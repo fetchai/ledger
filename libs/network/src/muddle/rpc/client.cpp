@@ -137,7 +137,7 @@ void Client::BackgroundWorker()
 
   std::list<MuddleEndpoint::Response> pending_promises;
 
-  std::size_t idle_loops{0};
+  std::size_t consecutive_idle_loops{0};
   while (running_)
   {
     bool was_idle{true};
@@ -180,16 +180,13 @@ void Client::BackgroundWorker()
       was_idle = false;
     }
 
-    // update the idle loop counter if necessary
-    if (was_idle)
-    {
-      ++idle_loops;
+    // update the idle loop counter
+    consecutive_idle_loops = (was_idle) ? consecutive_idle_loops + 1 : 0;
 
-      // if we are sustained a period of idleness then we should sleep the thread
-      if (idle_loops >= 3)
-      {
-        std::this_thread::sleep_for(std::chrono::milliseconds{100});
-      }
+    // if we are in sustained a period of idleness then we should sleep the thread
+    if (consecutive_idle_loops >= 3)
+    {
+      std::this_thread::sleep_for(std::chrono::milliseconds{100});
     }
   }
 }
