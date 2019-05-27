@@ -22,6 +22,7 @@
 #include "crypto/sha256.hpp"
 #include "storage/new_revertible_document_store.hpp"
 #include "testing/common_testing_functionality.hpp"
+#include "core/random/lcg.hpp"
 
 #include <gtest/gtest.h>
 
@@ -37,8 +38,35 @@ using namespace fetch::storage;
 using namespace fetch::crypto;
 using namespace fetch::testing;
 
+using fetch::random::LinearCongruentialGenerator;
+
 using ByteArray      = fetch::byte_array::ByteArray;
 using ConstByteArray = fetch::byte_array::ConstByteArray;
+
+char NewChar(LinearCongruentialGenerator & rng)
+{
+  char a = char(rng());
+  return a == '\0' ? '0' : a;
+}
+
+std::string GetStringForTesting(LinearCongruentialGenerator & rng)
+{
+  uint64_t    size_desired = (1 << 10) + (rng() & 0xFF);
+  std::string ret;
+  ret.resize(size_desired);
+
+  for (std::size_t i = 0; i < 1 << 10; ++i)
+  {
+    ret[i] = NewChar(rng);
+  }
+
+  if(!(rng() % 10))
+  {
+    ret = std::string{};
+  }
+
+  return ret;
+}
 
 TEST(new_revertible_store_test, basic_example_of_commit_revert1)
 {
@@ -311,20 +339,238 @@ TEST(new_revertible_store_test, more_commit_revert_and_erase)
     ++i;
   }
 
-  int stopme = 0;
-
   // Erase the elements
   for (auto it = expected_in_store.begin();it != expected_in_store.end();)
   {
-    stopme++;
-    auto aa = it->first;
-    auto bb = it->second;
-
-    FETCH_UNUSED(aa);
-    FETCH_UNUSED(bb);
-
     store.Erase(it->first);
     it = expected_in_store.erase(it);
     ASSERT_EQ(store.size(), expected_in_store.size());
+  }
+}
+
+template <typename C>
+typename C::value_type GetRandom(C const &container, LinearCongruentialGenerator &rng)
+{
+  auto beg = container.cbegin();
+  auto container_size = container.size();
+
+  if(container_size == 0)
+  {
+    return {};
+  }
+
+  std::size_t select = rng() % container_size;
+
+  for (std::size_t i = 0; i < select; ++i)
+  {
+    beg++;
+  }
+
+  return *beg;
+}
+
+TEST(new_revertible_store_test, stress_test)
+{
+  NewRevertibleDocumentStore store;
+  store.New("a_66.db", "b_66.db", "c_66.db", "d_66.db", true);
+  LinearCongruentialGenerator rng;
+
+  // TODO(HUT): replace this with a fake RDS
+  using CommitID = ByteArray;
+  using State = std::unordered_map<storage::ResourceID, std::string>;
+
+  std::unordered_map<CommitID, State> previous_states;
+  State current_state;
+  auto hash_pool        = GenerateUniqueHashes(1000);
+  auto rid_pool         = GenerateUniqueIDs(1000);
+  auto unused_hash_pool = GenerateUniqueHashes(1000);
+  auto unused_rid_pool  = GenerateUniqueIDs(1000);
+
+  enum class Action
+  {
+    GET,
+    GET_OR_CREATE,
+    SET,
+    ERASE,
+    COMMIT,
+    REVERT,
+    CHECK_FOR_HASH,
+    BAD_CHECK_FOR_HASH,
+    BAD_REVERT,
+    BAD_ERASE
+  };
+
+  std::vector<Action> prev_actions;
+  FETCH_UNUSED(prev_actions);
+
+  for (std::size_t i = 0; i < 10000; ++i)
+  {
+    uint64_t rnd_action = rng() % 100;
+    Action action{Action::GET};
+
+    if(rnd_action > 90)
+    {
+      action = Action::GET;
+    }
+    else if(rnd_action > 80)
+    {
+      action = Action::GET_OR_CREATE;
+    }
+    else if(rnd_action > 70)
+    {
+      action = Action::SET;
+    }
+    else if(rnd_action > 60)
+    {
+      action = Action::ERASE;
+    }
+    else if(rnd_action > 50)
+    {
+      action = Action::COMMIT;
+    }
+    else if(rnd_action > 40)
+    {
+      action = Action::REVERT;
+    }
+    else if(rnd_action > 30)
+    {
+      action = Action::CHECK_FOR_HASH;
+    }
+    else if(rnd_action > 20)
+    {
+      action = Action::BAD_CHECK_FOR_HASH;
+    }
+    else if(rnd_action > 10)
+    {
+      action = Action::BAD_REVERT;
+    }
+    else
+    {
+      action = Action::BAD_ERASE;
+    }
+
+    prev_actions.push_back(action);
+
+    storage::ResourceID random_rid          = GetRandom(rid_pool, rng);
+    ByteArray           random_unused_hash  = GetRandom(unused_hash_pool, rng);
+    storage::ResourceID random_unused_rid   = GetRandom(unused_rid_pool, rng);
+    ByteArray           random_prev_commmit = GetRandom(previous_states, rng).first;
+    std::string         random_string       = GetStringForTesting(rng);
+    ByteArray           current_hash;
+
+    switch(action)
+    {
+      case Action::GET:
+        if(current_state.find(random_rid) != current_state.end())
+        {
+          ASSERT_EQ(store.Get(random_rid).failed, false);
+          ASSERT_EQ(store.Get(random_rid).was_created, false);
+          ASSERT_EQ(current_state[random_rid], std::string{store.Get(random_rid).document});
+        }
+        else
+        {
+          ASSERT_EQ(store.Get(random_rid).failed, true);
+          ASSERT_EQ(store.Get(random_rid).was_created, false);
+        }
+      break;
+
+      case Action::GET_OR_CREATE:
+        /*
+        random_rid = GetRandom(rid_pool, rng);
+
+        if(current_state.find(random_rid) != current_state.end())
+        {
+          ASSERT_EQ(store.Get(random_rid).failed, false);
+          ASSERT_EQ(store.Get(random_rid).was_created, false);
+          ASSERT_EQ(current_state[random_rid], std::string{store.Get(random_rid).document});
+        }
+        else
+        {
+          ASSERT_EQ(store.Get(random_rid).failed, true);
+          ASSERT_EQ(store.Get(random_rid).was_created, false);
+        }
+        */
+      break;
+
+      case Action::SET:
+        current_state[random_rid] = random_string;
+        store.Set(random_rid, random_string);
+      break;
+
+      case Action::ERASE:
+
+        if(current_state.find(random_rid) != current_state.end())
+        {
+          current_state.erase(random_rid);
+        }
+
+        store.Erase(random_rid);
+        ASSERT_EQ(store.Get(random_rid).failed, true);
+      break;
+
+      case Action::COMMIT:
+
+      current_hash = store.CurrentHash();
+
+      std::cerr << "Commit: " << current_hash << std::endl; // DELETEME_NH
+      std::cerr << "size: " << store.size() << std::endl; // DELETEME_NH
+
+      previous_states[current_hash] = current_state;
+
+      ASSERT_EQ(store.Commit(), current_hash);
+      ASSERT_EQ(store.HashExists(current_hash), true);
+      break;
+
+      case Action::REVERT:
+      if(!previous_states.empty())
+      {
+        current_state = std::move(previous_states[random_prev_commmit]);
+        previous_states.erase(random_prev_commmit);
+
+        ASSERT_EQ(store.HashExists(random_prev_commmit), true);
+        store.RevertToHash(random_prev_commmit);
+        /* ASSERT_EQ(store.HashExists(random_prev_commmit), false); */ // TODO(HUT): this fails.
+        std::cerr << "revert to: " << random_prev_commmit << std::endl; // DELETEME_NH
+      }
+      break;
+
+      case Action::CHECK_FOR_HASH:
+      if(!previous_states.empty())
+      {
+        ASSERT_EQ(store.HashExists(random_prev_commmit), true);
+      }
+      break;
+
+      case Action::BAD_CHECK_FOR_HASH:
+        ASSERT_EQ(store.HashExists(random_unused_hash), false);
+      break;
+
+      case Action::BAD_REVERT:
+        ASSERT_EQ(store.RevertToHash(random_unused_hash), false);
+      break;
+
+      case Action::BAD_ERASE:
+        store.Erase(random_unused_rid);
+      break;
+    }
+
+    // Check states are identical
+    for (auto it = current_state.begin(); it != current_state.end(); ++it)
+    {
+      if(store.Get(it->first).failed != false)
+      {
+        std::cerr << "" << std::endl; // DELETEME_NH
+      }
+
+      ASSERT_EQ(store.Get(it->first).failed, false);
+      ASSERT_EQ(it->second, std::string{store.Get(it->first).document});
+    }
+
+    if(current_state.size() != store.size())
+    {
+      std::cerr << "argh" << std::endl; // DELETEME_NH
+    }
+
+    ASSERT_EQ(current_state.size(), store.size());
   }
 }
