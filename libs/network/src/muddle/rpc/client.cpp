@@ -137,14 +137,18 @@ void Client::BackgroundWorker()
 
   std::list<MuddleEndpoint::Response> pending_promises;
 
+  std::size_t idle_loops{0};
   while (running_)
   {
+    bool was_idle{true};
+
     // attempt to extract and promises from the queue
     {
       std::unique_lock<std::mutex> lk(promise_queue_lock_);
       if (!promise_queue_.empty())
       {
         pending_promises.splice(pending_promises.end(), promise_queue_);
+        was_idle = false;
       }
     }
 
@@ -152,13 +156,14 @@ void Client::BackgroundWorker()
     auto it = pending_promises.begin();
     while (it != pending_promises.end())
     {
-      // evaulate the state of the current promise
+      // evaluate the state of the current promise
       PromiseState const state = it->GetState();
 
       if (service::PromiseState::WAITING != state)
       {
         // erase the promise from the queue
         it = pending_promises.erase(it);
+        was_idle = false;
       }
       else
       {
@@ -166,10 +171,25 @@ void Client::BackgroundWorker()
         ++it;
       }
     }
+
     if (pending_promises.empty())
     {
       std::unique_lock<std::mutex> lk(promise_queue_lock_);
       promise_queue_cv_.wait(lk);
+
+      was_idle = false;
+    }
+
+    // update the idle loop counter if necessary
+    if (was_idle)
+    {
+      ++idle_loops;
+
+      // if we are sustained a period of idleness then we should sleep the thread
+      if (idle_loops >= 3)
+      {
+        std::this_thread::sleep_for(std::chrono::milliseconds{100});
+      }
     }
   }
 }
