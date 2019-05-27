@@ -36,7 +36,7 @@ void JSONDocument::ExtractPrimitive(Variant &variant, JSONToken const &token,
                                     ConstByteArray const &document)
 {
   bool        success{false};
-  std::string str;
+  char const* str = nullptr;
 
   switch (token.type)
   {
@@ -62,27 +62,26 @@ void JSONDocument::ExtractPrimitive(Variant &variant, JSONToken const &token,
 
   case NUMBER_INT:
     str     = document.char_pointer() + token.first;
-    variant = std::strtoll(str.c_str(), nullptr, 10);
+    variant = std::strtoll(str, nullptr, 10);
     if (errno == ERANGE)
     {
       errno = 0;
       FETCH_LOG_ERROR(LOGGING_NAME, "Failed to convert str=", str, " to integer");
 
-      throw JSONParseException("Failed to convert str=" + str + " to integer");
+      throw JSONParseException(std::string("Failed to convert str=") + str + " to integer");
     }
     success = true;
     break;
 
   case NUMBER_FLOAT:
     str     = document.char_pointer() + token.first;
-    variant = std::strtold(str.c_str(), nullptr);
-
+    variant = std::strtold(str, nullptr);
     if (errno == ERANGE)
     {
       errno = 0;
       FETCH_LOG_ERROR(LOGGING_NAME, "Failed to convert str=", str, " to long double");
 
-      throw JSONParseException("Failed to convert str=" + str + " to long double");
+      throw JSONParseException(std::string("Failed to convert str=") + str + " to long double");
     }
     success = true;
     break;
