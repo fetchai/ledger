@@ -31,7 +31,6 @@ namespace {
 
 using fetch::byte_array::ConstByteArray;
 using std::chrono::milliseconds;
-using std::this_thread::sleep_for;
 
 using ClientPtr = std::shared_ptr<ScopeClient>;
 

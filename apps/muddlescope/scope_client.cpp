@@ -32,7 +32,6 @@ using namespace std::chrono;
 using namespace std::this_thread;
 
 using fetch::muddle::NetworkId;
-using fetch::byte_array::ByteArray;
 using fetch::muddle::Packet;
 using fetch::serializers::ByteArrayBuffer;
 
