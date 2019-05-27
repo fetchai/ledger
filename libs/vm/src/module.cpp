@@ -172,6 +172,12 @@ Module::Module()
   auto iarray = GetClassInterface<IArray>();
   iarray.CreateConstuctor<int32_t>();
   iarray.CreateMemberFunction("count", &IArray::Count);
+  iarray.CreateMemberFunction<void, TemplateParameter const &>("append", &IArray::Append);
+  iarray.CreateMemberFunction("pop_back", &IArray::PopBackOne);
+  iarray.CreateMemberFunction("pop_back", &IArray::PopBackMany);
+  iarray.CreateMemberFunction("pop_front", &IArray::PopFrontOne);
+  iarray.CreateMemberFunction("pop_front", &IArray::PopFrontMany);
+  iarray.CreateMemberFunction("reverse", &IArray::Reverse);
   iarray.EnableIndexOperator<AnyInteger, TemplateParameter>();
   iarray.CreateInstantiationType<Array<bool>>();
   iarray.CreateInstantiationType<Array<int8_t>>();
