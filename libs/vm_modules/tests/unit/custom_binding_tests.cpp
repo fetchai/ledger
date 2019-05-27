@@ -18,6 +18,11 @@
 
 #include "vm_test_suite.hpp"
 
+#include "gtest/gtest.h"
+
+#include <cstdint>
+#include <memory>
+
 class CustomBindingTests : public VmTestSuite
 {
 protected:

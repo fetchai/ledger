@@ -27,9 +27,15 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 //
 
-#include "core/byte_array/byte_array.hpp"
+#include "core/byte_array/const_byte_array.hpp"
 #include "core/byte_array/decoders.hpp"
 #include "core/byte_array/encoders.hpp"
+
+#include <cassert>
+#include <cstddef>
+#include <cstdint>
+#include <string>
+#include <vector>
 
 namespace fetch {
 namespace byte_array {

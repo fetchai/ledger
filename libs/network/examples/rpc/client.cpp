@@ -16,19 +16,26 @@
 //
 //------------------------------------------------------------------------------
 
+#include "network/muddle/rpc/client.hpp"
 #include "core/logger.hpp"
 #include "core/serializers/byte_array.hpp"
+#include "network/muddle/muddle.hpp"
+#include "network/muddle/rpc/server.hpp"
 #include "network/service/service_client.hpp"
 #include "service_consts.hpp"
 
+#include <chrono>
+#include <cstdlib>
 #include <iostream>
+#include <memory>
+#include <ratio>
+#include <string>
+#include <thread>
+#include <utility>
+#include <vector>
 
 using namespace fetch::service;
 using namespace fetch::byte_array;
-
-#include "network/muddle/muddle.hpp"
-#include "network/muddle/rpc/client.hpp"
-#include "network/muddle/rpc/server.hpp"
 
 using fetch::muddle::Muddle;
 using fetch::muddle::NetworkId;
@@ -56,7 +63,7 @@ int main()
   if (!client_muddle->UriToDirectAddress(peer, target_address))
   {
     std::cout << "Can't connect" << std::endl;
-    exit(1);
+    std::exit(1);
   }
 
   auto prom = client->CallSpecificAddress(target_address, MYPROTO, GREET, "Fetch");

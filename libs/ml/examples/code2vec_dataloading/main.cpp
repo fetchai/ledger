@@ -18,8 +18,14 @@
 
 #include "math/tensor.hpp"
 #include "ml/dataloaders/code2vec_context_loaders/context_loader.hpp"
+
+#include <cstdint>
 #include <fstream>
 #include <iostream>
+#include <string>
+#include <tuple>
+#include <unordered_map>
+#include <utility>
 
 #define MAX_CONTEXTS 20
 

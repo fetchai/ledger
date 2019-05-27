@@ -20,6 +20,9 @@
 
 #include "gtest/gtest.h"
 
+#include <chrono>
+#include <memory>
+
 TEST(ClockTests, BasicChecks)
 {
   auto test_clock = fetch::moment::CreateAdjustableClock("default");

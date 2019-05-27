@@ -19,6 +19,8 @@
 
 #include "metrics/metric_handler.hpp"
 
+#include <atomic>
+#include <memory>
 #include <string>
 
 namespace fetch {

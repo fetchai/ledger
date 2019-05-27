@@ -18,10 +18,12 @@
 //------------------------------------------------------------------------------
 
 #include "http/http_client.hpp"
-
 #include "network/fetch_asio.hpp"
 
+#include <cstddef>
+#include <cstdint>
 #include <string>
+#include <system_error>
 
 namespace fetch {
 namespace http {
