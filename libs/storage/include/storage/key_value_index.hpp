@@ -127,10 +127,7 @@ struct KeyValuePair
 
   bool UpdateLeaf(uint64_t const &val, byte_array::ConstByteArray const &data)
   {
-    HashFunction hasher;
-    hasher.Reset();
-    hasher.Update(data);
-    hasher.Final(hash, N);
+    memcpy(hash, data.pointer(), N);
     value = val;
 
     return true;
@@ -141,8 +138,8 @@ struct KeyValuePair
     HashFunction hasher;
     hasher.Reset();
 
-    hasher.Update(left.hash, N);
     hasher.Update(right.hash, N);
+    hasher.Update(left.hash, N);
     hasher.Final(hash, N);
 
     return true;
@@ -345,7 +342,7 @@ public:
    *
    */
   template <typename... Args>
-  void Set(byte_array::ConstByteArray const &key_str, Args const &... args)
+  void Set(byte_array::ConstByteArray const &key_str, uint64_t const &val, byte_array::ConstByteArray const &data)
   {
     DebugVerify();
 
@@ -366,7 +363,7 @@ public:
       kv.key        = key;
       kv.parent     = key_value_pair::TREE_ROOT_VALUE;
       kv.split      = uint16_t{key.size_in_bits()};
-      update_parent = kv.UpdateLeaf(args...);
+      update_parent = kv.UpdateLeaf(val, data);
 
       index = stack_.Push(kv);
     }
@@ -392,7 +389,7 @@ public:
         left.parent  = stack_.size() + 1;
         right.parent = stack_.size() + 1;
 
-        update_parent = left.UpdateLeaf(args...);
+        update_parent = left.UpdateLeaf(val, data);
 
         lid = stack_.Push(left);
         stack_.Set(rid, right);
@@ -409,7 +406,7 @@ public:
         right.parent = stack_.size() + 1;
         left.parent  = stack_.size() + 1;
 
-        update_parent = right.UpdateLeaf(args...);
+        update_parent = right.UpdateLeaf(val, data);
 
         rid = stack_.Push(right);
         stack_.Set(lid, left);
@@ -455,7 +452,7 @@ public:
     // Case where we are overwriting a leaf that already exists
     else
     {
-      update_parent = kv.UpdateLeaf(args...);
+      update_parent = kv.UpdateLeaf(val, data);
       stack_.Set(uint64_t(index), kv);
     }
 
@@ -474,6 +471,7 @@ public:
     }
 
     DebugVerify();
+    DebugVerifyMerkle();
   }
 
   byte_array::ByteArray Hash()
@@ -484,6 +482,8 @@ public:
     {
       stack_.Get(root_, kv);
     }
+
+    DebugVerifyMerkle();
 
     return kv.Hash();
   }
@@ -717,7 +717,8 @@ public:
     // Clear the tree for edge case of only node
     if (size() == 1)
     {
-      stack_.Clear();
+      // Note: this must be an operation that is recorded in the case of a revertible underlying store.
+      stack_.Pop();
       root_ = 0;
       stack_.SetExtraHeader(root_);
 
@@ -799,6 +800,15 @@ public:
     }
 
     DebugVerify();
+    DebugVerifyMerkle();
+
+    // It's now important to update the merkle tree from the deleted node's sibling upwards
+    //UpdateParents(kv.parent, index, kv)
+  }
+
+  void UpdateVariables()
+  {
+    root_ = stack_.header_extra();
   }
 
 private:
@@ -1216,6 +1226,89 @@ private:
     {
       throw StorageException("In the key value index trie, there should always be an odd number of nodes");
     }
+  }
+
+  void DebugVerifyMerkle()
+  {
+    if (stack_.size() == 0)
+    {
+      return;
+    }
+
+    if (root_ >= stack_.size())
+    {
+      throw StorageException("Root out of bounds of stack");
+    }
+
+    std::vector<uint64_t> nodes_stack{root_};
+    std::vector<uint64_t> verified_so_far{0};
+
+    key_value_pair kv;
+    key_value_pair kv_left;
+    key_value_pair kv_right;
+    key_value_pair kv_dummy;
+
+    // To verify, do a depth first search of the tree
+    while(nodes_stack.size() > 0)
+    {
+      // Get node of stack
+      auto &stack_end = nodes_stack.back();
+      stack_.Get(stack_end, kv);
+
+      // Verify this node is correct (hash is hash of children)
+      if(!(kv.is_leaf()))
+      {
+        // Clear dummy
+        kv_dummy = key_value_pair{};
+
+        stack_.Get(kv.left, kv_left);
+        stack_.Get(kv.right, kv_right);
+
+        kv_dummy.UpdateNode(kv_left, kv_right);
+
+        if(kv_dummy.Hash() != kv.Hash())
+        {
+          throw StorageException("Merkle tree is malformed!");
+        }
+      }
+
+      // Verified keeps track of whether the left/right side of the tree has been verified already
+      switch(verified_so_far.back())
+      {
+        // Node hasn't been seen before
+        case 0:
+
+          if(!kv.is_leaf())
+          {
+            nodes_stack.push_back(kv.left);
+            verified_so_far[verified_so_far.size()-1]++;
+            verified_so_far.push_back(0);
+          }
+          else
+          {
+            nodes_stack.pop_back();
+            verified_so_far.pop_back();
+          }
+        break;
+
+        // Previously node went left
+        case 1:
+          nodes_stack.push_back(kv.right);
+          verified_so_far[verified_so_far.size()-1]++;
+          verified_so_far.push_back(0);
+        break;
+
+        // Node went right last time - go upwards
+        case 2:
+          nodes_stack.pop_back();
+          verified_so_far.pop_back();
+        break;
+
+        default:
+        throw StorageException("Found unexpected value in verified stack");
+      }
+    }
+
   }
 };
 

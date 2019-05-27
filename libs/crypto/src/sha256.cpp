@@ -41,6 +41,7 @@ SHA256::SHA256()
 void SHA256::Reset()
 {
   ResetContext(context_);
+  invalid = false;
 }
 
 bool SHA256::Update(uint8_t const *data_to_hash, std::size_t const &size)
@@ -54,6 +55,13 @@ bool SHA256::Update(uint8_t const *data_to_hash, std::size_t const &size)
 
 void SHA256::Final(uint8_t *hash, std::size_t const &size)
 {
+  if(invalid)
+  {
+    std::cerr << "ooh." << std::endl; // DELETEME_NH
+  }
+
+  assert((!invalid) && "Final called on invalid sha256 - it needs to be reset between uses");
+
   if (size < size_in_bytes())
   {
     throw std::runtime_error("size of input buffer is smaller than hash size.");
@@ -63,6 +71,8 @@ void SHA256::Final(uint8_t *hash, std::size_t const &size)
   {
     throw std::runtime_error("could not finalize SHA256.");
   }
+
+  invalid = true;
 }
 
 }  // namespace crypto

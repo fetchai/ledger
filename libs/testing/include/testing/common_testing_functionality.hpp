@@ -20,6 +20,7 @@
 #include "core/byte_array/byte_array.hpp"
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
+#include "core/random/lfg.hpp"
 #include "storage/resource_mapper.hpp"
 
 #include <set>
@@ -66,7 +67,8 @@ inline std::ostream &operator<<(std::ostream &os, StringProxy const &m)
 inline std::unordered_set<fetch::byte_array::ByteArray> GenerateUniqueHashes(uint64_t size,
                                                                              uint64_t seed = 0)
 {
-  fetch::byte_array::ByteArray reference = crypto::Hash<crypto::SHA256>(std::to_string(seed));
+  random::LinearCongruentialGenerator lcg(seed);
+  fetch::byte_array::ByteArray reference = crypto::Hash<crypto::SHA256>(std::to_string(lcg()));
   std::unordered_set<fetch::byte_array::ByteArray> ret;
   ret.reserve(size);
   uint32_t bit_flip_position      = 0;
@@ -92,8 +94,7 @@ inline std::unordered_set<fetch::byte_array::ByteArray> GenerateUniqueHashes(uin
     if (bit_flip_position == 256)
     {
       bit_flip_position = 0;
-      seed++;
-      reference = crypto::Hash<crypto::SHA256>(std::to_string(seed));
+      reference = crypto::Hash<crypto::SHA256>(std::to_string(lcg()));
     }
   }
 

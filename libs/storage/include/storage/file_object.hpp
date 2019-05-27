@@ -166,6 +166,12 @@ public:
   stack_type *stack();
   stack_type &underlying_stack();
 
+  void UpdateVariables()
+  {
+    block_index_           = 0;
+    id_                    = 0;
+  }
+
   // TODO(HUT): make private (?)
 protected:
   stack_type stack_;
@@ -436,6 +442,7 @@ byte_array::ConstByteArray FileObject<S>::Hash()
   hasher_type hasher;
   hasher.Reset();
   UpdateHash(hasher);
+
   return hasher.Final();
 }
 
@@ -447,6 +454,10 @@ void FileObject<S>::UpdateHash(crypto::StreamHasher &hasher)
   byte_array::ByteArray arr;
   arr.Resize(length_);
   Read(arr);
+
+  std::string thing = std::string{arr};
+  FETCH_UNUSED(thing);
+
   hasher.Update(arr.pointer(), length_);
 }
 

@@ -284,6 +284,12 @@ public:
     std::lock_guard<mutex::Mutex> lock(mutex_);
     byte_array_type               hash = key_index_.Hash();
 
+    if (key_index_.underlying_stack().HashExists(hash) || file_object_.underlying_stack().HashExists(hash))
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Attempted to commit an already committed hash");
+      return hash;
+    }
+
     key_index_.underlying_stack().Commit(hash);
     file_object_.underlying_stack().Commit(hash);
 
@@ -304,6 +310,9 @@ public:
 
     key_index_.underlying_stack().RevertToHash(hash);
     file_object_.underlying_stack().RevertToHash(hash);
+
+    key_index_.UpdateVariables();
+    file_object_.UpdateVariables();
 
     return true;
   }
