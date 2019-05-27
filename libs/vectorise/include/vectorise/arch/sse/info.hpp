@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "vectorise/info.hpp"
 #include <cstddef>
 #include <cstdint>
 #include <emmintrin.h>
