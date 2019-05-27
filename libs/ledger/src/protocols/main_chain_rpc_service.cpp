@@ -24,7 +24,7 @@
 #include "core/service_ids.hpp"
 #include "crypto/fetch_identity.hpp"
 #include "ledger/chain/block_coordinator.hpp"
-#include "ledger/chain/v2/transaction_layout_rpc_serializers.hpp"
+#include "ledger/chain/transaction_layout_rpc_serializers.hpp"
 #include "metrics/metrics.hpp"
 #include "network/muddle/packet.hpp"
 

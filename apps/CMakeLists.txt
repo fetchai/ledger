@@ -5,7 +5,5 @@ cmake_minimum_required(VERSION 3.5 FATAL_ERROR)
 project(fetch-apps)
 
 add_subdirectory(constellation)
-add_subdirectory(miner)
 add_subdirectory(muddlescope)
-add_subdirectory(tx)
 add_subdirectory(vm-lang)

@@ -17,8 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include <iostream>
-#include <stack>
+#include <cstdint>
 
 namespace fetch {
 namespace math {

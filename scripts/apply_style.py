@@ -14,17 +14,15 @@
 # `-a` options.
 #
 
-import os
-import sys
 import argparse
 import fnmatch
-import subprocess
-import difflib
-import threading
 import multiprocessing
-import codecs
-import shutil
+import os
 import re
+import shutil
+import subprocess
+import sys
+import threading
 from concurrent.futures import ThreadPoolExecutor
 
 PROJECT_ROOT = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
@@ -64,8 +62,11 @@ def output(text):
 def parse_commandline():
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('-w', '--warn-only', dest='fix',
-                        action='store_false', help='Only display warnings')
+    parser.add_argument(
+        '-d',
+        '--diff',
+        action='store_true',
+        help='Exit with error and print diff if there are changes')
     parser.add_argument(
         '-j',
         dest='jobs',
@@ -197,36 +198,6 @@ def project_sources(project_root):
                     yield source_path
 
 
-def compare_against_original(reformatted, source_path, rel_path, names_only):
-    # read the contents of the original file
-    original = None
-    with codecs.open(source_path, 'r', encoding='utf8') as source_file:
-        try:
-            original = source_file.read()
-        except UnicodeDecodeError as ex:
-            output('Unable to read contents of file: {}'.format(rel_path))
-            output(ex)
-            sys.exit(1)
-
-    # handle the read error
-    if original is None:
-        return False
-
-    out = list(difflib.context_diff(
-        original.splitlines(), reformatted.splitlines()))
-
-    success = True
-    if len(out) != 0:
-        if names_only:
-            output(rel_path)
-        else:
-            output('Style mismatch in: {}\n'.format(rel_path))
-            output('\n'.join(out[3:]))  # first 3 elements are garbage
-            success = False
-
-    return success
-
-
 def format_cpp(args):
     clang_format = find_clang_format()
     if clang_format is None:
@@ -236,10 +207,8 @@ def format_cpp(args):
     cmd_prefix = [
         clang_format,
         '-style=file',
+        '-i'
     ]
-
-    if args.fix:
-        cmd_prefix += ['-i']
 
     def apply_style_to_file(source_path):
         # apply twice to allow the changes to "settle"
@@ -249,70 +218,50 @@ def format_cpp(args):
         if args.dont_goto_fail:
             postprocess_file(source_path)
 
-        return True
-
-    def diff_style_to_file(source_path):
-        formatted_output = subprocess.check_output(
-            cmd_prefix + [source_path], cwd=PROJECT_ROOT).decode()
-
-        if args.dont_goto_fail:
-            formatted_output = postprocess_contents(formatted_output)
-
-        rel_path = os.path.relpath(source_path, PROJECT_ROOT)
-        return compare_against_original(
-            formatted_output, source_path, rel_path, args.names_only)
-
-    if args.fix:
-        handler = apply_style_to_file
-        output('Applying style...')
-    else:
-        handler = diff_style_to_file
-        if args.names_only:
-            output('Files to reformat:')
-        else:
-            output('Checking style...')
-
-    # process all the files
-    success = False
+    if args.names_only:
+        output('Files to reformat:')
 
     processed_files = args.filename or project_sources(PROJECT_ROOT)
 
     with ThreadPoolExecutor(max_workers=args.jobs) as pool:
-        result = pool.map(handler, processed_files)
+        result = pool.map(apply_style_to_file, processed_files)
 
         if args.all:
             result = list(result)
 
-        success = all(result)
-
-    if args.fix:
-        output('Applying style complete!')
-    else:
-        output('Checking style complete!')
-
-    if not success:
-        sys.exit(1)
+        all(result)
 
 
 def format_python(args):
-    fix_or_diff_arg = ['--in-place' if args.fix else '--diff']
-    # Parallel jobs requires '--in-place' arg
-    jobs_arg = ['-j {}'.format(args.jobs)] if args.fix else []
+    jobs_arg = ['-j {}'.format(args.jobs)]
 
-    autopep8_cmd = ['autopep8', '.', '--exit-code', '--recursive',
-                    '--exclude', 'vendor'] + fix_or_diff_arg + jobs_arg
+    autopep8_cmd = ['autopep8', '.', '--in-place', '--recursive',
+                    '--exclude', 'vendor'] + jobs_arg
 
-    exit_code = subprocess.call(autopep8_cmd, cwd=PROJECT_ROOT)
-    if exit_code != 0:
-        sys.exit(1)
+    subprocess.call(autopep8_cmd, cwd=PROJECT_ROOT)
+
+
+def get_diff():
+    return subprocess.check_output(['git', 'diff'], cwd=PROJECT_ROOT).decode().strip()
 
 
 def main():
     args = parse_commandline()
 
     # TODO(WK) Make multilanguage reformatting concurrent
+    output('Formatting C/C++ ...')
     format_cpp(args)
+    output('Formatting Python ...')
     format_python(args)
+    output('Done.')
+
+    if args.diff:
+        diff = get_diff()
+        if diff:
+            print('*' * 80)
+            print(diff)
+            print('*' * 80)
+            sys.exit(1)
 
 
 if __name__ == '__main__':

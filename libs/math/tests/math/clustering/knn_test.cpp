@@ -17,8 +17,6 @@
 //------------------------------------------------------------------------------
 
 #include <gtest/gtest.h>
-#include <iomanip>
-#include <iostream>
 
 #include "math/clustering/knn.hpp"
 #include "math/distance/euclidean.hpp"

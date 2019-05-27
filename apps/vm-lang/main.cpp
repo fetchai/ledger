@@ -300,7 +300,7 @@ int main(int argc, char **argv)
     state_map.LoadFromFile(data_path.c_str());
   }
 
-  vm->AttachOutputDevice("stdout", std::cout);
+  vm->AttachOutputDevice(fetch::vm::VM::STDOUT, std::cout);
   vm->AttachOutputDevice("stderr", std::cerr);
 
   // Execute the requested function

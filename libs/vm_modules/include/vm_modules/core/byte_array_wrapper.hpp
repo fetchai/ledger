@@ -63,6 +63,18 @@ public:
     return byte_array_;
   }
 
+  bool SerializeTo(vm::ByteArrayBuffer &buffer) override
+  {
+    buffer << byte_array_;
+    return true;
+  }
+
+  bool DeserializeFrom(vm::ByteArrayBuffer &buffer) override
+  {
+    buffer >> byte_array_;
+    return true;
+  }
+
 private:
   byte_array::ByteArray byte_array_;
 };

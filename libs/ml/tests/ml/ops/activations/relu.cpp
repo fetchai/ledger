@@ -34,14 +34,15 @@ TYPED_TEST_CASE(ReluTest, MyTypes);
 
 TYPED_TEST(ReluTest, forward_all_positive_test)
 {
-  using ArrayType = TypeParam;
+  using ArrayType     = TypeParam;
+  using VecTensorType = typename fetch::ml::Ops<TypeParam>::VecTensorType;
 
   ArrayType data = ArrayType::FromString("1, 2, 3, 4, 5, 6, 7, 8");
   ArrayType gt   = ArrayType::FromString("1, 2, 3, 4, 5, 6, 7, 8");
 
   fetch::ml::ops::Relu<ArrayType> op;
-  ArrayType                       prediction = op.fetch::ml::template Ops<ArrayType>::Forward(
-      std::vector<std::reference_wrapper<ArrayType const>>({data}));
+  ArrayType                       prediction(op.ComputeOutputShape({data}));
+  op.Forward(VecTensorType({data}), prediction);
 
   // test correct values
   ASSERT_TRUE(prediction.AllClose(gt));
@@ -71,8 +72,8 @@ TYPED_TEST(ReluTest, forward_3d_tensor_test)
   }
 
   fetch::ml::ops::Relu<ArrayType> op;
-  ArrayType                       prediction = op.fetch::ml::template Ops<ArrayType>::Forward(
-      std::vector<std::reference_wrapper<ArrayType const>>({data}));
+  ArrayType                       prediction(op.ComputeOutputShape({data}));
+  op.Forward({data}, prediction);
 
   // test correct values
   ASSERT_TRUE(prediction.AllClose(gt, static_cast<DataType>(1e-5), static_cast<DataType>(1e-5)));
@@ -86,8 +87,8 @@ TYPED_TEST(ReluTest, forward_all_negative_integer_test)
   ArrayType gt   = ArrayType::FromString("0, 0, 0, 0, 0, 0, 0, 0");
 
   fetch::ml::ops::Relu<ArrayType> op;
-  ArrayType                       prediction = op.fetch::ml::template Ops<ArrayType>::Forward(
-      std::vector<std::reference_wrapper<ArrayType const>>({data}));
+  ArrayType                       prediction(op.ComputeOutputShape({data}));
+  op.Forward({data}, prediction);
 
   // test correct values
   ASSERT_TRUE(prediction.AllClose(gt));
@@ -101,8 +102,8 @@ TYPED_TEST(ReluTest, forward_mixed_test)
   ArrayType gt   = ArrayType::FromString("1, 0, 3, 0, 5, 0, 7, 0");
 
   fetch::ml::ops::Relu<ArrayType> op;
-  ArrayType                       prediction = op.fetch::ml::template Ops<ArrayType>::Forward(
-      std::vector<std::reference_wrapper<ArrayType const>>({data}));
+  ArrayType                       prediction(op.ComputeOutputShape({data}));
+  op.Forward({data}, prediction);
 
   // test correct values
   ASSERT_TRUE(prediction.AllClose(gt));

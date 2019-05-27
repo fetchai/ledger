@@ -25,7 +25,6 @@
 #include "crypto/sha256.hpp"
 
 #include <gtest/gtest.h>
-#include <iostream>
 
 using namespace fetch;
 using namespace fetch::crypto;

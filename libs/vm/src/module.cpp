@@ -18,6 +18,8 @@
 
 #include "vm/module.hpp"
 
+#include <cstdint>
+
 namespace fetch {
 namespace vm {
 
@@ -154,6 +156,13 @@ Module::Module()
   CreateFreeFunction("toFloat32", &toFloat32);
   CreateFreeFunction("toFloat64", &toFloat64);
 
+  auto istring = GetClassInterface<String>();
+  istring.CreateMemberFunction("length", &String::Length);
+  istring.CreateMemberFunction("trim", &String::Trim);
+  istring.CreateMemberFunction<int32_t, Ptr<String> const &>("find", &String::Find);
+  istring.CreateMemberFunction<Ptr<String>, int32_t, int32_t>("substr", &String::Substring);
+  istring.CreateMemberFunction("reverse", &String::Reverse);
+
   auto imatrix = GetClassInterface<IMatrix>();
   imatrix.CreateConstuctor<int32_t, int32_t>();
   imatrix.EnableIndexOperator<AnyInteger, AnyInteger, TemplateParameter>();
@@ -163,6 +172,12 @@ Module::Module()
   auto iarray = GetClassInterface<IArray>();
   iarray.CreateConstuctor<int32_t>();
   iarray.CreateMemberFunction("count", &IArray::Count);
+  iarray.CreateMemberFunction<void, TemplateParameter const &>("append", &IArray::Append);
+  iarray.CreateMemberFunction("pop_back", &IArray::PopBackOne);
+  iarray.CreateMemberFunction("pop_back", &IArray::PopBackMany);
+  iarray.CreateMemberFunction("pop_front", &IArray::PopFrontOne);
+  iarray.CreateMemberFunction("pop_front", &IArray::PopFrontMany);
+  iarray.CreateMemberFunction("reverse", &IArray::Reverse);
   iarray.EnableIndexOperator<AnyInteger, TemplateParameter>();
   iarray.CreateInstantiationType<Array<bool>>();
   iarray.CreateInstantiationType<Array<int8_t>>();

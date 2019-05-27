@@ -22,7 +22,7 @@
 #include "crypto/fnv.hpp"
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
-#include "ledger/chain/v2/transaction.hpp"
+#include "ledger/chain/transaction.hpp"
 #include "ledger/chaincode/smart_contract_exception.hpp"
 #include "ledger/chaincode/vm_definition.hpp"
 #include "ledger/state_adapter.hpp"
@@ -43,6 +43,8 @@ using fetch::byte_array::ConstByteArray;
 namespace fetch {
 namespace ledger {
 
+namespace {
+
 /**
  * Compute the digest for the contract source
  *
@@ -62,9 +64,9 @@ ConstByteArray GenerateDigest(std::string const &source)
  * @param: tx the transaction triggering the smart contract
  * @param: params the parameters
  */
-void ValidateAddressesInParams(v2::Transaction const &tx, vm::ParameterPack const &params)
+void ValidateAddressesInParams(Transaction const &tx, vm::ParameterPack const &params)
 {
-  std::unordered_set<v2::Address> signing_addresses;
+  std::unordered_set<Address> signing_addresses;
   for (auto const &sig : tx.signatories())
   {
     signing_addresses.insert(sig.address);
@@ -85,6 +87,8 @@ void ValidateAddressesInParams(v2::Transaction const &tx, vm::ParameterPack cons
   }
 }
 
+}  // namespace
+
 /**
  * Construct a smart contract from the specified source
  *
@@ -103,6 +107,9 @@ SmartContract::SmartContract(std::string const &source)
   }
 
   FETCH_LOG_DEBUG(LOGGING_NAME, "Constructing contract: 0x", contract_digest().ToHex());
+
+  module_->CreateFreeFunctionFromLambda<uint64_t>("getBlockNumber",
+                                                  [this](vm::VM *) { return block_index_; });
 
   // create and compile the executable
   auto errors = vm_modules::VMFactory::Compile(module_, source_, *executable_);
@@ -141,8 +148,9 @@ SmartContract::SmartContract(std::string const &source)
                       " (Contract: ", contract_digest().ToBase64(), ')');
 
       // register the transaction handler
-      OnTransaction(fn.name,
-                    [this, name = fn.name](auto const &tx) { return InvokeAction(name, tx); });
+      OnTransaction(fn.name, [this, name = fn.name](auto const &tx, BlockIndex index) {
+        return InvokeAction(name, tx, index);
+      });
       break;
     case vm::FunctionDecoratorKind::QUERY:
       FETCH_LOG_DEBUG(LOGGING_NAME, "Registering Query: ", fn.name,
@@ -254,8 +262,8 @@ void AddAddressToParameterPack(vm::VM *vm, vm::ParameterPack &pack, msgpack::obj
  */
 void AddAddressToParameterPack(vm::VM *vm, vm::ParameterPack &pack, variant::Variant const &obj)
 {
-  v2::Address address{};
-  if (!v2::Address::Parse(obj.As<ConstByteArray>(), address))
+  Address address{};
+  if (!Address::Parse(obj.As<ConstByteArray>(), address))
   {
     throw std::runtime_error("Unable to parse address");
   }
@@ -337,12 +345,15 @@ void AddToParameterPack(vm::VM *vm, vm::ParameterPack &params, vm::TypeId expect
  * @param tx The input transaction
  * @return The corresponding status result for the operation
  */
-Contract::Status SmartContract::InvokeAction(std::string const &name, v2::Transaction const &tx)
+Contract::Status SmartContract::InvokeAction(std::string const &name, Transaction const &tx,
+                                             BlockIndex index)
 {
   // Important to keep the handle alive as long as the msgpack::object is needed to avoid segfault!
   msgpack::object_handle       h;
   std::vector<msgpack::object> input_params;
   auto const                   parameter_data = tx.data();
+
+  block_index_ = index;
 
   // if the tx has a payload parse it
   if (!parameter_data.empty() && parameter_data != "{}")
@@ -415,7 +426,7 @@ Contract::Status SmartContract::InvokeAction(std::string const &name, v2::Transa
   std::stringstream  console;
   fetch::vm::Variant output;
 
-  vm->AttachOutputDevice("stdout", console);
+  vm->AttachOutputDevice(vm::VM::STDOUT, console);
 
   if (!vm->Execute(*executable_, name, error, output, params))
   {
@@ -432,7 +443,7 @@ Contract::Status SmartContract::InvokeAction(std::string const &name, v2::Transa
  * @param owner The owner identity of the contract (i.e. the creator of the contract)
  * @return The corresponding status result for the operation
  */
-Contract::Status SmartContract::InvokeInit(v2::Address const &owner)
+Contract::Status SmartContract::InvokeInit(Address const &owner)
 {
   // Get clean VM instance
   auto vm = vm_modules::VMFactory::GetVM(module_);
@@ -463,7 +474,7 @@ Contract::Status SmartContract::InvokeInit(v2::Address const &owner)
   std::stringstream  console;
   fetch::vm::Variant output;
 
-  vm->AttachOutputDevice("stdout", console);
+  vm->AttachOutputDevice(vm::VM::STDOUT, console);
 
   if (!vm->Execute(*executable_, init_fn_name_, error, output, params))
   {
@@ -530,7 +541,7 @@ SmartContract::Status SmartContract::InvokeQuery(std::string const &name, Query 
   std::string       error;
   std::stringstream console;
 
-  vm->AttachOutputDevice("stdout", console);
+  vm->AttachOutputDevice(vm::VM::STDOUT, console);
 
   if (!vm->Execute(*executable_, name, error, output, params))
   {

@@ -20,9 +20,8 @@
 #include "storage/versioned_random_access_stack.hpp"
 #include <gtest/gtest.h>
 
-#include <iostream>
-#include <stack>
 #include <vector>
+
 using namespace fetch::storage;
 
 class TestClass
