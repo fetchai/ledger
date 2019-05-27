@@ -1,6 +1,6 @@
-################################################################################
-# F E T C H   M U D D L E   U T I L S
-################################################################################
+#
+# F E T C H   M U D D L E S C O P E
+#
 cmake_minimum_required(VERSION 3.5 FATAL_ERROR)
 project(fetch-muddlescope)
 
