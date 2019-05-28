@@ -20,10 +20,13 @@
 #include "core/logger.hpp"
 #include "core/macros.hpp"
 
+#include <atomic>
+#include <csignal>
 #include <map>
 #include <memory>
 #include <mutex>
-#include <signal.h>
+#include <sstream>
+#include <string>
 #include <thread>
 #include <utility>
 
@@ -36,7 +39,7 @@ namespace mutex {
 class ProductionMutex : public AbstractMutex
 {
 public:
-  ProductionMutex(int, std::string)
+  ProductionMutex(int, std::string const&)
   {}
 };
 
