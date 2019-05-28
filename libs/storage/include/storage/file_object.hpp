@@ -111,7 +111,7 @@ public:
   FileObject();
   virtual ~FileObject();
 
-  // TODO(HUT): unify this new/load methodology in constructor (?) etc.
+  // TODO(private 1067): Unify this new/load methodology to avoid templates
   template <typename... Args>
   void Load(Args &&... args)
   {
@@ -130,7 +130,7 @@ public:
 
   void Seek(uint64_t index);
 
-  uint64_t Tell();
+  uint64_t Tell() const;
 
   void Resize(uint64_t size);
 
@@ -146,10 +146,8 @@ public:
 
   uint64_t FileObjectSize() const;
 
-  // TODO(HUT): look into/consider deleting
   byte_array::ConstByteArray Hash();
 
-  // TODO(HUT): move to private?
   void UpdateHash(crypto::StreamHasher &hasher);
 
   bool SeekFile(std::size_t const &position);
@@ -162,7 +160,6 @@ public:
 
   bool VerifyConsistency(std::vector<uint64_t> const &ids);
 
-  // TODO(HUT): figure out what to do about this abstraction breaking
   stack_type *stack();
   stack_type &underlying_stack();
 
@@ -172,8 +169,7 @@ public:
     id_          = 0;
   }
 
-  // TODO(HUT): make private (?)
-protected:
+private:
   stack_type stack_;
 
   std::vector<std::vector<std::tuple<uint64_t, uint64_t, uint64_t>>> linked_lists;
@@ -183,14 +179,15 @@ protected:
   uint64_t block_number_      = 0;  // Nth block in file we are looking at
   uint64_t block_index_       = 0;  // index of block_number_ on the stack
   uint64_t byte_index_        = 0;  // index of current byte within BLOCK
-  uint64_t byte_index_global_ = 0;  // index of current byte within file // TODO(HUT): del?
-  uint64_t length_ = 0;  // length in bytes of file. // TODO(HUT): make sure this is correct - also
-                         // can be found from Get(id) right - any point in keeping?
+  uint64_t byte_index_global_ = 0;  // index of current byte within file
+  uint64_t length_            = 0;  // length in bytes of file.
+                                    // can be found from Get(id) right - any point in keeping?
 
-  // TODO(HUT): block_type -> BlockType etc.
+  // TODO(private 1067): block_type -> BlockType etc.
+  // TODO(private 1067): possibly some performance benefits by caching blocks like the free block
+  // here
   static constexpr uint64_t free_block_index_ = 0;  // Location of the meta 'free block'
 
-private:
   void Initalise();
 
   enum class Action
@@ -212,25 +209,22 @@ private:
   void Set(uint64_t index, block_type const &block);
 };
 
-// TODO(HUT): done
 template <typename S>
 FileObject<S>::FileObject() = default;
 
-// TODO(HUT): done
 template <typename S>
 FileObject<S>::~FileObject()
 {
-  // TODO(HUT): don't flush in destructors, except the highest level storage code (?)
+  // TODO(private 1067): consistency in storage : don't flush in destructors, except the highest
+  // level storage code.
 }
 
-// TODO(HUT): done
 template <typename S>
 void FileObject<S>::Flush(bool lazy)
 {
   stack_.Flush(lazy);
 }
 
-// TODO(HUT): done
 template <typename S>
 void FileObject<S>::Seek(uint64_t index)
 {
@@ -266,10 +260,9 @@ void FileObject<S>::Seek(uint64_t index)
   }
 }
 
-// TODO(HUT): done
-// TODO(HUT): const things
+// TODO(private 1067): make sure everything is const correct
 template <typename S>
-uint64_t FileObject<S>::Tell()
+uint64_t FileObject<S>::Tell() const
 {
   return byte_index_global_;
 }
@@ -337,7 +330,6 @@ void FileObject<S>::Resize(uint64_t size)
   }
 }
 
-// TODO(HUT): done
 template <typename S>
 void FileObject<S>::Write(byte_array::ConstByteArray const &arr)
 {
@@ -371,12 +363,11 @@ void FileObject<S>::ReadWriteHelper(uint8_t const *bytes, uint64_t const &num, A
 
   while (bytes_left_to_write > 0)
   {
-    // TODO(HUT): switch to explicit ref here
+    // TODO(private 1067): use max size type
     assert(block_index_being_written != uint64_t(-1) && "Invalid block index during writing");
     // Get block, write data to it
     Get(block_index_being_written, block_being_written);
 
-    // TODO(HUT): 'write' -> copy
     switch (action)
     {
     case Action::READ:
@@ -399,29 +390,26 @@ void FileObject<S>::ReadWriteHelper(uint8_t const *bytes, uint64_t const &num, A
   }
 }
 
-// TODO(HUT): done
-// TODO(HUT): num -> bytes_left_to_write
+// TODO(private 1067): num -> bytes_left_to_write renaming consistency
 template <typename S>
 void FileObject<S>::Write(uint8_t const *bytes, uint64_t const &num)
 {
   ReadWriteHelper(bytes, num, Action::WRITE);
 }
 
-// TODO(HUT): done
 template <typename S>
 void FileObject<S>::Read(byte_array::ByteArray &arr)
 {
   Read(arr.pointer(), arr.size());
 }
 
-// TODO(HUT): rename m -> num
+// TODO(private 1067): rename m -> num
 template <typename S>
 void FileObject<S>::Read(uint8_t *bytes, uint64_t const &m)
 {
   ReadWriteHelper(bytes, m, Action::READ);
 }
 
-// TODO(HUT): done
 template <typename S>
 uint64_t const &FileObject<S>::id() const
 {
@@ -434,8 +422,6 @@ uint64_t FileObject<S>::FileObjectSize() const
   return length_;
 }
 
-// TODO(HUT): done
-// TODO(HUT): remove?
 template <typename S>
 byte_array::ConstByteArray FileObject<S>::Hash()
 {
@@ -446,7 +432,6 @@ byte_array::ConstByteArray FileObject<S>::Hash()
   return hasher.Final();
 }
 
-// TODO(HUT): done
 template <typename S>
 void FileObject<S>::UpdateHash(crypto::StreamHasher &hasher)
 {
@@ -461,7 +446,6 @@ void FileObject<S>::UpdateHash(crypto::StreamHasher &hasher)
   hasher.Update(arr.pointer(), length_);
 }
 
-// TODO(HUT): done
 template <typename S>
 bool FileObject<S>::SeekFile(std::size_t const &position)
 {
@@ -484,7 +468,6 @@ bool FileObject<S>::SeekFile(std::size_t const &position)
   return true;
 }
 
-// TODO(HUT): done
 template <typename S>
 void FileObject<S>::CreateNewFile(uint64_t size)
 {
@@ -505,7 +488,6 @@ void FileObject<S>::CreateNewFile(uint64_t size)
   Set(id_, block);
 }
 
-// TODO(HUT): done
 template <typename S>
 Document FileObject<S>::AsDocument()
 {
@@ -523,7 +505,6 @@ Document FileObject<S>::AsDocument()
   return ret;
 }
 
-// TODO(HUT): done
 template <typename S>
 void FileObject<S>::Erase()
 {
@@ -532,7 +513,6 @@ void FileObject<S>::Erase()
   length_ = 0;
 }
 
-// TODO(HUT): figure out what to do about this abstraction breaking
 template <typename S>
 S *FileObject<S>::stack()
 {
@@ -545,7 +525,6 @@ S &FileObject<S>::underlying_stack()
   return stack_;
 }
 
-// TODO(HUT): rename this overloading
 /**
  * Get the number of free blocks that are available in the stack without
  * having to increase its size
@@ -565,7 +544,6 @@ uint64_t FileObject<S>::FreeBlocks()
  * Initialise by looking for the block that's the beginning of our free blocks linked list. If
  * the stack is empty this means we set our own.
  */
-// TODO(HUT): done
 template <typename S>
 void FileObject<S>::Initalise()
 {

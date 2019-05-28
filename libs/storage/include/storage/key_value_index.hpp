@@ -345,8 +345,6 @@ public:
   void Set(byte_array::ConstByteArray const &key_str, uint64_t const &val,
            byte_array::ConstByteArray const &data)
   {
-    DebugVerify();
-
     key_type       key(key_str);
     bool           split;
     int            pos;
@@ -470,9 +468,6 @@ public:
         schedule_update_[index] = kv;
       }
     }
-
-    DebugVerify();
-    DebugVerifyMerkle();
   }
 
   byte_array::ByteArray Hash()
@@ -483,8 +478,6 @@ public:
     {
       stack_.Get(root_, kv);
     }
-
-    DebugVerifyMerkle();
 
     return kv.Hash();
   }
@@ -519,7 +512,7 @@ public:
     stack_.Close();
   }
 
-  // TODO(HUT): this will be removed when updating the versioned stack
+  // TODO(private 1067): this will be removed when updating the versioned stack
   using bookmark_type = uint64_t;
   bookmark_type Commit()
   {
@@ -686,11 +679,7 @@ public:
     static int times_erased = 0;
     times_erased++;
 
-    DebugVerify();
-
     Flush(false);
-
-    DebugVerify();
 
     if (size() == 0)
     {
@@ -723,8 +712,6 @@ public:
       stack_.Pop();
       root_ = 0;
       stack_.SetExtraHeader(root_);
-
-      DebugVerify();
       return;
     }
 
@@ -787,8 +774,6 @@ public:
     stack_.Set(sibling_index, sibling);
     UpdateParents(sibling.parent, sibling_index, sibling);
 
-    // DebugVerify();
-
     //// Erase our node and its parent, important to do this at the end since it might shuffle
     /// indexes
     if (parent_index > kv_index)
@@ -802,11 +787,7 @@ public:
       Erase(parent_index);
     }
 
-    DebugVerify();
-    DebugVerifyMerkle();
-
-    // It's now important to update the merkle tree from the deleted node's sibling upwards
-    // UpdateParents(kv.parent, index, kv)
+    // It's should be important to update the merkle tree from the deleted node's sibling upwards
   }
 
   void UpdateVariables()
@@ -815,8 +796,7 @@ public:
   }
 
 private:
-  stack_type                  stack_;
-  std::vector<key_value_pair> debug_stack_;
+  stack_type stack_;
 
   uint64_t                                     root_ = 0;
   std::unordered_map<uint64_t, key_value_pair> schedule_update_;
@@ -1102,21 +1082,8 @@ private:
     stack_.Pop();
   }
 
-  void LoadDebugStack()
-  {
-    debug_stack_.clear();
-    for (std::size_t i = 0; i < stack_.size(); ++i)
-    {
-      key_value_pair kv;
-      stack_.Get(i, kv);
-      debug_stack_.push_back(kv);
-    }
-  }
-
   void DebugVerify()
   {
-    LoadDebugStack();
-
     if (stack_.size() == 0)
     {
       return;
