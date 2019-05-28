@@ -92,6 +92,7 @@ private:
       auto packet = std::make_shared<Packet>();
 
       {
+        LOG_STACK_TRACE_POINT;
         buffer >> *packet;
       }
 

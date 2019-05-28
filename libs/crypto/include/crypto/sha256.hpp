@@ -49,7 +49,6 @@ public:
 
 private:
   SHA256_CTX context_;
-  bool       invalid = false;
 };
 
 inline std::size_t SHA256::GetSizeInBytes() const

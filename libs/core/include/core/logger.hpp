@@ -787,31 +787,6 @@ extern log::details::LogWrapper logger;
 
 #endif
 
-#define ERROR_BACKTRACE_STRING ERROR_BACKTRACE_STRING_START(0)
-
-#define ERROR_BACKTRACE_STRING_START(start_frame)               \
-  []() {                                                        \
-    constexpr int            framesMax  = 20;                   \
-    constexpr int            startFrame = start_frame;          \
-    std::vector<std::string> results;                           \
-                                                                \
-    void *callstack[framesMax];                                 \
-                                                                \
-    int frames = backtrace(callstack, framesMax);               \
-                                                                \
-    char **frameStrings = backtrace_symbols(callstack, frames); \
-                                                                \
-    std::ostringstream trace;                                   \
-                                                                \
-    for (int i = startFrame; i < frames; ++i)                   \
-    {                                                           \
-      trace << frameStrings[i] << std::endl;                    \
-    }                                                           \
-    free(frameStrings);                                         \
-                                                                \
-    return std::string{trace.str()};                            \
-  }()
-
 #define ERROR_BACKTRACE                                         \
   {                                                             \
     constexpr int            framesMax = 20;                    \

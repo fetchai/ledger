@@ -1,6 +1,6 @@
-################################################################################
-# F E T C H   V E C T O R I S A T I O N   T E S T S
-################################################################################
+#
+# F E T C H   V E C T O R I S E   T E S T S
+#
 cmake_minimum_required(VERSION 3.5 FATAL_ERROR)
 project(fetch-vectorisation-tests)
 
@@ -10,10 +10,13 @@ include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
 # Compiler Configuration
 setup_compiler()
 
-add_fetch_test(fetch_vectorise_memory_tests fetch-vectorise memory)
-include_directories(fetch_vectorise_memory_tests PRIVATE "../../core/include") # This should be handled with library imports
+add_fetch_test(vectorise_memory_gtest fetch-vectorise memory)
+add_fetch_test(vectorise_exponent_gtest fetch-vectorise vectorize)
+add_fetch_test(vectorise_gtest
+               fetch-vectorise
+               gtest
+               SLOW)
+add_fetch_test(vectorise_exact_exponents_gtest fetch-vectorise meta/gtest)
 
-add_fetch_test(fetch_vectorise_exponent_tests fetch-vectorise vectorize)
-add_fetch_test(fetch_vectorise_tests fetch-vectorise tests SLOW)
-add_fetch_test(fetch_vectorise_exact_exponents_tests fetch-vectorise meta/tests)
-
+target_link_libraries(vectorise_gtest PRIVATE fetch-core)
+target_link_libraries(vectorise_memory_gtest PRIVATE fetch-core)

@@ -51,11 +51,11 @@ std::atomic<std::size_t> clientReceivedCount{0};
 bool                     printingClientResponses = false;
 
 // Simple function to check if port is free
-bool TcpServerAt(uint16_t port_here)
+bool TcpServerAt(uint16_t port)
 {
   try
   {
-    fetch::network::LoopbackServer echoServer(port_here);
+    fetch::network::LoopbackServer echoServer(port);
   }
   catch (...)
   {
@@ -66,12 +66,12 @@ bool TcpServerAt(uint16_t port_here)
 
 uint16_t GetOpenPort()
 {
-  uint16_t port_here = 8090;
+  uint16_t port = 8090;
   while (true)
   {
-    if (TcpServerAt(port_here))
+    if (TcpServerAt(port))
     {
-      port_here++;
+      port++;
       std::cerr << "Trying next port for absence" << std::endl;
     }
     else
@@ -79,17 +79,17 @@ uint16_t GetOpenPort()
       break;
     }
   }
-  return port_here;
+  return port;
 }
 
 // Basic client increments on received messages
 class Client : public TCPClient
 {
 public:
-  Client(std::string const &host_here, std::string const &port_here, NetworkManager &nmanager)
+  Client(std::string const &host, std::string const &port, NetworkManager &nmanager)
     : TCPClient(nmanager)
   {
-    Connect(host_here, port_here);
+    Connect(host, port);
     this->OnMessage([](message_type const &value) {
       if (printingClientResponses)
       {
@@ -115,10 +115,10 @@ public:
 class SlowClient : public TCPClient
 {
 public:
-  SlowClient(std::string const &host_here, std::string const &port_here, NetworkManager &nmanager)
+  SlowClient(std::string const &host, std::string const &port, NetworkManager &nmanager)
     : TCPClient(nmanager)
   {
-    Connect(host_here, port_here);
+    Connect(host, port);
     this->OnMessage([](message_type const &value) {
       if (printingClientResponses)
       {
@@ -148,10 +148,10 @@ std::mutex                mutex_;
 class VerifyClient : public TCPClient
 {
 public:
-  VerifyClient(std::string const &host_here, std::string const &port_here, NetworkManager &nmanager)
+  VerifyClient(std::string const &host, std::string const &port, NetworkManager &nmanager)
     : TCPClient(nmanager)
   {
-    Connect(host_here, port_here);
+    Connect(host, port);
     this->OnMessage([](message_type const &value) {
       {
         std::lock_guard<std::mutex> lock(mutex_);
@@ -360,9 +360,10 @@ TEST(tcp_client_stress_gtest, open_connection_to_existing_port_async)
   std::cerr << "Info: Attempting to open multiple\
     connections to a port that does exist, async"
             << std::endl;
-  std::string hostID      = "localhost";
-  uint16_t    portNo      = 8080;
-  std::string port_number = std::to_string(portNo);
+  std::string hostID     = "localhost";
+  uint16_t    portNo     = 8080;
+  std::string portNumber = std::to_string(portNo);
+  std::size_t N          = 1;
 
   // Start echo server
   fetch::network::LoopbackServer echo(uint16_t(std::stoi(port)));
@@ -377,9 +378,9 @@ TEST(tcp_client_stress_gtest, open_connection_to_existing_port_async)
 
     for (std::size_t i = 0; i < iterations; ++i)
     {
-      std::thread([&hostID, &port_number, &nmanager, &threadCount] {
+      std::thread([&hostID, &portNumber, &nmanager, &threadCount] {
         NetworkManager managerCopy = nmanager;
-        auto           i           = std::make_shared<Client>(hostID, port_number, managerCopy);
+        auto           i           = std::make_shared<Client>(hostID, portNumber, managerCopy);
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
         i->Send("test");
         threadCount++;
@@ -610,9 +611,9 @@ TEST(tcp_client_stress_gtest, bouncing_messages_off_server_and_check_order)
     EXPECT_EQ(globalMessages.size(), sendData.size())
         << "Failed to receive all messages" << std::endl;
 
-    for (std::size_t z = 0; z < globalMessages.size(); ++z)
+    for (std::size_t i = 0; i < globalMessages.size(); ++i)
     {
-      EXPECT_EQ(globalMessages[z], sendData[z]) << "Failed to verify messages" << std::endl;
+      EXPECT_EQ(globalMessages[i], sendData[i]) << "Failed to verify messages" << std::endl;
     }
     nmanager.Stop();
   }
@@ -716,7 +717,7 @@ TEST(tcp_client_stress_gtest, killing_during_transmission)
     nmanager.Start();
     std::vector<std::shared_ptr<VerifyClient>> clients;
 
-    for (std::size_t z = 0; z < 5; ++z)
+    for (std::size_t i = 0; i < 5; ++i)
     {
       clients.push_back(std::make_shared<VerifyClient>(host, std::to_string(emptyPort), nmanager));
     }
@@ -725,9 +726,9 @@ TEST(tcp_client_stress_gtest, killing_during_transmission)
     globalMessages.clear();
     globalMessages.reserve(messagesToSend);
 
-    for (auto cli : clients)
+    for (auto i : clients)
     {
-      while (!cli->is_alive())
+      while (!i->is_alive())
       {
         std::this_thread::sleep_for(std::chrono::milliseconds(5));
       }
@@ -751,11 +752,11 @@ TEST(tcp_client_stress_gtest, killing_during_transmission)
 
     for (std::size_t j = 0; j < messagesToSend; ++j)
     {
-      for (auto const &data : sendData)
+      for (auto const &i : sendData)
       {
         for (auto const &client : clients)
         {
-          std::thread([client, data]() { client->Send(data); }).detach();
+          std::thread([client, i]() { client->Send(i); }).detach();
         }
       }
     }

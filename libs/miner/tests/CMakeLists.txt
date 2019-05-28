@@ -11,4 +11,4 @@ include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
 setup_compiler()
 
 # define the test target
-add_fetch_test(fetch_miner_tests fetch-miner .)
+add_fetch_test(fetch-miner-tests fetch-miner .)
