@@ -29,21 +29,25 @@ from os.path import abspath, dirname, join
 PROJECT_ROOT = abspath(dirname(dirname(__file__)))
 
 
-def cmake_build_tree_roots():
-    direct_subdirectories = os.listdir(PROJECT_ROOT)
+def find_excluded_dirs():
+    def get_abspath(name):
+        return abspath(join(PROJECT_ROOT, name))
 
-    return [name for name in direct_subdirectories
-            if os.path.isfile(join(PROJECT_ROOT, name, 'CMakeCache.txt'))]
+    def cmake_build_tree_roots():
+        direct_subdirectories = os.listdir(PROJECT_ROOT)
+
+        return [name for name in direct_subdirectories
+                if os.path.isfile(join(get_abspath(name), 'CMakeCache.txt'))]
+
+    directories_to_exclude = ['.git', 'vendor'] + \
+        cmake_build_tree_roots()
+
+    return [get_abspath(name)
+            for name in directories_to_exclude
+            if os.path.isdir(get_abspath(name))]
 
 
-def get_abspath(name):
-    return abspath(join(PROJECT_ROOT, name))
-
-
-EXCLUDED_DIRS = [
-    get_abspath(name)
-    for name in (['.git', 'vendor'] + cmake_build_tree_roots())
-    if os.path.isdir(get_abspath(name))]
+EXCLUDED_DIRS = find_excluded_dirs()
 
 
 def find_clang_format():
