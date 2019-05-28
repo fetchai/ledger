@@ -350,9 +350,9 @@ bool LoadSaveVsBulk()
   }
 
   key_index.New("test1.db");
-  for (std::size_t i = 0; i < values.size(); ++i)
+  for (std::size_t z = 0; z < values.size(); ++z)
   {
-    auto const &val = values[i];
+    auto const &val = values[z];
     key_index.Set(val.key, val.value, val.key);
   }
   std::size_t bulk_size = key_index.size();
@@ -363,7 +363,7 @@ bool LoadSaveVsBulk()
     test.New("test1.db");
   }
 
-  for (std::size_t i = 0; i < batches; ++i)
+  for (std::size_t z = 0; z < batches; ++z)
   {
     kvi_type test;
     test.Load("test1.db");
@@ -383,14 +383,14 @@ bool LoadSaveVsBulk()
     batched_hash = test.Hash();
     batched_size = test.size();
 
-    for (std::size_t i = 0; i < test.size(); ++i)
+    for (std::size_t z = 0; z < test.size(); ++z)
     {
       uint64_t a, b;
-      test.GetElement(i, a);
-      key_index.GetElement(i, b);
+      test.GetElement(z, a);
+      key_index.GetElement(z, b);
       if (a != b)
       {
-        std::cout << "ERRROR! " << i << ": " << a << " " << b << std::endl;
+        std::cout << "ERROR! " << z << ": " << a << " " << b << std::endl;
         exit(-1);
       }
     }
@@ -402,7 +402,7 @@ bool LoadSaveVsBulk()
     test.New("test1.db");
   }
   k = 0;
-  for (std::size_t i = 0; i < batches; ++i)
+  for (std::size_t z = 0; z < batches; ++z)
   {
     kvi_type test;
     test.Load("test1.db");
