@@ -19,6 +19,13 @@ MAX_CPUS = 7  # as defined by CI workflow
 AVAILABLE_CPUS = multiprocessing.cpu_count()
 CONCURRENCY = min(MAX_CPUS, AVAILABLE_CPUS)
 
+SLOW_TEST_LABEL = 'Slow'
+INTEGRATION_TEST_LABEL = 'Integration'
+
+LABELS_TO_EXCLUDE_FOR_FAST_TESTS = [
+    SLOW_TEST_LABEL,
+    INTEGRATION_TEST_LABEL]
+
 
 def output(*args):
     text = ' '.join(map(str, args))
@@ -139,9 +146,14 @@ def parse_commandline():
                               'available CPU cores will be used. '
                               'Defaults to {}'.format(CONCURRENCY)))
     parser.add_argument('-T', '--test', action='store_true',
-                        help='Run unit tests. Skips tests marked with the \'Slow\' CTest label.')
+                        help='Run unit tests. Skips tests marked with the following CTest labels: {}'
+                        .format(', '.join(LABELS_TO_EXCLUDE_FOR_FAST_TESTS)))
     parser.add_argument('-S', '--slow-tests', action='store_true',
-                        help='Run tests marked with the \'Slow\' CTest label.')
+                        help='Run tests marked with the \'{}\' CTest label.'
+                        .format(SLOW_TEST_LABEL))
+    parser.add_argument('-I', '--integration-tests', action='store_true',
+                        help='Run tests marked with the \'{}\' CTest label.'
+                        .format(INTEGRATION_TEST_LABEL))
     parser.add_argument('-E', '--end-to-end-tests', action='store_true',
                         help='Run the end-to-end tests for the project.')
     parser.add_argument(
@@ -207,7 +219,7 @@ def clean_files(build_root):
             os.remove(data_path)
 
 
-def test_project(build_root, include=None, exclude=None):
+def test_project(build_root, include_regex=None, exclude_regex=None):
     TEST_NAME = 'Test'
 
     if not os.path.isdir(build_root):
@@ -224,10 +236,10 @@ def test_project(build_root, include=None, exclude=None):
         '-T', TEST_NAME
     ]
 
-    if include is not None:
-        cmd = cmd + ['-L', str(include)]
-    if exclude is not None:
-        cmd = cmd + ['-LE', str(exclude)]
+    if include_regex is not None:
+        cmd = cmd + ['-L', str(include_regex)]
+    if exclude_regex is not None:
+        cmd = cmd + ['-LE', str(exclude_regex)]
 
     env = {"CTEST_OUTPUT_ON_FAILURE": "1"}
     exit_code = subprocess.call(cmd, cwd=build_root, env=env)
@@ -303,10 +315,19 @@ def main():
         build_project(project_root, build_root, options, concurrency)
 
     if args.test:
-        test_project(build_root, exclude='Slow')
+        test_project(
+            build_root,
+            exclude_regex='|'.join(LABELS_TO_EXCLUDE_FOR_FAST_TESTS))
 
     if args.slow_tests:
-        test_project(build_root, include='Slow')
+        test_project(
+            build_root,
+            include_regex=SLOW_TEST_LABEL)
+
+    if args.integration_tests:
+        test_project(
+            build_root,
+            include_regex=INTEGRATION_TEST_LABEL)
 
     if args.end_to_end_tests:
         test_end_to_end(project_root, build_root)

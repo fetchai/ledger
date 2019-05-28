@@ -111,7 +111,7 @@ function (setup_library_examples library)
   endif (FETCH_ENABLE_EXAMPLES)
 endfunction ()
 
-function (add_fetch_test
+function (_internal_add_fetch_test
           name
           library
           directory)
@@ -133,12 +133,10 @@ function (add_fetch_test
     set(is_disabled FALSE)
     if ("DISABLED" IN_LIST ARGV)
       set(is_disabled TRUE)
+      fetch_warning("Disabled Test: ${name} - ${file}")
     endif ()
 
-    if (is_disabled)
-      fetch_warning("Disabled Test: ${name} - ${file}")
-    else ()
-
+    if (NOT is_disabled)
       include(CTest)
 
       # locate the headers for the test project
@@ -168,6 +166,33 @@ function (add_fetch_test
     endif ()
 
   endif (FETCH_ENABLE_TESTS)
+endfunction ()
+
+function (fetch_add_test
+          name
+          library
+          directory)
+  _internal_add_fetch_test("${name}" "${library}" "${directory}")
+endfunction ()
+
+function (fetch_add_slow_test
+          name
+          library
+          directory)
+  _internal_add_fetch_test("${name}"
+                           "${library}"
+                           "${directory}"
+                           SLOW)
+endfunction ()
+
+function (fetch_add_integration_test
+          name
+          library
+          directory)
+  _internal_add_fetch_test("${name}"
+                           "${library}"
+                           "${directory}"
+                           INTEGRATION)
 endfunction ()
 
 function (add_fetch_gbench

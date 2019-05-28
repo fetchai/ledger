@@ -102,6 +102,10 @@ def create_build(Platform platform, Configuration config)
                 sh "./scripts/ci-tool.py -S ${config.label}"
               }
 
+              SLOW_stage("Integration Tests ${suffix}") {
+                sh "./scripts/ci-tool.py -I ${config.label}"
+              }
+
               SLOW_stage("End-to-End Tests ${suffix}") {
                 sh './scripts/ci/install-test-dependencies.sh'
                 sh "./scripts/ci-tool.py -E ${config.label}"
