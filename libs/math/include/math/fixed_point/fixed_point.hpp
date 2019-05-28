@@ -17,16 +17,14 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/assert.hpp"
 #include "meta/tags.hpp"
 #include "meta/type_traits.hpp"
 #include "vectorise/platform.hpp"
 
-#include <iostream>
-#include <sstream>
-
 #include <cmath>
-#include <core/assert.hpp>
 #include <limits>
+#include <sstream>
 
 namespace fetch {
 namespace fixed_point {

@@ -33,8 +33,9 @@ TYPED_TEST_CASE(LogSoftmaxTest, MyTypes);
 
 TYPED_TEST(LogSoftmaxTest, forward_test)
 {
-  using DataType  = typename TypeParam::Type;
-  using ArrayType = TypeParam;
+  using DataType      = typename TypeParam::Type;
+  using ArrayType     = TypeParam;
+  using VecTensorType = typename fetch::ml::Ops<ArrayType>::VecTensorType;
 
   ArrayType data = ArrayType::FromString("1, -2, 3, -4, 5, -6, 7, -8");
   ArrayType gt   = ArrayType::FromString(
@@ -42,8 +43,8 @@ TYPED_TEST(LogSoftmaxTest, forward_test)
       "-0.14520134, -15.14520134");
 
   fetch::ml::ops::LogSoftmax<ArrayType> op;
-  ArrayType                             prediction = op.fetch::ml::template Ops<ArrayType>::Forward(
-      std::vector<std::reference_wrapper<ArrayType const>>({data}));
+  ArrayType                             prediction(op.ComputeOutputShape({data}));
+  op.Forward(VecTensorType({data}), prediction);
 
   // test correct values
   ASSERT_TRUE(prediction.AllClose(gt, DataType{1e-3f}, DataType{1e-3f}));
@@ -51,9 +52,10 @@ TYPED_TEST(LogSoftmaxTest, forward_test)
 
 TYPED_TEST(LogSoftmaxTest, forward_2d_tensor_axis_0_test)
 {
-  using DataType  = typename TypeParam::Type;
-  using ArrayType = TypeParam;
-  using SizeType  = typename TypeParam::SizeType;
+  using DataType      = typename TypeParam::Type;
+  using ArrayType     = TypeParam;
+  using SizeType      = typename TypeParam::SizeType;
+  using VecTensorType = typename fetch::ml::Ops<ArrayType>::VecTensorType;
 
   ArrayType           data({3, 3});
   ArrayType           gt({3, 3});
@@ -70,8 +72,8 @@ TYPED_TEST(LogSoftmaxTest, forward_2d_tensor_axis_0_test)
   }
 
   fetch::ml::ops::LogSoftmax<ArrayType> op{0};
-  ArrayType                             prediction = op.fetch::ml::template Ops<ArrayType>::Forward(
-      std::vector<std::reference_wrapper<ArrayType const>>({data}));
+  ArrayType                             prediction(op.ComputeOutputShape({data}));
+  op.Forward(VecTensorType({data}), prediction);
 
   // test correct values
   ASSERT_TRUE(prediction.AllClose(gt, DataType{1e-3f}, DataType{1e-3f}));

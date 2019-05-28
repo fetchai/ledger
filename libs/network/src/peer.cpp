@@ -21,8 +21,6 @@
 #include <regex>
 #include <stdexcept>
 
-#include <iostream>
-
 static const std::regex ADDRESS_FORMAT("^(.*):(\\d+)$");
 static const std::regex URI_ADDRESS_FORMAT("^tcp://(.*):(\\d+)$");
 

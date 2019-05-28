@@ -593,6 +593,7 @@ void Generator::HandleVarStatement(IRNodePtr const &node)
     Executable::Instruction instruction(Opcodes::VariableDeclare);
     instruction.type_id = type_id;
     instruction.index   = variable_index;
+    instruction.data    = scope_number;
     uint16_t pc         = function_->AddInstruction(instruction);
     AddLineNumber(node->line, pc);
   }
@@ -612,6 +613,7 @@ void Generator::HandleVarStatement(IRNodePtr const &node)
     Executable::Instruction instruction(Opcodes::VariableDeclareAssign);
     instruction.type_id = type_id;
     instruction.index   = variable_index;
+    instruction.data    = scope_number;
     uint16_t pc         = function_->AddInstruction(instruction);
     AddLineNumber(node->line, pc);
   }

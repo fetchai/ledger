@@ -21,8 +21,6 @@
 #include "core/byte_array/encoders.hpp"
 #include "gtest/gtest.h"
 
-#include <iostream>
-
 namespace fetch {
 namespace crypto {
 

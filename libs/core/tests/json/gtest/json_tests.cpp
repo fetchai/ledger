@@ -19,9 +19,11 @@
 #include "./json_long_strings.hpp"
 #include "core/json/document.hpp"
 #include "core/json/exceptions.hpp"
-#include <gtest/gtest.h>
-#include <iostream>
+
+#include "gtest/gtest.h"
+
 #include <memory>
+#include <ostream>
 
 using namespace fetch::json;
 using namespace fetch::byte_array;
@@ -33,6 +35,14 @@ struct TestCase
   const char *output_text;
   bool        expect_throw;
 };
+
+std::ostream &operator<<(std::ostream &os, TestCase const &test_case)
+{
+  os << "input_text=" << test_case.input_text << ", expect_output=" << test_case.expect_output
+     << ", output_text=" << test_case.output_text << ", expect_throw=" << test_case.expect_throw;
+
+  return os;
+}
 
 static const TestCase
     TEST_CASES
@@ -358,15 +368,15 @@ static const TestCase
 
                 {R"([123.456e-789])", false, "", false},
                 {R"([0.4e00669999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999969999999006])",
-                 false, "", false},
-                {R"([-1e+9999])", false, "", false},
-                {R"([1.5e+9999])", false, "", false},
-                {R"([-123123e100000])", false, "", false},
-                {R"([123123e100000])", false, "", false},
-                {R"([123e-10000000])", false, "", false},
-                {R"([-123123123123123123123123123123])", false, "", false},
-                {R"([100000000000000000000])", false, "", false},
-                {R"([-237462374673276894279832749832423479823246327846])", false, "", false},
+                 false, "", true},
+                {R"([-1e+9999])", false, "", true},
+                {R"([1.5e+9999])", false, "", true},
+                {R"([-123123e100000])", false, "", true},
+                {R"([123123e100000])", false, "", true},
+                {R"([123e-10000000])", false, "", true},
+                {R"([-123123123123123123123123123123])", false, "", true},
+                {R"([100000000000000000000])", false, "", true},
+                {R"([-237462374673276894279832749832423479823246327846])", false, "", true},
                 {R"({"\uDFAA":0})", false, "", false},
                 {R"(["\uDADA"])", false, "", false},
                 {R"(["\uD888\u1234"])", false, "", false},
@@ -396,7 +406,6 @@ static const TestCase
 
 class JsonTests : public ::testing::TestWithParam<TestCase>
 {
-protected:
 };
 
 TEST_P(JsonTests, CheckParsing)

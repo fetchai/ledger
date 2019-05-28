@@ -1,6 +1,6 @@
-################################################################################
-# F E T C H   V A R I A N T   L I B R A R Y
-################################################################################
+#
+# F E T C H   M E T A   L I B R A R Y
+#
 cmake_minimum_required(VERSION 3.5 FATAL_ERROR)
 project(fetch-meta)
 

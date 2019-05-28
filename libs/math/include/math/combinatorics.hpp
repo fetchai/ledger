@@ -18,8 +18,8 @@
 //------------------------------------------------------------------------------
 
 #include <cassert>
-#include <iostream>
-#include <math/tensor.hpp>
+
+#include "math/tensor.hpp"
 
 namespace fetch {
 namespace math {

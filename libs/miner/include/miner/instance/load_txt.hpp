@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include <string/trim.hpp>
+#include "string/trim.hpp"
 
 #include <fstream>
 #include <sstream>

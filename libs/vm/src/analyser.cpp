@@ -86,6 +86,10 @@ void Analyser::Initialise()
   CreateMetaType("[Any]", TypeIndex(typeid(Any)), TypeIds::Unknown, any_type_);
   CreateMetaType("[AnyPrimitive]", TypeIndex(typeid(AnyPrimitive)), TypeIds::Unknown,
                  any_primitive_type_);
+
+  EnableOperator(bool_type_, Operator::Equal);
+  EnableOperator(bool_type_, Operator::NotEqual);
+
   TypePtrArray const integer_types = {int8_type_,  byte_type_,   int16_type_, uint16_type_,
                                       int32_type_, uint32_type_, int64_type_, uint64_type_};
   TypePtrArray const number_types  = {int8_type_,    byte_type_,   int16_type_, uint16_type_,

@@ -49,8 +49,9 @@ TYPED_TEST(LeakyReluOpTest, forward_test)
     alpha.Set(i, DataType(alphaInput[i]));
   }
   fetch::ml::ops::LeakyReluOp<ArrayType> op;
-  ArrayType prediction = op.fetch::ml::template Ops<TypeParam>::Forward(
-      std::vector<std::reference_wrapper<TypeParam const>>({data, alpha}));
+
+  TypeParam prediction(op.ComputeOutputShape({data, alpha}));
+  op.Forward({data, alpha}, prediction);
 
   // test correct values
   ASSERT_TRUE(
