@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/const_byte_array.hpp"
+#include "storage/document.hpp"
 #include "storage/document_store.hpp"
 
 namespace fetch {
@@ -46,7 +47,7 @@ public:
   {
     std::lock_guard<mutex::Mutex> lock(mutex_);
 
-    file_store_.Commit(b);
+    file_object_.stack()->Commit(b);
     return key_index_.Commit(b);
   }
 
@@ -54,17 +55,13 @@ public:
   {
     std::lock_guard<mutex::Mutex> lock(mutex_);
 
-    std::cout << "First revert" << std::endl;
-    file_store_.Revert(b);
-    std::cout << "Second revert" << std::endl;
-
+    file_object_.stack()->Revert(b);
     key_index_.Revert(b);
   }
 
-protected:
-  DocumentFile GetDocumentFile(ResourceID const &rid, bool const &create = true)
+  Document GetDocument(ResourceID const &rid, bool const &create = true)
   {
-    return super_type::GetDocumentFile(rid, create);
+    return super_type::GetOrCreate(rid, create);
   }
 };
 
