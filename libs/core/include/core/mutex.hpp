@@ -39,7 +39,7 @@ namespace mutex {
 class ProductionMutex : public AbstractMutex
 {
 public:
-  ProductionMutex(int, std::string const&)
+  ProductionMutex(int, std::string const &)
   {}
 };
 
