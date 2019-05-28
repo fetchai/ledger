@@ -36,10 +36,14 @@ def cmake_build_tree_roots():
             if os.path.isfile(join(PROJECT_ROOT, name, 'CMakeCache.txt'))]
 
 
+def get_abspath(name):
+    return abspath(join(PROJECT_ROOT, name))
+
+
 EXCLUDED_DIRS = [
-    abspath(join(PROJECT_ROOT, name))
-    for name in (['.git', 'vendor'] + cmake_build_tree_roots()) if os.path.isdir(join(PROJECT_ROOT, name))
-]
+    get_abspath(name)
+    for name in (['.git', 'vendor'] + cmake_build_tree_roots())
+    if os.path.isdir(get_abspath(name))]
 
 
 def find_clang_format():
