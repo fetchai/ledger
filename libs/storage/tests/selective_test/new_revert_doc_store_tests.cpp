@@ -630,7 +630,6 @@ TEST(new_revertible_store_test, stress_test)
       ASSERT_EQ(store.Get(it->first).failed, false);
       ASSERT_EQ(it->second, std::string{store.Get(it->first).document});
     }
-
     ASSERT_EQ(current_state.size(), store.size());
   }
 }
