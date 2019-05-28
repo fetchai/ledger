@@ -19,21 +19,27 @@
 
 #include "core/abstract_mutex.hpp"
 #include "core/commandline/vt100.hpp"
-#include <atomic>
-#include <chrono>
-#include <ctime>
+
 #include <execinfo.h>
+
+#include <algorithm>
+#include <chrono>
+#include <cstdint>
+#include <ctime>
 #include <iomanip>
 #include <iostream>
+#include <map>
+#include <memory>
 #include <mutex>
+#include <string>
 #include <thread>
+#include <type_traits>
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>
 #include <vector>
 
 namespace fetch {
-
 namespace log {
 
 class ReadableThread
@@ -64,7 +70,7 @@ class ContextDetails
 public:
   using shared_type = std::shared_ptr<ContextDetails>;
 
-  ContextDetails(void *instance = nullptr)
+  explicit ContextDetails(void *instance = nullptr)
     : instance_(instance)
   {
     id_ = std::this_thread::get_id();
@@ -197,7 +203,8 @@ public:
     using Duration  = Clock::duration;
 
     using namespace fetch::commandline::VT100;
-    int color = 9, bg_color = 9;
+    int color    = 9;
+    int bg_color = 9;
 
     char const *level_name = "UNKNWN";
     switch (level)
