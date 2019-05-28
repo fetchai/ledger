@@ -328,5 +328,5 @@ TYPED_TEST(OptimizersTest, adam_optimizer_training)
   {
     loss = optimizer.DoBatch(data, gt);
   }
-  EXPECT_NEAR(static_cast<double>(loss), 10.252499443013221, 1e-5);
+  EXPECT_NEAR(static_cast<double>(loss), 9.3365340689197183, 1e-5);
 }

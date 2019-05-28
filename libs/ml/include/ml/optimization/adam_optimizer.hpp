@@ -68,9 +68,9 @@ private:
       DataType vt;
       while (git.is_valid())
       {
-        *cit = beta1_ * (*cit) + (DataType{1} - beta1_) * (*git);
+        *cit = (beta1_t_ * (*cit)) + ((DataType{1} - beta1_t_) * (*git));
         mt   = *cit / (DataType{1} - beta1_t_);
-        *mit = beta2_t_ * (*mit) + (DataType{1} - beta2_t_) * (*git * (*git));
+        *mit = (beta2_t_ * (*mit)) + ((DataType{1} - beta2_t_) * (*git) * (*git));
         vt   = *mit / (DataType{1} - beta2_t_);
         // 1e-4 is added to prevent division by 0
         *git = -this->learning_rate_ * mt / (fetch::math::Sqrt(vt) + DataType{1e-4f});
