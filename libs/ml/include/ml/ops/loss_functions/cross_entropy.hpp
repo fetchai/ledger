@@ -25,13 +25,14 @@
 #include "math/ml/activation_functions/sigmoid.hpp"
 #include "math/ml/activation_functions/softmax.hpp"
 #include "math/ml/loss_functions/cross_entropy.hpp"
+#include "ml/ops/loss_functions/criterion.hpp"
 
 namespace fetch {
 namespace ml {
 namespace ops {
 
 template <class T>
-class CrossEntropy
+class CrossEntropy : public Criterion<T>
 {
 public:
   using ArrayType    = T;
@@ -42,40 +43,34 @@ public:
   CrossEntropy()          = default;
   virtual ~CrossEntropy() = default;
 
+  /**
+   * @param inputs vector of 2 one-hot Tensors
+   * @return CrossEntropy value of 2 inputs
+   */
   virtual DataType Forward(std::vector<ArrayType> const &inputs)
   {
-    assert((inputs.size() == 2) || ((inputs.size() == 3) && (inputs.at(2).size() == 1)));
+    assert(inputs.size() == 2);
     assert(inputs.at(0).size() == inputs.at(1).size());
 
-    SizeType n_classes{2};
-    if (inputs.size() == 3)
-    {
-      n_classes = SizeType(inputs.at(2).data()[0]);
-    }
+    SizeType n_classes{inputs.at(0).size()};
     DataType result = fetch::math::CrossEntropyLoss(inputs[0], inputs[1], n_classes);
 
     return result;
   }
 
+  /**
+   * @param inputs vector of 2 one-hot Tensors
+   * @return gradient of CrossEntropy of 2 inputs
+   */
   virtual ArrayType Backward(std::vector<ArrayType> const &inputs)
   {
     assert(inputs.size() == 2);
     assert(inputs[0].size() == inputs[1].size());
     assert(inputs[0].shape().size() == 2);
 
-    ArrayType ret;
-    if (inputs[0].shape().at(1) == 1)  // not one-hot
-    {
-      ret = fetch::math::Sigmoid(inputs[0]);
-      fetch::math::Subtract(ret, inputs[1], ret);
-      fetch::math::Multiply(ret, inputs[0], ret);
-    }
-    else if (inputs[0].shape().size())  // one-hot
-    {
-      ret = fetch::math::Softmax(inputs[0], 0);
-      fetch::math::Divide(inputs[1], ret, ret);
-      fetch::math::Multiply(DataType(-1), ret, ret);
-    }
+    ArrayType ret = fetch::math::Softmax(inputs[0], 0);
+    fetch::math::Divide(inputs[1], ret, ret);
+    fetch::math::Multiply(DataType(-1), ret, ret);
 
     return ret;
   }

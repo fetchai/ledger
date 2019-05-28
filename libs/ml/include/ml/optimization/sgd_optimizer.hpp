@@ -24,18 +24,17 @@
 namespace fetch {
 namespace ml {
 
-template <class T>
-class SGDOptimizer : public Optimizer<T>
+template <class T, class C>
+class SGDOptimizer : public Optimizer<T, C>
 {
 public:
   using ArrayType = T;
   using DataType  = typename ArrayType::Type;
   using SizeType  = typename ArrayType::SizeType;
 
-  SGDOptimizer(std::shared_ptr<Graph<T>> graph, std::shared_ptr<ops::Criterion<T>> criterion,
-               std::string const &input_node_name, std::string const &output_node_name,
-               DataType const &learning_rate)
-    : Optimizer<T>(graph, criterion, input_node_name, output_node_name, learning_rate)
+  SGDOptimizer(std::shared_ptr<Graph<T>> graph, std::string const &input_node_name,
+               std::string const &output_node_name, DataType const &learning_rate)
+    : Optimizer<T, C>(graph, input_node_name, output_node_name, learning_rate)
   {}
 
 private:
@@ -44,11 +43,9 @@ private:
     std::vector<ArrayType> gradients = this->graph_->GetGradients();
 
     // Do operation with gradient
-    SizeType i{0};
     for (auto &grad : gradients)
     {
       fetch::math::Multiply(grad, -this->learning_rate_, grad);
-      i++;
     }
     this->graph_->ApplyGradients(gradients);
   }

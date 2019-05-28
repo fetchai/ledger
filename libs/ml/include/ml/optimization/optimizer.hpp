@@ -23,31 +23,24 @@
 namespace fetch {
 namespace ml {
 
-template <class T>
+template <class T, class C>
 class Optimizer
 {
 public:
-  using ArrayType = T;
-  using DataType  = typename ArrayType::Type;
-  using SizeType  = typename ArrayType::SizeType;
+  using ArrayType     = T;
+  using CriterionType = C;
+  using DataType      = typename ArrayType::Type;
+  using SizeType      = typename ArrayType::SizeType;
 
-  Optimizer(std::shared_ptr<Graph<T>> graph, std::shared_ptr<ops::Criterion<T>> criterion,
-            std::string const &input_node_name, std::string const &output_node_name,
-            DataType const &learning_rate)
+  Optimizer(std::shared_ptr<Graph<T>> graph, std::string const &input_node_name,
+            std::string const &output_node_name, DataType const &learning_rate)
     : graph_(graph)
-    , criterion_(criterion)
     , input_node_name_(input_node_name)
     , output_node_name_(output_node_name)
     , learning_rate_(learning_rate)
-  {
-    auto weights = graph_->GetWeights();
-    for (auto &wei : weights)
-    {
-      momentum_.push_back(ArrayType(wei.shape()));
-    }
-  }
+  {}
 
-  DataType Step(ArrayType &data, ArrayType &labels)
+  DataType DoBatch(ArrayType &data, ArrayType &labels)
   {
     DataType loss{0};
     SizeType n_data = data.shape().at(0);
@@ -60,22 +53,21 @@ public:
 
       auto label_pred = graph_->Evaluate(output_node_name_);
 
-      loss += criterion_->Forward({label_pred, cur_label});
+      loss += criterion_.Forward({label_pred, cur_label});
 
-      graph_->BackPropagate(output_node_name_, criterion_->Backward({label_pred, cur_label}));
+      graph_->BackPropagate(output_node_name_, criterion_.Backward({label_pred, cur_label}));
     }
     ApplyGradients();
     return loss;
   }
 
 protected:
-  std::shared_ptr<Graph<T>>          graph_;
-  std::shared_ptr<ops::Criterion<T>> criterion_;
+  std::shared_ptr<Graph<T>> graph_;
+  CriterionType             criterion_;
 
-  std::string            input_node_name_;
-  std::string            output_node_name_;
-  DataType               learning_rate_;
-  std::vector<ArrayType> momentum_;
+  std::string input_node_name_;
+  std::string output_node_name_;
+  DataType    learning_rate_;
 
 private:
   virtual void ApplyGradients() = 0;

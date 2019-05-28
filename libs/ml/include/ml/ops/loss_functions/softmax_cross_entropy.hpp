@@ -23,13 +23,14 @@
 
 #include "math/ml/activation_functions/softmax.hpp"
 #include "math/ml/loss_functions/cross_entropy.hpp"
+#include "ml/ops/loss_functions/criterion.hpp"
 
 namespace fetch {
 namespace ml {
 namespace ops {
 
 template <class T>
-class SoftmaxCrossEntropy
+class SoftmaxCrossEntropy : public Criterion<T>
 {
 public:
   using ArrayType    = T;
@@ -43,18 +44,14 @@ public:
   virtual typename ArrayType::Type Forward(std::vector<ArrayType> const &inputs)
   {
     // third term may be present for specifying n_classes
-    assert((inputs.size() == 2) || ((inputs.size() == 3) && (inputs.at(2).size() == 1)));
+    assert(inputs.size() == 2);
     assert(inputs.at(0).size() == inputs.at(1).size());
 
     // sanity check the softmax adds up to 1
     assert(Sum(fetch::math::Softmax(inputs.at(0))) - (DataType(inputs.at(0).shape().at(0))) <
            0.0001);
 
-    SizeType n_classes{2};
-    if (inputs.size() == 3)
-    {
-      n_classes = SizeType(inputs.at(2).At(0));
-    }
+    SizeType n_classes{inputs.at(0).size()};
 
     // softmax forward & then CrossEntropy
     typename ArrayType::Type result =

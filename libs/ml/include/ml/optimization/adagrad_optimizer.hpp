@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "math/standard_functions/sqrt.hpp"
 #include "ml/graph.hpp"
 #include "ml/ops/loss_functions/criterion.hpp"
 #include "ml/optimization/optimizer.hpp"
@@ -25,25 +26,23 @@ namespace fetch {
 namespace ml {
 
 template <class T, class C>
-class MomentumOptimizer : public Optimizer<T, C>
+class AdaGradOptimizer : public Optimizer<T, C>
 {
 public:
   using ArrayType = T;
   using DataType  = typename ArrayType::Type;
   using SizeType  = typename ArrayType::SizeType;
 
-  MomentumOptimizer(std::shared_ptr<Graph<T>> graph, std::string const &input_node_name,
-                    std::string const &output_node_name, DataType const &learning_rate,
-                    DataType const &momentum_update = 0.9)
+  AdaGradOptimizer(std::shared_ptr<Graph<T>> graph, std::string const &input_node_name,
+                   std::string const &output_node_name, DataType const &learning_rate)
     : Optimizer<T, C>(graph, input_node_name, output_node_name, learning_rate)
-    , momentum_update_(momentum_update)
   {
     auto weights = this->graph_->GetWeights();
     for (auto &wei : weights)
     {
-      this->momentum_.push_back(ArrayType(wei.shape()));
+      this->cache_.push_back(ArrayType(wei.shape()));
     }
-    ResetMomentum();
+    ResetCache();
   }
 
 private:
@@ -56,25 +55,30 @@ private:
     SizeType i{0};
     for (auto &grad : gradients)
     {
-      fetch::math::Multiply(momentum_[i], momentum_update_, momentum_[i]);
-      fetch::math::Multiply(grad, this->learning_rate_, grad);
-      fetch::math::Add(momentum_.at(i), grad, momentum_.at(i));
-      fetch::math::Multiply(momentum_[i], DataType{-1}, grad);
+      auto git = grad.begin();
+      auto cit = cache_[i].begin();
+      while (git.is_valid())
+      {
+        *cit += (*git) * (*git);
+        // 1e-8 is added to prevent division by 0
+        *git = -this->learning_rate_ * ((*git) / fetch::math::Sqrt(*cit + DataType{1e-8f}));
+        ++git;
+        ++cit;
+      }
       i++;
     }
     this->graph_->ApplyGradients(gradients);
   }
 
-  void ResetMomentum()
+  void ResetCache()
   {
-    for (auto &moment : this->momentum_)
+    for (auto &val : this->cache_)
     {
-      moment.Fill(DataType{0});
+      val.Fill(DataType{0});
     }
   }
 
-  std::vector<ArrayType> momentum_;
-  DataType               momentum_update_;
+  std::vector<ArrayType> cache_;
 };
 
 }  // namespace ml
