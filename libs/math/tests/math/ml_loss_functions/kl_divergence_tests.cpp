@@ -17,7 +17,6 @@
 //------------------------------------------------------------------------------
 
 #include <gtest/gtest.h>
-#include <iostream>
 
 #include "math/ml/loss_functions/kl_divergence.hpp"
 #include "math/tensor.hpp"

@@ -22,7 +22,6 @@
 #include "ml/node.hpp"
 #include "ml/ops/weights.hpp"
 
-#include <iostream>
 #include <list>
 #include <memory>
 #include <unordered_map>

@@ -17,7 +17,6 @@
 //------------------------------------------------------------------------------
 
 #include <gtest/gtest.h>
-#include <iostream>
 
 #include "math/correlation/pearson.hpp"
 #include "math/tensor.hpp"

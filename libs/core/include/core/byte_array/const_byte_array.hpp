@@ -20,11 +20,14 @@
 #include "core/common.hpp"
 #include "core/logger.hpp"
 #include "vectorise/memory/shared_array.hpp"
+
 #include <algorithm>
 #include <cassert>
+#include <cerrno>
+#include <cstdlib>
 #include <cstring>
-#include <iostream>
 #include <ostream>
+#include <stdexcept>
 #include <string.h>
 #include <type_traits>
 
@@ -112,7 +115,7 @@ public:
   {
     if (src_offset + dest_size > size())
     {
-      FETCH_LOG_WARN("ConstByteArray",
+      FETCH_LOG_WARN(LOGGING_NAME,
                      "ReadBytes target array is too big for us to fill. dest_size=", dest_size,
                      " src_offset=", src_offset, " size=", size());
       throw std::range_error("ReadBytes target array is too big");
@@ -269,13 +272,33 @@ public:
   int AsInt() const
   {
     std::string const value = static_cast<std::string>(*this);
-    return atoi(value.c_str());
+
+    const auto ret = std::strtol(value.c_str(), nullptr, 10);
+    if (errno == ERANGE)
+    {
+      errno = 0;
+      FETCH_LOG_ERROR(LOGGING_NAME, "AsInt() failed to convert value=", value, " to integer");
+
+      throw std::domain_error("AsInt() failed to convert value=" + value + " to integer");
+    }
+
+    return static_cast<int>(ret);
   }
 
   double AsFloat() const
   {
     std::string const value = static_cast<std::string>(*this);
-    return atof(value.c_str());
+
+    const auto ret = std::strtod(value.c_str(), nullptr);
+    if (errno == ERANGE)
+    {
+      errno = 0;
+      FETCH_LOG_ERROR(LOGGING_NAME, "AsFloat() failed to convert value=", value, " to double");
+
+      throw std::domain_error("AsFloat() failed to convert value=" + value + " to double");
+    }
+
+    return ret;
   }
 
   ConstByteArray ToBase64() const;
@@ -447,6 +470,8 @@ protected:
   }
 
 private:
+  constexpr static char const *LOGGING_NAME = "ConstByteArray";
+
   void AppendInternal(std::size_t const acc_size)
   {
     Resize(acc_size);

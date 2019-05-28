@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include <iostream>
+#include <string>
 
 std::string n_structure_open_array_object =
     std::string(

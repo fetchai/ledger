@@ -23,8 +23,6 @@
 #include "miner/miner_interface.hpp"
 #include "miner/transaction_item.hpp"
 
-#include <iostream>
-
 namespace fetch {
 namespace miner {
 

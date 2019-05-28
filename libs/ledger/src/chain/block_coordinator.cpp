@@ -345,6 +345,11 @@ BlockCoordinator::State BlockCoordinator::OnSynchronised(State current, State pr
                    " (block: ", current_block_->body.block_number, " prev: 0x",
                    current_block_->body.previous_hash.ToHex(), ")");
   }
+  else
+  {
+    // delay the invocation of this state machine
+    state_machine_->Delay(std::chrono::milliseconds{100});
+  }
 
   return State::SYNCHRONISED;
 }
