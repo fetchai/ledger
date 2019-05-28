@@ -61,7 +61,8 @@ template <typename T>
 static constexpr bool IsConstByteArray = std::is_same<T, fetch::byte_array::ConstByteArray>::value;
 
 template <typename T>
-static constexpr bool IsAByteArray = type_util::IsAnyOfV<T, byte_array::ByteArray, byte_array::ConstByteArray>;
+static constexpr bool IsAByteArray =
+    type_util::IsAnyOfV<T, byte_array::ByteArray, byte_array::ConstByteArray>;
 
 template <typename T>
 static constexpr bool IsStdString = std::is_same<T, std::string>::value;
@@ -72,8 +73,8 @@ static constexpr bool IsStringLike = IsStdString<T> || IsAByteArray<T>;
 template <typename T>
 static constexpr bool IsNullPtr = std::is_null_pointer<T>::value;
 
-template<class C>
-static constexpr bool IsPOD = std::is_trivial<C>::value && std::is_standard_layout<C>::value;
+template <class C>
+static constexpr bool IsPOD = std::is_trivial<C>::value &&std::is_standard_layout<C>::value;
 
 template <typename T>
 using Decay = typename std::decay<T>::type;

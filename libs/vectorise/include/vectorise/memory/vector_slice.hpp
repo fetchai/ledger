@@ -28,16 +28,22 @@
 namespace fetch {
 namespace memory {
 
-template<class T, bool = meta::IsPOD<T>> struct ZeroMem {
-	static constexpr void Call(T *buf, std::size_t size) {
-		std::fill(buf, buf + size, T{});
-	}
+template <class T, bool = meta::IsPOD<T>>
+struct ZeroMem
+{
+  static constexpr void Call(T *buf, std::size_t size)
+  {
+    std::fill(buf, buf + size, T{});
+  }
 };
 
-template<class T> struct ZeroMem<T, true> {
-	static constexpr void Call(T *buf, std::size_t size) {
-		std::memset(static_cast<void *>(buf), 0, size * sizeof(T));
-	}
+template <class T>
+struct ZeroMem<T, true>
+{
+  static constexpr void Call(T *buf, std::size_t size)
+  {
+    std::memset(static_cast<void *>(buf), 0, size * sizeof(T));
+  }
 };
 
 template <typename T, std::size_t type_size = sizeof(T)>
@@ -134,7 +140,8 @@ public:
   }
 
   template <typename S>
-  constexpr typename std::enable_if<std::is_integral<S>::value, T>::type &operator[](S const &n) noexcept
+  constexpr typename std::enable_if<std::is_integral<S>::value, T>::type &operator[](
+      S const &n) noexcept
   {
     assert(pointer_ != nullptr);
     assert(std::size_t(n) < padded_size());
@@ -142,7 +149,8 @@ public:
   }
 
   template <typename S>
-  constexpr typename std::enable_if<std::is_integral<S>::value, T>::type const &operator[](S const &n) const noexcept
+  constexpr typename std::enable_if<std::is_integral<S>::value, T>::type const &operator[](
+      S const &n) const noexcept
   {
     assert(pointer_ != nullptr);
 
@@ -159,7 +167,8 @@ public:
   }
 
   template <typename S>
-  constexpr typename std::enable_if<std::is_integral<S>::value, T>::type const &At(S const &n) const noexcept
+  constexpr typename std::enable_if<std::is_integral<S>::value, T>::type const &At(S const &n) const
+      noexcept
   {
     assert(pointer_ != nullptr);
     assert(n < padded_size());
@@ -167,7 +176,8 @@ public:
   }
 
   template <typename S>
-  constexpr typename std::enable_if<std::is_integral<S>::value, T>::type const &Set(S const &n, T const &v) noexcept
+  constexpr typename std::enable_if<std::is_integral<S>::value, T>::type const &Set(
+      S const &n, T const &v) noexcept
   {
     assert(pointer_ != nullptr);
     assert(n < padded_size());

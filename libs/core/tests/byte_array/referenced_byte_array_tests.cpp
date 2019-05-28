@@ -205,7 +205,7 @@ TEST(reference_byte_array_gtest, basic_append_operations)
   ByteArray      v2("kitty");
 
   ByteArray array;
-  array.Append(v0, " ", v1, " ", v2, " :)");
+  array.Append(v0, " ", v1, " ", v2, ' ', std::uint8_t(':'), ")");
 
   EXPECT_EQ(array, "hello pretty kitty :)");
   EXPECT_EQ(v0, "hello");
