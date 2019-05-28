@@ -28,9 +28,17 @@ from os.path import abspath, dirname, join
 
 PROJECT_ROOT = abspath(dirname(dirname(__file__)))
 
+
+def cmake_build_tree_roots():
+    direct_subdirectories = os.listdir(PROJECT_ROOT)
+
+    return [name for name in direct_subdirectories
+            if os.path.isfile(join(PROJECT_ROOT, name, 'CMakeCache.txt'))]
+
+
 EXCLUDED_DIRS = [
-    abspath(join(PROJECT_ROOT, directory))
-    for directory in ('.git', 'build', 'vendor')
+    abspath(join(PROJECT_ROOT, name))
+    for name in (['.git', 'vendor'] + cmake_build_tree_roots()) if os.path.isdir(join(PROJECT_ROOT, name))
 ]
 
 
