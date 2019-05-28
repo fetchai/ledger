@@ -17,11 +17,11 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/bitvector.hpp"
 #include "core/logger.hpp"
 #include "core/random/lcg.hpp"
 #include "core/random/lfg.hpp"
 #include "math/approx_exp.hpp"
-#include "miner/optimisation/bitvector.hpp"
 
 namespace fetch {
 namespace optimisers {
@@ -36,7 +36,7 @@ public:
 
   using exp_type        = math::ApproxExpImplementation<0>;
   using bit_data_type   = uint64_t;
-  using bit_vector_type = bitmanip::BitVector;
+  using bit_vector_type = BitVector;
   using cost_type       = double;
 
   void Anneal()

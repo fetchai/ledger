@@ -23,7 +23,6 @@
 
 #include "gtest/gtest.h"
 
-#include <iostream>
 #include <memory>
 
 namespace fetch {
@@ -45,11 +44,11 @@ using fetch::ledger::TransactionStatusCache;
 using fetch::random::LinearCongruentialGenerator;
 using fetch::ledger::TransactionStatus;
 using fetch::ledger::ToString;
+using fetch::ledger::Digest;
 
 using StatusCachePtr = std::unique_ptr<TransactionStatusCache>;
 using Clock          = TransactionStatusCache::Clock;
 using Timepoint      = TransactionStatusCache::Timepoint;
-using TxDigest       = TransactionStatusCache::TxDigest;
 using RngWord        = LinearCongruentialGenerator::random_type;
 
 class TransactionStatusCacheTests : public ::testing::Test
@@ -65,7 +64,7 @@ protected:
     cache_.reset();
   }
 
-  TxDigest GenerateDigest()
+  Digest GenerateDigest()
   {
     static constexpr std::size_t DIGEST_BIT_LENGTH  = 256u;
     static constexpr std::size_t DIGEST_BYTE_LENGTH = DIGEST_BIT_LENGTH / 8u;
@@ -83,7 +82,7 @@ protected:
       *digest_raw++ = rng_();
     }
 
-    return TxDigest{digest};
+    return Digest{digest};
   }
 
   StatusCachePtr              cache_{};

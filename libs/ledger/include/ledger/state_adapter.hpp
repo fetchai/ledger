@@ -17,7 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chain/mutable_transaction.hpp"
 #include "ledger/identifier.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 #include "vm/io_observer_interface.hpp"
@@ -36,13 +35,18 @@ class StateAdapter : public vm::IoObserverInterface
 public:
   using ConstByteArray  = byte_array::ConstByteArray;
   using ResourceAddress = storage::ResourceAddress;
-  using ResourceSet     = std::set<byte_array::ConstByteArray>;
 
   static constexpr char const *LOGGING_NAME = "StateAdapter";
 
   // Resource Mapping
   static ResourceAddress CreateAddress(Identifier const &scope, ConstByteArray const &key);
   static ResourceAddress CreateAddress(ConstByteArray const &key);
+
+  enum class Mode
+  {
+    READ_ONLY,
+    READ_WRITE
+  };
 
   // Construction / Destruction
   StateAdapter(StorageInterface &storage, Identifier scope);
@@ -60,9 +64,12 @@ public:
   std::string WrapKeyWithScope(std::string const &key);
 
 protected:
+  // Protected construction
+  StateAdapter(StorageInterface &storage, Identifier scope, Mode mode);
+
   StorageInterface &      storage_;
   std::vector<Identifier> scope_;
-  bool                    enable_writes_ = false;
+  Mode                    mode_;
 };
 
 }  // namespace ledger

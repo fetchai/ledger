@@ -17,15 +17,15 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/byte_array/const_byte_array.hpp"
+#include "ledger/chain/digest.hpp"
 
 namespace fetch {
 namespace ledger {
 
 constexpr uint64_t FINALITY_PERIOD = 10;
 
-extern const byte_array::ConstByteArray GENESIS_DIGEST;
-extern const byte_array::ConstByteArray GENESIS_MERKLE_ROOT;
+extern const Digest GENESIS_DIGEST;
+extern const Digest GENESIS_MERKLE_ROOT;
 
 }  // namespace ledger
 }  // namespace fetch

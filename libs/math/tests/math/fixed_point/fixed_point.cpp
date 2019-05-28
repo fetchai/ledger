@@ -20,8 +20,6 @@
 #include <array>
 #include <cmath>
 #include <gtest/gtest.h>
-#include <iomanip>
-#include <iostream>
 #include <limits>
 
 using fp32 = fetch::fixed_point::FixedPoint<16, 16>;

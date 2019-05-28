@@ -173,8 +173,8 @@ inline void Deserialize(T &serializer, std::pair<fir, sec> &pair)
   pair = std::make_pair(std::move(first), std::move(second));
 }
 
-template <typename T, typename K, typename V, typename H>
-inline void Serialize(T &serializer, std::unordered_map<K, V, H> const &map)
+template <typename T, typename K, typename V, typename H, typename E>
+inline void Serialize(T &serializer, std::unordered_map<K, V, H, E> const &map)
 {
 
   // Allocating memory for the size
@@ -191,8 +191,8 @@ inline void Serialize(T &serializer, std::unordered_map<K, V, H> const &map)
   }
 }
 
-template <typename T, typename K, typename V, typename H>
-inline void Deserialize(T &serializer, std::unordered_map<K, V, H> &map)
+template <typename T, typename K, typename V, typename H, typename E>
+inline void Deserialize(T &serializer, std::unordered_map<K, V, H, E> &map)
 {
 
   // Read the number of items in the map

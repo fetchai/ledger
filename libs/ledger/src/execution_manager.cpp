@@ -34,8 +34,6 @@
 #include <thread>
 #include <vector>
 
-#include <iostream>
-
 static constexpr char const *LOGGING_NAME              = "ExecutionManager";
 static constexpr std::size_t MAX_STARTUP_ITERATIONS    = 20;
 static constexpr std::size_t STARTUP_ITERATION_TIME_MS = 100;
@@ -48,11 +46,11 @@ namespace ledger {
  *
  * @param num_executors The specified number of executors (and threads)
  */
-// std::make_shared<fetch::network::ThreadPool>(num_executors)
-ExecutionManager::ExecutionManager(std::size_t num_executors, StorageUnitPtr storage,
-                                   ExecutorFactory const &factory)
-  : storage_(std::move(storage))
-  , idle_executors_(num_executors)
+ExecutionManager::ExecutionManager(std::size_t num_executors, uint32_t log2_num_lanes,
+                                   StorageUnitPtr storage, ExecutorFactory const &factory)
+  : log2_num_lanes_{log2_num_lanes}
+  , storage_(std::move(storage))
+  , idle_executors_()
   , thread_pool_(network::MakeThreadPool(num_executors, "Executor"))
 {
   // setup the executor pool
@@ -65,7 +63,10 @@ ExecutionManager::ExecutionManager(std::size_t num_executors, StorageUnitPtr sto
     // create the executor instances
     for (std::size_t i = 0; i < num_executors; ++i)
     {
-      idle_executors_.emplace_back(factory());
+      auto executor = factory();
+      assert(static_cast<bool>(executor));
+
+      idle_executors_.emplace_back(std::move(executor));
     }
   }
 }
@@ -100,8 +101,9 @@ ExecutionManager::ScheduleStatus ExecutionManager::Execute(Block::Body const &bl
   }
 
   // update the last block hash
-  last_block_hash_ = block.hash;
-  num_slices_      = block.slices.size();
+  last_block_hash_  = block.hash;
+  last_block_miner_ = block.miner;
+  num_slices_       = block.slices.size();
 
   // update the state otherwise there is a race between when the executor thread wakes up
   state_.Set(State::ACTIVE);
@@ -130,7 +132,7 @@ bool ExecutionManager::PlanExecution(Block::Body const &block)
   execution_plan_.clear();
   execution_plan_.resize(block.slices.size());
 
-  std::size_t slice_index = 0;
+  uint64_t slice_index = 0;
   for (auto const &slice : block.slices)
   {
     auto &slice_plan = execution_plan_[slice_index];
@@ -138,28 +140,13 @@ bool ExecutionManager::PlanExecution(Block::Body const &block)
     // process the transactions
     for (auto const &tx : slice)
     {
-      Identifier contract_id;
-      if (!contract_id.Parse(tx.contract_name))
-      {
-        return false;
-      }
-
-      auto item = std::make_unique<ExecutionItem>(tx.transaction_hash, slice_index);
-
-      // transform the resources into lane allocation
-      for (auto const &resource : tx.resources)
-      {
-        item->AddLane(
-            StateAdapter::CreateAddress(contract_id, resource).lane(block.log2_num_lanes));
-      }
-
-      for (auto const &contract_hash : tx.raw_resources)
-      {
-        item->AddLane(StateAdapter::CreateAddress(contract_hash).lane(block.log2_num_lanes));
-      }
+      // ensure each of the layouts are correctly formatted. This should be removed in the future
+      // and some level of dynamic scaling should be applied.
+      assert((1u << log2_num_lanes_) == tx.mask().size());
 
       // insert the item into the execution plan
-      slice_plan.emplace_back(std::move(item));
+      slice_plan.emplace_back(
+          std::make_unique<ExecutionItem>(tx.digest(), block.block_number, slice_index, tx.mask()));
     }
 
     ++slice_index;
@@ -204,8 +191,8 @@ void ExecutionManager::DispatchExecution(ExecutionItem &item)
     // determine what the status is
     if (ExecutorInterface::Status::SUCCESS != item.status())
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Error executing tx: ", item.hash().ToBase64(),
-                     " slice: ", item.slice(), " status: ", ledger::ToString(item.status()));
+      FETCH_LOG_WARN(LOGGING_NAME, "Error executing tx: 0x", item.digest().ToHex(),
+                     " status: ", ledger::ToString(item.status()));
     }
 
     counters_.Apply([](Counters &counters) {
@@ -279,13 +266,13 @@ void ExecutionManager::Stop()
   thread_pool_->Stop();
 }
 
-void ExecutionManager::SetLastProcessedBlock(BlockHash hash)
+void ExecutionManager::SetLastProcessedBlock(Digest hash)
 {
   // TODO(issue 33): thread safety
   last_block_hash_ = hash;
 }
 
-ExecutionManagerInterface::BlockHash ExecutionManager::LastProcessedBlock()
+Digest ExecutionManager::LastProcessedBlock()
 {
   // TODO(issue 33): thread safety
   return last_block_hash_;
@@ -314,14 +301,16 @@ void ExecutionManager::MonitorThreadEntrypoint()
     IDLE,
     SCHEDULE_NEXT_SLICE,
     RUNNING,
+    SETTLE_FEES,
     BOOKMARKING_STATE
   };
 
   MonitorState monitor_state = MonitorState::COMPLETED;
 
-  std::size_t current_slice = 0;
+  std::size_t current_slice        = 0;
+  uint64_t    aggregate_block_fees = 0;
 
-  BlockHash current_block;
+  Digest current_block;
 
   while (running_)
   {
@@ -370,8 +359,9 @@ void ExecutionManager::MonitorThreadEntrypoint()
       // schedule the next slice if we have been triggered
       if (running_)
       {
-        monitor_state = MonitorState::SCHEDULE_NEXT_SLICE;
-        current_slice = 0;
+        monitor_state        = MonitorState::SCHEDULE_NEXT_SLICE;
+        current_slice        = 0;
+        aggregate_block_fees = 0;
       }
 
       break;
@@ -383,7 +373,7 @@ void ExecutionManager::MonitorThreadEntrypoint()
 
       if (execution_plan_.empty())
       {
-        monitor_state = MonitorState::BOOKMARKING_STATE;
+        monitor_state = MonitorState::SETTLE_FEES;
       }
       else
       {
@@ -448,6 +438,9 @@ void ExecutionManager::MonitorThreadEntrypoint()
             ++num_fatal_errors;
             break;
           }
+
+          // update aggregate fees
+          aggregate_block_fees += item->fee();
         }
 
         // only provide debug if required
@@ -485,10 +478,29 @@ void ExecutionManager::MonitorThreadEntrypoint()
         }
         else
         {
-          monitor_state = MonitorState::BOOKMARKING_STATE;
+          monitor_state = MonitorState::SETTLE_FEES;
         }
       }
 
+      break;
+    }
+
+    case MonitorState::SETTLE_FEES:
+    {
+      FETCH_LOCK(idle_executors_lock_);
+
+      if (!idle_executors_.empty())
+      {
+        idle_executors_.front()->SettleFees(last_block_miner_, aggregate_block_fees,
+                                            log2_num_lanes_);
+      }
+      else
+      {
+        FETCH_LOG_WARN(LOGGING_NAME, "Unable to locate free executor to settle miner fees");
+      }
+
+      // move on to the next state
+      monitor_state = MonitorState::BOOKMARKING_STATE;
       break;
     }
 

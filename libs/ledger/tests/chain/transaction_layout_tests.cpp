@@ -18,21 +18,20 @@
 
 #include "crypto/ecdsa.hpp"
 #include "crypto/identity.hpp"
-#include "ledger/chain/v2/address.hpp"
-#include "ledger/chain/v2/transaction.hpp"
-#include "ledger/chain/v2/transaction_builder.hpp"
-#include "ledger/chain/v2/transaction_layout.hpp"
+#include "ledger/chain/address.hpp"
+#include "ledger/chain/transaction.hpp"
+#include "ledger/chain/transaction_builder.hpp"
+#include "ledger/chain/transaction_layout.hpp"
 
 #include "gtest/gtest.h"
 
-#include <ledger/chain/v2/transaction.hpp>
 #include <memory>
 
-using fetch::ledger::v2::Transaction;
-using fetch::ledger::v2::TransactionLayout;
-using fetch::ledger::v2::TransactionBuilder;
-using fetch::ledger::v2::Address;
+using fetch::ledger::TransactionLayout;
+using fetch::ledger::TransactionBuilder;
+using fetch::ledger::Address;
 using fetch::crypto::ECDSASigner;
+using fetch::BitVector;
 
 using SignerPtr  = std::unique_ptr<ECDSASigner>;
 using AddressPtr = std::unique_ptr<Address>;
@@ -58,7 +57,7 @@ protected:
 
 TEST_F(TransactionLayoutTests, BasicTest)
 {
-  Transaction::BitVector shard_mask{4};
+  BitVector shard_mask{4};
   shard_mask.set(1, 1);
   shard_mask.set(2, 1);
 
@@ -76,10 +75,9 @@ TEST_F(TransactionLayoutTests, BasicTest)
                       .Build();
 
   // build the transaction layout from this transaction
-  TransactionLayout const layout{*tx};
+  TransactionLayout const layout{*tx, 2};
 
   EXPECT_EQ(layout.digest(), tx->digest());
-  EXPECT_EQ(layout.mask(), tx->shard_mask());
   EXPECT_EQ(layout.charge(), tx->charge());
   EXPECT_EQ(layout.valid_from(), tx->valid_from());
   EXPECT_EQ(layout.valid_until(), tx->valid_until());

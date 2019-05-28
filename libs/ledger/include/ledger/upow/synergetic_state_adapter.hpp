@@ -33,14 +33,11 @@ public:
 
   // Construction / Destruction
   SynergeticStateAdapter(StorageInterface &storage, Identifier scope, bool can_write = false)
-    : StateAdapter(storage, scope)
+    : StateAdapter(storage, scope, (can_write) ? Mode::READ_WRITE : Mode::READ_ONLY)
   {
-    enable_writes_ = std::move(can_write);
-    // TODO: Lock full contract resource
   }
 
-  ~SynergeticStateAdapter() override
-  {}
+  ~SynergeticStateAdapter() override = default;
 
   /// @name IO Observer Interface
   /// @{

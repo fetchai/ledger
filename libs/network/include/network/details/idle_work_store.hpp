@@ -20,7 +20,6 @@
 #include "core/mutex.hpp"
 
 #include <algorithm>
-#include <iostream>
 #include <string>
 
 namespace fetch {

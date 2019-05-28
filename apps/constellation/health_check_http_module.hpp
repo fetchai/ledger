@@ -29,8 +29,8 @@ public:
   using MainChain           = ledger::MainChain;
   using MainChainRpcService = ledger::MainChainRpcService;
 
-  HealthCheckHttpModule(MainChain &chain, MainChainRpcService &chain_service,
-                        BlockCoordinator &block_coordinator)
+  HealthCheckHttpModule(MainChain const &chain, MainChainRpcService const &chain_service,
+                        BlockCoordinator const &block_coordinator)
     : chain_{chain}
     , chain_service_{chain_service}
     , block_coordinator_{block_coordinator}
@@ -41,9 +41,9 @@ public:
 
     Get("/api/health/ready", [this](http::ViewParameters const &, http::HTTPRequest const &) {
       // determine the state of the machine system state machines
-      bool const chain_synced = chain_service_.state() == MainChainRpcService::State::SYNCHRONISED;
+      bool const chain_synced = chain_service_.IsSynced();
       bool const chain_executed_finished =
-          block_coordinator_.GetStateMachine().state() == BlockCoordinator::State::SYNCHRONIZED;
+          block_coordinator_.GetStateMachine().state() == BlockCoordinator::State::SYNCHRONISED;
       bool const chain_execution_complete =
           block_coordinator_.GetLastExecutedBlock() == chain_.GetHeaviestBlockHash();
 
@@ -64,9 +64,9 @@ public:
   }
 
 private:
-  MainChain &          chain_;
-  MainChainRpcService &chain_service_;
-  BlockCoordinator &   block_coordinator_;
+  MainChain const &          chain_;
+  MainChainRpcService const &chain_service_;
+  BlockCoordinator const &   block_coordinator_;
 };
 
 }  // namespace fetch

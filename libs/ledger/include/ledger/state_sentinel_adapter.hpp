@@ -17,7 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/bitvector.hpp"
 #include "ledger/state_adapter.hpp"
+#include "vectorise/platform.hpp"
 
 namespace fetch {
 namespace ledger {
@@ -29,15 +31,10 @@ namespace ledger {
 class StateSentinelAdapter : public StateAdapter
 {
 public:
-  using ResourceSet = TransactionSummary::ResourceSet;
-
   static constexpr char const *LOGGING_NAME = "StateSentinelAdapter";
 
   // Construction / Destruction
-  StateSentinelAdapter(StorageInterface &storage, Identifier scope,
-                       ResourceSet const &resources     = ResourceSet{},
-                       ResourceSet const &raw_resources = ResourceSet{});
-
+  StateSentinelAdapter(StorageInterface &storage, Identifier scope, BitVector const &shards);
   ~StateSentinelAdapter() override;
 
   /// @name IO Observer Interface
@@ -47,9 +44,36 @@ public:
   Status Exists(std::string const &key) override;
   /// @}
 
+  /// @name Counter Access
+  /// @{
+  uint64_t num_lookups() const
+  {
+    return lookups_;
+  }
+  uint64_t num_bytes_read() const
+  {
+    return bytes_read_;
+  }
+  uint64_t num_bytes_written() const
+  {
+    return bytes_written_;
+  }
+  /// @}
+
 private:
-  bool                  IsAllowedResource(std::string const &key) const;
-  std::set<std::string> allowed_accesses_;
+  bool IsAllowedResource(std::string const &key) const;
+
+  /// @name Shard Limits
+  /// @{
+  BitVector shards_;
+  /// @}
+
+  /// @name Counters
+  /// @{
+  uint64_t lookups_{0};
+  uint64_t bytes_read_{0};
+  uint64_t bytes_written_{0};
+  /// @}
 };
 
 }  // namespace ledger

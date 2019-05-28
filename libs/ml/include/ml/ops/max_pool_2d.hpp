@@ -27,10 +27,11 @@ template <class T>
 class MaxPool2D : public BatchOps<T>
 {
 public:
-  using ArrayType    = T;
-  using SizeType     = typename ArrayType::SizeType;
-  using DataType     = typename ArrayType::Type;
-  using ArrayPtrType = std::shared_ptr<ArrayType>;
+  using ArrayType     = T;
+  using SizeType      = typename ArrayType::SizeType;
+  using DataType      = typename ArrayType::Type;
+  using ArrayPtrType  = std::shared_ptr<ArrayType>;
+  using VecTensorType = typename BatchOps<T>::VecTensorType;
 
   MaxPool2D(SizeType const kernel_size, SizeType const stride_size)
     : kernel_size_{kernel_size}
@@ -48,30 +49,27 @@ public:
    * number_of_stride_sized_steps_over_input_height x number_of_stride_sized_steps_over_input_width]
    * @return: output tensor parameter
    */
-  ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
-                    ArrayType &                                                 output) override
+  void Forward(VecTensorType const &inputs, ArrayType &output) override
   {
     ASSERT(inputs.size() == 1);
     // Input should be a 3D tensor [C x W x H]
     ASSERT(inputs.at(0).get().shape().size() == 3);
-
-    auto output_shape = ComputeOutputShape(inputs);
-    ASSERT(output.shape() == output_shape);
+    ASSERT(output.shape() == ComputeOutputShape(inputs));
 
     SizeType iterw;
     SizeType iterh;
     DataType val;
     DataType max;
     auto     oit = output.begin();
-    for (SizeType ih{0}; ih < output_shape.at(2); ih++)  // Iterate height over kernel stride
+    for (SizeType ih{0}; ih < output.shape().at(2); ih++)  // Iterate height over kernel stride
     {
       iterh = ih * stride_size_;
 
-      for (SizeType iw{0}; iw < output_shape.at(1); iw++)  // Iterate width over kernel stride
+      for (SizeType iw{0}; iw < output.shape().at(1); iw++)  // Iterate width over kernel stride
       {
         iterw = iw * stride_size_;
 
-        for (SizeType c{0}; c < output_shape.at(0); ++c)  // Iterate over output channels
+        for (SizeType c{0}; c < output.shape().at(0); ++c)  // Iterate over output channels
         {
           max = inputs.at(0).get().At(c, iterw, iterh);
 
@@ -94,7 +92,6 @@ public:
         }
       }
     }
-    return output;
   }
 
   /**
@@ -108,15 +105,12 @@ public:
    * @return: output vector of tensors with back propagated error signal
    * output[0]=input_error[inputs[0].shape]
    */
-  std::vector<ArrayType> Backward(
-      std::vector<std::reference_wrapper<const ArrayType>> const &inputs,
-      ArrayType const &                                           error_signal) override
+  std::vector<ArrayType> Backward(VecTensorType const &inputs,
+                                  ArrayType const &    error_signal) override
   {
     ASSERT(inputs.size() == 1);
     ASSERT(error_signal.shape() == ComputeOutputShape(inputs));
     ArrayType return_signal{inputs.at(0).get().shape()};
-
-    auto output_shape = ComputeOutputShape(inputs);
 
     SizeType iterh;
     SizeType iterw;
@@ -125,13 +119,14 @@ public:
     SizeType max_iterw;
     SizeType max_iterh;
     auto     erit = error_signal.cbegin();
-    for (SizeType iw{0}; iw < output_shape.at(1); iw++)  // Iterate width over kernel stride
+    for (SizeType iw{0}; iw < error_signal.shape().at(1); iw++)  // Iterate width over kernel stride
     {
       iterw = iw * stride_size_;
-      for (SizeType ih{0}; ih < output_shape.at(2); ih++)  // Iterate height over kernel stride
+      for (SizeType ih{0}; ih < error_signal.shape().at(2);
+           ih++)  // Iterate height over kernel stride
       {
         iterh = ih * stride_size_;
-        for (SizeType c{0}; c < output_shape[0]; ++c)  // Iterate over output channels
+        for (SizeType c{0}; c < error_signal.shape().at(0); ++c)  // Iterate over output channels
         {
           max       = inputs.at(0).get().At(c, iterw, iterh);
           max_iterw = iterw;
@@ -164,29 +159,26 @@ public:
     return {return_signal};
   }
 
-  std::vector<SizeType> ComputeOutputShape(
-      std::vector<std::reference_wrapper<ArrayType const>> const &inputs) override
+  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
   {
-    // Return pre-computed value if exist
-    if (output_shape_.size() != 0)
-      return output_shape_;
+    std::vector<SizeType> output_shape;
+
     // output_shape_[0]=number of output channels
-    output_shape_.emplace_back(inputs.at(0).get().shape().at(0));
+    output_shape.emplace_back(inputs.at(0).get().shape().at(0));
     // output_shape_[1]=number of stride_size steps over input height
-    output_shape_.emplace_back((inputs.at(0).get().shape().at(1) - (kernel_size_ - stride_size_)) /
-                               stride_size_);
+    output_shape.emplace_back((inputs.at(0).get().shape().at(1) - (kernel_size_ - stride_size_)) /
+                              stride_size_);
     // output_shape_[2]=number of stride_size steps over input width
-    output_shape_.emplace_back((inputs.at(0).get().shape().at(2) - (kernel_size_ - stride_size_)) /
-                               stride_size_);
-    return output_shape_;
+    output_shape.emplace_back((inputs.at(0).get().shape().at(2) - (kernel_size_ - stride_size_)) /
+                              stride_size_);
+    return output_shape;
   }
 
   static constexpr char const *DESCRIPTOR = "MaxPool2D";
 
 private:
-  SizeType              kernel_size_;
-  SizeType              stride_size_;
-  std::vector<SizeType> output_shape_;
+  SizeType kernel_size_;
+  SizeType stride_size_;
 };
 
 }  // namespace ops

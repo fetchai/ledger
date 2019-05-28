@@ -19,6 +19,7 @@
 #include "ledger/chaincode/token_contract.hpp"
 #include "core/byte_array/decoders.hpp"
 #include "crypto/fnv.hpp"
+#include "ledger/chain/transaction.hpp"
 #include "ledger/chaincode/deed.hpp"
 #include "ledger/chaincode/wallet_record.hpp"
 #include "variant/variant.hpp"
@@ -26,11 +27,14 @@
 
 #include <functional>
 #include <memory>
+#include <numeric>
 #include <set>
 #include <stdexcept>
 
 namespace fetch {
 namespace ledger {
+
+constexpr uint64_t MAX_TOKENS = 0xFFFFFFFFFFFFFFFFull;
 
 TokenContract::TokenContract()
 {
@@ -41,36 +45,104 @@ TokenContract::TokenContract()
   OnQuery("balance", this, &TokenContract::Balance);
 }
 
-Contract::Status TokenContract::CreateWealth(Transaction const &tx)
+uint64_t TokenContract::GetBalance(Address const &address)
 {
-  Variant data;
-  if (!ParseAsJson(tx, data))
+  WalletRecord record{};
+  GetStateRecord(record, address.display());
+
+  return record.balance;
+}
+
+bool TokenContract::AddTokens(Address const &address, uint64_t amount)
+{
+  WalletRecord record{};
+  GetStateRecord(record, address.display());
+
+  if (amount > (MAX_TOKENS - record.balance))
   {
-    return Status::FAILED;
+    return false;
   }
 
-  ConstByteArray address;
-  uint64_t       amount{0};
+  record.balance += amount;
 
-  if (Extract(data, ADDRESS_NAME, address) && Extract(data, AMOUNT_NAME, amount))
+  SetStateRecord(record, address.display());
+
+  return true;
+}
+
+bool TokenContract::SubtractTokens(Address const &address, uint64_t amount)
+{
+  WalletRecord record{};
+  GetStateRecord(record, address.display());
+
+  if (amount > record.balance)
   {
-    address = FromBase64(address);  //  the address needs to be converted
+    return false;
+  }
 
-    // retrieve the record (if it exists)
-    WalletRecord record{};
-    GetStateRecord(record, address);
+  record.balance -= amount;
 
-    // update the balance
-    record.balance += amount;
+  SetStateRecord(record, address.display());
 
-    SetStateRecord(record, address);
+  return true;
+}
+
+bool TokenContract::TransferTokens(Transaction const &tx, Address const &to, uint64_t amount)
+{
+  // look up the state record (to see if there is a deed associated with this address)
+  WalletRecord from_record{};
+  if (!GetStateRecord(from_record, tx.from().display()))
+  {
+    return false;
+  }
+
+  // perform validation checks
+  if (from_record.deed)
+  {
+    // There is current deed in effect.
+
+    // Verify that current transaction possesses authority to perform the transfer
+    if (!from_record.deed->Verify(tx, TRANSFER_NAME))
+    {
+      return false;
+    }
   }
   else
   {
-    return Status::FAILED;
+    // There is NO deed associated with the SOURCE address.
+
+    // NECESSARY & SUFFICIENT CONDITION to perform transfer: Signature of the
+    // SOURCE address MUST be present when NO preceding deed exists.
+    if (!tx.IsSignedByFromAddress())
+    {
+      return false;
+    }
   }
 
-  return Status::OK;
+  return SubtractTokens(tx.from(), amount) && AddTokens(to, amount);
+}
+
+Contract::Status TokenContract::CreateWealth(Transaction const &tx, BlockIndex)
+{
+  Contract::Status status{Contract::Status::FAILED};
+
+  // parse the payload as JSON
+  Variant data;
+  if (ParseAsJson(tx, data))
+  {
+    // attempt to extract the amount field
+    uint64_t amount{0};
+    if (Extract(data, AMOUNT_NAME, amount))
+    {
+      // mint new tokens
+      if (AddTokens(tx.from(), amount))
+      {
+        status = Contract::Status::OK;
+      }
+    }
+  }
+
+  return status;
 }
 
 /**
@@ -84,7 +156,7 @@ Contract::Status TokenContract::CreateWealth(Transaction const &tx)
  *
  * @return Status::OK if deed has been incorporated successfully.
  */
-Contract::Status TokenContract::Deed(Transaction const &tx)
+Contract::Status TokenContract::Deed(Transaction const &tx, BlockIndex)
 {
   Variant data;
   if (!ParseAsJson(tx, data))
@@ -92,16 +164,9 @@ Contract::Status TokenContract::Deed(Transaction const &tx)
     return Status::FAILED;
   }
 
-  ConstByteArray address;
-  if (!Extract(data, ADDRESS_NAME, address))
-  {
-    return Status::FAILED;
-  }
-  address = FromBase64(address);  //  the address needs to be converted
-
   // retrieve the record (if it exists)
   WalletRecord record{};
-  GetStateRecord(record, address);
+  GetStateRecord(record, tx.from().display());
 
   if (record.deed)
   {
@@ -126,7 +191,7 @@ Contract::Status TokenContract::Deed(Transaction const &tx)
 
     // NECESSARY & SUFFICIENT CONDITION: Signature of the DESTINATION address
     // MUST be present when NO preceding deed exists.
-    if (0 == tx.signatures().count(crypto::Identity{address}))
+    if (!tx.IsSignedByFromAddress())
     {
       return Status::FAILED;
     }
@@ -137,99 +202,38 @@ Contract::Status TokenContract::Deed(Transaction const &tx)
     }
   }
 
-  SetStateRecord(record, address);
+  SetStateRecord(record, tx.from().display());
 
   return Status::OK;
 }
 
-Contract::Status TokenContract::Transfer(Transaction const &tx)
+Contract::Status TokenContract::Transfer(Transaction const &tx, BlockIndex)
 {
-  Variant data;
-  if (!ParseAsJson(tx, data))
-  {
-    return Status::FAILED;
-  }
-
-  ConstByteArray to_address;
-  ConstByteArray from_address;
-  uint64_t       amount{0};
-  if (!Extract(data, FROM_NAME, from_address) || !Extract(data, TO_NAME, to_address) ||
-      !Extract(data, AMOUNT_NAME, amount))
-  {
-    return Status::FAILED;
-  }
-
-  to_address   = byte_array::FromBase64(to_address);    //  the address needs to be converted
-  from_address = byte_array::FromBase64(from_address);  //  the address needs to be converted
-
-  WalletRecord to_record{};
-  WalletRecord from_record{};
-
-  if (!GetStateRecord(from_record, from_address))
-  {
-    return Status::FAILED;
-  }
-
-  // check the balance here to limit further reads if required
-  if (from_record.balance < amount)
-  {
-    return Status::FAILED;
-  }
-
-  if (from_record.deed)
-  {
-    // There is current deed in effect.
-
-    // Verify that current transaction possesses authority to perform the transfer
-    if (!from_record.deed->Verify(tx, TRANSFER_NAME))
-    {
-      return Status::FAILED;
-    }
-  }
-  else
-  {
-    // There is NO deed associated with the SOURCE address.
-
-    // NECESSARY & SUFFICIENT CONDITION to perform transfer: Signature of the
-    // SOURCE address MUST be present when NO preceding deed exists.
-    if (0 == tx.signatures().count(crypto::Identity{from_address}))
-    {
-      return Status::FAILED;
-    }
-  }
-
-  // get the state record for the target address
-  GetStateRecord(to_record, to_address);
-
-  // update the records
-  from_record.balance -= amount;
-  to_record.balance += amount;
-
-  // write the records back to the state database
-  SetStateRecord(from_record, from_address);
-  SetStateRecord(to_record, to_address);
-
-  return Status::OK;
+  FETCH_UNUSED(tx);
+  return Status::FAILED;
 }
 
 Contract::Status TokenContract::Balance(Query const &query, Query &response)
 {
   Status status = Status::FAILED;
 
-  ConstByteArray address;
-  if (Extract(query, ADDRESS_NAME, address))
+  ConstByteArray input;
+  if (Extract(query, ADDRESS_NAME, input))
   {
-    address = FromBase64(address);
+    // attempt to parse the input address
+    Address address{};
+    if (Address::Parse(input, address))
+    {
+      // lookup the record
+      WalletRecord record{};
+      GetStateRecord(record, address.display());
 
-    // lookup the record
-    WalletRecord record{};
-    GetStateRecord(record, address);
+      // formulate the response
+      response            = Variant::Object();
+      response["balance"] = record.balance;
 
-    // formulate the response
-    response            = Variant::Object();
-    response["balance"] = record.balance;
-
-    status = Status::OK;
+      status = Status::OK;
+    }
   }
   else
   {

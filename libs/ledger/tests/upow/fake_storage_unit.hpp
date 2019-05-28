@@ -19,6 +19,7 @@
 
 #include "crypto/fnv.hpp"
 #include "crypto/sha256.hpp"
+#include "ledger/chain/transaction.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 
 #include <algorithm>
@@ -31,11 +32,11 @@ class FakeStorageUnit final : public fetch::ledger::StorageUnitInterface
 {
 public:
   using transaction_store_type =
-      std::unordered_map<fetch::byte_array::ConstByteArray, fetch::ledger::Transaction>;
+      std::unordered_map<fetch::ledger::Digest, fetch::ledger::Transaction>;
   using state_store_type =
       std::unordered_map<fetch::byte_array::ConstByteArray, fetch::byte_array::ConstByteArray>;
   /*using state_archive_type = std::unordered_map<bookmark_type, state_store_type>; */
-  using lock_store_type = std::unordered_set<fetch::byte_array::ConstByteArray>;
+  using lock_store_type = std::unordered_set<ShardIndex>;
   using mutex_type      = std::mutex;
   using lock_guard_type = std::lock_guard<mutex_type>;
   using hash_type       = fetch::byte_array::ConstByteArray;
@@ -84,31 +85,28 @@ public:
     state_[key.id()] = value;
   }
 
-  bool Lock(ResourceAddress const &key) override
+  bool Lock(ShardIndex shard) override
   {
-    lock_guard_type lock(mutex_);
-    bool            success = false;
+    FETCH_LOCK(mutex_);
 
-    bool const already_locked = locks_.find(key.id()) != locks_.end();
-    if (!already_locked)
+    bool const success = locks_.find(shard) == locks_.end();
+    if (success)
     {
-      locks_.insert(key.id());
-      success = true;
+      locks_.insert(shard);
     }
 
     return success;
   }
 
-  bool Unlock(ResourceAddress const &key) override
+  bool Unlock(ShardIndex shard) override
   {
-    lock_guard_type lock(mutex_);
-    bool            success = false;
+    FETCH_LOCK(mutex_);
 
-    bool const already_locked = locks_.find(key.id()) != locks_.end();
-    if (already_locked)
+    auto it = locks_.find(shard);
+    bool const success = it != locks_.end();
+    if (success)
     {
-      locks_.erase(key.id());
-      success = true;
+      locks_.erase(it);
     }
 
     return success;
@@ -167,12 +165,12 @@ public:
   };
 
   // Does nothing
-  TxSummaries PollRecentTx(uint32_t) override
+  TxLayouts PollRecentTx(uint32_t) override
   {
     return {};
   }
 
-  void IssueCallForMissingTxs(fetch::ledger::TxDigestSet const &) override
+  void IssueCallForMissingTxs(fetch::ledger::DigestSet const &) override
   {}
 
 private:

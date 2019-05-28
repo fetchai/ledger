@@ -28,10 +28,11 @@ template <class T>
 class Softmax : public fetch::ml::BatchOps<T>
 {
 public:
-  using ArrayType    = T;
-  using DataType     = typename ArrayType::Type;
-  using SizeType     = typename ArrayType::SizeType;
-  using ArrayPtrType = std::shared_ptr<ArrayType>;
+  using ArrayType     = T;
+  using DataType      = typename ArrayType::Type;
+  using SizeType      = typename ArrayType::SizeType;
+  using ArrayPtrType  = std::shared_ptr<ArrayType>;
+  using VecTensorType = typename ElementWiseOps<T>::VecTensorType;
 
   Softmax(SizeType axis = 0)
     : axis_(axis)
@@ -39,25 +40,21 @@ public:
 
   ~Softmax() = default;
 
-  ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
-                    ArrayType &                                                 output)
+  void Forward(VecTensorType const &inputs, ArrayType &output)
   {
     ASSERT(output.shape() == ComputeOutputShape(inputs));
     ASSERT(inputs.size() == 1);
     fetch::math::Softmax(inputs[0].get(), output, axis_);
-    return output;
   }
 
-  std::vector<ArrayType> Backward(
-      std::vector<std::reference_wrapper<const ArrayType>> const &inputs,
-      ArrayType const &                                           errorSignal)
+  std::vector<ArrayType> Backward(VecTensorType const &inputs, ArrayType const &error_signal)
   {
     ASSERT(inputs.size() == 1);
-    ASSERT(inputs.front().get().shape() == errorSignal.shape());
+    ASSERT(inputs.front().get().shape() == error_signal.shape());
 
-    ArrayType return_signal = errorSignal.Copy();
-    ArrayType t(this->ComputeOutputShape(inputs));
-    t = this->Forward(inputs, t);
+    ArrayType return_signal = error_signal.Copy();
+    ArrayType t(error_signal.shape());
+    this->Forward(inputs, t);
     return_signal.InlineMultiply(t);
 
     // 1D softmax
@@ -83,8 +80,7 @@ public:
     return {return_signal};
   }
 
-  std::vector<SizeType> ComputeOutputShape(
-      std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
+  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const
   {
     return inputs.front().get().shape();
   }

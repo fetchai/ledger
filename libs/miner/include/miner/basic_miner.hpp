@@ -20,10 +20,13 @@
 #include "core/mutex.hpp"
 #include "ledger/block_packer_interface.hpp"
 #include "ledger/chain/block.hpp"
-#include "ledger/chain/transaction.hpp"
-#include "meta/is_log2.hpp"
-#include "miner/optimisation/bitvector.hpp"
+#include "ledger/chain/digest.hpp"
+#include "ledger/chain/transaction_layout.hpp"
+#include "meta/log2.hpp"
 #include "vectorise/threading/pool.hpp"
+
+#include "miner/transaction_layout_queue.hpp"
+
 #include <list>
 
 namespace fetch {
@@ -31,7 +34,7 @@ namespace miner {
 
 /**
  * Simplistic greedy search algorithm for generating / packing blocks. Has rudimentary support to
- * parallelise the packing over a number of threads.
+ * parallelize the packing over a number of threads.
  *
  * Internally the miner maintains 2 queues. One which is the pending queue which is populated when
  * a new transaction is added to the miner. When block generation begins, this pending queue is
@@ -43,66 +46,64 @@ class BasicMiner : public ledger::BlockPackerInterface
 public:
   static constexpr char const *LOGGING_NAME = "BasicMiner";
 
-  using Block     = ledger::Block;
-  using MainChain = ledger::MainChain;
+  using Block             = ledger::Block;
+  using MainChain         = ledger::MainChain;
+  using TransactionLayout = ledger::TransactionLayout;
 
   // Construction / Destruction
-  explicit BasicMiner(uint32_t log2_num_lanes, uint32_t num_slices);
+  explicit BasicMiner(uint32_t log2_num_lanes);
   BasicMiner(BasicMiner const &) = delete;
   BasicMiner(BasicMiner &&)      = delete;
-  ~BasicMiner()                  = default;
+  ~BasicMiner() override         = default;
 
   /// @name Miner Interface
   /// @{
-  void EnqueueTransaction(ledger::TransactionSummary const &tx) override;
-  void GenerateBlock(Block &block, std::size_t num_lanes, std::size_t num_slices,
-                     MainChain const &chain) override;
+  void     EnqueueTransaction(ledger::Transaction const &tx) override;
+  void     EnqueueTransaction(ledger::TransactionLayout const &layout) override;
+  void     GenerateBlock(Block &block, std::size_t num_lanes, std::size_t num_slices,
+                         MainChain const &chain) override;
+  uint64_t GetBacklog() const override;
   /// @}
-
-  uint64_t  GetBacklog() const override;
-  uint32_t &log2_num_lanes()
-  {
-    return log2_num_lanes_;
-  }
 
   // Operators
   BasicMiner &operator=(BasicMiner const &) = delete;
   BasicMiner &operator=(BasicMiner &&) = delete;
 
 private:
-  using BitVector = bitmanip::BitVector;
-
-  struct TransactionEntry
-  {
-    BitVector                  resources;
-    ledger::TransactionSummary transaction;
-
-    TransactionEntry(ledger::TransactionSummary const &summary, uint32_t log2_num_lanes);
-    ~TransactionEntry() = default;
-  };
-
   using Mutex           = mutex::Mutex;
-  using TransactionList = std::list<TransactionEntry>;
-  using TransactionSet  = std::set<ledger::TransactionSummary>;
+  using TransactionList = TransactionLayoutQueue::UnderlyingList;
+  using TransactionSet  = std::unordered_set<ledger::TransactionLayout>;
   using ThreadPool      = threading::Pool;
+  using DigestSet       = ledger::DigestSet;
+  using Queue           = TransactionLayoutQueue;
 
-  static void GenerateSlices(TransactionList &tx, Block::Body &block, std::size_t offset,
+  /// @name Packing Operations
+  /// @{
+  static void GenerateSlices(Queue &transactions, Block::Body &block, std::size_t offset,
                              std::size_t interval, std::size_t num_lanes);
-  static void GenerateSlice(TransactionList &tx, Block::Slice &slice, std::size_t slice_index,
+  static void GenerateSlice(Queue &transactions, Block::Slice &slice, std::size_t slice_index,
                             std::size_t num_lanes);
+  static bool SortByFee(TransactionLayout const &a, TransactionLayout const &b);
+  /// @}
 
-  static bool SortByFee(TransactionEntry const &a, TransactionEntry const &b);
+  /// @name Configuration
+  /// @{
+  uint32_t       log2_num_lanes_;   ///< The log2 of the number of lanes
+  uint32_t const max_num_threads_;  ///< The configured maximum number of threads
+  ThreadPool     thread_pool_;      ///< The thread pool used to dispatch work
+  /// @}
 
-  uint32_t       log2_num_lanes_;                    ///< The log2 of the number of lanes
-  uint32_t const max_num_threads_;                   ///< The configured maximum number of threads
-  ThreadPool     thread_pool_;                       ///< The thread pool used to dispatch work
-  mutable Mutex  pending_lock_{__LINE__, __FILE__};  ///< The lock for the pending transaction queue
-  TransactionList pending_;                          ///< The pending transaction queue
-  TransactionSet  txs_seen_;                         ///< The transactions seen so far
-  std::size_t     main_queue_size_{0};               ///< The thread safe main queue size
-  TransactionList main_queue_;                       ///< The main transaction queue
-  bool            filtering_input_duplicates_{
-      true};  ///< Whether duplicate transactions are filtered on entry to the packer
+  /// @name Pending Queue
+  /// @{
+  mutable Mutex pending_lock_{__LINE__, __FILE__};  ///< Pending queue lock (priority 1)
+  Queue         pending_;                           ///< The main mining queue for the node
+  /// @}
+
+  /// @name Central Mining Pool Queue
+  /// @{
+  mutable Mutex mining_pool_lock_{__LINE__, __FILE__};  ///< Mining pool lock (priority 0)
+  Queue         mining_pool_;                           ///< The main mining queue for the node
+  /// @}
 };
 
 }  // namespace miner

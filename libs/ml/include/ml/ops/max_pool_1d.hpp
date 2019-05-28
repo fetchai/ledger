@@ -27,10 +27,11 @@ template <class T>
 class MaxPool1D : public BatchOps<T>
 {
 public:
-  using ArrayType    = T;
-  using SizeType     = typename ArrayType::SizeType;
-  using DataType     = typename ArrayType::Type;
-  using ArrayPtrType = std::shared_ptr<ArrayType>;
+  using ArrayType     = T;
+  using SizeType      = typename ArrayType::SizeType;
+  using DataType      = typename ArrayType::Type;
+  using ArrayPtrType  = std::shared_ptr<ArrayType>;
+  using VecTensorType = typename BatchOps<T>::VecTensorType;
 
   MaxPool1D(SizeType const kernel_size, SizeType const stride_size)
     : kernel_size_{kernel_size}
@@ -47,24 +48,22 @@ public:
    * @param output tensor of size [input_channels=output_channels x number_of_stride_sized_steps]
    * @return: output tensor parameter
    */
-  ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
-                    ArrayType &                                                 output) override
+  void Forward(VecTensorType const &inputs, ArrayType &output) override
   {
     ASSERT(inputs.size() == 1);
     // Input should be a 2D tensor [C x W]
     ASSERT(inputs.at(0).get().shape().size() == 2);
+    ASSERT(output.shape() == ComputeOutputShape(inputs));
 
-    auto output_shape = ComputeOutputShape(inputs);
-    ASSERT(output.shape() == output_shape);
     SizeType iter;
     DataType max;
     DataType val;
     auto     oit = output.begin();
     // output_channels = input_channels
-    for (SizeType i{0}; i < output_shape.at(1); i++)  // Iterate over kernel stride
+    for (SizeType i{0}; i < output.shape().at(1); i++)  // Iterate over kernel stride
     {
       iter = i * stride_size_;
-      for (SizeType c{0}; c < output_shape[0]; ++c)  // Iterate over output channels
+      for (SizeType c{0}; c < output.shape().at(0); ++c)  // Iterate over output channels
       {
         max = inputs.at(0).get().At(c, iter);
 
@@ -83,7 +82,6 @@ public:
         ++oit;
       }
     }
-    return output;
   }
 
   /**
@@ -97,16 +95,15 @@ public:
    * @return: output vector of tensors with back propagated error signal
    * output[0]=input_error[inputs[0].shape]
    */
-  std::vector<ArrayType> Backward(
-      std::vector<std::reference_wrapper<const ArrayType>> const &inputs,
-      ArrayType const &                                           error_signal) override
+  std::vector<ArrayType> Backward(VecTensorType const &inputs,
+                                  ArrayType const &    error_signal) override
   {
     ASSERT(inputs.size() == 1);
     ASSERT(error_signal.shape() == ComputeOutputShape(inputs));
 
     ArrayType return_signal{inputs.at(0).get().shape()};
 
-    auto output_shape = ComputeOutputShape(inputs);
+    auto output_shape = error_signal.shape();
 
     SizeType iter;
     DataType max;
@@ -141,26 +138,23 @@ public:
     return {return_signal};
   }
 
-  std::vector<SizeType> ComputeOutputShape(
-      std::vector<std::reference_wrapper<ArrayType const>> const &inputs) override
+  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
   {
-    // Return pre-computed value if exist
-    if (output_shape_.size() != 0)
-      return output_shape_;
+    std::vector<SizeType> output_shape;
+
     // output_shape_[0]=number of output channels
-    output_shape_.emplace_back(inputs.at(0).get().shape().at(0));
+    output_shape.emplace_back(inputs.at(0).get().shape().at(0));
     // output_shape_[1]=number of stride_size steps over input size
-    output_shape_.emplace_back((inputs.at(0).get().shape().at(1) - (kernel_size_ - stride_size_)) /
-                               stride_size_);
-    return output_shape_;
+    output_shape.emplace_back((inputs.at(0).get().shape().at(1) - (kernel_size_ - stride_size_)) /
+                              stride_size_);
+    return output_shape;
   }
 
   static constexpr char const *DESCRIPTOR = "MaxPool1D";
 
 private:
-  SizeType              kernel_size_;
-  SizeType              stride_size_;
-  std::vector<SizeType> output_shape_;
+  SizeType kernel_size_;
+  SizeType stride_size_;
 };
 
 }  // namespace ops

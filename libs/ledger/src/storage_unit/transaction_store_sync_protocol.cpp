@@ -17,7 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "ledger/storage_unit/transaction_store_sync_protocol.hpp"
-#include "ledger/chain/transaction_serialization.hpp"
+#include "ledger/chain/transaction_rpc_serializers.hpp"
 
 using fetch::byte_array::ConstByteArray;
 
@@ -101,7 +101,7 @@ void TransactionStoreSyncProtocol::TrimCache()
 
 /// @}
 
-void TransactionStoreSyncProtocol::OnNewTx(VerifiedTransaction const &o)
+void TransactionStoreSyncProtocol::OnNewTx(Transaction const &o)
 {
 #ifdef FETCH_ENABLE_METRICS
   RecordNewCacheElement(o.digest());
@@ -125,16 +125,17 @@ uint64_t TransactionStoreSyncProtocol::ObjectCount()
  *
  * @return: the subtree the client is requesting as a vector (size limited)
  */
-TxList TransactionStoreSyncProtocol::PullSubtree(byte_array::ConstByteArray const &rid,
-                                                 uint64_t                          bit_count)
+TransactionStoreSyncProtocol::TxArray TransactionStoreSyncProtocol::PullSubtree(
+    byte_array::ConstByteArray const &rid, uint64_t bit_count)
 {
   return store_->PullSubtree(rid, bit_count, PULL_LIMIT_);
 }
 
-TxList TransactionStoreSyncProtocol::PullObjects(service::CallContext const *call_context)
+TransactionStoreSyncProtocol::TxArray TransactionStoreSyncProtocol::PullObjects(
+    service::CallContext const *call_context)
 {
   // Creating result
-  TxList ret;
+  TxArray ret{};
 
   {
     generics::MilliTimer timer("ObjectSync:PullObjects", 500);
@@ -156,11 +157,11 @@ TxList TransactionStoreSyncProtocol::PullObjects(service::CallContext const *cal
   return ret;
 }
 
-TxList TransactionStoreSyncProtocol::PullSpecificObjects(
+TransactionStoreSyncProtocol::TxArray TransactionStoreSyncProtocol::PullSpecificObjects(
     std::vector<storage::ResourceID> const &rids)
 {
-  TxList              ret;
-  VerifiedTransaction tx;
+  TxArray     ret;
+  Transaction tx;
 
   for (auto const &rid : rids)
   {

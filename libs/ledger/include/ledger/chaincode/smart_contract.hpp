@@ -32,6 +32,8 @@ class Module;
 
 namespace ledger {
 
+class Address;
+
 /**
  * Smart Contract instance.
  *
@@ -64,14 +66,15 @@ private:
   using ModulePtr = std::shared_ptr<vm::Module>;
 
   // Transaction /
-  Status InvokeAction(std::string const &name, Transaction const &tx);
+  Status InvokeAction(std::string const &name, Transaction const &tx, BlockIndex index);
   Status InvokeQuery(std::string const &name, Query const &request, Query &response);
-  Status InvokeInit(Identity const &owner);
+  Status InvokeInit(Address const &owner);
 
-  std::string    source_;      ///< The source of the current contract
-  ConstByteArray digest_;      ///< The digest of the current contract
-  ExecutablePtr  executable_;  ///< The internal script object of the parsed source
-  ModulePtr      module_;      ///< The internal module instance for the contract
+  BlockIndex     block_index_{};  ///< The index current contract's block
+  std::string    source_;         ///< The source of the current contract
+  ConstByteArray digest_;         ///< The digest of the current contract
+  ExecutablePtr  executable_;     ///< The internal script object of the parsed source
+  ModulePtr      module_;         ///< The internal module instance for the contract
   std::string    init_fn_name_;
 };
 

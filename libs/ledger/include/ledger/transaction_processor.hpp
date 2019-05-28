@@ -21,21 +21,20 @@
 #include "ledger/transaction_verifier.hpp"
 
 #include <atomic>
+#include <memory>
 #include <thread>
 
 namespace fetch {
 namespace ledger {
 
+class Transaction;
 class StorageUnitInterface;
 class BlockPackerInterface;
 class TransactionStatusCache;
 
-class TransactionProcessor : public UnverifiedTransactionSink, public VerifiedTransactionSink
+class TransactionProcessor : public TransactionSink
 {
 public:
-  using ThreadPtr       = std::unique_ptr<std::thread>;
-  using TransactionList = std::vector<Transaction>;
-
   static constexpr char const *LOGGING_NAME = "TransactionProcessor";
 
   // Construction / Destruction
@@ -53,8 +52,8 @@ public:
 
   /// @name Transaction Processing
   /// @{
-  void AddTransaction(MutableTransaction const &mtx);
-  void AddTransaction(MutableTransaction &&mtx);
+  void AddTransaction(TransactionPtr const &mtx);
+  void AddTransaction(TransactionPtr &&mtx);
   /// @}
 
   // Operators
@@ -62,19 +61,11 @@ public:
   TransactionProcessor &operator=(TransactionProcessor &&) = delete;
 
 protected:
-  /// @name Unverified Transaction Sink
-  /// @{
-  void OnTransaction(UnverifiedTransaction const &tx) override;
-  /// @}
-
-  /// @name Transaction Handlers
-  /// @{
-  void OnTransaction(VerifiedTransaction const &tx) override;
-  void OnTransactions(TransactionList const &txs) override;
-  /// @}
+  void OnTransaction(TransactionPtr const &tx) override;
 
 private:
-  using Flag = std::atomic<bool>;
+  using Flag      = std::atomic<bool>;
+  using ThreadPtr = std::unique_ptr<std::thread>;
 
   StorageUnitInterface &  storage_;
   BlockPackerInterface &  packer_;
@@ -117,9 +108,9 @@ inline void TransactionProcessor::Stop()
  *
  * @param tx The reference to the new transaction to be processed
  */
-inline void TransactionProcessor::AddTransaction(MutableTransaction const &mtx)
+inline void TransactionProcessor::AddTransaction(TransactionPtr const &tx)
 {
-  verifier_.AddTransaction(mtx);
+  verifier_.AddTransaction(tx);
 }
 
 /**
@@ -127,9 +118,9 @@ inline void TransactionProcessor::AddTransaction(MutableTransaction const &mtx)
  *
  * @param tx The reference to the new transaction to be processed
  */
-inline void TransactionProcessor::AddTransaction(MutableTransaction &&mtx)
+inline void TransactionProcessor::AddTransaction(TransactionPtr &&tx)
 {
-  verifier_.AddTransaction(std::move(mtx));
+  verifier_.AddTransaction(std::move(tx));
 }
 
 }  // namespace ledger

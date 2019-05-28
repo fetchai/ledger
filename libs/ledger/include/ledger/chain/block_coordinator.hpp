@@ -24,6 +24,8 @@
 #include "core/threading/synchronised_state.hpp"
 #include "ledger/chain/block.hpp"
 #include "ledger/chain/main_chain.hpp"
+#include "ledger/chain/transaction.hpp"
+#include "moment/deadline_timer.hpp"
 #include "ledger/dag/dag.hpp"
 #include "ledger/upow/synergetic_executor.hpp"
 
@@ -33,6 +35,10 @@
 #include <thread>
 
 namespace fetch {
+namespace crypto {
+class Identity;
+}
+
 namespace ledger {
 namespace consensus {
 class ConsensusMinerInterface;
@@ -125,15 +131,14 @@ public:
   static constexpr char const *LOGGING_NAME = "BlockCoordinator";
 
   using ConstByteArray = byte_array::ConstByteArray;
-  using Identity       = ConstByteArray;
   using DAG            = fetch::ledger::DAG;
 
   enum class State
   {
     // Main loop
     RELOAD_STATE,   ///< Recovering previous state
-    SYNCHRONIZING,  ///< Catch up with the outstanding blocks
-    SYNCHRONIZED,   ///< Caught up waiting to generate a new block
+    SYNCHRONISING,                 ///< Catch up with the outstanding blocks
+    SYNCHRONISED,                  ///< Caught up waiting to generate a new block
 
     // Pipe 1
     PRE_EXEC_BLOCK_VALIDATION,  ///< Validation stage before block execution
@@ -161,7 +166,7 @@ public:
   BlockCoordinator(MainChain &chain, DAG &dag, ExecutionManagerInterface &execution_manager,
                    StorageUnitInterface &storage_unit, BlockPackerInterface &packer,
                    BlockSinkInterface &block_sink, TransactionStatusCache &status_cache,
-                   Identity identity, std::size_t num_lanes, std::size_t num_slices,
+                   crypto::Identity const &identity, std::size_t num_lanes, std::size_t num_slices,
                    std::size_t block_difficulty);
   BlockCoordinator(BlockCoordinator const &) = delete;
   BlockCoordinator(BlockCoordinator &&)      = delete;
@@ -187,6 +192,11 @@ public:
     return *state_machine_;
   }
 
+  StateMachine &GetStateMachine()
+  {
+    return *state_machine_;
+  }
+
   std::weak_ptr<core::StateMachineInterface> GetWeakStateMachine()
   {
     return state_machine_;
@@ -199,7 +209,7 @@ public:
 
   bool IsSynced() const
   {
-    return (state_machine_->state() == State::SYNCHRONIZED) &&
+    return (state_machine_->state() == State::SYNCHRONISED) &&
            (last_executed_block_.Get() == chain_.GetHeaviestBlockHash());
   }
 
@@ -229,16 +239,17 @@ private:
   using Timepoint          = Clock::time_point;
   using StateMachinePtr    = std::shared_ptr<StateMachine>;
   using MinerPtr           = std::shared_ptr<consensus::ConsensusMinerInterface>;
-  using TxDigestSetPtr     = std::unique_ptr<TxDigestSet>;
+  using TxDigestSetPtr    = std::unique_ptr<DigestSet>;
   using LastExecutedBlock  = SynchronisedState<ConstByteArray>;
   using FutureTimepoint    = fetch::core::FutureTimepoint;
+  using DeadlineTimer     = fetch::moment::DeadlineTimer;
   using SynergeticExecutor = fetch::consensus::SynergeticExecutor;
 
   /// @name Monitor State
   /// @{
   State OnReloadState();
-  State OnSynchronizing();
-  State OnSynchronized(State current, State previous);
+  State OnSynchronising();
+  State OnSynchronised(State current, State previous);
 
   // Phase 1
   State OnPreExecBlockValidation();
@@ -290,7 +301,7 @@ private:
 
   /// @name State Machine State
   /// @{
-  Identity        identity_{};             ///< The miner identity
+  Address         mining_address_;         ///< The miners address
   StateMachinePtr state_machine_;          ///< The main state machine for this service
   std::size_t     block_difficulty_;       ///< The number of leading zeros needed in the proof
   std::size_t     num_lanes_;              ///< The current number of lanes
@@ -300,15 +311,14 @@ private:
   BlockPeriod     block_period_;           ///< The desired period before a block is generated
   Timepoint       next_block_time_;        ///< The next point that a block should be generated
   BlockPtr        current_block_{};        ///< The pointer to the current block (read only)
-  NextBlockPtr
-                  next_block_{};  ///< The next block being created (read / write) - only in mining mode
-  TxDigestSetPtr  pending_txs_{};        ///< The list of pending txs that are being waited on
-  PeriodicAction  tx_wait_periodic_;     ///< Periodic print for transaction waiting
-  PeriodicAction  exec_wait_periodic_;   ///< Periodic print for execution
-  PeriodicAction  syncing_periodic_;     ///< Periodic print for synchronisation
-  FutureTimepoint wait_for_tx_timeout_;  ///< Timeout when waiting for transactions
-  FutureTimepoint
-       wait_before_asking_for_missing_tx_;  ///< Time to wait before asking peers for any missing txs
+  NextBlockPtr    next_block_{};           ///< The next block being created (read / write)
+  TxDigestSetPtr  pending_txs_{};          ///< The list of pending txs that are being waited on
+  PeriodicAction  tx_wait_periodic_;       ///< Periodic print for transaction waiting
+  PeriodicAction  exec_wait_periodic_;     ///< Periodic print for execution
+  PeriodicAction  syncing_periodic_;       ///< Periodic print for synchronisation
+  DeadlineTimer   wait_for_tx_timeout_{"bc:deadline"};  ///< Timeout when waiting for transactions
+  DeadlineTimer   wait_before_asking_for_missing_tx_{
+      "bc:deadline"};              ///< Time to wait before asking peers for any missing txs
   bool have_asked_for_missing_txs_;  ///< true if a request for missing Txs has been issued for the
                                      ///< current block
   /// @}

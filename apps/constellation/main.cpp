@@ -38,7 +38,6 @@
 #include <csignal>
 #include <cstdlib>
 #include <fstream>
-#include <iomanip>
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
@@ -49,6 +48,8 @@
 namespace {
 
 constexpr char const *LOGGING_NAME = "main";
+
+using fetch::ledger::Address;
 
 using Prover         = fetch::crypto::Prover;
 using BootstrapPtr   = std::unique_ptr<fetch::BootstrapMonitor>;
@@ -386,8 +387,9 @@ struct CommandLineArguments
     {
       auto const identity = prover->identity();
 
-      bool const is_public_network     = NetworkMode::PUBLIC_NETWORK == args.cfg.network_mode;
-      bool const is_non_fetch_identity = !fetch::crypto::IsFetchIdentity(identity);
+      bool const is_public_network = NetworkMode::PUBLIC_NETWORK == args.cfg.network_mode;
+      bool const is_non_fetch_identity =
+          !fetch::crypto::IsFetchIdentity(Address{identity}.display());
 
       if (is_public_network && is_non_fetch_identity)
       {

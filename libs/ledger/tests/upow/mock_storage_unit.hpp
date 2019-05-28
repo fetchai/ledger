@@ -56,14 +56,14 @@ public:
   MOCK_METHOD1(Get, Document(ResourceAddress const &));
   MOCK_METHOD1(GetOrCreate, Document(ResourceAddress const &));
   MOCK_METHOD2(Set, void(ResourceAddress const &, StateValue const &));
-  MOCK_METHOD1(Lock, bool(ResourceAddress const &));
-  MOCK_METHOD1(Unlock, bool(ResourceAddress const &));
+  MOCK_METHOD1(Lock, bool(ShardIndex));
+  MOCK_METHOD1(Unlock, bool(ShardIndex));
 
   MOCK_METHOD1(AddTransaction, void(Transaction const &));
   MOCK_METHOD2(GetTransaction, bool(ConstByteArray const &, Transaction &));
   MOCK_METHOD1(HasTransaction, bool(ConstByteArray const &));
 
-  MOCK_METHOD1(PollRecentTx, TxSummaries(uint32_t));
+  MOCK_METHOD1(PollRecentTx, TxLayouts(uint32_t));
 
   MOCK_METHOD0(CurrentHash, Hash());
   MOCK_METHOD0(LastCommitHash, Hash());

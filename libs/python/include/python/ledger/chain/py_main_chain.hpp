@@ -17,7 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include <iostream>
 #include <string>
 
 #include "ledger/chain/main_chain.hpp"

@@ -25,8 +25,6 @@ namespace ledger {
 class ExecutionManagerInterface
 {
 public:
-  using BlockHash = ledger::Block::Digest;
-
   enum class ScheduleStatus
   {
     SCHEDULED = 0,  ///< The block has been scheduled for execution
@@ -60,11 +58,11 @@ public:
 
   /// @name Execution Manager Interface
   /// @{
-  virtual ScheduleStatus Execute(Block::Body const &block)     = 0;
-  virtual void           SetLastProcessedBlock(BlockHash hash) = 0;
-  virtual BlockHash      LastProcessedBlock()                  = 0;
-  virtual State          GetState()                            = 0;
-  virtual bool           Abort()                               = 0;
+  virtual ScheduleStatus Execute(Block::Body const &block)          = 0;
+  virtual void           SetLastProcessedBlock(Digest block_digest) = 0;
+  virtual Digest         LastProcessedBlock()                       = 0;
+  virtual State          GetState()                                 = 0;
+  virtual bool           Abort()                                    = 0;
   /// @}
 };
 

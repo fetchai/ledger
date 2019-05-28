@@ -19,6 +19,7 @@
 
 #include "crypto/fnv.hpp"
 #include "crypto/sha256.hpp"
+#include "ledger/chain/transaction.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 
 #include <algorithm>
@@ -35,7 +36,7 @@ public:
   using state_store_type =
       std::unordered_map<fetch::byte_array::ConstByteArray, fetch::byte_array::ConstByteArray>;
   /*using state_archive_type = std::unordered_map<bookmark_type, state_store_type>; */
-  using lock_store_type = std::unordered_set<fetch::byte_array::ConstByteArray>;
+  using lock_store_type = std::unordered_set<ShardIndex>;
   using mutex_type      = std::mutex;
   using lock_guard_type = std::lock_guard<mutex_type>;
   using hash_type       = fetch::byte_array::ConstByteArray;
@@ -84,30 +85,30 @@ public:
     state_[key.id()] = value;
   }
 
-  bool Lock(ResourceAddress const &key) override
+  bool Lock(ShardIndex shard) override
   {
     lock_guard_type lock(mutex_);
     bool            success = false;
 
-    bool const already_locked = locks_.find(key.id()) != locks_.end();
+    bool const already_locked = locks_.find(shard) != locks_.end();
     if (!already_locked)
     {
-      locks_.insert(key.id());
+      locks_.insert(shard);
       success = true;
     }
 
     return success;
   }
 
-  bool Unlock(ResourceAddress const &key) override
+  bool Unlock(ShardIndex shard) override
   {
     lock_guard_type lock(mutex_);
     bool            success = false;
 
-    bool const already_locked = locks_.find(key.id()) != locks_.end();
+    bool const already_locked = locks_.find(shard) != locks_.end();
     if (already_locked)
     {
-      locks_.erase(key.id());
+      locks_.erase(shard);
       success = true;
     }
 
@@ -142,7 +143,7 @@ public:
     return transactions_.find(digest) != transactions_.end();
   }
 
-  void IssueCallForMissingTxs(fetch::ledger::TxDigestSet const &) override
+  void IssueCallForMissingTxs(fetch::ledger::DigestSet const &) override
   {}
 
   Hash CurrentHash() override
@@ -167,7 +168,7 @@ public:
   };
 
   // Does nothing
-  TxSummaries PollRecentTx(uint32_t) override
+  TxLayouts PollRecentTx(uint32_t) override
   {
     return {};
   }

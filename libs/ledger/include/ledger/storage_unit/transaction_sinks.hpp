@@ -17,49 +17,29 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chain/transaction.hpp"
+#include <memory>
+#include <vector>
 
 namespace fetch {
 namespace ledger {
 
-class UnverifiedTransactionSink
+class Transaction;
+
+class TransactionSink
 {
 public:
-  using TransactionList = std::vector<UnverifiedTransaction>;
+  using TransactionPtr  = std::shared_ptr<Transaction>;
+  using TransactionList = std::vector<TransactionPtr>;
 
   // Construction / Destruction
-  UnverifiedTransactionSink()          = default;
-  virtual ~UnverifiedTransactionSink() = default;
+  TransactionSink()          = default;
+  virtual ~TransactionSink() = default;
 
-  /// @name Transaction Handlers
+  /// @name Transaction Sink
   /// @{
-  virtual void OnTransaction(UnverifiedTransaction const &tx) = 0;
+  virtual void OnTransaction(TransactionPtr const &tx) = 0;
   /// @}
 };
-
-class VerifiedTransactionSink
-{
-public:
-  using TransactionList = std::vector<VerifiedTransaction>;
-
-  // Construction / Destruction
-  VerifiedTransactionSink()          = default;
-  virtual ~VerifiedTransactionSink() = default;
-
-  /// @name Transaction Handlers
-  /// @{
-  virtual void OnTransaction(VerifiedTransaction const &tx) = 0;
-  virtual void OnTransactions(TransactionList const &txs);
-  /// @}
-};
-
-inline void VerifiedTransactionSink::OnTransactions(TransactionList const &txs)
-{
-  for (auto const &tx : txs)
-  {
-    OnTransaction(tx);
-  }
-}
 
 }  // namespace ledger
 }  // namespace fetch

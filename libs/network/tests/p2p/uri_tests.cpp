@@ -19,7 +19,6 @@
 #include "network/uri.hpp"
 
 #include <gtest/gtest.h>
-#include <iostream>
 #include <memory>
 
 using fetch::network::Uri;

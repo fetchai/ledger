@@ -31,11 +31,11 @@ template <class T>
 class RandomizedRelu : public fetch::ml::ElementWiseOps<T>
 {
 public:
-  using ArrayType    = T;
-  using DataType     = typename ArrayType::Type;
-  using ArrayPtrType = std::shared_ptr<ArrayType>;
-  using SizeType     = typename ArrayType::SizeType;
-  using RNG          = fetch::random::LaggedFibonacciGenerator<>;
+  using ArrayType     = T;
+  using DataType      = typename ArrayType::Type;
+  using SizeType      = typename ArrayType::SizeType;
+  using RNG           = fetch::random::LaggedFibonacciGenerator<>;
+  using VecTensorType = typename ElementWiseOps<T>::VecTensorType;
 
   RandomizedRelu(DataType const lower_bound, DataType const upper_bound,
                  SizeType const &random_seed = 25102015)
@@ -49,8 +49,7 @@ public:
 
   virtual ~RandomizedRelu() = default;
 
-  virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
-                            ArrayType &                                                 output)
+  virtual void Forward(VecTensorType const &inputs, ArrayType &output)
   {
     assert(inputs.size() == 1);
     assert(output.shape() == this->ComputeOutputShape(inputs));
@@ -62,13 +61,10 @@ public:
 
     DataType alpha = this->is_training_ ? random_value_ : bounds_mean_;
     fetch::math::LeakyRelu(inputs.front().get(), alpha, output);
-
-    return output;
   }
 
-  virtual std::vector<ArrayType> Backward(
-      std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
-      ArrayType const &                                           error_signal)
+  virtual std::vector<ArrayType> Backward(VecTensorType const &inputs,
+                                          ArrayType const &    error_signal)
   {
     assert(inputs.size() == 1);
     assert(inputs.front().get().shape() == error_signal.shape());
@@ -80,7 +76,7 @@ public:
     DataType alpha = this->is_training_ ? random_value_ : bounds_mean_;
 
     // gradient of randomized-relu function is for x<0 = alpha, x>=0 = 1.0
-    t = this->Forward(inputs, t);
+    this->Forward(inputs, t);
 
     auto it  = t.cbegin();
     auto rit = ret.begin();

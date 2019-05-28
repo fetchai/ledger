@@ -16,8 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chain/mutable_transaction.hpp"
+#include "crypto/ecdsa.hpp"
 #include "ledger/chain/transaction.hpp"
+#include "ledger/chain/transaction_builder.hpp"
 #include "ledger/chaincode/dummy_contract.hpp"
 
 #include "ledger/state_sentinel_adapter.hpp"
@@ -26,7 +27,6 @@
 
 #include <gmock/gmock.h>
 
-#include <iostream>
 #include <memory>
 
 using ::testing::_;
@@ -83,19 +83,24 @@ TEST_F(DummyContractTests, CheckDispatch)
   EXPECT_CALL(*storage_, AddTransaction(_)).Times(0);
   EXPECT_CALL(*storage_, GetTransaction(_, _)).Times(0);
 
-  // create the sample transaction
-  MutableTransaction tx;
-  tx.set_contract_name("fetch.dummy.wait");
+  fetch::crypto::ECDSASigner signer;
 
-  Identifier identifier;
-  ASSERT_TRUE(identifier.Parse(tx.contract_name()));
+  // create the sample transaction
+  auto const tx = TransactionBuilder()
+                      .From(Address{signer.identity()})
+                      .TargetChainCode("fetch.dummy", BitVector{})
+                      .Action("wait")
+                      .Signer(signer.identity())
+                      .Seal()
+                      .Sign(signer)
+                      .Build();
 
   // create the storage adapter
-  StateSentinelAdapter adapter(*storage_, identifier.GetParent(), tx.resources(),
-                               tx.raw_resources());
+  StateSentinelAdapter adapter(*storage_, Identifier{tx->chain_code()}, BitVector{});
 
   // attach, dispatch and detach (run the life cycle)
   contract_->Attach(adapter);
-  contract_->DispatchTransaction(identifier.name(), VerifiedTransaction::Create(tx));
+  const auto arbitrary_block_number = 1234u;
+  contract_->DispatchTransaction(tx->action(), *tx, arbitrary_block_number);
   contract_->Detach();
 }

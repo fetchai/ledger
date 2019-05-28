@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "ledger/chaincode/smart_contract_manager.hpp"
+#include "ledger/chain/transaction.hpp"
 #include "ledger/chaincode/smart_contract.hpp"
 
 #include "core/byte_array/decoders.hpp"
@@ -37,7 +38,6 @@
 #include <string>
 
 using fetch::byte_array::ConstByteArray;
-using fetch::byte_array::ToBase64;
 using fetch::byte_array::FromBase64;
 
 namespace fetch {
@@ -51,7 +51,7 @@ SmartContractManager::SmartContractManager()
   OnTransaction("create", this, &SmartContractManager::OnCreate);
 }
 
-Contract::Status SmartContractManager::OnCreate(Transaction const &tx)
+Contract::Status SmartContractManager::OnCreate(Transaction const &tx, BlockIndex)
 {
   // attempt to parse the transaction
   variant::Variant data;
@@ -79,7 +79,7 @@ Contract::Status SmartContractManager::OnCreate(Transaction const &tx)
   contract_source = FromBase64(contract_source);
 
   // calculate a hash to compare against the one submitted
-  auto const calculated_hash = ToBase64(crypto::Hash<crypto::SHA256>(contract_source));
+  auto const calculated_hash = crypto::Hash<crypto::SHA256>(contract_source).ToHex();
 
   if (calculated_hash != contract_hash)
   {
@@ -91,8 +91,7 @@ Contract::Status SmartContractManager::OnCreate(Transaction const &tx)
   }
 
   // Set the scope for the smart contract to execute its on_init if it exists
-  auto tx_signatures = tx.signatures();
-
+  auto const &tx_signatures = tx.signatories();
   if (tx_signatures.size() != 1)
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Only one signature allowed when setting up smart contract");
@@ -100,10 +99,7 @@ Contract::Status SmartContractManager::OnCreate(Transaction const &tx)
   }
 
   Identifier scope;
-
-  auto pub_key_b64 = tx_signatures.begin()->first.identifier().ToBase64();
-
-  if (!scope.Parse(calculated_hash + "." + pub_key_b64))
+  if (!scope.Parse(calculated_hash + "." + tx.from().display()))
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Failed to parse scope for smart contract");
     return Status::FAILED;
@@ -129,7 +125,7 @@ Contract::Status SmartContractManager::OnCreate(Transaction const &tx)
         FETCH_LOG_WARN(LOGGING_NAME, "More than one init function found in SC. Terminating.");
         return Status::FAILED;
       }
-      FETCH_LOG_WARN(LOGGING_NAME, "Found init function for SC");
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Found init function for SC");
       on_init_function = fn.name;
       break;
 
@@ -143,13 +139,13 @@ Contract::Status SmartContractManager::OnCreate(Transaction const &tx)
   }
 
   // if there is an init function to run, do so.
-  if (on_init_function.size() > 0)
+  if (!on_init_function.empty())
   {
     // Attach our state to the smart contract
     smart_contract.Attach(state());
 
     // Dispatch to the init. method
-    auto const status = smart_contract.DispatchInitialise(tx.signatures().begin()->first);
+    auto const status = smart_contract.DispatchInitialise(tx.signatories().begin()->address);
     if (status != Status::OK)
     {
       return status;

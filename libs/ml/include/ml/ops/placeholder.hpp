@@ -28,27 +28,25 @@ template <class T>
 class PlaceHolder : public fetch::ml::ElementWiseOps<T>
 {
 public:
-  using ArrayType    = T;
-  using SizeType     = typename ArrayType::SizeType;
-  using ArrayPtrType = std::shared_ptr<ArrayType>;
+  using ArrayType     = T;
+  using SizeType      = typename ArrayType::SizeType;
+  using ArrayPtrType  = std::shared_ptr<ArrayType>;
+  using VecTensorType = typename ElementWiseOps<T>::VecTensorType;
 
   PlaceHolder() = default;
 
-  virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
-                            ArrayType &                                                 output)
+  virtual void Forward(VecTensorType const &inputs, ArrayType &output)
   {
-    (void)output;
     ASSERT(inputs.empty());
     ASSERT(this->output_);
-    return *(this->output_);
+    output = *(this->output_);
   }
 
-  virtual std::vector<ArrayType> Backward(
-      std::vector<std::reference_wrapper<const ArrayType>> const &inputs,
-      ArrayType const &                                           errorSignal)
+  virtual std::vector<ArrayType> Backward(VecTensorType const &inputs,
+                                          ArrayType const &    error_signal)
   {
     ASSERT(inputs.empty());
-    return {errorSignal};
+    return {error_signal};
   }
 
   virtual bool SetData(ArrayType const &data)
@@ -62,8 +60,7 @@ public:
     return old_shape != this->output_->shape();
   }
 
-  virtual std::vector<SizeType> ComputeOutputShape(
-      std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
+  virtual std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const
   {
     (void)inputs;
     return this->output_->shape();

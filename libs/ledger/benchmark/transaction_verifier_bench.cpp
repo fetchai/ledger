@@ -17,24 +17,21 @@
 //------------------------------------------------------------------------------
 
 #include "crypto/ecdsa.hpp"
-#include "ledger/chain/mutable_transaction.hpp"
-#include "ledger/chain/transaction.hpp"
+#include "ledger/storage_unit/transaction_sinks.hpp"
 #include "ledger/transaction_verifier.hpp"
 
 #include "tx_generation.hpp"
 
 #include <benchmark/benchmark.h>
 #include <condition_variable>
-#include <iostream>
 #include <thread>
 
-using fetch::ledger::VerifiedTransaction;
 using fetch::ledger::TransactionVerifier;
 using fetch::crypto::ECDSASigner;
 
 namespace {
 
-class DummySink : public fetch::ledger::VerifiedTransactionSink
+class DummySink : public fetch::ledger::TransactionSink
 {
 
   std::size_t const       threshold_;
@@ -47,21 +44,10 @@ public:
     : threshold_(threshold)
   {}
 
-  void OnTransaction(VerifiedTransaction const &) override
+  void OnTransaction(TransactionPtr const &) override
   {
     std::lock_guard<std::mutex> lock(lock_);
     ++count_;
-
-    if (count_ >= threshold_)
-    {
-      condition_.notify_all();
-    }
-  }
-
-  void OnTransactions(TransactionList const &txs) override
-  {
-    std::lock_guard<std::mutex> lock(lock_);
-    count_ += txs.size();
 
     if (count_ >= threshold_)
     {
@@ -88,7 +74,7 @@ void TransactionVerifierBench(benchmark::State &state)
 
   // generate the transactions
   ECDSASigner signer;
-  auto const  txs = GenerateTransactions(static_cast<std::size_t>(state.range(1)), false, &signer);
+  auto const  txs = GenerateTransactions(static_cast<std::size_t>(state.range(1)), signer);
 
   // wait for the
   for (auto _ : state)
@@ -103,7 +89,7 @@ void TransactionVerifierBench(benchmark::State &state)
     // front load the verifier
     for (auto const &tx : txs)
     {
-      verifier->AddTransaction(tx.AsMutable());
+      verifier->AddTransaction(tx);
     }
 
     verifier->Start();

@@ -23,7 +23,7 @@
 #include "core/runnable.hpp"
 #include "core/state_machine.hpp"
 #include "core/threading.hpp"
-#include "ledger/chain/transaction.hpp"
+#include "ledger/chain/transaction_layout.hpp"
 #include "storage/object_store.hpp"
 
 #include <chrono>
@@ -50,12 +50,13 @@ class TransientObjectStore
 public:
   using Callback     = std::function<void(Object const &)>;
   using Archive      = ObjectStore<Object>;
-  using TxSummaries  = std::vector<ledger::TransactionSummary>;
+  using TxLayouts    = std::vector<ledger::TransactionLayout>;
+  using TxArray      = std::vector<ledger::Transaction>;
   using WeakRunnable = core::WeakRunnable;
 
   static constexpr char const *LOGGING_NAME = "TransientObjectStore";
 
-  TransientObjectStore();
+  explicit TransientObjectStore(uint32_t log2_num_lanes);
   TransientObjectStore(TransientObjectStore const &) = delete;
   TransientObjectStore(TransientObjectStore &&)      = delete;
 
@@ -64,11 +65,11 @@ public:
 
   /// @name Accessors
   /// @{
-  bool        Get(ResourceID const &rid, Object &object);
-  bool        Has(ResourceID const &rid);
-  void        Set(ResourceID const &rid, Object const &object, bool newly_seen);
-  bool        Confirm(ResourceID const &rid);
-  TxSummaries GetRecent(uint32_t max_to_poll);
+  bool      Get(ResourceID const &rid, Object &object);
+  bool      Has(ResourceID const &rid);
+  void      Set(ResourceID const &rid, Object const &object, bool newly_seen);
+  bool      Confirm(ResourceID const &rid);
+  TxLayouts GetRecent(uint32_t max_to_poll);
   /// @}
 
   void SetCallback(Callback cb)
@@ -82,10 +83,10 @@ public:
 
   std::size_t Size() const;
 
-  ledger::TxList PullSubtree(byte_array::ConstByteArray const &rid, uint64_t bit_count,
-                             uint64_t pull_limit);
+  TxArray PullSubtree(byte_array::ConstByteArray const &rid, uint64_t bit_count,
+                      uint64_t pull_limit);
 
-  WeakRunnable getWeakRunnable() const;
+  WeakRunnable GetWeakRunnable() const;
 
 private:
   enum class Phase
@@ -98,7 +99,7 @@ private:
   using Mutex           = fetch::mutex::Mutex;
   using StateMachinePtr = std::shared_ptr<core::StateMachine<Phase>>;
   using Queue           = fetch::core::MPMCQueue<ResourceID, 1 << 15>;
-  using RecentQueue     = fetch::core::MPMCQueue<ledger::TransactionSummary, 1 << 15>;
+  using RecentQueue     = fetch::core::MPMCQueue<ledger::TransactionLayout, 1 << 15>;
   using Cache           = std::unordered_map<ResourceID, Object>;
   using Flag            = std::atomic<bool>;
 
@@ -110,6 +111,7 @@ private:
   Phase OnWriting();
   Phase OnFlushing();
 
+  uint32_t const    log2_num_lanes_;
   const std::size_t batch_size_ = 100;
 
   std::vector<ResourceID> rids;
@@ -134,8 +136,9 @@ private:
  * @tparam O The type of the object being stored
  */
 template <typename O>
-inline TransientObjectStore<O>::TransientObjectStore()
-  : rids(batch_size_)
+inline TransientObjectStore<O>::TransientObjectStore(uint32_t log2_num_lanes)
+  : log2_num_lanes_(log2_num_lanes)
+  , rids(batch_size_)
   , state_machine_{
         std::make_shared<core::StateMachine<Phase>>("TransientObjectStore", Phase::Populating)}
 
@@ -154,10 +157,10 @@ std::size_t TransientObjectStore<O>::Size() const
 }
 
 template <typename O>
-ledger::TxList TransientObjectStore<O>::PullSubtree(byte_array::ConstByteArray const &rid,
-                                                    uint64_t bit_count, uint64_t pull_limit)
+typename TransientObjectStore<O>::TxArray TransientObjectStore<O>::PullSubtree(
+    byte_array::ConstByteArray const &rid, uint64_t bit_count, uint64_t pull_limit)
 {
-  ledger::TxList ret;
+  TxArray ret{};
 
   uint64_t counter = 0;
 
@@ -284,7 +287,7 @@ typename TransientObjectStore<O>::Phase TransientObjectStore<O>::OnFlushing()
 }
 
 template <typename O>
-core::WeakRunnable TransientObjectStore<O>::getWeakRunnable() const
+core::WeakRunnable TransientObjectStore<O>::GetWeakRunnable() const
 {
   return state_machine_;
 }
@@ -353,18 +356,18 @@ bool TransientObjectStore<O>::Get(ResourceID const &rid, O &object)
  * @return a vector of the tx summaries
  */
 template <typename O>
-typename TransientObjectStore<O>::TxSummaries TransientObjectStore<O>::GetRecent(
-    uint32_t max_to_poll)
+typename TransientObjectStore<O>::TxLayouts TransientObjectStore<O>::GetRecent(uint32_t max_to_poll)
 {
-  TransientObjectStore<O>::TxSummaries   ret;
-  ledger::TransactionSummary             summary;
   static const std::chrono::milliseconds MAX_WAIT{5};
+
+  TxLayouts                 layouts{};
+  ledger::TransactionLayout summary;
 
   for (std::size_t i = 0; i < max_to_poll; ++i)
   {
     if (most_recent_seen_.Pop(summary, MAX_WAIT))
     {
-      ret.push_back(summary);
+      layouts.push_back(summary);
     }
     else
     {
@@ -372,7 +375,7 @@ typename TransientObjectStore<O>::TxSummaries TransientObjectStore<O>::GetRecent
     }
   }
 
-  return ret;
+  return layouts;
 }
 
 /**
@@ -413,8 +416,8 @@ void TransientObjectStore<O>::Set(ResourceID const &rid, O const &object, bool n
   if (newly_seen)
   {
     std::size_t count{most_recent_seen_.QUEUE_LENGTH};
-    bool const  inserted =
-        most_recent_seen_.Push(object.summary(), count, std::chrono::milliseconds{100});
+    bool const inserted = most_recent_seen_.Push(ledger::TransactionLayout{object, log2_num_lanes_},
+                                                 count, std::chrono::milliseconds{100});
     if (inserted && prev_count != count)
     {
       if (prev_count < recent_queue_alarm_threshold && count >= recent_queue_alarm_threshold)

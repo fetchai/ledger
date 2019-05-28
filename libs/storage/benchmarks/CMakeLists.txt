@@ -1,6 +1,6 @@
-################################################################################
-# F E T C H   S T O R A G E   T E S T S
-################################################################################
+#
+# F E T C H   S T O R A G E   B E N C H M A R K S
+#
 cmake_minimum_required(VERSION 3.5 FATAL_ERROR)
 project(fetch-storage)
 

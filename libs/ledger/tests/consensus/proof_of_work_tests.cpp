@@ -19,7 +19,7 @@
 #include "core/byte_array/encoders.hpp"
 #include "ledger/chain/consensus/proof_of_work.hpp"
 #include <gtest/gtest.h>
-#include <iostream>
+
 using namespace fetch::ledger::consensus;
 using namespace fetch::byte_array;
 

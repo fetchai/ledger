@@ -20,15 +20,14 @@
 #include "ledger/chain/consensus/dummy_miner.hpp"
 #include "ledger/chain/main_chain.hpp"
 #include <gtest/gtest.h>
-#include <iostream>
 #include <list>
 
 using fetch::ledger::consensus::DummyMiner;
 using fetch::ledger::Block;
+using fetch::ledger::Address;
 
-using Blocks    = std::vector<Block>;
-using Body      = Block::Body;
-using BlockHash = Block::Digest;
+using Blocks = std::vector<Block>;
+using Body   = Block::Body;
 
 // TODO(issue 33): get these from helper_functions when it's sorted
 // Time related functionality
@@ -76,9 +75,8 @@ TEST(ledger_main_chain_gtest, Test_mining_proof)
     for (std::size_t j = 0; j < blockIterations; ++j)
     {
       Block block;
-      Body  block_body;
-      block_body.block_number = j;
-      block.body              = block_body;
+      block.body.block_number = j;
+      block.body.miner        = Address{Address::RawAddress{}};
       block.nonce             = 0;
       block.UpdateDigest();
       block.proof.SetTarget(diff);  // Number of zeroes
@@ -111,10 +109,9 @@ TEST(ledger_main_chain_gtest, Test_mining_proof_after_serialization)
   for (std::size_t j = 0; j < 10; ++j)
   {
     Block block;
-    Body  block_body;
-    block_body.block_number = j;
+    block.body.block_number = j;
+    block.body.miner        = Address{Address::RawAddress{}};
     block.nonce             = 0;
-    block.body              = block_body;
     block.UpdateDigest();
     block.proof.SetTarget(8);  // Number of zeroes
 

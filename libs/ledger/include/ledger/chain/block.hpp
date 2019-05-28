@@ -19,8 +19,11 @@
 
 #include "core/byte_array/byte_array.hpp"
 #include "core/serializers/stl_types.hpp"
+#include "ledger/chain/address.hpp"
+#include "ledger/chain/address_rpc_serializer.hpp"
 #include "ledger/chain/consensus/proof_of_work.hpp"
-#include "ledger/chain/mutable_transaction.hpp"
+#include "ledger/chain/digest.hpp"
+#include "ledger/chain/transaction_layout.hpp"
 
 #include <memory>
 
@@ -35,11 +38,9 @@ namespace ledger {
 class Block
 {
 public:
-  using Identity  = byte_array::ConstByteArray;
-  using Digest    = byte_array::ConstByteArray;
-  using Proof     = consensus::ProofOfWork;
-  using Slice     = std::vector<TransactionSummary>;
-  using Slices    = std::vector<Slice>;
+  using Proof  = consensus::ProofOfWork;
+  using Slice  = std::vector<TransactionLayout>;
+  using Slices = std::vector<Slice>;
   using DAGDigest = byte_array::ConstByteArray;
   using DAGNodes  = std::vector<DAGDigest>;
 
@@ -51,7 +52,7 @@ public:
     Digest   previous_hash;      ///< The hash of the previous block
     Digest   merkle_hash;        ///< The merkle state hash across all shards
     uint64_t block_number{0};    ///< The height of the block from genesis
-    Identity miner;              ///< The identity of the generated miner
+    Address  miner;              ///< The identity of the generated miner
     uint32_t log2_num_lanes{0};  ///< The log2(number of lanes)
     Slices   slices;             ///< The slice lists
     DAGNodes dag_nodes;          ///< The DAG nodes which the chain is certifying

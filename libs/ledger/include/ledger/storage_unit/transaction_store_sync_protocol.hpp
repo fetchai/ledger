@@ -52,7 +52,7 @@ public:
     PULL_SPECIFIC_OBJECTS = 4
   };
 
-  using ObjectStore = storage::TransientObjectStore<VerifiedTransaction>;
+  using ObjectStore = storage::TransientObjectStore<Transaction>;
 
   static constexpr char const *LOGGING_NAME = "ObjectStoreSyncProtocol";
 
@@ -62,7 +62,7 @@ public:
   TransactionStoreSyncProtocol(TransactionStoreSyncProtocol &&)      = delete;
   ~TransactionStoreSyncProtocol() override                           = default;
 
-  void OnNewTx(VerifiedTransaction const &o);
+  void OnNewTx(Transaction const &o);
   void TrimCache();
 
   // Operators
@@ -78,27 +78,24 @@ private:
     using Timepoint  = Clock::time_point;
     using AddressSet = std::unordered_set<muddle::Muddle::Address>;
 
-    CachedObject(UnverifiedTransaction value)
+    explicit CachedObject(Transaction value)
       : data(std::move(value))
     {}
 
-    CachedObject(UnverifiedTransaction &&value)
-      : data(std::move(value))
-    {}
-
-    UnverifiedTransaction data;
-    AddressSet            delivered_to;
-    Timepoint             created{Clock::now()};
+    Transaction data;
+    AddressSet  delivered_to;
+    Timepoint   created{Clock::now()};
   };
 
-  using Self  = TransactionStoreSyncProtocol;
-  using Cache = std::vector<CachedObject>;
+  using Self    = TransactionStoreSyncProtocol;
+  using Cache   = std::vector<CachedObject>;
+  using TxArray = std::vector<Transaction>;
 
   uint64_t ObjectCount();
-  TxList   PullObjects(service::CallContext const *call_context);
+  TxArray  PullObjects(service::CallContext const *call_context);
 
-  TxList PullSubtree(byte_array::ConstByteArray const &rid, uint64_t mask);
-  TxList PullSpecificObjects(std::vector<storage::ResourceID> const &rids);
+  TxArray PullSubtree(byte_array::ConstByteArray const &rid, uint64_t mask);
+  TxArray PullSpecificObjects(std::vector<storage::ResourceID> const &rids);
 
   ObjectStore *store_;  ///< The pointer to the object store
 

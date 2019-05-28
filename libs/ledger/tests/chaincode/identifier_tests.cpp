@@ -19,6 +19,7 @@
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/byte_array/encoders.hpp"
+#include "ledger/chain/address.hpp"
 #include "ledger/identifier.hpp"
 
 #include <gtest/gtest.h>
@@ -26,7 +27,7 @@
 using fetch::ledger::Identifier;
 using fetch::byte_array::ConstByteArray;
 using fetch::byte_array::ByteArray;
-using fetch::byte_array::ToBase64;
+using fetch::ledger::Address;
 
 ConstByteArray GenerateSequence(std::size_t size)
 {
@@ -106,18 +107,20 @@ TEST(IdentifierTests, CheckSmartContractDigest)
 {
   auto const digest = GenerateSequence(32);
 
-  Identifier id{ToBase64(digest)};
+  Identifier id{ToHex(digest)};
 
   EXPECT_EQ(Identifier::Type::SMART_CONTRACT, id.type());
-  EXPECT_EQ(ToBase64(digest), id.qualifier());
+  EXPECT_EQ(ToHex(digest), id.qualifier());
 }
 
 TEST(IdentifierTests, CheckContractName)
 {
   auto const digest     = GenerateSequence(32);
-  auto const public_key = GenerateSequence(64);
+  auto const public_key = GenerateSequence(32);
 
-  auto const ns = ToBase64(digest) + "." + ToBase64(public_key);
+  Address address{public_key};
+
+  auto const ns = ToHex(digest) + "." + address.display();
 
   Identifier id{ns + "." + "main"};
 
@@ -125,5 +128,5 @@ TEST(IdentifierTests, CheckContractName)
   EXPECT_EQ(ns, id.name_space());
   EXPECT_EQ(ConstByteArray{"main"}, id.name());
   EXPECT_EQ(ns + "." + "main", id.full_name());
-  EXPECT_EQ(ToBase64(digest), id.qualifier());
+  EXPECT_EQ(ToHex(digest), id.qualifier());
 }

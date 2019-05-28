@@ -53,8 +53,8 @@ public:
   MOCK_METHOD1(Get, Document(ResourceAddress const &));
   MOCK_METHOD1(GetOrCreate, Document(ResourceAddress const &));
   MOCK_METHOD2(Set, void(ResourceAddress const &, StateValue const &));
-  MOCK_METHOD1(Lock, bool(ResourceAddress const &));
-  MOCK_METHOD1(Unlock, bool(ResourceAddress const &));
+  MOCK_METHOD1(Lock, bool(ShardIndex));
+  MOCK_METHOD1(Unlock, bool(ShardIndex));
 
   MOCK_METHOD0(CurrentHash, Hash());
   MOCK_METHOD0(LastCommitHash, Hash());
@@ -63,12 +63,11 @@ public:
   MOCK_METHOD2(HashExists, bool(Hash const &, uint64_t));
 
   MOCK_METHOD1(AddTransaction, void(fetch::ledger::Transaction const &));
-  MOCK_METHOD2(GetTransaction,
-               bool(fetch::byte_array::ConstByteArray const &, fetch::ledger::Transaction &));
+  MOCK_METHOD2(GetTransaction, bool(fetch::ledger::Digest const &, fetch::ledger::Transaction &));
   MOCK_METHOD1(HasTransaction, bool(fetch::byte_array::ConstByteArray const &));
-  MOCK_METHOD1(IssueCallForMissingTxs, void(fetch::ledger::TxDigestSet const &));
+  MOCK_METHOD1(IssueCallForMissingTxs, void(fetch::ledger::DigestSet const &));
 
-  MOCK_METHOD1(PollRecentTx, std::vector<fetch::ledger::TransactionSummary>(uint32_t));
+  MOCK_METHOD1(PollRecentTx, TxLayouts(uint32_t));
 
   FakeStorageUnit &GetFake()
   {

@@ -17,9 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/byte_array/byte_array.hpp"
-#include "ledger/chain/mutable_transaction.hpp"
-#include "ledger/chain/transaction.hpp"
+#include "core/byte_array/const_byte_array.hpp"
+#include "ledger/chain/digest.hpp"
+#include "ledger/chain/transaction_layout.hpp"
 #include "storage/document.hpp"
 #include "storage/resource_mapper.hpp"
 
@@ -28,52 +28,50 @@
 namespace fetch {
 namespace ledger {
 
+class Transaction;
+
 class StorageInterface
 {
 public:
   using Document        = storage::Document;
   using ResourceAddress = storage::ResourceAddress;
   using StateValue      = byte_array::ConstByteArray;
+  using ShardIndex      = uint32_t;
+
+  // Construction / Destruction
+  StorageInterface()          = default;
+  virtual ~StorageInterface() = default;
 
   /// @name State Interface
   /// @{
   virtual Document Get(ResourceAddress const &key)                          = 0;
   virtual Document GetOrCreate(ResourceAddress const &key)                  = 0;
   virtual void     Set(ResourceAddress const &key, StateValue const &value) = 0;
-  virtual bool     Lock(ResourceAddress const &key)                         = 0;
-  virtual bool     Unlock(ResourceAddress const &key)                       = 0;
+  virtual bool     Lock(ShardIndex shard)                                   = 0;
+  virtual bool     Unlock(ShardIndex shard)                                 = 0;
   /// @}
 };
 
 class StorageUnitInterface : public StorageInterface
 {
 public:
-  using Hash            = byte_array::ConstByteArray;
-  using TransactionList = std::vector<Transaction>;
-  using ConstByteArray  = byte_array::ConstByteArray;
-  using TxSummaries     = std::vector<TransactionSummary>;
+  using Hash           = byte_array::ConstByteArray;
+  using ConstByteArray = byte_array::ConstByteArray;
+  using TxLayouts      = std::vector<TransactionLayout>;
 
   // Construction / Destruction
-  StorageUnitInterface()          = default;
-  virtual ~StorageUnitInterface() = default;
+  StorageUnitInterface()           = default;
+  ~StorageUnitInterface() override = default;
 
   /// @name Transaction Interface
   /// @{
-  virtual void AddTransaction(Transaction const &tx)                         = 0;
-  virtual bool GetTransaction(ConstByteArray const &digest, Transaction &tx) = 0;
-  virtual bool HasTransaction(ConstByteArray const &digest)                  = 0;
-  virtual void IssueCallForMissingTxs(TxDigestSet const &tx_set)             = 0;
-
-  virtual void AddTransactions(TransactionList const &txs)
-  {
-    for (auto const &tx : txs)
-    {
-      AddTransaction(tx);
-    }
-  }
+  virtual void AddTransaction(Transaction const &tx)                 = 0;
+  virtual bool GetTransaction(Digest const &digest, Transaction &tx) = 0;
+  virtual bool HasTransaction(Digest const &digest)                  = 0;
+  virtual void IssueCallForMissingTxs(DigestSet const &tx_set)       = 0;
   /// @}
 
-  virtual TxSummaries PollRecentTx(uint32_t) = 0;
+  virtual TxLayouts PollRecentTx(uint32_t) = 0;
 
   /// @name Revertible Document Store Interface
   /// @{

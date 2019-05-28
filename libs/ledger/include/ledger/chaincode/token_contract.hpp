@@ -17,10 +17,14 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ledger/chain/transaction.hpp"
 #include "ledger/chaincode/contract.hpp"
 
 namespace fetch {
 namespace ledger {
+
+class Address;
+class Transaction;
 
 class TokenContract : public Contract
 {
@@ -32,11 +36,16 @@ public:
   TokenContract();
   ~TokenContract() override = default;
 
-private:
+  // library functions
+  uint64_t GetBalance(Address const &address);
+  bool     AddTokens(Address const &address, uint64_t amount);
+  bool     SubtractTokens(Address const &address, uint64_t amount);
+  bool     TransferTokens(Transaction const &tx, Address const &to, uint64_t amount);
+
   // transaction handlers
-  Status CreateWealth(Transaction const &tx);
-  Status Deed(Transaction const &tx);
-  Status Transfer(Transaction const &tx);
+  Status CreateWealth(Transaction const &tx, BlockIndex);
+  Status Deed(Transaction const &tx, BlockIndex);
+  Status Transfer(Transaction const &tx, BlockIndex);
 
   // queries
   Status Balance(Query const &query, Query &response);

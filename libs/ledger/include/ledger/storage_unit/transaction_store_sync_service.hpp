@@ -20,7 +20,6 @@
 #include "core/future_timepoint.hpp"
 #include "core/service_ids.hpp"
 #include "core/state_machine.hpp"
-#include "ledger/chain/transaction.hpp"
 #include "ledger/storage_unit/lane_controller.hpp"
 #include "ledger/storage_unit/transaction_sinks.hpp"
 #include "ledger/transaction_verifier.hpp"
@@ -52,7 +51,7 @@ enum class State
 };
 }
 
-class TransactionStoreSyncService : public VerifiedTransactionSink
+class TransactionStoreSyncService : public TransactionSink
 {
 public:
   using Muddle                = muddle::Muddle;
@@ -61,16 +60,17 @@ public:
   using Uri                   = Muddle::Uri;
   using Client                = muddle::rpc::Client;
   using ClientPtr             = std::shared_ptr<Client>;
-  using ObjectStore           = storage::TransientObjectStore<VerifiedTransaction>;
+  using ObjectStore           = storage::TransientObjectStore<Transaction>;
   using FutureTimepoint       = core::FutureTimepoint;
   using RequestingObjectCount = network::RequestingQueueOf<Address, uint64_t>;
   using PromiseOfObjectCount  = network::PromiseOf<uint64_t>;
-  using RequestingTxList      = network::RequestingQueueOf<Address, TxList>;
-  using RequestingSubTreeList = network::RequestingQueueOf<uint64_t, TxList>;
-  using PromiseOfTxList       = network::PromiseOf<TxList>;
+  using TxArray               = std::vector<Transaction>;
+  using RequestingTxList      = network::RequestingQueueOf<Address, TxArray>;
+  using RequestingSubTreeList = network::RequestingQueueOf<uint64_t, TxArray>;
+  using PromiseOfTxList       = network::PromiseOf<TxArray>;
   using ResourceID            = storage::ResourceID;
   using Mutex                 = mutex::Mutex;
-  using EventNewTransaction   = std::function<void(VerifiedTransaction const &)>;
+  using EventNewTransaction   = std::function<void(Transaction const &)>;
   using TrimCacheCallback     = std::function<void()>;
   using State                 = tx_sync::State;
   using StateMachine          = core::StateMachine<State>;
@@ -83,9 +83,9 @@ public:
   static constexpr std::size_t MAX_SUBTREE_RESOLUTION_PER_CYCLE      = 128;
   static constexpr std::size_t MAX_OBJECT_RESOLUTION_PER_CYCLE       = 128;
   // Limit the amount to be retrieved at once from the TxFinderProtocol
-  static constexpr uint64_t TX_FINDER_PROTO_LIMIT_ = 1000;
+  static constexpr uint64_t TX_FINDER_PROTO_LIMIT = 1000;
   // Limit the amount a single rpc call will provide
-  static constexpr uint64_t PULL_LIMIT_ = 10000;
+  static constexpr uint64_t PULL_LIMIT = 10000;
 
   struct Config
   {
@@ -99,7 +99,7 @@ public:
   TransactionStoreSyncService(Config const &cfg, MuddlePtr muddle, ObjectStorePtr store,
                               TxFinderProtocol *tx_finder_protocol,
                               TrimCacheCallback trim_cache_callback);
-  virtual ~TransactionStoreSyncService();
+  ~TransactionStoreSyncService() override;
 
   void Start()
   {
@@ -127,7 +127,7 @@ public:
   }
 
 protected:
-  void OnTransaction(VerifiedTransaction const &tx) override;
+  void OnTransaction(TransactionPtr const &tx) override;
 
   // Reverse bits in byte
   uint8_t Reverse(uint8_t c)

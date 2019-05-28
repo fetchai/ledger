@@ -19,15 +19,16 @@
 
 #include "core/byte_array/decoders.hpp"
 #include "crypto/fnv.hpp"
+#include "ledger/chain/address.hpp"
+#include "ledger/chain/address_rpc_serializer.hpp"
 
 namespace fetch {
 namespace ledger {
 
-class VerifiedTransaction;
+class Transaction;
 
 struct Deed
 {
-  using Address            = byte_array::ConstByteArray;
   using Weight             = std::size_t;
   using Threshold          = Weight;
   using DeedOperation      = byte_array::ConstByteArray;
@@ -37,7 +38,7 @@ struct Deed
   using MandatorityMatrix  = std::unordered_map<Threshold, Weights>;
 
   bool              IsSane() const;
-  bool              Verify(VerifiedTransaction const &tx, DeedOperation const &operation) const;
+  bool              Verify(Transaction const &tx, DeedOperation const &operation) const;
   MandatorityMatrix InferMandatoryWeights() const;
 
   Deed()             = default;

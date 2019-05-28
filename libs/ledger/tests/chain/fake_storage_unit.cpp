@@ -17,7 +17,9 @@
 //------------------------------------------------------------------------------
 
 #include "fake_storage_unit.hpp"
+
 #include "core/byte_array/byte_array.hpp"
+#include "core/macros.hpp"
 #include "crypto/sha256.hpp"
 
 #include <algorithm>
@@ -61,15 +63,15 @@ void FakeStorageUnit::Set(ResourceAddress const &key, StateValue const &value)
   (*state_)[key] = value;
 }
 
-bool FakeStorageUnit::Lock(ResourceAddress const &key)
+bool FakeStorageUnit::Lock(ShardIndex index)
 {
-  FETCH_UNUSED(key);
+  FETCH_UNUSED(index);
   return true;
 }
 
-bool FakeStorageUnit::Unlock(ResourceAddress const &key)
+bool FakeStorageUnit::Unlock(ShardIndex index)
 {
-  FETCH_UNUSED(key);
+  FETCH_UNUSED(index);
   return true;
 }
 
@@ -97,10 +99,12 @@ bool FakeStorageUnit::HasTransaction(ConstByteArray const &digest)
   return transaction_store_.find(digest) != transaction_store_.end();
 }
 
-void FakeStorageUnit::IssueCallForMissingTxs(TxDigestSet const &)
-{}
+void FakeStorageUnit::IssueCallForMissingTxs(DigestSet const &digests)
+{
+  FETCH_UNUSED(digests);
+}
 
-FakeStorageUnit::TxSummaries FakeStorageUnit::PollRecentTx(uint32_t)
+FakeStorageUnit::TxLayouts FakeStorageUnit::PollRecentTx(uint32_t)
 {
   return {};
 }

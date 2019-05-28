@@ -19,6 +19,7 @@
 #include "ledger/chaincode/contract.hpp"
 #include "core/byte_array/decoders.hpp"
 #include "core/json/document.hpp"
+#include "ledger/chain/transaction.hpp"
 
 namespace fetch {
 namespace ledger {
@@ -29,7 +30,7 @@ namespace ledger {
  * @param tx The reference to the originating transaction
  * @return The corresponding status result for the operation
  */
-Contract::Status Contract::DispatchInitialise(Identity const &owner)
+Contract::Status Contract::DispatchInitialise(Address const &owner)
 {
   Status status{Status::OK};
 
@@ -72,7 +73,7 @@ Contract::Status Contract::DispatchQuery(ContractName const &name, Query const &
  * @return The corresponding status result for the operation
  */
 Contract::Status Contract::DispatchTransaction(byte_array::ConstByteArray const &name,
-                                               Transaction const &               tx)
+                                               Transaction const &tx, BlockIndex block_index)
 {
   Status status{Status::NOT_FOUND};
 
@@ -80,7 +81,7 @@ Contract::Status Contract::DispatchTransaction(byte_array::ConstByteArray const 
   if (it != transaction_handlers_.end())
   {
     // dispatch the contract
-    status = it->second(tx);
+    status = it->second(tx, block_index);
     ++transaction_counters_[name];
   }
 

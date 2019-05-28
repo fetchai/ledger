@@ -20,24 +20,18 @@
 #include "core/common.hpp"
 #include "core/logger.hpp"
 #include "vectorise/memory/shared_array.hpp"
+
 #include <algorithm>
 #include <cassert>
+#include <cerrno>
+#include <cstdlib>
 #include <cstring>
-#include <iostream>
 #include <ostream>
+#include <stdexcept>
 #include <string.h>
 #include <type_traits>
 
 namespace fetch {
-namespace byte_array {
-class ConstByteArray;
-}  // namespace byte_array
-
-namespace serializers {
-template <typename T>
-inline void Deserialize(T &, byte_array::ConstByteArray &);
-}  // namespace serializers
-
 namespace byte_array {
 
 class ConstByteArray
@@ -121,7 +115,7 @@ public:
   {
     if (src_offset + dest_size > size())
     {
-      FETCH_LOG_WARN("ConstByteArray",
+      FETCH_LOG_WARN(LOGGING_NAME,
                      "ReadBytes target array is too big for us to fill. dest_size=", dest_size,
                      " src_offset=", src_offset, " size=", size());
       throw std::range_error("ReadBytes target array is too big");
@@ -210,9 +204,9 @@ public:
   }
 
 public:
-  self_type SubArray(std::size_t const &start, std::size_t length = std::size_t(-1)) const
+  self_type SubArray(std::size_t start, std::size_t length = std::size_t(-1)) const
   {
-    return SubArray<self_type>(start, length);
+    return SubArrayInternal<self_type>(start, length);
   }
 
   bool Match(self_type const &str, std::size_t pos = 0) const
@@ -278,13 +272,33 @@ public:
   int AsInt() const
   {
     std::string const value = static_cast<std::string>(*this);
-    return atoi(value.c_str());
+
+    const auto ret = std::strtol(value.c_str(), nullptr, 10);
+    if (errno == ERANGE)
+    {
+      errno = 0;
+      FETCH_LOG_ERROR(LOGGING_NAME, "AsInt() failed to convert value=", value, " to integer");
+
+      throw std::domain_error("AsInt() failed to convert value=" + value + " to integer");
+    }
+
+    return static_cast<int>(ret);
   }
 
   double AsFloat() const
   {
     std::string const value = static_cast<std::string>(*this);
-    return atof(value.c_str());
+
+    const auto ret = std::strtod(value.c_str(), nullptr);
+    if (errno == ERANGE)
+    {
+      errno = 0;
+      FETCH_LOG_ERROR(LOGGING_NAME, "AsFloat() failed to convert value=", value, " to double");
+
+      throw std::domain_error("AsFloat() failed to convert value=" + value + " to double");
+    }
+
+    return ret;
   }
 
   ConstByteArray ToBase64() const;
@@ -311,7 +325,7 @@ public:
 
 protected:
   template <typename RETURN_TYPE = self_type>
-  RETURN_TYPE SubArray(std::size_t const &start, std::size_t length = std::size_t(-1)) const
+  RETURN_TYPE SubArrayInternal(std::size_t const &start, std::size_t length = std::size_t(-1)) const
   {
     length = std::min(length, length_ - start);
     assert(start + length <= start_ + length_);
@@ -325,7 +339,7 @@ protected:
   }
 
   /**
-   * Resizes the array and allocates ammount of memory necessary to contain the requested size.
+   * Resizes the array and allocates amount of memory necessary to contain the requested size.
    * Memory allocation is handled by the @ref Reserve() method.
    *
    * Please be NOTE, that this method operates in SIZE space, which is always RELATIVE
@@ -341,7 +355,7 @@ protected:
    * original_size + n. Where new resulting SIZE is internally still relative to the internal start_
    * offset in BOTH cases (relative and absolute).
    *
-   * @zero_reserved_space If true then the ammount of new memory reserved/allocated (if any) ABOVE
+   * @zero_reserved_space If true then the amount of new memory reserved/allocated (if any) ABOVE
    * of already allocated will be zeroed byte by byte.
    */
   void Resize(std::size_t const &n, ResizeParadigm const resize_paradigm = ResizeParadigm::ABSOLUTE,
@@ -367,7 +381,7 @@ protected:
   }
 
   /**
-   * Reserves (allocates) requested ammount of memory IF it is more than already allocated.
+   * Reserves (allocates) requested amount of memory IF it is more than already allocated.
    *
    * Please be NOTE, that this method operates in CAPACITY space, which is defined by WHOLE
    * allocated size of underlying data buffer.
@@ -382,7 +396,7 @@ protected:
    * current_capacity + n, what ALWAYS resuts to re-allocation since the requested CAPACITY is
    * always bigger then the current one.
    *
-   * @zero_reserved_space If true then the ammount of new memory reserved/allocated (if any) ABOVE
+   * @zero_reserved_space If true then the amount of new memory reserved/allocated (if any) ABOVE
    * of already allocated will be zeroed byte by byte.
    */
   void Reserve(std::size_t const &  n,
@@ -456,6 +470,8 @@ protected:
   }
 
 private:
+  constexpr static char const *LOGGING_NAME = "ConstByteArray";
+
   void AppendInternal(std::size_t const acc_size)
   {
     Resize(acc_size);
@@ -476,9 +492,6 @@ private:
     AppendInternal(acc_size + 1, others...);
     std::memcpy(pointer() + acc_size, &other, 1u);
   }
-
-  template <typename T>
-  friend void fetch::serializers::Deserialize(T &serializer, ConstByteArray &s);
 
   shared_array_type data_;
   std::size_t       start_ = 0, length_ = 0;

@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ledger/chain/address.hpp"
 #include "ledger/upow/synergetic_executor.hpp"
 #include "core/random/lfg.hpp"
 #include "ledger/upow/synergetic_contract_register.hpp"
@@ -47,7 +48,8 @@ public:
   using UniqueMiner      = std::unique_ptr<SynergeticMiner>;
 
   using FakeStorageUnitPtr = std::unique_ptr<FakeStorageUnit>;
-  using Address            = fetch::byte_array::ConstByteArray;
+  using Address            = fetch::ledger::Address;
+  using AddressPtr         = std::unique_ptr<Address>;
   using ContractRegister   = fetch::consensus::SynergeticContractRegister;
   using Work               = fetch::consensus::Work;
   using RandomGenerator    = fetch::random::LaggedFibonacciGenerator<>;
@@ -75,6 +77,7 @@ public:
     chain_       = UniqueBlockChain(new FakeChain());
     miner_       = UniqueMiner(new SynergeticMiner(*dag_.get()));
     certificate_ = std::make_unique<fetch::crypto::ECDSASigner>();
+    address_     = std::make_unique<Address>(certificate_->identity());
 
     // Adding input/output
     executor_->AttachStandardOutputDevice(std::cout);
@@ -84,7 +87,7 @@ public:
     Block next_block;
     next_block.body.previous_hash = "genesis";
     next_block.body.block_number  = 0;
-    next_block.body.miner         = "unkown";
+    next_block.body.miner         = *address_;
     next_block.body.dag_nodes     = {};
     chain_->push_back(next_block);
 
@@ -183,6 +186,7 @@ public:
     executor_.reset();
     dag_.reset();
     storage_.reset();
+    address_.reset();
   }
 
   void ExecuteRound(uint64_t N = 100, uint64_t mine_every = 5)
@@ -305,7 +309,7 @@ private:
     Block next_block;
     next_block.body.previous_hash = current_block.body.hash;
     next_block.body.block_number  = current_block.body.block_number + 1;
-    next_block.body.miner         = "unkown";
+    next_block.body.miner         = *address_;
     next_block.body.dag_nodes     = dag_->UncertifiedTipsAsVector();
 
     chain_->push_back(next_block);
@@ -351,6 +355,7 @@ private:
   UniqueBlockChain   chain_;
   UniqueMiner        miner_;
   UniqueCertificate  certificate_;
+  AddressPtr         address_;
   ContractRegister   cregister_;
   RandomGenerator    random_;
 };

@@ -20,6 +20,7 @@
 #include "ledger/chain/block.hpp"
 #include "ledger/dag/dag.hpp"
 #include "math/bignumber.hpp"
+#include "ledger/chain/address.hpp"
 
 #include <fstream>
 #include <gtest/gtest.h>
@@ -37,7 +38,8 @@ public:
   using UniqueBlock      = std::unique_ptr<Block>;
   using UniqueBlockChain = std::unique_ptr<FakeChain>;
 
-  using Address           = fetch::byte_array::ConstByteArray;
+  using Address = fetch::ledger::Address;
+  using AddressPtr = std::unique_ptr<Address>;
   using RandomGenerator   = fetch::random::LaggedFibonacciGenerator<>;
   using UniqueCertificate = std::unique_ptr<fetch::crypto::ECDSASigner>;
 
@@ -58,12 +60,13 @@ public:
     dag_         = UniqueDAG(new DAG());
     chain_       = UniqueBlockChain(new FakeChain());
     certificate_ = std::make_unique<fetch::crypto::ECDSASigner>();
+    address_     = std::make_unique<Address>(certificate_->identity());
 
     // Preparing genesis block
     Block next_block;
     next_block.body.previous_hash = "genesis";
     next_block.body.block_number  = 0;
-    next_block.body.miner         = "unkown";
+    next_block.body.miner         = *address_;
     next_block.body.dag_nodes     = {};
     chain_->push_back(next_block);
 
@@ -73,6 +76,7 @@ public:
   void TearDown() override
   {
     certificate_.reset();
+    address_.reset();
     chain_.reset();
     dag_.reset();
   }
@@ -142,7 +146,7 @@ private:
     Block next_block;
     next_block.body.previous_hash = current_block.body.hash;
     next_block.body.block_number  = current_block.body.block_number + 1;
-    next_block.body.miner         = "unkown";
+    next_block.body.miner         = *address_;
     next_block.body.dag_nodes     = dag_->UncertifiedTipsAsVector();
 
     chain_->push_back(next_block);
@@ -152,6 +156,7 @@ private:
   UniqueDAG         dag_;
   UniqueBlockChain  chain_;
   UniqueCertificate certificate_;
+  AddressPtr        address_;
   RandomGenerator   random_;
 };
 

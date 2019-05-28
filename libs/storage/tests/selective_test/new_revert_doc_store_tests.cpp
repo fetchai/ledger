@@ -26,8 +26,6 @@
 #include <gtest/gtest.h>
 
 #include <algorithm>
-#include <iostream>
-#include <stack>
 #include <string>
 #include <vector>
 
@@ -126,19 +124,21 @@ TEST(DISABLED_new_revertible_store_test, more_involved_commit_revert)
   auto unique_hashes = GenerateUniqueHashes(1000);
 
   // Make some changes to the store
-  for (std::size_t i = 0; i < unique_hashes.size(); ++i)
+  std::size_t i = 0;
+  for (auto const &hash : unique_hashes)
   {
     std::string set_me{std::to_string(i)};
-    store.Set(storage::ResourceID(unique_hashes[i]), set_me);
+    store.Set(storage::ResourceID(hash), set_me);
     ASSERT_EQ(store.size(), i + 1); /* This fails */
+    ++i;
   }
 
-  // Verify state is correct with no changes
-  for (std::size_t i = 0; i < unique_hashes.size(); ++i)
+  i = 0;
+  for (auto const &hash : unique_hashes)
   {
     // Test for success
     {
-      auto document = store.Get(storage::ResourceID(unique_hashes[i]));
+      auto document = store.Get(storage::ResourceID(hash));
       EXPECT_EQ(document.failed, false);
       EXPECT_EQ(ConstByteArray(document), ByteArray(std::to_string(i)));
     }
@@ -150,6 +150,7 @@ TEST(DISABLED_new_revertible_store_test, more_involved_commit_revert)
       EXPECT_EQ(document.was_created, false);
       EXPECT_NE(ConstByteArray(document), ByteArray(std::to_string(10000 + i)));
     }
+    ++i;
   }
 }
 
