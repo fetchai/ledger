@@ -149,18 +149,19 @@ def parse_commandline():
                         help='Run unit tests. Skips tests marked with the following CTest labels: {}'
                         .format(', '.join(LABELS_TO_EXCLUDE_FOR_FAST_TESTS)))
     parser.add_argument('-S', '--slow-tests', action='store_true',
-                        help='Run tests marked with the \'{}\' CTest label.'
+                        help='Run tests marked with the \'{}\' CTest label'
                         .format(SLOW_TEST_LABEL))
     parser.add_argument('-I', '--integration-tests', action='store_true',
-                        help='Run tests marked with the \'{}\' CTest label.'
+                        help='Run tests marked with the \'{}\' CTest label'
                         .format(INTEGRATION_TEST_LABEL))
     parser.add_argument('-E', '--end-to-end-tests', action='store_true',
-                        help='Run the end-to-end tests for the project.')
+                        help='Run the end-to-end tests for the project')
     parser.add_argument(
         '-f', '--force-build-folder',
         help='Specify the folder directly that should be used for the build / test')
     parser.add_argument('-m', '--metrics',
-                        action='store_true', help='Store the metrics.')
+                        action='store_true', help='Store the metrics')
+
     return parser.parse_args()
 
 
@@ -200,7 +201,7 @@ def build_project(project_root, build_root, options, concurrency):
         cmd = ["ninja"]
 
     else:
-        cmd = ['make', '-j', str(concurrency)]
+        cmd = ['make', '-j{}'.format(concurrency)]
 
     output('Building project with command: {} (detected cpus: {})'.format(
         ' '.join(cmd), AVAILABLE_CPUS))
