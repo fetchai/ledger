@@ -40,10 +40,10 @@ void BuildByteArray(pybind11::module &module)
       .def(py::self + fetch::byte_array::ByteArray())
       .def("Resize", &ByteArray::Resize)
       .def("operator[]", (fetch::byte_array::ConstByteArray::container_type &
-                          (ByteArray::*)(const std::size_t &)) &
+                          (ByteArray::*)(std::size_t)) &
                              ByteArray::operator[])
       .def("operator[]", (const fetch::byte_array::ConstByteArray::container_type &(
-                             ByteArray::*)(const std::size_t &)const) &
+                             ByteArray::*)(std::size_t)const) &
                              ByteArray::operator[])
       .def("pointer",
            (const fetch::byte_array::ConstByteArray::container_type *(ByteArray::*)() const) &

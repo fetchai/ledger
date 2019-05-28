@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "meta/tags.hpp"
+#include "meta/type_util.hpp"
 
 #include <string>
 #include <type_traits>
@@ -36,41 +37,43 @@ struct BaseFixedpointType;
 namespace meta {
 
 template <typename T>
-constexpr bool IsBoolean = std::is_same<T, bool>::value;
+static constexpr bool IsBoolean = std::is_same<T, bool>::value;
 
 template <typename T>
-constexpr bool IsUnsignedInteger = std::is_unsigned<T>::value && (!IsBoolean<T>);
+static constexpr bool IsUnsignedInteger = std::is_unsigned<T>::value && (!IsBoolean<T>);
 
 template <typename T>
-constexpr bool IsSignedInteger = std::is_signed<T>::value && (!IsBoolean<T>);
+static constexpr bool IsSignedInteger = std::is_signed<T>::value && (!IsBoolean<T>);
 
 template <typename T>
-constexpr bool IsInteger = std::is_integral<T>::value && (!IsBoolean<T>);
+static constexpr bool IsInteger = std::is_integral<T>::value && (!IsBoolean<T>);
 
 template <typename T>
-constexpr bool IsFloat = std::is_floating_point<T>::value;
+static constexpr bool IsFloat = std::is_floating_point<T>::value;
 
 template <typename T>
-constexpr bool IsFixedPoint = std::is_base_of<fixed_point::BaseFixedpointType, T>::value;
+static constexpr bool IsFixedPoint = std::is_base_of<fixed_point::BaseFixedpointType, T>::value;
 
 template <typename T>
-constexpr bool IsNotFixedPoint = !IsFixedPoint<T>;
+static constexpr bool IsNotFixedPoint = !IsFixedPoint<T>;
 
 template <typename T>
-constexpr bool IsConstByteArray = std::is_same<T, fetch::byte_array::ConstByteArray>::value;
+static constexpr bool IsConstByteArray = std::is_same<T, fetch::byte_array::ConstByteArray>::value;
 
 template <typename T>
-constexpr bool IsAByteArray = (std::is_same<T, byte_array::ByteArray>::value ||
-                               std::is_same<T, byte_array::ConstByteArray>::value);
+static constexpr bool IsAByteArray = type_util::IsAnyOfV<T, byte_array::ByteArray, byte_array::ConstByteArray>;
 
 template <typename T>
-constexpr bool IsStdString = std::is_same<T, std::string>::value;
+static constexpr bool IsStdString = std::is_same<T, std::string>::value;
 
 template <typename T>
-constexpr bool IsStringLike = IsStdString<T> || IsAByteArray<T>;
+static constexpr bool IsStringLike = IsStdString<T> || IsAByteArray<T>;
 
 template <typename T>
-constexpr bool IsNullPtr = std::is_null_pointer<T>::value;
+static constexpr bool IsNullPtr = std::is_null_pointer<T>::value;
+
+template<class C>
+static constexpr bool IsPOD = std::is_trivial<C>::value && std::is_standard_layout<C>::value;
 
 template <typename T>
 using Decay = typename std::decay<T>::type;

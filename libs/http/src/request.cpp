@@ -45,7 +45,7 @@ bool HTTPRequest::ParseBody(asio::streambuf &buffer)
   return true;
 }
 
-bool HTTPRequest::ParseHeader(asio::streambuf &buffer, std::size_t const &end)
+bool HTTPRequest::ParseHeader(asio::streambuf &buffer, std::size_t end)
 {
   LOG_STACK_TRACE_POINT;
 

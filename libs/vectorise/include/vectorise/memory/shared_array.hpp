@@ -64,20 +64,20 @@ public:
     }
   }
 
-  SharedArray() = default;
-  SharedArray(SharedArray const &other)
+  constexpr SharedArray() = default;
+  SharedArray(SharedArray const &other) noexcept
     : super_type(other.data_.get(), other.size())
     , data_(other.data_)
   {}
 
-  SharedArray(SharedArray &&other)
+  SharedArray(SharedArray &&other) noexcept
   {
     std::swap(this->size_, other.size_);
     std::swap(this->data_, other.data_);
     std::swap(this->pointer_, other.pointer_);
   }
 
-  SharedArray &operator=(SharedArray &&other)
+  SharedArray &operator=(SharedArray &&other) noexcept
   {
     std::swap(this->size_, other.size_);
     std::swap(this->data_, other.data_);
