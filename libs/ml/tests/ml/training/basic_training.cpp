@@ -208,7 +208,7 @@ void CategoricalPlusOneTest(bool add_softmax = false)
     g.SetInput(input_name, cur_input);
     auto cur_gt  = gt.Slice(step).Copy();
     auto results = g.Evaluate(output_name);
-    loss += criterion.Forward({results, cur_gt, n_classes});
+    loss += criterion.Forward({results, cur_gt});
     g.BackPropagate(output_name, criterion.Backward({results, cur_gt}));
   }
   g.Step(alpha);
@@ -229,7 +229,7 @@ void CategoricalPlusOneTest(bool add_softmax = false)
       g.SetInput(input_name, cur_input);
       auto cur_gt  = gt.Slice(step).Copy();
       auto results = g.Evaluate(output_name);
-      loss += criterion.Forward({results, cur_gt, n_classes});
+      loss += criterion.Forward({results, cur_gt});
       g.BackPropagate(output_name, criterion.Backward({results, cur_gt}));
     }
 
@@ -292,7 +292,7 @@ void CategoricalXorTest(bool add_softmax = false)
     g.SetInput(input_name, cur_input);
     auto results = g.Evaluate(output_name);
     cur_gt       = gt.Slice(step).Copy();
-    loss += criterion.Forward({results, cur_gt, n_classes});
+    loss += criterion.Forward({results, cur_gt});
     g.BackPropagate(output_name, criterion.Backward({results, cur_gt}));
   }
   g.Step(alpha);
@@ -313,7 +313,7 @@ void CategoricalXorTest(bool add_softmax = false)
       g.SetInput(input_name, cur_input);
       cur_gt       = gt.Slice(step).Copy();
       auto results = g.Evaluate(output_name);
-      loss += criterion.Forward({results, cur_gt, n_classes});
+      loss += criterion.Forward({results, cur_gt});
       g.BackPropagate(output_name, criterion.Backward({results, cur_gt}));
     }
 
