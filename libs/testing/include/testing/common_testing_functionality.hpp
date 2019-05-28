@@ -18,9 +18,9 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/byte_array.hpp"
+#include "core/random/lfg.hpp"
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
-#include "core/random/lfg.hpp"
 #include "storage/resource_mapper.hpp"
 
 #include <set>
@@ -94,7 +94,7 @@ inline std::unordered_set<fetch::byte_array::ByteArray> GenerateUniqueHashes(uin
     if (bit_flip_position == 256)
     {
       bit_flip_position = 0;
-      reference = crypto::Hash<crypto::SHA256>(std::to_string(lcg()));
+      reference         = crypto::Hash<crypto::SHA256>(std::to_string(lcg()));
     }
   }
 

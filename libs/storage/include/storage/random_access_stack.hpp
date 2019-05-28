@@ -227,12 +227,12 @@ public:
   {
     assert(filename_ != "");
 
-    if(!(i < size()))
+    if (!(i < size()))
     {
-        if(i == 0) {
-            std::cerr << "bad things" << std::endl; // DELETEME_NH
-        }
-
+      if (i == 0)
+      {
+        std::cerr << "bad things" << std::endl;  // DELETEME_NH
+      }
     }
 
     assert(i < size());

@@ -168,8 +168,8 @@ public:
 
   void UpdateVariables()
   {
-    block_index_           = 0;
-    id_                    = 0;
+    block_index_ = 0;
+    id_          = 0;
   }
 
   // TODO(HUT): make private (?)

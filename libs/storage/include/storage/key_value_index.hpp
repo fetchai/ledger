@@ -342,7 +342,8 @@ public:
    *
    */
   template <typename... Args>
-  void Set(byte_array::ConstByteArray const &key_str, uint64_t const &val, byte_array::ConstByteArray const &data)
+  void Set(byte_array::ConstByteArray const &key_str, uint64_t const &val,
+           byte_array::ConstByteArray const &data)
   {
     DebugVerify();
 
@@ -677,8 +678,8 @@ public:
    * Note: the hashes of the tree must be recalculated in this instance, since deletion is a costly
    * operation anyway we do not schedule hash rewrites.
    *
-   * The way this deletion is achieved efficiently is that the node to be deleted switches its location
-   * in the stack to the end. It can then be easily popped off
+   * The way this deletion is achieved efficiently is that the node to be deleted switches its
+   * location in the stack to the end. It can then be easily popped off
    */
   void Erase(byte_array::ConstByteArray const &key_str)
   {
@@ -717,7 +718,8 @@ public:
     // Clear the tree for edge case of only node
     if (size() == 1)
     {
-      // Note: this must be an operation that is recorded in the case of a revertible underlying store.
+      // Note: this must be an operation that is recorded in the case of a revertible underlying
+      // store.
       stack_.Pop();
       root_ = 0;
       stack_.SetExtraHeader(root_);
@@ -785,9 +787,10 @@ public:
     stack_.Set(sibling_index, sibling);
     UpdateParents(sibling.parent, sibling_index, sibling);
 
-    //DebugVerify();
+    // DebugVerify();
 
-    //// Erase our node and its parent, important to do this at the end since it might shuffle indexes
+    //// Erase our node and its parent, important to do this at the end since it might shuffle
+    /// indexes
     if (parent_index > kv_index)
     {
       Erase(parent_index);
@@ -803,7 +806,7 @@ public:
     DebugVerifyMerkle();
 
     // It's now important to update the merkle tree from the deleted node's sibling upwards
-    //UpdateParents(kv.parent, index, kv)
+    // UpdateParents(kv.parent, index, kv)
   }
 
   void UpdateVariables()
@@ -1077,13 +1080,12 @@ private:
       root_ = index;
     }
 
-
     // Write last element into index location
     stack_.Set(index, last_element);
 
     // We have now changed the last element location in the stack. Update children's
     // parents
-    if(!last_element.is_leaf())
+    if (!last_element.is_leaf())
     {
       key_value_pair kv;
 
@@ -1129,10 +1131,10 @@ private:
     // to make sure it's the same size as the underlying stack
     std::vector<uint64_t> nodes_stack{root_};
     std::vector<uint64_t> verified_so_far{0};
-    std::set<uint64_t> leaf_values;
-    key_value_pair kv;
-    uint64_t nodes_found  = 0;
-    uint64_t leaves_found = 0;
+    std::set<uint64_t>    leaf_values;
+    key_value_pair        kv;
+    uint64_t              nodes_found  = 0;
+    uint64_t              leaves_found = 0;
 
     // Check root is terminated correctly
     stack_.Get(root_, kv);
@@ -1142,89 +1144,91 @@ private:
     }
 
     // To verify, do a depth first search of the tree
-    while(nodes_stack.size() > 0)
+    while (nodes_stack.size() > 0)
     {
       // Get node of stack
       auto &stack_end = nodes_stack.back();
       stack_.Get(stack_end, kv);
 
       // Verify this node is correct
-      if(kv.is_leaf())
+      if (kv.is_leaf())
       {
         // Note: the key value index shouldn't really know that 0 is invalid, but it is.
-        if(kv.value == 0 || kv.value == uint64_t(-1))
+        if (kv.value == 0 || kv.value == uint64_t(-1))
         {
           throw StorageException("leaf key in key value index is malformed");
         }
 
-        if(leaf_values.find(kv.value) != leaf_values.end())
+        if (leaf_values.find(kv.value) != leaf_values.end())
         {
-          throw StorageException("Duplicate values found in key value index! " + std::to_string(kv.value));
+          throw StorageException("Duplicate values found in key value index! " +
+                                 std::to_string(kv.value));
         }
       }
       else
       {
-        if(kv.left == kv.right || kv.left == uint64_t(-1) || kv.right == uint64_t(-1))
+        if (kv.left == kv.right || kv.left == uint64_t(-1) || kv.right == uint64_t(-1))
         {
           throw StorageException("key in key value index is malformed");
         }
       }
 
       // Verified keeps track of whether the left/right side of the tree has been verified already
-      switch(verified_so_far.back())
+      switch (verified_so_far.back())
       {
-        // Node hasn't been seen before
-        case 0:
-          nodes_found++;
+      // Node hasn't been seen before
+      case 0:
+        nodes_found++;
 
-          if(!kv.is_leaf())
-          {
-            nodes_stack.push_back(kv.left);
-            verified_so_far[verified_so_far.size()-1]++;
-            verified_so_far.push_back(0);
-          }
-          else
-          {
-            leaves_found++;
-            nodes_stack.pop_back();
-            verified_so_far.pop_back();
-          }
-        break;
-
-        // Previously node went left
-        case 1:
-          nodes_stack.push_back(kv.right);
-          verified_so_far[verified_so_far.size()-1]++;
+        if (!kv.is_leaf())
+        {
+          nodes_stack.push_back(kv.left);
+          verified_so_far[verified_so_far.size() - 1]++;
           verified_so_far.push_back(0);
-        break;
-
-        // Node went right last time - go upwards
-        case 2:
+        }
+        else
+        {
+          leaves_found++;
           nodes_stack.pop_back();
           verified_so_far.pop_back();
+        }
         break;
 
-        default:
+      // Previously node went left
+      case 1:
+        nodes_stack.push_back(kv.right);
+        verified_so_far[verified_so_far.size() - 1]++;
+        verified_so_far.push_back(0);
+        break;
+
+      // Node went right last time - go upwards
+      case 2:
+        nodes_stack.pop_back();
+        verified_so_far.pop_back();
+        break;
+
+      default:
         throw StorageException("Found unexpected value in verified stack");
       }
     }
 
     // verify size meets expectations
-    if(nodes_found != stack_.size())
+    if (nodes_found != stack_.size())
     {
       throw StorageException("Stack size mismatch");
     }
 
-    if(leaves_found != size())
+    if (leaves_found != size())
     {
       throw StorageException("Calculated leaves found mismatch");
     }
 
     auto res = stack_.size();
 
-    if(!(res & 0x1))
+    if (!(res & 0x1))
     {
-      throw StorageException("In the key value index trie, there should always be an odd number of nodes");
+      throw StorageException(
+          "In the key value index trie, there should always be an odd number of nodes");
     }
   }
 
@@ -1249,14 +1253,14 @@ private:
     key_value_pair kv_dummy;
 
     // To verify, do a depth first search of the tree
-    while(nodes_stack.size() > 0)
+    while (nodes_stack.size() > 0)
     {
       // Get node of stack
       auto &stack_end = nodes_stack.back();
       stack_.Get(stack_end, kv);
 
       // Verify this node is correct (hash is hash of children)
-      if(!(kv.is_leaf()))
+      if (!(kv.is_leaf()))
       {
         // Clear dummy
         kv_dummy = key_value_pair{};
@@ -1266,49 +1270,48 @@ private:
 
         kv_dummy.UpdateNode(kv_left, kv_right);
 
-        if(kv_dummy.Hash() != kv.Hash())
+        if (kv_dummy.Hash() != kv.Hash())
         {
           throw StorageException("Merkle tree is malformed!");
         }
       }
 
       // Verified keeps track of whether the left/right side of the tree has been verified already
-      switch(verified_so_far.back())
+      switch (verified_so_far.back())
       {
-        // Node hasn't been seen before
-        case 0:
+      // Node hasn't been seen before
+      case 0:
 
-          if(!kv.is_leaf())
-          {
-            nodes_stack.push_back(kv.left);
-            verified_so_far[verified_so_far.size()-1]++;
-            verified_so_far.push_back(0);
-          }
-          else
-          {
-            nodes_stack.pop_back();
-            verified_so_far.pop_back();
-          }
-        break;
-
-        // Previously node went left
-        case 1:
-          nodes_stack.push_back(kv.right);
-          verified_so_far[verified_so_far.size()-1]++;
+        if (!kv.is_leaf())
+        {
+          nodes_stack.push_back(kv.left);
+          verified_so_far[verified_so_far.size() - 1]++;
           verified_so_far.push_back(0);
-        break;
-
-        // Node went right last time - go upwards
-        case 2:
+        }
+        else
+        {
           nodes_stack.pop_back();
           verified_so_far.pop_back();
+        }
         break;
 
-        default:
+      // Previously node went left
+      case 1:
+        nodes_stack.push_back(kv.right);
+        verified_so_far[verified_so_far.size() - 1]++;
+        verified_so_far.push_back(0);
+        break;
+
+      // Node went right last time - go upwards
+      case 2:
+        nodes_stack.pop_back();
+        verified_so_far.pop_back();
+        break;
+
+      default:
         throw StorageException("Found unexpected value in verified stack");
       }
     }
-
   }
 };
 

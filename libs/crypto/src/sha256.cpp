@@ -55,9 +55,9 @@ bool SHA256::Update(uint8_t const *data_to_hash, std::size_t const &size)
 
 void SHA256::Final(uint8_t *hash, std::size_t const &size)
 {
-  if(invalid)
+  if (invalid)
   {
-    std::cerr << "ooh." << std::endl; // DELETEME_NH
+    std::cerr << "ooh." << std::endl;  // DELETEME_NH
   }
 
   assert((!invalid) && "Final called on invalid sha256 - it needs to be reset between uses");
