@@ -485,7 +485,7 @@ TEST(new_revertible_store_test, stress_test)
   std::vector<Action> prev_actions;
   FETCH_UNUSED(prev_actions);
 
-  for (std::size_t i = 0; i < 5000; ++i)
+  for (std::size_t i = 0; i < 1000; ++i)
   {
     uint64_t rnd_action = rng() % 100;
     Action   action{Action::GET};
