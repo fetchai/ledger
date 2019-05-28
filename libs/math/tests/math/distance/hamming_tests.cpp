@@ -16,9 +16,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include <iomanip>
-#include <iostream>
-
 #include "core/random/lcg.hpp"
 #include "math/distance/hamming.hpp"
 #include "math/tensor.hpp"

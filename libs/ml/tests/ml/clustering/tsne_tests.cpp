@@ -17,7 +17,6 @@
 //------------------------------------------------------------------------------
 
 #include <gtest/gtest.h>
-#include <iostream>
 
 #include "math/tensor.hpp"
 #include "ml/clustering/tsne.hpp"

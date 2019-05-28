@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include <iostream>
-#include <string>
+#include <utility>
+#include <vector>
 
 namespace fetch {
 namespace generics {
@@ -59,11 +59,9 @@ public:
     callbacks_.clear();
   }
 
-  explicit Callbacks()
-  {}
+  explicit Callbacks() = default;
 
-  virtual ~Callbacks()
-  {}
+  virtual ~Callbacks() = default;
 
 private:
   std::vector<FUNC> callbacks_;

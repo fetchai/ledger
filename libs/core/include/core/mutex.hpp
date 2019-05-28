@@ -20,7 +20,6 @@
 #include "core/logger.hpp"
 #include "core/macros.hpp"
 
-#include <iostream>
 #include <map>
 #include <memory>
 #include <mutex>

@@ -20,12 +20,11 @@
 #include "ledger/chain/consensus/dummy_miner.hpp"
 #include "ledger/chain/main_chain.hpp"
 #include <gtest/gtest.h>
-#include <iostream>
 #include <list>
 
 using fetch::ledger::consensus::DummyMiner;
 using fetch::ledger::Block;
-using fetch::ledger::v2::Address;
+using fetch::ledger::Address;
 
 using Blocks = std::vector<Block>;
 using Body   = Block::Body;

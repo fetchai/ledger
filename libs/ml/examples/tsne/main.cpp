@@ -16,8 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include <math/tensor.hpp>
-
+#include "math/tensor.hpp"
 #include "ml/clustering/tsne.hpp"
 #include "ml/dataloaders/mnist_loaders/mnist_loader.hpp"
 
@@ -32,9 +31,6 @@ using namespace fetch::ml;
 using DataType     = double;
 using ArrayType    = Tensor<DataType>;
 using SizeTypeHere = typename ArrayType::SizeType;
-
-#include <math/tensor.hpp>
-#include <sstream>
 
 /**
  * i.e. Fill tensor matrix with DataType values from file at path

@@ -23,15 +23,12 @@
 #include "core/serializers/stl_types.hpp"
 #include "core/string/replace.hpp"
 #include "http/json_response.hpp"
-#include "ledger/chain/mutable_transaction.hpp"
-#include "ledger/chain/transaction.hpp"
-#include "ledger/chain/wire_transaction.hpp"
 #include "ledger/chaincode/contract.hpp"
 #include "ledger/state_adapter.hpp"
 #include "ledger/transaction_processor.hpp"
 
-#include "ledger/chain/v2/json_transaction.hpp"
-#include "ledger/chain/v2/transaction.hpp"
+#include "ledger/chain/json_transaction.hpp"
+#include "ledger/chain/transaction.hpp"
 #include "variant/variant.hpp"
 
 #include <memory>
@@ -45,19 +42,7 @@ using fetch::variant::Variant;
 using fetch::byte_array::ByteArray;
 using fetch::byte_array::ConstByteArray;
 using fetch::byte_array::ToBase64;
-using fetch::ledger::v2::FromJsonTransaction;
-
-struct AdaptedTx
-{
-  MutableTransaction                   tx;
-  TxSigningAdapter<MutableTransaction> adapter{tx};
-
-  template <typename T>
-  friend void Deserialize(T &serializer, AdaptedTx &tx_in)
-  {
-    serializer >> tx_in.adapter;
-  }
-};
+using fetch::ledger::FromJsonTransaction;
 
 ConstByteArray const API_PATH_CONTRACT_PREFIX("/api/contract/");
 ConstByteArray const CONTRACT_NAME_SEPARATOR(".");
@@ -341,7 +326,7 @@ ContractHttpInterface::SubmitTxStatus ContractHttpInterface::SubmitJsonTx(
       auto const &tx_obj = doc[i];
 
       // create the transaction
-      auto tx = std::make_shared<v2::Transaction>();
+      auto tx = std::make_shared<Transaction>();
       if (FromJsonTransaction(tx_obj, *tx))
       {
         txs.emplace_back(tx->digest());
@@ -355,7 +340,7 @@ ContractHttpInterface::SubmitTxStatus ContractHttpInterface::SubmitJsonTx(
   {
     expected_count = 1;
 
-    auto tx = std::make_shared<v2::Transaction>();
+    auto tx = std::make_shared<Transaction>();
     if (FromJsonTransaction(doc.root(), *tx))
     {
       txs.emplace_back(tx->digest());

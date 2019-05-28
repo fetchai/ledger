@@ -47,7 +47,6 @@ public:
   using ServicePtr      = std::unique_ptr<service::ServiceClient>;
   using NetworkManager  = fetch::network::NetworkManager;
   using ConstByteArray  = byte_array::ConstByteArray;
-  using Address         = Muddle::Address;  // == a crypto::Identity.identifier_
   using Uri             = Muddle::Uri;
   using PromiseState    = fetch::service::PromiseState;
   using FutureTimepoint = core::FutureTimepoint;
@@ -62,11 +61,11 @@ public:
   void Connect(Muddle &muddle, Uri uri,
                std::chrono::milliseconds timeout = std::chrono::milliseconds(10000));
 
-  Result Execute(v2::Digest const &digest, BlockIndex block, SliceIndex slice,
+  Result Execute(Digest const &digest, BlockIndex block, SliceIndex slice,
                  BitVector const &shards) override;
-  void   SettleFees(v2::Address const &miner, TokenAmount amount, uint32_t log2_num_lanes) override;
+  void   SettleFees(Address const &miner, TokenAmount amount, uint32_t log2_num_lanes) override;
 
-  bool GetAddress(Address &address) const
+  bool GetAddress(Muddle::Address &address) const
   {
     if (!connections_)
     {
@@ -108,7 +107,7 @@ private:
   using BackgroundedWorkThread  = network::HasWorkerThread<BackgroundedWork>;
   using BackgroundedWorkThreadP = std::shared_ptr<BackgroundedWorkThread>;
 
-  Address                 address_;
+  Muddle::Address         address_;
   BackgroundedWork        bg_work_;
   BackgroundedWorkThreadP workthread_;
   size_t                  connections_ = 0;

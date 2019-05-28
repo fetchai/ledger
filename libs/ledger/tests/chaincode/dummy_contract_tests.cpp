@@ -17,9 +17,8 @@
 //------------------------------------------------------------------------------
 
 #include "crypto/ecdsa.hpp"
-#include "ledger/chain/mutable_transaction.hpp"
-#include "ledger/chain/v2/transaction.hpp"
-#include "ledger/chain/v2/transaction_builder.hpp"
+#include "ledger/chain/transaction.hpp"
+#include "ledger/chain/transaction_builder.hpp"
 #include "ledger/chaincode/dummy_contract.hpp"
 
 #include "ledger/state_sentinel_adapter.hpp"
@@ -28,7 +27,6 @@
 
 #include <gmock/gmock.h>
 
-#include <iostream>
 #include <memory>
 
 using ::testing::_;
@@ -88,8 +86,8 @@ TEST_F(DummyContractTests, CheckDispatch)
   fetch::crypto::ECDSASigner signer;
 
   // create the sample transaction
-  auto const tx = v2::TransactionBuilder()
-                      .From(v2::Address{signer.identity()})
+  auto const tx = TransactionBuilder()
+                      .From(Address{signer.identity()})
                       .TargetChainCode("fetch.dummy", BitVector{})
                       .Action("wait")
                       .Signer(signer.identity())

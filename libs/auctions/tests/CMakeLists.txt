@@ -1,6 +1,6 @@
-################################################################################
-# F E T C H   A U C T I O N S   L I B R A R Y
-################################################################################
+#
+# F E T C H   A U C T I O N S   T E S T S
+#
 cmake_minimum_required(VERSION 3.5 FATAL_ERROR)
 project(fetch-auctions)
 

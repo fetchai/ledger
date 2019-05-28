@@ -16,9 +16,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include <iomanip>
-#include <iostream>
-
 #include "math/ml/activation_functions/sigmoid.hpp"
 #include "math/tensor.hpp"
 #include <gtest/gtest.h>

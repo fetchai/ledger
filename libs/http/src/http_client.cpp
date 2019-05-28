@@ -24,7 +24,6 @@
 #include <stdexcept>
 #include <system_error>
 
-#include <iostream>
 #include <sstream>
 
 namespace fetch {

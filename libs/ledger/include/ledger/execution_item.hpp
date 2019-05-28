@@ -40,17 +40,17 @@ public:
   static constexpr char const *LOGGING_NAME = "ExecutionItem";
 
   // Construction / Destruction
-  ExecutionItem(v2::Digest digest, BlockIndex block, SliceIndex slice, BitVector const &shards);
+  ExecutionItem(Digest digest, BlockIndex block, SliceIndex slice, BitVector const &shards);
   ExecutionItem(ExecutionItem const &) = delete;
   ExecutionItem(ExecutionItem &&)      = delete;
   ~ExecutionItem()                     = default;
 
   /// @name Accessors
   /// @{
-  v2::Digest const &digest() const;
-  BitVector const & shards() const;
-  Status            status() const;
-  uint64_t          fee() const;
+  Digest const &   digest() const;
+  BitVector const &shards() const;
+  Status           status() const;
+  uint64_t         fee() const;
   /// @}
 
   void Execute(ExecutorInterface &executor);
@@ -63,7 +63,7 @@ private:
   using AtomicStatus = std::atomic<Status>;
   using AtomicFee    = std::atomic<uint64_t>;
 
-  v2::Digest   digest_;
+  Digest       digest_;
   BlockIndex   block_{0};
   SliceIndex   slice_{0};
   BitVector    shards_;
@@ -71,7 +71,7 @@ private:
   AtomicFee    fee_{0};
 };
 
-inline ExecutionItem::ExecutionItem(v2::Digest digest, BlockIndex block, SliceIndex slice,
+inline ExecutionItem::ExecutionItem(Digest digest, BlockIndex block, SliceIndex slice,
                                     BitVector const &shards)
   : digest_(std::move(digest))
   , block_{block}
@@ -79,7 +79,7 @@ inline ExecutionItem::ExecutionItem(v2::Digest digest, BlockIndex block, SliceIn
   , shards_(shards)
 {}
 
-inline v2::Digest const &ExecutionItem::digest() const
+inline Digest const &ExecutionItem::digest() const
 {
   return digest_;
 }

@@ -44,7 +44,7 @@ public:
 private:
   /// @name Transaction Handlers
   /// @{
-  Status OnCreate(v2::Transaction const &tx, BlockIndex);
+  Status OnCreate(Transaction const &tx, BlockIndex);
   /// @}
 };
 

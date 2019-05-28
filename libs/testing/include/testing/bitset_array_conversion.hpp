@@ -21,7 +21,6 @@
 
 #include <array>
 #include <bitset>
-#include <iomanip>
 #include <ostream>
 
 namespace fetch {

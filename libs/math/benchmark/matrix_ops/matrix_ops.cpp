@@ -16,9 +16,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include <iomanip>
-#include <iostream>
-
 #include "math/matrix_operations.hpp"
 #include "math/tensor.hpp"
 

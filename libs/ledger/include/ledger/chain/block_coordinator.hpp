@@ -24,7 +24,7 @@
 #include "core/threading/synchronised_state.hpp"
 #include "ledger/chain/block.hpp"
 #include "ledger/chain/main_chain.hpp"
-#include "ledger/chain/v2/transaction.hpp"
+#include "ledger/chain/transaction.hpp"
 #include "moment/deadline_timer.hpp"
 
 #include <atomic>
@@ -132,8 +132,8 @@ public:
   enum class State
   {
     RELOAD_STATE,                  ///< Recovering previous state
-    SYNCHRONIZING,                 ///< Catch up with the outstanding blocks
-    SYNCHRONIZED,                  ///< Caught up waiting to generate a new block
+    SYNCHRONISING,                 ///< Catch up with the outstanding blocks
+    SYNCHRONISED,                  ///< Caught up waiting to generate a new block
     PRE_EXEC_BLOCK_VALIDATION,     ///< Validation stage before block execution
     WAIT_FOR_TRANSACTIONS,         ///< Halts the state machine until all the block transactions are
                                    ///< present
@@ -196,7 +196,7 @@ public:
 
   bool IsSynced() const
   {
-    return (state_machine_->state() == State::SYNCHRONIZED) &&
+    return (state_machine_->state() == State::SYNCHRONISED) &&
            (last_executed_block_.Get() == chain_.GetHeaviestBlockHash());
   }
 
@@ -226,7 +226,7 @@ private:
   using Timepoint         = Clock::time_point;
   using StateMachinePtr   = std::shared_ptr<StateMachine>;
   using MinerPtr          = std::shared_ptr<consensus::ConsensusMinerInterface>;
-  using TxDigestSetPtr    = std::unique_ptr<v2::DigestSet>;
+  using TxDigestSetPtr    = std::unique_ptr<DigestSet>;
   using LastExecutedBlock = SynchronisedState<ConstByteArray>;
   using FutureTimepoint   = fetch::core::FutureTimepoint;
   using DeadlineTimer     = fetch::moment::DeadlineTimer;
@@ -234,8 +234,8 @@ private:
   /// @name Monitor State
   /// @{
   State OnReloadState();
-  State OnSynchronizing();
-  State OnSynchronized(State current, State previous);
+  State OnSynchronising();
+  State OnSynchronised(State current, State previous);
   State OnPreExecBlockValidation();
   State OnWaitForTransactions(State current, State previous);
   State OnScheduleBlockExecution();
@@ -280,7 +280,7 @@ private:
 
   /// @name State Machine State
   /// @{
-  v2::Address     mining_address_;         ///< The miners address
+  Address         mining_address_;         ///< The miners address
   StateMachinePtr state_machine_;          ///< The main state machine for this service
   std::size_t     block_difficulty_;       ///< The number of leading zeros needed in the proof
   std::size_t     num_lanes_;              ///< The current number of lanes

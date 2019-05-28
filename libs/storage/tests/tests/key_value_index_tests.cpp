@@ -23,8 +23,7 @@
 #include "storage/key_value_index.hpp"
 #include <algorithm>
 #include <gtest/gtest.h>
-#include <iomanip>
-#include <iostream>
+
 using namespace fetch;
 using namespace fetch::storage;
 using cached_kvi_type = KeyValueIndex<KeyValuePair<>, CachedRandomAccessStack<KeyValuePair<>>>;
