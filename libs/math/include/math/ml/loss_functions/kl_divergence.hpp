@@ -17,11 +17,11 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/assert.hpp"
 #include "math/fundamental_operators.hpp"
+#include "math/matrix_operations.hpp"
 #include "math/meta/math_type_traits.hpp"
 #include "math/standard_functions/log.hpp"
-#include <core/assert.hpp>
-#include <math/matrix_operations.hpp>
 
 namespace fetch {
 namespace math {

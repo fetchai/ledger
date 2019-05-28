@@ -1,3 +1,4 @@
+#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -16,9 +17,15 @@
 //
 //------------------------------------------------------------------------------
 
-#include <iostream>
+#include "fake_random_access_stack.hpp"
+#include "storage/file_object.hpp"
 
-int main()
+#include <gmock/gmock.h>
+
+class MockFileObject
+  : public fetch::storage::FileObject<FakeRandomAccessStack<fetch::storage::FileBlockType<>>>
 {
-  return 0;
-}
+public:
+  MockFileObject()
+  {}
+};

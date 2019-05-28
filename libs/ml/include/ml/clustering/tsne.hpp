@@ -17,18 +17,18 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/assert.hpp"
 #include "core/random/lfg.hpp"
 #include "math/distance/euclidean.hpp"
+#include "math/fundamental_operators.hpp"
+#include "math/matrix_operations.hpp"
 #include "math/meta/math_type_traits.hpp"
+#include "math/ml/loss_functions/kl_divergence.hpp"
+#include "math/normalize_array.hpp"
+#include "math/standard_functions/exp.hpp"
+#include "math/standard_functions/log.hpp"
+#include "math/tensor.hpp"
 #include "meta/type_traits.hpp"
-#include <core/assert.hpp>
-#include <math/fundamental_operators.hpp>
-#include <math/matrix_operations.hpp>
-#include <math/ml/loss_functions/kl_divergence.hpp>
-#include <math/normalize_array.hpp>
-#include <math/standard_functions/exp.hpp>
-#include <math/standard_functions/log.hpp>
-#include <math/tensor.hpp>
 
 #include <cmath>
 

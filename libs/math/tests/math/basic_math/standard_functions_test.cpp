@@ -17,7 +17,6 @@
 //------------------------------------------------------------------------------
 
 #include <gtest/gtest.h>
-#include <iostream>
 
 #include "math/standard_functions/clamp.hpp"
 #include "math/tensor.hpp"

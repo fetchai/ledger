@@ -27,7 +27,6 @@
 
 #include <gmock/gmock.h>
 
-#include <iostream>
 #include <memory>
 
 using ::testing::_;

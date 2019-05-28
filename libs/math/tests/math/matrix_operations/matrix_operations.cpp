@@ -17,7 +17,6 @@
 //------------------------------------------------------------------------------
 
 #include <gtest/gtest.h>
-#include <iostream>
 
 #include "core/random/lcg.hpp"
 #include "math/fixed_point/fixed_point.hpp"

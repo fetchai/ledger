@@ -24,9 +24,11 @@
 
 #include <algorithm>
 #include <cassert>
+#include <cerrno>
+#include <cstdlib>
 #include <cstring>
-#include <iostream>
 #include <ostream>
+#include <stdexcept>
 #include <string.h>
 #include <type_traits>
 
@@ -114,7 +116,7 @@ public:
   {
     if (src_offset + dest_size > size())
     {
-      FETCH_LOG_WARN("ConstByteArray",
+      FETCH_LOG_WARN(LOGGING_NAME,
                      "ReadBytes target array is too big for us to fill. dest_size=", dest_size,
                      " src_offset=", src_offset, " size=", size());
       throw std::range_error("ReadBytes target array is too big");
@@ -271,13 +273,33 @@ public:
   int AsInt() const
   {
     std::string const value = static_cast<std::string>(*this);
-    return atoi(value.c_str());
+
+    const auto ret = std::strtol(value.c_str(), nullptr, 10);
+    if (errno == ERANGE)
+    {
+      errno = 0;
+      FETCH_LOG_ERROR(LOGGING_NAME, "AsInt() failed to convert value=", value, " to integer");
+
+      throw std::domain_error("AsInt() failed to convert value=" + value + " to integer");
+    }
+
+    return static_cast<int>(ret);
   }
 
   double AsFloat() const
   {
     std::string const value = static_cast<std::string>(*this);
-    return atof(value.c_str());
+
+    const auto ret = std::strtod(value.c_str(), nullptr);
+    if (errno == ERANGE)
+    {
+      errno = 0;
+      FETCH_LOG_ERROR(LOGGING_NAME, "AsFloat() failed to convert value=", value, " to double");
+
+      throw std::domain_error("AsFloat() failed to convert value=" + value + " to double");
+    }
+
+    return ret;
   }
 
   ConstByteArray ToBase64() const;
@@ -378,9 +400,8 @@ protected:
    * @zero_reserved_space If true then the amount of new memory reserved/allocated (if any) ABOVE
    * of already allocated will be zeroed byte by byte.
    */
-  void Reserve(std::size_t   n,
-               ResizeParadigm const resize_paradigm     = ResizeParadigm::ABSOLUTE,
-               bool const           zero_reserved_space = true)
+  void Reserve(std::size_t n, ResizeParadigm const resize_paradigm = ResizeParadigm::ABSOLUTE,
+               bool const zero_reserved_space = true)
   {
     std::size_t new_capacity_for_reserve{0};
 
@@ -424,9 +445,9 @@ protected:
   }
 
   template <typename... Arg>
-  self_type &Append(Arg &&...others)
+  self_type &Append(Arg &&... others)
   {
-    AppendInternal<AppendedType<Arg>...>(AppendedType<Arg>(others)...);
+    AppendInternal<AppendedType<Arg>...>(static_cast<AppendedType<Arg>>(others)...);
     return *this;
   }
 
@@ -449,88 +470,80 @@ protected:
   }
 
 private:
+  constexpr static char const *LOGGING_NAME = "ConstByteArray";
+
   // this struct accumulates the size of all appended arguments
-  struct GetSize {
+  struct GetSize
+  {
   public:
-	  template<class Arg> constexpr std::size_t operator()(std::size_t counter, Arg &&arg)
-		  noexcept(noexcept(static_cast<std::size_t>(std::declval<Arg>().size())))
-	  {
-		  return counter + static_cast<std::size_t>(std::forward<Arg>(arg).size());
-	  }
-	  constexpr std::size_t operator()(std::size_t counter, std::uint8_t) noexcept { return counter + 1; }
-	  constexpr std::size_t operator()(std::size_t counter, std::int8_t) noexcept { return counter + 1; }
-	  constexpr std::size_t operator()(std::size_t counter, char) noexcept { return counter + 1; }
+    template <class Arg>
+    constexpr std::size_t operator()(std::size_t counter, Arg &&arg) noexcept(
+        noexcept(static_cast<std::size_t>(std::declval<Arg>().size())))
+    {
+      return counter + static_cast<std::size_t>(std::forward<Arg>(arg).size());
+    }
+    constexpr std::size_t operator()(std::size_t counter, std::uint8_t) noexcept
+    {
+      return counter + 1;
+    }
+    constexpr std::size_t operator()(std::size_t counter, std::int8_t) noexcept
+    {
+      return counter + 1;
+    }
+    constexpr std::size_t operator()(std::size_t counter, char) noexcept
+    {
+      return counter + 1;
+    }
   };
 
   // this struct appends an argument's content to this bytearray
-  class AddBytes {
-	  self_type &self_;
-  public:
-	  AddBytes(self_type &self): self_(self) {}
+  class AddBytes
+  {
+    self_type &self_;
 
-	  template<class Arg> constexpr std::size_t operator()(std::size_t counter, Arg &&arg)
-		  noexcept(noexcept(std::size_t(std::declval<Arg>().size())))
-	  {
-		  std::memcpy(self_.pointer() + counter, arg.pointer(), arg.size());
-		  return counter + std::forward<Arg>(arg).size();
-	  }
-	  constexpr std::size_t operator()(std::size_t counter, std::uint8_t arg) noexcept {
-		  self_.pointer()[counter] = arg;
-		  return counter + 1;
-	  }
-	  constexpr std::size_t operator()(std::size_t counter, std::int8_t arg) noexcept {
-		  self_.pointer()[counter] = static_cast<std::uint8_t>(arg);
-		  return counter + 1;
-	  }
-	  constexpr std::size_t operator()(std::size_t counter, char arg) noexcept {
-		  self_.pointer()[counter] = static_cast<std::uint8_t>(arg);
-		  return counter + 1;
-	  }
+  public:
+    AddBytes(self_type &self)
+      : self_(self)
+    {}
+
+    template <class Arg>
+    constexpr std::size_t operator()(std::size_t counter, Arg &&arg) noexcept(
+        noexcept(std::size_t(std::declval<Arg>().size())))
+    {
+      std::memcpy(self_.pointer() + counter, arg.pointer(), arg.size());
+      return counter + std::forward<Arg>(arg).size();
+    }
+    constexpr std::size_t operator()(std::size_t counter, std::uint8_t arg) noexcept
+    {
+      self_.pointer()[counter] = arg;
+      return counter + 1;
+    }
+    constexpr std::size_t operator()(std::size_t counter, std::int8_t arg) noexcept
+    {
+      self_.pointer()[counter] = static_cast<std::uint8_t>(arg);
+      return counter + 1;
+    }
+    constexpr std::size_t operator()(std::size_t counter, char arg) noexcept
+    {
+      self_.pointer()[counter] = static_cast<std::uint8_t>(arg);
+      return counter + 1;
+    }
   };
 
-  template<typename T> using AppendedType = std::conditional_t<
-	  type_util::IsAnyOfV<std::decay_t<T>, std::uint8_t, char, unsigned char, std::int8_t>
-	  , std::decay_t<T>
-	  , self_type>;
-
-  template<typename... Args> void AppendInternal(Args const &...args) {
-	  auto old_size{size()};
-	  // grow enough to contain all the arguments
-	  Resize(value_util::Accumulate(GetSize{}, old_size, args...));
-	  // write down arguments' contents
-	  value_util::Accumulate(AddBytes{*this}, old_size, args...);
-  }
-
-  /*
-  void AppendInternal(std::size_t const acc_size)
-  {
-    Resize(acc_size);
-  }
-
-  // TODO(pbukva) (private issue #257)
-  template <typename... Args>
-  void AppendInternal(std::size_t const acc_size, self_type const &other, Args &&... args)
-  {
-    AppendInternal(acc_size + other.size(), std::forward<Args>(args)...);
-    memcpy(pointer() + acc_size, other.pointer(), other.size());
-           //static_cast<size_t>(other.size()) & 0x7FFFFFFFFFFFFFFFull);
-  }
+  template <typename T>
+  using AppendedType =
+      std::conditional_t<type_util::IsAnyOfV<std::decay_t<T>, std::uint8_t, char, std::int8_t>,
+                         std::decay_t<T>, self_type const &>;
 
   template <typename... Args>
-  void AppendInternal(std::size_t const acc_size, self_type &&other, Args &&... args)
+  void AppendInternal(Args... args)
   {
-    AppendInternal(acc_size + other.size(), std::forward<Args>(args)...);
-    memcpy(pointer() + acc_size, other.pointer(), other.size());
-           //static_cast<size_t>(other.size()) & 0x7FFFFFFFFFFFFFFFull);
+    auto old_size{size()};
+    // grow enough to contain all the arguments
+    Resize(value_util::Accumulate(GetSize{}, old_size, args...));
+    // write down arguments' contents
+    value_util::Accumulate(AddBytes{*this}, old_size, args...);
   }
-
-  template <typename... Args>
-  void AppendInternal(std::size_t const acc_size, std::uint8_t other, Args &&... args)
-  {
-    AppendInternal(acc_size + 1, std::forward<Args>(args)...);
-    pointer()[acc_size] = other;
-  }
-  */
 
   shared_array_type data_;
   std::size_t       start_ = 0, length_ = 0;

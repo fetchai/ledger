@@ -18,10 +18,93 @@
 
 #include "vm/string.hpp"
 
+#include <algorithm>
+#include <cctype>
+#include <cstddef>
+#include <cstdint>
+#include <string>
+
 namespace fetch {
 namespace vm {
 
-size_t String::GetHashCode()
+namespace {
+bool is_not_whitespace(int ch)
+{
+  return !std::isspace(ch);
+}
+
+void trim_left(std::string &s)
+{
+  s.erase(s.begin(), std::find_if(s.begin(), s.end(), is_not_whitespace));
+}
+
+void trim_right(std::string &s)
+{
+  s.erase(std::find_if(s.rbegin(), s.rend(), is_not_whitespace).base(), s.end());
+}
+
+}  // namespace
+
+void String::Trim()
+{
+  trim_left(str);
+  trim_right(str);
+}
+
+int32_t String::Find(Ptr<String> const &substring) const
+{
+  constexpr int32_t NOT_FOUND = -1;
+
+  // No string contains the empty string (incl. the empty string itself)
+  if (str.empty() || substring->str.empty())
+  {
+    return NOT_FOUND;
+  }
+
+  auto const first = str.find(substring->str);
+  if (first == std::string::npos)
+  {
+    return NOT_FOUND;
+  }
+
+  return static_cast<int32_t>(first);
+}
+
+Ptr<String> String::Substring(int32_t start_index, int32_t end_index)
+{
+  if (start_index < 0)
+  {
+    RuntimeError("substring start index must be non-negative");
+    return nullptr;
+  }
+  if (end_index < start_index)
+  {
+    RuntimeError("substring start index must not exceed end index");
+    return nullptr;
+  }
+  if (static_cast<std::size_t>(end_index) > str.size())
+  {
+    RuntimeError("substring end index exceeds length of string");
+    return nullptr;
+  }
+
+  const auto substring_length =
+      static_cast<std::size_t>(end_index) - static_cast<std::size_t>(start_index);
+
+  return new String(vm_, str.substr(static_cast<std::size_t>(start_index), substring_length));
+}
+
+void String::Reverse()
+{
+  std::reverse(str.begin(), str.end());
+}
+
+int32_t String::Length() const
+{
+  return static_cast<int32_t>(str.size());
+}
+
+std::size_t String::GetHashCode()
 {
   return std::hash<std::string>()(str);
 }

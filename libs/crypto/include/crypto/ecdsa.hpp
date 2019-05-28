@@ -17,12 +17,11 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/assert.hpp"
 #include "core/threading/synchronised_state.hpp"
 #include "crypto/ecdsa_signature.hpp"
 #include "crypto/prover.hpp"
 #include "crypto/verifier.hpp"
-
-#include <core/assert.hpp>
 
 namespace fetch {
 namespace crypto {
