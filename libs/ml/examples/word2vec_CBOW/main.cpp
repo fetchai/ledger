@@ -17,11 +17,9 @@
 //------------------------------------------------------------------------------
 
 #include "core/serializers/byte_array_buffer.hpp"
-
 #include "math/clustering/knn.hpp"
 #include "math/matrix_operations.hpp"
 #include "math/tensor.hpp"
-
 #include "ml/dataloaders/word2vec_loaders/cbow_dataloader.hpp"
 #include "ml/graph.hpp"
 #include "ml/layers/fully_connected.hpp"
@@ -32,11 +30,19 @@
 
 #include <fstream>
 #include <iostream>
+#include <map>
+#include <memory>
+#include <set>
+#include <string>
+#include <unordered_map>
+#include <utility>
+#include <vector>
 
 #define EMBEDING_DIMENSION 64u
 #define CONTEXT_WINDOW_SIZE 4  // Each side
 #define LEARNING_RATE 0.50f
 #define K 10u
+
 std::string TEST_WORD = "cold";
 
 using DataType  = double;

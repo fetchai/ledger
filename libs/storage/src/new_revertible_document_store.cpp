@@ -16,9 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
-/* static constexpr char const *LOGGING_NAME = "RevertableStore"; */
-
 #include "storage/new_revertible_document_store.hpp"
+
+#include <cstddef>
+#include <string>
+#include <utility>
 
 using Hash           = fetch::storage::NewRevertibleDocumentStore::Hash;
 using ByteArray      = fetch::storage::NewRevertibleDocumentStore::ByteArray;

@@ -21,6 +21,8 @@
 #include <ifaddrs.h>
 #include <sys/types.h>
 
+#include <stdexcept>
+
 namespace fetch {
 namespace network {
 

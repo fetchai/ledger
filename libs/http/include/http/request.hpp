@@ -28,8 +28,10 @@
 #include "http/status.hpp"
 #include "network/fetch_asio.hpp"
 
-#include <algorithm>
-#include <limits>
+#include <cstddef>
+#include <cstdint>
+#include <string>
+#include <utility>
 
 namespace fetch {
 namespace http {

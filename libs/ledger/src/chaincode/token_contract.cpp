@@ -25,11 +25,8 @@
 #include "variant/variant.hpp"
 #include "variant/variant_utils.hpp"
 
-#include <functional>
 #include <memory>
-#include <numeric>
-#include <set>
-#include <stdexcept>
+#include <unordered_map>
 
 namespace fetch {
 namespace ledger {

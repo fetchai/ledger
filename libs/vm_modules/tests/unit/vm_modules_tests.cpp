@@ -16,12 +16,13 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm_test_suite.hpp"
-
 #include "vm/io_observer_interface.hpp"
 #include "vm_modules/vm_factory.hpp"
+#include "vm_test_suite.hpp"
 
 #include "gtest/gtest.h"
+
+#include <memory>
 
 class VMTests : public VmTestSuite
 {

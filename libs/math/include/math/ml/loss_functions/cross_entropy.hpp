@@ -21,7 +21,8 @@
 #include "math/fundamental_operators.hpp"   // divide
 #include "math/matrix_operations.hpp"       //
 #include "math/standard_functions/log.hpp"  // log
-#include <cassert>
+
+#include <stdexcept>
 
 namespace fetch {
 namespace math {

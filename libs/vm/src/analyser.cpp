@@ -23,6 +23,10 @@
 #include "vm/state.hpp"
 #include "vm/string.hpp"
 
+#include <cstddef>
+#include <cstdint>
+#include <ostream>
+
 namespace fetch {
 namespace vm {
 
@@ -353,7 +357,7 @@ void Analyser::BuildFunctionDefinition(BlockNodePtr const &parent_block_node,
   for (int i = 0; i < num_parameters; ++i)
   {
     ExpressionNodePtr parameter_node =
-        ConvertToExpressionNodePtr(function_definition_node->children[size_t(2 + i * 2)]);
+        ConvertToExpressionNodePtr(function_definition_node->children[std::size_t(2 + i * 2)]);
     std::string const &parameter_name = parameter_node->text;
     SymbolPtr          symbol         = function_definition_node->symbols->Find(parameter_name);
     if (symbol)
@@ -364,7 +368,7 @@ void Analyser::BuildFunctionDefinition(BlockNodePtr const &parent_block_node,
       continue;
     }
     ExpressionNodePtr parameter_type_node =
-        ConvertToExpressionNodePtr(function_definition_node->children[size_t(3 + i * 2)]);
+        ConvertToExpressionNodePtr(function_definition_node->children[std::size_t(3 + i * 2)]);
     TypePtr parameter_type = FindType(parameter_type_node);
     if (parameter_type == nullptr)
     {
@@ -382,7 +386,7 @@ void Analyser::BuildFunctionDefinition(BlockNodePtr const &parent_block_node,
   }
   TypePtr           return_type;
   ExpressionNodePtr return_type_node =
-      ConvertToExpressionNodePtr(function_definition_node->children[size_t(count - 1)]);
+      ConvertToExpressionNodePtr(function_definition_node->children[std::size_t(count - 1)]);
   if (return_type_node)
   {
     return_type = FindType(return_type_node);
@@ -583,10 +587,10 @@ void Analyser::AnnotateForStatement(BlockNodePtr const &for_statement_node)
   VariablePtr variable = CreateVariable(VariableKind::For, name);
   for_statement_node->symbols->Add(variable);
   identifier_node->variable            = variable;
-  size_t const                   count = for_statement_node->children.size() - 1;
+  std::size_t const              count = for_statement_node->children.size() - 1;
   std::vector<ExpressionNodePtr> nodes;
   int                            problems = 0;
-  for (size_t i = 1; i <= count; ++i)
+  for (std::size_t i = 1; i <= count; ++i)
   {
     NodePtr const &   child      = for_statement_node->children[i];
     ExpressionNodePtr child_node = ConvertToExpressionNodePtr(child);
@@ -889,9 +893,9 @@ bool Analyser::AnnotateLHSExpression(ExpressionNodePtr const &parent, Expression
     type = container_node->type;
   }
 
-  size_t const num_supplied_indexes = lhs->children.size() - 1;
-  TypePtrArray supplied_index_types;
-  for (size_t i = 1; i <= num_supplied_indexes; ++i)
+  std::size_t const num_supplied_indexes = lhs->children.size() - 1;
+  TypePtrArray      supplied_index_types;
+  for (std::size_t i = 1; i <= num_supplied_indexes; ++i)
   {
     NodePtr const &   supplied_index      = lhs->children[i];
     ExpressionNodePtr supplied_index_node = ConvertToExpressionNodePtr(supplied_index);
@@ -1379,9 +1383,9 @@ bool Analyser::AnnotateIndexOp(ExpressionNodePtr const &node)
     type = lhs->type;
   }
 
-  size_t const num_supplied_indexes = node->children.size() - 1;
-  TypePtrArray supplied_index_types;
-  for (size_t i = 1; i <= num_supplied_indexes; ++i)
+  std::size_t const num_supplied_indexes = node->children.size() - 1;
+  TypePtrArray      supplied_index_types;
+  for (std::size_t i = 1; i <= num_supplied_indexes; ++i)
   {
     NodePtr const &   supplied_index      = node->children[i];
     ExpressionNodePtr supplied_index_node = ConvertToExpressionNodePtr(supplied_index);
@@ -1411,7 +1415,7 @@ bool Analyser::AnnotateIndexOp(ExpressionNodePtr const &node)
     return false;
   }
 
-  for (size_t i = 1; i <= num_supplied_indexes; ++i)
+  for (std::size_t i = 1; i <= num_supplied_indexes; ++i)
   {
     NodePtr const &   supplied_index      = node->children[i];
     ExpressionNodePtr supplied_index_node = ConvertToExpressionNodePtr(supplied_index);
@@ -1562,7 +1566,7 @@ bool Analyser::AnnotateInvokeOp(ExpressionNodePtr const &node)
   }
 
   TypePtrArray supplied_parameter_types;
-  for (size_t i = 1; i < node->children.size(); ++i)
+  for (std::size_t i = 1; i < node->children.size(); ++i)
   {
     NodePtr const &   supplied_parameter      = node->children[i];
     ExpressionNodePtr supplied_parameter_node = ConvertToExpressionNodePtr(supplied_parameter);
@@ -1606,7 +1610,7 @@ bool Analyser::AnnotateInvokeOp(ExpressionNodePtr const &node)
       }
     }
 
-    for (size_t i = 1; i < node->children.size(); ++i)
+    for (std::size_t i = 1; i < node->children.size(); ++i)
     {
       NodePtr const &   supplied_parameter      = node->children[i];
       ExpressionNodePtr supplied_parameter_node = ConvertToExpressionNodePtr(supplied_parameter);
@@ -1650,7 +1654,7 @@ bool Analyser::AnnotateInvokeOp(ExpressionNodePtr const &node)
       return false;
     }
 
-    for (size_t i = 1; i < node->children.size(); ++i)
+    for (std::size_t i = 1; i < node->children.size(); ++i)
     {
       NodePtr const &   supplied_parameter      = node->children[i];
       ExpressionNodePtr supplied_parameter_node = ConvertToExpressionNodePtr(supplied_parameter);
@@ -1865,13 +1869,13 @@ bool Analyser::MatchTypes(TypePtr const &type, TypePtrArray const &supplied_type
                           TypePtrArray const &expected_types, TypePtrArray &actual_types)
 {
   actual_types.clear();
-  size_t const num_types = expected_types.size();
+  std::size_t const num_types = expected_types.size();
   if (supplied_types.size() != num_types)
   {
     // Not a match
     return false;
   }
-  for (size_t i = 0; i < num_types; ++i)
+  for (std::size_t i = 0; i < num_types; ++i)
   {
     TypePtr const &supplied_type = supplied_types[i];
     if (supplied_type->IsVoid())
@@ -1960,15 +1964,15 @@ SymbolPtr Analyser::FindSymbol(ExpressionNodePtr const &node)
       // Template type doesn't exist
       return nullptr;
     }
-    TypePtr      template_type                = ConvertToTypePtr(symbol);
-    size_t const num_supplied_parameter_types = node->children.size() - 1;
-    size_t const num_expected_parameter_types = template_type->types.size();
-    TypePtrArray parameter_types;
+    TypePtr           template_type                = ConvertToTypePtr(symbol);
+    std::size_t const num_supplied_parameter_types = node->children.size() - 1;
+    std::size_t const num_expected_parameter_types = template_type->types.size();
+    TypePtrArray      parameter_types;
     if (num_supplied_parameter_types != num_expected_parameter_types)
     {
       return nullptr;
     }
-    for (size_t i = 1; i <= num_expected_parameter_types; ++i)
+    for (std::size_t i = 1; i <= num_expected_parameter_types; ++i)
     {
       ExpressionNodePtr parameter_type_node = ConvertToExpressionNodePtr(node->children[i]);
       TypePtr           parameter_type      = FindType(parameter_type_node);
@@ -2166,8 +2170,8 @@ TypePtr Analyser::InternalCreateInstantiationType(TypeKind type_kind, TypePtr co
 {
   std::stringstream stream;
   stream << template_type->name + "<";
-  size_t const count = parameter_types.size();
-  for (size_t i = 0; i < count; ++i)
+  std::size_t const count = parameter_types.size();
+  for (std::size_t i = 0; i < count; ++i)
   {
     stream << parameter_types[i]->name;
     if (i + 1 < count)
@@ -2285,8 +2289,8 @@ std::string Analyser::BuildUniqueId(TypePtr const &type, std::string const &func
     stream << type->name;
   }
   stream << "::" << function_name << "^";
-  size_t const count = parameter_types.size();
-  for (size_t i = 0; i < count; ++i)
+  std::size_t const count = parameter_types.size();
+  for (std::size_t i = 0; i < count; ++i)
   {
     stream << parameter_types[i]->name;
     if (i + 1 < count)
