@@ -77,14 +77,14 @@ std::bitset<BITS> ToBitset(StdArray<T, SIZE> const &from)
 template <typename T, std::size_t SIZE>
 byte_array::ByteArray ToByteArray(StdArray<T, SIZE> const &from)
 {
-  return {reinterpret_cast<byte_array::ConstByteArray::container_type const *>(from.data()),
+  return {reinterpret_cast<byte_array::ConstByteArray::value_type const *>(from.data()),
           from.size() * sizeof(typename StdArray<T, SIZE>::value_type)};
 }
 
 template <std::size_t BITS>
 meta::EnableIf<meta::IsLog2(BITS), byte_array::ByteArray> ToByteArray(std::bitset<BITS> const &from)
 {
-  using T = byte_array::ConstByteArray::container_type;
+  using T = byte_array::ConstByteArray::value_type;
   auto const arr{ToArray<T>(from)};
   return {reinterpret_cast<T const *const>(arr.data()), arr.size() * sizeof(T)};
 }

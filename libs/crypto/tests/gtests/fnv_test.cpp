@@ -77,7 +77,7 @@ TEST_F(FVNTest, test_basic)
 {
   FNV::context_type const          expected_hash = 0x406e475017aa7737;
   byte_array::ConstByteArray const expected_hash_array(
-      reinterpret_cast<byte_array::ConstByteArray::container_type const *>(&expected_hash),
+      reinterpret_cast<byte_array::ConstByteArray::value_type const *>(&expected_hash),
       sizeof(expected_hash));
   test_basic_hash("abcdefg", expected_hash_array);
   test_basic_hash_value("abcdefg", expected_hash);

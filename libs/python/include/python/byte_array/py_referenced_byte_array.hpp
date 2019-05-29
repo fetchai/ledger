@@ -40,16 +40,17 @@ void BuildByteArray(pybind11::module &module)
       .def(py::self + fetch::byte_array::ByteArray())
       .def("Resize", &ByteArray::Resize)
       .def("operator[]",
-           (fetch::byte_array::ConstByteArray::container_type & (ByteArray::*)(std::size_t)) &
+           (fetch::byte_array::ConstByteArray::value_type & (ByteArray::*)(std::size_t)) &
                ByteArray::operator[])
-      .def("operator[]", (const fetch::byte_array::ConstByteArray::container_type &(
-                             ByteArray::*)(std::size_t) const) &
-                             ByteArray::operator[])
+      .def(
+          "operator[]",
+          (const fetch::byte_array::ConstByteArray::value_type &(ByteArray::*)(std::size_t) const) &
+              ByteArray::operator[])
       .def("pointer",
-           (const fetch::byte_array::ConstByteArray::container_type *(ByteArray::*)() const) &
+           (const fetch::byte_array::ConstByteArray::value_type *(ByteArray::*)() const) &
                ByteArray::pointer)
-      .def("pointer", (fetch::byte_array::ConstByteArray::container_type * (ByteArray::*)()) &
-                          ByteArray::pointer)
+      .def("pointer",
+           (fetch::byte_array::ConstByteArray::value_type * (ByteArray::*)()) & ByteArray::pointer)
       .def("char_pointer", (const char *(ByteArray::*)() const) & ByteArray::char_pointer)
       .def("char_pointer", (char *(ByteArray::*)()) & ByteArray::char_pointer)
       .def("Reserve", &ByteArray::Reserve);

@@ -38,9 +38,9 @@ namespace byte_array {
 class ConstByteArray
 {
 public:
-  using container_type    = std::uint8_t;
+  using value_type        = std::uint8_t;
   using self_type         = ConstByteArray;
-  using shared_array_type = memory::SharedArray<container_type>;
+  using shared_array_type = memory::SharedArray<value_type>;
 
   enum
   {
@@ -58,7 +58,7 @@ public:
     : ConstByteArray{reinterpret_cast<std::uint8_t const *>(str), str ? std::strlen(str) : 0}
   {}
 
-  ConstByteArray(container_type const *const data, std::size_t size)
+  ConstByteArray(value_type const *const data, std::size_t size)
   {
     if (size > 0)
     {
@@ -69,7 +69,7 @@ public:
     }
   }
 
-  ConstByteArray(std::initializer_list<container_type> l)
+  ConstByteArray(std::initializer_list<value_type> l)
   {
     Resize(l.size());
     std::size_t i = 0;
@@ -104,15 +104,13 @@ public:
     return ConstByteArray{pointer(), size()};
   }
 
-  void WriteBytes(container_type const *const src, std::size_t src_size,
-                  std::size_t dest_offset = 0)
+  void WriteBytes(value_type const *const src, std::size_t src_size, std::size_t dest_offset = 0)
   {
     assert(dest_offset + src_size <= size());
     std::memcpy(pointer() + dest_offset, src, src_size);
   }
 
-  void ReadBytes(container_type *const dest, std::size_t dest_size,
-                 std::size_t src_offset = 0) const
+  void ReadBytes(value_type *const dest, std::size_t dest_size, std::size_t src_offset = 0) const
   {
     if (src_offset + dest_size > size())
     {
@@ -131,7 +129,7 @@ public:
     return {char_pointer(), length_};
   }
 
-  container_type const &operator[](std::size_t n) const
+  value_type const &operator[](std::size_t n) const
   {
     assert(n < length_);
     return arr_pointer_[n];
@@ -220,7 +218,7 @@ public:
     return (p == str.size());
   }
 
-  bool Match(container_type const *str, std::size_t pos = 0) const
+  bool Match(value_type const *str, std::size_t pos = 0) const
   {
     std::size_t p = 0;
     while ((pos < length_) && (str[p] != '\0') && (str[p] == arr_pointer_[pos]))
@@ -253,7 +251,7 @@ public:
     return 0 == length_;
   }
 
-  container_type const *pointer() const
+  value_type const *pointer() const
   {
     return arr_pointer_;
   }
@@ -333,7 +331,7 @@ protected:
     return RETURN_TYPE(*this, start + start_, length);
   }
 
-  container_type &operator[](std::size_t n)
+  value_type &operator[](std::size_t n)
   {
     assert(n < length_);
     return arr_pointer_[n];
@@ -434,7 +432,7 @@ protected:
     arr_pointer_ = data_.pointer() + start_;
   }
 
-  constexpr container_type *pointer() noexcept
+  constexpr value_type *pointer() noexcept
   {
     return arr_pointer_;
   }
@@ -463,7 +461,7 @@ protected:
         break;
       }
 
-      (*this)[pos] = static_cast<container_type>(with);
+      (*this)[pos] = static_cast<value_type>(with);
       ++num_of_replacements;
     }
     return num_of_replacements;
@@ -572,7 +570,7 @@ private:
 
   shared_array_type data_;
   std::size_t       start_ = 0, length_ = 0;
-  container_type *  arr_pointer_ = nullptr;
+  value_type *      arr_pointer_ = nullptr;
 };
 
 inline std::ostream &operator<<(std::ostream &os, ConstByteArray const &str)
