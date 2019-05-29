@@ -67,7 +67,7 @@ meta::IfIsInteger<T, fetch::byte_array::ConstByteArray> EncodeInteger(T value)
       uint64_t const bytes_to_encode = (bits_to_encode + 7u) >> 3u;
 
       uint8_t log2_bytes_required{3};
-      for (uint8_t limit = 4u; limit; limit >>= 1u)
+      for (uint64_t limit = 4u; limit; limit >>= 1u)
       {
         if (bytes_to_encode <= limit)
         {
