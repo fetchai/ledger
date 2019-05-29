@@ -472,8 +472,14 @@ protected:
 private:
   constexpr static char const *LOGGING_NAME = "ConstByteArray";
 
-  // this struct accumulates the size of all appended arguments
-  struct GetSize
+  /**
+   * AddSize is a binary callable object that, when called,
+   * returns the sum of its first argument and the size of the second.
+   * By default, `size' is whatever returned by arg.size().
+   * As a special case, the second argument can be a char, an int8_t or uint8_t,
+   * in which case its size is always 1.
+   */
+  struct AddSize
   {
   public:
     template <class Arg>
@@ -482,21 +488,32 @@ private:
     {
       return counter + static_cast<std::size_t>(std::forward<Arg>(arg).size());
     }
+
     constexpr std::size_t operator()(std::size_t counter, std::uint8_t) noexcept
     {
       return counter + 1;
     }
+
     constexpr std::size_t operator()(std::size_t counter, std::int8_t) noexcept
     {
       return counter + 1;
     }
+
     constexpr std::size_t operator()(std::size_t counter, char) noexcept
     {
       return counter + 1;
     }
   };
 
-  // this struct appends an argument's content to this bytearray
+  /**
+   * AddBytes is a binary callable object that keeps a reference to this bytearray.
+   * It accepts two arguments: the offset and a anoher bytearray,
+   * and pastes its second argument's contents into this bytearray starting at offset.
+   * As a special case, the second argument can be a char, an int8_t or uint8_t,
+   * in which case it is simply put into array at offset.
+   * Returns the sum of its first argument and the size of the second, i.e. next offset
+   * past the last copied byte, to be used in left-folds.
+   */
   class AddBytes
   {
     self_type &self_;
@@ -513,16 +530,19 @@ private:
       std::memcpy(self_.pointer() + counter, arg.pointer(), arg.size());
       return counter + std::forward<Arg>(arg).size();
     }
+
     constexpr std::size_t operator()(std::size_t counter, std::uint8_t arg) noexcept
     {
       self_.pointer()[counter] = arg;
       return counter + 1;
     }
+
     constexpr std::size_t operator()(std::size_t counter, std::int8_t arg) noexcept
     {
       self_.pointer()[counter] = static_cast<std::uint8_t>(arg);
       return counter + 1;
     }
+
     constexpr std::size_t operator()(std::size_t counter, char arg) noexcept
     {
       self_.pointer()[counter] = static_cast<std::uint8_t>(arg);
@@ -535,12 +555,17 @@ private:
       std::conditional_t<type_util::IsAnyOfV<std::decay_t<T>, std::uint8_t, char, std::int8_t>,
                          std::decay_t<T>, self_type const &>;
 
+  /**
+   * Appends args to this array in left-to-right order.
+   * Note that Args, as invoked by Append() are either single-byte scalars,
+   * or const references, so no ref-qualification in the prototype.
+   */
   template <typename... Args>
   void AppendInternal(Args... args)
   {
     auto old_size{size()};
     // grow enough to contain all the arguments
-    Resize(value_util::Accumulate(GetSize{}, old_size, args...));
+    Resize(value_util::Accumulate(AddSize{}, old_size, args...));
     // write down arguments' contents
     value_util::Accumulate(AddBytes{*this}, old_size, args...);
   }
