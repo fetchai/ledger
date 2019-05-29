@@ -54,7 +54,7 @@ public:
     Resize(n);
   }
 
-  constexpr ConstByteArray(char const *str) noexcept
+  ConstByteArray(char const *str)
     : ConstByteArray{reinterpret_cast<std::uint8_t const *>(str), str ? std::strlen(str) : 0}
   {}
 
@@ -79,7 +79,7 @@ public:
     }
   }
 
-  ConstByteArray(std::string const &s) noexcept
+  ConstByteArray(std::string const &s)
     : ConstByteArray(reinterpret_cast<std::uint8_t const *>(s.data()), s.size())
   {}
 
@@ -87,8 +87,7 @@ public:
   ConstByteArray(ConstByteArray &&other) noexcept      = default;
   // TODO(pbukva): (private issue #229: confusion what method does without analysing implementation
   // details - absolute vs relative[against `other.start_`] size)
-  constexpr ConstByteArray(ConstByteArray const &other, std::size_t start,
-                           std::size_t length) noexcept
+  ConstByteArray(ConstByteArray const &other, std::size_t start, std::size_t length) noexcept
     : data_(other.data_)
     , start_(start)
     , length_(length)
