@@ -25,6 +25,12 @@
 namespace fetch {
 namespace ml {
 
+/**
+ * Root Mean Square Propagation optimizer explained in paper:
+ * https://www.cs.toronto.edu/~tijmen/csc321/slides/lecture_slides_lec6.pdf
+ * @tparam T ArrayType
+ * @tparam C CriterionType
+ */
 template <class T, class C>
 class RMSPropOptimizer : public Optimizer<T, C>
 {

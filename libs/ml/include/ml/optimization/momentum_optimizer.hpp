@@ -24,6 +24,12 @@
 namespace fetch {
 namespace ml {
 
+/**
+ * Adaptive Momentum optimizer
+ * i.e.  Stochastic gradient descent with momentum
+ * @tparam T ArrayType
+ * @tparam C CriterionType
+ */
 template <class T, class C>
 class MomentumOptimizer : public Optimizer<T, C>
 {

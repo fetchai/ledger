@@ -23,6 +23,11 @@
 namespace fetch {
 namespace ml {
 
+/**
+ * Abstract gradient optimizer class
+ * @tparam T ArrayType
+ * @tparam C CriterionType
+ */
 template <class T, class C>
 class Optimizer
 {

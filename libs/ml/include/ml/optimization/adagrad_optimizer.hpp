@@ -25,6 +25,12 @@
 namespace fetch {
 namespace ml {
 
+/**
+ * Adaptive Gradient Algorithm optimizer
+ * i.e. Modified stochastic gradient descent with per-parameter learning rate
+ * @tparam T ArrayType
+ * @tparam C CriterionType
+ */
 template <class T, class C>
 class AdaGradOptimizer : public Optimizer<T, C>
 {

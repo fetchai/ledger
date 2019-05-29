@@ -24,6 +24,11 @@
 namespace fetch {
 namespace ml {
 
+/**
+ * Stochastic Gradient Descent optimizer
+ * @tparam T ArrayType
+ * @tparam C CriterionType
+ */
 template <class T, class C>
 class SGDOptimizer : public Optimizer<T, C>
 {

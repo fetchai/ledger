@@ -25,6 +25,11 @@
 namespace fetch {
 namespace ml {
 
+/**
+ * Adaptive Momentum optimizer
+ * @tparam T ArrayType
+ * @tparam C CriterionType
+ */
 template <class T, class C>
 class AdamOptimizer : public Optimizer<T, C>
 {
