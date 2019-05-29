@@ -33,7 +33,7 @@ namespace ml {
  * The full graph on which to run the computation
  */
 template <class T>
-class Graph : public ops::Trainable<T>
+class Graph
 {
 public:
   using ArrayType          = T;
@@ -47,6 +47,7 @@ public:
 
   Graph()
   {}
+  virtual ~Graph() = default;
 
   ArrayType    Evaluate(std::string const &node_name);
   void         BackPropagate(std::string const &node_name, ArrayType const &error_signal);
@@ -61,6 +62,12 @@ public:
 
   virtual struct fetch::ml::StateDict<ArrayType> StateDict() const;
   virtual void LoadStateDict(struct fetch::ml::StateDict<T> const &dict);
+
+  std::vector<ArrayType> GetWeights() const;
+  std::vector<ArrayType> GetGradients() const;
+  void                   ApplyGradients(std::vector<ArrayType> &grad);
+
+  void ResetGradients();
 
 private:
   /**
@@ -77,6 +84,18 @@ private:
     trainable_[name] = op;
   }
 
+  template <class OperationType>
+  meta::IfIsGraph<ArrayType, OperationType, void> AddTrainable(
+      std::string const &name, std::shared_ptr<Node<ArrayType, OperationType>> op)
+  {
+
+    for (auto &trainable : op->trainable_)
+    {
+      FETCH_LOG_INFO("ML_LIB", "Created trainable node [", name, "]");
+      trainable_[name + "_" + trainable.first] = trainable.second;
+    }
+  }
+
   /**
    * If AddNode is called for a non-trainable op, this version of the function is called which
    * does not append to the trainable map
@@ -86,7 +105,7 @@ private:
    * @return
    */
   template <class OperationType>
-  meta::IfIsNotTrainable<ArrayType, OperationType, void> AddTrainable(
+  meta::IfIsNotGraphOrTrainable<ArrayType, OperationType, void> AddTrainable(
       std::string const &name, std::shared_ptr<Node<ArrayType, OperationType>> op)
   {
     FETCH_UNUSED(name);
@@ -104,7 +123,7 @@ private:
     std::string ret           = name;
     std::string op_descriptor = (OperationType::DESCRIPTOR);
     // search graph for existing variable names
-    if (ret.empty())
+    if ((nodes_.find(ret) != nodes_.end()) || ret.empty())
     {
       std::uint64_t name_idx = 0;
       ret                    = op_descriptor + "_" + std::to_string(name_idx);
@@ -279,6 +298,66 @@ void Graph<ArrayType>::LoadStateDict(struct fetch::ml::StateDict<ArrayType> cons
   for (auto const &t : trainable_)
   {
     t.second->LoadStateDict(dict.dict_.at(t.first));
+  }
+}
+
+/**
+ * Assigns all trainable weights parameters to vector of ArrayType for exporting and serialising
+ * @return ret is vector containing values for all weights
+ */
+template <typename ArrayType>
+std::vector<ArrayType> Graph<ArrayType>::GetWeights() const
+{
+  std::vector<ArrayType> ret;
+
+  for (auto const &t : trainable_)
+  {
+    ret.push_back(t.second->GetWeights());
+  }
+  return ret;
+}
+
+/**
+ * Assigns all trainable accumulated gradient parameters to vector of ArrayType for exporting and
+ * serialising
+ * @return ret is vector containing all gradient values
+ */
+template <typename ArrayType>
+std::vector<ArrayType> Graph<ArrayType>::GetGradients() const
+{
+  std::vector<ArrayType> ret;
+
+  for (auto const &t : trainable_)
+  {
+    ret.push_back(t.second->Gradients());
+  }
+  return ret;
+}
+
+/**
+ * Sets all accumulated gradients for each trainable to zero
+ */
+template <typename ArrayType>
+void Graph<ArrayType>::ResetGradients()
+{
+  for (auto const &t : trainable_)
+  {
+    t.second->ResetGradients();
+  }
+}
+
+/**
+ * Add gradient values to weight for each trainable
+ * @param grad vector of gradient values for each trainable stored in ArrayType
+ */
+template <typename ArrayType>
+void Graph<ArrayType>::ApplyGradients(std::vector<ArrayType> &grad)
+{
+  typename ArrayType::SizeType i = 0;
+  for (auto const &t : trainable_)
+  {
+    t.second->ApplyGradient(grad.at(i));
+    i++;
   }
 }
 

@@ -24,36 +24,38 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class Add : public fetch::ml::ElementWiseOps<T>
+class Subtract : public fetch::ml::ElementWiseOps<T>
 {
 public:
   using ArrayType     = T;
   using DataType      = typename ArrayType::Type;
   using VecTensorType = typename ElementWiseOps<T>::VecTensorType;
 
-  Add()          = default;
-  virtual ~Add() = default;
+  Subtract()          = default;
+  virtual ~Subtract() = default;
 
   virtual void Forward(VecTensorType const &inputs, ArrayType &output)
   {
     assert(inputs.size() == 2);
     assert(inputs.at(0).get().size() == inputs.at(1).get().size());
     assert(output.shape() == this->ComputeOutputShape(inputs));
-    fetch::math::Add(inputs[0].get(), inputs[1].get(), output);
+
+    fetch::math::Subtract(inputs[0].get(), inputs[1].get(), output);
   }
 
   virtual std::vector<ArrayType> Backward(VecTensorType const &inputs,
                                           ArrayType const &    error_signal)
   {
     (void)inputs;
+
     assert(inputs.size() == 2);
     assert(inputs.at(0).get().size() == inputs.at(1).get().size());
     assert(error_signal.size() == inputs.at(1).get().size());
 
-    return {error_signal, error_signal};
+    return {error_signal, fetch::math::Multiply(error_signal, DataType{-1})};
   }
 
-  static constexpr char const *DESCRIPTOR = "Add";
+  static constexpr char const *DESCRIPTOR = "Subtract";
 };
 
 }  // namespace ops

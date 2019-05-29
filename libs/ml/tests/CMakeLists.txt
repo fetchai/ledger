@@ -18,4 +18,5 @@ add_fetch_test(ml_training_gtest
                fetch-ml
                ml/training
                SLOW)
+add_fetch_test(ml_optimization_gtest fetch-ml ml/optimization)
 add_fetch_test(ml_clustering_gtest fetch-ml ml/clustering)

@@ -50,9 +50,13 @@ public:
   using ArrayType    = T;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
 
-  virtual void                           Step(typename T::Type learningRate) = 0;
-  virtual struct fetch::ml::StateDict<T> StateDict() const                   = 0;
-  virtual void LoadStateDict(struct fetch::ml::StateDict<T> const &dict)     = 0;
+  virtual void                           Step(typename T::Type learningRate)         = 0;
+  virtual struct fetch::ml::StateDict<T> StateDict() const                           = 0;
+  virtual void             LoadStateDict(struct fetch::ml::StateDict<T> const &dict) = 0;
+  virtual ArrayType const &GetWeights() const                                        = 0;
+  virtual ArrayType        Gradients() const                                         = 0;
+  virtual void             ResetGradients()                                          = 0;
+  virtual void             ApplyGradient(ArrayType const &grad)                      = 0;
 };
 
 template <class T>
@@ -95,6 +99,20 @@ public:
     this->output_->InlineAdd(*gradient_accumulation_);
     // Major DL framework do not do that, but as I can't think of any reason why, I'll leave it here
     // for convenience. Remove if needed -- Pierre
+    ResetGradients();
+  }
+
+  virtual void ApplyGradient(ArrayType const &grad)
+  {
+    this->output_->InlineAdd(grad);
+    ResetGradients();
+  }
+
+  /**
+   * Set all gradient values to 0
+   */
+  virtual void ResetGradients()
+  {
     gradient_accumulation_->Fill(typename T::Type(0));
   }
 
@@ -172,7 +190,7 @@ public:
    * Returns a copy of embeddings gradients for enquiry
    * @return
    */
-  ArrayType Gradients()
+  ArrayType Gradients() const
   {
     return gradient_accumulation_->Copy();
   }
