@@ -30,7 +30,7 @@ namespace combinatorics {
  * @param n - Integer for which this function calculates the factorial
  * @return - Integer solution to n!
  */
-std::size_t factorial(std::size_t n)
+inline std::size_t factorial(std::size_t n)
 {
   // Trivial case
   if (n == 0)
@@ -54,7 +54,7 @@ std::size_t factorial(std::size_t n)
  * @param r - The size of each combination
  * @return - Number of combinations as float
  */
-std::size_t calculateNumCombinations(std::size_t n, std::size_t r)
+inline std::size_t calculateNumCombinations(std::size_t n, std::size_t r)
 {
   assert(r <= n);
 
