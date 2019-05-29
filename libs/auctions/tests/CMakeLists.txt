@@ -10,6 +10,6 @@ include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
 # Compiler Configuration
 setup_compiler()
 
-add_fetch_test(first_price_auction_gtest fetch-auctions auctions/first_price_auction)
-add_fetch_test(vickrey_auction_gtest fetch-auctions auctions/vickrey_auction)
-add_fetch_test(combinatorial_auction_gtest fetch-auctions auctions/combinatorial_auction)
+fetch_add_test(first_price_auction_gtest fetch-auctions auctions/first_price_auction)
+fetch_add_test(vickrey_auction_gtest fetch-auctions auctions/vickrey_auction)
+fetch_add_test(combinatorial_auction_gtest fetch-auctions auctions/combinatorial_auction)
