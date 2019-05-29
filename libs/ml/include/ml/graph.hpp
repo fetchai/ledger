@@ -302,8 +302,8 @@ void Graph<ArrayType>::LoadStateDict(struct fetch::ml::StateDict<ArrayType> cons
 }
 
 /**
- * Assigns all trainable parameters to vector of ArrayType for exporting and serialising
- * @return ret is vector containing all weights values
+ * Assigns all trainable weights parameters to vector of ArrayType for exporting and serialising
+ * @return ret is vector containing values for all weights
  */
 template <typename ArrayType>
 std::vector<ArrayType> Graph<ArrayType>::GetWeights() const
@@ -318,8 +318,9 @@ std::vector<ArrayType> Graph<ArrayType>::GetWeights() const
 }
 
 /**
- * Assigns all trainable parameters to vector of ArrayType for exporting and serialising
- * @return ret is vector containing all weights values
+ * Assigns all trainable accumulated gradient parameters to vector of ArrayType for exporting and
+ * serialising
+ * @return ret is vector containing all gradient values
  */
 template <typename ArrayType>
 std::vector<ArrayType> Graph<ArrayType>::GetGradients() const
@@ -333,6 +334,9 @@ std::vector<ArrayType> Graph<ArrayType>::GetGradients() const
   return ret;
 }
 
+/**
+ * Sets all accumulated gradients for each trainable to zero
+ */
 template <typename ArrayType>
 void Graph<ArrayType>::ResetGradients()
 {
@@ -342,6 +346,10 @@ void Graph<ArrayType>::ResetGradients()
   }
 }
 
+/**
+ * Add gradient values to weight for each trainable
+ * @param grad vector of gradient values for each trainable stored in ArrayType
+ */
 template <typename ArrayType>
 void Graph<ArrayType>::ApplyGradients(std::vector<ArrayType> &grad)
 {

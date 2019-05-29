@@ -51,11 +51,9 @@ public:
     assert(Sum(fetch::math::Softmax(inputs.at(0))) - (DataType(inputs.at(0).shape().at(0))) <
            0.0001);
 
-    SizeType n_classes{inputs.at(0).size()};
-
     // softmax forward & then CrossEntropy
     typename ArrayType::Type result =
-        fetch::math::CrossEntropyLoss(fetch::math::Softmax(inputs[0]), inputs[1], n_classes);
+        fetch::math::CrossEntropyLoss(fetch::math::Softmax(inputs[0]), inputs[1]);
 
     return result;
   }

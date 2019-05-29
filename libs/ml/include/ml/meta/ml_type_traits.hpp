@@ -46,7 +46,8 @@ template <typename T, typename OperationType>
 constexpr bool IsNotGraph = !IsGraph<T, OperationType>;
 
 template <typename T, typename OperationType>
-constexpr bool IsNotGraphOrTrainable = !IsGraph<T, OperationType> && !IsTrainable<T, OperationType>;
+constexpr bool                     IsNotGraphOrTrainable =
+    IsNotGraph<T, OperationType> &&IsNotTrainable<T, OperationType>;
 
 template <typename T, typename OperationType, typename R = void>
 using IfIsTrainable = fetch::meta::EnableIf<IsTrainable<T, OperationType>, R>;

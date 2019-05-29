@@ -52,8 +52,7 @@ public:
     assert(inputs.size() == 2);
     assert(inputs.at(0).size() == inputs.at(1).size());
 
-    SizeType n_classes{inputs.at(0).size()};
-    DataType result = fetch::math::CrossEntropyLoss(inputs[0], inputs[1], n_classes);
+    DataType result = fetch::math::CrossEntropyLoss(inputs[0], inputs[1]);
 
     return result;
   }
@@ -62,15 +61,26 @@ public:
    * @param inputs vector of 2 one-hot Tensors
    * @return gradient of CrossEntropy of 2 inputs
    */
+
   virtual ArrayType Backward(std::vector<ArrayType> const &inputs)
   {
     assert(inputs.size() == 2);
     assert(inputs[0].size() == inputs[1].size());
     assert(inputs[0].shape().size() == 2);
 
-    ArrayType ret = fetch::math::Softmax(inputs[0], 0);
-    fetch::math::Divide(inputs[1], ret, ret);
-    fetch::math::Multiply(DataType(-1), ret, ret);
+    ArrayType ret;
+    if (inputs[0].shape().at(1) == 1)  // not one-hot
+    {
+      ret = fetch::math::Sigmoid(inputs[0]);
+      fetch::math::Subtract(ret, inputs[1], ret);
+      fetch::math::Multiply(ret, inputs[0], ret);
+    }
+    else if (inputs[0].shape().size())  // one-hot
+    {
+      ret = fetch::math::Softmax(inputs[0], 0);
+      fetch::math::Divide(inputs[1], ret, ret);
+      fetch::math::Multiply(DataType(-1), ret, ret);
+    }
 
     return ret;
   }
