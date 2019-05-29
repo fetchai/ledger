@@ -35,7 +35,7 @@ public:
 
   AdamOptimizer(std::shared_ptr<Graph<T>> graph, std::string const &input_node_name,
                 std::string const &output_node_name, DataType const &learning_rate,
-                DataType const &beta1 = 0.9, DataType const &beta2 = 0.999)
+                DataType const &beta1 = DataType{0.9f}, DataType const &beta2 = DataType{0.999f})
     : Optimizer<T, C>(graph, input_node_name, output_node_name, learning_rate)
     , beta1_(beta1)
     , beta2_(beta2)

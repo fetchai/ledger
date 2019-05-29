@@ -34,7 +34,7 @@ public:
 
   MomentumOptimizer(std::shared_ptr<Graph<T>> graph, std::string const &input_node_name,
                     std::string const &output_node_name, DataType const &learning_rate,
-                    DataType const &momentum_update = 0.9)
+                    DataType const &momentum_update = DataType{0.9f})
     : Optimizer<T, C>(graph, input_node_name, output_node_name, learning_rate)
     , momentum_update_(momentum_update)
   {

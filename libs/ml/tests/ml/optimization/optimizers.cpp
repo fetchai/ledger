@@ -42,291 +42,223 @@ using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor
                                  fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
 TYPED_TEST_CASE(OptimizersTest, MyTypes);
 
-TYPED_TEST(OptimizersTest, sgd_optimizer_training)
+template <typename TypeParam>
+std::shared_ptr<fetch::ml::Graph<TypeParam>> PrepareTestGraph(std::string &input_name,
+                                                              std::string &output_name)
 {
   using SizeType = typename TypeParam::SizeType;
-  using DataType = typename TypeParam::Type;
 
-  DataType learning_rate = DataType{0.01f};
-  SizeType input_size    = SizeType(1);
-  SizeType output_size   = SizeType(1);
-  SizeType n_batches     = SizeType(3);
-  SizeType hidden_size   = SizeType(100);
+  SizeType input_size  = SizeType(1);
+  SizeType output_size = SizeType(1);
+  SizeType hidden_size = SizeType(10);
 
   std::shared_ptr<fetch::ml::Graph<TypeParam>> g =
       std::shared_ptr<fetch::ml::Graph<TypeParam>>(new fetch::ml::Graph<TypeParam>());
 
-  std::string x_input_name = g->template AddNode<fetch::ml::ops::PlaceHolder<TypeParam>>("", {});
+  input_name = g->template AddNode<fetch::ml::ops::PlaceHolder<TypeParam>>("", {});
 
   std::string fc1_name = g->template AddNode<fetch::ml::layers::FullyConnected<TypeParam>>(
-      "FC1", {x_input_name}, input_size, hidden_size);
-  std::string act_name    = g->template AddNode<fetch::ml::ops::Relu<TypeParam>>("", {fc1_name});
-  std::string output_name = g->template AddNode<fetch::ml::layers::FullyConnected<TypeParam>>(
+      "FC1", {input_name}, input_size, hidden_size);
+  std::string act_name = g->template AddNode<fetch::ml::ops::Relu<TypeParam>>("", {fc1_name});
+  output_name          = g->template AddNode<fetch::ml::layers::FullyConnected<TypeParam>>(
       "FC2", {act_name}, hidden_size, output_size);
 
-  ////////////////////////////////////////
-  /// DEFINING DATA AND LABELS FOR XOR ///
-  ////////////////////////////////////////
+  return g;
+}
 
-  TypeParam data{{4, 1}};
+template <typename TypeParam>
+void PrepareTestDataAndLabels(TypeParam &data, TypeParam &gt)
+{
+  using DataType = typename TypeParam::Type;
+
+  data.Resize({4, 1});
   data.Set(0, 0, DataType(1));
   data.Set(1, 0, DataType(2));
   data.Set(2, 0, DataType(3));
   data.Set(3, 0, DataType(4));
 
-  TypeParam gt{{4, 1}};
+  gt.Resize({4, 1});
   gt.Set(0, 0, DataType(2));
   gt.Set(1, 0, DataType(3));
   gt.Set(2, 0, DataType(4));
   gt.Set(3, 0, DataType(5));
+}
 
-  //////////////////////
-  /// Initialize SGD ///
-  //////////////////////
+TYPED_TEST(OptimizersTest, sgd_optimizer_training)
+{
+  using DataType = typename TypeParam::Type;
 
+  DataType learning_rate = DataType{0.01f};
+
+  // Prepare model
+  std::string                                  input_name;
+  std::string                                  output_name;
+  std::shared_ptr<fetch::ml::Graph<TypeParam>> g =
+      PrepareTestGraph<TypeParam>(input_name, output_name);
+
+  // Prepare data and labels
+  TypeParam data;
+  TypeParam gt;
+  PrepareTestDataAndLabels(data, gt);
+
+  // Initialize Optimizer
   fetch::ml::SGDOptimizer<TypeParam, fetch::ml::ops::MeanSquareError<TypeParam>> optimizer(
-      g, x_input_name, output_name, learning_rate);
+      g, input_name, output_name, learning_rate);
 
-  /////////////////////
-  /// TRAINING LOOP ///
-  /////////////////////
+  // Do optimizer step
+  DataType loss = optimizer.DoBatch(data, gt);
 
-  DataType loss;
-  for (std::size_t i = 0; i < n_batches; ++i)
-  {
-    loss = optimizer.DoBatch(data, gt);
-  }
-  EXPECT_NEAR(static_cast<double>(loss), 2.3003983497619629, 1e-5);
+  // Test loss
+  EXPECT_NEAR(static_cast<double>(loss), 5.05902, 1e-5);
+
+  // Test weights
+  std::vector<TypeParam> weights = g->GetWeights();
+  EXPECT_NEAR(static_cast<double>(weights[0].At(2, 0)), -0.01474, 1e-5);
+  EXPECT_NEAR(static_cast<double>(weights[1].At(0, 0)), 0.06280, 1e-5);
+  EXPECT_NEAR(static_cast<double>(weights[2].At(0, 9)), 0.02294, 1e-5);
+  EXPECT_NEAR(static_cast<double>(weights[3].At(0, 4)), -0.18362, 1e-5);
 }
 
 TYPED_TEST(OptimizersTest, momentum_optimizer_training)
 {
-  using SizeType = typename TypeParam::SizeType;
   using DataType = typename TypeParam::Type;
 
-  DataType learning_rate   = DataType{0.01f};
-  DataType momentum_update = DataType{0.9f};
-  SizeType input_size      = SizeType(1);
-  SizeType output_size     = SizeType(1);
-  SizeType n_batches       = SizeType(3);
-  SizeType hidden_size     = SizeType(100);
+  DataType learning_rate = DataType{0.01f};
 
+  // Prepare model
+  std::string                                  input_name;
+  std::string                                  output_name;
   std::shared_ptr<fetch::ml::Graph<TypeParam>> g =
-      std::shared_ptr<fetch::ml::Graph<TypeParam>>(new fetch::ml::Graph<TypeParam>());
+      PrepareTestGraph<TypeParam>(input_name, output_name);
 
-  std::string x_input_name = g->template AddNode<fetch::ml::ops::PlaceHolder<TypeParam>>("", {});
+  // Prepare data and labels
+  TypeParam data;
+  TypeParam gt;
+  PrepareTestDataAndLabels(data, gt);
 
-  std::string fc1_name = g->template AddNode<fetch::ml::layers::FullyConnected<TypeParam>>(
-      "FC1", {x_input_name}, input_size, hidden_size);
-  std::string act_name    = g->template AddNode<fetch::ml::ops::Relu<TypeParam>>("", {fc1_name});
-  std::string output_name = g->template AddNode<fetch::ml::layers::FullyConnected<TypeParam>>(
-      "FC2", {act_name}, hidden_size, output_size);
-
-  ////////////////////////////////////////
-  /// DEFINING DATA AND LABELS FOR XOR ///
-  ////////////////////////////////////////
-
-  TypeParam data{{4, 1}};
-  data.Set(0, 0, DataType(1));
-  data.Set(1, 0, DataType(2));
-  data.Set(2, 0, DataType(3));
-  data.Set(3, 0, DataType(4));
-
-  TypeParam gt{{4, 1}};
-  gt.Set(0, 0, DataType(2));
-  gt.Set(1, 0, DataType(3));
-  gt.Set(2, 0, DataType(4));
-  gt.Set(3, 0, DataType(5));
-
-  //////////////////////
-  /// Initialize SGD ///
-  //////////////////////
-
+  // Initialize Optimizer
   fetch::ml::MomentumOptimizer<TypeParam, fetch::ml::ops::MeanSquareError<TypeParam>> optimizer(
-      g, x_input_name, output_name, learning_rate, momentum_update);
+      g, input_name, output_name, learning_rate);
 
-  /////////////////////
-  /// TRAINING LOOP ///
-  /////////////////////
+  // Do 2 optimizer steps to ensure that momentum was applied
+  optimizer.DoBatch(data, gt);
+  DataType loss = optimizer.DoBatch(data, gt);
 
-  DataType loss;
-  for (std::size_t i = 0; i < n_batches; ++i)
-  {
-    loss = optimizer.DoBatch(data, gt);
-  }
-  EXPECT_NEAR(static_cast<double>(loss), 0.095217056572437286, 1e-5);
+  // Test loss
+  EXPECT_NEAR(static_cast<double>(loss), 1.11945, 1e-5);
+
+  // Test weights
+  std::vector<TypeParam> weights = g->GetWeights();
+  EXPECT_NEAR(static_cast<double>(weights[0].At(2, 0)), -0.01474, 1e-5);
+  EXPECT_NEAR(static_cast<double>(weights[1].At(0, 0)), 0.14914, 1e-5);
+  EXPECT_NEAR(static_cast<double>(weights[2].At(0, 9)), 0.05633, 1e-5);
+  EXPECT_NEAR(static_cast<double>(weights[3].At(0, 4)), -0.18362, 1e-5);
 }
 
 TYPED_TEST(OptimizersTest, adagrad_optimizer_training)
 {
-  using SizeType = typename TypeParam::SizeType;
   using DataType = typename TypeParam::Type;
 
   DataType learning_rate = DataType{0.01f};
-  SizeType input_size    = SizeType(1);
-  SizeType output_size   = SizeType(1);
-  SizeType n_batches     = SizeType(3);
-  SizeType hidden_size   = SizeType(100);
 
+  // Prepare model
+  std::string                                  input_name;
+  std::string                                  output_name;
   std::shared_ptr<fetch::ml::Graph<TypeParam>> g =
-      std::shared_ptr<fetch::ml::Graph<TypeParam>>(new fetch::ml::Graph<TypeParam>());
+      PrepareTestGraph<TypeParam>(input_name, output_name);
 
-  std::string x_input_name = g->template AddNode<fetch::ml::ops::PlaceHolder<TypeParam>>("", {});
+  // Prepare data and labels
+  TypeParam data;
+  TypeParam gt;
+  PrepareTestDataAndLabels(data, gt);
 
-  std::string fc1_name = g->template AddNode<fetch::ml::layers::FullyConnected<TypeParam>>(
-      "FC1", {x_input_name}, input_size, hidden_size);
-  std::string act_name    = g->template AddNode<fetch::ml::ops::Relu<TypeParam>>("", {fc1_name});
-  std::string output_name = g->template AddNode<fetch::ml::layers::FullyConnected<TypeParam>>(
-      "FC2", {act_name}, hidden_size, output_size);
-
-  ////////////////////////////////////////
-  /// DEFINING DATA AND LABELS FOR XOR ///
-  ////////////////////////////////////////
-
-  TypeParam data{{4, 1}};
-  data.Set(0, 0, DataType(1));
-  data.Set(1, 0, DataType(2));
-  data.Set(2, 0, DataType(3));
-  data.Set(3, 0, DataType(4));
-
-  TypeParam gt{{4, 1}};
-  gt.Set(0, 0, DataType(2));
-  gt.Set(1, 0, DataType(3));
-  gt.Set(2, 0, DataType(4));
-  gt.Set(3, 0, DataType(5));
-
-  //////////////////////
-  /// Initialize SGD ///
-  //////////////////////
-
+  // Initialize Optimizer
   fetch::ml::AdaGradOptimizer<TypeParam, fetch::ml::ops::MeanSquareError<TypeParam>> optimizer(
-      g, x_input_name, output_name, learning_rate);
+      g, input_name, output_name, learning_rate);
 
-  /////////////////////
-  /// TRAINING LOOP ///
-  /////////////////////
+  // Do multiple steps
+  optimizer.DoBatch(data, gt);
+  DataType loss = optimizer.DoBatch(data, gt);
 
-  DataType loss;
-  for (std::size_t i = 0; i < n_batches; ++i)
-  {
-    loss = optimizer.DoBatch(data, gt);
-  }
-  EXPECT_NEAR(static_cast<double>(loss), 10.477067716419697, 1e-5);
+  // Test loss
+  EXPECT_NEAR(static_cast<double>(loss), 4.21152, 1e-5);
+
+  // Test weights
+  std::vector<TypeParam> weights = g->GetWeights();
+  EXPECT_NEAR(static_cast<double>(weights[0].At(2, 0)), -0.01474, 1e-5);
+  EXPECT_NEAR(static_cast<double>(weights[1].At(0, 0)), 0.01675, 1e-5);
+  EXPECT_NEAR(static_cast<double>(weights[2].At(0, 9)), 0.01685, 1e-5);
+  EXPECT_NEAR(static_cast<double>(weights[3].At(0, 4)), -0.18362, 1e-5);
 }
 
 TYPED_TEST(OptimizersTest, rmsprop_optimizer_training)
 {
-  using SizeType = typename TypeParam::SizeType;
   using DataType = typename TypeParam::Type;
 
   DataType learning_rate = DataType{0.01f};
-  DataType decay_rate    = DataType{0.9f};
-  SizeType input_size    = SizeType(1);
-  SizeType output_size   = SizeType(1);
-  SizeType n_batches     = SizeType(3);
-  SizeType hidden_size   = SizeType(100);
 
+  // Prepare model
+  std::string                                  input_name;
+  std::string                                  output_name;
   std::shared_ptr<fetch::ml::Graph<TypeParam>> g =
-      std::shared_ptr<fetch::ml::Graph<TypeParam>>(new fetch::ml::Graph<TypeParam>());
+      PrepareTestGraph<TypeParam>(input_name, output_name);
 
-  std::string x_input_name = g->template AddNode<fetch::ml::ops::PlaceHolder<TypeParam>>("", {});
+  // Prepare data and labels
+  TypeParam data;
+  TypeParam gt;
+  PrepareTestDataAndLabels(data, gt);
 
-  std::string fc1_name = g->template AddNode<fetch::ml::layers::FullyConnected<TypeParam>>(
-      "FC1", {x_input_name}, input_size, hidden_size);
-  std::string act_name    = g->template AddNode<fetch::ml::ops::Relu<TypeParam>>("", {fc1_name});
-  std::string output_name = g->template AddNode<fetch::ml::layers::FullyConnected<TypeParam>>(
-      "FC2", {act_name}, hidden_size, output_size);
-
-  ////////////////////////////////////////
-  /// DEFINING DATA AND LABELS FOR XOR ///
-  ////////////////////////////////////////
-
-  TypeParam data{{4, 1}};
-  data.Set(0, 0, DataType(1));
-  data.Set(1, 0, DataType(2));
-  data.Set(2, 0, DataType(3));
-  data.Set(3, 0, DataType(4));
-
-  TypeParam gt{{4, 1}};
-  gt.Set(0, 0, DataType(2));
-  gt.Set(1, 0, DataType(3));
-  gt.Set(2, 0, DataType(4));
-  gt.Set(3, 0, DataType(5));
-
-  //////////////////////
-  /// Initialize SGD ///
-  //////////////////////
-
+  // Initialize Optimizer
   fetch::ml::RMSPropOptimizer<TypeParam, fetch::ml::ops::MeanSquareError<TypeParam>> optimizer(
-      g, x_input_name, output_name, learning_rate, decay_rate);
+      g, input_name, output_name, learning_rate);
 
-  /////////////////////
-  /// TRAINING LOOP ///
-  /////////////////////
+  // Do multiple steps
+  optimizer.DoBatch(data, gt);
+  DataType loss = optimizer.DoBatch(data, gt);
 
-  DataType loss;
-  for (std::size_t i = 0; i < n_batches; ++i)
-  {
-    loss = optimizer.DoBatch(data, gt);
-  }
-  EXPECT_NEAR(static_cast<double>(loss), 2.0320102334953845, 1e-5);
+  // Test loss
+  EXPECT_NEAR(static_cast<double>(loss), 2.58567, 1e-5);
+
+  // Test weights
+  std::vector<TypeParam> weights = g->GetWeights();
+  EXPECT_NEAR(static_cast<double>(weights[0].At(2, 0)), -0.01474, 1e-5);
+  EXPECT_NEAR(static_cast<double>(weights[1].At(0, 0)), 0.05076, 1e-5);
+  EXPECT_NEAR(static_cast<double>(weights[2].At(0, 9)), 0.05176, 1e-5);
+  EXPECT_NEAR(static_cast<double>(weights[3].At(0, 4)), -0.18362, 1e-5);
 }
 
 TYPED_TEST(OptimizersTest, adam_optimizer_training)
 {
-  using SizeType = typename TypeParam::SizeType;
   using DataType = typename TypeParam::Type;
 
   DataType learning_rate = DataType{0.01f};
-  DataType beta1         = DataType{0.9f};
-  DataType beta2         = DataType{0.999f};
-  SizeType input_size    = SizeType(1);
-  SizeType output_size   = SizeType(1);
-  SizeType n_batches     = SizeType(3);
-  SizeType hidden_size   = SizeType(100);
 
+  // Prepare model
+  std::string                                  input_name;
+  std::string                                  output_name;
   std::shared_ptr<fetch::ml::Graph<TypeParam>> g =
-      std::shared_ptr<fetch::ml::Graph<TypeParam>>(new fetch::ml::Graph<TypeParam>());
+      PrepareTestGraph<TypeParam>(input_name, output_name);
 
-  std::string x_input_name = g->template AddNode<fetch::ml::ops::PlaceHolder<TypeParam>>("", {});
+  // Prepare data and labels
+  TypeParam data;
+  TypeParam gt;
+  PrepareTestDataAndLabels(data, gt);
 
-  std::string fc1_name = g->template AddNode<fetch::ml::layers::FullyConnected<TypeParam>>(
-      "FC1", {x_input_name}, input_size, hidden_size);
-  std::string act_name    = g->template AddNode<fetch::ml::ops::Relu<TypeParam>>("", {fc1_name});
-  std::string output_name = g->template AddNode<fetch::ml::layers::FullyConnected<TypeParam>>(
-      "FC2", {act_name}, hidden_size, output_size);
-
-  ////////////////////////////////////////
-  /// DEFINING DATA AND LABELS FOR XOR ///
-  ////////////////////////////////////////
-
-  TypeParam data{{4, 1}};
-  data.Set(0, 0, DataType(1));
-  data.Set(1, 0, DataType(2));
-  data.Set(2, 0, DataType(3));
-  data.Set(3, 0, DataType(4));
-
-  TypeParam gt{{4, 1}};
-  gt.Set(0, 0, DataType(2));
-  gt.Set(1, 0, DataType(3));
-  gt.Set(2, 0, DataType(4));
-  gt.Set(3, 0, DataType(5));
-
-  //////////////////////
-  /// Initialize SGD ///
-  //////////////////////
-
+  // Initialize Optimizer
   fetch::ml::AdamOptimizer<TypeParam, fetch::ml::ops::MeanSquareError<TypeParam>> optimizer(
-      g, x_input_name, output_name, learning_rate, beta1, beta2);
+      g, input_name, output_name, learning_rate);
 
-  /////////////////////
-  /// TRAINING LOOP ///
-  /////////////////////
+  // Do multiple steps
+  optimizer.DoBatch(data, gt);
+  DataType loss = optimizer.DoBatch(data, gt);
 
-  DataType loss;
-  for (std::size_t i = 0; i < n_batches; ++i)
-  {
-    loss = optimizer.DoBatch(data, gt);
-  }
-  EXPECT_NEAR(static_cast<double>(loss), 9.3365340689197183, 1e-5);
+  // Test loss
+  EXPECT_NEAR(static_cast<double>(loss), 4.21154, 1e-5);
+
+  // Test weights
+  std::vector<TypeParam> weights = g->GetWeights();
+  EXPECT_NEAR(static_cast<double>(weights[0].At(2, 0)), -0.01474, 1e-5);
+  EXPECT_NEAR(static_cast<double>(weights[1].At(0, 0)), 0.02160, 1e-5);
+  EXPECT_NEAR(static_cast<double>(weights[2].At(0, 9)), 0.02162, 1e-5);
+  EXPECT_NEAR(static_cast<double>(weights[3].At(0, 4)), -0.18362, 1e-5);
 }

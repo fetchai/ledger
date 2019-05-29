@@ -35,7 +35,7 @@ public:
 
   RMSPropOptimizer(std::shared_ptr<Graph<T>> graph, std::string const &input_node_name,
                    std::string const &output_node_name, DataType const &learning_rate,
-                   DataType const &decay_rate)
+                   DataType const &decay_rate = DataType{0.9f})
     : Optimizer<T, C>(graph, input_node_name, output_node_name, learning_rate)
     , decay_rate_(decay_rate)
   {
