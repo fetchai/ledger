@@ -165,4 +165,22 @@ TEST_F(StateTests, querying_resource_from_nonexistent_address_fails_gracefully)
   ASSERT_FALSE(Run());
 }
 
+TEST_F(StateTests, Crash)//???
+{
+  static char const *TEXT = R"(
+    function main()
+      var null_str : String;
+//print(null_str.length())
+      var string_state = State<String>('does_not_exist', null_str);
+      var supply = State<Float64>(string_state.get(), 0.0);
+      supply.get();
+    endfunction
+  )";
+
+  EXPECT_CALL(*observer_, Exists("does_not_exist"));
+
+  ASSERT_TRUE(Compile(TEXT));
+  ASSERT_FALSE(Run());
+}
+
 }  // namespace
