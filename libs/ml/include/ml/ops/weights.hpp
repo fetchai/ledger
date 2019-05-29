@@ -50,7 +50,7 @@ public:
   using ArrayType    = T;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
 
-  virtual void                           Step(typename T::Type learningRate)         = 0;
+  virtual void                           Step(typename T::Type learning_rate)        = 0;
   virtual struct fetch::ml::StateDict<T> StateDict() const                           = 0;
   virtual void             LoadStateDict(struct fetch::ml::StateDict<T> const &dict) = 0;
   virtual ArrayType const &GetWeights() const                                        = 0;
@@ -93,9 +93,9 @@ public:
     return false;
   }
 
-  virtual void Step(typename T::Type learningRate)
+  virtual void Step(typename T::Type learning_rate)
   {
-    this->gradient_accumulation_->InlineMultiply(-learningRate);
+    this->gradient_accumulation_->InlineMultiply(-learning_rate);
     this->output_->InlineAdd(*gradient_accumulation_);
     // Major DL framework do not do that, but as I can't think of any reason why, I'll leave it here
     // for convenience. Remove if needed -- Pierre

@@ -51,7 +51,7 @@ public:
 
   ArrayType    Evaluate(std::string const &node_name);
   void         BackPropagate(std::string const &node_name, ArrayType const &error_signal);
-  virtual void Step(Datatype learningRate);
+  virtual void Step(Datatype learning_rate);
 
   template <class OperationType, typename... Params>
   std::string AddNode(std::string const &node_name, std::vector<std::string> const &inputs,
@@ -173,14 +173,14 @@ void Graph<ArrayType>::BackPropagate(std::string const &node_name, ArrayType con
 
 /**
  * takes a training step
- * @param learningRate the learning rate (alpha) hyperparameter
+ * @param learning_rate the learning rate (alpha) hyperparameter
  */
 template <typename ArrayType>
-void Graph<ArrayType>::Step(Datatype learningRate)
+void Graph<ArrayType>::Step(Datatype learning_rate)
 {
   for (auto &t : trainable_)
   {
-    t.second->Step(learningRate);
+    t.second->Step(learning_rate);
   }
 }
 
