@@ -164,6 +164,7 @@ public:
     }
     catch (...)
     {
+      // TODO(issue 1094): Support for nested runtime error(s) and/or exception(s)
       vm_->RuntimeError("An exception has been thrown from State<...>::FlushIO().");
     }
   }

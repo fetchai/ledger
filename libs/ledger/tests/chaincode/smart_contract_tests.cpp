@@ -32,7 +32,6 @@
 namespace {
 
 using ::testing::_;
-using ::testing::Sequence;
 using ::testing::InSequence;
 using fetch::crypto::SHA256;
 using fetch::ledger::SmartContract;
