@@ -233,11 +233,16 @@ def postprocess_file(filename):
         destination.writelines(postprocess_contents(contents))
 
 
-def project_sources(patterns):
+def walk_source_directories():
     for root, _, files in os.walk(PROJECT_ROOT):
         if any([os.path.commonpath([root, excluded_dir]) == excluded_dir for excluded_dir in EXCLUDED_DIRS]):
             continue
 
+        yield root, _, files
+
+
+def project_sources(patterns):
+    for root, _, files in walk_source_directories():
         for pattern in patterns:
             for file in fnmatch.filter(files, pattern):
                 source_path = join(root, file)
@@ -280,6 +285,29 @@ def get_diff():
     return subprocess.check_output(['git', 'diff'], cwd=PROJECT_ROOT).decode().strip()
 
 
+def fix_missing_include_guards():
+    for root, dirs, files in walk_source_directories():
+        invalid_header_file_name_groups_in_this_dir = [fnmatch.filter(files, pattern) for pattern in
+                                                       ('*.h', '*.hxx', '*.hh')]
+
+        if any([len(match) > 0 for match in invalid_header_file_name_groups_in_this_dir]):
+            output("Error: Fetch header files should have the extension *.hpp")
+            for group in invalid_header_file_name_groups_in_this_dir:
+                for file in group:
+                    output(abspath(join(root, file)))
+            sys.exit(1)
+
+        for file in fnmatch.filter(files, '*.hpp'):
+            INCLUDE_GUARD_LINE = '#pragma once\n'
+            with open(os.path.join(root, file), 'r+', encoding='utf-8') as f:
+                first_line = f.readline()
+                if not first_line == INCLUDE_GUARD_LINE:
+                    f.seek(0)
+                    text = f.read()
+                    f.seek(0)
+                    f.write(INCLUDE_GUARD_LINE + text)
+
+
 def main():
     args = parse_commandline()
 
@@ -290,14 +318,18 @@ def main():
     format_python(args)
     output('Formatting CMake ...')
     format_language(args, **SUPPORTED_LANGUAGES['cmake'])
+
+    output('Checking header include guards ...')
+    fix_missing_include_guards()
+
     output('Done.')
 
     if args.diff:
         diff = get_diff()
         if diff:
-            print('*' * 80)
-            print(diff)
-            print('*' * 80)
+            output('*' * 80)
+            output(diff)
+            output('*' * 80)
             sys.exit(1)
 
 
