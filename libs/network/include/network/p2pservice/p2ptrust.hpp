@@ -25,10 +25,11 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <cstddef>
 #include <ctime>
-#include <map>
 #include <random>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 namespace fetch {
@@ -75,17 +76,17 @@ class P2PTrust : public P2PTrustInterface<IDENTITY>
 protected:
   struct PeerTrustRating
   {
-    IDENTITY peer_identity;
-    double   trust;
-    time_t   last_modified;
+    IDENTITY    peer_identity;
+    double      trust;
+    std::time_t last_modified;
 
-    double ComputeCurrentTrust(time_t current_time) const
+    double ComputeCurrentTrust(std::time_t current_time) const
     {
       double const time_delta = double(std::max(0L, last_modified + 100 - current_time)) / 300.0;
       return trust * time_delta;
     }
 
-    void SetCurrentTrust(time_t current_time)
+    void SetCurrentTrust(std::time_t current_time)
     {
       trust         = ComputeCurrentTrust(current_time);
       last_modified = current_time;
@@ -303,7 +304,7 @@ protected:
     }
   }
 
-  static time_t GetCurrentTime()
+  static std::time_t GetCurrentTime()
   {
     return std::time(nullptr);
   }

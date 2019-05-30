@@ -20,6 +20,9 @@
 
 #include <algorithm>
 #include <cctype>
+#include <map>
+#include <string>
+#include <utility>
 
 namespace fetch {
 namespace commandline {

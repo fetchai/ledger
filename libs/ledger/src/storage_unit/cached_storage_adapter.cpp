@@ -18,6 +18,8 @@
 
 #include "ledger/storage_unit/cached_storage_adapter.hpp"
 
+#include <cassert>
+
 namespace fetch {
 namespace ledger {
 
@@ -33,8 +35,7 @@ CachedStorageAdapter::CachedStorageAdapter(StorageInterface &storage)
 /**
  * Destruct the Cache Adapter, this might cause a flush to occur
  */
-CachedStorageAdapter::~CachedStorageAdapter()
-{}
+CachedStorageAdapter::~CachedStorageAdapter() = default;
 
 /**
  * Trigger a flush of the cached entries to the storage engine

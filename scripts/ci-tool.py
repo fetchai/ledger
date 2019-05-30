@@ -4,20 +4,27 @@
 #
 # Helper script used to help make CI based build simpler.
 
+import argparse
+import fnmatch
+import multiprocessing
 import os
 import re
-import sys
-import argparse
-import subprocess
-import fnmatch
 import shutil
-import multiprocessing
+import subprocess
+import sys
 import xml.etree.ElementTree as ET
 
 BUILD_TYPES = ('Debug', 'Release', 'RelWithDebInfo', 'MinSizeRel')
 MAX_CPUS = 7  # as defined by CI workflow
 AVAILABLE_CPUS = multiprocessing.cpu_count()
 CONCURRENCY = min(MAX_CPUS, AVAILABLE_CPUS)
+
+SLOW_TEST_LABEL = 'Slow'
+INTEGRATION_TEST_LABEL = 'Integration'
+
+LABELS_TO_EXCLUDE_FOR_FAST_TESTS = [
+    SLOW_TEST_LABEL,
+    INTEGRATION_TEST_LABEL]
 
 
 def output(*args):
@@ -99,7 +106,6 @@ def create_junit_format(output_path, data):
             testcase = ET.SubElement(
                 testsuite, "testcase", id='0', name=name, time=str(time))
             if status != 'passed':
-
                 # extract more status
                 failure = ET.SubElement(
                     testcase,
@@ -135,25 +141,31 @@ def parse_commandline():
         help='The prefix to be used for the naming of the build folder')
     parser.add_argument('-B', '--build', action='store_true',
                         help='Build the project')
-    parser.add_argument('-j', dest='jobs', type=int, default=CONCURRENCY,
-                        help=('The number of jobs to do in parallel. If `0` then number of '
-                              'available CPU cores will be used, if omitted then it defaults '
-                              'to {}'.format(CONCURRENCY)))
+    parser.add_argument('-j', '--jobs', type=int, default=CONCURRENCY,
+                        help=('The number of jobs to do in parallel. If \'0\' then number of '
+                              'available CPU cores will be used. '
+                              'Defaults to {}'.format(CONCURRENCY)))
     parser.add_argument('-T', '--test', action='store_true',
-                        help='Test the project')
+                        help='Run unit tests. Skips tests marked with the following CTest labels: {}'
+                        .format(', '.join(LABELS_TO_EXCLUDE_FOR_FAST_TESTS)))
+    parser.add_argument('-S', '--slow-tests', action='store_true',
+                        help='Run tests marked with the \'{}\' CTest label'
+                        .format(SLOW_TEST_LABEL))
     parser.add_argument('-I', '--integration-tests', action='store_true',
-                        help='Run the integration tests for the project')
+                        help='Run tests marked with the \'{}\' CTest label'
+                        .format(INTEGRATION_TEST_LABEL))
     parser.add_argument('-E', '--end-to-end-tests', action='store_true',
-                        help='Run the end to end tests for the project')
+                        help='Run the end-to-end tests for the project')
     parser.add_argument(
         '-f', '--force-build-folder',
         help='Specify the folder directly that should be used for the build / test')
     parser.add_argument('-m', '--metrics',
-                        action='store_true', help='Store the metrics.')
+                        action='store_true', help='Store the metrics')
+
     return parser.parse_args()
 
 
-def build_project(project_root, build_root, options, concurrency=CONCURRENCY):
+def build_project(project_root, build_root, options, concurrency):
     output('Source.:', project_root)
     output('Build..:', build_root)
     output('Options:')
@@ -189,7 +201,7 @@ def build_project(project_root, build_root, options, concurrency=CONCURRENCY):
         cmd = ["ninja"]
 
     else:
-        cmd = ['make', '-j', str(concurrency)]
+        cmd = ['make', '-j{}'.format(concurrency)]
 
     output('Building project with command: {} (detected cpus: {})'.format(
         ' '.join(cmd), AVAILABLE_CPUS))
@@ -208,7 +220,7 @@ def clean_files(build_root):
             os.remove(data_path)
 
 
-def test_project(build_root, label):
+def test_project(build_root, include_regex=None, exclude_regex=None):
     TEST_NAME = 'Test'
 
     if not os.path.isdir(build_root):
@@ -222,9 +234,14 @@ def test_project(build_root, label):
     cmd = [
         ctest_executable,
         '--output-on-failure',
-        '-T', TEST_NAME,
-        '-L', str(label),
+        '-T', TEST_NAME
     ]
+
+    if include_regex is not None:
+        cmd = cmd + ['-L', str(include_regex)]
+    if exclude_regex is not None:
+        cmd = cmd + ['-LE', str(exclude_regex)]
+
     env = {"CTEST_OUTPUT_ON_FAILURE": "1"}
     exit_code = subprocess.call(cmd, cwd=build_root, env=env)
 
@@ -274,7 +291,6 @@ def test_end_to_end(project_root, build_root):
 
 
 def main():
-
     # parse the options from the command line
     args = parse_commandline()
 
@@ -297,15 +313,22 @@ def main():
         options['FETCH_ENABLE_METRICS'] = 1
 
     if args.build:
-        build_project(project_root, build_root,
-                      options, concurrency=concurrency)
+        build_project(project_root, build_root, options, concurrency)
 
     if args.test:
-        test_project(build_root, 'Normal')
+        test_project(
+            build_root,
+            exclude_regex='|'.join(LABELS_TO_EXCLUDE_FOR_FAST_TESTS))
+
+    if args.slow_tests:
+        test_project(
+            build_root,
+            include_regex=SLOW_TEST_LABEL)
 
     if args.integration_tests:
-        test_project(build_root, 'Slow')
-        test_project(build_root, 'Integration')
+        test_project(
+            build_root,
+            include_regex=INTEGRATION_TEST_LABEL)
 
     if args.end_to_end_tests:
         test_end_to_end(project_root, build_root)

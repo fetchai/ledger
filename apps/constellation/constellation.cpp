@@ -33,8 +33,11 @@
 
 #include "health_check_http_module.hpp"
 
+#include <chrono>
 #include <memory>
 #include <random>
+#include <stdexcept>
+#include <thread>
 #include <utility>
 
 using fetch::byte_array::ToBase64;

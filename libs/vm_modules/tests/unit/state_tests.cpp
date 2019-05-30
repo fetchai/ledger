@@ -18,11 +18,14 @@
 
 #include "vm_test_suite.hpp"
 
+#include "gmock/gmock.h"
+
+#include <memory>
+
 namespace {
 
 class StateTests : public VmTestSuite
 {
-protected:
 };
 
 TEST_F(StateTests, SanityCheck)

@@ -20,6 +20,8 @@
 #include "core/byte_array/const_byte_array.hpp"
 
 #include <array>
+#include <cstddef>
+#include <cstdint>
 
 namespace fetch {
 namespace crypto {

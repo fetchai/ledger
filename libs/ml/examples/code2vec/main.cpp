@@ -30,9 +30,17 @@
 #include "ml/ops/tanh.hpp"
 #include "ml/ops/transpose.hpp"
 #include "ml/ops/weights.hpp"
+
 #include <chrono>
+#include <cstdint>
 #include <fstream>
 #include <iostream>
+#include <set>
+#include <string>
+#include <tuple>
+#include <unordered_map>
+#include <utility>
+#include <vector>
 
 using DataType   = double;
 using ArrayType  = fetch::math::Tensor<DataType>;
@@ -79,9 +87,9 @@ int main(int ac, char **av)
   std::cout << "Number of different paths: " << cloader.path_counter().size() << std::endl;
   std::cout << "Number of different words: " << cloader.word_counter().size() << std::endl;
 
-  u_int64_t vocab_size_function_names{cloader.function_name_counter().size() + 1};
-  u_int64_t vocab_size_paths{cloader.path_counter().size() + 1};
-  u_int64_t vocab_size_words{cloader.word_counter().size() + 1};
+  uint64_t vocab_size_function_names{cloader.function_name_counter().size() + 1};
+  uint64_t vocab_size_paths{cloader.path_counter().size() + 1};
+  uint64_t vocab_size_words{cloader.word_counter().size() + 1};
 
   // Defining the graph
   fetch::ml::Graph<ArrayType> g;

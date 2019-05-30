@@ -16,10 +16,15 @@
 //
 //------------------------------------------------------------------------------
 
-#include <gtest/gtest.h>
-
 #include "math/tensor.hpp"
 #include "math/tensor_broadcast.hpp"
+
+#include "gtest/gtest.h"
+
+#include <functional>
+#include <iterator>
+#include <numeric>
+#include <vector>
 
 using namespace fetch::math;
 
