@@ -16,7 +16,6 @@
 //
 //------------------------------------------------------------------------------
 
-
 #include "vm/io_observer_interface.hpp"
 #include "vm_modules/vm_factory.hpp"
 #include "vm_modules/vm_test_toolkit.hpp"
