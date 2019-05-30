@@ -141,16 +141,15 @@ void TrainModelNew()
     if (i % 10000 == 0)
     {
       PrintStats(i, iterations);
- 
+
       std::cout << "Times: " << time_forward << " " << time_exp << " " << time_backward << " "
                 << time_step << std::endl;
       std::cout << "      -- ";
-      for(auto &e :error_signal )
+      for (auto &e : error_signal)
       {
         std::cout << e << ", ";
       }
       std::cout << std::endl;
-
     }
 
     if (global_loader.IsDone())
@@ -257,7 +256,8 @@ void TrainModelNew()
       }
       else
       {
-        float sm = static_cast<float>(std::exp(f) / (1. + std::exp(f))) ; //static_cast<float>(fexp(f) / (1. + fexp(f)));
+        float sm = static_cast<float>(
+            std::exp(f) / (1. + std::exp(f)));  // static_cast<float>(fexp(f) / (1. + fexp(f)));
         error_signal.Set(d, 0, label - sm);
       }
     }
@@ -276,7 +276,7 @@ void TrainModelNew()
     // MatrixMultiply: Backward in
     // N5fetch2ml3ops14MatrixMultiplyINS_4math6TensorIfNS_6memory11SharedArrayIfLm4EEEEEEE
     fetch::math::Tensor<FloatType> error_words(words.shape());
-    fetch::math::Tensor<FloatType> error_target_weights(target_weights.shape()); // TODO: move
+    fetch::math::Tensor<FloatType> error_target_weights(target_weights.shape());  // TODO: move
     fetch::math::Dot(target_weights, error_signal, error_words);
     fetch::math::DotTranspose(words, error_signal, error_target_weights);
 
@@ -321,7 +321,7 @@ void TrainModelNew()
       auto slice2 = error_target_weights.View(j);
 
       PolyfillInlineAdd(slice1, slice2);
-      
+
       j++;
     }
     // Node: BackPropagate in
@@ -345,13 +345,15 @@ void TrainModelNew()
     for (auto const &r : updated_rows_weights)
     {
       auto input = gradient_weights.View(r);
-      auto ret   = weights.View(r); // embeddings.View(r);
+      auto ret   = weights.View(r);  // embeddings.View(r);
 
       ret.data().in_parallel().Apply(
-          range, [rate](VectorRegisterType const &a, VectorRegisterType const &b, VectorRegisterType &c) { c = b + a * rate; },
+          range,
+          [rate](VectorRegisterType const &a, VectorRegisterType const &b, VectorRegisterType &c) {
+            c = b + a * rate;
+          },
           input.data(), ret.data());
       input.data().in_parallel().Apply([zero](VectorRegisterType &a) { a = zero; });
-
     }
 
     updated_rows_weights.clear();
@@ -374,7 +376,7 @@ void TrainModelNew()
       }
     }
 
-    updated_rows_embeddings.clear();    
+    updated_rows_embeddings.clear();
   }
 
   std::cout << "Done" << std::endl;

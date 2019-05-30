@@ -92,6 +92,11 @@ void NewRevertibleDocumentStore::Set(ResourceID const &rid, ByteArray const &val
   return storage_.Set(rid, value);
 }
 
+void NewRevertibleDocumentStore::Erase(ResourceID const &rid)
+{
+  return storage_.Erase(rid);
+}
+
 // State-based operations
 Hash NewRevertibleDocumentStore::Commit()
 {

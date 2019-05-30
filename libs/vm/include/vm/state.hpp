@@ -259,7 +259,12 @@ inline Ptr<IState> IState::Constructor(VM *vm, TypeId type_id, Ptr<String> const
 inline Ptr<IState> IState::Constructor(VM *vm, TypeId type_id, Ptr<Address> const &address,
                                        TemplateParameter const &value)
 {
-  return Construct(vm, type_id, address->AsString(), value);
+  if (address != nullptr)
+  {
+    return Construct(vm, type_id, address->AsString(), value);
+  }
+
+  return nullptr;
 }
 
 }  // namespace vm

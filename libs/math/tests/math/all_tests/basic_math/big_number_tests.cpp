@@ -18,6 +18,7 @@
 
 #include "core/byte_array/encoders.hpp"
 #include "math/bignumber.hpp"
+
 #include <gtest/gtest.h>
 
 using namespace fetch::math;
@@ -25,7 +26,6 @@ using namespace fetch::byte_array;
 TEST(big_number_gtest, elemntary_left_shift)
 {
   BigUnsigned n1(0);
-  std::cout << "Original: " << ToHex(n1) << std::endl;
   // testing elementary left shifting
   n1 = 3;
   EXPECT_EQ(3, n1[0]);

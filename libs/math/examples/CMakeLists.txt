@@ -1,6 +1,6 @@
-################################################################################
+#
 # F E T C H   M A T H   E X A M P L E S
-################################################################################
+#
 cmake_minimum_required(VERSION 3.5 FATAL_ERROR)
 project(fetch-math)
 
@@ -11,7 +11,3 @@ include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
 setup_compiler()
 
 setup_library_examples(fetch-math)
-
-if (FETCH_ENABLE_EXAMPLES)
-
-endif(FETCH_ENABLE_EXAMPLES)

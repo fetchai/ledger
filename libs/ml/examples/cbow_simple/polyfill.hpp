@@ -35,8 +35,10 @@ fetch::meta::IsIterableTwoArg<T1, T2, void> PolyfillInlineAdd(T1 &ret, T2 const 
     auto ret_slice = ret.data().slice(ret.padded_height() * j, ret.padded_height());
     auto slice     = other.data().slice(other.padded_height() * j, other.padded_height());
 
-    ret_slice.in_parallel().Apply(
-        range, [](VectorRegisterType const &a, VectorRegisterType const &b, VectorRegisterType &c) { c = b + a; }, ret_slice, slice);
+    ret_slice.in_parallel().Apply(range,
+                                  [](VectorRegisterType const &a, VectorRegisterType const &b,
+                                     VectorRegisterType &c) { c = b + a; },
+                                  ret_slice, slice);
   }
 }
 
@@ -56,7 +58,6 @@ fetch::meta::IsIterableTwoArg<T1, T2, void> Assign(T1 ret, T2 const &other)
 
     ret_slice.in_parallel().Apply(
         range, [](VectorRegisterType const &a, VectorRegisterType &b) { b = a; }, slice);
-
   }
 }
 
@@ -66,8 +67,8 @@ fetch::meta::IsIterableTwoArg<T1, T2, void> AssignVector(T1 ret, T2 const &other
   using Type               = typename T1::Type;
   using VectorRegisterType = typename TensorView<Type>::VectorRegisterType;
 
-  ret.data().in_parallel().Apply(
-    [](VectorRegisterType const &a, VectorRegisterType &b) { b = a; }, other.data());
+  ret.data().in_parallel().Apply([](VectorRegisterType const &a, VectorRegisterType &b) { b = a; },
+                                 other.data());
 }
 
 }  // namespace math

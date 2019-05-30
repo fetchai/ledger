@@ -101,13 +101,13 @@ public:
 
     if (other.data_)
     {
-      this->data_ = other.data_;
-      this->pointer_ = other.pointer_;      
+      this->data_    = other.data_;
+      this->pointer_ = other.pointer_;
     }
     else
     {
       this->data_.reset();
-      this->pointer_ = nullptr; 
+      this->pointer_ = nullptr;
     }
 
     return *this;
