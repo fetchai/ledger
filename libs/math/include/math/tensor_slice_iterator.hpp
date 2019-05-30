@@ -316,7 +316,7 @@ protected:
 private:
   void Setup(std::vector<std::vector<SizeType>> const &step, std::vector<SizeType> const &stride)
   {
-    ASSERT(array_.shape().size() == step.size());
+    assert(array_.shape().size() == step.size());
     SizeType volume = 1;
 
     if (step.size() == 0)

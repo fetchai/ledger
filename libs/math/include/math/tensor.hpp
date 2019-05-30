@@ -843,6 +843,8 @@ typename Tensor<T, C>::ConstIteratorType Tensor<T, C>::cend() const
 template <typename T, typename C>
 TensorView<T, C> Tensor<T, C>::View()
 {
+  assert(shape_.size() >= 1);
+
   SizeType N     = shape_.size() - 1;
   SizeType width = shape_[N] * stride_[N] / padded_height_;
   return TensorView<Type, ContainerType>(data_, height(), width);
@@ -851,6 +853,8 @@ TensorView<T, C> Tensor<T, C>::View()
 template <typename T, typename C>
 TensorView<T, C> const Tensor<T, C>::View() const
 {
+  assert(shape_.size() >= 1);
+
   SizeType N     = shape_.size() - 1;
   SizeType width = shape_[N] * stride_[N] / padded_height_;
   return TensorView<Type, ContainerType>(data_, height(), width);
@@ -859,6 +863,8 @@ TensorView<T, C> const Tensor<T, C>::View() const
 template <typename T, typename C>
 TensorView<T, C> Tensor<T, C>::View(SizeType index)
 {
+  assert(shape_.size() >= 2);
+
   SizeType N                = shape_.size() - 1 - 1;
   SizeType dimension_length = (N == 0 ? padded_height_ : shape_[N]);
   SizeType volume           = dimension_length * stride_[N];
@@ -870,6 +876,8 @@ TensorView<T, C> Tensor<T, C>::View(SizeType index)
 template <typename T, typename C>
 TensorView<T, C> const Tensor<T, C>::View(SizeType index) const
 {
+  assert(shape_.size() >= 2);
+
   SizeType N                = shape_.size() - 1 - 1;
   SizeType dimension_length = (N == 0 ? padded_height_ : shape_[N]);
   SizeType volume           = dimension_length * stride_[N];
@@ -881,6 +889,8 @@ TensorView<T, C> const Tensor<T, C>::View(SizeType index) const
 template <typename T, typename C>
 TensorView<T, C> Tensor<T, C>::View(std::vector<SizeType> indices)
 {
+  assert(shape_.size() >= 1 + indices.size());
+
   SizeType N                = shape_.size() - 1 - indices.size();
   SizeType dimension_length = (N == 0 ? padded_height_ : shape_[N]);
   SizeType volume           = dimension_length * stride_[N];
@@ -940,7 +950,7 @@ void Tensor<T, C>::Assign(TensorSliceImplementation<G> const &other)
 {
   auto it1 = begin();
   auto it2 = other.begin();
-  ASSERT(it1.size() == it2.size());
+  assert(it1.size() == it2.size());
   while (it1.is_valid())
   {
     *it1 = *it2;
@@ -980,7 +990,7 @@ void Tensor<T, C>::Assign(Tensor const &other)
 {
   auto it1 = begin();
   auto it2 = other.begin();
-  ASSERT(it1.size() == it2.size());
+  assert(it1.size() == it2.size());
   while (it1.is_valid())
   {
     *it1 = *it2;
@@ -1001,7 +1011,7 @@ template <typename T, typename C>
 template <typename... Indices>
 typename Tensor<T, C>::Type &Tensor<T, C>::At(Indices... indices)
 {
-  ASSERT(sizeof...(indices) == stride_.size());
+  assert(sizeof...(indices) == stride_.size());
   return this->data()[UnrollComputeColIndex<0>(std::forward<Indices>(indices)...)];
 }
 
@@ -1017,7 +1027,7 @@ template <typename T, typename C>
 template <typename... Indices>
 typename Tensor<T, C>::Type Tensor<T, C>::At(Indices... indices) const
 {
-  ASSERT(sizeof...(indices) == stride_.size());
+  assert(sizeof...(indices) == stride_.size());
   SizeType N = UnrollComputeColIndex<0>(std::forward<Indices>(indices)...);
   return this->data()[std::move(N)];
 }
@@ -1063,7 +1073,7 @@ typename Tensor<T, C>::Type &Tensor<T, C>::operator()(Indices... indices)
 template <typename T, typename C>
 typename Tensor<T, C>::Type Tensor<T, C>::operator()(SizeType const &index) const
 {
-  ASSERT(index < this->size_);
+  assert(index < this->size_);
   return operator[](index);
 }
 
@@ -1419,7 +1429,7 @@ Tensor<T, C> &Tensor<T, C>::FillUniformRandom()
 template <typename T, typename C>
 Tensor<T, C> &Tensor<T, C>::FillUniformRandomIntegers(int64_t const &min, int64_t const &max)
 {
-  ASSERT(min <= max);
+  assert(min <= max);
 
   uint64_t diff = uint64_t(max - min);
 
@@ -1526,7 +1536,7 @@ template <typename T, typename C>
 Tensor<T, C> Tensor<T, C>::Transpose() const
 {
   // TODO (private 867) -
-  ASSERT(shape_.size() == 2);
+  assert(shape_.size() == 2);
   SizeVector new_axes{1, 0};
 
   Tensor ret({shape().at(1), shape().at(0)});
@@ -1544,8 +1554,8 @@ Tensor<T, C> Tensor<T, C>::Transpose() const
 template <typename T, typename C>
 Tensor<T, C> Tensor<T, C>::Transpose(SizeVector &new_axes) const
 {
-  ASSERT(shape_.size() > 1);
-  ASSERT(shape_.size() == new_axes.size());
+  assert(shape_.size() > 1);
+  assert(shape_.size() == new_axes.size());
 
   Tensor ret(shape());
   TransposeImplementation(new_axes, ret);
@@ -2026,7 +2036,7 @@ template <typename T, typename C>
 Tensor<T, C> Tensor<T, C>::Softmax(Tensor const &x)
 {
   Resize({x.size()});
-  ASSERT(x.size() == this->size());
+  assert(x.size() == this->size());
   fetch::math::Softmax(x, *this);
 
   return *this;
@@ -2227,10 +2237,10 @@ template <typename T, typename C>
 Tensor<T, C> Tensor<T, C>::Concat(std::vector<Tensor> const &tensors, SizeType const axis)
 {
   // cant concatenate a single tensor
-  ASSERT(tensors.size() > 1);
+  assert(tensors.size() > 1);
   SizeVector tensor0_shape = tensors[0].shape();
   // specified axis must be within range of tensor axes
-  ASSERT(axis < tensor0_shape.size());
+  assert(axis < tensor0_shape.size());
 
   // all tensors must have same shape except on the axis dimension
   // also we need to know the sum of axis dimensions
@@ -2241,7 +2251,7 @@ Tensor<T, C> Tensor<T, C>::Concat(std::vector<Tensor> const &tensors, SizeType c
     {
       if (j != axis)
       {
-        ASSERT(tensors[i].shape()[j] == tensor0_shape[j]);
+        assert(tensors[i].shape()[j] == tensor0_shape[j]);
       }
       else
       {
@@ -2398,8 +2408,8 @@ void Tensor<T, C>::Sort(memory::TrivialRange const &range)
 template <typename T, typename C>
 Tensor<T, C> Tensor<T, C>::Arange(T const &from, T const &to, T const &delta)
 {
-  ASSERT(delta != 0);
-  ASSERT(((from < to) && delta > 0) || ((from > to) && delta < 0));
+  assert(delta != 0);
+  assert(((from < to) && delta > 0) || ((from > to) && delta < 0));
   Tensor ret;
   details::ArangeImplementation(from, to, delta, ret);
   return ret;
@@ -2415,7 +2425,7 @@ bool Tensor<T, C>::AllClose(Tensor const &o, Type const &relative_tolerance,
 {
   // Only enforcing number of elements
   // we allow for different shapes as long as element are in same order
-  ASSERT(o.size() == this->size());
+  assert(o.size() == this->size());
   auto it1  = this->cbegin();
   auto eit1 = this->cend();
   auto it2  = o.cbegin();
@@ -2508,7 +2518,7 @@ struct Tensor<T, C>::TensorSetter
   static SizeType IndexOf(SizeVector const &stride, SizeVector const &shape, TSType const &index,
                           Args &&... args)
   {
-    ASSERT(SizeType(index) < shape[N]);
+    assert(SizeType(index) < shape[N]);
     return stride[N] * SizeType(index) +
            TensorSetter<N + 1, Args...>::IndexOf(stride, shape, std::forward<Args>(args)...);
   }
@@ -2537,8 +2547,8 @@ struct Tensor<T, C>::TensorSetter<N, TSType>
   // Ignore last argument (i.e. value)
   static SizeType IndexOf(SizeVector const &stride, SizeVector const &shape, TSType const &index)
   {
-    ASSERT(shape.size() == N);
-    ASSERT(stride.size() == N);
+    assert(shape.size() == N);
+    assert(stride.size() == N);
     FETCH_UNUSED(index);
     FETCH_UNUSED(stride);
     FETCH_UNUSED(shape);
@@ -2581,7 +2591,7 @@ void Tensor<T, C>::TensorSlice::Assign(TensorSliceImplementation<G> const &other
 {
   auto it1 = begin();
   auto it2 = other.begin();
-  ASSERT(it1.size() == it2.size());
+  assert(it1.size() == it2.size());
   while (it1.is_valid())
   {
     *it1 = *it2;
@@ -2595,7 +2605,7 @@ void Tensor<T, C>::TensorSlice::Assign(Tensor const &other)
 {
   auto it1 = begin();
   auto it2 = other.begin();
-  ASSERT(it1.size() == it2.size());
+  assert(it1.size() == it2.size());
   while (it1.is_valid())
   {
     *it1 = *it2;

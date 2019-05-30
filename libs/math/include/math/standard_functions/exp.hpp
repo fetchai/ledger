@@ -62,7 +62,7 @@ meta::IfIsArithmetic<Type, Type> Exp(Type const &x)
 template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, void> Exp(ArrayType const &array, ArrayType &ret)
 {
-  ASSERT(ret.shape() == array.shape());
+  assert(ret.shape() == array.shape());
   auto it1 = array.cbegin();
   auto rit = ret.begin();
   while (it1.is_valid())
