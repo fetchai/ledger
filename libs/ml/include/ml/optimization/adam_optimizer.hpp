@@ -40,12 +40,15 @@ public:
 
   AdamOptimizer(std::shared_ptr<Graph<T>> graph, std::string const &input_node_name,
                 std::string const &output_node_name, DataType const &learning_rate,
-                DataType const &beta1 = DataType{0.9f}, DataType const &beta2 = DataType{0.999f})
+                DataType const &beta1 = DataType{0.9f}, DataType const &beta2 = DataType{0.999f},
+                DataType const &epsilon = DataType{1e-4f})
     : Optimizer<T, C>(graph, input_node_name, output_node_name, learning_rate)
     , beta1_(beta1)
     , beta2_(beta2)
     , beta1_t_(beta1)
     , beta2_t_(beta2)
+    , epsilon_(epsilon)
+
   {
     auto weights = this->graph_->GetWeights();
     for (auto &wei : weights)
@@ -62,29 +65,32 @@ private:
     std::vector<ArrayType> gradients = this->graph_->GetGradients();
 
     // Do operation with gradient
-    SizeType i{0};
+    auto cached_weight_it = cache_.begin();
+    auto momentum_it      = momentum_.begin();
     for (auto &grad : gradients)
     {
       auto git = grad.begin();
-      auto cit = cache_[i].begin();
-      auto mit = momentum_[i].begin();
+      auto cit = (*cached_weight_it).begin();
+      auto mit = (*momentum_it).begin();
 
       DataType mt;
       DataType vt;
       while (git.is_valid())
       {
-        *cit = (beta1_t_ * (*cit)) + ((DataType{1} - beta1_t_) * (*git));
-        mt   = *cit / (DataType{1} - beta1_t_);
-        *mit = (beta2_t_ * (*mit)) + ((DataType{1} - beta2_t_) * (*git) * (*git));
-        vt   = *mit / (DataType{1} - beta2_t_);
-        // 1e-4 is added to prevent division by 0
-        *git = -this->learning_rate_ * mt / (fetch::math::Sqrt(vt) + DataType{1e-4f});
+        *cit = (beta1_t_ * (*cit)) + ((one_ - beta1_t_) * (*git));
+        mt   = *cit / (one_ - beta1_t_);
+        *mit = (beta2_t_ * (*mit)) + ((one_ - beta2_t_) * (*git) * (*git));
+        vt   = *mit / (one_ - beta2_t_);
+        // epsilon is added to prevent division by 0
+        *git = -this->learning_rate_ * mt / (fetch::math::Sqrt(vt) + epsilon_);
         ++git;
         ++cit;
         ++mit;
       }
-      i++;
+      ++cached_weight_it;
+      ++momentum_it;
     }
+    // weights[i]+=grad[i]
     this->graph_->ApplyGradients(gradients);
 
     // beta1_t=beta1^t and beta2_t=beta2^t, where t is number of epochs + 1
@@ -112,6 +118,8 @@ private:
   DataType               beta2_;
   DataType               beta1_t_;
   DataType               beta2_t_;
+  DataType               epsilon_;
+  DataType               one_{1};
 };
 
 }  // namespace ml

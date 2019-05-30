@@ -40,8 +40,10 @@ public:
   using SizeType  = typename ArrayType::SizeType;
 
   AdaGradOptimizer(std::shared_ptr<Graph<T>> graph, std::string const &input_node_name,
-                   std::string const &output_node_name, DataType const &learning_rate)
+                   std::string const &output_node_name, DataType const &learning_rate,
+                   DataType const &epsilon = DataType{1e-8f})
     : Optimizer<T, C>(graph, input_node_name, output_node_name, learning_rate)
+    , epsilon_(epsilon)
   {
     auto weights = this->graph_->GetWeights();
     for (auto &wei : weights)
@@ -54,25 +56,29 @@ public:
 private:
   void ApplyGradients()
   {
-
     std::vector<ArrayType> gradients = this->graph_->GetGradients();
 
     // Do operation with gradient
-    SizeType i{0};
+    auto cached_weight_it = cache_.begin();
     for (auto &grad : gradients)
     {
       auto git = grad.begin();
-      auto cit = cache_[i].begin();
+      auto cit = (*cached_weight_it).begin();
       while (git.is_valid())
       {
+        // cache[i] += grad[i]^2
         *cit += (*git) * (*git);
-        // 1e-8 is added to prevent division by 0
-        *git = -this->learning_rate_ * ((*git) / fetch::math::Sqrt(*cit + DataType{1e-8f}));
+
+        // epsilon is added to prevent division by 0
+        // grad[i] = learning_rate * grad[i] / (sqrt(cache[i]) + epsilon)
+        *git = -this->learning_rate_ * ((*git) / fetch::math::Sqrt(*cit + epsilon_));
         ++git;
         ++cit;
       }
-      i++;
+      ++cached_weight_it;
     }
+
+    // weights[i]+=grad[i]
     this->graph_->ApplyGradients(gradients);
   }
 
@@ -85,6 +91,7 @@ private:
   }
 
   std::vector<ArrayType> cache_;
+  DataType               epsilon_;
 };
 
 }  // namespace ml

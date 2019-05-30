@@ -41,9 +41,11 @@ public:
 
   RMSPropOptimizer(std::shared_ptr<Graph<T>> graph, std::string const &input_node_name,
                    std::string const &output_node_name, DataType const &learning_rate,
-                   DataType const &decay_rate = DataType{0.9f})
+                   DataType const &decay_rate = DataType{0.9f},
+                   DataType const &epsilon    = DataType{1e-8f})
     : Optimizer<T, C>(graph, input_node_name, output_node_name, learning_rate)
     , decay_rate_(decay_rate)
+    , epsilon_(epsilon)
   {
     auto weights = this->graph_->GetWeights();
     for (auto &wei : weights)
@@ -60,21 +62,26 @@ private:
     std::vector<ArrayType> gradients = this->graph_->GetGradients();
 
     // Do operation with gradient
-    SizeType i{0};
+    auto cached_weight_it = cache_.begin();
     for (auto &grad : gradients)
     {
       auto git = grad.begin();
-      auto cit = cache_[i].begin();
+      auto cit = (*cached_weight_it).begin();
+
       while (git.is_valid())
       {
-        *cit = decay_rate_ * (*cit) + (DataType{1} - decay_rate_) * (*git) * (*git);
-        // 1e-8 is added to prevent division by 0
-        *git = -this->learning_rate_ * ((*git) / fetch::math::Sqrt(*cit + DataType{1e-8f}));
+        // cache[i] = decay_rate * cache[i] + (1 - decay_rate) * (grad[i]^2)
+        *cit = decay_rate_ * (*cit) + (one_ - decay_rate_) * (*git) * (*git);
+
+        // epsilon is added to prevent division by 0
+        // grad[i] = learning_rate * grad[i] / (sqrt(cache[i]) + epsilon)
+        *git = -this->learning_rate_ * ((*git) / fetch::math::Sqrt(*cit + epsilon_));
         ++git;
         ++cit;
       }
-      i++;
+      ++cached_weight_it;
     }
+    // weights[i]+=grad[i]
     this->graph_->ApplyGradients(gradients);
   }
 
@@ -88,6 +95,8 @@ private:
 
   std::vector<ArrayType> cache_;
   DataType               decay_rate_;
+  DataType               one_{1};
+  DataType               epsilon_;
 };
 
 }  // namespace ml

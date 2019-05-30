@@ -45,6 +45,7 @@ public:
     , learning_rate_(learning_rate)
   {}
 
+  // Todo 1090: Optimize TensorSlice for graph-feeding without using .Copy
   DataType DoBatch(ArrayType &data, ArrayType &labels)
   {
     DataType loss{0};
@@ -54,12 +55,9 @@ public:
     {
       auto cur_input = data.Slice(step).Copy();
       graph_->SetInput(input_node_name_, cur_input);
-      auto cur_label = labels.Slice(step).Copy();
-
+      auto cur_label  = labels.Slice(step).Copy();
       auto label_pred = graph_->Evaluate(output_node_name_);
-
       loss += criterion_.Forward({label_pred, cur_label});
-
       graph_->BackPropagate(output_node_name_, criterion_.Backward({label_pred, cur_label}));
     }
     ApplyGradients();

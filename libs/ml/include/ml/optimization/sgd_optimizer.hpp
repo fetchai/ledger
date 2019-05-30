@@ -50,8 +50,11 @@ private:
     // Do operation with gradient
     for (auto &grad : gradients)
     {
+      // grad[i]=grad[i] * -learning_rate
       fetch::math::Multiply(grad, -this->learning_rate_, grad);
     }
+
+    // weights[i]+=grad[i]
     this->graph_->ApplyGradients(gradients);
   }
 };

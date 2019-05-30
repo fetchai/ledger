@@ -59,15 +59,20 @@ private:
     std::vector<ArrayType> gradients = this->graph_->GetGradients();
 
     // Do operation with gradient
-    SizeType i{0};
+    auto mit = momentum_.begin();
     for (auto &grad : gradients)
     {
-      fetch::math::Multiply(momentum_[i], momentum_update_, momentum_[i]);
+      // momentum[i] = momentum_update * momentum[i] + learning_rate * grad[i]
+      fetch::math::Multiply(*mit, momentum_update_, *mit);
       fetch::math::Multiply(grad, this->learning_rate_, grad);
-      fetch::math::Add(momentum_.at(i), grad, momentum_.at(i));
-      fetch::math::Multiply(momentum_[i], DataType{-1}, grad);
-      i++;
+      fetch::math::Add(*mit, grad, *mit);
+
+      // grad[i]=-momentum[i]
+      fetch::math::Multiply(*mit, negative_one_, grad);
+      ++mit;
     }
+
+    // weights[i]+=grad[i]
     this->graph_->ApplyGradients(gradients);
   }
 
@@ -75,12 +80,14 @@ private:
   {
     for (auto &moment : this->momentum_)
     {
-      moment.Fill(DataType{0});
+      moment.Fill(zero_);
     }
   }
 
   std::vector<ArrayType> momentum_;
   DataType               momentum_update_;
+  DataType               negative_one_{-1};
+  DataType               zero_{0};
 };
 
 }  // namespace ml

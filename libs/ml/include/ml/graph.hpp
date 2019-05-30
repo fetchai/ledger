@@ -73,72 +73,20 @@ public:
   void ResetGradients();
 
 private:
-  /**
-   * Appends op to map of trainable nodes. Called by AddNode if the node is for a trainable op
-   * @tparam OperationType template class of operation
-   * @param name the guaranteed unique name of the node
-   * @param op the pointer to the op
-   */
   template <class OperationType>
   meta::IfIsTrainable<ArrayType, OperationType, void> AddTrainable(
-      std::string const &name, std::shared_ptr<Node<ArrayType, OperationType>> op)
-  {
-    FETCH_LOG_INFO("ML_LIB", "Created trainable node [", name, "]");
-    trainable_[name] = op;
-  }
+      std::string const &name, std::shared_ptr<Node<ArrayType, OperationType>> op);
 
   template <class OperationType>
   meta::IfIsGraph<ArrayType, OperationType, void> AddTrainable(
-      std::string const &name, std::shared_ptr<Node<ArrayType, OperationType>> op)
-  {
+      std::string const &name, std::shared_ptr<Node<ArrayType, OperationType>> op);
 
-    for (auto &trainable : op->trainable_)
-    {
-      FETCH_LOG_INFO("ML_LIB", "Created trainable node [", name, "]");
-      trainable_[name + "_" + trainable.first] = trainable.second;
-    }
-  }
-
-  /**
-   * If AddNode is called for a non-trainable op, this version of the function is called which
-   * does not append to the trainable map
-   * @tparam OperationType
-   * @param name
-   * @param op
-   * @return
-   */
   template <class OperationType>
   meta::IfIsNotGraphOrTrainable<ArrayType, OperationType, void> AddTrainable(
-      std::string const &name, std::shared_ptr<Node<ArrayType, OperationType>> op)
-  {
-    FETCH_UNUSED(name);
-    FETCH_UNUSED(op);
-  }
+      std::string const &name, std::shared_ptr<Node<ArrayType, OperationType>> op);
 
-  /**
-   * generates a new variable name if necessary to ensure uniqueness within graph
-   * @param pre_string
-   * @return
-   */
   template <typename OperationType>
-  std::string UpdateVariableName(std::string const &name)
-  {
-    std::string ret           = name;
-    std::string op_descriptor = (OperationType::DESCRIPTOR);
-    // search graph for existing variable names
-    if ((nodes_.find(ret) != nodes_.end()) || ret.empty())
-    {
-      std::uint64_t name_idx = 0;
-      ret                    = op_descriptor + "_" + std::to_string(name_idx);
-      while (!(nodes_.find(ret) == nodes_.end()))
-      {
-        ++name_idx;
-        ret = op_descriptor + "_" + std::to_string(name_idx);
-      }
-    }
-
-    return ret;
-  }
+  std::string UpdateVariableName(std::string const &name);
 
 protected:
   std::unordered_map<std::string, NodePtrType>      nodes_;
@@ -313,7 +261,7 @@ std::vector<ArrayType> Graph<ArrayType>::GetWeights() const
 
   for (auto const &t : trainable_)
   {
-    ret.push_back(t.second->GetWeights());
+    ret.emplace_back(t.second->GetWeights());
   }
   return ret;
 }
@@ -330,7 +278,7 @@ std::vector<ArrayType> Graph<ArrayType>::GetGradients() const
 
   for (auto const &t : trainable_)
   {
-    ret.push_back(t.second->Gradients());
+    ret.emplace_back(t.second->Gradients());
   }
   return ret;
 }
@@ -354,12 +302,90 @@ void Graph<ArrayType>::ResetGradients()
 template <typename ArrayType>
 void Graph<ArrayType>::ApplyGradients(std::vector<ArrayType> &grad)
 {
-  typename ArrayType::SizeType i = 0;
+  auto grad_it = grad.begin();
   for (auto const &t : trainable_)
   {
-    t.second->ApplyGradient(grad.at(i));
-    i++;
+    t.second->ApplyGradient(*grad_it);
+    ++grad_it;
   }
+}
+
+/**
+ * Appends op to map of trainable nodes. Called by AddNode if the node is for a trainable op
+ * @tparam OperationType template class of operation
+ * @param name the guaranteed unique name of the node
+ * @param op the pointer to the op
+ */
+template <typename ArrayType>
+template <class OperationType>
+meta::IfIsTrainable<ArrayType, OperationType, void> Graph<ArrayType>::AddTrainable(
+    std::string const &name, std::shared_ptr<Node<ArrayType, OperationType>> op)
+{
+  FETCH_LOG_INFO("ML_LIB", "Created trainable node [", name, "]");
+  trainable_[name] = op;
+}
+
+/**
+ * Appends all trainable ops from op.trainable_ to map of trainable nodes.
+ * Called by AddNode if the OperationType is a graph
+ * @tparam OperationType template class of operation
+ * @param name the guaranteed unique name of the node
+ * @param op the pointer to the op
+ */
+template <typename ArrayType>
+template <class OperationType>
+meta::IfIsGraph<ArrayType, OperationType, void> Graph<ArrayType>::AddTrainable(
+    std::string const &name, std::shared_ptr<Node<ArrayType, OperationType>> op)
+{
+
+  for (auto &trainable : op->trainable_)
+  {
+    FETCH_LOG_INFO("ML_LIB", "Created trainable node [", name, "]");
+    trainable_[name + "_" + trainable.first] = trainable.second;
+  }
+}
+
+/**
+ * If AddNode is called for a non-trainable op, this version of the function is called which
+ * does not append to the trainable map
+ * @tparam OperationType
+ * @param name
+ * @param op
+ * @return
+ */
+template <typename ArrayType>
+template <class OperationType>
+meta::IfIsNotGraphOrTrainable<ArrayType, OperationType, void> Graph<ArrayType>::AddTrainable(
+    std::string const &name, std::shared_ptr<Node<ArrayType, OperationType>> op)
+{
+  FETCH_UNUSED(name);
+  FETCH_UNUSED(op);
+}
+
+/**
+ * generates a new variable name if necessary to ensure uniqueness within graph
+ * @param pre_string
+ * @return
+ */
+template <typename ArrayType>
+template <typename OperationType>
+std::string Graph<ArrayType>::UpdateVariableName(std::string const &name)
+{
+  std::string ret           = name;
+  std::string op_descriptor = (OperationType::DESCRIPTOR);
+  // search graph for existing variable names
+  if ((nodes_.find(ret) != nodes_.end()) || ret.empty())
+  {
+    std::uint64_t name_idx = 0;
+    ret                    = op_descriptor + "_" + std::to_string(name_idx);
+    while (!(nodes_.find(ret) == nodes_.end()))
+    {
+      ++name_idx;
+      ret = op_descriptor + "_" + std::to_string(name_idx);
+    }
+  }
+
+  return ret;
 }
 
 }  // namespace ml
