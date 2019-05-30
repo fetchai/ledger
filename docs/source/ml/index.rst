@@ -22,27 +22,42 @@ machine learning frameworks.
 
 Machine Learning Library architecture
 -------------------------
-The core of the machine learning library is graph.hpp. This class represents a computation graph to which operation
-nodes may be added and executed. It also manages setting inputs to nodes, saving and loading existing graph states
-(the state_dict), as well as the uniqueness of variable names. node.hpp defines the NodeInterface for the nodes
-stored on this graph.
 
-The nodes on the graph represent operations to apply to Tensors. The graph may also contain special placeholder
-operations which simply hold the place that a tensor will later fill when assigned in the training loop. A wide variety
-of operations (including loss functions) are listed under ops; and layers are additional constructs that are useful for
-wrapping up multiple ops that are commonly repeated (e.g. such as fully connected layer, which wraps the dot product
-between the weights and the input tensor, followed by the addition of the bias tensor, and possibly also followed by an
-activation function).
-
-Finally the dataloaders are utilities for managing input training data when training the weights in the neural network.
-
-The following block diagram gives a rough indication of the library structure (work in progress).
+The following block diagram shows the inheritance structure for some of the key components of the ML library (work in progress).
 
 .. raw:: html
-    :file: ml_lib_overview.svg
+    :file: ml_inheritance.svg
+
+The headings show the core concepts into which the library is divided, and the the blocks boredered with X's indicate abstract classes. Here we discuss further some of the core components:
+
+Graph represents a computation graph containing nodes. When adding nodes to a graph the inputs to those nodes must be
+specified, and must not result in a cycle; thus the graph must in fact be be a directed acyclic graph (DAG). Graph
+also manages saving and loading existing graph states (a state dictionary), as checking for collisions in node names.
+Nodes are merely the positions in the graph which know from which other nodes to draw inputs, and are able to perform
+forward and backward computation according to a particular operation (Op). Each node is associated with a particular Op
+and this defines the specifics of what happens whenever a the forward or backward methods are called. Often the forward
+method will merely call upon an existing math function from the math library; for example the Add op called upon the
+math library implementation for Add. The backward method will compute the gradient associated with that forward
+operation given a particular error signal.
+
+To inject data into the computation graph, special Ops are required that can have data assigned to them; these are the
+placeholders. Weights are a specialisation of placeholders in that the data assigned to them is randomly initialised
+and their data is trainable via back-propagation. Finally there may be further specialisations of weights, such as
+embeddings, that offer additional functionality with respect to accessing and updating the data.
+
+Layers, which inherit from SubGraphs, allow for wrapping up multiple Ops that are commonly repeated (e.g. such as fully
+connected layer, which wraps the dot product between the weights and the input tensor, followed by the addition of the
+bias tensor, and possibly also followed by an activation function).
+
+Last of all, not shown on the diagram, are DataLoaders. These are for managing input training data when training the
+weights in the neural network. They are responsible for parsing data into a format compatible with the rest of the
+machine learning library, and then sampling data for training and testing. A specific dataloader is often needed for
+each machine learning problem, as input data formats will tend to vary; however the DataLoader abstract class mandates
+the necessary methods for all dataloaders.
 
 
-Important Notes for Working with the Machine Learning Library
+
+General Notes for Working with the Machine Learning Library
 -------------------------
 
 - Every Op must have a DESCRIPTOR (this is for logging/error reporting)
