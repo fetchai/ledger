@@ -25,7 +25,6 @@
 
 class CustomBindingTests : public VmTestSuite
 {
-protected:
 };
 
 // Test to add a custom binding that will increment this counter when
@@ -39,10 +38,11 @@ static void CustomBinding(fetch::vm::VM * /*vm*/)
 
 TEST_F(CustomBindingTests, CheckBasicBinding)
 {
-  static char const *TEXT =
-      " function main() "
-      "   customBinding();"
-      " endfunction ";
+  static char const *TEXT = R"(
+    function main()
+      customBinding();
+    endfunction
+  )";
 
   EXPECT_EQ(binding_called_count, 0);
 
