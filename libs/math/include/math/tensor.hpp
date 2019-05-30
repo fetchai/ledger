@@ -37,6 +37,7 @@
 #include "math/tensor_broadcast.hpp"
 #include "math/tensor_iterator.hpp"
 #include "math/tensor_slice_iterator.hpp"
+#include "math/tensor_view.hpp"
 
 #include <memory>
 #include <numeric>
@@ -58,7 +59,7 @@ static void ArangeImplementation(DataType const &from, DataType const &to, DataT
 }
 }  // namespace details
 
-template <typename T, typename C = memory::SharedArray<T>>
+template <typename T, typename C>
 class Tensor
 {
 public:
@@ -68,8 +69,8 @@ public:
   using VectorRegisterType         = typename ContainerType::VectorRegisterType;
   using VectorRegisterIteratorType = typename ContainerType::VectorRegisterIteratorType;
 
-  using IteratorType      = TensorIterator<T, ContainerType>;
-  using ConstIteratorType = ConstTensorIterator<T, ContainerType>;
+  using IteratorType      = TensorIterator<T>;
+  using ConstIteratorType = ConstTensorIterator<T>;
 
   using SliceIteratorType      = TensorSliceIterator<T, ContainerType>;
   using ConstSliceIteratorType = ConstTensorSliceIterator<T, ContainerType>;
@@ -78,9 +79,9 @@ public:
 
   static constexpr char const *LOGGING_NAME = "Tensor";
 
-  enum
+  enum  // TODO: Get from view
   {
-    LOG_PADDING = 3,
+    LOG_PADDING = 2,
     PADDING     = static_cast<SizeType>(1) << LOG_PADDING
   };
 
@@ -295,10 +296,8 @@ public:
   template <typename OtherType>
   Tensor operator/=(OtherType const &other);
 
-  Tensor &DotTranspose(Tensor const &A, Tensor const &B, Type alpha = 1.0, Type beta = 0.0);
-  Tensor &TransposeDot(Tensor const &A, Tensor const &B, Type alpha = 1.0, Type beta = 0.0);
-  Type    Sum() const;
-
+  // TODO: Make free functions
+  Type Sum() const;
   void Exp(Tensor const &x);
   void ApproxSoftMax(Tensor const &x);
   Type L2Norm() const;
@@ -316,19 +315,66 @@ public:
   void        MajorOrderFlip();
   MAJOR_ORDER MajorOrder() const;
 
-  ////////////////////////
-  /// Numpy Operations ///
-  ////////////////////////
-
-  void CopyFromNumpy(T *ptr, SizeVector &shape, SizeVector & /*stride*/, SizeVector & /*index*/);
-  void CopyToNumpy(T *ptr, SizeVector &shape, SizeVector &stride, SizeVector &index);
-
   //////////////
   /// Slices ///
   //////////////
 
   ConstSliceType Slice(SizeType i, SizeType axis = 0) const;
   TensorSlice    Slice(SizeType i, SizeType axis = 0);
+
+  //////////////
+  /// Views  ///
+  //////////////
+  TensorView<Type, ContainerType> View()
+  {
+    SizeType N     = shape_.size() - 1;
+    SizeType width = shape_[N] * stride_[N] / padded_height_;
+    return TensorView<Type, ContainerType>(data_, height(), width);
+  }
+
+  TensorView<Type, ContainerType> const View() const
+  {
+    SizeType N     = shape_.size() - 1;
+    SizeType width = shape_[N] * stride_[N] / padded_height_;
+    return TensorView<Type, ContainerType>(data_, height(), width);
+  }
+
+  TensorView<Type, ContainerType> View(SizeType index)
+  {
+    SizeType N                = shape_.size() - 1 - 1;
+    SizeType dimension_length = (N == 0 ? padded_height_ : shape_[N]);
+    SizeType volume           = dimension_length * stride_[N];
+    SizeType width            = volume / padded_height_;
+    SizeType offset           = volume * index;
+    return TensorView<Type, ContainerType>(data_, height(), width, offset);
+  }
+
+  TensorView<Type, ContainerType> const View(SizeType index) const
+  {
+    SizeType N                = shape_.size() - 1 - 1;
+    SizeType dimension_length = (N == 0 ? padded_height_ : shape_[N]);
+    SizeType volume           = dimension_length * stride_[N];
+    SizeType width            = volume / padded_height_;
+    SizeType offset           = volume * index;
+    return TensorView<Type, ContainerType>(data_, height(), width, offset);
+  }
+
+  TensorView<Type, ContainerType> View(std::vector<SizeType> indices)
+  {
+    SizeType N                = shape_.size() - 1 - indices.size();
+    SizeType dimension_length = (N == 0 ? padded_height_ : shape_[N]);
+    SizeType volume           = dimension_length * stride_[N];
+    SizeType width            = volume / padded_height_;
+    SizeType offset           = 0;
+
+    for (SizeType i = 0; i < indices.size(); ++i)
+    {
+      SizeType g = N + i + 1;
+      offset += stride_[g] * indices[i];
+    }
+
+    return TensorView<Type, ContainerType>(data_, height(), width, offset);
+  }
 
   /////////////////////////
   /// general utilities ///
@@ -346,14 +392,7 @@ public:
   void Sort();
   void Sort(memory::TrivialRange const &range);
 
-  template <typename Unsigned>
-  static fetch::meta::IfIsUnsignedInteger<Unsigned, Tensor> Arange(Unsigned const &from,
-                                                                   Unsigned const &to,
-                                                                   Unsigned const &delta);
-
-  template <typename Signed>
-  static fetch::meta::IfIsSignedInteger<Signed, Tensor> Arange(Signed const &from, Signed const &to,
-                                                               Signed const &delta);
+  static Tensor Arange(Type const &from, Type const &to, Type const &delta);
 
   ////////////////////////////
   /// COMPARISON OPERATORS ///
@@ -807,37 +846,40 @@ Tensor<T, C>::Tensor(SizeVector const &dims)
 template <typename T, typename C>
 typename Tensor<T, C>::IteratorType Tensor<T, C>::begin()
 {
-  return IteratorType(*this);
+  return IteratorType(data().pointer(), size(), data().size(), height(), padded_height());
 }
 
 template <typename T, typename C>
 typename Tensor<T, C>::IteratorType Tensor<T, C>::end()
 {
-  return IteratorType::EndIterator(*this);
+  return IteratorType(data().pointer() + data().size(), size(), data().size(), height(),
+                      padded_height());
 }
 
 template <typename T, typename C>
 typename Tensor<T, C>::ConstIteratorType Tensor<T, C>::begin() const
 {
-  return ConstIteratorType(*this);
+  return ConstIteratorType(data().pointer(), size(), data().size(), height(), padded_height());
 }
 
 template <typename T, typename C>
 typename Tensor<T, C>::ConstIteratorType Tensor<T, C>::end() const
 {
-  return ConstIteratorType::EndIterator(*this);
+  return ConstIteratorType(data().pointer() + data().size(), size(), data().size(), height(),
+                           padded_height());
 }
 
 template <typename T, typename C>
 typename Tensor<T, C>::ConstIteratorType Tensor<T, C>::cbegin() const
 {
-  return ConstIteratorType(*this);
+  return ConstIteratorType(data().pointer(), size(), data().size(), height(), padded_height());
 }
 
 template <typename T, typename C>
 typename Tensor<T, C>::ConstIteratorType Tensor<T, C>::cend() const
 {
-  return ConstIteratorType::EndIterator(*this);
+  return ConstIteratorType(data().pointer() + data().size(), size(), data().size(), height(),
+                           padded_height());
 }
 
 //////////////////////////////////////////////
@@ -1207,9 +1249,15 @@ void Tensor<T, C>::Fill(Type const &value, memory::TrivialRange const &range)
 template <typename T, typename C>
 void Tensor<T, C>::Fill(Type const &value)
 {
+  for (auto &x : *this)
+  {
+    x = value;
+  }
+  /*
+  TODO: Implement all relevant vector functions
   VectorRegisterType val(value);
-
   this->data().in_parallel().Apply([val](VectorRegisterType &z) { z = val; });
+  */
 }
 
 /**
@@ -1868,40 +1916,6 @@ Tensor<T, C> Tensor<T, C>::operator/=(OtherType const &other)
   return InlineDivide(other);
 }
 
-/**
- * Efficient vectorised and threaded routine for C = A.T(B)
- * @param A
- * @param B
- * @return
- */
-template <typename T, typename C>
-Tensor<T, C> &Tensor<T, C>::DotTranspose(Tensor const &A, Tensor const &B, Type alpha, Type beta)
-{
-  ASSERT(this->shape().size() == 2);
-  fetch::math::DotTranspose(A, B, *this, alpha, beta);
-
-  return *this;
-}
-
-/**
- * Efficient vectorised and threaded routine for C = T(A).B
- * @param A
- * @param B
- * @return
- */
-template <typename T, typename C>
-Tensor<T, C> &Tensor<T, C>::TransposeDot(Tensor const &A, Tensor const &B, Type alpha, Type beta)
-{
-  assert(this->shape().size() == 2);
-  fetch::math::TransposeDot(A, B, *this, alpha, beta);
-
-  return *this;
-}
-
-/**
- *
- * @return
- */
 template <typename T, typename C>
 typename Tensor<T, C>::Type Tensor<T, C>::Sum() const
 {
@@ -2050,75 +2064,6 @@ template <typename T, typename C>
 typename Tensor<T, C>::MAJOR_ORDER Tensor<T, C>::MajorOrder() const
 {
   return major_order_;
-}
-
-////////////////////////////////////////
-/// Tensor methods: Numpy Operations ///
-////////////////////////////////////////
-
-/**
- * Copies data from a row major numpy array into the current column major array
- * @param new_array
- */
-// TODO(private 869):
-template <typename T, typename C>
-void Tensor<T, C>::CopyFromNumpy(T *ptr, SizeVector &shape, SizeVector & /*stride*/,
-                                 SizeVector & /*index*/)
-{
-  SizeType total_size = Tensor::SizeFromShape(shape);
-
-  // get pointer to the data
-  this->Reshape(shape);
-
-  // re-allocate all the data
-  TensorSliceIterator<T, C> it(*this);
-
-  // copy all the data initially
-  for (SizeType i = 0; i < total_size; ++i)
-  {
-    *it = ptr[i];
-    ++it;
-  }
-
-  // numpy arrays are row major - we should be column major by default
-  FlipMajorOrder(MAJOR_ORDER::COLUMN);
-}
-
-template <typename T, typename C>
-void Tensor<T, C>::CopyToNumpy(T *ptr, SizeVector &shape, SizeVector &stride, SizeVector &index)
-{
-
-  // copy the data
-  TensorSliceIterator<T, C> it(*this);
-
-  for (SizeType j = 0; j < this->size(); ++j)
-  {
-    // Computing numpy index
-    SizeType i   = 0;
-    SizeType pos = 0;
-    for (i = 0; i < shape.size(); ++i)
-    {
-      pos += stride[i] * index[i];
-    }
-
-    // Updating
-    ptr[pos] = *it;
-    ++it;
-
-    // Increamenting Numpy
-    i = 0;
-    ++index[i];
-    while (index[i] >= shape[i])
-    {
-      index[i] = 0;
-      ++i;
-      if (i >= shape.size())
-      {
-        break;
-      }
-      ++index[i];
-    }
-  }
 }
 
 //////////////////////////////
@@ -2429,27 +2374,6 @@ void Tensor<T, C>::Sort(memory::TrivialRange const &range)
 }
 
 /**
- * returns a range over this array defined using unsigned integers (only forward ranges)
- * @tparam Unsigned an unsigned integer type
- * @param from starting point of range
- * @param to end of range
- * @param delta the increment to step through the range
- * @return returns a shapeless array with the values in *this over the specified range
- */
-template <typename T, typename C>
-template <typename Unsigned>
-fetch::meta::IfIsUnsignedInteger<Unsigned, Tensor<T, C>> Tensor<T, C>::Arange(Unsigned const &from,
-                                                                              Unsigned const &to,
-                                                                              Unsigned const &delta)
-{
-  ASSERT(delta != 0);
-  ASSERT(from < to);
-  Tensor ret;
-  details::ArangeImplementation(from, to, delta, ret);
-  return ret;
-}
-
-/**
  * returns a range over this array defined using signed integers (i.e. permitting backward ranges)
  * @tparam Signed a signed integer type
  * @param from starting point of range
@@ -2458,10 +2382,7 @@ fetch::meta::IfIsUnsignedInteger<Unsigned, Tensor<T, C>> Tensor<T, C>::Arange(Un
  * @return returns a shapeless array with the values in *this over the specified range
  */
 template <typename T, typename C>
-template <typename Signed>
-fetch::meta::IfIsSignedInteger<Signed, Tensor<T, C>> Tensor<T, C>::Arange(Signed const &from,
-                                                                          Signed const &to,
-                                                                          Signed const &delta)
+Tensor<T, C> Tensor<T, C>::Arange(T const &from, T const &to, T const &delta)
 {
   ASSERT(delta != 0);
   ASSERT(((from < to) && delta > 0) || ((from > to) && delta < 0));

@@ -19,7 +19,7 @@
 #include "math/linalg/blas/gemm_tn_vector.hpp"
 #include "math/linalg/blas/base.hpp"
 #include "math/linalg/prototype.hpp"
-#include "math/tensor.hpp"
+#include "math/tensor_view.hpp"
 namespace fetch {
 namespace math {
 namespace linalg {
@@ -27,25 +27,26 @@ namespace linalg {
 template <typename S>
 void Blas<S, Signature(_C <= _alpha, _A, _B, _beta, _C),
           Computes(_C <= _alpha * T(_A) * _B + _beta * _C), platform::Parallelisation::VECTORISE>::
-     operator()(Type const &alpha, Tensor<Type> const &a, Tensor<Type> const &b, Type const &beta,
-           Tensor<Type> &c) const
+     operator()(Type const alpha, TensorView<Type> const a, TensorView<Type> const b, Type const beta,
+           TensorView<Type> c) const
 {
   std::size_t i;
   std::size_t j;
   if ((c.height() == 0) ||
-      ((c.width() == 0) || (((alpha == 0.0) || (a.height() == 0)) && (beta == 1.0))))
+      ((c.width() == 0) || (((alpha == static_cast<Type>(0.0)) || (a.height() == 0)) &&
+                            (beta == static_cast<Type>(1.0)))))
   {
     return;
   }
 
-  if (alpha == 0.0)
+  if (alpha == static_cast<Type>(0.0))
   {
-    if (beta == 0.0)
+    if (beta == static_cast<Type>(0.0))
     {
       for (j = 0; j < c.width(); ++j)
       {
 
-        VectorRegisterType vec_zero(0.0);
+        VectorRegisterType vec_zero(static_cast<Type>(0.0));
 
         auto                 ret_slice = c.data().slice(c.padded_height() * j, c.height());
         memory::TrivialRange range(std::size_t(0), std::size_t(c.height()));
@@ -80,7 +81,7 @@ void Blas<S, Signature(_C <= _alpha, _A, _B, _beta, _C),
     for (i = 0; i < c.height(); ++i)
     {
       Type temp;
-      temp = 0.0;
+      temp = static_cast<Type>(0.0);
 
       auto slice_a_i = a.data().slice(a.padded_height() * std::size_t(i), a.padded_height());
       auto slice_b_j = b.data().slice(b.padded_height() * std::size_t(j), b.padded_height());
@@ -91,7 +92,7 @@ void Blas<S, Signature(_C <= _alpha, _A, _B, _beta, _C),
             return vr_a_i * vr_b_j;
           },
           slice_b_j);
-      if (beta == 0.0)
+      if (beta == static_cast<Type>(0.0))
       {
         c(i, j) = alpha * temp;
       }

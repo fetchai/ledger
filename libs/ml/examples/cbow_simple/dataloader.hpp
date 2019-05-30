@@ -17,35 +17,21 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/byte_array_buffer.hpp"
-#include "ml/serializers/ml_types.hpp"
+#include <memory>
+#include <utility>
 
 namespace fetch {
 namespace ml {
-namespace examples {
 
-/**
- * Saves the state dict of a graph to a file location specified by user
- * @param g the graph to save
- * @param save_location a string specifying save location
- */
-template <typename GraphType>
-void SaveModel(GraphType const &g, std::string const &save_location)
+template <typename DataType, typename LabelType>
+class DataLoader
 {
-  fetch::serializers::ByteArrayBuffer serializer;
-  serializer << g.StateDict();
-  std::fstream file(save_location, std::fstream::out);  // fba = FetchByteArray
-  if (file)
-  {
-    file << std::string(serializer.data());
-    file.close();
-  }
-  else
-  {
-    std::cerr << "Can't open save file" << std::endl;
-  }
-}
+public:
+  virtual std::pair<DataType, LabelType> GetNext()      = 0;
+  virtual uint64_t                       Size() const   = 0;
+  virtual bool                           IsDone() const = 0;
+  virtual void                           Reset()        = 0;
+};
 
-}  // namespace examples
 }  // namespace ml
 }  // namespace fetch

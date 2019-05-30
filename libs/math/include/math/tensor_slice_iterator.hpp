@@ -26,10 +26,6 @@
 namespace fetch {
 namespace math {
 
-// need to forward declare
-template <typename T, typename C>
-class Tensor;
-
 struct TensorSliceIteratorRange
 {
   using SizeType       = uint64_t;

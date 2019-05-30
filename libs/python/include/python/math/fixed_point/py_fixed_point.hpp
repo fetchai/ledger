@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/fixed_point/fixed_point.hpp"
+#include "vectorise/fixed_point/fixed_point.hpp"
 #include "python/fetch_pybind.hpp"
 
 namespace py = pybind11;

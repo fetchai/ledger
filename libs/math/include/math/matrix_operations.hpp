@@ -20,15 +20,23 @@
 #include "core/assert.hpp"
 #include <numeric>
 
+#include "math/linalg/blas/base.hpp"
+#include "math/linalg/blas/gemm_nn_novector.hpp"
+#include "math/linalg/blas/gemm_nn_vector.hpp"
+#include "math/linalg/blas/gemm_nt_novector.hpp"
+#include "math/linalg/blas/gemm_nt_vector.hpp"
+#include "math/linalg/blas/gemm_tn_novector.hpp"
+#include "math/linalg/blas/gemm_tn_vector.hpp"
+
+#include "math/linalg/prototype.hpp"
+
 #include "math/base_types.hpp"
 #include "math/comparison.hpp"
 #include "math/fundamental_operators.hpp"  // add, subtract etc.
+#include "math/meta/math_type_traits.hpp"
 
 namespace fetch {
 namespace math {
-
-template <typename T, typename C>
-class Tensor;
 
 // TODO (private 854) - vectorisation implementations not yet called
 namespace details_vectorisation {
@@ -187,7 +195,8 @@ meta::IfIsMathArray<ArrayType, void> Product(ArrayType const &array1, T &ret)
   }
 }
 
-template <typename T, typename C, typename = std::enable_if_t<meta::IsArithmetic<T>>>
+template <typename T, typename C /*template<class> class C*/,
+          typename = std::enable_if_t<meta::IsArithmetic<T>>>
 meta::IfIsMathArray<Tensor<T, C>, T> Product(Tensor<T, C> const &array1)
 {
   T ret;
@@ -745,21 +754,31 @@ template <typename ArrayType>
 fetch::math::meta::IfIsMathArray<ArrayType, void> Dot(ArrayType const &A, ArrayType const &B,
                                                       ArrayType &ret)
 {
-  ASSERT(A.shape().size() == 2);
-  ASSERT(B.shape().size() == 2);
-  ASSERT(A.shape()[1] == B.shape()[0]);
+  auto aview = A.View();
+  auto bview = B.View();
 
-  for (SizeType i(0); i < A.shape()[0]; ++i)
+  if (aview.width() != bview.height())
   {
-    for (SizeType j(0); j < B.shape()[1]; ++j)
-    {
-      ret.At(i, j) = A.At(i, 0) * B.At(0, j);
-      for (SizeType k(1); k < A.shape()[1]; ++k)
-      {
-        ret.At(i, j) += A.At(i, k) * B.At(k, j);
-      }
-    }
+    throw std::runtime_error("expected A width to equal and B height.");
   }
+
+  ret.Resize({aview.height(), bview.width()});
+
+  using Type = typename ArrayType::Type;
+  using namespace linalg;
+
+  enum
+  {
+    OPTIMISATION_FLAGS = meta::HasVectorSupport<Type>::value
+                             ? platform::Parallelisation::VECTORISE
+                             : platform::Parallelisation::NOT_PARALLEL
+  };
+
+  Blas<Type, Signature(_C <= _alpha, _A, _B, _beta, _C),
+       Computes(_C <= _alpha * _A * _B + _beta * _C), OPTIMISATION_FLAGS>
+      gemm_nn;
+
+  gemm_nn(static_cast<Type>(1), aview, bview, static_cast<Type>(0), ret.View());
 }
 
 template <typename ArrayType>
@@ -782,22 +801,31 @@ template <class ArrayType>
 fetch::math::meta::IfIsMathArray<ArrayType, void> DotTranspose(ArrayType const &A,
                                                                ArrayType const &B, ArrayType &ret)
 {
-  ASSERT(A.shape().size() == 2);
-  ASSERT(B.shape().size() == 2);
-  ASSERT(A.shape()[1] == B.shape()[1]);
-  ASSERT(A.shape()[0] == ret.shape()[0]);
-  ASSERT(B.shape()[0] == ret.shape()[1]);
+  auto aview = A.View();
+  auto bview = B.View();
 
-  for (size_t i(0); i < A.shape()[0]; ++i)
+  if (aview.width() != bview.width())
   {
-    for (size_t j(0); j < B.shape()[0]; ++j)
-    {
-      for (size_t k(0); k < A.shape()[1]; ++k)
-      {
-        ret.At(i, j) += A.At(i, k) * B.At(j, k);
-      }
-    }
+    throw std::runtime_error("expected A and B to have same width.");
   }
+
+  ret.Resize({aview.height(), bview.height()});
+
+  using Type = typename ArrayType::Type;
+  using namespace linalg;
+
+  enum
+  {
+    OPTIMISATION_FLAGS = meta::HasVectorSupport<Type>::value
+                             ? platform::Parallelisation::VECTORISE
+                             : platform::Parallelisation::NOT_PARALLEL
+  };
+
+  Blas<Type, Signature(_C <= _alpha, _A, _B, _beta, _C),
+       Computes(_C <= _alpha * _A * T(_B) + _beta * _C), OPTIMISATION_FLAGS>
+      gemm_nt;
+
+  gemm_nt(static_cast<Type>(1), A.View(), B.View(), static_cast<Type>(0), ret.View());
 }
 
 template <typename ArrayType>
@@ -821,20 +849,31 @@ template <class ArrayType>
 fetch::math::meta::IfIsMathArray<ArrayType, void> TransposeDot(ArrayType const &A,
                                                                ArrayType const &B, ArrayType &ret)
 {
-  ASSERT(A.shape()[0] == B.shape()[0]);
-  ASSERT(A.shape()[1] == ret.shape()[0]);
-  ASSERT(B.shape()[1] == ret.shape()[1]);
+  auto aview = A.View();
+  auto bview = B.View();
 
-  for (size_t i(0); i < A.shape()[1]; ++i)
+  if (aview.height() != bview.height())
   {
-    for (size_t j(0); j < B.shape()[1]; ++j)
-    {
-      for (size_t k(0); k < A.shape()[0]; ++k)
-      {
-        ret.At(i, j) += A.At(k, i) * B.At(k, j);
-      }
-    }
+    throw std::runtime_error("expected A and B to have same height.");
   }
+
+  ret.Resize({aview.width(), bview.width()});
+
+  using Type = typename ArrayType::Type;
+  using namespace linalg;
+
+  enum
+  {
+    OPTIMISATION_FLAGS = meta::HasVectorSupport<Type>::value
+                             ? platform::Parallelisation::VECTORISE
+                             : platform::Parallelisation::NOT_PARALLEL
+  };
+
+  Blas<Type, Signature(_C <= _alpha, _A, _B, _beta, _C),
+       Computes(_C <= _alpha * T(_A) * _B + _beta * _C), OPTIMISATION_FLAGS>
+      gemm_tn;
+
+  gemm_tn(static_cast<Type>(1), A.View(), B.View(), static_cast<Type>(0), ret.View());
 }
 
 template <class ArrayType>

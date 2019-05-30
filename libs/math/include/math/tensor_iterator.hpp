@@ -22,22 +22,24 @@
 namespace fetch {
 namespace math {
 
-template <typename T, typename C>
-class Tensor;
-
-template <typename T, typename C, typename TensorType = Tensor<T, C>>
+template <typename T>
 class TensorIterator
 {
 public:
-  using Type     = T;
-  using SizeType = uint64_t;
+  using Type = T;
   /**
    * default range assumes step 1 over whole array - useful for trivial cases
    * @param array
    */
-  TensorIterator(TensorType &array)
-    : array_(array)
-  {}
+  TensorIterator(T *pointer, SizeType size, SizeType padded_size, SizeType height,
+                 SizeType padded_height)
+  {
+    pointer_ = pointer;
+    skip_    = padded_height - height;
+    end_     = pointer_ + padded_size;
+    height_  = height;
+    size_    = size;
+  }
 
   TensorIterator(TensorIterator const &other) = default;
   TensorIterator &operator=(TensorIterator const &other) = default;
@@ -45,26 +47,12 @@ public:
   TensorIterator &operator=(TensorIterator &&other) = default;
 
   /**
-   * @brief creates an iterator for a tensor with a given starting position.
-   * @param array is the tensor that is iterated over
-   * @param position is the starting position referencing the underlying memory.
-   */
-  TensorIterator(TensorType &array, SizeType position)
-    : array_(array)
-    , position_{std::move(position)}
-  {}
-
-  static TensorIterator EndIterator(TensorType &array)
-  {
-    return TensorIterator(array, array.data().size());
-  }
-  /**
    * identifies whether the iterator is still valid or has finished iterating
    * @return boolean indicating validity
    */
   bool is_valid() const
   {
-    return position_ < array_.data().size();
+    return pointer_ < end_;
   }
 
   /**
@@ -84,13 +72,13 @@ public:
   TensorIterator &operator++()
   {
     ++i_;
-    ++position_;
+    ++pointer_;
 
-    if (i_ >= array_.height())
+    if (i_ >= height_)
     {
       i_ = 0;
       ++j_;
-      position_ = j_ * array_.padded_height();
+      pointer_ += skip_;
     }
 
     return *this;
@@ -102,40 +90,44 @@ public:
    */
   Type &operator*()
   {
-    assert(position_ < array_.data().size());
-    return array_.data()[position_];
+    assert(is_valid());
+    return *pointer_;
   }
 
   Type const &operator*() const
   {
-    assert(position_ < array_.data().size());
-    return array_.data()[position_];
+    assert(is_valid());
+    return *pointer_;
   }
 
   bool operator==(TensorIterator const &other) const
   {
-    return other.position_ == position_;
+    return other.pointer_ == pointer_;
   }
 
   bool operator!=(TensorIterator const &other) const
   {
-    return other.position_ != position_;
+    return other.pointer_ != pointer_;
   }
 
   SizeType size() const
   {
-    return array_.size();
+    return size_;
   }
 
 private:
-  TensorType &array_;
-  SizeType    position_{0};
-  SizeType    i_{0};
-  SizeType    j_{0};
+  T *pointer_;
+  T *end_;
+
+  SizeType height_{0};
+  SizeType skip_{0};
+  SizeType i_{0};
+  SizeType j_{0};
+  SizeType size_{0};
 };
 
-template <typename T, typename C>
-using ConstTensorIterator = TensorIterator<T const, C, Tensor<T, C> const>;
+template <typename T>
+using ConstTensorIterator = TensorIterator<T const>;
 
 }  // namespace math
 }  // namespace fetch

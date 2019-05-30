@@ -17,12 +17,14 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/assert.hpp"
 #include "meta/tags.hpp"
 #include "meta/type_traits.hpp"
 #include "vectorise/platform.hpp"
 
+#include <cassert>
 #include <cmath>
+#include <iomanip>
+#include <iostream>
 #include <limits>
 #include <sstream>
 
