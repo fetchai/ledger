@@ -42,7 +42,7 @@ public:
       for (std::size_t j(0); j < size; ++j)
       {
         data_[j] = i;
-        if (j / (double)size > n)
+        if (static_cast<double>(j) / static_cast<double>(size) > static_cast<double>(n))
         {
           i++;
           n += pow(frequencies[i], 0.75) / total;

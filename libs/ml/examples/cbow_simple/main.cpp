@@ -53,9 +53,9 @@ double time_exp      = 0;
 double time_backward = 0;
 double time_step     = 0;
 
-uint64_t                          layer1_size = 200;  // 200
-uint64_t                          iter        = 1;
-FloatType                         alpha       = static_cast<FloatType>(0.025);
+uint64_t                          dimensionality = 200;  // 200
+uint64_t                          iter           = 1;
+FloatType                         alpha          = static_cast<FloatType>(0.025);
 FloatType                         starting_alpha;
 int32_t                           negative = 25;
 high_resolution_clock::time_point last_time;
@@ -70,15 +70,17 @@ void PrintStats(uint32_t const &i, uint32_t const &iterations)
 {
   high_resolution_clock::time_point cur_time = high_resolution_clock::now();
 
-  alpha = starting_alpha * (((FloatType)iter * iterations - i) / (iter * iterations));
+  alpha =
+      starting_alpha * ((static_cast<FloatType>(iter * iterations) - static_cast<FloatType>(i)) /
+                        static_cast<FloatType>(iter * iterations));
   if (alpha < starting_alpha * 0.0001)
   {
     alpha = static_cast<float>(starting_alpha * 0.0001);
   }
 
   duration<double> time_span = duration_cast<duration<double>>(cur_time - last_time);
-
-  std::cout << i << " / " << iter * iterations << " (" << (int)(100.0 * i / (iter * iterations))
+  double           total     = static_cast<double>(iter * iterations);
+  std::cout << i << " / " << iter * iterations << " (" << static_cast<int32_t>(100.0 * i / total)
             << ") -- " << alpha << " -- " << 10000. / time_span.count() << " words / sec"
             << std::endl;
 
@@ -96,17 +98,17 @@ void TrainModelNew()
   // Initialising
   using ContainerType = typename fetch::math::Tensor<FloatType>::ContainerType;
 
-  fetch::math::Tensor<FloatType> words({layer1_size, 1});
+  fetch::math::Tensor<FloatType> words({dimensionality, 1});
 
-  fetch::math::Tensor<FloatType>     embeddings({layer1_size, data_loader.VocabSize()});
-  fetch::math::Tensor<FloatType>     gradient_embeddings({layer1_size, data_loader.VocabSize()});
+  fetch::math::Tensor<FloatType>     embeddings({dimensionality, data_loader.VocabSize()});
+  fetch::math::Tensor<FloatType>     gradient_embeddings({dimensionality, data_loader.VocabSize()});
   std::vector<fetch::math::SizeType> updated_rows_embeddings;
 
-  fetch::math::Tensor<FloatType>     weights({layer1_size, data_loader.VocabSize()});
-  fetch::math::Tensor<FloatType>     gradient_weights({layer1_size, data_loader.VocabSize()});
+  fetch::math::Tensor<FloatType>     weights({dimensionality, data_loader.VocabSize()});
+  fetch::math::Tensor<FloatType>     gradient_weights({dimensionality, data_loader.VocabSize()});
   std::vector<fetch::math::SizeType> updated_rows_weights;
 
-  fetch::math::Tensor<FloatType> target_weights({layer1_size, 25});
+  fetch::math::Tensor<FloatType> target_weights({dimensionality, 25});
   fetch::math::Tensor<FloatType> error_signal({uint64_t(negative), 1});
 
   fetch::math::Tensor<FloatType> error_words(words.shape());
@@ -117,7 +119,7 @@ void TrainModelNew()
     rng.Seed(42);
     for (auto &e : embeddings)
     {
-      e = FloatType(rng.AsDouble() / layer1_size);
+      e = FloatType(rng.AsDouble() / static_cast<double>(dimensionality));
     }
   }
   {  // Weights: Initialise
