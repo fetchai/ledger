@@ -70,16 +70,14 @@ public:
     }
 
     // Compute and apply gradient
-    ComputeGradients();
     ApplyGradients();
 
     return loss;
   }
 
 protected:
-  std::shared_ptr<Graph<T>> graph_;
-  CriterionType             criterion_;
-
+  std::shared_ptr<Graph<T>>                                          graph_;
+  CriterionType                                                      criterion_;
   std::string                                                        input_node_name_;
   std::string                                                        output_node_name_;
   DataType                                                           learning_rate_;
@@ -87,21 +85,7 @@ protected:
   std::vector<ArrayType>                                             gradients_;
 
 private:
-  virtual void ComputeGradients() = 0;
-
-  void ApplyGradients()
-  {
-    auto trainable_it = this->graph_trainables_.begin();
-    auto gradient_it  = this->gradients_.begin();
-
-    while (gradient_it != this->gradients_.end())
-    {
-      // weights[i]+=grad[i]
-      (*trainable_it)->ApplyGradient(*gradient_it);
-      ++trainable_it;
-      ++gradient_it;
-    }
-  }
+  virtual void ApplyGradients() = 0;
 };
 
 }  // namespace ml

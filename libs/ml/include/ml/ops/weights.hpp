@@ -54,7 +54,7 @@ public:
   virtual struct fetch::ml::StateDict<T> StateDict() const                           = 0;
   virtual void             LoadStateDict(struct fetch::ml::StateDict<T> const &dict) = 0;
   virtual ArrayType const &GetWeights() const                                        = 0;
-  virtual ArrayType        Gradients() const                                         = 0;
+  virtual ArrayType const &Gradients() const                                         = 0;
   virtual void             ResetGradients()                                          = 0;
   virtual void             ApplyGradient(ArrayType const &grad)                      = 0;
 };
@@ -178,7 +178,7 @@ public:
   }
 
   /**
-   * exports the weights Array
+   * exports the weight Array
    * @return
    */
   ArrayType const &GetWeights() const
@@ -187,12 +187,12 @@ public:
   }
 
   /**
-   * Returns a copy of embeddings gradients for enquiry
+   *exports the weight gradients Array
    * @return
    */
-  ArrayType Gradients() const
+  ArrayType const &Gradients() const
   {
-    return gradient_accumulation_->Copy();
+    return *this->gradient_accumulation_;
   }
 
   static constexpr char const *DESCRIPTOR = "Weights";

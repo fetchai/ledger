@@ -61,7 +61,7 @@ public:
   }
 
 private:
-  void ComputeGradients()
+  void ApplyGradients()
   {
     // Do operation with gradient
     auto cached_weight_it = cache_.begin();
@@ -96,6 +96,9 @@ private:
       fetch::math::Add(*gradient_it, epsilon_, *gradient_it);
       fetch::math::Divide(*mt_it, *gradient_it, *gradient_it);
       fetch::math::Multiply(*gradient_it, -this->learning_rate_, *gradient_it);
+
+      // Apply gradient weights[i]+=grad[i]
+      (*trainable_it)->ApplyGradient(*gradient_it);
 
       ++cached_weight_it;
       ++momentum_it;

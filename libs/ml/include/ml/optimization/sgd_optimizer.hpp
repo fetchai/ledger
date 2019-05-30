@@ -43,7 +43,7 @@ public:
   {}
 
 private:
-  void ComputeGradients()
+  void ApplyGradients()
   {
     auto trainable_it = this->graph_trainables_.begin();
     auto gradient_it  = this->gradients_.begin();
@@ -52,6 +52,9 @@ private:
     {
       // grad[i]=grad[i] * -learning_rate
       fetch::math::Multiply((*trainable_it)->Gradients(), -this->learning_rate_, *gradient_it);
+
+      // Apply gradient weights[i]+=grad[i]
+      (*trainable_it)->ApplyGradient(*gradient_it);
 
       ++trainable_it;
       ++gradient_it;
