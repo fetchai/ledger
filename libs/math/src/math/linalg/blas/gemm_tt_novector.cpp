@@ -16,91 +16,87 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/linalg/blas/gemm_tt_novector.hpp"
-#include "math/linalg/blas/base.hpp"
 #include "math/linalg/prototype.hpp"
 #include "math/tensor_view.hpp"
-namespace fetch {
-namespace math {
-namespace linalg {
+#include "math/linalg/blas/base.hpp"
+#include "math/linalg/blas/gemm_tt_novector.hpp"
+namespace fetch
+{
+namespace math
+{
+namespace linalg 
+{
 
-template <typename S>
-void Blas<S, Signature(_C <= _alpha, _A, _B, _beta, _C),
-          Computes(_C <= _alpha * T(_A) * T(_B) + _beta * _C),
-          platform::Parallelisation::NOT_PARALLEL>::operator()(Type const             alpha,
-                                                               TensorView<Type> const a,
-                                                               TensorView<Type> const b,
-                                                               Type const             beta,
-                                                               TensorView<Type>       c) const
+template< typename S >
+void Blas< S, Signature( _C <= _alpha, _A, _B, _beta, _C ), Computes( _C <= _alpha * T(_A) * T(_B) + _beta * _C ),platform::Parallelisation::NOT_PARALLEL >::operator()(Type const alpha, TensorView< Type > const a, TensorView< Type > const b, Type const beta, TensorView< Type >c ) const
 {
   std::size_t i;
   std::size_t j;
-  if ((c.height() == 0) ||
-      ((c.width() == 0) || (((alpha == static_cast<Type>(0.0)) || (a.height() == 0)) &&
-                            (beta == static_cast<Type>(1.0)))))
+  if( (c.height() == 0) || ((c.width() == 0) || (((alpha == static_cast< Type >(0.0)) || (a.height() == 0)) && (beta == static_cast< Type >(1.0)))) ) 
   {
     return;
-  }
-
-  if (alpha == static_cast<Type>(0.0))
+  } 
+  
+  if( alpha == static_cast< Type >(0.0) ) 
   {
-    if (beta == static_cast<Type>(0.0))
+    if( beta == static_cast< Type >(0.0) ) 
     {
-      for (j = 0; j < c.width(); ++j)
+      for(j = 0 ; j <  c.width(); ++j)
       {
-        for (i = 0; i < c.height(); ++i)
+        for(i = 0 ; i <  c.height(); ++i)
         {
-          c(i, j) = static_cast<Type>(0.0);
+          c(i, j) = static_cast< Type >(0.0);
         }
       }
     }
-    else
+    else 
     {
-      for (j = 0; j < c.width(); ++j)
+      for(j = 0 ; j <  c.width(); ++j)
       {
-        for (i = 0; i < c.height(); ++i)
+        for(i = 0 ; i <  c.height(); ++i)
         {
           c(i, j) = beta * c(i, j);
         }
       }
-    }
-
+    } 
+    
     return;
-  }
-
-  for (j = 0; j < c.width(); ++j)
-  {
-    for (i = 0; i < c.height(); ++i)
+  } 
+  
+  
+  for(j = 0 ; j <  c.width(); ++j)
+  {  for(i = 0 ; i <  c.height(); ++i)
     {
-      Type        temp;
+      Type temp;
       std::size_t l;
-      temp = static_cast<Type>(0.0);
-      for (l = 0; l < a.height(); ++l)
+      temp = static_cast< Type >(0.0);
+      for(l = 0 ; l <  a.height(); ++l)
       {
         temp = temp + a(l, i) * b(j, l);
       }
-
-      if (beta == static_cast<Type>(0.0))
+      
+      if( beta == static_cast< Type >(0.0) ) 
       {
         c(i, j) = alpha * temp;
       }
-      else
+      else 
       {
         c(i, j) = alpha * temp + beta * c(i, j);
       }
+    }  
     }
-  }
   return;
+  
 }
 
-template class Blas<double, Signature(_C <= _alpha, _A, _B, _beta, _C),
-                    Computes(_C <= _alpha * T(_A) * T(_B) + _beta * _C),
-                    platform::Parallelisation::NOT_PARALLEL>;
 
-template class Blas<float, Signature(_C <= _alpha, _A, _B, _beta, _C),
-                    Computes(_C <= _alpha * T(_A) * T(_B) + _beta * _C),
-                    platform::Parallelisation::NOT_PARALLEL>;
+template class
+Blas< double , Signature( _C <= _alpha, _A, _B, _beta, _C ), Computes( _C <= _alpha * T(_A) * T(_B) + _beta * _C ), platform::Parallelisation::NOT_PARALLEL>;
 
-}  // namespace linalg
-}  // namespace math
-}  // namespace fetch
+template class
+Blas< float , Signature( _C <= _alpha, _A, _B, _beta, _C ), Computes( _C <= _alpha * T(_A) * T(_B) + _beta * _C ), platform::Parallelisation::NOT_PARALLEL>;
+
+
+} // namespace linalg
+} // namespace math
+} // namepsace fetch

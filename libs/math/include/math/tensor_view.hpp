@@ -86,25 +86,47 @@ public:
                              padded_height_);
   }
 
-  Type operator()(SizeType i, SizeType j) const
+  template <typename S>
+  typename std::enable_if<std::is_integral<S>::value, Type>::type 
+  operator()(S i, S j) const
   {
-    return data_[i + j * padded_height_];
+    return data_[static_cast<SizeType>(i) + static_cast<SizeType>(j) * padded_height_];
   }
 
-  Type &operator()(SizeType i, SizeType j)
+  template <typename S>
+  typename std::enable_if<std::is_integral<S>::value, Type>::type 
+  &operator()(S i, S j)
   {
-    return data_[i + j * padded_height_];
+    return data_[static_cast<SizeType>(i) + static_cast<SizeType>(j) * padded_height_];
   }
 
-  Type operator()(SizeType i) const
+  template <typename S>
+  typename std::enable_if<std::is_integral<S>::value, Type>::type 
+  operator()(S i) const
   {
-    return data_[i];
+    return data_[std::move(i)];
   }
 
-  Type &operator()(SizeType i)
+  template <typename S>
+  typename std::enable_if<std::is_integral<S>::value, Type>::type 
+  &operator()(S i)
   {
-    return data_[i];
+    return data_[std::move(i)];
   }
+
+  template <typename S>
+  typename std::enable_if<std::is_integral<S>::value, Type>::type 
+  operator[](S i) const
+  {
+    return data_[std::move(i)];
+  }
+
+  template <typename S>
+  typename std::enable_if<std::is_integral<S>::value, Type>::type 
+  &operator[](S i)
+  {
+    return data_[std::move(i)];
+  }  
 
   /* @breif returns the smallest number which is a multiple of PADDING and greater than or equal to
    a desired size.
@@ -148,40 +170,14 @@ public:
 
   ContainerType const &data() const
   {
-    return data_;  // ContainerType(data_, offset_, padded_height_ * width_);
+    return data_; 
   }
 
   ContainerType &data()
   {
-    return data_;  // ContainerType(data_, offset_, padded_height_ * width_);
+    return data_;
   }
 
-  /*
-protected:
-
-  void SetHeight(SizeType height)
-  {
-    height_        = std::move(height);
-    padded_height_ = PadValue(height_);
-  }
-
-  void SetWidth(SizeType width)
-  {
-    width_ = std::move(width);
-  }
-
-  void SetOffset(SizeType offset)
-  {
-    offset_  = std::move(offset);
-    pointer_ = data_.pointer() + offset_;
-  }
-
-  void SetData(ContainerType data)
-  {
-    data_    = std::move(data);
-    pointer_ = data_.pointer() + offset_;
-  }
-*/
 private:
   SizeType      height_{0};
   SizeType      width_{0};

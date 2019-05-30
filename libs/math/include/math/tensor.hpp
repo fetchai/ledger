@@ -325,56 +325,12 @@ public:
   //////////////
   /// Views  ///
   //////////////
-  TensorView<Type, ContainerType> View()
-  {
-    SizeType N     = shape_.size() - 1;
-    SizeType width = shape_[N] * stride_[N] / padded_height_;
-    return TensorView<Type, ContainerType>(data_, height(), width);
-  }
+  TensorView<Type, ContainerType> View();
+  TensorView<Type, ContainerType> const View() const;
+  TensorView<Type, ContainerType> View(SizeType index);
+  TensorView<Type, ContainerType> const View(SizeType index) const;
+  TensorView<Type, ContainerType> View(std::vector<SizeType> indices);
 
-  TensorView<Type, ContainerType> const View() const
-  {
-    SizeType N     = shape_.size() - 1;
-    SizeType width = shape_[N] * stride_[N] / padded_height_;
-    return TensorView<Type, ContainerType>(data_, height(), width);
-  }
-
-  TensorView<Type, ContainerType> View(SizeType index)
-  {
-    SizeType N                = shape_.size() - 1 - 1;
-    SizeType dimension_length = (N == 0 ? padded_height_ : shape_[N]);
-    SizeType volume           = dimension_length * stride_[N];
-    SizeType width            = volume / padded_height_;
-    SizeType offset           = volume * index;
-    return TensorView<Type, ContainerType>(data_, height(), width, offset);
-  }
-
-  TensorView<Type, ContainerType> const View(SizeType index) const
-  {
-    SizeType N                = shape_.size() - 1 - 1;
-    SizeType dimension_length = (N == 0 ? padded_height_ : shape_[N]);
-    SizeType volume           = dimension_length * stride_[N];
-    SizeType width            = volume / padded_height_;
-    SizeType offset           = volume * index;
-    return TensorView<Type, ContainerType>(data_, height(), width, offset);
-  }
-
-  TensorView<Type, ContainerType> View(std::vector<SizeType> indices)
-  {
-    SizeType N                = shape_.size() - 1 - indices.size();
-    SizeType dimension_length = (N == 0 ? padded_height_ : shape_[N]);
-    SizeType volume           = dimension_length * stride_[N];
-    SizeType width            = volume / padded_height_;
-    SizeType offset           = 0;
-
-    for (SizeType i = 0; i < indices.size(); ++i)
-    {
-      SizeType g = N + i + 1;
-      offset += stride_[g] * indices[i];
-    }
-
-    return TensorView<Type, ContainerType>(data_, height(), width, offset);
-  }
 
   /////////////////////////
   /// general utilities ///
@@ -881,6 +837,66 @@ typename Tensor<T, C>::ConstIteratorType Tensor<T, C>::cend() const
   return ConstIteratorType(data().pointer() + data().size(), size(), data().size(), height(),
                            padded_height());
 }
+
+///////////////////////
+/// View Extraction ///
+///////////////////////
+template <typename T, typename C>
+TensorView<T, C> Tensor<T, C>::View()
+{
+  SizeType N     = shape_.size() - 1;
+  SizeType width = shape_[N] * stride_[N] / padded_height_;
+  return TensorView<Type, ContainerType>(data_, height(), width);
+}
+
+template <typename T, typename C>
+TensorView<T, C> const Tensor<T, C>::View() const
+{
+  SizeType N     = shape_.size() - 1;
+  SizeType width = shape_[N] * stride_[N] / padded_height_;
+  return TensorView<Type, ContainerType>(data_, height(), width);
+}
+
+template <typename T, typename C>
+TensorView<T, C> Tensor<T, C>::View(SizeType index)
+{
+  SizeType N                = shape_.size() - 1 - 1;
+  SizeType dimension_length = (N == 0 ? padded_height_ : shape_[N]);
+  SizeType volume           = dimension_length * stride_[N];
+  SizeType width            = volume / padded_height_;
+  SizeType offset           = volume * index;
+  return TensorView<Type, ContainerType>(data_, height(), width, offset);
+}
+
+template <typename T, typename C>
+TensorView<T, C> const Tensor<T, C>::View(SizeType index) const
+{
+  SizeType N                = shape_.size() - 1 - 1;
+  SizeType dimension_length = (N == 0 ? padded_height_ : shape_[N]);
+  SizeType volume           = dimension_length * stride_[N];
+  SizeType width            = volume / padded_height_;
+  SizeType offset           = volume * index;
+  return TensorView<Type, ContainerType>(data_, height(), width, offset);
+}
+
+template <typename T, typename C>
+TensorView<T, C> Tensor<T, C>::View(std::vector<SizeType> indices)
+{
+  SizeType N                = shape_.size() - 1 - indices.size();
+  SizeType dimension_length = (N == 0 ? padded_height_ : shape_[N]);
+  SizeType volume           = dimension_length * stride_[N];
+  SizeType width            = volume / padded_height_;
+  SizeType offset           = 0;
+
+  for (SizeType i = 0; i < indices.size(); ++i)
+  {
+    SizeType g = N + i + 1;
+    offset += stride_[g] * indices[i];
+  }
+
+  return TensorView<Type, ContainerType>(data_, height(), width, offset);
+}
+
 
 //////////////////////////////////////////////
 /// Tensor methods: assignment & accessing ///

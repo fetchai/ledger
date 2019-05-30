@@ -17,7 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-/* The class defined in this file implements the equivalent of
+
+/* The class defined in this file implements the equivalent of 
  * following Python code:
  *
  * import numpy as np
@@ -29,7 +30,7 @@
  *   elif m > 0:
  *     x[:n*m:m] = alpha * x[:n*m:m]
  *   # else nothing to do for negative increases
- *
+ *   
  *   return x
  *
  * Authors:
@@ -40,24 +41,30 @@
  *  - NAG Ltd.                     (Fortran version)
  */
 
-#include "math/linalg/blas/base.hpp"
 #include "math/linalg/prototype.hpp"
-#include "math/tensor.hpp"
+#include "math/tensor_view.hpp"
+#include "math/linalg/blas/base.hpp"
 
-namespace fetch {
-namespace math {
-namespace linalg {
+namespace fetch
+{
+namespace math
+{
+namespace linalg 
+{
 
-template <typename S, uint64_t V>
-class Blas<S, Signature(_x <= _n, _alpha, _x, _m), Computes(_x <= _alpha * _x), V>
+template<typename S, uint64_t V>
+class Blas< S, 
+            Signature( _x <= _n, _alpha, _x, _m ),
+            Computes( _x <= _alpha * _x ), 
+            V>
 {
 public:
-  using Type               = S;
-  using VectorRegisterType = typename Tensor<Type>::VectorRegisterType;
-
-  void operator()(int const &n, Type const &da, Tensor<Type> &dx, int const &incx) const;
+  using Type = S;
+  using VectorRegisterType = typename TensorView< Type >::VectorRegisterType;
+  
+  void operator()(int const n, Type const da, TensorView< Type >dx, int const incx ) const;
 };
 
-}  // namespace linalg
-}  // namespace math
-}  // namespace fetch
+} // namespace linalg
+} // namespace math
+} // namepsace fetch

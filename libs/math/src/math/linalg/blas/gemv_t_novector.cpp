@@ -16,153 +16,147 @@
 //
 //------------------------------------------------------------------------------
 
+#include "math/linalg/prototype.hpp"
+#include "math/tensor_view.hpp"
 #include "math/linalg/blas/base.hpp"
 #include "math/linalg/blas/gemv_t.hpp"
-#include "math/linalg/prototype.hpp"
-#include "math/tensor.hpp"
-namespace fetch {
-namespace math {
-namespace linalg {
+namespace fetch
+{
+namespace math
+{
+namespace linalg 
+{
 
-template <typename S, uint64_t V>
-void Blas<S, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
-          Computes(_y <= _alpha * T(_A) * _x + _beta * _y), V>::operator()(Type const &alpha,
-                                                                           Tensor<Type> const &a,
-                                                                           Tensor<Type> const &x,
-                                                                           int const &         incx,
-                                                                           Type const &        beta,
-                                                                           Tensor<Type> &      y,
-                                                                           int const &incy) const
+template< typename S, uint64_t V >
+void Blas< S, Signature( _y <= _alpha, _A, _x, _n, _beta, _y, _m ), Computes( _y <= _alpha * T(_A) * _x + _beta * _y ),V >::operator()(Type const alpha, TensorView< Type > const a, TensorView< Type > const x, int const incx, Type const beta, TensorView< Type >y, int const incy ) const
 {
   Type temp;
-  int  i;
-  int  j;
-  int  jy;
-  int  kx;
-  int  ky;
-  int  lenx;
-  int  leny;
-  if ((int(a.height()) == 0) || ((int(a.width()) == 0) || ((alpha == 0.0) && (beta == 1.0))))
+  int i;
+  int j;
+  int jy;
+  int kx;
+  int ky;
+  int lenx;
+  int leny;
+  if( (int(a.height()) == 0) || ((int(a.width()) == 0) || ((alpha == static_cast< Type >(0.0)) && (beta == static_cast< Type >(1.0)))) ) 
   {
     return;
-  }
-
+  } 
+  
   lenx = int(a.height());
   leny = int(a.width());
-  if (incx > 0)
+  if( incx > 0 ) 
   {
     kx = 1;
   }
-  else
+  else 
   {
     kx = 1 + (-(-1 + lenx) * incx);
-  }
-
-  if (incy > 0)
+  } 
+  
+  if( incy > 0 ) 
   {
     ky = 1;
   }
-  else
+  else 
   {
     ky = 1 + (-(-1 + leny) * incy);
-  }
-
-  if (beta != 1.0)
+  } 
+  
+  if( beta != static_cast< Type >(1.0) ) 
   {
-    if (incy == 1)
+    if( incy == 1 ) 
     {
-      if (beta == 0.0)
+      if( beta == static_cast< Type >(0.0) ) 
       {
-        for (i = 0; i < leny; ++i)
+        for(i = 0 ; i <  leny; ++i)
         {
-          y[i] = 0.0;
+          y[i] = static_cast< Type >(0.0);
         }
       }
-      else
+      else 
       {
-        for (i = 0; i < leny; ++i)
+        for(i = 0 ; i <  leny; ++i)
         {
           y[i] = beta * y[i];
         }
       }
     }
-    else
+    else 
     {
       int iy;
       iy = -1 + ky;
-      if (beta == 0.0)
+      if( beta == static_cast< Type >(0.0) ) 
       {
-        for (i = 0; i < leny; ++i)
+        for(i = 0 ; i <  leny; ++i)
         {
-          y[iy] = 0.0;
-          iy    = iy + incy;
+          y[iy] = static_cast< Type >(0.0);
+          iy = iy + incy;
         }
       }
-      else
+      else 
       {
-        for (i = 0; i < leny; ++i)
+        for(i = 0 ; i <  leny; ++i)
         {
           y[iy] = beta * y[iy];
-          iy    = iy + incy;
+          iy = iy + incy;
         }
       }
     }
-  }
-
-  if (alpha == 0.0)
+  } 
+  
+  if( alpha == static_cast< Type >(0.0) ) 
   {
     return;
-  }
-
+  } 
+  
   jy = -1 + ky;
-  if (incx == 1)
+  if( incx == 1 ) 
   {
-    for (j = 0; j < int(a.width()); ++j)
+    for(j = 0 ; j <  int(a.width()); ++j)
     {
-      temp = 0.0;
-      for (i = 0; i < int(a.height()); ++i)
+      temp = static_cast< Type >(0.0);
+      for(i = 0 ; i <  int(a.height()); ++i)
       {
         temp = temp + a(i, j) * x[i];
       }
-
+      
       y[jy] = y[jy] + alpha * temp;
-      jy    = jy + incy;
+      jy = jy + incy;
     }
   }
-  else
+  else 
   {
-    for (j = 0; j < int(a.width()); ++j)
+    for(j = 0 ; j <  int(a.width()); ++j)
     {
       int ix;
-      temp = 0.0;
-      ix   = -1 + kx;
-      for (i = 0; i < int(a.height()); ++i)
+      temp = static_cast< Type >(0.0);
+      ix = -1 + kx;
+      for(i = 0 ; i <  int(a.height()); ++i)
       {
         temp = temp + a(i, j) * x[ix];
-        ix   = ix + incx;
+        ix = ix + incx;
       }
-
+      
       y[jy] = y[jy] + alpha * temp;
-      jy    = jy + incy;
+      jy = jy + incy;
     }
-  }
-
+  } 
+  
   return;
+  
 }
 
-template class Blas<double, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
-                    Computes(_y <= _alpha * T(_A) * _x + _beta * _y),
-                    platform::Parallelisation::NOT_PARALLEL>;
-template class Blas<float, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
-                    Computes(_y <= _alpha * T(_A) * _x + _beta * _y),
-                    platform::Parallelisation::NOT_PARALLEL>;
-template class Blas<double, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
-                    Computes(_y <= _alpha * T(_A) * _x + _beta * _y),
-                    platform::Parallelisation::THREADING>;
-template class Blas<float, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
-                    Computes(_y <= _alpha * T(_A) * _x + _beta * _y),
-                    platform::Parallelisation::THREADING>;
 
-}  // namespace linalg
-}  // namespace math
-}  // namespace fetch
+template class
+Blas< double , Signature( _y <= _alpha, _A, _x, _n, _beta, _y, _m ), Computes( _y <= _alpha * T(_A) * _x + _beta * _y ), platform::Parallelisation::NOT_PARALLEL >;
+template class
+Blas< float , Signature( _y <= _alpha, _A, _x, _n, _beta, _y, _m ), Computes( _y <= _alpha * T(_A) * _x + _beta * _y ), platform::Parallelisation::NOT_PARALLEL >;
+template class
+Blas< double , Signature( _y <= _alpha, _A, _x, _n, _beta, _y, _m ), Computes( _y <= _alpha * T(_A) * _x + _beta * _y ), platform::Parallelisation::THREADING >;
+template class
+Blas< float , Signature( _y <= _alpha, _A, _x, _n, _beta, _y, _m ), Computes( _y <= _alpha * T(_A) * _x + _beta * _y ), platform::Parallelisation::THREADING >;
+
+} // namespace linalg
+} // namespace math
+} // namepsace fetch
