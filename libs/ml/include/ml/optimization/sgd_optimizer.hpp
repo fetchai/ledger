@@ -43,19 +43,19 @@ public:
   {}
 
 private:
-  void ApplyGradients()
+  void ComputeGradients()
   {
-    std::vector<ArrayType> gradients = this->graph_->GetGradients();
+    auto trainable_it = this->graph_trainables_.begin();
+    auto gradient_it  = this->gradients_.begin();
 
-    // Do operation with gradient
-    for (auto &grad : gradients)
+    while (gradient_it != this->gradients_.end())
     {
       // grad[i]=grad[i] * -learning_rate
-      fetch::math::Multiply(grad, -this->learning_rate_, grad);
-    }
+      fetch::math::Multiply((*trainable_it)->Gradients(), -this->learning_rate_, *gradient_it);
 
-    // weights[i]+=grad[i]
-    this->graph_->ApplyGradients(gradients);
+      ++trainable_it;
+      ++gradient_it;
+    }
   }
 };
 

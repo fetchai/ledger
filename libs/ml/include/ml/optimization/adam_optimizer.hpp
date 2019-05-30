@@ -50,48 +50,61 @@ public:
     , epsilon_(epsilon)
 
   {
-    auto weights = this->graph_->GetWeights();
-    for (auto &wei : weights)
+    for (auto &train : this->graph_trainables_)
     {
-      this->cache_.push_back(ArrayType(wei.shape()));
-      this->momentum_.push_back(ArrayType(wei.shape()));
+      this->cache_.push_back(ArrayType(train->GetWeights().shape()));
+      this->momentum_.push_back(ArrayType(train->GetWeights().shape()));
+      this->mt_.push_back(ArrayType(train->GetWeights().shape()));
+      this->vt_.push_back(ArrayType(train->GetWeights().shape()));
     }
     ResetCache();
   }
 
 private:
-  void ApplyGradients()
+  void ComputeGradients()
   {
-    std::vector<ArrayType> gradients = this->graph_->GetGradients();
-
     // Do operation with gradient
     auto cached_weight_it = cache_.begin();
     auto momentum_it      = momentum_.begin();
-    for (auto &grad : gradients)
-    {
-      auto git = grad.begin();
-      auto cit = (*cached_weight_it).begin();
-      auto mit = (*momentum_it).begin();
+    auto mt_it            = mt_.begin();
+    auto vt_it            = vt_.begin();
 
-      DataType mt;
-      DataType vt;
-      while (git.is_valid())
-      {
-        *cit = (beta1_t_ * (*cit)) + ((one_ - beta1_t_) * (*git));
-        mt   = *cit / (one_ - beta1_t_);
-        *mit = (beta2_t_ * (*mit)) + ((one_ - beta2_t_) * (*git) * (*git));
-        vt   = *mit / (one_ - beta2_t_);
-        // epsilon is added to prevent division by 0
-        *git = -this->learning_rate_ * mt / (fetch::math::Sqrt(vt) + epsilon_);
-        ++git;
-        ++cit;
-        ++mit;
-      }
+    auto gradient_it  = this->gradients_.begin();
+    auto trainable_it = this->graph_trainables_.begin();
+
+    while (gradient_it != this->gradients_.end())
+    {
+      // cache[i] = (beta1_t_ * cache[i]) + ((one_ - beta1_t_) * (gradients[i]));
+      fetch::math::Multiply((*trainable_it)->Gradients(), (one_ - beta1_t_), *gradient_it);
+      fetch::math::Multiply(*cached_weight_it, beta1_t_, *cached_weight_it);
+      fetch::math::Add(*cached_weight_it, *gradient_it, *cached_weight_it);
+
+      // mt   = cache[i] / (one_ - beta1_t_);
+      fetch::math::Divide(*cached_weight_it, (one_ - beta1_t_), *mt_it);
+
+      // momentum[i] = (beta2_t_ * momentum[i]) + ((one_ - beta2_t_) * (gradients[i]^2));
+      fetch::math::Multiply((*trainable_it)->Gradients(), (*trainable_it)->Gradients(), *vt_it);
+      fetch::math::Multiply(*vt_it, (one_ - beta2_t_), *vt_it);
+      fetch::math::Multiply(*momentum_it, beta2_t_, *momentum_it);
+      fetch::math::Add(*momentum_it, *vt_it, *momentum_it);
+
+      // vt   = momentum[i] / (one_ - beta2_t_);
+      fetch::math::Divide(*momentum_it, (one_ - beta2_t_), *vt_it);
+
+      // gradients[i] = -this->learning_rate_ * mt / (sqrt(vt) + epsilon_);
+      fetch::math::Sqrt(*vt_it, *gradient_it);
+      fetch::math::Add(*gradient_it, epsilon_, *gradient_it);
+      fetch::math::Divide(*mt_it, *gradient_it, *gradient_it);
+      fetch::math::Multiply(*gradient_it, -this->learning_rate_, *gradient_it);
+
       ++cached_weight_it;
       ++momentum_it;
+      ++mt_it;
+      ++vt_it;
+
+      ++gradient_it;
+      ++trainable_it;
     }
-    // weights[i]+=grad[i]
-    this->graph_->ApplyGradients(gradients);
 
     // beta1_t=beta1^t and beta2_t=beta2^t, where t is number of epochs + 1
     beta1_t_ *= beta1_;
@@ -114,12 +127,15 @@ private:
 
   std::vector<ArrayType> cache_;
   std::vector<ArrayType> momentum_;
-  DataType               beta1_;
-  DataType               beta2_;
-  DataType               beta1_t_;
-  DataType               beta2_t_;
-  DataType               epsilon_;
-  DataType               one_{1};
+  std::vector<ArrayType> mt_;
+  std::vector<ArrayType> vt_;
+
+  DataType beta1_;
+  DataType beta2_;
+  DataType beta1_t_;
+  DataType beta2_t_;
+  DataType epsilon_;
+  DataType one_{1};
 };
 
 }  // namespace ml

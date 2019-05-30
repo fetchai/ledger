@@ -66,9 +66,10 @@ public:
   virtual struct fetch::ml::StateDict<ArrayType> StateDict() const;
   virtual void LoadStateDict(struct fetch::ml::StateDict<T> const &dict);
 
-  std::vector<ArrayType> GetWeights() const;
-  std::vector<ArrayType> GetGradients() const;
-  void                   ApplyGradients(std::vector<ArrayType> &grad);
+  std::vector<ArrayType>        GetWeights() const;
+  std::vector<ArrayType>        GetGradients() const;
+  void                          ApplyGradients(std::vector<ArrayType> &grad);
+  std::vector<TrainablePtrType> GetTrainables();
 
   void ResetGradients();
 
@@ -385,6 +386,23 @@ std::string Graph<ArrayType>::UpdateVariableName(std::string const &name)
     }
   }
 
+  return ret;
+}
+
+/**
+ * Assigns all trainable pointers to vector for optimizer purpose
+ * @return ret is vector containing pointers to all trainables
+ */
+template <typename ArrayType>
+std::vector<typename std::shared_ptr<fetch::ml::ops::Trainable<ArrayType>>>
+Graph<ArrayType>::GetTrainables()
+{
+  std::vector<TrainablePtrType> ret;
+
+  for (auto const &t : trainable_)
+  {
+    ret.emplace_back(t.second);
+  }
   return ret;
 }
 

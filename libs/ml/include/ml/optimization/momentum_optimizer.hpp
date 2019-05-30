@@ -44,36 +44,34 @@ public:
     : Optimizer<T, C>(graph, input_node_name, output_node_name, learning_rate)
     , momentum_update_(momentum_update)
   {
-    auto weights = this->graph_->GetWeights();
-    for (auto &wei : weights)
+    for (auto &train : this->graph_trainables_)
     {
-      this->momentum_.push_back(ArrayType(wei.shape()));
+      this->momentum_.push_back(ArrayType(train->GetWeights().shape()));
     }
     ResetMomentum();
   }
 
 private:
-  void ApplyGradients()
+  void ComputeGradients()
   {
+    auto trainable_it = this->graph_trainables_.begin();
+    auto gradient_it  = this->gradients_.begin();
+    auto mit          = momentum_.begin();
 
-    std::vector<ArrayType> gradients = this->graph_->GetGradients();
-
-    // Do operation with gradient
-    auto mit = momentum_.begin();
-    for (auto &grad : gradients)
+    while (gradient_it != this->gradients_.end())
     {
       // momentum[i] = momentum_update * momentum[i] + learning_rate * grad[i]
       fetch::math::Multiply(*mit, momentum_update_, *mit);
-      fetch::math::Multiply(grad, this->learning_rate_, grad);
-      fetch::math::Add(*mit, grad, *mit);
+      fetch::math::Multiply((*trainable_it)->Gradients(), this->learning_rate_, *gradient_it);
+      fetch::math::Add(*mit, *gradient_it, *mit);
 
       // grad[i]=-momentum[i]
-      fetch::math::Multiply(*mit, negative_one_, grad);
+      fetch::math::Multiply(*mit, negative_one_, *gradient_it);
+
+      ++trainable_it;
+      ++gradient_it;
       ++mit;
     }
-
-    // weights[i]+=grad[i]
-    this->graph_->ApplyGradients(gradients);
   }
 
   void ResetMomentum()

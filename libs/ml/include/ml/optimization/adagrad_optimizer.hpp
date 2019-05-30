@@ -45,41 +45,39 @@ public:
     : Optimizer<T, C>(graph, input_node_name, output_node_name, learning_rate)
     , epsilon_(epsilon)
   {
-    auto weights = this->graph_->GetWeights();
-    for (auto &wei : weights)
+    for (auto &train : this->graph_trainables_)
     {
-      this->cache_.push_back(ArrayType(wei.shape()));
+      this->cache_.push_back(ArrayType(train->GetWeights().shape()));
     }
     ResetCache();
   }
 
 private:
-  void ApplyGradients()
+  void ComputeGradients()
   {
-    std::vector<ArrayType> gradients = this->graph_->GetGradients();
-
     // Do operation with gradient
     auto cached_weight_it = cache_.begin();
-    for (auto &grad : gradients)
+    auto gradient_it      = this->gradients_.begin();
+    auto trainable_it     = this->graph_trainables_.begin();
+
+    while (gradient_it != this->gradients_.end())
     {
-      auto git = grad.begin();
-      auto cit = (*cached_weight_it).begin();
-      while (git.is_valid())
-      {
-        // cache[i] += grad[i]^2
-        *cit += (*git) * (*git);
+      // cache[i] += grad[i]^2
+      fetch::math::Multiply((*trainable_it)->Gradients(), (*trainable_it)->Gradients(),
+                            *gradient_it);
+      fetch::math::Add(*cached_weight_it, *gradient_it, *cached_weight_it);
 
-        // epsilon is added to prevent division by 0
-        // grad[i] = learning_rate * grad[i] / (sqrt(cache[i]) + epsilon)
-        *git = -this->learning_rate_ * ((*git) / fetch::math::Sqrt(*cit + epsilon_));
-        ++git;
-        ++cit;
-      }
+      // epsilon is added to prevent division by 0
+      // grad[i] = learning_rate * grad[i] / (sqrt(cache[i]) + epsilon)
+      fetch::math::Sqrt(*cached_weight_it, *gradient_it);
+      fetch::math::Add(*gradient_it, epsilon_, *gradient_it);
+      fetch::math::Divide((*trainable_it)->Gradients(), *gradient_it, *gradient_it);
+      fetch::math::Multiply(*gradient_it, -this->learning_rate_, *gradient_it);
+
       ++cached_weight_it;
+      ++gradient_it;
+      ++trainable_it;
     }
-
-    // weights[i]+=grad[i]
-    this->graph_->ApplyGradients(gradients);
   }
 
   void ResetCache()
