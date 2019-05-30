@@ -120,7 +120,7 @@ inline IoObserverInterface::Status WriteHelper(std::string const &name, Ptr<Obje
 
   // convert the type into a byte stream
   ByteArrayBuffer buffer;
-  if (!val->SerializeTo(buffer))
+  if (!val || !val->SerializeTo(buffer))
   {
     return IoObserverInterface::Status::ERROR;
   }
@@ -128,7 +128,7 @@ inline IoObserverInterface::Status WriteHelper(std::string const &name, Ptr<Obje
   return io.Write(name, buffer.data().pointer(), buffer.data().size());
 }
 
-template <typename T>
+template <typename T, typename = void>
 class State : public IState
 {
 public:
@@ -149,10 +149,24 @@ public:
 
       // mark the variable as existed if we get a positive result back
       existed_ = (Status::OK == status);
+      if (!existed_)
+      {
+        Set(value);
+      }
     }
   }
 
-  ~State() override = default;
+  ~State() override
+  {
+    try
+    {
+      FlushIO();
+    }
+    catch (...)
+    {
+      vm_->RuntimeError("An exception has been thrown from State<...>::FlushIO().");
+    }
+  }
 
   TemplateParameter Get() const override
   {
@@ -161,10 +175,7 @@ public:
 
   void Set(TemplateParameter const &value) override
   {
-    value_ = value.Get<Value>();
-
-    // flush the value if it is being observed
-    FlushIO();
+    value_ = GetValue<>(value);
   }
 
   bool Existed() const override
@@ -176,10 +187,27 @@ private:
   using Value  = typename GetStorageType<T>::type;
   using Status = IoObserverInterface::Status;
 
+  template <typename Y = T>
+  meta::EnableIf<IsPrimitive<Y>::value, Y> GetValue(TemplateParameter const &value)
+  {
+    return value.Get<Value>();
+  }
+
+  template <typename Y = T>
+  meta::EnableIf<IsPtr<Y>::value, Y> GetValue(TemplateParameter const &value)
+  {
+    auto v{value.Get<Value>()};
+    if (!v)
+    {
+      vm_->RuntimeError("Input value is null reference.");
+    }
+    return v;
+  }
+
   void FlushIO()
   {
     // if we have an IO observer then inform it of the changes
-    if (vm_->HasIoObserver())
+    if (!vm_->HasError() && vm_->HasIoObserver())
     {
       WriteHelper(name_->str, value_, vm_->GetIOObserver());
     }
@@ -253,7 +281,7 @@ inline Ptr<IState> IState::Construct(VM *vm, TypeId type_id, Args &&... args)
 inline Ptr<IState> IState::Constructor(VM *vm, TypeId type_id, Ptr<String> const &name,
                                        TemplateParameter const &value)
 {
-  if (name != nullptr)
+  if (name)
   {
     return Construct(vm, type_id, name, value);
   }
@@ -265,7 +293,7 @@ inline Ptr<IState> IState::Constructor(VM *vm, TypeId type_id, Ptr<String> const
 inline Ptr<IState> IState::Constructor(VM *vm, TypeId type_id, Ptr<Address> const &address,
                                        TemplateParameter const &value)
 {
-  if (address != nullptr)
+  if (address)
   {
     return Construct(vm, type_id, address->AsString(), value);
   }
