@@ -21,7 +21,9 @@
 #include "metrics/metric_handler.hpp"
 
 #include <atomic>
+#include <chrono>
 #include <condition_variable>
+#include <cstddef>
 #include <string>
 #include <thread>
 #include <vector>
@@ -36,7 +38,7 @@ class MetricFileHandler : public MetricHandler
 {
 public:
   // Construction / Destruction
-  MetricFileHandler(std::string filename);
+  explicit MetricFileHandler(std::string filename);
   MetricFileHandler(MetricHandler const &) = delete;
   MetricFileHandler(MetricHandler &&)      = delete;
   ~MetricFileHandler() override;

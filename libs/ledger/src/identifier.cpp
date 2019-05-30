@@ -19,7 +19,6 @@
 #include "ledger/identifier.hpp"
 #include "core/byte_array/byte_array.hpp"
 
-#include <regex>
 #include <stdexcept>
 
 using fetch::byte_array::ConstByteArray;

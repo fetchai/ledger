@@ -23,14 +23,17 @@
 #include "core/serializers/exception.hpp"
 #include "network/service/types.hpp"
 
+#include <array>
 #include <atomic>
 #include <chrono>
 #include <condition_variable>
+#include <cstdint>
+#include <functional>
 #include <limits>
 #include <memory>
-#include <mutex>
 #include <stdexcept>
-#include <thread>
+#include <string>
+#include <utility>
 
 namespace fetch {
 namespace service {
@@ -50,8 +53,7 @@ public:
     this->function_ = func;
   }
 
-  PromiseImplementation()
-  {}
+  PromiseImplementation() = default;
 
   using Counter               = uint64_t;
   using ConstByteArray        = byte_array::ConstByteArray;

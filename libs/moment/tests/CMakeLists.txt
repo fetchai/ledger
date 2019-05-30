@@ -11,5 +11,5 @@ include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
 setup_compiler()
 
 # define the test target
-add_fetch_test(fetch-moment-unit-tests fetch-moment unit/)
-# add_fetch_test(fetch-moment-integration-tests fetch-moment integration/)
+fetch_add_test(fetch-moment-unit-tests fetch-moment unit/)
+# fetch_add_integration_test(fetch-moment-integration-tests fetch-moment integration/)

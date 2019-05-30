@@ -28,7 +28,14 @@
 #include "ml/ops/loss_functions/cross_entropy.hpp"
 
 #include <iostream>
-#include <numeric>
+#include <map>
+#include <memory>
+#include <set>
+#include <stdexcept>
+#include <string>
+#include <unordered_map>
+#include <utility>
+#include <vector>
 
 using namespace fetch::ml;
 using namespace fetch::ml::dataloaders;

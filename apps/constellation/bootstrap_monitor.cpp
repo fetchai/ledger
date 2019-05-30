@@ -23,8 +23,11 @@
 
 #include <array>
 #include <chrono>
+#include <memory>
 #include <random>
 #include <sstream>
+#include <unordered_map>
+#include <utility>
 
 namespace fetch {
 namespace {

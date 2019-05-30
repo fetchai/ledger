@@ -19,16 +19,23 @@
 #include "math/tensor.hpp"
 #include "ml/dataloaders/mnist_loaders/mnist_loader.hpp"
 #include "ml/graph.hpp"
-
 #include "ml/layers/fully_connected.hpp"
 #include "ml/ops/activation.hpp"
 #include "ml/ops/loss_functions/cross_entropy.hpp"
 
-#include <fstream>
+#include <cstdint>
+#include <cstdlib>
+#include <ctime>
 #include <iostream>
+#include <list>
+#include <map>
 #include <memory>
 #include <set>
+#include <string>
 #include <thread>
+#include <unordered_map>
+#include <utility>
+#include <vector>
 
 // Runs in about 40 sec on a 2018 MBP
 // Remember to disable debug using | grep -v INFO
@@ -64,10 +71,10 @@ public:
 
   void Train(unsigned int numberOfBatches)
   {
-    float                        loss = 0;
-    CrossEntropy<ArrayType>      criterion;
-    std::pair<size_t, ArrayType> input;
-    ArrayType                    gt{std::vector<typename ArrayType::SizeType>({1, 10})};
+    float                             loss = 0;
+    CrossEntropy<ArrayType>           criterion;
+    std::pair<std::size_t, ArrayType> input;
+    ArrayType                         gt{std::vector<typename ArrayType::SizeType>({1, 10})};
     for (unsigned int i(0); i < numberOfBatches; ++i)
     {
       loss = 0;
@@ -143,7 +150,7 @@ int main(int ac, char **av)
   }
 
   std::cout << "FETCH Distributed MNIST Demo -- Synchronised" << std::endl;
-  srand((unsigned int)time(nullptr));
+  std::srand((unsigned int)std::time(nullptr));
 
   std::vector<std::shared_ptr<TrainingClient>> clients(NUMBER_OF_CLIENTS);
   for (unsigned int i(0); i < NUMBER_OF_CLIENTS; ++i)
@@ -160,7 +167,7 @@ int main(int ac, char **av)
       // Re-arrange the graph every time
       for (unsigned int j(0); j < NUMBER_OF_PEERS;)
       {
-        unsigned int r = (unsigned int)rand() % (unsigned int)clients.size();
+        unsigned int r = (unsigned int)std::rand() % (unsigned int)clients.size();
         j += (c->AddPeer(clients[r]) ? 1 : 0);
       }
       // Start each client to train on NUMBER_OF_BATCHES * BATCH_SIZE examples

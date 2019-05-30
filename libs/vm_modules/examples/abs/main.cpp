@@ -17,19 +17,24 @@
 //------------------------------------------------------------------------------
 
 #include "vm/module.hpp"
-#include <fstream>
-#include <sstream>
-
 #include "vm_modules/core/print.hpp"
 #include "vm_modules/core/type_convert.hpp"
 #include "vm_modules/math/abs.hpp"
+
+#include <cstdlib>
+#include <fstream>
+#include <iostream>
+#include <memory>
+#include <string>
+#include <utility>
+#include <vector>
 
 int main(int argc, char **argv)
 {
   if (argc < 2)
   {
     std::cerr << "usage ./" << argv[0] << " [filename]" << std::endl;
-    exit(-9);
+    std::exit(-9);
   }
 
   // Reading file

@@ -20,10 +20,13 @@
 #include "ml/clustering/tsne.hpp"
 #include "ml/dataloaders/mnist_loaders/mnist_loader.hpp"
 
+#include <cstdint>
 #include <fstream>
 #include <iostream>
-#include <random>
 #include <sstream>
+#include <string>
+#include <utility>
+#include <vector>
 
 using namespace fetch::math;
 using namespace fetch::ml;

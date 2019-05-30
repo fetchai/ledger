@@ -24,12 +24,14 @@
 #include <algorithm>
 #include <cassert>
 #include <cerrno>
+#include <cstddef>
+#include <cstdint>
 #include <cstdlib>
 #include <cstring>
+#include <initializer_list>
 #include <ostream>
 #include <stdexcept>
-#include <string.h>
-#include <type_traits>
+#include <string>
 
 namespace fetch {
 namespace byte_array {

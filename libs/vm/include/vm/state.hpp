@@ -253,7 +253,13 @@ inline Ptr<IState> IState::Construct(VM *vm, TypeId type_id, Args &&... args)
 inline Ptr<IState> IState::Constructor(VM *vm, TypeId type_id, Ptr<String> const &name,
                                        TemplateParameter const &value)
 {
-  return Construct(vm, type_id, name, value);
+  if (name != nullptr)
+  {
+    return Construct(vm, type_id, name, value);
+  }
+
+  vm->RuntimeError("Failed to construct State: name is null");
+  return nullptr;
 }
 
 inline Ptr<IState> IState::Constructor(VM *vm, TypeId type_id, Ptr<Address> const &address,
@@ -264,6 +270,7 @@ inline Ptr<IState> IState::Constructor(VM *vm, TypeId type_id, Ptr<Address> cons
     return Construct(vm, type_id, address->AsString(), value);
   }
 
+  vm->RuntimeError("Failed to construct State: address is null");
   return nullptr;
 }
 

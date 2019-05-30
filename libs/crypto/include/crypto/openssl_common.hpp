@@ -19,9 +19,11 @@
 
 #include "core/byte_array/byte_array.hpp"
 #include "crypto/openssl_memory.hpp"
-#include "openssl/obj_mac.h"
+
+#include <openssl/obj_mac.h>
 
 #include <cstddef>
+#include <stdexcept>
 
 namespace fetch {
 namespace crypto {
@@ -74,8 +76,8 @@ public:
 
   static byte_array::ByteArray Convert2Canonical(BIGNUM const *const x, BIGNUM const *const y)
   {
-    const std::size_t xBytes = static_cast<std::size_t>(BN_num_bytes(x));
-    const std::size_t yBytes = static_cast<std::size_t>(BN_num_bytes(y));
+    const auto xBytes = static_cast<std::size_t>(BN_num_bytes(x));
+    const auto yBytes = static_cast<std::size_t>(BN_num_bytes(y));
 
     byte_array::ByteArray canonical_data;
     canonical_data.Resize(x_size + y_size);
