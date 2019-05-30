@@ -18,8 +18,11 @@
 
 #include "core/serializers/byte_array_buffer.hpp"
 #include "network/service/callable_class_member.hpp"
-#include <gtest/gtest.h>
+
+#include "gtest/gtest.h"
+
 #include <iostream>
+
 using namespace fetch::service;
 
 class Foo

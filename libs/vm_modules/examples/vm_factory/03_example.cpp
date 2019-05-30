@@ -17,8 +17,14 @@
 //------------------------------------------------------------------------------
 
 #include "vm_modules/vm_factory.hpp"
+
+#include <cstdlib>
 #include <fstream>
-#include <sstream>
+#include <iostream>
+#include <memory>
+#include <stdexcept>
+#include <string>
+#include <vector>
 
 using namespace fetch;
 using namespace fetch::vm_modules;
@@ -28,7 +34,7 @@ int main(int argc, char **argv)
   if (argc < 2)
   {
     std::cerr << "usage ./" << argv[0] << " [filename]" << std::endl;
-    exit(-9);
+    std::exit(-9);
   }
 
   // Reading file
@@ -56,7 +62,7 @@ int main(int argc, char **argv)
     std::cerr << error << std::endl;
   }
 
-  if (errors.size() > 0)
+  if (!errors.empty())
   {
     return -1;
   }

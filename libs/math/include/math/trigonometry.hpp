@@ -21,9 +21,6 @@
 #include "math/kernels/trigonometry.hpp"
 #include "math/meta/math_type_traits.hpp"
 
-#include <cassert>
-#include <cmath>
-
 namespace fetch {
 namespace math {
 

@@ -20,7 +20,7 @@
 #include "ledger/chaincode/factory.hpp"
 #include "meta/log2.hpp"
 
-#include <algorithm>
+#include <cassert>
 #include <chrono>
 #include <unordered_map>
 #include <utility>

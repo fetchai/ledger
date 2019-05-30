@@ -20,8 +20,6 @@
 
 #include "gmock/gmock.h"
 
-#include <cstddef>
-
 namespace {
 
 class StateTests : public ::testing::Test
@@ -150,6 +148,26 @@ TEST_F(StateTests, ArrayDeserializeTest)
 
   ASSERT_TRUE(toolkit.Compile(TEXT));
   ASSERT_TRUE(toolkit.Run());
+}
+
+// Regression test for issue 1072: used to segfault prior to fix
+TEST_F(StateTests, querying_resource_from_nonexistent_address_fails_gracefully)
+{
+  static char const *TEXT = R"(
+    function main()
+      // null default just to be able to call the following init
+      var ownerAddressVoid : Address;
+
+      var ownerAddress = State<Address>('does_not_exist', ownerAddressVoid);
+      var supply = State<Float64>(ownerAddress.get(), 0.0);
+      supply.get();
+    endfunction
+  )";
+
+  EXPECT_CALL(toolkit.observer(), Exists("does_not_exist"));
+
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_FALSE(toolkit.Run());
 }
 
 }  // namespace

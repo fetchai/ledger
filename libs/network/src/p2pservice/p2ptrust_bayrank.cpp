@@ -18,8 +18,6 @@
 
 #include "network/p2pservice/p2ptrust_bayrank.hpp"
 
-#include <cmath>
-
 namespace fetch {
 namespace p2p {
 

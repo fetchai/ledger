@@ -50,12 +50,13 @@ public:
   using type            = T;
   using self_type       = ObjectStore<T, S>;
   using serializer_type = serializers::TypedByteArrayBuffer;
-  using Callback        = std::function<void(type const &)>;
   class Iterator;
 
-  static constexpr char const *LOGGING_NAME = "ObjectStore";
-
-  std::string id = "";
+  ObjectStore(){};
+  ObjectStore(ObjectStore const &rhs) = delete;
+  ObjectStore(ObjectStore &&rhs)      = delete;
+  ObjectStore &operator=(ObjectStore const &rhs) = delete;
+  ObjectStore &operator=(ObjectStore &&rhs) = delete;
 
   /**
    * Create a new file for the object store with the filename parameters for the
@@ -94,6 +95,12 @@ public:
     return LocklessGet(rid, object);
   }
 
+  void Erase(ResourceID const &rid)
+  {
+    std::lock_guard<mutex::Mutex> lock(mutex_);
+    LocklessErase(rid);
+  }
+
   /**
    * Check whether a key has been set
    *
@@ -117,7 +124,7 @@ public:
   void Set(ResourceID const &rid, type const &object)
   {
     std::lock_guard<mutex::Mutex> lock(mutex_);
-    LocklessSet(rid, object);
+    return LocklessSet(rid, object);
   }
 
   /**
@@ -127,8 +134,7 @@ public:
    *
    * @param: f The closure
    */
-  template <typename F>
-  void WithLock(F const &f)
+  void WithLock(std::function<void()> const &f)
   {
     std::lock_guard<mutex::Mutex> lock(mutex_);
     f();
@@ -158,6 +164,11 @@ public:
     ser >> object;
 
     return true;
+  }
+
+  void LocklessErase(ResourceID const &rid)
+  {
+    store_.Erase(rid);
   }
 
   /**
@@ -191,21 +202,11 @@ public:
     ser << object;
 
     store_.Set(rid, ser.data());  // temporarily disable disk writes
-
-    if (set_callback_)
-    {
-      set_callback_(object);
-    }
   }
 
   std::size_t size() const
   {
     return store_.size();
-  }
-
-  void SetCallback(Callback cb)
-  {
-    set_callback_ = std::move(cb);
   }
 
   void Flush(bool lazy = true)
@@ -280,13 +281,13 @@ public:
    * matches the first bits of rid)
    *
    * @param: rid The key
-   * @param: bit_count The number of bits of rid we want to match against
+   * @param: bits The number of bits of rid we want to match against
    *
    * @return: an iterator to the first element of that tree
    */
-  self_type::Iterator GetSubtree(ResourceID const &rid, uint64_t bit_count)
+  self_type::Iterator GetSubtree(ResourceID const &rid, uint64_t bits)
   {
-    auto it = store_.GetSubtree(rid, bit_count);
+    auto it = store_.GetSubtree(rid, bits);
 
     return Iterator(it);
   }
@@ -304,8 +305,6 @@ public:
 private:
   mutex::Mutex         mutex_{__LINE__, __FILE__};
   KeyByteArrayStore<S> store_;
-
-  Callback set_callback_;
 };
 
 }  // namespace storage

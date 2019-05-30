@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "constellation.hpp"
 #include "core/byte_array/byte_array.hpp"
 #include "core/mutex.hpp"
 #include "core/state_machine.hpp"
@@ -24,13 +25,9 @@
 #include "http/json_client.hpp"
 #include "network/fetch_asio.hpp"
 
-#include "constellation.hpp"
-
-#include <atomic>
+#include <cstdint>
 #include <memory>
-#include <mutex>
 #include <string>
-#include <thread>
 
 namespace fetch {
 

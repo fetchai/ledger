@@ -40,6 +40,7 @@ public:
   UnderlyingType Get(ResourceID const &rid);
   UnderlyingType GetOrCreate(ResourceID const &rid);
   void           Set(ResourceID const &rid, ByteArray const &value);
+  void           Erase(ResourceID const &rid);
 
   Hash Commit();
   bool RevertToHash(Hash const &hash);

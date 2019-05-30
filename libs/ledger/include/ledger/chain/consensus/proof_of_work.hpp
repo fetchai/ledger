@@ -20,6 +20,9 @@
 #include "core/byte_array/const_byte_array.hpp"
 #include "math/bignumber.hpp"
 
+#include <cstddef>
+#include <utility>
+
 namespace fetch {
 namespace ledger {
 namespace consensus {
@@ -32,7 +35,7 @@ public:
 
   // Construction / Destruction
   ProofOfWork() = default;
-  ProofOfWork(header_type header);
+  explicit ProofOfWork(header_type header);
   ~ProofOfWork() = default;
 
   bool operator()();

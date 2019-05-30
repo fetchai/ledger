@@ -20,6 +20,8 @@
 #include "core/byte_array/encoders.hpp"
 
 #include <fstream>
+#include <mutex>
+#include <utility>
 
 using fetch::byte_array::ToBase64;
 

@@ -18,8 +18,13 @@
 
 #include "vm/module.hpp"
 
+#include <cstdint>
+#include <cstdlib>
 #include <fstream>
-#include <sstream>
+#include <iostream>
+#include <stdexcept>
+#include <string>
+#include <vector>
 
 static void Print(fetch::vm::VM * /*vm*/, fetch::vm::Ptr<fetch::vm::String> const &s)
 {
@@ -34,8 +39,8 @@ fetch::vm::Ptr<fetch::vm::String> toString(fetch::vm::VM *vm, int32_t const &a)
 
 struct System : public fetch::vm::Object
 {
-  System()          = delete;
-  virtual ~System() = default;
+  System()           = delete;
+  ~System() override = default;
 
   static int32_t Argc(fetch::vm::VM * /*vm*/, fetch::vm::TypeId /*type_id*/)
   {
@@ -59,12 +64,12 @@ int main(int argc, char **argv)
   if (argc < 2)
   {
     std::cerr << "usage ./" << argv[0] << " [filename]" << std::endl;
-    exit(-9);
+    std::exit(-9);
   }
 
   for (int i = 1; i < argc; ++i)
   {
-    System::args.push_back(std::string(argv[i]));
+    System::args.emplace_back(argv[i]);
   }
 
   // Reading file
@@ -89,9 +94,8 @@ int main(int argc, char **argv)
       .CreateStaticMemberFunction("Argv", &System::Argv);
 
   // Setting compiler up
-
-  fetch::vm::Compiler *compiler = new fetch::vm::Compiler(&module);
-  fetch::vm::VM *      vm       = new fetch::vm::VM(&module);
+  auto compiler = new fetch::vm::Compiler(&module);
+  auto vm       = new fetch::vm::VM(&module);
 
   fetch::vm::Executable    executable;
   fetch::vm::IR            ir;

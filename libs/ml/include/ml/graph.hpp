@@ -18,13 +18,18 @@
 //------------------------------------------------------------------------------
 
 #include "ml/meta/ml_type_traits.hpp"
-
 #include "ml/node.hpp"
 #include "ml/ops/weights.hpp"
 
-#include <list>
+#include <algorithm>
+#include <cassert>
+#include <cstdint>
 #include <memory>
+#include <stdexcept>
+#include <string>
 #include <unordered_map>
+#include <utility>
+#include <vector>
 
 namespace fetch {
 namespace ml {
@@ -45,8 +50,7 @@ public:
   using PlaceholderType    = typename fetch::ml::ops::PlaceHolder<ArrayType>;
   using PlaceholderPtrType = typename std::shared_ptr<fetch::ml::ops::PlaceHolder<ArrayType>>;
 
-  Graph()
-  {}
+  Graph() = default;
 
   ArrayType    Evaluate(std::string const &node_name);
   void         BackPropagate(std::string const &node_name, ArrayType const &error_signal);
@@ -265,8 +269,6 @@ struct fetch::ml::StateDict<ArrayType> Graph<ArrayType>::StateDict() const
   }
   return d;
 }
-
-//
 
 /**
  * Import trainable parameters from an exported model

@@ -19,6 +19,8 @@
 #include "vm/vm.hpp"
 #include "vm/module.hpp"
 
+#include <cstddef>
+
 namespace fetch {
 namespace vm {
 
@@ -179,16 +181,16 @@ bool VM::GenerateExecutable(IR const &ir, std::string const &name, Executable &e
 
 bool VM::Execute(std::string &error, Variant &output)
 {
-  size_t const num_strings = executable_->strings.size();
-  strings_                 = std::vector<Ptr<String>>(num_strings);
-  for (size_t i = 0; i < num_strings; ++i)
+  std::size_t const num_strings = executable_->strings.size();
+  strings_                      = std::vector<Ptr<String>>(num_strings);
+  for (std::size_t i = 0; i < num_strings; ++i)
   {
     std::string const &str = executable_->strings[i];
     strings_[i]            = Ptr<String>(new String(this, str, true));
   }
 
-  size_t const num_local_types = executable_->types.size();
-  for (size_t i = 0; i < num_local_types; ++i)
+  std::size_t const num_local_types = executable_->types.size();
+  for (std::size_t i = 0; i < num_local_types; ++i)
   {
     TypeInfo const &type_info = executable_->types[i];
     type_info_array_.push_back(type_info);
@@ -228,7 +230,7 @@ bool VM::Execute(std::string &error, Variant &output)
   strings_.clear();
 
   // Remove the executable's local types
-  for (size_t i = 0; i < num_local_types; ++i)
+  for (std::size_t i = 0; i < num_local_types; ++i)
   {
     type_info_array_.pop_back();
   }
