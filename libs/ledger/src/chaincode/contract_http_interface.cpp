@@ -263,7 +263,7 @@ http::HTTPResponse ContractHttpInterface::OnTransaction(http::HTTPRequest const 
     json["txs"]                 = Variant::Array(txs.size());
     for (std::size_t i = 0; i < txs.size(); ++i)
     {
-      json["txs"][i] = ToBase64(txs[i]);
+      json["txs"][i] = ToHex(txs[i]);
     }
 
     if (unknown_format)
