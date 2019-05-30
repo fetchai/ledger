@@ -680,13 +680,15 @@ public:
     FixedPoint r2 = r * r;
     FixedPoint r3 = r2 * r;
     FixedPoint r4 = r3 * r;
+    FixedPoint r5 = r4 * r;
     // Multiply the coefficients as they are the same in both numerator and denominator
-    r *= FixedPoint(0.5);
-    r2 *= FixedPoint(3.0 / 28.0);
-    r3 *= CONST_ONE / FixedPoint(84.0);
-    r4 *= CONST_ONE / FixedPoint(1680.0);
-    FixedPoint P  = CONST_ONE + r + r2 + r3 + r4;
-    FixedPoint Q  = CONST_ONE - r + r2 - r3 + r4;
+    r *= FixedPoint{0.5};
+    r2 *= FixedPoint{0.1111111111111111}; // 1/9
+    r3 *= FixedPoint{0.01388888888888889}; // 1/72
+    r4 *= FixedPoint{0.0009920634920634921}; // 1/1008
+    r5 *= FixedPoint{3.306878306878307e-05}; // 1/30240
+    FixedPoint P  = CONST_ONE + r + r2 + r3 + r4 + r5;
+    FixedPoint Q  = CONST_ONE - r + r2 - r3 + r4 - r5;
     FixedPoint e2 = P / Q;
 
     return std::move(e1 * e2);
@@ -712,7 +714,7 @@ public:
     }
     else if (x < CONST_ZERO)
     {
-      throw std::runtime_error("Log2(): mathematical operation not defined: x < 0!");
+      return NaN;
     }
 
     /* Argument Reduction: find k and f such that
@@ -731,17 +733,26 @@ public:
     FixedPoint k_shifted{Type(1) << k};
     FixedPoint f = y / k_shifted;
 
-    // Pade Approximant for Log2(x) around x=1, 4th order
-    FixedPoint P00{5};
-    FixedPoint P01{37};
-    FixedPoint Q00{6};
-    FixedPoint Q01{16};
-    FixedPoint Q02{36};
-    FixedPoint f2 = f * f;
-    FixedPoint f3 = f2 * f;
-    FixedPoint f4 = f3 * f;
-    FixedPoint P  = P00 * (-CONST_ONE + f) * (P00 + P01 * f + P01 * f2 + P00 * f3);
-    FixedPoint Q  = Q00 * (CONST_ONE + f * Q01 + f2 * Q02 + f3 * Q01 + f4) * CONST_LN2;
+    // Pade Approximant for Log2(x) around x=1, 6th order
+    // FixedPoint P00{5};
+    // FixedPoint P01{37};
+    // FixedPoint Q00{6};
+    // FixedPoint Q01{16};
+    // FixedPoint Q02{36};
+    // FixedPoint f2 = f * f;
+    // FixedPoint f3 = f2 * f;
+    // FixedPoint f4 = f3 * f;
+    // FixedPoint P  = P00 * (-CONST_ONE + f) * (P00 + P01 * f + P01 * f2 + P00 * f3);
+    // FixedPoint Q  = Q00 * (CONST_ONE + f * Q01 + f2 * Q02 + f3 * Q01 + f4) * CONST_LN2;
+    FixedPoint P00{137};
+    FixedPoint P01{1762}; // P03 also
+    FixedPoint P02{3762};
+    FixedPoint P04{137};
+    FixedPoint Q0{30};
+    FixedPoint Q01{24}; // Q03 also
+    FixedPoint Q02{76};
+    FixedPoint P = (-CONST_ONE + f) * (P00 + f * (P01 + f * (P02 + f * (P01 + f * P04))));
+    FixedPoint Q = Q0 * (CONST_ONE + f) * (CONST_ONE + f * (Q01 + f * (Q02 + f * (Q01 + f)))) * CONST_LN2;
     FixedPoint R  = P / Q;
 
     if (adjustment)
@@ -776,7 +787,7 @@ public:
     }
     if (x < CONST_ZERO)
     {
-      throw std::runtime_error("Sqrt(): mathematical operation not defined: x < 0!");
+      return NaN;
     }
 
     FixedPoint x0 = x;
@@ -870,13 +881,7 @@ public:
 
   static constexpr FixedPoint Cos(FixedPoint const &x)
   {
-    if (x < CONST_ZERO)
-    {
-      return Cos(-x);
-    }
-
-    FixedPoint r = Fmod(x, CONST_PI * 2);
-
+    FixedPoint r = Fmod(Abs(x), CONST_PI * 2);
     if (r == CONST_ZERO)
     {
       return CONST_ONE;
@@ -903,29 +908,32 @@ public:
     FixedPoint r = Fmod(x, CONST_PI);
     if (r <= CONST_PI_4)
     {
-      FixedPoint P00{945};
-      FixedPoint P01{105};
-      FixedPoint Q0{15};
-      FixedPoint Q00{63};
-      FixedPoint Q01{28};
+      FixedPoint P01{0.1212121212121212};   // 4/33
+      FixedPoint P02{0.00202020202020202};  // 1/495
+      FixedPoint Q01{0.4545454545454545};   // 5/11
+      FixedPoint Q02{0.0202020202020202};   // 2/99
+      FixedPoint Q03{9.62000962000962e-05}; // 1/10395
       FixedPoint r2 = r * r;
       FixedPoint r4 = r2 * r2;
-      FixedPoint P  = r * (P00 - P01 * r2 + r4);
-      FixedPoint Q  = Q0 * (Q00 - Q01 * r2 + r4);
+      FixedPoint r6 = r2 * r2;
+      FixedPoint P  = r * (CONST_ONE - P01 * r2 + P02 * r4);
+      FixedPoint Q  = CONST_ONE - Q01 * r2 + Q02 * r4 - Q03 * r6;
       return std::move(P / Q);
     }
     else if (r < CONST_PI_2)
     {
-      FixedPoint P00{4.0 / 9.0};
-      FixedPoint P01{1.0 / 63.0};
-      FixedPoint Q01{1.0 / 9.0};
-      FixedPoint Q02{1.0 / 945.0};
+      FixedPoint P01{0.4545454545454545};   // 5/11
+      FixedPoint P02{0.0202020202020202};   // 2/99
+      FixedPoint P03{9.62000962000962e-05}; // 1/10395
+      FixedPoint Q01{0.1212121212121212};   // 4/33
+      FixedPoint Q02{0.00202020202020202};  // 1/495
       FixedPoint y  = r - CONST_PI_2;
       FixedPoint y2 = y * y;
       FixedPoint y3 = y2 * y;
       FixedPoint y4 = y3 * y;
       FixedPoint y5 = y4 * y;
-      FixedPoint P  = -CONST_ONE + P00 * y2 - P01 * y4;
+      FixedPoint y6 = y5 * y;
+      FixedPoint P  = -CONST_ONE + P01 * y2 - P02 * y4 + P03 * y6;
       FixedPoint Q  = -CONST_PI_2 + r - Q01 * y3 + Q02 * y5;
       return std::move(P / Q);
     }
@@ -934,81 +942,204 @@ public:
       return Tan(r - CONST_PI);
     }
   }
-
-  static constexpr FixedPoint Cot(FixedPoint const &x)
-  {
-    if (x < CONST_ZERO)
-    {
-      return -Cot(-x);
-    }
-
-    FixedPoint r = Fmod(x, CONST_PI_2);
-    // if (r < 1.0) {
-    //    FixedPoint P00{105};
-    //    FixedPoint r2 = r * r;
-    //    FixedPoint r3 = r2 * r;
-    //    FixedPoint r4 = r2 * r2;
-    //    FixedPoint P = P00 - r2 * 45 + r4;
-    //    FixedPoint Q = P00 * r - r3 * 10;
-    //    return std::move(P / Q);
-    // } else {
-    return Cos(r) / Sin(r);
-    // }
-  }
-
+  
+  /* Based on the NetBSD implementation
+   *  Since  asin(x) = x + x^3/6 + x^5*3/40 + x^7*15/336 + ...
+   *  we approximate asin(x) on [0,0.5] by
+   *    asin(x) = x + x*x^2*R(x^2)
+   *  where
+   *    R(x^2) is a rational approximation of (asin(x)-x)/x^3
+   *  and its remez error is bounded by
+   *    |(asin(x)-x)/x^3 - R(x^2)| < 2^(-58.75)
+   *
+   *  For x in [0.5,1]
+   *    asin(x) = pi/2-2*asin(sqrt((1-x)/2))
+   *  Let y = (1-x), z = y/2, s := sqrt(z), and pio2_hi+pio2_lo=pi/2;
+   *  then for x>0.98
+   *    asin(x) = pi/2 - 2*(s+s*z*R(z))
+   *      = pio2_hi - (2*(s+s*z*R(z)) - pio2_lo)
+   *  For x<=0.98, let pio4_hi = pio2_hi/2, then
+   *    f = hi part of s;
+   *    c = sqrt(z) - f = (z-f*f)/(s+f)   ...f+c=sqrt(z)
+   *  and
+   *    asin(x) = pi/2 - 2*(s+s*z*R(z))
+   *      = pio4_hi+(pio4-2s)-(2s*z*R(z)-pio2_lo)
+   *      = pio4_hi+(pio4-2f)-(2s*z*R(z)-(pio2_lo+2c))
+   *
+   * Special cases:
+   *  if x is NaN, return x itself;
+   *  if |x|>1, return NaN with invalid signal.
+   */
   static constexpr FixedPoint ASin(FixedPoint const &x)
   {
-    if (Abs(x) > CONST_ONE)
-    {
-      throw std::runtime_error(
-          "ASin(x): mathematical operation is not defined for x not in (-1,1)!");
+    if (x < 0) {
+      return -ASin(-x);
     }
-    return FixedPoint{std::asin((double)x)};
+
+    if (x > CONST_ONE)
+    {
+      return NaN;
+    }
+
+    FixedPoint  p0{1.66666666666666657415e-01},
+                p1{-3.25565818622400915405e-01},
+                p2{2.01212532134862925881e-01},
+                p3{-4.00555345006794114027e-02},
+                p4{7.91534994289814532176e-04},
+                p5{3.47933107596021167570e-05},
+                q1{-2.40339491173441421878e+00},
+                q2{2.02094576023350569471e+00},
+                q3{-6.88283971605453293030e-01},
+                q4{7.70381505559019352791e-02},
+                pio2_hi{1.57079632679489655800e+00},
+                pio4_hi{7.85398163397448278999e-01};
+    FixedPoint c;
+    if (x < 0.5) {
+      FixedPoint t = x * x;
+      FixedPoint P = t * (p0 + t * (p1 + t * (p2 + t * (p3 + t * (p4 + t * p5)))));
+      FixedPoint Q = CONST_ONE + t * (q1 + t * (q2 + t * (q3 + t * q4)));
+      FixedPoint R = P/Q;
+      return x + x * R;
+    } else {
+      FixedPoint w = CONST_ONE - x;
+      FixedPoint t = w * 0.5;
+      FixedPoint P = t * (p0 + t * (p1 + t * (p2 + t * (p3 + t * (p4 + t * p5)))));
+      FixedPoint Q = CONST_ONE + t * (q1 + t * (q2 + t * (q3 + t * q4)));
+      FixedPoint s = Sqrt(t);
+      FixedPoint R  = P/Q;
+      if (x < 0.975) {
+        w  = s;
+        c  = (t - w * w) / (s + w);
+        P  = s * R * 2.0 + c * 2.0;
+        Q  = pio4_hi - w * 2.0;
+        t  = pio4_hi - (P - Q);
+        return t;
+      } else {
+        w = P/Q;
+        t = pio2_hi - ((s + s * R) * 2.0);
+        return t;
+      }
+    }
   }
 
   static constexpr FixedPoint ACos(FixedPoint const &x)
   {
     if (Abs(x) > CONST_ONE)
     {
-      throw std::runtime_error(
-          "ASin(x): mathematical operation is not defined for x not in (-1,1)!");
+      return NaN;
     }
-    return FixedPoint{std::acos((double)x)};
+
+    return CONST_PI_2 - ASin(x);
   }
 
   static constexpr FixedPoint ATan(FixedPoint const &x)
   {
-    return FixedPoint{std::atan((double)x)};
+    if (x < 0) {
+      return -ATan(-x);
+    }
+
+    if (x > 1) {
+      return CONST_PI_2 - ATan(CONST_ONE/x);
+    }
+
+    FixedPoint P03 = FixedPoint{116.0/57.0};
+    FixedPoint P05 = FixedPoint{2198.0/1615.0};
+    FixedPoint P07 = FixedPoint{44.0/133.0};
+    FixedPoint P09 = FixedPoint{5597.0/264537.0};
+    FixedPoint Q02 = FixedPoint{45.0/19.0};
+    FixedPoint Q04 = FixedPoint{630.0/323.0};
+    FixedPoint Q06 = FixedPoint{210.0/323.0};
+    FixedPoint Q08 = FixedPoint{315.0/4199.0};
+    FixedPoint Q10 = FixedPoint{63.0/46189.0};
+    FixedPoint x2 = x * x;
+    FixedPoint x3 = x2 * x;
+    FixedPoint x4 = x3 * x;
+    FixedPoint x5 = x4 * x;
+    FixedPoint x6 = x5 * x;
+    FixedPoint x7 = x6 * x;
+    FixedPoint x8 = x7 * x;
+    FixedPoint x9 = x8 * x;
+    FixedPoint x10 = x9 * x;
+    FixedPoint P  = x + P03 * x3 + P05 * x5 + P07 * x7 + P09 * x9;
+    FixedPoint Q  = CONST_ONE + Q02 * x2 + Q04 * x4 + Q06 * x6 + Q08 * x8 + Q10 * x10;
+
+    return std::move(P / Q);
   }
 
-  static constexpr FixedPoint ATan2(FixedPoint const &x, FixedPoint const &y)
+  static constexpr FixedPoint ATan2(FixedPoint const &y, FixedPoint const &x)
   {
-    return FixedPoint{std::atan2((double)x, (double)y)};
+    if (isNaN(y) || isNaN(x)) {
+      return NaN;
+    }
+
+    if (y < 0) {
+      return -ATan2(-y, x);
+    }
+
+    if (x == 0) {
+      return Sign(y) * CONST_PI_2;
+    }
+
+    FixedPoint u = y/Abs(x);
+    FixedPoint atan = ATan(u);
+    if (x < 0) {
+      return CONST_PI - atan;
+    } else {
+      return atan;
+    }
   }
 
   static constexpr FixedPoint SinH(FixedPoint const &x)
   {
-    return FixedPoint{std::sinh((double)x)};
+    if (isNaN(x)) {
+      return NaN;
+    }
+
+    FixedPoint half{0.5};
+    return std::move(half * (Exp(x) - Exp(-x)));
   }
 
   static constexpr FixedPoint CosH(FixedPoint const &x)
   {
-    return FixedPoint{std::cosh((double)x)};
+    if (isNaN(x)) {
+      return NaN;
+    }
+
+    FixedPoint half{0.5};
+    return std::move(half * (Exp(x) + Exp(-x)));
   }
 
   static constexpr FixedPoint TanH(FixedPoint const &x)
   {
-    return FixedPoint{std::tanh((double)x)};
+    if (isNaN(x)) {
+      return NaN;
+    }
+
+    FixedPoint e1 = Exp(x);
+    FixedPoint e2 = Exp(-x);
+    FixedPoint result = (e1 - e2) / (e1 + e2);
+    return std::move(result);
   }
 
   static constexpr FixedPoint ASinH(FixedPoint const &x)
   {
-    return FixedPoint{std::asinh((double)x)};
+    if (isNaN(x)) {
+      return NaN;
+    }
+
+    return Log(x + Sqrt(x * x + CONST_ONE));
   }
 
   static constexpr FixedPoint ACosH(FixedPoint const &x)
   {
-    return FixedPoint{std::acosh((double)x)};
+    if (isNaN(x)) {
+      return NaN;
+    }
+
+    if (x < CONST_ONE) {
+      return NaN;
+    }
+    return Log(x + Sqrt(x * x - CONST_ONE));
   }
 
   static constexpr FixedPoint ATanH(FixedPoint const &x)
@@ -1039,7 +1170,7 @@ public:
 
   static constexpr FixedPoint Sign(FixedPoint const &x)
   {
-    return std::move(FixedPoint{Type((x > CONST_ZERO) - (x < CONST_ZERO))});
+    return std::move(FixedPoint{Type((x >= CONST_ZERO) - (x < CONST_ZERO))});
   }
 
   static constexpr FixedPoint FromBase(Type n)
