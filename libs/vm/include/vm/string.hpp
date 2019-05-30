@@ -27,8 +27,8 @@ namespace vm {
 
 struct String : public Object
 {
-  String()          = delete;
-  virtual ~String() = default;
+  String()           = delete;
+  ~String() override = default;
 
   String(VM *vm, std::string str__, bool is_literal__ = false)
     : Object(vm, TypeIds::String)
