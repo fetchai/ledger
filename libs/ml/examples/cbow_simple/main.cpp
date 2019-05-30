@@ -55,9 +55,9 @@ double time_step     = 0;
 
 uint64_t                          layer1_size = 200;  // 200
 uint64_t                          iter        = 1;
-FloatType                             alpha       = static_cast<FloatType>(0.025);
-FloatType                             starting_alpha;
-int32_t                               negative = 25;
+FloatType                         alpha       = static_cast<FloatType>(0.025);
+FloatType                         starting_alpha;
+int32_t                           negative = 25;
 high_resolution_clock::time_point last_time;
 
 std::string readFile(std::string const &path)
@@ -110,7 +110,7 @@ void TrainModelNew()
   fetch::math::Tensor<FloatType> error_signal({uint64_t(negative), 1});
 
   fetch::math::Tensor<FloatType> error_words(words.shape());
-  fetch::math::Tensor<FloatType> error_target_weights(target_weights.shape());   
+  fetch::math::Tensor<FloatType> error_target_weights(target_weights.shape());
 
   {  // Embeddings: Initialise
     fetch::random::LinearCongruentialGenerator rng;
@@ -165,7 +165,7 @@ void TrainModelNew()
     // Average Embeddings: context -> words
     uint64_t valid_samples(0);
     auto     output_view = words.View(0);
-    bool     clear        = true;
+    bool     clear       = true;
     for (FloatType const &i : context)
     {
       if (i >= 0)
@@ -212,7 +212,7 @@ void TrainModelNew()
     {
       FloatType f     = error_signal(d, 0);
       FloatType label = (d == 0) ? 1 : 0;
-      FloatType sm = static_cast<FloatType>( static_cast<FloatType>(fexp(f) / (1. + fexp(f))) );
+      FloatType sm    = static_cast<FloatType>(static_cast<FloatType>(fexp(f) / (1. + fexp(f))));
       error_signal.Set(d, 0, label - sm);
     }
 

@@ -87,46 +87,40 @@ public:
   }
 
   template <typename S>
-  typename std::enable_if<std::is_integral<S>::value, Type>::type 
-  operator()(S i, S j) const
+  typename std::enable_if<std::is_integral<S>::value, Type>::type operator()(S i, S j) const
   {
     return data_[static_cast<SizeType>(i) + static_cast<SizeType>(j) * padded_height_];
   }
 
   template <typename S>
-  typename std::enable_if<std::is_integral<S>::value, Type>::type 
-  &operator()(S i, S j)
+  typename std::enable_if<std::is_integral<S>::value, Type>::type &operator()(S i, S j)
   {
     return data_[static_cast<SizeType>(i) + static_cast<SizeType>(j) * padded_height_];
   }
 
   template <typename S>
-  typename std::enable_if<std::is_integral<S>::value, Type>::type 
-  operator()(S i) const
+  typename std::enable_if<std::is_integral<S>::value, Type>::type operator()(S i) const
   {
     return data_[std::move(i)];
   }
 
   template <typename S>
-  typename std::enable_if<std::is_integral<S>::value, Type>::type 
-  &operator()(S i)
+  typename std::enable_if<std::is_integral<S>::value, Type>::type &operator()(S i)
   {
     return data_[std::move(i)];
   }
 
   template <typename S>
-  typename std::enable_if<std::is_integral<S>::value, Type>::type 
-  operator[](S i) const
+  typename std::enable_if<std::is_integral<S>::value, Type>::type operator[](S i) const
   {
     return data_[std::move(i)];
   }
 
   template <typename S>
-  typename std::enable_if<std::is_integral<S>::value, Type>::type 
-  &operator[](S i)
+  typename std::enable_if<std::is_integral<S>::value, Type>::type &operator[](S i)
   {
     return data_[std::move(i)];
-  }  
+  }
 
   /* @breif returns the smallest number which is a multiple of PADDING and greater than or equal to
    a desired size.
@@ -170,7 +164,7 @@ public:
 
   ContainerType const &data() const
   {
-    return data_; 
+    return data_;
   }
 
   ContainerType &data()

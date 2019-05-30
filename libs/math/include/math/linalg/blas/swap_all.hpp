@@ -17,28 +17,27 @@
 //
 //------------------------------------------------------------------------------
 
-
-/* The class defined in this file implements the equivalent of 
+/* The class defined in this file implements the equivalent of
  * following Python code:
  *
  * import numpy as np
  * import copy
  *
  * def swap_all(n, x, m, y, p):
- *   A = copy.copy(x)    
+ *   A = copy.copy(x)
  *   if p >= 0 and m >= 0:
  *     x[:(m * n):m] = y[:(p * n):p]
- *     y[:(p * n):p] = A[:(m * n):m]    
- *   elif p >= 0 and m < 0:        
+ *     y[:(p * n):p] = A[:(m * n):m]
+ *   elif p >= 0 and m < 0:
  *     x[:(m * n + m):m] = y[:(p * n):p]
- *     y[:(p * n):p] = A[:(m * n + m):m] 
+ *     y[:(p * n):p] = A[:(m * n + m):m]
  *   elif p < 0 and m >= 0:
  *     x[:(m * n):m] = y[:(p * n + p):p]
  *     y[:(p * n + p):p] = A[:(m * n):m]
  *   else:
  *     x[m *(-n + 1)::m] = y[p *(-n + 1)::p]
- *     y[p *(-n + 1)::p] = A[m *(-n + 1)::m]    
- *   
+ *     y[p *(-n + 1)::p] = A[m *(-n + 1)::m]
+ *
  *   return x, y
  *
  * Authors:
@@ -49,30 +48,25 @@
  *  - NAG Ltd.                     (Fortran version)
  */
 
+#include "math/linalg/blas/base.hpp"
 #include "math/linalg/prototype.hpp"
 #include "math/tensor_view.hpp"
-#include "math/linalg/blas/base.hpp"
 
-namespace fetch
-{
-namespace math
-{
-namespace linalg 
-{
+namespace fetch {
+namespace math {
+namespace linalg {
 
-template<typename S, uint64_t V>
-class Blas< S, 
-            Signature( _x, _y <= _n, _x, _m, _y, _p ),
-            Computes( _x, _y <= _y, _x ), 
-            V>
+template <typename S, uint64_t V>
+class Blas<S, Signature(_x, _y <= _n, _x, _m, _y, _p), Computes(_x, _y <= _y, _x), V>
 {
 public:
-  using Type = S;
-  using VectorRegisterType = typename TensorView< Type >::VectorRegisterType;
-  
-  void operator()(int const n, TensorView< Type >dx, int const incx, TensorView< Type >dy, int const incy ) const;
+  using Type               = S;
+  using VectorRegisterType = typename TensorView<Type>::VectorRegisterType;
+
+  void operator()(int const n, TensorView<Type> dx, int const incx, TensorView<Type> dy,
+                  int const incy) const;
 };
 
-} // namespace linalg
-} // namespace math
-} // namepsace fetch
+}  // namespace linalg
+}  // namespace math
+}  // namespace fetch

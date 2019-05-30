@@ -325,12 +325,11 @@ public:
   //////////////
   /// Views  ///
   //////////////
-  TensorView<Type, ContainerType> View();
+  TensorView<Type, ContainerType>       View();
   TensorView<Type, ContainerType> const View() const;
-  TensorView<Type, ContainerType> View(SizeType index);
+  TensorView<Type, ContainerType>       View(SizeType index);
   TensorView<Type, ContainerType> const View(SizeType index) const;
-  TensorView<Type, ContainerType> View(std::vector<SizeType> indices);
-
+  TensorView<Type, ContainerType>       View(std::vector<SizeType> indices);
 
   /////////////////////////
   /// general utilities ///
@@ -896,7 +895,6 @@ TensorView<T, C> Tensor<T, C>::View(std::vector<SizeType> indices)
 
   return TensorView<Type, ContainerType>(data_, height(), width, offset);
 }
-
 
 //////////////////////////////////////////////
 /// Tensor methods: assignment & accessing ///

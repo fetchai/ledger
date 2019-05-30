@@ -17,8 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-
-/* The class defined in this file implements the equivalent of 
+/* The class defined in this file implements the equivalent of
  * following Python code:
  *
  * import numpy as np
@@ -26,36 +25,33 @@
  *
  * def gemm_nt_novector(alpha, A, B, beta, C):
  *   C = alpha * np.dot(A, B.T) + beta * C
- *   
+ *
  *   return C
  *
  * Authors:
  */
 
+#include "math/linalg/blas/base.hpp"
 #include "math/linalg/prototype.hpp"
 #include "math/tensor_view.hpp"
-#include "math/linalg/blas/base.hpp"
 
-namespace fetch
-{
-namespace math
-{
-namespace linalg 
-{
+namespace fetch {
+namespace math {
+namespace linalg {
 
-template<typename S>
-class Blas< S, 
-            Signature( _C <= _alpha, _A, _B, _beta, _C ),
-            Computes( _C <= _alpha * _A * T(_B) + _beta * _C ), 
-            platform::Parallelisation::NOT_PARALLEL>
+template <typename S>
+class Blas<S, Signature(_C <= _alpha, _A, _B, _beta, _C),
+           Computes(_C <= _alpha * _A * T(_B) + _beta * _C),
+           platform::Parallelisation::NOT_PARALLEL>
 {
 public:
-  using Type = S;
-  using VectorRegisterType = typename TensorView< Type >::VectorRegisterType;
-  
-  void operator()(Type const alpha, TensorView< Type > const a, TensorView< Type > const b, Type const beta, TensorView< Type >c ) const;
+  using Type               = S;
+  using VectorRegisterType = typename TensorView<Type>::VectorRegisterType;
+
+  void operator()(Type const alpha, TensorView<Type> const a, TensorView<Type> const b,
+                  Type const beta, TensorView<Type> c) const;
 };
 
-} // namespace linalg
-} // namespace math
-} // namepsace fetch
+}  // namespace linalg
+}  // namespace math
+}  // namespace fetch
