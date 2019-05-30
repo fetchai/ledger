@@ -149,20 +149,29 @@ TEST_F(StateTests, ArrayDeserializeTest)
 }
 
 // Regression test for issue 1072: used to segfault prior to fix
-TEST_F(StateTests, querying_resource_from_nonexistent_address_fails_gracefully)
+TEST_F(StateTests, querying_resource_using_a_null_address_fails_gracefully)
 {
   static char const *TEXT = R"(
     function main()
-      // null default just to be able to call the following init
-      var ownerAddressVoid : Address;
-
-      var ownerAddress = State<Address>('does_not_exist', ownerAddressVoid);
-      var supply = State<Float64>(ownerAddress.get(), 0.0);
+      var nullAddress : Address;
+      var supply = State<Float64>(nullAddress, 0.0);
       supply.get();
     endfunction
   )";
 
-  EXPECT_CALL(*observer_, Exists("does_not_exist"));
+  ASSERT_TRUE(Compile(TEXT));
+  ASSERT_FALSE(Run());
+}
+
+TEST_F(StateTests, querying_resource_from_using_a_null_string_as_the_name_fails_gracefully)
+{
+  static char const *TEXT = R"(
+    function main()
+      var nullName : String;
+      var supply = State<Float64>(nullName, 0.0);
+      supply.get();
+    endfunction
+  )";
 
   ASSERT_TRUE(Compile(TEXT));
   ASSERT_FALSE(Run());
