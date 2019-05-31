@@ -47,7 +47,7 @@ public:
     NPOS = uint64_t(-1)
   };
 
-  constexpr ConstByteArray() noexcept = default;
+  constexpr ConstByteArray() = default;
 
   explicit ConstByteArray(std::size_t n)
   {
@@ -160,7 +160,7 @@ public:
   bool operator==(self_type const &other) const
   {
     return length_ == other.length_ &&
-           (length == 0 || std::memcmp(arr_pointer_, other.arr_pointer_, length_) == 0);
+           (length_ == 0 || std::memcmp(arr_pointer_, other.arr_pointer_, length_) == 0);
   }
 
   bool operator!=(self_type const &other) const
@@ -222,8 +222,9 @@ public:
 
   std::size_t Find(char c, std::size_t pos) const
   {
-    auto position = std::memchr(arr_pointer_ + pos, c, length_ - pos);
-    return position ? position - arr_pointer_ : NPOS;
+    value_type const *position =
+        static_cast<value_type const *>(std::memchr(arr_pointer_ + pos, c, length_ - pos));
+    return position ? static_cast<std::size_t>(position - arr_pointer_) : NPOS;
   }
 
   constexpr std::size_t size() const noexcept
@@ -241,7 +242,7 @@ public:
     return arr_pointer_;
   }
 
-  constexpr char const *char_pointer() const noexcept
+  char const *char_pointer() const noexcept
   {
     return reinterpret_cast<char const *>(arr_pointer_);
   }
@@ -289,8 +290,7 @@ public:
   ConstByteArray ToHex() const;
 
   // Non-const functions go here
-  constexpr void FromByteArray(self_type const &other, std::size_t start,
-                               std::size_t length) noexcept
+  void FromByteArray(self_type const &other, std::size_t start, std::size_t length) noexcept
   {
     data_        = other.data_;
     start_       = other.start_ + start;
@@ -424,7 +424,7 @@ protected:
     return arr_pointer_;
   }
 
-  constexpr char *char_pointer() noexcept
+  char *char_pointer() noexcept
   {
     return reinterpret_cast<char *>(data_.pointer());
   }
@@ -557,8 +557,8 @@ private:
   }
 
   shared_array_type data_;
-  std::size_t       start_ = 0, length_ = 0;
-  value_type *      arr_pointer_ = nullptr;
+  std::size_t       start_{0}, length_{0};
+  value_type *      arr_pointer_{nullptr};
 };
 
 inline std::ostream &operator<<(std::ostream &os, ConstByteArray const &str)

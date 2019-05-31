@@ -85,7 +85,7 @@ public:
     return *this;
   }
 
-  self_type &operator=(SharedArray const &other)
+  self_type &operator=(SharedArray const &other) noexcept
   {
     if (&other == this)
     {
