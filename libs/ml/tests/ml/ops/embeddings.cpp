@@ -19,7 +19,12 @@
 #include "ml/ops/embeddings.hpp"
 #include "math/fixed_point/fixed_point.hpp"
 #include "math/tensor.hpp"
-#include <gtest/gtest.h>
+
+#include "gtest/gtest.h"
+
+#include <cstdint>
+#include <cstdlib>
+#include <vector>
 
 template <typename T>
 class EmbeddingsTest : public ::testing::Test
@@ -83,7 +88,7 @@ TYPED_TEST(EmbeddingsTest, forward)
       {
         std::cerr << "ERROR: " << output.At(i, j) << " "
                   << typename TypeParam::Type(gt[(i * 6) + j]) << std::endl;
-        exit(-1);
+        std::exit(-1);
       }
     }
   }

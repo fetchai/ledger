@@ -16,9 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
-/* static constexpr char const *LOGGING_NAME = "RevertableStore"; */
-
 #include "storage/new_revertible_document_store.hpp"
+
+#include <cstddef>
+#include <string>
+#include <utility>
 
 using Hash           = fetch::storage::NewRevertibleDocumentStore::Hash;
 using ByteArray      = fetch::storage::NewRevertibleDocumentStore::ByteArray;
@@ -90,6 +92,11 @@ UnderlyingType NewRevertibleDocumentStore::GetOrCreate(ResourceID const &rid)
 void NewRevertibleDocumentStore::Set(ResourceID const &rid, ByteArray const &value)
 {
   return storage_.Set(rid, value);
+}
+
+void NewRevertibleDocumentStore::Erase(ResourceID const &rid)
+{
+  return storage_.Erase(rid);
 }
 
 // State-based operations

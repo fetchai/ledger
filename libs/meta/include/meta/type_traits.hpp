@@ -76,7 +76,7 @@ template <typename T>
 using Decay = typename std::decay<T>::type;
 
 template <bool C, typename R = void>
-using EnableIf = typename std::enable_if<C, R>::type;
+using EnableIf = std::enable_if_t<C, R>;
 
 template <typename T, typename U, typename R = void>
 using EnableIfSame = EnableIf<std::is_same<T, U>::value, R>;

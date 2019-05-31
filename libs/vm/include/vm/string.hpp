@@ -19,6 +19,9 @@
 
 #include "vm/variant.hpp"
 
+#include <cstddef>
+#include <cstdint>
+
 namespace fetch {
 namespace vm {
 
@@ -34,14 +37,20 @@ public:
     , is_literal(is_literal__)
   {}
 
-  virtual size_t GetHashCode() override;
-  virtual bool   IsEqual(Ptr<Object> const &lhso, Ptr<Object> const &rhso) override;
-  virtual bool   IsNotEqual(Ptr<Object> const &lhso, Ptr<Object> const &rhso) override;
-  virtual bool   IsLessThan(Ptr<Object> const &lhso, Ptr<Object> const &rhso) override;
-  virtual bool   IsLessThanOrEqual(Ptr<Object> const &lhso, Ptr<Object> const &rhso) override;
-  virtual bool   IsGreaterThan(Ptr<Object> const &lhso, Ptr<Object> const &rhso) override;
-  virtual bool   IsGreaterThanOrEqual(Ptr<Object> const &lhso, Ptr<Object> const &rhso) override;
-  virtual void   Add(Ptr<Object> &lhso, Ptr<Object> &rhso) override;
+  int32_t     Length() const;
+  void        Trim();
+  int32_t     Find(Ptr<String> const &substring) const;
+  Ptr<String> Substring(int32_t start_index, int32_t end_index);
+  void        Reverse();
+
+  std::size_t GetHashCode() override;
+  bool        IsEqual(Ptr<Object> const &lhso, Ptr<Object> const &rhso) override;
+  bool        IsNotEqual(Ptr<Object> const &lhso, Ptr<Object> const &rhso) override;
+  bool        IsLessThan(Ptr<Object> const &lhso, Ptr<Object> const &rhso) override;
+  bool        IsLessThanOrEqual(Ptr<Object> const &lhso, Ptr<Object> const &rhso) override;
+  bool        IsGreaterThan(Ptr<Object> const &lhso, Ptr<Object> const &rhso) override;
+  bool        IsGreaterThanOrEqual(Ptr<Object> const &lhso, Ptr<Object> const &rhso) override;
+  void        Add(Ptr<Object> &lhso, Ptr<Object> &rhso) override;
 
   bool SerializeTo(ByteArrayBuffer &buffer) override;
   bool DeserializeFrom(ByteArrayBuffer &buffer) override;

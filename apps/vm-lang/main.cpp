@@ -25,10 +25,13 @@
 #include "vm/module.hpp"
 #include "vm_modules/vm_factory.hpp"
 
+#include <cstdint>
+#include <cstring>
 #include <fstream>
+#include <iostream>
 #include <memory>
-#include <sstream>
-#include <streambuf>
+#include <stdexcept>
+#include <string>
 #include <vector>
 
 namespace {

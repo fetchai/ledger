@@ -21,7 +21,11 @@
 #include "http/mime_types.hpp"
 #include "http/status.hpp"
 #include "network/fetch_asio.hpp"
-#include <ostream>
+
+#include <cstddef>
+#include <cstdint>
+#include <memory>
+#include <string>
 #include <utility>
 
 namespace fetch {

@@ -37,17 +37,13 @@
 #include "network/p2pservice/p2p_service.hpp"
 #include "network/p2pservice/p2ptrust_bayrank.hpp"
 
-#include <algorithm>
 #include <atomic>
-#include <chrono>
-#include <deque>
-#include <iterator>
+#include <cstddef>
+#include <cstdint>
 #include <memory>
-#include <random>
-#include <thread>
-#include <tuple>
+#include <string>
 #include <unordered_map>
-#include <unordered_set>
+#include <vector>
 
 namespace fetch {
 

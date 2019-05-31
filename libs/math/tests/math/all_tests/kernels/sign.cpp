@@ -16,7 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/kernels/sign.hpp"
+#include <iostream>
+
+#include "math/sign.hpp"
+//#include "math/kernels/sign.hpp"
 #include "math/tensor.hpp"
 #include <gtest/gtest.h>
 
@@ -24,7 +27,7 @@ using namespace fetch::math;
 using data_type      = double;
 using container_type = fetch::memory::SharedArray<data_type>;
 
-Tensor<data_type, container_type> RandomArray(std::size_t n, data_type adj)
+inline Tensor<data_type, container_type> RandomArray(std::size_t n, data_type adj)
 {
   static fetch::random::LinearCongruentialGenerator gen;
   Tensor<data_type, container_type>                 a1(n);

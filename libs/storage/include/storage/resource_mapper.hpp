@@ -51,6 +51,8 @@ public:
 
   bool operator==(ResourceID const &other) const;
 
+  bool operator<(ResourceID const &other) const;
+
   std::string ToString() const
   {
     return static_cast<std::string>(ToBase64(id_));
@@ -121,6 +123,11 @@ inline ResourceID::Group ResourceID::lane(std::size_t log2_num_lanes) const
 inline bool ResourceID::operator==(ResourceID const &other) const
 {
   return id_ == other.id_;
+}
+
+inline bool ResourceID::operator<(ResourceID const &other) const
+{
+  return id_ < other.id_;
 }
 
 /**
