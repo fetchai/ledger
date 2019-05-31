@@ -70,9 +70,9 @@ TEST_F(StateTests, AddressDeserializeTest)
       "000000000000000020000000000000002f351e415c71722c379baac9394a947b8a303927b8b8421fb9466ed"
       "3db1f5683");
 
-  EXPECT_CALL(*observer_, Exists("addr"));
-  EXPECT_CALL(*observer_, Read("addr", _, _));
-  EXPECT_CALL(*observer_, Write("addr", _, _));
+  EXPECT_CALL(toolkit.observer(), Exists("addr"));
+  EXPECT_CALL(toolkit.observer(), Read("addr", _, _));
+  EXPECT_CALL(toolkit.observer(), Write("addr", _, _));
 
   ASSERT_TRUE(toolkit.Compile(TEXT));
   ASSERT_TRUE(toolkit.Run());
@@ -106,9 +106,9 @@ TEST_F(StateTests, MapDeserializeTest)
 
   toolkit.AddState("map", "0000000000000000");
 
-  EXPECT_CALL(*observer_, Exists("map"));
-  EXPECT_CALL(*observer_, Read("map", _, _));
-  EXPECT_CALL(*observer_, Write("map", _, _));
+  EXPECT_CALL(toolkit.observer(), Exists("map"));
+  EXPECT_CALL(toolkit.observer(), Read("map", _, _));
+  EXPECT_CALL(toolkit.observer(), Write("map", _, _));
 
   ASSERT_TRUE(toolkit.Compile(TEXT));
   ASSERT_TRUE(toolkit.Run());
@@ -145,9 +145,9 @@ TEST_F(StateTests, ArrayDeserializeTest)
       "0c000a000000000000000000000000000000000000000000000000000000000000000000000000000000000"
       "0000000000000");
 
-  EXPECT_CALL(*observer_, Exists("state"));
-  EXPECT_CALL(*observer_, Read("state", _, _));
-  EXPECT_CALL(*observer_, Write("state", _, _));
+  EXPECT_CALL(toolkit.observer(), Exists("state"));
+  EXPECT_CALL(toolkit.observer(), Read("state", _, _));
+  EXPECT_CALL(toolkit.observer(), Write("state", _, _));
 
   ASSERT_TRUE(toolkit.Compile(TEXT));
   ASSERT_TRUE(toolkit.Run());
