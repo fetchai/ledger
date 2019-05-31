@@ -33,6 +33,7 @@ INCLUDE_GUARD = '#pragma once'
 DISALLOWED_HEADER_FILE_EXTENSIONS = ('*.h', '*.hxx', '*.hh')
 NUM_PROCESSED_FILES = 0
 TOTAL_FILES_TO_PROCESS = 0
+CMAKE_VERSION_REQUIREMENT = 'cmake_minimum_required(VERSION 3.5 FATAL_ERROR)'
 
 
 def find_excluded_dirs():
@@ -241,6 +242,22 @@ def fix_missing_include_guards(text, path_to_file):
     return text
 
 
+@include_patterns('CMakeLists.txt')
+def fix_cmake_version_requirements(text, path_to_file):
+    lines = text.splitlines()
+    counter = 0
+    for line in lines:
+        if not line.startswith('#') and line.startswith(CMAKE_VERSION_REQUIREMENT):
+            return text
+        elif not line.startswith('#') and not line.startswith(CMAKE_VERSION_REQUIREMENT):
+            break
+        counter = counter + 1
+
+    lines.insert(counter, CMAKE_VERSION_REQUIREMENT)
+
+    return '\n'.join(lines)
+
+
 @include_patterns('*')
 def fix_terminal_newlines(text, path_to_file):
     if len(text) and text[-1] != '\n':
@@ -250,6 +267,7 @@ def fix_terminal_newlines(text, path_to_file):
 
 
 TRANSFORMATIONS = [
+    fix_cmake_version_requirements,
     fix_license_header,
     fix_missing_include_guards,
     fix_terminal_newlines,

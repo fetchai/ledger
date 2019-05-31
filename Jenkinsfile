@@ -148,9 +148,6 @@ def run_basic_checks()
         stage('Style Check') {
           sh './scripts/apply_style.py -d'
         }
-        stage('CMake Version Check') {
-          sh './scripts/check-cmake-versions.py'
-        }
       }
     }
   }
