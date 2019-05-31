@@ -264,7 +264,7 @@ std::vector<ArrayType> Graph<ArrayType>::GetWeights() const
   {
     ret.emplace_back(t.second->GetWeights());
   }
-  return ret;
+  return std::move(ret);
 }
 
 /**
@@ -281,7 +281,7 @@ std::vector<ArrayType> Graph<ArrayType>::GetGradients() const
   {
     ret.emplace_back(t.second->Gradients());
   }
-  return ret;
+  return std::move(ret);
 }
 
 /**
@@ -403,7 +403,7 @@ Graph<ArrayType>::GetTrainables()
   {
     ret.emplace_back(t.second);
   }
-  return ret;
+  return std::move(ret);
 }
 
 }  // namespace ml

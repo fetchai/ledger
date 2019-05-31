@@ -43,56 +43,73 @@ public:
 
                                        graph,
                     std::string const &input_node_name, std::string const &output_node_name,
-                    DataType const &learning_rate, DataType const &momentum_update = DataType{0.9f})
-    : Optimiser<T, C>(graph, input_node_name, output_node_name, learning_rate)
-    , momentum_update_(momentum_update)
-  {
-    for (auto &train : this->graph_trainables_)
-    {
-      this->momentum_.push_back(ArrayType(train->GetWeights().shape()));
-    }
-    ResetMomentum();
-  }
+                    DataType const &learning_rate   = DataType{0.001f},
+                    DataType const &momentum_update = DataType{0.9f});
 
 private:
-  void ApplyGradients()
-  {
-    auto trainable_it = this->graph_trainables_.begin();
-    auto gradient_it  = this->gradients_.begin();
-    auto mit          = momentum_.begin();
-
-    while (gradient_it != this->gradients_.end())
-    {
-      // momentum[i] = momentum_update * momentum[i] + learning_rate * grad[i]
-      fetch::math::Multiply(*mit, momentum_update_, *mit);
-      fetch::math::Multiply((*trainable_it)->Gradients(), this->learning_rate_, *gradient_it);
-      fetch::math::Add(*mit, *gradient_it, *mit);
-
-      // grad[i]=-momentum[i]
-      fetch::math::Multiply(*mit, negative_one_, *gradient_it);
-
-      // Apply gradient weights[i]+=grad[i]
-      (*trainable_it)->ApplyGradient(*gradient_it);
-
-      ++trainable_it;
-      ++gradient_it;
-      ++mit;
-    }
-  }
-
-  void ResetMomentum()
-  {
-    for (auto &moment : this->momentum_)
-    {
-      moment.Fill(zero_);
-    }
-  }
-
   std::vector<ArrayType> momentum_;
   DataType               momentum_update_;
   DataType               negative_one_{-1};
   DataType               zero_{0};
+
+  void ApplyGradients() override;
+  void ResetMomentum();
 };
+
+template <class T, class C>
+MomentumOptimiser<T, C>::MomentumOptimiser(std::shared_ptr<Graph<T>>
+
+                                                              graph,
+                                           std::string const &input_node_name,
+                                           std::string const &output_node_name,
+                                           DataType const &   learning_rate,
+                                           DataType const &   momentum_update)
+  : Optimiser<T, C>(graph, input_node_name, output_node_name, learning_rate)
+  , momentum_update_(momentum_update)
+{
+  for (auto &train : this->graph_trainables_)
+  {
+    this->momentum_.emplace_back(ArrayType(train->GetWeights().shape()));
+  }
+  ResetMomentum();
+}
+
+// private
+
+template <class T, class C>
+void MomentumOptimiser<T, C>::ApplyGradients()
+{
+  auto trainable_it = this->graph_trainables_.begin();
+  auto gradient_it  = this->gradients_.begin();
+  auto mit          = momentum_.begin();
+
+  while (gradient_it != this->gradients_.end())
+  {
+    // momentum[i] = momentum_update * momentum[i] + learning_rate * grad[i]
+    fetch::math::Multiply(*mit, momentum_update_, *mit);
+    fetch::math::Multiply((*trainable_it)->Gradients(), this->learning_rate_, *gradient_it);
+    fetch::math::Add(*mit, *gradient_it, *mit);
+
+    // grad[i]=-momentum[i]
+    fetch::math::Multiply(*mit, negative_one_, *gradient_it);
+
+    // Apply gradient weights[i]+=grad[i]
+    (*trainable_it)->ApplyGradient(*gradient_it);
+
+    ++trainable_it;
+    ++gradient_it;
+    ++mit;
+  }
+}
+
+template <class T, class C>
+void MomentumOptimiser<T, C>::ResetMomentum()
+{
+  for (auto &moment : this->momentum_)
+  {
+    moment.Fill(zero_);
+  }
+}
 
 }  // namespace optimisers
 }  // namespace ml

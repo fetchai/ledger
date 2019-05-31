@@ -42,29 +42,41 @@ public:
 
                                   graph,
                std::string const &input_node_name, std::string const &output_node_name,
-               DataType const &learning_rate)
-    : Optimiser<T, C>(graph, input_node_name, output_node_name, learning_rate)
-  {}
+               DataType const &learning_rate = DataType{0.001f});
 
 private:
-  void ApplyGradients()
-  {
-    auto trainable_it = this->graph_trainables_.begin();
-    auto gradient_it  = this->gradients_.begin();
-
-    while (gradient_it != this->gradients_.end())
-    {
-      // grad[i]=grad[i] * -learning_rate
-      fetch::math::Multiply((*trainable_it)->Gradients(), -this->learning_rate_, *gradient_it);
-
-      // Apply gradient weights[i]+=grad[i]
-      (*trainable_it)->ApplyGradient(*gradient_it);
-
-      ++trainable_it;
-      ++gradient_it;
-    }
-  }
+  void ApplyGradients() override;
 };
+
+template <class T, class C>
+SGDOptimiser<T, C>::SGDOptimiser(std::shared_ptr<Graph<T>>
+
+                                                    graph,
+                                 std::string const &input_node_name,
+                                 std::string const &output_node_name, DataType const &learning_rate)
+  : Optimiser<T, C>(graph, input_node_name, output_node_name, learning_rate)
+{}
+
+// private
+
+template <class T, class C>
+void SGDOptimiser<T, C>::ApplyGradients()
+{
+  auto trainable_it = this->graph_trainables_.begin();
+  auto gradient_it  = this->gradients_.begin();
+
+  while (gradient_it != this->gradients_.end())
+  {
+    // grad[i]=grad[i] * -learning_rate
+    fetch::math::Multiply((*trainable_it)->Gradients(), -this->learning_rate_, *gradient_it);
+
+    // Apply gradient weights[i]+=grad[i]
+    (*trainable_it)->ApplyGradient(*gradient_it);
+
+    ++trainable_it;
+    ++gradient_it;
+  }
+}
 
 }  // namespace optimisers
 }  // namespace ml
