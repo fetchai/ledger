@@ -145,9 +145,6 @@ def run_basic_checks()
       }
 
       docker.image(DOCKER_IMAGE_NAME).inside {
-        stage('License Check') {
-          sh './scripts/check_license_header.py'
-        }
         stage('Style Check') {
           sh './scripts/apply_style.py -d'
         }

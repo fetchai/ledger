@@ -16,10 +16,12 @@ import autopep8
 import fnmatch
 import multiprocessing
 import os
+import re
 import shutil
 import subprocess
 import sys
 import threading
+import time
 import traceback
 from concurrent.futures import ThreadPoolExecutor
 from functools import wraps
@@ -29,6 +31,8 @@ PROJECT_ROOT = abspath(dirname(dirname(__file__)))
 CHECKED_IN_BINARY_FILE_PATTERNS = ('*.png', '*.npy')
 INCLUDE_GUARD = '#pragma once'
 DISALLOWED_HEADER_FILE_EXTENSIONS = ('*.h', '*.hxx', '*.hh')
+NUM_PROCESSED_FILES = 0
+TOTAL_FILES_TO_PROCESS = 0
 
 
 def find_excluded_dirs():
@@ -50,6 +54,89 @@ def find_excluded_dirs():
 
 
 EXCLUDED_DIRS = find_excluded_dirs()
+
+CURRENT_YEAR = int(time.localtime().tm_year)
+
+RE_LICENSE = """//------------------------------------------------------------------------------
+//
+//   Copyright 2018(-\\d+)? Fetch.AI Limited
+//
+//   Licensed under the Apache License, Version 2.0 \\(the "License"\\);
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+//
+//------------------------------------------------------------------------------([\\s\\n]*)
+"""
+
+LICENSE = """//------------------------------------------------------------------------------
+//
+//   Copyright 2018-{} Fetch.AI Limited
+//
+//   Licensed under the Apache License, Version 2.0 (the "License");
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+//
+//------------------------------------------------------------------------------
+
+""".format(CURRENT_YEAR)
+
+
+def include_patterns(*filename_patterns):
+    def decorator(func):
+        @wraps(func)
+        def wrapper(text, path_to_file):
+            if any([fnmatch.fnmatch(basename(path_to_file), pattern) for pattern in filename_patterns]):
+                return func(text, path_to_file)
+            else:
+                return text
+
+        return wrapper
+
+    return decorator
+
+
+def has_include_guard(text):
+    return text.startswith(INCLUDE_GUARD)
+
+
+@include_patterns('*.cpp', '*.hpp')
+def fix_license_header(text, path_to_file):
+    if LICENSE in text:
+        return text
+
+    # determine if an old license is already present
+    existing_license_present = bool(re.search(RE_LICENSE, text, re.MULTILINE))
+
+    if existing_license_present:
+        # replace the contents of the license
+        return re.sub(RE_LICENSE, LICENSE, text)
+    elif fnmatch.fnmatch(basename(path_to_file), '*.cpp'):
+        # add license to the top of the file
+        return LICENSE + text
+    elif fnmatch.fnmatch(basename(path_to_file), '*.hpp'):
+        if has_include_guard(text):
+            # add the license after the header guard
+            return re.sub(r'{}\s+'.format(INCLUDE_GUARD), '{}\n{}'.format(INCLUDE_GUARD, LICENSE), text)
+        else:
+            return LICENSE + text
+
+    return text
 
 
 def find_clang_format():
@@ -115,20 +202,6 @@ def walk_source_directories(project_root, excluded_dirs):
         yield root, _, files
 
 
-def include_patterns(*filename_patterns):
-    def decorator(func):
-        @wraps(func)
-        def wrapper(text, path_to_file):
-            if any([fnmatch.fnmatch(basename(path_to_file), pattern) for pattern in filename_patterns]):
-                return func(text, path_to_file)
-            else:
-                return text
-
-        return wrapper
-
-    return decorator
-
-
 def format_language(cmd_prefix, filename_patterns):
     @include_patterns(*filename_patterns)
     def reformat_as_pipe(text, path_to_file):
@@ -162,7 +235,7 @@ def get_diff():
 
 @include_patterns('*.hpp')
 def fix_missing_include_guards(text, path_to_file):
-    if not text.startswith(INCLUDE_GUARD):
+    if not has_include_guard(text):
         return '{}\n{}'.format(INCLUDE_GUARD, text)
 
     return text
@@ -177,15 +250,13 @@ def fix_terminal_newlines(text, path_to_file):
 
 
 TRANSFORMATIONS = [
+    fix_license_header,
     fix_missing_include_guards,
     fix_terminal_newlines,
     format_language(**SUPPORTED_LANGUAGES['cpp']),
     format_language(**SUPPORTED_LANGUAGES['cmake']),
     format_python
 ]
-
-NUM_PROCESSED_FILES = 0
-TOTAL_FILES_TO_PROCESS = 0
 
 
 def apply_transformations_to_file(path_to_file):
