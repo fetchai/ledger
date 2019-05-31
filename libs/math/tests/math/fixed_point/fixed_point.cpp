@@ -752,6 +752,31 @@ TEST(FixedPointTest, Exponential_16_16)
   EXPECT_NEAR((double)e_max / std::exp((double)fp32::MAX_EXP), 1.0, (double)fp32::TOLERANCE);
   EXPECT_THROW(fp32::Exp(fp32::MAX_EXP + 1), std::overflow_error);
 
+  fp32 step{0.001};
+  fp32 x{-10.0};
+  double max_error = 0, avg_error = 0;
+  size_t iterations = 0;
+  double tolerance = (double)fp32::TOLERANCE;
+  for (; x < 10.0; x += step)
+  {
+    fp32 e = fp32::Exp(x);
+    double r = std::exp((double)x);
+    double delta  = std::abs((double)e - r);
+    max_error = std::max(max_error, delta);
+    avg_error += delta;
+    iterations++;
+    if (delta > tolerance) {
+      std::cout << "delta = " << delta << std::endl;
+      std::cout << "e = " << e << std::endl;
+      std::cout << "r = " << r << std::endl;
+      std::cout << "x = " << x << std::endl;
+    }
+  }
+  avg_error /= iterations;
+  EXPECT_NEAR(max_error, 0.0, tolerance);
+  EXPECT_NEAR(avg_error, 0.0, tolerance);
+  std::cout << "Exp: max error = " << max_error << std::endl;
+  std::cout << "Exp: avg error = " << avg_error << std::endl;
 }
 
 TEST(FixedPointTest, Exponential_32_32)
@@ -769,44 +794,36 @@ TEST(FixedPointTest, Exponential_32_32)
   fetch::fixed_point::FixedPoint<32, 32> e6 = fp64::Exp(tiny);
   fetch::fixed_point::FixedPoint<32, 32> e7 = fp64::Exp(negative);
 
-  EXPECT_NEAR(((double)e1 - std::exp(1.0)) / std::exp(1.0), 0, (double)fp64::TOLERANCE);
-  EXPECT_NEAR(((double)e2 - std::exp(2.0)) / std::exp(2.0), 0, (double)fp64::TOLERANCE);
-  EXPECT_NEAR(((double)e3 - std::exp(10.0)) / std::exp(10.0), 0, (double)fp64::TOLERANCE);
-  EXPECT_NEAR(((double)e5 - std::exp(0.0001)) / std::exp(0.0001), 0, (double)fp64::TOLERANCE);
-  EXPECT_NEAR(((double)e6 - std::exp(double(tiny))) / std::exp(double(tiny)), 0,
-              (double)fp64::TOLERANCE);
-  EXPECT_NEAR(((double)e7 - std::exp(double(negative))) / std::exp(double(negative)), 0,
-              (double)fp64::TOLERANCE);
-  EXPECT_NEAR(((double)fp64::Exp(fp64::MAX_EXP) - std::exp(double(fp64::MAX_EXP))) /
-                  std::exp(double(fp64::MAX_EXP)),
-              0, (double)fp64::TOLERANCE);
+  EXPECT_NEAR((double)e1 - std::exp(1.0), 0, (double)fp64::TOLERANCE);
+  EXPECT_NEAR((double)e2 - std::exp(2.0), 0, (double)fp64::TOLERANCE);
+  EXPECT_NEAR((double)e3 - std::exp(10.0), 0, (double)fp64::TOLERANCE);
+  EXPECT_NEAR((double)e5 - std::exp(0.0001), 0, (double)fp64::TOLERANCE);
+  EXPECT_NEAR((double)e6 - std::exp(double(tiny)), 0, (double)fp64::TOLERANCE);
+  EXPECT_NEAR((double)e7 - std::exp(double(negative)), 0, (double)fp64::TOLERANCE);
+  EXPECT_NEAR((double)fp64::Exp(fp64::MAX_EXP) - std::exp(double(fp64::MAX_EXP)), 0, (double)fp64::TOLERANCE);
 
   // Out of range
   EXPECT_THROW(fp64::Exp(fp64::MAX_EXP + 1), std::overflow_error);
 
   // Negative values
-  EXPECT_NEAR(((double)fp64::Exp(-one) - std::exp(-1.0)) / std::exp(-1.0), 0,
+  EXPECT_NEAR(((double)fp64::Exp(-one) - std::exp(-1.0)), 0,
               (double)fp64::TOLERANCE);
-  EXPECT_NEAR(((double)fp64::Exp(-two) - std::exp(-2.0)) / std::exp(-2.0), 0,
+  EXPECT_NEAR(((double)fp64::Exp(-two) - std::exp(-2.0)), 0,
               (double)fp64::TOLERANCE);
 
   // This particular error produces more than 1e-6 error failing the test
-  EXPECT_NEAR(((double)fp64::Exp(-ten) - std::exp(-10.0)) / std::exp(-10.0), 0, (double)fp64::TOLERANCE);
+  EXPECT_NEAR((double)fp64::Exp(-ten) - std::exp(-10.0), 0, (double)fp64::TOLERANCE);
   // The rest pass with fp64::TOLERANCE
-  EXPECT_NEAR(((double)fp64::Exp(-small) - std::exp(-0.0001)) / std::exp(-0.0001), 0,
-              (double)fp64::TOLERANCE);
-  EXPECT_NEAR(((double)fp64::Exp(-tiny) - std::exp(-double(tiny))) / std::exp(-double(tiny)), 0,
-              (double)fp64::TOLERANCE);
-  EXPECT_NEAR(((double)fp64::Exp(fp64::MIN_EXP) - std::exp((double)fp64::MIN_EXP)) /
-                  std::exp((double)fp64::MIN_EXP),
-              0, (double)fp64::TOLERANCE);
+  EXPECT_NEAR((double)fp64::Exp(-small) - std::exp(-0.0001), 0, (double)fp64::TOLERANCE);
+  EXPECT_NEAR((double)fp64::Exp(-tiny) - std::exp(-double(tiny)), 0, (double)fp64::TOLERANCE);
+  EXPECT_NEAR((double)fp64::Exp(fp64::MIN_EXP) - std::exp((double)fp64::MIN_EXP), 0, (double)fp64::TOLERANCE);
 
   fp64 step{0.0001};
-  fp64 x{-5.0};
+  fp64 x{-10.0};
   double max_error = 0, avg_error = 0;
   size_t iterations = 0;
-  double tolerance = 2*(double)fp64::TOLERANCE;
-  for (; x < 5.0; x += step)
+  double tolerance = (double)fp64::TOLERANCE;
+  for (; x < 10.0; x += step)
   {
     fp64 e = fp64::Exp(x);
     double r = std::exp((double)x);
