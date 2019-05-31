@@ -32,13 +32,13 @@ inline typename memory::VectorSlice<T, S>::type L2Loss(memory::VectorSlice<T, S>
   using VectorRegisterType = typename memory::VectorSlice<T, S>::VectorRegisterType;
   using type               = typename memory::VectorSlice<T, S>::type;
 
-  type l2loss = a.in_parallel().SumReduce(
-      memory::TrivialRange(0, a.size()),
-      [](VectorRegisterType const &x, VectorRegisterType const &y) {
-        VectorRegisterType d = x - y;
-        return d * d;
-      },
-      b);
+  type l2loss =
+      a.in_parallel().SumReduce(memory::TrivialRange(0, a.size()),
+                                [](VectorRegisterType const &x, VectorRegisterType const &y) {
+                                  VectorRegisterType d = x - y;
+                                  return d * d;
+                                },
+                                b);
   l2loss /= 2;
   return l2loss;
 }
