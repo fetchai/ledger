@@ -1127,7 +1127,7 @@ TEST(FixedPointTest, SQRT_16_16)
   EXPECT_NEAR(delta / std::sqrt((double)tiny), 0.0, (double)fp32::TOLERANCE);
 
   // Sqrt of a negative
-  EXPECT_THROW(fp32::Sqrt(-one), std::runtime_error);
+  EXPECT_TRUE(fp32::isNaN(fp32::Sqrt(-one)));
 }
 
 TEST(FixedPointTest, SQRT_32_32)
@@ -1169,7 +1169,7 @@ TEST(FixedPointTest, SQRT_32_32)
   EXPECT_NEAR(delta / std::sqrt((double)tiny), 0.0, (double)fp64::TOLERANCE);
 
   // Sqrt of a negative
-  EXPECT_THROW(fp64::Sqrt(-one), std::runtime_error);
+  EXPECT_TRUE(fp64::isNaN(fp64::Sqrt(-one)));
 }
 
 TEST(FixedPointTest, Sin_16_16)
@@ -1500,12 +1500,14 @@ TEST(FixedPointTest, Tan_16_16)
   EXPECT_TRUE(fp32::isNaN(fp32::Tan(fp32::CONST_PI_2)));
   EXPECT_TRUE(fp32::isNaN(fp32::Tan(-fp32::CONST_PI_2)));
 
-  fp32 step{0.001};
-  fp32 x{-fp32::CONST_PI_2};
+  fp32 step{0.001}, offset{step * 10};
+  fp32 x{-fp32::CONST_PI_2}, max{fp32::CONST_PI_2};
+  x += offset;
+  max -= offset;
   double max_error = 0, avg_error = 0;
   size_t iterations = 0;
-  double tolerance = (double)fp32::TOLERANCE;
-  for (; x < fp32::CONST_PI_2; x += step)
+  double tolerance = 2*(double)fp32::TOLERANCE;
+  for (; x < max; x += step)
   {
     fp32 e = fp32::Tan(x);
     double r = std::tan((double)x);
@@ -1513,12 +1515,6 @@ TEST(FixedPointTest, Tan_16_16)
     max_error = std::max(max_error, delta);
     avg_error += delta;
     iterations++;
-    if (delta > tolerance) {
-        std::cout << "delta = " << delta << std::endl;
-        std::cout << "e = " << e << std::endl;
-        std::cout << "r = " << r << std::endl;
-        std::cout << "x = " << x << std::endl;
-    }
   }
   avg_error /= iterations;
   EXPECT_NEAR(max_error, 0.0, tolerance);
@@ -1583,12 +1579,14 @@ TEST(FixedPointTest, Tan_32_32)
   EXPECT_TRUE(fp64::isNaN(fp64::Tan(fp64::CONST_PI_2)));
   EXPECT_TRUE(fp64::isNaN(fp64::Tan(-fp64::CONST_PI_2)));
 
-  fp64 step{0.0001};
-  fp64 x{-fp64::CONST_PI_2 + step};
+  fp64 step{0.0001}, offset{step * 100};
+  fp64 x{-fp64::CONST_PI_2}, max{fp64::CONST_PI_2};
+  x += offset;
+  max -= offset;
   double max_error = 0, avg_error = 0;
   size_t iterations = 0;
-  double tolerance = (double)fp64::TOLERANCE;
-  for (; x < fp64::CONST_PI_2; x += step)
+  double tolerance = 2*(double)fp64::TOLERANCE;
+  for (; x < max; x += step)
   {
     fp64 e = fp64::Tan(x);
     double r = std::tan((double)x);
@@ -1596,12 +1594,6 @@ TEST(FixedPointTest, Tan_32_32)
     max_error = std::max(max_error, delta);
     avg_error += delta;
     iterations++;
-    if (delta > tolerance) {
-        std::cout << "delta = " << delta << std::endl;
-        std::cout << "e = " << e << std::endl;
-        std::cout << "r = " << r << std::endl;
-        std::cout << "x = " << x << std::endl;
-    }
   }
   avg_error /= iterations;
   EXPECT_NEAR(max_error, 0.0, tolerance);
@@ -1717,12 +1709,6 @@ TEST(FixedPointTest, ATan_16_16)
     max_error = std::max(max_error, delta);
     avg_error += delta;
     iterations++;
-    if (delta > tolerance) {
-        std::cout << "delta = " << delta << std::endl;
-        std::cout << "e = " << e << std::endl;
-        std::cout << "r = " << r << std::endl;
-        std::cout << "x = " << x << std::endl;
-    }
   }
   avg_error /= iterations;
   EXPECT_NEAR(max_error, 0.0, tolerance);
@@ -1746,12 +1732,6 @@ TEST(FixedPointTest, ATan_32_32)
     max_error = std::max(max_error, delta);
     avg_error += delta;
     iterations++;
-    if (delta > tolerance) {
-        std::cout << "delta = " << delta << std::endl;
-        std::cout << "e = " << e << std::endl;
-        std::cout << "r = " << r << std::endl;
-        std::cout << "x = " << x << std::endl;
-    }
   }
   avg_error /= iterations;
   EXPECT_NEAR(max_error, 0.0, tolerance);
@@ -1778,12 +1758,6 @@ TEST(FixedPointTest, ATan2_16_16)
       max_error = std::max(max_error, delta);
       avg_error += delta;
       iterations++;
-      if (delta > tolerance) {
-        std::cout << "delta = " << delta << std::endl;
-        std::cout << "e = " << e << std::endl;
-        std::cout << "r = " << r << std::endl;
-        std::cout << "(y, x) = (" << y << ", " << x << ") " << std::endl;
-      }
     }
   }
   avg_error /= iterations;
@@ -1811,12 +1785,6 @@ TEST(FixedPointTest, ATan2_32_32)
       max_error = std::max(max_error, delta);
       avg_error += delta;
       iterations++;
-      if (delta > tolerance) {
-        std::cout << "delta = " << delta << std::endl;
-        std::cout << "e = " << e << std::endl;
-        std::cout << "r = " << r << std::endl;
-        std::cout << "(y, x) = (" << y << ", " << x << ") " << std::endl;
-      }
     }
   }
   avg_error /= iterations;
@@ -1841,12 +1809,6 @@ TEST(FixedPointTest, SinH_16_16)
     max_error = std::max(max_error, delta);
     avg_error += delta;
     iterations++;
-    if (delta > tolerance) {
-      std::cout << "delta = " << delta << std::endl;
-      std::cout << "e = " << e << std::endl;
-      std::cout << "r = " << r << std::endl;
-      std::cout << "x = " << x << std::endl;
-    }
   }
   avg_error /= iterations;
   EXPECT_NEAR(max_error, 0.0, tolerance);
@@ -1870,12 +1832,6 @@ TEST(FixedPointTest, SinH_32_32)
     max_error = std::max(max_error, delta);
     avg_error += delta;
     iterations++;
-    if (delta > tolerance) {
-      std::cout << "delta = " << delta << std::endl;
-      std::cout << "e = " << e << std::endl;
-      std::cout << "r = " << r << std::endl;
-      std::cout << "x = " << x << std::endl;
-    }
   }
   avg_error /= iterations;
   EXPECT_NEAR(max_error, 0.0, tolerance);
@@ -1899,12 +1855,6 @@ TEST(FixedPointTest, CosH_16_16)
     max_error = std::max(max_error, delta);
     avg_error += delta;
     iterations++;
-    if (delta > tolerance) {
-      std::cout << "delta = " << delta << std::endl;
-      std::cout << "e = " << e << std::endl;
-      std::cout << "r = " << r << std::endl;
-      std::cout << "x = " << x << std::endl;
-    }
   }
   avg_error /= iterations;
   EXPECT_NEAR(max_error, 0.0, tolerance);
@@ -1928,12 +1878,6 @@ TEST(FixedPointTest, CosH_32_32)
     max_error = std::max(max_error, delta);
     avg_error += delta;
     iterations++;
-    if (delta > tolerance) {
-      std::cout << "delta = " << delta << std::endl;
-      std::cout << "e = " << e << std::endl;
-      std::cout << "r = " << r << std::endl;
-      std::cout << "x = " << x << std::endl;
-    }
   }
   avg_error /= iterations;
   EXPECT_NEAR(max_error, 0.0, tolerance);
@@ -1957,12 +1901,6 @@ TEST(FixedPointTest, TanH_16_16)
     max_error = std::max(max_error, delta);
     avg_error += delta;
     iterations++;
-    if (delta > tolerance) {
-      std::cout << "delta = " << delta << std::endl;
-      std::cout << "e = " << e << std::endl;
-      std::cout << "r = " << r << std::endl;
-      std::cout << "x = " << x << std::endl;
-    }
   }
   avg_error /= iterations;
   EXPECT_NEAR(max_error, 0.0, tolerance);
@@ -1986,12 +1924,6 @@ TEST(FixedPointTest, TanH_32_32)
     max_error = std::max(max_error, delta);
     avg_error += delta;
     iterations++;
-    if (delta > tolerance) {
-      std::cout << "delta = " << delta << std::endl;
-      std::cout << "e = " << e << std::endl;
-      std::cout << "r = " << r << std::endl;
-      std::cout << "x = " << x << std::endl;
-    }
   }
   avg_error /= iterations;
   EXPECT_NEAR(max_error, 0.0, tolerance);
@@ -2015,12 +1947,6 @@ TEST(FixedPointTest, ASinH_16_16)
     max_error = std::max(max_error, delta);
     avg_error += delta;
     iterations++;
-    if (delta > tolerance) {
-      std::cout << "delta = " << delta << std::endl;
-      std::cout << "e = " << e << std::endl;
-      std::cout << "r = " << r << std::endl;
-      std::cout << "x = " << x << std::endl;
-    }
   }
   avg_error /= iterations;
   EXPECT_NEAR(max_error, 0.0, tolerance);
@@ -2044,12 +1970,6 @@ TEST(FixedPointTest, ASinH_32_32)
     max_error = std::max(max_error, delta);
     avg_error += delta;
     iterations++;
-    if (delta > tolerance) {
-      std::cout << "delta = " << delta << std::endl;
-      std::cout << "e = " << e << std::endl;
-      std::cout << "r = " << r << std::endl;
-      std::cout << "x = " << x << std::endl;
-    }
   }
   avg_error /= iterations;
   EXPECT_NEAR(max_error, 0.0, tolerance);
@@ -2061,7 +1981,7 @@ TEST(FixedPointTest, ASinH_32_32)
 TEST(FixedPointTest, ACosH_16_16)
 {
   fp32 step{0.001};
-  fp32 x{-3.0};
+  fp32 x{1.0};
   double max_error = 0, avg_error = 0;
   size_t iterations = 0;
   double tolerance = 2*(double)fp32::TOLERANCE;
@@ -2073,12 +1993,6 @@ TEST(FixedPointTest, ACosH_16_16)
     max_error = std::max(max_error, delta);
     avg_error += delta;
     iterations++;
-    if (delta > tolerance) {
-      std::cout << "delta = " << delta << std::endl;
-      std::cout << "e = " << e << std::endl;
-      std::cout << "r = " << r << std::endl;
-      std::cout << "x = " << x << std::endl;
-    }
   }
   avg_error /= iterations;
   EXPECT_NEAR(max_error, 0.0, tolerance);
@@ -2090,7 +2004,7 @@ TEST(FixedPointTest, ACosH_16_16)
 TEST(FixedPointTest, ACosH_32_32)
 {
   fp64 step{0.0001};
-  fp64 x{-5.0};
+  fp64 x{1.0};
   double max_error = 0, avg_error = 0;
   size_t iterations = 0;
   double tolerance = 2*(double)fp64::TOLERANCE;
@@ -2102,16 +2016,60 @@ TEST(FixedPointTest, ACosH_32_32)
     max_error = std::max(max_error, delta);
     avg_error += delta;
     iterations++;
-    if (delta > tolerance) {
-      std::cout << "delta = " << delta << std::endl;
-      std::cout << "e = " << e << std::endl;
-      std::cout << "r = " << r << std::endl;
-      std::cout << "x = " << x << std::endl;
-    }
   }
   avg_error /= iterations;
   EXPECT_NEAR(max_error, 0.0, tolerance);
   EXPECT_NEAR(avg_error, 0.0, tolerance);
   std::cout << "ACosH: max error = " << max_error << std::endl;
   std::cout << "ACosH: avg error = " << avg_error << std::endl;
+}
+
+TEST(FixedPointTest, ATanH_16_16)
+{
+  fp32 step{0.001}, offset{step * 10};
+  fp32 x{-1.0}, max{1.0};
+  x += offset;
+  max -= offset;
+  double max_error = 0, avg_error = 0;
+  size_t iterations = 0;
+  double tolerance = 2*(double)fp32::TOLERANCE;
+  for (; x < max; x += step)
+  {
+    fp32 e = fp32::ATanH(x);
+    double r = std::atanh((double)x);
+    double delta  = std::abs((double)e - r);
+    max_error = std::max(max_error, delta);
+    avg_error += delta;
+    iterations++;
+  }
+  avg_error /= iterations;
+  EXPECT_NEAR(max_error, 0.0, 2*tolerance);
+  EXPECT_NEAR(avg_error, 0.0, tolerance);
+  std::cout << "ATamH: max error = " << max_error << std::endl;
+  std::cout << "ATanH: avg error = " << avg_error << std::endl;
+}
+
+TEST(FixedPointTest, ATanH_32_32)
+{
+  fp64 step{0.0001}, offset{step * 10};
+  fp64 x{-1.0}, max{1.0};
+  x += offset;
+  max -= offset;
+  double max_error = 0, avg_error = 0;
+  size_t iterations = 0;
+  double tolerance = 2*(double)fp64::TOLERANCE;
+  for (; x < max; x += step)
+  {
+    fp64 e = fp64::ATanH(x);
+    double r = std::atanh((double)x);
+    double delta  = std::abs((double)e - r);
+    max_error = std::max(max_error, delta);
+    avg_error += delta;
+    iterations++;
+  }
+  avg_error /= iterations;
+  EXPECT_NEAR(max_error, 0.0, tolerance);
+  EXPECT_NEAR(avg_error, 0.0, tolerance);
+  std::cout << "ATanH: max error = " << max_error << std::endl;
+  std::cout << "ATanH: avg error = " << avg_error << std::endl;
 }
