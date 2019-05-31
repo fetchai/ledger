@@ -56,10 +56,12 @@ meta::IfIsMathArray<ArrayType, void> Add(ArrayType const &array1, ArrayType cons
   {
     auto r = range.ToTrivialRange(ret.data().size());
 
-    ret.data().in_parallel().Apply(r,
-                                   [](VectorRegisterType const &x, VectorRegisterType const &y,
-                                      VectorRegisterType &z) { z = x + y; },
-                                   array1.data(), array2.data());
+    ret.data().in_parallel().Apply(
+        r,
+        [](VectorRegisterType const &x, VectorRegisterType const &y, VectorRegisterType &z) {
+          z = x + y;
+        },
+        array1.data(), array2.data());
   }
 }
 
@@ -130,10 +132,12 @@ meta::IfIsMathArray<ArrayType, void> Multiply(ArrayType const &obj1, ArrayType c
   {
     auto r = range.ToTrivialRange(ret.data().size());
 
-    ret.data().in_parallel().Apply(r,
-                                   [](VectorRegisterType const &x, VectorRegisterType const &y,
-                                      VectorRegisterType &z) { z = x * y; },
-                                   obj1.data(), obj2.data());
+    ret.data().in_parallel().Apply(
+        r,
+        [](VectorRegisterType const &x, VectorRegisterType const &y, VectorRegisterType &z) {
+          z = x * y;
+        },
+        obj1.data(), obj2.data());
   }
 }
 
@@ -164,10 +168,12 @@ meta::IfIsMathArray<ArrayType, void> Subtract(ArrayType const &obj1, ArrayType c
   {
     auto r = range.ToTrivialRange(ret.data().size());
 
-    ret.data().in_parallel().Apply(r,
-                                   [](VectorRegisterType const &x, VectorRegisterType const &y,
-                                      VectorRegisterType &z) { z = x - y; },
-                                   obj1.data(), obj2.data());
+    ret.data().in_parallel().Apply(
+        r,
+        [](VectorRegisterType const &x, VectorRegisterType const &y, VectorRegisterType &z) {
+          z = x - y;
+        },
+        obj1.data(), obj2.data());
   }
 }
 
@@ -262,10 +268,12 @@ meta::IfIsMathArray<ArrayType, void> Divide(ArrayType const &obj1, ArrayType con
     {
       auto r = range.ToTrivialRange(ret.data().size());
 
-      ret.data().in_parallel().Apply(r,
-                                     [](VectorRegisterType const &x, VectorRegisterType const &y,
-                                        VectorRegisterType &z) { z = x / y; },
-                                     obj1.data(), obj2.data());
+      ret.data().in_parallel().Apply(
+          r,
+          [](VectorRegisterType const &x, VectorRegisterType const &y, VectorRegisterType &z) {
+            z = x / y;
+          },
+          obj1.data(), obj2.data());
     }
   }
 }

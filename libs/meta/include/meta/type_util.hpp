@@ -96,16 +96,16 @@ using IsAnyOf = Any<Bind<std::is_same, T>::template type, Ts...>;
 template <class T, class... Ts>
 static constexpr auto IsAnyOfV = IsAnyOf<T, Ts...>::value;
 
-template <class T, template<class...> class Predicate>
+template <class T, template <class...> class Predicate>
 using Satisfies = Predicate<T>;
 
-template <class T, template<class...> class Predicate>
+template <class T, template <class...> class Predicate>
 static constexpr bool SatisfiesV = Satisfies<T, Predicate>::value;
 
-template <class T, template<class...> class... Predicates>
+template <class T, template <class...> class... Predicates>
 using SatisfiesAll = Conjunction<Predicates<T>...>;
 
-template <class T, template<class...> class... Predicates>
+template <class T, template <class...> class... Predicates>
 static constexpr bool SatisfiesAllV = SatisfiesAll<T, Predicates...>::value;
 
 template <class F, class... Args>
@@ -137,7 +137,8 @@ using SwitchT = typename Switch<Clauses...>::type;
 
 template <class If, class Then, class... Else>
 struct Switch<If, Then, Else...> : std::conditional<If::value, Then, SwitchT<Else...>>
-{};
+{
+};
 
 template <class Default>
 struct Switch<Default>

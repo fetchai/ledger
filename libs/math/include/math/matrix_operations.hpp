@@ -62,11 +62,11 @@ void Product(ArrayType const &obj1, typename ArrayType::Type &ret)
   // TODO(private issue 994): Create test for this function
   if (obj1.padding() == 1)
   {
-    ret =
-        obj1.data().in_parallel().Reduce(memory::TrivialRange(0, obj1.size()),
-                                         [](typename ArrayType::VectorRegisterType const &a,
-                                            typename ArrayType::VectorRegisterType const &b) ->
-                                         typename ArrayType::VectorRegisterType { return a * b; });
+    ret = obj1.data().in_parallel().Reduce(
+        memory::TrivialRange(0, obj1.size()),
+        [](typename ArrayType::VectorRegisterType const &a,
+           typename ArrayType::VectorRegisterType const &b) ->
+        typename ArrayType::VectorRegisterType { return a * b; });
   }
   else
   {
@@ -90,10 +90,11 @@ void Product(ArrayType const &obj1, typename ArrayType::Type &ret)
 template <typename ArrayType>
 void Sum(ArrayType const &obj1, typename ArrayType::Type &ret)
 {
-  ret = obj1.data().in_parallel().Reduce(memory::TrivialRange(0, obj1.size()),
-                                         [](typename ArrayType::VectorRegisterType const &a,
-                                            typename ArrayType::VectorRegisterType const &b) ->
-                                         typename ArrayType::VectorRegisterType { return a + b; });
+  ret = obj1.data().in_parallel().Reduce(
+      memory::TrivialRange(0, obj1.size()),
+      [](typename ArrayType::VectorRegisterType const &a,
+         typename ArrayType::VectorRegisterType const &b) ->
+      typename ArrayType::VectorRegisterType { return a + b; });
 }
 
 }  // namespace details_vectorisation
