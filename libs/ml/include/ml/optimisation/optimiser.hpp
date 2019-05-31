@@ -22,14 +22,15 @@
 
 namespace fetch {
 namespace ml {
+namespace optimisers {
 
 /**
- * Abstract gradient optimizer class
+ * Abstract gradient optimiser class
  * @tparam T ArrayType
  * @tparam C CriterionType
  */
 template <class T, class C>
-class Optimizer
+class Optimiser
 {
 public:
   using ArrayType     = T;
@@ -37,9 +38,14 @@ public:
   using DataType      = typename ArrayType::Type;
   using SizeType      = typename ArrayType::SizeType;
 
-  Optimizer(std::shared_ptr<Graph<T>> graph, std::string const &input_node_name,
-            std::string const &output_node_name, DataType const &learning_rate)
-    : graph_(graph)
+  Optimiser(std::shared_ptr<Graph<T>>
+
+                               graph,
+            std::string const &input_node_name, std::string const &output_node_name,
+            DataType const &learning_rate)
+    :
+
+    graph_(graph)
     , input_node_name_(input_node_name)
     , output_node_name_(output_node_name)
     , learning_rate_(learning_rate)
@@ -52,7 +58,7 @@ public:
     }
   }
 
-  // Todo 1090: Optimize TensorSlice for graph-feeding without using .Copy
+  // Todo 1090: Optimise TensorSlice for graph-feeding without using .Copy
   DataType DoBatch(ArrayType &data, ArrayType &labels)
   {
     DataType loss{0};
@@ -88,5 +94,6 @@ private:
   virtual void ApplyGradients() = 0;
 };
 
+}  // namespace optimisers
 }  // namespace ml
 }  // namespace fetch

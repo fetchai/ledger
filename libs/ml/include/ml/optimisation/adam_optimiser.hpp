@@ -20,35 +20,39 @@
 #include "math/standard_functions/sqrt.hpp"
 #include "ml/graph.hpp"
 #include "ml/ops/loss_functions/criterion.hpp"
-#include "ml/optimization/optimizer.hpp"
+#include "ml/optimisation/optimiser.hpp"
 
 namespace fetch {
 namespace ml {
+namespace optimisers {
 
 /**
- * Adaptive Momentum optimizer
+ * Adaptive Momentum optimiser
  * @tparam T ArrayType
  * @tparam C CriterionType
  */
 template <class T, class C>
-class AdamOptimizer : public Optimizer<T, C>
+class AdamOptimiser : public Optimiser<T, C>
 {
 public:
   using ArrayType = T;
   using DataType  = typename ArrayType::Type;
   using SizeType  = typename ArrayType::SizeType;
 
-  AdamOptimizer(std::shared_ptr<Graph<T>> graph, std::string const &input_node_name,
-                std::string const &output_node_name, DataType const &learning_rate,
-                DataType const &beta1 = DataType{0.9f}, DataType const &beta2 = DataType{0.999f},
-                DataType const &epsilon = DataType{1e-4f})
-    : Optimizer<T, C>(graph, input_node_name, output_node_name, learning_rate)
-    , beta1_(beta1)
+  AdamOptimiser(std::shared_ptr<Graph<T>>
+
+                                   graph,
+                std::string const &input_node_name, std::string const &output_node_name,
+                DataType const &learning_rate, DataType const &beta1 = DataType{0.9f},
+                DataType const &beta2 = DataType{0.999f}, DataType const &epsilon = DataType{1e-4f})
+    : Optimiser<T, C>(graph, input_node_name, output_node_name, learning_rate)
+    ,
+
+    beta1_(beta1)
     , beta2_(beta2)
     , beta1_t_(beta1)
     , beta2_t_(beta2)
     , epsilon_(epsilon)
-
   {
     for (auto &train : this->graph_trainables_)
     {
@@ -141,5 +145,6 @@ private:
   DataType one_{1};
 };
 
+}  // namespace optimisers
 }  // namespace ml
 }  // namespace fetch

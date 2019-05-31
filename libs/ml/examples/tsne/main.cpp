@@ -94,7 +94,7 @@ int main(int ac, char **av)
   std::cout << "Running TSNE init. " << std::endl;
   TSNE<Tensor<DataType>> tsn(input.first, N_OUTPUT_FEATURE_SIZE, PERPLEXITY, RANDOM_SEED);
 
-  std::cout << "Started optimization. " << std::endl;
+  std::cout << "Started optimisation. " << std::endl;
   tsn.Optimize(LEARNING_RATE, MAX_ITERATIONS, INITIAL_MOMENTUM, FINAL_MOMENTUM,
                FINAL_MOMENTUM_STEPS, P_LATER_CORRECTION_ITERATION);
 

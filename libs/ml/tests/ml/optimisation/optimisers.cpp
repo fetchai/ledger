@@ -23,24 +23,24 @@
 #include "ml/ops/multiply.hpp"
 #include "ml/ops/placeholder.hpp"
 #include "ml/ops/subtract.hpp"
-#include "ml/optimization/adagrad_optimizer.hpp"
-#include "ml/optimization/adam_optimizer.hpp"
-#include "ml/optimization/momentum_optimizer.hpp"
-#include "ml/optimization/rmsprop_optimizer.hpp"
-#include "ml/optimization/sgd_optimizer.hpp"
+#include "ml/optimisation/adagrad_optimiser.hpp"
+#include "ml/optimisation/adam_optimiser.hpp"
+#include "ml/optimisation/momentum_optimiser.hpp"
+#include "ml/optimisation/rmsprop_optimiser.hpp"
+#include "ml/optimisation/sgd_optimiser.hpp"
 
 #include "ml/layers/self_attention.hpp"
 
 #include <gtest/gtest.h>
 
 template <typename T>
-class OptimizersTest : public ::testing::Test
+class OptimisersTest : public ::testing::Test
 {
 };
 
 using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
                                  fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
-TYPED_TEST_CASE(OptimizersTest, MyTypes);
+TYPED_TEST_CASE(OptimisersTest, MyTypes);
 
 template <typename TypeParam>
 std::shared_ptr<fetch::ml::Graph<TypeParam>> PrepareTestGraph(std::string &input_name,
@@ -84,7 +84,7 @@ void PrepareTestDataAndLabels(TypeParam &data, TypeParam &gt)
   gt.Set(3, 0, DataType(5));
 }
 
-TYPED_TEST(OptimizersTest, sgd_optimizer_training)
+TYPED_TEST(OptimisersTest, sgd_optimiser_training)
 {
   using DataType = typename TypeParam::Type;
 
@@ -101,12 +101,12 @@ TYPED_TEST(OptimizersTest, sgd_optimizer_training)
   TypeParam gt;
   PrepareTestDataAndLabels(data, gt);
 
-  // Initialize Optimizer
-  fetch::ml::SGDOptimizer<TypeParam, fetch::ml::ops::MeanSquareError<TypeParam>> optimizer(
-      g, input_name, output_name, learning_rate);
+  // Initialize Optimiser
+  fetch::ml::optimisers::SGDOptimiser<TypeParam, fetch::ml::ops::MeanSquareError<TypeParam>>
+      optimiser(g, input_name, output_name, learning_rate);
 
-  // Do optimizer step
-  DataType loss = optimizer.DoBatch(data, gt);
+  // Do optimiser step
+  DataType loss = optimiser.DoBatch(data, gt);
 
   // Test loss
   EXPECT_NEAR(static_cast<double>(loss), 5.05902, 1e-5);
@@ -119,7 +119,7 @@ TYPED_TEST(OptimizersTest, sgd_optimizer_training)
   EXPECT_NEAR(static_cast<double>(weights[3].At(0, 4)), -0.18362, 1e-5);
 }
 
-TYPED_TEST(OptimizersTest, momentum_optimizer_training)
+TYPED_TEST(OptimisersTest, momentum_optimiser_training)
 {
   using DataType = typename TypeParam::Type;
 
@@ -136,13 +136,13 @@ TYPED_TEST(OptimizersTest, momentum_optimizer_training)
   TypeParam gt;
   PrepareTestDataAndLabels(data, gt);
 
-  // Initialize Optimizer
-  fetch::ml::MomentumOptimizer<TypeParam, fetch::ml::ops::MeanSquareError<TypeParam>> optimizer(
-      g, input_name, output_name, learning_rate);
+  // Initialize Optimiser
+  fetch::ml::optimisers::MomentumOptimiser<TypeParam, fetch::ml::ops::MeanSquareError<TypeParam>>
+      optimiser(g, input_name, output_name, learning_rate);
 
-  // Do 2 optimizer steps to ensure that momentum was applied
-  optimizer.DoBatch(data, gt);
-  DataType loss = optimizer.DoBatch(data, gt);
+  // Do 2 optimiser steps to ensure that momentum was applied
+  optimiser.DoBatch(data, gt);
+  DataType loss = optimiser.DoBatch(data, gt);
 
   // Test loss
   EXPECT_NEAR(static_cast<double>(loss), 1.11945, 1e-5);
@@ -155,7 +155,7 @@ TYPED_TEST(OptimizersTest, momentum_optimizer_training)
   EXPECT_NEAR(static_cast<double>(weights[3].At(0, 4)), -0.18362, 1e-5);
 }
 
-TYPED_TEST(OptimizersTest, adagrad_optimizer_training)
+TYPED_TEST(OptimisersTest, adagrad_optimiser_training)
 {
   using DataType = typename TypeParam::Type;
 
@@ -172,13 +172,13 @@ TYPED_TEST(OptimizersTest, adagrad_optimizer_training)
   TypeParam gt;
   PrepareTestDataAndLabels(data, gt);
 
-  // Initialize Optimizer
-  fetch::ml::AdaGradOptimizer<TypeParam, fetch::ml::ops::MeanSquareError<TypeParam>> optimizer(
-      g, input_name, output_name, learning_rate);
+  // Initialize Optimiser
+  fetch::ml::optimisers::AdaGradOptimiser<TypeParam, fetch::ml::ops::MeanSquareError<TypeParam>>
+      optimiser(g, input_name, output_name, learning_rate);
 
   // Do multiple steps
-  optimizer.DoBatch(data, gt);
-  DataType loss = optimizer.DoBatch(data, gt);
+  optimiser.DoBatch(data, gt);
+  DataType loss = optimiser.DoBatch(data, gt);
 
   // Test loss
   EXPECT_NEAR(static_cast<double>(loss), 4.21152, 1e-5);
@@ -191,7 +191,7 @@ TYPED_TEST(OptimizersTest, adagrad_optimizer_training)
   EXPECT_NEAR(static_cast<double>(weights[3].At(0, 4)), -0.18362, 1e-5);
 }
 
-TYPED_TEST(OptimizersTest, rmsprop_optimizer_training)
+TYPED_TEST(OptimisersTest, rmsprop_optimiser_training)
 {
   using DataType = typename TypeParam::Type;
 
@@ -208,13 +208,13 @@ TYPED_TEST(OptimizersTest, rmsprop_optimizer_training)
   TypeParam gt;
   PrepareTestDataAndLabels(data, gt);
 
-  // Initialize Optimizer
-  fetch::ml::RMSPropOptimizer<TypeParam, fetch::ml::ops::MeanSquareError<TypeParam>> optimizer(
-      g, input_name, output_name, learning_rate);
+  // Initialize Optimiser
+  fetch::ml::optimisers::RMSPropOptimiser<TypeParam, fetch::ml::ops::MeanSquareError<TypeParam>>
+      optimiser(g, input_name, output_name, learning_rate);
 
   // Do multiple steps
-  optimizer.DoBatch(data, gt);
-  DataType loss = optimizer.DoBatch(data, gt);
+  optimiser.DoBatch(data, gt);
+  DataType loss = optimiser.DoBatch(data, gt);
 
   // Test loss
   EXPECT_NEAR(static_cast<double>(loss), 2.58567, 1e-5);
@@ -227,7 +227,7 @@ TYPED_TEST(OptimizersTest, rmsprop_optimizer_training)
   EXPECT_NEAR(static_cast<double>(weights[3].At(0, 4)), -0.18362, 1e-5);
 }
 
-TYPED_TEST(OptimizersTest, adam_optimizer_training)
+TYPED_TEST(OptimisersTest, adam_optimiser_training)
 {
   using DataType = typename TypeParam::Type;
 
@@ -244,13 +244,13 @@ TYPED_TEST(OptimizersTest, adam_optimizer_training)
   TypeParam gt;
   PrepareTestDataAndLabels(data, gt);
 
-  // Initialize Optimizer
-  fetch::ml::AdamOptimizer<TypeParam, fetch::ml::ops::MeanSquareError<TypeParam>> optimizer(
-      g, input_name, output_name, learning_rate);
+  // Initialize Optimiser
+  fetch::ml::optimisers::AdamOptimiser<TypeParam, fetch::ml::ops::MeanSquareError<TypeParam>>
+      optimiser(g, input_name, output_name, learning_rate);
 
   // Do multiple steps
-  optimizer.DoBatch(data, gt);
-  DataType loss = optimizer.DoBatch(data, gt);
+  optimiser.DoBatch(data, gt);
+  DataType loss = optimiser.DoBatch(data, gt);
 
   // Test loss
   EXPECT_NEAR(static_cast<double>(loss), 4.21154, 1e-5);

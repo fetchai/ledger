@@ -99,7 +99,7 @@ public:
     ArrayType gains(output_matrix_.shape());
     gains.Fill(DataType(1));
 
-    // Start optimization
+    // Start optimisation
     for (SizeType iter{0}; iter < max_iters; iter++)
     {
       // Compute output matrix pairwise affinities

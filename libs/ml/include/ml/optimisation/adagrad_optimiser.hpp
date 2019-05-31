@@ -20,29 +20,30 @@
 #include "math/standard_functions/sqrt.hpp"
 #include "ml/graph.hpp"
 #include "ml/ops/loss_functions/criterion.hpp"
-#include "ml/optimization/optimizer.hpp"
+#include "ml/optimisation/optimiser.hpp"
 
 namespace fetch {
 namespace ml {
+namespace optimisers {
 
 /**
- * Adaptive Gradient Algorithm optimizer
+ * Adaptive Gradient Algorithm optimiser
  * i.e. Modified stochastic gradient descent with per-parameter learning rate
  * @tparam T ArrayType
  * @tparam C CriterionType
  */
 template <class T, class C>
-class AdaGradOptimizer : public Optimizer<T, C>
+class AdaGradOptimiser : public Optimiser<T, C>
 {
 public:
   using ArrayType = T;
   using DataType  = typename ArrayType::Type;
   using SizeType  = typename ArrayType::SizeType;
 
-  AdaGradOptimizer(std::shared_ptr<Graph<T>> graph, std::string const &input_node_name,
+  AdaGradOptimiser(std::shared_ptr<Graph<T>> graph, std::string const &input_node_name,
                    std::string const &output_node_name, DataType const &learning_rate,
                    DataType const &epsilon = DataType{1e-8f})
-    : Optimizer<T, C>(graph, input_node_name, output_node_name, learning_rate)
+    : Optimiser<T, C>(graph, input_node_name, output_node_name, learning_rate)
     , epsilon_(epsilon)
   {
     for (auto &train : this->graph_trainables_)
@@ -95,5 +96,6 @@ private:
   DataType               epsilon_;
 };
 
+}  // namespace optimisers
 }  // namespace ml
 }  // namespace fetch

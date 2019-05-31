@@ -20,31 +20,36 @@
 #include "math/standard_functions/sqrt.hpp"
 #include "ml/graph.hpp"
 #include "ml/ops/loss_functions/criterion.hpp"
-#include "ml/optimization/optimizer.hpp"
+#include "optimiser.hpp"
 
 namespace fetch {
 namespace ml {
+namespace optimisers {
 
 /**
- * Root Mean Square Propagation optimizer explained in paper:
+ * Root Mean Square Propagation optimiser explained in paper:
  * https://www.cs.toronto.edu/~tijmen/csc321/slides/lecture_slides_lec6.pdf
  * @tparam T ArrayType
  * @tparam C CriterionType
  */
 template <class T, class C>
-class RMSPropOptimizer : public Optimizer<T, C>
+class RMSPropOptimiser : public Optimiser<T, C>
 {
 public:
   using ArrayType = T;
   using DataType  = typename ArrayType::Type;
   using SizeType  = typename ArrayType::SizeType;
 
-  RMSPropOptimizer(std::shared_ptr<Graph<T>> graph, std::string const &input_node_name,
-                   std::string const &output_node_name, DataType const &learning_rate,
-                   DataType const &decay_rate = DataType{0.9f},
-                   DataType const &epsilon    = DataType{1e-8f})
-    : Optimizer<T, C>(graph, input_node_name, output_node_name, learning_rate)
-    , decay_rate_(decay_rate)
+  RMSPropOptimiser(std::shared_ptr<Graph<T>>
+
+                                      graph,
+                   std::string const &input_node_name, std::string const &output_node_name,
+                   DataType const &learning_rate, DataType const &decay_rate = DataType{0.9f},
+                   DataType const &epsilon = DataType{1e-8f})
+    : Optimiser<T, C>(graph, input_node_name, output_node_name, learning_rate)
+    ,
+
+    decay_rate_(decay_rate)
     , epsilon_(epsilon)
   {
     auto weights = this->graph_->GetWeights();
@@ -103,5 +108,6 @@ private:
   DataType               epsilon_;
 };
 
+}  // namespace optimisers
 }  // namespace ml
 }  // namespace fetch

@@ -18,7 +18,6 @@
 //------------------------------------------------------------------------------
 
 #include "ml/ops/ops.hpp"
-#include <cassert>
 
 namespace fetch {
 namespace ml {

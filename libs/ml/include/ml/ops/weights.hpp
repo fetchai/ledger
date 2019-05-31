@@ -97,8 +97,6 @@ public:
   {
     this->gradient_accumulation_->InlineMultiply(-learning_rate);
     this->output_->InlineAdd(*gradient_accumulation_);
-    // Major DL framework do not do that, but as I can't think of any reason why, I'll leave it here
-    // for convenience. Remove if needed -- Pierre
     ResetGradients();
   }
 
