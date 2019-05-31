@@ -28,7 +28,6 @@
 #include <immintrin.h>
 #include <smmintrin.h>
 
-// ???
 #include "vectorise/sse.hpp"
 
 namespace fetch {
