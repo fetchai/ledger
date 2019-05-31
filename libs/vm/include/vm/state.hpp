@@ -136,7 +136,7 @@ inline IoObserverInterface::Status WriteHelper(std::string const &name, Ptr<Obje
   return io.Write(name, buffer.data().pointer(), buffer.data().size());
 }
 
-template <typename T, typename = void>
+template <typename T>
 class State : public IState
 {
 public:
