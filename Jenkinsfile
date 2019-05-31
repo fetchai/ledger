@@ -31,10 +31,10 @@ enum Configuration
   public final String label
 }
 
-// Only execute long-running tests on develop and merge branches
+// Only execute long-running tests on master and merge branches
 def should_run_slow_tests()
 {
-  return BRANCH_NAME == 'develop' || BRANCH_NAME ==~ /^PR-\d+-merge$/
+  return BRANCH_NAME == 'master' || BRANCH_NAME ==~ /^PR-\d+-merge$/
 }
 
 def static_analysis()
