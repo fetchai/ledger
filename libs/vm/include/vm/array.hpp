@@ -28,8 +28,8 @@ namespace vm {
 class IArray : public Object
 {
 public:
-  IArray()          = delete;
-  virtual ~IArray() = default;
+  IArray()           = delete;
+  ~IArray() override = default;
   static Ptr<IArray> Constructor(VM *vm, TypeId type_id, int32_t size);
 
   virtual int32_t           Count() const                     = 0;
@@ -57,17 +57,16 @@ struct Array : public IArray
 {
   using ElementType = typename GetStorageType<T>::type;
 
-  Array()          = delete;
-  virtual ~Array() = default;
+  Array()           = delete;
+  ~Array() override = default;
 
   Array(VM *vm, TypeId type_id, TypeId element_type_id__, int32_t size)
     : IArray(vm, type_id)
-  {
-    element_type_id = element_type_id__;
-    elements        = std::vector<ElementType>(size_t(size), 0);
-  }
+    , element_type_id(element_type_id__)
+    , elements(static_cast<std::size_t>(size), ElementType(0))
+  {}
 
-  virtual int32_t Count() const override
+  int32_t Count() const override
   {
     return int32_t(elements.size());
   }
@@ -180,7 +179,7 @@ struct Array : public IArray
     std::reverse(elements.begin(), elements.end());
   }
 
-  virtual TemplateParameter GetIndexedValue(AnyInteger const &index) override
+  TemplateParameter GetIndexedValue(AnyInteger const &index) override
   {
     ElementType *ptr = Find(index);
     if (ptr)
@@ -191,7 +190,7 @@ struct Array : public IArray
     return TemplateParameter();
   }
 
-  virtual void SetIndexedValue(AnyInteger const &index, TemplateParameter const &value) override
+  void SetIndexedValue(AnyInteger const &index, TemplateParameter const &value) override
   {
     ElementType *ptr = Find(index);
     if (ptr)
@@ -296,7 +295,8 @@ inline Ptr<IArray> IArray::Constructor(VM *vm, TypeId type_id, int32_t size)
   if (size < 0)
   {
     vm->RuntimeError("negative size");
-    return Ptr<IArray>();
+
+    return nullptr;
   }
   return Construct(vm, type_id, size);
 }
