@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "ledger/chain/block.hpp"
+
 #include "core/serializers/byte_array_buffer.hpp"
 #include "crypto/merkle_tree.hpp"
 #include "crypto/sha256.hpp"

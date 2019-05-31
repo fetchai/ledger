@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "ml/ops/embeddings.hpp"
+
 #include "math/fixed_point/fixed_point.hpp"
 #include "math/tensor.hpp"
 

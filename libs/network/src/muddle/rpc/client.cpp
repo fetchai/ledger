@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "network/muddle/rpc/client.hpp"
+
 #include "core/threading.hpp"
 
 #include <list>

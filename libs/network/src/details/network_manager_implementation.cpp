@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "network/details/network_manager_implementation.hpp"
+
 #include "core/threading.hpp"
 
 namespace fetch {

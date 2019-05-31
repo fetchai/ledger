@@ -17,8 +17,10 @@
 //------------------------------------------------------------------------------
 
 #include "ml/layers/convolution_1d.hpp"
+
 #include "math/fixed_point/fixed_point.hpp"
 #include "math/tensor.hpp"
+
 #include <gtest/gtest.h>
 
 template <typename T>

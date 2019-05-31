@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "http/https_client.hpp"
+
 #include "core/logger.hpp"
 #include "http/request.hpp"
 #include "http/response.hpp"

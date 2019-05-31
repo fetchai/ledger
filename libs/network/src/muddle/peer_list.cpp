@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "network/muddle/peer_list.hpp"
+
 #include "core/serializers/byte_array_buffer.hpp"
 #include "core/service_ids.hpp"
 #include "network/muddle/packet.hpp"
