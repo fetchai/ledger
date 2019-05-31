@@ -216,7 +216,6 @@ def get_targets_cmake() -> map:
             command = match.group(1)
             target = os.path.basename(command)
 
-            # print('???', target, command)
             targets[target] = command
 
     if len(targets) == 0:

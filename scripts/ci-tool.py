@@ -274,6 +274,7 @@ def test_project(build_root, include_regex=None, exclude_regex=None):
 
 def test_end_to_end(project_root, build_root):
     from end_to_end_test import run_end_to_end_test
+
     yaml_file = os.path.join(
         project_root, "scripts/end_to_end_test/end_to_end_test.yaml")
 
@@ -286,6 +287,8 @@ def test_end_to_end(project_root, build_root):
     # should be the location of constellation exe - if not the test will catch
     constellation_exe = os.path.join(
         build_root, "apps/constellation/constellation")
+
+    clean_files(build_root)
 
     run_end_to_end_test.run_test(build_root, yaml_file, constellation_exe)
 

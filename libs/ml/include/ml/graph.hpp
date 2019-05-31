@@ -263,7 +263,7 @@ std::vector<ArrayType> Graph<ArrayType>::GetWeights() const
   {
     ret.emplace_back(t.second->GetWeights());
   }
-  return ret;
+  return std::move(ret);
 }
 
 /**
@@ -280,7 +280,7 @@ std::vector<ArrayType> Graph<ArrayType>::GetGradients() const
   {
     ret.emplace_back(t.second->Gradients());
   }
-  return ret;
+  return std::move(ret);
 }
 
 /**
@@ -389,7 +389,7 @@ std::string Graph<ArrayType>::UpdateVariableName(std::string const &name)
 }
 
 /**
- * Assigns all trainable pointers to vector for optimizer purpose
+ * Assigns all trainable pointers to vector for optimiser purpose
  * @return ret is vector containing pointers to all trainables
  */
 template <typename ArrayType>
@@ -402,7 +402,7 @@ Graph<ArrayType>::GetTrainables()
   {
     ret.emplace_back(t.second);
   }
-  return ret;
+  return std::move(ret);
 }
 
 }  // namespace ml

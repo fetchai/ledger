@@ -28,10 +28,10 @@ VM::VM(Module *module)
 {
   FunctionInfoArray function_info_array;
   module->GetDetails(type_info_array_, type_info_map_, registered_types_, function_info_array);
-  uint16_t num_types     = uint16_t(type_info_array_.size());
-  uint16_t num_functions = uint16_t(function_info_array.size());
-  uint16_t num_opcodes   = uint16_t(Opcodes::NumReserved + num_functions);
-  opcode_info_array_     = OpcodeInfoArray(num_opcodes);
+  auto num_types     = static_cast<uint16_t>(type_info_array_.size());
+  auto num_functions = static_cast<uint16_t>(function_info_array.size());
+  auto num_opcodes   = static_cast<uint16_t>(Opcodes::NumReserved + num_functions);
+  opcode_info_array_ = OpcodeInfoArray(num_opcodes);
 
   AddOpcodeInfo(Opcodes::VariableDeclare, "VariableDeclare",
                 [](VM *vm) { vm->Handler__VariableDeclare(); });
@@ -164,7 +164,7 @@ VM::VM(Module *module)
   opcode_map_.clear();
   for (uint16_t i = 0; i < num_functions; ++i)
   {
-    uint16_t    opcode = uint16_t(Opcodes::NumReserved + i);
+    auto        opcode = static_cast<uint16_t>(Opcodes::NumReserved + i);
     auto const &info   = function_info_array[i];
     AddOpcodeInfo(opcode, info.unique_id, info.handler);
     opcode_map_[info.unique_id] = opcode;
@@ -224,7 +224,7 @@ bool VM::Execute(std::string &error, Variant &output)
     }
   } while (!stop_);
 
-  bool const ok = error_.empty();
+  bool const ok = !HasError();
 
   // Remove the executable's strings
   strings_.clear();

@@ -44,7 +44,7 @@ public:
   virtual ~CrossEntropy() = default;
 
   /**
-   * @param inputs vector of 2 one-hot Tensors
+   * @param inputs vector of 2 Tensors
    * @return CrossEntropy value of 2 inputs
    */
   virtual DataType Forward(std::vector<ArrayType> const &inputs)
@@ -58,7 +58,7 @@ public:
   }
 
   /**
-   * @param inputs vector of 2 one-hot Tensors
+   * @param inputs vector of 2 Tensors
    * @return gradient of CrossEntropy of 2 inputs
    */
 

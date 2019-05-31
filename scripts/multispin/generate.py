@@ -1,4 +1,3 @@
-
 def make_codes(N, TB):
     B = N * TB
     for i in range(N):

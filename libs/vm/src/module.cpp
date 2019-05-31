@@ -159,8 +159,8 @@ Module::Module()
   auto istring = GetClassInterface<String>();
   istring.CreateMemberFunction("length", &String::Length);
   istring.CreateMemberFunction("trim", &String::Trim);
-  istring.CreateMemberFunction<int32_t, Ptr<String> const &>("find", &String::Find);
-  istring.CreateMemberFunction<Ptr<String>, int32_t, int32_t>("substr", &String::Substring);
+  istring.CreateMemberFunction("find", &String::Find);
+  istring.CreateMemberFunction("substr", &String::Substring);
   istring.CreateMemberFunction("reverse", &String::Reverse);
 
   auto imatrix = GetClassInterface<IMatrix>();
@@ -172,7 +172,7 @@ Module::Module()
   auto iarray = GetClassInterface<IArray>();
   iarray.CreateConstuctor<int32_t>();
   iarray.CreateMemberFunction("count", &IArray::Count);
-  iarray.CreateMemberFunction<void, TemplateParameter const &>("append", &IArray::Append);
+  iarray.CreateMemberFunction("append", &IArray::Append);
   iarray.CreateMemberFunction("pop_back", &IArray::PopBackOne);
   iarray.CreateMemberFunction("pop_back", &IArray::PopBackMany);
   iarray.CreateMemberFunction("pop_front", &IArray::PopFrontOne);
