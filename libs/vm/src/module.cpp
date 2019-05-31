@@ -204,8 +204,8 @@ Module::Module()
   address.CreateMemberFunction("signed_tx", &Address::HasSignedTx);
 
   auto istate = GetClassInterface<IState>();
-  istate.CreateConstuctor<Ptr<String>, TemplateParameter1>();
-  istate.CreateConstuctor<Ptr<Address>, TemplateParameter1>();
+  istate.CreateConstuctor<Ptr<String>, TemplateParameter>();
+  istate.CreateConstuctor<Ptr<Address>, TemplateParameter>();
   istate.CreateMemberFunction("get", &IState::Get);
   istate.CreateMemberFunction("set", &IState::Set);
   istate.CreateMemberFunction("existed", &IState::Existed);

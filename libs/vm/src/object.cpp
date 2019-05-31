@@ -116,143 +116,143 @@ std::size_t Object::GetHashCode()
 
 bool Object::IsEqual(Ptr<Object> const & /* lhso */, Ptr<Object> const & /* rhso */)
 {
-  RuntimeError("IsEqual operator not implemented");
+  RuntimeError(std::string(__func__) + "operator not implemented");
   return false;
 }
 
 bool Object::IsNotEqual(Ptr<Object> const & /* lhso */, Ptr<Object> const & /* rhso */)
 {
-  RuntimeError("IsNotEqual operator not implemented");
+  RuntimeError(std::string(__func__) + "operator not implemented");
   return false;
 }
 
 bool Object::IsLessThan(Ptr<Object> const & /* lhso */, Ptr<Object> const & /* rhso */)
 {
-  RuntimeError("IsLessThan operator not implemented");
+  RuntimeError(std::string(__func__) + "operator not implemented");
   return false;
 }
 
 bool Object::IsLessThanOrEqual(Ptr<Object> const & /* lhso */, Ptr<Object> const & /* rhso */)
 {
-  RuntimeError("IsLessThanOrEqual operator not implemented");
+  RuntimeError(std::string(__func__) + "operator not implemented");
   return false;
 }
 
 bool Object::IsGreaterThan(Ptr<Object> const & /* lhso */, Ptr<Object> const & /* rhso */)
 {
-  RuntimeError("IsGreaterThan operator not implemented");
+  RuntimeError(std::string(__func__) + "operator not implemented");
   return false;
 }
 
 bool Object::IsGreaterThanOrEqual(Ptr<Object> const & /* lhso */, Ptr<Object> const & /* rhso */)
 {
-  RuntimeError("IsGreaterThanOrEqual operator not implemented");
+  RuntimeError(std::string(__func__) + "operator not implemented");
   return false;
 }
 
 void Object::Negate(Ptr<Object> & /* object */)
 {
-  RuntimeError("UnaryMinus operator not implemented");
+  RuntimeError(std::string(__func__) + "operator not implemented");
 }
 
 void Object::Add(Ptr<Object> & /* lhso */, Ptr<Object> & /* rhso */)
 {
-  RuntimeError("Add operator not implemented");
+  RuntimeError(std::string(__func__) + "operator not implemented");
 }
 
 void Object::LeftAdd(Variant & /* lhsv */, Variant & /* objectv */)
 {
-  RuntimeError("LeftAdd operator not implemented");
+  RuntimeError(std::string(__func__) + "operator not implemented");
 }
 
 void Object::RightAdd(Variant & /* objectv */, Variant & /* rhsv */)
 {
-  RuntimeError("RightAdd operator not implemented");
+  RuntimeError(std::string(__func__) + "operator not implemented");
 }
 
 void Object::InplaceAdd(Ptr<Object> const & /* lhso */, Ptr<Object> const & /* rhso */)
 {
-  RuntimeError("AddAssign operator not implemented");
+  RuntimeError(std::string(__func__) + "operator not implemented");
 }
 
 void Object::InplaceRightAdd(Ptr<Object> const & /* lhso */, Variant const & /* rhsv */)
 {
-  RuntimeError("RightAddAssign operator not implemented");
+  RuntimeError(std::string(__func__) + "operator not implemented");
 }
 
 void Object::Subtract(Ptr<Object> & /* lhso */, Ptr<Object> & /* rhso */)
 {
-  RuntimeError("Subtract operator not implemented");
+  RuntimeError(std::string(__func__) + "operator not implemented");
 }
 
 void Object::LeftSubtract(Variant & /* lhsv */, Variant & /* objectv */)
 {
-  RuntimeError("LeftSubtract operator not implemented");
+  RuntimeError(std::string(__func__) + "operator not implemented");
 }
 
 void Object::RightSubtract(Variant & /* objectv */, Variant & /* rhsv */)
 {
-  RuntimeError("RightSubtract operator not implemented");
+  RuntimeError(std::string(__func__) + "operator not implemented");
 }
 
 void Object::InplaceSubtract(Ptr<Object> const & /* lhso */, Ptr<Object> const & /* rhso */)
 {
-  RuntimeError("SubtractAssign operator not implemented");
+  RuntimeError(std::string(__func__) + "operator not implemented");
 }
 
 void Object::InplaceRightSubtract(Ptr<Object> const & /* lhso */, Variant const & /* rhsv */)
 {
-  RuntimeError("RightSubtractAssign operator not implemented");
+  RuntimeError(std::string(__func__) + "operator not implemented");
 }
 
 void Object::Multiply(Ptr<Object> & /* lhso */, Ptr<Object> & /* rhso */)
 {
-  RuntimeError("Multiply operator not implemented");
+  RuntimeError(std::string(__func__) + "operator not implemented");
 }
 
 void Object::LeftMultiply(Variant & /* lhsv */, Variant & /* objectv */)
 {
-  RuntimeError("LeftMultiply operator not implemented");
+  RuntimeError(std::string(__func__) + "operator not implemented");
 }
 
 void Object::RightMultiply(Variant & /* objectv */, Variant & /* rhsv */)
 {
-  RuntimeError("RightMultiply operator not implemented");
+  RuntimeError(std::string(__func__) + "operator not implemented");
 }
 
 void Object::InplaceMultiply(Ptr<Object> const & /* lhso */, Ptr<Object> const & /* rhso */)
 {
-  RuntimeError("MultiplyAssign operator not implemented");
+  RuntimeError(std::string(__func__) + "operator not implemented");
 }
 
 void Object::InplaceRightMultiply(Ptr<Object> const & /* lhso */, Variant const & /* rhsv */)
 {
-  RuntimeError("RightMultiplyAssign operator not implemented");
+  RuntimeError(std::string(__func__) + "operator not implemented");
 }
 
 void Object::Divide(Ptr<Object> & /* lhso */, Ptr<Object> & /* rhso */)
 {
-  RuntimeError("Divide operator not implemented");
+  RuntimeError(std::string(__func__) + "operator not implemented");
 }
 
 void Object::LeftDivide(Variant & /* lhsv */, Variant & /* objectv */)
 {
-  RuntimeError("LeftDivide operator not implemented");
+  RuntimeError(std::string(__func__) + "operator not implemented");
 }
 
 void Object::RightDivide(Variant & /* objectv */, Variant & /* rhsv */)
 {
-  RuntimeError("RightDivide operator not implemented");
+  RuntimeError(std::string(__func__) + "operator not implemented");
 }
 
 void Object::InplaceDivide(Ptr<Object> const & /* lhso */, Ptr<Object> const & /* rhso */)
 {
-  RuntimeError("DivideAssign operator not implemented");
+  RuntimeError(std::string(__func__) + "operator not implemented");
 }
 
 void Object::InplaceRightDivide(Ptr<Object> const & /* lhso*/, Variant const & /* rhsv */)
 {
-  RuntimeError("RightDivideAssign operator not implemented");
+  RuntimeError(std::string(__func__) + "operator not implemented");
 }
 
 bool Object::SerializeTo(ByteArrayBuffer &buffer)
