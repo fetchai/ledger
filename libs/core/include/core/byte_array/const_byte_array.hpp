@@ -168,7 +168,7 @@ public:
     return !(*this == other);
   }
 
-  constexpr std::size_t capacity() const noexcept
+  constexpr std::size_t const &capacity() const noexcept
   {
     return data_.size();
   }
@@ -227,7 +227,7 @@ public:
     return position ? static_cast<std::size_t>(position - arr_pointer_) : NPOS;
   }
 
-  constexpr std::size_t size() const noexcept
+  constexpr std::size_t const &size() const noexcept
   {
     return length_;
   }

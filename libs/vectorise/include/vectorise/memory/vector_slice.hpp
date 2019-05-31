@@ -185,17 +185,17 @@ public:
     return v;
   }
 
-  constexpr std::size_t simd_size() const noexcept
+  constexpr SizeType simd_size() const noexcept
   {
     return (size_) >> E_LOG_SIMD_COUNT;
   }
 
-  constexpr std::size_t size() const noexcept
+  constexpr SizeType const &size() const noexcept
   {
     return size_;
   }
 
-  constexpr std::size_t padded_size() const noexcept
+  constexpr SizeType padded_size() const noexcept
   {
     std::size_t padded = std::size_t((size_) >> E_LOG_SIMD_COUNT) << E_LOG_SIMD_COUNT;
     if (padded < size_)
@@ -215,7 +215,7 @@ public:
     return pointer_;
   }
 
-  constexpr SizeType size() noexcept
+  constexpr SizeType const &size() noexcept
   {
     return size_;
   }

@@ -74,7 +74,7 @@ template <typename T>
 static constexpr bool IsNullPtr = std::is_null_pointer<T>::value;
 
 template <class C>
-static constexpr bool IsPOD = std::is_trivial<C>::value &&std::is_standard_layout<C>::value;
+static constexpr bool IsPOD = type_util::SatisfiesAllV<C, std::is_trivial, std::is_standard_layout>;
 
 template <typename T>
 using Decay = typename std::decay<T>::type;
