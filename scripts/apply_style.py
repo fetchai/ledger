@@ -17,7 +17,6 @@ import fnmatch
 import multiprocessing
 import os
 import re
-import shutil
 import subprocess
 import sys
 import threading
@@ -95,6 +94,27 @@ LICENSE = """//-----------------------------------------------------------------
 
 """.format(CURRENT_YEAR)
 
+SUPPORTED_LANGUAGES = {
+    'cpp': {
+        'cmd_prefix': [
+            'clang-format',
+            '-style=file'
+        ],
+        'filename_patterns': ('*.cpp', '*.hpp')
+    },
+    'cmake': {
+        'cmd_prefix': [
+            'python3',
+            '-m',
+            'cmake_format',
+            '--separate-ctrl-name-with-space',
+            '--line-width', '100',
+            '-'
+        ],
+        'filename_patterns': ('*.cmake', 'CMakeLists.txt')
+    }
+}
+
 NUM_FILES_PROCESSEFD_SO_FAR = 0  # Global variable
 TOTAL_FILES_TO_PROCESS = 0  # Global variable
 
@@ -134,51 +154,6 @@ def include_patterns(*filename_patterns):
 
 def has_include_guard(text):
     return text.startswith(INCLUDE_GUARD)
-
-
-def find_clang_format():
-    name = 'clang-format'
-
-    # try and find the executable
-    path = shutil.which(name)
-    if path is not None:
-        return path
-
-    output('Unable to find clang-format using \'which\' attempting manual search...')
-
-    # try and manually perform the search
-    for prefix in ('/usr/bin', '/usr/local/bin'):
-        potential_path = join(prefix, name)
-        if isfile(potential_path):
-            output('Found potential candidate: {}'.format(potential_path))
-            if os.access(potential_path, os.X_OK):
-                output('Found candidate: {}'.format(potential_path))
-                return potential_path
-
-    output('Unable to locate clang-format tool')
-    sys.exit(1)
-
-
-SUPPORTED_LANGUAGES = {
-    'cpp': {
-        'cmd_prefix': [
-            find_clang_format(),
-            '-style=file'
-        ],
-        'filename_patterns': ('*.cpp', '*.hpp')
-    },
-    'cmake': {
-        'cmd_prefix': [
-            'python3',
-            '-m',
-            'cmake_format',
-            '--separate-ctrl-name-with-space',
-            '--line-width', '100',
-            '-'
-        ],
-        'filename_patterns': ('*.cmake', 'CMakeLists.txt')
-    }
-}
 
 
 def walk_source_directories(project_root, excluded_dirs):
