@@ -178,8 +178,8 @@ public:
   }
 
   /**
-   * exports the weight Array
-   * @return
+   * exports the weight values Array
+   * @return const reference to internal values Array
    */
   ArrayType const &GetWeights() const
   {
@@ -187,8 +187,8 @@ public:
   }
 
   /**
-   *exports the weight gradients Array
-   * @return
+   * exports the weight gradients Array
+   * @return const reference to internal accumulated gradient Array
    */
   ArrayType const &Gradients() const
   {

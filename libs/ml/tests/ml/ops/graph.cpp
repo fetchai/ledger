@@ -271,8 +271,6 @@ TYPED_TEST(GraphTest, diamond_graph_backward)  // output=(input1*input2)-(input1
 
 TYPED_TEST(GraphTest, diamond_graph_getStateDict)
 {
-  using DataType = typename TypeParam::Type;
-  //    using SizeType  = typename TypeParam::SizeType;
   using ArrayType = TypeParam;
 
   // Generate input
@@ -300,11 +298,16 @@ TYPED_TEST(GraphTest, diamond_graph_getStateDict)
   g.SetInput(input_name1, data1);
   g.SetInput(input_name2, data2);
 
-  std::vector<TypeParam> weights = g.GetWeights();
+  // Get statedict
+  fetch::ml::StateDict<TypeParam> sd = g.StateDict();
 
-  EXPECT_EQ(weights.size(), 2);
-  ASSERT_TRUE(
-      weights[0].AllClose(data2, static_cast<DataType>(1e-5f), static_cast<DataType>(1e-5f)));
-  ASSERT_TRUE(
-      weights[1].AllClose(data1, static_cast<DataType>(1e-5f), static_cast<DataType>(1e-5f)));
+  // Test weights
+  EXPECT_EQ(sd.weights_, nullptr);
+  EXPECT_EQ(sd.dict_.size(), 2);
+
+  ASSERT_NE(sd.dict_["Diamond_Weight1"].weights_, nullptr);
+  EXPECT_EQ(sd.dict_["Diamond_Weight1"].weights_->shape(), data1.shape());
+
+  ASSERT_NE(sd.dict_["Diamond_Weight2"].weights_, nullptr);
+  EXPECT_EQ(sd.dict_["Diamond_Weight2"].weights_->shape(), data2.shape());
 }
