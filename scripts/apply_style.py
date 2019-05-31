@@ -3,30 +3,32 @@
 #
 # CODE STYLE SCRIPT
 #
-# This script is used to run the clang-format based code style checks on the project.
+# This script is used to run check and enforce a consistent code style in the
+# project files.
 #
-# It can be run simply with the following command:
+# For usage instructions, run
 #
-# ./scripts/apply_style.py
-#
-# By default the script will "fix" all style issues that it finds. However, if the user
-# only requires warning of the style issues then it is recommended to use the `-w` and
-# `-a` options.
+#   ./scripts/apply_style.py --help
 #
 
 import argparse
+import autopep8
 import fnmatch
 import multiprocessing
 import os
-import re
 import shutil
 import subprocess
 import sys
 import threading
+import traceback
 from concurrent.futures import ThreadPoolExecutor
-from os.path import abspath, dirname, join
+from functools import wraps
+from os.path import abspath, basename, dirname, isdir, isfile, join
 
 PROJECT_ROOT = abspath(dirname(dirname(__file__)))
+CHECKED_IN_BINARY_FILE_PATTERNS = ('*.png', '*.npy')
+INCLUDE_GUARD = '#pragma once'
+DISALLOWED_HEADER_FILE_EXTENSIONS = ('*.h', '*.hxx', '*.hh')
 
 
 def find_excluded_dirs():
@@ -37,14 +39,14 @@ def find_excluded_dirs():
         direct_subdirectories = os.listdir(PROJECT_ROOT)
 
         return [name for name in direct_subdirectories
-                if os.path.isfile(join(get_abspath(name), 'CMakeCache.txt'))]
+                if isfile(join(get_abspath(name), 'CMakeCache.txt'))]
 
     directories_to_exclude = ['.git', 'vendor'] + \
         cmake_build_tree_roots()
 
     return [get_abspath(name)
             for name in directories_to_exclude
-            if os.path.isdir(get_abspath(name))]
+            if isdir(get_abspath(name))]
 
 
 EXCLUDED_DIRS = find_excluded_dirs()
@@ -63,7 +65,7 @@ def find_clang_format():
     # try and manually perform the search
     for prefix in ('/usr/bin', '/usr/local/bin'):
         potential_path = join(prefix, name)
-        if os.path.isfile(potential_path):
+        if isfile(potential_path):
             output('Found potential candidate: {}'.format(potential_path))
             if os.access(potential_path, os.X_OK):
                 output('Found candidate: {}'.format(potential_path))
@@ -77,8 +79,7 @@ SUPPORTED_LANGUAGES = {
     'cpp': {
         'cmd_prefix': [
             find_clang_format(),
-            '-style=file',
-            '-i'
+            '-style=file'
         ],
         'filename_patterns': ('*.cpp', '*.hpp')
     },
@@ -89,13 +90,14 @@ SUPPORTED_LANGUAGES = {
             'cmake_format',
             '--separate-ctrl-name-with-space',
             '--line-width', '100',
-            '--in-place'
+            '-'
         ],
         'filename_patterns': ('*.cmake', 'CMakeLists.txt')
     }
 }
 
 output_lock = threading.Lock()
+file_count_lock = threading.Lock()
 
 
 def output(text):
@@ -104,227 +106,203 @@ def output(text):
         sys.stdout.flush()
 
 
-def parse_commandline():
-    parser = argparse.ArgumentParser()
-
-    parser.add_argument(
-        '-d',
-        '--diff',
-        action='store_true',
-        help='Exit with error and print diff if there are changes')
-    parser.add_argument(
-        '-j',
-        dest='jobs',
-        type=int,
-        default=multiprocessing.cpu_count(),
-        help='The number of jobs to do in parallel')
-    parser.add_argument(
-        '-a', '--all', dest='all', action='store_true',
-        help='Evaluate all files, do not stop on first failure')
-    parser.add_argument(
-        '-b',
-        '--embrace',
-        dest='dont_goto_fail',
-        action='store_true',
-        help='Put single-statement then/else clauses and loop bodies in braces')
-    parser.add_argument(
-        '-n',
-        '--names-only',
-        dest='names_only',
-        action='store_true',
-        help='In warn-only mode, only list names of files to be formatted')
-    parser.add_argument(
-        'filename',
-        metavar='<filename>',
-        action='store',
-        nargs='*',
-        help='process only <filename>s (default: the whole project tree)')
-
-    return parser.parse_args()
-
-
-blocks = re.compile(r'( *)(?:if|while|for|else)\b')
-indentation = re.compile(r' *')
-is_long = re.compile(r'(.*)\\$')
-is_empty = re.compile(r'\s*(?://.*)?$')
-
-
-def opening(level):
-    return ' ' * level + '{'
-
-
-def closing(level):
-    return ' ' * level + '}'
-
-
-def block_entry(level):
-    return re.compile(opening(level) + '.*')
-
-
-def extra_line(line_text, padding):
-    if padding:
-        return line_text + ' ' * (padding - len(line_text)) + '\\'
-    else:
-        return line_text
-
-
-def postprocess(lines):
-    """ Scans an array of clang-formatted strings and tries to turn any single statement
-    that is either a then/else clause of an if-statement or a for/while loop body
-    into a braced block."""
-
-    # These two arrays are tightly coupled.
-    levels = []
-    unbraced = []
-
-    empties = []
-    in_long = None
-
-    for line in lines:
-        if is_empty.match(line):
-            empties.append(line)
-        else:
-            if levels:
-                recent_level = levels[-1]
-                if block_entry(recent_level).match(line):
-                    unbraced[-1] = False
-                else:
-                    level = len(indentation.match(line)[0])
-                    if level == recent_level + 2:
-                        if unbraced[-1]:
-                            yield extra_line(' ' * recent_level + '{', in_long)
-                    elif level <= recent_level:
-                        while unbraced and level <= recent_level:
-                            levels.pop()
-                            if unbraced.pop():
-                                yield extra_line(closing(recent_level), in_long)
-                            if levels:
-                                recent_level = levels[-1]
-            match = blocks.match(line)
-            if match:
-                levels.append(len(match[1]))
-                unbraced.append(True)
-            if empties:
-                for e in empties:
-                    yield e
-                empties.clear()
-            yield line
-            match = is_long.match(line)
-            in_long = match and len(match[1])
-
-    if empties:
-        for e in empties:
-            yield e
-        empties.clear()
-
-
-def postprocess_contents(contents):
-    """ Applies postprocess() to source code in a string."""
-
-    return '\n'.join(postprocess(contents.split('\n')))
-
-
-def postprocess_file(filename):
-    """ Applies postprocess() to file's content in-place."""
-
-    with open(filename, 'r') as source:
-        contents = source.read()
-    with open(filename, 'w') as destination:
-        destination.writelines(postprocess_contents(contents))
-
-
-def walk_source_directories():
-    for root, _, files in os.walk(PROJECT_ROOT):
-        if any([os.path.commonpath([root, excluded_dir]) == excluded_dir for excluded_dir in EXCLUDED_DIRS]):
+def walk_source_directories(project_root, excluded_dirs):
+    """Walk directory tree, skip listed subtrees"""
+    for root, _, files in os.walk(project_root):
+        if any([os.path.commonpath([root, excluded_dir]) == excluded_dir for excluded_dir in excluded_dirs]):
             continue
 
         yield root, _, files
 
 
-def project_sources(patterns):
-    for root, _, files in walk_source_directories():
-        for pattern in patterns:
-            for file in fnmatch.filter(files, pattern):
-                source_path = join(root, file)
-                yield source_path
+def include_patterns(*filename_patterns):
+    def decorator(func):
+        @wraps(func)
+        def wrapper(text, path_to_file):
+            if any([fnmatch.fnmatch(basename(path_to_file), pattern) for pattern in filename_patterns]):
+                return func(text, path_to_file)
+            else:
+                return text
+
+        return wrapper
+
+    return decorator
 
 
-def format_language(args, cmd_prefix, filename_patterns):
-    def apply_style_to_file(source_path):
-        # apply twice to allow the changes to "settle"
-        subprocess.check_call(cmd_prefix + [source_path], cwd=PROJECT_ROOT)
-        subprocess.check_call(cmd_prefix + [source_path], cwd=PROJECT_ROOT)
+def format_language(cmd_prefix, filename_patterns):
+    @include_patterns(*filename_patterns)
+    def reformat_as_pipe(text, path_to_file):
+        input_bytes = text.encode()
 
-        if args.dont_goto_fail:
-            postprocess_file(source_path)
+        # Process twice for changes to 'settle'
+        for _ in range(2):
+            p = subprocess.Popen(
+                cmd_prefix,
+                stdout=subprocess.PIPE,
+                stdin=subprocess.PIPE,
+                cwd=PROJECT_ROOT)
+            input_bytes = p.communicate(input=input_bytes)[0]
 
-    if args.names_only:
-        output('Files to reformat:')
+        return input_bytes.decode('utf-8')
 
-    processed_files = args.filename or project_sources(filename_patterns)
-
-    with ThreadPoolExecutor(max_workers=args.jobs) as pool:
-        result = pool.map(apply_style_to_file, processed_files)
-
-        if args.all:
-            result = list(result)
-
-        all(result)
+    return reformat_as_pipe
 
 
-def format_python(args):
-    jobs_arg = ['-j {}'.format(args.jobs)]
+@include_patterns('*.py')
+def format_python(text, path_to_file):
+    if text.strip():
+        return autopep8.fix_code(text)
 
-    autopep8_cmd = ['autopep8', '.', '--in-place', '--recursive',
-                    '--exclude', 'vendor'] + jobs_arg
-
-    subprocess.check_call(autopep8_cmd, cwd=PROJECT_ROOT)
+    return text.strip()
 
 
 def get_diff():
     return subprocess.check_output(['git', 'diff'], cwd=PROJECT_ROOT).decode().strip()
 
 
-def fix_missing_include_guards():
-    for root, dirs, files in walk_source_directories():
-        invalid_header_file_name_groups_in_this_dir = [fnmatch.filter(files, pattern) for pattern in
-                                                       ('*.h', '*.hxx', '*.hh')]
+@include_patterns('*.hpp')
+def fix_missing_include_guards(text, path_to_file):
+    if not text.startswith(INCLUDE_GUARD):
+        return '{}\n{}'.format(INCLUDE_GUARD, text)
 
-        if any([len(match) > 0 for match in invalid_header_file_name_groups_in_this_dir]):
-            output("Error: Fetch header files should have the extension *.hpp")
-            for group in invalid_header_file_name_groups_in_this_dir:
-                for file in group:
-                    output(abspath(join(root, file)))
-            sys.exit(1)
+    return text
 
-        for file in fnmatch.filter(files, '*.hpp'):
-            INCLUDE_GUARD_LINE = '#pragma once\n'
-            with open(os.path.join(root, file), 'r+', encoding='utf-8') as f:
-                first_line = f.readline()
-                if not first_line == INCLUDE_GUARD_LINE:
-                    f.seek(0)
-                    text = f.read()
-                    f.seek(0)
-                    f.write(INCLUDE_GUARD_LINE + text)
+
+@include_patterns('*')
+def fix_terminal_newlines(text, path_to_file):
+    if len(text) and text[-1] != '\n':
+        return text + '\n'
+
+    return text
+
+
+TRANSFORMATIONS = [
+    fix_missing_include_guards,
+    fix_terminal_newlines,
+    format_language(**SUPPORTED_LANGUAGES['cpp']),
+    format_language(**SUPPORTED_LANGUAGES['cmake']),
+    format_python
+]
+
+NUM_PROCESSED_FILES = 0
+TOTAL_FILES_TO_PROCESS = 0
+
+
+def apply_transformations_to_file(path_to_file):
+    global NUM_PROCESSED_FILES
+    global TOTAL_FILES_TO_PROCESS
+
+    try:
+        with open(path_to_file, 'r+', encoding='utf-8') as f:
+            original_text = f.read()
+            text = original_text
+
+            for transformation in TRANSFORMATIONS:
+                text = transformation(text, path_to_file)
+
+            if text != original_text:
+                f.seek(0)
+                f.truncate(0)
+                f.write(text)
+
+        with file_count_lock:
+            NUM_PROCESSED_FILES += 1
+            if NUM_PROCESSED_FILES % 100 == 0:
+                output('Processed {}\t of {} files'.format(
+                    NUM_PROCESSED_FILES, TOTAL_FILES_TO_PROCESS))
+
+    except:
+        output(traceback.format_exc())
+
+
+def check_for_headers_with_non_hpp_extension(file_paths):
+    invalid_file_groups = [fnmatch.filter(
+        file_paths, pattern) for pattern in DISALLOWED_HEADER_FILE_EXTENSIONS]
+
+    invalid_files = [file for group in invalid_file_groups for file in group]
+    if invalid_files:
+        output("Error: Fetch header files should have the extension hpp")
+        for path in invalid_files:
+            output(path)
+        sys.exit(1)
+
+
+def is_binary_file(file_name):
+    return any([fnmatch.fnmatch(file_name, pattern) for pattern in CHECKED_IN_BINARY_FILE_PATTERNS])
+
+
+def get_changed_paths_from_git(commit):
+    relative_paths = subprocess.check_output(
+        ['git', 'diff', '--name-only', commit]).splitlines()
+
+    return [abspath(join(PROJECT_ROOT, rel_path.decode('utf-8'))) for rel_path in relative_paths]
+
+
+def files_of_interest(commit):
+    ret = []
+    changes = [] if commit is None else get_changed_paths_from_git(commit)
+
+    for root, _, files in walk_source_directories(PROJECT_ROOT, EXCLUDED_DIRS):
+        for file_name in files:
+            if not is_binary_file(file_name):
+                absolute_path = abspath(join(root, file_name))
+                if isfile(absolute_path):
+                    if commit is None or absolute_path in changes:
+                        ret.append(absolute_path)
+
+    return ret
+
+
+def parse_commandline():
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument(
+        '-c',
+        '--commit',
+        nargs=1,
+        default=None,
+        help='scan and fix only files that changed between Git\'s HEAD and the '
+             'given commit or ref. If not set, process all files in the project')
+    parser.add_argument(
+        '-d',
+        '--diff',
+        action='store_true',
+        help='if deviations from the style are found, print the diff and exit '
+             'with error. Useful for automated checks')
+    parser.add_argument(
+        '-j',
+        '--jobs',
+        type=int,
+        default=min(multiprocessing.cpu_count(), 7),
+        help='the maximum number of parallel jobs')
+
+    args = parser.parse_args()
+
+    return args.commit if args.commit is None else args.commit[0], \
+        args.diff, \
+        args.jobs
 
 
 def main():
-    args = parse_commandline()
+    global TOTAL_FILES_TO_PROCESS
 
-    # TODO(WK) Make multilanguage reformatting concurrent
-    output('Formatting C/C++ ...')
-    format_language(args, **SUPPORTED_LANGUAGES['cpp'])
-    output('Formatting Python ...')
-    format_python(args)
-    output('Formatting CMake ...')
-    format_language(args, **SUPPORTED_LANGUAGES['cmake'])
+    commit_arg, diff_arg, jobs_arg = parse_commandline()
 
-    output('Checking header include guards ...')
-    fix_missing_include_guards()
+    output('Composing list of files ...')
+    files_to_process = files_of_interest(commit_arg)
+    TOTAL_FILES_TO_PROCESS = len(files_to_process)
+
+    output('Checking for header files with incorrect extensions ...')
+    check_for_headers_with_non_hpp_extension(files_to_process)
+
+    output('Processing {} file(s) with {} job(s) ...'
+           .format(TOTAL_FILES_TO_PROCESS, jobs_arg))
+    with ThreadPoolExecutor(max_workers=jobs_arg) as pool:
+        pool.map(apply_transformations_to_file, files_to_process)
 
     output('Done.')
 
-    if args.diff:
+    if diff_arg:
         diff = get_diff()
         if diff:
             output('*' * 80)
