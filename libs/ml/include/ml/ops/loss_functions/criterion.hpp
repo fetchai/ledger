@@ -1,3 +1,4 @@
+#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -16,44 +17,27 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm_test_suite.hpp"
+#include "ml/ops/ops.hpp"
 
-#include "gtest/gtest.h"
+namespace fetch {
+namespace ml {
+namespace ops {
 
-#include <cstdint>
-#include <memory>
-
-class CustomBindingTests : public VmTestSuite
+template <class T>
+class Criterion
 {
+public:
+  using ArrayType    = T;
+  using Datatype     = typename ArrayType::Type;
+  using ArrayPtrType = std::shared_ptr<ArrayType>;
+
+  Criterion()
+  {}
+
+  virtual typename ArrayType::Type Forward(std::vector<ArrayType> const &inputs)  = 0;
+  virtual ArrayType                Backward(std::vector<ArrayType> const &inputs) = 0;
 };
 
-// Test to add a custom binding that will increment this counter when
-// the smart contract is executed
-static int32_t binding_called_count = 0;
-
-static void CustomBinding(fetch::vm::VM * /*vm*/)
-{
-  binding_called_count++;
-}
-
-TEST_F(CustomBindingTests, CheckBasicBinding)
-{
-  static char const *TEXT = R"(
-    function main()
-      customBinding();
-    endfunction
-  )";
-
-  EXPECT_EQ(binding_called_count, 0);
-
-  // create the binding
-  module_->CreateFreeFunction("customBinding", &CustomBinding);
-
-  ASSERT_TRUE(Compile(TEXT));
-
-  ASSERT_TRUE(Run());
-  ASSERT_TRUE(Run());
-  ASSERT_TRUE(Run());
-
-  EXPECT_EQ(binding_called_count, 3);
-}
+}  // namespace ops
+}  // namespace ml
+}  // namespace fetch

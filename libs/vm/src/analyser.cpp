@@ -267,7 +267,7 @@ bool Analyser::Analyse(BlockNodePtr const &root, std::vector<std::string> &error
   // Check function prototypes
   BuildBlock(root_);
 
-  if (errors_.size() != 0)
+  if (!errors_.empty())
   {
     errors = std::move(errors_);
     root_  = nullptr;
@@ -285,7 +285,7 @@ bool Analyser::Analyse(BlockNodePtr const &root, std::vector<std::string> &error
   loops_.clear();
   function_ = nullptr;
 
-  if (errors_.size() != 0)
+  if (!errors_.empty())
   {
     errors = std::move(errors_);
     errors_.clear();
@@ -509,7 +509,7 @@ void Analyser::AnnotateBlock(BlockNodePtr const &block_node)
     }
     case NodeKind::BreakStatement:
     {
-      if (loops_.size() == 0)
+      if (!loops_.empty())
       {
         AddError(child->line, "break statement is not inside a while or for loop");
       }
@@ -517,7 +517,7 @@ void Analyser::AnnotateBlock(BlockNodePtr const &block_node)
     }
     case NodeKind::ContinueStatement:
     {
-      if (loops_.size() == 0)
+      if (!loops_.empty())
       {
         AddError(child->line, "continue statement is not inside a while or for loop");
       }
