@@ -71,6 +71,7 @@ TEST_F(StateTests, AddressDeserializeTest)
 
   EXPECT_CALL(*observer_, Exists("addr"));
   EXPECT_CALL(*observer_, Read("addr", _, _));
+  EXPECT_CALL(*observer_, Write("addr", _, _));
 
   ASSERT_TRUE(Compile(TEXT));
   ASSERT_TRUE(Run());
@@ -106,6 +107,7 @@ TEST_F(StateTests, MapDeserializeTest)
 
   EXPECT_CALL(*observer_, Exists("map"));
   EXPECT_CALL(*observer_, Read("map", _, _));
+  EXPECT_CALL(*observer_, Write("map", _, _));
 
   ASSERT_TRUE(Compile(TEXT));
   ASSERT_TRUE(Run());
@@ -143,6 +145,7 @@ TEST_F(StateTests, ArrayDeserializeTest)
 
   EXPECT_CALL(*observer_, Exists("state"));
   EXPECT_CALL(*observer_, Read("state", _, _));
+  EXPECT_CALL(*observer_, Write("state", _, _));
 
   ASSERT_TRUE(Compile(TEXT));
   ASSERT_TRUE(Run());

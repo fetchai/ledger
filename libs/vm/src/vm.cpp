@@ -224,7 +224,7 @@ bool VM::Execute(std::string &error, Variant &output)
     }
   } while (!stop_);
 
-  bool const ok = error_.empty();
+  bool const ok = !HasError();
 
   // Remove the executable's strings
   strings_.clear();
