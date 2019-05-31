@@ -79,7 +79,6 @@ TYPED_TEST(GraphTest, get_state_dict)
   fetch::ml::Graph<ArrayType>     g;
   fetch::ml::StateDict<ArrayType> sd = g.StateDict();
 
-  EXPECT_EQ(sd.weights_, nullptr);
   EXPECT_TRUE(sd.dict_.empty());
 }
 
@@ -302,12 +301,7 @@ TYPED_TEST(GraphTest, diamond_graph_getStateDict)
   fetch::ml::StateDict<TypeParam> sd = g.StateDict();
 
   // Test weights
-  EXPECT_EQ(sd.weights_, nullptr);
   EXPECT_EQ(sd.dict_.size(), 2);
-
-  ASSERT_NE(sd.dict_["Diamond_Weight1"].weights_, nullptr);
-  EXPECT_EQ(sd.dict_["Diamond_Weight1"].weights_->shape(), data1.shape());
-
-  ASSERT_NE(sd.dict_["Diamond_Weight2"].weights_, nullptr);
-  EXPECT_EQ(sd.dict_["Diamond_Weight2"].weights_->shape(), data2.shape());
+  EXPECT_EQ(sd.dict_["Diamond_Weight1"].weights_.shape(), data1.shape());
+  EXPECT_EQ(sd.dict_["Diamond_Weight2"].weights_.shape(), data2.shape());
 }

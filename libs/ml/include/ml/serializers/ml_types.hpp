@@ -25,10 +25,10 @@ namespace serializers {
 template <typename T, typename U>
 inline void Serialize(T &serializer, struct ml::StateDict<U> const &sd)
 {
-  if (sd.weights_)
+  if (sd.weights_.size()!=0)
   {
     Serialize(serializer, true);
-    Serialize(serializer, *sd.weights_);
+    Serialize(serializer, sd.weights_);
   }
   else
   {
@@ -55,7 +55,7 @@ inline void Deserialize(T &serializer, struct ml::StateDict<U> &sd)
   Deserialize(serializer, hasWeight);
   if (hasWeight)
   {
-    std::shared_ptr<U> w = std::make_shared<U>();
+    U w = U();
     Deserialize(serializer, *w);
     sd.weights_ = w;
   }

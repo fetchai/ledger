@@ -244,7 +244,6 @@ struct fetch::ml::StateDict<ArrayType> Graph<ArrayType>::StateDict() const
 template <typename ArrayType>
 void Graph<ArrayType>::LoadStateDict(struct fetch::ml::StateDict<ArrayType> const &dict)
 {
-  assert(!dict.weights_);
   for (auto const &t : trainable_)
   {
     t.second->LoadStateDict(dict.dict_.at(t.first));

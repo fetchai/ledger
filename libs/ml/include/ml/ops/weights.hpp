@@ -69,7 +69,7 @@ public:
   using VecTensorType = typename PlaceHolder<T>::VecTensorType;
 
 protected:
-  ArrayPtrType gradient_accumulation_;
+  ArrayType gradient_accumulation_;
 
 public:
   Weights()          = default;
@@ -79,7 +79,7 @@ public:
                                           ArrayType const &    error_signal)
   {
     ASSERT(inputs.empty());
-    gradient_accumulation_->InlineAdd(error_signal);
+    gradient_accumulation_.InlineAdd(error_signal);
     return {};
   }
 
@@ -87,7 +87,7 @@ public:
   {
     if (PlaceHolder<T>::SetData(data))  // if input_size_changed
     {
-      gradient_accumulation_ = std::make_shared<ArrayType>(this->output_->shape());
+      gradient_accumulation_ = ArrayType(this->output_.shape());
       return true;
     }
     return false;
@@ -95,8 +95,8 @@ public:
 
   virtual void Step(typename T::Type learning_rate)
   {
-    this->gradient_accumulation_->InlineMultiply(-learning_rate);
-    this->output_->InlineAdd(*gradient_accumulation_);
+    this->gradient_accumulation_.InlineMultiply(-learning_rate);
+    this->output_.InlineAdd(gradient_accumulation_);
     // Major DL framework do not do that, but as I can't think of any reason why, I'll leave it here
     // for convenience. Remove if needed -- Pierre
     ResetGradients();
@@ -104,7 +104,7 @@ public:
 
   virtual void ApplyGradient(ArrayType const &grad)
   {
-    this->output_->InlineAdd(grad);
+    this->output_.InlineAdd(grad);
     ResetGradients();
   }
 
@@ -113,7 +113,7 @@ public:
    */
   virtual void ResetGradients()
   {
-    gradient_accumulation_->Fill(typename T::Type(0));
+    gradient_accumulation_.Fill(typename T::Type(0));
   }
 
   /**
@@ -135,7 +135,7 @@ public:
   LoadStateDict(struct fetch::ml::StateDict<T> const &dict)
   {
     assert(dict.dict_.empty());
-    SetData(*dict.weights_);
+    SetData(dict.weights_);
   }
 
   /**
@@ -183,16 +183,16 @@ public:
    */
   ArrayType const &GetWeights() const
   {
-    return *this->output_;
+    return this->output_;
   }
 
   /**
    * exports the weight gradients Array
    * @return const reference to internal accumulated gradient Array
    */
-  ArrayType const &Gradients() const
+  ArrayType  const &Gradients() const
   {
-    return *this->gradient_accumulation_;
+    return this->gradient_accumulation_;
   }
 
   static constexpr char const *DESCRIPTOR = "Weights";

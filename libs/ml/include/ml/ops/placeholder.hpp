@@ -38,8 +38,7 @@ public:
   virtual void Forward(VecTensorType const &inputs, ArrayType &output)
   {
     ASSERT(inputs.empty());
-    ASSERT(this->output_);
-    output = *(this->output_);
+    output = this->output_;
   }
 
   virtual std::vector<ArrayType> Backward(VecTensorType const &inputs,
@@ -51,25 +50,21 @@ public:
 
   virtual bool SetData(ArrayType const &data)
   {
-    std::vector<SizeType> old_shape;
-    if (this->output_)
-    {
-      old_shape = this->output_->shape();
-    }
-    this->output_ = std::make_shared<ArrayType>(data);
-    return old_shape != this->output_->shape();
+    std::vector<SizeType> old_shape = this->output_.shape();
+    this->output_ = data;
+    return old_shape != this->output_.shape();
   }
 
   virtual std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const
   {
     (void)inputs;
-    return this->output_->shape();
+    return this->output_.shape();
   }
 
   static constexpr char const *DESCRIPTOR = "PlaceHolder";
 
 protected:
-  ArrayPtrType output_;
+  ArrayType output_;
 };
 
 }  // namespace ops

@@ -51,7 +51,6 @@ public:
 
   virtual void Forward(VecTensorType const &inputs, ArrayType &output)
   {
-    ASSERT(this->output_);
     ASSERT(inputs.size() == 1);
     ASSERT(
         (inputs.front().get().shape().size() == 1) ||
@@ -59,16 +58,16 @@ public:
 
     if (!this->embeddings_output_ ||
         this->embeddings_output_->shape()[0] != inputs.front().get().size() ||
-        this->embeddings_output_->shape()[1] != this->output_->shape()[1])
+        this->embeddings_output_->shape()[1] != this->output_.shape()[1])
     {
       this->embeddings_output_ = std::make_shared<ArrayType>(
-          std::vector<SizeType>({inputs.front().get().size(), this->output_->shape()[1]}));
+          std::vector<SizeType>({inputs.front().get().size(), this->output_.shape()[1]}));
     }
     uint64_t j(0);
     for (DataType const &i : inputs.front().get())
     {
       auto tmp  = this->embeddings_output_->Slice(j);
-      auto tmp2 = this->output_->Slice(typename ArrayType::SizeType(i));
+      auto tmp2 = this->output_.Slice(typename ArrayType::SizeType(i));
       tmp.Assign(tmp2);
       j++;
     }
@@ -87,7 +86,7 @@ public:
     for (DataType const &i : inputs.front().get())
     {
       updated_rows_.insert(typename ArrayType::SizeType(double(i)));
-      this->gradient_accumulation_->Slice(typename ArrayType::SizeType(double(i)))
+      this->gradient_accumulation_.Slice(typename ArrayType::SizeType(double(i)))
           .Assign(error_signal.Slice(j));
       j++;
     }
@@ -101,8 +100,8 @@ public:
     for (auto const &r : updated_rows_)
     {
       // get the relevant slice from gradients and embeddings
-      auto grad_slice = this->gradient_accumulation_->Slice(r);
-      auto out_slice  = this->output_->Slice(r);
+      auto grad_slice = this->gradient_accumulation_.Slice(r);
+      auto out_slice  = this->output_.Slice(r);
 
       embedding_slice = out_slice.Copy();
 

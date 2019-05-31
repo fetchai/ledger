@@ -33,21 +33,18 @@ struct StateDict
 {
   using ArrayType    = T;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
-  ArrayPtrType                        weights_;
+  ArrayType                        weights_;
   std::map<std::string, StateDict<T>> dict_;
 
   bool operator==(StateDict<T> const &o) const
   {
-    return !((bool(weights_) ^ bool(o.weights_)) || (weights_ && (*weights_ != *(o.weights_))) ||
+    return !((bool(weights_.size()!=0) ^ bool(o.weights_.size()!=0)) || (weights_.size()!=0 && (weights_ != (o.weights_))) ||
              (dict_ != o.dict_));
   }
 
   void InlineDivide(typename ArrayType::Type n)
   {
-    if (weights_)
-    {
-      weights_->InlineDivide(n);
-    }
+      weights_.InlineDivide(n);
     for (auto &kvp : dict_)
     {
       kvp.second.InlineDivide(n);
@@ -56,15 +53,12 @@ struct StateDict
 
   void InlineAdd(StateDict const &o, bool strict = true)
   {
-    if (o.weights_ && !weights_ && !strict)
+    if ((o.weights_.size()!=0) && (weights_.size()==0) && !strict)
     {
-      weights_ = std::make_shared<ArrayType>(o.weights_->shape());
+      weights_ =ArrayType(o.weights_.shape());
     }
-    assert(!((bool(weights_) ^ bool(o.weights_))));
-    if (weights_)
-    {
-      weights_->InlineAdd(*(o.weights_));
-    }
+      weights_.InlineAdd(o.weights_);
+
     for (auto const &kvp : o.dict_)
     {
       dict_[kvp.first].InlineAdd(kvp.second, strict);
@@ -97,11 +91,8 @@ struct StateDict
     assert(ratio >= 0.0f && ratio <= 1.0f);
     if (ratio > 0)
     {
-      if (weights_)
-      {
-        weights_->InlineMultiply(typename ArrayType::Type(1.0f - ratio));
-        weights_->InlineAdd(o.weights_->Copy().InlineMultiply(typename ArrayType::Type(ratio)));
-      }
+        weights_.InlineMultiply(typename ArrayType::Type(1.0f - ratio));
+        weights_.InlineAdd(o.weights_.Copy().InlineMultiply(typename ArrayType::Type(ratio)));
       for (auto &e : dict_)
       {
         e.second.Merge(o.dict_.at(e.first));
