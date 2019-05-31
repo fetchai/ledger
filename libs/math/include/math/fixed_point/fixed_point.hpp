@@ -850,10 +850,29 @@ public:
         return CONST_ZERO;
       }
     }
-    if (x < CONST_ZERO && y.Fraction() != 0)
+
+    if (y == CONST_ZERO) {
+      return CONST_ONE;
+    }
+
+    if (x < CONST_ZERO)
     {
-      throw std::runtime_error(
-          "Pow(x, y): x^y where x < 0 and y non-integer: mathematical operation not defined!");
+      if (y.Fraction() != 0) {
+        throw std::runtime_error(
+            "Pow(x, y): x^y where x < 0 and y non-integer: mathematical operation not defined!");
+      } else {
+        FixedPoint pow{x};
+        FixedPoint t{Abs(y)};
+        while (--t) {
+          pow *= x;
+        }
+        if (y > 0) {
+          return pow;
+        }
+        else {
+          return CONST_ONE/pow;
+        }
+      }
     }
     FixedPoint s   = CONST_ONE * ((y.Integer() + 1) & 1) + Sign(x) * (y.Integer() & 1);
     FixedPoint pow = s * Exp(y * Log(Abs(x)));
