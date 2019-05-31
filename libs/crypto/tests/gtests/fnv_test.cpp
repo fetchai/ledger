@@ -17,8 +17,8 @@
 //------------------------------------------------------------------------------
 
 #include "crypto/fnv.hpp"
-
 #include "core/byte_array/encoders.hpp"
+
 #include "gtest/gtest.h"
 
 namespace fetch {
@@ -29,12 +29,6 @@ namespace {
 class FVNTest : public testing::Test
 {
 protected:
-  void SetUp()
-  {}
-
-  void TearDown()
-  {}
-
   void test_basic_hash(byte_array::ConstByteArray const &data_to_hash,
                        byte_array::ConstByteArray const &expected_hash)
   {

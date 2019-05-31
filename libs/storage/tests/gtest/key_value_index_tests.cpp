@@ -21,8 +21,15 @@
 #include "core/random/lfg.hpp"
 #include "storage/key.hpp"
 #include "storage/key_value_index.hpp"
+
+#include "gtest/gtest.h"
+
 #include <algorithm>
-#include <gtest/gtest.h>
+#include <cstdint>
+#include <cstdlib>
+#include <map>
+#include <unordered_map>
+#include <vector>
 
 using namespace fetch;
 using namespace fetch::storage;
@@ -391,7 +398,7 @@ bool LoadSaveVsBulk()
       if (a != b)
       {
         std::cout << "ERROR! " << z << ": " << a << " " << b << std::endl;
-        exit(-1);
+        std::exit(-1);
       }
     }
   }

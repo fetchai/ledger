@@ -19,6 +19,7 @@
 #include "fetch_version.hpp"
 
 #include <iostream>
+#include <string>
 
 namespace fetch {
 namespace commandline {

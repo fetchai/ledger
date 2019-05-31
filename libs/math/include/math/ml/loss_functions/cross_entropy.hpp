@@ -21,7 +21,8 @@
 #include "math/fundamental_operators.hpp"   // divide
 #include "math/matrix_operations.hpp"       //
 #include "math/standard_functions/log.hpp"  // log
-#include <cassert>
+
+#include <stdexcept>
 
 namespace fetch {
 namespace math {
@@ -37,18 +38,13 @@ namespace math {
  * @return
  */
 template <typename ArrayType>
-typename ArrayType::Type CrossEntropyLoss(
-    ArrayType const &x, ArrayType const &y,
-    typename ArrayType::SizeType n_classes = typename ArrayType::SizeType(2))
+typename ArrayType::Type CrossEntropyLoss(ArrayType const &x, ArrayType const &y)
 {
   using DataType = typename ArrayType::Type;
   using SizeType = typename ArrayType::SizeType;
 
-  FETCH_UNUSED(n_classes);
-
   ASSERT(x.shape() == y.shape());
   ASSERT(x.shape().size() == 2);
-  ASSERT(n_classes > SizeType(1));
 
   auto n_examples = x.shape().at(0);
   auto n_dims     = x.shape().at(1);
@@ -58,8 +54,6 @@ typename ArrayType::Type CrossEntropyLoss(
   // if not a one-hot, must be binary logistic regression cost
   if (n_dims == 1)
   {
-    ASSERT(n_classes == SizeType(2));
-
     auto     x_it = x.cbegin();
     auto     y_it = y.cbegin();
     DataType one{1};

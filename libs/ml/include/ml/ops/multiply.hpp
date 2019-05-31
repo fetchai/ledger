@@ -46,18 +46,7 @@ public:
     ASSERT(inputs.at(0).get().size() == inputs.at(1).get().size());
     ASSERT(output.shape() == this->ComputeOutputShape(inputs));
 
-    auto output_it  = output.begin();
-    auto output_end = output.end();
-    auto a_it       = inputs[0].get().begin();
-    auto b_it       = inputs[1].get().begin();
-
-    while (output_it != output_end)
-    {
-      *output_it = *a_it * *b_it;
-      ++output_it;
-      ++a_it;
-      ++b_it;
-    }
+    fetch::math::Multiply(inputs[0].get(), inputs[1].get(), output);
   }
 
   /**
@@ -65,7 +54,8 @@ public:
    * f'(input0)=input0*error_signal
    * f'(input1)=input1*error_signal
    */
-  virtual std::vector<ArrayPtrType> Backward(VecTensorType const &inputs, ArrayPtrType error_signal)
+  virtual std::vector<ArrayType> Backward(VecTensorType const &inputs,
+                                          ArrayType const &    error_signal)
   {
     ASSERT(inputs.size() == 2);
     ASSERT(inputs.at(0).get().size() == inputs.at(1).get().size());

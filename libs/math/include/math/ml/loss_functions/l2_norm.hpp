@@ -20,7 +20,6 @@
 #include "math/fundamental_operators.hpp"    // add, subtract etc.
 #include "math/standard_functions/pow.hpp"   // square
 #include "math/standard_functions/sqrt.hpp"  // sqrt
-#include <cassert>
 
 namespace fetch {
 namespace math {

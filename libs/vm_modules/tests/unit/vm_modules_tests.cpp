@@ -16,27 +16,26 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm_test_suite.hpp"
-
 #include "vm/io_observer_interface.hpp"
 #include "vm_modules/vm_factory.hpp"
+#include "vm_test_suite.hpp"
 
 #include "gtest/gtest.h"
 
+#include <memory>
+
 class VMTests : public VmTestSuite
 {
-protected:
-  using Module = std::shared_ptr<fetch::vm::Module>;
-  using VM     = std::unique_ptr<fetch::vm::VM>;
 };
 
 // Test we can compile and run a fairly inoffensive smart contract
 TEST_F(VMTests, CheckCompileAndExecute)
 {
-  static char const *TEXT =
-      " function main() "
-      "   print(\"Hello, world\");"
-      " endfunction ";
+  static char const *TEXT = R"(
+    function main()
+      print("Hello, world");
+    endfunction
+  )";
 
   ASSERT_TRUE(Compile(TEXT));
   ASSERT_TRUE(Run());
@@ -44,16 +43,17 @@ TEST_F(VMTests, CheckCompileAndExecute)
 
 TEST_F(VMTests, CheckRandom)
 {
-  static char const *TEXT =
-      " function main()"
-      "   print('rnd = ' + toString(Rand(0u64, 1000u64)));"
-      "   print('rnd = ' + toString(Rand(0u64, 1000u64)));"
-      "   print('rnd = ' + toString(Rand(0u64, 1000u64)));"
-      "   print('rnd = ' + toString(Rand(0u64, 1000u64)));"
-      "   print('rnd = ' + toString(Rand(0u64, 1000u64)));"
-      "   print('rnd = ' + toString(Rand(0.0f, 1000.0f)));"
-      "   print('rnd = ' + toString(Rand(0.0, 1000.0)));"
-      " endfunction ";
+  static char const *TEXT = R"(
+    function main()
+      print('rnd = ' + toString(Rand(0u64, 1000u64)));
+      print('rnd = ' + toString(Rand(0u64, 1000u64)));
+      print('rnd = ' + toString(Rand(0u64, 1000u64)));
+      print('rnd = ' + toString(Rand(0u64, 1000u64)));
+      print('rnd = ' + toString(Rand(0u64, 1000u64)));
+      print('rnd = ' + toString(Rand(0.0f, 1000.0f)));
+      print('rnd = ' + toString(Rand(0.0, 1000.0)));
+    endfunction
+  )";
 
   ASSERT_TRUE(Compile(TEXT));
   ASSERT_TRUE(Run());

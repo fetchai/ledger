@@ -23,6 +23,9 @@
 namespace fetch {
 namespace ml {
 
+template <typename T>
+class Graph;
+
 namespace ops {
 template <typename T>
 class Trainable;
@@ -36,11 +39,27 @@ constexpr bool IsTrainable = std::is_base_of<fetch::ml::ops::Trainable<T>, Opera
 template <typename T, typename OperationType>
 constexpr bool IsNotTrainable = !IsTrainable<T, OperationType>;
 
+template <typename T, typename OperationType>
+constexpr bool IsGraph = std::is_base_of<fetch::ml::Graph<T>, OperationType>::value;
+
+template <typename T, typename OperationType>
+constexpr bool IsNotGraph = !IsGraph<T, OperationType>;
+
+template <typename T, typename OperationType>
+constexpr bool                     IsNotGraphOrTrainable =
+    IsNotGraph<T, OperationType> &&IsNotTrainable<T, OperationType>;
+
 template <typename T, typename OperationType, typename R = void>
 using IfIsTrainable = fetch::meta::EnableIf<IsTrainable<T, OperationType>, R>;
 
 template <typename T, typename OperationType, typename R = void>
+using IfIsGraph = fetch::meta::EnableIf<IsGraph<T, OperationType>, R>;
+
+template <typename T, typename OperationType, typename R = void>
 using IfIsNotTrainable = fetch::meta::EnableIf<IsNotTrainable<T, OperationType>, R>;
+
+template <typename T, typename OperationType, typename R = void>
+using IfIsNotGraphOrTrainable = fetch::meta::EnableIf<IsNotGraphOrTrainable<T, OperationType>, R>;
 
 }  // namespace meta
 }  // namespace ml

@@ -18,9 +18,11 @@
 
 #include "vectorise/memory/array.hpp"
 #include "vectorise/memory/shared_array.hpp"
+
 #include <chrono>
+#include <cstddef>
+#include <cstdlib>
 #include <iostream>
-#include <vector>
 
 using type        = double;
 using array_type  = fetch::memory::SharedArray<type>;
@@ -42,8 +44,8 @@ int main(int argc, char const **argv)
     return 0;
   }
 
-  std::size_t N = std::size_t(atoi(argv[1]));
-  array_type  A(N), C(N);
+  auto       N = std::size_t(std::atoi(argv[1]));
+  array_type A(N), C(N);
 
   for (std::size_t i = 0; i < N; ++i)
   {

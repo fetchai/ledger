@@ -22,14 +22,17 @@
 #include "ml/layers/fully_connected.hpp"
 #include "ml/ops/activation.hpp"
 #include "ml/ops/loss_functions/mean_square_error.hpp"
-
 #include "vm/module.hpp"
-
 #include "vm_modules/ml/cross_entropy.hpp"
 #include "vm_modules/ml/graph.hpp"
 
+#include <cstdint>
+#include <cstdlib>
 #include <fstream>
-#include <sstream>
+#include <iostream>
+#include <memory>
+#include <string>
+#include <utility>
 #include <vector>
 
 struct System : public fetch::vm::Object
@@ -143,7 +146,7 @@ int main(int argc, char **argv)
   if (argc < 2)
   {
     std::cerr << "usage ./" << argv[0] << " [filename]" << std::endl;
-    exit(-9);
+    std::exit(-9);
   }
 
   for (int i = 2; i < argc; ++i)
