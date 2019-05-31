@@ -390,7 +390,7 @@ std::string Graph<ArrayType>::UpdateVariableName(std::string const &name)
 }
 
 /**
- * Assigns all trainable pointers to vector for optimizer purpose
+ * Assigns all trainable pointers to vector for optimiser purpose
  * @return ret is vector containing pointers to all trainables
  */
 template <typename ArrayType>

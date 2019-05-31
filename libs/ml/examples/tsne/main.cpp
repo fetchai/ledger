@@ -95,7 +95,7 @@ int main(int ac, char **av)
   TSNE<Tensor<DataType>> tsn(input.first, N_OUTPUT_FEATURE_SIZE, PERPLEXITY, RANDOM_SEED);
 
   std::cout << "Started optimisation. " << std::endl;
-  tsn.Optimize(LEARNING_RATE, MAX_ITERATIONS, INITIAL_MOMENTUM, FINAL_MOMENTUM,
+  tsn.Optimise(LEARNING_RATE, MAX_ITERATIONS, INITIAL_MOMENTUM, FINAL_MOMENTUM,
                FINAL_MOMENTUM_STEPS, P_LATER_CORRECTION_ITERATION);
 
   std::cout << "Result: " << tsn.GetOutputMatrix().ToString() << std::endl;

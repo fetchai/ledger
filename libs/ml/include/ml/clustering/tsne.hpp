@@ -78,11 +78,11 @@ public:
   }
 
   /**
-   * i.e. Optimize cost function
+   * i.e. Optimise cost function
    * @param learning_rate input Learning rate
-   * @param max_iters input Number of optimization iterations
+   * @param max_iters input Number of optimisation iterations
    */
-  void Optimize(DataType const &learning_rate, SizeType const &max_iters,
+  void Optimise(DataType const &learning_rate, SizeType const &max_iters,
                 DataType const &initial_momentum, DataType const &final_momentum,
                 SizeType const &final_momentum_steps, SizeType const &p_later_correction_iteration)
   {
