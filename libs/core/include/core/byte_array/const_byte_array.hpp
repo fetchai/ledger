@@ -83,8 +83,8 @@ public:
     : ConstByteArray(reinterpret_cast<std::uint8_t const *>(s.data()), s.size())
   {}
 
-  ConstByteArray(ConstByteArray const &other) noexcept = default;
-  ConstByteArray(ConstByteArray &&other) noexcept      = default;
+  ConstByteArray(ConstByteArray const &other) = default;
+  ConstByteArray(ConstByteArray &&other)      = default;
   // TODO(pbukva): (private issue #229: confusion what method does without analysing implementation
   // details - absolute vs relative[against `other.start_`] size)
   ConstByteArray(ConstByteArray const &other, std::size_t start, std::size_t length) noexcept
@@ -96,8 +96,8 @@ public:
     assert(start_ + length_ <= data_.size());
   }
 
-  ConstByteArray &operator=(ConstByteArray const &) noexcept = default;
-  ConstByteArray &operator=(ConstByteArray &&other) noexcept = default;
+  ConstByteArray &operator=(ConstByteArray const &) = default;
+  ConstByteArray &operator=(ConstByteArray &&other) = default;
 
   ConstByteArray Copy() const
   {
