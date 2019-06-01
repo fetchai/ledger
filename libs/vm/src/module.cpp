@@ -178,6 +178,7 @@ Module::Module()
   iarray.CreateMemberFunction("pop_front", &IArray::PopFrontOne);
   iarray.CreateMemberFunction("pop_front", &IArray::PopFrontMany);
   iarray.CreateMemberFunction("reverse", &IArray::Reverse);
+  iarray.CreateMemberFunction("extend", &IArray::Extend);
   iarray.EnableIndexOperator<AnyInteger, TemplateParameter>();
   iarray.CreateInstantiationType<Array<bool>>();
   iarray.CreateInstantiationType<Array<int8_t>>();
