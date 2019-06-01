@@ -20,15 +20,16 @@
 #include "byte_array_wrapper.hpp"
 #include "core/byte_array/encoders.hpp"
 
+#include <ostream>
+
 namespace fetch {
 namespace vm_modules {
 
-template <bool APPEND_LINEBREAK = false>
-inline void PrintString(fetch::vm::VM *vm, fetch::vm::Ptr<fetch::vm::String> const &s)
-{
-  auto &out = vm->GetOutputDevice(vm::VM::STDOUT);
-  out << s->str;
+namespace internal {
 
+template <bool APPEND_LINEBREAK>
+inline void FlushOutput(std::ostream &out)
+{
   if (APPEND_LINEBREAK)
   {
     out << std::endl;
@@ -37,6 +38,17 @@ inline void PrintString(fetch::vm::VM *vm, fetch::vm::Ptr<fetch::vm::String> con
   {
     out << std::flush;
   }
+}
+
+}  // namespace internal
+
+template <bool APPEND_LINEBREAK = false>
+inline void PrintString(fetch::vm::VM *vm, fetch::vm::Ptr<fetch::vm::String> const &s)
+{
+  auto &out = vm->GetOutputDevice(vm::VM::STDOUT);
+  out << s->str;
+
+  internal::FlushOutput<APPEND_LINEBREAK>(out);
 }
 
 template <typename T, bool APPEND_LINEBREAK = false>
@@ -45,14 +57,7 @@ inline void PrintNumber(fetch::vm::VM *vm, T const &s)
   auto &out = vm->GetOutputDevice(vm::VM::STDOUT);
   out << s;
 
-  if (APPEND_LINEBREAK)
-  {
-    out << std::endl;
-  }
-  else
-  {
-    out << std::flush;
-  }
+  internal::FlushOutput<APPEND_LINEBREAK>(out);
 }
 
 template <bool APPEND_LINEBREAK = false>
@@ -61,14 +66,7 @@ inline void PrintByte(fetch::vm::VM *vm, int8_t const &s)
   auto &out = vm->GetOutputDevice(vm::VM::STDOUT);
   out << static_cast<int32_t>(s);
 
-  if (APPEND_LINEBREAK)
-  {
-    out << std::endl;
-  }
-  else
-  {
-    out << std::flush;
-  }
+  internal::FlushOutput<APPEND_LINEBREAK>(out);
 }
 
 template <bool APPEND_LINEBREAK = false>
@@ -77,14 +75,7 @@ inline void PrintUnsignedByte(fetch::vm::VM *vm, uint8_t const &s)
   auto &out = vm->GetOutputDevice(vm::VM::STDOUT);
   out << static_cast<uint32_t>(s);
 
-  if (APPEND_LINEBREAK)
-  {
-    out << std::endl;
-  }
-  else
-  {
-    out << std::flush;
-  }
+  internal::FlushOutput<APPEND_LINEBREAK>(out);
 }
 
 template <typename T, bool APPEND_LINEBREAK = false>
@@ -100,24 +91,17 @@ inline void PrintArrayPrimitive(fetch::vm::VM *vm, vm::Ptr<vm::Array<T>> const &
   assert(g != nullptr);
 
   out << "[";
-  for (std::size_t i = 0; i < g->elements.size(); ++i)
+  if (!g->elements.empty())
   {
-    if (i != 0)
+    out << g->elements[0];
+    for (std::size_t i = 1; i < g->elements.size(); ++i)
     {
-      out << ", ";
+      out << ", " << g->elements[i];
     }
-    out << g->elements[i];
   }
   out << "]";
 
-  if (APPEND_LINEBREAK)
-  {
-    out << std::endl;
-  }
-  else
-  {
-    out << std::flush;
-  }
+  internal::FlushOutput<APPEND_LINEBREAK>(out);
 }
 
 inline void CreatePrint(vm::Module &module)
