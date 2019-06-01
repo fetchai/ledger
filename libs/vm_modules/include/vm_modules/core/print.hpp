@@ -40,6 +40,13 @@ inline void FlushOutput(std::ostream &out)
   }
 }
 
+template <bool APPEND_LINEBREAK>
+inline void PrintNullPtr(std::ostream &out)
+{
+  out << "(nullptr)";
+  FlushOutput<APPEND_LINEBREAK>(out);
+}
+
 }  // namespace internal
 
 template <bool APPEND_LINEBREAK = false>
@@ -85,7 +92,7 @@ inline void PrintArrayPrimitiveByte(fetch::vm::VM *vm, vm::Ptr<vm::Array<T>> con
   auto &out = vm->GetOutputDevice(vm::VM::STDOUT);
   if (g == nullptr)
   {
-    out << "(nullptr)" << std::endl;
+    internal::PrintNullPtr<APPEND_LINEBREAK>(out);
     return;
   }
 
@@ -111,7 +118,7 @@ inline void PrintArrayPrimitive(fetch::vm::VM *vm, vm::Ptr<vm::Array<T>> const &
   auto &out = vm->GetOutputDevice(vm::VM::STDOUT);
   if (g == nullptr)
   {
-    out << "(nullptr)" << std::endl;
+    internal::PrintNullPtr<APPEND_LINEBREAK>(out);
     return;
   }
 
