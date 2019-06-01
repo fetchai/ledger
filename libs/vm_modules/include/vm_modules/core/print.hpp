@@ -33,6 +33,10 @@ inline void PrintString(fetch::vm::VM *vm, fetch::vm::Ptr<fetch::vm::String> con
   {
     out << std::endl;
   }
+  else
+  {
+    out << std::flush;
+  }
 }
 
 template <typename T, bool APPEND_LINEBREAK = false>
@@ -44,6 +48,10 @@ inline void PrintNumber(fetch::vm::VM *vm, T const &s)
   if (APPEND_LINEBREAK)
   {
     out << std::endl;
+  }
+  else
+  {
+    out << std::flush;
   }
 }
 
@@ -57,6 +65,10 @@ inline void PrintByte(fetch::vm::VM *vm, int8_t const &s)
   {
     out << std::endl;
   }
+  else
+  {
+    out << std::flush;
+  }
 }
 
 template <bool APPEND_LINEBREAK = false>
@@ -68,6 +80,10 @@ inline void PrintUnsignedByte(fetch::vm::VM *vm, uint8_t const &s)
   if (APPEND_LINEBREAK)
   {
     out << std::endl;
+  }
+  else
+  {
+    out << std::flush;
   }
 }
 
@@ -97,6 +113,10 @@ inline void PrintArrayPrimitive(fetch::vm::VM *vm, vm::Ptr<vm::Array<T>> const &
   if (APPEND_LINEBREAK)
   {
     out << std::endl;
+  }
+  else
+  {
+    out << std::flush;
   }
 }
 
