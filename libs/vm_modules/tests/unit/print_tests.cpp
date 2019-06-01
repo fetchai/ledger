@@ -163,6 +163,25 @@ TEST_F(PrintTests, DISABLED_print_works_for_arrays_of_8_bit_integers_with_one_el
 }
 
 // TODO(WK)
+TEST_F(PrintTests, DISABLED_print_works_for_empty_arrays_of_8_bit_integers)
+{
+  static char const *TEXT = R"(
+    function main()
+      var i = Array<Int8>(0);
+      print(i);
+
+      var u = Array<UInt8>(0);
+      print(u);
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_TRUE(toolkit.Run());
+
+  ASSERT_EQ(toolkit.stdout(), "[][]");
+}
+
+// TODO(WK)
 TEST_F(PrintTests, DISABLED_print_works_for_arrays_of_16_bit_integers_with_multiple_elements)
 {
   static char const *TEXT = R"(
@@ -202,6 +221,25 @@ TEST_F(PrintTests, DISABLED_print_works_for_arrays_of_16_bit_integers_with_one_e
   ASSERT_TRUE(toolkit.Run());
 
   ASSERT_EQ(toolkit.stdout(), "[-42][42]");
+}
+
+// TODO(WK)
+TEST_F(PrintTests, DISABLED_print_works_for_empty_arrays_of_16_bit_integers)
+{
+  static char const *TEXT = R"(
+    function main()
+      var i = Array<Int16>(0);
+      print(i);
+
+      var u = Array<UInt16>(0);
+      print(u);
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_TRUE(toolkit.Run());
+
+  ASSERT_EQ(toolkit.stdout(), "[][]");
 }
 
 TEST_F(PrintTests, print_works_for_arrays_of_32_bit_integers_with_multiple_elements)
@@ -244,6 +282,24 @@ TEST_F(PrintTests, print_works_for_arrays_of_32_bit_integers_with_one_element)
   ASSERT_EQ(toolkit.stdout(), "[-42][42]");
 }
 
+TEST_F(PrintTests, print_works_for_empty_arrays_of_32_bit_integers)
+{
+  static char const *TEXT = R"(
+    function main()
+      var i = Array<Int32>(0);
+      print(i);
+
+      var u = Array<UInt32>(0);
+      print(u);
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_TRUE(toolkit.Run());
+
+  ASSERT_EQ(toolkit.stdout(), "[][]");
+}
+
 TEST_F(PrintTests, print_works_for_arrays_of_64_bit_integers_with_multiple_elements)
 {
   static char const *TEXT = R"(
@@ -282,6 +338,24 @@ TEST_F(PrintTests, print_works_for_arrays_of_64_bit_integers_with_one_element)
   ASSERT_TRUE(toolkit.Run());
 
   ASSERT_EQ(toolkit.stdout(), "[-42][42]");
+}
+
+TEST_F(PrintTests, print_works_for_empty_arrays_of_64_bit_integers)
+{
+  static char const *TEXT = R"(
+    function main()
+      var i = Array<Int64>(0);
+      print(i);
+
+      var u = Array<UInt64>(0);
+      print(u);
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_TRUE(toolkit.Run());
+
+  ASSERT_EQ(toolkit.stdout(), "[][]");
 }
 
 }  // namespace
