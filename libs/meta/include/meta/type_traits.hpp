@@ -73,6 +73,9 @@ template <typename T>
 constexpr bool IsNullPtr = std::is_null_pointer<T>::value;
 
 template <typename T>
+constexpr bool IsAny8BitInteger = std::is_same<T, int8_t>::value || std::is_same<T, uint8_t>::value;
+
+template <typename T>
 using Decay = typename std::decay<T>::type;
 
 template <bool C, typename R = void>

@@ -19,6 +19,7 @@
 
 #include "byte_array_wrapper.hpp"
 #include "core/byte_array/encoders.hpp"
+#include "meta/type_traits.hpp"
 
 #include <ostream>
 
@@ -26,6 +27,9 @@ namespace fetch {
 namespace vm_modules {
 
 namespace internal {
+
+using meta::EnableIf;
+using meta::IsAny8BitInteger;
 
 template <bool APPEND_LINEBREAK>
 inline void FlushOutput(std::ostream &out)
@@ -40,11 +44,22 @@ inline void FlushOutput(std::ostream &out)
   }
 }
 
-template <bool APPEND_LINEBREAK>
 inline void PrintNullPtr(std::ostream &out)
 {
   out << "(nullptr)";
-  FlushOutput<APPEND_LINEBREAK>(out);
+}
+
+template <typename T>
+inline EnableIf<!IsAny8BitInteger<T>, void> PrintWithCastIf8Bit(std::ostream &out, T const &el)
+{
+  out << el;
+}
+
+// int8_t and uint8_t need casting to int32_t, or they get mangled to ASCII characters
+template <typename T>
+inline EnableIf<IsAny8BitInteger<T>, void> PrintWithCastIf8Bit(std::ostream &out, T const &el)
+{
+  out << static_cast<int32_t>(el);
 }
 
 }  // namespace internal
@@ -53,6 +68,7 @@ template <bool APPEND_LINEBREAK = false>
 inline void PrintString(fetch::vm::VM *vm, fetch::vm::Ptr<fetch::vm::String> const &s)
 {
   auto &out = vm->GetOutputDevice(vm::VM::STDOUT);
+
   out << s->str;
 
   internal::FlushOutput<APPEND_LINEBREAK>(out);
@@ -62,16 +78,8 @@ template <typename T, bool APPEND_LINEBREAK = false>
 inline void PrintNumber(fetch::vm::VM *vm, T const &s)
 {
   auto &out = vm->GetOutputDevice(vm::VM::STDOUT);
-  out << s;
 
-  internal::FlushOutput<APPEND_LINEBREAK>(out);
-}
-
-template <typename T, bool APPEND_LINEBREAK = false>
-inline void PrintByte(fetch::vm::VM *vm, T const &s)
-{
-  auto &out = vm->GetOutputDevice(vm::VM::STDOUT);
-  out << static_cast<int32_t>(s);
+  internal::PrintWithCastIf8Bit(out, s);
 
   internal::FlushOutput<APPEND_LINEBREAK>(out);
 }
@@ -87,54 +95,28 @@ inline void PrintBool(fetch::vm::VM *vm, bool const &s)
 }
 
 template <typename T, bool APPEND_LINEBREAK = false>
-inline void PrintArrayPrimitiveByte(fetch::vm::VM *vm, vm::Ptr<vm::Array<T>> const &g)
+inline void PrintArray(fetch::vm::VM *vm, vm::Ptr<vm::Array<T>> const &g)
 {
   auto &out = vm->GetOutputDevice(vm::VM::STDOUT);
   if (g == nullptr)
   {
-    internal::PrintNullPtr<APPEND_LINEBREAK>(out);
-    return;
+    internal::PrintNullPtr(out);
   }
-
-  assert(g != nullptr);
-
-  out << "[";
-  if (!g->elements.empty())
+  else
   {
-    out << static_cast<int32_t>(g->elements[0]);
-    for (std::size_t i = 1; i < g->elements.size(); ++i)
+
+    out << "[";
+    if (!g->elements.empty())
     {
-      out << ", " << static_cast<int32_t>(g->elements[i]);
+      internal::PrintWithCastIf8Bit(out, g->elements[0]);
+      for (std::size_t i = 1; i < g->elements.size(); ++i)
+      {
+        out << ", ";
+        internal::PrintWithCastIf8Bit(out, g->elements[i]);
+      }
     }
+    out << "]";
   }
-  out << "]";
-
-  internal::FlushOutput<APPEND_LINEBREAK>(out);
-}
-
-template <typename T, bool APPEND_LINEBREAK = false>
-inline void PrintArrayPrimitive(fetch::vm::VM *vm, vm::Ptr<vm::Array<T>> const &g)
-{
-  auto &out = vm->GetOutputDevice(vm::VM::STDOUT);
-  if (g == nullptr)
-  {
-    internal::PrintNullPtr<APPEND_LINEBREAK>(out);
-    return;
-  }
-
-  assert(g != nullptr);
-
-  out << "[";
-  if (!g->elements.empty())
-  {
-    out << g->elements[0];
-    for (std::size_t i = 1; i < g->elements.size(); ++i)
-    {
-      out << ", " << g->elements[i];
-    }
-  }
-  out << "]";
-
   internal::FlushOutput<APPEND_LINEBREAK>(out);
 }
 
@@ -146,10 +128,10 @@ inline void CreatePrint(vm::Module &module)
   module.CreateFreeFunction("print", &PrintBool<>);
   module.CreateFreeFunction("printLn", &PrintBool<true>);
 
-  module.CreateFreeFunction("print", &PrintByte<uint8_t>);
-  module.CreateFreeFunction("printLn", &PrintByte<uint8_t, true>);
-  module.CreateFreeFunction("print", &PrintByte<int8_t>);
-  module.CreateFreeFunction("printLn", &PrintByte<int8_t, true>);
+  module.CreateFreeFunction("print", &PrintNumber<uint8_t>);
+  module.CreateFreeFunction("printLn", &PrintNumber<uint8_t, true>);
+  module.CreateFreeFunction("print", &PrintNumber<int8_t>);
+  module.CreateFreeFunction("printLn", &PrintNumber<int8_t, true>);
 
   module.CreateFreeFunction("print", &PrintNumber<uint16_t>);
   module.CreateFreeFunction("printLn", &PrintNumber<uint16_t, true>);
@@ -171,30 +153,30 @@ inline void CreatePrint(vm::Module &module)
   module.CreateFreeFunction("print", &PrintNumber<double>);
   module.CreateFreeFunction("printLn", &PrintNumber<double, true>);
 
-  module.CreateFreeFunction("print", &PrintArrayPrimitiveByte<uint8_t>);
-  module.CreateFreeFunction("printLn", &PrintArrayPrimitiveByte<uint8_t, true>);
-  module.CreateFreeFunction("print", &PrintArrayPrimitiveByte<int8_t>);
-  module.CreateFreeFunction("printLn", &PrintArrayPrimitiveByte<int8_t, true>);
+  module.CreateFreeFunction("print", &PrintArray<uint8_t>);
+  module.CreateFreeFunction("printLn", &PrintArray<uint8_t, true>);
+  module.CreateFreeFunction("print", &PrintArray<int8_t>);
+  module.CreateFreeFunction("printLn", &PrintArray<int8_t, true>);
 
-  module.CreateFreeFunction("print", &PrintArrayPrimitive<uint16_t>);
-  module.CreateFreeFunction("printLn", &PrintArrayPrimitive<uint16_t, true>);
-  module.CreateFreeFunction("print", &PrintArrayPrimitive<int16_t>);
-  module.CreateFreeFunction("printLn", &PrintArrayPrimitive<int16_t, true>);
+  module.CreateFreeFunction("print", &PrintArray<uint16_t>);
+  module.CreateFreeFunction("printLn", &PrintArray<uint16_t, true>);
+  module.CreateFreeFunction("print", &PrintArray<int16_t>);
+  module.CreateFreeFunction("printLn", &PrintArray<int16_t, true>);
 
-  module.CreateFreeFunction("print", &PrintArrayPrimitive<uint32_t>);
-  module.CreateFreeFunction("printLn", &PrintArrayPrimitive<uint32_t, true>);
-  module.CreateFreeFunction("print", &PrintArrayPrimitive<int32_t>);
-  module.CreateFreeFunction("printLn", &PrintArrayPrimitive<int32_t, true>);
+  module.CreateFreeFunction("print", &PrintArray<uint32_t>);
+  module.CreateFreeFunction("printLn", &PrintArray<uint32_t, true>);
+  module.CreateFreeFunction("print", &PrintArray<int32_t>);
+  module.CreateFreeFunction("printLn", &PrintArray<int32_t, true>);
 
-  module.CreateFreeFunction("print", &PrintArrayPrimitive<uint64_t>);
-  module.CreateFreeFunction("printLn", &PrintArrayPrimitive<uint64_t, true>);
-  module.CreateFreeFunction("print", &PrintArrayPrimitive<int64_t>);
-  module.CreateFreeFunction("printLn", &PrintArrayPrimitive<int64_t, true>);
+  module.CreateFreeFunction("print", &PrintArray<uint64_t>);
+  module.CreateFreeFunction("printLn", &PrintArray<uint64_t, true>);
+  module.CreateFreeFunction("print", &PrintArray<int64_t>);
+  module.CreateFreeFunction("printLn", &PrintArray<int64_t, true>);
 
-  module.CreateFreeFunction("print", &PrintArrayPrimitive<float>);
-  module.CreateFreeFunction("printLn", &PrintArrayPrimitive<float, true>);
-  module.CreateFreeFunction("print", &PrintArrayPrimitive<double>);
-  module.CreateFreeFunction("printLn", &PrintArrayPrimitive<double, true>);
+  module.CreateFreeFunction("print", &PrintArray<float>);
+  module.CreateFreeFunction("printLn", &PrintArray<float, true>);
+  module.CreateFreeFunction("print", &PrintArray<double>);
+  module.CreateFreeFunction("printLn", &PrintArray<double, true>);
 }
 
 inline void CreatePrint(std::shared_ptr<vm::Module> module)
