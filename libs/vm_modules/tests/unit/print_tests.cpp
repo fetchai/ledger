@@ -352,4 +352,127 @@ TEST_F(PrintTests, print_works_for_empty_arrays_of_64_bit_integers)
   ASSERT_EQ(toolkit.stdout(), "[][]");
 }
 
+// TODO(WK)
+TEST_F(PrintTests, DISABLED_print_works_for_two_dimensional_arrays_of_integers)
+{
+  static char const *TEXT = R"(
+    function main()
+      var data = Array<Array<Int64>>(2);
+
+      data[0] = Array<Int64>(2);
+      data[0][0] = 1i64;
+      data[0][1] = 2i64;
+
+      data[1] = Array<Int64>(2);
+      data[1][0] = 3i64;
+      data[1][1] = 4i64;
+
+      print(data);
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_TRUE(toolkit.Run());
+
+  ASSERT_EQ(toolkit.stdout(), "[[1, 2], [3, 4]]");
+}
+
+TEST_F(PrintTests, print_works_for_strings)
+{
+  static char const *TEXT = R"(
+    function main()
+      print("abc");
+      print(" ");
+      print('def');
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_TRUE(toolkit.Run());
+
+  ASSERT_EQ(toolkit.stdout(), "abc def");
+}
+
+// TODO(WK)
+TEST_F(PrintTests, DISABLED_print_works_for_arrays_of_strings)
+{
+  static char const *TEXT = R"(
+    function main()
+      var data = Array<String>(2);
+      data[0] = 'a';
+      data[1] = 'b';
+
+      print(data);
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_TRUE(toolkit.Run());
+
+  ASSERT_EQ(toolkit.stdout(), "[a, b]");
+}
+
+// TODO(WK)
+TEST_F(PrintTests, DISABLED_print_works_for_two_dimensional_arrays_of_strings)
+{
+  static char const *TEXT = R"(
+    function main()
+      var data = Array<Array<String>>(2);
+
+      data[0] = Array<String>(2);
+      data[0][0] = 'a';
+      data[0][1] = 'b';
+
+      data[1] = Array<String>(2);
+      data[1][0] = 'c';
+      data[1][1] = 'd';
+
+      print(data);
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_TRUE(toolkit.Run());
+
+  ASSERT_EQ(toolkit.stdout(), "[[a, b], [c, d]]");
+}
+
+TEST_F(PrintTests, print_works_for_booleans)
+{
+  static char const *TEXT = R"(
+    function main()
+      var true_val = true;
+      var false_val = false;
+
+      print(true_val);
+      print('-');
+      print(false_val);
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_TRUE(toolkit.Run());
+
+  ASSERT_EQ(toolkit.stdout(), "true-false");
+}
+
+// TODO(WK)
+TEST_F(PrintTests, DISABLED_print_works_for_arrays_of_booleans)
+{
+  static char const *TEXT = R"(
+    function main()
+      var data = Array<Bool>(2);
+      data[0] = true;
+      data[1] = false;
+
+      print(data);
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_TRUE(toolkit.Run());
+
+  ASSERT_EQ(toolkit.stdout(), "[true, false]");
+}
+
 }  // namespace

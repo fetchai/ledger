@@ -69,6 +69,16 @@ inline void PrintByte(fetch::vm::VM *vm, T const &s)
   internal::FlushOutput<APPEND_LINEBREAK>(out);
 }
 
+template <bool APPEND_LINEBREAK = false>
+inline void PrintBool(fetch::vm::VM *vm, bool const &s)
+{
+  auto &out = vm->GetOutputDevice(vm::VM::STDOUT);
+
+  out << (s ? "true" : "false");
+
+  internal::FlushOutput<APPEND_LINEBREAK>(out);
+}
+
 template <typename T, bool APPEND_LINEBREAK = false>
 inline void PrintArrayPrimitiveByte(fetch::vm::VM *vm, vm::Ptr<vm::Array<T>> const &g)
 {
@@ -125,6 +135,9 @@ inline void CreatePrint(vm::Module &module)
 {
   module.CreateFreeFunction("print", &PrintString<>);
   module.CreateFreeFunction("printLn", &PrintString<true>);
+
+  module.CreateFreeFunction("print", &PrintBool<>);
+  module.CreateFreeFunction("printLn", &PrintBool<true>);
 
   module.CreateFreeFunction("print", &PrintByte<uint8_t>);
   module.CreateFreeFunction("printLn", &PrintByte<uint8_t, true>);
