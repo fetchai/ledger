@@ -120,8 +120,7 @@ TEST_F(PrintTests, print_works_for_64_bit_integers)
   ASSERT_EQ(toolkit.stdout(), "42, 42, -42");
 }
 
-// TODO(WK)
-TEST_F(PrintTests, DISABLED_print_works_for_arrays_of_8_bit_integers_with_multiple_elements)
+TEST_F(PrintTests, print_works_for_arrays_of_8_bit_integers_with_multiple_elements)
 {
   static char const *TEXT = R"(
     function main()
@@ -141,8 +140,7 @@ TEST_F(PrintTests, DISABLED_print_works_for_arrays_of_8_bit_integers_with_multip
   ASSERT_EQ(toolkit.stdout(), "[-1, 0, 1][0, 1, 2]");
 }
 
-// TODO(WK)
-TEST_F(PrintTests, DISABLED_print_works_for_arrays_of_8_bit_integers_with_one_element)
+TEST_F(PrintTests, print_works_for_arrays_of_8_bit_integers_with_one_element)
 {
   static char const *TEXT = R"(
     function main()
@@ -162,8 +160,7 @@ TEST_F(PrintTests, DISABLED_print_works_for_arrays_of_8_bit_integers_with_one_el
   ASSERT_EQ(toolkit.stdout(), "[-42][42]");
 }
 
-// TODO(WK)
-TEST_F(PrintTests, DISABLED_print_works_for_empty_arrays_of_8_bit_integers)
+TEST_F(PrintTests, print_works_for_empty_arrays_of_8_bit_integers)
 {
   static char const *TEXT = R"(
     function main()
@@ -181,8 +178,7 @@ TEST_F(PrintTests, DISABLED_print_works_for_empty_arrays_of_8_bit_integers)
   ASSERT_EQ(toolkit.stdout(), "[][]");
 }
 
-// TODO(WK)
-TEST_F(PrintTests, DISABLED_print_works_for_arrays_of_16_bit_integers_with_multiple_elements)
+TEST_F(PrintTests, print_works_for_arrays_of_16_bit_integers_with_multiple_elements)
 {
   static char const *TEXT = R"(
     function main()
@@ -202,8 +198,7 @@ TEST_F(PrintTests, DISABLED_print_works_for_arrays_of_16_bit_integers_with_multi
   ASSERT_EQ(toolkit.stdout(), "[-1, 0, 1][0, 1, 2]");
 }
 
-// TODO(WK)
-TEST_F(PrintTests, DISABLED_print_works_for_arrays_of_16_bit_integers_with_one_element)
+TEST_F(PrintTests, print_works_for_arrays_of_16_bit_integers_with_one_element)
 {
   static char const *TEXT = R"(
     function main()
@@ -223,8 +218,7 @@ TEST_F(PrintTests, DISABLED_print_works_for_arrays_of_16_bit_integers_with_one_e
   ASSERT_EQ(toolkit.stdout(), "[-42][42]");
 }
 
-// TODO(WK)
-TEST_F(PrintTests, DISABLED_print_works_for_empty_arrays_of_16_bit_integers)
+TEST_F(PrintTests, print_works_for_empty_arrays_of_16_bit_integers)
 {
   static char const *TEXT = R"(
     function main()

@@ -39,7 +39,7 @@ To Cast(Variant const &from)
     to = static_cast<To>(from.primitive.i8);
     break;
   }
-  case TypeIds::Byte:
+  case TypeIds::UInt8:
   {
     to = static_cast<To>(from.primitive.ui8);
     break;

@@ -941,7 +941,7 @@ private:
       Op::Apply(lhsv, lhsv.primitive.i8, rhsv.primitive.i8);
       break;
     }
-    case TypeIds::Byte:
+    case TypeIds::UInt8:
     {
       Op::Apply(lhsv, lhsv.primitive.ui8, rhsv.primitive.ui8);
       break;
@@ -1003,7 +1003,7 @@ private:
       Op::Apply(this, lhsv.primitive.i8, rhsv.primitive.i8);
       break;
     }
-    case TypeIds::Byte:
+    case TypeIds::UInt8:
     {
       Op::Apply(this, lhsv.primitive.ui8, rhsv.primitive.ui8);
       break;
@@ -1055,7 +1055,7 @@ private:
       Op::Apply(this, lhsv.primitive.i8, rhsv.primitive.i8);
       break;
     }
-    case TypeIds::Byte:
+    case TypeIds::UInt8:
     {
       Op::Apply(this, lhsv.primitive.ui8, rhsv.primitive.ui8);
       break;
@@ -1117,7 +1117,7 @@ private:
       Op::Apply(this, *static_cast<int8_t *>(lhs), rhsv.primitive.i8);
       break;
     }
-    case TypeIds::Byte:
+    case TypeIds::UInt8:
     {
       Op::Apply(this, *static_cast<uint8_t *>(lhs), rhsv.primitive.ui8);
       break;
@@ -1169,7 +1169,7 @@ private:
       Op::Apply(this, *static_cast<int8_t *>(lhs), rhsv.primitive.i8);
       break;
     }
-    case TypeIds::Byte:
+    case TypeIds::UInt8:
     {
       Op::Apply(this, *static_cast<uint8_t *>(lhs), rhsv.primitive.ui8);
       break;
