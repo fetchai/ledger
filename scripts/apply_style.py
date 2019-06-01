@@ -241,7 +241,7 @@ def check_for_headers_with_non_hpp_extension(file_paths):
     if invalid_files:
         output("Error: Fetch header files should have the extension '.hpp':")
         list_counter = 1
-        for path in invalid_files:
+        for path in sorted(invalid_files):
             output('  {}. {}'.format(list_counter, path))
             list_counter = list_counter + 1
 
