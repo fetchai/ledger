@@ -18,14 +18,16 @@
 
 #include "vm/io_observer_interface.hpp"
 #include "vm_modules/vm_factory.hpp"
-#include "vm_test_suite.hpp"
+#include "vm_test_toolkit.hpp"
 
 #include "gtest/gtest.h"
 
-#include <memory>
+namespace {
 
-class VMTests : public VmTestSuite
+class VMTests : public ::testing::Test
 {
+public:
+  VmTestToolkit toolkit;
 };
 
 // Test we can compile and run a fairly inoffensive smart contract
@@ -37,8 +39,8 @@ TEST_F(VMTests, CheckCompileAndExecute)
     endfunction
   )";
 
-  ASSERT_TRUE(Compile(TEXT));
-  ASSERT_TRUE(Run());
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_TRUE(toolkit.Run());
 }
 
 TEST_F(VMTests, CheckRandom)
@@ -55,6 +57,8 @@ TEST_F(VMTests, CheckRandom)
     endfunction
   )";
 
-  ASSERT_TRUE(Compile(TEXT));
-  ASSERT_TRUE(Run());
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_TRUE(toolkit.Run());
 }
+
+}  // namespace
