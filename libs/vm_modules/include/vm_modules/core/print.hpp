@@ -23,26 +23,6 @@
 namespace fetch {
 namespace vm_modules {
 
-/**
- * method for printing string to std::cout
- */
-
-/*
-inline void PrintByteArray(fetch::vm::VM *                                            vm,
-                         fetch::vm::Ptr<fetch::vm_modules::ByteArrayWrapper> const &s)
-{
-auto &out = vm->GetOutputDevice(vm::VM::STDOUT);
-out << s->byte_array();
-}
-
-inline void PrintLnByteArray(fetch::vm::VM *                                            vm,
-                           fetch::vm::Ptr<fetch::vm_modules::ByteArrayWrapper> const &s)
-{
-auto &out = vm->GetOutputDevice(vm::VM::STDOUT);
-out << byte_array::ToHex(s->byte_array()) << std::endl;
-}
-*/
-
 inline void PrintString(fetch::vm::VM *vm, fetch::vm::Ptr<fetch::vm::String> const &s)
 {
   auto &out = vm->GetOutputDevice(vm::VM::STDOUT);
@@ -54,50 +34,15 @@ inline void PrintLnString(fetch::vm::VM *vm, fetch::vm::Ptr<fetch::vm::String> c
   auto &out = vm->GetOutputDevice(vm::VM::STDOUT);
   out << s->str << std::endl;
 }
-
-inline void PrintInt32(fetch::vm::VM *vm, int32_t const &s)
+template<typename T>
+  inline void Print(fetch::vm::VM *vm, T const &s)
 {
   auto &out = vm->GetOutputDevice(vm::VM::STDOUT);
   out << s;
 }
 
-inline void PrintLnInt32(fetch::vm::VM *vm, int32_t const &s)
-{
-  auto &out = vm->GetOutputDevice(vm::VM::STDOUT);
-  out << s << std::endl;
-}
-
-inline void PrintInt64(fetch::vm::VM *vm, int64_t const &s)
-{
-  auto &out = vm->GetOutputDevice(vm::VM::STDOUT);
-  out << s;
-}
-
-inline void PrintLnInt64(fetch::vm::VM *vm, int64_t const &s)
-{
-  auto &out = vm->GetOutputDevice(vm::VM::STDOUT);
-  out << s << std::endl;
-}
-
-inline void PrintFloat(fetch::vm::VM *vm, float const &s)
-{
-  auto &out = vm->GetOutputDevice(vm::VM::STDOUT);
-  out << s;
-}
-
-inline void PrintLnFloat(fetch::vm::VM *vm, float const &s)
-{
-  auto &out = vm->GetOutputDevice(vm::VM::STDOUT);
-  out << s;
-}
-
-inline void PrintDouble(fetch::vm::VM *vm, double const &s)
-{
-  auto &out = vm->GetOutputDevice(vm::VM::STDOUT);
-  out << s;
-}
-
-inline void PrintLnDouble(fetch::vm::VM *vm, double const &s)
+template<typename T>
+  inline void PrintLn(fetch::vm::VM *vm, T const &s)
 {
   auto &out = vm->GetOutputDevice(vm::VM::STDOUT);
   out << s << std::endl;
@@ -133,21 +78,21 @@ inline void PrintArrayPrimitive(fetch::vm::VM *vm, vm::Ptr<vm::Array<T>> const &
 
 inline void CreatePrint(vm::Module &module)
 {
-  /*
-  module.CreateFreeFunction("print", &PrintByteArray);
-  module.CreateFreeFunction("printLn", &PrintLnByteArray);
-  */
-
   module.CreateFreeFunction("print", &PrintString);
   module.CreateFreeFunction("printLn", &PrintLnString);
-  module.CreateFreeFunction("print", &PrintInt32);
-  module.CreateFreeFunction("printLn", &PrintLnInt32);
-  module.CreateFreeFunction("print", &PrintInt64);
-  module.CreateFreeFunction("printLn", &PrintLnInt64);
-  module.CreateFreeFunction("print", &PrintDouble);
-  module.CreateFreeFunction("printLn", &PrintLnDouble);
-  module.CreateFreeFunction("print", &PrintFloat);
-  module.CreateFreeFunction("printLn", &PrintLnFloat);
+
+  module.CreateFreeFunction("print", &Print<uint32_t >);
+  module.CreateFreeFunction("printLn", &PrintLn<uint32_t>);
+  module.CreateFreeFunction("print", &Print<int32_t >);
+  module.CreateFreeFunction("printLn", &PrintLn<int32_t>);
+  module.CreateFreeFunction("print", &Print<uint64_t>);
+  module.CreateFreeFunction("printLn", &PrintLn<uint64_t>);
+  module.CreateFreeFunction("print", &Print<int64_t>);
+  module.CreateFreeFunction("printLn", &PrintLn<int64_t>);
+  module.CreateFreeFunction("print", &Print<float>);
+  module.CreateFreeFunction("printLn", &PrintLn<float>);
+  module.CreateFreeFunction("print", &Print<double>);
+  module.CreateFreeFunction("printLn", &PrintLn<double>);
 
   module.CreateFreeFunction("print", &PrintArrayPrimitive<int32_t>);
   module.CreateFreeFunction("print", &PrintArrayPrimitive<int64_t>);
