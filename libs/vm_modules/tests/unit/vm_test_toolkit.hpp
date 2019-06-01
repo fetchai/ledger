@@ -52,24 +52,13 @@ using IRPtr         = std::unique_ptr<IR>;
 using VMPtr         = std::unique_ptr<VM>;
 using ObserverPtr   = std::unique_ptr<MockIoObserver>;
 
-class VmTestSuite : public ::testing::Test
+class VmTestToolkit
 {
-protected:
-  void SetUp() override
-  {
-    observer_ = std::make_unique<MockIoObserver>();
-    module_   = fetch::vm_modules::VMFactory::GetModule();
-  }
-
-  void TearDown() override
-  {
-    vm_.reset();
-    executable_.reset();
-    ir_.reset();
-    compiler_.reset();
-    module_.reset();
-    observer_.reset();
-  }
+public:
+  VmTestToolkit()
+    : observer_{std::make_unique<MockIoObserver>()}
+    , module_{fetch::vm_modules::VMFactory::GetModule()}
+  {}
 
   bool Compile(char const *text)
   {
@@ -130,6 +119,16 @@ protected:
     auto raw_value = FromHex(hex_value);
 
     observer_->fake_.SetKeyValue(key, raw_value);
+  }
+
+  Module &module() const
+  {
+    return *module_;
+  }
+
+  MockIoObserver &observer() const
+  {
+    return *observer_;
   }
 
   std::string stdout() const
