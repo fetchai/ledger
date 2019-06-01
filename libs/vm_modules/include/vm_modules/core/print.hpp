@@ -111,49 +111,46 @@ inline void CreatePrint(vm::Module &module)
 
   module.CreateFreeFunction("print", &PrintUnsignedByte<>);
   module.CreateFreeFunction("printLn", &PrintUnsignedByte<true>);
-
   module.CreateFreeFunction("print", &PrintByte<>);
   module.CreateFreeFunction("printLn", &PrintByte<true>);
 
   module.CreateFreeFunction("print", &PrintNumber<uint16_t>);
   module.CreateFreeFunction("printLn", &PrintNumber<uint16_t, true>);
-
   module.CreateFreeFunction("print", &PrintNumber<int16_t>);
   module.CreateFreeFunction("printLn", &PrintNumber<int16_t, true>);
 
   module.CreateFreeFunction("print", &PrintNumber<uint32_t>);
   module.CreateFreeFunction("printLn", &PrintNumber<uint32_t, true>);
-
   module.CreateFreeFunction("print", &PrintNumber<int32_t>);
   module.CreateFreeFunction("printLn", &PrintNumber<int32_t, true>);
 
   module.CreateFreeFunction("print", &PrintNumber<uint64_t>);
   module.CreateFreeFunction("printLn", &PrintNumber<uint64_t, true>);
-
   module.CreateFreeFunction("print", &PrintNumber<int64_t>);
   module.CreateFreeFunction("printLn", &PrintNumber<int64_t, true>);
 
   module.CreateFreeFunction("print", &PrintNumber<float>);
   module.CreateFreeFunction("printLn", &PrintNumber<float, true>);
-
   module.CreateFreeFunction("print", &PrintNumber<double>);
   module.CreateFreeFunction("printLn", &PrintNumber<double, true>);
 
+  module.CreateFreeFunction("print", &PrintArrayPrimitive<uint8_t>);
+  module.CreateFreeFunction("printLn", &PrintArrayPrimitive<uint8_t, true>);
+  module.CreateFreeFunction("print", &PrintArrayPrimitive<int8_t>);
+  module.CreateFreeFunction("printLn", &PrintArrayPrimitive<int8_t, true>);
+
   module.CreateFreeFunction("print", &PrintArrayPrimitive<uint32_t>);
   module.CreateFreeFunction("printLn", &PrintArrayPrimitive<uint32_t, true>);
-
   module.CreateFreeFunction("print", &PrintArrayPrimitive<int32_t>);
   module.CreateFreeFunction("printLn", &PrintArrayPrimitive<int32_t, true>);
 
   module.CreateFreeFunction("print", &PrintArrayPrimitive<uint64_t>);
   module.CreateFreeFunction("printLn", &PrintArrayPrimitive<uint64_t, true>);
-
   module.CreateFreeFunction("print", &PrintArrayPrimitive<int64_t>);
   module.CreateFreeFunction("printLn", &PrintArrayPrimitive<int64_t, true>);
 
   module.CreateFreeFunction("print", &PrintArrayPrimitive<float>);
   module.CreateFreeFunction("printLn", &PrintArrayPrimitive<float, true>);
-
   module.CreateFreeFunction("print", &PrintArrayPrimitive<double>);
   module.CreateFreeFunction("printLn", &PrintArrayPrimitive<double, true>);
 }
