@@ -34,18 +34,42 @@ inline void PrintLnString(fetch::vm::VM *vm, fetch::vm::Ptr<fetch::vm::String> c
   auto &out = vm->GetOutputDevice(vm::VM::STDOUT);
   out << s->str << std::endl;
 }
-template<typename T>
-  inline void Print(fetch::vm::VM *vm, T const &s)
+template <typename T>
+inline void Print(fetch::vm::VM *vm, T const &s)
 {
   auto &out = vm->GetOutputDevice(vm::VM::STDOUT);
   out << s;
 }
 
-template<typename T>
-  inline void PrintLn(fetch::vm::VM *vm, T const &s)
+template <typename T>
+inline void PrintLn(fetch::vm::VM *vm, T const &s)
 {
   auto &out = vm->GetOutputDevice(vm::VM::STDOUT);
   out << s << std::endl;
+}
+
+inline void PrintByte(fetch::vm::VM *vm, int8_t const &s)
+{
+  auto &out = vm->GetOutputDevice(vm::VM::STDOUT);
+  out << static_cast<int32_t>(s);
+}
+
+inline void PrintByteLn(fetch::vm::VM *vm, int8_t const &s)
+{
+  auto &out = vm->GetOutputDevice(vm::VM::STDOUT);
+  out << static_cast<int32_t>(s) << std::endl;
+}
+
+inline void PrintUnsignedByte(fetch::vm::VM *vm, uint8_t const &s)
+{
+  auto &out = vm->GetOutputDevice(vm::VM::STDOUT);
+  out << static_cast<uint32_t>(s);
+}
+
+inline void PrintUnsignedByteLn(fetch::vm::VM *vm, uint8_t const &s)
+{
+  auto &out = vm->GetOutputDevice(vm::VM::STDOUT);
+  out << static_cast<uint32_t>(s) << std::endl;
 }
 
 template <typename T, bool NL = false>
@@ -81,14 +105,26 @@ inline void CreatePrint(vm::Module &module)
   module.CreateFreeFunction("print", &PrintString);
   module.CreateFreeFunction("printLn", &PrintLnString);
 
-  module.CreateFreeFunction("print", &Print<uint32_t >);
+  module.CreateFreeFunction("print", &PrintUnsignedByte);
+  module.CreateFreeFunction("printLn", &PrintUnsignedByteLn);
+  module.CreateFreeFunction("print", &PrintByte);
+  module.CreateFreeFunction("printLn", &PrintByteLn);
+
+  module.CreateFreeFunction("print", &Print<uint16_t>);
+  module.CreateFreeFunction("printLn", &PrintLn<uint16_t>);
+  module.CreateFreeFunction("print", &Print<int16_t>);
+  module.CreateFreeFunction("printLn", &PrintLn<int16_t>);
+
+  module.CreateFreeFunction("print", &Print<uint32_t>);
   module.CreateFreeFunction("printLn", &PrintLn<uint32_t>);
-  module.CreateFreeFunction("print", &Print<int32_t >);
+  module.CreateFreeFunction("print", &Print<int32_t>);
   module.CreateFreeFunction("printLn", &PrintLn<int32_t>);
+
   module.CreateFreeFunction("print", &Print<uint64_t>);
   module.CreateFreeFunction("printLn", &PrintLn<uint64_t>);
   module.CreateFreeFunction("print", &Print<int64_t>);
   module.CreateFreeFunction("printLn", &PrintLn<int64_t>);
+
   module.CreateFreeFunction("print", &Print<float>);
   module.CreateFreeFunction("printLn", &PrintLn<float>);
   module.CreateFreeFunction("print", &Print<double>);

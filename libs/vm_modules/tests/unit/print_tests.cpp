@@ -28,22 +28,21 @@ public:
   VmTestToolkit toolkit;
 };
 
-// TODO(WK)
-TEST_F(PrintTests, DISABLED_print_works_for_8_bit_integers)
+TEST_F(PrintTests, print_works_for_8_bit_integers)
 {
   static char const *TEXT = R"(
     function main()
-//      var u = 42u8;
-//      print(u);
-//      print(', ');
+      var u = 42u8;
+      print(u);
+      print(', ');
 
-//      var pos_i = 42i8;
-//      print(pos_i);
-//      print(', ');
+      var pos_i = 42i8;
+      print(pos_i);
+      print(', ');
 
-//      var neg_i = -42i8;
-//      print(neg_i);
-   endfunction
+      var neg_i = -42i8;
+      print(neg_i);
+    endfunction
   )";
 
   ASSERT_TRUE(toolkit.Compile(TEXT));
@@ -52,22 +51,21 @@ TEST_F(PrintTests, DISABLED_print_works_for_8_bit_integers)
   ASSERT_EQ(toolkit.stdout(), "42, 42, -42");
 }
 
-// TODO(WK)
-TEST_F(PrintTests, DISABLED_print_works_for_16_bit_integers)
+TEST_F(PrintTests, print_works_for_16_bit_integers)
 {
   static char const *TEXT = R"(
     function main()
-//      var u = 42u16;
-//      print(u);
-//      print(', ');
+      var u = 42u16;
+      print(u);
+      print(', ');
 
-//      var pos_i = 42i16;
-//      print(pos_i);
-//      print(', ');
+      var pos_i = 42i16;
+      print(pos_i);
+      print(', ');
 
-//      var neg_i = -42i16;
-//      print(neg_i);
-   endfunction
+      var neg_i = -42i16;
+      print(neg_i);
+    endfunction
   )";
 
   ASSERT_TRUE(toolkit.Compile(TEXT));
@@ -90,7 +88,7 @@ TEST_F(PrintTests, print_works_for_32_bit_integers)
 
       var neg_i = -42i32;
       print(neg_i);
-   endfunction
+    endfunction
   )";
 
   ASSERT_TRUE(toolkit.Compile(TEXT));
@@ -113,7 +111,7 @@ TEST_F(PrintTests, print_works_for_64_bit_integers)
 
       var neg_i = -42i64;
       print(neg_i);
-   endfunction
+    endfunction
   )";
 
   ASSERT_TRUE(toolkit.Compile(TEXT));
