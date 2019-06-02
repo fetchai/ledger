@@ -24,7 +24,7 @@ import time
 import traceback
 from concurrent.futures import ThreadPoolExecutor
 from functools import wraps
-from os.path import abspath, basename, dirname, isdir, isfile, join
+from os.path import abspath, basename, commonpath, dirname, isdir, isfile, join
 
 PROJECT_ROOT = abspath(dirname(dirname(__file__)))
 CHECKED_IN_BINARY_FILE_PATTERNS = ('*.png', '*.npy')
@@ -138,10 +138,14 @@ def has_include_guard(text):
     return text.startswith(INCLUDE_GUARD)
 
 
-def walk_source_directories(project_root, excluded_dirs):
+def is_excluded_path(absolute_path):
+    return any([commonpath([absolute_path, excluded_dir]) == excluded_dir for excluded_dir in EXCLUDED_DIRS])
+
+
+def walk_source_directories(project_root):
     """Walk directory tree, skip excluded subtrees"""
     for root, _, files in os.walk(project_root):
-        if any([os.path.commonpath([root, excluded_dir]) == excluded_dir for excluded_dir in excluded_dirs]):
+        if is_excluded_path(root):
             continue
 
         yield root, _, files
@@ -248,31 +252,41 @@ def check_for_headers_with_non_hpp_extension(file_paths):
         sys.exit(1)
 
 
-def is_checked_in_binary_file(file_name):
-    return any([fnmatch.fnmatch(file_name, pattern) for pattern in CHECKED_IN_BINARY_FILE_PATTERNS])
+def is_checked_in_binary_file(absolute_path):
+    return any([fnmatch.fnmatch(basename(absolute_path), pattern) for pattern in CHECKED_IN_BINARY_FILE_PATTERNS])
 
 
 def get_changed_paths_from_git(commit):
-    relative_paths = subprocess.check_output(
-        ['git', 'diff', '--name-only', commit]).splitlines()
+    raw_relative_paths = subprocess.check_output(['git', 'diff', '--name-only', commit]) \
+        .strip() \
+        .splitlines()
 
-    return [abspath(join(PROJECT_ROOT, rel_path.decode('utf-8'))) for rel_path in relative_paths]
+    relative_paths = [rel_path.decode('utf-8').strip()
+                      for rel_path in raw_relative_paths]
+
+    return [abspath(join(PROJECT_ROOT, rel_path)) for rel_path in relative_paths
+            if not is_excluded_path(abspath(join(PROJECT_ROOT, rel_path)))]
 
 
 def files_of_interest(commit):
+    """Returns list of absolute paths to files"""
     global TOTAL_FILES_TO_PROCESS
 
     output('Composing list of files ...')
-    ret = []
-    changes = None if commit is None else get_changed_paths_from_git(commit)
 
-    for root, _, files in walk_source_directories(PROJECT_ROOT, EXCLUDED_DIRS):
-        for file_name in files:
-            if not is_checked_in_binary_file(file_name):
+    ret = []
+
+    if commit is None:
+        for root, _, files in walk_source_directories(PROJECT_ROOT):
+            for file_name in files:
                 absolute_path = abspath(join(root, file_name))
-                if isfile(absolute_path):
-                    if commit is None or absolute_path in changes:
-                        ret.append(absolute_path)
+                ret.append(absolute_path)
+    else:
+        ret = get_changed_paths_from_git(commit)
+
+    # Filter out binary files and symbolic links
+    ret = [abs_path for abs_path in ret
+           if isfile(abs_path) and not is_checked_in_binary_file(abs_path)]
 
     TOTAL_FILES_TO_PROCESS = len(ret)
 
