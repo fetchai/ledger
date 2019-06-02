@@ -24,10 +24,6 @@ project_root = 'unknown'
 build_directory = 'unknown'
 
 
-
-
-
-
 def create_dir(dirname, remove):
     dirname = os.path.join(build_directory, dirname)
 

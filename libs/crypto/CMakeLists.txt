@@ -14,7 +14,7 @@ setup_compiler()
 # Main Library Target
 # ------------------------------------------------------------------------------
 
-setup_library  (fetch-crypto)
+setup_library(fetch-crypto)
 target_link_libraries(fetch-crypto
                       PUBLIC fetch-core
                              fetch-meta
