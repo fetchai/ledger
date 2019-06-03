@@ -39,8 +39,6 @@ fetch::meta::EnableIf<fetch::meta::IsInteger<Type> || fetch::meta::IsFloat<Type>
   ret = static_cast<Type>(std::log(x));
 }
 
-// TODO(800) - native implementations of fixed point are required; casting to double will not be
-// permissible
 template <typename T>
 meta::IfIsFixedPoint<T, void> Log(T const &n, T &ret)
 {
@@ -54,8 +52,6 @@ fetch::meta::EnableIf<fetch::meta::IsInteger<Type> || fetch::meta::IsFloat<Type>
   ret = std::log2(x);
 }
 
-// TODO(800) - native implementations of fixed point are required; casting to double will not be
-// permissible
 template <typename T>
 meta::IfIsFixedPoint<T, void> Log2(T const &n, T &ret)
 {
