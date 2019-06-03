@@ -733,17 +733,6 @@ public:
     FixedPoint k_shifted{Type(1) << k};
     FixedPoint f = y / k_shifted;
 
-    // Pade Approximant for Log2(x) around x=1, 6th order
-    // FixedPoint P00{5};
-    // FixedPoint P01{37};
-    // FixedPoint Q00{6};
-    // FixedPoint Q01{16};
-    // FixedPoint Q02{36};
-    // FixedPoint f2 = f * f;
-    // FixedPoint f3 = f2 * f;
-    // FixedPoint f4 = f3 * f;
-    // FixedPoint P  = P00 * (-CONST_ONE + f) * (P00 + P01 * f + P01 * f2 + P00 * f3);
-    // FixedPoint Q  = Q00 * (CONST_ONE + f * Q01 + f2 * Q02 + f3 * Q01 + f4) * CONST_LN2;
     FixedPoint P00{137};
     FixedPoint P01{1762};  // P03 also
     FixedPoint P02{3762};
