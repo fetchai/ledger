@@ -34,10 +34,11 @@ namespace ml {
 template <typename T>
 class CBOWLoader : public DataLoader<fetch::math::Tensor<T>, fetch::math::Tensor<T>>
 {
+  using SizeType = fetch::math::SizeType;
+
 public:
   using ReturnType = std::pair<fetch::math::Tensor<T>, fetch::math::Tensor<T>>;
 
-public:
   CBOWLoader(uint64_t window_size, uint64_t negative_samples)
     : current_sentence_(0)
     , current_word_(0)
@@ -87,7 +88,7 @@ public:
    * Remove words that appears less than MIN times
    * This is a destructive operation
    */
-  void RemoveInfrequent(unsigned int min)
+  void RemoveInfrequent(SizeType min)
   {
     // Removing words while keeping indexes consecutive takes too long
     // So creating a new object, not the most efficient, but good enought for now
@@ -164,7 +165,7 @@ public:
     return GetNext(p);
   }
 
-  std::size_t VocabSize() const
+  SizeType VocabSize() const
   {
     return vocab_.size();
   }

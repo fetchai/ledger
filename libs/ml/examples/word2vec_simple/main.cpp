@@ -37,25 +37,25 @@
 
 using namespace std::chrono;
 using namespace fetch::ml;
+using SizeType = fetch::math::SizeType;
 using FloatType = float;
 
 CBOWLoader<FloatType> data_loader(5, 25);
 
 std::string train_file, output_file;
 
-int32_t window    = 5;  // 5
-int32_t min_count = 5;
+SizeType window    = 5;  // 5
+SizeType min_count = 5;
 
-double time_forward  = 0;
-double time_exp      = 0;
-double time_backward = 0;
-double time_step     = 0;
+SizeType print_frequency = 10000;
 
-uint64_t                          dimensionality = 200;  // 200
-uint64_t                          iter           = 1;
+
+
+SizeType                          dimensionality = 200;  // embeddings size
+SizeType                          iter           = 1;    // training epochs
 FloatType                         alpha          = static_cast<FloatType>(0.025);
 FloatType                         starting_alpha;
-int32_t                           negative = 25;
+SizeType                          negative = 25;
 high_resolution_clock::time_point last_time;
 
 std::string ReadFile(std::string const &path)
@@ -64,36 +64,29 @@ std::string ReadFile(std::string const &path)
   return std::string((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());
 }
 
-void PrintStats(uint32_t const &i, uint32_t const &iterations,
+void PrintStats(SizeType const &i, SizeType const &iterations,
                 fetch::math::Tensor<FloatType> const &error_signal)
 {
   high_resolution_clock::time_point cur_time = high_resolution_clock::now();
 
   duration<double> time_span = duration_cast<duration<double>>(cur_time - last_time);
   double           total     = static_cast<double>(iter * iterations);
-  std::cout << i << " / " << iter * iterations << " (" << static_cast<int32_t>(100.0 * i / total)
-            << ") -- " << alpha << " -- " << 10000. / time_span.count() << " words / sec"
+  std::cout << i << " / " << iter * iterations << " (" << static_cast<SizeType>(100.0 * i / total)
+            << ") -- " << alpha << " -- " << static_cast<double>(print_frequency) / time_span.count() << " words / sec"
             << std::endl;
 
+  std::cout << "error_signal: " << error_signal.ToString() << std::endl;
+  
   last_time = cur_time;
-
-  std::cout << "Times: " << time_forward << " " << time_exp << " " << time_backward << " "
-            << time_step << std::endl;
-  std::cout << "      -- ";
-  for (auto const &e : error_signal)
-  {
-    std::cout << e << ", ";
-  }
-  std::cout << std::endl;
 }
 
-void TrainModelNew()
+fetch::math::Tensor<FloatType> TrainModelNew()
 {
   data_loader.Reset();
   fetch::math::ApproxExpImplementation<0> fexp;
 
   data_loader.GetNext();
-  uint32_t iterations = static_cast<uint32_t>(data_loader.Size());
+  SizeType iterations = data_loader.Size();
 
   // Initialising
   using ContainerType = typename fetch::math::Tensor<FloatType>::ContainerType;
@@ -119,7 +112,8 @@ void TrainModelNew()
     rng.Seed(42);
     for (auto &e : embeddings)
     {
-      e = FloatType(rng.AsDouble() / static_cast<double>(dimensionality));
+      e = FloatType((rng.AsDouble() - 0.5) / static_cast<double>(dimensionality));
+
     }
   }
   {  // Weights: Initialise
@@ -133,10 +127,10 @@ void TrainModelNew()
     }
   }
 
-  for (uint32_t i = 0; i < iter * iterations; ++i)
+  for (SizeType i = 0; i < iter * iterations; ++i)
   {
 
-    if (i % 10000 == 0)
+    if (i % print_frequency == 0)
     {
       alpha = starting_alpha *
               ((static_cast<FloatType>(iter * iterations) - static_cast<FloatType>(i)) /
@@ -209,7 +203,7 @@ void TrainModelNew()
     ///////////////////////
     // ERROR
     ///////////////////////
-    for (int32_t d = 0; d < negative; d++)
+    for (SizeType d = 0; d < negative; d++)
     {
       FloatType f     = error_signal(d, 0);
       FloatType label = (d == 0) ? 1 : 0;
@@ -259,10 +253,10 @@ void TrainModelNew()
     ///////////////////////
 
     // Embeddings: Step in
-    float learningRate       = alpha;
+    float learning_rate       = alpha;
     using VectorRegisterType = typename fetch::math::TensorView<FloatType>::VectorRegisterType;
     fetch::memory::TrivialRange range(0, std::size_t(gradient_weights.height()));
-    VectorRegisterType          rate(learningRate);
+    VectorRegisterType          rate(learning_rate);
     VectorRegisterType          zero(static_cast<FloatType>(0));
 
     for (auto const &r : updated_rows_weights)
@@ -290,7 +284,7 @@ void TrainModelNew()
       auto it2                       = outputSlice.begin();
       while (it1.is_valid())
       {
-        *it2 += (*it1 * learningRate);
+        *it2 += (*it1 * learning_rate);
         *it1 = 0;
         ++it1;
         ++it2;
@@ -300,29 +294,71 @@ void TrainModelNew()
     updated_rows_embeddings.clear();
   }
 
-  std::cout << "Done" << std::endl;
+  std::cout << "Done Training" << std::endl;
+  return embeddings;
+}
+
+void SaveEmbeddings(std::string output_filename, fetch::math::Tensor<FloatType> &embeddings, bool binary)
+{
+  FILE *fo = std::fopen(output_filename.c_str(), "wb");
+
+  fprintf(fo, "%llu %llu\n", data_loader.VocabSize(), dimensionality);
+  for (SizeType a = 0; a < data_loader.VocabSize(); a++)
+  {
+    fprintf(fo, "%s ", (data_loader.WordFromIndex(a)).c_str());
+    if (binary)
+    {
+      for (SizeType b = 0; b < dimensionality; b++)
+      {
+        std::fwrite(&embeddings(b, a), sizeof(FloatType), 1, fo);
+      }
+    }
+    else
+    {
+      for (SizeType b = 0; b < dimensionality; b++)
+      {
+        fprintf(fo, "%lf ", embeddings(b, a));
+      }
+    }
+    fprintf(fo, "\n");
+  }
 }
 
 int main(int argc, char **argv)
 {
   if (argc == 1)
   {
+    std::cout << "must specify training text document as first argument: " << std::endl;
     return 0;
   }
 
-  output_file = "./vector.bin";
   train_file  = argv[1];
+
+  std::string mode = "cbow";
+  if (argc == 3)
+  {
+    mode = argv[3];
+  }
+
+  assert((mode == "cbow") || (mode == "skipgram"));
+
 
   starting_alpha = static_cast<FloatType>(0.05);  // Initial learning rate
   alpha          = starting_alpha;
 
   std::cout << "Loading ..." << std::endl;
   data_loader.AddData(ReadFile(train_file));
-  data_loader.RemoveInfrequent(static_cast<uint32_t>(min_count));
+  data_loader.RemoveInfrequent(min_count);
   data_loader.InitUnigramTable();
   std::cout << "Dataloader Vocab Size : " << data_loader.VocabSize() << std::endl;
 
-  TrainModelNew();
+  auto embeddings = TrainModelNew();
+
+
+  output_file = "./vector.bin";
+  bool binary_save_mode = 1;
+
+  SaveEmbeddings(output_file, embeddings, binary_save_mode);
 
   std::cout << "All done" << std::endl;
   return 0;
