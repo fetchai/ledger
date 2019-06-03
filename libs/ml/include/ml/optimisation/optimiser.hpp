@@ -119,8 +119,6 @@ typename T::Type Optimiser<T, C>::Run(ArrayType &data, ArrayType &labels, SizeTy
       graph_->SetInput(input_node_name_, cur_input);
       auto cur_label  = labels.Slice(it, n_label_dimm).Copy();
       auto label_pred = graph_->Evaluate(output_node_name_);
-      std::cout << "PRED: " << label_pred.ToString() << std::endl;
-      std::cout << "ACTU: " << cur_label.ToString() << std::endl;
       loss += criterion_.Forward({label_pred, cur_label});
       graph_->BackPropagate(output_node_name_, criterion_.Backward({label_pred, cur_label}));
     }

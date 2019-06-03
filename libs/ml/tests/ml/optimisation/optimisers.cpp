@@ -488,6 +488,7 @@ TYPED_TEST(OptimisersTest, adam_optimiser_minibatch_training)
   std::string                                  input_name;
   std::string                                  output_name;
   std::shared_ptr<fetch::ml::Graph<TypeParam>> g =
+
       PrepareTestGraph<TypeParam>(1, 1, input_name, output_name);
 
   // Prepare data and labels
