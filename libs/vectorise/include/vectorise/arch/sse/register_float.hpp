@@ -137,7 +137,7 @@ FETCH_ADD_OPERATOR(<, float, __m128, _mm_cmplt_ps)
 
 #undef FETCH_ADD_OPERATOR
 
-// Manage NaN
+// Note: Useful functions to manage NaN
 //__m128d _mm_cmpord_pd (__m128d a, __m128d b)
 //__m128d _mm_cmpunord_pd (__m128d a, __m128d b)
 
@@ -193,7 +193,7 @@ inline float reduce(VectorRegister<float, 128> const &x)
 }
 
 /*
-// TODO: Float equivalent
+// TODO (issue 1115): Float equivalent
 inline bool all_less_than(VectorRegister<double, 128> const &x,
                           VectorRegister<double, 128> const &y)
 {

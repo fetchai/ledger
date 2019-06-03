@@ -28,20 +28,19 @@
 #include <map>
 #include <string>
 #include <vector>
+#include <fstream>
 
 #include "math/approx_exp.hpp"
 #include "math/tensor.hpp"
 #include "polyfill.hpp"
 #include "unigram_table.hpp"
 #include "w2v_cbow_dataloader.hpp"
-#include "word_loader.hpp"
 
 using namespace std::chrono;
 using namespace fetch::ml;
 using FloatType = float;
 
 CBOWLoader<FloatType> data_loader(5, 25);
-WordLoader<FloatType> new_loader;
 
 std::string train_file, output_file;
 
@@ -60,23 +59,17 @@ FloatType                         starting_alpha;
 int32_t                           negative = 25;
 high_resolution_clock::time_point last_time;
 
-std::string readFile(std::string const &path)
+std::string ReadFile(std::string const &path)
 {
   std::ifstream t(path);
   return std::string((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());
 }
 
-void PrintStats(uint32_t const &i, uint32_t const &iterations)
+void PrintStats(uint32_t const &i, uint32_t const &iterations, fetch::math::Tensor<FloatType> const &error_signal)
 {
   high_resolution_clock::time_point cur_time = high_resolution_clock::now();
 
-  alpha =
-      starting_alpha * ((static_cast<FloatType>(iter * iterations) - static_cast<FloatType>(i)) /
-                        static_cast<FloatType>(iter * iterations));
-  if (alpha < starting_alpha * 0.0001)
-  {
-    alpha = static_cast<float>(starting_alpha * 0.0001);
-  }
+
 
   duration<double> time_span = duration_cast<duration<double>>(cur_time - last_time);
   double           total     = static_cast<double>(iter * iterations);
@@ -85,6 +78,16 @@ void PrintStats(uint32_t const &i, uint32_t const &iterations)
             << std::endl;
 
   last_time = cur_time;
+
+
+  std::cout << "Times: " << time_forward << " " << time_exp << " " << time_backward << " "
+            << time_step << std::endl;
+  std::cout << "      -- ";
+  for (auto const &e : error_signal)
+  {
+    std::cout << e << ", ";
+  }
+  std::cout << std::endl;
 }
 
 void TrainModelNew()
@@ -138,16 +141,15 @@ void TrainModelNew()
 
     if (i % 10000 == 0)
     {
-      PrintStats(i, iterations);
-
-      std::cout << "Times: " << time_forward << " " << time_exp << " " << time_backward << " "
-                << time_step << std::endl;
-      std::cout << "      -- ";
-      for (auto &e : error_signal)
+      alpha =
+          starting_alpha * ((static_cast<FloatType>(iter * iterations) - static_cast<FloatType>(i)) /
+                            static_cast<FloatType>(iter * iterations));
+      if (alpha < starting_alpha * 0.0001)
       {
-        std::cout << e << ", ";
+        alpha = static_cast<float>(starting_alpha * 0.0001);
       }
-      std::cout << std::endl;
+
+      PrintStats(i, iterations, error_signal);
     }
 
     if (data_loader.IsDone())
@@ -314,18 +316,16 @@ int main(int argc, char **argv)
   output_file = "./vector.bin";
   train_file  = argv[1];
 
-  alpha = static_cast<FloatType>(0.05);  // Initial learning rate
+  starting_alpha = static_cast<FloatType>(0.05);  // Initial learning rate
+  alpha = starting_alpha;
 
-  //  std::cout << "New loader" << std::endl;
-  //  new_loader.Load(train_file);
-
-  std::cout << "Old loader" << std::endl;
-  data_loader.AddData(readFile(train_file));
+  std::cout << "Loading ..." << std::endl;
+  data_loader.AddData(ReadFile(train_file));
   data_loader.RemoveInfrequent(static_cast<uint32_t>(min_count));
   data_loader.InitUnigramTable();
   std::cout << "Dataloader Vocab Size : " << data_loader.VocabSize() << std::endl;
 
-  starting_alpha = alpha;
+
   TrainModelNew();
 
   std::cout << "All done" << std::endl;

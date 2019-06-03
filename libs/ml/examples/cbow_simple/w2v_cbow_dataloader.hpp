@@ -18,12 +18,11 @@
 //------------------------------------------------------------------------------
 
 #include "core/random/lcg.hpp"
-#include "dataloader.hpp"
+#include "ml/dataloaders/dataloader.hpp"
 #include "math/tensor.hpp"
 #include "unigram_table.hpp"
 
 #include <exception>
-#include <fstream>
 #include <map>
 #include <random>
 #include <string>
@@ -40,8 +39,8 @@ public:
 
 public:
   CBOWLoader(uint64_t window_size, uint64_t negative_samples)
-    : currentSentence_(0)
-    , currentWord_(0)
+    : current_sentence_(0)
+    , current_word_(0)
     , window_size_(window_size)
     , negative_samples_(negative_samples)
   {}
@@ -61,13 +60,13 @@ public:
 
   bool IsDone() const override
   {
-    if (currentSentence_ >= data_.size())
+    if (current_sentence_ >= data_.size())
     {
       return true;
     }
-    else if (currentSentence_ >= data_.size() - 1)  // In the last sentence
+    else if (current_sentence_ >= data_.size() - 1)  // In the last sentence
     {
-      if (currentWord_ > data_.at(currentSentence_).size() - (2 * window_size_ + 1))
+      if (current_word_ > data_.at(current_sentence_).size() - (2 * window_size_ + 1))
       {
         return true;
       }
@@ -78,8 +77,8 @@ public:
   void Reset() override
   {
     //    std::random_shuffle(data_.begin(), data_.end());
-    currentSentence_ = 0;
-    currentWord_     = 0;
+    current_sentence_ = 0;
+    current_word_     = 0;
     rng_.Seed(1337);
     unigram_table_.Reset();
   }
@@ -130,13 +129,13 @@ public:
     // The number of context words changes at each iteration with values in range [1 * 2,
     // window_size_ * 2]
     uint64_t dynamic_size = rng_() % window_size_ + 1;
-    t.second.Set(0, 0, T(data_[currentSentence_][currentWord_ + dynamic_size]));
+    t.second.Set(0, 0, T(data_[current_sentence_][current_word_ + dynamic_size]));
 
     for (uint64_t i(0); i < dynamic_size; ++i)
     {
-      t.first.Set(i, 0, T(data_[currentSentence_][currentWord_ + i]));
+      t.first.Set(i, 0, T(data_[current_sentence_][current_word_ + i]));
       t.first.Set(i + dynamic_size, 0,
-                  T(data_[currentSentence_][currentWord_ + dynamic_size + i + 1]));
+                  T(data_[current_sentence_][current_word_ + dynamic_size + i + 1]));
     }
 
     for (uint64_t i(dynamic_size * 2); i < t.first.size(); ++i)
@@ -148,11 +147,11 @@ public:
     {
       t.second(i, 0) = T(unigram_table_.SampleNegative(static_cast<uint64_t>(t.second(0, 0))));
     }
-    currentWord_++;
-    if (currentWord_ >= data_.at(currentSentence_).size() - (2 * window_size_))
+    current_word_++;
+    if (current_word_ >= data_.at(current_sentence_).size() - (2 * window_size_))
     {
-      currentWord_ = 0;
-      currentSentence_++;
+      current_word_ = 0;
+      current_sentence_++;
     }
     return t;
   }
@@ -172,7 +171,7 @@ public:
 
   bool AddData(std::string const &s)
   {
-    std::vector<uint64_t> indexes = StringsToIndexes(PreprocessString(s));
+    std::vector<uint64_t> indexes = StringsToIndices(PreprocessString(s));
     if (indexes.size() >= 2 * window_size_ + 1)
     {
       data_.push_back(std::move(indexes));
@@ -199,7 +198,7 @@ public:
   }
 
 private:
-  std::vector<uint64_t> StringsToIndexes(std::vector<std::string> const &strings)
+  std::vector<uint64_t> StringsToIndices(std::vector<std::string> const &strings)
   {
     std::vector<uint64_t> indexes;
     if (strings.size() >= 2 * window_size_ + 1)  // Don't bother processing too short inputs
@@ -234,8 +233,8 @@ private:
   }
 
 private:
-  uint64_t                                             currentSentence_;
-  uint64_t                                             currentWord_;
+  uint64_t                                             current_sentence_;
+  uint64_t                                             current_word_;
   uint64_t                                             window_size_;
   uint64_t                                             negative_samples_;
   std::map<std::string, std::pair<uint64_t, uint64_t>> vocab_;

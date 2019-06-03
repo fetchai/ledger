@@ -20,7 +20,6 @@
 #include "vectorise/arch/sse/math/abs.hpp"
 #include "vectorise/arch/sse/math/approx_exp.hpp"
 #include "vectorise/arch/sse/math/approx_log.hpp"
-#include "vectorise/arch/sse/math/approx_reciprocal.hpp"
 #include "vectorise/arch/sse/math/exp.hpp"
 #include "vectorise/arch/sse/math/max.hpp"
 #include "vectorise/arch/sse/math/min.hpp"

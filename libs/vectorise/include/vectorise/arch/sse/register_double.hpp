@@ -211,7 +211,7 @@ inline VectorRegister<double, 128> operator<(VectorRegister<double, 128> const &
   return VectorRegister<double, 128>(_mm_castsi128_pd(ret));
 }
 
-// Manage NaN
+// Note: Useful functions to manage NaN
 //__m128d _mm_cmpord_pd (__m128d a, __m128d b)
 //__m128d _mm_cmpunord_pd (__m128d a, __m128d b)
 
@@ -258,9 +258,6 @@ inline double first_element(VectorRegister<double, 128> const &x)
   return _mm_cvtsd_f64(x.data());
 }
 
-// Floats
-
-// TODO(unknown): Rename and move
 inline double reduce(VectorRegister<double, 128> const &x)
 {
   __m128d r = _mm_hadd_pd(x.data(), _mm_setzero_pd());

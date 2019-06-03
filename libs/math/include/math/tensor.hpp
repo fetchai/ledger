@@ -79,12 +79,12 @@ public:
 
   static constexpr char const *LOGGING_NAME = "Tensor";
 
-  enum  // TODO: Get from view
+  enum
   {
-    LOG_PADDING = 2,
-    PADDING     = static_cast<SizeType>(1) << LOG_PADDING
+    LOG_PADDING = TensorView<T,C>::LOG_PADDING,
+    PADDING = TensorView<T,C>::PADDING
   };
-
+  
 private:
   template <typename STensor>
   class TensorSliceImplementation;
@@ -296,7 +296,7 @@ public:
   template <typename OtherType>
   Tensor operator/=(OtherType const &other);
 
-  // TODO: Make free functions
+  // TODO (issue 1117): Make free functions
   Type Sum() const;
   void Exp(Tensor const &x);
   void ApproxSoftMax(Tensor const &x);

@@ -26,7 +26,7 @@ namespace math {
 template <typename DataType, typename ContainerType = memory::SharedArray<DataType>>
 class Tensor;
 
-// TODO: Migrate to:
+// TODO (issue 1116): Migrate to:
 // template <typename DataType, template<class> class ContainerType = memory::SharedArray>
 // class Tensor;
 

@@ -629,7 +629,7 @@ public:
     }
   }
 
-  // TODO: This function is potentially slow
+  // TODO (issue 1113): This function is potentially slow
   template <typename... Args>
   void Apply(typename details::MatrixApplyFreeFunction<VectorRegisterType, void>::template Unroll<
                  Args...>::signature_type &&apply,
@@ -766,7 +766,7 @@ public:
     }
   }
 
-  // TODO: Remove below
+  // TODO (issue 1114): Remove below
 
   template <class C, typename... Args>
   void Apply(C const &cls,
