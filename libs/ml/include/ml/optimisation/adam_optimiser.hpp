@@ -95,7 +95,6 @@ AdamOptimiser<T, C>::AdamOptimiser(std::shared_ptr<Graph<T>>
 template <class T, class C>
 void AdamOptimiser<T, C>::ApplyGradients(SizeType batch_size)
 {
-  (void)batch_size;
   // Do operation with gradient
   auto cached_weight_it = cache_.begin();
   auto momentum_it      = momentum_.begin();

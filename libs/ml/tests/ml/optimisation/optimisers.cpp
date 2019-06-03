@@ -106,8 +106,8 @@ TYPED_TEST(OptimisersTest, sgd_optimiser_training)
       optimiser(g, input_name, output_name, learning_rate);
 
   // Do 2 optimiser steps
-  optimiser.DoBatch(data, gt);
-  DataType loss = optimiser.DoBatch(data, gt);
+  optimiser.Run(data, gt);
+  DataType loss = optimiser.Run(data, gt);
 
   // Test loss
   EXPECT_NEAR(static_cast<double>(loss), 1.83612, 1e-5);
@@ -143,8 +143,8 @@ TYPED_TEST(OptimisersTest, momentum_optimiser_training)
       optimiser(g, input_name, output_name, learning_rate);
 
   // Do 2 optimiser steps to ensure that momentum was applied
-  optimiser.DoBatch(data, gt);
-  DataType loss = optimiser.DoBatch(data, gt);
+  optimiser.Run(data, gt);
+  DataType loss = optimiser.Run(data, gt);
 
   // Test loss
   EXPECT_NEAR(static_cast<double>(loss), 1.11945, 1e-5);
@@ -179,8 +179,8 @@ TYPED_TEST(OptimisersTest, adagrad_optimiser_training)
       optimiser(g, input_name, output_name, learning_rate);
 
   // Do multiple steps
-  optimiser.DoBatch(data, gt);
-  DataType loss = optimiser.DoBatch(data, gt);
+  optimiser.Run(data, gt);
+  DataType loss = optimiser.Run(data, gt);
 
   // Test loss
   EXPECT_NEAR(static_cast<double>(loss), 2.04488, 1e-5);
@@ -215,8 +215,8 @@ TYPED_TEST(OptimisersTest, rmsprop_optimiser_training)
       optimiser(g, input_name, output_name, learning_rate);
 
   // Do multiple steps
-  optimiser.DoBatch(data, gt);
-  DataType loss = optimiser.DoBatch(data, gt);
+  optimiser.Run(data, gt);
+  DataType loss = optimiser.Run(data, gt);
 
   // Test loss
   EXPECT_NEAR(static_cast<double>(loss), 2.58567, 1e-5);
@@ -251,8 +251,8 @@ TYPED_TEST(OptimisersTest, adam_optimiser_training)
       optimiser(g, input_name, output_name, learning_rate);
 
   // Do multiple steps
-  optimiser.DoBatch(data, gt);
-  DataType loss = optimiser.DoBatch(data, gt);
+  optimiser.Run(data, gt);
+  DataType loss = optimiser.Run(data, gt);
 
   // Test loss
   EXPECT_NEAR(static_cast<double>(loss), 4.21160, 1e-5);
@@ -287,8 +287,8 @@ TYPED_TEST(OptimisersTest, adam_optimiser_minibatch_training)
       optimiser(g, input_name, output_name, learning_rate);
 
   // Do multiple steps
-  optimiser.DoBatch(data, gt, 3);
-  DataType loss = optimiser.DoBatch(data, gt, 2);
+  optimiser.Run(data, gt, 3);
+  DataType loss = optimiser.Run(data, gt, 2);
 
   // Test loss
   EXPECT_NEAR(static_cast<double>(loss), 1.33776, 1e-5);

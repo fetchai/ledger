@@ -46,7 +46,7 @@ public:
             DataType const &learning_rate = DataType{0.001f});
 
   // TODO (private 1090): Optimise TensorSlice for graph-feeding without using .Copy
-  DataType DoBatch(ArrayType &data, ArrayType &labels, SizeType batch_size = 0);
+  DataType Run(ArrayType &data, ArrayType &labels, SizeType batch_size = 0);
 
 protected:
   std::shared_ptr<Graph<T>> graph_;
@@ -73,7 +73,7 @@ Optimiser<T, C>::Optimiser(std::shared_ptr<Graph<T>> graph, std::string const &i
   , learning_rate_(learning_rate)
   , epoch_(0)
 {
-  graph_trainables_ = graph_->GetTrainables();
+  graph_trainables_ = graph_->get_trainables();
   for (auto &train : graph_trainables_)
   {
     this->gradients_.emplace_back(ArrayType(train->get_weights().shape()));
@@ -91,7 +91,7 @@ Optimiser<T, C>::Optimiser(std::shared_ptr<Graph<T>> graph, std::string const &i
  */
 // TODO (private 1090): Optimise TensorSlice for graph-feeding without using .Copy
 template <class T, class C>
-typename T::Type Optimiser<T, C>::DoBatch(ArrayType &data, ArrayType &labels, SizeType batch_size)
+typename T::Type Optimiser<T, C>::Run(ArrayType &data, ArrayType &labels, SizeType batch_size)
 {
 
   // If batch_size is not specified do full batch

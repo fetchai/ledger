@@ -79,7 +79,6 @@ MomentumOptimiser<T, C>::MomentumOptimiser(std::shared_ptr<Graph<T>>
 template <class T, class C>
 void MomentumOptimiser<T, C>::ApplyGradients(SizeType batch_size)
 {
-  (void)batch_size;
   auto trainable_it = this->graph_trainables_.begin();
   auto gradient_it  = this->gradients_.begin();
   auto mit          = momentum_.begin();

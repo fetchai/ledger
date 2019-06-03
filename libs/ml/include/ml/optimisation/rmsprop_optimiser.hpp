@@ -86,7 +86,6 @@ RMSPropOptimiser<T, C>::RMSPropOptimiser(std::shared_ptr<Graph<T>>
 template <class T, class C>
 void RMSPropOptimiser<T, C>::ApplyGradients(SizeType batch_size)
 {
-  (void)batch_size;
   // Do operation with gradient
   auto cached_weight_it = cache_.begin();
   auto gradient_it      = this->gradients_.begin();

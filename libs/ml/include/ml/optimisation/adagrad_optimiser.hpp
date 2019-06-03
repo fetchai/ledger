@@ -73,7 +73,6 @@ AdaGradOptimiser<T, C>::AdaGradOptimiser(std::shared_ptr<Graph<T>> graph,
 template <class T, class C>
 void AdaGradOptimiser<T, C>::ApplyGradients(SizeType batch_size)
 {
-  (void)batch_size;
   // Do operation with gradient
   auto cached_weight_it = cache_.begin();
   auto gradient_it      = this->gradients_.begin();

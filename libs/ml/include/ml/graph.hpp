@@ -70,7 +70,7 @@ public:
   std::vector<ArrayType>        get_weights() const;
   std::vector<ArrayType>        GetGradients() const;
   void                          ApplyGradients(std::vector<ArrayType> &grad);
-  std::vector<TrainablePtrType> GetTrainables();
+  std::vector<TrainablePtrType> get_trainables();
 
   void ResetGradients();
 
@@ -400,7 +400,7 @@ std::string Graph<ArrayType>::UpdateVariableName(std::string const &name)
  */
 template <typename ArrayType>
 std::vector<typename std::shared_ptr<fetch::ml::ops::Trainable<ArrayType>>>
-Graph<ArrayType>::GetTrainables()
+Graph<ArrayType>::get_trainables()
 {
   return trainable_;
 }
