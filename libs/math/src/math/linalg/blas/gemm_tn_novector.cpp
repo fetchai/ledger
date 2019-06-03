@@ -16,10 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/linalg/blas/base.hpp"
 #include "math/linalg/blas/gemm_tn_novector.hpp"
+
+#include "math/linalg/blas/base.hpp"
 #include "math/linalg/prototype.hpp"
 #include "math/tensor_view.hpp"
+
 namespace fetch {
 namespace math {
 namespace linalg {

@@ -16,9 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/tensor.hpp"
 #include "ml/ops/loss_functions/cross_entropy.hpp"
+
+#include "math/tensor.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
+
 #include <gtest/gtest.h>
 
 template <typename T>

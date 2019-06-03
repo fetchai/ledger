@@ -17,7 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/assert.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/byte_array/consumers.hpp"
 #include "core/macros.hpp"
@@ -39,6 +38,7 @@
 #include "math/tensor_slice_iterator.hpp"
 #include "math/tensor_view.hpp"
 
+#include <cassert>
 #include <memory>
 #include <numeric>
 #include <random>
