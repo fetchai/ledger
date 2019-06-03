@@ -17,18 +17,16 @@
 //------------------------------------------------------------------------------
 
 #include "math/linalg/blas/swap_all.hpp"
-
 #include "math/linalg/blas/base.hpp"
 #include "math/linalg/prototype.hpp"
-#include "math/tensor.hpp"
-
+#include "math/tensor_view.hpp"
 namespace fetch {
 namespace math {
 namespace linalg {
 
 template <typename S, uint64_t V>
 void Blas<S, Signature(_x, _y <= _n, _x, _m, _y, _p), Computes(_x, _y <= _y, _x), V>::operator()(
-    int const &n, Tensor<Type> &dx, int const &incx, Tensor<Type> &dy, int const &incy) const
+    int const n, TensorView<Type> dx, int const incx, TensorView<Type> dy, int const incy) const
 {
   Type dtemp;
   int  i;

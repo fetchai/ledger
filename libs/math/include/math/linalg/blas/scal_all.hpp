@@ -42,7 +42,7 @@
 
 #include "math/linalg/blas/base.hpp"
 #include "math/linalg/prototype.hpp"
-#include "math/tensor.hpp"
+#include "math/tensor_view.hpp"
 
 namespace fetch {
 namespace math {
@@ -53,9 +53,9 @@ class Blas<S, Signature(_x <= _n, _alpha, _x, _m), Computes(_x <= _alpha * _x), 
 {
 public:
   using Type               = S;
-  using VectorRegisterType = typename Tensor<Type>::VectorRegisterType;
+  using VectorRegisterType = typename TensorView<Type>::VectorRegisterType;
 
-  void operator()(int const &n, Type const &da, Tensor<Type> &dx, int const &incx) const;
+  void operator()(int const n, Type const da, TensorView<Type> dx, int const incx) const;
 };
 
 }  // namespace linalg

@@ -18,7 +18,6 @@
 //------------------------------------------------------------------------------
 
 #include "meta/type_traits.hpp"
-#include "vectorise/vectorise.hpp"
 
 namespace fetch {
 namespace platform {

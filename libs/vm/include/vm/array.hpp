@@ -112,7 +112,7 @@ struct Array : public IArray
       return {};
     }
 
-    auto array = new Array<ElementType>(vm_, element_type_id, element_type_id, num_to_pop);
+    auto array = new Array<ElementType>(vm_, type_id_, element_type_id, num_to_pop);
 
     std::move(elements.rbegin(), elements.rbegin() + num_to_pop, array->elements.rbegin());
 
@@ -157,7 +157,7 @@ struct Array : public IArray
       return {};
     }
 
-    auto array = new Array<ElementType>(vm_, element_type_id, element_type_id, num_to_pop);
+    auto array = new Array<ElementType>(vm_, type_id_, element_type_id, num_to_pop);
 
     std::move(elements.begin(), elements.begin() + num_to_pop, array->elements.begin());
 

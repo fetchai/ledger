@@ -55,7 +55,7 @@ meta::IfIsArithmetic<Type, Type> Sqrt(Type const &x)
 template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, void> Sqrt(ArrayType const &array, ArrayType &ret)
 {
-  ASSERT(ret.shape() == array.shape());
+  assert(ret.shape() == array.shape());
   auto arr_it = array.cbegin();
   auto rit    = ret.begin();
 

@@ -77,7 +77,7 @@ meta::IfIsArithmetic<Type, Type> Log(Type const &x)
 template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, void> Log(ArrayType const &array, ArrayType &ret)
 {
-  ASSERT(ret.shape() == array.shape());
+  assert(ret.shape() == array.shape());
   auto it1 = array.cbegin();
   auto rit = ret.begin();
   while (it1.is_valid())
@@ -107,7 +107,7 @@ meta::IfIsArithmetic<Type, Type> Log2(Type const &x)
 template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, void> Log2(ArrayType const &array, ArrayType &ret)
 {
-  ASSERT(ret.shape() == array.shape());
+  assert(ret.shape() == array.shape());
   auto it1 = array.cbegin();
   auto rit = ret.begin();
   while (it1.is_valid())

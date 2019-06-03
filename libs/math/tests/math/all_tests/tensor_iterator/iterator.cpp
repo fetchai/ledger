@@ -25,7 +25,7 @@ using namespace fetch::math;
 
 TEST(tensor_iterator, reshape_iterator_test)
 {
-  Tensor<double> a = Tensor<double>::Arange(0u, 20u, 1u);
+  Tensor<double> a = Tensor<double>::Arange(0., 20., 1.);
   a.Reshape({1, a.size()});
 
   Tensor<double> b{a};
@@ -45,7 +45,7 @@ TEST(tensor_iterator, simple_iterator_permute_test)
 {
 
   // set up an initial array
-  Tensor<double> array{Tensor<double>::Arange(0u, 77u, 1u)};
+  Tensor<double> array{Tensor<double>::Arange(0., 77., 1.)};
   array.Reshape({7, 11});
   EXPECT_EQ(array.size(), 77);
 
@@ -88,7 +88,7 @@ TEST(tensor_iterator, iterator_4dim_copy_test)
 {
 
   // set up an initial array
-  Tensor<double> array{Tensor<double>::Arange(0u, 1008u, 1u)};
+  Tensor<double> array{Tensor<double>::Arange(0., 1008., 1.)};
   array.Reshape({4, 6, 7, 6});
   Tensor<double> ret = array.Copy();
 
@@ -128,7 +128,7 @@ TEST(Tensor, iterator_4dim_permute_test)
 {
 
   // set up an initial array
-  Tensor<double> array{Tensor<double>::Arange(0u, 1008u, 1u)};
+  Tensor<double> array{Tensor<double>::Arange(0., 1008., 1.)};
   array.Reshape({4, 6, 7, 6});
   Tensor<double> ret = array.Copy();
 
@@ -178,12 +178,10 @@ TEST(Tensor, simple_iterator_transpose_test)
   SizeType arr_size = fetch::math::Product(original_shape);
 
   // set up an initial array
-  Tensor<double> array =
-      Tensor<double>::Arange(static_cast<SizeType>(0u), arr_size, static_cast<SizeType>(1u));
+  Tensor<double> array = Tensor<double>::Arange(0., static_cast<double>(arr_size), 1.);
   array.Reshape(original_shape);
 
-  Tensor<double> ret =
-      Tensor<double>::Arange(static_cast<SizeType>(0u), arr_size, static_cast<SizeType>(1u));
+  Tensor<double> ret = Tensor<double>::Arange(0., static_cast<double>(arr_size), 1.);
   ret.Reshape(new_shape);
 
   Tensor<double> test_array{original_shape};

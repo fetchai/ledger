@@ -17,9 +17,8 @@
 //------------------------------------------------------------------------------
 
 #include "ml/ops/tanh.hpp"
-
-#include "math/fixed_point/fixed_point.hpp"
 #include "math/tensor.hpp"
+#include "vectorise/fixed_point/fixed_point.hpp"
 
 #include "gtest/gtest.h"
 

@@ -20,15 +20,23 @@
 #include "core/assert.hpp"
 #include <numeric>
 
+#include "math/linalg/blas/base.hpp"
+#include "math/linalg/blas/gemm_nn_novector.hpp"
+#include "math/linalg/blas/gemm_nn_vector.hpp"
+#include "math/linalg/blas/gemm_nt_novector.hpp"
+#include "math/linalg/blas/gemm_nt_vector.hpp"
+#include "math/linalg/blas/gemm_tn_novector.hpp"
+#include "math/linalg/blas/gemm_tn_vector.hpp"
+
+#include "math/linalg/prototype.hpp"
+
 #include "math/base_types.hpp"
 #include "math/comparison.hpp"
 #include "math/fundamental_operators.hpp"  // add, subtract etc.
+#include "math/meta/math_type_traits.hpp"
 
 namespace fetch {
 namespace math {
-
-template <typename T, typename C>
-class Tensor;
 
 // TODO (private 854) - vectorisation implementations not yet called
 namespace details_vectorisation {
@@ -106,8 +114,8 @@ template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, void> BooleanMask(ArrayType const &input_array,
                                                  ArrayType const &mask, ArrayType &ret)
 {
-  ASSERT(input_array.size() == mask.size());
-  ASSERT(ret.size() >= typename ArrayType::SizeType(Sum(mask)));
+  assert(input_array.size() == mask.size());
+  assert(ret.size() >= typename ArrayType::SizeType(Sum(mask)));
 
   auto     it1 = input_array.cbegin();
   auto     it2 = mask.cbegin();
@@ -116,7 +124,7 @@ meta::IfIsMathArray<ArrayType, void> BooleanMask(ArrayType const &input_array,
   while (rit.is_valid())
   {
     // TODO(private issue 193): implement boolean only array
-    ASSERT((*it2 == 1) || (*it2 == 0));
+    assert((*it2 == 1) || (*it2 == 0));
     if (static_cast<uint64_t>(*it2))
     {
       *rit = *it1;
@@ -150,7 +158,7 @@ template <typename ArrayType>
 void Scatter(ArrayType &input_array, ArrayType const &updates,
              std::vector<SizeVector> const &indices)
 {
-  ASSERT(indices.size() == updates.size());
+  assert(indices.size() == updates.size());
 
   auto     indices_it = indices.begin();
   SizeType update_idx{0};
@@ -187,7 +195,8 @@ meta::IfIsMathArray<ArrayType, void> Product(ArrayType const &array1, T &ret)
   }
 }
 
-template <typename T, typename C, typename = std::enable_if_t<meta::IsArithmetic<T>>>
+template <typename T, typename C /*template<class> class C*/,
+          typename = std::enable_if_t<meta::IsArithmetic<T>>>
 meta::IfIsMathArray<Tensor<T, C>, T> Product(Tensor<T, C> const &array1)
 {
   T ret;
@@ -262,18 +271,18 @@ meta::IfIsMathArray<ArrayType, typename ArrayType::Type> Max(ArrayType const &ar
 template <typename ArrayType>
 void Max(ArrayType const &array, typename ArrayType::SizeType const &axis, ArrayType &ret)
 {
-  ASSERT(axis < array.shape().size());
+  assert(axis < array.shape().size());
 
   if (array.shape().size() == 1)
   {
-    ASSERT(axis == 0);
+    assert(axis == 0);
     ret[0] = Max(array);
   }
   else
   {  // Argmax along a single axis
     SizeType axis_length = array.shape()[axis];
-    ASSERT(axis_length > 1);
-    ASSERT(ret.size() == Divide(Product(array.shape()), array.shape()[axis]));
+    assert(axis_length > 1);
+    assert(ret.size() == Divide(Product(array.shape()), array.shape()[axis]));
 
     // fill the return with the first index values
     ret.Assign(array.Slice(0, axis));
@@ -351,19 +360,19 @@ meta::IfIsMathArray<ArrayType, typename ArrayType::Type> Min(ArrayType const &ar
 template <typename ArrayType>
 void Min(ArrayType const &array, typename ArrayType::SizeType const &axis, ArrayType &ret)
 {
-  ASSERT(array.shape().size() <= 2);
-  ASSERT(axis < array.shape().size());
+  assert(array.shape().size() <= 2);
+  assert(axis < array.shape().size());
 
   if (array.shape().size() == 1)
   {
-    ASSERT(axis == 0);
+    assert(axis == 0);
     ret[0] = Min(array);
   }
   else
   {  // Argmax along a single axis
     SizeType axis_length = array.shape()[axis];
-    ASSERT(axis_length > 1);
-    ASSERT(ret.size() == Divide(Product(array.shape()), array.shape()[axis]));
+    assert(axis_length > 1);
+    assert(ret.size() == Divide(Product(array.shape()), array.shape()[axis]));
 
     // fill the return with the first index values
     ret.Assign(array.Slice(0, axis));
@@ -399,8 +408,8 @@ template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, void> Maximum(ArrayType const &array1, ArrayType const &array2,
                                              ArrayType &ret)
 {
-  ASSERT(array1.shape() == array2.shape());
-  ASSERT(ret.shape() == array2.shape());
+  assert(array1.shape() == array2.shape());
+  assert(ret.shape() == array2.shape());
 
   auto it1 = array1.cbegin();
   auto it2 = array2.cbegin();
@@ -450,14 +459,14 @@ meta::IfIsMathArray<ArrayType, typename ArrayType::Type> Sum(ArrayType const &ar
 template <typename ArrayType>
 void ReduceSum(ArrayType const &obj1, SizeType axis, ArrayType &ret)
 {
-  ASSERT((axis == 0) || (axis == 1));
-  ASSERT(obj1.shape().size() == 2);
+  assert((axis == 0) || (axis == 1));
+  assert(obj1.shape().size() == 2);
 
   SizeVector access_idx{0, 0};
   if (axis == 0)
   {
-    ASSERT(ret.shape()[0] == 1);
-    ASSERT(ret.shape()[1] == obj1.shape()[1]);
+    assert(ret.shape()[0] == 1);
+    assert(ret.shape()[1] == obj1.shape()[1]);
 
     auto it  = obj1.cbegin();
     auto rit = ret.begin();
@@ -474,8 +483,8 @@ void ReduceSum(ArrayType const &obj1, SizeType axis, ArrayType &ret)
   }
   else
   {
-    ASSERT(ret.shape()[0] == obj1.shape()[0]);
-    ASSERT(ret.shape()[1] == 1);
+    assert(ret.shape()[0] == obj1.shape()[0]);
+    assert(ret.shape()[1] == 1);
 
     auto rit = ret.begin();
     for (SizeType i = 0; i < ret.size(); ++i)
@@ -494,7 +503,7 @@ void ReduceSum(ArrayType const &obj1, SizeType axis, ArrayType &ret)
 template <typename ArrayType>
 ArrayType ReduceSum(ArrayType const &obj1, SizeType axis)
 {
-  ASSERT((axis == 0) || (axis == 1));
+  assert((axis == 0) || (axis == 1));
   if (axis == 0)
   {
     SizeVector new_shape{1, obj1.shape()[1]};
@@ -518,7 +527,7 @@ meta::IfIsMathArray<ArrayType, void> ReduceMean(ArrayType const &               
 {
   using Type = typename ArrayType::Type;
 
-  ASSERT(axis == 0 || axis == 1);
+  assert(axis == 0 || axis == 1);
   Type n = static_cast<Type>(obj1.shape().at(1 - axis));
   ReduceSum(obj1, axis, ret);
   Divide(ret, n, ret);
@@ -530,7 +539,7 @@ meta::IfIsMathArray<ArrayType, ArrayType> ReduceMean(ArrayType const &          
 {
   using Type = typename ArrayType::Type;
 
-  ASSERT(axis == 0 || axis == 1);
+  assert(axis == 0 || axis == 1);
   Type n   = static_cast<Type>(obj1.shape().at(1 - axis));
   Type ret = ReduceSum(obj1, axis);
   Divide(ret, n, ret);
@@ -583,19 +592,19 @@ typename ArrayType::Type PeakToPeak(ArrayType const &array)
 template <typename ArrayType>
 void PeakToPeak(ArrayType const &array, typename ArrayType::SizeType const &axis, ArrayType &ret)
 {
-  ASSERT(array.shape().size() <= 2);
-  ASSERT(axis < array.shape().size());
+  assert(array.shape().size() <= 2);
+  assert(axis < array.shape().size());
 
   if (array.shape().size() == 1)
   {
-    ASSERT(axis == 0);
+    assert(axis == 0);
     ret[0] = PeakToPeak(array);
   }
   else
   {  // Argmax-Argmin along a single axis
     SizeType axis_length = array.shape()[axis];
-    ASSERT(axis_length > 1);
-    ASSERT(ret.size() == Divide(Product(array.shape()), array.shape()[axis]));
+    assert(axis_length > 1);
+    assert(ret.size() == Divide(Product(array.shape()), array.shape()[axis]));
 
     // fill the return with the first index values
     ret.Assign(array.Slice(0, axis));
@@ -654,7 +663,7 @@ meta::IfIsMathArray<ArrayType, void> ArgMax(ArrayType const &array, ArrayType &r
 
   if (axis == NO_AXIS)
   {  // Argmax over the full array
-    ASSERT(ret.size() == SizeType(1));
+    assert(ret.size() == SizeType(1));
     SizeType position = 0;
     auto     it       = array.begin();
     Type     value    = numeric_lowest<Type>();
@@ -676,8 +685,8 @@ meta::IfIsMathArray<ArrayType, void> ArgMax(ArrayType const &array, ArrayType &r
   else
   {  // Argmax along a single axis
     SizeType axis_length = array.shape()[axis];
-    ASSERT(axis_length > 1);
-    ASSERT(ret.size() == Divide(Product(array.shape()), array.shape()[axis]));
+    assert(axis_length > 1);
+    assert(ret.size() == Divide(Product(array.shape()), array.shape()[axis]));
 
     ret.Fill(Type(0));
     auto max_slice = (array.Slice(0, axis)).Copy();
@@ -745,21 +754,31 @@ template <typename ArrayType>
 fetch::math::meta::IfIsMathArray<ArrayType, void> Dot(ArrayType const &A, ArrayType const &B,
                                                       ArrayType &ret)
 {
-  ASSERT(A.shape().size() == 2);
-  ASSERT(B.shape().size() == 2);
-  ASSERT(A.shape()[1] == B.shape()[0]);
+  auto aview = A.View();
+  auto bview = B.View();
 
-  for (SizeType i(0); i < A.shape()[0]; ++i)
+  if (aview.width() != bview.height())
   {
-    for (SizeType j(0); j < B.shape()[1]; ++j)
-    {
-      ret.At(i, j) = A.At(i, 0) * B.At(0, j);
-      for (SizeType k(1); k < A.shape()[1]; ++k)
-      {
-        ret.At(i, j) += A.At(i, k) * B.At(k, j);
-      }
-    }
+    throw std::runtime_error("expected A width to equal and B height.");
   }
+
+  ret.Resize({aview.height(), bview.width()});
+
+  using Type = typename ArrayType::Type;
+  using namespace linalg;
+
+  enum
+  {
+    OPTIMISATION_FLAGS = meta::HasVectorSupport<Type>::value
+                             ? platform::Parallelisation::VECTORISE
+                             : platform::Parallelisation::NOT_PARALLEL
+  };
+
+  Blas<Type, Signature(_C <= _alpha, _A, _B, _beta, _C),
+       Computes(_C <= _alpha * _A * _B + _beta * _C), OPTIMISATION_FLAGS>
+      gemm_nn;
+
+  gemm_nn(static_cast<Type>(1), aview, bview, static_cast<Type>(0), ret.View());
 }
 
 template <typename ArrayType>
@@ -782,22 +801,31 @@ template <class ArrayType>
 fetch::math::meta::IfIsMathArray<ArrayType, void> DotTranspose(ArrayType const &A,
                                                                ArrayType const &B, ArrayType &ret)
 {
-  ASSERT(A.shape().size() == 2);
-  ASSERT(B.shape().size() == 2);
-  ASSERT(A.shape()[1] == B.shape()[1]);
-  ASSERT(A.shape()[0] == ret.shape()[0]);
-  ASSERT(B.shape()[0] == ret.shape()[1]);
+  auto aview = A.View();
+  auto bview = B.View();
 
-  for (size_t i(0); i < A.shape()[0]; ++i)
+  if (aview.width() != bview.width())
   {
-    for (size_t j(0); j < B.shape()[0]; ++j)
-    {
-      for (size_t k(0); k < A.shape()[1]; ++k)
-      {
-        ret.At(i, j) += A.At(i, k) * B.At(j, k);
-      }
-    }
+    throw std::runtime_error("expected A and B to have same width.");
   }
+
+  ret.Resize({aview.height(), bview.height()});
+
+  using Type = typename ArrayType::Type;
+  using namespace linalg;
+
+  enum
+  {
+    OPTIMISATION_FLAGS = meta::HasVectorSupport<Type>::value
+                             ? platform::Parallelisation::VECTORISE
+                             : platform::Parallelisation::NOT_PARALLEL
+  };
+
+  Blas<Type, Signature(_C <= _alpha, _A, _B, _beta, _C),
+       Computes(_C <= _alpha * _A * T(_B) + _beta * _C), OPTIMISATION_FLAGS>
+      gemm_nt;
+
+  gemm_nt(static_cast<Type>(1), A.View(), B.View(), static_cast<Type>(0), ret.View());
 }
 
 template <typename ArrayType>
@@ -821,20 +849,31 @@ template <class ArrayType>
 fetch::math::meta::IfIsMathArray<ArrayType, void> TransposeDot(ArrayType const &A,
                                                                ArrayType const &B, ArrayType &ret)
 {
-  ASSERT(A.shape()[0] == B.shape()[0]);
-  ASSERT(A.shape()[1] == ret.shape()[0]);
-  ASSERT(B.shape()[1] == ret.shape()[1]);
+  auto aview = A.View();
+  auto bview = B.View();
 
-  for (size_t i(0); i < A.shape()[1]; ++i)
+  if (aview.height() != bview.height())
   {
-    for (size_t j(0); j < B.shape()[1]; ++j)
-    {
-      for (size_t k(0); k < A.shape()[0]; ++k)
-      {
-        ret.At(i, j) += A.At(k, i) * B.At(k, j);
-      }
-    }
+    throw std::runtime_error("expected A and B to have same height.");
   }
+
+  ret.Resize({aview.width(), bview.width()});
+
+  using Type = typename ArrayType::Type;
+  using namespace linalg;
+
+  enum
+  {
+    OPTIMISATION_FLAGS = meta::HasVectorSupport<Type>::value
+                             ? platform::Parallelisation::VECTORISE
+                             : platform::Parallelisation::NOT_PARALLEL
+  };
+
+  Blas<Type, Signature(_C <= _alpha, _A, _B, _beta, _C),
+       Computes(_C <= _alpha * T(_A) * _B + _beta * _C), OPTIMISATION_FLAGS>
+      gemm_tn;
+
+  gemm_tn(static_cast<Type>(1), A.View(), B.View(), static_cast<Type>(0), ret.View());
 }
 
 template <class ArrayType>
@@ -852,9 +891,9 @@ fetch::math::meta::IfIsMathArray<ArrayType, void> DynamicStitch(ArrayType &     
                                                                 ArrayType const &indices,
                                                                 ArrayType const &data)
 {
-  ASSERT(data.size() <= input_array.size());
-  ASSERT(input_array.size() > static_cast<typename ArrayType::SizeType>(Max(indices)));
-  ASSERT(static_cast<typename ArrayType::SizeType>(Min(indices)) >= 0);
+  assert(data.size() <= input_array.size());
+  assert(input_array.size() > static_cast<typename ArrayType::SizeType>(Max(indices)));
+  assert(static_cast<typename ArrayType::SizeType>(Min(indices)) >= 0);
   input_array.Resize({indices.size()});
 
   auto ind_it  = indices.cbegin();
