@@ -71,6 +71,11 @@ protected:
     observer_.reset();
   }
 
+  ModulePtr module()
+  {
+    return module_;
+  }
+
   bool Compile(char const *text)
   {
     std::vector<std::string> errors{};

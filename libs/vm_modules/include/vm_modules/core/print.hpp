@@ -19,6 +19,7 @@
 
 #include "byte_array_wrapper.hpp"
 #include "core/byte_array/encoders.hpp"
+#include "vm_modules/math/fixed_point_wrapper.hpp"
 
 namespace fetch {
 namespace vm_modules {
@@ -103,6 +104,18 @@ inline void PrintLnDouble(fetch::vm::VM *vm, double const &s)
   out << s << std::endl;
 }
 
+inline void PrintFixedPoint(fetch::vm::VM *vm, FixedPointWrapper const &s)
+{
+  auto &out = vm->GetOutputDevice(vm::VM::STDOUT);
+  out << s.ToDouble();
+}
+
+inline void PrintLnFixedPoint(fetch::vm::VM *vm, FixedPointWrapper const &s)
+{
+  auto &out = vm->GetOutputDevice(vm::VM::STDOUT);
+  out << s.ToDouble() << std::endl;
+}
+
 template <typename T, bool NL = false>
 inline void PrintArrayPrimitive(fetch::vm::VM *vm, vm::Ptr<vm::Array<T>> const &g)
 {
@@ -148,6 +161,8 @@ inline void CreatePrint(vm::Module &module)
   module.CreateFreeFunction("printLn", &PrintLnDouble);
   module.CreateFreeFunction("print", &PrintFloat);
   module.CreateFreeFunction("printLn", &PrintLnFloat);
+  module.CreateFreeFunction("print", &PrintFixedPoint);
+  module.CreateFreeFunction("printLn", &PrintLnFixedPoint);
 
   module.CreateFreeFunction("print", &PrintArrayPrimitive<int32_t>);
   module.CreateFreeFunction("print", &PrintArrayPrimitive<int64_t>);

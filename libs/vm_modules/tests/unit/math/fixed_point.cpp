@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -17,35 +16,33 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm/module.hpp"
-#include "math/meta/math_type_traits.hpp"
-#include "math/standard_functions/abs.hpp"
+#include "vm_modules/math/fixed_point_wrapper.hpp"
+#include "math/fixed_point/fixed_point.hpp"
+#include "../vm_test_suite.hpp"
 
-namespace fetch {
-namespace vm_modules {
+namespace {
 
-/**
- * method for taking the absolute of a value
- */
-template <typename T>
-fetch::math::meta::IfIsMath<T, T> Abs(fetch::vm::VM *, T const &a)
+class FixedPointTest : public VmTestSuite
 {
-  T x = T(a);
-  fetch::math::Abs(x, x);
-  return x;
+};
+
+TEST_F(FixedPointTest, create_fixed_point)
+{
+  auto m = module();
+  fetch::vm_modules::CreateFixedPoint(m);
+
+
+  static char const *TEXT = R"(
+    function main()
+      print(FixedPoint(1.0));
+    endfunction
+  )";
+
+  ASSERT_TRUE(Compile(TEXT));
+  ASSERT_TRUE(Run());
+
+  double gt = static_cast<double>(fetch::fixed_point::FixedPoint<32, 32>(1));
+  EXPECT_EQ(stdout(), std::to_string(gt));
 }
 
-static void CreateAbs(fetch::vm::Module &module)
-{
-  module.CreateFreeFunction<int32_t>("Abs", &Abs<int32_t>);
-  module.CreateFreeFunction<float_t>("Abs", &Abs<float_t>);
-  module.CreateFreeFunction<double_t>("Abs", &Abs<double_t>);
-}
-
-inline void CreateAbs(std::shared_ptr<vm::Module> module)
-{
-  CreateAbs(*module.get());
-}
-
-}  // namespace vm_modules
-}  // namespace fetch
+}  // namespace
