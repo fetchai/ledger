@@ -13,9 +13,9 @@
 # ./scripts/run_static_analysis.py
 #
 # Extended usage
-# ./scripts/run_static_analysis.py --build-path ./build --branch develop
+# ./scripts/run_static_analysis.py --build-path ./build --branch master
 #
-# The script will ask git for the changes between this commit and the last common commit to [develop]
+# The script will ask git for the changes between this commit and the last common commit to [master]
 # to determine the files that need changing.
 
 import run_static_analysis
@@ -143,7 +143,7 @@ def parse_commandline():
         '--branch',
         type=str,
         help='branch that is being merged against',
-        default="develop")
+        default="origin/master")
     parser.add_argument('-v', '--verbose', action='store_true',
                         help='verbose mode', default=False)
     return parser.parse_args()

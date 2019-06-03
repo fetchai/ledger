@@ -17,36 +17,27 @@
 //
 //------------------------------------------------------------------------------
 
-#include <string>
-#include <vector>
+#include "ml/ops/ops.hpp"
 
-struct AEAToNode
+namespace fetch {
+namespace ml {
+namespace ops {
+
+template <class T>
+class Criterion
 {
-  enum
-  {
-    REGISTER = 1
-  };
+public:
+  using ArrayType    = T;
+  using Datatype     = typename ArrayType::Type;
+  using ArrayPtrType = std::shared_ptr<ArrayType>;
+
+  Criterion()
+  {}
+
+  virtual typename ArrayType::Type Forward(std::vector<ArrayType> const &inputs)  = 0;
+  virtual ArrayType                Backward(std::vector<ArrayType> const &inputs) = 0;
 };
 
-struct NodeToAEA
-{
-  enum
-  {
-    SEARCH = 1
-  };
-};
-
-struct FetchProtocols
-{
-
-  enum
-  {
-    AEA_TO_NODE = 1,
-    NODE_TO_AEA = 2
-  };
-};
-
-static const int SERVICE_TEST = 1;
-static const int CHANNEL_RPC  = 1;
-
-using Strings = std::vector<std::string>;
+}  // namespace ops
+}  // namespace ml
+}  // namespace fetch

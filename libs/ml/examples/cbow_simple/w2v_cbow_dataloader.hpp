@@ -18,8 +18,8 @@
 //------------------------------------------------------------------------------
 
 #include "core/random/lcg.hpp"
-#include "ml/dataloaders/dataloader.hpp"
 #include "math/tensor.hpp"
+#include "ml/dataloaders/dataloader.hpp"
 #include "unigram_table.hpp"
 
 #include <exception>

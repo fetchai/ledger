@@ -17,7 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/assert.hpp"
 #include "ml/ops/ops.hpp"
 
 namespace fetch {
@@ -30,7 +29,6 @@ class Add : public fetch::ml::ElementWiseOps<T>
 public:
   using ArrayType     = T;
   using DataType      = typename ArrayType::Type;
-  using ArrayPtrType  = std::shared_ptr<ArrayType>;
   using VecTensorType = typename ElementWiseOps<T>::VecTensorType;
 
   Add()          = default;
@@ -38,31 +36,20 @@ public:
 
   virtual void Forward(VecTensorType const &inputs, ArrayType &output)
   {
-    (void)output;
-    ASSERT(inputs.size() == 2);
-    ASSERT(inputs.at(0).get().size() == inputs.at(1).get().size());
-    ASSERT(output.shape() == this->ComputeOutputShape(inputs));
-
-    auto output_it  = output.begin();
-    auto output_end = output.end();
-    auto a_it       = inputs[0].get().begin();
-    auto b_it       = inputs[1].get().begin();
-
-    while (output_it != output_end)
-    {
-      *output_it = *a_it + *b_it;
-      ++output_it;
-      ++a_it;
-      ++b_it;
-    }
+    assert(inputs.size() == 2);
+    assert(inputs.at(0).get().size() == inputs.at(1).get().size());
+    assert(output.shape() == this->ComputeOutputShape(inputs));
+    fetch::math::Add(inputs[0].get(), inputs[1].get(), output);
   }
 
   virtual std::vector<ArrayType> Backward(VecTensorType const &inputs,
                                           ArrayType const &    error_signal)
   {
-    ASSERT(inputs.size() == 2);
-    ASSERT(inputs.at(0).get().size() == inputs.at(1).get().size());
-    ASSERT(error_signal.size() == inputs.at(1).get().size());
+    (void)inputs;
+    assert(inputs.size() == 2);
+    assert(inputs.at(0).get().size() == inputs.at(1).get().size());
+    assert(error_signal.size() == inputs.at(1).get().size());
+
     return {error_signal, error_signal};
   }
 

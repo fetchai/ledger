@@ -28,7 +28,6 @@
 #include <map>
 #include <string>
 #include <vector>
-#include <fstream>
 
 #include "math/approx_exp.hpp"
 #include "math/tensor.hpp"
@@ -65,11 +64,10 @@ std::string ReadFile(std::string const &path)
   return std::string((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());
 }
 
-void PrintStats(uint32_t const &i, uint32_t const &iterations, fetch::math::Tensor<FloatType> const &error_signal)
+void PrintStats(uint32_t const &i, uint32_t const &iterations,
+                fetch::math::Tensor<FloatType> const &error_signal)
 {
   high_resolution_clock::time_point cur_time = high_resolution_clock::now();
-
-
 
   duration<double> time_span = duration_cast<duration<double>>(cur_time - last_time);
   double           total     = static_cast<double>(iter * iterations);
@@ -78,7 +76,6 @@ void PrintStats(uint32_t const &i, uint32_t const &iterations, fetch::math::Tens
             << std::endl;
 
   last_time = cur_time;
-
 
   std::cout << "Times: " << time_forward << " " << time_exp << " " << time_backward << " "
             << time_step << std::endl;
@@ -141,9 +138,9 @@ void TrainModelNew()
 
     if (i % 10000 == 0)
     {
-      alpha =
-          starting_alpha * ((static_cast<FloatType>(iter * iterations) - static_cast<FloatType>(i)) /
-                            static_cast<FloatType>(iter * iterations));
+      alpha = starting_alpha *
+              ((static_cast<FloatType>(iter * iterations) - static_cast<FloatType>(i)) /
+               static_cast<FloatType>(iter * iterations));
       if (alpha < starting_alpha * 0.0001)
       {
         alpha = static_cast<float>(starting_alpha * 0.0001);
@@ -317,14 +314,13 @@ int main(int argc, char **argv)
   train_file  = argv[1];
 
   starting_alpha = static_cast<FloatType>(0.05);  // Initial learning rate
-  alpha = starting_alpha;
+  alpha          = starting_alpha;
 
   std::cout << "Loading ..." << std::endl;
   data_loader.AddData(ReadFile(train_file));
   data_loader.RemoveInfrequent(static_cast<uint32_t>(min_count));
   data_loader.InitUnigramTable();
   std::cout << "Dataloader Vocab Size : " << data_loader.VocabSize() << std::endl;
-
 
   TrainModelNew();
 

@@ -81,10 +81,10 @@ public:
 
   enum
   {
-    LOG_PADDING = TensorView<T,C>::LOG_PADDING,
-    PADDING = TensorView<T,C>::PADDING
+    LOG_PADDING = TensorView<T, C>::LOG_PADDING,
+    PADDING     = TensorView<T, C>::PADDING
   };
-  
+
 private:
   template <typename STensor>
   class TensorSliceImplementation;

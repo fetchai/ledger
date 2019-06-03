@@ -389,8 +389,12 @@ public:
 
   // These two are public for the benefit of the static Constructor() functions in
   // each of the Object-derived classes
-  void            RuntimeError(std::string const &message);
-  TypeInfo const &GetTypeInfo(TypeId type_id)
+  void RuntimeError(std::string const &message);
+  bool HasError() const
+  {
+    return !error_.empty();
+  }
+  TypeInfo const &GetTypeInfo(TypeId type_id) const
   {
     return type_info_array_[type_id];
   }
@@ -453,6 +457,8 @@ private:
   friend struct ConstructorInvokerHelper;
   template <typename ReturnType, typename StaticMemberFunction, typename... Ts>
   friend struct StaticMemberFunctionInvokerHelper;
+  template <typename ReturnType, typename Functor, typename... Ts>
+  friend struct FunctorInvokerHelper;
 
   TypeInfoArray                  type_info_array_;
   TypeInfoMap                    type_info_map_;
