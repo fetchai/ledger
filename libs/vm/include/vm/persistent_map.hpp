@@ -100,7 +100,8 @@ protected:
         IState::ConstructIntrinsic(vm_, TypeIds::Unknown, value_type_, key, TemplateParameter{})};
     auto value = state->Get();
 
-    return {value};
+    return value;
+    //return {value.object, value.type_id};
   }
 
   void SetIndexedValue(TemplateParameter1 const &key_v, TemplateParameter2 const &value_v) override
@@ -125,8 +126,7 @@ protected:
     else
     {
       auto state{
-          IState::ConstructIntrinsic(vm_, TypeIds::Unknown, value_type_, key, TemplateParameter{})};
-      state->Set(TemplateParameter{value_v});
+          IState::ConstructIntrinsic(vm_, TypeIds::Unknown, value_type_, key, value_v)};
     }
   }
 };

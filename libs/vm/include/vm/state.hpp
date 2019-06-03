@@ -313,7 +313,7 @@ inline Ptr<IState> IState::Constructor(VM *vm, TypeId type_id, Ptr<Object> &&nam
 
 inline std::string IState::NameToString(VM *vm, Ptr<Object> &&name)
 {
-  switch (name->getTypeId())
+  switch (name->type_id())
   {
   case TypeIds::String:
     return dynamic_cast<String const &>(*name).str;

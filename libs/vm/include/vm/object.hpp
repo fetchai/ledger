@@ -221,7 +221,7 @@ public:
   virtual bool SerializeTo(ByteArrayBuffer &buffer);
   virtual bool DeserializeFrom(ByteArrayBuffer &buffer);
 
-  TypeId getTypeId() const
+  TypeId type_id() const
   {
     return type_id_;
   }
