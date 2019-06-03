@@ -16,7 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vectorise/math/exp.hpp"
+#include "vectorise/arch/sse/math/exp.hpp"
 #include "vectorise/memory/array.hpp"
 #include "vectorise/memory/shared_array.hpp"
 

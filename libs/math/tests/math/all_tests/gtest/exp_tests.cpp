@@ -23,7 +23,7 @@
 #include "core/random/lcg.hpp"
 
 #include "math/approx_exp.hpp"
-#include "math/fixed_point/fixed_point.hpp"
+#include "vectorise/fixed_point/fixed_point.hpp"
 #include <gtest/gtest.h>
 
 template <uint8_t N, uint64_t C, typename T>

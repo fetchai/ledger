@@ -43,8 +43,8 @@ typename ArrayType::Type CrossEntropyLoss(ArrayType const &x, ArrayType const &y
   using DataType = typename ArrayType::Type;
   using SizeType = typename ArrayType::SizeType;
 
-  ASSERT(x.shape() == y.shape());
-  ASSERT(x.shape().size() == 2);
+  assert(x.shape() == y.shape());
+  assert(x.shape().size() == 2);
 
   auto n_examples = x.shape().at(0);
   auto n_dims     = x.shape().at(1);
@@ -57,12 +57,11 @@ typename ArrayType::Type CrossEntropyLoss(ArrayType const &x, ArrayType const &y
     auto     x_it = x.cbegin();
     auto     y_it = y.cbegin();
     DataType one{1};
-    DataType zero{0};
     DataType tmp;
 
     while (x_it.is_valid())
     {
-      ASSERT((*y_it == one) || (*y_it == zero));
+      assert((*y_it == one) || (*y_it == static_cast<DataType>(0)));
       if (*y_it == one)
       {
         ret -= Log(*x_it);

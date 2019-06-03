@@ -113,10 +113,11 @@ TYPED_TEST(OptimisersTest, sgd_optimiser_training)
 
   // Test weights
   std::vector<TypeParam> weights = g->GetWeights();
-  EXPECT_NEAR(static_cast<double>(weights[0].At(2, 0)), -0.01474, 1e-5);
-  EXPECT_NEAR(static_cast<double>(weights[1].At(0, 0)), 0.06280, 1e-5);
-  EXPECT_NEAR(static_cast<double>(weights[2].At(0, 9)), 0.02294, 1e-5);
-  EXPECT_NEAR(static_cast<double>(weights[3].At(0, 4)), -0.18362, 1e-5);
+
+  EXPECT_NEAR(static_cast<double>(weights[3].At(2, 0)), -0.01474, 1e-5);
+  EXPECT_NEAR(static_cast<double>(weights[2].At(0, 0)), 0.06280, 1e-5);
+  EXPECT_NEAR(static_cast<double>(weights[0].At(0, 9)), 0.02294, 1e-5);
+  EXPECT_NEAR(static_cast<double>(weights[1].At(0, 4)), -0.18362, 1e-5);
 }
 
 TYPED_TEST(OptimisersTest, momentum_optimiser_training)
@@ -149,10 +150,10 @@ TYPED_TEST(OptimisersTest, momentum_optimiser_training)
 
   // Test weights
   std::vector<TypeParam> weights = g->GetWeights();
-  EXPECT_NEAR(static_cast<double>(weights[0].At(2, 0)), -0.01474, 1e-5);
-  EXPECT_NEAR(static_cast<double>(weights[1].At(0, 0)), 0.14914, 1e-5);
-  EXPECT_NEAR(static_cast<double>(weights[2].At(0, 9)), 0.05633, 1e-5);
-  EXPECT_NEAR(static_cast<double>(weights[3].At(0, 4)), -0.18362, 1e-5);
+  EXPECT_NEAR(static_cast<double>(weights[3].At(2, 0)), -0.01474, 1e-5);
+  EXPECT_NEAR(static_cast<double>(weights[2].At(0, 0)), 0.14914, 1e-5);
+  EXPECT_NEAR(static_cast<double>(weights[0].At(0, 9)), 0.05633, 1e-5);
+  EXPECT_NEAR(static_cast<double>(weights[1].At(0, 4)), -0.18362, 1e-5);
 }
 
 TYPED_TEST(OptimisersTest, adagrad_optimiser_training)
@@ -185,10 +186,10 @@ TYPED_TEST(OptimisersTest, adagrad_optimiser_training)
 
   // Test weights
   std::vector<TypeParam> weights = g->GetWeights();
-  EXPECT_NEAR(static_cast<double>(weights[0].At(2, 0)), -0.01474, 1e-5);
-  EXPECT_NEAR(static_cast<double>(weights[1].At(0, 0)), 0.01675, 1e-5);
-  EXPECT_NEAR(static_cast<double>(weights[2].At(0, 9)), 0.01685, 1e-5);
-  EXPECT_NEAR(static_cast<double>(weights[3].At(0, 4)), -0.18362, 1e-5);
+  EXPECT_NEAR(static_cast<double>(weights[3].At(2, 0)), -0.01474, 1e-5);
+  EXPECT_NEAR(static_cast<double>(weights[2].At(0, 0)), 0.01675, 1e-5);
+  EXPECT_NEAR(static_cast<double>(weights[0].At(0, 9)), 0.01685, 1e-5);
+  EXPECT_NEAR(static_cast<double>(weights[1].At(0, 4)), -0.18362, 1e-5);
 }
 
 TYPED_TEST(OptimisersTest, rmsprop_optimiser_training)
@@ -221,10 +222,10 @@ TYPED_TEST(OptimisersTest, rmsprop_optimiser_training)
 
   // Test weights
   std::vector<TypeParam> weights = g->GetWeights();
-  EXPECT_NEAR(static_cast<double>(weights[0].At(2, 0)), -0.01474, 1e-5);
-  EXPECT_NEAR(static_cast<double>(weights[1].At(0, 0)), 0.05076, 1e-5);
-  EXPECT_NEAR(static_cast<double>(weights[2].At(0, 9)), 0.05176, 1e-5);
-  EXPECT_NEAR(static_cast<double>(weights[3].At(0, 4)), -0.18362, 1e-5);
+  EXPECT_NEAR(static_cast<double>(weights[3].At(2, 0)), -0.01474, 1e-5);
+  EXPECT_NEAR(static_cast<double>(weights[2].At(0, 0)), 0.05076, 1e-5);
+  EXPECT_NEAR(static_cast<double>(weights[0].At(0, 9)), 0.05176, 1e-5);
+  EXPECT_NEAR(static_cast<double>(weights[1].At(0, 4)), -0.18362, 1e-5);
 }
 
 TYPED_TEST(OptimisersTest, adam_optimiser_training)
@@ -257,8 +258,8 @@ TYPED_TEST(OptimisersTest, adam_optimiser_training)
 
   // Test weights
   std::vector<TypeParam> weights = g->GetWeights();
-  EXPECT_NEAR(static_cast<double>(weights[0].At(2, 0)), -0.01474, 1e-5);
-  EXPECT_NEAR(static_cast<double>(weights[1].At(0, 0)), 0.02160, 1e-5);
-  EXPECT_NEAR(static_cast<double>(weights[2].At(0, 9)), 0.02162, 1e-5);
-  EXPECT_NEAR(static_cast<double>(weights[3].At(0, 4)), -0.18362, 1e-5);
+  EXPECT_NEAR(static_cast<double>(weights[3].At(2, 0)), -0.01474, 1e-5);
+  EXPECT_NEAR(static_cast<double>(weights[2].At(0, 0)), 0.02160, 1e-5);
+  EXPECT_NEAR(static_cast<double>(weights[0].At(0, 9)), 0.02162, 1e-5);
+  EXPECT_NEAR(static_cast<double>(weights[1].At(0, 4)), -0.18362, 1e-5);
 }

@@ -90,8 +90,8 @@ private:
   std::string UpdateVariableName(std::string const &name);
 
 protected:
-  std::unordered_map<std::string, NodePtrType>      nodes_;
-  std::unordered_map<std::string, TrainablePtrType> trainable_;
+  std::unordered_map<std::string, NodePtrType> nodes_;
+  std::map<std::string, TrainablePtrType>      trainable_;
 };
 
 /**

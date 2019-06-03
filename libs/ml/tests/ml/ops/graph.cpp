@@ -221,17 +221,17 @@ TYPED_TEST(GraphTest, diamond_graph_backward)  // output=(input1*input2)-(input1
   std::vector<TypeParam> gradients = g.GetGradients();
   EXPECT_EQ(gradients.size(), 2);
   ASSERT_TRUE(
-      gradients[0].AllClose(grad1, static_cast<DataType>(1e-5f), static_cast<DataType>(1e-5f)));
+      gradients[1].AllClose(grad1, static_cast<DataType>(1e-5f), static_cast<DataType>(1e-5f)));
   ASSERT_TRUE(
-      gradients[1].AllClose(grad2, static_cast<DataType>(1e-5f), static_cast<DataType>(1e-5f)));
+      gradients[0].AllClose(grad2, static_cast<DataType>(1e-5f), static_cast<DataType>(1e-5f)));
 
   // Test Weights
   std::vector<TypeParam> weights = g.GetWeights();
   EXPECT_EQ(weights.size(), 2);
   ASSERT_TRUE(
-      weights[0].AllClose(data2, static_cast<DataType>(1e-5f), static_cast<DataType>(1e-5f)));
+      weights[1].AllClose(data2, static_cast<DataType>(1e-5f), static_cast<DataType>(1e-5f)));
   ASSERT_TRUE(
-      weights[1].AllClose(data1, static_cast<DataType>(1e-5f), static_cast<DataType>(1e-5f)));
+      weights[0].AllClose(data1, static_cast<DataType>(1e-5f), static_cast<DataType>(1e-5f)));
 
   // Change data2
   data2                       = ArrayType::FromString("-2, -1, 0, 1, 2, 3");
@@ -255,18 +255,18 @@ TYPED_TEST(GraphTest, diamond_graph_backward)  // output=(input1*input2)-(input1
   // Test Weights
   std::vector<TypeParam> weights2 = g.GetWeights();
   EXPECT_EQ(weights2.size(), 2);
-  ASSERT_TRUE(weights2[0].AllClose(weights1_expected, static_cast<DataType>(1e-5f),
+  ASSERT_TRUE(weights2[1].AllClose(weights1_expected, static_cast<DataType>(1e-5f),
                                    static_cast<DataType>(1e-5f)));
-  ASSERT_TRUE(weights2[1].AllClose(weights2_expected, static_cast<DataType>(1e-5f),
+  ASSERT_TRUE(weights2[0].AllClose(weights2_expected, static_cast<DataType>(1e-5f),
                                    static_cast<DataType>(1e-5f)));
 
   // Test gradient
   std::vector<TypeParam> gradients2 = g.GetGradients();
   EXPECT_EQ(gradients2.size(), 2);
   ASSERT_TRUE(
-      gradients2[0].AllClose(grad1, static_cast<DataType>(1e-5f), static_cast<DataType>(1e-5f)));
+      gradients2[1].AllClose(grad1, static_cast<DataType>(1e-5f), static_cast<DataType>(1e-5f)));
   ASSERT_TRUE(
-      gradients2[1].AllClose(grad2, static_cast<DataType>(1e-5f), static_cast<DataType>(1e-5f)));
+      gradients2[0].AllClose(grad2, static_cast<DataType>(1e-5f), static_cast<DataType>(1e-5f)));
 }
 
 TYPED_TEST(GraphTest, diamond_graph_getStateDict)
