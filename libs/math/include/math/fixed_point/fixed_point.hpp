@@ -254,8 +254,8 @@ public:
   /// conversions ///
   ///////////////////
 
-  constexpr Type Integer() const;
-  constexpr Type Fraction() const;
+  constexpr Type              Integer() const;
+  constexpr Type              Fraction() const;
   static constexpr FixedPoint Floor(FixedPoint const &o);
   static constexpr FixedPoint Round(FixedPoint const &o);
   static constexpr FixedPoint FromBase(Type n);
@@ -307,9 +307,9 @@ public:
   /// unary operators ///
   ///////////////////////
 
-  constexpr bool operator!() const;
-  constexpr FixedPoint operator~() const;
-  constexpr FixedPoint operator-() const;
+  constexpr bool        operator!() const;
+  constexpr FixedPoint  operator~() const;
+  constexpr FixedPoint  operator-() const;
   constexpr FixedPoint &operator++();
   constexpr FixedPoint &operator--();
 
@@ -328,7 +328,7 @@ public:
   constexpr FixedPoint operator*(T const &n) const;
   constexpr FixedPoint operator/(FixedPoint const &n) const;
   template <typename T>
-  constexpr FixedPoint operator/(T const &n) const;
+  constexpr FixedPoint  operator/(T const &n) const;
   constexpr FixedPoint &operator+=(FixedPoint const &n);
   constexpr FixedPoint &operator-=(FixedPoint const &n);
   constexpr FixedPoint &operator&=(FixedPoint const &n);
@@ -381,7 +381,7 @@ public:
   static constexpr FixedPoint Fmod(FixedPoint const &x, FixedPoint const &y);
   static constexpr FixedPoint Abs(FixedPoint const &x);
   static constexpr FixedPoint Sign(FixedPoint const &x);
-  static constexpr bool isNaN(FixedPoint const &x);
+  static constexpr bool       isNaN(FixedPoint const &x);
 
 private:
   Type data_{0};  // the value to be stored
@@ -625,7 +625,6 @@ template <std::uint16_t I, std::uint16_t F>
 FixedPoint<I, F> const FixedPoint<I, F>::NaN{
     FixedPoint::FromBase(FixedPoint::Type(1) << (FixedPoint::TOTAL_BITS - 1))};
 
-
 template <std::uint16_t I, std::uint16_t F>
 std::ostream &operator<<(std::ostream &s, FixedPoint<I, F> const &n)
 {
@@ -644,7 +643,6 @@ std::ostream &operator<<(std::ostream &s, FixedPoint<I, F> const &n)
   s.flags(f);
   return s;
 }
-
 
 ////////////////////
 /// constructors ///
@@ -682,7 +680,8 @@ constexpr FixedPoint<I, F>::FixedPoint(FixedPoint<I, F> const &o)
 {}
 
 template <std::uint16_t I, std::uint16_t F>
-constexpr FixedPoint<I, F>::FixedPoint(const typename FixedPoint<I, F>::Type &integer, const typename FixedPoint<I, F>::UnsignedType &fraction)
+constexpr FixedPoint<I, F>::FixedPoint(const typename FixedPoint<I, F>::Type &        integer,
+                                       const typename FixedPoint<I, F>::UnsignedType &fraction)
   : data_{(INTEGER_MASK & (Type(integer) << FRACTIONAL_BITS)) | Type(fraction & FRACTIONAL_MASK)}
 {}
 
@@ -1307,7 +1306,8 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::Sqrt(FixedPoint<I, F> const &x)
 }
 
 template <std::uint16_t I, std::uint16_t F>
-constexpr FixedPoint<I, F> FixedPoint<I, F>::Pow(FixedPoint<I, F> const &x, FixedPoint<I, F> const &y)
+constexpr FixedPoint<I, F> FixedPoint<I, F>::Pow(FixedPoint<I, F> const &x,
+                                                 FixedPoint<I, F> const &y)
 {
   if (x == CONST_ZERO)
   {
@@ -1561,7 +1561,8 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::ATan(FixedPoint<I, F> const &x)
 }
 
 template <std::uint16_t I, std::uint16_t F>
-constexpr FixedPoint<I, F> FixedPoint<I, F>::ATan2(FixedPoint<I, F> const &y, FixedPoint<I, F> const &x)
+constexpr FixedPoint<I, F> FixedPoint<I, F>::ATan2(FixedPoint<I, F> const &y,
+                                                   FixedPoint<I, F> const &x)
 {
   if (isNaN(y) || isNaN(x))
   {
@@ -1671,14 +1672,16 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::ATanH(FixedPoint<I, F> const &x)
 }
 
 template <std::uint16_t I, std::uint16_t F>
-constexpr FixedPoint<I, F> FixedPoint<I, F>::Remainder(FixedPoint<I, F> const &x, FixedPoint<I, F> const &y)
+constexpr FixedPoint<I, F> FixedPoint<I, F>::Remainder(FixedPoint<I, F> const &x,
+                                                       FixedPoint<I, F> const &y)
 {
   FixedPoint result = x / y;
   return std::move(x - Round(result) * y);
 }
 
 template <std::uint16_t I, std::uint16_t F>
-constexpr FixedPoint<I, F> FixedPoint<I, F>::Fmod(FixedPoint<I, F> const &x, FixedPoint<I, F> const &y)
+constexpr FixedPoint<I, F> FixedPoint<I, F>::Fmod(FixedPoint<I, F> const &x,
+                                                  FixedPoint<I, F> const &y)
 {
   FixedPoint result = Remainder(Abs(x), Abs(y));
   if (result < CONST_ZERO)
@@ -1712,8 +1715,6 @@ constexpr bool FixedPoint<I, F>::isNaN(FixedPoint<I, F> const &x)
     return false;
   }
 }
-
-
 
 }  // namespace fixed_point
 }  // namespace fetch
