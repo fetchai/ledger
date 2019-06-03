@@ -24,16 +24,15 @@
 #include "math/linalg/blas/gemm_nt_vector.hpp"
 #include "math/linalg/blas/gemm_tn_novector.hpp"
 #include "math/linalg/blas/gemm_tn_vector.hpp"
-
 #include "math/linalg/prototype.hpp"
-
 #include "math/base_types.hpp"
 #include "math/comparison.hpp"
-#include "math/fundamental_operators.hpp"  // add, subtract etc.
+#include "math/fundamental_operators.hpp"
 #include "math/meta/math_type_traits.hpp"
 
 #include <cassert>
 #include <numeric>
+#include <vector>
 
 namespace fetch {
 namespace math {

@@ -116,8 +116,7 @@ public:
   Tensor(Tensor &&other)      = default;
   Tensor(Tensor const &other) = default;
   Tensor(SizeVector const &dims);
-  virtual ~Tensor()
-  {}
+  virtual ~Tensor() = default;
 
   Tensor &operator=(Tensor const &other) = default;
   Tensor &operator=(Tensor &&other) = default;

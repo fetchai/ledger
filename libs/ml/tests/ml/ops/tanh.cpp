@@ -24,6 +24,7 @@
 #include "gtest/gtest.h"
 
 #include <cstdint>
+#include <vector>
 
 template <typename T>
 class TanhTest : public ::testing::Test

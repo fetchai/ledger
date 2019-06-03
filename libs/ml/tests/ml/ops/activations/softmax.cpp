@@ -19,6 +19,7 @@
 #include "math/tensor.hpp"
 #include "ml/ops/activation.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
+
 #include <gtest/gtest.h>
 
 template <typename T>

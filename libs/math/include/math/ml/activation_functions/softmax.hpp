@@ -18,10 +18,14 @@
 //------------------------------------------------------------------------------
 
 #include "math/comparison.hpp"
-#include "math/fundamental_operators.hpp"  // add, subtract etc.
+#include "math/fundamental_operators.hpp"
 #include "math/matrix_operations.hpp"
 #include "math/meta/math_type_traits.hpp"
 #include "math/standard_functions/exp.hpp"
+
+#include <cassert>
+#include <cstddef>
+#include <stdexcept>
 
 namespace fetch {
 namespace math {

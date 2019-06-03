@@ -22,6 +22,8 @@
 #include "math/linalg/prototype.hpp"
 #include "math/tensor_view.hpp"
 
+#include <cstdint>
+
 namespace fetch {
 namespace math {
 namespace linalg {
