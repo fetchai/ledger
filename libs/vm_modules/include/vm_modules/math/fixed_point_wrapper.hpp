@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/fixed_point/fixed_point.hpp"
+#include "vectorise/fixed_point/fixed_point.hpp"
 #include "vm/module.hpp"
 
 namespace fetch {

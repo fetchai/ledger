@@ -17,18 +17,21 @@
 //------------------------------------------------------------------------------
 
 #include "vm_modules/math/fixed_point_wrapper.hpp"
-#include "math/fixed_point/fixed_point.hpp"
-#include "../vm_test_suite.hpp"
+#include "../vm_test_toolkit.hpp"
+#include "vectorise/fixed_point/fixed_point.hpp"
 
 namespace {
 
-class FixedPointTest : public VmTestSuite
+class FixedPointTest : ::testing::Test
 {
+public:
+  VmTestToolkit toolkit;
 };
+
 
 TEST_F(FixedPointTest, create_fixed_point)
 {
-  auto m = module();
+  auto m = toolkit.module();
   fetch::vm_modules::CreateFixedPoint(m);
 
 
@@ -38,8 +41,8 @@ TEST_F(FixedPointTest, create_fixed_point)
     endfunction
   )";
 
-  ASSERT_TRUE(Compile(TEXT));
-  ASSERT_TRUE(Run());
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_TRUE(toolkit.Run());
 
   double gt = static_cast<double>(fetch::fixed_point::FixedPoint<32, 32>(1));
   EXPECT_EQ(stdout(), std::to_string(gt));
