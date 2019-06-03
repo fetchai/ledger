@@ -29,6 +29,9 @@ elif [[ "$OSTYPE" == "darwin"* ]]; then
     done
 fi
 git submodule update --init --recursive
+if [ -d build ]; then
+    rm -rf build
+fi
 mkdir build
 cd build
 if [[ "$OSTYPE" == "darwin"* ]]; then
