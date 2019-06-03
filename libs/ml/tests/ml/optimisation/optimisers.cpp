@@ -44,11 +44,11 @@ TYPED_TEST_CASE(OptimisersTest, MyTypes);
 
 template <typename TypeParam>
 std::shared_ptr<fetch::ml::Graph<TypeParam>> PrepareTestGraph(
-    typename TypeParam::SizeType input_size, std::string &input_name, std::string &output_name)
+    typename TypeParam::SizeType input_size, typename TypeParam::SizeType output_size,
+    std::string &input_name, std::string &output_name)
 {
   using SizeType = typename TypeParam::SizeType;
 
-  SizeType output_size = SizeType(1);
   SizeType hidden_size = SizeType(10);
 
   std::shared_ptr<fetch::ml::Graph<TypeParam>> g =
@@ -104,10 +104,15 @@ void PrepareTestDataAndLabels2D(TypeParam &data, TypeParam &gt)
   data.Set(1, 0, 2, DataType(11));
   data.Set(1, 1, 2, DataType(12));
 
-  gt.Resize({1, 3});
+  gt.Resize({2, 3});
   gt.Set(0, 0, DataType(2));
+  gt.Set(1, 0, DataType(3));
+
   gt.Set(0, 1, DataType(6));
+  gt.Set(1, 1, DataType(7));
+
   gt.Set(0, 2, DataType(10));
+  gt.Set(1, 2, DataType(11));
 }
 
 TYPED_TEST(OptimisersTest, sgd_optimiser_training)
@@ -120,7 +125,7 @@ TYPED_TEST(OptimisersTest, sgd_optimiser_training)
   std::string                                  input_name;
   std::string                                  output_name;
   std::shared_ptr<fetch::ml::Graph<TypeParam>> g =
-      PrepareTestGraph<TypeParam>(1, input_name, output_name);
+      PrepareTestGraph<TypeParam>(1, 1, input_name, output_name);
 
   // Prepare data and labels
   TypeParam data;
@@ -157,7 +162,7 @@ TYPED_TEST(OptimisersTest, sgd_optimiser_training_2D)
   std::string                                  input_name;
   std::string                                  output_name;
   std::shared_ptr<fetch::ml::Graph<TypeParam>> g =
-      PrepareTestGraph<TypeParam>(4, input_name, output_name);
+      PrepareTestGraph<TypeParam>(4, 2, input_name, output_name);
 
   // Prepare data and labels
   TypeParam data;
@@ -194,7 +199,7 @@ TYPED_TEST(OptimisersTest, momentum_optimiser_training)
   std::string                                  input_name;
   std::string                                  output_name;
   std::shared_ptr<fetch::ml::Graph<TypeParam>> g =
-      PrepareTestGraph<TypeParam>(1, input_name, output_name);
+      PrepareTestGraph<TypeParam>(1, 1, input_name, output_name);
 
   // Prepare data and labels
   TypeParam data;
@@ -230,7 +235,7 @@ TYPED_TEST(OptimisersTest, momentum_optimiser_training_2D)
   std::string                                  input_name;
   std::string                                  output_name;
   std::shared_ptr<fetch::ml::Graph<TypeParam>> g =
-      PrepareTestGraph<TypeParam>(4, input_name, output_name);
+      PrepareTestGraph<TypeParam>(4, 2, input_name, output_name);
 
   // Prepare data and labels
   TypeParam data;
@@ -267,7 +272,7 @@ TYPED_TEST(OptimisersTest, adagrad_optimiser_training)
   std::string                                  input_name;
   std::string                                  output_name;
   std::shared_ptr<fetch::ml::Graph<TypeParam>> g =
-      PrepareTestGraph<TypeParam>(1, input_name, output_name);
+      PrepareTestGraph<TypeParam>(1, 1, input_name, output_name);
 
   // Prepare data and labels
   TypeParam data;
@@ -303,7 +308,7 @@ TYPED_TEST(OptimisersTest, adagrad_optimiser_training_2D)
   std::string                                  input_name;
   std::string                                  output_name;
   std::shared_ptr<fetch::ml::Graph<TypeParam>> g =
-      PrepareTestGraph<TypeParam>(4, input_name, output_name);
+      PrepareTestGraph<TypeParam>(4, 2, input_name, output_name);
 
   // Prepare data and labels
   TypeParam data;
@@ -339,7 +344,7 @@ TYPED_TEST(OptimisersTest, rmsprop_optimiser_training)
   std::string                                  input_name;
   std::string                                  output_name;
   std::shared_ptr<fetch::ml::Graph<TypeParam>> g =
-      PrepareTestGraph<TypeParam>(1, input_name, output_name);
+      PrepareTestGraph<TypeParam>(1, 1, input_name, output_name);
 
   // Prepare data and labels
   TypeParam data;
@@ -375,7 +380,7 @@ TYPED_TEST(OptimisersTest, rmsprop_optimiser_training_2D)
   std::string                                  input_name;
   std::string                                  output_name;
   std::shared_ptr<fetch::ml::Graph<TypeParam>> g =
-      PrepareTestGraph<TypeParam>(4, input_name, output_name);
+      PrepareTestGraph<TypeParam>(4, 2, input_name, output_name);
 
   // Prepare data and labels
   TypeParam data;
@@ -411,7 +416,7 @@ TYPED_TEST(OptimisersTest, adam_optimiser_training)
   std::string                                  input_name;
   std::string                                  output_name;
   std::shared_ptr<fetch::ml::Graph<TypeParam>> g =
-      PrepareTestGraph<TypeParam>(1, input_name, output_name);
+      PrepareTestGraph<TypeParam>(1, 1, input_name, output_name);
 
   // Prepare data and labels
   TypeParam data;
@@ -447,7 +452,7 @@ TYPED_TEST(OptimisersTest, adam_optimiser_training_2D)
   std::string                                  input_name;
   std::string                                  output_name;
   std::shared_ptr<fetch::ml::Graph<TypeParam>> g =
-      PrepareTestGraph<TypeParam>(4, input_name, output_name);
+      PrepareTestGraph<TypeParam>(4, 2, input_name, output_name);
 
   // Prepare data and labels
   TypeParam data;
@@ -483,7 +488,7 @@ TYPED_TEST(OptimisersTest, adam_optimiser_minibatch_training)
   std::string                                  input_name;
   std::string                                  output_name;
   std::shared_ptr<fetch::ml::Graph<TypeParam>> g =
-      PrepareTestGraph<TypeParam>(1, input_name, output_name);
+      PrepareTestGraph<TypeParam>(1, 1, input_name, output_name);
 
   // Prepare data and labels
   TypeParam data;

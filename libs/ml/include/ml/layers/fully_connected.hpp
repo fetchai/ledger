@@ -23,6 +23,7 @@
 #include "ml/ops/add.hpp"
 #include "ml/ops/flatten.hpp"
 #include "ml/ops/matrix_multiply.hpp"
+#include "ml/ops/transpose.hpp"
 #include "ml/ops/weights.hpp"
 #include "ml/subgraph.hpp"
 #include <cmath>
@@ -56,8 +57,10 @@ public:
         name + "_MatrixMultiply", {flat_input, weights});
     std::string bias =
         this->template AddNode<fetch::ml::ops::Weights<ArrayType>>(name + "_Bias", {});
-    std::string output = this->template AddNode<fetch::ml::ops::Add<ArrayType>>(
+    std::string add = this->template AddNode<fetch::ml::ops::Add<ArrayType>>(
         name + "_Add", {weights_matmul, bias});
+    std::string output =
+        this->template AddNode<fetch::ml::ops::Transpose<ArrayType>>(name + "_Transpose", {add});
 
     output = fetch::ml::details::AddActivationNode<T>(activation_type, this, name + "_Activation",
                                                       output);
@@ -77,7 +80,7 @@ public:
       std::vector<std::reference_wrapper<ArrayType const>> const &inputs) const
   {
     (void)inputs;
-    return {1, this->out_size};
+    return {this->out_size, 1};
   }
 
   static constexpr char const *DESCRIPTOR = "FullyConnected";

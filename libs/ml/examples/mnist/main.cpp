@@ -22,10 +22,12 @@
 #include "ml/layers/fully_connected.hpp"
 #include "ml/ops/activation.hpp"
 #include "ml/ops/loss_functions/cross_entropy.hpp"
+#include "ml/optimisation/adam_optimiser.hpp"
 
 #include <cstddef>
 #include <cstdint>
 #include <iostream>
+#include <ml/optimisation/sgd_optimiser.hpp>
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -36,9 +38,15 @@ using namespace fetch::ml::layers;
 
 using DataType  = float;
 using ArrayType = fetch::math::Tensor<DataType>;
+using SizeType  = typename ArrayType::SizeType;
 
 int main(int ac, char **av)
 {
+  DataType learning_rate{0.01f};
+  SizeType subset_size{100};
+  SizeType epochs{10};
+  SizeType batch_size{10};
+
   if (ac < 3)
   {
     std::cout << "Usage : " << av[0]
@@ -47,55 +55,49 @@ int main(int ac, char **av)
   }
 
   std::cout << "FETCH MNIST Demo" << std::endl;
-  fetch::ml::MNISTLoader<ArrayType> dataloader(av[1], av[2]);
-  fetch::ml::Graph<ArrayType>       g;
+  fetch::ml::MNISTLoader<ArrayType>            dataloader(av[1], av[2]);
+  std::shared_ptr<fetch::ml::Graph<ArrayType>> g =
+      std::shared_ptr<fetch::ml::Graph<ArrayType>>(new fetch::ml::Graph<ArrayType>());
 
-  g.AddNode<PlaceHolder<ArrayType>>("Input", {});
-  g.AddNode<FullyConnected<ArrayType>>("FC1", {"Input"}, 28u * 28u, 10u);
-  g.AddNode<Relu<ArrayType>>("Relu1", {"FC1"});
-  g.AddNode<FullyConnected<ArrayType>>("FC2", {"Relu1"}, 10u, 10u);
-  g.AddNode<Relu<ArrayType>>("Relu2", {"FC1"});
-  g.AddNode<FullyConnected<ArrayType>>("FC3", {"Relu2"}, 10u, 10u);
-  g.AddNode<Softmax<ArrayType>>("Softmax", {"FC3"});
+  std::string input_name = g->AddNode<PlaceHolder<ArrayType>>("Input", {});
+  g->AddNode<FullyConnected<ArrayType>>("FC1", {"Input"}, 28u * 28u, 10u);
+  g->AddNode<Relu<ArrayType>>("Relu1", {"FC1"});
+  g->AddNode<FullyConnected<ArrayType>>("FC2", {"Relu1"}, 10u, 10u);
+  g->AddNode<Relu<ArrayType>>("Relu2", {"FC1"});
+  g->AddNode<FullyConnected<ArrayType>>("FC3", {"Relu2"}, 10u, 10u);
+  std::string output_name = g->AddNode<Softmax<ArrayType>>("Softmax", {"FC3"});
   //  Input -> FC -> Relu -> FC -> Relu -> FC -> Softmax
 
-  CrossEntropy<ArrayType> criterion;
+  ArrayType data(std::vector<typename ArrayType::SizeType>({28, 28, subset_size}));
+  ArrayType labels(std::vector<typename ArrayType::SizeType>({10, subset_size}));
+  labels.Fill(0);
 
   std::pair<std::size_t, ArrayType> input;
-  ArrayType                         gt(std::vector<typename ArrayType::SizeType>({1, 10}));
-
-  gt.At(0, 0)       = 1.0;
-  DataType     loss = 0;
-  unsigned int errorCount(0);
-  unsigned int i(0);
-
-  while (true)
+  for (SizeType n{0}; n < subset_size; n++)
   {
-    if (dataloader.IsDone())
-    {
-      dataloader.Reset();
-    }
-    input = dataloader.GetNext();
-    g.SetInput("Input", input.second);
-    gt.Fill(0);
-    gt.At(0, input.first) = DataType(1.0);
-    ArrayType results     = g.Evaluate("Softmax");
+    input                     = dataloader.GetNext();
+    labels.At(input.first, n) = DataType(1.0);
 
-    loss += criterion.Forward({results, gt});
-    if (results.At(0, input.first) < .5)
+    for (SizeType i{0}; i < 28; i++)
     {
-      errorCount++;
-    }
-    g.BackPropagate("Softmax", criterion.Backward({results, gt}));
-    i++;
-    if (i % 60 == 0)
-    {
-      std::cout << "MiniBatch: " << i / 60 << " -- Loss : " << loss
-                << " -- Correct: " << 60 - errorCount << " / 60" << std::endl;
-      g.Step(0.01f);
-      loss       = 0;
-      errorCount = 0;
+      for (SizeType j{0}; j < 28; j++)
+      {
+        data.At(i, j, n) = input.second.At(i, j);
+      }
     }
   }
+
+  // Initialize Optimiser
+  fetch::ml::optimisers::SGDOptimiser<ArrayType, fetch::ml::ops::CrossEntropy<ArrayType>> optimiser(
+      g, input_name, output_name, learning_rate);
+
+  DataType loss;
+
+  for (SizeType i{0}; i < epochs; i++)
+  {
+    loss = optimiser.Run(data, labels, batch_size);
+    std::cout << "Loss: " << loss << std::endl;
+  }
+
   return 0;
 }

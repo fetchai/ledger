@@ -69,7 +69,7 @@ public:
     assert(inputs[0].shape().size() == 2);
 
     ArrayType ret;
-    if (inputs[0].shape().at(1) == 1)  // not one-hot
+    if (inputs[0].shape().at(0) == 1)  // not one-hot
     {
       ret = fetch::math::Sigmoid(inputs[0]);
       fetch::math::Subtract(ret, inputs[1], ret);
@@ -77,7 +77,7 @@ public:
     }
     else if (inputs[0].shape().size())  // one-hot
     {
-      ret = fetch::math::Softmax(inputs[0], 0);
+      ret = fetch::math::Softmax(inputs[0], 1);
       fetch::math::Divide(inputs[1], ret, ret);
       fetch::math::Multiply(DataType(-1), ret, ret);
     }

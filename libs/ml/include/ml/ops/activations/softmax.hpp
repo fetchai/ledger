@@ -34,7 +34,7 @@ public:
   using ArrayPtrType  = std::shared_ptr<ArrayType>;
   using VecTensorType = typename ElementWiseOps<T>::VecTensorType;
 
-  Softmax(SizeType axis = 0)
+  Softmax(SizeType axis = 1)
     : axis_(axis)
   {}
 
