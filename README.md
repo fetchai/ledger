@@ -39,7 +39,7 @@ features. Fetch will be delivering regular updates.
 ```
 git clone https://github.com/fetchai/ledger.git
 cd ledger
-./install.sh
+./scripts/quickstart.sh
 ```
 
 Manual build steps are available in our [Getting Started Guide](docs/source/getting_started/index.rst).    
