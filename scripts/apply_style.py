@@ -14,25 +14,40 @@
 # `-a` options.
 #
 
-import os
-import sys
 import argparse
 import fnmatch
-import subprocess
-import difflib
-import threading
 import multiprocessing
-import codecs
-import shutil
+import os
 import re
+import shutil
+import subprocess
+import sys
+import threading
 from concurrent.futures import ThreadPoolExecutor
+from os.path import abspath, dirname, join
 
-PROJECT_ROOT = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
+PROJECT_ROOT = abspath(dirname(dirname(__file__)))
 
-SOURCE_FOLDERS = ('apps', 'libs')
-SOURCE_EXT = ('*.cpp', '*.hpp')
 
-output_lock = threading.Lock()
+def find_excluded_dirs():
+    def get_abspath(name):
+        return abspath(join(PROJECT_ROOT, name))
+
+    def cmake_build_tree_roots():
+        direct_subdirectories = os.listdir(PROJECT_ROOT)
+
+        return [name for name in direct_subdirectories
+                if os.path.isfile(join(get_abspath(name), 'CMakeCache.txt'))]
+
+    directories_to_exclude = ['.git', 'vendor'] + \
+        cmake_build_tree_roots()
+
+    return [get_abspath(name)
+            for name in directories_to_exclude
+            if os.path.isdir(get_abspath(name))]
+
+
+EXCLUDED_DIRS = find_excluded_dirs()
 
 
 def find_clang_format():
@@ -43,16 +58,44 @@ def find_clang_format():
     if path is not None:
         return path
 
-    output('Unable to find clang-format using which attempting manual search...')
+    output('Unable to find clang-format using \'which\' attempting manual search...')
 
     # try and manually perform the search
     for prefix in ('/usr/bin', '/usr/local/bin'):
-        potential_path = os.path.join(prefix, name)
+        potential_path = join(prefix, name)
         if os.path.isfile(potential_path):
             output('Found potential candidate: {}'.format(potential_path))
             if os.access(potential_path, os.X_OK):
                 output('Found candidate: {}'.format(potential_path))
                 return potential_path
+
+    output('Unable to locate clang-format tool')
+    sys.exit(1)
+
+
+SUPPORTED_LANGUAGES = {
+    'cpp': {
+        'cmd_prefix': [
+            find_clang_format(),
+            '-style=file',
+            '-i'
+        ],
+        'filename_patterns': ('*.cpp', '*.hpp')
+    },
+    'cmake': {
+        'cmd_prefix': [
+            'python3',
+            '-m',
+            'cmake_format',
+            '--separate-ctrl-name-with-space',
+            '--line-width', '100',
+            '--in-place'
+        ],
+        'filename_patterns': ('*.cmake', 'CMakeLists.txt')
+    }
+}
+
+output_lock = threading.Lock()
 
 
 def output(text):
@@ -64,8 +107,11 @@ def output(text):
 def parse_commandline():
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('-w', '--warn-only', dest='fix',
-                        action='store_false', help='Only display warnings')
+    parser.add_argument(
+        '-d',
+        '--diff',
+        action='store_true',
+        help='Exit with error and print diff if there are changes')
     parser.add_argument(
         '-j',
         dest='jobs',
@@ -187,60 +233,23 @@ def postprocess_file(filename):
         destination.writelines(postprocess_contents(contents))
 
 
-def project_sources(project_root):
-    # process all the files
-    for path in SOURCE_FOLDERS:
-        for root, _, files in os.walk(os.path.join(project_root, path)):
-            for ext in SOURCE_EXT:
-                for file in fnmatch.filter(files, ext):
-                    source_path = os.path.join(root, file)
-                    yield source_path
+def walk_source_directories():
+    for root, _, files in os.walk(PROJECT_ROOT):
+        if any([os.path.commonpath([root, excluded_dir]) == excluded_dir for excluded_dir in EXCLUDED_DIRS]):
+            continue
+
+        yield root, _, files
 
 
-def compare_against_original(reformatted, source_path, rel_path, names_only):
-    # read the contents of the original file
-    original = None
-    with codecs.open(source_path, 'r', encoding='utf8') as source_file:
-        try:
-            original = source_file.read()
-        except UnicodeDecodeError as ex:
-            output('Unable to read contents of file: {}'.format(rel_path))
-            output(ex)
-            sys.exit(1)
-
-    # handle the read error
-    if original is None:
-        return False
-
-    out = list(difflib.context_diff(
-        original.splitlines(), reformatted.splitlines()))
-
-    success = True
-    if len(out) != 0:
-        if names_only:
-            output(rel_path)
-        else:
-            output('Style mismatch in: {}\n'.format(rel_path))
-            output('\n'.join(out[3:]))  # first 3 elements are garbage
-            success = False
-
-    return success
+def project_sources(patterns):
+    for root, _, files in walk_source_directories():
+        for pattern in patterns:
+            for file in fnmatch.filter(files, pattern):
+                source_path = join(root, file)
+                yield source_path
 
 
-def format_cpp(args):
-    clang_format = find_clang_format()
-    if clang_format is None:
-        output('Unable to locate clang-format tool')
-        sys.exit(1)
-
-    cmd_prefix = [
-        clang_format,
-        '-style=file',
-    ]
-
-    if args.fix:
-        cmd_prefix += ['-i']
-
+def format_language(args, cmd_prefix, filename_patterns):
     def apply_style_to_file(source_path):
         # apply twice to allow the changes to "settle"
         subprocess.check_call(cmd_prefix + [source_path], cwd=PROJECT_ROOT)
@@ -249,70 +258,79 @@ def format_cpp(args):
         if args.dont_goto_fail:
             postprocess_file(source_path)
 
-        return True
+    if args.names_only:
+        output('Files to reformat:')
 
-    def diff_style_to_file(source_path):
-        formatted_output = subprocess.check_output(
-            cmd_prefix + [source_path], cwd=PROJECT_ROOT).decode()
-
-        if args.dont_goto_fail:
-            formatted_output = postprocess_contents(formatted_output)
-
-        rel_path = os.path.relpath(source_path, PROJECT_ROOT)
-        return compare_against_original(
-            formatted_output, source_path, rel_path, args.names_only)
-
-    if args.fix:
-        handler = apply_style_to_file
-        output('Applying style...')
-    else:
-        handler = diff_style_to_file
-        if args.names_only:
-            output('Files to reformat:')
-        else:
-            output('Checking style...')
-
-    # process all the files
-    success = False
-
-    processed_files = args.filename or project_sources(PROJECT_ROOT)
+    processed_files = args.filename or project_sources(filename_patterns)
 
     with ThreadPoolExecutor(max_workers=args.jobs) as pool:
-        result = pool.map(handler, processed_files)
+        result = pool.map(apply_style_to_file, processed_files)
 
         if args.all:
             result = list(result)
 
-        success = all(result)
-
-    if args.fix:
-        output('Applying style complete!')
-    else:
-        output('Checking style complete!')
-
-    if not success:
-        sys.exit(1)
+        all(result)
 
 
 def format_python(args):
-    fix_or_diff_arg = ['--in-place' if args.fix else '--diff']
-    # Parallel jobs requires '--in-place' arg
-    jobs_arg = ['-j {}'.format(args.jobs)] if args.fix else []
+    jobs_arg = ['-j {}'.format(args.jobs)]
 
-    autopep8_cmd = ['autopep8', '.', '--exit-code', '--recursive',
-                    '--exclude', 'vendor'] + fix_or_diff_arg + jobs_arg
+    autopep8_cmd = ['autopep8', '.', '--in-place', '--recursive',
+                    '--exclude', 'vendor'] + jobs_arg
 
-    exit_code = subprocess.call(autopep8_cmd, cwd=PROJECT_ROOT)
-    if exit_code != 0:
-        sys.exit(1)
+    subprocess.check_call(autopep8_cmd, cwd=PROJECT_ROOT)
+
+
+def get_diff():
+    return subprocess.check_output(['git', 'diff'], cwd=PROJECT_ROOT).decode().strip()
+
+
+def fix_missing_include_guards():
+    for root, dirs, files in walk_source_directories():
+        invalid_header_file_name_groups_in_this_dir = [fnmatch.filter(files, pattern) for pattern in
+                                                       ('*.h', '*.hxx', '*.hh')]
+
+        if any([len(match) > 0 for match in invalid_header_file_name_groups_in_this_dir]):
+            output("Error: Fetch header files should have the extension *.hpp")
+            for group in invalid_header_file_name_groups_in_this_dir:
+                for file in group:
+                    output(abspath(join(root, file)))
+            sys.exit(1)
+
+        for file in fnmatch.filter(files, '*.hpp'):
+            INCLUDE_GUARD_LINE = '#pragma once\n'
+            with open(os.path.join(root, file), 'r+', encoding='utf-8') as f:
+                first_line = f.readline()
+                if not first_line == INCLUDE_GUARD_LINE:
+                    f.seek(0)
+                    text = f.read()
+                    f.seek(0)
+                    f.write(INCLUDE_GUARD_LINE + text)
 
 
 def main():
     args = parse_commandline()
 
     # TODO(WK) Make multilanguage reformatting concurrent
-    format_cpp(args)
+    output('Formatting C/C++ ...')
+    format_language(args, **SUPPORTED_LANGUAGES['cpp'])
+    output('Formatting Python ...')
     format_python(args)
+    output('Formatting CMake ...')
+    format_language(args, **SUPPORTED_LANGUAGES['cmake'])
+
+    output('Checking header include guards ...')
+    fix_missing_include_guards()
+
+    output('Done.')
+
+    if args.diff:
+        diff = get_diff()
+        if diff:
+            output('*' * 80)
+            output(diff)
+            output('*' * 80)
+            sys.exit(1)
 
 
 if __name__ == '__main__':

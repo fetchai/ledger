@@ -22,9 +22,13 @@
 #include "meta/type_traits.hpp"
 #include "variant/detail/element_pool.hpp"
 
+#include <cassert>
 #include <cstdint>
+#include <iosfwd>
 #include <stdexcept>
+#include <string>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 namespace fetch {

@@ -17,11 +17,11 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/assert.hpp"
 #include "math/fundamental_operators.hpp"
+#include "math/matrix_operations.hpp"
 #include "math/meta/math_type_traits.hpp"
 #include "math/standard_functions/log.hpp"
-#include <core/assert.hpp>
-#include <math/matrix_operations.hpp>
 
 namespace fetch {
 namespace math {
@@ -38,7 +38,7 @@ template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, void> KlDivergence(ArrayType const &p, ArrayType const &q,
                                                   typename ArrayType::Type &ret)
 {
-  ASSERT(p.shape().at(0) == q.shape().at(0));
+  assert(p.shape().at(0) == q.shape().at(0));
   ret = Sum(Multiply(p, Log(Divide(p, q))));
 }
 

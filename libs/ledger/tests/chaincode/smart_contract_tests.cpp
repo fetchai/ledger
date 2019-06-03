@@ -26,7 +26,6 @@
 #include "mock_storage_unit.hpp"
 
 #include <gmock/gmock.h>
-#include <gtest/gtest.h>
 
 #include <memory>
 
@@ -120,6 +119,7 @@ TEST_F(SmartContractTests, CheckSimpleContract)
   // define our what we expect the values to be in our storage requests
   auto const expected_key      = contract_name_->full_name() + ".state.value";
   auto const expected_resource = ResourceAddress{expected_key};
+  auto const exp_default_val   = RawBytes<int32_t>(10);
   auto const expected_value    = RawBytes<int32_t>(11);
 
   {
@@ -128,7 +128,7 @@ TEST_F(SmartContractTests, CheckSimpleContract)
     // from the action
     EXPECT_CALL(*storage_, Lock(_));
     EXPECT_CALL(*storage_, Get(expected_resource));
-    EXPECT_CALL(*storage_, Set(expected_resource, expected_value)).Times(1);
+    EXPECT_CALL(*storage_, Set(expected_resource, expected_value));
     EXPECT_CALL(*storage_, Unlock(_));
 
     // from the query
@@ -319,8 +319,7 @@ TEST_F(SmartContractTests, CheckParameterizedActionAndQuery)
   std::string const contract_source = R"(
     @action
     function increment(increment: Int32)
-      var state = State<Int32>("value", 10);
-      state.set(state.get() + increment);
+      var state = State<Int32>("value", 10 + increment);
     endfunction
 
     @query
@@ -362,7 +361,7 @@ TEST_F(SmartContractTests, CheckParameterizedActionAndQuery)
     // from the action
     EXPECT_CALL(*storage_, Lock(_));
     EXPECT_CALL(*storage_, Get(expected_resource));
-    EXPECT_CALL(*storage_, Set(expected_resource, expected_value)).Times(1);
+    EXPECT_CALL(*storage_, Set(expected_resource, expected_value));
     EXPECT_CALL(*storage_, Unlock(_));
 
     // from the query
@@ -410,9 +409,7 @@ TEST_F(SmartContractTests, CheckBasicTokenContract)
     @init
     function initialize(owner: Address)
         var INITIAL_SUPPLY = 100000000000u64;
-
-        var account = State<UInt64>(owner, 0u64);
-        account.set(INITIAL_SUPPLY);
+        State<UInt64>(owner, INITIAL_SUPPLY);
     endfunction
 
     @action
@@ -458,12 +455,12 @@ TEST_F(SmartContractTests, CheckBasicTokenContract)
 
   auto const owner_resource   = ResourceAddress{owner_key};
   auto const target_resource  = ResourceAddress{target_key};
+  auto const default_val      = RawBytes<uint64_t>(0ull);
   auto const initial_supply   = RawBytes<uint64_t>(100000000000ull);
   auto const transfer_amount  = RawBytes<uint64_t>(1000000000ull);
   auto const remaining_amount = RawBytes<uint64_t>(99000000000ull);
 
   {
-    using ::testing::_;
     InSequence seq;
 
     // from the init
@@ -472,74 +469,78 @@ TEST_F(SmartContractTests, CheckBasicTokenContract)
     EXPECT_CALL(*storage_, Set(owner_resource, initial_supply));
     EXPECT_CALL(*storage_, Unlock(_));
 
-    // from the query
+    // from query
     EXPECT_CALL(*storage_, Get(owner_resource));
 
     // from the action
     EXPECT_CALL(*storage_, Lock(_));
-    EXPECT_CALL(*storage_, Get(_));
-    EXPECT_CALL(*storage_, Get(_));
-    EXPECT_CALL(*storage_, Set(_, remaining_amount));
-    EXPECT_CALL(*storage_, Set(_, transfer_amount));
+    EXPECT_CALL(*storage_, Get(owner_resource));
+    EXPECT_CALL(*storage_, Get(target_resource));
+    EXPECT_CALL(*storage_, Set(target_resource, transfer_amount));
+    EXPECT_CALL(*storage_, Set(owner_resource, remaining_amount));
     EXPECT_CALL(*storage_, Unlock(_));
 
-    // from the queries
+    // from query
     EXPECT_CALL(*storage_, Get(owner_resource));
+    // from query
     EXPECT_CALL(*storage_, Get(target_resource));
   }
 
-  EXPECT_EQ(SmartContract::Status::OK, InvokeInit(certificate_->identity()));
-
-  // check to see if the owners balance is present
   {
-    Variant request    = Variant::Object();
-    request["address"] = owner_address_->display();
+    EXPECT_EQ(SmartContract::Status::OK, InvokeInit(certificate_->identity()));
+    // check to see if the owners balance is present
+    {
+      Variant request    = Variant::Object();
+      request["address"] = owner_address_->display();
 
-    Variant response;
-    EXPECT_EQ(SmartContract::Status::OK, SendQuery("balance", request, response));
+      Variant response;
+      EXPECT_EQ(SmartContract::Status::OK, SendQuery("balance", request, response));
 
-    // check the response is as we expect
-    ASSERT_TRUE(response.Has("result"));
-    EXPECT_EQ(response["result"].As<uint64_t>(), 100000000000ull);
+      // check the response is as we expect
+      ASSERT_TRUE(response.Has("result"));
+      EXPECT_EQ(response["result"].As<uint64_t>(), 100000000000ull);
 
-    ASSERT_TRUE(response.Has("status"));
-    EXPECT_EQ(response["status"].As<ConstByteArray>(), "success");
+      ASSERT_TRUE(response.Has("status"));
+      EXPECT_EQ(response["status"].As<ConstByteArray>(), "success");
+    }
   }
 
-  // send the smart contract an "increment" action
-  EXPECT_EQ(SmartContract::Status::OK,
-            SendSmartActionWithParams("transfer", *owner_address_, target_address, 1000000000ull));
-
-  // make the query
   {
-    Variant request    = Variant::Object();
-    request["address"] = owner_address_->display();
+    // send the smart contract an "increment" action
+    EXPECT_EQ(SmartContract::Status::OK, SendSmartActionWithParams("transfer", *owner_address_,
+                                                                   target_address, 1000000000ull));
 
-    Variant response;
-    EXPECT_EQ(SmartContract::Status::OK, SendQuery("balance", request, response));
+    // make the query
+    {
+      Variant request    = Variant::Object();
+      request["address"] = owner_address_->display();
 
-    // check the response is as we expect
-    ASSERT_TRUE(response.Has("result"));
-    EXPECT_EQ(response["result"].As<uint64_t>(), 99000000000ull);
+      Variant response;
+      EXPECT_EQ(SmartContract::Status::OK, SendQuery("balance", request, response));
 
-    ASSERT_TRUE(response.Has("status"));
-    EXPECT_EQ(response["status"].As<ConstByteArray>(), "success");
-  }
+      // check the response is as we expect
+      ASSERT_TRUE(response.Has("result"));
+      EXPECT_EQ(response["result"].As<uint64_t>(), 99000000000ull);
 
-  // make the query
-  {
-    Variant request    = Variant::Object();
-    request["address"] = target_address.display();
+      ASSERT_TRUE(response.Has("status"));
+      EXPECT_EQ(response["status"].As<ConstByteArray>(), "success");
+    }
 
-    Variant response;
-    EXPECT_EQ(SmartContract::Status::OK, SendQuery("balance", request, response));
+    // make the query
+    {
+      Variant request    = Variant::Object();
+      request["address"] = target_address.display();
 
-    // check the response is as we expect
-    ASSERT_TRUE(response.Has("result"));
-    EXPECT_EQ(response["result"].As<uint64_t>(), 1000000000ull);
+      Variant response;
+      EXPECT_EQ(SmartContract::Status::OK, SendQuery("balance", request, response));
 
-    ASSERT_TRUE(response.Has("status"));
-    EXPECT_EQ(response["status"].As<ConstByteArray>(), "success");
+      // check the response is as we expect
+      ASSERT_TRUE(response.Has("result"));
+      EXPECT_EQ(response["result"].As<uint64_t>(), 1000000000ull);
+
+      ASSERT_TRUE(response.Has("status"));
+      EXPECT_EQ(response["status"].As<ConstByteArray>(), "success");
+    }
   }
 }
 

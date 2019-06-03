@@ -17,18 +17,18 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/assert.hpp"
 #include "core/random/lfg.hpp"
 #include "math/distance/euclidean.hpp"
+#include "math/fundamental_operators.hpp"
+#include "math/matrix_operations.hpp"
 #include "math/meta/math_type_traits.hpp"
+#include "math/ml/loss_functions/kl_divergence.hpp"
+#include "math/normalize_array.hpp"
+#include "math/standard_functions/exp.hpp"
+#include "math/standard_functions/log.hpp"
+#include "math/tensor.hpp"
 #include "meta/type_traits.hpp"
-#include <core/assert.hpp>
-#include <math/fundamental_operators.hpp>
-#include <math/matrix_operations.hpp>
-#include <math/ml/loss_functions/kl_divergence.hpp>
-#include <math/normalize_array.hpp>
-#include <math/standard_functions/exp.hpp>
-#include <math/standard_functions/log.hpp>
-#include <math/tensor.hpp>
 
 #include <cmath>
 
@@ -78,11 +78,11 @@ public:
   }
 
   /**
-   * i.e. Optimize cost function
+   * i.e. Optimise cost function
    * @param learning_rate input Learning rate
-   * @param max_iters input Number of optimization iterations
+   * @param max_iters input Number of optimisation iterations
    */
-  void Optimize(DataType const &learning_rate, SizeType const &max_iters,
+  void Optimise(DataType const &learning_rate, SizeType const &max_iters,
                 DataType const &initial_momentum, DataType const &final_momentum,
                 SizeType const &final_momentum_steps, SizeType const &p_later_correction_iteration)
   {
@@ -99,7 +99,7 @@ public:
     ArrayType gains(output_matrix_.shape());
     gains.Fill(DataType(1));
 
-    // Start optimization
+    // Start optimisation
     for (SizeType iter{0}; iter < max_iters; iter++)
     {
       // Compute output matrix pairwise affinities

@@ -21,15 +21,21 @@
 
 #include "math/clustering/knn.hpp"
 #include "math/matrix_operations.hpp"
-
+#include "math/tensor.hpp"
 #include "ml/dataloaders/word2vec_loaders/skipgram_dataloader.hpp"
 #include "ml/graph.hpp"
 #include "ml/layers/skip_gram.hpp"
 #include "ml/ops/loss_functions/cross_entropy.hpp"
 
 #include <iostream>
-#include <math/tensor.hpp>
-#include <numeric>
+#include <map>
+#include <memory>
+#include <set>
+#include <stdexcept>
+#include <string>
+#include <unordered_map>
+#include <utility>
+#include <vector>
 
 using namespace fetch::ml;
 using namespace fetch::ml::dataloaders;
@@ -127,7 +133,7 @@ void TestEmbeddings(Graph<ArrayType> const &g, std::string const &skip_gram_name
   std::shared_ptr<fetch::ml::ops::Embeddings<ArrayType>> embeddings =
       sg_layer->GetEmbeddings(sg_layer);
 
-  PrintKNN(dl, embeddings->GetWeights(), test_word, K);
+  PrintKNN(dl, embeddings->get_weights(), test_word, K);
 }
 
 int main(int argc, char **argv)

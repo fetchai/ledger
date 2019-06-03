@@ -16,7 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include <iostream>
+#include <cstddef>
 #include <vector>
 
 using array_type = std::vector<float>;

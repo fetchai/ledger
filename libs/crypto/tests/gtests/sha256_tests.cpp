@@ -19,12 +19,11 @@
 #include "core/byte_array/encoders.hpp"
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
-#include <iostream>
+
+#include "gtest/gtest.h"
 
 using namespace fetch;
 using namespace fetch::crypto;
-
-#include <gtest/gtest.h>
 
 using byte_array_type = byte_array::ByteArray;
 TEST(crypto_SHA_gtest, The_SHA256_implmentation_differs_from_other_libraries)

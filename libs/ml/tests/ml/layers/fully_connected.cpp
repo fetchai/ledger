@@ -17,8 +17,8 @@
 //------------------------------------------------------------------------------
 
 #include "ml/layers/fully_connected.hpp"
-#include "math/fixed_point/fixed_point.hpp"
 #include "math/tensor.hpp"
+#include "vectorise/fixed_point/fixed_point.hpp"
 #include <gtest/gtest.h>
 
 template <typename T>
@@ -35,8 +35,8 @@ TYPED_TEST_CASE(FullyConnectedTest, MyTypes);
 TYPED_TEST(FullyConnectedTest, set_input_and_evaluate_test)  // Use the class as a subgraph
 {
   fetch::ml::layers::FullyConnected<TypeParam> fc(100u, 10u);
-  TypeParam inputData(std::vector<typename TypeParam::SizeType>({10, 10}));
-  fc.SetInput("FC_Input", inputData);
+  TypeParam input_data(std::vector<typename TypeParam::SizeType>({10, 10}));
+  fc.SetInput("FC_Input", input_data);
   TypeParam output = fc.Evaluate("FC_MatrixMultiply");
 
   ASSERT_EQ(output.shape().size(), 2);
@@ -48,9 +48,10 @@ TYPED_TEST(FullyConnectedTest, set_input_and_evaluate_test)  // Use the class as
 TYPED_TEST(FullyConnectedTest, ops_forward_test)  // Use the class as an Ops
 {
   fetch::ml::layers::FullyConnected<TypeParam> fc(50, 10);
-  TypeParam inputData(std::vector<typename TypeParam::SizeType>({5, 10}));
-  TypeParam output = fc.fetch::ml::template Ops<TypeParam>::Forward(
-      std::vector<std::reference_wrapper<TypeParam const>>({inputData}));
+  TypeParam input_data(std::vector<typename TypeParam::SizeType>({5, 10}));
+
+  TypeParam output(fc.ComputeOutputShape({input_data}));
+  fc.Forward({input_data}, output);
 
   ASSERT_EQ(output.shape().size(), 2);
   ASSERT_EQ(output.shape()[0], 1);
@@ -61,12 +62,14 @@ TYPED_TEST(FullyConnectedTest, ops_forward_test)  // Use the class as an Ops
 TYPED_TEST(FullyConnectedTest, ops_backward_test)  // Use the class as an Ops
 {
   fetch::ml::layers::FullyConnected<TypeParam> fc(50, 10);
-  TypeParam inputData(std::vector<typename TypeParam::SizeType>({5, 10}));
-  TypeParam output = fc.fetch::ml::template Ops<TypeParam>::Forward(
-      std::vector<std::reference_wrapper<TypeParam const>>({inputData}));
+  TypeParam input_data(std::vector<typename TypeParam::SizeType>({5, 10}));
+
+  TypeParam output(fc.ComputeOutputShape({input_data}));
+  fc.Forward({input_data}, output);
+
   TypeParam error_signal(std::vector<typename TypeParam::SizeType>({1, 10}));
 
-  std::vector<TypeParam> backprop_error = fc.Backward({inputData}, error_signal);
+  std::vector<TypeParam> backprop_error = fc.Backward({input_data}, error_signal);
   ASSERT_EQ(backprop_error.size(), 1);
   ASSERT_EQ(backprop_error[0].shape().size(), 2);
   ASSERT_EQ(backprop_error[0].shape()[0], 5);

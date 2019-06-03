@@ -17,11 +17,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/tensor_slice_iterator.hpp"
-#include <assert.h>
-#include <iostream>
-
 #include "math/base_types.hpp"
+#include "math/tensor_slice_iterator.hpp"
+
+#include <cassert>
 
 namespace fetch {
 namespace math {

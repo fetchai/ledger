@@ -17,9 +17,11 @@
 //------------------------------------------------------------------------------
 
 #include "vectorise/memory/shared_array.hpp"
-#include <benchmark/benchmark.h>
+
+#include "benchmark/benchmark.h"
+
 #include <cmath>
-#include <iostream>
+#include <cstddef>
 
 using namespace fetch::memory;
 

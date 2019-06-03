@@ -22,7 +22,6 @@
 #include "testing/common_testing_functionality.hpp"
 #include <algorithm>
 #include <gtest/gtest.h>
-#include <iostream>
 
 using namespace fetch::storage;
 using namespace fetch::byte_array;

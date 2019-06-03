@@ -17,7 +17,6 @@
 //------------------------------------------------------------------------------
 
 #include <gtest/gtest.h>
-#include <iostream>
 
 #include "math/tensor.hpp"
 #include "ml/clustering/tsne.hpp"
@@ -86,7 +85,7 @@ TypeParam RunTest(typename TypeParam::SizeType n_data_size,
 
   fetch::ml::TSNE<ArrayType> tsn(A, N_OUTPUT_FEATURE_SIZE, PERPLEXITY, RANDOM_SEED);
 
-  tsn.Optimize(LEARNING_RATE, MAX_ITERATIONS, INITIAL_MOMENTUM, FINAL_MOMENTUM,
+  tsn.Optimise(LEARNING_RATE, MAX_ITERATIONS, INITIAL_MOMENTUM, FINAL_MOMENTUM,
                FINAL_MOMENTUM_STEPS, P_LATER_CORRECTION_ITERATION);
   return tsn.GetOutputMatrix();
 }

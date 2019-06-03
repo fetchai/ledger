@@ -19,7 +19,6 @@
 #include "crypto/openssl_memory.hpp"
 
 #include "gmock/gmock.h"
-#include "gtest/gtest.h"
 
 namespace fetch {
 namespace crypto {

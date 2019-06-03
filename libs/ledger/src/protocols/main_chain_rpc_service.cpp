@@ -444,6 +444,10 @@ MainChainRpcService::State MainChainRpcService::OnSynchronised(State current, St
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Synchronised");
   }
+  else
+  {
+    state_machine_->Delay(std::chrono::milliseconds{100});
+  }
 
   return next_state;
 }

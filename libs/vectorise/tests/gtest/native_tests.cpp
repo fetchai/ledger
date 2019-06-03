@@ -18,7 +18,6 @@
 
 #include "core/random/lfg.hpp"
 #include "vectorise/register.hpp"
-#include <iostream>
 
 #include <gtest/gtest.h>
 using namespace fetch::vectorize;

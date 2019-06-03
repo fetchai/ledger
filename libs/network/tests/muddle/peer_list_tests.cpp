@@ -22,12 +22,12 @@
 
 #include <gmock/gmock.h>
 
-#include <network/muddle/dispatcher.hpp>
-#include <network/muddle/muddle.hpp>
-#include <network/muddle/muddle_register.hpp>
-#include <network/muddle/peer_list.hpp>
-#include <network/muddle/router.hpp>
-#include <network/service/promise.hpp>
+#include "network/muddle/dispatcher.hpp"
+#include "network/muddle/muddle.hpp"
+#include "network/muddle/muddle_register.hpp"
+#include "network/muddle/peer_list.hpp"
+#include "network/muddle/router.hpp"
+#include "network/service/promise.hpp"
 
 using fetch::muddle::NetworkId;
 

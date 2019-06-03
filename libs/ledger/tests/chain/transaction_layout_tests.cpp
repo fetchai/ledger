@@ -25,7 +25,6 @@
 
 #include "gtest/gtest.h"
 
-#include <ledger/chain/transaction.hpp>
 #include <memory>
 
 using fetch::ledger::TransactionLayout;

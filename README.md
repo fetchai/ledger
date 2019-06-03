@@ -56,7 +56,7 @@ following commands:
 
 ### MacOS
 
-    sudo brew install cmake openssl
+    brew install cmake openssl
 
 ## Building the code
 

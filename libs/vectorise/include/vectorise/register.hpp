@@ -19,9 +19,27 @@
 
 #include "vectorise/info.hpp"
 
-#include <iostream>
 #include <type_traits>
 #include <typeinfo>
+
+namespace details {
+template <typename T, std::size_t N>
+struct UnrollSet
+{
+  static void Set(T *ptr, T const &c)
+  {
+    (*ptr) = c;
+    UnrollSet<T, N - 1>::Set(ptr + 1, c);
+  }
+};
+
+template <typename T>
+struct UnrollSet<T, 0>
+{
+  static void Set(T * /*ptr*/, T const & /*c*/)
+  {}
+};
+}  // namespace details
 
 // clang-format off
 // NOLINTNEXTLINE
@@ -70,28 +88,6 @@ public:
   explicit operator T()
   {
     return data_;
-  }
-
-  template <typename G>
-  static G dsp_sum(G const *a, std::size_t const &n)
-  {
-    G ret(0);
-    for (std::size_t i = 0; i < n; ++i)
-    {
-      ret += a[i];
-    }
-    return ret;
-  }
-
-  template <typename G>
-  static G dsp_sum_of_product(G const *a, G const *b, std::size_t const &n)
-  {
-    T ret(0);
-    for (std::size_t i = 0; i < n; ++i)
-    {
-      ret += a[i] * b[i];
-    }
-    return ret;
   }
 
 #define FETCH_ADD_OPERATOR(OP)                            \

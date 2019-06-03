@@ -17,7 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/assert.hpp"
 #include "ml/ops/ops.hpp"
 
 namespace fetch {
@@ -28,45 +27,30 @@ template <class T>
 class Add : public fetch::ml::ElementWiseOps<T>
 {
 public:
-  using ArrayType      = T;
-  using DataType       = typename ArrayType::Type;
-  using ArrayPtrType   = std::shared_ptr<ArrayType>;
-  using ConstSliceType = typename ArrayType::ConstSliceType;
-  Add()                = default;
-  virtual ~Add()       = default;
+  using ArrayType     = T;
+  using DataType      = typename ArrayType::Type;
+  using VecTensorType = typename ElementWiseOps<T>::VecTensorType;
 
-  virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
-                            ArrayType &                                                 output)
+  Add()          = default;
+  virtual ~Add() = default;
+
+  virtual void Forward(VecTensorType const &inputs, ArrayType &output)
   {
-    (void)output;
-    ASSERT(inputs.size() == 2);
-    ASSERT(inputs.at(0).get().size() == inputs.at(1).get().size());
-    ASSERT(output.shape() == this->ComputeOutputShape(inputs));
-
-    auto output_it  = output.begin();
-    auto output_end = output.end();
-    auto a_it       = inputs[0].get().begin();
-    auto b_it       = inputs[1].get().begin();
-
-    while (output_it != output_end)
-    {
-      *output_it = *a_it + *b_it;
-      ++output_it;
-      ++a_it;
-      ++b_it;
-    }
-
-    return output;
+    assert(inputs.size() == 2);
+    assert(inputs.at(0).get().size() == inputs.at(1).get().size());
+    assert(output.shape() == this->ComputeOutputShape(inputs));
+    fetch::math::Add(inputs[0].get(), inputs[1].get(), output);
   }
 
-  virtual std::vector<ArrayType> Backward(
-      std::vector<std::reference_wrapper<const ArrayType>> const &inputs,
-      ArrayType const &                                           errorSignal)
+  virtual std::vector<ArrayType> Backward(VecTensorType const &inputs,
+                                          ArrayType const &    error_signal)
   {
-    ASSERT(inputs.size() == 2);
-    ASSERT(inputs.at(0).get().size() == inputs.at(1).get().size());
-    ASSERT(errorSignal.size() == inputs.at(1).get().size());
-    return {errorSignal, errorSignal};
+    (void)inputs;
+    assert(inputs.size() == 2);
+    assert(inputs.at(0).get().size() == inputs.at(1).get().size());
+    assert(error_signal.size() == inputs.at(1).get().size());
+
+    return {error_signal, error_signal};
   }
 
   static constexpr char const *DESCRIPTOR = "Add";

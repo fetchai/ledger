@@ -17,8 +17,8 @@
 //------------------------------------------------------------------------------
 
 #include "ml/ops/convolution_1d.hpp"
-#include "math/fixed_point/fixed_point.hpp"
 #include "math/tensor.hpp"
+#include "vectorise/fixed_point/fixed_point.hpp"
 #include <gtest/gtest.h>
 
 template <typename T>
@@ -42,8 +42,9 @@ TYPED_TEST(Convolution1DTest, forward_1x1_1x1x1)
   input.At(0, 0)      = DataType{5};
   weights.At(0, 0, 0) = DataType{-4};
   fetch::ml::ops::Convolution1D<ArrayType> c;
-  ArrayType                                output = c.fetch::ml::template Ops<ArrayType>::Forward(
-      std::vector<std::reference_wrapper<ArrayType const>>({input, weights}));
+
+  ArrayType output(c.ComputeOutputShape({input, weights}));
+  c.Forward({input, weights}, output);
 
   ASSERT_EQ(output.shape(), std::vector<SizeType>({1, 1}));
   EXPECT_EQ(output.At(0, 0), DataType{-20});
@@ -63,8 +64,9 @@ TYPED_TEST(Convolution1DTest, forward_1x3_1x1x3)
     weights.At(0, 0, i) = static_cast<DataType>(i);
   }
   fetch::ml::ops::Convolution1D<ArrayType> c;
-  ArrayType                                output = c.fetch::ml::template Ops<ArrayType>::Forward(
-      std::vector<std::reference_wrapper<ArrayType const>>({input, weights}));
+
+  ArrayType output(c.ComputeOutputShape({input, weights}));
+  c.Forward({input, weights}, output);
 
   ASSERT_EQ(output.shape(), std::vector<SizeType>({1, 1}));
   EXPECT_EQ(output.At(0, 0), DataType{5});
@@ -89,8 +91,9 @@ TYPED_TEST(Convolution1DTest, forward_3x3_1x3x3)
     }
   }
   fetch::ml::ops::Convolution1D<ArrayType> c;
-  ArrayType                                output = c.fetch::ml::template Ops<ArrayType>::Forward(
-      std::vector<std::reference_wrapper<ArrayType const>>({input, weights}));
+
+  ArrayType output(c.ComputeOutputShape({input, weights}));
+  c.Forward({input, weights}, output);
 
   ASSERT_EQ(output.shape(), std::vector<SizeType>({1, 1}));
   EXPECT_EQ(output.At(0, 0), DataType{204});
@@ -105,8 +108,9 @@ TYPED_TEST(Convolution1DTest, forward_3x3_5x3x3)
   ArrayType                                input({3, 3});
   ArrayType                                weights({5, 3, 3});
   fetch::ml::ops::Convolution1D<ArrayType> c;
-  ArrayType                                output = c.fetch::ml::template Ops<ArrayType>::Forward(
-      std::vector<std::reference_wrapper<ArrayType const>>({input, weights}));
+
+  ArrayType output(c.ComputeOutputShape({input, weights}));
+  c.Forward({input, weights}, output);
 
   ASSERT_EQ(output.shape(), std::vector<SizeType>({5, 1}));
 }
@@ -120,8 +124,9 @@ TYPED_TEST(Convolution1DTest, forward_1x5_1x1x3)
   ArrayType                                input({1, 5});
   ArrayType                                weights({1, 1, 3});
   fetch::ml::ops::Convolution1D<ArrayType> c;
-  ArrayType                                output = c.fetch::ml::template Ops<ArrayType>::Forward(
-      std::vector<std::reference_wrapper<ArrayType const>>({input, weights}));
+
+  ArrayType output(c.ComputeOutputShape({input, weights}));
+  c.Forward({input, weights}, output);
 
   ASSERT_EQ(output.shape(), std::vector<SizeType>({1, 3}));
 }
@@ -135,8 +140,9 @@ TYPED_TEST(Convolution1DTest, forward_1x5_1x1x3_stride_2)
   ArrayType                                input({1, 5});
   ArrayType                                weights({1, 1, 3});
   fetch::ml::ops::Convolution1D<ArrayType> c(2);
-  ArrayType                                output = c.fetch::ml::template Ops<ArrayType>::Forward(
-      std::vector<std::reference_wrapper<ArrayType const>>({input, weights}));
+
+  ArrayType output(c.ComputeOutputShape({input, weights}));
+  c.Forward({input, weights}, output);
 
   ASSERT_EQ(output.shape(), std::vector<SizeType>({1, 2}));
 }
@@ -194,8 +200,7 @@ TYPED_TEST(Convolution1DTest, backward_3x3_5x3x3)
   }
 
   fetch::ml::ops::Convolution1D<ArrayType> op;
-  std::vector<ArrayType>                   prediction =
-      op.Backward(std::vector<std::reference_wrapper<ArrayType const>>({input, kernels}), error);
+  std::vector<ArrayType>                   prediction = op.Backward({input, kernels}, error);
 
   // Test correct gradient shape
   ASSERT_EQ(prediction.at(0).shape(), input.shape());

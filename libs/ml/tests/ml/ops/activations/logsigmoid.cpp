@@ -17,8 +17,8 @@
 //------------------------------------------------------------------------------
 
 #include "ml/ops/activations/logsigmoid.hpp"
-#include "math/fixed_point/fixed_point.hpp"
 #include "math/tensor.hpp"
+#include "vectorise/fixed_point/fixed_point.hpp"
 #include <gtest/gtest.h>
 
 template <typename T>
@@ -33,16 +33,17 @@ TYPED_TEST_CASE(LogSigmoidTest, MyTypes);
 
 TYPED_TEST(LogSigmoidTest, forward_test)
 {
-  using DataType  = typename TypeParam::Type;
-  using ArrayType = TypeParam;
+  using DataType      = typename TypeParam::Type;
+  using ArrayType     = TypeParam;
+  using VecTensorType = typename fetch::ml::Ops<ArrayType>::VecTensorType;
 
   ArrayType data = ArrayType::FromString("1, -2, 3, -4, 5, -6, 7, -8");
   ArrayType gt   = ArrayType::FromString(
       "-0.31326, -2.126928, -0.048587, -4.01815, -0.006715, -6.002476, -0.000911466, -8.000335");
 
   fetch::ml::ops::LogSigmoid<ArrayType> op;
-  ArrayType                             prediction = op.fetch::ml::template Ops<ArrayType>::Forward(
-      std::vector<std::reference_wrapper<ArrayType const>>({data}));
+  ArrayType                             prediction(op.ComputeOutputShape({data}));
+  op.Forward(VecTensorType({data}), prediction);
 
   // test correct values
   ASSERT_TRUE(prediction.AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
@@ -50,9 +51,10 @@ TYPED_TEST(LogSigmoidTest, forward_test)
 
 TYPED_TEST(LogSigmoidTest, forward_3d_tensor_test)
 {
-  using DataType  = typename TypeParam::Type;
-  using ArrayType = TypeParam;
-  using SizeType  = typename TypeParam::SizeType;
+  using DataType      = typename TypeParam::Type;
+  using ArrayType     = TypeParam;
+  using SizeType      = typename TypeParam::SizeType;
+  using VecTensorType = typename fetch::ml::Ops<ArrayType>::VecTensorType;
 
   ArrayType           data({2, 2, 2});
   ArrayType           gt({2, 2, 2});
@@ -73,8 +75,8 @@ TYPED_TEST(LogSigmoidTest, forward_3d_tensor_test)
   }
 
   fetch::ml::ops::LogSigmoid<ArrayType> op;
-  ArrayType                             prediction = op.fetch::ml::template Ops<ArrayType>::Forward(
-      std::vector<std::reference_wrapper<ArrayType const>>({data}));
+  ArrayType                             prediction(op.ComputeOutputShape({data}));
+  op.Forward(VecTensorType({data}), prediction);
 
   // test correct values
   ASSERT_TRUE(prediction.AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));

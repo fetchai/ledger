@@ -17,9 +17,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/byte_array/byte_array.hpp"
 #include "core/mutex.hpp"
 #include "http/request.hpp"
+
+#include <cstdint>
 
 namespace fetch {
 namespace http {
@@ -33,8 +34,8 @@ public:
 
   static handle_type next_handle()
   {
-    std::lock_guard<fetch::mutex::Mutex> lck(global_handle_mutex_);
-    handle_type                          ret = global_handle_counter_;
+    FETCH_LOCK(global_handle_mutex_);
+    handle_type ret = global_handle_counter_;
     ++global_handle_counter_;
     return ret;
   }

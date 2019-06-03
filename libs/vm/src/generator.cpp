@@ -19,6 +19,11 @@
 #include "vm/generator.hpp"
 #include "vm/vm.hpp"
 
+#include <cstddef>
+#include <cstdint>
+#include <cstdlib>
+#include <memory>
+
 namespace fetch {
 namespace vm {
 
@@ -233,13 +238,13 @@ void Generator::SetAnnotationLiteral(IRNodePtr const &node, AnnotationLiteral &l
   }
   case NodeKind::Integer64:
   {
-    int64_t i = static_cast<int64_t>(atoll(text.c_str()));
+    int64_t i = static_cast<int64_t>(std::atoll(text.c_str()));
     literal.SetInteger(i);
     break;
   }
   case NodeKind::Float64:
   {
-    double r = atof(text.c_str());
+    double r = std::atof(text.c_str());
     literal.SetReal(r);
     break;
   }
@@ -593,6 +598,7 @@ void Generator::HandleVarStatement(IRNodePtr const &node)
     Executable::Instruction instruction(Opcodes::VariableDeclare);
     instruction.type_id = type_id;
     instruction.index   = variable_index;
+    instruction.data    = scope_number;
     uint16_t pc         = function_->AddInstruction(instruction);
     AddLineNumber(node->line, pc);
   }
@@ -612,6 +618,7 @@ void Generator::HandleVarStatement(IRNodePtr const &node)
     Executable::Instruction instruction(Opcodes::VariableDeclareAssign);
     instruction.type_id = type_id;
     instruction.index   = variable_index;
+    instruction.data    = scope_number;
     uint16_t pc         = function_->AddInstruction(instruction);
     AddLineNumber(node->line, pc);
   }
@@ -771,8 +778,8 @@ void Generator::HandleIndexedAssignmentStatement(IRExpressionNodePtr const &node
   IRExpressionNodePtr container_node = ConvertToIRExpressionNodePtr(lhs->children[0]);
   HandleExpression(container_node);
   // Arrange for the indices to be pushed on to the stack
-  size_t const num_indices = lhs->children.size() - 1;
-  for (size_t i = 1; i <= num_indices; ++i)
+  std::size_t const num_indices = lhs->children.size() - 1;
+  for (std::size_t i = 1; i <= num_indices; ++i)
   {
     HandleExpression(ConvertToIRExpressionNodePtr(lhs->children[i]));
   }
@@ -795,8 +802,8 @@ void Generator::HandleIndexedInplaceAssignmentStatement(IRExpressionNodePtr cons
   IRExpressionNodePtr container_node = ConvertToIRExpressionNodePtr(lhs->children[0]);
   HandleExpression(container_node);
   // Arrange for the indices to be pushed on to the stack
-  size_t const num_indices = lhs->children.size() - 1;
-  for (size_t i = 1; i <= num_indices; ++i)
+  std::size_t const num_indices = lhs->children.size() - 1;
+  for (std::size_t i = 1; i <= num_indices; ++i)
   {
     HandleExpression(ConvertToIRExpressionNodePtr(lhs->children[i]));
   }
@@ -1022,7 +1029,7 @@ void Generator::HandleIdentifier(IRExpressionNodePtr const &node)
 void Generator::HandleInteger8(IRExpressionNodePtr const &node)
 {
   Executable::Instruction instruction(Opcodes::PushConstant);
-  int8_t                  value = static_cast<int8_t>(atoi(node->text.c_str()));
+  int8_t                  value = static_cast<int8_t>(std::atoi(node->text.c_str()));
   instruction.index             = AddConstant(Variant(value, TypeIds::Int8));
   uint16_t pc                   = function_->AddInstruction(instruction);
   AddLineNumber(node->line, pc);
@@ -1031,7 +1038,7 @@ void Generator::HandleInteger8(IRExpressionNodePtr const &node)
 void Generator::HandleUnsignedInteger8(IRExpressionNodePtr const &node)
 {
   Executable::Instruction instruction(Opcodes::PushConstant);
-  uint8_t                 value = static_cast<uint8_t>(atoi(node->text.c_str()));
+  uint8_t                 value = static_cast<uint8_t>(std::atoi(node->text.c_str()));
   instruction.index             = AddConstant(Variant(value, TypeIds::Byte));
   uint16_t pc                   = function_->AddInstruction(instruction);
   AddLineNumber(node->line, pc);
@@ -1040,7 +1047,7 @@ void Generator::HandleUnsignedInteger8(IRExpressionNodePtr const &node)
 void Generator::HandleInteger16(IRExpressionNodePtr const &node)
 {
   Executable::Instruction instruction(Opcodes::PushConstant);
-  int16_t                 value = static_cast<int16_t>(atoi(node->text.c_str()));
+  int16_t                 value = static_cast<int16_t>(std::atoi(node->text.c_str()));
   instruction.index             = AddConstant(Variant(value, TypeIds::Int16));
   uint16_t pc                   = function_->AddInstruction(instruction);
   AddLineNumber(node->line, pc);
@@ -1049,7 +1056,7 @@ void Generator::HandleInteger16(IRExpressionNodePtr const &node)
 void Generator::HandleUnsignedInteger16(IRExpressionNodePtr const &node)
 {
   Executable::Instruction instruction(Opcodes::PushConstant);
-  uint16_t                value = static_cast<uint16_t>(atoi(node->text.c_str()));
+  uint16_t                value = static_cast<uint16_t>(std::atoi(node->text.c_str()));
   instruction.index             = AddConstant(Variant(value, TypeIds::UInt16));
   uint16_t pc                   = function_->AddInstruction(instruction);
   AddLineNumber(node->line, pc);
@@ -1058,7 +1065,7 @@ void Generator::HandleUnsignedInteger16(IRExpressionNodePtr const &node)
 void Generator::HandleInteger32(IRExpressionNodePtr const &node)
 {
   Executable::Instruction instruction(Opcodes::PushConstant);
-  int32_t                 value = static_cast<int32_t>(atoi(node->text.c_str()));
+  int32_t                 value = static_cast<int32_t>(std::atoi(node->text.c_str()));
   instruction.index             = AddConstant(Variant(value, TypeIds::Int32));
   uint16_t pc                   = function_->AddInstruction(instruction);
   AddLineNumber(node->line, pc);
@@ -1067,7 +1074,7 @@ void Generator::HandleInteger32(IRExpressionNodePtr const &node)
 void Generator::HandleUnsignedInteger32(IRExpressionNodePtr const &node)
 {
   Executable::Instruction instruction(Opcodes::PushConstant);
-  uint32_t                value = static_cast<uint32_t>(atoll(node->text.c_str()));
+  uint32_t                value = static_cast<uint32_t>(std::atoll(node->text.c_str()));
   instruction.index             = AddConstant(Variant(value, TypeIds::UInt32));
   uint16_t pc                   = function_->AddInstruction(instruction);
   AddLineNumber(node->line, pc);
@@ -1076,7 +1083,7 @@ void Generator::HandleUnsignedInteger32(IRExpressionNodePtr const &node)
 void Generator::HandleInteger64(IRExpressionNodePtr const &node)
 {
   Executable::Instruction instruction(Opcodes::PushConstant);
-  int64_t                 value = static_cast<int64_t>(atoll(node->text.c_str()));
+  int64_t                 value = static_cast<int64_t>(std::atoll(node->text.c_str()));
   instruction.index             = AddConstant(Variant(value, TypeIds::Int64));
   uint16_t pc                   = function_->AddInstruction(instruction);
   AddLineNumber(node->line, pc);
@@ -1085,7 +1092,7 @@ void Generator::HandleInteger64(IRExpressionNodePtr const &node)
 void Generator::HandleUnsignedInteger64(IRExpressionNodePtr const &node)
 {
   Executable::Instruction instruction(Opcodes::PushConstant);
-  uint64_t                value = static_cast<uint64_t>(atoll(node->text.c_str()));
+  uint64_t                value = static_cast<uint64_t>(std::atoll(node->text.c_str()));
   instruction.index             = AddConstant(Variant(value, TypeIds::UInt64));
   uint16_t pc                   = function_->AddInstruction(instruction);
   AddLineNumber(node->line, pc);
@@ -1094,7 +1101,7 @@ void Generator::HandleUnsignedInteger64(IRExpressionNodePtr const &node)
 void Generator::HandleFloat32(IRExpressionNodePtr const &node)
 {
   Executable::Instruction instruction(Opcodes::PushConstant);
-  float                   value = float(atof(node->text.c_str()));
+  float                   value = float(std::atof(node->text.c_str()));
   instruction.index             = AddConstant(Variant(value, TypeIds::Float32));
   uint16_t pc                   = function_->AddInstruction(instruction);
   AddLineNumber(node->line, pc);
@@ -1103,7 +1110,7 @@ void Generator::HandleFloat32(IRExpressionNodePtr const &node)
 void Generator::HandleFloat64(IRExpressionNodePtr const &node)
 {
   Executable::Instruction instruction(Opcodes::PushConstant);
-  double                  value = atof(node->text.c_str());
+  double                  value = std::atof(node->text.c_str());
   instruction.index             = AddConstant(Variant(value, TypeIds::Float64));
   uint16_t pc                   = function_->AddInstruction(instruction);
   AddLineNumber(node->line, pc);
@@ -1182,7 +1189,7 @@ void Generator::HandleBinaryOp(IRExpressionNodePtr const &node)
 {
   IRExpressionNodePtr lhs = ConvertToIRExpressionNodePtr(node->children[0]);
   IRExpressionNodePtr rhs = ConvertToIRExpressionNodePtr(node->children[1]);
-  for (size_t i = 0; i < node->children.size(); ++i)
+  for (std::size_t i = 0; i < node->children.size(); ++i)
   {
     HandleExpression(ConvertToIRExpressionNodePtr(node->children[i]));
   }
@@ -1326,8 +1333,8 @@ void Generator::HandleIndexOp(IRExpressionNodePtr const &node)
   IRExpressionNodePtr container_node = ConvertToIRExpressionNodePtr(node->children[0]);
   HandleExpression(container_node);
   // Arrange for the indices to be pushed on to the stack
-  size_t const num_indices = node->children.size() - 1;
-  for (size_t i = 1; i <= num_indices; ++i)
+  std::size_t const num_indices = node->children.size() - 1;
+  for (std::size_t i = 1; i <= num_indices; ++i)
   {
     HandleExpression(ConvertToIRExpressionNodePtr(node->children[i]));
   }
@@ -1361,7 +1368,7 @@ void Generator::HandleInvokeOp(IRExpressionNodePtr const &node)
     HandleExpression(ConvertToIRExpressionNodePtr(lhs));
   }
   // Arrange for the function parameters to be pushed on to the stack
-  for (size_t i = 1; i < node->children.size(); ++i)
+  for (std::size_t i = 1; i < node->children.size(); ++i)
   {
     HandleExpression(ConvertToIRExpressionNodePtr(node->children[i]));
   }
@@ -1438,8 +1445,8 @@ void Generator::HandleIndexedPrefixPostfixOp(IRExpressionNodePtr const &node,
   IRExpressionNodePtr container_node = ConvertToIRExpressionNodePtr(operand->children[0]);
   HandleExpression(container_node);
   // Arrange for the indices to be pushed on to the stack
-  size_t const num_indices = operand->children.size() - 1;
-  for (size_t i = 1; i <= num_indices; ++i)
+  std::size_t const num_indices = operand->children.size() - 1;
+  for (std::size_t i = 1; i <= num_indices; ++i)
   {
     HandleExpression(ConvertToIRExpressionNodePtr(operand->children[i]));
   }

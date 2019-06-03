@@ -28,9 +28,9 @@ template <class T>
 class Divide : public fetch::ml::Ops<T>
 {
 public:
-  using ArrayType      = T;
-  using ArrayPtrType   = std::shared_ptr<ArrayType>;
-  using ConstSliceType = typename ArrayType::ConstSliceType;
+  using ArrayType     = T;
+  using ArrayPtrType  = std::shared_ptr<ArrayType>;
+  using VecTensorType = typename Ops<T>::VecTensorType;
 
   Divide()          = default;
   virtual ~Divide() = default;
@@ -40,7 +40,7 @@ public:
    * @param inputs  left & right inputs to Divide
    * @return
    */
-  virtual ArrayPtrType Forward(std::vector<ArrayPtrType> const &inputs, ArrayType &output)
+  virtual void Forward(std::vector<ArrayPtrType> const &inputs, ArrayType &output)
   {
     (void)output;
     assert(inputs.size() > 1);
@@ -64,16 +64,15 @@ public:
       }
     }
 
-    return this->output_;
+    output = this->output_;
   }
 
   /**
    * elementwise multiplication is not trainable - just pass the error signal back
    */
-  virtual std::vector<ArrayPtrType> Backward(
-      std::vector<std::reference_wrapper<ArrayType const>> const &inputs, ArrayPtrType errorSignal)
+  virtual std::vector<ArrayPtrType> Backward(VecTensorType const &inputs, ArrayPtrType error_signal)
   {
-    return std::vector<ArrayPtrType>(inputs.size(), errorSignal);
+    return std::vector<ArrayPtrType>(inputs.size(), error_signal);
   }
 
   static constexpr char const *DESCRIPTOR = "Divide";

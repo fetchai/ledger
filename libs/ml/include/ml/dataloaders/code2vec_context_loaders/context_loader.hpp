@@ -19,6 +19,8 @@
 
 #include "math/base_types.hpp"
 #include "ml/dataloaders/dataloader.hpp"
+
+#include <cstdint>
 #include <sstream>
 #include <string>
 #include <unordered_map>
@@ -274,7 +276,7 @@ C2VLoader<DataType, LabelType>::GetNext()
 
       if (context_positions.size() <= this->max_contexts_)
       {
-        for (u_int64_t i{0}; i < context_positions.size(); i++)
+        for (uint64_t i{0}; i < context_positions.size(); i++)
         {
           source_word_tensor.Set(
               i, static_cast<Type>(std::get<0>(this->data[context_positions[i]].first)));
@@ -283,7 +285,7 @@ C2VLoader<DataType, LabelType>::GetNext()
           target_word_tensor.Set(
               i, static_cast<Type>(std::get<2>(this->data[context_positions[i]].first)));
         }
-        for (u_int64_t i{context_positions.size()}; i < this->max_contexts_; i++)
+        for (uint64_t i{context_positions.size()}; i < this->max_contexts_; i++)
         {
           source_word_tensor.Set(i, static_cast<Type>(this->word_to_idx_[EMPTY_CONTEXT_STRING]));
           path_tensor.Set(i, static_cast<Type>(this->path_to_idx_[EMPTY_CONTEXT_STRING]));
@@ -292,7 +294,7 @@ C2VLoader<DataType, LabelType>::GetNext()
       }
       else
       {
-        for (u_int64_t i{0}; i < this->max_contexts_; i++)
+        for (uint64_t i{0}; i < this->max_contexts_; i++)
         {
           source_word_tensor.Set(
               i, static_cast<Type>(std::get<0>(this->data[context_positions[i]].first)));

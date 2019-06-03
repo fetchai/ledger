@@ -31,3 +31,4 @@ libs/ml/            @uvue-git/ledger-vm
 libs/python/        @uvue-git/ledger-vm
 libs/vm/            @uvue-git/ledger-vm
 libs/vectorise/     @uvue-git/ledger-vm
+libs/math/          @uvue-git/ledger-vm

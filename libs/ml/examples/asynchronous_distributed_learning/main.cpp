@@ -19,18 +19,26 @@
 #include "math/tensor.hpp"
 #include "ml/dataloaders/mnist_loaders/mnist_loader.hpp"
 #include "ml/graph.hpp"
-
 #include "ml/layers/fully_connected.hpp"
 #include "ml/ops/activation.hpp"
 #include "ml/ops/loss_functions/cross_entropy.hpp"
 
 #include <algorithm>
+#include <cstddef>
+#include <cstdint>
+#include <cstdlib>
+#include <ctime>
 #include <fstream>
 #include <iostream>
+#include <list>
+#include <map>
 #include <memory>
 #include <mutex>
-#include <set>
+#include <string>
 #include <thread>
+#include <unordered_map>
+#include <utility>
+#include <vector>
 
 // Runs in about 40 sec on a 2018 MBP
 // Remember to disable debug using | grep -v INFO
@@ -162,7 +170,7 @@ int main(int ac, char **av)
   }
 
   std::cout << "FETCH Distributed MNIST Demo -- Synchronised" << std::endl;
-  srand((unsigned int)time(nullptr));
+  std::srand((unsigned int)std::time(nullptr));
 
   std::vector<std::shared_ptr<TrainingClient>> clients(NUMBER_OF_CLIENTS);
   for (unsigned int i(0); i < NUMBER_OF_CLIENTS; ++i)

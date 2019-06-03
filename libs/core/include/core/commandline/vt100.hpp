@@ -17,8 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include <algorithm>
-#include <map>
+#include <cstdint>
 #include <sstream>
 #include <string>
 

@@ -16,12 +16,14 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vectorise/math/exp.hpp"
+#include "vectorise/arch/sse/math/exp.hpp"
 #include "vectorise/memory/array.hpp"
 #include "vectorise/memory/shared_array.hpp"
+
+#include "gtest/gtest.h"
+
 #include <cmath>
-#include <gtest/gtest.h>
-#include <iostream>
+#include <cstddef>
 
 using type        = double;
 using array_type  = fetch::memory::Array<type>;
@@ -35,7 +37,7 @@ void Exponentials(array_type const &A, array_type &C)
 
 TEST(vectorise_exp_gtest, exp_test)
 {
-  std::size_t N = std::size_t(100);
+  std::size_t N = 100u;
   array_type  A(N), C(N);
   // Exponent value not accurate outside these bounds(-5 , 5) due to being a taylor series around 0
   A[0] = double(-5);

@@ -16,15 +16,17 @@
 //
 //------------------------------------------------------------------------------
 
-#include <math/tensor.hpp>
-
+#include "math/tensor.hpp"
 #include "ml/clustering/tsne.hpp"
 #include "ml/dataloaders/mnist_loaders/mnist_loader.hpp"
 
+#include <cstdint>
 #include <fstream>
 #include <iostream>
-#include <random>
 #include <sstream>
+#include <string>
+#include <utility>
+#include <vector>
 
 using namespace fetch::math;
 using namespace fetch::ml;
@@ -32,9 +34,6 @@ using namespace fetch::ml;
 using DataType  = double;
 using ArrayType = Tensor<DataType>;
 using SizeType  = typename ArrayType::SizeType;
-
-#include <math/tensor.hpp>
-#include <sstream>
 
 /**
  * i.e. Fill tensor matrix with DataType values from file at path
@@ -95,8 +94,8 @@ int main(int ac, char **av)
   std::cout << "Running TSNE init. " << std::endl;
   TSNE<Tensor<DataType>> tsn(input.first, N_OUTPUT_FEATURE_SIZE, PERPLEXITY, RANDOM_SEED);
 
-  std::cout << "Started optimization. " << std::endl;
-  tsn.Optimize(LEARNING_RATE, MAX_ITERATIONS, INITIAL_MOMENTUM, FINAL_MOMENTUM,
+  std::cout << "Started optimisation. " << std::endl;
+  tsn.Optimise(LEARNING_RATE, MAX_ITERATIONS, INITIAL_MOMENTUM, FINAL_MOMENTUM,
                FINAL_MOMENTUM_STEPS, P_LATER_CORRECTION_ITERATION);
 
   std::cout << "Result: " << tsn.GetOutputMatrix().ToString() << std::endl;

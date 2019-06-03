@@ -17,8 +17,6 @@
 //------------------------------------------------------------------------------
 
 #include "vectorise/memory/shared_array.hpp"
-#include <iostream>
-#include <vector>
 
 using array_type  = fetch::memory::SharedArray<float>;
 using vector_type = typename array_type::VectorRegisterType;
