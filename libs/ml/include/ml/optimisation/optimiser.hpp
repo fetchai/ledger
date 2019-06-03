@@ -93,14 +93,13 @@ Optimiser<T, C>::Optimiser(std::shared_ptr<Graph<T>> graph, std::string const &i
 template <class T, class C>
 typename T::Type Optimiser<T, C>::Run(ArrayType &data, ArrayType &labels, SizeType batch_size)
 {
-
-  // If batch_size is not specified do full batch
-
+  // Get trailing dimensions
   SizeType n_data_dimm  = data.shape().size() - 1;
   SizeType n_label_dimm = labels.shape().size() - 1;
 
   SizeType n_data = data.shape().at(n_data_dimm);
 
+  // If batch_size is not specified do full batch
   if (batch_size == 0)
   {
     batch_size = n_data;

@@ -220,6 +220,43 @@ TYPED_TEST(OptimisersTest, momentum_optimiser_training)
   EXPECT_NEAR(static_cast<double>(weights[1].At(0, 4)), -0.18362, 1e-5);
 }
 
+TYPED_TEST(OptimisersTest, momentum_optimiser_training_2D)
+{
+  using DataType = typename TypeParam::Type;
+
+  DataType learning_rate = DataType{0.01f};
+
+  // Prepare model
+  std::string                                  input_name;
+  std::string                                  output_name;
+  std::shared_ptr<fetch::ml::Graph<TypeParam>> g =
+      PrepareTestGraph<TypeParam>(4, input_name, output_name);
+
+  // Prepare data and labels
+  TypeParam data;
+  TypeParam gt;
+  PrepareTestDataAndLabels2D(data, gt);
+
+  // Initialize Optimiser
+  fetch::ml::optimisers::MomentumOptimiser<TypeParam, fetch::ml::ops::MeanSquareError<TypeParam>>
+      optimiser(g, input_name, output_name, learning_rate);
+
+  // Do 2 optimiser steps
+  optimiser.Run(data, gt);
+  DataType loss = optimiser.Run(data, gt);
+
+  // Test loss
+  EXPECT_NEAR(static_cast<double>(loss), 76.87332, 1e-5);
+
+  // Test weights
+  std::vector<TypeParam> weights = g->get_weights();
+
+  EXPECT_NEAR(static_cast<double>(weights[3].At(2, 0)), 0.02457, 1e-5);
+  EXPECT_NEAR(static_cast<double>(weights[2].At(0, 0)), 0.06412, 1e-5);
+  EXPECT_NEAR(static_cast<double>(weights[0].At(0, 9)), 0.00000, 1e-5);
+  EXPECT_NEAR(static_cast<double>(weights[1].At(0, 4)), -0.22194, 1e-5);
+}
+
 TYPED_TEST(OptimisersTest, adagrad_optimiser_training)
 {
   using DataType = typename TypeParam::Type;
@@ -254,6 +291,42 @@ TYPED_TEST(OptimisersTest, adagrad_optimiser_training)
   EXPECT_NEAR(static_cast<double>(weights[2].At(0, 0)), 0.06163, 1e-5);
   EXPECT_NEAR(static_cast<double>(weights[0].At(0, 9)), 0.06323, 1e-5);
   EXPECT_NEAR(static_cast<double>(weights[1].At(0, 4)), -0.18362, 1e-5);
+}
+
+TYPED_TEST(OptimisersTest, adagrad_optimiser_training_2D)
+{
+  using DataType = typename TypeParam::Type;
+
+  DataType learning_rate = DataType{0.04f};
+
+  // Prepare model
+  std::string                                  input_name;
+  std::string                                  output_name;
+  std::shared_ptr<fetch::ml::Graph<TypeParam>> g =
+      PrepareTestGraph<TypeParam>(4, input_name, output_name);
+
+  // Prepare data and labels
+  TypeParam data;
+  TypeParam gt;
+  PrepareTestDataAndLabels2D(data, gt);
+
+  // Initialize Optimiser
+  fetch::ml::optimisers::AdaGradOptimiser<TypeParam, fetch::ml::ops::MeanSquareError<TypeParam>>
+      optimiser(g, input_name, output_name, learning_rate);
+
+  // Do multiple steps
+  optimiser.Run(data, gt);
+  DataType loss = optimiser.Run(data, gt);
+
+  // Test loss
+  EXPECT_NEAR(static_cast<double>(loss), 37.42798, 1e-5);
+
+  // Test weights
+  std::vector<TypeParam> weights = g->get_weights();
+  EXPECT_NEAR(static_cast<double>(weights[3].At(2, 0)), 0.02526, 1e-5);
+  EXPECT_NEAR(static_cast<double>(weights[2].At(0, 0)), 0.06196, 1e-5);
+  EXPECT_NEAR(static_cast<double>(weights[0].At(0, 9)), 0.00000, 1e-5);
+  EXPECT_NEAR(static_cast<double>(weights[1].At(0, 4)), -0.09280, 1e-5);
 }
 
 TYPED_TEST(OptimisersTest, rmsprop_optimiser_training)
@@ -292,6 +365,42 @@ TYPED_TEST(OptimisersTest, rmsprop_optimiser_training)
   EXPECT_NEAR(static_cast<double>(weights[1].At(0, 4)), -0.18362, 1e-5);
 }
 
+TYPED_TEST(OptimisersTest, rmsprop_optimiser_training_2D)
+{
+  using DataType = typename TypeParam::Type;
+
+  DataType learning_rate = DataType{0.01f};
+
+  // Prepare model
+  std::string                                  input_name;
+  std::string                                  output_name;
+  std::shared_ptr<fetch::ml::Graph<TypeParam>> g =
+      PrepareTestGraph<TypeParam>(4, input_name, output_name);
+
+  // Prepare data and labels
+  TypeParam data;
+  TypeParam gt;
+  PrepareTestDataAndLabels2D(data, gt);
+
+  // Initialize Optimiser
+  fetch::ml::optimisers::RMSPropOptimiser<TypeParam, fetch::ml::ops::MeanSquareError<TypeParam>>
+      optimiser(g, input_name, output_name, learning_rate);
+
+  // Do multiple steps
+  optimiser.Run(data, gt);
+  DataType loss = optimiser.Run(data, gt);
+
+  // Test loss
+  EXPECT_NEAR(static_cast<double>(loss), 46.19006, 1e-5);
+
+  // Test weights
+  std::vector<TypeParam> weights = g->get_weights();
+  EXPECT_NEAR(static_cast<double>(weights[3].At(2, 0)), 0.01689, 1e-5);
+  EXPECT_NEAR(static_cast<double>(weights[2].At(0, 0)), 0.05091, 1e-5);
+  EXPECT_NEAR(static_cast<double>(weights[0].At(0, 9)), 0.00000, 1e-5);
+  EXPECT_NEAR(static_cast<double>(weights[1].At(0, 4)), -0.08313, 1e-5);
+}
+
 TYPED_TEST(OptimisersTest, adam_optimiser_training)
 {
   using DataType = typename TypeParam::Type;
@@ -326,6 +435,42 @@ TYPED_TEST(OptimisersTest, adam_optimiser_training)
   EXPECT_NEAR(static_cast<double>(weights[2].At(0, 0)), 0.02160, 1e-5);
   EXPECT_NEAR(static_cast<double>(weights[0].At(0, 9)), 0.02162, 1e-5);
   EXPECT_NEAR(static_cast<double>(weights[1].At(0, 4)), -0.18362, 1e-5);
+}
+
+TYPED_TEST(OptimisersTest, adam_optimiser_training_2D)
+{
+  using DataType = typename TypeParam::Type;
+
+  DataType learning_rate = DataType{0.01f};
+
+  // Prepare model
+  std::string                                  input_name;
+  std::string                                  output_name;
+  std::shared_ptr<fetch::ml::Graph<TypeParam>> g =
+      PrepareTestGraph<TypeParam>(4, input_name, output_name);
+
+  // Prepare data and labels
+  TypeParam data;
+  TypeParam gt;
+  PrepareTestDataAndLabels2D(data, gt);
+
+  // Initialize Optimiser
+  fetch::ml::optimisers::AdamOptimiser<TypeParam, fetch::ml::ops::MeanSquareError<TypeParam>>
+      optimiser(g, input_name, output_name, learning_rate);
+
+  // Do multiple steps
+  optimiser.Run(data, gt);
+  DataType loss = optimiser.Run(data, gt);
+
+  // Test loss
+  EXPECT_NEAR(static_cast<double>(loss), 72.608612060546875, 1e-4);
+
+  // Test weights
+  std::vector<TypeParam> weights = g->get_weights();
+  EXPECT_NEAR(static_cast<double>(weights[3].At(2, 0)), 0.00471, 1e-5);
+  EXPECT_NEAR(static_cast<double>(weights[2].At(0, 0)), 0.02160, 1e-5);
+  EXPECT_NEAR(static_cast<double>(weights[0].At(0, 9)), 0.00000, 1e-5);
+  EXPECT_NEAR(static_cast<double>(weights[1].At(0, 4)), -0.05608, 1e-5);
 }
 
 TYPED_TEST(OptimisersTest, adam_optimiser_minibatch_training)
