@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/linalg/blas/gemm_tt_vector.hpp"
 #include "math/linalg/blas/base.hpp"
+#include "math/linalg/blas/gemm_tt_vector.hpp"
 #include "math/linalg/prototype.hpp"
 #include "math/tensor_view.hpp"
 namespace fetch {

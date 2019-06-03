@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/ops/activations/dropout.hpp"
 #include "math/tensor.hpp"
+#include "ml/ops/activations/dropout.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 #include <gtest/gtest.h>
 

@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/ops/loss_functions/mean_square_error.hpp"
 #include "math/tensor.hpp"
+#include "ml/ops/loss_functions/mean_square_error.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 #include <gtest/gtest.h>
 

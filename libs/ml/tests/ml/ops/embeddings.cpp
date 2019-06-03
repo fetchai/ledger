@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/ops/embeddings.hpp"
 #include "math/tensor.hpp"
+#include "ml/ops/embeddings.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 
 #include "gtest/gtest.h"
