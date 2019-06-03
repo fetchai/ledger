@@ -21,6 +21,7 @@
 #include "ml/layers/layers.hpp"
 #include "ml/ops/activation.hpp"
 #include "ml/ops/loss_functions.hpp"
+#include "ml/ops/weights.hpp"
 #include <gtest/gtest.h>
 
 template <typename ArrayType>
@@ -117,7 +118,13 @@ void PlusOneTest()
 
     g.BackPropagate(output_name, criterion.Backward({results, cur_gt}));
   }
-  g.Step(alpha);
+
+  for (auto &w : g.get_trainables())
+  {
+    TypeParam grad = w->get_gradients();
+    fetch::math::Multiply(grad, DataType{-alpha}, grad);
+    w->ApplyGradient(grad);
+  }
 
   DataType current_loss = loss;
 
@@ -143,7 +150,13 @@ void PlusOneTest()
     // This task is so easy the loss should fall on every training step
     EXPECT_GE(current_loss, loss);
     current_loss = loss;
-    g.Step(alpha);
+
+    for (auto &w : g.get_trainables())
+    {
+      TypeParam grad = w->get_gradients();
+      fetch::math::Multiply(grad, DataType{-alpha}, grad);
+      w->ApplyGradient(grad);
+    }
   }
 }
 
@@ -211,7 +224,13 @@ void CategoricalPlusOneTest(bool add_softmax = false)
     loss += criterion.Forward({results, cur_gt});
     g.BackPropagate(output_name, criterion.Backward({results, cur_gt}));
   }
-  g.Step(alpha);
+
+  for (auto &w : g.get_trainables())
+  {
+    TypeParam grad = w->get_gradients();
+    fetch::math::Multiply(grad, DataType{-alpha}, grad);
+    w->ApplyGradient(grad);
+  }
 
   DataType current_loss = loss;
 
@@ -236,7 +255,13 @@ void CategoricalPlusOneTest(bool add_softmax = false)
     // This task is so easy the loss should fall on every training step
     EXPECT_GE(current_loss, loss);
     current_loss = loss;
-    g.Step(alpha);
+
+    for (auto &w : g.get_trainables())
+    {
+      TypeParam grad = w->get_gradients();
+      fetch::math::Multiply(grad, DataType{-alpha}, grad);
+      w->ApplyGradient(grad);
+    }
   }
 }
 
@@ -295,7 +320,13 @@ void CategoricalXorTest(bool add_softmax = false)
     loss += criterion.Forward({results, cur_gt});
     g.BackPropagate(output_name, criterion.Backward({results, cur_gt}));
   }
-  g.Step(alpha);
+
+  for (auto &w : g.get_trainables())
+  {
+    TypeParam grad = w->get_gradients();
+    fetch::math::Multiply(grad, DataType{-alpha}, grad);
+    w->ApplyGradient(grad);
+  }
 
   DataType current_loss = loss;
 
@@ -319,7 +350,13 @@ void CategoricalXorTest(bool add_softmax = false)
 
     EXPECT_GE(current_loss, loss);
     current_loss = loss;
-    g.Step(alpha);
+
+    for (auto &w : g.get_trainables())
+    {
+      TypeParam grad = w->get_gradients();
+      fetch::math::Multiply(grad, DataType{-alpha}, grad);
+      w->ApplyGradient(grad);
+    }
   }
 }
 

@@ -86,8 +86,14 @@ public:
         g_.BackPropagate("Softmax", criterion.Backward({results, gt}));
       }
       losses_values_.push_back(loss);
+
       // Updating the weights
-      g_.Step(LEARNING_RATE);
+      for (auto &w : g_.get_trainables())
+      {
+        ArrayType grad = w->get_gradients();
+        fetch::math::Multiply(grad, DataType{-LEARNING_RATE}, grad);
+        w->ApplyGradient(grad);
+      }
     }
   }
 

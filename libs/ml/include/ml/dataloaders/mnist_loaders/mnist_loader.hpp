@@ -61,12 +61,19 @@ public:
 
   std::pair<uint64_t, T> GetAtIndex(uint64_t index) const
   {
+    using SizeType = typename T::SizeType;
+    using DataType = typename T::Type;
     T buffer({28u, 28u});
-    for (std::uint64_t i(0); i < figure_size_; ++i)
+
+    SizeType i{0};
+    auto     it = buffer.begin();
+    while (it.is_valid())
     {
-      buffer.At(i) = typename T::Type(data_[index][i]) / typename T::Type(256);
+      *it = static_cast<DataType>(data_[index][i]) / DataType{256};
+      i++;
+      ++it;
     }
-    uint64_t label = (uint64_t)(labels_[index]);
+    SizeType label = static_cast<SizeType>(labels_[index]);
     return std::make_pair(label, buffer);
   }
 

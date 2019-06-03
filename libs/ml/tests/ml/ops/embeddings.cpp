@@ -96,8 +96,9 @@ TYPED_TEST(EmbeddingsTest, forward)
 
 TYPED_TEST(EmbeddingsTest, backward)
 {
-  using Type     = typename TypeParam::Type;
-  using SizeType = typename TypeParam::SizeType;
+  using ArrayType = TypeParam;
+  using DataType  = typename TypeParam::Type;
+  using SizeType  = typename TypeParam::SizeType;
 
   fetch::ml::ops::Embeddings<TypeParam> e(10, 6);
   TypeParam                             weights(std::vector<uint64_t>({10, 6}));
@@ -105,36 +106,39 @@ TYPED_TEST(EmbeddingsTest, backward)
   {
     for (SizeType j{0}; j < 6; ++j)
     {
-      weights.Set(i, j, Type(i * 10 + j));
+      weights.Set(i, j, static_cast<DataType>(i * 10 + j));
     }
   }
   e.SetData(weights);
 
-  TypeParam input(std::vector<uint64_t>({2}));
-  input.At(0) = Type(3);
-  input.At(1) = Type(5);
+  ArrayType input(std::vector<uint64_t>({2}));
+  input.At(0) = DataType{3};
+  input.At(1) = DataType{5};
 
-  TypeParam output(e.ComputeOutputShape({input}));
+  ArrayType output(e.ComputeOutputShape({input}));
   e.Forward({input}, output);
 
-  TypeParam error_signal(std::vector<uint64_t>({2, 6}));
+  ArrayType error_signal(std::vector<uint64_t>({2, 6}));
   for (SizeType j{0}; j < 2; ++j)
   {
     for (SizeType k{0}; k < 6; ++k)
     {
-      error_signal.Set(j, k, Type((j * 6) + k));
+      error_signal.Set(j, k, static_cast<DataType>((j * 6) + k));
     }
   }
 
   e.Backward({input}, error_signal);
-  e.Step(Type(1));
+
+  ArrayType grad = e.get_gradients();
+  fetch::math::Multiply(grad, DataType{-1}, grad);
+  e.ApplyGradient(grad);
 
   // Get a copy of the gradients and check that they were zeroed out after Step
-  TypeParam grads_copy = e.get_gradients();
-  EXPECT_TRUE(TypeParam::Zeroes({1, 6}).AllClose(grads_copy.Slice(SizeType(input.At(0))).Copy()));
-  EXPECT_TRUE(TypeParam::Zeroes({1, 6}).AllClose(grads_copy.Slice(SizeType(input.At(1))).Copy()));
+  ArrayType grads_copy = e.get_gradients();
+  EXPECT_TRUE(ArrayType::Zeroes({1, 6}).AllClose(grads_copy.Slice(SizeType(input.At(0))).Copy()));
+  EXPECT_TRUE(ArrayType::Zeroes({1, 6}).AllClose(grads_copy.Slice(SizeType(input.At(1))).Copy()));
 
-  output = TypeParam(e.ComputeOutputShape({input}));
+  output = ArrayType(e.ComputeOutputShape({input}));
   e.Forward({input}, output);
 
   std::vector<int> gt{30, 30, 30, 30, 30, 30, 44, 44, 44, 44, 44, 44};
@@ -143,7 +147,7 @@ TYPED_TEST(EmbeddingsTest, backward)
   {
     for (SizeType k{0}; k < 6; ++k)
     {
-      EXPECT_EQ(output.At(j, k), Type(gt[(j * 6) + k]));
+      EXPECT_EQ(output.At(j, k), static_cast<DataType>(gt[(j * 6) + k]));
     }
   }
 }
