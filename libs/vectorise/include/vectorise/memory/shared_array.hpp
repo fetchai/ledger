@@ -58,15 +58,21 @@ public:
     if (n > 0)
     {
       data_ = std::shared_ptr<T>(
-          reinterpret_cast<type *>(_mm_malloc(this->padded_size() * sizeof(type), 64)), _mm_free);
+          static_cast<T *>(_mm_malloc(this->padded_size() * sizeof(type), 64)), _mm_free);
 
       this->pointer_ = data_.get();
     }
   }
 
   constexpr SharedArray() = default;
+
   SharedArray(SharedArray const &other) noexcept
-    : super_type(other.data_.get(), other.size())
+    : super_type(other.pointer_, other.size())
+    , data_(other.data_)
+  {}
+
+  SharedArray(SharedArray const &other, uint64_t offset, uint64_t size) noexcept
+    : super_type(other.data_.get() + offset, size)
     , data_(other.data_)
   {}
 
@@ -96,14 +102,15 @@ public:
 
     if (other.data_)
     {
-      this->data_ = other.data_;
+      this->data_    = other.data_;
+      this->pointer_ = other.pointer_;
     }
     else
     {
       this->data_.reset();
+      this->pointer_ = nullptr;
     }
 
-    this->pointer_ = other.pointer_;
     return *this;
   }
 

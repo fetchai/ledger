@@ -38,7 +38,7 @@ template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, void> KlDivergence(ArrayType const &p, ArrayType const &q,
                                                   typename ArrayType::Type &ret)
 {
-  ASSERT(p.shape().at(0) == q.shape().at(0));
+  assert(p.shape().at(0) == q.shape().at(0));
   ret = Sum(Multiply(p, Log(Divide(p, q))));
 }
 

@@ -133,7 +133,7 @@ void TestEmbeddings(Graph<ArrayType> const &g, std::string const &skip_gram_name
   std::shared_ptr<fetch::ml::ops::Embeddings<ArrayType>> embeddings =
       sg_layer->GetEmbeddings(sg_layer);
 
-  PrintKNN(dl, embeddings->GetWeights(), test_word, K);
+  PrintKNN(dl, embeddings->get_weights(), test_word, K);
 }
 
 int main(int argc, char **argv)

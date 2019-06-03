@@ -35,7 +35,7 @@ namespace math {
 template <typename ArrayType>
 void Elu(ArrayType const &t, typename ArrayType::Type &a, ArrayType &ret)
 {
-  ASSERT(t.size() == ret.size());
+  assert(t.size() == ret.size());
   using DataType = typename ArrayType::Type;
 
   DataType zero{0};

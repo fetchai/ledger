@@ -17,14 +17,12 @@
 //
 //------------------------------------------------------------------------------
 
+#include "math/base_types.hpp"
 #include "vectorise/memory/shared_array.hpp"
 #include "vectorise/platform.hpp"
 
 namespace fetch {
 namespace math {
-
-template <typename T, typename C>
-class Tensor;
 
 namespace linalg {
 template <typename T, uint64_t S, uint64_t I,
