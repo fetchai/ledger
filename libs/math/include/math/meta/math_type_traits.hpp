@@ -19,21 +19,55 @@
 
 #include "core/byte_array/byte_array.hpp"
 
-#include "math/fixed_point/fixed_point.hpp"
+#include "math/tensor_declaration.hpp"
 #include "meta/type_traits.hpp"
+#include "vectorise/fixed_point/fixed_point.hpp"
 
 #include <type_traits>
 
 namespace fetch {
 namespace math {
 
-template <typename DataType, typename ContainerType>
-class Tensor;
-
 namespace meta {
 
 template <bool C, typename ReturnType = void>
 using EnableIf = typename std::enable_if<C, ReturnType>::type;
+
+////////////////////////////////////
+/// REGISTER OF VECTORISED TYPES ///
+////////////////////////////////////
+
+template <typename T>
+struct HasVectorSupport
+{
+  enum
+  {
+    value = 0
+  };
+};
+
+template <>
+struct HasVectorSupport<double>
+{
+  enum
+  {
+    value = 1
+  };
+};
+
+template <>
+struct HasVectorSupport<float>
+{
+  enum
+  {
+    value = 1
+  };
+};
+
+template <typename T, typename R>
+using IfVectorSupportFor = typename std::enable_if<HasVectorSupport<T>::value, R>::type;
+template <typename T, typename R>
+using IfNoVectorSupportFor = typename std::enable_if<!HasVectorSupport<T>::value, R>::type;
 
 ////////////////////////////
 /// FIXED POINT CHECKING ///
@@ -99,11 +133,14 @@ struct IsMathImpl<int, ReturnType>
 {
   using Type = ReturnType;
 };
-template <typename DataType, typename ContainerType, typename ReturnType>
+
+template <typename DataType, typename ContainerType /*template<class> class ContainerType*/,
+          typename ReturnType>
 struct IsMathImpl<Tensor<DataType, ContainerType>, ReturnType>
 {
   using Type = ReturnType;
 };
+
 template <typename DataType, typename ReturnType>
 using IfIsMath = typename IsMathImpl<DataType, ReturnType>::Type;
 
@@ -115,7 +152,8 @@ template <typename DataType, typename ReturnType>
 struct IsMathArrayImpl
 {
 };
-template <typename DataType, typename ContainerType, typename ReturnType>
+template <typename DataType, typename ContainerType /*template<class> class ContainerType*/,
+          typename ReturnType>
 struct IsMathArrayImpl<Tensor<DataType, ContainerType>, ReturnType>
 {
   using Type = ReturnType;

@@ -34,7 +34,7 @@ namespace math {
 template <typename ArrayType>
 void LeakyRelu(ArrayType const &t, typename ArrayType::Type const &a, ArrayType &ret)
 {
-  ASSERT(t.size() == ret.size());
+  assert(t.size() == ret.size());
   using DataType = typename ArrayType::Type;
 
   auto it  = t.cbegin();
@@ -76,8 +76,8 @@ template <typename ArrayType>
 void LeakyRelu(ArrayType const &t, ArrayType const &a, ArrayType &ret)
 {
   {
-    ASSERT(t.size() == ret.size());
-    ASSERT(t.size() == a.size());
+    assert(t.size() == ret.size());
+    assert(t.size() == a.size());
     using DataType = typename ArrayType::Type;
 
     auto it  = t.cbegin();

@@ -17,12 +17,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vectorise/math/abs.hpp"
-#include "vectorise/math/approx_exp.hpp"
-#include "vectorise/math/approx_log.hpp"
-#include "vectorise/math/approx_reciprocal.hpp"
-#include "vectorise/math/exp.hpp"
-#include "vectorise/math/max.hpp"
-#include "vectorise/math/min.hpp"
-#include "vectorise/math/pow.hpp"
-#include "vectorise/math/sqrt.hpp"
+#include "vectorise/arch/sse/math/abs.hpp"
+#include "vectorise/arch/sse/math/approx_exp.hpp"
+#include "vectorise/arch/sse/math/approx_log.hpp"
+#include "vectorise/arch/sse/math/exp.hpp"
+#include "vectorise/arch/sse/math/max.hpp"
+#include "vectorise/arch/sse/math/min.hpp"
+#include "vectorise/arch/sse/math/pow.hpp"
+#include "vectorise/arch/sse/math/sqrt.hpp"

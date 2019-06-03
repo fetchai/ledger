@@ -19,9 +19,9 @@
 #include <gtest/gtest.h>
 
 #include "core/random/lcg.hpp"
-#include "math/fixed_point/fixed_point.hpp"
 #include "math/matrix_operations.hpp"
 #include "math/tensor.hpp"
+#include "vectorise/fixed_point/fixed_point.hpp"
 
 #include <chrono>
 
