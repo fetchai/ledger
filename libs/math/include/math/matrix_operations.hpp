@@ -17,6 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include "math/base_types.hpp"
+#include "math/comparison.hpp"
+#include "math/fundamental_operators.hpp"
 #include "math/linalg/blas/base.hpp"
 #include "math/linalg/blas/gemm_nn_novector.hpp"
 #include "math/linalg/blas/gemm_nn_vector.hpp"
@@ -25,9 +28,6 @@
 #include "math/linalg/blas/gemm_tn_novector.hpp"
 #include "math/linalg/blas/gemm_tn_vector.hpp"
 #include "math/linalg/prototype.hpp"
-#include "math/base_types.hpp"
-#include "math/comparison.hpp"
-#include "math/fundamental_operators.hpp"
 #include "math/meta/math_type_traits.hpp"
 
 #include <cassert>
