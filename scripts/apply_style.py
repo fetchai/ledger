@@ -97,8 +97,8 @@ SUPPORTED_LANGUAGES = {
     }
 }
 
-NUM_FILES_PROCESSEFD_SO_FAR = 0  # Global variable
-TOTAL_FILES_TO_PROCESS = 0  # Global variable
+num_files_processed_so_far = 0  # Global variable
+total_files_to_process = 0  # Global variable
 
 output_lock = threading.Lock()
 file_count_lock = threading.Lock()
@@ -111,13 +111,13 @@ def output(text):
 
 
 def increment_file_count():
-    global NUM_FILES_PROCESSEFD_SO_FAR
+    global num_files_processed_so_far
 
     with file_count_lock:
-        NUM_FILES_PROCESSEFD_SO_FAR += 1
-        if NUM_FILES_PROCESSEFD_SO_FAR % 100 == 0:
+        num_files_processed_so_far += 1
+        if num_files_processed_so_far % 100 == 0:
             output('Processed {}\t of {} files'.format(
-                NUM_FILES_PROCESSEFD_SO_FAR, TOTAL_FILES_TO_PROCESS))
+                num_files_processed_so_far, total_files_to_process))
 
 
 def include_patterns(*filename_patterns):
@@ -270,7 +270,7 @@ def get_changed_paths_from_git(commit):
 
 def files_of_interest(commit):
     """Returns list of absolute paths to files"""
-    global TOTAL_FILES_TO_PROCESS
+    global total_files_to_process
 
     output('Composing list of files ...')
 
@@ -288,7 +288,7 @@ def files_of_interest(commit):
     ret = [abs_path for abs_path in ret
            if isfile(abs_path) and not is_checked_in_binary_file(abs_path)]
 
-    TOTAL_FILES_TO_PROCESS = len(ret)
+    total_files_to_process = len(ret)
 
     return ret
 
@@ -365,7 +365,7 @@ def apply_transformations_to_file(path_to_file):
 
 def process_in_parallel(files_to_process, jobs):
     output('Processing {} file(s) with {} job(s) ...'
-           .format(TOTAL_FILES_TO_PROCESS, jobs))
+           .format(total_files_to_process, jobs))
     with ThreadPoolExecutor(max_workers=jobs) as pool:
         pool.map(apply_transformations_to_file, files_to_process)
 
