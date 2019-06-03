@@ -95,7 +95,12 @@ typename T::Type Optimiser<T, C>::Run(ArrayType &data, ArrayType &labels, SizeTy
 {
 
   // If batch_size is not specified do full batch
-  SizeType n_data = data.shape().at(0);
+
+  SizeType n_data_dimm  = data.shape().size() - 1;
+  SizeType n_label_dimm = labels.shape().size() - 1;
+
+  SizeType n_data = data.shape().at(n_data_dimm);
+
   if (batch_size == 0)
   {
     batch_size = n_data;
@@ -111,9 +116,9 @@ typename T::Type Optimiser<T, C>::Run(ArrayType &data, ArrayType &labels, SizeTy
     // Do batch back-propagation
     for (SizeType it{step}; (it < step + batch_size) && (it < n_data); ++it)
     {
-      auto cur_input = data.Slice(it).Copy();
+      auto cur_input = data.Slice(it, n_data_dimm).Copy();
       graph_->SetInput(input_node_name_, cur_input);
-      auto cur_label  = labels.Slice(it).Copy();
+      auto cur_label  = labels.Slice(it, n_label_dimm).Copy();
       auto label_pred = graph_->Evaluate(output_node_name_);
       loss += criterion_.Forward({label_pred, cur_label});
       graph_->BackPropagate(output_node_name_, criterion_.Backward({label_pred, cur_label}));
