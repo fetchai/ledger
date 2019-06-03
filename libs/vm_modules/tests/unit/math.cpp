@@ -16,9 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm_test_suite.hpp"
 #include "vm_modules/math/math.hpp"
 #include "math/standard_functions/abs.hpp"
+#include "vm_test_suite.hpp"
 
 namespace {
 
@@ -40,7 +40,7 @@ TEST_F(MathTests, abs_test)
   ASSERT_EQ(stdout(), std::to_string(fetch::math::Abs(-1)));
 }
 //
-//TEST_F(MathTests, count_returns_zero_if_the_array_is_empty)
+// TEST_F(MathTests, count_returns_zero_if_the_array_is_empty)
 //{
 //  static char const *TEXT = R"(
 //    function main()
@@ -56,7 +56,7 @@ TEST_F(MathTests, abs_test)
 //  ASSERT_EQ(stdout(), "0-0");
 //}
 //
-//TEST_F(MathTests, append_adds_one_element_at_the_end_of_the_array)
+// TEST_F(MathTests, append_adds_one_element_at_the_end_of_the_array)
 //{
 //  static char const *TEXT = R"(
 //    function main()
@@ -76,7 +76,7 @@ TEST_F(MathTests, abs_test)
 //  ASSERT_EQ(stdout(), "[1, 2, 42]");
 //}
 //
-//TEST_F(MathTests, append_is_statically_type_safe_with_numeric_arrays)
+// TEST_F(MathTests, append_is_statically_type_safe_with_numeric_arrays)
 //{
 //  static char const *TEXT = R"(
 //    function main()
@@ -88,7 +88,7 @@ TEST_F(MathTests, abs_test)
 //  ASSERT_FALSE(Compile(TEXT));
 //}
 //
-//TEST_F(MathTests, append_accepts_objects)
+// TEST_F(MathTests, append_accepts_objects)
 //{
 //  static char const *TEXT = R"(
 //    function main()
@@ -109,7 +109,7 @@ TEST_F(MathTests, abs_test)
 //  ASSERT_EQ(stdout(), "1-3");
 //}
 //
-//TEST_F(MathTests, append_is_statically_type_safe_with_object_arrays)
+// TEST_F(MathTests, append_is_statically_type_safe_with_object_arrays)
 //{
 //  static char const *TEXT = R"(
 //    function main()
@@ -122,7 +122,7 @@ TEST_F(MathTests, abs_test)
 //  ASSERT_FALSE(Compile(TEXT));
 //}
 //
-//TEST_F(MathTests, pop_back_removes_the_last_element_and_returns_it)
+// TEST_F(MathTests, pop_back_removes_the_last_element_and_returns_it)
 //{
 //  static char const *TEXT = R"(
 //    function main()
@@ -145,7 +145,7 @@ TEST_F(MathTests, abs_test)
 //  ASSERT_EQ(stdout(), "30-[10, 20]");
 //}
 //
-//TEST_F(MathTests, pop_back_works_with_arrays_of_objects)
+// TEST_F(MathTests, pop_back_works_with_arrays_of_objects)
 //{
 //  static char const *TEXT = R"(
 //    function main()
@@ -175,7 +175,7 @@ TEST_F(MathTests, abs_test)
 //  ASSERT_EQ(stdout(), "3-2-[30]-[10]-[20]");
 //}
 //
-//TEST_F(MathTests, pop_back_fails_if_array_is_empty)
+// TEST_F(MathTests, pop_back_fails_if_array_is_empty)
 //{
 //  static char const *TEXT = R"(
 //    function main()
@@ -188,7 +188,7 @@ TEST_F(MathTests, abs_test)
 //  ASSERT_FALSE(Run());
 //}
 //
-//TEST_F(MathTests,
+// TEST_F(MathTests,
 //       when_passed_an_integer_N_pop_back_removes_the_last_N_elements_and_returns_them_as_an_array)
 //{
 //  static char const *TEXT = R"(
@@ -212,7 +212,7 @@ TEST_F(MathTests, abs_test)
 //  ASSERT_EQ(stdout(), "[20, 30]-[10]");
 //}
 //
-//TEST_F(MathTests, when_passed_an_integer_N_pop_back_works_for_arrays_of_objects)
+// TEST_F(MathTests, when_passed_an_integer_N_pop_back_works_for_arrays_of_objects)
 //{
 //  static char const *TEXT = R"(
 //    function main()
@@ -244,7 +244,7 @@ TEST_F(MathTests, abs_test)
 //  ASSERT_EQ(stdout(), "3-1-2-[20]-[30]-[10]");
 //}
 //
-//TEST_F(MathTests, when_passed_zero_pop_back_does_not_mutate_its_array_and_returns_an_empty_array)
+// TEST_F(MathTests, when_passed_zero_pop_back_does_not_mutate_its_array_and_returns_an_empty_array)
 //{
 //  static char const *TEXT = R"(
 //    function main()
@@ -267,7 +267,7 @@ TEST_F(MathTests, abs_test)
 //  ASSERT_EQ(stdout(), "[]-[10, 20, 30]");
 //}
 //
-//TEST_F(MathTests, when_passed_a_negative_number_pop_back_fails)
+// TEST_F(MathTests, when_passed_a_negative_number_pop_back_fails)
 //{
 //  static char const *TEXT = R"(
 //    function main()
@@ -284,7 +284,7 @@ TEST_F(MathTests, abs_test)
 //  ASSERT_FALSE(Run());
 //}
 //
-//TEST_F(MathTests, pop_front_removes_the_first_element_and_returns_it)
+// TEST_F(MathTests, pop_front_removes_the_first_element_and_returns_it)
 //{
 //  static char const *TEXT = R"(
 //    function main()
@@ -307,7 +307,7 @@ TEST_F(MathTests, abs_test)
 //  ASSERT_EQ(stdout(), "10-[20, 30]");
 //}
 //
-//TEST_F(MathTests, pop_front_works_with_arrays_of_objects)
+// TEST_F(MathTests, pop_front_works_with_arrays_of_objects)
 //{
 //  static char const *TEXT = R"(
 //    function main()
@@ -337,7 +337,7 @@ TEST_F(MathTests, abs_test)
 //  ASSERT_EQ(stdout(), "3-2-[10]-[20]-[30]");
 //}
 //
-//TEST_F(MathTests, pop_front_fails_if_array_is_empty)
+// TEST_F(MathTests, pop_front_fails_if_array_is_empty)
 //{
 //  static char const *TEXT = R"(
 //    function main()
@@ -350,7 +350,7 @@ TEST_F(MathTests, abs_test)
 //  ASSERT_FALSE(Run());
 //}
 //
-//TEST_F(MathTests,
+// TEST_F(MathTests,
 //       when_passed_an_integer_N_pop_front_removes_the_last_N_elements_and_returns_them_as_an_array)
 //{
 //  static char const *TEXT = R"(
@@ -374,7 +374,7 @@ TEST_F(MathTests, abs_test)
 //  ASSERT_EQ(stdout(), "[10, 20]-[30]");
 //}
 //
-//TEST_F(MathTests, when_passed_an_integer_N_pop_front_works_for_arrays_of_objects)
+// TEST_F(MathTests, when_passed_an_integer_N_pop_front_works_for_arrays_of_objects)
 //{
 //  static char const *TEXT = R"(
 //    function main()
@@ -406,7 +406,8 @@ TEST_F(MathTests, abs_test)
 //  ASSERT_EQ(stdout(), "3-1-2-[10]-[20]-[30]");
 //}
 //
-//TEST_F(MathTests, when_passed_zero_pop_front_does_not_mutate_its_array_and_returns_an_empty_array)
+// TEST_F(MathTests,
+// when_passed_zero_pop_front_does_not_mutate_its_array_and_returns_an_empty_array)
 //{
 //  static char const *TEXT = R"(
 //    function main()
@@ -429,7 +430,7 @@ TEST_F(MathTests, abs_test)
 //  ASSERT_EQ(stdout(), "[]-[10, 20, 30]");
 //}
 //
-//TEST_F(MathTests, when_passed_a_negative_number_pop_front_fails)
+// TEST_F(MathTests, when_passed_a_negative_number_pop_front_fails)
 //{
 //  static char const *TEXT = R"(
 //    function main()
@@ -446,7 +447,7 @@ TEST_F(MathTests, abs_test)
 //  ASSERT_FALSE(Run());
 //}
 //
-//TEST_F(MathTests, reverse_inverts_the_order_of_elements)
+// TEST_F(MathTests, reverse_inverts_the_order_of_elements)
 //{
 //  static char const *TEXT = R"(
 //    function main()
@@ -467,7 +468,7 @@ TEST_F(MathTests, abs_test)
 //  ASSERT_EQ(stdout(), "[30, 20, 10]");
 //}
 //
-//TEST_F(MathTests, reverse_of_an_empty_array_is_a_noop)
+// TEST_F(MathTests, reverse_of_an_empty_array_is_a_noop)
 //{
 //  static char const *TEXT = R"(
 //    function main()

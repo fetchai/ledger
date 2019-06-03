@@ -34,7 +34,6 @@ using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor
 
 TYPED_TEST_CASE(StandardFunctionTests, MyTypes);
 
-
 template <typename TensorType>
 void RandomAssign(TensorType &tensor)
 {
@@ -43,7 +42,7 @@ void RandomAssign(TensorType &tensor)
   static fetch::random::LinearCongruentialGenerator gen;
 
   auto it = tensor.begin();
-  while(it.is_valid())
+  while (it.is_valid())
   {
     *it = static_cast<Type>(gen.AsDouble());
     ++it;
@@ -59,9 +58,9 @@ TYPED_TEST(StandardFunctionTests, abs_test)
   RandomAssign(tensor);
 
   // manually calculate the abs as ground truth comparison
-  ArrayType gt = tensor.Copy();
-  auto gt_it = gt.begin();
-  while(gt_it.is_valid())
+  ArrayType gt    = tensor.Copy();
+  auto      gt_it = gt.begin();
+  while (gt_it.is_valid())
   {
     if (*gt_it < 0)
     {
