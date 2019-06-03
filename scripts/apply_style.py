@@ -19,11 +19,10 @@ import os
 import re
 import subprocess
 import sys
-import threading
 import time
 import traceback
-from concurrent.futures import ThreadPoolExecutor
 from functools import wraps
+from multiprocessing import Lock, Pool
 from os.path import abspath, basename, commonpath, dirname, isdir, isfile, join
 
 PROJECT_ROOT = abspath(dirname(dirname(__file__)))
@@ -100,8 +99,8 @@ SUPPORTED_LANGUAGES = {
 num_files_processed_so_far = 0  # Global variable
 total_files_to_process = 0  # Global variable
 
-output_lock = threading.Lock()
-file_count_lock = threading.Lock()
+output_lock = Lock()
+file_count_lock = Lock()
 
 
 def output(text):
@@ -110,7 +109,7 @@ def output(text):
         sys.stdout.flush()
 
 
-def increment_file_count():
+def increment_file_count(_):
     global num_files_processed_so_far
 
     with file_count_lock:
@@ -357,8 +356,6 @@ def apply_transformations_to_file(path_to_file):
                 f.seek(0)
                 f.truncate(0)
                 f.write(text)
-
-        increment_file_count()
     except:
         output(traceback.format_exc())
 
@@ -366,8 +363,14 @@ def apply_transformations_to_file(path_to_file):
 def process_in_parallel(files_to_process, jobs):
     output('Processing {} file(s) with {} job(s) ...'
            .format(total_files_to_process, jobs))
-    with ThreadPoolExecutor(max_workers=jobs) as pool:
-        pool.map(apply_transformations_to_file, files_to_process)
+
+    with Pool(processes=jobs) as pool:
+        for file in files_to_process:
+            pool.apply_async(apply_transformations_to_file,
+                             (file,), callback=increment_file_count)
+
+        pool.close()
+        pool.join()
 
     output('Done.')
 
