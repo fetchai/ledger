@@ -41,7 +41,6 @@ namespace {
 using fetch::variant::Variant;
 using fetch::byte_array::ByteArray;
 using fetch::byte_array::ConstByteArray;
-using fetch::byte_array::ToBase64;
 using fetch::ledger::FromJsonTransaction;
 
 ConstByteArray const API_PATH_CONTRACT_PREFIX("/api/contract/");
