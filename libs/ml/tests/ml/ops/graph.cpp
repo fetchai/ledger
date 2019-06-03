@@ -226,7 +226,7 @@ TYPED_TEST(GraphTest, diamond_graph_backward)  // output=(input1*input2)-(input1
       gradients[0].AllClose(grad2, static_cast<DataType>(1e-5f), static_cast<DataType>(1e-5f)));
 
   // Test Weights
-  std::vector<TypeParam> weights = g.GetWeights();
+  std::vector<TypeParam> weights = g.get_weights();
   EXPECT_EQ(weights.size(), 2);
   ASSERT_TRUE(
       weights[1].AllClose(data2, static_cast<DataType>(1e-5f), static_cast<DataType>(1e-5f)));
@@ -253,7 +253,7 @@ TYPED_TEST(GraphTest, diamond_graph_backward)  // output=(input1*input2)-(input1
   g.BackPropagate(output_name, error_signal);
 
   // Test Weights
-  std::vector<TypeParam> weights2 = g.GetWeights();
+  std::vector<TypeParam> weights2 = g.get_weights();
   EXPECT_EQ(weights2.size(), 2);
   ASSERT_TRUE(weights2[1].AllClose(weights1_expected, static_cast<DataType>(1e-5f),
                                    static_cast<DataType>(1e-5f)));
