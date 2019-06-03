@@ -46,7 +46,7 @@ public:
             DataType const &learning_rate = DataType{0.001f});
 
   // TODO (private 1090): Optimise TensorSlice for graph-feeding without using .Copy
-  DataType DoBatch(ArrayType &data, ArrayType &labels);
+  DataType DoBatch(ArrayType &data, ArrayType &labels, SizeType batch_size = 0);
 
 protected:
   std::shared_ptr<Graph<T>> graph_;
@@ -56,9 +56,10 @@ protected:
   DataType                  learning_rate_    = fetch::math::numeric_max<DataType>();
   std::vector<std::shared_ptr<fetch::ml::ops::Trainable<ArrayType>>> graph_trainables_;
   std::vector<ArrayType>                                             gradients_;
+  SizeType epoch_ = fetch::math::numeric_max<SizeType>();
 
 private:
-  virtual void ApplyGradients() = 0;
+  virtual void ApplyGradients(SizeType batch_size) = 0;
 };
 
 template <class T, class C>
@@ -70,37 +71,64 @@ Optimiser<T, C>::Optimiser(std::shared_ptr<Graph<T>> graph, std::string const &i
   , input_node_name_(input_node_name)
   , output_node_name_(output_node_name)
   , learning_rate_(learning_rate)
+  , epoch_(0)
 {
   graph_trainables_ = graph_->GetTrainables();
-
   for (auto &train : graph_trainables_)
   {
-    this->gradients_.emplace_back(ArrayType(train->GetWeights().shape()));
+    this->gradients_.emplace_back(ArrayType(train->get_weights().shape()));
   }
 }
 
+/**
+ *
+ * @tparam T ArrayType
+ * @tparam C CriterionType
+ * @param data training data
+ * @param labels training labels
+ * @param batch_size size of mini-batch, if batch_size==0 it will be set to n_data size
+ * @return Sum of losses from all mini-batches
+ */
 // TODO (private 1090): Optimise TensorSlice for graph-feeding without using .Copy
 template <class T, class C>
-typename T::Type Optimiser<T, C>::DoBatch(ArrayType &data, ArrayType &labels)
+typename T::Type Optimiser<T, C>::DoBatch(ArrayType &data, ArrayType &labels, SizeType batch_size)
 {
-  DataType loss{0};
-  SizeType n_data = data.shape().at(0);
 
-  // Do batch back-propagation
-  for (SizeType step{0}; step < n_data; ++step)
+  // If batch_size is not specified do full batch
+  SizeType n_data = data.shape().at(0);
+  if (batch_size == 0)
   {
-    auto cur_input = data.Slice(step).Copy();
-    graph_->SetInput(input_node_name_, cur_input);
-    auto cur_label  = labels.Slice(step).Copy();
-    auto label_pred = graph_->Evaluate(output_node_name_);
-    loss += criterion_.Forward({label_pred, cur_label});
-    graph_->BackPropagate(output_node_name_, criterion_.Backward({label_pred, cur_label}));
+    batch_size = n_data;
   }
 
-  // Compute and apply gradient
-  ApplyGradients();
+  DataType loss;
+  DataType loss_sum{0};
+  SizeType step{0};
+  while (step < n_data)
+  {
+    loss = DataType{0};
 
-  return loss;
+    // Do batch back-propagation
+    for (SizeType it{step}; (it < step + batch_size) && (it < n_data); ++it)
+    {
+      auto cur_input = data.Slice(it).Copy();
+      graph_->SetInput(input_node_name_, cur_input);
+      auto cur_label  = labels.Slice(it).Copy();
+      auto label_pred = graph_->Evaluate(output_node_name_);
+      loss += criterion_.Forward({label_pred, cur_label});
+      graph_->BackPropagate(output_node_name_, criterion_.Backward({label_pred, cur_label}));
+    }
+    // Compute and apply gradient
+    ApplyGradients(batch_size);
+
+    FETCH_LOG_INFO("ML_LIB", "Loss: ", loss);
+
+    step += batch_size;
+  }
+  loss_sum += loss;
+  epoch_++;
+
+  return loss_sum;
 }
 
 }  // namespace optimisers

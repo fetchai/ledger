@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "math/standard_functions/pow.hpp"
 #include "math/standard_functions/sqrt.hpp"
 #include "ml/graph.hpp"
 #include "ml/ops/loss_functions/criterion.hpp"
@@ -60,7 +61,7 @@ private:
   DataType epsilon_;
   DataType one_{1};
 
-  void ApplyGradients() override;
+  void ApplyGradients(SizeType batch_size) override;
   void ResetCache();
 };
 
@@ -81,10 +82,10 @@ AdamOptimiser<T, C>::AdamOptimiser(std::shared_ptr<Graph<T>>
 {
   for (auto &train : this->graph_trainables_)
   {
-    this->cache_.emplace_back(ArrayType(train->GetWeights().shape()));
-    this->momentum_.emplace_back(ArrayType(train->GetWeights().shape()));
-    this->mt_.emplace_back(ArrayType(train->GetWeights().shape()));
-    this->vt_.emplace_back(ArrayType(train->GetWeights().shape()));
+    this->cache_.emplace_back(ArrayType(train->get_weights().shape()));
+    this->momentum_.emplace_back(ArrayType(train->get_weights().shape()));
+    this->mt_.emplace_back(ArrayType(train->get_weights().shape()));
+    this->vt_.emplace_back(ArrayType(train->get_weights().shape()));
   }
   ResetCache();
 }
@@ -92,8 +93,9 @@ AdamOptimiser<T, C>::AdamOptimiser(std::shared_ptr<Graph<T>>
 // private
 
 template <class T, class C>
-void AdamOptimiser<T, C>::ApplyGradients()
+void AdamOptimiser<T, C>::ApplyGradients(SizeType batch_size)
 {
+  (void)batch_size;
   // Do operation with gradient
   auto cached_weight_it = cache_.begin();
   auto momentum_it      = momentum_.begin();
@@ -103,18 +105,27 @@ void AdamOptimiser<T, C>::ApplyGradients()
   auto gradient_it  = this->gradients_.begin();
   auto trainable_it = this->graph_trainables_.begin();
 
+  // beta1_t=beta1^t and beta2_t=beta2^t, where t is number of epochs + 1
+  fetch::math::Pow(beta1_, static_cast<DataType>(this->epoch_ + 1), beta1_t_);
+  fetch::math::Pow(beta2_, static_cast<DataType>(this->epoch_ + 1), beta2_t_);
+
   while (gradient_it != this->gradients_.end())
   {
-    // cache[i] = (beta1_t_ * cache[i]) + ((one_ - beta1_t_) * (gradients[i]));
-    fetch::math::Multiply((*trainable_it)->Gradients(), (one_ - beta1_t_), *gradient_it);
+    // cache[i] = (beta1_t_ * cache[i]) + ((one_ - beta1_t_) * (input_gradients[i]/batch_size));
+    fetch::math::Multiply((*trainable_it)->get_gradients(),
+                          (one_ - beta1_t_) / static_cast<DataType>(batch_size), *gradient_it);
     fetch::math::Multiply(*cached_weight_it, beta1_t_, *cached_weight_it);
     fetch::math::Add(*cached_weight_it, *gradient_it, *cached_weight_it);
 
     // mt   = cache[i] / (one_ - beta1_t_);
     fetch::math::Divide(*cached_weight_it, (one_ - beta1_t_), *mt_it);
 
-    // momentum[i] = (beta2_t_ * momentum[i]) + ((one_ - beta2_t_) * (gradients[i]^2));
-    fetch::math::Multiply((*trainable_it)->Gradients(), (*trainable_it)->Gradients(), *vt_it);
+    // momentum[i] = (beta2_t_ * momentum[i]) + ((one_ - beta2_t_) *
+    // ((input_gradients[i]/batch_size)^2));
+    fetch::math::Divide((*trainable_it)->get_gradients(), static_cast<DataType>(batch_size),
+                        *vt_it);
+    fetch::math::Square(*vt_it, *vt_it);
+
     fetch::math::Multiply(*vt_it, (one_ - beta2_t_), *vt_it);
     fetch::math::Multiply(*momentum_it, beta2_t_, *momentum_it);
     fetch::math::Add(*momentum_it, *vt_it, *momentum_it);
@@ -122,13 +133,13 @@ void AdamOptimiser<T, C>::ApplyGradients()
     // vt   = momentum[i] / (one_ - beta2_t_);
     fetch::math::Divide(*momentum_it, (one_ - beta2_t_), *vt_it);
 
-    // gradients[i] = -this->learning_rate_ * mt / (sqrt(vt) + epsilon_);
+    // output_gradients[i] = -this->learning_rate_ * mt / (sqrt(vt) + epsilon_);
     fetch::math::Sqrt(*vt_it, *gradient_it);
     fetch::math::Add(*gradient_it, epsilon_, *gradient_it);
     fetch::math::Divide(*mt_it, *gradient_it, *gradient_it);
     fetch::math::Multiply(*gradient_it, -this->learning_rate_, *gradient_it);
 
-    // Apply gradient weights[i]+=grad[i]
+    // Apply gradient weights[i]+=output_gradients[i]
     (*trainable_it)->ApplyGradient(*gradient_it);
 
     ++cached_weight_it;
@@ -139,10 +150,6 @@ void AdamOptimiser<T, C>::ApplyGradients()
     ++gradient_it;
     ++trainable_it;
   }
-
-  // beta1_t=beta1^t and beta2_t=beta2^t, where t is number of epochs + 1
-  beta1_t_ *= beta1_;
-  beta2_t_ *= beta2_;
 }
 
 template <class T, class C>

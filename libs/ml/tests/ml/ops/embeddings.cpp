@@ -130,7 +130,7 @@ TYPED_TEST(EmbeddingsTest, backward)
   e.Step(Type(1));
 
   // Get a copy of the gradients and check that they were zeroed out after Step
-  TypeParam grads_copy = e.Gradients();
+  TypeParam grads_copy = e.get_gradients();
   EXPECT_TRUE(TypeParam::Zeroes({1, 6}).AllClose(grads_copy.Slice(SizeType(input.At(0))).Copy()));
   EXPECT_TRUE(TypeParam::Zeroes({1, 6}).AllClose(grads_copy.Slice(SizeType(input.At(1))).Copy()));
 

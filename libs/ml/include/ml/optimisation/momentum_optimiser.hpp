@@ -52,7 +52,7 @@ private:
   DataType               negative_one_{-1};
   DataType               zero_{0};
 
-  void ApplyGradients() override;
+  void ApplyGradients(SizeType batch_size) override;
   void ResetMomentum();
 };
 
@@ -69,7 +69,7 @@ MomentumOptimiser<T, C>::MomentumOptimiser(std::shared_ptr<Graph<T>>
 {
   for (auto &train : this->graph_trainables_)
   {
-    this->momentum_.emplace_back(ArrayType(train->GetWeights().shape()));
+    this->momentum_.emplace_back(ArrayType(train->get_weights().shape()));
   }
   ResetMomentum();
 }
@@ -77,23 +77,26 @@ MomentumOptimiser<T, C>::MomentumOptimiser(std::shared_ptr<Graph<T>>
 // private
 
 template <class T, class C>
-void MomentumOptimiser<T, C>::ApplyGradients()
+void MomentumOptimiser<T, C>::ApplyGradients(SizeType batch_size)
 {
+  (void)batch_size;
   auto trainable_it = this->graph_trainables_.begin();
   auto gradient_it  = this->gradients_.begin();
   auto mit          = momentum_.begin();
 
   while (gradient_it != this->gradients_.end())
   {
-    // momentum[i] = momentum_update * momentum[i] + learning_rate * grad[i]
+    // momentum[i] = momentum_update * momentum[i] + learning_rate * (input_grad[i]/batch_size)
     fetch::math::Multiply(*mit, momentum_update_, *mit);
-    fetch::math::Multiply((*trainable_it)->Gradients(), this->learning_rate_, *gradient_it);
+    fetch::math::Multiply((*trainable_it)->get_gradients(),
+                          (this->learning_rate_) / (static_cast<DataType>(batch_size)),
+                          *gradient_it);
     fetch::math::Add(*mit, *gradient_it, *mit);
 
-    // grad[i]=-momentum[i]
+    // output_grad[i]=-momentum[i]
     fetch::math::Multiply(*mit, negative_one_, *gradient_it);
 
-    // Apply gradient weights[i]+=grad[i]
+    // Apply gradient weights[i]+=output_grad[i]
     (*trainable_it)->ApplyGradient(*gradient_it);
 
     ++trainable_it;

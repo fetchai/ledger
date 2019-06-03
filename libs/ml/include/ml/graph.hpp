@@ -43,6 +43,7 @@ class Graph
 public:
   using ArrayType          = T;
   using ArrayPtrType       = std::shared_ptr<ArrayType>;
+  using SizeType           = typename ArrayType::SizeType;
   using Datatype           = typename ArrayType::Type;
   using ConstSliceType     = typename ArrayType::ConstSliceType;
   using NodePtrType        = typename std::shared_ptr<fetch::ml::NodeInterface<ArrayType>>;
@@ -66,7 +67,7 @@ public:
   virtual struct fetch::ml::StateDict<ArrayType> StateDict() const;
   virtual void LoadStateDict(struct fetch::ml::StateDict<T> const &dict);
 
-  std::vector<ArrayType>        GetWeights() const;
+  std::vector<ArrayType>        get_weights() const;
   std::vector<ArrayType>        GetGradients() const;
   void                          ApplyGradients(std::vector<ArrayType> &grad);
   std::vector<TrainablePtrType> GetTrainables();
@@ -91,7 +92,8 @@ private:
 
 protected:
   std::unordered_map<std::string, NodePtrType> nodes_;
-  std::map<std::string, TrainablePtrType>      trainable_;
+  std::unordered_map<std::string, SizeType>    trainable_lookup_;
+  std::vector<TrainablePtrType>                trainable_;
 };
 
 /**
@@ -132,7 +134,7 @@ void Graph<ArrayType>::Step(Datatype learning_rate)
 {
   for (auto &t : trainable_)
   {
-    t.second->Step(learning_rate);
+    t->Step(learning_rate);
   }
 }
 
@@ -230,9 +232,9 @@ template <typename ArrayType>
 struct fetch::ml::StateDict<ArrayType> Graph<ArrayType>::StateDict() const
 {
   struct fetch::ml::StateDict<ArrayType> d;
-  for (auto const &t : trainable_)
+  for (auto const &t : trainable_lookup_)
   {
-    d.dict_.emplace(t.first, t.second->StateDict());
+    d.dict_.emplace(t.first, trainable_.at(t.second)->StateDict());
   }
   return d;
 }
@@ -245,9 +247,9 @@ template <typename ArrayType>
 void Graph<ArrayType>::LoadStateDict(struct fetch::ml::StateDict<ArrayType> const &dict)
 {
   assert(!dict.weights_);
-  for (auto const &t : trainable_)
+  for (auto const &t : trainable_lookup_)
   {
-    t.second->LoadStateDict(dict.dict_.at(t.first));
+    trainable_.at(t.second)->LoadStateDict(dict.dict_.at(t.first));
   }
 }
 
@@ -256,13 +258,13 @@ void Graph<ArrayType>::LoadStateDict(struct fetch::ml::StateDict<ArrayType> cons
  * @return ret is vector containing values for all weights
  */
 template <typename ArrayType>
-std::vector<ArrayType> Graph<ArrayType>::GetWeights() const
+std::vector<ArrayType> Graph<ArrayType>::get_weights() const
 {
   std::vector<ArrayType> ret;
 
   for (auto const &t : trainable_)
   {
-    ret.emplace_back(t.second->GetWeights());
+    ret.emplace_back(t->get_weights());
   }
   return std::move(ret);
 }
@@ -279,7 +281,7 @@ std::vector<ArrayType> Graph<ArrayType>::GetGradients() const
 
   for (auto const &t : trainable_)
   {
-    ret.emplace_back(t.second->Gradients());
+    ret.emplace_back(t->get_gradients());
   }
   return std::move(ret);
 }
@@ -292,7 +294,7 @@ void Graph<ArrayType>::ResetGradients()
 {
   for (auto const &t : trainable_)
   {
-    t.second->ResetGradients();
+    t->ResetGradients();
   }
 }
 
@@ -306,7 +308,7 @@ void Graph<ArrayType>::ApplyGradients(std::vector<ArrayType> &grad)
   auto grad_it = grad.begin();
   for (auto const &t : trainable_)
   {
-    t.second->ApplyGradient(*grad_it);
+    t->ApplyGradient(*grad_it);
     ++grad_it;
   }
 }
@@ -323,7 +325,8 @@ meta::IfIsTrainable<ArrayType, OperationType, void> Graph<ArrayType>::AddTrainab
     std::string const &name, std::shared_ptr<Node<ArrayType, OperationType>> op)
 {
   FETCH_LOG_INFO("ML_LIB", "Created trainable node [", name, "]");
-  trainable_[name] = op;
+  trainable_.emplace_back(op);
+  trainable_lookup_[name] = trainable_.size() - 1;
 }
 
 /**
@@ -339,10 +342,12 @@ meta::IfIsGraph<ArrayType, OperationType, void> Graph<ArrayType>::AddTrainable(
     std::string const &name, std::shared_ptr<Node<ArrayType, OperationType>> op)
 {
 
-  for (auto &trainable : op->trainable_)
+  for (auto &trainable : op->trainable_lookup_)
   {
     FETCH_LOG_INFO("ML_LIB", "Created trainable node [", name, "]");
-    trainable_[name + "_" + trainable.first] = trainable.second;
+
+    trainable_.emplace_back(op->trainable_.at(trainable.second));
+    trainable_lookup_[trainable.first] = trainable_.size() - 1;
   }
 }
 
@@ -397,13 +402,7 @@ template <typename ArrayType>
 std::vector<typename std::shared_ptr<fetch::ml::ops::Trainable<ArrayType>>>
 Graph<ArrayType>::GetTrainables()
 {
-  std::vector<TrainablePtrType> ret;
-
-  for (auto const &t : trainable_)
-  {
-    ret.emplace_back(t.second);
-  }
-  return std::move(ret);
+  return trainable_;
 }
 
 }  // namespace ml
