@@ -19,6 +19,9 @@
 #include "vm/compiler.hpp"
 #include "vm/module.hpp"
 
+#include <string>
+#include <vector>
+
 namespace fetch {
 namespace vm {
 
@@ -36,26 +39,23 @@ Compiler::~Compiler()
 bool Compiler::Compile(std::string const &source, std::string const &name, IR &ir,
                        std::vector<std::string> &errors)
 {
-  std::string  filename = "";
+  std::string  filename;
   BlockNodePtr root     = parser_.Parse(filename, source, errors);
+
   if (root == nullptr)
   {
     return false;
   }
-  bool analysed = analyser_.Analyse(root, errors);
-  if (!analysed)
+
+  bool success = analyser_.Analyse(root, errors);
+  if (success)
   {
-    root->Reset();
-    root = nullptr;
-    return false;
+    builder_.Build(name, root, ir);
   }
 
-  builder_.Build(name, root, ir);
-
   root->Reset();
-  root = nullptr;
 
-  return true;
+  return success;
 }
 
 }  // namespace vm
