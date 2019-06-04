@@ -850,8 +850,8 @@ TEST(FixedPointTest, Pow_16_16_positive_x)
   EXPECT_NEAR((double)e1 / std::pow(-1.6519711627625, 2), 1.0, (double)fp32::TOLERANCE);
   EXPECT_NEAR((double)e2 / std::pow(-1.6519711627625, 3), 1.0, (double)fp32::TOLERANCE);
   EXPECT_NEAR((double)e3 / std::pow(2, 1.8464393615723), 1.0, (double)fp32::TOLERANCE);
-  EXPECT_THROW(fp32::Pow(fp32::CONST_ZERO, fp32::CONST_ZERO), std::runtime_error);
-  EXPECT_THROW(fp32::Pow(a, a), std::runtime_error);
+  EXPECT_TRUE(fp32::isNaN(fp32::Pow(fp32::CONST_ZERO, fp32::CONST_ZERO)));
+  EXPECT_TRUE(fp32::isNaN(fp32::Pow(a, a)));
 
   fp32   step{0.001};
   fp32   x{0.001};
@@ -918,8 +918,8 @@ TEST(FixedPointTest, Pow_32_32_positive_x)
   EXPECT_NEAR((double)e1 / std::pow(-1.6519711627625, 2), 1.0, (double)fp64::TOLERANCE);
   EXPECT_NEAR((double)e2 / std::pow(-1.6519711627625, 3), 1.0, (double)fp64::TOLERANCE);
   EXPECT_NEAR((double)e3 / std::pow(2, 1.8464393615723), 1.0, (double)fp64::TOLERANCE);
-  EXPECT_THROW(fp64::Pow(fp64::CONST_ZERO, fp64::CONST_ZERO), std::runtime_error);
-  EXPECT_THROW(fp64::Pow(a, a), std::runtime_error);
+  EXPECT_TRUE(fp64::isNaN(fp64::Pow(fp64::CONST_ZERO, fp64::CONST_ZERO)));
+  EXPECT_TRUE(fp64::isNaN(fp64::Pow(a, a)));
 
   fp64   step{0.0001};
   fp64   x{0.0001};
@@ -1665,9 +1665,8 @@ TEST(FixedPointTest, Tan_16_16)
   delta = (double)e14 - std::tan((double)(fp64::CONST_PI_4 * 3));
   EXPECT_NEAR(delta / std::tan((double)(fp64::CONST_PI_4 * 3)), 0.0, (double)fp32::TOLERANCE);
 
-  // (843, private) Replace with IsInfinity()
-  EXPECT_TRUE(fp32::isNaN(fp32::Tan(fp32::CONST_PI_2)));
-  EXPECT_TRUE(fp32::isNaN(fp32::Tan(-fp32::CONST_PI_2)));
+  EXPECT_TRUE(fp32::isPosInfinity(fp32::Tan(fp32::CONST_PI_2)));
+  EXPECT_TRUE(fp32::isNegInfinity(fp32::Tan(-fp32::CONST_PI_2)));
 
   fp32 step{0.001}, offset{step * 10};
   fp32 x{-fp32::CONST_PI_2}, max{fp32::CONST_PI_2};
@@ -1740,8 +1739,8 @@ TEST(FixedPointTest, Tan_32_32)
   EXPECT_NEAR(delta / std::tan((double)(fp64::CONST_PI_4 * 3)), 0.0, (double)fp64::TOLERANCE);
 
   // (843, private) Replace with IsInfinity()
-  EXPECT_TRUE(fp64::isNaN(fp64::Tan(fp64::CONST_PI_2)));
-  EXPECT_TRUE(fp64::isNaN(fp64::Tan(-fp64::CONST_PI_2)));
+  EXPECT_TRUE(fp64::isPosInfinity(fp64::Tan(fp64::CONST_PI_2)));
+  EXPECT_TRUE(fp64::isNegInfinity(fp64::Tan(-fp64::CONST_PI_2)));
 
   fp64 step{0.0001}, offset{step * 100};
   fp64 x{-fp64::CONST_PI_2}, max{fp64::CONST_PI_2};
@@ -2236,4 +2235,55 @@ TEST(FixedPointTest, ATanH_32_32)
   EXPECT_NEAR(avg_error, 0.0, tolerance);
   std::cout << "ATanH: max error = " << max_error << std::endl;
   std::cout << "ATanH: avg error = " << avg_error << std::endl;
+}
+
+TEST(FixedPointTest, NanInfinity_16_16)
+{
+  std::cout << fp32::NaN << std::endl;
+  std::cout << fp32::POSITIVE_INFINITY << std::endl;
+  std::cout << fp32::NEGATIVE_INFINITY << std::endl;
+
+  fp32 m_inf{fp32::NEGATIVE_INFINITY};
+  fp32 p_inf{fp32::POSITIVE_INFINITY};
+
+  // Basic checks
+  EXPECT_TRUE(fp32::isInfinity(m_inf));
+  EXPECT_TRUE(fp32::isNegInfinity(m_inf));
+  EXPECT_TRUE(fp32::isInfinity(p_inf));
+  EXPECT_TRUE(fp32::isPosInfinity(p_inf));
+  EXPECT_FALSE(fp32::isNegInfinity(p_inf));
+  EXPECT_FALSE(fp32::isPosInfinity(m_inf));
+
+  // Addition checks 
+  EXPECT_TRUE(fp32::isNegInfinity(m_inf + m_inf));
+  EXPECT_TRUE(fp32::isPosInfinity(p_inf + p_inf));
+  EXPECT_TRUE(fp32::isNaN(m_inf + p_inf));
+  EXPECT_TRUE(fp32::isNaN(p_inf + m_inf));
+
+  // Subtraction checks
+  // Multiplication checks
+  // Division checks
+  // Exponential checks
+  // Logarithm checks
+  // Trigonometry checks
+}
+
+TEST(FixedPointTest, NanInfinity_32_32)
+{
+  std::cout << fp64::NaN << std::endl;
+  std::cout << fp64::POSITIVE_INFINITY << std::endl;
+  std::cout << fp64::NEGATIVE_INFINITY << std::endl;
+
+  fp64 m_inf{fp64::NEGATIVE_INFINITY};
+  fp64 p_inf{fp64::POSITIVE_INFINITY};
+
+  // Basic checks
+  EXPECT_TRUE(fp64::isInfinity(m_inf));
+  EXPECT_TRUE(fp64::isNegInfinity(m_inf));
+  EXPECT_TRUE(fp64::isInfinity(p_inf));
+  EXPECT_TRUE(fp64::isPosInfinity(p_inf));
+  EXPECT_FALSE(fp64::isNegInfinity(p_inf));
+  EXPECT_FALSE(fp64::isPosInfinity(m_inf));
+
+
 }
