@@ -740,7 +740,8 @@ Tensor<T, C> Tensor<T, C>::FromString(byte_array::ConstByteArray const &c)
       }
       else
       {
-        elems.push_back(Type(atof(c.char_pointer() + last)));
+        std::string cur_elem((c.char_pointer() + last), static_cast<std::size_t>(i - last));
+        elems.push_back(Type(std::atof(cur_elem.c_str())));
       }
       break;
     }
