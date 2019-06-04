@@ -486,4 +486,68 @@ TEST_F(ArrayTests, reverse_of_an_empty_array_is_a_noop)
   ASSERT_EQ(toolkit.stdout(), "[]");
 }
 
+TEST_F(ArrayTests, extend_appends_the_elements_of_the_argument_array_in_order)
+{
+  static char const *TEXT = R"(
+    function main()
+      var data1 = Array<Int32>(3);
+      data1[0] = 1;
+      data1[1] = 2;
+      data1[2] = 3;
+      var data2 = Array<Int32>(2);
+      data2[0] = 5;
+      data2[1] = 4;
+
+      data1.extend(data2);
+
+      print(data1);
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_TRUE(toolkit.Run());
+
+  ASSERT_EQ(toolkit.stdout(), "[1, 2, 3, 5, 4]");
+}
+
+TEST_F(ArrayTests, extend_called_with_an_empty_array_is_a_noop)
+{
+  static char const *TEXT = R"(
+    function main()
+      var data1 = Array<Int32>(3);
+      data1[0] = 1;
+      data1[1] = 2;
+      data1[2] = 3;
+      var data2 = Array<Int32>(0);
+
+      data1.extend(data2);
+
+      print(data1);
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_TRUE(toolkit.Run());
+
+  ASSERT_EQ(toolkit.stdout(), "[1, 2, 3]");
+}
+
+TEST_F(ArrayTests, extend_fails_if_called_with_an_array_of_different_type)
+{
+  static char const *TEXT = R"(
+    function main()
+      var data1 = Array<Int32>(1);
+      data1[0] = 1;
+      var data2 = Array<UInt64>(1);
+      data2[0] = 1;
+
+      data1.extend(data2);
+
+      print(data1);
+    endfunction
+  )";
+
+  ASSERT_FALSE(toolkit.Compile(TEXT));
+}
+
 }  // namespace
