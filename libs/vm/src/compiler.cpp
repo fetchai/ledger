@@ -40,7 +40,7 @@ bool Compiler::Compile(std::string const &source, std::string const &name, IR &i
                        std::vector<std::string> &errors)
 {
   std::string  filename;
-  BlockNodePtr root     = parser_.Parse(filename, source, errors);
+  BlockNodePtr root = parser_.Parse(filename, source, errors);
 
   if (root == nullptr)
   {
