@@ -47,14 +47,12 @@ private:
 
   struct OpInfo
   {
-    OpInfo()
+    OpInfo() = default;
+    OpInfo(int precedence, Association association, int arity)
+      : precedence(precedence)
+      , association(association)
+      , arity(arity)
     {}
-    OpInfo(int precedence__, Association association__, int arity__)
-    {
-      precedence  = precedence__;
-      association = association__;
-      arity       = arity__;
-    }
     int         precedence;
     Association association;
     int         arity;
