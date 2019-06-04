@@ -76,6 +76,11 @@ public:
 
   // Accessors
   Address const &address() const;
+  std::string const &work_function() const;
+  std::string const &problem_function() const;
+  std::string const &objective_function() const;
+  std::string const &clear_function() const;
+  std::string const &generator_function() const;
 
   // Basic Contract Actions
   void Attach(StorageInterface &storage);
@@ -118,6 +123,31 @@ private:
 inline Address const &SynergeticContract::address() const
 {
   return address_;
+}
+
+inline std::string const &SynergeticContract::work_function() const
+{
+  return work_function_;
+}
+
+inline std::string const &SynergeticContract::problem_function() const
+{
+  return problem_function_;
+}
+
+inline std::string const &SynergeticContract::objective_function() const
+{
+  return objective_function_;
+}
+
+inline std::string const &SynergeticContract::clear_function() const
+{
+  return clear_function_;
+}
+
+inline std::string const &SynergeticContract::generator_function() const
+{
+  return test_dag_generator_;
 }
 
 inline void SynergeticContract::Attach(StorageInterface &storage)
