@@ -17,6 +17,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include "vm/module.hpp"
+
+#include <cstdint>
+
 namespace fetch {
 namespace vm_modules {
 
@@ -29,7 +33,8 @@ fetch::math::meta::IfIsArithmetic<T, fetch::vm::Ptr<fetch::vm::String>> ToString
 {
   if (std::is_same<T, bool>::value)
   {
-    fetch::vm::Ptr<fetch::vm::String> ret(new fetch::vm::String(vm, a ? "True" : "False"));
+    fetch::vm::Ptr<fetch::vm::String> ret(
+        new fetch::vm::String(vm, static_cast<bool>(a) ? "true" : "false"));
     return ret;
   }
   else
@@ -54,11 +59,6 @@ inline void CreateToString(fetch::vm::Module &module)
   module.CreateFreeFunction("toString", &ToString<float_t>);
   module.CreateFreeFunction("toString", &ToString<double_t>);
   module.CreateFreeFunction("toString", &ToString<bool>);
-}
-
-inline void CreateToString(std::shared_ptr<vm::Module> module)
-{
-  CreateToString(*module.get());
 }
 
 inline void CreateToBool(fetch::vm::Module &module)
