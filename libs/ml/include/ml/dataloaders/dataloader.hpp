@@ -27,6 +27,7 @@ template <typename DataType, typename LabelType>
 class DataLoader
 {
 public:
+  virtual ~DataLoader()                                 = default;
   virtual std::pair<DataType, LabelType> GetNext()      = 0;
   virtual std::uint64_t                  Size() const   = 0;
   virtual bool                           IsDone() const = 0;
