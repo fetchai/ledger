@@ -189,8 +189,7 @@ struct Array : public IArray
 
     elements.reserve(elements.size() + other_elements.size());
 
-    auto insert_iterator = std::back_inserter(elements);
-    std::copy(other_elements.cbegin(), other_elements.cend(), insert_iterator);
+    elements.insert(elements.cend(), other_elements.cbegin(), other_elements.cend());
   }
 
   TemplateParameter GetIndexedValue(AnyInteger const &index) override
