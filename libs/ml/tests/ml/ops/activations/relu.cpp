@@ -98,8 +98,8 @@ TYPED_TEST(ReluTest, forward_mixed_test)
 {
   using ArrayType = TypeParam;
 
-  ArrayType data = ArrayType::FromString(R"("1, -2, 3, -4, 5, -6, 7, -8)");
-  ArrayType gt   = ArrayType::FromString(R"("1, 0, 3, 0, 5, 0, 7, 0)");
+  ArrayType data = ArrayType::FromString(R"(1, -2, 3, -4, 5, -6, 7, -8)");
+  ArrayType gt   = ArrayType::FromString(R"(1, 0, 3, 0, 5, 0, 7, 0)");
 
   fetch::ml::ops::Relu<ArrayType> op;
   ArrayType                       prediction(op.ComputeOutputShape({data}));
