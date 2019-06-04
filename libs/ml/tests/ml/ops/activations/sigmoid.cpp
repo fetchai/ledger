@@ -36,10 +36,9 @@ TYPED_TEST(SigmoidTest, forward_test)
   using DataType  = typename TypeParam::Type;
   using ArrayType = TypeParam;
 
-  ArrayType data = ArrayType::FromString("1, -2, 3, -4, 5, -6, 7, -8");
+  ArrayType data = ArrayType::FromString(R"(1, -2, 3, -4, 5, -6, 7, -8)");
   ArrayType gt   = ArrayType::FromString(
-      "0.73106, 0.1192029, 0.952574, 0.01798620996, 0.993307149, 0.002472623156635, "
-      "0.999088948806, 0.000335350130466");
+      R"(0.73106, 0.1192029, 0.952574, 0.01798620996, 0.993307149, 0.002472623156635, 0.999088948806, 0.000335350130466)");
 
   fetch::ml::ops::Sigmoid<ArrayType> op;
   ArrayType                          prediction(op.ComputeOutputShape({data}));
@@ -86,9 +85,9 @@ TYPED_TEST(SigmoidTest, backward_test)
   using DataType  = typename TypeParam::Type;
   using ArrayType = TypeParam;
 
-  ArrayType data  = ArrayType::FromString("1, -2, 3, -4, 5, -6, 7, -8");
-  ArrayType error = ArrayType::FromString("0, 0, 0, 0.5, 1, 1, 0, 0");
-  ArrayType gt    = ArrayType::FromString("0, 0, 0, 0.00883135, 0.00664803, 0.00246651, 0, 0");
+  ArrayType data  = ArrayType::FromString(R"(1, -2, 3, -4, 5, -6, 7, -8)");
+  ArrayType error = ArrayType::FromString(R"(0, 0, 0, 0.5, 1, 1, 0, 0)");
+  ArrayType gt    = ArrayType::FromString(R"(0, 0, 0, 0.00883135, 0.00664803, 0.00246651, 0, 0)");
 
   fetch::ml::ops::Sigmoid<ArrayType> op;
   std::vector<ArrayType>             prediction = op.Backward({data}, error);
