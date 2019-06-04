@@ -17,7 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "vm/module.hpp"
-#include "vm/persistent_map.hpp"
+#include "vm/sharded_state.hpp"
 
 #include <cstdint>
 

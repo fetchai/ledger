@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -17,39 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/macros.hpp"
-#include "vm/state.hpp"
-#include "vm/vm.hpp"
+#include "vm/sharded_state.hpp"
 
 namespace fetch {
 namespace vm {
-
-class IShardedState : public Object
-{
-public:
-  // Factory
-  static Ptr<IShardedState> Constructor(VM *vm, TypeId type_id, Ptr<Object> name);
-
-  // Construction / Destruction
-  IShardedState(VM *vm, TypeId type_id, Ptr<Object> name, TypeId value_type)
-    : Object(vm, type_id)
-    , name_{IState::NameToString(vm, std::move(name))}
-    , value_type_{value_type}
-  {}
-
-  ~IShardedState() = default;
-
-  virtual TemplateParameter1 GetIndexedValue(Ptr<String> const &key)                    = 0;
-  virtual void SetIndexedValue(Ptr<String> const &key, TemplateParameter1 const &value) = 0;
-
-  virtual TemplateParameter1 GetIndexedValue(Ptr<Address> const &key)                    = 0;
-  virtual void SetIndexedValue(Ptr<Address> const &key, TemplateParameter1 const &value) = 0;
-
-protected:
-  std::string name_;
-  TypeId      value_type_;
-};
-
+namespace {
 class ShardedState : public IShardedState
 {
 public:
@@ -111,7 +82,8 @@ private:
     }
 
     auto state{
-        IState::ConstructIntrinsic(vm_, TypeIds::Unknown, value_type_, ComposeFullKey(index), TemplateParameter1{})};
+      IState::ConstructIntrinsic(vm_, TypeIds::Unknown, value_type_, ComposeFullKey(index),
+                                 TemplateParameter1{})};
     return state->Get();
   }
 
@@ -123,10 +95,13 @@ private:
       return;
     }
 
-    auto state {IState::ConstructIntrinsic(vm_, TypeIds::Unknown, value_type_, ComposeFullKey(index), value_v)};
+    auto state{IState::ConstructIntrinsic(vm_, TypeIds::Unknown, value_type_, ComposeFullKey(index),
+                                          value_v)};
     state->Set(value_v);
   }
 };
+
+} // namespace
 
 inline Ptr<IShardedState> IShardedState::Constructor(VM *vm, TypeId type_id, Ptr<Object> name)
 {

@@ -20,7 +20,7 @@
 #include "vm/array.hpp"
 #include "vm/map.hpp"
 #include "vm/matrix.hpp"
-#include "vm/persistent_map.hpp"
+#include "vm/sharded_state.hpp"
 #include "vm/state.hpp"
 #include "vm/string.hpp"
 

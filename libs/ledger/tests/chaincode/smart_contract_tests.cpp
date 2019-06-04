@@ -245,8 +245,7 @@ TEST_F(SmartContractTests, CheckParameterizedActionAndQuery)
   auto const expected_value    = RawBytes<int32_t>(30);
 
   {
-    using ::testing::_;
-    InSequence seq;
+   InSequence seq;
 
     // from the action
     EXPECT_CALL(*storage_, Lock(_));
