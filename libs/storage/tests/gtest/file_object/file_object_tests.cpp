@@ -194,10 +194,11 @@ TEST_F(FileObjectTests, ResizeAndWriteFiles)
 
   ASSERT_EQ(file_ids.size(), strings_to_set.size());
 
+  std::random_device rd;
+  std::mt19937       g(rd());
+
   for (std::size_t i = 0; i < 10; ++i)
   {
-    std::random_device rd;
-    std::mt19937       g(rd());
     std::shuffle(consistency_check_.begin(), consistency_check_.end(), g);
 
     for (auto const &index : consistency_check_)
