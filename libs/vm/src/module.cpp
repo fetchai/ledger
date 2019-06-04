@@ -210,10 +210,11 @@ Module::Module()
   istate.CreateMemberFunction("set", &IState::Set);
   istate.CreateMemberFunction("existed", &IState::Existed);
 
-  auto ipersistentmap = GetClassInterface<IPersistentMap>();
-  ipersistentmap.CreateConstuctor<Ptr<String>>();
-  ipersistentmap.CreateConstuctor<Ptr<Address>>();
-  ipersistentmap.EnableIndexOperator<TemplateParameter1, TemplateParameter2>();
+  GetClassInterface<IPersistentMap>()
+    .CreateConstuctor<Ptr<String>>()
+    .CreateConstuctor<Ptr<Address>>()
+    .EnableIndexOperator<Ptr<String>,  TemplateParameter1>()
+    .EnableIndexOperator<Ptr<Address>, TemplateParameter1>();
 }
 
 }  // namespace vm

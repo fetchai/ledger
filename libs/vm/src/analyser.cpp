@@ -146,7 +146,7 @@ void Analyser::Initialise()
   CreateTemplateType("State", TypeIndex(typeid(IState)), {any_type_}, TypeIds::Unknown,
                      state_type_);
 
-  CreateTemplateType("PersistentMap", TypeIndex(typeid(IPersistentMap)), {any_type_, any_type_},
+  CreateTemplateType("PersistentMap", TypeIndex(typeid(IPersistentMap)), {any_type_},
                      TypeIds::Unknown, persistent_map_type_);
 }
 

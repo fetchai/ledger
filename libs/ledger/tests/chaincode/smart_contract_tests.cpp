@@ -385,20 +385,20 @@ TEST_F(SmartContractTests, CheckPersistentMapSetAndQuery)
   std::string const contract_source = R"(
     @action
     function test_persistent_map()
-      var state = PersistentMap<String, Int32>("value");
+      var state = PersistentMap<Int32>("value");
       state["foo"] = 20;
       state["bar"] = 30;
     endfunction
 
     @query
     function query_foo() : Int32
-      var state = PersistentMap<String, Int32>("value");
+      var state = PersistentMap<Int32>("value");
       return state["foo"];
     endfunction
 
     @query
     function query_bar() : Int32
-      var state = PersistentMap<String, Int32>("value");
+      var state = PersistentMap<Int32>("value");
       return state["bar"];
     endfunction
   )";
@@ -456,14 +456,14 @@ TEST_F(SmartContractTests, CheckPersistentMapSetWithAddressAsName)
 {
   std::string const contract_source = R"(
     @action
-    function test_persistent_map(addr : Address)
-      var state = PersistentMap<String, Int32>(addr);
+    function test_persistent_map(address : Address)
+      var state = PersistentMap<Int32>(address);
       state["foo"] = 20;
     endfunction
 
     @query
     function query_foo(address : Address) : Int32
-      var state = PersistentMap<String, Int32>(address);
+      var state = PersistentMap<Int32>(address);
       return state["foo"];
     endfunction
   )";
