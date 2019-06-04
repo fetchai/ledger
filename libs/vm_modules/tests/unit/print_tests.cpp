@@ -456,6 +456,22 @@ TEST_F(PrintTests, print_works_for_booleans)
   ASSERT_EQ(toolkit.stdout(), "true-false");
 }
 
+TEST_F(PrintTests, print_works_for_a_null_reference)
+{
+  static char const *TEXT = R"(
+    function main()
+      var data : Array<Int32>;
+
+      print(data);
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_TRUE(toolkit.Run());
+
+  ASSERT_EQ(toolkit.stdout(), "(nullptr)");
+}
+
 // TODO(WK)
 TEST_F(PrintTests, DISABLED_print_works_for_arrays_of_booleans)
 {
