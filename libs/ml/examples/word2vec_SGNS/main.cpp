@@ -219,7 +219,7 @@ int main(int argc, char **argv)
     batch_loss = 0;
 
     // effectively clears any leftover gradients
-    g.Step(0);
+    g.ResetGradients();
 
     while (!dataloader.IsDone())
     {

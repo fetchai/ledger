@@ -30,7 +30,7 @@ namespace fetch {
 namespace ml {
 
 template <typename T>
-class MNISTLoader : public DataLoader<uint64_t, T>
+class MNISTLoader : public DataLoader<T, T>
 {
 public:
   MNISTLoader(std::string const &imagesFile, std::string const &labelsFile)
@@ -59,11 +59,11 @@ public:
     cursor_ = 0;
   }
 
-  std::pair<uint64_t, T> GetAtIndex(uint64_t index) const
+  std::pair<T, T> GetAtIndex(uint64_t index) const
   {
     using SizeType = typename T::SizeType;
     using DataType = typename T::Type;
-    T buffer({28u, 28u});
+    T buffer({28u, 28u, 1u});
 
     SizeType i{0};
     auto     it = buffer.begin();
@@ -73,16 +73,20 @@ public:
       i++;
       ++it;
     }
-    SizeType label = static_cast<SizeType>(labels_[index]);
+    // SizeType label = static_cast<SizeType>(labels_[index]);
+
+    T label({10, 1});
+    label.At(labels_[index], 0) = DataType(1.0);
+
     return std::make_pair(label, buffer);
   }
 
-  virtual std::pair<uint64_t, T> GetNext()
+  virtual std::pair<T, T> GetNext()
   {
     return GetAtIndex(cursor_++);
   }
 
-  std::pair<uint64_t, T> GetRandom()
+  std::pair<T, T> GetRandom()
   {
     return GetAtIndex((uint64_t)rand() % Size());
   }

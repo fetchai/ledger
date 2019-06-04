@@ -71,10 +71,9 @@ public:
 
   void Train(unsigned int numberOfBatches)
   {
-    float                             loss = 0;
-    CrossEntropy<ArrayType>           criterion;
-    std::pair<std::size_t, ArrayType> input;
-    ArrayType                         gt{std::vector<typename ArrayType::SizeType>({1, 10})};
+    float                           loss = 0;
+    CrossEntropy<ArrayType>         criterion;
+    std::pair<ArrayType, ArrayType> input;
     for (unsigned int i(0); i < numberOfBatches; ++i)
     {
       loss = 0;
@@ -83,11 +82,9 @@ public:
         // Randomly sampling the dataset, should ensure everyone is training on different data
         input = dataloader_.GetRandom();
         g_.SetInput("Input", input.second);
-        gt.Fill(0);
-        gt.At(input.first) = DataType(1.0);
-        ArrayType results  = g_.Evaluate("Softmax").Copy();
-        loss += criterion.Forward({results, gt});
-        g_.BackPropagate("Softmax", criterion.Backward({results, gt}));
+        ArrayType results = g_.Evaluate("Softmax").Copy();
+        loss += criterion.Forward({results, input.first});
+        g_.BackPropagate("Softmax", criterion.Backward({results, input.first}));
       }
       losses_values_.push_back(loss);
       // Updating the weights

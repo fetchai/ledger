@@ -27,7 +27,6 @@
 #include <cstddef>
 #include <cstdint>
 #include <iostream>
-#include <ml/optimisation/sgd_optimiser.hpp>
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -55,7 +54,9 @@ int main(int ac, char **av)
   }
 
   std::cout << "FETCH MNIST Demo" << std::endl;
-  fetch::ml::MNISTLoader<ArrayType>            dataloader(av[1], av[2]);
+
+  // Prepare graph
+  //  Input -> FC -> Relu -> FC -> Relu -> FC -> Softmax
   std::shared_ptr<fetch::ml::Graph<ArrayType>> g =
       std::shared_ptr<fetch::ml::Graph<ArrayType>>(new fetch::ml::Graph<ArrayType>());
 
@@ -66,36 +67,20 @@ int main(int ac, char **av)
   g->AddNode<Relu<ArrayType>>("Relu2", {"FC1"});
   g->AddNode<FullyConnected<ArrayType>>("FC3", {"Relu2"}, 10u, 10u);
   std::string output_name = g->AddNode<Softmax<ArrayType>>("Softmax", {"FC3"});
-  //  Input -> FC -> Relu -> FC -> Relu -> FC -> Softmax
 
-  ArrayType data(std::vector<typename ArrayType::SizeType>({28, 28, subset_size}));
-  ArrayType labels(std::vector<typename ArrayType::SizeType>({10, subset_size}));
-  labels.Fill(0);
-
-  std::pair<std::size_t, ArrayType> input;
-  for (SizeType n{0}; n < subset_size; n++)
-  {
-    input                     = dataloader.GetNext();
-    labels.At(input.first, n) = DataType(1.0);
-
-    for (SizeType i{0}; i < 28; i++)
-    {
-      for (SizeType j{0}; j < 28; j++)
-      {
-        data.At(i, j, n) = input.second.At(i, j);
-      }
-    }
-  }
+  // Initialize MNIST loader
+  std::shared_ptr<fetch::ml::DataLoader<ArrayType, ArrayType>> dataloader(
+      new fetch::ml::MNISTLoader<ArrayType>(av[1], av[2]));
 
   // Initialize Optimiser
-  fetch::ml::optimisers::SGDOptimiser<ArrayType, fetch::ml::ops::CrossEntropy<ArrayType>> optimiser(
-      g, input_name, output_name, learning_rate);
+  fetch::ml::optimisers::AdamOptimiser<ArrayType, fetch::ml::ops::CrossEntropy<ArrayType>>
+      optimiser(g, input_name, output_name, learning_rate);
 
+  // Training loop
   DataType loss;
-
   for (SizeType i{0}; i < epochs; i++)
   {
-    loss = optimiser.Run(data, labels, batch_size);
+    loss = optimiser.Run(*dataloader, batch_size, subset_size);
     std::cout << "Loss: " << loss << std::endl;
   }
 

@@ -104,14 +104,27 @@ public:
     return new DataLoaderWrapper(vm, type_id, images_file->str, labels_file->str);
   }
 
+  // Temporary, remove!!
+  uint64_t FromOneHot(fetch::math::Tensor<float> &one_hot)
+  {
+    for (uint64_t i{0}; i < one_hot.size(); i++)
+    {
+      if (one_hot.At(i, 0) > 0.1)
+      {
+        return i;
+      }
+    }
+    return 0;
+  }
+
   // Wont compile if parameter is not const &
   // The actual fetch::vm::Ptr is const, but the pointed to memory is modified
   fetch::vm::Ptr<TrainingPairWrapper> GetData(fetch::vm::Ptr<TrainingPairWrapper> const &dataHolder)
   {
-    std::pair<uint64_t, fetch::math::Tensor<float>> d = loader_.GetNext();
-    fetch::math::Tensor<float>                      a = *(dataHolder->second);
+    std::pair<fetch::math::Tensor<float>, fetch::math::Tensor<float>> d = loader_.GetNext();
+    fetch::math::Tensor<float>                                        a = *(dataHolder->second);
     a.Copy(d.second);
-    dataHolder->first = d.first;
+    dataHolder->first = FromOneHot(d.first);
     return dataHolder;
   }
 

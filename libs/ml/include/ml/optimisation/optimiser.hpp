@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "math/base_types.hpp"
+#include "ml/dataloaders/dataloader.hpp"
 #include "ml/graph.hpp"
 #include "ml/ops/loss_functions/criterion.hpp"
 
@@ -47,6 +48,10 @@ public:
 
   // TODO (private 1090): Optimise TensorSlice for graph-feeding without using .Copy
   DataType Run(ArrayType &data, ArrayType &labels, SizeType batch_size = 0);
+
+  DataType Run(fetch::ml::DataLoader<ArrayType, ArrayType> &loader,
+               SizeType batch_size  = fetch::math::numeric_max<SizeType>(),
+               SizeType subset_size = fetch::math::numeric_max<SizeType>());
 
 protected:
   std::shared_ptr<Graph<T>> graph_;
@@ -81,7 +86,7 @@ Optimiser<T, C>::Optimiser(std::shared_ptr<Graph<T>> graph, std::string const &i
 }
 
 /**
- *
+ * Does 1 training epoch using data and label Tensors
  * @tparam T ArrayType
  * @tparam C CriterionType
  * @param data training data
@@ -118,6 +123,57 @@ typename T::Type Optimiser<T, C>::Run(ArrayType &data, ArrayType &labels, SizeTy
       auto cur_input = data.Slice(it, n_data_dimm).Copy();
       graph_->SetInput(input_node_name_, cur_input);
       auto cur_label  = labels.Slice(it, n_label_dimm).Copy();
+      auto label_pred = graph_->Evaluate(output_node_name_);
+      loss += criterion_.Forward({label_pred, cur_label});
+      graph_->BackPropagate(output_node_name_, criterion_.Backward({label_pred, cur_label}));
+    }
+    // Compute and apply gradient
+    ApplyGradients(batch_size);
+
+    FETCH_LOG_INFO("ML_LIB", "Loss: ", loss);
+
+    step += batch_size;
+  }
+  loss_sum += loss;
+  epoch_++;
+
+  return loss_sum;
+}
+
+/**
+ * Does 1 training epoch using DataLoader
+ * @tparam T ArrayType
+ * @tparam C CriterionType
+ * @param loader DataLoader that provides examples for training
+ * @param batch_size size of mini-batch
+ * @param subset_size size of subset that will be loaded from DataLoader and trained in 1 epoch. If
+ * not specified, epoch will end when DataLoader wouldn't have next example. Loader is being reset
+ * on begining of each epoch.
+ * @return Sum of losses from all mini-batches
+ */
+template <class T, class C>
+typename T::Type Optimiser<T, C>::Run(fetch::ml::DataLoader<ArrayType, ArrayType> &loader,
+                                      SizeType batch_size, SizeType subset_size)
+{
+  loader.Reset();
+
+  DataType                        loss{0};
+  DataType                        loss_sum{0};
+  SizeType                        step{0};
+  std::pair<ArrayType, ArrayType> input;
+  while (!loader.IsDone() && step < subset_size)
+  {
+    loss = DataType{0};
+
+    // Do batch back-propagation
+    for (SizeType it{step}; (it < step + batch_size) && (!loader.IsDone()) && (step < subset_size);
+         ++it)
+    {
+      input = loader.GetNext();
+
+      auto cur_input = input.second;
+      graph_->SetInput(input_node_name_, cur_input);
+      auto cur_label  = input.first;
       auto label_pred = graph_->Evaluate(output_node_name_);
       loss += criterion_.Forward({label_pred, cur_label});
       graph_->BackPropagate(output_node_name_, criterion_.Backward({label_pred, cur_label}));
