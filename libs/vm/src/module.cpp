@@ -210,7 +210,7 @@ Module::Module()
   istate.CreateMemberFunction("set", &IState::Set);
   istate.CreateMemberFunction("existed", &IState::Existed);
 
-  GetClassInterface<IPersistentMap>()
+  GetClassInterface<IShardedState>()
     .CreateConstuctor<Ptr<String>>()
     .CreateConstuctor<Ptr<Address>>()
     .EnableIndexOperator<Ptr<String>,  TemplateParameter1>()

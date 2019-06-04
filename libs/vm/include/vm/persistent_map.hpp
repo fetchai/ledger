@@ -24,20 +24,20 @@
 namespace fetch {
 namespace vm {
 
-class IPersistentMap : public Object
+class IShardedState : public Object
 {
 public:
   // Factory
-  static Ptr<IPersistentMap> Constructor(VM *vm, TypeId type_id, Ptr<Object> name);
+  static Ptr<IShardedState> Constructor(VM *vm, TypeId type_id, Ptr<Object> name);
 
   // Construction / Destruction
-  IPersistentMap(VM *vm, TypeId type_id, Ptr<Object> name, TypeId value_type)
+  IShardedState(VM *vm, TypeId type_id, Ptr<Object> name, TypeId value_type)
     : Object(vm, type_id)
     , name_{IState::NameToString(vm, std::move(name))}
     , value_type_{value_type}
   {}
 
-  ~IPersistentMap() = default;
+  ~IShardedState() = default;
 
   virtual TemplateParameter1 GetIndexedValue(Ptr<String> const &key)                    = 0;
   virtual void SetIndexedValue(Ptr<String> const &key, TemplateParameter1 const &value) = 0;
@@ -50,12 +50,12 @@ protected:
   TypeId      value_type_;
 };
 
-class PersistentMap : public IPersistentMap
+class ShardedState : public IShardedState
 {
 public:
   // Construction / Destruction
-  PersistentMap(VM *vm, TypeId type_id, Ptr<Object> name, TypeId value_type)
-    : IPersistentMap(vm, type_id, std::move(name), value_type)
+  ShardedState(VM *vm, TypeId type_id, Ptr<Object> name, TypeId value_type)
+    : IShardedState(vm, type_id, std::move(name), value_type)
   {}
 
 protected:
@@ -128,12 +128,12 @@ private:
   }
 };
 
-inline Ptr<IPersistentMap> IPersistentMap::Constructor(VM *vm, TypeId type_id, Ptr<Object> name)
+inline Ptr<IShardedState> IShardedState::Constructor(VM *vm, TypeId type_id, Ptr<Object> name)
 {
   TypeInfo const &type_info     = vm->GetTypeInfo(type_id);
   TypeId const    value_type_id = type_info.parameter_type_ids[0];
 
-  return new PersistentMap(vm, type_id, std::move(name), value_type_id);
+  return new ShardedState(vm, type_id, std::move(name), value_type_id);
 }
 
 }  // namespace vm

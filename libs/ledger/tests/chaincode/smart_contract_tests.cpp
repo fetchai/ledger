@@ -380,25 +380,25 @@ TEST_F(SmartContractTests, CheckBasicTokenContract)
   }
 }
 
-TEST_F(SmartContractTests, CheckPersistentMapSetAndQuery)
+TEST_F(SmartContractTests, CheckShardedStateSetAndQuery)
 {
   std::string const contract_source = R"(
     @action
     function test_persistent_map()
-      var state = PersistentMap<Int32>("value");
+      var state = ShardedState<Int32>("value");
       state["foo"] = 20;
       state["bar"] = 30;
     endfunction
 
     @query
     function query_foo() : Int32
-      var state = PersistentMap<Int32>("value");
+      var state = ShardedState<Int32>("value");
       return state["foo"];
     endfunction
 
     @query
     function query_bar() : Int32
-      var state = PersistentMap<Int32>("value");
+      var state = ShardedState<Int32>("value");
       return state["bar"];
     endfunction
   )";
@@ -452,18 +452,18 @@ TEST_F(SmartContractTests, CheckPersistentMapSetAndQuery)
   VerifyQuery("query_bar", int32_t{30});
 }
 
-TEST_F(SmartContractTests, CheckPersistentMapSetWithAddressAsName)
+TEST_F(SmartContractTests, CheckShardedStateSetWithAddressAsName)
 {
   std::string const contract_source = R"(
     @action
     function test_persistent_map(address : Address)
-      var state = PersistentMap<Int32>(address);
+      var state = ShardedState<Int32>(address);
       state["foo"] = 20;
     endfunction
 
     @query
     function query_foo(address : Address) : Int32
-      var state = PersistentMap<Int32>(address);
+      var state = ShardedState<Int32>(address);
       return state["foo"];
     endfunction
   )";
