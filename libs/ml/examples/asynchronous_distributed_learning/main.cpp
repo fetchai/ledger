@@ -34,6 +34,7 @@
 #include <map>
 #include <memory>
 #include <mutex>
+#include <random>
 #include <string>
 #include <thread>
 #include <unordered_map>
@@ -121,7 +122,9 @@ public:
         peers_.push_back(p);
       }
     }
-    std::random_shuffle(peers_.begin(), peers_.end());
+    std::random_device rd;
+    std::mt19937       g(rd());
+    std::shuffle(peers_.begin(), peers_.end(), g);
   }
 
   void UpdateWeights()
@@ -139,7 +142,9 @@ public:
       g_.LoadStateDict(g_.StateDict().Merge(averageStateDict, MERGE_RATIO));
     }
     // Shuffle the peers list to get new contact for next update
-    std::random_shuffle(peers_.begin(), peers_.end());
+    std::random_device rd;
+    std::mt19937       g(rd());
+    std::shuffle(peers_.begin(), peers_.end(), g);
   }
 
   std::vector<float> const &GetLossesValues() const
@@ -150,12 +155,16 @@ public:
 private:
   // Client own graph
   fetch::ml::Graph<ArrayType> g_;
+
   // Client own dataloader
   fetch::ml::MNISTLoader<ArrayType> dataloader_;
+
   // Loss history
   std::vector<float> losses_values_;
+
   // Connection to other nodes
   std::vector<std::shared_ptr<TrainingClient>> peers_;
+
   // Mutex to protect weight access
   std::mutex m_;
 };

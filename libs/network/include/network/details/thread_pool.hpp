@@ -85,7 +85,7 @@ public:
 
   explicit ThreadPoolImplementation(std::size_t threads, std::string name);
   ThreadPoolImplementation(ThreadPoolImplementation const &) = delete;
-  ThreadPoolImplementation(ThreadPoolImplementation &&)      = default;
+  ThreadPoolImplementation(ThreadPoolImplementation &&)      = delete;
   ~ThreadPoolImplementation();
 
   /// @name Current / Future Work
