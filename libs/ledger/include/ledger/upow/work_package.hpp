@@ -20,45 +20,52 @@
 #include "ledger/identifier.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 #include "ledger/upow/work.hpp"
+#include "ledger/upow/work_queue.hpp"
 
 #include <algorithm>
 #include <memory>
 #include <queue>
+
 namespace fetch {
-namespace consensus {
+namespace ledger {
 
-struct WorkPackage
+class WorkPackage
 {
-  using ContractName      = byte_array::ConstByteArray;
-  using ContractAddress   = storage::ResourceAddress;
-  using SharedWorkPackage = std::shared_ptr<WorkPackage>;
-  using WorkQueue         = std::priority_queue<Work>;
+public:
 
-  static SharedWorkPackage New(ContractName name, ContractAddress contract_address)
+  explicit WorkPackage(Digest digest)
+    : contract_digest_{std::move(digest)}
+  {}
+  ~WorkPackage() = default;
+
+  Address const &contract_digest() const
   {
-    return SharedWorkPackage(new WorkPackage(std::move(name), std::move(contract_address)));
+    return contract_digest_;
   }
 
-  /// @name defining work and candidate solutions
-  /// @{
-  ContractName    contract_name{};     //< Contract name which is extracted from the DAG
-  ContractAddress contract_address{};  //< The corresponding address of the contract
-  WorkQueue       solutions_queue{};   //< A prioritised queue with work items
-  /// }
-
-  // Work packages needs to be sortable to ensure consistent execution
-  // order accross different platforms.
-  bool operator<(WorkPackage const &other) const
+  WorkQueue const &solutions() const
   {
-    return contract_address < other.contract_address;
+    return solutions_;
   }
 
 private:
-  WorkPackage(ContractName name, ContractAddress address)
-    : contract_name{std::move(name)}
-    , contract_address{std::move(address)}
-  {}
+
+  /// @name defining work and candidate solutions
+  /// @{
+  Address   contract_digest_{};     //< Contract name which is extracted from the DAG
+  WorkQueue solutions_{};   //< A prioritised queue with work items
+  /// }
+
+//  // Work packages needs to be sortable to ensure consistent execution
+//  // order accross different platforms.
+//  bool operator<(WorkPackage const &other) const
+//  {
+//    return contract_address < other.contract_address;
+//  }
+
 };
 
-}  // namespace consensus
+using WorkPackagePtr = std::shared_ptr<WorkPackage>;
+
+}  // namespace ledger
 }  // namespace fetch

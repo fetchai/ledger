@@ -17,53 +17,25 @@
 //
 //------------------------------------------------------------------------------
 
-#include "work.hpp"
+#include "ledger/upow/work.hpp"
 
-#include <unordered_map>
-#include <vector>
+#include <queue>
 
 namespace fetch {
-namespace consensus {
+namespace ledger {
+namespace detail {
 
-class WorkRegister
+struct WorkQueueSort
 {
-public:
-  using ContractName = byte_array::ConstByteArray;
-
-  void RegisterWork(Work const &work)
+  bool operator()(WorkPtr const &a, WorkPtr const &b) const
   {
-    ContractName name = work.contract_name;
-    if (work_pool_.find(name) == work_pool_.end())
-    {
-      work_pool_[name] = work;
-      return;
-    }
-
-    auto cur_work = work_pool_[name];
-    if (cur_work.score > work.score)
-    {
-      work_pool_[name] = work;
-    }
+    return a->score() < b->score();
   }
-
-  Work ClearWorkPool(SynergeticContract contract)
-  {
-    ContractName name = contract->name;
-
-    auto it = work_pool_.find(name);
-    if (it == work_pool_.end())
-    {
-      return {};
-    }
-
-    Work ret = it->second;
-    work_pool_.erase(it);
-    return ret;
-  }
-
-private:
-  std::unordered_map<ContractName, Work> work_pool_;
 };
 
-}  // namespace consensus
+}  // namespace detail
+
+using WorkQueue = std::priority_queue<WorkPtr, std::vector<WorkPtr>, detail::WorkQueueSort>;
+
+}  // namespace ledger
 }  // namespace fetch

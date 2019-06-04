@@ -24,12 +24,136 @@
 #include "vm/module.hpp"
 #include "vm/vm.hpp"
 
+#include "ledger/upow/synergetic_base_types.hpp"
+#include "ledger/chain/address.hpp"
+
 #include <memory>
 #include <string>
 #include <vector>
 
 namespace fetch {
-namespace consensus {
+
+
+namespace byte_array {
+class ConstByteArray;
+} // namespace byte_array
+
+namespace math {
+
+class BigUnsigned;
+
+} // namespace math
+
+namespace vm {
+
+class Module;
+class Compiler;
+class IR;
+struct Executable;
+struct Variant;
+
+} // namespace vm
+
+namespace ledger {
+
+class StorageInterface;
+
+class SynergeticContract
+{
+public:
+
+  using ConstByteArray = byte_array::ConstByteArray;
+
+  enum class Status
+  {
+    SUCCESS = 0,
+    VM_EXECUTION_ERROR,
+    GENERAL_ERROR,
+  };
+
+  explicit SynergeticContract(ConstByteArray const &source);
+  ~SynergeticContract() = default;
+
+  // Accessors
+  Address const &address() const;
+
+  // Basic Contract Actions
+  void Attach(StorageInterface &storage);
+  void Detach();
+
+  /// @name Actions to be taken on the synergetic contract
+  /// @{
+  Status DefineProblem();
+  Status Clear();
+  Status Work(math::BigUnsigned const &nonce, WorkScore &score);
+  Status EvaluateObjective();
+  Status GenerateSolution();
+  /// @}
+
+private:
+
+  using ModulePtr = std::shared_ptr<vm::Module>;
+  using CompilerPtr = std::shared_ptr<vm::Compiler>;
+  using IRPtr = std::shared_ptr<vm::IR>;
+  using ExecutablePtr = std::shared_ptr<vm::Executable>;
+  using VariantPtr = std::shared_ptr<vm::Variant>;
+
+  Address     address_;
+  ModulePtr   module_;
+  CompilerPtr compiler_;
+  IRPtr       ir_;
+  ExecutablePtr executable_;
+
+  std::string problem_function_;
+  std::string work_function_;
+  std::string objective_function_;
+  std::string clear_function_;
+  std::string test_dag_generator_; /// EJF TODO
+  int64_t clear_interval_{1};
+
+  StorageInterface *storage_{nullptr};
+  VariantPtr problem_;
+};
+
+inline Address const &SynergeticContract::address() const
+{
+  return address_;
+}
+
+inline void SynergeticContract::Attach(StorageInterface &storage)
+{
+  storage_ = &storage;
+}
+
+inline void SynergeticContract::Detach()
+{
+  storage_ = nullptr;
+  problem_.reset();
+}
+
+inline char const *ToString(SynergeticContract::Status status)
+{
+  char const *text = "Unknown";
+
+  switch (status)
+  {
+  case SynergeticContract::Status::SUCCESS:
+    text = "Success";
+    break;
+  case SynergeticContract::Status::VM_EXECUTION_ERROR:
+    text = "VM Execution Error";
+    break;
+  case SynergeticContract::Status::GENERAL_ERROR:
+    return "General Error";
+    break;
+  }
+
+  return text;
+}
+
+using SynergeticContractPtr = std::shared_ptr<SynergeticContract>;
+
+#if 0
 
 struct SynergeticContractClass
 {
@@ -173,6 +297,8 @@ struct SynergeticContractClass
 };
 
 using SynergeticContract = SynergeticContractClass::SynergeticContract;
+#endif
 
-}  // namespace consensus
+}  // namespace ledger
 }  // namespace fetch
+

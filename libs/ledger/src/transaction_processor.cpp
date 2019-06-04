@@ -24,6 +24,8 @@
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 #include "ledger/transaction_status_cache.hpp"
 #include "metrics/metrics.hpp"
+#include "ledger/dag/dag_interface.hpp"
+#include "ledger/dag/dag_node.hpp"
 
 namespace fetch {
 namespace ledger {
@@ -34,11 +36,13 @@ namespace ledger {
  * @param storage The reference to the storage unit
  * @param miner The reference to the system miner
  */
-TransactionProcessor::TransactionProcessor(StorageUnitInterface &  storage,
+TransactionProcessor::TransactionProcessor(DAGInterface& dag,
+                                           StorageUnitInterface &  storage,
                                            BlockPackerInterface &  packer,
                                            TransactionStatusCache &tx_status_cache,
                                            std::size_t             num_threads)
-  : storage_{storage}
+  : dag_{dag}
+  , storage_{storage}
   , packer_{packer}
   , status_cache_{tx_status_cache}
   , verifier_{*this, num_threads, "TxV-P"}
@@ -70,11 +74,62 @@ void TransactionProcessor::OnTransaction(TransactionPtr const &tx)
 
   FETCH_METRIC_TX_STORED(tx->digest());
 
-  // dispatch the summary to the miner
-  packer_.EnqueueTransaction(*tx);
+  switch (tx->contract_mode())
+  {
+  case Transaction::ContractMode::NOT_PRESENT:
+  case Transaction::ContractMode::PRESENT:
+  case Transaction::ContractMode::CHAIN_CODE:
 
-  // update the status cache with the state of this transaction
-  status_cache_.Update(tx->digest(), TransactionStatus::PENDING);
+    // dispatch the summary to the miner
+    packer_.EnqueueTransaction(*tx);
+
+    // update the status cache with the state of this transaction
+    status_cache_.Update(tx->digest(), TransactionStatus::PENDING);
+    break;
+
+  case Transaction::ContractMode::SYNERGETIC:
+
+    if (tx->action() == "data")
+    {
+
+      // create the DAG node for the data
+      DAGNode node{};
+      node.type            = DAGNode::DATA;
+      node.contract_digest = tx->contract_digest();
+      node.creator         = tx->from();
+      node.contents        = tx->data();
+      dag_.SetNodeReferences(node);
+
+      // TODO(EJF): This is incorrect put needs for the moment
+      crypto::ECDSASigner signer;
+      node.identity  = signer.identity();
+
+      node.Finalise();
+
+      // TODO(EJF): This is incorrect put needs for the moment
+      node.signature = signer.Sign(node.hash);
+
+      FETCH_LOG_INFO(LOGGING_NAME, "Verification Input");
+      FETCH_LOG_INFO(LOGGING_NAME, " -> Identity : ", node.identity.identifier().ToHex());
+      FETCH_LOG_INFO(LOGGING_NAME, " -> Signature: ", node.signature.ToHex());
+      FETCH_LOG_INFO(LOGGING_NAME, " -> Data     : ", node.hash.ToHex());
+
+      // add the node to the dag
+      if (!dag_.Push(std::move(node)))
+      {
+        FETCH_LOG_WARN(LOGGING_NAME, "Failed to add node to the DAG");
+      }
+      else
+      {
+        FETCH_LOG_INFO(LOGGING_NAME, "Adding data node: ", tx->data());
+      }
+
+      // update the status cache with the state of this transaction
+      status_cache_.Update(tx->digest(), TransactionStatus::SUBMITTED);
+    }
+
+    break;
+  }
 
   FETCH_METRIC_TX_QUEUED(tx->digest());
 }

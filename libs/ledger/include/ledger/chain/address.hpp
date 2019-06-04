@@ -86,6 +86,7 @@ public:
   /// @{
   ConstByteArray const &address() const;
   ConstByteArray const &display() const;
+  bool empty() const;
   /// @}
 
   // Operators
@@ -118,6 +119,16 @@ inline Address::ConstByteArray const &Address::address() const
 inline Address::ConstByteArray const &Address::display() const
 {
   return display_;
+}
+
+/**
+ * Determine if the address is empty or not
+ *
+ * @return true if empty otherwise false
+ */
+inline bool Address::empty() const
+{
+  return address_.empty();
 }
 
 /**

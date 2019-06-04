@@ -56,9 +56,9 @@ inline void BindLen(vm::Module &module)
   module.CreateFreeFunction("lengthOf", &LenArray<uint64_t>);
   module.CreateFreeFunction("lengthOf", &LenArray<float>);
   module.CreateFreeFunction("lengthOf", &LenArray<double>);
-  module.CreateFreeFunction("lengthOf", &LenArrayObj<DAGNodeWrapper>);
-  module.CreateFreeFunction("lengthOf", &LenArrayObj<ByteArrayWrapper>);
-  module.CreateFreeFunction("lengthOf", &LenArrayObj<vm::String>);
+//  module.CreateFreeFunction("lengthOf", &LenArrayObj<DAGNodeWrapper>);
+//  module.CreateFreeFunction("lengthOf", &LenArrayObj<ByteArrayWrapper>);
+//  module.CreateFreeFunction("lengthOf", &LenArrayObj<vm::String>);
 }
 
 }  // namespace vm_modules

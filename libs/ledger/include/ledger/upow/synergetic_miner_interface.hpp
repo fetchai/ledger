@@ -17,29 +17,28 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/upow/synergetic_executor_interface.hpp"
+#include "ledger/dag/dag_node.hpp" // TODO(EJF): Lets trim down the dependencies for the DAG node
+
+#include <cstdint>
+#include <vector>
 
 namespace fetch {
 namespace ledger {
 
-class SynergeticExecutor : public SynergeticExecutorInterface
+class SynergeticMinerInterface
 {
 public:
+  using BlockIndex = uint64_t;
+  using DagNodes   = std::vector<DAGNode>;
 
   // Construction / Destruction
-  SynergeticExecutor() = default;
-  SynergeticExecutor(SynergeticExecutor const &) = delete;
-  SynergeticExecutor(SynergeticExecutor &&) = delete;
-  ~SynergeticExecutor() override = default;
+  SynergeticMinerInterface() = default;
+  virtual ~SynergeticMinerInterface() = default;
 
-  /// @name Synergetic Executor Interface
+  /// @name Synergetic Miner Interface
   /// @{
-  void VerifySolution() override;
+  virtual DagNodes Mine(BlockIndex block) = 0;
   /// @}
-
-  // Operators
-  SynergeticExecutor &operator=(SynergeticExecutor const &) = delete;
-  SynergeticExecutor &operator=(SynergeticExecutor &&) = delete;
 };
 
 } // namespace ledger

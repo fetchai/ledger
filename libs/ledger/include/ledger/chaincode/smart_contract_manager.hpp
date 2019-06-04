@@ -29,6 +29,7 @@ class Module;
 namespace ledger {
 
 class Identifier;
+class Address;
 
 class SmartContractManager : public Contract
 {
@@ -37,6 +38,7 @@ public:
   static constexpr char const *LOGGING_NAME = "SmartContractManager";
 
   static storage::ResourceAddress CreateAddressForContract(Identifier const &contract_id);
+  static storage::ResourceAddress CreateAddressForContract(Address const &contract_address);
 
   SmartContractManager();
   ~SmartContractManager() override = default;

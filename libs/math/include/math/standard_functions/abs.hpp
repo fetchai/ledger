@@ -35,6 +35,7 @@ namespace math {
 template <typename T>
 meta::IfIsNonFixedPointArithmetic<T, void> Abs(T const &n, T &ret)
 {
+  // TODO(EJF): This seems like madness for integers
   ret = T(std::abs(double(n)));
 }
 

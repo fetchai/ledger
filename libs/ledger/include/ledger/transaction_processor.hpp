@@ -31,6 +31,7 @@ class Transaction;
 class StorageUnitInterface;
 class BlockPackerInterface;
 class TransactionStatusCache;
+class DAGInterface;
 
 class TransactionProcessor : public TransactionSink
 {
@@ -38,7 +39,7 @@ public:
   static constexpr char const *LOGGING_NAME = "TransactionProcessor";
 
   // Construction / Destruction
-  TransactionProcessor(StorageUnitInterface &storage, BlockPackerInterface &packer,
+  TransactionProcessor(DAGInterface& dag, StorageUnitInterface &storage, BlockPackerInterface &packer,
                        TransactionStatusCache &tx_status_cache, std::size_t num_threads);
   TransactionProcessor(TransactionProcessor const &) = delete;
   TransactionProcessor(TransactionProcessor &&)      = delete;
@@ -67,6 +68,7 @@ private:
   using Flag      = std::atomic<bool>;
   using ThreadPtr = std::unique_ptr<std::thread>;
 
+  DAGInterface&           dag_;
   StorageUnitInterface &  storage_;
   BlockPackerInterface &  packer_;
   TransactionStatusCache &status_cache_;

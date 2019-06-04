@@ -17,29 +17,35 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/upow/synergetic_executor_interface.hpp"
-
 namespace fetch {
 namespace ledger {
 
-class SynergeticExecutor : public SynergeticExecutorInterface
+class Block;
+
+class SynergeticExecutionManagerInterface
 {
 public:
 
   // Construction / Destruction
-  SynergeticExecutor() = default;
-  SynergeticExecutor(SynergeticExecutor const &) = delete;
-  SynergeticExecutor(SynergeticExecutor &&) = delete;
-  ~SynergeticExecutor() override = default;
+  SynergeticExecutionManagerInterface() = default;
+  virtual ~SynergeticExecutionManagerInterface() = default;
 
-  /// @name Synergetic Executor Interface
+  enum ExecStatus
+  {
+    SUCCESS,
+    CONTRACT_NAME_PARSE_FAILURE,
+    INVALID_CONTRACT_ADDRESS,
+    INVALID_NODE,
+    INVALID_BLOCK,
+    CONTRACT_REGISTRATION_FAILED
+  };
+
+  /// @name Synergetic Execution Manager Interface
   /// @{
-  void VerifySolution() override;
+  virtual ExecStatus PrepareWorkQueue(Block const &current, Block const &previous) = 0;
+  virtual bool ValidateWorkAndUpdateState() = 0;
   /// @}
 
-  // Operators
-  SynergeticExecutor &operator=(SynergeticExecutor const &) = delete;
-  SynergeticExecutor &operator=(SynergeticExecutor &&) = delete;
 };
 
 } // namespace ledger

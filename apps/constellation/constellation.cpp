@@ -139,7 +139,7 @@ ledger::ShardConfigs GenerateShardsConfig(uint32_t num_lanes, uint16_t start_por
  * @param interface_address The current interface address TODO(EJF): This should be more integrated
  * @param db_prefix The database file(s) prefix
  */
-Constellation::Constellation(CertificatePtr &&certificate, Config config)
+Constellation::Constellation(CertificatePtr certificate, Config config)
   : active_{true}
   , cfg_{std::move(config)}
   , p2p_port_(LookupLocalPort(cfg_.manifest, ServiceType::CORE))
@@ -149,7 +149,7 @@ Constellation::Constellation(CertificatePtr &&certificate, Config config)
   , reactor_{"Reactor"}
   , network_manager_{"NetMgr", CalcNetworkManagerThreads(cfg_.num_lanes())}
   , http_network_manager_{"Http", HTTP_THREADS}
-  , muddle_{muddle::NetworkId{"IHUB"}, std::move(certificate), network_manager_,
+  , muddle_{muddle::NetworkId{"IHUB"}, certificate, network_manager_,
             !config.disable_signing, config.sign_broadcasts}
   , internal_identity_{std::make_shared<crypto::ECDSASigner>()}
   , internal_muddle_{muddle::NetworkId{"ISRD"}, internal_identity_, network_manager_}
@@ -174,13 +174,14 @@ Constellation::Constellation(CertificatePtr &&certificate, Config config)
                        block_packer_,
                        *this,
                        tx_status_cache_,
-                       muddle_.identity().identifier(),
+                       cfg_.features,
+                       certificate,
                        cfg_.num_lanes(),
                        cfg_.num_slices,
                        cfg_.block_difficulty}
   , main_chain_service_{std::make_shared<MainChainRpcService>(p2p_.AsEndpoint(), chain_, trust_,
                                                               cfg_.network_mode)}
-  , tx_processor_{*storage_, block_packer_, tx_status_cache_, cfg_.processor_threads}
+  , tx_processor_{dag_, *storage_, block_packer_, tx_status_cache_, cfg_.processor_threads}
   , http_{http_network_manager_}
   , http_modules_{
         std::make_shared<p2p::P2PHttpInterface>(

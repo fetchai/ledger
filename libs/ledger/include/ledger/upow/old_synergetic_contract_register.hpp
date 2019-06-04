@@ -34,6 +34,7 @@
 namespace fetch {
 namespace consensus {
 
+#if 0
 class SynergeticContractRegister
 {
 public:
@@ -90,6 +91,7 @@ private:
   std::vector<std::string>                             errors_;
   std::unordered_map<ContractName, SynergeticContract> contracts_;
 };
+#endif
 
 }  // namespace consensus
 }  // namespace fetch

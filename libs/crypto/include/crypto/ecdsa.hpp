@@ -43,6 +43,12 @@ public:
     {
       return false;
     }
+
+    if (signature.empty())
+    {
+      return false;
+    }
+
     Signature sig{signature};
     return sig.Verify(public_key_, data);
   }

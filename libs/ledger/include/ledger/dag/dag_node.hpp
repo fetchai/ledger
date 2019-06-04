@@ -27,6 +27,7 @@
 #include "crypto/fnv.hpp"
 #include "crypto/identity.hpp"
 #include "crypto/sha256.hpp"
+#include "ledger/chain/address.hpp"
 
 #include <deque>
 #include <limits>
@@ -73,6 +74,8 @@ struct DAGNode
   DigestList       previous;            ///< previous nodes.
   ConstByteArray   contents;            ///< payload to be deserialised.
   ConstByteArray   contract_name;       ///< The contract which this node is associated with.
+  Address          contract_digest;
+  Address          creator;
   crypto::Identity identity;            ///< identity of the creator.
   /// }
 

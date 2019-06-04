@@ -22,6 +22,7 @@
 namespace fetch {
 namespace consensus {
 
+#if 0
 class SynergeticStateAdapter : public ledger::StateAdapter
 {
 public:
@@ -50,6 +51,8 @@ public:
 
 private:
 };
+
+#endif
 
 }  // namespace consensus
 }  // namespace fetch

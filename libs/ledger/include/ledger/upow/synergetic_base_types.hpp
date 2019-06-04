@@ -20,8 +20,9 @@
 #include <cstdint>
 
 namespace fetch {
-namespace consensus {
+namespace ledger {
 
-using SynergeticScoreType = int64_t;
+using WorkScore = int64_t;
+
 }
 }  // namespace fetch

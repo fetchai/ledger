@@ -28,13 +28,14 @@
 #include "vm/module.hpp"
 #include "vm/vm.hpp"
 #include "vm_modules/core/byte_array_wrapper.hpp"
+
 namespace fetch {
 namespace vm_modules {
 template <typename T>
 vm::Ptr<vm::Array<T>> CreateNewPrimitiveArray(vm::VM *vm, std::vector<T> items)
 {
   vm::Ptr<vm::Array<T>> array =
-      new vm::Array<T>(vm, vm->GetTypeId<vm::IArray>(), int32_t(items.size()));
+      new vm::Array<T>(vm, vm->GetTypeId<vm::IArray>(), vm->GetTypeId<T>(), int32_t(items.size()));
   std::size_t idx = 0;
 
   for (auto const &e : items)
@@ -50,50 +51,50 @@ class DAGNodeWrapper : public fetch::vm::Object
 public:
   using Node = ledger::DAGNode;
 
-  DAGNodeWrapper()          = delete;
-  virtual ~DAGNodeWrapper() = default;
+  DAGNodeWrapper()           = delete;
+  ~DAGNodeWrapper() override = default;
 
-  static void Bind(vm::Module & /*module*/)
+  static void Bind(vm::Module & module)
   {
-    /*
     auto interface = module.CreateClassType<DAGNodeWrapper>("DAGNode");
 
-    interface.CreateTypeConstuctor<>()
-        .CreateInstanceFunction("owner", &DAGNodeWrapper::owner)
-        .CreateInstanceFunction("has", &DAGNodeWrapper::Has)
+
+    interface.CreateConstuctor<>()
+        .CreateMemberFunction("owner", &DAGNodeWrapper::owner)
+        .CreateMemberFunction("has", &DAGNodeWrapper::Has)
         // Getters
-        .CreateInstanceFunction("getNumber", &DAGNodeWrapper::GetNumber)
-        .CreateInstanceFunction("getArrayFloat32", &DAGNodeWrapper::GetArray<float>)
-        .CreateInstanceFunction("getArrayFloat64", &DAGNodeWrapper::GetArray<double>)
-        .CreateInstanceFunction("getArrayInt32", &DAGNodeWrapper::GetArray<int32_t>)
-        .CreateInstanceFunction("getArrayInt64", &DAGNodeWrapper::GetArray<int64_t>)
-        .CreateInstanceFunction("getArrayUInt32", &DAGNodeWrapper::GetArray<uint32_t>)
-        .CreateInstanceFunction("getArrayUInt64", &DAGNodeWrapper::GetArray<uint64_t>)
-        .CreateInstanceFunction("getFloat32", &DAGNodeWrapper::GetPrimitive<float>)
-        .CreateInstanceFunction("getFloat64", &DAGNodeWrapper::GetPrimitive<double>)
-        .CreateInstanceFunction("getInt32", &DAGNodeWrapper::GetPrimitive<int32_t>)
-        .CreateInstanceFunction("getInt64", &DAGNodeWrapper::GetPrimitive<int64_t>)
-        .CreateInstanceFunction("getUInt32", &DAGNodeWrapper::GetPrimitive<uint32_t>)
-        .CreateInstanceFunction("getUInt64", &DAGNodeWrapper::GetPrimitive<uint64_t>)
-        .CreateInstanceFunction("getString", &DAGNodeWrapper::GetString)
-        .CreateInstanceFunction("getBuffer", &DAGNodeWrapper::GetBuffer)
-        //      .CreateInstanceFunction("GetStringArray", &DAGNodeWrapper::GetArrayString)
+        .CreateMemberFunction("getNumber", &DAGNodeWrapper::GetNumber)
+        .CreateMemberFunction("getArrayFloat32", &DAGNodeWrapper::GetArray<float>)
+        .CreateMemberFunction("getArrayFloat64", &DAGNodeWrapper::GetArray<double>)
+        .CreateMemberFunction("getArrayInt32", &DAGNodeWrapper::GetArray<int32_t>)
+        .CreateMemberFunction("getArrayInt64", &DAGNodeWrapper::GetArray<int64_t>)
+        .CreateMemberFunction("getArrayUInt32", &DAGNodeWrapper::GetArray<uint32_t>)
+        .CreateMemberFunction("getArrayUInt64", &DAGNodeWrapper::GetArray<uint64_t>)
+        .CreateMemberFunction("getFloat32", &DAGNodeWrapper::GetPrimitive<float>)
+        .CreateMemberFunction("getFloat64", &DAGNodeWrapper::GetPrimitive<double>)
+        .CreateMemberFunction("getInt32", &DAGNodeWrapper::GetPrimitive<int32_t>)
+        .CreateMemberFunction("getInt64", &DAGNodeWrapper::GetPrimitive<int64_t>)
+        .CreateMemberFunction("getUInt32", &DAGNodeWrapper::GetPrimitive<uint32_t>)
+        .CreateMemberFunction("getUInt64", &DAGNodeWrapper::GetPrimitive<uint64_t>)
+        .CreateMemberFunction("getString", &DAGNodeWrapper::GetString)
+        .CreateMemberFunction("getBuffer", &DAGNodeWrapper::GetBuffer)
+        //      .CreateMemberFunction("GetStringArray", &DAGNodeWrapper::GetArrayString)
         // Setters
-        //      .CreateInstanceFunction("set", &DAGNodeWrapper::SetStringArray)
-        .CreateInstanceFunction("set", &DAGNodeWrapper::SetBuffer)
-        .CreateInstanceFunction("set", &DAGNodeWrapper::SetString)
-        .CreateInstanceFunction("set", &DAGNodeWrapper::SetArray<float>)
-        .CreateInstanceFunction("set", &DAGNodeWrapper::SetArray<double>)
-        .CreateInstanceFunction("set", &DAGNodeWrapper::SetArray<int32_t>)
-        .CreateInstanceFunction("set", &DAGNodeWrapper::SetArray<int64_t>)
-        .CreateInstanceFunction("set", &DAGNodeWrapper::SetArray<uint32_t>)
-        .CreateInstanceFunction("set", &DAGNodeWrapper::SetArray<uint64_t>)
-        .CreateInstanceFunction("set", &DAGNodeWrapper::SetPrimitive<float>)
-        .CreateInstanceFunction("set", &DAGNodeWrapper::SetPrimitive<double>)
-        .CreateInstanceFunction("set", &DAGNodeWrapper::SetPrimitive<int32_t>)
-        .CreateInstanceFunction("set", &DAGNodeWrapper::SetPrimitive<int64_t>)
-        .CreateInstanceFunction("set", &DAGNodeWrapper::SetPrimitive<uint32_t>)
-        .CreateInstanceFunction("set", &DAGNodeWrapper::SetPrimitive<uint64_t>); */
+//              .CreateMemberFunction("set", &DAGNodeWrapper::SetStringArray)
+        .CreateMemberFunction("set", &DAGNodeWrapper::SetBuffer)
+        .CreateMemberFunction("set", &DAGNodeWrapper::SetString)
+        .CreateMemberFunction("set", &DAGNodeWrapper::SetArray<float>)
+        .CreateMemberFunction("set", &DAGNodeWrapper::SetArray<double>)
+        .CreateMemberFunction("set", &DAGNodeWrapper::SetArray<int32_t>)
+        .CreateMemberFunction("set", &DAGNodeWrapper::SetArray<int64_t>)
+        .CreateMemberFunction("set", &DAGNodeWrapper::SetArray<uint32_t>)
+        .CreateMemberFunction("set", &DAGNodeWrapper::SetArray<uint64_t>)
+        .CreateMemberFunction("set", &DAGNodeWrapper::SetPrimitive<float>)
+        .CreateMemberFunction("set", &DAGNodeWrapper::SetPrimitive<double>)
+        .CreateMemberFunction("set", &DAGNodeWrapper::SetPrimitive<int32_t>)
+        .CreateMemberFunction("set", &DAGNodeWrapper::SetPrimitive<int64_t>)
+        .CreateMemberFunction("set", &DAGNodeWrapper::SetPrimitive<uint32_t>)
+        .CreateMemberFunction("set", &DAGNodeWrapper::SetPrimitive<uint64_t>);
   }
 
   DAGNodeWrapper(fetch::vm::VM *vm, fetch::vm::TypeId type_id, Node const &node)

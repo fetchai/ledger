@@ -16,10 +16,10 @@ setup_compiler()
 
 setup_library(fetch-vm-modules)
 target_link_libraries(fetch-vm-modules
-                      INTERFACE fetch-vm
-                                fetch-core
-                                fetch-math
-                                fetch-ml)
+                      PUBLIC fetch-vm
+                             fetch-core
+                             fetch-math
+                             fetch-ml)
 
 add_test_target()
 

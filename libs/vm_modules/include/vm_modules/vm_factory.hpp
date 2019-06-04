@@ -17,20 +17,19 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm/module.hpp"
-
-#include "vm_modules/core/print.hpp"
-#include "vm_modules/core/type_convert.hpp"
-
-#include "vm_modules/math/abs.hpp"
-#include "vm_modules/math/random.hpp"
-
-#include "vm_modules/ml/cross_entropy.hpp"
-#include "vm_modules/ml/graph.hpp"
-#include "vm_modules/ml/mean_square_error.hpp"
-#include "vm_modules/ml/tensor.hpp"
+#include <memory>
+#include <string>
+#include <vector>
 
 namespace fetch {
+namespace vm {
+
+class Module;
+struct Executable;
+class VM;
+
+} // namespace vm
+
 namespace vm_modules {
 
 /**
@@ -41,94 +40,30 @@ namespace vm_modules {
 class VMFactory
 {
 public:
-  /**
-   * Get a module, the VMFactory will add whatever bindings etc. are considered in the 'standard
-   * library'
-   *
-   * @return: The module
-   */
-  static std::shared_ptr<fetch::vm::Module> GetModule()
+
+  using Errors = std::vector<std::string>;
+  using ModulePtr = std::shared_ptr<vm::Module>;
+
+  enum Modules : uint64_t
   {
-    auto module = std::make_shared<fetch::vm::Module>();
+    MOD_CORE = (1ull << 0ull),
+    MOD_MATH = (1ull << 1ull),
+    MOD_SYN  = (1ull << 2ull),
+    MOD_ML   = (1ull << 3ull),
+  };
 
-    // core modules
-    CreatePrint(*module);
-    CreateToString(*module);
-
-    // math modules
-    CreateAbs(*module);
-    CreateRand(module);
-
-    // ml modules - order is important!!
-    ml::CreateTensor(*module);
-    ml::CreateGraph(*module);
-    ml::CreateCrossEntropy(*module);
-    ml::CreateMeanSquareError(*module);
-
-    return module;
-  }
-
-  /**
-   * Compile a source file, returning a executable
-   *
-   * @param: module The module which the user might have added various bindings/classes to etc.
-   * @param: source The raw source to compile
-   * @param: executable executable to fill
-   *
-   * @return: Vector of strings which represent errors found during compilation
-   */
-  static std::vector<std::string> Compile(std::shared_ptr<fetch::vm::Module> const &module,
-                                          std::string const &                       source,
-                                          fetch::vm::Executable &                   executable)
+  enum UseCases : uint64_t
   {
-    std::vector<std::string> errors;
+    USE_SMART_CONTRACTS = (MOD_CORE | MOD_MATH | MOD_ML),
+    USE_SYNERGETIC      = (MOD_CORE | MOD_MATH | MOD_SYN),
+    USE_ALL             = (~uint64_t(0)),
+  };
 
-    // generate the compiler from the module
-    auto   compiler = std::make_shared<fetch::vm::Compiler>(module.get());
-    vm::IR ir;
+  // Module Creator
+  static ModulePtr GetModule(uint64_t enabled);
 
-    // compile the source
-    bool const compiled = compiler->Compile(source, "default", ir, errors);
-
-    if (!compiled)
-    {
-      errors.push_back("Failed to compile.");
-      return errors;
-    }
-
-    fetch::vm::VM vm(module.get());  // TODO(tfr): refactor such that IR is first made exectuable
-    if (!vm.GenerateExecutable(ir, "default_ir", executable, errors))
-    {
-      return errors;
-    }
-
-#ifndef NDEBUG
-    std::ostringstream all_errors;
-    for (auto const &error : errors)
-    {
-      all_errors << error << std::endl;
-    }
-
-    if (errors.size() > 0)
-    {
-      FETCH_LOG_WARN("VM_FACTORY", "Found badly constructed SC. Debug:\n", all_errors.str());
-    }
-#endif
-
-    return errors;
-  }
-
-  /**
-   * Get an instance of the VM after binding to a module
-   *
-   * @param: module Module which the user has added bindings to
-   *
-   * @return: An instance of the VM
-   */
-  static std::unique_ptr<fetch::vm::VM> GetVM(std::shared_ptr<fetch::vm::Module> const &module)
-  {
-    return std::make_unique<fetch::vm::VM>(module.get());
-  }
+  // Utils
+  static Errors Compile(ModulePtr const &module, std::string const &source, vm::Executable &executable);
 };
 
 }  // namespace vm_modules

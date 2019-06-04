@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/reactor.hpp"
+#include "core/feature_flags.hpp"
 #include "http/module.hpp"
 #include "http/server.hpp"
 #include "ledger/block_sink_interface.hpp"
@@ -66,28 +67,29 @@ public:
   using UriList          = std::vector<network::Uri>;
   using Manifest         = network::Manifest;
   using NetworkMode      = ledger::MainChainRpcService::Mode;
+  using FeatureFlags     = core::FeatureFlags;
 
   static constexpr uint32_t DEFAULT_BLOCK_DIFFICULTY = 6;
 
   struct Config
   {
-    Manifest    manifest{};
-    uint32_t    log2_num_lanes{0};
-    uint32_t    num_slices{0};
-    uint32_t    num_executors{0};
-    std::string interface_address{};
-    std::string db_prefix{};
-    uint32_t    processor_threads{0};
-    uint32_t    verification_threads{0};
-    uint32_t    max_peers{0};
-    uint32_t    transient_peers{0};
-    uint32_t    block_interval_ms{0};
-    uint32_t    block_difficulty{DEFAULT_BLOCK_DIFFICULTY};
-    uint32_t    peers_update_cycle_ms{0};
-    bool        disable_signing{false};
-    bool        sign_broadcasts{false};
-    NetworkMode network_mode{NetworkMode::PUBLIC_NETWORK};
-    bool        synergetic_mine{true};
+    Manifest     manifest{};
+    uint32_t     log2_num_lanes{0};
+    uint32_t     num_slices{0};
+    uint32_t     num_executors{0};
+    std::string  interface_address{};
+    std::string  db_prefix{};
+    uint32_t     processor_threads{0};
+    uint32_t     verification_threads{0};
+    uint32_t     max_peers{0};
+    uint32_t     transient_peers{0};
+    uint32_t     block_interval_ms{0};
+    uint32_t     block_difficulty{DEFAULT_BLOCK_DIFFICULTY};
+    uint32_t     peers_update_cycle_ms{0};
+    bool         disable_signing{false};
+    bool         sign_broadcasts{false};
+    NetworkMode  network_mode{NetworkMode::PUBLIC_NETWORK};
+    FeatureFlags features{};
 
     uint32_t num_lanes() const
     {
@@ -97,7 +99,9 @@ public:
 
   static constexpr char const *LOGGING_NAME = "constellation";
 
-  explicit Constellation(CertificatePtr &&certificate, Config config);
+  // Construction / Destruction
+  explicit Constellation(CertificatePtr certificate, Config config);
+  ~Constellation() override = default;
 
   void Run(UriList const &initial_peers, core::WeakRunnable bootstrap_monitor);
   void SignalStop();
@@ -106,7 +110,6 @@ protected:
   void OnBlock(ledger::Block const &block) override;
 
 private:
-  void CreateInfoFile(std::string const &filename);
 
   using Muddle                 = muddle::Muddle;
   using NetworkManager         = network::NetworkManager;

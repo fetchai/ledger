@@ -17,29 +17,22 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/upow/synergetic_executor_interface.hpp"
 
 namespace fetch {
 namespace ledger {
 
-class SynergeticExecutor : public SynergeticExecutorInterface
+class SynergeticExecutorInterface
 {
 public:
 
   // Construction / Destruction
-  SynergeticExecutor() = default;
-  SynergeticExecutor(SynergeticExecutor const &) = delete;
-  SynergeticExecutor(SynergeticExecutor &&) = delete;
-  ~SynergeticExecutor() override = default;
+  SynergeticExecutorInterface() = default;
+  virtual ~SynergeticExecutorInterface() = default;
 
-  /// @name Synergetic Executor Interface
+  /// @name Executor Interface
   /// @{
-  void VerifySolution() override;
+  virtual void VerifySolution() = 0;
   /// @}
-
-  // Operators
-  SynergeticExecutor &operator=(SynergeticExecutor const &) = delete;
-  SynergeticExecutor &operator=(SynergeticExecutor &&) = delete;
 };
 
 } // namespace ledger

@@ -18,6 +18,7 @@
 
 #include "ledger/chain/block_coordinator.hpp"
 #include "core/byte_array/encoders.hpp"
+#include "core/feature_flags.hpp"
 #include "core/threading.hpp"
 #include "ledger/block_packer_interface.hpp"
 #include "ledger/block_sink_interface.hpp"
@@ -27,24 +28,60 @@
 #include "ledger/execution_manager_interface.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 #include "ledger/transaction_status_cache.hpp"
+#include "ledger/upow/synergetic_execution_manager.hpp"
+#include "ledger/upow/naive_synergetic_miner.hpp"
 
 #include <chrono>
 
-using fetch::byte_array::ToBase64;
 
-using ScheduleStatus = fetch::ledger::ExecutionManagerInterface::ScheduleStatus;
-using ExecutionState = fetch::ledger::ExecutionManagerInterface::State;
-
-static const std::chrono::milliseconds TX_SYNC_NOTIFY_INTERVAL{1000};
-static const std::chrono::milliseconds EXEC_NOTIFY_INTERVAL{500};
-static const std::chrono::seconds      NOTIFY_INTERVAL{10};
-static const std::chrono::seconds      WAIT_BEFORE_ASKING_FOR_MISSING_TX_INTERVAL{30};
-static const std::chrono::seconds      WAIT_FOR_TX_TIMEOUT_INTERVAL{30};
-static const uint32_t                  THRESHOLD_FOR_FAST_SYNCING{100u};
-static const std::size_t               DIGEST_LENGTH_BYTES{32};
 
 namespace fetch {
 namespace ledger {
+namespace {
+
+  using fetch::byte_array::ToBase64;
+
+  using ScheduleStatus = fetch::ledger::ExecutionManagerInterface::ScheduleStatus;
+  using ExecutionState = fetch::ledger::ExecutionManagerInterface::State;
+  using SynergeticExecMgrPtr = std::unique_ptr<SynergeticExecutionManagerInterface>;
+  using SynergeticMinerPtr = std::unique_ptr<SynergeticMinerInterface>;
+  using ProverPtr = BlockCoordinator::ProverPtr;
+
+  // Constants
+  const std::chrono::milliseconds TX_SYNC_NOTIFY_INTERVAL{1000};
+  const std::chrono::milliseconds EXEC_NOTIFY_INTERVAL{500};
+  const std::chrono::seconds      NOTIFY_INTERVAL{10};
+  const std::chrono::seconds      WAIT_BEFORE_ASKING_FOR_MISSING_TX_INTERVAL{30};
+  const std::chrono::seconds      WAIT_FOR_TX_TIMEOUT_INTERVAL{30};
+  const uint32_t                  THRESHOLD_FOR_FAST_SYNCING{100u};
+  const std::size_t               DIGEST_LENGTH_BYTES{32};
+
+
+SynergeticExecMgrPtr CreateSynergeticExecutor(core::FeatureFlags const &features, DAGInterface &dag, StorageUnitInterface &storage_unit)
+{
+  SynergeticExecMgrPtr execution_mgr{};
+
+  if (features.IsEnabled("synergetic"))
+  {
+    execution_mgr = std::make_unique<SynergeticExecutionManager>(dag, storage_unit);
+  }
+
+  return execution_mgr;
+}
+
+SynergeticMinerPtr CreateSynergeticMiner(core::FeatureFlags const &features, DAGInterface &dag, StorageInterface &storage, ProverPtr prover)
+{
+  SynergeticMinerPtr miner{};
+
+  if (features.IsEnabled("naive-synergetic-mining"))
+  {
+    miner = std::make_unique<NaiveSynergeticMiner>(dag, storage, std::move(prover));
+  }
+
+  return miner;
+}
+
+}
 
 /**
  * Construct the Block Coordinator
@@ -57,7 +94,8 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAG &dag,
                                    StorageUnitInterface &storage_unit, BlockPackerInterface &packer,
                                    BlockSinkInterface &    block_sink,
                                    TransactionStatusCache &status_cache,
-                                   crypto::Identity const &identity, std::size_t num_lanes,
+                                   core::FeatureFlags const &features,
+                                   ProverPtr const &prover, std::size_t num_lanes,
                                    std::size_t num_slices, std::size_t block_difficulty)
   : chain_{chain}
   , dag_{dag}
@@ -69,7 +107,7 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAG &dag,
   , periodic_print_{NOTIFY_INTERVAL}
   , miner_{std::make_shared<consensus::DummyMiner>()}
   , last_executed_block_{GENESIS_DIGEST}
-  , mining_address_{identity}
+  , mining_address_{prover->identity()}
   , state_machine_{std::make_shared<StateMachine>("BlockCoordinator", State::RELOAD_STATE,
                                                   [](State state) { return ToString(state); })}
   , block_difficulty_{block_difficulty}
@@ -78,7 +116,8 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAG &dag,
   , tx_wait_periodic_{TX_SYNC_NOTIFY_INTERVAL}
   , exec_wait_periodic_{EXEC_NOTIFY_INTERVAL}
   , syncing_periodic_{NOTIFY_INTERVAL}
-  , synergetic_executor_{dag, storage_unit_}
+  , synergetic_exec_mgr_{CreateSynergeticExecutor(features, dag, storage_unit_)}
+  , synergetic_miner_{CreateSynergeticMiner(features, dag, storage_unit, std::move(prover))}
 {
   // configure the state machine
   // clang-format off
@@ -334,6 +373,16 @@ BlockCoordinator::State BlockCoordinator::OnSynchronised(State current, State pr
   }
   else if (mining_ && mining_enabled_ && (Clock::now() >= next_block_time_))
   {
+    // in the case of the synergetic miner we simulate the generation of mining nodes here
+    if (synergetic_miner_)
+    {
+      // create all the nodes for the DAG
+      auto const nodes = synergetic_miner_->Mine(current_block_->body.block_number);
+
+      // TODO(EJF): Broadcast the nodes to the network
+      FETCH_UNUSED(nodes);
+    }
+
     // create a new block
     next_block_                     = std::make_unique<Block>();
     next_block_->body.previous_hash = current_block_->body.hash;
@@ -421,13 +470,13 @@ BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
   }
 
   // Validating DAG hashes
-  if ((!is_genesis) && synergetic_contracts_enabled_)
+  if ((!is_genesis) && synergetic_exec_mgr_)
   {
     BlockPtr previous_block = chain_.GetBlock(current_block_->body.previous_hash);
 
     // All work is identified on the latest DAG segment and prepared in a queue
-    auto result = synergetic_executor_.PrepareWorkQueue(*previous_block, *current_block_);
-    if (SynergeticExecutor::PreparationStatusType::SUCCESS != result)
+    auto const result = synergetic_exec_mgr_->PrepareWorkQueue(*current_block_, *previous_block);
+    if (SynExecStatus ::SUCCESS != result)
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Block certifies work that possibly is malicious (",
                      ToBase64(current_block_->body.hash), ")");
@@ -451,9 +500,9 @@ BlockCoordinator::State BlockCoordinator::OnSynergeticExecution()
   bool const is_genesis = current_block_->body.previous_hash == GENESIS_DIGEST;
 
   // Executing synergetic work
-  if ((!is_genesis) && synergetic_contracts_enabled_)
+  if ((!is_genesis) && synergetic_exec_mgr_)
   {
-    if (!synergetic_executor_.ValidateWorkAndUpdateState())
+    if (!synergetic_exec_mgr_->ValidateWorkAndUpdateState())
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Work did not execute (", ToBase64(current_block_->body.hash),
                      ")");
@@ -701,13 +750,13 @@ BlockCoordinator::State BlockCoordinator::OnPackNewBlock()
 
 BlockCoordinator::State BlockCoordinator::OnNewSynergeticExecution()
 {
-  if (synergetic_contracts_enabled_)
+  if (synergetic_exec_mgr_)
   {
     BlockPtr previous_block = chain_.GetBlock(next_block_->body.previous_hash);
 
     // All work is identified on the latest DAG segment and prepared in a queue
-    auto result = synergetic_executor_.PrepareWorkQueue(*previous_block, *next_block_);
-    if (SynergeticExecutor::PreparationStatusType::SUCCESS != result)
+    auto const result = synergetic_exec_mgr_->PrepareWorkQueue(*next_block_, *previous_block);
+    if (SynExecStatus::SUCCESS != result)
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Block certifies work that possibly is malicious (",
                      ToBase64(next_block_->body.hash), ")");
@@ -727,9 +776,9 @@ BlockCoordinator::State BlockCoordinator::OnExecuteNewBlock()
   State next_state{State::RESET};
 
   // Executing synergetic work
-  if (synergetic_contracts_enabled_)
+  if (synergetic_exec_mgr_)
   {
-    if (!synergetic_executor_.ValidateWorkAndUpdateState())
+    if (!synergetic_exec_mgr_->ValidateWorkAndUpdateState())
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Work did not execute (", ToBase64(next_block_->body.hash), ")");
       chain_.RemoveBlock(next_block_->body.hash);

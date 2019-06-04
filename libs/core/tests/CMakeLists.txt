@@ -16,6 +16,7 @@ add_fetch_test(byte_array_gtest fetch-core byte_array)
 add_fetch_test(random_generator_gtest fetch-core random)
 add_fetch_test(json_gtest fetch-core json/gtest/)
 add_fetch_test(core_encode_decode_gtest fetch-core tokenizer/gtest/)
+add_fetch_test(fetch-core-unit-tests fetch-core unit/)
 add_fetch_test(containers-tests
                fetch-core
                containers/

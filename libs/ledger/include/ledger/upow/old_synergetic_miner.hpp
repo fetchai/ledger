@@ -25,12 +25,14 @@
 #include "vm/vm.hpp"
 
 #include "math/bignumber.hpp"
+#include "old_synergetic_state_adapter.hpp"
 #include "synergetic_contract.hpp"
-#include "synergetic_state_adapter.hpp"
 #include "synergetic_vm_module.hpp"
 #include "work.hpp"
 
 #include "ledger/storage_unit/storage_unit_interface.hpp"
+
+#if 0
 
 namespace fetch {
 namespace consensus {
@@ -328,6 +330,8 @@ private:
 
   ChainState chain_state_;
 };
+
+#endif
 
 }  // namespace consensus
 }  // namespace fetch

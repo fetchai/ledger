@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -17,30 +16,16 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/upow/synergetic_executor_interface.hpp"
+#include "ledger/upow/synergetic_contract_factory.hpp"
 
 namespace fetch {
 namespace ledger {
 
-class SynergeticExecutor : public SynergeticExecutorInterface
+SynergeticContractPtr SynergeticContractFactory::Create()
 {
-public:
-
-  // Construction / Destruction
-  SynergeticExecutor() = default;
-  SynergeticExecutor(SynergeticExecutor const &) = delete;
-  SynergeticExecutor(SynergeticExecutor &&) = delete;
-  ~SynergeticExecutor() override = default;
-
-  /// @name Synergetic Executor Interface
-  /// @{
-  void VerifySolution() override;
-  /// @}
-
-  // Operators
-  SynergeticExecutor &operator=(SynergeticExecutor const &) = delete;
-  SynergeticExecutor &operator=(SynergeticExecutor &&) = delete;
-};
+  return {};
+}
 
 } // namespace ledger
 } // namespace fetch
+

@@ -25,9 +25,10 @@
 #include "ledger/chain/block.hpp"
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/chain/transaction.hpp"
-#include "moment/deadline_timer.hpp"
 #include "ledger/dag/dag.hpp"
-#include "ledger/upow/synergetic_executor.hpp"
+#include "moment/deadline_timer.hpp"
+#include "ledger/upow/synergetic_execution_manager_interface.hpp"
+#include "ledger/upow/synergetic_miner_interface.hpp"
 
 #include <atomic>
 #include <chrono>
@@ -35,8 +36,12 @@
 #include <thread>
 
 namespace fetch {
+namespace core {
+class FeatureFlags;
+}
+
 namespace crypto {
-class Identity;
+class Prover;
 }
 
 namespace ledger {
@@ -132,6 +137,7 @@ public:
 
   using ConstByteArray = byte_array::ConstByteArray;
   using DAG            = fetch::ledger::DAG;
+  using ProverPtr      = std::shared_ptr<crypto::Prover>;
 
   enum class State
   {
@@ -166,8 +172,8 @@ public:
   BlockCoordinator(MainChain &chain, DAG &dag, ExecutionManagerInterface &execution_manager,
                    StorageUnitInterface &storage_unit, BlockPackerInterface &packer,
                    BlockSinkInterface &block_sink, TransactionStatusCache &status_cache,
-                   crypto::Identity const &identity, std::size_t num_lanes, std::size_t num_slices,
-                   std::size_t block_difficulty);
+                   core::FeatureFlags const &features, ProverPtr const &prover,
+                   std::size_t num_lanes, std::size_t num_slices, std::size_t block_difficulty);
   BlockCoordinator(BlockCoordinator const &) = delete;
   BlockCoordinator(BlockCoordinator &&)      = delete;
   ~BlockCoordinator()                        = default;
@@ -228,22 +234,24 @@ private:
 
   static constexpr uint64_t COMMON_PATH_TO_ANCESTOR_LENGTH_LIMIT = 1000;
 
-  using Mutex              = fetch::mutex::Mutex;
-  using BlockPtr           = MainChain::BlockPtr;
-  using NextBlockPtr       = std::unique_ptr<Block>;
-  using PendingBlocks      = std::deque<BlockPtr>;
-  using PendingStack       = std::vector<BlockPtr>;
-  using Flag               = std::atomic<bool>;
-  using BlockPeriod        = std::chrono::milliseconds;
-  using Clock              = std::chrono::system_clock;
-  using Timepoint          = Clock::time_point;
-  using StateMachinePtr    = std::shared_ptr<StateMachine>;
-  using MinerPtr           = std::shared_ptr<consensus::ConsensusMinerInterface>;
-  using TxDigestSetPtr    = std::unique_ptr<DigestSet>;
-  using LastExecutedBlock  = SynchronisedState<ConstByteArray>;
-  using FutureTimepoint    = fetch::core::FutureTimepoint;
-  using DeadlineTimer     = fetch::moment::DeadlineTimer;
-  using SynergeticExecutor = fetch::consensus::SynergeticExecutor;
+  using Mutex                = fetch::mutex::Mutex;
+  using BlockPtr             = MainChain::BlockPtr;
+  using NextBlockPtr         = std::unique_ptr<Block>;
+  using PendingBlocks        = std::deque<BlockPtr>;
+  using PendingStack         = std::vector<BlockPtr>;
+  using Flag                 = std::atomic<bool>;
+  using BlockPeriod          = std::chrono::milliseconds;
+  using Clock                = std::chrono::system_clock;
+  using Timepoint            = Clock::time_point;
+  using StateMachinePtr      = std::shared_ptr<StateMachine>;
+  using MinerPtr             = std::shared_ptr<consensus::ConsensusMinerInterface>;
+  using TxDigestSetPtr       = std::unique_ptr<DigestSet>;
+  using LastExecutedBlock    = SynchronisedState<ConstByteArray>;
+  using FutureTimepoint      = fetch::core::FutureTimepoint;
+  using DeadlineTimer        = fetch::moment::DeadlineTimer;
+  using SynergeticExecMgrPtr = std::unique_ptr<SynergeticExecutionManagerInterface>;
+  using SynExecStatus        = SynergeticExecutionManagerInterface::ExecStatus;
+  using SynergeticMinerPtr   = std::unique_ptr<SynergeticMinerInterface>;
 
   /// @name Monitor State
   /// @{
@@ -325,8 +333,8 @@ private:
 
   /// @name Synergetic Contracts
   /// @{
-  bool synergetic_contracts_enabled_{true};  //< Variable to disable synergetic contracts
-  SynergeticExecutor synergetic_executor_;
+  SynergeticExecMgrPtr synergetic_exec_mgr_;
+  SynergeticMinerPtr   synergetic_miner_;
   /// }
 };
 

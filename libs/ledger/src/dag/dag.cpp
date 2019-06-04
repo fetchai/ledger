@@ -20,6 +20,11 @@
 
 namespace fetch {
 namespace ledger {
+namespace {
+
+constexpr char const *LOGGING_NAME = "DAG";
+
+} // namespace
 
 DAG::DAG(ConstByteArray genesis_contents)
 {
@@ -245,7 +250,7 @@ bool DAG::ValidatePreviousInternal(DAGNode const &node)
     auto it = nodes_.find(h);
     if (it == nodes_.end())
     {
-      FETCH_LOG_INFO("DAG", "could not find preivous.");
+      FETCH_LOG_INFO("DAG", "could not find previous.");
       is_valid = false;
       break;
     }
@@ -455,6 +460,11 @@ bool DAG::PushInternal(DAGNode node, bool check_signature)
     VerifierType verfifier(node.identity);
     if (!verfifier.Verify(node.hash, node.signature))
     {
+      FETCH_LOG_INFO(LOGGING_NAME, "Verification Failed!!!");
+      FETCH_LOG_INFO(LOGGING_NAME, " -> Identity : ", node.identity.identifier().ToHex());
+      FETCH_LOG_INFO(LOGGING_NAME, " -> Signature: ", node.signature.ToHex());
+      FETCH_LOG_INFO(LOGGING_NAME, " -> Data     : ", node.hash.ToHex());
+
       // TODO: Update trust system
       return false;
     }

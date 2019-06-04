@@ -39,6 +39,7 @@
 #include <string>
 
 using fetch::byte_array::ConstByteArray;
+using fetch::vm_modules::VMFactory;
 
 namespace fetch {
 namespace ledger {
@@ -98,7 +99,7 @@ SmartContract::SmartContract(std::string const &source)
   : source_{source}
   , digest_{GenerateDigest(source)}
   , executable_{std::make_shared<Executable>()}
-  , module_{vm_modules::VMFactory::GetModule()}
+  , module_{VMFactory::GetModule(VMFactory::USE_SMART_CONTRACTS)}
 {
   if (source_.empty())
   {
@@ -384,7 +385,7 @@ Contract::Status SmartContract::InvokeAction(std::string const &name, Transactio
   }
 
   // Get clean VM instance
-  auto vm = vm_modules::VMFactory::GetVM(module_);
+  auto vm = std::make_unique<vm::VM>(module_.get());
   vm->SetIOObserver(state());
 
   // lookup the function / entry point which will be executed
@@ -446,7 +447,7 @@ Contract::Status SmartContract::InvokeAction(std::string const &name, Transactio
 Contract::Status SmartContract::InvokeInit(Address const &owner)
 {
   // Get clean VM instance
-  auto vm = vm_modules::VMFactory::GetVM(module_);
+  auto vm = std::make_unique<vm::VM>(module_.get());
   vm->SetIOObserver(state());
 
   FETCH_LOG_DEBUG(LOGGING_NAME, "Running SC init function: ", init_fn_name_);
@@ -497,7 +498,7 @@ SmartContract::Status SmartContract::InvokeQuery(std::string const &name, Query 
                                                  Query &response)
 {
   // get clean VM instance
-  auto vm = vm_modules::VMFactory::GetVM(module_);
+  auto vm = std::make_unique<vm::VM>(module_.get());
   vm->SetIOObserver(state());
 
   // lookup the executable

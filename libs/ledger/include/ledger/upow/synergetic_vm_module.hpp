@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#if 0
 #include "vm_modules/core/byte_array_wrapper.hpp"
 #include "vm_modules/core/crypto_rng.hpp"
 #include "vm_modules/core/print.hpp"
@@ -79,3 +80,5 @@ inline void CreateConensusVMModule(fetch::vm::Module &module)
 
 }  // namespace consensus
 }  // namespace fetch
+
+#endif

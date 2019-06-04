@@ -69,6 +69,7 @@ public:
     NOT_PRESENT,  ///< The is no contract present, simple token transfer transaction
     PRESENT,      ///< There is a smart contract reference present
     CHAIN_CODE,   ///< There is a reference to chain code (hard coded smart contracts) present
+    SYNERGETIC,   ///< The synergetic transaction
   };
 
   /**
