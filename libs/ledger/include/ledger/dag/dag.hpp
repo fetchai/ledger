@@ -27,9 +27,12 @@
 #include "crypto/fnv.hpp"
 #include "crypto/identity.hpp"
 #include "crypto/sha256.hpp"
-#include "ledger/chain/block.hpp"
-#include "ledger/dag/dag_interface.hpp"
+
 #include "ledger/dag/dag_node.hpp"
+#include "ledger/dag/dag_epoch.hpp"
+
+#include "storage/object_store.hpp"
+#include "ledger/upow/work.hpp"
 
 #include <deque>
 #include <limits>
@@ -42,135 +45,142 @@
 namespace fetch {
 namespace ledger {
 
-/**
- * DAG implementation.
- */
-class DAG : public DAGInterface
+struct DAGTip
 {
-public:
-  using VerifierType     = crypto::ECDSAVerifier;
-  using ConstByteArray   = byte_array::ConstByteArray;
-  using Digest           = ConstByteArray;
-  using DigestCache      = std::deque<Digest>;
-  using DigestArray      = std::vector<Digest>;
-  using NodeList         = std::list<DAGNode>;
-  using NodeArray        = std::vector<DAGNode>;
-  using NodeDeque        = std::deque<DAGNode>;
-  using NodeMap          = std::unordered_map<Digest, DAGNode>;
-  using DigestMap        = std::unordered_map<Digest, uint64_t>;
-  using Mutex            = mutex::Mutex;
-  using CallbackFunction = std::function<void(DAGNode)>;
+  using ConstByteArray = byte_array::ConstByteArray;
 
-  static const uint64_t PARAMETER_REFERENCES_TO_BE_TIP = 2;
-  static const uint64_t LATEST_CACHE_SIZE              = 20;
-
-  // Construction / Destruction
-  DAG(ConstByteArray genesis_contents = "genesis");
-  DAG(DAG const &) = delete;
-  DAG(DAG &&)      = delete;
-  virtual ~DAG()   = default;
-
-  // Operators
-  DAG &operator=(DAG const &) = delete;
-  DAG &operator=(DAG &&) = delete;
-
-  /// Methods to interact with the dag
-  /// @{
-  bool            Push(DAGNode node) override;
-  bool            HasNode(Digest const &hash) override;
-  NodeArray       DAGNodes() const override;
-  DigestArray     UncertifiedTipsAsVector() const override;
-  DigestMap const tips() const override;
-  NodeMap const   nodes() const override;
-  uint64_t        node_count() override;
-  void            RemoveNode(Digest const &hash) override;
-  /// }
-
-  /// Methods used for syncing
-  /// @{
-  NodeArray GetChunk(uint64_t const &f, uint64_t const &t) override;
-  NodeArray GetBefore(DigestArray hashes, uint64_t const &block_number,
-                      uint64_t const &count) override;
-  NodeArray GetAfter(DigestArray hashes, uint64_t const &block_number,
-                     uint64_t const &count) override;
-  NodeDeque GetLatest() const override;
-  /// }
-
-  /// Control logic for setting the time of the nodes.
-  /// @{
-  bool      SetNodeTime(Block const &block) override;
-  NodeArray ExtractSegment(Block const &block) override;
-  void      SetNodeReferences(DAGNode &node, int count = 2) override;
-
-  void RevertTo(uint64_t /*block_number*/) override
+  DAGTip(ConstByteArray dag_node_ref, uint64_t epoch, uint64_t wei)
+    : dag_node_reference{dag_node_ref}
+    , oldest_epoch_referenced{epoch}
+    , weight{wei}
   {
-    FETCH_LOCK(maintenance_mutex_);
-    // TODO: Implement to revert.
-    throw std::runtime_error("DAG::RevertTo not implemented");
-  }
-  /// }
-
-  /**
-   * @brief validates the previous nodes referenced by a node.
-   *
-   * @param node is the node which needs to be checked.
-   */
-  bool ValidatePrevious(DAGNode const &node) override
-  {
-    FETCH_LOCK(maintenance_mutex_);
-    return ValidatePreviousInternal(node);
+    static uint64_t ids = 1;
+    id = ids++;
   }
 
-  std::size_t size() const
-  {
-    return nodes_.size();
-  }  // TODO: check whether can be deleted
-private:
-  bool ValidatePreviousInternal(DAGNode const &node);
-  void SignalNewNode(DAGNode n)
-  {
-    LOG_STACK_TRACE_POINT;
-    if (on_new_node_)
-      on_new_node_(std::move(n));
-  }
-
-  bool PushInternal(DAGNode node, bool check_signature = true);
-
-  NodeMap          nodes_;            ///< the full DAG.
-  DigestMap        tips_;             ///< tips of the DAG.
-  DigestArray      all_node_hashes_;  ///< contain all node hashes
-  CallbackFunction on_new_node_;
-  NodeDeque        latest_;
-
-  mutable Mutex maintenance_mutex_{__LINE__, __FILE__};
+  ConstByteArray dag_node_reference; // Refers to a DagNode that has no references to it
+  uint64_t oldest_epoch_referenced = 0;
+  uint64_t weight = 0;
+  uint64_t id = 0;
 };
 
 /**
- * @brief returns the tips of the DAG.
+ * DAG implementation.
  */
-inline DAG::DigestMap const DAG::tips() const
+class DAG
 {
-  FETCH_LOCK(maintenance_mutex_);
-  return tips_;
-}
+private:
+  using ByteArray       = byte_array::ByteArray;
+  using ConstByteArray  = byte_array::ConstByteArray;
+  using EpochStore      = fetch::storage::ObjectStore<DAGEpoch>;
+  using DAGNodeStore    = fetch::storage::ObjectStore<DAGNode>;
+  using NodeHash        = ConstByteArray;
+  using EpochHash       = ConstByteArray;
+  using EpochStackStore = fetch::storage::ObjectStore<EpochHash>;
+  using DAGTipID        = uint64_t;
+  using DAGTipPtr       = std::shared_ptr<DAGTip>;
+  using DAGNodePtr      = std::shared_ptr<DAGNode>;
+  using Mutex           = mutex::Mutex;
 
-/**
- * @brief returns all nodes.
- */
-inline DAG::NodeMap const DAG::nodes() const
-{
-  FETCH_LOCK(maintenance_mutex_);
-  return nodes_;
-}
+public:
 
-/**
- * @brief checks whether a given hash is found in the DAG.
- */
-inline bool DAG::HasNode(byte_array::ConstByteArray const &hash)
-{
-  FETCH_LOCK(maintenance_mutex_);
-  return nodes_.find(hash) != nodes_.end();
-}
+  enum class DAGTypes
+  {
+    DATA
+  };
+
+  using MissingTXs        = std::vector<NodeHash>;
+  using MissingNodes      = std::vector<DAGNode>;
+
+  DAG() = delete;
+  DAG(std::string const &db_name, bool);
+  DAG(DAG const &rhs) = delete;
+  DAG(DAG &&rhs)      = delete;
+  DAG &operator       = (DAG const &rhs) = delete;
+  DAG &operator       = (DAG&& rhs)      = delete;
+
+  static constexpr char const *LOGGING_NAME = "DAG";
+  static const uint64_t PARAMETER_REFERENCES_TO_BE_TIP    = 2; // Must be > 1 as 1 reference signifies pointing at a DAGEpoch
+  static const uint64_t EPOCH_VALIDITY_PERIOD             = 4;
+  static const uint64_t LOOSE_NODE_LIFETIME               = EPOCH_VALIDITY_PERIOD;
+  static const uint64_t MAX_TIPS_IN_EPOCH                 = 30;
+
+  // TXs will be added here when they arrive for the first time at the node,
+  // also when they are synchronised across the network
+  void AddTransaction(Transaction const &tx);
+
+  // newer things
+  void AddTransaction(Transaction const &tx, crypto::ECDSASigner const &signer, DAGTypes type);
+  void AddWork(Work work);
+
+  // Create an epoch based on the current DAG (not committal)
+  DAGEpoch CreateEpoch(uint64_t block_number);
+
+  // Commit the state of the DAG as this node believes it (using an epoch)
+  bool CommitEpoch(DAGEpoch);
+
+  // Revert to a previous epoch // TODO(HUT): consider making this a block number instead
+  bool RevertToEpoch(DAGEpoch const &);
+
+  // Make sure that the dag has all nodes for a certain epoch
+  bool SatisfyEpoch(DAGEpoch &);
+
+  std::vector<DAGNode> GetLatest();
+
+  ///////////////////////////////////////
+  // Fns used for syncing
+
+  // Recently added DAG nodes by this miner (not seen by network yet)
+  std::vector<DAGNode>  GetRecentlyAdded();
+
+  // DAG node hashes this miner knows should exist
+  MissingTXs GetRecentlyMissing();
+
+  bool GetDAGNode(ConstByteArray hash, DAGNode &node);
+
+  // TXs and epochs will be added here when they are broadcast in
+  bool AddDAGNode(DAGNode node);
+
+private:
+
+  // Long term storage
+  uint64_t              most_recent_epoch_ = 0;
+  DAGEpoch              previous_epoch_;                      // Most recent epoch, not in deque for convenience
+  std::deque<DAGEpoch>  previous_epochs_;                     // N - 1 still relevant epochs
+  EpochStackStore       epochs_;                              // Past less-relevant epochs as a stack (key = index, value = hash)
+  EpochStore            all_stored_epochs_;                   // All epochs, including from non-winning forks (key = epoch hash, val = epoch)
+  DAGNodeStore          finalised_dnodes_;                    // Once an epoch arrives, all dag nodes inbetween go here
+  DAGEpoch              temp_recently_created_epoch_;         // Most recent epoch, not in deque for convenience
+  std::string           db_name_;
+
+  // volatile state
+  std::unordered_map<DAGTipID, DAGTipPtr>               all_tips_;          // All tips are here
+  std::unordered_map<NodeHash, DAGTipPtr>               tips_;              // lookup tips of the dag pointing at a certain node hash
+  std::unordered_map<NodeHash, DAGNodePtr>              node_pool_;         // dag nodes that are not finalised but are still valid
+  std::unordered_map<NodeHash, std::vector<DAGNodePtr>> loose_nodes_;       // nodes that are missing one or more references (waiting on NodeHash)
+  // std::unordered_map<NodeHash, uint64_t>                loose_nodes_ttl_;   // TODO(HUT): this.
+
+  // Used for sync purposes
+  std::vector<DAGNode>  recently_added_;                                  // nodes that have been recently added
+  std::vector<NodeHash> missing_;                                         // node hashes that we know are missing
+
+  // Internal functions don't need locking and can recursively call themselves etc.
+  bool PushInternal(DAGNodePtr node);
+  bool AlreadySeenInternal(DAGNodePtr node); // const
+  bool TooOldInternal(uint64_t); // const
+  bool IsLooseInternal(DAGNodePtr node); // const
+  void SetReferencesInternal(DAGNodePtr node); // const
+  void AdvanceTipsInternal(DAGNodePtr node);
+  bool HashInPrevEpochsInternal(ConstByteArray hash); // const
+  void AddLooseNodeInternal(DAGNodePtr node);
+  void HealLooseBlocksInternal(ConstByteArray added_hash);
+  void UpdateStaleTipsInternal();
+  bool NodeInvalidInternal(DAGNodePtr node);
+  DAGNodePtr GetDAGNodeInternal(ConstByteArray hash);
+  void TraverseFromTips(std::set<ConstByteArray> const &, std::function<void (NodeHash)>, std::function<bool (NodeHash)>);
+
+    mutable Mutex mutex_{__LINE__, __FILE__};
+  };
 
 }  // namespace ledger
 }  // namespace fetch

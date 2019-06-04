@@ -20,10 +20,10 @@
 #include "http/middleware/allow_origin.hpp"
 #include "ledger/chain/consensus/bad_miner.hpp"
 #include "ledger/chain/consensus/dummy_miner.hpp"
-/* #include "ledger/chain/main_chain_http_interface.hpp" */
+
 #include "ledger/chaincode/contract_http_interface.hpp"
 #include "ledger/dag/dag.hpp"
-#include "ledger/dag/dag_http_interface.hpp"
+
 #include "ledger/execution_manager.hpp"
 #include "ledger/storage_unit/lane_remote_control.hpp"
 #include "ledger/tx_query_http_interface.hpp"
@@ -163,11 +163,11 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
   , storage_(std::make_shared<StorageUnitClient>(internal_muddle_.AsEndpoint(), shard_cfgs_,
                                                  cfg_.log2_num_lanes))
   , lane_control_(internal_muddle_.AsEndpoint(), shard_cfgs_, cfg_.log2_num_lanes)
+  , dag_{std::make_shared<ledger::DAG>("dag_db_", false)}
+  , dag_service_{std::make_shared<ledger::DAGService>(muddle_, dag_)}
   , execution_manager_{std::make_shared<ExecutionManager>(
         cfg_.num_executors, cfg_.log2_num_lanes, storage_,
         [this] { return std::make_shared<Executor>(storage_); })}
-  , dag_{}
-  , dag_rpc_service_{muddle_, muddle_.AsEndpoint(), dag_}
   , chain_{ledger::MainChain::Mode::LOAD_PERSISTENT_DB}
   , block_packer_{cfg_.log2_num_lanes}
   , block_coordinator_{chain_,
@@ -194,8 +194,7 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
         std::make_shared<ledger::TxStatusHttpInterface>(tx_status_cache_),
         std::make_shared<ledger::TxQueryHttpInterface>(*storage_),
         std::make_shared<ledger::ContractHttpInterface>(*storage_, tx_processor_),
-        std::make_shared<HealthCheckHttpModule>(chain_, *main_chain_service_, block_coordinator_),
-        std::make_shared<ledger::DAGHTTPInterface>(dag_, dag_rpc_service_)}
+        std::make_shared<HealthCheckHttpModule>(chain_, *main_chain_service_, block_coordinator_)}
 {
 
   // print the start up log banner
@@ -207,6 +206,7 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
 
   // attach the services to the reactor
   reactor_.Attach(main_chain_service_->GetWeakRunnable());
+  reactor_.Attach(dag_service_->GetWeakRunnable());
 
   // configure all the lane services
   lane_services_.Setup(network_manager_, shard_cfgs_, !config.disable_signing);
@@ -310,23 +310,6 @@ void Constellation::Run(UriList const &initial_peers, core::WeakRunnable bootstr
 
   execution_manager_->Start();
   tx_processor_.Start();
-
-  /////////////////////////////////
-  //// TODO
-
-  //  dag_.OnNewNode([this](fetch::ledger::DAGNode /*node*/)
-  //  {
-  //    // TODO: Replace with a way of updating the contents of the next block being mined.
-  //    mock_chain_.SetTips(dag_.tips_unsafe());
-  //  });
-
-  //  // TODO: Replace
-  //  mock_chain_.OnBlock([this](fetch::ledger::Block block)
-  //  {
-  //    //dag_.SetNodeTime(block.body.block_number, block.body.dag_nodes);
-  //  });
-  //// TODO
-  /////////////////////////////////
 
   /// P2P (TRUST) HIGH LEVEL MANAGEMENT
 

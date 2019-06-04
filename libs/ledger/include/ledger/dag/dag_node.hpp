@@ -27,6 +27,7 @@
 #include "crypto/fnv.hpp"
 #include "crypto/identity.hpp"
 #include "crypto/sha256.hpp"
+#include "ledger/chain/transaction_serializer.hpp"
 #include "ledger/chain/address.hpp"
 
 #include <deque>
@@ -42,81 +43,63 @@ namespace ledger {
 
 struct DAGNode
 {
-  using HasherType     = crypto::SHA256;
+
   using ConstByteArray = byte_array::ConstByteArray;
   using Digest         = ConstByteArray;
   using Signature      = ConstByteArray;
   using DigestList     = std::vector<Digest>;
-  using DigestSet      = std::unordered_set<Digest>;
+  using HasherType     = crypto::SHA256;
 
-  static constexpr uint64_t INVALID_TIMESTAMP = std::numeric_limits<uint64_t>::max();
-  static constexpr uint64_t GENESIS_TIME      = std::numeric_limits<uint64_t>::max() - 1;
+  DAGNode()                              = default;
+  DAGNode(DAGNode const &rhs)            = default;
+  DAGNode(DAGNode &&rhs)                 = default;
+  DAGNode &operator=(DAGNode const &rhs) = default;
+  DAGNode &operator=(DAGNode&& rhs)      = default;
 
   // Different types of DAG nodes.
-  enum
+  enum Types : uint64_t
   {
     GENESIS      = 1,   //< Used to identify the genesis DAG node
     WORK         = 2,   //< Indicates that work is stored in the contents
     DATA         = 3,   //< DAG contains data that can be used inside the contract.
+    TX           = 4,   //< Contains a TX intended to set up a problem
     INVALID_NODE = 255  //< The node is not valid (default on construction)
   };
-
-  /// Properties derived from DAG and chain
-  /// @{
-  uint64_t timestamp{
-      INVALID_TIMESTAMP};  ///< timestamp to that keeps the time since last validated block.
-  DigestSet next;          ///< nodes referencing this node
-  /// }
 
   /// Serialisable state-variables
   /// @{
   uint64_t         type{INVALID_NODE};  ///< type of the DAG node
   DigestList       previous;            ///< previous nodes.
-  ConstByteArray   contents;            ///< payload to be deserialised.
-  ConstByteArray   contract_name;       ///< The contract which this node is associated with.
-  Address          contract_digest;
   Address          creator;
-  crypto::Identity identity;            ///< identity of the creator.
-  /// }
+  ConstByteArray   contents;            ///< payload to be deserialised.
+  Address          contract_digest;       ///< The contract which this node is associated with.
+  crypto::Identity identity;            ///< identity of the creator (empty for now)
 
   /// Serialisable entries to verify state
   /// @{
   Digest    hash;       ///< DAG hash.
-  Signature signature;  ///< creators signature.
+  Signature signature;  ///< creators signature (empty for now).
   /// }
 
-  /**
-   * @brief tests whether a node is valid or not.
-   */
-  operator bool() const
-  {
-    return type != INVALID_NODE;
-  }
+  // bookkeeping
+  uint64_t   oldest_epoch_referenced = std::numeric_limits<uint64_t>::max();
+  uint64_t   weight             = 0;
 
-  template <typename T>
-  bool SetObject(T const &obj)
+  bool SetContents(Transaction const &tx)
   {
-    serializers::ByteArrayBuffer serializer;
-    serializer << obj;
-    contents = serializer.data();
+    ledger::TransactionSerializer ser{};
+    ser.Serialize(tx);
+    contents = ser.data();
 
     return true;
   }
 
-  template <typename T>
-  bool GetObject(T &obj)
+  bool GetContents(Transaction &tx)
   {
-    serializers::ByteArrayBuffer serializer(contents);
-    serializer >> obj;
+    ledger::TransactionSerializer ser{contents};
+    ser.Deserialize(tx);
 
     return true;
-  }
-
-  bool operator==(DAGNode const &other) const
-  {
-    return (timestamp == other.timestamp) && (type == other.type) && (previous == other.previous) &&
-           (contents == other.contents) && (contract_name == other.contract_name) &&
-           (identity == other.identity) && (hash == other.hash) && (signature == other.signature);
   }
 
   /**
@@ -125,9 +108,17 @@ struct DAGNode
   void Finalise()
   {
     serializers::ByteArrayBuffer buf;
-    buf << type << previous << contents;
-    buf << contract_name;
+
+    buf << type;
+    buf << previous;
+    buf << creator;
+    buf << contents;
+    buf << contract_digest;
     buf << identity;
+    buf << hash;
+    buf << signature;
+    buf << oldest_epoch_referenced;
+    buf << weight;
 
     HasherType hasher;
     hasher.Reset();
@@ -139,15 +130,31 @@ struct DAGNode
 template <typename T>
 void Serialize(T &serializer, DAGNode const &node)
 {
-  serializer << node.type << node.previous << node.contents << node.contract_name << node.identity
-             << node.hash << node.signature;
+  serializer << node.type;
+  serializer << node.previous;
+  serializer << node.creator;
+  serializer << node.contents;
+  serializer << node.contract_digest;
+  serializer << node.identity;
+  serializer << node.hash;
+  serializer << node.signature;
+  serializer << node.oldest_epoch_referenced;
+  serializer << node.weight;
 }
 
 template <typename T>
 void Deserialize(T &serializer, DAGNode &node)
 {
-  serializer >> node.type >> node.previous >> node.contents >> node.contract_name >>
-      node.identity >> node.hash >> node.signature;
+  serializer >> node.type;
+  serializer >> node.previous;
+  serializer >> node.creator;
+  serializer >> node.contents;
+  serializer >> node.contract_digest;
+  serializer >> node.identity;
+  serializer >> node.hash;
+  serializer >> node.signature;
+  serializer >> node.oldest_epoch_referenced;
+  serializer >> node.weight;
 }
 
 }  // namespace ledger

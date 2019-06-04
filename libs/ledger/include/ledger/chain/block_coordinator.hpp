@@ -67,67 +67,6 @@ class BlockSinkInterface;
  * - Mining / generating a new block
  * - Waiting in and idle / syncronised state
  *
- *                           ┌──────────────────┐
- *                           │   Synchronise    │
- *                           │                  │◀───────────────────────────────┐
- *                           └──────────────────┘                                │
- *                                     │                                         │
- *                                     │                                         │
- *                                     │                                         │
- *           ┌─────────────────────────┴────────────────────────┐                │
- *           │                                                  │                │
- *           │                                                  ▼                │
- *  Pipe 1   │                Pipe 2                  ┌──────────────────┐       │
- *           │                                        │   Synchronised   │       │ < (v) Add DAG
- * hashes to block here. │                         ┌──────────────│Reverts as needed │◀ ┐    │ < ( )
- * Add revert here │                         │              └──────────────────┘       │ │ │ │ │ │
- *           │                         │                        │                │
- *           │                         │                        ├ ─ ─ ─ ─ ─ ┘    │
- *           ▼                         ▼                        │                │
- * ┌──────────────────┐      ┌──────────────────┐               │                │ < 1: Add
- * synergetic validation here │ Pre Exec. Block  │      │  Pack New Block  │               │ │ │
- * Validation    │      │                  │               │                │ └──────────────────┘
- * └──────────────────┘               │                │ │                         │ │ │ │ │ │ │ │
- * │                        │                │ ▼                         ▼                        │
- * │ ┌──────────────────┐      ┌──────────────────┐               │                │ < 1 & 2: Add
- * synergetic execution here │ Synergetic       │      │  Synergetic new  │               │ │ < //
- * TODO: Move one down below wait for transactions │ execution        │      │  execution       │ │
- * │ └──────────────────┘      └──────────────────┘               │                │ │ │ │ │ ▼ ▼ │ │
- * ┌──────────────────┐      ┌──────────────────┐               │                │
- * │  Schedule Block  │      │Execute New Block │               │                │
- * │    Execution     │      │                  │               │                │
- * └──────────────────┘      └──────────────────┘               │                │
- *           │                         │                        │                │
- *           │                         │                        │                │
- *           ▼                         ▼                        │                │
- * ┌──────────────────┐      ┌──────────────────┐               │                │
- * │Wait for New Block│      │Wait for Execution│               │                │
- * │    Execution     │◀ ─   │                  │◀ ─            │                │
- * └──────────────────┘   │  └──────────────────┘   │           │                │
- *           │                         │                        │                │
- *           │─ ─ ─ ─ ─ ─ ┘            │─ ─ ─ ─ ─ ─ ┘           │                │
- *           ▼                         ▼                        │                │
- * ┌──────────────────┐      ┌──────────────────┐               │                │
- * │ Post Exec. Block │      │   Proof Search   │               │                │
- * │    Validation    │      │                  │◀ ─            │                │
- * └──────────────────┘      └──────────────────┘   │           │                │
- *           │                         │                        │                │
- *           │                         │─ ─ ─ ─ ─ ─ ┘           │                │
- *           │                         ▼                        │                │
- *           │               ┌──────────────────┐               │                │
- *           │               │  Transmit Block  │               │                │
- *           │               │                  │               │                │
- *           │               └──────────────────┘               │                │
- *           │                         │                        │                │
- *           └─────────────────────────┼────────────────────────┘                │
- *                                     │                                         │
- *                                     │                                         │
- *                                     │                                         │
- *                                     ▼                                         │
- *                           ┌──────────────────┐                                │
- *                           │      Reset       │                                │
- *                           │                  │────────────────────────────────┘
- *                           └──────────────────┘
  *
  */
 class BlockCoordinator
@@ -136,7 +75,7 @@ public:
   static constexpr char const *LOGGING_NAME = "BlockCoordinator";
 
   using ConstByteArray = byte_array::ConstByteArray;
-  using DAG            = fetch::ledger::DAG;
+  using DAGPtr         = std::shared_ptr<ledger::DAG>;
   using ProverPtr      = std::shared_ptr<crypto::Prover>;
 
   enum class State
@@ -169,7 +108,7 @@ public:
   using StateMachine = core::StateMachine<State>;
 
   // Construction / Destruction
-  BlockCoordinator(MainChain &chain, DAG &dag, ExecutionManagerInterface &execution_manager,
+  BlockCoordinator(MainChain &chain, DAGPtr dag, ExecutionManagerInterface &execution_manager,
                    StorageUnitInterface &storage_unit, BlockPackerInterface &packer,
                    BlockSinkInterface &block_sink, TransactionStatusCache &status_cache,
                    core::FeatureFlags const &features, ProverPtr const &prover,
@@ -290,7 +229,7 @@ private:
   /// @name External Components
   /// @{
   MainChain &                chain_;              ///< Ref to system chain
-  DAG &                      dag_;                ///< Ref to DAG
+  DAGPtr                     dag_;                ///< Ref to DAG
   ExecutionManagerInterface &execution_manager_;  ///< Ref to system execution manager
   StorageUnitInterface &     storage_unit_;       ///< Ref to the storage unit
   BlockPackerInterface &     block_packer_;       ///< Ref to the block packer

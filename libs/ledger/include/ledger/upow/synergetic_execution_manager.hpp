@@ -23,20 +23,23 @@
 #include "ledger/upow/work_package.hpp"
 #include "ledger/upow/synergetic_execution_manager_interface.hpp"
 
+#include "ledger/dag/dag.hpp"
+
 #include <unordered_map>
 
 namespace fetch {
 namespace ledger {
 
-class DAGInterface;
 class StorageUnitInterface;
 
 class SynergeticExecutionManager : public SynergeticExecutionManagerInterface
 {
 public:
 
+  using DAGPtr                 = std::shared_ptr<ledger::DAG>;
+
   // Construction / Destruction
-  SynergeticExecutionManager(DAGInterface &, StorageUnitInterface &);
+  SynergeticExecutionManager(DAGPtr, StorageUnitInterface &);
   SynergeticExecutionManager(SynergeticExecutionManager const &) = delete;
   SynergeticExecutionManager(SynergeticExecutionManager &&) = delete;
   ~SynergeticExecutionManager() override = default;
@@ -54,7 +57,7 @@ public:
 private:
   using WorkMap = std::unordered_map<Digest, WorkPackagePtr, DigestHashAdapter>;
 
-  DAGInterface &dag_;
+  DAGPtr dag_;
   StorageUnitInterface &storage_;
 
   WorkMap solution_queues_;

@@ -21,6 +21,8 @@
 #include "ledger/upow/synergetic_miner_interface.hpp"
 #include "ledger/upow/synergetic_contract.hpp"
 
+#include "ledger/dag/dag.hpp"
+
 #include <math/bignumber.hpp>
 #include <memory>
 
@@ -33,16 +35,17 @@ class Prover;
 namespace ledger {
 
 class StorageInterface;
-class DAGInterface;
+
 class Address;
 
 class NaiveSynergeticMiner : public SynergeticMinerInterface
 {
 public:
   using ProverPtr = std::shared_ptr<crypto::Prover>;
+  using DAGPtr                 = std::shared_ptr<ledger::DAG>;
 
   // Construction / Destruction
-  NaiveSynergeticMiner(DAGInterface &dag, StorageInterface &storage, ProverPtr prover);
+  NaiveSynergeticMiner(DAGPtr dag, StorageInterface &storage, ProverPtr prover);
   NaiveSynergeticMiner(NaiveSynergeticMiner const &) = delete;
   NaiveSynergeticMiner(NaiveSynergeticMiner &&) = delete;
   ~NaiveSynergeticMiner() override = default;
@@ -63,7 +66,7 @@ private:
   SynergeticContractPtr LoadContract(Address const &address);
   WorkPtr MineSolution(Address const &address, BlockIndex block);
 
-  DAGInterface     &dag_;
+  DAGPtr            dag_;
   StorageInterface &storage_;
   ProverPtr         prover_;
   math::BigUnsigned starting_nonce_;

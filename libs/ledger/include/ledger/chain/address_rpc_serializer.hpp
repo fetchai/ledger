@@ -23,23 +23,6 @@
 namespace fetch {
 namespace ledger {
 
-template <typename T>
-void Serialize(T &s, Address const &address)
-{
-  assert(!address.address().empty());
-  s << address.address();
-}
-
-template <typename T>
-void Deserialize(T &s, Address &address)
-{
-  // extract the data from the stream
-  byte_array::ConstByteArray data;
-  s >> data;
-
-  // create the address
-  address = Address{data};
-}
 
 }  // namespace ledger
 }  // namespace fetch

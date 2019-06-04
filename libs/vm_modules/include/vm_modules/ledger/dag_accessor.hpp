@@ -84,23 +84,24 @@ public:
       return nullptr;
     }
 
-    // TODO: Make it such that multiple block times can be extracted
-    auto nodes = chain_state_->dag->ExtractSegment(chain_state_->block);
+    // TODO(HUT): this.
+    //// TODO: Make it such that multiple block times can be extracted
+    //auto nodes = chain_state_->dag->ExtractSegment(chain_state_->block);
 
-    for (auto &n : nodes)
-    {
-      // We ignore anything that does not reference the past
-      if (n.previous.size() == 0)
-      {
-        continue;
-      }
+    //for (auto &n : nodes)
+    //{
+    //  // We ignore anything that does not reference the past
+    //  if (n.previous.size() == 0)
+    //  {
+    //    continue;
+    //  }
 
-      // Only data is available inside the contract
-      if (n.type == ledger::DAGNode::DATA)
-      {
-        items.push_back(vm_->CreateNewObject<DAGNodeWrapper>(n));
-      }
-    }
+    //  // Only data is available inside the contract
+    //  if (n.type == ledger::DAGNode::DATA)
+    //  {
+    //    items.push_back(vm_->CreateNewObject<DAGNodeWrapper>(n));
+    //  }
+    //}
 
     return CreateNewArray(vm_, items);
   }

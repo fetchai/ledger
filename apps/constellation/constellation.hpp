@@ -38,9 +38,8 @@
 #include "network/p2pservice/p2p_service.hpp"
 #include "network/p2pservice/p2ptrust_bayrank.hpp"
 
+#include "ledger/protocols/dag_service.hpp"
 #include "ledger/dag/dag.hpp"
-#include "ledger/dag/dag_muddle_configuration.hpp"  //< TODO(tfr): Move to where it belongs
-#include "ledger/protocols/dag_rpc_service.hpp"
 
 #include <atomic>
 #include <cstddef>
@@ -128,8 +127,9 @@ private:
   using HttpModules            = std::vector<HttpModulePtr>;
   using TransactionProcessor   = ledger::TransactionProcessor;
   using TrustSystem            = p2p::P2PTrustBayRank<Muddle::Address>;
-  using DAGRpcService          = fetch::ledger::DAGRpcService;
-  using DAG                    = fetch::ledger::DAG;
+  using DAGPtr                 = std::shared_ptr<ledger::DAG>;
+  using DAGServicePtr          = std::shared_ptr<ledger::DAGService>;
+
   using ShardConfigs           = ledger::ShardConfigs;
   using TxStatusCache          = ledger::TransactionStatusCache;
 
@@ -161,17 +161,13 @@ private:
   LaneServices         lane_services_;    ///< The lane services
   StorageUnitClientPtr storage_;          ///< The storage client to the lane services
   LaneRemoteControl    lane_control_;     ///< The lane control client for the lane services
+  DAGPtr               dag_;
+  DAGServicePtr        dag_service_;
   /// @}
 
   /// @name Block Processing
   /// @{
   ExecutionManagerPtr execution_manager_;  ///< The transaction execution manager
-  /// @}
-
-  /// @name DAG and useful work
-  /// @{
-  DAG           dag_;
-  DAGRpcService dag_rpc_service_;
   /// @}
 
   /// @name Blockchain and Mining

@@ -28,12 +28,13 @@
 #include "ledger/execution_manager_interface.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 #include "ledger/transaction_status_cache.hpp"
-#include "ledger/upow/synergetic_execution_manager.hpp"
+
 #include "ledger/upow/naive_synergetic_miner.hpp"
 
+#include "ledger/upow/synergetic_execution_manager.hpp"
+#include "ledger/dag/dag.hpp"
+
 #include <chrono>
-
-
 
 namespace fetch {
 namespace ledger {
@@ -46,6 +47,7 @@ namespace {
   using SynergeticExecMgrPtr = std::unique_ptr<SynergeticExecutionManagerInterface>;
   using SynergeticMinerPtr = std::unique_ptr<SynergeticMinerInterface>;
   using ProverPtr = BlockCoordinator::ProverPtr;
+  using DAGPtr                 = std::shared_ptr<ledger::DAG>;
 
   // Constants
   const std::chrono::milliseconds TX_SYNC_NOTIFY_INTERVAL{1000};
@@ -57,7 +59,7 @@ namespace {
   const std::size_t               DIGEST_LENGTH_BYTES{32};
 
 
-SynergeticExecMgrPtr CreateSynergeticExecutor(core::FeatureFlags const &features, DAGInterface &dag, StorageUnitInterface &storage_unit)
+SynergeticExecMgrPtr CreateSynergeticExecutor(core::FeatureFlags const &features, DAGPtr dag, StorageUnitInterface &storage_unit)
 {
   SynergeticExecMgrPtr execution_mgr{};
 
@@ -69,7 +71,7 @@ SynergeticExecMgrPtr CreateSynergeticExecutor(core::FeatureFlags const &features
   return execution_mgr;
 }
 
-SynergeticMinerPtr CreateSynergeticMiner(core::FeatureFlags const &features, DAGInterface &dag, StorageInterface &storage, ProverPtr prover)
+SynergeticMinerPtr CreateSynergeticMiner(core::FeatureFlags const &features, DAGPtr dag, StorageInterface &storage, ProverPtr prover)
 {
   SynergeticMinerPtr miner{};
 
@@ -89,7 +91,7 @@ SynergeticMinerPtr CreateSynergeticMiner(core::FeatureFlags const &features, DAG
  * @param chain The reference to the main change
  * @param execution_manager  The reference to the execution manager
  */
-BlockCoordinator::BlockCoordinator(MainChain &chain, DAG &dag,
+BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag,
                                    ExecutionManagerInterface &execution_manager,
                                    StorageUnitInterface &storage_unit, BlockPackerInterface &packer,
                                    BlockSinkInterface &    block_sink,
@@ -187,7 +189,14 @@ BlockCoordinator::State BlockCoordinator::OnReloadState()
     bool const revert_success = storage_unit_.RevertToHash(current_block_->body.merkle_hash,
                                                            current_block_->body.block_number);
 
-    if (revert_success)
+    bool revert_success_dag = true;
+
+    if(dag_)
+    {
+      revert_success_dag = dag_->RevertToEpoch(current_block_->body.dag_epoch);
+    }
+
+    if (revert_success && revert_success_dag)
     {
       // we need to update the execution manager state and also our locally cached state about the
       // last block that has been executed
@@ -323,11 +332,18 @@ BlockCoordinator::State BlockCoordinator::OnSynchronising()
         FETCH_LOG_ERROR(LOGGING_NAME, "Unable to revert back to genesis");
       }
 
+      // TODO(HUT): DAG genesis revert here
+
       // delay the state machine in these error cases, to allow the network to catch up if the issue
       // is network related and if nothing else restrict logs being spammed
       state_machine_->Delay(std::chrono::seconds{5});
 
       return State::RESET;
+    }
+
+    if(dag_ && !dag_->RevertToEpoch(common_parent->body.dag_epoch))
+    {
+      FETCH_LOG_ERROR(LOGGING_NAME, "Failed to revert dag to block: ", common_parent->body.block_number);
     }
 
     // revert the storage back to the known state
@@ -374,13 +390,11 @@ BlockCoordinator::State BlockCoordinator::OnSynchronised(State current, State pr
   else if (mining_ && mining_enabled_ && (Clock::now() >= next_block_time_))
   {
     // in the case of the synergetic miner we simulate the generation of mining nodes here
-    if (synergetic_miner_)
+    if (synergetic_miner_ && dag_)
     {
       // create all the nodes for the DAG
-      auto const nodes = synergetic_miner_->Mine(current_block_->body.block_number);
-
-      // TODO(EJF): Broadcast the nodes to the network
-      FETCH_UNUSED(nodes);
+      //auto const nodes = synergetic_miner_->Mine(current_block_->body.block_number); // old
+      synergetic_miner_->Mine(999); // new - no need for it to mine at this point btw.
     }
 
     // create a new block
@@ -388,7 +402,12 @@ BlockCoordinator::State BlockCoordinator::OnSynchronised(State current, State pr
     next_block_->body.previous_hash = current_block_->body.hash;
     next_block_->body.block_number  = current_block_->body.block_number + 1;
     next_block_->body.miner         = mining_address_;
-    next_block_->body.dag_nodes     = dag_.UncertifiedTipsAsVector();
+
+    // Attach current DAG state
+    if(dag_)
+    {
+      next_block_->body.dag_epoch = dag_->CreateEpoch(next_block_->body.block_number);
+    }
 
     // ensure the difficulty is correctly set
     next_block_->proof.SetTarget(block_difficulty_);
@@ -549,6 +568,19 @@ BlockCoordinator::State BlockCoordinator::OnWaitForTransactions(State current, S
     have_asked_for_missing_txs_ = false;
   }
 
+  // TODO(HUT): this might need to check that storage has whatever this dag epoch needs wrt contracts.
+  bool dag_is_ready;
+
+  if(dag_)
+  {
+    // This combines waiting until all dag nodes are in the epoch and epoch validation (well formed dag)
+    dag_is_ready = dag_->SatisfyEpoch(current_block_->body.dag_epoch);
+  }
+  else
+  {
+    dag_is_ready = true;
+  }
+
   // if the transaction digests have not been cached then do this now
   if (!pending_txs_)
   {
@@ -581,7 +613,7 @@ BlockCoordinator::State BlockCoordinator::OnWaitForTransactions(State current, S
 
   // once all the transactions are present we can then move to scheduling the block. This makes life
   // much easier all around
-  if (pending_txs_->empty())
+  if (pending_txs_->empty() && dag_is_ready)
   {
     FETCH_LOG_DEBUG(LOGGING_NAME, "All transactions have been synchronised!");
 
@@ -596,6 +628,11 @@ BlockCoordinator::State BlockCoordinator::OnWaitForTransactions(State current, S
     if (tx_wait_periodic_.Poll())
     {
       FETCH_LOG_INFO(LOGGING_NAME, "Waiting for ", pending_txs_->size(), " transactions to sync");
+    }
+
+    if(!dag_is_ready)
+    {
+      FETCH_LOG_INFO(LOGGING_NAME, "Waiting for DAG to sync");
     }
 
     // signal the the next execution of the state machine should be much later in the future
@@ -716,6 +753,9 @@ BlockCoordinator::State BlockCoordinator::OnPostExecBlockValidation()
     // Commit this state
     storage_unit_.Commit(current_block_->body.block_number);
 
+    // Notify the DAG of this epoch
+    dag_->CommitEpoch(current_block_->body.dag_epoch);
+
     // signal the last block that has been executed
     last_executed_block_.Set(current_block_->body.hash);
   }
@@ -750,24 +790,6 @@ BlockCoordinator::State BlockCoordinator::OnPackNewBlock()
 
 BlockCoordinator::State BlockCoordinator::OnNewSynergeticExecution()
 {
-  if (synergetic_exec_mgr_)
-  {
-    BlockPtr previous_block = chain_.GetBlock(next_block_->body.previous_hash);
-
-    // All work is identified on the latest DAG segment and prepared in a queue
-    auto const result = synergetic_exec_mgr_->PrepareWorkQueue(*next_block_, *previous_block);
-    if (SynExecStatus::SUCCESS != result)
-    {
-      FETCH_LOG_WARN(LOGGING_NAME, "Block certifies work that possibly is malicious (",
-                     ToBase64(next_block_->body.hash), ")");
-      chain_.RemoveBlock(next_block_->body.hash);
-
-      // TODO(unknown): Remove malicious DAG nodes
-
-      return State::RESET;
-    }
-  }
-
   return State::EXECUTE_NEW_BLOCK;
 }
 
@@ -816,6 +838,9 @@ BlockCoordinator::State BlockCoordinator::OnWaitForNewBlockExecution()
 
     // Commit the state generated by this block
     storage_unit_.Commit(next_block_->body.block_number);
+
+    // Notify the DAG of this epoch
+    dag_->CommitEpoch(next_block_->body.dag_epoch);
 
     next_state = State::PROOF_SEARCH;
     break;

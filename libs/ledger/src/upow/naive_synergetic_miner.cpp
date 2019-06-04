@@ -22,7 +22,7 @@
 #include "ledger/upow/naive_synergetic_miner.hpp"
 #include "ledger/upow/work.hpp"
 #include "ledger/upow/solutions.hpp"
-#include "ledger/dag/dag_interface.hpp"
+
 #include "ledger/upow/synergetic_base_types.hpp"
 #include "ledger/chaincode/smart_contract_manager.hpp"
 
@@ -70,7 +70,7 @@ WorkScore ExecuteWork(SynergeticContractPtr const &contract, WorkPtr const &work
 
 } // namespace
 
-NaiveSynergeticMiner::NaiveSynergeticMiner(DAGInterface &dag, StorageInterface &storage, ProverPtr prover)
+NaiveSynergeticMiner::NaiveSynergeticMiner(DAGPtr dag, StorageInterface &storage, ProverPtr prover)
   : dag_{dag}
   , storage_{storage}
   , prover_{std::move(prover)}
@@ -82,76 +82,55 @@ DagNodes NaiveSynergeticMiner::Mine(BlockIndex block)
 {
   // iterate through the latest DAG nodes and build a complete set of addresses to mine solutions
   // for
-  AddressSet address_set;
-  for (auto const &node : dag_.GetLatest())
-  {
-    if (DAGNode::DATA == node.type)
-    {
-      assert(!node.contract_digest.empty());
-      address_set.insert(node.contract_digest);
-    }
-  }
+  // TODO(HUT): would be nicer to specify here what we want by type
+  auto dag_nodes = dag_->GetLatest();
 
-  if (address_set.empty())
+  // Debug
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "No data to be mined");
-    return {};
-  }
-  else
-  {
-    std::ostringstream oss;
-    for (auto const &address : address_set)
+    AddressSet address_set;
+    for (auto const &node : dag_nodes)
     {
-      oss << '\n' << address.display();
+      if (DAGNode::DATA == node.type)
+      {
+        assert(!node.contract_digest.empty());
+        address_set.insert(node.contract_digest);
+      }
     }
 
-    FETCH_LOG_INFO(LOGGING_NAME, "Available synergetic contracts to be mined", oss.str());
-  }
+    if (address_set.empty())
+    {
+      FETCH_LOG_INFO(LOGGING_NAME, "No data to be mined");
+      return {};
+    }
+    else
+    {
+      std::ostringstream oss;
+      for (auto const &address : address_set)
+      {
+        oss << '\n' << address.display();
+      }
 
-  // create the output vector of nodes (we can preallocate because we know the maximum size)
-  DagNodes nodes(address_set.size());
-  std::size_t node_count{0};
+      FETCH_LOG_INFO(LOGGING_NAME, "Available synergetic contracts to be mined", oss.str());
+    }
+  }
 
   // for each of the contract addresses available mine a solution
-  for (auto const &address : address_set)
+  for (auto const &dag_node : dag_nodes)
   {
-    auto const solution = MineSolution(address, block);
-
-    if (solution)
+    if (DAGNode::DATA == dag_node.type)
     {
-      auto &node = nodes[node_count++];
+      auto const solution = MineSolution(dag_node.contract_digest, block);
 
-      // create a node
-      node.type            = DAGNode::WORK;
-      node.contract_digest = solution->contract_digest();
-      node.identity        = prover_->identity();
-
-      node.SetObject(*solution);
-      dag_.SetNodeReferences(node);
-
-      node.Finalise();
-
-      node.signature = prover_->Sign(node.hash);
-
-      // Pushing
-      if (!dag_.Push(node))
+      if (solution)
       {
-        FETCH_LOG_WARN(LOGGING_NAME, "Failed to add node to DAG");
-
-        // effectively erase the entry from the vector
-        --node_count;
-      }
-      else
-      {
-        FETCH_LOG_INFO(LOGGING_NAME, "Just generated that new work solution now...");
+        // TODO(HUT): get signing correct
+        //dag_->AddWork(*solution, prover_);
+        dag_->AddWork(*solution);
       }
     }
   }
 
-  // remove all the empty nodes
-  nodes.resize(node_count);
-
-  return nodes;
+  return {};
 }
 
 SynergeticContractPtr NaiveSynergeticMiner::LoadContract(Address const &address)
