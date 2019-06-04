@@ -31,10 +31,10 @@ enum Configuration
   public final String label
 }
 
-// Only execute long-running tests on develop and merge branches
+// Only execute long-running tests on master and merge branches
 def should_run_slow_tests()
 {
-  return BRANCH_NAME == 'develop' || BRANCH_NAME ==~ /^PR-\d+-merge$/
+  return BRANCH_NAME == 'master' || BRANCH_NAME ==~ /^PR-\d+-merge$/
 }
 
 def static_analysis()
@@ -96,6 +96,10 @@ def create_build(Platform platform, Configuration config)
 
               stage("Unit Tests ${suffix}") {
                 sh "./scripts/ci-tool.py -T ${config.label}"
+              }
+
+              SLOW_stage("Slow Tests ${suffix}") {
+                sh "./scripts/ci-tool.py -S ${config.label}"
               }
 
               SLOW_stage("Integration Tests ${suffix}") {

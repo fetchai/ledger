@@ -10,18 +10,16 @@ include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
 # Compiler Configuration
 setup_compiler()
 
-add_fetch_test(ledger-chaincode-tests fetch-ledger chaincode)
-add_fetch_test(ledger-executor-tests
-               fetch-ledger
-               executors
-               SLOW)
+fetch_add_test(ledger-chaincode-tests fetch-ledger chaincode)
+fetch_add_test(ledger-consensus-tests fetch-ledger consensus)
+fetch_add_test(ledger-chain-tests fetch-ledger chain)
+
+fetch_add_slow_test(ledger-executor-tests fetch-ledger executors)
 target_include_directories(ledger-executor-tests PRIVATE chaincode)
-add_fetch_test(ledger-consensus-tests fetch-ledger consensus)
-add_fetch_test(ledger-chain-tests fetch-ledger chain)
 
-add_fetch_test(ledger-dag-tests fetch-ledger dag)
+fetch_add_test(ledger-dag-tests fetch-ledger dag)
 
-add_fetch_test(ledger-upow-tests fetch-ledger upow)
+fetch_add_test(ledger-upow-tests fetch-ledger upow)
 
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/upow/synergetic_test_contract.etch" 
                "${CMAKE_CURRENT_BINARY_DIR}/synergetic_test_contract.etch" COPYONLY)

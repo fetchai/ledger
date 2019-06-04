@@ -42,17 +42,13 @@
 #include "ledger/dag/dag_muddle_configuration.hpp"  //< TODO(tfr): Move to where it belongs
 #include "ledger/protocols/dag_rpc_service.hpp"
 
-#include <algorithm>
 #include <atomic>
-#include <chrono>
-#include <deque>
-#include <iterator>
+#include <cstddef>
+#include <cstdint>
 #include <memory>
-#include <random>
-#include <thread>
-#include <tuple>
+#include <string>
 #include <unordered_map>
-#include <unordered_set>
+#include <vector>
 
 namespace fetch {
 

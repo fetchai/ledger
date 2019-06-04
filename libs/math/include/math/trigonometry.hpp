@@ -21,9 +21,6 @@
 #include "math/kernels/trigonometry.hpp"
 #include "math/meta/math_type_traits.hpp"
 
-#include <cassert>
-#include <cmath>
-
 namespace fetch {
 namespace math {
 
@@ -35,7 +32,7 @@ template <typename ArrayType>
 fetch::math::meta::IfIsMathNonFixedPointArray<ArrayType, void> Sin(ArrayType const &x,
                                                                    ArrayType &      ret)
 {
-  ASSERT(ret.size() == x.size());
+  assert(ret.size() == x.size());
   kernels::Sin<typename ArrayType::Type> s;
   auto                                   x_it = x.cbegin();
   auto                                   rit  = ret.begin();
@@ -50,7 +47,7 @@ template <typename ArrayType>
 fetch::math::meta::IfIsMathFixedPointArray<ArrayType, void> Sin(ArrayType const &x, ArrayType &ret)
 {
   using Type = typename ArrayType::Type;
-  ASSERT(ret.size() == x.size());
+  assert(ret.size() == x.size());
   kernels::Sin<double> s;
   auto                 x_it = x.cbegin();
   auto                 rit  = ret.begin();
@@ -84,7 +81,7 @@ template <typename ArrayType>
 fetch::math::meta::IfIsMathNonFixedPointArray<ArrayType, void> Cos(ArrayType const &x,
                                                                    ArrayType &      ret)
 {
-  ASSERT(ret.size() == x.size());
+  assert(ret.size() == x.size());
   kernels::Cos<typename ArrayType::Type> c;
   auto                                   x_it = x.cbegin();
   auto                                   rit  = ret.begin();
@@ -99,7 +96,7 @@ template <typename ArrayType>
 fetch::math::meta::IfIsMathFixedPointArray<ArrayType, void> Cos(ArrayType const &x, ArrayType &ret)
 {
   using Type = typename ArrayType::Type;
-  ASSERT(ret.size() == x.size());
+  assert(ret.size() == x.size());
   kernels::Cos<double> c;
   auto                 x_it = x.cbegin();
   auto                 rit  = ret.begin();
@@ -133,7 +130,7 @@ template <typename ArrayType>
 fetch::math::meta::IfIsMathNonFixedPointArray<ArrayType, void> Tan(ArrayType const &x,
                                                                    ArrayType &      ret)
 {
-  ASSERT(ret.size() == x.size());
+  assert(ret.size() == x.size());
   kernels::Tan<typename ArrayType::Type> s;
   auto                                   x_it = x.cbegin();
   auto                                   rit  = ret.begin();
@@ -148,7 +145,7 @@ template <typename ArrayType>
 fetch::math::meta::IfIsMathFixedPointArray<ArrayType, void> Tan(ArrayType const &x, ArrayType &ret)
 {
   using Type = typename ArrayType::Type;
-  ASSERT(ret.size() == x.size());
+  assert(ret.size() == x.size());
   kernels::Tan<double> s;
   auto                 x_it = x.cbegin();
   auto                 rit  = ret.begin();
@@ -182,7 +179,7 @@ template <typename ArrayType>
 fetch::math::meta::IfIsMathNonFixedPointArray<ArrayType, void> ASin(ArrayType const &x,
                                                                     ArrayType &      ret)
 {
-  ASSERT(ret.size() == x.size());
+  assert(ret.size() == x.size());
   kernels::ASin<typename ArrayType::Type> s;
   auto                                    x_it = x.cbegin();
   auto                                    rit  = ret.begin();
@@ -197,7 +194,7 @@ template <typename ArrayType>
 fetch::math::meta::IfIsMathFixedPointArray<ArrayType, void> ASin(ArrayType const &x, ArrayType &ret)
 {
   using Type = typename ArrayType::Type;
-  ASSERT(ret.size() == x.size());
+  assert(ret.size() == x.size());
   kernels::ASin<double> s;
   auto                  x_it = x.cbegin();
   auto                  rit  = ret.begin();
@@ -231,7 +228,7 @@ template <typename ArrayType>
 fetch::math::meta::IfIsMathNonFixedPointArray<ArrayType, void> ACos(ArrayType const &x,
                                                                     ArrayType &      ret)
 {
-  ASSERT(ret.size() == x.size());
+  assert(ret.size() == x.size());
   kernels::ACos<typename ArrayType::Type> s;
   auto                                    x_it = x.cbegin();
   auto                                    rit  = ret.begin();
@@ -246,7 +243,7 @@ template <typename ArrayType>
 fetch::math::meta::IfIsMathFixedPointArray<ArrayType, void> ACos(ArrayType const &x, ArrayType &ret)
 {
   using Type = typename ArrayType::Type;
-  ASSERT(ret.size() == x.size());
+  assert(ret.size() == x.size());
   kernels::ACos<double> s;
   auto                  x_it = x.cbegin();
   auto                  rit  = ret.begin();
@@ -280,7 +277,7 @@ template <typename ArrayType>
 fetch::math::meta::IfIsMathNonFixedPointArray<ArrayType, void> ATan(ArrayType const &x,
                                                                     ArrayType &      ret)
 {
-  ASSERT(ret.size() == x.size());
+  assert(ret.size() == x.size());
   kernels::ATan<typename ArrayType::Type> s;
   auto                                    x_it = x.cbegin();
   auto                                    rit  = ret.begin();
@@ -295,7 +292,7 @@ template <typename ArrayType>
 fetch::math::meta::IfIsMathFixedPointArray<ArrayType, void> ATan(ArrayType const &x, ArrayType &ret)
 {
   using Type = typename ArrayType::Type;
-  ASSERT(ret.size() == x.size());
+  assert(ret.size() == x.size());
   kernels::ATan<double> s;
   auto                  x_it = x.cbegin();
   auto                  rit  = ret.begin();
@@ -329,7 +326,7 @@ template <typename ArrayType>
 fetch::math::meta::IfIsMathNonFixedPointArray<ArrayType, void> SinH(ArrayType const &x,
                                                                     ArrayType &      ret)
 {
-  ASSERT(ret.size() == x.size());
+  assert(ret.size() == x.size());
   kernels::SinH<typename ArrayType::Type> s;
   auto                                    x_it = x.cbegin();
   auto                                    rit  = ret.begin();
@@ -344,7 +341,7 @@ template <typename ArrayType>
 fetch::math::meta::IfIsMathFixedPointArray<ArrayType, void> SinH(ArrayType const &x, ArrayType &ret)
 {
   using Type = typename ArrayType::Type;
-  ASSERT(ret.size() == x.size());
+  assert(ret.size() == x.size());
   kernels::SinH<double> s;
   auto                  x_it = x.cbegin();
   auto                  rit  = ret.begin();
@@ -378,7 +375,7 @@ template <typename ArrayType>
 fetch::math::meta::IfIsMathNonFixedPointArray<ArrayType, void> CosH(ArrayType const &x,
                                                                     ArrayType &      ret)
 {
-  ASSERT(ret.size() == x.size());
+  assert(ret.size() == x.size());
   kernels::CosH<typename ArrayType::Type> s;
   auto                                    x_it = x.cbegin();
   auto                                    rit  = ret.begin();
@@ -393,7 +390,7 @@ template <typename ArrayType>
 fetch::math::meta::IfIsMathFixedPointArray<ArrayType, void> CosH(ArrayType const &x, ArrayType &ret)
 {
   using Type = typename ArrayType::Type;
-  ASSERT(ret.size() == x.size());
+  assert(ret.size() == x.size());
   kernels::CosH<double> s;
   auto                  x_it = x.cbegin();
   auto                  rit  = ret.begin();
@@ -427,7 +424,7 @@ template <typename ArrayType>
 fetch::math::meta::IfIsMathNonFixedPointArray<ArrayType, void> TanH(ArrayType const &x,
                                                                     ArrayType &      ret)
 {
-  ASSERT(ret.size() == x.size());
+  assert(ret.size() == x.size());
   kernels::TanH<typename ArrayType::Type> s;
   auto                                    x_it = x.cbegin();
   auto                                    rit  = ret.begin();
@@ -442,7 +439,7 @@ template <typename ArrayType>
 fetch::math::meta::IfIsMathFixedPointArray<ArrayType, void> TanH(ArrayType const &x, ArrayType &ret)
 {
   using Type = typename ArrayType::Type;
-  ASSERT(ret.size() == x.size());
+  assert(ret.size() == x.size());
   kernels::TanH<double> s;
   auto                  x_it = x.cbegin();
   auto                  rit  = ret.begin();
@@ -476,7 +473,7 @@ template <typename ArrayType>
 fetch::math::meta::IfIsMathNonFixedPointArray<ArrayType, void> ASinH(ArrayType const &x,
                                                                      ArrayType &      ret)
 {
-  ASSERT(ret.size() == x.size());
+  assert(ret.size() == x.size());
   kernels::ASinH<typename ArrayType::Type> s;
   auto                                     x_it = x.cbegin();
   auto                                     rit  = ret.begin();
@@ -492,7 +489,7 @@ fetch::math::meta::IfIsMathFixedPointArray<ArrayType, void> ASinH(ArrayType cons
                                                                   ArrayType &      ret)
 {
   using Type = typename ArrayType::Type;
-  ASSERT(ret.size() == x.size());
+  assert(ret.size() == x.size());
   kernels::ASinH<double> s;
   auto                   x_it = x.cbegin();
   auto                   rit  = ret.begin();
@@ -526,7 +523,7 @@ template <typename ArrayType>
 fetch::math::meta::IfIsMathNonFixedPointArray<ArrayType, void> ACosH(ArrayType const &x,
                                                                      ArrayType &      ret)
 {
-  ASSERT(ret.size() == x.size());
+  assert(ret.size() == x.size());
   kernels::ACosH<typename ArrayType::Type> s;
   auto                                     x_it = x.cbegin();
   auto                                     rit  = ret.begin();
@@ -542,7 +539,7 @@ fetch::math::meta::IfIsMathFixedPointArray<ArrayType, void> ACosH(ArrayType cons
                                                                   ArrayType &      ret)
 {
   using Type = typename ArrayType::Type;
-  ASSERT(ret.size() == x.size());
+  assert(ret.size() == x.size());
   kernels::ACosH<double> s;
   auto                   x_it = x.cbegin();
   auto                   rit  = ret.begin();
@@ -576,7 +573,7 @@ template <typename ArrayType>
 fetch::math::meta::IfIsMathNonFixedPointArray<ArrayType, void> ATanH(ArrayType const &x,
                                                                      ArrayType &      ret)
 {
-  ASSERT(ret.size() == x.size());
+  assert(ret.size() == x.size());
   kernels::ATanH<typename ArrayType::Type> s;
   auto                                     x_it = x.cbegin();
   auto                                     rit  = ret.begin();
@@ -592,7 +589,7 @@ fetch::math::meta::IfIsMathFixedPointArray<ArrayType, void> ATanH(ArrayType cons
                                                                   ArrayType &      ret)
 {
   using Type = typename ArrayType::Type;
-  ASSERT(ret.size() == x.size());
+  assert(ret.size() == x.size());
   kernels::ATanH<double> s;
   auto                   x_it = x.cbegin();
   auto                   rit  = ret.begin();

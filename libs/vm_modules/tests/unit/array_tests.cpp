@@ -16,12 +16,14 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm_test_suite.hpp"
+#include "vm_test_toolkit.hpp"
 
 namespace {
 
-class ArrayTests : public VmTestSuite
+class ArrayTests : public ::testing::Test
 {
+public:
+  VmTestToolkit toolkit;
 };
 
 TEST_F(ArrayTests, count_returns_the_number_of_elements_in_the_array)
@@ -34,10 +36,10 @@ TEST_F(ArrayTests, count_returns_the_number_of_elements_in_the_array)
     endfunction
   )";
 
-  ASSERT_TRUE(Compile(TEXT));
-  ASSERT_TRUE(Run());
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_TRUE(toolkit.Run());
 
-  ASSERT_EQ(stdout(), "2-5");
+  ASSERT_EQ(toolkit.stdout(), "2-5");
 }
 
 TEST_F(ArrayTests, count_returns_zero_if_the_array_is_empty)
@@ -50,10 +52,10 @@ TEST_F(ArrayTests, count_returns_zero_if_the_array_is_empty)
     endfunction
   )";
 
-  ASSERT_TRUE(Compile(TEXT));
-  ASSERT_TRUE(Run());
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_TRUE(toolkit.Run());
 
-  ASSERT_EQ(stdout(), "0-0");
+  ASSERT_EQ(toolkit.stdout(), "0-0");
 }
 
 TEST_F(ArrayTests, append_adds_one_element_at_the_end_of_the_array)
@@ -70,10 +72,10 @@ TEST_F(ArrayTests, append_adds_one_element_at_the_end_of_the_array)
     endfunction
   )";
 
-  ASSERT_TRUE(Compile(TEXT));
-  ASSERT_TRUE(Run());
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_TRUE(toolkit.Run());
 
-  ASSERT_EQ(stdout(), "[1, 2, 42]");
+  ASSERT_EQ(toolkit.stdout(), "[1, 2, 42]");
 }
 
 TEST_F(ArrayTests, append_is_statically_type_safe_with_numeric_arrays)
@@ -85,7 +87,7 @@ TEST_F(ArrayTests, append_is_statically_type_safe_with_numeric_arrays)
     endfunction
   )";
 
-  ASSERT_FALSE(Compile(TEXT));
+  ASSERT_FALSE(toolkit.Compile(TEXT));
 }
 
 TEST_F(ArrayTests, append_accepts_objects)
@@ -103,10 +105,10 @@ TEST_F(ArrayTests, append_accepts_objects)
     endfunction
   )";
 
-  ASSERT_TRUE(Compile(TEXT));
-  ASSERT_TRUE(Run());
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_TRUE(toolkit.Run());
 
-  ASSERT_EQ(stdout(), "1-3");
+  ASSERT_EQ(toolkit.stdout(), "1-3");
 }
 
 TEST_F(ArrayTests, append_is_statically_type_safe_with_object_arrays)
@@ -119,7 +121,7 @@ TEST_F(ArrayTests, append_is_statically_type_safe_with_object_arrays)
     endfunction
   )";
 
-  ASSERT_FALSE(Compile(TEXT));
+  ASSERT_FALSE(toolkit.Compile(TEXT));
 }
 
 TEST_F(ArrayTests, pop_back_removes_the_last_element_and_returns_it)
@@ -139,10 +141,10 @@ TEST_F(ArrayTests, pop_back_removes_the_last_element_and_returns_it)
     endfunction
   )";
 
-  ASSERT_TRUE(Compile(TEXT));
-  ASSERT_TRUE(Run());
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_TRUE(toolkit.Run());
 
-  ASSERT_EQ(stdout(), "30-[10, 20]");
+  ASSERT_EQ(toolkit.stdout(), "30-[10, 20]");
 }
 
 TEST_F(ArrayTests, pop_back_works_with_arrays_of_objects)
@@ -169,10 +171,10 @@ TEST_F(ArrayTests, pop_back_works_with_arrays_of_objects)
     endfunction
   )";
 
-  ASSERT_TRUE(Compile(TEXT));
-  ASSERT_TRUE(Run());
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_TRUE(toolkit.Run());
 
-  ASSERT_EQ(stdout(), "3-2-[30]-[10]-[20]");
+  ASSERT_EQ(toolkit.stdout(), "3-2-[30]-[10]-[20]");
 }
 
 TEST_F(ArrayTests, pop_back_fails_if_array_is_empty)
@@ -184,8 +186,8 @@ TEST_F(ArrayTests, pop_back_fails_if_array_is_empty)
     endfunction
   )";
 
-  ASSERT_TRUE(Compile(TEXT));
-  ASSERT_FALSE(Run());
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_FALSE(toolkit.Run());
 }
 
 TEST_F(ArrayTests,
@@ -206,10 +208,10 @@ TEST_F(ArrayTests,
     endfunction
   )";
 
-  ASSERT_TRUE(Compile(TEXT));
-  ASSERT_TRUE(Run());
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_TRUE(toolkit.Run());
 
-  ASSERT_EQ(stdout(), "[20, 30]-[10]");
+  ASSERT_EQ(toolkit.stdout(), "[20, 30]-[10]");
 }
 
 TEST_F(ArrayTests, when_passed_an_integer_N_pop_back_works_for_arrays_of_objects)
@@ -238,10 +240,10 @@ TEST_F(ArrayTests, when_passed_an_integer_N_pop_back_works_for_arrays_of_objects
     endfunction
   )";
 
-  ASSERT_TRUE(Compile(TEXT));
-  ASSERT_TRUE(Run());
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_TRUE(toolkit.Run());
 
-  ASSERT_EQ(stdout(), "3-1-2-[20]-[30]-[10]");
+  ASSERT_EQ(toolkit.stdout(), "3-1-2-[20]-[30]-[10]");
 }
 
 TEST_F(ArrayTests, when_passed_zero_pop_back_does_not_mutate_its_array_and_returns_an_empty_array)
@@ -261,10 +263,10 @@ TEST_F(ArrayTests, when_passed_zero_pop_back_does_not_mutate_its_array_and_retur
     endfunction
   )";
 
-  ASSERT_TRUE(Compile(TEXT));
-  ASSERT_TRUE(Run());
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_TRUE(toolkit.Run());
 
-  ASSERT_EQ(stdout(), "[]-[10, 20, 30]");
+  ASSERT_EQ(toolkit.stdout(), "[]-[10, 20, 30]");
 }
 
 TEST_F(ArrayTests, when_passed_a_negative_number_pop_back_fails)
@@ -280,8 +282,8 @@ TEST_F(ArrayTests, when_passed_a_negative_number_pop_back_fails)
     endfunction
   )";
 
-  ASSERT_TRUE(Compile(TEXT));
-  ASSERT_FALSE(Run());
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_FALSE(toolkit.Run());
 }
 
 TEST_F(ArrayTests, pop_front_removes_the_first_element_and_returns_it)
@@ -301,10 +303,10 @@ TEST_F(ArrayTests, pop_front_removes_the_first_element_and_returns_it)
     endfunction
   )";
 
-  ASSERT_TRUE(Compile(TEXT));
-  ASSERT_TRUE(Run());
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_TRUE(toolkit.Run());
 
-  ASSERT_EQ(stdout(), "10-[20, 30]");
+  ASSERT_EQ(toolkit.stdout(), "10-[20, 30]");
 }
 
 TEST_F(ArrayTests, pop_front_works_with_arrays_of_objects)
@@ -331,10 +333,10 @@ TEST_F(ArrayTests, pop_front_works_with_arrays_of_objects)
     endfunction
   )";
 
-  ASSERT_TRUE(Compile(TEXT));
-  ASSERT_TRUE(Run());
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_TRUE(toolkit.Run());
 
-  ASSERT_EQ(stdout(), "3-2-[10]-[20]-[30]");
+  ASSERT_EQ(toolkit.stdout(), "3-2-[10]-[20]-[30]");
 }
 
 TEST_F(ArrayTests, pop_front_fails_if_array_is_empty)
@@ -346,8 +348,8 @@ TEST_F(ArrayTests, pop_front_fails_if_array_is_empty)
     endfunction
   )";
 
-  ASSERT_TRUE(Compile(TEXT));
-  ASSERT_FALSE(Run());
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_FALSE(toolkit.Run());
 }
 
 TEST_F(ArrayTests,
@@ -368,10 +370,10 @@ TEST_F(ArrayTests,
     endfunction
   )";
 
-  ASSERT_TRUE(Compile(TEXT));
-  ASSERT_TRUE(Run());
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_TRUE(toolkit.Run());
 
-  ASSERT_EQ(stdout(), "[10, 20]-[30]");
+  ASSERT_EQ(toolkit.stdout(), "[10, 20]-[30]");
 }
 
 TEST_F(ArrayTests, when_passed_an_integer_N_pop_front_works_for_arrays_of_objects)
@@ -400,10 +402,10 @@ TEST_F(ArrayTests, when_passed_an_integer_N_pop_front_works_for_arrays_of_object
     endfunction
   )";
 
-  ASSERT_TRUE(Compile(TEXT));
-  ASSERT_TRUE(Run());
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_TRUE(toolkit.Run());
 
-  ASSERT_EQ(stdout(), "3-1-2-[10]-[20]-[30]");
+  ASSERT_EQ(toolkit.stdout(), "3-1-2-[10]-[20]-[30]");
 }
 
 TEST_F(ArrayTests, when_passed_zero_pop_front_does_not_mutate_its_array_and_returns_an_empty_array)
@@ -423,10 +425,10 @@ TEST_F(ArrayTests, when_passed_zero_pop_front_does_not_mutate_its_array_and_retu
     endfunction
   )";
 
-  ASSERT_TRUE(Compile(TEXT));
-  ASSERT_TRUE(Run());
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_TRUE(toolkit.Run());
 
-  ASSERT_EQ(stdout(), "[]-[10, 20, 30]");
+  ASSERT_EQ(toolkit.stdout(), "[]-[10, 20, 30]");
 }
 
 TEST_F(ArrayTests, when_passed_a_negative_number_pop_front_fails)
@@ -442,8 +444,8 @@ TEST_F(ArrayTests, when_passed_a_negative_number_pop_front_fails)
     endfunction
   )";
 
-  ASSERT_TRUE(Compile(TEXT));
-  ASSERT_FALSE(Run());
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_FALSE(toolkit.Run());
 }
 
 TEST_F(ArrayTests, reverse_inverts_the_order_of_elements)
@@ -461,10 +463,10 @@ TEST_F(ArrayTests, reverse_inverts_the_order_of_elements)
     endfunction
   )";
 
-  ASSERT_TRUE(Compile(TEXT));
-  ASSERT_TRUE(Run());
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_TRUE(toolkit.Run());
 
-  ASSERT_EQ(stdout(), "[30, 20, 10]");
+  ASSERT_EQ(toolkit.stdout(), "[30, 20, 10]");
 }
 
 TEST_F(ArrayTests, reverse_of_an_empty_array_is_a_noop)
@@ -478,10 +480,74 @@ TEST_F(ArrayTests, reverse_of_an_empty_array_is_a_noop)
     endfunction
   )";
 
-  ASSERT_TRUE(Compile(TEXT));
-  ASSERT_TRUE(Run());
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_TRUE(toolkit.Run());
 
-  ASSERT_EQ(stdout(), "[]");
+  ASSERT_EQ(toolkit.stdout(), "[]");
+}
+
+TEST_F(ArrayTests, extend_appends_the_elements_of_the_argument_array_in_order)
+{
+  static char const *TEXT = R"(
+    function main()
+      var data1 = Array<Int32>(3);
+      data1[0] = 1;
+      data1[1] = 2;
+      data1[2] = 3;
+      var data2 = Array<Int32>(2);
+      data2[0] = 5;
+      data2[1] = 4;
+
+      data1.extend(data2);
+
+      print(data1);
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_TRUE(toolkit.Run());
+
+  ASSERT_EQ(toolkit.stdout(), "[1, 2, 3, 5, 4]");
+}
+
+TEST_F(ArrayTests, extend_called_with_an_empty_array_is_a_noop)
+{
+  static char const *TEXT = R"(
+    function main()
+      var data1 = Array<Int32>(3);
+      data1[0] = 1;
+      data1[1] = 2;
+      data1[2] = 3;
+      var data2 = Array<Int32>(0);
+
+      data1.extend(data2);
+
+      print(data1);
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_TRUE(toolkit.Run());
+
+  ASSERT_EQ(toolkit.stdout(), "[1, 2, 3]");
+}
+
+TEST_F(ArrayTests, extend_fails_if_called_with_an_array_of_different_type)
+{
+  static char const *TEXT = R"(
+    function main()
+      var data1 = Array<Int32>(1);
+      data1[0] = 1;
+      var data2 = Array<UInt64>(1);
+      data2[0] = 1;
+
+      data1.extend(data2);
+
+      print(data1);
+    endfunction
+  )";
+
+  ASSERT_FALSE(toolkit.Compile(TEXT));
 }
 
 }  // namespace

@@ -16,9 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/fixed_point/fixed_point.hpp"
 #include "math/tensor.hpp"
 #include "meta/type_traits.hpp"
+#include "vectorise/fixed_point/fixed_point.hpp"
 #include <gtest/gtest.h>
 
 template <typename T>

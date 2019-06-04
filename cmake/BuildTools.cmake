@@ -111,7 +111,7 @@ function (setup_library_examples library)
   endif (FETCH_ENABLE_EXAMPLES)
 endfunction ()
 
-function (add_fetch_test
+function (_internal_add_fetch_test
           name
           library
           directory)
@@ -125,24 +125,18 @@ function (add_fetch_test
     # define the label for the test
     if ("SLOW" IN_LIST ARGV)
       set(test_label "Slow")
-      fetch_warning("Slow Test: ${name}")
     elseif ("INTEGRATION" IN_LIST ARGV)
       set(test_label "Integration")
-      fetch_warning("Integration Test: ${name}")
-    else ()
-      set(test_label "Normal")
     endif ()
 
     # detect if the "DISABLED" flag has been passed to this test
     set(is_disabled FALSE)
     if ("DISABLED" IN_LIST ARGV)
       set(is_disabled TRUE)
+      fetch_warning("Disabled Test: ${name} - ${file}")
     endif ()
 
-    if (is_disabled)
-      fetch_warning("Disabled Test: ${name} - ${file}")
-    else ()
-
+    if (NOT is_disabled)
       include(CTest)
 
       # locate the headers for the test project
@@ -165,11 +159,40 @@ function (add_fetch_test
       # define the test
       add_test(${name} ${name} ${ARGV})
       set_tests_properties(${name} PROPERTIES TIMEOUT 300)
-      set_tests_properties(${name} PROPERTIES LABELS "${test_label}")
+      if (test_label)
+        set_tests_properties(${name} PROPERTIES LABELS "${test_label}")
+      endif ()
 
     endif ()
 
   endif (FETCH_ENABLE_TESTS)
+endfunction ()
+
+function (fetch_add_test
+          name
+          library
+          directory)
+  _internal_add_fetch_test("${name}" "${library}" "${directory}")
+endfunction ()
+
+function (fetch_add_slow_test
+          name
+          library
+          directory)
+  _internal_add_fetch_test("${name}"
+                           "${library}"
+                           "${directory}"
+                           SLOW)
+endfunction ()
+
+function (fetch_add_integration_test
+          name
+          library
+          directory)
+  _internal_add_fetch_test("${name}"
+                           "${library}"
+                           "${directory}"
+                           INTEGRATION)
 endfunction ()
 
 function (add_fetch_gbench

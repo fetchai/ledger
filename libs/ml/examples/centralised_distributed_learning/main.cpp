@@ -19,14 +19,21 @@
 #include "math/tensor.hpp"
 #include "ml/dataloaders/mnist_loaders/mnist_loader.hpp"
 #include "ml/graph.hpp"
-
 #include "ml/layers/fully_connected.hpp"
 #include "ml/ops/activation.hpp"
 #include "ml/ops/loss_functions/cross_entropy.hpp"
 
-#include <fstream>
+#include <cstddef>
+#include <cstdint>
 #include <iostream>
+#include <list>
+#include <map>
+#include <memory>
+#include <string>
 #include <thread>
+#include <unordered_map>
+#include <utility>
+#include <vector>
 
 // Runs in about 40 sec on a 2018 MBP
 // Remember to disable debug using | grep -v INFO

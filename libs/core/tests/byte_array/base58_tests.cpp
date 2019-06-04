@@ -21,6 +21,8 @@
 
 #include "gtest/gtest.h"
 
+#include <string>
+
 namespace {
 
 using fetch::byte_array::ConstByteArray;

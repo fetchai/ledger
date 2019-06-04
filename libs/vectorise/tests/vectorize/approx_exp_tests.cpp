@@ -18,8 +18,10 @@
 
 #include "vectorise/memory/array.hpp"
 #include "vectorise/memory/shared_array.hpp"
+
+#include "gtest/gtest.h"
+
 #include <cmath>
-#include <gtest/gtest.h>
 #include <iostream>
 
 using type        = float;
@@ -34,7 +36,7 @@ void Exponentials(array_type const &A, array_type &C)
 
 TEST(vectorise_approx_exp_gtest, exp_test)
 {
-  std::size_t N             = std::size_t(20);
+  std::size_t N             = 20u;
   float       initial_value = 1;
   array_type  A(N), C(N);
 

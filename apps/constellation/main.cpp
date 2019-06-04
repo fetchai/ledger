@@ -16,6 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include "bootstrap_monitor.hpp"
+#include "constellation.hpp"
+#include "fetch_version.hpp"
+
 #include "core/commandline/cli_header.hpp"
 #include "core/commandline/parameter_parser.hpp"
 #include "core/commandline/params.hpp"
@@ -31,18 +35,17 @@
 #include "network/management/network_manager.hpp"
 #include "variant/variant.hpp"
 
-#include "bootstrap_monitor.hpp"
-#include "constellation.hpp"
-#include "fetch_version.hpp"
-
+#include <atomic>
 #include <csignal>
+#include <cstdint>
 #include <cstdlib>
-#include <fstream>
 #include <iostream>
-#include <sstream>
+#include <memory>
 #include <stdexcept>
 #include <string>
-#include <system_error>
+#include <thread>
+#include <unordered_set>
+#include <utility>
 #include <vector>
 
 namespace {

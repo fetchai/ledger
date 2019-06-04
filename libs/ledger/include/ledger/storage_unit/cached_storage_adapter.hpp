@@ -20,8 +20,9 @@
 #include "core/mutex.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 
-#include <atomic>
+#include <string>
 #include <unordered_map>
+#include <utility>
 
 namespace fetch {
 namespace ledger {
@@ -36,7 +37,7 @@ class CachedStorageAdapter : public StorageInterface
 public:
   // Construction / Destruction
   explicit CachedStorageAdapter(StorageInterface &storage);
-  ~CachedStorageAdapter();
+  ~CachedStorageAdapter() override;
 
   void Flush();
   void Clear();

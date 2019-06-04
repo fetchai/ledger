@@ -21,6 +21,7 @@
 #include "core/serializers/byte_array_buffer.hpp"
 #include "crypto/sha256.hpp"
 #include "ledger/chain/transaction.hpp"
+#include "ledger/chain/transaction_encoding.hpp"
 #include "meta/type_traits.hpp"
 #include "vectorise/platform.hpp"
 
@@ -77,100 +78,9 @@ ConstByteArray Encode(Address const &address)
 }
 
 template <typename T>
-meta::IfIsUnsignedInteger<T, T> ToUnsigned(T value)
-{
-  return value;
-}
-
-template <typename T>
-meta::IfIsSignedInteger<T, typename std::make_unsigned<T>::type> ToUnsigned(T value)
-{
-  using U = typename std::make_unsigned<T>::type;
-  return static_cast<U>(std::abs(value));
-}
-
-template <typename T>
-meta::IfIsUnsignedInteger<T, T> Negate(T value)
-{
-  return value;
-}
-
-template <typename T>
-meta::IfIsSignedInteger<T, T> Negate(T value)
-{
-  return static_cast<T>(-value);
-}
-
-template <typename T>
 meta::IfIsInteger<T, ConstByteArray> Encode(T value)
 {
-  using U = typename std::make_unsigned<T>::type;
-
-  bool const is_signed = meta::IsSignedInteger<T> && (value < 0);
-
-  ByteArray encoded;
-  if (!is_signed && (value <= T{0x7f}))
-  {
-    encoded.Resize(1);
-    encoded[0] = static_cast<uint8_t>(value & 0x7f);
-  }
-  else
-  {
-    U const abs_value = ToUnsigned(value);
-
-    if (is_signed && (abs_value <= 0x1F))
-    {
-      encoded.Resize(1);
-      encoded[0] = 0xE0 | static_cast<uint8_t>(abs_value);
-    }
-    else
-    {
-      constexpr std::size_t MAX_BYTES = sizeof(U);
-
-      // determine the corresponding number of bytes required to encode this value
-      uint8_t log2_bytes_required{0};
-
-      U limit{0x100};
-      for (std::size_t i = 1; i <= MAX_BYTES; i <<= 1u, limit <<= 8u)
-      {
-        if (abs_value < limit)
-        {
-          break;
-        }
-
-        ++log2_bytes_required;
-      }
-
-      // calculate the actual number of bytes that will be required
-      std::size_t const bytes_required = 1u << log2_bytes_required;
-
-      // resize the buffer and encode the value
-      encoded.Resize(bytes_required + 1u);
-
-      // write out the header
-      encoded[0] = static_cast<uint8_t>((is_signed) ? 0xD0u : 0xC0u) |
-                   static_cast<uint8_t>(log2_bytes_required & 0xFu);
-
-      std::size_t i = 1;
-      for (std::size_t index = bytes_required - 1u;; --index)
-      {
-        // configure the mask to
-        U const offset = index << 3u;
-        U const mask   = 0xFFu << offset;
-
-        // mask of the byte we are interested and store into place
-        encoded[i++] = static_cast<uint8_t>((abs_value & mask) >> offset);
-
-        // exit the loop once we have finished the zero'th index
-        if (index == 0)
-        {
-          break;
-        }
-      }
-    }
-  }
-
-  return {encoded};
+  return detail::EncodeInteger(std::move(value));
 }
 
 ConstByteArray Encode(ConstByteArray const &value)
@@ -217,85 +127,7 @@ void Decode(ByteArrayBuffer &buffer, Address &address)
 template <typename T>
 meta::IfIsInteger<T, T> Decode(ByteArrayBuffer &buffer)
 {
-  using U = typename std::make_unsigned<T>::type;
-
-  // determine the traits of the output type
-  constexpr bool        output_is_signed   = meta::IsSignedInteger<T>;
-  constexpr std::size_t output_length      = sizeof(T);
-  constexpr std::size_t output_log2_length = meta::Log2(output_length);
-
-  T output_value{0};
-
-  uint8_t initial_byte{0};
-  buffer.ReadBytes(&initial_byte, 1);
-
-  if ((initial_byte & 0x80u) == 0)
-  {
-    output_value = static_cast<T>(initial_byte & 0x7Fu);
-  }
-  else
-  {
-    uint8_t const type = (initial_byte >> 5u) & 0x3u;
-
-    if (type == 3u)
-    {
-      // ensure the output type is of the correct type
-      if (!output_is_signed)
-      {
-        throw std::runtime_error("Unable to extract signed value into unsigned value");
-      }
-
-      output_value = Negate(static_cast<T>(initial_byte & 0x1fu));
-    }
-    else
-    {
-      uint8_t const signed_flag       = (initial_byte >> 4u) & 0x1u;
-      uint8_t const log2_value_length = (initial_byte & 0xfu);
-
-      // size checks
-      bool const output_is_too_small = (log2_value_length > output_log2_length);
-
-      // in the case where U64::Max is (potentially) encoded but the output format is I64
-      bool const unsigned_value_too_large =
-          (!signed_flag) && output_is_signed && (log2_value_length == output_log2_length);
-
-      // ensure that the output is of the correct size for this value
-      if (output_is_too_small || unsigned_value_too_large)
-      {
-        throw std::runtime_error("Output is not large enough to extract the encoded value");
-      }
-      else if (signed_flag && !output_is_signed)
-      {
-        throw std::runtime_error("Unable to extract signed value into unsigned value");
-      }
-
-      U partial_value{0};
-      for (std::size_t index = (1u << log2_value_length) - 1u;; --index)
-      {
-        // read the next byte
-        uint8_t encoded_byte{0};
-        buffer.ReadBytes(&encoded_byte, 1);
-
-        // build up the partial value
-        partial_value |= static_cast<U>(encoded_byte << (index * 8u));
-
-        // exit the loop once we ahve finished
-        if (index == 0)
-        {
-          break;
-        }
-      }
-
-      output_value = static_cast<T>(partial_value);
-
-      if (output_is_signed && signed_flag)
-      {
-        output_value = Negate(output_value);
-      }
-    }
-  }
-
-  return output_value;
+  return detail::DecodeInteger<T>(buffer);
 }
 
 template <typename T>

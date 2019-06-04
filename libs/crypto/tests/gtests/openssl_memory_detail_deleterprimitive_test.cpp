@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "crypto/openssl_memory_detail.hpp"
+
 #include "gtest/gtest.h"
 
 namespace fetch {
@@ -29,12 +30,6 @@ namespace {
 
 class DeleterPrimitiveTest : public testing::Test
 {
-protected:
-  virtual void SetUp()
-  {}
-
-  virtual void TearDown()
-  {}
 };
 
 TEST_F(DeleterPrimitiveTest, test_BIGNUM_free)

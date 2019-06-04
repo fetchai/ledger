@@ -17,8 +17,12 @@
 //------------------------------------------------------------------------------
 
 #include "vectorise/memory/shared_array.hpp"
+
 #include <chrono>
+#include <cstddef>
+#include <cstdlib>
 #include <iostream>
+#include <type_traits>
 #include <vector>
 
 using type       = float;
@@ -46,7 +50,7 @@ int main(int argc, char const **argv)
     return 0;
   }
 
-  std::size_t N = std::size_t(atoi(argv[1]));
+  auto N = std::size_t(std::atoi(argv[1]));
   A.resize(N);
   B.resize(N);
   C.resize(N);

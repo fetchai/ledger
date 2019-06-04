@@ -19,6 +19,10 @@
 #include "fake_io_observer.hpp"
 #include "core/logger.hpp"
 
+#include <cstdint>
+#include <string>
+#include <utility>
+
 static constexpr char const *LOGGING_NAME = "FakeIO";
 
 FakeIoObserver::Status FakeIoObserver::Read(std::string const &key, void *data, uint64_t &size)

@@ -22,13 +22,14 @@
 #include <vector>
 
 #include "math/ml/loss_functions/mean_square_error.hpp"
+#include "ml/ops/loss_functions/criterion.hpp"
 
 namespace fetch {
 namespace ml {
 namespace ops {
 
 template <class T>
-class MeanSquareError
+class MeanSquareError : public Criterion<T>
 {
 public:
   using ArrayType    = T;

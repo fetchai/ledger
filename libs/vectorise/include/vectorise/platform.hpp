@@ -18,7 +18,6 @@
 //------------------------------------------------------------------------------
 
 #include "meta/type_traits.hpp"
-#include "vectorise/vectorise.hpp"
 
 namespace fetch {
 namespace platform {
@@ -186,14 +185,14 @@ inline uint64_t ConvertToBigEndian(uint64_t x)
 }
 #endif
 
-inline int CountLeadingZeroes64(uint64_t x)
+inline uint64_t CountLeadingZeroes64(uint64_t x)
 {
-  return __builtin_clzll(x);
+  return static_cast<uint64_t>(__builtin_clzll(x));
 }
 
-inline int CountTrailingZeroes64(uint64_t x)
+inline uint64_t CountTrailingZeroes64(uint64_t x)
 {
-  return __builtin_ctzll(x);
+  return static_cast<uint64_t>(__builtin_ctzll(x));
 }
 
 // Return the minimum number of bits required to represent x
@@ -218,6 +217,12 @@ inline uint32_t ToLog2(uint32_t value)
   static constexpr uint32_t VALUE_SIZE_IN_BITS = sizeof(value) << 3;
   return static_cast<uint32_t>(VALUE_SIZE_IN_BITS -
                                static_cast<uint32_t>(__builtin_clz(value) + 1));
+}
+
+inline uint64_t ToLog2(uint64_t value)
+{
+  static constexpr uint64_t VALUE_SIZE_IN_BITS = sizeof(value) << 3;
+  return VALUE_SIZE_IN_BITS - static_cast<uint64_t>(__builtin_clzll(value) + 1);
 }
 
 // https://graphics.stanford.edu/~seander/bithacks.html

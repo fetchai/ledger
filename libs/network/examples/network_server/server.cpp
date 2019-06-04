@@ -17,8 +17,15 @@
 //------------------------------------------------------------------------------
 
 #include "network/tcp/tcp_server.hpp"
+
+#include <chrono>
+#include <cstdint>
 #include <cstdlib>
+#include <exception>
 #include <iostream>
+#include <string>
+#include <thread>
+
 using namespace fetch::network;
 
 class Server : public TCPServer
@@ -32,8 +39,6 @@ public:
   {
     std::cout << "Message: " << msg << std::endl;
   }
-
-private:
 };
 
 int main(int argc, char *argv[])
