@@ -161,13 +161,13 @@ int main(int argc, char **argv)
   std::cout << "Setting up training data...: " << std::endl;
 
   // set up dataloader
-  SkipGramLoader<ArrayType> dataloader(sp);
+  SkipGramLoader<ArrayType> data_loader(sp);
 
   // load text from files as necessary and process text with dataloader
-  dataloader.AddData(fetch::ml::examples::GetTextString(training_text));
+  data_loader.AddData(fetch::ml::examples::GetTextString(training_text));
 
-  std::cout << "dataloader.VocabSize(): " << dataloader.VocabSize() << std::endl;
-  std::cout << "dataloader.Size(): " << dataloader.Size() << std::endl;
+  std::cout << "dataloader.VocabSize(): " << data_loader.VocabSize() << std::endl;
+  std::cout << "dataloader.Size(): " << data_loader.Size() << std::endl;
 
   ////////////////////////////////
   /// SETUP MODEL ARCHITECTURE ///
@@ -176,7 +176,7 @@ int main(int argc, char **argv)
   // set up model architecture
   std::cout << "building model architecture...: " << std::endl;
   fetch::ml::Graph<ArrayType> g;
-  std::string                 output_name = Model(g, tp.embedding_size, dataloader.VocabSize());
+  std::string                 output_name = Model(g, tp.embedding_size, data_loader.VocabSize());
 
   // set up loss
   CrossEntropy<ArrayType> criterion;
@@ -207,7 +207,7 @@ int main(int argc, char **argv)
 
   for (SizeType i = 0; i < tp.training_epochs; ++i)
   {
-    dataloader.Reset();
+    data_loader.Reset();
 
     sum_average_scores = 0;
     sum_average_count  = 0;
@@ -221,12 +221,12 @@ int main(int argc, char **argv)
     // effectively clears any leftover gradients
     g.ResetGradients();
 
-    while (!dataloader.IsDone())
+    while (!data_loader.IsDone())
     {
       gt.Fill(DataType(0));
 
       // get random data point
-      data = dataloader.GetRandom();
+      data = data_loader.GetRandom();
 
       // assign input and context vectors
       input.At(0, 0)   = data.first.At(0);
@@ -283,7 +283,7 @@ int main(int argc, char **argv)
 
     // print batch loss and embeddings distances
     // Test trained embeddings
-    TestEmbeddings(g, output_name, dataloader, tp.test_word, tp.k);
+    TestEmbeddings(g, output_name, data_loader, tp.test_word, tp.k);
     std::cout << "epoch_loss: " << epoch_loss << std::endl;
     std::cout << "average_score: " << sum_average_scores / sum_average_count << std::endl;
     std::cout << "over [" << batch_count << "] batches involving [" << step_count
@@ -299,7 +299,7 @@ int main(int argc, char **argv)
   //////////////////////////////////////
 
   // Test trained embeddings
-  TestEmbeddings(g, output_name, dataloader, tp.test_word, tp.k);
+  TestEmbeddings(g, output_name, data_loader, tp.test_word, tp.k);
 
   return 0;
 }

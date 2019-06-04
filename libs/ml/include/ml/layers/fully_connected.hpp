@@ -54,13 +54,11 @@ public:
     std::string weights =
         this->template AddNode<fetch::ml::ops::Weights<ArrayType>>(name + "_Weights", {});
     std::string weights_matmul = this->template AddNode<fetch::ml::ops::MatrixMultiply<ArrayType>>(
-        name + "_MatrixMultiply", {flat_input, weights});
+        name + "_MatrixMultiply", {weights, flat_input});
     std::string bias =
         this->template AddNode<fetch::ml::ops::Weights<ArrayType>>(name + "_Bias", {});
-    std::string add = this->template AddNode<fetch::ml::ops::Add<ArrayType>>(
+    std::string output = this->template AddNode<fetch::ml::ops::Add<ArrayType>>(
         name + "_Add", {weights_matmul, bias});
-    std::string output =
-        this->template AddNode<fetch::ml::ops::Transpose<ArrayType>>(name + "_Transpose", {add});
 
     output = fetch::ml::details::AddActivationNode<T>(activation_type, this, name + "_Activation",
                                                       output);
@@ -68,11 +66,11 @@ public:
     this->AddInputNode(input);
     this->SetOutputNode(output);
 
-    ArrayType weights_data(std::vector<SizeType>({in, out}));
+    ArrayType weights_data(std::vector<SizeType>({out, in}));
     this->Initialise(weights_data, init_mode);
     this->SetInput(weights, weights_data, false);
 
-    ArrayType bias_data(std::vector<SizeType>({1, out}));
+    ArrayType bias_data(std::vector<SizeType>({out, 1}));
     this->SetInput(bias, bias_data, false);
   }
 

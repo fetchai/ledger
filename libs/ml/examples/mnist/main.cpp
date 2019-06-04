@@ -57,8 +57,7 @@ int main(int ac, char **av)
 
   // Prepare graph
   //  Input -> FC -> Relu -> FC -> Relu -> FC -> Softmax
-  std::shared_ptr<fetch::ml::Graph<ArrayType>> g =
-      std::shared_ptr<fetch::ml::Graph<ArrayType>>(new fetch::ml::Graph<ArrayType>());
+  std::shared_ptr<fetch::ml::Graph<ArrayType>> g(std::make_shared<fetch::ml::Graph<ArrayType>>());
 
   std::string input_name = g->AddNode<PlaceHolder<ArrayType>>("Input", {});
   g->AddNode<FullyConnected<ArrayType>>("FC1", {"Input"}, 28u * 28u, 10u);
@@ -68,11 +67,11 @@ int main(int ac, char **av)
   g->AddNode<FullyConnected<ArrayType>>("FC3", {"Relu2"}, 10u, 10u);
   std::string output_name = g->AddNode<Softmax<ArrayType>>("Softmax", {"FC3"});
 
-  // Initialize MNIST loader
-  std::shared_ptr<fetch::ml::DataLoader<ArrayType, ArrayType>> dataloader(
-      new fetch::ml::MNISTLoader<ArrayType>(av[1], av[2]));
+  // Initialise MNIST loader
+  std::shared_ptr<fetch::ml::DataLoader<ArrayType, ArrayType>> data_loader(
+      std::make_shared<fetch::ml::MNISTLoader<ArrayType>>(av[1], av[2]));
 
-  // Initialize Optimiser
+  // Initialise Optimiser
   fetch::ml::optimisers::AdamOptimiser<ArrayType, fetch::ml::ops::CrossEntropy<ArrayType>>
       optimiser(g, input_name, output_name, learning_rate);
 
@@ -80,7 +79,7 @@ int main(int ac, char **av)
   DataType loss;
   for (SizeType i{0}; i < epochs; i++)
   {
-    loss = optimiser.Run(*dataloader, batch_size, subset_size);
+    loss = optimiser.Run(*data_loader, batch_size, subset_size);
     std::cout << "Loss: " << loss << std::endl;
   }
 

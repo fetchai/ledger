@@ -40,8 +40,8 @@ TYPED_TEST(FullyConnectedTest, set_input_and_evaluate_test)  // Use the class as
   TypeParam output = fc.Evaluate("FC_MatrixMultiply");
 
   ASSERT_EQ(output.shape().size(), 2);
-  ASSERT_EQ(output.shape()[0], 1);
-  ASSERT_EQ(output.shape()[1], 10);
+  ASSERT_EQ(output.shape()[0], 10);
+  ASSERT_EQ(output.shape()[1], 1);
   // No way to test actual values for now as weights are randomly initialised.
 }
 
@@ -144,9 +144,9 @@ TYPED_TEST(FullyConnectedTest, getStateDict)
 
   ASSERT_NE(sd.dict_["FCTest_Weights"].weights_, nullptr);
   EXPECT_EQ(sd.dict_["FCTest_Weights"].weights_->shape(),
-            std::vector<typename TypeParam::SizeType>({50, 10}));
+            std::vector<typename TypeParam::SizeType>({10, 50}));
 
   ASSERT_NE(sd.dict_["FCTest_Bias"].weights_, nullptr);
   EXPECT_EQ(sd.dict_["FCTest_Bias"].weights_->shape(),
-            std::vector<typename TypeParam::SizeType>({1, 10}));
+            std::vector<typename TypeParam::SizeType>({10, 1}));
 }
