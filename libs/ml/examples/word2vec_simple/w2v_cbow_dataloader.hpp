@@ -186,7 +186,7 @@ public:
     return vocab_;
   }
 
-  std::string WordFromIndex(uint64_t index)
+  std::string WordFromIndex(uint64_t index) const
   {
     for (auto const &kvp : vocab_)
     {
@@ -196,6 +196,12 @@ public:
       }
     }
     return "";
+  }
+
+  SizeType IndexFromWord(std::string word)
+  {
+    auto tmp = vocab_[word];
+    return tmp.second;
   }
 
 private:
