@@ -93,10 +93,10 @@ template <class ArrayType>
 void Convolution2D<ArrayType>::Forward(VecTensorType const &inputs, ArrayType &output)
 {
   ASSERT(inputs.size() == 2);
-  // Input should be a 3D tensor [C x H x W]
-  ASSERT(inputs.at(0).get().shape().size() == 3);
-  // Kernels should be a 4D tensor [oC x iC x H x W]
-  ASSERT(inputs.at(1).get().shape().size() == 4);
+  // Input should be a 3D tensor [C x H x W x N]
+  ASSERT(inputs.at(0).get().shape().size() == 4);
+  // Kernels should be a 4D tensor [oC x iC x H x W x N]
+  ASSERT(inputs.at(1).get().shape().size() == 5);
   ASSERT(output.shape() == ComputeOutputShape(inputs));
 
   ArrayType input   = inputs.at(0).get();
@@ -149,10 +149,10 @@ std::vector<ArrayType> Convolution2D<ArrayType>::Backward(VecTensorType const &i
                                                           ArrayType const &    error_signal)
 {
   ASSERT(inputs.size() == 2);
-  // Input should be a 3D tensor [C x H x W]
-  ASSERT(inputs.at(0).get().shape().size() == 3);
-  // Kernels should be a 4D tensor [oC x iC x H x W]
-  ASSERT(inputs.at(1).get().shape().size() == 4);
+  // Input should be a 3D tensor [C x H x W x N]
+  ASSERT(inputs.at(0).get().shape().size() == 4);
+  // Kernels should be a 4D tensor [oC x iC x H x W x N]
+  ASSERT(inputs.at(1).get().shape().size() == 5);
   ASSERT(error_signal.shape() == ComputeOutputShape(inputs));
 
   SizeType output_height = error_signal.shape().at(1);
@@ -220,6 +220,9 @@ std::vector<typename ArrayType::SizeType> Convolution2D<ArrayType>::ComputeOutpu
   output_shape.emplace_back(
       (inputs.at(0).get().shape()[2] - inputs.at(1).get().shape()[3] + stride_size_) /
       stride_size_);
+  // output_shape_[3]=batch dimension
+  output_shape.emplace_back(1);
+
   return output_shape;
 }
 
@@ -252,7 +255,7 @@ void Convolution2D<ArrayType>::FillVerticalStride(ArrayType &input, ArrayType &v
       {
         for (SizeType j_k(0); j_k < kernel_width; j_k++)  // Iterate over kernel width
         {
-          vertical_stride.Set(i_oc, j_s, input.At(i_oc, i_ic, i_k, j_k));
+          vertical_stride.Set(i_oc, j_s, input.At(i_oc, i_ic, i_k, j_k, 0));
           ++j_s;
         }
       }
@@ -287,7 +290,7 @@ void Convolution2D<ArrayType>::ReverseFillVerticalStride(
       {
         for (SizeType j_k(0); j_k < kernel_width; j_k++)  // Iterate over kernel width
         {
-          input.Set(i_oc, i_ic, i_k, j_k, vertical_stride.At(i_oc, j_s));
+          input.Set(i_oc, i_ic, i_k, j_k, 0, vertical_stride.At(i_oc, j_s));
           ++j_s;
         }
       }
@@ -332,7 +335,7 @@ void Convolution2D<ArrayType>::FillHorizontalStride(ArrayType &input, ArrayType 
           for (SizeType j_k(0); j_k < kernel_width; j_k++)  // Iterate over kernel width
           {
             horizontal_stride.Set(
-                i_s, j_s, input.At(i_ic, i_o * stride_size_ + i_k, j_o * stride_size_ + j_k));
+                i_s, j_s, input.At(i_ic, i_o * stride_size_ + i_k, j_o * stride_size_ + j_k, 0));
             ++i_s;
           }
         }
@@ -376,7 +379,7 @@ void Convolution2D<ArrayType>::ReverseFillHorizontalStride(
         {
           for (SizeType j_k(0); j_k < kernel_width; j_k++)  // Iterate over kernel width
           {
-            input.Set(i_ic, i_o * stride_size_ + i_k, j_o * stride_size_ + j_k,
+            input.Set(i_ic, i_o * stride_size_ + i_k, j_o * stride_size_ + j_k, 0,
                       horizontal_stride.At(i_s, j_s));
             ++i_s;
           }
@@ -411,7 +414,7 @@ void Convolution2D<ArrayType>::FillOutput(ArrayType const &gemm_output, ArrayTyp
     {
       for (SizeType j_o{0}; j_o < output_width; ++j_o)  // Iterate over output width
       {
-        output.Set(i_oc, i_o, j_o, gemm_output.At(i_oc, it));
+        output.Set(i_oc, i_o, j_o, 0, gemm_output.At(i_oc, it));
         ++it;
       }
     }
@@ -443,7 +446,7 @@ void Convolution2D<ArrayType>::ReverseFillOutput(ArrayType &gemm_output, ArrayTy
     {
       for (SizeType j_o{0}; j_o < output_width; ++j_o)  // Iterate over output width
       {
-        gemm_output.Set(i_oc, it, output.At(i_oc, i_o, j_o));
+        gemm_output.Set(i_oc, it, output.At(i_oc, i_o, j_o, 0));
         ++it;
       }
     }

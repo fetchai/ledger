@@ -37,17 +37,17 @@ TYPED_TEST(Convolution1DTest, forward_1x1_1x1x1)
   using ArrayType = TypeParam;
   using SizeType  = typename TypeParam::SizeType;
 
-  ArrayType input({1, 1});
-  ArrayType weights({1, 1, 1});
-  input.At(0, 0)      = DataType{5};
-  weights.At(0, 0, 0) = DataType{-4};
+  ArrayType input({1, 1, 1});
+  ArrayType weights({1, 1, 1, 1});
+  input.At(0, 0, 0)      = DataType{5};
+  weights.At(0, 0, 0, 0) = DataType{-4};
   fetch::ml::ops::Convolution1D<ArrayType> c;
 
   ArrayType output(c.ComputeOutputShape({input, weights}));
   c.Forward({input, weights}, output);
 
-  ASSERT_EQ(output.shape(), std::vector<SizeType>({1, 1}));
-  EXPECT_EQ(output.At(0, 0), DataType{-20});
+  ASSERT_EQ(output.shape(), std::vector<SizeType>({1, 1, 1}));
+  EXPECT_EQ(output.At(0, 0, 0), DataType{-20});
 }
 
 TYPED_TEST(Convolution1DTest, forward_1x3_1x1x3)
@@ -56,20 +56,20 @@ TYPED_TEST(Convolution1DTest, forward_1x3_1x1x3)
   using ArrayType = TypeParam;
   using SizeType  = typename TypeParam::SizeType;
 
-  ArrayType input({1, 3});
-  ArrayType weights({1, 1, 3});
+  ArrayType input({1, 3, 1});
+  ArrayType weights({1, 1, 3, 1});
   for (SizeType i{0}; i < 3; ++i)
   {
-    input.At(0, i)      = static_cast<DataType>(i);
-    weights.At(0, 0, i) = static_cast<DataType>(i);
+    input.At(0, i, 0)      = static_cast<DataType>(i);
+    weights.At(0, 0, i, 0) = static_cast<DataType>(i);
   }
   fetch::ml::ops::Convolution1D<ArrayType> c;
 
   ArrayType output(c.ComputeOutputShape({input, weights}));
   c.Forward({input, weights}, output);
 
-  ASSERT_EQ(output.shape(), std::vector<SizeType>({1, 1}));
-  EXPECT_EQ(output.At(0, 0), DataType{5});
+  ASSERT_EQ(output.shape(), std::vector<SizeType>({1, 1, 1}));
+  EXPECT_EQ(output.At(0, 0, 0), DataType{5});
 }
 
 TYPED_TEST(Convolution1DTest, forward_3x3_1x3x3)
@@ -78,15 +78,15 @@ TYPED_TEST(Convolution1DTest, forward_3x3_1x3x3)
   using ArrayType = TypeParam;
   using SizeType  = typename TypeParam::SizeType;
 
-  ArrayType input({3, 3});
-  ArrayType weights({1, 3, 3});
+  ArrayType input({3, 3, 1});
+  ArrayType weights({1, 3, 3, 1});
   SizeType  counter = 0;
   for (SizeType i{0}; i < 3; ++i)
   {
     for (SizeType k{0}; k < 3; ++k)
     {
-      input.At(i, k)      = static_cast<DataType>(counter);
-      weights.At(0, i, k) = static_cast<DataType>(counter);
+      input.At(i, k, 0)      = static_cast<DataType>(counter);
+      weights.At(0, i, k, 0) = static_cast<DataType>(counter);
       ++counter;
     }
   }
@@ -95,8 +95,8 @@ TYPED_TEST(Convolution1DTest, forward_3x3_1x3x3)
   ArrayType output(c.ComputeOutputShape({input, weights}));
   c.Forward({input, weights}, output);
 
-  ASSERT_EQ(output.shape(), std::vector<SizeType>({1, 1}));
-  EXPECT_EQ(output.At(0, 0), DataType{204});
+  ASSERT_EQ(output.shape(), std::vector<SizeType>({1, 1, 1}));
+  EXPECT_EQ(output.At(0, 0, 0), DataType{204});
 }
 
 TYPED_TEST(Convolution1DTest, forward_3x3_5x3x3)
@@ -105,14 +105,14 @@ TYPED_TEST(Convolution1DTest, forward_3x3_5x3x3)
   using ArrayType = TypeParam;
   using SizeType  = typename TypeParam::SizeType;
 
-  ArrayType                                input({3, 3});
-  ArrayType                                weights({5, 3, 3});
+  ArrayType                                input({3, 3, 1});
+  ArrayType                                weights({5, 3, 3, 1});
   fetch::ml::ops::Convolution1D<ArrayType> c;
 
   ArrayType output(c.ComputeOutputShape({input, weights}));
   c.Forward({input, weights}, output);
 
-  ASSERT_EQ(output.shape(), std::vector<SizeType>({5, 1}));
+  ASSERT_EQ(output.shape(), std::vector<SizeType>({5, 1, 1}));
 }
 
 TYPED_TEST(Convolution1DTest, forward_1x5_1x1x3)
@@ -121,14 +121,14 @@ TYPED_TEST(Convolution1DTest, forward_1x5_1x1x3)
   using ArrayType = TypeParam;
   using SizeType  = typename TypeParam::SizeType;
 
-  ArrayType                                input({1, 5});
-  ArrayType                                weights({1, 1, 3});
+  ArrayType                                input({1, 5, 1});
+  ArrayType                                weights({1, 1, 3, 1});
   fetch::ml::ops::Convolution1D<ArrayType> c;
 
   ArrayType output(c.ComputeOutputShape({input, weights}));
   c.Forward({input, weights}, output);
 
-  ASSERT_EQ(output.shape(), std::vector<SizeType>({1, 3}));
+  ASSERT_EQ(output.shape(), std::vector<SizeType>({1, 3, 1}));
 }
 
 TYPED_TEST(Convolution1DTest, forward_1x5_1x1x3_stride_2)
@@ -137,14 +137,14 @@ TYPED_TEST(Convolution1DTest, forward_1x5_1x1x3_stride_2)
   using ArrayType = TypeParam;
   using SizeType  = typename TypeParam::SizeType;
 
-  ArrayType                                input({1, 5});
-  ArrayType                                weights({1, 1, 3});
+  ArrayType                                input({1, 5, 1});
+  ArrayType                                weights({1, 1, 3, 1});
   fetch::ml::ops::Convolution1D<ArrayType> c(2);
 
   ArrayType output(c.ComputeOutputShape({input, weights}));
   c.Forward({input, weights}, output);
 
-  ASSERT_EQ(output.shape(), std::vector<SizeType>({1, 2}));
+  ASSERT_EQ(output.shape(), std::vector<SizeType>({1, 2, 1}));
 }
 
 TYPED_TEST(Convolution1DTest, backward_3x3_5x3x3)
@@ -159,9 +159,9 @@ TYPED_TEST(Convolution1DTest, backward_3x3_5x3x3)
   SizeType const kernel_height   = 3;
   SizeType const output_height   = 1;
 
-  ArrayType input({input_channels, input_height});
-  ArrayType kernels({output_channels, input_channels, kernel_height});
-  ArrayType error({output_channels, output_height});
+  ArrayType input({input_channels, input_height, 1});
+  ArrayType kernels({output_channels, input_channels, kernel_height, 1});
+  ArrayType error({output_channels, output_height, 1});
   ArrayType gt1(input.shape());
   ArrayType gt2(kernels.shape());
 
@@ -170,8 +170,8 @@ TYPED_TEST(Convolution1DTest, backward_3x3_5x3x3)
   {
     for (SizeType i_i{0}; i_i < input_height; ++i_i)
     {
-      input.Set(i_ic, i_i, static_cast<DataType>(i_i + 1));
-      gt1.Set(i_ic, i_i, DataType{10});
+      input.Set(i_ic, i_i, 0, static_cast<DataType>(i_i + 1));
+      gt1.Set(i_ic, i_i, 0, DataType{10});
     }
   }
 
@@ -183,8 +183,8 @@ TYPED_TEST(Convolution1DTest, backward_3x3_5x3x3)
       for (SizeType i_k{0}; i_k < kernel_height; ++i_k)
       {
 
-        kernels.Set(i_oc, i_ic, i_k, DataType{2});
-        gt2.Set(i_oc, i_ic, i_k, static_cast<DataType>(i_k + 1));
+        kernels.Set(i_oc, i_ic, i_k, 0, DataType{2});
+        gt2.Set(i_oc, i_ic, i_k, 0, static_cast<DataType>(i_k + 1));
       }
     }
   }
@@ -195,7 +195,7 @@ TYPED_TEST(Convolution1DTest, backward_3x3_5x3x3)
     for (SizeType i_o{0}; i_o < output_height; ++i_o)
     {
 
-      error.Set(i_oc, i_o, static_cast<DataType>(i_o + 1));
+      error.Set(i_oc, i_o, 0, static_cast<DataType>(i_o + 1));
     }
   }
 
