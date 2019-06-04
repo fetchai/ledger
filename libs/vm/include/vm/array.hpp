@@ -19,8 +19,10 @@
 
 #include "vm/vm.hpp"
 
+#include <algorithm>
 #include <cstddef>
 #include <cstdint>
+#include <iterator>
 
 namespace fetch {
 namespace vm {
@@ -39,6 +41,7 @@ public:
   virtual TemplateParameter PopFrontOne()                     = 0;
   virtual Ptr<IArray>       PopFrontMany(int32_t)             = 0;
   virtual void              Reverse()                         = 0;
+  virtual void              Extend(Ptr<IArray> const &)       = 0;
 
   virtual TemplateParameter GetIndexedValue(AnyInteger const &index)                    = 0;
   virtual void SetIndexedValue(AnyInteger const &index, TemplateParameter const &value) = 0;
@@ -112,7 +115,7 @@ struct Array : public IArray
       return {};
     }
 
-    auto array = new Array<ElementType>(vm_, element_type_id, element_type_id, num_to_pop);
+    auto array = new Array<ElementType>(vm_, type_id_, element_type_id, num_to_pop);
 
     std::move(elements.rbegin(), elements.rbegin() + num_to_pop, array->elements.rbegin());
 
@@ -157,7 +160,7 @@ struct Array : public IArray
       return {};
     }
 
-    auto array = new Array<ElementType>(vm_, element_type_id, element_type_id, num_to_pop);
+    auto array = new Array<ElementType>(vm_, type_id_, element_type_id, num_to_pop);
 
     std::move(elements.begin(), elements.begin() + num_to_pop, array->elements.begin());
 
@@ -177,6 +180,16 @@ struct Array : public IArray
   void Reverse() override
   {
     std::reverse(elements.begin(), elements.end());
+  }
+
+  void Extend(Ptr<IArray> const &other) override
+  {
+    Ptr<Array<ElementType>> const &other_array    = other;
+    auto const &                   other_elements = other_array->elements;
+
+    elements.reserve(elements.size() + other_elements.size());
+
+    elements.insert(elements.cend(), other_elements.cbegin(), other_elements.cend());
   }
 
   TemplateParameter GetIndexedValue(AnyInteger const &index) override
