@@ -124,7 +124,7 @@ TEST_F(ArrayTests, append_is_statically_type_safe_with_object_arrays)
   ASSERT_FALSE(toolkit.Compile(TEXT));
 }
 
-TEST_F(ArrayTests, pop_back_removes_the_last_element_and_returns_it)
+TEST_F(ArrayTests, popBack_removes_the_last_element_and_returns_it)
 {
   static char const *TEXT = R"(
     function main()
@@ -133,7 +133,7 @@ TEST_F(ArrayTests, pop_back_removes_the_last_element_and_returns_it)
       data[1] = 20;
       data[2] = 30;
 
-      var popped = data.pop_back();
+      var popped = data.popBack();
 
       print(popped);
       print('-');
@@ -147,7 +147,7 @@ TEST_F(ArrayTests, pop_back_removes_the_last_element_and_returns_it)
   ASSERT_EQ(toolkit.stdout(), "30-[10, 20]");
 }
 
-TEST_F(ArrayTests, pop_back_works_with_arrays_of_objects)
+TEST_F(ArrayTests, popBack_works_with_arrays_of_objects)
 {
   static char const *TEXT = R"(
     function main()
@@ -159,7 +159,7 @@ TEST_F(ArrayTests, pop_back_works_with_arrays_of_objects)
 
       print(data.count());
       print('-');
-      var popped = data.pop_back();
+      var popped = data.popBack();
 
       print(data.count());
       print('-');
@@ -177,12 +177,12 @@ TEST_F(ArrayTests, pop_back_works_with_arrays_of_objects)
   ASSERT_EQ(toolkit.stdout(), "3-2-[30]-[10]-[20]");
 }
 
-TEST_F(ArrayTests, pop_back_fails_if_array_is_empty)
+TEST_F(ArrayTests, popBack_fails_if_array_is_empty)
 {
   static char const *TEXT = R"(
     function main()
       var data = Array<Int32>(0);
-      data.pop_back();
+      data.popBack();
     endfunction
   )";
 
@@ -191,7 +191,7 @@ TEST_F(ArrayTests, pop_back_fails_if_array_is_empty)
 }
 
 TEST_F(ArrayTests,
-       when_passed_an_integer_N_pop_back_removes_the_last_N_elements_and_returns_them_as_an_array)
+       when_passed_an_integer_N_popBack_removes_the_last_N_elements_and_returns_them_as_an_array)
 {
   static char const *TEXT = R"(
     function main()
@@ -200,7 +200,7 @@ TEST_F(ArrayTests,
       data[1] = 20;
       data[2] = 30;
 
-      var popped = data.pop_back(2);
+      var popped = data.popBack(2);
 
       print(popped);
       print('-');
@@ -214,7 +214,7 @@ TEST_F(ArrayTests,
   ASSERT_EQ(toolkit.stdout(), "[20, 30]-[10]");
 }
 
-TEST_F(ArrayTests, when_passed_an_integer_N_pop_back_works_for_arrays_of_objects)
+TEST_F(ArrayTests, when_passed_an_integer_N_popBack_works_for_arrays_of_objects)
 {
   static char const *TEXT = R"(
     function main()
@@ -226,7 +226,7 @@ TEST_F(ArrayTests, when_passed_an_integer_N_pop_back_works_for_arrays_of_objects
 
       print(data.count());
       print('-');
-      var popped = data.pop_back(2);
+      var popped = data.popBack(2);
 
       print(data.count());
       print('-');
@@ -246,7 +246,7 @@ TEST_F(ArrayTests, when_passed_an_integer_N_pop_back_works_for_arrays_of_objects
   ASSERT_EQ(toolkit.stdout(), "3-1-2-[20]-[30]-[10]");
 }
 
-TEST_F(ArrayTests, when_passed_zero_pop_back_does_not_mutate_its_array_and_returns_an_empty_array)
+TEST_F(ArrayTests, when_passed_zero_popBack_does_not_mutate_its_array_and_returns_an_empty_array)
 {
   static char const *TEXT = R"(
     function main()
@@ -255,7 +255,7 @@ TEST_F(ArrayTests, when_passed_zero_pop_back_does_not_mutate_its_array_and_retur
       data[1] = 20;
       data[2] = 30;
 
-      var popped = data.pop_back(0);
+      var popped = data.popBack(0);
 
       print(popped);
       print('-');
@@ -269,7 +269,7 @@ TEST_F(ArrayTests, when_passed_zero_pop_back_does_not_mutate_its_array_and_retur
   ASSERT_EQ(toolkit.stdout(), "[]-[10, 20, 30]");
 }
 
-TEST_F(ArrayTests, when_passed_a_negative_number_pop_back_fails)
+TEST_F(ArrayTests, when_passed_a_negative_number_popBack_fails)
 {
   static char const *TEXT = R"(
     function main()
@@ -278,7 +278,7 @@ TEST_F(ArrayTests, when_passed_a_negative_number_pop_back_fails)
       data[1] = 20;
       data[2] = 30;
 
-      var popped = data.pop_back(-3);
+      var popped = data.popBack(-3);
     endfunction
   )";
 
@@ -286,7 +286,7 @@ TEST_F(ArrayTests, when_passed_a_negative_number_pop_back_fails)
   ASSERT_FALSE(toolkit.Run());
 }
 
-TEST_F(ArrayTests, pop_front_removes_the_first_element_and_returns_it)
+TEST_F(ArrayTests, popFront_removes_the_first_element_and_returns_it)
 {
   static char const *TEXT = R"(
     function main()
@@ -295,7 +295,7 @@ TEST_F(ArrayTests, pop_front_removes_the_first_element_and_returns_it)
       data[1] = 20;
       data[2] = 30;
 
-      var popped = data.pop_front();
+      var popped = data.popFront();
 
       print(popped);
       print('-');
@@ -309,7 +309,7 @@ TEST_F(ArrayTests, pop_front_removes_the_first_element_and_returns_it)
   ASSERT_EQ(toolkit.stdout(), "10-[20, 30]");
 }
 
-TEST_F(ArrayTests, pop_front_works_with_arrays_of_objects)
+TEST_F(ArrayTests, popFront_works_with_arrays_of_objects)
 {
   static char const *TEXT = R"(
     function main()
@@ -321,7 +321,7 @@ TEST_F(ArrayTests, pop_front_works_with_arrays_of_objects)
 
       print(data.count());
       print('-');
-      var popped = data.pop_front();
+      var popped = data.popFront();
 
       print(data.count());
       print('-');
@@ -339,12 +339,12 @@ TEST_F(ArrayTests, pop_front_works_with_arrays_of_objects)
   ASSERT_EQ(toolkit.stdout(), "3-2-[10]-[20]-[30]");
 }
 
-TEST_F(ArrayTests, pop_front_fails_if_array_is_empty)
+TEST_F(ArrayTests, popFront_fails_if_array_is_empty)
 {
   static char const *TEXT = R"(
     function main()
       var data = Array<Int32>(0);
-      data.pop_front();
+      data.popFront();
     endfunction
   )";
 
@@ -353,7 +353,7 @@ TEST_F(ArrayTests, pop_front_fails_if_array_is_empty)
 }
 
 TEST_F(ArrayTests,
-       when_passed_an_integer_N_pop_front_removes_the_last_N_elements_and_returns_them_as_an_array)
+       when_passed_an_integer_N_popFront_removes_the_last_N_elements_and_returns_them_as_an_array)
 {
   static char const *TEXT = R"(
     function main()
@@ -362,7 +362,7 @@ TEST_F(ArrayTests,
       data[1] = 20;
       data[2] = 30;
 
-      var popped = data.pop_front(2);
+      var popped = data.popFront(2);
 
       print(popped);
       print('-');
@@ -376,7 +376,7 @@ TEST_F(ArrayTests,
   ASSERT_EQ(toolkit.stdout(), "[10, 20]-[30]");
 }
 
-TEST_F(ArrayTests, when_passed_an_integer_N_pop_front_works_for_arrays_of_objects)
+TEST_F(ArrayTests, when_passed_an_integer_N_popFront_works_for_arrays_of_objects)
 {
   static char const *TEXT = R"(
     function main()
@@ -388,7 +388,7 @@ TEST_F(ArrayTests, when_passed_an_integer_N_pop_front_works_for_arrays_of_object
 
       print(data.count());
       print('-');
-      var popped = data.pop_front(2);
+      var popped = data.popFront(2);
 
       print(data.count());
       print('-');
@@ -408,7 +408,7 @@ TEST_F(ArrayTests, when_passed_an_integer_N_pop_front_works_for_arrays_of_object
   ASSERT_EQ(toolkit.stdout(), "3-1-2-[10]-[20]-[30]");
 }
 
-TEST_F(ArrayTests, when_passed_zero_pop_front_does_not_mutate_its_array_and_returns_an_empty_array)
+TEST_F(ArrayTests, when_passed_zero_popFront_does_not_mutate_its_array_and_returns_an_empty_array)
 {
   static char const *TEXT = R"(
     function main()
@@ -417,7 +417,7 @@ TEST_F(ArrayTests, when_passed_zero_pop_front_does_not_mutate_its_array_and_retu
       data[1] = 20;
       data[2] = 30;
 
-      var popped = data.pop_front(0);
+      var popped = data.popFront(0);
 
       print(popped);
       print('-');
@@ -431,7 +431,7 @@ TEST_F(ArrayTests, when_passed_zero_pop_front_does_not_mutate_its_array_and_retu
   ASSERT_EQ(toolkit.stdout(), "[]-[10, 20, 30]");
 }
 
-TEST_F(ArrayTests, when_passed_a_negative_number_pop_front_fails)
+TEST_F(ArrayTests, when_passed_a_negative_number_popFront_fails)
 {
   static char const *TEXT = R"(
     function main()
@@ -440,7 +440,7 @@ TEST_F(ArrayTests, when_passed_a_negative_number_pop_front_fails)
       data[1] = 20;
       data[2] = 30;
 
-      var popped = data.pop_front(-3);
+      var popped = data.popFront(-3);
     endfunction
   )";
 
