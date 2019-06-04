@@ -17,7 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/layers/layer.hpp"
 #include "ml/meta/ml_type_traits.hpp"
 #include "ml/ops/activation.hpp"
 #include "ml/ops/add.hpp"
@@ -34,7 +33,7 @@ namespace ml {
 namespace layers {
 
 template <class T>
-class FullyConnected : public Layer<T>
+class FullyConnected : public SubGraph<T>
 {
 public:
   using ArrayType    = T;
@@ -45,7 +44,8 @@ public:
   FullyConnected(SizeType in, SizeType out,
                  details::ActivationType activation_type = details::ActivationType::NOTHING,
                  std::string const &name = "FC", WeightsInit init_mode = WeightsInit::XAVIER_GLOROT)
-    : Layer<T>(in, out)
+    : in_size_(in)
+    , out_size_(out)
   {
     std::string input =
         this->template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>(name + "_Input", {});
@@ -80,10 +80,19 @@ public:
       std::vector<std::reference_wrapper<ArrayType const>> const &inputs) const
   {
     (void)inputs;
-    return {this->out_size, 1};
+    return {this->out_size_, 1};
   }
 
   static constexpr char const *DESCRIPTOR = "FullyConnected";
+
+private:
+  SizeType in_size_;
+  SizeType out_size_;
+
+  void Initialise(ArrayType &weights, WeightsInit init_mode)
+  {
+    fetch::ml::ops::Weights<ArrayType>::Initialise(weights, in_size_, out_size_, init_mode);
+  }
 };
 
 }  // namespace layers
