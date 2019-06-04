@@ -15,7 +15,7 @@ implement the ledger, you do so at your own risk. In no event will Fetch.AI be l
 for any damages whatsoever, even if it had been advised of the possibility of damage.
 
 As such this codebase should be treated as experimental and does not contain all currently developed
-features. Fetch will be delivering regular updates.
+features. Fetch.AI will be delivering regular updates.
 
 ## Resources
 
