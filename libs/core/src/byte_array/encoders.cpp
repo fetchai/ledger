@@ -103,6 +103,30 @@ ConstByteArray ToHex(ConstByteArray const &str)
   return std::move(ret);
 }
 
+ConstByteArray PartialHex(ConstByteArray const &str)
+{
+  uint8_t const *data = reinterpret_cast<uint8_t const *>(str.pointer());
+  ByteArray      ret;
+  ret.Resize(str.size() << 1);
+
+  std::size_t j = 0;
+  for (std::size_t i = 0; i < str.size(); ++i)
+  {
+    uint8_t c = data[i];
+    if(' ' <= c && c <='~')
+    {
+      ret[j++] = c;
+    }
+    else
+    {
+      ret[j++]  = uint8_t(details::hexChars[(c >> 4) & 0xF]);
+      ret[j++]  = uint8_t(details::hexChars[c & 0xF]);
+    }
+  }
+  ret.Resize(j);
+  return std::move(ret);
+}
+
 // Reverse bits in byte
 uint8_t Reverse(uint8_t c)
 {
