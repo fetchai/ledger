@@ -90,112 +90,112 @@ int main(int ac, char **av)
   uint64_t vocab_size_words{cloader.word_counter().size() + 1};
 
   // Defining the graph
-  fetch::ml::Graph<ArrayType> g;
+  std::shared_ptr<fetch::ml::Graph<ArrayType>> g(std::make_shared<fetch::ml::Graph<ArrayType>>());
 
   // Setting up the attention vector
   // Dimension: (EMBEDDING_SIZE, 1)
-  std::string attention_vector = g.AddNode<Weights>("AttentionVector", {});
+  std::string attention_vector = g->AddNode<Weights>("AttentionVector", {});
   ArrayType   attention_vector_data(SizeVector({EMBEDDING_SIZE, SizeType{1}}));
   Weights::Initialise(attention_vector_data, EMBEDDING_SIZE, SizeType{1});
-  g.SetInput(attention_vector, attention_vector_data, false);
+  g->SetInput(attention_vector, attention_vector_data, false);
 
   // Setting up the weights of FC1)
   // Dimension: (EMBEDDING_SIZE, 3*EMBEDDING_SIZE)
-  std::string fc1_weights = g.AddNode<Weights>("FullyConnectedWeights", {});
+  std::string fc1_weights = g->AddNode<Weights>("FullyConnectedWeights", {});
   ArrayType   fc1_weights_data(SizeVector({EMBEDDING_SIZE, 3 * EMBEDDING_SIZE}));
   Weights::Initialise(fc1_weights_data, EMBEDDING_SIZE, 3 * EMBEDDING_SIZE);
-  g.SetInput(fc1_weights, fc1_weights_data, false);
+  g->SetInput(fc1_weights, fc1_weights_data, false);
 
   // Setting up the embedding matrix for the function names
   // Dimension: (VOCAB_SIZE_FUNCTION_NAMES, EMBEDDING_SIZE)
-  std::string function_name_embedding = g.AddNode<Weights>("EmbeddingFunctionNames", {});
+  std::string function_name_embedding = g->AddNode<Weights>("EmbeddingFunctionNames", {});
   ArrayType function_name_embedding_matrix(SizeVector({vocab_size_function_names, EMBEDDING_SIZE}));
   Weights::Initialise(function_name_embedding_matrix, vocab_size_function_names, EMBEDDING_SIZE);
-  g.SetInput(function_name_embedding, function_name_embedding_matrix, false);
+  g->SetInput(function_name_embedding, function_name_embedding_matrix, false);
 
   // Setting up shared embedding matrix for words
   // Dimension: (VOCAB_SIZE_WORDS, EMBEDDING_SIZE)
-  std::string shared_embedding = g.AddNode<Weights>("SharedEmbedding", {});
+  std::string shared_embedding = g->AddNode<Weights>("SharedEmbedding", {});
   ArrayType   shared_embedding_tensor(SizeVector({vocab_size_words, EMBEDDING_SIZE}));
   Weights::Initialise(shared_embedding_tensor, vocab_size_words, EMBEDDING_SIZE);
-  g.SetInput(shared_embedding, shared_embedding_tensor, false);
+  g->SetInput(shared_embedding, shared_embedding_tensor, false);
 
   // Defining the input nodes
 
   // Inputs have dimensions (N_CONTEXTS, )
-  std::string input_paths = g.AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>("InputPaths", {});
+  std::string input_paths = g->AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>("InputPaths", {});
   std::string input_source_words =
-      g.AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>("InputSourceWords", {});
+      g->AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>("InputSourceWords", {});
   std::string input_target_words =
-      g.AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>("InputTargetWords", {});
+      g->AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>("InputTargetWords", {});
 
   // Retrieving the rows of the embedding tensors according to the input
 
   // Path embedding
   // Dimension: (N_CONTEXTS, EMBEDDING_SIZE)
   std::string embeddings_paths =
-      g.AddNode<Embeddings>("EmbeddingPaths", {input_paths}, vocab_size_paths, EMBEDDING_SIZE);
+      g->AddNode<Embeddings>("EmbeddingPaths", {input_paths}, vocab_size_paths, EMBEDDING_SIZE);
 
   // Target word embedding
   // Dimension: (N_CONTEXTS, EMBEDDING_SIZE)
   std::string embedding_target_words =
-      g.AddNode<Embeddings>("EmbeddingTargetwords", {input_target_words}, shared_embedding_tensor);
+      g->AddNode<Embeddings>("EmbeddingTargetwords", {input_target_words}, shared_embedding_tensor);
 
   // Source word embedding
   // Dimension: (N_CONTEXTS, EMBEDDING_SIZE)
   std::string embedding_source_words =
-      g.AddNode<Embeddings>("EmbeddingSourcewords", {input_source_words}, shared_embedding_tensor);
+      g->AddNode<Embeddings>("EmbeddingSourcewords", {input_source_words}, shared_embedding_tensor);
 
   // Concatenate along axis = 1
   // Dimension: (N_CONTEXTS, 3*EMBEDDING_SIZE) = Concatenate ((N_CONTEXTS, EMBEDDING_SIZE),
   // (N_CONTEXTS, EMBEDDING_SIZE), (N_CONTEXTS, EMBEDDING_SIZE))
-  std::string context_vectors = g.AddNode<fetch::ml::ops::Concatenate<ArrayType>>(
+  std::string context_vectors = g->AddNode<fetch::ml::ops::Concatenate<ArrayType>>(
       "ContextVectors", {embedding_source_words, embeddings_paths, embedding_target_words},
       SizeType(1));
 
   // Transposition
   // Dimensions: (3*EMBEDDING_SIZE, N_CONTEXTS) = Transpose((N_CONTEXTS, 3*EMBEDDING_SIZE))
   std::string context_vector_transpose =
-      g.AddNode<Transpose>("ContextVectorTransposed", {context_vectors});
+      g->AddNode<Transpose>("ContextVectorTransposed", {context_vectors});
 
   // Fully connected layer
   // Dimensions: (EMBEDDING_SIZE, N_CONTEXTS) = (EMBEDDING_SIZE, 3*EMBEDDING_SIZE) @
   // (3*EMBEDDING_SIZE, N_CONTEXTS)
-  std::string fc1 = g.AddNode<MatrixMultiply>("FC1", {fc1_weights, context_vector_transpose});
+  std::string fc1 = g->AddNode<MatrixMultiply>("FC1", {fc1_weights, context_vector_transpose});
 
   // (Elementwise) TanH Layer
   // Dimensions: (EMBEDDING_SIZE, N_CONTEXTS)
   std::string combined_context_vector =
-      g.AddNode<fetch::ml::ops::TanH<ArrayType>>("CombinedContextVector", {fc1});
+      g->AddNode<fetch::ml::ops::TanH<ArrayType>>("CombinedContextVector", {fc1});
 
   // Transposition
   // Dimensions: (N_CONTEXTS, EMBEDDING_SIZE) = Transpose((EMBEDDING_SIZE, N_CONTEXTS))
   std::string combined_context_vector_transpose =
-      g.AddNode<Transpose>("CombinedContextVectorTransposed", {combined_context_vector});
+      g->AddNode<Transpose>("CombinedContextVectorTransposed", {combined_context_vector});
 
   // (Dot) Multiplication with the Attention vector
   // Dimensions: (N_CONTEXTS, 1) = (N_CONTEXTS, EMBEDDING_SIZE) @ (EMBEDDING_SIZE, 1)
-  std::string scalar_product_contexts_with_attention = g.AddNode<MatrixMultiply>(
+  std::string scalar_product_contexts_with_attention = g->AddNode<MatrixMultiply>(
       "ScalarProductContextsWithAttention", {combined_context_vector_transpose, attention_vector});
 
   // Transposition
   // DImension: (1, N_CONTEXTS) = Transpose((N_CONTEXTS, 1))
-  std::string scalar_product_contexts_with_attention_transposed = g.AddNode<Transpose>(
+  std::string scalar_product_contexts_with_attention_transposed = g->AddNode<Transpose>(
       "ScalarProductContextsWithAttentionTransposed", {scalar_product_contexts_with_attention});
 
   // (Softmax) normalisation
   // Dimensions: (1, N_CONTEXTS)
-  std::string attention_weight = g.AddNode<fetch::ml::ops::Softmax<ArrayType>>(
+  std::string attention_weight = g->AddNode<fetch::ml::ops::Softmax<ArrayType>>(
       "AttentionWeight", {scalar_product_contexts_with_attention_transposed});
 
   // Transposition
   //   Dimensions: (N_CONTEXTS, 1)
   std::string attention_weight_transposed =
-      g.AddNode<Transpose>("AttentionWeightTransposed", {attention_weight});
+      g->AddNode<Transpose>("AttentionWeightTransposed", {attention_weight});
 
   // (Dot) Multiplication with attention weights; i.e. calculating the code vectors
   // Dimensions: (EMBEDDING_SIZE, 1) = (EMBEDDING_SIZE, N_CONTEXTS) @ (N_CONTEXTS, 1)
-  std::string code_vector = g.AddNode<MatrixMultiply>(
+  std::string code_vector = g->AddNode<MatrixMultiply>(
       "CodeVector", {combined_context_vector, attention_weight_transposed});
 
   // (Unnormalised) predictions for each function name in the vocab, by
@@ -203,15 +203,15 @@ int main(int ac, char **av)
   // Dimensions: (vocab_size_functions, 1) = (vocab_size_functions, EMBEDDING_SIZE) @
   // (EMBEDDING_SIZE, 1)
   std::string prediction_softmax_kernel =
-      g.AddNode<MatrixMultiply>("PredictionSoftMaxKernel", {function_name_embedding, code_vector});
+      g->AddNode<MatrixMultiply>("PredictionSoftMaxKernel", {function_name_embedding, code_vector});
 
   // Dimensions: (1, vocab_size_functions) = Transpose((vocab_size_functions, 1))
   std::string prediction_softmax_kernel_T =
-      g.AddNode<Transpose>("PredictionSoftMaxKernelTransposed", {prediction_softmax_kernel});
+      g->AddNode<Transpose>("PredictionSoftMaxKernelTransposed", {prediction_softmax_kernel});
 
   // (Softmax) Normalisation of the prediction
   // Dimensions:  (1, vocab_size_functions)
-  std::string result = g.AddNode<fetch::ml::ops::Softmax<ArrayType>>(
+  std::string result = g->AddNode<fetch::ml::ops::Softmax<ArrayType>>(
       "PredictionSoftMax", {prediction_softmax_kernel_T}, SizeType{0});
 
   // Criterion: Cross Entropy Loss
@@ -219,11 +219,6 @@ int main(int ac, char **av)
   // example, and as many categories as vocab_size
   fetch::ml::ops::CrossEntropy<ArrayType> criterion;
   DataType                                loss = 0;
-
-  // (One hot encoded) \y_{true} vector
-  ArrayType y_true_vec({1, cloader.function_name_counter().size() + 1});
-
-  y_true_vec.Fill(0);
 
   int n_epochs{0};
   int n_iter{0};
@@ -245,21 +240,21 @@ int main(int ac, char **av)
     ContextTensorsLabelPair input = cloader.GetNext();
 
     // Feeding the tensors to the graph
-    g.SetInput(input_source_words, input.second[0]);
-    g.SetInput(input_paths, input.second[1]);
-    g.SetInput(input_target_words, input.second[2]);
+    g->SetInput(input_source_words, input.second[0]);
+    g->SetInput(input_paths, input.second[1]);
+    g->SetInput(input_target_words, input.second[2]);
 
     // Making the forward pass
     // dimension:  (1, vocab_size_functions)
-    ArrayType results = g.Evaluate(result);
+    ArrayType results = g->Evaluate(result);
     // dimension:  (1, vocab_size_functions), (1, vocab_size_functions)
     loss += criterion.Forward({results, input.first});
 
     // Making the backward pass
-    g.BackPropagate(result, criterion.Backward({results, input.first}));
+    g->BackPropagate(result, criterion.Backward({results, input.first}));
 
     // apply the gradients
-    g.Step(LEARNING_RATE);
+    g->Step(LEARNING_RATE);
 
     n_iter++;
     if (n_iter % 5 == 0)
