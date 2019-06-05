@@ -39,7 +39,7 @@ To Cast(Variant const &from)
     to = static_cast<To>(from.primitive.i8);
     break;
   }
-  case TypeIds::Byte:
+  case TypeIds::UInt8:
   {
     to = static_cast<To>(from.primitive.ui8);
     break;
@@ -98,7 +98,7 @@ int8_t toInt8(VM * /* vm */, AnyPrimitive const &from)
   return Cast<int8_t>(from);
 }
 
-uint8_t toByte(VM * /* vm */, AnyPrimitive const &from)
+uint8_t toUInt8(VM * /* vm */, AnyPrimitive const &from)
 {
   return Cast<uint8_t>(from);
 }
@@ -146,7 +146,7 @@ double toFloat64(VM * /* vm */, AnyPrimitive const &from)
 Module::Module()
 {
   CreateFreeFunction("toInt8", &toInt8);
-  CreateFreeFunction("toByte", &toByte);
+  CreateFreeFunction("toUInt8", &toUInt8);
   CreateFreeFunction("toInt16", &toInt16);
   CreateFreeFunction("toUInt16", &toUInt16);
   CreateFreeFunction("toInt32", &toInt32);

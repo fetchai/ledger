@@ -257,7 +257,7 @@ inline Ptr<IArray> IArray::Construct(VM *vm, TypeId type_id, Args &&... args)
   {
     return new Array<int8_t>(vm, type_id, element_type_id, std::forward<Args>(args)...);
   }
-  case TypeIds::Byte:
+  case TypeIds::UInt8:
   {
     return new Array<uint8_t>(vm, type_id, element_type_id, std::forward<Args>(args)...);
   }

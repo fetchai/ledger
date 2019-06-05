@@ -242,7 +242,7 @@ inline Ptr<IState> IState::Construct(VM *vm, TypeId type_id, Args &&... args)
   {
     return new State<int8_t>(vm, type_id, value_type_id, std::forward<Args>(args)...);
   }
-  case TypeIds::Byte:
+  case TypeIds::UInt8:
   {
     return new State<uint8_t>(vm, type_id, value_type_id, std::forward<Args>(args)...);
   }
