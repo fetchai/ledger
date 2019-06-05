@@ -47,6 +47,6 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
 else
     cmake ../
 fi
-make -j
+make -j 4
 
 echo -e "${ongreen}Fetch Ledger installed.$endcolor"
