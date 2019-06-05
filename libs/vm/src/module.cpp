@@ -164,13 +164,6 @@ Module::Module()
   CreateFreeFunction("toFloat32", &toFloat32);
   CreateFreeFunction("toFloat64", &toFloat64);
 
-  GetClassInterface<String>()
-      .CreateMemberFunction("length", &String::Length)
-      .CreateMemberFunction("trim", &String::Trim)
-      .CreateMemberFunction("find", &String::Find)
-      .CreateMemberFunction("substr", &String::Substring)
-      .CreateMemberFunction("reverse", &String::Reverse);
-
   GetClassInterface<IMatrix>()
       .CreateConstuctor<int32_t, int32_t>()
       .EnableIndexOperator<AnyInteger, AnyInteger, TemplateParameter>()
@@ -200,6 +193,14 @@ Module::Module()
       .CreateInstantiationType<Array<float>>()
       .CreateInstantiationType<Array<double>>()
       .CreateInstantiationType<Array<Ptr<String>>>();
+
+  GetClassInterface<String>()
+      .CreateMemberFunction("find", &String::Find)
+      .CreateMemberFunction("length", &String::Length)
+      .CreateMemberFunction("reverse", &String::Reverse)
+      .CreateMemberFunction("split", &String::Split)
+      .CreateMemberFunction("substr", &String::Substring)
+      .CreateMemberFunction("trim", &String::Trim);
 
   GetClassInterface<IMap>()
       .CreateConstuctor<>()
