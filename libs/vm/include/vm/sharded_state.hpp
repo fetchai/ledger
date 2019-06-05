@@ -31,11 +31,8 @@ public:
   static Ptr<IShardedState> Constructor(VM *vm, TypeId type_id, Ptr<String> const &name);
   static Ptr<IShardedState> Constructor(VM *vm, TypeId type_id, Ptr<Address> const &name);
 
-  // Construction / Destruction
-  IShardedState(VM *vm, TypeId type_id, Ptr<String> const &name, TypeId value_type)
+  IShardedState(VM *vm, TypeId type_id)
     : Object(vm, type_id)
-    , name_{name->str}
-    , value_type_{value_type}
   {}
 
   virtual TemplateParameter1 GetIndexedValue(Ptr<String> const &key)                    = 0;
@@ -43,10 +40,6 @@ public:
 
   virtual TemplateParameter1 GetIndexedValue(Ptr<Address> const &key)                    = 0;
   virtual void SetIndexedValue(Ptr<Address> const &key, TemplateParameter1 const &value) = 0;
-
-protected:
-  std::string name_;
-  TypeId      value_type_;
 };
 
 }  // namespace vm

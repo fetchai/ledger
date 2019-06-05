@@ -23,15 +23,22 @@ namespace vm {
 namespace {
 class ShardedState : public IShardedState
 {
+  std::string name_;
+  TypeId      value_type_id_;
+
 public:
-  // Construction / Destruction
-  ShardedState(VM *vm, TypeId type_id, Ptr<String> const &name, TypeId value_type)
-    : IShardedState(vm, type_id, name, value_type)
-  {}
+  ShardedState(VM *vm, TypeId type_id, Ptr<String> const &name, TypeId value_type_id)
+    : IShardedState(vm, type_id)
+    , name_{name ? name->str : ""}
+    , value_type_id_{value_type_id}
+  {
+    if (!name)
+    {
+      vm->RuntimeError("ShardedState: the `name` is null reference.");
+    }
+  }
 
 protected:
-  using ByteBuffer = std::vector<uint8_t>;
-
   TemplateParameter1 GetIndexedValue(Ptr<String> const &key) override
   {
     return GetIndexedValueInternal(key);
@@ -81,8 +88,8 @@ private:
       return {};
     }
 
-    auto state{IState::ConstructIntrinsic(vm_, TypeIds::Unknown, value_type_, ComposeFullKey(index),
-                                          TemplateParameter1{})};
+    auto state{IState::ConstructIntrinsic(vm_, TypeIds::Unknown, value_type_id_,
+                                          ComposeFullKey(index), TemplateParameter1{})};
     return state->Get();
   }
 
@@ -94,8 +101,8 @@ private:
       return;
     }
 
-    auto state{IState::ConstructIntrinsic(vm_, TypeIds::Unknown, value_type_, ComposeFullKey(index),
-                                          value_v)};
+    auto state{IState::ConstructIntrinsic(vm_, TypeIds::Unknown, value_type_id_,
+                                          ComposeFullKey(index), value_v)};
     state->Set(value_v);
   }
 };
@@ -111,21 +118,13 @@ Ptr<IShardedState> IShardedState::Constructor(VM *vm, TypeId type_id, Ptr<String
     return new ShardedState(vm, type_id, name, value_type_id);
   }
 
-  vm->RuntimeError("Failed to construct SharededState instance: the `name` is null reference.");
+  vm->RuntimeError("Failed to construct ShardedState instance: the `name` is null reference.");
   return nullptr;
 }
 
 Ptr<IShardedState> IShardedState::Constructor(VM *vm, TypeId type_id, Ptr<Address> const &name)
 {
-  if (name)
-  {
-    TypeInfo const &type_info     = vm->GetTypeInfo(type_id);
-    TypeId const    value_type_id = type_info.parameter_type_ids[0];
-    return new ShardedState(vm, type_id, name->AsString(), value_type_id);
-  }
-
-  vm->RuntimeError("Failed to construct SharededState instance: the `name` is null reference.");
-  return nullptr;
+  return Constructor(vm, type_id, name ? name->AsString() : nullptr);
 }
 
 }  // namespace vm
