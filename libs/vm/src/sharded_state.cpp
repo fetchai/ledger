@@ -62,7 +62,7 @@ protected:
   }
 
 private:
-  Ptr<String> ComposeFullKey(Ptr<String> const &key)
+  inline Ptr<String> ComposeFullKey(Ptr<String> const &key)
   {
     if (!key)
     {
@@ -73,7 +73,7 @@ private:
     return new String{vm_, name_ + "." + key->str};
   }
 
-  TemplateParameter1 GetIndexedValueInternal(Ptr<String> const &index)
+  inline TemplateParameter1 GetIndexedValueInternal(Ptr<String> const &index)
   {
     if (!vm_->HasIoObserver())
     {
@@ -81,13 +81,12 @@ private:
       return {};
     }
 
-    auto state{
-      IState::ConstructIntrinsic(vm_, TypeIds::Unknown, value_type_, ComposeFullKey(index),
-                                 TemplateParameter1{})};
+    auto state{IState::ConstructIntrinsic(vm_, TypeIds::Unknown, value_type_, ComposeFullKey(index),
+                                          TemplateParameter1{})};
     return state->Get();
   }
 
-  void SetIndexedValueInternal(Ptr<String> const &index, TemplateParameter1 const &value_v)
+  inline void SetIndexedValueInternal(Ptr<String> const &index, TemplateParameter1 const &value_v)
   {
     if (!vm_->HasIoObserver())
     {
@@ -101,7 +100,7 @@ private:
   }
 };
 
-} // namespace
+}  // namespace
 
 Ptr<IShardedState> IShardedState::Constructor(VM *vm, TypeId type_id, Ptr<Object> name)
 {

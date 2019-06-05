@@ -212,10 +212,10 @@ Module::Module()
   istate.CreateMemberFunction("existed", &IState::Existed);
 
   GetClassInterface<IShardedState>()
-    .CreateConstuctor<Ptr<String>>()
-    .CreateConstuctor<Ptr<Address>>()
-    .EnableIndexOperator<Ptr<String>,  TemplateParameter1>()
-    .EnableIndexOperator<Ptr<Address>, TemplateParameter1>();
+      .CreateConstuctor<Ptr<String>>()
+      .CreateConstuctor<Ptr<Address>>()
+      .EnableIndexOperator<Ptr<String>, TemplateParameter1>()
+      .EnableIndexOperator<Ptr<Address>, TemplateParameter1>();
 }
 
 }  // namespace vm

@@ -10,7 +10,7 @@ include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
 # Compiler Configuration
 setup_compiler()
 
-fetch_add_test(ledger-chaincode-tests fetch-ledger fetch-vm chaincode)
+fetch_add_test(ledger-chaincode-tests fetch-ledger chaincode)
 fetch_add_test(ledger-consensus-tests fetch-ledger consensus)
 fetch_add_test(ledger-chain-tests fetch-ledger chain)
 
