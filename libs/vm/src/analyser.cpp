@@ -147,7 +147,7 @@ void Analyser::Initialise()
                      state_type_);
 
   CreateTemplateType("ShardedState", TypeIndex(typeid(IShardedState)), {any_type_},
-                     TypeIds::Unknown, persistent_map_type_);
+                     TypeIds::Unknown, sharded_state_type_);
 }
 
 void Analyser::UnInitialise()
@@ -190,7 +190,7 @@ void Analyser::UnInitialise()
   map_type_                 = nullptr;
   state_type_               = nullptr;
   address_type_             = nullptr;
-  persistent_map_type_      = nullptr;
+  sharded_state_type_       = nullptr;
 }
 
 void Analyser::CreateClassType(std::string const &name, TypeIndex type_index)

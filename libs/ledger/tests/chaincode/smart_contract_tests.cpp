@@ -383,7 +383,7 @@ TEST_F(SmartContractTests, CheckShardedStateSetAndQuery)
 {
   std::string const contract_source = R"(
     @action
-    function test_persistent_map()
+    function test_sharded_state()
       var state = ShardedState<Int32>("value");
       state["foo"] = 20;
       state["bar"] = 30;
@@ -408,7 +408,7 @@ TEST_F(SmartContractTests, CheckShardedStateSetAndQuery)
   // check the registered handlers
   auto const transaction_handlers = contract_->transaction_handlers();
   ASSERT_EQ(1u, transaction_handlers.size());
-  EXPECT_TRUE(IsIn(transaction_handlers, "test_persistent_map"));
+  EXPECT_TRUE(IsIn(transaction_handlers, "test_sharded_state"));
 
   // check the query handlers
   auto const query_handlers = contract_->query_handlers();
@@ -445,7 +445,7 @@ TEST_F(SmartContractTests, CheckShardedStateSetAndQuery)
       .WillOnce(Return(fetch::storage::Document{expected_value2}));
 
   // send the smart contract an "increment" action
-  EXPECT_EQ(SmartContract::Status::OK, SendSmartAction("test_persistent_map"));
+  EXPECT_EQ(SmartContract::Status::OK, SendSmartAction("test_sharded_state"));
 
   VerifyQuery("query_foo", int32_t{20});
   VerifyQuery("query_bar", int32_t{30});
@@ -455,7 +455,7 @@ TEST_F(SmartContractTests, CheckShardedStateSetWithAddressAsName)
 {
   std::string const contract_source = R"(
     @action
-    function test_persistent_map(address : Address)
+    function test_sharded_state(address : Address)
       var state = ShardedState<Int32>(address);
       state["foo"] = 20;
     endfunction
@@ -473,7 +473,7 @@ TEST_F(SmartContractTests, CheckShardedStateSetWithAddressAsName)
   // check the registered handlers
   auto const transaction_handlers = contract_->transaction_handlers();
   ASSERT_EQ(1u, transaction_handlers.size());
-  EXPECT_TRUE(IsIn(transaction_handlers, "test_persistent_map"));
+  EXPECT_TRUE(IsIn(transaction_handlers, "test_sharded_state"));
 
   // check the query handlers
   auto const query_handlers = contract_->query_handlers();
@@ -510,7 +510,7 @@ TEST_F(SmartContractTests, CheckShardedStateSetWithAddressAsName)
 
   // send the smart contract an "increment" action
   EXPECT_EQ(SmartContract::Status::OK,
-            SendSmartActionWithParams("test_persistent_map", address_as_name));
+            SendSmartActionWithParams("test_sharded_state", address_as_name));
 
   auto request{Variant::Object()};
   request["address"] = address_as_name.display();
