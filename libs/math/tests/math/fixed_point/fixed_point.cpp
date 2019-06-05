@@ -2284,6 +2284,4 @@ TEST(FixedPointTest, NanInfinity_32_32)
   EXPECT_TRUE(fp64::isPosInfinity(p_inf));
   EXPECT_FALSE(fp64::isNegInfinity(p_inf));
   EXPECT_FALSE(fp64::isPosInfinity(m_inf));
-
-
 }
