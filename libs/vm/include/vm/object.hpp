@@ -32,7 +32,7 @@ template <typename T>
 class Ptr;
 struct Variant;
 class Address;
-class String;
+struct String;
 
 template <typename T, typename = void>
 struct IsPrimitive : std::false_type

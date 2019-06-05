@@ -71,7 +71,14 @@ void PrintString(fetch::vm::VM *vm, fetch::vm::Ptr<fetch::vm::String> const &s)
 {
   auto &out = vm->GetOutputDevice(vm::VM::STDOUT);
 
-  out << s->str;
+  if (s == nullptr)
+  {
+    internal::PrintNullPtr(out);
+  }
+  else
+  {
+    out << s->str;
+  }
 
   internal::FlushOutput<APPEND_LINEBREAK>(out);
 }
