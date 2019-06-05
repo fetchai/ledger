@@ -41,11 +41,6 @@ inline auto FullShards(std::size_t lane_count)
 
 class ContractTest : public ::testing::Test
 {
-  // ContractTest() = default;
-  // ContractTest(fetch::BitVector shards)
-  //  : shards_{shards}
-  //{}
-
 protected:
   using Identity              = fetch::crypto::Identity;
   using Identifier            = fetch::ledger::Identifier;

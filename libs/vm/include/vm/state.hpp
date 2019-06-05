@@ -34,9 +34,6 @@ public:
   static Ptr<IState> Constructor(VM *vm, TypeId type_id, Ptr<Object> &&name,
                                  TemplateParameter const &value);
 
-  //  static Ptr<IState> Constructor(VM *vm, TypeId type_id, Ptr<Object> const &address,
-  //                                 TemplateParameter const &value);
-
   virtual TemplateParameter Get() const                         = 0;
   virtual void              Set(TemplateParameter const &value) = 0;
   virtual bool              Existed() const                     = 0;
@@ -313,7 +310,7 @@ inline Ptr<IState> IState::Constructor(VM *vm, TypeId type_id, Ptr<Object> &&nam
 
 inline std::string IState::NameToString(VM *vm, Ptr<Object> &&name)
 {
-  switch (name->type_id())
+  switch (name->GetTypeId())
   {
   case TypeIds::String:
     return dynamic_cast<String const &>(*name).str;

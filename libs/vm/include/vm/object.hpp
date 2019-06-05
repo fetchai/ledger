@@ -39,9 +39,9 @@ struct IsPrimitive : std::false_type
 {
 };
 template <typename T>
-struct IsPrimitive<T, typename std::enable_if_t<
-                          type_util::IsAnyOfV<T, void, bool, int8_t, uint8_t, int16_t, uint16_t,
-                                              int32_t, uint32_t, int64_t, uint64_t, float, double>>>
+struct IsPrimitive<
+    T, std::enable_if_t<type_util::IsAnyOfV<T, void, bool, int8_t, uint8_t, int16_t, uint16_t,
+                                            int32_t, uint32_t, int64_t, uint64_t, float, double>>>
   : std::true_type
 {
 };
@@ -93,8 +93,7 @@ struct IsString : std::false_type
 {
 };
 template <typename T>
-struct IsString<
-    T, typename std::enable_if_t<std::is_base_of<String, typename std::decay<T>::type>::value>>
+struct IsString<T, std::enable_if_t<std::is_base_of<String, std::decay_t<T>>::value>>
   : std::true_type
 {
 };
@@ -221,7 +220,7 @@ public:
   virtual bool SerializeTo(ByteArrayBuffer &buffer);
   virtual bool DeserializeFrom(ByteArrayBuffer &buffer);
 
-  TypeId type_id() const
+  TypeId GetTypeId() const
   {
     return type_id_;
   }

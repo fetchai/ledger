@@ -200,7 +200,7 @@ public:
   }
 
 private:
-  byte_array::ByteArray address_;  ///< The canonical resource address
+  byte_array::ConstByteArray address_;  ///< The canonical resource address
 };
 
 }  // namespace storage
