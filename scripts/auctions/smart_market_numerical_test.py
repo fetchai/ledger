@@ -159,7 +159,7 @@ class SmartMarket(object):
                     else:
                         self.active[n] = 1
 
-                #self.SelectBid( n )
+                # self.SelectBid( n )
                 newreward = self.TotalBenefit()
                 de = oldreward - newreward
                 print("oldreward: " + str(oldreward))
@@ -173,13 +173,13 @@ class SmartMarket(object):
                     r_thresh = random.random()
                 if r_thresh < math.exp(-beta * de):
                     pass
-                    #print(oldreward, " => ", newreward, ":",de,beta,  math.exp(-beta*de))
+                    # print(oldreward, " => ", newreward, ":",de,beta,  math.exp(-beta*de))
                 else:
                     self.active = oldactive
                     rejected += 1
 
             beta += db
-        #print(rejected/ runtime/len(self.bids))
+        # print(rejected/ runtime/len(self.bids))
 
 
 market = SmartMarket()
@@ -202,7 +202,7 @@ print(market.TotalBenefit())
 market.SelectBid(0)
 market.SelectBid(1)
 market.SelectBid(2)
-#market.SelectBid( 3 )
+# market.SelectBid( 3 )
 print(market.TotalBenefit())
 print("---")
 for i in range(1):

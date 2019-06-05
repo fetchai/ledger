@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/decoders.hpp"
+
 #include "core/assert.hpp"
 #include "core/byte_array/details/encode_decode.hpp"
 

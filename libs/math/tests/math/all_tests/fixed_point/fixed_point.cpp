@@ -17,9 +17,11 @@
 //------------------------------------------------------------------------------
 
 #include "vectorise/fixed_point/fixed_point.hpp"
+
+#include <gtest/gtest.h>
+
 #include <array>
 #include <cmath>
-#include <gtest/gtest.h>
 #include <limits>
 
 using fp32 = fetch::fixed_point::FixedPoint<16, 16>;

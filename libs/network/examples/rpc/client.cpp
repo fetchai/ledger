@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "network/muddle/rpc/client.hpp"
+
 #include "core/logger.hpp"
 #include "core/serializers/byte_array.hpp"
 #include "network/muddle/muddle.hpp"

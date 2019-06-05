@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "fake_io_observer.hpp"
+
 #include "core/logger.hpp"
 
 #include <cstdint>
