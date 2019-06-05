@@ -479,10 +479,6 @@ template <std::size_t ID>
 struct VariantT : public Variant
 {
   using Variant::Variant;
-  template <typename T>
-  VariantT(T &&other)
-    : Variant{std::forward<T>(other)}
-  {}
 };
 
 using TemplateParameter1 = VariantT<0>;
