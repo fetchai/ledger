@@ -73,7 +73,7 @@ int main(int ac, char **av)
 
   // Initialise Optimiser
   fetch::ml::optimisers::AdamOptimiser<ArrayType, fetch::ml::ops::CrossEntropy<ArrayType>>
-      optimiser(g, input_name, output_name, learning_rate);
+      optimiser(g, {input_name}, output_name, learning_rate);
 
   // Training loop
   DataType loss;

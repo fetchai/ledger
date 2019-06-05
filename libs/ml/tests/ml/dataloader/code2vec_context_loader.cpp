@@ -32,7 +32,7 @@ TEST(C2vLoaderTest, loader_test)
   using ArrayType   = typename fetch::math::Tensor<fetch::math::SizeType>;
   using SizeType    = fetch::math::SizeType;
   using LabelType   = SizeType;
-  using ContextType = std::tuple<ArrayType, ArrayType, ArrayType>;
+  using ContextType = ArrayType;
 
   std::string training_data =
       "get|timestamp override,-726273290,long override,-733851942,METHOD_NAME "
@@ -56,7 +56,7 @@ TEST(C2vLoaderTest, loader_test)
 
   SizeType max_contexts = 10;
 
-  C2VLoader<ContextType, LabelType> loader(max_contexts);
+  C2VLoader<LabelType, ContextType> loader(max_contexts);
 
   loader.AddData(training_data);
 
@@ -73,43 +73,43 @@ TEST(C2vLoaderTest, loader_test)
   EXPECT_EQ(loader.umap_idx_to_functionname()[6], "");
   EXPECT_EQ(loader.umap_idx_to_functionname()[7], "");
 
-  typename C2VLoader<ContextType, LabelType>::ContextTensorsLabelPair training_pair =
+  typename C2VLoader<LabelType, ContextType>::ContextTensorsLabelPair training_pair =
       loader.GetNext();
 
-  EXPECT_EQ(std::get<0>(training_pair.first).size(), max_contexts);
-  EXPECT_EQ(std::get<1>(training_pair.first).size(), max_contexts);
-  EXPECT_EQ(std::get<2>(training_pair.first).size(), max_contexts);
+  EXPECT_EQ(training_pair.second[0].size(), max_contexts);
+  EXPECT_EQ(training_pair.second[1].size(), max_contexts);
+  EXPECT_EQ(training_pair.second[2].size(), max_contexts);
 
-  EXPECT_EQ(std::get<0>(training_pair.first)[0], 1);
-  EXPECT_EQ(std::get<0>(training_pair.first)[1], 1);
-  EXPECT_EQ(std::get<0>(training_pair.first)[2], 2);
-  EXPECT_EQ(std::get<0>(training_pair.first)[3], 2);
-  EXPECT_EQ(std::get<0>(training_pair.first)[4], 3);
-  EXPECT_EQ(std::get<0>(training_pair.first)[5], 0);
-  EXPECT_EQ(std::get<0>(training_pair.first)[6], 0);
-  EXPECT_EQ(std::get<0>(training_pair.first)[7], 0);
-  EXPECT_EQ(std::get<0>(training_pair.first)[8], 0);
-  EXPECT_EQ(std::get<0>(training_pair.first)[9], 0);
+  EXPECT_EQ(training_pair.second[0][0], 1);
+  EXPECT_EQ(training_pair.second[0][1], 1);
+  EXPECT_EQ(training_pair.second[0][2], 2);
+  EXPECT_EQ(training_pair.second[0][3], 2);
+  EXPECT_EQ(training_pair.second[0][4], 3);
+  EXPECT_EQ(training_pair.second[0][5], 0);
+  EXPECT_EQ(training_pair.second[0][6], 0);
+  EXPECT_EQ(training_pair.second[0][7], 0);
+  EXPECT_EQ(training_pair.second[0][8], 0);
+  EXPECT_EQ(training_pair.second[0][9], 0);
 
-  EXPECT_EQ(std::get<1>(training_pair.first)[0], 1);
-  EXPECT_EQ(std::get<1>(training_pair.first)[1], 2);
-  EXPECT_EQ(std::get<1>(training_pair.first)[2], 3);
-  EXPECT_EQ(std::get<1>(training_pair.first)[3], 4);
-  EXPECT_EQ(std::get<1>(training_pair.first)[4], 5);
-  EXPECT_EQ(std::get<1>(training_pair.first)[5], 0);
-  EXPECT_EQ(std::get<1>(training_pair.first)[6], 0);
-  EXPECT_EQ(std::get<1>(training_pair.first)[7], 0);
-  EXPECT_EQ(std::get<1>(training_pair.first)[8], 0);
-  EXPECT_EQ(std::get<1>(training_pair.first)[9], 0);
+  EXPECT_EQ(training_pair.second[1][0], 1);
+  EXPECT_EQ(training_pair.second[1][1], 2);
+  EXPECT_EQ(training_pair.second[1][2], 3);
+  EXPECT_EQ(training_pair.second[1][3], 4);
+  EXPECT_EQ(training_pair.second[1][4], 5);
+  EXPECT_EQ(training_pair.second[1][5], 0);
+  EXPECT_EQ(training_pair.second[1][6], 0);
+  EXPECT_EQ(training_pair.second[1][7], 0);
+  EXPECT_EQ(training_pair.second[1][8], 0);
+  EXPECT_EQ(training_pair.second[1][9], 0);
 
-  EXPECT_EQ(std::get<2>(training_pair.first)[0], 2);
-  EXPECT_EQ(std::get<2>(training_pair.first)[1], 3);
-  EXPECT_EQ(std::get<2>(training_pair.first)[2], 3);
-  EXPECT_EQ(std::get<2>(training_pair.first)[3], 4);
-  EXPECT_EQ(std::get<2>(training_pair.first)[4], 4);
-  EXPECT_EQ(std::get<2>(training_pair.first)[5], 0);
-  EXPECT_EQ(std::get<2>(training_pair.first)[6], 0);
-  EXPECT_EQ(std::get<2>(training_pair.first)[7], 0);
-  EXPECT_EQ(std::get<2>(training_pair.first)[8], 0);
-  EXPECT_EQ(std::get<2>(training_pair.first)[9], 0);
+  EXPECT_EQ(training_pair.second[2][0], 2);
+  EXPECT_EQ(training_pair.second[2][1], 3);
+  EXPECT_EQ(training_pair.second[2][2], 3);
+  EXPECT_EQ(training_pair.second[2][3], 4);
+  EXPECT_EQ(training_pair.second[2][4], 4);
+  EXPECT_EQ(training_pair.second[2][5], 0);
+  EXPECT_EQ(training_pair.second[2][6], 0);
+  EXPECT_EQ(training_pair.second[2][7], 0);
+  EXPECT_EQ(training_pair.second[2][8], 0);
+  EXPECT_EQ(training_pair.second[2][9], 0);
 }

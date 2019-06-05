@@ -42,12 +42,13 @@ public:
 
   Optimiser(std::shared_ptr<Graph<T>>
 
-                               graph,
-            std::string const &input_node_name, std::string const &output_node_name,
+                                            graph,
+            std::vector<std::string> const &input_node_names, std::string const &output_node_name,
             DataType const &learning_rate = DataType{0.001f});
 
   // TODO (private 1090): Optimise TensorSlice for graph-feeding without using .Copy
-  DataType Run(ArrayType &data, ArrayType &labels, SizeType batch_size = 0);
+  DataType Run(std::vector<ArrayType> const &data, ArrayType const &labels,
+               SizeType batch_size = 0);
 
   DataType Run(fetch::ml::DataLoader<ArrayType, ArrayType> &loader,
                SizeType batch_size  = fetch::math::numeric_max<SizeType>(),
@@ -56,7 +57,7 @@ public:
 protected:
   std::shared_ptr<Graph<T>> graph_;
   CriterionType             criterion_;
-  std::string               input_node_name_  = "";
+  std::vector<std::string>  input_node_names_ = {};
   std::string               output_node_name_ = "";
   DataType                  learning_rate_    = fetch::math::numeric_max<DataType>();
   std::vector<std::shared_ptr<fetch::ml::ops::Trainable<ArrayType>>> graph_trainables_;
@@ -68,12 +69,13 @@ private:
 };
 
 template <class T, class C>
-Optimiser<T, C>::Optimiser(std::shared_ptr<Graph<T>> graph, std::string const &input_node_name,
+Optimiser<T, C>::Optimiser(std::shared_ptr<Graph<T>>       graph,
+                           std::vector<std::string> const &input_node_names,
                            std::string const &output_node_name, DataType const &learning_rate)
   :
 
   graph_(graph)
-  , input_node_name_(input_node_name)
+  , input_node_names_(input_node_names)
   , output_node_name_(output_node_name)
   , learning_rate_(learning_rate)
   , epoch_(0)
@@ -96,13 +98,14 @@ Optimiser<T, C>::Optimiser(std::shared_ptr<Graph<T>> graph, std::string const &i
  */
 // TODO (private 1090): Optimise TensorSlice for graph-feeding without using .Copy
 template <class T, class C>
-typename T::Type Optimiser<T, C>::Run(ArrayType &data, ArrayType &labels, SizeType batch_size)
+typename T::Type Optimiser<T, C>::Run(std::vector<ArrayType> const &data, ArrayType const &labels,
+                                      SizeType batch_size)
 {
   // Get trailing dimensions
-  SizeType n_data_dimm  = data.shape().size() - 1;
+  SizeType n_data_dimm  = data[0].shape().size() - 1;
   SizeType n_label_dimm = labels.shape().size() - 1;
 
-  SizeType n_data = data.shape().at(n_data_dimm);
+  SizeType n_data = data[0].shape().at(n_data_dimm);
 
   // If batch_size is not specified do full batch
   if (batch_size == 0)
@@ -120,8 +123,16 @@ typename T::Type Optimiser<T, C>::Run(ArrayType &data, ArrayType &labels, SizeTy
     // Do batch back-propagation
     for (SizeType it{step}; (it < step + batch_size) && (it < n_data); ++it)
     {
-      auto cur_input = data.Slice(it, n_data_dimm).Copy();
-      graph_->SetInput(input_node_name_, cur_input);
+
+      auto name_it = input_node_names_.begin();
+      for (auto &input : data)
+      {
+
+        auto cur_input = input.Slice(it, n_data_dimm).Copy();
+        graph_->SetInput(*name_it, cur_input);
+        ++name_it;
+      }
+
       auto cur_label  = labels.Slice(it, n_label_dimm).Copy();
       auto label_pred = graph_->Evaluate(output_node_name_);
       loss += criterion_.Forward({label_pred, cur_label});
@@ -157,10 +168,10 @@ typename T::Type Optimiser<T, C>::Run(fetch::ml::DataLoader<ArrayType, ArrayType
 {
   loader.Reset();
 
-  DataType                        loss{0};
-  DataType                        loss_sum{0};
-  SizeType                        step{0};
-  std::pair<ArrayType, ArrayType> input;
+  DataType                                     loss{0};
+  DataType                                     loss_sum{0};
+  SizeType                                     step{0};
+  std::pair<ArrayType, std::vector<ArrayType>> input;
   while (!loader.IsDone() && step < subset_size)
   {
     loss = DataType{0};
@@ -172,7 +183,14 @@ typename T::Type Optimiser<T, C>::Run(fetch::ml::DataLoader<ArrayType, ArrayType
       input = loader.GetNext();
 
       auto cur_input = input.second;
-      graph_->SetInput(input_node_name_, cur_input);
+
+      auto name_it = input_node_names_.begin();
+      for (auto &cur_input : input.second)
+      {
+        graph_->SetInput(*name_it, cur_input);
+        ++name_it;
+      }
+
       auto cur_label  = input.first;
       auto label_pred = graph_->Evaluate(output_node_name_);
       loss += criterion_.Forward({label_pred, cur_label});

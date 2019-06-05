@@ -89,7 +89,7 @@ TYPED_TEST(CBoWDataloaderTest, small_window_loader_test)
       loader.Reset();
     }
 
-    left_and_right = loader.GetNext().first;
+    left_and_right = loader.GetNext().second[0];
 
     std::string left  = loader.VocabLookup(SizeType(double(left_and_right.At(0))));
     std::string right = loader.VocabLookup(SizeType(double(left_and_right.At(1))));
@@ -155,45 +155,45 @@ TYPED_TEST(CBoWDataloaderTest, large_window_loader_test)
   EXPECT_EQ(loader.VocabLookup("$£%^*($"), std::numeric_limits<SizeType>::max());
 
   // data check
-  std::pair<TypeParam, SizeType> data;
+  std::pair<SizeType, std::vector<TypeParam>> data;
   EXPECT_FALSE(loader.IsDone());
   data = loader.GetNext();
-  EXPECT_EQ(data.first.size(), p.n_data_buffers);  //
-  EXPECT_EQ(data.first.At(0), 0);                  // my
-  EXPECT_EQ(data.first.At(1), 1);                  // name
-  EXPECT_EQ(data.first.At(2), 2);                  // is
-  EXPECT_EQ(data.first.At(3), 3);                  // fetchbot
-  EXPECT_EQ(data.second, 4);                       // I
-  EXPECT_EQ(data.first.At(4), 5);                  // am
-  EXPECT_EQ(data.first.At(5), 6);                  // one
-  EXPECT_EQ(data.first.At(6), 7);                  // year
-  EXPECT_EQ(data.first.At(7), 8);                  // old
+  EXPECT_EQ(data.second[0].size(), p.n_data_buffers);  //
+  EXPECT_EQ(data.second[0].At(0), 0);                  // my
+  EXPECT_EQ(data.second[0].At(1), 1);                  // name
+  EXPECT_EQ(data.second[0].At(2), 2);                  // is
+  EXPECT_EQ(data.second[0].At(3), 3);                  // fetchbot
+  EXPECT_EQ(data.first, 4);                            // I
+  EXPECT_EQ(data.second[0].At(4), 5);                  // am
+  EXPECT_EQ(data.second[0].At(5), 6);                  // one
+  EXPECT_EQ(data.second[0].At(6), 7);                  // year
+  EXPECT_EQ(data.second[0].At(7), 8);                  // old
 
   EXPECT_FALSE(loader.IsDone());
   data = loader.GetNext();
-  EXPECT_EQ(data.first.size(), p.n_data_buffers);  // 8 = 2 * windowSize
-  EXPECT_EQ(data.first.At(0), 1);                  // name
-  EXPECT_EQ(data.first.At(1), 2);                  // is
-  EXPECT_EQ(data.first.At(2), 3);                  // fetchbot
-  EXPECT_EQ(data.first.At(3), 4);                  // I
-  EXPECT_EQ(data.second, 5);                       // am
-  EXPECT_EQ(data.first.At(4), 6);                  // one
-  EXPECT_EQ(data.first.At(5), 7);                  // year
-  EXPECT_EQ(data.first.At(6), 8);                  // old
-  EXPECT_EQ(data.first.At(7), 9);                  // and
+  EXPECT_EQ(data.second[0].size(), p.n_data_buffers);  // 8 = 2 * windowSize
+  EXPECT_EQ(data.second[0].At(0), 1);                  // name
+  EXPECT_EQ(data.second[0].At(1), 2);                  // is
+  EXPECT_EQ(data.second[0].At(2), 3);                  // fetchbot
+  EXPECT_EQ(data.second[0].At(3), 4);                  // I
+  EXPECT_EQ(data.first, 5);                            // am
+  EXPECT_EQ(data.second[0].At(4), 6);                  // one
+  EXPECT_EQ(data.second[0].At(5), 7);                  // year
+  EXPECT_EQ(data.second[0].At(6), 8);                  // old
+  EXPECT_EQ(data.second[0].At(7), 9);                  // and
 
   EXPECT_FALSE(loader.IsDone());
   data = loader.GetNext();
-  EXPECT_EQ(data.first.size(), p.n_data_buffers);  // 8 = 2 * windowSize
-  EXPECT_EQ(data.first.At(0), 2);                  // is
-  EXPECT_EQ(data.first.At(1), 3);                  // fetchbot
-  EXPECT_EQ(data.first.At(2), 4);                  // I
-  EXPECT_EQ(data.first.At(3), 5);                  // am
-  EXPECT_EQ(data.second, 6);                       // one
-  EXPECT_EQ(data.first.At(4), 7);                  // year
-  EXPECT_EQ(data.first.At(5), 8);                  // old
-  EXPECT_EQ(data.first.At(6), 9);                  // and
-  EXPECT_EQ(data.first.At(7), 4);                  // I
+  EXPECT_EQ(data.second[0].size(), p.n_data_buffers);  // 8 = 2 * windowSize
+  EXPECT_EQ(data.second[0].At(0), 2);                  // is
+  EXPECT_EQ(data.second[0].At(1), 3);                  // fetchbot
+  EXPECT_EQ(data.second[0].At(2), 4);                  // I
+  EXPECT_EQ(data.second[0].At(3), 5);                  // am
+  EXPECT_EQ(data.first, 6);                            // one
+  EXPECT_EQ(data.second[0].At(4), 7);                  // year
+  EXPECT_EQ(data.second[0].At(5), 8);                  // old
+  EXPECT_EQ(data.second[0].At(6), 9);                  // and
+  EXPECT_EQ(data.second[0].At(7), 4);                  // I
 
   EXPECT_FALSE(loader.IsDone());
   data = loader.GetNext();  // fetchbot I am one year old and I eat

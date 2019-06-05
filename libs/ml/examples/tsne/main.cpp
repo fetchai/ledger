@@ -88,11 +88,11 @@ int main(int ac, char **av)
 
   std::cout << "Loading input data. " << std::endl;
   fetch::ml::MNISTLoader<ArrayType, ArrayType> data_loader(av[1], av[2]);
-  std::pair<ArrayType, ArrayType>              input = data_loader.SubsetToArray(SUBSET_SIZE);
+  std::pair<ArrayType, std::vector<ArrayType>> input = data_loader.SubsetToArray(SUBSET_SIZE);
 
   // Initialize TSNE
   std::cout << "Running TSNE init. " << std::endl;
-  TSNE<Tensor<DataType>> tsn(input.first, N_OUTPUT_FEATURE_SIZE, PERPLEXITY, RANDOM_SEED);
+  TSNE<Tensor<DataType>> tsn(input.second[0], N_OUTPUT_FEATURE_SIZE, PERPLEXITY, RANDOM_SEED);
 
   std::cout << "Started optimisation. " << std::endl;
   tsn.Optimise(LEARNING_RATE, MAX_ITERATIONS, INITIAL_MOMENTUM, FINAL_MOMENTUM,

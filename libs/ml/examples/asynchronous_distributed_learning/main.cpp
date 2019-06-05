@@ -74,9 +74,9 @@ public:
 
   void Train(unsigned int numberOfBatches)
   {
-    float                           loss = 0;
-    CrossEntropy<ArrayType>         criterion;
-    std::pair<ArrayType, ArrayType> input;
+    float                                        loss = 0;
+    CrossEntropy<ArrayType>                      criterion;
+    std::pair<ArrayType, std::vector<ArrayType>> input;
     for (unsigned int i(0); i < numberOfBatches; ++i)
     {
       loss = 0;
@@ -85,7 +85,7 @@ public:
         // Random sampling ensures that for relatively few training steps the proportion of shared
         // training data is low
         input = dataloader_.GetRandom();
-        g_.SetInput("Input", input.second);
+        g_.SetInput("Input", input.second[0]);
         {
           std::lock_guard<std::mutex> l(m_);
           ArrayType const &           results = g_.Evaluate("Softmax").Copy();

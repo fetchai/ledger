@@ -63,14 +63,16 @@ public:
   // One-hot
 
   template <typename DataT = T, typename LabelT = LabelType>
-  math::meta::IfIsMathArray<LabelT, std::pair<LabelType, T>> GetAtIndex(uint64_t index) const
+  math::meta::IfIsMathArray<LabelT, std::pair<LabelType, std::vector<T>>> GetAtIndex(
+      uint64_t index) const
   {
     using SizeType = typename T::SizeType;
     using DataType = typename T::Type;
-    T buffer({28u, 28u, 1u});
+    std::vector<T> buffer;
+    buffer.push_back(T({28u, 28u, 1u}));
 
     SizeType i{0};
-    auto     it = buffer.begin();
+    auto     it = buffer[0].begin();
     while (it.is_valid())
     {
       *it = static_cast<DataType>(data_[index][i]) / DataType{256};
@@ -85,14 +87,16 @@ public:
 
   // Non one-hot
   template <typename DataT = T, typename LabelT = LabelType>
-  math::meta::IfIsArithmetic<LabelT, std::pair<LabelType, T>> GetAtIndex(uint64_t index) const
+  math::meta::IfIsArithmetic<LabelT, std::pair<LabelType, std::vector<T>>> GetAtIndex(
+      uint64_t index) const
   {
     using SizeType = typename T::SizeType;
     using DataType = typename T::Type;
-    T buffer({28u, 28u, 1u});
+    std::vector<T> buffer;
+    buffer.push_back(T({28u, 28u, 1u}));
 
     SizeType i{0};
-    auto     it = buffer.begin();
+    auto     it = buffer[0].begin();
     while (it.is_valid())
     {
       *it = static_cast<DataType>(data_[index][i]) / DataType{256};
@@ -102,12 +106,12 @@ public:
     return std::make_pair(static_cast<LabelType>(labels_[index]), buffer);
   }
 
-  virtual std::pair<LabelType, T> GetNext()
+  virtual std::pair<LabelType, std::vector<T>> GetNext()
   {
     return GetAtIndex(cursor_++);
   }
 
-  std::pair<LabelType, T> GetRandom()
+  std::pair<LabelType, std::vector<T>> GetRandom()
   {
     return GetAtIndex((uint64_t)rand() % Size());
   }
@@ -122,24 +126,25 @@ public:
     std::cout << std::endl;
   }
 
-  std::pair<LabelType, T> SubsetToArray(uint64_t subset_size)
+  std::pair<LabelType, std::vector<T>> SubsetToArray(uint64_t subset_size)
   {
-    T ret_labels({subset_size});
-    T ret_images({subset_size, figure_size_});
+    T              ret_labels({subset_size});
+    std::vector<T> ret_images;
+    ret_images.push_back(T({subset_size, figure_size_}));
 
     for (fetch::math::SizeType i(0); i < subset_size; ++i)
     {
       ret_labels.Set(i, static_cast<typename T::Type>(labels_[i]));
       for (fetch::math::SizeType j(0); j < figure_size_; ++j)
       {
-        ret_images.Set(i, j, static_cast<typename T::Type>(data_[i][j]) / typename T::Type(256));
+        ret_images[0].Set(i, j, static_cast<typename T::Type>(data_[i][j]) / typename T::Type(256));
       }
     }
 
-    return std::make_pair(ret_images, ret_labels);
+    return std::make_pair(ret_labels, ret_images);
   }
 
-  std::pair<LabelType, T> ToArray()
+  std::pair<LabelType, std::vector<T>> ToArray()
   {
     return SubsetToArray(size_);
   }

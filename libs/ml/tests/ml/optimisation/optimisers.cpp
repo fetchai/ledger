@@ -133,11 +133,11 @@ TYPED_TEST(OptimisersTest, sgd_optimiser_training)
 
   // Initialize Optimiser
   fetch::ml::optimisers::SGDOptimiser<TypeParam, fetch::ml::ops::MeanSquareError<TypeParam>>
-      optimiser(g, input_name, output_name, learning_rate);
+      optimiser(g, {input_name}, output_name, learning_rate);
 
   // Do 2 optimiser steps
-  optimiser.Run(data, gt);
-  DataType loss = optimiser.Run(data, gt);
+  optimiser.Run({data}, gt);
+  DataType loss = optimiser.Run({data}, gt);
 
   // Test loss
   EXPECT_NEAR(static_cast<double>(loss), 1.83612, 1e-5);
@@ -169,11 +169,11 @@ TYPED_TEST(OptimisersTest, sgd_optimiser_training_2D)
 
   // Initialize Optimiser
   fetch::ml::optimisers::SGDOptimiser<TypeParam, fetch::ml::ops::MeanSquareError<TypeParam>>
-      optimiser(g, input_name, output_name, learning_rate);
+      optimiser(g, {input_name}, output_name, learning_rate);
 
   // Do 2 optimiser steps
-  optimiser.Run(data, gt);
-  DataType loss = optimiser.Run(data, gt);
+  optimiser.Run({data}, gt);
+  DataType loss = optimiser.Run({data}, gt);
 
   // Test loss
   EXPECT_NEAR(static_cast<double>(loss), 117.98718, 1e-4);
@@ -205,11 +205,11 @@ TYPED_TEST(OptimisersTest, momentum_optimiser_training)
 
   // Initialize Optimiser
   fetch::ml::optimisers::MomentumOptimiser<TypeParam, fetch::ml::ops::MeanSquareError<TypeParam>>
-      optimiser(g, input_name, output_name, learning_rate);
+      optimiser(g, {input_name}, output_name, learning_rate);
 
   // Do 2 optimiser steps to ensure that momentum was applied
-  optimiser.Run(data, gt);
-  DataType loss = optimiser.Run(data, gt);
+  optimiser.Run({data}, gt);
+  DataType loss = optimiser.Run({data}, gt);
 
   // Test loss
   EXPECT_NEAR(static_cast<double>(loss), 1.11945, 1e-5);
@@ -241,11 +241,11 @@ TYPED_TEST(OptimisersTest, momentum_optimiser_training_2D)
 
   // Initialize Optimiser
   fetch::ml::optimisers::MomentumOptimiser<TypeParam, fetch::ml::ops::MeanSquareError<TypeParam>>
-      optimiser(g, input_name, output_name, learning_rate);
+      optimiser(g, {input_name}, output_name, learning_rate);
 
   // Do 2 optimiser steps
-  optimiser.Run(data, gt);
-  DataType loss = optimiser.Run(data, gt);
+  optimiser.Run({data}, gt);
+  DataType loss = optimiser.Run({data}, gt);
 
   // Test loss
   EXPECT_NEAR(static_cast<double>(loss), 117.98717, 1e-4);
@@ -277,11 +277,11 @@ TYPED_TEST(OptimisersTest, adagrad_optimiser_training)
 
   // Initialize Optimiser
   fetch::ml::optimisers::AdaGradOptimiser<TypeParam, fetch::ml::ops::MeanSquareError<TypeParam>>
-      optimiser(g, input_name, output_name, learning_rate);
+      optimiser(g, {input_name}, output_name, learning_rate);
 
   // Do multiple steps
-  optimiser.Run(data, gt);
-  DataType loss = optimiser.Run(data, gt);
+  optimiser.Run({data}, gt);
+  DataType loss = optimiser.Run({data}, gt);
 
   // Test loss
   EXPECT_NEAR(static_cast<double>(loss), 2.04488, 1e-5);
@@ -313,11 +313,11 @@ TYPED_TEST(OptimisersTest, adagrad_optimiser_training_2D)
 
   // Initialize Optimiser
   fetch::ml::optimisers::AdaGradOptimiser<TypeParam, fetch::ml::ops::MeanSquareError<TypeParam>>
-      optimiser(g, input_name, output_name, learning_rate);
+      optimiser(g, {input_name}, output_name, learning_rate);
 
   // Do multiple steps
-  optimiser.Run(data, gt);
-  DataType loss = optimiser.Run(data, gt);
+  optimiser.Run({data}, gt);
+  DataType loss = optimiser.Run({data}, gt);
 
   // Test loss
   EXPECT_NEAR(static_cast<double>(loss), 13.57873, 1e-5);
@@ -349,11 +349,11 @@ TYPED_TEST(OptimisersTest, rmsprop_optimiser_training)
 
   // Initialize Optimiser
   fetch::ml::optimisers::RMSPropOptimiser<TypeParam, fetch::ml::ops::MeanSquareError<TypeParam>>
-      optimiser(g, input_name, output_name, learning_rate);
+      optimiser(g, {input_name}, output_name, learning_rate);
 
   // Do multiple steps
-  optimiser.Run(data, gt);
-  DataType loss = optimiser.Run(data, gt);
+  optimiser.Run({data}, gt);
+  DataType loss = optimiser.Run({data}, gt);
 
   // Test loss
   EXPECT_NEAR(static_cast<double>(loss), 2.58567, 1e-5);
@@ -385,11 +385,11 @@ TYPED_TEST(OptimisersTest, rmsprop_optimiser_training_2D)
 
   // Initialize Optimiser
   fetch::ml::optimisers::RMSPropOptimiser<TypeParam, fetch::ml::ops::MeanSquareError<TypeParam>>
-      optimiser(g, input_name, output_name, learning_rate);
+      optimiser(g, {input_name}, output_name, learning_rate);
 
   // Do multiple steps
-  optimiser.Run(data, gt);
-  DataType loss = optimiser.Run(data, gt);
+  optimiser.Run({data}, gt);
+  DataType loss = optimiser.Run({data}, gt);
 
   // Test loss
   EXPECT_NEAR(static_cast<double>(loss), 18.19288, 1e-5);
@@ -421,11 +421,11 @@ TYPED_TEST(OptimisersTest, adam_optimiser_training)
 
   // Initialize Optimiser
   fetch::ml::optimisers::AdamOptimiser<TypeParam, fetch::ml::ops::MeanSquareError<TypeParam>>
-      optimiser(g, input_name, output_name, learning_rate);
+      optimiser(g, {input_name}, output_name, learning_rate);
 
   // Do multiple steps
-  optimiser.Run(data, gt);
-  DataType loss = optimiser.Run(data, gt);
+  optimiser.Run({data}, gt);
+  DataType loss = optimiser.Run({data}, gt);
 
   // Test loss
   EXPECT_NEAR(static_cast<double>(loss), 4.21160, 1e-5);
@@ -457,11 +457,11 @@ TYPED_TEST(OptimisersTest, adam_optimiser_training_2D)
 
   // Initialize Optimiser
   fetch::ml::optimisers::AdamOptimiser<TypeParam, fetch::ml::ops::MeanSquareError<TypeParam>>
-      optimiser(g, input_name, output_name, learning_rate);
+      optimiser(g, {input_name}, output_name, learning_rate);
 
   // Do multiple steps
-  optimiser.Run(data, gt);
-  DataType loss = optimiser.Run(data, gt);
+  optimiser.Run({data}, gt);
+  DataType loss = optimiser.Run({data}, gt);
 
   // Test loss
   EXPECT_NEAR(static_cast<double>(loss), 32.87280, 1e-4);
@@ -494,11 +494,11 @@ TYPED_TEST(OptimisersTest, adam_optimiser_minibatch_training)
 
   // Initialize Optimiser
   fetch::ml::optimisers::AdamOptimiser<TypeParam, fetch::ml::ops::MeanSquareError<TypeParam>>
-      optimiser(g, input_name, output_name, learning_rate);
+      optimiser(g, {input_name}, output_name, learning_rate);
 
   // Do multiple steps
-  optimiser.Run(data, gt, 3);
-  DataType loss = optimiser.Run(data, gt, 2);
+  optimiser.Run({data}, gt, 3);
+  DataType loss = optimiser.Run({data}, gt, 2);
 
   // Test loss
   EXPECT_NEAR(static_cast<double>(loss), 1.33776, 1e-5);

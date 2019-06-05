@@ -91,7 +91,7 @@ TYPED_TEST(SkipGramDataloaderTest, loader_test)
     {
       loader.Reset();
     }
-    left_and_right            = loader.GetNext().first;
+    left_and_right            = loader.GetNext().second[0];
     std::string input         = loader.VocabLookup(SizeType(double(left_and_right.At(0))));
     std::string context       = loader.VocabLookup(SizeType(double(left_and_right.At(1))));
     auto        input_context = std::make_pair(input, context);

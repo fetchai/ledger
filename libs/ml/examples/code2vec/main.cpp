@@ -51,8 +51,8 @@ using Embeddings     = fetch::ml::ops::Embeddings<ArrayType>;
 using Transpose      = fetch::ml::ops::Transpose<ArrayType>;
 using MatrixMultiply = fetch::ml::ops::MatrixMultiply<ArrayType>;
 
-using ContextTensorTuple      = typename std::tuple<ArrayType, ArrayType, ArrayType>;
-using ContextTensorsLabelPair = typename std::pair<ContextTensorTuple, SizeType>;
+using ContextTensorTuple      = typename std::vector<ArrayType>;
+using ContextTensorsLabelPair = typename std::pair<SizeType, ContextTensorTuple>;
 
 #define EMBEDDING_SIZE 64u
 #define BATCHSIZE 12u
@@ -73,8 +73,7 @@ int main(int ac, char **av)
     return 1;
   }
 
-  fetch::ml::dataloaders::C2VLoader<std::tuple<ArrayType, ArrayType, ArrayType>, SizeType> cloader(
-      20);
+  fetch::ml::dataloaders::C2VLoader<SizeType, ArrayType> cloader(20);
 
   for (int i(1); i < ac; ++i)
   {
@@ -246,12 +245,12 @@ int main(int ac, char **av)
     ContextTensorsLabelPair input = cloader.GetNext();
 
     // Feeding the tensors to the graph
-    g.SetInput(input_source_words, std::get<0>(input.first));
-    g.SetInput(input_paths, std::get<1>(input.first));
-    g.SetInput(input_target_words, std::get<2>(input.first));
+    g.SetInput(input_source_words, input.second[0]);
+    g.SetInput(input_paths, input.second[1]);
+    g.SetInput(input_target_words, input.second[2]);
 
     // Preparing the y_true vector (one-hot-encoded)
-    y_true_vec.Set(0, input.second, 1);
+    y_true_vec.Set(0, input.first, 1);
 
     // Making the forward pass
     // dimension:  (1, vocab_size_functions)
@@ -266,7 +265,7 @@ int main(int ac, char **av)
     g.Step(LEARNING_RATE);
 
     // Resetting the y_true vector for reusing it
-    y_true_vec.Set(0, input.second, 0);
+    y_true_vec.Set(0, input.first, 0);
 
     n_iter++;
     if (n_iter % 5 == 0)

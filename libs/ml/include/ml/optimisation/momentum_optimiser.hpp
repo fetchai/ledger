@@ -41,10 +41,11 @@ public:
 
   MomentumOptimiser(std::shared_ptr<Graph<T>>
 
-                                       graph,
-                    std::string const &input_node_name, std::string const &output_node_name,
-                    DataType const &learning_rate   = DataType{0.001f},
-                    DataType const &momentum_update = DataType{0.9f});
+                                                    graph,
+                    std::vector<std::string> const &input_node_names,
+                    std::string const &             output_node_name,
+                    DataType const &                learning_rate   = DataType{0.001f},
+                    DataType const &                momentum_update = DataType{0.9f});
 
 private:
   std::vector<ArrayType> momentum_;
@@ -59,12 +60,12 @@ private:
 template <class T, class C>
 MomentumOptimiser<T, C>::MomentumOptimiser(std::shared_ptr<Graph<T>>
 
-                                                              graph,
-                                           std::string const &input_node_name,
-                                           std::string const &output_node_name,
-                                           DataType const &   learning_rate,
-                                           DataType const &   momentum_update)
-  : Optimiser<T, C>(graph, input_node_name, output_node_name, learning_rate)
+                                                                           graph,
+                                           std::vector<std::string> const &input_node_names,
+                                           std::string const &             output_node_name,
+                                           DataType const &                learning_rate,
+                                           DataType const &                momentum_update)
+  : Optimiser<T, C>(graph, input_node_names, output_node_name, learning_rate)
   , momentum_update_(momentum_update)
 {
   for (auto &train : this->graph_trainables_)
