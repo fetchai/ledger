@@ -52,7 +52,7 @@ public:
   using SizeType                = typename ArrayType::SizeType;
   using ContextTuple            = typename std::tuple<SizeType, SizeType, SizeType>;
   using ContextTensorTuple      = typename std::vector<ArrayType>;
-  using ContextLabelPair        = typename std::pair<LabelType, ContextTuple>;
+  using ContextLabelPair        = typename std::pair<SizeType, ContextTuple>;
   using ContextTensorsLabelPair = typename std::pair<LabelType, ContextTensorTuple>;
 
   using WordIdxType   = std::vector<std::vector<SizeType>>;
@@ -125,7 +125,7 @@ public:
   umap_str_int function_name_counter();
   umap_str_int path_counter();
   umap_str_int word_counter();
-  std::vector<std::pair<LabelType, std::tuple<SizeType, SizeType, SizeType>>> data;
+  std::vector<std::pair<SizeType, std::tuple<SizeType, SizeType, SizeType>>> data;
 
 private:
   SizeType iterator_position_get_next_context_{fetch::math::numeric_max<SizeType>()};
@@ -224,7 +224,7 @@ void C2VLoader<LabelType, DataType>::AddData(std::string const &c2v_input)
       SizeType target_word_idx =
           addToIdxUMaps(context_string_splitted[2], word_to_idx_, idx_to_word_);
 
-      std::pair<LabelType, std::tuple<SizeType, SizeType, SizeType>> input_data_pair(
+      std::pair<SizeType, std::tuple<SizeType, SizeType, SizeType>> input_data_pair(
           function_name_idx, std::make_tuple(source_word_idx, path_idx, target_word_idx));
 
       this->data.push_back(input_data_pair);
@@ -306,7 +306,12 @@ C2VLoader<LabelType, DataType>::GetNext()
       ContextTensorTuple context_tensor_tuple = {source_word_tensor, path_tensor,
                                                  target_word_tensor};
 
-      ContextTensorsLabelPair return_pair{old_function_index, context_tensor_tuple};
+      ArrayType y_true_vec({1, function_name_counter().size() + 1});
+      y_true_vec.Fill(0);
+      // Preparing the y_true vector (one-hot-encoded)
+      y_true_vec.Set(0, old_function_index, 1);
+
+      ContextTensorsLabelPair return_pair{y_true_vec, context_tensor_tuple};
 
       return return_pair;
     }

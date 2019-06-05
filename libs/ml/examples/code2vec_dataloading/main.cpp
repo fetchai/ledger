@@ -50,7 +50,7 @@ int main(int ac, char **av)
     return 1;
   }
 
-  fetch::ml::dataloaders::C2VLoader<LabelType, ArrayType> cloader(MAX_CONTEXTS);
+  fetch::ml::dataloaders::C2VLoader<ArrayType, ArrayType> cloader(MAX_CONTEXTS);
 
   cloader.AddData(ReadFile(av[1]));
   std::cout << "Number of different function names: " << cloader.function_name_counter().size()

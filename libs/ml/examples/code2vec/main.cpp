@@ -52,7 +52,7 @@ using Transpose      = fetch::ml::ops::Transpose<ArrayType>;
 using MatrixMultiply = fetch::ml::ops::MatrixMultiply<ArrayType>;
 
 using ContextTensorTuple      = typename std::vector<ArrayType>;
-using ContextTensorsLabelPair = typename std::pair<SizeType, ContextTensorTuple>;
+using ContextTensorsLabelPair = typename std::pair<ArrayType, ContextTensorTuple>;
 
 #define EMBEDDING_SIZE 64u
 #define BATCHSIZE 12u
@@ -73,7 +73,7 @@ int main(int ac, char **av)
     return 1;
   }
 
-  fetch::ml::dataloaders::C2VLoader<SizeType, ArrayType> cloader(20);
+  fetch::ml::dataloaders::C2VLoader<ArrayType, ArrayType> cloader(20);
 
   for (int i(1); i < ac; ++i)
   {
@@ -99,7 +99,7 @@ int main(int ac, char **av)
   Weights::Initialise(attention_vector_data, EMBEDDING_SIZE, SizeType{1});
   g.SetInput(attention_vector, attention_vector_data, false);
 
-  // Setting up the weights of FC1
+  // Setting up the weights of FC1)
   // Dimension: (EMBEDDING_SIZE, 3*EMBEDDING_SIZE)
   std::string fc1_weights = g.AddNode<Weights>("FullyConnectedWeights", {});
   ArrayType   fc1_weights_data(SizeVector({EMBEDDING_SIZE, 3 * EMBEDDING_SIZE}));
@@ -249,23 +249,17 @@ int main(int ac, char **av)
     g.SetInput(input_paths, input.second[1]);
     g.SetInput(input_target_words, input.second[2]);
 
-    // Preparing the y_true vector (one-hot-encoded)
-    y_true_vec.Set(0, input.first, 1);
-
     // Making the forward pass
     // dimension:  (1, vocab_size_functions)
     ArrayType results = g.Evaluate(result);
     // dimension:  (1, vocab_size_functions), (1, vocab_size_functions)
-    loss += criterion.Forward({results, y_true_vec});
+    loss += criterion.Forward({results, input.first});
 
     // Making the backward pass
-    g.BackPropagate(result, criterion.Backward({results, y_true_vec}));
+    g.BackPropagate(result, criterion.Backward({results, input.first}));
 
     // apply the gradients
     g.Step(LEARNING_RATE);
-
-    // Resetting the y_true vector for reusing it
-    y_true_vec.Set(0, input.first, 0);
 
     n_iter++;
     if (n_iter % 5 == 0)

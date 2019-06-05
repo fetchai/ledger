@@ -61,8 +61,7 @@ public:
   }
 
   // One-hot
-
-  template <typename DataT = T, typename LabelT = LabelType>
+  template <typename LabelT = LabelType, typename DataT = T>
   math::meta::IfIsMathArray<LabelT, std::pair<LabelType, std::vector<T>>> GetAtIndex(
       uint64_t index) const
   {
@@ -86,7 +85,7 @@ public:
   }
 
   // Non one-hot
-  template <typename DataT = T, typename LabelT = LabelType>
+  template <typename LabelT = LabelType, typename DataT = T>
   math::meta::IfIsArithmetic<LabelT, std::pair<LabelType, std::vector<T>>> GetAtIndex(
       uint64_t index) const
   {

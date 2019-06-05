@@ -31,7 +31,7 @@ TEST(C2vLoaderTest, loader_test)
 {
   using ArrayType   = typename fetch::math::Tensor<fetch::math::SizeType>;
   using SizeType    = fetch::math::SizeType;
-  using LabelType   = SizeType;
+  using LabelType   = ArrayType;
   using ContextType = ArrayType;
 
   std::string training_data =
