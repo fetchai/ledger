@@ -119,8 +119,8 @@ public:
   // Commit the state of the DAG as this node believes it (using an epoch)
   bool CommitEpoch(DAGEpoch);
 
-  // Revert to a previous epoch // TODO(HUT): consider making this a block number instead
-  bool RevertToEpoch(DAGEpoch const &);
+  // Revert to a previous/forward epoch
+  bool RevertToEpoch(uint64_t);
 
   // Make sure that the dag has all nodes for a certain epoch
   bool SatisfyEpoch(DAGEpoch &);
@@ -178,6 +178,9 @@ private:
   bool NodeInvalidInternal(DAGNodePtr node);
   DAGNodePtr GetDAGNodeInternal(ConstByteArray hash);
   void TraverseFromTips(std::set<ConstByteArray> const &, std::function<void (NodeHash)>, std::function<bool (NodeHash)>);
+  bool GetEpochFromStorage(std::string const &, DAGEpoch &);
+  bool SetEpochInStorage(std::string const &, DAGEpoch const &, bool);
+  void Flush();
 
     mutable Mutex mutex_{__LINE__, __FILE__};
   };
