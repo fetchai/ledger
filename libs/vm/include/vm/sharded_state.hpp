@@ -28,12 +28,13 @@ class IShardedState : public Object
 {
 public:
   // Factory
-  static Ptr<IShardedState> Constructor(VM *vm, TypeId type_id, Ptr<Object> name);
+  static Ptr<IShardedState> Constructor(VM *vm, TypeId type_id, Ptr<String> const &name);
+  static Ptr<IShardedState> Constructor(VM *vm, TypeId type_id, Ptr<Address> const &name);
 
   // Construction / Destruction
-  IShardedState(VM *vm, TypeId type_id, Ptr<Object> name, TypeId value_type)
+  IShardedState(VM *vm, TypeId type_id, Ptr<String> const &name, TypeId value_type)
     : Object(vm, type_id)
-    , name_{IState::NameToString(vm, std::move(name))}
+    , name_{name->str}
     , value_type_{value_type}
   {}
 

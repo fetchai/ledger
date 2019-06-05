@@ -31,7 +31,9 @@ public:
   IState()          = delete;
   virtual ~IState() = default;
 
-  static Ptr<IState> Constructor(VM *vm, TypeId type_id, Ptr<Object> &&name,
+  static Ptr<IState> Constructor(VM *vm, TypeId type_id, Ptr<String> const &name,
+                                 TemplateParameter1 const &value);
+  static Ptr<IState> Constructor(VM *vm, TypeId type_id, Ptr<Address> const &name,
                                  TemplateParameter1 const &value);
 
   virtual TemplateParameter1 Get() const                          = 0;
@@ -50,8 +52,6 @@ public:
   template <typename... Args>
   static Ptr<IState> ConstructIntrinsic(VM *vm, TypeId type_id, TypeId value_type_id,
                                         Args &&... args);
-
-  static std::string NameToString(VM *vm, Ptr<Object> &&name);
 };
 
 template <typename T, typename = std::enable_if_t<std::is_arithmetic<T>::value>>
@@ -139,10 +139,10 @@ class State : public IState
 public:
   // Construct state object, default argument = get from state DB, initializing to value if not
   // found
-  State(VM *vm, TypeId type_id, TypeId value_type_id, Ptr<Object> &&name,
+  State(VM *vm, TypeId type_id, TypeId value_type_id, Ptr<String> const &name,
         TemplateParameter1 const &value)
     : IState(vm, type_id)
-    , name_{NameToString(vm, std::move(name))}
+    , name_{name->str}
     , value_{value.Get<Value>()}
     , value_type_id_{value_type_id}
   {
@@ -296,32 +296,28 @@ inline Ptr<IState> IState::Construct(VM *vm, TypeId type_id, Args &&... args)
   return ConstructIntrinsic(vm, type_id, value_type_id, std::forward<Args>(args)...);
 }
 
-inline Ptr<IState> IState::Constructor(VM *vm, TypeId type_id, Ptr<Object> &&name,
+inline Ptr<IState> IState::Constructor(VM *vm, TypeId type_id, Ptr<String> const &name,
                                        TemplateParameter1 const &value)
 {
   if (name)
   {
-    return Construct(vm, type_id, std::move(name), value);
+    return Construct(vm, type_id, name, value);
   }
 
-  vm->RuntimeError("Failed to construct State: address is null");
+  vm->RuntimeError("Failed to construct State: the `name` is null reference");
   return nullptr;
 }
 
-inline std::string IState::NameToString(VM *vm, Ptr<Object> &&name)
+inline Ptr<IState> IState::Constructor(VM *vm, TypeId type_id, Ptr<Address> const &name,
+                                       TemplateParameter1 const &value)
 {
-  switch (name->GetTypeId())
+  if (name)
   {
-  case TypeIds::String:
-    return dynamic_cast<String const &>(*name).str;
-  case TypeIds::Address:
-    return dynamic_cast<Address &>(*name).AsString()->str;
+    return Construct(vm, type_id, name->AsString(), value);
   }
 
-  vm->RuntimeError(
-      "Unsupported type of `name` parameter for `State<...>(name)` constructor. It must be either "
-      "`String` or `Address` type.");
-  return {};
+  vm->RuntimeError("Failed to construct State: the `name` is null reference");
+  return nullptr;
 }
 
 }  // namespace vm

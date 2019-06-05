@@ -25,8 +25,8 @@ class ShardedState : public IShardedState
 {
 public:
   // Construction / Destruction
-  ShardedState(VM *vm, TypeId type_id, Ptr<Object> name, TypeId value_type)
-    : IShardedState(vm, type_id, std::move(name), value_type)
+  ShardedState(VM *vm, TypeId type_id, Ptr<String> const &name, TypeId value_type)
+    : IShardedState(vm, type_id, name, value_type)
   {}
 
 protected:
@@ -102,12 +102,30 @@ private:
 
 }  // namespace
 
-Ptr<IShardedState> IShardedState::Constructor(VM *vm, TypeId type_id, Ptr<Object> name)
+Ptr<IShardedState> IShardedState::Constructor(VM *vm, TypeId type_id, Ptr<String> const &name)
 {
-  TypeInfo const &type_info     = vm->GetTypeInfo(type_id);
-  TypeId const    value_type_id = type_info.parameter_type_ids[0];
+  if (name)
+  {
+    TypeInfo const &type_info     = vm->GetTypeInfo(type_id);
+    TypeId const    value_type_id = type_info.parameter_type_ids[0];
+    return new ShardedState(vm, type_id, name, value_type_id);
+  }
 
-  return new ShardedState(vm, type_id, std::move(name), value_type_id);
+  vm->RuntimeError("Failed to construct SharededState instance: the `name` is null reference.");
+  return nullptr;
+}
+
+Ptr<IShardedState> IShardedState::Constructor(VM *vm, TypeId type_id, Ptr<Address> const &name)
+{
+  if (name)
+  {
+    TypeInfo const &type_info     = vm->GetTypeInfo(type_id);
+    TypeId const    value_type_id = type_info.parameter_type_ids[0];
+    return new ShardedState(vm, type_id, name->AsString(), value_type_id);
+  }
+
+  vm->RuntimeError("Failed to construct SharededState instance: the `name` is null reference.");
+  return nullptr;
 }
 
 }  // namespace vm
