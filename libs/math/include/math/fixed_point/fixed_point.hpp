@@ -207,8 +207,8 @@ public:
   static constexpr std::uint16_t DECIMAL_DIGITS{BaseTypeInfo::decimals};
 
   static FixedPoint const TOLERANCE;
-  static FixedPoint const CONST_ZERO; /* 0 */
-  static FixedPoint const CONST_ONE;  /* 1 */
+  static FixedPoint const _0; /* 0 */
+  static FixedPoint const _1; /* 1 */
   static FixedPoint const CONST_SMALLEST_FRACTION;
   static FixedPoint const CONST_E;            /* e */
   static FixedPoint const CONST_LOG2E;        /* log_2 e */
@@ -476,15 +476,14 @@ private:
     /* Given x, find k such as x = 2^{2*k} * y, where 1 < y < 4
      */
     int        k = 0;
-    FixedPoint four{4};
-    while (x > four)
+    while (x > 4)
     {
       k++;
       x >>= 2;
     }
-    if (x < CONST_ONE)
+    if (x < _1)
     {
-      while (x < CONST_ONE)
+      while (x < _1)
       {
         k++;
         x <<= 2;
@@ -596,12 +595,13 @@ template <std::uint16_t I, std::uint16_t F>
 constexpr std::uint16_t FixedPoint<I, F>::DECIMAL_DIGITS;
 
 template <std::uint16_t I, std::uint16_t F>
+FixedPoint<I, F> const FixedPoint<I, F>::_0{0}; /* 0 */
+template <std::uint16_t I, std::uint16_t F>
+FixedPoint<I, F> const FixedPoint<I, F>::_1{1}; /* 1 */
+template <std::uint16_t I, std::uint16_t F>
+
 FixedPoint<I, F> const FixedPoint<I, F>::TOLERANCE(
     0, FixedPoint<I, F>::BaseTypeInfo::tolerance); /* 0 */
-template <std::uint16_t I, std::uint16_t F>
-FixedPoint<I, F> const FixedPoint<I, F>::CONST_ZERO{0}; /* 0 */
-template <std::uint16_t I, std::uint16_t F>
-FixedPoint<I, F> const FixedPoint<I, F>::CONST_ONE{1}; /* 1 */
 template <std::uint16_t I, std::uint16_t F>
 const FixedPoint<I, F> FixedPoint<I, F>::CONST_SMALLEST_FRACTION(0, FixedPoint::SMALLEST_FRACTION);
 template <std::uint16_t I, std::uint16_t F>
@@ -1127,7 +1127,7 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::operator~() const
 template <std::uint16_t I, std::uint16_t F>
 constexpr FixedPoint<I, F> &FixedPoint<I, F>::operator++()
 {
-  assert(CheckNoOverflow(data_ + CONST_ONE.Data()));
+  assert(CheckNoOverflow(data_ + _1.Data()));
   data_ += ONE_MASK;
   return *this;
 }
@@ -1139,7 +1139,7 @@ constexpr FixedPoint<I, F> &FixedPoint<I, F>::operator++()
 template <std::uint16_t I, std::uint16_t F>
 constexpr FixedPoint<I, F> &FixedPoint<I, F>::operator--()
 {
-  assert(CheckNoOverflow(data_ - CONST_ONE.Data()));
+  assert(CheckNoOverflow(data_ - _1.Data()));
   data_ -= ONE_MASK;
   return *this;
 }
@@ -1200,7 +1200,7 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::operator*(FixedPoint<I, F> const &n
 template <std::uint16_t I, std::uint16_t F>
 constexpr FixedPoint<I, F> FixedPoint<I, F>::operator/(FixedPoint<I, F> const &n) const
 {
-  if (n == CONST_ZERO)
+  if (n == _0)
   {
     throw std::overflow_error("Division by zero!");
   }
@@ -1618,7 +1618,7 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::Fmod(FixedPoint<I, F> const &x,
                                                   FixedPoint<I, F> const &y)
 {
   FixedPoint result = Remainder(Abs(x), Abs(y));
-  if (result < CONST_ZERO)
+  if (result < _0)
   {
     result += Abs(y);
   }
@@ -1644,7 +1644,7 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::Abs(FixedPoint<I, F> const &x)
 template <std::uint16_t I, std::uint16_t F>
 constexpr FixedPoint<I, F> FixedPoint<I, F>::Sign(FixedPoint<I, F> const &x)
 {
-  return std::move(FixedPoint{Type((x >= CONST_ZERO) - (x < CONST_ZERO))});
+  return std::move(FixedPoint{Type((x >= _0) - (x < _0))});
 }
 
 /**
@@ -1676,6 +1676,10 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::Sign(FixedPoint<I, F> const &x)
  * You can reproduce the result in Mathematica using:
  * PadeApproximant[Exp[x], {x, 0, 5}]
  *
+ * errors for x ∈ [-10, 5):
+ * FixedPoint<16,16>: average: 0.000178116, max: 0.00584819
+ * FixedPoint<32,32>: average: 4.97318e-09, max: 1.66689e-07
+ *
  * @param the given x
  * @return the result of e^x
  */
@@ -1687,7 +1691,7 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::Exp(FixedPoint<I, F> const &x)
   }
   else if (isNegInfinity(x))
   {
-    return CONST_ZERO;
+    return _0;
   }
   else if (isPosInfinity(x))
   {
@@ -1695,23 +1699,23 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::Exp(FixedPoint<I, F> const &x)
   }
   else if (x < MIN_EXP)
   {
-    return CONST_ZERO;
+    return _0;
   }
   else if (x > MAX_EXP)
   {
     throw std::overflow_error("Exp() does not support exponents larger than MAX_EXP");
   }
-  else if (x == CONST_ONE)
+  else if (x == _1)
   {
     return CONST_E;
   }
-  else if (x == CONST_ZERO)
+  else if (x == _0)
   {
-    return CONST_ONE;
+    return _1;
   }
-  else if (x < CONST_ZERO)
+  else if (x < _0)
   {
-    return CONST_ONE / Exp(-x);
+    return _1 / Exp(-x);
   }
 
   // Find integer k and r ∈ [-0.5, 0.5) such as: x = k*ln2 + r
@@ -1720,7 +1724,7 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::Exp(FixedPoint<I, F> const &x)
   k            = Floor(k);
 
   FixedPoint r = x - k * CONST_LN2;
-  FixedPoint e1{CONST_ONE};
+  FixedPoint e1{_1};
   e1 <<= k;
 
   FixedPoint r2 = r * r;
@@ -1733,8 +1737,8 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::Exp(FixedPoint<I, F> const &x)
   r3 *= FixedPoint{0.01388888888888889};    // 1/72
   r4 *= FixedPoint{0.0009920634920634921};  // 1/1008
   r5 *= FixedPoint{3.306878306878307e-05};  // 1/30240
-  FixedPoint P  = CONST_ONE + r + r2 + r3 + r4 + r5;
-  FixedPoint Q  = CONST_ONE - r + r2 - r3 + r4 - r5;
+  FixedPoint P  = _1 + r + r2 + r3 + r4 + r5;
+  FixedPoint Q  = _1 - r + r2 - r3 + r4 - r5;
   FixedPoint e2 = P / Q;
 
   return std::move(e1 * e2);
@@ -1763,17 +1767,21 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::Exp(FixedPoint<I, F> const &x)
  * You can reproduce the result in Mathematica using:
  * PadeApproximant[Log2[x], {x, 1, 4}]
  *
+ * errors for x ∈ (0, 5):
+ * FixedPoint<16,16>: average: 9.38213e-06, max: 5.34362e-05
+ * FixedPoint<32,32>: average: 2.43861e-09, max: 2.27512e-08
+ *
  * @param the given x
  * @return the result of log2(x)
  */
 template <std::uint16_t I, std::uint16_t F>
 constexpr FixedPoint<I, F> FixedPoint<I, F>::Log2(FixedPoint<I, F> const &x)
 {
-  if (x == CONST_ONE)
+  if (x == _1)
   {
-    return CONST_ZERO;
+    return _0;
   }
-  else if (x == CONST_ZERO)
+  else if (x == _0)
   {
     return NEGATIVE_INFINITY;
   }
@@ -1785,7 +1793,7 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::Log2(FixedPoint<I, F> const &x)
   {
     return NaN;
   }
-  else if (x < CONST_ZERO)
+  else if (x < _0)
   {
     return NaN;
   }
@@ -1795,11 +1803,11 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::Log2(FixedPoint<I, F> const &x)
      We can get k easily with HighestSetBit(), but we have to subtract the fractional bits to
      mark negative logarithms for numbers < 1.
   */
-  FixedPoint sign = Sign(x - CONST_ONE);
+  FixedPoint sign = Sign(x - _1);
   FixedPoint y{x};
-  if (y < 1.0)
+  if (y < _1)
   {
-    y = CONST_ONE / x;
+    y = _1 / x;
   }
   Type       k = HighestSetBit(y.Data()) - Type(FRACTIONAL_BITS);
   FixedPoint k_shifted{Type(1) << k};
@@ -1812,9 +1820,9 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::Log2(FixedPoint<I, F> const &x)
   FixedPoint Q0{30};
   FixedPoint Q01{24};  // Q03 also
   FixedPoint Q02{76};
-  FixedPoint P = (-CONST_ONE + r) * (P00 + r * (P01 + r * (P02 + r * (P01 + r * P04))));
+  FixedPoint P = (-_1 + r) * (P00 + r * (P01 + r * (P02 + r * (P01 + r * P04))));
   FixedPoint Q =
-      Q0 * (CONST_ONE + r) * (CONST_ONE + r * (Q01 + r * (Q02 + r * (Q01 + r)))) * CONST_LN2;
+      Q0 * (_1 + r) * (_1 + r * (Q01 + r * (Q02 + r * (Q01 + r)))) * CONST_LN2;
   FixedPoint R = P / Q;
 
   return std::move(sign * (FixedPoint(k) + R));
@@ -1869,21 +1877,25 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::Log10(FixedPoint<I, F> const &x)
  * Afterwards we run 2 iterations of Goldsmith's algorithm as it converges faster
  * than Newton-Raphson.
  *
+ * errors for x ∈ (0, 5):
+ * FixedPoint<16,16>: average: 0.000863796, max: 0.00368993
+ * FixedPoint<32,32>: average: 3.71316e-10, max: 1.56033e-09
+ *
  * @param the given x
  * @return the result of log2(x)
  */
 template <std::uint16_t I, std::uint16_t F>
 constexpr FixedPoint<I, F> FixedPoint<I, F>::Sqrt(FixedPoint<I, F> const &x)
 {
-  if (x == CONST_ONE)
+  if (x == _1)
   {
-    return CONST_ONE;
+    return _1;
   }
-  else if (x == CONST_ZERO)
+  else if (x == _0)
   {
-    return CONST_ZERO;
+    return _0;
   }
-  else if (x < CONST_ZERO)
+  else if (x < _0)
   {
     return NaN;
   }
@@ -1895,7 +1907,7 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::Sqrt(FixedPoint<I, F> const &x)
   FixedPoint r{x};
   int k  = ReduceSqrt(r);
 
-  if (r != CONST_ONE)
+  if (r != _1)
   {
     // Do a Pade Approximation, 4th order around 1.
     FixedPoint P01{3};
@@ -1904,14 +1916,14 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::Sqrt(FixedPoint<I, F> const &x)
     FixedPoint Q01{3};
     FixedPoint Q02{27};
     FixedPoint Q03{33};
-    FixedPoint P = (CONST_ONE + P01 * r) * (CONST_ONE + P01 * r * (P02 + r * (P03 + r)));
+    FixedPoint P = (_1 + P01 * r) * (_1 + P01 * r * (P02 + r * (P03 + r)));
     FixedPoint Q = (Q01 + r) * (Q01 + r * (Q02 + r * (Q03 + r)));
     FixedPoint R = P / Q;
 
     // Tune the approximation with 2 iterations of Goldsmith's algorithm (converges faster than
     // NR)
     FixedPoint half{0.5};
-    FixedPoint y_n = CONST_ONE / R;
+    FixedPoint y_n = _1 / R;
     FixedPoint x_n = r * y_n;
     FixedPoint h_n = half * y_n;
     FixedPoint r_n;
@@ -1926,7 +1938,7 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::Sqrt(FixedPoint<I, F> const &x)
     r = x_n;
   }
 
-  FixedPoint twok{CONST_ONE};
+  FixedPoint twok{1};
   if (k < 0)
   {
     twok >>= -k;
@@ -1955,6 +1967,14 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::Sqrt(FixedPoint<I, F> const &x)
  * x^y = s * Exp(y * Log(Abs(x)));
  * where s is the +1 if y is even or Sign(x) if y is odd.
  *
+ * errors for x ∈ (0, 100), y ∈ (0, 10.5):
+ * FixedPoint<16,16>: average: 1.49365e-06, max: 3.04673e-05
+ * FixedPoint<32,32>: average: 8.45537e-12, max: 8.70098e-10
+ *
+ * errors for x ∈ [-10, 10), y ∈ (-4, 4):
+ * FixedPoint<16,16>: average: 3.9093e-06, max: 9.15527e-06
+ * FixedPoint<32,32>: average: 7.71863e-11, max: 2.25216e-10
+ *
  * @param the given x
  * @return the result of log2(x)
  */
@@ -1966,25 +1986,25 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::Pow(FixedPoint<I, F> const &x,
   {
     return NaN;
   }
-  else if (x == CONST_ZERO)
+  else if (x == _0)
   {
-    if (y == CONST_ZERO)
+    if (y == _0)
     {
       return NaN;
     }
     else
     {
-      return CONST_ZERO;
+      return _0;
     }
   }
 
-  if (y == CONST_ZERO)
+  if (y == _0)
   {
-    return CONST_ONE;
+    return _1;
   }
 
   // For negative x, pow() is defined only for integer y
-  if (x < CONST_ZERO)
+  if (x < _0)
   {
     if (y.Fraction() != 0)
     {
@@ -1998,17 +2018,17 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::Pow(FixedPoint<I, F> const &x,
       {
         pow *= x;
       }
-      if (y > 0)
+      if (y > _0)
       {
         return pow;
       }
       else
       {
-        return CONST_ONE / pow;
+        return _1 / pow;
       }
     }
   }
-  FixedPoint s   = CONST_ONE * ((y.Integer() + 1) & 1) + Sign(x) * (y.Integer() & 1);
+  FixedPoint s   = _1 * ((y.Integer() + 1) & 1) + Sign(x) * (y.Integer() & 1);
   FixedPoint pow = s * Exp(y * Log(Abs(x)));
   return std::move(pow);
 }
@@ -2023,12 +2043,16 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::Pow(FixedPoint<I, F> const &x,
  * * x < 0       -> sin(x) = -sin(-x)
  *
  * Calculation of sin(x) is done by doing range reduction of x in the range [0, 2*PI]
- * Then we find which quadrant x is in and we use the respective trigonometry identity:
+ * Then we further reduce x to the [0, Pi/2] quadrant and  use the respective trigonometry identity:
  *
+ * x in [0, Pi/2)       ->  SinPi2(x)
+ * x in [Pi/2, Pi)      ->  CosPi2(x)
+ * x in [Pi, 3*Pi/2)    -> -SinPi2(x)
+ * x in [3*Pi/2, 2*Pi)  -> -CosPi2(x)
  *
- *
- * You can reproduce the result in Mathematica using:
- * PadeApproximant[Sin[x], {x, 1, 4}]
+ * errors for x ∈ (-100 * Pi/2, 100 *Pi/2):
+ * FixedPoint<16,16>: average: 0.000552292, max: 0.108399
+ * FixedPoint<32,32>: average: 4.52891e-09, max: 1.38022e-06
  *
  * @param the given x
  * @return the result of sin(x)
@@ -2040,16 +2064,16 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::Sin(FixedPoint<I, F> const &x)
   {
     return NaN;
   }
-  else if (x < CONST_ZERO)
+  else if (x < _0)
   {
     return -Sin(-x);
   }
 
   FixedPoint r = Fmod(x, CONST_PI * 2);
 
-  if (r == CONST_ZERO)
+  if (r == _0)
   {
-    return CONST_ZERO;
+    return _0;
   }
 
   FixedPoint quadrant = Floor(r / CONST_PI_2);
@@ -2057,14 +2081,36 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::Sin(FixedPoint<I, F> const &x)
   return SinPi2QuadrantFuncs[(size_t)quadrant](r - CONST_PI_2 * quadrant);
 }
 
-
+/**
+ * Calculate the FixedPoint cosinus of x cos(x).
+ * 
+ * Special cases
+ * * x is NaN    -> cos(x) = NaN
+ * * x is +/-inf -> cos(x) = NaN
+ * * x == 0      -> cos(x) = 1
+ *
+ * Calculation of cos(x) is done by doing range reduction of x in the range [0, 2*PI]
+ * Then we further reduce x to the [0, Pi/2] quadrant and  use the respective trigonometry identity:
+ *
+ * x in [0, Pi/2)       ->  CosPi2(x)
+ * x in [Pi/2, Pi)      -> -SinPi2(x)
+ * x in [Pi, 3*Pi/2)    -> -CosPi2(x)
+ * x in [3*Pi/2, 2*Pi)  ->  SinPi2(x)
+ *
+ * errors for x ∈ (-100 * Pi/2, 100 *Pi/2):
+ * FixedPoint<16,16>: average: 0.000552292, max: 0.108399
+ * FixedPoint<32,32>: average: 4.52891e-09, max: 1.38022e-06
+ *
+ * @param the given x
+ * @return the result of cos(x)
+ */
 template <std::uint16_t I, std::uint16_t F>
 constexpr FixedPoint<I, F> FixedPoint<I, F>::Cos(FixedPoint<I, F> const &x)
 {
   FixedPoint r = Fmod(Abs(x), CONST_PI * 2);
-  if (r == CONST_ZERO)
+  if (r == _0)
   {
-    return CONST_ONE;
+    return _1;
   }
 
   FixedPoint quadrant = Floor(r / CONST_PI_2);
@@ -2072,6 +2118,45 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::Cos(FixedPoint<I, F> const &x)
   return CosPi2QuadrantFuncs[(size_t)quadrant](r - CONST_PI_2 * quadrant);
 }
 
+/**
+ * Calculate the FixedPoint tangent of x tan(x).
+ * 
+ * Special cases
+ * * x is NaN    -> sqrt(NaN) = NaN
+ * * x == 1      -> sqrt(x) = 1
+ * * x == 0      -> sqrt(x) = 0
+ * * x < 0       -> sqrt(x) = NaN
+ * * x == +inf   -> sqrt(+inf) = +inf
+ *
+ * Calculation of cos(x) is done by doing range reduction of x in the range [0, 2*PI]
+ * The tan(r) is calculated using a Pade approximant, 6th order,
+ * 
+ * if x < Pi/4:
+ *
+ *            r * (1 + r^2 * (4/33 + r^2 * 1/495))
+ * tan(r) = --------------------------------------------------
+ *            1 + r^2 * (5/11 + r^2 * (2/99 + r^2 * 1/10395))
+ *
+ * You can reproduce the result in Mathematica using:
+ * PadeApproximant[Tan[x], {x, 0, 6}] and
+ *
+ * if Pi/4 < x < Pi/2:
+ * let y = r - Pi/2
+ * 
+ *            y * (1 + y^2 * (4/33 + y^2 * 1/495))
+ * tan(r) = --------------------------------------------------
+ *            1 + r + y^2 * (5/11 + y^2 * (2/99 + y^2 * 1/10395))
+ *
+ * You can reproduce the result in Mathematica using:
+ * PadeApproximant[Tan[x], {x, Pi/2, 6}]
+ *
+ * errors for x ∈ (-Pi/2 + 0.01, Pi/2 - 0.01):
+ * FixedPoint<16,16>: average: 0.000552292, max: 0.108399
+ * FixedPoint<32,32>: average: 4.52891e-09, max: 1.38022e-06
+ *
+ * @param the given x
+ * @return the result of tan(x)
+ */
 template <std::uint16_t I, std::uint16_t F>
 constexpr FixedPoint<I, F> FixedPoint<I, F>::Tan(FixedPoint<I, F> const &x)
 {
@@ -2084,7 +2169,7 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::Tan(FixedPoint<I, F> const &x)
     return NEGATIVE_INFINITY;
   }
 
-  if (x < CONST_ZERO)
+  if (x < _0)
   {
     return -Tan(-x);
   }
@@ -2098,15 +2183,15 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::Tan(FixedPoint<I, F> const &x)
   if (r <= CONST_PI_4)
   {
     FixedPoint r2 = r * r;
-    FixedPoint P  = r * (CONST_ONE + r2 * (P01 + r2 * P02));
-    FixedPoint Q  = CONST_ONE + r2 * (Q01 + r2 * (Q02 + r2 * Q03));
+    FixedPoint P  = r * (_1 + r2 * (P01 + r2 * P02));
+    FixedPoint Q  = _1 + r2 * (Q01 + r2 * (Q02 + r2 * Q03));
     return std::move(P / Q);
   }
   else if (r < CONST_PI_2)
   {
     FixedPoint y  = r - CONST_PI_2;
     FixedPoint y2 = y * y;
-    FixedPoint P  = -(CONST_ONE + y2 * (Q01 + y2 * (Q02 + y2 * Q03)));
+    FixedPoint P  = -(_1 + y2 * (Q01 + y2 * (Q02 + y2 * Q03)));
     FixedPoint Q  = -CONST_PI_2 + r + y2 * y * (P01 + y2 * P02);
     return std::move(P / Q);
   }
@@ -2116,66 +2201,64 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::Tan(FixedPoint<I, F> const &x)
   }
 }
 
-/* Based on the NetBSD libm asin() implementation
- *  Since  asin(x) = x + x^3/6 + x^5*3/40 + x^7*15/336 + ...
- *  we approximate asin(x) on [0,0.5] by
- *    asin(x) = x + x*x^2*R(x^2)
- *  where
- *    R(x^2) is a rational approximation of (asin(x)-x)/x^3
- *  and its remez error is bounded by
- *    |(asin(x)-x)/x^3 - R(x^2)| < 2^(-58.75)
+/**
+ * Calculate the FixedPoint arcsin of x asin(x).
+ * Based on the NetBSD libm asin() implementation
  *
- *  For x in [0.5,1]
- *    asin(x) = pi/2-2*asin(sqrt((1-x)/2))
- *  Let y = (1-x), z = y/2, s := sqrt(z), and pio2_hi+pio2_lo=pi/2;
- *  then for x>0.98
- *    asin(x) = pi/2 - 2*(s+s*z*R(z))
- *      = pio2_hi - (2*(s+s*z*R(z)) - pio2_lo)
- *  For x<=0.98, let pio4_hi = pio2_hi/2, then
- *    f = hi part of s;
- *    c = sqrt(z) - f = (z-f*f)/(s+f)   ...f+c=sqrt(z)
- *  and
- *    asin(x) = pi/2 - 2*(s+s*z*R(z))
- *      = pio4_hi+(pio4-2s)-(2s*z*R(z)-pio2_lo)
- *      = pio4_hi+(pio4-2f)-(2s*z*R(z)-(pio2_lo+2c))
+ * Special cases
+ * * x is NaN    -> asin(x) = NaN
+ * * x is +/-inf -> asin(x) = NaN
+ * * |x| > 1     -> asin(x) = Nan
+ * * x < 0       -> asin(x) = -asin(-x)
  *
- * Special cases:
- *  if x is NaN, return x itself;
- *  if |x|>1, return NaN with invalid signal.
+ * errors for x ∈ (-1, 1):
+ * FixedPoint<16,16>: average: 1.76928e-05, max: 0.000294807
+ * FixedPoint<32,32>: average: 2.62396e-10, max: 1.87484e-09
+ *
+ * @param the given x
+ * @return the result of asin(x)
  */
 template <std::uint16_t I, std::uint16_t F>
 constexpr FixedPoint<I, F> FixedPoint<I, F>::ASin(FixedPoint<I, F> const &x)
 {
-  if (x < 0)
+  if (isNaN(x) || isInfinity(x)) 
+  {
+    return NaN;
+  }
+  else if (x < _0)
   {
     return -ASin(-x);
   }
-
-  if (x > CONST_ONE)
+  else  if (x > _1)
   {
     return NaN;
   }
 
-  FixedPoint p0{1.66666666666666657415e-01}, p1{-3.25565818622400915405e-01},
-      p2{2.01212532134862925881e-01}, p3{-4.00555345006794114027e-02},
-      p4{7.91534994289814532176e-04}, p5{3.47933107596021167570e-05},
-      q1{-2.40339491173441421878e+00}, q2{2.02094576023350569471e+00},
-      q3{-6.88283971605453293030e-01}, q4{7.70381505559019352791e-02};
+  FixedPoint P00{1.66666666666666657415e-01};
+  FixedPoint P01{-3.25565818622400915405e-01};
+  FixedPoint P02{2.01212532134862925881e-01};
+  FixedPoint P03{-4.00555345006794114027e-02};
+  FixedPoint P04{7.91534994289814532176e-04};
+  FixedPoint P05{3.47933107596021167570e-05};
+  FixedPoint Q01{-2.40339491173441421878e+00};
+  FixedPoint Q02{2.02094576023350569471e+00};
+  FixedPoint Q03{-6.88283971605453293030e-01};
+  FixedPoint Q04{7.70381505559019352791e-02};
   FixedPoint c;
   if (x < 0.5)
   {
     FixedPoint t = x * x;
-    FixedPoint P = t * (p0 + t * (p1 + t * (p2 + t * (p3 + t * (p4 + t * p5)))));
-    FixedPoint Q = CONST_ONE + t * (q1 + t * (q2 + t * (q3 + t * q4)));
+    FixedPoint P = t * (P00 + t * (P01 + t * (P02 + t * (P03 + t * (P04 + t * P05)))));
+    FixedPoint Q = _1 + t * (Q01 + t * (Q02 + t * (Q03 + t * Q04)));
     FixedPoint R = P / Q;
     return x + x * R;
   }
   else
   {
-    FixedPoint w = CONST_ONE - x;
+    FixedPoint w = _1 - x;
     FixedPoint t = w * 0.5;
-    FixedPoint P = t * (p0 + t * (p1 + t * (p2 + t * (p3 + t * (p4 + t * p5)))));
-    FixedPoint Q = CONST_ONE + t * (q1 + t * (q2 + t * (q3 + t * q4)));
+    FixedPoint P = t * (P00 + t * (P01 + t * (P02 + t * (P03 + t * (P04 + t * P05)))));
+    FixedPoint Q = _1 + t * (Q01 + t * (Q02 + t * (Q03 + t * Q04)));
     FixedPoint s = Sqrt(t);
     FixedPoint R = P / Q;
     if (x < 0.975)
@@ -2196,10 +2279,27 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::ASin(FixedPoint<I, F> const &x)
   }
 }
 
+/**
+ * Calculate the FixedPoint arccos of x acos(x).
+ *
+ * Special cases
+ * * x is NaN    -> asin(x) = NaN
+ * * x is +/-inf -> asin(x) = NaN
+ * * |x| > 1     -> asin(x) = Nan
+ * 
+ * We use the identity acos(x) = Pi/2 - asin(x) to calculate the value
+ *
+ * errors for x ∈ [-1, 1):
+ * FixedPoint<16,16>: average: 1.94115e-05, max: 0.000305612
+ * FixedPoint<32,32>: average: 2.65666e-10, max: 1.78974e-09
+ *
+ * @param the given x
+ * @return the result of acos(x)
+ */
 template <std::uint16_t I, std::uint16_t F>
 constexpr FixedPoint<I, F> FixedPoint<I, F>::ACos(FixedPoint<I, F> const &x)
 {
-  if (Abs(x) > CONST_ONE)
+  if (Abs(x) > _1)
   {
     return NaN;
   }
@@ -2207,17 +2307,51 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::ACos(FixedPoint<I, F> const &x)
   return CONST_PI_2 - ASin(x);
 }
 
+/**
+ * Calculate the FixedPoint arctan of x atan(x).
+ *
+ * Special cases
+ * * x is NaN    -> atan(x) = NaN
+ * * x is +/-inf -> atan(x) = +/- Pi/2
+ * * x < 0       -> atan(x) = -atan(-x)
+ * * x > 1       -> atan(x) = Pi/2 - Atan(1/x)
+ *
+ * The atan(x) is calculated using a Pade approximant, 10th order,
+ *
+ *            x * (1 + x^2 * (116/57 + x^2 * (2198/1615 + x^2 * (44/133 + x^2 * 5597/264537)))
+ * tan(r) = --------------------------------------------------
+ *            1 + x^2 * (45/19 + x^2 * (630/323 + x^2 * (210/323 + x^2 * (315/4199 + x^2 * 63/46189))))
+ *
+ * errors for x ∈ [-5, 5):
+ * FixedPoint<16,16>: average: 9.41805e-06, max: 3.11978e-05
+ * FixedPoint<32,32>: average: 9.69576e-10, max: 2.84322e-08
+ 
+ * @param the given x
+ * @return the result of atan(x)
+ */
 template <std::uint16_t I, std::uint16_t F>
 constexpr FixedPoint<I, F> FixedPoint<I, F>::ATan(FixedPoint<I, F> const &x)
 {
-  if (x < 0)
+  if (isNaN(x))
+  {
+    return NaN;
+  }
+  else if (isPosInfinity(x))
+  {
+    return CONST_PI_2;
+  }
+  else if (isNegInfinity(x))
+  {
+    return -CONST_PI_2;
+  }
+  else if (x < _0)
   {
     return -ATan(-x);
   }
 
-  if (x > 1)
+  if (x > _1)
   {
-    return CONST_PI_2 - ATan(CONST_ONE / x);
+    return CONST_PI_2 - ATan(_1 / x);
   }
 
   FixedPoint P03 = FixedPoint{116.0 / 57.0};
@@ -2230,20 +2364,36 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::ATan(FixedPoint<I, F> const &x)
   FixedPoint Q08 = FixedPoint{315.0 / 4199.0};
   FixedPoint Q10 = FixedPoint{63.0 / 46189.0};
   FixedPoint x2  = x * x;
-  FixedPoint x3  = x2 * x;
-  FixedPoint x4  = x3 * x;
-  FixedPoint x5  = x4 * x;
-  FixedPoint x6  = x5 * x;
-  FixedPoint x7  = x6 * x;
-  FixedPoint x8  = x7 * x;
-  FixedPoint x9  = x8 * x;
-  FixedPoint x10 = x9 * x;
-  FixedPoint P   = x + P03 * x3 + P05 * x5 + P07 * x7 + P09 * x9;
-  FixedPoint Q   = CONST_ONE + Q02 * x2 + Q04 * x4 + Q06 * x6 + Q08 * x8 + Q10 * x10;
+  FixedPoint P   = x * (_1 + x2 * (P03 + x2 * (P05 + x2 * (P07 + x2 * P09))));
+  FixedPoint Q   = _1 + x2 * (Q02 + x2 * (Q04 + x2 * (Q06 + x2 * (Q08 + x2 * Q10))));
 
   return std::move(P / Q);
 }
 
+/**
+ * Calculate the FixedPoint version of atan2(y, x).
+ *
+ * Special cases
+ * * x is NaN    -> atan2(y, x) = NaN
+ * * y is NaN    -> atan2(y, x) = NaN
+ * * x is +/-inf -> atan(x) = +/- Pi/2
+ * * x < 0       -> atan(x) = -atan(-x)
+ * * x > 1       -> atan(x) = Pi/2 - Atan(1/x)
+ *
+ * The atan(x) is calculated using a Pade approximant, 10th order,
+ *
+ *            x * (1 + x^2 * (116/57 + x^2 * (2198/1615 + x^2 * (44/133 + x^2 * 5597/264537)))
+ * tan(r) = --------------------------------------------------
+ *            1 + x^2 * (45/19 + x^2 * (630/323 + x^2 * (210/323 + x^2 * (315/4199 + x^2 * 63/46189))))
+ *
+ * errors for x ∈ (-2, 2), y ∈ (-2, 2):
+ * FixedPoint<16,16>: average: 9.10062e-06, max: 2.69345e-05
+ * FixedPoint<32,32>: average: 1.81937e-09, max: 2.83877e-08
+ *
+ * @param the given y
+ * @param the given x
+ * @return the result of atan2(y, x)
+ */
 template <std::uint16_t I, std::uint16_t F>
 constexpr FixedPoint<I, F> FixedPoint<I, F>::ATan2(FixedPoint<I, F> const &y,
                                                    FixedPoint<I, F> const &x)
@@ -2253,19 +2403,19 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::ATan2(FixedPoint<I, F> const &y,
     return NaN;
   }
 
-  if (y < 0)
+  if (y < _0)
   {
     return -ATan2(-y, x);
   }
 
-  if (x == 0)
+  if (x == _0)
   {
     return Sign(y) * CONST_PI_2;
   }
 
   FixedPoint u    = y / Abs(x);
   FixedPoint atan = ATan(u);
-  if (x < 0)
+  if (x < _0)
   {
     return CONST_PI - atan;
   }
@@ -2275,6 +2425,26 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::ATan2(FixedPoint<I, F> const &y,
   }
 }
 
+/**
+ * Calculate the FixedPoint hyperbolic sinus of x sinh(x).
+ *
+ * Special cases
+ * * x is NaN    -> sinh(x) = NaN
+ * * x is +/-inf -> sinh(x) = +/-inf
+ * Calculated using the definition formula:
+ * 
+ *            e^x - e^(-x)
+ * sinh(x) = --------------
+ *                2
+ *
+ * errors for x ∈ [-3, 3):
+ * FixedPoint<16,16>: average: 6.63577e-05, max: 0.000479903
+ * errors for x ∈ [-5, 5):
+ * FixedPoint<32,32>: average: 7.39076e-09, max: 7.90546e-08
+ 
+ * @param the given x
+ * @return the result of sinh(x)
+ */
 template <std::uint16_t I, std::uint16_t F>
 constexpr FixedPoint<I, F> FixedPoint<I, F>::SinH(FixedPoint<I, F> const &x)
 {
@@ -2282,11 +2452,39 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::SinH(FixedPoint<I, F> const &x)
   {
     return NaN;
   }
+  else if (isPosInfinity(x))
+  {
+    return POSITIVE_INFINITY;
+  }
+  else if (isNegInfinity(x))
+  {
+    return NEGATIVE_INFINITY;
+  }
 
   FixedPoint half{0.5};
   return std::move(half * (Exp(x) - Exp(-x)));
 }
 
+/**
+ * Calculate the FixedPoint hyperbolic cosinus of x cosh(x).
+ *
+ * Special cases
+ * * x is NaN    -> cosh(x) = NaN
+ * * x is +/-inf -> cosh(x) = +inf
+ * Calculated using the definition formula:
+ * 
+ *            e^x + e^(-x)
+ * sinh(x) = --------------
+ *                2
+ *
+ * errors for x ∈ [-3, 3):
+ * FixedPoint<16,16>: average: 6.92127e-05, max: 0.000487532
+ * errors for x ∈ [-5, 5):
+ * FixedPoint<32,32>: average: 7.30786e-09, max: 7.89509e-08
+ 
+ * @param the given x
+ * @return the result of cosh(x)
+ */
 template <std::uint16_t I, std::uint16_t F>
 constexpr FixedPoint<I, F> FixedPoint<I, F>::CosH(FixedPoint<I, F> const &x)
 {
@@ -2294,17 +2492,48 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::CosH(FixedPoint<I, F> const &x)
   {
     return NaN;
   }
+  else if (isInfinity(x))
+  {
+    return POSITIVE_INFINITY;
+  }
 
   FixedPoint half{0.5};
   return std::move(half * (Exp(x) + Exp(-x)));
 }
 
+/**
+ * Calculate the FixedPoint hyperbolic tangent of x, tanh(x).
+ *
+ * Special cases
+ * * x is NaN    -> tanh(x) = NaN
+ * * x is +/-inf -> tanh(x) = +/-1
+ * Calculated using the definition formula:
+ * 
+ *            e^x - e^(-x)
+ * sinh(x) = --------------
+ *            e^x + e^(-x)
+ *
+ * errors for x ∈ [-3, 3):
+ * FixedPoint<16,16>: average: 1.25046e-05, max: 7.0897e-05
+ * FixedPoint<32,32>: average: 1.7648e-10,  max: 1.19186e-09
+ 
+ * @param the given x
+ * @return the result of tanh(x)
+ */
 template <std::uint16_t I, std::uint16_t F>
 constexpr FixedPoint<I, F> FixedPoint<I, F>::TanH(FixedPoint<I, F> const &x)
 {
   if (isNaN(x))
   {
     return NaN;
+  }
+  else if (isPosInfinity(x))
+  {
+    return POSITIVE_INFINITY;
+  }
+  else if (isNegInfinity(x))
+  {
+    return NEGATIVE_INFINITY;
   }
 
   FixedPoint e1     = Exp(x);
@@ -2313,6 +2542,23 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::TanH(FixedPoint<I, F> const &x)
   return std::move(result);
 }
 
+/**
+ * Calculate the FixedPoint inverse of hyperbolic sinus of x, asinh(x).
+ *
+ * Special cases
+ * * x is NaN    -> asinh(x) = NaN
+ * * x is +/-inf -> asinh(x) = +/-inf
+ * Calculated using the  formula:
+ * 
+ * asinh(x) = Log(x + Sqrt(x^2 + 1))
+ *
+ * errors for x ∈ [-3, 3):
+ * FixedPoint<16,16>: average: 5.59257e-05, max: 0.00063489
+ * FixedPoint<32,32>: average: 3.49254e-09, max: 2.62839e-08
+ 
+ * @param the given x
+ * @return the result of asinh(x)
+ */
 template <std::uint16_t I, std::uint16_t F>
 constexpr FixedPoint<I, F> FixedPoint<I, F>::ASinH(FixedPoint<I, F> const &x)
 {
@@ -2320,10 +2566,37 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::ASinH(FixedPoint<I, F> const &x)
   {
     return NaN;
   }
+  else if (isPosInfinity(x))
+  {
+    return POSITIVE_INFINITY;
+  }
+  else if (isNegInfinity(x))
+  {
+    return NEGATIVE_INFINITY;
+  }
 
-  return Log(x + Sqrt(x * x + CONST_ONE));
+  return Log(x + Sqrt(x * x + _1));
 }
 
+/**
+ * Calculate the FixedPoint inverse of hyperbolic cosinus of x, acosh(x).
+ *
+ * Special cases
+ * * x is NaN    -> acosh(x) = NaN
+ * * x is +inf   -> acosh(x) = +inf
+ * * x < 1       -> acosh(x) = NaN
+ * Calculated using the definition formula:
+ * 
+ * acosh(x) = Log(x + Sqrt(x^2 - 1))
+ *
+ * errors for x ∈ [1, 3):
+ * FixedPoint<16,16>: average: 8.53834e-06, max: 6.62567e-05
+* errors for x ∈ [1, 5):
+ * FixedPoint<32,32>: average: 2.37609e-09, max: 2.28507e-08
+ 
+ * @param the given x
+ * @return the result of acosh(x)
+ */
 template <std::uint16_t I, std::uint16_t F>
 constexpr FixedPoint<I, F> FixedPoint<I, F>::ACosH(FixedPoint<I, F> const &x)
 {
@@ -2331,14 +2604,41 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::ACosH(FixedPoint<I, F> const &x)
   {
     return NaN;
   }
-
-  if (x < CONST_ONE)
+  else if (isPosInfinity(x))
+  {
+    return POSITIVE_INFINITY;
+  }
+  else if (isNegInfinity(x))
   {
     return NaN;
   }
-  return Log(x + Sqrt(x * x - CONST_ONE));
+
+  if (x < _1)
+  {
+    return NaN;
+  }
+  return Log(x + Sqrt(x * x - _1));
 }
 
+/**
+ * Calculate the FixedPoint inverse of hyperbolic tangent of x, atanh(x).
+ *
+ * Special cases
+ * * x is NaN    -> atanh(x) = NaN
+ * * x is +/-inf -> atanh(x) = NaN
+ * Calculated using the definition formula:
+ * 
+ *            1        1 + x
+ * atanh(x) = - * Log(-------)
+ *            2        1 - x
+ *
+ * errors for x ∈ (-1, 1):
+ * FixedPoint<16,16>: average: 2.08502e-05, max: 0.000954267
+ * FixedPoint<32,32>: average: 1.47673e-09, max: 1.98984e-07
+ 
+ * @param the given x
+ * @return the result of atanh(x)
+ */
 template <std::uint16_t I, std::uint16_t F>
 constexpr FixedPoint<I, F> FixedPoint<I, F>::ATanH(FixedPoint<I, F> const &x)
 {
@@ -2346,13 +2646,21 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::ATanH(FixedPoint<I, F> const &x)
   {
     return NaN;
   }
+  else if (isPosInfinity(x))
+  {
+    return NaN;
+  }
+  else if (isNegInfinity(x))
+  {
+    return NaN;
+  }
 
-  if (x > CONST_ONE)
+  if (Abs(x) > _1)
   {
     return NaN;
   }
   FixedPoint half{0.5};
-  return half * Log((CONST_ONE + x) / (CONST_ONE - x));
+  return half * Log((_1 + x) / (_1 - x));
 }
 
 }  // namespace fixed_point
