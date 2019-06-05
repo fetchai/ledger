@@ -550,4 +550,28 @@ TEST_F(ArrayTests, extend_fails_if_called_with_an_array_of_different_type)
   ASSERT_FALSE(toolkit.Compile(TEXT));
 }
 
+TEST_F(ArrayTests, extend_does_not_mutate_its_argument)
+{
+  static char const *TEXT = R"(
+    function main()
+      var data1 = Array<Int32>(2);
+      data1[0] = 10;
+      data1[1] = 20;
+      var data2 = Array<Int32>(3);
+      data2[0] = 50;
+      data2[1] = 40;
+      data2[2] = 30;
+
+      data1.extend(data2);
+
+      print(data2);
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_TRUE(toolkit.Run());
+
+  ASSERT_EQ(toolkit.stdout(), "[50, 40, 30]");
+}
+
 }  // namespace

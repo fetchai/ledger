@@ -92,13 +92,11 @@ struct Array : public IArray
       return {};
     }
 
-    auto element =
-        GetIndexedValue(AnyInteger(static_cast<uint64_t>(elements.size() - 1u), TypeIds::Int32))
-            .template Move<TemplateParameter>();
+    auto element = std::move(elements[elements.size() - 1u]);
 
     elements.pop_back();
 
-    return element;
+    return TemplateParameter(element, element_type_id);
   }
 
   Ptr<IArray> PopBackMany(int32_t num_to_pop) override
@@ -132,8 +130,7 @@ struct Array : public IArray
       return {};
     }
 
-    TemplateParameter element =
-        GetIndexedValue(AnyInteger(0u, TypeIds::Int32)).template Move<TemplateParameter>();
+    auto element = std::move(elements[0]);
 
     // Shift remaining elements to the right
     for (std::size_t i = 1u; i < elements.size(); ++i)
@@ -143,7 +140,7 @@ struct Array : public IArray
 
     elements.resize(elements.size() - 1);
 
-    return element;
+    return TemplateParameter(element, element_type_id);
   }
 
   Ptr<IArray> PopFrontMany(int32_t num_to_pop) override
