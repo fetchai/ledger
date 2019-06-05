@@ -27,12 +27,12 @@
 template <typename ArrayType>
 ArrayType GenerateXorData()
 {
-  ArrayType data{{4, 2}};
+  ArrayType data{{2, 4}};
   data.Fill(typename ArrayType::Type(0));
   data.Set(1, 1, typename ArrayType::Type(1));
-  data.Set(2, 0, typename ArrayType::Type(1));
-  data.Set(3, 0, typename ArrayType::Type(1));
-  data.Set(3, 1, typename ArrayType::Type(1));
+  data.Set(0, 2, typename ArrayType::Type(1));
+  data.Set(0, 3, typename ArrayType::Type(1));
+  data.Set(1, 3, typename ArrayType::Type(1));
 
   return data;
 }
@@ -42,7 +42,7 @@ ArrayType GenerateXorGt(typename ArrayType::SizeType dims)
 {
   assert((dims == 1) || (dims == 2));
 
-  ArrayType gt{{4, dims}};
+  ArrayType gt{{dims, 4}};
   gt.Fill(typename ArrayType::Type(0));
   if (dims == 1)
   {
@@ -53,8 +53,8 @@ ArrayType GenerateXorGt(typename ArrayType::SizeType dims)
   {
     gt.Set(0, 0, typename ArrayType::Type(1));
     gt.Set(1, 1, typename ArrayType::Type(1));
-    gt.Set(2, 1, typename ArrayType::Type(1));
-    gt.Set(3, 0, typename ArrayType::Type(1));
+    gt.Set(1, 2, typename ArrayType::Type(1));
+    gt.Set(0, 3, typename ArrayType::Type(1));
   }
 
   return gt;
@@ -217,9 +217,9 @@ void CategoricalPlusOneTest(bool add_softmax = false)
 
   for (SizeType step{0}; step < n_data; ++step)
   {
-    auto cur_input = data.Slice(step).Copy();
+    auto cur_input = data.Slice(step, 1).Copy();
     g.SetInput(input_name, cur_input);
-    auto cur_gt  = gt.Slice(step).Copy();
+    auto cur_gt  = gt.Slice(step, 1).Copy();
     auto results = g.Evaluate(output_name);
     loss += criterion.Forward({results, cur_gt});
     g.BackPropagate(output_name, criterion.Backward({results, cur_gt}));
@@ -244,9 +244,9 @@ void CategoricalPlusOneTest(bool add_softmax = false)
 
     for (SizeType step{0}; step < n_data; ++step)
     {
-      auto cur_input = data.Slice(step).Copy();
+      auto cur_input = data.Slice(step, 1).Copy();
       g.SetInput(input_name, cur_input);
-      auto cur_gt  = gt.Slice(step).Copy();
+      auto cur_gt  = gt.Slice(step, 1).Copy();
       auto results = g.Evaluate(output_name);
       loss += criterion.Forward({results, cur_gt});
       g.BackPropagate(output_name, criterion.Backward({results, cur_gt}));
@@ -313,10 +313,10 @@ void CategoricalXorTest(bool add_softmax = false)
 
   for (SizeType step{0}; step < n_data; ++step)
   {
-    cur_input = data.Slice(step).Copy();
+    cur_input = data.Slice(step, 1).Copy();
     g.SetInput(input_name, cur_input);
     auto results = g.Evaluate(output_name);
-    cur_gt       = gt.Slice(step).Copy();
+    cur_gt       = gt.Slice(step, 1).Copy();
     loss += criterion.Forward({results, cur_gt});
     g.BackPropagate(output_name, criterion.Backward({results, cur_gt}));
   }
@@ -340,9 +340,9 @@ void CategoricalXorTest(bool add_softmax = false)
 
     for (SizeType step{0}; step < n_data; ++step)
     {
-      cur_input = data.Slice(step).Copy();
+      cur_input = data.Slice(step, 1).Copy();
       g.SetInput(input_name, cur_input);
-      cur_gt       = gt.Slice(step).Copy();
+      cur_gt       = gt.Slice(step, 1).Copy();
       auto results = g.Evaluate(output_name);
       loss += criterion.Forward({results, cur_gt});
       g.BackPropagate(output_name, criterion.Backward({results, cur_gt}));
