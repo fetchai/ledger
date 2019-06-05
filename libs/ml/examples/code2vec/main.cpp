@@ -29,6 +29,7 @@
 #include "ml/ops/tanh.hpp"
 #include "ml/ops/transpose.hpp"
 #include "ml/ops/weights.hpp"
+#include "ml/optimisation/adam_optimiser.hpp"
 
 #include <chrono>
 #include <cstdint>
@@ -57,7 +58,8 @@ using ContextTensorsLabelPair = typename std::pair<ArrayType, ContextTensorTuple
 #define EMBEDDING_SIZE 64u
 #define BATCHSIZE 12u
 #define N_EPOCHS 100
-#define LEARNING_RATE 0.01f
+#define BATCH_SIZE 5
+#define LEARNING_RATE 0.001f
 
 std::string ReadFile(std::string const &path)
 {
@@ -214,60 +216,16 @@ int main(int ac, char **av)
   std::string result = g->AddNode<fetch::ml::ops::Softmax<ArrayType>>(
       "PredictionSoftMax", {prediction_softmax_kernel_T}, SizeType{0});
 
-  // Criterion: Cross Entropy Loss
-  // Here, the CrossEntropy eats two tensors of size (1, function_name_vocab_size); i.e. it has 1
-  // example, and as many categories as vocab_size
-  fetch::ml::ops::CrossEntropy<ArrayType> criterion;
-  DataType                                loss = 0;
+  // Initialise Optimiser
+  fetch::ml::optimisers::AdamOptimiser<ArrayType, fetch::ml::ops::CrossEntropy<ArrayType>>
+      optimiser(g, {input_source_words, input_paths, input_target_words}, result, LEARNING_RATE);
 
-  int n_epochs{0};
-  int n_iter{0};
-
-  while (n_epochs < N_EPOCHS)
+  // Training loop
+  DataType loss;
+  for (SizeType i{0}; i < N_EPOCHS; i++)
   {
-    if (cloader.IsDone())
-    {
-      cloader.Reset();
-      n_epochs++;
-    }
-
-    auto t1 = std::chrono::high_resolution_clock::now();
-
-    // Loading the tuple of ((InputSourceWords, InputPaths, InputTargetWords), function_name_idx)
-    // first: 3 tensors with shape (n_contexts) holding
-    //        the indices of the source words/paths/target words in the vocabulary
-    // second: function_name_idx is the index of the function name in the vocabulary
-    ContextTensorsLabelPair input = cloader.GetNext();
-
-    // Feeding the tensors to the graph
-    g->SetInput(input_source_words, input.second[0]);
-    g->SetInput(input_paths, input.second[1]);
-    g->SetInput(input_target_words, input.second[2]);
-
-    // Making the forward pass
-    // dimension:  (1, vocab_size_functions)
-    ArrayType results = g->Evaluate(result);
-    // dimension:  (1, vocab_size_functions), (1, vocab_size_functions)
-    loss += criterion.Forward({results, input.first});
-
-    // Making the backward pass
-    g->BackPropagate(result, criterion.Backward({results, input.first}));
-
-    // apply the gradients
-    g->Step(LEARNING_RATE);
-
-    n_iter++;
-    if (n_iter % 5 == 0)
-    {
-      auto t2 = std::chrono::high_resolution_clock::now();
-
-      std::chrono::duration<double> time_diff =
-          std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1);
-
-      std::cout << "MiniBatch: " << n_iter / 5 << " -- Loss : " << loss << std::endl;
-      std::cout << "Steps / Sec: " << 5.0 / time_diff.count() << std::endl;
-      loss = 0;
-    }
+    loss = optimiser.Run(cloader, BATCH_SIZE);
+    std::cout << "Loss: " << loss << std::endl;
   }
 
   return 0;

@@ -68,8 +68,7 @@ int main(int ac, char **av)
   std::string output_name = g->AddNode<Softmax<ArrayType>>("Softmax", {"FC3"});
 
   // Initialise MNIST loader
-  std::shared_ptr<fetch::ml::DataLoader<ArrayType, ArrayType>> data_loader(
-      std::make_shared<fetch::ml::MNISTLoader<ArrayType, ArrayType>>(av[1], av[2]));
+  fetch::ml::MNISTLoader<ArrayType, ArrayType> data_loader(av[1], av[2]);
 
   // Initialise Optimiser
   fetch::ml::optimisers::AdamOptimiser<ArrayType, fetch::ml::ops::CrossEntropy<ArrayType>>
@@ -79,7 +78,7 @@ int main(int ac, char **av)
   DataType loss;
   for (SizeType i{0}; i < epochs; i++)
   {
-    loss = optimiser.Run(*data_loader, batch_size, subset_size);
+    loss = optimiser.Run(data_loader, batch_size, subset_size);
     std::cout << "Loss: " << loss << std::endl;
   }
 
