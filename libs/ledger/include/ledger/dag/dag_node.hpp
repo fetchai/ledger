@@ -50,7 +50,13 @@ struct DAGNode
   using DigestList     = std::vector<Digest>;
   using HasherType     = crypto::SHA256;
 
-  DAGNode()                              = default;
+  DAGNode()
+  {
+    // TODO(HUT): forced to do this so addresses serialize something - fix
+    Address::RawAddress dummy_address;
+    creator = Address(dummy_address);
+  }
+
   DAGNode(DAGNode const &rhs)            = default;
   DAGNode(DAGNode &&rhs)                 = default;
   DAGNode &operator=(DAGNode const &rhs) = default;
