@@ -304,7 +304,6 @@ int main(int argc, char **argv)
   }
 
   vm->AttachOutputDevice(fetch::vm::VM::STDOUT, std::cout);
-  vm->AttachOutputDevice("stderr", std::cerr);
 
   // Execute the requested function
   std::string        error;

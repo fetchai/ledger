@@ -17,13 +17,13 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/assert.hpp"
 #include "math/fundamental_operators.hpp"
 #include "math/matrix_operations.hpp"
 #include "math/standard_functions/pow.hpp"
 #include "math/standard_functions/sqrt.hpp"
 #include "math/statistics/mean.hpp"
-#include <cmath>
+
+#include <cassert>
 
 namespace fetch {
 namespace math {
@@ -32,7 +32,7 @@ namespace correlation {
 template <typename ArrayType>
 inline typename ArrayType::Type Pearson(ArrayType const &a, ArrayType const &b)
 {
-  ASSERT(a.size() == b.size());
+  assert(a.size() == b.size());
   using Type     = typename ArrayType::Type;
   using SizeType = typename ArrayType::SizeType;
 

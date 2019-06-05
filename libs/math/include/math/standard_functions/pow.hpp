@@ -17,8 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/assert.hpp"
 #include "math/meta/math_type_traits.hpp"
+
+#include <cassert>
 
 namespace fetch {
 namespace math {
@@ -55,7 +56,7 @@ template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, void> Pow(ArrayType const &               array1,
                                          typename ArrayType::Type const &exponent, ArrayType &ret)
 {
-  ASSERT(ret.shape() == array1.shape());
+  assert(ret.shape() == array1.shape());
   auto arr_it = array1.cbegin();
   auto rit    = ret.begin();
 
@@ -92,7 +93,7 @@ meta::IfIsArithmetic<Type, void> Square(Type const &x, Type &ret)
 template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, void> Square(ArrayType const &x, ArrayType &ret)
 {
-  ASSERT(ret.shape() == x.shape());
+  assert(ret.shape() == x.shape());
   auto arr_it = x.cbegin();
   auto rit    = ret.begin();
 

@@ -17,10 +17,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/assert.hpp"
 #include "math/comparison.hpp"
 #include "math/fundamental_operators.hpp"
 #include "math/standard_functions/exp.hpp"
+
+#include <cassert>
 
 namespace fetch {
 namespace math {
@@ -35,7 +36,7 @@ namespace math {
 template <typename ArrayType>
 void Elu(ArrayType const &t, typename ArrayType::Type &a, ArrayType &ret)
 {
-  ASSERT(t.size() == ret.size());
+  assert(t.size() == ret.size());
   using DataType = typename ArrayType::Type;
 
   DataType zero{0};

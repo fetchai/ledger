@@ -53,8 +53,8 @@ public:
   virtual void                           Step(typename T::Type learning_rate)        = 0;
   virtual struct fetch::ml::StateDict<T> StateDict() const                           = 0;
   virtual void             LoadStateDict(struct fetch::ml::StateDict<T> const &dict) = 0;
-  virtual ArrayType const &GetWeights() const                                        = 0;
-  virtual ArrayType const &Gradients() const                                         = 0;
+  virtual ArrayType const &get_weights() const                                       = 0;
+  virtual ArrayType const &get_gradients() const                                     = 0;
   virtual void             ResetGradients()                                          = 0;
   virtual void             ApplyGradient(ArrayType const &grad)                      = 0;
 };
@@ -179,7 +179,7 @@ public:
    * exports the weight values Array
    * @return const reference to internal values Array
    */
-  ArrayType const &GetWeights() const
+  ArrayType const &get_weights() const
   {
     return *this->output_;
   }
@@ -188,7 +188,7 @@ public:
    * exports the weight gradients Array
    * @return const reference to internal accumulated gradient Array
    */
-  ArrayType const &Gradients() const
+  ArrayType const &get_gradients() const
   {
     return *this->gradient_accumulation_;
   }

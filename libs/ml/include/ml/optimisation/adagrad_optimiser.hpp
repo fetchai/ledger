@@ -49,7 +49,7 @@ private:
   std::vector<ArrayType> cache_;
   DataType               epsilon_;
 
-  void ApplyGradients() override;
+  void ApplyGradients(SizeType batch_size) override;
   void ResetCache();
 };
 
@@ -63,7 +63,7 @@ AdaGradOptimiser<T, C>::AdaGradOptimiser(std::shared_ptr<Graph<T>> graph,
 {
   for (auto &train : this->graph_trainables_)
   {
-    this->cache_.emplace_back(ArrayType(train->GetWeights().shape()));
+    this->cache_.emplace_back(ArrayType(train->get_weights().shape()));
   }
   ResetCache();
 }
@@ -71,7 +71,7 @@ AdaGradOptimiser<T, C>::AdaGradOptimiser(std::shared_ptr<Graph<T>> graph,
 // private
 
 template <class T, class C>
-void AdaGradOptimiser<T, C>::ApplyGradients()
+void AdaGradOptimiser<T, C>::ApplyGradients(SizeType batch_size)
 {
   // Do operation with gradient
   auto cached_weight_it = cache_.begin();
@@ -80,18 +80,21 @@ void AdaGradOptimiser<T, C>::ApplyGradients()
 
   while (gradient_it != this->gradients_.end())
   {
-    // cache[i] += grad[i]^2
-    fetch::math::Multiply((*trainable_it)->Gradients(), (*trainable_it)->Gradients(), *gradient_it);
+    // cache[i] += (input_grad[i]/batch_size)^2
+    fetch::math::Divide((*trainable_it)->get_gradients(), static_cast<DataType>(batch_size),
+                        *gradient_it);
+    fetch::math::Square(*gradient_it, *gradient_it);
     fetch::math::Add(*cached_weight_it, *gradient_it, *cached_weight_it);
 
     // epsilon is added to prevent division by 0
-    // grad[i] = learning_rate * grad[i] / (sqrt(cache[i]) + epsilon)
+    // output_grad[i] = learning_rate * (grad[i]/batch_size) / (sqrt(cache[i]) + epsilon)
     fetch::math::Sqrt(*cached_weight_it, *gradient_it);
     fetch::math::Add(*gradient_it, epsilon_, *gradient_it);
-    fetch::math::Divide((*trainable_it)->Gradients(), *gradient_it, *gradient_it);
-    fetch::math::Multiply(*gradient_it, -this->learning_rate_, *gradient_it);
+    fetch::math::Divide((*trainable_it)->get_gradients(), *gradient_it, *gradient_it);
+    fetch::math::Multiply(
+        *gradient_it, (-this->learning_rate_) / (static_cast<DataType>(batch_size)), *gradient_it);
 
-    // Apply gradient weights[i]+=grad[i]
+    // Apply gradient weights[i]+=output_grad[i]
     (*trainable_it)->ApplyGradient(*gradient_it);
 
     ++cached_weight_it;

@@ -17,8 +17,10 @@
 //------------------------------------------------------------------------------
 
 #include "ml/ops/activations/randomized_relu.hpp"
-#include "math/fixed_point/fixed_point.hpp"
+
 #include "math/tensor.hpp"
+#include "vectorise/fixed_point/fixed_point.hpp"
+
 #include <gtest/gtest.h>
 
 template <typename T>

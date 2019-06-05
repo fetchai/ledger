@@ -17,13 +17,13 @@
 //------------------------------------------------------------------------------
 
 #include "ml/graph.hpp"
+
 #include "math/tensor.hpp"
+#include "ml/layers/self_attention.hpp"
 #include "ml/ops/activations/relu.hpp"
 #include "ml/ops/multiply.hpp"
 #include "ml/ops/placeholder.hpp"
 #include "ml/ops/subtract.hpp"
-
-#include "ml/layers/self_attention.hpp"
 
 #include <gtest/gtest.h>
 
@@ -43,8 +43,8 @@ TYPED_TEST(GraphTest, node_placeholder)
   fetch::ml::Graph<ArrayType> g;
   g.template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>("Input", {});
 
-  ArrayType data = ArrayType::FromString("1, 2, 3, 4, 5, 6, 7, 8");
-  ArrayType gt   = ArrayType::FromString("1, 2, 3, 4, 5, 6, 7, 8");
+  ArrayType data = ArrayType::FromString(R"(1, 2, 3, 4, 5, 6, 7, 8)");
+  ArrayType gt   = ArrayType::FromString(R"(1, 2, 3, 4, 5, 6, 7, 8)");
 
   g.SetInput("Input", data);
   ArrayType prediction = g.Evaluate("Input");
@@ -62,8 +62,8 @@ TYPED_TEST(GraphTest, node_relu)
   g.template AddNode<fetch::ml::ops::Relu<ArrayType>>("Relu", {"Input"});
 
   ArrayType data =
-      ArrayType::FromString("0, -1, 2, -3, 4, -5, 6, -7, 8, -9, 10, -11, 12, -13, 14, -15, 16");
-  ArrayType gt = ArrayType::FromString("0, 0, 2, 0, 4, 0, 6, 0, 8, 0, 10, 0, 12, 0, 14, 0, 16");
+      ArrayType::FromString(R"(0, -1, 2, -3, 4, -5, 6, -7, 8, -9, 10, -11, 12, -13, 14, -15, 16)");
+  ArrayType gt = ArrayType::FromString(R"(0, 0, 2, 0, 4, 0, 6, 0, 8, 0, 10, 0, 12, 0, 14, 0, 16)");
 
   g.SetInput("Input", data);
   ArrayType prediction = g.Evaluate("Relu");
@@ -133,9 +133,9 @@ TYPED_TEST(GraphTest,
   using ArrayType = TypeParam;
 
   // Generate input
-  ArrayType data1 = ArrayType::FromString("-1,0,1,2,3,4");
-  ArrayType data2 = ArrayType::FromString("-20,-10, 0, 10, 20, 30");
-  ArrayType gt    = ArrayType::FromString("19, -0, -1, 16, 51, 104");
+  ArrayType data1 = ArrayType::FromString(R"(-1,0,1,2,3,4)");
+  ArrayType data2 = ArrayType::FromString(R"(-20,-10, 0, 10, 20, 30)");
+  ArrayType gt    = ArrayType::FromString(R"(19, -0, -1, 16, 51, 104)");
 
   // Create graph
   std::string                 name = "Diamond";
@@ -166,8 +166,8 @@ TYPED_TEST(GraphTest,
   ASSERT_TRUE(output.AllClose(gt, static_cast<DataType>(1e-5f), static_cast<DataType>(1e-5f)));
 
   // Change data2
-  data2 = ArrayType::FromString("-2, -1, 0, 1, 2, 3");
-  gt    = ArrayType::FromString("1, -0, -1, -2, -3, -4");
+  data2 = ArrayType::FromString(R"(-2, -1, 0, 1, 2, 3)");
+  gt    = ArrayType::FromString(R"(1, -0, -1, -2, -3, -4)");
   g.SetInput(input_name2, data2);
 
   // Recompute graph
@@ -185,11 +185,11 @@ TYPED_TEST(GraphTest, diamond_graph_backward)  // output=(input1*input2)-(input1
   using ArrayType = TypeParam;
 
   // Generate input
-  ArrayType data1        = ArrayType::FromString("-1,0,1,2,3,4");
-  ArrayType data2        = ArrayType::FromString("-20,-10, 0, 10, 20, 30");
-  ArrayType error_signal = ArrayType::FromString("-1,0,1,2,3,4");
-  ArrayType grad1        = ArrayType::FromString("1,  0,  1,  4,  9, 16");
-  ArrayType grad2        = ArrayType::FromString("18, 0, -2, 12, 42, 88");
+  ArrayType data1        = ArrayType::FromString(R"(-1,0,1,2,3,4)");
+  ArrayType data2        = ArrayType::FromString(R"(-20,-10, 0, 10, 20, 30)");
+  ArrayType error_signal = ArrayType::FromString(R"(-1,0,1,2,3,4)");
+  ArrayType grad1        = ArrayType::FromString(R"(1,  0,  1,  4,  9, 16)");
+  ArrayType grad2        = ArrayType::FromString(R"(18, 0, -2, 12, 42, 88)");
 
   // Create graph
   std::string                 name = "Diamond";
@@ -221,25 +221,25 @@ TYPED_TEST(GraphTest, diamond_graph_backward)  // output=(input1*input2)-(input1
   std::vector<TypeParam> gradients = g.GetGradients();
   EXPECT_EQ(gradients.size(), 2);
   ASSERT_TRUE(
-      gradients[0].AllClose(grad1, static_cast<DataType>(1e-5f), static_cast<DataType>(1e-5f)));
+      gradients[1].AllClose(grad1, static_cast<DataType>(1e-5f), static_cast<DataType>(1e-5f)));
   ASSERT_TRUE(
-      gradients[1].AllClose(grad2, static_cast<DataType>(1e-5f), static_cast<DataType>(1e-5f)));
+      gradients[0].AllClose(grad2, static_cast<DataType>(1e-5f), static_cast<DataType>(1e-5f)));
 
   // Test Weights
-  std::vector<TypeParam> weights = g.GetWeights();
+  std::vector<TypeParam> weights = g.get_weights();
   EXPECT_EQ(weights.size(), 2);
   ASSERT_TRUE(
-      weights[0].AllClose(data2, static_cast<DataType>(1e-5f), static_cast<DataType>(1e-5f)));
+      weights[1].AllClose(data2, static_cast<DataType>(1e-5f), static_cast<DataType>(1e-5f)));
   ASSERT_TRUE(
-      weights[1].AllClose(data1, static_cast<DataType>(1e-5f), static_cast<DataType>(1e-5f)));
+      weights[0].AllClose(data1, static_cast<DataType>(1e-5f), static_cast<DataType>(1e-5f)));
 
   // Change data2
-  data2                       = ArrayType::FromString("-2, -1, 0, 1, 2, 3");
-  error_signal                = ArrayType::FromString("-0.1,0,0.1,0.2,0.3,0.4");
-  ArrayType weights1_expected = ArrayType::FromString("-1,-1,1,5,11,19");
-  ArrayType weights2_expected = ArrayType::FromString("17, 0, -1, 14, 45, 92");
-  grad1                       = ArrayType::FromString("-1.7,0,-0.1,2.8,13.5,36.8");
-  grad2                       = ArrayType::FromString("3.5, 0, 0.3, -4.6, -23.7, -66");
+  data2                       = ArrayType::FromString(R"(-2, -1, 0, 1, 2, 3)");
+  error_signal                = ArrayType::FromString(R"(-0.1,0,0.1,0.2,0.3,0.4)");
+  ArrayType weights1_expected = ArrayType::FromString(R"(-1,-1,1,5,11,19)");
+  ArrayType weights2_expected = ArrayType::FromString(R"(17, 0, -1, 14, 45, 92)");
+  grad1                       = ArrayType::FromString(R"(-1.7,0,-0.1,2.8,13.5,36.8)");
+  grad2                       = ArrayType::FromString(R"(3.5, 0, 0.3, -4.6, -23.7, -66)");
 
   g.SetInput(input_name2, data2);
 
@@ -253,20 +253,20 @@ TYPED_TEST(GraphTest, diamond_graph_backward)  // output=(input1*input2)-(input1
   g.BackPropagate(output_name, error_signal);
 
   // Test Weights
-  std::vector<TypeParam> weights2 = g.GetWeights();
+  std::vector<TypeParam> weights2 = g.get_weights();
   EXPECT_EQ(weights2.size(), 2);
-  ASSERT_TRUE(weights2[0].AllClose(weights1_expected, static_cast<DataType>(1e-5f),
+  ASSERT_TRUE(weights2[1].AllClose(weights1_expected, static_cast<DataType>(1e-5f),
                                    static_cast<DataType>(1e-5f)));
-  ASSERT_TRUE(weights2[1].AllClose(weights2_expected, static_cast<DataType>(1e-5f),
+  ASSERT_TRUE(weights2[0].AllClose(weights2_expected, static_cast<DataType>(1e-5f),
                                    static_cast<DataType>(1e-5f)));
 
   // Test gradient
   std::vector<TypeParam> gradients2 = g.GetGradients();
   EXPECT_EQ(gradients2.size(), 2);
   ASSERT_TRUE(
-      gradients2[0].AllClose(grad1, static_cast<DataType>(1e-5f), static_cast<DataType>(1e-5f)));
+      gradients2[1].AllClose(grad1, static_cast<DataType>(1e-5f), static_cast<DataType>(1e-5f)));
   ASSERT_TRUE(
-      gradients2[1].AllClose(grad2, static_cast<DataType>(1e-5f), static_cast<DataType>(1e-5f)));
+      gradients2[0].AllClose(grad2, static_cast<DataType>(1e-5f), static_cast<DataType>(1e-5f)));
 }
 
 TYPED_TEST(GraphTest, diamond_graph_getStateDict)
@@ -274,8 +274,8 @@ TYPED_TEST(GraphTest, diamond_graph_getStateDict)
   using ArrayType = TypeParam;
 
   // Generate input
-  ArrayType data1 = ArrayType::FromString("-1,0,1,2,3,4");
-  ArrayType data2 = ArrayType::FromString("-20,-10, 0, 10, 20, 30");
+  ArrayType data1 = ArrayType::FromString(R"(-1,0,1,2,3,4)");
+  ArrayType data2 = ArrayType::FromString(R"(-20,-10, 0, 10, 20, 30)");
 
   // Create graph
   std::string                 name = "Diamond";

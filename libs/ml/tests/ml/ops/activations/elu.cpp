@@ -17,8 +17,10 @@
 //------------------------------------------------------------------------------
 
 #include "ml/ops/activations/elu.hpp"
-#include "math/fixed_point/fixed_point.hpp"
+
 #include "math/tensor.hpp"
+#include "vectorise/fixed_point/fixed_point.hpp"
+
 #include <gtest/gtest.h>
 
 template <typename T>
@@ -37,9 +39,9 @@ TYPED_TEST(EluTest, forward_test)
   using ArrayType     = TypeParam;
   using VecTensorType = typename fetch::ml::Ops<ArrayType>::VecTensorType;
 
-  ArrayType data = ArrayType::FromString("1, -2, 3, -4, 5, -6, 7, -8");
+  ArrayType data = ArrayType::FromString(R"(1, -2, 3, -4, 5, -6, 7, -8)");
   ArrayType gt   = ArrayType::FromString(
-      "1, -1.72932943352677, 3, -1.96336872222253, 5, -1.99504249564667, 7, -1.99932907474419");
+      R"(1, -1.72932943352677, 3, -1.96336872222253, 5, -1.99504249564667, 7, -1.99932907474419)");
 
   fetch::ml::ops::Elu<ArrayType> op(DataType{2.0});
 
@@ -89,9 +91,9 @@ TYPED_TEST(EluTest, backward_test)
   using DataType  = typename TypeParam::Type;
   using ArrayType = TypeParam;
 
-  ArrayType data  = ArrayType::FromString("1, -2, 3, -4, 5, -6, 7, -8");
-  ArrayType error = ArrayType::FromString("0, 0, 0, 0.5, 1, 1, 0, 0");
-  ArrayType gt    = ArrayType::FromString("0, 0, 0, 0.0183156133, 1, 0.0049575567, 0, 0");
+  ArrayType data  = ArrayType::FromString(R"(1, -2, 3, -4, 5, -6, 7, -8)");
+  ArrayType error = ArrayType::FromString(R"(0, 0, 0, 0.5, 1, 1, 0, 0)");
+  ArrayType gt    = ArrayType::FromString(R"(0, 0, 0, 0.0183156133, 1, 0.0049575567, 0, 0)");
 
   fetch::ml::ops::Elu<ArrayType> op(DataType{2.0});
   std::vector<ArrayType>         prediction = op.Backward({data}, error);

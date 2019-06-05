@@ -45,7 +45,7 @@ public:
                DataType const &learning_rate = DataType{0.001f});
 
 private:
-  void ApplyGradients() override;
+  void ApplyGradients(SizeType batch_size) override;
 };
 
 template <class T, class C>
@@ -60,17 +60,19 @@ SGDOptimiser<T, C>::SGDOptimiser(std::shared_ptr<Graph<T>>
 // private
 
 template <class T, class C>
-void SGDOptimiser<T, C>::ApplyGradients()
+void SGDOptimiser<T, C>::ApplyGradients(SizeType batch_size)
 {
   auto trainable_it = this->graph_trainables_.begin();
   auto gradient_it  = this->gradients_.begin();
 
   while (gradient_it != this->gradients_.end())
   {
-    // grad[i]=grad[i] * -learning_rate
-    fetch::math::Multiply((*trainable_it)->Gradients(), -this->learning_rate_, *gradient_it);
+    // output_grad[i]=(input_grad[i]/batch_size) * -learning_rate
+    fetch::math::Multiply((*trainable_it)->get_gradients(),
+                          (-this->learning_rate_) / static_cast<DataType>(batch_size),
+                          *gradient_it);
 
-    // Apply gradient weights[i]+=grad[i]
+    // Apply gradient weights[i]+=output_grad[i]
     (*trainable_it)->ApplyGradient(*gradient_it);
 
     ++trainable_it;

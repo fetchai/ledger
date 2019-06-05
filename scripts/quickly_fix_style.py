@@ -20,7 +20,6 @@
 
 import run_static_analysis
 import apply_style
-import check_license_header
 import subprocess
 import sys
 import os
@@ -156,11 +155,6 @@ def main():
     compare_branch = args.branch
     build_path = args.build_path
 
-    # Firstly, check license headers
-    print("Checking license headers")
-    sys.argv = ['_', '--fix']
-    check_license_header.main()
-
     changed_files = []
     # Stack overflow 34279322
     proc = subprocess.Popen(
@@ -190,8 +184,7 @@ def main():
         print(changed_files_fullpath)
 
     print("Applying style")
-    sys.argv = ['_']
-    sys.argv.extend(changed_files_fullpath)
+    sys.argv = ['_', '--commit', compare_branch]
     if args.verbose:
         print(sys.argv)
     apply_style.main()

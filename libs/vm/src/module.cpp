@@ -174,11 +174,12 @@ Module::Module()
   iarray.CreateConstuctor<int32_t>();
   iarray.CreateMemberFunction("count", &IArray::Count);
   iarray.CreateMemberFunction("append", &IArray::Append);
-  iarray.CreateMemberFunction("pop_back", &IArray::PopBackOne);
-  iarray.CreateMemberFunction("pop_back", &IArray::PopBackMany);
-  iarray.CreateMemberFunction("pop_front", &IArray::PopFrontOne);
-  iarray.CreateMemberFunction("pop_front", &IArray::PopFrontMany);
+  iarray.CreateMemberFunction("popBack", &IArray::PopBackOne);
+  iarray.CreateMemberFunction("popBack", &IArray::PopBackMany);
+  iarray.CreateMemberFunction("popFront", &IArray::PopFrontOne);
+  iarray.CreateMemberFunction("popFront", &IArray::PopFrontMany);
   iarray.CreateMemberFunction("reverse", &IArray::Reverse);
+  iarray.CreateMemberFunction("extend", &IArray::Extend);
   iarray.EnableIndexOperator<AnyInteger, TemplateParameter>();
   iarray.CreateInstantiationType<Array<bool>>();
   iarray.CreateInstantiationType<Array<int8_t>>();
@@ -201,7 +202,7 @@ Module::Module()
   auto address = GetClassInterface<Address>();
   address.CreateConstuctor<>();
   address.CreateConstuctor<Ptr<String>>();
-  address.CreateMemberFunction("signed_tx", &Address::HasSignedTx);
+  address.CreateMemberFunction("signedTx", &Address::HasSignedTx);
 
   auto istate = GetClassInterface<IState>();
   istate.CreateConstuctor<Ptr<String>, TemplateParameter>();

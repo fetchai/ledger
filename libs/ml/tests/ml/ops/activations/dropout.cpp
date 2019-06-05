@@ -17,8 +17,10 @@
 //------------------------------------------------------------------------------
 
 #include "ml/ops/activations/dropout.hpp"
-#include "math/fixed_point/fixed_point.hpp"
+
 #include "math/tensor.hpp"
+#include "vectorise/fixed_point/fixed_point.hpp"
+
 #include <gtest/gtest.h>
 
 template <typename T>
@@ -37,8 +39,8 @@ TYPED_TEST(DropoutTest, forward_test)
   using ArrayType     = TypeParam;
   using VecTensorType = typename fetch::ml::Ops<ArrayType>::VecTensorType;
 
-  ArrayType data = ArrayType::FromString("1, -2, 3, -4, 5, -6, 7, -8");
-  ArrayType gt   = ArrayType::FromString("0, -2, 0,  0, 5, -6, 7, -8");
+  ArrayType data = ArrayType::FromString(R"(1, -2, 3, -4, 5, -6, 7, -8)");
+  ArrayType gt   = ArrayType::FromString(R"(0, -2, 0,  0, 5, -6, 7, -8)");
 
   fetch::ml::ops::Dropout<ArrayType> op(DataType{0.5}, 12345);
 
@@ -51,7 +53,7 @@ TYPED_TEST(DropoutTest, forward_test)
   ASSERT_TRUE(prediction.AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
 
   // Test after generating new random alpha value
-  gt = ArrayType::FromString("1, -2, 3, 0, 5, 0, 7, 0");
+  gt = ArrayType::FromString(R"(1, -2, 3, 0, 5, 0, 7, 0)");
 
   op.Forward(VecTensorType({data}), prediction);
 
@@ -61,7 +63,7 @@ TYPED_TEST(DropoutTest, forward_test)
   // Test with is_training set to false
   op.SetTraining(false);
 
-  gt = ArrayType::FromString("1, -2, 3, -4, 5, -6, 7, -8");
+  gt = ArrayType::FromString(R"(1, -2, 3, -4, 5, -6, 7, -8)");
 
   op.Forward(VecTensorType({data}), prediction);
 
@@ -107,9 +109,9 @@ TYPED_TEST(DropoutTest, backward_test)
   using ArrayType     = TypeParam;
   using VecTensorType = typename fetch::ml::Ops<ArrayType>::VecTensorType;
 
-  ArrayType data  = ArrayType::FromString("1, -2, 3, -4, 5, -6, 7, -8");
-  ArrayType error = ArrayType::FromString("0, 0, 0, 0, 1, 1, 0, 0");
-  ArrayType gt    = ArrayType::FromString("0, 0, 0, 0, 1, 1, 0, 0");
+  ArrayType data  = ArrayType::FromString(R"(1, -2, 3, -4, 5, -6, 7, -8)");
+  ArrayType error = ArrayType::FromString(R"(0, 0, 0, 0, 1, 1, 0, 0)");
+  ArrayType gt    = ArrayType::FromString(R"(0, 0, 0, 0, 1, 1, 0, 0)");
 
   fetch::ml::ops::Dropout<ArrayType> op(DataType{0.5f}, 12345);
 
@@ -126,7 +128,7 @@ TYPED_TEST(DropoutTest, backward_test)
   // Forward pass will update random value
   op.Forward(VecTensorType({data}), output);
 
-  gt         = ArrayType::FromString("0, 0, 0, 0, 1, 0, 0, 0");
+  gt         = ArrayType::FromString(R"(0, 0, 0, 0, 1, 0, 0, 0)");
   prediction = op.Backward({data}, error);
 
   // test correct values
@@ -135,7 +137,7 @@ TYPED_TEST(DropoutTest, backward_test)
   // Test with is_training set to false
   op.SetTraining(false);
 
-  gt         = ArrayType::FromString("0, 0, 0, 0, 1, 1, 0, 0");
+  gt         = ArrayType::FromString(R"(0, 0, 0, 0, 1, 1, 0, 0)");
   prediction = op.Backward({data}, error);
 
   // test correct values

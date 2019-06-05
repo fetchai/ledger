@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "ledger/chaincode/smart_contract.hpp"
+
 #include "core/byte_array/decoders.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "crypto/fnv.hpp"
@@ -108,8 +109,7 @@ SmartContract::SmartContract(std::string const &source)
 
   FETCH_LOG_DEBUG(LOGGING_NAME, "Constructing contract: 0x", contract_digest().ToHex());
 
-  module_->CreateFreeFunctionFromLambda<uint64_t>("getBlockNumber",
-                                                  [this](vm::VM *) { return block_index_; });
+  module_->CreateFreeFunction("getBlockNumber", [this](vm::VM *) { return block_index_; });
 
   // create and compile the executable
   auto errors = vm_modules::VMFactory::Compile(module_, source_, *executable_);

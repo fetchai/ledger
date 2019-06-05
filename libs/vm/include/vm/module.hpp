@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "meta/tuple.hpp"
 #include "vm/address.hpp"
 #include "vm/array.hpp"
 #include "vm/compiler.hpp"
@@ -25,12 +26,17 @@
 #include "vm/module/base.hpp"
 #include "vm/module/constructor_invoke.hpp"
 #include "vm/module/free_function_invoke.hpp"
+#include "vm/module/functor_invoke.hpp"
 #include "vm/module/member_function_invoke.hpp"
 #include "vm/module/static_member_function_invoke.hpp"
 #include "vm/state.hpp"
 #include "vm/vm.hpp"
 
 #include <functional>
+#include <string>
+#include <tuple>
+#include <type_traits>
+#include <typeinfo>
 
 namespace fetch {
 namespace vm {
@@ -118,8 +124,8 @@ public:
     {
       static_assert(sizeof...(Types) >= 2, "2 or more types expected");
       using Tuple       = std::tuple<Types...>;
-      using InputsTuple = typename RemoveLastType<Tuple>::type;
-      using OutputType  = typename GetLastType<Tuple>::type;
+      using InputsTuple = typename meta::RemoveLastType<Tuple>::type;
+      using OutputType  = typename meta::GetLastType<Tuple>::type;
       using Getter      = typename IndexedValueGetter<Type, InputsTuple, OutputType>::type;
       using Setter      = typename IndexedValueSetter<Type, InputsTuple, OutputType>::type;
       TypeIndex const type_index__ = type_index_;
@@ -182,26 +188,6 @@ public:
     TypeIndex type_index_;
   };
 
-  template <typename ReturnType>
-  void CreateFreeFunctionFromLambda(std::string const &name, std::function<ReturnType(VM *)> f)
-  {
-    TypeIndexArray  parameter_type_index_array;
-    TypeIndex const return_type_index = TypeGetter<ReturnType>::GetTypeIndex();
-    Handler         handler           = [f](VM *vm) {
-      ReturnType           result               = f(vm);
-      constexpr auto const stack_pointer_offset = -1;
-      StackSetter<ReturnType>::Set(vm, stack_pointer_offset, std::move(result),
-                                   vm->instruction_->type_id);
-      vm->sp_ -= stack_pointer_offset;
-    };
-
-    auto compiler_setup_function = [name, parameter_type_index_array, return_type_index,
-                                    handler](Compiler *compiler) {
-      compiler->CreateFreeFunction(name, parameter_type_index_array, return_type_index, handler);
-    };
-    AddCompilerSetupFunction(compiler_setup_function);
-  }
-
   template <typename ReturnType, typename... Ts>
   void CreateFreeFunction(std::string const &name, ReturnType (*f)(VM *, Ts...))
   {
@@ -210,6 +196,34 @@ public:
     TypeIndex const return_type_index = TypeGetter<ReturnType>::GetTypeIndex();
     Handler         handler = [f](VM *vm) { InvokeFreeFunction(vm, vm->instruction_->type_id, f); };
     auto            compiler_setup_function = [name, parameter_type_index_array, return_type_index,
+                                    handler](Compiler *compiler) {
+      compiler->CreateFreeFunction(name, parameter_type_index_array, return_type_index, handler);
+    };
+    AddCompilerSetupFunction(compiler_setup_function);
+  }
+
+  /*
+  // Create a free function that takes an Int32 and a Float32 and returns a Float64
+  auto lambda = [](fetch::vm::VM*, int32_t i, float f)
+  {
+    return double(float(i) + f);
+  };
+  module.CreateFreeFunction("myfunc", lambda);
+  */
+  template <typename Functor>
+  void CreateFreeFunction(std::string const &name, Functor &&functor)
+  {
+    using ReturnType     = typename FunctorTraits<Functor>::return_type;
+    using SignatureTuple = typename FunctorTraits<Functor>::args_tuple_type;
+    using ParameterTuple = typename meta::RemoveFirstType<SignatureTuple>::type;
+    TypeIndexArray parameter_type_index_array;
+    UnrollTupleParameterTypes<ParameterTuple>::Unroll(parameter_type_index_array);
+    TypeIndex const return_type_index = TypeGetter<ReturnType>::GetTypeIndex();
+
+    Handler handler = [f{std::forward<Functor>(functor)}](VM *vm) {
+      InvokeFunctor(vm, vm->instruction_->type_id, f, ParameterTuple());
+    };
+    auto compiler_setup_function = [name, parameter_type_index_array, return_type_index,
                                     handler](Compiler *compiler) {
       compiler->CreateFreeFunction(name, parameter_type_index_array, return_type_index, handler);
     };

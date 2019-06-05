@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "variant/variant.hpp"
+
 #include "core/macros.hpp"
 
 #include <iomanip>
