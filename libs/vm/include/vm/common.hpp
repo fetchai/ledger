@@ -136,7 +136,8 @@ enum class NodeKind : uint16_t
   Divide                                    = 61,
   InplaceDivide                             = 62,
   Modulo                                    = 63,
-  InplaceModulo                             = 64
+  InplaceModulo                             = 64,
+  Array                                     = 65
 };
 
 enum class ExpressionKind : uint8_t

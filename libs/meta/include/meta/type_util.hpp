@@ -101,5 +101,13 @@ struct IsAnyOf
 template <class T, class... Ts>
 static constexpr auto IsAnyOfV = IsAnyOf<T, Ts...>::value;
 
+template<class...> struct Last;
+
+template<class...> using LastT = typename<Last<class...>>::type;
+
+template<class Car, class Cadr, class... Cddr> struct Last: Last<Cadr, Cddr...> {};
+
+template<class RV> struct Last<RV> { using type = RV; };
+
 }  // namespace type_util
 }  // namespace fetch

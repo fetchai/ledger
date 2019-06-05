@@ -348,10 +348,19 @@ struct ExpressionNode : public Node
 {
   ExpressionNode(NodeKind node_kind, std::string const &text, uint16_t line)
     : Node(NodeCategory::Expression, node_kind, text, line)
-  {
-    expression_kind              = ExpressionKind::Unknown;
-    function_invoked_on_instance = false;
-  }
+    , expression_kind{ExpressionKind::Unknown}
+    , function_invoked_on_instance{}
+  {}
+
+  ExpressionNode(ExpressionKind expression_kind, TypePtr type, VariablePtr variable, FunctionGroupPtr fg, bool function_invoked_on_instance, FunctionPtr function)
+    : expression_kind{expression_kind}
+    , type{std::move(type)}
+    , variable{std::move(variable)}
+    , fg{std::move(fg)}
+    , function_invoked_on_instance{function_invoked_on_instance}
+    , function{std::move(function)}
+  {}
+
   virtual ~ExpressionNode() = default;
   virtual void Reset() override
   {

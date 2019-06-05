@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "meta/type_util.hpp"
 #include "vm/node.hpp"
 
 namespace fetch {
@@ -63,9 +64,9 @@ private:
     bool              is_operator;
     ExpressionNodePtr node;
     OpInfo            op_info;
-    Token::Kind       closer_token_kind;
+    Token::Kind       closer_token_kind = Token::Kind::Unknown;
     std::string       closer_token_text;
-    int               num_members;
+    int               num_members = 0;
   };
 
   using StringSet = std::unordered_set<std::string>;
@@ -105,6 +106,7 @@ private:
   ExpressionNodePtr ParseExpression(bool is_conditional_expression = false);
   bool              HandleIdentifier();
   bool              ParseExpressionIdentifier(std::string &name);
+  ExpressionNodePtr ParseArray();
   bool              HandleLiteral(NodeKind kind);
   void              HandlePlus();
   void              HandleMinus();
@@ -118,11 +120,18 @@ private:
   bool HandleCloser(bool is_conditional_expression);
   bool HandleComma();
   void HandleOp(NodeKind kind, OpInfo const &op_info);
+  bool HandleLeftSquareBracket();
+  bool HandleArrayExpression();
   void AddGroup(NodeKind kind, int arity, Token::Kind closer_token_kind,
                 std::string const &closer_token_text);
   void AddOp(NodeKind kind, OpInfo const &op_info);
   void AddOperand(NodeKind kind);
   void AddError(std::string const &message);
+  bool MatchLiteral(Token::Kind token);
+
+  template<class F, class... Fs> auto Branches(F &&f, Fs &&...fs) {
+	  using RetVal = type_util::
+  }
 
   void IncrementGroupMembers()
   {
@@ -133,7 +142,7 @@ private:
     }
   }
 
-  void Next()
+  constexpr void Next() noexcept
   {
     if (index_ < static_cast<int>(tokens_.size()) - 1)
     {
@@ -141,7 +150,7 @@ private:
     }
   }
 
-  void Undo()
+  constexpr void Undo() noexcept
   {
     if (--index_ >= 0)
     {
@@ -151,6 +160,20 @@ private:
     {
       token_ = nullptr;
     }
+  }
+
+  constexpr int Index() const noexcept
+  {
+	  return index_;
+  }
+
+  constexpr void Rewind(int index) noexcept
+  {
+	  if (index != index_)
+	  {
+		  index_ = index;
+		  token_ = index < static_cast<int>(tokens_.size())? &tokens_[index_] : &tokens.back();
+	  }
   }
 };
 
