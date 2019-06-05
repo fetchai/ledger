@@ -475,18 +475,35 @@ struct Variant
   }
 };
 
-template <std::size_t ID>
-struct VariantT : public Variant
+struct TemplateParameter1 : public Variant
 {
   using Variant::Variant;
 };
 
-using TemplateParameter1 = VariantT<0>;
-using TemplateParameter2 = VariantT<1>;
-using Any                = VariantT<2>;
-using AnyPrimitive       = VariantT<3>;
-using AnyInteger         = VariantT<4>;
-using AnyFloatingPoint   = VariantT<5>;
+struct TemplateParameter2 : public Variant
+{
+  using Variant::Variant;
+};
+
+struct Any : public Variant
+{
+  using Variant::Variant;
+};
+
+struct AnyPrimitive : public Variant
+{
+  using Variant::Variant;
+};
+
+struct AnyInteger : public Variant
+{
+  using Variant::Variant;
+};
+
+struct AnyFloatingPoint : public Variant
+{
+  using Variant::Variant;
+};
 
 inline void Serialize(ByteArrayBuffer &buffer, Variant const &variant)
 {
