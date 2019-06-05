@@ -37,8 +37,6 @@ public:
     , value_type_{value_type}
   {}
 
-  ~IShardedState() = default;
-
   virtual TemplateParameter1 GetIndexedValue(Ptr<String> const &key)                    = 0;
   virtual void SetIndexedValue(Ptr<String> const &key, TemplateParameter1 const &value) = 0;
 

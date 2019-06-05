@@ -103,7 +103,7 @@ private:
 
 } // namespace
 
-inline Ptr<IShardedState> IShardedState::Constructor(VM *vm, TypeId type_id, Ptr<Object> name)
+Ptr<IShardedState> IShardedState::Constructor(VM *vm, TypeId type_id, Ptr<Object> name)
 {
   TypeInfo const &type_info     = vm->GetTypeInfo(type_id);
   TypeId const    value_type_id = type_info.parameter_type_ids[0];
