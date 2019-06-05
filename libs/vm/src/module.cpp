@@ -166,7 +166,7 @@ Module::Module()
 
   auto imatrix = GetClassInterface<IMatrix>();
   imatrix.CreateConstuctor<int32_t, int32_t>();
-  imatrix.EnableIndexOperator<AnyInteger, AnyInteger, TemplateParameter>();
+  imatrix.EnableIndexOperator<AnyInteger, AnyInteger, TemplateParameter1>();
   imatrix.CreateInstantiationType<Matrix<double>>();
   imatrix.CreateInstantiationType<Matrix<float>>();
 
@@ -180,7 +180,7 @@ Module::Module()
   iarray.CreateMemberFunction("popFront", &IArray::PopFrontMany);
   iarray.CreateMemberFunction("reverse", &IArray::Reverse);
   iarray.CreateMemberFunction("extend", &IArray::Extend);
-  iarray.EnableIndexOperator<AnyInteger, TemplateParameter>();
+  iarray.EnableIndexOperator<AnyInteger, TemplateParameter1>();
   iarray.CreateInstantiationType<Array<bool>>();
   iarray.CreateInstantiationType<Array<int8_t>>();
   iarray.CreateInstantiationType<Array<uint8_t>>();
@@ -205,8 +205,8 @@ Module::Module()
   address.CreateMemberFunction("signedTx", &Address::HasSignedTx);
 
   auto istate = GetClassInterface<IState>();
-  istate.CreateConstuctor<Ptr<String>, TemplateParameter>();
-  istate.CreateConstuctor<Ptr<Address>, TemplateParameter>();
+  istate.CreateConstuctor<Ptr<String>, TemplateParameter1>();
+  istate.CreateConstuctor<Ptr<Address>, TemplateParameter1>();
   istate.CreateMemberFunction("get", &IState::Get);
   istate.CreateMemberFunction("set", &IState::Set);
   istate.CreateMemberFunction("existed", &IState::Existed);

@@ -491,7 +491,6 @@ using Any                = VariantT<2>;
 using AnyPrimitive       = VariantT<3>;
 using AnyInteger         = VariantT<4>;
 using AnyFloatingPoint   = VariantT<5>;
-using TemplateParameter  = TemplateParameter1;
 
 inline void Serialize(ByteArrayBuffer &buffer, Variant const &variant)
 {

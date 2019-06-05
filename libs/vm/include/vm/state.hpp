@@ -32,11 +32,11 @@ public:
   virtual ~IState() = default;
 
   static Ptr<IState> Constructor(VM *vm, TypeId type_id, Ptr<Object> &&name,
-                                 TemplateParameter const &value);
+                                 TemplateParameter1 const &value);
 
-  virtual TemplateParameter Get() const                         = 0;
-  virtual void              Set(TemplateParameter const &value) = 0;
-  virtual bool              Existed() const                     = 0;
+  virtual TemplateParameter1 Get() const                          = 0;
+  virtual void               Set(TemplateParameter1 const &value) = 0;
+  virtual bool               Existed() const                      = 0;
 
 protected:
   IState(VM *vm, TypeId type_id)
@@ -140,7 +140,7 @@ public:
   // Construct state object, default argument = get from state DB, initializing to value if not
   // found
   State(VM *vm, TypeId type_id, TypeId value_type_id, Ptr<Object> &&name,
-        TemplateParameter const &value)
+        TemplateParameter1 const &value)
     : IState(vm, type_id)
     , name_{NameToString(vm, std::move(name))}
     , value_{value.Get<Value>()}
@@ -180,12 +180,12 @@ public:
     }
   }
 
-  TemplateParameter Get() const override
+  TemplateParameter1 Get() const override
   {
-    return TemplateParameter(value_, value_type_id_);
+    return TemplateParameter1(value_, value_type_id_);
   }
 
-  void Set(TemplateParameter const &value) override
+  void Set(TemplateParameter1 const &value) override
   {
     value_ = GetValue<>(value);
   }
@@ -200,13 +200,13 @@ private:
   using Status = IoObserverInterface::Status;
 
   template <typename Y = T>
-  meta::EnableIf<IsPrimitive<Y>::value, Y> GetValue(TemplateParameter const &value)
+  meta::EnableIf<IsPrimitive<Y>::value, Y> GetValue(TemplateParameter1 const &value)
   {
     return value.Get<Value>();
   }
 
   template <typename Y = T>
-  meta::EnableIf<IsPtr<Y>::value, Y> GetValue(TemplateParameter const &value)
+  meta::EnableIf<IsPtr<Y>::value, Y> GetValue(TemplateParameter1 const &value)
   {
     auto v{value.Get<Value>()};
     if (!v)
@@ -297,7 +297,7 @@ inline Ptr<IState> IState::Construct(VM *vm, TypeId type_id, Args &&... args)
 }
 
 inline Ptr<IState> IState::Constructor(VM *vm, TypeId type_id, Ptr<Object> &&name,
-                                       TemplateParameter const &value)
+                                       TemplateParameter1 const &value)
 {
   if (name)
   {
@@ -321,7 +321,7 @@ inline std::string IState::NameToString(VM *vm, Ptr<Object> &&name)
   vm->RuntimeError(
       "Unsupported type of `name` parameter for `State<...>(name)` constructor. It must be either "
       "`String` or `Address` type.");
-  return std::string{};
+  return {};
 }
 
 }  // namespace vm
