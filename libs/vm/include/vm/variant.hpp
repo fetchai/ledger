@@ -545,15 +545,14 @@ inline void Serialize(ByteArrayBuffer &buffer, Variant const &variant)
     buffer << variant.primitive.f64;
     break;
   default:
-    break;
-  }
-
-  if (variant.object)
-  {
-    if (!variant.object->SerializeTo(buffer))
+    if (variant.object)
     {
-      throw std::runtime_error("Unable to serialize type");
+      if (!variant.object->SerializeTo(buffer))
+      {
+        throw std::runtime_error("Unable to serialize type");
+      }
     }
+    break;
   }
 }
 
@@ -601,15 +600,14 @@ inline void Deserialize(ByteArrayBuffer &buffer, Variant &variant)
     buffer >> variant.primitive.f64;
     break;
   default:
-    break;
-  }
-
-  if (variant.object)
-  {
-    if (!variant.object->DeserializeFrom(buffer))
+    if (variant.object)
     {
-      throw std::runtime_error("Failed to the deserialize compound object");
+      if (!variant.object->DeserializeFrom(buffer))
+      {
+        throw std::runtime_error("Failed to the deserialize compound object");
+      }
     }
+    break;
   }
 }
 

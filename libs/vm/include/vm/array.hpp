@@ -86,7 +86,7 @@ struct Array : public IArray
   {
     if (elements.empty())
     {
-      RuntimeError("Failed to pop_back: array is empty");
+      RuntimeError("Failed to popBack: array is empty");
       return {};
     }
 
@@ -103,17 +103,17 @@ struct Array : public IArray
   {
     if (num_to_pop < 0)
     {
-      RuntimeError("Failed to pop_back: argument must be non-negative");
+      RuntimeError("Failed to popBack: argument must be non-negative");
       return {};
     }
 
     if (elements.size() < static_cast<std::size_t>(num_to_pop))
     {
-      RuntimeError("Failed to pop_back: not enough elements in array");
+      RuntimeError("Failed to popBack: not enough elements in array");
       return {};
     }
 
-    auto array = new Array<ElementType>(vm_, element_type_id, element_type_id, num_to_pop);
+    auto array = new Array<ElementType>(vm_, type_id_, element_type_id, num_to_pop);
 
     std::move(elements.rbegin(), elements.rbegin() + num_to_pop, array->elements.rbegin());
 
@@ -126,7 +126,7 @@ struct Array : public IArray
   {
     if (elements.empty())
     {
-      RuntimeError("Failed to pop_front: array is empty");
+      RuntimeError("Failed to popFront: array is empty");
       return {};
     }
 
@@ -148,17 +148,17 @@ struct Array : public IArray
   {
     if (num_to_pop < 0)
     {
-      RuntimeError("Failed to pop_front: argument must be non-negative");
+      RuntimeError("Failed to popFront: argument must be non-negative");
       return {};
     }
 
     if (elements.size() < static_cast<std::size_t>(num_to_pop))
     {
-      RuntimeError("Failed to pop_front: not enough elements in array");
+      RuntimeError("Failed to popFront: not enough elements in array");
       return {};
     }
 
-    auto array = new Array<ElementType>(vm_, element_type_id, element_type_id, num_to_pop);
+    auto array = new Array<ElementType>(vm_, type_id_, element_type_id, num_to_pop);
 
     std::move(elements.begin(), elements.begin() + num_to_pop, array->elements.begin());
 
