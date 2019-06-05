@@ -37,23 +37,24 @@ class CBOWLoader : public DataLoader<fetch::math::Tensor<T>, fetch::math::Tensor
   using SizeType = fetch::math::SizeType;
 
 public:
+  using VocabType  = std::map<std::string, std::pair<SizeType, SizeType>>;
   using ReturnType = std::pair<fetch::math::Tensor<T>, fetch::math::Tensor<T>>;
 
-  CBOWLoader(uint64_t window_size, uint64_t negative_samples)
+  CBOWLoader(SizeType window_size, SizeType negative_samples)
     : current_sentence_(0)
     , current_word_(0)
     , window_size_(window_size)
     , negative_samples_(negative_samples)
   {}
 
-  uint64_t Size() const override
+  SizeType Size() const override
   {
-    uint64_t size(0);
+    SizeType size(0);
     for (auto const &s : data_)
     {
-      if ((uint64_t)s.size() > (2 * window_size_))
+      if ((SizeType)s.size() > (2 * window_size_))
       {
-        size += (uint64_t)s.size() - (2 * window_size_);
+        size += (SizeType)s.size() - (2 * window_size_);
       }
     }
     return size;
@@ -93,7 +94,7 @@ public:
     // Removing words while keeping indexes consecutive takes too long
     // So creating a new object, not the most efficient, but good enought for now
     CBOWLoader new_loader(window_size_, negative_samples_);
-    std::map<uint64_t, std::pair<std::string, uint64_t>> reverse_vocab;
+    std::map<SizeType, std::pair<std::string, SizeType>> reverse_vocab;
     for (auto const &kvp : vocab_)
     {
       reverse_vocab[kvp.second.first] = std::make_pair(kvp.first, kvp.second.second);
@@ -116,7 +117,7 @@ public:
 
   void InitUnigramTable()
   {
-    std::vector<uint64_t> frequencies(VocabSize());
+    std::vector<SizeType> frequencies(VocabSize());
     for (auto const &kvp : GetVocab())
     {
       frequencies[kvp.second.first] = kvp.second.second;
@@ -129,24 +130,24 @@ public:
     // This seems to be one of the most important tricks to get word2vec to train
     // The number of context words changes at each iteration with values in range [1 * 2,
     // window_size_ * 2]
-    uint64_t dynamic_size = rng_() % window_size_ + 1;
+    SizeType dynamic_size = rng_() % window_size_ + 1;
     t.second.Set(0, 0, T(data_[current_sentence_][current_word_ + dynamic_size]));
 
-    for (uint64_t i(0); i < dynamic_size; ++i)
+    for (SizeType i(0); i < dynamic_size; ++i)
     {
       t.first.Set(i, 0, T(data_[current_sentence_][current_word_ + i]));
       t.first.Set(i + dynamic_size, 0,
                   T(data_[current_sentence_][current_word_ + dynamic_size + i + 1]));
     }
 
-    for (uint64_t i(dynamic_size * 2); i < t.first.size(); ++i)
+    for (SizeType i(dynamic_size * 2); i < t.first.size(); ++i)
     {
       t.first(i, 0) = -1;
     }
 
-    for (uint64_t i(1); i < negative_samples_; ++i)
+    for (SizeType i(1); i < negative_samples_; ++i)
     {
-      t.second(i, 0) = T(unigram_table_.SampleNegative(static_cast<uint64_t>(t.second(0, 0))));
+      t.second(i, 0) = T(unigram_table_.SampleNegative(static_cast<SizeType>(t.second(0, 0))));
     }
     current_word_++;
     if (current_word_ >= data_.at(current_sentence_).size() - (2 * window_size_))
@@ -172,7 +173,7 @@ public:
 
   bool AddData(std::string const &s)
   {
-    std::vector<uint64_t> indexes = StringsToIndices(PreprocessString(s));
+    std::vector<SizeType> indexes = StringsToIndices(PreprocessString(s));
     if (indexes.size() >= 2 * window_size_ + 1)
     {
       data_.push_back(std::move(indexes));
@@ -181,12 +182,12 @@ public:
     return false;
   }
 
-  std::map<std::string, std::pair<uint64_t, uint64_t>> const &GetVocab() const
+  VocabType const &GetVocab() const
   {
     return vocab_;
   }
 
-  std::string WordFromIndex(uint64_t index) const
+  std::string WordFromIndex(SizeType index) const
   {
     for (auto const &kvp : vocab_)
     {
@@ -201,19 +202,19 @@ public:
   SizeType IndexFromWord(std::string word)
   {
     auto tmp = vocab_[word];
-    return tmp.second;
+    return tmp.first;
   }
 
 private:
-  std::vector<uint64_t> StringsToIndices(std::vector<std::string> const &strings)
+  std::vector<SizeType> StringsToIndices(std::vector<std::string> const &strings)
   {
-    std::vector<uint64_t> indexes;
+    std::vector<SizeType> indexes;
     if (strings.size() >= 2 * window_size_ + 1)  // Don't bother processing too short inputs
     {
       indexes.reserve(strings.size());
       for (std::string const &s : strings)
       {
-        auto value = vocab_.insert(std::make_pair(s, std::make_pair((uint64_t)(vocab_.size()), 0)));
+        auto value = vocab_.insert(std::make_pair(s, std::make_pair((SizeType)(vocab_.size()), 0)));
         indexes.push_back((*value.first).second.first);
         value.first->second.second++;
       }
@@ -240,14 +241,14 @@ private:
   }
 
 private:
-  uint64_t                                             current_sentence_;
-  uint64_t                                             current_word_;
-  uint64_t                                             window_size_;
-  uint64_t                                             negative_samples_;
-  std::map<std::string, std::pair<uint64_t, uint64_t>> vocab_;
-  std::vector<std::vector<uint64_t>>                   data_;
-  fetch::random::LinearCongruentialGenerator           rng_;
-  UnigramTable                                         unigram_table_;
+  SizeType                                   current_sentence_;
+  SizeType                                   current_word_;
+  SizeType                                   window_size_;
+  SizeType                                   negative_samples_;
+  VocabType                                  vocab_;
+  std::vector<std::vector<SizeType>>         data_;
+  fetch::random::LinearCongruentialGenerator rng_;
+  UnigramTable                               unigram_table_;
 };
 }  // namespace ml
 }  // namespace fetch
