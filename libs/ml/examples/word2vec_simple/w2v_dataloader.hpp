@@ -308,8 +308,11 @@ std::string W2VLoader<T>::WordFromIndex(SizeType index) const
 template <typename T>
 math::SizeType W2VLoader<T>::IndexFromWord(std::string word)
 {
-  auto tmp = vocab_[word];
-  return tmp.first;
+  if (vocab_.find(word) != vocab_.end())
+  {
+    return (vocab_[word]).first;
+  }
+  return 0;
 }
 
 /**

@@ -35,6 +35,7 @@
 #include "polyfill.hpp"
 #include "unigram_table.hpp"
 #include "w2v_dataloader.hpp"
+#include "word_analogy.hpp"
 
 using namespace std::chrono;
 using namespace fetch::ml;
@@ -312,124 +313,6 @@ public:
   }
 };
 
-template <typename ArrayType>
-void EvalAnalogy(W2VLoader<FloatType> &data_loader, ArrayType &embeds)
-{
-  // define top K
-  SizeType k = 5;
-
-  /// first we L2 normalise all embeddings ///
-  SizeType vocab_size     = embeds.shape()[1];
-  SizeType embedding_size = embeds.shape()[0];
-  auto     embeddings     = embeds.Copy();
-  for (std::size_t i = 0; i < vocab_size; ++i)
-  {
-    FloatType l2 = 0;
-    l2           = std::sqrt(l2);
-    for (std::size_t k = 0; k < embedding_size; ++k)
-    {
-      l2 += (embeddings(k, i) * embeddings(k, i));
-    }
-    l2 = sqrt(l2);
-
-    // divide each element by ss
-    for (std::size_t k = 0; k < embedding_size; ++k)
-    {
-      embeddings(k, i) /= l2;
-    }
-  }
-
-  std::string word1 = "italy";
-  std::string word2 = "rome";
-  std::string word3 = "france";
-  std::string word4 = "paris";
-
-  SizeType word1_idx = data_loader.IndexFromWord(word1);
-  SizeType word2_idx = data_loader.IndexFromWord(word2);
-  SizeType word3_idx = data_loader.IndexFromWord(word3);
-  SizeType word4_idx = data_loader.IndexFromWord(word4);
-
-  auto italy_vector  = embeddings.Slice(word1_idx, 1).Copy();
-  auto rome_vector   = embeddings.Slice(word2_idx, 1).Copy();
-  auto france_vector = embeddings.Slice(word3_idx, 1).Copy();
-  auto paris_vector  = embeddings.Slice(word4_idx, 1).Copy();
-
-  std::vector<std::pair<typename ArrayType::SizeType, typename ArrayType::Type>> output;
-
-  /// Vector Math analogy: Paris - France + Italy should give us rome ///
-  auto analogy_target_vector = paris_vector - france_vector + italy_vector;
-
-  // normalise the analogy target vector
-  FloatType l2 = 0;
-  l2           = std::sqrt(l2);
-  for (auto &val : analogy_target_vector)
-  {
-    l2 += (val * val);
-  }
-  l2 = sqrt(l2);
-  for (auto &val : analogy_target_vector)
-  {
-    val /= l2;
-  }
-
-  // TODO: we should be able to calculate this all in one call to KNNCosine - result is different
-  // however
-  //  output = fetch::math::clustering::KNNCosine(embeddings.Transpose(),
-  //  analogy_target_vector.Transpose(), k);
-
-  /// manual calculate similarity ///
-
-  //
-  FloatType                                   cur_similarity;
-  std::vector<std::pair<SizeType, FloatType>> best_word_distances{};
-  for (std::size_t m = 0; m < k; ++m)
-  {
-    best_word_distances.emplace_back(std::make_pair(0, fetch::math::numeric_lowest<FloatType>()));
-  }
-
-  for (std::size_t i = 0; i < vocab_size; ++i)
-  {
-    cur_similarity = 0;
-    if ((i == 0) || (i == word1_idx) || (i == word2_idx) || (i == word3_idx))
-    {
-      continue;
-    }
-
-    SizeType e_idx = 0;
-    for (auto &val : analogy_target_vector)
-    {
-      cur_similarity += (val * embeddings(e_idx, i));
-      e_idx++;
-    }
-
-    bool replaced = false;
-    for (std::size_t j = 0; j < best_word_distances.size(); ++j)
-    {
-      if (cur_similarity > best_word_distances[j].second)
-      {
-        auto prev_best = best_word_distances[j];
-        if (replaced)
-        {
-          best_word_distances[j] = prev_best;
-        }
-        else
-        {
-          best_word_distances[j] = std::make_pair(i, cur_similarity);
-          replaced               = true;
-        }
-      }
-    }
-  }
-
-  std::cout << "Paris - France + Italy = : " << std::endl;
-  for (std::size_t l = 0; l < best_word_distances.size(); ++l)
-  {
-    std::cout << "rank: " << l << ", "
-              << "distance, " << best_word_distances.at(l).second << ": "
-              << data_loader.WordFromIndex(best_word_distances.at(l).first) << std::endl;
-  }
-}
-
 void SaveEmbeddings(W2VLoader<FloatType> const &data_loader, std::string output_filename,
                     fetch::math::Tensor<FloatType> &embeddings)
 {
@@ -441,11 +324,9 @@ void SaveEmbeddings(W2VLoader<FloatType> const &data_loader, std::string output_
   outfile << std::to_string(embeddings_size) << " " << std::to_string(vocab_size) << "\n";
   for (SizeType a = 0; a < data_loader.VocabSize(); a++)
   {
-    std::cout << "data_loader.WordFromIndex(a): " << data_loader.WordFromIndex(a) << std::endl;
     outfile << data_loader.WordFromIndex(a) << " ";
     for (SizeType b = 0; b < embeddings_size; ++b)
     {
-      std::cout << "embeddings(b, a): " << embeddings(b, a) << std::endl;
       outfile << embeddings(b, a) << " ";
     }
     outfile << "\n";
@@ -469,11 +350,9 @@ void SaveEmbeddings(W2VLoader<FloatType> const &data_loader, std::string output_
 //  fprintf(fo, "%lld %lld\n", vocab_size, embeddings_size);
 //  for (SizeType a = 0; a < vocab_size; a++)
 //  {
-//    std::cout << "data_loader.WordFromIndex(a): " << data_loader.WordFromIndex(a) << std::endl;
 //    fprintf(fo, "%s ", data_loader.WordFromIndex(a).c_str());
 //    for (SizeType b = 0; b < embeddings_size; b++)
 //    {
-//      std::cout << "embeddings(b, a): " << embeddings(b, a) << std::endl;
 //      std::fwrite(&embeddings(b, a), sizeof(FloatType), 1, fo);
 //    }
 //
@@ -524,42 +403,113 @@ fetch::math::Tensor<FloatType> LoadEmbeddings(std::string filename)
   return embeddings;
 }
 
+int ArgPos(char *str, int argc, char **argv)
+{
+  int a;
+  for (a = 1; a < argc; a++)
+    if (!strcmp(str, argv[a]))
+    {
+      if (a == argc - 1)
+      {
+        printf("Argument missing for %s\n", str);
+        exit(1);
+      }
+      return a;
+    }
+  return -1;
+}
+
 int main(int argc, char **argv)
 {
+  int                      i;
+  std::string              train_file      = "";
+  bool                     load            = false;  // whether to load or train new embeddings
+  bool                     train_mode      = true;   // true for cbow, false for sgns
+  std::string              output_file     = "./vector.bin";
+  SizeType                 top_k           = 10;
+  std::vector<std::string> test_words      = {"france", "paris", "italy"};
+  SizeType                 window_size     = 8;
+  SizeType                 negative        = 25;
+  SizeType                 min_count       = 5;
+  SizeType                 embeddings_size = 200;  // embeddings size
+  SizeType                 iter            = 15;   // training epochs
+  FloatType                alpha           = static_cast<FloatType>(0.025);
+  SizeType                 print_frequency = 10000;
+
   /// INPUT ARGUMENTS ///
-  if (argc == 1)
+  if ((i = ArgPos((char *)"-train", argc, argv)) > 0)
   {
-    std::cout << "must specify training text document as first argument: " << std::endl;
-    return 0;
+    train_file = argv[i + 1];
+  }
+  if ((i = ArgPos((char *)"-mode", argc, argv)) > 0)
+  {
+    assert((argv[i + 1] == "cbow") || (argv[i + 1] == "sgns"));
+    if (std::string(argv[i + 1]) == "cbow")
+    {
+      train_mode = true;
+    }
+    else
+    {
+      train_mode = false;
+    }
+  }
+  if ((i = ArgPos((char *)"-output", argc, argv)) > 0)
+  {
+    output_file = argv[i + 1];
+  }
+  if ((i = ArgPos((char *)"-k", argc, argv)) > 0)
+  {
+    top_k = std::stoull(argv[i + 1]);
+  }
+  if ((i = ArgPos((char *)"-word1", argc, argv)) > 0)
+  {
+    test_words[0] = argv[i + 1];
+  }
+  if ((i = ArgPos((char *)"-word2", argc, argv)) > 0)
+  {
+    test_words[1] = argv[i + 1];
+  }
+  if ((i = ArgPos((char *)"-word3", argc, argv)) > 0)
+  {
+    test_words[2] = argv[i + 1];
+  }
+  if ((i = ArgPos((char *)"-window", argc, argv)) > 0)
+  {
+    window_size = std::stoull(argv[i + 1]);
+  }
+  if ((i = ArgPos((char *)"-negative", argc, argv)) > 0)
+  {
+    negative = std::stoull(argv[i + 1]);
+  }
+  if ((i = ArgPos((char *)"-min", argc, argv)) > 0)
+  {
+    min_count = std::stoull(argv[i + 1]);
+  }
+  if ((i = ArgPos((char *)"-embedding", argc, argv)) > 0)
+  {
+    embeddings_size = std::stoull(argv[i + 1]);
+  }
+  if ((i = ArgPos((char *)"-epochs", argc, argv)) > 0)
+  {
+    iter = std::stoull(argv[i + 1]);
+  }
+  if ((i = ArgPos((char *)"-lr", argc, argv)) > 0)
+  {
+    alpha = std::stoull(argv[i + 1]);
+  }
+  if ((i = ArgPos((char *)"-print", argc, argv)) > 0)
+  {
+    print_frequency = std::stoull(argv[i + 1]);
+  }
+  if ((i = ArgPos((char *)"-load", argc, argv)) > 0)
+  {
+    load = std::stoull(argv[i + 1]);
   }
 
-  std::string train_file = argv[1];
-  std::string mode       = "cbow";
-  bool        train_mode;
-  std::string output_file = "./vector.bin";
-  if (argc >= 3)
-  {
-    mode = argv[2];
-  }
-  if (argc >= 4)
-  {
-    output_file = argv[3];
-  }
-  assert((mode == "cbow") || (mode == "sgns"));
-  if (mode == "cbow")
-  {
-    train_mode = true;
-  }
-  else
-  {
-    train_mode = false;
-  }
+  // if no train file specified - we just run analogy example
+  fetch::math::Tensor<FloatType> embeddings;
 
-  /// DATA LOADING ///
-  SizeType window_size = 8;
-  SizeType negative    = 25;
-  SizeType min_count   = 5;
-
+  // TODO : make vocab saveable
   std::cout << "Loading ..." << std::endl;
   W2VLoader<FloatType> data_loader(window_size, negative, train_mode);
   data_loader.AddData(ReadFile(train_file));
@@ -567,27 +517,36 @@ int main(int argc, char **argv)
   data_loader.InitUnigramTable();
   std::cout << "Dataloader Vocab Size : " << data_loader.VocabSize() << std::endl;
 
-  SizeType  embeddings_size = 200;  // embeddings size
-  SizeType  iter            = 15;   // training epochs
-  FloatType alpha           = static_cast<FloatType>(0.025);
-  SizeType  print_frequency = 10000;
+  if (!load)
+  {
+    /// DATA LOADING ///
 
-  std::cout << "Training " << mode << std::endl;
-  W2VModel w2v(embeddings_size, negative, alpha, data_loader);
-  w2v.Train(iter, print_frequency, train_mode);
-  auto embeddings = w2v.Embeddings();
+    if (train_mode == 1)
+    {
+      std::cout << "Training CBOW" << std::endl;
+    }
+    else
+    {
+      std::cout << "Training SGNS" << std::endl;
+    }
 
-  /// SAVE EMBEDDINGS ///
-  SaveEmbeddings(data_loader, output_file, embeddings);
-  //  SaveEmbeddingsOld(data_loader, "./vector_old.bin", embeddings);
-  std::cout << "All done" << std::endl;
+    W2VModel w2v(embeddings_size, negative, alpha, data_loader);
+    w2v.Train(iter, print_frequency, train_mode);
+    embeddings = w2v.Embeddings();
 
-  //  /// LOAD EMBEDDINGS FROM A FILE ///
-  //  std::cout << "Loading existing embeddings from: " << output_file << std::endl;
-  //  embeddings = LoadEmbeddings(output_file);
+    /// SAVE EMBEDDINGS ///
+    SaveEmbeddings(data_loader, output_file, embeddings);
+    //  SaveEmbeddingsOld(data_loader, "./vector_old.bin", embeddings);
+  }
+  else
+  {
+    /// LOAD EMBEDDINGS FROM A FILE ///
+    std::cout << "Loading existing embeddings from: " << output_file << std::endl;
+    embeddings = LoadEmbeddings(output_file);
+  }
 
   /// SHOW ANALOGY EXAMPLE ///
-  EvalAnalogy(data_loader, embeddings);
+  EvalAnalogy(data_loader, embeddings, top_k, test_words);
 
   return 0;
 }
