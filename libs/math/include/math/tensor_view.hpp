@@ -20,6 +20,9 @@
 #include "math/base_types.hpp"
 #include "math/tensor_iterator.hpp"
 
+#include <type_traits>
+#include <utility>
+
 namespace fetch {
 namespace math {
 template <typename T, typename C = memory::SharedArray<T>>

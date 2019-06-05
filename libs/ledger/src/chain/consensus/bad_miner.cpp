@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "ledger/chain/consensus/bad_miner.hpp"
+
 #include "ledger/chain/block.hpp"
 
 namespace fetch {

@@ -48,9 +48,9 @@ public:
   {}
 
   AbstractConnectionRegister(AbstractConnectionRegister const &other) = delete;
-  AbstractConnectionRegister(AbstractConnectionRegister &&other)      = default;
+  AbstractConnectionRegister(AbstractConnectionRegister &&other)      = delete;
   AbstractConnectionRegister &operator=(AbstractConnectionRegister const &other) = delete;
-  AbstractConnectionRegister &operator=(AbstractConnectionRegister &&other) = default;
+  AbstractConnectionRegister &operator=(AbstractConnectionRegister &&other) = delete;
 
   virtual ~AbstractConnectionRegister() = default;
 

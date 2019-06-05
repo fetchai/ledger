@@ -17,7 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/assert.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/byte_array/consumers.hpp"
 #include "core/macros.hpp"
@@ -39,6 +38,7 @@
 #include "math/tensor_slice_iterator.hpp"
 #include "math/tensor_view.hpp"
 
+#include <cassert>
 #include <memory>
 #include <numeric>
 #include <random>
@@ -116,8 +116,7 @@ public:
   Tensor(Tensor &&other)      = default;
   Tensor(Tensor const &other) = default;
   Tensor(SizeVector const &dims);
-  virtual ~Tensor()
-  {}
+  virtual ~Tensor() = default;
 
   Tensor &operator=(Tensor const &other) = default;
   Tensor &operator=(Tensor &&other) = default;
@@ -740,7 +739,8 @@ Tensor<T, C> Tensor<T, C>::FromString(byte_array::ConstByteArray const &c)
       }
       else
       {
-        elems.push_back(Type(atof(c.char_pointer() + last)));
+        std::string cur_elem((c.char_pointer() + last), static_cast<std::size_t>(i - last));
+        elems.push_back(Type(std::atof(cur_elem.c_str())));
       }
       break;
     }

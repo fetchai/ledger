@@ -20,6 +20,7 @@
 #include "math/linalg/blas/gemv_n.hpp"
 #include "math/linalg/prototype.hpp"
 #include "math/tensor_view.hpp"
+
 namespace fetch {
 namespace math {
 namespace linalg {
