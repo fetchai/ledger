@@ -512,7 +512,7 @@ inline void Serialize(ByteArrayBuffer &buffer, Variant const &variant)
   switch (variant.type_id)
   {
   case TypeIds::Bool:
-  case TypeIds::Byte:
+  case TypeIds::UInt8:
     buffer << variant.primitive.ui8;
     break;
   case TypeIds::Int8:
@@ -567,7 +567,7 @@ inline void Deserialize(ByteArrayBuffer &buffer, Variant &variant)
   switch (variant.type_id)
   {
   case TypeIds::Bool:
-  case TypeIds::Byte:
+  case TypeIds::UInt8:
     buffer >> variant.primitive.ui8;
     break;
   case TypeIds::Int8:

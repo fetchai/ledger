@@ -114,7 +114,7 @@ private:
   TypePtr           void_type_;
   TypePtr           bool_type_;
   TypePtr           int8_type_;
-  TypePtr           byte_type_;
+  TypePtr           uint8_type_;
   TypePtr           int16_type_;
   TypePtr           uint16_type_;
   TypePtr           int32_type_;

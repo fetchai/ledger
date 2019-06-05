@@ -62,7 +62,7 @@ bool Object::GetNonNegativeInteger(Variant const &v, std::size_t &index)
     ok    = v.primitive.i8 >= 0;
     break;
   }
-  case TypeIds::Byte:
+  case TypeIds::UInt8:
   {
     index = std::size_t(v.primitive.ui8);
     break;
