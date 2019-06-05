@@ -80,15 +80,6 @@ public:
     return state_machine_;
   }
 
-  // TODO(HUT): remove?
-  void Execute()
-  {
-    if (state_machine_->IsReadyToExecute())
-    {
-      state_machine_->Execute();
-    }
-  }
-
 private:
 
   State OnInitial();

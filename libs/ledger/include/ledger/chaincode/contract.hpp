@@ -22,7 +22,7 @@
 #include "ledger/identifier.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 #include "variant/variant.hpp"
-
+#include "ledger/chain/address.hpp"
 #include "ledger/state_adapter.hpp"
 
 #include <atomic>

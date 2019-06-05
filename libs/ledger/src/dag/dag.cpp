@@ -146,26 +146,6 @@ std::vector<DAGNode> DAG::GetLatest()
   return ret;
 }
 
-void DAG::AddTransaction(Transaction const &tx)
-{
-  std::cerr << "ADDING TX" << std::endl; // DELETEME_NH
-  std::lock_guard<fetch::mutex::Mutex> lock(mutex_);
-
-  // This currently stores the TX in the DAG. TODO(HUT): use the storage engine for TX storing
-
-  // Create a new dag node containing this TX
-  DAGNodePtr new_node = std::make_shared<DAGNode>();
-
-  new_node->type                    = DAGNode::TX;
-  new_node->SetContents(tx);
-  /* new_node->contract_digest           = tx.chain_code(); */ // depreciated
-  SetReferencesInternal(new_node);
-  new_node->Finalise();
-
-  PushInternal(new_node);
-  recently_added_.push_back(*new_node);
-}
-
 void DAG::AddTransaction(Transaction const &tx, crypto::ECDSASigner const &signer, DAGTypes type)
 {
   if(type != DAGTypes::DATA)
