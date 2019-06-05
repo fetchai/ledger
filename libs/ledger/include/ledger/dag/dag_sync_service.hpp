@@ -50,7 +50,7 @@ enum class State
 /**
  * DAG implementation.
  */
-class DAGSyncService : public muddle::rpc::Server //: public TransactionSink
+class DAGSyncService //: public muddle::rpc::Server //: public TransactionSink
 {
 public:
 
@@ -67,7 +67,7 @@ public:
 
   using MissingTXs             = DAG::MissingTXs;
   using MissingNodes           = DAG::MissingNodes;
-  using RequestingMissingNodes = network::RequestingQueueOf<Address, MissingNodes>;
+  using RequestingMissingNodes = network::RequestingQueueOf<muddle::Packet::Address, MissingNodes>;
   using PromiseOfMissingNodes  = network::PromiseOf<MissingNodes>;
 
   DAGSyncService(Muddle &muddle, std::shared_ptr<ledger::DAG> dag);
@@ -89,6 +89,7 @@ private:
   State OnResolveMissing();
 
   Muddle                        &muddle_;
+  muddle::rpc::Server           server_;
   ClientPtr                     client_;
   std::shared_ptr<StateMachine> state_machine_;
   std::shared_ptr<ledger::DAG>  dag_;
