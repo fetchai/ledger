@@ -47,16 +47,16 @@ masterEndpoint = {"HTTPPort": 8080, "TCPPort": 9080, "IP": "localhost"}
 usingMasterNode = False
 
 # localhost test
-#endpoint1       = {"HTTPPort": 8083, "TCPPort": 9083, "IP": "localhost"}
-#endpoint2       = {"HTTPPort": 8081, "TCPPort": 9081, "IP": "localhost"}
-#endpoint3       = {"HTTPPort": 8082, "TCPPort": 9082, "IP": "localhost"}
-#allEndpoints    = [ endpoint1, endpoint2, endpoint3]
-#activeEndpoints = [ endpoint1, endpoint2, endpoint3]
+# endpoint1       = {"HTTPPort": 8083, "TCPPort": 9083, "IP": "localhost"}
+# endpoint2       = {"HTTPPort": 8081, "TCPPort": 9081, "IP": "localhost"}
+# endpoint3       = {"HTTPPort": 8082, "TCPPort": 9082, "IP": "localhost"}
+# allEndpoints    = [ endpoint1, endpoint2, endpoint3]
+# activeEndpoints = [ endpoint1, endpoint2, endpoint3]
 
 # cloud test basic
-#endpoint1 = {"HTTPPort": 8080, "TCPPort": 9080, "IP": "35.204.38.91"}
-#endpoint2 = {"HTTPPort": 8080, "TCPPort": 9080, "IP": "35.204.60.187"}
-#allEndpoints = [ endpoint1, endpoint2]
+# endpoint1 = {"HTTPPort": 8080, "TCPPort": 9080, "IP": "35.204.38.91"}
+# endpoint2 = {"HTTPPort": 8080, "TCPPort": 9080, "IP": "35.204.60.187"}
+# allEndpoints = [ endpoint1, endpoint2]
 
 # google cloud test
 endpoint1 = {"HTTPPort": 8080, "TCPPort": 9080, "IP": "35.204.38.91"}
@@ -180,7 +180,7 @@ hashPages = []
 
 hashes = [ordered(HTTPpost(i, 'transactions-hash').json())
           for i in allEndpoints]
-#hashes = [1, 1]
+# hashes = [1, 1]
 comparison = [x == hashes[0] for x in hashes]
 
 if(all(comparison) == False):

@@ -19,7 +19,17 @@
 #include "core/random/lfg.hpp"
 #include "storage/mmap_random_access_stack.hpp"
 
-#include <gtest/gtest.h>
+#include "gtest/gtest.h"
+
+#include <algorithm>
+#include <cstddef>
+#include <cstdint>
+#include <cstdio>
+#include <cstdlib>
+#include <memory>
+#include <string>
+#include <utility>
+#include <vector>
 
 using namespace fetch::storage;
 
@@ -196,7 +206,7 @@ TEST(mmap_random_access_stack, get_bulk)
           << "    " << objects[j].value1 << std::endl;
     }
 
-    free(objects);
+    std::free(objects);
   }
 }
 

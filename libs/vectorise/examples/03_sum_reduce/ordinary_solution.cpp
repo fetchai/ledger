@@ -18,6 +18,8 @@
 
 #include <chrono>
 #include <cmath>
+#include <cstddef>
+#include <cstdlib>
 #include <iostream>
 #include <vector>
 
@@ -48,7 +50,7 @@ int main(int argc, char const **argv)
     return 0;
   }
 
-  std::size_t       N = std::size_t(atoi(argv[1]));
+  auto              N = std::size_t(std::atoi(argv[1]));
   std::vector<type> A, B;
 
   A.resize(N);

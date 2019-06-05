@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "ledger/chain/block_coordinator.hpp"
+
 #include "core/byte_array/encoders.hpp"
 #include "core/threading.hpp"
 #include "ledger/block_packer_interface.hpp"
@@ -344,6 +345,11 @@ BlockCoordinator::State BlockCoordinator::OnSynchronised(State current, State pr
     FETCH_LOG_INFO(LOGGING_NAME, "Chain Sync complete on 0x", current_block_->body.hash.ToHex(),
                    " (block: ", current_block_->body.block_number, " prev: 0x",
                    current_block_->body.previous_hash.ToHex(), ")");
+  }
+  else
+  {
+    // delay the invocation of this state machine
+    state_machine_->Delay(std::chrono::milliseconds{100});
   }
 
   return State::SYNCHRONISED;

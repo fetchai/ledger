@@ -25,10 +25,13 @@
 #include "vm/module.hpp"
 #include "vm_modules/vm_factory.hpp"
 
+#include <cstdint>
+#include <cstring>
 #include <fstream>
+#include <iostream>
 #include <memory>
-#include <sstream>
-#include <streambuf>
+#include <stdexcept>
+#include <string>
 #include <vector>
 
 namespace {
@@ -301,7 +304,6 @@ int main(int argc, char **argv)
   }
 
   vm->AttachOutputDevice(fetch::vm::VM::STDOUT, std::cout);
-  vm->AttachOutputDevice("stderr", std::cerr);
 
   // Execute the requested function
   std::string        error;

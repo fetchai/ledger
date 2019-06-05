@@ -20,8 +20,10 @@
 #include "http_client_interface.hpp"
 #include "network/fetch_asio.hpp"
 
+#include <cstddef>
 #include <cstdint>
 #include <string>
+#include <system_error>
 
 namespace asio {
 template <typename T>

@@ -17,10 +17,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/assert.hpp"
 #include "math/comparison.hpp"
 #include "math/fundamental_operators.hpp"
-#include <cmath>
+
+#include <cassert>
 
 namespace fetch {
 namespace math {
@@ -29,7 +29,7 @@ namespace correlation {
 template <typename ArrayType>
 inline typename ArrayType::Type Jaccard(ArrayType const &a, ArrayType const &b)
 {
-  ASSERT(a.size() == b.size());
+  assert(a.size() == b.size());
   using DataType = typename ArrayType::Type;
   using SizeType = typename ArrayType::SizeType;
 
@@ -49,7 +49,7 @@ inline typename ArrayType::Type Jaccard(ArrayType const &a, ArrayType const &b)
 template <typename ArrayType>
 inline typename ArrayType::Type GeneralisedJaccard(ArrayType const &a, ArrayType const &b)
 {
-  ASSERT(a.size() == b.size());
+  assert(a.size() == b.size());
   using DataType = typename ArrayType::Type;
   using SizeType = typename ArrayType::SizeType;
 

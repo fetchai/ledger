@@ -22,6 +22,7 @@
 #include <vector>
 
 #include "math/meta/math_type_traits.hpp"
+#include "math/tensor_declaration.hpp"
 
 namespace fetch {
 namespace math {

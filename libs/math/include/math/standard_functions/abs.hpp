@@ -19,6 +19,8 @@
 
 #include "math/meta/math_type_traits.hpp"
 
+#include <cassert>
+
 /**
  * assigns the absolute of x to this array
  * @param x
@@ -59,7 +61,7 @@ meta::IfIsArithmetic<Type, Type> Abs(Type const &x)
 template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, void> Abs(ArrayType const &array, ArrayType &ret)
 {
-  ASSERT(ret.shape() == array.shape());
+  assert(ret.shape() == array.shape());
   auto it1 = array.cbegin();
   auto rit = ret.begin();
   while (it1.is_valid())

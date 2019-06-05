@@ -19,6 +19,10 @@
 #include "vm/variant.hpp"
 #include "vm/vm.hpp"
 
+#include <cstddef>
+#include <string>
+#include <unordered_map>
+
 namespace fetch {
 namespace vm {
 
@@ -47,53 +51,53 @@ TypeInfo const &Object::GetTypeInfo(TypeId type_id)
   return vm_->GetTypeInfo(type_id);
 }
 
-bool Object::GetNonNegativeInteger(Variant const &v, size_t &index)
+bool Object::GetNonNegativeInteger(Variant const &v, std::size_t &index)
 {
   bool ok = true;
   switch (v.type_id)
   {
   case TypeIds::Int8:
   {
-    index = size_t(v.primitive.i8);
+    index = std::size_t(v.primitive.i8);
     ok    = v.primitive.i8 >= 0;
     break;
   }
-  case TypeIds::Byte:
+  case TypeIds::UInt8:
   {
-    index = size_t(v.primitive.ui8);
+    index = std::size_t(v.primitive.ui8);
     break;
   }
   case TypeIds::Int16:
   {
-    index = size_t(v.primitive.i16);
+    index = std::size_t(v.primitive.i16);
     ok    = v.primitive.i16 >= 0;
     break;
   }
   case TypeIds::UInt16:
   {
-    index = size_t(v.primitive.ui16);
+    index = std::size_t(v.primitive.ui16);
     break;
   }
   case TypeIds::Int32:
   {
-    index = size_t(v.primitive.i32);
+    index = std::size_t(v.primitive.i32);
     ok    = v.primitive.i32 >= 0;
     break;
   }
   case TypeIds::UInt32:
   {
-    index = size_t(v.primitive.ui32);
+    index = std::size_t(v.primitive.ui32);
     break;
   }
   case TypeIds::Int64:
   {
-    index = size_t(v.primitive.i64);
+    index = std::size_t(v.primitive.i64);
     ok    = v.primitive.i64 >= 0;
     break;
   }
   case TypeIds::UInt64:
   {
-    index = size_t(v.primitive.ui64);
+    index = std::size_t(v.primitive.ui64);
     break;
   }
   default:
@@ -105,7 +109,7 @@ bool Object::GetNonNegativeInteger(Variant const &v, size_t &index)
   return ok;
 }
 
-size_t Object::GetHashCode()
+std::size_t Object::GetHashCode()
 {
   return std::hash<const void *>()(this);
 }

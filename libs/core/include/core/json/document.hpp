@@ -56,7 +56,6 @@ public:
     KEY = 16
   };
 
-public:
   using ByteArray      = byte_array::ByteArray;
   using ConstByteArray = byte_array::ConstByteArray;
   using Variant        = variant::Variant;
@@ -117,6 +116,8 @@ public:
   }
 
 private:
+  constexpr static char const *LOGGING_NAME = "JSONDocument";
+
   struct JSONObject
   {
     uint64_t start = 0;

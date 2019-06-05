@@ -19,6 +19,8 @@
 
 #include "math/meta/math_type_traits.hpp"
 
+#include <cassert>
+
 /**
  * Computes the IEEE remainder of the floating point division operation x/y
  * @tparam type
@@ -60,8 +62,8 @@ template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, void> Remainder(ArrayType const &array1, ArrayType const &array2,
                                                ArrayType &ret)
 {
-  ASSERT(ret.shape() == array1.shape());
-  ASSERT(ret.shape() == array2.shape());
+  assert(ret.shape() == array1.shape());
+  assert(ret.shape() == array2.shape());
   auto it1 = array1.cbegin();
   auto it2 = array2.cbegin();
   auto rit = ret.begin();
@@ -78,7 +80,7 @@ template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, ArrayType> Remainder(ArrayType const &array1,
                                                     ArrayType const &array2)
 {
-  ASSERT(array2.shape() == array1.shape());
+  assert(array2.shape() == array1.shape());
   ArrayType ret{array1.shape()};
   Remainder(array1, array2, ret);
   return ret;

@@ -17,8 +17,10 @@
 //------------------------------------------------------------------------------
 
 #include "ml/ops/activations/leaky_relu.hpp"
-#include "math/fixed_point/fixed_point.hpp"
+
 #include "math/tensor.hpp"
+#include "vectorise/fixed_point/fixed_point.hpp"
+
 #include <gtest/gtest.h>
 
 template <typename T>
@@ -37,8 +39,8 @@ TYPED_TEST(LeakyReluTest, forward_test)
   using ArrayType     = TypeParam;
   using VecTensorType = typename fetch::ml::Ops<ArrayType>::VecTensorType;
 
-  ArrayType data = ArrayType::FromString("1, -2, 3, -4, 5, -6, 7, -8");
-  ArrayType gt   = ArrayType::FromString("1, -0.02, 3, -0.04, 5, -0.06, 7, -0.08");
+  ArrayType data = ArrayType::FromString(R"(1, -2, 3, -4, 5, -6, 7, -8)");
+  ArrayType gt   = ArrayType::FromString(R"(1, -0.02, 3, -0.04, 5, -0.06, 7, -0.08)");
 
   fetch::ml::ops::LeakyRelu<ArrayType> op(DataType{0.01f});
   ArrayType                            prediction(op.ComputeOutputShape({data}));
@@ -86,9 +88,9 @@ TYPED_TEST(LeakyReluTest, backward_test)
   using DataType  = typename TypeParam::Type;
   using ArrayType = TypeParam;
 
-  ArrayType data  = ArrayType::FromString("1, -2, 3, -4, 5, -6, 7, -8");
-  ArrayType error = ArrayType::FromString("0, 0, 0, 0.5, 1, 1, 0, 0");
-  ArrayType gt    = ArrayType::FromString("0, 0, 0, 0.005, 1, 0.01, 0, 0");
+  ArrayType data  = ArrayType::FromString(R"(1, -2, 3, -4, 5, -6, 7, -8)");
+  ArrayType error = ArrayType::FromString(R"(0, 0, 0, 0.5, 1, 1, 0, 0)");
+  ArrayType gt    = ArrayType::FromString(R"(0, 0, 0, 0.005, 1, 0.01, 0, 0)");
 
   fetch::ml::ops::LeakyRelu<ArrayType> op(DataType{0.01f});
   std::vector<ArrayType>               prediction = op.Backward({data}, error);

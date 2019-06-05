@@ -17,8 +17,10 @@
 //------------------------------------------------------------------------------
 
 #include "ml/ops/max_pool_2d.hpp"
-#include "math/fixed_point/fixed_point.hpp"
+
 #include "math/tensor.hpp"
+#include "vectorise/fixed_point/fixed_point.hpp"
+
 #include <gtest/gtest.h>
 
 template <typename T>

@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "ledger/chaincode/token_contract.hpp"
+
 #include "core/byte_array/decoders.hpp"
 #include "crypto/fnv.hpp"
 #include "ledger/chain/transaction.hpp"
@@ -25,11 +26,8 @@
 #include "variant/variant.hpp"
 #include "variant/variant_utils.hpp"
 
-#include <functional>
 #include <memory>
-#include <numeric>
-#include <set>
-#include <stdexcept>
+#include <unordered_map>
 
 namespace fetch {
 namespace ledger {

@@ -17,12 +17,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/assert.hpp"
 #include "math/kernels/trigonometry.hpp"
 #include "math/meta/math_type_traits.hpp"
 
 #include <cassert>
-#include <cmath>
 
 namespace fetch {
 namespace math {
@@ -153,7 +151,6 @@ fetch::math::meta::IfIsMathArray<ArrayType, void> ACos(ArrayType const &x, Array
     ++rit;
   }
 }
-
 template <typename ArrayType>
 fetch::math::meta::IfIsMathArray<ArrayType, ArrayType> ACos(ArrayType const &x)
 {

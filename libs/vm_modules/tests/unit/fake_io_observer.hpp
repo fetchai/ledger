@@ -20,7 +20,10 @@
 #include "core/byte_array/const_byte_array.hpp"
 #include "vm/io_observer_interface.hpp"
 
-#include <unordered_map>
+#include <cstdint>
+#include <map>
+#include <string>
+#include <unordered_set>
 
 class FakeIoObserver : public fetch::vm::IoObserverInterface
 {

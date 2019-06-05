@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "network/p2pservice/p2p_resolver_protocol.hpp"
+
 #include "network/p2pservice/p2p_resolver.hpp"
 #include "network/p2pservice/p2p_service.hpp"
 

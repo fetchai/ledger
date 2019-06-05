@@ -17,14 +17,19 @@
 //------------------------------------------------------------------------------
 
 #include "http/json_client.hpp"
+
 #include "core/json/document.hpp"
 #include "http/http_client.hpp"
 #include "http/https_client.hpp"
 #include "http/request.hpp"
 #include "http/response.hpp"
 
+#include <cerrno>
+#include <cstdlib>
 #include <regex>
 #include <sstream>
+#include <stdexcept>
+#include <string>
 #include <utility>
 
 namespace fetch {
@@ -90,9 +95,19 @@ JsonClient JsonClient::CreateFromUrl(std::string const &url)
 
   if (port.matched)
   {
-    // convert the port to a integer (from a string)
-    uint16_t const port_value = static_cast<uint16_t>(std::atoi(port.first.base()));
-    return JsonClient{mode, host, port_value};
+    // convert the port to an integer (from a string)
+    char const *port_str   = port.first.base();
+    const auto  port_value = std::strtol(port_str, nullptr, 10);
+    if (errno == ERANGE)
+    {
+      errno = 0;
+      FETCH_LOG_ERROR(LOGGING_NAME, "Failed to convert port_str=", port_str, " to integer");
+
+      throw std::domain_error(std::string("Failed to convert port_str=") + port_str +
+                              " to integer");
+    }
+
+    return JsonClient{mode, host, static_cast<uint16_t>(port_value)};
   }
   else
   {

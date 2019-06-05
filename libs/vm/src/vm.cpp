@@ -17,7 +17,10 @@
 //------------------------------------------------------------------------------
 
 #include "vm/vm.hpp"
+
 #include "vm/module.hpp"
+
+#include <cstddef>
 
 namespace fetch {
 namespace vm {
@@ -26,10 +29,10 @@ VM::VM(Module *module)
 {
   FunctionInfoArray function_info_array;
   module->GetDetails(type_info_array_, type_info_map_, registered_types_, function_info_array);
-  uint16_t num_types     = uint16_t(type_info_array_.size());
-  uint16_t num_functions = uint16_t(function_info_array.size());
-  uint16_t num_opcodes   = uint16_t(Opcodes::NumReserved + num_functions);
-  opcode_info_array_     = OpcodeInfoArray(num_opcodes);
+  auto num_types     = static_cast<uint16_t>(type_info_array_.size());
+  auto num_functions = static_cast<uint16_t>(function_info_array.size());
+  auto num_opcodes   = static_cast<uint16_t>(Opcodes::NumReserved + num_functions);
+  opcode_info_array_ = OpcodeInfoArray(num_opcodes);
 
   AddOpcodeInfo(Opcodes::VariableDeclare, "VariableDeclare",
                 [](VM *vm) { vm->Handler__VariableDeclare(); });
@@ -162,7 +165,7 @@ VM::VM(Module *module)
   opcode_map_.clear();
   for (uint16_t i = 0; i < num_functions; ++i)
   {
-    uint16_t    opcode = uint16_t(Opcodes::NumReserved + i);
+    auto        opcode = static_cast<uint16_t>(Opcodes::NumReserved + i);
     auto const &info   = function_info_array[i];
     AddOpcodeInfo(opcode, info.unique_id, info.handler);
     opcode_map_[info.unique_id] = opcode;
@@ -179,16 +182,16 @@ bool VM::GenerateExecutable(IR const &ir, std::string const &name, Executable &e
 
 bool VM::Execute(std::string &error, Variant &output)
 {
-  size_t const num_strings = executable_->strings.size();
-  strings_                 = std::vector<Ptr<String>>(num_strings);
-  for (size_t i = 0; i < num_strings; ++i)
+  std::size_t const num_strings = executable_->strings.size();
+  strings_                      = std::vector<Ptr<String>>(num_strings);
+  for (std::size_t i = 0; i < num_strings; ++i)
   {
     std::string const &str = executable_->strings[i];
     strings_[i]            = Ptr<String>(new String(this, str, true));
   }
 
-  size_t const num_local_types = executable_->types.size();
-  for (size_t i = 0; i < num_local_types; ++i)
+  std::size_t const num_local_types = executable_->types.size();
+  for (std::size_t i = 0; i < num_local_types; ++i)
   {
     TypeInfo const &type_info = executable_->types[i];
     type_info_array_.push_back(type_info);
@@ -222,13 +225,13 @@ bool VM::Execute(std::string &error, Variant &output)
     }
   } while (!stop_);
 
-  bool const ok = error_.empty();
+  bool const ok = !HasError();
 
   // Remove the executable's strings
   strings_.clear();
 
   // Remove the executable's local types
-  for (size_t i = 0; i < num_local_types; ++i)
+  for (std::size_t i = 0; i < num_local_types; ++i)
   {
     type_info_array_.pop_back();
   }

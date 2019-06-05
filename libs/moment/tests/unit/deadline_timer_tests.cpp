@@ -20,6 +20,9 @@
 
 #include "gtest/gtest.h"
 
+#include <chrono>
+#include <memory>
+
 using fetch::moment::DeadlineTimer;
 using fetch::moment::CreateAdjustableClock;
 

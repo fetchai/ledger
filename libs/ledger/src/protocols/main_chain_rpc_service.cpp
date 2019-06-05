@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "ledger/protocols/main_chain_rpc_service.hpp"
+
 #include "core/byte_array/encoders.hpp"
 #include "core/logger.hpp"
 #include "core/serializers/byte_array_buffer.hpp"
@@ -444,6 +445,10 @@ MainChainRpcService::State MainChainRpcService::OnSynchronised(State current, St
   else if (previous != State::SYNCHRONISED)
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Synchronised");
+  }
+  else
+  {
+    state_machine_->Delay(std::chrono::milliseconds{100});
   }
 
   return next_state;

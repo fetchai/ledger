@@ -16,14 +16,16 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm_test_suite.hpp"
+#include "vm_test_toolkit.hpp"
 
 #include "gmock/gmock.h"
 
 namespace {
 
-class StringTests : public VmTestSuite
+class StringTests : public ::testing::Test
 {
+public:
+  VmTestToolkit toolkit;
 };
 
 TEST_F(StringTests, length_returns_number_of_characters)
@@ -38,10 +40,10 @@ TEST_F(StringTests, length_returns_number_of_characters)
     endfunction
   )";
 
-  ASSERT_TRUE(Compile(TEXT));
-  ASSERT_TRUE(Run());
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_TRUE(toolkit.Run());
 
-  ASSERT_EQ(stdout(), "[3, 10]");
+  ASSERT_EQ(toolkit.stdout(), "[3, 10]");
 }
 
 TEST_F(StringTests, length_returns_zero_for_empty_string)
@@ -52,10 +54,10 @@ TEST_F(StringTests, length_returns_zero_for_empty_string)
     endfunction
   )";
 
-  ASSERT_TRUE(Compile(TEXT));
-  ASSERT_TRUE(Run());
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_TRUE(toolkit.Run());
 
-  ASSERT_EQ(stdout(), "0");
+  ASSERT_EQ(toolkit.stdout(), "0");
 }
 
 TEST_F(StringTests, trim_removes_leading_whitespace)
@@ -68,10 +70,10 @@ TEST_F(StringTests, trim_removes_leading_whitespace)
     endfunction
   )";
 
-  ASSERT_TRUE(Compile(TEXT));
-  ASSERT_TRUE(Run());
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_TRUE(toolkit.Run());
 
-  ASSERT_EQ(stdout(), "abc def");
+  ASSERT_EQ(toolkit.stdout(), "abc def");
 }
 
 TEST_F(StringTests, trim_removes_trailing_whitespace)
@@ -84,10 +86,10 @@ TEST_F(StringTests, trim_removes_trailing_whitespace)
     endfunction
   )";
 
-  ASSERT_TRUE(Compile(TEXT));
-  ASSERT_TRUE(Run());
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_TRUE(toolkit.Run());
 
-  ASSERT_EQ(stdout(), "abc def");
+  ASSERT_EQ(toolkit.stdout(), "abc def");
 }
 
 TEST_F(StringTests, trim_removes_both_leading_and_trailing_whitespace)
@@ -100,10 +102,10 @@ TEST_F(StringTests, trim_removes_both_leading_and_trailing_whitespace)
     endfunction
   )";
 
-  ASSERT_TRUE(Compile(TEXT));
-  ASSERT_TRUE(Run());
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_TRUE(toolkit.Run());
 
-  ASSERT_EQ(stdout(), "abc def");
+  ASSERT_EQ(toolkit.stdout(), "abc def");
 }
 
 TEST_F(StringTests, trim_is_noop_if_string_has_no_leading_or_trailing_whitespace)
@@ -116,10 +118,10 @@ TEST_F(StringTests, trim_is_noop_if_string_has_no_leading_or_trailing_whitespace
     endfunction
   )";
 
-  ASSERT_TRUE(Compile(TEXT));
-  ASSERT_TRUE(Run());
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_TRUE(toolkit.Run());
 
-  ASSERT_EQ(stdout(), "abc def");
+  ASSERT_EQ(toolkit.stdout(), "abc def");
 }
 
 TEST_F(StringTests, trim_is_noop_if_string_is_empty)
@@ -132,10 +134,10 @@ TEST_F(StringTests, trim_is_noop_if_string_is_empty)
     endfunction
   )";
 
-  ASSERT_TRUE(Compile(TEXT));
-  ASSERT_TRUE(Run());
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_TRUE(toolkit.Run());
 
-  ASSERT_EQ(stdout(), "");
+  ASSERT_EQ(toolkit.stdout(), "");
 }
 
 TEST_F(StringTests, trim_leaves_string_empty_if_it_contains_only_whitespace)
@@ -148,10 +150,10 @@ TEST_F(StringTests, trim_leaves_string_empty_if_it_contains_only_whitespace)
     endfunction
   )";
 
-  ASSERT_TRUE(Compile(TEXT));
-  ASSERT_TRUE(Run());
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_TRUE(toolkit.Run());
 
-  ASSERT_EQ(stdout(), "");
+  ASSERT_EQ(toolkit.stdout(), "");
 }
 
 TEST_F(StringTests, find_returns_zero_based_index_of_first_occurrence_of_substring_in_string)
@@ -160,7 +162,7 @@ TEST_F(StringTests, find_returns_zero_based_index_of_first_occurrence_of_substri
     function main()
       var text = 'ab bbc';
 
-var output = Array<Int32>(3);
+      var output = Array<Int32>(3);
       output[0] = text.find('ab');
       output[1] = text.find('bb');
       output[2] = text.find('c');
@@ -169,10 +171,10 @@ var output = Array<Int32>(3);
     endfunction
   )";
 
-  ASSERT_TRUE(Compile(TEXT));
-  ASSERT_TRUE(Run());
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_TRUE(toolkit.Run());
 
-  ASSERT_EQ(stdout(), "[0, 3, 5]");
+  ASSERT_EQ(toolkit.stdout(), "[0, 3, 5]");
 }
 
 TEST_F(StringTests, find_returns_minus_one_if_substring_not_found)
@@ -183,10 +185,10 @@ TEST_F(StringTests, find_returns_minus_one_if_substring_not_found)
     endfunction
   )";
 
-  ASSERT_TRUE(Compile(TEXT));
-  ASSERT_TRUE(Run());
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_TRUE(toolkit.Run());
 
-  ASSERT_EQ(stdout(), "-1");
+  ASSERT_EQ(toolkit.stdout(), "-1");
 }
 
 TEST_F(StringTests, find_returns_minus_one_if_string_is_empty)
@@ -197,10 +199,10 @@ TEST_F(StringTests, find_returns_minus_one_if_string_is_empty)
     endfunction
   )";
 
-  ASSERT_TRUE(Compile(TEXT));
-  ASSERT_TRUE(Run());
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_TRUE(toolkit.Run());
 
-  ASSERT_EQ(stdout(), "-1");
+  ASSERT_EQ(toolkit.stdout(), "-1");
 }
 
 TEST_F(StringTests, find_returns_minus_one_if_substring_is_empty)
@@ -211,10 +213,10 @@ TEST_F(StringTests, find_returns_minus_one_if_substring_is_empty)
     endfunction
   )";
 
-  ASSERT_TRUE(Compile(TEXT));
-  ASSERT_TRUE(Run());
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_TRUE(toolkit.Run());
 
-  ASSERT_EQ(stdout(), "-1");
+  ASSERT_EQ(toolkit.stdout(), "-1");
 }
 
 TEST_F(StringTests, find_returns_minus_one_if_both_string_and_substring_are_empty)
@@ -225,10 +227,10 @@ TEST_F(StringTests, find_returns_minus_one_if_both_string_and_substring_are_empt
     endfunction
   )";
 
-  ASSERT_TRUE(Compile(TEXT));
-  ASSERT_TRUE(Run());
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_TRUE(toolkit.Run());
 
-  ASSERT_EQ(stdout(), "-1");
+  ASSERT_EQ(toolkit.stdout(), "-1");
 }
 
 TEST_F(StringTests, reverse_changes_string_contents_to_the_original_characters_but_in_reverse_order)
@@ -241,10 +243,10 @@ TEST_F(StringTests, reverse_changes_string_contents_to_the_original_characters_b
     endfunction
   )";
 
-  ASSERT_TRUE(Compile(TEXT));
-  ASSERT_TRUE(Run());
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_TRUE(toolkit.Run());
 
-  ASSERT_EQ(stdout(), "zyx");
+  ASSERT_EQ(toolkit.stdout(), "zyx");
 }
 
 TEST_F(StringTests, reverse_is_noop_if_string_is_empty)
@@ -257,10 +259,10 @@ TEST_F(StringTests, reverse_is_noop_if_string_is_empty)
     endfunction
   )";
 
-  ASSERT_TRUE(Compile(TEXT));
-  ASSERT_TRUE(Run());
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_TRUE(toolkit.Run());
 
-  ASSERT_EQ(stdout(), "");
+  ASSERT_EQ(toolkit.stdout(), "");
 }
 
 TEST_F(
@@ -273,10 +275,10 @@ TEST_F(
     endfunction
   )";
 
-  ASSERT_TRUE(Compile(TEXT));
-  ASSERT_TRUE(Run());
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_TRUE(toolkit.Run());
 
-  ASSERT_EQ(stdout(), "bc");
+  ASSERT_EQ(toolkit.stdout(), "bc");
 }
 
 TEST_F(StringTests, substring_returns_empty_string_if_start_and_end_are_equal)
@@ -289,10 +291,10 @@ TEST_F(StringTests, substring_returns_empty_string_if_start_and_end_are_equal)
     endfunction
   )";
 
-  ASSERT_TRUE(Compile(TEXT));
-  ASSERT_TRUE(Run());
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_TRUE(toolkit.Run());
 
-  ASSERT_EQ(stdout(), "");
+  ASSERT_EQ(toolkit.stdout(), "");
 }
 
 TEST_F(StringTests, substring_returns_the_whole_string_given_zero_and_length)
@@ -303,10 +305,10 @@ TEST_F(StringTests, substring_returns_the_whole_string_given_zero_and_length)
     endfunction
   )";
 
-  ASSERT_TRUE(Compile(TEXT));
-  ASSERT_TRUE(Run());
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_TRUE(toolkit.Run());
 
-  ASSERT_EQ(stdout(), "abcdef");
+  ASSERT_EQ(toolkit.stdout(), "abcdef");
 }
 
 TEST_F(StringTests, substring_fails_if_start_is_negative)
@@ -317,8 +319,8 @@ TEST_F(StringTests, substring_fails_if_start_is_negative)
     endfunction
   )";
 
-  ASSERT_TRUE(Compile(TEXT));
-  ASSERT_FALSE(Run());
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_FALSE(toolkit.Run());
 }
 
 TEST_F(StringTests, substring_fails_if_end_is_greater_than_length)
@@ -329,8 +331,8 @@ TEST_F(StringTests, substring_fails_if_end_is_greater_than_length)
     endfunction
   )";
 
-  ASSERT_TRUE(Compile(TEXT));
-  ASSERT_FALSE(Run());
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_FALSE(toolkit.Run());
 }
 
 TEST_F(StringTests, substring_fails_if_start_is_greater_than_end)
@@ -341,8 +343,8 @@ TEST_F(StringTests, substring_fails_if_start_is_greater_than_end)
     endfunction
   )";
 
-  ASSERT_TRUE(Compile(TEXT));
-  ASSERT_FALSE(Run());
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_FALSE(toolkit.Run());
 }
 
 }  // namespace

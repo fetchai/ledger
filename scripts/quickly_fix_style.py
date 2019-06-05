@@ -13,14 +13,13 @@
 # ./scripts/run_static_analysis.py
 #
 # Extended usage
-# ./scripts/run_static_analysis.py --build-path ./build --branch develop
+# ./scripts/run_static_analysis.py --build-path ./build --branch master
 #
-# The script will ask git for the changes between this commit and the last common commit to [develop]
+# The script will ask git for the changes between this commit and the last common commit to [master]
 # to determine the files that need changing.
 
 import run_static_analysis
 import apply_style
-import check_license_header
 import subprocess
 import sys
 import os
@@ -143,7 +142,7 @@ def parse_commandline():
         '--branch',
         type=str,
         help='branch that is being merged against',
-        default="develop")
+        default="origin/master")
     parser.add_argument('-v', '--verbose', action='store_true',
                         help='verbose mode', default=False)
     return parser.parse_args()
@@ -155,11 +154,6 @@ def main():
 
     compare_branch = args.branch
     build_path = args.build_path
-
-    # Firstly, check license headers
-    print("Checking license headers")
-    sys.argv = ['_', '--fix']
-    check_license_header.main()
 
     changed_files = []
     # Stack overflow 34279322
@@ -190,8 +184,7 @@ def main():
         print(changed_files_fullpath)
 
     print("Applying style")
-    sys.argv = ['_']
-    sys.argv.extend(changed_files_fullpath)
+    sys.argv = ['_', '--commit', compare_branch]
     if args.verbose:
         print(sys.argv)
     apply_style.main()

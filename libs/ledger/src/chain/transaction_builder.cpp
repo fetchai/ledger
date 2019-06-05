@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "ledger/chain/transaction_builder.hpp"
+
 #include "core/logger.hpp"
 #include "core/macros.hpp"
 #include "crypto/prover.hpp"

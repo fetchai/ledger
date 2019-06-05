@@ -205,7 +205,7 @@ public:
   using InputDeviceMap  = std::unordered_map<std::string, std::istream *>;
   using OutputDeviceMap = std::unordered_map<std::string, std::ostream *>;
 
-  VM(Module *module);
+  explicit VM(Module *module);
   ~VM() = default;
 
   static constexpr char const *const STDOUT = "stdout";
@@ -316,7 +316,7 @@ public:
     return *io_observer_;
   }
 
-  std::ostream &GetOutputDevice(std::string name)
+  std::ostream &GetOutputDevice(std::string const &name)
   {
     if (output_devices_.find(name) == output_devices_.end())
     {
@@ -326,7 +326,7 @@ public:
     return *output_devices_[name];
   }
 
-  std::istream &GetInputDevice(std::string name)
+  std::istream &GetInputDevice(std::string const &name)
   {
     if (input_devices_.find(name) == input_devices_.end())
     {
@@ -336,7 +336,7 @@ public:
     return *input_devices_[name];
   }
 
-  void DetachInputDevice(std::string name)
+  void DetachInputDevice(std::string const &name)
   {
     auto it = input_devices_.find(name);
     if (it != input_devices_.end())
@@ -359,7 +359,7 @@ public:
     input_devices_.insert({std::move(name), &device});
   }
 
-  void DetachOutputDevice(std::string name)
+  void DetachOutputDevice(std::string const &name)
   {
     auto it = output_devices_.find(name);
     if (it != output_devices_.end())
@@ -389,8 +389,12 @@ public:
 
   // These two are public for the benefit of the static Constructor() functions in
   // each of the Object-derived classes
-  void            RuntimeError(std::string const &message);
-  TypeInfo const &GetTypeInfo(TypeId type_id)
+  void RuntimeError(std::string const &message);
+  bool HasError() const
+  {
+    return !error_.empty();
+  }
+  TypeInfo const &GetTypeInfo(TypeId type_id) const
   {
     return type_info_array_[type_id];
   }
@@ -404,11 +408,11 @@ private:
   struct OpcodeInfo
   {
     OpcodeInfo() = default;
-    OpcodeInfo(std::string const &name__, Handler handler__)
-    {
-      name    = name__;
-      handler = handler__;
-    }
+    OpcodeInfo(std::string name__, Handler handler__)
+      : name(std::move(name__))
+      , handler(std::move(handler__))
+    {}
+
     std::string name;
     Handler     handler;
   };
@@ -453,6 +457,8 @@ private:
   friend struct ConstructorInvokerHelper;
   template <typename ReturnType, typename StaticMemberFunction, typename... Ts>
   friend struct StaticMemberFunctionInvokerHelper;
+  template <typename ReturnType, typename Functor, typename... Ts>
+  friend struct FunctorInvokerHelper;
 
   TypeInfoArray                  type_info_array_;
   TypeInfoMap                    type_info_map_;
@@ -935,7 +941,7 @@ private:
       Op::Apply(lhsv, lhsv.primitive.i8, rhsv.primitive.i8);
       break;
     }
-    case TypeIds::Byte:
+    case TypeIds::UInt8:
     {
       Op::Apply(lhsv, lhsv.primitive.ui8, rhsv.primitive.ui8);
       break;
@@ -997,7 +1003,7 @@ private:
       Op::Apply(this, lhsv.primitive.i8, rhsv.primitive.i8);
       break;
     }
-    case TypeIds::Byte:
+    case TypeIds::UInt8:
     {
       Op::Apply(this, lhsv.primitive.ui8, rhsv.primitive.ui8);
       break;
@@ -1049,7 +1055,7 @@ private:
       Op::Apply(this, lhsv.primitive.i8, rhsv.primitive.i8);
       break;
     }
-    case TypeIds::Byte:
+    case TypeIds::UInt8:
     {
       Op::Apply(this, lhsv.primitive.ui8, rhsv.primitive.ui8);
       break;
@@ -1111,7 +1117,7 @@ private:
       Op::Apply(this, *static_cast<int8_t *>(lhs), rhsv.primitive.i8);
       break;
     }
-    case TypeIds::Byte:
+    case TypeIds::UInt8:
     {
       Op::Apply(this, *static_cast<uint8_t *>(lhs), rhsv.primitive.ui8);
       break;
@@ -1163,7 +1169,7 @@ private:
       Op::Apply(this, *static_cast<int8_t *>(lhs), rhsv.primitive.i8);
       break;
     }
-    case TypeIds::Byte:
+    case TypeIds::UInt8:
     {
       Op::Apply(this, *static_cast<uint8_t *>(lhs), rhsv.primitive.ui8);
       break;

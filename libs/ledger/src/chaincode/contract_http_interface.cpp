@@ -17,18 +17,18 @@
 //------------------------------------------------------------------------------
 
 #include "ledger/chaincode/contract_http_interface.hpp"
+
 #include "core/byte_array/decoders.hpp"
 #include "core/json/document.hpp"
 #include "core/logger.hpp"
 #include "core/serializers/stl_types.hpp"
 #include "core/string/replace.hpp"
 #include "http/json_response.hpp"
+#include "ledger/chain/json_transaction.hpp"
+#include "ledger/chain/transaction.hpp"
 #include "ledger/chaincode/contract.hpp"
 #include "ledger/state_adapter.hpp"
 #include "ledger/transaction_processor.hpp"
-
-#include "ledger/chain/json_transaction.hpp"
-#include "ledger/chain/transaction.hpp"
 #include "variant/variant.hpp"
 
 #include <memory>
@@ -41,7 +41,6 @@ namespace {
 using fetch::variant::Variant;
 using fetch::byte_array::ByteArray;
 using fetch::byte_array::ConstByteArray;
-using fetch::byte_array::ToBase64;
 using fetch::ledger::FromJsonTransaction;
 
 ConstByteArray const API_PATH_CONTRACT_PREFIX("/api/contract/");
@@ -263,7 +262,7 @@ http::HTTPResponse ContractHttpInterface::OnTransaction(http::HTTPRequest const 
     json["txs"]                 = Variant::Array(txs.size());
     for (std::size_t i = 0; i < txs.size(); ++i)
     {
-      json["txs"][i] = ToBase64(txs[i]);
+      json["txs"][i] = ToHex(txs[i]);
     }
 
     if (unknown_format)

@@ -21,6 +21,8 @@
 
 #include "benchmark/benchmark.h"
 
+#include <vector>
+
 template <class T, int C, int H, int W>
 void BM_BooleanMaskEmpty(benchmark::State &state)
 {

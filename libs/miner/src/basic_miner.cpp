@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "miner/basic_miner.hpp"
+
 #include "core/logger.hpp"
 #include "ledger/chain/address.hpp"
 #include "ledger/chain/block.hpp"

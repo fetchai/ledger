@@ -19,6 +19,8 @@
 #include "core/json/document.hpp"
 
 #include <cstdlib>
+#include <stdexcept>
+#include <string>
 
 namespace fetch {
 namespace json {
@@ -33,7 +35,8 @@ namespace json {
 void JSONDocument::ExtractPrimitive(Variant &variant, JSONToken const &token,
                                     ConstByteArray const &document)
 {
-  bool success{false};
+  bool        success{false};
+  char const *str = nullptr;
 
   switch (token.type)
   {
@@ -58,16 +61,28 @@ void JSONDocument::ExtractPrimitive(Variant &variant, JSONToken const &token,
     break;
 
   case NUMBER_INT:
-    // TODO(private issue #566): the `std::strtoll(...)` should be used here instead (converting to
-    // `long long`)
-    variant = std::atoll(document.char_pointer() + token.first);
+    str     = document.char_pointer() + token.first;
+    variant = std::strtoll(str, nullptr, 10);
+    if (errno == ERANGE)
+    {
+      errno = 0;
+      FETCH_LOG_ERROR(LOGGING_NAME, "Failed to convert str=", str, " to integer");
+
+      throw JSONParseException(std::string("Failed to convert str=") + str + " to integer");
+    }
     success = true;
     break;
 
   case NUMBER_FLOAT:
-    // TODO(private issue #566)): the `std::strtold(...)` should be used here instead (converting to
-    // `long double`)
-    variant = std::atof(document.char_pointer() + token.first);
+    str     = document.char_pointer() + token.first;
+    variant = std::strtold(str, nullptr);
+    if (errno == ERANGE)
+    {
+      errno = 0;
+      FETCH_LOG_ERROR(LOGGING_NAME, "Failed to convert str=", str, " to long double");
+
+      throw JSONParseException(std::string("Failed to convert str=") + str + " to long double");
+    }
     success = true;
     break;
 

@@ -17,7 +17,12 @@
 //------------------------------------------------------------------------------
 
 #include "variant/variant.hpp"
+
 #include "core/macros.hpp"
+
+#include <iomanip>
+#include <ostream>
+#include <sstream>
 
 namespace fetch {
 namespace variant {

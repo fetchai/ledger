@@ -19,6 +19,8 @@
 
 #include "math/meta/math_type_traits.hpp"
 
+#include <cassert>
+
 /**
  * Computes the floating-point remainder of the division operation x / y
  */
@@ -57,8 +59,8 @@ template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, void> Fmod(ArrayType const &array1, ArrayType const &array2,
                                           ArrayType &ret)
 {
-  ASSERT(ret.shape() == array1.shape());
-  ASSERT(ret.shape() == array2.shape());
+  assert(ret.shape() == array1.shape());
+  assert(ret.shape() == array2.shape());
   auto it1 = array1.cbegin();
   auto it2 = array2.cbegin();
   auto rit = ret.begin();
@@ -74,7 +76,7 @@ meta::IfIsMathArray<ArrayType, void> Fmod(ArrayType const &array1, ArrayType con
 template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, ArrayType> Fmod(ArrayType const &array1, ArrayType const &array2)
 {
-  ASSERT(array2.shape() == array1.shape());
+  assert(array2.shape() == array1.shape());
   ArrayType ret{array1.shape()};
   Fmod(array1, array2, ret);
   return ret;

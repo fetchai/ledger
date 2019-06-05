@@ -17,19 +17,15 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/assert.hpp"
+#include "math/comparison.hpp"
+#include "math/fundamental_operators.hpp"
+#include "math/matrix_operations.hpp"
 #include "math/meta/math_type_traits.hpp"
-
-#include <algorithm>
-#include <cassert>
-#include <numeric>
-#include <vector>
-
-#include "math/fundamental_operators.hpp"  // add, subtract etc.
 #include "math/standard_functions/exp.hpp"
 
-#include "math/comparison.hpp"
-#include "math/matrix_operations.hpp"
+#include <cassert>
+#include <cstddef>
+#include <stdexcept>
 
 namespace fetch {
 namespace math {
@@ -45,7 +41,7 @@ template <typename ArrayType1, typename ArrayType2>
 void Softmax1DImplementation(ArrayType1 const &array, ArrayType2 &ret)
 {
   using Type = typename ArrayType1::Type;
-  ASSERT(ret.size() == array.size());
+  assert(ret.size() == array.size());
 
   // subtract max for numerical stability
   Type array_max = numeric_lowest<Type>();

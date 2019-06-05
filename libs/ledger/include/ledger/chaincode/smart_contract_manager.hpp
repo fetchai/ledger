@@ -21,11 +21,6 @@
 
 namespace fetch {
 
-namespace vm {
-struct Executable;
-class Module;
-}  // namespace vm
-
 namespace ledger {
 
 class Identifier;
