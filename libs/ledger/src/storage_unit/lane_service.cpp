@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "ledger/storage_unit/lane_service.hpp"
+
 #include "core/service_ids.hpp"
 #include "ledger/chain/transaction_layout_rpc_serializers.hpp"
 #include "ledger/chain/transaction_rpc_serializers.hpp"

@@ -68,7 +68,7 @@ The project uses cmake so you can following formal build procedure of:
 
     cmake ../
 
-    make -j
+    make -j 4
 
 ## Connecting to a test network
 
@@ -79,7 +79,7 @@ ensure that you have build the latest version of the `constellation` application
 
     cmake ../
 
-    make -j constellation
+    make -j 4 constellation
 
 Navigate to the constellation application folder:
 

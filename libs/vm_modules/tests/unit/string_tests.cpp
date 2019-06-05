@@ -162,7 +162,7 @@ TEST_F(StringTests, find_returns_zero_based_index_of_first_occurrence_of_substri
     function main()
       var text = 'ab bbc';
 
-var output = Array<Int32>(3);
+      var output = Array<Int32>(3);
       output[0] = text.find('ab');
       output[1] = text.find('bb');
       output[2] = text.find('c');

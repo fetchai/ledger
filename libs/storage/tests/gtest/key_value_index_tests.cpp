@@ -28,6 +28,7 @@
 #include <cstdint>
 #include <cstdlib>
 #include <map>
+#include <random>
 #include <unordered_map>
 #include <vector>
 
@@ -194,7 +195,9 @@ bool RandomInsertHashConsistency()
   // REDO
   key_index.New("test1.db");
 
-  std::random_shuffle(values.begin(), values.end());
+  std::random_device rd;
+  std::mt19937       g(rd());
+  std::shuffle(values.begin(), values.end(), g);
   for (std::size_t i = 0; i < values.size(); ++i)
   {
     auto const &val = values[i];
@@ -250,7 +253,9 @@ bool IntermediateFlushHashConsistency()
 
   key_index.New("test1.db");
 
-  std::random_shuffle(values.begin(), values.end());
+  std::random_device rd;
+  std::mt19937       g(rd());
+  std::shuffle(values.begin(), values.end(), g);
   for (std::size_t i = 0; i < values.size(); ++i)
   {
 
@@ -313,7 +318,9 @@ bool DoubleInsertionhConsistency()
   std::size_t size1 = key_index.size();
   auto        hash1 = key_index.Hash();
 
-  std::random_shuffle(values.begin(), values.end());
+  std::random_device rd;
+  std::mt19937       g(rd());
+  std::shuffle(values.begin(), values.end(), g);
   for (std::size_t i = 0; i < values.size() / 10; ++i)
   {
     auto const &val = values[i];
@@ -403,7 +410,9 @@ bool LoadSaveVsBulk()
     }
   }
 
-  std::random_shuffle(values.begin(), values.end());
+  std::random_device rd;
+  std::mt19937       g(rd());
+  std::shuffle(values.begin(), values.end(), g);
   {
     kvi_type test;
     test.New("test1.db");

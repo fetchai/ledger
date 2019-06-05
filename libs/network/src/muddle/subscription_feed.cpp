@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "network/muddle/subscription_feed.hpp"
+
 #include "core/mutex.hpp"
 
 namespace fetch {
