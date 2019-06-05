@@ -71,7 +71,7 @@ public:
   using PromiseOfMissingNodes  = network::PromiseOf<MissingNodes>;
 
   DAGSyncService(Muddle &muddle, std::shared_ptr<ledger::DAG> dag);
-  ~DAGSyncService();
+  ~DAGSyncService() override;
 
   static constexpr std::size_t MAX_OBJECT_RESOLUTION_PER_CYCLE       = 128;
 

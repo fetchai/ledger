@@ -569,7 +569,7 @@ DAGEpoch DAG::CreateEpoch(uint64_t block_number)
   ret.Finalise();
 
   std::cerr << "epoch " << ret.block_number << std::endl; // DELETEME_NH
-  std::cerr << "epoch hash " << ret.hash << std::endl; // DELETEME_NH
+  std::cerr << "epoch hash " << ret.hash.ToHex() << std::endl; // DELETEME_NH
   std::cerr << "epoch tips " << ret.tips.size() << std::endl; // DELETEME_NH
   std::cerr << "epoch nodes " << ret.all_nodes.size() << std::endl; // DELETEME_NH
   std::cerr << "epoch transaction " << ret.tx_digests.size() << std::endl; // DELETEME_NH
@@ -668,7 +668,7 @@ void DAG::TraverseFromTips(std::set<ConstByteArray> const &tip_hashes, std::func
     {
       start           = switch_hashes.back();  // Hash under evaluation
 
-      std::cerr << "attempting to add " << start << std::endl; // DELETEME_NH
+      std::cerr << "attempting to add " << start.ToHex() << std::endl; // DELETEME_NH
 
       // Hash 'terminates' - refers to already used hash
       if(HashInPrevEpochsInternal(start))

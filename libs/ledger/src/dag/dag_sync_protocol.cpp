@@ -3,8 +3,8 @@
 using namespace fetch::ledger;
 
 
-DAGSyncProtocol::DAGSyncProtocol(std::shared_ptr<ledger::DAG>  dag)
-  : dag_{dag}
+DAGSyncProtocol::DAGSyncProtocol(std::shared_ptr<ledger::DAG> dag)
+  : dag_{std::move(dag)}
 {
   this->Expose(REQUEST_NODES, this, &Self::RequestNodes);
 }

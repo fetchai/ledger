@@ -569,16 +569,12 @@ BlockCoordinator::State BlockCoordinator::OnWaitForTransactions(State current, S
   }
 
   // TODO(HUT): this might need to check that storage has whatever this dag epoch needs wrt contracts.
-  bool dag_is_ready;
+  bool dag_is_ready{true};
 
   if(dag_)
   {
     // This combines waiting until all dag nodes are in the epoch and epoch validation (well formed dag)
     dag_is_ready = dag_->SatisfyEpoch(current_block_->body.dag_epoch);
-  }
-  else
-  {
-    dag_is_ready = true;
   }
 
   // if the transaction digests have not been cached then do this now
