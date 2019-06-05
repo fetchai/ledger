@@ -34,7 +34,7 @@
 #include "math/tensor.hpp"
 #include "polyfill.hpp"
 #include "unigram_table.hpp"
-#include "w2v_cbow_dataloader.hpp"
+#include "w2v_dataloader.hpp"
 
 using namespace std::chrono;
 using namespace fetch::ml;
@@ -75,11 +75,11 @@ private:
   ArrayType error_words_;
   ArrayType error_target_weights_;
 
-  CBOWLoader<FloatType> &data_loader_;
+  W2VLoader<FloatType> &data_loader_;
 
 public:
   W2VModel(SizeType embeddings_size, SizeType negative, FloatType starting_alpha,
-           CBOWLoader<FloatType> &data_loader)
+           W2VLoader<FloatType> &data_loader)
     : embeddings_size_(embeddings_size)
     , negative_(negative)
     , alpha_(starting_alpha)
@@ -236,7 +236,6 @@ public:
       }
       else
       {
-        throw std::runtime_error("skipgram not implemented yet");
 
         ///////////////////////
         // FORWARD
@@ -378,7 +377,7 @@ public:
 };
 
 template <typename ArrayType>
-void EvalAnalogy(CBOWLoader<FloatType> &data_loader, ArrayType &embeds)
+void EvalAnalogy(W2VLoader<FloatType> &data_loader, ArrayType &embeds)
 {
   // define top K
   SizeType k = 5;
@@ -495,7 +494,7 @@ void EvalAnalogy(CBOWLoader<FloatType> &data_loader, ArrayType &embeds)
   }
 }
 
-void SaveEmbeddings(CBOWLoader<FloatType> const &data_loader, std::string output_filename,
+void SaveEmbeddings(W2VLoader<FloatType> const &data_loader, std::string output_filename,
                     fetch::math::Tensor<FloatType> &embeddings)
 {
   std::ofstream outfile(output_filename, std::ios::binary);
@@ -523,7 +522,7 @@ void SaveEmbeddings(CBOWLoader<FloatType> const &data_loader, std::string output
 // * @param output_filename
 // * @param embeddings
 // */
-// void SaveEmbeddingsOld(CBOWLoader<FloatType> const& data_loader, std::string output_filename,
+// void SaveEmbeddingsOld(W2VLoader<FloatType> const& data_loader, std::string output_filename,
 // fetch::math::Tensor<FloatType> &embeddings)
 //{
 //  SizeType embeddings_size = embeddings.shape()[0];
@@ -625,9 +624,8 @@ int main(int argc, char **argv)
   SizeType negative    = 25;
   SizeType min_count   = 5;
 
-  CBOWLoader<FloatType> data_loader(window_size, negative);
-
   std::cout << "Loading ..." << std::endl;
+  W2VLoader<FloatType> data_loader(window_size, negative, train_mode);
   data_loader.AddData(ReadFile(train_file));
   data_loader.RemoveInfrequent(min_count);
   data_loader.InitUnigramTable();
