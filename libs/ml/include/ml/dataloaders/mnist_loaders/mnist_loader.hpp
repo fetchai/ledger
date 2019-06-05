@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "math/base_types.hpp"
+#include "math/meta/math_type_traits.hpp"
 #include "ml/dataloaders/dataloader.hpp"
 
 #include <exception>
@@ -29,8 +30,8 @@
 namespace fetch {
 namespace ml {
 
-template <typename T>
-class MNISTLoader : public DataLoader<T, T>
+template <typename LabelType, typename T>
+class MNISTLoader : public DataLoader<LabelType, T>
 {
 public:
   MNISTLoader(std::string const &imagesFile, std::string const &labelsFile)
@@ -59,7 +60,10 @@ public:
     cursor_ = 0;
   }
 
-  std::pair<T, T> GetAtIndex(uint64_t index) const
+  // One-hot
+
+  template <typename DataT = T, typename LabelT = LabelType>
+  math::meta::IfIsMathArray<LabelT, std::pair<LabelType, T>> GetAtIndex(uint64_t index) const
   {
     using SizeType = typename T::SizeType;
     using DataType = typename T::Type;
@@ -73,20 +77,37 @@ public:
       i++;
       ++it;
     }
-    // SizeType label = static_cast<SizeType>(labels_[index]);
 
     T label({10, 1});
     label.At(labels_[index], 0) = DataType(1.0);
-
     return std::make_pair(label, buffer);
   }
 
-  virtual std::pair<T, T> GetNext()
+  // Non one-hot
+  template <typename DataT = T, typename LabelT = LabelType>
+  math::meta::IfIsArithmetic<LabelT, std::pair<LabelType, T>> GetAtIndex(uint64_t index) const
+  {
+    using SizeType = typename T::SizeType;
+    using DataType = typename T::Type;
+    T buffer({28u, 28u, 1u});
+
+    SizeType i{0};
+    auto     it = buffer.begin();
+    while (it.is_valid())
+    {
+      *it = static_cast<DataType>(data_[index][i]) / DataType{256};
+      i++;
+      ++it;
+    }
+    return std::make_pair(static_cast<LabelType>(labels_[index]), buffer);
+  }
+
+  virtual std::pair<LabelType, T> GetNext()
   {
     return GetAtIndex(cursor_++);
   }
 
-  std::pair<T, T> GetRandom()
+  std::pair<LabelType, T> GetRandom()
   {
     return GetAtIndex((uint64_t)rand() % Size());
   }
@@ -101,7 +122,7 @@ public:
     std::cout << std::endl;
   }
 
-  std::pair<T, T> SubsetToArray(uint64_t subset_size)
+  std::pair<LabelType, T> SubsetToArray(uint64_t subset_size)
   {
     T ret_labels({subset_size});
     T ret_images({subset_size, figure_size_});
@@ -118,7 +139,7 @@ public:
     return std::make_pair(ret_images, ret_labels);
   }
 
-  std::pair<T, T> ToArray()
+  std::pair<LabelType, T> ToArray()
   {
     return SubsetToArray(size_);
   }

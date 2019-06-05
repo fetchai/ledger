@@ -114,7 +114,7 @@ private:
   // Client own graph
   fetch::ml::Graph<ArrayType> g_;
   // Client own dataloader
-  fetch::ml::MNISTLoader<ArrayType> dataloader_;
+  fetch::ml::MNISTLoader<ArrayType, ArrayType> dataloader_;
   // Loss history
   std::vector<float> losses_values_;
 };

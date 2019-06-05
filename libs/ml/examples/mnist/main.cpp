@@ -69,7 +69,7 @@ int main(int ac, char **av)
 
   // Initialise MNIST loader
   std::shared_ptr<fetch::ml::DataLoader<ArrayType, ArrayType>> data_loader(
-      std::make_shared<fetch::ml::MNISTLoader<ArrayType>>(av[1], av[2]));
+      std::make_shared<fetch::ml::MNISTLoader<ArrayType, ArrayType>>(av[1], av[2]));
 
   // Initialise Optimiser
   fetch::ml::optimisers::AdamOptimiser<ArrayType, fetch::ml::ops::CrossEntropy<ArrayType>>

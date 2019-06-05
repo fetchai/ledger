@@ -29,13 +29,13 @@ namespace dataloaders {
 template <typename T>
 void BuildMNISTLoader(std::string const &custom_name, pybind11::module &module)
 {
-  py::class_<fetch::ml::MNISTLoader<fetch::math::Tensor<T>>>(module, custom_name.c_str())
+  py::class_<fetch::ml::MNISTLoader<uint64_t, fetch::math::Tensor<T>>>(module, custom_name.c_str())
       .def(py::init<std::string, std::string>())
-      .def("Size", &fetch::ml::MNISTLoader<fetch::math::Tensor<T>>::Size)
-      .def("IsDone", &fetch::ml::MNISTLoader<fetch::math::Tensor<T>>::IsDone)
-      .def("Reset", &fetch::ml::MNISTLoader<fetch::math::Tensor<T>>::Reset)
-      .def("Display", &fetch::ml::MNISTLoader<fetch::math::Tensor<T>>::Display)
-      .def("GetNext", &fetch::ml::MNISTLoader<fetch::math::Tensor<T>>::GetNext);
+      .def("Size", &fetch::ml::MNISTLoader<uint64_t, fetch::math::Tensor<T>>::Size)
+      .def("IsDone", &fetch::ml::MNISTLoader<uint64_t, fetch::math::Tensor<T>>::IsDone)
+      .def("Reset", &fetch::ml::MNISTLoader<uint64_t, fetch::math::Tensor<T>>::Reset)
+      .def("Display", &fetch::ml::MNISTLoader<uint64_t, fetch::math::Tensor<T>>::Display)
+      .def("GetNext", &fetch::ml::MNISTLoader<uint64_t, fetch::math::Tensor<T>>::GetNext);
 }
 
 }  // namespace dataloaders
