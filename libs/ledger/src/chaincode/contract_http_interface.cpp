@@ -41,6 +41,7 @@ namespace {
 using fetch::variant::Variant;
 using fetch::byte_array::ByteArray;
 using fetch::byte_array::ConstByteArray;
+using fetch::byte_array::ToBase64;
 using fetch::ledger::FromJsonTransaction;
 
 ConstByteArray const API_PATH_CONTRACT_PREFIX("/api/contract/");
@@ -262,7 +263,7 @@ http::HTTPResponse ContractHttpInterface::OnTransaction(http::HTTPRequest const 
     json["txs"]                 = Variant::Array(txs.size());
     for (std::size_t i = 0; i < txs.size(); ++i)
     {
-      json["txs"][i] = ToHex(txs[i]);
+      json["txs"][i] = ToBase64(txs[i]);
     }
 
     if (unknown_format)
