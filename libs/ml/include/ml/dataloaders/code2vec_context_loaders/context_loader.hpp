@@ -307,9 +307,9 @@ C2VLoader<LabelType, DataType>::GetNext()
                                                  target_word_tensor};
 
       ArrayType y_true_vec({1, function_name_counter().size() + 1});
-      y_true_vec.Fill(0);
+      y_true_vec.Fill(Type{0});
       // Preparing the y_true vector (one-hot-encoded)
-      y_true_vec.Set(0, old_function_index, 1);
+      y_true_vec.Set(Type{0}, old_function_index, Type{1});
 
       ContextTensorsLabelPair return_pair{y_true_vec, context_tensor_tuple};
 
