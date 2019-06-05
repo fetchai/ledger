@@ -21,9 +21,9 @@
 #include "meta/type_traits.hpp"
 #include "vectorise/platform.hpp"
 
-#include <functional>
 #include <cassert>
 #include <cmath>
+#include <functional>
 #include <iomanip>
 #include <iostream>
 #include <limits>
