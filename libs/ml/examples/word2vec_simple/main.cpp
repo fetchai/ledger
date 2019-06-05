@@ -207,82 +207,32 @@ public:
         {
           val /= div;
         }
-
-        // Embeddings: target -> weights
-        uint64_t j = 0;
-
-        for (FloatType const &i : target)
-        {
-          auto view1 = target_weights_.View(j);
-          auto view2 = weights_.View(fetch::math::SizeType(i));
-
-          Assign(view1, view2);
-          j++;
-        }
-
-        // MatrixMultiply: Forward
-        fetch::math::TransposeDot(target_weights_, words_, error_signal_);
-
-        ///////////////////////
-        // ERROR
-        ///////////////////////
-        for (SizeType d = 0; d < negative_; d++)
-        {
-          FloatType f     = error_signal_(d, 0);
-          FloatType label = (d == 0) ? 1 : 0;
-          FloatType sm = static_cast<FloatType>(static_cast<FloatType>(fexp(f) / (1. + fexp(f))));
-          error_signal_.Set(d, 0, label - sm);
-        }
       }
-      else
+
+      // Embeddings: target -> weights
+      uint64_t j = 0;
+
+      for (FloatType const &i : target)
       {
+        auto view1 = target_weights_.View(j);
+        auto view2 = weights_.View(fetch::math::SizeType(i));
 
-        ///////////////////////
-        // FORWARD
-        ///////////////////////
+        Assign(view1, view2);
+        j++;
+      }
 
-        // Average Embeddings: context -> words
-        uint64_t valid_samples(0);
-        auto     output_view = words_.View(0);
-        bool     clear       = true;
-        for (FloatType const &i : context)
-        {
-          if (i >= 0)
-          {
-            if (clear)
-            {
-              Assign(output_view, embeddings_.View(fetch::math::SizeType(i)));
-              clear = false;
-            }
-            else
-            {
-              auto view = embeddings_.View(fetch::math::SizeType(i));
-              PolyfillInlineAdd(output_view, view);
-            }
-            valid_samples++;
-          }
-        }
+      // MatrixMultiply: Forward
+      fetch::math::TransposeDot(target_weights_, words_, error_signal_);
 
-        FloatType div = static_cast<FloatType>(valid_samples);
-        for (auto &val : output_view)
-        {
-          val /= div;
-        }
-
-        // Embeddings: target -> weights
-        uint64_t j = 0;
-
-        for (FloatType const &i : target)
-        {
-          auto view1 = target_weights_.View(j);
-          auto view2 = weights_.View(fetch::math::SizeType(i));
-
-          Assign(view1, view2);
-          j++;
-        }
-
-        // MatrixMultiply: Forward
-        fetch::math::TransposeDot(target_weights_, words_, error_signal_);
+      ///////////////////////
+      // ERROR
+      ///////////////////////
+      for (SizeType d = 0; d < negative_; d++)
+      {
+        FloatType f     = error_signal_(d, 0);
+        FloatType label = (d == 0) ? 1 : 0;
+        FloatType sm    = static_cast<FloatType>(static_cast<FloatType>(fexp(f) / (1. + fexp(f))));
+        error_signal_.Set(d, 0, label - sm);
       }
 
       ///////////////////////
@@ -291,24 +241,12 @@ public:
 
       // MatrixMultiply: Backward
       fetch::math::Dot(target_weights_, error_signal_, error_words_);
+
+      // TODO: for cbow the shape is diffeernt because of weight averaging
       fetch::math::DotTranspose(words_, error_signal_, error_target_weights_);
 
-      // Average Embeddings: Backward
-      auto error_signal_view = error_words_.View(0);
-      for (FloatType const &i : context)
-      {
-        if (i >= 0)
-        {
-          auto ii = static_cast<fetch::math::SizeType>(i);
-          updated_rows_embeddings_.push_back(ii);
-          auto view1 = gradient_embeddings_.View(ii);
-
-          PolyfillInlineAdd(view1, error_signal_view);
-        }
-      }
-
       // Embeddings: Backward
-      SizeType j = 0;
+      j = 0;
       for (FloatType const &i : target)
       {
         auto ii = fetch::math::SizeType(double(i));
@@ -348,13 +286,11 @@ public:
 
       updated_rows_weights_.clear();
 
-      // Average Embeddings: Step
+      // Embeddings: Step
       for (auto const &r : updated_rows_embeddings_)
       {
-        auto gradientAccumulationSlice = gradient_embeddings_.View(r);
-        auto outputSlice               = embeddings_.View(r);
-        auto it1                       = gradientAccumulationSlice.begin();
-        auto it2                       = outputSlice.begin();
+        auto it1 = (gradient_embeddings_.View(r)).begin();
+        auto it2 = (embeddings_.View(r)).begin();
         while (it1.is_valid())
         {
           *it2 += (*it1 * learning_rate);
@@ -609,7 +545,7 @@ int main(int argc, char **argv)
   {
     output_file = argv[3];
   }
-  assert((mode == "cbow") || (mode == "skipgram"));
+  assert((mode == "cbow") || (mode == "sgns"));
   if (mode == "cbow")
   {
     train_mode = true;
@@ -652,39 +588,6 @@ int main(int argc, char **argv)
 
   /// SHOW ANALOGY EXAMPLE ///
   EvalAnalogy(data_loader, embeddings);
-
-  //  bool load_embeddings = true;
-  //  if (load_embeddings)
-  //  {
-  //    /// LOAD EMBEDDINGS FROM A FILE ///
-  //    std::string load_filename = "./vector.bin";
-  //    std::cout << "Loading existing embeddings from: " << load_filename << std::endl;
-  //    auto embeddings = LoadEmbeddings(load_filename);
-  //
-  ////    /// SHOW ANALOGY EXAMPLE ///
-  ////    EvalAnalogy(data_loader, embeddings);
-  //  }
-  //  else
-  //  {
-  ////    /// TRAIN MODEL ///
-  ////    SizeType embeddings_size = 200;  // embeddings size
-  ////    SizeType iter           = 1;    // training epochs
-  ////    FloatType alpha = static_cast<FloatType>(0.025);
-  ////    SizeType print_frequency = 10000;
-  ////    std::string output_file = "./vector.bin";
-  ////
-  ////    std::cout << "Training " << mode << std::endl;
-  ////    W2VModel w2v(embeddings_size, negative, alpha, data_loader);
-  ////    w2v.Train(iter, print_frequency);
-  ////    auto embeddings = w2v.Embeddings();
-  ////
-  ////    /// SHOW ANALOGY EXAMPLE ///
-  ////    EvalAnalogy(data_loader, embeddings);
-  ////
-  ////    /// SAVE EMBEDDINGS ///
-  ////    SaveEmbeddings(data_loader, output_file, embeddings);
-  ////    std::cout << "All done" << std::endl;
-  //  }
 
   return 0;
 }

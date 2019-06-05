@@ -57,7 +57,6 @@ public:
   SizeType         IndexFromWord(std::string word);
 
 private:
-  bool                                       mode_;
   SizeType                                   current_sentence_;
   SizeType                                   current_word_;
   SizeType                                   window_size_;
@@ -66,6 +65,7 @@ private:
   std::vector<std::vector<SizeType>>         data_;
   fetch::random::LinearCongruentialGenerator rng_;
   UnigramTable                               unigram_table_;
+  bool                                       mode_;
 
   std::vector<SizeType>    StringsToIndices(std::vector<std::string> const &strings);
   std::vector<std::string> PreprocessString(std::string const &s);
@@ -96,20 +96,14 @@ template <typename T>
 math::SizeType W2VLoader<T>::Size() const
 {
   SizeType size(0);
-  if (mode_)
+  for (auto const &s : data_)
   {
-    for (auto const &s : data_)
+    if ((SizeType)s.size() > (2 * window_size_))
     {
-      if ((SizeType)s.size() > (2 * window_size_))
-      {
-        size += (SizeType)s.size() - (2 * window_size_);
-      }
+      size += (SizeType)s.size() - (2 * window_size_);
     }
   }
-  else
-  {
-    throw std::runtime_error("skipgram not implemented");
-  }
+
   return size;
 }
 
@@ -156,9 +150,8 @@ void W2VLoader<T>::Reset()
 template <typename T>
 void W2VLoader<T>::RemoveInfrequent(SizeType min)
 {
-  // Removing words while keeping indexes consecutive takes too long
-  // So creating a new object, not the most efficient, but good enought for now
-  W2VLoader                                            new_loader(window_size_, negative_samples_);
+  // TODO: rework - creating a new_loader not terribly efficient
+  W2VLoader new_loader(window_size_, negative_samples_, mode_);
   std::map<SizeType, std::pair<std::string, SizeType>> reverse_vocab;
   for (auto const &kvp : vocab_)
   {
@@ -204,43 +197,34 @@ void W2VLoader<T>::InitUnigramTable()
 template <typename T>
 void W2VLoader<T>::GetNext(ReturnType &t)
 {
-  if (mode_)
+  // select random window size
+  SizeType dynamic_size = rng_() % window_size_ + 1;
+
+  // set the positive sample
+  t.second.Set(0, 0, T(data_[current_sentence_][current_word_ + dynamic_size]));
+  for (SizeType i = 0; i < dynamic_size; ++i)
   {
-    // This seems to be one of the most important tricks to get word2vec to train
-    // The number of context words changes at each iteration with values in range [1 * 2,
-    // window_size_ * 2]
-    SizeType dynamic_size = rng_() % window_size_ + 1;
-
-    // set the positive sample
-    t.second.Set(0, 0, T(data_[current_sentence_][current_word_ + dynamic_size]));
-    for (SizeType i = 0; i < dynamic_size; ++i)
-    {
-      t.first.Set(i, 0, T(data_[current_sentence_][current_word_ + i]));
-      t.first.Set(i + dynamic_size, 0,
-                  T(data_[current_sentence_][current_word_ + dynamic_size + i + 1]));
-    }
-
-    // pad the unused part of the window
-    for (SizeType i = (dynamic_size * 2); i < t.first.size(); ++i)
-    {
-      t.first(i, 0) = -1;
-    }
-
-    // negative sampling
-    for (SizeType i = 1; i < negative_samples_; ++i)
-    {
-      t.second(i, 0) = T(unigram_table_.SampleNegative(static_cast<SizeType>(t.second(0, 0))));
-    }
-    current_word_++;
-    if (current_word_ >= data_.at(current_sentence_).size() - (2 * window_size_))
-    {
-      current_word_ = 0;
-      current_sentence_++;
-    }
+    t.first.Set(i, 0, T(data_[current_sentence_][current_word_ + i]));
+    t.first.Set(i + dynamic_size, 0,
+                T(data_[current_sentence_][current_word_ + dynamic_size + i + 1]));
   }
-  else
+
+  // pad the unused part of the window
+  for (SizeType i = (dynamic_size * 2); i < t.first.size(); ++i)
   {
-    throw std::runtime_error("skipgram dataloading not yet implemented");
+    t.first(i, 0) = -1;
+  }
+
+  // negative sampling
+  for (SizeType i = 1; i < negative_samples_; ++i)
+  {
+    t.second(i, 0) = T(unigram_table_.SampleNegative(static_cast<SizeType>(t.second(0, 0))));
+  }
+  current_word_++;
+  if (current_word_ >= data_.at(current_sentence_).size() - (2 * window_size_))
+  {
+    current_word_ = 0;
+    current_sentence_++;
   }
 }
 
@@ -252,7 +236,8 @@ typename W2VLoader<T>::ReturnType W2VLoader<T>::GetNext()
   fetch::math::Tensor<T> t({window_size_ * 2, 1});
   fetch::math::Tensor<T> label({negative_samples_, 1});
   ReturnType             p(t, label);
-  return GetNext(p);
+  GetNext(p);
+  return p;
 }
 
 /**

@@ -20,6 +20,8 @@
 #include "math/tensor.hpp"
 #include "meta/is_iterable.hpp"
 
+// TODO: should probably move this to math library since its quite general purpose
+
 namespace fetch {
 namespace math {
 
