@@ -29,6 +29,7 @@
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 #include "ledger/transaction_status_cache.hpp"
 
+#include "ledger/upow/synergetic_executor.hpp"
 #include "ledger/upow/naive_synergetic_miner.hpp"
 
 #include "ledger/upow/synergetic_execution_manager.hpp"
@@ -65,7 +66,9 @@ SynergeticExecMgrPtr CreateSynergeticExecutor(core::FeatureFlags const &features
 
   if (features.IsEnabled("synergetic"))
   {
-    execution_mgr = std::make_unique<SynergeticExecutionManager>(dag, storage_unit);
+    execution_mgr = std::make_unique<SynergeticExecutionManager>(
+        dag, storage_unit, 1u,
+        [&storage_unit]() { return std::make_shared<SynergeticExecutor>(storage_unit); });
   }
 
   return execution_mgr;
@@ -119,7 +122,7 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag,
   , exec_wait_periodic_{EXEC_NOTIFY_INTERVAL}
   , syncing_periodic_{NOTIFY_INTERVAL}
   , synergetic_exec_mgr_{CreateSynergeticExecutor(features, dag, storage_unit_)}
-  , synergetic_miner_{CreateSynergeticMiner(features, dag, storage_unit, std::move(prover))}
+  , synergetic_miner_{CreateSynergeticMiner(features, dag, storage_unit, prover)}
 {
   // configure the state machine
   // clang-format off
@@ -416,7 +419,7 @@ BlockCoordinator::State BlockCoordinator::OnSynchronised(State current, State pr
     current_block_.reset();
 
     // trigger packing state
-    return State::PACK_NEW_BLOCK;
+    return State::NEW_SYNERGETIC_EXECUTION;
   }
   else if (State::SYNCHRONISING == previous)
   {
@@ -786,7 +789,28 @@ BlockCoordinator::State BlockCoordinator::OnPackNewBlock()
 
 BlockCoordinator::State BlockCoordinator::OnNewSynergeticExecution()
 {
-  return State::EXECUTE_NEW_BLOCK;
+  if (synergetic_exec_mgr_ && dag_)
+  {
+    // lookup the previous block
+    BlockPtr previous_block = chain_.GetBlock(next_block_->body.previous_hash);
+
+    // prepare the work queue
+    auto const status = synergetic_exec_mgr_->PrepareWorkQueue(*next_block_, *previous_block);
+    if (SynExecStatus::SUCCESS != status)
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Error preparing synergetic work queue: ", ledger::ToString(status));
+      return State::RESET;
+    }
+
+    if (!synergetic_exec_mgr_->ValidateWorkAndUpdateState())
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Failed to valid work queue");
+
+      return State::RESET;
+    }
+  }
+
+  return State::PACK_NEW_BLOCK;
 }
 
 BlockCoordinator::State BlockCoordinator::OnExecuteNewBlock()

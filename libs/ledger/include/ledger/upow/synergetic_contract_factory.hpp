@@ -22,14 +22,28 @@
 namespace fetch {
 namespace ledger {
 
+class StorageInterface;
+class Address;
+
 class SynergeticContractFactory
 {
 public:
 
-  SynergeticContractFactory() = default;
+  // Construction / Destruction
+  explicit SynergeticContractFactory(StorageInterface &storage);
+  SynergeticContractFactory(SynergeticContractFactory const &) = delete;
+  SynergeticContractFactory(SynergeticContractFactory &&) = delete;
   ~SynergeticContractFactory() = default;
 
-  SynergeticContractPtr Create();
+  SynergeticContractPtr Create(Address const &address);
+
+  // Operators
+  SynergeticContractFactory &operator=(SynergeticContractFactory const &) = delete;
+  SynergeticContractFactory &operator=(SynergeticContractFactory &&) = delete;
+
+private:
+
+  StorageInterface &storage_;
 };
 
 } // namespace ledger

@@ -34,7 +34,8 @@ struct DAGEpoch
 
   uint64_t                 block_number;
   std::set<ConstByteArray> tips;
-  std::set<ConstByteArray> open_problems;
+  std::set<ConstByteArray> open_problems; // TODO(EJF): Not sure this is populated yet
+  std::set<ConstByteArray> solutions;
 
   ConstByteArray           hash;
 
@@ -44,15 +45,17 @@ struct DAGEpoch
   std::set<ConstByteArray>   all_nodes;
 
   // Useful to pass info around
-  std::set<ConstByteArray> tx_digests;
+  std::set<ConstByteArray> tx_digests; // TODO(EJF): Not really sure this is useful
 
-  bool Contains(ConstByteArray const &hash) const
+  bool Contains(ConstByteArray const &digest) const
   {
-    return all_nodes.find(hash) != all_nodes.end();
+    return all_nodes.find(digest) != all_nodes.end();
   }
 
   void Finalise()
   {
+    // strictly speaking this is a bit of a weird hash because it will also contain all the weird
+    // serialisation metadata
     serializers::ByteArrayBuffer buf;
     buf << *this;
 
@@ -69,6 +72,7 @@ void Serialize(T &serializer, DAGEpoch const &node)
   serializer << node.block_number;
   serializer << node.tips;
   serializer << node.open_problems;
+  serializer << node.solutions;
   serializer << node.hash;
   serializer << node.all_nodes;
 }
@@ -79,6 +83,7 @@ void Deserialize(T &serializer, DAGEpoch &node)
   serializer >> node.block_number;
   serializer >> node.tips;
   serializer >> node.open_problems;
+  serializer >> node.solutions;
   serializer >> node.hash;
   serializer >> node.all_nodes;
 }

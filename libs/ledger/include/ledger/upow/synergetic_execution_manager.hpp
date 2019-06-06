@@ -17,29 +17,36 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/mutex.hpp"
 #include "ledger/chain/digest.hpp"
 #include "ledger/chain/address.hpp"
 #include "ledger/upow/work.hpp"
 #include "ledger/upow/work_package.hpp"
+#include "ledger/upow/work_queue.hpp"
 #include "ledger/upow/synergetic_execution_manager_interface.hpp"
+#include "vectorise/threading/pool.hpp"
 
 #include "ledger/dag/dag.hpp"
 
 #include <unordered_map>
+#include <functional>
 
 namespace fetch {
 namespace ledger {
 
 class StorageUnitInterface;
+class SynergeticExecutorInterface;
 
 class SynergeticExecutionManager : public SynergeticExecutionManagerInterface
 {
 public:
-
-  using DAGPtr                 = std::shared_ptr<ledger::DAG>;
+  using ExecutorPtr     = std::shared_ptr<SynergeticExecutorInterface>;
+  using ExecutorFactory = std::function<ExecutorPtr()>;
+  using DAGPtr          = std::shared_ptr<DAG>;
+  using DAGNodePtr      = std::shared_ptr<DAGNode>;
 
   // Construction / Destruction
-  SynergeticExecutionManager(DAGPtr, StorageUnitInterface &);
+  SynergeticExecutionManager(DAGPtr, StorageUnitInterface &, std::size_t num_executors, ExecutorFactory const &);
   SynergeticExecutionManager(SynergeticExecutionManager const &) = delete;
   SynergeticExecutionManager(SynergeticExecutionManager &&) = delete;
   ~SynergeticExecutionManager() override = default;
@@ -55,12 +62,24 @@ public:
   SynergeticExecutionManager &operator=(SynergeticExecutionManager &&) = delete;
 
 private:
-  using WorkMap = std::unordered_map<Digest, WorkPackagePtr, DigestHashAdapter>;
+  using Executors      = std::vector<ExecutorPtr>;
+  using WorkQueueStack = std::vector<WorkQueuePtr>;
+  using ThreadPool     = threading::Pool;
+  using Mutex          = mutex::Mutex;
 
-  DAGPtr dag_;
+  void ExecuteItem(WorkQueuePtr const &queue);
+
+  // System Components
+  DAGPtr                dag_;
   StorageUnitInterface &storage_;
 
-  WorkMap solution_queues_;
+  /// @name Protected State
+  /// @{
+  Mutex      lock_{__LINE__, __FILE__};
+  WorkQueueStack  solution_stack_;
+  Executors  executors_;
+  ThreadPool threads_;
+  /// @}
 };
 
 } // namespace ledger

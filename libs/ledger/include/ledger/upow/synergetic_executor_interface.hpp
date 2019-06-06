@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ledger/upow/work_queue.hpp"
 
 namespace fetch {
 namespace ledger {
@@ -31,7 +32,7 @@ public:
 
   /// @name Executor Interface
   /// @{
-  virtual void VerifySolution() = 0;
+  virtual void Verify(WorkQueue &solutions) = 0;
   /// @}
 };
 

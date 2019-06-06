@@ -111,7 +111,7 @@ public:
 
   // newer things
   void AddTransaction(Transaction const &tx, crypto::ECDSASigner const &signer, DAGTypes type);
-  void AddWork(Work work);
+  void AddWork(Work const &work);
 
   // Create an epoch based on the current DAG (not committal)
   DAGEpoch CreateEpoch(uint64_t block_number);
@@ -125,7 +125,7 @@ public:
   // Make sure that the dag has all nodes for a certain epoch
   bool SatisfyEpoch(DAGEpoch &);
 
-  std::vector<DAGNode> GetLatest();
+  std::vector<DAGNode> GetLatest(bool previous_epoch_only = false);
 
   ///////////////////////////////////////
   // Fns used for syncing
@@ -136,7 +136,8 @@ public:
   // DAG node hashes this miner knows should exist
   MissingTXs GetRecentlyMissing();
 
-  bool GetDAGNode(ConstByteArray hash, DAGNode &node);
+  bool GetDAGNode(ConstByteArray const &hash, DAGNode &node);
+  bool GetWork(ConstByteArray const &hash, Work &work);
 
   // TXs and epochs will be added here when they are broadcast in
   bool AddDAGNode(DAGNode node);

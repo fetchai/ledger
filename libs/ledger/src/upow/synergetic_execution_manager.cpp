@@ -19,60 +19,145 @@
 #include "core/macros.hpp"
 #include "ledger/chain/block.hpp"
 #include "ledger/upow/synergetic_execution_manager.hpp"
+#include "ledger/upow/synergetic_executor_interface.hpp"
 #include "ledger/chaincode/smart_contract_manager.hpp"
 
 namespace fetch {
 namespace ledger {
 namespace {
 
-//constexpr char const *LOGGING_NAME = "SynExecMgr";
+constexpr char const *LOGGING_NAME = "SynExecMgr";
 
 using ExecStatus = SynergeticExecutionManager::ExecStatus;
 
 } // namespace
 
-SynergeticExecutionManager::SynergeticExecutionManager(DAGPtr dag, StorageUnitInterface &storage)
-  : dag_{dag}
+SynergeticExecutionManager::SynergeticExecutionManager(DAGPtr dag, StorageUnitInterface &storage, std::size_t num_executors, ExecutorFactory const &factory)
+  : dag_{std::move(dag)}
   , storage_{storage}
+  , executors_(num_executors)
+  , threads_{num_executors, "SynEx"}
 {
-  FETCH_UNUSED(storage_);
+  if (num_executors != 1)
+  {
+    throw std::runtime_error("The number of executors must be 1 because state concurrency not implemented");
+  }
+
+  // build the required number of executors
+  for (auto &executor : executors_)
+  {
+    executor = factory();
+  }
 }
 
 ExecStatus SynergeticExecutionManager::PrepareWorkQueue(Block const &current, Block const &previous)
 {
-  FETCH_UNUSED(current);
-  FETCH_UNUSED(previous);
+  using WorkMap = std::unordered_map<Digest, WorkQueuePtr, DigestHashAdapter>;
 
-//  solution_queues_.clear();
-//  WorkMap synergetic_work_candidates;
-//
-//  // Annotating nodes in the DAG
-//  if (!dag_.SetNodeTime(current))
-//  {
-//    return ExecStatus::INVALID_BLOCK;
-//  }
-//
-//  // Work is certified by current block
-//  auto segment = dag_.ExtractSegment(current);
-//
-//  // but data is used from the previous block
-////  miner_.SetBlock(previous);
-////  assert((previous.body.block_number + 1) == current.body.block_number);
-//
-//  std::size_t index{0};
-//  for (auto const &item : segment)
-//  {
-//    FETCH_LOG_INFO(LOGGING_NAME, "Work ", index, " Hash: 0x", item.hash.ToHex(), " Type: ", item.type);
-//
-//    ++index;
-//  }
+  auto const &epoch = current.body.dag_epoch;
+
+  FETCH_LOG_INFO(LOGGING_NAME, "#### Preparing work queue for epoch: ", epoch.block_number);
+
+  // Step 1. loop through all the solutions which were presented in this epoch
+  WorkMap work_map{};
+  for (auto const &digest : epoch.solutions)
+  {
+    // lookup the work from the block
+    auto work = std::make_shared<Work>();
+    if (!dag_->GetWork(digest, *work))
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Failed to get work from DAG. Node: 0x", digest.ToHex());
+      continue;
+    }
+
+    // lookup (or create) the solution queue
+    auto &solution_queue = work_map[work->contract_digest().address()];
+
+    // if the doesn't exist then create it
+    if (!solution_queue)
+    {
+      solution_queue = std::make_shared<WorkQueue>();
+    }
+
+    FETCH_LOG_WARN(LOGGING_NAME, "Mapping Solution for 0x", work->contract_digest().address().ToHex(), " score: ", work->score());
+
+    // add the work to the queue
+    solution_queue->push(std::move(work));
+  }
+
+  // Step 2. Update the final queue
+  {
+    FETCH_LOCK(lock_);
+
+    solution_stack_.clear();
+    solution_stack_.reserve(work_map.size());
+    for (auto &item : work_map)
+    {
+      solution_stack_.emplace_back(std::move(item.second));
+    }
+  }
 
   return SUCCESS;
 }
 
 bool SynergeticExecutionManager::ValidateWorkAndUpdateState()
 {
+  // get the current solution stack
+  WorkQueueStack solution_stack;
+  {
+    FETCH_LOCK(lock_);
+    std::swap(solution_stack, solution_stack_);
+  }
+
+  if (!solution_stack.empty())
+  {
+    int i = 1 + 2;
+  }
+
+  // post all the work into the thread queues
+  while (!solution_stack.empty())
+  {
+    // extract the solution queue
+    auto solutions = solution_stack.back();
+    solution_stack.pop_back();
+
+    {
+      auto const &work = solutions->top();
+      FETCH_LOG_WARN(LOGGING_NAME, "Scheduling validation for syn contract 0x",
+                     work->contract_digest().address().ToHex(), " score: ", work->score());
+    }
+
+    // dispatch the work
+    threads_.Dispatch([this, solutions] {
+      ExecuteItem(solutions);
+    });
+  }
+
+  // wait for the execution to complete
+  threads_.Wait();
+
   return true;
+}
+
+void SynergeticExecutionManager::ExecuteItem(WorkQueuePtr const &queue)
+{
+  ExecutorPtr executor;
+
+  // pick up an executor from the stack
+  {
+    FETCH_LOCK(lock_);
+    executor = executors_.back();
+    executors_.pop_back();
+  }
+
+  assert(static_cast<bool>(executor));
+  executor->Verify(*queue);
+
+  // return the executor to the stack
+  {
+    FETCH_LOCK(lock_);
+    executors_.emplace_back(std::move(executor));
+  }
 }
 
 } // namespace ledger
