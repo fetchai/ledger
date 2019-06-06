@@ -87,6 +87,8 @@ protected:
   fetch::random::LaggedFibonacciGenerator<>  lfg_;
   fetch::random::LinearCongruentialGenerator lcg_;
 
+  std::random_device rd_;
+
   // containers for the data and labels
   std::vector<std::vector<SizeType>> data_buffers_;
 
@@ -243,7 +245,9 @@ void BasicTextLoader<T>::Reset()
   // note that ran_idx_ is of size word_count_ not of size number of valid training pairs
   ran_idx_ = std::vector<SizeType>(this->TextLoader<T>::Size());
   std::iota(ran_idx_.begin(), ran_idx_.end(), 0);
-  std::random_shuffle(ran_idx_.begin(), ran_idx_.end());
+
+  std::mt19937 g(rd_());
+  std::shuffle(ran_idx_.begin(), ran_idx_.end(), g);
   assert(ran_idx_.size() == this->word_count_);
 
   // recompute which words should be ignored based on their frequency

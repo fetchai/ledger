@@ -18,10 +18,16 @@
 
 #include "vm/module.hpp"
 
+#include "vm/common.hpp"
+#include "vm/variant.hpp"
+#include "vm/vm.hpp"
+
 #include <cstdint>
 
 namespace fetch {
 namespace vm {
+
+namespace {
 
 template <typename To>
 To Cast(Variant const &from)
@@ -39,7 +45,7 @@ To Cast(Variant const &from)
     to = static_cast<To>(from.primitive.i8);
     break;
   }
-  case TypeIds::Byte:
+  case TypeIds::UInt8:
   {
     to = static_cast<To>(from.primitive.ui8);
     break;
@@ -98,7 +104,7 @@ int8_t toInt8(VM * /* vm */, AnyPrimitive const &from)
   return Cast<int8_t>(from);
 }
 
-uint8_t toByte(VM * /* vm */, AnyPrimitive const &from)
+uint8_t toUInt8(VM * /* vm */, AnyPrimitive const &from)
 {
   return Cast<uint8_t>(from);
 }
@@ -143,10 +149,12 @@ double toFloat64(VM * /* vm */, AnyPrimitive const &from)
   return Cast<double>(from);
 }
 
+}  // namespace
+
 Module::Module()
 {
   CreateFreeFunction("toInt8", &toInt8);
-  CreateFreeFunction("toByte", &toByte);
+  CreateFreeFunction("toUInt8", &toUInt8);
   CreateFreeFunction("toInt16", &toInt16);
   CreateFreeFunction("toUInt16", &toUInt16);
   CreateFreeFunction("toInt32", &toInt32);
@@ -156,58 +164,60 @@ Module::Module()
   CreateFreeFunction("toFloat32", &toFloat32);
   CreateFreeFunction("toFloat64", &toFloat64);
 
-  auto istring = GetClassInterface<String>();
-  istring.CreateMemberFunction("length", &String::Length);
-  istring.CreateMemberFunction("trim", &String::Trim);
-  istring.CreateMemberFunction("find", &String::Find);
-  istring.CreateMemberFunction("substr", &String::Substring);
-  istring.CreateMemberFunction("reverse", &String::Reverse);
+  GetClassInterface<IMatrix>()
+      .CreateConstuctor<int32_t, int32_t>()
+      .EnableIndexOperator<AnyInteger, AnyInteger, TemplateParameter>()
+      .CreateInstantiationType<Matrix<double>>()
+      .CreateInstantiationType<Matrix<float>>();
 
-  auto imatrix = GetClassInterface<IMatrix>();
-  imatrix.CreateConstuctor<int32_t, int32_t>();
-  imatrix.EnableIndexOperator<AnyInteger, AnyInteger, TemplateParameter>();
-  imatrix.CreateInstantiationType<Matrix<double>>();
-  imatrix.CreateInstantiationType<Matrix<float>>();
+  GetClassInterface<IArray>()
+      .CreateConstuctor<int32_t>()
+      .CreateMemberFunction("count", &IArray::Count)
+      .CreateMemberFunction("append", &IArray::Append)
+      .CreateMemberFunction("popBack", &IArray::PopBackOne)
+      .CreateMemberFunction("popBack", &IArray::PopBackMany)
+      .CreateMemberFunction("popFront", &IArray::PopFrontOne)
+      .CreateMemberFunction("popFront", &IArray::PopFrontMany)
+      .CreateMemberFunction("reverse", &IArray::Reverse)
+      .CreateMemberFunction("extend", &IArray::Extend)
+      .EnableIndexOperator<AnyInteger, TemplateParameter>()
+      .CreateInstantiationType<Array<bool>>()
+      .CreateInstantiationType<Array<int8_t>>()
+      .CreateInstantiationType<Array<uint8_t>>()
+      .CreateInstantiationType<Array<int16_t>>()
+      .CreateInstantiationType<Array<uint16_t>>()
+      .CreateInstantiationType<Array<int32_t>>()
+      .CreateInstantiationType<Array<uint32_t>>()
+      .CreateInstantiationType<Array<int64_t>>()
+      .CreateInstantiationType<Array<uint64_t>>()
+      .CreateInstantiationType<Array<float>>()
+      .CreateInstantiationType<Array<double>>()
+      .CreateInstantiationType<Array<Ptr<String>>>();
 
-  auto iarray = GetClassInterface<IArray>();
-  iarray.CreateConstuctor<int32_t>();
-  iarray.CreateMemberFunction("count", &IArray::Count);
-  iarray.CreateMemberFunction("append", &IArray::Append);
-  iarray.CreateMemberFunction("pop_back", &IArray::PopBackOne);
-  iarray.CreateMemberFunction("pop_back", &IArray::PopBackMany);
-  iarray.CreateMemberFunction("pop_front", &IArray::PopFrontOne);
-  iarray.CreateMemberFunction("pop_front", &IArray::PopFrontMany);
-  iarray.CreateMemberFunction("reverse", &IArray::Reverse);
-  iarray.EnableIndexOperator<AnyInteger, TemplateParameter>();
-  iarray.CreateInstantiationType<Array<bool>>();
-  iarray.CreateInstantiationType<Array<int8_t>>();
-  iarray.CreateInstantiationType<Array<uint8_t>>();
-  iarray.CreateInstantiationType<Array<int16_t>>();
-  iarray.CreateInstantiationType<Array<uint16_t>>();
-  iarray.CreateInstantiationType<Array<int32_t>>();
-  iarray.CreateInstantiationType<Array<uint32_t>>();
-  iarray.CreateInstantiationType<Array<int64_t>>();
-  iarray.CreateInstantiationType<Array<uint64_t>>();
-  iarray.CreateInstantiationType<Array<float>>();
-  iarray.CreateInstantiationType<Array<double>>();
-  iarray.CreateInstantiationType<Array<Ptr<String>>>();
+  GetClassInterface<String>()
+      .CreateMemberFunction("find", &String::Find)
+      .CreateMemberFunction("length", &String::Length)
+      .CreateMemberFunction("reverse", &String::Reverse)
+      .CreateMemberFunction("split", &String::Split)
+      .CreateMemberFunction("substr", &String::Substring)
+      .CreateMemberFunction("trim", &String::Trim);
 
-  auto imap = GetClassInterface<IMap>();
-  imap.CreateConstuctor<>();
-  imap.CreateMemberFunction("count", &IMap::Count);
-  imap.EnableIndexOperator<TemplateParameter1, TemplateParameter2>();
+  GetClassInterface<IMap>()
+      .CreateConstuctor<>()
+      .CreateMemberFunction("count", &IMap::Count)
+      .EnableIndexOperator<TemplateParameter1, TemplateParameter2>();
 
-  auto address = GetClassInterface<Address>();
-  address.CreateConstuctor<>();
-  address.CreateConstuctor<Ptr<String>>();
-  address.CreateMemberFunction("signed_tx", &Address::HasSignedTx);
+  GetClassInterface<Address>()
+      .CreateConstuctor<>()
+      .CreateConstuctor<Ptr<String>>()
+      .CreateMemberFunction("signedTx", &Address::HasSignedTx);
 
-  auto istate = GetClassInterface<IState>();
-  istate.CreateConstuctor<Ptr<String>, TemplateParameter>();
-  istate.CreateConstuctor<Ptr<Address>, TemplateParameter>();
-  istate.CreateMemberFunction("get", &IState::Get);
-  istate.CreateMemberFunction("set", &IState::Set);
-  istate.CreateMemberFunction("existed", &IState::Existed);
+  GetClassInterface<IState>()
+      .CreateConstuctor<Ptr<String>, TemplateParameter>()
+      .CreateConstuctor<Ptr<Address>, TemplateParameter>()
+      .CreateMemberFunction("get", &IState::Get)
+      .CreateMemberFunction("set", &IState::Set)
+      .CreateMemberFunction("existed", &IState::Existed);
 }
 
 }  // namespace vm

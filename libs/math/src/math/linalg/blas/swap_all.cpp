@@ -17,9 +17,13 @@
 //------------------------------------------------------------------------------
 
 #include "math/linalg/blas/swap_all.hpp"
+
 #include "math/linalg/blas/base.hpp"
 #include "math/linalg/prototype.hpp"
 #include "math/tensor_view.hpp"
+
+#include <cstdint>
+
 namespace fetch {
 namespace math {
 namespace linalg {

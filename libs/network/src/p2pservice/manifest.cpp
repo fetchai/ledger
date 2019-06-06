@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "network/p2pservice/manifest.hpp"
+
 #include "core/json/document.hpp"
 #include "core/logger.hpp"
 #include "variant/variant_utils.hpp"

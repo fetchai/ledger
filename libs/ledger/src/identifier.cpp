@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "ledger/identifier.hpp"
+
 #include "core/byte_array/byte_array.hpp"
 
 #include <stdexcept>

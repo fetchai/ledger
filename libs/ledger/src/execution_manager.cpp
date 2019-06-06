@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "ledger/execution_manager.hpp"
+
 #include "core/assert.hpp"
 #include "core/logger.hpp"
 #include "core/mutex.hpp"
