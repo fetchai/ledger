@@ -29,7 +29,7 @@ struct WorkQueueSort
 {
   bool operator()(WorkPtr const &a, WorkPtr const &b) const
   {
-    return a->score() < b->score();
+    return a->score() > b->score();
   }
 };
 
