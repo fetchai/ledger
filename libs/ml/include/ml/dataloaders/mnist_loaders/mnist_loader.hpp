@@ -69,7 +69,7 @@ public:
     using DataType = typename T::Type;
 
     SizeType i{0};
-    auto     it = data_buffer_.at(0).begin();
+    auto     it = buffer_.second.at(0).begin();
     while (it.is_valid())
     {
       *it = static_cast<DataType>(data_[index][i]) / DataType{256};
@@ -77,10 +77,10 @@ public:
       ++it;
     }
 
-    label_buffer_.Fill(DataType{0});
-    label_buffer_.At(labels_[index], 0) = DataType{1.0};
+    buffer_.first.Fill(DataType{0});
+    buffer_.first.At(labels_[index], 0) = DataType{1.0};
 
-    return std::make_pair(label_buffer_, data_buffer_);
+    return buffer_;
   }
 
   // Non one-hot
@@ -92,14 +92,15 @@ public:
     using DataType = typename T::Type;
 
     SizeType i{0};
-    auto     it = data_buffer_.at(0).begin();
+    auto     it = buffer_.second.at(0).begin();
     while (it.is_valid())
     {
       *it = static_cast<DataType>(data_[index][i]) / DataType{256};
       i++;
       ++it;
     }
-    return std::make_pair(static_cast<LabelType>(labels_[index]), data_buffer_);
+    
+    return buffer_;
   }
 
   virtual std::pair<LabelType, std::vector<T>> GetNext()
@@ -152,15 +153,15 @@ private:
   template <typename LabelT = LabelType, typename DataT = T>
   math::meta::IfIsArithmetic<LabelT, void> Initialise()
   {
-    data_buffer_.push_back(T({28u, 28u, 1u}));
+    buffer_.second.push_back(T({28u, 28u, 1u}));
   }
 
   // One-hot
   template <typename LabelT = LabelType, typename DataT = T>
   math::meta::IfIsMathArray<LabelT, void> Initialise()
   {
-    data_buffer_.push_back(T({28u, 28u, 1u}));
-    label_buffer_ = LabelType({10u, 1u});
+    buffer_.second.push_back(T({28u, 28u, 1u}));
+    buffer_.first = LabelType({10u, 1u});
   }
 
   uchar **read_mnist_images(std::string full_path, std::uint32_t &number_of_images,
@@ -254,8 +255,8 @@ private:
   std::uint32_t  cursor_;
   std::uint32_t  size_;
   std::uint32_t  figure_size_;
-  std::vector<T> data_buffer_;
-  LabelType      label_buffer_;
+
+  std::pair<LabelType,std::vector<T>> buffer_;
 
   unsigned char **data_;
   unsigned char * labels_;
