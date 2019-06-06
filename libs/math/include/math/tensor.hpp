@@ -74,6 +74,7 @@ public:
 
   using SliceIteratorType      = TensorSliceIterator<T, ContainerType>;
   using ConstSliceIteratorType = ConstTensorSliceIterator<T, ContainerType>;
+  using ViewType               = TensorView<T, C>;
   using SizeType               = fetch::math::SizeType;
   using SizeVector             = fetch::math::SizeVector;
 
@@ -81,8 +82,8 @@ public:
 
   enum
   {
-    LOG_PADDING = TensorView<T, C>::LOG_PADDING,
-    PADDING     = TensorView<T, C>::PADDING
+    LOG_PADDING = ViewType::LOG_PADDING,
+    PADDING     = ViewType::PADDING
   };
 
 private:
@@ -802,7 +803,7 @@ typename Tensor<T, C>::ConstIteratorType Tensor<T, C>::cend() const
 /// View Extraction ///
 ///////////////////////
 template <typename T, typename C>
-TensorView<T, C> Tensor<T, C>::View()
+typename Tensor<T, C>::ViewType Tensor<T, C>::View()
 {
   assert(shape_.size() >= 1);
 
@@ -812,7 +813,7 @@ TensorView<T, C> Tensor<T, C>::View()
 }
 
 template <typename T, typename C>
-TensorView<T, C> const Tensor<T, C>::View() const
+typename Tensor<T, C>::ViewType const Tensor<T, C>::View() const
 {
   assert(shape_.size() >= 1);
 
@@ -822,7 +823,7 @@ TensorView<T, C> const Tensor<T, C>::View() const
 }
 
 template <typename T, typename C>
-TensorView<T, C> Tensor<T, C>::View(SizeType index)
+typename Tensor<T, C>::ViewType Tensor<T, C>::View(SizeType index)
 {
   assert(shape_.size() >= 2);
 
@@ -835,7 +836,7 @@ TensorView<T, C> Tensor<T, C>::View(SizeType index)
 }
 
 template <typename T, typename C>
-TensorView<T, C> const Tensor<T, C>::View(SizeType index) const
+typename Tensor<T, C>::ViewType const Tensor<T, C>::View(SizeType index) const
 {
   assert(shape_.size() >= 2);
 
@@ -848,7 +849,7 @@ TensorView<T, C> const Tensor<T, C>::View(SizeType index) const
 }
 
 template <typename T, typename C>
-TensorView<T, C> Tensor<T, C>::View(std::vector<SizeType> indices)
+typename Tensor<T, C>::ViewType Tensor<T, C>::View(std::vector<SizeType> indices)
 {
   assert(shape_.size() >= 1 + indices.size());
 
