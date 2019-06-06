@@ -70,33 +70,6 @@ void SaveEmbeddings(W2VLoader<FloatType> const &data_loader, std::string output_
   }
 }
 
-///**
-// * A method for saving in the style the original google code wants to load
-// * @param data_loader
-// * @param output_filename
-// * @param embeddings
-// */
-// void SaveEmbeddingsOld(W2VLoader<FloatType> const& data_loader, std::string output_filename,
-// ArrayType &embeddings)
-//{
-//  SizeType embeddings_size = embeddings.shape()[0];
-//  SizeType vocab_size = embeddings.shape()[1];
-//
-//  FILE * fo = std::fopen(output_filename.c_str(), "wb");
-//  // Save the word vectors
-//  fprintf(fo, "%lld %lld\n", vocab_size, embeddings_size);
-//  for (SizeType a = 0; a < vocab_size; a++)
-//  {
-//    fprintf(fo, "%s ", data_loader.WordFromIndex(a).c_str());
-//    for (SizeType b = 0; b < embeddings_size; b++)
-//    {
-//      std::fwrite(&embeddings(b, a), sizeof(FloatType), 1, fo);
-//    }
-//
-//    fprintf(fo, "\n");
-//  }
-//}
-
 ArrayType LoadEmbeddings(std::string filename)
 {
 
@@ -120,7 +93,6 @@ ArrayType LoadEmbeddings(std::string filename)
   {
     input >> cur_word;
 
-    // TODO - also load words into vocab of dataloader?
     for (SizeType b = 0; b < embeddings_size; ++b)
     {
       input >> cur_string;
@@ -277,7 +249,6 @@ int main(int argc, char **argv)
     /// SAVE EMBEDDINGS ///
     std::cout << "saving embeddings: " << std::endl;
     SaveEmbeddings(data_loader, "embed_" + output_file, embeddings);
-    //  SaveEmbeddingsOld(data_loader, "./vector_old.bin", embeddings);
   }
   else
   {

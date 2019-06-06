@@ -109,10 +109,10 @@ public:
 
     duration<double> time_span = duration_cast<duration<double>>(cur_time - last_time);
     double           total     = static_cast<double>(iter * iterations);
-    std::cout << i << " / " << iter * iterations << " (" << static_cast<SizeType>(100.0 * i / total)
-              << ") -- " << alpha_ << " -- "
-              << static_cast<double>(print_frequency) / time_span.count() << " words / sec"
-              << std::endl;
+    std::cout << i << " / " << iter * iterations << " ("
+              << static_cast<SizeType>(100.0 * static_cast<double>(i) / total) << ") -- " << alpha_
+              << " -- " << static_cast<double>(print_frequency) / time_span.count()
+              << " words / sec" << std::endl;
 
     last_time = cur_time;
   }
