@@ -34,6 +34,8 @@ CMAKE_VERSION_REQUIREMENT = 'cmake_minimum_required(VERSION 3.5 FATAL_ERROR)'
 CLANG_FORMAT_REQUIRED_VERSION = '6.0'
 CLANG_FORMAT_EXE_NAME = 'clang-format-{}'.format(CLANG_FORMAT_REQUIRED_VERSION)
 CMAKE_FORMAT_EXE_NAME = 'cmake-format'
+CMAKE_FORMAT_REQUIRED_VERSION = '0.5.1'
+AUTOPEP8_REQUIRED_VERSION = '1.4.4'
 
 
 def find_excluded_dirs():
@@ -100,6 +102,7 @@ SUPPORTED_LANGUAGES = {
 
 num_files_processed_so_far = 0  # Global variable
 total_files_to_process = 0  # Global variable
+failures = []  # Global variable
 
 output_lock = Lock()
 file_count_lock = Lock()
@@ -165,6 +168,9 @@ def external_formatter(cmd_prefix, filename_patterns):
                 stdin=subprocess.PIPE,
                 cwd=PROJECT_ROOT)
             input_bytes = p.communicate(input=input_bytes)[0]
+
+            if p.returncode != 0:
+                raise Exception('External formatter failed')
 
         return input_bytes.decode('utf-8')
 
@@ -359,6 +365,13 @@ def apply_transformations_to_file(path_to_file):
                 f.write(text)
     except:
         output(traceback.format_exc())
+        raise
+
+
+def failed(_):
+    global failures
+
+    failures.append(_)
 
 
 def process_in_parallel(files_to_process, jobs):
@@ -367,16 +380,64 @@ def process_in_parallel(files_to_process, jobs):
 
     with Pool(processes=jobs) as pool:
         for file in files_to_process:
-            pool.apply_async(apply_transformations_to_file,
-                             (file,), callback=increment_file_count)
+            pool.apply_async(apply_transformations_to_file, (file,),
+                             callback=increment_file_count, error_callback=failed)
 
         pool.close()
         pool.join()
 
+    if failures:
+        output('Failure ({} errors):'.format(len(failures)))
+        for err in failures:
+            output(err)
+        sys.exit(1)
+
     output('Done.')
 
 
+def check_tool_versions():
+    clang_format_cmd = [CLANG_FORMAT_EXE_NAME, '--version']
+    try:
+        clang_format_version = subprocess.check_output(
+            clang_format_cmd).decode().strip()
+    except:
+        output(
+            'Could not run "{}". Make sure {} is installed.'.format(' '.join(clang_format_cmd), CLANG_FORMAT_EXE_NAME))
+        sys.exit(1)
+    assert clang_format_version.startswith('clang-format version {}'.format(
+        CLANG_FORMAT_REQUIRED_VERSION)), \
+        'Unexpected version of clang-format:\n{}\nPlease use version {}.x'.format(
+            clang_format_version,
+            CLANG_FORMAT_REQUIRED_VERSION)
+
+    cmake_format_cmd = [CMAKE_FORMAT_EXE_NAME, '--version']
+    try:
+        cmake_format_version = subprocess.check_output(
+            cmake_format_cmd).decode().strip()
+    except:
+        output(
+            'Could not run "{}". Make sure {} is installed.'.format(' '.join(cmake_format_cmd), CMAKE_FORMAT_EXE_NAME))
+        sys.exit(1)
+    assert cmake_format_version == CMAKE_FORMAT_REQUIRED_VERSION, \
+        'Unexpected version of cmake-format:\n{}\nPlease use version {}'.format(
+            cmake_format_version,
+            CMAKE_FORMAT_REQUIRED_VERSION)
+
+    try:
+        autopep8_version = autopep8.__version__
+    except:
+        output('Could not read autopep8 version. Version {} is required.'.format(
+            AUTOPEP8_REQUIRED_VERSION))
+        sys.exit(1)
+    assert autopep8_version == AUTOPEP8_REQUIRED_VERSION, \
+        'Unexpected version of autopep8:\n{}\nPlease use version {}'.format(
+            autopep8_version,
+            AUTOPEP8_REQUIRED_VERSION)
+
+
 def main():
+    check_tool_versions()
+
     commit, fail_if_changes, jobs = parse_commandline()
 
     files_to_process = files_of_interest(commit)

@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "vm/module.hpp"
+#include "vm/sharded_state.hpp"
 
 #include "vm/common.hpp"
 #include "vm/variant.hpp"
@@ -166,7 +167,7 @@ Module::Module()
 
   GetClassInterface<IMatrix>()
       .CreateConstuctor<int32_t, int32_t>()
-      .EnableIndexOperator<AnyInteger, AnyInteger, TemplateParameter>()
+      .EnableIndexOperator<AnyInteger, AnyInteger, TemplateParameter1>()
       .CreateInstantiationType<Matrix<double>>()
       .CreateInstantiationType<Matrix<float>>();
 
@@ -180,7 +181,7 @@ Module::Module()
       .CreateMemberFunction("popFront", &IArray::PopFrontMany)
       .CreateMemberFunction("reverse", &IArray::Reverse)
       .CreateMemberFunction("extend", &IArray::Extend)
-      .EnableIndexOperator<AnyInteger, TemplateParameter>()
+      .EnableIndexOperator<AnyInteger, TemplateParameter1>()
       .CreateInstantiationType<Array<bool>>()
       .CreateInstantiationType<Array<int8_t>>()
       .CreateInstantiationType<Array<uint8_t>>()
@@ -213,11 +214,17 @@ Module::Module()
       .CreateMemberFunction("signedTx", &Address::HasSignedTx);
 
   GetClassInterface<IState>()
-      .CreateConstuctor<Ptr<String>, TemplateParameter>()
-      .CreateConstuctor<Ptr<Address>, TemplateParameter>()
+      .CreateConstuctor<Ptr<String>, TemplateParameter1>()
+      .CreateConstuctor<Ptr<Address>, TemplateParameter1>()
       .CreateMemberFunction("get", &IState::Get)
       .CreateMemberFunction("set", &IState::Set)
       .CreateMemberFunction("existed", &IState::Existed);
+
+  GetClassInterface<IShardedState>()
+      .CreateConstuctor<Ptr<String>>()
+      .CreateConstuctor<Ptr<Address>>()
+      .EnableIndexOperator<Ptr<String>, TemplateParameter1>()
+      .EnableIndexOperator<Ptr<Address>, TemplateParameter1>();
 }
 
 }  // namespace vm

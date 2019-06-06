@@ -32,21 +32,26 @@ public:
   virtual ~IState() = default;
 
   static Ptr<IState> Constructor(VM *vm, TypeId type_id, Ptr<String> const &name,
-                                 TemplateParameter const &value);
+                                 TemplateParameter1 const &value);
+  static Ptr<IState> Constructor(VM *vm, TypeId type_id, Ptr<Address> const &name,
+                                 TemplateParameter1 const &value);
 
-  static Ptr<IState> Constructor(VM *vm, TypeId type_id, Ptr<Address> const &address,
-                                 TemplateParameter const &value);
-
-  virtual TemplateParameter Get() const                         = 0;
-  virtual void              Set(TemplateParameter const &value) = 0;
-  virtual bool              Existed() const                     = 0;
+  virtual TemplateParameter1 Get() const                          = 0;
+  virtual void               Set(TemplateParameter1 const &value) = 0;
+  virtual bool               Existed() const                      = 0;
 
 protected:
   IState(VM *vm, TypeId type_id)
     : Object(vm, type_id)
   {}
+
   template <typename... Args>
   static Ptr<IState> Construct(VM *vm, TypeId type_id, Args &&... args);
+
+public:
+  template <typename... Args>
+  static Ptr<IState> ConstructIntrinsic(VM *vm, TypeId type_id, TypeId value_type_id,
+                                        Args &&... args);
 };
 
 template <typename T, typename = std::enable_if_t<std::is_arithmetic<T>::value>>
@@ -128,16 +133,16 @@ inline IoObserverInterface::Status WriteHelper(std::string const &name, Ptr<Obje
   return io.Write(name, buffer.data().pointer(), buffer.data().size());
 }
 
-template <typename T, typename = void>
+template <typename T>
 class State : public IState
 {
 public:
   // Construct state object, default argument = get from state DB, initializing to value if not
   // found
-  State(VM *vm, TypeId type_id, TypeId value_type_id, Ptr<String> name,
-        TemplateParameter const &value)
+  State(VM *vm, TypeId type_id, TypeId value_type_id, Ptr<String> const &name,
+        TemplateParameter1 const &value)
     : IState(vm, type_id)
-    , name_{std::move(name)}
+    , name_{name->str}
     , value_{value.Get<Value>()}
     , value_type_id_{value_type_id}
   {
@@ -145,7 +150,7 @@ public:
     if (vm_->HasIoObserver())
     {
       // attempt to read the value from the storage engine
-      auto const status = ReadHelper(name_->str, value_, vm_->GetIOObserver());
+      auto const status = ReadHelper(name_, value_, vm_->GetIOObserver());
 
       // mark the variable as existed if we get a positive result back
       existed_ = (Status::OK == status);
@@ -175,12 +180,12 @@ public:
     }
   }
 
-  TemplateParameter Get() const override
+  TemplateParameter1 Get() const override
   {
-    return TemplateParameter(value_, value_type_id_);
+    return TemplateParameter1(value_, value_type_id_);
   }
 
-  void Set(TemplateParameter const &value) override
+  void Set(TemplateParameter1 const &value) override
   {
     value_ = GetValue<>(value);
   }
@@ -195,13 +200,13 @@ private:
   using Status = IoObserverInterface::Status;
 
   template <typename Y = T>
-  meta::EnableIf<IsPrimitive<Y>::value, Y> GetValue(TemplateParameter const &value)
+  meta::EnableIf<IsPrimitive<Y>::value, Y> GetValue(TemplateParameter1 const &value)
   {
     return value.Get<Value>();
   }
 
   template <typename Y = T>
-  meta::EnableIf<IsPtr<Y>::value, Y> GetValue(TemplateParameter const &value)
+  meta::EnableIf<IsPtr<Y>::value, Y> GetValue(TemplateParameter1 const &value)
   {
     auto v{value.Get<Value>()};
     if (!v)
@@ -216,22 +221,20 @@ private:
     // if we have an IO observer then inform it of the changes
     if (!vm_->HasError() && vm_->HasIoObserver())
     {
-      WriteHelper(name_->str, value_, vm_->GetIOObserver());
+      WriteHelper(name_, value_, vm_->GetIOObserver());
     }
   }
 
-  Ptr<String> name_;
+  std::string name_;
   Value       value_;
   TypeId      value_type_id_;
   bool        existed_{false};
 };
 
 template <typename... Args>
-inline Ptr<IState> IState::Construct(VM *vm, TypeId type_id, Args &&... args)
+inline Ptr<IState> IState::ConstructIntrinsic(VM *vm, TypeId type_id, TypeId value_type_id,
+                                              Args &&... args)
 {
-  TypeInfo const &type_info     = vm->GetTypeInfo(type_id);
-  TypeId const    value_type_id = type_info.parameter_type_ids[0];
-
   switch (value_type_id)
   {
   case TypeIds::Bool:
@@ -285,27 +288,35 @@ inline Ptr<IState> IState::Construct(VM *vm, TypeId type_id, Args &&... args)
   }  // switch
 }
 
+template <typename... Args>
+inline Ptr<IState> IState::Construct(VM *vm, TypeId type_id, Args &&... args)
+{
+  TypeInfo const &type_info     = vm->GetTypeInfo(type_id);
+  TypeId const    value_type_id = type_info.parameter_type_ids[0];
+  return ConstructIntrinsic(vm, type_id, value_type_id, std::forward<Args>(args)...);
+}
+
 inline Ptr<IState> IState::Constructor(VM *vm, TypeId type_id, Ptr<String> const &name,
-                                       TemplateParameter const &value)
+                                       TemplateParameter1 const &value)
 {
   if (name)
   {
     return Construct(vm, type_id, name, value);
   }
 
-  vm->RuntimeError("Failed to construct State: name is null");
+  vm->RuntimeError("Failed to construct State: the `name` is null reference");
   return nullptr;
 }
 
-inline Ptr<IState> IState::Constructor(VM *vm, TypeId type_id, Ptr<Address> const &address,
-                                       TemplateParameter const &value)
+inline Ptr<IState> IState::Constructor(VM *vm, TypeId type_id, Ptr<Address> const &name,
+                                       TemplateParameter1 const &value)
 {
-  if (address)
+  if (name)
   {
-    return Construct(vm, type_id, address->AsString(), value);
+    return Construct(vm, type_id, name->AsString(), value);
   }
 
-  vm->RuntimeError("Failed to construct State: address is null");
+  vm->RuntimeError("Failed to construct State: the `name` is null reference");
   return nullptr;
 }
 

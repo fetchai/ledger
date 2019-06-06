@@ -480,8 +480,6 @@ struct TemplateParameter1 : public Variant
   using Variant::Variant;
 };
 
-using TemplateParameter = TemplateParameter1;
-
 struct TemplateParameter2 : public Variant
 {
   using Variant::Variant;
