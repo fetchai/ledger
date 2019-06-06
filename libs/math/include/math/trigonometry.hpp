@@ -32,7 +32,7 @@ namespace math {
 template <typename ArrayType>
 fetch::math::meta::IfIsMathArray<ArrayType, void> Sin(ArrayType const &x, ArrayType &ret)
 {
-  ASSERT(ret.size() == x.size());
+  assert(ret.size() == x.size());
   kernels::Sin s;
   auto         x_it = x.cbegin();
   auto         rit  = ret.begin();
@@ -59,7 +59,7 @@ fetch::math::meta::IfIsMathArray<ArrayType, ArrayType> Sin(ArrayType const &x)
 template <typename ArrayType>
 fetch::math::meta::IfIsMathArray<ArrayType, void> Cos(ArrayType const &x, ArrayType &ret)
 {
-  ASSERT(ret.size() == x.size());
+  assert(ret.size() == x.size());
   kernels::Cos c;
   auto         x_it = x.cbegin();
   auto         rit  = ret.begin();
@@ -86,7 +86,7 @@ fetch::math::meta::IfIsMathArray<ArrayType, ArrayType> Cos(ArrayType const &x)
 template <typename ArrayType>
 fetch::math::meta::IfIsMathArray<ArrayType, void> Tan(ArrayType const &x, ArrayType &ret)
 {
-  ASSERT(ret.size() == x.size());
+  assert(ret.size() == x.size());
   kernels::Tan s;
   auto         x_it = x.cbegin();
   auto         rit  = ret.begin();
@@ -113,7 +113,7 @@ fetch::math::meta::IfIsMathArray<ArrayType, ArrayType> Tan(ArrayType const &x)
 template <typename ArrayType>
 fetch::math::meta::IfIsMathArray<ArrayType, void> ASin(ArrayType const &x, ArrayType &ret)
 {
-  ASSERT(ret.size() == x.size());
+  assert(ret.size() == x.size());
   kernels::ASin s;
   auto          x_it = x.cbegin();
   auto          rit  = ret.begin();
@@ -140,7 +140,7 @@ fetch::math::meta::IfIsMathArray<ArrayType, ArrayType> ASin(ArrayType const &x)
 template <typename ArrayType>
 fetch::math::meta::IfIsMathArray<ArrayType, void> ACos(ArrayType const &x, ArrayType &ret)
 {
-  ASSERT(ret.size() == x.size());
+  assert(ret.size() == x.size());
   kernels::ACos s;
   auto          x_it = x.cbegin();
   auto          rit  = ret.begin();
@@ -166,7 +166,7 @@ fetch::math::meta::IfIsMathArray<ArrayType, ArrayType> ACos(ArrayType const &x)
 template <typename ArrayType>
 fetch::math::meta::IfIsMathArray<ArrayType, void> ATan(ArrayType const &x, ArrayType &ret)
 {
-  ASSERT(ret.size() == x.size());
+  assert(ret.size() == x.size());
   kernels::ATan s;
   auto          x_it = x.cbegin();
   auto          rit  = ret.begin();
@@ -193,7 +193,7 @@ fetch::math::meta::IfIsMathArray<ArrayType, ArrayType> ATan(ArrayType const &x)
 template <typename ArrayType>
 fetch::math::meta::IfIsMathArray<ArrayType, void> SinH(ArrayType const &x, ArrayType &ret)
 {
-  ASSERT(ret.size() == x.size());
+  assert(ret.size() == x.size());
   kernels::SinH s;
   auto          x_it = x.cbegin();
   auto          rit  = ret.begin();
@@ -220,7 +220,7 @@ fetch::math::meta::IfIsMathArray<ArrayType, ArrayType> SinH(ArrayType const &x)
 template <typename ArrayType>
 fetch::math::meta::IfIsMathArray<ArrayType, void> CosH(ArrayType const &x, ArrayType &ret)
 {
-  ASSERT(ret.size() == x.size());
+  assert(ret.size() == x.size());
   kernels::CosH s;
   auto          x_it = x.cbegin();
   auto          rit  = ret.begin();
@@ -247,7 +247,7 @@ fetch::math::meta::IfIsMathArray<ArrayType, ArrayType> CosH(ArrayType const &x)
 template <typename ArrayType>
 fetch::math::meta::IfIsMathArray<ArrayType, void> TanH(ArrayType const &x, ArrayType &ret)
 {
-  ASSERT(ret.size() == x.size());
+  assert(ret.size() == x.size());
   kernels::TanH s;
   auto          x_it = x.cbegin();
   auto          rit  = ret.begin();
@@ -274,7 +274,7 @@ fetch::math::meta::IfIsMathArray<ArrayType, ArrayType> TanH(ArrayType const &x)
 template <typename ArrayType>
 fetch::math::meta::IfIsMathArray<ArrayType, void> ASinH(ArrayType const &x, ArrayType &ret)
 {
-  ASSERT(ret.size() == x.size());
+  assert(ret.size() == x.size());
   kernels::ASinH s;
   auto           x_it = x.cbegin();
   auto           rit  = ret.begin();
@@ -301,7 +301,7 @@ fetch::math::meta::IfIsMathArray<ArrayType, ArrayType> ASinH(ArrayType const &x)
 template <typename ArrayType>
 fetch::math::meta::IfIsMathArray<ArrayType, void> ACosH(ArrayType const &x, ArrayType &ret)
 {
-  ASSERT(ret.size() == x.size());
+  assert(ret.size() == x.size());
   kernels::ACosH s;
   auto           x_it = x.cbegin();
   auto           rit  = ret.begin();
@@ -328,7 +328,7 @@ fetch::math::meta::IfIsMathArray<ArrayType, ArrayType> ACosH(ArrayType const &x)
 template <typename ArrayType>
 fetch::math::meta::IfIsMathArray<ArrayType, void> ATanH(ArrayType const &x, ArrayType &ret)
 {
-  ASSERT(ret.size() == x.size());
+  assert(ret.size() == x.size());
   kernels::ATanH s;
   auto           x_it = x.cbegin();
   auto           rit  = ret.begin();
