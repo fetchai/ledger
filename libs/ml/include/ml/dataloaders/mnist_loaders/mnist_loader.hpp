@@ -42,6 +42,7 @@ public:
     labels_      = read_mnist_labels(labelsFile, size_);
     figure_size_ = 28 * 28;
     assert(recordLength == figure_size_);
+    Initialise();
   }
 
   virtual uint64_t Size() const
@@ -62,16 +63,13 @@ public:
 
   // One-hot
   template <typename LabelT = LabelType, typename DataT = T>
-  math::meta::IfIsMathArray<LabelT, std::pair<LabelType, std::vector<T>>> GetAtIndex(
-      uint64_t index) const
+  math::meta::IfIsMathArray<LabelT, std::pair<LabelType, std::vector<T>>> GetAtIndex(uint64_t index)
   {
     using SizeType = typename T::SizeType;
     using DataType = typename T::Type;
-    std::vector<T> buffer;
-    buffer.push_back(T({28u, 28u, 1u}));
 
     SizeType i{0};
-    auto     it = buffer[0].begin();
+    auto     it = data_buffer_.at(0).begin();
     while (it.is_valid())
     {
       *it = static_cast<DataType>(data_[index][i]) / DataType{256};
@@ -79,30 +77,29 @@ public:
       ++it;
     }
 
-    T label({10, 1});
-    label.At(labels_[index], 0) = DataType(1.0);
-    return std::make_pair(label, buffer);
+    label_buffer_.Fill(DataType{0});
+    label_buffer_.At(labels_[index], 0) = DataType{1.0};
+
+    return std::make_pair(label_buffer_, data_buffer_);
   }
 
   // Non one-hot
   template <typename LabelT = LabelType, typename DataT = T>
   math::meta::IfIsArithmetic<LabelT, std::pair<LabelType, std::vector<T>>> GetAtIndex(
-      uint64_t index) const
+      uint64_t index)
   {
     using SizeType = typename T::SizeType;
     using DataType = typename T::Type;
-    std::vector<T> buffer;
-    buffer.push_back(T({28u, 28u, 1u}));
 
     SizeType i{0};
-    auto     it = buffer[0].begin();
+    auto     it = data_buffer_.at(0).begin();
     while (it.is_valid())
     {
       *it = static_cast<DataType>(data_[index][i]) / DataType{256};
       i++;
       ++it;
     }
-    return std::make_pair(static_cast<LabelType>(labels_[index]), buffer);
+    return std::make_pair(static_cast<LabelType>(labels_[index]), data_buffer_);
   }
 
   virtual std::pair<LabelType, std::vector<T>> GetNext()
@@ -150,6 +147,21 @@ public:
 
 private:
   using uchar = unsigned char;
+
+  // Non one-hot
+  template <typename LabelT = LabelType, typename DataT = T>
+  math::meta::IfIsArithmetic<LabelT, void> Initialise()
+  {
+    data_buffer_.push_back(T({28u, 28u, 1u}));
+  }
+
+  // One-hot
+  template <typename LabelT = LabelType, typename DataT = T>
+  math::meta::IfIsMathArray<LabelT, void> Initialise()
+  {
+    data_buffer_.push_back(T({28u, 28u, 1u}));
+    label_buffer_ = LabelType({10u, 1u});
+  }
 
   uchar **read_mnist_images(std::string full_path, std::uint32_t &number_of_images,
                             unsigned int &image_size)
@@ -239,9 +251,11 @@ private:
   }
 
 private:
-  std::uint32_t cursor_;
-  std::uint32_t size_;
-  std::uint32_t figure_size_;
+  std::uint32_t  cursor_;
+  std::uint32_t  size_;
+  std::uint32_t  figure_size_;
+  std::vector<T> data_buffer_;
+  LabelType      label_buffer_;
 
   unsigned char **data_;
   unsigned char * labels_;

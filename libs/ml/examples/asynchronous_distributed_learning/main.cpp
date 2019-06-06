@@ -199,7 +199,7 @@ int main(int ac, char **av)
       // Start each client to train on NUMBER_OF_BATCHES * BATCH_SIZE examples
       threads.emplace_back([&c] { c->Train(NUMBER_OF_BATCHES); });
     }
-    SubsetToArray for (auto &t : threads)
+    for (auto &t : threads)
     {
       // Wait for everyone to finish (force synchronisation)
       t.join();
