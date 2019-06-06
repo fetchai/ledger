@@ -163,7 +163,7 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
   , storage_(std::make_shared<StorageUnitClient>(internal_muddle_.AsEndpoint(), shard_cfgs_,
                                                  cfg_.log2_num_lanes))
   , lane_control_(internal_muddle_.AsEndpoint(), shard_cfgs_, cfg_.log2_num_lanes)
-  , dag_{std::make_shared<ledger::DAG>("dag_db_", false)}
+  , dag_{std::make_shared<ledger::DAG>("dag_db_", true)}
   , dag_service_{std::make_shared<ledger::DAGService>(muddle_, dag_)}
   , execution_manager_{std::make_shared<ExecutionManager>(
         cfg_.num_executors, cfg_.log2_num_lanes, storage_,

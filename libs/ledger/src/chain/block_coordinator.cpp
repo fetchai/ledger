@@ -196,7 +196,7 @@ BlockCoordinator::State BlockCoordinator::OnReloadState()
 
     if(dag_)
     {
-      revert_success_dag = dag_->RevertToEpoch(current_block_->body.dag_epoch);
+      revert_success_dag = dag_->RevertToEpoch(current_block_->body.block_number);
     }
 
     if (revert_success && revert_success_dag)
@@ -344,7 +344,7 @@ BlockCoordinator::State BlockCoordinator::OnSynchronising()
       return State::RESET;
     }
 
-    if(dag_ && !dag_->RevertToEpoch(common_parent->body.dag_epoch))
+    if(dag_ && !dag_->RevertToEpoch(common_parent->body.block_number))
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "Failed to revert dag to block: ", common_parent->body.block_number);
     }

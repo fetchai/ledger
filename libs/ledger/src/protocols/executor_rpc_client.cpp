@@ -18,7 +18,7 @@
 
 #include "ledger/protocols/executor_rpc_client.hpp"
 #include "core/state_machine.hpp"
-#include "ledger/chain/address_rpc_serializer.hpp"
+#include "ledger/chain/address.hpp"
 
 #include <memory>
 

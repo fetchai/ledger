@@ -24,26 +24,106 @@
 
 using namespace fetch::ledger;
 
-// TODO(HUT): done
 DAG::DAG(std::string const &db_name, bool load)
   : db_name_{db_name}
 {
-  if(!load)
+  std::cerr << "DAG LOAD " << load << std::endl; // DELETEME_NH
+
+  // Fallback is to reset everything
+  auto CreateCleanState = [this]()
   {
     epochs_.New(db_name_ +"_epochs.db", db_name_ +"_epochs.index.db");
     all_stored_epochs_.New(db_name_ +"_all_epochs.db", db_name_ +"_all_epochs.index.db");
     finalised_dnodes_.New(db_name_ +"_fin_nodes.db", db_name_ +"_fin_nodes.index.db");
-  }
-  else
+
+    most_recent_epoch_ = 0;
+    previous_epochs_.clear();
+    all_tips_.clear();
+    tips_.clear();
+    node_pool_.clear();
+    loose_nodes_.clear();
+    recently_added_.clear();
+    missing_.clear();
+
+    // for epoch 0 - this should always be empty
+    previous_epoch_ = DAGEpoch{};
+    previous_epoch_.Finalise();
+  };
+
+  // If everything is in order we can recreate our epoch state by pushing from the store into our deque
+  auto RecoverToEpoch = [this](uint64_t block_number) -> bool
   {
+    DAGEpoch recover_epoch;
+
+    // Get head
+    if(!GetEpochFromStorage(std::to_string(block_number), recover_epoch))
+    {
+      FETCH_LOG_ERROR(LOGGING_NAME, "No head found when loading epoch store!");
+      return false;
+    }
+
+    // Push head - N until the memory deque is full
+    while(previous_epochs_.size() < EPOCH_VALIDITY_PERIOD)
+    {
+      previous_epochs_.push_back(recover_epoch);
+
+      if(recover_epoch.block_number == 0)
+      {
+        break;
+      }
+
+      uint64_t next_epoch = recover_epoch.block_number - 1;
+
+      if(!GetEpochFromStorage(std::to_string(next_epoch), recover_epoch))
+      {
+        FETCH_LOG_ERROR(LOGGING_NAME, "Epoch not found when traversing/recovering from file. Index: ", next_epoch);
+        return false;
+      }
+    }
+
+    assert(previous_epochs_.size() > 0);
+
+    // Sanity check
+    for(auto const &epoch : previous_epochs_)
+    {
+      FETCH_LOG_INFO(LOGGING_NAME, "Recovered epoch: ", epoch.block_number);
+    }
+
+    // mend
+    previous_epoch_    = previous_epochs_.front();
+    previous_epochs_.pop_front();
+    most_recent_epoch_ = previous_epoch_.block_number;
+
+    return true;
+  };
+
+  bool success_loading = true;
+
+  if(load)
+  {
+    // Attempt to load state
     epochs_.Load(db_name_ +"_epochs.db", db_name_ +"_epochs.index.db");
     all_stored_epochs_.Load(db_name_ +"_all_epochs.db", db_name_ +"_all_epochs.index.db");
     finalised_dnodes_.Load(db_name_ +"_fin_nodes.db", db_name_ +"_fin_nodes.index.db");
+
+    DAGEpoch recover_head;
+
+    if(!GetEpochFromStorage("HEAD", recover_head))
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "No head found when loading epoch store!");
+      success_loading = false;
+    }
+
+    if(success_loading)
+    {
+      success_loading = RecoverToEpoch(recover_head.block_number);
+    }
   }
 
-  // for epoch 0 - this should always be empty
-  previous_epoch_ = DAGEpoch{};
-  previous_epoch_.Finalise();
+  if(!load || !success_loading)
+  {
+    CreateCleanState();
+  }
 }
 
 std::vector<DAGNode> DAG::GetLatest(bool previous_epoch_only)
@@ -69,27 +149,6 @@ std::vector<DAGNode> DAG::GetLatest(bool previous_epoch_only)
   }
 
   return ret;
-}
-
-// TODO(HUT): done
-void DAG::AddTransaction(Transaction const &tx)
-{
-  std::cerr << "ADDING TX" << std::endl; // DELETEME_NH
-  std::lock_guard<fetch::mutex::Mutex> lock(mutex_);
-
-  // This currently stores the TX in the DAG. TODO(HUT): use the storage engine for TX storing
-
-  // Create a new dag node containing this TX
-  DAGNodePtr new_node = std::make_shared<DAGNode>();
-
-  new_node->type                    = DAGNode::TX;
-  new_node->SetContents(tx);
-  /* new_node->contract_digest           = tx.chain_code(); */ // depreciated
-  SetReferencesInternal(new_node);
-  new_node->Finalise();
-
-  PushInternal(new_node);
-  recently_added_.push_back(*new_node);
 }
 
 void DAG::AddTransaction(Transaction const &tx, crypto::ECDSASigner const &signer, DAGTypes type)
@@ -146,7 +205,6 @@ void DAG::AddWork(Work const &solution)
   recently_added_.push_back(*new_node);
 }
 
-// TODO(HUT): done
 // Get as many references as required for the node, when adding. DAG nodes or epoch hashes are valid, but
 // don't validate dag nodes already finalised since that adds little information
 void DAG::SetReferencesInternal(DAGNodePtr node)
@@ -222,7 +280,6 @@ void DAG::SetReferencesInternal(DAGNodePtr node)
   }
 }
 
-// TODO(HUT): done
 bool DAG::AddDAGNode(DAGNode node)
 {
   assert(node.hash.size() > 0);
@@ -232,7 +289,6 @@ bool DAG::AddDAGNode(DAGNode node)
   return success;
 }
 
-// TODO(HUT): done
 std::vector<DAGNode> DAG::GetRecentlyAdded()
 {
   std::lock_guard<fetch::mutex::Mutex> lock(mutex_);
@@ -249,7 +305,6 @@ std::vector<fetch::byte_array::ConstByteArray> DAG::GetRecentlyMissing()
   return ret;
 }
 
-// TODO(HUT): done
 // Node is loose when not all references are found in the last N block periods
 bool DAG::IsLooseInternal(DAGNodePtr node)
 {
@@ -264,7 +319,6 @@ bool DAG::IsLooseInternal(DAGNodePtr node)
   return false;
 }
 
-// TODO(HUT): done
 // Add this node as loose - one or more entries in loose_nodes[missing_hash]
 void DAG::AddLooseNodeInternal(DAGNodePtr node)
 {
@@ -278,7 +332,6 @@ void DAG::AddLooseNodeInternal(DAGNodePtr node)
   }
 }
 
-// TODO(HUT): done
 // Check whether the hash refers to anything considered valid that's not in the node pool
 bool DAG::HashInPrevEpochsInternal(ConstByteArray hash)
 {
@@ -308,7 +361,6 @@ bool DAG::HashInPrevEpochsInternal(ConstByteArray hash)
   return false;
 }
 
-// TODO(HUT): done
 // check whether the node has already been added for this period
 bool DAG::AlreadySeenInternal(DAGNodePtr node)
 {
@@ -320,7 +372,6 @@ bool DAG::AlreadySeenInternal(DAGNodePtr node)
   return false;
 }
 
-// TODO(HUT): done
 bool DAG::TooOldInternal(uint64_t oldest_reference)
 {
   if((oldest_reference + EPOCH_VALIDITY_PERIOD) <= most_recent_epoch_)
@@ -331,7 +382,6 @@ bool DAG::TooOldInternal(uint64_t oldest_reference)
   return false;
 }
 
-// TODO(HUT): done
 bool DAG::GetDAGNode(ConstByteArray const &hash, DAGNode &node)
 {
   std::lock_guard<fetch::mutex::Mutex> lock(mutex_);
@@ -379,7 +429,6 @@ bool DAG::GetWork(ConstByteArray const &hash, Work &work)
   return success;
 }
 
-// TODO(HUT): done
 std::shared_ptr<DAGNode> DAG::GetDAGNodeInternal(ConstByteArray hash)
 {
   // Find in node pool
@@ -409,7 +458,6 @@ std::shared_ptr<DAGNode> DAG::GetDAGNodeInternal(ConstByteArray hash)
   return {};
 }
 
-// TODO(HUT): done
 // Add a dag node
 bool DAG::PushInternal(DAGNodePtr node)
 {
@@ -471,7 +519,6 @@ bool DAG::PushInternal(DAGNodePtr node)
   return true;
 }
 
-// TODO(HUT): done
 void DAG::HealLooseBlocksInternal(ConstByteArray added_hash)
 {
   std::cerr << "attempting to heal: " << added_hash.ToBase64() << std::endl; // DELETEME_NH
@@ -533,7 +580,6 @@ void DAG::HealLooseBlocksInternal(ConstByteArray added_hash)
   }
 }
 
-// TODO(HUT): done
 // Create an epoch given our current tips (doesn't advance the dag)
 DAGEpoch DAG::CreateEpoch(uint64_t block_number)
 {
@@ -670,8 +716,7 @@ bool DAG::CommitEpoch(DAGEpoch new_epoch)
     {
       auto &front_epoch = previous_epochs_.front();
       assert(front_epoch.hash.size() > 0);
-      all_stored_epochs_.Set(storage::ResourceID(front_epoch.hash), front_epoch);                        // All epochs are stored here
-      epochs_.Set(storage::ResourceAddress(std::to_string(front_epoch.block_number)), front_epoch.hash); // Keep track of our epoch stack this way
+      SetEpochInStorage(std::to_string(front_epoch.block_number), front_epoch, true);
       previous_epochs_.pop_front();
     }
   }
@@ -684,7 +729,16 @@ bool DAG::CommitEpoch(DAGEpoch new_epoch)
   // Some nodes will have been looking for this hash, heal these
   HealLooseBlocksInternal(new_epoch.hash);
 
+  Flush();
+
   return true;
+}
+
+void DAG::Flush()
+{
+  epochs_.Flush(false);
+  all_stored_epochs_.Flush(false);
+  finalised_dnodes_.Flush(false);
 }
 
 void DAG::TraverseFromTips(std::set<ConstByteArray> const &tip_hashes, std::function<void (NodeHash)> on_node, std::function<bool (NodeHash)> terminating_condition)
@@ -1006,11 +1060,9 @@ bool DAG::SatisfyEpoch(DAGEpoch &epoch)
 }
 
 // TODO(HUT): this
-bool DAG::RevertToEpoch(DAGEpoch const &epoch)
+bool DAG::RevertToEpoch(uint64_t epoch_bn_to_revert)
 {
   std::lock_guard<fetch::mutex::Mutex> lock(mutex_);
-
-  uint64_t epoch_bn_to_revert = epoch.block_number;
 
   if(epoch_bn_to_revert == 0)
   {
@@ -1037,7 +1089,8 @@ bool DAG::RevertToEpoch(DAGEpoch const &epoch)
 
   if(epoch_bn_to_revert > most_recent_epoch_)
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Attempt to revert dag epoch forward is not valid");
+    FETCH_LOG_WARN(LOGGING_NAME, "Attempting to restore to epoch forward in time! Requested: ", epoch_bn_to_revert, " while dag is at: ", most_recent_epoch_,". This is invalid.");
+    return false;
   }
 
   auto GetEpochAndErase = [this](uint64_t current_index, bool erase) -> DAGEpoch
@@ -1099,6 +1152,32 @@ bool DAG::RevertToEpoch(DAGEpoch const &epoch)
   for(auto const &node : nodes_to_readd)
   {
     PushInternal(node);
+  }
+
+  return true;
+}
+
+bool DAG::GetEpochFromStorage(std::string const &identifier, DAGEpoch &epoch)
+{
+  EpochHash getme;
+
+  // Need to get hash of epoch first (default key is block number as string)
+  if(!epochs_.Get(storage::ResourceAddress(identifier), getme))
+  {
+    return false;
+  }
+
+  return all_stored_epochs_.Get(storage::ResourceID(getme), epoch);
+}
+
+bool DAG::SetEpochInStorage(std::string const &, DAGEpoch const &epoch, bool is_head)
+{
+  all_stored_epochs_.Set(storage::ResourceID(epoch.hash), epoch); // Store of all epochs
+  epochs_.Set(storage::ResourceAddress(std::to_string(epoch.block_number)), epoch.hash); // Our epoch stack
+
+  if(is_head)
+  {
+    epochs_.Set(storage::ResourceAddress("HEAD"), epoch.hash);
   }
 
   return true;

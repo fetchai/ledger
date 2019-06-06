@@ -105,11 +105,8 @@ public:
   static const uint64_t LOOSE_NODE_LIFETIME               = EPOCH_VALIDITY_PERIOD;
   static const uint64_t MAX_TIPS_IN_EPOCH                 = 30;
 
-  // TXs will be added here when they arrive for the first time at the node,
-  // also when they are synchronised across the network
-  void AddTransaction(Transaction const &tx);
-
-  // newer things
+  // Interface for adding what internally becomes a dag node. Easy to modify this interface
+  // so do as you like with it Ed
   void AddTransaction(Transaction const &tx, crypto::ECDSASigner const &signer, DAGTypes type);
   void AddWork(Work const &work);
 
@@ -119,8 +116,8 @@ public:
   // Commit the state of the DAG as this node believes it (using an epoch)
   bool CommitEpoch(DAGEpoch);
 
-  // Revert to a previous epoch // TODO(HUT): consider making this a block number instead
-  bool RevertToEpoch(DAGEpoch const &);
+  // Revert to a previous/forward epoch
+  bool RevertToEpoch(uint64_t);
 
   // Make sure that the dag has all nodes for a certain epoch
   bool SatisfyEpoch(DAGEpoch &);
@@ -159,7 +156,8 @@ private:
   std::unordered_map<NodeHash, DAGTipPtr>               tips_;              // lookup tips of the dag pointing at a certain node hash
   std::unordered_map<NodeHash, DAGNodePtr>              node_pool_;         // dag nodes that are not finalised but are still valid
   std::unordered_map<NodeHash, std::vector<DAGNodePtr>> loose_nodes_;       // nodes that are missing one or more references (waiting on NodeHash)
-  // std::unordered_map<NodeHash, uint64_t>                loose_nodes_ttl_;   // TODO(HUT): this.
+
+  // std::unordered_map<NodeHash, uint64_t>                loose_nodes_ttl_;   // TODO(HUT): loose nodes management scheme
 
   // Used for sync purposes
   std::vector<DAGNode>  recently_added_;                                  // nodes that have been recently added
@@ -179,6 +177,9 @@ private:
   bool NodeInvalidInternal(DAGNodePtr node);
   DAGNodePtr GetDAGNodeInternal(ConstByteArray hash);
   void TraverseFromTips(std::set<ConstByteArray> const &, std::function<void (NodeHash)>, std::function<bool (NodeHash)>);
+  bool GetEpochFromStorage(std::string const &, DAGEpoch &);
+  bool SetEpochInStorage(std::string const &, DAGEpoch const &, bool);
+  void Flush();
 
     mutable Mutex mutex_{__LINE__, __FILE__};
   };

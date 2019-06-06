@@ -84,6 +84,7 @@ public:
       return nullptr;
     }
 
+
     // TODO(HUT): this.
     //// TODO: Make it such that multiple block times can be extracted
     //auto nodes = chain_state_->dag->ExtractSegment(chain_state_->block);

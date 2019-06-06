@@ -20,18 +20,19 @@
 #include "ledger/dag/dag_sync_protocol.hpp"
 #include "core/service_ids.hpp"
 
-using namespace fetch::ledger;
+namespace fetch {
+namespace ledger {
 
 using DAGNodesSerializer        = fetch::serializers::ByteArrayBuffer;
 
 DAGSyncService::DAGSyncService(Muddle &muddle, std::shared_ptr<ledger::DAG> dag)
-  : muddle::rpc::Server(muddle.AsEndpoint(), 980, 981)
-  , muddle_(muddle)
+  : muddle_(muddle)
+  , server_(muddle.AsEndpoint(), 980, 981) // TODO(EJF): These need to be added to service ids
   , client_(std::make_shared<Client>("R:DAGSync-L",
                                      muddle_.AsEndpoint(), Muddle::Address(), SERVICE_DAG, CHANNEL_RPC))
   , state_machine_{std::make_shared<core::StateMachine<State>>("DAGSyncService",
                                                                State::INITIAL)}
-  , dag_{dag}
+  , dag_{std::move(dag)}
   , dag_subscription_(muddle_.AsEndpoint().Subscribe(SERVICE_DAG, CHANNEL_RPC_BROADCAST))
 {
   state_machine_->RegisterHandler(State::INITIAL, this, &DAGSyncService::OnInitial);
@@ -43,26 +44,25 @@ DAGSyncService::DAGSyncService(Muddle &muddle, std::shared_ptr<ledger::DAG> dag)
   state_machine_->OnStateChange([](State /*new_state*/, State /* old_state */) { });
 
   // Broadcast blocks arrive here
-  dag_subscription_->SetMessageHandler([this](Address const &from, uint16_t, uint16_t, uint16_t,
-                                                muddle::Packet::Payload const &payload,
-                                                Address                transmitter) {
+  dag_subscription_->SetMessageHandler([this](muddle::Packet::Address const &from, uint16_t, uint16_t, uint16_t,
+                                              muddle::Packet::Payload const &payload,
+                                              muddle::Packet::Address                transmitter) {
+    FETCH_UNUSED(from);
+    FETCH_UNUSED(transmitter);
 
-      FETCH_UNUSED(from);
-      FETCH_UNUSED(transmitter);
+    std::cerr << "argha size: " << payload.size() << std::endl; // DELETEME_NH
 
-      std::cerr << "argha size: " << payload.size() << std::endl; // DELETEME_NH
+    DAGNodesSerializer serialiser(payload);
 
-      DAGNodesSerializer serialiser(payload);
+    std::vector<DAGNode> result;
+    serialiser >> result;
 
-      std::vector<DAGNode> result;
-      serialiser >> result;
+    std::cerr << "************************ RECV broadcast of size " << result.size() << std::endl; // DELETEME_NH
 
-      std::cerr << "************************ RECV broadcast of size " << result.size() << std::endl; // DELETEME_NH
+    std::cerr << "recv hash: " << result[0].hash.ToBase64() << std::endl; // DELETEME_NH
 
-      std::cerr << "recv hash: " << result[0].hash.ToBase64() << std::endl; // DELETEME_NH
-
-      std::lock_guard<fetch::mutex::Mutex> lock(mutex_);
-      this->recvd_broadcast_nodes_.push_back(std::move(result));
+    std::lock_guard<fetch::mutex::Mutex> lock(mutex_);
+    this->recvd_broadcast_nodes_.push_back(std::move(result));
   });
 }
 
@@ -70,7 +70,7 @@ DAGSyncService::~DAGSyncService()
 {
 }
 
-DAGSyncService::State DAGSyncService::OnInitial(){  
+DAGSyncService::State DAGSyncService::OnInitial(){
 
   if (muddle_.AsEndpoint().GetDirectlyConnectedPeers().empty())
   {
@@ -177,4 +177,9 @@ DAGSyncService::State DAGSyncService::OnResolveMissing()
 
   return State::BROADCAST_RECENT;
 }
+
+} // namespace ledger
+} // namespace fetch
+
+
 
