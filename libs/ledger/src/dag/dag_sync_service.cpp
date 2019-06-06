@@ -149,7 +149,7 @@ DAGSyncService::State DAGSyncService::OnResolveMissing()
 
     for (auto &dag_node : result.promised)
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "Node hash: ", dag_node.hash.ToBase64());
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Node hash: ", dag_node.hash.ToBase64());
       dag_->AddDAGNode(dag_node);
     }
   }

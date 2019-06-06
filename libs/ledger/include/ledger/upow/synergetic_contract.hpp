@@ -33,6 +33,7 @@
 
 namespace fetch {
 
+class BitVector;
 
 namespace byte_array {
 class ConstByteArray;
@@ -68,6 +69,7 @@ public:
   {
     SUCCESS = 0,
     VM_EXECUTION_ERROR,
+    NO_STATE_ACCESS,
     GENERAL_ERROR,
   };
 
@@ -89,10 +91,8 @@ public:
   /// @name Actions to be taken on the synergetic contract
   /// @{
   Status DefineProblem();
-  Status Clear();
   Status Work(math::BigUnsigned const &nonce, WorkScore &score);
-  Status EvaluateObjective();
-  Status GenerateSolution();
+  Status Complete(uint64_t block, BitVector const &shards);
   /// @}
 
 private:
@@ -118,6 +118,7 @@ private:
 
   StorageInterface *storage_{nullptr};
   VariantPtr problem_;
+  VariantPtr solution_;
 };
 
 inline Address const &SynergeticContract::address() const
@@ -173,8 +174,11 @@ inline char const *ToString(SynergeticContract::Status status)
   case SynergeticContract::Status::VM_EXECUTION_ERROR:
     text = "VM Execution Error";
     break;
+  case SynergeticContract::Status::NO_STATE_ACCESS:
+    text = "No State Access";
+    break;
   case SynergeticContract::Status::GENERAL_ERROR:
-    return "General Error";
+    text = "General Error";
     break;
   }
 

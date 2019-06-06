@@ -490,7 +490,7 @@ BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
   tx_wait_periodic_.Reset();
 
   // All the checks pass
-  return State::SYNERGETIC_EXECUTION;
+  return State::WAIT_FOR_TRANSACTIONS;
 }
 
 BlockCoordinator::State BlockCoordinator::OnSynergeticExecution()
@@ -500,7 +500,23 @@ BlockCoordinator::State BlockCoordinator::OnSynergeticExecution()
   // Executing synergetic work
   if ((!is_genesis) && synergetic_exec_mgr_)
   {
-    if (!synergetic_exec_mgr_->ValidateWorkAndUpdateState())
+    // lookup the previous block
+    auto const previous_block = chain_.GetBlock(current_block_->body.previous_hash);
+    if (!previous_block)
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Failed to lookup previous block");
+      return State::RESET;
+    }
+
+    // prepare the work queue
+    auto const status = synergetic_exec_mgr_->PrepareWorkQueue(*current_block_, *previous_block);
+    if (SynExecStatus::SUCCESS != status)
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Error preparing synergetic work queue: ", ledger::ToString(status));
+      return State::RESET;
+    }
+
+    if (!synergetic_exec_mgr_->ValidateWorkAndUpdateState(current_block_->body.block_number, num_lanes_))
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Work did not execute (", ToBase64(current_block_->body.hash),
                      ")");
@@ -512,7 +528,7 @@ BlockCoordinator::State BlockCoordinator::OnSynergeticExecution()
     }
   }
 
-  return State::WAIT_FOR_TRANSACTIONS;
+  return State::SCHEDULE_BLOCK_EXECUTION;
 }
 
 BlockCoordinator::State BlockCoordinator::OnWaitForTransactions(State current, State previous)
@@ -595,7 +611,7 @@ BlockCoordinator::State BlockCoordinator::OnWaitForTransactions(State current, S
     // clear the pending transaction set
     pending_txs_.reset();
 
-    return State::SCHEDULE_BLOCK_EXECUTION;
+    return State::SYNERGETIC_EXECUTION;
   }
   else
   {
@@ -781,7 +797,7 @@ BlockCoordinator::State BlockCoordinator::OnNewSynergeticExecution()
       return State::RESET;
     }
 
-    if (!synergetic_exec_mgr_->ValidateWorkAndUpdateState())
+    if (!synergetic_exec_mgr_->ValidateWorkAndUpdateState(next_block_->body.block_number, num_lanes_))
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Failed to valid work queue");
 
@@ -795,20 +811,6 @@ BlockCoordinator::State BlockCoordinator::OnNewSynergeticExecution()
 BlockCoordinator::State BlockCoordinator::OnExecuteNewBlock()
 {
   State next_state{State::RESET};
-
-  // Executing synergetic work
-  if (synergetic_exec_mgr_)
-  {
-    if (!synergetic_exec_mgr_->ValidateWorkAndUpdateState())
-    {
-      FETCH_LOG_WARN(LOGGING_NAME, "Work did not execute (", ToBase64(next_block_->body.hash), ")");
-      chain_.RemoveBlock(next_block_->body.hash);
-
-      // TODO(unknown): Remove malicious DAG nodes
-
-      return State::RESET;
-    }
-  }
 
   // schedule the current block for execution
   if (ScheduleNextBlock())

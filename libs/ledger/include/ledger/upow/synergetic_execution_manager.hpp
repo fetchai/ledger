@@ -54,7 +54,7 @@ public:
   /// @name Synergetic Execution Manager Interface
   /// @{
   ExecStatus PrepareWorkQueue(Block const &current, Block const &previous) override;
-  bool ValidateWorkAndUpdateState() override;
+  bool ValidateWorkAndUpdateState(uint64_t block, std::size_t num_lanes) override;
   /// @}
 
   // Operators
@@ -67,7 +67,7 @@ private:
   using ThreadPool     = threading::Pool;
   using Mutex          = mutex::Mutex;
 
-  void ExecuteItem(WorkQueuePtr const &queue);
+  void ExecuteItem(WorkQueuePtr const &queue, uint64_t block, std::size_t num_lanes);
 
   // System Components
   DAGPtr                dag_;

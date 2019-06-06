@@ -18,6 +18,8 @@
 
 #include "core/logger.hpp"
 #include "ledger/upow/synergetic_contract.hpp"
+#include "ledger/state_sentinel_adapter.hpp"
+#include "ledger/storage_unit/cached_storage_adapter.hpp"
 #include "vm/compiler.hpp"
 #include "vm/vm.hpp"
 #include "vm_modules/vm_factory.hpp"
@@ -50,12 +52,6 @@ enum class FunctionKind
   GENERATOR, ///<
   INVALID,   ///< The function has an invalid decorator
 };
-
-bool is_work               = false;
-bool is_objective          = false;
-bool is_problem            = false;
-bool is_clear_function     = false;
-bool is_test_dag_generator = false;
 
 Address ComputeAddress(ConstByteArray const &source)
 {
@@ -117,7 +113,6 @@ FunctionKind DetermineKind(vm::Executable::Function const &fn)
 
 }
 
-
 SynergeticContract::SynergeticContract(ConstByteArray const &source)
   : address_{ComputeAddress(source)}
   , module_{VMFactory::GetModule(VMFactory::USE_SYNERGETIC)}
@@ -128,7 +123,7 @@ SynergeticContract::SynergeticContract(ConstByteArray const &source)
     throw std::runtime_error("Empty source for synergetic contract");
   }
 
-  FETCH_LOG_INFO(LOGGING_NAME, "Synergetic contract source\n", source);
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Synergetic contract source\n", source);
 
   // additional modules
 
@@ -221,36 +216,6 @@ Status SynergeticContract::DefineProblem()
   return Status::SUCCESS;
 }
 
-Status SynergeticContract::Clear()
-{
-  //     assert(contract_ != nullptr);
-  //    // Clear contest is the only function for which synergetic contracts can change the state
-  //    if (has_state())
-  //    {
-  //      vm_->SetIOObserver(read_write_state());
-  //    }
-  //    else
-  //    {
-  //      /* vm_->ClearIOObserver(); */
-  //      errors_.push_back("Could not attach state in clear contest.");
-  //      return false;
-  //    }
-  //
-  //    //    // Invoking the clear function
-  //    //    VMVariant output;
-  //    //    if (!vm_->Execute(contract_->script, contract_->clear_function, error_, output, problem_,
-  //    //                      solution_))
-  //    //    {
-  //    //      errors_.push_back("Error while clearing contest during execution.");
-  //    //      errors_.push_back(error_);
-  //    //
-  //    //      vm_->ClearIOObserver();
-  //    //      return false;
-  //    //    }
-
-  return Status::GENERAL_ERROR;
-}
-
 /**
  * Perform a piece of work based on a specified nonce
  *
@@ -273,8 +238,8 @@ Status SynergeticContract::Work(math::BigUnsigned const &nonce, WorkScore &score
 
   // execute the work function of the contract
   std::string error{};
-  vm::Variant work_output{};
-  if (!vm->Execute(*executable_, work_function_, error, work_output, *problem_, hashed_nonce))
+  solution_ = std::make_shared<vm::Variant>();
+  if (!vm->Execute(*executable_, work_function_, error, *solution_, *problem_, hashed_nonce))
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Work execution error: ", error);
     return Status::VM_EXECUTION_ERROR;
@@ -282,7 +247,7 @@ Status SynergeticContract::Work(math::BigUnsigned const &nonce, WorkScore &score
 
   // execute the objective function of the contract
   vm::Variant objective_output{};
-  if (!vm->Execute(*executable_, objective_function_, error, objective_output, *problem_, work_output))
+  if (!vm->Execute(*executable_, objective_function_, error, objective_output, *problem_, *solution_))
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Objective evaluation execution error: ", error);
     return Status::VM_EXECUTION_ERROR;
@@ -301,14 +266,35 @@ Status SynergeticContract::Work(math::BigUnsigned const &nonce, WorkScore &score
   return Status::SUCCESS;
 }
 
-Status SynergeticContract::EvaluateObjective()
+Status SynergeticContract::Complete(uint64_t block, BitVector const &shards)
 {
-  return Status::GENERAL_ERROR;
-}
+  if (!storage_)
+  {
+    return Status::NO_STATE_ACCESS;
+  }
 
-Status SynergeticContract::GenerateSolution()
-{
-  return Status::GENERAL_ERROR;
+  auto vm = std::make_unique<vm::VM>(module_.get());
+
+  // setup the storage infrastructure
+  CachedStorageAdapter storage_cache(*storage_);
+  StateSentinelAdapter state_sentinel{
+      storage_cache, Identifier{address_.display() + "*" + std::to_string(block)}, shards};
+
+  // attach the state to the VM
+  vm->SetIOObserver(state_sentinel);
+
+  vm::Variant output;
+  std::string error{};
+  if (!vm->Execute(*executable_, clear_function_, error, output, *problem_, *solution_))
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Solution execution failure: ", error);
+    return Status::VM_EXECUTION_ERROR;
+  }
+
+  // everything worked, flush the storage
+  storage_cache.Flush();
+
+  return Status::SUCCESS;
 }
 
 } // namespace ledger

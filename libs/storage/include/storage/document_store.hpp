@@ -287,7 +287,7 @@ public:
     if (key_index_.underlying_stack().HashExists(hash) ||
         file_object_.underlying_stack().HashExists(hash))
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Attempted to commit an already committed hash");
+      FETCH_LOG_INFO(LOGGING_NAME, "Attempted to commit an already committed hash");
       return hash;
     }
 

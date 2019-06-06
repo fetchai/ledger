@@ -196,7 +196,7 @@ void DAG::AddWork(Work const &solution)
   SetReferencesInternal(new_node);
   new_node->Finalise();
 
-  FETCH_LOG_INFO(LOGGING_NAME, "!!! New Work node: 0x", new_node->hash.ToHex(), " contract: 0x", new_node->contract_digest.address().ToHex(), " score: ", solution.score());
+  FETCH_LOG_INFO(LOGGING_NAME, "!!! Work for contract: 0x", new_node->contract_digest.address().ToHex(), " score: ", solution.score());
 
   /* new_node->signature = signer.Sign(new_node->hash); */ // TODO(HUT): signing correctly
 
@@ -384,8 +384,8 @@ bool DAG::GetDAGNode(ConstByteArray const &hash, DAGNode &node)
   if(ret)
   {
     node = *ret;
-    FETCH_LOG_INFO(LOGGING_NAME, "Request for dag node", hash.ToBase64(), " win");
-    FETCH_LOG_INFO(LOGGING_NAME, "DAG node hash: ", node.hash.ToBase64());
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Request for dag node", hash.ToBase64(), " win");
+    FETCH_LOG_DEBUG(LOGGING_NAME, "DAG node hash: ", node.hash.ToBase64());
     return true;
   }
   else
@@ -897,7 +897,7 @@ bool DAG::NodeInvalidInternal(DAGNodePtr node)
 // TODO(HUT): this.
 bool DAG::SatisfyEpoch(DAGEpoch &epoch)
 {
-  FETCH_LOG_INFO(LOGGING_NAME, "Satisfying epoch: ", epoch.block_number);
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Satisfying epoch: ", epoch.block_number);
 
   if(epoch.block_number == 0)
   {

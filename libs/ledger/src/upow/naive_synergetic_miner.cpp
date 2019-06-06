@@ -29,6 +29,7 @@
 #include "vm_modules/math/bignumber.hpp"
 
 #include <unordered_set>
+#include <random>
 
 namespace fetch {
 namespace ledger {
@@ -43,12 +44,6 @@ using byte_array::ConstByteArray;
 
 using AddressSet = std::unordered_set<Address>;
 using DagNodes   = NaiveSynergeticMiner::DagNodes;
-
-BigUnsigned GenerateStartingNonce(crypto::Prover const &prover)
-{
-  Address address{prover.identity()};
-  return {address.address()};
-}
 
 void ExecuteWork(SynergeticContractPtr const &contract, WorkPtr const &work)
 {
@@ -69,7 +64,7 @@ void ExecuteWork(SynergeticContractPtr const &contract, WorkPtr const &work)
 
   // update the score for the piece of work
   work->UpdateScore(score);
-  FETCH_LOG_INFO(LOGGING_NAME, "Execute Nonce: ", nonce_work.ToHex(), " score: ", score);
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Execute Nonce: ", nonce_work.ToHex(), " score: ", score);
 }
 
 } // namespace
@@ -78,7 +73,6 @@ NaiveSynergeticMiner::NaiveSynergeticMiner(DAGPtr dag, StorageInterface &storage
   : dag_{std::move(dag)}
   , storage_{storage}
   , prover_{std::move(prover)}
-  , starting_nonce_{GenerateStartingNonce(*prover_)}
   , state_machine_{std::make_shared<core::StateMachine<State>>("NaiveSynMiner",
                                                                State::INITIAL)}
 {
@@ -130,7 +124,7 @@ DagNodes NaiveSynergeticMiner::Mine(BlockIndex block)
 
     if (address_set.empty())
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "No data to be mined");
+      FETCH_LOG_DEBUG(LOGGING_NAME, "No data to be mined");
       return {};
     }
     else
@@ -138,7 +132,7 @@ DagNodes NaiveSynergeticMiner::Mine(BlockIndex block)
       std::ostringstream oss;
       for (auto const &address : address_set)
       {
-        oss << '\n' << address.display();
+        oss << "\n -> " << address.display();
       }
 
       FETCH_LOG_INFO(LOGGING_NAME, "Available synergetic contracts to be mined", oss.str());
@@ -218,7 +212,8 @@ WorkPtr NaiveSynergeticMiner::MineSolution(Address const &address, BlockIndex bl
   }
 
   // update the initial nonce
-  BigUnsigned nonce{starting_nonce_.Copy()};
+  std::random_device rd;
+  BigUnsigned nonce{rd()};
 
   // generate a series of solutions for each of the problems
   WorkPtr best_work{};
@@ -235,8 +230,6 @@ WorkPtr NaiveSynergeticMiner::MineSolution(Address const &address, BlockIndex bl
     if (!(best_work && best_work->score() >= work->score()))
     {
       best_work = std::make_shared<Work>(*work);
-
-      FETCH_LOG_INFO(LOGGING_NAME, "Score before: ", work->score(), " after: ", best_work->score());
     }
   }
 

@@ -32,7 +32,7 @@ public:
 
   /// @name Executor Interface
   /// @{
-  virtual void Verify(WorkQueue &solutions) = 0;
+  virtual void Verify(WorkQueue &solutions, uint64_t block, std::size_t num_lanes) = 0;
   /// @}
 };
 

@@ -56,7 +56,7 @@ void TransactionProcessor::OnTransaction(TransactionPtr const &tx)
 {
   FETCH_METRIC_TX_SUBMITTED(tx->digest());
 
-  FETCH_LOG_INFO(LOGGING_NAME, "Verified Input Transaction: 0x", tx->digest().ToHex());
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Verified Input Transaction: 0x", tx->digest().ToHex());
 
   // dispatch the transaction to the storage engine
   try

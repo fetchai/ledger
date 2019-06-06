@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/bitvector.hpp"
 #include "ledger/chaincode/smart_contract_manager.hpp"
 #include "ledger/upow/synergetic_executor.hpp"
 
@@ -30,11 +31,12 @@ constexpr char const *LOGGING_NAME = "SynExec";
 } // namespace
 
 SynergeticExecutor::SynergeticExecutor(StorageInterface &storage)
-  : factory_{storage}
+  : storage_{storage}
+  , factory_{storage}
 {
 }
 
-void SynergeticExecutor::Verify(WorkQueue &solutions)
+void SynergeticExecutor::Verify(WorkQueue &solutions, uint64_t block, std::size_t num_lanes)
 {
   SynergeticContractPtr contract{};
 
@@ -67,21 +69,27 @@ void SynergeticExecutor::Verify(WorkQueue &solutions)
       }
     }
 
-    auto const verification_nonce = solution->CreateHashedNonce();
-
-    FETCH_LOG_INFO(LOGGING_NAME, "Verified Nonce: ", verification_nonce.ToHex());
-
     // validate the work that has been done
     WorkScore calculated_score{0};
-    auto const status = contract->Work(verification_nonce, calculated_score);
-
-    FETCH_LOG_INFO(LOGGING_NAME, "Verified Score: ", calculated_score, " Expected Score: ", solution->score());
+    auto status = contract->Work(solution->CreateHashedNonce(), calculated_score);
 
     if ((SynergeticContract::Status::SUCCESS == status) && (calculated_score == solution->score()))
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "$$$ I would normally apply those state changes now $$$");
+      // TODO(EJF): State sharding needs to be added here
+      BitVector shard_mask{num_lanes};
+      shard_mask.SetAllOne();
 
-      // TODO(EJF): Apply statue changes
+      // complete the work and resolve the work queue
+      contract->Attach(storage_);
+      status = contract->Complete(block, shard_mask);
+      contract->Detach();
+
+      if (SynergeticContract::Status::SUCCESS != status)
+      {
+        FETCH_LOG_WARN(LOGGING_NAME, "Failed to complete contract: 0x", contract->address().address().ToHex(), " Reason: ", ToString(status));
+        return;
+      }
+
       break;
     }
 

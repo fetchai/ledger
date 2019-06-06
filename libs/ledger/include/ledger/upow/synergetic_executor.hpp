@@ -35,7 +35,7 @@ public:
 
   /// @name Synergetic Executor Interface
   /// @{
-  void Verify(WorkQueue &solutions) override;
+  void Verify(WorkQueue &solutions, uint64_t block, std::size_t num_lanes) override;
   /// @}
 
   // Operators
@@ -44,6 +44,7 @@ public:
 
 private:
 
+  StorageInterface          &storage_;
   SynergeticContractFactory factory_;
 };
 

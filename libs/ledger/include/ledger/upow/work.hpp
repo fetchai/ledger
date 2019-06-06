@@ -148,12 +148,12 @@ inline math::BigUnsigned Work::CreateHashedNonce() const
 
   auto const digest2 = hasher.Final();
 
-  FETCH_LOG_INFO("Work", "---------------------------------------------------------------------------------------------");
-  FETCH_LOG_INFO("Work", "Contract Digest: ", contract_digest_.address().ToHex());
-  FETCH_LOG_INFO("Work", "Miner..........: ", miner_.identifier().ToHex());
-  FETCH_LOG_INFO("Work", "Nonce..........: ", nonce_.ToHex());
-  FETCH_LOG_INFO("Work", "Digest 1.......: ", digest1.ToHex());
-  FETCH_LOG_INFO("Work", "Digest 2.......: ", digest2.ToHex());
+  FETCH_LOG_DEBUG("Work", "---------------------------------------------------------------------------------------------");
+  FETCH_LOG_DEBUG("Work", "Contract Digest: ", contract_digest_.address().ToHex());
+  FETCH_LOG_DEBUG("Work", "Miner..........: ", miner_.identifier().ToHex());
+  FETCH_LOG_DEBUG("Work", "Nonce..........: ", nonce_.ToHex());
+  FETCH_LOG_DEBUG("Work", "Digest 1.......: ", digest1.ToHex());
+  FETCH_LOG_DEBUG("Work", "Digest 2.......: ", digest2.ToHex());
 
   return digest2;
 }

@@ -56,7 +56,7 @@ ExecStatus SynergeticExecutionManager::PrepareWorkQueue(Block const &current, Bl
 
   auto const &epoch = current.body.dag_epoch;
 
-  FETCH_LOG_INFO(LOGGING_NAME, "#### Preparing work queue for epoch: ", epoch.block_number);
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Preparing work queue for epoch: ", epoch.block_number);
 
   // Step 1. loop through all the solutions which were presented in this epoch
   WorkMap work_map{};
@@ -79,8 +79,6 @@ ExecStatus SynergeticExecutionManager::PrepareWorkQueue(Block const &current, Bl
       solution_queue = std::make_shared<WorkQueue>();
     }
 
-    FETCH_LOG_WARN(LOGGING_NAME, "Mapping Solution for 0x", work->contract_digest().address().ToHex(), " score: ", work->score());
-
     // add the work to the queue
     solution_queue->push(std::move(work));
   }
@@ -100,18 +98,13 @@ ExecStatus SynergeticExecutionManager::PrepareWorkQueue(Block const &current, Bl
   return SUCCESS;
 }
 
-bool SynergeticExecutionManager::ValidateWorkAndUpdateState()
+bool SynergeticExecutionManager::ValidateWorkAndUpdateState(uint64_t block, std::size_t num_lanes)
 {
   // get the current solution stack
   WorkQueueStack solution_stack;
   {
     FETCH_LOCK(lock_);
     std::swap(solution_stack, solution_stack_);
-  }
-
-  if (!solution_stack.empty())
-  {
-    int i = 1 + 2;
   }
 
   // post all the work into the thread queues
@@ -121,15 +114,17 @@ bool SynergeticExecutionManager::ValidateWorkAndUpdateState()
     auto solutions = solution_stack.back();
     solution_stack.pop_back();
 
+#if 1
     {
       auto const &work = solutions->top();
       FETCH_LOG_WARN(LOGGING_NAME, "Scheduling validation for syn contract 0x",
                      work->contract_digest().address().ToHex(), " score: ", work->score());
     }
+#endif
 
     // dispatch the work
-    threads_.Dispatch([this, solutions] {
-      ExecuteItem(solutions);
+    threads_.Dispatch([this, solutions, block, num_lanes] {
+      ExecuteItem(solutions, block, num_lanes);
     });
   }
 
@@ -139,7 +134,7 @@ bool SynergeticExecutionManager::ValidateWorkAndUpdateState()
   return true;
 }
 
-void SynergeticExecutionManager::ExecuteItem(WorkQueuePtr const &queue)
+void SynergeticExecutionManager::ExecuteItem(WorkQueuePtr const &queue, uint64_t block, std::size_t num_lanes)
 {
   ExecutorPtr executor;
 
@@ -151,7 +146,7 @@ void SynergeticExecutionManager::ExecuteItem(WorkQueuePtr const &queue)
   }
 
   assert(static_cast<bool>(executor));
-  executor->Verify(*queue);
+  executor->Verify(*queue, block, num_lanes);
 
   // return the executor to the stack
   {

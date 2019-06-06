@@ -100,11 +100,11 @@ Contract::Status SmartContractManager::OnCreate(Transaction const &tx, BlockInde
   contract_source = FromBase64(contract_source);
 
   // debug
-  FETCH_LOG_WARN(LOGGING_NAME, "---------------------------------------------------------------");
-  FETCH_LOG_WARN(LOGGING_NAME, "New Contract Mode: ", contract_type);
-  FETCH_LOG_WARN(LOGGING_NAME, "Digest...........: ", contract_hash);
-  FETCH_LOG_WARN(LOGGING_NAME, "Text.............:\n\n", contract_source, "\n\n");
-  FETCH_LOG_WARN(LOGGING_NAME, "---------------------------------------------------------------");
+  FETCH_LOG_DEBUG(LOGGING_NAME, "---------------------------------------------------------------");
+  FETCH_LOG_DEBUG(LOGGING_NAME, "New Contract Mode: ", contract_type);
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Digest...........: ", contract_hash);
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Text.............:\n\n", contract_source, "\n\n");
+  FETCH_LOG_DEBUG(LOGGING_NAME, "---------------------------------------------------------------");
 
   // calculate a hash to compare against the one submitted
   auto const calculated_hash = crypto::Hash<crypto::SHA256>(contract_source).ToHex();
