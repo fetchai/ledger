@@ -50,16 +50,10 @@ DAGSyncService::DAGSyncService(Muddle &muddle, std::shared_ptr<ledger::DAG> dag)
     FETCH_UNUSED(from);
     FETCH_UNUSED(transmitter);
 
-    std::cerr << "argha size: " << payload.size() << std::endl; // DELETEME_NH
-
     DAGNodesSerializer serialiser(payload);
 
     std::vector<DAGNode> result;
     serialiser >> result;
-
-    std::cerr << "************************ RECV broadcast of size " << result.size() << std::endl; // DELETEME_NH
-
-    std::cerr << "recv hash: " << result[0].hash.ToBase64() << std::endl; // DELETEME_NH
 
     std::lock_guard<fetch::mutex::Mutex> lock(mutex_);
     this->recvd_broadcast_nodes_.push_back(std::move(result));
@@ -87,9 +81,6 @@ DAGSyncService::State DAGSyncService::OnBroadcastRecent()
 
   if(!nodes_to_broadcast.empty())
   {
-    std::cerr << "about to broadcast: " << nodes_to_broadcast.size() << std::endl; // DELETEME_NH
-    std::cerr << "broadcast " << nodes_to_broadcast[0].hash.ToBase64() << std::endl; // DELETEME_NH
-
     // determine the serialised size of the dag nodes to send
     fetch::serializers::SizeCounter<std::vector<DAGNode>> counter;
     counter << nodes_to_broadcast;
@@ -98,9 +89,6 @@ DAGSyncService::State DAGSyncService::OnBroadcastRecent()
     DAGNodesSerializer serializer;
     serializer.Reserve(counter.size());
     serializer << nodes_to_broadcast;
-
-    std::cerr << "counter size: " << counter.size() << std::endl; // DELETEME_NH
-    std::cerr << "data size: " << serializer.data().size() << std::endl; // DELETEME_NH
 
     // broadcast the block to the nodes on the network
     muddle_.AsEndpoint().Broadcast(SERVICE_DAG, CHANNEL_RPC_BROADCAST, serializer.data());
@@ -139,13 +127,9 @@ DAGSyncService::State DAGSyncService::OnQueryMissing()
   {
     auto missing = dag_->GetRecentlyMissing();
 
-    // TODO(HUT): comment out
-    if(!missing.empty() && !false)
+    if(!missing.empty())
     {
-      std::cerr << "requesting " << missing.size() << " missing txs" << std::endl; // DELETEME_NH
-
       auto promise = PromiseOfMissingNodes(client_->CallSpecificAddress(connection, RPC_DAG_STORE_SYNC, DAGSyncProtocol::REQUEST_NODES, missing));
-
       missing_pending_.Add(connection, promise);
     }
 
