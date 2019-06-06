@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "ledger/tx_status_http_interface.hpp"
+
 #include "core/byte_array/decoders.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "core/logger.hpp"

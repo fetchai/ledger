@@ -19,8 +19,10 @@
 
 #include "vm/vm.hpp"
 
+#include <algorithm>
 #include <cstddef>
 #include <cstdint>
+#include <iterator>
 
 namespace fetch {
 namespace vm {
@@ -32,16 +34,17 @@ public:
   ~IArray() override = default;
   static Ptr<IArray> Constructor(VM *vm, TypeId type_id, int32_t size);
 
-  virtual int32_t           Count() const                     = 0;
-  virtual void              Append(TemplateParameter const &) = 0;
-  virtual TemplateParameter PopBackOne()                      = 0;
-  virtual Ptr<IArray>       PopBackMany(int32_t)              = 0;
-  virtual TemplateParameter PopFrontOne()                     = 0;
-  virtual Ptr<IArray>       PopFrontMany(int32_t)             = 0;
-  virtual void              Reverse()                         = 0;
+  virtual int32_t            Count() const                      = 0;
+  virtual void               Append(TemplateParameter1 const &) = 0;
+  virtual TemplateParameter1 PopBackOne()                       = 0;
+  virtual Ptr<IArray>        PopBackMany(int32_t)               = 0;
+  virtual TemplateParameter1 PopFrontOne()                      = 0;
+  virtual Ptr<IArray>        PopFrontMany(int32_t)              = 0;
+  virtual void               Reverse()                          = 0;
+  virtual void               Extend(Ptr<IArray> const &)        = 0;
 
-  virtual TemplateParameter GetIndexedValue(AnyInteger const &index)                    = 0;
-  virtual void SetIndexedValue(AnyInteger const &index, TemplateParameter const &value) = 0;
+  virtual TemplateParameter1 GetIndexedValue(AnyInteger const &index)                    = 0;
+  virtual void SetIndexedValue(AnyInteger const &index, TemplateParameter1 const &value) = 0;
 
 protected:
   IArray(VM *vm, TypeId type_id)
@@ -71,7 +74,7 @@ struct Array : public IArray
     return int32_t(elements.size());
   }
 
-  void Append(TemplateParameter const &element) override
+  void Append(TemplateParameter1 const &element) override
   {
     if (element.type_id != element_type_id)
     {
@@ -81,34 +84,32 @@ struct Array : public IArray
     elements.push_back(element.Get<ElementType>());
   }
 
-  TemplateParameter PopBackOne() override
+  TemplateParameter1 PopBackOne() override
   {
     if (elements.empty())
     {
-      RuntimeError("Failed to pop_back: array is empty");
+      RuntimeError("Failed to popBack: array is empty");
       return {};
     }
 
-    auto element =
-        GetIndexedValue(AnyInteger(static_cast<uint64_t>(elements.size() - 1u), TypeIds::Int32))
-            .template Move<TemplateParameter>();
+    auto element = std::move(elements[elements.size() - 1u]);
 
     elements.pop_back();
 
-    return element;
+    return TemplateParameter1(element, element_type_id);
   }
 
   Ptr<IArray> PopBackMany(int32_t num_to_pop) override
   {
     if (num_to_pop < 0)
     {
-      RuntimeError("Failed to pop_back: argument must be non-negative");
+      RuntimeError("Failed to popBack: argument must be non-negative");
       return {};
     }
 
     if (elements.size() < static_cast<std::size_t>(num_to_pop))
     {
-      RuntimeError("Failed to pop_back: not enough elements in array");
+      RuntimeError("Failed to popBack: not enough elements in array");
       return {};
     }
 
@@ -121,16 +122,15 @@ struct Array : public IArray
     return array;
   }
 
-  TemplateParameter PopFrontOne() override
+  TemplateParameter1 PopFrontOne() override
   {
     if (elements.empty())
     {
-      RuntimeError("Failed to pop_front: array is empty");
+      RuntimeError("Failed to popFront: array is empty");
       return {};
     }
 
-    TemplateParameter element =
-        GetIndexedValue(AnyInteger(0u, TypeIds::Int32)).template Move<TemplateParameter>();
+    auto element = std::move(elements[0]);
 
     // Shift remaining elements to the right
     for (std::size_t i = 1u; i < elements.size(); ++i)
@@ -140,20 +140,20 @@ struct Array : public IArray
 
     elements.resize(elements.size() - 1);
 
-    return element;
+    return TemplateParameter1(element, element_type_id);
   }
 
   Ptr<IArray> PopFrontMany(int32_t num_to_pop) override
   {
     if (num_to_pop < 0)
     {
-      RuntimeError("Failed to pop_front: argument must be non-negative");
+      RuntimeError("Failed to popFront: argument must be non-negative");
       return {};
     }
 
     if (elements.size() < static_cast<std::size_t>(num_to_pop))
     {
-      RuntimeError("Failed to pop_front: not enough elements in array");
+      RuntimeError("Failed to popFront: not enough elements in array");
       return {};
     }
 
@@ -179,18 +179,28 @@ struct Array : public IArray
     std::reverse(elements.begin(), elements.end());
   }
 
-  TemplateParameter GetIndexedValue(AnyInteger const &index) override
+  void Extend(Ptr<IArray> const &other) override
+  {
+    Ptr<Array<ElementType>> const &other_array    = other;
+    auto const &                   other_elements = other_array->elements;
+
+    elements.reserve(elements.size() + other_elements.size());
+
+    elements.insert(elements.cend(), other_elements.cbegin(), other_elements.cend());
+  }
+
+  TemplateParameter1 GetIndexedValue(AnyInteger const &index) override
   {
     ElementType *ptr = Find(index);
     if (ptr)
     {
-      return TemplateParameter(*ptr, element_type_id);
+      return TemplateParameter1(*ptr, element_type_id);
     }
     // Not found
-    return TemplateParameter();
+    return TemplateParameter1();
   }
 
-  void SetIndexedValue(AnyInteger const &index, TemplateParameter const &value) override
+  void SetIndexedValue(AnyInteger const &index, TemplateParameter1 const &value) override
   {
     ElementType *ptr = Find(index);
     if (ptr)
@@ -247,7 +257,7 @@ inline Ptr<IArray> IArray::Construct(VM *vm, TypeId type_id, Args &&... args)
   {
     return new Array<int8_t>(vm, type_id, element_type_id, std::forward<Args>(args)...);
   }
-  case TypeIds::Byte:
+  case TypeIds::UInt8:
   {
     return new Array<uint8_t>(vm, type_id, element_type_id, std::forward<Args>(args)...);
   }

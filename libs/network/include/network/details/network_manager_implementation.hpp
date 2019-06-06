@@ -54,7 +54,7 @@ public:
   }
 
   NetworkManagerImplementation(NetworkManagerImplementation const &) = delete;
-  NetworkManagerImplementation(NetworkManagerImplementation &&)      = default;
+  NetworkManagerImplementation(NetworkManagerImplementation &&)      = delete;
 
   void Start();
   void Work();

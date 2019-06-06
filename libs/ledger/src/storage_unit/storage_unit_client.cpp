@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "ledger/storage_unit/storage_unit_client.hpp"
+
 #include "ledger/chain/constants.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "ledger/chain/transaction_layout_rpc_serializers.hpp"

@@ -17,19 +17,15 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/assert.hpp"
+#include "math/comparison.hpp"
+#include "math/fundamental_operators.hpp"
+#include "math/matrix_operations.hpp"
 #include "math/meta/math_type_traits.hpp"
-
-#include <algorithm>
-#include <cassert>
-#include <numeric>
-#include <vector>
-
-#include "math/fundamental_operators.hpp"  // add, subtract etc.
 #include "math/standard_functions/exp.hpp"
 
-#include "math/comparison.hpp"
-#include "math/matrix_operations.hpp"
+#include <cassert>
+#include <cstddef>
+#include <stdexcept>
 
 namespace fetch {
 namespace math {

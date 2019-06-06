@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "crypto/fnv.hpp"
+
 #include "core/byte_array/encoders.hpp"
 
 #include "gtest/gtest.h"

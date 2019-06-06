@@ -162,7 +162,7 @@ TEST_F(StringTests, find_returns_zero_based_index_of_first_occurrence_of_substri
     function main()
       var text = 'ab bbc';
 
-var output = Array<Int32>(3);
+      var output = Array<Int32>(3);
       output[0] = text.find('ab');
       output[1] = text.find('bb');
       output[2] = text.find('c');
@@ -345,6 +345,209 @@ TEST_F(StringTests, substring_fails_if_start_is_greater_than_end)
 
   ASSERT_TRUE(toolkit.Compile(TEXT));
   ASSERT_FALSE(toolkit.Run());
+}
+
+TEST_F(StringTests, split_returns_an_array_of_string_segments_with_the_separators_taken_out)
+{
+  static char const *TEXT = R"(
+    function main()
+      var text = 'xxx --yyy --zzz';
+      var output = text.split(' --');
+
+      print(output[0]);
+      print(' | ');
+      print(output[1]);
+      print(' | ');
+      print(output[2]);
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_TRUE(toolkit.Run());
+
+  ASSERT_EQ(toolkit.stdout(), "xxx | yyy | zzz");
+}
+
+TEST_F(
+    StringTests,
+    if_the_string_does_not_contain_a_separator_split_returns_an_array_with_one_element_equal_to_the_string)
+{
+  static char const *TEXT = R"(
+    function main()
+      var text = 'xxx yyy zzz';
+      var output = text.split('*');
+
+      print(output.count());
+      print('-');
+      print(output[0]);
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_TRUE(toolkit.Run());
+
+  ASSERT_EQ(toolkit.stdout(), "1-xxx yyy zzz");
+}
+
+TEST_F(StringTests, split_works_if_the_fragments_are_long_compared_to_the_separator)
+{
+  static char const *TEXT = R"(
+    function main()
+      var text = 'abcdefghi abcdefghi';
+      var output = text.split(' ');
+
+      print(output.count());
+      print(' | ');
+      print(output[0]);
+      print(' | ');
+      print(output[1]);
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_TRUE(toolkit.Run());
+
+  ASSERT_EQ(toolkit.stdout(), "2 | abcdefghi | abcdefghi");
+}
+
+TEST_F(StringTests, split_works_if_the_separator_is_long_compared_to_the_fragments)
+{
+  static char const *TEXT = R"(
+    function main()
+      var text = 'a 1234567890 b';
+      var output = text.split(' 1234567890 ');
+
+      print(output.count());
+      print(' | ');
+      print(output[0]);
+      print(' | ');
+      print(output[1]);
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_TRUE(toolkit.Run());
+
+  ASSERT_EQ(toolkit.stdout(), "2 | a | b");
+}
+
+TEST_F(StringTests,
+       if_the_string_is_empty_split_returns_an_array_with_one_element_equal_to_the_empty_string)
+{
+  static char const *TEXT = R"(
+    function main()
+      var text = '';
+      var output = text.split('*');
+
+      print(output.count());
+      print('-');
+      print(output[0]);
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_TRUE(toolkit.Run());
+
+  ASSERT_EQ(toolkit.stdout(), "1-");
+}
+
+TEST_F(StringTests, split_reports_an_error_if_the_separator_is_the_empty_string)
+{
+  static char const *TEXT = R"(
+    function main()
+      var text = 'plums';
+      var output = text.split('');
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_FALSE(toolkit.Run());
+}
+
+TEST_F(StringTests, split_reports_an_error_if_the_separator_is_null)
+{
+  static char const *TEXT = R"(
+    function main()
+      var text = 'plums';
+      var sep : String;
+      var output = text.split(sep);
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_FALSE(toolkit.Run());
+}
+
+TEST_F(StringTests,
+       if_the_string_contains_consecutive_separators_split_returns_an_array_with_empty_strings)
+{
+  static char const *TEXT = R"(
+    function main()
+      var text = 'aaa-bbb--ccc';
+      var output = text.split('-');
+
+      print(output.count());
+      print(' | ');
+      print(output[0]);
+      print(' | ');
+      print(output[1]);
+      print(' | ');
+      print(output[2]);
+      print(' | ');
+      print(output[3]);
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_TRUE(toolkit.Run());
+
+  ASSERT_EQ(toolkit.stdout(), "4 | aaa | bbb |  | ccc");
+}
+
+TEST_F(
+    StringTests,
+    if_the_string_begins_with_a_separator_split_returns_an_array_with_the_empty_string_as_its_first_element)
+{
+  static char const *TEXT = R"(
+    function main()
+      var text = '+aaa';
+      var output = text.split('+');
+
+      print(output.count());
+      print(' | ');
+      print(output[0]);
+      print(' | ');
+      print(output[1]);
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_TRUE(toolkit.Run());
+
+  ASSERT_EQ(toolkit.stdout(), "2 |  | aaa");
+}
+
+TEST_F(
+    StringTests,
+    if_the_string_ends_with_a_separator_split_returns_an_array_with_the_empty_string_as_its_last_element)
+{
+  static char const *TEXT = R"(
+    function main()
+      var text = 'aaa+';
+      var output = text.split('+');
+
+      print(output.count());
+      print(' | ');
+      print(output[0]);
+      print(' | ');
+      print(output[1]);
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_TRUE(toolkit.Run());
+
+  ASSERT_EQ(toolkit.stdout(), "2 | aaa | ");
 }
 
 }  // namespace

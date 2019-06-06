@@ -18,6 +18,7 @@
 
 #include "ledger/chain/main_chain.hpp"
 #include "core/assert.hpp"
+
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "ledger/chain/transaction_layout_rpc_serializers.hpp"

@@ -1039,7 +1039,7 @@ void Generator::HandleUnsignedInteger8(IRExpressionNodePtr const &node)
 {
   Executable::Instruction instruction(Opcodes::PushConstant);
   uint8_t                 value = static_cast<uint8_t>(std::atoi(node->text.c_str()));
-  instruction.index             = AddConstant(Variant(value, TypeIds::Byte));
+  instruction.index             = AddConstant(Variant(value, TypeIds::UInt8));
   uint16_t pc                   = function_->AddInstruction(instruction);
   AddLineNumber(node->line, pc);
 }
@@ -1642,7 +1642,7 @@ bool Generator::ConstantComparator::operator()(Variant const &lhs, Variant const
   {
     return lhs.primitive.i8 < rhs.primitive.i8;
   }
-  case TypeIds::Byte:
+  case TypeIds::UInt8:
   {
     return lhs.primitive.ui8 < rhs.primitive.ui8;
   }

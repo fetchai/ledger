@@ -17,8 +17,10 @@
 //------------------------------------------------------------------------------
 
 #include "ml/ops/activations/logsigmoid.hpp"
+
 #include "math/tensor.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
+
 #include <gtest/gtest.h>
 
 template <typename T>
@@ -37,9 +39,9 @@ TYPED_TEST(LogSigmoidTest, forward_test)
   using ArrayType     = TypeParam;
   using VecTensorType = typename fetch::ml::Ops<ArrayType>::VecTensorType;
 
-  ArrayType data = ArrayType::FromString("1, -2, 3, -4, 5, -6, 7, -8");
+  ArrayType data = ArrayType::FromString(R"(1, -2, 3, -4, 5, -6, 7, -8)");
   ArrayType gt   = ArrayType::FromString(
-      "-0.31326, -2.126928, -0.048587, -4.01815, -0.006715, -6.002476, -0.000911466, -8.000335");
+      R"(-0.31326, -2.126928, -0.048587, -4.01815, -0.006715, -6.002476, -0.000911466, -8.000335)");
 
   fetch::ml::ops::LogSigmoid<ArrayType> op;
   ArrayType                             prediction(op.ComputeOutputShape({data}));
@@ -87,9 +89,9 @@ TYPED_TEST(LogSigmoidTest, backward_test)
   using DataType  = typename TypeParam::Type;
   using ArrayType = TypeParam;
 
-  ArrayType data  = ArrayType::FromString("1, -2, 3, -4, 5, -6, 7, -8");
-  ArrayType error = ArrayType::FromString("0, 0, 0, 0.5, 1, 1, 0, 0");
-  ArrayType gt    = ArrayType::FromString("0, 0, 0, 0.4910068810, 0.006692850, 0.997527, 0, 0");
+  ArrayType data  = ArrayType::FromString(R"(1, -2, 3, -4, 5, -6, 7, -8)");
+  ArrayType error = ArrayType::FromString(R"(0, 0, 0, 0.5, 1, 1, 0, 0)");
+  ArrayType gt    = ArrayType::FromString(R"(0, 0, 0, 0.4910068810, 0.006692850, 0.997527, 0, 0)");
 
   fetch::ml::ops::LogSigmoid<ArrayType> op;
   std::vector<ArrayType>                prediction = op.Backward({data}, error);

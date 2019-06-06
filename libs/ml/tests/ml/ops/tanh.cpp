@@ -17,12 +17,14 @@
 //------------------------------------------------------------------------------
 
 #include "ml/ops/tanh.hpp"
+
 #include "math/tensor.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 
 #include "gtest/gtest.h"
 
 #include <cstdint>
+#include <vector>
 
 template <typename T>
 class TanhTest : public ::testing::Test
