@@ -16,6 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/serializers/byte_array.hpp"
+#include "core/serializers/byte_array_buffer.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "ledger/dag/dag.hpp"
 #include "ledger/dag/dag_node.hpp"
@@ -124,7 +126,7 @@ DAG::DAG(std::string const &db_name, bool load, CertificatePtr certificate)
   }
 }
 
-std::vector<DAGNode> DAG::GetLatest()
+std::vector<DAGNode> DAG::GetLatest(bool previous_epoch_only)
 {
   std::vector<DAGNode> ret;
 
@@ -135,11 +137,14 @@ std::vector<DAGNode> DAG::GetLatest()
     ret.push_back(*GetDAGNodeInternal(node_hash));
   }
 
-  for(auto const &epoch : previous_epochs_)
+  if (!previous_epoch_only)
   {
-    for(auto const &node_hash : epoch.all_nodes)
+    for (auto const &epoch : previous_epochs_)
     {
-      ret.push_back(*GetDAGNodeInternal(node_hash));
+      for (auto const &node_hash : epoch.all_nodes)
+      {
+        ret.push_back(*GetDAGNodeInternal(node_hash));
+      }
     }
   }
 
@@ -173,20 +178,27 @@ void DAG::AddTransaction(Transaction const &tx, crypto::ECDSASigner const &signe
   recently_added_.push_back(*new_node);
 }
 
-void DAG::AddWork(Work solution)
+void DAG::AddWork(Work const &solution)
 {
   std::lock_guard<fetch::mutex::Mutex> lock(mutex_);
 
   // Create a new dag node containing this data
   DAGNodePtr new_node = std::make_shared<DAGNode>();
 
+  serializers::ByteArrayBuffer buffer;
+  buffer << solution;
+
   new_node->type            = DAGNode::WORK;
   new_node->contract_digest = solution.contract_digest();
-  /* new_node->identity        = signer.identity(); */
+  new_node->identity        = solution.miner();
+  new_node->contents        = buffer.data();
 
   /* new_node.SetObject(*solution); */ // TODO(HUT): implement
   SetReferencesInternal(new_node);
   new_node->Finalise();
+
+  FETCH_LOG_INFO(LOGGING_NAME, "!!! New Work node: 0x", new_node->hash.ToHex(), " contract: 0x", new_node->contract_digest.address().ToHex(), " score: ", solution.score());
+
   /* new_node->signature = signer.Sign(new_node->hash); */ // TODO(HUT): signing correctly
 
   PushInternal(new_node);
@@ -365,7 +377,7 @@ bool DAG::TooOldInternal(uint64_t oldest_reference)
   return false;
 }
 
-bool DAG::GetDAGNode(ConstByteArray hash, DAGNode &node)
+bool DAG::GetDAGNode(ConstByteArray const &hash, DAGNode &node)
 {
   std::lock_guard<fetch::mutex::Mutex> lock(mutex_);
   auto ret = GetDAGNodeInternal(hash);
@@ -382,6 +394,34 @@ bool DAG::GetDAGNode(ConstByteArray hash, DAGNode &node)
     FETCH_LOG_INFO(LOGGING_NAME, "Request for dag node", hash.ToBase64(), " lose");
     return false;
   }
+}
+
+bool DAG::GetWork(ConstByteArray const &hash, Work &work)
+{
+  bool success{false};
+
+  // lookup the DAG node in question
+  DAGNode node;
+  if (GetDAGNode(hash, node))
+  {
+    try
+    {
+      serializers::ByteArrayBuffer buffer{node.contents};
+      buffer >> work;
+
+      // add fields normally not serialised
+      work.UpdateDigest(node.contract_digest);
+      work.UpdateIdentity(node.identity);
+
+      success = true;
+    }
+    catch (std::exception const &ex)
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Unable to deserialise the work from node: ", ex.what());
+    }
+  }
+
+  return success;
 }
 
 std::shared_ptr<DAGNode> DAG::GetDAGNodeInternal(ConstByteArray hash)
@@ -588,6 +628,10 @@ DAGEpoch DAG::CreateEpoch(uint64_t block_number)
       Transaction contents;
       dag_node_to_add->GetContents(contents);
       ret.tx_digests.insert(contents.digest());
+    }
+    else if (dag_node_to_add->type == DAGNode::WORK)
+    {
+      ret.solutions.insert(dag_node_to_add->hash);
     }
   }
 

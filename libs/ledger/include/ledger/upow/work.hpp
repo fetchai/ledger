@@ -40,26 +40,38 @@ public:
     WORK_NOT_VALID = uint64_t(-1)
   };
 
+  Work() = default;
   Work(Address address, crypto::Identity miner, BlockIndex block_number);
+  Work(Work const &) = default;
   ~Work() = default;
 
   Address const &contract_digest() const;
   crypto::Identity const &miner() const;
-  BlockIndex block_number() const;
+//  BlockIndex block_number() const;
   math::BigUnsigned const &nonce() const;
   WorkScore score() const;
+
+  void UpdateDigest(Address const &address)
+  {
+    contract_digest_ = address;
+  }
+
+  void UpdateIdentity(crypto::Identity const &identity)
+  {
+    miner_ = identity;
+  }
 
   void UpdateScore(WorkScore score)
   {
     score_ = score;
   }
 
-  void UpdateNonce(math::BigUnsigned nonce)
+  void UpdateNonce(math::BigUnsigned const &nonce)
   {
-    nonce_ = std::move(nonce);
+    nonce_ = nonce;
   }
 
-  explicit operator bool() const;
+//  explicit operator bool() const;
   math::BigUnsigned CreateHashedNonce() const;
 
 //  bool operator<(Work const &other) const;
@@ -68,9 +80,9 @@ public:
 
 private:
 
-  Address           contract_digest_;
-  crypto::Identity  miner_;
-  BlockIndex        block_number_{WORK_NOT_VALID};
+  Address           contract_digest_{};
+  crypto::Identity  miner_{};
+//  BlockIndex        block_number_{WORK_NOT_VALID};
   math::BigUnsigned nonce_{};
   WorkScore         score_{std::numeric_limits<WorkScore>::max()};
 
@@ -83,8 +95,9 @@ private:
 inline Work::Work(Address address, crypto::Identity miner, BlockIndex block_number)
   : contract_digest_{std::move(address)}
   , miner_{std::move(miner)}
-  , block_number_{block_number}
+//  , block_number_{block_number}
 {
+  (void)block_number;
 }
 
 inline Address const &Work::contract_digest() const
@@ -97,10 +110,10 @@ inline crypto::Identity const &Work::miner() const
   return miner_;
 }
 
-inline BlockIndex Work::block_number() const
-{
-  return block_number_;
-}
+//inline BlockIndex Work::block_number() const
+//{
+//  return block_number_;
+//}
 
 inline math::BigUnsigned const &Work::nonce() const
 {
@@ -112,10 +125,10 @@ inline WorkScore Work::score() const
   return score_;
 }
 
-inline Work::operator bool() const
-{
-  return block_number_ != WORK_NOT_VALID;
-}
+//inline Work::operator bool() const
+//{
+//  return block_number_ != WORK_NOT_VALID;
+//}
 
 /*
  * @brief computes the hashed nonce for work execution.
@@ -129,11 +142,20 @@ inline math::BigUnsigned Work::CreateHashedNonce() const
   hasher.Update(miner_.identifier());
   hasher.Update(nonce_);
 
-  auto const digest = hasher.Final();
+  auto const digest1 = hasher.Final();
   hasher.Reset();
-  hasher.Update(digest);
+  hasher.Update(digest1);
 
-  return hasher.Final();
+  auto const digest2 = hasher.Final();
+
+  FETCH_LOG_INFO("Work", "---------------------------------------------------------------------------------------------");
+  FETCH_LOG_INFO("Work", "Contract Digest: ", contract_digest_.address().ToHex());
+  FETCH_LOG_INFO("Work", "Miner..........: ", miner_.identifier().ToHex());
+  FETCH_LOG_INFO("Work", "Nonce..........: ", nonce_.ToHex());
+  FETCH_LOG_INFO("Work", "Digest 1.......: ", digest1.ToHex());
+  FETCH_LOG_INFO("Work", "Digest 2.......: ", digest2.ToHex());
+
+  return digest2;
 }
 
 ///*
@@ -159,13 +181,13 @@ inline math::BigUnsigned Work::CreateHashedNonce() const
 template <typename T>
 void Serialize(T &serializer, Work const &work)
 {
-  serializer << work.block_number_ << work.nonce_ << work.score_;
+  serializer << /*work.block_number_ <<*/ work.nonce_ << work.score_;
 }
 
 template <typename T>
 void Deserialize(T &serializer, Work &work)
 {
-  serializer >> work.block_number_ >> work.nonce_ >> work.score_;
+  serializer >> /*work.block_number_ >>*/ work.nonce_ >> work.score_;
 }
 
 using WorkPtr = std::shared_ptr<Work>;

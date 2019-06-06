@@ -35,7 +35,8 @@ struct WorkQueueSort
 
 }  // namespace detail
 
-using WorkQueue = std::priority_queue<WorkPtr, std::vector<WorkPtr>, detail::WorkQueueSort>;
+using WorkQueue    = std::priority_queue<WorkPtr, std::vector<WorkPtr>, detail::WorkQueueSort>;
+using WorkQueuePtr = std::shared_ptr<WorkQueue>;
 
 }  // namespace ledger
 }  // namespace fetch

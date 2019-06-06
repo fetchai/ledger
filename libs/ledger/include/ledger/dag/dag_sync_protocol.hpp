@@ -24,9 +24,6 @@
 namespace fetch {
 namespace ledger {
 
-/**
- * DAG implementation.
- */
 class DAGSyncProtocol : public fetch::service::Protocol
 {
 public:
@@ -39,7 +36,7 @@ public:
   static constexpr char const *LOGGING_NAME = "DAGSyncProtocol";
 
   // Construction / Destruction
-  DAGSyncProtocol(std::shared_ptr<ledger::DAG> dag);
+  explicit DAGSyncProtocol(std::shared_ptr<ledger::DAG> dag);
   DAGSyncProtocol(DAGSyncProtocol const &) = delete;
   DAGSyncProtocol(DAGSyncProtocol &&)      = delete;
   ~DAGSyncProtocol() override              = default;

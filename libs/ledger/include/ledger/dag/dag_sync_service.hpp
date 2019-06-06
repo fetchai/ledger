@@ -72,7 +72,7 @@ public:
   using MuddleEndpoint         = muddle::MuddleEndpoint;
 
   DAGSyncService(MuddleEndpoint &muddle_endpoint, std::shared_ptr<ledger::DAG> dag);
-  ~DAGSyncService();
+  ~DAGSyncService() = default;
 
   static constexpr std::size_t MAX_OBJECT_RESOLUTION_PER_CYCLE       = 128;
 

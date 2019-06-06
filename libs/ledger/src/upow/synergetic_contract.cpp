@@ -263,6 +263,9 @@ Status SynergeticContract::Work(math::BigUnsigned const &nonce, WorkScore &score
   // overriding assumption that the problem has previously been defined
   assert(static_cast<bool>(problem_));
 
+  // assume this end badly
+  score = std::numeric_limits<WorkScore>::max();
+
   auto vm = std::make_unique<vm::VM>(module_.get());
 
   // create the nonce object to be passed into the work function

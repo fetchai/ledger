@@ -50,12 +50,14 @@ BigUnsigned GenerateStartingNonce(crypto::Prover const &prover)
   return {address.address()};
 }
 
-WorkScore ExecuteWork(SynergeticContractPtr const &contract, WorkPtr const &work)
+void ExecuteWork(SynergeticContractPtr const &contract, WorkPtr const &work)
 {
   WorkScore score{0};
 
   // execute the work
-  auto const status = contract->Work(work->CreateHashedNonce(), score);
+  auto const nonce_work = work->CreateHashedNonce();
+
+  auto const status = contract->Work(nonce_work, score);
 
   if (SynergeticContract::Status::SUCCESS != status)
   {
@@ -65,13 +67,15 @@ WorkScore ExecuteWork(SynergeticContractPtr const &contract, WorkPtr const &work
     score = std::numeric_limits<WorkScore>::max();
   }
 
-  return score;
+  // update the score for the piece of work
+  work->UpdateScore(score);
+  FETCH_LOG_INFO(LOGGING_NAME, "Execute Nonce: ", nonce_work.ToHex(), " score: ", score);
 }
 
 } // namespace
 
 NaiveSynergeticMiner::NaiveSynergeticMiner(DAGPtr dag, StorageInterface &storage, ProverPtr prover)
-  : dag_{dag}
+  : dag_{std::move(dag)}
   , storage_{storage}
   , prover_{std::move(prover)}
   , starting_nonce_{GenerateStartingNonce(*prover_)}
@@ -110,7 +114,7 @@ DagNodes NaiveSynergeticMiner::Mine(BlockIndex block)
   // iterate through the latest DAG nodes and build a complete set of addresses to mine solutions
   // for
   // TODO(HUT): would be nicer to specify here what we want by type
-  auto dag_nodes = dag_->GetLatest();
+  auto dag_nodes = dag_->GetLatest(true);
 
   // Debug
   {
@@ -233,6 +237,8 @@ WorkPtr NaiveSynergeticMiner::MineSolution(Address const &address, BlockIndex bl
     if (!(best_work && best_work->score() >= work->score()))
     {
       best_work = std::make_shared<Work>(*work);
+
+      FETCH_LOG_INFO(LOGGING_NAME, "Score before: ", work->score(), " after: ", best_work->score());
     }
   }
 

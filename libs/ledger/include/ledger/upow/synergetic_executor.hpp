@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ledger/upow/synergetic_contract_factory.hpp"
 #include "ledger/upow/synergetic_executor_interface.hpp"
 
 namespace fetch {
@@ -27,19 +28,23 @@ class SynergeticExecutor : public SynergeticExecutorInterface
 public:
 
   // Construction / Destruction
-  SynergeticExecutor() = default;
+  explicit SynergeticExecutor(StorageInterface &storage);
   SynergeticExecutor(SynergeticExecutor const &) = delete;
   SynergeticExecutor(SynergeticExecutor &&) = delete;
   ~SynergeticExecutor() override = default;
 
   /// @name Synergetic Executor Interface
   /// @{
-  void VerifySolution() override;
+  void Verify(WorkQueue &solutions) override;
   /// @}
 
   // Operators
   SynergeticExecutor &operator=(SynergeticExecutor const &) = delete;
   SynergeticExecutor &operator=(SynergeticExecutor &&) = delete;
+
+private:
+
+  SynergeticContractFactory factory_;
 };
 
 } // namespace ledger
