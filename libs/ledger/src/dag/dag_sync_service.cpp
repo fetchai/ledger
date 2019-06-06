@@ -59,10 +59,6 @@ DAGSyncService::DAGSyncService(MuddleEndpoint &muddle_endpoint, std::shared_ptr<
   });
 }
 
-DAGSyncService::~DAGSyncService()
-{
-}
-
 DAGSyncService::State DAGSyncService::OnInitial(){
 
   if (muddle_endpoint_.GetDirectlyConnectedPeers().empty())
