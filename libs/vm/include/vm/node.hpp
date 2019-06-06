@@ -20,6 +20,8 @@
 #include "vm/common.hpp"
 #include "vm/token.hpp"
 
+#include <algorithm>
+
 namespace fetch {
 namespace vm {
 
@@ -268,13 +270,15 @@ using NodePtr      = std::shared_ptr<Node>;
 using NodePtrArray = std::vector<NodePtr>;
 struct Node
 {
-  Node(NodeCategory node_category__, NodeKind node_kind__, std::string const &text__,
+  Node(NodeCategory node_category__, NodeKind node_kind__, std::string text__,
        uint16_t line__)
-  {
-    node_category = node_category__;
-    node_kind     = node_kind__;
-    text          = text__;
-    line          = line__;
+    : node_category{node_category__}
+    , node_kind{node_kind__}
+    , text{std::move(text__)}
+    , line{line__}
+  {}
+  virtual NodePtr Clone() const {
+	  return GrowClone<NodePtr>();
   }
   virtual ~Node() = default;
   virtual void Reset()
@@ -304,6 +308,21 @@ struct Node
   std::string  text;
   uint16_t     line;
   NodePtrArray children;
+protected:
+  template<class ChildPtr> ChildPtr GrowClone() const {
+	  ChildPtr ret_val{std::make_shared<typename ChildPtr::element_type>(node_category, node_kind, text, line)};
+	  if (children)
+	  {
+		  ret_val->children = CopyArray(children);
+	  }
+	  return ret_val;
+  }
+  static NodePtrArray CopyArray(NodePtrArray const &source)
+  {
+	  NodePtrArray ret_val(source.size());
+	  std::transform(source.begin(), source.end(), ret_val->source.begin(), [](auto const &c) { return c->Clone(); });
+	  return ret_val;
+  }
 };
 
 inline NodePtr CreateBasicNode(NodeKind node_kind, std::string const &text, uint16_t line)
@@ -311,12 +330,19 @@ inline NodePtr CreateBasicNode(NodeKind node_kind, std::string const &text, uint
   return std::make_shared<Node>(Node(NodeCategory::Basic, node_kind, text, line));
 }
 
+struct BlockNode;
+using BlockNodePtr      = std::shared_ptr<BlockNode>;
+using BlockNodePtrArray = std::vector<BlockNodePtr>;
 struct BlockNode : public Node
 {
   BlockNode(NodeKind node_kind, std::string const &text, uint16_t line)
     : Node(NodeCategory::Block, node_kind, text, line)
   {
     block_terminator_line = 0;
+  }
+  virtual NodePtr Clone() const override {
+	  auto ret_val{GrowClone<BlokNodePtr>()};
+	  
   }
   virtual ~BlockNode() = default;
   virtual void Reset() override
@@ -336,8 +362,6 @@ struct BlockNode : public Node
   uint16_t       block_terminator_line;
   SymbolTablePtr symbols;
 };
-using BlockNodePtr      = std::shared_ptr<BlockNode>;
-using BlockNodePtrArray = std::vector<BlockNodePtr>;
 
 inline BlockNodePtr CreateBlockNode(NodeKind node_kind, std::string const &text, uint16_t line)
 {
@@ -350,15 +374,6 @@ struct ExpressionNode : public Node
     : Node(NodeCategory::Expression, node_kind, text, line)
     , expression_kind{ExpressionKind::Unknown}
     , function_invoked_on_instance{}
-  {}
-
-  ExpressionNode(ExpressionKind expression_kind, TypePtr type, VariablePtr variable, FunctionGroupPtr fg, bool function_invoked_on_instance, FunctionPtr function)
-    : expression_kind{expression_kind}
-    , type{std::move(type)}
-    , variable{std::move(variable)}
-    , fg{std::move(fg)}
-    , function_invoked_on_instance{function_invoked_on_instance}
-    , function{std::move(function)}
   {}
 
   virtual ~ExpressionNode() = default;

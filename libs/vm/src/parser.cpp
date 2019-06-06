@@ -1390,37 +1390,70 @@ bool Parser::HandleArrayExpression()
   return true;
 }
 
+bool Parser::MatchLiteral(literal_kind Token::Kind)
+{
+	Next();
+	if (token_->kind == literal_kind)
+	{
+		return true;
+	}
+	Undo();
+	return false;
+}
+
 // ArrayExpression ::= "[" Array
 // Left square bracket has been already consumed.
 //
 // Array ::= ArraySequence | ArrayRepetition | ArrayEmpty
-ExpressionNodePtr ParseArray()
+ExpressionNodePtr Parser::ParseArray()
 {
-	return value_util::Or(ParseArraySequence(), ParseArrayRepetition(), ParseArrayEmpty());
+	return Branches(ParseArraySequence, ParseArrayRepetition, ParseArrayEmpty);
 }
 
 // ArraySequence ::= Expr ("," Expr)* "]"
-ExpressionNodePtr ParseArraySequence()
+ExpressionNodePtr Parser::ParseArraySequence()
 {
 	NodePtrArray elements;
-	for(auto element{ParseExpression()}; element; element = value_util::And(MatchLiteral(Token::Kind::Comma), ParseExpression()))
+	std::string text;
+	const uint16_t line{token_->line};
+	TypePtr element_type;
+
+	for(auto element{ParseExpression()} /* Expr */; element; )
 	{
+		element_type = CommonType(element_type, element->type);
 		elements.push_back(std::move(element));
+		text += element->text;
+		if (MatchLiteral(Token::Kind::Comma))
+		{
+			text += ", ";
+			element = ParseExpression();
+		}
+		else {
+			element.reset();
+		}
 	}
-	if (elements.empty())
+
+	// token stream does not match this rule
+	if (elements.empty() || !MatchLiteral(Token::Kind::RightSquareBracket) /* "]" */)
 	{
 		return {};
 	}
-	Next();
-	if (token_->kind == Token::Kind::RightSquareBracket)
-	{
-		// empty array literal
-		return ExpressionNodePtr{ExpessionKind::RV, TemplateInstance(
-	}
-	switch (token_->kind)
-	{
-		case Token::Kind::RightSquareBracket: return EmptyArray();
-			c
+
+	// token stream conforms to this rule
+	auto node{CreateExpressionNode(NodeKind::Array, text, line)};
+	node->expression_kind = ExpressionKind::RV;
+	node->type = element_type;
+	return node;
+}
+
+// ArrayRepetition ::= Expr ";" Number "]"
+ExpressionNodePtr Parser::ParseArrayRepetition()
+{
+	std::string text;
+	const uint16_t line{token_->line};
+
+	auto repeated_element{ParseExpression()};
+}
 
 bool Parser::HandleOpener(NodeKind prefix_kind, NodeKind postfix_kind,
                           Token::Kind closer_token_kind, std::string const &closer_token_text)

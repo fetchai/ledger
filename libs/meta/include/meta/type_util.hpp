@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include <type_traits>
+#include <utility>
 
 namespace fetch {
 namespace type_util {
@@ -90,16 +91,87 @@ struct Bind
 };
 
 template <class T, class... Ts>
-struct IsAnyOf
-{
-  enum : bool
-  {
-    value = AnyV<Bind<std::is_same, T>::template type, Ts...>
-  };
-};
+using IsAnyOf = Any<Bind<std::is_same, T>::template type, Ts...>;
 
 template <class T, class... Ts>
 static constexpr auto IsAnyOfV = IsAnyOf<T, Ts...>::value;
+
+template <class T, template <class...> class Predicate>
+using Satisfies = Predicate<T>;
+
+template <class T, template <class...> class Predicate>
+static constexpr bool SatisfiesV = Satisfies<T, Predicate>::value;
+
+template <class T, template <class...> class... Predicates>
+using SatisfiesAll = Conjunction<Predicates<T>...>;
+
+template <class T, template <class...> class... Predicates>
+static constexpr bool SatisfiesAllV = SatisfiesAll<T, Predicates...>::value;
+
+template <class F, class... Args>
+struct IsNothrowInvocable
+{
+  enum : bool
+  {
+    value = noexcept(std::declval<F>()(std::declval<Args>()...))
+  };
+};
+
+template <class F, class... Args>
+static constexpr auto IsNothrowInvocableV = IsNothrowInvocable<F, Args...>::value;
+
+template <class F, class... Args>
+struct InvokeResult
+{
+  using type = decltype(std::declval<F>()(std::declval<Args>()...));
+};
+
+template <class F, class... Args>
+using InvokeResultT = typename InvokeResult<F, Args...>::type;
+
+template <class C, class RV, class... Args1>
+struct InvokeResult<RV (C::*)(Args...), Args1...>
+{
+	using type = RV;
+}
+
+template <class C, class RV, class... Args1>
+struct InvokeResult<RV (C::*)(Args...), Args1...>
+{
+	using type = RV;
+}
+
+template <class...>
+struct Switch;
+
+template <class... Clauses>
+using SwitchT = typename Switch<Clauses...>::type;
+
+template <class If, class Then, class... Else>
+struct Switch<If, Then, Else...> : std::conditional<If::value, Then, SwitchT<Else...>>
+{
+};
+
+template <class Default>
+struct Switch<Default>
+{
+  using type = Default;
+};
+
+template <>
+struct Switch<>
+{
+  using type = void;
+};
+
+template <class Source, class Dest>
+using CopyReferenceKind =
+    Switch<std::is_lvalue_reference<Source>, std::add_lvalue_reference_t<Dest>,
+           std::is_rvalue_reference<Source>, std::add_rvalue_reference_t<std::decay_t<Dest>>,
+           std::decay_t<Dest>>;
+
+template <class Source, class Dest>
+using CopyReferenceKindT = typename CopyReferenceKind<Source, Dest>::type;
 
 template<class...> struct Last;
 

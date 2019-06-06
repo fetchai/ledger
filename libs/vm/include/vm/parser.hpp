@@ -129,8 +129,40 @@ private:
   void AddError(std::string const &message);
   bool MatchLiteral(Token::Kind token);
 
-  template<class F, class... Fs> auto Branches(F &&f, Fs &&...fs) {
-	  using RetVal = type_util::
+  template<class F> auto AttemptBranch(int start, F &&f)
+  {
+	  auto rv = std::forward<F>(f)();
+	  if (!rv)
+	  {
+		  Rewind(start);
+	  }
+	  return rv;
+  }
+
+  template<class RV> auto AttemptBranch(int start, RV (Parser::*f)())
+  {
+	  auto rv = (this->*f)();
+	  if (!rv)
+	  {
+		  Rewind(start);
+	  }
+	  return rv;
+  }
+
+  template<class RV> auto AttemptBranch(int start, RV (Parser::&f)())
+  {
+	  auto rv = (this->*(&f))();
+	  if (!rv)
+	  {
+		  Rewind(start);
+	  }
+	  return rv;
+  }
+
+  template<class... Fs> auto Branches(Fs &&...fs) {
+	  using RetVal = type_util::InvokeResultT<F>;
+	  const auto index = Index();
+	  return value_util::Or(AttemptBranch(index, fs)...);
   }
 
   void IncrementGroupMembers()
