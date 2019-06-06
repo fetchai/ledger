@@ -22,10 +22,9 @@ DAG::MissingNodes DAGSyncProtocol::RequestNodes(MissingTXs missing_txs)
     }
   }
 
-
   for(auto const &node : ret)
   {
-    FETCH_LOG_INFO(LOGGING_NAME, " returning a hash: ", node.hash.ToBase64());
+    FETCH_LOG_INFO(LOGGING_NAME, " returning a DAG hash: ", node.hash.ToBase64());
   }
 
   return ret;

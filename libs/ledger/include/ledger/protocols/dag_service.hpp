@@ -20,10 +20,7 @@
 #include "core/reactor.hpp"
 #include "network/muddle/muddle.hpp"
 #include "ledger/shard_config.hpp"
-
 #include "network/muddle/rpc/server.hpp"
-
-
 #include "ledger/dag/dag_sync_protocol.hpp"
 #include "ledger/dag/dag_sync_service.hpp"
 
@@ -44,20 +41,16 @@ public:
 
   using Subscription    = muddle::Subscription;
   using SubscriptionPtr = std::shared_ptr<Subscription>;
-  using Muddle         = muddle::Muddle;
-  using NetworkManager = network::NetworkManager;
-  using DAG = std::shared_ptr<ledger::DAG>;
+  using Muddle          = muddle::Muddle;
+  using NetworkManager  = network::NetworkManager;
+  using DAG             = std::shared_ptr<ledger::DAG>;
+  using MuddleEndpoint  = muddle::MuddleEndpoint;
 
-  // TODO(issue 7): Make config JSON
   // Construction / Destruction
-  DAGService(muddle::Muddle &muddle, DAG dag, Mode mode = Mode::LOAD_DATABASE);
+  DAGService(MuddleEndpoint &muddle_endpoint, DAG dag, Mode mode = Mode::LOAD_DATABASE);
   DAGService(DAGService const &) = delete;
   DAGService(DAGService &&)      = delete;
   ~DAGService();
-
-  void Start(muddle::Muddle::UriList const &initial_peers);
-
-  void Stop();
 
   core::WeakRunnable GetWeakRunnable()
   {
@@ -73,7 +66,6 @@ private:
   using Server                    = fetch::muddle::rpc::Server;
   using Reactor                   = core::Reactor;
   using ServerPtr                 = std::shared_ptr<Server>;
-  using MuddlePtr                 = std::shared_ptr<Muddle>;
 
   static constexpr unsigned int SYNC_PERIOD_MS = 500;
 
@@ -82,7 +74,7 @@ private:
   /// @name External P2P Network
   /// @{
   ServerPtr      external_rpc_server_;
-  muddle::Muddle &external_muddle_;  ///< The muddle networking service
+  MuddleEndpoint &external_muddle_;  ///< The muddle networking service
   /// @}
 
   /// @name DAG Store sync mechanism

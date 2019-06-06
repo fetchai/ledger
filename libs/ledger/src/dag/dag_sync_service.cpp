@@ -25,15 +25,14 @@ namespace ledger {
 
 using DAGNodesSerializer        = fetch::serializers::ByteArrayBuffer;
 
-DAGSyncService::DAGSyncService(Muddle &muddle, std::shared_ptr<ledger::DAG> dag)
-  : muddle_(muddle)
-  , server_(muddle.AsEndpoint(), 980, 981) // TODO(EJF): These need to be added to service ids
+DAGSyncService::DAGSyncService(MuddleEndpoint &muddle_endpoint, std::shared_ptr<ledger::DAG> dag)
+  : muddle_endpoint_(muddle_endpoint)
   , client_(std::make_shared<Client>("R:DAGSync-L",
-                                     muddle_.AsEndpoint(), Muddle::Address(), SERVICE_DAG, CHANNEL_RPC))
+                                     muddle_endpoint_, Muddle::Address(), SERVICE_DAG, CHANNEL_RPC))
   , state_machine_{std::make_shared<core::StateMachine<State>>("DAGSyncService",
                                                                State::INITIAL)}
   , dag_{std::move(dag)}
-  , dag_subscription_(muddle_.AsEndpoint().Subscribe(SERVICE_DAG, CHANNEL_RPC_BROADCAST))
+  , dag_subscription_(muddle_endpoint_.Subscribe(SERVICE_DAG, CHANNEL_RPC_BROADCAST))
 {
   state_machine_->RegisterHandler(State::INITIAL, this, &DAGSyncService::OnInitial);
   state_machine_->RegisterHandler(State::BROADCAST_RECENT, this, &DAGSyncService::OnBroadcastRecent);
@@ -66,7 +65,7 @@ DAGSyncService::~DAGSyncService()
 
 DAGSyncService::State DAGSyncService::OnInitial(){
 
-  if (muddle_.AsEndpoint().GetDirectlyConnectedPeers().empty())
+  if (muddle_endpoint_.GetDirectlyConnectedPeers().empty())
   {
     state_machine_->Delay(std::chrono::milliseconds{700});
     return State::INITIAL;
@@ -91,7 +90,7 @@ DAGSyncService::State DAGSyncService::OnBroadcastRecent()
     serializer << nodes_to_broadcast;
 
     // broadcast the block to the nodes on the network
-    muddle_.AsEndpoint().Broadcast(SERVICE_DAG, CHANNEL_RPC_BROADCAST, serializer.data());
+    muddle_endpoint_.Broadcast(SERVICE_DAG, CHANNEL_RPC_BROADCAST, serializer.data());
   }
   else
   {
@@ -123,7 +122,7 @@ DAGSyncService::State DAGSyncService::OnAddBroadcastRecent()
 
 DAGSyncService::State DAGSyncService::OnQueryMissing()
 {
-  for (auto const &connection : muddle_.AsEndpoint().GetDirectlyConnectedPeers())
+  for (auto const &connection : muddle_endpoint_.GetDirectlyConnectedPeers())
   {
     auto missing = dag_->GetRecentlyMissing();
 
