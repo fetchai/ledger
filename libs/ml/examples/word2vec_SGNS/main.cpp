@@ -187,8 +187,7 @@ int main(int argc, char **argv)
 
   std::cout << "beginning training...: " << std::endl;
 
-  std::pair<SizeType, std::vector<ArrayType>> data;
-  ArrayType gt(std::vector<typename ArrayType::SizeType>({1, tp.output_size}));
+  std::pair<ArrayType, std::vector<ArrayType>> data;
   ArrayType scale_factor(std::vector<typename ArrayType::SizeType>({1, 1}));
 
   DataType correct_score      = 0;
@@ -221,13 +220,9 @@ int main(int argc, char **argv)
 
     while (!data_loader.IsDone())
     {
-      gt.Fill(DataType(0));
 
       // get random data point
       data = data_loader.GetRandom();
-
-      // assign label
-      gt.At(0, 0) = DataType(data.first);
 
       g.SetInput("Input", data.second[0], false);
       g.SetInput("Context", data.second[1], false);
@@ -236,25 +231,26 @@ int main(int argc, char **argv)
       results = g.Evaluate(output_name);
 
       scale_factor.At(0, 0) =
-          (gt.At(0, 0) == DataType(0)) ? DataType(sp.k_negative_samples) : DataType(1);
+          (data.first.At(0, 0) == DataType(0)) ? DataType(sp.k_negative_samples) : DataType(1);
 
-      if (((results.At(0, 0) >= DataType(0.5)) && (gt.At(0, 0) == DataType(1))) ||
-          ((results.At(0, 0) < DataType(0.5)) && (gt.At(0, 0) == DataType(0))))
+      if (((results.At(0, 0) >= DataType(0.5)) && (data.first.At(0, 0) == DataType(1))) ||
+          ((results.At(0, 0) < DataType(0.5)) && (data.first.At(0, 0) == DataType(0))))
       {
         ++correct_score;
       }
 
-      loss = criterion.Forward({results, gt});
+      loss = criterion.Forward({results, data.first});
 
       // diminish size of updates due to negative examples
-      if (data.first == 0)
+      if (data.first.At(0, 0) == 0)
       {
         loss /= DataType(sp.k_negative_samples);
       }
       batch_loss += loss;
 
       // backprop
-      g.BackPropagate(output_name, criterion.Backward(std::vector<ArrayType>({results, gt})));
+      g.BackPropagate(output_name,
+                      criterion.Backward(std::vector<ArrayType>({results, data.first})));
 
       // take mini-batch learning step
       if (step_count % tp.batch_size == (tp.batch_size - 1))

@@ -59,7 +59,7 @@ public:
  * @tparam T  tensor type
  */
 template <typename T>
-class BasicTextLoader : public TextLoader<T>, public DataLoader<typename T::SizeType, T>
+class BasicTextLoader : public TextLoader<T>, public DataLoader<T, T>
 {
 public:
   using ArrayType = T;
@@ -69,15 +69,15 @@ public:
   explicit BasicTextLoader(TextParams<ArrayType> const &p, SizeType seed = 123456789);
 
   // overloaded member from dataloader
-  std::pair<SizeType, std::vector<T>>         GetNext() override;
-  virtual std::pair<SizeType, std::vector<T>> GetRandom();
-  SizeType                                    Size() const override;
-  virtual bool                                IsDone() const override;
-  void                                        Reset() override;
+  std::pair<T, std::vector<T>>         GetNext() override;
+  virtual std::pair<T, std::vector<T>> GetRandom();
+  SizeType                             Size() const override;
+  virtual bool                         IsDone() const override;
+  void                                 Reset() override;
 
-  virtual std::pair<SizeType, std::vector<T>> GetAtIndex(SizeType idx);
-  SizeType                                    GetDiscardCount();
-  bool                                        AddData(std::string const &text) override;
+  virtual std::pair<T, std::vector<T>> GetAtIndex(SizeType idx);
+  SizeType                             GetDiscardCount();
+  bool                                 AddData(std::string const &text) override;
 
 protected:
   // params
@@ -155,7 +155,7 @@ BasicTextLoader<T>::BasicTextLoader(TextParams<T> const &p, SizeType seed)
  * @return  returns a pair of Array and Label
  */
 template <typename T>
-std::pair<typename BasicTextLoader<T>::SizeType, std::vector<T>> BasicTextLoader<T>::GetNext()
+std::pair<T, std::vector<T>> BasicTextLoader<T>::GetNext()
 {
   GetNextValidIndices();
   if (cursor_set_)
@@ -171,7 +171,7 @@ std::pair<typename BasicTextLoader<T>::SizeType, std::vector<T>> BasicTextLoader
  * @return  returns a pair of Array and Label
  */
 template <typename T>
-std::pair<typename BasicTextLoader<T>::SizeType, std::vector<T>> BasicTextLoader<T>::GetRandom()
+std::pair<T, std::vector<T>> BasicTextLoader<T>::GetRandom()
 {
   GetNextValidIndices();
   if (ran_cursor_set_)
@@ -259,8 +259,7 @@ void BasicTextLoader<T>::Reset()
  * @return  returns a pair of output buffer and label (i.e. X & Y)
  */
 template <typename T>
-std::pair<typename BasicTextLoader<T>::SizeType, std::vector<T>> BasicTextLoader<T>::GetAtIndex(
-    SizeType idx)
+std::pair<T, std::vector<T>> BasicTextLoader<T>::GetAtIndex(SizeType idx)
 {
   // pull data from multiple data buffers into single output buffer
   std::vector<T> data_buffer;
@@ -272,7 +271,8 @@ std::pair<typename BasicTextLoader<T>::SizeType, std::vector<T>> BasicTextLoader
 
   GetData(idx, data_buffer);
 
-  SizeType label = GetLabel(idx);
+  T label({1, 1});
+  label(0, 0) = static_cast<DataType>(GetLabel(idx));
 
   // increment the cursor find the next valid position
   ++cursor_;

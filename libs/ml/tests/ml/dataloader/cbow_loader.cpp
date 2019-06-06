@@ -155,7 +155,7 @@ TYPED_TEST(CBoWDataloaderTest, large_window_loader_test)
   EXPECT_EQ(loader.VocabLookup("$£%^*($"), std::numeric_limits<SizeType>::max());
 
   // data check
-  std::pair<SizeType, std::vector<TypeParam>> data;
+  std::pair<TypeParam, std::vector<TypeParam>> data;
   EXPECT_FALSE(loader.IsDone());
   data = loader.GetNext();
   EXPECT_EQ(data.second.size(), p.n_data_buffers);  //
@@ -163,7 +163,7 @@ TYPED_TEST(CBoWDataloaderTest, large_window_loader_test)
   EXPECT_EQ(data.second.at(1).At(0, 0), 1);         // name
   EXPECT_EQ(data.second.at(2).At(0, 0), 2);         // is
   EXPECT_EQ(data.second.at(3).At(0, 0), 3);         // fetchbot
-  EXPECT_EQ(data.first, 4);                         // I
+  EXPECT_EQ(data.first.At(0, 0), 4);                // I
   EXPECT_EQ(data.second.at(4).At(0, 0), 5);         // am
   EXPECT_EQ(data.second.at(5).At(0, 0), 6);         // one
   EXPECT_EQ(data.second.at(6).At(0, 0), 7);         // year
@@ -176,7 +176,7 @@ TYPED_TEST(CBoWDataloaderTest, large_window_loader_test)
   EXPECT_EQ(data.second.at(1).At(0, 0), 2);         // is
   EXPECT_EQ(data.second.at(2).At(0, 0), 3);         // fetchbot
   EXPECT_EQ(data.second.at(3).At(0, 0), 4);         // I
-  EXPECT_EQ(data.first, 5);                         // am
+  EXPECT_EQ(data.first.At(0, 0), 5);                // am
   EXPECT_EQ(data.second.at(4).At(0, 0), 6);         // one
   EXPECT_EQ(data.second.at(5).At(0, 0), 7);         // year
   EXPECT_EQ(data.second.at(6).At(0, 0), 8);         // old
@@ -189,7 +189,7 @@ TYPED_TEST(CBoWDataloaderTest, large_window_loader_test)
   EXPECT_EQ(data.second.at(1).At(0, 0), 3);         // fetchbot
   EXPECT_EQ(data.second.at(2).At(0, 0), 4);         // I
   EXPECT_EQ(data.second.at(3).At(0, 0), 5);         // am
-  EXPECT_EQ(data.first, 6);                         // one
+  EXPECT_EQ(data.first.At(0, 0), 6);                // one
   EXPECT_EQ(data.second.at(4).At(0, 0), 7);         // year
   EXPECT_EQ(data.second.at(5).At(0, 0), 8);         // old
   EXPECT_EQ(data.second.at(6).At(0, 0), 9);         // and
