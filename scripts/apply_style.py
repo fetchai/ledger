@@ -31,6 +31,10 @@ INCLUDE_GUARD = '#pragma once'
 DISALLOWED_HEADER_FILE_EXTENSIONS = ('*.h', '*.hxx', '*.hh')
 CMAKE_VERSION_REQUIREMENT = 'cmake_minimum_required(VERSION 3.5 FATAL_ERROR)'
 
+CLANG_FORMAT_REQUIRED_VERSION = '6.0'
+CLANG_FORMAT_EXE_NAME = 'clang-format-{}'.format(CLANG_FORMAT_REQUIRED_VERSION)
+CMAKE_FORMAT_EXE_NAME = 'cmake-format'
+
 
 def find_excluded_dirs():
     def get_abspath(name):
@@ -78,16 +82,14 @@ RE_LICENSE = LICENSE_TEMPLATE.format('(-\\d+)?', '\\(', '\\)', '([\\s\\n]*)')
 SUPPORTED_LANGUAGES = {
     'cpp': {
         'cmd_prefix': [
-            'clang-format',
+            CLANG_FORMAT_EXE_NAME,
             '-style=file'
         ],
         'filename_patterns': ('*.cpp', '*.hpp')
     },
     'cmake': {
         'cmd_prefix': [
-            'python3',
-            '-m',
-            'cmake_format',
+            CMAKE_FORMAT_EXE_NAME,
             '--separate-ctrl-name-with-space',
             '--line-width', '100',
             '-'
@@ -151,7 +153,6 @@ def walk_source_directories(project_root):
 
 
 def external_formatter(cmd_prefix, filename_patterns):
-
     @include_patterns(*filename_patterns)
     def reformat_as_pipe(text, path_to_file):
         input_bytes = text.encode()
