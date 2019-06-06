@@ -396,25 +396,27 @@ def process_in_parallel(files_to_process, jobs):
 
 
 def check_tool_versions():
+    clang_format_cmd = [CLANG_FORMAT_EXE_NAME, '--version']
     try:
-        cmd = [CLANG_FORMAT_EXE_NAME, '--version']
         clang_format_version = subprocess.check_output(
-            cmd).decode().strip()
+            clang_format_cmd).decode().strip()
     except:
-        output('Could not run {}'.format(' '.join(cmd)))
+        output(
+            'Could not run "{}". Make sure {} is installed.'.format(' '.join(clang_format_cmd), CLANG_FORMAT_EXE_NAME))
         sys.exit(1)
     assert clang_format_version.startswith('clang-format version {}'.format(
         CLANG_FORMAT_REQUIRED_VERSION)), \
         'Unexpected version of clang-format:\n{}\nPlease use version {}.x'.format(
-        clang_format_version,
-        CLANG_FORMAT_REQUIRED_VERSION)
+            clang_format_version,
+            CLANG_FORMAT_REQUIRED_VERSION)
 
+    cmake_format_cmd = [CMAKE_FORMAT_EXE_NAME, '--version']
     try:
-        cmd = [CMAKE_FORMAT_EXE_NAME, '--version']
         cmake_format_version = subprocess.check_output(
-            cmd).decode().strip()
+            cmake_format_cmd).decode().strip()
     except:
-        output('Could not run {}'.format(' '.join(cmd)))
+        output(
+            'Could not run "{}". Make sure {} is installed.'.format(' '.join(cmake_format_cmd), CMAKE_FORMAT_EXE_NAME))
         sys.exit(1)
     assert cmake_format_version == CMAKE_FORMAT_REQUIRED_VERSION, \
         'Unexpected version of cmake-format:\n{}\nPlease use version {}'.format(
