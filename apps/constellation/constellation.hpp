@@ -129,6 +129,8 @@ private:
   using TrustSystem            = p2p::P2PTrustBayRank<Muddle::Address>;
   using DAGPtr                 = std::shared_ptr<ledger::DAG>;
   using DAGServicePtr          = std::shared_ptr<ledger::DAGService>;
+  using SynergeticMinerPtr     = std::unique_ptr<ledger::SynergeticMinerInterface>;
+  using NaiveSynergeticMiner   = ledger::NaiveSynergeticMiner;
 
   using ShardConfigs           = ledger::ShardConfigs;
   using TxStatusCache          = ledger::TransactionStatusCache;
@@ -161,8 +163,10 @@ private:
   LaneServices         lane_services_;    ///< The lane services
   StorageUnitClientPtr storage_;          ///< The storage client to the lane services
   LaneRemoteControl    lane_control_;     ///< The lane control client for the lane services
+
   DAGPtr               dag_;
   DAGServicePtr        dag_service_;
+  SynergeticMinerPtr   synergetic_miner_;
   /// @}
 
   /// @name Block Processing

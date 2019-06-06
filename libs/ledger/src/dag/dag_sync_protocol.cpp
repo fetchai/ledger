@@ -11,7 +11,6 @@ DAGSyncProtocol::DAGSyncProtocol(std::shared_ptr<ledger::DAG> dag)
 
 DAG::MissingNodes DAGSyncProtocol::RequestNodes(MissingTXs missing_txs)
 {
-  std::cerr << "whooo : DSP happened." << std::endl; // DELETEME_NH
   DAG::MissingNodes ret;
   DAGNode getme;
 
@@ -23,11 +22,9 @@ DAG::MissingNodes DAGSyncProtocol::RequestNodes(MissingTXs missing_txs)
     }
   }
 
-  std::cerr << "returning: " << ret.size() << std::endl; // DELETEME_NH
-
   for(auto const &node : ret)
   {
-    FETCH_LOG_INFO(LOGGING_NAME, " returning a hash: ", node.hash.ToBase64());
+    FETCH_LOG_INFO(LOGGING_NAME, " returning a DAG hash: ", node.hash.ToBase64());
   }
 
   return ret;

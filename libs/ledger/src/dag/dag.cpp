@@ -27,7 +27,6 @@ using namespace fetch::ledger;
 DAG::DAG(std::string const &db_name, bool load)
   : db_name_{db_name}
 {
-  std::cerr << "DAG LOAD " << load << std::endl; // DELETEME_NH
 
   // Fallback is to reset everything
   auto CreateCleanState = [this]()
@@ -283,7 +282,6 @@ void DAG::SetReferencesInternal(DAGNodePtr node)
 bool DAG::AddDAGNode(DAGNode node)
 {
   assert(node.hash.size() > 0);
-  std::cerr << "Adding new dag node, hash: " << node.hash.ToBase64() << std::endl; // DELETEME_NH
   std::lock_guard<fetch::mutex::Mutex> lock(mutex_);
   bool success = PushInternal(std::make_shared<DAGNode>(node));
   return success;
@@ -326,7 +324,6 @@ void DAG::AddLooseNodeInternal(DAGNodePtr node)
   {
     if(node_pool_.find(dag_node_prev) == node_pool_.end() &&  HashInPrevEpochsInternal(dag_node_prev) == false)
     {
-      std::cerr << "Adding loose ref: " << dag_node_prev.ToBase64() << std::endl; // DELETEME_NH
       loose_nodes_[dag_node_prev].push_back(node);
     }
   }
@@ -338,14 +335,12 @@ bool DAG::HashInPrevEpochsInternal(ConstByteArray hash)
   // Check if hash is a node in epoch
   if(previous_epoch_.Contains(hash))
   {
-    std::cerr << "prev epoch already contains this." << std::endl; // DELETEME_NH
     return true;
   }
 
   // check if hash is epoch/prev epochs
   if(hash == previous_epoch_.hash)
   {
-    std::cerr << "hash is a prev epoch" << std::endl; // DELETEME_NH
     return true;
   }
 
@@ -353,7 +348,6 @@ bool DAG::HashInPrevEpochsInternal(ConstByteArray hash)
   {
     if(hash == epoch.hash || epoch.Contains(hash))
     {
-      std::cerr << "hash is a prevv epoch" << std::endl; // DELETEME_NH
       return true;
     }
   }
@@ -466,21 +460,18 @@ bool DAG::PushInternal(DAGNodePtr node)
   // First check if we have already seen this node
   if(AlreadySeenInternal(node))
   {
-    std::cerr << "Already seen" << std::endl; // DELETEME_NH
     return false;
   }
 
   // Check if node refers too far back in the dag to be considered valid
   if(TooOldInternal(node->oldest_epoch_referenced))
   {
-    std::cerr << "too old." << std::endl; // DELETEME_NH
     return false;
   }
 
   // Check if loose
   if(IsLooseInternal(node))
   {
-    std::cerr << "loose" << std::endl; // DELETEME_NH
     AddLooseNodeInternal(node);
     return true;
   }
@@ -488,11 +479,9 @@ bool DAG::PushInternal(DAGNodePtr node)
   // At this point the node is suitable for addition and needs to be checked
   if(NodeInvalidInternal(node))
   {
-    std::cerr << "invalid" << std::endl; // DELETEME_NH
     return false;
   }
 
-  std::cerr << "Added to node pool" << std::endl; // DELETEME_NH
 
   // Add to node pool, update any tips that advance due to this
   node_pool_[node->hash] = node;
@@ -501,19 +490,15 @@ bool DAG::PushInternal(DAGNodePtr node)
   // There is now a chance that adding this node completed some loose nodes.
   HealLooseBlocksInternal(node->hash);
 
-  std::cerr << "Check we can actually get it!" << std::endl; // DELETEME_NH
 
   DAGNodePtr getme;
   getme = GetDAGNodeInternal(node->hash);
 
   if(!getme)
   {
-    std::cerr << "something went wrong." << std::endl; // DELETEME_NH
   }
   else
   {
-    std::cerr << "node hash size: " << node->hash.size() << std::endl; // DELETEME_NH
-    std::cerr << "successfully retr: " << node->hash.ToBase64() << std::endl; // DELETEME_NH
   }
 
   return true;
@@ -521,7 +506,6 @@ bool DAG::PushInternal(DAGNodePtr node)
 
 void DAG::HealLooseBlocksInternal(ConstByteArray added_hash)
 {
-  std::cerr << "attempting to heal: " << added_hash.ToBase64() << std::endl; // DELETEME_NH
   while(true)
   {
     // 'it' will be a vector of dag nodes that were waiting for this hash
@@ -529,7 +513,6 @@ void DAG::HealLooseBlocksInternal(ConstByteArray added_hash)
 
     if(it == loose_nodes_.end())
     {
-      std::cerr << "no loose noes healed" << std::endl; // DELETEME_NH
       break;
     }
 
@@ -537,7 +520,6 @@ void DAG::HealLooseBlocksInternal(ConstByteArray added_hash)
 
     if(loose_nodes.empty())
     {
-      std::cerr << "Loose nodes finished healing" << std::endl; // DELETEME_NH
       loose_nodes_.erase(it);
       break;
     }
@@ -562,7 +544,6 @@ void DAG::HealLooseBlocksInternal(ConstByteArray added_hash)
 
     if(hash_still_in_loose)
     {
-      std::cerr << "hash still in loose" << std::endl; // DELETEME_NH
       continue;
     }
 
@@ -570,12 +551,10 @@ void DAG::HealLooseBlocksInternal(ConstByteArray added_hash)
     // At this point, the node is either added or dropped
     if(!IsLooseInternal(possibly_non_loose))
     {
-      std::cerr << "Completing loose dag node!" << std::endl; // DELETEME_NH
       PushInternal(possibly_non_loose);
     }
     else
     {
-      std::cerr << "still loose!" << std::endl; // DELETEME_NH
     }
   }
 }
@@ -609,7 +588,6 @@ DAGEpoch DAG::CreateEpoch(uint64_t block_number)
     it++;
   }
 
-  std::cerr << "Adding tips in epoch: " << tips_to_add.size() << std::endl; // DELETEME_NH
 
   // Find all un-finalised nodes given tips in epoch
   std::set<ConstByteArray> all_nodes_to_add;
@@ -658,11 +636,6 @@ DAGEpoch DAG::CreateEpoch(uint64_t block_number)
 
   ret.Finalise();
 
-  std::cerr << "epoch " << ret.block_number << std::endl; // DELETEME_NH
-  std::cerr << "epoch hash " << ret.hash.ToHex() << std::endl; // DELETEME_NH
-  std::cerr << "epoch tips " << ret.tips.size() << std::endl; // DELETEME_NH
-  std::cerr << "epoch nodes " << ret.all_nodes.size() << std::endl; // DELETEME_NH
-  std::cerr << "epoch transaction " << ret.tx_digests.size() << std::endl; // DELETEME_NH
 
   return ret;
 }
@@ -766,7 +739,6 @@ void DAG::TraverseFromTips(std::set<ConstByteArray> const &tip_hashes, std::func
     {
       start           = switch_hashes.back();  // Hash under evaluation
 
-      std::cerr << "attempting to add " << start.ToHex() << std::endl; // DELETEME_NH
 
       // Hash 'terminates' - refers to already used hash
       if(HashInPrevEpochsInternal(start))
@@ -942,7 +914,6 @@ bool DAG::SatisfyEpoch(DAGEpoch &epoch)
   {
     if(node->previous.size() == 0)
     {
-      std::cerr << "zero size" << std::endl; // DELETEME_NH
       return true;
     }
 
@@ -989,7 +960,6 @@ bool DAG::SatisfyEpoch(DAGEpoch &epoch)
     }
     else // normal case, dag node references two others
     {
-      std::cerr << "two referrals!" << std::endl; // DELETEME_NH
 
       uint64_t previous_hashes_oldest_allowed = previous_epochs_.front().block_number;
       uint64_t previous_hashes_oldest         = 0;

@@ -79,7 +79,34 @@ NaiveSynergeticMiner::NaiveSynergeticMiner(DAGPtr dag, StorageInterface &storage
   , storage_{storage}
   , prover_{std::move(prover)}
   , starting_nonce_{GenerateStartingNonce(*prover_)}
+  , state_machine_{std::make_shared<core::StateMachine<State>>("NaiveSynMiner",
+                                                               State::INITIAL)}
 {
+  state_machine_->RegisterHandler(State::INITIAL, this, &NaiveSynergeticMiner::OnInitial);
+  state_machine_->RegisterHandler(State::MINE, this, &NaiveSynergeticMiner::OnMine);
+
+  state_machine_->OnStateChange([](State /*new_state*/, State /* old_state */) { });
+}
+
+core::WeakRunnable NaiveSynergeticMiner::GetWeakRunnable()
+{
+  return state_machine_;
+}
+
+NaiveSynergeticMiner::State NaiveSynergeticMiner::OnInitial()
+{
+  state_machine_->Delay(std::chrono::milliseconds{200});
+
+  return State::MINE;
+}
+
+NaiveSynergeticMiner::State NaiveSynergeticMiner::OnMine()
+{
+  state_machine_->Delay(std::chrono::milliseconds{200});
+
+  this->Mine(0);
+
+  return State::INITIAL;
 }
 
 DagNodes NaiveSynergeticMiner::Mine(BlockIndex block)
@@ -128,7 +155,6 @@ DagNodes NaiveSynergeticMiner::Mine(BlockIndex block)
       if (solution)
       {
         // TODO(HUT): get signing correct
-        //dag_->AddWork(*solution, prover_);
         dag_->AddWork(*solution);
       }
     }
@@ -222,3 +248,4 @@ WorkPtr NaiveSynergeticMiner::MineSolution(Address const &address, BlockIndex bl
 
 } // namespace ledger
 } // namespace fetch
+

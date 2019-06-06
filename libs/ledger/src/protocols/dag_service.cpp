@@ -16,20 +16,6 @@
 //
 //------------------------------------------------------------------------------
 
-//#include "ledger/storage_unit/lane_service.hpp"
-//#include "ledger/chain/transaction_layout_rpc_serializers.hpp"
-//#include "ledger/chain/transaction_rpc_serializers.hpp"
-//#include "ledger/storage_unit/lane_controller.hpp"
-//#include "ledger/storage_unit/lane_controller_protocol.hpp"
-//#include "ledger/storage_unit/lane_identity.hpp"
-//#include "ledger/storage_unit/lane_identity_protocol.hpp"
-//#include "ledger/storage_unit/transaction_finder_protocol.hpp"
-//#include "ledger/storage_unit/transaction_store_sync_protocol.hpp"
-//#include "ledger/storage_unit/transaction_store_sync_service.hpp"
-//#include "meta/log2.hpp"
-//#include "storage/document_store_protocol.hpp"
-//#include "storage/new_revertible_document_store.hpp"
-
 #include "ledger/protocols/dag_service.hpp"
 #include "core/service_ids.hpp"
 #include "network/muddle/muddle.hpp"
@@ -38,15 +24,15 @@
 namespace fetch {
 namespace ledger {
 
-DAGService::DAGService(muddle::Muddle &muddle, DAGPtr dag, Mode mode)
+DAGService::DAGService(MuddleEndpoint &muddle_endpoint, DAGPtr dag, Mode mode)
   : reactor_("DAGServiceReactor")
-  , external_muddle_{muddle}
+  , external_muddle_{muddle_endpoint}
   , dag_{dag}
 {
   FETCH_UNUSED(mode);
 
   external_rpc_server_ =
-      std::make_shared<Server>(external_muddle_.AsEndpoint(), SERVICE_DAG, CHANNEL_RPC);
+      std::make_shared<Server>(external_muddle_, SERVICE_DAG, CHANNEL_RPC);
 
   dag_sync_protocol_ = std::make_shared<DAGSyncProtocol>(dag_);
   dag_sync_service_   = std::make_shared<DAGSyncService>(external_muddle_, dag_);
@@ -61,24 +47,7 @@ DAGService::DAGService(muddle::Muddle &muddle, DAGPtr dag, Mode mode)
 
 DAGService::~DAGService()
 {
-  /*
   reactor_.Stop();
-  external_muddle_->Shutdown();
-  */
-}
-
-void DAGService::Start(muddle::Muddle::UriList const &initial_peers)
-{
-  FETCH_UNUSED(initial_peers);
-}
-
-void DAGService::Stop()
-{
-  /*
-  tx_sync_service_->Stop();
-  external_muddle_->Stop();
-  internal_muddle_->Stop();
-  */
 }
 
 }  // namespace ledger
