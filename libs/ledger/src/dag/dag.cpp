@@ -22,8 +22,9 @@
 
 using namespace fetch::ledger;
 
-DAG::DAG(std::string const &db_name, bool load)
+DAG::DAG(std::string const &db_name, bool load, CertificatePtr certificate)
   : db_name_{db_name}
+  , certificate_{certificate}
 {
 
   // Fallback is to reset everything
@@ -1107,4 +1108,15 @@ bool DAG::SetEpochInStorage(std::string const &, DAGEpoch const &epoch, bool is_
   }
 
   return true;
+}
+
+uint64_t DAG::CurrentEpoch() const
+{
+  return most_recent_epoch_;
+}
+
+bool DAG::HasEpoch(EpochHash const &hash)
+{
+  DAGEpoch dummy;
+  return all_stored_epochs_.Get(storage::ResourceID(hash), dummy);
 }

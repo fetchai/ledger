@@ -131,6 +131,11 @@ struct DAGNode
     hasher.Update(buf.data());
     this->hash = hasher.Final();
   }
+
+  bool Verify() const
+  {
+    return true;
+  }
 };
 
 template <typename T>

@@ -204,12 +204,13 @@ BlockCoordinator::State BlockCoordinator::OnSynchronising()
   bool const extra_debug = syncing_periodic_.Poll();
 
   // cache some useful variables
-  auto const current_hash         = current_block_->body.hash;
-  auto const previous_hash        = current_block_->body.previous_hash;
-  auto const desired_state        = current_block_->body.merkle_hash;
-  auto const last_committed_state = storage_unit_.LastCommitHash();
-  auto const current_state        = storage_unit_.CurrentHash();
-  auto const last_processed_block = execution_manager_.LastProcessedBlock();
+  auto const current_hash          = current_block_->body.hash;
+  auto const previous_hash         = current_block_->body.previous_hash;
+  auto const desired_state         = current_block_->body.merkle_hash;
+  auto const last_committed_state  = storage_unit_.LastCommitHash();
+  auto const current_state         = storage_unit_.CurrentHash();
+  auto const last_processed_block  = execution_manager_.LastProcessedBlock();
+  uint64_t const current_dag_epoch = dag_ ? dag_->CurrentEpoch() : 0;
 
 #ifdef FETCH_LOG_DEBUG_ENABLED
   if (extra_debug)
@@ -222,8 +223,11 @@ BlockCoordinator::State BlockCoordinator::OnSynchronising()
     FETCH_LOG_INFO(LOGGING_NAME, "Sync: LCommit State: 0x", last_committed_state.ToHex());
     FETCH_LOG_INFO(LOGGING_NAME, "Sync: Last Block...: 0x", last_processed_block.ToHex());
     FETCH_LOG_INFO(LOGGING_NAME, "Sync: Last BlockInt: 0x", last_executed_block_.Get().ToHex());
+    FETCH_LOG_INFO(LOGGING_NAME, "Sync: Last DAGEpoch: 0x", current_dag_epoch);
   }
 #endif  // FETCH_LOG_DEBUG_ENABLED
+
+  FETCH_UNUSED(current_dag_epoch);
 
   // initial condition, the last processed block is empty
   if (GENESIS_DIGEST == last_processed_block)
@@ -304,7 +308,7 @@ BlockCoordinator::State BlockCoordinator::OnSynchronising()
     // we expect that the common parent in this case will always have been processed, but this
     // should be checked
     if (!storage_unit_.HashExists(common_parent->body.merkle_hash,
-                                  common_parent->body.block_number))
+                                  common_parent->body.block_number) /*|| dag_ && !dag->HasEpoch(common_parent->body.dag_epoch)*/)
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "Ancestor block's state hash cannot be retrieved for block: 0x",
                       current_hash.ToHex(), " number; ", common_parent->body.block_number);
@@ -316,18 +320,16 @@ BlockCoordinator::State BlockCoordinator::OnSynchronising()
         FETCH_LOG_ERROR(LOGGING_NAME, "Unable to revert back to genesis");
       }
 
-      // TODO(HUT): DAG genesis revert here
+      if(dag_ && !dag_->RevertToEpoch(0))
+      {
+        FETCH_LOG_ERROR(LOGGING_NAME, "Unable to revert DAG back to genesis!");
+      }
 
       // delay the state machine in these error cases, to allow the network to catch up if the issue
       // is network related and if nothing else restrict logs being spammed
       state_machine_->Delay(std::chrono::seconds{5});
 
       return State::RESET;
-    }
-
-    if(dag_ && !dag_->RevertToEpoch(common_parent->body.block_number))
-    {
-      FETCH_LOG_ERROR(LOGGING_NAME, "Failed to revert dag to block: ", common_parent->body.block_number);
     }
 
     // revert the storage back to the known state
@@ -340,6 +342,13 @@ BlockCoordinator::State BlockCoordinator::OnSynchronising()
       // is network related and if nothing else restrict logs being spammed
       state_machine_->Delay(std::chrono::seconds{5});
 
+      return State::RESET;
+    }
+
+    if(dag_ && !dag_->RevertToEpoch(common_parent->body.block_number))
+    {
+      FETCH_LOG_ERROR(LOGGING_NAME, "Failed to revert dag to block: ", common_parent->body.block_number);
+      state_machine_->Delay(std::chrono::seconds{5});
       return State::RESET;
     }
 
@@ -702,9 +711,11 @@ BlockCoordinator::State BlockCoordinator::OnPostExecBlockValidation()
     BlockPtr previous_block = chain_.GetBlock(current_block_->body.previous_hash);
     if (previous_block)
     {
+      revert_successful = dag_->RevertToEpoch(previous_block->body.block_number);
+
       // signal the storage engine to make these changes
       if (storage_unit_.RevertToHash(previous_block->body.merkle_hash,
-                                     previous_block->body.block_number))
+                                     previous_block->body.block_number) && revert_successful)
       {
         execution_manager_.SetLastProcessedBlock(previous_block->body.hash);
         revert_successful = true;
@@ -714,6 +725,10 @@ BlockCoordinator::State BlockCoordinator::OnPostExecBlockValidation()
     // if the revert has gone wrong, we need to initiate a complete re-sync
     if (!revert_successful)
     {
+      if(dag_)
+      {
+        dag_->RevertToEpoch(0);
+      }
       storage_unit_.RevertToHash(GENESIS_MERKLE_ROOT, 0);
       execution_manager_.SetLastProcessedBlock(GENESIS_DIGEST);
     }

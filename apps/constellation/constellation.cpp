@@ -95,13 +95,13 @@ uint16_t LookupLocalPort(Manifest const &manifest, ServiceType service, uint16_t
   return manifest.GetLocalPort(identifier);
 }
 
-std::shared_ptr<ledger::DAG> GenerateDAG(bool generate, std::string const &db_name, bool load_on_start)
+std::shared_ptr<ledger::DAG> GenerateDAG(bool generate, std::string const &db_name, bool load_on_start, Constellation::CertificatePtr certificate)
 {
   std::shared_ptr<ledger::DAG> ret;
 
   if(generate)
   {
-    ret = std::make_shared<ledger::DAG>(db_name, load_on_start);
+    ret = std::make_shared<ledger::DAG>(db_name, load_on_start, certificate);
   }
 
   return ret;
@@ -175,7 +175,7 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
   , storage_(std::make_shared<StorageUnitClient>(internal_muddle_.AsEndpoint(), shard_cfgs_,
                                                  cfg_.log2_num_lanes))
   , lane_control_(internal_muddle_.AsEndpoint(), shard_cfgs_, cfg_.log2_num_lanes)
-  , dag_{GenerateDAG(cfg_.features.IsEnabled("synergetic"), "dag_db_", true)}
+  , dag_{GenerateDAG(cfg_.features.IsEnabled("synergetic"), "dag_db_", true, certificate)}
   , execution_manager_{std::make_shared<ExecutionManager>(
         cfg_.num_executors, cfg_.log2_num_lanes, storage_,
         [this] { return std::make_shared<Executor>(storage_); })}

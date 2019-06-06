@@ -152,6 +152,8 @@ DagNodes NaiveSynergeticMiner::Mine(BlockIndex block)
       {
         // TODO(HUT): get signing correct
         dag_->AddWork(*solution);
+
+        FETCH_LOG_INFO(LOGGING_NAME, "Mined and added work! Epoch number: ", dag_->CurrentEpoch());
       }
     }
   }
