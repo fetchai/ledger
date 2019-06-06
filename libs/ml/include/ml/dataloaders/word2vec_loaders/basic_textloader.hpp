@@ -100,7 +100,7 @@ protected:
   SizeType              ran_cursor_;  // indexes through data randomly
   std::vector<SizeType> ran_idx_;     // random indices container
 
-  void     GetData(SizeType idx, ArrayType &ret) override;
+  void     GetData(SizeType idx, std::vector<T> &ret) override;
   SizeType GetLabel(SizeType idx) override;
 
   SizeType GetWordOffsetFromWordIdx(SizeType word_idx) const;
@@ -264,9 +264,13 @@ std::pair<typename BasicTextLoader<T>::SizeType, std::vector<T>> BasicTextLoader
 {
   // pull data from multiple data buffers into single output buffer
   std::vector<T> data_buffer;
-  data_buffer.push_back(std::vector<SizeType>({p_.n_data_buffers}));
 
-  GetData(idx, data_buffer[0]);
+  for (SizeType i{0}; i < p_.n_data_buffers; i++)
+  {
+    data_buffer.push_back(T({1, 1}));
+  }
+
+  GetData(idx, data_buffer);
 
   SizeType label = GetLabel(idx);
 
@@ -322,12 +326,12 @@ bool BasicTextLoader<T>::AddData(std::string const &text)
  * @param ret
  */
 template <typename T>
-void BasicTextLoader<T>::GetData(typename BasicTextLoader<T>::SizeType idx, T &ret)
+void BasicTextLoader<T>::GetData(typename BasicTextLoader<T>::SizeType idx, std::vector<T> &ret)
 {
   assert(p_.n_data_buffers == 1);
   SizeType sentence_idx = this->word_idx_sentence_idx.at(idx);
   SizeType word_idx     = this->GetWordOffsetFromWordIdx(idx);
-  ret.At(0)             = DataType(this->data_.at(sentence_idx).at(word_idx));
+  ret[0].At(0, 0)       = DataType(this->data_.at(sentence_idx).at(word_idx));
 }
 
 /**

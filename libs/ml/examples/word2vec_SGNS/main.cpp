@@ -188,8 +188,6 @@ int main(int argc, char **argv)
   std::cout << "beginning training...: " << std::endl;
 
   std::pair<SizeType, std::vector<ArrayType>> data;
-  ArrayType input(std::vector<typename ArrayType::SizeType>({1, 1}));
-  ArrayType context(std::vector<typename ArrayType::SizeType>({1, 1}));
   ArrayType gt(std::vector<typename ArrayType::SizeType>({1, tp.output_size}));
   ArrayType scale_factor(std::vector<typename ArrayType::SizeType>({1, 1}));
 
@@ -228,15 +226,11 @@ int main(int argc, char **argv)
       // get random data point
       data = data_loader.GetRandom();
 
-      // assign input and context vectors
-      input.At(0, 0)   = data.second[0].At(0);
-      context.At(0, 0) = data.second[0].At(1);
-
       // assign label
       gt.At(0, 0) = DataType(data.first);
 
-      g.SetInput("Input", input, false);
-      g.SetInput("Context", context, false);
+      g.SetInput("Input", data.second[0], false);
+      g.SetInput("Context", data.second[1], false);
 
       // forward pass
       results = g.Evaluate(output_name);

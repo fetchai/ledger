@@ -72,8 +72,8 @@ protected:
       sentence_idx_word_idx;  // lookup table for word number from word sentence
 
   // should be overwridden when inheriting from text loader
-  virtual void     GetData(SizeType idx, ArrayType &ret) = 0;
-  virtual SizeType GetLabel(SizeType idx)                = 0;
+  virtual void     GetData(SizeType idx, std::vector<T> &ret) = 0;
+  virtual SizeType GetLabel(SizeType idx)                     = 0;
 
 private:
   const std::vector<char> word_break_{'-', '\'', '.', '\t', '\n', '!', '?'};

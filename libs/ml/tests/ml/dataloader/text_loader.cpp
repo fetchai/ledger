@@ -149,9 +149,9 @@ TYPED_TEST(TextDataLoaderTest, loader_test)
   std::pair<SizeType, std::vector<TypeParam>> data;
   EXPECT_FALSE(loader.IsDone());
   data = loader.GetNext();
-  EXPECT_EQ(data.second[0].size(), 1);  // target word -> size 1
-  EXPECT_EQ(data.second[0].At(0), 4);   // I
-  EXPECT_EQ(data.first, 1);             // irrelevant label
+  EXPECT_EQ(data.second.size(), 1);          // target word -> size 1
+  EXPECT_EQ(data.second.at(0).At(0, 0), 4);  // I
+  EXPECT_EQ(data.first, 1);                  // irrelevant label
 }
 
 TYPED_TEST(TextDataLoaderTest, basic_loader_cycle_test)
@@ -179,7 +179,7 @@ TYPED_TEST(TextDataLoaderTest, basic_loader_cycle_test)
       loader.Reset();
     }
     std::pair<SizeType, std::vector<TypeParam>> output = loader.GetNext();
-    cur_word = loader.VocabLookup(SizeType(double(output.second[0].At(0))));
+    cur_word = loader.VocabLookup(SizeType(double(output.second.at(0).At(0, 0))));
 
     ASSERT_EQ(cur_word, gt_input.at(j));
   }
@@ -210,7 +210,7 @@ TYPED_TEST(TextDataLoaderTest, adddata_loader_test)
       loader.Reset();
     }
     std::pair<SizeType, std::vector<TypeParam>> output = loader.GetNext();
-    cur_word = loader.VocabLookup(SizeType(double(output.second[0].At(0))));
+    cur_word = loader.VocabLookup(SizeType(double(output.second.at(0).At(0, 0))));
     ASSERT_EQ(cur_word.compare(gt_input.at(j)), 0);
   }
 
@@ -230,7 +230,7 @@ TYPED_TEST(TextDataLoaderTest, adddata_loader_test)
       loader.Reset();
     }
     std::pair<SizeType, std::vector<TypeParam>> output = loader.GetNext();
-    cur_word = loader.VocabLookup(SizeType(double(output.second[0].At(0))));
+    cur_word = loader.VocabLookup(SizeType(double(output.second.at(0).At(0, 0))));
     ASSERT_EQ(cur_word.compare(gt_input.at(j)), 0);
   }
 }
@@ -268,7 +268,7 @@ TYPED_TEST(TextDataLoaderTest, punctuation_loader_test)
       loader.Reset();
     }
     std::pair<SizeType, std::vector<TypeParam>> output = loader.GetNext();
-    cur_word = loader.VocabLookup(SizeType(double(output.second[0].At(0))));
+    cur_word = loader.VocabLookup(SizeType(double(output.second.at(0).At(0, 0))));
     ASSERT_EQ(cur_word, gt_input.at(j));
   }
 }
