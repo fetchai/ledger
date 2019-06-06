@@ -99,7 +99,7 @@ public:
       i++;
       ++it;
     }
-    
+
     return buffer_;
   }
 
@@ -125,16 +125,16 @@ public:
 
   std::pair<LabelType, std::vector<T>> SubsetToArray(uint64_t subset_size)
   {
-    T              ret_labels({subset_size});
+    T              ret_labels({1, subset_size});
     std::vector<T> ret_images;
-    ret_images.push_back(T({subset_size, figure_size_}));
+    ret_images.push_back(T({figure_size_, subset_size}));
 
     for (fetch::math::SizeType i(0); i < subset_size; ++i)
     {
-      ret_labels.Set(i, static_cast<typename T::Type>(labels_[i]));
+      ret_labels.Set(0, i, static_cast<typename T::Type>(labels_[i]));
       for (fetch::math::SizeType j(0); j < figure_size_; ++j)
       {
-        ret_images[0].Set(i, j, static_cast<typename T::Type>(data_[i][j]) / typename T::Type(256));
+        ret_images[0].Set(j, i, static_cast<typename T::Type>(data_[i][j]) / typename T::Type(256));
       }
     }
 
@@ -252,11 +252,11 @@ private:
   }
 
 private:
-  std::uint32_t  cursor_;
-  std::uint32_t  size_;
-  std::uint32_t  figure_size_;
+  std::uint32_t cursor_;
+  std::uint32_t size_;
+  std::uint32_t figure_size_;
 
-  std::pair<LabelType,std::vector<T>> buffer_;
+  std::pair<LabelType, std::vector<T>> buffer_;
 
   unsigned char **data_;
   unsigned char * labels_;
