@@ -172,10 +172,6 @@ TYPED_TEST(CrossEntropyTest, trivial_one_dimensional_backward_test)
   }
 
   fetch::ml::ops::CrossEntropy<TypeParam> op;
-
-  std::cout << gt.ToString() << std::endl;
-  std::cout << op.Backward({data1, data2}).ToString() << std::endl;
-
   EXPECT_TRUE(op.Backward({data1, data2})
                   .AllClose(gt, typename TypeParam::Type(1e-5), typename TypeParam::Type(1e-5)));
 }
