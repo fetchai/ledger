@@ -22,6 +22,8 @@
 #include <string>
 #include <vector>
 
+#include "math/matrix_operations.hpp"
+
 template <typename ArrayType, typename DataLoaderType, typename SizeType>
 void EvalAnalogy(DataLoaderType &data_loader, ArrayType &embeds, SizeType top_k,
                  std::vector<std::string> &test_words)
@@ -100,41 +102,46 @@ void EvalAnalogy(DataLoaderType &data_loader, ArrayType &embeds, SizeType top_k,
   /// manual calculate similarity ///
 
   //
-  DataType                                   cur_similarity;
+  ArrayType                                  cur_similarity({1});
   std::vector<std::pair<SizeType, DataType>> best_word_distances{};
   for (std::size_t m = 0; m < top_k; ++m)
   {
     best_word_distances.emplace_back(std::make_pair(0, fetch::math::numeric_lowest<DataType>()));
   }
 
-  for (std::size_t i = 0; i < vocab_size; ++i)
+  for (std::size_t i = 1; i < vocab_size; ++i)
   {
-    cur_similarity = 0;
-    if ((i == 0) || (i == word1_idx) || (i == word2_idx) || (i == word3_idx))
+    cur_similarity[0] = 0;
+
+    // ignore the input words
+    if ((i == word1_idx) || (i == word2_idx) || (i == word3_idx))
     {
       continue;
     }
 
-    SizeType e_idx = 0;
-    for (auto &val : analogy_target_vector)
-    {
-      cur_similarity += (val * embeddings(e_idx, i));
-      e_idx++;
-    }
+    // get similarity between normed test vector with normed embedding vector
+    auto embed_slice = embeddings.Slice(i, 1).Copy();
+    fetch::math::TransposeDot(analogy_target_vector, embed_slice, cur_similarity);
+    assert(cur_similarity.size() == 1);
 
-    bool replaced = false;
+    // place in top_k as appropriate
+    bool                          replaced = false;
+    std::pair<SizeType, DataType> prev_best;
+    std::pair<SizeType, DataType> new_prev_best;
     for (std::size_t j = 0; j < best_word_distances.size(); ++j)
     {
-      if (cur_similarity > best_word_distances[j].second)
+      if (cur_similarity[0] > best_word_distances[j].second)
       {
-        auto prev_best = best_word_distances[j];
         if (replaced)
         {
+          new_prev_best          = best_word_distances[j];
           best_word_distances[j] = prev_best;
+          prev_best              = new_prev_best;
         }
         else
         {
-          best_word_distances[j] = std::make_pair(i, cur_similarity);
+          prev_best              = best_word_distances[j];
+          best_word_distances[j] = std::make_pair(i, cur_similarity[0]);
           replaced               = true;
         }
       }

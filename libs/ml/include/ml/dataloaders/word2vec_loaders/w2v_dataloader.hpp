@@ -20,6 +20,7 @@
 #include "core/random/lcg.hpp"
 #include "math/tensor.hpp"
 #include "ml/dataloaders/dataloader.hpp"
+#include "ml/dataloaders/word2vec_loaders/vocab.hpp"
 #include "unigram_table.hpp"
 
 #include <exception>
@@ -36,7 +37,7 @@ class W2VLoader : public DataLoader<fetch::math::Tensor<T>, fetch::math::Tensor<
 {
 public:
   using SizeType   = fetch::math::SizeType;
-  using VocabType  = std::map<std::string, std::pair<SizeType, SizeType>>;
+  using VocabType  = Vocab;
   using ReturnType = std::pair<fetch::math::Tensor<T>, fetch::math::Tensor<T>>;
 
   W2VLoader(SizeType window_size, SizeType negative_samples, bool mode);
@@ -47,14 +48,17 @@ public:
   void       InitUnigramTable();
   void       GetNext(ReturnType &t);
   ReturnType GetNext() override;
-  bool       AddData(std::string const &s);
+
+  bool BuildVocab(std::string const &s);
+  void SaveVocab(std::string const &filename);
+  void LoadVocab(std::string const &filename);
 
   /// accessors and helper functions ///
   SizeType         Size() const override;
   SizeType         VocabSize() const;
   VocabType const &GetVocab() const;
   std::string      WordFromIndex(SizeType index) const;
-  SizeType         IndexFromWord(std::string word);
+  SizeType         IndexFromWord(std::string const &word);
 
 private:
   SizeType                                   current_sentence_;
@@ -153,7 +157,7 @@ void W2VLoader<T>::RemoveInfrequent(SizeType min)
   // TODO: rework - creating a new_loader not terribly efficient
   W2VLoader new_loader(window_size_, negative_samples_, mode_);
   std::map<SizeType, std::pair<std::string, SizeType>> reverse_vocab;
-  for (auto const &kvp : vocab_)
+  for (auto const &kvp : vocab_.data)
   {
     reverse_vocab[kvp.second.first] = std::make_pair(kvp.first, kvp.second.second);
   }
@@ -167,10 +171,10 @@ void W2VLoader<T>::RemoveInfrequent(SizeType min)
         s += reverse_vocab[word].first + " ";
       }
     }
-    new_loader.AddData(s);
+    new_loader.BuildVocab(s);
   }
-  data_  = std::move(new_loader.data_);
-  vocab_ = std::move(new_loader.vocab_);
+  data_       = std::move(new_loader.data_);
+  vocab_.data = std::move(new_loader.vocab_.data);
 }
 
 /**
@@ -181,7 +185,7 @@ template <typename T>
 void W2VLoader<T>::InitUnigramTable()
 {
   std::vector<SizeType> frequencies(VocabSize());
-  for (auto const &kvp : GetVocab())
+  for (auto const &kvp : vocab_.data)
   {
     frequencies[kvp.second.first] = kvp.second.second;
   }
@@ -247,7 +251,7 @@ typename W2VLoader<T>::ReturnType W2VLoader<T>::GetNext()
  * @return bool indicates success
  */
 template <typename T>
-bool W2VLoader<T>::AddData(std::string const &s)
+bool W2VLoader<T>::BuildVocab(std::string const &s)
 {
   std::vector<SizeType> indexes = StringsToIndices(PreprocessString(s));
   if (indexes.size() >= 2 * window_size_ + 1)
@@ -259,6 +263,28 @@ bool W2VLoader<T>::AddData(std::string const &s)
 }
 
 /**
+ *
+ * @tparam T
+ * @param filename
+ */
+template <typename T>
+void W2VLoader<T>::SaveVocab(std::string const &filename)
+{
+  vocab_.Save(std::move(filename));
+}
+
+/**
+ *
+ * @tparam T
+ * @param filename
+ */
+template <typename T>
+void W2VLoader<T>::LoadVocab(std::string const &filename)
+{
+  vocab_.Load(std::move(filename));
+}
+
+/**
  * get size of the vocab
  * @tparam T
  * @return
@@ -266,7 +292,7 @@ bool W2VLoader<T>::AddData(std::string const &s)
 template <typename T>
 math::SizeType W2VLoader<T>::VocabSize() const
 {
-  return vocab_.size();
+  return vocab_.data.size();
 }
 
 /**
@@ -289,14 +315,7 @@ typename W2VLoader<T>::VocabType const &W2VLoader<T>::GetVocab() const
 template <typename T>
 std::string W2VLoader<T>::WordFromIndex(SizeType index) const
 {
-  for (auto const &kvp : vocab_)
-  {
-    if (kvp.second.first == index)
-    {
-      return kvp.first;
-    }
-  }
-  return "";
+  return vocab_.WordFromIndex(std::move(index));
 }
 
 /**
@@ -306,13 +325,9 @@ std::string W2VLoader<T>::WordFromIndex(SizeType index) const
  * @return
  */
 template <typename T>
-math::SizeType W2VLoader<T>::IndexFromWord(std::string word)
+math::SizeType W2VLoader<T>::IndexFromWord(std::string const &word)
 {
-  if (vocab_.find(word) != vocab_.end())
-  {
-    return (vocab_[word]).first;
-  }
-  return 0;
+  return vocab_.IndexFromWord(std::move(word));
 }
 
 /**
@@ -330,7 +345,8 @@ std::vector<math::SizeType> W2VLoader<T>::StringsToIndices(std::vector<std::stri
     indexes.reserve(strings.size());
     for (std::string const &s : strings)
     {
-      auto value = vocab_.insert(std::make_pair(s, std::make_pair((SizeType)(vocab_.size()), 0)));
+      auto value =
+          vocab_.data.insert(std::make_pair(s, std::make_pair((SizeType)(vocab_.data.size()), 0)));
       indexes.push_back((*value.first).second.first);
       value.first->second.second++;
     }
