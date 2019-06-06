@@ -59,7 +59,7 @@ void SaveEmbeddings(W2VLoader<FloatType> const &data_loader, std::string output_
   SizeType vocab_size      = embeddings.shape()[1];
 
   outfile << std::to_string(embeddings_size) << " " << std::to_string(vocab_size) << "\n";
-  for (SizeType a = 0; a < data_loader.VocabSize(); a++)
+  for (SizeType a = 0; a < data_loader.vocab_size(); a++)
   {
     outfile << data_loader.WordFromIndex(a) << " ";
     for (SizeType b = 0; b < embeddings_size; ++b)
@@ -227,7 +227,7 @@ int main(int argc, char **argv)
     data_loader.BuildVocab(ReadFile(train_file));
     data_loader.RemoveInfrequent(min_count);
     data_loader.InitUnigramTable();
-    std::cout << "Vocab Size : " << data_loader.VocabSize() << std::endl;
+    std::cout << "Vocab Size : " << data_loader.vocab_size() << std::endl;
 
     /// SAVE VOCAB///
     std::cout << "saving vocab " << std::endl;

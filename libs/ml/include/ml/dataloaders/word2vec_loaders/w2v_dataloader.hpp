@@ -55,10 +55,11 @@ public:
 
   /// accessors and helper functions ///
   SizeType         Size() const override;
-  SizeType         VocabSize() const;
-  VocabType const &GetVocab() const;
+  SizeType         vocab_size() const;
+  VocabType const &vocab() const;
   std::string      WordFromIndex(SizeType index) const;
   SizeType         IndexFromWord(std::string const &word);
+  SizeType         window_size();
 
 private:
   SizeType                                   current_sentence_;
@@ -184,7 +185,7 @@ void W2VLoader<T>::RemoveInfrequent(SizeType min)
 template <typename T>
 void W2VLoader<T>::InitUnigramTable()
 {
-  std::vector<SizeType> frequencies(VocabSize());
+  std::vector<SizeType> frequencies(vocab_size());
   for (auto const &kvp : vocab_.data)
   {
     frequencies[kvp.second.first] = kvp.second.second;
@@ -290,7 +291,7 @@ void W2VLoader<T>::LoadVocab(std::string const &filename)
  * @return
  */
 template <typename T>
-math::SizeType W2VLoader<T>::VocabSize() const
+math::SizeType W2VLoader<T>::vocab_size() const
 {
   return vocab_.data.size();
 }
@@ -301,7 +302,7 @@ math::SizeType W2VLoader<T>::VocabSize() const
  * @return
  */
 template <typename T>
-typename W2VLoader<T>::VocabType const &W2VLoader<T>::GetVocab() const
+typename W2VLoader<T>::VocabType const &W2VLoader<T>::vocab() const
 {
   return vocab_;
 }
@@ -325,9 +326,15 @@ std::string W2VLoader<T>::WordFromIndex(SizeType index) const
  * @return
  */
 template <typename T>
-math::SizeType W2VLoader<T>::IndexFromWord(std::string const &word)
+typename W2VLoader<T>::SizeType W2VLoader<T>::IndexFromWord(std::string const &word)
 {
   return vocab_.IndexFromWord(std::move(word));
+}
+
+template <typename T>
+typename W2VLoader<T>::SizeType W2VLoader<T>::window_size()
+{
+  return window_size_;
 }
 
 /**

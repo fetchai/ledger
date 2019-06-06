@@ -40,7 +40,7 @@ private:
   DataType alpha_;
   DataType starting_alpha_;
 
-  ArrayType words_;
+  ArrayType word_vector_;
 
   ArrayType                          embeddings_;
   ArrayType                          gradient_embeddings_;
@@ -80,18 +80,14 @@ W2VModel<ArrayType>::W2VModel(SizeType embeddings_size, SizeType negative, DataT
   , data_loader_(data_loader)
 {
 
-  words_ = ArrayType({embeddings_size_, 1});
+  embeddings_          = ArrayType({embeddings_size_, data_loader.vocab_size()});
+  gradient_embeddings_ = ArrayType({embeddings_size_, data_loader.vocab_size()});
 
-  embeddings_          = ArrayType({embeddings_size_, data_loader.VocabSize()});
-  gradient_embeddings_ = ArrayType({embeddings_size_, data_loader.VocabSize()});
-
-  weights_          = ArrayType({embeddings_size_, data_loader.VocabSize()});
-  gradient_weights_ = ArrayType({embeddings_size_, data_loader.VocabSize()});
+  weights_          = ArrayType({embeddings_size_, data_loader.vocab_size()});
+  gradient_weights_ = ArrayType({embeddings_size_, data_loader.vocab_size()});
 
   target_weights_ = ArrayType({embeddings_size_, 25});
-  error_signal_   = ArrayType({uint64_t(negative_), 1});
 
-  error_words_          = ArrayType(words_.shape());
   error_target_weights_ = ArrayType(target_weights_.shape());
 
   {  // Embeddings: Initialise
@@ -150,6 +146,16 @@ void W2VModel<ArrayType>::PrintStats(SizeType const &i, SizeType const &iter,
 template <typename ArrayType>
 void W2VModel<ArrayType>::Train(SizeType iter, SizeType print_frequency, bool cbow)
 {
+  if (cbow)
+  {
+    word_vector_ = ArrayType({embeddings_size_, 1});
+  }
+  else
+  {
+    word_vector_ = ArrayType({embeddings_size_, 2 * data_loader_.window_size()});
+  }
+  error_words_  = ArrayType(word_vector_.shape());
+  error_signal_ = ArrayType({SizeType(negative_), 2 * data_loader_.window_size()});
 
   high_resolution_clock::time_point last_time;
 
@@ -186,15 +192,15 @@ void W2VModel<ArrayType>::Train(SizeType iter, SizeType print_frequency, bool cb
     auto &context = sample.first;
     auto &target  = sample.second;
 
+    ///////////////////////
+    /// FORWARD
+    ///////////////////////
+
     if (cbow)
     {
-      ///////////////////////
-      // FORWARD
-      ///////////////////////
-
       // Average Embeddings: context -> words
-      uint64_t valid_samples(0);
-      auto     output_view = words_.View(0);
+      SizeType valid_samples(0);
+      auto     output_view = word_vector_.View(0);
       bool     clear       = true;
       for (DataType const &i : context)
       {
@@ -219,32 +225,87 @@ void W2VModel<ArrayType>::Train(SizeType iter, SizeType print_frequency, bool cb
       {
         val /= div;
       }
+
+      // Embeddings: target -> weights
+      SizeType j = 0;
+
+      for (DataType const &i : target)
+      {
+        auto view1 = target_weights_.View(j);
+        auto view2 = weights_.View(fetch::math::SizeType(i));
+
+        Assign(view1, view2);
+        j++;
+      }
+
+      // MatrixMultiply: Forward
+      fetch::math::TransposeDot(target_weights_, word_vector_, error_signal_);
     }
 
-    // Embeddings: target -> weights
-    uint64_t j = 0;
-
-    for (DataType const &i : target)
+    else  // skip gram - one word vector per word - no averaging
     {
-      auto view1 = target_weights_.View(j);
-      auto view2 = weights_.View(fetch::math::SizeType(i));
+      // assign context embeddings
+      // Embeddings: context -> words
+      word_vector_.Reshape(
+          {embeddings_size_, context.size()});  // reshape to maximum possible context size
+      SizeType word_vector_idx = 0;
+      SizeType valid_samples(0);
+      for (DataType const &i : context)
+      {
+        auto output_view = word_vector_.View(word_vector_idx);
+        if (i >= 0)
+        {
+          Assign(output_view, embeddings_.View(fetch::math::SizeType(i)));
+          valid_samples++;
+        }
+        word_vector_idx++;
+      }
+      word_vector_.Reshape(
+          {embeddings_size_, valid_samples});  // reshape back to only valid samples
+      error_words_.Reshape(word_vector_.shape());
+      error_signal_.Reshape({SizeType(negative_), valid_samples});
 
-      Assign(view1, view2);
-      j++;
+      // assign target weights (Embeddings: target -> weights)
+      SizeType j = 0;
+
+      for (DataType const &i : target)
+      {
+        auto view1 = target_weights_.View(j);
+        auto view2 = weights_.View(fetch::math::SizeType(i));
+
+        Assign(view1, view2);
+        j++;
+      }
+
+      // MatrixMultiply: Forward
+      fetch::math::TransposeDot(target_weights_, word_vector_, error_signal_);
     }
-
-    // MatrixMultiply: Forward
-    fetch::math::TransposeDot(target_weights_, words_, error_signal_);
 
     ///////////////////////
     // ERROR
     ///////////////////////
-    for (SizeType d = 0; d < negative_; d++)
+    if (cbow)
     {
-      DataType f     = error_signal_(d, 0);
-      DataType label = (d == 0) ? 1 : 0;
-      DataType sm    = static_cast<DataType>(static_cast<DataType>(fexp(f) / (1. + fexp(f))));
-      error_signal_.Set(d, 0, label - sm);
+      for (SizeType cur_neg_sample = 0; cur_neg_sample < negative_; cur_neg_sample++)
+      {
+        DataType f     = error_signal_(cur_neg_sample, 0);
+        DataType label = (cur_neg_sample == 0) ? 1 : 0;
+        DataType sm    = static_cast<DataType>(static_cast<DataType>(fexp(f) / (1. + fexp(f))));
+        error_signal_.Set(cur_neg_sample, 0, label - sm);
+      }
+    }
+    else
+    {
+      for (SizeType cur_neg_sample = 0; cur_neg_sample < negative_; cur_neg_sample++)
+      {
+        for (SizeType cur_example = 0; cur_example < error_signal_.shape()[1]; cur_example++)
+        {
+          DataType f     = error_signal_(cur_neg_sample, cur_example);
+          DataType label = (cur_neg_sample == 0) ? 1 : 0;
+          DataType sm    = static_cast<DataType>(static_cast<DataType>(fexp(f) / (1. + fexp(f))));
+          error_signal_.Set(cur_neg_sample, cur_example, label - sm);
+        }
+      }
     }
 
     ///////////////////////
@@ -255,10 +316,10 @@ void W2VModel<ArrayType>::Train(SizeType iter, SizeType print_frequency, bool cb
     fetch::math::Dot(target_weights_, error_signal_, error_words_);
 
     // TODO: for cbow the shape is diffeernt because of weight averaging
-    fetch::math::DotTranspose(words_, error_signal_, error_target_weights_);
+    fetch::math::DotTranspose(word_vector_, error_signal_, error_target_weights_);
 
     // Embeddings: Backward
-    j = 0;
+    SizeType j = 0;
     for (DataType const &i : target)
     {
       auto ii = fetch::math::SizeType(double(i));
