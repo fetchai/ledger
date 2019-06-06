@@ -32,8 +32,8 @@
 using DataType    = uint64_t;
 using ArrayType   = fetch::math::Tensor<DataType>;
 using SizeType    = fetch::math::Tensor<DataType>::SizeType;
-using LabelType   = SizeType;
-using ContextType = std::vector<ArrayType>;
+using LabelType   = ArrayType;
+using ContextType = ArrayType;
 
 std::string ReadFile(std::string const &path)
 {
@@ -50,7 +50,7 @@ int main(int ac, char **av)
     return 1;
   }
 
-  fetch::ml::dataloaders::C2VLoader<ArrayType, ArrayType> cloader(MAX_CONTEXTS);
+  fetch::ml::dataloaders::C2VLoader<LabelType, ContextType> cloader(MAX_CONTEXTS);
 
   cloader.AddData(ReadFile(av[1]));
   std::cout << "Number of different function names: " << cloader.function_name_counter().size()
