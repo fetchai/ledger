@@ -35,10 +35,7 @@ DAGService::DAGService(MuddleEndpoint &muddle_endpoint, DAGPtr dag, Mode mode)
       std::make_shared<Server>(external_muddle_, SERVICE_DAG, CHANNEL_RPC);
 
   dag_sync_protocol_ = std::make_shared<DAGSyncProtocol>(dag_);
-
-  DAGSyncService dummy{external_muddle_, dag_};
-
-  //dag_sync_service_   = std::make_shared<DAGSyncService>();
+  dag_sync_service_   = std::make_shared<DAGSyncService>(external_muddle_, dag_);
 
   // TX Sync protocol
   external_rpc_server_->Add(RPC_DAG_STORE_SYNC, dag_sync_protocol_.get());
