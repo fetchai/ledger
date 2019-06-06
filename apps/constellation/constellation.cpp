@@ -95,6 +95,18 @@ uint16_t LookupLocalPort(Manifest const &manifest, ServiceType service, uint16_t
   return manifest.GetLocalPort(identifier);
 }
 
+std::shared_ptr<ledger::DAG> GenerateDAG(bool generate, std::string const &db_name, bool load_on_start)
+{
+  std::shared_ptr<ledger::DAG> ret;
+
+  if(generate)
+  {
+    ret = std::make_shared<ledger::DAG>(db_name, load_on_start);
+  }
+
+  return ret;
+}
+
 ledger::ShardConfigs GenerateShardsConfig(uint32_t num_lanes, uint16_t start_port,
                                           std::string const &storage_path)
 {
@@ -163,8 +175,7 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
   , storage_(std::make_shared<StorageUnitClient>(internal_muddle_.AsEndpoint(), shard_cfgs_,
                                                  cfg_.log2_num_lanes))
   , lane_control_(internal_muddle_.AsEndpoint(), shard_cfgs_, cfg_.log2_num_lanes)
-  , dag_{std::make_shared<ledger::DAG>("dag_db_", true)}
-  , dag_service_{std::make_shared<ledger::DAGService>(muddle_.AsEndpoint(), dag_)}
+  , dag_{GenerateDAG(cfg_.features.IsEnabled("synergetic"), "dag_db_", true)}
   , execution_manager_{std::make_shared<ExecutionManager>(
         cfg_.num_executors, cfg_.log2_num_lanes, storage_,
         [this] { return std::make_shared<Executor>(storage_); })}
@@ -178,7 +189,7 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
                        *this,
                        tx_status_cache_,
                        cfg_.features,
-                       certificate,
+                       certificate, // TODO(HUT): perhaps unused now
                        cfg_.num_lanes(),
                        cfg_.num_slices,
                        cfg_.block_difficulty}
@@ -204,9 +215,21 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
   FETCH_LOG_INFO(LOGGING_NAME, "              :: ", Address{p2p_.identity()}.display());
   FETCH_LOG_INFO(LOGGING_NAME, "");
 
+  // Enable experimental features
+  if (cfg_.features.IsEnabled("synergetic"))
+  {
+    assert(dag_);
+    dag_service_ = std::make_shared<ledger::DAGService>(muddle_.AsEndpoint(), dag_);
+    reactor_.Attach(dag_service_->GetWeakRunnable());
+
+    NaiveSynergeticMiner *syn_miner = new NaiveSynergeticMiner{dag_, *storage_, certificate};
+    reactor_.Attach(syn_miner->GetWeakRunnable());
+
+    synergetic_miner_.reset(syn_miner);
+  }
+
   // attach the services to the reactor
   reactor_.Attach(main_chain_service_->GetWeakRunnable());
-  reactor_.Attach(dag_service_->GetWeakRunnable());
 
   // configure all the lane services
   lane_services_.Setup(network_manager_, shard_cfgs_, !config.disable_signing);

@@ -29,6 +29,7 @@
 #include "moment/deadline_timer.hpp"
 #include "ledger/upow/synergetic_execution_manager_interface.hpp"
 #include "ledger/upow/synergetic_miner_interface.hpp"
+#include "ledger/upow/naive_synergetic_miner.hpp"
 
 #include <atomic>
 #include <chrono>
@@ -190,7 +191,6 @@ private:
   using DeadlineTimer        = fetch::moment::DeadlineTimer;
   using SynergeticExecMgrPtr = std::unique_ptr<SynergeticExecutionManagerInterface>;
   using SynExecStatus        = SynergeticExecutionManagerInterface::ExecStatus;
-  using SynergeticMinerPtr   = std::unique_ptr<SynergeticMinerInterface>;
 
   /// @name Monitor State
   /// @{
@@ -273,7 +273,6 @@ private:
   /// @name Synergetic Contracts
   /// @{
   SynergeticExecMgrPtr synergetic_exec_mgr_;
-  SynergeticMinerPtr   synergetic_miner_;
   /// }
 };
 

@@ -29,8 +29,6 @@
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 #include "ledger/transaction_status_cache.hpp"
 
-#include "ledger/upow/naive_synergetic_miner.hpp"
-
 #include "ledger/upow/synergetic_execution_manager.hpp"
 #include "ledger/dag/dag.hpp"
 
@@ -70,19 +68,6 @@ SynergeticExecMgrPtr CreateSynergeticExecutor(core::FeatureFlags const &features
 
   return execution_mgr;
 }
-
-SynergeticMinerPtr CreateSynergeticMiner(core::FeatureFlags const &features, DAGPtr dag, StorageInterface &storage, ProverPtr prover)
-{
-  SynergeticMinerPtr miner{};
-
-  if (features.IsEnabled("naive-synergetic-mining"))
-  {
-    miner = std::make_unique<NaiveSynergeticMiner>(dag, storage, std::move(prover));
-  }
-
-  return miner;
-}
-
 }
 
 /**
@@ -119,7 +104,6 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag,
   , exec_wait_periodic_{EXEC_NOTIFY_INTERVAL}
   , syncing_periodic_{NOTIFY_INTERVAL}
   , synergetic_exec_mgr_{CreateSynergeticExecutor(features, dag, storage_unit_)}
-  , synergetic_miner_{CreateSynergeticMiner(features, dag, storage_unit, std::move(prover))}
 {
   // configure the state machine
   // clang-format off
@@ -389,14 +373,6 @@ BlockCoordinator::State BlockCoordinator::OnSynchronised(State current, State pr
   }
   else if (mining_ && mining_enabled_ && (Clock::now() >= next_block_time_))
   {
-    // in the case of the synergetic miner we simulate the generation of mining nodes here
-    if (synergetic_miner_ && dag_)
-    {
-      // create all the nodes for the DAG
-      //auto const nodes = synergetic_miner_->Mine(current_block_->body.block_number); // old
-      synergetic_miner_->Mine(999); // new - no need for it to mine at this point btw.
-    }
-
     // create a new block
     next_block_                     = std::make_unique<Block>();
     next_block_->body.previous_hash = current_block_->body.hash;
@@ -754,7 +730,10 @@ BlockCoordinator::State BlockCoordinator::OnPostExecBlockValidation()
     storage_unit_.Commit(current_block_->body.block_number);
 
     // Notify the DAG of this epoch
-    dag_->CommitEpoch(current_block_->body.dag_epoch);
+    if(dag_)
+    {
+      dag_->CommitEpoch(current_block_->body.dag_epoch);
+    }
 
     // signal the last block that has been executed
     last_executed_block_.Set(current_block_->body.hash);
@@ -840,7 +819,10 @@ BlockCoordinator::State BlockCoordinator::OnWaitForNewBlockExecution()
     storage_unit_.Commit(next_block_->body.block_number);
 
     // Notify the DAG of this epoch
-    dag_->CommitEpoch(next_block_->body.dag_epoch);
+    if(dag_)
+    {
+      dag_->CommitEpoch(next_block_->body.dag_epoch);
+    }
 
     next_state = State::PROOF_SEARCH;
     break;

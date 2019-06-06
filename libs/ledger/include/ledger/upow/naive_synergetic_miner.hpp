@@ -20,6 +20,7 @@
 #include "ledger/upow/work.hpp"
 #include "ledger/upow/synergetic_miner_interface.hpp"
 #include "ledger/upow/synergetic_contract.hpp"
+#include "core/state_machine.hpp"
 
 #include "ledger/dag/dag.hpp"
 
@@ -41,8 +42,16 @@ class Address;
 class NaiveSynergeticMiner : public SynergeticMinerInterface
 {
 public:
-  using ProverPtr = std::shared_ptr<crypto::Prover>;
-  using DAGPtr                 = std::shared_ptr<ledger::DAG>;
+
+  enum class State
+  {
+    INITIAL = 0,
+    MINE,
+  };
+
+  using ProverPtr    = std::shared_ptr<crypto::Prover>;
+  using DAGPtr       = std::shared_ptr<ledger::DAG>;
+  using StateMachine = core::StateMachine<State>;
 
   // Construction / Destruction
   NaiveSynergeticMiner(DAGPtr dag, StorageInterface &storage, ProverPtr prover);
@@ -59,7 +68,12 @@ public:
   NaiveSynergeticMiner &operator=(NaiveSynergeticMiner const &) = delete;
   NaiveSynergeticMiner &operator=(NaiveSynergeticMiner &&) = delete;
 
+  core::WeakRunnable GetWeakRunnable();
+
 private:
+
+  NaiveSynergeticMiner::State OnInitial();
+  NaiveSynergeticMiner::State OnMine();
 
   static const std::size_t DEFAULT_SEARCH_LENGTH = 20;
 
@@ -71,6 +85,7 @@ private:
   ProverPtr         prover_;
   math::BigUnsigned starting_nonce_;
   std::size_t       search_length_{DEFAULT_SEARCH_LENGTH};
+  std::shared_ptr <StateMachine> state_machine_;
 };
 
 } // namespace ledger
