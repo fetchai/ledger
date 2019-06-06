@@ -93,7 +93,7 @@ public:
   using MissingNodes      = std::vector<DAGNode>;
 
   DAG() = delete;
-  DAG(std::string const &db_name, bool);
+  DAG(std::string db_name, bool);
   DAG(DAG const &rhs) = delete;
   DAG(DAG &&rhs)      = delete;
   DAG &operator       = (DAG const &rhs) = delete;
@@ -164,19 +164,19 @@ private:
   std::vector<NodeHash> missing_;                                         // node hashes that we know are missing
 
   // Internal functions don't need locking and can recursively call themselves etc.
-  bool PushInternal(DAGNodePtr node);
-  bool AlreadySeenInternal(DAGNodePtr node); // const
+  bool PushInternal(DAGNodePtr const &node);
+  bool AlreadySeenInternal(DAGNodePtr const &node); // const
   bool TooOldInternal(uint64_t); // const
-  bool IsLooseInternal(DAGNodePtr node); // const
-  void SetReferencesInternal(DAGNodePtr node); // const
-  void AdvanceTipsInternal(DAGNodePtr node);
-  bool HashInPrevEpochsInternal(ConstByteArray hash); // const
-  void AddLooseNodeInternal(DAGNodePtr node);
-  void HealLooseBlocksInternal(ConstByteArray added_hash);
+  bool IsLooseInternal(DAGNodePtr const &node); // const
+  void SetReferencesInternal(DAGNodePtr const &node); // const
+  void AdvanceTipsInternal(DAGNodePtr const &node);
+  bool HashInPrevEpochsInternal(ConstByteArray const &hash); // const
+  void AddLooseNodeInternal(DAGNodePtr const &node);
+  void HealLooseBlocksInternal(ConstByteArray const &added_hash);
   void UpdateStaleTipsInternal();
-  bool NodeInvalidInternal(DAGNodePtr node);
-  DAGNodePtr GetDAGNodeInternal(ConstByteArray hash);
-  void TraverseFromTips(std::set<ConstByteArray> const &, std::function<void (NodeHash)>, std::function<bool (NodeHash)>);
+  bool NodeInvalidInternal(DAGNodePtr const &node);
+  DAGNodePtr GetDAGNodeInternal(ConstByteArray const &hash);
+  void TraverseFromTips(std::set<ConstByteArray> const &, std::function<void (NodeHash)> const &, std::function<bool (NodeHash)> const &);
   bool GetEpochFromStorage(std::string const &, DAGEpoch &);
   bool SetEpochInStorage(std::string const &, DAGEpoch const &, bool);
   void Flush();
