@@ -17,10 +17,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ledger/chain/digest.hpp"
 #include "ledger/chaincode/contract.hpp"
 
 namespace fetch {
-
 namespace ledger {
 
 class Identifier;
@@ -33,7 +33,7 @@ public:
   static constexpr char const *LOGGING_NAME = "SmartContractManager";
 
   static storage::ResourceAddress CreateAddressForContract(Identifier const &contract_id);
-  static storage::ResourceAddress CreateAddressForContract(Address const &contract_address);
+  static storage::ResourceAddress CreateAddressForSynergeticContract(Digest const &digest);
 
   SmartContractManager();
   ~SmartContractManager() override = default;

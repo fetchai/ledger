@@ -217,9 +217,9 @@ storage::ResourceAddress SmartContractManager::CreateAddressForContract(
   return StateAdapter::CreateAddress(Identifier{NAME}, contract_id.qualifier());
 }
 
-storage::ResourceAddress SmartContractManager::CreateAddressForContract(Address const &contract_digest)
+storage::ResourceAddress SmartContractManager::CreateAddressForSynergeticContract(Digest const &contract_digest)
 {
-  return StateAdapter::CreateAddress(Identifier{NAME}, contract_digest.address().ToHex());
+  return StateAdapter::CreateAddress(Identifier{NAME}, contract_digest.ToHex());
 }
 
 }  // namespace ledger

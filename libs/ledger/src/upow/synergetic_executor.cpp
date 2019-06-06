@@ -56,7 +56,7 @@ void SynergeticExecutor::Verify(WorkQueue &solutions, uint64_t block, std::size_
       contract = factory_.Create(contract_address);
       if (!contract)
       {
-        FETCH_LOG_WARN(LOGGING_NAME, "Failed to create contract: 0x", contract_address.address().ToHex());
+        FETCH_LOG_WARN(LOGGING_NAME, "Failed to create contract: 0x", contract_address.ToHex());
         return;
       }
 
@@ -86,7 +86,7 @@ void SynergeticExecutor::Verify(WorkQueue &solutions, uint64_t block, std::size_
 
       if (SynergeticContract::Status::SUCCESS != status)
       {
-        FETCH_LOG_WARN(LOGGING_NAME, "Failed to complete contract: 0x", contract->address().address().ToHex(), " Reason: ", ToString(status));
+        FETCH_LOG_WARN(LOGGING_NAME, "Failed to complete contract: 0x", contract->digest().ToHex(), " Reason: ", ToString(status));
         return;
       }
 

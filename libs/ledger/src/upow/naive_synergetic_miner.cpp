@@ -18,10 +18,9 @@
 
 #include "core/serializers/byte_array.hpp"
 #include "core/serializers/byte_array_buffer.hpp"
-#include "ledger/chain/address.hpp"
+#include "ledger/chain/digest.hpp"
 #include "ledger/upow/naive_synergetic_miner.hpp"
 #include "ledger/upow/work.hpp"
-#include "ledger/upow/solutions.hpp"
 
 #include "ledger/upow/synergetic_base_types.hpp"
 #include "ledger/chaincode/smart_contract_manager.hpp"
@@ -42,7 +41,6 @@ using vm_modules::BigNumberWrapper;
 using serializers::ByteArrayBuffer;
 using byte_array::ConstByteArray;
 
-using AddressSet = std::unordered_set<Address>;
 using DagNodes   = NaiveSynergeticMiner::DagNodes;
 
 void ExecuteWork(SynergeticContractPtr const &contract, WorkPtr const &work)
@@ -98,12 +96,12 @@ NaiveSynergeticMiner::State NaiveSynergeticMiner::OnMine()
 {
   state_machine_->Delay(std::chrono::milliseconds{200});
 
-  this->Mine(0);
+  this->Mine();
 
   return State::INITIAL;
 }
 
-DagNodes NaiveSynergeticMiner::Mine(BlockIndex block)
+void NaiveSynergeticMiner::Mine()
 {
   // iterate through the latest DAG nodes and build a complete set of addresses to mine solutions
   // for
@@ -112,27 +110,27 @@ DagNodes NaiveSynergeticMiner::Mine(BlockIndex block)
 
   // Debug
   {
-    AddressSet address_set;
+    DigestSet contracts;
     for (auto const &node : dag_nodes)
     {
       if (DAGNode::DATA == node.type)
       {
         assert(!node.contract_digest.empty());
-        address_set.insert(node.contract_digest);
+        contracts.insert(node.contract_digest);
       }
     }
 
-    if (address_set.empty())
+    if (contracts.empty())
     {
       FETCH_LOG_DEBUG(LOGGING_NAME, "No data to be mined");
-      return {};
+      return;
     }
     else
     {
       std::ostringstream oss;
-      for (auto const &address : address_set)
+      for (auto const &digest : contracts)
       {
-        oss << "\n -> " << address.display();
+        oss << "\n -> 0x" << digest.ToHex();
       }
 
       FETCH_LOG_INFO(LOGGING_NAME, "Available synergetic contracts to be mined", oss.str());
@@ -144,7 +142,7 @@ DagNodes NaiveSynergeticMiner::Mine(BlockIndex block)
   {
     if (DAGNode::DATA == dag_node.type)
     {
-      auto const solution = MineSolution(dag_node.contract_digest, block);
+      auto const solution = MineSolution(dag_node.contract_digest);
 
       if (solution)
       {
@@ -153,17 +151,15 @@ DagNodes NaiveSynergeticMiner::Mine(BlockIndex block)
       }
     }
   }
-
-  return {};
 }
 
-SynergeticContractPtr NaiveSynergeticMiner::LoadContract(Address const &address)
+SynergeticContractPtr NaiveSynergeticMiner::LoadContract(Digest const &contract_digest)
 {
   SynergeticContractPtr contract{};
 
   // attempt to retrieve the document stored in the database
   auto const resource_document =
-      storage_.Get(SmartContractManager::CreateAddressForContract(address));
+      storage_.Get(SmartContractManager::CreateAddressForSynergeticContract(contract_digest));
 
   if (!resource_document.failed)
   {
@@ -188,20 +184,20 @@ SynergeticContractPtr NaiveSynergeticMiner::LoadContract(Address const &address)
   return contract;
 }
 
-WorkPtr NaiveSynergeticMiner::MineSolution(Address const &address, BlockIndex block)
+WorkPtr NaiveSynergeticMiner::MineSolution(Digest const &contract_digest)
 {
   // create the synergetic contract
-  auto contract = LoadContract(address);
+  auto contract = LoadContract(contract_digest);
 
   // if no contract can be loaded then simple return
   if (!contract)
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Unable to lookup contract: ", address.display());
+    FETCH_LOG_WARN(LOGGING_NAME, "Unable to lookup contract: 0x", contract_digest.ToHex());
     return {};
   }
 
   // build up a work instance
-  auto work = std::make_shared<Work>(address, prover_->identity(), block);
+  auto work = std::make_shared<Work>(contract_digest, prover_->identity());
 
   // Preparing to mine
   auto status = contract->DefineProblem();

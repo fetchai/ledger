@@ -23,7 +23,7 @@
 #include "crypto/identity.hpp"
 #include "ledger/upow/synergetic_base_types.hpp"
 #include "ledger/chain/common_types.hpp"
-#include "ledger/chain/address.hpp"
+#include "ledger/chain/digest.hpp"
 #include "math/bignumber.hpp"
 
 #include <limits>
@@ -40,49 +40,31 @@ public:
     WORK_NOT_VALID = uint64_t(-1)
   };
 
+  // Construction / Destruction
   Work() = default;
-  Work(Address address, crypto::Identity miner, BlockIndex block_number);
+  Work(Digest digest, crypto::Identity miner);
   Work(Work const &) = default;
   ~Work() = default;
 
-  Address const &contract_digest() const;
+  // Getters
+  Digest const &contract_digest() const;
   crypto::Identity const &miner() const;
-//  BlockIndex block_number() const;
   math::BigUnsigned const &nonce() const;
   WorkScore score() const;
 
-  void UpdateDigest(Address const &address)
-  {
-    contract_digest_ = address;
-  }
+  // Setters
+  void UpdateDigest(Digest digest);
+  void UpdateIdentity(crypto::Identity const &identity);
+  void UpdateScore(WorkScore score);
+  void UpdateNonce(math::BigUnsigned const &nonce);
 
-  void UpdateIdentity(crypto::Identity const &identity)
-  {
-    miner_ = identity;
-  }
-
-  void UpdateScore(WorkScore score)
-  {
-    score_ = score;
-  }
-
-  void UpdateNonce(math::BigUnsigned const &nonce)
-  {
-    nonce_ = nonce;
-  }
-
-//  explicit operator bool() const;
+  // Actions
   math::BigUnsigned CreateHashedNonce() const;
-
-//  bool operator<(Work const &other) const;
-//  bool operator==(Work const &other) const;
-//  bool operator!=(Work const &other) const;
 
 private:
 
-  Address           contract_digest_{};
+  Digest            contract_digest_{};
   crypto::Identity  miner_{};
-//  BlockIndex        block_number_{WORK_NOT_VALID};
   math::BigUnsigned nonce_{};
   WorkScore         score_{std::numeric_limits<WorkScore>::max()};
 
@@ -92,15 +74,13 @@ private:
   friend void Deserialize(T &serializer, Work &work);
 };
 
-inline Work::Work(Address address, crypto::Identity miner, BlockIndex block_number)
+inline Work::Work(Digest address, crypto::Identity miner)
   : contract_digest_{std::move(address)}
   , miner_{std::move(miner)}
-//  , block_number_{block_number}
 {
-  (void)block_number;
 }
 
-inline Address const &Work::contract_digest() const
+inline Digest const &Work::contract_digest() const
 {
   return contract_digest_;
 }
@@ -109,11 +89,6 @@ inline crypto::Identity const &Work::miner() const
 {
   return miner_;
 }
-
-//inline BlockIndex Work::block_number() const
-//{
-//  return block_number_;
-//}
 
 inline math::BigUnsigned const &Work::nonce() const
 {
@@ -125,20 +100,32 @@ inline WorkScore Work::score() const
   return score_;
 }
 
-//inline Work::operator bool() const
-//{
-//  return block_number_ != WORK_NOT_VALID;
-//}
+inline void Work::UpdateDigest(Digest digest)
+{
+  contract_digest_ = std::move(digest);
+}
 
-/*
- * @brief computes the hashed nonce for work execution.
- */
+inline void Work::UpdateIdentity(crypto::Identity const &identity)
+{
+  miner_ = identity;
+}
+
+inline void Work::UpdateScore(WorkScore score)
+{
+  score_ = score;
+}
+
+inline void Work::UpdateNonce(math::BigUnsigned const &nonce)
+{
+  nonce_ = nonce;
+}
+
 inline math::BigUnsigned Work::CreateHashedNonce() const
 {
   crypto::SHA256 hasher{};
   hasher.Reset();
 
-  hasher.Update(contract_digest_.address());
+  hasher.Update(contract_digest_);
   hasher.Update(miner_.identifier());
   hasher.Update(nonce_);
 
@@ -146,37 +133,8 @@ inline math::BigUnsigned Work::CreateHashedNonce() const
   hasher.Reset();
   hasher.Update(digest1);
 
-  auto const digest2 = hasher.Final();
-
-  FETCH_LOG_DEBUG("Work", "---------------------------------------------------------------------------------------------");
-  FETCH_LOG_DEBUG("Work", "Contract Digest: ", contract_digest_.address().ToHex());
-  FETCH_LOG_DEBUG("Work", "Miner..........: ", miner_.identifier().ToHex());
-  FETCH_LOG_DEBUG("Work", "Nonce..........: ", nonce_.ToHex());
-  FETCH_LOG_DEBUG("Work", "Digest 1.......: ", digest1.ToHex());
-  FETCH_LOG_DEBUG("Work", "Digest 2.......: ", digest2.ToHex());
-
-  return digest2;
+  return hasher.Final();
 }
-
-///*
-// * @brief work can be prioritised based on
-// */
-//inline bool Work::operator<(Work const &other) const
-//{
-//  return score_ < other.score_;
-//}
-//
-//inline bool Work::operator==(Work const &other) const
-//{
-//  return (block_number_ == other.block_number_) && (score_ == other.score_) &&
-//         (nonce_ == other.nonce_) && (contract_digest_ == other.contract_digest_) &&
-//         (miner_ == other.miner_);
-//}
-//
-//inline bool Work::operator!=(Work const &other) const
-//{
-//  return !(*this == other);
-//}
 
 template <typename T>
 void Serialize(T &serializer, Work const &work)

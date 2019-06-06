@@ -35,7 +35,7 @@ public:
   SynergeticContractFactory(SynergeticContractFactory &&) = delete;
   ~SynergeticContractFactory() = default;
 
-  SynergeticContractPtr Create(Address const &address);
+  SynergeticContractPtr Create(Digest const &digest);
 
   // Operators
   SynergeticContractFactory &operator=(SynergeticContractFactory const &) = delete;

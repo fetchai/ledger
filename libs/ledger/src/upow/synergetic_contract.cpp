@@ -53,9 +53,9 @@ enum class FunctionKind
   INVALID,   ///< The function has an invalid decorator
 };
 
-Address ComputeAddress(ConstByteArray const &source)
+Digest ComputeDigest(ConstByteArray const &source)
 {
-  return Address{crypto::Hash<crypto::SHA256>(source)};
+  return crypto::Hash<crypto::SHA256>(source);
 }
 
 std::string ErrorsToLog(std::vector<std::string> const &errors)
@@ -114,7 +114,7 @@ FunctionKind DetermineKind(vm::Executable::Function const &fn)
 }
 
 SynergeticContract::SynergeticContract(ConstByteArray const &source)
-  : address_{ComputeAddress(source)}
+  : digest_{ComputeDigest(source)}
   , module_{VMFactory::GetModule(VMFactory::USE_SYNERGETIC)}
 {
   // ensure the source has size
@@ -278,7 +278,7 @@ Status SynergeticContract::Complete(uint64_t block, BitVector const &shards)
   // setup the storage infrastructure
   CachedStorageAdapter storage_cache(*storage_);
   StateSentinelAdapter state_sentinel{
-      storage_cache, Identifier{address_.display() + "*" + std::to_string(block)}, shards};
+      storage_cache, Identifier{digest_.ToHex() + "." + std::to_string(block)}, shards};
 
   // attach the state to the VM
   vm->SetIOObserver(state_sentinel);

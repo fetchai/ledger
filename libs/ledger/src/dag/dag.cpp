@@ -164,7 +164,7 @@ void DAG::AddTransaction(Transaction const &tx, crypto::ECDSASigner const &signe
 
   new_node->type                    = DAGNode::DATA;
   new_node->SetContents(tx);
-  new_node->contract_digest           = tx.contract_digest();
+  new_node->contract_digest         = tx.contract_digest().address();
   new_node->creator                 = tx.from();
   new_node->contents                = tx.data();
   SetReferencesInternal(new_node);
@@ -196,7 +196,7 @@ void DAG::AddWork(Work const &solution)
   SetReferencesInternal(new_node);
   new_node->Finalise();
 
-  FETCH_LOG_INFO(LOGGING_NAME, "!!! Work for contract: 0x", new_node->contract_digest.address().ToHex(), " score: ", solution.score());
+  FETCH_LOG_INFO(LOGGING_NAME, "!!! Work for contract: 0x", new_node->contract_digest.ToHex(), " score: ", solution.score());
 
   /* new_node->signature = signer.Sign(new_node->hash); */ // TODO(HUT): signing correctly
 

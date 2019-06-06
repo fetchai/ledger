@@ -78,7 +78,7 @@ struct DAGNode
   DigestList       previous;            ///< previous nodes.
   Address          creator;
   ConstByteArray   contents;            ///< payload to be deserialised.
-  Address          contract_digest;       ///< The contract which this node is associated with.
+  Digest           contract_digest;       ///< The contract which this node is associated with.
   crypto::Identity identity;            ///< identity of the creator (empty for now)
 
   /// Serialisable entries to verify state

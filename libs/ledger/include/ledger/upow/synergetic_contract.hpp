@@ -26,6 +26,7 @@
 
 #include "ledger/upow/synergetic_base_types.hpp"
 #include "ledger/chain/address.hpp"
+#include "ledger/chain/digest.hpp"
 
 #include <memory>
 #include <string>
@@ -77,7 +78,7 @@ public:
   ~SynergeticContract() = default;
 
   // Accessors
-  Address const &address() const;
+  Digest const &digest() const;
   std::string const &work_function() const;
   std::string const &problem_function() const;
   std::string const &objective_function() const;
@@ -103,7 +104,7 @@ private:
   using ExecutablePtr = std::shared_ptr<vm::Executable>;
   using VariantPtr = std::shared_ptr<vm::Variant>;
 
-  Address     address_;
+  Digest      digest_;
   ModulePtr   module_;
   CompilerPtr compiler_;
   IRPtr       ir_;
@@ -121,9 +122,9 @@ private:
   VariantPtr solution_;
 };
 
-inline Address const &SynergeticContract::address() const
+inline Digest const &SynergeticContract::digest() const
 {
-  return address_;
+  return digest_;
 }
 
 inline std::string const &SynergeticContract::work_function() const

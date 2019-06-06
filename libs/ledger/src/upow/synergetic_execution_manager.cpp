@@ -71,7 +71,7 @@ ExecStatus SynergeticExecutionManager::PrepareWorkQueue(Block const &current, Bl
     }
 
     // lookup (or create) the solution queue
-    auto &solution_queue = work_map[work->contract_digest().address()];
+    auto &solution_queue = work_map[work->contract_digest()];
 
     // if the doesn't exist then create it
     if (!solution_queue)
@@ -113,14 +113,6 @@ bool SynergeticExecutionManager::ValidateWorkAndUpdateState(uint64_t block, std:
     // extract the solution queue
     auto solutions = solution_stack.back();
     solution_stack.pop_back();
-
-#if 1
-    {
-      auto const &work = solutions->top();
-      FETCH_LOG_WARN(LOGGING_NAME, "Scheduling validation for syn contract 0x",
-                     work->contract_digest().address().ToHex(), " score: ", work->score());
-    }
-#endif
 
     // dispatch the work
     threads_.Dispatch([this, solutions, block, num_lanes] {

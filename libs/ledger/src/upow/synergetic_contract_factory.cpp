@@ -18,7 +18,7 @@
 
 #include "core/serializers/byte_array.hpp"
 #include "core/serializers/byte_array_buffer.hpp"
-#include "ledger/chain/address.hpp"
+#include "ledger/chain/digest.hpp"
 #include "ledger/chaincode/smart_contract_manager.hpp"
 #include "ledger/upow/synergetic_contract_factory.hpp"
 
@@ -38,12 +38,12 @@ SynergeticContractFactory::SynergeticContractFactory(StorageInterface &storage)
 {
 }
 
-SynergeticContractPtr SynergeticContractFactory::Create(Address const &address)
+SynergeticContractPtr SynergeticContractFactory::Create(Digest const &digest)
 {
   SynergeticContractPtr contract{};
 
   // attempt to retrieve the document stored in the database
-  auto const resource = storage_.Get(SmartContractManager::CreateAddressForContract(address));
+  auto const resource = storage_.Get(SmartContractManager::CreateAddressForSynergeticContract(digest));
 
   if (!resource.failed)
   {

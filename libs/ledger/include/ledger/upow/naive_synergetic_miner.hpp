@@ -37,8 +37,6 @@ namespace ledger {
 
 class StorageInterface;
 
-class Address;
-
 class NaiveSynergeticMiner : public SynergeticMinerInterface
 {
 public:
@@ -61,7 +59,7 @@ public:
 
   /// @name Synergetic Miner Interface
   /// @{
-  DagNodes Mine(BlockIndex block) override;
+  void Mine() override;
   /// @}
 
   // Operators
@@ -77,8 +75,8 @@ private:
 
   static const std::size_t DEFAULT_SEARCH_LENGTH = 20;
 
-  SynergeticContractPtr LoadContract(Address const &address);
-  WorkPtr MineSolution(Address const &address, BlockIndex block);
+  SynergeticContractPtr LoadContract(Digest const &contract_digest);
+  WorkPtr MineSolution(Digest const &contract_digest);
 
   DAGPtr            dag_;
   StorageInterface &storage_;
