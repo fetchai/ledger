@@ -50,7 +50,7 @@ public:
   DataType Run(std::vector<ArrayType> const &data, ArrayType const &labels,
                SizeType batch_size = 0);
 
-  DataType Run(fetch::ml::DataLoader<ArrayType, ArrayType> &loader,
+  DataType Run(fetch::ml::DataLoader<ArrayType, ArrayType> &loader, bool random_mode = false,
                SizeType batch_size  = fetch::math::numeric_max<SizeType>(),
                SizeType subset_size = fetch::math::numeric_max<SizeType>());
 
@@ -164,7 +164,7 @@ typename T::Type Optimiser<T, C>::Run(std::vector<ArrayType> const &data, ArrayT
  */
 template <class T, class C>
 typename T::Type Optimiser<T, C>::Run(fetch::ml::DataLoader<ArrayType, ArrayType> &loader,
-                                      SizeType batch_size, SizeType subset_size)
+                                      bool random_mode, SizeType batch_size, SizeType subset_size)
 {
   loader.Reset();
 
@@ -180,7 +180,14 @@ typename T::Type Optimiser<T, C>::Run(fetch::ml::DataLoader<ArrayType, ArrayType
     for (SizeType it{step}; (it < step + batch_size) && (!loader.IsDone()) && (step < subset_size);
          ++it)
     {
-      input = loader.GetNext();
+      if (random_mode)
+      {
+        input = loader.GetRandom();
+      }
+      else
+      {
+        input = loader.GetNext();
+      }
 
       auto cur_input = input.second;
 

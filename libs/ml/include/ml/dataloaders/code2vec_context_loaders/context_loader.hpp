@@ -75,9 +75,9 @@ public:
   ContextLabelPair GetNextContext();
 
   /**
-   * @brief Gets the next pair of feature (tensor triple) and target
+   * @brief Gets the next pair of feature (vector of 3 tensors) and target
    *
-   * @return std::pair<std::tuple<ArrayType, ArrayType, ArrayType>, LabelType>;
+   * @return std::pair<std::vector<ArrayType>, LabelType>;
    */
   ContextTensorsLabelPair GetNext() override;
 

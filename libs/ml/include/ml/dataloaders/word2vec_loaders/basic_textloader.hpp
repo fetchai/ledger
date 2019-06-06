@@ -69,11 +69,11 @@ public:
   explicit BasicTextLoader(TextParams<ArrayType> const &p, SizeType seed = 123456789);
 
   // overloaded member from dataloader
-  std::pair<T, std::vector<T>>         GetNext() override;
-  virtual std::pair<T, std::vector<T>> GetRandom();
-  SizeType                             Size() const override;
-  virtual bool                         IsDone() const override;
-  void                                 Reset() override;
+  std::pair<T, std::vector<T>> GetNext() override;
+  std::pair<T, std::vector<T>> GetRandom() override;
+  SizeType                     Size() const override;
+  virtual bool                 IsDone() const override;
+  void                         Reset() override;
 
   virtual std::pair<T, std::vector<T>> GetAtIndex(SizeType idx);
   SizeType                             GetDiscardCount();

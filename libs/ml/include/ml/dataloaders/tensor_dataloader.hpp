@@ -33,6 +33,11 @@ public:
     return data_.at(cursor_++);
   }
 
+  virtual std::pair<LabelType, std::vector<DataType>> GetRandom()
+  {
+    return data_.at((uint64_t)rand() % Size());
+  }
+
   virtual uint64_t Size() const
   {
     return data_.size();
