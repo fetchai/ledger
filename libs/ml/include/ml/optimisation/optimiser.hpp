@@ -105,8 +105,7 @@ typename T::Type Optimiser<T, C>::Run(ArrayType &data, ArrayType &labels, SizeTy
     batch_size = n_data;
   }
 
-  DataType loss;
-  DataType loss_sum{0};
+  DataType loss{0};
   SizeType step{0};
   while (step < n_data)
   {
@@ -129,6 +128,8 @@ typename T::Type Optimiser<T, C>::Run(ArrayType &data, ArrayType &labels, SizeTy
 
     step += batch_size;
   }
+
+  DataType loss_sum{0};
   loss_sum += loss;
   epoch_++;
 
