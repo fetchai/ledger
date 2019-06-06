@@ -161,6 +161,7 @@ DAGSyncService::State DAGSyncService::OnResolveMissing()
       else
       {
         FETCH_LOG_INFO(LOGGING_NAME, "Node hash: ", dag_node.hash.ToBase64(), " not verified!");
+        exit(1);
       }
     }
   }

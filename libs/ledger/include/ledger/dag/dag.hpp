@@ -109,7 +109,7 @@ public:
 
   // Interface for adding what internally becomes a dag node. Easy to modify this interface
   // so do as you like with it Ed
-  void AddTransaction(Transaction const &tx, crypto::ECDSASigner const &signer, DAGTypes type);
+  void AddTransaction(Transaction const &tx, DAGTypes type);
   void AddWork(Work const &work);
 
   // Create an epoch based on the current DAG (not committal)

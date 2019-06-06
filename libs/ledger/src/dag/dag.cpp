@@ -151,7 +151,7 @@ std::vector<DAGNode> DAG::GetLatest(bool previous_epoch_only)
   return ret;
 }
 
-void DAG::AddTransaction(Transaction const &tx, crypto::ECDSASigner const &signer, DAGTypes type)
+void DAG::AddTransaction(Transaction const &tx, DAGTypes type)
 {
   if(type != DAGTypes::DATA)
   {
@@ -170,9 +170,9 @@ void DAG::AddTransaction(Transaction const &tx, crypto::ECDSASigner const &signe
   new_node->contents                = tx.data();
   SetReferencesInternal(new_node);
 
-  new_node->identity                    = signer.identity();
+  new_node->identity                    = certificate_->identity();
   new_node->Finalise();
-  new_node->signature = signer.Sign(new_node->hash);
+  new_node->signature = certificate_->Sign(new_node->hash);
 
   PushInternal(new_node);
   recently_added_.push_back(*new_node);
@@ -193,13 +193,13 @@ void DAG::AddWork(Work const &solution)
   new_node->identity        = solution.miner();
   new_node->contents        = buffer.data();
 
-  /* new_node.SetObject(*solution); */ // TODO(HUT): implement
   SetReferencesInternal(new_node);
+
+  new_node->identity                    = certificate_->identity();
   new_node->Finalise();
+  new_node->signature = certificate_->Sign(new_node->hash);
 
   FETCH_LOG_INFO(LOGGING_NAME, "!!! New Work node: 0x", new_node->hash.ToHex(), " contract: 0x", new_node->contract_digest.address().ToHex(), " score: ", solution.score());
-
-  /* new_node->signature = signer.Sign(new_node->hash); */ // TODO(HUT): signing correctly
 
   PushInternal(new_node);
   recently_added_.push_back(*new_node);
@@ -637,7 +637,6 @@ DAGEpoch DAG::CreateEpoch(uint64_t block_number)
 
   ret.Finalise();
 
-
   return ret;
 }
 
@@ -998,6 +997,7 @@ bool DAG::SatisfyEpoch(DAGEpoch &epoch)
 
   DAGNodePtr dag_node_to_add;
   bool success = true;
+  uint64_t missing_count = 0;
 
   for(auto const &node_hash : epoch.all_nodes)
   {
@@ -1008,6 +1008,7 @@ bool DAG::SatisfyEpoch(DAGEpoch &epoch)
       success = false;
       FETCH_LOG_INFO(LOGGING_NAME, "Found missing DAG node/hash: ", node_hash.ToBase64());
       missing_.push_back(node_hash);
+      missing_count++;
       continue;
     }
 
@@ -1024,6 +1025,8 @@ bool DAG::SatisfyEpoch(DAGEpoch &epoch)
       epoch.tx_digests.insert(contents.digest());
     }
   }
+
+  FETCH_LOG_INFO(LOGGING_NAME, "Node is missing : ", missing_count, " of ", epoch.all_nodes.size());
 
   // TODO(HUT): Verify Epoch here
 

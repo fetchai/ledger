@@ -134,7 +134,12 @@ struct DAGNode
 
   bool Verify() const
   {
-    return true;
+    if(hash.empty())
+    {
+      return false;
+    }
+
+    return crypto::Verifier::Verify(identity, hash, signature);
   }
 };
 

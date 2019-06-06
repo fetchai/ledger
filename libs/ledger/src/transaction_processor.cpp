@@ -89,9 +89,7 @@ void TransactionProcessor::OnTransaction(TransactionPtr const &tx)
 
     if (tx->action() == "data" && dag_)
     {
-      // TODO(HUT): not correct currently
-      crypto::ECDSASigner signer;
-      dag_->AddTransaction(*tx, signer, DAG::DAGTypes::DATA);
+      dag_->AddTransaction(*tx, DAG::DAGTypes::DATA);
 
       // update the status cache with the state of this transaction
       status_cache_.Update(tx->digest(), TransactionStatus::SUBMITTED);
