@@ -19,6 +19,13 @@
 #include "auctions/combinatorial_auction.hpp"
 #include "math/matrix_operations.hpp"
 
+#include <cassert>
+#include <cmath>
+#include <iostream>
+#include <memory>
+#include <utility>
+#include <vector>
+
 namespace fetch {
 namespace auctions {
 
@@ -80,7 +87,6 @@ void CombinatorialAuction::Mine(std::size_t random_seed, std::size_t run_time)
 
   for (std::size_t i = 0; i < run_time; ++i)
   {
-    std::cout << "mining run: " << i << std::endl;
     for (std::size_t j = 0; j < bids_.size(); ++j)
     {
       prev_active_ = active_.Copy();

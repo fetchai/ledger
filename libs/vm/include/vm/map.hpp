@@ -184,7 +184,7 @@ inline Ptr<IMap> inner(TypeId value_type_id, VM *vm, TypeId type_id)
   {
     return Ptr<IMap>(new Container<Key, int8_t>(vm, type_id));
   }
-  case TypeIds::Byte:
+  case TypeIds::UInt8:
   {
     return Ptr<IMap>(new Container<Key, uint8_t>(vm, type_id));
   }
@@ -239,7 +239,7 @@ inline Ptr<IMap> outer(TypeId key_type_id, TypeId value_type_id, VM *vm, TypeId 
   {
     return inner<int8_t>(value_type_id, vm, type_id);
   }
-  case TypeIds::Byte:
+  case TypeIds::UInt8:
   {
     return inner<uint8_t>(value_type_id, vm, type_id);
   }

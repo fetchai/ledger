@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "ledger/transaction_verifier.hpp"
+
 #include "core/logger.hpp"
 #include "core/threading.hpp"
 #include "ledger/chain/transaction.hpp"

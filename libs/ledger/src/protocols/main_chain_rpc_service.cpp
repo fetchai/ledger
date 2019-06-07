@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "ledger/protocols/main_chain_rpc_service.hpp"
+
 #include "core/byte_array/encoders.hpp"
 #include "core/logger.hpp"
 #include "core/serializers/byte_array_buffer.hpp"

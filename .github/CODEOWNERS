@@ -1,5 +1,5 @@
 # Default catch all
-*                   @uvue-git/ledger-dev
+*                   @fetchai/ledger
 
 # External dependencies
 docker-images       @ejfitzgerald @n-hutton
@@ -13,22 +13,26 @@ cmake/              @ejfitzgerald @n-hutton
 Jenkinsfile         @ejfitzgerald @n-hutton @wkaluza
 
 # Core Libraries
-apps/               @uvue-git/ledger-core
-libs/core/          @uvue-git/ledger-core
-libs/crypto/        @uvue-git/ledger-core
-libs/http/          @uvue-git/ledger-core
-libs/ledger/        @uvue-git/ledger-core
-libs/meta/          @uvue-git/ledger-core
-libs/metrics/       @uvue-git/ledger-core
-libs/miner/         @uvue-git/ledger-core
-libs/network/       @uvue-git/ledger-core
-libs/storage/       @uvue-git/ledger-core
-libs/testing/       @uvue-git/ledger-core
-libs/variant/       @uvue-git/ledger-core
+apps/               @fetchai/ledger-core
+
+libs/crypto/        @fetchai/ledger-core
+libs/http/          @fetchai/ledger-core
+libs/ledger/        @fetchai/ledger-core
+libs/meta/          @fetchai/ledger-core
+libs/metrics/       @fetchai/ledger-core
+libs/miner/         @fetchai/ledger-core
+libs/network/       @fetchai/ledger-core
+libs/storage/       @fetchai/ledger-core
+libs/testing/       @fetchai/ledger-core
+libs/variant/       @fetchai/ledger-core
+
+# Common Libraries
+libs/core/          @fetchai/ledger
+libs/vm/            @fetchai/ledger
+libs/vm_modules/    @fetchai/ledger
+libs/vectorise/     @fetchai/ledger
 
 # VM + ML Libraries
-libs/ml/            @uvue-git/ledger-vm
-libs/python/        @uvue-git/ledger-vm
-libs/vm/            @uvue-git/ledger-vm
-libs/vectorise/     @uvue-git/ledger-vm
-libs/math/          @uvue-git/ledger-vm
+libs/ml/            @fetchai/ledger-vm
+libs/python/        @fetchai/ledger-vm
+libs/math/          @fetchai/ledger-vm

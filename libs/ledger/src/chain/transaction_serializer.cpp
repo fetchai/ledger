@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "ledger/chain/transaction_serializer.hpp"
+
 #include "core/byte_array/byte_array.hpp"
 #include "core/serializers/byte_array_buffer.hpp"
 #include "crypto/sha256.hpp"
@@ -216,7 +217,7 @@ ByteArray TransactionSerializer::SerializePayload(Transaction const &tx)
 
   uint8_t header1{0};
 
-  uint8_t const contract_mode_field = static_cast<uint8_t>(Map(contract_mode) << 6u);
+  const auto contract_mode_field = static_cast<uint8_t>(Map(contract_mode) << 6u);
 
   header1 |= contract_mode_field;
   header1 |= static_cast<uint8_t>(signalled_signatures) & 0x3Fu;

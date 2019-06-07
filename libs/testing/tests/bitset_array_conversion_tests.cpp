@@ -55,7 +55,6 @@ TEST(array_bitset_test, test_conversion_bitset_to_array_and_back)
 
     DefaultArray interm_arr{ToArray<DefaultArray::value_type>(current_bitset)};
     arr_keys.emplace_back(interm_arr);
-    std::cout << interm_arr << std::endl;
 
     DefaultBitset regenerated_bitset{ToBitset(interm_arr)};
 

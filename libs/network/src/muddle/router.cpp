@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "network/muddle/router.hpp"
+
 #include "core/byte_array/encoders.hpp"
 #include "core/serializers/byte_array.hpp"
 #include "core/serializers/byte_array_buffer.hpp"

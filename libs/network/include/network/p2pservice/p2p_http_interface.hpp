@@ -242,6 +242,7 @@ private:
       block["proof"]        = "0x" + b->proof.header().ToHex();
       block["miner"]        = b->body.miner.display();
       block["blockNumber"]  = b->body.block_number;
+      block["timestamp"]    = b->body.timestamp;
 
       if (include_transactions)
       {
