@@ -64,7 +64,7 @@ ExecStatus SynergeticExecutionManager::PrepareWorkQueue(Block const &current, Bl
     dag_->GetDAGNode(nodes, node);
 
     FETCH_LOG_INFO(LOGGING_NAME, " -> 0x", nodes.ToHex(), " type: ", DAGNodeTypeToString(node.type),
-                   " creator: ", node.creator.display());
+                   " creator: ", node.identity.identifier().ToBase64());
   }
   FETCH_LOG_INFO(LOGGING_NAME, "=======================================");
 #endif

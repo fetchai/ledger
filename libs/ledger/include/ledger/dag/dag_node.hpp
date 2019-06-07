@@ -50,13 +50,7 @@ struct DAGNode
   using DigestList     = std::vector<Digest>;
   using HasherType     = crypto::SHA256;
 
-  DAGNode()
-  {
-    // TODO(HUT): forced to do this so addresses serialize something - fix
-    Address::RawAddress dummy_address;
-    creator = Address(dummy_address);
-  }
-
+  DAGNode() = default;
   DAGNode(DAGNode const &rhs)            = default;
   DAGNode(DAGNode &&rhs)                 = default;
   DAGNode &operator=(DAGNode const &rhs) = default;
@@ -75,7 +69,6 @@ struct DAGNode
   /// @{
   uint64_t         type{INVALID_NODE};  ///< type of the DAG node
   DigestList       previous;            ///< previous nodes.
-  Address          creator;
   ConstByteArray   contents;            ///< payload to be deserialised.
   Digest           contract_digest;       ///< The contract which this node is associated with.
   crypto::Identity identity;            ///< identity of the creator (empty for now)
@@ -116,7 +109,6 @@ struct DAGNode
 
     buf << type;
     buf << previous;
-    buf << creator;
     buf << contents;
     buf << contract_digest;
     buf << identity;
@@ -147,7 +139,6 @@ void Serialize(T &serializer, DAGNode const &node)
 {
   serializer << node.type;
   serializer << node.previous;
-  serializer << node.creator;
   serializer << node.contents;
   serializer << node.contract_digest;
   serializer << node.identity;
@@ -162,7 +153,6 @@ void Deserialize(T &serializer, DAGNode &node)
 {
   serializer >> node.type;
   serializer >> node.previous;
-  serializer >> node.creator;
   serializer >> node.contents;
   serializer >> node.contract_digest;
   serializer >> node.identity;

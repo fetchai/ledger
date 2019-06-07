@@ -189,6 +189,8 @@ private:
   bool SetEpochInStorage(std::string const &, DAGEpoch const &, bool);
   void Flush();
 
+  void DeleteTip(DAGTipID tip);
+
     mutable Mutex mutex_{__LINE__, __FILE__};
   };
 

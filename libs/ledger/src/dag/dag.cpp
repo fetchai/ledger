@@ -166,7 +166,6 @@ void DAG::AddTransaction(Transaction const &tx, DAGTypes type)
   new_node->type                    = DAGNode::DATA;
   new_node->SetContents(tx);
   new_node->contract_digest         = tx.contract_digest().address();
-  new_node->creator                 = tx.from();
   new_node->contents                = tx.data();
   SetReferencesInternal(new_node);
 
@@ -220,6 +219,8 @@ void DAG::SetReferencesInternal(DAGNodePtr node)
     prevs.push_back(previous_epoch_.hash);
     oldest_epoch = most_recent_epoch_;
     wei = 0;
+
+    FETCH_LOG_INFO(LOGGING_NAME, "First case epoch is: ", oldest_epoch);
     return;
   }
 
@@ -237,7 +238,11 @@ void DAG::SetReferencesInternal(DAGNodePtr node)
 
     while(prevs.size() < PARAMETER_REFERENCES_TO_BE_TIP && !dag_ids.empty())
     {
-      auto &rnd_tip_ref = all_tips_[dag_ids.back()];
+      // extract the current tip id from the vector
+      auto const current_tip_id = dag_ids.back();
+      dag_ids.pop_back();
+
+      auto rnd_tip_ref = all_tips_.at(current_tip_id);
       prevs.push_back(rnd_tip_ref->dag_node_reference);
 
       if(wei <= rnd_tip_ref->weight)
@@ -245,12 +250,12 @@ void DAG::SetReferencesInternal(DAGNodePtr node)
         wei = rnd_tip_ref->weight + 1;
       }
 
-      if(oldest_epoch < rnd_tip_ref->oldest_epoch_referenced)
+      if(oldest_epoch > rnd_tip_ref->oldest_epoch_referenced)
       {
         oldest_epoch = rnd_tip_ref->oldest_epoch_referenced;
       }
 
-      dag_ids.pop_back();
+      DeleteTip(current_tip_id);
     }
   }
   else
@@ -270,7 +275,7 @@ void DAG::SetReferencesInternal(DAGNodePtr node)
         wei = node->weight + 1;
       }
 
-      if(oldest_epoch < node->oldest_epoch_referenced)
+      if(oldest_epoch > node->oldest_epoch_referenced)
       {
         oldest_epoch = node->oldest_epoch_referenced;
       }
@@ -278,6 +283,13 @@ void DAG::SetReferencesInternal(DAGNodePtr node)
       node_pool_copy.erase(node_pool_copy.begin());
     }
   }
+
+  if (oldest_epoch == std::numeric_limits<uint64_t>::max())
+  {
+    int i = 1 + 2;
+  }
+
+  FETCH_LOG_INFO(LOGGING_NAME, "Othrr case epoch is: ", oldest_epoch);
 }
 
 bool DAG::AddDAGNode(DAGNode node)
@@ -1162,4 +1174,12 @@ bool DAG::HasEpoch(EpochHash const &hash)
 {
   DAGEpoch dummy;
   return all_stored_epochs_.Get(storage::ResourceID(hash), dummy);
+}
+
+void DAG::DeleteTip(DAGTipID tip_id)
+{
+  auto tip = all_tips_.at(tip_id);
+
+  tips_.erase(tip->dag_node_reference);
+  all_tips_.erase(tip_id);
 }
