@@ -26,6 +26,7 @@
 #include "ledger/testing/block_generator.hpp"
 
 #include <gtest/gtest.h>
+#include <iostream>
 #include <memory>
 #include <random>
 
@@ -146,10 +147,17 @@ TEST_P(MainChainTests, CheckSideChainSwitching)
   }
 
   // add the main chain blocks
-  for (std::size_t i{}; i < main.size() - 1; ++i)
+  ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*main.front()));
+  ASSERT_EQ(chain_->GetHeaviestBlockHash(), side.back()->body.hash);
+
+  ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*main[1]));
+  if (main[1]->body.block_number > side.back()->body.block_number)
   {
-    ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*main[i])) << "when adding main block no. " << i;
-    ASSERT_EQ(chain_->GetHeaviestBlockHash(), side.back()->body.hash);  // because of hash values
+    ASSERT_EQ(chain_->GetHeaviestBlockHash(), main[1]->body.hash);
+  }
+  else
+  {
+    ASSERT_EQ(chain_->GetHeaviestBlockHash(), side.back()->body.hash);
   }
 
   ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*main.back()));
