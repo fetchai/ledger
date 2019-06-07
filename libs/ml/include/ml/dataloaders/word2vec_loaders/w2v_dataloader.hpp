@@ -72,6 +72,9 @@ private:
   UnigramTable                               unigram_table_;
   bool                                       mode_;
 
+  fetch::math::Tensor<T> t_;
+  fetch::math::Tensor<T> label_;
+
   std::vector<SizeType>    StringsToIndices(std::vector<std::string> const &strings);
   std::vector<std::string> PreprocessString(std::string const &s);
 };
@@ -90,6 +93,8 @@ W2VLoader<T>::W2VLoader(SizeType window_size, SizeType negative_samples, bool mo
   , window_size_(window_size)
   , negative_samples_(negative_samples)
   , mode_(mode)
+  , t_({window_size_ * 2, 1})
+  , label_({negative_samples_, 1})
 {}
 
 /**
@@ -236,11 +241,7 @@ void W2VLoader<T>::GetNext(ReturnType &t)
 template <typename T>
 typename W2VLoader<T>::ReturnType W2VLoader<T>::GetNext()
 {
-  // TODO - cant we instantiate these tensors once as member variables rather than continuously
-  // recreate them?
-  fetch::math::Tensor<T> t({window_size_ * 2, 1});
-  fetch::math::Tensor<T> label({negative_samples_, 1});
-  ReturnType             p(t, label);
+  ReturnType p(t_, label_);
   GetNext(p);
   return p;
 }
