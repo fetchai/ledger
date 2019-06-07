@@ -61,6 +61,8 @@ public:
   // Actions
   math::BigUnsigned CreateHashedNonce() const;
 
+  byte_array::ConstByteArray originating_node;
+
 private:
 
   Digest            contract_digest_{};

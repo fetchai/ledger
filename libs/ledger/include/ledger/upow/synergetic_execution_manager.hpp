@@ -70,7 +70,7 @@ private:
   void ExecuteItem(WorkQueuePtr const &queue, uint64_t block, std::size_t num_lanes);
 
   // System Components
-  DAGPtr                dag_;
+  DAGPtr dag_;
 
   /// @name Protected State
   /// @{

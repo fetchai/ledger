@@ -55,7 +55,21 @@ ExecStatus SynergeticExecutionManager::PrepareWorkQueue(Block const &current, Bl
 
   auto const &epoch = current.body.dag_epoch;
 
-  FETCH_LOG_DEBUG(LOGGING_NAME, "Preparing work queue for epoch: ", epoch.block_number);
+#if 1
+  FETCH_LOG_INFO(LOGGING_NAME, "==== EPOCH ", epoch.block_number, " ====");
+  for (auto const &nodes : epoch.all_nodes)
+  {
+    // lookup the node
+    DAGNode node{};
+    dag_->GetDAGNode(nodes, node);
+
+    FETCH_LOG_INFO(LOGGING_NAME, " -> 0x", nodes.ToHex(), " type: ", DAGNodeTypeToString(node.type),
+                   " creator: ", node.creator.display());
+  }
+  FETCH_LOG_INFO(LOGGING_NAME, "=======================================");
+#endif
+
+  FETCH_LOG_INFO(LOGGING_NAME, "Preparing work queue for epoch: ", epoch.block_number);
 
   // Step 1. loop through all the solutions which were presented in this epoch
   WorkMap work_map{};
@@ -78,9 +92,13 @@ ExecStatus SynergeticExecutionManager::PrepareWorkQueue(Block const &current, Bl
       solution_queue = std::make_shared<WorkQueue>();
     }
 
+    FETCH_LOG_INFO(LOGGING_NAME, "Enqueue work: 0x", work->originating_node.ToHex(), " score: ", work->score());
+
     // add the work to the queue
     solution_queue->push(std::move(work));
   }
+
+  FETCH_LOG_INFO(LOGGING_NAME, "Preparing work queue for epoch: ", epoch.block_number, " (complete)");
 
   // Step 2. Update the final queue
   {
