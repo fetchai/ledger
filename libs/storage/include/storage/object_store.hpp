@@ -52,7 +52,7 @@ public:
   using serializer_type = serializers::TypedByteArrayBuffer;
   class Iterator;
 
-  ObjectStore(){};
+  ObjectStore()                       = default;
   ObjectStore(ObjectStore const &rhs) = delete;
   ObjectStore(ObjectStore &&rhs)      = delete;
   ObjectStore &operator=(ObjectStore const &rhs) = delete;
@@ -124,7 +124,7 @@ public:
   void Set(ResourceID const &rid, type const &object)
   {
     std::lock_guard<mutex::Mutex> lock(mutex_);
-    return LocklessSet(rid, object);
+    LocklessSet(rid, object);
   }
 
   /**
@@ -134,7 +134,8 @@ public:
    *
    * @param: f The closure
    */
-  void WithLock(std::function<void()> const &f)
+  template <typename F>
+  void WithLock(F &&f)
   {
     std::lock_guard<mutex::Mutex> lock(mutex_);
     f();

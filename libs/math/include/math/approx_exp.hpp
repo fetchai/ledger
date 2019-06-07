@@ -161,8 +161,7 @@ class ApproxExpImplementation<0, C, OF>
   double                  b_               = exponent_offset_ * multiplier_pow2_ - C;
 
 public:
-  ApproxExpImplementation()
-  {}
+  ApproxExpImplementation()                                     = default;
   ApproxExpImplementation(ApproxExpImplementation const &other) = delete;
   ApproxExpImplementation operator=(ApproxExpImplementation const &other) = delete;
 

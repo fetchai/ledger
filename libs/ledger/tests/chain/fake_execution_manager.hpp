@@ -29,8 +29,6 @@ public:
   using Block  = fetch::ledger::Block;
   using Digest = fetch::ledger::Digest;
 
-  static constexpr char const *LOGGING_NAME = "FakeExexMgr";
-
   explicit FakeExecutionManager(FakeStorageUnit &storage);
   ~FakeExecutionManager() override = default;
 
