@@ -208,11 +208,11 @@ typename T::Type Optimiser<T, C>::Run(fetch::ml::DataLoader<ArrayType, ArrayType
     // Compute and apply gradient
     ApplyGradients(batch_size);
 
-    FETCH_LOG_INFO("ML_LIB", "Loss: ", loss);
+    FETCH_LOG_INFO("ML_LIB", "Batch loss: ", loss);
 
     step += batch_size;
+    loss_sum += loss;
   }
-  loss_sum += loss;
   epoch_++;
 
   return loss_sum;
