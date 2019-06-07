@@ -109,7 +109,7 @@ public:
   using StateMachine = core::StateMachine<State>;
 
   // Construction / Destruction
-  BlockCoordinator(MainChain &chain, DAGPtr dag, ExecutionManagerInterface &execution_manager,
+  BlockCoordinator(MainChain &chain, DAGPtr const &dag, ExecutionManagerInterface &execution_manager,
                    StorageUnitInterface &storage_unit, BlockPackerInterface &packer,
                    BlockSinkInterface &block_sink, TransactionStatusCache &status_cache,
                    core::FeatureFlags const &features, ProverPtr const &prover,

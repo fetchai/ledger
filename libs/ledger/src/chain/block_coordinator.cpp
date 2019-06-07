@@ -39,24 +39,23 @@ namespace fetch {
 namespace ledger {
 namespace {
 
-  using fetch::byte_array::ToBase64;
+using fetch::byte_array::ToBase64;
 
-  using ScheduleStatus = fetch::ledger::ExecutionManagerInterface::ScheduleStatus;
-  using ExecutionState = fetch::ledger::ExecutionManagerInterface::State;
-  using SynergeticExecMgrPtr = std::unique_ptr<SynergeticExecutionManagerInterface>;
-  using SynergeticMinerPtr = std::unique_ptr<SynergeticMinerInterface>;
-  using ProverPtr = BlockCoordinator::ProverPtr;
-  using DAGPtr                 = std::shared_ptr<ledger::DAG>;
+using ScheduleStatus       = fetch::ledger::ExecutionManagerInterface::ScheduleStatus;
+using ExecutionState       = fetch::ledger::ExecutionManagerInterface::State;
+using SynergeticExecMgrPtr = std::unique_ptr<SynergeticExecutionManagerInterface>;
+using SynergeticMinerPtr   = std::unique_ptr<SynergeticMinerInterface>;
+using ProverPtr            = BlockCoordinator::ProverPtr;
+using DAGPtr               = std::shared_ptr<ledger::DAG>;
 
-  // Constants
-  const std::chrono::milliseconds TX_SYNC_NOTIFY_INTERVAL{1000};
-  const std::chrono::milliseconds EXEC_NOTIFY_INTERVAL{500};
-  const std::chrono::seconds      NOTIFY_INTERVAL{10};
-  const std::chrono::seconds      WAIT_BEFORE_ASKING_FOR_MISSING_TX_INTERVAL{30};
-  const std::chrono::seconds      WAIT_FOR_TX_TIMEOUT_INTERVAL{30};
-  const uint32_t                  THRESHOLD_FOR_FAST_SYNCING{100u};
-  const std::size_t               DIGEST_LENGTH_BYTES{32};
-
+// Constants
+const std::chrono::milliseconds TX_SYNC_NOTIFY_INTERVAL{1000};
+const std::chrono::milliseconds EXEC_NOTIFY_INTERVAL{500};
+const std::chrono::seconds      NOTIFY_INTERVAL{10};
+const std::chrono::seconds      WAIT_BEFORE_ASKING_FOR_MISSING_TX_INTERVAL{30};
+const std::chrono::seconds      WAIT_FOR_TX_TIMEOUT_INTERVAL{30};
+const uint32_t                  THRESHOLD_FOR_FAST_SYNCING{100u};
+const std::size_t               DIGEST_LENGTH_BYTES{32};
 
 SynergeticExecMgrPtr CreateSynergeticExecutor(core::FeatureFlags const &features, DAGPtr dag, StorageUnitInterface &storage_unit)
 {
@@ -65,8 +64,7 @@ SynergeticExecMgrPtr CreateSynergeticExecutor(core::FeatureFlags const &features
   if (features.IsEnabled("synergetic"))
   {
     execution_mgr = std::make_unique<SynergeticExecutionManager>(
-        dag, storage_unit, 1u,
-        [&storage_unit]() { return std::make_shared<SynergeticExecutor>(storage_unit); });
+        dag, 1u, [&storage_unit]() { return std::make_shared<SynergeticExecutor>(storage_unit); });
   }
 
   return execution_mgr;
@@ -79,7 +77,7 @@ SynergeticExecMgrPtr CreateSynergeticExecutor(core::FeatureFlags const &features
  * @param chain The reference to the main change
  * @param execution_manager  The reference to the execution manager
  */
-BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag,
+BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr const &dag,
                                    ExecutionManagerInterface &execution_manager,
                                    StorageUnitInterface &storage_unit, BlockPackerInterface &packer,
                                    BlockSinkInterface &    block_sink,
