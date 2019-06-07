@@ -87,7 +87,7 @@ void CombinatorialAuction::Mine(std::size_t random_seed, std::size_t run_time)
 
   for (std::size_t i = 0; i < run_time; ++i)
   {
-`    for (std::size_t j = 0; j < bids_.size(); ++j)
+    for (std::size_t j = 0; j < bids_.size(); ++j)
     {
       prev_active_ = active_.Copy();
       prev_reward  = TotalBenefit();
