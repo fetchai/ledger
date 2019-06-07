@@ -167,12 +167,12 @@ void W2VModel<ArrayType>::UpdateLearningRate(SizeType i, SizeType iter, SizeType
 template <typename ArrayType>
 void W2VModel<ArrayType>::Train(SizeType iter, SizeType print_frequency, bool cbow)
 {
-//  if (cbow)
-//  {
-//    word_vector_.Reshape({embeddings_size_, 1});
-//    error_words_  = ArrayType(word_vector_.shape());
-//    error_signal_ = ArrayType({SizeType(negative_), 1});
-//  }
+  //  if (cbow)
+  //  {
+  //    word_vector_.Reshape({embeddings_size_, 1});
+  //    error_words_  = ArrayType(word_vector_.shape());
+  //    error_signal_ = ArrayType({SizeType(negative_), 1});
+  //  }
   word_vector_.Reshape({embeddings_size_, 1});
   error_words_  = ArrayType(word_vector_.shape());
   error_signal_ = ArrayType({SizeType(negative_), 1});
@@ -200,7 +200,7 @@ void W2VModel<ArrayType>::Train(SizeType iter, SizeType print_frequency, bool cb
     }
 
     // Getting context and target
-    auto sample  = data_loader_.GetNext();
+    auto sample = data_loader_.GetNext();
 
     if (cbow)
     {
@@ -228,7 +228,7 @@ void W2VModel<ArrayType>::CBOWTrain(ArrayType &context, ArrayType &target)
   ///////////////////////
 
   // dynamic window means that there will often be some invalid samples to ignore
-    SizeType valid_samples = 0;
+  SizeType valid_samples = 0;
 
   // Average Embeddings: context -> words
   auto output_view = word_vector_.View(0);
@@ -336,12 +336,10 @@ void W2VModel<ArrayType>::CBOWTrain(ArrayType &context, ArrayType &target)
     auto input = gradient_weights_.View(r);
     auto ret   = weights_.View(r);  // embeddings.View(r);
 
-    ret.data().in_parallel().Apply(
-        range,
-        [rate](VectorRegisterType const &a, VectorRegisterType const &b, VectorRegisterType &c) {
-          c = b + a * rate;
-        },
-        input.data(), ret.data());
+    ret.data().in_parallel().Apply(range,
+                                   [rate](VectorRegisterType const &a, VectorRegisterType const &b,
+                                          VectorRegisterType &c) { c = b + a * rate; },
+                                   input.data(), ret.data());
     input.data().in_parallel().Apply([zero](VectorRegisterType &a) { a = zero; });
   }
 
@@ -362,32 +360,11 @@ void W2VModel<ArrayType>::CBOWTrain(ArrayType &context, ArrayType &target)
   }
 
   updated_rows_embeddings_.clear();
-
 }
 
 template <typename ArrayType>
 void W2VModel<ArrayType>::SGNSTrain(ArrayType const &context, ArrayType const &target)
 {
-
-//  // get context words
-//  // for each context word
-//  {
-//    // get 25 negative sample words
-//    // for each negative sample word
-//    {
-//    // f = target_weights * embeddings
-//    // g = sigmoid(f)
-//    // error_words_ = g * target_weights
-//    // target_weights = g * embeddings
-//    }
-//
-//    // embeddings += error_words_
-//  }
-
-
-
-
-
   for (DataType const &cur_context_word : context)
   {
     if (cur_context_word >= 0)
@@ -425,11 +402,10 @@ void W2VModel<ArrayType>::SGNSTrain(ArrayType const &context, ArrayType const &t
         {
           DataType f     = error_signal_(cur_neg_sample, cur_example);
           DataType label = (cur_neg_sample == 0) ? 1 : 0;
-          auto sm    = static_cast<DataType>(static_cast<DataType>(fexp_(f) / (1. + fexp_(f))));
+          auto     sm    = static_cast<DataType>(static_cast<DataType>(fexp_(f) / (1. + fexp_(f))));
           error_signal_.Set(cur_neg_sample, cur_example, label - sm);
         }
       }
-
 
       ///////////////////////
       // BACKWARD
@@ -443,7 +419,6 @@ void W2VModel<ArrayType>::SGNSTrain(ArrayType const &context, ArrayType const &t
       auto error_signal_view = error_words_.View(0);
       auto view1 = gradient_embeddings_.View(static_cast<fetch::math::SizeType>(cur_context_word));
       PolyfillInlineAdd(view1, error_signal_view);
-
 
       // Embeddings: target Backward
       j = 0;
@@ -464,7 +439,8 @@ void W2VModel<ArrayType>::SGNSTrain(ArrayType const &context, ArrayType const &t
       // STEP
       ///////////////////////
 
-      // TODO: original implementation has a new set of 25 random samples for each context value. This requires an update to dataloader
+      // TODO: original implementation has a new set of 25 random samples for each context value.
+      // This requires an update to dataloader
 
       // Embeddings: step for all weights
       float learning_rate      = alpha_;
@@ -480,9 +456,8 @@ void W2VModel<ArrayType>::SGNSTrain(ArrayType const &context, ArrayType const &t
 
         ret.data().in_parallel().Apply(
             range,
-            [rate](VectorRegisterType const &a, VectorRegisterType const &b, VectorRegisterType &c) {
-              c = b + a * rate;
-            },
+            [rate](VectorRegisterType const &a, VectorRegisterType const &b,
+                   VectorRegisterType &c) { c = b + a * rate; },
             input.data(), ret.data());
         input.data().in_parallel().Apply([zero](VectorRegisterType &a) { a = zero; });
       }
@@ -501,151 +476,6 @@ void W2VModel<ArrayType>::SGNSTrain(ArrayType const &context, ArrayType const &t
       }
     }
   }
-
-
-
-
-
-
-
-  ///////////////////////
-  /// FORWARD
-  ///////////////////////
-
-//  // dynamic window means that there will often be some invalid samples to ignore
-//  SizeType valid_samples = 0;
-//
-//  // assign context embeddings
-//  // Embeddings: context -> words
-//  word_vector_.Reshape(
-//      {embeddings_size_, context.size()});  // reshape to maximum possible context size
-//  SizeType word_vector_idx = 0;
-//  for (DataType const &i : context)
-//  {
-//    auto output_view = word_vector_.View(word_vector_idx);
-//    if (i >= 0)
-//    {
-//      Assign(output_view, embeddings_.View(fetch::math::SizeType(i)));
-//      valid_samples++;
-//    }
-//    word_vector_idx++;
-//  }
-//  word_vector_.Reshape({embeddings_size_, valid_samples});  // reshape back to only valid samples
-//  error_words_.Reshape(word_vector_.shape());
-//  error_signal_.Reshape({SizeType(negative_), valid_samples});
-//
-//  // assign target weights (Embeddings: target -> weights)
-//  SizeType j = 0;
-//
-//  for (DataType const &i : target)
-//  {
-//    auto view1 = target_weights_.View(j);
-//    auto view2 = weights_.View(fetch::math::SizeType(i));
-//
-//    Assign(view1, view2);
-//    j++;
-//  }
-//
-//  // MatrixMultiply: Forward
-//  fetch::math::TransposeDot(target_weights_, word_vector_, error_signal_);
-//
-//  ///////////////////////
-//  // ERROR
-//  ///////////////////////
-//  for (SizeType cur_neg_sample = 0; cur_neg_sample < negative_; cur_neg_sample++)
-//  {
-//    for (SizeType cur_example = 0; cur_example < error_signal_.shape()[1]; cur_example++)
-//    {
-//      DataType f     = error_signal_(cur_neg_sample, cur_example);
-//      DataType label = (cur_neg_sample == 0) ? 1 : 0;
-//      DataType sm    = static_cast<DataType>(static_cast<DataType>(fexp_(f) / (1. + fexp_(f))));
-//      error_signal_.Set(cur_neg_sample, cur_example, label - sm);
-//    }
-//  }
-//
-//  ///////////////////////
-//  // BACKWARD
-//  ///////////////////////
-//
-//  // MatrixMultiply: Backward
-//  fetch::math::Dot(target_weights_, error_signal_, error_words_);
-//  fetch::math::DotTranspose(word_vector_, error_signal_, error_target_weights_);
-//
-//  // Embeddings: Backward
-//  SizeType word_count_idx = 0;
-//  for (DataType const &i : context)
-//  {
-//    if (i >= 0)
-//    {
-//      auto error_signal_view = error_words_.View(word_count_idx);
-//
-//      auto ii = static_cast<fetch::math::SizeType>(i);
-//      updated_rows_embeddings_.push_back(ii);
-//
-//      auto view1 = gradient_embeddings_.View(ii);
-//      PolyfillInlineAdd(view1, error_signal_view);
-//
-//      word_count_idx++;
-//    }
-//  }
-//
-//  // Embeddings: Backward
-//  j = 0;
-//  for (DataType const &i : target)
-//  {
-//    auto ii = fetch::math::SizeType(double(i));
-//    updated_rows_weights_.push_back(ii);
-//
-//    auto view1 = gradient_weights_.View(fetch::math::SizeType(double(i)));
-//    auto view2 = error_target_weights_.View(j);
-//
-//    PolyfillInlineAdd(view1, view2);
-//
-//    j++;
-//  }
-//
-//  ///////////////////////
-//  // STEP
-//  ///////////////////////
-//
-//  // Embeddings: Step in
-//  float learning_rate      = alpha_;
-//  using VectorRegisterType = typename fetch::math::TensorView<DataType>::VectorRegisterType;
-//  fetch::memory::TrivialRange range(0, std::size_t(gradient_weights_.height()));
-//  VectorRegisterType          rate(learning_rate);
-//  VectorRegisterType          zero(static_cast<DataType>(0));
-//
-//  for (auto const &r : updated_rows_weights_)
-//  {
-//    auto input = gradient_weights_.View(r);
-//    auto ret   = weights_.View(r);  // embeddings.View(r);
-//
-//    ret.data().in_parallel().Apply(
-//        range,
-//        [rate](VectorRegisterType const &a, VectorRegisterType const &b, VectorRegisterType &c) {
-//          c = b + a * rate;
-//        },
-//        input.data(), ret.data());
-//    input.data().in_parallel().Apply([zero](VectorRegisterType &a) { a = zero; });
-//  }
-//
-//  updated_rows_weights_.clear();
-//
-//  // Embeddings: Step
-//  for (auto const &r : updated_rows_embeddings_)
-//  {
-//    auto it1 = (gradient_embeddings_.View(r)).begin();
-//    auto it2 = (embeddings_.View(r)).begin();
-//    while (it1.is_valid())
-//    {
-//      *it2 += (*it1 * learning_rate);
-//      *it1 = 0;
-//      ++it1;
-//      ++it2;
-//    }
-//  }
-//
-//  updated_rows_embeddings_.clear();
 }
 
 /**
