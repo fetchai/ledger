@@ -1,0 +1,8 @@
+//
+// Created by jiri on 07/06/19.
+//
+
+#ifndef FETCH_BATCHWISE_FLATTEN_HPP
+#define FETCH_BATCHWISE_FLATTEN_HPP
+
+#endif //FETCH_BATCHWISE_FLATTEN_HPP
