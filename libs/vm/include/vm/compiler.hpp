@@ -21,6 +21,9 @@
 #include "vm/ir_builder.hpp"
 #include "vm/parser.hpp"
 
+#include <string>
+#include <vector>
+
 namespace fetch {
 namespace vm {
 
@@ -29,7 +32,7 @@ class Module;
 class Compiler
 {
 public:
-  Compiler(Module *module);
+  explicit Compiler(Module *module);
   ~Compiler();
   bool Compile(std::string const &source, std::string const &name, IR &ir,
                std::vector<std::string> &errors);

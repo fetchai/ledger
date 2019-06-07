@@ -26,6 +26,5 @@ class MockFileObject
   : public fetch::storage::FileObject<FakeRandomAccessStack<fetch::storage::FileBlockType<>>>
 {
 public:
-  MockFileObject()
-  {}
+  MockFileObject() = default;
 };

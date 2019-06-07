@@ -50,7 +50,8 @@ static bool IsSameBlock(Block const &a, Block const &b)
   return (a.body.hash == b.body.hash) && (a.body.previous_hash == b.body.previous_hash) &&
          (a.body.merkle_hash == b.body.merkle_hash) &&
          (a.body.block_number == b.body.block_number) && (a.body.miner == b.body.miner) &&
-         (a.body.log2_num_lanes == b.body.log2_num_lanes) && (a.body.slices == b.body.slices) &&
+         (a.body.log2_num_lanes == b.body.log2_num_lanes) &&
+         (a.body.timestamp == b.body.timestamp) && (a.body.slices == b.body.slices) &&
          (a.proof == b.proof) && (a.nonce == b.nonce);
 }
 
@@ -193,7 +194,7 @@ TEST_P(MainChainTests, CheckChainBlockInvalidation)
         << "when adding branch3's block no. " << block->body.hash;
   }
 
-  // add the two more branches growing in length
+  // and the two more branches growing in length
   auto youngest_block_age{branch3.size() - 1};
   auto best_block{branch3.back()};
 

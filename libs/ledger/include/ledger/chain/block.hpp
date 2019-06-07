@@ -44,7 +44,6 @@ public:
 
   struct Body
   {
-    // TODO(private issue 496): Populate the state hash
     Digest   hash;               ///< The hash of the block
     Digest   previous_hash;      ///< The hash of the previous block
     Digest   merkle_hash;        ///< The merkle state hash across all shards
@@ -52,6 +51,7 @@ public:
     Address  miner;              ///< The identity of the generated miner
     uint32_t log2_num_lanes{0};  ///< The log2(number of lanes)
     Slices   slices;             ///< The slice lists
+    uint64_t timestamp{0u};      ///< The number of seconds elapsed since the Unix epoch
   };
 
   /// @name Block Contents
@@ -75,6 +75,7 @@ public:
   // Helper functions
   std::size_t GetTransactionCount() const;
   void        UpdateDigest();
+  void        UpdateTimestamp();
 };
 
 /**
@@ -88,7 +89,7 @@ template <typename T>
 void Serialize(T &serializer, Block::Body const &body)
 {
   serializer << body.hash << body.previous_hash << body.merkle_hash << body.block_number
-             << body.miner << body.log2_num_lanes << body.slices;
+             << body.miner << body.log2_num_lanes << body.slices << body.timestamp;
 }
 
 /**
@@ -102,7 +103,7 @@ template <typename T>
 void Deserialize(T &serializer, Block::Body &body)
 {
   serializer >> body.hash >> body.previous_hash >> body.merkle_hash >> body.block_number >>
-      body.miner >> body.log2_num_lanes >> body.slices;
+      body.miner >> body.log2_num_lanes >> body.slices >> body.timestamp;
 }
 
 /**
