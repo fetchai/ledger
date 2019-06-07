@@ -200,7 +200,7 @@ void DAG::AddWork(Work const &solution)
   SetReferencesInternal(new_node);
   new_node->Finalise();
 
-  FETCH_LOG_INFO(LOGGING_NAME, "!!! Work for contract: 0x", new_node->contract_digest.ToHex(), " score: ", solution.score());
+  FETCH_LOG_INFO(LOGGING_NAME, "!!! Work for contract: 0x", new_node->contract_digest.ToHex(), " score: ", solution.score(), " (id: 0x", new_node->hash.ToHex(), ")");
 
   /* new_node->signature = signer.Sign(new_node->hash); */ // TODO(HUT): signing correctly
 
@@ -406,6 +406,9 @@ bool DAG::GetWork(ConstByteArray const &hash, Work &work)
       work.UpdateDigest(node.contract_digest);
       work.UpdateIdentity(node.identity);
 
+      // debug
+      work.originating_node = hash;
+
       success = true;
     }
     catch (std::exception const &ex)
@@ -605,13 +608,7 @@ DAGEpoch DAG::CreateEpoch(uint64_t block_number)
   {
     dag_node_to_add = node_pool_.at(dag_node_hash);
 
-    if(dag_node_to_add->type == DAGNode::TX)
-    {
-      Transaction contents;
-      dag_node_to_add->GetContents(contents);
-      ret.tx_digests.insert(contents.digest());
-    }
-    else if (dag_node_to_add->type == DAGNode::WORK)
+    if (dag_node_to_add->type == DAGNode::WORK)
     {
       ret.solutions.insert(dag_node_to_add->hash);
     }
@@ -997,11 +994,10 @@ bool DAG::SatisfyEpoch(DAGEpoch &epoch)
       return false;
     }
 
-    if(dag_node_to_add->type == DAGNode::TX)
+    // TODO(EJF): Needed?
+    if (dag_node_to_add->type == DAGNode::WORK)
     {
-      Transaction contents;
-      dag_node_to_add->GetContents(contents);
-      epoch.tx_digests.insert(contents.digest());
+      epoch.solutions.insert(dag_node_to_add->hash);
     }
   }
 

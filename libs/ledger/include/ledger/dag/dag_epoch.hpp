@@ -44,9 +44,6 @@ struct DAGEpoch
   // map of dag node hash to dag node
   std::set<ConstByteArray>   all_nodes;
 
-  // Useful to pass info around
-  std::set<ConstByteArray> tx_digests; // TODO(EJF): Not really sure this is useful
-
   bool Contains(ConstByteArray const &digest) const
   {
     return all_nodes.find(digest) != all_nodes.end();

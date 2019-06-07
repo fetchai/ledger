@@ -68,7 +68,6 @@ struct DAGNode
     GENESIS      = 1,   //< Used to identify the genesis DAG node
     WORK         = 2,   //< Indicates that work is stored in the contents
     DATA         = 3,   //< DAG contains data that can be used inside the contract.
-    TX           = 4,   //< Contains a TX intended to set up a problem
     INVALID_NODE = 255  //< The node is not valid (default on construction)
   };
 
@@ -161,6 +160,28 @@ void Deserialize(T &serializer, DAGNode &node)
   serializer >> node.signature;
   serializer >> node.oldest_epoch_referenced;
   serializer >> node.weight;
+}
+
+constexpr char const *DAGNodeTypeToString(uint64_t type)
+{
+  char const *text = "Unknown";
+
+  switch (type)
+  {
+  case DAGNode::GENESIS:
+    text = "Genesis";
+    break;
+  case DAGNode::WORK:
+    text = "Work";
+    break;
+  case DAGNode::DATA:
+    text = "Data";
+    break;
+  default:
+    break;
+  }
+
+  return text;
 }
 
 }  // namespace ledger
