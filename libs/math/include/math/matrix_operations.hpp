@@ -926,5 +926,36 @@ fetch::math::meta::IfIsMathArray<ArrayType, void> BatchwiseFlatten(ArrayType con
   }
 }
 
+template <typename ArrayType>
+fetch::math::meta::IfIsMathArray<ArrayType, void> BatchwiseAdd(ArrayType const &A,
+                                                               ArrayType const &B, ArrayType &ret)
+{
+  // Test if batch dimensions are equal
+  // assert(ret.shape().at(ret.shape().size() - 1) == A.shape().at(A.shape().size() - 1));
+
+  SizeType A_batch_dimension   = A.shape().size() - 1;
+  SizeType B_batch_dimension   = B.shape().size() - 1;
+  SizeType ret_batch_dimension = ret.shape().size() - 1;
+  SizeType batch_size          = A.shape().at(A_batch_dimension);
+
+  for (SizeType i{0}; i < batch_size; i++)
+  {
+    auto A_slice   = A.Slice(i, A_batch_dimension);
+    auto B_slice   = B.Slice(0, B_batch_dimension);
+    auto ret_slice = ret.Slice(i, ret_batch_dimension);
+
+    auto A_slice_it   = A_slice.begin();
+    auto B_slice_it   = B_slice.begin();
+    auto ret_slice_it = ret_slice.begin();
+    while (A_slice_it.is_valid())
+    {
+      *ret_slice_it = *A_slice_it + *B_slice_it;
+      ++A_slice_it;
+      ++B_slice_it;
+      ++ret_slice_it;
+    }
+  }
+}
+
 }  // namespace math
 }  // namespace fetch
