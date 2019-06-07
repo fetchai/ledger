@@ -439,8 +439,8 @@ void W2VModel<ArrayType>::SGNSTrain(ArrayType const &context, ArrayType const &t
       // STEP
       ///////////////////////
 
-      // TODO: original implementation has a new set of 25 random samples for each context value.
-      // This requires an update to dataloader
+      // TODO(1157) original implementation has a new set of 25 random samples for each context
+      // value. but we're using a single set of 25 random samples for one who dynamic window
 
       // Embeddings: step for all weights
       float learning_rate      = alpha_;

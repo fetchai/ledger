@@ -66,7 +66,7 @@ std::vector<std::pair<typename ArrayType::SizeType, typename ArrayType::Type>> K
   // compute distances
   for (SizeType i = 0; i < array.shape().at(data_axis); ++i)
   {
-    typename ArrayType::Type d = Distance(vec, array.Slice(i, 1).Copy());
+    DataType d = Distance(vec, array.Slice(i, data_axis).Copy());
     similarities.emplace_back(i, d);
   }
 

@@ -160,7 +160,6 @@ void W2VLoader<T>::Reset()
 template <typename T>
 void W2VLoader<T>::RemoveInfrequent(SizeType min)
 {
-  // TODO: rework - creating a new_loader not terribly efficient
   W2VLoader new_loader(window_size_, negative_samples_, mode_);
   std::map<SizeType, std::pair<std::string, SizeType>> reverse_vocab;
   for (auto const &kvp : vocab_.data)
