@@ -773,8 +773,8 @@ TEST(FixedPointTest, Exponential_16_16)
   avg_error /= static_cast<double>(iterations);
   EXPECT_NEAR(max_error, 0.0, 10 * tolerance);
   EXPECT_NEAR(avg_error, 0.0, tolerance);
-  std::cout << "Exp: max error = " << max_error << std::endl;
-  std::cout << "Exp: avg error = " << avg_error << std::endl;
+  // std::cout << "Exp: max error = " << max_error << std::endl;
+  // std::cout << "Exp: avg error = " << avg_error << std::endl;
 }
 
 TEST(FixedPointTest, Exponential_32_32)
@@ -850,8 +850,8 @@ TEST(FixedPointTest, Exponential_32_32)
   avg_error /= static_cast<double>(iterations);
   EXPECT_NEAR(max_error, 0.0, 10 * tolerance);
   EXPECT_NEAR(avg_error, 0.0, tolerance);
-  std::cout << "Exp: max error = " << max_error << std::endl;
-  std::cout << "Exp: avg error = " << avg_error << std::endl;
+  // std::cout << "Exp: max error = " << max_error << std::endl;
+  // std::cout << "Exp: avg error = " << avg_error << std::endl;
 }
 
 TEST(FixedPointTest, Pow_16_16_positive_x)
@@ -894,8 +894,8 @@ TEST(FixedPointTest, Pow_16_16_positive_x)
   avg_error /= static_cast<double>(iterations);
   EXPECT_NEAR(max_error, 0.0, tolerance);
   EXPECT_NEAR(avg_error, 0.0, tolerance);
-  std::cout << "Pow: max error = " << max_error << std::endl;
-  std::cout << "Pow: avg error = " << avg_error << std::endl;
+  // std::cout << "Pow: max error = " << max_error << std::endl;
+  // std::cout << "Pow: avg error = " << avg_error << std::endl;
 }
 
 TEST(FixedPointTest, Pow_16_16_negative_x)
@@ -921,8 +921,8 @@ TEST(FixedPointTest, Pow_16_16_negative_x)
   avg_error /= static_cast<double>(iterations);
   EXPECT_NEAR(max_error, 0.0, tolerance);
   EXPECT_NEAR(avg_error, 0.0, tolerance);
-  std::cout << "Pow: max error = " << max_error << std::endl;
-  std::cout << "Pow: avg error = " << avg_error << std::endl;
+  // std::cout << "Pow: max error = " << max_error << std::endl;
+  // std::cout << "Pow: avg error = " << avg_error << std::endl;
 }
 
 TEST(FixedPointTest, Pow_32_32_positive_x)
@@ -965,8 +965,8 @@ TEST(FixedPointTest, Pow_32_32_positive_x)
   avg_error /= static_cast<double>(iterations);
   EXPECT_NEAR(max_error, 0.0, tolerance);
   EXPECT_NEAR(avg_error, 0.0, tolerance);
-  std::cout << "Pow: max error = " << max_error << std::endl;
-  std::cout << "Pow: avg error = " << avg_error << std::endl;
+  // std::cout << "Pow: max error = " << max_error << std::endl;
+  // std::cout << "Pow: avg error = " << avg_error << std::endl;
 }
 
 TEST(FixedPointTest, Pow_32_32_negative_x)
@@ -992,8 +992,8 @@ TEST(FixedPointTest, Pow_32_32_negative_x)
   avg_error /= static_cast<double>(iterations);
   EXPECT_NEAR(max_error, 0.0, tolerance);
   EXPECT_NEAR(avg_error, 0.0, tolerance);
-  std::cout << "Pow: max error = " << max_error << std::endl;
-  std::cout << "Pow: avg error = " << avg_error << std::endl;
+  // std::cout << "Pow: max error = " << max_error << std::endl;
+  // std::cout << "Pow: avg error = " << avg_error << std::endl;
 }
 
 TEST(FixedPointTest, Logarithm_16_16)
@@ -1041,8 +1041,8 @@ TEST(FixedPointTest, Logarithm_16_16)
   avg_error /= static_cast<double>(iterations);
   EXPECT_NEAR(max_error, 0.0, tolerance);
   EXPECT_NEAR(avg_error, 0.0, tolerance);
-  std::cout << "Log: max error = " << max_error << std::endl;
-  std::cout << "Log: avg error = " << avg_error << std::endl;
+  // std::cout << "Log: max error = " << max_error << std::endl;
+  // std::cout << "Log: avg error = " << avg_error << std::endl;
 }
 
 TEST(FixedPointTest, Logarithm_32_32)
@@ -1088,17 +1088,17 @@ TEST(FixedPointTest, Logarithm_32_32)
     iterations++;
     if (delta > tolerance)
     {
-      std::cout << "delta = " << delta << std::endl;
-      std::cout << "e = " << e << std::endl;
-      std::cout << "r = " << r << std::endl;
-      std::cout << "x = " << x << std::endl;
+      // std::cout << "delta = " << delta << std::endl;
+      // std::cout << "e = " << e << std::endl;
+      // std::cout << "r = " << r << std::endl;
+      // std::cout << "x = " << x << std::endl;
     }
   }
   avg_error /= static_cast<double>(iterations);
   EXPECT_NEAR(max_error, 0.0, tolerance);
   EXPECT_NEAR(avg_error, 0.0, tolerance);
-  std::cout << "Log: max error = " << max_error << std::endl;
-  std::cout << "Log: avg error = " << avg_error << std::endl;
+  // std::cout << "Log: max error = " << max_error << std::endl;
+  // std::cout << "Log: avg error = " << avg_error << std::endl;
 }
 
 TEST(FixedPointTest, Abs_16_16)
@@ -1319,8 +1319,8 @@ TEST(FixedPointTest, SQRT_16_16)
   avg_error /= static_cast<double>(iterations);
   EXPECT_NEAR(max_error, 0.0, 5 * tolerance);
   EXPECT_NEAR(avg_error, 0.0, tolerance);
-  std::cout << "Sqrt: max error = " << max_error << std::endl;
-  std::cout << "Sqrt: avg error = " << avg_error << std::endl;
+  // std::cout << "Sqrt: max error = " << max_error << std::endl;
+  // std::cout << "Sqrt: avg error = " << avg_error << std::endl;
 }
 
 TEST(FixedPointTest, SQRT_32_32)
@@ -1390,8 +1390,8 @@ TEST(FixedPointTest, SQRT_32_32)
   avg_error /= static_cast<double>(iterations);
   EXPECT_NEAR(max_error, 0.0, 10 * tolerance);
   EXPECT_NEAR(avg_error, 0.0, tolerance);
-  std::cout << "Sqrt: max error = " << max_error << std::endl;
-  std::cout << "Sqrt: avg error = " << avg_error << std::endl;
+  // std::cout << "Sqrt: max error = " << max_error << std::endl;
+  // std::cout << "Sqrt: avg error = " << avg_error << std::endl;
 }
 
 TEST(FixedPointTest, Sin_16_16)
@@ -1782,8 +1782,8 @@ TEST(FixedPointTest, Tan_16_16)
   avg_error /= static_cast<double>(iterations);
   // EXPECT_NEAR(max_error, 0.0, tolerance);
   EXPECT_NEAR(avg_error, 0.0, tolerance);
-  std::cout << "Tan: max error = " << max_error << std::endl;
-  std::cout << "Tan: avg error = " << avg_error << std::endl;
+  // std::cout << "Tan: max error = " << max_error << std::endl;
+  // std::cout << "Tan: avg error = " << avg_error << std::endl;
 }
 
 TEST(FixedPointTest, Tan_32_32)
@@ -1862,8 +1862,8 @@ TEST(FixedPointTest, Tan_32_32)
   avg_error /= static_cast<double>(iterations);
   // EXPECT_NEAR(max_error, 0.0, tolerance);
   EXPECT_NEAR(avg_error, 0.0, tolerance);
-  std::cout << "Tan: max error = " << max_error << std::endl;
-  std::cout << "Tan: avg error = " << avg_error << std::endl;
+  // std::cout << "Tan: max error = " << max_error << std::endl;
+  // std::cout << "Tan: avg error = " << avg_error << std::endl;
 }
 
 TEST(FixedPointTest, ASin_16_16)
@@ -1885,8 +1885,8 @@ TEST(FixedPointTest, ASin_16_16)
   avg_error /= static_cast<double>(iterations);
   EXPECT_NEAR(max_error, 0.0, tolerance);
   EXPECT_NEAR(avg_error, 0.0, tolerance);
-  std::cout << "ASin: max error = " << max_error << std::endl;
-  std::cout << "ASin: avg error = " << avg_error << std::endl;
+  // std::cout << "ASin: max error = " << max_error << std::endl;
+  // std::cout << "ASin: avg error = " << avg_error << std::endl;
 }
 
 TEST(FixedPointTest, ASin_32_32)
@@ -1908,8 +1908,8 @@ TEST(FixedPointTest, ASin_32_32)
   avg_error /= static_cast<double>(iterations);
   EXPECT_NEAR(max_error, 0.0, tolerance);
   EXPECT_NEAR(avg_error, 0.0, tolerance);
-  std::cout << "ASin: max error = " << max_error << std::endl;
-  std::cout << "ASin: avg error = " << avg_error << std::endl;
+  // std::cout << "ASin: max error = " << max_error << std::endl;
+  // std::cout << "ASin: avg error = " << avg_error << std::endl;
 }
 
 TEST(FixedPointTest, ACos_16_16)
@@ -1931,8 +1931,8 @@ TEST(FixedPointTest, ACos_16_16)
   avg_error /= static_cast<double>(iterations);
   EXPECT_NEAR(max_error, 0.0, tolerance);
   EXPECT_NEAR(avg_error, 0.0, tolerance);
-  std::cout << "ACos: max error = " << max_error << std::endl;
-  std::cout << "ACos: avg error = " << avg_error << std::endl;
+  // std::cout << "ACos: max error = " << max_error << std::endl;
+  // std::cout << "ACos: avg error = " << avg_error << std::endl;
 }
 
 TEST(FixedPointTest, ACos_32_32)
@@ -1954,8 +1954,8 @@ TEST(FixedPointTest, ACos_32_32)
   avg_error /= static_cast<double>(iterations);
   EXPECT_NEAR(max_error, 0.0, tolerance);
   EXPECT_NEAR(avg_error, 0.0, tolerance);
-  std::cout << "ACos: max error = " << max_error << std::endl;
-  std::cout << "ACos: avg error = " << avg_error << std::endl;
+  // std::cout << "ACos: max error = " << max_error << std::endl;
+  // std::cout << "ACos: avg error = " << avg_error << std::endl;
 }
 
 TEST(FixedPointTest, ATan_16_16)
@@ -1977,8 +1977,8 @@ TEST(FixedPointTest, ATan_16_16)
   avg_error /= static_cast<double>(iterations);
   EXPECT_NEAR(max_error, 0.0, tolerance);
   EXPECT_NEAR(avg_error, 0.0, tolerance);
-  std::cout << "ATan: max error = " << max_error << std::endl;
-  std::cout << "ATan: avg error = " << avg_error << std::endl;
+  // std::cout << "ATan: max error = " << max_error << std::endl;
+  // std::cout << "ATan: avg error = " << avg_error << std::endl;
 }
 
 TEST(FixedPointTest, ATan_32_32)
@@ -2000,8 +2000,8 @@ TEST(FixedPointTest, ATan_32_32)
   avg_error /= static_cast<double>(iterations);
   EXPECT_NEAR(max_error, 0.0, tolerance);
   EXPECT_NEAR(avg_error, 0.0, tolerance);
-  std::cout << "ATan: max error = " << max_error << std::endl;
-  std::cout << "ATan: avg error = " << avg_error << std::endl;
+  // std::cout << "ATan: max error = " << max_error << std::endl;
+  // std::cout << "ATan: avg error = " << avg_error << std::endl;
 }
 
 TEST(FixedPointTest, ATan2_16_16)
@@ -2027,8 +2027,8 @@ TEST(FixedPointTest, ATan2_16_16)
   avg_error /= static_cast<double>(iterations);
   EXPECT_NEAR(max_error, 0.0, tolerance);
   EXPECT_NEAR(avg_error, 0.0, tolerance);
-  std::cout << "ATan2: max error = " << max_error << std::endl;
-  std::cout << "ATan2: avg error = " << avg_error << std::endl;
+  // std::cout << "ATan2: max error = " << max_error << std::endl;
+  // std::cout << "ATan2: avg error = " << avg_error << std::endl;
 }
 
 TEST(FixedPointTest, ATan2_32_32)
@@ -2054,8 +2054,8 @@ TEST(FixedPointTest, ATan2_32_32)
   avg_error /= static_cast<double>(iterations);
   EXPECT_NEAR(max_error, 0.0, tolerance);
   EXPECT_NEAR(avg_error, 0.0, tolerance);
-  std::cout << "ATan2: max error = " << max_error << std::endl;
-  std::cout << "ATan2: avg error = " << avg_error << std::endl;
+  // std::cout << "ATan2: max error = " << max_error << std::endl;
+  // std::cout << "ATan2: avg error = " << avg_error << std::endl;
 }
 
 TEST(FixedPointTest, SinH_16_16)
@@ -2077,8 +2077,8 @@ TEST(FixedPointTest, SinH_16_16)
   avg_error /= static_cast<double>(iterations);
   EXPECT_NEAR(max_error, 0.0, tolerance);
   EXPECT_NEAR(avg_error, 0.0, tolerance);
-  std::cout << "SinH: max error = " << max_error << std::endl;
-  std::cout << "SinH: avg error = " << avg_error << std::endl;
+  // std::cout << "SinH: max error = " << max_error << std::endl;
+  // std::cout << "SinH: avg error = " << avg_error << std::endl;
 }
 
 TEST(FixedPointTest, SinH_32_32)
@@ -2100,8 +2100,8 @@ TEST(FixedPointTest, SinH_32_32)
   avg_error /= static_cast<double>(iterations);
   EXPECT_NEAR(max_error, 0.0, tolerance);
   EXPECT_NEAR(avg_error, 0.0, tolerance);
-  std::cout << "SinH: max error = " << max_error << std::endl;
-  std::cout << "SinH: avg error = " << avg_error << std::endl;
+  // std::cout << "SinH: max error = " << max_error << std::endl;
+  // std::cout << "SinH: avg error = " << avg_error << std::endl;
 }
 
 TEST(FixedPointTest, CosH_16_16)
@@ -2123,8 +2123,8 @@ TEST(FixedPointTest, CosH_16_16)
   avg_error /= static_cast<double>(iterations);
   EXPECT_NEAR(max_error, 0.0, tolerance);
   EXPECT_NEAR(avg_error, 0.0, tolerance);
-  std::cout << "CosH: max error = " << max_error << std::endl;
-  std::cout << "CosH: avg error = " << avg_error << std::endl;
+  // std::cout << "CosH: max error = " << max_error << std::endl;
+  // std::cout << "CosH: avg error = " << avg_error << std::endl;
 }
 
 TEST(FixedPointTest, CosH_32_32)
@@ -2146,8 +2146,8 @@ TEST(FixedPointTest, CosH_32_32)
   avg_error /= static_cast<double>(iterations);
   EXPECT_NEAR(max_error, 0.0, tolerance);
   EXPECT_NEAR(avg_error, 0.0, tolerance);
-  std::cout << "CosH: max error = " << max_error << std::endl;
-  std::cout << "CosH: avg error = " << avg_error << std::endl;
+  // std::cout << "CosH: max error = " << max_error << std::endl;
+  // std::cout << "CosH: avg error = " << avg_error << std::endl;
 }
 
 TEST(FixedPointTest, TanH_16_16)
@@ -2169,8 +2169,8 @@ TEST(FixedPointTest, TanH_16_16)
   avg_error /= static_cast<double>(iterations);
   EXPECT_NEAR(max_error, 0.0, tolerance);
   EXPECT_NEAR(avg_error, 0.0, tolerance);
-  std::cout << "TanH: max error = " << max_error << std::endl;
-  std::cout << "TanH: avg error = " << avg_error << std::endl;
+  // std::cout << "TanH: max error = " << max_error << std::endl;
+  // std::cout << "TanH: avg error = " << avg_error << std::endl;
 }
 
 TEST(FixedPointTest, TanH_32_32)
@@ -2192,8 +2192,8 @@ TEST(FixedPointTest, TanH_32_32)
   avg_error /= static_cast<double>(iterations);
   EXPECT_NEAR(max_error, 0.0, tolerance);
   EXPECT_NEAR(avg_error, 0.0, tolerance);
-  std::cout << "TanH: max error = " << max_error << std::endl;
-  std::cout << "TanH: avg error = " << avg_error << std::endl;
+  // std::cout << "TanH: max error = " << max_error << std::endl;
+  // std::cout << "TanH: avg error = " << avg_error << std::endl;
 }
 
 TEST(FixedPointTest, ASinH_16_16)
@@ -2215,8 +2215,8 @@ TEST(FixedPointTest, ASinH_16_16)
   avg_error /= static_cast<double>(iterations);
   EXPECT_NEAR(max_error, 0.0, tolerance);
   EXPECT_NEAR(avg_error, 0.0, tolerance);
-  std::cout << "ASinH: max error = " << max_error << std::endl;
-  std::cout << "ASinH: avg error = " << avg_error << std::endl;
+  // std::cout << "ASinH: max error = " << max_error << std::endl;
+  // std::cout << "ASinH: avg error = " << avg_error << std::endl;
 }
 
 TEST(FixedPointTest, ASinH_32_32)
@@ -2238,8 +2238,8 @@ TEST(FixedPointTest, ASinH_32_32)
   avg_error /= static_cast<double>(iterations);
   EXPECT_NEAR(max_error, 0.0, tolerance);
   EXPECT_NEAR(avg_error, 0.0, tolerance);
-  std::cout << "ASinH: max error = " << max_error << std::endl;
-  std::cout << "ASinH: avg error = " << avg_error << std::endl;
+  // std::cout << "ASinH: max error = " << max_error << std::endl;
+  // std::cout << "ASinH: avg error = " << avg_error << std::endl;
 }
 
 TEST(FixedPointTest, ACosH_16_16)
@@ -2261,8 +2261,8 @@ TEST(FixedPointTest, ACosH_16_16)
   avg_error /= static_cast<double>(iterations);
   EXPECT_NEAR(max_error, 0.0, tolerance);
   EXPECT_NEAR(avg_error, 0.0, tolerance);
-  std::cout << "ACosH: max error = " << max_error << std::endl;
-  std::cout << "ACosH: avg error = " << avg_error << std::endl;
+  // std::cout << "ACosH: max error = " << max_error << std::endl;
+  // std::cout << "ACosH: avg error = " << avg_error << std::endl;
 }
 
 TEST(FixedPointTest, ACosH_32_32)
@@ -2284,8 +2284,8 @@ TEST(FixedPointTest, ACosH_32_32)
   avg_error /= static_cast<double>(iterations);
   EXPECT_NEAR(max_error, 0.0, tolerance);
   EXPECT_NEAR(avg_error, 0.0, tolerance);
-  std::cout << "ACosH: max error = " << max_error << std::endl;
-  std::cout << "ACosH: avg error = " << avg_error << std::endl;
+  // std::cout << "ACosH: max error = " << max_error << std::endl;
+  // std::cout << "ACosH: avg error = " << avg_error << std::endl;
 }
 
 TEST(FixedPointTest, ATanH_16_16)
@@ -2309,8 +2309,8 @@ TEST(FixedPointTest, ATanH_16_16)
   avg_error /= static_cast<double>(iterations);
   EXPECT_NEAR(max_error, 0.0, 2 * tolerance);
   EXPECT_NEAR(avg_error, 0.0, tolerance);
-  std::cout << "ATamH: max error = " << max_error << std::endl;
-  std::cout << "ATanH: avg error = " << avg_error << std::endl;
+  // std::cout << "ATamH: max error = " << max_error << std::endl;
+  // std::cout << "ATanH: avg error = " << avg_error << std::endl;
 }
 
 TEST(FixedPointTest, ATanH_32_32)
@@ -2334,15 +2334,15 @@ TEST(FixedPointTest, ATanH_32_32)
   avg_error /= static_cast<double>(iterations);
   EXPECT_NEAR(max_error, 0.0, tolerance);
   EXPECT_NEAR(avg_error, 0.0, tolerance);
-  std::cout << "ATanH: max error = " << max_error << std::endl;
-  std::cout << "ATanH: avg error = " << avg_error << std::endl;
+  // std::cout << "ATanH: max error = " << max_error << std::endl;
+  // std::cout << "ATanH: avg error = " << avg_error << std::endl;
 }
 
 TEST(FixedPointTest, NanInfinity_16_16)
 {
-  std::cout << fp32::NaN << std::endl;
-  std::cout << fp32::POSITIVE_INFINITY << std::endl;
-  std::cout << fp32::NEGATIVE_INFINITY << std::endl;
+  // std::cout << fp32::NaN << std::endl;
+  // std::cout << fp32::POSITIVE_INFINITY << std::endl;
+  // std::cout << fp32::NEGATIVE_INFINITY << std::endl;
 
   fp32 m_inf{fp32::NEGATIVE_INFINITY};
   fp32 p_inf{fp32::POSITIVE_INFINITY};
@@ -2372,9 +2372,9 @@ TEST(FixedPointTest, NanInfinity_16_16)
 
 TEST(FixedPointTest, NanInfinity_32_32)
 {
-  std::cout << fp64::NaN << std::endl;
-  std::cout << fp64::POSITIVE_INFINITY << std::endl;
-  std::cout << fp64::NEGATIVE_INFINITY << std::endl;
+  // std::cout << fp64::NaN << std::endl;
+  // std::cout << fp64::POSITIVE_INFINITY << std::endl;
+  // std::cout << fp64::NEGATIVE_INFINITY << std::endl;
 
   fp64 m_inf{fp64::NEGATIVE_INFINITY};
   fp64 p_inf{fp64::POSITIVE_INFINITY};
