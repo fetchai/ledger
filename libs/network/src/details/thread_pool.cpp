@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "network/details/thread_pool.hpp"
+
 #include "core/threading.hpp"
 
 namespace fetch {

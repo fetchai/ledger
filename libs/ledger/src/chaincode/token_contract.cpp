@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "ledger/chaincode/token_contract.hpp"
+
 #include "core/byte_array/decoders.hpp"
 #include "crypto/fnv.hpp"
 #include "ledger/chain/transaction.hpp"

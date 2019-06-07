@@ -17,7 +17,9 @@
 //------------------------------------------------------------------------------
 
 #include "math/serializers/fixed_point.hpp"
+
 #include "core/serializers/byte_array_buffer.hpp"
+
 #include "gtest/gtest.h"
 
 namespace fetch {

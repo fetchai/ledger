@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "math/trigonometry.hpp"
+
 #include "core/random/lfg.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 

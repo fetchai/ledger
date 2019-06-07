@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "ledger/chain/json_transaction.hpp"
+
 #include "core/byte_array/decoders.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "ledger/chain/transaction_serializer.hpp"

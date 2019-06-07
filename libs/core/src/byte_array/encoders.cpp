@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/encoders.hpp"
+
 #include "core/byte_array/details/encode_decode.hpp"
 
 namespace fetch {

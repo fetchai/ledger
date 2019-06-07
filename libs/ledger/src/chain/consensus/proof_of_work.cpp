@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "ledger/chain/consensus/proof_of_work.hpp"
+
 #include "crypto/sha256.hpp"
 
 namespace fetch {

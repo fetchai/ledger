@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "ledger/storage_unit/transaction_store_sync_service.hpp"
+
 #include "core/macros.hpp"
 #include "ledger/chain/transaction_rpc_serializers.hpp"
 

@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "ledger/executor.hpp"
+
 #include "core/assert.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "core/logger.hpp"

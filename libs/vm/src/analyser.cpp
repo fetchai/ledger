@@ -20,6 +20,7 @@
 #include "vm/array.hpp"
 #include "vm/map.hpp"
 #include "vm/matrix.hpp"
+#include "vm/sharded_state.hpp"
 #include "vm/state.hpp"
 #include "vm/string.hpp"
 
@@ -61,7 +62,7 @@ void Analyser::Initialise()
   CreatePrimitiveType("Void", TypeIndex(typeid(void)), false, TypeIds::Void, void_type_);
   CreatePrimitiveType("Bool", TypeIndex(typeid(bool)), true, TypeIds::Bool, bool_type_);
   CreatePrimitiveType("Int8", TypeIndex(typeid(int8_t)), true, TypeIds::Int8, int8_type_);
-  CreatePrimitiveType("Byte", TypeIndex(typeid(uint8_t)), true, TypeIds::Byte, byte_type_);
+  CreatePrimitiveType("UInt8", TypeIndex(typeid(uint8_t)), true, TypeIds::UInt8, uint8_type_);
   CreatePrimitiveType("Int16", TypeIndex(typeid(int16_t)), true, TypeIds::Int16, int16_type_);
   CreatePrimitiveType("UInt16", TypeIndex(typeid(uint16_t)), true, TypeIds::UInt16, uint16_type_);
   CreatePrimitiveType("Int32", TypeIndex(typeid(int32_t)), true, TypeIds::Int32, int32_type_);
@@ -94,9 +95,9 @@ void Analyser::Initialise()
   EnableOperator(bool_type_, Operator::Equal);
   EnableOperator(bool_type_, Operator::NotEqual);
 
-  TypePtrArray const integer_types = {int8_type_,  byte_type_,   int16_type_, uint16_type_,
+  TypePtrArray const integer_types = {int8_type_,  uint8_type_,  int16_type_, uint16_type_,
                                       int32_type_, uint32_type_, int64_type_, uint64_type_};
-  TypePtrArray const number_types  = {int8_type_,    byte_type_,   int16_type_, uint16_type_,
+  TypePtrArray const number_types  = {int8_type_,    uint8_type_,  int16_type_, uint16_type_,
                                      int32_type_,   uint32_type_, int64_type_, uint64_type_,
                                      float32_type_, float64_type_};
   for (auto const &type : number_types)
@@ -144,6 +145,9 @@ void Analyser::Initialise()
                      map_type_);
   CreateTemplateType("State", TypeIndex(typeid(IState)), {any_type_}, TypeIds::Unknown,
                      state_type_);
+
+  CreateTemplateType("ShardedState", TypeIndex(typeid(IShardedState)), {any_type_},
+                     TypeIds::Unknown, sharded_state_type_);
 }
 
 void Analyser::UnInitialise()
@@ -164,7 +168,7 @@ void Analyser::UnInitialise()
   void_type_                = nullptr;
   bool_type_                = nullptr;
   int8_type_                = nullptr;
-  byte_type_                = nullptr;
+  uint8_type_               = nullptr;
   int16_type_               = nullptr;
   uint16_type_              = nullptr;
   int32_type_               = nullptr;
@@ -185,6 +189,8 @@ void Analyser::UnInitialise()
   array_type_               = nullptr;
   map_type_                 = nullptr;
   state_type_               = nullptr;
+  address_type_             = nullptr;
+  sharded_state_type_       = nullptr;
 }
 
 void Analyser::CreateClassType(std::string const &name, TypeIndex type_index)
@@ -963,7 +969,7 @@ bool Analyser::AnnotateExpression(ExpressionNodePtr const &node)
   }
   case NodeKind::UnsignedInteger8:
   {
-    SetRVExpression(node, byte_type_);
+    SetRVExpression(node, uint8_type_);
     break;
   }
   case NodeKind::Integer16:

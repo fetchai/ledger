@@ -19,6 +19,7 @@
 #include "math/tensor.hpp"
 #include "ml/ops/activation.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
+
 #include <gtest/gtest.h>
 
 template <typename T>
@@ -37,10 +38,9 @@ TYPED_TEST(LogSoftmaxTest, forward_test)
   using ArrayType     = TypeParam;
   using VecTensorType = typename fetch::ml::Ops<ArrayType>::VecTensorType;
 
-  ArrayType data = ArrayType::FromString("1, -2, 3, -4, 5, -6, 7, -8");
+  ArrayType data = ArrayType::FromString(R"(1, -2, 3, -4, 5, -6, 7, -8)");
   ArrayType gt   = ArrayType::FromString(
-      "-6.14520134, -9.14520134, -4.14520134, -11.14520134, -2.14520134, -13.14520134, "
-      "-0.14520134, -15.14520134");
+      R"(-6.14520134, -9.14520134, -4.14520134, -11.14520134, -2.14520134, -13.14520134, -0.14520134, -15.14520134)");
 
   fetch::ml::ops::LogSoftmax<ArrayType> op;
   ArrayType                             prediction(op.ComputeOutputShape({data}));
@@ -84,11 +84,10 @@ TYPED_TEST(LogSoftmaxTest, backward_test)
   using DataType  = typename TypeParam::Type;
   using ArrayType = TypeParam;
 
-  ArrayType data  = ArrayType::FromString("1, -2, 3, -4, 5, -6, 7, -8");
-  ArrayType error = ArrayType::FromString("0, 0, 0, 1, 1, 1, 0, 0");
+  ArrayType data  = ArrayType::FromString(R"(1, -2, 3, -4, 5, -6, 7, -8)");
+  ArrayType error = ArrayType::FromString(R"(0, 0, 0, 1, 1, 1, 0, 0)");
   ArrayType gt    = ArrayType::FromString(
-      "-6.4312e-03, -3.2019e-04, -4.7521e-02,  9.9996e-01,  6.4887e-01, 9.9999e-01, -2.59454, "
-      "-7.9368e-07");
+      R"(-6.4312e-03, -3.2019e-04, -4.7521e-02,  9.9996e-01,  6.4887e-01, 9.9999e-01, -2.59454, -7.9368e-07)");
 
   fetch::ml::ops::LogSoftmax<ArrayType> op;
   std::vector<ArrayType>                prediction = op.Backward({data}, error);
