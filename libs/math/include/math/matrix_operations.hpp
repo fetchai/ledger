@@ -907,5 +907,24 @@ fetch::math::meta::IfIsMathArray<ArrayType, void> DynamicStitch(ArrayType &     
   }
 }
 
+template <typename ArrayType>
+fetch::math::meta::IfIsMathArray<ArrayType, void> BatchwiseFlatten(ArrayType const &A,
+                                                                   ArrayType &      ret)
+{
+  // Test if batch dimensions are equal
+  assert(ret.shape().at(ret.shape().size() - 1) == A.shape().at(A.shape().size() - 1));
+
+  SizeType input_batch_dimension  = A.shape().size() - 1;
+  SizeType output_batch_dimension = ret.shape().size() - 1;
+  SizeType batch_size             = ret.shape().at(output_batch_dimension);
+
+  for (SizeType i{0}; i < batch_size; i++)
+  {
+    auto input_slice  = A.Slice(i, input_batch_dimension);
+    auto output_slice = ret.Slice(i, output_batch_dimension);
+    output_slice.Assign(input_slice);
+  }
+}
+
 }  // namespace math
 }  // namespace fetch
