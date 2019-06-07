@@ -33,9 +33,6 @@ FakeExecutionManager::FakeExecutionManager(FakeStorageUnit &storage)
 
 FakeExecutionManager::ScheduleStatus FakeExecutionManager::Execute(Block::Body const &block)
 {
-  FETCH_LOG_INFO(LOGGING_NAME, "Execute called. State: ", ToBase64(block.merkle_hash));
-
-  // if we have
   if (current_hash_.size())
   {
     return ScheduleStatus::ALREADY_RUNNING;
@@ -55,16 +52,11 @@ FakeExecutionManager::ScheduleStatus FakeExecutionManager::Execute(Block::Body c
 
 Digest FakeExecutionManager::LastProcessedBlock()
 {
-  FETCH_LOG_INFO(LOGGING_NAME, "LastProcessedBlock called");
-
   return last_processed_;
 }
 
 FakeExecutionManager::State FakeExecutionManager::GetState()
 {
-  FETCH_LOG_INFO(LOGGING_NAME, "GetState called");
-
-  // decrement the
   bool execution_complete{false};
   if (current_polls_)
   {
@@ -90,8 +82,6 @@ FakeExecutionManager::State FakeExecutionManager::GetState()
 
 bool FakeExecutionManager::Abort()
 {
-  FETCH_LOG_INFO(LOGGING_NAME, "Abort called");
-
   return false;
 }
 
