@@ -316,7 +316,7 @@ public:
   template <typename... Args>
   void Info(Args &&... args)
   {
-    Log(DefaultLogger::Level::INFO, nullptr, std::forward<Args>(args)...);
+    InfoWithName(nullptr, std::forward<Args>(args)...);
   }
 
   template <typename... Args>
@@ -328,7 +328,7 @@ public:
   template <typename... Args>
   void Warn(Args &&... args)
   {
-    Log(DefaultLogger::Level::WARNING, nullptr, std::forward<Args>(args)...);
+    WarnWithName(nullptr, std::forward<Args>(args)...);
   }
 
   template <typename... Args>
@@ -340,7 +340,7 @@ public:
   template <typename... Args>
   void Highlight(Args &&... args)
   {
-    Log(DefaultLogger::Level::HIGHLIGHT, nullptr, std::forward<Args>(args)...);
+    HighlightWithName(nullptr, std::forward<Args>(args)...);
   }
 
   template <typename... Args>
@@ -352,7 +352,7 @@ public:
   template <typename... Args>
   void Debug(Args &&... args)
   {
-    Log(DefaultLogger::Level::DEBUG, nullptr, std::forward<Args>(args)...);
+    DebugWithName(nullptr, std::forward<Args>(args)...);
   }
 
   template <typename... Args>
@@ -364,19 +364,11 @@ public:
   template <typename... Args>
   void Error(Args &&... args)
   {
-    std::lock_guard<std::mutex> lock(mutex_);
-    if (log_)
-    {
-      log_->StartEntry(DefaultLogger::Level::ERROR, nullptr, TopContextImpl());
-      Unroll<Args...>::Append(this, std::forward<Args>(args)...);
-      log_->CloseEntry(DefaultLogger::Level::ERROR);
-
-      StackTrace();
-    }
+    ErrorWithName(nullptr, std::forward<Args>(args)...);
   }
 
   template <typename... Args>
-  void DebugWithName(char const *name, Args &&... args)
+  void ErrorWithName(char const *name, Args &&... args)
   {
     std::lock_guard<std::mutex> lock(mutex_);
     if (log_)
