@@ -1,10 +1,12 @@
-DOCKER_IMAGE_NAME = 'gcr.io/organic-storm-201412/fetch-ledger-develop:v0.2.0'
+DOCKER_IMAGE_NAME = 'gcr.io/organic-storm-201412/fetch-ledger-develop:v0.3.0'
 HIGH_LOAD_NODE_LABEL = 'ledger'
 
 enum Platform
 {
   CLANG6('Clang 6', 'clang-6.0', 'clang++-6.0'),
-  GCC7  ('GCC 7',   'gcc',       'g++')
+  CLANG7('Clang 7', 'clang-7',   'clang++-7'  ),
+  GCC7  ('GCC 7',   'gcc-7',     'g++-7'      ),
+  GCC8  ('GCC 8',   'gcc-8',     'g++-8'      )
 
   public Platform(label, cc, cxx)
   {

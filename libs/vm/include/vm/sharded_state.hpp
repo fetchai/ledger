@@ -17,34 +17,30 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/meta/math_type_traits.hpp"
-#include "math/standard_functions/abs.hpp"
+#include "core/macros.hpp"
+#include "vm/state.hpp"
+#include "vm/vm.hpp"
 
 namespace fetch {
-namespace vm_modules {
+namespace vm {
 
-/**
- * method for taking the absolute of a value
- */
-template <typename T>
-fetch::math::meta::IfIsMath<T, T> Abs(fetch::vm::VM *, T const &a)
+class IShardedState : public Object
 {
-  T x;
-  fetch::math::Abs(a, x);
-  return x;
-}
+public:
+  // Factory
+  static Ptr<IShardedState> Constructor(VM *vm, TypeId type_id, Ptr<String> const &name);
+  static Ptr<IShardedState> Constructor(VM *vm, TypeId type_id, Ptr<Address> const &name);
 
-static void CreateAbs(fetch::vm::Module &module)
-{
-  module.CreateFreeFunction<int32_t>("Abs", &Abs<int32_t>);
-  module.CreateFreeFunction<float_t>("Abs", &Abs<float_t>);
-  module.CreateFreeFunction<double_t>("Abs", &Abs<double_t>);
-}
+  IShardedState(VM *vm, TypeId type_id)
+    : Object(vm, type_id)
+  {}
 
-inline void CreateAbs(std::shared_ptr<vm::Module> module)
-{
-  CreateAbs(*module.get());
-}
+  virtual TemplateParameter1 GetIndexedValue(Ptr<String> const &key)                    = 0;
+  virtual void SetIndexedValue(Ptr<String> const &key, TemplateParameter1 const &value) = 0;
 
-}  // namespace vm_modules
+  virtual TemplateParameter1 GetIndexedValue(Ptr<Address> const &key)                    = 0;
+  virtual void SetIndexedValue(Ptr<Address> const &key, TemplateParameter1 const &value) = 0;
+};
+
+}  // namespace vm
 }  // namespace fetch

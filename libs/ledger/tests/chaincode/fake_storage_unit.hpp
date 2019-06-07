@@ -46,7 +46,10 @@ public:
   Document GetOrCreate(ResourceAddress const &key) override
   {
     lock_guard_type lock(mutex_);
-    Document        doc;
+    FETCH_LOG_DEBUG(LOGGING_NAME, "GetOrCreate (key.address = ", key.address(),
+                    ", key.id[b64] = ", key.ToString(), ")");
+
+    Document doc;
 
     auto it = state_.find(key.id());
     if (it != state_.end())
@@ -65,6 +68,8 @@ public:
   {
     lock_guard_type lock(mutex_);
     Document        doc;
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Get (key.address = ", key.address(),
+                    ", key.id[b64] = ", key.ToString(), ")");
 
     auto it = state_.find(key.id());
     if (it != state_.end())
@@ -82,13 +87,19 @@ public:
   void Set(ResourceAddress const &key, StateValue const &value) override
   {
     lock_guard_type lock(mutex_);
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Set (key.address = ", key.address(),
+                    ", key.id[b64] = ", key.ToString(), ", value = ", value.ToBase64(), ")");
+
     state_[key.id()] = value;
   }
 
   bool Lock(ShardIndex shard) override
   {
     lock_guard_type lock(mutex_);
-    bool            success = false;
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Lock (key.address = ", key.address(),
+                    ", key.id[b64] = ", key.ToString(), ")");
+
+    bool success = false;
 
     bool const already_locked = locks_.find(shard) != locks_.end();
     if (!already_locked)
@@ -103,7 +114,10 @@ public:
   bool Unlock(ShardIndex shard) override
   {
     lock_guard_type lock(mutex_);
-    bool            success = false;
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Unlock (key.address = ", key.address(),
+                    ", key.id[b64] = ", key.ToString(), ")");
+
+    bool success = false;
 
     bool const already_locked = locks_.find(shard) != locks_.end();
     if (already_locked)

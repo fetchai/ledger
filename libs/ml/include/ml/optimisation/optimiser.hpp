@@ -115,6 +115,7 @@ typename T::Type Optimiser<T, C>::Run(std::vector<ArrayType> const &data, ArrayT
 
   DataType loss{0};
   DataType loss_sum{0};
+
   SizeType step{0};
   while (step < n_data)
   {
@@ -141,11 +142,12 @@ typename T::Type Optimiser<T, C>::Run(std::vector<ArrayType> const &data, ArrayT
     // Compute and apply gradient
     ApplyGradients(batch_size);
 
-    FETCH_LOG_INFO("ML_LIB", "Loss: ", loss);
+    FETCH_LOG_INFO("ML_LIB", "Batch loss: ", loss);
 
     step += batch_size;
+    loss_sum += loss;
   }
-  loss_sum += loss;
+
   epoch_++;
 
   return loss_sum;
