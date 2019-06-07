@@ -23,10 +23,9 @@
 #include "crypto/sha256.hpp"
 #include "ledger/chain/constants.hpp"
 
-#include <chrono>
+#include <cstddef>
 #include <cstdint>
-
-using namespace std::chrono;
+#include <ctime>
 
 namespace fetch {
 namespace ledger {
@@ -86,8 +85,7 @@ void Block::UpdateTimestamp()
 {
   if (body.previous_hash != GENESIS_DIGEST)
   {
-    const auto ms_since_epoch = duration_cast<milliseconds>(system_clock::now().time_since_epoch());
-    body.timestamp            = static_cast<uint64_t>(ms_since_epoch.count());
+    body.timestamp = static_cast<uint64_t>(std::time(nullptr));
   }
 }
 
