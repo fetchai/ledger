@@ -101,7 +101,7 @@ int main(int ac, char **av)
   Weights::Initialise(attention_vector_data, EMBEDDING_SIZE, SizeType{1});
   g->SetInput(attention_vector, attention_vector_data, false);
 
-  // Setting up the weights of FC1)
+  // Setting up the weights of FC1
   // Dimension: (EMBEDDING_SIZE, 3*EMBEDDING_SIZE)
   std::string fc1_weights = g->AddNode<Weights>("FullyConnectedWeights", {});
   ArrayType   fc1_weights_data(SizeVector({EMBEDDING_SIZE, 3 * EMBEDDING_SIZE}));
@@ -207,14 +207,10 @@ int main(int ac, char **av)
   std::string prediction_softmax_kernel =
       g->AddNode<MatrixMultiply>("PredictionSoftMaxKernel", {function_name_embedding, code_vector});
 
-  // Dimensions: (1, vocab_size_functions) = Transpose((vocab_size_functions, 1))
-  std::string prediction_softmax_kernel_T =
-      g->AddNode<Transpose>("PredictionSoftMaxKernelTransposed", {prediction_softmax_kernel});
-
   // (Softmax) Normalisation of the prediction
-  // Dimensions:  (1, vocab_size_functions)
+  // Dimensions:  (vocab_size_functions,1)
   std::string result = g->AddNode<fetch::ml::ops::Softmax<ArrayType>>(
-      "PredictionSoftMax", {prediction_softmax_kernel_T}, SizeType{0});
+      "PredictionSoftMax", {prediction_softmax_kernel}, SizeType{1});
 
   // Initialise Optimiser
   fetch::ml::optimisers::AdamOptimiser<ArrayType, fetch::ml::ops::CrossEntropy<ArrayType>>

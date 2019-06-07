@@ -88,7 +88,7 @@ Optimiser<T, C>::Optimiser(std::shared_ptr<Graph<T>>       graph,
 }
 
 /**
- * Does 1 training epoch using data and label Tensors
+ * Does 1 training epoch using label array and vector of data arrays
  * @tparam T ArrayType
  * @tparam C CriterionType
  * @param data training data

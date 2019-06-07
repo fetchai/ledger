@@ -269,26 +269,26 @@ C2VLoader<LabelType, DataType>::GetNext()
         context_positions.push_back(current_context_position);
       }
 
-      ArrayType source_word_tensor({this->max_contexts_});
-      ArrayType path_tensor({this->max_contexts_});
-      ArrayType target_word_tensor({this->max_contexts_});
+      ArrayType source_word_tensor({this->max_contexts_, 1});
+      ArrayType path_tensor({this->max_contexts_, 1});
+      ArrayType target_word_tensor({this->max_contexts_, 1});
 
       if (context_positions.size() <= this->max_contexts_)
       {
         for (uint64_t i{0}; i < context_positions.size(); i++)
         {
           source_word_tensor.Set(
-              i, static_cast<Type>(std::get<0>(this->data[context_positions[i]].second)));
-          path_tensor.Set(i,
+              i, 0, static_cast<Type>(std::get<0>(this->data[context_positions[i]].second)));
+          path_tensor.Set(i, 0,
                           static_cast<Type>(std::get<1>(this->data[context_positions[i]].second)));
           target_word_tensor.Set(
-              i, static_cast<Type>(std::get<2>(this->data[context_positions[i]].second)));
+              i, 0, static_cast<Type>(std::get<2>(this->data[context_positions[i]].second)));
         }
         for (uint64_t i{context_positions.size()}; i < this->max_contexts_; i++)
         {
-          source_word_tensor.Set(i, static_cast<Type>(this->word_to_idx_[EMPTY_CONTEXT_STRING]));
-          path_tensor.Set(i, static_cast<Type>(this->path_to_idx_[EMPTY_CONTEXT_STRING]));
-          target_word_tensor.Set(i, static_cast<Type>(this->word_to_idx_[EMPTY_CONTEXT_STRING]));
+          source_word_tensor.Set(i, 0, static_cast<Type>(this->word_to_idx_[EMPTY_CONTEXT_STRING]));
+          path_tensor.Set(i, 0, static_cast<Type>(this->path_to_idx_[EMPTY_CONTEXT_STRING]));
+          target_word_tensor.Set(i, 0, static_cast<Type>(this->word_to_idx_[EMPTY_CONTEXT_STRING]));
         }
       }
       else
@@ -296,20 +296,20 @@ C2VLoader<LabelType, DataType>::GetNext()
         for (uint64_t i{0}; i < this->max_contexts_; i++)
         {
           source_word_tensor.Set(
-              i, static_cast<Type>(std::get<0>(this->data[context_positions[i]].second)));
-          path_tensor.Set(i,
+              i, 0, static_cast<Type>(std::get<0>(this->data[context_positions[i]].second)));
+          path_tensor.Set(i, 0,
                           static_cast<Type>(std::get<1>(this->data[context_positions[i]].second)));
           target_word_tensor.Set(
-              i, static_cast<Type>(std::get<2>(this->data[context_positions[i]].second)));
+              i, 0, static_cast<Type>(std::get<2>(this->data[context_positions[i]].second)));
         }
       }
       ContextTensorTuple context_tensor_tuple = {source_word_tensor, path_tensor,
                                                  target_word_tensor};
 
-      ArrayType y_true_vec({1, function_name_counter().size() + 1});
+      ArrayType y_true_vec({function_name_counter().size() + 1, 1});
       y_true_vec.Fill(Type{0});
       // Preparing the y_true vector (one-hot-encoded)
-      y_true_vec.Set(Type{0}, old_function_index, Type{1});
+      y_true_vec.Set(old_function_index, Type{0}, Type{1});
 
       ContextTensorsLabelPair return_pair{y_true_vec, context_tensor_tuple};
 

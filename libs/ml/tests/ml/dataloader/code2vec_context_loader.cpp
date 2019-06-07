@@ -76,40 +76,40 @@ TEST(C2vLoaderTest, loader_test)
   typename C2VLoader<LabelType, ContextType>::ContextTensorsLabelPair training_pair =
       loader.GetNext();
 
-  EXPECT_EQ(training_pair.second[0].size(), max_contexts);
-  EXPECT_EQ(training_pair.second[1].size(), max_contexts);
-  EXPECT_EQ(training_pair.second[2].size(), max_contexts);
+  EXPECT_EQ(training_pair.second.at(0).size(), max_contexts);
+  EXPECT_EQ(training_pair.second.at(1).size(), max_contexts);
+  EXPECT_EQ(training_pair.second.at(2).size(), max_contexts);
 
-  EXPECT_EQ(training_pair.second[0][0], 1);
-  EXPECT_EQ(training_pair.second[0][1], 1);
-  EXPECT_EQ(training_pair.second[0][2], 2);
-  EXPECT_EQ(training_pair.second[0][3], 2);
-  EXPECT_EQ(training_pair.second[0][4], 3);
-  EXPECT_EQ(training_pair.second[0][5], 0);
-  EXPECT_EQ(training_pair.second[0][6], 0);
-  EXPECT_EQ(training_pair.second[0][7], 0);
-  EXPECT_EQ(training_pair.second[0][8], 0);
-  EXPECT_EQ(training_pair.second[0][9], 0);
+  EXPECT_EQ(training_pair.second.at(0).At(0, 0), 1);
+  EXPECT_EQ(training_pair.second.at(0).At(1, 0), 1);
+  EXPECT_EQ(training_pair.second.at(0).At(2, 0), 2);
+  EXPECT_EQ(training_pair.second.at(0).At(3, 0), 2);
+  EXPECT_EQ(training_pair.second.at(0).At(4, 0), 3);
+  EXPECT_EQ(training_pair.second.at(0).At(5, 0), 0);
+  EXPECT_EQ(training_pair.second.at(0).At(6, 0), 0);
+  EXPECT_EQ(training_pair.second.at(0).At(7, 0), 0);
+  EXPECT_EQ(training_pair.second.at(0).At(8, 0), 0);
+  EXPECT_EQ(training_pair.second.at(0).At(9, 0), 0);
 
-  EXPECT_EQ(training_pair.second[1][0], 1);
-  EXPECT_EQ(training_pair.second[1][1], 2);
-  EXPECT_EQ(training_pair.second[1][2], 3);
-  EXPECT_EQ(training_pair.second[1][3], 4);
-  EXPECT_EQ(training_pair.second[1][4], 5);
-  EXPECT_EQ(training_pair.second[1][5], 0);
-  EXPECT_EQ(training_pair.second[1][6], 0);
-  EXPECT_EQ(training_pair.second[1][7], 0);
-  EXPECT_EQ(training_pair.second[1][8], 0);
-  EXPECT_EQ(training_pair.second[1][9], 0);
+  EXPECT_EQ(training_pair.second.at(1).At(0, 0), 1);
+  EXPECT_EQ(training_pair.second.at(1).At(1, 0), 2);
+  EXPECT_EQ(training_pair.second.at(1).At(2, 0), 3);
+  EXPECT_EQ(training_pair.second.at(1).At(3, 0), 4);
+  EXPECT_EQ(training_pair.second.at(1).At(4, 0), 5);
+  EXPECT_EQ(training_pair.second.at(1).At(5, 0), 0);
+  EXPECT_EQ(training_pair.second.at(1).At(6, 0), 0);
+  EXPECT_EQ(training_pair.second.at(1).At(7, 0), 0);
+  EXPECT_EQ(training_pair.second.at(1).At(8, 0), 0);
+  EXPECT_EQ(training_pair.second.at(1).At(9, 0), 0);
 
-  EXPECT_EQ(training_pair.second[2][0], 2);
-  EXPECT_EQ(training_pair.second[2][1], 3);
-  EXPECT_EQ(training_pair.second[2][2], 3);
-  EXPECT_EQ(training_pair.second[2][3], 4);
-  EXPECT_EQ(training_pair.second[2][4], 4);
-  EXPECT_EQ(training_pair.second[2][5], 0);
-  EXPECT_EQ(training_pair.second[2][6], 0);
-  EXPECT_EQ(training_pair.second[2][7], 0);
-  EXPECT_EQ(training_pair.second[2][8], 0);
-  EXPECT_EQ(training_pair.second[2][9], 0);
+  EXPECT_EQ(training_pair.second.at(2).At(0, 0), 2);
+  EXPECT_EQ(training_pair.second.at(2).At(1, 0), 3);
+  EXPECT_EQ(training_pair.second.at(2).At(2, 0), 3);
+  EXPECT_EQ(training_pair.second.at(2).At(3, 0), 4);
+  EXPECT_EQ(training_pair.second.at(2).At(4, 0), 4);
+  EXPECT_EQ(training_pair.second.at(2).At(5, 0), 0);
+  EXPECT_EQ(training_pair.second.at(2).At(6, 0), 0);
+  EXPECT_EQ(training_pair.second.at(2).At(7, 0), 0);
+  EXPECT_EQ(training_pair.second.at(2).At(8, 0), 0);
+  EXPECT_EQ(training_pair.second.at(2).At(9, 0), 0);
 }
