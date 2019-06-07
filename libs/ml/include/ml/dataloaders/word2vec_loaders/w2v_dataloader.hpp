@@ -72,8 +72,8 @@ private:
   UnigramTable                               unigram_table_;
   bool                                       mode_;
 
-  fetch::math::Tensor<T> t_;
-  fetch::math::Tensor<T> label_;
+  fetch::math::Tensor<T> target_;  // reusable target tensor
+  fetch::math::Tensor<T> label_;   // reusable label tensor
 
   std::vector<SizeType>    StringsToIndices(std::vector<std::string> const &strings);
   std::vector<std::string> PreprocessString(std::string const &s);
@@ -93,7 +93,7 @@ W2VLoader<T>::W2VLoader(SizeType window_size, SizeType negative_samples, bool mo
   , window_size_(window_size)
   , negative_samples_(negative_samples)
   , mode_(mode)
-  , t_({window_size_ * 2, 1})
+  , target_({window_size_ * 2, 1})
   , label_({negative_samples_, 1})
 {}
 
@@ -228,7 +228,16 @@ void W2VLoader<T>::GetNext(ReturnType &t)
   // negative sampling
   for (SizeType i = 1; i < negative_samples_; ++i)
   {
-    t.second(i, 0) = T(unigram_table_.SampleNegative(static_cast<SizeType>(t.second(0, 0))));
+    SizeType neg_sample;
+    bool success = unigram_table_.SampleNegative(static_cast<SizeType>(t.second(0, 0)), neg_sample);
+    if (success)
+    {
+      t.second(i, 0) = static_cast<T>(neg_sample);
+    }
+    else
+    {
+      throw std::runtime_error("unigram table timed out looking for a negative sample for word index: " << t.second(0, 0) << ". check window size for sentence length and that data loaded correctly.");
+    }
   }
   current_word_++;
   if (current_word_ >= data_.at(current_sentence_).size() - (2 * window_size_))
@@ -241,7 +250,7 @@ void W2VLoader<T>::GetNext(ReturnType &t)
 template <typename T>
 typename W2VLoader<T>::ReturnType W2VLoader<T>::GetNext()
 {
-  ReturnType p(t_, label_);
+  ReturnType p(target_, label_);
   GetNext(p);
   return p;
 }

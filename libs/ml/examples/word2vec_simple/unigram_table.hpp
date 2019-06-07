@@ -24,17 +24,20 @@ namespace ml {
 
 class UnigramTable
 {
+  using SizeType = fetch::math::SizeType;
+
 public:
   UnigramTable(unsigned int size = 0, std::vector<uint64_t> const &frequencies = {});
 
-  void     Reset(unsigned int size, std::vector<uint64_t> const &frequencies);
-  uint64_t Sample();
-  uint64_t SampleNegative(uint64_t positive_index);
-  void     Reset();
+  void Reset(unsigned int size, std::vector<uint64_t> const &frequencies);
+  bool Sample(SizeType &ret);
+  bool SampleNegative(uint64_t positive_index, SizeType &ret);
+  void Reset();
 
 private:
   std::vector<uint64_t>                      data_;
   fetch::random::LinearCongruentialGenerator rng_;
+  SizeType                                   timeout_ = 100;
 };
 
 void UnigramTable::Reset(unsigned int size, std::vector<uint64_t> const &frequencies)
@@ -76,9 +79,10 @@ UnigramTable::UnigramTable(unsigned int size, std::vector<uint64_t> const &frequ
  * samples a random data point from the unigram table
  * @return
  */
-uint64_t UnigramTable::Sample()
+bool UnigramTable::Sample(SizeType &ret)
 {
-  return data_[rng_() % data_.size()];
+  ret = data_[rng_() % data_.size()];
+  return true;
 }
 
 /**
@@ -86,15 +90,21 @@ uint64_t UnigramTable::Sample()
  * @param positive_index
  * @return
  */
-uint64_t UnigramTable::SampleNegative(uint64_t positive_index)
+bool UnigramTable::SampleNegative(uint64_t positive_index, SizeType &ret)
 {
-  // TODO: make safe - either include a timeout or check if any negative indices exist
-  uint64_t sample = data_[rng_() % data_.size()];
-  while (sample == positive_index)
+  ret = data_[rng_() % data_.size()];
+
+  SizeType attempt_count = 0;
+  while (ret == positive_index)
   {
-    sample = data_[rng_() % data_.size()];
+    ret = data_[rng_() % data_.size()];
+    attempt_count++;
+    if (attempt_count > timeout_)
+    {
+      return false;
+    }
   }
-  return sample;
+  return true;
 }
 
 /**
