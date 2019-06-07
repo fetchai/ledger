@@ -413,7 +413,7 @@ bool DAG::GetWork(ConstByteArray const &hash, Work &work)
       work.UpdateIdentity(node.identity);
 
       // debug
-      work.originating_node = hash;
+      //work.originating_node = hash;
 
       success = true;
     }

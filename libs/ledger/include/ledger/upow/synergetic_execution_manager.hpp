@@ -46,7 +46,7 @@ public:
   using DAGNodePtr      = std::shared_ptr<DAGNode>;
 
   // Construction / Destruction
-  SynergeticExecutionManager(DAGPtr, StorageUnitInterface &, std::size_t num_executors, ExecutorFactory const &);
+  SynergeticExecutionManager(DAGPtr dag, std::size_t num_executors, ExecutorFactory const &);
   SynergeticExecutionManager(SynergeticExecutionManager const &) = delete;
   SynergeticExecutionManager(SynergeticExecutionManager &&) = delete;
   ~SynergeticExecutionManager() override = default;
@@ -71,7 +71,6 @@ private:
 
   // System Components
   DAGPtr                dag_;
-  StorageUnitInterface &storage_;
 
   /// @name Protected State
   /// @{

@@ -32,9 +32,8 @@ using ExecStatus = SynergeticExecutionManager::ExecStatus;
 
 } // namespace
 
-SynergeticExecutionManager::SynergeticExecutionManager(DAGPtr dag, StorageUnitInterface &storage, std::size_t num_executors, ExecutorFactory const &factory)
+SynergeticExecutionManager::SynergeticExecutionManager(DAGPtr dag, std::size_t num_executors, ExecutorFactory const &factory)
   : dag_{std::move(dag)}
-  , storage_{storage}
   , executors_(num_executors)
   , threads_{num_executors, "SynEx"}
 {
