@@ -130,6 +130,16 @@ struct DAGNode
     hasher.Update(buf.data());
     this->hash = hasher.Final();
   }
+
+  bool Verify() const
+  {
+    if(hash.empty())
+    {
+      return false;
+    }
+
+    return crypto::Verifier::Verify(identity, hash, signature);
+  }
 };
 
 template <typename T>

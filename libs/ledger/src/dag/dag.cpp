@@ -24,8 +24,9 @@
 
 using namespace fetch::ledger;
 
-DAG::DAG(std::string const &db_name, bool load)
+DAG::DAG(std::string const &db_name, bool load, CertificatePtr certificate)
   : db_name_{db_name}
+  , certificate_{certificate}
 {
 
   // Fallback is to reset everything
@@ -150,7 +151,7 @@ std::vector<DAGNode> DAG::GetLatest(bool previous_epoch_only)
   return ret;
 }
 
-void DAG::AddTransaction(Transaction const &tx, crypto::ECDSASigner const &signer, DAGTypes type)
+void DAG::AddTransaction(Transaction const &tx, DAGTypes type)
 {
   if(type != DAGTypes::DATA)
   {
@@ -169,9 +170,9 @@ void DAG::AddTransaction(Transaction const &tx, crypto::ECDSASigner const &signe
   new_node->contents                = tx.data();
   SetReferencesInternal(new_node);
 
-  new_node->identity                    = signer.identity();
+  new_node->identity                    = certificate_->identity();
   new_node->Finalise();
-  new_node->signature = signer.Sign(new_node->hash);
+  new_node->signature = certificate_->Sign(new_node->hash);
 
   PushInternal(new_node);
   recently_added_.push_back(*new_node);
@@ -192,13 +193,13 @@ void DAG::AddWork(Work const &solution)
   new_node->identity        = solution.miner();
   new_node->contents        = buffer.data();
 
-  /* new_node.SetObject(*solution); */ // TODO(HUT): implement
   SetReferencesInternal(new_node);
+
+  new_node->identity                    = certificate_->identity();
   new_node->Finalise();
+  new_node->signature = certificate_->Sign(new_node->hash);
 
   FETCH_LOG_INFO(LOGGING_NAME, "!!! Work for contract: 0x", new_node->contract_digest.ToHex(), " score: ", solution.score(), " (id: 0x", new_node->hash.ToHex(), ")");
-
-  /* new_node->signature = signer.Sign(new_node->hash); */ // TODO(HUT): signing correctly
 
   PushInternal(new_node);
   recently_added_.push_back(*new_node);
@@ -633,7 +634,6 @@ DAGEpoch DAG::CreateEpoch(uint64_t block_number)
 
   ret.Finalise();
 
-
   return ret;
 }
 
@@ -641,7 +641,7 @@ DAGEpoch DAG::CreateEpoch(uint64_t block_number)
 // TODO(HUT): const this.
 bool DAG::CommitEpoch(DAGEpoch new_epoch)
 {
-  FETCH_LOG_INFO(LOGGING_NAME, "Committing epoch: ", new_epoch.block_number);
+  FETCH_LOG_INFO(LOGGING_NAME, "Committing epoch: ", new_epoch.block_number, " Nodes: ", new_epoch.all_nodes.size());
 
   if(new_epoch.block_number != most_recent_epoch_ + 1)
   {
@@ -994,6 +994,7 @@ bool DAG::SatisfyEpoch(DAGEpoch &epoch)
 
   DAGNodePtr dag_node_to_add;
   bool success = true;
+  uint64_t missing_count = 0;
 
   for(auto const &node_hash : epoch.all_nodes)
   {
@@ -1004,6 +1005,7 @@ bool DAG::SatisfyEpoch(DAGEpoch &epoch)
       success = false;
       FETCH_LOG_INFO(LOGGING_NAME, "Found missing DAG node/hash: ", node_hash.ToBase64());
       missing_.push_back(node_hash);
+      missing_count++;
       continue;
     }
 
@@ -1019,6 +1021,8 @@ bool DAG::SatisfyEpoch(DAGEpoch &epoch)
       epoch.solutions.insert(dag_node_to_add->hash);
     }
   }
+
+  FETCH_LOG_INFO(LOGGING_NAME, "Node is missing : ", missing_count, " of ", epoch.all_nodes.size());
 
   // TODO(HUT): Verify Epoch here
 
@@ -1147,4 +1151,15 @@ bool DAG::SetEpochInStorage(std::string const &, DAGEpoch const &epoch, bool is_
   }
 
   return true;
+}
+
+uint64_t DAG::CurrentEpoch() const
+{
+  return most_recent_epoch_;
+}
+
+bool DAG::HasEpoch(EpochHash const &hash)
+{
+  DAGEpoch dummy;
+  return all_stored_epochs_.Get(storage::ResourceID(hash), dummy);
 }

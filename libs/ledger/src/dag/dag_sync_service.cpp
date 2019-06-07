@@ -109,7 +109,10 @@ DAGSyncService::State DAGSyncService::OnAddBroadcastRecent()
   {
     for(auto const &node : nodes_vector)
     {
-      dag_->AddDAGNode(node);
+      if(node.Verify())
+      {
+        dag_->AddDAGNode(node);
+      }
     }
   }
 
@@ -150,7 +153,16 @@ DAGSyncService::State DAGSyncService::OnResolveMissing()
     for (auto &dag_node : result.promised)
     {
       FETCH_LOG_DEBUG(LOGGING_NAME, "Node hash: ", dag_node.hash.ToBase64());
-      dag_->AddDAGNode(dag_node);
+
+      if(dag_node.Verify())
+      {
+        dag_->AddDAGNode(dag_node);
+      }
+      else
+      {
+        FETCH_LOG_INFO(LOGGING_NAME, "Node hash: ", dag_node.hash.ToBase64(), " not verified!");
+        exit(1);
+      }
     }
   }
 

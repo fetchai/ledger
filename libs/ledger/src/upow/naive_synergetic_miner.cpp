@@ -96,7 +96,10 @@ NaiveSynergeticMiner::State NaiveSynergeticMiner::OnMine()
 {
   state_machine_->Delay(std::chrono::milliseconds{200});
 
-  this->Mine();
+  if(is_mining_)
+  {
+  	this->Mine();
+  }
 
   return State::INITIAL;
 }
@@ -148,9 +151,16 @@ void NaiveSynergeticMiner::Mine()
       {
         // TODO(HUT): get signing correct
         dag_->AddWork(*solution);
+
+        FETCH_LOG_INFO(LOGGING_NAME, "Mined and added work! Epoch number: ", dag_->CurrentEpoch());
       }
     }
   }
+}
+
+void NaiveSynergeticMiner::EnableMining(bool enable)
+{
+  is_mining_ = enable;
 }
 
 SynergeticContractPtr NaiveSynergeticMiner::LoadContract(Digest const &contract_digest)

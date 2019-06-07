@@ -27,6 +27,7 @@
 #include "crypto/fnv.hpp"
 #include "crypto/identity.hpp"
 #include "crypto/sha256.hpp"
+#include "network/p2pservice/p2p_service.hpp"
 
 #include "ledger/dag/dag_node.hpp"
 #include "ledger/dag/dag_epoch.hpp"
@@ -81,6 +82,7 @@ private:
   using DAGTipPtr       = std::shared_ptr<DAGTip>;
   using DAGNodePtr      = std::shared_ptr<DAGNode>;
   using Mutex           = mutex::Mutex;
+  using CertificatePtr  = p2p::P2PService::CertificatePtr;
 
 public:
 
@@ -93,7 +95,7 @@ public:
   using MissingNodes      = std::vector<DAGNode>;
 
   DAG() = delete;
-  DAG(std::string const &db_name, bool);
+  DAG(std::string const &db_name, bool, CertificatePtr certificate);
   DAG(DAG const &rhs) = delete;
   DAG(DAG &&rhs)      = delete;
   DAG &operator       = (DAG const &rhs) = delete;
@@ -101,13 +103,13 @@ public:
 
   static constexpr char const *LOGGING_NAME = "DAG";
   static const uint64_t PARAMETER_REFERENCES_TO_BE_TIP    = 2; // Must be > 1 as 1 reference signifies pointing at a DAGEpoch
-  static const uint64_t EPOCH_VALIDITY_PERIOD             = 4;
+  static const uint64_t EPOCH_VALIDITY_PERIOD             = 2;
   static const uint64_t LOOSE_NODE_LIFETIME               = EPOCH_VALIDITY_PERIOD;
   static const uint64_t MAX_TIPS_IN_EPOCH                 = 30;
 
   // Interface for adding what internally becomes a dag node. Easy to modify this interface
   // so do as you like with it Ed
-  void AddTransaction(Transaction const &tx, crypto::ECDSASigner const &signer, DAGTypes type);
+  void AddTransaction(Transaction const &tx, DAGTypes type);
   void AddWork(Work const &work);
 
   // Create an epoch based on the current DAG (not committal)
@@ -118,6 +120,10 @@ public:
 
   // Revert to a previous/forward epoch
   bool RevertToEpoch(uint64_t);
+
+  uint64_t CurrentEpoch() const;
+
+  bool HasEpoch(EpochHash const &hash);
 
   // Make sure that the dag has all nodes for a certain epoch
   bool SatisfyEpoch(DAGEpoch &);
@@ -141,6 +147,7 @@ public:
 
 private:
 
+
   // Long term storage
   uint64_t              most_recent_epoch_ = 0;
   DAGEpoch              previous_epoch_;                      // Most recent epoch, not in deque for convenience
@@ -150,6 +157,7 @@ private:
   DAGNodeStore          finalised_dnodes_;                    // Once an epoch arrives, all dag nodes inbetween go here
   DAGEpoch              temp_recently_created_epoch_;         // Most recent epoch, not in deque for convenience
   std::string           db_name_;
+  CertificatePtr        certificate_;
 
   // volatile state
   std::unordered_map<DAGTipID, DAGTipPtr>               all_tips_;          // All tips are here

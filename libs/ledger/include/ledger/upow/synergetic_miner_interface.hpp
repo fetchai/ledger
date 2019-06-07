@@ -38,6 +38,7 @@ public:
   /// @name Synergetic Miner Interface
   /// @{
   virtual void Mine() = 0;
+  virtual void EnableMining(bool enable)  = 0;
   /// @}
 };
 
