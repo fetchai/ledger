@@ -34,7 +34,7 @@ public:
   void Load(std::string const &filename);
 
   std::string WordFromIndex(SizeType index) const;
-  SizeType    IndexFromWord(std::string const &word);
+  SizeType    IndexFromWord(std::string const &word) const;
 };
 
 /**
@@ -111,11 +111,11 @@ std::string Vocab::WordFromIndex(SizeType index) const
  * @param word
  * @return
  */
-math::SizeType Vocab::IndexFromWord(std::string const &word)
+math::SizeType Vocab::IndexFromWord(std::string const &word) const
 {
   if (data.find(word) != data.end())
   {
-    return (data[word]).first;
+    return (data.at(word)).first;
   }
   return 0;
 }

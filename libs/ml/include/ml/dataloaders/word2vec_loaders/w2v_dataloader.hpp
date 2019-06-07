@@ -58,7 +58,7 @@ public:
   SizeType         vocab_size() const;
   VocabType const &vocab() const;
   std::string      WordFromIndex(SizeType index) const;
-  SizeType         IndexFromWord(std::string const &word);
+  SizeType         IndexFromWord(std::string const &word) const;
   SizeType         window_size();
 
 private:
@@ -236,7 +236,9 @@ void W2VLoader<T>::GetNext(ReturnType &t)
     }
     else
     {
-      throw std::runtime_error("unigram table timed out looking for a negative sample for word index: " << t.second(0, 0) << ". check window size for sentence length and that data loaded correctly.");
+      throw std::runtime_error(
+          "unigram table timed out looking for a negative sample. check window size for sentence "
+          "length and that data loaded correctly.");
     }
   }
   current_word_++;
@@ -326,7 +328,7 @@ typename W2VLoader<T>::VocabType const &W2VLoader<T>::vocab() const
 template <typename T>
 std::string W2VLoader<T>::WordFromIndex(SizeType index) const
 {
-  return vocab_.WordFromIndex(std::move(index));
+  return vocab_.WordFromIndex(index);
 }
 
 /**
@@ -336,9 +338,9 @@ std::string W2VLoader<T>::WordFromIndex(SizeType index) const
  * @return
  */
 template <typename T>
-typename W2VLoader<T>::SizeType W2VLoader<T>::IndexFromWord(std::string const &word)
+typename W2VLoader<T>::SizeType W2VLoader<T>::IndexFromWord(std::string const &word) const
 {
-  return vocab_.IndexFromWord(std::move(word));
+  return vocab_.IndexFromWord(word);
 }
 
 template <typename T>

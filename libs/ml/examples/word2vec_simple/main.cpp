@@ -74,6 +74,10 @@ ArrayType LoadEmbeddings(std::string filename)
 {
 
   std::ifstream input(filename, std::ios::binary);
+  if (input.fail())
+  {
+    throw std::runtime_error("embeddings file does not exist");
+  }
 
   std::string line;
   input >> line;
@@ -106,7 +110,6 @@ ArrayType LoadEmbeddings(std::string filename)
       }
     }
   }
-
   return embeddings;
 }
 
