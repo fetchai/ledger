@@ -38,6 +38,7 @@ public:
   /// @name Synergetic Miner Interface
   /// @{
   virtual DagNodes Mine(BlockIndex block) = 0;
+  virtual void EnableMining(bool enable)  = 0;
   /// @}
 };
 

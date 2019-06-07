@@ -62,6 +62,7 @@ public:
   /// @name Synergetic Miner Interface
   /// @{
   DagNodes Mine(BlockIndex block) override;
+  void EnableMining(bool enable) override;
   /// @}
 
   // Operators
@@ -86,6 +87,7 @@ private:
   math::BigUnsigned starting_nonce_;
   std::size_t       search_length_{DEFAULT_SEARCH_LENGTH};
   std::shared_ptr <StateMachine> state_machine_;
+  std::atomic<bool> is_mining_{false};
 };
 
 } // namespace ledger

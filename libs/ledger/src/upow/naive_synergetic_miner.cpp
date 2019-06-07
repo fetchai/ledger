@@ -104,7 +104,10 @@ NaiveSynergeticMiner::State NaiveSynergeticMiner::OnMine()
 {
   state_machine_->Delay(std::chrono::milliseconds{200});
 
-  this->Mine(0);
+  if(is_mining_)
+  {
+    this->Mine(0);
+  }
 
   return State::INITIAL;
 }
@@ -163,6 +166,11 @@ DagNodes NaiveSynergeticMiner::Mine(BlockIndex block)
   }
 
   return {};
+}
+
+void NaiveSynergeticMiner::EnableMining(bool enable)
+{
+  is_mining_ = enable;
 }
 
 SynergeticContractPtr NaiveSynergeticMiner::LoadContract(Address const &address)
