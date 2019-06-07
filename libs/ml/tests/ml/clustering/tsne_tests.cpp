@@ -97,8 +97,8 @@ TEST(TsneTests, tsne_test_2d_float)
 
   Tensor<float> output_matrix = RunTest<Tensor<float>>(N_OUTPUT_FEATURE_SIZE, N_DATA_SIZE);
 
-  ASSERT_EQ(output_matrix.shape().at(1), N_DATA_SIZE);
   ASSERT_EQ(output_matrix.shape().at(0), N_OUTPUT_FEATURE_SIZE);
+  ASSERT_EQ(output_matrix.shape().at(1), N_DATA_SIZE);
 
   EXPECT_FLOAT_EQ(output_matrix.At(0, 0), 0.25323879718780517578);
   EXPECT_FLOAT_EQ(output_matrix.At(1, 0), -3.1758825778961181641);
@@ -117,8 +117,8 @@ TEST(TsneTests, tsne_test_2d_double)
 
   Tensor<double> output_matrix = RunTest<Tensor<double>>(N_OUTPUT_FEATURE_SIZE, N_DATA_SIZE);
 
-  ASSERT_EQ(output_matrix.shape().at(1), N_DATA_SIZE);
   ASSERT_EQ(output_matrix.shape().at(0), N_OUTPUT_FEATURE_SIZE);
+  ASSERT_EQ(output_matrix.shape().at(1), N_DATA_SIZE);
 
   EXPECT_DOUBLE_EQ(output_matrix.At(0, 0), 0.25323926146043396201);
   EXPECT_DOUBLE_EQ(output_matrix.At(1, 0), -3.1758751208173934266);
@@ -138,8 +138,8 @@ TEST(TsneTests, tsne_test_2d_fixed_point)
 
   Tensor<DataType> output_matrix = RunTest<Tensor<DataType>>(N_OUTPUT_FEATURE_SIZE, N_DATA_SIZE);
 
-  ASSERT_EQ(output_matrix.shape().at(1), N_DATA_SIZE);
   ASSERT_EQ(output_matrix.shape().at(0), N_OUTPUT_FEATURE_SIZE);
+  ASSERT_EQ(output_matrix.shape().at(1), N_DATA_SIZE);
 
   EXPECT_NEAR(double(output_matrix.At(0, 0)), 0.25323880254290997982025146484375, 2e-6);
   EXPECT_NEAR(double(output_matrix.At(1, 0)), -3.17587922653183341026306152343750, 3e-6);
@@ -158,8 +158,8 @@ TYPED_TEST(TsneTests, tsne_test_2d_cross_type_consistency_test)
 
   TypeParam output_matrix = RunTest<TypeParam>(N_OUTPUT_FEATURE_SIZE, N_DATA_SIZE);
 
-  ASSERT_EQ(output_matrix.shape().at(1), N_DATA_SIZE);
   ASSERT_EQ(output_matrix.shape().at(0), N_OUTPUT_FEATURE_SIZE);
+  ASSERT_EQ(output_matrix.shape().at(1), N_DATA_SIZE);
 
   EXPECT_NEAR(double(output_matrix.At(0, 0)), 0.25323879718780517578, 1e-4);
   EXPECT_NEAR(double(output_matrix.At(1, 0)), -3.1758825778961181641, 1e-4);

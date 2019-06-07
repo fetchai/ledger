@@ -22,7 +22,6 @@
 #include "ml/ops/add.hpp"
 #include "ml/ops/flatten.hpp"
 #include "ml/ops/matrix_multiply.hpp"
-#include "ml/ops/transpose.hpp"
 #include "ml/ops/weights.hpp"
 #include "ml/subgraph.hpp"
 #include <cmath>
