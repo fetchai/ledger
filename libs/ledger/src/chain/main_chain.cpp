@@ -1222,8 +1222,6 @@ bool MainChain::AddTip(IntBlockPtr const &block)
  */
 bool MainChain::DetermineHeaviestTip()
 {
-  bool success{false};
-
   FETCH_LOCK(lock_);
 
   if (!tips_.empty())
@@ -1231,20 +1229,19 @@ bool MainChain::DetermineHeaviestTip()
     // find the heaviest item in our tip selection
     auto it = std::max_element(
         tips_.begin(), tips_.end(), [](TipsMap::value_type const &a, TipsMap::value_type const &b) {
-          bool const is_heavier      = a.second.total_weight < b.second.total_weight;
-          bool const is_equal_weight = a.second.total_weight == b.second.total_weight;
-          bool const is_hash_larger  = a.first < b.first;
+          auto        a_weight{a.second.total_weight}, b_weight{b.second.total_weight};
+          auto const &a_hash{a.first}, &b_hash{b.first};
 
-          return (is_heavier || (is_equal_weight && is_hash_larger));
+          return a_weight < b_weight || (a_weight == b_weight && a_hash < b_hash);
         });
 
     // update the heaviest
     heaviest_.hash   = it->first;
     heaviest_.weight = it->second.total_weight;
-    success          = true;
+    return true;
   }
 
-  return success;
+  return false;
 }
 
 /**
