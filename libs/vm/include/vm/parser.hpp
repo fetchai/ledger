@@ -162,7 +162,12 @@ private:
   template<class... Fs> auto Branches(Fs &&...fs) {
 	  using RetVal = type_util::InvokeResultT<F>;
 	  const auto index = Index();
-	  return value_util::Or(AttemptBranch(index, fs)...);
+	  return value_util::Accumulate(
+		  [this](RetVal accum, auto &&f){ 
+			  return accum? accum : AttemptBranch(index, std::forward<decltype(f)>(f));
+		  },
+		  RetVal{},
+		  std::forward<Fs>(fs)...);
   }
 
   void IncrementGroupMembers()

@@ -1440,7 +1440,7 @@ ExpressionNodePtr Parser::ParseArraySequence()
 	}
 
 	// token stream conforms to this rule
-	auto node{CreateExpressionNode(NodeKind::Array, text, line)};
+	auto node{CreateExpressionNode(NodeKind::Array, text, line, elements)};
 	node->expression_kind = ExpressionKind::RV;
 	node->type = element_type;
 	return node;
@@ -1452,7 +1452,15 @@ ExpressionNodePtr Parser::ParseArrayRepetition()
 	std::string text;
 	const uint16_t line{token_->line};
 
-	auto repeated_element{ParseExpression()};
+	auto repeated_element{ParseExpression()};	// Expr
+	if (!repeated_element
+	    || !MatchLiteral(Token::Kind::Semicolon))	// ";"
+	{
+		return {};
+	}
+
+	auto amount{ParseExpression()};			// Number
+	if (amount->
 }
 
 bool Parser::HandleOpener(NodeKind prefix_kind, NodeKind postfix_kind,
