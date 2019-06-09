@@ -158,8 +158,8 @@ def run_basic_checks()
 def main()
 {
   timeout(180) {
-    run_basic_checks()
-    run_builds_in_parallel()
+//    run_basic_checks()
+//    run_builds_in_parallel()
   }
 }
 
