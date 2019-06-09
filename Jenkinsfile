@@ -160,6 +160,44 @@ def main()
   timeout(180) {
 //    run_basic_checks()
 //    run_builds_in_parallel()
+
+
+platform = Platform.GCC7
+config = Configuration.RELEASE
+
+  def suffix = "${platform.label} ${config.label}"
+
+  def environment = {
+    return [
+      "CC=${platform.env_cc}",
+      "CXX=${platform.env_cxx}"
+    ]
+  }
+
+    stage(suffix) {
+      node(HIGH_LOAD_NODE_LABEL) {
+        timeout(120) {
+          stage("SCM ${suffix}") {
+            checkout scm
+          }
+
+          withEnv(environment()) {
+            docker.build('???').inside {
+              stage("Build ${suffix}") {
+                sh "./scripts/ci-tool.py -B ${config.label}"
+              }
+
+              stage("Unit Tests ${suffix}") {
+                sh "./scripts/ci-tool.py -T ${config.label}"
+              }
+            }
+          }
+        }
+      }
+    }
+
+
+
   }
 }
 
