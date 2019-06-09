@@ -18,6 +18,12 @@
 
 #include "core/logger.hpp"
 
+namespace backward {
+
+backward::SignalHandling sh;
+
+} // namespace backward
+
 namespace fetch {
 std::map<std::thread::id, int> fetch::log::ReadableThread::thread_number_ =
     std::map<std::thread::id, int>();

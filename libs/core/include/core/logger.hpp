@@ -19,6 +19,7 @@
 
 #include "core/abstract_mutex.hpp"
 #include "core/commandline/vt100.hpp"
+#include "core/fetch_backward.hpp"
 
 #include <execinfo.h>
 

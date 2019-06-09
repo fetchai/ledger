@@ -12,7 +12,7 @@
 #
 
 import argparse
-import autopep8
+#import autopep8
 import fnmatch
 import multiprocessing
 import os
@@ -203,10 +203,11 @@ def fix_license_header(text, path_to_file):
 
 @include_patterns('*.py')
 def format_python(text, path_to_file):
-    if text.strip():
-        return autopep8.fix_code(text)
+    pass
+    #if text.strip():
+    #    return autopep8.fix_code(text)
 
-    return text.strip()
+    #return text.strip()
 
 
 @include_patterns('*.hpp')
@@ -423,16 +424,16 @@ def check_tool_versions():
             cmake_format_version,
             CMAKE_FORMAT_REQUIRED_VERSION)
 
-    try:
-        autopep8_version = autopep8.__version__
-    except:
-        output('Could not read autopep8 version. Version {} is required.'.format(
-            AUTOPEP8_REQUIRED_VERSION))
-        sys.exit(1)
-    assert autopep8_version == AUTOPEP8_REQUIRED_VERSION, \
-        'Unexpected version of autopep8:\n{}\nPlease use version {}'.format(
-            autopep8_version,
-            AUTOPEP8_REQUIRED_VERSION)
+    #try:
+    #    autopep8_version = autopep8.__version__
+    #except:
+    #    output('Could not read autopep8 version. Version {} is required.'.format(
+    #        AUTOPEP8_REQUIRED_VERSION))
+    #    sys.exit(1)
+    #assert autopep8_version == AUTOPEP8_REQUIRED_VERSION, \
+    #    'Unexpected version of autopep8:\n{}\nPlease use version {}'.format(
+    #        autopep8_version,
+    #        AUTOPEP8_REQUIRED_VERSION)
 
 
 def main():
