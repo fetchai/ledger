@@ -19,12 +19,6 @@
 #include "core/fetch_backward.hpp"
 #include "core/logger.hpp"
 
-// namespace backward {
-//
-// backward::SignalHandling sh;
-//
-//}  // namespace backward
-
 namespace fetch {
 std::map<std::thread::id, int> fetch::log::ReadableThread::thread_number_ =
     std::map<std::thread::id, int>();
@@ -35,6 +29,7 @@ log::details::LogWrapper logger;
 
 namespace log {
 
+// Add functionality to print a stack trace when program-terminating signals such as sigsegv are found
 FetchBackward fb;
 
 Context::Context(void *instance)
