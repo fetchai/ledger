@@ -74,13 +74,11 @@ public:
   TransactionLayoutQueue &operator=(TransactionLayoutQueue &&) = delete;
 
 private:
-  uint32_t       log2_num_lanes_;
   DigestSet      digests_;  ///< Set of digests stored within the list
   UnderlyingList list_;     ///< The list of transaction layouts
 };
 
-inline TransactionLayoutQueue::TransactionLayoutQueue(uint32_t log2_num_lanes)
-  : log2_num_lanes_{log2_num_lanes}
+inline TransactionLayoutQueue::TransactionLayoutQueue(uint32_t /* log2_num_lanes */)
 {}
 
 inline TransactionLayoutQueue::ConstIterator TransactionLayoutQueue::cbegin() const
