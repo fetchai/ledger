@@ -80,10 +80,6 @@ RUN echo "deb [arch=amd64]                                                   \
 RUN curl https://bazel.build/bazel-release.pub.gpg | apt-key add -
 RUN apt-get update && apt-get install -y bazel
 
-RUN git clone --recurse-submodules                                           \
-    https://github.com/fetchai/ledger.git                                    \
-    /build
-
 USER default
 WORKDIR /build
 
