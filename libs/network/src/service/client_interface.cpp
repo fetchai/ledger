@@ -18,6 +18,8 @@
 
 #include "network/service/client_interface.hpp"
 
+#include <algorithm>
+
 namespace fetch {
 namespace service {
 
@@ -155,16 +157,6 @@ bool ServiceClientInterface::ProcessServerMessage(network::message_type const &m
   if ((type == SERVICE_RESULT) || (type == 0))
   {
     ProcessRPCResult(msg, params);
-    // PromiseCounter id;
-    // params >> id;
-
-    // Promise p = ExtractPromise(id);
-
-    // auto ret = msg.SubArray(params.tell(), msg.size() - params.tell());
-    // p->Fulfill(ret);
-
-    // FETCH_LOG_DEBUG(LOGGING_NAME, "Binning promise ", id, " due to finishing delivering the
-    // response");
   }
   else if (type == SERVICE_ERROR)
   {

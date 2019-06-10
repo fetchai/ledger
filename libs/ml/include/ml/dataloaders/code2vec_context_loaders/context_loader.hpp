@@ -68,58 +68,15 @@ public:
     , current_function_index_(0)
     , max_contexts_(max_contexts_){};
 
-  /**
-   * @brief Gets the next pair of feature and target
-   *
-   * @return std::pair<DataType, LabelType>
-   */
-  ContextLabelPair GetNextContext();
-
-  /**
-   * @brief Gets the next pair of feature (vector of 3 tensors) and target
-   *
-   * @return std::pair<std::vector<ArrayType>, LabelType>;
-   */
+  ContextLabelPair        GetNextContext();
   ContextTensorsLabelPair GetNext() override;
-
-  /**
-   * Not implemented
-   * @return
-   */
   ContextTensorsLabelPair GetRandom() override;
 
-  /**
-   * @brief Gets the number of feature/target pairs
-   *
-   * @return std::uint64_t
-   */
-  std::uint64_t Size() const override;
-
-  /**
-   * @brief Indicates if the GetNextContext() generater is at its end
-   *
-   * @return true
-   * @return false
-   */
-  bool IsDone() const override;
-
-  /**
-   * @brief Resets the GetNextContext() generator
-   *
-   */
-  void Reset() override;
-
-  /**
-   * @brief Adds (raw) data in the c2v format and creates the lookup maps
-   *
-   * @param text The input corpus in the "correct" c2v format
-   */
-  void AddData(std::string const &text);
-
-  /**
-   * @brief Creates umaps mapping strings to indices from the counter
-   */
-  void createIdxUMaps();
+  SizeType Size() const override;
+  bool     IsDone() const override;
+  void     Reset() override;
+  void     AddData(std::string const &text);
+  void     createIdxUMaps();
 
   umap_int_str umap_idx_to_functionname();
   umap_int_str umap_idx_to_path();
@@ -152,46 +109,22 @@ private:
   umap_int_str idx_to_path_;
   umap_int_str idx_to_word_;
 
-  /**
-   * @brief Creates an unordered map for hashing strings from a counter (unordered map counting the
-   * occurences of words in the input)
-   *
-   * @param counter unordered map with counts of words
-   * @param name_to_idx unordered map for storing the mapping string->numeric
-   * @param idx_to_name unordered map for storing the mapping numeric->string
-   */
   static void createIdxUMapsFromCounter(umap_str_int &counter, umap_str_int &name_to_idx,
                                         umap_int_str &idx_to_name);
 
-  /**
-   * @brief Add value to the unordered map for counting strings. If the provided string exists, the
-   * counter is set +1, otherwise its set to 1
-   *
-   * @param umap the unordered map where the counts are stored
-   * @param word the string to be counted.
-   */
   static void addValueToCounter(umap_str_int &umap, std::string word);
-  /**
-   * @brief method splitting a string(stream) by a separator character
-   *
-   * @param input the stringstream which should be splitted
-   * @param sep the seprator character
-   * @return std::vector<std::string> A vector of substrings
-   */
+
   static std::vector<std::string> splitStringByChar(std::stringstream input, const char *sep);
 
-  /**
-   * @brief Adds a string to the unordered maps for hashing and outputs the hashing index
-   *
-   * @param input input string
-   * @param name_to_idx unordered map for mapping string->numeric
-   * @param idx_to_name unordered map for mapping numeric->string
-   * @return SizeType index of the string in the unordered maps
-   */
   SizeType addToIdxUMaps(std::string const &input, umap_str_int &name_to_idx,
                          umap_int_str &idx_to_name);
 };
 
+/**
+ * @brief Adds (raw) data in the c2v format and creates the lookup maps
+ *
+ * @param text The input corpus in the "correct" c2v format
+ */
 template <typename LabelType, typename DataType>
 void C2VLoader<LabelType, DataType>::AddData(std::string const &c2v_input)
 {
@@ -239,6 +172,11 @@ void C2VLoader<LabelType, DataType>::AddData(std::string const &c2v_input)
   }
 }
 
+/**
+ * @brief Gets the next pair of feature and target
+ *
+ * @return std::pair<DataType, LabelType>
+ */
 template <typename LabelType, typename DataType>
 typename C2VLoader<LabelType, DataType>::ContextLabelPair
 C2VLoader<LabelType, DataType>::GetNextContext()
@@ -248,6 +186,11 @@ C2VLoader<LabelType, DataType>::GetNextContext()
   return return_value;
 }
 
+/**
+ * @brief Gets the next pair of feature (vector of 3 tensors) and target
+ *
+ * @return std::pair<std::vector<ArrayType>, LabelType>;
+ */
 template <typename LabelType, typename DataType>
 typename C2VLoader<LabelType, DataType>::ContextTensorsLabelPair
 C2VLoader<LabelType, DataType>::GetNext()
@@ -282,7 +225,7 @@ C2VLoader<LabelType, DataType>::GetNext()
 
       if (context_positions.size() <= this->max_contexts_)
       {
-        for (uint64_t i{0}; i < context_positions.size(); i++)
+        for (SizeType i{0}; i < context_positions.size(); i++)
         {
 
           source_word_tensor(i, 0) =
@@ -292,7 +235,7 @@ C2VLoader<LabelType, DataType>::GetNext()
           target_word_tensor(i, 0) =
               static_cast<Type>(std::get<2>(this->data[context_positions[i]].second));
         }
-        for (uint64_t i{context_positions.size()}; i < this->max_contexts_; i++)
+        for (SizeType i{context_positions.size()}; i < this->max_contexts_; i++)
         {
           source_word_tensor(i, 0) = static_cast<Type>(this->word_to_idx_[EMPTY_CONTEXT_STRING]);
           path_tensor(i, 0)        = static_cast<Type>(this->path_to_idx_[EMPTY_CONTEXT_STRING]);
@@ -301,7 +244,7 @@ C2VLoader<LabelType, DataType>::GetNext()
       }
       else
       {
-        for (uint64_t i{0}; i < this->max_contexts_; i++)
+        for (SizeType i{0}; i < this->max_contexts_; i++)
         {
           source_word_tensor(i, 0) =
               static_cast<Type>(std::get<0>(this->data[context_positions[i]].second));
@@ -326,6 +269,10 @@ C2VLoader<LabelType, DataType>::GetNext()
   }
 }
 
+/**
+ * Not implemented
+ * @return
+ */
 template <typename LabelType, typename DataType>
 typename C2VLoader<LabelType, DataType>::ContextTensorsLabelPair
 C2VLoader<LabelType, DataType>::GetRandom()
@@ -333,24 +280,46 @@ C2VLoader<LabelType, DataType>::GetRandom()
   throw std::runtime_error("Random sampling not implemented for C2VLoader");
 }
 
+/**
+ * @brief Gets the number of feature/target pairs
+ *
+ * @return std::uint64_t
+ */
 template <typename LabelType, typename DataType>
-std::uint64_t C2VLoader<LabelType, DataType>::Size() const
+typename DataType::SizeType C2VLoader<LabelType, DataType>::Size() const
 {
   return this->data.size();
 }
 
+/**
+ * @brief Indicates if the GetNextContext() generater is at its end
+ *
+ * @return true
+ * @return false
+ */
 template <typename LabelType, typename DataType>
 bool C2VLoader<LabelType, DataType>::IsDone() const
 {
   return ((this->data).size() == (this->iterator_position_get_next_context_));
 }
 
+/**
+ * @brief Resets the GetNextContext() generator
+ *
+ */
 template <typename LabelType, typename DataType>
 void C2VLoader<LabelType, DataType>::Reset()
 {
   this->iterator_position_get_next_context_ = SizeType{0};
 }
 
+/**
+ * @brief Add value to the unordered map for counting strings. If the provided string exists, the
+ * counter is set +1, otherwise its set to 1
+ *
+ * @param umap the unordered map where the counts are stored
+ * @param word the string to be counted.
+ */
 template <typename LabelType, typename DataType>
 void C2VLoader<LabelType, DataType>::addValueToCounter(
     typename C2VLoader<LabelType, DataType>::umap_str_int &umap, std::string word)
@@ -365,6 +334,13 @@ void C2VLoader<LabelType, DataType>::addValueToCounter(
   }
 }
 
+/**
+ * @brief method splitting a string(stream) by a separator character
+ *
+ * @param input the stringstream which should be splitted
+ * @param sep the seprator character
+ * @return std::vector<std::string> A vector of substrings
+ */
 template <typename LabelType, typename DataType>
 std::vector<std::string> C2VLoader<LabelType, DataType>::splitStringByChar(std::stringstream input,
                                                                            const char *      sep)
@@ -378,6 +354,14 @@ std::vector<std::string> C2VLoader<LabelType, DataType>::splitStringByChar(std::
   return splitted_string;
 }
 
+/**
+ * @brief Adds a string to the unordered maps for hashing and outputs the hashing index
+ *
+ * @param input input string
+ * @param name_to_idx unordered map for mapping string->numeric
+ * @param idx_to_name unordered map for mapping numeric->string
+ * @return SizeType index of the string in the unordered maps
+ */
 template <typename LabelType, typename DataType>
 typename C2VLoader<LabelType, DataType>::SizeType C2VLoader<LabelType, DataType>::addToIdxUMaps(
     std::string const &input, typename C2VLoader<LabelType, DataType>::umap_str_int &name_to_idx,
@@ -397,6 +381,14 @@ typename C2VLoader<LabelType, DataType>::SizeType C2VLoader<LabelType, DataType>
   }
 }
 
+/**
+ * @brief Creates an unordered map for hashing strings from a counter (unordered map counting the
+ * occurences of words in the input)
+ *
+ * @param counter unordered map with counts of words
+ * @param name_to_idx unordered map for storing the mapping string->numeric
+ * @param idx_to_name unordered map for storing the mapping numeric->string
+ */
 template <typename LabelType, typename DataType>
 void C2VLoader<LabelType, DataType>::createIdxUMapsFromCounter(
     typename C2VLoader<LabelType, DataType>::umap_str_int &counter,
@@ -412,6 +404,9 @@ void C2VLoader<LabelType, DataType>::createIdxUMapsFromCounter(
   }
 }
 
+/**
+ * @brief Creates umaps mapping strings to indices from the counter
+ */
 template <typename LabelType, typename DataType>
 void C2VLoader<LabelType, DataType>::createIdxUMaps()
 {

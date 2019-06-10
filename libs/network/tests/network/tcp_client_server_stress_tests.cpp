@@ -48,7 +48,6 @@ public:
 
   void PushRequest(connection_handle_type /*client*/, message_type const &msg) override
   {
-    /*std::cerr << "Message: " << msg << std::endl;*/
     std::lock_guard<std::mutex> lock(messages_);
     globalMessagesFromServer_.push_back(msg);
   }

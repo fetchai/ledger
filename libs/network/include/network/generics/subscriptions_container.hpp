@@ -22,7 +22,10 @@
 #include "network/service/service_client.hpp"
 #include "network/service/types.hpp"
 
+#include <map>
+#include <memory>
 #include <string>
+#include <tuple>
 #include <utility>
 
 namespace fetch {
@@ -53,11 +56,9 @@ public:
   bool                   operator==(const SubscriptionsContainer &rhs) const = delete;
   bool                   operator<(const SubscriptionsContainer &rhs) const  = delete;
 
-  explicit SubscriptionsContainer()
-  {}
+  SubscriptionsContainer() = default;
 
-  virtual ~SubscriptionsContainer()
-  {}
+  virtual ~SubscriptionsContainer() = default;
 
   template <class FUNC_CLASS>
   subs_handle_type Subscribe(client_ptr client, protocol_number_type protocol_number,

@@ -193,7 +193,8 @@ Module::Module()
       .CreateInstantiationType<Array<uint64_t>>()
       .CreateInstantiationType<Array<float>>()
       .CreateInstantiationType<Array<double>>()
-      .CreateInstantiationType<Array<Ptr<String>>>();
+      .CreateInstantiationType<Array<Ptr<String>>>()
+      .CreateInstantiationType<Array<Ptr<Address>>>();
 
   GetClassInterface<String>()
       .CreateMemberFunction("find", &String::Find)

@@ -21,6 +21,8 @@
 #include "core/serializers/stl_types.hpp"
 #include "vm/common.hpp"
 
+#include <string>
+
 namespace fetch {
 namespace vm {
 
@@ -182,11 +184,10 @@ public:
   virtual ~Object() = default;
 
   Object(VM *vm, TypeId type_id)
-  {
-    vm_        = vm;
-    type_id_   = type_id;
-    ref_count_ = 1;
-  }
+    : vm_(vm)
+    , type_id_(type_id)
+    , ref_count_(1)
+  {}
 
   virtual size_t GetHashCode();
   virtual bool   IsEqual(Ptr<Object> const &lhso, Ptr<Object> const &rhso);

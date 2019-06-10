@@ -424,17 +424,21 @@ TEST_F(SmartContractTests, CheckShardedStateSetAndQuery)
   fetch::BitVector mask{1ull << 4};
   auto const       lane1 = expected_resource1.lane(mask.log2_size());
   auto const       lane2 = expected_resource2.lane(mask.log2_size());
-  mask.flip(lane1);
-  mask.flip(lane2);
+  mask.set(lane1, 1);
+  mask.set(lane2, 1);
   shards(mask);
 
   // expected calls
   EXPECT_CALL(*storage_, Lock(lane1)).WillOnce(Return(true));
-  EXPECT_CALL(*storage_, Lock(lane2)).WillOnce(Return(true));
+  EXPECT_CALL(*storage_, Unlock(lane1)).WillOnce(Return(true));
+  if (lane1 != lane2)
+  {
+    EXPECT_CALL(*storage_, Lock(lane2)).WillOnce(Return(true));
+    EXPECT_CALL(*storage_, Unlock(lane2)).WillOnce(Return(true));
+  }
+
   EXPECT_CALL(*storage_, Set(expected_resource1, expected_value1)).WillOnce(Return());
   EXPECT_CALL(*storage_, Set(expected_resource2, expected_value2)).WillOnce(Return());
-  EXPECT_CALL(*storage_, Unlock(lane1)).WillOnce(Return(true));
-  EXPECT_CALL(*storage_, Unlock(lane2)).WillOnce(Return(true));
 
   // from the action & query
   EXPECT_CALL(*storage_, Get(expected_resource1))
@@ -495,7 +499,7 @@ TEST_F(SmartContractTests, CheckShardedStateSetWithAddressAsName)
   auto const       expected_value1    = RawBytes<int32_t>(20);
   fetch::BitVector mask{1ull << 4};
   auto const       lane1 = expected_resource1.lane(mask.log2_size());
-  mask.flip(lane1);
+  mask.set(lane1, 1);
   shards(mask);
 
   // expected calls

@@ -22,9 +22,14 @@
 #include "core/mutex.hpp"
 #include "network/fetch_asio.hpp"
 
-#include <functional>
-#include <map>
+#include <atomic>
+#include <cstddef>
 #include <memory>
+#include <mutex>
+#include <string>
+#include <thread>
+#include <utility>
+#include <vector>
 
 namespace fetch {
 namespace network {

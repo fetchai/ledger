@@ -381,7 +381,6 @@ void Convolution1D<ArrayType>::FillOutput(ArrayType const &gemm_output, ArrayTyp
     i_tmp = 0;
     for (SizeType i_b{0}; i_b < batch_size; ++i_b)  // Iterate over batch
     {
-
       for (SizeType i_o = 0; i_o < output_height; ++i_o)  // Iterate over output height
       {
         output(i_oc, i_o, i_b) = gemm_output(i_oc, i_tmp);
@@ -412,7 +411,6 @@ void Convolution1D<ArrayType>::ReverseFillOutput(ArrayType &gemm_output, ArrayTy
     i_tmp = 0;
     for (SizeType i_b{0}; i_b < batch_size; ++i_b)  // Iterate over batch
     {
-
       for (SizeType i_o = 0; i_o < output_height; ++i_o)  // Iterate over output height
       {
         gemm_output(i_oc, i_tmp) = output(i_oc, i_o, i_b);
