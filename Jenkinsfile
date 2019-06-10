@@ -1,6 +1,13 @@
 DOCKER_IMAGE_NAME = 'gcr.io/organic-storm-201412/fetch-ledger-develop:v0.3.0'
 HIGH_LOAD_NODE_LABEL = 'ledger'
 
+def insideDocker(steps)
+{
+  docker.build('wk_bazel_experiment', '-f Dockerfile_build ./').inside {
+    steps()
+  }
+}
+
 enum Platform
 {
   CLANG6('Clang 6', 'clang-6.0', 'clang++-6.0'),
@@ -49,7 +56,7 @@ def static_analysis()
         }
                         
         stage('Run Static Analysis') {
-          docker.image(DOCKER_IMAGE_NAME).inside {
+          insideDocker {
             sh '''\
               mkdir -p build-analysis
               cd build-analysis
@@ -91,7 +98,7 @@ def create_build(Platform platform, Configuration config)
           }
 
           withEnv(environment()) {
-            docker.image(DOCKER_IMAGE_NAME).inside {
+            insideDocker {
               stage("Build ${suffix}") {
                 sh "./scripts/ci-tool.py -B ${config.label}"
               }
@@ -146,7 +153,7 @@ def run_basic_checks()
         checkout scm
       }
 
-      docker.image(DOCKER_IMAGE_NAME).inside {
+      insideDocker {
         stage('Style Check') {
           sh './scripts/apply_style.py -d'
         }
@@ -161,18 +168,17 @@ def main()
 //    run_basic_checks()
 //    run_builds_in_parallel()
 
+    platform = Platform.GCC7
+    config = Configuration.RELEASE
 
-platform = Platform.GCC7
-config = Configuration.RELEASE
+    def suffix = "${platform.label} ${config.label}"
 
-  def suffix = "${platform.label} ${config.label}"
-
-  def environment = {
-    return [
-      "CC=${platform.env_cc}",
-      "CXX=${platform.env_cxx}"
-    ]
-  }
+    def environment = {
+      return [
+        "CC=${platform.env_cc}",
+        "CXX=${platform.env_cxx}"
+      ]
+    }
 
     stage(suffix) {
       node(HIGH_LOAD_NODE_LABEL) {
@@ -182,7 +188,7 @@ config = Configuration.RELEASE
           }
 
           withEnv(environment()) {
-            docker.build('???').inside {
+            insideDocker {
               stage("Build ${suffix}") {
                 sh "./scripts/ci-tool.py -B ${config.label}"
               }
@@ -195,9 +201,6 @@ config = Configuration.RELEASE
         }
       }
     }
-
-
-
   }
 }
 
