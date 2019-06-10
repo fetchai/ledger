@@ -183,12 +183,12 @@ def main()
     stage(suffix) {
       node(HIGH_LOAD_NODE_LABEL) {
         timeout(120) {
-          stage("SCM ${suffix}") {
-            checkout scm
-          }
-
           withEnv(environment()) {
             insideDocker {
+              stage("SCM ${suffix}") {
+                checkout scm
+              }
+
               stage("Build ${suffix}") {
                 sh "./scripts/ci-tool.py -B ${config.label}"
               }
