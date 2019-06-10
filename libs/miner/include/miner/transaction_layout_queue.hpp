@@ -74,8 +74,6 @@ public:
   TransactionLayoutQueue &operator=(TransactionLayoutQueue &&) = delete;
 
 private:
-  static bool RemapAndAdd(UnderlyingList &list, TransactionLayout const &tx, uint32_t num_lanes);
-
   uint32_t       log2_num_lanes_;
   DigestSet      digests_;  ///< Set of digests stored within the list
   UnderlyingList list_;     ///< The list of transaction layouts
