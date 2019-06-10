@@ -197,7 +197,7 @@ typename T::Type Optimiser<T, C>::Run(fetch::ml::DataLoader<ArrayType, ArrayType
     for (SizeType it{step}; (it < step + batch_size) && (!loader.IsDone()) && (step < subset_size);
          ++it)
     {
-      input = loader.GetData();
+      input = loader.GetDataPair();
 
       auto cur_input = input.second;
 

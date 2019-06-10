@@ -34,7 +34,7 @@ public:
   virtual ~DataLoader()                                           = default;
   virtual std::pair<LabelType, std::vector<DataType>> GetNext()   = 0;
   virtual std::pair<LabelType, std::vector<DataType>> GetRandom() = 0;
-  virtual std::pair<LabelType, std::vector<DataType>> GetData()
+  virtual std::pair<LabelType, std::vector<DataType>> GetDataPair()
   {
     if (random_mode_)
     {
