@@ -1,0 +1,3 @@
+function main()
+  print(FixedPoint(1.0));
+endfunction

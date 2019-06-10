@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -17,17 +16,36 @@
 //
 //------------------------------------------------------------------------------
 
+#include "vm_modules/math/fixed_point_wrapper.hpp"
+#include "../vm_test_toolkit.hpp"
+#include "vectorise/fixed_point/fixed_point.hpp"
 
-namespace fetch {
+namespace {
 
-namespace vm {
-class Module;
+class FixedPointTest : ::testing::Test
+{
+public:
+  VmTestToolkit toolkit;
+};
+
+
+TEST_F(FixedPointTest, create_fixed_point)
+{
+  auto m = toolkit.module();
+  fetch::vm_modules::CreateFixedPoint(m);
+
+
+  static char const *TEXT = R"(
+    function main()
+      print(FixedPoint(1.0));
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_TRUE(toolkit.Run());
+
+  double gt = static_cast<double>(fetch::fixed_point::FixedPoint<32, 32>(1));
+  EXPECT_EQ(stdout(), std::to_string(gt));
 }
 
-
-namespace vm_modules {
-
-void CreatePrint(vm::Module &module);
-
-}  // namespace vm_modules
-}  // namespace fetch
+}  // namespace
