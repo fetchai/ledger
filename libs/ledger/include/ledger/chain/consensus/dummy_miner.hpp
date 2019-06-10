@@ -16,7 +16,8 @@
 //   limitations under the License.
 //
 //------------------------------------------------------------------------------
-
+#include "ledger/chain/transaction_rpc_serializers.hpp" 
+#include "ledger/chain/transaction_layout_rpc_serializers.hpp"
 #include "ledger/chain/consensus/consensus_miner_interface.hpp"
 
 namespace fetch {

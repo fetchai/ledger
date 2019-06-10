@@ -26,6 +26,8 @@
 
 #include <gtest/gtest.h>
 
+//struct fetch::serializers::MapSerializer<fetch::crypto::MerkleTree, fetch::serializers::MsgPackByteArrayBuffer >;
+
 using namespace fetch;
 using namespace fetch::crypto;
 

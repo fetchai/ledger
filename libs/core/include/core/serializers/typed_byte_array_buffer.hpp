@@ -20,98 +20,13 @@
 #include "core/assert.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "core/logger.hpp"
-#include "core/serializers/byte_array_buffer.hpp"
-#include "core/serializers/exception.hpp"
-#include "core/serializers/pointer_types.hpp"
-#include "core/serializers/stl_types.hpp"
-#include "core/serializers/type_register.hpp"
+#include "core/serializers/main_serializer.hpp"
 #include <type_traits>
 
 namespace fetch {
 namespace serializers {
 
-using typed_array_buffer_id_type = TypeRegister<void>;
-using TypedByteArrayBuffer       = ByteArrayBufferEx<typed_array_buffer_id_type>;
-
-template <>
-template <typename T>
-TypedByteArrayBuffer &TypedByteArrayBuffer::operator<<(T const *val)
-{
-  Serialize(*this, TypeRegister<void>::value_type(TypeRegister<T const *>::value));
-  Serialize(*this, val);
-  return *this;
-}
-
-template <>
-template <typename T>
-TypedByteArrayBuffer &TypedByteArrayBuffer::operator<<(T const &val)
-{
-  Serialize(*this, TypeRegister<void>::value_type(TypeRegister<T>::value));
-  Serialize(*this, val);
-  return *this;
-}
-
-template <>
-template <typename T>
-TypedByteArrayBuffer &TypedByteArrayBuffer::operator>>(T &val)
-{
-  TypeRegister<void>::value_type type;
-  Deserialize(*this, type);
-  if (TypeRegister<T>::value != type)
-  {
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Serializer at position ", pos_, " out of ", data_.size());
-    FETCH_LOG_ERROR(LOGGING_NAME, byte_array_type("Expected type '") + TypeRegister<T>::name() +
-                                      byte_array_type("' differs from deserialized type '") +
-                                      ErrorCodeToMessage(type) + byte_array_type("'"));
-
-    throw SerializableException(error::TYPE_ERROR,
-                                byte_array_type("Expected type '") + TypeRegister<T>::name() +
-                                    byte_array_type("' differs from deserialized type '") +
-                                    ErrorCodeToMessage(type) + byte_array_type("'"));
-  }
-  Deserialize(*this, val);
-  return *this;
-}
-
-template <>
-template <typename T>
-SizeCounter<TypedByteArrayBuffer> &SizeCounter<TypedByteArrayBuffer>::operator<<(T const &val)
-{
-  Serialize(*this, TypeRegister<void>::value_type(TypeRegister<T>::value));
-  Serialize(*this, val);
-  return *this;
-}
-
-template <>
-inline void TypedByteArrayBuffer::ReadBytes(uint8_t *arr, std::size_t const &size)
-{
-  if (int64_t(size) > bytes_left())
-  {
-    throw SerializableException(error::TYPE_ERROR,
-                                "Typed serializer error (ReadBytes): Not enough bytes " +
-                                    std::to_string(bytes_left()) + " not  " + std::to_string(size));
-  }
-
-  for (std::size_t i = 0; i < size; ++i)
-  {
-    arr[i] = data_[pos_++];
-  }
-}
-
-template <>
-inline void TypedByteArrayBuffer::ReadByteArray(byte_array::ConstByteArray &b,
-                                                std::size_t const &         size)
-{
-  if (int64_t(size) > bytes_left())
-  {
-    throw SerializableException(error::TYPE_ERROR,
-                                "Typed serializer error (ReadByteArray): Not enough bytes " +
-                                    std::to_string(bytes_left()) + " not  " + std::to_string(size));
-  }
-
-  b = data_.SubArray(pos_, size);
-  pos_ += size;
-}
+using TypedByteArrayBuffer       = MsgPackByteArrayBuffer;
 
 }  // namespace serializers
 }  // namespace fetch

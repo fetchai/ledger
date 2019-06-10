@@ -22,6 +22,7 @@
 #include "core/byte_array/byte_array.hpp"
 #include "crypto/fnv.hpp"
 #include "crypto/openssl_common.hpp"
+#include "core/serializers/group_definitions.hpp"
 
 namespace fetch {
 namespace crypto {
@@ -117,33 +118,48 @@ static inline Identity InvalidIdentity()
   return Identity::CreateInvalid();
 }
 
-template <typename T>
-T &Serialize(T &serializer, Identity const &data)
+}  // namespace crypto
+
+namespace serializers
 {
-  serializer << data.identifier();
-  serializer << data.parameters();
-
-  return serializer;
-}
-
-template <typename T>
-T &Deserialize(T &serializer, Identity &data)
+template< typename D >
+struct MapSerializer<crypto::Identity, D >
 {
-  byte_array::ByteArray params, id;
-  serializer >> id;
-  serializer >> params;
+public:
+  using Type = crypto::Identity;
+  using DriverType = D;
 
-  data.SetParameters(params);
-  data.SetIdentifier(id);
-  if (!data)
+  static uint8_t const ID = 1;
+  static uint8_t const PARAMS = 2;  
+
+  template< typename Constructor >
+  static void Serialize(Constructor & map_constructor, Type const & data)
   {
-    data = InvalidIdentity();
+    auto map = map_constructor(2);
+    map.Append(ID,  data.identifier());
+    map.Append(PARAMS, data.parameters());
   }
 
-  return serializer;
+  template< typename MapDeserializer >
+  static void Deserialize(MapDeserializer & map, Type & data)
+  {
+    byte_array::ByteArray id;
+    byte_array::ByteArray params;
+
+    map.ExpectKeyGetValue(ID, id);
+    map.ExpectKeyGetValue(PARAMS, params);
+
+    data.SetParameters(params);
+    data.SetIdentifier(id);
+    if (!data)
+    {
+      data = crypto::InvalidIdentity();
+    }
+
+  }  
+};
 }
 
-}  // namespace crypto
 }  // namespace fetch
 
 namespace std {

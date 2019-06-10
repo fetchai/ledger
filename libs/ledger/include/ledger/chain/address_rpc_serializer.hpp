@@ -19,27 +19,38 @@
 
 #include "core/serializers/byte_array.hpp"
 #include "ledger/chain/address.hpp"
+#include "core/serializers/base_types.hpp"
 
 namespace fetch {
-namespace ledger {
+namespace serializers {
 
-template <typename T>
-void Serialize(T &s, Address const &address)
+
+template< typename D >
+struct MapSerializer< ledger::Address, D > // TODO: Consider using forward to bytearray
 {
-  assert(!address.address().empty());
-  s << address.address();
-}
+public:
+  using Type = ledger::Address;
+  using DriverType = D;
 
-template <typename T>
-void Deserialize(T &s, Address &address)
-{
-  // extract the data from the stream
-  byte_array::ConstByteArray data;
-  s >> data;
+  static uint8_t const ADDRESS = 1;
 
-  // create the address
-  address = Address{data};
-}
+  template< typename Constructor >
+  static void Serialize(Constructor & map_constructor, Type const & address)
+  {
+    auto map = map_constructor(1);
+    map.Append(ADDRESS, address);
+  }
 
-}  // namespace ledger
+  template< typename MapDeserializer >
+  static void Deserialize(MapDeserializer & map, Type & address)
+  {
+    uint8_t key;
+    byte_array::ConstByteArray data;  
+    map.GetNextKeyPair(key, data);
+    address = Type{data};
+  }  
+};
+
+
+}  // namespace serializers
 }  // namespace fetch

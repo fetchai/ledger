@@ -22,6 +22,8 @@
 #include "core/byte_array/consumers.hpp"
 #include "core/macros.hpp"
 #include "core/random.hpp"
+#include "core/serializers/group_definitions.hpp"
+
 
 #include "vectorise/memory/array.hpp"
 
@@ -384,34 +386,8 @@ public:
   ////////////////////////////////
   /// Serialization operations ///
   ////////////////////////////////
-
-  template <typename S>
-  friend void Serialize(S &serializer, Tensor const &t)
-  {
-    serializer << t.size_;
-    serializer << t.shape_;
-    // TODO (private 870)
-    for (std::size_t i = 0; i < t.data().padded_size(); ++i)
-    {
-      serializer << t.data()[i];
-    }
-  }
-
-  template <typename S>
-  friend void Deserialize(S &serializer, Tensor &t)
-  {
-    SizeType   size;
-    SizeVector shape;
-    serializer >> size;
-    serializer >> shape;
-
-    t.Reshape(shape);
-
-    for (std::size_t i = 0; i < t.data().padded_size(); ++i)
-    {
-      serializer >> t.data()[i];
-    }
-  }
+  template< typename A, typename B >
+  friend struct serializers::MapSerializer;
 
   // TODO(private 858): Vectorize and deduce D from parent
   template <typename S, typename D = memory::SharedArray<S>>
@@ -2678,4 +2654,95 @@ typename Tensor<T, C>::SizeVector Tensor<T, C>::TensorSliceImplementation<STenso
 }
 
 }  // namespace math
+
+namespace serializers
+{
+
+template< typename V, typename D >
+struct ArraySerializer< memory::SharedArray< V >, D >
+{
+public:
+  using Type = memory::SharedArray< V >;
+  using DriverType = D;
+
+  template< typename Constructor >
+  static void Serialize(Constructor & array_constructor, Type const & input)
+  {
+    auto array = array_constructor(input.size());
+    for(uint32_t i=0; i < input.size(); ++i)
+    {
+      array.Append(input[i]);
+    }
+  }
+
+  template< typename ArrayDeserializer >
+  static void Deserialize(ArrayDeserializer & array, Type & output)
+  {
+    output = Type(array.size());
+    for(uint32_t i=0; i < output.size(); ++i)
+    {
+      array.GetNextValue(output[i]);
+    }
+  }  
+};
+
+
+template< typename V, typename D >
+struct ArraySerializer< memory::Array< V >, D >
+{
+public:
+  using Type = memory::Array< V >;
+  using DriverType = D;
+
+  template< typename Constructor >
+  static void Serialize(Constructor & array_constructor, Type const & input)
+  {
+    auto array = array_constructor(input.size());
+    for(uint32_t i=0; i < input.size(); ++i)
+    {
+      array.Append(input[i]);
+    }
+  }
+
+  template< typename ArrayDeserializer >
+  static void Deserialize(ArrayDeserializer & array, Type & output)
+  {
+    output = Type(array.size());
+    for(uint32_t i=0; i < output.size(); ++i)
+    {
+      array.GetNextValue(output[i]);
+    }
+  }  
+};
+
+template< typename A, typename B, typename D >
+struct MapSerializer< math::Tensor< A, B >, D >
+{
+public:
+  using Type       = math::Tensor< A, B >;
+  using DriverType = D;
+
+  static uint8_t const SHAPE = 1;
+  static uint8_t const DATA = 2;
+
+
+  template< typename Constructor >
+  static void Serialize(Constructor & map_constructor, Type const & tensor)
+  {
+    auto map = map_constructor(2);
+    map.Append(SHAPE, tensor.shape_);  
+    map.Append(DATA,   tensor.data_);
+  }
+
+  template< typename MapDeserializer >
+  static void Deserialize(MapDeserializer & map, Type & tensor)
+  {
+    math::SizeVector shape;
+    map.ExpectKeyGetValue(SHAPE, tensor.shape_);
+    map.ExpectKeyGetValue(DATA,  tensor.data_);
+  }  
+};
+
+}
+
 }  // namespace fetch

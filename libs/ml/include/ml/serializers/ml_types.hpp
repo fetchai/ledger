@@ -22,6 +22,31 @@
 namespace fetch {
 namespace serializers {
 
+template< typename V, typename D >
+struct ArraySerializer< ml::StateDict< V >, D >
+{
+public:
+  using Type = memory::Array< V >;
+  using DriverType = D;
+
+  template< typename Constructor >
+  static void Serialize(Constructor & array_constructor, Type const & sd)
+  {
+    auto array = array_constructor(2);
+    array.Append(*sd.weights_);
+    array.Append(sd.dict_);    
+  }
+
+  template< typename ArrayDeserializer >
+  static void Deserialize(ArrayDeserializer & array, Type & output)
+  {
+    output.weights_ = std::make_shared<V>();
+    array.GetNextValue(*output.weights_);
+    array.GetNextValue(output.dict_);
+  }  
+};
+
+/*
 template <typename T, typename U>
 inline void Serialize(T &serializer, struct ml::StateDict<U> const &sd)
 {
@@ -66,6 +91,6 @@ inline void Deserialize(T &serializer, struct ml::StateDict<U> &sd)
     Deserialize(serializer, sd.dict_);
   }
 }
-
+*/
 }  // namespace serializers
 }  // namespace fetch

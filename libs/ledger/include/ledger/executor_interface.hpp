@@ -126,31 +126,64 @@ inline char const *ToString(ExecutorInterface::Status status)
   return text;
 }
 
-template <typename T>
-void Serialize(T &stream, ExecutorInterface::Status const &status)
-{
-  stream << static_cast<int>(status);
-}
-
-template <typename T>
-void Deserialize(T &stream, ExecutorInterface::Status &status)
-{
-  int raw_status{0};
-  stream >> raw_status;
-  status = static_cast<ExecutorInterface::Status>(raw_status);
-}
-
-template <typename T>
-void Serialize(T &stream, ExecutorInterface::Result const &result)
-{
-  stream << result.status << result.charge << result.charge_rate << result.fee;
-}
-
-template <typename T>
-void Deserialize(T &stream, ExecutorInterface::Result &result)
-{
-  stream >> result.status >> result.charge >> result.charge_rate >> result.fee;
-}
-
 }  // namespace ledger
+
+namespace serializers
+{
+
+template< typename D >
+struct ForwardSerializer< ledger::ExecutorInterface::Status, D >
+{
+public:
+  using Type = ledger::ExecutorInterface::Status;
+  using DriverType = D;
+
+  template< typename Serializer >
+  static inline void Serialize(Serializer &s, Type const &status)
+  {
+    s << static_cast<int32_t>(status);
+  }
+
+  template< typename Serializer >
+  static inline void Deserialize(Serializer &s, Type &status)
+  {
+    int32_t raw_status{0};
+    s >> raw_status;
+    status = static_cast<ledger::ExecutorInterface::Status>(raw_status);
+  }
+};
+
+
+template< typename D >
+struct MapSerializer<ledger::ExecutorInterface::Result, D >
+{
+public:
+  using Type = ledger::ExecutorInterface::Result;
+  using DriverType = D;
+
+  static uint8_t const STATUS = 1;
+  static uint8_t const CHARGE = 2;  
+  static uint8_t const CHARGE_RATE = 3;
+  static uint8_t const FEE = 4;
+
+  template< typename Constructor >
+  static void Serialize(Constructor & map_constructor, Type const & result)
+  {
+    auto map = map_constructor(4);
+    map.Append(STATUS, result.status);
+    map.Append(CHARGE, result.charge);
+    map.Append(CHARGE_RATE, result.charge_rate);   
+    map.Append(FEE, result.fee);    
+  }
+
+  template< typename MapDeserializer >
+  static void Deserialize(MapDeserializer & map, Type & result)
+  {
+    map.ExpectKeyGetValue(STATUS, result.status);
+    map.ExpectKeyGetValue(CHARGE, result.charge);
+    map.ExpectKeyGetValue(CHARGE_RATE, result.charge_rate);   
+    map.ExpectKeyGetValue(FEE, result.fee);
+  }  
+};
+}
 }  // namespace fetch

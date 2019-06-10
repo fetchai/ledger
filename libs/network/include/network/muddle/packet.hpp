@@ -162,11 +162,17 @@ private:
   void         SetStamped(bool set = true) noexcept;
   BinaryHeader StaticHeader() const noexcept;
 
+
+  template< typename V, typename D >
+  friend struct serializers::MapSerializer;
+
+/*  
   template <typename T>
   friend void Serialize(T &serializer, Packet const &b);
 
   template <typename T>
   friend void Deserialize(T &serializer, Packet &b);
+  */
 };
 
 inline Packet::Packet(Address const &source_address, uint32_t network_id)
@@ -389,27 +395,56 @@ inline bool Packet::Verify() const
   return retVal;
 }
 
-template <typename T>
-void Serialize(T &serializer, Packet const &packet)
-{
-  serializer << *reinterpret_cast<Packet::BinaryHeader const *>(&packet.header_) << packet.payload_;
-  if (packet.header_.stamped)
-  {
-    serializer << packet.stamp_;
-  }
-}
-
-template <typename T>
-void Deserialize(T &serializer, Packet &packet)
-{
-  serializer >> *reinterpret_cast<Packet::BinaryHeader *>(&packet.header_) >> packet.payload_;
-  if (packet.header_.stamped)
-  {
-    serializer >> packet.stamp_;
-  }
-}
-
 }  // namespace muddle
+
+
+namespace serializers
+{
+template< typename D >
+struct MapSerializer< muddle::Packet, D >
+{
+public:
+  using Type = muddle::Packet;
+  using DriverType = D;
+
+  static const uint8_t HEADER  = 1;
+  static const uint8_t PAYLOAD = 2;
+  static const uint8_t STAMP   = 3;
+
+  template <typename T>
+  static void Serialize(T &map_constructor, Type const &packet)
+  {
+    auto map = map_constructor(3);
+    map.Append(HEADER,  *reinterpret_cast<Type::BinaryHeader const *>(&packet.header_));
+    map.Append(PAYLOAD, packet.payload_);
+    map.Append(STAMP, packet.stamp_);  // TODO: add support optional fields.
+    /*
+    serializer << *reinterpret_cast<Packet::BinaryHeader const *>(&packet.header_) << packet.payload_;
+    if (packet.header_.stamped)
+    {
+      serializer << packet.stamp_;
+    }
+    */
+  }
+
+  template <typename T>
+  static void Deserialize(T &map, Type &packet)
+  {
+    uint8_t key;
+    map.GetNextKeyPair(key, *reinterpret_cast<Type::BinaryHeader *>(&packet.header_));
+    map.GetNextKeyPair(key, packet.payload_); // TODO: Test keys
+    map.GetNextKeyPair(key, packet.stamp_);
+    /*
+    serializer >> *reinterpret_cast<Packet::BinaryHeader *>(&packet.header_) >> packet.payload_;
+    if (packet.header_.stamped)
+    {
+      serializer >> packet.stamp_;
+    }
+    */
+  }
+};
+}
+
 }  // namespace fetch
 
 namespace std {

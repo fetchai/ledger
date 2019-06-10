@@ -13,6 +13,6 @@ setup_compiler()
 
 if (FETCH_ENABLE_EXAMPLES)
 
-  add_executable(example-msg-pack msg_pack/main.cpp)
-  target_link_libraries(example-msg-pack PRIVATE fetch-core)
+#  add_executable(example-msg-pack msg_pack/main.cpp)
+#  target_link_libraries(example-msg-pack PRIVATE fetch-core)
 endif()

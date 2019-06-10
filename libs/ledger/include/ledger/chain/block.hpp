@@ -76,60 +76,91 @@ public:
   std::size_t GetTransactionCount() const;
   void        UpdateDigest();
 };
+} // namespace ledger
 
-/**
- * Serializer for the block body
- *
- * @tparam T The serializer type
- * @param serializer The reference to the serializer
- * @param body The reference to the body to be serialised
- */
-template <typename T>
-void Serialize(T &serializer, Block::Body const &body)
+
+namespace serializers {
+
+template< typename D >
+struct MapSerializer< ledger::Block::Body, D > // TODO: Consider using forward to bytearray
 {
-  serializer << body.hash << body.previous_hash << body.merkle_hash << body.block_number
-             << body.miner << body.log2_num_lanes << body.slices;
-}
+public:
+  using Type = ledger::Block::Body;
+  using DriverType = D;
 
-/**
- * Deserializer for the block body
- *
- * @tparam T The serializer type
- * @param serializer The reference to the serializer
- * @param body The reference to the output body to be populated
- */
-template <typename T>
-void Deserialize(T &serializer, Block::Body &body)
+  static uint8_t const HASH = 1;
+  static uint8_t const PREVIOUS_HASH = 2;
+  static uint8_t const MERKLE_HASH = 3;
+  static uint8_t const BLOCK_NUMBER = 4;  
+  static uint8_t const MINER = 5;
+  static uint8_t const LOG2_NUM_LANES = 6;
+  static uint8_t const SLICES = 7;
+
+  template< typename Constructor >
+  static void Serialize(Constructor & map_constructor, Type const & body)
+  {
+
+    auto map = map_constructor(7);
+    map.Append(HASH, body.hash);
+    map.Append(PREVIOUS_HASH, body.previous_hash);
+    map.Append(MERKLE_HASH, body.merkle_hash);
+    map.Append(BLOCK_NUMBER, body.block_number);
+    map.Append(MINER, body.miner);
+    map.Append(LOG2_NUM_LANES, body.log2_num_lanes);
+    map.Append(SLICES, body.slices);
+  }
+
+  template< typename MapDeserializer >
+  static void Deserialize(MapDeserializer & map, Type & body)
+  {
+    uint8_t key; 
+    map.GetNextKeyPair(key, body.hash);
+    map.GetNextKeyPair(key, body.previous_hash);
+    map.GetNextKeyPair(key, body.merkle_hash);
+    map.GetNextKeyPair(key, body.block_number);
+    map.GetNextKeyPair(key, body.miner);
+    map.GetNextKeyPair(key, body.log2_num_lanes);
+    map.GetNextKeyPair(key, body.slices);
+  }  
+};
+
+template< typename D >
+struct MapSerializer< ledger::Block, D > // TODO: Consider using forward to bytearray
 {
-  serializer >> body.hash >> body.previous_hash >> body.merkle_hash >> body.block_number >>
-      body.miner >> body.log2_num_lanes >> body.slices;
-}
+public:
+  using Type = ledger::Block;
+  using DriverType = D;
 
-/**
- * Serializer for the block
- *
- * @tparam T The serializer type
- * @param serializer The reference to hte serializer
- * @param block The reference to the block to be serialised
- */
-template <typename T>
-inline void Serialize(T &serializer, Block const &block)
-{
-  serializer << block.body << block.nonce << block.proof << block.weight << block.total_weight;
-}
+  static uint8_t const BODY = 1;
+  static uint8_t const NONCE = 2;
+  static uint8_t const PROOF = 3;  
+  static uint8_t const WEIGHT = 4;  
+  static uint8_t const TOTAL_WEIGHT = 5;
 
-/**
- * Deserializer for the block
- *
- * @tparam T The serializer type
- * @param serializer The reference to the serializer
- * @param block The reference to the output block to be populated
- */
-template <typename T>
-inline void Deserialize(T &serializer, Block &block)
-{
-  serializer >> block.body >> block.nonce >> block.proof >> block.weight >> block.total_weight;
-}
+  template< typename Constructor >
+  static void Serialize(Constructor & map_constructor, Type const & block)
+  {
+    auto map = map_constructor(5);
+    map.Append(BODY, block.body);
+    map.Append(NONCE, block.nonce);
+    map.Append(PROOF, block.proof); 
+    map.Append(WEIGHT, block.weight);
+    map.Append(TOTAL_WEIGHT, block.total_weight);
+  }
 
-}  // namespace ledger
+  template< typename MapDeserializer >
+  static void Deserialize(MapDeserializer & map, Type & block)
+  {
+    uint8_t key;
+    map.GetNextKeyPair(key, block.body);
+    map.GetNextKeyPair(key, block.nonce);
+    map.GetNextKeyPair(key, block.proof); 
+    map.GetNextKeyPair(key, block.weight);
+    map.GetNextKeyPair(key, block.total_weight);
+
+  }  
+};
+
+
+}  // namespace serializers
 }  // namespace fetch

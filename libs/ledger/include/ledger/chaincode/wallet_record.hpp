@@ -151,6 +151,49 @@ struct WalletRecord
     return false;
   }
 
+};
+
+}  // namespace details
+
+}  // namespace ledger
+
+namespace serializers
+{
+template< typename D >
+struct ArraySerializer< ledger::WalletRecord, D >
+{
+public:
+  using Type       = ledger::WalletRecord;
+  using DriverType = D;
+
+  template< typename Constructor >
+  static void Serialize(Constructor & array_constructor, Type const & b)
+  {
+    auto array = array_constructor(b.deed ? 2 : 1);
+    array.Append(b.balance);
+    if(b.deed)
+    {
+      array.Append(*b.deed);
+    }
+  }
+
+  template< typename ArrayDeserializer >
+  static void Deserialize(ArrayDeserializer & array, Type & b)
+  {
+    array.GetNextValue(b.balance);
+    if(array.size() == 2)
+    {
+      if(!b.deed)
+      {
+        b.deed.reset(new ledger::Deed{});        
+      }
+      array.GetNextValue(*b.deed);      
+    }
+  }  
+};
+}
+
+/*
   template <typename T>
   friend void Serialize(T &serializer, WalletRecord const &b)
   {
@@ -178,9 +221,6 @@ struct WalletRecord
       serializer >> *b.deed;
     }
   }
-};
+*/
 
-}  // namespace
-
-}  // namespace ledger
 }  // namespace fetch

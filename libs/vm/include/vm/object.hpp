@@ -444,22 +444,33 @@ inline bool operator!=(std::nullptr_t /* lhs */, Ptr<R> const &rhs)
 {
   return (nullptr != rhs.ptr_);
 }
+} // namespace vm
 
-inline void Serialize(ByteArrayBuffer &buffer, Ptr<Object> const &object)
+namespace serializers
 {
-  if (!object->SerializeTo(buffer))
-  {
-    throw std::runtime_error("Unable to serialize requested object");
-  }
-}
-
-inline void Deserialize(ByteArrayBuffer &buffer, Ptr<Object> &object)
+template< typename D >
+struct ForwardSerializer< vm::Ptr< vm::Object >, D >
 {
-  if (!object->DeserializeFrom(buffer))
-  {
-    throw std::runtime_error("Unable to deserialize request object");
-  }
-}
+public:
+  using Type = vm::Ptr< vm::Object >;
+  using DriverType = D;
 
-}  // namespace vm
+  static inline void Serialize(ByteArrayBuffer &buffer, Type const &object)
+  {
+    if (!object->SerializeTo(buffer))
+    {
+      throw std::runtime_error("Unable to serialize requested object");
+    }
+  }
+
+  static inline void Deserialize(ByteArrayBuffer &buffer, Type &object)
+  {
+    if (!object->DeserializeFrom(buffer))
+    {
+      throw std::runtime_error("Unable to deserialize request object");
+    }
+  }
+};
+
+}  // namespace serializers
 }  // namespace fetch

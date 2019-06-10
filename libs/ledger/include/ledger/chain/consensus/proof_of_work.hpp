@@ -19,6 +19,7 @@
 
 #include "core/byte_array/const_byte_array.hpp"
 #include "math/bignumber.hpp"
+#include "core/serializers/group_definitions.hpp"
 
 #include <cstddef>
 #include <utility>
@@ -69,24 +70,66 @@ inline math::BigUnsigned const &ProofOfWork::target() const
   return target_;
 }
 
-template <typename T>
-inline void Serialize(T &serializer, ProofOfWork const &p)
+} // namespace consensus
+} // namespace ledger
+
+namespace serializers
 {
-  serializer << p.header() << p.target();
-}
 
-template <typename T>
-inline void Deserialize(T &serializer, ProofOfWork &p)
+template< typename D >
+struct ForwardSerializer< math::BigUnsigned, D >
 {
-  byte_array::ConstByteArray header;
-  math::BigUnsigned          target;
+public:
+  using Type = math::BigUnsigned; 
+  using DriverType = D;
 
-  serializer >> header >> target;
+  template< typename Serializer >
+  static inline void Serialize(Serializer &buffer, Type const &object)
+  {
+    byte_array::ConstByteArray const & ba = static_cast< byte_array::ConstByteArray const & >(object);
+    buffer << ba;
+  }
 
-  p.SetHeader(header);
-  p.SetTarget(std::move(target));
-}
+  template< typename Serializer >
+  static inline void Deserialize(Serializer &buffer, Type &object)
+  {
+    byte_array::ConstByteArray & ba = static_cast< byte_array::ConstByteArray & >(object);
+    buffer >> ba;
+  }
+};
 
-}  // namespace consensus
-}  // namespace ledger
+template< typename D >
+struct MapSerializer< ledger::consensus::ProofOfWork, D > // TODO: Consider using forward to bytearray
+{
+public:
+  using Type = ledger::consensus::ProofOfWork;
+  using DriverType = D;
+
+  static uint8_t const HEADER = 1;
+  static uint8_t const TARGET = 2;
+
+  template< typename Constructor >
+  static void Serialize(Constructor & map_constructor, Type const & p)
+  {
+    auto map = map_constructor(2);
+    map.Append(HEADER, p.header());
+    map.Append(TARGET, p.target());
+  }
+
+  template< typename MapDeserializer >
+  static void Deserialize(MapDeserializer & map, Type & p)
+  {
+    byte_array::ConstByteArray header;
+    math::BigUnsigned          target;
+  
+    map.ExpectKeyGetValue(HEADER, header);
+    map.ExpectKeyGetValue(TARGET, target);
+
+    p.SetHeader(header);
+    p.SetTarget(std::move(target));    
+  }  
+};
+
+
+}  // namespace serializers
 }  // namespace fetch

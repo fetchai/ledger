@@ -23,7 +23,8 @@
 
 namespace fetch {
 namespace serializers {
-
+/*
+TODO: Redo this test
 namespace {
 
 template <typename T>
@@ -130,10 +131,10 @@ protected:
 
     auto const orig_stream_offset = stream.tell();
 
-    //* Serialising
+    // Serialising
     stream.Append(b0, x, b1);
 
-    //* De-serialising
+    // De-serialising
     B        b0_d;
     B        b1_d;
     uint64_t x_d = 0;
@@ -193,18 +194,18 @@ TEST_F(ByteArrayBufferTest, verify_correctness_of_copy_and_comparison_behaviour_
   B const b0{"b0", "b0"};
   B       b0_copy{b0};
 
-  //* Verifying that both variables have the **same** value
+  // Verifying that both variables have the **same** value
   EXPECT_EQ(b0, b0_copy);
 
   auto const b0_copy_y_orig_value{b0_copy.t.t.y.Copy()};
-  //* Modifying value of one of variables
+  // Modifying value of one of variables
   b0_copy.t.t.y.Append("somethig new");
-  //* Proving that variables have **different** value
+  // Proving that variables have **different** value
   EXPECT_NE(b0, b0_copy);
 
-  //* Reverting variable to it's original value
+  // Reverting variable to it's original value
   b0_copy.t.t.y = b0_copy_y_orig_value;
-  //* Proving that variables have the **same** value after reverting
+  // Proving that variables have the **same** value after reverting
   EXPECT_EQ(b0, b0_copy);
 }
 
@@ -229,7 +230,7 @@ TEST_F(ByteArrayBufferTest, test_stream_relative_resize_with_preexisting_offset)
   constexpr std::size_t preallocated_amount = 100;
   ByteArrayBuffer       stream;
 
-  //* Production code under test
+  // Production code under test
   stream.Resize(preallocated_amount, ResizeParadigm::RELATIVE);
   stream.seek(preallocated_amount);
 
@@ -238,7 +239,7 @@ TEST_F(ByteArrayBufferTest, test_stream_relative_resize_with_preexisting_offset)
   EXPECT_EQ(preallocated_amount, stream.tell());
 
   constexpr std::size_t delta_size = 10;
-  //* Production code under test
+  // Production code under test
   stream.Resize(delta_size, ResizeParadigm::RELATIVE);
 
   EXPECT_EQ(preallocated_amount + delta_size, stream.size());
@@ -249,16 +250,16 @@ TEST_F(ByteArrayBufferTest, test_stream_relative_resize_with_preexisting_offset)
 TEST_F(ByteArrayBufferTest, test_that_default_resize_paradigm_is_relative)
 {
   constexpr std::size_t delta_size = 10;
-  //* Setup
+  // Setup
   ByteArrayBuffer stream;
 
   std::size_t expected_size = 0;
   for (uint64_t i = 0; i < 10; ++i)
   {
-    //* Production code under test
+    // Production code under test
     stream.Resize(delta_size);
 
-    //* Expectations
+    // Expectations
     expected_size += delta_size;
     EXPECT_EQ(expected_size, stream.size());
     EXPECT_EQ(expected_size, stream.data().capacity());
@@ -271,21 +272,21 @@ TEST_F(ByteArrayBufferTest, test_stream_absolute_resize_with_preexisting_offset)
   constexpr std::size_t offset              = small_size + 20;
   constexpr std::size_t preallocated_amount = offset + 50;
 
-  //* Setup
+  // Setup
   ByteArrayBuffer stream;
   stream.Resize(preallocated_amount);
   stream.seek(offset);
 
-  //* Production code under test
+  // Production code under test
   stream.Resize(small_size, ResizeParadigm::ABSOLUTE);
 
-  //* Expectations
+  // Expectations
   EXPECT_EQ(small_size, stream.size());
   EXPECT_EQ(preallocated_amount, stream.data().capacity());
   EXPECT_EQ(small_size, stream.tell());
 }
 
 }  // namespace
-
+*/
 }  // namespace serializers
 }  // namespace fetch

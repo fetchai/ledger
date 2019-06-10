@@ -22,6 +22,7 @@
 #include "crypto/fnv.hpp"
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
+#include "core/serializers/group_definitions.hpp"
 
 #include <limits>
 #include <type_traits>
@@ -64,10 +65,8 @@ public:
 private:
   byte_array::ConstByteArray id_;  ///< The byte array containing the hashed resource address
 
-  template <typename T>
-  friend inline void Serialize(T &, ResourceID const &);
-  template <typename T>
-  friend inline void Deserialize(T &, ResourceID &);
+  template< typename T, typename D >
+  friend struct serializers::ForwardSerializer;
 };
 
 /**
@@ -130,31 +129,6 @@ inline bool ResourceID::operator<(ResourceID const &other) const
   return id_ < other.id_;
 }
 
-/**
- * Serializes a specified `ResourceID` object with the given serializer
- *
- * @tparam T The type of the serializer
- * @param serializer The reference to the serializer
- * @param b The reference to the resource id
- */
-template <typename T>
-void Serialize(T &serializer, ResourceID const &b)
-{
-  serializer << b.id_;
-}
-
-/**
- * Deserializes a given `ResourceID` object from the specified serializer
- *
- * @tparam T The type of the serializer
- * @param serializer The reference to the serializer
- * @param b The reference to the output resource id
- */
-template <typename T>
-void Deserialize(T &serializer, ResourceID &b)
-{
-  serializer >> b.id_;
-}
 
 /**
  * The Resource Address is
@@ -205,6 +179,31 @@ private:
 };
 
 }  // namespace storage
+
+namespace serializers
+{
+
+template< typename D >
+struct ForwardSerializer< storage::ResourceID, D >
+{
+public:
+  using Type = storage::ResourceID;
+  using DriverType = D;
+
+  template< typename Serializer >
+  static inline void Serialize(Serializer &s, Type const &b)
+  {
+    s << b.id_;
+  }
+
+  template< typename Serializer >
+  static inline void Deserialize(Serializer &s, Type &b)
+  {
+    s >> b.id_;
+  }
+};  
+
+} // namespace serializers
 }  // namespace fetch
 
 namespace std {

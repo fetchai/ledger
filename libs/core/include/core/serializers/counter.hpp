@@ -94,16 +94,16 @@ public:
   }
 
   template <typename T>
-  self_type &operator<<(T const *val)
+  self_type &operator<<(T const * /*val*/)
   {
-    Serialize(*this, val);
+// TODO: Fix    Serialize(*this, val);
     return *this;
   }
 
   template <typename T>
-  self_type &operator<<(T const &val)
+  self_type &operator<<(T const & /*val*/)
   {
-    Serialize(*this, val);
+// TODO: Fix    Serialize(*this, val);
     return *this;
   }
 

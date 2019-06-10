@@ -129,12 +129,16 @@ public:
 
   std::string ToString() const;
 
+  template< typename T, typename D >
+  friend struct serializers::MapSerializer;
+/*
+TODO: Remove
   template <typename T>
   friend void Serialize(T &serializer, Manifest const &x);
 
   template <typename T>
   friend void Deserialize(T &serializer, Manifest &x);
-
+*/
   Manifest &operator=(Manifest &&other) = default;
   Manifest &operator=(Manifest const &other) = default;
 
@@ -169,29 +173,69 @@ inline Manifest::const_iterator Manifest::cend() const
   return service_map_.end();
 }
 
-template <typename T>
-void Serialize(T &serializer, Manifest const &x)
-{
-  serializer << x.service_map_;
-}
-
-template <typename T>
-void Serialize(T &serializer, Manifest::Entry const &x)
-{
-  serializer << x.remote_uri << x.local_port;
-}
-
-template <typename T>
-void Deserialize(T &serializer, Manifest &x)
-{
-  serializer >> x.service_map_;
-}
-
-template <typename T>
-void Deserialize(T &serializer, Manifest::Entry &x)
-{
-  serializer >> x.remote_uri >> x.local_port;
-}
-
 }  // namespace network
+
+
+namespace serializers
+{
+
+template< typename D >
+struct MapSerializer< network::Manifest, D >
+{
+public:
+  using DriverType = D;
+  using Type = network::Manifest;
+
+  static const uint8_t SERVICE_MAP  = 1;
+
+  template <typename T>
+  static inline void Serialize(T &map_constructor, Type const &x)
+  {
+    auto map = map_constructor(1);
+    map.Append(SERVICE_MAP, x.service_map_);
+
+  }
+
+  template <typename T>
+  static inline void Deserialize(T &map, Type &x)
+  {
+    byte_array::ConstByteArray uri;
+    uint8_t key;
+    map.GetNextKeyPair(key, x.service_map_);   
+    // TODO: Test key
+  }
+};
+
+
+template< typename D >
+struct MapSerializer< network::Manifest::Entry, D >
+{
+public:
+  using DriverType = D;
+  using Type = network::Manifest::Entry;
+
+  static const uint8_t REMOTE_URI  = 1;
+  static const uint8_t LOCAL_PORT  = 2;  
+
+  template <typename T>
+  static inline void Serialize(T &map_constructor, Type const &x)
+  {
+    auto map = map_constructor(2);
+    map.Append(REMOTE_URI, x.remote_uri);
+    map.Append(LOCAL_PORT, x.local_port);
+  }
+
+  template <typename T>
+  static inline void Deserialize(T &map, Type &x)
+  {
+    byte_array::ConstByteArray uri;
+    uint8_t key;
+    map.GetNextKeyPair(key, x.remote_uri);
+    map.GetNextKeyPair(key, x.local_port);    
+  }
+};
+
+
+}
+
 }  // namespace fetch

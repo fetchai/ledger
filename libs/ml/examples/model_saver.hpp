@@ -34,6 +34,7 @@ void SaveModel(GraphType const &g, std::string const &save_location)
 {
   fetch::serializers::ByteArrayBuffer serializer;
   serializer << g.StateDict();
+  
   std::fstream file(save_location, std::fstream::out);  // fba = FetchByteArray
   if (file)
   {
@@ -44,6 +45,7 @@ void SaveModel(GraphType const &g, std::string const &save_location)
   {
     std::cerr << "Can't open save file" << std::endl;
   }
+  
 }
 
 }  // namespace examples

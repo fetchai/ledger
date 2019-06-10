@@ -507,109 +507,148 @@ struct AnyFloatingPoint : public Variant
   using Variant::Variant;
 };
 
-inline void Serialize(ByteArrayBuffer &buffer, Variant const &variant)
+} // namespace vm
+
+namespace serializers
 {
-  buffer << variant.type_id;
-
-  switch (variant.type_id)
-  {
-  case TypeIds::Bool:
-  case TypeIds::Byte:
-    buffer << variant.primitive.ui8;
-    break;
-  case TypeIds::Int8:
-    buffer << variant.primitive.i8;
-    break;
-  case TypeIds::Int16:
-    buffer << variant.primitive.i16;
-    break;
-  case TypeIds::UInt16:
-    buffer << variant.primitive.ui16;
-    break;
-  case TypeIds::Int32:
-    buffer << variant.primitive.i32;
-    break;
-  case TypeIds::UInt32:
-    buffer << variant.primitive.ui32;
-    break;
-  case TypeIds::Int64:
-    buffer << variant.primitive.i64;
-    break;
-  case TypeIds::UInt64:
-    buffer << variant.primitive.ui64;
-    break;
-  case TypeIds::Float32:
-    buffer << variant.primitive.f32;
-    break;
-  case TypeIds::Float64:
-    buffer << variant.primitive.f64;
-    break;
-  default:
-    if (variant.object)
-    {
-      if (!variant.object->SerializeTo(buffer))
-      {
-        throw std::runtime_error("Unable to serialize type");
-      }
-    }
-    break;
-  }
-}
-
-inline void Deserialize(ByteArrayBuffer &buffer, Variant &variant)
+template< typename D >
+struct MapSerializer< vm::Variant, D >
 {
-  TypeId id;
-  buffer >> id;
+public:
+  using Type = vm::Variant;
+  using DriverType = D;
 
-  if (id != variant.type_id)
-  {
-    throw std::runtime_error("Unable to deserialize the variant type");
-  }
+  static const uint8_t TYPE = 1;
+  static const uint8_t DATA = 2;
 
-  switch (variant.type_id)
+  template <typename T>
+  static void Serialize(T &map_constructor, Type const &variant)
   {
-  case TypeIds::Bool:
-  case TypeIds::Byte:
-    buffer >> variant.primitive.ui8;
-    break;
-  case TypeIds::Int8:
-    buffer >> variant.primitive.i8;
-    break;
-  case TypeIds::Int16:
-    buffer >> variant.primitive.i16;
-    break;
-  case TypeIds::UInt16:
-    buffer >> variant.primitive.ui16;
-    break;
-  case TypeIds::Int32:
-    buffer >> variant.primitive.i32;
-    break;
-  case TypeIds::UInt32:
-    buffer >> variant.primitive.ui32;
-    break;
-  case TypeIds::Int64:
-    buffer >> variant.primitive.i64;
-    break;
-  case TypeIds::UInt64:
-    buffer >> variant.primitive.ui64;
-    break;
-  case TypeIds::Float32:
-    buffer >> variant.primitive.f32;
-    break;
-  case TypeIds::Float64:
-    buffer >> variant.primitive.f64;
-    break;
-  default:
-    if (variant.object)
+    auto map = map_constructor(2);
+    map.Append(TYPE,  variant.type_id);
+    switch (variant.type_id)
     {
-      if (!variant.object->DeserializeFrom(buffer))
+    case vm::TypeIds::Bool:
+    case vm::TypeIds::Byte:
+      map.Append(DATA, variant.primitive.ui8);
+      break;
+    case vm::TypeIds::Int8:
+      map.Append(DATA, variant.primitive.i8);
+      break;
+    case vm::TypeIds::Int16:
+      map.Append(DATA, variant.primitive.i16);
+      break;
+    case vm::TypeIds::UInt16:
+      map.Append(DATA, variant.primitive.ui16);
+      break;
+    case vm::TypeIds::Int32:
+      map.Append(DATA, variant.primitive.i32);
+      break;
+    case vm::TypeIds::UInt32:
+      map.Append(DATA, variant.primitive.ui32);
+      break;
+    case vm::TypeIds::Int64:
+      map.Append(DATA, variant.primitive.i64);
+      break;
+    case vm::TypeIds::UInt64:
+      map.Append(DATA, variant.primitive.ui64);
+      break;
+    case vm::TypeIds::Float32:
+      map.Append(DATA, variant.primitive.f32);
+      break;
+    case vm::TypeIds::Float64:
+      map.Append(DATA, variant.primitive.f64);
+      break;
+    default:
+      if (variant.object)
       {
-        throw std::runtime_error("Failed to the deserialize compound object");
+        /*
+        TODO: Needs fixing
+        if (!variant.object->SerializeTo(buffer))
+        {
+          throw std::runtime_error("Unable to serialize type");
+        }
+        */
       }
+      else
+      {
+        // TODO: Add null.
+      }
+      break;
     }
-    break;
-  }
-}
 
-}  // namespace vm
+  }
+
+  template <typename T>
+  static void Deserialize(T &map, Type &variant)
+  {
+    uint8_t key;
+    map.GetNextKeyPair(key, variant.type_id);
+
+    switch (variant.type_id)
+    {
+    case vm::TypeIds::Bool:
+    case vm::TypeIds::Byte:
+      map.GetNextKeyPair(key, variant.primitive.ui8);
+      break;
+    case vm::TypeIds::Int8:
+      map.GetNextKeyPair(key, variant.primitive.i8);
+      break;
+    case vm::TypeIds::Int16:
+      map.GetNextKeyPair(key, variant.primitive.i16);
+      break;
+    case vm::TypeIds::UInt16:
+      map.GetNextKeyPair(key, variant.primitive.ui16);
+      break;
+    case vm::TypeIds::Int32:
+      map.GetNextKeyPair(key, variant.primitive.i32);
+      break;
+    case vm::TypeIds::UInt32:
+      map.GetNextKeyPair(key, variant.primitive.ui32);
+      break;
+    case vm::TypeIds::Int64:
+      map.GetNextKeyPair(key, variant.primitive.i64);
+      break;
+    case vm::TypeIds::UInt64:
+      map.GetNextKeyPair(key, variant.primitive.ui64);
+      break;
+    case vm::TypeIds::Float32:
+      map.GetNextKeyPair(key, variant.primitive.f32);
+      break;
+    case vm::TypeIds::Float64:
+      map.GetNextKeyPair(key, variant.primitive.f64);
+      break;
+    default:
+      if (variant.object)
+      {
+        /* TODO: Needs fixing
+        if (!variant.object->SerializeTo(buffer))
+        {
+          throw std::runtime_error("Unable to serialize type");
+        }
+        */
+      }
+      else
+      {
+        // TODO: Add null.
+      }
+      break;
+    }
+
+  }
+};
+
+template< typename D >
+struct MapSerializer< vm::TemplateParameter1, D > : public MapSerializer< vm::Variant, D >
+{
+  using DriverType = D;
+};
+
+template< typename D >
+struct MapSerializer< vm::TemplateParameter2, D > : public MapSerializer< vm::Variant, D >
+{
+  using DriverType = D;
+};
+
+}  // namespace serializers
 }  // namespace fetch

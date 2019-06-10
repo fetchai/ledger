@@ -121,11 +121,12 @@ private:
     service::CallContext context;
     context.sender_address      = from;
     context.transmitter_address = transmitter;
-
+    context.MarkAsValid();
+    
     // dispatch down to the core RPC level
     try
     {
-      PushProtocolRequest(index, payload, &context);
+      PushProtocolRequest(index, payload, context);
     }
     catch (std::exception const &ex)
     {

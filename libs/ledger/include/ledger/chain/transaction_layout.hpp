@@ -19,6 +19,7 @@
 
 #include "core/bitvector.hpp"
 #include "core/byte_array/const_byte_array.hpp"
+#include "core/serializers/group_definitions.hpp"
 
 namespace fetch {
 namespace ledger {
@@ -70,10 +71,8 @@ private:
   BlockIndex     valid_until_{0};
 
   // Native serializers
-  template <typename T>
-  friend void Serialize(T &s, TransactionLayout const &tx);
-  template <typename T>
-  friend void Deserialize(T &s, TransactionLayout &tx);
+  template<typename T, typename D>
+  friend struct serializers::MapSerializer;
 };
 
 /**
