@@ -16,13 +16,14 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/fetch_backward.hpp"
 #include "core/logger.hpp"
 
-namespace backward {
-
-backward::SignalHandling sh;
-
-}  // namespace backward
+// namespace backward {
+//
+// backward::SignalHandling sh;
+//
+//}  // namespace backward
 
 namespace fetch {
 std::map<std::thread::id, int> fetch::log::ReadableThread::thread_number_ =
@@ -33,6 +34,9 @@ std::mutex fetch::log::ReadableThread::mutex_;
 log::details::LogWrapper logger;
 
 namespace log {
+
+FetchBackward fb;
+
 Context::Context(void *instance)
   : details_{std::make_shared<ContextDetails>(instance)}
   , created_{std::chrono::high_resolution_clock::now()}
