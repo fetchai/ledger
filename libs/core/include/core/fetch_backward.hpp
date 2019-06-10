@@ -31,8 +31,8 @@
 #pragma GCC diagnostic ignored "-Wsign-compare"
 #endif
 
-#include <signal.h>
 #include <backward.hpp>
+#include <signal.h>
 
 #if defined(__clang__)
 #pragma clang diagnostic pop
@@ -41,4 +41,3 @@
 #if defined(__GNUC__)
 #pragma GCC diagnostic pop
 #endif
-

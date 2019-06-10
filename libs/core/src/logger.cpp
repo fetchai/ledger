@@ -22,7 +22,7 @@ namespace backward {
 
 backward::SignalHandling sh;
 
-} // namespace backward
+}  // namespace backward
 
 namespace fetch {
 std::map<std::thread::id, int> fetch::log::ReadableThread::thread_number_ =
