@@ -34,7 +34,9 @@ template <typename LabelType, typename T>
 class MNISTLoader : public DataLoader<LabelType, T>
 {
 public:
-  using SizeType = typename T::SizeType;
+  using SizeType   = typename T::SizeType;
+  using DataType   = typename T::Type;
+  using ReturnType = std::pair<LabelType, std::vector<T>>;
 
   MNISTLoader(std::string const &imagesFile, std::string const &labelsFile)
     : cursor_(0)
@@ -44,7 +46,10 @@ public:
     labels_      = read_mnist_labels(labelsFile, size_);
     figure_size_ = 28 * 28;
     assert(recordLength == figure_size_);
-    Initialise();
+
+    // Prepare return buffer
+    buffer_.second.push_back(T({28u, 28u, 1u}));
+    buffer_.first = LabelType({10u, 1u});
   }
 
   virtual SizeType Size() const
@@ -63,13 +68,13 @@ public:
     cursor_ = 0;
   }
 
-  virtual std::pair<LabelType, std::vector<T>> GetNext()
+  virtual ReturnType GetNext()
   {
     GetAtIndex(static_cast<SizeType>(cursor_++), buffer_);
     return buffer_;
   }
 
-  std::pair<LabelType, std::vector<T>> GetRandom()
+  ReturnType GetRandom()
   {
     GetAtIndex((SizeType)rand() % Size(), buffer_);
     return buffer_;
@@ -77,15 +82,19 @@ public:
 
   void Display(T const &data) const
   {
-    for (SizeType j{0}; j < figure_size_; ++j)
+    for (SizeType i{0}; i < 28u; ++i)
     {
-      std::cout << (data.At(j) > typename T::Type(0.5) ? char(219) : ' ')
-                << ((j % 28 == 0) ? "\n" : "");
+      for (SizeType j{0}; j < 28u; ++j)
+      {
+
+        std::cout << (data.At(i, j, 0) > typename T::Type(0.5) ? char(219) : ' ');
+      }
+      std::cout << "\n";
     }
     std::cout << std::endl;
   }
 
-  std::pair<LabelType, std::vector<T>> SubsetToArray(SizeType subset_size)
+  ReturnType SubsetToArray(SizeType subset_size)
   {
     T              ret_labels({1, subset_size});
     std::vector<T> ret_images;
@@ -111,30 +120,8 @@ public:
 private:
   using uchar = unsigned char;
 
-  // Non one-hot
-  template <typename LabelT = LabelType, typename DataT = T>
-  math::meta::IfIsArithmetic<LabelT, void> Initialise()
+  void GetAtIndex(SizeType index, ReturnType &ret)
   {
-    buffer_.second.push_back(T({28u, 28u, 1u}));
-  }
-
-  // One-hot
-  template <typename LabelT = LabelType, typename DataT = T>
-  math::meta::IfIsMathArray<LabelT, void> Initialise()
-  {
-    buffer_.second.push_back(T({28u, 28u, 1u}));
-    buffer_.first = LabelType({10u, 1u});
-  }
-
-  // TEMPORARY - Find a way how to make this work without  template <typename LabelT=LabelType,
-  // typename DataT=T> One-hot
-  template <typename LabelT = LabelType, typename DataT = T>
-  math::meta::IfIsMathArray<LabelT, void> GetAtIndex(SizeType index,
-                                                     std::pair<LabelType, std::vector<DataT>> &ret)
-  {
-    using SizeType = typename T::SizeType;
-    using DataType = typename T::Type;
-
     SizeType i{0};
     auto     it = buffer_.second.at(0).begin();
     while (it.is_valid())
@@ -145,27 +132,7 @@ private:
     }
 
     buffer_.first.Fill(DataType{0});
-    buffer_.first.At(labels_[index], 0) = DataType{1.0};
-
-    ret = buffer_;
-  }
-
-  // Non one-hot
-  template <typename LabelT = LabelType, typename DataT = T>
-  math::meta::IfIsArithmetic<LabelT, void> GetAtIndex(SizeType index,
-                                                      std::pair<LabelType, std::vector<DataT>> &ret)
-  {
-    using SizeType = typename T::SizeType;
-    using DataType = typename T::Type;
-
-    SizeType i{0};
-    auto     it = buffer_.second.at(0).begin();
-    while (it.is_valid())
-    {
-      *it = static_cast<DataType>(data_[index][i]) / DataType{256};
-      i++;
-      ++it;
-    }
+    buffer_.first(labels_[index], 0) = DataType{1.0};
 
     ret = buffer_;
   }
@@ -262,7 +229,7 @@ private:
   std::uint32_t size_;
   std::uint32_t figure_size_;
 
-  std::pair<LabelType, std::vector<T>> buffer_;
+  ReturnType buffer_;
 
   unsigned char **data_;
   unsigned char * labels_;
