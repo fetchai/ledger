@@ -54,10 +54,10 @@ int main(int ac, char **av)
   g.AddNode<FullyConnected<ArrayType>>("FC1", {"Input"}, 28u * 28u, 10u);
   g.AddNode<Relu<ArrayType>>("Relu1", {"FC1"});
   g.AddNode<FullyConnected<ArrayType>>("FC2", {"Relu1"}, 10u, 10u);
-  g.AddNode<Relu<ArrayType>>("Relu2", {"FC1"});
+  g.AddNode<Relu<ArrayType>>("Relu2", {"FC2"});
   g.AddNode<FullyConnected<ArrayType>>("FC3", {"Relu2"}, 10u, 10u);
   g.AddNode<Softmax<ArrayType>>("Softmax", {"FC3"});
-  //  Input -> FC -> Relu -> FC -> Relu -> FC -> Softmax
+  //  Input -> FC1 -> Relu1 -> FC2 -> Relu2 -> FC3 -> Softmax
 
   CrossEntropy<ArrayType> criterion;
 
