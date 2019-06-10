@@ -59,13 +59,13 @@ int main(int ac, char **av)
   std::cout << "Number of different words: " << cloader.word_counter().size() << std::endl;
 
   std::cout << "Retrieving function names from cloader" << std::endl;
-  std::cout << cloader.umap_idx_to_functionname()[0] << std::endl;
-  std::cout << cloader.umap_idx_to_functionname()[1] << std::endl;
-  std::cout << cloader.umap_idx_to_functionname()[2] << std::endl;
+  std::cout << cloader.umap_idx_to_functionname().at(0) << std::endl;
+  std::cout << cloader.umap_idx_to_functionname().at(1) << std::endl;
+  std::cout << cloader.umap_idx_to_functionname().at(2) << std::endl;
 
   auto input = cloader.GetNext();
   std::cout << "Getting next input indices" << std::endl;
-  std::cout << input.second[2].ToString() << std::endl;
+  std::cout << input.second.at(2).ToString() << std::endl;
 
   return 0;
 }

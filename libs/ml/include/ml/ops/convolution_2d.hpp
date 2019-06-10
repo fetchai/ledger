@@ -83,10 +83,10 @@ private:
  * Applies 2D convolution using im2col with General Matrix Multiplication described here:
  * https://www.scss.tcd.ie/~andersan/static/papers/asap-2017.pdf
  * @param inputs vector of tensor references where at:
- * inputs[0] = input_data[input_channels x input_height x input_width], inputs[1] =
- * kernel_data[kernel_channels x kernel_height x kernel_width]
+ * inputs[0] = input_data[input_channels x input_height x input_width x batch_position], inputs[1] =
+ * kernel_data[kernel_channels x kernel_height x kernel_width x batch_position]
  * @param output tensor of size [output_channels x number_of_stride_sized_steps_over_input_height x
- * number_of_stride_sized_steps_over_input_width]
+ * number_of_stride_sized_steps_over_input_width x batch_position]
  * @return: output tensor parameter
  */
 template <class ArrayType>
@@ -138,9 +138,10 @@ void Convolution2D<ArrayType>::Forward(VecTensorType const &inputs, ArrayType &o
  * described here: https://www.scss.tcd.ie/~andersan/static/papers/asap-2017.pdf
  * @param inputs vector of tensor references where at:
  * inputs[0] = input_data[input_channels x input_height x input_width], inputs[1] =
- * kernel_data[kernel_channels x kernel_height x kernel_width]
+ * kernel_data[kernel_channels x kernel_height x kernel_width x batch_position]
  * @param error_signal tensor of size [output_channels x
- * number_of_stride_sized_steps_over_input_height x number_of_stride_sized_steps_over_input_width]
+ * number_of_stride_sized_steps_over_input_height x number_of_stride_sized_steps_over_input_width x
+ * batch_position]
  * @return: output vector of tensors with back propagated error signal
  * output[0]=input_error[inputs[0].shape], output[1]=kernel_error[inputs[1].shape]
  */

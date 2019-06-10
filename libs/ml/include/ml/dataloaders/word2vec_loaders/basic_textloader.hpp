@@ -333,6 +333,7 @@ template <typename T>
 void BasicTextLoader<T>::GetData(typename BasicTextLoader<T>::SizeType idx, std::vector<T> &ret)
 {
   assert(p_.n_data_buffers == 1);
+  assert(ret.size() > 0);
   SizeType sentence_idx = this->word_idx_sentence_idx.at(idx);
   SizeType word_idx     = this->GetWordOffsetFromWordIdx(idx);
   ret[0].At(0, 0)       = DataType(this->data_.at(sentence_idx).at(word_idx));

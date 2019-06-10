@@ -28,12 +28,9 @@ template <typename LabelType, typename DataType>
 class DataLoader
 {
 public:
-  virtual ~DataLoader()                                         = default;
-  virtual std::pair<LabelType, std::vector<DataType>> GetNext() = 0;
-  virtual std::pair<LabelType, std::vector<DataType>> GetRandom()
-  {
-    throw std::runtime_error("Random sampling not implemented for this dataloader");
-  }
+  virtual ~DataLoader()                                           = default;
+  virtual std::pair<LabelType, std::vector<DataType>> GetNext()   = 0;
+  virtual std::pair<LabelType, std::vector<DataType>> GetRandom() = 0;
 
   virtual std::uint64_t Size() const   = 0;
   virtual bool          IsDone() const = 0;

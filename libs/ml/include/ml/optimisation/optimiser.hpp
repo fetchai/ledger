@@ -51,7 +51,7 @@ public:
                SizeType batch_size = 0);
 
   DataType Run(fetch::ml::DataLoader<ArrayType, ArrayType> &loader, bool random_mode = false,
-               SizeType batch_size  = fetch::math::numeric_max<SizeType>(),
+               SizeType batch_size  = 0,
                SizeType subset_size = fetch::math::numeric_max<SizeType>());
 
 protected:
@@ -101,11 +101,13 @@ template <class T, class C>
 typename T::Type Optimiser<T, C>::Run(std::vector<ArrayType> const &data, ArrayType const &labels,
                                       SizeType batch_size)
 {
+  assert(data.size() > 0);
+
   // Get trailing dimensions
-  SizeType n_data_dimm  = data[0].shape().size() - 1;
+  SizeType n_data_dimm  = data.at(0).shape().size() - 1;
   SizeType n_label_dimm = labels.shape().size() - 1;
 
-  SizeType n_data = data[0].shape().at(n_data_dimm);
+  SizeType n_data = data.at(0).shape().at(n_data_dimm);
 
   // If batch_size is not specified do full batch
   if (batch_size == 0)
@@ -139,6 +141,7 @@ typename T::Type Optimiser<T, C>::Run(std::vector<ArrayType> const &data, ArrayT
       loss += criterion_.Forward({label_pred, cur_label});
       graph_->BackPropagate(output_node_name_, criterion_.Backward({label_pred, cur_label}));
     }
+
     // Compute and apply gradient
     ApplyGradients(batch_size);
 
@@ -168,7 +171,16 @@ template <class T, class C>
 typename T::Type Optimiser<T, C>::Run(fetch::ml::DataLoader<ArrayType, ArrayType> &loader,
                                       bool random_mode, SizeType batch_size, SizeType subset_size)
 {
-  loader.Reset();
+  if (loader.IsDone())
+  {
+    loader.Reset();
+  }
+
+  // If batch_size is not specified do full batch
+  if (batch_size == 0)
+  {
+    batch_size = loader.Size();
+  }
 
   DataType                                     loss{0};
   DataType                                     loss_sum{0};

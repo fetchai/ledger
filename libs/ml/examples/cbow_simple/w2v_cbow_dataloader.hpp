@@ -133,14 +133,14 @@ public:
 
     for (uint64_t i(0); i < dynamic_size; ++i)
     {
-      t.second[0].Set(i, 0, T(data_[current_sentence_][current_word_ + i]));
-      t.second[0].Set(i + dynamic_size, 0,
-                      T(data_[current_sentence_][current_word_ + dynamic_size + i + 1]));
+      t.second.at(0).Set(i, 0, T(data_[current_sentence_][current_word_ + i]));
+      t.second.at(0).Set(i + dynamic_size, 0,
+                         T(data_[current_sentence_][current_word_ + dynamic_size + i + 1]));
     }
 
     for (uint64_t i(dynamic_size * 2); i < t.second[0].size(); ++i)
     {
-      t.second[0](i, 0) = -1;
+      t.second.at(0).At(i, 0) = -1;
     }
 
     for (uint64_t i(1); i < negative_samples_; ++i)
@@ -162,6 +162,11 @@ public:
     fetch::math::Tensor<T> label({negative_samples_, 1});
     ReturnType             p(label, {t});
     return GetNext(p);
+  }
+
+  ReturnType GetRandom() override
+  {
+    throw std::runtime_error("Random sampling not implemented for CBOWLoader");
   }
 
   std::size_t VocabSize() const

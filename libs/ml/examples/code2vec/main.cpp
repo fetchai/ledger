@@ -52,8 +52,8 @@ using Embeddings     = fetch::ml::ops::Embeddings<ArrayType>;
 using Transpose      = fetch::ml::ops::Transpose<ArrayType>;
 using MatrixMultiply = fetch::ml::ops::MatrixMultiply<ArrayType>;
 
-using ContextTensorTuple      = typename std::vector<ArrayType>;
-using ContextTensorsLabelPair = typename std::pair<ArrayType, ContextTensorTuple>;
+using ContextVector           = typename std::vector<ArrayType>;
+using ContextTensorsLabelPair = typename std::pair<ArrayType, ContextVector>;
 
 #define EMBEDDING_SIZE 64u
 #define BATCHSIZE 12u
