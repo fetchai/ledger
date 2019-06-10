@@ -13,6 +13,12 @@ macro (setup_compiler)
   set(CMAKE_CXX_STANDARD 14)
   set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
 
+  set(_is_clang_compiler FALSE)
+  if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang"
+      OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "AppleClang")
+    set(_is_clang_compiler TRUE)
+  endif ()
+
   # ensure that only one architecture is enable
   set(_num_architectures_compiler 0)
   set(_list_architectures_compiler)
@@ -75,23 +81,16 @@ macro (setup_compiler)
 
   if (${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-pragmas -Wno-unknown-pragmas")
-  elseif (${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
+  elseif (_is_clang_compiler)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unknown-warning-option")
   endif ()
 
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
   if (FETCH_WARNINGS_AS_ERRORS)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
   endif (FETCH_WARNINGS_AS_ERRORS)
 
   # prefer PIC
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
-
-  set(_is_clang_compiler FALSE)
-  if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang"
-      OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "AppleClang")
-    set(_is_clang_compiler TRUE)
-  endif ()
 
   if (FETCH_ENABLE_COVERAGE)
     if (_is_clang_compiler)

@@ -151,18 +151,6 @@ protected:
     services_[n] = ptr;
   }
 
-  template <typename T>
-  void ActivateSelfManage(T ptr)
-  {
-    ptr->ActivateSelfManage();
-  }
-
-  template <typename T>
-  void DeactivateSelfManage(T ptr)
-  {
-    ptr->ADativateSelfManage();
-  }
-
 private:
   mutable mutex::Mutex  service_lock_{__LINE__, __FILE__};
   service_map_type      services_;

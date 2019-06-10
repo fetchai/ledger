@@ -17,14 +17,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include "fake_random_access_stack.hpp"
-#include "storage/file_object.hpp"
+namespace fetch {
+namespace value_util {
 
-#include <gmock/gmock.h>
+template <class... Ts>
+constexpr void no_op(Ts &&... /*ts*/) noexcept
+{}
 
-class MockFileObject
-  : public fetch::storage::FileObject<FakeRandomAccessStack<fetch::storage::FileBlockType<>>>
-{
-public:
-  MockFileObject() = default;
-};
+}  // namespace value_util
+}  // namespace fetch

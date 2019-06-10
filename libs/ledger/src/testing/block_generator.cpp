@@ -93,6 +93,8 @@ BlockGenerator::BlockPtr BlockGenerator::Generate(BlockPtr const &from, uint64_t
     block->body.miner         = Address{fetch::ledger::GENESIS_DIGEST};
   }
 
+  block->UpdateTimestamp();
+
   // compute the digest for the block
   block->UpdateDigest();
 
