@@ -130,13 +130,13 @@ public:
     // The number of context words changes at each iteration with values in range [1 * 2,
     // window_size_ * 2]
     uint64_t dynamic_size = rng_() % window_size_ + 1;
-    t.first.Set(0, 0, T(data_[current_sentence_][current_word_ + dynamic_size]));
+    t.first(0, 0)         = T(data_[current_sentence_][current_word_ + dynamic_size]);
 
     for (uint64_t i(0); i < dynamic_size; ++i)
     {
-      t.second.at(0).Set(i, 0, T(data_[current_sentence_][current_word_ + i]));
-      t.second.at(0).Set(i + dynamic_size, 0,
-                         T(data_[current_sentence_][current_word_ + dynamic_size + i + 1]));
+      t.second.at(0)(i, 0) = T(data_[current_sentence_][current_word_ + i]);
+      t.second.at(0)(i + dynamic_size, 0) =
+          T(data_[current_sentence_][current_word_ + dynamic_size + i + 1]);
     }
 
     for (uint64_t i(dynamic_size * 2); i < t.second.at(0).size(); ++i)
