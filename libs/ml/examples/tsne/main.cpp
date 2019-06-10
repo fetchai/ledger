@@ -92,7 +92,7 @@ int main(int ac, char **av)
 
   // Initialize TSNE
   std::cout << "Running TSNE init. " << std::endl;
-  TSNE<Tensor<DataType>> tsn(input.second[0], N_OUTPUT_FEATURE_SIZE, PERPLEXITY, RANDOM_SEED);
+  TSNE<Tensor<DataType>> tsn(input.second.at(0), N_OUTPUT_FEATURE_SIZE, PERPLEXITY, RANDOM_SEED);
 
   std::cout << "Started optimisation. " << std::endl;
   tsn.Optimise(LEARNING_RATE, MAX_ITERATIONS, INITIAL_MOMENTUM, FINAL_MOMENTUM,

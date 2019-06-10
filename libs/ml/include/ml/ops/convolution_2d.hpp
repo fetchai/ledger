@@ -83,10 +83,10 @@ private:
  * Applies 2D convolution using im2col with General Matrix Multiplication described here:
  * https://www.scss.tcd.ie/~andersan/static/papers/asap-2017.pdf
  * @param inputs vector of tensor references where at:
- * inputs[0] = input_data[input_channels x input_height x input_width], inputs[1] =
- * kernel_data[kernel_channels x kernel_height x kernel_width]
+ * inputs[0] = input_data[input_channels x input_height x input_width x batch_position], inputs[1] =
+ * kernel_data[kernel_channels x kernel_height x kernel_width x batch_position]
  * @param output tensor of size [output_channels x number_of_stride_sized_steps_over_input_height x
- * number_of_stride_sized_steps_over_input_width]
+ * number_of_stride_sized_steps_over_input_width x batch_position]
  * @return: output tensor parameter
  */
 template <class ArrayType>
@@ -138,9 +138,10 @@ void Convolution2D<ArrayType>::Forward(VecTensorType const &inputs, ArrayType &o
  * described here: https://www.scss.tcd.ie/~andersan/static/papers/asap-2017.pdf
  * @param inputs vector of tensor references where at:
  * inputs[0] = input_data[input_channels x input_height x input_width], inputs[1] =
- * kernel_data[kernel_channels x kernel_height x kernel_width]
+ * kernel_data[kernel_channels x kernel_height x kernel_width x batch_position]
  * @param error_signal tensor of size [output_channels x
- * number_of_stride_sized_steps_over_input_height x number_of_stride_sized_steps_over_input_width]
+ * number_of_stride_sized_steps_over_input_height x number_of_stride_sized_steps_over_input_width x
+ * batch_position]
  * @return: output vector of tensors with back propagated error signal
  * output[0]=input_error[inputs[0].shape], output[1]=kernel_error[inputs[1].shape]
  */
@@ -255,7 +256,7 @@ void Convolution2D<ArrayType>::FillVerticalStride(ArrayType &input, ArrayType &v
       {
         for (SizeType j_k(0); j_k < kernel_width; j_k++)  // Iterate over kernel width
         {
-          vertical_stride.Set(i_oc, j_s, input.At(i_oc, i_ic, i_k, j_k, 0));
+          vertical_stride(i_oc, j_s) = input.At(i_oc, i_ic, i_k, j_k, 0);
           ++j_s;
         }
       }
@@ -290,7 +291,7 @@ void Convolution2D<ArrayType>::ReverseFillVerticalStride(
       {
         for (SizeType j_k(0); j_k < kernel_width; j_k++)  // Iterate over kernel width
         {
-          input.Set(i_oc, i_ic, i_k, j_k, 0, vertical_stride.At(i_oc, j_s));
+          input(i_oc, i_ic, i_k, j_k, 0) = vertical_stride.At(i_oc, j_s);
           ++j_s;
         }
       }
@@ -334,8 +335,8 @@ void Convolution2D<ArrayType>::FillHorizontalStride(ArrayType &input, ArrayType 
         {
           for (SizeType j_k(0); j_k < kernel_width; j_k++)  // Iterate over kernel width
           {
-            horizontal_stride.Set(
-                i_s, j_s, input.At(i_ic, i_o * stride_size_ + i_k, j_o * stride_size_ + j_k, 0));
+            horizontal_stride(i_s, j_s) =
+                input.At(i_ic, i_o * stride_size_ + i_k, j_o * stride_size_ + j_k, 0);
             ++i_s;
           }
         }
@@ -379,8 +380,8 @@ void Convolution2D<ArrayType>::ReverseFillHorizontalStride(
         {
           for (SizeType j_k(0); j_k < kernel_width; j_k++)  // Iterate over kernel width
           {
-            input.Set(i_ic, i_o * stride_size_ + i_k, j_o * stride_size_ + j_k, 0,
-                      horizontal_stride.At(i_s, j_s));
+            input(i_ic, i_o * stride_size_ + i_k, j_o * stride_size_ + j_k, 0) =
+                horizontal_stride.At(i_s, j_s);
             ++i_s;
           }
         }
@@ -414,7 +415,7 @@ void Convolution2D<ArrayType>::FillOutput(ArrayType const &gemm_output, ArrayTyp
     {
       for (SizeType j_o{0}; j_o < output_width; ++j_o)  // Iterate over output width
       {
-        output.Set(i_oc, i_o, j_o, 0, gemm_output.At(i_oc, it));
+        output(i_oc, i_o, j_o, 0) = gemm_output.At(i_oc, it);
         ++it;
       }
     }
@@ -446,7 +447,7 @@ void Convolution2D<ArrayType>::ReverseFillOutput(ArrayType &gemm_output, ArrayTy
     {
       for (SizeType j_o{0}; j_o < output_width; ++j_o)  // Iterate over output width
       {
-        gemm_output.Set(i_oc, it, output.At(i_oc, i_o, j_o, 0));
+        gemm_output(i_oc, it) = output.At(i_oc, i_o, j_o, 0);
         ++it;
       }
     }

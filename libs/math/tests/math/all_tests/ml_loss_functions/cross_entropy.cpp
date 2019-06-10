@@ -45,11 +45,11 @@ TYPED_TEST(CrossEntropyTest, perfect_match_test)
     {
       if (gt_data[i] == j)
       {
-        gt_array.Set(SizeType{i}, SizeType{j}, typename TypeParam::Type(1));
+        gt_array(i, j) = typename TypeParam::Type(1);
       }
       else
       {
-        gt_array.Set(SizeType{i}, SizeType{j}, typename TypeParam::Type(0));
+        gt_array(i, j) = typename TypeParam::Type(0);
       }
     }
   }
@@ -80,11 +80,11 @@ TYPED_TEST(CrossEntropyTest, value_test)
     {
       if (gt_data[i] == j)
       {
-        gt_array.Set(SizeType{j}, SizeType{i}, typename TypeParam::Type(1));
+        gt_array(j, i) = typename TypeParam::Type(1);
       }
       else
       {
-        gt_array.Set(SizeType{j}, SizeType{i}, typename TypeParam::Type(0));
+        gt_array(j, i) = typename TypeParam::Type(0);
       }
     }
   }
@@ -99,7 +99,7 @@ TYPED_TEST(CrossEntropyTest, value_test)
   {
     for (SizeType j{0}; j < n_classes; ++j)
     {
-      test_array.Set(SizeType{j}, SizeType{i}, typename TypeParam::Type(logits.at(idx)));
+      test_array(j, i) = typename TypeParam::Type(logits.at(idx));
       idx++;
     }
   }

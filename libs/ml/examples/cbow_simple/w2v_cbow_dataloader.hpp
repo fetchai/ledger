@@ -38,8 +38,9 @@ public:
   using ReturnType = std::pair<fetch::math::Tensor<T>, std::vector<fetch::math::Tensor<T>>>;
 
 public:
-  CBOWLoader(uint64_t window_size, uint64_t negative_samples)
-    : current_sentence_(0)
+  CBOWLoader(uint64_t window_size, uint64_t negative_samples, bool random_mode = false)
+    : DataLoader<fetch::math::Tensor<T>, fetch::math::Tensor<T>>(random_mode)
+    , current_sentence_(0)
     , current_word_(0)
     , window_size_(window_size)
     , negative_samples_(negative_samples)
@@ -129,18 +130,18 @@ public:
     // The number of context words changes at each iteration with values in range [1 * 2,
     // window_size_ * 2]
     uint64_t dynamic_size = rng_() % window_size_ + 1;
-    t.first.Set(0, 0, T(data_[current_sentence_][current_word_ + dynamic_size]));
+    t.first(0, 0)         = T(data_[current_sentence_][current_word_ + dynamic_size]);
 
     for (uint64_t i(0); i < dynamic_size; ++i)
     {
-      t.second[0].Set(i, 0, T(data_[current_sentence_][current_word_ + i]));
-      t.second[0].Set(i + dynamic_size, 0,
-                      T(data_[current_sentence_][current_word_ + dynamic_size + i + 1]));
+      t.second.at(0)(i, 0) = T(data_[current_sentence_][current_word_ + i]);
+      t.second.at(0)(i + dynamic_size, 0) =
+          T(data_[current_sentence_][current_word_ + dynamic_size + i + 1]);
     }
 
-    for (uint64_t i(dynamic_size * 2); i < t.second[0].size(); ++i)
+    for (uint64_t i(dynamic_size * 2); i < t.second.at(0).size(); ++i)
     {
-      t.second[0](i, 0) = -1;
+      t.second.at(0).At(i, 0) = -1;
     }
 
     for (uint64_t i(1); i < negative_samples_; ++i)
@@ -162,6 +163,11 @@ public:
     fetch::math::Tensor<T> label({negative_samples_, 1});
     ReturnType             p(label, {t});
     return GetNext(p);
+  }
+
+  ReturnType GetRandom() override
+  {
+    throw std::runtime_error("Random sampling not implemented for CBOWLoader");
   }
 
   std::size_t VocabSize() const

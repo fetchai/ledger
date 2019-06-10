@@ -81,8 +81,8 @@ private:
  * https://www.scss.tcd.ie/~andersan/static/papers/asap-2017.pdf
  * @param inputs vector of tensor references where at:
  * inputs[0] = input_data[input_channels x input_height], inputs[1] = kernel_data[kernel_channels x
- * kernel_height]
- * @param output tensor of size [output_channels x number_of_stride_sized_steps]
+ * kernel_height x batch_position]
+ * @param output tensor of size [output_channels x number_of_stride_sized_steps x batch_position]
  * @return: output tensor parameter
  */
 template <class ArrayType>
@@ -130,8 +130,9 @@ void Convolution1D<ArrayType>::Forward(VecTensorType const &inputs, ArrayType &o
  * described here: https://www.scss.tcd.ie/~andersan/static/papers/asap-2017.pdf
  * @param inputs vector of tensor references where at:
  * inputs[0] = input_data[input_channels x input_height], inputs[1] = kernel_data[kernel_channels x
- * kernel_height]
- * @param error_signal tensor of size [output_channels x number_of_stride_sized_steps]
+ * kernel_height x batch_position]
+ * @param error_signal tensor of size [output_channels x number_of_stride_sized_steps x
+ * batch_position]
  * @return: output vector of tensors with back propagated error signal
  * output[0]=input_error[inputs[0].shape], output[1]=kernel_error[inputs[1].shape]
  */
@@ -233,7 +234,7 @@ void Convolution1D<ArrayType>::FillVerticalStride(ArrayType const &input,
       for (SizeType i_oc{0}; i_oc < output_channels; ++i_oc)  // Iterate over output channels
       {
 
-        vertical_stride.Set(i_oc, j_s, input.At(i_oc, i_ic, i_k, 0));
+        vertical_stride(i_oc, j_s) = input.At(i_oc, i_ic, i_k, 0);
       }
       ++j_s;
     }
@@ -267,7 +268,6 @@ void Convolution1D<ArrayType>::ReverseFillVerticalStride(ArrayType &      input,
     {
       for (SizeType i_oc{0}; i_oc < output_channels; ++i_oc)  // Iterate over output channels
       {
-
         input(i_oc, i_ic, i_k, 0) = vertical_stride(i_oc, j_s);
       }
       ++j_s;

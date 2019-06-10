@@ -77,7 +77,7 @@ public:
         // Random sampling ensures that for relatively few training steps the proportion of shared
         // training data is low
         input = dataloader_.GetRandom();
-        g_.SetInput("Input", input.second[0]);
+        g_.SetInput("Input", input.second.at(0));
 
         ArrayType results = g_.Evaluate("Softmax").Copy();
         loss += criterion.Forward({results, input.first});

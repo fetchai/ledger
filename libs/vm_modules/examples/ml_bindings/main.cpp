@@ -57,23 +57,26 @@ struct System : public fetch::vm::Object
 
 std::vector<std::string> System::args;
 
-class TrainingPairWrapper
-  : public fetch::vm::Object,
-    public std::pair<uint64_t, fetch::vm::Ptr<fetch::vm_modules::ml::TensorWrapper>>
+class TrainingPairWrapper : public fetch::vm::Object,
+                            public std::pair<fetch::vm::Ptr<fetch::vm_modules::ml::TensorWrapper>,
+                                             fetch::vm::Ptr<fetch::vm_modules::ml::TensorWrapper>>
 {
 public:
   TrainingPairWrapper(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
-                      fetch::vm::Ptr<fetch::vm_modules::ml::TensorWrapper> t)
+                      fetch::vm::Ptr<fetch::vm_modules::ml::TensorWrapper> ta,
+                      fetch::vm::Ptr<fetch::vm_modules::ml::TensorWrapper> tb)
     : fetch::vm::Object(vm, type_id)
   {
-    this->second = t;
+    this->first  = ta;
+    this->second = tb;
   }
 
   static fetch::vm::Ptr<TrainingPairWrapper> Constructor(
       fetch::vm::VM *vm, fetch::vm::TypeId type_id,
-      fetch::vm::Ptr<fetch::vm_modules::ml::TensorWrapper> t)
+      fetch::vm::Ptr<fetch::vm_modules::ml::TensorWrapper> ta,
+      fetch::vm::Ptr<fetch::vm_modules::ml::TensorWrapper> tb)
   {
-    return new TrainingPairWrapper(vm, type_id, t);
+    return new TrainingPairWrapper(vm, type_id, ta, tb);
   }
 
   fetch::vm::Ptr<fetch::vm_modules::ml::TensorWrapper> data()
@@ -81,7 +84,7 @@ public:
     return this->second;
   }
 
-  uint64_t label()
+  fetch::vm::Ptr<fetch::vm_modules::ml::TensorWrapper> label()
   {
     return this->first;
   }
@@ -108,10 +111,10 @@ public:
   // The actual fetch::vm::Ptr is const, but the pointed to memory is modified
   fetch::vm::Ptr<TrainingPairWrapper> GetData(fetch::vm::Ptr<TrainingPairWrapper> const &dataHolder)
   {
-    std::pair<uint64_t, std::vector<fetch::math::Tensor<float>>> d = loader_.GetNext();
-    fetch::math::Tensor<float>                                   a = *(dataHolder->second);
-    a.Copy(d.second[0]);
-    dataHolder->first = d.first;
+    std::pair<fetch::math::Tensor<float>, std::vector<fetch::math::Tensor<float>>> d =
+        loader_.GetNext();
+    (*(dataHolder->first)).Copy(d.first);
+    (*(dataHolder->second)).Copy(d.second.at(0));
     return dataHolder;
   }
 
@@ -121,7 +124,7 @@ public:
   }
 
 private:
-  fetch::ml::MNISTLoader<uint64_t, fetch::math::Tensor<float>> loader_;
+  fetch::ml::MNISTLoader<fetch::math::Tensor<float>, fetch::math::Tensor<float>> loader_;
 };
 
 template <typename T>
@@ -179,7 +182,8 @@ int main(int argc, char **argv)
   fetch::vm_modules::ml::CreateCrossEntropy(*module);
 
   module->CreateClassType<TrainingPairWrapper>("TrainingPair")
-      .CreateConstuctor<fetch::vm::Ptr<fetch::vm_modules::ml::TensorWrapper>>()
+      .CreateConstuctor<fetch::vm::Ptr<fetch::vm_modules::ml::TensorWrapper>,
+                        fetch::vm::Ptr<fetch::vm_modules::ml::TensorWrapper>>()
       .CreateMemberFunction("Data", &TrainingPairWrapper::data)
       .CreateMemberFunction("Label", &TrainingPairWrapper::label);
 

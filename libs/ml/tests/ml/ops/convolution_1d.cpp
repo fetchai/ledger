@@ -172,8 +172,8 @@ TYPED_TEST(Convolution1DTest, backward_3x3_5x3x3)
   {
     for (SizeType i_i{0}; i_i < input_height; ++i_i)
     {
-      input.Set(i_ic, i_i, 0, static_cast<DataType>(i_i + 1));
-      gt1.Set(i_ic, i_i, 0, DataType{10});
+      input(i_ic, i_i, 0) = static_cast<DataType>(i_i + 1);
+      gt1(i_ic, i_i, 0)   = DataType{10};
     }
   }
 
@@ -185,8 +185,8 @@ TYPED_TEST(Convolution1DTest, backward_3x3_5x3x3)
       for (SizeType i_k{0}; i_k < kernel_height; ++i_k)
       {
 
-        kernels.Set(i_oc, i_ic, i_k, 0, DataType{2});
-        gt2.Set(i_oc, i_ic, i_k, 0, static_cast<DataType>(i_k + 1));
+        kernels(i_oc, i_ic, i_k, 0) = DataType{2};
+        gt2(i_oc, i_ic, i_k, 0)     = static_cast<DataType>(i_k + 1);
       }
     }
   }
@@ -197,7 +197,7 @@ TYPED_TEST(Convolution1DTest, backward_3x3_5x3x3)
     for (SizeType i_o{0}; i_o < output_height; ++i_o)
     {
 
-      error.Set(i_oc, i_o, 0, static_cast<DataType>(i_o + 1));
+      error(i_oc, i_o, 0) = static_cast<DataType>(i_o + 1);
     }
   }
 

@@ -78,7 +78,7 @@ int main(int ac, char **av)
   DataType loss;
   for (SizeType i{0}; i < epochs; i++)
   {
-    loss = optimiser.Run(data_loader, false, batch_size, subset_size);
+    loss = optimiser.Run(data_loader, batch_size, subset_size);
     std::cout << "Loss: " << loss << std::endl;
   }
 

@@ -81,7 +81,7 @@ public:
       {
         // Randomly sampling the dataset, should ensure everyone is training on different data
         input = dataloader_.GetRandom();
-        g_.SetInput("Input", input.second[0]);
+        g_.SetInput("Input", input.second.at(0));
         ArrayType results = g_.Evaluate("Softmax").Copy();
         loss += criterion.Forward({results, input.first});
         g_.BackPropagate("Softmax", criterion.Backward({results, input.first}));

@@ -156,7 +156,7 @@ void TrainModelNew()
 
     // Getting context and target
     auto  sample  = data_loader.GetNext();
-    auto &context = sample.second[0];
+    auto &context = sample.second.at(0);
     auto &target  = sample.first;
 
     ///////////////////////

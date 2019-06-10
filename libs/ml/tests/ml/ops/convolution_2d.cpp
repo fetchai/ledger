@@ -185,8 +185,8 @@ TYPED_TEST(Convolution2DTest, backward_3x3x3_5x3x3x3)
     {
       for (SizeType j_i{0}; j_i < input_width; ++j_i)
       {
-        input.Set(i_ic, i_i, j_i, 0, static_cast<DataType>((i_i + 1) * (j_i + 1)));
-        gt1.Set(i_ic, i_i, j_i, 0, DataType{10});
+        input(i_ic, i_i, j_i, 0) = static_cast<DataType>((i_i + 1) * (j_i + 1));
+        gt1(i_ic, i_i, j_i, 0)   = DataType{10};
       }
     }
   }
@@ -200,8 +200,8 @@ TYPED_TEST(Convolution2DTest, backward_3x3x3_5x3x3x3)
       {
         for (SizeType j_k{0}; j_k < kernel_width; ++j_k)
         {
-          kernels.Set(i_oc, i_ic, i_k, j_k, 0, DataType{2});
-          gt2.Set(i_oc, i_ic, i_k, j_k, 0, static_cast<DataType>((i_k + 1) * (j_k + 1)));
+          kernels(i_oc, i_ic, i_k, j_k, 0) = DataType{2};
+          gt2(i_oc, i_ic, i_k, j_k, 0)     = static_cast<DataType>((i_k + 1) * (j_k + 1));
         }
       }
     }
@@ -214,7 +214,7 @@ TYPED_TEST(Convolution2DTest, backward_3x3x3_5x3x3x3)
     {
       for (SizeType j_o{0}; j_o < output_width; ++j_o)
       {
-        error.Set(i_oc, i_o, j_o, 0, static_cast<DataType>((i_o + 1) * (j_o + 1)));
+        error(i_oc, i_o, j_o, 0) = static_cast<DataType>((i_o + 1) * (j_o + 1));
       }
     }
   }
@@ -261,8 +261,8 @@ TYPED_TEST(Convolution2DTest, backward_3x3x2_5x3x3x2)
     {
       for (SizeType j_i{0}; j_i < input_width; ++j_i)
       {
-        input.Set(i_ic, i_i, j_i, 0, static_cast<DataType>((i_i + 1) * (j_i + 1)));
-        gt1.Set(i_ic, i_i, j_i, 0, DataType{10});
+        input(i_ic, i_i, j_i, 0) = static_cast<DataType>((i_i + 1) * (j_i + 1));
+        gt1(i_ic, i_i, j_i, 0)   = DataType{10};
       }
     }
   }
@@ -276,8 +276,8 @@ TYPED_TEST(Convolution2DTest, backward_3x3x2_5x3x3x2)
       {
         for (SizeType j_k{0}; j_k < kernel_width; ++j_k)
         {
-          kernels.Set(i_oc, i_ic, i_k, j_k, 0, DataType{2});
-          gt2.Set(i_oc, i_ic, i_k, j_k, 0, static_cast<DataType>((i_k + 1) * (j_k + 1)));
+          kernels(i_oc, i_ic, i_k, j_k, 0) = DataType{2};
+          gt2(i_oc, i_ic, i_k, j_k, 0)     = static_cast<DataType>((i_k + 1) * (j_k + 1));
         }
       }
     }
@@ -290,7 +290,7 @@ TYPED_TEST(Convolution2DTest, backward_3x3x2_5x3x3x2)
     {
       for (SizeType j_o{0}; j_o < output_width; ++j_o)
       {
-        error.Set(i_oc, i_o, j_o, 0, static_cast<DataType>((i_o + 1) * (j_o + 1)));
+        error(i_oc, i_o, j_o, 0) = static_cast<DataType>((i_o + 1) * (j_o + 1));
       }
     }
   }

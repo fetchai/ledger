@@ -66,7 +66,8 @@ public:
   using DataType  = typename T::Type;
   using SizeType  = typename T::SizeType;
 
-  explicit BasicTextLoader(TextParams<ArrayType> const &p, SizeType seed = 123456789);
+  explicit BasicTextLoader(TextParams<ArrayType> const &p, bool random_mode = false,
+                           SizeType seed = 123456789);
 
   // overloaded member from dataloader
   std::pair<T, std::vector<T>> GetNext() override;
@@ -122,8 +123,9 @@ private:
  * @tparam T
  */
 template <typename T>
-BasicTextLoader<T>::BasicTextLoader(TextParams<T> const &p, SizeType seed)
-  : p_(p)
+BasicTextLoader<T>::BasicTextLoader(TextParams<T> const &p, bool random_mode, SizeType seed)
+  : DataLoader<T, T>(random_mode)
+  , p_(p)
   , lfg_(seed)
   , lcg_(seed)
   , cursor_(0)
@@ -333,6 +335,7 @@ template <typename T>
 void BasicTextLoader<T>::GetData(typename BasicTextLoader<T>::SizeType idx, std::vector<T> &ret)
 {
   assert(p_.n_data_buffers == 1);
+  assert(ret.size() > 0);
   SizeType sentence_idx = this->word_idx_sentence_idx.at(idx);
   SizeType word_idx     = this->GetWordOffsetFromWordIdx(idx);
   ret[0].At(0, 0)       = DataType(this->data_.at(sentence_idx).at(word_idx));

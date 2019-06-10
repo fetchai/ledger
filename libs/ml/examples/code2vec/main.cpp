@@ -52,8 +52,8 @@ using Embeddings     = fetch::ml::ops::Embeddings<ArrayType>;
 using Transpose      = fetch::ml::ops::Transpose<ArrayType>;
 using MatrixMultiply = fetch::ml::ops::MatrixMultiply<ArrayType>;
 
-using ContextTensorTuple      = typename std::vector<ArrayType>;
-using ContextTensorsLabelPair = typename std::pair<ArrayType, ContextTensorTuple>;
+using ContextVector           = typename std::vector<ArrayType>;
+using ContextTensorsLabelPair = typename std::pair<ArrayType, ContextVector>;
 
 #define EMBEDDING_SIZE 64u
 #define BATCHSIZE 12u
@@ -220,7 +220,7 @@ int main(int ac, char **av)
   DataType loss;
   for (SizeType i{0}; i < N_EPOCHS; i++)
   {
-    loss = optimiser.Run(cloader, false, BATCH_SIZE);
+    loss = optimiser.Run(cloader, BATCH_SIZE);
     std::cout << "Loss: " << loss << std::endl;
   }
 

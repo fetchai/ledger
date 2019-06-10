@@ -51,9 +51,9 @@ public:
   using Type                    = typename ArrayType::Type;
   using SizeType                = typename ArrayType::SizeType;
   using ContextTuple            = typename std::tuple<SizeType, SizeType, SizeType>;
-  using ContextTensorTuple      = typename std::vector<ArrayType>;
+  using ContextVector           = typename std::vector<ArrayType>;
   using ContextLabelPair        = typename std::pair<SizeType, ContextTuple>;
-  using ContextTensorsLabelPair = typename std::pair<LabelType, ContextTensorTuple>;
+  using ContextTensorsLabelPair = typename std::pair<LabelType, ContextVector>;
 
   using WordIdxType   = std::vector<std::vector<SizeType>>;
   using VocabType     = std::unordered_map<std::string, SizeType>;
@@ -61,8 +61,9 @@ public:
   using umap_str_int  = std::unordered_map<std::string, SizeType>;
   using umap_int_str  = std::unordered_map<SizeType, std::string>;
 
-  C2VLoader(SizeType max_contexts_)
-    : iterator_position_get_next_context_(0)
+  C2VLoader(SizeType max_contexts_, bool random_mode = false)
+    : DataLoader<LabelType, DataType>(random_mode)
+    , iterator_position_get_next_context_(0)
     , iterator_position_get_next_(0)
     , current_function_index_(0)
     , max_contexts_(max_contexts_){};
@@ -80,6 +81,12 @@ public:
    * @return std::pair<std::vector<ArrayType>, LabelType>;
    */
   ContextTensorsLabelPair GetNext() override;
+
+  /**
+   * Not implemented
+   * @return
+   */
+  ContextTensorsLabelPair GetRandom() override;
 
   /**
    * @brief Gets the number of feature/target pairs
@@ -277,34 +284,34 @@ C2VLoader<LabelType, DataType>::GetNext()
       {
         for (uint64_t i{0}; i < context_positions.size(); i++)
         {
-          source_word_tensor.Set(
-              i, 0, static_cast<Type>(std::get<0>(this->data[context_positions[i]].second)));
-          path_tensor.Set(i, 0,
-                          static_cast<Type>(std::get<1>(this->data[context_positions[i]].second)));
-          target_word_tensor.Set(
-              i, 0, static_cast<Type>(std::get<2>(this->data[context_positions[i]].second)));
+
+          source_word_tensor(i, 0) =
+              static_cast<Type>(std::get<0>(this->data[context_positions[i]].second));
+          path_tensor(i, 0) =
+              static_cast<Type>(std::get<1>(this->data[context_positions[i]].second));
+          target_word_tensor(i, 0) =
+              static_cast<Type>(std::get<2>(this->data[context_positions[i]].second));
         }
         for (uint64_t i{context_positions.size()}; i < this->max_contexts_; i++)
         {
-          source_word_tensor.Set(i, 0, static_cast<Type>(this->word_to_idx_[EMPTY_CONTEXT_STRING]));
-          path_tensor.Set(i, 0, static_cast<Type>(this->path_to_idx_[EMPTY_CONTEXT_STRING]));
-          target_word_tensor.Set(i, 0, static_cast<Type>(this->word_to_idx_[EMPTY_CONTEXT_STRING]));
+          source_word_tensor(i, 0) = static_cast<Type>(this->word_to_idx_[EMPTY_CONTEXT_STRING]);
+          path_tensor(i, 0)        = static_cast<Type>(this->path_to_idx_[EMPTY_CONTEXT_STRING]);
+          target_word_tensor(i, 0) = static_cast<Type>(this->word_to_idx_[EMPTY_CONTEXT_STRING]);
         }
       }
       else
       {
         for (uint64_t i{0}; i < this->max_contexts_; i++)
         {
-          source_word_tensor.Set(
-              i, 0, static_cast<Type>(std::get<0>(this->data[context_positions[i]].second)));
-          path_tensor.Set(i, 0,
-                          static_cast<Type>(std::get<1>(this->data[context_positions[i]].second)));
-          target_word_tensor.Set(
-              i, 0, static_cast<Type>(std::get<2>(this->data[context_positions[i]].second)));
+          source_word_tensor(i, 0) =
+              static_cast<Type>(std::get<0>(this->data[context_positions[i]].second));
+          path_tensor(i, 0) =
+              static_cast<Type>(std::get<1>(this->data[context_positions[i]].second));
+          target_word_tensor(i, 0) =
+              static_cast<Type>(std::get<2>(this->data[context_positions[i]].second));
         }
       }
-      ContextTensorTuple context_tensor_tuple = {source_word_tensor, path_tensor,
-                                                 target_word_tensor};
+      ContextVector context_tensor_tuple = {source_word_tensor, path_tensor, target_word_tensor};
 
       ArrayType y_true_vec({function_name_counter().size() + 1, 1});
       y_true_vec.Fill(Type{0});
@@ -317,6 +324,13 @@ C2VLoader<LabelType, DataType>::GetNext()
     }
     iteration_start = false;
   }
+}
+
+template <typename LabelType, typename DataType>
+typename C2VLoader<LabelType, DataType>::ContextTensorsLabelPair
+C2VLoader<LabelType, DataType>::GetRandom()
+{
+  throw std::runtime_error("Random sampling not implemented for C2VLoader");
 }
 
 template <typename LabelType, typename DataType>

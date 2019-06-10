@@ -52,7 +52,7 @@ TYPED_TEST(Convolution1DTest, set_input_and_evaluate_test)  // Use the class as 
   {
     for (SizeType i_i{0}; i_i < input_height; ++i_i)
     {
-      input.Set(i_ic, i_i, 0, static_cast<DataType>(i_i + 1));
+      input(i_ic, i_i, 0) = static_cast<DataType>(i_i + 1);
     }
   }
 
@@ -69,11 +69,11 @@ TYPED_TEST(Convolution1DTest, set_input_and_evaluate_test)  // Use the class as 
   ASSERT_EQ(output.shape()[2], 1);
 
   ArrayType gt({output_channels, output_height});
-  gt.Set(0, 0, static_cast<DataType>(-4.28031352977));
-  gt.Set(1, 0, static_cast<DataType>(-4.03654768132));
-  gt.Set(2, 0, static_cast<DataType>(8.11192789580));
-  gt.Set(3, 0, static_cast<DataType>(1.763717529829592));
-  gt.Set(4, 0, static_cast<DataType>(-1.8677866039798));
+  gt(0, 0) = static_cast<DataType>(-4.28031352977);
+  gt(1, 0) = static_cast<DataType>(-4.03654768132);
+  gt(2, 0) = static_cast<DataType>(8.11192789580);
+  gt(3, 0) = static_cast<DataType>(1.763717529829592);
+  gt(4, 0) = static_cast<DataType>(-1.8677866039798);
 
   ASSERT_TRUE(output.AllClose(gt, static_cast<DataType>(1e-5f), static_cast<DataType>(1e-5f)));
 }
@@ -98,7 +98,7 @@ TYPED_TEST(Convolution1DTest, ops_forward_test)  // Use the class as an Ops
   {
     for (SizeType i_i{0}; i_i < input_height; ++i_i)
     {
-      input.Set(i_ic, i_i, 0, static_cast<DataType>(i_i + 1));
+      input(i_ic, i_i, 0) = static_cast<DataType>(i_i + 1);
     }
   }
 
@@ -116,11 +116,11 @@ TYPED_TEST(Convolution1DTest, ops_forward_test)  // Use the class as an Ops
   ASSERT_EQ(output.shape()[2], 1);
 
   ArrayType gt({output_channels, output_height, 1});
-  gt.Set(0, 0, 0, static_cast<DataType>(-4.28031352977));
-  gt.Set(1, 0, 0, static_cast<DataType>(-4.03654768132));
-  gt.Set(2, 0, 0, static_cast<DataType>(8.11192789580));
-  gt.Set(3, 0, 0, static_cast<DataType>(1.763717529829592));
-  gt.Set(4, 0, 0, static_cast<DataType>(-1.8677866039798));
+  gt(0, 0, 0) = static_cast<DataType>(-4.28031352977);
+  gt(1, 0, 0) = static_cast<DataType>(-4.03654768132);
+  gt(2, 0, 0) = static_cast<DataType>(8.11192789580);
+  gt(3, 0, 0) = static_cast<DataType>(1.763717529829592);
+  gt(4, 0, 0) = static_cast<DataType>(-1.8677866039798);
 
   ASSERT_TRUE(output.AllClose(gt, static_cast<DataType>(1e-5f), static_cast<DataType>(1e-5f)));
 }
@@ -145,7 +145,7 @@ TYPED_TEST(Convolution1DTest, ops_backward_test)  // Use the class as an Ops
   {
     for (SizeType i_i{0}; i_i < input_height; ++i_i)
     {
-      input.Set(i_ic, i_i, 0, static_cast<DataType>(i_i + 1));
+      input(i_ic, i_i, 0) = static_cast<DataType>(i_i + 1);
     }
   }
 
@@ -157,7 +157,7 @@ TYPED_TEST(Convolution1DTest, ops_backward_test)  // Use the class as an Ops
   {
     for (SizeType i_o{0}; i_o < output_height; ++i_o)
     {
-      error_signal.Set(i_oc, i_o, 0, static_cast<DataType>(2));
+      error_signal(i_oc, i_o, 0) = static_cast<DataType>(2);
     }
   }
 
@@ -208,7 +208,7 @@ TYPED_TEST(Convolution1DTest, node_forward_test)  // Use the class as a Node
   {
     for (SizeType i_i{0}; i_i < input_height; ++i_i)
     {
-      input.Set(i_ic, i_i, 0, static_cast<DataType>(i_i + 1));
+      input(i_ic, i_i, 0) = static_cast<DataType>(i_i + 1);
     }
   }
 
@@ -230,11 +230,11 @@ TYPED_TEST(Convolution1DTest, node_forward_test)  // Use the class as a Node
   ASSERT_EQ(prediction.shape()[2], 1);
 
   ArrayType gt({output_channels, output_height, 1});
-  gt.Set(0, 0, 0, static_cast<DataType>(-4.28031352977));
-  gt.Set(1, 0, 0, static_cast<DataType>(-4.03654768132));
-  gt.Set(2, 0, 0, static_cast<DataType>(8.11192789580));
-  gt.Set(3, 0, 0, static_cast<DataType>(1.763717529829592));
-  gt.Set(4, 0, 0, static_cast<DataType>(-1.8677866039798));
+  gt(0, 0, 0) = static_cast<DataType>(-4.28031352977);
+  gt(1, 0, 0) = static_cast<DataType>(-4.03654768132);
+  gt(2, 0, 0) = static_cast<DataType>(8.11192789580);
+  gt(3, 0, 0) = static_cast<DataType>(1.763717529829592);
+  gt(4, 0, 0) = static_cast<DataType>(-1.8677866039798);
 
   ASSERT_TRUE(prediction.AllClose(gt, static_cast<DataType>(1e-5f), static_cast<DataType>(1e-5f)));
 }
@@ -259,7 +259,7 @@ TYPED_TEST(Convolution1DTest, node_backward_test)  // Use the class as a Node
   {
     for (SizeType i_i{0}; i_i < input_height; ++i_i)
     {
-      input.Set(i_ic, i_i, 0, static_cast<DataType>(i_i + 1));
+      input(i_ic, i_i, 0) = static_cast<DataType>(i_i + 1);
     }
   }
 
@@ -271,7 +271,7 @@ TYPED_TEST(Convolution1DTest, node_backward_test)  // Use the class as a Node
   {
     for (SizeType i_o{0}; i_o < output_height; ++i_o)
     {
-      error_signal.Set(i_oc, i_o, 0, static_cast<DataType>(2));
+      error_signal(i_oc, i_o, 0) = static_cast<DataType>(2);
     }
   }
 
@@ -333,7 +333,7 @@ TYPED_TEST(Convolution1DTest, graph_forward_test)  // Use the class as a Node
   {
     for (SizeType i_i{0}; i_i < input_height; ++i_i)
     {
-      input.Set(i_ic, i_i, 0, static_cast<DataType>(i_i + 1));
+      input(i_ic, i_i, 0) = static_cast<DataType>(i_i + 1);
     }
   }
 
@@ -353,11 +353,11 @@ TYPED_TEST(Convolution1DTest, graph_forward_test)  // Use the class as a Node
   ASSERT_EQ(prediction.shape()[2], 1);
 
   ArrayType gt({output_channels, output_height, 1});
-  gt.Set(0, 0, 0, static_cast<DataType>(-4.28031352977));
-  gt.Set(1, 0, 0, static_cast<DataType>(-4.03654768132));
-  gt.Set(2, 0, 0, static_cast<DataType>(8.11192789580));
-  gt.Set(3, 0, 0, static_cast<DataType>(1.763717529829592));
-  gt.Set(4, 0, 0, static_cast<DataType>(-1.8677866039798));
+  gt(0, 0, 0) = static_cast<DataType>(-4.28031352977);
+  gt(1, 0, 0) = static_cast<DataType>(-4.03654768132);
+  gt(2, 0, 0) = static_cast<DataType>(8.11192789580);
+  gt(3, 0, 0) = static_cast<DataType>(1.763717529829592);
+  gt(4, 0, 0) = static_cast<DataType>(-1.8677866039798);
 
   ASSERT_TRUE(prediction.AllClose(gt, static_cast<DataType>(1e-5f), static_cast<DataType>(1e-5f)));
 }

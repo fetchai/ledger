@@ -71,6 +71,7 @@ public:
   TSNE(ArrayType const &input_matrix, SizeType const &output_dimensions, DataType const &perplexity,
        SizeType const &random_seed)
   {
+    assert(input_matrix.shape().size() == 2);
     ArrayType output_matrix({input_matrix.shape().at(1), output_dimensions});
     rng_.Seed(random_seed);
     RandomInitWeights(output_matrix);
