@@ -206,22 +206,27 @@ TransactionStoreSyncService::State TransactionStoreSyncService::OnQuerySubtree()
   assert(!roots_to_sync_.empty());
 
   FETCH_LOCK(mutex_);
-  for (auto const &connection : muddle_->AsEndpoint().GetDirectlyConnectedPeers())
+
+  // sanity check that this is not the case
+  if (!roots_to_sync_.empty())
   {
-    auto root = roots_to_sync_.front();
-    roots_to_sync_.pop();
+    for (auto const &connection : muddle_->AsEndpoint().GetDirectlyConnectedPeers())
+    {
+      auto root = roots_to_sync_.front();
+      roots_to_sync_.pop();
 
-    byte_array::ByteArray transactions_prefix;
+      byte_array::ByteArray transactions_prefix;
 
-    transactions_prefix.Resize(std::size_t{ResourceID::RESOURCE_ID_SIZE_IN_BYTES});
-    transactions_prefix[0] = root;
+      transactions_prefix.Resize(std::size_t{ResourceID::RESOURCE_ID_SIZE_IN_BYTES});
+      transactions_prefix[0] = root;
 
-    auto promise = PromiseOfTxList(client_->CallSpecificAddress(
-        connection, RPC_TX_STORE_SYNC, TransactionStoreSyncProtocol::PULL_SUBTREE,
-        transactions_prefix, root_size_));
+      auto promise = PromiseOfTxList(client_->CallSpecificAddress(
+          connection, RPC_TX_STORE_SYNC, TransactionStoreSyncProtocol::PULL_SUBTREE,
+          transactions_prefix, root_size_));
 
-    promise_id_to_roots_[promise.id()] = root;
-    pending_subtree_.Add(root, promise);
+      promise_id_to_roots_[promise.id()] = root;
+      pending_subtree_.Add(root, promise);
+    }
   }
 
   if (!roots_to_sync_.empty())
