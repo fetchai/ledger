@@ -28,7 +28,7 @@
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wconversion"
 #pragma clang diagnostic ignored "-Wpedantic"
-#pragma GCC diagnostic ignored "-Wsign-compare"
+#pragma clang diagnostic ignored "-Wsign-compare"
 #endif
 
 #include <backward.hpp>
