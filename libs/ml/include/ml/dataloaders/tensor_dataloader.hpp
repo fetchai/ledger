@@ -28,6 +28,10 @@ template <typename LabelType, typename DataType>
 class TensorDataLoader : DataLoader<LabelType, DataType>
 {
 public:
+  TensorDataLoader(bool random_mode = false)
+    : DataLoader<LabelType, DataType>(random_mode)
+  {}
+
   virtual std::pair<LabelType, std::vector<DataType>> GetNext()
   {
     return data_.at(cursor_++);

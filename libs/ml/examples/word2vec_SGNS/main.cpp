@@ -162,7 +162,7 @@ int main(int argc, char **argv)
   std::cout << "Setting up training data...: " << std::endl;
 
   // set up dataloader
-  SkipGramLoader<ArrayType> data_loader(sp);
+  SkipGramLoader<ArrayType> data_loader(sp, true);
 
   // load text from files as necessary and process text with dataloader
   data_loader.AddData(fetch::ml::examples::GetTextString(training_text));
@@ -196,7 +196,7 @@ int main(int argc, char **argv)
   DataType loss;
   for (SizeType i{0}; i < tp.training_epochs; i++)
   {
-    loss = optimiser.Run(data_loader, true, tp.batch_size, tp.batch_size);
+    loss = optimiser.Run(data_loader, tp.batch_size, tp.batch_size);
     std::cout << "Loss: " << loss << std::endl;
   }
 

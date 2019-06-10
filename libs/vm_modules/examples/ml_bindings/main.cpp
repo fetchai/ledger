@@ -113,10 +113,8 @@ public:
   {
     std::pair<fetch::math::Tensor<float>, std::vector<fetch::math::Tensor<float>>> d =
         loader_.GetNext();
-    fetch::math::Tensor<float> a = *(dataHolder->first);
-    fetch::math::Tensor<float> b = *(dataHolder->second);
-    a.Copy(d.first);
-    b.Copy(d.second.at(0));
+    (*(dataHolder->first)).Copy(d.first);
+    (*(dataHolder->second)).Copy(d.second.at(0));
     return dataHolder;
   }
 

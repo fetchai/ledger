@@ -66,7 +66,8 @@ public:
   using DataType  = typename T::Type;
   using SizeType  = typename T::SizeType;
 
-  explicit BasicTextLoader(TextParams<ArrayType> const &p, SizeType seed = 123456789);
+  explicit BasicTextLoader(TextParams<ArrayType> const &p, bool random_mode = false,
+                           SizeType seed = 123456789);
 
   // overloaded member from dataloader
   std::pair<T, std::vector<T>> GetNext() override;
@@ -122,8 +123,9 @@ private:
  * @tparam T
  */
 template <typename T>
-BasicTextLoader<T>::BasicTextLoader(TextParams<T> const &p, SizeType seed)
-  : p_(p)
+BasicTextLoader<T>::BasicTextLoader(TextParams<T> const &p, bool random_mode, SizeType seed)
+  : DataLoader<T, T>(random_mode)
+  , p_(p)
   , lfg_(seed)
   , lcg_(seed)
   , cursor_(0)

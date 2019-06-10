@@ -46,7 +46,8 @@ class CBoWLoader : public BasicTextLoader<T>
   using SizeType  = typename T::SizeType;
 
 public:
-  explicit CBoWLoader(CBoWTextParams<T> p, SizeType seed = 123456789);
+  explicit CBoWLoader(CBoWTextParams<T> p, bool random_mode = false, SizeType seed = 123456789);
+
   bool AddData(std::string const &training_data) override;
 
 private:
@@ -57,8 +58,8 @@ private:
 };
 
 template <typename T>
-CBoWLoader<T>::CBoWLoader(CBoWTextParams<T> p, SizeType seed)
-  : BasicTextLoader<T>(p, seed)
+CBoWLoader<T>::CBoWLoader(CBoWTextParams<T> p, bool random_mode, SizeType seed)
+  : BasicTextLoader<T>(p, random_mode, seed)
   , p_(p)
 {
 

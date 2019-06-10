@@ -220,7 +220,7 @@ int main(int ac, char **av)
   DataType loss;
   for (SizeType i{0}; i < N_EPOCHS; i++)
   {
-    loss = optimiser.Run(cloader, false, BATCH_SIZE);
+    loss = optimiser.Run(cloader, BATCH_SIZE);
     std::cout << "Loss: " << loss << std::endl;
   }
 

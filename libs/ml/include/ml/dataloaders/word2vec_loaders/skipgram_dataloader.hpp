@@ -69,7 +69,7 @@ private:
   SizeType cur_label_ = 0;
 
 public:
-  SkipGramLoader(SkipGramTextParams<T> p, SizeType seed = 123456789);
+  SkipGramLoader(SkipGramTextParams<T> p, bool random_mode = false, SizeType seed = 123456789);
 
   virtual bool AddData(std::string const &training_data) override;
 
@@ -86,8 +86,8 @@ private:
   bool WindowPositionCheck(SizeType target_pos, SizeType context_pos, SizeType sentence_len) const;
 };
 template <typename T>
-SkipGramLoader<T>::SkipGramLoader(SkipGramTextParams<T> p, SizeType seed)
-  : BasicTextLoader<T>(p, seed)
+SkipGramLoader<T>::SkipGramLoader(SkipGramTextParams<T> p, bool random_mode, SizeType seed)
+  : BasicTextLoader<T>(p, random_mode, seed)
   , p_(p)
 {
   assert(p_.window_size > 0);

@@ -38,8 +38,9 @@ public:
   using ReturnType = std::pair<fetch::math::Tensor<T>, std::vector<fetch::math::Tensor<T>>>;
 
 public:
-  CBOWLoader(uint64_t window_size, uint64_t negative_samples)
-    : current_sentence_(0)
+  CBOWLoader(uint64_t window_size, uint64_t negative_samples, bool random_mode = false)
+    : DataLoader<fetch::math::Tensor<T>, fetch::math::Tensor<T>>(random_mode)
+    , current_sentence_(0)
     , current_word_(0)
     , window_size_(window_size)
     , negative_samples_(negative_samples)
@@ -138,7 +139,7 @@ public:
                          T(data_[current_sentence_][current_word_ + dynamic_size + i + 1]));
     }
 
-    for (uint64_t i(dynamic_size * 2); i < t.second[0].size(); ++i)
+    for (uint64_t i(dynamic_size * 2); i < t.second.at(0).size(); ++i)
     {
       t.second.at(0).At(i, 0) = -1;
     }

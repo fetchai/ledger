@@ -28,26 +28,30 @@ template <typename LabelType, typename DataType>
 class DataLoader
 {
 public:
+  DataLoader(bool random_mode)
+    : random_mode_(random_mode)
+  {}
   virtual ~DataLoader()                                           = default;
   virtual std::pair<LabelType, std::vector<DataType>> GetNext()   = 0;
   virtual std::pair<LabelType, std::vector<DataType>> GetRandom() = 0;
-  /* virtual std::pair<LabelType, std::vector<DataType>> GetData()
-   {
-       if(random_mode)
-       {
-           GetNext();
-       } else
-           {
-
-       }
-   }*/
+  virtual std::pair<LabelType, std::vector<DataType>> GetData()
+  {
+    if (random_mode_)
+    {
+      return GetRandom();
+    }
+    else
+    {
+      return GetNext();
+    }
+  }
 
   virtual std::uint64_t Size() const   = 0;
   virtual bool          IsDone() const = 0;
   virtual void          Reset()        = 0;
 
 private:
-  bool random_mode;
+  bool random_mode_ = false;
 };
 
 }  // namespace ml

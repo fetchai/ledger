@@ -69,7 +69,7 @@ TYPED_TEST(TensorDataloaderTest, loader_test)
     {
       for (int64_t k(0); k < 5; ++k)
       {
-        EXPECT_EQ(cur_tensor.second[0]->At(j, k), typename TypeParam::Type(i));
+        EXPECT_EQ(cur_tensor.second.at(0)->At(j, k), typename TypeParam::Type(i));
       }
     }
   }

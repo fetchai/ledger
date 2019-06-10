@@ -38,8 +38,10 @@ public:
   using DataType   = typename T::Type;
   using ReturnType = std::pair<LabelType, std::vector<T>>;
 
-  MNISTLoader(std::string const &imagesFile, std::string const &labelsFile)
-    : cursor_(0)
+  MNISTLoader(std::string const &imagesFile, std::string const &labelsFile,
+              bool random_mode = false)
+    : DataLoader<LabelType, T>(random_mode)
+    , cursor_(0)
   {
     std::uint32_t recordLength(0);
     data_        = read_mnist_images(imagesFile, size_, recordLength);
@@ -87,7 +89,7 @@ public:
       for (SizeType j{0}; j < 28u; ++j)
       {
 
-        std::cout << (data.At(i, j, 0) > typename T::Type(0.5) ? char(219) : ' ');
+        std::cout << (data.At(j, i, 0) > typename T::Type(0.5) ? char(219) : ' ');
       }
       std::cout << "\n";
     }

@@ -40,18 +40,14 @@ public:
   using DataType      = typename ArrayType::Type;
   using SizeType      = typename ArrayType::SizeType;
 
-  Optimiser(std::shared_ptr<Graph<T>>
-
-                                            graph,
-            std::vector<std::string> const &input_node_names, std::string const &output_node_name,
-            DataType const &learning_rate = DataType{0.001f});
+  Optimiser(std::shared_ptr<Graph<T>> graph, std::vector<std::string> const &input_node_names,
+            std::string const &output_node_name, DataType const &learning_rate = DataType{0.001f});
 
   // TODO (private 1090): Optimise TensorSlice for graph-feeding without using .Copy
   DataType Run(std::vector<ArrayType> const &data, ArrayType const &labels,
                SizeType batch_size = 0);
 
-  DataType Run(fetch::ml::DataLoader<ArrayType, ArrayType> &loader, bool random_mode = false,
-               SizeType batch_size  = 0,
+  DataType Run(fetch::ml::DataLoader<ArrayType, ArrayType> &loader, SizeType batch_size = 0,
                SizeType subset_size = fetch::math::numeric_max<SizeType>());
 
 protected:
@@ -169,7 +165,7 @@ typename T::Type Optimiser<T, C>::Run(std::vector<ArrayType> const &data, ArrayT
  */
 template <class T, class C>
 typename T::Type Optimiser<T, C>::Run(fetch::ml::DataLoader<ArrayType, ArrayType> &loader,
-                                      bool random_mode, SizeType batch_size, SizeType subset_size)
+                                      SizeType batch_size, SizeType subset_size)
 {
   if (loader.IsDone())
   {
@@ -179,7 +175,14 @@ typename T::Type Optimiser<T, C>::Run(fetch::ml::DataLoader<ArrayType, ArrayType
   // If batch_size is not specified do full batch
   if (batch_size == 0)
   {
-    batch_size = loader.Size();
+    if (subset_size == fetch::math::numeric_max<SizeType>())
+    {
+      batch_size = loader.Size();
+    }
+    else
+    {
+      batch_size = subset_size;
+    }
   }
 
   DataType                                     loss{0};
@@ -194,14 +197,7 @@ typename T::Type Optimiser<T, C>::Run(fetch::ml::DataLoader<ArrayType, ArrayType
     for (SizeType it{step}; (it < step + batch_size) && (!loader.IsDone()) && (step < subset_size);
          ++it)
     {
-      if (random_mode)
-      {
-        input = loader.GetRandom();
-      }
-      else
-      {
-        input = loader.GetNext();
-      }
+      input = loader.GetData();
 
       auto cur_input = input.second;
 
