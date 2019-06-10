@@ -33,7 +33,7 @@ using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor
                                  fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
 TYPED_TEST_CASE(Convolution2DTest, MyTypes);
 
-TYPED_TEST(Convolution2DTest, forward_1x1x1_1x1x1x1)
+TYPED_TEST(Convolution2DTest, forward_1x1x1x1_1x1x1x1x1)
 {
   using DataType  = typename TypeParam::Type;
   using ArrayType = TypeParam;
@@ -52,7 +52,7 @@ TYPED_TEST(Convolution2DTest, forward_1x1x1_1x1x1x1)
   EXPECT_EQ(output.At(0, 0, 0, 0), DataType{-20});
 }
 
-TYPED_TEST(Convolution2DTest, forward_1x3x3_1x1x3x3)
+TYPED_TEST(Convolution2DTest, forward_1x3x3x1_1x1x3x3x1)
 {
   using DataType  = typename TypeParam::Type;
   using ArrayType = TypeParam;
@@ -77,7 +77,7 @@ TYPED_TEST(Convolution2DTest, forward_1x3x3_1x1x3x3)
   EXPECT_EQ(output.At(0, 0, 0, 0), DataType{204});
 }
 
-TYPED_TEST(Convolution2DTest, forward_3x3x3_1x3x3x3)
+TYPED_TEST(Convolution2DTest, forward_3x3x3x1_1x3x3x3x1)
 {
   using DataType  = typename TypeParam::Type;
   using ArrayType = TypeParam;
@@ -107,7 +107,7 @@ TYPED_TEST(Convolution2DTest, forward_3x3x3_1x3x3x3)
   EXPECT_EQ(output.At(0, 0, 0, 0), DataType{6201});
 }
 
-TYPED_TEST(Convolution2DTest, forward_3x3x3_5x3x3x3)
+TYPED_TEST(Convolution2DTest, forward_3x3x3x1_5x3x3x3x1)
 {
   // using DataType  = typename TypeParam::Type;
   using ArrayType = TypeParam;
@@ -123,7 +123,7 @@ TYPED_TEST(Convolution2DTest, forward_3x3x3_5x3x3x3)
   ASSERT_EQ(output.shape(), std::vector<SizeType>({5, 1, 1, 1}));
 }
 
-TYPED_TEST(Convolution2DTest, forward_1x5x5_1x1x3x3)
+TYPED_TEST(Convolution2DTest, forward_1x5x5x1_1x1x3x3x1)
 {
   // using DataType  = typename TypeParam::Type;
   using ArrayType = TypeParam;
@@ -139,7 +139,7 @@ TYPED_TEST(Convolution2DTest, forward_1x5x5_1x1x3x3)
   ASSERT_EQ(output.shape(), std::vector<SizeType>({1, 3, 3, 1}));
 }
 
-TYPED_TEST(Convolution2DTest, forward_1x5x5_1x1x3x3_stride_2)
+TYPED_TEST(Convolution2DTest, forward_1x5x5x1_1x1x3x3x1_stride_2)
 {
   // using DataType  = typename TypeParam::Type;
   using ArrayType = TypeParam;
@@ -155,7 +155,7 @@ TYPED_TEST(Convolution2DTest, forward_1x5x5_1x1x3x3_stride_2)
   ASSERT_EQ(output.shape(), std::vector<SizeType>({1, 2, 2, 1}));
 }
 
-TYPED_TEST(Convolution2DTest, backward_3x3x3_5x3x3x3)
+TYPED_TEST(Convolution2DTest, backward_3x3x3x1_5x3x3x3x1)
 {
   using DataType  = typename TypeParam::Type;
   using ArrayType = TypeParam;
@@ -231,7 +231,7 @@ TYPED_TEST(Convolution2DTest, backward_3x3x3_5x3x3x3)
   ASSERT_TRUE(prediction[1].AllClose(gt2, DataType{1e-5f}, DataType{1e-5f}));
 }
 
-TYPED_TEST(Convolution2DTest, backward_3x3x2_5x3x3x2)
+TYPED_TEST(Convolution2DTest, backward_3x3x2x1_5x3x3x2x1)
 {
   using DataType  = typename TypeParam::Type;
   using ArrayType = TypeParam;
