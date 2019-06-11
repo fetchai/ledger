@@ -230,6 +230,10 @@ function (configure_vendor_targets)
   add_library(vendor-mio INTERFACE)
   target_include_directories(vendor-mio INTERFACE ${FETCH_ROOT_VENDOR_DIR}/mio/include)
 
+  # backtrace stack vendor library
+  add_library(vendor-backward-cpp INTERFACE)
+  target_include_directories(vendor-backward-cpp INTERFACE ${FETCH_ROOT_VENDOR_DIR}/backward-cpp/)
+
   # MsgPack
   add_library(vendor-msgpack INTERFACE)
   target_include_directories(vendor-msgpack INTERFACE ${FETCH_ROOT_VENDOR_DIR}/msgpack/include)
