@@ -173,7 +173,7 @@ std::vector<ArrayType> Convolution2D<ArrayType>::Backward(VecTensorType const &i
   ArrayType kernel_error(kernels.shape());
 
   SizeType horizontal_stride_width  = kernel_width * kernel_height * input_channels;
-  SizeType horizontal_stride_height = output_height * output_width;
+  SizeType horizontal_stride_height = output_height * output_width * batch_size;
   SizeType vertical_stride_width    = output_channels;
 
   // Horizontal stride contains input data
@@ -225,7 +225,7 @@ std::vector<typename ArrayType::SizeType> Convolution2D<ArrayType>::ComputeOutpu
       (inputs.at(0).get().shape()[2] - inputs.at(1).get().shape()[3] + stride_size_) /
       stride_size_);
   // output_shape_[3]=batch dimension
-  output_shape.emplace_back(1);
+  output_shape.emplace_back(inputs.at(0).get().shape().at(3));
 
   return output_shape;
 }

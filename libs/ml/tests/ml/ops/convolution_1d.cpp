@@ -182,18 +182,6 @@ TYPED_TEST(Convolution1DTest, forward_3x3x2_5x3x3x2)
     }
   }
 
-  // Generate gt
-  for (SizeType i_b{0}; i_b < batch_size; ++i_b)
-  {
-    for (SizeType i_oc{0}; i_oc < output_channels; ++i_oc)
-    {
-      for (SizeType i_o{0}; i_o < output_height; ++i_o)
-      {
-
-        gt(i_oc, i_o, i_b) = static_cast<DataType>((6 * i_o) * (i_b * 6) * (i_oc + 1));
-      }
-    }
-  }
   fetch::ml::ops::Convolution1D<ArrayType> op;
   ArrayType                                output(op.ComputeOutputShape({input, kernels}));
   op.Forward({input, kernels}, output);
