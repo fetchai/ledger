@@ -20,6 +20,7 @@
 #include "vm/module.hpp"
 
 #include "vm_modules/core/print.hpp"
+#include "vm_modules/core/panic.hpp"
 #include "vm_modules/core/type_convert.hpp"
 #include "vm_modules/core/byte_array_wrapper.hpp"
 
@@ -57,6 +58,7 @@ public:
 
     // core modules
     CreatePrint(*module);
+    CreatePanic(*module);    
     CreateToString(*module);
     ByteArrayWrapper::Bind(*module);
 
