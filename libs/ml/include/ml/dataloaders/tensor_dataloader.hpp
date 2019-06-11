@@ -24,13 +24,22 @@
 namespace fetch {
 namespace ml {
 
-template <typename DataType, typename LabelType>
-class TensorDataLoader : DataLoader<DataType, LabelType>
+template <typename LabelType, typename DataType>
+class TensorDataLoader : DataLoader<LabelType, DataType>
 {
 public:
-  virtual std::pair<DataType, LabelType> GetNext()
+  TensorDataLoader(bool random_mode = false)
+    : DataLoader<LabelType, DataType>(random_mode)
+  {}
+
+  virtual std::pair<LabelType, std::vector<DataType>> GetNext()
   {
     return data_.at(cursor_++);
+  }
+
+  virtual std::pair<LabelType, std::vector<DataType>> GetRandom()
+  {
+    return data_.at((uint64_t)rand() % Size());
   }
 
   virtual uint64_t Size() const
@@ -48,14 +57,14 @@ public:
     cursor_ = 0;
   }
 
-  void Add(std::pair<DataType, LabelType> const &data)
+  void Add(std::pair<LabelType, std::vector<DataType>> const &data)
   {
     data_.push_back(data);
   }
 
 private:
-  uint64_t                                    cursor_ = 0;
-  std::vector<std::pair<DataType, LabelType>> data_;
+  uint64_t                                                 cursor_ = 0;
+  std::vector<std::pair<LabelType, std::vector<DataType>>> data_;
 };
 
 }  // namespace ml

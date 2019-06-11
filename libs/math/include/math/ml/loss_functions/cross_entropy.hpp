@@ -46,8 +46,8 @@ typename ArrayType::Type CrossEntropyLoss(ArrayType const &x, ArrayType const &y
   assert(x.shape() == y.shape());
   assert(x.shape().size() == 2);
 
-  auto n_examples = x.shape().at(0);
-  auto n_dims     = x.shape().at(1);
+  auto n_examples = x.shape().at(1);
+  auto n_dims     = x.shape().at(0);
 
   DataType ret = DataType(0);
 
@@ -82,11 +82,11 @@ typename ArrayType::Type CrossEntropyLoss(ArrayType const &x, ArrayType const &y
   // if a one-hot, could be arbitrary n_classes
   else
   {
-    ArrayType gt = ArgMax(y, 1);  // y must be one hot - and we can ignore the zero cases
+    ArrayType gt = ArgMax(y, 0);  // y must be one hot - and we can ignore the zero cases
 
     for (SizeType idx = 0; idx < n_examples; ++idx)
     {
-      ret -= Log(x.At(idx, SizeType(gt[idx])));
+      ret -= Log(x.At(SizeType(gt[idx]), idx));
     }
   }
   Divide(ret, static_cast<DataType>(n_examples), ret);

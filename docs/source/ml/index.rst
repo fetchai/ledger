@@ -63,3 +63,6 @@ General Notes for Working with the Machine Learning Library
 - Every Op must have a DESCRIPTOR, this is used to generate a unique node name when name collisions are detected in a graph, as well as for logging/error reporting
 - Node names are not guaranteed to be identical to the input string specified by the developer on AddNode (this is because the graph automatically resolves name collisions such that every node is uniquely named).
 - Function ComputeOutputShape for classes that inherits from Ops is usually expensive and should be used only for initialization or in ASSERT. On Forward you can use output.shape() instead and for Backward there is error_signal.shape()
+- Batch dimension is always trailing dimension, if you work with single datapoint it needs to have trailing dimension of size 1.
+- Dataloaders are designed to reteturn pair of {Label,{Data}}, where Data are in vector.
+
