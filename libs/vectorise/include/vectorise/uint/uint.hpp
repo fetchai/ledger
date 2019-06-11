@@ -37,11 +37,12 @@ template< uint16_t S = 256 >
 class UInt
 {
 public:
+  using BaseType = uint8_t;
   enum {
     UINT_SIZE = S,
-    ELEMENTS = UINT_SIZE >> 3
+    ELEMENTS = UINT_SIZE / sizeof(BaseType) / 8
   };
-  static_assert(S == (ELEMENTS << 3), "Size must be a multiple of 8.");
+  static_assert(S == (ELEMENTS * sizeof(BaseType) << 3), "Size must be a multiple of 8 times the base type size.");
 
   using ContainerType = std::array< uint8_t, ELEMENTS >; 
   static constexpr char const *LOGGING_NAME = "UInt";
@@ -79,7 +80,7 @@ public:
     union
     {
       uint64_t value;
-      uint8_t  bytes[sizeof(uint64_t)];
+      uint8_t  bytes[sizeof(uint64_t) / sizeof(BaseType)];
     } data;
     data.value = number;
 
@@ -110,6 +111,7 @@ public:
   template< typename ArrayType >
   meta::HasIndex<ArrayType, UInt> &operator=(ArrayType const &v)
   {
+    // TODO: Assert that index return type is the same size
     if(data_.size() != v.size())
     {
       throw std::runtime_error("ByteArray size and UInt size differs");
@@ -117,7 +119,7 @@ public:
 
     for(uint64_t i=0; i < data_.size(); ++i)
     {
-      data_[i] = v[i];
+      data_[i] = static_cast<BaseType>(v[i]);
     }
 
     return *this;

@@ -41,6 +41,7 @@ public:
   static void Bind(vm::Module &module)
   {
     module.CreateClassType<UInt256Wrapper>("UInt256")
+        .CreateConstuctor<Ptr<vm::String>>()    
         .CreateConstuctor<Ptr<ByteArrayWrapper>>()
 //        .CreateMemberFunction("toBuffer", &UInt256Wrapper::ToBuffer)
         .CreateMemberFunction("increase", &UInt256Wrapper::Increase)
@@ -56,11 +57,40 @@ public:
     , number_(data)
   {}
 
+  UInt256Wrapper(fetch::vm::VM *vm, fetch::vm::TypeId type_id, std::string data)
+    : fetch::vm::Object(vm, type_id)
+    , number_(data)
+  {}
+
+
   static fetch::vm::Ptr<UInt256Wrapper> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
                                                       fetch::vm::Ptr<ByteArrayWrapper> const &ba)
   {
-    return new UInt256Wrapper(vm, type_id, ba->byte_array());
+    try
+    {
+      return new UInt256Wrapper(vm, type_id, ba->byte_array());
+    }
+    catch(std::runtime_error const &e)
+    {
+      vm->RuntimeError(e.what());
+    }
+    return nullptr;
   }
+
+  static fetch::vm::Ptr<UInt256Wrapper> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
+                                                      fetch::vm::Ptr<vm::String> const &ba)
+  {
+    try 
+    {
+      return new UInt256Wrapper(vm, type_id, ba->str);
+    }
+    catch(std::runtime_error const &e)
+    {
+      vm->RuntimeError(e.what());
+    }
+    return nullptr;
+  }
+
 
   double ToFloat64()
   {
@@ -108,6 +138,7 @@ public:
     return number_.size();
   }
 
+  vectorise::UInt<256> const& number() const { return number_; }
 private:
   vectorise::UInt<256> number_;
 };
