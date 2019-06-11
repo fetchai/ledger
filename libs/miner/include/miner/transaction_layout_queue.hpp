@@ -38,7 +38,7 @@ public:
   using ConstIterator     = UnderlyingList::const_iterator;
 
   // Construction / Destruction
-  explicit TransactionLayoutQueue(uint32_t log2_num_lanes);
+  TransactionLayoutQueue()                               = default;
   TransactionLayoutQueue(TransactionLayoutQueue const &) = delete;
   TransactionLayoutQueue(TransactionLayoutQueue &&)      = delete;
   ~TransactionLayoutQueue()                              = default;
@@ -77,9 +77,6 @@ private:
   DigestSet      digests_;  ///< Set of digests stored within the list
   UnderlyingList list_;     ///< The list of transaction layouts
 };
-
-inline TransactionLayoutQueue::TransactionLayoutQueue(uint32_t /* log2_num_lanes */)
-{}
 
 inline TransactionLayoutQueue::ConstIterator TransactionLayoutQueue::cbegin() const
 {

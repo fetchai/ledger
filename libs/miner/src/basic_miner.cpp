@@ -59,8 +59,8 @@ BasicMiner::BasicMiner(uint32_t log2_num_lanes)
   : log2_num_lanes_{log2_num_lanes}
   , max_num_threads_{std::thread::hardware_concurrency()}
   , thread_pool_{max_num_threads_, "Miner"}
-  , pending_{log2_num_lanes}
-  , mining_pool_{log2_num_lanes}
+  , pending_{}
+  , mining_pool_{}
 {}
 
 /**
@@ -151,7 +151,7 @@ void BasicMiner::GenerateBlock(Block &block, std::size_t num_lanes, std::size_t 
     std::vector<QueuePtr> transaction_lists(num_threads);
     for (auto &queue : transaction_lists)
     {
-      queue = std::make_unique<Queue>(log2_num_lanes_);
+      queue = std::make_unique<Queue>();
     }
 
     std::size_t const num_tx_per_thread = mining_pool_.size() / num_threads;
