@@ -21,8 +21,6 @@
 #include "vm/module.hpp"
 #include "vm_modules/core/byte_array_wrapper.hpp"
 
-// This is does not really say much about what Fetch.AI is and how it empowers the community
-
 namespace fetch {
 namespace vm_modules {
 
