@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "vm/vm.hpp"
+#include "vm/vm_type_traits.hpp"
 
 #include <algorithm>
 #include <cstddef>
@@ -226,10 +227,9 @@ struct Array : public IArray
     return &element;
   }
 
-  bool SerializeTo(ByteArrayBuffer &buffer) override
+  bool SerializeTo(ByteArrayBuffer & buffer) override
   {
-    buffer << element_type_id << elements;
-    return true;
+    return ApplySerialize(buffer, elements);
   }
 
   bool DeserializeFrom(ByteArrayBuffer &buffer) override
@@ -240,6 +240,38 @@ struct Array : public IArray
 
   TypeId                   element_type_id;
   std::vector<ElementType> elements;
+private:
+  
+  bool ApplySerialize(ByteArrayBuffer &buffer, std::vector< Ptr< Object > > const &data)
+  {
+    std::cout << "Serializing array of Objects: " << typeid(T).name() << std::endl;
+    std::cout << "Serializing array of Objects: " << typeid(ElementType).name() << std::endl;    
+    buffer << element_type_id << elements.size();
+    for(Ptr< Object > const &v: data)
+    {
+      if(v == nullptr)
+      {
+        RuntimeError("Cannot serialize array element with null reference.");
+        return false;
+      }
+      buffer << v;
+    }
+    return true;
+  }
+
+  template< typename G >
+  typename std::enable_if<IsPrimitive<G>::value,  bool>::type
+  ApplySerialize(ByteArrayBuffer &buffer, std::vector< G > const &data)
+  {
+    buffer << element_type_id << elements.size();    
+    for(G const & v: data)
+    {
+      buffer << v;
+    }
+    return true;
+  }
+
+  // TODO: Make deserialise
 };
 
 template <typename... Args>

@@ -176,7 +176,8 @@ enum class FunctionKind : uint8_t
   Constructor             = 2,
   StaticMemberFunction    = 3,
   MemberFunction          = 4,
-  UserDefinedFreeFunction = 5
+  UserDefinedFreeFunction = 5,
+  DeserializeConstructor  = 6
 };
 
 struct TypeInfo
@@ -219,6 +220,21 @@ struct FunctionInfo
   Handler      handler;
 };
 using FunctionInfoArray = std::vector<FunctionInfo>;
+
+struct DeserializeConstructorInfo
+{
+  DeserializeConstructorInfo(TypeIndex      &&type_index__,
+    TypeIndexArray &&parameters__,
+    Handler handler__)
+  : type_index{type_index__}
+  , parameters{parameters__}
+  , handler{handler__} {}
+  TypeIndex      type_index;
+  TypeIndexArray parameters;
+  Handler        handler;
+};
+
+using DeserializeConstructorArray = std::vector<DeserializeConstructorInfo>;
 
 class RegisteredTypes
 {

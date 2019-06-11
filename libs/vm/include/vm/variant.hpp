@@ -543,6 +543,7 @@ inline void Serialize(ByteArrayBuffer &buffer, Variant const &variant)
     buffer << variant.primitive.f64;
     break;
   default:
+    std::cout << "Was here? 2" << std::endl;  
     if (variant.object)
     {
       if (!variant.object->SerializeTo(buffer))

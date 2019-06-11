@@ -68,6 +68,10 @@ public:
       auto compiler_setup_function = [type_index__, parameter_type_index_array,
                                       handler](Compiler *compiler) {
         compiler->CreateConstructor(type_index__, parameter_type_index_array, handler);
+        compiler->CreateDeserializeConstructor(type_index__, parameter_type_index_array, [](VM *) {
+          std::cout << "Hello world" << std::endl;
+        });
+
       };
       module_->AddCompilerSetupFunction(compiler_setup_function);
       return *this;

@@ -125,6 +125,7 @@ inline IoObserverInterface::Status WriteHelper(std::string const &name, Ptr<Obje
 
   // convert the type into a byte stream
   ByteArrayBuffer buffer;
+  std::cout << "Starting serialization" << std::endl;
   if (!val || !val->SerializeTo(buffer))
   {
     return IoObserverInterface::Status::ERROR;
@@ -165,6 +166,7 @@ public:
   {
     try
     {
+      std::cout << "Start of traceback" << std::endl;
       FlushIO();
     }
     catch (std::exception const &ex)
@@ -187,6 +189,7 @@ public:
 
   void Set(TemplateParameter1 const &value) override
   {
+    std::cout << "Was here?" << std::endl;
     value_ = GetValue<>(value);
   }
 

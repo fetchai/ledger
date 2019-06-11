@@ -47,6 +47,10 @@ public:
   void CreateConstructor(TypeIndex type_index, TypeIndexArray const &parameter_type_index_array,
                          Handler const &handler);
 
+  void CreateDeserializeConstructor(TypeIndex type_index, TypeIndexArray parameter_type_index_array,
+                         Handler handler);
+
+
   void CreateStaticMemberFunction(TypeIndex type_index, std::string const &function_name,
                                   TypeIndexArray const &parameter_type_index_array,
                                   TypeIndex return_type_index, Handler const &handler);
@@ -109,6 +113,7 @@ private:
   TypeInfoMap       type_info_map_;
   RegisteredTypes   registered_types_;
   FunctionInfoArray function_info_array_;
+  DeserializeConstructorArray deserialize_constructor_array_;  
   SymbolTablePtr    symbols_;
   TypePtr           null_type_;
   TypePtr           void_type_;
@@ -215,6 +220,7 @@ private:
                                  TypePtr const &return_type, Handler const &handler);
   void        CreateConstructor(TypePtr const &type, TypePtrArray const &parameter_types,
                                 Handler const &handler);
+
   void        CreateStaticMemberFunction(TypePtr const &type, std::string const &name,
                                          TypePtrArray const &parameter_types, TypePtr const &return_type,
                                          Handler const &handler);
@@ -230,6 +236,7 @@ private:
                                   Handler const &set_handler);
   void        AddTypeInfo(TypeInfo const &info, TypeId type_id, TypePtr const &type);
   void        AddFunctionInfo(FunctionPtr const &function, Handler const &handler);
+
   std::string BuildUniqueId(TypePtr const &type, std::string const &function_name,
                             TypePtrArray const &parameter_types, TypePtr const &return_type);
   void        AddFunctionToSymbolTable(SymbolTablePtr const &symbols, FunctionPtr const &function);

@@ -61,6 +61,13 @@ private:
     analyser_.CreateConstructor(type_index, parameter_type_index_array, handler);
   }
 
+  void CreateDeserializeConstructor(TypeIndex type_index, TypeIndexArray const &parameter_type_index_array,
+                         Handler const &handler)
+  {
+    analyser_.CreateDeserializeConstructor(type_index, parameter_type_index_array, handler);
+  }
+
+
   void CreateStaticMemberFunction(TypeIndex type_index, std::string const &function_name,
                                   TypeIndexArray const &parameter_type_index_array,
                                   TypeIndex return_type_index, Handler const &handler)
