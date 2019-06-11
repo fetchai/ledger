@@ -23,6 +23,8 @@
 #include <algorithm>
 #include <cmath>
 #include <vector>
+#include <array>
+
 namespace fetch {
 namespace math {
 /* Implements a subset of big number functionality.
@@ -34,33 +36,49 @@ namespace math {
  * The implementation subclasses a <byte_array::ConstByteArray> such
  * one easily use this in combination with hashes etc.
  */
-class BigUnsigned : public byte_array::ByteArray
+template< uint16_t S = 256 >
+class UInt
 {
 public:
-  using super_type = byte_array::ByteArray;
+  enum {
+    UINT_SIZE = S,
+    ELEMENTS = UINT_SIZE >> 3
+  };
+  static_assert(S == (ELEMENTS << 3), "Size must be a multiple of 8.");
 
-  static constexpr char const *LOGGING_NAME = "BigUnsigned";
+  using ContainerType = std::array< uint8_t, ELEMENTS >; 
+  static constexpr char const *LOGGING_NAME = "UInt";
 
-  BigUnsigned()
+  UInt()
   {
-    Resize(std::max(std::size_t(256 >> 3), sizeof(uint64_t)));
-    for (std::size_t i = 0; i < sizeof(uint64_t); ++i)
+    for (std::size_t i = 0; i < ELEMENTS; ++i)
     {
-      super_type::operator[](i) = 0;
+      data_[i] = 0;
     }
   }
 
-  BigUnsigned(BigUnsigned const &other)
-    : super_type(other.Copy())
-  {}
-  BigUnsigned(super_type const &other)
-    : super_type(other.Copy())
+  UInt(UInt const &other)
+    : data_{other.data_}
   {}
 
-  BigUnsigned(uint64_t const &number, std::size_t size = 256)
+  UInt(ContainerType const &other)
+    : data_(other)
+  {}
+
+  template< typename T >
+  UInt(T const &other)
   {
-    Resize(std::max(size >> 3, sizeof(uint64_t)));
+    for (std::size_t i = 0; i < ELEMENTS; ++i)
+    {
+      data_[i] = 0;
+    }
 
+    // TODO: Copy instead
+    *this = other;
+  }  
+
+  UInt(uint64_t const &number)
+  {    
     union
     {
       uint64_t value;
@@ -69,32 +87,61 @@ public:
     data.value = number;
 
     // FIXME: Assumes little endian
-    for (std::size_t i = 0; i < sizeof(uint64_t); ++i)
+    std::size_t i = 0;
+    for (; i < sizeof(uint64_t); ++i)
     {
-      super_type::operator[](i) = data.bytes[i];
+      data_[i] = data.bytes[i];
+    }
+    for (; i < ELEMENTS; ++i)
+    {
+      data_[i] = 0;
     }
   }
 
-  BigUnsigned &operator=(BigUnsigned const &v)
+  bool operator==(UInt const &other) const
   {
-    super_type::operator=(v);
+    return data_ == other.data_;
+  }
+
+
+  UInt &operator=(UInt const &v)
+  {
+    data_ = v.data_;
     return *this;
   }
 
-  BigUnsigned &operator=(byte_array::ByteArray const &v)
+  UInt &operator=(byte_array::ByteArray const &v)
   {
-    super_type::operator=(v);
+    if(data_.size() != v.size())
+    {
+      throw std::runtime_error("ByteArray size and UInt size differs");
+    }
+
+    for(uint64_t i=0; i < data_.size(); ++i)
+    {
+      data_[i] = v[i];
+    }
+
     return *this;
   }
 
-  BigUnsigned &operator=(byte_array::ConstByteArray const &v)
+  UInt &operator=(byte_array::ConstByteArray const &v)
   {
-    super_type::operator=(v);
+    if(data_.size() != v.size())
+    {
+      throw std::runtime_error("ByteArray size and UInt size differs");
+    }
+
+    for(uint64_t i=0; i < data_.size(); ++i)
+    {
+      data_[i] = v[i];
+    }
+
     return *this;
   }
 
   template <typename T>
-  BigUnsigned &operator=(T const &v)
+  UInt &operator=(T const &v)
   {
     union
     {
@@ -103,75 +150,75 @@ public:
     } data;
     data.value = uint64_t(v);
 
-    if (sizeof(T) > super_type::size())
+    if (sizeof(T) > data_.size())
     {
-      throw std::runtime_error("BIg number too small");
+      throw std::runtime_error("UInt cannot contain object with more then 256 bits/");
     }
 
     // FIXME: Assumes little endian
     std::size_t i = 0;
     for (; i < sizeof(T); ++i)
     {
-      super_type::operator[](i) = data.bytes[i];
+      data_[i] = data.bytes[i];
     }
 
-    for (; i < super_type::size(); ++i)
+    for (; i < data_.size(); ++i)
     {
-      super_type::operator[](i) = 0;
+      data_[i] = 0;
     }
     return *this;
   }
 
-  BigUnsigned &operator++()
+  UInt &operator++()
   {
     // TODO(issue 32): Propagation of carry bits this way is slow.
     // If we instead make sure that the size is always a multiple of 8
     // We can do the logic in uint64_t
     // In fact, we should re implement this using vector registers.
     std::size_t i = 0;
-    uint8_t val   = ++super_type::operator[](i);
+    uint8_t val   = ++data_[i];
     while (val == 0)
     {
       ++i;
-      if (i == super_type::size())
+      if (i == data_.size())
       {
         throw std::runtime_error("Throw error, size too little");
-        val = super_type::operator[](i) = 1;
+        val = data_[i] = 1;
       }
       else
       {
-        val = ++super_type::operator[](i);
+        val = ++data_[i];
       }
     }
 
     return *this;
   }
 
-  BigUnsigned &operator<<=(std::size_t const &n)
+  UInt &operator<<=(std::size_t const &n)
   {
     std::size_t bits  = n & 7;
     std::size_t bytes = n >> 3;
-    std::size_t old   = super_type::size() - bytes;
+    std::size_t old   = data_.size() - bytes;
 
     for (std::size_t i = old; i != 0;)
     {
       --i;
-      super_type::operator[](i + bytes) = super_type::operator[](i);
+      data_[i + bytes] = data_[i];
     }
 
     for (std::size_t i = 0; i < bytes; ++i)
     {
-      super_type::operator[](i) = 0;
+      data_[i] = 0;
     }
 
     std::size_t nbits = 8 - bits;
     uint8_t     carry = 0;
-    for (std::size_t i = 0; i < size(); ++i)
+    for (std::size_t i = 0; i < data_.size(); ++i)
     {
-      uint8_t val = super_type::operator[](i);
+      uint8_t val = data_[i];
 
-      super_type::operator[](i) = uint8_t(uint8_t(val << bits) | carry);
-      carry                     = uint8_t(val >> nbits);
+      data_[i] = uint8_t(uint8_t(val << bits) | carry);
+      carry                 = uint8_t(val >> nbits);
     }
 
     return *this;
@@ -179,13 +226,13 @@ public:
 
   uint8_t operator[](std::size_t const &n) const
   {
-    return super_type::operator[](n);
+    return data_[n];
   }
 
-  bool operator<(BigUnsigned const &other) const
+  bool operator<(UInt const &other) const
   {
-    std::size_t s1 = TrimmedSize();
-    std::size_t s2 = other.TrimmedSize();
+    uint64_t s1 = TrimmedSize();
+    uint64_t s2 = other.TrimmedSize();
 
     if (s1 != s2)
     {
@@ -197,31 +244,51 @@ public:
     }
 
     --s1;
-    while ((s1 != 0) && (super_type::operator[](s1) == other[s1]))
+    while ((s1 != 0) && (data_[s1] == other[s1]))
     {
       --s1;
     }
 
-    return super_type::operator[](s1) < other[s1];
+    return data_[s1] < other[s1];
   }
 
-  bool operator>(BigUnsigned const &other) const
+  bool operator>(UInt const &other) const
   {
     return other < (*this);
   }
 
-  std::size_t TrimmedSize() const
+  uint64_t TrimmedSize() const
   {
-    std::size_t ret = super_type::size();
-    while ((ret != 0) && (super_type::operator[](ret - 1) == 0))
+    uint64_t ret = data_.size();
+    while ((ret != 0) && (data_[ret - 1] == 0))
     {
       --ret;
     }
     return ret;
   }
+
+  uint8_t const * pointer() const 
+  {
+    return data_.data();
+  }
+
+  uint64_t size() const
+  {
+    return data_.size();
+  }
+
+
+  template<typename T, uint16_t G>
+  friend void Serialize(T& s, UInt<G> const &u);
+
+  template<typename T, uint16_t G>
+  friend void Deserialize(T& s, UInt<G> &u);
+
+private:
+  ContainerType data_;
 };
 
-inline double Log(BigUnsigned const &x)
+inline double Log(UInt<256> const &x)
 {
   uint64_t last_byte = x.TrimmedSize();
   union
@@ -247,7 +314,7 @@ inline double Log(BigUnsigned const &x)
   return double(exponent) + std::log(double(fraction.value << tz) * (1. / double(uint32_t(-1))));
 }
 
-inline double ToDouble(BigUnsigned const &x)
+inline double ToDouble(UInt<256> const &x)
 {
   uint64_t last_byte = x.TrimmedSize();
 
@@ -284,5 +351,19 @@ inline double ToDouble(BigUnsigned const &x)
   conv.bits |= uint64_t((fraction.value << (20 + tz)) & ((1ull << 53) - 1));
   return conv.value;
 }
+
+template<typename T, uint16_t S>
+void Serialize(T& s, UInt<S> const &u)
+{
+  s << u.data_;
+}
+
+template<typename T, uint16_t S>
+void Deserialize(T& s, UInt<S> &u)
+{
+  s >> u.data_;
+}
+
+
 }  // namespace math
 }  // namespace fetch

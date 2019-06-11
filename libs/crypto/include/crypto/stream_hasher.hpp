@@ -19,6 +19,7 @@
 
 #include "core/byte_array/byte_array.hpp"
 #include "meta/type_traits.hpp"
+#include "math/bignumber.hpp"
 
 namespace fetch {
 namespace crypto {
@@ -26,6 +27,7 @@ namespace crypto {
 class StreamHasher
 {
 public:
+  using UInt256 = math::UInt<256>;  
   virtual void        Reset()                                                      = 0;
   virtual bool        Update(uint8_t const *data_to_hash, std::size_t const &size) = 0;
   virtual void        Final(uint8_t *hash, std::size_t const &size)                = 0;
@@ -58,6 +60,12 @@ public:
   {
     return Update(reinterpret_cast<uint8_t const *>(vect.data()), vect.size() * sizeof(T));
   }
+
+  UInt256 Update(UInt256 const &val)
+  {
+    return Update(val.pointer(), val.size());
+  }
+
 
   virtual ~StreamHasher() = default;
 };

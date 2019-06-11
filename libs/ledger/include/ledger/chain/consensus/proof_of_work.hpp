@@ -27,10 +27,10 @@ namespace fetch {
 namespace ledger {
 namespace consensus {
 
-class ProofOfWork : public math::BigUnsigned
+class ProofOfWork : public math::UInt<256>
 {
 public:
-  using super_type  = math::BigUnsigned;
+  using UInt256  = math::UInt<256>;
   using header_type = byte_array::ConstByteArray;
 
   // Construction / Destruction
@@ -41,16 +41,16 @@ public:
   bool operator()();
 
   void SetTarget(std::size_t zeros);
-  void SetTarget(math::BigUnsigned &&target);
+  void SetTarget(UInt256 &&target);
   void SetHeader(byte_array::ByteArray header);
 
   header_type const &      header() const;
-  math::BigUnsigned const &digest() const;
-  math::BigUnsigned const &target() const;
+  UInt256 const &digest() const;
+  UInt256 const &target() const;
 
 private:
-  math::BigUnsigned          digest_;
-  math::BigUnsigned          target_;
+  UInt256          digest_;
+  UInt256          target_;
   byte_array::ConstByteArray header_;
 };
 
@@ -59,12 +59,12 @@ inline byte_array::ConstByteArray const &ProofOfWork::header() const
   return header_;
 }
 
-inline math::BigUnsigned const &ProofOfWork::digest() const
+inline math::UInt<256> const &ProofOfWork::digest() const
 {
   return digest_;
 }
 
-inline math::BigUnsigned const &ProofOfWork::target() const
+inline math::UInt<256> const &ProofOfWork::target() const
 {
   return target_;
 }
@@ -79,7 +79,7 @@ template <typename T>
 inline void Deserialize(T &serializer, ProofOfWork &p)
 {
   byte_array::ConstByteArray header;
-  math::BigUnsigned          target;
+  math::UInt<256>          target;
 
   serializer >> header >> target;
 

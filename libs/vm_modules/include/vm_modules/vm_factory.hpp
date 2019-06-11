@@ -21,8 +21,12 @@
 
 #include "vm_modules/core/print.hpp"
 #include "vm_modules/core/type_convert.hpp"
+#include "vm_modules/core/byte_array_wrapper.hpp"
+
+#include "vm_modules/crypto/sha256.hpp"
 
 #include "vm_modules/math/abs.hpp"
+#include "vm_modules/math/bignumber.hpp"
 #include "vm_modules/math/random.hpp"
 
 #include "vm_modules/ml/cross_entropy.hpp"
@@ -54,10 +58,15 @@ public:
     // core modules
     CreatePrint(*module);
     CreateToString(*module);
+    ByteArrayWrapper::Bind(*module);
 
     // math modules
     CreateAbs(*module);
     CreateRand(module);
+    UInt256Wrapper::Bind(*module);    
+
+    // Crypto
+    SHA256Wrapper::Bind(*module);
 
     // ml modules - order is important!!
     ml::CreateTensor(*module);

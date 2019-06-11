@@ -18,16 +18,15 @@
 //------------------------------------------------------------------------------
 
 #include "math/bignumber.hpp"
-
 #include "vm_modules/core/byte_array_wrapper.hpp"
-
 #include "vm/module.hpp"
+
+// This is does not really say much about what Fetch.AI is and how it empowers the community
 
 namespace fetch {
 namespace vm_modules {
 
-// TODO: Make templated
-class BigNumberWrapper : public fetch::vm::Object
+class UInt256Wrapper : public fetch::vm::Object
 {
 public:
   using SizeType = uint64_t;
@@ -36,31 +35,31 @@ public:
   using Ptr    = fetch::vm::Ptr<T>;
   using String = fetch::vm::String;
 
-  BigNumberWrapper()          = delete;
-  virtual ~BigNumberWrapper() = default;
+  UInt256Wrapper()          = delete;
+  virtual ~UInt256Wrapper() = default;
 
   static void Bind(vm::Module &module)
   {
-    module.CreateClassType<BigNumberWrapper>("BigUInt")
+    module.CreateClassType<UInt256Wrapper>("UInt256")
         .CreateConstuctor<Ptr<ByteArrayWrapper>>()
-        .CreateMemberFunction("toBuffer", &BigNumberWrapper::ToBuffer)
-        .CreateMemberFunction("increase", &BigNumberWrapper::Increase)
-        .CreateMemberFunction("lessThan", &BigNumberWrapper::LessThan)
-        .CreateMemberFunction("logValue", &BigNumberWrapper::LogValue)
-        .CreateMemberFunction("toFloat64", &BigNumberWrapper::ToFloat64)
-        .CreateMemberFunction("toInt32", &BigNumberWrapper::ToInt32)
-        .CreateMemberFunction("size", &BigNumberWrapper::size);
+//        .CreateMemberFunction("toBuffer", &UInt256Wrapper::ToBuffer)
+        .CreateMemberFunction("increase", &UInt256Wrapper::Increase)
+        .CreateMemberFunction("lessThan", &UInt256Wrapper::LessThan)
+        .CreateMemberFunction("logValue", &UInt256Wrapper::LogValue)
+        .CreateMemberFunction("toFloat64", &UInt256Wrapper::ToFloat64)
+        .CreateMemberFunction("toInt32", &UInt256Wrapper::ToInt32)
+        .CreateMemberFunction("size", &UInt256Wrapper::size);
   }
 
-  BigNumberWrapper(fetch::vm::VM *vm, fetch::vm::TypeId type_id, byte_array::ByteArray data)
+  UInt256Wrapper(fetch::vm::VM *vm, fetch::vm::TypeId type_id, byte_array::ByteArray data)
     : fetch::vm::Object(vm, type_id)
     , number_(data)
   {}
 
-  static fetch::vm::Ptr<BigNumberWrapper> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
+  static fetch::vm::Ptr<UInt256Wrapper> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
                                                       fetch::vm::Ptr<ByteArrayWrapper> const &ba)
   {
-    return new BigNumberWrapper(vm, type_id, ba->byte_array());
+    return new UInt256Wrapper(vm, type_id, ba->byte_array());
   }
 
   double ToFloat64()
@@ -87,12 +86,14 @@ public:
     return math::Log(number_);
   }
 
+  /*
   fetch::vm::Ptr<ByteArrayWrapper> ToBuffer()
   {
     return vm_->CreateNewObject<ByteArrayWrapper>(number_.Copy());
   }
+  */
 
-  bool LessThan(Ptr<BigNumberWrapper> const &other)
+  bool LessThan(Ptr<UInt256Wrapper> const &other)
   {
     return number_ < other->number_;
   }
@@ -108,8 +109,9 @@ public:
   }
 
 private:
-  math::BigUnsigned number_;
+  math::UInt<256> number_;
 };
+
 
 }  // namespace vm_modules
 }  // namespace fetch

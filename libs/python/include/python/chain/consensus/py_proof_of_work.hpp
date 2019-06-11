@@ -28,7 +28,7 @@ namespace consensus {
 void BuildProofOfWork(pybind11::module &module)
 {
   namespace py = pybind11;
-  py::class_<ProofOfWork, math::BigUnsigned>(module, "ProofOfWork")
+  py::class_<ProofOfWork, math::UInt256>(module, "ProofOfWork")
       .def(py::init<>())
       .def(py::init<fetch::ledger::consensus::ProofOfWork::header_type>())
       .def("target", &ProofOfWork::target)
