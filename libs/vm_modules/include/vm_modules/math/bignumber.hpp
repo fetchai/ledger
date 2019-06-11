@@ -18,8 +18,8 @@
 //------------------------------------------------------------------------------
 
 #include "vectorise/uint/uint.hpp"
-#include "vm_modules/core/byte_array_wrapper.hpp"
 #include "vm/module.hpp"
+#include "vm_modules/core/byte_array_wrapper.hpp"
 
 // This is does not really say much about what Fetch.AI is and how it empowers the community
 
@@ -41,10 +41,10 @@ public:
   static void Bind(vm::Module &module)
   {
     module.CreateClassType<UInt256Wrapper>("UInt256")
-        .CreateConstuctor<uint64_t>()     
+        .CreateConstuctor<uint64_t>()
         .CreateConstuctor<Ptr<vm::String>>()
         .CreateConstuctor<Ptr<ByteArrayWrapper>>()
-//        .CreateMemberFunction("toBuffer", &UInt256Wrapper::ToBuffer)
+        //        .CreateMemberFunction("toBuffer", &UInt256Wrapper::ToBuffer)
         .CreateMemberFunction("increase", &UInt256Wrapper::Increase)
         .CreateMemberFunction("lessThan", &UInt256Wrapper::LessThan)
         .CreateMemberFunction("logValue", &UInt256Wrapper::LogValue)
@@ -53,7 +53,7 @@ public:
         .CreateMemberFunction("size", &UInt256Wrapper::size);
   }
 
-  UInt256Wrapper(fetch::vm::VM *vm, fetch::vm::TypeId type_id, byte_array::ByteArray const& data)
+  UInt256Wrapper(fetch::vm::VM *vm, fetch::vm::TypeId type_id, byte_array::ByteArray const &data)
     : fetch::vm::Object(vm, type_id)
     , number_(data)
   {}
@@ -68,15 +68,14 @@ public:
     , number_(data)
   {}
 
-
   static fetch::vm::Ptr<UInt256Wrapper> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
-                                                      fetch::vm::Ptr<ByteArrayWrapper> const &ba)
+                                                    fetch::vm::Ptr<ByteArrayWrapper> const &ba)
   {
     try
     {
       return new UInt256Wrapper(vm, type_id, ba->byte_array());
     }
-    catch(std::runtime_error const &e)
+    catch (std::runtime_error const &e)
     {
       vm->RuntimeError(e.what());
     }
@@ -84,13 +83,13 @@ public:
   }
 
   static fetch::vm::Ptr<UInt256Wrapper> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
-                                                      fetch::vm::Ptr<vm::String> const &ba)
+                                                    fetch::vm::Ptr<vm::String> const &ba)
   {
-    try 
+    try
     {
       return new UInt256Wrapper(vm, type_id, ba->str);
     }
-    catch(std::runtime_error const &e)
+    catch (std::runtime_error const &e)
     {
       vm->RuntimeError(e.what());
     }
@@ -98,13 +97,13 @@ public:
   }
 
   static fetch::vm::Ptr<UInt256Wrapper> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
-                                                      uint64_t const &val)
+                                                    uint64_t const &val)
   {
-    try 
+    try
     {
       return new UInt256Wrapper(vm, type_id, val);
     }
-    catch(std::runtime_error const &e)
+    catch (std::runtime_error const &e)
     {
       vm->RuntimeError(e.what());
     }
@@ -157,11 +156,14 @@ public:
     return number_.size();
   }
 
-  vectorise::UInt<256> const& number() const { return number_; }
+  vectorise::UInt<256> const &number() const
+  {
+    return number_;
+  }
+
 private:
   vectorise::UInt<256> number_;
 };
-
 
 }  // namespace vm_modules
 }  // namespace fetch

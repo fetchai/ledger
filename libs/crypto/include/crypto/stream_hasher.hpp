@@ -27,8 +27,8 @@ namespace crypto {
 class StreamHasher
 {
 public:
-  using UInt256 = vectorise::UInt<256>;  
-  virtual void        Reset()                                                      = 0;
+  using UInt256               = vectorise::UInt<256>;
+  virtual void        Reset() = 0;
   virtual bool        Update(uint8_t const *data_to_hash, std::size_t const &size) = 0;
   virtual void        Final(uint8_t *hash, std::size_t const &size)                = 0;
   virtual std::size_t GetSizeInBytes() const                                       = 0;
@@ -65,7 +65,6 @@ public:
   {
     return Update(val.pointer(), val.size());
   }
-
 
   virtual ~StreamHasher() = default;
 };

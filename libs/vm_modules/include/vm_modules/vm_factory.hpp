@@ -19,10 +19,10 @@
 
 #include "vm/module.hpp"
 
-#include "vm_modules/core/print.hpp"
-#include "vm_modules/core/panic.hpp"
-#include "vm_modules/core/type_convert.hpp"
 #include "vm_modules/core/byte_array_wrapper.hpp"
+#include "vm_modules/core/panic.hpp"
+#include "vm_modules/core/print.hpp"
+#include "vm_modules/core/type_convert.hpp"
 
 #include "vm_modules/crypto/sha256.hpp"
 
@@ -58,14 +58,14 @@ public:
 
     // core modules
     CreatePrint(*module);
-    CreatePanic(*module);    
+    CreatePanic(*module);
     CreateToString(*module);
     ByteArrayWrapper::Bind(*module);
 
     // math modules
     CreateAbs(*module);
     CreateRand(module);
-    UInt256Wrapper::Bind(*module);    
+    UInt256Wrapper::Bind(*module);
 
     // Crypto
     SHA256Wrapper::Bind(*module);

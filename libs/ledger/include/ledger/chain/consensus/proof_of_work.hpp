@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/byte_array/const_byte_array.hpp"
 #include "core/byte_array/byte_array.hpp"
+#include "core/byte_array/const_byte_array.hpp"
 #include "vectorise/uint/uint.hpp"
 
 #include <cstddef>
@@ -31,7 +31,7 @@ namespace consensus {
 class ProofOfWork : public vectorise::UInt<256>
 {
 public:
-  using UInt256  = vectorise::UInt<256>;
+  using UInt256     = vectorise::UInt<256>;
   using header_type = byte_array::ConstByteArray;
 
   // Construction / Destruction
@@ -45,13 +45,13 @@ public:
   void SetTarget(UInt256 &&target);
   void SetHeader(byte_array::ByteArray header);
 
-  header_type const &      header() const;
-  UInt256 const &digest() const;
-  UInt256 const &target() const;
+  header_type const &header() const;
+  UInt256 const &    digest() const;
+  UInt256 const &    target() const;
 
 private:
-  UInt256          digest_;
-  UInt256          target_;
+  UInt256                    digest_;
+  UInt256                    target_;
   byte_array::ConstByteArray header_;
 };
 
@@ -80,7 +80,7 @@ template <typename T>
 inline void Deserialize(T &serializer, ProofOfWork &p)
 {
   byte_array::ConstByteArray header;
-  vectorise::UInt<256>          target;
+  vectorise::UInt<256>       target;
 
   serializer >> header >> target;
 

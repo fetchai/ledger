@@ -25,20 +25,18 @@ namespace fetch {
 namespace meta {
 
 namespace detail {
-template<class T, class Index>
+template <class T, class Index>
 struct HasIndexImpl
-{ 
-  template<class T1,
-     class IndexDeduced = Index,  // <--- here
-     class Reference = decltype(
-       (*std::declval<T*>())[std::declval<IndexDeduced>()] // and use that here
-     ),
-     class = typename std::enable_if<
-       !std::is_void<Reference>::value
-     >::type>
+{
+  template <class T1,
+            class IndexDeduced = Index,  // <--- here
+            class Reference    = decltype(
+                (*std::declval<T *>())[std::declval<IndexDeduced>()]  // and use that here
+                ),
+            class = typename std::enable_if<!std::is_void<Reference>::value>::type>
   static std::true_type test(int);
 
-  template<class>
+  template <class>
   static std::false_type test(...);
 
   using Type = decltype(test<T>(0));
@@ -48,12 +46,13 @@ struct HasIndexImpl
 
 template <typename T, typename R>
 using HasIndex = typename std::enable_if<
-    std::is_same<typename detail::HasIndexImpl<T,std::size_t>::Type, std::true_type>::value, R>::type;
+    std::is_same<typename detail::HasIndexImpl<T, std::size_t>::Type, std::true_type>::value,
+    R>::type;
 
 template <typename T, typename R>
 using HasNoIndex = typename std::enable_if<
-    std::is_same<typename detail::HasIndexImpl<T,std::size_t>::Type, std::false_type>::value, R>::type;
-
+    std::is_same<typename detail::HasIndexImpl<T, std::size_t>::Type, std::false_type>::value,
+    R>::type;
 
 }  // namespace meta
 }  // namespace fetch

@@ -43,7 +43,7 @@ public:
   {
     module.CreateClassType<SHA256Wrapper>("SHA256")
         .CreateConstuctor<>()
-        .CreateMemberFunction("update", &SHA256Wrapper::UpdateUInt256)        
+        .CreateMemberFunction("update", &SHA256Wrapper::UpdateUInt256)
         .CreateMemberFunction("update", &SHA256Wrapper::UpdateString)
         .CreateMemberFunction("update", &SHA256Wrapper::UpdateBuffer)
         .CreateMemberFunction("final", &SHA256Wrapper::Final)
@@ -74,7 +74,6 @@ public:
   {
     return vm_->CreateNewObject<UInt256Wrapper>(hasher_.Final());
   }
-
 
   Ptr<ByteArrayWrapper> FinalAsBuffer()
   {

@@ -16,11 +16,29 @@
 //   limitations under the License.
 //
 //------------------------------------------------------------------------------
+
+//------------------------------------------------------------------------------
+//
+//   Copyright 2018-2019 Fetch.AI Limited
+//
+//   Licensed under the Apache License, Version 2.0 (the "License");
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+//
+//------------------------------------------------------------------------------
 #include "meta/has_index.hpp"
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <vector>
-#include <array>
 
 namespace fetch {
 namespace vectorise {
@@ -33,18 +51,20 @@ namespace vectorise {
  * The implementation subclasses a <byte_array::ConstByteArray> such
  * one easily use this in combination with hashes etc.
  */
-template< uint16_t S = 256 >
+template <uint16_t S = 256>
 class UInt
 {
 public:
   using BaseType = uint8_t;
-  enum {
+  enum
+  {
     UINT_SIZE = S,
-    ELEMENTS = UINT_SIZE / sizeof(BaseType) / 8
+    ELEMENTS  = UINT_SIZE / sizeof(BaseType) / 8
   };
-  static_assert(S == (ELEMENTS * sizeof(BaseType) << 3), "Size must be a multiple of 8 times the base type size.");
+  static_assert(S == (ELEMENTS * sizeof(BaseType) << 3),
+                "Size must be a multiple of 8 times the base type size.");
 
-  using ContainerType = std::array< uint8_t, ELEMENTS >; 
+  using ContainerType                       = std::array<uint8_t, ELEMENTS>;
   static constexpr char const *LOGGING_NAME = "UInt";
 
   UInt()
@@ -63,7 +83,7 @@ public:
     : data_(other)
   {}
 
-  template< typename T >
+  template <typename T>
   UInt(T const &other)
   {
     for (std::size_t i = 0; i < ELEMENTS; ++i)
@@ -73,10 +93,10 @@ public:
 
     // TODO: Copy instead
     *this = other;
-  }  
+  }
 
   UInt(uint64_t const &number)
-  {    
+  {
     union
     {
       uint64_t value;
@@ -101,29 +121,28 @@ public:
     return data_ == other.data_;
   }
 
-
   UInt &operator=(UInt const &v)
   {
     data_ = v.data_;
     return *this;
   }
 
-  template< typename ArrayType >
+  template <typename ArrayType>
   meta::HasIndex<ArrayType, UInt> &operator=(ArrayType const &v)
   {
     // TODO: Assert that index return type is the same size
-    if(data_.size() < v.size())
+    if (data_.size() < v.size())
     {
       throw std::runtime_error("Array size is greater than UInt capacity");
     }
 
-    uint64_t i=0;
-    for(; i < v.size(); ++i)
+    uint64_t i = 0;
+    for (; i < v.size(); ++i)
     {
       data_[i] = static_cast<BaseType>(v[i]);
     }
 
-    for(; i < data_.size(); ++i)
+    for (; i < data_.size(); ++i)
     {
       data_[i] = 0;
     }
@@ -131,7 +150,7 @@ public:
     return *this;
   }
 
-  template< typename T >
+  template <typename T>
   meta::HasNoIndex<T, UInt> &operator=(T const &v)
   {
     union
@@ -166,8 +185,8 @@ public:
     // If we instead make sure that the size is always a multiple of 8
     // We can do the logic in uint64_t
     // In fact, we should re implement this using vector registers.
-    std::size_t i = 0;
-    uint8_t val   = ++data_[i];
+    std::size_t i   = 0;
+    uint8_t     val = ++data_[i];
     while (val == 0)
     {
       ++i;
@@ -209,7 +228,7 @@ public:
       uint8_t val = data_[i];
 
       data_[i] = uint8_t(uint8_t(val << bits) | carry);
-      carry                 = uint8_t(val >> nbits);
+      carry    = uint8_t(val >> nbits);
     }
 
     return *this;
@@ -258,7 +277,7 @@ public:
     return ret;
   }
 
-  uint8_t const * pointer() const 
+  uint8_t const *pointer() const
   {
     return data_.data();
   }
@@ -268,12 +287,11 @@ public:
     return data_.size();
   }
 
+  template <typename T, uint16_t G>
+  friend void Serialize(T &s, UInt<G> const &u);
 
-  template<typename T, uint16_t G>
-  friend void Serialize(T& s, UInt<G> const &u);
-
-  template<typename T, uint16_t G>
-  friend void Deserialize(T& s, UInt<G> &u);
+  template <typename T, uint16_t G>
+  friend void Deserialize(T &s, UInt<G> &u);
 
 private:
   ContainerType data_;
@@ -343,18 +361,17 @@ inline double ToDouble(UInt<256> const &x)
   return conv.value;
 }
 
-template<typename T, uint16_t S>
-void Serialize(T& s, UInt<S> const &u)
+template <typename T, uint16_t S>
+void Serialize(T &s, UInt<S> const &u)
 {
   s << u.data_;
 }
 
-template<typename T, uint16_t S>
-void Deserialize(T& s, UInt<S> &u)
+template <typename T, uint16_t S>
+void Deserialize(T &s, UInt<S> &u)
 {
   s >> u.data_;
 }
 
-
-}  // namespace math
+}  // namespace vectorise
 }  // namespace fetch
