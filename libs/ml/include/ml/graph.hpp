@@ -341,7 +341,6 @@ template <class OperationType>
 meta::IfIsGraph<ArrayType, OperationType, void> Graph<ArrayType>::AddTrainable(
     std::string const &name, std::shared_ptr<Node<ArrayType, OperationType>> op)
 {
-
   for (auto &trainable : op->trainable_lookup_)
   {
     // guarantee unique op name
