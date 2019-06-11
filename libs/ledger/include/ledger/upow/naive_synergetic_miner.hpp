@@ -22,7 +22,7 @@
 #include "ledger/upow/synergetic_contract.hpp"
 #include "core/state_machine.hpp"
 
-#include "ledger/dag/dag.hpp"
+#include "ledger/dag/dag_interface.hpp"
 
 #include <math/bignumber.hpp>
 #include <memory>
@@ -48,7 +48,7 @@ public:
   };
 
   using ProverPtr    = std::shared_ptr<crypto::Prover>;
-  using DAGPtr       = std::shared_ptr<ledger::DAG>;
+  using DAGPtr       = std::shared_ptr<ledger::DAGInterface>;
   using StateMachine = core::StateMachine<State>;
 
   // Construction / Destruction

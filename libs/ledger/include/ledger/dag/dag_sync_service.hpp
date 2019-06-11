@@ -30,6 +30,7 @@
 #include "network/muddle/subscription.hpp"
 
 #include "ledger/dag/dag.hpp"
+#include "ledger/dag/dag_interface.hpp"
 
 namespace fetch {
 namespace ledger {
@@ -71,7 +72,7 @@ public:
   using PromiseOfMissingNodes  = network::PromiseOf<MissingNodes>;
   using MuddleEndpoint         = muddle::MuddleEndpoint;
 
-  DAGSyncService(MuddleEndpoint &muddle_endpoint, std::shared_ptr<ledger::DAG> dag);
+  DAGSyncService(MuddleEndpoint &muddle_endpoint, std::shared_ptr<ledger::DAGInterface> dag);
   ~DAGSyncService() = default;
 
   static constexpr std::size_t MAX_OBJECT_RESOLUTION_PER_CYCLE       = 128;
@@ -92,7 +93,7 @@ private:
   MuddleEndpoint                &muddle_endpoint_;
   ClientPtr                     client_;
   std::shared_ptr<StateMachine> state_machine_;
-  std::shared_ptr<ledger::DAG>  dag_;
+  std::shared_ptr<ledger::DAGInterface>  dag_;
   SubscriptionPtr               dag_subscription_;
 
   RequestingMissingNodes missing_pending_;

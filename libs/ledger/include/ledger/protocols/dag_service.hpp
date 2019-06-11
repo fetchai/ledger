@@ -43,11 +43,11 @@ public:
   using SubscriptionPtr = std::shared_ptr<Subscription>;
   using Muddle          = muddle::Muddle;
   using NetworkManager  = network::NetworkManager;
-  using DAG             = std::shared_ptr<ledger::DAG>;
   using MuddleEndpoint  = muddle::MuddleEndpoint;
+  using DAGPtr            = std::shared_ptr<ledger::DAGInterface>;
 
   // Construction / Destruction
-  DAGService(MuddleEndpoint &muddle_endpoint, DAG dag, Mode mode = Mode::LOAD_DATABASE);
+  DAGService(MuddleEndpoint &muddle_endpoint, DAGPtr dag, Mode mode = Mode::LOAD_DATABASE);
   DAGService(DAGService const &) = delete;
   DAGService(DAGService &&)      = delete;
   ~DAGService();
@@ -59,7 +59,6 @@ public:
 
 private:
 
-  using DAGPtr            = std::shared_ptr<ledger::DAG>;
   using DAGSyncProtoPtr   = std::shared_ptr<ledger::DAGSyncProtocol>;
   using DAGSyncServicePtr = std::shared_ptr<ledger::DAGSyncService>;
 

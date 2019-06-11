@@ -89,7 +89,7 @@ void TransactionProcessor::OnTransaction(TransactionPtr const &tx)
 
     if (tx->action() == "data" && dag_)
     {
-      dag_->AddTransaction(*tx, DAG::DAGTypes::DATA);
+      dag_->AddTransaction(*tx, DAGInterface::DAGTypes::DATA);
 
       // update the status cache with the state of this transaction
       status_cache_.Update(tx->digest(), TransactionStatus::SUBMITTED);

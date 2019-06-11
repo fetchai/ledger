@@ -31,7 +31,7 @@
 
 #include "ledger/upow/synergetic_executor.hpp"
 #include "ledger/upow/synergetic_execution_manager.hpp"
-#include "ledger/dag/dag.hpp"
+#include "ledger/dag/dag_interface.hpp"
 
 #include <chrono>
 
@@ -46,7 +46,7 @@ using ExecutionState       = fetch::ledger::ExecutionManagerInterface::State;
 using SynergeticExecMgrPtr = std::unique_ptr<SynergeticExecutionManagerInterface>;
 using SynergeticMinerPtr   = std::unique_ptr<SynergeticMinerInterface>;
 using ProverPtr            = BlockCoordinator::ProverPtr;
-using DAGPtr               = std::shared_ptr<ledger::DAG>;
+using DAGPtr               = std::shared_ptr<ledger::DAGInterface>;
 
 // Constants
 const std::chrono::milliseconds TX_SYNC_NOTIFY_INTERVAL{1000};

@@ -25,7 +25,7 @@
 #include "ledger/chain/block.hpp"
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/chain/transaction.hpp"
-#include "ledger/dag/dag.hpp"
+#include "ledger/dag/dag_interface.hpp"
 #include "moment/deadline_timer.hpp"
 #include "ledger/upow/synergetic_execution_manager_interface.hpp"
 #include "ledger/upow/synergetic_miner_interface.hpp"
@@ -76,7 +76,7 @@ public:
   static constexpr char const *LOGGING_NAME = "BlockCoordinator";
 
   using ConstByteArray = byte_array::ConstByteArray;
-  using DAGPtr         = std::shared_ptr<ledger::DAG>;
+  using DAGPtr         = std::shared_ptr<ledger::DAGInterface>;
   using ProverPtr      = std::shared_ptr<crypto::Prover>;
 
   enum class State

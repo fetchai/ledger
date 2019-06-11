@@ -284,11 +284,6 @@ void DAG::SetReferencesInternal(DAGNodePtr node)
     }
   }
 
-  if (oldest_epoch == std::numeric_limits<uint64_t>::max())
-  {
-    int i = 1 + 2;
-  }
-
   FETCH_LOG_INFO(LOGGING_NAME, "Othrr case epoch is: ", oldest_epoch);
 }
 

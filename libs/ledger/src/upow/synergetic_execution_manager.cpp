@@ -51,6 +51,7 @@ SynergeticExecutionManager::SynergeticExecutionManager(DAGPtr dag, std::size_t n
 
 ExecStatus SynergeticExecutionManager::PrepareWorkQueue(Block const &current, Block const &previous)
 {
+  FETCH_UNUSED(previous);
   using WorkMap = std::unordered_map<Digest, WorkQueuePtr, DigestHashAdapter>;
 
   auto const &epoch = current.body.dag_epoch;
