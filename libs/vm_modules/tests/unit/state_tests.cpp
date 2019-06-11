@@ -195,6 +195,19 @@ TEST_F(StateTests, querying_state_constructed_from_null_string_fails_gracefully)
   ASSERT_FALSE(toolkit.Run(&output));
 }
 
+TEST_F(StateTests, serialising_compound_object_with_null_values_does_not_segfault)
+{
+  static char const *TEXT = R"(
+    function main()
+      var default_array = Array<Array<UInt64>>(2);
+      var bids = State<Array<Array<UInt64>>>("state_label", default_array);
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_FALSE(toolkit.Run());
+}
+
 TEST_F(StateTests, DISABLED_test_serialisation_of_complex_type)
 {
   static char const *TEXT = R"(
