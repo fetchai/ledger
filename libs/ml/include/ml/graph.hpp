@@ -344,10 +344,14 @@ meta::IfIsGraph<ArrayType, OperationType, void> Graph<ArrayType>::AddTrainable(
 
   for (auto &trainable : op->trainable_lookup_)
   {
-    FETCH_LOG_INFO("ML_LIB", "Created trainable node [", name, "]");
+    // guarantee unique op name
+    std::string node_name(name + "_" + trainable.first);
+    std::string resolved_name = UpdateVariableName<OperationType>(node_name);
+
+    FETCH_LOG_INFO("ML_LIB", "Created trainable node [", resolved_name, "]");
 
     trainable_.emplace_back(op->trainable_.at(trainable.second));
-    trainable_lookup_[trainable.first] = trainable_.size() - 1;
+    trainable_lookup_[resolved_name] = trainable_.size() - 1;
   }
 }
 
