@@ -43,9 +43,6 @@ std::vector<std::pair<typename ArrayType::SizeType, typename ArrayType::Type>> K
   assert(((array.shape().at(1) == vec.shape().at(1)) && (vec.shape().at(0) == 1)) ||
          ((array.shape().at(0) == vec.shape().at(0)) && (vec.shape().at(1) == 1)));
 
-  // vec <1, M>; array <N, M>
-  //  assert(array.shape().at(1) == vec.shape().at(1));
-
   SizeType feature_axis;
   SizeType data_axis;
   if (vec.shape().at(0) == 1)

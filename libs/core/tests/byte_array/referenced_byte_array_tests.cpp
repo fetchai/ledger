@@ -17,9 +17,13 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/byte_array.hpp"
-using namespace fetch::byte_array;
 
-#include <gtest/gtest.h>
+#include "gtest/gtest.h"
+
+#include <string>
+#include <utility>
+
+using namespace fetch::byte_array;
 
 TEST(reference_byte_array_gtest, ensuring_subbyte_arrays_come_out_correctly)
 {

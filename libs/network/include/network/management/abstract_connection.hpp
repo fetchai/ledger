@@ -24,6 +24,7 @@
 
 #include <atomic>
 #include <memory>
+
 namespace fetch {
 namespace network {
 
@@ -45,9 +46,8 @@ public:
   };
 
   AbstractConnection()
-  {
-    handle_ = AbstractConnection::next_handle();
-  }
+    : handle_(AbstractConnection::next_handle())
+  {}
 
   // Interface
   virtual ~AbstractConnection()
@@ -254,8 +254,8 @@ private:
     return ret;
   }
 
-  weak_register_type                  connection_register_;
-  std::atomic<connection_handle_type> handle_;
+  weak_register_type                        connection_register_;
+  std::atomic<connection_handle_type> const handle_;
 
   static connection_handle_type global_handle_counter_;
   static fetch::mutex::Mutex    global_handle_mutex_;

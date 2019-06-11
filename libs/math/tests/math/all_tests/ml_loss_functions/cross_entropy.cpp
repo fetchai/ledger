@@ -45,11 +45,11 @@ TYPED_TEST(CrossEntropyTest, perfect_match_test)
     {
       if (gt_data[i] == j)
       {
-        gt_array.Set(SizeType{i}, SizeType{j}, typename TypeParam::Type(1));
+        gt_array(i, j) = typename TypeParam::Type(1);
       }
       else
       {
-        gt_array.Set(SizeType{i}, SizeType{j}, typename TypeParam::Type(0));
+        gt_array(i, j) = typename TypeParam::Type(0);
       }
     }
   }
@@ -69,8 +69,8 @@ TYPED_TEST(CrossEntropyTest, value_test)
   typename TypeParam::SizeType n_classes = 4;
   typename TypeParam::SizeType n_data    = 8;
 
-  TypeParam test_array = TypeParam{{n_data, n_classes}};
-  TypeParam gt_array   = TypeParam{{n_data, n_classes}};
+  TypeParam test_array = TypeParam{{n_classes, n_data}};
+  TypeParam gt_array   = TypeParam{{n_classes, n_data}};
 
   // set gt data
   std::vector<std::uint64_t> gt_data = {1, 2, 3, 0, 3, 1, 0, 2};
@@ -80,11 +80,11 @@ TYPED_TEST(CrossEntropyTest, value_test)
     {
       if (gt_data[i] == j)
       {
-        gt_array.Set(SizeType{i}, SizeType{j}, typename TypeParam::Type(1));
+        gt_array(j, i) = typename TypeParam::Type(1);
       }
       else
       {
-        gt_array.Set(SizeType{i}, SizeType{j}, typename TypeParam::Type(0));
+        gt_array(j, i) = typename TypeParam::Type(0);
       }
     }
   }
@@ -99,7 +99,7 @@ TYPED_TEST(CrossEntropyTest, value_test)
   {
     for (SizeType j{0}; j < n_classes; ++j)
     {
-      test_array.Set(SizeType{i}, SizeType{j}, typename TypeParam::Type(logits.at(idx)));
+      test_array(j, i) = typename TypeParam::Type(logits.at(idx));
       idx++;
     }
   }

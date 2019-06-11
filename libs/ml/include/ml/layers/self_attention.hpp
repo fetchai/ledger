@@ -17,8 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/layers/layer.hpp"
-
 #include "ml/layers/fully_connected.hpp"
 #include "ml/ops/activations/softmax.hpp"
 #include "ml/ops/add.hpp"
@@ -34,7 +32,7 @@ namespace ml {
 namespace layers {
 
 template <class T>
-class SelfAttention : public Layer<T>
+class SelfAttention : public SubGraph<T>
 {
 public:
   using ArrayType    = T;
@@ -43,7 +41,8 @@ public:
 
   SelfAttention(std::uint64_t in, std::uint64_t out, std::uint64_t hidden,
                 std::string const &name = "SA")
-    : Layer<T>(in, out)
+    : in_size_(in)
+    , out_size_(out)
   {
 
     std::string input =
@@ -94,6 +93,10 @@ public:
   }
 
   static constexpr char const *DESCRIPTOR = "SelfAttention";
+
+private:
+  SizeType in_size_;
+  SizeType out_size_;
 };
 
 }  // namespace layers
