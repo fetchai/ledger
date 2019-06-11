@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/bignumber.hpp"
+#include "vectorise/uint/uint.hpp"
 #include "vm_modules/core/byte_array_wrapper.hpp"
 #include "vm/module.hpp"
 
@@ -64,7 +64,7 @@ public:
 
   double ToFloat64()
   {
-    return math::ToDouble(number_);
+    return ToDouble(number_);
   }
 
   int32_t ToInt32()
@@ -83,7 +83,7 @@ public:
 
   double LogValue()
   {
-    return math::Log(number_);
+    return Log(number_);
   }
 
   /*
@@ -109,7 +109,7 @@ public:
   }
 
 private:
-  math::UInt<256> number_;
+  vectorise::UInt<256> number_;
 };
 
 

@@ -18,7 +18,8 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/const_byte_array.hpp"
-#include "math/bignumber.hpp"
+#include "core/byte_array/byte_array.hpp"
+#include "vectorise/uint/uint.hpp"
 
 #include <cstddef>
 #include <utility>
@@ -27,10 +28,10 @@ namespace fetch {
 namespace ledger {
 namespace consensus {
 
-class ProofOfWork : public math::UInt<256>
+class ProofOfWork : public vectorise::UInt<256>
 {
 public:
-  using UInt256  = math::UInt<256>;
+  using UInt256  = vectorise::UInt<256>;
   using header_type = byte_array::ConstByteArray;
 
   // Construction / Destruction
@@ -59,12 +60,12 @@ inline byte_array::ConstByteArray const &ProofOfWork::header() const
   return header_;
 }
 
-inline math::UInt<256> const &ProofOfWork::digest() const
+inline vectorise::UInt<256> const &ProofOfWork::digest() const
 {
   return digest_;
 }
 
-inline math::UInt<256> const &ProofOfWork::target() const
+inline vectorise::UInt<256> const &ProofOfWork::target() const
 {
   return target_;
 }
@@ -79,7 +80,7 @@ template <typename T>
 inline void Deserialize(T &serializer, ProofOfWork &p)
 {
   byte_array::ConstByteArray header;
-  math::UInt<256>          target;
+  vectorise::UInt<256>          target;
 
   serializer >> header >> target;
 

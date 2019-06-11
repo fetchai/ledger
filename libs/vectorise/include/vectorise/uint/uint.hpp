@@ -16,17 +16,14 @@
 //   limitations under the License.
 //
 //------------------------------------------------------------------------------
-
-#include "core/assert.hpp"
-#include "core/byte_array/byte_array.hpp"
-#include "core/byte_array/const_byte_array.hpp"
+#include "meta/has_index.hpp"
 #include <algorithm>
 #include <cmath>
 #include <vector>
 #include <array>
 
 namespace fetch {
-namespace math {
+namespace vectorise {
 /* Implements a subset of big number functionality.
  *
  * The purpose of this library is to implement a subset of number
@@ -110,7 +107,8 @@ public:
     return *this;
   }
 
-  UInt &operator=(byte_array::ByteArray const &v)
+  template< typename ArrayType >
+  meta::HasIndex<ArrayType, UInt> &operator=(ArrayType const &v)
   {
     if(data_.size() != v.size())
     {
@@ -125,23 +123,8 @@ public:
     return *this;
   }
 
-  UInt &operator=(byte_array::ConstByteArray const &v)
-  {
-    if(data_.size() != v.size())
-    {
-      throw std::runtime_error("ByteArray size and UInt size differs");
-    }
-
-    for(uint64_t i=0; i < data_.size(); ++i)
-    {
-      data_[i] = v[i];
-    }
-
-    return *this;
-  }
-
-  template <typename T>
-  UInt &operator=(T const &v)
+  template< typename T >
+  meta::HasNoIndex<T, UInt> &operator=(T const &v)
   {
     union
     {
