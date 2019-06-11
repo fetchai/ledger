@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "ml/graph.hpp"
+#include "ml/ops/activations/dropout.hpp"
 #include "ml/ops/activations/leaky_relu.hpp"
 #include "ml/ops/activations/logsigmoid.hpp"
 #include "ml/ops/activations/logsoftmax.hpp"
