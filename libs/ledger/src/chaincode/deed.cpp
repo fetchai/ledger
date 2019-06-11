@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "ledger/chaincode/deed.hpp"
+
 #include "ledger/chain/transaction.hpp"
 
 namespace fetch {

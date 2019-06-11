@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "ledger/transaction_processor.hpp"
+
 #include "core/threading.hpp"
 #include "ledger/block_packer_interface.hpp"
 #include "ledger/chain/transaction.hpp"

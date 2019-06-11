@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "miner/basic_miner.hpp"
+
 #include "core/logger.hpp"
 #include "ledger/chain/address.hpp"
 #include "ledger/chain/block.hpp"
@@ -132,8 +133,7 @@ void BasicMiner::GenerateBlock(Block &block, std::size_t num_lanes, std::size_t 
   FETCH_LOG_INFO(LOGGING_NAME, "Starting block packing. Pool Size: ", pool_size_before);
 
   // determine how many of the threads should be used in this block generation
-  std::size_t const num_threads =
-      Clip3<std::size_t>(mining_pool_.size() / 1000u, 1u, max_num_threads_);
+  auto const num_threads = Clip3<std::size_t>(mining_pool_.size() / 1000u, 1u, max_num_threads_);
 
   // prepare the basic formatting for the block
   block.body.slices.resize(num_slices);
@@ -185,6 +185,8 @@ void BasicMiner::GenerateBlock(Block &block, std::size_t num_lanes, std::size_t 
       mining_pool_.Splice(*transaction_lists[i]);
     }
   }
+
+  block.UpdateTimestamp();
 
   std::size_t const remaining_transactions = mining_pool_.size();
   std::size_t const packed_transactions    = pool_size_before - remaining_transactions;

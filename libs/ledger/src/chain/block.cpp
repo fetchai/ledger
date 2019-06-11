@@ -17,9 +17,15 @@
 //------------------------------------------------------------------------------
 
 #include "ledger/chain/block.hpp"
+
 #include "core/serializers/byte_array_buffer.hpp"
 #include "crypto/merkle_tree.hpp"
 #include "crypto/sha256.hpp"
+#include "ledger/chain/constants.hpp"
+
+#include <cstddef>
+#include <cstdint>
+#include <ctime>
 
 namespace fetch {
 namespace ledger {
@@ -64,7 +70,7 @@ void Block::UpdateDigest()
   // Generate hash stream
   serializers::ByteArrayBuffer buf;
   buf << body.previous_hash << body.merkle_hash << body.block_number << body.miner
-      << body.log2_num_lanes << tx_merkle_tree.root() << nonce;
+      << body.log2_num_lanes << body.timestamp << tx_merkle_tree.root() << nonce;
 
   // Generate the hash
   crypto::SHA256 hash;
@@ -73,6 +79,14 @@ void Block::UpdateDigest()
   body.hash = hash.Final();
 
   proof.SetHeader(body.hash);
+}
+
+void Block::UpdateTimestamp()
+{
+  if (body.previous_hash != GENESIS_DIGEST)
+  {
+    body.timestamp = static_cast<uint64_t>(std::time(nullptr));
+  }
 }
 
 }  // namespace ledger

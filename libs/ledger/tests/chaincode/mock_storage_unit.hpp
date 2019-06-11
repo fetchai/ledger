@@ -21,7 +21,7 @@
 
 #include <gmock/gmock.h>
 
-class MockStorageUnit final : public fetch::ledger::StorageUnitInterface
+class MockStorageUnit : public fetch::ledger::StorageUnitInterface
 {
 public:
   MockStorageUnit()

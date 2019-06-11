@@ -61,7 +61,7 @@ public:
 
   static constexpr char const *LOGGING_NAME = "DocumentStore";
 
-  DocumentStore(){};
+  DocumentStore()                         = default;
   DocumentStore(DocumentStore const &rhs) = delete;
   DocumentStore(DocumentStore &&rhs)      = delete;
   DocumentStore &operator=(DocumentStore const &rhs) = delete;

@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "ledger/protocols/executor_rpc_client.hpp"
+
 #include "core/state_machine.hpp"
 #include "ledger/chain/address.hpp"
 

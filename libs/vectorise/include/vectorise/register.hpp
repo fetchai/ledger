@@ -19,8 +19,7 @@
 
 #include "vectorise/info.hpp"
 
-#include <type_traits>
-#include <typeinfo>
+#include <cstddef>
 
 namespace details {
 template <typename T, std::size_t N>
@@ -73,15 +72,14 @@ public:
   static_assert((E_BLOCK_COUNT * sizeof(type)) == E_REGISTER_SIZE,
                 "type cannot be contained in the given register size.");
 
-  VectorRegister()
-  {}
-  VectorRegister(type const *d)
+  VectorRegister() = default;
+  explicit VectorRegister(type const *d)
     : data_(*d)
   {}
-  VectorRegister(type const &d)
+  explicit VectorRegister(type const &d)
     : data_(d)
   {}
-  VectorRegister(type &&d)
+  explicit VectorRegister(type &&d)
     : data_(d)
   {}
 

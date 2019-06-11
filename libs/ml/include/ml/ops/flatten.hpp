@@ -54,7 +54,7 @@ public:
 
   virtual std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const
   {
-    return {1, inputs.front().get().size()};
+    return {inputs.front().get().size(), 1};
   }
 
   static constexpr char const *DESCRIPTOR = "Flatten";

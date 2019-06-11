@@ -30,9 +30,9 @@ public:
   IMatrix()          = delete;
   virtual ~IMatrix() = default;
   static Ptr<IMatrix> Constructor(VM *vm, TypeId type_id, int32_t num_rows, int32_t num_columns);
-  virtual TemplateParameter GetIndexedValue(AnyInteger const &row, AnyInteger const &column) = 0;
-  virtual void              SetIndexedValue(AnyInteger const &row, AnyInteger const &column,
-                                            TemplateParameter const &value)                  = 0;
+  virtual TemplateParameter1 GetIndexedValue(AnyInteger const &row, AnyInteger const &column) = 0;
+  virtual void               SetIndexedValue(AnyInteger const &row, AnyInteger const &column,
+                                             TemplateParameter1 const &value)                 = 0;
 
 protected:
   IMatrix(VM *vm, TypeId type_id)
@@ -338,20 +338,20 @@ struct Matrix : public IMatrix
     return &matrix.At(c, r);
   }
 
-  virtual TemplateParameter GetIndexedValue(AnyInteger const &row,
-                                            AnyInteger const &column) override
+  virtual TemplateParameter1 GetIndexedValue(AnyInteger const &row,
+                                             AnyInteger const &column) override
   {
     T *ptr = Find(row, column);
     if (ptr)
     {
-      return TemplateParameter(*ptr, element_type_id_);
+      return TemplateParameter1(*ptr, element_type_id_);
     }
     // Not found
-    return TemplateParameter();
+    return TemplateParameter1();
   }
 
   virtual void SetIndexedValue(AnyInteger const &row, AnyInteger const &column,
-                               TemplateParameter const &value) override
+                               TemplateParameter1 const &value) override
   {
     T *ptr = Find(row, column);
     if (ptr)

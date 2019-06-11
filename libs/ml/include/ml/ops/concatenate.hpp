@@ -19,6 +19,9 @@
 
 #include "ml/ops/ops.hpp"
 
+#include <functional>
+#include <vector>
+
 namespace fetch {
 namespace ml {
 namespace ops {
@@ -31,7 +34,7 @@ public:
   using SizeType      = fetch::math::SizeType;
   using VecTensorType = typename ElementWiseOps<T>::VecTensorType;
 
-  Concatenate(SizeType axis)
+  explicit Concatenate(SizeType axis)
     : axis_(axis)
   {}
 

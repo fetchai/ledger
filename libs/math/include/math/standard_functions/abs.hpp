@@ -19,6 +19,8 @@
 
 #include "math/meta/math_type_traits.hpp"
 
+#include <cassert>
+
 /**
  * assigns the absolute of x to this array
  * @param x

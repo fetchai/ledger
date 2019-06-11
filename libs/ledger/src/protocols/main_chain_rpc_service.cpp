@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "ledger/protocols/main_chain_rpc_service.hpp"
+
 #include "core/byte_array/encoders.hpp"
 #include "core/logger.hpp"
 #include "core/serializers/byte_array_buffer.hpp"
@@ -142,8 +143,7 @@ void MainChainRpcService::OnNewBlock(Address const &from, Block &block, Address 
   {
     for (auto const &tx : slice)
     {
-      FETCH_LOG_DEBUG(LOGGING_NAME, "Recv Ref TX: ", ToBase64(tx.transaction_hash), " (",
-                      tx.contract_name, ')');
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Recv Ref TX: ", ToBase64(tx.digest()));
     }
   }
 #endif  // FETCH_LOG_INFO_ENABLED

@@ -304,7 +304,6 @@ int main(int argc, char **argv)
   }
 
   vm->AttachOutputDevice(fetch::vm::VM::STDOUT, std::cout);
-  vm->AttachOutputDevice("stderr", std::cerr);
 
   // Execute the requested function
   std::string        error;
@@ -324,17 +323,11 @@ int main(int argc, char **argv)
     std::cout << console << std::endl;
   }
 
-  // display the error message if the script execution was not successful
-  if (!success)
-  {
-    std::cerr << error << std::endl;
-  }
-
   // save any specified data file
   if (!data_path.empty())
   {
     state_map.SaveToFile(data_path.c_str());
   }
 
-  return (success) ? 0 : 1;
+  return 0;
 }

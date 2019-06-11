@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "ledger/storage_unit/transaction_store_sync_service.hpp"
+
 #include "core/macros.hpp"
 #include "ledger/chain/transaction_rpc_serializers.hpp"
 
@@ -399,8 +400,8 @@ void TransactionStoreSyncService::OnTransaction(TransactionPtr const &tx)
 
   if (!store_->Has(rid))
   {
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Verified Sync TX: ", tx.digest().ToBase64(), " (",
-                    tx.contract_name(), ')');
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Verified Sync TX: ", tx->digest().ToBase64(), " (",
+                    tx->contract_digest().display(), ')');
 
     store_->Set(rid, *tx, true);
   }
