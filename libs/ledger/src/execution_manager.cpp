@@ -23,6 +23,7 @@
 #include "core/threading.hpp"
 #include "ledger/executor.hpp"
 #include "storage/resource_mapper.hpp"
+#include "moment/deadline_timer.hpp"
 
 #include "ledger/state_adapter.hpp"
 
@@ -487,16 +488,34 @@ void ExecutionManager::MonitorThreadEntrypoint()
 
     case MonitorState::SETTLE_FEES:
     {
-      FETCH_LOCK(idle_executors_lock_);
+      moment::DeadlineTimer executor_deadline("ExecMgr");
+      executor_deadline.Restart(1000u);
 
-      if (!idle_executors_.empty())
+      // In rare cases due to scheduling, no executors might have been returned to the idle queue.
+      // This busy wait loop will catch this event and has a fixed duration.
+      for (;;)
       {
-        idle_executors_.front()->SettleFees(last_block_miner_, aggregate_block_fees,
-                                            log2_num_lanes_);
-      }
-      else
-      {
-        FETCH_LOG_WARN(LOGGING_NAME, "Unable to locate free executor to settle miner fees");
+        if (executor_deadline.HasExpired())
+        {
+          FETCH_LOG_WARN(LOGGING_NAME, "Unable to locate free executor to settle miner fees");
+          break;
+        }
+
+        // attempt to settle the fees using one of the free executors
+        {
+          FETCH_LOCK(idle_executors_lock_);
+          if (!idle_executors_.empty())
+          {
+            // get the first one and settle the fees
+            idle_executors_.front()->SettleFees(last_block_miner_, aggregate_block_fees,
+                                                log2_num_lanes_);
+
+            break;
+          }
+        }
+
+        // due to the race on the idle executors wait here
+        std::this_thread::sleep_for(std::chrono::milliseconds{2});
       }
 
       // move on to the next state
