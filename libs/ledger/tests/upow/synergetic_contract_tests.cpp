@@ -53,17 +53,13 @@ function proofOfWork(problem : Int32, solution : Int32 ) : Int64
   return abs(toInt64(problem) - toInt64(solution));
 endfunction
 
-@clear
-function applyWork(problem : Int32, solution : Int32)
-endfunction
-
 @work
 function mineWork(problem : Int32, nonce : BigUInt) :  Int32
   return nonce.toInt32();
 endfunction
 
-@generator
-function makeDAGnode(epoch : Int32, entropy : BigUInt)
+@clear
+function applyWork(problem : Int32, solution : Int32)
 endfunction
 )";
 
@@ -72,7 +68,6 @@ endfunction
   EXPECT_EQ(contract_->objective_function(), "proofOfWork");
   EXPECT_EQ(contract_->clear_function(), "applyWork");
   EXPECT_EQ(contract_->work_function(), "mineWork");
-  EXPECT_EQ(contract_->generator_function(), "makeDAGnode");
 
   // create a simple nonce
   BigUnsigned nonce{42ull};

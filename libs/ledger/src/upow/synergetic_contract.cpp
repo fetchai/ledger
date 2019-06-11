@@ -48,8 +48,7 @@ enum class FunctionKind
   WORK,      ///< A function that is called to do some work
   OBJECTIVE, ///< A function that is called to determine the quality of the work
   PROBLEM,   ///< The problem function
-  CLEAR,     ///<
-  GENERATOR, ///<
+  CLEAR,     ///< The clear function
   INVALID,   ///< The function has an invalid decorator
 };
 
@@ -96,10 +95,6 @@ FunctionKind DetermineKind(vm::Executable::Function const &fn)
     else if (annotation.name == "@clear")
     {
       kind = FunctionKind::CLEAR;
-    }
-    else if (annotation.name == "@generator")
-    {
-      kind = FunctionKind::GENERATOR;
     }
     else
     {
@@ -172,10 +167,6 @@ SynergeticContract::SynergeticContract(ConstByteArray const &source)
     case FunctionKind::CLEAR:
       name     = "clear";
       function = &clear_function_;
-      break;
-    case FunctionKind::GENERATOR:
-      name     = "generator";
-      function = &test_dag_generator_;
       break;
     case FunctionKind::NORMAL:
     case FunctionKind::INVALID:
