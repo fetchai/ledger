@@ -41,7 +41,8 @@ public:
   static void Bind(vm::Module &module)
   {
     module.CreateClassType<UInt256Wrapper>("UInt256")
-        .CreateConstuctor<Ptr<vm::String>>()    
+        .CreateConstuctor<uint64_t>()     
+        .CreateConstuctor<Ptr<vm::String>>()
         .CreateConstuctor<Ptr<ByteArrayWrapper>>()
 //        .CreateMemberFunction("toBuffer", &UInt256Wrapper::ToBuffer)
         .CreateMemberFunction("increase", &UInt256Wrapper::Increase)
@@ -52,12 +53,17 @@ public:
         .CreateMemberFunction("size", &UInt256Wrapper::size);
   }
 
-  UInt256Wrapper(fetch::vm::VM *vm, fetch::vm::TypeId type_id, byte_array::ByteArray data)
+  UInt256Wrapper(fetch::vm::VM *vm, fetch::vm::TypeId type_id, byte_array::ByteArray const& data)
     : fetch::vm::Object(vm, type_id)
     , number_(data)
   {}
 
-  UInt256Wrapper(fetch::vm::VM *vm, fetch::vm::TypeId type_id, std::string data)
+  UInt256Wrapper(fetch::vm::VM *vm, fetch::vm::TypeId type_id, std::string const &data)
+    : fetch::vm::Object(vm, type_id)
+    , number_(data)
+  {}
+
+  UInt256Wrapper(fetch::vm::VM *vm, fetch::vm::TypeId type_id, uint64_t data)
     : fetch::vm::Object(vm, type_id)
     , number_(data)
   {}
@@ -91,6 +97,19 @@ public:
     return nullptr;
   }
 
+  static fetch::vm::Ptr<UInt256Wrapper> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
+                                                      uint64_t const &val)
+  {
+    try 
+    {
+      return new UInt256Wrapper(vm, type_id, val);
+    }
+    catch(std::runtime_error const &e)
+    {
+      vm->RuntimeError(e.what());
+    }
+    return nullptr;
+  }
 
   double ToFloat64()
   {

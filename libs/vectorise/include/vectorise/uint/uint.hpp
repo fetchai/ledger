@@ -112,14 +112,20 @@ public:
   meta::HasIndex<ArrayType, UInt> &operator=(ArrayType const &v)
   {
     // TODO: Assert that index return type is the same size
-    if(data_.size() != v.size())
+    if(data_.size() < v.size())
     {
-      throw std::runtime_error("ByteArray size and UInt size differs");
+      throw std::runtime_error("Array size is greater than UInt capacity");
     }
 
-    for(uint64_t i=0; i < data_.size(); ++i)
+    uint64_t i=0;
+    for(; i < v.size(); ++i)
     {
       data_[i] = static_cast<BaseType>(v[i]);
+    }
+
+    for(; i < data_.size(); ++i)
+    {
+      data_[i] = 0;
     }
 
     return *this;
