@@ -289,6 +289,10 @@ void Router::Route(Handle handle, PacketPtr packet)
   }
   else if (packet->GetTargetRaw() == address_)
   {
+#if 1
+    // we do not care about the transmitter
+    DispatchPacket(packet, packet->GetSender());
+#else
     // when the message is targetted at us we must handle it
     Address transmitter;
 
@@ -302,6 +306,7 @@ void Router::Route(Handle handle, PacketPtr packet)
       FETCH_LOG_WARN(LOGGING_NAME,
                      "Cannot get transmitter address for packet: ", DescribePacket(*packet));
     }
+#endif
   }
   else
   {
