@@ -20,6 +20,7 @@
 #include "core/serializers/byte_array_buffer.hpp"
 #include "core/serializers/stl_types.hpp"
 #include "vm/common.hpp"
+#include "vectorise/fixed_point/fixed_point.hpp"
 
 #include <string>
 
@@ -43,7 +44,7 @@ struct IsPrimitive : std::false_type
 template <typename T>
 struct IsPrimitive<
     T, std::enable_if_t<type_util::IsAnyOfV<T, void, bool, int8_t, uint8_t, int16_t, uint16_t,
-                                            int32_t, uint32_t, int64_t, uint64_t, float, double>>>
+                                            int32_t, uint32_t, int64_t, uint64_t, float, double, fixed_point::fp32_t, fixed_point::fp64_t>>>
   : std::true_type
 {
 };

@@ -16,36 +16,30 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm_modules/math/fixed_point_wrapper.hpp"
-#include "../vm_test_toolkit.hpp"
-#include "vectorise/fixed_point/fixed_point.hpp"
+#include "vm_modules/math/math.hpp"
+#include "math/standard_functions/abs.hpp"
+#include "vm_test_toolkit.hpp"
 
 namespace {
 
-class FixedPointTest : ::testing::Test
+class MathTests : public ::testing::Test
 {
 public:
   VmTestToolkit toolkit;
 };
 
-
-TEST_F(FixedPointTest, create_fixed_point)
+TEST_F(MathTests, abs_test)
 {
-  auto m = toolkit.module();
-  fetch::vm_modules::CreateFixedPoint(m);
-
-
   static char const *TEXT = R"(
     function main()
-      print(FixedPoint(1.0));
+      print(Abs(-1));
     endfunction
   )";
 
   ASSERT_TRUE(toolkit.Compile(TEXT));
   ASSERT_TRUE(toolkit.Run());
 
-  double gt = static_cast<double>(fetch::fixed_point::FixedPoint<32, 32>(1));
-  EXPECT_EQ(stdout(), std::to_string(gt));
+  ASSERT_EQ(toolkit.stdout(), std::to_string(fetch::math::Abs(-1)));
 }
 
 }  // namespace

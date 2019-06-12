@@ -35,6 +35,10 @@ namespace fixed_point {
 template <std::uint16_t I, std::uint16_t F>
 class FixedPoint;
 
+using fp32_t  = FixedPoint<16, 16>;
+using fp64_t  = FixedPoint<32, 32>;
+using fp128_t = FixedPoint<64, 64>;
+
 namespace {
 
 // struct for inferring what underlying types to use

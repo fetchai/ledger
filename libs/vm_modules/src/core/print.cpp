@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "vm_modules/core/print.hpp"
+#include "vectorise/fixed_point/fixed_point.hpp"
 
 #include "meta/type_traits.hpp"
 #include "vm/module.hpp"
@@ -165,6 +166,11 @@ void CreatePrint(vm::Module &module)
   module.CreateFreeFunction("print", &PrintNumber<double>);
   module.CreateFreeFunction("printLn", &PrintNumber<double, true>);
 
+  module.CreateFreeFunction("print", &PrintNumber<fixed_point::fp32_t>);
+  module.CreateFreeFunction("print", &PrintNumber<fixed_point::fp64_t>);
+  module.CreateFreeFunction("printLn", &PrintNumber<fixed_point::fp32_t, true>);
+  module.CreateFreeFunction("printLn", &PrintNumber<fixed_point::fp64_t, true>);
+
   module.CreateFreeFunction("print", &PrintArray<uint8_t>);
   module.CreateFreeFunction("printLn", &PrintArray<uint8_t, true>);
   module.CreateFreeFunction("print", &PrintArray<int8_t>);
@@ -189,6 +195,16 @@ void CreatePrint(vm::Module &module)
   module.CreateFreeFunction("printLn", &PrintArray<float, true>);
   module.CreateFreeFunction("print", &PrintArray<double>);
   module.CreateFreeFunction("printLn", &PrintArray<double, true>);
+
+  module.CreateFreeFunction("print", &PrintArray<fixed_point::FixedPoint<16, 16>>);
+  module.CreateFreeFunction("print", &PrintArray<fixed_point::FixedPoint<32, 32>>);
+  module.CreateFreeFunction("printLn", &PrintArray<fixed_point::FixedPoint<16, 16>, true>);
+  module.CreateFreeFunction("printLn", &PrintArray<fixed_point::FixedPoint<32, 32>, true>);
+}
+
+inline void CreatePrint(std::shared_ptr<vm::Module> module)
+{
+  CreatePrint(*module.get());
 }
 
 }  // namespace vm_modules

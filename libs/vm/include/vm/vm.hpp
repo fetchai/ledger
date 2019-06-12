@@ -986,6 +986,20 @@ private:
       Op::Apply(lhsv, lhsv.primitive.f64, rhsv.primitive.f64);
       break;
     }
+    case TypeIds::Fixed32:
+    {
+      fixed_point::fp32_t lhsv_fp32 = fixed_point::fp32_t::FromBase(lhsv.primitive.i32);
+      fixed_point::fp32_t rhsv_fp32 = fixed_point::fp32_t::FromBase(rhsv.primitive.i32);
+      Op::Apply(lhsv, lhsv_fp32, rhsv_fp32);
+      break;
+    }
+    case TypeIds::Fixed64:
+    {
+      fixed_point::fp64_t lhsv_fp64 = fixed_point::fp64_t::FromBase(lhsv.primitive.i64);
+      fixed_point::fp64_t rhsv_fp64 = fixed_point::fp64_t::FromBase(rhsv.primitive.i64);
+      Op::Apply(lhsv, lhsv_fp64, rhsv_fp64);
+      break;
+    }
     default:
     {
       break;
@@ -1098,6 +1112,20 @@ private:
     case TypeIds::Float64:
     {
       Op::Apply(this, lhsv.primitive.f64, rhsv.primitive.f64);
+      break;
+    }
+    case TypeIds::Fixed32:
+    {
+      fixed_point::fp32_t lhsv_fp32 = fixed_point::fp32_t::FromBase(lhsv.primitive.i32);
+      fixed_point::fp32_t rhsv_fp32 = fixed_point::fp32_t::FromBase(rhsv.primitive.i32);
+      Op::Apply(this, lhsv_fp32, rhsv_fp32);
+      break;
+    }
+    case TypeIds::Fixed64:
+    {
+      fixed_point::fp64_t lhsv_fp64 = fixed_point::fp64_t::FromBase(lhsv.primitive.i64);
+      fixed_point::fp64_t rhsv_fp64 = fixed_point::fp64_t::FromBase(rhsv.primitive.i64);
+      Op::Apply(this, lhsv_fp64, rhsv_fp64);
       break;
     }
     default:
