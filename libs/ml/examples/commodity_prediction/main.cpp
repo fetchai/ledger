@@ -22,20 +22,30 @@
 #include "ml/layers/fully_connected.hpp"
 #include "ml/ops/activation.hpp"
 #include "ml/state_dict.hpp"
+#include "file_loader.hpp"
 
 #include <fstream>
 #include <iostream>
 #include <ml/ops/transpose.hpp>
 #include <string>
 
-using DataType  = float;
+using DataType  = double;
 using ArrayType = fetch::math::Tensor<DataType>;
+using GraphType = fetch::ml::Graph<ArrayType>;
 
 using namespace fetch::ml::ops;
 using namespace fetch::ml::layers;
 using namespace fetch::math;
 
-ArrayType read_csv(std::string filename, SizeType cols_to_skip = 0, SizeType rows_to_skip = 0,
+/**
+ * Loads a csv file into a Tensor
+ * @param filename  name of the file
+ * @param cols_to_skip  number of columns to skip
+ * @param rows_to_skip  number of rows to skip
+ * @param transpose  whether to transpose the resulting Tensor
+ * @return  Tensor with data
+ */
+ArrayType read_csv(std::string const & filename, SizeType cols_to_skip = 0, SizeType rows_to_skip = 0,
                    bool transpose = false)
 {
   std::ifstream file(filename);
@@ -58,6 +68,7 @@ ArrayType read_csv(std::string filename, SizeType cols_to_skip = 0, SizeType row
 
   ArrayType weights({row - rows_to_skip, col + 1 - cols_to_skip});
 
+  // read data into weights array
   std::string token;
   file.clear();
   file.seekg(0, std::ios::beg);
@@ -79,11 +90,11 @@ ArrayType read_csv(std::string filename, SizeType cols_to_skip = 0, SizeType row
     }
     while ((pos = buf.find(delimiter)) != std::string::npos)
     {
-      weights(row, col) = std::stof(buf.substr(0, pos));
+      weights(row, col) = static_cast<DataType>(std::stod(buf.substr(0, pos)));
       buf.erase(0, pos + delimiter.length());
       ++col;
     }
-    weights(row, col) = std::stof(buf);
+    weights(row, col) = static_cast<DataType>(std::stod(buf));
     ++row;
   }
 
@@ -94,87 +105,193 @@ ArrayType read_csv(std::string filename, SizeType cols_to_skip = 0, SizeType row
   return weights;
 }
 
-int main()
+
+/**
+ * Loads a single model architecture from a csv file and adds the specified nodes to the graph
+ * Example csv line: keras_h7_aluminium_px_last_us,num_input,118,dropout_0,output_dense,54,softmax
+ * File can contain several models, one per line.
+ * @param filename name of the file
+ * @param g Graph to add nodes to
+ * @param line_num line in the architecture file to load
+ * @return pair of the name of the data (e.g. keras_h7_aluminium_px_last_us) and a vector of the names of the nodes
+ */
+std::pair<std::string, std::vector<std::string>> read_architecture(std::string const &filename,
+                                                                              std::shared_ptr<GraphType> const &g,
+                                                                              SizeType line_num=0)
 {
+    std::string           delimiter = ",";
+    std::ifstream file(filename);
+    std::string   buf;
+    std::string dataname;
+    std::string layer_name;
+    std::string previous_layer_name;
+    SizeType layer_size;
+    SizeType input_layer_size;
+    SizeType previous_layer_size;
+    std::string layer_activation;
+    char delim;
+    DataType dropout_prob = 1.0;
+    std::vector<std::string> node_names({});
 
-  /// DEFINE NEURAL NET ARCHITECTURE ///
+    while (line_num--)  // continue reading until we get to the desired line
+    {
+        std::getline(file, buf, '\n');
+    }
 
-  fetch::ml::Graph<ArrayType> g;
-  DataType dropout_prob0 = 1.0f;  // this is the probability that an input is *kept* and not dropped
-  DataType dropout_prob1 = 1.0f;  // set to 1.0 for testing, 0.6 and 0.8 for training
+    std::getline(file, buf, '\n');
 
-  // extract weights for each
-  ArrayType weights1 = read_csv(
-      "/home/emmasmith/Development/best_models/output/keras_h7_aluminium_px_last_us/model_weights/"
-      "hidden_dense_1/hidden_dense_1_12/kernel:0.csv",
-      0, 0, true);
-  ArrayType bias1 = read_csv(
-      "/home/emmasmith/Development/best_models/output/keras_h7_aluminium_px_last_us/model_weights/"
-      "hidden_dense_1/hidden_dense_1_12/bias:0.csv",
-      0, 0, false);
-  ArrayType weights2 = read_csv(
-      "/home/emmasmith/Development/best_models/output/keras_h7_aluminium_px_last_us/model_weights/"
-      "hidden_dense_2/hidden_dense_2_4/kernel:0.csv",
-      0, 0, true);
-  ArrayType bias2 = read_csv(
-      "/home/emmasmith/Development/best_models/output/keras_h7_aluminium_px_last_us/model_weights/"
-      "hidden_dense_2/hidden_dense_2_4/bias:0.csv",
-      0, 0, false);
-  ArrayType weights3 = read_csv(
-      "/home/emmasmith/Development/best_models/output/keras_h7_aluminium_px_last_us/model_weights/"
-      "output_dense/output_dense_12/kernel:0.csv",
-      0, 0, true);
-  ArrayType bias3 = read_csv(
-      "/home/emmasmith/Development/best_models/output/keras_h7_aluminium_px_last_us/model_weights/"
-      "output_dense/output_dense_12/bias:0.csv",
-      0, 0, false);
+    std::stringstream ss(buf);
+    std::getline(ss,dataname, ',');
+    std::getline(ss,layer_name, ',');
+    ss >> input_layer_size >> delim;
+    previous_layer_size = input_layer_size;
+    previous_layer_name = layer_name;
 
-  assert(bias1.shape()[0] == weights1.shape()[0]);
+    g->AddNode<PlaceHolder<ArrayType>>(layer_name, {});  // add node for input
 
-  std::string input    = g.AddNode<PlaceHolder<ArrayType>>("Input", {});
-  std::string dropout0 = g.AddNode<Dropout<ArrayType>>("dropout0", {input}, dropout_prob0);
-  std::string fc1      = g.AddNode<FullyConnected<ArrayType>>(
-      "fc1", {dropout0}, 118u, 216u, fetch::ml::details::ActivationType::SOFTMAX);
-  std::string dropout1 = g.AddNode<Dropout<ArrayType>>("dropout2", {fc1}, dropout_prob1);
-  std::string fc2      = g.AddNode<FullyConnected<ArrayType>>(
-      "fc2", {dropout1}, 216u, 108u, fetch::ml::details::ActivationType::SOFTMAX);
-  std::string dropout2 = g.AddNode<Dropout<ArrayType>>("dropout3", {fc2}, dropout_prob1);
-  std::string fc3      = g.AddNode<FullyConnected<ArrayType>>(
-      "fc3", {dropout2}, 108u, 54u, fetch::ml::details::ActivationType::SOFTMAX);
+    // Iterate through fields adding nodes to graph
+    while(previous_layer_name.find("output") == std::string::npos) {
+        std::getline(ss, layer_name, ',');
+        // layer_name will contain dropout or dense or softmax
+        if (layer_name.find("dropout") != std::string::npos)
+        {
+            previous_layer_name = g->AddNode<Dropout<ArrayType>>(layer_name, {previous_layer_name}, dropout_prob);
+        } else if (layer_name.find("dense") != std::string::npos)
+        {
+            ss >> layer_size >> delim;
+            previous_layer_name = g->AddNode<FullyConnected<ArrayType>>(
+                    layer_name, {previous_layer_name}, previous_layer_size, layer_size);
+            previous_layer_size = layer_size;
+        } else if (layer_name.find("softmax") != std::string::npos)
+        {
+            previous_layer_name = g->AddNode<fetch::ml::ops::Softmax<ArrayType>>(layer_name, {previous_layer_name});
+        } else
+        {
+            throw std::runtime_error("Unknown node type");
+        }
+        node_names.emplace_back(previous_layer_name);
+    }
+
+    // there might be a final softmax layer
+    std::getline(ss, layer_name, ',');
+    if (layer_name.find("softmax") != std::string::npos)
+    {
+        previous_layer_name = g->AddNode<fetch::ml::ops::Softmax<ArrayType>>(layer_name, {previous_layer_name});
+        node_names.emplace_back(previous_layer_name);
+    }
+
+    return std::make_pair(dataname, node_names);
+}
+
+
+int ArgPos(char *str, int argc, char **argv)
+{
+    int a;
+    for (a = 1; a < argc; a++)
+    {
+        if (!strcmp(str, argv[a]))
+        {
+            if (a == argc - 1)
+            {
+                printf("Argument missing for %s\n", str);
+                exit(1);
+            }
+            return a;
+        }
+    }
+    return -1;
+}
+
+/**
+ * Loads in a model, evaluates it on test inputs and compares this with test outputs.
+ * Usage: -model_num 2 (line in the model file to read) and -input_dir (directory with
+ * model weights and test files)
+ */
+int main(int argc, char **argv)
+{
+    int i;
+    std::string input_dir;
+    SizeType model_num = 0;
+    SizeType output_feature_size = 0;
+
+    /// READ ARGUMENTS
+    if ((i = ArgPos((char *)"-model_num", argc, argv)) > 0)
+    {
+        model_num = static_cast<SizeType >(std::stoul(argv[i + 1]));
+    }
+    if ((i = ArgPos((char *)"-input_dir", argc, argv)) > 0)
+    {
+        input_dir = argv[i + 1];
+    }
+
+    std::string architecture_file = input_dir + "/architecture.csv";
+
+
+    /// DEFINE NEURAL NET ARCHITECTURE ///
+
+    auto g_ptr = std::make_shared<fetch::ml::Graph<ArrayType >>(GraphType());
+
+    auto arch_tuple = read_architecture(architecture_file, g_ptr, model_num);
+    std::string dataname = arch_tuple.first;
+    std::vector<std::string> node_names = arch_tuple.second;
+
+    std::string test_x_file = input_dir + "/" + dataname + "_x_test.csv";
+    std::string test_y_file = input_dir + "/" + dataname + "_y_pred_test.csv";
+    std::string weights_dir = input_dir + "/output/" + dataname + "/model_weights";
 
   /// LOAD WEIGHTS INTO GRAPH ///
-  auto sd = g.StateDict();
+  auto sd = g_ptr->StateDict();
 
-  auto fc1_weights = sd.dict_[fc1 + "_FC_Weights"].weights_;
-  auto fc1_bias    = sd.dict_[fc1 + "_FC_Bias"].weights_;
-  auto fc2_weights = sd.dict_[fc2 + "_FC_Weights"].weights_;
-  auto fc2_bias    = sd.dict_[fc2 + "_FC_Bias"].weights_;
-  auto fc3_weights = sd.dict_[fc3 + "_FC_Weights"].weights_;
-  auto fc3_bias    = sd.dict_[fc3 + "_FC_Bias"].weights_;
+  for (auto const &name: node_names)
+  {
+      if (name.find("dense") != std::string::npos)
+      {
+        // if it is a dense layer there will be weights and bias files
+          std::vector<std::string> dir_list = fetch::ml::examples::GetAllTextFiles(weights_dir + "/" + name, "");
+          std::vector<std::string> actual_dirs;
+          for (auto dir: dir_list)
+          {
+              if (dir != "." && dir != "..")
+              {
+                  actual_dirs.emplace_back(dir);
+              }
+          }
+          assert(actual_dirs.size() == 1);
 
-  *fc1_weights = weights1;
-  *fc1_bias    = bias1;
-  *fc2_weights = weights2;
-  *fc2_bias    = bias2;
-  *fc3_weights = weights3;
-  *fc3_bias    = bias3;
+          std::string node_weights_dir = weights_dir + "/" + name + "/" + actual_dirs[0];
+          ArrayType weights = read_csv(node_weights_dir + "/kernel:0.csv", 0, 0, true);
+          ArrayType bias = read_csv(node_weights_dir + "/bias:0.csv", 0, 0, false);
+
+          assert(bias.shape()[0] == weights.shape()[0]);
+
+          auto weights_tensor = sd.dict_[name + "_FC_Weights"].weights_;
+          auto bias_tensor    = sd.dict_[name + "_FC_Bias"].weights_;
+
+          *weights_tensor = weights;
+          *bias_tensor    = bias;
+          output_feature_size = weights.shape()[0];  // stores shape of last dense layer
+      }
+  }
 
   // load state dict into graph (i.e. load pretrained weights)
-  g.LoadStateDict(sd);
+  g_ptr->LoadStateDict(sd);
 
   /// FORWARD PASS PREDICTIONS ///
-  ArrayType test_x = read_csv(
-      "/home/emmasmith/Development/best_models/keras_h7_aluminium_px_last_us_x_test.csv", 1, 1);
-  ArrayType test_y = read_csv(
-      "/home/emmasmith/Development/best_models/keras_h7_aluminium_px_last_us_y_pred_test.csv", 1,
-      1);
+  ArrayType test_x = read_csv(test_x_file, 1, 1);
+  ArrayType test_y = read_csv(test_y_file, 1, 1);
+  SizeType output_data_size = test_y.shape()[0];
+  assert(output_feature_size==test_y.shape()[1]);
+  assert(test_y.shape()[0] == test_x.shape()[0]);
 
-  SizeType test_index    = 42;
-  auto     current_input = test_x.Slice(test_index).Copy().Transpose();
-  g.SetInput(input, current_input);
+  ArrayType output({output_data_size, output_feature_size});
 
-  ArrayType output = g.Evaluate(fc3);
-  // output should be the same as test_y
-  std::cout << "output: " << output.Transpose().ToString() << std::endl;
-  std::cout << "test_y: " << (test_y.Slice(test_index)).Copy().ToString() << std::endl;
+  for (SizeType j=0; j<output_data_size; j++)
+  {
+      auto current_input = test_x.Slice(j).Copy().Transpose();
+      g_ptr->SetInput("num_input", current_input);
+      auto slice_output = g_ptr->Evaluate(node_names.back());
+      output.Slice(j).Assign(slice_output);
+  }
+
+  assert(output.AllClose(test_y, 0.00001f));
 }
