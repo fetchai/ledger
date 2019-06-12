@@ -106,7 +106,6 @@ void Analyser::Initialise()
                                      float32_type_, float64_type_, fixed32_type_, fixed64_type_};
   for (auto const &type : number_types)
   {
-    std::cout << "type = " << type << std::endl;
     EnableOperator(type, Operator::Equal);
     EnableOperator(type, Operator::NotEqual);
     EnableOperator(type, Operator::LessThan);
@@ -2098,7 +2097,6 @@ void Analyser::CreatePrimitiveType(std::string const &type_name, TypeIndex type_
     return;
   }
   type = CreateType(TypeKind::Primitive, type_name);
-  std::cout << "type_name = " << type_name << ", type = " << type << std::endl;
   type_map_.Add(type_index, type);
   AddTypeInfo(TypeInfo(TypeKind::Primitive, type_name, {}), type_id, type);
   registered_types_.Add(type_index, type->id);

@@ -1,3 +1,8 @@
 function main()
-  print(FixedPoint(1.0));
+  var a: Fixed32 = 2.0fp32;
+  var b: Fixed32 = 1.0fp32;
+  printLn(a);
+  printLn(b);
+  var c: Fixed64 = 44.0fp64;
+  printLn(c);
 endfunction
