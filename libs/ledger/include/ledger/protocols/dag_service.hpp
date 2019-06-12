@@ -44,7 +44,7 @@ public:
   using Muddle          = muddle::Muddle;
   using NetworkManager  = network::NetworkManager;
   using MuddleEndpoint  = muddle::MuddleEndpoint;
-  using DAGPtr            = std::shared_ptr<ledger::DAGInterface>;
+  using DAGPtr          = std::shared_ptr<ledger::DAGInterface>;
 
   // Construction / Destruction
   DAGService(MuddleEndpoint &muddle_endpoint, DAGPtr dag, Mode mode = Mode::LOAD_DATABASE);

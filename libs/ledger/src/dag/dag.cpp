@@ -129,7 +129,6 @@ DAG::DAG(std::string const &db_name, bool load, CertificatePtr certificate)
 std::vector<DAGNode> DAG::GetLatest(bool previous_epoch_only)
 {
   std::vector<DAGNode> ret;
-
   std::lock_guard<fetch::mutex::Mutex> lock(mutex_);
 
   for(auto const &node_hash : previous_epoch_.all_nodes)
@@ -199,6 +198,24 @@ void DAG::AddWork(Work const &solution)
   new_node->signature = certificate_->Sign(new_node->hash);
 
   FETCH_LOG_INFO(LOGGING_NAME, "!!! Work for contract: 0x", new_node->contract_digest.ToHex(), " score: ", solution.score(), " (id: 0x", new_node->hash.ToHex(), ")");
+
+  PushInternal(new_node);
+  recently_added_.push_back(*new_node);
+}
+
+void DAG::AddArbitrary(ConstByteArray const &payload)
+{
+  std::lock_guard<fetch::mutex::Mutex> lock(mutex_);
+
+  // Create a new dag node containing this data
+  DAGNodePtr new_node = std::make_shared<DAGNode>();
+
+  new_node->type                    = DAGNode::ARBITRARY;
+  new_node->contents                = payload;
+  SetReferencesInternal(new_node);
+  new_node->identity                    = certificate_->identity();
+  new_node->Finalise();
+  new_node->signature = certificate_->Sign(new_node->hash);
 
   PushInternal(new_node);
   recently_added_.push_back(*new_node);
@@ -284,7 +301,7 @@ void DAG::SetReferencesInternal(DAGNodePtr node)
     }
   }
 
-  FETCH_LOG_INFO(LOGGING_NAME, "Othrr case epoch is: ", oldest_epoch);
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Other case epoch is: ", oldest_epoch);
 }
 
 bool DAG::AddDAGNode(DAGNode node)
@@ -405,6 +422,7 @@ bool DAG::GetDAGNode(ConstByteArray const &hash, DAGNode &node)
 
 bool DAG::GetWork(ConstByteArray const &hash, Work &work)
 {
+  std::lock_guard<fetch::mutex::Mutex> lock(mutex_);
   bool success{false};
 
   // lookup the DAG node in question
@@ -501,17 +519,6 @@ bool DAG::PushInternal(DAGNodePtr node)
   // There is now a chance that adding this node completed some loose nodes.
   HealLooseBlocksInternal(node->hash);
 
-
-  DAGNodePtr getme;
-  getme = GetDAGNodeInternal(node->hash);
-
-  if(!getme)
-  {
-  }
-  else
-  {
-  }
-
   return true;
 }
 
@@ -573,6 +580,7 @@ void DAG::HealLooseBlocksInternal(ConstByteArray added_hash)
 // Create an epoch given our current tips (doesn't advance the dag)
 DAGEpoch DAG::CreateEpoch(uint64_t block_number)
 {
+  std::lock_guard<fetch::mutex::Mutex> lock(mutex_);
   DAGEpoch ret;
   ret.block_number = block_number;
 
@@ -649,6 +657,7 @@ DAGEpoch DAG::CreateEpoch(uint64_t block_number)
 bool DAG::CommitEpoch(DAGEpoch new_epoch)
 {
   FETCH_LOG_INFO(LOGGING_NAME, "Committing epoch: ", new_epoch.block_number, " Nodes: ", new_epoch.all_nodes.size());
+  std::lock_guard<fetch::mutex::Mutex> lock(mutex_);
 
   if(new_epoch.block_number != most_recent_epoch_ + 1)
   {
@@ -661,6 +670,8 @@ bool DAG::CommitEpoch(DAGEpoch new_epoch)
     // Remove all TXs from the active node pool that are referenced in this epoch
     // also remove tips that refer to nodes in this epoch
     // Note that unaffected tips will remain valid but will have less elements
+
+    std::cerr << "hash in epoch: " << node_hash.ToBase64() << std::endl; // DELETEME_NH
 
     // move finalised nodes into long term storage
     auto it_node_to_rmv = node_pool_.find(node_hash);
@@ -679,10 +690,18 @@ bool DAG::CommitEpoch(DAGEpoch new_epoch)
     auto it_tip_to_rmv = tips_.find(node_hash);
     if(it_tip_to_rmv != tips_.end())
     {
-      all_tips_.erase(it_tip_to_rmv->second->id);
-      tips_.erase(it_tip_to_rmv);
+      std::cerr << "tips xxx:" << all_tips_.size() << std::endl; // DELETEME_NH
+      std::cerr << "tips xxx:" << tips_.size() << std::endl; // DELETEME_NH
+
+      std::cerr << "removing tip" << std::endl; // DELETEME_NH
+      DeleteTip(node_hash);
+      std::cerr << "tips yyy:" << all_tips_.size() << std::endl; // DELETEME_NH
+      std::cerr << "tips yyy:" << tips_.size() << std::endl; // DELETEME_NH
     }
   }
+
+  std::cerr << "tips left 1:" << all_tips_.size() << std::endl; // DELETEME_NH
+  std::cerr << "tips left 2:" << tips_.size() << std::endl; // DELETEME_NH
 
   // push back current epoch
   {
@@ -842,8 +861,7 @@ void DAG::UpdateStaleTipsInternal()
 
     if(it != tips_.end())
     {
-      all_tips_.erase(it->second->id);
-      tips_.erase(it);
+      DeleteTip(it->second->id);
     }
 
     node_pool_.erase(stale_node_hash);
@@ -877,7 +895,7 @@ void DAG::AdvanceTipsInternal(DAGNodePtr node)
     auto it = tips_.find(dag_node_prev);
     if(it != tips_.end())
     {
-      tips_.erase(it);
+      DeleteTip(dag_node_prev);
     }
   }
 
@@ -902,6 +920,7 @@ bool DAG::NodeInvalidInternal(DAGNodePtr node)
 bool DAG::SatisfyEpoch(DAGEpoch &epoch)
 {
   FETCH_LOG_DEBUG(LOGGING_NAME, "Satisfying epoch: ", epoch.block_number);
+  std::lock_guard<fetch::mutex::Mutex> lock(mutex_);
 
   if(epoch.block_number == 0)
   {
@@ -965,7 +984,7 @@ bool DAG::SatisfyEpoch(DAGEpoch &epoch)
     else // normal case, dag node references two others
     {
 
-      uint64_t previous_hashes_oldest_allowed = previous_epochs_.front().block_number;
+      uint64_t previous_hashes_oldest_allowed = previous_epochs_.empty() ? 0 : previous_epochs_.front().block_number;
       uint64_t previous_hashes_oldest         = 0;
       uint64_t previous_hashes_heaviest       = 0;
       DAGNodePtr getme;
@@ -997,8 +1016,6 @@ bool DAG::SatisfyEpoch(DAGEpoch &epoch)
     return false;
   };
 
-  std::lock_guard<fetch::mutex::Mutex> lock(mutex_);
-
   DAGNodePtr dag_node_to_add;
   bool success = true;
   uint64_t missing_count = 0;
@@ -1029,7 +1046,7 @@ bool DAG::SatisfyEpoch(DAGEpoch &epoch)
     }
   }
 
-  FETCH_LOG_INFO(LOGGING_NAME, "Node is missing : ", missing_count, " of ", epoch.all_nodes.size());
+  FETCH_LOG_DEBUG(LOGGING_NAME, "When satisfying, epoch is missing : ", missing_count, " of ", epoch.all_nodes.size());
 
   // TODO(HUT): Verify Epoch here
 
@@ -1113,22 +1130,35 @@ bool DAG::RevertToEpoch(uint64_t epoch_bn_to_revert)
   }
 
   // Set HEAD and previous epochs
-  most_recent_epoch_ = epoch_bn_to_revert;
   current_index      = epoch_bn_to_revert;
-  current_index--;
-  previous_epochs_.clear();
 
-  while(current_index != 0 && (previous_epochs_.size() < (EPOCH_VALIDITY_PERIOD - 1)))
+  // TODO(HUT): could be more efficient
+  std::deque<DAGEpoch> replacement_epochs;
+
+  while(current_index != 0 && (replacement_epochs.size() < (EPOCH_VALIDITY_PERIOD)))
   {
     DAGEpoch epoch_to_set = GetEpochAndErase(current_index, false);
-    previous_epochs_.push_front(epoch_to_set);
+    replacement_epochs.push_front(epoch_to_set);
     current_index--;
   }
 
-  // TODO(HUT): discuss w/colleagues - do we want to re-add nodes like this?
-  for(auto const &node : nodes_to_readd)
+  previous_epochs_ = std::move(replacement_epochs);
+  previous_epoch_ = previous_epochs_.back();
+  previous_epochs_.pop_back();
+  most_recent_epoch_ = epoch_bn_to_revert;
+
+  assert(previous_epochs_.size() < EPOCH_VALIDITY_PERIOD);
+
+  // In the case that there has been a revert these nodes are not deleted from storage (for now - need to think about it)
+  // because it might be immediately used on start up. They are not readded to the pool though.
+  const bool add_nodes_to_pool = false;
+
+  if(add_nodes_to_pool)
   {
-    PushInternal(node);
+    for(auto const &node : nodes_to_readd)
+    {
+      PushInternal(node);
+    }
   }
 
   return true;
@@ -1162,19 +1192,46 @@ bool DAG::SetEpochInStorage(std::string const &, DAGEpoch const &epoch, bool is_
 
 uint64_t DAG::CurrentEpoch() const
 {
+  std::lock_guard<fetch::mutex::Mutex> lock(mutex_);
   return most_recent_epoch_;
 }
 
 bool DAG::HasEpoch(EpochHash const &hash)
 {
+  std::lock_guard<fetch::mutex::Mutex> lock(mutex_);
+
+  // Check for current before checking the file
+  if(hash == previous_epoch_.hash)
+  {
+    return true;
+  }
+
+  for (auto const &epoch : previous_epochs_)
+  {
+    if(hash == epoch.hash)
+    {
+      return true;
+    }
+  }
+
   DAGEpoch dummy;
   return all_stored_epochs_.Get(storage::ResourceID(hash), dummy);
 }
 
+// Delete tip by id
 void DAG::DeleteTip(DAGTipID tip_id)
 {
   auto tip = all_tips_.at(tip_id);
 
   tips_.erase(tip->dag_node_reference);
   all_tips_.erase(tip_id);
+}
+
+// Delete tip by hash
+void DAG::DeleteTip(NodeHash hash)
+{
+  auto tip = tips_.at(hash);
+
+  all_tips_.erase(tip->id);
+  tips_.erase(hash);
 }

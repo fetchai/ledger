@@ -108,6 +108,7 @@ public:
   // so do as you like with it Ed
   void AddTransaction(Transaction const &tx, DAGTypes type) override;
   void AddWork(Work const &work) override;
+  void AddArbitrary(ConstByteArray const &payload) override;
 
   // Create an epoch based on the current DAG (not committal)
   DAGEpoch CreateEpoch(uint64_t block_number) override;
@@ -184,6 +185,7 @@ private:
   void Flush();
 
   void DeleteTip(DAGTipID tip);
+  void DeleteTip(NodeHash hash);
 
   std::string           db_name_;
   CertificatePtr        certificate_;
