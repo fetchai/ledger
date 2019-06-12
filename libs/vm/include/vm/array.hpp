@@ -296,11 +296,11 @@ inline Ptr<IArray> IArray::Construct(VM *vm, TypeId type_id, Args &&... args)
   }
   case TypeIds::Fixed32:
   {
-    return new Array<fixed_point::fp32_t>(vm, type_id, element_type_id, std::forward<Args>(args)...);
+    return new Array<int32_t>(vm, type_id, element_type_id, std::forward<Args>(args)...);
   }
   case TypeIds::Fixed64:
   {
-    return new Array<fixed_point::fp64_t>(vm, type_id, element_type_id, std::forward<Args>(args)...);
+    return new Array<int64_t>(vm, type_id, element_type_id, std::forward<Args>(args)...);
   }
   default:
   {
