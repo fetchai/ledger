@@ -24,6 +24,8 @@
 
 #include "crypto/ecdsa.hpp"
 #include "crypto/prover.hpp"
+#include "crypto/hash.hpp"
+#include "crypto/sha256.hpp"
 
 using ::testing::_;
 using ::testing::AnyNumber;
@@ -145,7 +147,7 @@ private:
 };
 
 // Check that the dag can consistently add nodes locally and advance the epochs
-TEST_F(DagTests, DISABLED_CheckBasicDagFunctionality)
+TEST_F(DagTests, CheckBasicDagFunctionality)
 {
   // This function has assertions
   PopulateDAG();
@@ -153,7 +155,7 @@ TEST_F(DagTests, DISABLED_CheckBasicDagFunctionality)
 
 
 // Check the basic functionality, plus that the dag can revert
-TEST_F(DagTests, DISABLED_CheckDagRevertsCorrectly)
+TEST_F(DagTests, CheckDagRevertsCorrectly)
 {
   PopulateDAG();
 
@@ -174,7 +176,7 @@ TEST_F(DagTests, DISABLED_CheckDagRevertsCorrectly)
 
 // Check that an epoch that does not contain all of the nodes doesn't invalidate
 // nodes that have not yet been epoched (epoch tips don't contain all dag nodes)
-TEST_F(DagTests, DISABLED_CheckDagMaintainsTipsCorrectly)
+TEST_F(DagTests, CheckDagMaintainsTipsCorrectly)
 {
   // The easiest way to create a partitioned DAG is to:
   // -Create two DAGs
@@ -244,7 +246,7 @@ TEST_F(DagTests, DISABLED_CheckDagMaintainsTipsCorrectly)
 }
 
 // Check has epoch functionality
-TEST_F(DagTests, DISABLED_CheckBasicDagFunctionality___CheckHasEpochWorks)
+TEST_F(DagTests, CheckBasicDagFunctionality___CheckHasEpochWorks)
 {
   PopulateDAG();
 
@@ -271,4 +273,17 @@ TEST_F(DagTests, CheckDagFileRecovery)
   epoch_history_.resize(current_dag + 1);
 
   VerifyEpochNodes(current_dag);
+}
+
+TEST_F(DagTests, CheckDagGetNode)
+{
+  dag_->AddArbitrary("one_dag_node");
+
+  auto dnodes = dag_->GetRecentlyAdded();
+
+  EXPECT_EQ(dnodes.size(), 1);
+
+  ledger::DAGNode dummy;
+  EXPECT_EQ(dag_->GetDAGNode(dnodes.back().hash, dummy), true);
+  EXPECT_EQ(dag_->GetDAGNode(crypto::Hash<crypto::SHA256>("not here"), dummy), false);
 }
