@@ -289,24 +289,8 @@ void Router::Route(Handle handle, PacketPtr packet)
   }
   else if (packet->GetTargetRaw() == address_)
   {
-#if 1
-    // we do not care about the transmitter
+    // we do not care about the transmitter, since this was an addition for the trust system.
     DispatchPacket(packet, packet->GetSender());
-#else
-    // when the message is targetted at us we must handle it
-    Address transmitter;
-
-    if (HandleToDirectAddress(handle, transmitter))
-    {
-      DispatchPacket(packet, transmitter);
-    }
-    else
-    {
-      // The connection has gone away while we were processing things so far.
-      FETCH_LOG_WARN(LOGGING_NAME,
-                     "Cannot get transmitter address for packet: ", DescribePacket(*packet));
-    }
-#endif
   }
   else
   {
