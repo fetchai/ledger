@@ -47,14 +47,14 @@ TYPED_TEST(MaxPool2DTest, forward_test_3_2)
 
   SizeType const batch_size = 2;
 
-  ArrayType           data({1, input_width, input_height,batch_size});
-  ArrayType           gt({1, output_width, output_height,batch_size});
+  ArrayType           data({1, input_width, input_height, batch_size});
+  ArrayType           gt({1, output_width, output_height, batch_size});
   std::vector<double> gt_input({4, 8, 12, 16, 8, 16, 24, 32});
   for (SizeType i{0}; i < input_width; ++i)
   {
     for (SizeType j{0}; j < input_height; ++j)
     {
-      data.Set(0, i, j,0, static_cast<DataType>(i * j));
+      data.Set(0, i, j, 0, static_cast<DataType>(i * j));
     }
   }
 
@@ -62,7 +62,7 @@ TYPED_TEST(MaxPool2DTest, forward_test_3_2)
   {
     for (SizeType j{0}; j < output_height; ++j)
     {
-      gt.Set(0, i, j,0, static_cast<DataType>(gt_input[i + j * output_width]));
+      gt.Set(0, i, j, 0, static_cast<DataType>(gt_input[i + j * output_width]));
     }
   }
 
@@ -90,8 +90,8 @@ TYPED_TEST(MaxPool2DTest, forward_2_channels_test_3_2)
 
   SizeType const batch_size = 2;
 
-  ArrayType           data({channels_size, input_width, input_height,batch_size});
-  ArrayType           gt({channels_size, output_width, output_height,batch_size});
+  ArrayType           data({channels_size, input_width, input_height, batch_size});
+  ArrayType           gt({channels_size, output_width, output_height, batch_size});
   std::vector<double> gt_input({4, 8, 12, 16, 8, 16, 24, 32, 8, 16, 24, 32, 16, 32, 48, 64});
 
   for (SizeType c{0}; c < channels_size; ++c)
@@ -100,7 +100,7 @@ TYPED_TEST(MaxPool2DTest, forward_2_channels_test_3_2)
     {
       for (SizeType j{0}; j < input_height; ++j)
       {
-        data.Set(c, i, j,0, static_cast<DataType>((c + 1) * i * j));
+        data.Set(c, i, j, 0, static_cast<DataType>((c + 1) * i * j));
       }
     }
   }
@@ -136,18 +136,18 @@ TYPED_TEST(MaxPool2DTest, backward_test)
   SizeType const input_height  = 5;
   SizeType const output_width  = 2;
   SizeType const output_height = 2;
-  SizeType const batch_size = 2;
+  SizeType const batch_size    = 2;
 
-  ArrayType data({1, input_width, input_height,batch_size});
-  ArrayType error({1, output_width, output_height,batch_size});
-  ArrayType gt({1, input_width, input_height,batch_size});
+  ArrayType data({1, input_width, input_height, batch_size});
+  ArrayType error({1, output_width, output_height, batch_size});
+  ArrayType gt({1, input_width, input_height, batch_size});
 
   for (SizeType i{0}; i < input_width; ++i)
   {
     for (SizeType j{0}; j < input_height; ++j)
     {
-      data.Set(0, i, j,0, static_cast<DataType>(i * j));
-      gt.Set(0, i, j,0, DataType{0});
+      data.Set(0, i, j, 0, static_cast<DataType>(i * j));
+      gt.Set(0, i, j, 0, DataType{0});
     }
   }
 
@@ -155,14 +155,14 @@ TYPED_TEST(MaxPool2DTest, backward_test)
   {
     for (SizeType j{0}; j < output_height; ++j)
     {
-      error.Set(0, i, j,0, static_cast<DataType>(1 + i + j));
+      error.Set(0, i, j, 0, static_cast<DataType>(1 + i + j));
     }
   }
 
-  gt.Set(0, 2, 2,0, DataType{1});
-  gt.Set(0, 4, 2,0, DataType{2});
-  gt.Set(0, 2, 4,0, DataType{2});
-  gt.Set(0, 4, 4,0, DataType{3});
+  gt.Set(0, 2, 2, 0, DataType{1});
+  gt.Set(0, 4, 2, 0, DataType{2});
+  gt.Set(0, 2, 4, 0, DataType{2});
+  gt.Set(0, 4, 4, 0, DataType{3});
 
   fetch::ml::ops::MaxPool2D<ArrayType> op(3, 2);
   std::vector<ArrayType>               prediction = op.Backward({data}, error);
@@ -182,11 +182,11 @@ TYPED_TEST(MaxPool2DTest, backward_2_channels_test)
   SizeType const input_height  = 5;
   SizeType const output_width  = 2;
   SizeType const output_height = 2;
-  SizeType const batch_size = 2;
+  SizeType const batch_size    = 2;
 
-  ArrayType data({channels_size, input_width, input_height,batch_size});
-  ArrayType error({channels_size, output_width, output_height,batch_size});
-  ArrayType gt({channels_size, input_width, input_height,batch_size});
+  ArrayType data({channels_size, input_width, input_height, batch_size});
+  ArrayType error({channels_size, output_width, output_height, batch_size});
+  ArrayType gt({channels_size, input_width, input_height, batch_size});
 
   for (SizeType c{0}; c < channels_size; ++c)
   {
@@ -194,8 +194,8 @@ TYPED_TEST(MaxPool2DTest, backward_2_channels_test)
     {
       for (SizeType j{0}; j < input_height; ++j)
       {
-        data.Set(c, i, j,0, static_cast<DataType>((c + 1) * i * j));
-        gt.Set(c, i, j,0, DataType{0});
+        data.Set(c, i, j, 0, static_cast<DataType>((c + 1) * i * j));
+        gt.Set(c, i, j, 0, DataType{0});
       }
     }
   }
@@ -206,19 +206,19 @@ TYPED_TEST(MaxPool2DTest, backward_2_channels_test)
     {
       for (SizeType j{0}; j < output_height; ++j)
       {
-        error.Set(c, i, j,0, static_cast<DataType>((c + 1) * (1 + i + j)));
+        error.Set(c, i, j, 0, static_cast<DataType>((c + 1) * (1 + i + j)));
       }
     }
   }
 
-  gt.Set(0, 2, 2,0, DataType{1});
-  gt.Set(0, 4, 2,0, DataType{2});
-  gt.Set(0, 2, 4,0, DataType{2});
-  gt.Set(0, 4, 4,0, DataType{3});
-  gt.Set(1, 2, 2,0, DataType{2});
-  gt.Set(1, 4, 2,0, DataType{4});
-  gt.Set(1, 2, 4,0, DataType{4});
-  gt.Set(1, 4, 4,0, DataType{6});
+  gt.Set(0, 2, 2, 0, DataType{1});
+  gt.Set(0, 4, 2, 0, DataType{2});
+  gt.Set(0, 2, 4, 0, DataType{2});
+  gt.Set(0, 4, 4, 0, DataType{3});
+  gt.Set(1, 2, 2, 0, DataType{2});
+  gt.Set(1, 4, 2, 0, DataType{4});
+  gt.Set(1, 2, 4, 0, DataType{4});
+  gt.Set(1, 4, 4, 0, DataType{6});
 
   fetch::ml::ops::MaxPool2D<ArrayType> op(3, 2);
   std::vector<ArrayType>               prediction = op.Backward({data}, error);
