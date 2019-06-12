@@ -61,7 +61,7 @@ public:
     return inputs.front().get().shape();
   }
 
-  static constexpr char const *DESCRIPTOR = "Add";
+  static constexpr char const *DESCRIPTOR = "BatchwiseAdd";
 };
 
 }  // namespace ops
