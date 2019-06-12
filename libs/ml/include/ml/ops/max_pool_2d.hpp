@@ -49,46 +49,49 @@ public:
    * number_of_stride_sized_steps_over_input_height x number_of_stride_sized_steps_over_input_width]
    * @return: output tensor parameter
    */
-  void Forward(VecTensorType const &inputs, ArrayType &output) override
-  {
-    ASSERT(inputs.size() == 1);
-    // Input should be a 3D tensor [C x W x H]
-    ASSERT(inputs.at(0).get().shape().size() == 3);
-    ASSERT(output.shape() == ComputeOutputShape(inputs));
+  void Forward(VecTensorType const &inputs, ArrayType &output) override {
+            ASSERT(inputs.size() == 1);
+    // Input must be a 4D tensor [C x W x H x N]
+            ASSERT(inputs.at(0).get().shape().size() == 4);
+            ASSERT(output.shape() == ComputeOutputShape(inputs));
 
     SizeType iterw;
     SizeType iterh;
     DataType val;
     DataType max;
-    auto     oit = output.begin();
-    for (SizeType ih{0}; ih < output.shape().at(2); ih++)  // Iterate height over kernel stride
+    auto oit = output.begin();
+
+
+    for (SizeType n_i{0}; n_i < output.shape().at(2); n_i++)  // iterate over batch
     {
-      iterh = ih * stride_size_;
-
-      for (SizeType iw{0}; iw < output.shape().at(1); iw++)  // Iterate width over kernel stride
+      for (SizeType ih{0}; ih < output.shape().at(2); ih++)  // Iterate height over kernel stride
       {
-        iterw = iw * stride_size_;
+        iterh = ih * stride_size_;
 
-        for (SizeType c{0}; c < output.shape().at(0); ++c)  // Iterate over output channels
+        for (SizeType iw{0}; iw < output.shape().at(1); iw++)  // Iterate width over kernel stride
         {
-          max = inputs.at(0).get().At(c, iterw, iterh);
+          iterw = iw * stride_size_;
 
-          // Get maximum value on kernel_size_ x kernel_size_ window
-          for (SizeType jw{0}; jw < kernel_size_; jw++)  // Iterate over kernel width
+          for (SizeType c{0}; c < output.shape().at(0); ++c)  // Iterate over output channels
           {
-            for (SizeType jh{0}; jh < kernel_size_; jh++)  // Iterate over kernel width
+            max = inputs.at(0).get().At(c, iterw, iterh,n_i);
+
+            // Get maximum value on kernel_size_ x kernel_size_ window
+            for (SizeType jw{0}; jw < kernel_size_; jw++)  // Iterate over kernel width
             {
-              val = inputs.at(0).get().At(c, iterw + jw, iterh + jh);
-              if (val > max)
+              for (SizeType jh{0}; jh < kernel_size_; jh++)  // Iterate over kernel width
               {
-                max = val;
+                val = inputs.at(0).get().At(c, iterw + jw, iterh + jh,n_i);
+                if (val > max) {
+                  max = val;
+                }
               }
             }
-          }
 
-          // Set maximum value for each [kernel_size_ x kernel_size_] window to output
-          *oit = max;
-          ++oit;
+            // Set maximum value for each [kernel_size_ x kernel_size_] window to output
+            *oit = max;
+            ++oit;
+          }
         }
       }
     }
@@ -119,39 +122,41 @@ public:
     SizeType max_iterw;
     SizeType max_iterh;
     auto     erit = error_signal.cbegin();
-    for (SizeType iw{0}; iw < error_signal.shape().at(1); iw++)  // Iterate width over kernel stride
+    for (SizeType n_i{0}; n_i < error_signal.shape().at(2); n_i++)  // iterate over batch
     {
-      iterw = iw * stride_size_;
-      for (SizeType ih{0}; ih < error_signal.shape().at(2);
-           ih++)  // Iterate height over kernel stride
+      for (SizeType iw{0}; iw < error_signal.shape().at(1); iw++)  // Iterate width over kernel stride
       {
-        iterh = ih * stride_size_;
-        for (SizeType c{0}; c < error_signal.shape().at(0); ++c)  // Iterate over output channels
+        iterw = iw * stride_size_;
+        for (SizeType ih{0}; ih < error_signal.shape().at(2);
+             ih++)  // Iterate height over kernel stride
         {
-          max       = inputs.at(0).get().At(c, iterw, iterh);
-          max_iterw = iterw;
-          max_iterh = iterh;
-
-          // Find max node
-          for (SizeType jw{0}; jw < kernel_size_; jw++)  // Iterate over kernel width
+          iterh = ih * stride_size_;
+          for (SizeType c{0}; c < error_signal.shape().at(0); ++c)  // Iterate over output channels
           {
-            for (SizeType jh{0}; jh < kernel_size_; jh++)  // Iterate over kernel width
-            {
+            max = inputs.at(0).get().At(c, iterw, iterh,n_i);
+            max_iterw = iterw;
+            max_iterh = iterh;
 
-              val = inputs.at(0).get().At(c, iterw + jw, iterh + jh);
-              if (val > max)
+            // Find max node
+            for (SizeType jw{0}; jw < kernel_size_; jw++)  // Iterate over kernel width
+            {
+              for (SizeType jh{0}; jh < kernel_size_; jh++)  // Iterate over kernel width
               {
-                max       = val;
-                max_iterw = iterw + jw;
-                max_iterh = iterh + jh;
+
+                val = inputs.at(0).get().At(c, iterw + jw, iterh + jh,n_i);
+                if (val > max) {
+                  max = val;
+                  max_iterw = iterw + jw;
+                  max_iterh = iterh + jh;
+                }
               }
             }
-          }
 
-          // Add error to max node
-          return_signal.Set(c, max_iterw, max_iterh,
-                            return_signal.At(c, max_iterw, max_iterh) + *erit);
-          ++erit;
+            // Add error to max node
+            return_signal.Set(c, max_iterw, max_iterh, n_i,
+                              return_signal.At(c, max_iterw, max_iterh,n_i) + *erit);
+            ++erit;
+          }
         }
       }
     }
@@ -171,6 +176,8 @@ public:
     // output_shape_[2]=number of stride_size steps over input width
     output_shape.emplace_back((inputs.at(0).get().shape().at(2) - (kernel_size_ - stride_size_)) /
                               stride_size_);
+    // output_shape_[3]=batch dimension
+    output_shape.emplace_back(inputs.at(0).get().shape().at(3));
     return output_shape;
   }
 

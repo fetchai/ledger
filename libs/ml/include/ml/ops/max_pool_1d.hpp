@@ -51,7 +51,7 @@ public:
   void Forward(VecTensorType const &inputs, ArrayType &output) override
   {
     ASSERT(inputs.size() == 1);
-    // Input should be a 2D tensor [C x W x N]
+    // Input must be a 3D tensor [C x W x N]
     ASSERT(inputs.at(0).get().shape().size() == 3);
     ASSERT(output.shape() == ComputeOutputShape(inputs));
 
