@@ -50,7 +50,7 @@ public:
 
     if (thread_number_.find(thread) == thread_number_.end())
     {
-      thread_number_[thread] = int(++thread_count_);
+      thread_number_.emplace(thread, int(++thread_count_));
     }
     int thread_number = thread_number_[thread];
     mutex_.unlock();
@@ -71,32 +71,26 @@ public:
 
   explicit ContextDetails(void *instance = nullptr)
     : instance_(instance)
-  {
-    id_ = std::this_thread::get_id();
-  }
+  {}
 
   ContextDetails(shared_type ctx, shared_type parent, std::string context,
-                 std::string filename = "", int const &line = 0, void *instance = nullptr)
+                 std::string filename = std::string(), int line = 0, void *instance = nullptr)
     : context_(std::move(context))
     , filename_(std::move(filename))
     , line_(line)
     , parent_(std::move(parent))
     , derived_from_(std::move(ctx))
     , instance_(instance)
-  {
-    id_ = std::this_thread::get_id();
-  }
+  {}
 
-  ContextDetails(shared_type parent, std::string context, std::string filename = "",
-                 int const &line = 0, void *instance = nullptr)
+  ContextDetails(shared_type parent, std::string context, std::string filename = std::string(),
+                 int line = 0, void *instance = nullptr)
     : context_(std::move(context))
     , filename_(std::move(filename))
     , line_(line)
     , parent_(std::move(parent))
     , instance_(instance)
-  {
-    id_ = std::this_thread::get_id();
-  }
+  {}
 
   ~ContextDetails() = default;
 
@@ -110,7 +104,7 @@ public:
     return derived_from_;
   }
 
-  std::string context(std::size_t const &n = std::size_t(-1)) const
+  std::string context(std::size_t n = std::size_t(-1)) const
   {
     if (context_.size() > n)
     {
@@ -118,10 +112,12 @@ public:
     }
     return context_;
   }
+
   std::string filename() const
   {
     return filename_;
   }
+
   int line() const
   {
     return line_;
@@ -131,15 +127,16 @@ public:
   {
     return id_;
   }
+
   void *instance() const
   {
     return instance_;
   }
 
 private:
-  std::string     context_  = "(root)";
-  std::string     filename_ = "";
-  int             line_     = 0;
+  std::string     context_ = "(root)";
+  std::string     filename_;
+  int             line_ = 0;
   shared_type     parent_;
   shared_type     derived_from_;
   std::thread::id id_       = std::this_thread::get_id();
@@ -149,18 +146,18 @@ private:
 class Context
 {
 public:
-  Context(void *instance = nullptr);
   using shared_type = std::shared_ptr<ContextDetails>;
+
+  Context(void *instance = nullptr);
   Context(shared_type ctx, std::string const &context, std::string const &filename = "",
-          int const &line = 0, void *instance = nullptr);
-  Context(std::string const &context, std::string const &filename = "", int const &line = 0,
+          int line = 0, void *instance = nullptr);
+  Context(std::string const &context, std::string const &filename = "", int line = 0,
           void *instance = nullptr);
 
   Context(Context const &context)
-  {
-    details_ = context.details_;
-    primary_ = false;
-  }
+    : details_{context.details_}
+    , primary_{false}
+  {}
 
   Context const &operator=(Context const &context) = delete;
 
@@ -268,10 +265,10 @@ public:
   }
 
   template <typename T>
-  void Append(T const &v)
+  void Append(T &&v)
   {
 #ifndef FETCH_DISABLE_COUT_LOGGING
-    std::cout << v;
+    std::cout << std::forward<T>(v);
 #endif
   }
 
@@ -289,8 +286,6 @@ public:
     std::cout << DefaultAttributes() << std::endl;
 #endif
   }
-
-private:
 };
 
 namespace details {
@@ -301,17 +296,13 @@ public:
   using shared_context_type = std::shared_ptr<ContextDetails>;
 
   LogWrapper()
-  {
-    log_ = std::make_unique<DefaultLogger>();
-  }
+    : log_{std::make_unique<DefaultLogger>()}
+  {}
 
   ~LogWrapper()
   {
     std::lock_guard<std::mutex> lock(mutex_);
-    if (log_)
-    {
-      log_.reset();
-    }
+    DisableLogger();
   }
 
   void DisableLogger()
@@ -325,142 +316,82 @@ public:
   template <typename... Args>
   void Info(Args &&... args)
   {
-    std::lock_guard<std::mutex> lock(mutex_);
-    if (this->log_ != nullptr)
-    {
-      this->log_->StartEntry(DefaultLogger::Level::INFO, nullptr, TopContextImpl());
-      Unroll<Args...>::Append(this, std::forward<Args>(args)...);
-      this->log_->CloseEntry(DefaultLogger::Level::INFO);
-    }
+    InfoWithName(nullptr, std::forward<Args>(args)...);
   }
 
   template <typename... Args>
   void InfoWithName(char const *name, Args &&... args)
   {
-    std::lock_guard<std::mutex> lock(mutex_);
-    if (this->log_ != nullptr)
-    {
-      this->log_->StartEntry(DefaultLogger::Level::INFO, name, TopContextImpl());
-      Unroll<Args...>::Append(this, std::forward<Args>(args)...);
-      this->log_->CloseEntry(DefaultLogger::Level::INFO);
-    }
+    Log(DefaultLogger::Level::INFO, name, std::forward<Args>(args)...);
   }
 
   template <typename... Args>
   void Warn(Args &&... args)
   {
-    std::lock_guard<std::mutex> lock(mutex_);
-    if (this->log_ != nullptr)
-    {
-      this->log_->StartEntry(DefaultLogger::Level::WARNING, nullptr, TopContextImpl());
-      Unroll<Args...>::Append(this, std::forward<Args>(args)...);
-      this->log_->CloseEntry(DefaultLogger::Level::WARNING);
-    }
+    WarnWithName(nullptr, std::forward<Args>(args)...);
   }
 
   template <typename... Args>
   void WarnWithName(char const *name, Args &&... args)
   {
-    std::lock_guard<std::mutex> lock(mutex_);
-    if (this->log_ != nullptr)
-    {
-      this->log_->StartEntry(DefaultLogger::Level::WARNING, name, TopContextImpl());
-      Unroll<Args...>::Append(this, std::forward<Args>(args)...);
-      this->log_->CloseEntry(DefaultLogger::Level::WARNING);
-    }
+    Log(DefaultLogger::Level::WARNING, name, std::forward<Args>(args)...);
   }
 
   template <typename... Args>
   void Highlight(Args &&... args)
   {
-    std::lock_guard<std::mutex> lock(mutex_);
-    if (this->log_ != nullptr)
-    {
-      this->log_->StartEntry(DefaultLogger::Level::HIGHLIGHT, nullptr, TopContextImpl());
-      Unroll<Args...>::Append(this, std::forward<Args>(args)...);
-      this->log_->CloseEntry(DefaultLogger::Level::HIGHLIGHT);
-    }
+    HighlightWithName(nullptr, std::forward<Args>(args)...);
   }
 
   template <typename... Args>
   void HighlightWithName(char const *name, Args &&... args)
   {
-    std::lock_guard<std::mutex> lock(mutex_);
-    if (this->log_ != nullptr)
-    {
-      this->log_->StartEntry(DefaultLogger::Level::HIGHLIGHT, name, TopContextImpl());
-      Unroll<Args...>::Append(this, std::forward<Args>(args)...);
-      this->log_->CloseEntry(DefaultLogger::Level::HIGHLIGHT);
-    }
+    Log(DefaultLogger::Level::HIGHLIGHT, name, std::forward<Args>(args)...);
+  }
+
+  template <typename... Args>
+  void Debug(Args &&... args)
+  {
+    DebugWithName(nullptr, std::forward<Args>(args)...);
+  }
+
+  template <typename... Args>
+  void DebugWithName(char const *name, Args &&... args)
+  {
+    Log(DefaultLogger::Level::DEBUG, name, std::forward<Args>(args)...);
   }
 
   template <typename... Args>
   void Error(Args &&... args)
   {
-    std::lock_guard<std::mutex> lock(mutex_);
-    if (this->log_ != nullptr)
-    {
-      this->log_->StartEntry(DefaultLogger::Level::ERROR, nullptr, TopContextImpl());
-      Unroll<Args...>::Append(this, std::forward<Args>(args)...);
-      this->log_->CloseEntry(DefaultLogger::Level::ERROR);
-
-      StackTrace();
-    }
-
-    //    exit(-1);
+    ErrorWithName(nullptr, std::forward<Args>(args)...);
   }
 
   template <typename... Args>
   void ErrorWithName(char const *name, Args &&... args)
   {
     std::lock_guard<std::mutex> lock(mutex_);
-    if (this->log_ != nullptr)
+    if (log_)
     {
-      this->log_->StartEntry(DefaultLogger::Level::ERROR, name, TopContextImpl());
+      log_->StartEntry(DefaultLogger::Level::ERROR, name, TopContextImpl());
       Unroll<Args...>::Append(this, std::forward<Args>(args)...);
-      this->log_->CloseEntry(DefaultLogger::Level::ERROR);
+      log_->CloseEntry(DefaultLogger::Level::ERROR);
 
       StackTrace();
-    }
-
-    //    exit(-1);
-  }
-
-  template <typename... Args>
-  void Debug(Args &&... args)
-  {
-    std::lock_guard<std::mutex> lock(mutex_);
-    if (this->log_ != nullptr)
-    {
-      this->log_->StartEntry(DefaultLogger::Level::DEBUG, nullptr, TopContextImpl());
-      Unroll<Args...>::Append(this, std::forward<Args>(args)...);
-      this->log_->CloseEntry(DefaultLogger::Level::DEBUG);
-    }
-  }
-
-  template <typename... Args>
-  void DebugWithName(char const *name, Args &&... args)
-  {
-    std::lock_guard<std::mutex> lock(mutex_);
-    if (this->log_ != nullptr)
-    {
-      this->log_->StartEntry(DefaultLogger::Level::DEBUG, name, TopContextImpl());
-      Unroll<Args...>::Append(this, std::forward<Args>(args)...);
-      this->log_->CloseEntry(DefaultLogger::Level::DEBUG);
     }
   }
 
   void Debug(std::vector<std::string> const &items)
   {
     std::lock_guard<std::mutex> lock(mutex_);
-    if (this->log_ != nullptr)
+    if (log_)
     {
-      this->log_->StartEntry(DefaultLogger::Level::DEBUG, nullptr, TopContextImpl());
+      log_->StartEntry(DefaultLogger::Level::DEBUG, nullptr, TopContextImpl());
       for (auto &item : items)
       {
-        this->log_->Append(item);
+        log_->Append(item);
       }
-      this->log_->CloseEntry(DefaultLogger::Level::DEBUG);
+      log_->CloseEntry(DefaultLogger::Level::DEBUG);
     }
   }
 
@@ -468,7 +399,7 @@ public:
   {
     std::thread::id             id = std::this_thread::get_id();
     std::lock_guard<std::mutex> lock(mutex_);
-    if (this->log_ != nullptr)
+    if (log_)
     {
       context_[id] = std::move(ctx);
     }
@@ -483,7 +414,7 @@ public:
   void RegisterLock(fetch::mutex::AbstractMutex *ptr)
   {
     std::lock_guard<std::mutex> lock(mutex_);
-    if (this->log_ != nullptr)
+    if (log_)
     {
       active_locks_.insert(ptr);
     }
@@ -493,7 +424,7 @@ public:
                       const std::string &filename, int line)
   {
     std::lock_guard<std::mutex> lock(mutex_);
-    if (this->log_ != nullptr)
+    if (log_)
     {
       std::stringstream ss;
       ss << filename << line;
@@ -526,7 +457,7 @@ public:
   }
 
   void StackTrace(shared_context_type ctx, uint32_t max = uint32_t(-1), bool show_locks = true,
-                  std::string const &trace_name = "Stack trace")
+                  std::string const &trace_name = "Stack trace") const
   {
 
     if (!ctx)
@@ -535,29 +466,30 @@ public:
       return;
     }
 
-    std::cout << trace_name << " for #" << ReadableThread::GetThreadID(ctx->thread_id())
-              << std::endl;
+    std::cout << trace_name << " for #" << ReadableThread::GetThreadID(ctx->thread_id()) << '\n';
     PrintTrace(ctx, max);
 
     if (show_locks)
     {
       std::vector<std::thread::id> locked_threads;
 
-      std::cout << std::endl;
-      std::cout << "Active locks: " << std::endl;
+      std::cout << "\nActive locks:\n";
       for (auto &l : active_locks_)
       {
-        std::cout << "  - " << l->AsString() << std::endl;
+        std::cout << "  - " << l->AsString() << '\n';
         locked_threads.push_back(l->thread_id());
       }
-      std::cout << std::endl;
       for (auto &id : locked_threads)
       {
-        std::cout << "Additionally trace for #" << ReadableThread::GetThreadID(id) << std::endl;
-        ctx = context_[id];
-        PrintTrace(ctx);
-        std::cout << std::endl;
+        std::cout << "\nAdditionally trace for #" << ReadableThread::GetThreadID(id) << '\n';
+        auto id_context{context_.find(id)};
+        if (id_context != context_.cend())
+        {
+          PrintTrace(id_context->second);
+          std::cout << '\n';
+        }
       }
+      std::cout << '\n';
     }
   }
 
@@ -567,7 +499,7 @@ public:
     StackTrace(ctx, max, show_locks);
   }
 
-  void UpdateContextTime(shared_context_type const &ctx, double spent_time)
+  void UpdateContextTime(shared_context_type ctx, double spent_time)
   {
     std::lock_guard<std::mutex> lock(timing_mutex_);
     std::stringstream           ss;
@@ -593,7 +525,7 @@ public:
     ++t.calls;
   }
 
-  void PrintTimings(std::size_t max = 50)
+  void PrintTimings(std::size_t max = 50) const
   {
     std::lock_guard<std::mutex> lock(timing_mutex_);
     std::lock_guard<std::mutex> lock2(mutex_);
@@ -608,7 +540,7 @@ public:
               [](TimingDetails const &a, TimingDetails const &b) { return (a.peak) > (b.peak); });
     std::size_t N = std::min(max, all_timings.size());
 
-    std::cout << "Profile for monitored function calls: " << std::endl;
+    std::cout << "Profile for monitored function calls:\n";
     for (std::size_t i = 0; i < N; ++i)
     {
       std::cout << std::setw(3) << i << std::setw(20)
@@ -617,13 +549,12 @@ public:
       std::cout << std::setw(20) << all_timings[i].calls << " ";
       std::cout << std::setw(20) << all_timings[i].total << " ";
       std::cout << all_timings[i].context << " " << all_timings[i].filename << " "
-                << all_timings[i].line;
-      std::cout << std::endl;
+                << all_timings[i].line << '\n';
     }
-    std::cout << std::endl;
+    std::cout << '\n';
   }
 
-  void PrintMutexTimings(std::size_t max = 50)
+  void PrintMutexTimings(std::size_t max = 50) const
   {
     std::lock_guard<std::mutex> lock2(mutex_);
     std::lock_guard<std::mutex> lock(timing_mutex_);
@@ -640,7 +571,7 @@ public:
               });
     std::size_t N = std::min(max, all_timings.size());
 
-    std::cout << "Mutex timings: " << std::endl;
+    std::cout << "Mutex timings:\n";
     for (std::size_t i = 0; i < N; ++i)
     {
       std::cout << std::setw(3) << i << std::setw(20)
@@ -649,10 +580,9 @@ public:
       std::cout << std::setw(20) << all_timings[i].calls << " ";
       std::cout << std::setw(20) << all_timings[i].total << " ";
       std::cout << all_timings[i].context << " " << all_timings[i].filename << " "
-                << all_timings[i].line;
-      std::cout << std::endl;
+                << all_timings[i].line << '\n';
     }
-    std::cout << std::endl;
+    std::cout << '\n';
   }
 
 private:
@@ -673,46 +603,55 @@ private:
 
   mutable std::mutex timing_mutex_;
 
+  template <typename... Args>
+  void Log(DefaultLogger::Level level, char const *name, Args &&... args)
+  {
+    std::lock_guard<std::mutex> lock(mutex_);
+    if (log_)
+    {
+      log_->StartEntry(level, name, TopContextImpl());
+      Unroll<Args...>::Append(this, std::forward<Args>(args)...);
+      log_->CloseEntry(level);
+    }
+  }
+
   shared_context_type TopContextImpl()
   {
     std::thread::id id = std::this_thread::get_id();
 
-    shared_context_type ret;
-
     auto it = context_.find(id);
     if (it != context_.end())
     {
-      ret = it->second;
+      return it->second;
     }
     else
     {
-      ret = std::make_shared<ContextDetails>();
+      shared_context_type ret{std::make_shared<ContextDetails>()};
       context_.emplace(id, ret);
+      return ret;
     }
-
-    return ret;
   }
 
   template <typename T, typename... Args>
   struct Unroll
   {
-    static void Append(LogWrapper *cls, T const &v, Args... args)
+    static void Append(LogWrapper *cls, T &&v, Args &&... args)
     {
-      cls->log_->Append(v);
-      Unroll<Args...>::Append(cls, args...);
+      cls->log_->Append(std::forward<T>(v));
+      Unroll<Args...>::Append(cls, std::forward<Args>(args)...);
     }
   };
 
   template <typename T>
   struct Unroll<T>
   {
-    static void Append(LogWrapper *cls, T const &v)
+    static void Append(LogWrapper *cls, T &&v)
     {
-      cls->log_->Append(v);
+      cls->log_->Append(std::forward<T>(v));
     }
   };
 
-  void PrintTrace(shared_context_type ctx, uint32_t max = uint32_t(-1))
+  void PrintTrace(shared_context_type ctx, uint32_t max = uint32_t(-1)) const
   {
     using namespace fetch::commandline::VT100;
     std::size_t i = 0;

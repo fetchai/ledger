@@ -25,7 +25,7 @@ namespace ledger {
 
 using DAGNodesSerializer        = fetch::serializers::ByteArrayBuffer;
 
-DAGSyncService::DAGSyncService(MuddleEndpoint &muddle_endpoint, std::shared_ptr<ledger::DAG> dag)
+DAGSyncService::DAGSyncService(MuddleEndpoint &muddle_endpoint, std::shared_ptr<ledger::DAGInterface> dag)
   : muddle_endpoint_(muddle_endpoint)
   , client_(std::make_shared<Client>("R:DAGSync-L",
                                      muddle_endpoint_, Muddle::Address(), SERVICE_DAG, CHANNEL_RPC))

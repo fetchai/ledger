@@ -129,40 +129,30 @@ function (_internal_add_fetch_test
       set(test_label "Integration")
     endif ()
 
-    # detect if the "DISABLED" flag has been passed to this test
-    set(is_disabled FALSE)
-    if ("DISABLED" IN_LIST ARGV)
-      set(is_disabled TRUE)
-      fetch_warning("Disabled Test: ${name} - ${file}")
+    include(CTest)
+
+    # locate the headers for the test project
+    file(GLOB_RECURSE headers ${directory}/*.hpp)
+    file(GLOB_RECURSE srcs ${directory}/*.cpp)
+
+    # define the target
+    add_executable(${name} ${headers} ${srcs})
+    target_link_libraries(${name} PRIVATE ${library} gmock gmock_main)
+    target_include_directories(${name}
+                               PRIVATE ${FETCH_ROOT_VENDOR_DIR}/googletest/googletest/include)
+    target_include_directories(${name}
+                               PRIVATE ${FETCH_ROOT_VENDOR_DIR}/googletest/googlemock/include)
+
+    # CoreFoundation Support on MacOS
+    if (APPLE)
+      target_link_libraries(${name} PRIVATE "-framework CoreFoundation")
     endif ()
 
-    if (NOT is_disabled)
-      include(CTest)
-
-      # locate the headers for the test project
-      file(GLOB_RECURSE headers ${directory}/*.hpp)
-      file(GLOB_RECURSE srcs ${directory}/*.cpp)
-
-      # define the target
-      add_executable(${name} ${headers} ${srcs})
-      target_link_libraries(${name} PRIVATE ${library} gmock gmock_main)
-      target_include_directories(${name}
-                                 PRIVATE ${FETCH_ROOT_VENDOR_DIR}/googletest/googletest/include)
-      target_include_directories(${name}
-                                 PRIVATE ${FETCH_ROOT_VENDOR_DIR}/googletest/googlemock/include)
-
-      # CoreFoundation Support on MacOS
-      if (APPLE)
-        target_link_libraries(${name} PRIVATE "-framework CoreFoundation")
-      endif ()
-
-      # define the test
-      add_test(${name} ${name} ${ARGV})
-      set_tests_properties(${name} PROPERTIES TIMEOUT 300)
-      if (test_label)
-        set_tests_properties(${name} PROPERTIES LABELS "${test_label}")
-      endif ()
-
+    # define the test
+    add_test(${name} ${name} ${ARGV})
+    set_tests_properties(${name} PROPERTIES TIMEOUT 300)
+    if (test_label)
+      set_tests_properties(${name} PROPERTIES LABELS "${test_label}")
     endif ()
 
   endif (FETCH_ENABLE_TESTS)
@@ -172,27 +162,51 @@ function (fetch_add_test
           name
           library
           directory)
-  _internal_add_fetch_test("${name}" "${library}" "${directory}")
+  list(REMOVE_AT ARGV 0)
+  list(REMOVE_AT ARGV 0)
+  list(REMOVE_AT ARGV 0)
+
+  if ("DISABLED" IN_LIST ARGV)
+    fetch_warning("Disabled test: ${name} - ${file}")
+  else ()
+    _internal_add_fetch_test("${name}" "${library}" "${directory}")
+  endif ()
 endfunction ()
 
 function (fetch_add_slow_test
           name
           library
           directory)
-  _internal_add_fetch_test("${name}"
-                           "${library}"
-                           "${directory}"
-                           SLOW)
+  list(REMOVE_AT ARGV 0)
+  list(REMOVE_AT ARGV 0)
+  list(REMOVE_AT ARGV 0)
+
+  if ("DISABLED" IN_LIST ARGV)
+    fetch_warning("Disabled slow test: ${name} - ${file}")
+  else ()
+    _internal_add_fetch_test("${name}"
+                             "${library}"
+                             "${directory}"
+                             SLOW)
+  endif ()
 endfunction ()
 
 function (fetch_add_integration_test
           name
           library
           directory)
-  _internal_add_fetch_test("${name}"
-                           "${library}"
-                           "${directory}"
-                           INTEGRATION)
+  list(REMOVE_AT ARGV 0)
+  list(REMOVE_AT ARGV 0)
+  list(REMOVE_AT ARGV 0)
+
+  if ("DISABLED" IN_LIST ARGV)
+    fetch_warning("Disabled integration test: ${name} - ${file}")
+  else ()
+    _internal_add_fetch_test("${name}"
+                             "${library}"
+                             "${directory}"
+                             INTEGRATION)
+  endif ()
 endfunction ()
 
 function (add_fetch_gbench

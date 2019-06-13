@@ -188,7 +188,6 @@ public:
     LOG_STACK_TRACE_POINT;
     if (!connected_)
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Attempting to write to socket too early. Returning.");
       return;
     }
 

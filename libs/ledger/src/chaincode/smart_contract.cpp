@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "ledger/chaincode/smart_contract.hpp"
+
 #include "core/byte_array/decoders.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "crypto/fnv.hpp"
@@ -301,7 +302,7 @@ void AddToParameterPack(vm::VM *vm, vm::ParameterPack &params, vm::TypeId expect
     AddToParameterPack<int8_t>(params, variant);
     break;
 
-  case vm::TypeIds::Byte:
+  case vm::TypeIds::UInt8:
     AddToParameterPack<uint8_t>(params, variant);
     break;
 
@@ -560,7 +561,7 @@ SmartContract::Status SmartContract::InvokeQuery(std::string const &name, Query 
   case vm::TypeIds::Int8:
     response["result"] = output.Get<int8_t>();
     break;
-  case vm::TypeIds::Byte:
+  case vm::TypeIds::UInt8:
     response["result"] = output.Get<uint8_t>();
     break;
   case vm::TypeIds::Int16:

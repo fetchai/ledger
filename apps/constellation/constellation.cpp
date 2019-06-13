@@ -22,7 +22,7 @@
 #include "ledger/chain/consensus/dummy_miner.hpp"
 
 #include "ledger/chaincode/contract_http_interface.hpp"
-#include "ledger/dag/dag.hpp"
+#include "ledger/dag/dag_interface.hpp"
 
 #include "ledger/execution_manager.hpp"
 #include "ledger/storage_unit/lane_remote_control.hpp"
@@ -95,13 +95,14 @@ uint16_t LookupLocalPort(Manifest const &manifest, ServiceType service, uint16_t
   return manifest.GetLocalPort(identifier);
 }
 
-std::shared_ptr<ledger::DAG> GenerateDAG(bool generate, std::string const &db_name, bool load_on_start, Constellation::CertificatePtr certificate)
+std::shared_ptr<ledger::DAGInterface> GenerateDAG(bool generate, std::string const &db_name, bool load_on_start, Constellation::CertificatePtr certificate)
 {
-  std::shared_ptr<ledger::DAG> ret;
+  std::shared_ptr<ledger::DAGInterface> ret;
 
   if(generate)
   {
-    ret = std::make_shared<ledger::DAG>(db_name, load_on_start, certificate);
+    ledger::DAG *new_dag = new ledger::DAG{db_name, load_on_start, certificate};
+    ret.reset(new_dag);
   }
 
   return ret;

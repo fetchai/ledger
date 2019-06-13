@@ -62,6 +62,7 @@ struct DAGNode
     GENESIS      = 1,   //< Used to identify the genesis DAG node
     WORK         = 2,   //< Indicates that work is stored in the contents
     DATA         = 3,   //< DAG contains data that can be used inside the contract.
+    ARBITRARY    = 4,   //< DAG contains an arbitrary payload
     INVALID_NODE = 255  //< The node is not valid (default on construction)
   };
 

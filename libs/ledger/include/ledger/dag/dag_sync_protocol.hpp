@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "ledger/dag/dag.hpp"
+#include "ledger/dag/dag_interface.hpp"
 #include "network/service/promise.hpp"
 #include "network/service/protocol.hpp"
 
@@ -36,7 +37,7 @@ public:
   static constexpr char const *LOGGING_NAME = "DAGSyncProtocol";
 
   // Construction / Destruction
-  explicit DAGSyncProtocol(std::shared_ptr<ledger::DAG> dag);
+  explicit DAGSyncProtocol(std::shared_ptr<ledger::DAGInterface> dag);
   DAGSyncProtocol(DAGSyncProtocol const &) = delete;
   DAGSyncProtocol(DAGSyncProtocol &&)      = delete;
   ~DAGSyncProtocol() override              = default;
@@ -54,7 +55,7 @@ private:
 
   DAG::MissingNodes RequestNodes(MissingTXs);
 
-  std::shared_ptr<ledger::DAG>  dag_;
+  std::shared_ptr<ledger::DAGInterface>  dag_;
 };
 
 }  // namespace ledger

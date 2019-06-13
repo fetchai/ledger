@@ -39,7 +39,7 @@
 #include "network/p2pservice/p2ptrust_bayrank.hpp"
 
 #include "ledger/protocols/dag_service.hpp"
-#include "ledger/dag/dag.hpp"
+#include "ledger/dag/dag_interface.hpp"
 
 #include <atomic>
 #include <cstddef>
@@ -127,7 +127,7 @@ private:
   using HttpModules            = std::vector<HttpModulePtr>;
   using TransactionProcessor   = ledger::TransactionProcessor;
   using TrustSystem            = p2p::P2PTrustBayRank<Muddle::Address>;
-  using DAGPtr                 = std::shared_ptr<ledger::DAG>;
+  using DAGPtr                 = std::shared_ptr<ledger::DAGInterface>;
   using DAGServicePtr          = std::shared_ptr<ledger::DAGService>;
   using SynergeticMinerPtr     = std::unique_ptr<ledger::SynergeticMinerInterface>;
   using NaiveSynergeticMiner   = ledger::NaiveSynergeticMiner;

@@ -17,8 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/assert.hpp"
 #include "math/meta/math_type_traits.hpp"
+
+#include <cassert>
 
 namespace fetch {
 namespace math {

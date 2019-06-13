@@ -480,8 +480,6 @@ struct TemplateParameter1 : public Variant
   using Variant::Variant;
 };
 
-using TemplateParameter = TemplateParameter1;
-
 struct TemplateParameter2 : public Variant
 {
   using Variant::Variant;
@@ -514,7 +512,7 @@ inline void Serialize(ByteArrayBuffer &buffer, Variant const &variant)
   switch (variant.type_id)
   {
   case TypeIds::Bool:
-  case TypeIds::Byte:
+  case TypeIds::UInt8:
     buffer << variant.primitive.ui8;
     break;
   case TypeIds::Int8:
@@ -545,15 +543,14 @@ inline void Serialize(ByteArrayBuffer &buffer, Variant const &variant)
     buffer << variant.primitive.f64;
     break;
   default:
-    break;
-  }
-
-  if (variant.object)
-  {
-    if (!variant.object->SerializeTo(buffer))
+    if (variant.object)
     {
-      throw std::runtime_error("Unable to serialize type");
+      if (!variant.object->SerializeTo(buffer))
+      {
+        throw std::runtime_error("Unable to serialize type");
+      }
     }
+    break;
   }
 }
 
@@ -570,7 +567,7 @@ inline void Deserialize(ByteArrayBuffer &buffer, Variant &variant)
   switch (variant.type_id)
   {
   case TypeIds::Bool:
-  case TypeIds::Byte:
+  case TypeIds::UInt8:
     buffer >> variant.primitive.ui8;
     break;
   case TypeIds::Int8:
@@ -601,15 +598,14 @@ inline void Deserialize(ByteArrayBuffer &buffer, Variant &variant)
     buffer >> variant.primitive.f64;
     break;
   default:
-    break;
-  }
-
-  if (variant.object)
-  {
-    if (!variant.object->DeserializeFrom(buffer))
+    if (variant.object)
     {
-      throw std::runtime_error("Failed to the deserialize compound object");
+      if (!variant.object->DeserializeFrom(buffer))
+      {
+        throw std::runtime_error("Failed to the deserialize compound object");
+      }
     }
+    break;
   }
 }
 

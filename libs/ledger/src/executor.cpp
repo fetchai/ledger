@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "ledger/executor.hpp"
+
 #include "core/assert.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "core/logger.hpp"
@@ -114,7 +115,7 @@ Executor::Executor(StorageUnitPtr storage)
 Executor::Result Executor::Execute(Digest const &digest, BlockIndex block, SliceIndex slice,
                                    BitVector const &shards)
 {
-  FETCH_LOG_DEBUG(LOGGING_NAME, "Executing tx ", byte_array::ToBase64(hash));
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Executing tx ", byte_array::ToBase64(digest));
 
   Result result{Status::INEXPLICABLE_FAILURE, 0, 0, 0};
 
@@ -319,7 +320,8 @@ bool Executor::ExecuteTransactionContract(Result &result)
     Metrics::Timestamp const completed = Metrics::Clock::now();
 #endif  // FETCH_ENABLE_METRICS
 
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Executing tx ", byte_array::ToBase64(hash), " (success)");
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Executing tx ", byte_array::ToBase64(current_tx_->digest()),
+                    " (success)");
 
     FETCH_METRIC_TX_EXEC_STARTED_EX(hash, started);
     FETCH_METRIC_TX_EXEC_COMPLETE_EX(hash, completed);

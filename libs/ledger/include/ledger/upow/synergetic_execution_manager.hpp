@@ -26,7 +26,7 @@
 #include "ledger/upow/synergetic_execution_manager_interface.hpp"
 #include "vectorise/threading/pool.hpp"
 
-#include "ledger/dag/dag.hpp"
+#include "ledger/dag/dag_interface.hpp"
 
 #include <unordered_map>
 #include <functional>
@@ -42,7 +42,7 @@ class SynergeticExecutionManager : public SynergeticExecutionManagerInterface
 public:
   using ExecutorPtr     = std::shared_ptr<SynergeticExecutorInterface>;
   using ExecutorFactory = std::function<ExecutorPtr()>;
-  using DAGPtr          = std::shared_ptr<DAG>;
+  using DAGPtr          = std::shared_ptr<DAGInterface>;
   using DAGNodePtr      = std::shared_ptr<DAGNode>;
   using ConstByteArray  = byte_array::ConstByteArray;
   using ProblemData     = std::vector<ConstByteArray>;

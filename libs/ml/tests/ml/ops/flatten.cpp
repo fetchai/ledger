@@ -17,8 +17,10 @@
 //------------------------------------------------------------------------------
 
 #include "ml/ops/flatten.hpp"
+
 #include "math/tensor.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
+
 #include <gtest/gtest.h>
 
 template <typename T>
@@ -41,7 +43,7 @@ TYPED_TEST(FlattenTest, forward_test)
   op.Forward({data}, prediction);
 
   // test correct shape
-  ASSERT_EQ(prediction.shape(), std::vector<typename TypeParam::SizeType>({1, 64}));
+  ASSERT_EQ(prediction.shape(), std::vector<typename TypeParam::SizeType>({64, 1}));
 }
 
 TYPED_TEST(FlattenTest, backward_test)

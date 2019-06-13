@@ -48,9 +48,9 @@ public:
   {}
 
   AbstractConnectionRegister(AbstractConnectionRegister const &other) = delete;
-  AbstractConnectionRegister(AbstractConnectionRegister &&other)      = default;
+  AbstractConnectionRegister(AbstractConnectionRegister &&other)      = delete;
   AbstractConnectionRegister &operator=(AbstractConnectionRegister const &other) = delete;
-  AbstractConnectionRegister &operator=(AbstractConnectionRegister &&other) = default;
+  AbstractConnectionRegister &operator=(AbstractConnectionRegister &&other) = delete;
 
   virtual ~AbstractConnectionRegister() = default;
 
@@ -149,18 +149,6 @@ protected:
 
     std::lock_guard<mutex::Mutex> lock(service_lock_);
     services_[n] = ptr;
-  }
-
-  template <typename T>
-  void ActivateSelfManage(T ptr)
-  {
-    ptr->ActivateSelfManage();
-  }
-
-  template <typename T>
-  void DeactivateSelfManage(T ptr)
-  {
-    ptr->ADativateSelfManage();
   }
 
 private:

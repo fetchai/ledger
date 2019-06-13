@@ -29,6 +29,7 @@
 #include "crypto/sha256.hpp"
 #include "network/p2pservice/p2p_service.hpp"
 
+#include "ledger/dag/dag_interface.hpp"
 #include "ledger/dag/dag_node.hpp"
 #include "ledger/dag/dag_epoch.hpp"
 
@@ -68,7 +69,7 @@ struct DAGTip
 /**
  * DAG implementation.
  */
-class DAG
+class DAG : public DAGInterface
 {
 private:
   using ByteArray       = byte_array::ByteArray;
@@ -83,13 +84,9 @@ private:
   using DAGNodePtr      = std::shared_ptr<DAGNode>;
   using Mutex           = mutex::Mutex;
   using CertificatePtr  = p2p::P2PService::CertificatePtr;
+  using DAGTypes        = DAGInterface::DAGTypes;
 
 public:
-
-  enum class DAGTypes
-  {
-    DATA
-  };
 
   using MissingTXs        = std::vector<NodeHash>;
   using MissingNodes      = std::vector<DAGNode>;
@@ -109,44 +106,44 @@ public:
 
   // Interface for adding what internally becomes a dag node. Easy to modify this interface
   // so do as you like with it Ed
-  void AddTransaction(Transaction const &tx, DAGTypes type);
-  void AddWork(Work const &work);
+  void AddTransaction(Transaction const &tx, DAGTypes type) override;
+  void AddWork(Work const &work) override;
+  void AddArbitrary(ConstByteArray const &payload) override;
 
   // Create an epoch based on the current DAG (not committal)
-  DAGEpoch CreateEpoch(uint64_t block_number);
+  DAGEpoch CreateEpoch(uint64_t block_number) override;
 
   // Commit the state of the DAG as this node believes it (using an epoch)
-  bool CommitEpoch(DAGEpoch);
+  bool CommitEpoch(DAGEpoch) override;
 
   // Revert to a previous/forward epoch
-  bool RevertToEpoch(uint64_t);
+  bool RevertToEpoch(uint64_t) override;
 
-  uint64_t CurrentEpoch() const;
+  uint64_t CurrentEpoch() const override;
 
-  bool HasEpoch(EpochHash const &hash);
+  bool HasEpoch(EpochHash const &hash) override;
 
   // Make sure that the dag has all nodes for a certain epoch
-  bool SatisfyEpoch(DAGEpoch &);
+  bool SatisfyEpoch(DAGEpoch &) override;
 
-  std::vector<DAGNode> GetLatest(bool previous_epoch_only = false);
+  std::vector<DAGNode> GetLatest(bool previous_epoch_only = false) override;
 
   ///////////////////////////////////////
   // Fns used for syncing
 
   // Recently added DAG nodes by this miner (not seen by network yet)
-  std::vector<DAGNode>  GetRecentlyAdded();
+  std::vector<DAGNode>  GetRecentlyAdded() override;
 
   // DAG node hashes this miner knows should exist
-  MissingTXs GetRecentlyMissing();
+  MissingTXs GetRecentlyMissing() override;
 
-  bool GetDAGNode(ConstByteArray const &hash, DAGNode &node);
-  bool GetWork(ConstByteArray const &hash, Work &work);
+  bool GetDAGNode(ConstByteArray const &hash, DAGNode &node) override;
+  bool GetWork(ConstByteArray const &hash, Work &work) override;
 
   // TXs and epochs will be added here when they are broadcast in
-  bool AddDAGNode(DAGNode node);
+  bool AddDAGNode(DAGNode node) override;
 
 private:
-
 
   // Long term storage
   uint64_t              most_recent_epoch_ = 0;
@@ -156,8 +153,6 @@ private:
   EpochStore            all_stored_epochs_;                   // All epochs, including from non-winning forks (key = epoch hash, val = epoch)
   DAGNodeStore          finalised_dnodes_;                    // Once an epoch arrives, all dag nodes inbetween go here
   DAGEpoch              temp_recently_created_epoch_;         // Most recent epoch, not in deque for convenience
-  std::string           db_name_;
-  CertificatePtr        certificate_;
 
   // volatile state
   std::unordered_map<DAGTipID, DAGTipPtr>               all_tips_;          // All tips are here
@@ -190,9 +185,12 @@ private:
   void Flush();
 
   void DeleteTip(DAGTipID tip);
+  void DeleteTip(NodeHash hash);
 
-    mutable Mutex mutex_{__LINE__, __FILE__};
-  };
+  std::string           db_name_;
+  CertificatePtr        certificate_;
+  mutable Mutex mutex_{__LINE__, __FILE__};
+};
 
 }  // namespace ledger
 }  // namespace fetch

@@ -261,7 +261,7 @@ void VM::Handler__ForRangeIterate()
       finished              = variable.primitive.i8 > loop.target.i8;
       break;
     }
-    case TypeIds::Byte:
+    case TypeIds::UInt8:
     {
       variable.primitive.ui8 = loop.current.ui8++;
       finished               = variable.primitive.ui8 > loop.target.ui8;
@@ -321,7 +321,7 @@ void VM::Handler__ForRangeIterate()
                                       : variable.primitive.i8 < loop.target.i8;
       break;
     }
-    case TypeIds::Byte:
+    case TypeIds::UInt8:
     {
       variable.primitive.ui8 = loop.current.ui8;
       loop.current.ui8       = uint8_t(loop.current.ui8 + loop.delta.ui8);
