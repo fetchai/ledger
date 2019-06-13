@@ -58,7 +58,7 @@ class TrainingClient
 {
 public:
   TrainingClient(std::string const &images, std::string const &labels)
-    : dataloader_(images, labels)
+    : dataloader_(images, labels, true)
   {
     g_.AddNode<PlaceHolder<ArrayType>>("Input", {});
     g_.AddNode<FullyConnected<ArrayType>>("FC1", {"Input"}, 28u * 28u, 10u);
@@ -80,7 +80,7 @@ public:
       for (unsigned int j(0); j < BATCH_SIZE; ++j)
       {
         // Randomly sampling the dataset, should ensure everyone is training on different data
-        input = dataloader_.GetRandom();
+        input = dataloader_.GetNext();
         g_.SetInput("Input", input.second.at(0));
         ArrayType results = g_.Evaluate("Softmax").Copy();
         loss += criterion.Forward({results, input.first});

@@ -20,8 +20,8 @@
 #include "core/random/lcg.hpp"
 #include "math/tensor.hpp"
 #include "ml/dataloaders/dataloader.hpp"
-#include "ml/dataloaders/word2vec_loaders/vocab.hpp"
 #include "ml/dataloaders/word2vec_loaders/unigram_table.hpp"
+#include "ml/dataloaders/word2vec_loaders/vocab.hpp"
 
 #include <exception>
 #include <map>
@@ -33,16 +33,15 @@ namespace fetch {
 namespace ml {
 
 template <typename T>
-class W2VLoader : public DataLoader<fetch::math::Tensor<T>, std::vector<fetch::math::Tensor<T>>>
+class W2VLoader : public DataLoader<fetch::math::Tensor<T>, fetch::math::Tensor<T>>
 {
 public:
-
-  using LabelType  = fetch::math::Tensor<T>;
-  using DataType   = std::vector<fetch::math::Tensor<T>>;
+  using LabelType = fetch::math::Tensor<T>;
+  using DataType  = fetch::math::Tensor<T>;
 
   using SizeType   = fetch::math::SizeType;
   using VocabType  = Vocab;
-  using ReturnType = std::pair<LabelType, DataType>;
+  using ReturnType = std::pair<LabelType, std::vector<DataType>>;
 
   W2VLoader(SizeType window_size, SizeType negative_samples, bool mode);
 
@@ -52,7 +51,6 @@ public:
   void       InitUnigramTable();
   void       GetNext(ReturnType &t);
   ReturnType GetNext() override;
-  ReturnType GetRandom() override;
 
   bool BuildVocab(std::string const &s);
   void SaveVocab(std::string const &filename);
@@ -93,7 +91,7 @@ private:
  */
 template <typename T>
 W2VLoader<T>::W2VLoader(SizeType window_size, SizeType negative_samples, bool mode)
-  : DataLoader<LabelType, T>(false) // no random mode specified
+  : DataLoader<LabelType, DataType>(false)  // no random mode specified
   , current_sentence_(0)
   , current_word_(0)
   , window_size_(window_size)
@@ -219,22 +217,23 @@ void W2VLoader<T>::GetNext(ReturnType &ret)
   ret.first.Set(0, 0, T(data_[current_sentence_][current_word_ + dynamic_size]));
   for (SizeType i = 0; i < dynamic_size; ++i)
   {
-    ret.second(0).Set(i, 0, T(data_[current_sentence_][current_word_ + i]));
-    ret.second(0).Set(i + dynamic_size, 0,
-                T(data_[current_sentence_][current_word_ + dynamic_size + i + 1]));
+    ret.second.at(0).Set(i, 0, T(data_[current_sentence_][current_word_ + i]));
+    ret.second.at(0).Set(i + dynamic_size, 0,
+                         T(data_[current_sentence_][current_word_ + dynamic_size + i + 1]));
   }
 
   // pad the unused part of the window
-  for (SizeType i = (dynamic_size * 2); i < ret.second(0).size(); ++i)
+  for (SizeType i = (dynamic_size * 2); i < ret.second.at(0).size(); ++i)
   {
-    ret.second(0)(i, 0) = -1;
+    ret.second.at(0)(i, 0) = -1;
   }
 
   // negative sampling
   for (SizeType i = 1; i < negative_samples_; ++i)
   {
     SizeType neg_sample;
-    bool success = unigram_table_.SampleNegative(static_cast<SizeType>(ret.first(0, 0)), neg_sample);
+    bool     success =
+        unigram_table_.SampleNegative(static_cast<SizeType>(ret.first(0, 0)), neg_sample);
     if (success)
     {
       ret.first(i, 0) = static_cast<T>(neg_sample);
@@ -260,17 +259,6 @@ typename W2VLoader<T>::ReturnType W2VLoader<T>::GetNext()
   ReturnType p(label_, {target_});
   GetNext(p);
   return p;
-}
-
-/**
- * GetRandom necessary for inheriting from dataloaders - but not applicable here
- * @tparam T
- * @return
- */
-template <typename T>
-typename W2VLoader<T>::ReturnType W2VLoader<T>::GetRandom()
-{
-  throw std::runtime_error("GetRandom not implemented for this dataloader");
 }
 
 /**

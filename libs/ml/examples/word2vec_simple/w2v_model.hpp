@@ -204,11 +204,11 @@ void W2VModel<ArrayType>::Train(SizeType iter, SizeType print_frequency, bool cb
 
     if (cbow)
     {
-      CBOWTrain(sample.first, sample.second);
+      CBOWTrain(sample.first, sample.second.at(0));
     }
     else
     {
-      SGNSTrain(sample.first, sample.second);
+      SGNSTrain(sample.first, sample.second.at(0));
     }
   }
 
