@@ -51,8 +51,8 @@ public:
   {
     fetch::math::Tensor<float> t =
         fetch::ml::Graph<fetch::math::Tensor<float>>::Evaluate(name->str);
-    fetch::vm::Ptr<TensorWrapper> ret = this->vm_->CreateNewObject<TensorWrapper>(t.shape());
-    (*ret).Copy(t);
+    fetch::vm::Ptr<TensorWrapper> ret; // TODO FIX = this->vm_->CreateNewObject<TensorWrapper>(t.shape());
+//    (*ret).Copy(t);
     return ret;
   }
 

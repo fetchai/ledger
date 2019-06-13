@@ -47,9 +47,6 @@ public:
   void CreateConstructor(TypeIndex type_index, TypeIndexArray const &parameter_type_index_array,
                          Handler const &handler);
 
-  void CreateDeserializeConstructor(TypeIndex type_index, TypeIndexArray parameter_type_index_array,
-                         Handler handler);
-
 
   void CreateStaticMemberFunction(TypeIndex type_index, std::string const &function_name,
                                   TypeIndexArray const &parameter_type_index_array,
@@ -113,7 +110,7 @@ private:
   TypeInfoMap       type_info_map_;
   RegisteredTypes   registered_types_;
   FunctionInfoArray function_info_array_;
-  DeserializeConstructorArray deserialize_constructor_array_;  
+
   SymbolTablePtr    symbols_;
   TypePtr           null_type_;
   TypePtr           void_type_;

@@ -288,16 +288,28 @@ public:
     return success;
   }
 
+  std::string GetUniqueId(TypeId type_id) const
+  {
+    auto info = GetTypeInfo(type_id);
+    return info.name;
+  }
+
   template <typename T>
   TypeId GetTypeId()
   {
     return registered_types_.GetTypeId(TypeIndex(typeid(T)));
   }
-
+/*
   template <typename T, typename... Ts>
   Ptr<T> CreateNewObject(Ts &&... args)
   {
-    return new T(this, GetTypeId<T>(), std::forward<Ts>(args)...);
+    return T::Constructor(this, GetTypeId<T>(), std::forward<Ts>(args)...);
+  }
+*/
+  template <typename T, typename... Ts>
+  Ptr<T> CreateNewObject(Ts... args)
+  {
+    return T::Constructor(this, GetTypeId<T>(), args...);
   }
 
   void SetIOObserver(IoObserverInterface &observer)
@@ -399,6 +411,28 @@ public:
     return type_info_array_[type_id];
   }
 
+  bool IsDefaultConstructable(TypeId type_id) const
+  {
+    TypeIndex idx = registered_types_.GetTypeIndex(type_id);
+    auto it = deserialization_constructors_.find(idx);
+    return (it != deserialization_constructors_.end());
+  }
+
+  Ptr< Object > DefaultConstruct(TypeId type_id) 
+  {
+    TypeIndex idx = registered_types_.GetTypeIndex(type_id);
+    auto it = deserialization_constructors_.find(idx);
+
+    if(it == deserialization_constructors_.end())
+    {
+      RuntimeError("object is not default constructible.");
+      return nullptr;
+    }
+
+    auto &constructor = it->second;
+    return constructor(this, type_id);
+  }
+
 private:
   static const int FRAME_STACK_SIZE = 50;
   static const int STACK_SIZE       = 5000;
@@ -487,6 +521,7 @@ private:
   IoObserverInterface *          io_observer_{nullptr};
   OutputDeviceMap                output_devices_;
   InputDeviceMap                 input_devices_;
+  DeserializeConstructorMap      deserialization_constructors_;
 
   void AddOpcodeInfo(uint16_t opcode, std::string const &name, Handler const &handler)
   {

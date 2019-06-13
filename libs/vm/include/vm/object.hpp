@@ -213,6 +213,7 @@ public:
     return type_id_;
   }
 
+  std::string GetUniqueId() const;
 protected:
   Variant &       Push();
   Variant &       Pop();
@@ -447,28 +448,6 @@ template <typename R>
 inline bool operator!=(std::nullptr_t /* lhs */, Ptr<R> const &rhs)
 {
   return (nullptr != rhs.ptr_);
-}
-
-inline void Serialize(ByteArrayBuffer &buffer, Ptr<Object> const &object)
-{
-  std::cout << "Was here? 3" << std::endl;  
-  if(object == nullptr)
-  {
-    throw std::runtime_error("Cannot serialize object with null reference");    
-  }
-
-  if (!object->SerializeTo(buffer))
-  {
-    throw std::runtime_error("Unable to serialize requested object");
-  }
-}
-
-inline void Deserialize(ByteArrayBuffer &buffer, Ptr<Object> &object)
-{
-  if (!object->DeserializeFrom(buffer))
-  {
-    throw std::runtime_error("Unable to deserialize request object");
-  }
 }
 
 }  // namespace vm

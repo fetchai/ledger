@@ -234,8 +234,7 @@ struct Array : public IArray
 
   bool DeserializeFrom(ByteArrayBuffer &buffer) override
   {
-    buffer >> element_type_id >> elements;
-    return true;
+    return ApplyDeserialize(buffer, elements);    
   }
 
   TypeId                   element_type_id;
@@ -244,17 +243,19 @@ private:
   
   bool ApplySerialize(ByteArrayBuffer &buffer, std::vector< Ptr< Object > > const &data)
   {
-    std::cout << "Serializing array of Objects: " << typeid(T).name() << std::endl;
-    std::cout << "Serializing array of Objects: " << typeid(ElementType).name() << std::endl;    
-    buffer << element_type_id << elements.size();
-    for(Ptr< Object > const &v: data)
+    buffer << GetUniqueId() << static_cast<uint64_t>(elements.size());
+    for(Ptr< Object > v: data)
     {
       if(v == nullptr)
       {
-        RuntimeError("Cannot serialize array element with null reference.");
+        RuntimeError("Cannot serialise null reference.");
         return false;
       }
-      buffer << v;
+
+      if(!v->SerializeTo(buffer))
+      {
+        return false;
+      }
     }
     return true;
   }
@@ -263,7 +264,7 @@ private:
   typename std::enable_if<IsPrimitive<G>::value,  bool>::type
   ApplySerialize(ByteArrayBuffer &buffer, std::vector< G > const &data)
   {
-    buffer << element_type_id << elements.size();    
+    buffer << GetUniqueId() << static_cast<uint64_t>(elements.size());
     for(G const & v: data)
     {
       buffer << v;
@@ -271,7 +272,51 @@ private:
     return true;
   }
 
-  // TODO: Make deserialise
+
+  bool ApplyDeserialize(ByteArrayBuffer &buffer, std::vector< Ptr< Object > > &data)
+  {
+    uint64_t size;
+    std::string uid;
+    buffer >> uid >> size;
+    if(uid != GetUniqueId())
+    {
+      vm_->RuntimeError("Type mismatch during deserialization. Got " + uid + " but expected " + GetUniqueId());
+      return false;
+    }
+
+    for(Ptr< Object > &v: data)
+    {
+      v = vm_->DefaultConstruct(element_type_id);
+      if(!v->DeserializeFrom(buffer))
+      {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  template< typename G >
+  typename std::enable_if<IsPrimitive<G>::value,  bool>::type
+  ApplyDeserialize(ByteArrayBuffer &buffer, std::vector< G > &data)
+  {
+    uint64_t size;
+    std::string uid;
+    buffer >> uid >> size;
+    if(uid != GetUniqueId())
+    {
+      vm_->RuntimeError("Type mismatch during deserialization. Got " + uid + " but expected " + GetUniqueId());
+      return false;
+    }
+
+    elements.resize(size);
+    for(G & v: data)
+    {
+      buffer >> v;
+    }
+    return true;
+  }
+
+
 };
 
 template <typename... Args>

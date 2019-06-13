@@ -222,16 +222,6 @@ void Analyser::CreateConstructor(TypeIndex             type_index,
   CreateConstructor(GetType(type_index), GetTypes(parameter_type_index_array), handler);
 }
 
-void Analyser::CreateDeserializeConstructor(TypeIndex             type_index,
-                                            TypeIndexArray        parameter_type_index_array,
-                                            Handler               handler)
-{
-  DeserializeConstructorInfo info{
-    std::move(type_index)
-  , std::move(parameter_type_index_array)
-  , std::move(handler) };
-  deserialize_constructor_array_.push_back(info);
-}
 
 void Analyser::CreateStaticMemberFunction(TypeIndex type_index, std::string const &function_name,
                                           TypeIndexArray const &parameter_type_index_array,
@@ -2165,6 +2155,7 @@ void Analyser::CreateInstantiationType(TypeIndex type_index, TypePtr const &temp
   }
   type_map_.Add(type_index, type);
   AddTypeInfo(TypeInfo(TypeKind::Instantiation, type->name, parameter_type_ids), type_id, type);
+
   registered_types_.Add(type_index, type->id);
   symbols_->Add(type);
 }

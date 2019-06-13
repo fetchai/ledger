@@ -173,6 +173,7 @@ Module::Module()
 
   GetClassInterface<IArray>()
       .CreateConstuctor<int32_t>()
+      .CreateSerializeDefaultConstuctor<int32_t>(static_cast<int32_t>(0))
       .CreateMemberFunction("count", &IArray::Count)
       .CreateMemberFunction("append", &IArray::Append)
       .CreateMemberFunction("popBack", &IArray::PopBackOne)
@@ -210,7 +211,8 @@ Module::Module()
       .EnableIndexOperator<TemplateParameter1, TemplateParameter2>();
 
   GetClassInterface<Address>()
-      .CreateConstuctor<>()
+      .CreateSerializeDefaultConstuctor<>()
+//      .CreateConstuctor<>()
       .CreateConstuctor<Ptr<String>>()
       .CreateMemberFunction("signedTx", &Address::HasSignedTx);
 
