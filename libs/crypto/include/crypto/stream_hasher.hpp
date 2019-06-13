@@ -19,6 +19,7 @@
 
 #include "core/byte_array/byte_array.hpp"
 #include "meta/type_traits.hpp"
+#include "vectorise/uint/uint.hpp"
 
 namespace fetch {
 namespace crypto {
@@ -26,7 +27,9 @@ namespace crypto {
 class StreamHasher
 {
 public:
-  virtual void        Reset()                                                      = 0;
+  template <uint16_t S>
+  using UInt                  = vectorise::UInt<S>;
+  virtual void        Reset() = 0;
   virtual bool        Update(uint8_t const *data_to_hash, std::size_t const &size) = 0;
   virtual void        Final(uint8_t *hash, std::size_t const &size)                = 0;
   virtual std::size_t GetSizeInBytes() const                                       = 0;
@@ -57,6 +60,12 @@ public:
   meta::IfIsPod<T, bool> Update(std::vector<T> const &vect)
   {
     return Update(reinterpret_cast<uint8_t const *>(vect.data()), vect.size() * sizeof(T));
+  }
+
+  template <uint16_t S>
+  UInt<S> Update(UInt<S> const &val)
+  {
+    return Update(val.pointer(), val.size());
   }
 
   virtual ~StreamHasher() = default;

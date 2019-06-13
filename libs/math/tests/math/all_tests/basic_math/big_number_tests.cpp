@@ -17,15 +17,15 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/encoders.hpp"
-#include "math/bignumber.hpp"
+#include "vectorise/uint/uint.hpp"
 
 #include <gtest/gtest.h>
 
-using namespace fetch::math;
+using namespace fetch::vectorise;
 using namespace fetch::byte_array;
 TEST(big_number_gtest, elemntary_left_shift)
 {
-  BigUnsigned n1(0);
+  UInt<256> n1(0);
   // testing elementary left shifting
   n1 = 3;
   EXPECT_EQ(3, n1[0]);
@@ -40,7 +40,7 @@ TEST(big_number_gtest, elemntary_left_shift)
 TEST(big_number_gtest, incrementer_for_million_increments)
 {
   // testing incrementer for a million increments
-  BigUnsigned n1(0);
+  UInt<256> n1(0);
   {
     for (std::size_t count = 0; count < (1 << 12); ++count)
     {
@@ -64,7 +64,7 @@ TEST(big_number_gtest, incrementer_for_million_increments)
 }
 TEST(big_number_gtest, testing_comparisons)
 {
-  BigUnsigned a(0), b(0);
+  UInt<256> a(0), b(0);
   for (std::size_t count = 0; count < (1 << 8); ++count)
   {
     EXPECT_EQ(a, b);

@@ -17,27 +17,15 @@
 //
 //------------------------------------------------------------------------------
 
-#include "chain/consensus/proof_of_work.hpp"
-
-#include "fetch_pybind.hpp"
-
 namespace fetch {
-namespace ledger {
-namespace consensus {
 
-void BuildProofOfWork(pybind11::module &module)
-{
-  namespace py = pybind11;
-  py::class_<ProofOfWork, vectorise::UInt256>(module, "ProofOfWork")
-      .def(py::init<>())
-      .def(py::init<fetch::ledger::consensus::ProofOfWork::header_type>())
-      .def("target", &ProofOfWork::target)
-      .def("SetTarget", &ProofOfWork::SetTarget)
-      .def("operator()", &ProofOfWork::operator())
-      .def("header", &ProofOfWork::header)
-      .def("SetHeader", &ProofOfWork::SetHeader)
-      .def("digest", &ProofOfWork::digest);
+namespace vm {
+class Module;
 }
-};  // namespace consensus
-};  // namespace ledger
-};  // namespace fetch
+
+namespace vm_modules {
+
+void CreatePanic(vm::Module &module);
+
+}  // namespace vm_modules
+}  // namespace fetch

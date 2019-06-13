@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -17,27 +16,26 @@
 //
 //------------------------------------------------------------------------------
 
-#include "chain/consensus/proof_of_work.hpp"
+#include "vm_modules/core/print.hpp"
 
-#include "fetch_pybind.hpp"
+#include "meta/type_traits.hpp"
+#include "vm/module.hpp"
+#include "vm/vm.hpp"
+
+#include <ostream>
 
 namespace fetch {
-namespace ledger {
-namespace consensus {
+namespace vm_modules {
 
-void BuildProofOfWork(pybind11::module &module)
+void Panic(fetch::vm::VM *vm, fetch::vm::Ptr<fetch::vm::String> const &s)
 {
-  namespace py = pybind11;
-  py::class_<ProofOfWork, vectorise::UInt256>(module, "ProofOfWork")
-      .def(py::init<>())
-      .def(py::init<fetch::ledger::consensus::ProofOfWork::header_type>())
-      .def("target", &ProofOfWork::target)
-      .def("SetTarget", &ProofOfWork::SetTarget)
-      .def("operator()", &ProofOfWork::operator())
-      .def("header", &ProofOfWork::header)
-      .def("SetHeader", &ProofOfWork::SetHeader)
-      .def("digest", &ProofOfWork::digest);
+  vm->RuntimeError(s->str);
 }
-};  // namespace consensus
-};  // namespace ledger
-};  // namespace fetch
+
+void CreatePanic(vm::Module &module)
+{
+  module.CreateFreeFunction("panic", &Panic);
+}
+
+}  // namespace vm_modules
+}  // namespace fetch
