@@ -36,7 +36,8 @@ SynergeticExecutor::SynergeticExecutor(StorageInterface &storage)
 {
 }
 
-void SynergeticExecutor::Verify(WorkQueue &solutions, uint64_t block, std::size_t num_lanes)
+void SynergeticExecutor::Verify(WorkQueue &solutions, ProblemData const &problem_data,
+                                uint64_t block, std::size_t num_lanes)
 {
   SynergeticContractPtr contract{};
 
@@ -61,7 +62,7 @@ void SynergeticExecutor::Verify(WorkQueue &solutions, uint64_t block, std::size_
       }
 
       // define the problem
-      auto const status = contract->DefineProblem();
+      auto const status = contract->DefineProblem(problem_data);
       if (SynergeticContract::Status::SUCCESS != status)
       {
         FETCH_LOG_WARN(LOGGING_NAME, "Unable to define synergetic problem: ", ToString(status));
@@ -75,7 +76,9 @@ void SynergeticExecutor::Verify(WorkQueue &solutions, uint64_t block, std::size_
 
     if ((SynergeticContract::Status::SUCCESS == status) && (calculated_score == solution->score()))
     {
+#if 0
       FETCH_LOG_INFO(LOGGING_NAME, "!!! Solution found with score: ", calculated_score);
+#endif
 
       // TODO(EJF): State sharding needs to be added here
       BitVector shard_mask{num_lanes};

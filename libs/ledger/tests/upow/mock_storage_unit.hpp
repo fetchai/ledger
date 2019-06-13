@@ -25,6 +25,7 @@ class MockStorageUnit : public fetch::ledger::StorageUnitInterface
 {
 public:
   using Transaction = fetch::ledger::Transaction;
+  using DigestSet   = fetch::ledger::DigestSet;
 
   MockStorageUnit()
   {
@@ -44,6 +45,7 @@ public:
     ON_CALL(*this, HasTransaction(_))
         .WillByDefault(Invoke(&fake, &FakeStorageUnit::HasTransaction));
 
+    ON_CALL(*this, IssueCallForMissingTxs(_)).WillByDefault(Invoke(&fake, &FakeStorageUnit::IssueCallForMissingTxs));
     ON_CALL(*this, PollRecentTx(_)).WillByDefault(Invoke(&fake, &FakeStorageUnit::PollRecentTx));
 
     ON_CALL(*this, CurrentHash()).WillByDefault(Invoke(&fake, &FakeStorageUnit::CurrentHash));
@@ -63,6 +65,7 @@ public:
   MOCK_METHOD2(GetTransaction, bool(ConstByteArray const &, Transaction &));
   MOCK_METHOD1(HasTransaction, bool(ConstByteArray const &));
 
+  MOCK_METHOD1(IssueCallForMissingTxs, void(DigestSet const &));
   MOCK_METHOD1(PollRecentTx, TxLayouts(uint32_t));
 
   MOCK_METHOD0(CurrentHash, Hash());

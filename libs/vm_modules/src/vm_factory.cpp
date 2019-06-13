@@ -34,6 +34,7 @@
 #include "vm_modules/core/crypto_rng.hpp"
 #include "vm_modules/core/print.hpp"
 #include "vm_modules/core/type_convert.hpp"
+#include "vm_modules/core/structured_data.hpp"
 #include "vm_modules/crypto/sha256.hpp"
 #include "vm_modules/ledger/chain_state.hpp"
 #include "vm_modules/ledger/dag_accessor.hpp"
@@ -64,6 +65,8 @@ std::shared_ptr<vm::Module> VMFactory::GetModule(uint64_t enabled)
     CreatePrint(*module);
     CreateToString(*module);
     CreateToBool(*module);
+
+    StructuredData::Bind(*module);
   }
 
   // math modules
@@ -76,43 +79,16 @@ std::shared_ptr<vm::Module> VMFactory::GetModule(uint64_t enabled)
   // synergetic modules
   if (MOD_SYN & enabled)
   {
-    /*
-    module.CreateTemplateInstantiationType<fetch::vm::Array, int32_t>(fetch::vm::TypeIds::IArray);
-    module.CreateTemplateInstantiationType<fetch::vm::Array, int64_t>(fetch::vm::TypeIds::IArray);
-    module.CreateTemplateInstantiationType<fetch::vm::Array, uint32_t>(fetch::vm::TypeIds::IArray);
-    module.CreateTemplateInstantiationType<fetch::vm::Array, uint64_t>(fetch::vm::TypeIds::IArray);
-    module.CreateTemplateInstantiationType<fetch::vm::Array, double>(fetch::vm::TypeIds::IArray);
-    module.CreateTemplateInstantiationType<fetch::vm::Array, float>(fetch::vm::TypeIds::IArray);
-    module.CreateTemplateInstantiationType<fetch::vm::Array, fetch::vm::Ptr<fetch::vm::String>>(
-        fetch::vm::TypeIds::IArray);
-    */
-
     ByteArrayWrapper::Bind(*module);
     CryptoRNG::Bind(*module);
     BigNumberWrapper::Bind(*module);
     SHA256Wrapper::Bind(*module);
-//    DAGNodeWrapper::Bind(*module);
-
-//    module->CreateClassType()
-//    module.CreateTemplateInstantiationType<fetch::vm::Array,
-//                                           fetch::vm::Ptr<vm_modules::DAGNodeWrapper>>(
-
-        /*
-            fetch::vm::TypeIds::IArray);
-        module.CreateTemplateInstantiationType<fetch::vm::Array,
-                                               fetch::vm::Ptr<vm_modules::ByteArrayWrapper>>(
-            fetch::vm::TypeIds::IArray);
-
-        */
-//    DAGWrapper::Bind(*module);
 
     BindExp(*module);
     BindSqrt(*module);
     BindBitShift(*module);
     BindBitwiseOps(*module);
     BindLen(*module);
-
-    CreateChainFunctions(*module);
   }
 
   // ml modules - order is important!!
@@ -168,7 +144,7 @@ VMFactory::Errors VMFactory::Compile(std::shared_ptr<fetch::vm::Module> const &m
     all_errors << error << std::endl;
   }
 
-  if (errors.size() > 0)
+  if (!errors.empty())
   {
     FETCH_LOG_WARN("VM_FACTORY", "Found badly constructed SC. Debug:\n", all_errors.str());
   }

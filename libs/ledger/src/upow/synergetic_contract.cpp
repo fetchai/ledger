@@ -27,7 +27,9 @@
 #include "crypto/hash.hpp"
 
 #include "vm_modules/math/bignumber.hpp"
+#include "vm_modules/core/structured_data.hpp"
 
+#include <core/json/document.hpp>
 #include <sstream>
 
 namespace fetch {
@@ -36,9 +38,13 @@ namespace {
 
 using vm_modules::BigNumberWrapper;
 using vm_modules::VMFactory;
+using vm_modules::StructuredData;
 using byte_array::ConstByteArray;
 
 using Status = SynergeticContract::Status;
+using ProblemData = SynergeticContract::ProblemData;
+using VmStructuredData = vm::Ptr<vm_modules::StructuredData>;
+using VmStructuredDataArray = vm::Ptr<vm::Array<VmStructuredData>>;
 
 constexpr char const *LOGGING_NAME = "SynContract";
 
@@ -104,6 +110,56 @@ FunctionKind DetermineKind(vm::Executable::Function const &fn)
   }
 
   return kind;
+}
+
+VmStructuredData CreateProblemData(vm::VM *vm, ConstByteArray const &problem_data)
+{
+  VmStructuredData data{};
+
+  try
+  {
+    // parse the input data
+    json::JSONDocument doc{problem_data};
+
+    // create the structured data
+    data = StructuredData::Constructor(vm, vm->GetTypeId<VmStructuredData>(), doc.root());
+  }
+  catch (std::exception const &ex)
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Failed to parse input problem data: ", ex.what());
+  }
+
+  return data;
+}
+
+VmStructuredDataArray CreateProblemData(vm::VM *vm, ProblemData const &problem_data)
+{
+  using UnderlyingArrayElement = vm::Array<VmStructuredData>::ElementType;
+  using UnderlyingArray        = std::vector<UnderlyingArrayElement>;
+
+  UnderlyingArray elements{};
+  elements.reserve(problem_data.size());
+
+  for (auto const &problem : problem_data)
+  {
+    // convert the problem data
+    auto data = CreateProblemData(vm, problem);
+
+    if (data)
+    {
+      elements.emplace_back(std::move(data));
+    }
+  }
+
+  // create the array
+  auto *ret = new vm::Array<VmStructuredData>(vm, vm->GetTypeId<vm::IArray>(),
+                                              vm->GetTypeId<VmStructuredData>(),
+                                              static_cast<int32_t>(elements.size()));
+
+  // move the constructed elements over to the array
+  ret->elements = std::move(elements);
+
+  return {ret};
 }
 
 }
@@ -190,15 +246,32 @@ SynergeticContract::SynergeticContract(ConstByteArray const &source)
   }
 }
 
-Status SynergeticContract::DefineProblem()
+Status SynergeticContract::DefineProblem(ProblemData const &problem_data)
 {
   // create the VM
   auto vm = std::make_unique<vm::VM>(module_.get());
   problem_ = std::make_shared<vm::Variant>();
 
+#if 0
+  // DEBUG
+  {
+    std::ostringstream oss;
+
+    for (auto const &data : problem_data)
+    {
+      oss << "\n - '" << data << "'";
+    }
+
+    FETCH_LOG_WARN(LOGGING_NAME, "Defining problem data for 0x", digest_.ToHex(), " Data:\n" + oss.str());
+  }
+#endif
+
+  // create the problem data
+  auto problems = CreateProblemData(vm.get(), problem_data);
+
   // execute the problem definition function
   std::string error{};
-  if (!vm->Execute(*executable_, problem_function_, error, *problem_))
+  if (!vm->Execute(*executable_, problem_function_, error, *problem_, problems))
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Problem definition error: ", error);
     return Status::VM_EXECUTION_ERROR;
@@ -286,6 +359,36 @@ Status SynergeticContract::Complete(uint64_t block, BitVector const &shards)
   storage_cache.Flush();
 
   return Status::SUCCESS;
+}
+
+bool SynergeticContract::HasProblem() const
+{
+  return static_cast<bool>(problem_);
+}
+
+vm::Variant const &SynergeticContract::GetProblem() const
+{
+  if (!problem_)
+  {
+    throw std::runtime_error("The contract does not have a problem");
+  }
+
+  return *problem_;
+}
+
+bool SynergeticContract::HasSolution() const
+{
+  return static_cast<bool>(solution_);
+}
+
+vm::Variant const &SynergeticContract::GetSolution() const
+{
+  if (!solution_)
+  {
+    throw std::runtime_error("The contract");
+  }
+
+  return *solution_;
 }
 
 } // namespace ledger

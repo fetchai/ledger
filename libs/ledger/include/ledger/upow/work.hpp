@@ -35,6 +35,9 @@ namespace ledger {
 class Work
 {
 public:
+  using ConstByteArray = byte_array::ConstByteArray;
+  using ProblemData    = std::vector<ConstByteArray>;
+
   enum
   {
     WORK_NOT_VALID = uint64_t(-1)
@@ -61,8 +64,6 @@ public:
   // Actions
   math::BigUnsigned CreateHashedNonce() const;
 
-  byte_array::ConstByteArray originating_node;
-
 private:
 
   Digest            contract_digest_{};
@@ -76,8 +77,8 @@ private:
   friend void Deserialize(T &serializer, Work &work);
 };
 
-inline Work::Work(Digest address, crypto::Identity miner)
-  : contract_digest_{std::move(address)}
+inline Work::Work(Digest digest, crypto::Identity miner)
+  : contract_digest_{std::move(digest)}
   , miner_{std::move(miner)}
 {
 }

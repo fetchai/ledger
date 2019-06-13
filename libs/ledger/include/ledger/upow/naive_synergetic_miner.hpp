@@ -70,14 +70,21 @@ public:
   core::WeakRunnable GetWeakRunnable();
 
 private:
-
-  NaiveSynergeticMiner::State OnInitial();
-  NaiveSynergeticMiner::State OnMine();
-
   static const std::size_t DEFAULT_SEARCH_LENGTH = 20;
 
+  using ProblemData = ledger::SynergeticContract::ProblemData;
+
+  /// @name State Machine Handlers
+  /// @{
+  State OnInitial();
+  State OnMine();
+  /// @}
+
+  /// @name Utils
+  /// @{
   SynergeticContractPtr LoadContract(Digest const &contract_digest);
-  WorkPtr MineSolution(Digest const &contract_digest);
+  WorkPtr MineSolution(Digest const &contract_digest, ProblemData const &problem_data);
+  /// @}
 
   DAGPtr            dag_;
   StorageInterface &storage_;

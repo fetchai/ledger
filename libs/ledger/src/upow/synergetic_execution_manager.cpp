@@ -51,13 +51,14 @@ SynergeticExecutionManager::SynergeticExecutionManager(DAGPtr dag, std::size_t n
 
 ExecStatus SynergeticExecutionManager::PrepareWorkQueue(Block const &current, Block const &previous)
 {
-  using WorkMap = std::unordered_map<Digest, WorkQueuePtr, DigestHashAdapter>;
+  using WorkMap = std::unordered_map<Digest, WorkItemPtr, DigestHashAdapter>;
 
-  auto const &epoch = current.body.dag_epoch;
+  auto const &current_epoch  = current.body.dag_epoch;
+  auto const &previous_epoch = previous.body.dag_epoch;
 
-#if 1
-  FETCH_LOG_INFO(LOGGING_NAME, "==== EPOCH ", epoch.block_number, " ====");
-  for (auto const &nodes : epoch.all_nodes)
+#if 0
+  FETCH_LOG_INFO(LOGGING_NAME, "==== EPOCH ", current_epoch.block_number, " ====");
+  for (auto const &nodes : current_epoch.all_nodes)
   {
     // lookup the node
     DAGNode node{};
@@ -69,11 +70,11 @@ ExecStatus SynergeticExecutionManager::PrepareWorkQueue(Block const &current, Bl
   FETCH_LOG_INFO(LOGGING_NAME, "=======================================");
 #endif
 
-  FETCH_LOG_INFO(LOGGING_NAME, "Preparing work queue for epoch: ", epoch.block_number);
+  FETCH_LOG_INFO(LOGGING_NAME, "Preparing work queue for epoch: ", current_epoch.block_number);
 
   // Step 1. loop through all the solutions which were presented in this epoch
   WorkMap work_map{};
-  for (auto const &digest : epoch.solutions)
+  for (auto const &digest : current_epoch.solution_nodes)
   {
     // lookup the work from the block
     auto work = std::make_shared<Work>();
@@ -84,23 +85,50 @@ ExecStatus SynergeticExecutionManager::PrepareWorkQueue(Block const &current, Bl
     }
 
     // lookup (or create) the solution queue
-    auto &solution_queue = work_map[work->contract_digest()];
-
-    // if the doesn't exist then create it
-    if (!solution_queue)
+    auto &work_item = work_map[work->contract_digest()];
+    if (!work_item)
     {
-      solution_queue = std::make_shared<WorkQueue>();
+      work_item = std::make_shared<WorkItem>();
     }
 
-    FETCH_LOG_INFO(LOGGING_NAME, "Enqueue work: 0x", work->originating_node.ToHex(), " score: ", work->score());
-
     // add the work to the queue
-    solution_queue->push(std::move(work));
+    work_item->work_queue.push(std::move(work));
   }
 
-  FETCH_LOG_INFO(LOGGING_NAME, "Preparing work queue for epoch: ", epoch.block_number, " (complete)");
+  // Step 2. Loop through previous epochs data in order form the problem data
+  DAGNode node{};
+  for (auto const &digest : previous_epoch.data_nodes)
+  {
+    // lookup the referenced DAG node
+    if (!dag_->GetDAGNode(digest, node))
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Failed to retrieve referenced DAG node: 0x", digest.ToHex());
+      continue;
+    }
 
-  // Step 2. Update the final queue
+    // ensure the node is of data type
+    if (node.type != DAGNode::DATA)
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Invalid data node referenced in epoch: 0x", digest.ToHex());
+      continue;
+    }
+
+    // attempt to lookup the contract being referenced
+    auto it = work_map.find(node.contract_digest);
+    if (it == work_map.end())
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Unable to lookup references contract: 0x", node.contract_digest.ToHex());
+      continue;
+    }
+
+    // add the problem into the work node
+    it->second->problem_data.emplace_back(node.contents);
+  }
+
+
+  FETCH_LOG_INFO(LOGGING_NAME, "Preparing work queue for epoch: ", current_epoch.block_number, " (complete)");
+
+  // Step 3. Update the final queue
   {
     FETCH_LOCK(lock_);
 
@@ -128,12 +156,12 @@ bool SynergeticExecutionManager::ValidateWorkAndUpdateState(uint64_t block, std:
   while (!solution_stack.empty())
   {
     // extract the solution queue
-    auto solutions = solution_stack.back();
+    auto work_item = solution_stack.back();
     solution_stack.pop_back();
 
     // dispatch the work
-    threads_.Dispatch([this, solutions, block, num_lanes] {
-      ExecuteItem(solutions, block, num_lanes);
+    threads_.Dispatch([this, work_item, block, num_lanes] {
+      ExecuteItem(work_item->work_queue, work_item->problem_data, block, num_lanes);
     });
   }
 
@@ -143,7 +171,7 @@ bool SynergeticExecutionManager::ValidateWorkAndUpdateState(uint64_t block, std:
   return true;
 }
 
-void SynergeticExecutionManager::ExecuteItem(WorkQueuePtr const &queue, uint64_t block, std::size_t num_lanes)
+void SynergeticExecutionManager::ExecuteItem(WorkQueue &queue, ProblemData const &problem_data, uint64_t block, std::size_t num_lanes)
 {
   ExecutorPtr executor;
 
@@ -155,7 +183,7 @@ void SynergeticExecutionManager::ExecuteItem(WorkQueuePtr const &queue, uint64_t
   }
 
   assert(static_cast<bool>(executor));
-  executor->Verify(*queue, block, num_lanes);
+  executor->Verify(queue, problem_data, block, num_lanes);
 
   // return the executor to the stack
   {

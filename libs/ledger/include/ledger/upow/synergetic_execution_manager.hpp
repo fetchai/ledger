@@ -44,6 +44,8 @@ public:
   using ExecutorFactory = std::function<ExecutorPtr()>;
   using DAGPtr          = std::shared_ptr<DAG>;
   using DAGNodePtr      = std::shared_ptr<DAGNode>;
+  using ConstByteArray  = byte_array::ConstByteArray;
+  using ProblemData     = std::vector<ConstByteArray>;
 
   // Construction / Destruction
   SynergeticExecutionManager(DAGPtr dag, std::size_t num_executors, ExecutorFactory const &);
@@ -62,12 +64,20 @@ public:
   SynergeticExecutionManager &operator=(SynergeticExecutionManager &&) = delete;
 
 private:
+
+  struct WorkItem
+  {
+    WorkQueue   work_queue;
+    ProblemData problem_data;
+  };
+
   using Executors      = std::vector<ExecutorPtr>;
-  using WorkQueueStack = std::vector<WorkQueuePtr>;
+  using WorkItemPtr    = std::shared_ptr<WorkItem>;
+  using WorkQueueStack = std::vector<WorkItemPtr>;
   using ThreadPool     = threading::Pool;
   using Mutex          = mutex::Mutex;
 
-  void ExecuteItem(WorkQueuePtr const &queue, uint64_t block, std::size_t num_lanes);
+  void ExecuteItem(WorkQueue &queue, ProblemData const &problem_data, uint64_t block, std::size_t num_lanes);
 
   // System Components
   DAGPtr dag_;

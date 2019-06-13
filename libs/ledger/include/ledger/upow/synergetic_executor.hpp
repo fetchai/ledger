@@ -26,7 +26,6 @@ namespace ledger {
 class SynergeticExecutor : public SynergeticExecutorInterface
 {
 public:
-
   // Construction / Destruction
   explicit SynergeticExecutor(StorageInterface &storage);
   SynergeticExecutor(SynergeticExecutor const &) = delete;
@@ -35,7 +34,7 @@ public:
 
   /// @name Synergetic Executor Interface
   /// @{
-  void Verify(WorkQueue &solutions, uint64_t block, std::size_t num_lanes) override;
+  void Verify(WorkQueue &solutions, ProblemData const &problem_data, uint64_t block, std::size_t num_lanes) override;
   /// @}
 
   // Operators

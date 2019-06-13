@@ -65,6 +65,7 @@ class SynergeticContract
 public:
 
   using ConstByteArray = byte_array::ConstByteArray;
+  using ProblemData = std::vector<ConstByteArray>;
 
   enum class Status
   {
@@ -90,7 +91,7 @@ public:
 
   /// @name Actions to be taken on the synergetic contract
   /// @{
-  Status DefineProblem();
+  Status DefineProblem(ProblemData const &problem_data);
   Status Work(math::BigUnsigned const &nonce, WorkScore &score);
   Status Complete(uint64_t block, BitVector const &shards);
   /// @}
@@ -160,6 +161,7 @@ inline void SynergeticContract::Detach()
 {
   storage_ = nullptr;
   problem_.reset();
+  solution_.reset();
 }
 
 inline constexpr char const *ToString(SynergeticContract::Status status)

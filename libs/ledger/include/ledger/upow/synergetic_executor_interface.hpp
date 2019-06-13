@@ -25,6 +25,8 @@ namespace ledger {
 class SynergeticExecutorInterface
 {
 public:
+  using ConstByteArray = byte_array::ConstByteArray;
+  using ProblemData    = std::vector<ConstByteArray>;
 
   // Construction / Destruction
   SynergeticExecutorInterface() = default;
@@ -32,7 +34,7 @@ public:
 
   /// @name Executor Interface
   /// @{
-  virtual void Verify(WorkQueue &solutions, uint64_t block, std::size_t num_lanes) = 0;
+  virtual void Verify(WorkQueue &solutions, ProblemData const &problem_data, uint64_t block, std::size_t num_lanes) = 0;
   /// @}
 };
 

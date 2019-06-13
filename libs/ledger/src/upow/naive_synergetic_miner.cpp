@@ -106,54 +106,57 @@ NaiveSynergeticMiner::State NaiveSynergeticMiner::OnMine()
 
 void NaiveSynergeticMiner::Mine()
 {
+  using ProblemSpaces = DigestMap<ProblemData>;
+
   // iterate through the latest DAG nodes and build a complete set of addresses to mine solutions
   // for
   // TODO(HUT): would be nicer to specify here what we want by type
   auto dag_nodes = dag_->GetLatest(true);
 
-  // Debug
+  // loop through the data that is available for the previous epoch
+  ProblemSpaces problem_spaces{};
+  for (auto const &node : dag_nodes)
   {
-    DigestSet contracts;
-    for (auto const &node : dag_nodes)
+    if (DAGNode::DATA == node.type)
     {
-      if (DAGNode::DATA == node.type)
-      {
-        assert(!node.contract_digest.empty());
-        contracts.insert(node.contract_digest);
-      }
-    }
+      // lookup the problem data
+      auto &problem_data = problem_spaces[node.contract_digest];
 
-    if (contracts.empty())
-    {
-      FETCH_LOG_DEBUG(LOGGING_NAME, "No data to be mined");
-      return;
-    }
-    else
-    {
-      std::ostringstream oss;
-      for (auto const &digest : contracts)
-      {
-        oss << "\n -> 0x" << digest.ToHex();
-      }
-
-      FETCH_LOG_INFO(LOGGING_NAME, "Available synergetic contracts to be mined", oss.str());
+      // add the problem data to the
+      problem_data.emplace_back(node.contents);
     }
   }
 
-  // for each of the contract addresses available mine a solution
-  for (auto const &dag_node : dag_nodes)
+  // no mining can be performed when no work is available
+  if (problem_spaces.empty())
   {
-    if (DAGNode::DATA == dag_node.type)
+    FETCH_LOG_DEBUG(LOGGING_NAME, "No data to be mined");
+    return;
+  }
+
+  // Debug
+  {
+    std::ostringstream oss;
+    for (auto const &element : problem_spaces)
     {
-      auto const solution = MineSolution(dag_node.contract_digest);
+      oss << "\n -> 0x" << element.first.ToHex();
+    }
 
-      if (solution)
-      {
-        // TODO(HUT): get signing correct
-        dag_->AddWork(*solution);
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Available synergetic contracts to be mined", oss.str());
+  }
 
-        FETCH_LOG_INFO(LOGGING_NAME, "Mined and added work! Epoch number: ", dag_->CurrentEpoch());
-      }
+  // for each of the contract addresses available mine a solution
+  for (auto const &problem : problem_spaces)
+  {
+    // attempt to mine a solution to this problem
+    auto const solution = MineSolution(problem.first, problem.second);
+
+    // check to see if a solution was generated
+    if (solution)
+    {
+      dag_->AddWork(*solution);
+
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Mined and added work! Epoch number: ", dag_->CurrentEpoch());
     }
   }
 }
@@ -194,7 +197,7 @@ SynergeticContractPtr NaiveSynergeticMiner::LoadContract(Digest const &contract_
   return contract;
 }
 
-WorkPtr NaiveSynergeticMiner::MineSolution(Digest const &contract_digest)
+WorkPtr NaiveSynergeticMiner::MineSolution(Digest const &contract_digest, ProblemData const &problem_data)
 {
   // create the synergetic contract
   auto contract = LoadContract(contract_digest);
@@ -210,7 +213,7 @@ WorkPtr NaiveSynergeticMiner::MineSolution(Digest const &contract_digest)
   auto work = std::make_shared<Work>(contract_digest, prover_->identity());
 
   // Preparing to mine
-  auto status = contract->DefineProblem();
+  auto status = contract->DefineProblem(problem_data);
   if (SynergeticContract::Status::SUCCESS != status)
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Failed to define the problem. Reason: ", ToString(status));

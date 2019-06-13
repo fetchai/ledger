@@ -33,9 +33,11 @@ struct DAGEpoch
   using HasherType     = crypto::SHA256;
 
   uint64_t                 block_number;
-  std::set<ConstByteArray> tips;
-  std::set<ConstByteArray> open_problems; // TODO(EJF): Not sure this is populated yet
-  std::set<ConstByteArray> solutions;
+
+  // TODO(EJF): The order of these nodes will need to be revised
+  std::set<ConstByteArray> tips{};
+  std::set<ConstByteArray> data_nodes{};
+  std::set<ConstByteArray> solution_nodes{};
 
   ConstByteArray           hash;
 
@@ -68,8 +70,8 @@ void Serialize(T &serializer, DAGEpoch const &node)
 {
   serializer << node.block_number;
   serializer << node.tips;
-  serializer << node.open_problems;
-  serializer << node.solutions;
+  serializer << node.data_nodes;
+  serializer << node.solution_nodes;
   serializer << node.hash;
   serializer << node.all_nodes;
 }
@@ -79,8 +81,8 @@ void Deserialize(T &serializer, DAGEpoch &node)
 {
   serializer >> node.block_number;
   serializer >> node.tips;
-  serializer >> node.open_problems;
-  serializer >> node.solutions;
+  serializer >> node.data_nodes;
+  serializer >> node.solution_nodes;
   serializer >> node.hash;
   serializer >> node.all_nodes;
 }

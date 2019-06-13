@@ -198,7 +198,9 @@ void DAG::AddWork(Work const &solution)
   new_node->Finalise();
   new_node->signature = certificate_->Sign(new_node->hash);
 
+#if 0
   FETCH_LOG_INFO(LOGGING_NAME, "!!! Work for contract: 0x", new_node->contract_digest.ToHex(), " score: ", solution.score(), " (id: 0x", new_node->hash.ToHex(), ")");
+#endif
 
   PushInternal(new_node);
   recently_added_.push_back(*new_node);
@@ -219,8 +221,6 @@ void DAG::SetReferencesInternal(DAGNodePtr node)
     prevs.push_back(previous_epoch_.hash);
     oldest_epoch = most_recent_epoch_;
     wei = 0;
-
-    FETCH_LOG_INFO(LOGGING_NAME, "First case epoch is: ", oldest_epoch);
     return;
   }
 
@@ -283,13 +283,6 @@ void DAG::SetReferencesInternal(DAGNodePtr node)
       node_pool_copy.erase(node_pool_copy.begin());
     }
   }
-
-  if (oldest_epoch == std::numeric_limits<uint64_t>::max())
-  {
-    int i = 1 + 2;
-  }
-
-  FETCH_LOG_INFO(LOGGING_NAME, "Othrr case epoch is: ", oldest_epoch);
 }
 
 bool DAG::AddDAGNode(DAGNode node)
@@ -638,9 +631,16 @@ DAGEpoch DAG::CreateEpoch(uint64_t block_number)
   {
     dag_node_to_add = node_pool_.at(dag_node_hash);
 
-    if (dag_node_to_add->type == DAGNode::WORK)
+    switch (dag_node_to_add->type)
     {
-      ret.solutions.insert(dag_node_to_add->hash);
+    case DAGNode::WORK:
+      ret.solution_nodes.insert(dag_node_to_add->hash);
+      break;
+    case DAGNode::DATA:
+      ret.data_nodes.insert(dag_node_to_add->hash);
+      break;
+    default:
+      break;
     }
   }
 
@@ -1027,11 +1027,18 @@ bool DAG::SatisfyEpoch(DAGEpoch &epoch)
       return false;
     }
 
+#if 1
     // TODO(EJF): Needed?
     if (dag_node_to_add->type == DAGNode::WORK)
     {
-      epoch.solutions.insert(dag_node_to_add->hash);
+      bool const present = epoch.solution_nodes.find(dag_node_to_add->hash) != epoch.solution_nodes.end();
+
+      if (!present)
+      {
+        FETCH_LOG_WARN(LOGGING_NAME, "Missing solution in subset: 0x", dag_node_to_add->hash.ToHex());
+      }
     }
+#endif
   }
 
   FETCH_LOG_INFO(LOGGING_NAME, "Node is missing : ", missing_count, " of ", epoch.all_nodes.size());
