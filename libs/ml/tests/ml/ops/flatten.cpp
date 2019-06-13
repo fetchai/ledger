@@ -36,7 +36,9 @@ TYPED_TEST_CASE(FlattenTest, MyTypes);
 
 TYPED_TEST(FlattenTest, forward_test)
 {
-  TypeParam                          data(std::vector<std::uint64_t>({8, 8}));
+  using SizeType = typename TypeParam::SizeType;
+
+  TypeParam                          data(std::vector<SizeType>({8, 8}));
   fetch::ml::ops::Flatten<TypeParam> op;
 
   TypeParam prediction(op.ComputeOutputShape({data}));
@@ -48,7 +50,9 @@ TYPED_TEST(FlattenTest, forward_test)
 
 TYPED_TEST(FlattenTest, backward_test)
 {
-  TypeParam                          data(std::vector<std::uint64_t>({8, 8}));
+  using SizeType = typename TypeParam::SizeType;
+
+  TypeParam                          data(std::vector<SizeType>({8, 8}));
   fetch::ml::ops::Flatten<TypeParam> op;
 
   TypeParam prediction(op.ComputeOutputShape({data}));

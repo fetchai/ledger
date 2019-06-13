@@ -155,13 +155,13 @@ public:
     // Normal Matmul
     if (inputs.at(0).get().shape().size() == 2)
     {
-      return {inputs.at(0).get().shape()[0], inputs.at(1).get().shape()[1]};
+      return {inputs.at(0).get().shape().at(0), inputs.at(1).get().shape().at(1)};
     }
     // Batchwise matmul
     else
     {
-      return {inputs.at(0).get().shape()[0], inputs.at(1).get().shape()[1],
-              inputs.at(0).get().shape()[2]};
+      return {inputs.at(0).get().shape().at(0), inputs.at(1).get().shape().at(1),
+              inputs.at(0).get().shape().at(2)};
     }
   }
 

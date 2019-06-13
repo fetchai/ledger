@@ -87,7 +87,7 @@ public:
       // Slice along batch dimension
       auto input1_slice = inputs.at(0).get().Slice(i, t_batch_dimension);
       auto rs1_slice    = return_signal1.Slice(i, t_batch_dimension);
-      auto error_slice  = error_signal.Slice(i, t_batch_dimension);
+      auto error_slice  = error_signal.Slice(i, 1);
 
       auto rs1_it    = rs1_slice.begin();
       auto rs2_it    = return_signal2.begin();

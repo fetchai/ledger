@@ -39,22 +39,50 @@ public:
   {
     ASSERT(inputs.size() == 1);
     ASSERT(output.shape() == this->ComputeOutputShape(inputs));
-    output.Copy(inputs.front().get().Transpose());
+
+    if (output.shape().size() == 2)
+    {
+      output.Copy(inputs.front().get().Transpose());
+    }
+    else
+    {
+      output.Copy(inputs.front().get().Transpose(transpose_vector_));
+    }
   }
 
   virtual std::vector<ArrayType> Backward(VecTensorType const &inputs,
                                           ArrayType const &    error_signal)
   {
     ASSERT(inputs.size() == 1);
-    return {error_signal.Transpose()};
+    ASSERT(error_signal.shape() == this->ComputeOutputShape(inputs));
+
+    if (error_signal.shape().size() == 2)
+    {
+      return {error_signal.Transpose()};
+    }
+    else
+    {
+      return {error_signal.Transpose(transpose_vector_)};
+    }
   }
 
   virtual std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const
   {
-    return {inputs.front().get().shape().at(1), inputs.front().get().shape().at(0)};
+    // Normal Matmul
+    if (inputs.at(0).get().shape().size() == 2)
+    {
+      return {inputs.front().get().shape().at(1), inputs.front().get().shape().at(0)};
+    }
+    // Batchwise matmul
+    else
+    {
+      return {inputs.front().get().shape().at(1), inputs.front().get().shape().at(0),
+              inputs.at(0).get().shape().at(2)};
+    }
   }
 
-  static constexpr char const *DESCRIPTOR = "Transpose";
+  std::vector<SizeType>        transpose_vector_ = {1, 0, 2};
+  static constexpr char const *DESCRIPTOR        = "Transpose";
 };
 
 }  // namespace ops

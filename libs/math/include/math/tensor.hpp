@@ -1557,7 +1557,14 @@ Tensor<T, C> Tensor<T, C>::Transpose(SizeVector &new_axes) const
   assert(shape_.size() > 1);
   assert(shape_.size() == new_axes.size());
 
-  Tensor ret(shape());
+  SizeVector new_shape;
+  new_shape.reserve(new_shape.size());
+  for (SizeType i{0}; i < shape_.size(); ++i)
+  {
+    new_shape.push_back(shape_[new_axes[i]]);
+  }
+  Tensor ret(new_shape);
+
   TransposeImplementation(new_axes, ret);
   return ret;
 }
