@@ -25,7 +25,8 @@ namespace {
 class PrintTests : public ::testing::Test
 {
 public:
-  VmTestToolkit toolkit;
+  std::stringstream stdout;
+  VmTestToolkit     toolkit{&stdout};
 };
 
 TEST_F(PrintTests, print_works_for_8_bit_integers)
@@ -48,7 +49,7 @@ TEST_F(PrintTests, print_works_for_8_bit_integers)
   ASSERT_TRUE(toolkit.Compile(TEXT));
   ASSERT_TRUE(toolkit.Run());
 
-  ASSERT_EQ(toolkit.stdout(), "42, 42, -42");
+  ASSERT_EQ(stdout.str(), "42, 42, -42");
 }
 
 TEST_F(PrintTests, print_works_for_16_bit_integers)
@@ -71,7 +72,7 @@ TEST_F(PrintTests, print_works_for_16_bit_integers)
   ASSERT_TRUE(toolkit.Compile(TEXT));
   ASSERT_TRUE(toolkit.Run());
 
-  ASSERT_EQ(toolkit.stdout(), "42, 42, -42");
+  ASSERT_EQ(stdout.str(), "42, 42, -42");
 }
 
 TEST_F(PrintTests, print_works_for_32_bit_integers)
@@ -94,7 +95,7 @@ TEST_F(PrintTests, print_works_for_32_bit_integers)
   ASSERT_TRUE(toolkit.Compile(TEXT));
   ASSERT_TRUE(toolkit.Run());
 
-  ASSERT_EQ(toolkit.stdout(), "42, 42, -42");
+  ASSERT_EQ(stdout.str(), "42, 42, -42");
 }
 
 TEST_F(PrintTests, print_works_for_64_bit_integers)
@@ -117,7 +118,7 @@ TEST_F(PrintTests, print_works_for_64_bit_integers)
   ASSERT_TRUE(toolkit.Compile(TEXT));
   ASSERT_TRUE(toolkit.Run());
 
-  ASSERT_EQ(toolkit.stdout(), "42, 42, -42");
+  ASSERT_EQ(stdout.str(), "42, 42, -42");
 }
 
 TEST_F(PrintTests, print_works_for_arrays_of_8_bit_integers_with_multiple_elements)
@@ -137,7 +138,7 @@ TEST_F(PrintTests, print_works_for_arrays_of_8_bit_integers_with_multiple_elemen
   ASSERT_TRUE(toolkit.Compile(TEXT));
   ASSERT_TRUE(toolkit.Run());
 
-  ASSERT_EQ(toolkit.stdout(), "[-1, 0, 1][0, 1, 2]");
+  ASSERT_EQ(stdout.str(), "[-1, 0, 1][0, 1, 2]");
 }
 
 TEST_F(PrintTests, print_works_for_arrays_of_8_bit_integers_with_one_element)
@@ -157,7 +158,7 @@ TEST_F(PrintTests, print_works_for_arrays_of_8_bit_integers_with_one_element)
   ASSERT_TRUE(toolkit.Compile(TEXT));
   ASSERT_TRUE(toolkit.Run());
 
-  ASSERT_EQ(toolkit.stdout(), "[-42][42]");
+  ASSERT_EQ(stdout.str(), "[-42][42]");
 }
 
 TEST_F(PrintTests, print_works_for_empty_arrays_of_8_bit_integers)
@@ -175,7 +176,7 @@ TEST_F(PrintTests, print_works_for_empty_arrays_of_8_bit_integers)
   ASSERT_TRUE(toolkit.Compile(TEXT));
   ASSERT_TRUE(toolkit.Run());
 
-  ASSERT_EQ(toolkit.stdout(), "[][]");
+  ASSERT_EQ(stdout.str(), "[][]");
 }
 
 TEST_F(PrintTests, print_works_for_arrays_of_16_bit_integers_with_multiple_elements)
@@ -195,7 +196,7 @@ TEST_F(PrintTests, print_works_for_arrays_of_16_bit_integers_with_multiple_eleme
   ASSERT_TRUE(toolkit.Compile(TEXT));
   ASSERT_TRUE(toolkit.Run());
 
-  ASSERT_EQ(toolkit.stdout(), "[-1, 0, 1][0, 1, 2]");
+  ASSERT_EQ(stdout.str(), "[-1, 0, 1][0, 1, 2]");
 }
 
 TEST_F(PrintTests, print_works_for_arrays_of_16_bit_integers_with_one_element)
@@ -215,7 +216,7 @@ TEST_F(PrintTests, print_works_for_arrays_of_16_bit_integers_with_one_element)
   ASSERT_TRUE(toolkit.Compile(TEXT));
   ASSERT_TRUE(toolkit.Run());
 
-  ASSERT_EQ(toolkit.stdout(), "[-42][42]");
+  ASSERT_EQ(stdout.str(), "[-42][42]");
 }
 
 TEST_F(PrintTests, print_works_for_empty_arrays_of_16_bit_integers)
@@ -233,7 +234,7 @@ TEST_F(PrintTests, print_works_for_empty_arrays_of_16_bit_integers)
   ASSERT_TRUE(toolkit.Compile(TEXT));
   ASSERT_TRUE(toolkit.Run());
 
-  ASSERT_EQ(toolkit.stdout(), "[][]");
+  ASSERT_EQ(stdout.str(), "[][]");
 }
 
 TEST_F(PrintTests, print_works_for_arrays_of_32_bit_integers_with_multiple_elements)
@@ -253,7 +254,7 @@ TEST_F(PrintTests, print_works_for_arrays_of_32_bit_integers_with_multiple_eleme
   ASSERT_TRUE(toolkit.Compile(TEXT));
   ASSERT_TRUE(toolkit.Run());
 
-  ASSERT_EQ(toolkit.stdout(), "[-1, 0, 1][0, 1, 2]");
+  ASSERT_EQ(stdout.str(), "[-1, 0, 1][0, 1, 2]");
 }
 
 TEST_F(PrintTests, print_works_for_arrays_of_32_bit_integers_with_one_element)
@@ -273,7 +274,7 @@ TEST_F(PrintTests, print_works_for_arrays_of_32_bit_integers_with_one_element)
   ASSERT_TRUE(toolkit.Compile(TEXT));
   ASSERT_TRUE(toolkit.Run());
 
-  ASSERT_EQ(toolkit.stdout(), "[-42][42]");
+  ASSERT_EQ(stdout.str(), "[-42][42]");
 }
 
 TEST_F(PrintTests, print_works_for_empty_arrays_of_32_bit_integers)
@@ -291,7 +292,7 @@ TEST_F(PrintTests, print_works_for_empty_arrays_of_32_bit_integers)
   ASSERT_TRUE(toolkit.Compile(TEXT));
   ASSERT_TRUE(toolkit.Run());
 
-  ASSERT_EQ(toolkit.stdout(), "[][]");
+  ASSERT_EQ(stdout.str(), "[][]");
 }
 
 TEST_F(PrintTests, print_works_for_arrays_of_64_bit_integers_with_multiple_elements)
@@ -311,7 +312,7 @@ TEST_F(PrintTests, print_works_for_arrays_of_64_bit_integers_with_multiple_eleme
   ASSERT_TRUE(toolkit.Compile(TEXT));
   ASSERT_TRUE(toolkit.Run());
 
-  ASSERT_EQ(toolkit.stdout(), "[-1, 0, 1][0, 1, 2]");
+  ASSERT_EQ(stdout.str(), "[-1, 0, 1][0, 1, 2]");
 }
 
 TEST_F(PrintTests, print_works_for_arrays_of_64_bit_integers_with_one_element)
@@ -331,7 +332,7 @@ TEST_F(PrintTests, print_works_for_arrays_of_64_bit_integers_with_one_element)
   ASSERT_TRUE(toolkit.Compile(TEXT));
   ASSERT_TRUE(toolkit.Run());
 
-  ASSERT_EQ(toolkit.stdout(), "[-42][42]");
+  ASSERT_EQ(stdout.str(), "[-42][42]");
 }
 
 TEST_F(PrintTests, print_works_for_empty_arrays_of_64_bit_integers)
@@ -349,7 +350,7 @@ TEST_F(PrintTests, print_works_for_empty_arrays_of_64_bit_integers)
   ASSERT_TRUE(toolkit.Compile(TEXT));
   ASSERT_TRUE(toolkit.Run());
 
-  ASSERT_EQ(toolkit.stdout(), "[][]");
+  ASSERT_EQ(stdout.str(), "[][]");
 }
 
 // TODO(WK)
@@ -374,7 +375,7 @@ TEST_F(PrintTests, DISABLED_print_works_for_two_dimensional_arrays_of_integers)
   ASSERT_TRUE(toolkit.Compile(TEXT));
   ASSERT_TRUE(toolkit.Run());
 
-  ASSERT_EQ(toolkit.stdout(), "[[1, 2], [3, 4]]");
+  ASSERT_EQ(stdout.str(), "[[1, 2], [3, 4]]");
 }
 
 TEST_F(PrintTests, print_works_for_strings)
@@ -390,7 +391,7 @@ TEST_F(PrintTests, print_works_for_strings)
   ASSERT_TRUE(toolkit.Compile(TEXT));
   ASSERT_TRUE(toolkit.Run());
 
-  ASSERT_EQ(toolkit.stdout(), "abc def");
+  ASSERT_EQ(stdout.str(), "abc def");
 }
 
 // TODO(WK)
@@ -409,7 +410,7 @@ TEST_F(PrintTests, DISABLED_print_works_for_arrays_of_strings)
   ASSERT_TRUE(toolkit.Compile(TEXT));
   ASSERT_TRUE(toolkit.Run());
 
-  ASSERT_EQ(toolkit.stdout(), "[a, b]");
+  ASSERT_EQ(stdout.str(), "[a, b]");
 }
 
 // TODO(WK)
@@ -434,7 +435,7 @@ TEST_F(PrintTests, DISABLED_print_works_for_two_dimensional_arrays_of_strings)
   ASSERT_TRUE(toolkit.Compile(TEXT));
   ASSERT_TRUE(toolkit.Run());
 
-  ASSERT_EQ(toolkit.stdout(), "[[a, b], [c, d]]");
+  ASSERT_EQ(stdout.str(), "[[a, b], [c, d]]");
 }
 
 TEST_F(PrintTests, print_works_for_booleans)
@@ -453,7 +454,7 @@ TEST_F(PrintTests, print_works_for_booleans)
   ASSERT_TRUE(toolkit.Compile(TEXT));
   ASSERT_TRUE(toolkit.Run());
 
-  ASSERT_EQ(toolkit.stdout(), "true-false");
+  ASSERT_EQ(stdout.str(), "true-false");
 }
 
 TEST_F(PrintTests, print_works_for_null_arrays)
@@ -469,7 +470,7 @@ TEST_F(PrintTests, print_works_for_null_arrays)
   ASSERT_TRUE(toolkit.Compile(TEXT));
   ASSERT_TRUE(toolkit.Run());
 
-  ASSERT_EQ(toolkit.stdout(), "(nullptr)");
+  ASSERT_EQ(stdout.str(), "(nullptr)");
 }
 
 TEST_F(PrintTests, print_works_for_null_strings)
@@ -485,7 +486,7 @@ TEST_F(PrintTests, print_works_for_null_strings)
   ASSERT_TRUE(toolkit.Compile(TEXT));
   ASSERT_TRUE(toolkit.Run());
 
-  ASSERT_EQ(toolkit.stdout(), "(nullptr)");
+  ASSERT_EQ(stdout.str(), "(nullptr)");
 }
 
 // TODO(WK)
@@ -504,7 +505,7 @@ TEST_F(PrintTests, DISABLED_print_works_for_arrays_of_booleans)
   ASSERT_TRUE(toolkit.Compile(TEXT));
   ASSERT_TRUE(toolkit.Run());
 
-  ASSERT_EQ(toolkit.stdout(), "[true, false]");
+  ASSERT_EQ(stdout.str(), "[true, false]");
 }
 
 }  // namespace

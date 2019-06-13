@@ -44,7 +44,7 @@ public:
   /// @}
 
 private:
-  using UnderlyingMap = std::map<std::string, ConstByteArray>;
+  using UnderlyingMap = std::unordered_map<std::string, ConstByteArray>;
   using DeniedKeys    = std::unordered_set<std::string>;
 
   bool IsPermittedKey(std::string const &key) const;
@@ -55,5 +55,5 @@ private:
 
 inline bool FakeIoObserver::IsPermittedKey(std::string const &key) const
 {
-  return denied_keys_.find(key) != denied_keys_.end();
+  return denied_keys_.find(key) == denied_keys_.end();
 }
