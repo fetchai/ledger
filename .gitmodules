@@ -16,3 +16,6 @@
 [submodule "vendor/msgpack"]
 	path = vendor/msgpack
 	url = https://github.com/msgpack/msgpack-c.git
+[submodule "vendor/backward-cpp"]
+	path = vendor/backward-cpp
+	url = https://github.com/n-hutton/backward-cpp.git

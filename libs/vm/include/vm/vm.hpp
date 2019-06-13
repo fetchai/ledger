@@ -406,17 +406,44 @@ public:
     return type_info_array_[type_id];
   }
 
-  bool IsDefaultConstructable(TypeId type_id) const
+  bool IsDefaultSerializeConstructable(TypeId type_id) const
   {
     TypeIndex idx = registered_types_.GetTypeIndex(type_id);
     auto it = deserialization_constructors_.find(idx);
-    return (it != deserialization_constructors_.end());
+
+    if(it == deserialization_constructors_.end())
+    {
+      TypeInfo tinfo = GetTypeInfo(type_id);
+
+      if(tinfo.template_type_id == TypeIds::Unknown)
+      {
+        return false;
+      }
+
+      idx = registered_types_.GetTypeIndex(tinfo.template_type_id);
+      it = deserialization_constructors_.find(idx);
+      return (it != deserialization_constructors_.end());
+    }
+    return true;
   }
 
-  Ptr< Object > DefaultConstruct(TypeId type_id) 
+
+  Ptr< Object > DefaultSerializeConstruct(TypeId type_id) 
   {
+    // Resolving constructor
     TypeIndex idx = registered_types_.GetTypeIndex(type_id);
     auto it = deserialization_constructors_.find(idx);
+
+    if(it == deserialization_constructors_.end())
+    {
+      // Testing if there is an interface constructor
+      TypeInfo tinfo = GetTypeInfo(type_id);
+      if(tinfo.template_type_id != TypeIds::Unknown)
+      {
+        idx = registered_types_.GetTypeIndex(tinfo.template_type_id);
+        it = deserialization_constructors_.find(idx);
+      }
+    }
 
     if(it == deserialization_constructors_.end())
     {

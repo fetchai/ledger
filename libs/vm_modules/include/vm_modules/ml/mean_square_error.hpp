@@ -51,9 +51,8 @@ public:
     fetch::math::Tensor<float> dt =
         fetch::ml::ops::MeanSquareError<fetch::math::Tensor<float>>::Backward(
             {*pred, *groundTruth});
-    fetch::vm::Ptr<fetch::vm_modules::ml::TensorWrapper> ret;// =
-//        this->vm_->CreateNewObject<fetch::vm_modules::ml::TensorWrapper>(dt.shape());
-// TODO: FIX    (*ret).Copy(dt);
+    fetch::vm::Ptr<fetch::vm_modules::ml::TensorWrapper> ret =  this->vm_->CreateNewObject<fetch::vm_modules::ml::TensorWrapper>(dt.shape());
+    (*ret).Copy(dt);
     return ret;
   }
 };

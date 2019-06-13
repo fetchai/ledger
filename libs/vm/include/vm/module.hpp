@@ -57,8 +57,7 @@ struct CreateSerializeConstructor
   static DefaultConstructorHandler Apply(Ts ...args) 
   {    
     return [args...](VM *vm, TypeId id) -> Ptr<Object> {
-      std::cout << "Invoking constructor with arguments" << std::endl;      
-      return T::Constructor(vm, id, args...); // vm->CreateNewObject<T, Ts...>(args...); //std::forward<Ts>(args)...);
+      return T::Constructor(vm, id, args...); 
     };
   }
 };
@@ -66,10 +65,9 @@ struct CreateSerializeConstructor
 template <typename T> 
 struct CreateSerializeConstructor<T>
 {
-  static DefaultConstructorHandler Apply() // Default constructor
+  static DefaultConstructorHandler Apply() 
   {    
     return [](VM *vm, TypeId id) -> Ptr<Object> {
-      std::cout << "Invoking default constructor" << std::endl;
       return T::Constructor(vm, id);
     };
   }

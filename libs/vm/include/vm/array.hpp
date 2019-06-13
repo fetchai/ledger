@@ -248,7 +248,7 @@ private:
     {
       if(v == nullptr)
       {
-        RuntimeError("Cannot serialise null reference.");
+        RuntimeError("Cannot serialise null reference element in " + GetUniqueId() );
         return false;
       }
 
@@ -284,9 +284,17 @@ private:
       return false;
     }
 
+    auto info = vm_->GetTypeInfo(element_type_id);
+
+    if(!vm_->IsDefaultSerializeConstructable(element_type_id))
+    {
+      vm_->RuntimeError("Cannot deserialize type " + vm_->GetUniqueId(element_type_id) + " as no serialisation constructor exists.");
+      return false;
+    }
+
     for(Ptr< Object > &v: data)
     {
-      v = vm_->DefaultConstruct(element_type_id);
+      v = vm_->DefaultSerializeConstruct(element_type_id);
       if(!v->DeserializeFrom(buffer))
       {
         return false;

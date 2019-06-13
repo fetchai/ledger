@@ -112,13 +112,14 @@ void Generator::ResolveTypes(IR const &ir)
   {
     if (type->type_kind == TypeKind::UserDefinedInstantiation)
     {
+      TypeId      template_type_id = type->template_type->resolved_id;
       TypeIdArray parameter_type_ids;
       for (auto const &parameter_type : type->parameter_types)
       {
         parameter_type_ids.push_back(parameter_type->resolved_id);
       }
-      uint16_t index =
-          executable_.AddType(TypeInfo(type->type_kind, type->name, parameter_type_ids));
+      uint16_t index = executable_.AddType(
+          TypeInfo(type->type_kind, type->name, template_type_id, parameter_type_ids));
       type->resolved_id = uint16_t(num_system_types_ + index);
       continue;
     }
