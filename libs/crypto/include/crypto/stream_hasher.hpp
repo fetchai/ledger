@@ -27,7 +27,7 @@ namespace crypto {
 class StreamHasher
 {
 public:
-  template< uint16_t S >
+  template <uint16_t S>
   using UInt                  = vectorise::UInt<S>;
   virtual void        Reset() = 0;
   virtual bool        Update(uint8_t const *data_to_hash, std::size_t const &size) = 0;
@@ -62,7 +62,7 @@ public:
     return Update(reinterpret_cast<uint8_t const *>(vect.data()), vect.size() * sizeof(T));
   }
 
-  template< uint16_t S >
+  template <uint16_t S>
   UInt<S> Update(UInt<S> const &val)
   {
     return Update(val.pointer(), val.size());
