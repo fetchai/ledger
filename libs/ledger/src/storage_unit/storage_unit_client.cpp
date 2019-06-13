@@ -268,7 +268,14 @@ byte_array::ConstByteArray StorageUnitClient::Commit(uint64_t commit_index)
 
     while (permanent_state_merkle_stack_.size() != commit_index + 1)
     {
-      permanent_state_merkle_stack_.Push(MerkleTreeBlock{});
+      if(permanent_state_merkle_stack_.size() > commit_index + 1)
+      {
+        permanent_state_merkle_stack_.Pop();
+      }
+      else
+      {
+        permanent_state_merkle_stack_.Push(MerkleTreeBlock{});
+      }
     }
 
     permanent_state_merkle_stack_.Set(commit_index, MerkleTreeBlock{tree});
