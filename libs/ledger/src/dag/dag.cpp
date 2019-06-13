@@ -129,7 +129,7 @@ DAG::DAG(std::string const &db_name, bool load, CertificatePtr certificate)
 std::vector<DAGNode> DAG::GetLatest(bool previous_epoch_only)
 {
   std::vector<DAGNode> ret;
-  std::lock_guard<fetch::mutex::Mutex> lock(mutex_);
+  FETCH_LOCK(mutex_);
 
   for(auto const &node_hash : previous_epoch_.all_nodes)
   {
@@ -157,7 +157,7 @@ void DAG::AddTransaction(Transaction const &tx, DAGTypes type)
     return;
   }
 
-  std::lock_guard<fetch::mutex::Mutex> lock(mutex_);
+  FETCH_LOCK(mutex_);
 
   // Create a new dag node containing this data
   DAGNodePtr new_node = std::make_shared<DAGNode>();
@@ -178,7 +178,7 @@ void DAG::AddTransaction(Transaction const &tx, DAGTypes type)
 
 void DAG::AddWork(Work const &solution)
 {
-  std::lock_guard<fetch::mutex::Mutex> lock(mutex_);
+  FETCH_LOCK(mutex_);
 
   // Create a new dag node containing this data
   DAGNodePtr new_node = std::make_shared<DAGNode>();
@@ -207,7 +207,7 @@ void DAG::AddWork(Work const &solution)
 
 void DAG::AddArbitrary(ConstByteArray const &payload)
 {
-  std::lock_guard<fetch::mutex::Mutex> lock(mutex_);
+  FETCH_LOCK(mutex_);
 
   // Create a new dag node containing this data
   DAGNodePtr new_node = std::make_shared<DAGNode>();
@@ -305,14 +305,14 @@ void DAG::SetReferencesInternal(DAGNodePtr node)
 bool DAG::AddDAGNode(DAGNode node)
 {
   assert(node.hash.size() > 0);
-  std::lock_guard<fetch::mutex::Mutex> lock(mutex_);
+  FETCH_LOCK(mutex_);
   bool success = PushInternal(std::make_shared<DAGNode>(node));
   return success;
 }
 
 std::vector<DAGNode> DAG::GetRecentlyAdded()
 {
-  std::lock_guard<fetch::mutex::Mutex> lock(mutex_);
+  FETCH_LOCK(mutex_);
   std::vector<DAGNode> ret = std::move(recently_added_);
   recently_added_.clear();
   return ret;
@@ -320,7 +320,7 @@ std::vector<DAGNode> DAG::GetRecentlyAdded()
 
 std::vector<fetch::byte_array::ConstByteArray> DAG::GetRecentlyMissing()
 {
-  std::lock_guard<fetch::mutex::Mutex> lock(mutex_);
+  FETCH_LOCK(mutex_);
   std::vector<NodeHash> ret = std::move(missing_);
   missing_.clear();
   return ret;
@@ -401,7 +401,7 @@ bool DAG::TooOldInternal(uint64_t oldest_reference)
 
 bool DAG::GetDAGNode(ConstByteArray const &hash, DAGNode &node)
 {
-  std::lock_guard<fetch::mutex::Mutex> lock(mutex_);
+  FETCH_LOCK(mutex_);
   auto ret = GetDAGNodeInternal(hash);
 
   if(ret)
@@ -420,7 +420,7 @@ bool DAG::GetDAGNode(ConstByteArray const &hash, DAGNode &node)
 
 bool DAG::GetWork(ConstByteArray const &hash, Work &work)
 {
-  std::lock_guard<fetch::mutex::Mutex> lock(mutex_);
+  FETCH_LOCK(mutex_);
   bool success{false};
 
   // lookup the DAG node in question
@@ -578,7 +578,7 @@ void DAG::HealLooseBlocksInternal(ConstByteArray added_hash)
 // Create an epoch given our current tips (doesn't advance the dag)
 DAGEpoch DAG::CreateEpoch(uint64_t block_number)
 {
-  std::lock_guard<fetch::mutex::Mutex> lock(mutex_);
+  FETCH_LOCK(mutex_);
   DAGEpoch ret;
   ret.block_number = block_number;
 
@@ -662,7 +662,7 @@ DAGEpoch DAG::CreateEpoch(uint64_t block_number)
 bool DAG::CommitEpoch(DAGEpoch new_epoch)
 {
   FETCH_LOG_INFO(LOGGING_NAME, "Committing epoch: ", new_epoch.block_number, " Nodes: ", new_epoch.all_nodes.size());
-  std::lock_guard<fetch::mutex::Mutex> lock(mutex_);
+  FETCH_LOCK(mutex_);
 
   if(new_epoch.block_number != most_recent_epoch_ + 1)
   {
@@ -675,8 +675,6 @@ bool DAG::CommitEpoch(DAGEpoch new_epoch)
     // Remove all TXs from the active node pool that are referenced in this epoch
     // also remove tips that refer to nodes in this epoch
     // Note that unaffected tips will remain valid but will have less elements
-
-    std::cerr << "hash in epoch: " << node_hash.ToBase64() << std::endl; // DELETEME_NH
 
     // move finalised nodes into long term storage
     auto it_node_to_rmv = node_pool_.find(node_hash);
@@ -695,18 +693,9 @@ bool DAG::CommitEpoch(DAGEpoch new_epoch)
     auto it_tip_to_rmv = tips_.find(node_hash);
     if(it_tip_to_rmv != tips_.end())
     {
-      std::cerr << "tips xxx:" << all_tips_.size() << std::endl; // DELETEME_NH
-      std::cerr << "tips xxx:" << tips_.size() << std::endl; // DELETEME_NH
-
-      std::cerr << "removing tip" << std::endl; // DELETEME_NH
       DeleteTip(node_hash);
-      std::cerr << "tips yyy:" << all_tips_.size() << std::endl; // DELETEME_NH
-      std::cerr << "tips yyy:" << tips_.size() << std::endl; // DELETEME_NH
     }
   }
-
-  std::cerr << "tips left 1:" << all_tips_.size() << std::endl; // DELETEME_NH
-  std::cerr << "tips left 2:" << tips_.size() << std::endl; // DELETEME_NH
 
   // push back current epoch
   {
@@ -925,7 +914,7 @@ bool DAG::NodeInvalidInternal(DAGNodePtr node)
 bool DAG::SatisfyEpoch(DAGEpoch &epoch)
 {
   FETCH_LOG_DEBUG(LOGGING_NAME, "Satisfying epoch: ", epoch.block_number);
-  std::lock_guard<fetch::mutex::Mutex> lock(mutex_);
+  FETCH_LOCK(mutex_);
 
   if(epoch.block_number == 0)
   {
@@ -1068,7 +1057,7 @@ bool DAG::SatisfyEpoch(DAGEpoch &epoch)
 // TODO(HUT): this
 bool DAG::RevertToEpoch(uint64_t epoch_bn_to_revert)
 {
-  std::lock_guard<fetch::mutex::Mutex> lock(mutex_);
+  FETCH_LOCK(mutex_);
 
   if(epoch_bn_to_revert == 0)
   {
@@ -1204,13 +1193,13 @@ bool DAG::SetEpochInStorage(std::string const &, DAGEpoch const &epoch, bool is_
 
 uint64_t DAG::CurrentEpoch() const
 {
-  std::lock_guard<fetch::mutex::Mutex> lock(mutex_);
+  FETCH_LOCK(mutex_);
   return most_recent_epoch_;
 }
 
 bool DAG::HasEpoch(EpochHash const &hash)
 {
-  std::lock_guard<fetch::mutex::Mutex> lock(mutex_);
+  FETCH_LOCK(mutex_);
 
   // Check for current before checking the file
   if(hash == previous_epoch_.hash)

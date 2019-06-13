@@ -82,7 +82,7 @@ private:
   using DAGTipID        = uint64_t;
   using DAGTipPtr       = std::shared_ptr<DAGTip>;
   using DAGNodePtr      = std::shared_ptr<DAGNode>;
-  using Mutex           = mutex::Mutex;
+  using Mutex           = std::recursive_mutex;
   using CertificatePtr  = p2p::P2PService::CertificatePtr;
   using DAGTypes        = DAGInterface::DAGTypes;
 
@@ -189,7 +189,7 @@ private:
 
   std::string           db_name_;
   CertificatePtr        certificate_;
-  mutable Mutex mutex_{__LINE__, __FILE__};
+  mutable Mutex mutex_;
 };
 
 }  // namespace ledger
