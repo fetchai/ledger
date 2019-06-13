@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm_modules/ml/tensor.hpp"
+#include "vm_modules/math/tensor.hpp"
 
 #include "ml/graph.hpp"
 #include "ml/layers/fully_connected.hpp"

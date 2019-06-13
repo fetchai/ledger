@@ -60,7 +60,8 @@ public:
 
   fetch::vm::Ptr<fetch::vm::Array<VMTensor::SizeType>> shape()
   {
-    return new fetch::vm::Array<VMTensor::SizeType>(tensor_.shape());
+    fetch::vm::Array<>(vm_, type_id_, elemen element_type_id__)
+    return fetch::vm::Array<VMTensor::SizeType>::Construct(vm_, type_id_, tensor_.shape());
   }
 
   ArrayType const & GetTensor()

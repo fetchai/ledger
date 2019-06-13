@@ -30,13 +30,13 @@ namespace math {
  * method for taking the argmax of a tensor
  */
 template <typename T>
-T VMArgMax(fetch::vm::VM *, T a)
+T VMArgMax(fetch::vm::VM vm, T a)
 {
 //  using DataType = typename (*a)::Type;
   using DataType = float;
 
   // Construct return tensor (get shape from input tensor)
-  fetch::vm_modules::math::VMTensor ret((*a).shape());
+  fetch::vm_modules::math::VMTensor ret(vm, , (*a).shape());
 
   // do the argmax
   fetch::math::ArgMax((*a).GetTensor(), ret);

@@ -60,13 +60,13 @@ struct System : public fetch::vm::Object
 std::vector<std::string> System::args;
 
 class TrainingPairWrapper : public fetch::vm::Object,
-                            public std::pair<fetch::vm::Ptr<fetch::vm_modules::ml::TensorWrapper>,
-                                             fetch::vm::Ptr<fetch::vm_modules::ml::TensorWrapper>>
+                            public std::pair<fetch::vm::Ptr<fetch::vm_modules::math::VMTensor>,
+                                             fetch::vm::Ptr<fetch::vm_modules::math::VMTensor>>
 {
 public:
   TrainingPairWrapper(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
-                      fetch::vm::Ptr<fetch::vm_modules::ml::TensorWrapper> ta,
-                      fetch::vm::Ptr<fetch::vm_modules::ml::TensorWrapper> tb)
+                      fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> ta,
+                      fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> tb)
     : fetch::vm::Object(vm, type_id)
   {
     this->first  = ta;
@@ -75,18 +75,18 @@ public:
 
   static fetch::vm::Ptr<TrainingPairWrapper> Constructor(
       fetch::vm::VM *vm, fetch::vm::TypeId type_id,
-      fetch::vm::Ptr<fetch::vm_modules::ml::TensorWrapper> ta,
-      fetch::vm::Ptr<fetch::vm_modules::ml::TensorWrapper> tb)
+      fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> ta,
+      fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> tb)
   {
     return new TrainingPairWrapper(vm, type_id, ta, tb);
   }
 
-  fetch::vm::Ptr<fetch::vm_modules::ml::TensorWrapper> data()
+  fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> data()
   {
     return this->second;
   }
 
-  fetch::vm::Ptr<fetch::vm_modules::ml::TensorWrapper> label()
+  fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> label()
   {
     return this->first;
   }
@@ -120,9 +120,9 @@ public:
     return dataHolder;
   }
 
-  void Display(fetch::vm::Ptr<fetch::vm_modules::ml::TensorWrapper> const &d)
+  void Display(fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> const &d)
   {
-    loader_.Display(*d);
+    loader_.Display((*d).GetTensor());
   }
 
 private:
@@ -180,14 +180,14 @@ int main(int argc, char **argv)
       .CreateStaticMemberFunction("Argv", &System::Argv);
 
 
-  fetch::vm_modules::CreateArgMax(*module);
-  fetch::vm_modules::ml::CreateTensor(*module);
+  fetch::vm_modules::math::CreateArgMax(*module);
+  fetch::vm_modules::math::CreateTensor(*module);
   fetch::vm_modules::ml::CreateGraph(*module);
   fetch::vm_modules::ml::CreateCrossEntropy(*module);
 
   module->CreateClassType<TrainingPairWrapper>("TrainingPair")
-      .CreateConstuctor<fetch::vm::Ptr<fetch::vm_modules::ml::TensorWrapper>,
-                        fetch::vm::Ptr<fetch::vm_modules::ml::TensorWrapper>>()
+      .CreateConstuctor<fetch::vm::Ptr<fetch::vm_modules::math::VMTensor>,
+                        fetch::vm::Ptr<fetch::vm_modules::math::VMTensor>>()
       .CreateMemberFunction("Data", &TrainingPairWrapper::data)
       .CreateMemberFunction("Label", &TrainingPairWrapper::label);
 
