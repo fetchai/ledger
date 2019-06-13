@@ -237,5 +237,9 @@ inline constexpr void ClearAll(Ts &&... ts) noexcept(noexcept(ForEach(ClearOne{}
   ForEach(ClearOne{}, std::forward<Ts>(ts)...);
 }
 
+template <class... Ts>
+constexpr void no_op(Ts &&... /*ts*/) noexcept
+{}
+
 }  // namespace value_util
 }  // namespace fetch

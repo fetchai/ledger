@@ -42,8 +42,8 @@ TYPED_TEST(FullyConnectedTest, set_input_and_evaluate_test)  // Use the class as
   TypeParam output = fc.Evaluate("FC_MatrixMultiply");
 
   ASSERT_EQ(output.shape().size(), 2);
-  ASSERT_EQ(output.shape()[0], 1);
-  ASSERT_EQ(output.shape()[1], 10);
+  ASSERT_EQ(output.shape()[0], 10);
+  ASSERT_EQ(output.shape()[1], 1);
   // No way to test actual values for now as weights are randomly initialised.
 }
 
@@ -56,8 +56,8 @@ TYPED_TEST(FullyConnectedTest, ops_forward_test)  // Use the class as an Ops
   fc.Forward({input_data}, output);
 
   ASSERT_EQ(output.shape().size(), 2);
-  ASSERT_EQ(output.shape()[0], 1);
-  ASSERT_EQ(output.shape()[1], 10);
+  ASSERT_EQ(output.shape()[0], 10);
+  ASSERT_EQ(output.shape()[1], 1);
   // No way to test actual values for now as weights are randomly initialised.
 }
 
@@ -69,7 +69,7 @@ TYPED_TEST(FullyConnectedTest, ops_backward_test)  // Use the class as an Ops
   TypeParam output(fc.ComputeOutputShape({input_data}));
   fc.Forward({input_data}, output);
 
-  TypeParam error_signal(std::vector<typename TypeParam::SizeType>({1, 10}));
+  TypeParam error_signal(std::vector<typename TypeParam::SizeType>({10, 1}));
 
   std::vector<TypeParam> backprop_error = fc.Backward({input_data}, error_signal);
   ASSERT_EQ(backprop_error.size(), 1);
@@ -93,8 +93,8 @@ TYPED_TEST(FullyConnectedTest, node_forward_test)  // Use the class as a Node
   TypeParam prediction = fc.Evaluate();
 
   ASSERT_EQ(prediction.shape().size(), 2);
-  ASSERT_EQ(prediction.shape()[0], 1);
-  ASSERT_EQ(prediction.shape()[1], 42);
+  ASSERT_EQ(prediction.shape()[0], 42);
+  ASSERT_EQ(prediction.shape()[1], 1);
 }
 
 TYPED_TEST(FullyConnectedTest, node_backward_test)  // Use the class as a Node
@@ -109,7 +109,7 @@ TYPED_TEST(FullyConnectedTest, node_backward_test)  // Use the class as a Node
   fc.AddInput(placeholder);
   TypeParam prediction = fc.Evaluate();
 
-  TypeParam error_signal(std::vector<typename TypeParam::SizeType>({1, 42}));
+  TypeParam error_signal(std::vector<typename TypeParam::SizeType>({42, 1}));
   auto      backprop_error = fc.BackPropagate(error_signal);
 
   ASSERT_EQ(backprop_error.size(), 1);
@@ -131,8 +131,8 @@ TYPED_TEST(FullyConnectedTest, graph_forward_test)  // Use the class as a Node
 
   TypeParam prediction = g.Evaluate("FullyConnected");
   ASSERT_EQ(prediction.shape().size(), 2);
-  ASSERT_EQ(prediction.shape()[0], 1);
-  ASSERT_EQ(prediction.shape()[1], 42);
+  ASSERT_EQ(prediction.shape()[0], 42);
+  ASSERT_EQ(prediction.shape()[1], 1);
 }
 
 TYPED_TEST(FullyConnectedTest, getStateDict)
@@ -146,9 +146,9 @@ TYPED_TEST(FullyConnectedTest, getStateDict)
 
   ASSERT_NE(sd.dict_["FCTest_Weights"].weights_, nullptr);
   EXPECT_EQ(sd.dict_["FCTest_Weights"].weights_->shape(),
-            std::vector<typename TypeParam::SizeType>({50, 10}));
+            std::vector<typename TypeParam::SizeType>({10, 50}));
 
   ASSERT_NE(sd.dict_["FCTest_Bias"].weights_, nullptr);
   EXPECT_EQ(sd.dict_["FCTest_Bias"].weights_->shape(),
-            std::vector<typename TypeParam::SizeType>({1, 10}));
+            std::vector<typename TypeParam::SizeType>({10, 1}));
 }

@@ -260,6 +260,7 @@ void Analyser::AddError(uint16_t line, std::string const &message)
 
 void Analyser::BuildBlock(BlockNodePtr const &block_node)
 {
+  blocks_.push_back(block_node);
   for (NodePtr const &child : block_node->block_children)
   {
     switch (child->node_kind)
@@ -288,6 +289,7 @@ void Analyser::BuildBlock(BlockNodePtr const &block_node)
       break;
     }  // switch
   }
+  blocks_.pop_back();
 }
 
 void Analyser::BuildFile(BlockNodePtr const &file_node)

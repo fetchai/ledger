@@ -54,11 +54,6 @@ namespace ledger {
  */
 struct Tip
 {
-  Tip() = default;
-  Tip(uint64_t weight)
-    : total_weight{weight}
-  {}
-
   uint64_t total_weight{0};
 };
 
@@ -70,7 +65,28 @@ enum class BlockStatus
   INVALID     ///< The block is invalid and has not been added to the chain
 };
 
-char const *ToString(BlockStatus status);
+/**
+ * Converts a block status into a human readable string
+ *
+ * @param status The status enumeration
+ * @return The output text
+ */
+inline constexpr char const *ToString(BlockStatus status)
+{
+  switch (status)
+  {
+  case BlockStatus::ADDED:
+    return "Added";
+  case BlockStatus::LOOSE:
+    return "Loose";
+  case BlockStatus::DUPLICATE:
+    return "Duplicate";
+  case BlockStatus::INVALID:
+    return "Invalid";
+  }
+
+  return "Unknown";
+}
 
 class MainChain
 {
@@ -78,7 +94,7 @@ public:
   using BlockPtr             = std::shared_ptr<Block const>;
   using Blocks               = std::vector<BlockPtr>;
   using BlockHash            = Digest;
-  using BlockHashs           = std::vector<BlockHash>;
+  using BlockHashes          = std::vector<BlockHash>;
   using BlockHashSet         = std::unordered_set<BlockHash>;
   using TransactionLayoutSet = std::unordered_set<TransactionLayout>;
 
@@ -134,7 +150,7 @@ public:
   /// @name Missing / Loose Management
   /// @{
   BlockHashSet GetMissingTips() const;
-  BlockHashs   GetMissingBlockHashes(uint64_t limit = UPPER_BOUND) const;
+  BlockHashes  GetMissingBlockHashes(uint64_t limit = UPPER_BOUND) const;
   bool         HasMissingBlocks() const;
   /// @}
 
@@ -149,13 +165,26 @@ public:
   MainChain &operator=(MainChain &&rhs) = delete;
 
 private:
+  struct DbRecord
+  {
+    Block block;
+    // genesis (hopefully) cannot be next hash so is used as undefined value
+    BlockHash next_hash = GENESIS_DIGEST;
+
+    BlockHash hash() const
+    {
+      return block.body.hash;
+    }
+  };
+
   using IntBlockPtr   = std::shared_ptr<Block>;
   using BlockMap      = std::unordered_map<BlockHash, IntBlockPtr>;
+  using References    = std::unordered_multimap<BlockHash, BlockHash>;
   using Proof         = Block::Proof;
   using TipsMap       = std::unordered_map<BlockHash, Tip>;
   using BlockHashList = std::list<BlockHash>;
   using LooseBlockMap = std::unordered_map<BlockHash, BlockHashList>;
-  using BlockStore    = fetch::storage::ObjectStore<Block>;
+  using BlockStore    = fetch::storage::ObjectStore<DbRecord>;
   using BlockStorePtr = std::unique_ptr<BlockStore>;
   using RMutex        = std::recursive_mutex;
   using RLock         = std::unique_lock<RMutex>;
@@ -192,6 +221,14 @@ private:
   void        AddBlockToCache(IntBlockPtr const &) const;
   /// @}
 
+  /// @name Low-level storage interface
+  /// @{
+  void                CacheBlock(IntBlockPtr const &block) const;
+  BlockMap::size_type UncacheBlock(BlockHash hash) const;
+  void                KeepBlock(IntBlockPtr const &block) const;
+  bool                LoadBlock(BlockHash const &hash, Block &block) const;
+  /// @}
+
   /// @name Tip Management
   /// @{
   bool AddTip(IntBlockPtr const &block);
@@ -204,14 +241,44 @@ private:
   BlockHash GetHeadHash();
   void      SetHeadHash(BlockHash const &hash);
 
+  bool RemoveTree(BlockHash const &hash, BlockHashSet &invalidated_blocks);
+
   BlockStorePtr block_store_;  /// < Long term storage and backup
   std::fstream  head_store_;
 
-  mutable RMutex   lock_;          ///< Mutex protecting block_chain_, tips_ & heaviest_
-  mutable BlockMap block_chain_;   ///< All recent blocks are kept in memory
-  TipsMap          tips_;          ///< Keep track of the tips
-  HeaviestTip      heaviest_;      ///< Heaviest block/tip
-  LooseBlockMap    loose_blocks_;  ///< Waiting (loose) blocks
+  mutable RMutex   lock_;         ///< Mutex protecting block_chain_, tips_ & heaviest_
+  mutable BlockMap block_chain_;  ///< All recent blocks are kept in memory
+  // The whole tree of previous-next relations among cached blocks
+  mutable References references_;
+  TipsMap            tips_;          ///< Keep track of the tips
+  HeaviestTip        heaviest_;      ///< Heaviest block/tip
+  LooseBlockMap      loose_blocks_;  ///< Waiting (loose) blocks
+
+  /**
+   * Serializer for the DbRecord
+   *
+   * @tparam T The serializer type
+   * @param serializer The reference to hte serializer
+   * @param dbRecord The reference to the DbRecord to be serialised
+   */
+  template <typename T>
+  friend void Serialize(T &serializer, DbRecord const &dbRecord)
+  {
+    serializer << dbRecord.block << dbRecord.next_hash;
+  }
+
+  /**
+   * Deserializer for the DbRecord
+   *
+   * @tparam T The serializer type
+   * @param serializer The reference to the serializer
+   * @param dbRecord The reference to the output dbRecord to be populated
+   */
+  template <typename T>
+  friend void Deserialize(T &serializer, DbRecord &dbRecord)
+  {
+    serializer >> dbRecord.block >> dbRecord.next_hash;
+  }
 };
 
 }  // namespace ledger

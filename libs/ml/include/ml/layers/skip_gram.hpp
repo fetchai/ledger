@@ -18,7 +18,6 @@
 //------------------------------------------------------------------------------
 
 #include "ml/layers/fully_connected.hpp"
-#include "ml/layers/layer.hpp"
 #include "ml/ops/activations/sigmoid.hpp"
 #include "ml/ops/embeddings.hpp"
 #include "ml/ops/matrix_multiply.hpp"
@@ -37,7 +36,7 @@ class Ops;
 namespace layers {
 
 template <class T>
-class SkipGram : public Layer<T>
+class SkipGram : public SubGraph<T>
 {
 public:
   using ArrayType    = T;
@@ -47,7 +46,8 @@ public:
 
   SkipGram(SizeType in_size, SizeType out, SizeType embedding_size, SizeType vocab_size,
            std::string const &name = "SkipGram", WeightsInit init_mode = WeightsInit::XAVIER_GLOROT)
-    : Layer<T>(in_size, out)
+    : in_size_(in_size)
+    , out_size_(out)
   {
 
     // define input and context placeholders
@@ -68,6 +68,7 @@ public:
     // dot product input and context embeddings
     std::string transpose_ctx = this->template AddNode<fetch::ml::ops::Transpose<ArrayType>>(
         name + "_TransposeCtx", {embed_ctx});
+
     std::string in_ctx_matmul = this->template AddNode<fetch::ml::ops::MatrixMultiply<ArrayType>>(
         name + "_In_Ctx_MatMul", {embed_in_, transpose_ctx});
 
@@ -114,13 +115,20 @@ public:
       std::vector<std::reference_wrapper<ArrayType const>> const &inputs) const
   {
     (void)inputs;
-    return {1, this->out_size};
+    return {this->out_size_, 1};
   }
 
   static constexpr char const *DESCRIPTOR = "SkipGram";
 
 private:
   std::string embed_in_ = "";
+  SizeType    in_size_;
+  SizeType    out_size_;
+
+  void Initialise(ArrayType &weights, WeightsInit init_mode)
+  {
+    fetch::ml::ops::Weights<ArrayType>::Initialise(weights, in_size_, out_size_, init_mode);
+  }
 };
 
 }  // namespace layers

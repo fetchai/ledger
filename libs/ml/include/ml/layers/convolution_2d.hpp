@@ -68,7 +68,7 @@ public:
         this->template AddNode<fetch::ml::ops::Weights<ArrayType>>(name + "_Weights", {});
 
     ArrayType weights_data(
-        std::vector<SizeType>{{output_channels_, input_channels_, kernel_size_, kernel_size_}});
+        std::vector<SizeType>{{output_channels_, input_channels_, kernel_size_, kernel_size_, 1}});
     fetch::ml::ops::Weights<ArrayType>::Initialise(weights_data, 1, 1, init_mode, seed);
     this->SetInput(weights, weights_data);
 
@@ -95,6 +95,9 @@ public:
     // output_shape_[2]=number of stride_size steps over input width
     output_shape.emplace_back((inputs.at(0).get().shape()[2] - kernel_size_ + stride_size_) /
                               stride_size_);
+    // output_shape_[3]=batch dimension
+    output_shape.emplace_back(1);
+
     return output_shape;
   }
 

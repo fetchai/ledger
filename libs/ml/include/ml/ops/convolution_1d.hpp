@@ -81,18 +81,18 @@ private:
  * https://www.scss.tcd.ie/~andersan/static/papers/asap-2017.pdf
  * @param inputs vector of tensor references where at:
  * inputs[0] = input_data[input_channels x input_height], inputs[1] = kernel_data[kernel_channels x
- * kernel_height]
- * @param output tensor of size [output_channels x number_of_stride_sized_steps]
+ * kernel_height x batch_position]
+ * @param output tensor of size [output_channels x number_of_stride_sized_steps x batch_position]
  * @return: output tensor parameter
  */
 template <class ArrayType>
 void Convolution1D<ArrayType>::Forward(VecTensorType const &inputs, ArrayType &output)
 {
   ASSERT(inputs.size() == 2);
-  // Input should be a 2D tensor [C x H]
-  ASSERT(inputs.at(0).get().shape().size() == 2);
-  // Kernels should be a 3D tensor [oC x iC x H]
-  ASSERT(inputs.at(1).get().shape().size() == 3);
+  // Input should be a 2D tensor [C x H x N]
+  ASSERT(inputs.at(0).get().shape().size() == 3);
+  // Kernels should be a 3D tensor [oC x iC x H x N]
+  ASSERT(inputs.at(1).get().shape().size() == 4);
   ASSERT(output.shape() == ComputeOutputShape(inputs));
 
   ArrayType input   = inputs.at(0).get();
@@ -130,8 +130,9 @@ void Convolution1D<ArrayType>::Forward(VecTensorType const &inputs, ArrayType &o
  * described here: https://www.scss.tcd.ie/~andersan/static/papers/asap-2017.pdf
  * @param inputs vector of tensor references where at:
  * inputs[0] = input_data[input_channels x input_height], inputs[1] = kernel_data[kernel_channels x
- * kernel_height]
- * @param error_signal tensor of size [output_channels x number_of_stride_sized_steps]
+ * kernel_height x batch_position]
+ * @param error_signal tensor of size [output_channels x number_of_stride_sized_steps x
+ * batch_position]
  * @return: output vector of tensors with back propagated error signal
  * output[0]=input_error[inputs[0].shape], output[1]=kernel_error[inputs[1].shape]
  */
@@ -140,10 +141,10 @@ std::vector<ArrayType> Convolution1D<ArrayType>::Backward(VecTensorType const &i
                                                           ArrayType const &    error_signal)
 {
   ASSERT(inputs.size() == 2);
-  // Input should be a 2D tensor [C x H]
-  ASSERT(inputs.at(0).get().shape().size() == 2);
-  // Kernels should be a 3D tensor [oC x iC x H]
-  ASSERT(inputs.at(1).get().shape().size() == 3);
+  // Input should be a 2D tensor [C x H x N]
+  ASSERT(inputs.at(0).get().shape().size() == 3);
+  // Kernels should be a 3D tensor [oC x iC x H x N]
+  ASSERT(inputs.at(1).get().shape().size() == 4);
   ASSERT(error_signal.shape() == ComputeOutputShape(inputs));
 
   SizeType output_height = error_signal.shape().at(1);
@@ -201,6 +202,9 @@ std::vector<typename ArrayType::SizeType> Convolution1D<ArrayType>::ComputeOutpu
   output_shape.emplace_back(
       (inputs.at(0).get().shape().at(1) - inputs.at(1).get().shape().at(2) + stride_size_) /
       stride_size_);
+  // output_shape_[2]=batch dimension
+  output_shape.emplace_back(1);
+
   return output_shape;
 }
 
@@ -230,7 +234,7 @@ void Convolution1D<ArrayType>::FillVerticalStride(ArrayType const &input,
       for (SizeType i_oc{0}; i_oc < output_channels; ++i_oc)  // Iterate over output channels
       {
 
-        vertical_stride.Set(i_oc, j_s, input.At(i_oc, i_ic, i_k));
+        vertical_stride(i_oc, j_s) = input.At(i_oc, i_ic, i_k, 0);
       }
       ++j_s;
     }
@@ -255,7 +259,7 @@ void Convolution1D<ArrayType>::ReverseFillVerticalStride(ArrayType &      input,
                                                          SizeType const   kernel_height)
 {
   SizeType j_s = 0;  // stride height iterator
-  assert(input.shape().size() == 3);
+  assert(input.shape().size() == 4);
   assert(vertical_stride.shape().size() == 2);
   for (SizeType i_ic{0}; i_ic < input_channels; ++i_ic)  // Iterate over input channels
   {
@@ -264,8 +268,7 @@ void Convolution1D<ArrayType>::ReverseFillVerticalStride(ArrayType &      input,
     {
       for (SizeType i_oc{0}; i_oc < output_channels; ++i_oc)  // Iterate over output channels
       {
-
-        input(i_oc, i_ic, i_k) = vertical_stride(i_oc, j_s);
+        input(i_oc, i_ic, i_k, 0) = vertical_stride(i_oc, j_s);
       }
       ++j_s;
     }
@@ -292,7 +295,7 @@ void Convolution1D<ArrayType>::FillHorizontalStride(ArrayType const &input,
   SizeType i_s;  // stride width index
   SizeType j_s;  // stride height index
   assert(horizontal_stride.shape().size() == 2);
-  assert(input.shape().size() == 2);
+  assert(input.shape().size() == 3);
 
   j_s = 0;
   for (SizeType i_o = 0; i_o < output_height; ++i_o)  // Iterate over output height
@@ -304,7 +307,7 @@ void Convolution1D<ArrayType>::FillHorizontalStride(ArrayType const &input,
 
       for (SizeType i_k = 0; i_k < kernel_height; i_k++)  // Iterate over kernel height
       {
-        horizontal_stride(i_s, j_s) = input(i_ic, i_o * stride_size_ + i_k);
+        horizontal_stride(i_s, j_s) = input(i_ic, i_o * stride_size_ + i_k, 0);
         ++i_s;
       }
     }
@@ -342,7 +345,7 @@ void Convolution1D<ArrayType>::ReverseFillHorizontalStride(ArrayType &      inpu
 
       for (SizeType i_k(0); i_k < kernel_height; i_k++)  // Iterate over kernel height
       {
-        input(i_ic, i_o * stride_size_ + i_k) = horizontal_stride(i_s, j_s);
+        input(i_ic, i_o * stride_size_ + i_k, 0) = horizontal_stride(i_s, j_s);
         ++i_s;
       }
     }
@@ -370,7 +373,7 @@ void Convolution1D<ArrayType>::FillOutput(ArrayType const &gemm_output, ArrayTyp
     i_tmp = 0;
     for (SizeType i_o = 0; i_o < output_height; ++i_o)  // Iterate over output height
     {
-      output(i_oc, i_o) = gemm_output(i_oc, i_tmp);
+      output(i_oc, i_o, 0) = gemm_output(i_oc, i_tmp);
       ++i_tmp;
     }
   }
@@ -396,7 +399,7 @@ void Convolution1D<ArrayType>::ReverseFillOutput(ArrayType &gemm_output, ArrayTy
     i_tmp = 0;
     for (SizeType i_o = 0; i_o < output_height; ++i_o)  // Iterate over output height
     {
-      gemm_output(i_oc, i_tmp) = output(i_oc, i_o);
+      gemm_output(i_oc, i_tmp) = output(i_oc, i_o, 0);
       ++i_tmp;
     }
   }

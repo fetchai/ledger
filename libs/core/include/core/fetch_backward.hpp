@@ -17,38 +17,29 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/ops/placeholder.hpp"
-#include "ml/ops/weights.hpp"
-#include "ml/subgraph.hpp"
+#include "core/logger.hpp"
 
-#include <cmath>
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wconversion"
+#pragma GCC diagnostic ignored "-Wpedantic"
+#pragma GCC diagnostic ignored "-Wsign-compare"
+#endif
 
-namespace fetch {
-namespace ml {
-namespace layers {
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wconversion"
+#pragma clang diagnostic ignored "-Wpedantic"
+#pragma clang diagnostic ignored "-Wsign-compare"
+#endif
 
-template <class T>
-class Layer : public SubGraph<T>
-{
-public:
-  using ArrayType    = T;
-  using ArrayPtrType = std::shared_ptr<ArrayType>;
-  using WeightsInit  = fetch::ml::ops::WeightsInitialisation;
+#include <backward.hpp>
+#include <signal.h>
 
-  std::uint64_t in_size;
-  std::uint64_t out_size;
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
 
-  Layer(std::uint64_t in, std::uint64_t out)
-    : in_size(in)
-    , out_size(out)
-  {}
-
-  void Initialise(ArrayType &weights, WeightsInit init_mode)
-  {
-    fetch::ml::ops::Weights<ArrayType>::Initialise(weights, in_size, out_size, init_mode);
-  }
-};
-
-}  // namespace layers
-}  // namespace ml
-}  // namespace fetch
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
