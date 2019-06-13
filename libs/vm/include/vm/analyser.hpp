@@ -114,7 +114,7 @@ private:
   TypePtr           void_type_;
   TypePtr           bool_type_;
   TypePtr           int8_type_;
-  TypePtr           byte_type_;
+  TypePtr           uint8_type_;
   TypePtr           int16_type_;
   TypePtr           uint16_type_;
   TypePtr           int32_type_;
@@ -134,6 +134,7 @@ private:
   TypePtr           matrix_type_;
   TypePtr           array_type_;
   TypePtr           map_type_;
+  TypePtr           sharded_state_type_;
   TypePtr           state_type_;
 
   BlockNodePtr             root_;

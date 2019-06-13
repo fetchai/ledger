@@ -36,59 +36,39 @@ features. Fetch will be delivering regular updates.
 
 ## Getting Started
 
-A more complete guide is available in our [Getting Started Guide](docs/source/getting_started/index.rst).
-However, the following section outlines some of the initial steps.
+```
+git clone https://github.com/fetchai/ledger.git
+cd ledger
+./scripts/quickstart.sh
+```
 
-To get started, ensure all the code along with the submodules has been checked out with the
-following commands:
-
-    git clone https://github.com/fetchai/ledger.git
-
-    cd ledger
-
-    git submodule update --init --recursive
-
-## Dependencies
-
-### Ubuntu
-
-    sudo apt-get install libssl-dev cmake python3-dev clang
-
-### MacOS
-
-    brew install cmake openssl
-
-## Building the code
-
-The project uses cmake so you can following formal build procedure of:
-
-    mkdir build
-
-    cd build
-
-    cmake ../
-
-    make -j
+Manual build steps are available in our [Getting Started Guide](docs/source/getting_started/index.rst).    
 
 ## Connecting to a test network
 
-Connecting and joining the test net is relatively straight forward. This first thing to do is to
-ensure that you have build the latest version of the `constellation` application.
-
-    cd build
-
-    cmake ../
-
-    make -j constellation
-
 Navigate to the constellation application folder:
 
-    cd apps/constellation
+```
+cd build/apps/constellation
+```
 
-Optionally delete the database files (in the case where you have been running a local network)
+Optionally delete the database files (in the case where you have been running a local network):
 
-    rm -f *.db
+```
+rm -f *.db
+```
 
-Start the network connecting to the `alpha` test network.
+Connect to the `alpha` test network:
 
-    ./constellation -bootstrap -network alpha
+```
+./constellation -bootstrap -network alpha
+```
+
+## Running the ledger locally
+
+Alternatively, you can run the ledger locally:
+
+```
+./constellation
+```
+

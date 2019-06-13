@@ -17,8 +17,10 @@
 //------------------------------------------------------------------------------
 
 #include "ml/layers/self_attention.hpp"
+
 #include "math/tensor.hpp"
 #include "ml/layers/fully_connected.hpp"
+
 #include <gtest/gtest.h>
 
 template <typename T>
@@ -43,6 +45,6 @@ TYPED_TEST(SelfAttentionTest, output_shape_test)  // Use the class as a Node
 
   TypeParam prediction = g.Evaluate("SelfAttention");
   ASSERT_EQ(prediction.shape().size(), 2);
-  ASSERT_EQ(prediction.shape()[0], 1);
-  ASSERT_EQ(prediction.shape()[1], 42);
+  ASSERT_EQ(prediction.shape()[0], 42);
+  ASSERT_EQ(prediction.shape()[1], 1);
 }

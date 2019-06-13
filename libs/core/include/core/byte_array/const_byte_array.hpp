@@ -484,8 +484,11 @@ private:
   void AppendInternal(std::size_t const acc_size, self_type const &other, Arg const &... others)
   {
     AppendInternal(acc_size + other.size(), others...);
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wrestrict"
     memcpy(pointer() + acc_size, other.pointer(),
            static_cast<size_t>(other.size()) & 0x7FFFFFFFFFFFFFFFull);
+#pragma GCC diagnostic pop
   }
 
   template <typename... Arg>

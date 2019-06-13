@@ -7,18 +7,20 @@ endif
   
 var trainingIterations = 1000000;
 
-var s = Array<UInt64>(2);
-s[0] = 28u64;
-s[1] = 28u64;
-var t = Tensor(s);
+var sa = Array<UInt64>(3);
+sa[0] = 28u64;
+sa[1] = 28u64;
+sa[2] = 1u64;
+var sb = Array<UInt64>(2);
+sb[0] = 10u64;
+sb[1] = 1u64;
 
-s[0] = 1u64;
-s[1] = 10u64;
-var gt = Tensor(s);
+var t = Tensor(sa);
+var gt = Tensor(sb);
 
 var g = Graph();
 var d = MNISTLoader(System.Argv(0), System.Argv(1));
-var p = TrainingPair(t);
+var p = TrainingPair(gt,t);
 var c = CrossEntropy();
 
 g.AddPlaceholder("Input");
@@ -29,27 +31,24 @@ g.AddRelu("Relu_2", "FC_2");
 g.AddFullyConnected("FC_3", "Relu_2", 64, 10);
 g.AddSoftmax("Softmax", "FC_3");
 
-g.SetInput("Input", t);
 var average = 0.0f;
 for(i in 0:trainingIterations)
     d.GetData(p);
     g.SetInput("Input", p.Data());
-    gt.SetAt(p.Label(), 1.0f); // Set ground truth label to one (gt is one-hot encoded)
     var pred = g.Evaluate("Softmax");
-    var loss = c.Forward(pred, gt);
+    var loss = c.Forward(pred, p.Label());
     average += loss;
     var remainder = i - (i / 100 * 100);
     if (remainder == 0) // No % operator :(
       print(average);
       average = 0.0f;
       d.Display(p.Data());
-      print("Expected  : " + gt.ToString());
+      print("Expected  : " + p.Label().ToString());
       print("Predicted : " + pred.ToString());
     endif
-    var dt = c.Backward(pred, gt);
+    var dt = c.Backward(pred, p.Label());
     g.Backpropagate("Softmax", dt);
     g.Step(0.1f);
-    gt.SetAt(p.Label(), 0.0f); // Unset, gt is full of 0.0f
 endfor
 
 endfunction

@@ -17,9 +17,11 @@
 //------------------------------------------------------------------------------
 
 #include "ml/node.hpp"
+
 #include "math/tensor.hpp"
 #include "ml/ops/activations/relu.hpp"
 #include "ml/ops/placeholder.hpp"
+
 #include <gtest/gtest.h>
 
 TEST(node_test, node_placeholder)

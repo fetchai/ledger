@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "http/json_client.hpp"
+
 #include "core/json/document.hpp"
 #include "http/http_client.hpp"
 #include "http/https_client.hpp"

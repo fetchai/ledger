@@ -15,7 +15,7 @@ setup_compiler()
 # ------------------------------------------------------------------------------
 
 setup_library(fetch-core)
-target_link_libraries(fetch-core PUBLIC fetch-vectorise fetch-variant)
+target_link_libraries(fetch-core PUBLIC fetch-vectorise fetch-variant vendor-backward-cpp)
 
 # ------------------------------------------------------------------------------
 # Example Targets

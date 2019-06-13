@@ -21,6 +21,8 @@
 #include "core/serializers/stl_types.hpp"
 #include "vm/common.hpp"
 
+#include <string>
+
 namespace fetch {
 namespace vm {
 
@@ -32,15 +34,16 @@ template <typename T>
 class Ptr;
 struct Variant;
 class Address;
+struct String;
 
 template <typename T, typename = void>
 struct IsPrimitive : std::false_type
 {
 };
 template <typename T>
-struct IsPrimitive<T, typename std::enable_if_t<
-                          type_util::IsAnyOfV<T, void, bool, int8_t, uint8_t, int16_t, uint16_t,
-                                              int32_t, uint32_t, int64_t, uint64_t, float, double>>>
+struct IsPrimitive<
+    T, std::enable_if_t<type_util::IsAnyOfV<T, void, bool, int8_t, uint8_t, int16_t, uint16_t,
+                                            int32_t, uint32_t, int64_t, uint64_t, float, double>>>
   : std::true_type
 {
 };
@@ -84,6 +87,16 @@ struct IsAddress : std::false_type
 };
 template <typename T>
 struct IsAddress<T, typename std::enable_if_t<std::is_base_of<Address, T>::value>> : std::true_type
+{
+};
+
+template <typename T, typename = void>
+struct IsString : std::false_type
+{
+};
+template <typename T>
+struct IsString<T, std::enable_if_t<std::is_base_of<String, std::decay_t<T>>::value>>
+  : std::true_type
 {
 };
 
@@ -171,11 +184,10 @@ public:
   virtual ~Object() = default;
 
   Object(VM *vm, TypeId type_id)
-  {
-    vm_        = vm;
-    type_id_   = type_id;
-    ref_count_ = 1;
-  }
+    : vm_(vm)
+    , type_id_(type_id)
+    , ref_count_(1)
+  {}
 
   virtual size_t GetHashCode();
   virtual bool   IsEqual(Ptr<Object> const &lhso, Ptr<Object> const &rhso);
@@ -208,6 +220,11 @@ public:
 
   virtual bool SerializeTo(ByteArrayBuffer &buffer);
   virtual bool DeserializeFrom(ByteArrayBuffer &buffer);
+
+  TypeId GetTypeId() const
+  {
+    return type_id_;
+  }
 
 protected:
   Variant &       Push();
@@ -447,6 +464,11 @@ inline bool operator!=(std::nullptr_t /* lhs */, Ptr<R> const &rhs)
 
 inline void Serialize(ByteArrayBuffer &buffer, Ptr<Object> const &object)
 {
+  if (!object)
+  {
+    throw std::runtime_error("Unable to serialize null reference");
+  }
+
   if (!object->SerializeTo(buffer))
   {
     throw std::runtime_error("Unable to serialize requested object");
@@ -455,9 +477,22 @@ inline void Serialize(ByteArrayBuffer &buffer, Ptr<Object> const &object)
 
 inline void Deserialize(ByteArrayBuffer &buffer, Ptr<Object> &object)
 {
+  if (!object)
+  {
+    throw std::runtime_error("Unable to deserialize in to null reference object");
+  }
+
+  // TODO (issue 1172): This won't work in general (not for nested Ptr<Object> types (e.g. `Array`
+  // of String, Array of Array, etc ...).
+  //                    Current serialisation principle firmly requires types to be `default
+  //                    constructable`, reason being that in order for types to be
+  //                    deserializable they need to have default constructor (= non-parametric
+  //                    constructor).
+  //                    It is necessary to extend/change current serialisation concept
+  //                    and enable default-like construction of VM `Object` based types.
   if (!object->DeserializeFrom(buffer))
   {
-    throw std::runtime_error("Unable to deserialize request object");
+    throw std::runtime_error("Object deserialisation failed.");
   }
 }
 

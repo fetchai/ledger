@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "crypto/merkle_tree.hpp"
+
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
 #include "vectorise/platform.hpp"

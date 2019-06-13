@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "ledger/chain/block_coordinator.hpp"
+
 #include "core/byte_array/encoders.hpp"
 #include "core/threading.hpp"
 #include "ledger/block_packer_interface.hpp"
@@ -358,6 +359,14 @@ BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
 {
   bool const is_genesis = current_block_->body.previous_hash == GENESIS_DIGEST;
 
+  auto fail{[this](char const *reason) {
+    FETCH_LOG_WARN(LOGGING_NAME, "Block validation failed: ", reason, " (",
+                   ToBase64(current_block_->body.hash), ')');
+    (void)reason;
+    chain_.RemoveBlock(current_block_->body.hash);
+    return State::RESET;
+  }};
+
   // Check: Ensure that we have a previous block
 
   if (!is_genesis)
@@ -365,48 +374,33 @@ BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
     BlockPtr previous = chain_.GetBlock(current_block_->body.previous_hash);
     if (!previous)
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Block validation failed: No previous block in chain (",
-                     ToBase64(current_block_->body.hash), ")");
-      chain_.RemoveBlock(current_block_->body.hash);
-      return State::RESET;
+      return fail("No previous block in chain");
     }
 
     // Check: Ensure the block number is continuous
     uint64_t const expected_block_number = previous->body.block_number + 1u;
     if (expected_block_number != current_block_->body.block_number)
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Block validation failed: Block number mismatch (",
-                     ToBase64(current_block_->body.hash), ")");
-      chain_.RemoveBlock(current_block_->body.hash);
-      return State::RESET;
+      return fail("Block number mismatch");
     }
 
     // Check: Ensure the number of lanes is correct
     if (num_lanes_ != (1u << current_block_->body.log2_num_lanes))
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Block validation failed: Lane count mismatch (",
-                     ToBase64(current_block_->body.hash), ")");
-      chain_.RemoveBlock(current_block_->body.hash);
-      return State::RESET;
+      return fail("Lane count mismatch");
     }
 
     // Check: Ensure the number of slices is correct
     if (num_slices_ != current_block_->body.slices.size())
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Block validation failed: Slice count mismatch (",
-                     ToBase64(current_block_->body.hash), ")");
-      chain_.RemoveBlock(current_block_->body.hash);
-      return State::RESET;
+      return fail("Slice count mismatch");
     }
   }
 
   // Check: Ensure the digests are the correct size
   if (DIGEST_LENGTH_BYTES != current_block_->body.previous_hash.size())
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Block validation failed: Previous block hash size mismatch (",
-                   ToBase64(current_block_->body.hash), ")");
-    chain_.RemoveBlock(current_block_->body.hash);
-    return State::RESET;
+    return fail("Previous block hash size mismatch");
   }
 
   // reset the tx wait period
