@@ -174,7 +174,7 @@ inline constexpr auto Or(Last &&last) noexcept(
 
 template <class H, class... Ts>
 inline constexpr auto Or(H &&h, Ts &&... ts) noexcept(
-    noexcept(bool(std::declval < std::add_lvalue_reference<H>::type)) &&
+    noexcept(bool(std::declval<std::add_lvalue_reference<H>::type>())) &&
     type_util::AllV<type_util::Bind<std::is_nothrow_constructible, bool>::template type, Ts...> &&
     std::is_nothrow_constructible<std::decay_t<type_util::LastT<H, Ts...>>>::value)
 {

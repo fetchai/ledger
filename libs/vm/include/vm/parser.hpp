@@ -205,7 +205,8 @@ private:
     if (index != index_)
     {
       index_ = index;
-      token_ = index < static_cast<int>(tokens_.size()) ? &tokens_[index_] : &tokens_.back();
+      std::size_t i{index};
+      token_ = i < tokens_.size() ? &tokens_[i] : &tokens_.back();
     }
   }
 };
