@@ -183,16 +183,20 @@ struct TypeInfo
 {
   TypeInfo()
   {
-    type_kind = TypeKind::Unknown;
+    type_kind        = TypeKind::Unknown;
+    template_type_id = TypeIds::Unknown;
   }
-  TypeInfo(TypeKind type_kind__, std::string const &name__, TypeIdArray const &parameter_type_ids__)
+  TypeInfo(TypeKind type_kind__, std::string const &name__, TypeId template_type_id__,
+           TypeIdArray const &parameter_type_ids__)
   {
     type_kind          = type_kind__;
     name               = name__;
+    template_type_id   = template_type_id__;
     parameter_type_ids = parameter_type_ids__;
   }
   TypeKind    type_kind;
   std::string name;
+  TypeId      template_type_id;
   TypeIdArray parameter_type_ids;
 };
 using TypeInfoArray = std::vector<TypeInfo>;
