@@ -176,7 +176,6 @@ TYPED_TEST(Convolution1DTest, forward_3x3x2_5x3x3x2)
     {
       for (SizeType i_k{0}; i_k < kernel_height; ++i_k)
       {
-
         kernels(i_oc, i_ic, i_k, 0) = static_cast<DataType>(i_oc + 1);
       }
     }
