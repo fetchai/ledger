@@ -32,7 +32,7 @@
 #include "math/clustering/knn.hpp"
 #include "math/tensor.hpp"
 #include "polyfill.hpp"
-#include "unigram_table.hpp"
+//#include "unigram_table.hpp"
 
 #include "ml/dataloaders/word2vec_loaders/w2v_dataloader.hpp"
 #include "w2v_model.hpp"

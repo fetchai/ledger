@@ -220,7 +220,7 @@ void W2VModel<ArrayType>::Train(SizeType iter, SizeType print_frequency, bool cb
  * @tparam ArrayType
  */
 template <typename ArrayType>
-void W2VModel<ArrayType>::CBOWTrain(ArrayType &context, ArrayType &target)
+void W2VModel<ArrayType>::CBOWTrain(ArrayType &target, ArrayType &context)
 {
 
   ///////////////////////
@@ -363,7 +363,7 @@ void W2VModel<ArrayType>::CBOWTrain(ArrayType &context, ArrayType &target)
 }
 
 template <typename ArrayType>
-void W2VModel<ArrayType>::SGNSTrain(ArrayType const &context, ArrayType const &target)
+void W2VModel<ArrayType>::SGNSTrain(ArrayType const &target, ArrayType const &context)
 {
   for (DataType const &cur_context_word : context)
   {
