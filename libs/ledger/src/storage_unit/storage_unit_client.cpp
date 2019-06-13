@@ -268,7 +268,7 @@ byte_array::ConstByteArray StorageUnitClient::Commit(uint64_t commit_index)
 
     while (permanent_state_merkle_stack_.size() != commit_index + 1)
     {
-      if(permanent_state_merkle_stack_.size() > commit_index + 1)
+      if (permanent_state_merkle_stack_.size() > commit_index + 1)
       {
         permanent_state_merkle_stack_.Pop();
       }
