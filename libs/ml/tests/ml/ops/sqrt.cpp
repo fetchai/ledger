@@ -39,21 +39,76 @@ TYPED_TEST_CASE(SqrtTest, MyTypes);
 
 TYPED_TEST(SqrtTest, forward_all_positive_test)
 {
-//uint8_t   n = 9;
-//TypeParam data{n};
-//TypeParam gt({n});
-using ArrayType     = TypeParam;
-//using VecTensorType = typename fetch::ml::Ops<TypeParam>::VecTensorType;
+  using ArrayType     = TypeParam;
 
-ArrayType data = ArrayType::FromString("0, 1, 2, 4, 10, 100");
-ArrayType gt   = ArrayType::FromString("0, 1, 1.41421356, 2, 3.1622776, 10");
+  ArrayType data = ArrayType::FromString("0, -0, 1, 2, 4, 10, 100");
+  ArrayType gt   = ArrayType::FromString("0, 0, 1, 1.41421356, 2, 3.1622776, 10");
 
 
-fetch::ml::ops::Sqrt<TypeParam> op;
+  fetch::ml::ops::Sqrt<TypeParam> op;
 
-TypeParam prediction(op.ComputeOutputShape({data}));
-op.Forward({data}, prediction);
+  TypeParam prediction(op.ComputeOutputShape({data}));
+  op.Forward({data}, prediction);
 
-ASSERT_TRUE(
-    prediction.AllClose(gt));
+  ASSERT_TRUE(
+      prediction.AllClose(gt, typename TypeParam::Type(1e-4), typename TypeParam::Type(1e-4)));
+}
+
+TYPED_TEST(SqrtTest, backward_all_positive_test)
+{
+  using ArrayType     = TypeParam;
+
+  ArrayType data  = ArrayType::FromString("1,   2,         4,   10,       100");
+  ArrayType error = ArrayType::FromString("1,   1,         1,    2,         0");
+  // 0.5 / sqrt(data) * error = gt
+  ArrayType gt    = ArrayType::FromString("0.5, 0.3535533, 0.25, 0.3162277, 0");
+
+  fetch::ml::ops::Sqrt<TypeParam> op;
+
+  std::vector<ArrayType> prediction = op.Backward({data}, error);
+
+  ASSERT_TRUE(prediction.at(0).AllClose(gt, fetch::math::function_tolerance<typename ArrayType::Type>(),
+      fetch::math::function_tolerance<typename ArrayType::Type>()));
+}
+
+TYPED_TEST(SqrtTest, forward_all_negative_test)
+{
+  using ArrayType     = TypeParam;
+
+  ArrayType data = ArrayType::FromString("-1, -2, -4, -10, -100");
+
+  fetch::ml::ops::Sqrt<TypeParam> op;
+
+  TypeParam prediction(op.ComputeOutputShape({data}));
+
+  // fails because sqrt of neg number is undefined
+  EXPECT_THROW(op.Forward({data}, prediction), std::runtime_error);
+}
+
+
+TYPED_TEST(SqrtTest, backward_all_negative_test)
+{
+  using ArrayType     = TypeParam;
+
+  ArrayType data  = ArrayType::FromString("-1, -2, -4, -10, -100");
+  ArrayType error = ArrayType::FromString("1,   1,  1,   2,    0");
+
+  fetch::ml::ops::Sqrt<TypeParam> op;
+
+  // fails because sqrt of neg number is undefined
+  EXPECT_THROW(std::vector<ArrayType> prediction = op.Backward({data}, error), std::runtime_error);
+}
+
+
+TYPED_TEST(SqrtTest, backward_zero_test)
+{
+  using ArrayType     = TypeParam;
+
+  ArrayType data  = ArrayType::FromString("0,  0,    0,    0,        0");
+  ArrayType error = ArrayType::FromString("1,  1,    1,    2,        0");
+
+  fetch::ml::ops::Sqrt<TypeParam> op;
+
+  // fails because of division by zero
+  EXPECT_THROW(std::vector<ArrayType> prediction = op.Backward({data}, error), std::runtime_error);
 }
