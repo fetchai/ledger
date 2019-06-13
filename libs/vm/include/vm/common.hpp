@@ -36,9 +36,89 @@
 namespace fetch {
 namespace vm {
 
-using TypeId         = uint16_t;
-using TypeIdArray    = std::vector<TypeId>;
-using TypeIndex      = std::type_index;
+using TypeId      = uint16_t;
+using TypeIdArray = std::vector<TypeId>;
+
+class TypeIndex
+{
+  struct Null
+  {
+  };
+  static const std::type_index null;
+  using Source = std::string;
+
+  std::type_index index_ = null;
+  Source          source_;
+
+public:
+  TypeIndex(std::type_info const &info)
+    : index_(info)
+  {}
+  TypeIndex(std::type_index index)
+    : index_(std::move(index))
+  {}
+  TypeIndex(std::string source)
+    : source_(std::move(source))
+  {}
+
+  bool operator==(const TypeIndex &rhs) const noexcept
+  {
+    return index_ == rhs.index_ && source_ == rhs.source_;
+  }
+  bool operator!=(const TypeIndex &rhs) const noexcept
+  {
+    return index_ != rhs.index_ || source_ != rhs.source_;
+  }
+  bool operator<(const TypeIndex &rhs) const noexcept
+  {
+    return index_ < rhs.index_ || (index_ == rhs.index_ && source_ < rhs.source_);
+  }
+  bool operator<=(const TypeIndex &rhs) const noexcept
+  {
+    return index_ < rhs.index_ || (index_ == rhs.index_ && source_ <= rhs.source_);
+  }
+  bool operator>(const TypeIndex &rhs) const noexcept
+  {
+    return index_ > rhs.index_ || (index_ == rhs.index_ && source_ > rhs.source_);
+  }
+  bool operator>=(const TypeIndex &rhs) const noexcept
+  {
+    return index_ > rhs.index_ || (index_ == rhs.index_ && source_ >= rhs.source_);
+  }
+
+  std::size_t hash_code() const noexcept
+  {
+    return index_ != null ? index_.hash_code() : std::hash<Source>{}(source_);
+  }
+
+  const char *name() const noexcept
+  {
+    return index_ != null ? index_.name() : source_.c_str();
+  }
+};
+
+}  // namespace vm
+}  // namespace fetch
+
+namespace std {
+
+template <>
+struct hash<fetch::vm::TypeIndex>
+{
+  typedef fetch::vm::TypeIndex argument_type;
+  typedef std::size_t          result_type;
+
+  result_type operator()(argument_type const &arg) const noexcept
+  {
+    return arg.hash_code();
+  }
+};
+
+}  // namespace std
+
+namespace fetch {
+namespace vm {
+
 using TypeIndexArray = std::vector<TypeIndex>;
 
 namespace TypeIds {
@@ -61,6 +141,11 @@ static TypeId const String         = 14;
 static TypeId const Address        = 15;
 static TypeId const NumReserved    = 16;
 }  // namespace TypeIds
+
+inline constexpr bool IsIntegral(TypeId type) noexcept
+{
+  return type > TypeIds::Bool && type < TypeIds::Float32;
+}
 
 enum class NodeCategory : uint8_t
 {

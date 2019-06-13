@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "meta/value_util.hpp"
 #include "vm/node.hpp"
 
 namespace fetch {
@@ -110,32 +111,33 @@ private:
   RegisteredTypes   registered_types_;
   FunctionInfoArray function_info_array_;
   SymbolTablePtr    symbols_;
-  TypePtr           null_type_;
-  TypePtr           void_type_;
-  TypePtr           bool_type_;
-  TypePtr           int8_type_;
-  TypePtr           uint8_type_;
-  TypePtr           int16_type_;
-  TypePtr           uint16_type_;
-  TypePtr           int32_type_;
-  TypePtr           uint32_type_;
-  TypePtr           int64_type_;
-  TypePtr           uint64_type_;
-  TypePtr           float32_type_;
-  TypePtr           float64_type_;
-  TypePtr           string_type_;
-  TypePtr           address_type_;
-  TypePtr           template_parameter1_type_;
-  TypePtr           template_parameter2_type_;
-  TypePtr           any_type_;
-  TypePtr           any_primitive_type_;
-  TypePtr           any_integer_type_;
-  TypePtr           any_floating_point_type_;
-  TypePtr           matrix_type_;
-  TypePtr           array_type_;
-  TypePtr           map_type_;
-  TypePtr           sharded_state_type_;
-  TypePtr           state_type_;
+
+  TypePtr null_type_;
+  TypePtr void_type_;
+  TypePtr bool_type_;
+  TypePtr int8_type_;
+  TypePtr uint8_type_;
+  TypePtr int16_type_;
+  TypePtr uint16_type_;
+  TypePtr int32_type_;
+  TypePtr uint32_type_;
+  TypePtr int64_type_;
+  TypePtr uint64_type_;
+  TypePtr float32_type_;
+  TypePtr float64_type_;
+  TypePtr string_type_;
+  TypePtr address_type_;
+  TypePtr template_parameter1_type_;
+  TypePtr template_parameter2_type_;
+  TypePtr any_type_;
+  TypePtr any_primitive_type_;
+  TypePtr any_integer_type_;
+  TypePtr any_floating_point_type_;
+  TypePtr matrix_type_;
+  TypePtr array_type_;
+  TypePtr map_type_;
+  TypePtr sharded_state_type_;
+  TypePtr state_type_;
 
   BlockNodePtr             root_;
   BlockNodePtrArray        blocks_;
@@ -278,6 +280,15 @@ private:
   void EnableOperator(TypePtr const &type, Operator op)
   {
     EnableOperator(type->ops, op);
+  }
+
+  template <typename... Operators>
+  void EnableOperators(TypePtr const &type, Operators... ops)
+  {
+    for (auto op : {ops...})
+    {
+      EnableOperator(type, op);
+    }
   }
 
   void EnableLeftOperator(TypePtr const &type, Operator op)

@@ -217,7 +217,7 @@ public:
     using SignatureTuple = typename FunctorTraits<Functor>::args_tuple_type;
     using ParameterTuple = typename meta::RemoveFirstType<SignatureTuple>::type;
     TypeIndexArray parameter_type_index_array;
-    UnrollTupleParameterTypes<ParameterTuple>::Unroll(parameter_type_index_array);
+    UnrollTemplateParameters<ParameterTuple>::Unroll(parameter_type_index_array);
     TypeIndex const return_type_index = TypeGetter<ReturnType>::GetTypeIndex();
 
     Handler handler = [f{std::forward<Functor>(functor)}](VM *vm) {

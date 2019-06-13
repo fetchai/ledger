@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "meta/type_util.hpp"
+#include "meta/value_util.hpp"
 #include "vm/node.hpp"
 
 namespace fetch {
@@ -122,6 +123,9 @@ private:
   void HandleOp(NodeKind kind, OpInfo const &op_info);
   bool HandleLeftSquareBracket();
   bool HandleArrayExpression();
+  bool HandleArraySequence();
+  bool HandleArrayRepetition();
+  bool HandleArrayEmpty();
   void AddGroup(NodeKind kind, int arity, Token::Kind closer_token_kind,
                 std::string const &closer_token_text);
   void AddOp(NodeKind kind, OpInfo const &op_info);
@@ -129,45 +133,37 @@ private:
   void AddError(std::string const &message);
   bool MatchLiteral(Token::Kind token);
 
-  template<class F> auto AttemptBranch(int start, F &&f)
+  template <class F>
+  auto AttemptBranch(F &&f)
   {
-	  auto rv = std::forward<F>(f)();
-	  if (!rv)
-	  {
-		  Rewind(start);
-	  }
-	  return rv;
+    return std::forward<F>(f)();
   }
 
-  template<class RV> auto AttemptBranch(int start, RV (Parser::*f)())
+  template <class RV>
+  auto AttemptBranch(RV (Parser::*f)())
   {
-	  auto rv = (this->*f)();
-	  if (!rv)
-	  {
-		  Rewind(start);
-	  }
-	  return rv;
+    return (this->*f)();
   }
 
-  template<class RV> auto AttemptBranch(int start, RV (Parser::&f)())
+  template <class... Fs>
+  auto Either(Fs &&... fs)
   {
-	  auto rv = (this->*(&f))();
-	  if (!rv)
-	  {
-		  Rewind(start);
-	  }
-	  return rv;
-  }
-
-  template<class... Fs> auto Branches(Fs &&...fs) {
-	  using RetVal = type_util::InvokeResultT<F>;
-	  const auto index = Index();
-	  return value_util::Accumulate(
-		  [this](RetVal accum, auto &&f){ 
-			  return accum? accum : AttemptBranch(index, std::forward<decltype(f)>(f));
-		  },
-		  RetVal{},
-		  std::forward<Fs>(fs)...);
+    using RetVal     = type_util::InvokeResultT<type_util::HeadT<Fs...>>;
+    const auto index = Index();
+    return value_util::Accumulate(
+        [this, index](RetVal accum, auto &&f) {
+          if (accum)
+          {
+            return accum;
+          }
+          auto rv{AttemptBranch(std::forward<decltype(f)>(f))};
+          if (!rv)
+          {
+            Rewind(index);
+          }
+          return rv;
+        },
+        RetVal{}, std::forward<Fs>(fs)...);
   }
 
   void IncrementGroupMembers()
@@ -179,7 +175,7 @@ private:
     }
   }
 
-  constexpr void Next() noexcept
+  void Next() noexcept
   {
     if (index_ < static_cast<int>(tokens_.size()) - 1)
     {
@@ -201,16 +197,16 @@ private:
 
   constexpr int Index() const noexcept
   {
-	  return index_;
+    return index_;
   }
 
   constexpr void Rewind(int index) noexcept
   {
-	  if (index != index_)
-	  {
-		  index_ = index;
-		  token_ = index < static_cast<int>(tokens_.size())? &tokens_[index_] : &tokens.back();
-	  }
+    if (index != index_)
+    {
+      index_ = index;
+      token_ = index < static_cast<int>(tokens_.size()) ? &tokens_[index_] : &tokens_.back();
+    }
   }
 };
 

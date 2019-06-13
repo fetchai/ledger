@@ -129,17 +129,17 @@ struct InvokeResult
 template <class F, class... Args>
 using InvokeResultT = typename InvokeResult<F, Args...>::type;
 
-template <class C, class RV, class... Args1>
+template <class C, class RV, class... Args, class... Args1>
 struct InvokeResult<RV (C::*)(Args...), Args1...>
 {
-	using type = RV;
-}
+  using type = RV;
+};
 
-template <class C, class RV, class... Args1>
-struct InvokeResult<RV (C::*)(Args...), Args1...>
+template <class C, class RV, class... Args, class... Args1>
+struct InvokeResult<RV (C::*)(Args...) const, Args1...>
 {
-	using type = RV;
-}
+  using type = RV;
+};
 
 template <class...>
 struct Switch;
@@ -173,13 +173,34 @@ using CopyReferenceKind =
 template <class Source, class Dest>
 using CopyReferenceKindT = typename CopyReferenceKind<Source, Dest>::type;
 
-template<class...> struct Last;
+template <class...>
+struct Head;
 
-template<class...> using LastT = typename<Last<class...>>::type;
+template <class... Ts>
+using HeadT = typename Head<Ts...>::type;
 
-template<class Car, class Cadr, class... Cddr> struct Last: Last<Cadr, Cddr...> {};
+template <class RV, class... Cdr>
+struct Head<RV, Cdr...>
+{
+  using type = RV;
+};
 
-template<class RV> struct Last<RV> { using type = RV; };
+template <class...>
+struct Last;
+
+template <class... Ts>
+using LastT = typename Last<Ts...>::type;
+
+template <class Car, class Cadr, class... Cddr>
+struct Last<Car, Cadr, Cddr...> : Last<Cadr, Cddr...>
+{
+};
+
+template <class RV>
+struct Last<RV>
+{
+  using type = RV;
+};
 
 }  // namespace type_util
 }  // namespace fetch

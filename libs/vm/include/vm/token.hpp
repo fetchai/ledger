@@ -64,7 +64,7 @@ struct Token
     Comma,
     Dot,
     Colon,
-    SemiColon,
+    Semicolon,
     LeftParenthesis,
     RightParenthesis,
     LeftSquareBracket,

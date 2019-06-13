@@ -1252,7 +1252,7 @@ YY_RULE_SETUP
 case 49:
 YY_RULE_SETUP
 #line 182 "tokeniser.l"
-{return Set(yylval, fetch::vm::Token::Kind::SemiColon, yytext, yyleng, yyextra);}
+{return Set(yylval, fetch::vm::Token::Kind::Semicolon, yytext, yyleng, yyextra);}
 	YY_BREAK
 case 50:
 YY_RULE_SETUP

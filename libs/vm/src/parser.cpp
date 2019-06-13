@@ -54,7 +54,7 @@ BlockNodePtr Parser::Parse(std::string const &filename, std::string const &sourc
   BlockNodePtr file_node = CreateBlockNode(NodeKind::File, filename, 1);
   root->block_children.push_back(file_node);
   ParseBlock(*file_node);
-  errors        = std::move(errors_);
+  errors = std::move(errors_);
 
   tokens_.clear();
   blocks_.clear();
@@ -726,7 +726,7 @@ NodePtr Parser::ParseVarStatement()
     assign = true;
     Next();
   }
-  if (token_->kind != Token::Kind::SemiColon)
+  if (token_->kind != Token::Kind::Semicolon)
   {
     if (assign)
     {
@@ -771,7 +771,7 @@ NodePtr Parser::ParseReturnStatement()
   NodePtr return_statement_node =
       CreateBasicNode(NodeKind::ReturnStatement, token_->text, token_->line);
   Next();
-  if (token_->kind == Token::Kind::SemiColon)
+  if (token_->kind == Token::Kind::Semicolon)
   {
     return return_statement_node;
   }
@@ -787,7 +787,7 @@ NodePtr Parser::ParseReturnStatement()
     return {};
   }
   Next();
-  if (token_->kind != Token::Kind::SemiColon)
+  if (token_->kind != Token::Kind::Semicolon)
   {
     AddError("expected ';'");
     return {};
@@ -809,7 +809,7 @@ NodePtr Parser::ParseBreakStatement()
   NodePtr break_statement_node =
       CreateBasicNode(NodeKind::BreakStatement, token_->text, token_->line);
   Next();
-  if (token_->kind != Token::Kind::SemiColon)
+  if (token_->kind != Token::Kind::Semicolon)
   {
     AddError("expected ';'");
     return {};
@@ -830,7 +830,7 @@ NodePtr Parser::ParseContinueStatement()
   NodePtr continue_statement_node =
       CreateBasicNode(NodeKind::ContinueStatement, token_->text, token_->line);
   Next();
-  if (token_->kind != Token::Kind::SemiColon)
+  if (token_->kind != Token::Kind::Semicolon)
   {
     AddError("expected ';'");
     return {};
@@ -864,30 +864,36 @@ ExpressionNodePtr Parser::ParseExpressionStatement()
   NodeKind kind;
   switch (token_->kind)
   {
-	  case Token::Kind::SemiColon:
-		  // Non-assignment expression statement
-		  return lhs;
-	  case Token::Kind::Assign:
-		  kind = NodeKind::Assign;;
-		  break;
-	  case Token::Kind::InplaceAdd:
-		  kind = NodeKind::InplaceAdd;;
-		  break;
-	  case Token::Kind::InplaceSubtract:
-		  kind = NodeKind::InplaceSubtract;;
-		  break;
-	  case Token::Kind::InplaceMultiply:
-		  kind = NodeKind::InplaceMultiply;;
-		  break;
-	  case Token::Kind::InplaceDivide:
-		  kind = NodeKind::InplaceDivide;;
-		  break;
-	  case Token::Kind::InplaceModulo:
-		  kind = NodeKind::InplaceModulo;;
-		  break;
-	  default:
-		  AddError("expected ';' or assignment operator");
-		  return {};
+  case Token::Kind::Semicolon:
+    // Non-assignment expression statement
+    return lhs;
+  case Token::Kind::Assign:
+    kind = NodeKind::Assign;
+    ;
+    break;
+  case Token::Kind::InplaceAdd:
+    kind = NodeKind::InplaceAdd;
+    ;
+    break;
+  case Token::Kind::InplaceSubtract:
+    kind = NodeKind::InplaceSubtract;
+    ;
+    break;
+  case Token::Kind::InplaceMultiply:
+    kind = NodeKind::InplaceMultiply;
+    ;
+    break;
+  case Token::Kind::InplaceDivide:
+    kind = NodeKind::InplaceDivide;
+    ;
+    break;
+  case Token::Kind::InplaceModulo:
+    kind = NodeKind::InplaceModulo;
+    ;
+    break;
+  default:
+    AddError("expected ';' or assignment operator");
+    return {};
   }
   // NOTE: This doesn't handle chains of assignment a = b = c by design
   ExpressionNodePtr assignment_node = CreateExpressionNode(kind, token_->text, token_->line);
@@ -899,7 +905,7 @@ ExpressionNodePtr Parser::ParseExpressionStatement()
   assignment_node->children.push_back(std::move(lhs));
   assignment_node->children.push_back(std::move(rhs));
   Next();
-  if (token_->kind == Token::Kind::SemiColon)
+  if (token_->kind == Token::Kind::Semicolon)
   {
     return assignment_node;
   }
@@ -909,9 +915,11 @@ ExpressionNodePtr Parser::ParseExpressionStatement()
 
 void Parser::GoToNextStatement()
 {
-  while (!value_util::IsAnyOf(token_->kind, Token::Kind::EndOfInput, Token::Kind::SemiColon))
+  while (!value_util::IsAnyOf(token_->kind, Token::Kind::EndOfInput, Token::Kind::Semicolon))
   {
-    if (value_util::IsAnyOf(token_->kind, Token::Kind::AnnotationIdentifier, Token::Kind::Function, Token::Kind::While, Token::Kind::For, Token::Kind::If, Token::Kind::Var, Token::Kind::Return, Token::Kind::Break, Token::Kind::Continue))
+    if (value_util::IsAnyOf(token_->kind, Token::Kind::AnnotationIdentifier, Token::Kind::Function,
+                            Token::Kind::While, Token::Kind::For, Token::Kind::If, Token::Kind::Var,
+                            Token::Kind::Return, Token::Kind::Break, Token::Kind::Continue))
     {
       Undo();
       return;
@@ -1007,40 +1015,43 @@ ExpressionNodePtr Parser::ParseExpression(bool is_conditional_expression)
   infix_stack_.clear();
 
   static const std::unordered_map<Token::Kind, NodeKind> literal_types{
-	  {Token::Kind::Integer8, NodeKind::Integer8},
-	  {Token::Kind::Integer16, NodeKind::Integer16},
-	  {Token::Kind::Integer32, NodeKind::Integer32},
-	  {Token::Kind::Integer64, NodeKind::Integer64},
-	  {Token::Kind::UnsignedInteger8, NodeKind::UnsignedInteger8},
-	  {Token::Kind::UnsignedInteger16, NodeKind::UnsignedInteger16},
-	  {Token::Kind::UnsignedInteger32, NodeKind::UnsignedInteger32},
-	  {Token::Kind::UnsignedInteger64, NodeKind::UnsignedInteger64},
-	  {Token::Kind::Float32, NodeKind::Float32},
-	  {Token::Kind::Float64, NodeKind::Float64},
-	  {Token::Kind::String, NodeKind::String},
-	  {Token::Kind::True, NodeKind::True},
-	  {Token::Kind::False, NodeKind::False},
-	  {Token::Kind::Null, NodeKind::Null},
+      {Token::Kind::Integer8, NodeKind::Integer8},
+      {Token::Kind::Integer16, NodeKind::Integer16},
+      {Token::Kind::Integer32, NodeKind::Integer32},
+      {Token::Kind::Integer64, NodeKind::Integer64},
+      {Token::Kind::UnsignedInteger8, NodeKind::UnsignedInteger8},
+      {Token::Kind::UnsignedInteger16, NodeKind::UnsignedInteger16},
+      {Token::Kind::UnsignedInteger32, NodeKind::UnsignedInteger32},
+      {Token::Kind::UnsignedInteger64, NodeKind::UnsignedInteger64},
+      {Token::Kind::Float32, NodeKind::Float32},
+      {Token::Kind::Float64, NodeKind::Float64},
+      {Token::Kind::String, NodeKind::String},
+      {Token::Kind::True, NodeKind::True},
+      {Token::Kind::False, NodeKind::False},
+      {Token::Kind::Null, NodeKind::Null},
   };
 
-  struct NodeOpInfo {
-	  NodeKind kind;
-	  OpInfo op_info;
+  struct NodeOpInfo
+  {
+    NodeKind kind;
+    OpInfo   op_info;
   };
 
   static const std::unordered_map<Token::Kind, NodeOpInfo> binary_operators{
-	  {Token::Kind::Multiply, NodeOpInfo{NodeKind::Multiply, OpInfo{6, Association::Left, 2}}},
-		  {Token::Kind::Divide, NodeOpInfo{NodeKind::Divide, OpInfo{6, Association::Left, 2}}},
-		  {Token::Kind::Modulo, NodeOpInfo{NodeKind::Modulo, OpInfo{6, Association::Left, 2}}},
-		  {Token::Kind::Equal, NodeOpInfo{NodeKind::Equal, OpInfo{3, Association::Left, 2}}},
-		  {Token::Kind::NotEqual, NodeOpInfo{NodeKind::NotEqual, OpInfo{3, Association::Left, 2}}},
-		  {Token::Kind::LessThan, NodeOpInfo{NodeKind::LessThan, OpInfo{4, Association::Left, 2}}},
-		  {Token::Kind::LessThanOrEqual, NodeOpInfo{NodeKind::LessThanOrEqual, OpInfo{4, Association::Left, 2}}},
-		  {Token::Kind::GreaterThan, NodeOpInfo{NodeKind::GreaterThan, OpInfo{4, Association::Left, 2}}},
-		  {Token::Kind::GreaterThanOrEqual, NodeOpInfo{NodeKind::GreaterThanOrEqual, OpInfo{4, Association::Left, 2}}},
-		  {Token::Kind::And, NodeOpInfo{NodeKind::And, OpInfo{2, Association::Left, 2}}},
-		  {Token::Kind::Or, NodeOpInfo{NodeKind::Or, OpInfo{1, Association::Left, 2}}}
-  };
+      {Token::Kind::Multiply, NodeOpInfo{NodeKind::Multiply, OpInfo{6, Association::Left, 2}}},
+      {Token::Kind::Divide, NodeOpInfo{NodeKind::Divide, OpInfo{6, Association::Left, 2}}},
+      {Token::Kind::Modulo, NodeOpInfo{NodeKind::Modulo, OpInfo{6, Association::Left, 2}}},
+      {Token::Kind::Equal, NodeOpInfo{NodeKind::Equal, OpInfo{3, Association::Left, 2}}},
+      {Token::Kind::NotEqual, NodeOpInfo{NodeKind::NotEqual, OpInfo{3, Association::Left, 2}}},
+      {Token::Kind::LessThan, NodeOpInfo{NodeKind::LessThan, OpInfo{4, Association::Left, 2}}},
+      {Token::Kind::LessThanOrEqual,
+       NodeOpInfo{NodeKind::LessThanOrEqual, OpInfo{4, Association::Left, 2}}},
+      {Token::Kind::GreaterThan,
+       NodeOpInfo{NodeKind::GreaterThan, OpInfo{4, Association::Left, 2}}},
+      {Token::Kind::GreaterThanOrEqual,
+       NodeOpInfo{NodeKind::GreaterThanOrEqual, OpInfo{4, Association::Left, 2}}},
+      {Token::Kind::And, NodeOpInfo{NodeKind::And, OpInfo{2, Association::Left, 2}}},
+      {Token::Kind::Or, NodeOpInfo{NodeKind::Or, OpInfo{1, Association::Left, 2}}}};
 
   do
   {
@@ -1066,7 +1077,7 @@ ExpressionNodePtr Parser::ParseExpression(bool is_conditional_expression)
     case Token::Kind::True:
     case Token::Kind::False:
     case Token::Kind::Null:
-      parses = HandleLiteral(literal_types[token_->kind]);
+      parses = HandleLiteral(literal_types.at(token_->kind));
       break;
 
     case Token::Kind::Plus:
@@ -1091,8 +1102,8 @@ ExpressionNodePtr Parser::ParseExpression(bool is_conditional_expression)
     case Token::Kind::And:
     case Token::Kind::Or:
     {
-      auto const &binary_operator = binary_operators[token_->kind];
-      parses = HandleBinaryOp(binary_operator.kind, binary_operator.op_info);
+      auto const &binary_operator = binary_operators.at(token_->kind);
+      parses                      = HandleBinaryOp(binary_operator.kind, binary_operator.op_info);
       break;
     }
 
@@ -1111,7 +1122,8 @@ ExpressionNodePtr Parser::ParseExpression(bool is_conditional_expression)
       break;
 
     case Token::Kind::LeftParenthesis:
-      parses = HandleOpener(NodeKind::ParenthesisGroup, NodeKind::Invoke, Token::Kind::RightParenthesis, ")");
+      parses = HandleOpener(NodeKind::ParenthesisGroup, NodeKind::Invoke,
+                            Token::Kind::RightParenthesis, ")");
       break;
 
     case Token::Kind::LeftSquareBracket:
@@ -1151,7 +1163,7 @@ ExpressionNodePtr Parser::ParseExpression(bool is_conditional_expression)
     }  // switch
     if (!parses)
     {
-      return {}; // failed parse
+      return {};  // failed parse
     }
   } while (!found_expression_terminator_);
   if (!groups_.empty())
@@ -1167,7 +1179,7 @@ ExpressionNodePtr Parser::ParseExpression(bool is_conditional_expression)
   operators_.clear();
   // rpn_ holds the Reverse Polish Notation (aka postfix) expression
   // Here we convert the RPN to an infix expression tree
-  for (auto &expr: rpn_)
+  for (auto &expr : rpn_)
   {
     if (value_util::IsAnyOf(expr.node->node_kind, NodeKind::ParenthesisGroup, NodeKind::UnaryPlus))
     {
@@ -1180,13 +1192,13 @@ ExpressionNodePtr Parser::ParseExpression(bool is_conditional_expression)
       if (arity)
       {
         auto expr_position = infix_stack_.end() - arity;
-	// move arity last nodes into expr's arguments
+        // move arity last nodes into expr's arguments
         std::transform(expr_position, infix_stack_.end(), std::back_inserter(expr.node->children),
-		       [](Expr &operand)->Node { return std::move(operand.node); })
-	// hide infix_stack_'s tail in expr subtree
-	*expr_position = std::move(expr);
-	infix_stack_.erase(expr_position + 1, infix_stack_.end());
-	continue;
+                       [](Expr &operand) { return std::move(operand.node); });
+        // hide infix_stack_'s tail in expr subtree
+        *expr_position = std::move(expr);
+        infix_stack_.erase(expr_position + 1, infix_stack_.end());
+        continue;
       }
     }
     // expr is not an operator, or its arity is 0
@@ -1358,9 +1370,9 @@ bool Parser::HandleDot()
   AddOperand(NodeKind::Identifier);
   IncrementGroupMembers();
   Expr expr;
-  expr.is_operator       = true;
-  expr.node              = std::move(dot_node);
-  expr.op_info.arity     = 2;
+  expr.is_operator   = true;
+  expr.node          = std::move(dot_node);
+  expr.op_info.arity = 2;
   rpn_.push_back(std::move(expr));
   state_ = State::PostOperand;
   return true;
@@ -1375,92 +1387,104 @@ bool Parser::HandleLeftSquareBracket()
   return HandleOpener(NodeKind::Unknown, NodeKind::Index, Token::Kind::RightSquareBracket, "]");
 }
 
+bool Parser::MatchLiteral(Token::Kind literal_kind)
+{
+  Next();
+  return token_->kind == literal_kind;
+}
+
 bool Parser::HandleArrayExpression()
 {
-  auto value{ParseArray()};
-  if (!value)
+  // ArrayExpression ::= "[" Array
+  // Left square bracket has been already consumed.
+  //
+  // Array ::= ArraySequence | ArrayRepetition | ArrayEmpty
+  return Either(&Parser::HandleArraySequence, &Parser::HandleArrayRepetition,
+                &Parser::HandleArrayEmpty);
+}
+
+bool Parser::HandleArraySequence()
+{
+  // ArraySequence ::= Expr ("," Expr)* "]"
+  NodePtrArray   elements;
+  std::string    text(1, '[');
+  const uint16_t line{token_->line};
+
+  for (auto element{ParseExpression()} /* Expr */; element;)
   {
+    elements.push_back(std::move(element));
+    text += element->text;
+    if (MatchLiteral(Token::Kind::Comma))
+    {
+      text += ", ";
+      element = ParseExpression();
+    }
+    else
+    {
+      element.reset();
+    }
+  }
+
+  if (elements.empty() || !MatchLiteral(Token::Kind::RightSquareBracket) /* "]" */)
+  {
+    // token stream does not match this rule
     return false;
   }
-  IncrementGroupMembers();
-  Expr expr;
-  expr.is_operator = false;
-  expr.node = std::move(value);
+
+  // token stream conforms to this rule
+  Expr expr{};
+  expr.node                  = CreateExpressionNode(NodeKind::Array, text, line, elements);
+  expr.node->expression_kind = ExpressionKind::RV;
   rpn_.push_back(std::move(expr));
+
   return true;
 }
 
-bool Parser::MatchLiteral(literal_kind Token::Kind)
-{
-	Next();
-	if (token_->kind == literal_kind)
-	{
-		return true;
-	}
-	Undo();
-	return false;
-}
-
-// ArrayExpression ::= "[" Array
-// Left square bracket has been already consumed.
-//
-// Array ::= ArraySequence | ArrayRepetition | ArrayEmpty
-ExpressionNodePtr Parser::ParseArray()
-{
-	return Branches(ParseArraySequence, ParseArrayRepetition, ParseArrayEmpty);
-}
-
-// ArraySequence ::= Expr ("," Expr)* "]"
-ExpressionNodePtr Parser::ParseArraySequence()
-{
-	NodePtrArray elements;
-	std::string text;
-	const uint16_t line{token_->line};
-	TypePtr element_type;
-
-	for(auto element{ParseExpression()} /* Expr */; element; )
-	{
-		element_type = CommonType(element_type, element->type);
-		elements.push_back(std::move(element));
-		text += element->text;
-		if (MatchLiteral(Token::Kind::Comma))
-		{
-			text += ", ";
-			element = ParseExpression();
-		}
-		else {
-			element.reset();
-		}
-	}
-
-	// token stream does not match this rule
-	if (elements.empty() || !MatchLiteral(Token::Kind::RightSquareBracket) /* "]" */)
-	{
-		return {};
-	}
-
-	// token stream conforms to this rule
-	auto node{CreateExpressionNode(NodeKind::Array, text, line, elements)};
-	node->expression_kind = ExpressionKind::RV;
-	node->type = element_type;
-	return node;
-}
-
 // ArrayRepetition ::= Expr ";" Number "]"
-ExpressionNodePtr Parser::ParseArrayRepetition()
+bool Parser::HandleArrayRepetition()
 {
-	std::string text;
-	const uint16_t line{token_->line};
+  const uint16_t line{token_->line};
 
-	auto repeated_element{ParseExpression()};	// Expr
-	if (!repeated_element
-	    || !MatchLiteral(Token::Kind::Semicolon))	// ";"
-	{
-		return {};
-	}
+  auto repeated_element{ParseExpression()};                        // Expr
+  if (!repeated_element || !MatchLiteral(Token::Kind::Semicolon))  // ";"
+  {
+    return false;
+  }
 
-	auto amount{ParseExpression()};			// Number
-	if (amount->
+  auto amount{ParseExpression()};  // Number
+  if (!amount->type || !amount->type->IsIntegral() ||
+      !MatchLiteral(Token::Kind::RightSquareBracket))  // "]"
+  {
+    return false;
+  }
+
+  static const OpInfo array_repetition_info{0, Association::Left, 2};
+
+  Expr expr;
+  expr.is_operator           = true;
+  expr.op_info               = array_repetition_info;
+  expr.node                  = CreateExpressionNode(NodeKind::Array,
+                                   '[' + repeated_element->text + "; " + amount->text + ']', line,
+                                   {repeated_element, amount});
+  expr.node->expression_kind = ExpressionKind::RV;
+  rpn_.push_back(std::move(expr));
+
+  return true;
+}
+
+bool Parser::HandleArrayEmpty()
+{
+  if (!MatchLiteral(Token::Kind::RightSquareBracket))
+  {
+    return false;
+  }
+
+  Expr expr{};
+  expr.node                  = CreateExpressionNode(NodeKind::Array, "[]", token_->line);
+  expr.node->expression_kind = ExpressionKind::RV;
+  rpn_.push_back(std::move(expr));
+
+  return true;
 }
 
 bool Parser::HandleOpener(NodeKind prefix_kind, NodeKind postfix_kind,
@@ -1505,9 +1529,10 @@ bool Parser::HandleCloser(bool is_conditional_expression)
     // Opener and closer don't match
     // Regardless of state_, this is a syntax error
     AddError("expected '" + groupop.closer_token_text + "'");
+
     return false;
   }
-  while (operators_.size())
+  while (!operators_.empty())
   {
     Expr &topop = operators_.back();
     if (topop.node->node_kind != groupop.node->node_kind)
@@ -1639,9 +1664,9 @@ void Parser::AddOp(NodeKind kind, OpInfo const &op_info)
 {
   IncrementGroupMembers();
   Expr expr;
-  expr.is_operator       = true;
-  expr.node              = CreateExpressionNode(kind, token_->text, token_->line);
-  expr.op_info           = op_info;
+  expr.is_operator = true;
+  expr.node        = CreateExpressionNode(kind, token_->text, token_->line);
+  expr.op_info     = op_info;
   operators_.push_back(std::move(expr));
 }
 
@@ -1649,8 +1674,8 @@ void Parser::AddOperand(NodeKind kind)
 {
   IncrementGroupMembers();
   Expr expr;
-  expr.is_operator       = false;
-  expr.node              = CreateExpressionNode(kind, token_->text, token_->line);
+  expr.is_operator = false;
+  expr.node        = CreateExpressionNode(kind, token_->text, token_->line);
   rpn_.push_back(std::move(expr));
 }
 

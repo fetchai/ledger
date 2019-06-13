@@ -103,66 +103,138 @@ constexpr auto Product(H &&h, Ts &&... ts) noexcept(
   return Accumulate(std::multiplies<void>{}, std::forward<H>(h), std::forward<Ts>(ts)...);
 }
 
-template<class LHS, class RHS> struct IsNothrowComparable {
-enum: bool {
-	      value = noexcept(std::declval<LHS>() == std::declval<RHS>())
-       };
+template <class LHS, class RHS>
+struct IsNothrowComparable
+{
+  enum : bool
+  {
+    value = noexcept(std::declval<LHS>() == std::declval<RHS>())
+  };
 };
 
-template<class LHS, class RHS> static constexpr bool IsNothrowComparableV = IsNothrowComparable<LHS, RHS>::value;
+template <class LHS, class RHS>
+static constexpr bool IsNothrowComparableV = IsNothrowComparable<LHS, RHS>::value;
 
-template <class T> inline constexpr bool IsAnyOf(T &&) noexcept
+template <class T>
+inline constexpr bool IsAnyOf(T &&) noexcept
 {
-	return false;
+  return false;
 }
 
-template <class T, class Last> inline constexpr bool IsAnyOf(T &&value, Last &&last)
-	noexcept(IsNothrowComparableV<T, Last>)
+template <class T, class Last>
+inline constexpr bool IsAnyOf(T &&value, Last &&last) noexcept(IsNothrowComparableV<T, Last>)
 {
-	return std::forward<T>(value) == std::forward<Last>(last);
+  return std::forward<T>(value) == std::forward<Last>(last);
 }
 
-template <class T, class H, class... Ts> inline constexpr bool IsAnyOf(T &&value, H &&h, Ts &&...ts)
-	noexcept(type_util::AllV<type_util::Bind<IsNothrowComparable, T>::template type, H, Ts...>);
+template <class T, class H, class... Ts>
+inline constexpr bool IsAnyOf(T &&value, H &&h, Ts &&... ts) noexcept(
+    type_util::AllV<type_util::Bind<IsNothrowComparable, T>::template type, H, Ts...>);
 
-template <class T, class H, class... Ts> inline constexpr bool IsAnyOf(T &&value, H &&h, Ts &&...ts)
-	noexcept(type_util::AllV<type_util::Bind<IsNothrowComparable, T>::template type, H, Ts...>)
+template <class T, class H, class... Ts>
+inline constexpr bool IsAnyOf(T &&value, H &&h, Ts &&... ts) noexcept(
+    type_util::AllV<type_util::Bind<IsNothrowComparable, T>::template type, H, Ts...>)
 {
-	return value == std::forward<H>(h) || IsAnyOf(std::forward<T>(value), std::forward<Ts>(ts)...);
+  return value == std::forward<H>(h) || IsAnyOf(std::forward<T>(value), std::forward<Ts>(ts)...);
 }
 
-constexpr bool And() noexcept { return true; }
-
-template <class Last> inline constexpr std::decay_t<Last> And(Last &&last)
-	noexcept(std::is_nothrow_move_constructible<Last>::value)
+constexpr bool And() noexcept
 {
-	return std::forward<Last>(last);
+  return true;
 }
 
-template <class H, class... Ts> inline constexpr auto And(H &&h, Ts &&...ts)
-	noexcept(noexcept(bool(std::declval<std::add_lvalue_reference_t<H>>())) &&
-		 type_util::AllV<type_util::Bind<std::is_nothrow_constructible, bool>::template type, Ts...> &&
-		 std::is_nothrow_constructible<std::decay_t<type_util::LastT<H, Ts...>>>::value)
+template <class Last>
+inline constexpr std::decay_t<Last> And(Last &&last) noexcept(
+    std::is_nothrow_move_constructible<Last>::value)
 {
-	using RetVal = std::decay_t<type_util::LastT<H, Ts...>>;
-	return h? And(std::forward<Ts>(ts)...) : RetVal{};
+  return std::forward<Last>(last);
 }
 
-constexpr bool Or() noexcept { return false; }
-
-template <class Last> inline constexpr auto Or(Last &&last)
-	noexcept(std::is_nothrow_constructible<typename std::decay<Last>::type, Last>::value)
+template <class H, class... Ts>
+inline constexpr auto And(H &&h, Ts &&... ts) noexcept(
+    noexcept(bool(std::declval<std::add_lvalue_reference_t<H>>())) &&
+    type_util::AllV<type_util::Bind<std::is_nothrow_constructible, bool>::template type, Ts...> &&
+    std::is_nothrow_constructible<std::decay_t<type_util::LastT<H, Ts...>>>::value)
 {
-	return std::forward<Last>(last);
+  using RetVal = std::decay_t<type_util::LastT<H, Ts...>>;
+  return h ? And(std::forward<Ts>(ts)...) : RetVal{};
 }
 
-template <class H, class... Ts> inline constexpr auto Or(H &&h, Ts &&...ts)
-	noexcept(noexcept(bool(std::declval<std::add_lvalue_reference<H>::type)) &&
-		 type_util::AllV<type_util::Bind<std::is_nothrow_constructible, bool>::template type, Ts...> &&
-		 std::is_nothrow_constructible<std::decay_t<type_util::LastT<H, Ts...>>>::value)
+constexpr bool Or() noexcept
 {
-	using RetVal = std::decay_t<type_util::LastT<H, Ts...>>;
-	return h? RetVal(std::forward<H>(h)) : Or(std::forward<Ts>(ts)...);
+  return false;
+}
+
+template <class Last>
+inline constexpr auto Or(Last &&last) noexcept(
+    std::is_nothrow_constructible<typename std::decay<Last>::type, Last>::value)
+{
+  return std::forward<Last>(last);
+}
+
+template <class H, class... Ts>
+inline constexpr auto Or(H &&h, Ts &&... ts) noexcept(
+    noexcept(bool(std::declval < std::add_lvalue_reference<H>::type)) &&
+    type_util::AllV<type_util::Bind<std::is_nothrow_constructible, bool>::template type, Ts...> &&
+    std::is_nothrow_constructible<std::decay_t<type_util::LastT<H, Ts...>>>::value)
+{
+  using RetVal = std::decay_t<type_util::LastT<H, Ts...>>;
+  return h ? RetVal(std::forward<H>(h)) : Or(std::forward<Ts>(ts)...);
+}
+
+template <class F>
+inline constexpr void ForEach(F &&) noexcept
+{}
+
+template <class F, class T>
+inline constexpr void ForEach(F &&f, T &&t) noexcept(type_util::IsNothrowInvocableV<F, T>)
+{
+  std::forward<F>(f)(std::forward<T>(t));
+}
+
+template <class F, class T, class... Ts>
+inline constexpr void ForEach(F &&f, T &&t, Ts &&... ts) noexcept(
+    type_util::AllV<type_util::Bind<type_util::IsNothrowInvocable, F>::template type, T, Ts...>);
+
+template <class F, class T, class... Ts>
+inline constexpr void ForEach(F &&f, T &&t, Ts &&... ts) noexcept(
+    type_util::AllV<type_util::Bind<type_util::IsNothrowInvocable, F>::template type, T, Ts...>)
+{
+  f(std::forward<T>(t)), ForEach(std::forward<F>(f), std::forward<Ts>(ts)...);
+}
+
+struct ResetOne
+{
+  template <class T>
+  inline constexpr void operator()(T &&t) noexcept(
+      std::is_nothrow_constructible<std::decay_t<T>>::value
+          &&std::is_nothrow_move_assignable<std::decay_t<T>>::value)
+  {
+    t = std::decay_t<T>{};
+  }
+};
+
+template <class... Ts>
+inline constexpr void ResetAll(Ts &&... ts) noexcept(noexcept(ForEach(ResetOne{},
+                                                                      std::forward<Ts>(ts)...)))
+{
+  ForEach(ResetOne{}, std::forward<Ts>(ts)...);
+}
+
+struct ClearOne
+{
+  template <class T>
+  inline constexpr void operator()(T &&t) noexcept(noexcept(std::forward<T>(t).clear()))
+  {
+    std::forward<T>(t).clear();
+  }
+};
+
+template <class... Ts>
+inline constexpr void ClearAll(Ts &&... ts) noexcept(noexcept(ForEach(ClearOne{},
+                                                                      std::forward<Ts>(ts)...)))
+{
+  ForEach(ClearOne{}, std::forward<Ts>(ts)...);
 }
 
 }  // namespace value_util

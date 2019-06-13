@@ -17,19 +17,16 @@
 //
 //------------------------------------------------------------------------------
 
+#include "meta/type_util.hpp"
+
+#include <type_traits>
+
 namespace fetch {
 namespace vm {
 
 template <typename T>
-struct IsResult
-{
-  static const int value = 1;
-};
-template <>
-struct IsResult<void>
-{
-  static const int value = 0;
-};
+using IsResult = std::conditional_t<std::is_same<T, void>::value, std::integral_constant<int, 0>,
+                                    std::integral_constant<int, 1>>;
 
 template <typename T>
 struct StackGetter
@@ -102,107 +99,44 @@ struct ParameterTypeGetter<T, typename std::enable_if_t<IsPtrParameter<T>::value
   }
 };
 
-template <typename... Ts>
-struct UnrollTypes;
-template <typename T, typename... Ts>
-struct UnrollTypes<T, Ts...>
+namespace detail_ {
+
+template <template <typename...> class Getter, typename... Ts>
+struct UnrollTypesWith
 {
-  // Invoked on non-final type
   static void Unroll(TypeIndexArray &array)
   {
-    TypeIndex const type_index = TypeGetter<T>::GetTypeIndex();
-    array.push_back(type_index);
-    UnrollTypes<Ts...>::Unroll(array);
+    static const TypeIndex type_indices[] = {Getter<Ts>::GetTypeIndex()...};
+    array.insert(array.end(), type_indices,
+                 type_indices + sizeof(type_indices) / sizeof(type_indices[0]));
   }
 };
-template <typename T>
-struct UnrollTypes<T>
+
+template <template <typename...> class Getter>
+struct UnrollTypesWith<Getter>
 {
-  // Invoked on final type
-  static void Unroll(TypeIndexArray &array)
-  {
-    TypeIndex const type_index = TypeGetter<T>::GetTypeIndex();
-    array.push_back(type_index);
-  }
-};
-template <>
-struct UnrollTypes<>
-{
-  // Invoked on zero types
-  static void Unroll(TypeIndexArray & /* array */)
+  static void Unroll(TypeIndexArray &)
   {}
 };
 
+}  // namespace detail_
+
 template <typename... Ts>
+using UnrollTypes = detail_::UnrollTypesWith<TypeGetter, Ts...>;
+
+template <typename Instantiation>
 struct UnrollTemplateParameters;
-template <template <typename, typename...> class Template, typename... Ts>
-struct UnrollTemplateParameters<Template<Ts...>>
+template <template <typename...> class Template, typename... Ts>
+struct UnrollTemplateParameters<Template<Ts...>> : UnrollTypes<Ts...>
 {
-  static void Unroll(TypeIndexArray &array)
-  {
-    UnrollTypes<Ts...>::Unroll(array);
-  }
 };
 
 template <typename... Ts>
-struct UnrollParameterTypes;
-template <typename T, typename... Ts>
-struct UnrollParameterTypes<T, Ts...>
-{
-  // Invoked on non-final type
-  static void Unroll(TypeIndexArray &array)
-  {
-    TypeIndex const type_index = ParameterTypeGetter<T>::GetTypeIndex();
-    array.push_back(type_index);
-    UnrollParameterTypes<Ts...>::Unroll(array);
-  }
-};
-template <typename T>
-struct UnrollParameterTypes<T>
-{
-  // Invoked on final type
-  static void Unroll(TypeIndexArray &array)
-  {
-    TypeIndex const type_index = ParameterTypeGetter<T>::GetTypeIndex();
-    array.push_back(type_index);
-  }
-};
-template <>
-struct UnrollParameterTypes<>
-{
-  // Invoked on zero types
-  static void Unroll(TypeIndexArray & /* array */)
-  {}
-};
+using UnrollParameterTypes = detail_::UnrollTypesWith<ParameterTypeGetter, Ts...>;
 
-template <typename... Ts>
-struct UnrollTupleParameterTypes;
-template <typename... Ts>
-struct UnrollTupleParameterTypes<std::tuple<Ts...>>
-{
-  static void Unroll(TypeIndexArray &array)
-  {
-    UnrollParameterTypes<Ts...>::Unroll(array);
-  }
-};
-
-template <typename T, typename = void>
-struct MakeParameterType;
 template <typename T>
-struct MakeParameterType<T, typename std::enable_if_t<fetch::vm::IsPrimitive<T>::value>>
-{
-  using type = T;
-};
-template <typename T>
-struct MakeParameterType<T, typename std::enable_if_t<fetch::vm::IsVariant<T>::value>>
-{
-  using type = T const &;
-};
-template <typename T>
-struct MakeParameterType<T, typename std::enable_if_t<fetch::vm::IsPtr<T>::value>>
-{
-  using type = T const &;
-};
+using MakeParameterType =
+    type_util::Switch<IsPrimitive<T>, T, IsVariant<T>, T const &, IsPtr<T>, T const &>;
 
 template <typename Type, typename OutputType, typename... InputTypes>
 struct IndexedValueGetter;
