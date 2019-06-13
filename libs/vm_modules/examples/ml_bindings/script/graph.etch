@@ -43,8 +43,10 @@ for(i in 0:trainingIterations)
       print(average);
       average = 0.0f;
       d.Display(p.Data());
-      print("Expected  : " + p.Label().ToString());
-      print("Predicted : " + pred.ToString());
+      var label_string = ArgMax(p.Label());
+      var pred_string = ArgMax(pred);
+      print("Expected  : " + label_string);
+      print("Predicted : " + pred_string);
     endif
     var dt = c.Backward(pred, p.Label());
     g.Backpropagate("Softmax", dt);

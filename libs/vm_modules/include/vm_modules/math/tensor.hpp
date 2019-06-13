@@ -22,45 +22,65 @@
 
 namespace fetch {
 namespace vm_modules {
-namespace ml {
-class TensorWrapper : public fetch::vm::Object, public fetch::math::Tensor<float>
+namespace math {
+class VMTensor : public fetch::vm::Object
 {
 
 public:
   using ArrayType = fetch::math::Tensor<float>;
   using SizeType  = ArrayType::SizeType;
 
-  TensorWrapper(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
+  VMTensor(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
                 std::vector<std::uint64_t> const &shape)
     : fetch::vm::Object(vm, type_id)
-    , ArrayType(shape)
-  {}
+    , tensor_(shape)
+  {
+  }
 
-  static fetch::vm::Ptr<TensorWrapper> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
+  static fetch::vm::Ptr<VMTensor> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
                                                    fetch::vm::Ptr<fetch::vm::Array<SizeType>> shape)
   {
-    return {new TensorWrapper(vm, type_id, shape->elements)};
+    return {new VMTensor(vm, type_id, shape->elements)};
   }
 
   void SetAt(uint64_t index, float value)
   {
-    (*this).At(index) = value;
+    tensor_.At(index) = value;
+  }
+
+  void Copy(ArrayType const &other)
+  {
+    tensor_.Copy(other);
   }
 
   fetch::vm::Ptr<fetch::vm::String> ToString()
   {
-    return new fetch::vm::String(vm_, (*this).Tensor::ToString());
+    return new fetch::vm::String(vm_, tensor_.ToString());
   }
+
+  fetch::vm::Ptr<fetch::vm::Array<VMTensor::SizeType>> shape()
+  {
+    return new fetch::vm::Array<VMTensor::SizeType>(tensor_.shape());
+  }
+
+  ArrayType const & GetTensor()
+  {
+    return tensor_;
+  }
+
+private:
+  ArrayType tensor_;
+
 };
 
 inline void CreateTensor(fetch::vm::Module &module)
 {
-  module.CreateClassType<TensorWrapper>("Tensor")
-      .CreateConstuctor<fetch::vm::Ptr<fetch::vm::Array<TensorWrapper::SizeType>>>()
-      .CreateMemberFunction("SetAt", &TensorWrapper::SetAt)
-      .CreateMemberFunction("ToString", &TensorWrapper::ToString);
+  module.CreateClassType<VMTensor>("Tensor")
+      .CreateConstuctor<fetch::vm::Ptr<fetch::vm::Array<VMTensor::SizeType>>>()
+      .CreateMemberFunction("SetAt", &VMTensor::SetAt)
+      .CreateMemberFunction("ToString", &VMTensor::ToString);
 }
 
-}  // namespace ml
+}  // namespace math
 }  // namespace vm_modules
 }  // namespace fetch

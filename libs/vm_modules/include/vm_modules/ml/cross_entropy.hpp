@@ -19,39 +19,39 @@
 
 #include "ml/ops/loss_functions/cross_entropy.hpp"
 #include "vm/module.hpp"
-#include "vm_modules/ml/tensor.hpp"
+#include "vm_modules/math/tensor.hpp"
 
 namespace fetch {
 namespace vm_modules {
 namespace ml {
-class CrossEntropyWrapper : public fetch::vm::Object,
+class VMCrossEntropyLoss : public fetch::vm::Object,
                             public fetch::ml::ops::CrossEntropy<fetch::math::Tensor<float>>
 {
 public:
-  CrossEntropyWrapper(fetch::vm::VM *vm, fetch::vm::TypeId type_id)
+  VMCrossEntropyLoss(fetch::vm::VM *vm, fetch::vm::TypeId type_id)
     : fetch::vm::Object(vm, type_id)
   {}
 
-  static fetch::vm::Ptr<CrossEntropyWrapper> Constructor(fetch::vm::VM *   vm,
+  static fetch::vm::Ptr<VMCrossEntropyLoss> Constructor(fetch::vm::VM *   vm,
                                                          fetch::vm::TypeId type_id)
   {
-    return new CrossEntropyWrapper(vm, type_id);
+    return new VMCrossEntropyLoss(vm, type_id);
   }
 
-  float ForwardWrapper(fetch::vm::Ptr<fetch::vm_modules::ml::TensorWrapper> const &pred,
-                       fetch::vm::Ptr<fetch::vm_modules::ml::TensorWrapper> const &groundTruth)
+  float ForwardWrapper(fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> const &pred,
+                       fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> const &groundTruth)
   {
     return fetch::ml::ops::CrossEntropy<fetch::math::Tensor<float>>::Forward({*pred, *groundTruth});
   }
 
-  fetch::vm::Ptr<fetch::vm_modules::ml::TensorWrapper> BackwardWrapper(
-      fetch::vm::Ptr<fetch::vm_modules::ml::TensorWrapper> const &pred,
-      fetch::vm::Ptr<fetch::vm_modules::ml::TensorWrapper> const &groundTruth)
+  fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> BackwardWrapper(
+      fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> const &pred,
+      fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> const &groundTruth)
   {
     fetch::math::Tensor<float> dt =
         fetch::ml::ops::CrossEntropy<fetch::math::Tensor<float>>::Backward({*pred, *groundTruth});
-    fetch::vm::Ptr<fetch::vm_modules::ml::TensorWrapper> ret =
-        this->vm_->CreateNewObject<fetch::vm_modules::ml::TensorWrapper>(dt.shape());
+    fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> ret =
+        this->vm_->CreateNewObject<fetch::vm_modules::math::VMTensor>(dt.shape());
     (*ret).Copy(dt);
     return ret;
   }
@@ -59,10 +59,10 @@ public:
 
 inline void CreateCrossEntropy(fetch::vm::Module &module)
 {
-  module.CreateClassType<CrossEntropyWrapper>("CrossEntropy")
+  module.CreateClassType<VMCrossEntropyLoss>("CrossEntropy")
       .CreateConstuctor<>()
-      .CreateMemberFunction("Forward", &CrossEntropyWrapper::ForwardWrapper)
-      .CreateMemberFunction("Backward", &CrossEntropyWrapper::BackwardWrapper);
+      .CreateMemberFunction("Forward", &VMCrossEntropyLoss::ForwardWrapper)
+      .CreateMemberFunction("Backward", &VMCrossEntropyLoss::BackwardWrapper);
 }
 
 }  // namespace ml

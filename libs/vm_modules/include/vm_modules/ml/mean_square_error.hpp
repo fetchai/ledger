@@ -19,40 +19,40 @@
 
 #include "ml/ops/loss_functions/mean_square_error.hpp"
 #include "vm/module.hpp"
-#include "vm_modules/ml/tensor.hpp"
+#include "vm_modules/math/tensor.hpp"
 
 namespace fetch {
 namespace vm_modules {
 namespace ml {
-class MSEWrapper : public fetch::vm::Object,
+class VMMeanSquareError : public fetch::vm::Object,
                    public fetch::ml::ops::MeanSquareError<fetch::math::Tensor<float>>
 {
 public:
-  MSEWrapper(fetch::vm::VM *vm, fetch::vm::TypeId type_id)
+  VMMeanSquareError(fetch::vm::VM *vm, fetch::vm::TypeId type_id)
     : fetch::vm::Object(vm, type_id)
   {}
 
-  static fetch::vm::Ptr<MSEWrapper> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id)
+  static fetch::vm::Ptr<VMMeanSquareError> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id)
   {
-    return new MSEWrapper(vm, type_id);
+    return new VMMeanSquareError(vm, type_id);
   }
 
-  float ForwardWrapper(fetch::vm::Ptr<fetch::vm_modules::ml::TensorWrapper> const &pred,
-                       fetch::vm::Ptr<fetch::vm_modules::ml::TensorWrapper> const &groundTruth)
+  float ForwardWrapper(fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> const &pred,
+                       fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> const &groundTruth)
   {
     return fetch::ml::ops::MeanSquareError<fetch::math::Tensor<float>>::Forward(
         {*pred, *groundTruth});
   }
 
-  fetch::vm::Ptr<fetch::vm_modules::ml::TensorWrapper> BackwardWrapper(
-      fetch::vm::Ptr<fetch::vm_modules::ml::TensorWrapper> const &pred,
-      fetch::vm::Ptr<fetch::vm_modules::ml::TensorWrapper> const &groundTruth)
+  fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> BackwardWrapper(
+      fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> const &pred,
+      fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> const &groundTruth)
   {
     fetch::math::Tensor<float> dt =
         fetch::ml::ops::MeanSquareError<fetch::math::Tensor<float>>::Backward(
             {*pred, *groundTruth});
-    fetch::vm::Ptr<fetch::vm_modules::ml::TensorWrapper> ret =
-        this->vm_->CreateNewObject<fetch::vm_modules::ml::TensorWrapper>(dt.shape());
+    fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> ret =
+        this->vm_->CreateNewObject<fetch::vm_modules::math::VMTensor>(dt.shape());
     (*ret).Copy(dt);
     return ret;
   }
@@ -60,10 +60,10 @@ public:
 
 inline void CreateMeanSquareError(fetch::vm::Module &module)
 {
-  module.CreateClassType<MSEWrapper>("MeanSquareError")
+  module.CreateClassType<VMMeanSquareError>("MeanSquareError")
       .CreateConstuctor<>()
-      .CreateMemberFunction("Forward", &MSEWrapper::ForwardWrapper)
-      .CreateMemberFunction("Backward", &MSEWrapper::BackwardWrapper);
+      .CreateMemberFunction("Forward", &VMMeanSquareError::ForwardWrapper)
+      .CreateMemberFunction("Backward", &VMMeanSquareError::BackwardWrapper);
 }
 
 }  // namespace ml
