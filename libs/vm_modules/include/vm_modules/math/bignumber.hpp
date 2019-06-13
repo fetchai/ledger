@@ -17,17 +17,14 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/bignumber.hpp"
-
-#include "vm_modules/core/byte_array_wrapper.hpp"
-
+#include "vectorise/uint/uint.hpp"
 #include "vm/module.hpp"
+#include "vm_modules/core/byte_array_wrapper.hpp"
 
 namespace fetch {
 namespace vm_modules {
 
-// TODO: Make templated
-class BigNumberWrapper : public fetch::vm::Object
+class UInt256Wrapper : public fetch::vm::Object
 {
 public:
   using SizeType = uint64_t;
@@ -36,36 +33,84 @@ public:
   using Ptr    = fetch::vm::Ptr<T>;
   using String = fetch::vm::String;
 
-  BigNumberWrapper()          = delete;
-  virtual ~BigNumberWrapper() = default;
+  UInt256Wrapper()          = delete;
+  virtual ~UInt256Wrapper() = default;
 
   static void Bind(vm::Module &module)
   {
-    module.CreateClassType<BigNumberWrapper>("BigUInt")
+    module.CreateClassType<UInt256Wrapper>("UInt256")
+        .CreateConstuctor<uint64_t>()
+        .CreateConstuctor<Ptr<vm::String>>()
         .CreateConstuctor<Ptr<ByteArrayWrapper>>()
-        .CreateMemberFunction("toBuffer", &BigNumberWrapper::ToBuffer)
-        .CreateMemberFunction("increase", &BigNumberWrapper::Increase)
-        .CreateMemberFunction("lessThan", &BigNumberWrapper::LessThan)
-        .CreateMemberFunction("logValue", &BigNumberWrapper::LogValue)
-        .CreateMemberFunction("toFloat64", &BigNumberWrapper::ToFloat64)
-        .CreateMemberFunction("toInt32", &BigNumberWrapper::ToInt32)
-        .CreateMemberFunction("size", &BigNumberWrapper::size);
+        //        .CreateMemberFunction("toBuffer", &UInt256Wrapper::ToBuffer)
+        .CreateMemberFunction("increase", &UInt256Wrapper::Increase)
+        .CreateMemberFunction("lessThan", &UInt256Wrapper::LessThan)
+        .CreateMemberFunction("logValue", &UInt256Wrapper::LogValue)
+        .CreateMemberFunction("toFloat64", &UInt256Wrapper::ToFloat64)
+        .CreateMemberFunction("toInt32", &UInt256Wrapper::ToInt32)
+        .CreateMemberFunction("size", &UInt256Wrapper::size);
   }
 
-  BigNumberWrapper(fetch::vm::VM *vm, fetch::vm::TypeId type_id, byte_array::ByteArray data)
+  UInt256Wrapper(fetch::vm::VM *vm, fetch::vm::TypeId type_id, byte_array::ByteArray const &data)
     : fetch::vm::Object(vm, type_id)
     , number_(data)
   {}
 
-  static fetch::vm::Ptr<BigNumberWrapper> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
-                                                      fetch::vm::Ptr<ByteArrayWrapper> const &ba)
+  UInt256Wrapper(fetch::vm::VM *vm, fetch::vm::TypeId type_id, std::string const &data)
+    : fetch::vm::Object(vm, type_id)
+    , number_(data)
+  {}
+
+  UInt256Wrapper(fetch::vm::VM *vm, fetch::vm::TypeId type_id, uint64_t data)
+    : fetch::vm::Object(vm, type_id)
+    , number_(data)
+  {}
+
+  static fetch::vm::Ptr<UInt256Wrapper> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
+                                                    fetch::vm::Ptr<ByteArrayWrapper> const &ba)
   {
-    return new BigNumberWrapper(vm, type_id, ba->byte_array());
+    try
+    {
+      return new UInt256Wrapper(vm, type_id, ba->byte_array());
+    }
+    catch (std::runtime_error const &e)
+    {
+      vm->RuntimeError(e.what());
+    }
+    return nullptr;
+  }
+
+  static fetch::vm::Ptr<UInt256Wrapper> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
+                                                    fetch::vm::Ptr<vm::String> const &ba)
+  {
+    try
+    {
+      return new UInt256Wrapper(vm, type_id, ba->str);
+    }
+    catch (std::runtime_error const &e)
+    {
+      vm->RuntimeError(e.what());
+    }
+    return nullptr;
+  }
+
+  static fetch::vm::Ptr<UInt256Wrapper> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
+                                                    uint64_t const &val)
+  {
+    try
+    {
+      return new UInt256Wrapper(vm, type_id, val);
+    }
+    catch (std::runtime_error const &e)
+    {
+      vm->RuntimeError(e.what());
+    }
+    return nullptr;
   }
 
   double ToFloat64()
   {
-    return math::ToDouble(number_);
+    return ToDouble(number_);
   }
 
   int32_t ToInt32()
@@ -84,15 +129,17 @@ public:
 
   double LogValue()
   {
-    return math::Log(number_);
+    return Log(number_);
   }
 
+  /*
   fetch::vm::Ptr<ByteArrayWrapper> ToBuffer()
   {
     return vm_->CreateNewObject<ByteArrayWrapper>(number_.Copy());
   }
+  */
 
-  bool LessThan(Ptr<BigNumberWrapper> const &other)
+  bool LessThan(Ptr<UInt256Wrapper> const &other)
   {
     return number_ < other->number_;
   }
@@ -107,8 +154,13 @@ public:
     return number_.size();
   }
 
+  vectorise::UInt<256> const &number() const
+  {
+    return number_;
+  }
+
 private:
-  math::BigUnsigned number_;
+  vectorise::UInt<256> number_;
 };
 
 }  // namespace vm_modules
