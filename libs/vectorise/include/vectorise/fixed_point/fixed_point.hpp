@@ -872,7 +872,7 @@ constexpr FixedPoint<I, F> &FixedPoint<I, F>::operator=(FixedPoint<I, F> const &
 {
   if (isNaN(o))
   {
-    throw std::overflow_error("Cannot assing NaN value!");
+    throw std::overflow_error("Cannot assign NaN value!");
   }
   data_ = o.data_;
   return *this;
@@ -880,7 +880,7 @@ constexpr FixedPoint<I, F> &FixedPoint<I, F>::operator=(FixedPoint<I, F> const &
 
 /**
  * Assignment operator for primitive integer types
- * @param the primitive to assing the FixedPoint object from
+ * @param the primitive to assign the FixedPoint object from
  * @return copies the given primitive integer n
  */
 template <std::uint16_t I, std::uint16_t F>
