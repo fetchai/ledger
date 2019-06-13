@@ -306,7 +306,6 @@ public:
     return new T(this, GetTypeId<T>(), std::forward<Ts>(args)...);
   }
 
-
   void SetIOObserver(IoObserverInterface &observer)
   {
     io_observer_ = &observer;
@@ -409,43 +408,42 @@ public:
   bool IsDefaultSerializeConstructable(TypeId type_id) const
   {
     TypeIndex idx = registered_types_.GetTypeIndex(type_id);
-    auto it = deserialization_constructors_.find(idx);
+    auto      it  = deserialization_constructors_.find(idx);
 
-    if(it == deserialization_constructors_.end())
+    if (it == deserialization_constructors_.end())
     {
       TypeInfo tinfo = GetTypeInfo(type_id);
 
-      if(tinfo.template_type_id == TypeIds::Unknown)
+      if (tinfo.template_type_id == TypeIds::Unknown)
       {
         return false;
       }
 
       idx = registered_types_.GetTypeIndex(tinfo.template_type_id);
-      it = deserialization_constructors_.find(idx);
+      it  = deserialization_constructors_.find(idx);
       return (it != deserialization_constructors_.end());
     }
     return true;
   }
 
-
-  Ptr< Object > DefaultSerializeConstruct(TypeId type_id) 
+  Ptr<Object> DefaultSerializeConstruct(TypeId type_id)
   {
     // Resolving constructor
     TypeIndex idx = registered_types_.GetTypeIndex(type_id);
-    auto it = deserialization_constructors_.find(idx);
+    auto      it  = deserialization_constructors_.find(idx);
 
-    if(it == deserialization_constructors_.end())
+    if (it == deserialization_constructors_.end())
     {
       // Testing if there is an interface constructor
       TypeInfo tinfo = GetTypeInfo(type_id);
-      if(tinfo.template_type_id != TypeIds::Unknown)
+      if (tinfo.template_type_id != TypeIds::Unknown)
       {
         idx = registered_types_.GetTypeIndex(tinfo.template_type_id);
-        it = deserialization_constructors_.find(idx);
+        it  = deserialization_constructors_.find(idx);
       }
     }
 
-    if(it == deserialization_constructors_.end())
+    if (it == deserialization_constructors_.end())
     {
       RuntimeError("object is not default constructible.");
       return nullptr;

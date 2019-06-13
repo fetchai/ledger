@@ -212,7 +212,7 @@ Module::Module()
 
   GetClassInterface<Address>()
       .CreateSerializeDefaultConstuctor<>()
-//      .CreateConstuctor<>()
+      //      .CreateConstuctor<>()
       .CreateConstuctor<Ptr<String>>()
       .CreateMemberFunction("signedTx", &Address::HasSignedTx);
 

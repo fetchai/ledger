@@ -47,7 +47,6 @@ public:
   void CreateConstructor(TypeIndex type_index, TypeIndexArray const &parameter_type_index_array,
                          Handler const &handler);
 
-
   void CreateStaticMemberFunction(TypeIndex type_index, std::string const &function_name,
                                   TypeIndexArray const &parameter_type_index_array,
                                   TypeIndex return_type_index, Handler const &handler);
@@ -111,33 +110,33 @@ private:
   RegisteredTypes   registered_types_;
   FunctionInfoArray function_info_array_;
 
-  SymbolTablePtr    symbols_;
-  TypePtr           null_type_;
-  TypePtr           void_type_;
-  TypePtr           bool_type_;
-  TypePtr           int8_type_;
-  TypePtr           uint8_type_;
-  TypePtr           int16_type_;
-  TypePtr           uint16_type_;
-  TypePtr           int32_type_;
-  TypePtr           uint32_type_;
-  TypePtr           int64_type_;
-  TypePtr           uint64_type_;
-  TypePtr           float32_type_;
-  TypePtr           float64_type_;
-  TypePtr           string_type_;
-  TypePtr           address_type_;
-  TypePtr           template_parameter1_type_;
-  TypePtr           template_parameter2_type_;
-  TypePtr           any_type_;
-  TypePtr           any_primitive_type_;
-  TypePtr           any_integer_type_;
-  TypePtr           any_floating_point_type_;
-  TypePtr           matrix_type_;
-  TypePtr           array_type_;
-  TypePtr           map_type_;
-  TypePtr           sharded_state_type_;
-  TypePtr           state_type_;
+  SymbolTablePtr symbols_;
+  TypePtr        null_type_;
+  TypePtr        void_type_;
+  TypePtr        bool_type_;
+  TypePtr        int8_type_;
+  TypePtr        uint8_type_;
+  TypePtr        int16_type_;
+  TypePtr        uint16_type_;
+  TypePtr        int32_type_;
+  TypePtr        uint32_type_;
+  TypePtr        int64_type_;
+  TypePtr        uint64_type_;
+  TypePtr        float32_type_;
+  TypePtr        float64_type_;
+  TypePtr        string_type_;
+  TypePtr        address_type_;
+  TypePtr        template_parameter1_type_;
+  TypePtr        template_parameter2_type_;
+  TypePtr        any_type_;
+  TypePtr        any_primitive_type_;
+  TypePtr        any_integer_type_;
+  TypePtr        any_floating_point_type_;
+  TypePtr        matrix_type_;
+  TypePtr        array_type_;
+  TypePtr        map_type_;
+  TypePtr        sharded_state_type_;
+  TypePtr        state_type_;
 
   BlockNodePtr             root_;
   BlockNodePtrArray        blocks_;

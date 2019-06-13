@@ -41,50 +41,45 @@
 namespace fetch {
 namespace vm {
 
-namespace details
-{
-template <typename T, typename... Ts> 
+namespace details {
+template <typename T, typename... Ts>
 struct CreateSerializeConstructor
 {
   static DefaultConstructorHandler Apply()
   {
-    return [](VM * vm, TypeId ) -> Ptr<Object> {
+    return [](VM *vm, TypeId) -> Ptr<Object> {
       vm->RuntimeError("No support for non-default constructors.");
       return nullptr;
     };
   }
 
-  static DefaultConstructorHandler Apply(Ts ...args) 
-  {    
-    return [args...](VM *vm, TypeId id) -> Ptr<Object> {
-      return T::Constructor(vm, id, args...); 
-    };
+  static DefaultConstructorHandler Apply(Ts... args)
+  {
+    return [args...](VM *vm, TypeId id) -> Ptr<Object> { return T::Constructor(vm, id, args...); };
   }
 };
 
-template <typename T> 
+template <typename T>
 struct CreateSerializeConstructor<T>
 {
-  static DefaultConstructorHandler Apply() 
-  {    
-    return [](VM *vm, TypeId id) -> Ptr<Object> {
-      return T::Constructor(vm, id);
-    };
+  static DefaultConstructorHandler Apply()
+  {
+    return [](VM *vm, TypeId id) -> Ptr<Object> { return T::Constructor(vm, id); };
   }
 };
 
-template <> 
+template <>
 struct CreateSerializeConstructor<IMap>
 {
-  static DefaultConstructorHandler Apply() 
-  {    
-    return [](VM * vm, TypeId ) -> Ptr<Object> {
+  static DefaultConstructorHandler Apply()
+  {
+    return [](VM *vm, TypeId) -> Ptr<Object> {
       vm->RuntimeError("Map interface is not constructable");
       return nullptr;
     };
   }
 };
-}
+}  // namespace details
 
 class Module
 {
@@ -95,8 +90,6 @@ public:
   template <typename Type>
   class ClassInterface
   {
-
-
 
   public:
     ClassInterface(Module *module__, TypeIndex type_index__)
@@ -120,10 +113,10 @@ public:
 
       module_->AddCompilerSetupFunction(compiler_setup_function);
 
-      if(sizeof...(Ts) == 0)
+      if (sizeof...(Ts) == 0)
       {
         DefaultConstructorHandler h = details::CreateSerializeConstructor<Type, Ts...>::Apply();
-        module_->deserialization_constructors_.insert({type_index__,std::move(h)});
+        module_->deserialization_constructors_.insert({type_index__, std::move(h)});
       }
 
       return *this;
@@ -136,8 +129,9 @@ public:
       TypeIndexArray  parameter_type_index_array;
       UnrollTypes<Ts...>::Unroll(parameter_type_index_array);
 
-      DefaultConstructorHandler h = details::CreateSerializeConstructor<Type, Ts...>::Apply(std::forward<Ts>(args)...);
-      module_->deserialization_constructors_.insert({type_index__,std::move(h)});
+      DefaultConstructorHandler h =
+          details::CreateSerializeConstructor<Type, Ts...>::Apply(std::forward<Ts>(args)...);
+      module_->deserialization_constructors_.insert({type_index__, std::move(h)});
 
       return *this;
     }
@@ -332,10 +326,10 @@ private:
                   RegisteredTypes &registered_types, FunctionInfoArray &function_info_array,
                   DeserializeConstructorMap &deserialization_constructors)
   {
-    type_info_array     = type_info_array_;
-    type_info_map       = type_info_map_;
-    registered_types    = registered_types_;
-    function_info_array = function_info_array_;
+    type_info_array              = type_info_array_;
+    type_info_map                = type_info_map_;
+    registered_types             = registered_types_;
+    function_info_array          = function_info_array_;
     deserialization_constructors = deserialization_constructors_;
   }
 
@@ -351,7 +345,7 @@ private:
   TypeInfoMap                        type_info_map_;
   RegisteredTypes                    registered_types_;
   FunctionInfoArray                  function_info_array_;
-  DeserializeConstructorMap        deserialization_constructors_;
+  DeserializeConstructorMap          deserialization_constructors_;
 
   friend class Compiler;
   friend class VM;

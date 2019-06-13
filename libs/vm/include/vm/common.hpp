@@ -203,11 +203,11 @@ using TypeInfoArray = std::vector<TypeInfo>;
 using TypeInfoMap   = std::unordered_map<std::string, TypeId>;
 
 class VM;
-template< typename T>
+template <typename T>
 class Ptr;
 class Object;
 
-using Handler = std::function<void(VM *)>;
+using Handler                   = std::function<void(VM *)>;
 using DefaultConstructorHandler = std::function<Ptr<Object>(VM *, TypeId)>;
 
 struct FunctionInfo
@@ -252,8 +252,9 @@ public:
       return it->second;
     }
 
-    return TypeIndex(typeid(void***));
+    return TypeIndex(typeid(void ***));
   }
+
 private:
   void Add(TypeIndex type_index, TypeId type_id)
   {

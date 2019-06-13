@@ -222,7 +222,6 @@ void Analyser::CreateConstructor(TypeIndex             type_index,
   CreateConstructor(GetType(type_index), GetTypes(parameter_type_index_array), handler);
 }
 
-
 void Analyser::CreateStaticMemberFunction(TypeIndex type_index, std::string const &function_name,
                                           TypeIndexArray const &parameter_type_index_array,
                                           TypeIndex return_type_index, Handler const &handler)
@@ -2289,8 +2288,6 @@ void Analyser::AddFunctionInfo(FunctionPtr const &function, Handler const &handl
   FunctionInfo info(function->function_kind, function->unique_id, handler);
   function_info_array_.push_back(info);
 }
-
-
 
 std::string Analyser::BuildUniqueId(TypePtr const &type, std::string const &function_name,
                                     TypePtrArray const &parameter_types, TypePtr const &return_type)

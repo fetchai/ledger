@@ -37,7 +37,6 @@ struct Variant;
 class Address;
 struct String;
 
-
 template <typename T, typename = void>
 struct IsObject : std::false_type
 {
@@ -214,6 +213,7 @@ public:
   }
 
   std::string GetUniqueId() const;
+
 protected:
   Variant &       Push();
   Variant &       Pop();

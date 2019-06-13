@@ -505,8 +505,7 @@ struct AnyFloatingPoint : public Variant
   using Variant::Variant;
 };
 
-
-inline void Serialize(ByteArrayBuffer &buffer, Variant const &variant) // TODO: Get rid of this
+inline void Serialize(ByteArrayBuffer &buffer, Variant const &variant)  // TODO: Get rid of this
 {
   buffer << variant.type_id;
 
@@ -562,28 +561,29 @@ inline void Serialize(ByteArrayBuffer &buffer, Variant const &variant) // TODO: 
   default:
     if (!variant.IsPrimitive())
     {
-      if(variant.object == nullptr)
+      if (variant.object == nullptr)
       {
-        throw std::runtime_error("Cannot serialize nullptr"); // TODO: Use VM
+        throw std::runtime_error("Cannot serialize nullptr");  // TODO: Use VM
         return;
       }
       variant.object->SerializeTo(buffer);
     }
     else
     {
-      throw std::runtime_error("Unable to deserialize unexpected type."); // TODO: Use VM
+      throw std::runtime_error("Unable to deserialize unexpected type.");  // TODO: Use VM
     }
     break;
   }
 }
 
-inline void Deserialize(ByteArrayBuffer &buffer, Variant &variant) // TODO Get rid of this
+inline void Deserialize(ByteArrayBuffer &buffer, Variant &variant)  // TODO Get rid of this
 {
   TypeId id;
   buffer >> id;
 
   // TODO (issue 1172): This check might not be necessary depending on serialisation principle
-  if (variant.type_id != id) // FIXME: This does not work. Type_id is not persistent - use uniqie id.
+  if (variant.type_id !=
+      id)  // FIXME: This does not work. Type_id is not persistent - use uniqie id.
   {
     throw std::runtime_error("Type of provided variant does not match type of serialised data.");
   }
@@ -655,7 +655,6 @@ inline void Deserialize(ByteArrayBuffer &buffer, Variant &variant) // TODO Get r
     // buffer >> variant.object;
   }
 }
-
 
 }  // namespace vm
 }  // namespace fetch

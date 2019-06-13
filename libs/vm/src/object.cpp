@@ -263,7 +263,7 @@ bool Object::SerializeTo(ByteArrayBuffer & /*buffer*/)
 
 bool Object::DeserializeFrom(ByteArrayBuffer & /*buffer*/)
 {
-  vm_->RuntimeError("Deserializer for " + GetUniqueId() + " is not defined.");  
+  vm_->RuntimeError("Deserializer for " + GetUniqueId() + " is not defined.");
   return false;
 }
 
