@@ -33,6 +33,7 @@ class LeakyReluOp : public fetch::ml::ElementWiseOps<T>
 public:
   using ArrayType     = T;
   using DataType      = typename ArrayType::Type;
+  using SizeType      = typename ArrayType::SizeType;
   using ArrayPtrType  = std::shared_ptr<ArrayType>;
   using VecTensorType = typename ElementWiseOps<T>::VecTensorType;
 
@@ -44,7 +45,9 @@ public:
   {
     ASSERT(inputs.size() == 2);
     ASSERT(inputs.at(0).get().shape() == output.shape());
-    ASSERT(inputs.at(1).get().size() == output.size());
+
+    // Test broadcastability
+    // ASSERT(inputs.at(1).get().size() == output.size());
 
     fetch::math::LeakyRelu(inputs.at(0).get(), inputs.at(1).get(), output);
   }
@@ -58,40 +61,57 @@ public:
   {
     ASSERT(inputs.size() == 2);
     ASSERT(inputs.at(0).get().size() == error_signal.size());
-    ASSERT(inputs.at(1).get().size() == error_signal.size());
-    ASSERT(error_signal.size() == inputs.at(1).get().size());
 
-    ArrayType return_signal1{error_signal.shape()};
-    ArrayType return_signal2{error_signal.shape()};
-
-    auto     rs1_it    = return_signal1.begin();
-    auto     rs2_it    = return_signal2.begin();
-    auto     input1_it = inputs.at(0).get().begin();
-    auto     input2_it = inputs.at(1).get().begin();
     DataType zero{0};
     DataType one{1};
 
-    while (input1_it.is_valid())
-    {
-      if (*input1_it >= zero)
-      {
-        *rs1_it = one;
-        *rs2_it = zero;
-      }
-      else
-      {
-        *rs1_it = *input2_it;
-        *rs2_it = *input1_it;
-      }
-      ++rs1_it;
-      ++rs2_it;
-      ++input1_it;
-      ++input2_it;
-    }
+    // Test if all dimensions are same except batch dimension
+    // ASSERT(inputs.at(1).get().size() == error_signal.size());
 
-    // multiply by error_signal (chain rule)
-    fetch::math::Multiply(error_signal, return_signal1, return_signal1);
-    fetch::math::Multiply(error_signal, return_signal2, return_signal2);
+    ArrayType return_signal1{inputs.at(0).get().shape()};
+
+    SizeType a_size{1};
+    for (SizeType i{0}; i < inputs.at(0).get().shape().size() - 1; i++)
+    {
+      a_size *= inputs.at(0).get().shape().at(i);
+    }
+    ArrayType return_signal2({a_size, 1});
+    return_signal2.Fill(zero);
+
+    SizeType t_batch_dimension = inputs.at(0).get().shape().size() - 1;
+    SizeType batch_size        = inputs.at(0).get().shape().at(t_batch_dimension);
+
+    for (SizeType i{0}; i < batch_size; i++)
+    {
+
+      // Slice along batch dimension
+      auto input1_slice = inputs.at(0).get().Slice(i, t_batch_dimension);
+      auto rs1_slice    = return_signal1.Slice(i, t_batch_dimension);
+
+      auto rs1_it    = rs1_slice.begin();
+      auto rs2_it    = return_signal2.begin();
+      auto input1_it = input1_slice.begin();
+      auto input2_it = inputs.at(1).get().begin();
+      auto error_it  = error_signal.begin();
+
+      while (input1_it.is_valid())
+      {
+        if (*input1_it >= zero)
+        {
+          *rs1_it = one * (*error_it);
+        }
+        else
+        {
+          *rs1_it = (*input2_it) * (*error_it);
+          *rs2_it += (*input1_it) * (*error_it);
+        }
+        ++rs1_it;
+        ++rs2_it;
+        ++input1_it;
+        ++input2_it;
+        ++error_it;
+      }
+    }
 
     return {return_signal1, return_signal2};
   }
