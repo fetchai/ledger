@@ -1,0 +1,59 @@
+//------------------------------------------------------------------------------
+//
+//   Copyright 2018-2019 Fetch.AI Limited
+//
+//   Licensed under the Apache License, Version 2.0 (the "License");
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+//
+//------------------------------------------------------------------------------
+
+#include "ml/ops/sqrt.hpp"
+
+#include "math/tensor.hpp"
+#include "vectorise/fixed_point/fixed_point.hpp"
+
+#include "gtest/gtest.h"
+
+#include <cstdint>
+#include <vector>
+
+template <typename T>
+class SqrtTest : public ::testing::Test
+{
+};
+
+using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
+fetch::math::Tensor<fetch::fixed_point::FixedPoint<16, 16>>,
+fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
+
+TYPED_TEST_CASE(SqrtTest, MyTypes);
+
+TYPED_TEST(SqrtTest, forward_all_positive_test)
+{
+//uint8_t   n = 9;
+//TypeParam data{n};
+//TypeParam gt({n});
+using ArrayType     = TypeParam;
+//using VecTensorType = typename fetch::ml::Ops<TypeParam>::VecTensorType;
+
+ArrayType data = ArrayType::FromString("0, 1, 2, 4, 10, 100");
+ArrayType gt   = ArrayType::FromString("0, 1, 1.41421356, 2, 3.1622776, 10");
+
+
+fetch::ml::ops::Sqrt<TypeParam> op;
+
+TypeParam prediction(op.ComputeOutputShape({data}));
+op.Forward({data}, prediction);
+
+ASSERT_TRUE(
+    prediction.AllClose(gt));
+}
