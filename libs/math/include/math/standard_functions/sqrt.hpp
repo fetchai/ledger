@@ -21,6 +21,11 @@
 
 #include <cassert>
 
+#include <cfenv>
+#include <cmath>
+
+#pragma STDC FENV_ACCESS ON
+
 namespace fetch {
 namespace math {
 
@@ -61,11 +66,15 @@ meta::IfIsMathArray<ArrayType, void> Sqrt(ArrayType const &array, ArrayType &ret
   auto arr_it = array.cbegin();
   auto rit    = ret.begin();
 
+  std::feclearexcept(FE_ALL_EXCEPT);
   while (arr_it.is_valid())
   {
     Sqrt(*arr_it, *rit);
     ++arr_it;
     ++rit;
+  }
+  if(std::fetestexcept(FE_INVALID)) {
+    throw std::runtime_error("Sqrt error");
   }
 }
 
