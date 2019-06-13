@@ -299,18 +299,13 @@ public:
   {
     return registered_types_.GetTypeId(TypeIndex(typeid(T)));
   }
-/*
+
   template <typename T, typename... Ts>
   Ptr<T> CreateNewObject(Ts &&... args)
   {
-    return T::Constructor(this, GetTypeId<T>(), std::forward<Ts>(args)...);
+    return new T(this, GetTypeId<T>(), std::forward<Ts>(args)...);
   }
-*/
-  template <typename T, typename... Ts>
-  Ptr<T> CreateNewObject(Ts... args)
-  {
-    return T::Constructor(this, GetTypeId<T>(), args...);
-  }
+
 
   void SetIOObserver(IoObserverInterface &observer)
   {
