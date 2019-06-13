@@ -47,12 +47,11 @@ TEST_F(StateTests, AddressSerializeTest)
   static char const *TEXT = R"(
     function main()
       var data = Address("MnrRHdvCkdZodEwM855vemS5V3p2hiWmcSQ8JEzD4ZjPdsYtB");
-      var state = State<Address>("addr", data);
+      var state = State<Address>("addr");
       state.set(data);
     endfunction
   )";
 
-  EXPECT_CALL(toolkit.observer(), Exists("addr"));
   EXPECT_CALL(toolkit.observer(), Write("addr", _, _));
 
   ASSERT_TRUE(toolkit.Compile(TEXT));
@@ -63,7 +62,8 @@ TEST_F(StateTests, AddressDeserializeTest)
 {
   static char const *TEXT = R"(
     function store_address(state_name: String, value: Address)
-      var state = State<Address>(state_name, value);
+      var state = State<Address>(state_name);
+      state.set(value);
     endfunction
 
     function main() : Address
@@ -72,14 +72,13 @@ TEST_F(StateTests, AddressDeserializeTest)
 
       store_address(state_name, ref_address);
 
-      var state = State<Address>(state_name, Address());
-      return state.get();
+      var state = State<Address>(state_name);
+      return state.get(Address());
     endfunction
   )";
 
-  EXPECT_CALL(toolkit.observer(), Exists("addr")).Times(2);
   EXPECT_CALL(toolkit.observer(), Read("addr", _, _));
-  EXPECT_CALL(toolkit.observer(), Write("addr", _, _)).Times(2);
+  EXPECT_CALL(toolkit.observer(), Write("addr", _, _)).Times(1);
 
   ASSERT_TRUE(toolkit.Compile(TEXT));
   Variant res;
@@ -94,12 +93,11 @@ TEST_F(StateTests, MapSerializeTest)
   static char const *TEXT = R"(
     function main()
       var data = Map<String, String>();
-      var state = State<Map<String, String>>("map", data);
+      var state = State<Map<String, String>>("map");
       state.set(data);
   endfunction
   )";
 
-  EXPECT_CALL(toolkit.observer(), Exists("map"));
   EXPECT_CALL(toolkit.observer(), Write("map", _, _));
 
   ASSERT_TRUE(toolkit.Compile(TEXT));
@@ -108,21 +106,34 @@ TEST_F(StateTests, MapSerializeTest)
 
 TEST_F(StateTests, MapDeserializeTest)
 {
-  static char const *TEXT = R"(
+  static char const *ser_src = R"(
     function main()
       var data = Map<String, String>();
-      var state = State<Map<String, String>>("map", data);
+      var state = State<Map<String, String>>("map");
+      state.set(data);
   endfunction
   )";
 
-  toolkit.AddState("map", "0000000000000000");
+  EXPECT_CALL(toolkit.observer(), Write("map", _, _));
+
+  ASSERT_TRUE(toolkit.Compile(ser_src));
+  ASSERT_TRUE(toolkit.Run());
+
+  static char const *deser_src = R"(
+    function main() : Map<String, String>
+      var state = State<Map<String, String>>("map");
+      return state.get(Map<String, String>());
+  endfunction
+  )";
 
   EXPECT_CALL(toolkit.observer(), Exists("map"));
   EXPECT_CALL(toolkit.observer(), Read("map", _, _));
-  EXPECT_CALL(toolkit.observer(), Write("map", _, _));
 
-  ASSERT_TRUE(toolkit.Compile(TEXT));
-  ASSERT_TRUE(toolkit.Run());
+  ASSERT_TRUE(toolkit.Compile(deser_src));
+  Variant ret;
+  ASSERT_TRUE(toolkit.Run(&ret));
+  auto const map{ret.Get<Ptr<IMap>>()};
+  EXPECT_TRUE(static_cast<bool>(map));
 }
 
 TEST_F(StateTests, ArraySerializeTest)
@@ -130,12 +141,11 @@ TEST_F(StateTests, ArraySerializeTest)
   static char const *TEXT = R"(
     function main()
       var data = Array<Float32>(10);
-      var state = State<Array<Float32>>("state", Array<Float32>(0));
+      var state = State<Array<Float32>>("state");
       state.set(data);
     endfunction
   )";
 
-  EXPECT_CALL(toolkit.observer(), Exists("state"));
   EXPECT_CALL(toolkit.observer(), Write("state", _, _));
 
   ASSERT_TRUE(toolkit.Compile(TEXT));
@@ -145,9 +155,10 @@ TEST_F(StateTests, ArraySerializeTest)
 TEST_F(StateTests, ArrayDeserializeTest)
 {
   static char const *TEXT = R"(
-    function main()
+    function main() : Array<Float32>
       var data = Array<Float32>(10);
-      var state = State<Array<Float32>>("state", Array<Float32>(0));
+      var state = State<Array<Float32>>("state");
+      return state.get(Array<Float32>(0));
     endfunction
   )";
 
@@ -158,7 +169,6 @@ TEST_F(StateTests, ArrayDeserializeTest)
 
   EXPECT_CALL(toolkit.observer(), Exists("state"));
   EXPECT_CALL(toolkit.observer(), Read("state", _, _));
-  EXPECT_CALL(toolkit.observer(), Write("state", _, _));
 
   ASSERT_TRUE(toolkit.Compile(TEXT));
   ASSERT_TRUE(toolkit.Run());
@@ -168,10 +178,11 @@ TEST_F(StateTests, ArrayDeserializeTest)
 TEST_F(StateTests, querying_state_constructed_from_null_address_fails_gracefully)
 {
   static char const *TEXT = R"(
-    function main()
+    function main() : Float64
       var nullAddress : Address;
-      var supply = State<Float64>(nullAddress, 0.0);
-      supply.get();
+      var supply = State<Float64>(nullAddress);
+      supply.set(3.7);
+      return supply.get(0.0);
     endfunction
   )";
 
@@ -182,10 +193,11 @@ TEST_F(StateTests, querying_state_constructed_from_null_address_fails_gracefully
 TEST_F(StateTests, querying_state_constructed_from_null_string_fails_gracefully)
 {
   static char const *TEXT = R"(
-    function main()
+    function main() : Float64
       var nullName : String;
-      var supply = State<Float64>(nullName, 0.0);
-      supply.get();
+      var supply = State<Float64>(nullName);
+      supply.set(3.7);
+      return supply.get(0.0);
     endfunction
   )";
 
@@ -200,7 +212,7 @@ TEST_F(StateTests, serialising_compound_object_with_null_values_does_not_segfaul
   static char const *TEXT = R"(
     function main()
       var default_array = Array<Array<UInt64>>(2);
-      var bids = State<Array<Array<UInt64>>>("state_label", default_array);
+      State<Array<Array<UInt64>>>("state_label").set(default_array);
     endfunction
   )";
 
@@ -208,43 +220,57 @@ TEST_F(StateTests, serialising_compound_object_with_null_values_does_not_segfaul
   ASSERT_FALSE(toolkit.Run());
 }
 
-TEST_F(StateTests, DISABLED_test_serialisation_of_complex_type)
+TEST_F(StateTests, test_serialisation_of_complex_type)
 {
-  static char const *TEXT = R"(
-    function store_array_in_state(state_name:String, state_value: Array<String>)
-      var state = State<Array<String>>(state_name, state_value);
-    endfunction
-
-    function main() : Array<String>
+  static char const *ser_src = R"(
+    function main()
       var ref_array = Array<String>(3);
       ref_array[0] = "aaa";
       ref_array[1] = "bbb";
       ref_array[2] = "ccc";
 
-      var ref_state_name = "my array";
-
-      store_array_in_state(ref_state_name, ref_array);
-
-      var retrieved_state = State<Array<String>>(ref_state_name, Array<String>(0));
-      return retrieved_state.get();
+      var state = State<Array<String>>("my array");
+      state.set(ref_array);
     endfunction
   )";
 
   std::string const state_name{"my array"};
-  EXPECT_CALL(toolkit.observer(), Exists(state_name)).Times(2);
-  EXPECT_CALL(toolkit.observer(), Read(state_name, _, _));
   EXPECT_CALL(toolkit.observer(), Write(state_name, _, _));
 
-  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_TRUE(toolkit.Compile(ser_src));
+  ASSERT_TRUE(toolkit.Run());
 
-  Variant output;
-  ASSERT_TRUE(toolkit.Run(&output));
-  ASSERT_FALSE(output.IsPrimitive());
+  static char const *deser_src = R"(
+    function main() : Array<String>
+      var retrieved_state = State<Array<String>>("my array");
+      return retrieved_state.get(Array<String>(0));
+    endfunction
+  )";
 
-  auto retval{output.Get<Ptr<IArray>>()};
-  ASSERT_TRUE(static_cast<bool>(retval));
+  EXPECT_CALL(toolkit.observer(), Exists(state_name));
+  EXPECT_CALL(toolkit.observer(), Read(state_name, _, _));
 
-  // EXPECT_EQ("PASSED", retval->str);
+  ASSERT_TRUE(toolkit.Compile(deser_src));
+
+  // TODO (issue 1172): This expectation is just temporary, it shall be replaced
+  // with commented-out code bellow once the issue is resolved.
+  try
+  {
+    auto const retval = toolkit.Run();
+    EXPECT_FALSE(retval)
+        << "Unexpected success, exception or `false` return value or is expected instead.";
+  }
+  catch (std::exception const &ex)
+  {
+    EXPECT_EQ(std::string("Unable to deserialize in to null reference object"),
+              std::string(ex.what()));
+  }
+  // Variant output;
+  // ASSERT_TRUE(toolkit.Run(&output));
+  // ASSERT_FALSE(output.IsPrimitive());
+
+  // auto retval{output.Get<Ptr<IArray>>()};
+  // ASSERT_TRUE(static_cast<bool>(retval));
 }
 
 }  // namespace

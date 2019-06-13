@@ -215,17 +215,36 @@ Module::Module()
       .CreateMemberFunction("signedTx", &Address::HasSignedTx);
 
   GetClassInterface<IState>()
-      .CreateConstuctor<Ptr<String>, TemplateParameter1>()
-      .CreateConstuctor<Ptr<Address>, TemplateParameter1>()
-      .CreateMemberFunction("get", &IState::Get)
+      .CreateConstuctor<Ptr<String>>()
+      .CreateConstuctor<Ptr<Address>>()
+      // TODO (issue 1172): This will be enabled once the issue is resolved
+      //.CreateMemberFunction("get", static_cast<TemplateParameter1(IState::*)()>(&IState::Get))
+      .CreateMemberFunction(
+          "get",
+          static_cast<TemplateParameter1 (IState::*)(TemplateParameter1 const &)>(&IState::Get))
       .CreateMemberFunction("set", &IState::Set)
       .CreateMemberFunction("existed", &IState::Existed);
 
   GetClassInterface<IShardedState>()
       .CreateConstuctor<Ptr<String>>()
       .CreateConstuctor<Ptr<Address>>()
-      .EnableIndexOperator<Ptr<String>, TemplateParameter1>()
-      .EnableIndexOperator<Ptr<Address>, TemplateParameter1>();
+      // TODO (issue 1172): This will be enabled once the issue is resolved
+      //.EnableIndexOperator<Ptr<String>, TemplateParameter1>()
+      //.EnableIndexOperator<Ptr<Address>, TemplateParameter1>();
+      .CreateMemberFunction(
+          "get", static_cast<TemplateParameter1 (IShardedState::*)(
+                     Ptr<String> const &, TemplateParameter1 const &)>(&IShardedState::Get))
+      .CreateMemberFunction(
+          "get", static_cast<TemplateParameter1 (IShardedState::*)(
+                     Ptr<Address> const &, TemplateParameter1 const &)>(&IShardedState::Get))
+      .CreateMemberFunction(
+          "set",
+          static_cast<void (IShardedState::*)(Ptr<String> const &, TemplateParameter1 const &)>(
+              &IShardedState::Set))
+      .CreateMemberFunction(
+          "set",
+          static_cast<void (IShardedState::*)(Ptr<Address> const &, TemplateParameter1 const &)>(
+              &IShardedState::Set));
 }
 
 }  // namespace vm
