@@ -22,8 +22,10 @@ namespace fetch {
 namespace vm {
 
 namespace {
-template <typename T, typename = std::enable_if_t<std::is_arithmetic<T>::value>>
-inline bool ReadHelper(std::string const &name, T &val, VM *vm)
+template <typename T,
+          typename = std::enable_if_t<std::is_arithmetic<T>::value>>  // TODO(tfr): Use IsPrimitive
+inline bool
+ReadHelper(TypeId /*type*/, std::string const &name, T &val, VM *vm)
 {
   if (!vm->HasIoObserver())
   {
@@ -47,7 +49,7 @@ inline bool WriteHelper(std::string const &name, T const &val, VM *vm)
   return result == IoObserverInterface::Status::OK;
 }
 
-inline bool ReadHelper(std::string const &name, Ptr<Object> &val, VM *vm)
+inline bool ReadHelper(TypeId type, std::string const &name, Ptr<Object> &val, VM *vm)
 {
   using fetch::byte_array::ByteArray;
   using fetch::serializers::ByteArrayBuffer;
@@ -57,12 +59,13 @@ inline bool ReadHelper(std::string const &name, Ptr<Object> &val, VM *vm)
     return false;
   }
 
-  // TODO (issue 1172): This check should not be necessary once the issue is resolved.
-  if (!val)
+  if (!vm->IsDefaultSerializeConstructable(type))
   {
-    vm->RuntimeError("Object to deserialise in to is null reference.");
-    return false;
+    vm->RuntimeError("Cannot deserialise object of type " + vm->GetUniqueId(type) +
+                     " for which no serialisation constructor exists.");
   }
+
+  val = vm->DefaultSerializeConstruct(type);
 
   // create an initial buffer size
   ByteArray buffer;
@@ -93,6 +96,7 @@ inline bool ReadHelper(std::string const &name, Ptr<Object> &val, VM *vm)
   if (IoObserverInterface::Status::OK == result)
   {
     ByteArrayBuffer byte_buffer{buffer};
+
     retval = val->DeserializeFrom(byte_buffer);
     if (!retval)
     {
@@ -117,7 +121,12 @@ inline bool WriteHelper(std::string const &name, Ptr<Object> const &val, VM *vm)
 
   // convert the type into a byte stream
   ByteArrayBuffer buffer;
-  if (!val || !val->SerializeTo(buffer))
+  if (val == nullptr)
+  {
+    vm->RuntimeError("Cannot serialise null reference");
+  }
+
+  if (!val->SerializeTo(buffer))
   {
     if (!vm->HasError())
     {
@@ -197,7 +206,7 @@ public:
     else if (Existed())
     {
       value_ = default_value.Get<T>();
-      if (ReadHelper(name_, value_, vm_))
+      if (ReadHelper(template_param_type_id_, name_, value_, vm_))
       {
         mod_status_ = eModifStatus::deserialised;
         return TemplateParameter1(value_, template_param_type_id_);
