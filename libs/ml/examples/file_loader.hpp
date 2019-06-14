@@ -48,7 +48,7 @@ inline bool ends_with(std::string const &value, std::string const &ending)
  * @param dir_name  the directory to scan
  * @return
  */
-std::vector<std::string> GetAllTextFiles(std::string const &dir_name)
+std::vector<std::string> GetAllTextFiles(std::string const &dir_name, std::string fileext = ".txt")
 {
   std::vector<std::string> ret;
   DIR *                    d;
@@ -59,7 +59,7 @@ std::vector<std::string> GetAllTextFiles(std::string const &dir_name)
     while ((ent = readdir(d)) != nullptr)
     {
       p1 = ent->d_name;
-      if (ends_with(p1, ".txt"))
+      if (ends_with(p1, fileext))
       {
         ret.emplace_back(ent->d_name);
       }
