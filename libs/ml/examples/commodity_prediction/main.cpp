@@ -18,7 +18,6 @@
 
 #include "file_loader.hpp"
 #include "math/tensor.hpp"
-#include "ml/dataloaders/tensor_dataloader.hpp"
 #include "ml/graph.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/ops/activation.hpp"
@@ -92,7 +91,7 @@ ArrayType read_csv(std::string const &filename, SizeType const cols_to_skip = 0,
 
   // find number of rows and columns in the file
   std::string           delimiter = ",";
-  ulong                 pos;
+  SizeType              pos;
   fetch::math::SizeType row{0};
   fetch::math::SizeType col{0};
   while (std::getline(file, buf, '\n'))
