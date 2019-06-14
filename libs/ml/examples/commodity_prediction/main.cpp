@@ -22,11 +22,11 @@
 #include "ml/graph.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/ops/activation.hpp"
+#include "ml/ops/transpose.hpp"
 #include "ml/state_dict.hpp"
 
 #include <fstream>
 #include <iostream>
-#include <ml/ops/transpose.hpp>
 #include <string>
 
 using DataType  = double;
@@ -66,19 +66,25 @@ LayerType get_layer_type(std::string const &layer_name)
     match_counter++;
   }
 
-  assert(match_counter == 1);
+  if (match_counter != 1)
+  {
+    throw std::runtime_error("Node name does not uniquely specify the node type.");
+  }
   return layer_type;
 }
 
 /**
  * Loads a csv file into a Tensor
+ * The Tensor will have the same number of rows as this file has (minus rows_to_skip) and the same
+ * number of columns (minus cols_to_skip) as the file, unless transpose=true is specified in which
+ * case it will be transposed.
  * @param filename  name of the file
  * @param cols_to_skip  number of columns to skip
  * @param rows_to_skip  number of rows to skip
  * @param transpose  whether to transpose the resulting Tensor
  * @return  Tensor with data
  */
-ArrayType read_csv(std::string const &filename, SizeType cols_to_skip = 0,
+ArrayType read_csv(std::string const &filename, SizeType const cols_to_skip = 0,
                    SizeType rows_to_skip = 0, bool transpose = false)
 {
   std::ifstream file(filename);
@@ -140,7 +146,10 @@ ArrayType read_csv(std::string const &filename, SizeType cols_to_skip = 0,
 
 /**
  * Loads a single model architecture from a csv file and adds the specified nodes to the graph
- * Example csv line: keras_h7_aluminium_px_last_us,num_input,118,dropout_0,output_dense,54,softmax
+ * Example csv line: {model_name},num_input,118,dropout_0,output_dense,54,softmax
+ * Model_name needs to match that in the weights directory and the filenames of the x and y test
+ * files, e.g. output/{model_name}/model_weights/hidden_dense_1/hidden_dense_1_12/bias:0.csv and
+ * {model_name}_x_test.csv
  * File can contain several models, one per line.
  * @param filename name of the file
  * @param g Graph to add nodes to
@@ -262,7 +271,7 @@ int ArgPos(char *str, int argc, char **argv)
 int main(int argc, char **argv)
 {
   int         i;
-  std::string input_dir;
+  std::string input_dir           = "";
   SizeType    model_num           = 0;
   SizeType    output_feature_size = 0;
 
@@ -274,6 +283,11 @@ int main(int argc, char **argv)
   if ((i = ArgPos((char *)"-input_dir", argc, argv)) > 0)
   {
     input_dir = argv[i + 1];
+  }
+
+  if (input_dir.empty())
+  {
+    throw std::runtime_error("Please specify an input directory");
   }
 
   std::string architecture_file = input_dir + "/architecture.csv";
@@ -311,8 +325,9 @@ int main(int argc, char **argv)
       assert(actual_dirs.size() == 1);
 
       std::string node_weights_dir = weights_dir + "/" + name + "/" + actual_dirs[0];
-      ArrayType   weights          = read_csv(node_weights_dir + "/kernel:0.csv", 0, 0, true);
-      ArrayType   bias             = read_csv(node_weights_dir + "/bias:0.csv", 0, 0, false);
+      // the weights array for the node has number of columns = number of features
+      ArrayType weights = read_csv(node_weights_dir + "/kernel:0.csv", 0, 0, true);
+      ArrayType bias    = read_csv(node_weights_dir + "/bias:0.csv", 0, 0, false);
 
       assert(bias.shape()[0] == weights.shape()[0]);
 
@@ -329,7 +344,9 @@ int main(int argc, char **argv)
   g_ptr->LoadStateDict(sd);
 
   /// FORWARD PASS PREDICTIONS ///
-  ArrayType test_x           = read_csv(test_x_file, 1, 1);
+  // the test_x array needs to have number of columns equal to number of features
+  ArrayType test_x = read_csv(test_x_file, 1, 1);
+  // the test_y array needs to have number of columns equal to number of output features
   ArrayType test_y           = read_csv(test_y_file, 1, 1);
   SizeType  output_data_size = test_y.shape()[0];
   assert(output_feature_size == test_y.shape()[1]);
@@ -345,5 +362,12 @@ int main(int argc, char **argv)
     output.Slice(j).Assign(slice_output);
   }
 
-  assert(output.AllClose(test_y, 0.00001f));
+  if (output.AllClose(test_y, 0.00001f))
+  {
+    std::cout << "Graph output is the same as the test output - success!";
+  }
+  else
+  {
+    std::cout << "Graph output is the different from the test output - fail.";
+  }
 }
