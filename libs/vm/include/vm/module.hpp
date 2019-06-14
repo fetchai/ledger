@@ -69,7 +69,7 @@ struct CreateSerializeConstructor<T>
 };
 
 template <>
-struct CreateSerializeConstructor< String >
+struct CreateSerializeConstructor<String>
 {
   static DefaultConstructorHandler Apply()
   {

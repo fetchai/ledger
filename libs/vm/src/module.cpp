@@ -198,7 +198,7 @@ Module::Module()
       .CreateInstantiationType<Array<Ptr<Address>>>();
 
   GetClassInterface<String>()
-      .CreateSerializeDefaultConstuctor<>()  
+      .CreateSerializeDefaultConstuctor<>()
       .CreateMemberFunction("find", &String::Find)
       .CreateMemberFunction("length", &String::Length)
       .CreateMemberFunction("reverse", &String::Reverse)
