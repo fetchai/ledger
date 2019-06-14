@@ -220,8 +220,7 @@ Module::Module()
   GetClassInterface<IState>()
       .CreateConstuctor<Ptr<String>>()
       .CreateConstuctor<Ptr<Address>>()
-      // TODO (issue 1172): This will be enabled once the issue is resolved
-      //.CreateMemberFunction("get", static_cast<TemplateParameter1(IState::*)()>(&IState::Get))
+      .CreateMemberFunction("get", static_cast<TemplateParameter1 (IState::*)()>(&IState::Get))
       .CreateMemberFunction(
           "get",
           static_cast<TemplateParameter1 (IState::*)(TemplateParameter1 const &)>(&IState::Get))

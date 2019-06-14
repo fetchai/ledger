@@ -73,12 +73,13 @@ TEST_F(StateTests, AddressDeserializeTest)
       store_address(state_name, ref_address);
 
       var state = State<Address>(state_name);
-      return state.get(Address("MnrRHdvCkdZodEwM855vemS5V3p2hiWmcSQ8JEzD4ZjPdsYtB"));
+      return state.get();
     endfunction
   )";
 
+  EXPECT_CALL(toolkit.observer(), Write("addr", _, _));
+  EXPECT_CALL(toolkit.observer(), Exists("addr"));
   EXPECT_CALL(toolkit.observer(), Read("addr", _, _));
-  EXPECT_CALL(toolkit.observer(), Write("addr", _, _)).Times(1);
 
   ASSERT_TRUE(toolkit.Compile(TEXT));
   Variant res;
@@ -88,24 +89,6 @@ TEST_F(StateTests, AddressDeserializeTest)
   EXPECT_EQ("MnrRHdvCkdZodEwM855vemS5V3p2hiWmcSQ8JEzD4ZjPdsYtB", addr->AsString()->str);
 }
 
-TEST_F(StateTests, MapSerializeTest)
-{
-  static char const *TEXT = R"(
-    function main()
-      var data = Map<String, String>();
-      var state = State<Map<String, String>>("map");
-      state.set(data);
-  endfunction
-  )";
-
-  EXPECT_CALL(toolkit.observer(), Write("map", _, _));
-
-  ASSERT_TRUE(toolkit.Compile(TEXT));
-  ASSERT_TRUE(toolkit.Run());
-}
-
-/*
-// TEST DEPRECATED AS BINARY FORMAT HAS CHANGED
 TEST_F(StateTests, MapDeserializeTest)
 {
   static char const *ser_src = R"(
@@ -137,7 +120,6 @@ TEST_F(StateTests, MapDeserializeTest)
   auto const map{ret.Get<Ptr<IMap>>()};
   EXPECT_TRUE(static_cast<bool>(map));
 }
-*/
 
 TEST_F(StateTests, ArrayDeserializeTest)
 {
@@ -259,21 +241,15 @@ TEST_F(StateTests, test_serialisation_of_complex_type)
 
   ASSERT_TRUE(toolkit.Compile(deser_src));
 
-  try
-  {
-    auto const retval = toolkit.Run();
-    EXPECT_TRUE(retval);
-  }
-  catch (std::exception const &ex)
-  {
-    EXPECT_FALSE(true);
-  }
-  // Variant output;
-  // ASSERT_TRUE(toolkit.Run(&output));
-  // ASSERT_FALSE(output.IsPrimitive());
-
-  // auto retval{output.Get<Ptr<IArray>>()};
-  // ASSERT_TRUE(static_cast<bool>(retval));
+  Variant output;
+  ASSERT_TRUE(toolkit.Run(&output));
+  ASSERT_FALSE(output.IsPrimitive());
+  auto retval{output.Get<Ptr<IArray>>()};
+  ASSERT_TRUE(static_cast<bool>(retval));
+  ASSERT_EQ(int32_t{3}, retval->Count());
+  EXPECT_EQ(std::string{"aaa"}, retval->PopFrontOne().Get<Ptr<String>>()->str);
+  EXPECT_EQ(std::string{"bbb"}, retval->PopFrontOne().Get<Ptr<String>>()->str);
+  EXPECT_EQ(std::string{"ccc"}, retval->PopFrontOne().Get<Ptr<String>>()->str);
 }
 
 }  // namespace
