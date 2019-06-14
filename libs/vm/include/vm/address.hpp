@@ -125,6 +125,48 @@ public:
     return true;
   }
 
+  bool IsEqual(Ptr<Object> const &lhso, Ptr<Object> const &rhso) override
+  {
+    Ptr<Address> lhs = lhso;
+    Ptr<Address> rhs = rhso;
+    return lhs->address_ == rhs->address_;
+  }
+
+  bool IsNotEqual(Ptr<Object> const &lhso, Ptr<Object> const &rhso) override
+  {
+    Ptr<Address> lhs = lhso;
+    Ptr<Address> rhs = rhso;
+    return lhs->address_ != rhs->address_;
+  }
+
+  bool IsLessThan(Ptr<Object> const &lhso, Ptr<Object> const &rhso) override
+  {
+    Ptr<Address> lhs = lhso;
+    Ptr<Address> rhs = rhso;
+    return lhs->address_ < rhs->address_;
+  }
+
+  bool IsLessThanOrEqual(Ptr<Object> const &lhso, Ptr<Object> const &rhso) override
+  {
+    Ptr<Address> lhs = lhso;
+    Ptr<Address> rhs = rhso;
+    return lhs->address_ <= rhs->address_;
+  }
+
+  bool IsGreaterThan(Ptr<Object> const &lhso, Ptr<Object> const &rhso) override
+  {
+    Ptr<Address> lhs = lhso;
+    Ptr<Address> rhs = rhso;
+    return lhs->address_ > rhs->address_;
+  }
+
+  bool IsGreaterThanOrEqual(Ptr<Object> const &lhso, Ptr<Object> const &rhso) override
+  {
+    Ptr<Address> lhs = lhso;
+    Ptr<Address> rhs = rhso;
+    return lhs->address_ >= rhs->address_;
+  }
+
 private:
   ledger::Address address_;
   bool            signed_tx_{false};
