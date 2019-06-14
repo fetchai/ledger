@@ -22,10 +22,8 @@ namespace fetch {
 namespace vm {
 
 namespace {
-template <typename T,
-          typename = std::enable_if_t<std::is_arithmetic<T>::value>>  // TODO(tfr): Use IsPrimitive
-inline bool
-ReadHelper(TypeId /*type*/, std::string const &name, T &val, VM *vm)
+template <typename T, typename = std::enable_if_t<IsPrimitive<T>::value>>
+inline bool ReadHelper(TypeId /*type*/, std::string const &name, T &val, VM *vm)
 {
   if (!vm->HasIoObserver())
   {
@@ -37,7 +35,7 @@ ReadHelper(TypeId /*type*/, std::string const &name, T &val, VM *vm)
   return result == IoObserverInterface::Status::OK;
 }
 
-template <typename T, typename = std::enable_if_t<std::is_arithmetic<T>::value>>
+template <typename T, typename = std::enable_if_t<IsPrimitive<T>::value>>
 inline bool WriteHelper(std::string const &name, T const &val, VM *vm)
 {
   if (!vm->HasIoObserver())
@@ -185,35 +183,14 @@ public:
     }
   }
 
-  // TODO(issue 1172): This will be re-enabled once the issue is resolved.
-  // TemplateParameter1 Get() override
-  //{
-  //  if (has_been_set_)
-  //  {
-  //    return TemplateParameter1(value_, template_param_type_id_);
-  //  }
-
-  //  vm_->RuntimeError("The state has not been set yet.");
-  //  return {};
-  //}
+  TemplateParameter1 Get() override
+  {
+    return GetInternal();
+  }
 
   TemplateParameter1 Get(TemplateParameter1 const &default_value) override
   {
-    if (mod_status_ != eModifStatus::undefined)
-    {
-      return TemplateParameter1(value_, template_param_type_id_);
-    }
-    else if (Existed())
-    {
-      value_ = default_value.Get<T>();
-      if (ReadHelper(template_param_type_id_, name_, value_, vm_))
-      {
-        mod_status_ = eModifStatus::deserialised;
-        return TemplateParameter1(value_, template_param_type_id_);
-      }
-    }
-
-    return default_value;
+    return GetInternal(&default_value);
   }
 
   void Set(TemplateParameter1 const &value) override
@@ -239,6 +216,32 @@ public:
 private:
   using Value  = typename GetStorageType<T>::type;
   using Status = IoObserverInterface::Status;
+
+  TemplateParameter1 GetInternal(TemplateParameter1 const *default_value = nullptr)
+  {
+    if (mod_status_ != eModifStatus::undefined)
+    {
+      return {value_, template_param_type_id_};
+    }
+    else if (Existed())
+    {
+      if (ReadHelper(template_param_type_id_, name_, value_, vm_))
+      {
+        mod_status_ = eModifStatus::deserialised;
+        return {value_, template_param_type_id_};
+      }
+    }
+    else if (default_value)
+    {
+      return *default_value;
+    }
+
+    vm_->RuntimeError(
+        "The state does not represent any value. The value has not been assigned and/or it does "
+        "not exist in data storage.");
+
+    return {};
+  }
 
   template <typename Y = T>
   meta::EnableIf<IsPrimitive<Y>::value> SetValue(TemplateParameter1 const &value)

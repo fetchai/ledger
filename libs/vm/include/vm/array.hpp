@@ -66,7 +66,7 @@ struct Array : public IArray
   Array(VM *vm, TypeId type_id, TypeId element_type_id__, int32_t size)
     : IArray(vm, type_id)
     , element_type_id(element_type_id__)
-    , elements(static_cast<std::size_t>(size), ElementType(0))
+    , elements(static_cast<std::size_t>(size), ElementType{})
   {}
 
   int32_t Count() const override
@@ -242,10 +242,17 @@ struct Array : public IArray
 private:
   bool ApplySerialize(ByteArrayBuffer &buffer, std::vector<Ptr<Object>> const &data)
   {
+    if (!vm_->IsDefaultSerializeConstructable(element_type_id))
+    {
+      vm_->RuntimeError("Cannot deserialize type " + vm_->GetUniqueId(element_type_id) +
+                        " as no serialisation constructor exists.");
+      return false;
+    }
+
     buffer << GetUniqueId() << static_cast<uint64_t>(elements.size());
     for (Ptr<Object> v : data)
     {
-      if (v == nullptr)
+      if (!v)
       {
         RuntimeError("Cannot serialise null reference element in " + GetUniqueId());
         return false;
@@ -285,7 +292,6 @@ private:
     }
 
     data.resize(size);
-    auto info = vm_->GetTypeInfo(element_type_id);
 
     if (!vm_->IsDefaultSerializeConstructable(element_type_id))
     {
@@ -294,10 +300,11 @@ private:
       return false;
     }
 
+    data.resize(size);
     for (Ptr<Object> &v : data)
     {
       v = vm_->DefaultSerializeConstruct(element_type_id);
-      if (!v->DeserializeFrom(buffer))
+      if (!v || !v->DeserializeFrom(buffer))
       {
         return false;
       }
@@ -392,7 +399,7 @@ inline Ptr<IArray> IArray::Constructor(VM *vm, TypeId type_id, int32_t size)
   {
     vm->RuntimeError("negative size");
 
-    return nullptr;
+    return {};
   }
   return Construct(vm, type_id, size);
 }

@@ -220,8 +220,7 @@ Module::Module()
   GetClassInterface<IState>()
       .CreateConstuctor<Ptr<String>>()
       .CreateConstuctor<Ptr<Address>>()
-      // TODO (issue 1172): This will be enabled once the issue is resolved
-      //.CreateMemberFunction("get", static_cast<TemplateParameter1(IState::*)()>(&IState::Get))
+      .CreateMemberFunction("get", static_cast<TemplateParameter1 (IState::*)()>(&IState::Get))
       .CreateMemberFunction(
           "get",
           static_cast<TemplateParameter1 (IState::*)(TemplateParameter1 const &)>(&IState::Get))
@@ -234,6 +233,12 @@ Module::Module()
       // TODO (issue 1172): This will be enabled once the issue is resolved
       //.EnableIndexOperator<Ptr<String>, TemplateParameter1>()
       //.EnableIndexOperator<Ptr<Address>, TemplateParameter1>();
+      .CreateMemberFunction("get",
+                            static_cast<TemplateParameter1 (IShardedState::*)(Ptr<String> const &)>(
+                                &IShardedState::Get))
+      .CreateMemberFunction(
+          "get", static_cast<TemplateParameter1 (IShardedState::*)(Ptr<Address> const &)>(
+                     &IShardedState::Get))
       .CreateMemberFunction(
           "get", static_cast<TemplateParameter1 (IShardedState::*)(
                      Ptr<String> const &, TemplateParameter1 const &)>(&IShardedState::Get))
