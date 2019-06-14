@@ -22,10 +22,8 @@ namespace fetch {
 namespace vm {
 
 namespace {
-template <typename T,
-          typename = std::enable_if_t<std::is_arithmetic<T>::value>>  // TODO: Use IsPrimitive
-inline bool
-ReadHelper(TypeId /*type*/, std::string const &name, T &val, VM *vm)
+template <typename T, typename = std::enable_if_t<IsPrimitive<T>::value>>
+inline bool ReadHelper(TypeId /*type*/, std::string const &name, T &val, VM *vm)
 {
   if (!vm->HasIoObserver())
   {
@@ -37,7 +35,7 @@ ReadHelper(TypeId /*type*/, std::string const &name, T &val, VM *vm)
   return result == IoObserverInterface::Status::OK;
 }
 
-template <typename T, typename = std::enable_if_t<std::is_arithmetic<T>::value>>
+template <typename T, typename = std::enable_if_t<IsPrimitive<T>::value>>
 inline bool WriteHelper(std::string const &name, T const &val, VM *vm)
 {
   if (!vm->HasIoObserver())
