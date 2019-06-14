@@ -20,55 +20,56 @@
 #include "ml/ops/ops.hpp"
 
 namespace fetch {
-  namespace ml {
-    namespace ops {
+namespace ml {
+namespace ops {
 
-      template <class T>
-      class Sqrt : public fetch::ml::ElementWiseOps<T>
-      {
-      public:
-        using ArrayType     = T;
-        using DataType      = typename ArrayType::Type;
-        using VecTensorType = typename ElementWiseOps<T>::VecTensorType;
+template <class T>
+class Sqrt : public fetch::ml::ElementWiseOps<T>
+{
+public:
+  using ArrayType     = T;
+  using DataType      = typename ArrayType::Type;
+  using VecTensorType = typename ElementWiseOps<T>::VecTensorType;
 
-        Sqrt()          = default;
-        virtual ~Sqrt() = default;
+  Sqrt()          = default;
+  virtual ~Sqrt() = default;
 
-        /**
-         * elementwise square root
-         * @param inputs vector containing one tensor which is the input tensor to Sqrt
-         * @return
-         */
-        virtual void Forward(VecTensorType const &inputs, ArrayType &output)
-        {
-          assert(inputs.size() == 1);
-          assert(output.shape() == this->ComputeOutputShape(inputs));
+  /**
+   * elementwise square root
+   * @param inputs vector containing one tensor which is the input tensor to Sqrt
+   * @return
+   */
+  virtual void Forward(VecTensorType const &inputs, ArrayType &output)
+  {
+    assert(inputs.size() == 1);
+    assert(output.shape() == this->ComputeOutputShape(inputs));
 
-          fetch::math::Sqrt(inputs.at(0).get(), output);
-        }
+    fetch::math::Sqrt(inputs.at(0).get(), output);
+  }
 
-        /**
-         * elementwise square root gradient is:
-         * f'(input0)= 0.5 * (input0 ^ -0.5) * error_signal
-         */
-        virtual std::vector<ArrayType> Backward(VecTensorType const &inputs,
-                                                ArrayType const &    error_signal)
-        {
-          assert(inputs.size() == 1);
-          assert(error_signal.shape() == this->ComputeOutputShape(inputs));
+  /**
+   * elementwise square root gradient is:
+   * f'(input0)= 0.5 * (input0 ^ -0.5) * error_signal
+   */
+  virtual std::vector<ArrayType> Backward(VecTensorType const &inputs,
+                                          ArrayType const &    error_signal)
+  {
+    assert(inputs.size() == 1);
+    assert(error_signal.shape() == this->ComputeOutputShape(inputs));
 
-          ArrayType ret_error_signal(inputs.at(0).get().shape());
+    ArrayType ret_error_signal(inputs.at(0).get().shape());
 
-          fetch::math::Sqrt(inputs.at(0).get(), ret_error_signal);
-          fetch::math::Divide(static_cast<DataType>(0.5), ret_error_signal, ret_error_signal);  // todo: datatype?
-          fetch::math::Multiply(error_signal, ret_error_signal, ret_error_signal);
+    fetch::math::Sqrt(inputs.at(0).get(), ret_error_signal);
+    fetch::math::Divide(static_cast<DataType>(0.5), ret_error_signal,
+                        ret_error_signal);  // todo: datatype?
+    fetch::math::Multiply(error_signal, ret_error_signal, ret_error_signal);
 
-          return {ret_error_signal};
-        }
+    return {ret_error_signal};
+  }
 
-        static constexpr char const *DESCRIPTOR = "Sqrt";
-      };
+  static constexpr char const *DESCRIPTOR = "Sqrt";
+};
 
-    }  // namespace ops
-  }  // namespace ml
+}  // namespace ops
+}  // namespace ml
 }  // namespace fetch
