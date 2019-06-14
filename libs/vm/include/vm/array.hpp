@@ -276,6 +276,7 @@ private:
     uint64_t    size;
     std::string uid;
     buffer >> uid >> size;
+
     if (uid != GetUniqueId())
     {
       vm_->RuntimeError("Type mismatch during deserialization. Got " + uid + " but expected " +
@@ -283,6 +284,7 @@ private:
       return false;
     }
 
+    data.resize(size);
     auto info = vm_->GetTypeInfo(element_type_id);
 
     if (!vm_->IsDefaultSerializeConstructable(element_type_id))
@@ -317,7 +319,7 @@ private:
       return false;
     }
 
-    elements.resize(size);
+    data.resize(size);
     for (G &v : data)
     {
       buffer >> v;
