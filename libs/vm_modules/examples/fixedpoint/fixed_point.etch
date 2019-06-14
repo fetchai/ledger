@@ -1,9 +1,22 @@
 function main()
   var a = 2.0fp32;
-  var b = 1.0fp32;
-  a += b;
+  var b = 3.0fp32;
   printLn(a);
   printLn(b);
-  var c = 44.0fp64;
+  a += b;
+  print("a += b: a = ");
+  printLn(a);
+  print("d = a * b = ");
+  var c = a * b;
   printLn(c);
+  var d = 44.0fp64;
+  var e = 2.0fp64;
+  printLn(d);
+  printLn(b);
+  d += e;
+  print("d += e : d = ");
+  printLn(d);
+  print("f = d * e = ");
+  var f = d * e;
+  printLn(f);
 endfunction
