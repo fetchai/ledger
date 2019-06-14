@@ -50,20 +50,19 @@ public:
   using ContainerType                       = std::array<uint8_t, ELEMENTS>;
   static constexpr char const *LOGGING_NAME = "UInt";
 
-  explicit operator std::string() const 
+  explicit operator std::string() const
   {
     std::string ret;
     ret.resize(UINT_SIZE / 8);
-    uint8_t const *data = reinterpret_cast< uint8_t const *>(data_.data());
+    uint8_t const *data = reinterpret_cast<uint8_t const *>(data_.data());
 
-    for(uint64_t i=0; i < ret.size(); ++i)
+    for (uint64_t i = 0; i < ret.size(); ++i)
     {
       ret[i] = static_cast<char>(data[i]);
     }
 
     return ret;
   }
-
 
   UInt()
   {
@@ -128,7 +127,6 @@ public:
   {
     return !(*this == other);
   }
-
 
   UInt &operator=(UInt const &v)
   {

@@ -158,8 +158,6 @@ inline bool Address::operator<=(Address const &other) const
   return address_ <= other.address_;
 }
 
-
-
 inline bool Address::operator>(Address const &other) const
 {
   return address_ > other.address_;
@@ -169,8 +167,6 @@ inline bool Address::operator>=(Address const &other) const
 {
   return address_ >= other.address_;
 }
-
-
 
 }  // namespace ledger
 }  // namespace fetch

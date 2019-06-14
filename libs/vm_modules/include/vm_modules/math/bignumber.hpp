@@ -36,7 +36,7 @@ public:
   UInt256Wrapper()          = delete;
   virtual ~UInt256Wrapper() = default;
 
-  static fetch::vm::Ptr<fetch::vm::String> ToString(fetch::vm::VM *vm, Ptr< UInt256Wrapper > const &n)
+  static fetch::vm::Ptr<fetch::vm::String> ToString(fetch::vm::VM *vm, Ptr<UInt256Wrapper> const &n)
   {
     fetch::vm::Ptr<fetch::vm::String> ret(
         new fetch::vm::String(vm, static_cast<std::string>(n->number())));
@@ -53,12 +53,12 @@ public:
         .EnableOperator(vm::Operator::Equal)
         .EnableOperator(vm::Operator::NotEqual)
         .EnableOperator(vm::Operator::LessThan)
-//        .EnableOperator(vm::Operator::LessThanOrEqual)
+        //        .EnableOperator(vm::Operator::LessThanOrEqual)
         .EnableOperator(vm::Operator::GreaterThan)
-//        .EnableOperator(vm::Operator::GreaterThanOrEqual)
+        //        .EnableOperator(vm::Operator::GreaterThanOrEqual)
         //        .CreateMemberFunction("toBuffer", &UInt256Wrapper::ToBuffer)
         .CreateMemberFunction("increase", &UInt256Wrapper::Increase)
-//        .CreateMemberFunction("lessThan", &UInt256Wrapper::LessThan)
+        //        .CreateMemberFunction("lessThan", &UInt256Wrapper::LessThan)
         .CreateMemberFunction("logValue", &UInt256Wrapper::LogValue)
         .CreateMemberFunction("toFloat64", &UInt256Wrapper::ToFloat64)
         .CreateMemberFunction("toInt32", &UInt256Wrapper::ToInt32)
@@ -187,7 +187,6 @@ public:
     return true;
   }
 
-
   bool IsEqual(Ptr<Object> const &lhso, Ptr<Object> const &rhso) override
   {
     Ptr<UInt256Wrapper> lhs = lhso;
@@ -209,13 +208,13 @@ public:
     return lhs->number_ < rhs->number_;
   }
 
-
   bool IsGreaterThan(Ptr<Object> const &lhso, Ptr<Object> const &rhso) override
   {
     Ptr<UInt256Wrapper> lhs = lhso;
     Ptr<UInt256Wrapper> rhs = rhso;
     return rhs->number_ < lhs->number_;
   }
+
 private:
   vectorise::UInt<256> number_;
 };

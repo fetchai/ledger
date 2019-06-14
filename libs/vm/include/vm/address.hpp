@@ -125,7 +125,6 @@ public:
     return true;
   }
 
-
   bool IsEqual(Ptr<Object> const &lhso, Ptr<Object> const &rhso) override
   {
     Ptr<Address> lhs = lhso;
@@ -167,6 +166,7 @@ public:
     Ptr<Address> rhs = rhso;
     return lhs->address_ >= rhs->address_;
   }
+
 private:
   ledger::Address address_;
   bool            signed_tx_{false};
