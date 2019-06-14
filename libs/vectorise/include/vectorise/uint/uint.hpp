@@ -17,23 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-//------------------------------------------------------------------------------
-//
-//   Copyright 2018-2019 Fetch.AI Limited
-//
-//   Licensed under the Apache License, Version 2.0 (the "License");
-//   you may not use this file except in compliance with the License.
-//   You may obtain a copy of the License at
-//
-//       http://www.apache.org/licenses/LICENSE-2.0
-//
-//   Unless required by applicable law or agreed to in writing, software
-//   distributed under the License is distributed on an "AS IS" BASIS,
-//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-//   See the License for the specific language governing permissions and
-//   limitations under the License.
-//
-//------------------------------------------------------------------------------
 #include "meta/has_index.hpp"
 #include <algorithm>
 #include <array>
@@ -66,6 +49,21 @@ public:
 
   using ContainerType                       = std::array<uint8_t, ELEMENTS>;
   static constexpr char const *LOGGING_NAME = "UInt";
+
+  explicit operator std::string() const 
+  {
+    std::string ret;
+    ret.resize(UINT_SIZE / 8);
+    uint8_t const *data = reinterpret_cast< uint8_t const *>(data_.data());
+
+    for(uint64_t i=0; i < ret.size(); ++i)
+    {
+      ret[i] = static_cast<char>(data[i]);
+    }
+
+    return ret;
+  }
+
 
   UInt()
   {
@@ -118,8 +116,19 @@ public:
 
   bool operator==(UInt const &other) const
   {
-    return data_ == other.data_;
+    bool ret = true;
+    for (std::size_t i = 0; i < ELEMENTS; ++i)
+    {
+      ret &= (data_[i] == other.data_[i]);
+    }
+    return ret;
   }
+
+  bool operator!=(UInt const &other) const
+  {
+    return !(*this == other);
+  }
+
 
   UInt &operator=(UInt const &v)
   {

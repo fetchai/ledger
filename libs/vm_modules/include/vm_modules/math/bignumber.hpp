@@ -36,19 +36,35 @@ public:
   UInt256Wrapper()          = delete;
   virtual ~UInt256Wrapper() = default;
 
+  static fetch::vm::Ptr<fetch::vm::String> ToString(fetch::vm::VM *vm, Ptr< UInt256Wrapper > const &n)
+  {
+    fetch::vm::Ptr<fetch::vm::String> ret(
+        new fetch::vm::String(vm, static_cast<std::string>(n->number())));
+    return ret;
+  }
+
   static void Bind(vm::Module &module)
   {
     module.CreateClassType<UInt256Wrapper>("UInt256")
+        .CreateSerializeDefaultConstuctor<uint64_t>(static_cast<uint64_t>(0))
         .CreateConstuctor<uint64_t>()
         .CreateConstuctor<Ptr<vm::String>>()
         .CreateConstuctor<Ptr<ByteArrayWrapper>>()
+        .EnableOperator(vm::Operator::Equal)
+        .EnableOperator(vm::Operator::NotEqual)
+        .EnableOperator(vm::Operator::LessThan)
+//        .EnableOperator(vm::Operator::LessThanOrEqual)
+        .EnableOperator(vm::Operator::GreaterThan)
+//        .EnableOperator(vm::Operator::GreaterThanOrEqual)
         //        .CreateMemberFunction("toBuffer", &UInt256Wrapper::ToBuffer)
         .CreateMemberFunction("increase", &UInt256Wrapper::Increase)
-        .CreateMemberFunction("lessThan", &UInt256Wrapper::LessThan)
+//        .CreateMemberFunction("lessThan", &UInt256Wrapper::LessThan)
         .CreateMemberFunction("logValue", &UInt256Wrapper::LogValue)
         .CreateMemberFunction("toFloat64", &UInt256Wrapper::ToFloat64)
         .CreateMemberFunction("toInt32", &UInt256Wrapper::ToInt32)
         .CreateMemberFunction("size", &UInt256Wrapper::size);
+
+    module.CreateFreeFunction("toString", &UInt256Wrapper::ToString);
   }
 
   UInt256Wrapper(fetch::vm::VM *vm, fetch::vm::TypeId type_id, byte_array::ByteArray const &data)
@@ -159,6 +175,47 @@ public:
     return number_;
   }
 
+  bool SerializeTo(serializers::ByteArrayBuffer &buffer) override
+  {
+    buffer << number_;
+    return true;
+  }
+
+  bool DeserializeFrom(serializers::ByteArrayBuffer &buffer) override
+  {
+    buffer >> number_;
+    return true;
+  }
+
+
+  bool IsEqual(Ptr<Object> const &lhso, Ptr<Object> const &rhso) override
+  {
+    Ptr<UInt256Wrapper> lhs = lhso;
+    Ptr<UInt256Wrapper> rhs = rhso;
+    return lhs->number_ == rhs->number_;
+  }
+
+  bool IsNotEqual(Ptr<Object> const &lhso, Ptr<Object> const &rhso) override
+  {
+    Ptr<UInt256Wrapper> lhs = lhso;
+    Ptr<UInt256Wrapper> rhs = rhso;
+    return lhs->number_ != rhs->number_;
+  }
+
+  bool IsLessThan(Ptr<Object> const &lhso, Ptr<Object> const &rhso) override
+  {
+    Ptr<UInt256Wrapper> lhs = lhso;
+    Ptr<UInt256Wrapper> rhs = rhso;
+    return lhs->number_ < rhs->number_;
+  }
+
+
+  bool IsGreaterThan(Ptr<Object> const &lhso, Ptr<Object> const &rhso) override
+  {
+    Ptr<UInt256Wrapper> lhs = lhso;
+    Ptr<UInt256Wrapper> rhs = rhso;
+    return rhs->number_ < lhs->number_;
+  }
 private:
   vectorise::UInt<256> number_;
 };
