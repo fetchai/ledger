@@ -237,8 +237,8 @@ private:
     }
 
     vm_->RuntimeError(
-        "The state does not represent any value - value it has not been assigned and/or it does "
-        "not exists in data storage.");
+        "The state does not represent any value. The value has not been assigned and/or it does "
+        "not exist in data storage.");
 
     return {};
   }
