@@ -69,16 +69,14 @@ struct CreateSerializeConstructor<T>
 };
 
 template <>
-struct CreateSerializeConstructor<IMap>
+struct CreateSerializeConstructor<String>
 {
   static DefaultConstructorHandler Apply()
   {
-    return [](VM *vm, TypeId) -> Ptr<Object> {
-      vm->RuntimeError("Map interface is not constructable");
-      return nullptr;
-    };
+    return [](VM *vm, TypeId /*id*/) -> Ptr<Object> { return new String(vm, ""); };
   }
 };
+
 }  // namespace details
 
 class Module
