@@ -264,13 +264,11 @@ TEST_F(StateTests, test_serialisation_of_complex_type)
   try
   {
     auto const retval = toolkit.Run();
-    EXPECT_FALSE(retval)
-        << "Unexpected success, exception or `false` return value or is expected instead.";
+    EXPECT_TRUE(retval);
   }
   catch (std::exception const &ex)
   {
-    EXPECT_EQ(std::string("Unable to deserialize in to null reference object"),
-              std::string(ex.what()));
+    EXPECT_FALSE(true);
   }
   // Variant output;
   // ASSERT_TRUE(toolkit.Run(&output));
