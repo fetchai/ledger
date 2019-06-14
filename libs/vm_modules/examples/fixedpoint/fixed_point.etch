@@ -1,8 +1,9 @@
 function main()
-  var a: Fixed32 = 2.0fp32;
-  var b: Fixed32 = 1.0fp32;
+  var a = 2.0fp32;
+  var b = 1.0fp32;
+  a += b;
   printLn(a);
   printLn(b);
-  var c: Fixed64 = 44.0fp64;
+  var c = 44.0fp64;
   printLn(c);
 endfunction
