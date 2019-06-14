@@ -462,5 +462,65 @@ inline bool operator!=(std::nullptr_t /* lhs */, Ptr<R> const &rhs)
   return (nullptr != rhs.ptr_);
 }
 
+class Unknown;
+
+template <template <typename T, typename... Args> class Functor, typename... Args>
+inline auto TypeIdAsCanonicalType(TypeId const type_id, Args &&... args)
+{
+  switch (type_id)
+  {
+  case TypeIds::Unknown:
+    return Functor<Unknown>{}(std::forward<Args>(args)...);
+
+  case TypeIds::Null:
+    return Functor<std::nullptr_t>{}(std::forward<Args>(args)...);
+
+  case TypeIds::Void:
+    return Functor<void>{}(std::forward<Args>(args)...);
+
+  case TypeIds::Bool:
+    return Functor<uint8_t>{}(std::forward<Args>(args)...);
+
+  case TypeIds::Int8:
+    return Functor<int8_t>{}(std::forward<Args>(args)...);
+
+  case TypeIds::UInt8:
+    return Functor<uint8_t>{}(std::forward<Args>(args)...);
+
+  case TypeIds::Int16:
+    return Functor<int16_t>{}(std::forward<Args>(args)...);
+
+  case TypeIds::UInt16:
+    return Functor<uint16_t>{}(std::forward<Args>(args)...);
+
+  case TypeIds::Int32:
+    return Functor<int32_t>{}(std::forward<Args>(args)...);
+
+  case TypeIds::UInt32:
+    return Functor<uint32_t>{}(std::forward<Args>(args)...);
+
+  case TypeIds::Int64:
+    return Functor<int64_t>{}(std::forward<Args>(args)...);
+
+  case TypeIds::UInt64:
+    return Functor<uint64_t>{}(std::forward<Args>(args)...);
+
+  case TypeIds::Float32:
+    return Functor<float>{}(std::forward<Args>(args)...);
+
+  case TypeIds::Float64:
+    return Functor<double>{}(std::forward<Args>(args)...);
+
+  case TypeIds::String:
+    return Functor<Ptr<String>>{}(std::forward<Args>(args)...);
+
+  case TypeIds::Address:
+    return Functor<Ptr<Address>>{}(std::forward<Args>(args)...);
+
+  default:
+    return Functor<Ptr<Object>>{}(std::forward<Args>(args)...);
+  }  // switch
+}
+
 }  // namespace vm
 }  // namespace fetch
