@@ -224,6 +224,8 @@ public:
     return type_id_;
   }
 
+  std::string GetUniqueId() const;
+
 protected:
   Variant &       Push();
   Variant &       Pop();
@@ -458,100 +460,6 @@ template <typename R>
 inline bool operator!=(std::nullptr_t /* lhs */, Ptr<R> const &rhs)
 {
   return (nullptr != rhs.ptr_);
-}
-
-inline void Serialize(ByteArrayBuffer &buffer, Ptr<Object> const &object)
-{
-  if (!object)
-  {
-    throw std::runtime_error("Unable to serialize null reference");
-  }
-
-  if (!object->SerializeTo(buffer))
-  {
-    throw std::runtime_error("Unable to serialize requested object");
-  }
-}
-
-inline void Deserialize(ByteArrayBuffer &buffer, Ptr<Object> &object)
-{
-  if (!object)
-  {
-    throw std::runtime_error("Unable to deserialize in to null reference object");
-  }
-
-  // TODO (issue 1172): This won't work in general (not for nested Ptr<Object> types (e.g. `Array`
-  // of String, Array of Array, etc ...).
-  //                    Current serialisation principle firmly requires types to be `default
-  //                    constructable`, reason being that in order for types to be
-  //                    deserializable they need to have default constructor (= non-parametric
-  //                    constructor).
-  //                    It is necessary to extend/change current serialisation concept
-  //                    and enable default-like construction of VM `Object` based types.
-  if (!object->DeserializeFrom(buffer))
-  {
-    throw std::runtime_error("Object deserialisation failed.");
-  }
-}
-
-class Unknown;
-
-template <template <typename T, typename... Args> class Functor, typename... Args>
-inline auto TypeIdAsCanonicalType(TypeId const type_id, Args &&... args)
-{
-  switch (type_id)
-  {
-  case TypeIds::Unknown:
-    return Functor<Unknown>{}(std::forward<Args>(args)...);
-
-  case TypeIds::Null:
-    return Functor<std::nullptr_t>{}(std::forward<Args>(args)...);
-
-  case TypeIds::Void:
-    return Functor<void>{}(std::forward<Args>(args)...);
-
-  case TypeIds::Bool:
-    return Functor<uint8_t>{}(std::forward<Args>(args)...);
-
-  case TypeIds::Int8:
-    return Functor<int8_t>{}(std::forward<Args>(args)...);
-
-  case TypeIds::UInt8:
-    return Functor<uint8_t>{}(std::forward<Args>(args)...);
-
-  case TypeIds::Int16:
-    return Functor<int16_t>{}(std::forward<Args>(args)...);
-
-  case TypeIds::UInt16:
-    return Functor<uint16_t>{}(std::forward<Args>(args)...);
-
-  case TypeIds::Int32:
-    return Functor<int32_t>{}(std::forward<Args>(args)...);
-
-  case TypeIds::UInt32:
-    return Functor<uint32_t>{}(std::forward<Args>(args)...);
-
-  case TypeIds::Int64:
-    return Functor<int64_t>{}(std::forward<Args>(args)...);
-
-  case TypeIds::UInt64:
-    return Functor<uint64_t>{}(std::forward<Args>(args)...);
-
-  case TypeIds::Float32:
-    return Functor<float>{}(std::forward<Args>(args)...);
-
-  case TypeIds::Float64:
-    return Functor<double>{}(std::forward<Args>(args)...);
-
-  case TypeIds::String:
-    return Functor<Ptr<String>>{}(std::forward<Args>(args)...);
-
-  case TypeIds::Address:
-    return Functor<Ptr<Address>>{}(std::forward<Args>(args)...);
-
-  default:
-    return Functor<Ptr<Object>>{}(std::forward<Args>(args)...);
-  }  // switch
 }
 
 }  // namespace vm

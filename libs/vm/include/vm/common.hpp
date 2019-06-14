@@ -203,7 +203,12 @@ using TypeInfoArray = std::vector<TypeInfo>;
 using TypeInfoMap   = std::unordered_map<std::string, TypeId>;
 
 class VM;
-using Handler = std::function<void(VM *)>;
+template <typename T>
+class Ptr;
+class Object;
+
+using Handler                   = std::function<void(VM *)>;
+using DefaultConstructorHandler = std::function<Ptr<Object>(VM *, TypeId)>;
 
 struct FunctionInfo
 {
@@ -224,25 +229,40 @@ struct FunctionInfo
 };
 using FunctionInfoArray = std::vector<FunctionInfo>;
 
+using DeserializeConstructorMap = std::unordered_map<TypeIndex, DefaultConstructorHandler>;
+
 class RegisteredTypes
 {
 public:
   TypeId GetTypeId(TypeIndex type_index) const
   {
-    auto it = map.find(type_index);
-    if (it != map.end())
+    auto it = map_.find(type_index);
+    if (it != map_.end())
     {
       return it->second;
     }
     return TypeIds::Unknown;
   }
 
+  TypeIndex GetTypeIndex(TypeId type_id) const
+  {
+    auto it = reverse_.find(type_id);
+    if (it != reverse_.end())
+    {
+      return it->second;
+    }
+
+    return TypeIndex(typeid(void ***));
+  }
+
 private:
   void Add(TypeIndex type_index, TypeId type_id)
   {
-    map[type_index] = type_id;
+    map_[type_index] = type_id;
+    reverse_.insert({type_id, type_index});
   }
-  std::unordered_map<TypeIndex, TypeId> map;
+  std::unordered_map<TypeIndex, TypeId> map_;
+  std::unordered_map<TypeId, TypeIndex> reverse_;
   friend class Analyser;
 };
 
