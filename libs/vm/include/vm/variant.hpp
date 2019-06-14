@@ -505,6 +505,5 @@ struct AnyFloatingPoint : public Variant
   using Variant::Variant;
 };
 
-
 }  // namespace vm
 }  // namespace fetch
