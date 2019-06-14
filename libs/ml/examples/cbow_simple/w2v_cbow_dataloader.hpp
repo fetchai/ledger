@@ -159,15 +159,17 @@ public:
 
   ReturnType GetNext() override
   {
-    fetch::math::Tensor<T> t({window_size_ * 2, 1});
-    fetch::math::Tensor<T> label({negative_samples_, 1});
-    ReturnType             p(label, {t});
-    return GetNext(p);
-  }
-
-  ReturnType GetRandom() override
-  {
-    throw std::runtime_error("Random sampling not implemented for CBOWLoader");
+    if (this->random_mode_)
+    {
+      throw std::runtime_error("Random sampling not implemented for CBOWLoader");
+    }
+    else
+    {
+      fetch::math::Tensor<T> t({window_size_ * 2, 1});
+      fetch::math::Tensor<T> label({negative_samples_, 1});
+      ReturnType             p(label, {t});
+      return GetNext(p);
+    }
   }
 
   std::size_t VocabSize() const

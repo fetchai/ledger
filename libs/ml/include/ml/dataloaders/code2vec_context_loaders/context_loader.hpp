@@ -70,7 +70,6 @@ public:
 
   ContextLabelPair        GetNextContext();
   ContextTensorsLabelPair GetNext() override;
-  ContextTensorsLabelPair GetRandom() override;
 
   SizeType Size() const override;
   bool     IsDone() const override;
@@ -195,89 +194,85 @@ template <typename LabelType, typename DataType>
 typename C2VLoader<LabelType, DataType>::ContextTensorsLabelPair
 C2VLoader<LabelType, DataType>::GetNext()
 {
-  std::vector<SizeType> context_positions;
-  SizeType              old_function_index{0};
-  bool                  iteration_start = true;
-
-  while (true)
+  if (this->random_mode_)
   {
-    auto             current_context_position = this->iterator_position_get_next_context_;
-    ContextLabelPair input                    = this->GetNextContext();
-    if ((iteration_start || (input.first == old_function_index)) && !this->IsDone())
+    throw std::runtime_error("Random sampling not implemented for C2VLoader");
+  }
+  else
+  {
+    std::vector<SizeType> context_positions;
+    SizeType              old_function_index{0};
+    bool                  iteration_start = true;
+
+    while (true)
     {
-      old_function_index = input.first;
-      context_positions.push_back(current_context_position);
-    }
-    else
-    {
-      if (!this->IsDone())
+      auto             current_context_position = this->iterator_position_get_next_context_;
+      ContextLabelPair input                    = this->GetNextContext();
+      if ((iteration_start || (input.first == old_function_index)) && !this->IsDone())
       {
-        this->iterator_position_get_next_context_--;
-      }
-      else
-      {
+        old_function_index = input.first;
         context_positions.push_back(current_context_position);
       }
-
-      ArrayType source_word_tensor({this->max_contexts_, 1});
-      ArrayType path_tensor({this->max_contexts_, 1});
-      ArrayType target_word_tensor({this->max_contexts_, 1});
-
-      if (context_positions.size() <= this->max_contexts_)
-      {
-        for (SizeType i{0}; i < context_positions.size(); i++)
-        {
-
-          source_word_tensor(i, 0) =
-              static_cast<Type>(std::get<0>(this->data[context_positions[i]].second));
-          path_tensor(i, 0) =
-              static_cast<Type>(std::get<1>(this->data[context_positions[i]].second));
-          target_word_tensor(i, 0) =
-              static_cast<Type>(std::get<2>(this->data[context_positions[i]].second));
-        }
-        for (SizeType i{context_positions.size()}; i < this->max_contexts_; i++)
-        {
-          source_word_tensor(i, 0) = static_cast<Type>(this->word_to_idx_[EMPTY_CONTEXT_STRING]);
-          path_tensor(i, 0)        = static_cast<Type>(this->path_to_idx_[EMPTY_CONTEXT_STRING]);
-          target_word_tensor(i, 0) = static_cast<Type>(this->word_to_idx_[EMPTY_CONTEXT_STRING]);
-        }
-      }
       else
       {
-        for (SizeType i{0}; i < this->max_contexts_; i++)
+        if (!this->IsDone())
         {
-          source_word_tensor(i, 0) =
-              static_cast<Type>(std::get<0>(this->data[context_positions[i]].second));
-          path_tensor(i, 0) =
-              static_cast<Type>(std::get<1>(this->data[context_positions[i]].second));
-          target_word_tensor(i, 0) =
-              static_cast<Type>(std::get<2>(this->data[context_positions[i]].second));
+          this->iterator_position_get_next_context_--;
         }
+        else
+        {
+          context_positions.push_back(current_context_position);
+        }
+
+        ArrayType source_word_tensor({this->max_contexts_, 1});
+        ArrayType path_tensor({this->max_contexts_, 1});
+        ArrayType target_word_tensor({this->max_contexts_, 1});
+
+        if (context_positions.size() <= this->max_contexts_)
+        {
+          for (SizeType i{0}; i < context_positions.size(); i++)
+          {
+
+            source_word_tensor(i, 0) =
+                static_cast<Type>(std::get<0>(this->data[context_positions[i]].second));
+            path_tensor(i, 0) =
+                static_cast<Type>(std::get<1>(this->data[context_positions[i]].second));
+            target_word_tensor(i, 0) =
+                static_cast<Type>(std::get<2>(this->data[context_positions[i]].second));
+          }
+          for (SizeType i{context_positions.size()}; i < this->max_contexts_; i++)
+          {
+            source_word_tensor(i, 0) = static_cast<Type>(this->word_to_idx_[EMPTY_CONTEXT_STRING]);
+            path_tensor(i, 0)        = static_cast<Type>(this->path_to_idx_[EMPTY_CONTEXT_STRING]);
+            target_word_tensor(i, 0) = static_cast<Type>(this->word_to_idx_[EMPTY_CONTEXT_STRING]);
+          }
+        }
+        else
+        {
+          for (SizeType i{0}; i < this->max_contexts_; i++)
+          {
+            source_word_tensor(i, 0) =
+                static_cast<Type>(std::get<0>(this->data[context_positions[i]].second));
+            path_tensor(i, 0) =
+                static_cast<Type>(std::get<1>(this->data[context_positions[i]].second));
+            target_word_tensor(i, 0) =
+                static_cast<Type>(std::get<2>(this->data[context_positions[i]].second));
+          }
+        }
+        ContextVector context_tensor_tuple = {source_word_tensor, path_tensor, target_word_tensor};
+
+        ArrayType y_true_vec({function_name_counter().size() + 1, 1});
+        y_true_vec.Fill(Type{0});
+        // Preparing the y_true vector (one-hot-encoded)
+        y_true_vec.Set(old_function_index, Type{0}, Type{1});
+
+        ContextTensorsLabelPair return_pair{y_true_vec, context_tensor_tuple};
+
+        return return_pair;
       }
-      ContextVector context_tensor_tuple = {source_word_tensor, path_tensor, target_word_tensor};
-
-      ArrayType y_true_vec({function_name_counter().size() + 1, 1});
-      y_true_vec.Fill(Type{0});
-      // Preparing the y_true vector (one-hot-encoded)
-      y_true_vec.Set(old_function_index, Type{0}, Type{1});
-
-      ContextTensorsLabelPair return_pair{y_true_vec, context_tensor_tuple};
-
-      return return_pair;
+      iteration_start = false;
     }
-    iteration_start = false;
   }
-}
-
-/**
- * Not implemented
- * @return
- */
-template <typename LabelType, typename DataType>
-typename C2VLoader<LabelType, DataType>::ContextTensorsLabelPair
-C2VLoader<LabelType, DataType>::GetRandom()
-{
-  throw std::runtime_error("Random sampling not implemented for C2VLoader");
 }
 
 /**
