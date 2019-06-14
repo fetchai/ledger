@@ -259,8 +259,6 @@ TEST_F(StateTests, test_serialisation_of_complex_type)
 
   ASSERT_TRUE(toolkit.Compile(deser_src));
 
-  // TODO (issue 1172): This expectation is just temporary, it shall be replaced
-  // with commented-out code bellow once the issue is resolved.
   try
   {
     auto const retval = toolkit.Run();
