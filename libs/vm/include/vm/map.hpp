@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "vm/vm.hpp"
+#include "vectorise/fixed_point/fixed_point.hpp"
 
 namespace fetch {
 namespace vm {
@@ -220,6 +221,14 @@ inline Ptr<IMap> inner(TypeId value_type_id, VM *vm, TypeId type_id)
   {
     return Ptr<IMap>(new Container<Key, double>(vm, type_id));
   }
+  case TypeIds::Fixed32:
+  {
+    return Ptr<IMap>(new Container<Key, fixed_point::fp32_t>(vm, type_id));
+  }
+  case TypeIds::Fixed64:
+  {
+    return Ptr<IMap>(new Container<Key, fixed_point::fp64_t>(vm, type_id));
+  }
   default:
   {
     return Ptr<IMap>(new Container<Key, Ptr<Object>>(vm, type_id));
@@ -275,6 +284,14 @@ inline Ptr<IMap> outer(TypeId key_type_id, TypeId value_type_id, VM *vm, TypeId 
   {
     return inner<double>(value_type_id, vm, type_id);
   }
+  // case TypeIds::Fixed32:
+  // {
+  //   return inner<fixed_point::fp32_t>(value_type_id, vm, type_id);
+  // }
+  // case TypeIds::Fixed64:
+  // {
+  //   return inner<fixed_point::fp64_t>(value_type_id, vm, type_id);
+  // }
   default:
   {
     return inner<Ptr<Object>>(value_type_id, vm, type_id);
