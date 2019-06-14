@@ -18,7 +18,6 @@
 //------------------------------------------------------------------------------
 
 #include "vm/vm.hpp"
-#include "vm/vm_type_traits.hpp"
 
 #include <algorithm>
 #include <cstddef>
