@@ -25,19 +25,37 @@
 
 #include <cstdint>
 #include <vector>
+#include <cmath>
 
 template <typename T>
-class SqrtTest : public ::testing::Test
+class SqrtFloatTest : public ::testing::Test
 {
 };
 
-using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
-fetch::math::Tensor<fetch::fixed_point::FixedPoint<16, 16>>,
+template <typename T>
+class SqrtFixedTest : public ::testing::Test
+{
+};
+
+template <typename T>
+class SqrtBothTest : public ::testing::Test
+{
+};
+
+using FloatingPointTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>>;
+
+using FixedPointTypes = ::testing::Types<fetch::math::Tensor<fetch::fixed_point::FixedPoint<16, 16>>,
 fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
 
-TYPED_TEST_CASE(SqrtTest, MyTypes);
+using BothTypes = ::testing::Types<fetch::math::Tensor<fetch::fixed_point::FixedPoint<16, 16>>,
+    fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>,
+        fetch::math::Tensor<float>, fetch::math::Tensor<double>>;
 
-TYPED_TEST(SqrtTest, forward_all_positive_test)
+TYPED_TEST_CASE(SqrtFloatTest, FloatingPointTypes);
+TYPED_TEST_CASE(SqrtFixedTest, FixedPointTypes);
+TYPED_TEST_CASE(SqrtBothTest, BothTypes);
+
+TYPED_TEST(SqrtBothTest, forward_all_positive_test)
 {
   using ArrayType     = TypeParam;
 
@@ -54,7 +72,7 @@ TYPED_TEST(SqrtTest, forward_all_positive_test)
       prediction.AllClose(gt, typename TypeParam::Type(1e-4), typename TypeParam::Type(1e-4)));
 }
 
-TYPED_TEST(SqrtTest, backward_all_positive_test)
+TYPED_TEST(SqrtBothTest, backward_all_positive_test)
 {
   using ArrayType     = TypeParam;
 
@@ -71,7 +89,7 @@ TYPED_TEST(SqrtTest, backward_all_positive_test)
       fetch::math::function_tolerance<typename ArrayType::Type>()));
 }
 
-TYPED_TEST(SqrtTest, forward_all_negative_test)
+TYPED_TEST(SqrtFloatTest, forward_all_negative_test)
 {
   using ArrayType     = TypeParam;
 
@@ -79,14 +97,31 @@ TYPED_TEST(SqrtTest, forward_all_negative_test)
 
   fetch::ml::ops::Sqrt<TypeParam> op;
 
-  TypeParam prediction(op.ComputeOutputShape({data}));
+  TypeParam pred(op.ComputeOutputShape({data}));
+  op.Forward({data}, pred);
 
-  // fails because sqrt of neg number is undefined
-  EXPECT_THROW(op.Forward({data}, prediction), std::runtime_error);
+  // gives NaN because sqrt of a negative number is undefined
+  for (auto p_it : pred){
+    EXPECT_TRUE(std::isnan(p_it));
+  }
+}
+
+TYPED_TEST(SqrtFixedTest, forward_all_negative_test)
+{
+  using ArrayType     = TypeParam;
+
+  ArrayType data = ArrayType::FromString("-1, -2, -4, -10, -100");
+
+  fetch::ml::ops::Sqrt<TypeParam> op;
+
+  TypeParam pred(op.ComputeOutputShape({data}));
+
+  // Throws runtime error with "Cannot assign NaN value!" because sqrt of neg number is undefined
+  EXPECT_THROW(op.Forward({data}, pred), std::runtime_error);
 }
 
 
-TYPED_TEST(SqrtTest, backward_all_negative_test)
+TYPED_TEST(SqrtFloatTest, backward_all_negative_test)
 {
   using ArrayType     = TypeParam;
 
@@ -95,12 +130,43 @@ TYPED_TEST(SqrtTest, backward_all_negative_test)
 
   fetch::ml::ops::Sqrt<TypeParam> op;
 
-  // fails because sqrt of neg number is undefined
+  std::vector<ArrayType> pred = op.Backward({data}, error);
+  // gives NaN because sqrt of a negative number is undefined
+  for (auto p_it : pred.at(0)){
+    EXPECT_TRUE(std::isnan(p_it));
+  }
+}
+
+TYPED_TEST(SqrtFixedTest, backward_all_negative_test)
+{
+  using ArrayType     = TypeParam;
+
+  ArrayType data  = ArrayType::FromString("-1, -2, -4, -10, -100");
+  ArrayType error = ArrayType::FromString("1,   1,  1,   2,    0");
+
+  fetch::ml::ops::Sqrt<TypeParam> op;
+
+  // Throws runtime error with "Cannot assign NaN value!" because sqrt of neg number is undefined
   EXPECT_THROW(std::vector<ArrayType> prediction = op.Backward({data}, error), std::runtime_error);
 }
 
+TYPED_TEST(SqrtFloatTest, backward_zero_test)
+{
+  using ArrayType     = TypeParam;
 
-TYPED_TEST(SqrtTest, backward_zero_test)
+  ArrayType data  = ArrayType::FromString("0,  0,    0,    0,       -0");
+  ArrayType error = ArrayType::FromString("1,100,   -1,    2,        1");
+
+  fetch::ml::ops::Sqrt<TypeParam> op;
+
+  std::vector<ArrayType> pred = op.Backward({data}, error);
+  // gives NaN because of division by zero
+  for (auto p_it : pred.at(0)){
+    EXPECT_TRUE(std::isinf(p_it));
+  }
+}
+
+TYPED_TEST(SqrtFixedTest, backward_zero_test)
 {
   using ArrayType     = TypeParam;
 
