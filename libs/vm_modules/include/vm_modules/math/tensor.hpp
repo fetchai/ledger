@@ -27,7 +27,7 @@ class VMTensor : public fetch::vm::Object
 {
 
 public:
-  using DataType = float;
+  using DataType  = float;
   using ArrayType = fetch::math::Tensor<DataType>;
   using SizeType  = ArrayType::SizeType;
 
@@ -42,17 +42,17 @@ public:
     return {new VMTensor(vm, type_id, shape->elements)};
   }
 
-  DataType AtOne(uint64_t const & idx1)
+  DataType AtOne(uint64_t const &idx1)
   {
     return tensor_.At(idx1);
   }
 
-  DataType AtTwo(uint64_t const & idx1, uint64_t const & idx2)
+  DataType AtTwo(uint64_t const &idx1, uint64_t const &idx2)
   {
     return tensor_.At(idx1, idx2);
   }
 
-  DataType AtThree(uint64_t const & idx1, uint64_t const & idx2, uint64_t const & idx3)
+  DataType AtThree(uint64_t const &idx1, uint64_t const &idx2, uint64_t const &idx3)
   {
     return tensor_.At(idx1, idx2, idx3);
   }
@@ -77,7 +77,7 @@ public:
     return tensor_.shape();
   }
 
-  ArrayType & GetTensor()
+  ArrayType &GetTensor()
   {
     return tensor_;
   }
@@ -95,7 +95,6 @@ inline void CreateTensor(fetch::vm::Module &module)
       .CreateMemberFunction("At", &VMTensor::AtThree)
       .CreateMemberFunction("SetAt", &VMTensor::SetAt)
       .CreateMemberFunction("ToString", &VMTensor::ToString);
-
 }
 
 }  // namespace math
