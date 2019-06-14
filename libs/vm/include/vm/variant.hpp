@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm/object.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
+#include "vm/object.hpp"
 
 namespace fetch {
 namespace vm {

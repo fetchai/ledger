@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "math/standard_functions/exp.hpp"
 #include "vm/module.hpp"
 
 #include <cmath>
@@ -24,14 +25,12 @@
 namespace fetch {
 namespace vm_modules {
 
-inline double Exp(fetch::vm::VM * /*vm*/, double x)
-{
-  return std::exp(x);
-}
-
 inline void BindExp(vm::Module &module)
 {
-  module.CreateFreeFunction("exp", &Exp);
+  module.CreateFreeFunction<float_t>("exp", &fetch::math::Exp<float_t>);
+  module.CreateFreeFunction<double_t>("exp", &fetch::math::Exp<double_t>);
+  module.CreateFreeFunction<fixed_point::fp32_t>("exp", &fetch::math::Exp<fixed_point::fp32_t>);
+  module.CreateFreeFunction<fixed_point::fp64_t>("exp", &fetch::math::Exp<fixed_point::fp64_t>);
 }
 
 }  // namespace vm_modules

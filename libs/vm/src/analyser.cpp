@@ -73,8 +73,10 @@ void Analyser::Initialise()
   CreatePrimitiveType("UInt64", TypeIndex(typeid(uint64_t)), true, TypeIds::UInt64, uint64_type_);
   CreatePrimitiveType("Float32", TypeIndex(typeid(float)), true, TypeIds::Float32, float32_type_);
   CreatePrimitiveType("Float64", TypeIndex(typeid(double)), true, TypeIds::Float64, float64_type_);
-  CreatePrimitiveType("Fixed32", TypeIndex(typeid(fixed_point::fp32_t)), true, TypeIds::Fixed32, fixed32_type_);
-  CreatePrimitiveType("Fixed64", TypeIndex(typeid(fixed_point::fp64_t)), true, TypeIds::Fixed64, fixed64_type_);
+  CreatePrimitiveType("Fixed32", TypeIndex(typeid(fixed_point::fp32_t)), true, TypeIds::Fixed32,
+                      fixed32_type_);
+  CreatePrimitiveType("Fixed64", TypeIndex(typeid(fixed_point::fp64_t)), true, TypeIds::Fixed64,
+                      fixed64_type_);
   CreateClassType("String", TypeIndex(typeid(String)), TypeIds::String, string_type_);
   EnableOperator(string_type_, Operator::Equal);
   EnableOperator(string_type_, Operator::NotEqual);
@@ -101,8 +103,8 @@ void Analyser::Initialise()
 
   TypePtrArray const integer_types = {int8_type_,  uint8_type_,  int16_type_, uint16_type_,
                                       int32_type_, uint32_type_, int64_type_, uint64_type_};
-  TypePtrArray const number_types  = {int8_type_,    uint8_type_,  int16_type_, uint16_type_,
-                                     int32_type_,   uint32_type_, int64_type_, uint64_type_,
+  TypePtrArray const number_types  = {int8_type_,    uint8_type_,   int16_type_,   uint16_type_,
+                                     int32_type_,   uint32_type_,  int64_type_,   uint64_type_,
                                      float32_type_, float64_type_, fixed32_type_, fixed64_type_};
   for (auto const &type : number_types)
   {

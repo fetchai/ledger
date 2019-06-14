@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "meta/tuple.hpp"
+#include "vectorise/fixed_point/fixed_point.hpp"
 #include "vm/address.hpp"
 #include "vm/array.hpp"
 #include "vm/compiler.hpp"
@@ -31,7 +32,6 @@
 #include "vm/module/static_member_function_invoke.hpp"
 #include "vm/state.hpp"
 #include "vm/vm.hpp"
-#include "vectorise/fixed_point/fixed_point.hpp"
 
 #include <functional>
 #include <string>

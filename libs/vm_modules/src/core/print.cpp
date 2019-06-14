@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm_modules/core/print.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
+#include "vm_modules/core/print.hpp"
 
 #include "meta/type_traits.hpp"
 #include "vm/module.hpp"

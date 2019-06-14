@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm_modules/math/fixed_point_wrapper.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
+#include "vm_modules/math/fixed_point_wrapper.hpp"
 #include "vm_test_toolkit.hpp"
 
 namespace {
@@ -28,7 +28,6 @@ public:
   VmTestToolkit toolkit;
 };
 
-
 TEST_F(FixedPointTest, create_fixed_point)
 {
   auto m = toolkit.module();
@@ -36,7 +35,7 @@ TEST_F(FixedPointTest, create_fixed_point)
 
   static char const *TEXT = R"(
     function main()
-      print(FixedPoint(1.0));
+      print(1.0fp32);
     endfunction
   )";
 
@@ -44,7 +43,7 @@ TEST_F(FixedPointTest, create_fixed_point)
   ASSERT_TRUE(toolkit.Run());
 
   double gt = static_cast<double>(fetch::fixed_point::fp32_t(1));
-  EXPECT_EQ(toolkit.stdout(), std::to_string(gt));
+  EXPECT_EQ(std::stod(toolkit.stdout()), gt);
 }
 
 }  // namespace

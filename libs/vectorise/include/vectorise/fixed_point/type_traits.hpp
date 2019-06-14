@@ -60,7 +60,8 @@ template <typename DataType, typename ReturnType>
 using IfIsArithmetic = fetch::meta::EnableIf<IsArithmetic<DataType>, ReturnType>;
 
 template <typename DataType, typename ReturnType>
-using IfIsNonFixedPointArithmetic = fetch::meta::EnableIf<IsNonFixedPointArithmetic<DataType>, ReturnType>;
+using IfIsNonFixedPointArithmetic =
+    fetch::meta::EnableIf<IsNonFixedPointArithmetic<DataType>, ReturnType>;
 
 }  // namespace meta
 }  // namespace math

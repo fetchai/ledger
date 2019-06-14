@@ -19,9 +19,9 @@
 #include "ml/serializers/ml_types.hpp"
 
 #include "core/serializers/byte_array_buffer.hpp"
-#include "vectorise/fixed_point/serializers.hpp"
 #include "math/tensor.hpp"
 #include "ml/layers/fully_connected.hpp"
+#include "vectorise/fixed_point/serializers.hpp"
 
 #include <gtest/gtest.h>
 

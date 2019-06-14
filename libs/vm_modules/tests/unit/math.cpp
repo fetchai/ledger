@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm_modules/math/math.hpp"
 #include "math/standard_functions/abs.hpp"
+#include "vm_modules/math/math.hpp"
 #include "vm_test_toolkit.hpp"
 
 namespace {

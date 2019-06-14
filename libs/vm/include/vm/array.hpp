@@ -17,9 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm/vm.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 #include "vectorise/fixed_point/serializers.hpp"
+#include "vm/vm.hpp"
 
 #include <algorithm>
 #include <cstddef>
@@ -297,11 +297,13 @@ inline Ptr<IArray> IArray::Construct(VM *vm, TypeId type_id, Args &&... args)
   }
   case TypeIds::Fixed32:
   {
-    return new Array<fixed_point::fp32_t>(vm, type_id, element_type_id, std::forward<Args>(args)...);
+    return new Array<fixed_point::fp32_t>(vm, type_id, element_type_id,
+                                          std::forward<Args>(args)...);
   }
   case TypeIds::Fixed64:
   {
-    return new Array<fixed_point::fp32_t>(vm, type_id, element_type_id, std::forward<Args>(args)...);
+    return new Array<fixed_point::fp32_t>(vm, type_id, element_type_id,
+                                          std::forward<Args>(args)...);
   }
   default:
   {

@@ -9,8 +9,8 @@ function main()
   print("d = a * b = ");
   var c = a * b;
   printLn(c);
-  var d = 44.0fp64;
-  var e = 2.0fp64;
+  var d = 4.0fp64;
+  var e = 3.0fp64;
   printLn(d);
   printLn(b);
   d += e;
@@ -19,4 +19,8 @@ function main()
   print("f = d * e = ");
   var f = d * e;
   printLn(f);
+  //var g = exp(f);
+  //print("exp(f) = ");
+  //printLn(g);
+  printLn(exp(4.0));
 endfunction

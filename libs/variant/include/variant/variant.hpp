@@ -377,8 +377,8 @@ template <typename T>
 Variant::Variant(T const &value, meta::IfIsFixedPoint<T> *)
   : Variant()
 {
-  type_                  = Type::FIXED_POINT;
-  primitive_.integer     = value.Data();
+  type_              = Type::FIXED_POINT;
+  primitive_.integer = value.Data();
 }
 
 /**
@@ -641,8 +641,8 @@ meta::IfIsFixedPoint<T, Variant &> Variant::operator=(T const &value)
 {
   Reset();
 
-  type_                  = Type::FIXED_POINT;
-  primitive_.integer     = value.Data();
+  type_              = Type::FIXED_POINT;
+  primitive_.integer = value.Data();
 
   return *this;
 }

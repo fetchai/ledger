@@ -694,7 +694,7 @@ std::ostream &operator<<(std::ostream &s, FixedPoint<I, F> const &n)
   {
     s << double(n);
   }
-  s << " (0x" << std::hex << n.Data() << ")";
+  // s << " (0x" << std::hex << n.Data() << ")";
   s.flags(f);
   return s;
 }

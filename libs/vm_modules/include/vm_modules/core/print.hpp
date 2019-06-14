@@ -17,13 +17,11 @@
 //
 //------------------------------------------------------------------------------
 
-
 namespace fetch {
 
 namespace vm {
 class Module;
 }
-
 
 namespace vm_modules {
 

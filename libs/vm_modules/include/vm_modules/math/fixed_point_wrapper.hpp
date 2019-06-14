@@ -31,45 +31,47 @@ public:
   FixedPointWrapper()          = delete;
   virtual ~FixedPointWrapper() = default;
 
-//  static void Bind(vm::Module &module)
-//  {
-//    module.CreateClassType<FixedPointWrapper>("Buffer")
-//        .CreateConstuctor<int32_t>();
-////        .CreateMemberFunction("copy", &FixedPointWrapper::Copy);
-//  }
+  //  static void Bind(vm::Module &module)
+  //  {
+  //    module.CreateClassType<FixedPointWrapper>("Buffer")
+  //        .CreateConstuctor<int32_t>();
+  ////        .CreateMemberFunction("copy", &FixedPointWrapper::Copy);
+  //  }
 
-  FixedPointWrapper(fetch::vm::VM *vm, fetch::vm::TypeId type_id, double const& val)
+  FixedPointWrapper(fetch::vm::VM *vm, fetch::vm::TypeId type_id, double const &val)
     : fetch::vm::Object(vm, type_id)
     , fixed_point_(val)
   {}
 
-  static fetch::vm::Ptr<FixedPointWrapper> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id, double val)
+  static fetch::vm::Ptr<FixedPointWrapper> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
+                                                       double val)
   {
     return {new FixedPointWrapper(vm, type_id, val)};
   }
-//
-//  static fetch::vm::Ptr<FixedPointWrapper> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
-//                                                      FixedPointType fixed_point)
-//  {
-//    return new FixedPointWrapper(vm, type_id, fixed_point);
-//  }
-//
-//  FixedPointType fixed_point()
-//  {
-//    return fixed_point_;
-//  }
+  //
+  //  static fetch::vm::Ptr<FixedPointWrapper> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId
+  //  type_id,
+  //                                                      FixedPointType fixed_point)
+  //  {
+  //    return new FixedPointWrapper(vm, type_id, fixed_point);
+  //  }
+  //
+  //  FixedPointType fixed_point()
+  //  {
+  //    return fixed_point_;
+  //  }
 
-//  bool SerializeTo(vm::ByteArrayBuffer &buffer) override
-//  {
-//    buffer << fixed_point_;
-//    return true;
-//  }
-//
-//  bool DeserializeFrom(vm::ByteArrayBuffer &buffer) override
-//  {
-//    buffer >> fixed_point_;
-//    return true;
-//  }
+  //  bool SerializeTo(vm::ByteArrayBuffer &buffer) override
+  //  {
+  //    buffer << fixed_point_;
+  //    return true;
+  //  }
+  //
+  //  bool DeserializeFrom(vm::ByteArrayBuffer &buffer) override
+  //  {
+  //    buffer >> fixed_point_;
+  //    return true;
+  //  }
 
   double ToDouble() const
   {
@@ -83,8 +85,8 @@ private:
 static void CreateFixedPoint(vm::Module &module)
 {
   module.CreateClassType<FixedPointWrapper>("FixedPoint")
-          .CreateConstuctor<double>()
-          .CreateMemberFunction("double", &FixedPointWrapper::ToDouble);
+      .CreateConstuctor<double>()
+      .CreateMemberFunction("double", &FixedPointWrapper::ToDouble);
 }
 
 inline void CreateFixedPoint(std::shared_ptr<vm::Module> module)
