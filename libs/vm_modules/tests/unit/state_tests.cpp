@@ -139,46 +139,47 @@ TEST_F(StateTests, MapDeserializeTest)
 }
 */
 
-TEST_F(StateTests, ArraySerializeTest)
+TEST_F(StateTests, ArrayDeserializeTest)
 {
-  static char const *TEXT = R"(
+  static char const *ser_src = R"(
     function main()
-      var data = Array<Float32>(10);
-      var state = State<Array<Float32>>("state");
-      state.set(data);
+      var data = Array<Float64>(3);
+      data[0] = 0.1;
+      data[1] = 2.3;
+      data[2] = 4.5;
+
+      State<Array<Float64>>("state").set(data);
     endfunction
   )";
 
   EXPECT_CALL(toolkit.observer(), Write("state", _, _));
 
-  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_TRUE(toolkit.Compile(ser_src));
   ASSERT_TRUE(toolkit.Run());
-}
 
-/*
-// TEST DEPRECATED AS BINARY REPRESENTATION HAS CHANGED.
-TEST_F(StateTests, ArrayDeserializeTest)
-{
-  static char const *TEXT = R"(
-    function main() : Array<Float32>
-      var data = Array<Float32>(10);
-      var state = State<Array<Float32>>("state");
-      return state.get(Array<Float32>(0));
+  static char const *deser_src = R"(
+    function main() : Array<Float64>
+      var state = State<Array<Float64>>("state");
+      return state.get(Array<Float64>(0));
     endfunction
   )";
-
-  toolkit.AddState(
-      "state",
-      "0c000a000000000000000000000000000000000000000000000000000000000000000000000000000000000"
-        "0000000000000");
 
   EXPECT_CALL(toolkit.observer(), Exists("state"));
   EXPECT_CALL(toolkit.observer(), Read("state", _, _));
 
-  ASSERT_TRUE(toolkit.Compile(TEXT));
-  ASSERT_TRUE(toolkit.Run());
+  ASSERT_TRUE(toolkit.Compile(deser_src));
+
+  Variant res;
+  ASSERT_TRUE(toolkit.Run(&res));
+  ASSERT_TRUE(!res.IsPrimitive());
+
+  auto array{res.Get<Ptr<IArray>>()};
+  ASSERT_TRUE(static_cast<bool>(array));
+  ASSERT_EQ(int32_t{3}, array->Count());
+  EXPECT_EQ(0.1, array->PopFrontOne().Get<double>());
+  EXPECT_EQ(2.3, array->PopFrontOne().Get<double>());
+  EXPECT_EQ(4.5, array->PopFrontOne().Get<double>());
 }
-*/
 
 // Regression test for issue 1072: used to segfault prior to fix
 TEST_F(StateTests, querying_state_constructed_from_null_address_fails_gracefully)
