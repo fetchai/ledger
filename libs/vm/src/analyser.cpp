@@ -511,7 +511,7 @@ void Analyser::AnnotateBlock(BlockNodePtr const &block_node)
     }
     case NodeKind::BreakStatement:
     {
-      if (!loops_.empty())
+      if (loops_.empty())
       {
         AddError(child->line, "break statement is not inside a while or for loop");
       }
@@ -519,7 +519,7 @@ void Analyser::AnnotateBlock(BlockNodePtr const &block_node)
     }
     case NodeKind::ContinueStatement:
     {
-      if (!loops_.empty())
+      if (loops_.empty())
       {
         AddError(child->line, "continue statement is not inside a while or for loop");
       }
