@@ -91,6 +91,7 @@ TYPED_TEST(SqrtBothTest, backward_all_positive_test)
                                 fetch::math::function_tolerance<typename ArrayType::Type>()));
 }
 
+// TODO(1195): fixed point and floating point tests should be unified.
 TYPED_TEST(SqrtFloatTest, forward_all_negative_test)
 {
   using ArrayType = TypeParam;
