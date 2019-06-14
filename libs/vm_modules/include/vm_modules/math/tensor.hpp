@@ -27,7 +27,8 @@ class VMTensor : public fetch::vm::Object
 {
 
 public:
-  using ArrayType = fetch::math::Tensor<float>;
+  using DataType = float;
+  using ArrayType = fetch::math::Tensor<DataType>;
   using SizeType  = ArrayType::SizeType;
 
   VMTensor(fetch::vm::VM *vm, fetch::vm::TypeId type_id, std::vector<std::uint64_t> const &shape)
@@ -41,7 +42,22 @@ public:
     return {new VMTensor(vm, type_id, shape->elements)};
   }
 
-  void SetAt(uint64_t index, float value)
+  DataType AtOne(uint64_t const & idx1)
+  {
+    return tensor_.At(idx1);
+  }
+
+  DataType AtTwo(uint64_t const & idx1, uint64_t const & idx2)
+  {
+    return tensor_.At(idx1, idx2);
+  }
+
+  DataType AtThree(uint64_t const & idx1, uint64_t const & idx2, uint64_t const & idx3)
+  {
+    return tensor_.At(idx1, idx2, idx3);
+  }
+
+  void SetAt(uint64_t index, DataType value)
   {
     tensor_.At(index) = value;
   }
@@ -58,20 +74,10 @@ public:
 
   fetch::math::SizeVector shape()
   {
-    ////    fetch::vm::Array<>(vm_, type_id_, elemen element_type_id__)
-    ////    return fetch::vm::Array<VMTensor::SizeType>::Construct(vm_, type_id_, tensor_.shape());
-    //
-    //    fetch::vm::Array<SizeType> shape_array(vm_, type_id_, element_type_id__,
-    //    tensor_.shape().size());
-    //
-    //    for (std::size_t i = 0; i < ; ++i)
-    //    {
-    //      shape_array.Append()
-    //    }
     return tensor_.shape();
   }
 
-  ArrayType const &GetTensor()
+  ArrayType & GetTensor()
   {
     return tensor_;
   }
@@ -84,8 +90,12 @@ inline void CreateTensor(fetch::vm::Module &module)
 {
   module.CreateClassType<VMTensor>("Tensor")
       .CreateConstuctor<fetch::vm::Ptr<fetch::vm::Array<VMTensor::SizeType>>>()
+      .CreateMemberFunction("At", &VMTensor::AtOne)
+      .CreateMemberFunction("At", &VMTensor::AtTwo)
+      .CreateMemberFunction("At", &VMTensor::AtThree)
       .CreateMemberFunction("SetAt", &VMTensor::SetAt)
       .CreateMemberFunction("ToString", &VMTensor::ToString);
+
 }
 
 }  // namespace math
