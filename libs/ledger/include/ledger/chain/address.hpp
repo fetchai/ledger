@@ -93,6 +93,10 @@ public:
   // Operators
   bool operator==(Address const &other) const;
   bool operator!=(Address const &other) const;
+  bool operator<(Address const &other) const;
+  bool operator<=(Address const &other) const;
+  bool operator>(Address const &other) const;
+  bool operator>=(Address const &other) const;
 
   Address &operator=(Address const &) = default;
   Address &operator=(Address &&) = default;
@@ -142,6 +146,26 @@ inline bool Address::operator==(Address const &other) const
 inline bool Address::operator!=(Address const &other) const
 {
   return !(*this == other);
+}
+
+inline bool Address::operator<(Address const &other) const
+{
+  return address_ < other.address_;
+}
+
+inline bool Address::operator<=(Address const &other) const
+{
+  return address_ <= other.address_;
+}
+
+inline bool Address::operator>(Address const &other) const
+{
+  return address_ > other.address_;
+}
+
+inline bool Address::operator>=(Address const &other) const
+{
+  return address_ >= other.address_;
 }
 
 }  // namespace ledger

@@ -291,6 +291,8 @@ private:
       return false;
     }
 
+    data.resize(size);
+
     if (!vm_->IsDefaultSerializeConstructable(element_type_id))
     {
       vm_->RuntimeError("Cannot deserialize type " + vm_->GetUniqueId(element_type_id) +
