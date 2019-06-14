@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/serializers/byte_array_buffer.hpp"
+#include "vectorise/fixed_point/fixed_point.hpp"
 
 #include "vm/address.hpp"
 #include "vm/vm.hpp"
@@ -280,6 +281,14 @@ inline Ptr<IState> IState::ConstructIntrinsic(VM *vm, TypeId type_id, TypeId val
   case TypeIds::Float64:
   {
     return new State<double>(vm, type_id, value_type_id, std::forward<Args>(args)...);
+  }
+  case TypeIds::Fixed32:
+  {
+    return new State<fixed_point::fp32_t>(vm, type_id, value_type_id, std::forward<Args>(args)...);
+  }
+  case TypeIds::Fixed64:
+  {
+    return new State<fixed_point::fp64_t>(vm, type_id, value_type_id, std::forward<Args>(args)...);
   }
   default:
   {
