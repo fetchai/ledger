@@ -150,7 +150,14 @@ public:
     if (vm_->HasIoObserver())
     {
       // attempt to read the value from the storage engine
+      // TODO: Allocate new pointer to value_ before reading as
+      // the value is otherwise overwritten in other variables.
       auto const status = ReadHelper(name_, value_, vm_->GetIOObserver());
+
+      if (vm_->HasError())
+      {
+        return;
+      }
 
       // mark the variable as existed if we get a positive result back
       existed_ = (Status::OK == status);

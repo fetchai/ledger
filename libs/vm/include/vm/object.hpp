@@ -226,6 +226,8 @@ public:
     return type_id_;
   }
 
+  std::string GetUniqueId() const;
+
 protected:
   Variant &       Push();
   Variant &       Pop();
@@ -460,40 +462,6 @@ template <typename R>
 inline bool operator!=(std::nullptr_t /* lhs */, Ptr<R> const &rhs)
 {
   return (nullptr != rhs.ptr_);
-}
-
-inline void Serialize(ByteArrayBuffer &buffer, Ptr<Object> const &object)
-{
-  if (!object)
-  {
-    throw std::runtime_error("Unable to serialize null reference");
-  }
-
-  if (!object->SerializeTo(buffer))
-  {
-    throw std::runtime_error("Unable to serialize requested object");
-  }
-}
-
-inline void Deserialize(ByteArrayBuffer &buffer, Ptr<Object> &object)
-{
-  if (!object)
-  {
-    throw std::runtime_error("Unable to deserialize in to null reference object");
-  }
-
-  // TODO (issue 1172): This won't work in general (not for nested Ptr<Object> types (e.g. `Array`
-  // of String, Array of Array, etc ...).
-  //                    Current serialisation principle firmly requires types to be `default
-  //                    constructable`, reason being that in order for types to be
-  //                    deserializable they need to have default constructor (= non-parametric
-  //                    constructor).
-  //                    It is necessary to extend/change current serialisation concept
-  //                    and enable default-like construction of VM `Object` based types.
-  if (!object->DeserializeFrom(buffer))
-  {
-    throw std::runtime_error("Object deserialisation failed.");
-  }
 }
 
 }  // namespace vm

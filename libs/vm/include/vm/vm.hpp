@@ -288,6 +288,12 @@ public:
     return success;
   }
 
+  std::string GetUniqueId(TypeId type_id) const
+  {
+    auto info = GetTypeInfo(type_id);
+    return info.name;
+  }
+
   template <typename T>
   TypeId GetTypeId()
   {
@@ -399,6 +405,54 @@ public:
     return type_info_array_[type_id];
   }
 
+  bool IsDefaultSerializeConstructable(TypeId type_id) const
+  {
+    TypeIndex idx = registered_types_.GetTypeIndex(type_id);
+    auto      it  = deserialization_constructors_.find(idx);
+
+    if (it == deserialization_constructors_.end())
+    {
+      TypeInfo tinfo = GetTypeInfo(type_id);
+
+      if (tinfo.template_type_id == TypeIds::Unknown)
+      {
+        return false;
+      }
+
+      idx = registered_types_.GetTypeIndex(tinfo.template_type_id);
+      it  = deserialization_constructors_.find(idx);
+      return (it != deserialization_constructors_.end());
+    }
+    return true;
+  }
+
+  Ptr<Object> DefaultSerializeConstruct(TypeId type_id)
+  {
+    // Resolving constructor
+    TypeIndex idx = registered_types_.GetTypeIndex(type_id);
+    auto      it  = deserialization_constructors_.find(idx);
+
+    if (it == deserialization_constructors_.end())
+    {
+      // Testing if there is an interface constructor
+      TypeInfo tinfo = GetTypeInfo(type_id);
+      if (tinfo.template_type_id != TypeIds::Unknown)
+      {
+        idx = registered_types_.GetTypeIndex(tinfo.template_type_id);
+        it  = deserialization_constructors_.find(idx);
+      }
+    }
+
+    if (it == deserialization_constructors_.end())
+    {
+      RuntimeError("object is not default constructible.");
+      return nullptr;
+    }
+
+    auto &constructor = it->second;
+    return constructor(this, type_id);
+  }
+
 private:
   static const int FRAME_STACK_SIZE = 50;
   static const int STACK_SIZE       = 5000;
@@ -487,6 +541,7 @@ private:
   IoObserverInterface *          io_observer_{nullptr};
   OutputDeviceMap                output_devices_;
   InputDeviceMap                 input_devices_;
+  DeserializeConstructorMap      deserialization_constructors_;
 
   void AddOpcodeInfo(uint16_t opcode, std::string const &name, Handler const &handler)
   {
