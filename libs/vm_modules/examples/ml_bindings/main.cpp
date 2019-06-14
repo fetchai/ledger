@@ -25,7 +25,6 @@
 #include "vm/module.hpp"
 #include "vm_modules/ml/cross_entropy.hpp"
 
-//#include "vm_modules/math/matrix_operations.hpp"
 #include "vm_modules/ml/graph.hpp"
 
 #include <cstdint>
@@ -180,7 +179,6 @@ int main(int argc, char **argv)
       .CreateStaticMemberFunction("Argv", &System::Argv);
 
   fetch::vm_modules::math::CreateTensor(*module);
-//  fetch::vm_modules::math::CreateArgMax(*module);
   fetch::vm_modules::ml::CreateGraph(*module);
   fetch::vm_modules::ml::CreateCrossEntropy(*module);
 
