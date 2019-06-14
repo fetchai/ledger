@@ -22,8 +22,10 @@ namespace fetch {
 namespace vm {
 
 namespace {
-template <typename T, typename = std::enable_if_t<std::is_arithmetic<T>::value>> // TODO: Use IsPrimitive
-inline bool ReadHelper(TypeId /*type*/, std::string const &name, T &val, VM *vm)
+template <typename T,
+          typename = std::enable_if_t<std::is_arithmetic<T>::value>>  // TODO: Use IsPrimitive
+inline bool
+ReadHelper(TypeId /*type*/, std::string const &name, T &val, VM *vm)
 {
   if (!vm->HasIoObserver())
   {
@@ -57,9 +59,10 @@ inline bool ReadHelper(TypeId type, std::string const &name, Ptr<Object> &val, V
     return false;
   }
 
-  if(!vm->IsDefaultSerializeConstructable(type))
+  if (!vm->IsDefaultSerializeConstructable(type))
   {
-    vm->RuntimeError("Cannot deserialise object of type " + vm->GetUniqueId(type) + " for which no serialisation constructor exists.");
+    vm->RuntimeError("Cannot deserialise object of type " + vm->GetUniqueId(type) +
+                     " for which no serialisation constructor exists.");
   }
 
   val = vm->DefaultSerializeConstruct(type);
@@ -118,7 +121,7 @@ inline bool WriteHelper(std::string const &name, Ptr<Object> const &val, VM *vm)
 
   // convert the type into a byte stream
   ByteArrayBuffer buffer;
-  if(val == nullptr)
+  if (val == nullptr)
   {
     vm->RuntimeError("Cannot serialise null reference");
   }
@@ -202,7 +205,7 @@ public:
     }
     else if (Existed())
     {
-      value_ = default_value.Get<T>(); 
+      value_ = default_value.Get<T>();
       if (ReadHelper(template_param_type_id_, name_, value_, vm_))
       {
         mod_status_ = eModifStatus::deserialised;
