@@ -73,7 +73,7 @@ TEST_F(StateTests, AddressDeserializeTest)
       store_address(state_name, ref_address);
 
       var state = State<Address>(state_name);
-      return state.get(Address("0nr00dvCkdZodEwM855vemS5V3p2hiWmcSQ8JEzD4ZjPdsYtB"));
+      return state.get(Address("MnrRHdvCkdZodEwM855vemS5V3p2hiWmcSQ8JEzD4ZjPdsYtB"));
     endfunction
   )";
 
