@@ -19,7 +19,7 @@
 #include "ml/serializers/ml_types.hpp"
 
 #include "core/serializers/byte_array_buffer.hpp"
-#include "math/serializers/fixed_point.hpp"
+#include "vectorise/fixed_point/serializers.hpp"
 #include "math/tensor.hpp"
 #include "ml/layers/fully_connected.hpp"
 

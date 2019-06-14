@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/serializers/byte_array_buffer.hpp"
-#include "math/serializers/fixed_point.hpp"
+#include "vectorise/fixed_point/serializers.hpp"
 #include "ml/ops/weights.hpp"
 #include "ml/serializers/ml_types.hpp"
 #include "python/fetch_pybind.hpp"
