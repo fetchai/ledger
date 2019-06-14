@@ -266,7 +266,7 @@ int main(int argc, char **argv)
   auto const source = ReadFileContents(params.program().GetArg(1));
 
   auto executable = std::make_unique<Executable>();
-  auto module     = VMFactory::GetModule();
+  auto module     = VMFactory::GetModule(VMFactory::USE_SMART_CONTRACTS);
 
   // additional module bindings
   module->CreateClassType<System>("System")
@@ -290,7 +290,7 @@ int main(int argc, char **argv)
   }
 
   // create the VM instance
-  auto vm = VMFactory::GetVM(module);
+  auto vm = std::make_unique<VM>(module.get());
 
   std::string const data_path = params.program().GetParam("data", "");
 
