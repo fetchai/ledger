@@ -25,7 +25,7 @@ namespace fetch {
 namespace vm_modules {
 namespace ml {
 class VMMeanSquareError : public fetch::vm::Object,
-                   public fetch::ml::ops::MeanSquareError<fetch::math::Tensor<float>>
+                          public fetch::ml::ops::MeanSquareError<fetch::math::Tensor<float>>
 {
 public:
   VMMeanSquareError(fetch::vm::VM *vm, fetch::vm::TypeId type_id)
@@ -41,7 +41,7 @@ public:
                        fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> const &groundTruth)
   {
     return fetch::ml::ops::MeanSquareError<fetch::math::Tensor<float>>::Forward(
-        {*pred, *groundTruth});
+        {(*pred).GetTensor(), (*groundTruth).GetTensor()});
   }
 
   fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> BackwardWrapper(
@@ -50,7 +50,7 @@ public:
   {
     fetch::math::Tensor<float> dt =
         fetch::ml::ops::MeanSquareError<fetch::math::Tensor<float>>::Backward(
-            {*pred, *groundTruth});
+            {(*pred).GetTensor(), (*groundTruth).GetTensor()});
     fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> ret =
         this->vm_->CreateNewObject<fetch::vm_modules::math::VMTensor>(dt.shape());
     (*ret).Copy(dt);

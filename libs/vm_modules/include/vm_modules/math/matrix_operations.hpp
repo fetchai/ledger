@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/meta/math_type_traits.hpp"
 #include "math/matrix_operations.hpp"
+#include "math/meta/math_type_traits.hpp"
 
 #include "vm_modules/math/tensor.hpp"
 
@@ -29,24 +29,39 @@ namespace math {
 /**
  * method for taking the argmax of a tensor
  */
+//template <typename T>
+//T VMArgMax(fetch::vm::VM * /*vm*/, T const & /*a*/)
+
 template <typename T>
-T VMArgMax(fetch::vm::VM vm, T a)
+T VMArgMax(T const & a)
 {
-//  using DataType = typename (*a)::Type;
-  using DataType = float;
 
-  // Construct return tensor (get shape from input tensor)
-  fetch::vm_modules::math::VMTensor ret(vm, , (*a).shape());
+  //  // Construct return tensor (get shape from input tensor)
+  //  std::vector<std::uint64_t> tensor_shape = (*a).shape();
+  //  fetch::vm::TypeId type_id = ((*a).GetTypeId());
+  //  fetch::vm_modules::math::VMTensor ret(vm, type_id, tensor_shape);//, (*a).GetTypeId(),
+  //  (*a).shape());
+  //
+  //  // do the argmax
+  //  fetch::math::Tensor<float> a_tensor = (*a).GetTensor();
+  //  fetch::math::Tensor<float> ret_tensor = ret.GetTensor();
+  //
+  //  fetch::math::ArgMax(a_tensor, ret_tensor);
+  //
+  //  fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> ret_ptr =
+  //  fetch::vm::Ptr<fetch::vm_modules::math::VMTensor>(&ret); return ret_ptr;
 
-  // do the argmax
-  fetch::math::ArgMax((*a).GetTensor(), ret);
 
-  return ret;
+//  fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> ret_ptr;
+//  return ret_ptr;
+  return a;
 }
 
 static void CreateArgMax(fetch::vm::Module &module)
 {
-  module.CreateFreeFunction<fetch::vm::Ptr<fetch::vm_modules::math::VMTensor>>("ArgMax", &VMArgMax<fetch::vm::Ptr<fetch::vm_modules::math::VMTensor>>);
+//  module.CreateFreeFunction<fetch::vm::Ptr<fetch::vm_modules::math::VMTensor>>(
+//      "ArgMax", &VMArgMax<fetch::vm::Ptr<fetch::vm_modules::math::VMTensor>>);
+  module.CreateFreeFunction<int32_t >("ArgMax", &VMArgMax<int32_t>);
 }
 
 inline void CreateArgMax(std::shared_ptr<vm::Module> module)

@@ -25,7 +25,7 @@ namespace fetch {
 namespace vm_modules {
 namespace ml {
 class VMCrossEntropyLoss : public fetch::vm::Object,
-                            public fetch::ml::ops::CrossEntropy<fetch::math::Tensor<float>>
+                           public fetch::ml::ops::CrossEntropy<fetch::math::Tensor<float>>
 {
 public:
   VMCrossEntropyLoss(fetch::vm::VM *vm, fetch::vm::TypeId type_id)
@@ -33,7 +33,7 @@ public:
   {}
 
   static fetch::vm::Ptr<VMCrossEntropyLoss> Constructor(fetch::vm::VM *   vm,
-                                                         fetch::vm::TypeId type_id)
+                                                        fetch::vm::TypeId type_id)
   {
     return new VMCrossEntropyLoss(vm, type_id);
   }
@@ -41,7 +41,8 @@ public:
   float ForwardWrapper(fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> const &pred,
                        fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> const &groundTruth)
   {
-    return fetch::ml::ops::CrossEntropy<fetch::math::Tensor<float>>::Forward({*pred, *groundTruth});
+    return fetch::ml::ops::CrossEntropy<fetch::math::Tensor<float>>::Forward(
+        {(*pred).GetTensor(), (*groundTruth).GetTensor()});
   }
 
   fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> BackwardWrapper(
@@ -49,7 +50,8 @@ public:
       fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> const &groundTruth)
   {
     fetch::math::Tensor<float> dt =
-        fetch::ml::ops::CrossEntropy<fetch::math::Tensor<float>>::Backward({*pred, *groundTruth});
+        fetch::ml::ops::CrossEntropy<fetch::math::Tensor<float>>::Backward(
+            {(*pred).GetTensor(), (*groundTruth).GetTensor()});
     fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> ret =
         this->vm_->CreateNewObject<fetch::vm_modules::math::VMTensor>(dt.shape());
     (*ret).Copy(dt);

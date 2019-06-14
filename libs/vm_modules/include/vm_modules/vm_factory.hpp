@@ -25,10 +25,10 @@
 #include "vm_modules/math/abs.hpp"
 #include "vm_modules/math/random.hpp"
 
+#include "vm_modules/math/tensor.hpp"
 #include "vm_modules/ml/cross_entropy.hpp"
 #include "vm_modules/ml/graph.hpp"
 #include "vm_modules/ml/mean_square_error.hpp"
-#include "vm_modules/ml/tensor.hpp"
 
 namespace fetch {
 namespace vm_modules {
@@ -60,7 +60,7 @@ public:
     CreateRand(module);
 
     // ml modules - order is important!!
-    ml::CreateTensor(*module);
+    math::CreateTensor(*module);
     ml::CreateGraph(*module);
     ml::CreateCrossEntropy(*module);
     ml::CreateMeanSquareError(*module);

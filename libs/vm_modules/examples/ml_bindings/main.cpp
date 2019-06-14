@@ -179,7 +179,6 @@ int main(int argc, char **argv)
       .CreateStaticMemberFunction("Argc", &System::Argc)
       .CreateStaticMemberFunction("Argv", &System::Argv);
 
-
   fetch::vm_modules::math::CreateArgMax(*module);
   fetch::vm_modules::math::CreateTensor(*module);
   fetch::vm_modules::ml::CreateGraph(*module);

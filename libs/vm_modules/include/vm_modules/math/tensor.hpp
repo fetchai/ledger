@@ -30,15 +30,13 @@ public:
   using ArrayType = fetch::math::Tensor<float>;
   using SizeType  = ArrayType::SizeType;
 
-  VMTensor(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
-                std::vector<std::uint64_t> const &shape)
+  VMTensor(fetch::vm::VM *vm, fetch::vm::TypeId type_id, std::vector<std::uint64_t> const &shape)
     : fetch::vm::Object(vm, type_id)
     , tensor_(shape)
-  {
-  }
+  {}
 
   static fetch::vm::Ptr<VMTensor> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
-                                                   fetch::vm::Ptr<fetch::vm::Array<SizeType>> shape)
+                                              fetch::vm::Ptr<fetch::vm::Array<SizeType>> shape)
   {
     return {new VMTensor(vm, type_id, shape->elements)};
   }
@@ -58,20 +56,28 @@ public:
     return new fetch::vm::String(vm_, tensor_.ToString());
   }
 
-  fetch::vm::Ptr<fetch::vm::Array<VMTensor::SizeType>> shape()
+  fetch::math::SizeVector shape()
   {
-    fetch::vm::Array<>(vm_, type_id_, elemen element_type_id__)
-    return fetch::vm::Array<VMTensor::SizeType>::Construct(vm_, type_id_, tensor_.shape());
+    ////    fetch::vm::Array<>(vm_, type_id_, elemen element_type_id__)
+    ////    return fetch::vm::Array<VMTensor::SizeType>::Construct(vm_, type_id_, tensor_.shape());
+    //
+    //    fetch::vm::Array<SizeType> shape_array(vm_, type_id_, element_type_id__,
+    //    tensor_.shape().size());
+    //
+    //    for (std::size_t i = 0; i < ; ++i)
+    //    {
+    //      shape_array.Append()
+    //    }
+    return tensor_.shape();
   }
 
-  ArrayType const & GetTensor()
+  ArrayType const &GetTensor()
   {
     return tensor_;
   }
 
 private:
   ArrayType tensor_;
-
 };
 
 inline void CreateTensor(fetch::vm::Module &module)

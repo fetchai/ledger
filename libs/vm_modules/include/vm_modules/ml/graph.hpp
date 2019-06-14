@@ -31,11 +31,10 @@ namespace ml {
 class VMGraph : public fetch::vm::Object
 {
   using MathTensorType = fetch::math::Tensor<float>;
-  using VMTensorType = fetch::vm_modules::math::VMTensor;
-  using GraphType = fetch::ml::Graph<MathTensorType>;
+  using VMTensorType   = fetch::vm_modules::math::VMTensor;
+  using GraphType      = fetch::ml::Graph<MathTensorType>;
 
 public:
-
   VMGraph(fetch::vm::VM *vm, fetch::vm::TypeId type_id)
     : fetch::vm::Object(vm, type_id)
     , graph_()
@@ -47,26 +46,26 @@ public:
   }
 
   void SetInput(fetch::vm::Ptr<fetch::vm::String> const &name,
-                fetch::vm::Ptr<VMTensorType> const &    input)
+                fetch::vm::Ptr<VMTensorType> const &     input)
   {
-    graph_.SetInput(name->str, *input);
+    graph_.SetInput(name->str, (*input).GetTensor());
   }
 
   fetch::vm::Ptr<VMTensorType> Evaluate(fetch::vm::Ptr<fetch::vm::String> const &name)
   {
-    MathTensorType t = graph_.Evaluate(name->str);
+    MathTensorType               t   = graph_.Evaluate(name->str);
     fetch::vm::Ptr<VMTensorType> ret = this->vm_->CreateNewObject<math::VMTensor>(t.shape());
     (*ret).Copy(t);
     return ret;
   }
 
   void Backpropagate(fetch::vm::Ptr<fetch::vm::String> const &name,
-                     fetch::vm::Ptr<math::VMTensor> const &    dt)
+                     fetch::vm::Ptr<math::VMTensor> const &   dt)
   {
-    graph_.BackPropagate(name->str, *dt);
+    graph_.BackPropagate(name->str, (*dt).GetTensor());
   }
 
-  void Step(float lr) override
+  void Step(float lr)
   {
     graph_.Step(lr);
   }
@@ -92,12 +91,12 @@ public:
   void AddSoftmax(fetch::vm::Ptr<fetch::vm::String> const &name,
                   fetch::vm::Ptr<fetch::vm::String> const &inputName)
   {
-    graph_.AddNode<fetch::ml::ops::Softmax<fetch::math::Tensor<float>>>(name->str, {inputName->str});
+    graph_.AddNode<fetch::ml::ops::Softmax<fetch::math::Tensor<float>>>(name->str,
+                                                                        {inputName->str});
   }
 
 private:
   GraphType graph_;
-
 };
 
 inline void CreateGraph(fetch::vm::Module &module)
