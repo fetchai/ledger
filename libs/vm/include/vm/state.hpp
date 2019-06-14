@@ -166,6 +166,13 @@ public:
     try
     {
       FlushIO();
+      // TODO (issue 1171): The the code bellow is is the correct code, however it
+      // is failing on various occasions (e.g. in our uTests on `Status::PERMISSION_DENIED`
+      // in `StateAdapter::Write(...)` method.).
+      // if (FlushIO() != Status::OK)
+      //{
+      //  vm_->RuntimeError("Failure of writing state to the storage.");
+      //}
     }
     catch (std::exception const &ex)
     {
@@ -216,13 +223,15 @@ private:
     return v;
   }
 
-  void FlushIO()
+  Status FlushIO()
   {
     // if we have an IO observer then inform it of the changes
     if (!vm_->HasError() && vm_->HasIoObserver())
     {
-      WriteHelper(name_, value_, vm_->GetIOObserver());
+      return WriteHelper(name_, value_, vm_->GetIOObserver());
     }
+
+    return Status::OK;
   }
 
   std::string name_;

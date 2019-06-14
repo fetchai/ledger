@@ -39,6 +39,11 @@ using DataType  = float;
 using ArrayType = fetch::math::Tensor<DataType>;
 using SizeType  = typename ArrayType::SizeType;
 
+using GraphType        = typename fetch::ml::Graph<ArrayType>;
+using CostFunctionType = typename fetch::ml::ops::CrossEntropy<ArrayType>;
+using OptimiserType    = typename fetch::ml::optimisers::AdamOptimiser<ArrayType, CostFunctionType>;
+using DataLoaderType   = typename fetch::ml::MNISTLoader<ArrayType, ArrayType>;
+
 int main(int ac, char **av)
 {
   DataType learning_rate{0.01f};
@@ -55,22 +60,23 @@ int main(int ac, char **av)
 
   std::cout << "FETCH MNIST Demo" << std::endl;
 
-  std::shared_ptr<fetch::ml::Graph<ArrayType>> g(std::make_shared<fetch::ml::Graph<ArrayType>>());
+  // Prepare graph
+  //  Input -> FC -> Relu -> FC -> Relu -> FC -> Softmax
+  auto g = std::make_shared<GraphType>();
 
-  std::string input_name = g->AddNode<PlaceHolder<ArrayType>>("Input", {});
-  g->AddNode<FullyConnected<ArrayType>>("FC1", {"Input"}, 28u * 28u, 10u);
-  g->AddNode<Relu<ArrayType>>("Relu1", {"FC1"});
-  g->AddNode<FullyConnected<ArrayType>>("FC2", {"Relu1"}, 10u, 10u);
-  g->AddNode<Relu<ArrayType>>("Relu2", {"FC2"});
-  g->AddNode<FullyConnected<ArrayType>>("FC3", {"Relu2"}, 10u, 10u);
-  std::string output_name = g->AddNode<Softmax<ArrayType>>("Softmax", {"FC3"});
+  std::string input   = g->AddNode<PlaceHolder<ArrayType>>("Input", {});
+  std::string layer_1 = g->AddNode<FullyConnected<ArrayType>>(
+      "FC1", {input}, 28u * 28u, 10u, fetch::ml::details::ActivationType::RELU);
+  std::string layer_2 = g->AddNode<FullyConnected<ArrayType>>(
+      "FC2", {layer_1}, 10u, 10u, fetch::ml::details::ActivationType::RELU);
+  std::string output = g->AddNode<FullyConnected<ArrayType>>(
+      "FC3", {layer_2}, 10u, 10u, fetch::ml::details::ActivationType::SOFTMAX);
 
   // Initialise MNIST loader
-  fetch::ml::MNISTLoader<ArrayType, ArrayType> data_loader(av[1], av[2]);
+  DataLoaderType data_loader(av[1], av[2]);
 
   // Initialise Optimiser
-  fetch::ml::optimisers::AdamOptimiser<ArrayType, fetch::ml::ops::CrossEntropy<ArrayType>>
-      optimiser(g, {input_name}, output_name, learning_rate);
+  OptimiserType optimiser(g, {input}, output, learning_rate);
 
   // Training loop
   DataType loss;
