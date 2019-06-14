@@ -196,7 +196,7 @@ int main(int argc, char **argv)
   DataType loss;
   for (SizeType i{0}; i < tp.training_epochs; i++)
   {
-    loss = optimiser.Run(data_loader, tp.batch_size, tp.batch_size);
+    loss = optimiser.Run(data_loader, tp.batch_size, false, tp.batch_size);
     std::cout << "Loss: " << loss << std::endl;
   }
 

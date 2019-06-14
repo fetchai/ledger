@@ -73,6 +73,7 @@ public:
   virtual ReturnType GetNext()
   {
     GetAtIndex(static_cast<SizeType>(cursor_++), buffer_);
+
     return buffer_;
   }
 
@@ -98,17 +99,26 @@ public:
 
   ReturnType SubsetToArray(SizeType subset_size)
   {
-    T              ret_labels({1, subset_size});
-    std::vector<T> ret_images;
-    ret_images.push_back(T({figure_size_, subset_size}));
+    typename LabelType::Type one{1};
+    T                        ret_labels({10, subset_size});
 
-    for (fetch::math::SizeType i(0); i < subset_size; ++i)
+    std::vector<T> ret_images;
+    ret_images.push_back(T({28, 28, subset_size}));
+
+    for (fetch::math::SizeType index{0}; index < subset_size; ++index)
     {
-      ret_labels(0, i) = static_cast<typename T::Type>(labels_[i]);
-      for (fetch::math::SizeType j{0}; j < figure_size_; ++j)
+
+      SizeType i{0};
+      auto     it = ret_images.at(0).Slice(index, 2).begin();
+      while (it.is_valid())
       {
-        ret_images.at(0)(j, i) = static_cast<typename T::Type>(data_[i][j]) / typename T::Type(256);
+        *it = static_cast<DataType>(data_[cursor_][i]) / DataType{256};
+        i++;
+        ++it;
       }
+      ret_labels(labels_[cursor_], index) = one;
+
+      ++cursor_;
     }
 
     return std::make_pair(ret_labels, ret_images);
