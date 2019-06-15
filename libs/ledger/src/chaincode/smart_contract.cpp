@@ -590,7 +590,7 @@ SmartContract::Status SmartContract::InvokeQuery(std::string const &name, Query 
   case vm::TypeIds::String:
     response["result"] = output.Get<vm::Ptr<vm::String>>()->str;
     break;
-  default:    
+  default:
     // TODO(private 900): Deal with general data structures
     response["result"] = "(return type not supported yet)";
     break;
