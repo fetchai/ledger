@@ -592,6 +592,7 @@ SmartContract::Status SmartContract::InvokeQuery(std::string const &name, Query 
     break;
   default:
     // TODO(private 900): Deal with general data structures
+    response["result"] = "(return type not supported yet)";
     break;
   }
 

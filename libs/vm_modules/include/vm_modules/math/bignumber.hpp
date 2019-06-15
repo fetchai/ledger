@@ -43,6 +43,22 @@ public:
     return ret;
   }
 
+  template <typename T>
+  static T ToPrimitive(fetch::vm::VM * /*vm*/, Ptr<UInt256Wrapper> const &a)
+  {
+    union
+    {
+      uint8_t bytes[sizeof(T)];
+      T       value;
+    } x;
+    for (uint64_t i = 0; i < sizeof(T); ++i)
+    {
+      x.bytes[i] = a->number_[i];
+    }
+
+    return x.value;
+  }
+
   static void Bind(vm::Module &module)
   {
     module.CreateClassType<UInt256Wrapper>("UInt256")
@@ -65,6 +81,10 @@ public:
         .CreateMemberFunction("size", &UInt256Wrapper::size);
 
     module.CreateFreeFunction("toString", &UInt256Wrapper::ToString);
+    module.CreateFreeFunction("toUInt64", &UInt256Wrapper::ToPrimitive<uint64_t>);
+    module.CreateFreeFunction("toInt64", &UInt256Wrapper::ToPrimitive<int64_t>);
+    module.CreateFreeFunction("toUInt32", &UInt256Wrapper::ToPrimitive<uint32_t>);
+    module.CreateFreeFunction("toInt32", &UInt256Wrapper::ToPrimitive<int32_t>);
   }
 
   UInt256Wrapper(fetch::vm::VM *vm, fetch::vm::TypeId type_id, byte_array::ByteArray const &data)
