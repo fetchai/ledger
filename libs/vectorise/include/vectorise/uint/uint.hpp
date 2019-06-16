@@ -120,6 +120,7 @@ public:
     {
       ret &= (data_[i] == other.data_[i]);
     }
+
     return ret;
   }
 
@@ -242,6 +243,11 @@ public:
   }
 
   uint8_t operator[](std::size_t const &n) const
+  {
+    return data_[n];
+  }
+
+  uint8_t &operator[](std::size_t const &n)
   {
     return data_[n];
   }
