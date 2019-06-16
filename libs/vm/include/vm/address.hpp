@@ -167,6 +167,20 @@ public:
     return lhs->address_ >= rhs->address_;
   }
 
+  bool ToJSON(vm::JSONVariant & variant) override
+  {
+    variant = address_.display();
+    return true;
+  }
+
+  bool FromJSON(vm::JSONVariant const& obj) override
+  {
+    if (!ledger::Address::Parse(obj.template As<byte_array::ConstByteArray>(), address_))
+    {
+      vm_->RuntimeError("Unable to parse address during JSON deserialization of " + GetUniqueId() +".");
+    }
+    return true;
+  }
 private:
   ledger::Address address_;
   bool            signed_tx_{false};

@@ -175,16 +175,15 @@ public:
 
 private:
   template <typename T>
-  bool AddInternal(T &&value)
+  bool AddInternal(T const &value)
   {
     bool success{false};
-
     TypeId const type_id = Getter<T>::GetTypeId(registered_types_, value);
 
     if (TypeIds::Unknown != type_id)
     {
       // add the value to the map
-      params_.emplace_back(std::forward<T>(value), type_id);
+      params_.emplace_back(value, type_id);
 
       // signal great success
       success = true;
@@ -192,6 +191,16 @@ private:
 
     return success;
   }
+
+  bool AddInternal(Ptr< Object > const &value)
+  {
+    // add the value to the map
+    Variant v;
+    v.Construct(value, value->GetTypeId());
+    params_.emplace_back(std::move(v));
+
+    return true;
+  }  
 
   using VariantArray = std::vector<Variant>;
 
@@ -254,8 +263,9 @@ public:
           // type check
           if (parameter.type_id != f->variables[i].type_id)
           {
-            error = "mismatched parameters";
-
+            error = "mismatched parameters: expected argument " + std::to_string(i);
+            error += "to be of type " + GetUniqueId(f->variables[i].type_id) + " but got ";
+            error += GetUniqueId(parameter.type_id);
             // clean up
             for (std::size_t j = 0; j < num_parameters; ++j)
             {
@@ -277,7 +287,8 @@ public:
       }
       else
       {
-        error = "mismatched parameters";
+        error = "mismatched parameters: expected " + std::to_string(num_parameters) + " arguments";
+        error += ", but got " + std::to_string(parameters.size());
       }
     }
     else
