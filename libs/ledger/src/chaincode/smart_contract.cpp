@@ -673,7 +673,6 @@ SmartContract::Status SmartContract::InvokeQuery(std::string const &name, Query 
       response["result"] = var;
     }
 
-
     break;
   }
 
