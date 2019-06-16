@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vectorise/uint/uint.hpp"
 #include "core/byte_array/encoders.hpp"
+#include "vectorise/uint/uint.hpp"
 #include "vm/module.hpp"
 #include "vm_modules/core/byte_array_wrapper.hpp"
 
@@ -40,7 +40,7 @@ public:
   static fetch::vm::Ptr<fetch::vm::String> ToString(fetch::vm::VM *vm, Ptr<UInt256Wrapper> const &n)
   {
     byte_array::ByteArray ba(32);
-    for(uint64_t i=0; i < 32; ++i)
+    for (uint64_t i = 0; i < 32; ++i)
     {
       ba[i] = n->number_[i];
     }
@@ -214,11 +214,11 @@ public:
     return true;
   }
 
-  bool ToJSON(vm::JSONVariant & variant) override
+  bool ToJSON(vm::JSONVariant &variant) override
   {
     variant = vm::JSONVariant::Object();
-    byte_array::ByteArray value(32);    
-    for(uint64_t i=0; i < 32; ++i)
+    byte_array::ByteArray value(32);
+    for (uint64_t i = 0; i < 32; ++i)
     {
       value[i] = number_[i];
     }
@@ -228,34 +228,33 @@ public:
     return true;
   }
 
-  
-  bool FromJSON(vm::JSONVariant const& variant) override
+  bool FromJSON(vm::JSONVariant const &variant) override
   {
-    if(!variant.IsObject())
+    if (!variant.IsObject())
     {
       vm_->RuntimeError("JSON deserialisation of " + GetUniqueId() + " must be an object.");
       return false;
     }
 
-    if(!variant.Has("type"))
+    if (!variant.Has("type"))
     {
       vm_->RuntimeError("JSON deserialisation of " + GetUniqueId() + " must have field 'type'.");
       return false;
     }
 
-    if(!variant.Has("value"))
+    if (!variant.Has("value"))
     {
       vm_->RuntimeError("JSON deserialisation of " + GetUniqueId() + " must have field 'value'.");
       return false;
     }
 
-    if(variant["type"].As<std::string>() != GetUniqueId())
+    if (variant["type"].As<std::string>() != GetUniqueId())
     {
       vm_->RuntimeError("Field 'type' must be '" + GetUniqueId() + "'.");
       return false;
     }
 
-    if(!variant["value"].IsString())
+    if (!variant["value"].IsString())
     {
       vm_->RuntimeError("Field 'value' must be a hex encoded string.");
       return false;
@@ -265,21 +264,20 @@ public:
 
     auto const value = FromHex(variant["value"].As<byte_array::ConstByteArray>());
 
-    uint64_t i=0;
+    uint64_t i = 0;
     uint64_t n = std::min(32ul, value.size());
-    for(; i < n; ++i)
+    for (; i < n; ++i)
     {
       number_[i] = value[i];
     }
 
-    for(; i < 32; ++i)
+    for (; i < 32; ++i)
     {
       number_[i] = 0;
     }
 
     return true;
   }
-  
 
   bool IsEqual(Ptr<Object> const &lhso, Ptr<Object> const &rhso) override
   {

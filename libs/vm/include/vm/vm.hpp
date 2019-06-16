@@ -177,7 +177,7 @@ private:
   template <typename T>
   bool AddInternal(T const &value)
   {
-    bool success{false};
+    bool         success{false};
     TypeId const type_id = Getter<T>::GetTypeId(registered_types_, value);
 
     if (TypeIds::Unknown != type_id)
@@ -192,7 +192,7 @@ private:
     return success;
   }
 
-  bool AddInternal(Ptr< Object > const &value)
+  bool AddInternal(Ptr<Object> const &value)
   {
     // add the value to the map
     Variant v;
@@ -200,7 +200,7 @@ private:
     params_.emplace_back(std::move(v));
 
     return true;
-  }  
+  }
 
   using VariantArray = std::vector<Variant>;
 

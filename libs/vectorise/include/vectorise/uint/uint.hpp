@@ -247,11 +247,10 @@ public:
     return data_[n];
   }
 
-  uint8_t &operator[](std::size_t const &n) 
+  uint8_t &operator[](std::size_t const &n)
   {
     return data_[n];
   }
-
 
   bool operator<(UInt const &other) const
   {

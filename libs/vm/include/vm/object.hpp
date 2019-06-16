@@ -19,15 +19,15 @@
 
 #include "core/serializers/byte_array_buffer.hpp"
 #include "core/serializers/stl_types.hpp"
-#include "vm/common.hpp"
 #include "variant/variant.hpp"
+#include "vm/common.hpp"
 
 namespace fetch {
 namespace vm {
 
 // TODO(tfr): We should rename variants to VMVariant and JSONVariant, respectively
 // to avoid name clash.
-using JSONVariant = fetch::variant::Variant;
+using JSONVariant     = fetch::variant::Variant;
 using ByteArrayBuffer = fetch::serializers::ByteArrayBuffer;
 
 // Forward declarations
@@ -224,7 +224,7 @@ public:
   virtual bool DeserializeFrom(ByteArrayBuffer &buffer);
 
   virtual bool ToJSON(JSONVariant &variant);
-  virtual bool FromJSON(JSONVariant const& variant);
+  virtual bool FromJSON(JSONVariant const &variant);
 
   TypeId GetTypeId() const
   {
