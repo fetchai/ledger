@@ -262,7 +262,7 @@ void AddAddressToParameterPack(vm::VM *vm, vm::ParameterPack &pack, msgpack::obj
  */
 void AddAddressToParameterPack(vm::VM *vm, vm::ParameterPack &pack, variant::Variant const &obj)
 {
-  // TODO: Consider using the FromJSON overloaded function.
+  // TODO(tfr): Consider using the FromJSON overloaded function.
   Address address{};
   if (!Address::Parse(obj.As<ConstByteArray>(), address))
   {
