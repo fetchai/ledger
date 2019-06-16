@@ -591,8 +591,28 @@ SmartContract::Status SmartContract::InvokeQuery(std::string const &name, Query 
     response["result"] = output.Get<vm::Ptr<vm::String>>()->str;
     break;
   default:
-    // TODO(private 900): Deal with general data structures
-    response["result"] = "(return type not supported yet)";
+    if(output.IsPrimitive())
+    {
+      // TODO(tfr): add error - all types not covered
+      response["status"] = "failed";
+      response["result"] = "could not serialise result";
+      break;
+    }
+    else
+    {
+      variant::Variant var;
+      if(output.object == nullptr)
+      {
+        var = variant::Variant::Null();
+      }
+      else
+      {
+        output.object->ToJSON(var);
+      }
+      response["result"] = var;
+    }
+
+
     break;
   }
 

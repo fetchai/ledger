@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "vectorise/uint/uint.hpp"
+#include "core/byte_array/encoders.hpp"
 #include "vm/module.hpp"
 #include "vm_modules/core/byte_array_wrapper.hpp"
 
@@ -206,6 +207,28 @@ public:
     buffer >> number_;
     return true;
   }
+
+  bool ToJSON(vm::JSONVariant & variant) override
+  {
+    variant = vm::JSONVariant::Object();
+    byte_array::ByteArray value(16);    
+    for(uint64_t i=0; i < 16; ++i)
+    {
+      value[i] = number_[i];
+    }
+
+    variant["type"]  = GetUniqueId();
+    variant["value"] = ToHex(value);
+    return true;
+  }
+
+  /*
+  bool FromJSON(JSONVariant const& variant) override
+  {
+    vm_->RuntimeError("JSON deserializer for " + GetUniqueId() + " is not defined.");
+    return false;
+  }
+  */
 
   bool IsEqual(Ptr<Object> const &lhso, Ptr<Object> const &rhso) override
   {

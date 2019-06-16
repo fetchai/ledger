@@ -271,5 +271,20 @@ std::string Object::GetUniqueId() const
 {
   return vm_->GetUniqueId(type_id_);
 }
+
+bool Object::ToJSON(JSONVariant & variant)
+{
+  variant = "JSON serializer for " + GetUniqueId() + " is not defined.";
+  vm_->RuntimeError("JSON serializer for " + GetUniqueId() + " is not defined.");
+  return false;
+}
+
+bool Object::FromJSON(JSONVariant const& /*variant*/)
+{
+  vm_->RuntimeError("JSON deserializer for " + GetUniqueId() + " is not defined.");
+  return false;
+}
+
+
 }  // namespace vm
 }  // namespace fetch
