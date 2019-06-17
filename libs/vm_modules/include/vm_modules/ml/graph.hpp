@@ -28,6 +28,7 @@
 namespace fetch {
 namespace vm_modules {
 namespace ml {
+
 class VMGraph : public fetch::vm::Object
 {
   using MathTensorType = fetch::math::Tensor<float>;
