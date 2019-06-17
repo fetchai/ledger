@@ -1,12 +1,14 @@
 DOCKER_IMAGE_NAME = 'gcr.io/organic-storm-201412/fetch-ledger-develop:v0.3.0'
 HIGH_LOAD_NODE_LABEL = 'ledger'
+MACOS_NODE_LABEL = 'mac-mini'
 
 enum Platform
 {
-  CLANG6('Clang 6', 'clang-6.0', 'clang++-6.0'),
-  CLANG7('Clang 7', 'clang-7',   'clang++-7'  ),
-  GCC7  ('GCC 7',   'gcc-7',     'g++-7'      ),
-  GCC8  ('GCC 8',   'gcc-8',     'g++-8'      )
+  DEFAULT_CLANG('Clang',      'clang',     'clang++'    ),
+  CLANG6       ('Clang 6',    'clang-6.0', 'clang++-6.0'),
+  CLANG7       ('Clang 7',    'clang-7',   'clang++-7'  ),
+  GCC7         ('GCC 7',      'gcc-7',     'g++-7'      ),
+  GCC8         ('GCC 8',      'gcc-8',     'g++-8'      )
 
   public Platform(label, cc, cxx)
   {
@@ -19,6 +21,12 @@ enum Platform
   public final String env_cc
   public final String env_cxx
 }
+
+LINUX_PLATFORMS = [
+  Platform.CLANG6,
+  Platform.CLANG7,
+  Platform.GCC7,
+  Platform.GCC8]
 
 enum Configuration
 {
@@ -34,7 +42,7 @@ enum Configuration
 }
 
 // Only execute long-running tests on master and merge branches
-def should_run_slow_tests()
+def is_master_or_merge_branch()
 {
   return BRANCH_NAME == 'master' || BRANCH_NAME ==~ /^PR-\d+-merge$/
 }
@@ -63,15 +71,12 @@ def static_analysis()
   }
 }
 
-def SLOW_stage(name, steps)
-{
-  if (should_run_slow_tests())
-  {
-    stage(name) { steps() }
-  }
-}
-
-def create_build(Platform platform, Configuration config)
+def _create_build(
+  Platform platform,
+  Configuration config,
+  node_label,
+  use_docker,
+  run_slow_tests)
 {
   def suffix = "${platform.label} ${config.label}"
 
@@ -82,37 +87,52 @@ def create_build(Platform platform, Configuration config)
     ]
   }
 
+  def stages = {
+    stage("Build ${suffix}") {
+      sh "./scripts/ci-tool.py -B ${config.label}"
+    }
+
+    stage("Unit Tests ${suffix}") {
+      sh "./scripts/ci-tool.py -T ${config.label}"
+    }
+
+    if (run_slow_tests)
+    {
+      stage("Slow Tests ${suffix}") {
+        sh "./scripts/ci-tool.py -S ${config.label}"
+      }
+
+      stage("Integration Tests ${suffix}") {
+        sh "./scripts/ci-tool.py -I ${config.label}"
+      }
+
+      stage("End-to-End Tests ${suffix}") {
+        sh './scripts/ci/install-test-dependencies.sh'
+        sh "./scripts/ci-tool.py -E ${config.label}"
+      }
+    }
+  }
+
+  def build = use_docker
+    ? {
+        docker.image(DOCKER_IMAGE_NAME).inside {
+          stages()
+        }
+      }
+    : {
+        stages()
+      }
+
   return {
     stage(suffix) {
-      node(HIGH_LOAD_NODE_LABEL) {
+      node(node_label) {
         timeout(120) {
           stage("SCM ${suffix}") {
             checkout scm
           }
 
           withEnv(environment()) {
-            docker.image(DOCKER_IMAGE_NAME).inside {
-              stage("Build ${suffix}") {
-                sh "./scripts/ci-tool.py -B ${config.label}"
-              }
-
-              stage("Unit Tests ${suffix}") {
-                sh "./scripts/ci-tool.py -T ${config.label}"
-              }
-
-              SLOW_stage("Slow Tests ${suffix}") {
-                sh "./scripts/ci-tool.py -S ${config.label}"
-              }
-
-              SLOW_stage("Integration Tests ${suffix}") {
-                sh "./scripts/ci-tool.py -I ${config.label}"
-              }
-
-              SLOW_stage("End-to-End Tests ${suffix}") {
-                sh './scripts/ci/install-test-dependencies.sh'
-                sh "./scripts/ci-tool.py -E ${config.label}"
-              }
-            }
+            build()
           }
         }
       }
@@ -120,13 +140,45 @@ def create_build(Platform platform, Configuration config)
   }
 }
 
+def create_docker_build(Platform platform, Configuration config)
+{
+  return _create_build(
+    platform,
+    config,
+    HIGH_LOAD_NODE_LABEL,
+    true,
+    is_master_or_merge_branch())
+}
+
+def create_macos_build(Platform platform, Configuration config)
+{
+  return _create_build(
+    platform,
+    config,
+    MACOS_NODE_LABEL,
+    false,
+    false)
+}
+
 def run_builds_in_parallel()
 {
   def stages = [:]
 
-  for (config in Configuration.values()) {
-    for (platform in Platform.values()) {
-      stages["${platform.label} ${config.label}"] = create_build(platform, config)
+  for (config in Configuration.values())
+  {
+    for (platform in LINUX_PLATFORMS)
+    {
+      stages["${platform.label} ${config.label}"] = create_docker_build(
+        platform,
+        config)
+    }
+
+    // Only run macOS builds on master and merge branches
+    if (is_master_or_merge_branch())
+    {
+      stages["macOS Clang ${config.label}"] = create_macos_build(
+        Platform.DEFAULT_CLANG,
+        config)
     }
   }
 

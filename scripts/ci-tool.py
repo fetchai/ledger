@@ -53,7 +53,7 @@ def parse_ctest_format(path):
             status = test.find(
                 "./Results/NamedMeasurement[@name='Exit Code']/Value").text.lower()
 
-        output = test.find("./Results/Measurement/Value").text
+        output = test.find('./Results/Measurement/Value').text
 
         # extract the test library
         match = re.match(r'./libs/(\w+)/tests', test_path)
@@ -73,7 +73,7 @@ def parse_ctest_format(path):
 def create_junit_format(output_path, data):
     testsuite_names = data.keys()
 
-    testsuites = ET.Element("testsuites")
+    testsuites = ET.Element('testsuites')
 
     all_tests = 0
     all_time = 0
@@ -94,7 +94,7 @@ def create_junit_format(output_path, data):
         # get all the test data for this suite
         testsuite = ET.SubElement(
             testsuites,
-            "testsuite",
+            'testsuite',
             id='0',
             name=group,
             tests=str(group_size),
@@ -104,14 +104,14 @@ def create_junit_format(output_path, data):
         # iterate through test cases
         for name, path, _, time, status, output in group_data:
             testcase = ET.SubElement(
-                testsuite, "testcase", id='0', name=name, time=str(time))
+                testsuite, 'testcase', id='0', name=name, time=str(time))
             if status != 'passed':
                 # extract more status
                 failure = ET.SubElement(
                     testcase,
                     'failure',
                     type=status,
-                    message="Test {}".format(status))
+                    message='Test {}'.format(status))
                 stdout = ET.SubElement(testcase, 'system-out').text = output
 
     # update the final aggregations
@@ -122,7 +122,7 @@ def create_junit_format(output_path, data):
     # generate the output file
     with open(output_path, 'w') as output_file:
         output_file.write('<?xml version="1.0" encoding="UTF-8" ?>')
-        output_file.write(ET.tostring(testsuites, encoding="utf-8").decode())
+        output_file.write(ET.tostring(testsuites, encoding='utf-8').decode())
 
 
 def build_type(text):
@@ -179,33 +179,29 @@ def build_project(project_root, build_root, options, concurrency):
     # ensure the build directory exists
     os.makedirs(build_root, exist_ok=True)
 
-    # run cmake
-    cmd = ['cmake']
+    cmake_cmd = ['cmake']
 
     # determine if this system has the ninja build system
     if new_build_folder and shutil.which('ninja') is not None:
-        cmd += ['-G', 'Ninja']
+        cmake_cmd += ['-G', 'Ninja']
 
-        # add all the configuration options
-    cmd += ['-D{}={}'.format(k, v) for k, v in options.items()]
-    cmd += [project_root]
+    # add all the configuration options
+    cmake_cmd += ['-D{}={}'.format(k, v) for k, v in options.items()]
+    cmake_cmd += [project_root]
 
     # execute the cmake configurations
-    exit_code = subprocess.call(cmd, cwd=build_root)
+    exit_code = subprocess.call(cmake_cmd, cwd=build_root)
     if exit_code != 0:
         output('Failed to configure cmake project')
         sys.exit(exit_code)
 
-    # make the project
-    if os.path.exists(os.path.join(build_root, "build.ninja")):
-        cmd = ["ninja"]
-
-    else:
-        cmd = ['make', '-j{}'.format(concurrency)]
+    build_cmd = ['ninja'] if os.path.exists(
+        os.path.join(build_root, 'build.ninja')) else ['make']
+    build_cmd += ['-j{}'.format(concurrency)]
 
     output('Building project with command: {} (detected cpus: {})'.format(
-        ' '.join(cmd), AVAILABLE_CPUS))
-    exit_code = subprocess.call(cmd, cwd=build_root)
+        ' '.join(build_cmd), AVAILABLE_CPUS))
+    exit_code = subprocess.call(build_cmd, cwd=build_root)
     if exit_code != 0:
         output('Failed to make the project')
         sys.exit(exit_code)
@@ -242,8 +238,7 @@ def test_project(build_root, include_regex=None, exclude_regex=None):
     if exclude_regex is not None:
         cmd = cmd + ['-LE', str(exclude_regex)]
 
-    env = {"CTEST_OUTPUT_ON_FAILURE": "1"}
-    exit_code = subprocess.call(cmd, cwd=build_root, env=env)
+    exit_code = subprocess.call(cmd, cwd=build_root)
 
     # load the test format
     test_tag_path = os.path.join(build_root, 'Testing', 'TAG')
@@ -276,7 +271,7 @@ def test_end_to_end(project_root, build_root):
     from end_to_end_test import run_end_to_end_test
 
     yaml_file = os.path.join(
-        project_root, "scripts/end_to_end_test/end_to_end_test.yaml")
+        project_root, 'scripts/end_to_end_test/end_to_end_test.yaml')
 
     # Check that the YAML file does exist
     if not os.path.exists(yaml_file):
@@ -286,7 +281,7 @@ def test_end_to_end(project_root, build_root):
 
     # should be the location of constellation exe - if not the test will catch
     constellation_exe = os.path.join(
-        build_root, "apps/constellation/constellation")
+        build_root, 'apps/constellation/constellation')
 
     clean_files(build_root)
 
@@ -310,6 +305,7 @@ def main():
 
     options = {
         'CMAKE_BUILD_TYPE': args.build_type,
+        'FETCH_ENABLE_CCACHE': 1
     }
 
     if args.metrics:
