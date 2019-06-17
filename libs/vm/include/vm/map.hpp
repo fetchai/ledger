@@ -42,7 +42,7 @@ protected:
 template <typename T, typename = void>
 struct H;
 
-template<>
+template <>
 struct H<fixed_point::fp32_t, void>
 {
   size_t operator()(TemplateParameter1 const &key) const
@@ -51,7 +51,7 @@ struct H<fixed_point::fp32_t, void>
   }
 };
 
-template<>
+template <>
 struct H<fixed_point::fp64_t, void>
 {
   size_t operator()(TemplateParameter1 const &key) const

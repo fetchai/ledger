@@ -29,8 +29,8 @@ namespace vm_modules {
  * method for type converting from arithmetic to string
  */
 template <typename T>
-fetch::math::meta::IfIsNonFixedPointArithmetic<T, fetch::vm::Ptr<fetch::vm::String>> ToString(fetch::vm::VM *vm,
-                                                                                 T const &      a)
+fetch::math::meta::IfIsNonFixedPointArithmetic<T, fetch::vm::Ptr<fetch::vm::String>> ToString(
+    fetch::vm::VM *vm, T const &a)
 {
   if (std::is_same<T, bool>::value)
   {
