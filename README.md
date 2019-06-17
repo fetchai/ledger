@@ -1,10 +1,10 @@
 # Ledger
 
-Welcome to Fetch ledger repository. We are building the digital world for today, and the future.
+Welcome to Fetch.AI ledger repository. We are building the digital world for today, and the future.
 
 ## License
 
-Fetch Ledger is licensed under the Apache software license (see LICENSE file). Unless required by
+Fetch.AI Ledger is licensed under the Apache software license (see LICENSE file). Unless required by
 applicable law or agreed to in writing, software distributed under the License is distributed on an
 "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either \express or implied.
 
@@ -15,7 +15,7 @@ implement the ledger, you do so at your own risk. In no event will Fetch.AI be l
 for any damages whatsoever, even if it had been advised of the possibility of damage.
 
 As such this codebase should be treated as experimental and does not contain all currently developed
-features. Fetch will be delivering regular updates.
+features. Fetch.AI will be delivering regular updates.
 
 ## Resources
 
