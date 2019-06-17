@@ -30,10 +30,11 @@ namespace vm_modules {
 namespace ml {
 class GraphWrapper : public fetch::vm::Object, public fetch::ml::Graph<fetch::math::Tensor<float>>
 {
+  using TensorType = fetch::math::Tensor<float>;
 public:
   GraphWrapper(fetch::vm::VM *vm, fetch::vm::TypeId type_id)
     : fetch::vm::Object(vm, type_id)
-    , fetch::ml::Graph<fetch::math::Tensor<float>>()
+    , fetch::ml::Graph<TensorType>()
   {}
 
   static fetch::vm::Ptr<GraphWrapper> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id)
@@ -44,13 +45,13 @@ public:
   void SetInput(fetch::vm::Ptr<fetch::vm::String> const &name,
                 fetch::vm::Ptr<TensorWrapper> const &    input)
   {
-    fetch::ml::Graph<fetch::math::Tensor<float>>::SetInput(name->str, *input);
+    fetch::ml::Graph<TensorType>::SetInput(name->str, *input);
   }
 
   fetch::vm::Ptr<TensorWrapper> Evaluate(fetch::vm::Ptr<fetch::vm::String> const &name)
   {
-    fetch::math::Tensor<float> t =
-        fetch::ml::Graph<fetch::math::Tensor<float>>::Evaluate(name->str);
+    TensorType t =
+        fetch::ml::Graph<TensorType>::Evaluate(name->str);
     fetch::vm::Ptr<TensorWrapper> ret = this->vm_->CreateNewObject<TensorWrapper>(t.shape());
     (*ret).Copy(t);
     return ret;
@@ -59,41 +60,50 @@ public:
   void Backpropagate(fetch::vm::Ptr<fetch::vm::String> const &name,
                      fetch::vm::Ptr<TensorWrapper> const &    dt)
   {
-    fetch::ml::Graph<fetch::math::Tensor<float>>::BackPropagate(name->str, *dt);
+    fetch::ml::Graph<TensorType>::BackPropagate(name->str, *dt);
   }
 
   void Step(float lr) override
   {
-    fetch::ml::Graph<fetch::math::Tensor<float>>::Step(lr);
+    fetch::ml::Graph<TensorType>::Step(lr);
   }
 
   void AddPlaceholder(fetch::vm::Ptr<fetch::vm::String> const &name)
   {
-    fetch::ml::Graph<fetch::math::Tensor<float>>::AddNode<
-        fetch::ml::ops::PlaceHolder<fetch::math::Tensor<float>>>(name->str, {});
+    fetch::ml::Graph<TensorType>::AddNode<
+        fetch::ml::ops::PlaceHolder<TensorType>>(name->str, {});
   }
 
   void AddFullyConnected(fetch::vm::Ptr<fetch::vm::String> const &name,
                          fetch::vm::Ptr<fetch::vm::String> const &inputName, int in, int out)
   {
-    fetch::ml::Graph<fetch::math::Tensor<float>>::AddNode<
-        fetch::ml::layers::FullyConnected<fetch::math::Tensor<float>>>(
+    fetch::ml::Graph<TensorType>::AddNode<
+        fetch::ml::layers::FullyConnected<TensorType>>(
         name->str, {inputName->str}, std::size_t(in), std::size_t(out));
   }
 
   void AddRelu(fetch::vm::Ptr<fetch::vm::String> const &name,
                fetch::vm::Ptr<fetch::vm::String> const &inputName)
   {
-    fetch::ml::Graph<fetch::math::Tensor<float>>::AddNode<
-        fetch::ml::ops::Relu<fetch::math::Tensor<float>>>(name->str, {inputName->str});
+    fetch::ml::Graph<TensorType>::AddNode<
+        fetch::ml::ops::Relu<TensorType>>(name->str, {inputName->str});
   }
 
   void AddSoftmax(fetch::vm::Ptr<fetch::vm::String> const &name,
                   fetch::vm::Ptr<fetch::vm::String> const &inputName)
   {
-    fetch::ml::Graph<fetch::math::Tensor<float>>::AddNode<
-        fetch::ml::ops::Softmax<fetch::math::Tensor<float>>>(name->str, {inputName->str});
+    fetch::ml::Graph<TensorType>::AddNode<
+        fetch::ml::ops::Softmax<TensorType>>(name->str, {inputName->str});
   }
+
+  void AddDropout(fetch::vm::Ptr<fetch::vm::String> const &name,
+                  fetch::vm::Ptr<fetch::vm::String> const &input_name)
+  {
+    fetch::ml::Graph<TensorType>::AddNode<
+        fetch::ml::ops::Dropout<TensorType>>(name->str, {input_name->str});
+  }
+
+
 };
 
 inline void CreateGraph(fetch::vm::Module &module)
@@ -107,7 +117,8 @@ inline void CreateGraph(fetch::vm::Module &module)
       .CreateMemberFunction("AddPlaceholder", &GraphWrapper::AddPlaceholder)
       .CreateMemberFunction("AddFullyConnected", &GraphWrapper::AddFullyConnected)
       .CreateMemberFunction("AddRelu", &GraphWrapper::AddRelu)
-      .CreateMemberFunction("AddSoftmax", &GraphWrapper::AddSoftmax);
+      .CreateMemberFunction("AddSoftmax", &GraphWrapper::AddSoftmax)
+      .CreateMemberFunction("AddDropout", &GraphWrapper::AddDropout);
 }
 
 }  // namespace ml
