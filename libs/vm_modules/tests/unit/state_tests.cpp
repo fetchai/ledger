@@ -20,6 +20,9 @@
 
 #include "gmock/gmock.h"
 
+namespace fetch {
+namespace vm {
+
 namespace {
 
 class StateTests : public ::testing::Test
@@ -59,23 +62,31 @@ TEST_F(StateTests, AddressSerializeTest)
 TEST_F(StateTests, AddressDeserializeTest)
 {
   static char const *TEXT = R"(
-    function main()
-      var data = Address("MnrRHdvCkdZodEwM855vemS5V3p2hiWmcSQ8JEzD4ZjPdsYtB");
-      var state = State<Address>("addr", data);
+    function store_address(state_name: String, value: Address)
+      var state = State<Address>(state_name, value);
+    endfunction
+
+    function main() : Address
+      var state_name = "addr";
+      var ref_address = Address("MnrRHdvCkdZodEwM855vemS5V3p2hiWmcSQ8JEzD4ZjPdsYtB");
+
+      store_address(state_name, ref_address);
+
+      var state = State<Address>(state_name, Address());
+      return state.get();
     endfunction
   )";
 
-  toolkit.AddState(
-      "addr",
-      "000000000000000020000000000000002f351e415c71722c379baac9394a947b8a303927b8b8421fb9466ed"
-      "3db1f5683");
-
-  EXPECT_CALL(toolkit.observer(), Exists("addr"));
+  EXPECT_CALL(toolkit.observer(), Exists("addr")).Times(2);
   EXPECT_CALL(toolkit.observer(), Read("addr", _, _));
-  EXPECT_CALL(toolkit.observer(), Write("addr", _, _));
+  EXPECT_CALL(toolkit.observer(), Write("addr", _, _)).Times(2);
 
   ASSERT_TRUE(toolkit.Compile(TEXT));
-  ASSERT_TRUE(toolkit.Run());
+  Variant res;
+  ASSERT_TRUE(toolkit.Run(&res));
+
+  auto const addr = res.Get<Ptr<Address>>();
+  EXPECT_EQ("MnrRHdvCkdZodEwM855vemS5V3p2hiWmcSQ8JEzD4ZjPdsYtB", addr->AsString()->str);
 }
 
 TEST_F(StateTests, MapSerializeTest)
@@ -179,7 +190,63 @@ TEST_F(StateTests, querying_state_constructed_from_null_string_fails_gracefully)
   )";
 
   ASSERT_TRUE(toolkit.Compile(TEXT));
+
+  Variant output;
+  ASSERT_FALSE(toolkit.Run(&output));
+}
+
+TEST_F(StateTests, serialising_compound_object_with_null_values_does_not_segfault)
+{
+  static char const *TEXT = R"(
+    function main()
+      var default_array = Array<Array<UInt64>>(2);
+      var bids = State<Array<Array<UInt64>>>("state_label", default_array);
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(TEXT));
   ASSERT_FALSE(toolkit.Run());
 }
 
+TEST_F(StateTests, DISABLED_test_serialisation_of_complex_type)
+{
+  static char const *TEXT = R"(
+    function store_array_in_state(state_name:String, state_value: Array<String>)
+      var state = State<Array<String>>(state_name, state_value);
+    endfunction
+
+    function main() : Array<String>
+      var ref_array = Array<String>(3);
+      ref_array[0] = "aaa";
+      ref_array[1] = "bbb";
+      ref_array[2] = "ccc";
+
+      var ref_state_name = "my array";
+
+      store_array_in_state(ref_state_name, ref_array);
+
+      var retrieved_state = State<Array<String>>(ref_state_name, Array<String>(0));
+      return retrieved_state.get();
+    endfunction
+  )";
+
+  std::string const state_name{"my array"};
+  EXPECT_CALL(toolkit.observer(), Exists(state_name)).Times(2);
+  EXPECT_CALL(toolkit.observer(), Read(state_name, _, _));
+  EXPECT_CALL(toolkit.observer(), Write(state_name, _, _));
+
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+
+  Variant output;
+  ASSERT_TRUE(toolkit.Run(&output));
+  ASSERT_FALSE(output.IsPrimitive());
+
+  auto retval{output.Get<Ptr<IArray>>()};
+  ASSERT_TRUE(static_cast<bool>(retval));
+
+  // EXPECT_EQ("PASSED", retval->str);
+}
+
 }  // namespace
+}  // namespace vm
+}  // namespace fetch
