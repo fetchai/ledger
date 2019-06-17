@@ -32,6 +32,14 @@ public:
     : fetch::vm::Object(vm, type_id)
   {}
 
+  static void Bind(vm::Module &module)
+  {
+    module.CreateClassType<VMCrossEntropyLoss>("CrossEntropy")
+        .CreateConstuctor<>()
+        .CreateMemberFunction("Forward", &VMCrossEntropyLoss::ForwardWrapper)
+        .CreateMemberFunction("Backward", &VMCrossEntropyLoss::BackwardWrapper);
+  }
+
   static fetch::vm::Ptr<VMCrossEntropyLoss> Constructor(fetch::vm::VM *   vm,
                                                         fetch::vm::TypeId type_id)
   {
@@ -58,14 +66,6 @@ public:
     return ret;
   }
 };
-
-inline void CreateCrossEntropy(fetch::vm::Module &module)
-{
-  module.CreateClassType<VMCrossEntropyLoss>("CrossEntropy")
-      .CreateConstuctor<>()
-      .CreateMemberFunction("Forward", &VMCrossEntropyLoss::ForwardWrapper)
-      .CreateMemberFunction("Backward", &VMCrossEntropyLoss::BackwardWrapper);
-}
 
 }  // namespace ml
 }  // namespace vm_modules

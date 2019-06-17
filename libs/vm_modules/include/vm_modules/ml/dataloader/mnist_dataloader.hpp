@@ -19,51 +19,11 @@
 
 #include "ml/dataloaders/mnist_loaders/mnist_loader.hpp"
 
+#include "vm_modules/ml/training_pair.hpp"
+
 namespace fetch {
 namespace vm_modules {
 namespace ml {
-
-class TrainingPair : public fetch::vm::Object,
-                     public std::pair<fetch::vm::Ptr<fetch::vm_modules::math::VMTensor>,
-                                      fetch::vm::Ptr<fetch::vm_modules::math::VMTensor>>
-{
-public:
-  TrainingPair(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
-               fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> ta,
-               fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> tb)
-    : fetch::vm::Object(vm, type_id)
-  {
-    this->first  = ta;
-    this->second = tb;
-  }
-
-  static void Bind(vm::Module &module)
-  {
-    module.CreateClassType<fetch::vm_modules::ml::TrainingPair>("TrainingPair")
-        .CreateConstuctor<fetch::vm::Ptr<fetch::vm_modules::math::VMTensor>,
-                          fetch::vm::Ptr<fetch::vm_modules::math::VMTensor>>()
-        .CreateMemberFunction("Data", &fetch::vm_modules::ml::TrainingPair::data)
-        .CreateMemberFunction("Label", &fetch::vm_modules::ml::TrainingPair::label);
-  }
-
-  static fetch::vm::Ptr<TrainingPair> Constructor(
-      fetch::vm::VM *vm, fetch::vm::TypeId type_id,
-      fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> ta,
-      fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> tb)
-  {
-    return new TrainingPair(vm, type_id, ta, tb);
-  }
-
-  fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> data()
-  {
-    return this->second;
-  }
-
-  fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> label()
-  {
-    return this->first;
-  }
-};
 
 class MnistDataLoader : public fetch::vm::Object
 {

@@ -24,8 +24,10 @@
 
 #include "vm/module.hpp"
 
-#include "vm_modules/ml/cross_entropy.hpp"
 #include "vm_modules/ml/dataloader/mnist_dataloader.hpp"
+#include "vm_modules/ml/ops/loss_functions/cross_entropy.hpp"
+#include "vm_modules/ml/training_pair.hpp"
+
 #include "vm_modules/ml/graph.hpp"
 
 #include <cstdint>
@@ -36,6 +38,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <vm_modules/ml/ops/loss_functions/cross_entropy.hpp>
 
 struct System : public fetch::vm::Object
 {
@@ -111,8 +114,8 @@ int main(int argc, char **argv)
 
   fetch::vm_modules::math::CreateTensor(*module);
   fetch::vm_modules::ml::CreateGraph(*module);
-  fetch::vm_modules::ml::CreateCrossEntropy(*module);
 
+  fetch::vm_modules::ml::VMCrossEntropyLoss::Bind(*module);
   fetch::vm_modules::ml::TrainingPair::Bind(*module);
   fetch::vm_modules::ml::MnistDataLoader::Bind(*module);
 

@@ -24,6 +24,7 @@
 namespace fetch {
 namespace vm_modules {
 namespace ml {
+
 class VMMeanSquareError : public fetch::vm::Object,
                           public fetch::ml::ops::MeanSquareError<fetch::math::Tensor<float>>
 {
@@ -31,6 +32,14 @@ public:
   VMMeanSquareError(fetch::vm::VM *vm, fetch::vm::TypeId type_id)
     : fetch::vm::Object(vm, type_id)
   {}
+
+  static void Bind(vm::Module &module)
+  {
+    module.CreateClassType<VMMeanSquareError>("CrossEntropy")
+        .CreateConstuctor<>()
+        .CreateMemberFunction("Forward", &VMMeanSquareError::ForwardWrapper)
+        .CreateMemberFunction("Backward", &VMMeanSquareError::BackwardWrapper);
+  }
 
   static fetch::vm::Ptr<VMMeanSquareError> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id)
   {
