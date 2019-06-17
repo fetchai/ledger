@@ -492,8 +492,6 @@ BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
                      ToBase64(current_block_->body.hash), ")");
       chain_.RemoveBlock(current_block_->body.hash);
 
-      // TODO(unknown): Remove malicious DAG nodes
-
       return State::RESET;
     }
   }
@@ -536,8 +534,6 @@ BlockCoordinator::State BlockCoordinator::OnSynergeticExecution()
                      ")");
       chain_.RemoveBlock(current_block_->body.hash);
 
-      // TODO(unknown): Remove malicious DAG nodes
-
       return State::RESET;
     }
   }
@@ -566,7 +562,7 @@ BlockCoordinator::State BlockCoordinator::OnWaitForTransactions(State current, S
       {
         storage_unit_.IssueCallForMissingTxs(*pending_txs_);
         have_asked_for_missing_txs_ = true;
-        wait_for_tx_timeout_.Restart(WAIT_FOR_TX_TIMEOUT_INTERVAL * 10);  // TODO(HUT): remove this
+        wait_for_tx_timeout_.Restart(WAIT_FOR_TX_TIMEOUT_INTERVAL);
       }
     }
   }

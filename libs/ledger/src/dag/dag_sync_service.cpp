@@ -45,10 +45,9 @@ DAGSyncService::DAGSyncService(MuddleEndpoint &                      muddle_endp
   state_machine_->OnStateChange([this](State current, State previous) {
     FETCH_UNUSED(current);
     FETCH_UNUSED(previous);
-    {
-      FETCH_LOG_DEBUG(LOGGING_NAME, "Current state: ", ToString(current),
-                      " (previous: ", ToString(previous), ")");
-    }
+    FETCH_UNUSED(this);
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Current state: ", ToString(current),
+                    " (previous: ", ToString(previous), ")");
   });
 
   // Broadcast blocks arrive here

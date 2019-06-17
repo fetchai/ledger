@@ -192,7 +192,7 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
                        *this,
                        tx_status_cache_,
                        cfg_.features,
-                       certificate,  // TODO(HUT): perhaps unused now
+                       certificate,
                        cfg_.num_lanes(),
                        cfg_.num_slices,
                        cfg_.block_difficulty}

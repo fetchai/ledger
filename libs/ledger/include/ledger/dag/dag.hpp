@@ -124,7 +124,7 @@ public:
   bool HasEpoch(EpochHash const &hash) override;
 
   // Make sure that the dag has all nodes for a certain epoch
-  bool SatisfyEpoch(DAGEpoch &) override;
+  bool SatisfyEpoch(DAGEpoch const &) override;
 
   std::vector<DAGNode> GetLatest(bool previous_epoch_only = false) override;
 
@@ -154,16 +154,14 @@ private:
   DAGNodeStore finalised_dnodes_;  // Once an epoch arrives, all dag nodes inbetween go here
   DAGEpoch     temp_recently_created_epoch_;  // Most recent epoch, not in deque for convenience
 
+  // clang-format off
   // volatile state
-  std::unordered_map<DAGTipID, DAGTipPtr> all_tips_;  // All tips are here
-  std::unordered_map<NodeHash, DAGTipPtr>
-      tips_;  // lookup tips of the dag pointing at a certain node hash
-  std::unordered_map<NodeHash, DAGNodePtr>
-      node_pool_;  // dag nodes that are not finalised but are still valid
-  std::unordered_map<NodeHash, DAGNodePtr>
-      loose_nodes_;  // nodes that are missing one or more references (waiting on NodeHash)
-  std::unordered_map<NodeHash, std::vector<DAGNodePtr>>
-      loose_nodes_lookup_;  // nodes that are missing one or more references (waiting on NodeHash)
+  std::unordered_map<DAGTipID, DAGTipPtr>               all_tips_;  // All tips are here
+  std::unordered_map<NodeHash, DAGTipPtr>               tips_;  // lookup tips of the dag pointing at a certain node hash
+  std::unordered_map<NodeHash, DAGNodePtr>              node_pool_;  // dag nodes that are not finalised but are still valid
+  std::unordered_map<NodeHash, DAGNodePtr>              loose_nodes_;  // nodes that are missing one or more references (waiting on NodeHash)
+  std::unordered_map<NodeHash, std::vector<DAGNodePtr>> loose_nodes_lookup_;  // nodes that are missing one or more references (waiting on NodeHash)
+  // clang-format on
 
   // std::unordered_map<NodeHash, uint64_t>                loose_nodes_ttl_;   // TODO(HUT): loose
   // nodes management scheme
@@ -184,7 +182,7 @@ private:
   void       HealLooseBlocksInternal(ConstByteArray added_hash);
   void       UpdateStaleTipsInternal();
   bool       NodeInvalidInternal(DAGNodePtr node);
-  DAGNodePtr GetDAGNodeInternal(ConstByteArray hash, bool, bool &);
+  DAGNodePtr GetDAGNodeInternal(ConstByteArray hash, bool, bool &); // const
   void       TraverseFromTips(std::set<ConstByteArray> const &, std::function<void(NodeHash)>,
                               std::function<bool(NodeHash)>);
   bool       GetEpochFromStorage(std::string const &, DAGEpoch &);

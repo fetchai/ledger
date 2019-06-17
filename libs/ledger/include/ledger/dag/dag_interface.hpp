@@ -58,7 +58,7 @@ public:
   virtual bool                 RevertToEpoch(uint64_t)                     = 0;
   virtual uint64_t             CurrentEpoch() const                        = 0;
   virtual bool                 HasEpoch(EpochHash const &hash)             = 0;
-  virtual bool                 SatisfyEpoch(DAGEpoch &)                    = 0;
+  virtual bool                 SatisfyEpoch(DAGEpoch const &)              = 0;
   virtual std::vector<DAGNode> GetLatest(bool previous_epoch_only = false) = 0;
 
   // Functions used for syncing

@@ -964,7 +964,7 @@ bool DAG::NodeInvalidInternal(DAGNodePtr node)
 }
 
 // TODO(HUT): this.
-bool DAG::SatisfyEpoch(DAGEpoch &epoch)
+bool DAG::SatisfyEpoch(DAGEpoch const &epoch)
 {
   FETCH_LOG_DEBUG(LOGGING_NAME, "Satisfying epoch: ", epoch.block_number);
   FETCH_LOCK(mutex_);
@@ -993,7 +993,7 @@ bool DAG::SatisfyEpoch(DAGEpoch &epoch)
     if (node->previous.size() == 1)
     {
       auto      node_prev_hash = *node->previous.begin();
-      DAGEpoch &points_to      = previous_epoch_;
+      DAGEpoch  points_to;
       bool      found          = false;
 
       if (node_prev_hash == previous_epoch_.hash)

@@ -46,8 +46,6 @@ public:
 
   struct Body
   {
-    // TODO(HUT): is this not done?
-    // TODO(private issue 496): Populate the state hash
     Digest           hash;               ///< The hash of the block
     Digest           previous_hash;      ///< The hash of the previous block
     Digest           merkle_hash;        ///< The merkle state hash across all shards
@@ -55,7 +53,7 @@ public:
     Address          miner;              ///< The identity of the generated miner
     uint32_t         log2_num_lanes{0};  ///< The log2(number of lanes)
     Slices           slices;             ///< The slice lists
-    mutable DAGEpoch dag_epoch;  // TODO(HUT): not mutable. Plus, is this hashed as part of block?
+    DAGEpoch         dag_epoch;          ///< DAG epoch containing information on new dnodes
     uint64_t         timestamp{0u};  ///< The number of seconds elapsed since the Unix epoch
   };
 
