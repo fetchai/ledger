@@ -101,6 +101,16 @@ struct IsMathImpl<int, ReturnType>
 {
   using Type = ReturnType;
 };
+template <typename ReturnType>
+struct IsMathImpl<fixed_point::fp32_t, ReturnType>
+{
+  using Type = ReturnType;
+};
+template <typename ReturnType>
+struct IsMathImpl<fixed_point::fp64_t, ReturnType>
+{
+  using Type = ReturnType;
+};
 
 template <typename DataType, typename ContainerType /*template<class> class ContainerType*/,
           typename ReturnType>
