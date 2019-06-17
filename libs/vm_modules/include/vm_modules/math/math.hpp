@@ -40,6 +40,8 @@ static void CreateAbs(fetch::vm::Module &module)
   module.CreateFreeFunction<int32_t>("Abs", &Abs<int32_t>);
   module.CreateFreeFunction<float_t>("Abs", &Abs<float_t>);
   module.CreateFreeFunction<double_t>("Abs", &Abs<double_t>);
+  module.CreateFreeFunction<fixed_point::fp32_t>("Abs", &Abs<fixed_point::fp32_t>);
+  module.CreateFreeFunction<fixed_point::fp64_t>("Abs", &Abs<fixed_point::fp64_t>);
 }
 
 inline void CreateAbs(std::shared_ptr<vm::Module> module)
