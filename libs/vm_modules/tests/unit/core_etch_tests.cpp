@@ -22,6 +22,7 @@
 
 namespace {
 
+// TODO(WK): extract test helpers library and move this test suite to the libs/vm
 class CoreEtchTests : public ::testing::Test
 {
 public:
