@@ -707,7 +707,8 @@ int main(int argc, char **argv)
     FETCH_LOG_INFO(LOGGING_NAME, "Configuration:\n", args);
 
     // create and run the constellation
-    auto constellation = std::make_unique<fetch::Constellation>(std::move(p2p_key), std::move(args.cfg));
+    auto constellation =
+        std::make_unique<fetch::Constellation>(std::move(p2p_key), std::move(args.cfg));
 
     // update the instance pointer
     gConstellationInstance = constellation.get();

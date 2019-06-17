@@ -17,10 +17,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/upow/work.hpp"
-#include "ledger/upow/synergetic_miner_interface.hpp"
-#include "ledger/upow/synergetic_contract.hpp"
 #include "core/state_machine.hpp"
+#include "ledger/upow/synergetic_contract.hpp"
+#include "ledger/upow/synergetic_miner_interface.hpp"
+#include "ledger/upow/work.hpp"
 
 #include "ledger/dag/dag_interface.hpp"
 
@@ -31,7 +31,6 @@ namespace fetch {
 namespace crypto {
 
 class Prover;
-
 }
 namespace ledger {
 
@@ -40,7 +39,6 @@ class StorageInterface;
 class NaiveSynergeticMiner : public SynergeticMinerInterface
 {
 public:
-
   enum class State
   {
     INITIAL = 0,
@@ -54,8 +52,8 @@ public:
   // Construction / Destruction
   NaiveSynergeticMiner(DAGPtr dag, StorageInterface &storage, ProverPtr prover);
   NaiveSynergeticMiner(NaiveSynergeticMiner const &) = delete;
-  NaiveSynergeticMiner(NaiveSynergeticMiner &&) = delete;
-  ~NaiveSynergeticMiner() override = default;
+  NaiveSynergeticMiner(NaiveSynergeticMiner &&)      = delete;
+  ~NaiveSynergeticMiner() override                   = default;
 
   /// @name Synergetic Miner Interface
   /// @{
@@ -86,13 +84,13 @@ private:
   WorkPtr MineSolution(Digest const &contract_digest, ProblemData const &problem_data);
   /// @}
 
-  DAGPtr            dag_;
-  StorageInterface &storage_;
-  ProverPtr         prover_;
-  std::size_t       search_length_{DEFAULT_SEARCH_LENGTH};
-  std::shared_ptr <StateMachine> state_machine_;
-  std::atomic<bool> is_mining_{false};
+  DAGPtr                        dag_;
+  StorageInterface &            storage_;
+  ProverPtr                     prover_;
+  std::size_t                   search_length_{DEFAULT_SEARCH_LENGTH};
+  std::shared_ptr<StateMachine> state_machine_;
+  std::atomic<bool>             is_mining_{false};
 };
 
-} // namespace ledger
-} // namespace fetch
+}  // namespace ledger
+}  // namespace fetch

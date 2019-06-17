@@ -56,9 +56,10 @@ using ObserverPtr   = std::unique_ptr<MockIoObserver>;
 class VmTestToolkit
 {
 public:
-  VmTestToolkit()
-    : observer_{std::make_unique<MockIoObserver>()}
-    , module_{VMFactory::GetModule(VMFactory::USE_SMART_CONTRACTS)}
+  VmTestToolkit(std::ostream *stdout = nullptr)
+    : stdout_{stdout ? stdout : &std::cout}
+    , observer_{std::make_unique<MockIoObserver>()}
+    , module_{fetch::vm_modules::VMFactory::GetModule(VMFactory::USE_SMART_CONTRACTS)}
   {}
 
   bool Compile(char const *text)
@@ -80,7 +81,7 @@ public:
     executable_ = std::make_unique<Executable>();
     vm_         = std::make_unique<VM>(module_.get());
     vm_->SetIOObserver(*observer_);
-    vm_->AttachOutputDevice(fetch::vm::VM::STDOUT, stdout_);
+    vm_->AttachOutputDevice(fetch::vm::VM::STDOUT, *stdout_);
 
     // generate the IR
     if (!vm_->GenerateExecutable(*ir_, "default_ir", *executable_, errors))
@@ -92,13 +93,19 @@ public:
     return true;
   }
 
-  bool Run()
+  bool Run(Variant *output = nullptr)
   {
     std::string error{};
-    Variant     output{};
-    if (!vm_->Execute(*executable_, "main", error, output))
+
+    Variant dummy_output{};
+    if (!output)
     {
-      stdout_ << "Runtime Error: " << error << std::endl;
+      output = &dummy_output;
+    }
+
+    if (!vm_->Execute(*executable_, "main", error, *output))
+    {
+      *stdout_ << "Runtime Error: " << error << std::endl;
 
       return false;
     }
@@ -110,9 +117,9 @@ public:
   {
     for (auto const &line : errors)
     {
-      stdout_ << "Compiler Error: " << line << '\n';
+      *stdout_ << "Compiler Error: " << line << '\n';
     }
-    stdout_ << std::endl;
+    *stdout_ << std::endl;
   }
 
   void AddState(std::string const &key, ConstByteArray const &hex_value)
@@ -132,16 +139,11 @@ public:
     return *observer_;
   }
 
-  std::string stdout() const
-  {
-    return stdout_.str();
-  }
-
-  std::ostringstream stdout_;
-  ObserverPtr        observer_;
-  ModulePtr          module_;
-  CompilerPtr        compiler_;
-  IRPtr              ir_;
-  ExecutablePtr      executable_;
-  VMPtr              vm_;
+  std::ostream *stdout_ = &std::cout;
+  ObserverPtr   observer_;
+  ModulePtr     module_;
+  CompilerPtr   compiler_;
+  IRPtr         ir_;
+  ExecutablePtr executable_;
+  VMPtr         vm_;
 };

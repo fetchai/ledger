@@ -18,11 +18,11 @@
 //------------------------------------------------------------------------------
 
 #include "core/reactor.hpp"
-#include "network/muddle/muddle.hpp"
-#include "ledger/shard_config.hpp"
-#include "network/muddle/rpc/server.hpp"
 #include "ledger/dag/dag_sync_protocol.hpp"
 #include "ledger/dag/dag_sync_service.hpp"
+#include "ledger/shard_config.hpp"
+#include "network/muddle/muddle.hpp"
+#include "network/muddle/rpc/server.hpp"
 
 namespace fetch {
 
@@ -58,33 +58,31 @@ public:
   }
 
 private:
-
   using DAGSyncProtoPtr   = std::shared_ptr<ledger::DAGSyncProtocol>;
   using DAGSyncServicePtr = std::shared_ptr<ledger::DAGSyncService>;
 
-  using Server                    = fetch::muddle::rpc::Server;
-  using Reactor                   = core::Reactor;
-  using ServerPtr                 = std::shared_ptr<Server>;
+  using Server    = fetch::muddle::rpc::Server;
+  using Reactor   = core::Reactor;
+  using ServerPtr = std::shared_ptr<Server>;
 
   static constexpr unsigned int SYNC_PERIOD_MS = 500;
 
-  Reactor     reactor_;
+  Reactor reactor_;
 
   /// @name External P2P Network
   /// @{
-  ServerPtr      external_rpc_server_;
+  ServerPtr       external_rpc_server_;
   MuddleEndpoint &external_muddle_;  ///< The muddle networking service
   /// @}
 
   /// @name DAG Store sync mechanism
   /// @{
-  DAGPtr               dag_;
-  SubscriptionPtr      dag_subscription_;
-  DAGSyncProtoPtr      dag_sync_protocol_;
-  DAGSyncServicePtr    dag_sync_service_;
+  DAGPtr            dag_;
+  SubscriptionPtr   dag_subscription_;
+  DAGSyncProtoPtr   dag_sync_protocol_;
+  DAGSyncServicePtr dag_sync_service_;
   /// @}
 };
 
 }  // namespace ledger
 }  // namespace fetch
-

@@ -27,8 +27,8 @@
 #include "crypto/fnv.hpp"
 #include "crypto/identity.hpp"
 #include "crypto/sha256.hpp"
-#include "ledger/chain/transaction_serializer.hpp"
 #include "ledger/chain/address.hpp"
+#include "ledger/chain/transaction_serializer.hpp"
 
 #include <deque>
 #include <limits>
@@ -50,11 +50,11 @@ struct DAGNode
   using DigestList     = std::vector<Digest>;
   using HasherType     = crypto::SHA256;
 
-  DAGNode() = default;
-  DAGNode(DAGNode const &rhs)            = default;
-  DAGNode(DAGNode &&rhs)                 = default;
+  DAGNode()                   = default;
+  DAGNode(DAGNode const &rhs) = default;
+  DAGNode(DAGNode &&rhs)      = default;
   DAGNode &operator=(DAGNode const &rhs) = default;
-  DAGNode &operator=(DAGNode&& rhs)      = default;
+  DAGNode &operator=(DAGNode &&rhs) = default;
 
   // Different types of DAG nodes.
   enum Types : uint64_t
@@ -71,7 +71,7 @@ struct DAGNode
   uint64_t         type{INVALID_NODE};  ///< type of the DAG node
   DigestList       previous;            ///< previous nodes.
   ConstByteArray   contents;            ///< payload to be deserialised.
-  Digest           contract_digest;       ///< The contract which this node is associated with.
+  Digest           contract_digest;     ///< The contract which this node is associated with.
   crypto::Identity identity;            ///< identity of the creator (empty for now)
 
   /// Serialisable entries to verify state
@@ -81,8 +81,8 @@ struct DAGNode
   /// }
 
   // bookkeeping
-  uint64_t   oldest_epoch_referenced = std::numeric_limits<uint64_t>::max();
-  uint64_t   weight             = 0;
+  uint64_t oldest_epoch_referenced = std::numeric_limits<uint64_t>::max();
+  uint64_t weight                  = 0;
 
   bool SetContents(Transaction const &tx)
   {
@@ -126,12 +126,22 @@ struct DAGNode
 
   bool Verify() const
   {
-    if(hash.empty())
+    if (hash.empty())
     {
       return false;
     }
 
     return crypto::Verifier::Verify(identity, hash, signature);
+  }
+
+  bool operator>(DAGNode const &rhs) const
+  {
+    return hash > rhs.hash;
+  }
+
+  bool operator<(DAGNode const &rhs) const
+  {
+    return hash < rhs.hash;
   }
 };
 

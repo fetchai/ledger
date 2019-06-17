@@ -28,12 +28,11 @@ class Address;
 class SynergeticContractFactory
 {
 public:
-
   // Construction / Destruction
   explicit SynergeticContractFactory(StorageInterface &storage);
   SynergeticContractFactory(SynergeticContractFactory const &) = delete;
-  SynergeticContractFactory(SynergeticContractFactory &&) = delete;
-  ~SynergeticContractFactory() = default;
+  SynergeticContractFactory(SynergeticContractFactory &&)      = delete;
+  ~SynergeticContractFactory()                                 = default;
 
   SynergeticContractPtr Create(Digest const &digest);
 
@@ -42,9 +41,8 @@ public:
   SynergeticContractFactory &operator=(SynergeticContractFactory &&) = delete;
 
 private:
-
   StorageInterface &storage_;
 };
 
-} // namespace ledger
-} // namespace fetch
+}  // namespace ledger
+}  // namespace fetch

@@ -45,7 +45,8 @@ public:
     ON_CALL(*this, HasTransaction(_))
         .WillByDefault(Invoke(&fake, &FakeStorageUnit::HasTransaction));
 
-    ON_CALL(*this, IssueCallForMissingTxs(_)).WillByDefault(Invoke(&fake, &FakeStorageUnit::IssueCallForMissingTxs));
+    ON_CALL(*this, IssueCallForMissingTxs(_))
+        .WillByDefault(Invoke(&fake, &FakeStorageUnit::IssueCallForMissingTxs));
     ON_CALL(*this, PollRecentTx(_)).WillByDefault(Invoke(&fake, &FakeStorageUnit::PollRecentTx));
 
     ON_CALL(*this, CurrentHash()).WillByDefault(Invoke(&fake, &FakeStorageUnit::CurrentHash));

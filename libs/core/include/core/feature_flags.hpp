@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "crypto/fnv.hpp"
 #include "core/byte_array/const_byte_array.hpp"
+#include "crypto/fnv.hpp"
 
 #include <unordered_set>
 
@@ -50,22 +50,21 @@ public:
   bool IsDisabled(ConstByteArray const &value) const;
 
   // Iteration
-  Iterator begin();
+  Iterator      begin();
   ConstIterator begin() const;
   ConstIterator cbegin() const;
-  Iterator end();
+  Iterator      end();
   ConstIterator end() const;
   ConstIterator cend() const;
-  bool empty() const;
-  std::size_t size() const;
+  bool          empty() const;
+  std::size_t   size() const;
 
   // Operators
   FeatureFlags &operator=(FeatureFlags const &) = delete;
-  FeatureFlags &operator=(FeatureFlags &&)      = default;
+  FeatureFlags &operator=(FeatureFlags &&) = default;
 
 private:
-
-  FlagSet flags_; ///< Flag storage
+  FlagSet flags_;  ///< Flag storage
 };
 
 /**
@@ -169,5 +168,5 @@ inline std::size_t FeatureFlags::size() const
   return flags_.size();
 }
 
-} // namespace core
-} // namespace fetch
+}  // namespace core
+}  // namespace fetch

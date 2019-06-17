@@ -26,10 +26,10 @@
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "ledger/dag/dag_interface.hpp"
-#include "moment/deadline_timer.hpp"
+#include "ledger/upow/naive_synergetic_miner.hpp"
 #include "ledger/upow/synergetic_execution_manager_interface.hpp"
 #include "ledger/upow/synergetic_miner_interface.hpp"
-#include "ledger/upow/naive_synergetic_miner.hpp"
+#include "moment/deadline_timer.hpp"
 
 #include <atomic>
 #include <chrono>
@@ -83,8 +83,8 @@ public:
   {
     // Main loop
     RELOAD_STATE,   ///< Recovering previous state
-    SYNCHRONISING,                 ///< Catch up with the outstanding blocks
-    SYNCHRONISED,                  ///< Caught up waiting to generate a new block
+    SYNCHRONISING,  ///< Catch up with the outstanding blocks
+    SYNCHRONISED,   ///< Caught up waiting to generate a new block
 
     // Pipe 1
     PRE_EXEC_BLOCK_VALIDATION,  ///< Validation stage before block execution
@@ -112,11 +112,12 @@ public:
 
 
   // Construction / Destruction
-  BlockCoordinator(MainChain &chain, DAGPtr const &dag, ExecutionManagerInterface &execution_manager,
-                   StorageUnitInterface &storage_unit, BlockPackerInterface &packer,
-                   BlockSinkInterface &block_sink, TransactionStatusCache &status_cache,
-                   core::FeatureFlags const &features, ProverPtr const &prover,
-                   std::size_t num_lanes, std::size_t num_slices, std::size_t block_difficulty);
+  BlockCoordinator(MainChain &chain, DAGPtr const &dag,
+                   ExecutionManagerInterface &execution_manager, StorageUnitInterface &storage_unit,
+                   BlockPackerInterface &packer, BlockSinkInterface &block_sink,
+                   TransactionStatusCache &status_cache, core::FeatureFlags const &features,
+                   ProverPtr const &prover, std::size_t num_lanes, std::size_t num_slices,
+                   std::size_t block_difficulty);
   BlockCoordinator(BlockCoordinator const &) = delete;
   BlockCoordinator(BlockCoordinator &&)      = delete;
   ~BlockCoordinator()                        = default;

@@ -17,17 +17,17 @@
 //------------------------------------------------------------------------------
 
 #include "core/logger.hpp"
-#include "ledger/upow/synergetic_contract.hpp"
+#include "crypto/hash.hpp"
+#include "crypto/sha256.hpp"
 #include "ledger/state_sentinel_adapter.hpp"
 #include "ledger/storage_unit/cached_storage_adapter.hpp"
+#include "ledger/upow/synergetic_contract.hpp"
 #include "vm/compiler.hpp"
 #include "vm/vm.hpp"
 #include "vm_modules/vm_factory.hpp"
-#include "crypto/sha256.hpp"
-#include "crypto/hash.hpp"
 
-#include "vm_modules/math/bignumber.hpp"
 #include "vm_modules/core/structured_data.hpp"
+#include "vm_modules/math/bignumber.hpp"
 
 #include <core/json/document.hpp>
 #include <sstream>
@@ -41,21 +41,21 @@ using vm_modules::VMFactory;
 using vm_modules::StructuredData;
 using byte_array::ConstByteArray;
 
-using Status = SynergeticContract::Status;
-using ProblemData = SynergeticContract::ProblemData;
-using VmStructuredData = vm::Ptr<vm_modules::StructuredData>;
+using Status                = SynergeticContract::Status;
+using ProblemData           = SynergeticContract::ProblemData;
+using VmStructuredData      = vm::Ptr<vm_modules::StructuredData>;
 using VmStructuredDataArray = vm::Ptr<vm::Array<VmStructuredData>>;
 
 constexpr char const *LOGGING_NAME = "SynContract";
 
 enum class FunctionKind
 {
-  NORMAL,    ///< Normal (undecorated) function
-  WORK,      ///< A function that is called to do some work
-  OBJECTIVE, ///< A function that is called to determine the quality of the work
-  PROBLEM,   ///< The problem function
-  CLEAR,     ///< The clear function
-  INVALID,   ///< The function has an invalid decorator
+  NORMAL,     ///< Normal (undecorated) function
+  WORK,       ///< A function that is called to do some work
+  OBJECTIVE,  ///< A function that is called to determine the quality of the work
+  PROBLEM,    ///< The problem function
+  CLEAR,      ///< The clear function
+  INVALID,    ///< The function has an invalid decorator
 };
 
 Digest ComputeDigest(ConstByteArray const &source)
@@ -162,7 +162,7 @@ VmStructuredDataArray CreateProblemData(vm::VM *vm, ProblemData const &problem_d
   return {ret};
 }
 
-}
+}  // namespace
 
 SynergeticContract::SynergeticContract(ConstByteArray const &source)
   : digest_{ComputeDigest(source)}
@@ -179,8 +179,8 @@ SynergeticContract::SynergeticContract(ConstByteArray const &source)
   // additional modules
 
   // create the compiler and IR
-  compiler_ = std::make_shared<vm::Compiler>(module_.get());
-  ir_ = std::make_shared<vm::IR>();
+  compiler_   = std::make_shared<vm::Compiler>(module_.get());
+  ir_         = std::make_shared<vm::IR>();
   executable_ = std::make_shared<vm::Executable>();
 
   // compile the source to IR
@@ -195,7 +195,8 @@ SynergeticContract::SynergeticContract(ConstByteArray const &source)
   auto vm = std::make_unique<vm::VM>(module_.get());
   if (!vm->GenerateExecutable(*ir_, "another", *executable_, errors))
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Failed to generate executable for contract: ", ErrorsToLog(errors));
+    FETCH_LOG_WARN(LOGGING_NAME,
+                   "Failed to generate executable for contract: ", ErrorsToLog(errors));
     throw std::runtime_error("Failed to generate executable for contract");
   }
 
@@ -249,7 +250,7 @@ SynergeticContract::SynergeticContract(ConstByteArray const &source)
 Status SynergeticContract::DefineProblem(ProblemData const &problem_data)
 {
   // create the VM
-  auto vm = std::make_unique<vm::VM>(module_.get());
+  auto vm  = std::make_unique<vm::VM>(module_.get());
   problem_ = std::make_shared<vm::Variant>();
 
 #if 0
@@ -311,7 +312,8 @@ Status SynergeticContract::Work(math::BigUnsigned const &nonce, WorkScore &score
 
   // execute the objective function of the contract
   vm::Variant objective_output{};
-  if (!vm->Execute(*executable_, objective_function_, error, objective_output, *problem_, *solution_))
+  if (!vm->Execute(*executable_, objective_function_, error, objective_output, *problem_,
+                   *solution_))
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Objective evaluation execution error: ", error);
     return Status::VM_EXECUTION_ERROR;
@@ -391,5 +393,5 @@ vm::Variant const &SynergeticContract::GetSolution() const
   return *solution_;
 }
 
-} // namespace ledger
-} // namespace fetch
+}  // namespace ledger
+}  // namespace fetch

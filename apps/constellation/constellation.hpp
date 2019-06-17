@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/reactor.hpp"
 #include "core/feature_flags.hpp"
+#include "core/reactor.hpp"
 #include "http/module.hpp"
 #include "http/server.hpp"
 #include "ledger/block_sink_interface.hpp"
@@ -38,8 +38,8 @@
 #include "network/p2pservice/p2p_service.hpp"
 #include "network/p2pservice/p2ptrust_bayrank.hpp"
 
-#include "ledger/protocols/dag_service.hpp"
 #include "ledger/dag/dag_interface.hpp"
+#include "ledger/protocols/dag_service.hpp"
 
 #include <atomic>
 #include <cstddef>
@@ -105,7 +105,6 @@ protected:
   void OnBlock(ledger::Block const &block) override;
 
 private:
-
   using Muddle                 = muddle::Muddle;
   using NetworkManager         = network::NetworkManager;
   using BlockPackingAlgorithm  = miner::BasicMiner;
@@ -132,8 +131,8 @@ private:
   using SynergeticMinerPtr     = std::unique_ptr<ledger::SynergeticMinerInterface>;
   using NaiveSynergeticMiner   = ledger::NaiveSynergeticMiner;
 
-  using ShardConfigs           = ledger::ShardConfigs;
-  using TxStatusCache          = ledger::TransactionStatusCache;
+  using ShardConfigs  = ledger::ShardConfigs;
+  using TxStatusCache = ledger::TransactionStatusCache;
 
   /// @name Configuration
   /// @{
@@ -164,9 +163,9 @@ private:
   StorageUnitClientPtr storage_;          ///< The storage client to the lane services
   LaneRemoteControl    lane_control_;     ///< The lane control client for the lane services
 
-  DAGPtr               dag_;
-  DAGServicePtr        dag_service_;
-  SynergeticMinerPtr   synergetic_miner_;
+  DAGPtr             dag_;
+  DAGServicePtr      dag_service_;
+  SynergeticMinerPtr synergetic_miner_;
   /// @}
 
   /// @name Block Processing

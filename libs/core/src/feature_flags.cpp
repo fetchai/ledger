@@ -22,32 +22,32 @@ namespace fetch {
 namespace core {
 namespace {
 
-  using fetch::byte_array::ConstByteArray;
+using fetch::byte_array::ConstByteArray;
 
-  ConstByteArray Split(ConstByteArray const &ref, std::size_t &start)
+ConstByteArray Split(ConstByteArray const &ref, std::size_t &start)
+{
+  ConstByteArray token{};
+
+  for (std::size_t curr = start; curr < ref.size(); ++curr)
   {
-    ConstByteArray token{};
-
-    for (std::size_t curr = start; curr < ref.size(); ++curr)
+    if (ref[curr] == ',')
     {
-      if (ref[curr] == ',')
-      {
-        token = ref.SubArray(start, curr - start);
-        start = curr + 1;
-        break;
-      }
+      token = ref.SubArray(start, curr - start);
+      start = curr + 1;
+      break;
     }
-
-    if (token.empty() && start < ref.size())
-    {
-      token = ref.SubArray(start, ref.size() - start);
-      start = ref.size();
-    }
-
-    return token;
   }
 
-} // namespace
+  if (token.empty() && start < ref.size())
+  {
+    token = ref.SubArray(start, ref.size() - start);
+    start = ref.size();
+  }
+
+  return token;
+}
+
+}  // namespace
 
 void FeatureFlags::Parse(ConstByteArray const &contents)
 {
@@ -67,5 +67,5 @@ void FeatureFlags::Parse(ConstByteArray const &contents)
   }
 }
 
-} // namespace core
-} // namespace fetch
+}  // namespace core
+}  // namespace fetch

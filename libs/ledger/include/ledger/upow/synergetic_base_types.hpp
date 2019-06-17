@@ -23,6 +23,5 @@ namespace fetch {
 namespace ledger {
 
 using WorkScore = int64_t;
-
 }
 }  // namespace fetch

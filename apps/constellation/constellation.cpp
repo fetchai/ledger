@@ -95,11 +95,13 @@ uint16_t LookupLocalPort(Manifest const &manifest, ServiceType service, uint16_t
   return manifest.GetLocalPort(identifier);
 }
 
-std::shared_ptr<ledger::DAGInterface> GenerateDAG(bool generate, std::string const &db_name, bool load_on_start, Constellation::CertificatePtr certificate)
+std::shared_ptr<ledger::DAGInterface> GenerateDAG(bool generate, std::string const &db_name,
+                                                  bool                          load_on_start,
+                                                  Constellation::CertificatePtr certificate)
 {
   std::shared_ptr<ledger::DAGInterface> ret;
 
-  if(generate)
+  if (generate)
   {
     ledger::DAG *new_dag = new ledger::DAG{db_name, load_on_start, certificate};
     ret.reset(new_dag);
@@ -165,8 +167,8 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
   , reactor_{"Reactor"}
   , network_manager_{"NetMgr", CalcNetworkManagerThreads(cfg_.num_lanes())}
   , http_network_manager_{"Http", HTTP_THREADS}
-  , muddle_{muddle::NetworkId{"IHUB"}, certificate, network_manager_,
-            !config.disable_signing, config.sign_broadcasts}
+  , muddle_{muddle::NetworkId{"IHUB"}, certificate, network_manager_, !config.disable_signing,
+            config.sign_broadcasts}
   , internal_identity_{std::make_shared<crypto::ECDSASigner>()}
   , internal_muddle_{muddle::NetworkId{"ISRD"}, internal_identity_, network_manager_}
   , trust_{}
@@ -190,7 +192,7 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
                        *this,
                        tx_status_cache_,
                        cfg_.features,
-                       certificate, // TODO(HUT): perhaps unused now
+                       certificate,  // TODO(HUT): perhaps unused now
                        cfg_.num_lanes(),
                        cfg_.num_slices,
                        cfg_.block_difficulty}
@@ -364,7 +366,7 @@ void Constellation::Run(UriList const &initial_peers, core::WeakRunnable bootstr
     // control from the top level block production based on the chain sync state
     block_coordinator_.EnableMining(is_in_sync);
 
-    if(synergetic_miner_)
+    if (synergetic_miner_)
     {
       synergetic_miner_->EnableMining(is_in_sync);
     }

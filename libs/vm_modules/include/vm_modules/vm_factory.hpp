@@ -28,7 +28,7 @@ class Module;
 struct Executable;
 class VM;
 
-} // namespace vm
+}  // namespace vm
 
 namespace vm_modules {
 
@@ -40,8 +40,7 @@ namespace vm_modules {
 class VMFactory
 {
 public:
-
-  using Errors = std::vector<std::string>;
+  using Errors    = std::vector<std::string>;
   using ModulePtr = std::shared_ptr<vm::Module>;
 
   enum Modules : uint64_t
@@ -63,7 +62,8 @@ public:
   static ModulePtr GetModule(uint64_t enabled);
 
   // Utils
-  static Errors Compile(ModulePtr const &module, std::string const &source, vm::Executable &executable);
+  static Errors Compile(ModulePtr const &module, std::string const &source,
+                        vm::Executable &executable);
 };
 
 }  // namespace vm_modules

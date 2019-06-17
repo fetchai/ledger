@@ -103,7 +103,7 @@ public:
   {
     FETCH_LOCK(mutex_);
 
-    auto it = locks_.find(shard);
+    auto       it      = locks_.find(shard);
     bool const success = it != locks_.end();
     if (success)
     {

@@ -18,9 +18,9 @@
 
 #include "core/macros.hpp"
 #include "ledger/chain/block.hpp"
+#include "ledger/chaincode/smart_contract_manager.hpp"
 #include "ledger/upow/synergetic_execution_manager.hpp"
 #include "ledger/upow/synergetic_executor_interface.hpp"
-#include "ledger/chaincode/smart_contract_manager.hpp"
 
 namespace fetch {
 namespace ledger {
@@ -30,16 +30,18 @@ constexpr char const *LOGGING_NAME = "SynExecMgr";
 
 using ExecStatus = SynergeticExecutionManager::ExecStatus;
 
-} // namespace
+}  // namespace
 
-SynergeticExecutionManager::SynergeticExecutionManager(DAGPtr dag, std::size_t num_executors, ExecutorFactory const &factory)
+SynergeticExecutionManager::SynergeticExecutionManager(DAGPtr dag, std::size_t num_executors,
+                                                       ExecutorFactory const &factory)
   : dag_{std::move(dag)}
   , executors_(num_executors)
   , threads_{num_executors, "SynEx"}
 {
   if (num_executors != 1)
   {
-    throw std::runtime_error("The number of executors must be 1 because state concurrency not implemented");
+    throw std::runtime_error(
+        "The number of executors must be 1 because state concurrency not implemented");
   }
 
   // build the required number of executors
@@ -117,7 +119,8 @@ ExecStatus SynergeticExecutionManager::PrepareWorkQueue(Block const &current, Bl
     auto it = work_map.find(node.contract_digest);
     if (it == work_map.end())
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Unable to lookup references contract: 0x", node.contract_digest.ToHex());
+      FETCH_LOG_WARN(LOGGING_NAME, "Unable to lookup references contract: 0x",
+                     node.contract_digest.ToHex());
       continue;
     }
 
@@ -125,8 +128,8 @@ ExecStatus SynergeticExecutionManager::PrepareWorkQueue(Block const &current, Bl
     it->second->problem_data.emplace_back(node.contents);
   }
 
-
-  FETCH_LOG_INFO(LOGGING_NAME, "Preparing work queue for epoch: ", current_epoch.block_number, " (complete)");
+  FETCH_LOG_INFO(LOGGING_NAME, "Preparing work queue for epoch: ", current_epoch.block_number,
+                 " (complete)");
 
   // Step 3. Update the final queue
   {
@@ -171,7 +174,8 @@ bool SynergeticExecutionManager::ValidateWorkAndUpdateState(uint64_t block, std:
   return true;
 }
 
-void SynergeticExecutionManager::ExecuteItem(WorkQueue &queue, ProblemData const &problem_data, uint64_t block, std::size_t num_lanes)
+void SynergeticExecutionManager::ExecuteItem(WorkQueue &queue, ProblemData const &problem_data,
+                                             uint64_t block, std::size_t num_lanes)
 {
   ExecutorPtr executor;
 
@@ -192,5 +196,5 @@ void SynergeticExecutionManager::ExecuteItem(WorkQueue &queue, ProblemData const
   }
 }
 
-} // namespace ledger
-} // namespace fetch
+}  // namespace ledger
+}  // namespace fetch

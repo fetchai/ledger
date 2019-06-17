@@ -32,7 +32,6 @@ using FeatureFlagsPtr = std::unique_ptr<FeatureFlags>;
 class FeatureFlagTests : public ::testing::Test
 {
 protected:
-
   void SetUp() override
   {
     flags_ = std::make_unique<FeatureFlags>();
@@ -47,7 +46,8 @@ protected:
   {
     if (items.size() != flags_->size())
     {
-      return ::testing::AssertionFailure() << "Unexpected size " << items.size() << " vs. " << flags_->size();
+      return ::testing::AssertionFailure()
+             << "Unexpected size " << items.size() << " vs. " << flags_->size();
     }
 
     for (auto const &item : *flags_)
@@ -70,4 +70,4 @@ TEST_F(FeatureFlagTests, Simple)
   EXPECT_TRUE(CheckContents({"foo", "bar", "baz"}));
 }
 
-} // namespace
+}  // namespace

@@ -32,7 +32,6 @@ namespace ledger {
 class WorkPackage
 {
 public:
-
   explicit WorkPackage(Digest digest)
     : contract_digest_{std::move(digest)}
   {}
@@ -49,20 +48,18 @@ public:
   }
 
 private:
-
   /// @name defining work and candidate solutions
   /// @{
-  Address   contract_digest_{};     //< Contract name which is extracted from the DAG
-  WorkQueue solutions_{};   //< A prioritised queue with work items
+  Address   contract_digest_{};  //< Contract name which is extracted from the DAG
+  WorkQueue solutions_{};        //< A prioritised queue with work items
   /// }
 
-//  // Work packages needs to be sortable to ensure consistent execution
-//  // order accross different platforms.
-//  bool operator<(WorkPackage const &other) const
-//  {
-//    return contract_address < other.contract_address;
-//  }
-
+  //  // Work packages needs to be sortable to ensure consistent execution
+  //  // order accross different platforms.
+  //  bool operator<(WorkPackage const &other) const
+  //  {
+  //    return contract_address < other.contract_address;
+  //  }
 };
 
 using WorkPackagePtr = std::shared_ptr<WorkPackage>;

@@ -22,13 +22,13 @@
 #include "ledger/upow/naive_synergetic_miner.hpp"
 #include "ledger/upow/work.hpp"
 
-#include "ledger/upow/synergetic_base_types.hpp"
 #include "ledger/chaincode/smart_contract_manager.hpp"
+#include "ledger/upow/synergetic_base_types.hpp"
 
 #include "vm_modules/math/bignumber.hpp"
 
-#include <unordered_set>
 #include <random>
+#include <unordered_set>
 
 namespace fetch {
 namespace ledger {
@@ -41,7 +41,7 @@ using vm_modules::BigNumberWrapper;
 using serializers::ByteArrayBuffer;
 using byte_array::ConstByteArray;
 
-using DagNodes   = NaiveSynergeticMiner::DagNodes;
+using DagNodes = NaiveSynergeticMiner::DagNodes;
 
 void ExecuteWork(SynergeticContractPtr const &contract, WorkPtr const &work)
 {
@@ -65,19 +65,18 @@ void ExecuteWork(SynergeticContractPtr const &contract, WorkPtr const &work)
   FETCH_LOG_DEBUG(LOGGING_NAME, "Execute Nonce: ", nonce_work.ToHex(), " score: ", score);
 }
 
-} // namespace
+}  // namespace
 
 NaiveSynergeticMiner::NaiveSynergeticMiner(DAGPtr dag, StorageInterface &storage, ProverPtr prover)
   : dag_{std::move(dag)}
   , storage_{storage}
   , prover_{std::move(prover)}
-  , state_machine_{std::make_shared<core::StateMachine<State>>("NaiveSynMiner",
-                                                               State::INITIAL)}
+  , state_machine_{std::make_shared<core::StateMachine<State>>("NaiveSynMiner", State::INITIAL)}
 {
   state_machine_->RegisterHandler(State::INITIAL, this, &NaiveSynergeticMiner::OnInitial);
   state_machine_->RegisterHandler(State::MINE, this, &NaiveSynergeticMiner::OnMine);
 
-  state_machine_->OnStateChange([](State /*new_state*/, State /* old_state */) { });
+  state_machine_->OnStateChange([](State /*new_state*/, State /* old_state */) {});
 }
 
 core::WeakRunnable NaiveSynergeticMiner::GetWeakRunnable()
@@ -96,9 +95,9 @@ NaiveSynergeticMiner::State NaiveSynergeticMiner::OnMine()
 {
   state_machine_->Delay(std::chrono::milliseconds{200});
 
-  if(is_mining_)
+  if (is_mining_)
   {
-  	this->Mine();
+    this->Mine();
   }
 
   return State::INITIAL;
@@ -197,7 +196,8 @@ SynergeticContractPtr NaiveSynergeticMiner::LoadContract(Digest const &contract_
   return contract;
 }
 
-WorkPtr NaiveSynergeticMiner::MineSolution(Digest const &contract_digest, ProblemData const &problem_data)
+WorkPtr NaiveSynergeticMiner::MineSolution(Digest const &     contract_digest,
+                                           ProblemData const &problem_data)
 {
   // create the synergetic contract
   auto contract = LoadContract(contract_digest);
@@ -222,7 +222,7 @@ WorkPtr NaiveSynergeticMiner::MineSolution(Digest const &contract_digest, Proble
 
   // update the initial nonce
   std::random_device rd;
-  BigUnsigned nonce{rd()};
+  BigUnsigned        nonce{rd()};
 
   // generate a series of solutions for each of the problems
   WorkPtr best_work{};
@@ -248,6 +248,5 @@ WorkPtr NaiveSynergeticMiner::MineSolution(Digest const &contract_digest, Proble
   return best_work;
 }
 
-} // namespace ledger
-} // namespace fetch
-
+}  // namespace ledger
+}  // namespace fetch

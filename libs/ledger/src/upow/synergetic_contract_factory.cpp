@@ -31,19 +31,19 @@ constexpr char const *LOGGING_NAME = "SynContractFactory";
 using byte_array::ConstByteArray;
 using serializers::ByteArrayBuffer;
 
-} // namespace
+}  // namespace
 
 SynergeticContractFactory::SynergeticContractFactory(StorageInterface &storage)
   : storage_{storage}
-{
-}
+{}
 
 SynergeticContractPtr SynergeticContractFactory::Create(Digest const &digest)
 {
   SynergeticContractPtr contract{};
 
   // attempt to retrieve the document stored in the database
-  auto const resource = storage_.Get(SmartContractManager::CreateAddressForSynergeticContract(digest));
+  auto const resource =
+      storage_.Get(SmartContractManager::CreateAddressForSynergeticContract(digest));
 
   if (!resource.failed)
   {
@@ -68,6 +68,5 @@ SynergeticContractPtr SynergeticContractFactory::Create(Digest const &digest)
   return contract;
 }
 
-} // namespace ledger
-} // namespace fetch
-
+}  // namespace ledger
+}  // namespace fetch

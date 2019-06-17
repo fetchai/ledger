@@ -17,10 +17,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/transaction_verifier.hpp"
-#include "ledger/chain/transaction.hpp"
-#include "core/state_machine.hpp"
+#include "core/byte_array/const_byte_array.hpp"
 #include "core/service_ids.hpp"
+#include "core/state_machine.hpp"
+#include "ledger/chain/transaction.hpp"
+#include "ledger/transaction_verifier.hpp"
 #include "network/muddle/muddle.hpp"
 
 #include "network/generics/requesting_queue.hpp"
@@ -45,7 +46,6 @@ enum class State
   QUERY_MISSING,
   RESOLVE_MISSING,
 };
-
 }
 
 /**
@@ -54,56 +54,60 @@ enum class State
 class DAGSyncService
 {
 public:
-
   static constexpr char const *LOGGING_NAME = "DAGSyncService";
 
-  using Muddle                = muddle::Muddle;
-  using TransactionPtr          = std::shared_ptr<Transaction>;
+  using Muddle         = muddle::Muddle;
+  using MuddleEndpoint = muddle::MuddleEndpoint;
+  using TransactionPtr = std::shared_ptr<Transaction>;
 
-  using Client                = muddle::rpc::Client;
-  using ClientPtr             = std::shared_ptr<Client>;
-  using State                 = dag_sync::State;
-  using StateMachine          = core::StateMachine<State>;
-  using SubscriptionPtr       = muddle::MuddleEndpoint::SubscriptionPtr;
+  using Client          = muddle::rpc::Client;
+  using ClientPtr       = std::shared_ptr<Client>;
+  using State           = dag_sync::State;
+  using StateMachine    = core::StateMachine<State>;
+  using SubscriptionPtr = muddle::MuddleEndpoint::SubscriptionPtr;
 
   using MissingTXs             = DAG::MissingTXs;
   using MissingNodes           = DAG::MissingNodes;
   using RequestingMissingNodes = network::RequestingQueueOf<muddle::Packet::Address, MissingNodes>;
   using PromiseOfMissingNodes  = network::PromiseOf<MissingNodes>;
-  using MuddleEndpoint         = muddle::MuddleEndpoint;
+  using MissingDNodes          = std::set<byte_array::ConstByteArray>;
 
   DAGSyncService(MuddleEndpoint &muddle_endpoint, std::shared_ptr<ledger::DAGInterface> dag);
   ~DAGSyncService() = default;
 
-  static constexpr std::size_t MAX_OBJECT_RESOLUTION_PER_CYCLE       = 128;
+  static constexpr std::size_t MAX_OBJECT_RESOLUTION_PER_CYCLE = 128;
 
   core::WeakRunnable GetWeakRunnable()
   {
     return state_machine_;
   }
 
-private:
+  static char const *ToString(State state);
 
+private:
   State OnInitial();
   State OnBroadcastRecent();
   State OnAddBroadcastRecent();
   State OnQueryMissing();
   State OnResolveMissing();
 
-  MuddleEndpoint                &muddle_endpoint_;
-  ClientPtr                     client_;
-  std::shared_ptr<StateMachine> state_machine_;
-  std::shared_ptr<ledger::DAGInterface>  dag_;
-  SubscriptionPtr               dag_subscription_;
+  MuddleEndpoint &                      muddle_endpoint_;
+  ClientPtr                             client_;
+  std::shared_ptr<StateMachine>         state_machine_;
+  std::shared_ptr<ledger::DAGInterface> dag_;
+  SubscriptionPtr                       dag_subscription_;
 
+  std::vector<DAGNode> nodes_to_broadcast_;
+  uint32_t             missing_modulo_ = 0;
+
+  RequestingMissingNodes missing_set_;
   RequestingMissingNodes missing_pending_;
+
+  MissingDNodes missing_dnodes_;
 
   fetch::mutex::Mutex               mutex_{__LINE__, __FILE__};
   std::vector<std::vector<DAGNode>> recvd_broadcast_nodes_;
 };
 
-
 }  // namespace ledger
 }  // namespace fetch
-
-

@@ -19,11 +19,11 @@
 
 #include "core/byte_array/const_byte_array.hpp"
 #include "crypto/fnv.hpp"
-#include "crypto/sha256.hpp"
 #include "crypto/identity.hpp"
-#include "ledger/upow/synergetic_base_types.hpp"
+#include "crypto/sha256.hpp"
 #include "ledger/chain/common_types.hpp"
 #include "ledger/chain/digest.hpp"
+#include "ledger/upow/synergetic_base_types.hpp"
 #include "math/bignumber.hpp"
 
 #include <limits>
@@ -47,13 +47,13 @@ public:
   Work() = default;
   Work(Digest digest, crypto::Identity miner);
   Work(Work const &) = default;
-  ~Work() = default;
+  ~Work()            = default;
 
   // Getters
-  Digest const &contract_digest() const;
-  crypto::Identity const &miner() const;
+  Digest const &           contract_digest() const;
+  crypto::Identity const & miner() const;
   math::BigUnsigned const &nonce() const;
-  WorkScore score() const;
+  WorkScore                score() const;
 
   // Setters
   void UpdateDigest(Digest digest);
@@ -65,7 +65,6 @@ public:
   math::BigUnsigned CreateHashedNonce() const;
 
 private:
-
   Digest            contract_digest_{};
   crypto::Identity  miner_{};
   math::BigUnsigned nonce_{};
@@ -80,8 +79,7 @@ private:
 inline Work::Work(Digest digest, crypto::Identity miner)
   : contract_digest_{std::move(digest)}
   , miner_{std::move(miner)}
-{
-}
+{}
 
 inline Digest const &Work::contract_digest() const
 {

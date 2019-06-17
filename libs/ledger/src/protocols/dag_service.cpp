@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/protocols/dag_service.hpp"
 #include "core/service_ids.hpp"
+#include "ledger/protocols/dag_service.hpp"
 #include "network/muddle/muddle.hpp"
 #include "network/muddle/rpc/server.hpp"
 
@@ -31,11 +31,10 @@ DAGService::DAGService(MuddleEndpoint &muddle_endpoint, DAGPtr dag, Mode mode)
 {
   FETCH_UNUSED(mode);
 
-  external_rpc_server_ =
-      std::make_shared<Server>(external_muddle_, SERVICE_DAG, CHANNEL_RPC);
+  external_rpc_server_ = std::make_shared<Server>(external_muddle_, SERVICE_DAG, CHANNEL_RPC);
 
   dag_sync_protocol_ = std::make_shared<DAGSyncProtocol>(dag_);
-  dag_sync_service_   = std::make_shared<DAGSyncService>(external_muddle_, dag_);
+  dag_sync_service_  = std::make_shared<DAGSyncService>(external_muddle_, dag_);
 
   // TX Sync protocol
   external_rpc_server_->Add(RPC_DAG_STORE_SYNC, dag_sync_protocol_.get());
@@ -52,4 +51,3 @@ DAGService::~DAGService()
 
 }  // namespace ledger
 }  // namespace fetch
-

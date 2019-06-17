@@ -41,7 +41,7 @@ static constexpr uint16_t CHANNEL_ROUTING = 1;
 // P2P Service Channels
 
 // Main Chain Service Channels
-static constexpr uint16_t CHANNEL_NODES  = 300;
+static constexpr uint16_t CHANNEL_NODES = 300;
 
 // RPC Protocol identifiers
 static constexpr uint64_t RPC_MAIN_CHAIN = 128;
@@ -60,7 +60,7 @@ static constexpr uint64_t RPC_MISSING_TX_FINDER = 210;
 static constexpr uint64_t RPC_DAG_STORE_SYNC    = 211;
 
 static constexpr uint64_t CHANNEL_RPC_BROADCAST = 801;
-static constexpr uint64_t SERVICE_DAG_BDCAST = 802;
+static constexpr uint64_t SERVICE_DAG_BDCAST    = 802;
 
 static constexpr uint16_t CHANNEL_BLOCKS = 2;
 
