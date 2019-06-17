@@ -96,7 +96,6 @@ public:
                                                                         {inputName->str});
   }
 
-private:
   GraphType graph_;
 };
 

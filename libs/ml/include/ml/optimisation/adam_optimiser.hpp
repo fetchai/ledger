@@ -40,12 +40,9 @@ public:
   using DataType  = typename ArrayType::Type;
   using SizeType  = typename ArrayType::SizeType;
 
-  AdamOptimiser(std::shared_ptr<Graph<T>>
-
-                                                graph,
-                std::vector<std::string> const &input_node_names,
-                std::string const &             output_node_name,
-                DataType const &                learning_rate = DataType{0.001f},
+  AdamOptimiser(std::shared_ptr<Graph<T>> graph, std::vector<std::string> const &input_node_names,
+                std::string const &output_node_name,
+                DataType const &   learning_rate = DataType{0.001f},
                 DataType const &beta1 = DataType{0.9f}, DataType const &beta2 = DataType{0.999f},
                 DataType const &epsilon = DataType{1e-4f});
 

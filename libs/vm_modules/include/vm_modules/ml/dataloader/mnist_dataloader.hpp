@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "ml/dataloaders/mnist_loaders/mnist_loader.hpp"
-
+#include "vm_modules/math/tensor.hpp"
 #include "vm_modules/ml/training_pair.hpp"
 
 namespace fetch {
@@ -66,7 +66,6 @@ public:
     loader_.Display((*d).GetTensor());
   }
 
-private:
   fetch::ml::MNISTLoader<fetch::math::Tensor<float>, fetch::math::Tensor<float>> loader_;
 };
 
