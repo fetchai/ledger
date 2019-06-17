@@ -22,6 +22,7 @@
 #include "vm_modules/ml/training_pair.hpp"
 
 #include "ml/graph.hpp"
+#include "ml/ops/loss_functions/cross_entropy.hpp"
 
 namespace fetch {
 namespace vm_modules {
@@ -32,15 +33,14 @@ class VMAdamOptimiser : public fetch::vm::Object
 public:
   using DataType      = float;
   using ArrayType     = fetch::math::Tensor<DataType>;
-  using CriterionType = fetch::vm_modules::ml::VMCrossEntropyLoss;
+  using CriterionType = fetch::ml::ops::CrossEntropy<ArrayType>;
   using GraphType     = fetch::ml::Graph<ArrayType>;
 
-  VMAdamOptimiser(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
-                  std::shared_ptr<GraphType> const &graph,
-                  std::vector<std::string> const &  input_node_names,
-                  std::string const &               output_node_name)
+  VMAdamOptimiser(fetch::vm::VM *vm, fetch::vm::TypeId type_id, GraphType const &graph,
+                  std::vector<std::string> const &input_node_names,
+                  std::string const &             output_node_name)
     : fetch::vm::Object(vm, type_id)
-    , optimiser_(graph, input_node_names, output_node_name)
+    , optimiser_(std::make_shared<GraphType>(graph), input_node_names, output_node_name)
   {}
 
   static void Bind(vm::Module &module)
@@ -58,7 +58,7 @@ public:
       fetch::vm::Ptr<fetch::vm::String> const &             output_node_names)
   {
     // std::make_shared<fetch::vm_modules::ml::VMGraph>(graph->graph_)
-    return new VMAdamOptimiser(vm, type_id, graph, {input_node_names->str},
+    return new VMAdamOptimiser(vm, type_id, graph->graph_, {input_node_names->str},
                                output_node_names->str);
   }
 
