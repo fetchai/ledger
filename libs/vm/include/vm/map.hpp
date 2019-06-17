@@ -284,14 +284,14 @@ inline Ptr<IMap> outer(TypeId key_type_id, TypeId value_type_id, VM *vm, TypeId 
   {
     return inner<double>(value_type_id, vm, type_id);
   }
-  // case TypeIds::Fixed32:
-  // {
-  //   return inner<fixed_point::fp32_t>(value_type_id, vm, type_id);
-  // }
-  // case TypeIds::Fixed64:
-  // {
-  //   return inner<fixed_point::fp64_t>(value_type_id, vm, type_id);
-  // }
+  case TypeIds::Fixed32:
+  {
+    return inner<int32_t>(value_type_id, vm, type_id);
+  }
+  case TypeIds::Fixed64:
+  {
+    return inner<int64_t>(value_type_id, vm, type_id);
+  }
   default:
   {
     return inner<Ptr<Object>>(value_type_id, vm, type_id);
