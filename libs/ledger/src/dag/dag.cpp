@@ -24,9 +24,9 @@
 
 using namespace fetch::ledger;
 
-DAG::DAG(std::string const &db_name, bool load, CertificatePtr certificate)
-  : db_name_{db_name}
-  , certificate_{certificate}
+DAG::DAG(std::string db_name, bool load, CertificatePtr certificate)
+  : db_name_{std::move(db_name)}
+  , certificate_{std::move(certificate)}
 {
 
   // Fallback is to reset everything

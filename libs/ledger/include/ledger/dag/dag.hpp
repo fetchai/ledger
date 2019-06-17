@@ -52,7 +52,7 @@ struct DAGTip
   using ConstByteArray = byte_array::ConstByteArray;
 
   DAGTip(ConstByteArray dag_node_ref, uint64_t epoch, uint64_t wei)
-    : dag_node_reference{dag_node_ref}
+    : dag_node_reference{std::move(dag_node_ref)}
     , oldest_epoch_referenced{epoch}
     , weight{wei}
   {
@@ -91,7 +91,7 @@ public:
   using MissingNodes      = std::set<DAGNode>;
 
   DAG() = delete;
-  DAG(std::string const &db_name, bool, CertificatePtr certificate);
+  DAG(std::string db_name, bool, CertificatePtr certificate);
   DAG(DAG const &rhs) = delete;
   DAG(DAG &&rhs)      = delete;
   DAG &operator=(DAG const &rhs) = delete;

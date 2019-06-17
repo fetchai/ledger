@@ -27,7 +27,7 @@ namespace ledger {
 DAGService::DAGService(MuddleEndpoint &muddle_endpoint, DAGPtr dag, Mode mode)
   : reactor_("DAGServiceReactor")
   , external_muddle_{muddle_endpoint}
-  , dag_{dag}
+  , dag_{std::move(dag)}
 {
   FETCH_UNUSED(mode);
 

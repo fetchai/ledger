@@ -39,9 +39,7 @@ std::ostream &operator<<(std::ostream &s, ResourceAddress const &address)
 namespace {
 
 using fetch::math::BigUnsigned;
-using fetch::byte_array::ConstByteArray;
 using fetch::storage::ResourceAddress;
-using fetch::ledger::StorageUnitInterface;
 using fetch::BitVector;
 using ::testing::_;
 using ::testing::StrictMock;

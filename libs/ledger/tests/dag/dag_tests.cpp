@@ -29,12 +29,6 @@
 
 #include <algorithm>
 
-using ::testing::_;
-using ::testing::AnyNumber;
-using ::testing::InSequence;
-using ::testing::NiceMock;
-using ::testing::StrictMock;
-
 using namespace fetch;
 
 static constexpr char const *LOGGING_NAME = "DagTests";
