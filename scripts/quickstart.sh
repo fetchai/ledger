@@ -15,8 +15,8 @@ trap 'error_report $LINENO' ERR
 echo -e "${onyellow}Installing Fetch Ledger...$endcolor"
 
 if [[ "$OSTYPE" == "linux-gnu" ]]; then
-    apt-get update
-    apt-get install -y libssl-dev cmake python3-dev clang git
+    sudo apt-get update
+    sudo apt-get install -y libssl-dev cmake python3-dev clang git
 elif [[ "$OSTYPE" == "darwin"* ]]; then
     xcode-select --version || xcode-select --install
     brew --version || yes | /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"

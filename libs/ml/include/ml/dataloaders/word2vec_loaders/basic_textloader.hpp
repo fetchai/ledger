@@ -71,7 +71,6 @@ public:
 
   // overloaded member from dataloader
   std::pair<T, std::vector<T>> GetNext() override;
-  std::pair<T, std::vector<T>> GetRandom() override;
   SizeType                     Size() const override;
   virtual bool                 IsDone() const override;
   void                         Reset() override;
@@ -154,35 +153,31 @@ BasicTextLoader<T>::BasicTextLoader(TextParams<T> const &p, bool random_mode, Si
 /////////////////////////////////////
 
 /**
- * gets the next data point
+ * gets the next data point or a random data point depending on mode
  * @tparam T  Array type
  * @return  returns a pair of Array and Label
  */
 template <typename T>
 std::pair<T, std::vector<T>> BasicTextLoader<T>::GetNext()
 {
-  GetNextValidIndices();
-  if (cursor_set_)
+  if (this->random_mode_)
   {
-    return GetAtIndex(cursor_);
+    GetNextValidIndices();
+    if (ran_cursor_set_)
+    {
+      return GetAtIndex(ran_cursor_);
+    }
+    throw std::runtime_error("no valid cursor position set");
   }
-  throw std::runtime_error("no valid cursor position set");
-}
-
-/**
- * gets the next data point from the randomised list
- * @tparam T  Array type
- * @return  returns a pair of Array and Label
- */
-template <typename T>
-std::pair<T, std::vector<T>> BasicTextLoader<T>::GetRandom()
-{
-  GetNextValidIndices();
-  if (ran_cursor_set_)
+  else
   {
-    return GetAtIndex(ran_cursor_);
+    GetNextValidIndices();
+    if (cursor_set_)
+    {
+      return GetAtIndex(cursor_);
+    }
+    throw std::runtime_error("no valid cursor position set");
   }
-  throw std::runtime_error("no valid cursor position set");
 }
 
 /**
