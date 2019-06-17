@@ -25,7 +25,8 @@ namespace {
 class FixedPointTest : public ::testing::Test
 {
 public:
-  VmTestToolkit toolkit;
+  std::stringstream stdout;
+  VmTestToolkit     toolkit{&stdout};
 };
 
 TEST_F(FixedPointTest, create_fixed_point)
@@ -43,7 +44,7 @@ TEST_F(FixedPointTest, create_fixed_point)
   ASSERT_TRUE(toolkit.Run());
 
   double gt = static_cast<double>(fetch::fixed_point::fp32_t(1));
-  EXPECT_EQ(std::stod(toolkit.stdout()), gt);
+  EXPECT_EQ(std::stod(stdout.str()), gt);
 }
 
 }  // namespace

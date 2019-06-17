@@ -25,7 +25,8 @@ namespace {
 class MathTests : public ::testing::Test
 {
 public:
-  VmTestToolkit toolkit;
+  std::stringstream stdout;
+  VmTestToolkit     toolkit{&stdout};
 };
 
 TEST_F(MathTests, abs_test)
@@ -39,7 +40,7 @@ TEST_F(MathTests, abs_test)
   ASSERT_TRUE(toolkit.Compile(TEXT));
   ASSERT_TRUE(toolkit.Run());
 
-  ASSERT_EQ(toolkit.stdout(), std::to_string(fetch::math::Abs(-1)));
+  ASSERT_EQ(stdout.str(), std::to_string(fetch::math::Abs(-1)));
 }
 
 }  // namespace
