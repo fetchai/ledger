@@ -34,4 +34,6 @@ function main()
   mymap[a] = b;
   print("mymap[" + toString(a) + "] = ");
   printLn(mymap[a]);
+
+  printLn("exp(" + toString(d) + ") = " + toString(exp(d)));
 endfunction
