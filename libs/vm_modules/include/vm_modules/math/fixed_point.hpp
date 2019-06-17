@@ -20,7 +20,9 @@
 #include "vectorise/fixed_point/fixed_point.hpp"
 #include "vm/module.hpp"
 #include "vm_modules/math/exp.hpp"
+#include "vm_modules/math/log.hpp"
 #include "vm_modules/math/math.hpp"
+#include "vm_modules/math/pow.hpp"
 #include "vm_modules/math/sqrt.hpp"
 #include "vm_modules/math/trigonometry.hpp"
 
@@ -32,6 +34,8 @@ inline void CreateFixedPoint(std::shared_ptr<vm::Module> module)
   CreateAbs(*module.get());
   CreateTrigonometry(*module.get());
   BindExp(*module.get());
+  BindLog(*module.get());
+  BindPow(*module.get());
 }
 
 }  // namespace vm_modules

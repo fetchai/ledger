@@ -39,5 +39,5 @@ function main()
   printLn("exp(" + toString(d) + ") = " + toString(exp(d)));
   printLn("sin(" + toString(pi) + ") = " + toString(sin(pi)));
 
-  printLn("pow(" + toString(d) + ", " + toString(f) + ") = " + toString(pow(d, f)));
+  printLn("pow(" + toString(d) + ", " + toString(d) + ") = " + toString(pow(d, d)));
 endfunction

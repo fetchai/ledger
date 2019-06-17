@@ -42,7 +42,7 @@ inline void BindPow(fetch::vm::Module &module)
   module.CreateFreeFunction<fixed_point::fp64_t>("pow", &Pow<fixed_point::fp64_t>);
 }
 
-inline void BindExp(std::shared_ptr<vm::Module> module)
+inline void BindPow(std::shared_ptr<vm::Module> module)
 {
   BindExp(*module.get());
 }
