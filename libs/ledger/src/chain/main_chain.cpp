@@ -267,8 +267,8 @@ bool MainChain::RemoveBlock(BlockHash hash)
 
   // Step 0. Manually set heaviest to a block we still know is valid
   auto block_before_one_to_del = GetBlock(hash);
-  heaviest_.weight             = block_before_one_to_del->body.weight;
-  heaviest_.hash               = block_before_one_to_del->body.hash;
+  heaviest_                    = HeaviestTip{};
+  heaviest_.Update(*block_before_one_to_del);
 
   // Step 1. Remove this block and the whole its progeny from the cache
   BlockHashSet invalidated_blocks;
