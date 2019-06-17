@@ -30,9 +30,9 @@
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 #include "ledger/transaction_status_cache.hpp"
 
-#include "ledger/upow/synergetic_executor.hpp"
-#include "ledger/upow/synergetic_execution_manager.hpp"
 #include "ledger/dag/dag_interface.hpp"
+#include "ledger/upow/synergetic_execution_manager.hpp"
+#include "ledger/upow/synergetic_executor.hpp"
 
 #include <chrono>
 
@@ -58,7 +58,8 @@ const std::chrono::seconds      WAIT_FOR_TX_TIMEOUT_INTERVAL{30};
 const uint32_t                  THRESHOLD_FOR_FAST_SYNCING{100u};
 const std::size_t               DIGEST_LENGTH_BYTES{32};
 
-SynergeticExecMgrPtr CreateSynergeticExecutor(core::FeatureFlags const &features, DAGPtr dag, StorageUnitInterface &storage_unit)
+SynergeticExecMgrPtr CreateSynergeticExecutor(core::FeatureFlags const &features, DAGPtr dag,
+                                              StorageUnitInterface &storage_unit)
 {
   SynergeticExecMgrPtr execution_mgr{};
 
@@ -70,7 +71,7 @@ SynergeticExecMgrPtr CreateSynergeticExecutor(core::FeatureFlags const &features
 
   return execution_mgr;
 }
-}
+}  // namespace
 
 /**
  * Construct the Block Coordinator
@@ -81,11 +82,11 @@ SynergeticExecMgrPtr CreateSynergeticExecutor(core::FeatureFlags const &features
 BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr const &dag,
                                    ExecutionManagerInterface &execution_manager,
                                    StorageUnitInterface &storage_unit, BlockPackerInterface &packer,
-                                   BlockSinkInterface &    block_sink,
-                                   TransactionStatusCache &status_cache,
-                                   core::FeatureFlags const &features,
-                                   ProverPtr const &prover, std::size_t num_lanes,
-                                   std::size_t num_slices, std::size_t block_difficulty)
+                                   BlockSinkInterface &      block_sink,
+                                   TransactionStatusCache &  status_cache,
+                                   core::FeatureFlags const &features, ProverPtr const &prover,
+                                   std::size_t num_lanes, std::size_t num_slices,
+                                   std::size_t block_difficulty)
   : chain_{chain}
   , dag_{dag}
   , execution_manager_{execution_manager}
@@ -177,7 +178,7 @@ BlockCoordinator::State BlockCoordinator::OnReloadState()
 
     bool revert_success_dag = true;
 
-    if(dag_)
+    if (dag_)
     {
       revert_success_dag = dag_->RevertToEpoch(current_block_->body.block_number);
     }
@@ -213,13 +214,13 @@ BlockCoordinator::State BlockCoordinator::OnSynchronising()
   bool const extra_debug = syncing_periodic_.Poll();
 
   // cache some useful variables
-  auto const current_hash          = current_block_->body.hash;
-  auto const previous_hash         = current_block_->body.previous_hash;
-  auto const desired_state         = current_block_->body.merkle_hash;
-  auto const last_committed_state  = storage_unit_.LastCommitHash();
-  auto const current_state         = storage_unit_.CurrentHash();
-  auto const last_processed_block  = execution_manager_.LastProcessedBlock();
-  uint64_t const current_dag_epoch = dag_ ? dag_->CurrentEpoch() : 0;
+  auto const     current_hash         = current_block_->body.hash;
+  auto const     previous_hash        = current_block_->body.previous_hash;
+  auto const     desired_state        = current_block_->body.merkle_hash;
+  auto const     last_committed_state = storage_unit_.LastCommitHash();
+  auto const     current_state        = storage_unit_.CurrentHash();
+  auto const     last_processed_block = execution_manager_.LastProcessedBlock();
+  uint64_t const current_dag_epoch    = dag_ ? dag_->CurrentEpoch() : 0;
 
 #ifdef FETCH_LOG_DEBUG_ENABLED
   if (extra_debug)
@@ -316,8 +317,10 @@ BlockCoordinator::State BlockCoordinator::OnSynchronising()
 
     // we expect that the common parent in this case will always have been processed, but this
     // should be checked
-    if (!storage_unit_.HashExists(common_parent->body.merkle_hash,
-                                  common_parent->body.block_number) /*|| dag_ && !dag->HasEpoch(common_parent->body.dag_epoch)*/)
+    if (!storage_unit_.HashExists(
+            common_parent->body.merkle_hash,
+            common_parent->body
+                .block_number) /*|| dag_ && !dag->HasEpoch(common_parent->body.dag_epoch)*/)
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "Ancestor block's state hash cannot be retrieved for block: 0x",
                       current_hash.ToHex(), " number; ", common_parent->body.block_number);
@@ -329,7 +332,7 @@ BlockCoordinator::State BlockCoordinator::OnSynchronising()
         FETCH_LOG_ERROR(LOGGING_NAME, "Unable to revert back to genesis");
       }
 
-      if(dag_ && !dag_->RevertToEpoch(0))
+      if (dag_ && !dag_->RevertToEpoch(0))
       {
         FETCH_LOG_ERROR(LOGGING_NAME, "Unable to revert DAG back to genesis!");
       }
@@ -354,9 +357,10 @@ BlockCoordinator::State BlockCoordinator::OnSynchronising()
       return State::RESET;
     }
 
-    if(dag_ && !dag_->RevertToEpoch(common_parent->body.block_number))
+    if (dag_ && !dag_->RevertToEpoch(common_parent->body.block_number))
     {
-      FETCH_LOG_ERROR(LOGGING_NAME, "Failed to revert dag to block: ", common_parent->body.block_number);
+      FETCH_LOG_ERROR(LOGGING_NAME,
+                      "Failed to revert dag to block: ", common_parent->body.block_number);
       state_machine_->Delay(std::chrono::seconds{5});
       return State::RESET;
     }
@@ -398,7 +402,7 @@ BlockCoordinator::State BlockCoordinator::OnSynchronised(State current, State pr
     next_block_->body.miner         = mining_address_;
 
     // Attach current DAG state
-    if(dag_)
+    if (dag_)
     {
       next_block_->body.dag_epoch = dag_->CreateEpoch(next_block_->body.block_number);
     }
@@ -520,11 +524,13 @@ BlockCoordinator::State BlockCoordinator::OnSynergeticExecution()
     auto const status = synergetic_exec_mgr_->PrepareWorkQueue(*current_block_, *previous_block);
     if (SynExecStatus::SUCCESS != status)
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Error preparing synergetic work queue: ", ledger::ToString(status));
+      FETCH_LOG_WARN(LOGGING_NAME,
+                     "Error preparing synergetic work queue: ", ledger::ToString(status));
       return State::RESET;
     }
 
-    if (!synergetic_exec_mgr_->ValidateWorkAndUpdateState(current_block_->body.block_number, num_lanes_))
+    if (!synergetic_exec_mgr_->ValidateWorkAndUpdateState(current_block_->body.block_number,
+                                                          num_lanes_))
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Work did not execute (", ToBase64(current_block_->body.hash),
                      ")");
@@ -560,7 +566,7 @@ BlockCoordinator::State BlockCoordinator::OnWaitForTransactions(State current, S
       {
         storage_unit_.IssueCallForMissingTxs(*pending_txs_);
         have_asked_for_missing_txs_ = true;
-        wait_for_tx_timeout_.Restart(WAIT_FOR_TX_TIMEOUT_INTERVAL * 10); // TODO(HUT): remove this
+        wait_for_tx_timeout_.Restart(WAIT_FOR_TX_TIMEOUT_INTERVAL * 10);  // TODO(HUT): remove this
       }
     }
   }
@@ -571,12 +577,14 @@ BlockCoordinator::State BlockCoordinator::OnWaitForTransactions(State current, S
     have_asked_for_missing_txs_ = false;
   }
 
-  // TODO(HUT): this might need to check that storage has whatever this dag epoch needs wrt contracts.
+  // TODO(HUT): this might need to check that storage has whatever this dag epoch needs wrt
+  // contracts.
   bool dag_is_ready{true};
 
-  if(dag_)
+  if (dag_)
   {
-    // This combines waiting until all dag nodes are in the epoch and epoch validation (well formed dag)
+    // This combines waiting until all dag nodes are in the epoch and epoch validation (well formed
+    // dag)
     dag_is_ready = dag_->SatisfyEpoch(current_block_->body.dag_epoch);
   }
 
@@ -629,7 +637,7 @@ BlockCoordinator::State BlockCoordinator::OnWaitForTransactions(State current, S
       FETCH_LOG_INFO(LOGGING_NAME, "Waiting for ", pending_txs_->size(), " transactions to sync");
     }
 
-    if(!dag_is_ready)
+    if (!dag_is_ready)
     {
       FETCH_LOG_INFO(LOGGING_NAME, "Waiting for DAG to sync");
     }
@@ -729,7 +737,8 @@ BlockCoordinator::State BlockCoordinator::OnPostExecBlockValidation()
 
       // signal the storage engine to make these changes
       if (storage_unit_.RevertToHash(previous_block->body.merkle_hash,
-                                     previous_block->body.block_number) && revert_successful)
+                                     previous_block->body.block_number) &&
+          revert_successful)
       {
         execution_manager_.SetLastProcessedBlock(previous_block->body.hash);
         revert_successful = true;
@@ -739,7 +748,7 @@ BlockCoordinator::State BlockCoordinator::OnPostExecBlockValidation()
     // if the revert has gone wrong, we need to initiate a complete re-sync
     if (!revert_successful)
     {
-      if(dag_)
+      if (dag_)
       {
         dag_->RevertToEpoch(0);
       }
@@ -759,7 +768,7 @@ BlockCoordinator::State BlockCoordinator::OnPostExecBlockValidation()
     storage_unit_.Commit(current_block_->body.block_number);
 
     // Notify the DAG of this epoch
-    if(dag_)
+    if (dag_)
     {
       dag_->CommitEpoch(current_block_->body.dag_epoch);
     }
@@ -807,11 +816,13 @@ BlockCoordinator::State BlockCoordinator::OnNewSynergeticExecution()
     auto const status = synergetic_exec_mgr_->PrepareWorkQueue(*next_block_, *previous_block);
     if (SynExecStatus::SUCCESS != status)
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Error preparing synergetic work queue: ", ledger::ToString(status));
+      FETCH_LOG_WARN(LOGGING_NAME,
+                     "Error preparing synergetic work queue: ", ledger::ToString(status));
       return State::RESET;
     }
 
-    if (!synergetic_exec_mgr_->ValidateWorkAndUpdateState(next_block_->body.block_number, num_lanes_))
+    if (!synergetic_exec_mgr_->ValidateWorkAndUpdateState(next_block_->body.block_number,
+                                                          num_lanes_))
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Failed to valid work queue");
 
@@ -855,7 +866,7 @@ BlockCoordinator::State BlockCoordinator::OnWaitForNewBlockExecution()
     storage_unit_.Commit(next_block_->body.block_number);
 
     // Notify the DAG of this epoch
-    if(dag_)
+    if (dag_)
     {
       dag_->CommitEpoch(next_block_->body.dag_epoch);
     }

@@ -49,19 +49,19 @@ meta::EnableIf<sizeof(T) < 4, int32_t> ToAtLeastInt(T const &value)
 }
 
 template <typename T>
-IfIsSmallSignedInteger<T,T> IntegerAbs(fetch::vm::VM *, T const &value)
+IfIsSmallSignedInteger<T, T> IntegerAbs(fetch::vm::VM *, T const &value)
 {
   return static_cast<T>(std::abs(value));
 }
 
 template <typename T>
-IfIsNormalSignedInteger<T,T> IntegerAbs(fetch::vm::VM *, T const &value)
+IfIsNormalSignedInteger<T, T> IntegerAbs(fetch::vm::VM *, T const &value)
 {
   return std::abs(value);
 }
 
 template <typename T>
-meta::IfIsUnsignedInteger<T,T> IntegerAbs(fetch::vm::VM *, T const &value)
+meta::IfIsUnsignedInteger<T, T> IntegerAbs(fetch::vm::VM *, T const &value)
 {
   return value;
 }

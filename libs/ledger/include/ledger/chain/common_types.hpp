@@ -22,5 +22,5 @@ namespace ledger {
 
 using BlockIndex = uint64_t;
 
-} // namespace ledger
-} // namespace fetch
+}  // namespace ledger
+}  // namespace fetch

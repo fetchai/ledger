@@ -28,10 +28,9 @@ namespace ledger {
 class DAGSyncProtocol : public fetch::service::Protocol
 {
 public:
-
   enum
   {
-    REQUEST_NODES          = 1,
+    REQUEST_NODES = 1,
   };
 
   static constexpr char const *LOGGING_NAME = "DAGSyncProtocol";
@@ -43,21 +42,19 @@ public:
   ~DAGSyncProtocol() override              = default;
 
   // Operators
-  DAGSyncProtocol &operator = (DAGSyncProtocol const &) = delete;
-  DAGSyncProtocol &operator = (DAGSyncProtocol &&) = delete;
+  DAGSyncProtocol &operator=(DAGSyncProtocol const &) = delete;
+  DAGSyncProtocol &operator=(DAGSyncProtocol &&) = delete;
 
 private:
+  using Self = DAGSyncProtocol;
 
-  using Self    = DAGSyncProtocol;
-
-  using MissingTXs             = DAG::MissingTXs;
-  using MissingNodes           = DAG::MissingNodes;
+  using MissingTXs   = DAG::MissingTXs;
+  using MissingNodes = DAG::MissingNodes;
 
   DAG::MissingNodes RequestNodes(MissingTXs);
 
-  std::shared_ptr<ledger::DAGInterface>  dag_;
+  std::shared_ptr<ledger::DAGInterface> dag_;
 };
 
 }  // namespace ledger
 }  // namespace fetch
-

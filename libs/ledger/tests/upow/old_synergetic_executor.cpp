@@ -1,3 +1,21 @@
+//------------------------------------------------------------------------------
+//
+//   Copyright 2018-2019 Fetch.AI Limited
+//
+//   Licensed under the Apache License, Version 2.0 (the "License");
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+//
+//------------------------------------------------------------------------------
+
 ////------------------------------------------------------------------------------
 ////
 ////   Copyright 2018-2019 Fetch.AI Limited
@@ -32,9 +50,9 @@
 //#include <memory>
 //#include <random>
 //
-//class SynergeticExecutorTest : public ::testing::Test
+// class SynergeticExecutorTest : public ::testing::Test
 //{
-//public:
+// public:
 //  using SynergeticExecutor = fetch::consensus::SynergeticExecutor;
 //  using DAG                = fetch::ledger::DAG;
 //  using Block              = fetch::ledger::Block;
@@ -222,7 +240,7 @@
 //    return chain_;
 //  }
 //
-//private:
+// private:
 //  void GenerateDAGData(uint64_t N = 100, uint64_t mine_every = 5)
 //  {
 //    for (uint32_t i = 0; i < N; ++i)
@@ -343,8 +361,8 @@
 //
 //  Work Mine(int32_t search_length = 10)
 //  {
-//    Work work = executor_->Mine(certificate_, CONTRACT_NAME, chain_->back(), 277326, search_length);
-//    EXPECT_TRUE(bool(work));
+//    Work work = executor_->Mine(certificate_, CONTRACT_NAME, chain_->back(), 277326,
+//    search_length); EXPECT_TRUE(bool(work));
 //
 //    return work;
 //  }
@@ -360,7 +378,7 @@
 //  RandomGenerator    random_;
 //};
 //
-//TEST_F(SynergeticExecutorTest, CheckMiningFlow)
+// TEST_F(SynergeticExecutorTest, CheckMiningFlow)
 //{
 //  std::vector<uint64_t> dag_counters;
 //  dag_counters.push_back(0);  // 0 dag nodes before genesis

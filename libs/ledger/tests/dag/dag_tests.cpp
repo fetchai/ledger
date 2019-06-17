@@ -16,15 +16,15 @@
 //
 //------------------------------------------------------------------------------
 
-#include "gtest/gtest.h"
 #include "gmock/gmock.h"
+#include "gtest/gtest.h"
 
-#include "ledger/dag/dag_interface.hpp"
 #include "ledger/dag/dag.hpp"
+#include "ledger/dag/dag_interface.hpp"
 
 #include "crypto/ecdsa.hpp"
-#include "crypto/prover.hpp"
 #include "crypto/hash.hpp"
+#include "crypto/prover.hpp"
 #include "crypto/sha256.hpp"
 
 #include <algorithm>
@@ -39,21 +39,20 @@ using namespace fetch;
 
 static constexpr char const *LOGGING_NAME = "DagTests";
 
-using DAGChild        = ledger::DAG;
-using DAGInterface    = ledger::DAGInterface;
-using DAG             = std::shared_ptr<DAGInterface>;
-using EpochHistory    = std::vector<std::set<std::string>>;
-using Epochs          = std::vector<ledger::DAGEpoch>;
+using DAGChild     = ledger::DAG;
+using DAGInterface = ledger::DAGInterface;
+using DAG          = std::shared_ptr<DAGInterface>;
+using EpochHistory = std::vector<std::set<std::string>>;
+using Epochs       = std::vector<ledger::DAGEpoch>;
 
 using Prover         = fetch::crypto::Prover;
 using ProverPtr      = std::shared_ptr<Prover>;
-using Certificate       = fetch::crypto::Prover;
-using CertificatePtr    = std::shared_ptr<Certificate>;
+using Certificate    = fetch::crypto::Prover;
+using CertificatePtr = std::shared_ptr<Certificate>;
 
 class DagTests : public ::testing::Test
 {
 protected:
-
   void SetUp() override
   {
     FETCH_UNUSED(LOGGING_NAME);
@@ -63,14 +62,13 @@ protected:
   DAG MakeDAG(std::string const &id, bool load_from_file)
   {
     auto certificate = CreateNewCertificate();
-    DAG dag;
+    DAG  dag;
     dag.reset(new DAGChild(id, load_from_file, certificate));
     return dag;
   }
 
   void TearDown() override
-  {
-  }
+  {}
 
   // Verify that the nodes in the latest dag epoch match the sanity check epoch_history_
   void VerifyEpochNodes(uint64_t index)
@@ -79,15 +77,16 @@ protected:
 
     auto &epoch_history_relevant = epoch_history_[index];
 
-    if(index != 0)
+    if (index != 0)
     {
       ASSERT_EQ(epoch_history_relevant.empty(), false);
     }
     ASSERT_EQ(latest_nodes.size(), epoch_history_relevant.size());
 
-    for(auto const &node : latest_nodes)
+    for (auto const &node : latest_nodes)
     {
-      auto found = epoch_history_relevant.find(std::string(node.contents)) != epoch_history_relevant.end();
+      auto found =
+          epoch_history_relevant.find(std::string(node.contents)) != epoch_history_relevant.end();
 
       ASSERT_EQ(found, true);
     }
@@ -113,7 +112,7 @@ protected:
         epoch_history_[epoch_index].insert(dag_contents);
         dag_->AddArbitrary(dag_contents);
 
-        if(dnode_index == nodes_in_epoch - 1)
+        if (dnode_index == nodes_in_epoch - 1)
         {
           auto epoch = dag_->CreateEpoch(epoch_index);
           EXPECT_EQ(epoch.block_number, epoch_index);
@@ -130,17 +129,17 @@ protected:
     }
   }
 
-  DAG             dag_;
-  EpochHistory    epoch_history_;
-  Epochs          epochs_;
-private:
+  DAG          dag_;
+  EpochHistory epoch_history_;
+  Epochs       epochs_;
 
+private:
   ProverPtr CreateNewCertificate()
   {
     using Signer    = fetch::crypto::ECDSASigner;
     using SignerPtr = std::shared_ptr<Signer>;
 
-    SignerPtr certificate        = std::make_shared<Signer>();
+    SignerPtr certificate = std::make_shared<Signer>();
 
     certificate->GenerateKeys();
 
@@ -155,18 +154,17 @@ TEST_F(DagTests, CheckBasicDagFunctionality)
   PopulateDAG();
 }
 
-
 // Check the basic functionality, plus that the dag can revert
 TEST_F(DagTests, CheckDagRevertsCorrectly)
 {
   PopulateDAG();
 
-  while(epoch_history_.size() > 0)
+  while (epoch_history_.size() > 0)
   {
     const auto epochs_head = epoch_history_.size() - 1;
     VerifyEpochNodes(epochs_head);
 
-    if(epochs_head != 0)
+    if (epochs_head != 0)
     {
       EXPECT_EQ(dag_->CurrentEpoch(), epochs_head);
       dag_->RevertToEpoch(epochs_head - 1);
@@ -187,12 +185,12 @@ TEST_F(DagTests, CheckDagMaintainsTipsCorrectly)
   // -Create epoch 1 on DAG 2 and synchronise (contains items A)
   // -Create epoch 2 on DAG 1 and synchronise (contains items B)
 
-  const size_t nodes_to_push   = 1000;
+  const size_t nodes_to_push = 1000;
 
   std::vector<std::string> items_A;
   std::vector<std::string> items_B;
 
-  DAG             dag_2 = MakeDAG("dag2", false);
+  DAG dag_2 = MakeDAG("dag2", false);
 
   for (std::size_t dnode_index = 0; dnode_index < nodes_to_push; ++dnode_index)
   {
@@ -204,18 +202,18 @@ TEST_F(DagTests, CheckDagMaintainsTipsCorrectly)
   }
 
   // Push items A, then add those dag nodes
-  for(auto const &item : items_A)
+  for (auto const &item : items_A)
   {
     dag_->AddArbitrary(item);
   }
 
-  for(auto const &newly_minted_dnode : dag_->GetRecentlyAdded())
+  for (auto const &newly_minted_dnode : dag_->GetRecentlyAdded())
   {
     dag_2->AddDAGNode(newly_minted_dnode);
   }
 
   // Push items B
-  for(auto const &item : items_B)
+  for (auto const &item : items_B)
   {
     dag_->AddArbitrary(item);
   }
@@ -230,19 +228,19 @@ TEST_F(DagTests, CheckDagMaintainsTipsCorrectly)
   // Create epoch 2 from dag 1, this contains nodes dag 2 doesn't have
   auto epoch_2 = dag_->CreateEpoch(2);
   ASSERT_EQ(dag_->SatisfyEpoch(epoch_2), true);
-  ASSERT_EQ(dag_2->SatisfyEpoch(epoch_2), false); // can't satisfy!
+  ASSERT_EQ(dag_2->SatisfyEpoch(epoch_2), false);  // can't satisfy!
 
   // Provide dag 2 the missing nodes
   auto recently_added = dag_->GetRecentlyAdded();
 
   std::random_shuffle(recently_added.begin(), recently_added.end());
 
-  for(auto const &newly_minted_dnode : recently_added)
+  for (auto const &newly_minted_dnode : recently_added)
   {
     dag_2->AddDAGNode(newly_minted_dnode);
   }
 
-  ASSERT_EQ(dag_2->SatisfyEpoch(epoch_2), true); // can now satisfy
+  ASSERT_EQ(dag_2->SatisfyEpoch(epoch_2), true);  // can now satisfy
 
   ASSERT_EQ(dag_->CommitEpoch(epoch_2), true);
   ASSERT_EQ(dag_2->CommitEpoch(epoch_2), true);

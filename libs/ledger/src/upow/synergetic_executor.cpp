@@ -28,13 +28,12 @@ namespace {
 
 constexpr char const *LOGGING_NAME = "SynExec";
 
-} // namespace
+}  // namespace
 
 SynergeticExecutor::SynergeticExecutor(StorageInterface &storage)
   : storage_{storage}
   , factory_{storage}
-{
-}
+{}
 
 void SynergeticExecutor::Verify(WorkQueue &solutions, ProblemData const &problem_data,
                                 uint64_t block, std::size_t num_lanes)
@@ -72,7 +71,7 @@ void SynergeticExecutor::Verify(WorkQueue &solutions, ProblemData const &problem
 
     // validate the work that has been done
     WorkScore calculated_score{0};
-    auto status = contract->Work(solution->CreateHashedNonce(), calculated_score);
+    auto      status = contract->Work(solution->CreateHashedNonce(), calculated_score);
 
     if ((SynergeticContract::Status::SUCCESS == status) && (calculated_score == solution->score()))
     {
@@ -91,7 +90,8 @@ void SynergeticExecutor::Verify(WorkQueue &solutions, ProblemData const &problem
 
       if (SynergeticContract::Status::SUCCESS != status)
       {
-        FETCH_LOG_WARN(LOGGING_NAME, "Failed to complete contract: 0x", contract->digest().ToHex(), " Reason: ", ToString(status));
+        FETCH_LOG_WARN(LOGGING_NAME, "Failed to complete contract: 0x", contract->digest().ToHex(),
+                       " Reason: ", ToString(status));
         return;
       }
 
@@ -102,5 +102,5 @@ void SynergeticExecutor::Verify(WorkQueue &solutions, ProblemData const &problem
   }
 }
 
-} // namespace ledger
-} // namespace fetch
+}  // namespace ledger
+}  // namespace fetch

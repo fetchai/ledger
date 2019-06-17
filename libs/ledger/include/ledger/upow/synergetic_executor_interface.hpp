@@ -29,14 +29,15 @@ public:
   using ProblemData    = std::vector<ConstByteArray>;
 
   // Construction / Destruction
-  SynergeticExecutorInterface() = default;
+  SynergeticExecutorInterface()          = default;
   virtual ~SynergeticExecutorInterface() = default;
 
   /// @name Executor Interface
   /// @{
-  virtual void Verify(WorkQueue &solutions, ProblemData const &problem_data, uint64_t block, std::size_t num_lanes) = 0;
+  virtual void Verify(WorkQueue &solutions, ProblemData const &problem_data, uint64_t block,
+                      std::size_t num_lanes) = 0;
   /// @}
 };
 
-} // namespace ledger
-} // namespace fetch
+}  // namespace ledger
+}  // namespace fetch

@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm_modules/vm_factory.hpp"
 #include "vm/module.hpp"
+#include "vm_modules/vm_factory.hpp"
 
 #include "vm_modules/core/print.hpp"
 #include "vm_modules/core/type_convert.hpp"
@@ -33,8 +33,8 @@
 #include "vm_modules/core/byte_array_wrapper.hpp"
 #include "vm_modules/core/crypto_rng.hpp"
 #include "vm_modules/core/print.hpp"
-#include "vm_modules/core/type_convert.hpp"
 #include "vm_modules/core/structured_data.hpp"
+#include "vm_modules/core/type_convert.hpp"
 #include "vm_modules/crypto/sha256.hpp"
 #include "vm_modules/ledger/chain_state.hpp"
 #include "vm_modules/ledger/dag_accessor.hpp"
@@ -113,8 +113,7 @@ std::shared_ptr<vm::Module> VMFactory::GetModule(uint64_t enabled)
  * @return: Vector of strings which represent errors found during compilation
  */
 VMFactory::Errors VMFactory::Compile(std::shared_ptr<fetch::vm::Module> const &module,
-                                     std::string const &                       source,
-                                     fetch::vm::Executable &                   executable)
+                                     std::string const &source, fetch::vm::Executable &executable)
 {
   std::vector<std::string> errors;
 
@@ -153,5 +152,5 @@ VMFactory::Errors VMFactory::Compile(std::shared_ptr<fetch::vm::Module> const &m
   return errors;
 }
 
-} // namespace vm_modules
-} // namespace fetch
+}  // namespace vm_modules
+}  // namespace fetch

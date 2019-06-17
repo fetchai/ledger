@@ -17,9 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm/object.hpp"
-#include "vm/array.hpp"
 #include "variant/variant.hpp"
+#include "vm/array.hpp"
+#include "vm/object.hpp"
 
 namespace fetch {
 namespace vm_modules {
@@ -27,17 +27,16 @@ namespace vm_modules {
 class StructuredData : public vm::Object
 {
 public:
-
-  static void Bind(vm::Module & module);
+  static void                    Bind(vm::Module &module);
   static vm::Ptr<StructuredData> Constructor(vm::VM *vm, vm::TypeId type_id);
-  static vm::Ptr<StructuredData> Constructor(vm::VM *vm, vm::TypeId type_id, variant::Variant const &data);
+  static vm::Ptr<StructuredData> Constructor(vm::VM *vm, vm::TypeId type_id,
+                                             variant::Variant const &data);
 
   StructuredData() = delete;
   StructuredData(vm::VM *vm, vm::TypeId type_id);
   ~StructuredData() override = default;
 
 private:
-
   bool Has(vm::Ptr<vm::String> const &s);
 
   vm::Ptr<vm::String> GetString(vm::Ptr<vm::String> const &s);
@@ -56,5 +55,5 @@ private:
   variant::Variant contents_{variant::Variant::Object()};
 };
 
-} // namespace vm_modules
-} // namespace fetch
+}  // namespace vm_modules
+}  // namespace fetch

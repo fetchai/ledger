@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/dag/dag_node.hpp" // TODO(EJF): Lets trim down the dependencies for the DAG node
+#include "ledger/dag/dag_node.hpp"  // TODO(EJF): Lets trim down the dependencies for the DAG node
 
 #include <cstdint>
 #include <vector>
@@ -32,15 +32,15 @@ public:
   using DagNodes   = std::vector<DAGNode>;
 
   // Construction / Destruction
-  SynergeticMinerInterface() = default;
+  SynergeticMinerInterface()          = default;
   virtual ~SynergeticMinerInterface() = default;
 
   /// @name Synergetic Miner Interface
   /// @{
-  virtual void Mine() = 0;
-  virtual void EnableMining(bool enable)  = 0;
+  virtual void Mine()                    = 0;
+  virtual void EnableMining(bool enable) = 0;
   /// @}
 };
 
-} // namespace ledger
-} // namespace fetch
+}  // namespace ledger
+}  // namespace fetch

@@ -24,9 +24,9 @@
 #include "vm/module.hpp"
 #include "vm/vm.hpp"
 
-#include "ledger/upow/synergetic_base_types.hpp"
 #include "ledger/chain/address.hpp"
 #include "ledger/chain/digest.hpp"
+#include "ledger/upow/synergetic_base_types.hpp"
 
 #include <memory>
 #include <string>
@@ -38,13 +38,13 @@ class BitVector;
 
 namespace byte_array {
 class ConstByteArray;
-} // namespace byte_array
+}  // namespace byte_array
 
 namespace math {
 
 class BigUnsigned;
 
-} // namespace math
+}  // namespace math
 
 namespace vm {
 
@@ -54,7 +54,7 @@ class IR;
 struct Executable;
 struct Variant;
 
-} // namespace vm
+}  // namespace vm
 
 namespace ledger {
 
@@ -63,9 +63,8 @@ class StorageInterface;
 class SynergeticContract
 {
 public:
-
   using ConstByteArray = byte_array::ConstByteArray;
-  using ProblemData = std::vector<ConstByteArray>;
+  using ProblemData    = std::vector<ConstByteArray>;
 
   enum class Status
   {
@@ -79,7 +78,7 @@ public:
   ~SynergeticContract() = default;
 
   // Accessors
-  Digest const &digest() const;
+  Digest const &     digest() const;
   std::string const &work_function() const;
   std::string const &problem_function() const;
   std::string const &objective_function() const;
@@ -98,9 +97,9 @@ public:
 
   /// @name Synergetic State Access
   /// @{
-  bool HasProblem() const;
+  bool               HasProblem() const;
   vm::Variant const &GetProblem() const;
-  bool HasSolution() const;
+  bool               HasSolution() const;
   vm::Variant const &GetSolution() const;
   /// @}
 
@@ -111,10 +110,10 @@ private:
   using ExecutablePtr = std::shared_ptr<vm::Executable>;
   using VariantPtr    = std::shared_ptr<vm::Variant>;
 
-  Digest      digest_;
-  ModulePtr   module_;
-  CompilerPtr compiler_;
-  IRPtr       ir_;
+  Digest        digest_;
+  ModulePtr     module_;
+  CompilerPtr   compiler_;
+  IRPtr         ir_;
   ExecutablePtr executable_;
 
   std::string problem_function_;
@@ -123,8 +122,8 @@ private:
   std::string clear_function_;
 
   StorageInterface *storage_{nullptr};
-  VariantPtr problem_;
-  VariantPtr solution_;
+  VariantPtr        problem_;
+  VariantPtr        solution_;
 };
 
 inline Digest const &SynergeticContract::digest() const
@@ -191,4 +190,3 @@ using SynergeticContractPtr = std::shared_ptr<SynergeticContract>;
 
 }  // namespace ledger
 }  // namespace fetch
-

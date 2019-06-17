@@ -17,8 +17,8 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/const_byte_array.hpp"
-#include "core/byte_array/encoders.hpp"
 #include "core/byte_array/decoders.hpp"
+#include "core/byte_array/encoders.hpp"
 #include "vm/module.hpp"
 #include "vm_modules/core/structured_data.hpp"
 
@@ -33,16 +33,16 @@ using fetch::byte_array::FromBase64;
 template <typename T>
 vm::Ptr<vm::Array<T>> CreateNewPrimitiveArray(vm::VM *vm, std::vector<T> &&items)
 {
-  vm::Ptr<vm::Array<T>> array = new vm::Array<T>(
-      vm, vm->GetTypeId<vm::IArray>(), vm->GetTypeId<T>(), int32_t(items.size()));
+  vm::Ptr<vm::Array<T>> array =
+      new vm::Array<T>(vm, vm->GetTypeId<vm::IArray>(), vm->GetTypeId<T>(), int32_t(items.size()));
   array->elements = std::move(items);
 
   return array;
 }
 
-} // namespace
+}  // namespace
 
-void StructuredData::Bind(vm::Module & module)
+void StructuredData::Bind(vm::Module &module)
 {
   auto interface = module.CreateClassType<StructuredData>("StructuredData");
 
@@ -78,7 +78,7 @@ void StructuredData::Bind(vm::Module & module)
 
   // add array support?
   module.GetClassInterface<vm::IArray>()
-    .CreateInstantiationType<vm::Array<vm::Ptr<StructuredData>>>();
+      .CreateInstantiationType<vm::Array<vm::Ptr<StructuredData>>>();
 }
 
 vm::Ptr<StructuredData> StructuredData::Constructor(vm::VM *vm, vm::TypeId type_id)
@@ -86,7 +86,8 @@ vm::Ptr<StructuredData> StructuredData::Constructor(vm::VM *vm, vm::TypeId type_
   return new StructuredData(vm, type_id);
 }
 
-vm::Ptr<StructuredData> StructuredData::Constructor(vm::VM *vm, vm::TypeId type_id, variant::Variant const &data)
+vm::Ptr<StructuredData> StructuredData::Constructor(vm::VM *vm, vm::TypeId type_id,
+                                                    variant::Variant const &data)
 {
   vm::Ptr<StructuredData> structured_data{};
 
@@ -115,8 +116,7 @@ vm::Ptr<StructuredData> StructuredData::Constructor(vm::VM *vm, vm::TypeId type_
 
 StructuredData::StructuredData(vm::VM *vm, vm::TypeId type_id)
   : vm::Object(vm, type_id)
-{
-}
+{}
 
 bool StructuredData::Has(vm::Ptr<vm::String> const &s)
 {
@@ -264,5 +264,5 @@ void StructuredData::SetString(vm::Ptr<vm::String> const &s, vm::Ptr<vm::String>
   }
 }
 
-} // namespace ledger
-} // namespace fetch
+}  // namespace vm_modules
+}  // namespace fetch

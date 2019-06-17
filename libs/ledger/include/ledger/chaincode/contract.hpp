@@ -19,11 +19,11 @@
 
 #include "core/serializers/byte_array_buffer.hpp"
 #include "crypto/identity.hpp"
+#include "ledger/chain/address.hpp"
 #include "ledger/identifier.hpp"
+#include "ledger/state_adapter.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 #include "variant/variant.hpp"
-#include "ledger/chain/address.hpp"
-#include "ledger/state_adapter.hpp"
 
 #include <atomic>
 #include <functional>

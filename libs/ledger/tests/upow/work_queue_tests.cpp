@@ -32,7 +32,6 @@ using WorkArrayPtr = std::unique_ptr<WorkArray>;
 class WorkQueueTests : public ::testing::Test
 {
 protected:
-
   void SetUp() override
   {
     work_queue_ = std::make_shared<WorkQueue>();
@@ -77,4 +76,4 @@ TEST_F(WorkQueueTests, SimpleTest)
   EXPECT_EQ(work_array_->at(2)->score(), 100);
 }
 
-} // namespace
+}  // namespace

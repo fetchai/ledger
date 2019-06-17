@@ -17,9 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ledger/dag/dag_interface.hpp"
 #include "ledger/storage_unit/transaction_sinks.hpp"
 #include "ledger/transaction_verifier.hpp"
-#include "ledger/dag/dag_interface.hpp"
 
 #include <atomic>
 #include <memory>
@@ -37,7 +37,7 @@ class TransactionProcessor : public TransactionSink
 {
 public:
   static constexpr char const *LOGGING_NAME = "TransactionProcessor";
-  using DAGPtr    = std::shared_ptr<::fetch::ledger::DAGInterface>;
+  using DAGPtr                              = std::shared_ptr<::fetch::ledger::DAGInterface>;
 
   // Construction / Destruction
   TransactionProcessor(DAGPtr dag, StorageUnitInterface &storage, BlockPackerInterface &packer,

@@ -35,8 +35,7 @@ namespace ledger {
  * @param storage The reference to the storage unit
  * @param miner The reference to the system miner
  */
-TransactionProcessor::TransactionProcessor(DAGPtr dag,
-                                           StorageUnitInterface &  storage,
+TransactionProcessor::TransactionProcessor(DAGPtr dag, StorageUnitInterface &storage,
                                            BlockPackerInterface &  packer,
                                            TransactionStatusCache &tx_status_cache,
                                            std::size_t             num_threads)

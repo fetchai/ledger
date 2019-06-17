@@ -43,19 +43,19 @@ namespace fetch {
 namespace ledger {
 namespace {
 
-  ConstByteArray const CONTRACT_SOURCE{"text"};
-  ConstByteArray const CONTRACT_HASH{"digest"};
-  ConstByteArray const CONTRACT_TYPE{"type"};
+ConstByteArray const CONTRACT_SOURCE{"text"};
+ConstByteArray const CONTRACT_HASH{"digest"};
+ConstByteArray const CONTRACT_TYPE{"type"};
 
-  using ContractTypeSet = std::unordered_set<ConstByteArray>;
+using ContractTypeSet = std::unordered_set<ConstByteArray>;
 
-  ContractTypeSet const VALID_CONTRACT_TYPES = {"smart", "synergetic"};
+ContractTypeSet const VALID_CONTRACT_TYPES = {"smart", "synergetic"};
 
-  bool IsValidContractType(ConstByteArray const &value)
-  {
-    return VALID_CONTRACT_TYPES.find(value) != VALID_CONTRACT_TYPES.end();
-  }
+bool IsValidContractType(ConstByteArray const &value)
+{
+  return VALID_CONTRACT_TYPES.find(value) != VALID_CONTRACT_TYPES.end();
 }
+}  // namespace
 
 SmartContractManager::SmartContractManager()
 {
@@ -215,7 +215,8 @@ storage::ResourceAddress SmartContractManager::CreateAddressForContract(
   return StateAdapter::CreateAddress(Identifier{NAME}, contract_id.qualifier());
 }
 
-storage::ResourceAddress SmartContractManager::CreateAddressForSynergeticContract(Digest const &contract_digest)
+storage::ResourceAddress SmartContractManager::CreateAddressForSynergeticContract(
+    Digest const &contract_digest)
 {
   return StateAdapter::CreateAddress(Identifier{NAME}, contract_digest.ToHex());
 }

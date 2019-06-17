@@ -29,12 +29,13 @@ public:
   // Construction / Destruction
   explicit SynergeticExecutor(StorageInterface &storage);
   SynergeticExecutor(SynergeticExecutor const &) = delete;
-  SynergeticExecutor(SynergeticExecutor &&) = delete;
-  ~SynergeticExecutor() override = default;
+  SynergeticExecutor(SynergeticExecutor &&)      = delete;
+  ~SynergeticExecutor() override                 = default;
 
   /// @name Synergetic Executor Interface
   /// @{
-  void Verify(WorkQueue &solutions, ProblemData const &problem_data, uint64_t block, std::size_t num_lanes) override;
+  void Verify(WorkQueue &solutions, ProblemData const &problem_data, uint64_t block,
+              std::size_t num_lanes) override;
   /// @}
 
   // Operators
@@ -42,10 +43,9 @@ public:
   SynergeticExecutor &operator=(SynergeticExecutor &&) = delete;
 
 private:
-
-  StorageInterface          &storage_;
+  StorageInterface &        storage_;
   SynergeticContractFactory factory_;
 };
 
-} // namespace ledger
-} // namespace fetch
+}  // namespace ledger
+}  // namespace fetch

@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/byte_array.hpp"
 #include "core/byte_array/const_byte_array.hpp"
+#include "core/serializers/byte_array.hpp"
 
 #include <array>
 #include <cstddef>
@@ -89,7 +89,7 @@ public:
   /// @{
   ConstByteArray const &address() const;
   ConstByteArray const &display() const;
-  bool empty() const;
+  bool                  empty() const;
   /// @}
 
   // Operators

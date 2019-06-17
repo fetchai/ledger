@@ -16,9 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/bitvector.hpp"
 #include "ledger/upow/synergetic_contract.hpp"
 #include "math/bignumber.hpp"
-#include "core/bitvector.hpp"
 
 #include "mock_storage_unit.hpp"
 
@@ -33,8 +33,8 @@ std::ostream &operator<<(std::ostream &s, ResourceAddress const &address)
   return s;
 }
 
-} // namespace storage
-} // namespace fetch
+}  // namespace storage
+}  // namespace fetch
 
 namespace {
 
@@ -61,14 +61,13 @@ BitVector CreateShards()
 class SynergeticContractTests : public ::testing::Test
 {
 protected:
-
   static BitVector const SHARDS;
 
   void CreateContract(char const *text)
   {
     // create and parse the contract
     contract_ = std::make_shared<SynergeticContract>(text);
-    storage_ = std::make_unique<StrictMock<MockStorageUnit>>();
+    storage_  = std::make_unique<StrictMock<MockStorageUnit>>();
   }
 
   void TearDown() override
@@ -78,7 +77,7 @@ protected:
     storage_.reset();
   }
 
-  SynergeticContractPtr contract_;
+  SynergeticContractPtr   contract_;
   StorageUnitInterfacePtr storage_;
 };
 
@@ -125,9 +124,9 @@ endfunction
 
   // define the problem beforehand
   contract_->DefineProblem({
-    R"({"value": 100})",
-    R"({"value": 150})",
-    R"({"value": 250})",
+      R"({"value": 100})",
+      R"({"value": 150})",
+      R"({"value": 250})",
   });
 
   ASSERT_TRUE(contract_->HasProblem());
@@ -151,8 +150,8 @@ endfunction
     uint64_t const block_number = 1024;
 
     // calculate the expected resources address
-    ResourceAddress const resource_address{
-      contract_->digest().ToHex() + "." + std::to_string(block_number) + ".state.solution"};
+    ResourceAddress const resource_address{contract_->digest().ToHex() + "." +
+                                           std::to_string(block_number) + ".state.solution"};
 
     EXPECT_CALL(*storage_, Lock(0));
     EXPECT_CALL(*storage_, Get(resource_address));
@@ -169,4 +168,4 @@ endfunction
   ASSERT_FALSE(contract_->HasSolution());
 }
 
-} // namespace
+}  // namespace

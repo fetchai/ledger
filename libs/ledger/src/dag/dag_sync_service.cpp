@@ -16,27 +16,29 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/dag/dag_sync_service.hpp"
-#include "ledger/dag/dag_sync_protocol.hpp"
 #include "core/service_ids.hpp"
+#include "ledger/dag/dag_sync_protocol.hpp"
+#include "ledger/dag/dag_sync_service.hpp"
 
 namespace fetch {
 namespace ledger {
 
-using DAGNodesSerializer        = fetch::serializers::ByteArrayBuffer;
+using DAGNodesSerializer = fetch::serializers::ByteArrayBuffer;
 
-DAGSyncService::DAGSyncService(MuddleEndpoint &muddle_endpoint, std::shared_ptr<ledger::DAGInterface> dag)
+DAGSyncService::DAGSyncService(MuddleEndpoint &                      muddle_endpoint,
+                               std::shared_ptr<ledger::DAGInterface> dag)
   : muddle_endpoint_(muddle_endpoint)
-  , client_(std::make_shared<Client>("R:DAGSync-L",
-                                     muddle_endpoint_, Muddle::Address(), SERVICE_DAG, CHANNEL_RPC))
-  , state_machine_{std::make_shared<core::StateMachine<State>>("DAGSyncService",
-                                                               State::INITIAL)}
+  , client_(std::make_shared<Client>("R:DAGSync-L", muddle_endpoint_, Muddle::Address(),
+                                     SERVICE_DAG, CHANNEL_RPC))
+  , state_machine_{std::make_shared<core::StateMachine<State>>("DAGSyncService", State::INITIAL)}
   , dag_{std::move(dag)}
   , dag_subscription_(muddle_endpoint_.Subscribe(SERVICE_DAG, CHANNEL_RPC_BROADCAST))
 {
   state_machine_->RegisterHandler(State::INITIAL, this, &DAGSyncService::OnInitial);
-  state_machine_->RegisterHandler(State::BROADCAST_RECENT, this, &DAGSyncService::OnBroadcastRecent);
-  state_machine_->RegisterHandler(State::ADD_BROADCAST_RECENT, this, &DAGSyncService::OnAddBroadcastRecent);
+  state_machine_->RegisterHandler(State::BROADCAST_RECENT, this,
+                                  &DAGSyncService::OnBroadcastRecent);
+  state_machine_->RegisterHandler(State::ADD_BROADCAST_RECENT, this,
+                                  &DAGSyncService::OnAddBroadcastRecent);
   state_machine_->RegisterHandler(State::QUERY_MISSING, this, &DAGSyncService::OnQueryMissing);
   state_machine_->RegisterHandler(State::RESOLVE_MISSING, this, &DAGSyncService::OnResolveMissing);
 
@@ -45,28 +47,29 @@ DAGSyncService::DAGSyncService(MuddleEndpoint &muddle_endpoint, std::shared_ptr<
     FETCH_UNUSED(previous);
     {
       FETCH_LOG_DEBUG(LOGGING_NAME, "Current state: ", ToString(current),
-                     " (previous: ", ToString(previous), ")");
+                      " (previous: ", ToString(previous), ")");
     }
   });
 
   // Broadcast blocks arrive here
-  dag_subscription_->SetMessageHandler([this](muddle::Packet::Address const &from, uint16_t, uint16_t, uint16_t,
-                                              muddle::Packet::Payload const &payload,
-                                              muddle::Packet::Address                transmitter) {
-    FETCH_UNUSED(from);
-    FETCH_UNUSED(transmitter);
+  dag_subscription_->SetMessageHandler(
+      [this](muddle::Packet::Address const &from, uint16_t, uint16_t, uint16_t,
+             muddle::Packet::Payload const &payload, muddle::Packet::Address transmitter) {
+        FETCH_UNUSED(from);
+        FETCH_UNUSED(transmitter);
 
-    DAGNodesSerializer serialiser(payload);
+        DAGNodesSerializer serialiser(payload);
 
-    std::vector<DAGNode> result;
-    serialiser >> result;
+        std::vector<DAGNode> result;
+        serialiser >> result;
 
-    std::lock_guard<fetch::mutex::Mutex> lock(mutex_);
-    this->recvd_broadcast_nodes_.push_back(std::move(result));
-  });
+        std::lock_guard<fetch::mutex::Mutex> lock(mutex_);
+        this->recvd_broadcast_nodes_.push_back(std::move(result));
+      });
 }
 
-DAGSyncService::State DAGSyncService::OnInitial(){
+DAGSyncService::State DAGSyncService::OnInitial()
+{
 
   if (muddle_endpoint_.GetDirectlyConnectedPeers().empty())
   {
@@ -81,13 +84,12 @@ DAGSyncService::State DAGSyncService::OnBroadcastRecent()
 {
   std::vector<DAGNode> nodes_to_broadcast = dag_->GetRecentlyAdded();
 
-  for(auto const &node : nodes_to_broadcast)
+  for (auto const &node : nodes_to_broadcast)
   {
     nodes_to_broadcast_.push_back(node);
   }
 
-
-  if(nodes_to_broadcast_.size() > 5)
+  if (nodes_to_broadcast_.size() > 5)
   {
     // determine the serialised size of the dag nodes to send
     fetch::serializers::SizeCounter<std::vector<DAGNode>> counter;
@@ -117,11 +119,11 @@ DAGSyncService::State DAGSyncService::OnAddBroadcastRecent()
     recvd_broadcast_nodes_.clear();
   }
 
-  for(auto const &nodes_vector : recvd_broadcast_nodes)
+  for (auto const &nodes_vector : recvd_broadcast_nodes)
   {
-    for(auto const &node : nodes_vector)
+    for (auto const &node : nodes_vector)
     {
-      if(node.Verify())
+      if (node.Verify())
       {
         FETCH_LOG_DEBUG(LOGGING_NAME, "Adding broadcasted dag node. Of: ", nodes_vector.size());
         dag_->AddDAGNode(node);
@@ -142,19 +144,20 @@ DAGSyncService::State DAGSyncService::OnQueryMissing()
 
   missing_dnodes_.clear();
 
-  if(missing_modulo_++ % 10000 == 0 && missing_pending_.Empty())
+  if (missing_modulo_++ % 10000 == 0 && missing_pending_.Empty())
   {
-    for(auto const &dnode : missing)
+    for (auto const &dnode : missing)
     {
       missing_dnodes_.insert(dnode);
     }
   }
 
-  if(!missing_dnodes_.empty())
+  if (!missing_dnodes_.empty())
   {
     for (auto const &connection : muddle_endpoint_.GetDirectlyConnectedPeers())
     {
-      auto promise = PromiseOfMissingNodes(client_->CallSpecificAddress(connection, RPC_DAG_STORE_SYNC, DAGSyncProtocol::REQUEST_NODES, missing_dnodes_));
+      auto promise = PromiseOfMissingNodes(client_->CallSpecificAddress(
+          connection, RPC_DAG_STORE_SYNC, DAGSyncProtocol::REQUEST_NODES, missing_dnodes_));
       missing_pending_.Add(connection, promise);
     }
 
@@ -177,7 +180,7 @@ DAGSyncService::State DAGSyncService::OnResolveMissing()
     {
       FETCH_LOG_DEBUG(LOGGING_NAME, "Node hash: ", dag_node.hash.ToBase64());
 
-      if(dag_node.Verify())
+      if (dag_node.Verify())
       {
         dag_->AddDAGNode(dag_node);
       }
@@ -217,8 +220,5 @@ char const *DAGSyncService::ToString(State state)
   return text;
 }
 
-} // namespace ledger
-} // namespace fetch
-
-
-
+}  // namespace ledger
+}  // namespace fetch

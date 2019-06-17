@@ -25,9 +25,8 @@ class Block;
 class SynergeticExecutionManagerInterface
 {
 public:
-
   // Construction / Destruction
-  SynergeticExecutionManagerInterface() = default;
+  SynergeticExecutionManagerInterface()          = default;
   virtual ~SynergeticExecutionManagerInterface() = default;
 
   enum ExecStatus
@@ -42,8 +41,8 @@ public:
 
   /// @name Synergetic Execution Manager Interface
   /// @{
-  virtual ExecStatus PrepareWorkQueue(Block const &current, Block const &previous) = 0;
-  virtual bool ValidateWorkAndUpdateState(uint64_t block, std::size_t num_lanes) = 0;
+  virtual ExecStatus PrepareWorkQueue(Block const &current, Block const &previous)     = 0;
+  virtual bool       ValidateWorkAndUpdateState(uint64_t block, std::size_t num_lanes) = 0;
   /// @}
 };
 
@@ -78,5 +77,5 @@ inline char const *ToString(SynergeticExecutionManagerInterface::ExecStatus stat
   return text;
 }
 
-} // namespace ledger
-} // namespace fetch
+}  // namespace ledger
+}  // namespace fetch

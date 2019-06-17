@@ -32,19 +32,19 @@ struct DAGEpoch
   using ConstByteArray = byte_array::ConstByteArray;
   using HasherType     = crypto::SHA256;
 
-  uint64_t                 block_number;
+  uint64_t block_number;
 
   // TODO(EJF): The order of these nodes will need to be revised
   std::set<ConstByteArray> tips{};
   std::set<ConstByteArray> data_nodes{};
   std::set<ConstByteArray> solution_nodes{};
 
-  ConstByteArray           hash;
+  ConstByteArray hash;
 
   // TODO(HUT): consider whether to actually transmit
   // Not transmitted, but built up and compared against the hash for validity
   // map of dag node hash to dag node
-  std::set<ConstByteArray>   all_nodes;
+  std::set<ConstByteArray> all_nodes;
 
   bool Contains(ConstByteArray const &digest) const
   {
@@ -89,4 +89,3 @@ void Deserialize(T &serializer, DAGEpoch &node)
 
 }  // namespace ledger
 }  // namespace fetch
-
