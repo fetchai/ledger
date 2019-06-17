@@ -187,7 +187,7 @@ TEST_F(DagTests, CheckDagMaintainsTipsCorrectly)
   // -Create epoch 1 on DAG 2 and synchronise (contains items A)
   // -Create epoch 2 on DAG 1 and synchronise (contains items B)
 
-  const size_t nodes_to_push   = 10;
+  const size_t nodes_to_push   = 1000;
 
   std::vector<std::string> items_A;
   std::vector<std::string> items_B;

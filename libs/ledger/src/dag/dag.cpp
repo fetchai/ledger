@@ -324,17 +324,8 @@ bool DAG::AddDAGNode(DAGNode node)
   assert(node.hash.size() > 0);
   FETCH_LOCK(mutex_);
 
-  FETCH_LOG_INFO(LOGGING_NAME, "Erasing: ", node.hash.ToBase64());
-
   missing_.erase(node.hash);
   bool success = PushInternal(std::make_shared<DAGNode>(node));
-
-  FETCH_LOG_INFO(LOGGING_NAME, "After pushing internal: ", success);
-
-  bool dummy;
-  auto dag_node_to_add = GetDAGNodeInternal(node.hash, true, dummy);
-
-  FETCH_LOG_INFO(LOGGING_NAME, "After trying to get internal: ", dag_node_to_add);
 
   return success;
 }
@@ -521,21 +512,18 @@ bool DAG::PushInternal(DAGNodePtr node)
   // First check if we have already seen this node
   if(AlreadySeenInternal(node))
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Already seen, so ignore");
     return false;
   }
 
   // Check if node refers too far back in the dag to be considered valid
   if(TooOldInternal(node->oldest_epoch_referenced))
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "too old, so ignore");
     return false;
   }
 
   // Check if loose
   if(IsLooseInternal(node))
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "is loose!");
     AddLooseNodeInternal(node);
 
     // There is now a chance that adding this node completed some loose nodes.
@@ -564,7 +552,7 @@ bool DAG::PushInternal(DAGNodePtr node)
 
 void DAG::HealLooseBlocksInternal(ConstByteArray added_hash)
 {
-  FETCH_LOG_INFO(LOGGING_NAME, "Healing: ", added_hash.ToBase64());
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Healing: ", added_hash.ToBase64());
 
   while(true)
   {
@@ -607,12 +595,7 @@ void DAG::HealLooseBlocksInternal(ConstByteArray added_hash)
       continue;
     }
 
-    FETCH_LOG_INFO(LOGGING_NAME, "Healing loose node: ", possibly_non_loose->hash.ToBase64());
-
-    if(loose_nodes_.find(possibly_non_loose->hash) == loose_nodes_.end())
-    {
-      FETCH_LOG_WARN(LOGGING_NAME, "Bad stuff happened");
-    }
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Healing loose node: ", possibly_non_loose->hash.ToBase64());
 
     // At this point, the node is either added or dropped
     assert(loose_nodes_.find(possibly_non_loose->hash) != loose_nodes_.end());
@@ -624,7 +607,7 @@ void DAG::HealLooseBlocksInternal(ConstByteArray added_hash)
     }
     else
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Oddly loose");
+      FETCH_LOG_WARN(LOGGING_NAME, "Dag structure keeping track of missing nodes might be invalid");
     }
   }
 }
@@ -984,8 +967,6 @@ bool DAG::SatisfyEpoch(DAGEpoch &epoch)
   FETCH_LOG_DEBUG(LOGGING_NAME, "Satisfying epoch: ", epoch.block_number);
   FETCH_LOCK(mutex_);
 
-  // some nodes will be looking for this epoch
-  //HealLooseBlocksInternal(epoch.hash);
 
   if(epoch.block_number == 0)
   {
@@ -1079,9 +1060,6 @@ bool DAG::SatisfyEpoch(DAGEpoch &epoch)
       if(node->oldest_epoch_referenced != previous_hashes_oldest || node->weight != previous_hashes_heaviest + 1)
       {
         FETCH_LOG_WARN(LOGGING_NAME, "Malformed node found in epoch: doesn't increment weight or refer to oldest correctly. Oldest: ", node->oldest_epoch_referenced, "  weight: ", node->weight);
-        //FETCH_LOG_WARN(LOGGING_NAME, "A: ", previous_hashes_oldest_allowed);
-        //FETCH_LOG_WARN(LOGGING_NAME, "A: ", previous_hashes_oldest_allowed);
-        exit(1); // TODO(HUT): remove exit condition
         return true;
       }
     }
@@ -1140,29 +1118,11 @@ bool DAG::SatisfyEpoch(DAGEpoch &epoch)
   if(missing_count || loose_count)
   {
     FETCH_LOG_INFO(LOGGING_NAME, "When satisfying, epoch ", epoch.block_number, " AKA: ",epoch.hash.ToBase64() , " is missing : ", missing_count, " of ", epoch.all_nodes.size(), ". Loose: ", loose_count);
-
-    //PrintLoose();
   }
 
-  // TODO(HUT): Verify Epoch here
+  // TODO(HUT): Verify Epoch here (loose nodes)
 
   return success;
-}
-
-void DAG::PrintLoose()
-{
-  for (auto it = loose_nodes_lookup_.begin(); it != loose_nodes_lookup_.end(); ++it)
-  {
-    for(auto const &dag_node_ptr : it->second)
-    {
-      FETCH_LOG_INFO(LOGGING_NAME, "Hash: ", it->first.ToBase64(), " node looking for: ", dag_node_ptr->hash.ToBase64());
-    }
-  }
-
-  for (auto it = loose_nodes_.begin(); it != loose_nodes_.end(); ++it)
-  {
-    FETCH_LOG_INFO(LOGGING_NAME, "All missing: ", it->first.ToBase64(), " sanity check: ", it->second->hash.ToBase64());
-  }
 }
 
 // TODO(HUT): this
@@ -1182,7 +1142,6 @@ bool DAG::RevertToEpoch(uint64_t epoch_bn_to_revert)
     loose_nodes_.clear();
     loose_nodes_lookup_.clear();
     recently_added_.clear();
-    FETCH_LOG_WARN(LOGGING_NAME, "REVERTING!!!!! to: ", epoch_bn_to_revert);
     missing_.clear();
 
     previous_epoch_ = DAGEpoch{};

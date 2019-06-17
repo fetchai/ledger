@@ -43,10 +43,10 @@ DAGSyncService::DAGSyncService(MuddleEndpoint &muddle_endpoint, std::shared_ptr<
   state_machine_->OnStateChange([this](State current, State previous) {
     FETCH_UNUSED(current);
     FETCH_UNUSED(previous);
-    //{
-    //  FETCH_LOG_INFO(LOGGING_NAME, "Current state: ", ToString(current),
-    //                 " (previous: ", ToString(previous), ")");
-    //}
+    {
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Current state: ", ToString(current),
+                     " (previous: ", ToString(previous), ")");
+    }
   });
 
   // Broadcast blocks arrive here
@@ -60,8 +60,6 @@ DAGSyncService::DAGSyncService(MuddleEndpoint &muddle_endpoint, std::shared_ptr<
 
     std::vector<DAGNode> result;
     serialiser >> result;
-
-    FETCH_LOG_INFO(LOGGING_NAME, "Saw ", result.size(), " nodes just there ");
 
     std::lock_guard<fetch::mutex::Mutex> lock(mutex_);
     this->recvd_broadcast_nodes_.push_back(std::move(result));
@@ -91,8 +89,6 @@ DAGSyncService::State DAGSyncService::OnBroadcastRecent()
 
   if(nodes_to_broadcast_.size() > 5)
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Broadcasting out ", nodes_to_broadcast_.size(), " nodes.");
-
     // determine the serialised size of the dag nodes to send
     fetch::serializers::SizeCounter<std::vector<DAGNode>> counter;
     counter << nodes_to_broadcast_;
@@ -121,18 +117,13 @@ DAGSyncService::State DAGSyncService::OnAddBroadcastRecent()
     recvd_broadcast_nodes_.clear();
   }
 
-  if(!recvd_broadcast_nodes.empty() && !recvd_broadcast_nodes.front().empty())
-  {
-    FETCH_LOG_INFO(LOGGING_NAME, "ARGH: ", recvd_broadcast_nodes.front().size());
-  }
-
   for(auto const &nodes_vector : recvd_broadcast_nodes)
   {
     for(auto const &node : nodes_vector)
     {
       if(node.Verify())
       {
-        FETCH_LOG_INFO(LOGGING_NAME, "Adding broadcasted dag node. Of: ", nodes_vector.size());
+        FETCH_LOG_DEBUG(LOGGING_NAME, "Adding broadcasted dag node. Of: ", nodes_vector.size());
         dag_->AddDAGNode(node);
       }
       else
@@ -149,8 +140,6 @@ DAGSyncService::State DAGSyncService::OnQueryMissing()
 {
   auto missing = dag_->GetRecentlyMissing();
 
-  //FETCH_LOG_WARN(LOGGING_NAME, "Missing pending: ", missing_pending_.Size(), " Empty : ", missing_pending_.Empty(), " recently missing: ", missing.size());
-
   missing_dnodes_.clear();
 
   if(missing_modulo_++ % 10000 == 0 && missing_pending_.Empty())
@@ -165,12 +154,8 @@ DAGSyncService::State DAGSyncService::OnQueryMissing()
   {
     for (auto const &connection : muddle_endpoint_.GetDirectlyConnectedPeers())
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Requesting: ", missing_dnodes_.size(), " missing dnodes! Peers: ", muddle_endpoint_.GetDirectlyConnectedPeers().size());
-
       auto promise = PromiseOfMissingNodes(client_->CallSpecificAddress(connection, RPC_DAG_STORE_SYNC, DAGSyncProtocol::REQUEST_NODES, missing_dnodes_));
       missing_pending_.Add(connection, promise);
-
-      FETCH_LOG_WARN(LOGGING_NAME, "Size is now: ", missing_pending_.Size());
     }
 
     state_machine_->Delay(std::chrono::milliseconds{200});
@@ -186,18 +171,11 @@ DAGSyncService::State DAGSyncService::OnResolveMissing()
 
   FETCH_UNUSED(counts);
 
-  bool found_any = false;
-
   for (auto &result : missing_pending_.Get(MAX_OBJECT_RESOLUTION_PER_CYCLE))
   {
-    found_any = true;
-    FETCH_LOG_INFO(LOGGING_NAME, "DAG got ", result.promised.size(), " nodes!");
-
-    auto aa = result.promised;
-
     for (auto &dag_node : result.promised)
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "Node hash: ", dag_node.hash.ToBase64());
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Node hash: ", dag_node.hash.ToBase64());
 
       if(dag_node.Verify())
       {
