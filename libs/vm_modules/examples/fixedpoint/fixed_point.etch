@@ -19,4 +19,19 @@ function main()
   print("f = d * e = ");
   var f = d * e;
   printLn(f);
+
+  var myArray = Array<Fixed32>(5);
+  var myArray2 = Array<Fixed64>(5);
+
+  for (i in 0:4)
+  	myArray[i] = a * toFixed32(i);
+  	myArray2[i] = d * toFixed64(i);
+    printLn(myArray[i]);
+    printLn(myArray2[i]);
+  endfor
+
+  var mymap = Map<Fixed32, Fixed32>();
+  mymap[a] = b;
+  print("mymap[" + toString(a) + "] = ");
+  printLn(mymap[a]);
 endfunction
