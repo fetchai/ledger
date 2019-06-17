@@ -45,15 +45,15 @@ FakeIoObserver::Status FakeIoObserver::Read(std::string const &key, void *data, 
 
   // ensure the buffer is the correct size
   auto const &stored_data = it->second;
-  size                    = stored_data.size();
-  if (size < stored_data.size())
+  auto const  orig_size{size};
+  size = stored_data.size();
+  if (orig_size < stored_data.size())
   {
     return Status::BUFFER_TOO_SMALL;
   }
 
   // copy the data back
   stored_data.ReadBytes(reinterpret_cast<uint8_t *>(data), size);
-  size = stored_data.size();
 
   return Status::OK;
 }
