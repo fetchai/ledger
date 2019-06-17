@@ -1,3 +1,4 @@
+#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -17,34 +18,21 @@
 //------------------------------------------------------------------------------
 
 #include "vectorise/fixed_point/fixed_point.hpp"
-#include "vm_modules/math/fixed_point.hpp"
-#include "vm_test_toolkit.hpp"
+#include "vm/module.hpp"
+#include "vm_modules/math/exp.hpp"
+#include "vm_modules/math/math.hpp"
+#include "vm_modules/math/sqrt.hpp"
+#include "vm_modules/math/trigonometry.hpp"
 
-namespace {
+namespace fetch {
+namespace vm_modules {
 
-class FixedPointTest : public ::testing::Test
+inline void CreateFixedPoint(std::shared_ptr<vm::Module> module)
 {
-public:
-  std::stringstream stdout;
-  VmTestToolkit     toolkit{&stdout};
-};
-
-TEST_F(FixedPointTest, create_fixed_point)
-{
-  auto m = toolkit.module();
-  fetch::vm_modules::CreateFixedPoint(m);
-
-  static char const *TEXT = R"(
-    function main()
-      print(1.0fp32);
-    endfunction
-  )";
-
-  ASSERT_TRUE(toolkit.Compile(TEXT));
-  ASSERT_TRUE(toolkit.Run());
-
-  double gt = static_cast<double>(fetch::fixed_point::fp32_t(1));
-  EXPECT_EQ(std::stod(stdout.str()), gt);
+  CreateAbs(*module.get());
+  CreateTrigonometry(*module.get());
+  BindExp(*module.get());
 }
 
-}  // namespace
+}  // namespace vm_modules
+}  // namespace fetch
