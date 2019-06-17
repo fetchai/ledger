@@ -57,14 +57,14 @@ public:
       fetch::vm::Ptr<fetch::vm::String> const &             input_node_names,
       fetch::vm::Ptr<fetch::vm::String> const &             output_node_names)
   {
-    // std::make_shared<fetch::vm_modules::ml::VMGraph>(graph->graph_)
     return new VMAdamOptimiser(vm, type_id, graph->graph_, {input_node_names->str},
                                output_node_names->str);
   }
 
-  DataType Run(fetch::vm::Ptr<fetch::vm_modules::ml::MnistDataLoader> const &loader)
+  DataType Run(fetch::vm::Ptr<fetch::vm_modules::ml::MnistDataLoader> const &loader,
+               uint64_t batch_size, uint64_t subset_size)
   {
-    return optimiser_.Run(loader->loader_);
+    return optimiser_.Run(loader->loader_, batch_size, subset_size);
   }
 
 private:
