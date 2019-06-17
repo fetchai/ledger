@@ -41,6 +41,25 @@ protected:
 
 template <typename T, typename = void>
 struct H;
+
+template<>
+struct H<fixed_point::fp32_t, void>
+{
+  size_t operator()(TemplateParameter1 const &key) const
+  {
+    return std::hash<int32_t>()(key.primitive.Get<int32_t>());
+  }
+};
+
+template<>
+struct H<fixed_point::fp64_t, void>
+{
+  size_t operator()(TemplateParameter1 const &key) const
+  {
+    return std::hash<int64_t>()(key.primitive.Get<int64_t>());
+  }
+};
+
 template <typename T>
 struct H<T, typename std::enable_if_t<IsPrimitive<T>::value>>
 {
@@ -49,6 +68,7 @@ struct H<T, typename std::enable_if_t<IsPrimitive<T>::value>>
     return std::hash<T>()(key.primitive.Get<T>());
   }
 };
+
 template <typename T>
 struct H<T, typename std::enable_if_t<IsPtr<T>::value>>
 {
@@ -286,11 +306,11 @@ inline Ptr<IMap> outer(TypeId key_type_id, TypeId value_type_id, VM *vm, TypeId 
   }
   case TypeIds::Fixed32:
   {
-    return inner<int32_t>(value_type_id, vm, type_id);
+    return inner<fixed_point::fp32_t>(value_type_id, vm, type_id);
   }
   case TypeIds::Fixed64:
   {
-    return inner<int64_t>(value_type_id, vm, type_id);
+    return inner<fixed_point::fp64_t>(value_type_id, vm, type_id);
   }
   default:
   {
