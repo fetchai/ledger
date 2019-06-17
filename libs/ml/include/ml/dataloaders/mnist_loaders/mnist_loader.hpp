@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "math/base_types.hpp"
+#include "math/meta/math_type_traits.hpp"
 #include "ml/dataloaders/dataloader.hpp"
 
 #include <exception>
@@ -29,24 +30,34 @@
 namespace fetch {
 namespace ml {
 
-template <typename T>
-class MNISTLoader : public DataLoader<uint64_t, T>
+template <typename LabelType, typename T>
+class MNISTLoader : public DataLoader<LabelType, T>
 {
 public:
-  MNISTLoader(std::string const &imagesFile, std::string const &labelsFile)
-    : cursor_(0)
+  using SizeType   = typename T::SizeType;
+  using DataType   = typename T::Type;
+  using ReturnType = std::pair<LabelType, std::vector<T>>;
+
+  MNISTLoader(std::string const &imagesFile, std::string const &labelsFile,
+              bool random_mode = false)
+    : DataLoader<LabelType, T>(random_mode)
+    , cursor_(0)
   {
     std::uint32_t recordLength(0);
     data_        = read_mnist_images(imagesFile, size_, recordLength);
     labels_      = read_mnist_labels(labelsFile, size_);
     figure_size_ = 28 * 28;
     assert(recordLength == figure_size_);
+
+    // Prepare return buffer
+    buffer_.second.push_back(T({28u, 28u, 1u}));
+    buffer_.first = LabelType({10u, 1u});
   }
 
-  virtual uint64_t Size() const
+  virtual SizeType Size() const
   {
     // MNIST files store the size as uint32_t but Dataloader interface require uint64_t
-    return static_cast<uint64_t>(size_);
+    return static_cast<SizeType>(size_);
   }
 
   virtual bool IsDone() const
@@ -59,61 +70,76 @@ public:
     cursor_ = 0;
   }
 
-  std::pair<uint64_t, T> GetAtIndex(uint64_t index) const
+  virtual ReturnType GetNext()
   {
-    T buffer({28u, 28u});
-    for (std::uint64_t i(0); i < figure_size_; ++i)
+    if (this->random_mode_)
     {
-      buffer.At(i) = typename T::Type(data_[index][i]) / typename T::Type(256);
+      GetAtIndex((SizeType)rand() % Size(), buffer_);
+      return buffer_;
     }
-    uint64_t label = (uint64_t)(labels_[index]);
-    return std::make_pair(label, buffer);
-  }
-
-  virtual std::pair<uint64_t, T> GetNext()
-  {
-    return GetAtIndex(cursor_++);
-  }
-
-  std::pair<uint64_t, T> GetRandom()
-  {
-    return GetAtIndex((uint64_t)rand() % Size());
+    else
+    {
+      GetAtIndex(static_cast<SizeType>(cursor_++), buffer_);
+      return buffer_;
+    }
   }
 
   void Display(T const &data) const
   {
-    for (std::uint64_t j(0); j < figure_size_; ++j)
+    for (SizeType i{0}; i < 28u; ++i)
     {
-      std::cout << (data.At(j) > typename T::Type(0.5) ? char(219) : ' ')
-                << ((j % 28 == 0) ? "\n" : "");
+      for (SizeType j{0}; j < 28u; ++j)
+      {
+
+        std::cout << (data.At(j, i, 0) > typename T::Type(0.5) ? char(219) : ' ');
+      }
+      std::cout << "\n";
     }
     std::cout << std::endl;
   }
 
-  std::pair<T, T> SubsetToArray(uint64_t subset_size)
+  ReturnType SubsetToArray(SizeType subset_size)
   {
-    T ret_labels({subset_size});
-    T ret_images({subset_size, figure_size_});
+    T              ret_labels({1, subset_size});
+    std::vector<T> ret_images;
+    ret_images.push_back(T({figure_size_, subset_size}));
 
     for (fetch::math::SizeType i(0); i < subset_size; ++i)
     {
-      ret_labels.Set(i, static_cast<typename T::Type>(labels_[i]));
-      for (fetch::math::SizeType j(0); j < figure_size_; ++j)
+      ret_labels(0, i) = static_cast<typename T::Type>(labels_[i]);
+      for (fetch::math::SizeType j{0}; j < figure_size_; ++j)
       {
-        ret_images.Set(i, j, static_cast<typename T::Type>(data_[i][j]) / typename T::Type(256));
+        ret_images.at(0)(j, i) = static_cast<typename T::Type>(data_[i][j]) / typename T::Type(256);
       }
     }
 
-    return std::make_pair(ret_images, ret_labels);
+    return std::make_pair(ret_labels, ret_images);
   }
 
-  std::pair<T, T> ToArray()
+  std::pair<LabelType, std::vector<T>> ToArray()
   {
     return SubsetToArray(size_);
   }
 
 private:
   using uchar = unsigned char;
+
+  void GetAtIndex(SizeType index, ReturnType &ret)
+  {
+    SizeType i{0};
+    auto     it = buffer_.second.at(0).begin();
+    while (it.is_valid())
+    {
+      *it = static_cast<DataType>(data_[index][i]) / DataType{256};
+      i++;
+      ++it;
+    }
+
+    buffer_.first.Fill(DataType{0});
+    buffer_.first(labels_[index], 0) = DataType{1.0};
+
+    ret = buffer_;
+  }
 
   uchar **read_mnist_images(std::string full_path, std::uint32_t &number_of_images,
                             unsigned int &image_size)
@@ -206,6 +232,8 @@ private:
   std::uint32_t cursor_;
   std::uint32_t size_;
   std::uint32_t figure_size_;
+
+  ReturnType buffer_;
 
   unsigned char **data_;
   unsigned char * labels_;

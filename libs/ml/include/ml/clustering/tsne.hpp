@@ -71,10 +71,11 @@ public:
   TSNE(ArrayType const &input_matrix, SizeType const &output_dimensions, DataType const &perplexity,
        SizeType const &random_seed)
   {
-    ArrayType output_matrix({input_matrix.shape().at(0), output_dimensions});
+    assert(input_matrix.shape().size() == 2);
+    ArrayType output_matrix({input_matrix.shape().at(1), output_dimensions});
     rng_.Seed(random_seed);
     RandomInitWeights(output_matrix);
-    Init(input_matrix, output_matrix, perplexity);
+    Init(input_matrix.Transpose(), output_matrix, perplexity);
   }
 
   /**
@@ -162,7 +163,7 @@ public:
 
   const ArrayType GetOutputMatrix() const
   {
-    return output_matrix_;
+    return output_matrix_.Transpose();
   }
 
 private:

@@ -26,6 +26,7 @@
 #include "ml/graph.hpp"
 #include "ml/layers/skip_gram.hpp"
 #include "ml/ops/loss_functions/cross_entropy.hpp"
+#include "ml/optimisation/adam_optimiser.hpp"
 
 #include <iostream>
 #include <map>
@@ -161,13 +162,13 @@ int main(int argc, char **argv)
   std::cout << "Setting up training data...: " << std::endl;
 
   // set up dataloader
-  SkipGramLoader<ArrayType> dataloader(sp);
+  SkipGramLoader<ArrayType> data_loader(sp, true);
 
   // load text from files as necessary and process text with dataloader
-  dataloader.AddData(fetch::ml::examples::GetTextString(training_text));
+  data_loader.AddData(fetch::ml::examples::GetTextString(training_text));
 
-  std::cout << "dataloader.VocabSize(): " << dataloader.VocabSize() << std::endl;
-  std::cout << "dataloader.Size(): " << dataloader.Size() << std::endl;
+  std::cout << "dataloader.VocabSize(): " << data_loader.VocabSize() << std::endl;
+  std::cout << "dataloader.Size(): " << data_loader.Size() << std::endl;
 
   ////////////////////////////////
   /// SETUP MODEL ARCHITECTURE ///
@@ -175,8 +176,8 @@ int main(int argc, char **argv)
 
   // set up model architecture
   std::cout << "building model architecture...: " << std::endl;
-  fetch::ml::Graph<ArrayType> g;
-  std::string                 output_name = Model(g, tp.embedding_size, dataloader.VocabSize());
+  std::shared_ptr<fetch::ml::Graph<ArrayType>> g(std::make_shared<fetch::ml::Graph<ArrayType>>());
+  std::string output_name = Model(*g, tp.embedding_size, data_loader.VocabSize());
 
   // set up loss
   CrossEntropy<ArrayType> criterion;
@@ -187,111 +188,16 @@ int main(int argc, char **argv)
 
   std::cout << "beginning training...: " << std::endl;
 
-  std::pair<ArrayType, SizeType> data;
-  ArrayType                      input(std::vector<typename ArrayType::SizeType>({1, 1}));
-  ArrayType                      context(std::vector<typename ArrayType::SizeType>({1, 1}));
-  ArrayType                      gt(std::vector<typename ArrayType::SizeType>({1, tp.output_size}));
-  ArrayType                      scale_factor(std::vector<typename ArrayType::SizeType>({1, 1}));
+  // Initialise Optimiser
+  fetch::ml::optimisers::AdamOptimiser<ArrayType, fetch::ml::ops::CrossEntropy<ArrayType>>
+      optimiser(g, {"Input", "Context"}, output_name, tp.learning_rate);
 
-  DataType correct_score      = 0;
-  DataType sum_average_scores = 0;
-  DataType sum_average_count  = 0;
-  DataType loss               = 0;
-  DataType batch_loss         = 0;
-  DataType epoch_loss         = 0;
-
-  SizeType batch_count = 0;
-  SizeType step_count  = 0;
-
-  ArrayType results;  // store predictions
-
-  for (SizeType i = 0; i < tp.training_epochs; ++i)
+  // Training loop
+  DataType loss;
+  for (SizeType i{0}; i < tp.training_epochs; i++)
   {
-    dataloader.Reset();
-
-    sum_average_scores = 0;
-    sum_average_count  = 0;
-
-    batch_count = 0;
-    step_count  = 0;
-
-    epoch_loss = 0;
-    batch_loss = 0;
-
-    // effectively clears any leftover gradients
-    g.Step(0);
-
-    while (!dataloader.IsDone())
-    {
-      gt.Fill(DataType(0));
-
-      // get random data point
-      data = dataloader.GetRandom();
-
-      // assign input and context vectors
-      input.At(0, 0)   = data.first.At(0);
-      context.At(0, 0) = data.first.At(1);
-
-      // assign label
-      gt.At(0, 0) = DataType(data.second);
-
-      g.SetInput("Input", input, false);
-      g.SetInput("Context", context, false);
-
-      // forward pass
-      results = g.Evaluate(output_name);
-
-      scale_factor.At(0, 0) =
-          (gt.At(0, 0) == DataType(0)) ? DataType(sp.k_negative_samples) : DataType(1);
-
-      if (((results.At(0, 0) >= DataType(0.5)) && (gt.At(0, 0) == DataType(1))) ||
-          ((results.At(0, 0) < DataType(0.5)) && (gt.At(0, 0) == DataType(0))))
-      {
-        ++correct_score;
-      }
-
-      loss = criterion.Forward({results, gt});
-
-      // diminish size of updates due to negative examples
-      if (data.second == 0)
-      {
-        loss /= DataType(sp.k_negative_samples);
-      }
-      batch_loss += loss;
-
-      // backprop
-      g.BackPropagate(output_name, criterion.Backward(std::vector<ArrayType>({results, gt})));
-
-      // take mini-batch learning step
-      if (step_count % tp.batch_size == (tp.batch_size - 1))
-      {
-        g.Step(tp.learning_rate);
-
-        // average prediction scores
-        sum_average_scores += (correct_score / double(tp.batch_size));
-        sum_average_count++;
-        correct_score = 0;
-
-        // sum epoch losses
-        epoch_loss += batch_loss;
-        batch_loss = 0;
-
-        ++batch_count;
-      }
-      ++step_count;
-    }
-
-    // print batch loss and embeddings distances
-    // Test trained embeddings
-    TestEmbeddings(g, output_name, dataloader, tp.test_word, tp.k);
-    std::cout << "epoch_loss: " << epoch_loss << std::endl;
-    std::cout << "average_score: " << sum_average_scores / sum_average_count << std::endl;
-    std::cout << "over [" << batch_count << "] batches involving [" << step_count
-              << "] steps total." << std::endl;
-    std::cout << "\n: " << std::endl;
-
-    // Save model
-    fetch::ml::examples::SaveModel(g, tp.save_loc);
+    loss = optimiser.Run(data_loader, tp.batch_size, tp.batch_size);
+    std::cout << "Loss: " << loss << std::endl;
   }
 
   //////////////////////////////////////
@@ -299,7 +205,7 @@ int main(int argc, char **argv)
   //////////////////////////////////////
 
   // Test trained embeddings
-  TestEmbeddings(g, output_name, dataloader, tp.test_word, tp.k);
+  TestEmbeddings(*g, output_name, data_loader, tp.test_word, tp.k);
 
   return 0;
 }

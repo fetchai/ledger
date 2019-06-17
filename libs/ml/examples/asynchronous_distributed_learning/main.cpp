@@ -62,7 +62,7 @@ class TrainingClient
 {
 public:
   TrainingClient(std::string const &images, std::string const &labels)
-    : dataloader_(images, labels)
+    : dataloader_(images, labels, true)
   {
     g_.AddNode<PlaceHolder<ArrayType>>("Input", {});
     g_.AddNode<FullyConnected<ArrayType>>("FC1", {"Input"}, 28u * 28u, 10u);
@@ -75,10 +75,9 @@ public:
 
   void Train(unsigned int numberOfBatches)
   {
-    float                             loss = 0;
-    CrossEntropy<ArrayType>           criterion;
-    std::pair<std::size_t, ArrayType> input;
-    ArrayType                         gt{std::vector<typename ArrayType::SizeType>({1, 10})};
+    float                                        loss = 0;
+    CrossEntropy<ArrayType>                      criterion;
+    std::pair<ArrayType, std::vector<ArrayType>> input;
     for (unsigned int i(0); i < numberOfBatches; ++i)
     {
       loss = 0;
@@ -86,15 +85,13 @@ public:
       {
         // Random sampling ensures that for relatively few training steps the proportion of shared
         // training data is low
-        input = dataloader_.GetRandom();
-        g_.SetInput("Input", input.second);
-        gt.Fill(0);
-        gt.At(input.first) = DataType(1.0);
+        input = dataloader_.GetNext();
+        g_.SetInput("Input", input.second.at(0));
         {
           std::lock_guard<std::mutex> l(m_);
           ArrayType const &           results = g_.Evaluate("Softmax").Copy();
-          loss += criterion.Forward({results, gt});
-          g_.BackPropagate("Softmax", criterion.Backward({results, gt}));
+          loss += criterion.Forward({results, input.first});
+          g_.BackPropagate("Softmax", criterion.Backward({results, input.first}));
         }
       }
       losses_values_.push_back(loss);
@@ -157,7 +154,7 @@ private:
   fetch::ml::Graph<ArrayType> g_;
 
   // Client own dataloader
-  fetch::ml::MNISTLoader<ArrayType> dataloader_;
+  fetch::ml::MNISTLoader<ArrayType, ArrayType> dataloader_;
 
   // Loss history
   std::vector<float> losses_values_;
