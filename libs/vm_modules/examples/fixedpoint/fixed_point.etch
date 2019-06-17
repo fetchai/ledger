@@ -19,8 +19,4 @@ function main()
   print("f = d * e = ");
   var f = d * e;
   printLn(f);
-  //var g = exp(f);
-  //print("exp(f) = ");
-  //printLn(g);
-  printLn(exp(4.0));
 endfunction
