@@ -38,4 +38,6 @@ function main()
   var pi : Fixed64 = 3.1415fp64;
   printLn("exp(" + toString(d) + ") = " + toString(exp(d)));
   printLn("sin(" + toString(pi) + ") = " + toString(sin(pi)));
+
+  printLn("pow(" + toString(d) + ", " + toString(f) + ") = " + toString(pow(d, f)));
 endfunction
