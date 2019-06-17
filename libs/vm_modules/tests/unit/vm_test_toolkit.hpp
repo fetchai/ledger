@@ -43,6 +43,7 @@ using fetch::vm::Executable;
 using fetch::vm::Compiler;
 using fetch::vm::Module;
 using fetch::vm::Variant;
+using fetch::vm_modules::VMFactory;
 
 using VmErrors      = std::vector<std::string>;
 using ExecutablePtr = std::unique_ptr<Executable>;
@@ -57,7 +58,7 @@ class VmTestToolkit
 public:
   VmTestToolkit()
     : observer_{std::make_unique<MockIoObserver>()}
-    , module_{fetch::vm_modules::VMFactory::GetModule()}
+    , module_{VMFactory::GetModule(VMFactory::USE_SMART_CONTRACTS)}
   {}
 
   bool Compile(char const *text)
