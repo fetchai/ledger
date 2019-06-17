@@ -27,7 +27,6 @@
 #include <iomanip>
 #include <iostream>
 #include <limits>
-#include <sstream>
 
 namespace fetch {
 namespace fixed_point {
