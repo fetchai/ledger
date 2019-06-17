@@ -46,8 +46,8 @@ std::ostream &operator<<(std::ostream &s, BlockCoordinator::State state)
   return s;
 }
 
-} // namespace ledger
-} // namespace fetch
+}  // namespace ledger
+}  // namespace fetch
 
 using fetch::ledger::BlockCoordinator;
 using fetch::ledger::MainChain;

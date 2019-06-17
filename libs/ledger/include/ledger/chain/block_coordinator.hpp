@@ -110,7 +110,6 @@ public:
 
   static char const *ToString(State state);
 
-
   // Construction / Destruction
   BlockCoordinator(MainChain &chain, DAGPtr const &dag,
                    ExecutionManagerInterface &execution_manager, StorageUnitInterface &storage_unit,
@@ -166,7 +165,6 @@ public:
   // Operators
   BlockCoordinator &operator=(BlockCoordinator const &) = delete;
   BlockCoordinator &operator=(BlockCoordinator &&) = delete;
-
 
 private:
   enum class ExecutionStatus

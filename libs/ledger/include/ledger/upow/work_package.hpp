@@ -48,7 +48,6 @@ public:
   }
 
 private:
-
   /// @name defining work and candidate solutions
   /// @{
   Address   contract_digest_{};  //< Contract name which is extracted from the DAG

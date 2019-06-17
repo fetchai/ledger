@@ -47,7 +47,7 @@ DAGSyncService::DAGSyncService(MuddleEndpoint &                      muddle_endp
     FETCH_LOG_DEBUG(LOGGING_NAME, "Current state: ", ToString(current),
                     " (previous: ", ToString(previous), ")");
   });
-#endif // FETCH_LOG_DEBUG_ENABLED
+#endif  // FETCH_LOG_DEBUG_ENABLED
 
   // Broadcast blocks arrive here
   dag_subscription_->SetMessageHandler(
