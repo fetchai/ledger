@@ -90,9 +90,6 @@ std::vector<std::pair<typename ArrayType::SizeType, typename ArrayType::Type>> K
 }  // namespace details
 
 /**
- */
-
-/**
  * Interface to get K nearest neighbours method comparing array with input vector
  * Uses cosine distance function
  * @tparam ArrayType  template for type of array

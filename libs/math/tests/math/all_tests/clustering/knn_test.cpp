@@ -63,7 +63,7 @@ TYPED_TEST(ClusteringTest, knn_cosine_test)
   ArrayType A = ArrayType::FromString("1, 2, 3, 4; 2, 3, 4, 5; -1, -2, -3, -4; -2, -3, -4, -5");
   ArrayType v = ArrayType::FromString("3, 4, 5, 6");
 
-  auto output = fetch::math::clustering::KNNCosine(A, v, 4);
+  auto output = KNNCosine(A, v, 4);
 
   EXPECT_EQ(output.at(0).first, SizeType(1));
   EXPECT_NEAR(double(output.at(0).second), double(0.00215564), 1e-4);
