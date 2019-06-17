@@ -21,6 +21,7 @@
 #include "ledger/chain/transaction.hpp"
 #include "core/state_machine.hpp"
 #include "core/service_ids.hpp"
+#include "core/byte_array/const_byte_array.hpp"
 #include "network/muddle/muddle.hpp"
 
 #include "network/generics/requesting_queue.hpp"
@@ -58,6 +59,7 @@ public:
   static constexpr char const *LOGGING_NAME = "DAGSyncService";
 
   using Muddle                = muddle::Muddle;
+  using MuddleEndpoint         = muddle::MuddleEndpoint;
   using TransactionPtr          = std::shared_ptr<Transaction>;
 
   using Client                = muddle::rpc::Client;
@@ -70,7 +72,7 @@ public:
   using MissingNodes           = DAG::MissingNodes;
   using RequestingMissingNodes = network::RequestingQueueOf<muddle::Packet::Address, MissingNodes>;
   using PromiseOfMissingNodes  = network::PromiseOf<MissingNodes>;
-  using MuddleEndpoint         = muddle::MuddleEndpoint;
+  using MissingDNodes  = std::set<byte_array::ConstByteArray>;
 
   DAGSyncService(MuddleEndpoint &muddle_endpoint, std::shared_ptr<ledger::DAGInterface> dag);
   ~DAGSyncService() = default;
@@ -81,6 +83,8 @@ public:
   {
     return state_machine_;
   }
+
+  static char const *ToString(State state);
 
 private:
 
@@ -96,7 +100,13 @@ private:
   std::shared_ptr<ledger::DAGInterface>  dag_;
   SubscriptionPtr               dag_subscription_;
 
+  std::vector<DAGNode> nodes_to_broadcast_;
+  uint32_t missing_modulo_ = 0;
+
+  RequestingMissingNodes missing_set_;
   RequestingMissingNodes missing_pending_;
+
+  MissingDNodes missing_dnodes_;
 
   fetch::mutex::Mutex               mutex_{__LINE__, __FILE__};
   std::vector<std::vector<DAGNode>> recvd_broadcast_nodes_;

@@ -42,6 +42,7 @@ DAG::DAG(std::string const &db_name, bool load, CertificatePtr certificate)
     tips_.clear();
     node_pool_.clear();
     loose_nodes_.clear();
+    loose_nodes_lookup_.clear();
     recently_added_.clear();
     missing_.clear();
 
@@ -133,7 +134,15 @@ std::vector<DAGNode> DAG::GetLatest(bool previous_epoch_only)
 
   for(auto const &node_hash : previous_epoch_.all_nodes)
   {
-    ret.push_back(*GetDAGNodeInternal(node_hash));
+    bool dummy;
+    auto node_internal = GetDAGNodeInternal(node_hash, false, dummy);
+
+    if(!node_internal)
+    {
+      FETCH_LOG_ERROR(LOGGING_NAME, "Node referenced in previous epoch not found!");
+    }
+
+    ret.push_back(*node_internal);
   }
 
   if (!previous_epoch_only)
@@ -142,7 +151,15 @@ std::vector<DAGNode> DAG::GetLatest(bool previous_epoch_only)
     {
       for (auto const &node_hash : epoch.all_nodes)
       {
-        ret.push_back(*GetDAGNodeInternal(node_hash));
+        bool dummy;
+        auto node_internal = GetDAGNodeInternal(node_hash, false, dummy);
+
+        if(!node_internal)
+        {
+          FETCH_LOG_ERROR(LOGGING_NAME, "Node referenced in previous epoch not found!");
+        }
+
+        ret.push_back(*node_internal);
       }
     }
   }
@@ -306,7 +323,19 @@ bool DAG::AddDAGNode(DAGNode node)
 {
   assert(node.hash.size() > 0);
   FETCH_LOCK(mutex_);
+
+  FETCH_LOG_INFO(LOGGING_NAME, "Erasing: ", node.hash.ToBase64());
+
+  missing_.erase(node.hash);
   bool success = PushInternal(std::make_shared<DAGNode>(node));
+
+  FETCH_LOG_INFO(LOGGING_NAME, "After pushing internal: ", success);
+
+  bool dummy;
+  auto dag_node_to_add = GetDAGNodeInternal(node.hash, true, dummy);
+
+  FETCH_LOG_INFO(LOGGING_NAME, "After trying to get internal: ", dag_node_to_add);
+
   return success;
 }
 
@@ -318,11 +347,10 @@ std::vector<DAGNode> DAG::GetRecentlyAdded()
   return ret;
 }
 
-std::vector<fetch::byte_array::ConstByteArray> DAG::GetRecentlyMissing()
+std::set<fetch::byte_array::ConstByteArray> DAG::GetRecentlyMissing()
 {
   FETCH_LOCK(mutex_);
-  std::vector<NodeHash> ret = std::move(missing_);
-  missing_.clear();
+  std::set<NodeHash> ret = missing_;
   return ret;
 }
 
@@ -347,7 +375,8 @@ void DAG::AddLooseNodeInternal(DAGNodePtr node)
   {
     if(node_pool_.find(dag_node_prev) == node_pool_.end() &&  HashInPrevEpochsInternal(dag_node_prev) == false)
     {
-      loose_nodes_[dag_node_prev].push_back(node);
+      loose_nodes_lookup_[dag_node_prev].push_back(node);
+      loose_nodes_[node->hash] = node;
     }
   }
 }
@@ -402,7 +431,8 @@ bool DAG::TooOldInternal(uint64_t oldest_reference)
 bool DAG::GetDAGNode(ConstByteArray const &hash, DAGNode &node)
 {
   FETCH_LOCK(mutex_);
-  auto ret = GetDAGNodeInternal(hash);
+  bool dummy;
+  auto ret = GetDAGNodeInternal(hash, true, dummy);
 
   if(ret)
   {
@@ -450,13 +480,26 @@ bool DAG::GetWork(ConstByteArray const &hash, Work &work)
   return success;
 }
 
-std::shared_ptr<DAGNode> DAG::GetDAGNodeInternal(ConstByteArray hash)
+std::shared_ptr<DAGNode> DAG::GetDAGNodeInternal(ConstByteArray hash, bool including_loose, bool &was_loose)
 {
   // Find in node pool
   auto it2 = node_pool_.find(hash);
   if(it2 != node_pool_.end())
   {
     return node_pool_[hash];
+  }
+
+  was_loose = false;
+
+  // If we are also looking for loose blocks
+  if(including_loose)
+  {
+    auto it = loose_nodes_.find(hash);
+    if(it != loose_nodes_.end())
+    {
+      was_loose = true;
+      return loose_nodes_[hash];
+    }
   }
 
   // Find in long term storage
@@ -467,15 +510,6 @@ std::shared_ptr<DAGNode> DAG::GetDAGNodeInternal(ConstByteArray hash)
     return ret;
   }
 
-  // find in loose nodes
-  // TODO(HUT): think about whether to do this 
-  //auto it = loose_nodes_.find(hash);
-  //if(it != loose_nodes_.end())
-  //{
-  //  return loose_nodes_[hash];
-  //}
-
-  // TODO(HUT): check this evaluates to false
   return {};
 }
 
@@ -487,25 +521,33 @@ bool DAG::PushInternal(DAGNodePtr node)
   // First check if we have already seen this node
   if(AlreadySeenInternal(node))
   {
+    FETCH_LOG_INFO(LOGGING_NAME, "Already seen, so ignore");
     return false;
   }
 
   // Check if node refers too far back in the dag to be considered valid
   if(TooOldInternal(node->oldest_epoch_referenced))
   {
+    FETCH_LOG_INFO(LOGGING_NAME, "too old, so ignore");
     return false;
   }
 
   // Check if loose
   if(IsLooseInternal(node))
   {
+    FETCH_LOG_INFO(LOGGING_NAME, "is loose!");
     AddLooseNodeInternal(node);
+
+    // There is now a chance that adding this node completed some loose nodes.
+    HealLooseBlocksInternal(node->hash);
+
     return true;
   }
 
   // At this point the node is suitable for addition and needs to be checked
   if(NodeInvalidInternal(node))
   {
+    FETCH_LOG_WARN(LOGGING_NAME, "is INVALID!");
     return false;
   }
 
@@ -522,12 +564,14 @@ bool DAG::PushInternal(DAGNodePtr node)
 
 void DAG::HealLooseBlocksInternal(ConstByteArray added_hash)
 {
+  FETCH_LOG_INFO(LOGGING_NAME, "Healing: ", added_hash.ToBase64());
+
   while(true)
   {
     // 'it' will be a vector of dag nodes that were waiting for this hash
-    auto it = loose_nodes_.find(added_hash);
+    auto it = loose_nodes_lookup_.find(added_hash);
 
-    if(it == loose_nodes_.end())
+    if(it == loose_nodes_lookup_.end())
     {
       break;
     }
@@ -536,7 +580,7 @@ void DAG::HealLooseBlocksInternal(ConstByteArray added_hash)
 
     if(loose_nodes.empty())
     {
-      loose_nodes_.erase(it);
+      loose_nodes_lookup_.erase(it);
       break;
     }
 
@@ -544,14 +588,14 @@ void DAG::HealLooseBlocksInternal(ConstByteArray added_hash)
     DAGNodePtr possibly_non_loose = loose_nodes.back();
     loose_nodes.pop_back();
 
-    // dag node could have other hash -> loose reference in loose_nodes_.
+    // dag node could have other hash -> loose reference in loose_nodes_lookup_.
     // if it doesn't, all hashes it was looking for have been seen. Either
     // it gets added now or it's discarded
     bool hash_still_in_loose = false;
 
     for(auto const &dag_node_prev : possibly_non_loose->previous)
     {
-      if(loose_nodes_.find(dag_node_prev) != loose_nodes_.end())
+      if(loose_nodes_lookup_.find(dag_node_prev) != loose_nodes_lookup_.end())
       {
         hash_still_in_loose = true;
         break;
@@ -563,14 +607,24 @@ void DAG::HealLooseBlocksInternal(ConstByteArray added_hash)
       continue;
     }
 
-    // TODO(HUT): discuss w/colleagues
+    FETCH_LOG_INFO(LOGGING_NAME, "Healing loose node: ", possibly_non_loose->hash.ToBase64());
+
+    if(loose_nodes_.find(possibly_non_loose->hash) == loose_nodes_.end())
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Bad stuff happened");
+    }
+
     // At this point, the node is either added or dropped
+    assert(loose_nodes_.find(possibly_non_loose->hash) != loose_nodes_.end());
+    loose_nodes_.erase(possibly_non_loose->hash);
+
     if(!IsLooseInternal(possibly_non_loose))
     {
       PushInternal(possibly_non_loose);
     }
     else
     {
+      FETCH_LOG_WARN(LOGGING_NAME, "Oddly loose");
     }
   }
 }
@@ -664,9 +718,14 @@ bool DAG::CommitEpoch(DAGEpoch new_epoch)
   FETCH_LOG_INFO(LOGGING_NAME, "Committing epoch: ", new_epoch.block_number, " Nodes: ", new_epoch.all_nodes.size());
   FETCH_LOCK(mutex_);
 
+  if (new_epoch.block_number == 0)
+  {
+    return false;
+  }
+
   if(new_epoch.block_number != most_recent_epoch_ + 1)
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Attempt to commit a bad epoch: not an increment on the current DAG epoch!");
+    FETCH_LOG_WARN(LOGGING_NAME, "Attempt to commit a bad epoch: not an increment on the current DAG epoch! Current: ", most_recent_epoch_, " attempted: ", new_epoch.block_number);
     return false;
   }
 
@@ -680,9 +739,18 @@ bool DAG::CommitEpoch(DAGEpoch new_epoch)
     auto it_node_to_rmv = node_pool_.find(node_hash);
     if(it_node_to_rmv != node_pool_.end())
     {
-      DAGNodePtr node_to_remove = it_node_to_rmv->second;
+      DAGNodePtr &node_to_remove = it_node_to_rmv->second;
       finalised_dnodes_.Set(storage::ResourceID(node_to_remove->hash), *node_to_remove);
       node_pool_.erase(it_node_to_rmv);
+    }
+    else if(loose_nodes_.find(node_hash) != loose_nodes_.end())
+    {
+      auto loose_node_it = loose_nodes_.find(node_hash);
+      DAGNodePtr &node_to_remove = loose_node_it->second;
+      finalised_dnodes_.Set(storage::ResourceID(node_to_remove->hash), *node_to_remove);
+      loose_nodes_.erase(loose_node_it);
+
+      // TODO(HUT): check that there are no references in loose_nodes_lookup_
     }
     else
     {
@@ -916,6 +984,9 @@ bool DAG::SatisfyEpoch(DAGEpoch &epoch)
   FETCH_LOG_DEBUG(LOGGING_NAME, "Satisfying epoch: ", epoch.block_number);
   FETCH_LOCK(mutex_);
 
+  // some nodes will be looking for this epoch
+  //HealLooseBlocksInternal(epoch.hash);
+
   if(epoch.block_number == 0)
   {
     return true;
@@ -977,20 +1048,20 @@ bool DAG::SatisfyEpoch(DAGEpoch &epoch)
     }
     else // normal case, dag node references two others
     {
-
       uint64_t previous_hashes_oldest_allowed = previous_epochs_.empty() ? 0 : previous_epochs_.front().block_number;
-      uint64_t previous_hashes_oldest         = 0;
+      uint64_t previous_hashes_oldest         = std::numeric_limits<uint64_t>::max();
       uint64_t previous_hashes_heaviest       = 0;
       DAGNodePtr getme;
 
       for(auto const &prev_hash : node->previous)
       {
-        getme = GetDAGNodeInternal(prev_hash);
+        bool dummy;
+        getme = GetDAGNodeInternal(prev_hash, true, dummy);
         if(!getme)
         {
           return true;
         }
-        previous_hashes_oldest   = std::max(previous_hashes_oldest, getme->oldest_epoch_referenced);
+        previous_hashes_oldest   = std::min(previous_hashes_oldest, getme->oldest_epoch_referenced);
         previous_hashes_heaviest = std::max(previous_hashes_heaviest, getme->weight);
       }
 
@@ -1000,9 +1071,17 @@ bool DAG::SatisfyEpoch(DAGEpoch &epoch)
         return true;
       }
 
+      if(node->oldest_epoch_referenced != previous_hashes_oldest)
+      {
+        FETCH_LOG_WARN(LOGGING_NAME, " condition one has happened");
+      }
+
       if(node->oldest_epoch_referenced != previous_hashes_oldest || node->weight != previous_hashes_heaviest + 1)
       {
-        FETCH_LOG_WARN(LOGGING_NAME, "Malformed node found in epoch: doesn't increment weight or refer to oldest correctly");
+        FETCH_LOG_WARN(LOGGING_NAME, "Malformed node found in epoch: doesn't increment weight or refer to oldest correctly. Oldest: ", node->oldest_epoch_referenced, "  weight: ", node->weight);
+        //FETCH_LOG_WARN(LOGGING_NAME, "A: ", previous_hashes_oldest_allowed);
+        //FETCH_LOG_WARN(LOGGING_NAME, "A: ", previous_hashes_oldest_allowed);
+        exit(1); // TODO(HUT): remove exit condition
         return true;
       }
     }
@@ -1013,16 +1092,27 @@ bool DAG::SatisfyEpoch(DAGEpoch &epoch)
   DAGNodePtr dag_node_to_add;
   bool success = true;
   uint64_t missing_count = 0;
+  uint64_t loose_count = 0;
 
   for(auto const &node_hash : epoch.all_nodes)
   {
-    auto dag_node_to_add = GetDAGNodeInternal(node_hash);
+    bool was_loose = false;
+    // Note: this includes loose blocks, but it will be checked later that there are no loose blocks in the final epoch
+    auto dag_node_to_add = GetDAGNodeInternal(node_hash, true, was_loose);
+
+    if(was_loose)
+    {
+      loose_count++;
+    }
 
     if(!dag_node_to_add)
     {
       success = false;
-      FETCH_LOG_INFO(LOGGING_NAME, "Found missing DAG node/hash: ", node_hash.ToBase64());
-      missing_.push_back(node_hash);
+      if(missing_count < 10)
+      {
+        FETCH_LOG_INFO(LOGGING_NAME, "Found missing DAG node/hash when satisfying epoch: ", node_hash.ToBase64());
+      }
+      missing_.insert(node_hash);
       missing_count++;
       continue;
     }
@@ -1047,11 +1137,32 @@ bool DAG::SatisfyEpoch(DAGEpoch &epoch)
 #endif
   }
 
-  FETCH_LOG_DEBUG(LOGGING_NAME, "When satisfying, epoch is missing : ", missing_count, " of ", epoch.all_nodes.size());
+  if(missing_count || loose_count)
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "When satisfying, epoch ", epoch.block_number, " AKA: ",epoch.hash.ToBase64() , " is missing : ", missing_count, " of ", epoch.all_nodes.size(), ". Loose: ", loose_count);
+
+    //PrintLoose();
+  }
 
   // TODO(HUT): Verify Epoch here
 
   return success;
+}
+
+void DAG::PrintLoose()
+{
+  for (auto it = loose_nodes_lookup_.begin(); it != loose_nodes_lookup_.end(); ++it)
+  {
+    for(auto const &dag_node_ptr : it->second)
+    {
+      FETCH_LOG_INFO(LOGGING_NAME, "Hash: ", it->first.ToBase64(), " node looking for: ", dag_node_ptr->hash.ToBase64());
+    }
+  }
+
+  for (auto it = loose_nodes_.begin(); it != loose_nodes_.end(); ++it)
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "All missing: ", it->first.ToBase64(), " sanity check: ", it->second->hash.ToBase64());
+  }
 }
 
 // TODO(HUT): this
@@ -1069,7 +1180,9 @@ bool DAG::RevertToEpoch(uint64_t epoch_bn_to_revert)
     tips_.clear();
     node_pool_.clear();
     loose_nodes_.clear();
+    loose_nodes_lookup_.clear();
     recently_added_.clear();
+    FETCH_LOG_WARN(LOGGING_NAME, "REVERTING!!!!! to: ", epoch_bn_to_revert);
     missing_.clear();
 
     previous_epoch_ = DAGEpoch{};
@@ -1125,7 +1238,8 @@ bool DAG::RevertToEpoch(uint64_t epoch_bn_to_revert)
 
     for(auto const &dag_node_hash : epoch_to_erase.all_nodes)
     {
-      nodes_to_readd.push_back(GetDAGNodeInternal(dag_node_hash));
+      bool dummy;
+      nodes_to_readd.push_back(GetDAGNodeInternal(dag_node_hash, false, dummy));
     }
     current_index--;
   }

@@ -133,6 +133,16 @@ struct DAGNode
 
     return crypto::Verifier::Verify(identity, hash, signature);
   }
+
+  bool operator>(DAGNode const &rhs) const
+  {
+    return hash > rhs.hash;
+  }
+
+  bool operator<(DAGNode const &rhs) const
+  {
+    return hash < rhs.hash;
+  }
 };
 
 template <typename T>

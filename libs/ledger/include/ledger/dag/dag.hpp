@@ -88,8 +88,8 @@ private:
 
 public:
 
-  using MissingTXs        = std::vector<NodeHash>;
-  using MissingNodes      = std::vector<DAGNode>;
+  using MissingNodeHashes = std::set<NodeHash>;
+  using MissingNodes      = std::set<DAGNode>;
 
   DAG() = delete;
   DAG(std::string const &db_name, bool, CertificatePtr certificate);
@@ -135,7 +135,7 @@ public:
   std::vector<DAGNode>  GetRecentlyAdded() override;
 
   // DAG node hashes this miner knows should exist
-  MissingTXs GetRecentlyMissing() override;
+  MissingNodeHashes GetRecentlyMissing() override;
 
   bool GetDAGNode(ConstByteArray const &hash, DAGNode &node) override;
   bool GetWork(ConstByteArray const &hash, Work &work) override;
@@ -155,16 +155,17 @@ private:
   DAGEpoch              temp_recently_created_epoch_;         // Most recent epoch, not in deque for convenience
 
   // volatile state
-  std::unordered_map<DAGTipID, DAGTipPtr>               all_tips_;          // All tips are here
-  std::unordered_map<NodeHash, DAGTipPtr>               tips_;              // lookup tips of the dag pointing at a certain node hash
-  std::unordered_map<NodeHash, DAGNodePtr>              node_pool_;         // dag nodes that are not finalised but are still valid
-  std::unordered_map<NodeHash, std::vector<DAGNodePtr>> loose_nodes_;       // nodes that are missing one or more references (waiting on NodeHash)
+  std::unordered_map<DAGTipID, DAGTipPtr>               all_tips_;            // All tips are here
+  std::unordered_map<NodeHash, DAGTipPtr>               tips_;                // lookup tips of the dag pointing at a certain node hash
+  std::unordered_map<NodeHash, DAGNodePtr>              node_pool_;           // dag nodes that are not finalised but are still valid
+  std::unordered_map<NodeHash, DAGNodePtr>              loose_nodes_;         // nodes that are missing one or more references (waiting on NodeHash)
+  std::unordered_map<NodeHash, std::vector<DAGNodePtr>> loose_nodes_lookup_;  // nodes that are missing one or more references (waiting on NodeHash)
 
   // std::unordered_map<NodeHash, uint64_t>                loose_nodes_ttl_;   // TODO(HUT): loose nodes management scheme
 
   // Used for sync purposes
   std::vector<DAGNode>  recently_added_;                                  // nodes that have been recently added
-  std::vector<NodeHash> missing_;                                         // node hashes that we know are missing
+  std::set<NodeHash> missing_;                                            // node hashes that we know are missing
 
   // Internal functions don't need locking and can recursively call themselves etc.
   bool PushInternal(DAGNodePtr node);
@@ -178,11 +179,12 @@ private:
   void HealLooseBlocksInternal(ConstByteArray added_hash);
   void UpdateStaleTipsInternal();
   bool NodeInvalidInternal(DAGNodePtr node);
-  DAGNodePtr GetDAGNodeInternal(ConstByteArray hash);
+  DAGNodePtr GetDAGNodeInternal(ConstByteArray hash, bool, bool &);
   void TraverseFromTips(std::set<ConstByteArray> const &, std::function<void (NodeHash)>, std::function<bool (NodeHash)>);
   bool GetEpochFromStorage(std::string const &, DAGEpoch &);
   bool SetEpochInStorage(std::string const &, DAGEpoch const &, bool);
   void Flush();
+  void PrintLoose();
 
   void DeleteTip(DAGTipID tip);
   void DeleteTip(NodeHash hash);

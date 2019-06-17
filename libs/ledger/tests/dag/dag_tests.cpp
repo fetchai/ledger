@@ -27,6 +27,8 @@
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
 
+#include <algorithm>
+
 using ::testing::_;
 using ::testing::AnyNumber;
 using ::testing::InSequence;
@@ -185,7 +187,7 @@ TEST_F(DagTests, CheckDagMaintainsTipsCorrectly)
   // -Create epoch 1 on DAG 2 and synchronise (contains items A)
   // -Create epoch 2 on DAG 1 and synchronise (contains items B)
 
-  const size_t nodes_to_push   = 1000;
+  const size_t nodes_to_push   = 10;
 
   std::vector<std::string> items_A;
   std::vector<std::string> items_B;
@@ -231,7 +233,11 @@ TEST_F(DagTests, CheckDagMaintainsTipsCorrectly)
   ASSERT_EQ(dag_2->SatisfyEpoch(epoch_2), false); // can't satisfy!
 
   // Provide dag 2 the missing nodes
-  for(auto const &newly_minted_dnode : dag_->GetRecentlyAdded())
+  auto recently_added = dag_->GetRecentlyAdded();
+
+  std::random_shuffle(recently_added.begin(), recently_added.end());
+
+  for(auto const &newly_minted_dnode : recently_added)
   {
     dag_2->AddDAGNode(newly_minted_dnode);
   }

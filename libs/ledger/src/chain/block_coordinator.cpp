@@ -202,6 +202,13 @@ BlockCoordinator::State BlockCoordinator::OnSynchronising()
     current_block_ = chain_.GetHeaviestBlock();
   }
 
+  if (!current_block_)
+  {
+    FETCH_LOG_ERROR(LOGGING_NAME, "Current block is still null!!!");
+
+    current_block_ = chain_.GetHeaviestBlock();
+  }
+
   // determine if extra debug is wanted or needed
   bool const extra_debug = syncing_periodic_.Poll();
 
@@ -553,7 +560,7 @@ BlockCoordinator::State BlockCoordinator::OnWaitForTransactions(State current, S
       {
         storage_unit_.IssueCallForMissingTxs(*pending_txs_);
         have_asked_for_missing_txs_ = true;
-        wait_for_tx_timeout_.Restart(WAIT_FOR_TX_TIMEOUT_INTERVAL);
+        wait_for_tx_timeout_.Restart(WAIT_FOR_TX_TIMEOUT_INTERVAL * 10); // TODO(HUT): remove this
       }
     }
   }

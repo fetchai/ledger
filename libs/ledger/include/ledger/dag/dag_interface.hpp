@@ -35,8 +35,10 @@ public:
   using NodeHash       = ConstByteArray;
   using EpochHash      = ConstByteArray;
   using CertificatePtr = p2p::P2PService::CertificatePtr;
-  using MissingTXs     = std::vector<NodeHash>;
-  using MissingNodes   = std::vector<DAGNode>;
+
+  // TODO(HUT): cleanly define things here
+  using MissingTXs     = std::set<NodeHash>;
+  using MissingNodes   = std::set<DAGNode>;
 
   enum class DAGTypes
   {

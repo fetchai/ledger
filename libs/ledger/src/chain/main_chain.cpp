@@ -207,6 +207,8 @@ MainChain::BlockPtr MainChain::GetHeaviestBlock() const
  */
 bool MainChain::RemoveTree(BlockHash const &removed_hash, BlockHashSet &invalidated_blocks)
 {
+  FETCH_LOG_WARN(LOGGING_NAME, "removing tree!");
+
   // check if the block is actually found in this chain
   IntBlockPtr root;
   bool        retVal{LookupBlock(removed_hash, root)};
@@ -500,6 +502,10 @@ MainChain::BlockPtr MainChain::GetBlock(BlockHash hash) const
   {
     // convert the pointer type to per const
     output_block = std::static_pointer_cast<Block const>(internal_block);
+  }
+  else
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "main chain failed to lookup block!");
   }
 
   return output_block;
@@ -873,6 +879,8 @@ void MainChain::TrimCache()
  */
 void MainChain::FlushBlock(IntBlockPtr const &block)
 {
+  FETCH_LOG_WARN(LOGGING_NAME, "Flushing block!");
+
   // remove the block from the block map
   UncacheBlock(block->body.hash);
 

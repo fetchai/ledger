@@ -40,7 +40,14 @@ DAGSyncService::DAGSyncService(MuddleEndpoint &muddle_endpoint, std::shared_ptr<
   state_machine_->RegisterHandler(State::QUERY_MISSING, this, &DAGSyncService::OnQueryMissing);
   state_machine_->RegisterHandler(State::RESOLVE_MISSING, this, &DAGSyncService::OnResolveMissing);
 
-  state_machine_->OnStateChange([](State /*new_state*/, State /* old_state */) { });
+  state_machine_->OnStateChange([this](State current, State previous) {
+    FETCH_UNUSED(current);
+    FETCH_UNUSED(previous);
+    //{
+    //  FETCH_LOG_INFO(LOGGING_NAME, "Current state: ", ToString(current),
+    //                 " (previous: ", ToString(previous), ")");
+    //}
+  });
 
   // Broadcast blocks arrive here
   dag_subscription_->SetMessageHandler([this](muddle::Packet::Address const &from, uint16_t, uint16_t, uint16_t,
@@ -53,6 +60,8 @@ DAGSyncService::DAGSyncService(MuddleEndpoint &muddle_endpoint, std::shared_ptr<
 
     std::vector<DAGNode> result;
     serialiser >> result;
+
+    FETCH_LOG_INFO(LOGGING_NAME, "Saw ", result.size(), " nodes just there ");
 
     std::lock_guard<fetch::mutex::Mutex> lock(mutex_);
     this->recvd_broadcast_nodes_.push_back(std::move(result));
@@ -74,23 +83,29 @@ DAGSyncService::State DAGSyncService::OnBroadcastRecent()
 {
   std::vector<DAGNode> nodes_to_broadcast = dag_->GetRecentlyAdded();
 
-  if(!nodes_to_broadcast.empty())
+  for(auto const &node : nodes_to_broadcast)
   {
+    nodes_to_broadcast_.push_back(node);
+  }
+
+
+  if(nodes_to_broadcast_.size() > 5)
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "Broadcasting out ", nodes_to_broadcast_.size(), " nodes.");
+
     // determine the serialised size of the dag nodes to send
     fetch::serializers::SizeCounter<std::vector<DAGNode>> counter;
-    counter << nodes_to_broadcast;
+    counter << nodes_to_broadcast_;
 
     // allocate the buffer and serialise the dag nodes to send
     DAGNodesSerializer serializer;
     serializer.Reserve(counter.size());
-    serializer << nodes_to_broadcast;
+    serializer << nodes_to_broadcast_;
+
+    nodes_to_broadcast_.clear();
 
     // broadcast the block to the nodes on the network
     muddle_endpoint_.Broadcast(SERVICE_DAG, CHANNEL_RPC_BROADCAST, serializer.data());
-  }
-  else
-  {
-    state_machine_->Delay(std::chrono::milliseconds{500});
   }
 
   return State::ADD_BROADCAST_RECENT;
@@ -103,6 +118,12 @@ DAGSyncService::State DAGSyncService::OnAddBroadcastRecent()
   {
     std::lock_guard<fetch::mutex::Mutex> lock(mutex_);
     recvd_broadcast_nodes = std::move(recvd_broadcast_nodes_);
+    recvd_broadcast_nodes_.clear();
+  }
+
+  if(!recvd_broadcast_nodes.empty() && !recvd_broadcast_nodes.front().empty())
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "ARGH: ", recvd_broadcast_nodes.front().size());
   }
 
   for(auto const &nodes_vector : recvd_broadcast_nodes)
@@ -111,7 +132,12 @@ DAGSyncService::State DAGSyncService::OnAddBroadcastRecent()
     {
       if(node.Verify())
       {
+        FETCH_LOG_INFO(LOGGING_NAME, "Adding broadcasted dag node. Of: ", nodes_vector.size());
         dag_->AddDAGNode(node);
+      }
+      else
+      {
+        FETCH_LOG_WARN(LOGGING_NAME, "Failed to verify broadcast dag node!");
       }
     }
   }
@@ -121,38 +147,57 @@ DAGSyncService::State DAGSyncService::OnAddBroadcastRecent()
 
 DAGSyncService::State DAGSyncService::OnQueryMissing()
 {
-  for (auto const &connection : muddle_endpoint_.GetDirectlyConnectedPeers())
+  auto missing = dag_->GetRecentlyMissing();
+
+  //FETCH_LOG_WARN(LOGGING_NAME, "Missing pending: ", missing_pending_.Size(), " Empty : ", missing_pending_.Empty(), " recently missing: ", missing.size());
+
+  missing_dnodes_.clear();
+
+  if(missing_modulo_++ % 10000 == 0 && missing_pending_.Empty())
   {
-    auto missing = dag_->GetRecentlyMissing();
-
-    if(!missing.empty())
+    for(auto const &dnode : missing)
     {
-      auto promise = PromiseOfMissingNodes(client_->CallSpecificAddress(connection, RPC_DAG_STORE_SYNC, DAGSyncProtocol::REQUEST_NODES, missing));
-      missing_pending_.Add(connection, promise);
+      missing_dnodes_.insert(dnode);
     }
-
-    // Only request from one peer for now
-    break;
   }
 
-  state_machine_->Delay(std::chrono::milliseconds{500});
+  if(!missing_dnodes_.empty())
+  {
+    for (auto const &connection : muddle_endpoint_.GetDirectlyConnectedPeers())
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Requesting: ", missing_dnodes_.size(), " missing dnodes! Peers: ", muddle_endpoint_.GetDirectlyConnectedPeers().size());
+
+      auto promise = PromiseOfMissingNodes(client_->CallSpecificAddress(connection, RPC_DAG_STORE_SYNC, DAGSyncProtocol::REQUEST_NODES, missing_dnodes_));
+      missing_pending_.Add(connection, promise);
+
+      FETCH_LOG_WARN(LOGGING_NAME, "Size is now: ", missing_pending_.Size());
+    }
+
+    state_machine_->Delay(std::chrono::milliseconds{200});
+  }
+
   return State::RESOLVE_MISSING;
 }
 
 DAGSyncService::State DAGSyncService::OnResolveMissing()
 {
-  std::this_thread::sleep_for(std::chrono::milliseconds(100));
-
   auto counts = missing_pending_.Resolve();
+  missing_pending_.DiscardFailures();
+
   FETCH_UNUSED(counts);
+
+  bool found_any = false;
 
   for (auto &result : missing_pending_.Get(MAX_OBJECT_RESOLUTION_PER_CYCLE))
   {
+    found_any = true;
     FETCH_LOG_INFO(LOGGING_NAME, "DAG got ", result.promised.size(), " nodes!");
+
+    auto aa = result.promised;
 
     for (auto &dag_node : result.promised)
     {
-      FETCH_LOG_DEBUG(LOGGING_NAME, "Node hash: ", dag_node.hash.ToBase64());
+      FETCH_LOG_INFO(LOGGING_NAME, "Node hash: ", dag_node.hash.ToBase64());
 
       if(dag_node.Verify())
       {
@@ -160,13 +205,38 @@ DAGSyncService::State DAGSyncService::OnResolveMissing()
       }
       else
       {
-        FETCH_LOG_INFO(LOGGING_NAME, "Node hash: ", dag_node.hash.ToBase64(), " not verified!");
-        exit(1);
+        FETCH_LOG_WARN(LOGGING_NAME, "Node hash: ", dag_node.hash.ToBase64(), " not verified!");
       }
     }
   }
 
   return State::BROADCAST_RECENT;
+}
+
+char const *DAGSyncService::ToString(State state)
+{
+  char const *text = "Unknown";
+
+  switch (state)
+  {
+  case State::INITIAL:
+    text = "Initial State";
+    break;
+  case State::BROADCAST_RECENT:
+    text = "Broadcasting recent";
+    break;
+  case State::ADD_BROADCAST_RECENT:
+    text = "Add broadcast recent";
+    break;
+  case State::QUERY_MISSING:
+    text = "Query for missing nodes";
+    break;
+  case State::RESOLVE_MISSING:
+    text = "Resolve promise for missing nodes";
+    break;
+  }
+
+  return text;
 }
 
 } // namespace ledger
