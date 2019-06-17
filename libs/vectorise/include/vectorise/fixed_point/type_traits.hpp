@@ -19,7 +19,6 @@
 
 #include <type_traits>
 
-#include "core/byte_array/byte_array.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 
 namespace fetch {
