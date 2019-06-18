@@ -18,6 +18,8 @@
 //------------------------------------------------------------------------------
 
 #include "core/serializers/byte_array_buffer.hpp"
+#include "vectorise/fixed_point/fixed_point.hpp"
+#include "vectorise/fixed_point/type_traits.hpp"
 
 #include "vm/address.hpp"
 #include "vm/vm.hpp"
@@ -54,7 +56,7 @@ public:
                                         Args &&... args);
 };
 
-template <typename T, typename = std::enable_if_t<std::is_arithmetic<T>::value>>
+template <typename T, typename = std::enable_if_t<math::meta::IsArithmetic<T>>>
 inline IoObserverInterface::Status ReadHelper(std::string const &name, T &val,
                                               IoObserverInterface &io)
 {
@@ -62,7 +64,7 @@ inline IoObserverInterface::Status ReadHelper(std::string const &name, T &val,
   return io.Read(name, &val, buffer_size);
 }
 
-template <typename T, typename = std::enable_if_t<std::is_arithmetic<T>::value>>
+template <typename T, typename = std::enable_if_t<math::meta::IsArithmetic<T>>>
 inline IoObserverInterface::Status WriteHelper(std::string const &name, T const &val,
                                                IoObserverInterface &io)
 {
@@ -289,6 +291,14 @@ inline Ptr<IState> IState::ConstructIntrinsic(VM *vm, TypeId type_id, TypeId val
   case TypeIds::Float64:
   {
     return new State<double>(vm, type_id, value_type_id, std::forward<Args>(args)...);
+  }
+  case TypeIds::Fixed32:
+  {
+    return new State<fixed_point::fp32_t>(vm, type_id, value_type_id, std::forward<Args>(args)...);
+  }
+  case TypeIds::Fixed64:
+  {
+    return new State<fixed_point::fp64_t>(vm, type_id, value_type_id, std::forward<Args>(args)...);
   }
   default:
   {

@@ -21,6 +21,9 @@
 #include <string>
 #include <vector>
 
+#include "vm_modules/math/math.hpp"
+#include "vm_modules/math/random.hpp"
+
 namespace fetch {
 namespace vm {
 

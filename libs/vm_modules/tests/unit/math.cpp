@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -17,35 +16,31 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/meta/math_type_traits.hpp"
-#include "math/standard_functions/exp.hpp"
-#include "vm/module.hpp"
+#include "math/standard_functions/abs.hpp"
+#include "vm_modules/math/math.hpp"
+#include "vm_test_toolkit.hpp"
 
-#include <cmath>
+namespace {
 
-namespace fetch {
-namespace vm_modules {
-
-template <typename T>
-fetch::math::meta::IfIsMath<T, T> Exp(fetch::vm::VM *, T const &a)
+class MathTests : public ::testing::Test
 {
-  T x;
-  fetch::math::Exp(a, x);
-  return x;
+public:
+  std::stringstream stdout;
+  VmTestToolkit     toolkit{&stdout};
+};
+
+TEST_F(MathTests, abs_test)
+{
+  static char const *TEXT = R"(
+    function main()
+      print(abs(-1));
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_TRUE(toolkit.Run());
+
+  ASSERT_EQ(stdout.str(), std::to_string(fetch::math::Abs(-1)));
 }
 
-inline void BindExp(fetch::vm::Module &module)
-{
-  module.CreateFreeFunction<float_t>("exp", &Exp<float_t>);
-  module.CreateFreeFunction<double_t>("exp", &Exp<double_t>);
-  module.CreateFreeFunction<fixed_point::fp32_t>("exp", &Exp<fixed_point::fp32_t>);
-  module.CreateFreeFunction<fixed_point::fp64_t>("exp", &Exp<fixed_point::fp64_t>);
-}
-
-inline void BindExp(std::shared_ptr<vm::Module> module)
-{
-  BindExp(*module.get());
-}
-
-}  // namespace vm_modules
-}  // namespace fetch
+}  // namespace

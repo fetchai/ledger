@@ -19,6 +19,7 @@
 
 #include "math/meta/math_type_traits.hpp"
 #include "math/standard_functions/abs.hpp"
+#include "vm/module.hpp"
 
 #include <cstdlib>
 
@@ -68,19 +69,11 @@ meta::IfIsUnsignedInteger<T, T> IntegerAbs(fetch::vm::VM *, T const &value)
 
 static void CreateAbs(fetch::vm::Module &module)
 {
-  module.CreateFreeFunction<int8_t>("abs", &IntegerAbs<int8_t>);
-  module.CreateFreeFunction<int16_t>("abs", &IntegerAbs<int16_t>);
-  module.CreateFreeFunction<int32_t>("abs", &IntegerAbs<int32_t>);
-  module.CreateFreeFunction<int64_t>("abs", &IntegerAbs<int64_t>);
-
-  // included for completeness sake
-  module.CreateFreeFunction<uint8_t>("abs", &IntegerAbs<uint8_t>);
-  module.CreateFreeFunction<uint16_t>("abs", &IntegerAbs<uint16_t>);
-  module.CreateFreeFunction<uint32_t>("abs", &IntegerAbs<uint32_t>);
-  module.CreateFreeFunction<uint64_t>("abs", &IntegerAbs<uint64_t>);
-
+  module.CreateFreeFunction<int32_t>("abs", &Abs<int32_t>);
   module.CreateFreeFunction<float_t>("abs", &Abs<float_t>);
   module.CreateFreeFunction<double_t>("abs", &Abs<double_t>);
+  module.CreateFreeFunction<fixed_point::fp32_t>("abs", &Abs<fixed_point::fp32_t>);
+  module.CreateFreeFunction<fixed_point::fp64_t>("abs", &Abs<fixed_point::fp64_t>);
 }
 
 inline void CreateAbs(std::shared_ptr<vm::Module> module)

@@ -17,34 +17,25 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/meta/math_type_traits.hpp"
-#include "math/standard_functions/exp.hpp"
+#include "vectorise/fixed_point/fixed_point.hpp"
 #include "vm/module.hpp"
-
-#include <cmath>
+#include "vm_modules/math/exp.hpp"
+#include "vm_modules/math/log.hpp"
+#include "vm_modules/math/math.hpp"
+#include "vm_modules/math/pow.hpp"
+#include "vm_modules/math/sqrt.hpp"
+#include "vm_modules/math/trigonometry.hpp"
 
 namespace fetch {
 namespace vm_modules {
 
-template <typename T>
-fetch::math::meta::IfIsMath<T, T> Exp(fetch::vm::VM *, T const &a)
+inline void CreateFixedPoint(std::shared_ptr<vm::Module> module)
 {
-  T x;
-  fetch::math::Exp(a, x);
-  return x;
-}
-
-inline void BindExp(fetch::vm::Module &module)
-{
-  module.CreateFreeFunction<float_t>("exp", &Exp<float_t>);
-  module.CreateFreeFunction<double_t>("exp", &Exp<double_t>);
-  module.CreateFreeFunction<fixed_point::fp32_t>("exp", &Exp<fixed_point::fp32_t>);
-  module.CreateFreeFunction<fixed_point::fp64_t>("exp", &Exp<fixed_point::fp64_t>);
-}
-
-inline void BindExp(std::shared_ptr<vm::Module> module)
-{
+  CreateAbs(*module.get());
+  CreateTrigonometry(*module.get());
   BindExp(*module.get());
+  BindLog(*module.get());
+  BindPow(*module.get());
 }
 
 }  // namespace vm_modules

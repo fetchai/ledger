@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "vectorise/fixed_point/fixed_point.hpp"
 #include "vm/vm.hpp"
 
 namespace fetch {
@@ -40,6 +41,25 @@ protected:
 
 template <typename T, typename = void>
 struct H;
+
+template <>
+struct H<fixed_point::fp32_t, void>
+{
+  size_t operator()(TemplateParameter1 const &key) const
+  {
+    return std::hash<int32_t>()(key.primitive.Get<int32_t>());
+  }
+};
+
+template <>
+struct H<fixed_point::fp64_t, void>
+{
+  size_t operator()(TemplateParameter1 const &key) const
+  {
+    return std::hash<int64_t>()(key.primitive.Get<int64_t>());
+  }
+};
+
 template <typename T>
 struct H<T, typename std::enable_if_t<IsPrimitive<T>::value>>
 {
@@ -48,6 +68,7 @@ struct H<T, typename std::enable_if_t<IsPrimitive<T>::value>>
     return std::hash<T>()(key.primitive.Get<T>());
   }
 };
+
 template <typename T>
 struct H<T, typename std::enable_if_t<IsPtr<T>::value>>
 {
@@ -220,6 +241,14 @@ inline Ptr<IMap> inner(TypeId value_type_id, VM *vm, TypeId type_id)
   {
     return Ptr<IMap>(new Container<Key, double>(vm, type_id));
   }
+  case TypeIds::Fixed32:
+  {
+    return Ptr<IMap>(new Container<Key, fixed_point::fp32_t>(vm, type_id));
+  }
+  case TypeIds::Fixed64:
+  {
+    return Ptr<IMap>(new Container<Key, fixed_point::fp64_t>(vm, type_id));
+  }
   default:
   {
     return Ptr<IMap>(new Container<Key, Ptr<Object>>(vm, type_id));
@@ -274,6 +303,14 @@ inline Ptr<IMap> outer(TypeId key_type_id, TypeId value_type_id, VM *vm, TypeId 
   case TypeIds::Float64:
   {
     return inner<double>(value_type_id, vm, type_id);
+  }
+  case TypeIds::Fixed32:
+  {
+    return inner<fixed_point::fp32_t>(value_type_id, vm, type_id);
+  }
+  case TypeIds::Fixed64:
+  {
+    return inner<fixed_point::fp64_t>(value_type_id, vm, type_id);
   }
   default:
   {

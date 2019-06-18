@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "vectorise/fixed_point/fixed_point.hpp"
 #include "vm/object.hpp"
 
 namespace fetch {
@@ -106,6 +107,18 @@ union Primitive
     return f64;
   }
 
+  template <typename T>
+  typename std::enable_if_t<std::is_same<T, fixed_point::fp32_t>::value, T> Get() const
+  {
+    return fixed_point::fp32_t::FromBase(i32);
+  }
+
+  template <typename T>
+  typename std::enable_if_t<std::is_same<T, fixed_point::fp64_t>::value, T> Get() const
+  {
+    return fixed_point::fp64_t::FromBase(i64);
+  }
+
   void Set(bool value)
   {
     ui8 = uint8_t(value);
@@ -159,6 +172,16 @@ union Primitive
   void Set(double value)
   {
     f64 = value;
+  }
+
+  void Set(fixed_point::fp32_t value)
+  {
+    i32 = value.Data();
+  }
+
+  void Set(fixed_point::fp64_t value)
+  {
+    i64 = value.Data();
   }
 };
 
@@ -558,6 +581,14 @@ inline void Serialize(ByteArrayBuffer &buffer, Variant const &variant)
     buffer << variant.primitive.f64;
     break;
 
+  case TypeIds::Fixed32:
+    buffer << variant.primitive.i32;
+    break;
+
+  case TypeIds::Fixed64:
+    buffer << variant.primitive.i64;
+    break;
+
   default:
     if (!variant.IsPrimitive())
     {
@@ -632,6 +663,14 @@ inline void Deserialize(ByteArrayBuffer &buffer, Variant &variant)
 
     case TypeIds::Float64:
       buffer >> variant.primitive.f64;
+      break;
+
+    case TypeIds::Fixed32:
+      buffer >> variant.primitive.i32;
+      break;
+
+    case TypeIds::Fixed64:
+      buffer >> variant.primitive.i64;
       break;
 
     default:

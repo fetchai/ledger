@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "math/meta/math_type_traits.hpp"
-#include "math/standard_functions/exp.hpp"
+#include "math/standard_functions/pow.hpp"
 #include "vm/module.hpp"
 
 #include <cmath>
@@ -27,22 +27,22 @@ namespace fetch {
 namespace vm_modules {
 
 template <typename T>
-fetch::math::meta::IfIsMath<T, T> Exp(fetch::vm::VM *, T const &a)
+fetch::math::meta::IfIsMath<T, T> Pow(fetch::vm::VM *, T const &a, T const &b)
 {
   T x;
-  fetch::math::Exp(a, x);
+  fetch::math::Pow(a, b, x);
   return x;
 }
 
-inline void BindExp(fetch::vm::Module &module)
+inline void BindPow(fetch::vm::Module &module)
 {
-  module.CreateFreeFunction<float_t>("exp", &Exp<float_t>);
-  module.CreateFreeFunction<double_t>("exp", &Exp<double_t>);
-  module.CreateFreeFunction<fixed_point::fp32_t>("exp", &Exp<fixed_point::fp32_t>);
-  module.CreateFreeFunction<fixed_point::fp64_t>("exp", &Exp<fixed_point::fp64_t>);
+  module.CreateFreeFunction<float_t>("pow", &Pow<float_t>);
+  module.CreateFreeFunction<double_t>("pow", &Pow<double_t>);
+  module.CreateFreeFunction<fixed_point::fp32_t>("pow", &Pow<fixed_point::fp32_t>);
+  module.CreateFreeFunction<fixed_point::fp64_t>("pow", &Pow<fixed_point::fp64_t>);
 }
 
-inline void BindExp(std::shared_ptr<vm::Module> module)
+inline void BindPow(std::shared_ptr<vm::Module> module)
 {
   BindExp(*module.get());
 }
