@@ -33,7 +33,7 @@ TEST_F(MathTests, abs_test)
 {
   static char const *TEXT = R"(
     function main()
-      print(Abs(-1));
+      print(abs(-1));
     endfunction
   )";
 
