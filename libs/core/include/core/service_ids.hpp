@@ -44,7 +44,7 @@ static constexpr uint16_t CHANNEL_ROUTING = 1;
 static constexpr uint16_t CHANNEL_BLOCKS = 2;
 
 // DAG Service Channels
-static constexpr uint16_t CHANNEL_NODES = 300;
+static constexpr uint16_t CHANNEL_NODES         = 300;
 static constexpr uint64_t CHANNEL_RPC_BROADCAST = 301;
 
 // RPC Protocol identifiers

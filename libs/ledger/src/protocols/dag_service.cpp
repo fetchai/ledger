@@ -16,6 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include <utility>
+
 #include "core/service_ids.hpp"
 #include "ledger/protocols/dag_service.hpp"
 #include "network/muddle/muddle.hpp"
@@ -27,7 +29,7 @@ namespace ledger {
 DAGService::DAGService(MuddleEndpoint &muddle_endpoint, DAGPtr dag, Mode mode)
   : reactor_("DAGServiceReactor")
   , external_muddle_{muddle_endpoint}
-  , dag_{dag}
+  , dag_{std::move(dag)}
 {
   FETCH_UNUSED(mode);
 

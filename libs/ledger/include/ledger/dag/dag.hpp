@@ -91,7 +91,7 @@ public:
   using MissingNodes      = std::set<DAGNode>;
 
   DAG() = delete;
-  DAG(std::string const &db_name, bool, CertificatePtr certificate);
+  DAG(std::string db_name, bool, CertificatePtr certificate);
   DAG(DAG const &rhs) = delete;
   DAG(DAG &&rhs)      = delete;
   DAG &operator=(DAG const &rhs) = delete;
@@ -182,7 +182,7 @@ private:
   void       HealLooseBlocksInternal(ConstByteArray added_hash);
   void       UpdateStaleTipsInternal();
   bool       NodeInvalidInternal(DAGNodePtr node);
-  DAGNodePtr GetDAGNodeInternal(ConstByteArray hash, bool, bool &); // const
+  DAGNodePtr GetDAGNodeInternal(ConstByteArray hash, bool, bool &);  // const
   void       TraverseFromTips(std::set<ConstByteArray> const &, std::function<void(NodeHash)>,
                               std::function<bool(NodeHash)>);
   bool       GetEpochFromStorage(std::string const &, DAGEpoch &);

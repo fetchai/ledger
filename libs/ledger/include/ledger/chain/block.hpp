@@ -46,15 +46,15 @@ public:
 
   struct Body
   {
-    Digest           hash;               ///< The hash of the block
-    Digest           previous_hash;      ///< The hash of the previous block
-    Digest           merkle_hash;        ///< The merkle state hash across all shards
-    uint64_t         block_number{0};    ///< The height of the block from genesis
-    Address          miner;              ///< The identity of the generated miner
-    uint32_t         log2_num_lanes{0};  ///< The log2(number of lanes)
-    Slices           slices;             ///< The slice lists
-    DAGEpoch         dag_epoch;          ///< DAG epoch containing information on new dnodes
-    uint64_t         timestamp{0u};  ///< The number of seconds elapsed since the Unix epoch
+    Digest   hash;               ///< The hash of the block
+    Digest   previous_hash;      ///< The hash of the previous block
+    Digest   merkle_hash;        ///< The merkle state hash across all shards
+    uint64_t block_number{0};    ///< The height of the block from genesis
+    Address  miner;              ///< The identity of the generated miner
+    uint32_t log2_num_lanes{0};  ///< The log2(number of lanes)
+    Slices   slices;             ///< The slice lists
+    DAGEpoch dag_epoch;          ///< DAG epoch containing information on new dnodes
+    uint64_t timestamp{0u};      ///< The number of seconds elapsed since the Unix epoch
   };
 
   /// @name Block Contents

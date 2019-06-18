@@ -37,7 +37,6 @@ namespace {
 constexpr char const *LOGGING_NAME = "NaiveSynMiner";
 
 using math::BigUnsigned;
-using vm_modules::BigNumberWrapper;
 using serializers::ByteArrayBuffer;
 using byte_array::ConstByteArray;
 

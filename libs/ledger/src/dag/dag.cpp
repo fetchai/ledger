@@ -16,6 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include <utility>
+
 #include "core/serializers/byte_array.hpp"
 #include "core/serializers/byte_array_buffer.hpp"
 #include "ledger/chain/transaction.hpp"
@@ -24,9 +26,9 @@
 
 using namespace fetch::ledger;
 
-DAG::DAG(std::string const &db_name, bool load, CertificatePtr certificate)
-  : db_name_{db_name}
-  , certificate_{certificate}
+DAG::DAG(std::string db_name, bool load, CertificatePtr certificate)
+  : db_name_{std::move(db_name)}
+  , certificate_{std::move(certificate)}
 {
 
   // Fallback is to reset everything
@@ -992,9 +994,9 @@ bool DAG::SatisfyEpoch(DAGEpoch const &epoch)
     // Node points to an epoch
     if (node->previous.size() == 1)
     {
-      auto      node_prev_hash = *node->previous.begin();
-      DAGEpoch  points_to;
-      bool      found          = false;
+      auto     node_prev_hash = *node->previous.begin();
+      DAGEpoch points_to;
+      bool     found = false;
 
       if (node_prev_hash == previous_epoch_.hash)
       {

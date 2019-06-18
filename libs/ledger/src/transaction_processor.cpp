@@ -16,6 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include <utility>
+
 #include "ledger/transaction_processor.hpp"
 
 #include "core/threading.hpp"
@@ -39,7 +41,7 @@ TransactionProcessor::TransactionProcessor(DAGPtr dag, StorageUnitInterface &sto
                                            BlockPackerInterface &  packer,
                                            TransactionStatusCache &tx_status_cache,
                                            std::size_t             num_threads)
-  : dag_{dag}
+  : dag_{std::move(dag)}
   , storage_{storage}
   , packer_{packer}
   , status_cache_{tx_status_cache}
