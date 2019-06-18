@@ -45,7 +45,7 @@ public:
   {
     ASSERT(inputs.size() == 2);
     ASSERT(inputs.at(0).get().shape() == output.shape());
-    ASSERT(inputs.at(1).get().shape().at(inputs.at(1).get().size() - 1) == 1);
+    ASSERT(inputs.at(1).get().shape().at(inputs.at(1).get().shape().size() - 1) == 1);
 
     fetch::math::LeakyRelu(inputs.at(0).get(), inputs.at(1).get(), output);
   }
