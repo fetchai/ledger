@@ -6,3 +6,5 @@ pip3 install -e git+https://github.com/fetchai/ledger-api-py.git@master#egg=fetc
 
 # install the latest version of the net utils
 pip3 install -i https://test.pypi.org/simple/ fetchai-netutils==0.0.5a1
+
+sudo apt install binutils-dev
