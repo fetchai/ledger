@@ -108,6 +108,8 @@ public:
   };
   using StateMachine = core::StateMachine<State>;
 
+  static char const *ToString(State state);
+
   // Construction / Destruction
   BlockCoordinator(MainChain &chain, DAGPtr const &dag,
                    ExecutionManagerInterface &execution_manager, StorageUnitInterface &storage_unit,
@@ -224,7 +226,6 @@ private:
   void            UpdateNextBlockTime();
   void            UpdateTxStatus(Block const &block);
 
-  static char const *ToString(State state);
   static char const *ToString(ExecutionStatus state);
 
   /// @name External Components

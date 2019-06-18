@@ -207,7 +207,7 @@ MainChain::BlockPtr MainChain::GetHeaviestBlock() const
  */
 bool MainChain::RemoveTree(BlockHash const &removed_hash, BlockHashSet &invalidated_blocks)
 {
-  FETCH_LOG_WARN(LOGGING_NAME, "removing tree!");
+  FETCH_LOG_WARN(LOGGING_NAME, "Removing tree");
 
   // check if the block is actually found in this chain
   IntBlockPtr root;

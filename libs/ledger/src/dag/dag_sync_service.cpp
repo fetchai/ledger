@@ -42,13 +42,12 @@ DAGSyncService::DAGSyncService(MuddleEndpoint &                      muddle_endp
   state_machine_->RegisterHandler(State::QUERY_MISSING, this, &DAGSyncService::OnQueryMissing);
   state_machine_->RegisterHandler(State::RESOLVE_MISSING, this, &DAGSyncService::OnResolveMissing);
 
-  state_machine_->OnStateChange([this](State current, State previous) {
-    FETCH_UNUSED(current);
-    FETCH_UNUSED(previous);
-    FETCH_UNUSED(this);
+#ifdef FETCH_LOG_DEBUG_ENABLED
+  state_machine_->OnStateChange([](State current, State previous) {
     FETCH_LOG_DEBUG(LOGGING_NAME, "Current state: ", ToString(current),
                     " (previous: ", ToString(previous), ")");
   });
+#endif  // FETCH_LOG_DEBUG_ENABLED
 
   // Broadcast blocks arrive here
   dag_subscription_->SetMessageHandler(

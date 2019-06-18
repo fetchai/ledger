@@ -52,7 +52,7 @@ struct DAGTip
   using ConstByteArray = byte_array::ConstByteArray;
 
   DAGTip(ConstByteArray dag_node_ref, uint64_t epoch, uint64_t wei)
-    : dag_node_reference{dag_node_ref}
+    : dag_node_reference{std::move(dag_node_ref)}
     , oldest_epoch_referenced{epoch}
     , weight{wei}
   {
