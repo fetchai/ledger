@@ -93,6 +93,7 @@ def create_build(Platform platform, Configuration config)
           withEnv(environment()) {
             docker.image(DOCKER_IMAGE_NAME).inside {
               stage("Build ${suffix}") {
+                sh './scripts/ci/install-test-dependencies.sh'
                 sh "./scripts/ci-tool.py -B ${config.label}"
               }
 
