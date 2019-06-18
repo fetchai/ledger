@@ -36,6 +36,12 @@ public:
     , ArrayType(shape)
   {}
 
+  TensorWrapper(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
+                ArrayType const & other)
+      : fetch::vm::Object(vm, type_id)
+      , ArrayType(other)
+  {}
+
   static fetch::vm::Ptr<TensorWrapper> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
                                                    fetch::vm::Ptr<fetch::vm::Array<SizeType>> shape)
   {

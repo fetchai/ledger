@@ -97,10 +97,11 @@ public:
   }
 
   void AddDropout(fetch::vm::Ptr<fetch::vm::String> const &name,
-                  fetch::vm::Ptr<fetch::vm::String> const &input_name)
+                  fetch::vm::Ptr<fetch::vm::String> const &input_name,
+                  float const & prob)
   {
     fetch::ml::Graph<TensorType>::AddNode<
-        fetch::ml::ops::Dropout<TensorType>>(name->str, {input_name->str});
+        fetch::ml::ops::Dropout<TensorType>>(name->str, {input_name->str}, prob);
   }
 
 
