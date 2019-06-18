@@ -142,7 +142,7 @@ void NaiveSynergeticMiner::Mine()
 
     FETCH_LOG_DEBUG(LOGGING_NAME, "Available synergetic contracts to be mined", oss.str());
   }
-#endif // FETCH_LOG_DEBUG_ENABLED
+#endif  // FETCH_LOG_DEBUG_ENABLED
 
   // for each of the contract addresses available mine a solution
   for (auto const &problem : problem_spaces)
