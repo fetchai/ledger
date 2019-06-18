@@ -22,8 +22,8 @@
 #include "core/mutex.hpp"
 #include "core/threading.hpp"
 #include "ledger/executor.hpp"
-#include "storage/resource_mapper.hpp"
 #include "moment/deadline_timer.hpp"
+#include "storage/resource_mapper.hpp"
 
 #include "ledger/state_adapter.hpp"
 
