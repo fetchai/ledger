@@ -96,8 +96,6 @@ public:
                                                                         {input_name->str});
   }
 
-  GraphType graph_;
-
   void AddDropout(fetch::vm::Ptr<fetch::vm::String> const &name,
                   fetch::vm::Ptr<fetch::vm::String> const &input_name,
                   float const & prob)
@@ -106,6 +104,7 @@ public:
                                                             {input_name->str}, prob);
   }
 
+  GraphType graph_;
 
 };
 

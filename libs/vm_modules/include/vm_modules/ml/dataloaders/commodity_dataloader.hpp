@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "ml/dataloaders/commodity_dataloader.hpp"
-#include "vm_modules/ml/tensor.hpp"
+#include "vm_modules/math/tensor.hpp"
 
 namespace fetch {
   namespace vm_modules {
@@ -46,29 +46,10 @@ namespace fetch {
           loader_.AddData(input_filename->str, input_filename->str);  // todo: this fills the output data with the input data
         }
 
-        fetch::vm::Ptr <TensorWrapper> GetNext(){
-          auto temp = loader_.GetNext().first;
-////          auto tensor_ptr = std::make_shared<TensorWrapper>(TensorWrapper(this->vm_, this->type_id_, temp));
-//          auto tensor_ptr = TensorWrapper(this->vm_, this->type_id_, temp);
-//          return fetch::vm::Ptr <TensorWrapper> (&tensor_ptr);
-
-          return this->vm_->CreateNewObject<TensorWrapper>(temp);
-
-
+        fetch::vm::Ptr <math::VMTensor> GetNext(){  // todo: return first and second
+          auto temp = loader_.GetNext().first;  // this is a math tensor with shape (1, n_outputs)
+          return this->vm_->CreateNewObject<math::VMTensor>(temp);
         }
-        // Wont compile if parameter is not const &
-        // The actual fetch::vm::Ptr is const, but the pointed to memory is modified
-//        fetch::vm::Ptr<TrainingPairWrapper> GetData(fetch::vm::Ptr<TrainingPairWrapper> const &dataHolder) {
-//          std::pair <fetch::math::Tensor<float>, std::vector<fetch::math::Tensor<float>>> d =
-//              loader_.GetNext();
-//          (*(dataHolder->first)).Copy(d.first);
-//          (*(dataHolder->second)).Copy(d.second.at(0));
-//          return dataHolder;
-//        }
-
-//        void Display(fetch::vm::Ptr<fetch::vm_modules::ml::TensorWrapper> const &d) {
-//          loader_.Display(*d);
-//        }
 
       private:
         fetch::ml::CommodityDataLoader<fetch::math::Tensor<float>, fetch::math::Tensor<float>> loader_;
