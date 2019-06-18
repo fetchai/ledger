@@ -55,6 +55,8 @@ fetch::meta::IfIsFloat<T, T> Rand(fetch::vm::VM *vm, T const &a = T{.0}, T const
   return std::uniform_real_distribution<T>{a, b}(mt);
 }
 
+// TODO(HUT): look at w/ed
+/*
 static void CreateRand(std::shared_ptr<fetch::vm::Module> module)
 {
   module->CreateFreeFunction<int16_t>("Rand", &Rand<int16_t>);
@@ -66,6 +68,7 @@ static void CreateRand(std::shared_ptr<fetch::vm::Module> module)
   module->CreateFreeFunction<float_t>("Rand", &Rand<float_t>);
   module->CreateFreeFunction<double_t>("Rand", &Rand<double_t>);
 }
+*/
 
 }  // namespace vm_modules
 }  // namespace fetch
