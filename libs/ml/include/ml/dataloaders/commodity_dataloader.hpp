@@ -25,64 +25,65 @@
 #include "math/base_types.hpp"
 #include "math/tensor.hpp"
 #include "ml/dataloaders/dataloader.hpp"
+#include "core/random.hpp"
 
 
 namespace fetch {
   namespace ml {
 
-    std::pair<math::SizeType, math::SizeType> count_rows_cols(std::string filename, bool transpose=false)
-    {
-      // find number of rows and columns in the file
-      std::ifstream file(filename);
-      std::string   buf;
-      std::string           delimiter = ",";
-      ulong                 pos;
-      math::SizeType row{0};
-      math::SizeType col{0};
-      while (std::getline(file, buf, '\n'))
-      {
-        while (row == 0 && ((pos = buf.find(delimiter)) != std::string::npos))
-        {
-          buf.erase(0, pos + delimiter.length());
-          ++col;
+    namespace {
+      std::pair<math::SizeType, math::SizeType> count_rows_cols(std::string filename, bool transpose = false) {
+        // find number of rows and columns in the file
+        std::ifstream file(filename);
+        std::string buf;
+        std::string delimiter = ",";
+        ulong pos;
+        math::SizeType row{0};
+        math::SizeType col{0};
+        while (std::getline(file, buf, '\n')) {
+          while (row == 0 && ((pos = buf.find(delimiter)) != std::string::npos)) {
+            buf.erase(0, pos + delimiter.length());
+            ++col;
+          }
+          ++row;
         }
-        ++row;
-      }
-      if (transpose)
-      {
-        return std::make_pair(col+1, row);
-      } else
-      {
-        return std::make_pair(row, col+1);
+        if (transpose) {
+          return std::make_pair(col + 1, row);
+        } else {
+          return std::make_pair(row, col + 1);
+        }
       }
     }
 
-    template <typename LabelType, typename DataType>
-    class CommodityDataLoader : DataLoader<LabelType, DataType>
+    template <typename LabelType, typename InputType>
+    class CommodityDataLoader : DataLoader<LabelType, InputType>
     {
 
     public:
-      using ReturnType = std::pair<LabelType, std::vector<DataType>>;
+
+      using DataType = typename InputType::Type;
+      using ReturnType = std::pair<LabelType, std::vector<InputType>>;
       using SizeType = math::SizeType;
 
-      CommodityDataLoader(bool random_mode)
-          : DataLoader<LabelType, DataType>(random_mode)
+      CommodityDataLoader(bool random_mode= false)
+          : DataLoader<LabelType, InputType>(random_mode)
       {}
+
       ~CommodityDataLoader() = default;
-      ReturnType GetNext() override
+
+      virtual ReturnType GetNext()
       {
-        GetAtIndex(static_cast<SizeType>(cursor_++));
-        return buffer_;
+        if (this->random_mode_)
+        {
+          GetAtIndex(static_cast<SizeType>(rand.generator()) % Size());
+          return buffer_;
+        }
+        else
+        {
+          GetAtIndex(static_cast<SizeType>(cursor_++));
+          return buffer_;
+        }
       }
-
-//      ReturnType GetRandom()  // todo: isn't this obsolete?
-//      {
-//        GetAtIndex((SizeType)rand() % Size(), buffer_);
-//        return buffer_;
-//      }
-
-//      SizeType Size() const   = 0; // todo: AddData should store size of buffer, number of rows,
-
       virtual SizeType Size() const
       {
         // MNIST files store the size as uint32_t but Dataloader interface require uint64_t
@@ -99,27 +100,8 @@ namespace fetch {
         cursor_ = 0;
       }
 
-      // todo: handle labels
-
       void AddData(std::string xfilename, std::string yfilename)
       {
-//
-//
-//        // find number of rows and columns in the file
-//        std::string           delimiter = ",";
-//        ulong                 pos;
-//        SizeType row{0};
-//        SizeType col{0};
-//        while (std::getline(file, buf, '\n'))
-//        {
-//          while (row == 0 && ((pos = buf.find(delimiter)) != std::string::npos))
-//          {
-//            buf.erase(0, pos + delimiter.length());
-//            ++col;
-//          }
-//          ++row;
-//        }
-
         std::pair<SizeType , SizeType > xshape = count_rows_cols(xfilename);
         std::pair<SizeType , SizeType > yshape = count_rows_cols(yfilename);
         SizeType row = xshape.first;
@@ -130,20 +112,12 @@ namespace fetch {
         assert(xshape.first == yshape.first);
         // save the number of rows in the data
         size_ = row - rows_to_skip_;
-        // set up the buffer
-        buffer_.second = std::vector<DataType>(static_cast<int>(col - cols_to_skip_));
-        buffer_.first = LabelType(yshape.second - cols_to_skip_);
-
-        // todo: read csv in separate function?
 
         // read csv data into buffer_ array
         std::ifstream file(xfilename);
         std::string   buf;
-//        file.clear();
-//        file.seekg(0, std::ios::beg);
         char delimiter = ',';
         std::string field_value;
-
 
         for(SizeType i=0; i<rows_to_skip_; i++)
         {
@@ -152,25 +126,19 @@ namespace fetch {
 
         row = 0;
         while (std::getline(file, buf, '\n'))
-//          while( file.peek() != EOF )
         {
           col = 0;
           std::stringstream ss(buf);
           for ( SizeType i = 0; i < cols_to_skip_; i++)
           {
             std::getline(ss, field_value, delimiter);
-//            pos = buf.find(delimiter);
-//            buf.erase(0, pos + delimiter.length());
           }
 
-//          while ((pos = buf.find(delimiter)) != std::string::npos)
           while (std::getline(ss, field_value, delimiter))
           {
             data_(row, col) = static_cast<DataType>(stod(field_value));
-//            buf.erase(0, pos + delimiter.length());
             ++col;
           }
-//          data_(row, col) = static_cast<DataType>(std::stod(buf));
           ++row;
         }
 
@@ -203,30 +171,21 @@ namespace fetch {
 
     private:
       bool random_mode_ = false;
-      fetch::math::Tensor<DataType> data_;   // features, n_data
-      fetch::math::Tensor<DataType> labels_;   // features, n_data
+      InputType data_;   // n_data, features
+      InputType labels_;   // n_data, features
 
-//      unsigned char **data_;
-//      unsigned char * labels_;
       SizeType rows_to_skip_ = 1;
       SizeType cols_to_skip_ = 1;
       ReturnType buffer_;
       SizeType cursor_ = 0;
       SizeType size_ = 0;
 
+      random::Random rand;
+
       void GetAtIndex(SizeType index)
       {
-        SizeType i{0};
-        auto     it = buffer_.second.at(0).begin();
-        while (it.is_valid())
-        {
-          *it = data_(index, i);
-          ++i;
-          ++it;
-        }  // todo: foreach
-
-        buffer_.first.Fill(DataType{0});
-        buffer_.first(labels_[index], 0) = DataType{1.0};
+        buffer_.first = labels_.Slice(index).Copy();
+        buffer_.second = std::vector<InputType>({data_.Slice(index).Copy()});
       }
     };
 
