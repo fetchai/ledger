@@ -73,7 +73,6 @@ public:
   virtual ReturnType GetNext()
   {
     GetAtIndex(static_cast<SizeType>(cursor_++), buffer_);
-
     return buffer_;
   }
 

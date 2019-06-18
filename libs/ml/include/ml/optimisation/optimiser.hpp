@@ -200,8 +200,8 @@ typename T::Type Optimiser<T, C>::Run(fetch::ml::DataLoader<ArrayType, ArrayType
     loss = DataType{0};
 
     // Do batch back-propagation
-    for (SizeType it{step};
-         (it < step + batch_size) /* && (!loader.IsDone()) && (step < subset_size)*/; ++it)
+    for (SizeType it{step}; (it < step + batch_size) && (!loader.IsDone()) && (step < subset_size);
+         ++it)
     {
       input = loader.GetDataPair();
 

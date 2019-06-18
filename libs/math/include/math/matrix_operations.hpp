@@ -930,8 +930,16 @@ template <typename ArrayType>
 fetch::math::meta::IfIsMathArray<ArrayType, void> BatchwiseAdd(ArrayType const &A,
                                                                ArrayType const &B, ArrayType &ret)
 {
-  // Test if batch dimensions are equal
-  // assert(ret.shape().at(ret.shape().size() - 1) == A.shape().at(A.shape().size() - 1));
+  // Test if input is broadcastable by batch dimension
+  assert(A.shape().size() == B.shape().size());
+  assert(A.shape().size() == ret.shape().size());
+  assert(B.shape().at(B.shape().size() - 1) == 1);
+
+  for (SizeType i{0}; i < A.shape().size() - 1; i++)
+  {
+    assert(A.shape().at(i) == B.shape().at(i));
+    assert(A.shape().at(i) == ret.shape().at(i));
+  }
 
   SizeType A_batch_dimension   = A.shape().size() - 1;
   SizeType B_batch_dimension   = B.shape().size() - 1;
