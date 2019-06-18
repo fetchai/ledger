@@ -8,6 +8,7 @@ import argparse
 import fnmatch
 import multiprocessing
 import os
+from os.path import abspath, dirname, exists, isdir, isfile, join
 import re
 import shutil
 import subprocess
@@ -174,7 +175,7 @@ def build_project(project_root, build_root, options, concurrency):
     output('\n')
 
     # determine if this is the first time that we are building the project
-    new_build_folder = not os.path.exists(build_root)
+    new_build_folder = not exists(build_root)
 
     # ensure the build directory exists
     os.makedirs(build_root, exist_ok=True)
@@ -195,8 +196,8 @@ def build_project(project_root, build_root, options, concurrency):
         output('Failed to configure cmake project')
         sys.exit(exit_code)
 
-    build_cmd = ['ninja'] if os.path.exists(
-        os.path.join(build_root, 'build.ninja')) else ['make']
+    build_cmd = ['ninja'] if exists(
+        join(build_root, 'build.ninja')) else ['make']
     build_cmd += ['-j{}'.format(concurrency)]
 
     output('Building project with command: {} (detected cpus: {})'.format(
@@ -211,7 +212,7 @@ def clean_files(build_root):
     """Clean files that are likely to interfere with testing"""
     for root, _, files in os.walk(build_root):
         for path in fnmatch.filter(files, '*.db'):
-            data_path = os.path.join(root, path)
+            data_path = join(root, path)
             print('Removing file:', data_path)
             os.remove(data_path)
 
@@ -219,7 +220,7 @@ def clean_files(build_root):
 def test_project(build_root, include_regex=None, exclude_regex=None):
     TEST_NAME = 'Test'
 
-    if not os.path.isdir(build_root):
+    if not isdir(build_root):
         raise RuntimeError('Build Root doesn\'t exist, unable to test project')
 
     clean_files(build_root)
@@ -241,17 +242,17 @@ def test_project(build_root, include_regex=None, exclude_regex=None):
     exit_code = subprocess.call(cmd, cwd=build_root)
 
     # load the test format
-    test_tag_path = os.path.join(build_root, 'Testing', 'TAG')
-    if not os.path.isfile(test_tag_path):
+    test_tag_path = join(build_root, 'Testing', 'TAG')
+    if not isfile(test_tag_path):
         output('Unable to detect ctest output path:', test_tag_path)
         sys.exit(1)
 
     # load the tag
     tag_folder = open(test_tag_path, 'r').read().splitlines()[0]
-    tag_folder_path = os.path.join(
-        build_root, 'Testing', tag_folder, '{}.xml'.format(TEST_NAME))
+    tag_folder_path = join(build_root, 'Testing',
+                           tag_folder, '{}.xml'.format(TEST_NAME))
 
-    if not os.path.isfile(tag_folder_path):
+    if not isfile(tag_folder_path):
         output('Unable to locate CTest summary XML:', tag_folder_path)
         sys.exit(1)
 
@@ -259,7 +260,7 @@ def test_project(build_root, include_regex=None, exclude_regex=None):
     test_data = parse_ctest_format(tag_folder_path)
 
     # convert the data to the Jenkins Junit
-    test_results = os.path.join(build_root, 'TestResults.xml')
+    test_results = join(build_root, 'TestResults.xml')
     create_junit_format(test_results, test_data)
 
     if exit_code != 0:
@@ -270,18 +271,17 @@ def test_project(build_root, include_regex=None, exclude_regex=None):
 def test_end_to_end(project_root, build_root):
     from end_to_end_test import run_end_to_end_test
 
-    yaml_file = os.path.join(
+    yaml_file = join(
         project_root, 'scripts/end_to_end_test/end_to_end_test.yaml')
 
     # Check that the YAML file does exist
-    if not os.path.exists(yaml_file):
+    if not exists(yaml_file):
         output('Failed to find yaml file for end_to_end testing:')
         output(yaml_file)
         sys.exit(1)
 
     # should be the location of constellation exe - if not the test will catch
-    constellation_exe = os.path.join(
-        build_root, 'apps/constellation/constellation')
+    constellation_exe = join(build_root, 'apps/constellation/constellation')
 
     clean_files(build_root)
 
@@ -297,15 +297,14 @@ def main():
     concurrency = AVAILABLE_CPUS if args.jobs == 0 else args.jobs
 
     # define all the build roots
-    project_root = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
-    build_root = os.path.join(project_root, '{}{}'.format(
+    project_root = abspath(dirname(dirname(__file__)))
+    build_root = join(project_root, '{}{}'.format(
         args.build_path_prefix, args.build_type.lower()))
     if args.force_build_folder:
-        build_root = os.path.abspath(args.force_build_folder)
+        build_root = abspath(args.force_build_folder)
 
     options = {
-        'CMAKE_BUILD_TYPE': args.build_type,
-        'FETCH_ENABLE_CCACHE': 1
+        'CMAKE_BUILD_TYPE': args.build_type
     }
 
     if args.metrics:
