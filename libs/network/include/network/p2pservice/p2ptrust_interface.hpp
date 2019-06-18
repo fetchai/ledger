@@ -77,10 +77,10 @@ public:
   virtual void AddFeedback(IDENTITY const &peer_ident, ConstByteArray const &object_ident,
                            TrustSubject subject, TrustQuality quality) = 0;
 
-  virtual IdentitySet GetBestPeers(size_t maximum) const = 0;
-  virtual PeerTrusts  GetPeersAndTrusts() const          = 0;
+  virtual IdentitySet GetBestPeers(std::size_t maximum) const = 0;
+  virtual PeerTrusts  GetPeersAndTrusts() const               = 0;
 
-  virtual IdentitySet GetRandomPeers(size_t maximum_count, double minimum_trust) const = 0;
+  virtual IdentitySet GetRandomPeers(std::size_t maximum_count, double minimum_trust) const = 0;
 
   virtual std::size_t GetRankOfPeer(IDENTITY const &peer_ident) const        = 0;
   virtual double      GetTrustRatingOfPeer(IDENTITY const &peer_ident) const = 0;

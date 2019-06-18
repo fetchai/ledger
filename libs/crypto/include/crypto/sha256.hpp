@@ -17,9 +17,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/byte_array/byte_array.hpp"
 #include "crypto/stream_hasher.hpp"
+
 #include <openssl/sha.h>
+
+#include <cstddef>
+#include <cstdint>
 
 namespace fetch {
 namespace crypto {

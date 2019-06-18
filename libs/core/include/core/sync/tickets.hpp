@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include <cassert>
+#include <chrono>
 #include <condition_variable>
 #include <cstddef>
 #include <mutex>
@@ -34,7 +34,7 @@ public:
   using Count = std::size_t;
 
   // Construction / Destruction
-  Tickets(Count initial = 0);
+  explicit Tickets(Count initial = 0);
   Tickets(Tickets const &) = delete;
   Tickets(Tickets &&)      = delete;
 
@@ -44,8 +44,6 @@ public:
   void Wait();
   template <typename R, typename P>
   bool Wait(std::chrono::duration<R, P> const &duration);
-
-  std::size_t size();
 
   // Operators
   Tickets &operator=(Tickets const &) = delete;

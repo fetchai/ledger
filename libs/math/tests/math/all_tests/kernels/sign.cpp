@@ -16,12 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include <iostream>
-
 #include "math/sign.hpp"
-//#include "math/kernels/sign.hpp"
 #include "math/tensor.hpp"
-#include <gtest/gtest.h>
+
+#include "gtest/gtest.h"
+
+#include <cstddef>
 
 using namespace fetch::math;
 using data_type      = double;

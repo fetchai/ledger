@@ -18,7 +18,6 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/const_byte_array.hpp"
-#include "http/http_client_interface.hpp"
 #include "http/method.hpp"
 #include "variant/variant.hpp"
 
@@ -28,6 +27,8 @@
 
 namespace fetch {
 namespace http {
+
+class HttpClientInterface;
 
 /**
  * The JsonHttpClient is an adapter around the normal HttpClient. It is used when interacting
@@ -44,7 +45,7 @@ public:
   enum class ConnectionMode
   {
     HTTP,
-    HTTPS,
+    HTTPS
   };
 
   // Helpers
@@ -54,8 +55,8 @@ public:
   JsonClient(ConnectionMode mode, std::string host);
   JsonClient(ConnectionMode mode, std::string host, uint16_t port);
   JsonClient(JsonClient const &) = delete;
-  JsonClient(JsonClient &&)      = default;
-  ~JsonClient()                  = default;
+  JsonClient(JsonClient &&) noexcept;
+  ~JsonClient();
 
   /// @name Action Methods
   /// @{
@@ -167,16 +168,6 @@ inline bool JsonClient::Post(ConstByteArray const &endpoint, Headers const &head
                              Variant &response)
 {
   return Request(Method::POST, endpoint, &headers, nullptr, response);
-}
-
-/**
- * Access to the underlying client
- *
- * @return The reference to the underlying client
- */
-inline HttpClientInterface const &JsonClient::underlying_client() const
-{
-  return *client_;
 }
 
 }  // namespace http

@@ -2095,7 +2095,7 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::Sin(FixedPoint<I, F> const &x)
 
   FixedPoint quadrant = Floor(r / CONST_PI_2);
 
-  return SinPi2QuadrantFuncs[(size_t)quadrant](r - CONST_PI_2 * quadrant);
+  return SinPi2QuadrantFuncs[static_cast<std::size_t>(quadrant)](r - CONST_PI_2 * quadrant);
 }
 
 /**
@@ -2132,7 +2132,7 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::Cos(FixedPoint<I, F> const &x)
 
   FixedPoint quadrant = Floor(r / CONST_PI_2);
 
-  return CosPi2QuadrantFuncs[(size_t)quadrant](r - CONST_PI_2 * quadrant);
+  return CosPi2QuadrantFuncs[static_cast<std::size_t>(quadrant)](r - CONST_PI_2 * quadrant);
 }
 
 /**

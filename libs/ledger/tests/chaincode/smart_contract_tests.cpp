@@ -16,16 +16,15 @@
 //
 //------------------------------------------------------------------------------
 
+#include "contract_test.hpp"
 #include "crypto/ecdsa.hpp"
 #include "crypto/sha256.hpp"
 #include "ledger/chain/transaction_builder.hpp"
 #include "ledger/chaincode/smart_contract.hpp"
 #include "ledger/state_adapter.hpp"
-
-#include "contract_test.hpp"
 #include "mock_storage_unit.hpp"
 
-#include <gmock/gmock.h>
+#include "gmock/gmock.h"
 
 #include <memory>
 

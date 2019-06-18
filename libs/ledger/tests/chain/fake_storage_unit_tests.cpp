@@ -17,10 +17,9 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/encoders.hpp"
-
 #include "fake_storage_unit.hpp"
 
-#include <gtest/gtest.h>
+#include "gtest/gtest.h"
 
 #include <memory>
 

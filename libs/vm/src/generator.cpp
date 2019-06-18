@@ -23,6 +23,8 @@
 #include <cstdint>
 #include <cstdlib>
 #include <memory>
+#include <string>
+#include <vector>
 
 namespace fetch {
 namespace vm {

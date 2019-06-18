@@ -16,12 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include <gtest/gtest.h>
-
 #include "math/linalg/blas/base.hpp"
 #include "math/linalg/blas/gemv_n.hpp"
 #include "math/linalg/prototype.hpp"
 #include "math/tensor.hpp"
+
+#include "gtest/gtest.h"
 
 using namespace fetch;
 using namespace fetch::math;
@@ -29,7 +29,6 @@ using namespace fetch::math::linalg;
 
 TEST(blas_gemv, blas_gemv_n_novector1)
 {
-
   Blas<double, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
        Computes(_y <= _alpha * _A * _x + _beta * _y), platform::Parallelisation::NOT_PARALLEL>
       gemv_n_novector;
@@ -66,7 +65,6 @@ TEST(blas_gemv, blas_gemv_n_novector1)
 
 TEST(blas_gemv, blas_gemv_n_novector2)
 {
-
   Blas<double, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
        Computes(_y <= _alpha * _A * _x + _beta * _y), platform::Parallelisation::NOT_PARALLEL>
       gemv_n_novector;
@@ -103,7 +101,6 @@ TEST(blas_gemv, blas_gemv_n_novector2)
 
 TEST(blas_gemv, blas_gemv_n_novector3)
 {
-
   Blas<double, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
        Computes(_y <= _alpha * _A * _x + _beta * _y), platform::Parallelisation::NOT_PARALLEL>
       gemv_n_novector;
@@ -140,7 +137,6 @@ TEST(blas_gemv, blas_gemv_n_novector3)
 
 TEST(blas_gemv, blas_gemv_n_novector4)
 {
-
   Blas<double, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
        Computes(_y <= _alpha * _A * _x + _beta * _y), platform::Parallelisation::NOT_PARALLEL>
       gemv_n_novector;
@@ -177,7 +173,6 @@ TEST(blas_gemv, blas_gemv_n_novector4)
 
 TEST(blas_gemv, blas_gemv_n_novector5)
 {
-
   Blas<double, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
        Computes(_y <= _alpha * _A * _x + _beta * _y), platform::Parallelisation::NOT_PARALLEL>
       gemv_n_novector;
@@ -214,7 +209,6 @@ TEST(blas_gemv, blas_gemv_n_novector5)
 
 TEST(blas_gemv, blas_gemv_n_novector6)
 {
-
   Blas<double, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
        Computes(_y <= _alpha * _A * _x + _beta * _y), platform::Parallelisation::NOT_PARALLEL>
       gemv_n_novector;

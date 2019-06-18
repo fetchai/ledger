@@ -16,11 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include <benchmark/benchmark.h>
-#include <gtest/gtest.h>
-
 #include "core/random/lfg.hpp"
 #include "storage/mmap_random_access_stack.hpp"
+
+#include "benchmark/benchmark.h"
+#include "gtest/gtest.h"
 
 using fetch::storage::MMapRandomAccessStack;
 

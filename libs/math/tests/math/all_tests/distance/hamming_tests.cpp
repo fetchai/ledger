@@ -20,7 +20,7 @@
 #include "math/distance/hamming.hpp"
 #include "math/tensor.hpp"
 
-#include <gtest/gtest.h>
+#include "gtest/gtest.h"
 
 using namespace fetch::math::distance;
 using namespace fetch::math;

@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/logger.hpp"
+
 #include <cstdint>
 #include <string>
 
@@ -37,9 +38,9 @@ public:
     : address_{std::move(address)}
     , port_{port}
   {}
-  Peer(Peer const &) = default;
-  Peer(Peer &&)      = default;
-  ~Peer()            = default;
+  Peer(Peer const &)     = default;
+  Peer(Peer &&) noexcept = default;
+  ~Peer()                = default;
 
   bool Parse(std::string const &address);
 

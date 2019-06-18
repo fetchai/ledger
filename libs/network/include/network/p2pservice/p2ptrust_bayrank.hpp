@@ -19,6 +19,8 @@
 
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/byte_array/encoders.hpp"
+#include "core/logger.hpp"
+#include "core/macros.hpp"
 #include "core/mutex.hpp"
 #include "math/statistics/normal.hpp"
 #include "network/p2pservice/p2ptrust_interface.hpp"
@@ -26,10 +28,10 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
-#include <ctime>
-#include <map>
+#include <cstddef>
 #include <random>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 namespace fetch {
@@ -61,7 +63,7 @@ protected:
     bool scored = false;
   };
   using TrustStore   = std::vector<PeerTrustRating>;
-  using RankingStore = std::unordered_map<IDENTITY, size_t>;
+  using RankingStore = std::unordered_map<IDENTITY, std::size_t>;
   using Mutex        = mutex::Mutex;
   using PeerTrusts   = typename P2PTrustInterface<IDENTITY>::PeerTrusts;
 
@@ -91,7 +93,7 @@ public:
 
     auto ranking = ranking_store_.find(peer_ident);
 
-    size_t pos;
+    std::size_t pos;
     if (ranking == ranking_store_.end())
     {
       PeerTrustRating new_record{peer_ident, Gaussian::ClassicForm(100., 100 / 6.), 0, false};
@@ -139,10 +141,10 @@ public:
     IdentitySet result;
     result.reserve(maximum_count);
 
-    size_t                                max_trial = maximum_count * 1000;
-    std::random_device                    rd;
-    std::mt19937                          g(rd());
-    std::uniform_int_distribution<size_t> distribution(0, trust_store_.size() - 1);
+    std::size_t                                max_trial = maximum_count * 1000;
+    std::random_device                         rd;
+    std::mt19937                               g(rd());
+    std::uniform_int_distribution<std::size_t> distribution(0, trust_store_.size() - 1);
 
     {
       FETCH_LOCK(mutex_);

@@ -16,16 +16,14 @@
 //
 //------------------------------------------------------------------------------
 
+#include "block_configs.hpp"
 #include "core/logger.hpp"
 #include "ledger/execution_manager.hpp"
-
-#include "block_configs.hpp"
 #include "mock_executor.hpp"
+#include "mock_storage_unit.hpp"
 #include "test_block.hpp"
 
-#include "mock_storage_unit.hpp"
-
-#include <gmock/gmock.h>
+#include "gmock/gmock.h"
 
 #include <algorithm>
 #include <chrono>

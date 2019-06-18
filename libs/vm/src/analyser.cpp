@@ -151,7 +151,6 @@ void Analyser::Initialise()
                      map_type_);
   CreateTemplateType("State", TypeIndex(typeid(IState)), {any_type_}, TypeIds::Unknown,
                      state_type_);
-
   CreateTemplateType("ShardedState", TypeIndex(typeid(IShardedState)), {any_type_},
                      TypeIds::Unknown, sharded_state_type_);
 }
@@ -305,7 +304,7 @@ bool Analyser::Analyse(BlockNodePtr const &root, std::vector<std::string> &error
 
 void Analyser::AddError(uint16_t line, std::string const &message)
 {
-  std::stringstream stream;
+  std::ostringstream stream;
   stream << "line " << line << ": "
          << "error: " << message;
   errors_.push_back(stream.str());
@@ -378,7 +377,6 @@ void Analyser::BuildFunctionDefinition(BlockNodePtr const &parent_block_node,
     SymbolPtr          symbol         = function_definition_node->symbols->Find(parameter_name);
     if (symbol)
     {
-      std::stringstream stream;
       AddError(parameter_node->line, "parameter name '" + parameter_name + "' is already defined");
       ++problems;
       continue;

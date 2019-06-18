@@ -30,8 +30,6 @@ namespace fetch {
 namespace miner {
 namespace {
 
-using ledger::Transaction;
-
 /**
  * Clip the specified to the bounds: [min_value, max_value]
  *

@@ -20,7 +20,7 @@
 
 #include "math/tensor.hpp"
 
-#include <gtest/gtest.h>
+#include "gtest/gtest.h"
 
 TEST(placeholder_test, setData)
 {

@@ -18,7 +18,7 @@
 
 #include "testing/bitset_array_conversion.hpp"
 
-#include <gtest/gtest.h>
+#include "gtest/gtest.h"
 
 namespace fetch {
 namespace testing {

@@ -16,14 +16,15 @@
 //
 //------------------------------------------------------------------------------
 
-#include <gtest/gtest.h>
-
 #include "core/random/lcg.hpp"
 #include "math/matrix_operations.hpp"
 #include "math/tensor.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 
-#include <chrono>
+#include "gtest/gtest.h"
+
+#include <cstddef>
+#include <vector>
 
 using namespace fetch::math;
 

@@ -20,9 +20,15 @@
 #include "core/assert.hpp"
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/const_byte_array.hpp"
+
 #include <algorithm>
+#include <cassert>
 #include <cmath>
+#include <cstddef>
+#include <cstdint>
+#include <stdexcept>
 #include <vector>
+
 namespace fetch {
 namespace math {
 /* Implements a subset of big number functionality.
@@ -43,7 +49,7 @@ public:
 
   BigUnsigned()
   {
-    Resize(std::max(std::size_t(256 >> 3), sizeof(uint64_t)));
+    Resize(std::max(std::size_t(256u >> 3u), sizeof(uint64_t)));
     for (std::size_t i = 0; i < sizeof(uint64_t); ++i)
     {
       super_type::operator[](i) = 0;
@@ -53,13 +59,13 @@ public:
   BigUnsigned(BigUnsigned const &other)
     : super_type(other.Copy())
   {}
-  BigUnsigned(super_type const &other)
+  explicit BigUnsigned(super_type const &other)
     : super_type(other.Copy())
   {}
 
-  BigUnsigned(uint64_t const &number, std::size_t size = 256)
+  explicit BigUnsigned(uint64_t const &number, std::size_t size = 256)
   {
-    Resize(std::max(size >> 3, sizeof(uint64_t)));
+    Resize(std::max(size >> 3u, sizeof(uint64_t)));
 
     union
     {
@@ -267,9 +273,9 @@ inline double ToDouble(BigUnsigned const &x)
   fraction.bytes[3] = x[j + 3];
 
   assert(fraction.value != 0);
-  uint16_t tz       = uint16_t(__builtin_ctz(
-      fraction.value));  // TODO(issue 31): Wrap in function for cross compiler portability
-  uint16_t exponent = uint16_t((last_byte << 3) - tz);
+  // TODO(issue 31): Wrap in function for cross compiler portability
+  auto tz       = static_cast<uint16_t>(__builtin_ctz(fraction.value));
+  auto exponent = static_cast<uint16_t>((last_byte << 3u) - tz);
 
   assert(exponent < 1023);
 
@@ -280,8 +286,8 @@ inline double ToDouble(BigUnsigned const &x)
   } conv;
 
   conv.bits = 0;
-  conv.bits |= uint64_t(uint64_t(exponent & ((1 << 12) - 1)) << 52);
-  conv.bits |= uint64_t((fraction.value << (20 + tz)) & ((1ull << 53) - 1));
+  conv.bits |= uint64_t(uint64_t(exponent & ((1u << 12u) - 1)) << 52u);
+  conv.bits |= uint64_t((fraction.value << (20u + tz)) & ((1ull << 53u) - 1));
   return conv.value;
 }
 }  // namespace math

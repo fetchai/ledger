@@ -45,12 +45,12 @@ public:
 
   ~FutureTimepoint() = default;
 
-  void SetSeconds(size_t seconds)
+  void SetSeconds(std::size_t seconds)
   {
     due_time_ = Clock::now() + std::chrono::seconds(seconds);
   }
 
-  void SetMilliseconds(size_t milliseconds)
+  void SetMilliseconds(std::size_t milliseconds)
   {
     due_time_ = Clock::now() + std::chrono::milliseconds(milliseconds);
   }
@@ -65,12 +65,12 @@ public:
     due_time_ = Clock::now() - std::chrono::seconds(1);
   }
 
-  void SetMilliseconds(Timepoint const &timepoint, size_t milliseconds)
+  void SetMilliseconds(Timepoint const &timepoint, std::size_t milliseconds)
   {
     due_time_ = timepoint + std::chrono::milliseconds(milliseconds);
   }
 
-  FutureTimepoint &operator=(size_t milliseconds)
+  FutureTimepoint &operator=(std::size_t milliseconds)
   {
     due_time_ = Clock::now() + std::chrono::milliseconds(milliseconds);
     return *this;

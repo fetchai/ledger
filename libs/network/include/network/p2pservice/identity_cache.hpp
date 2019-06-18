@@ -23,7 +23,9 @@
 #include "network/uri.hpp"
 
 #include <chrono>
+#include <functional>
 #include <unordered_map>
+#include <unordered_set>
 #include <utility>
 
 namespace fetch {
@@ -46,7 +48,7 @@ public:
     Timepoint last_update = Clock::now();
     bool      resolve{false};
 
-    CacheElement(Uri uri)
+    explicit CacheElement(Uri uri)
       : uri(std::move(uri))
     {}
   };
