@@ -23,6 +23,8 @@
 #include "vm/variant.hpp"
 #include "vm/vm.hpp"
 
+#include "vectorise/fixed_point/fixed_point.hpp"
+
 #include <cstdint>
 
 namespace fetch {
@@ -91,6 +93,16 @@ To Cast(Variant const &from)
     to = static_cast<To>(from.primitive.f64);
     break;
   }
+  case TypeIds::Fixed32:
+  {
+    to = static_cast<To>(fixed_point::fp32_t::FromBase(from.primitive.i32));
+    break;
+  }
+  case TypeIds::Fixed64:
+  {
+    to = static_cast<To>(fixed_point::fp64_t::FromBase(from.primitive.i64));
+    break;
+  }
   default:
   {
     to = 0;
@@ -150,6 +162,16 @@ double toFloat64(VM * /* vm */, AnyPrimitive const &from)
   return Cast<double>(from);
 }
 
+fixed_point::fp32_t toFixed32(VM * /* vm */, AnyPrimitive const &from)
+{
+  return Cast<fixed_point::fp32_t>(from);
+}
+
+fixed_point::fp64_t toFixed64(VM * /* vm */, AnyPrimitive const &from)
+{
+  return Cast<fixed_point::fp64_t>(from);
+}
+
 }  // namespace
 
 Module::Module()
@@ -164,6 +186,8 @@ Module::Module()
   CreateFreeFunction("toUInt64", &toUInt64);
   CreateFreeFunction("toFloat32", &toFloat32);
   CreateFreeFunction("toFloat64", &toFloat64);
+  CreateFreeFunction("toFixed32", &toFixed32);
+  CreateFreeFunction("toFixed64", &toFixed64);
 
   GetClassInterface<IMatrix>()
       .CreateConstuctor<int32_t, int32_t>()
@@ -193,6 +217,8 @@ Module::Module()
       .CreateInstantiationType<Array<uint64_t>>()
       .CreateInstantiationType<Array<float>>()
       .CreateInstantiationType<Array<double>>()
+      .CreateInstantiationType<Array<fixed_point::fp32_t>>()
+      .CreateInstantiationType<Array<fixed_point::fp64_t>>()
       .CreateInstantiationType<Array<Ptr<String>>>()
       .CreateInstantiationType<Array<Ptr<Address>>>();
 

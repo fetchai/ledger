@@ -16,7 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/serializers/fixed_point.hpp"
+#include "vectorise/fixed_point/serializers.hpp"
 
 #include "core/serializers/byte_array_buffer.hpp"
 

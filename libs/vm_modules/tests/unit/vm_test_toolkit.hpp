@@ -61,6 +61,11 @@ public:
     , module_{fetch::vm_modules::VMFactory::GetModule()}
   {}
 
+  ModulePtr module()
+  {
+    return module_;
+  }
+
   bool Compile(char const *text)
   {
     std::vector<std::string> errors{};

@@ -17,33 +17,25 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/meta/math_type_traits.hpp"
-#include "math/standard_functions/abs.hpp"
+#include "vectorise/fixed_point/fixed_point.hpp"
+#include "vm/module.hpp"
+#include "vm_modules/math/exp.hpp"
+#include "vm_modules/math/log.hpp"
+#include "vm_modules/math/math.hpp"
+#include "vm_modules/math/pow.hpp"
+#include "vm_modules/math/sqrt.hpp"
+#include "vm_modules/math/trigonometry.hpp"
 
 namespace fetch {
 namespace vm_modules {
 
-/**
- * method for taking the absolute of a value
- */
-template <typename T>
-fetch::math::meta::IfIsMath<T, T> Abs(fetch::vm::VM *, T const &a)
-{
-  T x;
-  fetch::math::Abs(a, x);
-  return x;
-}
-
-static void CreateAbs(fetch::vm::Module &module)
-{
-  module.CreateFreeFunction<int32_t>("Abs", &Abs<int32_t>);
-  module.CreateFreeFunction<float_t>("Abs", &Abs<float_t>);
-  module.CreateFreeFunction<double_t>("Abs", &Abs<double_t>);
-}
-
-inline void CreateAbs(std::shared_ptr<vm::Module> module)
+inline void CreateFixedPoint(std::shared_ptr<vm::Module> module)
 {
   CreateAbs(*module.get());
+  CreateTrigonometry(*module.get());
+  BindExp(*module.get());
+  BindLog(*module.get());
+  BindPow(*module.get());
 }
 
 }  // namespace vm_modules
