@@ -53,9 +53,7 @@ public:
   {
     ASSERT(this->output_);
     ASSERT(inputs.size() == 1);
-    ASSERT(
-        (inputs.front().get().shape().size() == 1) ||
-        ((inputs.front().get().shape().size() == 2) && (inputs.front().get().shape().at(1) == 1)));
+    ASSERT(inputs.front().get().shape().size() == 2);
 
     if (!this->embeddings_output_ ||
         this->embeddings_output_->shape()[0] != inputs.front().get().size() ||
@@ -64,14 +62,16 @@ public:
       this->embeddings_output_ = std::make_shared<ArrayType>(
           std::vector<SizeType>({inputs.front().get().size(), this->output_->shape()[1]}));
     }
-    uint64_t j(0);
-    for (DataType const &i : inputs.front().get())
+
+    for (SizeType i{0}; i < inputs.front().get().shape().at(0); i++)
     {
-      auto tmp  = this->embeddings_output_->Slice(j);
-      auto tmp2 = this->output_->Slice(typename ArrayType::SizeType(i));
-      tmp.Assign(tmp2);
-      j++;
+      SizeType e = static_cast<SizeType>(inputs.front().get().At(i, 0));
+      for (SizeType j{0}; j < this->output_->shape().at(1); j++)
+      {
+        this->embeddings_output_->At(i, j) = this->output_->At(e, j);
+      }
     }
+
     output = *this->embeddings_output_;
   }
 
@@ -79,18 +79,20 @@ public:
                                           ArrayType const &    error_signal)
   {
     ASSERT(inputs.size() == 1);
-    ASSERT(
-        (inputs.front().get().shape().size() == 1) ||
-        ((inputs.front().get().shape().size() == 2) && (inputs.front().get().shape().at(1) == 1)));
+    ASSERT(inputs.front().get().shape().size() == 2);
 
-    uint64_t j(0);
-    for (DataType const &i : inputs.front().get())
+    for (SizeType i{0}; i < inputs.front().get().shape().at(0); i++)
     {
-      updated_rows_.insert(typename ArrayType::SizeType(double(i)));
-      this->gradient_accumulation_->Slice(typename ArrayType::SizeType(double(i)))
-          .Assign(error_signal.Slice(j));
-      j++;
+      SizeType e = static_cast<SizeType>(inputs.front().get().At(i, 0));
+
+      updated_rows_.insert(typename ArrayType::SizeType(double(e)));
+
+      for (SizeType j{0}; j < inputs.front().get().shape().at(1); j++)
+      {
+        this->gradient_accumulation_->At(e, j) = error_signal.At(i, j);
+      }
     }
+
     return {ArrayType(error_signal.shape())};
   }
 
