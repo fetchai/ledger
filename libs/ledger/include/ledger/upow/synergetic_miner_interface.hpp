@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/dag/dag_node.hpp"  // TODO(EJF): Lets trim down the dependencies for the DAG node
+#include "ledger/dag/dag_node.hpp"
 
 #include <cstdint>
 #include <vector>

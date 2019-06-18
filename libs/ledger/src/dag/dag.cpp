@@ -1113,21 +1113,6 @@ bool DAG::SatisfyEpoch(DAGEpoch const &epoch)
       FETCH_LOG_WARN(LOGGING_NAME, "Invalid dag node found in epoch!");
       return false;
     }
-
-#if 1
-    // TODO(EJF): Needed?
-    if (dag_node_to_add->type == DAGNode::WORK)
-    {
-      bool const present =
-          epoch.solution_nodes.find(dag_node_to_add->hash) != epoch.solution_nodes.end();
-
-      if (!present)
-      {
-        FETCH_LOG_WARN(LOGGING_NAME, "Missing solution in subset: 0x",
-                       dag_node_to_add->hash.ToHex());
-      }
-    }
-#endif
   }
 
   if (missing_count || loose_count)

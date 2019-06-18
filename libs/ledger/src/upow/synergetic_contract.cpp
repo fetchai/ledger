@@ -253,20 +253,6 @@ Status SynergeticContract::DefineProblem(ProblemData const &problem_data)
   auto vm  = std::make_unique<vm::VM>(module_.get());
   problem_ = std::make_shared<vm::Variant>();
 
-#if 0
-  // DEBUG
-  {
-    std::ostringstream oss;
-
-    for (auto const &data : problem_data)
-    {
-      oss << "\n - '" << data << "'";
-    }
-
-    FETCH_LOG_WARN(LOGGING_NAME, "Defining problem data for 0x", digest_.ToHex(), " Data:\n" + oss.str());
-  }
-#endif
-
   // create the problem data
   auto problems = CreateProblemData(vm.get(), problem_data);
 

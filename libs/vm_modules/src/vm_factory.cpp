@@ -31,20 +31,15 @@
 #include "vm_modules/ml/tensor.hpp"
 
 #include "vm_modules/core/byte_array_wrapper.hpp"
-#include "vm_modules/core/crypto_rng.hpp"
 #include "vm_modules/core/print.hpp"
 #include "vm_modules/core/structured_data.hpp"
 #include "vm_modules/core/type_convert.hpp"
 #include "vm_modules/crypto/sha256.hpp"
-#include "vm_modules/ledger/chain_state.hpp"
-#include "vm_modules/ledger/dag_accessor.hpp"
-#include "vm_modules/ledger/dag_node_wrapper.hpp"
 #include "vm_modules/math/bignumber.hpp"
 #include "vm_modules/math/exp.hpp"
 #include "vm_modules/math/sqrt.hpp"
 #include "vm_modules/polyfill/bitshifting.hpp"
 #include "vm_modules/polyfill/bitwise_ops.hpp"
-#include "vm_modules/polyfill/length.hpp"
 
 namespace fetch {
 namespace vm_modules {
@@ -80,7 +75,6 @@ std::shared_ptr<vm::Module> VMFactory::GetModule(uint64_t enabled)
   if (MOD_SYN & enabled)
   {
     ByteArrayWrapper::Bind(*module);
-    CryptoRNG::Bind(*module);
     BigNumberWrapper::Bind(*module);
     SHA256Wrapper::Bind(*module);
 
@@ -88,7 +82,6 @@ std::shared_ptr<vm::Module> VMFactory::GetModule(uint64_t enabled)
     BindSqrt(*module);
     BindBitShift(*module);
     BindBitwiseOps(*module);
-    BindLen(*module);
   }
 
   // ml modules - order is important!!
