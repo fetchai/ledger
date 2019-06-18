@@ -23,9 +23,9 @@
 #include "ml/ops/activation.hpp"
 #include "ml/ops/loss_functions/mean_square_error.hpp"
 #include "vm/module.hpp"
-#include "vm_modules/ml/cross_entropy.hpp"
 #include "vm_modules/ml/graph.hpp"
 #include "vm_modules/ml/dataloaders/commodity_dataloader.hpp"
+#include "vm_modules/core/print.hpp"
 
 #include <cstdint>
 #include <cstdlib>
@@ -36,7 +36,7 @@
 #include <utility>
 #include <vector>
 
-using DataType  = double;
+using DataType  = float;  // todo: setting this to double breaks Arch
 using ArrayType = fetch::math::Tensor<DataType>;
 using GraphType = fetch::ml::Graph<ArrayType>;
 
@@ -64,170 +64,211 @@ struct System : public fetch::vm::Object
   static std::vector<std::string> args;
 };
 
-enum class LayerType
-{
-  NONE,
-  DENSE,
-  DROPOUT,
-  SOFTMAX
-};
-
-LayerType get_layer_type(std::string const &layer_name)
-{
-  LayerType layer_type    = LayerType::NONE;
-  int       match_counter = 0;
-
-  if (layer_name.find("dropout") != std::string::npos)
-  {
-    layer_type = LayerType::DROPOUT;
-    match_counter++;
-  }
-  if (layer_name.find("dense") != std::string::npos)
-  {
-    layer_type = LayerType::DENSE;
-    match_counter++;
-  }
-  if (layer_name.find("softmax") != std::string::npos)
-  {
-    layer_type = LayerType::SOFTMAX;
-    match_counter++;
-  }
-
-  if (match_counter != 1)
-  {
-    throw std::runtime_error("Node name does not uniquely specify the node type.");
-  }
-  return layer_type;
-}
-
 std::vector<std::string> System::args;
 
-/**
- * Loads a single model architecture from a csv file and adds the specified nodes to the graph
- * Example csv line: {model_name},num_input,118,dropout_0,output_dense,54,softmax
- * Model_name needs to match that in the weights directory and the filenames of the x and y test
- * files, e.g. output/{model_name}/model_weights/hidden_dense_1/hidden_dense_1_12/bias:0.csv and
- * {model_name}_x_test.csv
- * File can contain several models, one per line.
- * @param filename name of the file
- * @param g Graph to add nodes to
- * @param line_num line in the architecture file to load
- * @return pair of the name of the data (e.g. keras_h7_aluminium_px_last_us) and a vector of the
- * names of the nodes
- */
-std::pair<std::string, std::vector<std::string>> read_architecture(
-    std::string const &filename, std::shared_ptr<GraphType> const &g, SizeType line_num = 0)
+//enum class LayerType
+//{
+//  NONE,
+//  DENSE,
+//  DROPOUT,
+//  SOFTMAX
+//};
+//
+//LayerType get_layer_type(std::string const &layer_name)
+//{
+//  LayerType layer_type    = LayerType::NONE;
+//  int       match_counter = 0;
+//
+//  if (layer_name.find("dropout") != std::string::npos)
+//  {
+//    layer_type = LayerType::DROPOUT;
+//    match_counter++;
+//  }
+//  if (layer_name.find("dense") != std::string::npos)
+//  {
+//    layer_type = LayerType::DENSE;
+//    match_counter++;
+//  }
+//  if (layer_name.find("softmax") != std::string::npos)
+//  {
+//    layer_type = LayerType::SOFTMAX;
+//    match_counter++;
+//  }
+//
+//  if (match_counter != 1)
+//  {
+//    throw std::runtime_error("Node name does not uniquely specify the node type.");
+//  }
+//  return layer_type;
+//}
+//
+//
+///**
+// * Loads a single model architecture from a csv file and adds the specified nodes to the graph
+// * Example csv line: {model_name},num_input,118,dropout_0,output_dense,54,softmax
+// * Model_name needs to match that in the weights directory and the filenames of the x and y test
+// * files, e.g. output/{model_name}/model_weights/hidden_dense_1/hidden_dense_1_12/bias:0.csv and
+// * {model_name}_x_test.csv
+// * File can contain several models, one per line.
+// * @param filename name of the file
+// * @param g Graph to add nodes to
+// * @param line_num line in the architecture file to load
+// * @return pair of the name of the data (e.g. keras_h7_aluminium_px_last_us) and a vector of the
+// * names of the nodes
+// */
+//std::pair<std::string, std::vector<std::string>> read_architecture(
+//    std::string const &filename, std::shared_ptr<GraphType> const &g, SizeType line_num = 0)
+//{
+//  char                     delimiter = ',';
+//  std::ifstream            file(filename);
+//  std::string              buf;
+//  std::string              dataname;
+//  std::string              layer_name;
+//  std::string              previous_layer_name;
+//  SizeType                 layer_size;
+//  SizeType                 input_layer_size;
+//  SizeType                 previous_layer_size;
+//  std::string              layer_activation;
+//  DataType                 dropout_prob = 1.0;
+//  std::vector<std::string> node_names({});
+//
+//  LayerType layer_type;
+//
+//  while (line_num--)  // continue reading until we get to the desired line
+//  {
+//    std::getline(file, buf, '\n');
+//  }
+//
+//  std::getline(file, buf, '\n');
+//
+//  std::stringstream ss(buf);
+//  std::getline(ss, dataname, delimiter);
+//  std::getline(ss, layer_name, delimiter);
+//  ss >> input_layer_size >> delimiter;
+//  previous_layer_size = input_layer_size;
+//  previous_layer_name = layer_name;
+//
+//  g->AddNode<PlaceHolder<ArrayType>>(layer_name, {});  // add node for input
+//
+//  // Iterate through fields adding nodes to graph
+//  while (previous_layer_name.find("output") == std::string::npos)
+//  {
+//    std::getline(ss, layer_name, delimiter);
+//    layer_type = get_layer_type(layer_name);
+//
+//    switch (layer_type)
+//    {
+//      case LayerType::SOFTMAX:
+//      {
+//        previous_layer_name =
+//            g->AddNode<fetch::ml::ops::Softmax<ArrayType>>(layer_name, {previous_layer_name});
+//        break;
+//      }
+//      case LayerType::DROPOUT:
+//      {
+//        previous_layer_name =
+//            g->AddNode<Dropout<ArrayType>>(layer_name, {previous_layer_name}, dropout_prob);
+//        break;
+//      }
+//      case LayerType::DENSE:
+//      {
+//        ss >> layer_size >> delimiter;
+//        previous_layer_name = g->AddNode<FullyConnected<ArrayType>>(layer_name, {previous_layer_name},
+//            previous_layer_size, layer_size);
+//        previous_layer_size = layer_size;
+//        break;
+//      }
+//      default:
+//      {
+//        throw std::runtime_error("Unknown node type");
+//      }
+//    }
+//
+//    node_names.emplace_back(previous_layer_name);
+//  }
+//
+//  // there might be a final softmax layer
+//  std::getline(ss, layer_name, delimiter);
+//  layer_type = get_layer_type(layer_name);
+//  if (layer_type == LayerType::SOFTMAX)
+//  {
+//    previous_layer_name =
+//        g->AddNode<fetch::ml::ops::Softmax<ArrayType>>(layer_name, {previous_layer_name});
+//    node_names.emplace_back(previous_layer_name);
+//  }
+//  else
+//  {
+//    throw std::runtime_error("Unexpected node type");
+//  }
+//
+//  return std::make_pair(dataname, node_names);
+//}
+//
+//
+//static void Arch(fetch::vm::VM * /*vm*/,
+//                 fetch::vm::Ptr<fetch::vm::String> const & filename,
+//                 fetch::vm::Ptr<fetch::vm_modules::ml::VMGraph> const & graph
+//                 )
+//{
+//
+//  auto g_ptr = std::make_shared<fetch::ml::Graph<ArrayType>>(graph->graph_);
+//  read_architecture(filename->str, g_ptr);
+//}
+
+// read the weights and bias csv files
+
+fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> read_csv(
+    fetch::vm::VM *vm,
+    fetch::vm::Ptr<fetch::vm::String> const &filename,
+    bool transpose = false)
 {
-  char                     delimiter = ',';
-  std::ifstream            file(filename);
-  std::string              buf;
-  std::string              dataname;
-  std::string              layer_name;
-  std::string              previous_layer_name;
-  SizeType                 layer_size;
-  SizeType                 input_layer_size;
-  SizeType                 previous_layer_size;
-  std::string              layer_activation;
-  DataType                 dropout_prob = 1.0;
-  std::vector<std::string> node_names({});
+  std::ifstream file(filename->str);
+  std::string   buf;
 
-  LayerType layer_type;
+  // find number of rows and columns in the file
+  char delimiter = ',';
+  std::string field_value;
+  fetch::math::SizeType row{0};
+  fetch::math::SizeType col{0};
 
-  while (line_num--)  // continue reading until we get to the desired line
+  while (std::getline(file, buf, '\n'))
   {
-    std::getline(file, buf, '\n');
-  }
+    std::stringstream ss(buf);
 
-  std::getline(file, buf, '\n');
-
-  std::stringstream ss(buf);
-  std::getline(ss, dataname, delimiter);
-  std::getline(ss, layer_name, delimiter);
-  ss >> input_layer_size >> delimiter;
-  previous_layer_size = input_layer_size;
-  previous_layer_name = layer_name;
-
-  g->AddNode<PlaceHolder<ArrayType>>(layer_name, {});  // add node for input
-
-  // Iterate through fields adding nodes to graph
-  while (previous_layer_name.find("output") == std::string::npos)
-  {
-    std::getline(ss, layer_name, delimiter);
-    layer_type = get_layer_type(layer_name);
-
-    switch (layer_type)
+    while (row == 0 && std::getline(ss, field_value, delimiter))
     {
-      case LayerType::SOFTMAX:
-      {
-        previous_layer_name =
-            g->AddNode<fetch::ml::ops::Softmax<ArrayType>>(layer_name, {previous_layer_name});
-        break;
-      }
-      case LayerType::DROPOUT:
-      {
-        previous_layer_name =
-            g->AddNode<Dropout<ArrayType>>(layer_name, {previous_layer_name}, dropout_prob);
-        break;
-      }
-      case LayerType::DENSE:
-      {
-        ss >> layer_size >> delimiter;
-        previous_layer_name = g->AddNode<FullyConnected<ArrayType>>(layer_name, {previous_layer_name},
-            previous_layer_size, layer_size);
-        previous_layer_size = layer_size;
-        break;
-      }
-      default:
-      {
-        throw std::runtime_error("Unknown node type");
-      }
+      ++col;
     }
-
-    node_names.emplace_back(previous_layer_name);
+    ++row;
   }
 
-  // there might be a final softmax layer
-  std::getline(ss, layer_name, delimiter);
-  layer_type = get_layer_type(layer_name);
-  if (layer_type == LayerType::SOFTMAX)
+  ArrayType weights({row, col});
+
+  // read data into weights array
+  file.clear();
+  file.seekg(0, std::ios::beg);
+
+  row = 0;
+  while (std::getline(file, buf, '\n'))
   {
-    previous_layer_name =
-        g->AddNode<fetch::ml::ops::Softmax<ArrayType>>(layer_name, {previous_layer_name});
-    node_names.emplace_back(previous_layer_name);
+    col = 0;
+    std::stringstream ss(buf);
+    while (std::getline(ss, field_value, delimiter))
+    {
+      weights(row, col) = static_cast<DataType>(std::stod(field_value));
+      ++col;
+    }
+    ++row;
   }
-  else
+
+  if (transpose)
   {
-    throw std::runtime_error("Unexpected node type");
+    weights = weights.Transpose();
   }
 
-  return std::make_pair(dataname, node_names);
+  return vm->CreateNewObject<fetch::vm_modules::math::VMTensor>(weights);
 }
 
-
-static void Arch(fetch::vm::VM * /*vm*/,
-                 fetch::vm::Ptr<fetch::vm::String> const &filename,
-                 fetch::vm::Ptr<fetch::vm_modules::ml::GraphWrapper> const &graph
-                 )
-{
-
-//  auto g_ptr = std::make_shared<fetch::ml::Graph<ArrayType>>(GraphType());
-
-//  fetch::vm_modules::ml::GraphWrapper graph2 = *graph;
-  auto ml_type_graph = static_cast<fetch::ml::Graph<ArrayType >> (graph);
-  auto g_ptr = std::make_shared<fetch::vm_modules::ml::GraphWrapper>(ml_type_graph);
-  read_architecture(filename->str, g_ptr);
-}
-
-static void Print(fetch::vm::VM * /*vm*/, fetch::vm::Ptr<fetch::vm::String> const &s)
-{
-  std::cout << s->str << std::endl;
-}
-
-fetch::vm::Ptr<fetch::vm::String> toString(fetch::vm::VM *vm, float const &a)
-{
-  fetch::vm::Ptr<fetch::vm::String> ret(new fetch::vm::String(vm, std::to_string(a)));
-  return ret;
-}
 
 int main(int argc, char **argv)
 {
@@ -251,35 +292,17 @@ int main(int argc, char **argv)
 
   auto module = std::make_shared<fetch::vm::Module>();
 
-//  module->CreateFreeFunction("print", &PrintNumber<int>);
-//  module->CreateFreeFunction("print", &PrintNumber<uint64_t>);
-//  module->CreateFreeFunction("print", &PrintNumber<float>);
-//  module->CreateFreeFunction("print", &PrintNumber<double>);
-  module->CreateFreeFunction("print", &Print);
-  module->CreateFreeFunction("toString", &toString);
-
   module->CreateClassType<System>("System")
       .CreateStaticMemberFunction("Argc", &System::Argc)
       .CreateStaticMemberFunction("Argv", &System::Argv);
 
-  fetch::vm_modules::ml::CreateTensor(*module);
+  fetch::vm_modules::math::CreateTensor(*module);
   fetch::vm_modules::ml::CreateGraph(*module);
   fetch::vm_modules::ml::VMCommodityDataLoader::Bind(*module);
+  fetch::vm_modules::CreatePrint(*module);
 
-  module->CreateFreeFunction("read_architecture", &Arch);
-
-//  fetch::vm_modules::ml::CreateCrossEntropy(*module);
-
-//  module->CreateClassType<TrainingPairWrapper>("TrainingPair")
-//      .CreateConstuctor<fetch::vm::Ptr<fetch::vm_modules::ml::TensorWrapper>,
-//          fetch::vm::Ptr<fetch::vm_modules::ml::TensorWrapper>>()
-//      .CreateMemberFunction("Data", &TrainingPairWrapper::data)
-//      .CreateMemberFunction("Label", &TrainingPairWrapper::label);
-
-//  module->CreateClassType<DataLoaderWrapper>("MNISTLoader")
-//      .CreateConstuctor<fetch::vm::Ptr<fetch::vm::String>, fetch::vm::Ptr<fetch::vm::String>>()
-//      .CreateMemberFunction("GetData", &DataLoaderWrapper::GetData)
-//      .CreateMemberFunction("Display", &DataLoaderWrapper::Display);
+//  module->CreateFreeFunction("read_architecture", &Arch);
+  module->CreateFreeFunction("read_csv", &read_csv);
 
   // Setting compiler up
   fetch::vm::Compiler *    compiler = new fetch::vm::Compiler(module.get());
@@ -301,6 +324,10 @@ int main(int argc, char **argv)
   }
 
   fetch::vm::VM vm(module.get());
+
+  // attach std::cout for printing
+  vm.AttachOutputDevice("stdout", std::cout);
+
   if (!vm.GenerateExecutable(ir, "main_ir", executable, errors))
   {
     std::cout << "Failed to generate executable" << std::endl;
