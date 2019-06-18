@@ -65,9 +65,10 @@ private:
 };
 
 template <class T, class C>
-Optimiser<T, C>::Optimiser(std::shared_ptr<Graph<T>> graph, std::vector<std::string> input_node_names, std::string output_node_name, DataType const &learning_rate)
-  :
-  graph_(graph)
+Optimiser<T, C>::Optimiser(std::shared_ptr<Graph<T>> graph,
+                           std::vector<std::string> input_node_names, std::string output_node_name,
+                           DataType const &learning_rate)
+  : graph_(graph)
   , input_node_names_(std::move(input_node_names))
   , output_node_name_(std::move(output_node_name))
   , learning_rate_(learning_rate)
