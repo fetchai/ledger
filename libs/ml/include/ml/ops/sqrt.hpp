@@ -61,7 +61,7 @@ public:
 
     fetch::math::Sqrt(inputs.at(0).get(), ret_error_signal);
     fetch::math::Divide(static_cast<DataType>(0.5), ret_error_signal,
-                        ret_error_signal);  // todo: datatype?
+                        ret_error_signal);
     fetch::math::Multiply(error_signal, ret_error_signal, ret_error_signal);
 
     return {ret_error_signal};
