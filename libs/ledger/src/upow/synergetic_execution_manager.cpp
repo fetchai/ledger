@@ -58,20 +58,6 @@ ExecStatus SynergeticExecutionManager::PrepareWorkQueue(Block const &current, Bl
   auto const &current_epoch  = current.body.dag_epoch;
   auto const &previous_epoch = previous.body.dag_epoch;
 
-#if 0
-  FETCH_LOG_INFO(LOGGING_NAME, "==== EPOCH ", current_epoch.block_number, " ====");
-  for (auto const &nodes : current_epoch.all_nodes)
-  {
-    // lookup the node
-    DAGNode node{};
-    dag_->GetDAGNode(nodes, node);
-
-    FETCH_LOG_INFO(LOGGING_NAME, " -> 0x", nodes.ToHex(), " type: ", DAGNodeTypeToString(node.type),
-                   " creator: ", node.identity.identifier().ToBase64());
-  }
-  FETCH_LOG_INFO(LOGGING_NAME, "=======================================");
-#endif
-
   FETCH_LOG_INFO(LOGGING_NAME, "Preparing work queue for epoch: ", current_epoch.block_number);
 
   // Step 1. loop through all the solutions which were presented in this epoch
@@ -190,10 +176,8 @@ void SynergeticExecutionManager::ExecuteItem(WorkQueue &queue, ProblemData const
   executor->Verify(queue, problem_data, block, num_lanes);
 
   // return the executor to the stack
-  {
-    FETCH_LOCK(lock_);
-    executors_.emplace_back(std::move(executor));
-  }
+  FETCH_LOCK(lock_);
+  executors_.emplace_back(std::move(executor));
 }
 
 }  // namespace ledger

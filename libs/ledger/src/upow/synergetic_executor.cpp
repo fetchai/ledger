@@ -75,11 +75,7 @@ void SynergeticExecutor::Verify(WorkQueue &solutions, ProblemData const &problem
 
     if ((SynergeticContract::Status::SUCCESS == status) && (calculated_score == solution->score()))
     {
-#if 0
-      FETCH_LOG_INFO(LOGGING_NAME, "!!! Solution found with score: ", calculated_score);
-#endif
-
-      // TODO(EJF): State sharding needs to be added here
+      // TODO(issue 1213): State sharding needs to be added here
       BitVector shard_mask{num_lanes};
       shard_mask.SetAllOne();
 

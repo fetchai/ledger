@@ -96,12 +96,10 @@ TxQueryHttpInterface::TxQueryHttpInterface(StorageUnitInterface &storage_unit)
           tx_obj["action"]    = tx.action();
           tx_obj["data"]      = tx.data().ToBase64();
           break;
-
-        // TODO(HUT): fix this case
         case Transaction::ContractMode::SYNERGETIC:
-          tx_obj["chainCode"] = tx.chain_code();
-          tx_obj["action"]    = tx.action();
-          tx_obj["data"]      = tx.data().ToBase64();
+          tx_obj["contractDigest"] = tx.contract_digest().address().ToHex();
+          tx_obj["action"]         = tx.action();
+          tx_obj["data"]           = tx.data().ToBase64();
           break;
         }
 

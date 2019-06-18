@@ -699,7 +699,7 @@ extern log::details::LogWrapper logger;
 #endif
 
 #ifndef NDEBUG
-//#define FETCH_HAS_STACK_TRACE
+#define FETCH_HAS_STACK_TRACE
 #endif
 
 #ifdef FETCH_HAS_STACK_TRACE

@@ -194,7 +194,9 @@ bool MainChain::LoadBlock(BlockHash const &hash, Block &block) const
 MainChain::BlockPtr MainChain::GetHeaviestBlock() const
 {
   FETCH_LOCK(lock_);
-  return GetBlock(heaviest_.hash);
+  auto block_ptr = GetBlock(heaviest_.hash);
+  assert(block_ptr);
+  return block_ptr;
 }
 
 /**
@@ -264,6 +266,11 @@ bool MainChain::RemoveTree(BlockHash const &removed_hash, BlockHashSet &invalida
 bool MainChain::RemoveBlock(BlockHash hash)
 {
   FETCH_LOCK(lock_);
+
+  // Step 0. Manually set heaviest to a block we still know is valid
+  auto block_before_one_to_del = GetBlock(hash);
+  heaviest_                    = HeaviestTip{};
+  heaviest_.Update(*block_before_one_to_del);
 
   // Step 1. Remove this block and the whole its progeny from the cache
   BlockHashSet invalidated_blocks;

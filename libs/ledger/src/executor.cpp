@@ -67,9 +67,8 @@ bool GenerateContractName(Transaction const &tx, Identifier &identifier)
     contract_name = tx.chain_code() + "." + tx.action();
     break;
 
-  // TODO(HUT): look at this
   case ContractMode::SYNERGETIC:
-    contract_name = tx.chain_code() + "." + tx.action();
+    // synergetic contracts are not supported through normal pipeline
     break;
   }
 
