@@ -111,6 +111,7 @@ int main(int argc, char **argv)
       .CreateStaticMemberFunction("Argv", &System::Argv);
 
   fetch::vm_modules::math::CreateTensor(*module);
+  fetch::vm_modules::ml::CreateStateDict(*module);
   fetch::vm_modules::ml::CreateGraph(*module);
 
   fetch::vm_modules::ml::TrainingPair::Bind(*module);
