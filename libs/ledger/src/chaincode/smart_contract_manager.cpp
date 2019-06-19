@@ -78,15 +78,21 @@ Contract::Status SmartContractManager::OnCreate(Transaction const &tx, BlockInde
 
   // extract the fields from the contract
   bool const extract_success = Extract(data, CONTRACT_HASH, contract_hash) &&
-                               Extract(data, CONTRACT_SOURCE, contract_source) &&
-                               Extract(data, CONTRACT_TYPE, contract_type);
+                               Extract(data, CONTRACT_SOURCE, contract_source);
+
+  bool const extract_type_success = Extract(data, CONTRACT_TYPE, contract_type);
+
+  if (!extract_type_success)
+  {
+    contract_type = "smart";
+  }
 
   // fail if the extraction fails
   if (!extract_success)
   {
     FETCH_LOG_WARN(LOGGING_NAME,
                    "Failed to parse contract source from transaction body. Debug: ", contract_hash,
-                   " ", contract_type, " : ", contract_source);
+                   " - ", contract_type, " : ", contract_source);
     return Status::FAILED;
   }
 
