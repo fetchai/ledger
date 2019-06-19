@@ -29,6 +29,18 @@
 namespace fetch {
 namespace vm {
 
+template <typename T, typename = void>
+struct GetElementType
+{
+  using type = typename GetStorageType<T>::type;
+};
+template <typename T>
+struct GetElementType<T, typename std::enable_if_t<std::is_same<T, bool>::value>>
+{
+  // ElementType must NOT be bool because std::vector<bool> is a partial specialisation
+  using type = uint8_t;
+};
+
 class IArray : public Object
 {
 public:
@@ -60,7 +72,7 @@ protected:
 template <typename T>
 struct Array : public IArray
 {
-  using ElementType = typename GetStorageType<T>::type;
+  using ElementType = typename GetElementType<T>::type;
 
   Array()           = delete;
   ~Array() override = default;
@@ -241,6 +253,7 @@ struct Array : public IArray
   }
 
   TypeId                   element_type_id;
+  // ElementType must NOT be bool because std::vector<bool> is a partial specialisation
   std::vector<ElementType> elements;
 };
 
