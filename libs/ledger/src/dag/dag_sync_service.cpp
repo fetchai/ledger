@@ -71,7 +71,7 @@ DAGSyncService::State DAGSyncService::OnInitial()
 
   if (muddle_endpoint_.GetDirectlyConnectedPeers().empty())
   {
-    state_machine_->Delay(std::chrono::milliseconds{RETRY_TIMEOUT});
+    state_machine_->Delay(std::chrono::milliseconds{500});
     return State::INITIAL;
   }
 
@@ -156,7 +156,7 @@ DAGSyncService::State DAGSyncService::OnQueryMissing()
       missing_pending_.Add(connection, promise);
     }
 
-    state_machine_->Delay(std::chrono::milliseconds{RETRY_TIMEOUT});
+    state_machine_->Delay(std::chrono::milliseconds{500});
   }
 
   return State::RESOLVE_MISSING;
