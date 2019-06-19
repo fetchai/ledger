@@ -217,10 +217,6 @@ void DAG::AddWork(Work const &solution)
   new_node->Finalise();
   new_node->signature = certificate_->Sign(new_node->hash);
 
-#if 0
-  FETCH_LOG_INFO(LOGGING_NAME, "!!! Work for contract: 0x", new_node->contract_digest.ToHex(), " score: ", solution.score(), " (id: 0x", new_node->hash.ToHex(), ")");
-#endif
-
   PushInternal(new_node);
   recently_added_.push_back(*new_node);
 }
