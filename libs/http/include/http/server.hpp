@@ -85,7 +85,7 @@ public:
       }
     });
 
-    manager_.reset();
+    /* manager_.reset(); */
   }
 
   void Start(uint16_t port)
