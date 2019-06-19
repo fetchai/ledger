@@ -24,6 +24,7 @@
 #include "ml/ops/activation.hpp"
 
 #include "vm/module.hpp"
+#include "state_dict.hpp"
 
 namespace fetch {
 namespace vm_modules {
@@ -104,6 +105,18 @@ public:
                                                             {input_name->str}, prob);
   }
 
+  void LoadStateDict(fetch::vm::Ptr<fetch::vm_modules::ml::VMStateDict> const & sd)
+  {
+    graph_.LoadStateDict(sd->state_dict_);
+  }
+
+  fetch::vm::Ptr<fetch::vm_modules::ml::VMStateDict> StateDict()
+  {
+    fetch::vm::Ptr<fetch::vm_modules::ml::VMStateDict> ret =
+        this->vm_->CreateNewObject<fetch::vm_modules::ml::VMStateDict>(graph_.StateDict());
+    return ret;
+  }
+
   GraphType graph_;
 
 };
@@ -120,7 +133,10 @@ inline void CreateGraph(fetch::vm::Module &module)
       .CreateMemberFunction("AddFullyConnected", &VMGraph::AddFullyConnected)
       .CreateMemberFunction("AddRelu", &VMGraph::AddRelu)
       .CreateMemberFunction("AddSoftmax", &VMGraph::AddSoftmax)
-      .CreateMemberFunction("AddDropout", &VMGraph::AddDropout);
+      .CreateMemberFunction("AddDropout", &VMGraph::AddDropout)
+      .CreateMemberFunction("LoadStateDict", &VMGraph::LoadStateDict)
+      .CreateMemberFunction("StateDict", &VMGraph::StateDict)
+      ;
 }
 
 }  // namespace ml

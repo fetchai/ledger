@@ -8,67 +8,57 @@ endif
 var loader = CommodityDataLoader();
 loader.AddData(System.Argv(1));
 
-print(loader.GetNext().ToString());
+//print(loader.GetNext().ToString());
 
 // mkae graph with correct architecture
 var graph = Graph();
 
-//var architecture_file = System.Argv(0) + "/architecture.csv";
-//read_architecture(architecture_file, graph);
-
 graph.AddPlaceholder("num_input");
 graph.AddDropout("dropout_0", "num_input", 1.0f);
 graph.AddFullyConnected("hidden_dense_1", "dropout_0", 118, 216);
-graph.AddRelu("relu_1", "hidden_dense_1");
-graph.AddDropout("dropout_1", "relu_1", 1.0f);
+graph.AddSoftmax("softmax_1", "hidden_dense_1");
+graph.AddDropout("dropout_1", "softmax_1", 1.0f);
 graph.AddFullyConnected("hidden_dense_2", "dropout_1", 216, 108);
-graph.AddRelu("relu_2", "hidden_dense_2");
-graph.AddDropout("dropout_2", "relu_2", 1.0f);
+graph.AddSoftmax("softmax_2", "hidden_dense_2");
+graph.AddDropout("dropout_2", "softmax_2", 1.0f);
 graph.AddFullyConnected("output_dense", "dropout_2", 108, 54);
-graph.AddRelu("relu_3", "output_dense");
+graph.AddSoftmax("softmax_3", "output_dense");
 
 
 // read in weights
 var file_weights0 = System.Argv(0) +  "/output/keras_h7_aluminium_px_last_us/model_weights/hidden_dense_1/hidden_dense_1_12/kernel:0.csv";
 var file_bias0    = System.Argv(0) +  "/output/keras_h7_aluminium_px_last_us/model_weights/hidden_dense_1/hidden_dense_1_12/bias:0.csv";
+var file_weights1 = System.Argv(0) +  "/output/keras_h7_aluminium_px_last_us/model_weights/hidden_dense_2/hidden_dense_2_4/kernel:0.csv";
+var file_bias1    = System.Argv(0) +  "/output/keras_h7_aluminium_px_last_us/model_weights/hidden_dense_2/hidden_dense_2_4/bias:0.csv";
+var file_weights2 = System.Argv(0) +  "/output/keras_h7_aluminium_px_last_us/model_weights/output_dense/output_dense_12/kernel:0.csv";
+var file_bias2    = System.Argv(0) +  "/output/keras_h7_aluminium_px_last_us/model_weights/output_dense/output_dense_12/bias:0.csv";
 
 var weights0 = read_csv(file_weights0, true);
-var bias0 = read_csv(file_bias0, true);
+var bias0    = read_csv(file_bias0, false);
+var weights1 = read_csv(file_weights1, true);
+var bias1    = read_csv(file_bias1, false);
+var weights2 = read_csv(file_weights2, true);
+var bias2    = read_csv(file_bias2, false);
 
-//print(weights0.ToString());
-printLn(weights0.At(0u64,0u64));
+//printLn(weights0.At(0u64,0u64));
 
-// load weights into Graph
+// load weights into graph
 
-//var sd = graph.StateDict();
-//auto weights_tensor = sd.dict_[name + "_FC_Weights"].weights_;
-//auto bias_tensor    = sd.dict_[name + "_FC_Bias"].weights_;
-//
-//*weights_tensor     = weights;
-//*bias_tensor        = bias;
-//
-//g_ptr->LoadStateDict(sd);
+var sd = graph.StateDict();
+sd.SetWeights("hidden_dense_1" + "_FC_Weights", weights0);
+sd.SetWeights("hidden_dense_1" + "_FC_Bias", bias0);
+sd.SetWeights("hidden_dense_2" + "_FC_Weights", weights1);
+sd.SetWeights("hidden_dense_2" + "_FC_Bias", bias1);
+sd.SetWeights("output_dense" + "_FC_Weights", weights2);
+sd.SetWeights("output_dense" + "_FC_Bias", bias2);
 
+graph.LoadStateDict(sd);
 
-////var average = 0.0f;
-////for(i in 0:trainingIterations)
-//d.GetData(t);
-//g.SetInput("Input", t);
-//var pred = g.Evaluate("Output");
-////var loss = c.Forward(pred, p.Label());
-////    average += loss;
-//var remainder = i - (i / 100 * 100);
-////if (remainder == 0) // No % operator :(
-////      print(average);
-//////      average = 0.0f;
-////  d.Display(p.Data());
-////  print("Expected  : " + p.Label().ToString());
-////  print("Predicted : " + pred.ToString());
-////endif
-//print("prediction: " + pred.ToString());
-////var dt = c.Backward(pred, p.Label());
-////g.Backpropagate("Softmax", dt);
-////g.Step(0.1f);
-////endfor
-//
+for(i in 0:354)
+    var input_data = loader.GetNext();
+    graph.SetInput("num_input", input_data);
+    var pred = graph.Evaluate("softmax_3");
+    print(pred.ToString());
+endfor
+
 endfunction

@@ -24,6 +24,7 @@
 #include "ml/ops/loss_functions/mean_square_error.hpp"
 #include "vm/module.hpp"
 #include "vm_modules/ml/graph.hpp"
+#include "vm_modules/ml/state_dict.hpp"
 #include "vm_modules/ml/dataloaders/commodity_dataloader.hpp"
 #include "vm_modules/core/print.hpp"
 
@@ -38,7 +39,6 @@
 
 using DataType  = float;  // todo: setting this to double breaks Arch
 using ArrayType = fetch::math::Tensor<DataType>;
-using GraphType = fetch::ml::Graph<ArrayType>;
 
 using namespace fetch::ml::ops;
 using namespace fetch::ml::layers;
@@ -148,6 +148,7 @@ int main(int argc, char **argv)
       .CreateStaticMemberFunction("Argv", &System::Argv);
 
   fetch::vm_modules::math::CreateTensor(*module);
+  fetch::vm_modules::ml::CreateStateDict(*module);  // NB: things have to be created in the right order!
   fetch::vm_modules::ml::CreateGraph(*module);
   fetch::vm_modules::ml::VMCommodityDataLoader::Bind(*module);
   fetch::vm_modules::CreatePrint(*module);
