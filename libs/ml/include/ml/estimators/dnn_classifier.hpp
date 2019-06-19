@@ -55,7 +55,7 @@ public:
   bool Run(SizeType n_steps, RunMode const &rm, TensorType &input) override;
 
 private:
-  std::shared_ptr<DataLoader<TensorType, TensorType>> data_loader_ptr_;
+  std::shared_ptr<DataLoader<TensorType, TensorType>>                  data_loader_ptr_;
   std::shared_ptr<optimisers::Optimiser<TensorType, CostFunctionType>> optimiser_ptr_;
 
   std::string input_;

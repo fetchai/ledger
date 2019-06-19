@@ -16,24 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
-//#include "math/tensor.hpp"
-//#include "ml/graph.hpp"
-//#include "ml/layers/fully_connected.hpp"
-//#include "ml/ops/activation.hpp"
-//#include "ml/ops/loss_functions/cross_entropy.hpp"
-//#include "ml/optimisation/adam_optimiser.hpp"
-
 #include "ml/dataloaders/mnist_loaders/mnist_loader.hpp"
 #include "ml/estimators/dnn_classifier.hpp"
 #include "ml/optimisation/types.hpp"
-
-#include <cstddef>
-#include <cstdint>
-#include <iostream>
-#include <string>
-#include <unordered_map>
-#include <utility>
-#include <vector>
 
 using namespace fetch::ml::estimator;
 using namespace fetch::ml::optimisers;
@@ -44,7 +29,10 @@ using SizeType   = typename TensorType::SizeType;
 
 using EstimatorType  = typename fetch::ml::estimator::DNNClassifier<TensorType>;
 using DataLoaderType = typename fetch::ml::MNISTLoader<TensorType, TensorType>;
-using GraphType      = typename fetch::ml::MNISTLoader<TensorType, TensorType>;
+
+// TODO: implement a default dataloader for estimators
+// TODO: implement early stopping
+// TODO: rationalise Run() interaface
 
 int main(int ac, char **av)
 {
@@ -61,12 +49,11 @@ int main(int ac, char **av)
   EstimatorConfig<DataType> estimator_config;
   estimator_config.batch_size     = 64;
   estimator_config.early_stopping = true;
-  //  estimator_config.learning_rate  = 0.5;
   estimator_config.opt = OptimiserType::ADAM;
 
-  // setup dataloader - TODO: make this go away by implementing default dataloader in estimator
+  // setup dataloader
   auto data_loader_ptr = std::make_shared<DataLoaderType>(av[1], av[2]);
-  auto test_datum = (data_loader_ptr->GetNext()).second.at(0);
+  auto test_datum      = (data_loader_ptr->GetNext()).second.at(0);
 
   // run estimator in training mode
   EstimatorType estimator(estimator_config, data_loader_ptr, {784, 100, 20, 10});
@@ -74,7 +61,6 @@ int main(int ac, char **av)
 
   // run estimator in testing mode
   estimator.Run(5, RunMode::PREDICT, test_datum);
-
 
   return 0;
 }
