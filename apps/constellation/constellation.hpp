@@ -95,7 +95,7 @@ public:
   static constexpr char const *LOGGING_NAME = "constellation";
 
   // Construction / Destruction
-  explicit Constellation(CertificatePtr certificate, Config config);
+  Constellation(CertificatePtr certificate, Config config);
   ~Constellation() override = default;
 
   void Run(UriList const &initial_peers, core::WeakRunnable bootstrap_monitor);

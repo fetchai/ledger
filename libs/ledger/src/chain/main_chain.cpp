@@ -209,8 +209,6 @@ MainChain::BlockPtr MainChain::GetHeaviestBlock() const
  */
 bool MainChain::RemoveTree(BlockHash const &removed_hash, BlockHashSet &invalidated_blocks)
 {
-  FETCH_LOG_WARN(LOGGING_NAME, "Removing tree");
-
   // check if the block is actually found in this chain
   IntBlockPtr root;
   bool        retVal{LookupBlock(removed_hash, root)};
@@ -886,8 +884,6 @@ void MainChain::TrimCache()
  */
 void MainChain::FlushBlock(IntBlockPtr const &block)
 {
-  FETCH_LOG_WARN(LOGGING_NAME, "Flushing block!");
-
   // remove the block from the block map
   UncacheBlock(block->body.hash);
 

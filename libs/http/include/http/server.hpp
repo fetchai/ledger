@@ -85,6 +85,7 @@ public:
       }
     });
 
+    // TODO (issue 1220): This appears to cause a double free due to a race
     /* manager_.reset(); */
   }
 

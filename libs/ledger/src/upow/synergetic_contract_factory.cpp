@@ -24,14 +24,11 @@
 
 namespace fetch {
 namespace ledger {
-namespace {
 
 constexpr char const *LOGGING_NAME = "SynContractFactory";
 
 using byte_array::ConstByteArray;
 using serializers::ByteArrayBuffer;
-
-}  // namespace
 
 SynergeticContractFactory::SynergeticContractFactory(StorageInterface &storage)
   : storage_{storage}

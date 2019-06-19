@@ -24,13 +24,10 @@
 
 namespace fetch {
 namespace ledger {
-namespace {
 
 constexpr char const *LOGGING_NAME = "SynExecMgr";
 
 using ExecStatus = SynergeticExecutionManager::ExecStatus;
-
-}  // namespace
 
 SynergeticExecutionManager::SynergeticExecutionManager(DAGPtr dag, std::size_t num_executors,
                                                        ExecutorFactory const &factory)

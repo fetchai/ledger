@@ -204,7 +204,6 @@ vm::Ptr<vm::Array<T>> StructuredData::GetArray(vm::Ptr<vm::String> const &s)
           elements[i] = value_array[i].As<T>();
         }
 
-        // create the
         ret = CreateNewPrimitiveArray(vm_, std::move(elements));
       }
     }

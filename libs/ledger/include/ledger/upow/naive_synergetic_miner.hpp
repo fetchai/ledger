@@ -24,7 +24,6 @@
 
 #include "ledger/dag/dag_interface.hpp"
 
-#include <math/bignumber.hpp>
 #include <memory>
 
 namespace fetch {

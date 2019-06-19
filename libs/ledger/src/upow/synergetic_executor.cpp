@@ -24,11 +24,8 @@
 
 namespace fetch {
 namespace ledger {
-namespace {
 
 constexpr char const *LOGGING_NAME = "SynExec";
-
-}  // namespace
 
 SynergeticExecutor::SynergeticExecutor(StorageInterface &storage)
   : storage_{storage}

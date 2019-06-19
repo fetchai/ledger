@@ -29,7 +29,7 @@
 #include "vm_modules/core/structured_data.hpp"
 #include "vm_modules/math/bignumber.hpp"
 
-#include <core/json/document.hpp>
+#include "core/json/document.hpp"
 #include <sstream>
 
 namespace fetch {

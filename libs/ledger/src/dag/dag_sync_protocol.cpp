@@ -50,13 +50,5 @@ DAG::MissingNodes DAGSyncProtocol::RequestNodes(MissingTXs missing_txs)
     }
   }
 
-#if 1
-  for (auto const &node : ret)
-  {
-    FETCH_LOG_INFO(LOGGING_NAME, " returning a DAG hash: ", node.hash.ToBase64());
-  }
-#endif
-  FETCH_LOG_WARN(LOGGING_NAME, "Fulfilled request for missing txs. Count: ", ret.size());
-
   return ret;
 }

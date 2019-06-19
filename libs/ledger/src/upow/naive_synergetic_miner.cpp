@@ -74,8 +74,6 @@ NaiveSynergeticMiner::NaiveSynergeticMiner(DAGPtr dag, StorageInterface &storage
 {
   state_machine_->RegisterHandler(State::INITIAL, this, &NaiveSynergeticMiner::OnInitial);
   state_machine_->RegisterHandler(State::MINE, this, &NaiveSynergeticMiner::OnMine);
-
-  state_machine_->OnStateChange([](State /*new_state*/, State /* old_state */) {});
 }
 
 core::WeakRunnable NaiveSynergeticMiner::GetWeakRunnable()
