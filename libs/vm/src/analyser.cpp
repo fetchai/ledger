@@ -24,6 +24,8 @@
 #include "vm/state.hpp"
 #include "vm/string.hpp"
 
+#include "vectorise/fixed_point/fixed_point.hpp"
+
 #include <cstddef>
 #include <cstdint>
 #include <ostream>
@@ -71,6 +73,10 @@ void Analyser::Initialise()
   CreatePrimitiveType("UInt64", TypeIndex(typeid(uint64_t)), true, TypeIds::UInt64, uint64_type_);
   CreatePrimitiveType("Float32", TypeIndex(typeid(float)), true, TypeIds::Float32, float32_type_);
   CreatePrimitiveType("Float64", TypeIndex(typeid(double)), true, TypeIds::Float64, float64_type_);
+  CreatePrimitiveType("Fixed32", TypeIndex(typeid(fixed_point::fp32_t)), true, TypeIds::Fixed32,
+                      fixed32_type_);
+  CreatePrimitiveType("Fixed64", TypeIndex(typeid(fixed_point::fp64_t)), true, TypeIds::Fixed64,
+                      fixed64_type_);
   CreateClassType("String", TypeIndex(typeid(String)), TypeIds::String, string_type_);
   EnableOperator(string_type_, Operator::Equal);
   EnableOperator(string_type_, Operator::NotEqual);
@@ -97,9 +103,9 @@ void Analyser::Initialise()
 
   TypePtrArray const integer_types = {int8_type_,  uint8_type_,  int16_type_, uint16_type_,
                                       int32_type_, uint32_type_, int64_type_, uint64_type_};
-  TypePtrArray const number_types  = {int8_type_,    uint8_type_,  int16_type_, uint16_type_,
-                                     int32_type_,   uint32_type_, int64_type_, uint64_type_,
-                                     float32_type_, float64_type_};
+  TypePtrArray const number_types  = {int8_type_,    uint8_type_,   int16_type_,   uint16_type_,
+                                     int32_type_,   uint32_type_,  int64_type_,   uint64_type_,
+                                     float32_type_, float64_type_, fixed32_type_, fixed64_type_};
   for (auto const &type : number_types)
   {
     EnableOperator(type, Operator::Equal);
@@ -177,6 +183,8 @@ void Analyser::UnInitialise()
   uint64_type_              = nullptr;
   float32_type_             = nullptr;
   float64_type_             = nullptr;
+  fixed32_type_             = nullptr;
+  fixed64_type_             = nullptr;
   string_type_              = nullptr;
   address_type_             = nullptr;
   template_parameter1_type_ = nullptr;
@@ -511,7 +519,7 @@ void Analyser::AnnotateBlock(BlockNodePtr const &block_node)
     }
     case NodeKind::BreakStatement:
     {
-      if (!loops_.empty())
+      if (loops_.empty())
       {
         AddError(child->line, "break statement is not inside a while or for loop");
       }
@@ -519,7 +527,7 @@ void Analyser::AnnotateBlock(BlockNodePtr const &block_node)
     }
     case NodeKind::ContinueStatement:
     {
-      if (!loops_.empty())
+      if (loops_.empty())
       {
         AddError(child->line, "continue statement is not inside a while or for loop");
       }
@@ -1012,6 +1020,16 @@ bool Analyser::AnnotateExpression(ExpressionNodePtr const &node)
   case NodeKind::Float64:
   {
     SetRVExpression(node, float64_type_);
+    break;
+  }
+  case NodeKind::Fixed32:
+  {
+    SetRVExpression(node, fixed32_type_);
+    break;
+  }
+  case NodeKind::Fixed64:
+  {
+    SetRVExpression(node, fixed64_type_);
     break;
   }
   case NodeKind::String:

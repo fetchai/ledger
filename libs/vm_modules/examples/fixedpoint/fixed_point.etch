@@ -1,0 +1,43 @@
+function main()
+  var a = 2.0fp32;
+  var b = 3.0fp32;
+  printLn(a);
+  printLn(b);
+  a += b;
+  print("a += b: a = ");
+  printLn(a);
+  print("d = a * b = ");
+  var c = a * b;
+  printLn(c);
+  var d = 4.0fp64;
+  var e = 3.0fp64;
+  printLn(d);
+  printLn(b);
+  d += e;
+  print("d += e : d = ");
+  printLn(d);
+  print("f = d * e = ");
+  var f = d * e;
+  printLn(f);
+
+  var myArray = Array<Fixed32>(5);
+  var myArray2 = Array<Fixed64>(5);
+
+  for (i in 0:4)
+  	myArray[i] = a * toFixed32(i);
+  	myArray2[i] = d * toFixed64(i);
+    printLn(myArray[i]);
+    printLn(myArray2[i]);
+  endfor
+
+  var mymap = Map<Fixed32, Fixed32>();
+  mymap[a] = b;
+  print("mymap[" + toString(a) + "] = ");
+  printLn(mymap[a]);
+
+  var pi : Fixed64 = 3.1415fp64;
+  printLn("exp(" + toString(d) + ") = " + toString(exp(d)));
+  printLn("sin(" + toString(pi) + ") = " + toString(sin(pi)));
+
+  printLn("pow(" + toString(d) + ", " + toString(d) + ") = " + toString(pow(d, d)));
+endfunction

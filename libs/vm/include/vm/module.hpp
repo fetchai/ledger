@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "meta/tuple.hpp"
+#include "vectorise/fixed_point/fixed_point.hpp"
 #include "vm/address.hpp"
 #include "vm/array.hpp"
 #include "vm/compiler.hpp"

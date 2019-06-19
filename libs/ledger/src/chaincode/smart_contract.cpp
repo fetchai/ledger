@@ -587,6 +587,12 @@ SmartContract::Status SmartContract::InvokeQuery(std::string const &name, Query 
   case vm::TypeIds::Float64:
     response["result"] = output.Get<double>();
     break;
+  case vm::TypeIds::Fixed32:
+    response["result"] = output.Get<fixed_point::fp32_t>();
+    break;
+  case vm::TypeIds::Fixed64:
+    response["result"] = output.Get<fixed_point::fp64_t>();
+    break;
   case vm::TypeIds::String:
     response["result"] = output.Get<vm::Ptr<vm::String>>()->str;
     break;

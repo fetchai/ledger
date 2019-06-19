@@ -53,7 +53,7 @@ class TrainingClient
 {
 public:
   TrainingClient(std::string const &images, std::string const &labels)
-    : dataloader_(images, labels)
+    : dataloader_(images, labels, true)
   {
     g_.AddNode<PlaceHolder<ArrayType>>("Input", {});
     g_.AddNode<FullyConnected<ArrayType>>("FC1", {"Input"}, 28u * 28u, 10u);
@@ -76,7 +76,7 @@ public:
       {
         // Random sampling ensures that for relatively few training steps the proportion of shared
         // training data is low
-        input = dataloader_.GetRandom();
+        input = dataloader_.GetNext();
         g_.SetInput("Input", input.second.at(0));
 
         ArrayType results = g_.Evaluate("Softmax").Copy();

@@ -37,7 +37,6 @@ void BuildCBOWLoader(std::string const &custom_name, pybind11::module &module)
       .def("IsDone", &fetch::ml::dataloaders::CBoWLoader<ArrayType>::IsDone)
       .def("Reset", &fetch::ml::dataloaders::CBoWLoader<ArrayType>::Reset)
       .def("GetNext", &fetch::ml::dataloaders::CBoWLoader<ArrayType>::GetNext)
-      .def("GetRandom", &fetch::ml::dataloaders::CBoWLoader<ArrayType>::GetRandom)
       .def("GetVocab", &fetch::ml::dataloaders::CBoWLoader<ArrayType>::GetVocab)
       .def("VocabSize", &fetch::ml::dataloaders::CBoWLoader<ArrayType>::VocabSize);
 }
