@@ -140,13 +140,13 @@ inline math::BigUnsigned Work::CreateHashedNonce() const
 template <typename T>
 void Serialize(T &serializer, Work const &work)
 {
-  serializer << /*work.block_number_ <<*/ work.nonce_ << work.score_;
+  serializer << work.nonce_ << work.score_;
 }
 
 template <typename T>
 void Deserialize(T &serializer, Work &work)
 {
-  serializer >> /*work.block_number_ >>*/ work.nonce_ >> work.score_;
+  serializer >> work.nonce_ >> work.score_;
 }
 
 using WorkPtr = std::shared_ptr<Work>;

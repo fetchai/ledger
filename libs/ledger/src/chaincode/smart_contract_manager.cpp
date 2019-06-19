@@ -132,7 +132,7 @@ Contract::Status SmartContractManager::OnCreate(Transaction const &tx, BlockInde
     return Status::FAILED;
   }
 
-  if (contract_type == "smart")
+  if (contract_type == ConstByteArray{"smart"})
   {
     Identifier scope;
     if (!scope.Parse(calculated_hash + "." + tx.from().display()))
@@ -156,7 +156,7 @@ Contract::Status SmartContractManager::OnCreate(Transaction const &tx, BlockInde
       switch (kind)
       {
       case vm::FunctionDecoratorKind::ON_INIT:
-        if (on_init_function.size() > 0)
+        if (!on_init_function.empty())
         {
           FETCH_LOG_WARN(LOGGING_NAME, "More than one init function found in SC. Terminating.");
           return Status::FAILED;
