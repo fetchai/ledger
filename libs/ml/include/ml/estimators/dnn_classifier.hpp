@@ -17,8 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-//#include "ml/meta/ml_type_traits.hpp"
-
 #include "math/base_types.hpp"
 
 #include "ml/layers/fully_connected.hpp"
@@ -34,8 +32,6 @@ namespace fetch {
 namespace ml {
 namespace estimator {
 
-// TODO - implement arbitrary dataloader
-
 template <typename TensorType>
 class DNNClassifier : public Estimator<TensorType>
 {
@@ -44,7 +40,6 @@ public:
   using DataType         = typename TensorType::Type;
   using CostFunctionType = fetch::ml::ops::CrossEntropy<TensorType>;
   using OptimiserType    = fetch::ml::optimisers::OptimiserType;
-  //  using OptimiserType    = fetch::ml::optimisers::AdamOptimiser<TensorType, CostFunctionType>;
 
   DNNClassifier(EstimatorConfig<DataType>                           estimator_config,
                 std::shared_ptr<DataLoader<TensorType, TensorType>> data_loader_ptr,

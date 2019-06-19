@@ -32,7 +32,7 @@ namespace optimisers {
  * @tparam T ArrayType
  * @tparam C CriterionType
  */
-template <typename T, class C>
+template <class T, class C>
 class AdamOptimiser : public Optimiser<T, C>
 {
 public:

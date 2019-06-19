@@ -49,7 +49,7 @@ int main(int ac, char **av)
   EstimatorConfig<DataType> estimator_config;
   estimator_config.batch_size     = 64;
   estimator_config.early_stopping = true;
-  estimator_config.opt = OptimiserType::ADAM;
+  estimator_config.opt            = OptimiserType::ADAM;
 
   // setup dataloader
   auto data_loader_ptr = std::make_shared<DataLoaderType>(av[1], av[2]);

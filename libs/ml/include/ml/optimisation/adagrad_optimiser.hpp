@@ -46,6 +46,8 @@ public:
                    DataType const &                learning_rate = DataType{0.001f},
                    DataType const &                epsilon       = DataType{1e-8f});
 
+  virtual ~AdaGradOptimiser() = default;
+
 private:
   std::vector<ArrayType> cache_;
   DataType               epsilon_;
