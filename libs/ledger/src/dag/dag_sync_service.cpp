@@ -71,7 +71,7 @@ DAGSyncService::State DAGSyncService::OnInitial()
 
   if (muddle_endpoint_.GetDirectlyConnectedPeers().empty())
   {
-    state_machine_->Delay(std::chrono::milliseconds{700});
+    state_machine_->Delay(std::chrono::milliseconds{RETRY_TIMEOUT});
     return State::INITIAL;
   }
 
@@ -87,7 +87,7 @@ DAGSyncService::State DAGSyncService::OnBroadcastRecent()
     nodes_to_broadcast_.push_back(node);
   }
 
-  if (nodes_to_broadcast_.size() > 5)
+  if (nodes_to_broadcast_.size() > BROADCAST_BATCH_SIZE)
   {
     // determine the serialised size of the dag nodes to send
     fetch::serializers::SizeCounter<std::vector<DAGNode>> counter;
@@ -142,12 +142,9 @@ DAGSyncService::State DAGSyncService::OnQueryMissing()
 
   missing_dnodes_.clear();
 
-  if (missing_modulo_++ % 10000 == 0 && missing_pending_.Empty())
+  for (auto const &dnode : missing)
   {
-    for (auto const &dnode : missing)
-    {
-      missing_dnodes_.insert(dnode);
-    }
+    missing_dnodes_.insert(dnode);
   }
 
   if (!missing_dnodes_.empty())
@@ -159,7 +156,7 @@ DAGSyncService::State DAGSyncService::OnQueryMissing()
       missing_pending_.Add(connection, promise);
     }
 
-    state_machine_->Delay(std::chrono::milliseconds{200});
+    state_machine_->Delay(std::chrono::milliseconds{RETRY_TIMEOUT});
   }
 
   return State::RESOLVE_MISSING;

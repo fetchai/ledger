@@ -65,8 +65,6 @@ private:
   using Reactor   = core::Reactor;
   using ServerPtr = std::shared_ptr<Server>;
 
-  static constexpr unsigned int SYNC_PERIOD_MS = 500;
-
   Reactor reactor_;
 
   /// @name External P2P Network

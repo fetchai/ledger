@@ -25,6 +25,7 @@
 #include "vm_modules/core/type_convert.hpp"
 #include "vm_modules/math/math.hpp"
 #include "vm_modules/math/random.hpp"
+#include "vm_modules/math/abs.hpp"
 
 #include "vm_modules/math/tensor.hpp"
 #include "vm_modules/ml/graph.hpp"

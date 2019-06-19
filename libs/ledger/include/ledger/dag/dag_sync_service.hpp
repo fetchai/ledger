@@ -98,12 +98,14 @@ private:
   SubscriptionPtr                       dag_subscription_;
 
   std::vector<DAGNode> nodes_to_broadcast_;
-  uint32_t             missing_modulo_ = 0;
 
   RequestingMissingNodes missing_set_;
   RequestingMissingNodes missing_pending_;
 
   MissingDNodes missing_dnodes_;
+
+  static constexpr uint64_t RETRY_TIMEOUT        = 500;
+  static constexpr uint64_t BROADCAST_BATCH_SIZE = 5;
 
   fetch::mutex::Mutex               mutex_{__LINE__, __FILE__};
   std::vector<std::vector<DAGNode>> recvd_broadcast_nodes_;

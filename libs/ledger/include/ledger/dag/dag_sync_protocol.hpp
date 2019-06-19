@@ -45,6 +45,12 @@ public:
   DAGSyncProtocol &operator=(DAGSyncProtocol const &) = delete;
   DAGSyncProtocol &operator=(DAGSyncProtocol &&) = delete;
 
+  // When asked specifically for nodes by someone on the network,
+  // this needs to be limited in scope as it will probably
+  // cause them to timeout the request and us to lock the dag
+  // unnecessarily
+  static constexpr uint64_t MAX_NODES_TO_PROVIDE = 50;
+
 private:
   using Self = DAGSyncProtocol;
 
