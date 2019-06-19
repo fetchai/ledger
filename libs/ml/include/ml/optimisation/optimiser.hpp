@@ -40,8 +40,8 @@ public:
   using DataType      = typename ArrayType::Type;
   using SizeType      = typename ArrayType::SizeType;
 
-  Optimiser(std::shared_ptr<Graph<T>> graph, std::vector<std::string> const &input_node_names,
-            std::string const &output_node_name, DataType const &learning_rate = DataType{0.001f});
+  Optimiser(std::shared_ptr<Graph<T>> graph, std::vector<std::string> input_node_names,
+            std::string output_node_name, DataType const &learning_rate = DataType{0.001f});
 
   // TODO (private 1090): Optimise TensorSlice for graph-feeding without using .Copy
   DataType Run(std::vector<ArrayType> const &data, ArrayType const &labels,
@@ -65,14 +65,12 @@ private:
 };
 
 template <class T, class C>
-Optimiser<T, C>::Optimiser(std::shared_ptr<Graph<T>>       graph,
-                           std::vector<std::string> const &input_node_names,
-                           std::string const &output_node_name, DataType const &learning_rate)
-  :
-
-  graph_(graph)
-  , input_node_names_(input_node_names)
-  , output_node_name_(output_node_name)
+Optimiser<T, C>::Optimiser(std::shared_ptr<Graph<T>> graph,
+                           std::vector<std::string> input_node_names, std::string output_node_name,
+                           DataType const &learning_rate)
+  : graph_(graph)
+  , input_node_names_(std::move(input_node_names))
+  , output_node_name_(std::move(output_node_name))
   , learning_rate_(learning_rate)
   , epoch_(0)
 {
@@ -198,8 +196,6 @@ typename T::Type Optimiser<T, C>::Run(fetch::ml::DataLoader<ArrayType, ArrayType
          ++it)
     {
       input = loader.GetNext();
-
-      auto cur_input = input.second;
 
       auto name_it = input_node_names_.begin();
       for (auto &cur_input : input.second)

@@ -943,6 +943,16 @@ void Generator::HandleExpression(IRExpressionNodePtr const &node)
     HandleFloat64(node);
     break;
   }
+  case NodeKind::Fixed32:
+  {
+    HandleFixed32(node);
+    break;
+  }
+  case NodeKind::Fixed64:
+  {
+    HandleFixed64(node);
+    break;
+  }
   case NodeKind::String:
   {
     HandleString(node);
@@ -1112,6 +1122,24 @@ void Generator::HandleFloat64(IRExpressionNodePtr const &node)
   Executable::Instruction instruction(Opcodes::PushConstant);
   double                  value = std::atof(node->text.c_str());
   instruction.index             = AddConstant(Variant(value, TypeIds::Float64));
+  uint16_t pc                   = function_->AddInstruction(instruction);
+  AddLineNumber(node->line, pc);
+}
+
+void Generator::HandleFixed32(IRExpressionNodePtr const &node)
+{
+  Executable::Instruction instruction(Opcodes::PushConstant);
+  fixed_point::fp32_t     value = fixed_point::fp32_t(std::atof(node->text.c_str()));
+  instruction.index             = AddConstant(Variant(value, TypeIds::Fixed32));
+  uint16_t pc                   = function_->AddInstruction(instruction);
+  AddLineNumber(node->line, pc);
+}
+
+void Generator::HandleFixed64(IRExpressionNodePtr const &node)
+{
+  Executable::Instruction instruction(Opcodes::PushConstant);
+  fixed_point::fp64_t     value = fixed_point::fp64_t(std::atof(node->text.c_str()));
+  instruction.index             = AddConstant(Variant(value, TypeIds::Fixed64));
   uint16_t pc                   = function_->AddInstruction(instruction);
   AddLineNumber(node->line, pc);
 }
@@ -1677,6 +1705,16 @@ bool Generator::ConstantComparator::operator()(Variant const &lhs, Variant const
   case TypeIds::Float64:
   {
     return lhs.primitive.f64 < rhs.primitive.f64;
+  }
+  case TypeIds::Fixed32:
+  {
+    return fixed_point::fp32_t::FromBase(lhs.primitive.i32) <
+           fixed_point::fp32_t::FromBase(rhs.primitive.i32);
+  }
+  case TypeIds::Fixed64:
+  {
+    return fixed_point::fp64_t::FromBase(lhs.primitive.i64) <
+           fixed_point::fp64_t::FromBase(rhs.primitive.i64);
   }
   default:
   {

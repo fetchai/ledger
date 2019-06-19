@@ -24,14 +24,13 @@
 #include <cmath>
 #include <limits>
 
-using fp32 = fetch::fixed_point::FixedPoint<16, 16>;
-using fp64 = fetch::fixed_point::FixedPoint<32, 32>;
+using namespace fetch::fixed_point;
 
 TEST(FixedPointTest, Conversion_16_16)
 {
   // Positive
-  fetch::fixed_point::FixedPoint<16, 16> one(1);
-  fetch::fixed_point::FixedPoint<16, 16> two(2);
+  FixedPoint<16, 16> one(1);
+  FixedPoint<16, 16> two(2);
 
   EXPECT_EQ(static_cast<int>(one), 1);
   EXPECT_EQ(static_cast<int>(two), 2);
@@ -41,8 +40,8 @@ TEST(FixedPointTest, Conversion_16_16)
   EXPECT_EQ(static_cast<double>(two), 2.0);
 
   // Negative
-  fetch::fixed_point::FixedPoint<16, 16> m_one(-1);
-  fetch::fixed_point::FixedPoint<16, 16> m_two(-2);
+  FixedPoint<16, 16> m_one(-1);
+  FixedPoint<16, 16> m_two(-2);
 
   EXPECT_EQ(static_cast<int>(m_one), -1);
   EXPECT_EQ(static_cast<int>(m_two), -2);
@@ -52,8 +51,8 @@ TEST(FixedPointTest, Conversion_16_16)
   EXPECT_EQ(static_cast<double>(m_two), -2.0);
 
   // _0
-  fetch::fixed_point::FixedPoint<16, 16> zero(0);
-  fetch::fixed_point::FixedPoint<16, 16> m_zero(-0);
+  FixedPoint<16, 16> zero(0);
+  FixedPoint<16, 16> m_zero(-0);
 
   EXPECT_EQ(static_cast<int>(zero), 0);
   EXPECT_EQ(static_cast<int>(m_zero), 0);
@@ -63,10 +62,10 @@ TEST(FixedPointTest, Conversion_16_16)
   EXPECT_EQ(static_cast<double>(m_zero), 0.0);
 
   // Get raw value
-  fetch::fixed_point::FixedPoint<16, 16> zero_point_five(0.5);
-  fetch::fixed_point::FixedPoint<16, 16> one_point_five(1.5);
-  fetch::fixed_point::FixedPoint<16, 16> two_point_five(2.5);
-  fetch::fixed_point::FixedPoint<16, 16> m_one_point_five(-1.5);
+  FixedPoint<16, 16> zero_point_five(0.5);
+  FixedPoint<16, 16> one_point_five(1.5);
+  FixedPoint<16, 16> two_point_five(2.5);
+  FixedPoint<16, 16> m_one_point_five(-1.5);
 
   EXPECT_EQ(zero_point_five.Data(), 0x08000);
   EXPECT_EQ(one.Data(), 0x10000);
@@ -74,36 +73,36 @@ TEST(FixedPointTest, Conversion_16_16)
   EXPECT_EQ(two_point_five.Data(), 0x28000);
 
   // Convert from raw value
-  fetch::fixed_point::FixedPoint<16, 16> two_point_five_raw(2, 0x08000);
-  fetch::fixed_point::FixedPoint<16, 16> m_two_point_five_raw(-2, 0x08000);
+  FixedPoint<16, 16> two_point_five_raw(2, 0x08000);
+  FixedPoint<16, 16> m_two_point_five_raw(-2, 0x08000);
   EXPECT_EQ(two_point_five, two_point_five_raw);
   EXPECT_EQ(m_one_point_five, m_two_point_five_raw);
 
   // Extreme cases:
   // smallest possible double representable to a FixedPoint
-  fetch::fixed_point::FixedPoint<16, 16> infinitesimal(0.00002);
+  FixedPoint<16, 16> infinitesimal(0.00002);
   // Largest fractional closest to one, representable to a FixedPoint
-  fetch::fixed_point::FixedPoint<16, 16> almost_one(0.99999);
+  FixedPoint<16, 16> almost_one(0.99999);
   // Largest fractional closest to one, representable to a FixedPoint
-  fetch::fixed_point::FixedPoint<16, 16> largest_int(std::numeric_limits<int16_t>::max());
+  FixedPoint<16, 16> largest_int(std::numeric_limits<int16_t>::max());
 
   // Smallest possible integer, increase by one, in order to allow for the fractional part.
-  fetch::fixed_point::FixedPoint<16, 16> smallest_int(std::numeric_limits<int16_t>::min());
+  FixedPoint<16, 16> smallest_int(std::numeric_limits<int16_t>::min());
 
   // Largest possible Fixed Point number.
-  fetch::fixed_point::FixedPoint<16, 16> largest_fixed_point = largest_int + almost_one;
+  FixedPoint<16, 16> largest_fixed_point = largest_int + almost_one;
 
   // Smallest possible Fixed Point number.
-  fetch::fixed_point::FixedPoint<16, 16> smallest_fixed_point = smallest_int + almost_one;
+  FixedPoint<16, 16> smallest_fixed_point = smallest_int + almost_one;
 
-  EXPECT_EQ(infinitesimal.Data(), fp32::SMALLEST_FRACTION);
-  EXPECT_EQ(almost_one.Data(), fp32::LARGEST_FRACTION);
-  EXPECT_EQ(largest_int.Data(), fp32::MAX_INT);
-  EXPECT_EQ(smallest_int.Data(), fp32::MIN_INT);
-  EXPECT_EQ(largest_fixed_point.Data(), fp32::MAX);
-  EXPECT_EQ(smallest_fixed_point.Data(), fp32::MIN);
-  EXPECT_EQ(fp32::MIN, 0x8000ffff);
-  EXPECT_EQ(fp32::MAX, 0x7fffffff);
+  EXPECT_EQ(infinitesimal.Data(), fp32_t::SMALLEST_FRACTION);
+  EXPECT_EQ(almost_one.Data(), fp32_t::LARGEST_FRACTION);
+  EXPECT_EQ(largest_int.Data(), fp32_t::MAX_INT);
+  EXPECT_EQ(smallest_int.Data(), fp32_t::MIN_INT);
+  EXPECT_EQ(largest_fixed_point.Data(), fp32_t::MAX);
+  EXPECT_EQ(smallest_fixed_point.Data(), fp32_t::MIN);
+  EXPECT_EQ(fp32_t::MIN, 0x8000ffff);
+  EXPECT_EQ(fp32_t::MAX, 0x7fffffff);
 
   // We cannot be smaller than the actual negative integer of the actual type
   EXPECT_TRUE(smallest_fixed_point.Data() > std::numeric_limits<int32_t>::min());
@@ -121,15 +120,15 @@ TEST(FixedPointTest, Conversion_16_16)
   EXPECT_EQ(static_cast<int64_t>(one), 1);
   EXPECT_EQ(static_cast<uint64_t>(one), 1);
 
-  EXPECT_EQ(fp32::TOLERANCE.Data(), 0x15);
-  EXPECT_EQ(fp32::DECIMAL_DIGITS, 4);
+  EXPECT_EQ(fp32_t::TOLERANCE.Data(), 0x15);
+  EXPECT_EQ(fp32_t::DECIMAL_DIGITS, 4);
 }
 
 TEST(FixedPointTest, Conversion_32_32)
 {
   // Positive
-  fetch::fixed_point::FixedPoint<32, 32> one(1);
-  fetch::fixed_point::FixedPoint<32, 32> two(2);
+  FixedPoint<32, 32> one(1);
+  FixedPoint<32, 32> two(2);
 
   EXPECT_EQ(static_cast<int>(one), 1);
   EXPECT_EQ(static_cast<int>(two), 2);
@@ -139,8 +138,8 @@ TEST(FixedPointTest, Conversion_32_32)
   EXPECT_EQ(static_cast<double>(two), 2.0);
 
   // Negative
-  fetch::fixed_point::FixedPoint<32, 32> m_one(-1);
-  fetch::fixed_point::FixedPoint<32, 32> m_two(-2);
+  FixedPoint<32, 32> m_one(-1);
+  FixedPoint<32, 32> m_two(-2);
 
   EXPECT_EQ(static_cast<int>(m_one), -1);
   EXPECT_EQ(static_cast<int>(m_two), -2);
@@ -150,8 +149,8 @@ TEST(FixedPointTest, Conversion_32_32)
   EXPECT_EQ(static_cast<double>(m_two), -2.0);
 
   // _0
-  fetch::fixed_point::FixedPoint<32, 32> zero(0);
-  fetch::fixed_point::FixedPoint<32, 32> m_zero(-0);
+  FixedPoint<32, 32> zero(0);
+  FixedPoint<32, 32> m_zero(-0);
 
   EXPECT_EQ(static_cast<int>(zero), 0);
   EXPECT_EQ(static_cast<int>(m_zero), 0);
@@ -161,10 +160,10 @@ TEST(FixedPointTest, Conversion_32_32)
   EXPECT_EQ(static_cast<double>(m_zero), 0.0);
 
   // Get raw value
-  fetch::fixed_point::FixedPoint<32, 32> zero_point_five(0.5);
-  fetch::fixed_point::FixedPoint<32, 32> one_point_five(1.5);
-  fetch::fixed_point::FixedPoint<32, 32> two_point_five(2.5);
-  fetch::fixed_point::FixedPoint<32, 32> m_one_point_five(-1.5);
+  FixedPoint<32, 32> zero_point_five(0.5);
+  FixedPoint<32, 32> one_point_five(1.5);
+  FixedPoint<32, 32> two_point_five(2.5);
+  FixedPoint<32, 32> m_one_point_five(-1.5);
 
   EXPECT_EQ(zero_point_five.Data(), 0x080000000);
   EXPECT_EQ(one.Data(), 0x100000000);
@@ -172,36 +171,36 @@ TEST(FixedPointTest, Conversion_32_32)
   EXPECT_EQ(two_point_five.Data(), 0x280000000);
 
   // Convert from raw value
-  fetch::fixed_point::FixedPoint<32, 32> two_point_five_raw(2, 0x080000000);
-  fetch::fixed_point::FixedPoint<32, 32> m_two_point_five_raw(-2, 0x080000000);
+  FixedPoint<32, 32> two_point_five_raw(2, 0x080000000);
+  FixedPoint<32, 32> m_two_point_five_raw(-2, 0x080000000);
   EXPECT_EQ(two_point_five, two_point_five_raw);
   EXPECT_EQ(m_one_point_five, m_two_point_five_raw);
 
   // Extreme cases:
   // smallest possible double representable to a FixedPoint
-  fetch::fixed_point::FixedPoint<32, 32> infinitesimal(0.0000000004);
+  FixedPoint<32, 32> infinitesimal(0.0000000004);
   // Largest fractional closest to one, representable to a FixedPoint
-  fetch::fixed_point::FixedPoint<32, 32> almost_one(0.9999999998);
+  FixedPoint<32, 32> almost_one(0.9999999998);
   // Largest fractional closest to one, representable to a FixedPoint
-  fetch::fixed_point::FixedPoint<32, 32> largest_int(std::numeric_limits<int32_t>::max());
+  FixedPoint<32, 32> largest_int(std::numeric_limits<int32_t>::max());
 
   // Smallest possible integer, increase by one, in order to allow for the fractional part.
-  fetch::fixed_point::FixedPoint<32, 32> smallest_int(std::numeric_limits<int32_t>::min());
+  FixedPoint<32, 32> smallest_int(std::numeric_limits<int32_t>::min());
 
   // Largest possible Fixed Point number.
-  fetch::fixed_point::FixedPoint<32, 32> largest_fixed_point = largest_int + almost_one;
+  FixedPoint<32, 32> largest_fixed_point = largest_int + almost_one;
 
   // Smallest possible Fixed Point number.
-  fetch::fixed_point::FixedPoint<32, 32> smallest_fixed_point = smallest_int + almost_one;
+  FixedPoint<32, 32> smallest_fixed_point = smallest_int + almost_one;
 
-  EXPECT_EQ(infinitesimal.Data(), fp64::SMALLEST_FRACTION);
-  EXPECT_EQ(almost_one.Data(), fp64::LARGEST_FRACTION);
-  EXPECT_EQ(largest_int.Data(), fp64::MAX_INT);
-  EXPECT_EQ(smallest_int.Data(), fp64::MIN_INT);
-  EXPECT_EQ(largest_fixed_point.Data(), fp64::MAX);
-  EXPECT_EQ(smallest_fixed_point.Data(), fp64::MIN);
-  EXPECT_EQ(fp64::MIN, 0x80000000ffffffff);
-  EXPECT_EQ(fp64::MAX, 0x7fffffffffffffff);
+  EXPECT_EQ(infinitesimal.Data(), fp64_t::SMALLEST_FRACTION);
+  EXPECT_EQ(almost_one.Data(), fp64_t::LARGEST_FRACTION);
+  EXPECT_EQ(largest_int.Data(), fp64_t::MAX_INT);
+  EXPECT_EQ(smallest_int.Data(), fp64_t::MIN_INT);
+  EXPECT_EQ(largest_fixed_point.Data(), fp64_t::MAX);
+  EXPECT_EQ(smallest_fixed_point.Data(), fp64_t::MIN);
+  EXPECT_EQ(fp64_t::MIN, 0x80000000ffffffff);
+  EXPECT_EQ(fp64_t::MAX, 0x7fffffffffffffff);
 
   // We cannot be smaller than the actual negative integer of the actual type
   EXPECT_TRUE(smallest_fixed_point.Data() > std::numeric_limits<int64_t>::min());
@@ -219,23 +218,23 @@ TEST(FixedPointTest, Conversion_32_32)
   EXPECT_EQ(static_cast<int64_t>(one), 1);
   EXPECT_EQ(static_cast<uint64_t>(one), 1);
 
-  EXPECT_EQ(fp64::TOLERANCE.Data(), 0x200);
-  EXPECT_EQ(fp64::DECIMAL_DIGITS, 9);
+  EXPECT_EQ(fp64_t::TOLERANCE.Data(), 0x200);
+  EXPECT_EQ(fp64_t::DECIMAL_DIGITS, 9);
 }
 
 TEST(FixedPointTest, Addition_16_16)
 {
   // Positive
-  fetch::fixed_point::FixedPoint<16, 16> one(1);
-  fetch::fixed_point::FixedPoint<16, 16> two(2);
+  FixedPoint<16, 16> one(1);
+  FixedPoint<16, 16> two(2);
 
   EXPECT_EQ(static_cast<int>(one + two), 3);
   EXPECT_EQ(static_cast<float>(one + two), 3.0f);
   EXPECT_EQ(static_cast<double>(one + two), 3.0);
 
   // Negative
-  fetch::fixed_point::FixedPoint<16, 16> m_one(-1);
-  fetch::fixed_point::FixedPoint<16, 16> m_two(-2);
+  FixedPoint<16, 16> m_one(-1);
+  FixedPoint<16, 16> m_two(-2);
 
   EXPECT_EQ(static_cast<int>(m_one + one), 0);
   EXPECT_EQ(static_cast<int>(m_one + m_two), -3);
@@ -244,13 +243,13 @@ TEST(FixedPointTest, Addition_16_16)
   EXPECT_EQ(static_cast<double>(m_one + one), 0.0);
   EXPECT_EQ(static_cast<double>(m_one + m_two), -3.0);
 
-  fetch::fixed_point::FixedPoint<16, 16> another{one};
+  FixedPoint<16, 16> another{one};
   ++another;
   EXPECT_EQ(another, two);
 
   // _0
-  fetch::fixed_point::FixedPoint<16, 16> zero(0);
-  fetch::fixed_point::FixedPoint<16, 16> m_zero(-0);
+  FixedPoint<16, 16> zero(0);
+  FixedPoint<16, 16> m_zero(-0);
 
   EXPECT_EQ(static_cast<int>(zero), 0);
   EXPECT_EQ(static_cast<int>(m_zero), 0);
@@ -260,8 +259,8 @@ TEST(FixedPointTest, Addition_16_16)
   EXPECT_EQ(static_cast<double>(m_zero), 0.0);
 
   // Infinitesimal additions
-  fetch::fixed_point::FixedPoint<16, 16> almost_one(0, fp64::LARGEST_FRACTION);
-  fetch::fixed_point::FixedPoint<16, 16> infinitesimal(0, fp64::SMALLEST_FRACTION);
+  FixedPoint<16, 16> almost_one(0, fp64_t::LARGEST_FRACTION);
+  FixedPoint<16, 16> infinitesimal(0, fp64_t::SMALLEST_FRACTION);
 
   // Largest possible fraction and smallest possible fraction should make us the value of 1
   EXPECT_EQ(almost_one + infinitesimal, one);
@@ -272,16 +271,16 @@ TEST(FixedPointTest, Addition_16_16)
 TEST(FixedPointTest, Addition_32_32)
 {
   // Positive
-  fetch::fixed_point::FixedPoint<32, 32> one(1);
-  fetch::fixed_point::FixedPoint<32, 32> two(2);
+  FixedPoint<32, 32> one(1);
+  FixedPoint<32, 32> two(2);
 
   EXPECT_EQ(static_cast<int>(one + two), 3);
   EXPECT_EQ(static_cast<float>(one + two), 3.0f);
   EXPECT_EQ(static_cast<double>(one + two), 3.0);
 
   // Negative
-  fetch::fixed_point::FixedPoint<32, 32> m_one(-1);
-  fetch::fixed_point::FixedPoint<32, 32> m_two(-2);
+  FixedPoint<32, 32> m_one(-1);
+  FixedPoint<32, 32> m_two(-2);
 
   EXPECT_EQ(static_cast<int>(m_one + one), 0);
   EXPECT_EQ(static_cast<int>(m_one + m_two), -3);
@@ -291,8 +290,8 @@ TEST(FixedPointTest, Addition_32_32)
   EXPECT_EQ(static_cast<double>(m_one + m_two), -3.0);
 
   // _0
-  fetch::fixed_point::FixedPoint<32, 32> zero(0);
-  fetch::fixed_point::FixedPoint<32, 32> m_zero(-0);
+  FixedPoint<32, 32> zero(0);
+  FixedPoint<32, 32> m_zero(-0);
 
   EXPECT_EQ(static_cast<int>(zero), 0);
   EXPECT_EQ(static_cast<int>(m_zero), 0);
@@ -302,8 +301,8 @@ TEST(FixedPointTest, Addition_32_32)
   EXPECT_EQ(static_cast<double>(m_zero), 0.0);
 
   // Infinitesimal additions
-  fetch::fixed_point::FixedPoint<32, 32> almost_one(0, fp64::LARGEST_FRACTION);
-  fetch::fixed_point::FixedPoint<32, 32> infinitesimal(0, fp64::SMALLEST_FRACTION);
+  FixedPoint<32, 32> almost_one(0, fp64_t::LARGEST_FRACTION);
+  FixedPoint<32, 32> infinitesimal(0, fp64_t::SMALLEST_FRACTION);
 
   // Largest possible fraction and smallest possible fraction should make us the value of 1
   EXPECT_EQ(almost_one + infinitesimal, one);
@@ -314,8 +313,8 @@ TEST(FixedPointTest, Addition_32_32)
 TEST(FixedPointTest, Subtraction_16_16)
 {
   // Positive
-  fetch::fixed_point::FixedPoint<16, 16> one(1);
-  fetch::fixed_point::FixedPoint<16, 16> two(2);
+  FixedPoint<16, 16> one(1);
+  FixedPoint<16, 16> two(2);
 
   EXPECT_EQ(static_cast<int>(two - one), 1);
   EXPECT_EQ(static_cast<float>(two - one), 1.0f);
@@ -326,8 +325,8 @@ TEST(FixedPointTest, Subtraction_16_16)
   EXPECT_EQ(static_cast<double>(one - two), -1.0);
 
   // Negative
-  fetch::fixed_point::FixedPoint<16, 16> m_one(-1);
-  fetch::fixed_point::FixedPoint<16, 16> m_two(-2);
+  FixedPoint<16, 16> m_one(-1);
+  FixedPoint<16, 16> m_two(-2);
 
   EXPECT_EQ(static_cast<int>(m_one - one), -2);
   EXPECT_EQ(static_cast<int>(m_one - m_two), 1);
@@ -337,8 +336,8 @@ TEST(FixedPointTest, Subtraction_16_16)
   EXPECT_EQ(static_cast<double>(m_one - m_two), 1.0);
 
   // Fractions
-  fetch::fixed_point::FixedPoint<16, 16> almost_three(2, fp32::LARGEST_FRACTION);
-  fetch::fixed_point::FixedPoint<16, 16> almost_two(1, fp32::LARGEST_FRACTION);
+  FixedPoint<16, 16> almost_three(2, fp32_t::LARGEST_FRACTION);
+  FixedPoint<16, 16> almost_two(1, fp32_t::LARGEST_FRACTION);
 
   EXPECT_EQ(almost_three - almost_two, one);
 }
@@ -346,8 +345,8 @@ TEST(FixedPointTest, Subtraction_16_16)
 TEST(FixedPointTest, Subtraction_32_32)
 {
   // Positive
-  fetch::fixed_point::FixedPoint<32, 32> one(1);
-  fetch::fixed_point::FixedPoint<32, 32> two(2);
+  FixedPoint<32, 32> one(1);
+  FixedPoint<32, 32> two(2);
 
   EXPECT_EQ(static_cast<int>(two - one), 1);
   EXPECT_EQ(static_cast<float>(two - one), 1.0f);
@@ -358,8 +357,8 @@ TEST(FixedPointTest, Subtraction_32_32)
   EXPECT_EQ(static_cast<double>(one - two), -1.0);
 
   // Negative
-  fetch::fixed_point::FixedPoint<32, 32> m_one(-1);
-  fetch::fixed_point::FixedPoint<32, 32> m_two(-2);
+  FixedPoint<32, 32> m_one(-1);
+  FixedPoint<32, 32> m_two(-2);
 
   EXPECT_EQ(static_cast<int>(m_one - one), -2);
   EXPECT_EQ(static_cast<int>(m_one - m_two), 1);
@@ -369,8 +368,8 @@ TEST(FixedPointTest, Subtraction_32_32)
   EXPECT_EQ(static_cast<double>(m_one - m_two), 1.0);
 
   // Fractions
-  fetch::fixed_point::FixedPoint<32, 32> almost_three(2, fp64::LARGEST_FRACTION);
-  fetch::fixed_point::FixedPoint<32, 32> almost_two(1, fp64::LARGEST_FRACTION);
+  FixedPoint<32, 32> almost_three(2, fp64_t::LARGEST_FRACTION);
+  FixedPoint<32, 32> almost_two(1, fp64_t::LARGEST_FRACTION);
 
   EXPECT_EQ(almost_three - almost_two, one);
 }
@@ -378,11 +377,11 @@ TEST(FixedPointTest, Subtraction_32_32)
 TEST(FixedPointTest, Multiplication_16_16)
 {
   // Positive
-  fetch::fixed_point::FixedPoint<16, 16> zero(0);
-  fetch::fixed_point::FixedPoint<16, 16> one(1);
-  fetch::fixed_point::FixedPoint<16, 16> two(2);
-  fetch::fixed_point::FixedPoint<16, 16> three(3);
-  fetch::fixed_point::FixedPoint<16, 16> m_one(-1);
+  FixedPoint<16, 16> zero(0);
+  FixedPoint<16, 16> one(1);
+  FixedPoint<16, 16> two(2);
+  FixedPoint<16, 16> three(3);
+  FixedPoint<16, 16> m_one(-1);
 
   EXPECT_EQ(two * one, two);
   EXPECT_EQ(one * 2, 2);
@@ -400,10 +399,10 @@ TEST(FixedPointTest, Multiplication_16_16)
   EXPECT_EQ(static_cast<double>(two * zero), 0.0);
 
   // Extreme cases
-  fetch::fixed_point::FixedPoint<16, 16> almost_one(0, fp64::LARGEST_FRACTION);
-  fetch::fixed_point::FixedPoint<16, 16> infinitesimal(0, fp64::SMALLEST_FRACTION);
-  fetch::fixed_point::FixedPoint<16, 16> huge(0x4000, 0);
-  fetch::fixed_point::FixedPoint<16, 16> small(0, 0x4000);
+  FixedPoint<16, 16> almost_one(0, fp64_t::LARGEST_FRACTION);
+  FixedPoint<16, 16> infinitesimal(0, fp64_t::SMALLEST_FRACTION);
+  FixedPoint<16, 16> huge(0x4000, 0);
+  FixedPoint<16, 16> small(0, 0x4000);
 
   EXPECT_EQ(almost_one * almost_one, almost_one - infinitesimal);
   EXPECT_EQ(almost_one * infinitesimal, zero);
@@ -415,11 +414,11 @@ TEST(FixedPointTest, Multiplication_16_16)
 TEST(FixedPointTest, Multiplication_32_32)
 {
   // Positive
-  fetch::fixed_point::FixedPoint<32, 32> zero(0);
-  fetch::fixed_point::FixedPoint<32, 32> one(1);
-  fetch::fixed_point::FixedPoint<32, 32> two(2);
-  fetch::fixed_point::FixedPoint<32, 32> three(3);
-  fetch::fixed_point::FixedPoint<32, 32> m_one(-1);
+  FixedPoint<32, 32> zero(0);
+  FixedPoint<32, 32> one(1);
+  FixedPoint<32, 32> two(2);
+  FixedPoint<32, 32> three(3);
+  FixedPoint<32, 32> m_one(-1);
 
   EXPECT_EQ(two * one, two);
   EXPECT_EQ(one * 2, 2);
@@ -437,10 +436,10 @@ TEST(FixedPointTest, Multiplication_32_32)
   EXPECT_EQ(static_cast<double>(two * zero), 0.0);
 
   // Extreme cases
-  fetch::fixed_point::FixedPoint<32, 32> almost_one(0, fp64::LARGEST_FRACTION);
-  fetch::fixed_point::FixedPoint<32, 32> infinitesimal(0, fp64::SMALLEST_FRACTION);
-  fetch::fixed_point::FixedPoint<32, 32> huge(0x40000000, 0);
-  fetch::fixed_point::FixedPoint<32, 32> small(0, 0x40000000);
+  FixedPoint<32, 32> almost_one(0, fp64_t::LARGEST_FRACTION);
+  FixedPoint<32, 32> infinitesimal(0, fp64_t::SMALLEST_FRACTION);
+  FixedPoint<32, 32> huge(0x40000000, 0);
+  FixedPoint<32, 32> small(0, 0x40000000);
 
   EXPECT_EQ(almost_one * almost_one, almost_one - infinitesimal);
   EXPECT_EQ(almost_one * infinitesimal, zero);
@@ -450,9 +449,9 @@ TEST(FixedPointTest, Multiplication_32_32)
 TEST(FixedPointTest, Division_16_16)
 {
   // Positive
-  fetch::fixed_point::FixedPoint<16, 16> zero(0);
-  fetch::fixed_point::FixedPoint<16, 16> one(1);
-  fetch::fixed_point::FixedPoint<16, 16> two(2);
+  FixedPoint<16, 16> zero(0);
+  FixedPoint<16, 16> one(1);
+  FixedPoint<16, 16> two(2);
 
   EXPECT_EQ(static_cast<int>(two / one), 2);
   EXPECT_EQ(static_cast<float>(two / one), 2.0f);
@@ -463,9 +462,9 @@ TEST(FixedPointTest, Division_16_16)
   EXPECT_EQ(static_cast<double>(one / two), 0.5);
 
   // Extreme cases
-  fetch::fixed_point::FixedPoint<16, 16> infinitesimal(0, fp64::SMALLEST_FRACTION);
-  fetch::fixed_point::FixedPoint<16, 16> huge(0x4000, 0);
-  fetch::fixed_point::FixedPoint<16, 16> small(0, 0x4000);
+  FixedPoint<16, 16> infinitesimal(0, fp64_t::SMALLEST_FRACTION);
+  FixedPoint<16, 16> huge(0x4000, 0);
+  FixedPoint<16, 16> small(0, 0x4000);
 
   EXPECT_EQ(small / infinitesimal, huge);
   EXPECT_EQ(infinitesimal / one, infinitesimal);
@@ -479,9 +478,9 @@ TEST(FixedPointTest, Division_16_16)
 TEST(FixedPointTest, Division_32_32)
 {
   // Positive
-  fetch::fixed_point::FixedPoint<32, 32> zero(0);
-  fetch::fixed_point::FixedPoint<32, 32> one(1);
-  fetch::fixed_point::FixedPoint<32, 32> two(2);
+  FixedPoint<32, 32> zero(0);
+  FixedPoint<32, 32> one(1);
+  FixedPoint<32, 32> two(2);
 
   EXPECT_EQ(static_cast<int>(two / one), 2);
   EXPECT_EQ(static_cast<float>(two / one), 2.0f);
@@ -492,9 +491,9 @@ TEST(FixedPointTest, Division_32_32)
   EXPECT_EQ(static_cast<double>(one / two), 0.5);
 
   // Extreme cases
-  fetch::fixed_point::FixedPoint<32, 32> infinitesimal(0, fp64::SMALLEST_FRACTION);
-  fetch::fixed_point::FixedPoint<32, 32> huge(0x40000000, 0);
-  fetch::fixed_point::FixedPoint<32, 32> small(0, 0x40000000);
+  FixedPoint<32, 32> infinitesimal(0, fp64_t::SMALLEST_FRACTION);
+  FixedPoint<32, 32> huge(0x40000000, 0);
+  FixedPoint<32, 32> small(0, 0x40000000);
 
   EXPECT_EQ(small / infinitesimal, huge);
   EXPECT_EQ(infinitesimal / one, infinitesimal);
@@ -507,9 +506,9 @@ TEST(FixedPointTest, Division_32_32)
 
 TEST(FixedPointTest, Comparison_16_16)
 {
-  fetch::fixed_point::FixedPoint<16, 16> zero(0);
-  fetch::fixed_point::FixedPoint<16, 16> one(1);
-  fetch::fixed_point::FixedPoint<16, 16> two(2);
+  FixedPoint<16, 16> zero(0);
+  FixedPoint<16, 16> one(1);
+  FixedPoint<16, 16> two(2);
 
   EXPECT_TRUE(zero < one);
   EXPECT_TRUE(zero < two);
@@ -535,9 +534,9 @@ TEST(FixedPointTest, Comparison_16_16)
   EXPECT_TRUE(one <= one);
   EXPECT_TRUE(two <= two);
 
-  fetch::fixed_point::FixedPoint<16, 16> zero_point_five(0.5);
-  fetch::fixed_point::FixedPoint<16, 16> one_point_five(1.5);
-  fetch::fixed_point::FixedPoint<16, 16> two_point_five(2.5);
+  FixedPoint<16, 16> zero_point_five(0.5);
+  FixedPoint<16, 16> one_point_five(1.5);
+  FixedPoint<16, 16> two_point_five(2.5);
 
   EXPECT_TRUE(zero_point_five < one);
   EXPECT_TRUE(zero_point_five < two);
@@ -563,9 +562,9 @@ TEST(FixedPointTest, Comparison_16_16)
   EXPECT_TRUE(one_point_five <= one_point_five);
   EXPECT_TRUE(two_point_five <= two_point_five);
 
-  fetch::fixed_point::FixedPoint<16, 16> m_zero(-0);
-  fetch::fixed_point::FixedPoint<16, 16> m_one(-1.0);
-  fetch::fixed_point::FixedPoint<16, 16> m_two(-2);
+  FixedPoint<16, 16> m_zero(-0);
+  FixedPoint<16, 16> m_one(-1.0);
+  FixedPoint<16, 16> m_two(-2);
 
   EXPECT_TRUE(m_zero > m_one);
   EXPECT_TRUE(m_zero > m_two);
@@ -599,33 +598,33 @@ TEST(FixedPointTest, Comparison_16_16)
   EXPECT_TRUE(m_two < one);
   EXPECT_TRUE(m_one < two);
 
-  EXPECT_TRUE(fp32::CONST_E == 2.718281828459045235360287471352662498);
-  EXPECT_TRUE(fp32::CONST_LOG2E == 1.442695040888963407359924681001892137);
-  EXPECT_TRUE(fp32::CONST_LOG10E == 0.434294481903251827651128918916605082);
-  EXPECT_TRUE(fp32::CONST_LN2 == 0.693147180559945309417232121458176568);
-  EXPECT_TRUE(fp32::CONST_LN10 == 2.302585092994045684017991454684364208);
-  EXPECT_TRUE(fp32::CONST_PI == 3.141592653589793238462643383279502884);
-  EXPECT_TRUE(fp32::CONST_PI_2 == 1.570796326794896619231321691639751442);
-  EXPECT_TRUE(fp32::CONST_PI_4 == 0.785398163397448309615660845819875721);
-  EXPECT_TRUE(fp32::CONST_INV_PI == 0.318309886183790671537767526745028724);
-  EXPECT_TRUE(fp32::CONST_2_INV_PI == 0.636619772367581343075535053490057448);
-  EXPECT_TRUE(fp32::CONST_2_INV_SQRTPI == 1.128379167095512573896158903121545172);
-  EXPECT_TRUE(fp32::CONST_SQRT2 == 1.414213562373095048801688724209698079);
-  EXPECT_TRUE(fp32::CONST_INV_SQRT2 == 0.707106781186547524400844362104849039);
+  EXPECT_TRUE(fp32_t::CONST_E == 2.718281828459045235360287471352662498);
+  EXPECT_TRUE(fp32_t::CONST_LOG2E == 1.442695040888963407359924681001892137);
+  EXPECT_TRUE(fp32_t::CONST_LOG10E == 0.434294481903251827651128918916605082);
+  EXPECT_TRUE(fp32_t::CONST_LN2 == 0.693147180559945309417232121458176568);
+  EXPECT_TRUE(fp32_t::CONST_LN10 == 2.302585092994045684017991454684364208);
+  EXPECT_TRUE(fp32_t::CONST_PI == 3.141592653589793238462643383279502884);
+  EXPECT_TRUE(fp32_t::CONST_PI_2 == 1.570796326794896619231321691639751442);
+  EXPECT_TRUE(fp32_t::CONST_PI_4 == 0.785398163397448309615660845819875721);
+  EXPECT_TRUE(fp32_t::CONST_INV_PI == 0.318309886183790671537767526745028724);
+  EXPECT_TRUE(fp32_t::CONST_2_INV_PI == 0.636619772367581343075535053490057448);
+  EXPECT_TRUE(fp32_t::CONST_2_INV_SQRTPI == 1.128379167095512573896158903121545172);
+  EXPECT_TRUE(fp32_t::CONST_SQRT2 == 1.414213562373095048801688724209698079);
+  EXPECT_TRUE(fp32_t::CONST_INV_SQRT2 == 0.707106781186547524400844362104849039);
 
-  EXPECT_EQ(fp32::MAX_INT, 0x7fff0000);
-  EXPECT_EQ(fp32::MIN_INT, 0x80000000);
-  EXPECT_EQ(fp32::MAX, 0x7fffffff);
-  EXPECT_EQ(fp32::MIN, 0x8000ffff);
-  EXPECT_EQ(fp32::MAX_EXP.Data(), 0x000a65b9);
-  EXPECT_EQ(fp32::MIN_EXP.Data(), 0xfff59a47);
+  EXPECT_EQ(fp32_t::MAX_INT, 0x7fff0000);
+  EXPECT_EQ(fp32_t::MIN_INT, 0x80000000);
+  EXPECT_EQ(fp32_t::MAX, 0x7fffffff);
+  EXPECT_EQ(fp32_t::MIN, 0x8000ffff);
+  EXPECT_EQ(fp32_t::MAX_EXP.Data(), 0x000a65b9);
+  EXPECT_EQ(fp32_t::MIN_EXP.Data(), 0xfff59a47);
 }
 
 TEST(FixedPointTest, Comparison_32_32)
 {
-  fetch::fixed_point::FixedPoint<32, 32> zero(0);
-  fetch::fixed_point::FixedPoint<32, 32> one(1);
-  fetch::fixed_point::FixedPoint<32, 32> two(2);
+  FixedPoint<32, 32> zero(0);
+  FixedPoint<32, 32> one(1);
+  FixedPoint<32, 32> two(2);
 
   EXPECT_LT(zero, one);
   EXPECT_LT(zero, two);
@@ -651,9 +650,9 @@ TEST(FixedPointTest, Comparison_32_32)
   EXPECT_LE(one, one);
   EXPECT_LE(two, two);
 
-  fetch::fixed_point::FixedPoint<32, 32> zero_point_five(0.5);
-  fetch::fixed_point::FixedPoint<32, 32> one_point_five(1.5);
-  fetch::fixed_point::FixedPoint<32, 32> two_point_five(2.5);
+  FixedPoint<32, 32> zero_point_five(0.5);
+  FixedPoint<32, 32> one_point_five(1.5);
+  FixedPoint<32, 32> two_point_five(2.5);
 
   EXPECT_LT(zero_point_five, one);
   EXPECT_LT(zero_point_five, two);
@@ -679,9 +678,9 @@ TEST(FixedPointTest, Comparison_32_32)
   EXPECT_LE(one_point_five, one_point_five);
   EXPECT_LE(two_point_five, two_point_five);
 
-  fetch::fixed_point::FixedPoint<32, 32> m_zero(-0);
-  fetch::fixed_point::FixedPoint<32, 32> m_one(-1.0);
-  fetch::fixed_point::FixedPoint<32, 32> m_two(-2);
+  FixedPoint<32, 32> m_zero(-0);
+  FixedPoint<32, 32> m_one(-1.0);
+  FixedPoint<32, 32> m_two(-2);
 
   EXPECT_GT(m_zero, m_one);
   EXPECT_GT(m_zero, m_two);
@@ -715,55 +714,55 @@ TEST(FixedPointTest, Comparison_32_32)
   EXPECT_LT(m_two, one);
   EXPECT_LT(m_one, two);
 
-  EXPECT_TRUE(fp64::CONST_E == 2.718281828459045235360287471352662498);
-  EXPECT_TRUE(fp64::CONST_LOG2E == 1.442695040888963407359924681001892137);
-  EXPECT_TRUE(fp64::CONST_LOG10E == 0.434294481903251827651128918916605082);
-  EXPECT_TRUE(fp64::CONST_LN2 == 0.693147180559945309417232121458176568);
-  EXPECT_TRUE(fp64::CONST_LN10 == 2.302585092994045684017991454684364208);
-  EXPECT_TRUE(fp64::CONST_PI == 3.141592653589793238462643383279502884);
-  EXPECT_TRUE(fp64::CONST_PI / 2 == fp64::CONST_PI_2);
-  EXPECT_TRUE(fp64::CONST_PI_4 == 0.785398163397448309615660845819875721);
-  EXPECT_TRUE(one / fp64::CONST_PI == fp64::CONST_INV_PI);
-  EXPECT_TRUE(fp64::CONST_2_INV_PI == 0.636619772367581343075535053490057448);
-  EXPECT_TRUE(fp64::CONST_2_INV_SQRTPI == 1.128379167095512573896158903121545172);
-  EXPECT_TRUE(fp64::CONST_SQRT2 == 1.414213562373095048801688724209698079);
-  EXPECT_TRUE(fp64::CONST_INV_SQRT2 == 0.707106781186547524400844362104849039);
+  EXPECT_TRUE(fp64_t::CONST_E == 2.718281828459045235360287471352662498);
+  EXPECT_TRUE(fp64_t::CONST_LOG2E == 1.442695040888963407359924681001892137);
+  EXPECT_TRUE(fp64_t::CONST_LOG10E == 0.434294481903251827651128918916605082);
+  EXPECT_TRUE(fp64_t::CONST_LN2 == 0.693147180559945309417232121458176568);
+  EXPECT_TRUE(fp64_t::CONST_LN10 == 2.302585092994045684017991454684364208);
+  EXPECT_TRUE(fp64_t::CONST_PI == 3.141592653589793238462643383279502884);
+  EXPECT_TRUE(fp64_t::CONST_PI / 2 == fp64_t::CONST_PI_2);
+  EXPECT_TRUE(fp64_t::CONST_PI_4 == 0.785398163397448309615660845819875721);
+  EXPECT_TRUE(one / fp64_t::CONST_PI == fp64_t::CONST_INV_PI);
+  EXPECT_TRUE(fp64_t::CONST_2_INV_PI == 0.636619772367581343075535053490057448);
+  EXPECT_TRUE(fp64_t::CONST_2_INV_SQRTPI == 1.128379167095512573896158903121545172);
+  EXPECT_TRUE(fp64_t::CONST_SQRT2 == 1.414213562373095048801688724209698079);
+  EXPECT_TRUE(fp64_t::CONST_INV_SQRT2 == 0.707106781186547524400844362104849039);
 
-  EXPECT_EQ(fp64::MAX_INT, 0x7fffffff00000000);
-  EXPECT_EQ(fp64::MIN_INT, 0x8000000000000000);
-  EXPECT_EQ(fp64::MAX, 0x7fffffffffffffff);
-  EXPECT_EQ(fp64::MIN, 0x80000000ffffffff);
-  EXPECT_EQ(fp64::MAX_EXP.Data(), 0x000000157cd0e714);
-  EXPECT_EQ(fp64::MIN_EXP.Data(), 0xffffffea832f18ec);
+  EXPECT_EQ(fp64_t::MAX_INT, 0x7fffffff00000000);
+  EXPECT_EQ(fp64_t::MIN_INT, 0x8000000000000000);
+  EXPECT_EQ(fp64_t::MAX, 0x7fffffffffffffff);
+  EXPECT_EQ(fp64_t::MIN, 0x80000000ffffffff);
+  EXPECT_EQ(fp64_t::MAX_EXP.Data(), 0x000000157cd0e714);
+  EXPECT_EQ(fp64_t::MIN_EXP.Data(), 0xffffffea832f18ec);
 }
 
 TEST(FixedPointTest, Exponential_16_16)
 {
-  fetch::fixed_point::FixedPoint<16, 16> one(1);
-  fetch::fixed_point::FixedPoint<16, 16> two(2);
-  fetch::fixed_point::FixedPoint<16, 16> negative{-0.40028143};
-  fetch::fixed_point::FixedPoint<16, 16> e1    = fp32::Exp(one);
-  fetch::fixed_point::FixedPoint<16, 16> e2    = fp32::Exp(two);
-  fetch::fixed_point::FixedPoint<16, 16> e3    = fp32::Exp(negative);
-  fetch::fixed_point::FixedPoint<16, 16> e_max = fp32::Exp(fp32::MAX_EXP);
+  FixedPoint<16, 16> one(1);
+  FixedPoint<16, 16> two(2);
+  FixedPoint<16, 16> negative{-0.40028143};
+  FixedPoint<16, 16> e1    = fp32_t::Exp(one);
+  FixedPoint<16, 16> e2    = fp32_t::Exp(two);
+  FixedPoint<16, 16> e3    = fp32_t::Exp(negative);
+  FixedPoint<16, 16> e_max = fp32_t::Exp(fp32_t::MAX_EXP);
 
-  EXPECT_NEAR(static_cast<double>(e1) / std::exp(1.0), 1.0, static_cast<double>(fp32::TOLERANCE));
-  EXPECT_NEAR(static_cast<double>(e2) / std::exp(2.0), 1.0, static_cast<double>(fp32::TOLERANCE));
+  EXPECT_NEAR(static_cast<double>(e1) / std::exp(1.0), 1.0, static_cast<double>(fp32_t::TOLERANCE));
+  EXPECT_NEAR(static_cast<double>(e2) / std::exp(2.0), 1.0, static_cast<double>(fp32_t::TOLERANCE));
   EXPECT_NEAR((static_cast<double>(e3) - std::exp(static_cast<double>(negative))) /
                   std::exp(static_cast<double>(negative)),
-              0, static_cast<double>(fp32::TOLERANCE));
-  EXPECT_NEAR(static_cast<double>(e_max) / std::exp(static_cast<double>(fp32::MAX_EXP)), 1.0,
-              static_cast<double>(fp32::TOLERANCE));
-  EXPECT_THROW(fp32::Exp(fp32::MAX_EXP + 1), std::overflow_error);
+              0, static_cast<double>(fp32_t::TOLERANCE));
+  EXPECT_NEAR(static_cast<double>(e_max) / std::exp(static_cast<double>(fp32_t::MAX_EXP)), 1.0,
+              static_cast<double>(fp32_t::TOLERANCE));
+  EXPECT_THROW(fp32_t::Exp(fp32_t::MAX_EXP + 1), std::overflow_error);
 
-  fp32   step{0.001};
-  fp32   x{-10.0};
+  fp32_t step{0.001};
+  fp32_t x{-10.0};
   double max_error = 0, avg_error = 0;
   size_t iterations = 0;
-  double tolerance  = 2 * static_cast<double>(fp32::TOLERANCE);
+  double tolerance  = 2 * static_cast<double>(fp32_t::TOLERANCE);
   for (; x < 5.0; x += step)
   {
-    fp32   e     = fp32::Exp(x);
+    fp32_t e     = fp32_t::Exp(x);
     double r     = std::exp(static_cast<double>(x));
     double delta = std::abs(static_cast<double>(e - r));
     max_error    = std::max(max_error, delta);
@@ -779,68 +778,68 @@ TEST(FixedPointTest, Exponential_16_16)
 
 TEST(FixedPointTest, Exponential_32_32)
 {
-  fetch::fixed_point::FixedPoint<32, 32> one(1);
-  fetch::fixed_point::FixedPoint<32, 32> two(2);
-  fetch::fixed_point::FixedPoint<32, 32> ten(10);
-  fetch::fixed_point::FixedPoint<32, 32> small(0.0001);
-  fetch::fixed_point::FixedPoint<32, 32> tiny(0, fp64::SMALLEST_FRACTION);
-  fetch::fixed_point::FixedPoint<32, 32> negative{-0.40028143};
-  fetch::fixed_point::FixedPoint<32, 32> e1 = fp64::Exp(one);
-  fetch::fixed_point::FixedPoint<32, 32> e2 = fp64::Exp(two);
-  fetch::fixed_point::FixedPoint<32, 32> e3 = fp64::Exp(small);
-  fetch::fixed_point::FixedPoint<32, 32> e4 = fp64::Exp(tiny);
-  fetch::fixed_point::FixedPoint<32, 32> e5 = fp64::Exp(negative);
-  fetch::fixed_point::FixedPoint<32, 32> e6 = fp64::Exp(ten);
+  FixedPoint<32, 32> one(1);
+  FixedPoint<32, 32> two(2);
+  FixedPoint<32, 32> ten(10);
+  FixedPoint<32, 32> small(0.0001);
+  FixedPoint<32, 32> tiny(0, fp64_t::SMALLEST_FRACTION);
+  FixedPoint<32, 32> negative{-0.40028143};
+  FixedPoint<32, 32> e1 = fp64_t::Exp(one);
+  FixedPoint<32, 32> e2 = fp64_t::Exp(two);
+  FixedPoint<32, 32> e3 = fp64_t::Exp(small);
+  FixedPoint<32, 32> e4 = fp64_t::Exp(tiny);
+  FixedPoint<32, 32> e5 = fp64_t::Exp(negative);
+  FixedPoint<32, 32> e6 = fp64_t::Exp(ten);
 
   EXPECT_NEAR(static_cast<double>(e1) - std::exp(static_cast<double>(one)), 0,
-              static_cast<double>(fp64::TOLERANCE));
+              static_cast<double>(fp64_t::TOLERANCE));
   EXPECT_NEAR(static_cast<double>(e2) - std::exp(static_cast<double>(two)), 0,
-              static_cast<double>(fp64::TOLERANCE));
+              static_cast<double>(fp64_t::TOLERANCE));
   EXPECT_NEAR(static_cast<double>(e3) - std::exp(static_cast<double>(small)), 0,
-              static_cast<double>(fp64::TOLERANCE));
+              static_cast<double>(fp64_t::TOLERANCE));
   EXPECT_NEAR(static_cast<double>(e4) - std::exp(static_cast<double>(tiny)), 0,
-              static_cast<double>(fp64::TOLERANCE));
+              static_cast<double>(fp64_t::TOLERANCE));
   EXPECT_NEAR(static_cast<double>(e5) - std::exp(static_cast<double>(negative)), 0,
-              static_cast<double>(fp64::TOLERANCE));
+              static_cast<double>(fp64_t::TOLERANCE));
 
   // For bigger values check relative error
   EXPECT_NEAR((static_cast<double>(e6) - std::exp(static_cast<double>(ten))) /
                   std::exp(static_cast<double>(ten)),
-              0, static_cast<double>(fp64::TOLERANCE));
-  EXPECT_NEAR((static_cast<double>(fp64::Exp(fp64::MAX_EXP)) -
-               std::exp(static_cast<double>(fp64::MAX_EXP))) /
-                  std::exp(static_cast<double>(fp64::MAX_EXP)),
-              0, static_cast<double>(fp64::TOLERANCE));
+              0, static_cast<double>(fp64_t::TOLERANCE));
+  EXPECT_NEAR((static_cast<double>(fp64_t::Exp(fp64_t::MAX_EXP)) -
+               std::exp(static_cast<double>(fp64_t::MAX_EXP))) /
+                  std::exp(static_cast<double>(fp64_t::MAX_EXP)),
+              0, static_cast<double>(fp64_t::TOLERANCE));
 
   // Out of range
-  EXPECT_THROW(fp64::Exp(fp64::MAX_EXP + 1), std::overflow_error);
+  EXPECT_THROW(fp64_t::Exp(fp64_t::MAX_EXP + 1), std::overflow_error);
 
   // Negative values
-  EXPECT_NEAR(static_cast<double>(fp64::Exp(-one)) - std::exp(-static_cast<double>(one)), 0,
-              static_cast<double>(fp64::TOLERANCE));
-  EXPECT_NEAR(static_cast<double>(fp64::Exp(-two)) - std::exp(-static_cast<double>(two)), 0,
-              static_cast<double>(fp64::TOLERANCE));
+  EXPECT_NEAR(static_cast<double>(fp64_t::Exp(-one)) - std::exp(-static_cast<double>(one)), 0,
+              static_cast<double>(fp64_t::TOLERANCE));
+  EXPECT_NEAR(static_cast<double>(fp64_t::Exp(-two)) - std::exp(-static_cast<double>(two)), 0,
+              static_cast<double>(fp64_t::TOLERANCE));
 
   // This particular error produces more than 1e-6 error failing the test
-  EXPECT_NEAR(static_cast<double>(fp64::Exp(-ten)) - std::exp(-static_cast<double>(ten)), 0,
-              static_cast<double>(fp64::TOLERANCE));
-  // The rest pass with fp64::TOLERANCE
-  EXPECT_NEAR(static_cast<double>(fp64::Exp(-small)) - std::exp(-static_cast<double>(small)), 0,
-              static_cast<double>(fp64::TOLERANCE));
-  EXPECT_NEAR(static_cast<double>(fp64::Exp(-tiny)) - std::exp(-static_cast<double>(tiny)), 0,
-              static_cast<double>(fp64::TOLERANCE));
-  EXPECT_NEAR(
-      static_cast<double>(fp64::Exp(fp64::MIN_EXP)) - std::exp(static_cast<double>(fp64::MIN_EXP)),
-      0, static_cast<double>(fp64::TOLERANCE));
+  EXPECT_NEAR(static_cast<double>(fp64_t::Exp(-ten)) - std::exp(-static_cast<double>(ten)), 0,
+              static_cast<double>(fp64_t::TOLERANCE));
+  // The rest pass with fp64_t::TOLERANCE
+  EXPECT_NEAR(static_cast<double>(fp64_t::Exp(-small)) - std::exp(-static_cast<double>(small)), 0,
+              static_cast<double>(fp64_t::TOLERANCE));
+  EXPECT_NEAR(static_cast<double>(fp64_t::Exp(-tiny)) - std::exp(-static_cast<double>(tiny)), 0,
+              static_cast<double>(fp64_t::TOLERANCE));
+  EXPECT_NEAR(static_cast<double>(fp64_t::Exp(fp64_t::MIN_EXP)) -
+                  std::exp(static_cast<double>(fp64_t::MIN_EXP)),
+              0, static_cast<double>(fp64_t::TOLERANCE));
 
-  fp64   step{0.0001};
-  fp64   x{-10.0};
+  fp64_t step{0.0001};
+  fp64_t x{-10.0};
   double max_error = 0, avg_error = 0;
   size_t iterations = 0;
-  double tolerance  = static_cast<double>(fp64::TOLERANCE);
+  double tolerance  = static_cast<double>(fp64_t::TOLERANCE);
   for (; x < 5.0; x += step)
   {
-    fp64   e     = fp64::Exp(x);
+    fp64_t e     = fp64_t::Exp(x);
     double r     = std::exp(static_cast<double>(x));
     double delta = std::abs(static_cast<double>(e - r));
     max_error    = std::max(max_error, delta);
@@ -856,34 +855,34 @@ TEST(FixedPointTest, Exponential_32_32)
 
 TEST(FixedPointTest, Pow_16_16_positive_x)
 {
-  fetch::fixed_point::FixedPoint<16, 16> a{-1.6519711627625};
-  fetch::fixed_point::FixedPoint<16, 16> two{2};
-  fetch::fixed_point::FixedPoint<16, 16> three{3};
-  fetch::fixed_point::FixedPoint<16, 16> b{1.8464393615723};
-  fetch::fixed_point::FixedPoint<16, 16> e1 = fp32::Pow(a, two);
-  fetch::fixed_point::FixedPoint<16, 16> e2 = fp32::Pow(a, three);
-  fetch::fixed_point::FixedPoint<16, 16> e3 = fp32::Pow(two, b);
+  FixedPoint<16, 16> a{-1.6519711627625};
+  FixedPoint<16, 16> two{2};
+  FixedPoint<16, 16> three{3};
+  FixedPoint<16, 16> b{1.8464393615723};
+  FixedPoint<16, 16> e1 = fp32_t::Pow(a, two);
+  FixedPoint<16, 16> e2 = fp32_t::Pow(a, three);
+  FixedPoint<16, 16> e3 = fp32_t::Pow(two, b);
 
   EXPECT_NEAR(static_cast<double>(e1 / std::pow(-1.6519711627625, 2)), 1.0,
-              static_cast<double>(fp32::TOLERANCE));
+              static_cast<double>(fp32_t::TOLERANCE));
   EXPECT_NEAR(static_cast<double>(e2 / std::pow(-1.6519711627625, 3)), 1.0,
-              static_cast<double>(fp32::TOLERANCE));
+              static_cast<double>(fp32_t::TOLERANCE));
   EXPECT_NEAR(static_cast<double>(e3 / std::pow(2, 1.8464393615723)), 1.0,
-              static_cast<double>(fp32::TOLERANCE));
-  EXPECT_TRUE(fp32::isNaN(fp32::Pow(fp32::_0, fp32::_0)));
-  EXPECT_TRUE(fp32::isNaN(fp32::Pow(a, a)));
+              static_cast<double>(fp32_t::TOLERANCE));
+  EXPECT_TRUE(fp32_t::isNaN(fp32_t::Pow(fp32_t::_0, fp32_t::_0)));
+  EXPECT_TRUE(fp32_t::isNaN(fp32_t::Pow(a, a)));
 
-  fp32   step{0.001};
-  fp32   x{0.001};
-  fp32   y{0.001};
+  fp32_t step{0.001};
+  fp32_t x{0.001};
+  fp32_t y{0.001};
   double max_error = 0, avg_error = 0;
   size_t iterations = 0;
-  double tolerance  = static_cast<double>(fp32::TOLERANCE);
+  double tolerance  = static_cast<double>(fp32_t::TOLERANCE);
   for (; x < 100.0; x += step)
   {
     for (; y < 10.5; y += step)
     {
-      fp32   e     = fp32::Pow(x, y);
+      fp32_t e     = fp32_t::Pow(x, y);
       double r     = std::pow(static_cast<double>(x), static_cast<double>(y));
       double delta = std::abs(static_cast<double>(e - r));
       max_error    = std::max(max_error, delta);
@@ -900,17 +899,17 @@ TEST(FixedPointTest, Pow_16_16_positive_x)
 
 TEST(FixedPointTest, Pow_16_16_negative_x)
 {
-  fp32   step{0.01};
-  fp32   x{-10};
-  fp32   y{-4};
+  fp32_t step{0.01};
+  fp32_t x{-10};
+  fp32_t y{-4};
   double max_error = 0, avg_error = 0;
   size_t iterations = 0;
-  double tolerance  = static_cast<double>(fp32::TOLERANCE);
+  double tolerance  = static_cast<double>(fp32_t::TOLERANCE);
   for (; x < 10.0; x += step)
   {
     for (; y < 4; ++y)
     {
-      fp32   e     = fp32::Pow(x, y);
+      fp32_t e     = fp32_t::Pow(x, y);
       double r     = std::pow(static_cast<double>(x), static_cast<double>(y));
       double delta = std::abs(static_cast<double>(e - r));
       max_error    = std::max(max_error, delta);
@@ -927,34 +926,34 @@ TEST(FixedPointTest, Pow_16_16_negative_x)
 
 TEST(FixedPointTest, Pow_32_32_positive_x)
 {
-  fetch::fixed_point::FixedPoint<32, 32> a{-1.6519711627625};
-  fetch::fixed_point::FixedPoint<32, 32> two{2};
-  fetch::fixed_point::FixedPoint<32, 32> three{3};
-  fetch::fixed_point::FixedPoint<32, 32> b{1.8464393615723};
-  fetch::fixed_point::FixedPoint<32, 32> e1 = fp64::Pow(a, two);
-  fetch::fixed_point::FixedPoint<32, 32> e2 = fp64::Pow(a, three);
-  fetch::fixed_point::FixedPoint<32, 32> e3 = fp64::Pow(two, b);
+  FixedPoint<32, 32> a{-1.6519711627625};
+  FixedPoint<32, 32> two{2};
+  FixedPoint<32, 32> three{3};
+  FixedPoint<32, 32> b{1.8464393615723};
+  FixedPoint<32, 32> e1 = fp64_t::Pow(a, two);
+  FixedPoint<32, 32> e2 = fp64_t::Pow(a, three);
+  FixedPoint<32, 32> e3 = fp64_t::Pow(two, b);
 
   EXPECT_NEAR(static_cast<double>(e1 / std::pow(-1.6519711627625, 2)), 1.0,
-              static_cast<double>(fp64::TOLERANCE));
+              static_cast<double>(fp64_t::TOLERANCE));
   EXPECT_NEAR(static_cast<double>(e2 / std::pow(-1.6519711627625, 3)), 1.0,
-              static_cast<double>(fp64::TOLERANCE));
+              static_cast<double>(fp64_t::TOLERANCE));
   EXPECT_NEAR(static_cast<double>(e3 / std::pow(2, 1.8464393615723)), 1.0,
-              static_cast<double>(fp64::TOLERANCE));
-  EXPECT_TRUE(fp64::isNaN(fp64::Pow(fp64::_0, fp64::_0)));
-  EXPECT_TRUE(fp64::isNaN(fp64::Pow(a, a)));
+              static_cast<double>(fp64_t::TOLERANCE));
+  EXPECT_TRUE(fp64_t::isNaN(fp64_t::Pow(fp64_t::_0, fp64_t::_0)));
+  EXPECT_TRUE(fp64_t::isNaN(fp64_t::Pow(a, a)));
 
-  fp64   step{0.0001};
-  fp64   x{0.0001};
-  fp64   y{0.001};
+  fp64_t step{0.0001};
+  fp64_t x{0.0001};
+  fp64_t y{0.001};
   double max_error = 0, avg_error = 0;
   size_t iterations = 0;
-  double tolerance  = static_cast<double>(fp64::TOLERANCE);
+  double tolerance  = static_cast<double>(fp64_t::TOLERANCE);
   for (; x < 100.0; x += step)
   {
     for (; y < 40.5; y += step)
     {
-      fp64   e     = fp64::Pow(x, y);
+      fp64_t e     = fp64_t::Pow(x, y);
       double r     = std::pow(static_cast<double>(x), static_cast<double>(y));
       double delta = std::abs(static_cast<double>(e - r));
       max_error    = std::max(max_error, delta);
@@ -971,17 +970,17 @@ TEST(FixedPointTest, Pow_32_32_positive_x)
 
 TEST(FixedPointTest, Pow_32_32_negative_x)
 {
-  fp64   step{0.01};
-  fp64   x{-10};
-  fp64   y{-9};
+  fp64_t step{0.01};
+  fp64_t x{-10};
+  fp64_t y{-9};
   double max_error = 0, avg_error = 0;
   size_t iterations = 0;
-  double tolerance  = static_cast<double>(fp64::TOLERANCE);
+  double tolerance  = static_cast<double>(fp64_t::TOLERANCE);
   for (; x < 10.0; x += step)
   {
     for (; y < 9; ++y)
     {
-      fp64   e     = fp64::Pow(x, y);
+      fp64_t e     = fp64_t::Pow(x, y);
       double r     = std::pow(static_cast<double>(x), static_cast<double>(y));
       double delta = std::abs(static_cast<double>(e - r));
       max_error    = std::max(max_error, delta);
@@ -998,40 +997,40 @@ TEST(FixedPointTest, Pow_32_32_negative_x)
 
 TEST(FixedPointTest, Logarithm_16_16)
 {
-  fetch::fixed_point::FixedPoint<16, 16> one(1);
-  fetch::fixed_point::FixedPoint<16, 16> one_point_five(1.5);
-  fetch::fixed_point::FixedPoint<16, 16> ten(10);
-  fetch::fixed_point::FixedPoint<16, 16> huge(10000);
-  fetch::fixed_point::FixedPoint<16, 16> small(0.001);
-  fetch::fixed_point::FixedPoint<16, 16> tiny(0, fp64::SMALLEST_FRACTION);
-  fetch::fixed_point::FixedPoint<16, 16> e1 = fp32::Log2(one);
-  fetch::fixed_point::FixedPoint<16, 16> e2 = fp32::Log2(one_point_five);
-  fetch::fixed_point::FixedPoint<16, 16> e3 = fp32::Log2(ten);
-  fetch::fixed_point::FixedPoint<16, 16> e4 = fp32::Log2(huge);
-  fetch::fixed_point::FixedPoint<16, 16> e5 = fp32::Log2(small);
-  fetch::fixed_point::FixedPoint<16, 16> e6 = fp32::Log2(tiny);
+  FixedPoint<16, 16> one(1);
+  FixedPoint<16, 16> one_point_five(1.5);
+  FixedPoint<16, 16> ten(10);
+  FixedPoint<16, 16> huge(10000);
+  FixedPoint<16, 16> small(0.001);
+  FixedPoint<16, 16> tiny(0, fp64_t::SMALLEST_FRACTION);
+  FixedPoint<16, 16> e1 = fp32_t::Log2(one);
+  FixedPoint<16, 16> e2 = fp32_t::Log2(one_point_five);
+  FixedPoint<16, 16> e3 = fp32_t::Log2(ten);
+  FixedPoint<16, 16> e4 = fp32_t::Log2(huge);
+  FixedPoint<16, 16> e5 = fp32_t::Log2(small);
+  FixedPoint<16, 16> e6 = fp32_t::Log2(tiny);
 
   EXPECT_NEAR(static_cast<double>(e1), std::log2(static_cast<double>(one)),
-              static_cast<double>(fp32::TOLERANCE));
+              static_cast<double>(fp32_t::TOLERANCE));
   EXPECT_NEAR(static_cast<double>(e2), std::log2(static_cast<double>(one_point_five)),
-              static_cast<double>(fp32::TOLERANCE));
+              static_cast<double>(fp32_t::TOLERANCE));
   EXPECT_NEAR(static_cast<double>(e3), std::log2(static_cast<double>(ten)),
-              static_cast<double>(fp32::TOLERANCE));
+              static_cast<double>(fp32_t::TOLERANCE));
   EXPECT_NEAR(static_cast<double>(e4), std::log2(static_cast<double>(huge)),
-              static_cast<double>(fp32::TOLERANCE));
+              static_cast<double>(fp32_t::TOLERANCE));
   EXPECT_NEAR(static_cast<double>(e5), std::log2(static_cast<double>(small)),
-              static_cast<double>(fp32::TOLERANCE));
+              static_cast<double>(fp32_t::TOLERANCE));
   EXPECT_NEAR(static_cast<double>(e6), std::log2(static_cast<double>(tiny)),
-              static_cast<double>(fp32::TOLERANCE));
+              static_cast<double>(fp32_t::TOLERANCE));
 
-  fp32   step{0.001};
-  fp32   x{tiny};
+  fp32_t step{0.001};
+  fp32_t x{tiny};
   double max_error = 0, avg_error = 0;
   size_t iterations = 0;
-  double tolerance  = static_cast<double>(fp32::TOLERANCE);
+  double tolerance  = static_cast<double>(fp32_t::TOLERANCE);
   for (; x < 5.0; x += step)
   {
-    fp32   e     = fp32::Log(x);
+    fp32_t e     = fp32_t::Log(x);
     double r     = std::log(static_cast<double>(x));
     double delta = std::abs(static_cast<double>(e - r));
     max_error    = std::max(max_error, delta);
@@ -1047,40 +1046,40 @@ TEST(FixedPointTest, Logarithm_16_16)
 
 TEST(FixedPointTest, Logarithm_32_32)
 {
-  fetch::fixed_point::FixedPoint<32, 32> one(1);
-  fetch::fixed_point::FixedPoint<32, 32> one_point_five(1.5);
-  fetch::fixed_point::FixedPoint<32, 32> ten(10);
-  fetch::fixed_point::FixedPoint<32, 32> huge(1000000000);
-  fetch::fixed_point::FixedPoint<32, 32> small(0.0001);
-  fetch::fixed_point::FixedPoint<32, 32> tiny(0, fp64::SMALLEST_FRACTION);
-  fetch::fixed_point::FixedPoint<32, 32> e1 = fp64::Log2(one);
-  fetch::fixed_point::FixedPoint<32, 32> e2 = fp64::Log2(one_point_five);
-  fetch::fixed_point::FixedPoint<32, 32> e3 = fp64::Log2(ten);
-  fetch::fixed_point::FixedPoint<32, 32> e4 = fp64::Log2(huge);
-  fetch::fixed_point::FixedPoint<32, 32> e5 = fp64::Log2(small);
-  fetch::fixed_point::FixedPoint<32, 32> e6 = fp64::Log2(tiny);
+  FixedPoint<32, 32> one(1);
+  FixedPoint<32, 32> one_point_five(1.5);
+  FixedPoint<32, 32> ten(10);
+  FixedPoint<32, 32> huge(1000000000);
+  FixedPoint<32, 32> small(0.0001);
+  FixedPoint<32, 32> tiny(0, fp64_t::SMALLEST_FRACTION);
+  FixedPoint<32, 32> e1 = fp64_t::Log2(one);
+  FixedPoint<32, 32> e2 = fp64_t::Log2(one_point_five);
+  FixedPoint<32, 32> e3 = fp64_t::Log2(ten);
+  FixedPoint<32, 32> e4 = fp64_t::Log2(huge);
+  FixedPoint<32, 32> e5 = fp64_t::Log2(small);
+  FixedPoint<32, 32> e6 = fp64_t::Log2(tiny);
 
   EXPECT_NEAR(static_cast<double>(e1), std::log2(static_cast<double>(one)),
-              static_cast<double>(fp64::TOLERANCE));
+              static_cast<double>(fp64_t::TOLERANCE));
   EXPECT_NEAR(static_cast<double>(e2), std::log2(static_cast<double>(one_point_five)),
-              static_cast<double>(fp64::TOLERANCE));
+              static_cast<double>(fp64_t::TOLERANCE));
   EXPECT_NEAR(static_cast<double>(e3), std::log2(static_cast<double>(ten)),
-              static_cast<double>(fp64::TOLERANCE));
+              static_cast<double>(fp64_t::TOLERANCE));
   EXPECT_NEAR(static_cast<double>(e4), std::log2(static_cast<double>(huge)),
-              static_cast<double>(fp64::TOLERANCE));
+              static_cast<double>(fp64_t::TOLERANCE));
   EXPECT_NEAR(static_cast<double>(e5), std::log2(static_cast<double>(small)),
-              static_cast<double>(fp64::TOLERANCE));
+              static_cast<double>(fp64_t::TOLERANCE));
   EXPECT_NEAR(static_cast<double>(e6), std::log2(static_cast<double>(tiny)),
-              static_cast<double>(fp64::TOLERANCE));
+              static_cast<double>(fp64_t::TOLERANCE));
 
-  fp64   step{0.0001};
-  fp64   x{tiny};
+  fp64_t step{0.0001};
+  fp64_t x{tiny};
   double max_error = 0, avg_error = 0;
   size_t iterations = 0;
-  double tolerance  = 2 * static_cast<double>(fp64::TOLERANCE);
+  double tolerance  = 2 * static_cast<double>(fp64_t::TOLERANCE);
   for (; x < 5.0; x += step)
   {
-    fp64   e     = fp64::Log(x);
+    fp64_t e     = fp64_t::Log(x);
     double r     = std::log(static_cast<double>(x));
     double delta = std::abs(static_cast<double>(e - r));
     max_error    = std::max(max_error, delta);
@@ -1103,18 +1102,18 @@ TEST(FixedPointTest, Logarithm_32_32)
 
 TEST(FixedPointTest, Abs_16_16)
 {
-  fetch::fixed_point::FixedPoint<16, 16> one(1);
-  fetch::fixed_point::FixedPoint<16, 16> m_one(-1);
-  fetch::fixed_point::FixedPoint<16, 16> one_point_five(1.5);
-  fetch::fixed_point::FixedPoint<16, 16> m_one_point_five(-1.5);
-  fetch::fixed_point::FixedPoint<16, 16> ten(10);
-  fetch::fixed_point::FixedPoint<16, 16> m_ten(-10);
-  fetch::fixed_point::FixedPoint<16, 16> e1 = fp32::Abs(one);
-  fetch::fixed_point::FixedPoint<16, 16> e2 = fp32::Abs(m_one);
-  fetch::fixed_point::FixedPoint<16, 16> e3 = fp32::Abs(one_point_five);
-  fetch::fixed_point::FixedPoint<16, 16> e4 = fp32::Abs(m_one_point_five);
-  fetch::fixed_point::FixedPoint<16, 16> e5 = fp32::Abs(ten);
-  fetch::fixed_point::FixedPoint<16, 16> e6 = fp32::Abs(m_ten);
+  FixedPoint<16, 16> one(1);
+  FixedPoint<16, 16> m_one(-1);
+  FixedPoint<16, 16> one_point_five(1.5);
+  FixedPoint<16, 16> m_one_point_five(-1.5);
+  FixedPoint<16, 16> ten(10);
+  FixedPoint<16, 16> m_ten(-10);
+  FixedPoint<16, 16> e1 = fp32_t::Abs(one);
+  FixedPoint<16, 16> e2 = fp32_t::Abs(m_one);
+  FixedPoint<16, 16> e3 = fp32_t::Abs(one_point_five);
+  FixedPoint<16, 16> e4 = fp32_t::Abs(m_one_point_five);
+  FixedPoint<16, 16> e5 = fp32_t::Abs(ten);
+  FixedPoint<16, 16> e6 = fp32_t::Abs(m_ten);
 
   EXPECT_EQ(e1, one);
   EXPECT_EQ(e2, one);
@@ -1126,20 +1125,20 @@ TEST(FixedPointTest, Abs_16_16)
 
 TEST(FixedPointTest, Abs_32_32)
 {
-  fetch::fixed_point::FixedPoint<32, 32> one(1);
-  fetch::fixed_point::FixedPoint<32, 32> m_one(-1);
-  fetch::fixed_point::FixedPoint<32, 32> one_point_five(1.5);
-  fetch::fixed_point::FixedPoint<32, 32> m_one_point_five(-1.5);
-  fetch::fixed_point::FixedPoint<32, 32> ten(10);
-  fetch::fixed_point::FixedPoint<32, 32> m_ten(-10);
-  fetch::fixed_point::FixedPoint<32, 32> huge(999999999.0);
-  fetch::fixed_point::FixedPoint<32, 32> e1 = fp64::Abs(one);
-  fetch::fixed_point::FixedPoint<32, 32> e2 = fp64::Abs(m_one);
-  fetch::fixed_point::FixedPoint<32, 32> e3 = fp64::Abs(one_point_five);
-  fetch::fixed_point::FixedPoint<32, 32> e4 = fp64::Abs(m_one_point_five);
-  fetch::fixed_point::FixedPoint<32, 32> e5 = fp64::Abs(ten);
-  fetch::fixed_point::FixedPoint<32, 32> e6 = fp64::Abs(m_ten);
-  fetch::fixed_point::FixedPoint<32, 32> e7 = fp64::Abs(huge);
+  FixedPoint<32, 32> one(1);
+  FixedPoint<32, 32> m_one(-1);
+  FixedPoint<32, 32> one_point_five(1.5);
+  FixedPoint<32, 32> m_one_point_five(-1.5);
+  FixedPoint<32, 32> ten(10);
+  FixedPoint<32, 32> m_ten(-10);
+  FixedPoint<32, 32> huge(999999999.0);
+  FixedPoint<32, 32> e1 = fp64_t::Abs(one);
+  FixedPoint<32, 32> e2 = fp64_t::Abs(m_one);
+  FixedPoint<32, 32> e3 = fp64_t::Abs(one_point_five);
+  FixedPoint<32, 32> e4 = fp64_t::Abs(m_one_point_five);
+  FixedPoint<32, 32> e5 = fp64_t::Abs(ten);
+  FixedPoint<32, 32> e6 = fp64_t::Abs(m_ten);
+  FixedPoint<32, 32> e7 = fp64_t::Abs(huge);
 
   EXPECT_EQ(e1, one);
   EXPECT_EQ(e2, one);
@@ -1152,21 +1151,21 @@ TEST(FixedPointTest, Abs_32_32)
 
 TEST(FixedPointTest, Remainder_16_16)
 {
-  fetch::fixed_point::FixedPoint<16, 16> one(1);
-  fetch::fixed_point::FixedPoint<16, 16> m_one(-1);
-  fetch::fixed_point::FixedPoint<16, 16> one_point_five(1.5);
-  fetch::fixed_point::FixedPoint<16, 16> m_one_point_five(-1.5);
-  fetch::fixed_point::FixedPoint<16, 16> ten(10);
-  fetch::fixed_point::FixedPoint<16, 16> m_ten(-10);
-  fetch::fixed_point::FixedPoint<16, 16> x{1.6519711627625};
-  fetch::fixed_point::FixedPoint<16, 16> huge(1000);
-  fetch::fixed_point::FixedPoint<16, 16> e1 = fp32::Remainder(ten, one);
-  fetch::fixed_point::FixedPoint<16, 16> e2 = fp32::Remainder(ten, m_one);
-  fetch::fixed_point::FixedPoint<16, 16> e3 = fp32::Remainder(ten, one_point_five);
-  fetch::fixed_point::FixedPoint<16, 16> e4 = fp32::Remainder(ten, m_one_point_five);
-  fetch::fixed_point::FixedPoint<16, 16> e5 = fp32::Remainder(ten, x);
-  fetch::fixed_point::FixedPoint<16, 16> e6 = fp32::Remainder(m_ten, x);
-  fetch::fixed_point::FixedPoint<16, 16> e7 = fp32::Remainder(huge, fp32::CONST_PI);
+  FixedPoint<16, 16> one(1);
+  FixedPoint<16, 16> m_one(-1);
+  FixedPoint<16, 16> one_point_five(1.5);
+  FixedPoint<16, 16> m_one_point_five(-1.5);
+  FixedPoint<16, 16> ten(10);
+  FixedPoint<16, 16> m_ten(-10);
+  FixedPoint<16, 16> x{1.6519711627625};
+  FixedPoint<16, 16> huge(1000);
+  FixedPoint<16, 16> e1 = fp32_t::Remainder(ten, one);
+  FixedPoint<16, 16> e2 = fp32_t::Remainder(ten, m_one);
+  FixedPoint<16, 16> e3 = fp32_t::Remainder(ten, one_point_five);
+  FixedPoint<16, 16> e4 = fp32_t::Remainder(ten, m_one_point_five);
+  FixedPoint<16, 16> e5 = fp32_t::Remainder(ten, x);
+  FixedPoint<16, 16> e6 = fp32_t::Remainder(m_ten, x);
+  FixedPoint<16, 16> e7 = fp32_t::Remainder(huge, fp32_t::CONST_PI);
 
   EXPECT_EQ(e1, std::remainder(static_cast<double>(ten), static_cast<double>(one)));
   EXPECT_EQ(e2, std::remainder(static_cast<double>(ten), static_cast<double>(m_one)));
@@ -1174,26 +1173,26 @@ TEST(FixedPointTest, Remainder_16_16)
   EXPECT_EQ(e4, std::remainder(static_cast<double>(ten), static_cast<double>(m_one_point_five)));
   EXPECT_EQ(e5, std::remainder(static_cast<double>(ten), static_cast<double>(x)));
   EXPECT_EQ(e6, std::remainder(static_cast<double>(m_ten), static_cast<double>(x)));
-  EXPECT_EQ(e7, std::remainder(static_cast<double>(huge), static_cast<double>(fp32::CONST_PI)));
+  EXPECT_EQ(e7, std::remainder(static_cast<double>(huge), static_cast<double>(fp32_t::CONST_PI)));
 }
 
 TEST(FixedPointTest, Remainder_32_32)
 {
-  fetch::fixed_point::FixedPoint<32, 32> one(1);
-  fetch::fixed_point::FixedPoint<32, 32> m_one(-1);
-  fetch::fixed_point::FixedPoint<32, 32> one_point_five(1.5);
-  fetch::fixed_point::FixedPoint<32, 32> m_one_point_five(-1.5);
-  fetch::fixed_point::FixedPoint<32, 32> ten(10);
-  fetch::fixed_point::FixedPoint<32, 32> m_ten(-10);
-  fetch::fixed_point::FixedPoint<32, 32> x{1.6519711627625};
-  fetch::fixed_point::FixedPoint<32, 32> huge(1000000000);
-  fetch::fixed_point::FixedPoint<32, 32> e1 = fp64::Remainder(ten, one);
-  fetch::fixed_point::FixedPoint<32, 32> e2 = fp64::Remainder(ten, m_one);
-  fetch::fixed_point::FixedPoint<32, 32> e3 = fp64::Remainder(ten, one_point_five);
-  fetch::fixed_point::FixedPoint<32, 32> e4 = fp64::Remainder(ten, m_one_point_five);
-  fetch::fixed_point::FixedPoint<32, 32> e5 = fp64::Remainder(ten, x);
-  fetch::fixed_point::FixedPoint<32, 32> e6 = fp64::Remainder(m_ten, x);
-  fetch::fixed_point::FixedPoint<32, 32> e7 = fp64::Remainder(huge, x);
+  FixedPoint<32, 32> one(1);
+  FixedPoint<32, 32> m_one(-1);
+  FixedPoint<32, 32> one_point_five(1.5);
+  FixedPoint<32, 32> m_one_point_five(-1.5);
+  FixedPoint<32, 32> ten(10);
+  FixedPoint<32, 32> m_ten(-10);
+  FixedPoint<32, 32> x{1.6519711627625};
+  FixedPoint<32, 32> huge(1000000000);
+  FixedPoint<32, 32> e1 = fp64_t::Remainder(ten, one);
+  FixedPoint<32, 32> e2 = fp64_t::Remainder(ten, m_one);
+  FixedPoint<32, 32> e3 = fp64_t::Remainder(ten, one_point_five);
+  FixedPoint<32, 32> e4 = fp64_t::Remainder(ten, m_one_point_five);
+  FixedPoint<32, 32> e5 = fp64_t::Remainder(ten, x);
+  FixedPoint<32, 32> e6 = fp64_t::Remainder(m_ten, x);
+  FixedPoint<32, 32> e7 = fp64_t::Remainder(huge, x);
 
   EXPECT_EQ(e1, std::remainder(static_cast<double>(ten), static_cast<double>(one)));
   EXPECT_EQ(e2, std::remainder(static_cast<double>(ten), static_cast<double>(m_one)));
@@ -1206,19 +1205,19 @@ TEST(FixedPointTest, Remainder_32_32)
 
 TEST(FixedPointTest, Fmod_16_16)
 {
-  fetch::fixed_point::FixedPoint<16, 16> one(1);
-  fetch::fixed_point::FixedPoint<16, 16> m_one(-1);
-  fetch::fixed_point::FixedPoint<16, 16> one_point_five(1.5);
-  fetch::fixed_point::FixedPoint<16, 16> m_one_point_five(-1.5);
-  fetch::fixed_point::FixedPoint<16, 16> ten(10);
-  fetch::fixed_point::FixedPoint<16, 16> m_ten(-10);
-  fetch::fixed_point::FixedPoint<16, 16> x{1.6519711627625};
-  fetch::fixed_point::FixedPoint<16, 16> e1 = fp32::Fmod(ten, one);
-  fetch::fixed_point::FixedPoint<16, 16> e2 = fp32::Fmod(ten, m_one);
-  fetch::fixed_point::FixedPoint<16, 16> e3 = fp32::Fmod(ten, one_point_five);
-  fetch::fixed_point::FixedPoint<16, 16> e4 = fp32::Fmod(ten, m_one_point_five);
-  fetch::fixed_point::FixedPoint<16, 16> e5 = fp32::Fmod(ten, x);
-  fetch::fixed_point::FixedPoint<16, 16> e6 = fp32::Fmod(m_ten, x);
+  FixedPoint<16, 16> one(1);
+  FixedPoint<16, 16> m_one(-1);
+  FixedPoint<16, 16> one_point_five(1.5);
+  FixedPoint<16, 16> m_one_point_five(-1.5);
+  FixedPoint<16, 16> ten(10);
+  FixedPoint<16, 16> m_ten(-10);
+  FixedPoint<16, 16> x{1.6519711627625};
+  FixedPoint<16, 16> e1 = fp32_t::Fmod(ten, one);
+  FixedPoint<16, 16> e2 = fp32_t::Fmod(ten, m_one);
+  FixedPoint<16, 16> e3 = fp32_t::Fmod(ten, one_point_five);
+  FixedPoint<16, 16> e4 = fp32_t::Fmod(ten, m_one_point_five);
+  FixedPoint<16, 16> e5 = fp32_t::Fmod(ten, x);
+  FixedPoint<16, 16> e6 = fp32_t::Fmod(m_ten, x);
 
   EXPECT_EQ(e1, std::fmod(static_cast<double>(ten), static_cast<double>(one)));
   EXPECT_EQ(e2, std::fmod(static_cast<double>(ten), static_cast<double>(m_one)));
@@ -1230,19 +1229,19 @@ TEST(FixedPointTest, Fmod_16_16)
 
 TEST(FixedPointTest, Fmod_32_32)
 {
-  fetch::fixed_point::FixedPoint<32, 32> one(1);
-  fetch::fixed_point::FixedPoint<32, 32> m_one(-1);
-  fetch::fixed_point::FixedPoint<32, 32> one_point_five(1.5);
-  fetch::fixed_point::FixedPoint<32, 32> m_one_point_five(-1.5);
-  fetch::fixed_point::FixedPoint<32, 32> ten(10);
-  fetch::fixed_point::FixedPoint<32, 32> m_ten(-10);
-  fetch::fixed_point::FixedPoint<32, 32> x{1.6519711627625};
-  fetch::fixed_point::FixedPoint<32, 32> e1 = fp64::Fmod(ten, one);
-  fetch::fixed_point::FixedPoint<32, 32> e2 = fp64::Fmod(ten, m_one);
-  fetch::fixed_point::FixedPoint<32, 32> e3 = fp64::Fmod(ten, one_point_five);
-  fetch::fixed_point::FixedPoint<32, 32> e4 = fp64::Fmod(ten, m_one_point_five);
-  fetch::fixed_point::FixedPoint<32, 32> e5 = fp64::Fmod(ten, x);
-  fetch::fixed_point::FixedPoint<32, 32> e6 = fp64::Fmod(m_ten, x);
+  FixedPoint<32, 32> one(1);
+  FixedPoint<32, 32> m_one(-1);
+  FixedPoint<32, 32> one_point_five(1.5);
+  FixedPoint<32, 32> m_one_point_five(-1.5);
+  FixedPoint<32, 32> ten(10);
+  FixedPoint<32, 32> m_ten(-10);
+  FixedPoint<32, 32> x{1.6519711627625};
+  FixedPoint<32, 32> e1 = fp64_t::Fmod(ten, one);
+  FixedPoint<32, 32> e2 = fp64_t::Fmod(ten, m_one);
+  FixedPoint<32, 32> e3 = fp64_t::Fmod(ten, one_point_five);
+  FixedPoint<32, 32> e4 = fp64_t::Fmod(ten, m_one_point_five);
+  FixedPoint<32, 32> e5 = fp64_t::Fmod(ten, x);
+  FixedPoint<32, 32> e6 = fp64_t::Fmod(m_ten, x);
 
   EXPECT_EQ(e1, std::fmod(static_cast<double>(ten), static_cast<double>(one)));
   EXPECT_EQ(e2, std::fmod(static_cast<double>(ten), static_cast<double>(m_one)));
@@ -1254,62 +1253,62 @@ TEST(FixedPointTest, Fmod_32_32)
 
 TEST(FixedPointTest, SQRT_16_16)
 {
-  fetch::fixed_point::FixedPoint<16, 16> one(1);
-  fetch::fixed_point::FixedPoint<16, 16> one_point_five(1.5);
-  fetch::fixed_point::FixedPoint<16, 16> two(2);
-  fetch::fixed_point::FixedPoint<16, 16> four(4);
-  fetch::fixed_point::FixedPoint<16, 16> ten(10);
-  fetch::fixed_point::FixedPoint<16, 16> huge(10000);
-  fetch::fixed_point::FixedPoint<16, 16> small(0.0001);
-  fetch::fixed_point::FixedPoint<16, 16> tiny(0, fp32::SMALLEST_FRACTION);
-  fetch::fixed_point::FixedPoint<16, 16> e1 = fp32::Sqrt(one);
-  fetch::fixed_point::FixedPoint<16, 16> e2 = fp32::Sqrt(one_point_five);
-  fetch::fixed_point::FixedPoint<16, 16> e3 = fp32::Sqrt(two);
-  fetch::fixed_point::FixedPoint<16, 16> e4 = fp32::Sqrt(four);
-  fetch::fixed_point::FixedPoint<16, 16> e5 = fp32::Sqrt(ten);
-  fetch::fixed_point::FixedPoint<16, 16> e6 = fp32::Sqrt(huge);
-  fetch::fixed_point::FixedPoint<16, 16> e7 = fp32::Sqrt(small);
-  fetch::fixed_point::FixedPoint<16, 16> e8 = fp32::Sqrt(tiny);
+  FixedPoint<16, 16> one(1);
+  FixedPoint<16, 16> one_point_five(1.5);
+  FixedPoint<16, 16> two(2);
+  FixedPoint<16, 16> four(4);
+  FixedPoint<16, 16> ten(10);
+  FixedPoint<16, 16> huge(10000);
+  FixedPoint<16, 16> small(0.0001);
+  FixedPoint<16, 16> tiny(0, fp32_t::SMALLEST_FRACTION);
+  FixedPoint<16, 16> e1 = fp32_t::Sqrt(one);
+  FixedPoint<16, 16> e2 = fp32_t::Sqrt(one_point_five);
+  FixedPoint<16, 16> e3 = fp32_t::Sqrt(two);
+  FixedPoint<16, 16> e4 = fp32_t::Sqrt(four);
+  FixedPoint<16, 16> e5 = fp32_t::Sqrt(ten);
+  FixedPoint<16, 16> e6 = fp32_t::Sqrt(huge);
+  FixedPoint<16, 16> e7 = fp32_t::Sqrt(small);
+  FixedPoint<16, 16> e8 = fp32_t::Sqrt(tiny);
 
   double delta = static_cast<double>(e1) - std::sqrt(static_cast<double>(one));
   EXPECT_NEAR(delta / std::sqrt(static_cast<double>(one)), 0.0,
-              static_cast<double>(fp32::TOLERANCE));
+              static_cast<double>(fp32_t::TOLERANCE));
   delta = static_cast<double>(e2) - std::sqrt(static_cast<double>(one_point_five));
   EXPECT_NEAR(delta / std::sqrt(static_cast<double>(one_point_five)), 0.0,
-              static_cast<double>(fp32::TOLERANCE));
+              static_cast<double>(fp32_t::TOLERANCE));
   delta = static_cast<double>(e3) - std::sqrt(static_cast<double>(two));
   EXPECT_NEAR(delta / std::sqrt(static_cast<double>(two)), 0.0,
-              static_cast<double>(fp32::TOLERANCE));
-  delta = static_cast<double>(e3 - fp32::CONST_SQRT2);
-  EXPECT_NEAR(delta / static_cast<double>(fp32::CONST_SQRT2), 0.0,
-              static_cast<double>(fp32::TOLERANCE));
+              static_cast<double>(fp32_t::TOLERANCE));
+  delta = static_cast<double>(e3 - fp32_t::CONST_SQRT2);
+  EXPECT_NEAR(delta / static_cast<double>(fp32_t::CONST_SQRT2), 0.0,
+              static_cast<double>(fp32_t::TOLERANCE));
   delta = static_cast<double>(e4) - std::sqrt(static_cast<double>(four));
   EXPECT_NEAR(delta / std::sqrt(static_cast<double>(four)), 0.0,
-              static_cast<double>(fp32::TOLERANCE));
+              static_cast<double>(fp32_t::TOLERANCE));
   delta = static_cast<double>(e5) - std::sqrt(static_cast<double>(ten));
   EXPECT_NEAR(delta / std::sqrt(static_cast<double>(ten)), 0.0,
-              static_cast<double>(fp32::TOLERANCE));
+              static_cast<double>(fp32_t::TOLERANCE));
   delta = static_cast<double>(e6) - std::sqrt(static_cast<double>(huge));
   EXPECT_NEAR(delta / std::sqrt(static_cast<double>(huge)), 0.0,
-              static_cast<double>(fp32::TOLERANCE));
+              static_cast<double>(fp32_t::TOLERANCE));
   delta = static_cast<double>(e7) - std::sqrt(static_cast<double>(small));
   EXPECT_NEAR(delta / std::sqrt(static_cast<double>(small)), 0.0,
-              static_cast<double>(fp32::TOLERANCE));
+              static_cast<double>(fp32_t::TOLERANCE));
   delta = static_cast<double>(e8) - std::sqrt(static_cast<double>(tiny));
   EXPECT_NEAR(delta / std::sqrt(static_cast<double>(tiny)), 0.0,
-              static_cast<double>(fp32::TOLERANCE));
+              static_cast<double>(fp32_t::TOLERANCE));
 
   // Sqrt of a negative
-  EXPECT_TRUE(fp32::isNaN(fp32::Sqrt(-one)));
+  EXPECT_TRUE(fp32_t::isNaN(fp32_t::Sqrt(-one)));
 
-  fp32   step{0.01};
-  fp32   x{tiny}, max{huge};
+  fp32_t step{0.01};
+  fp32_t x{tiny}, max{huge};
   double max_error = 0, avg_error = 0;
   size_t iterations = 0;
-  double tolerance  = 4 * static_cast<double>(fp32::TOLERANCE);
+  double tolerance  = 4 * static_cast<double>(fp32_t::TOLERANCE);
   for (; x < max; x += step)
   {
-    fp32   e     = fp32::Sqrt(x);
+    fp32_t e     = fp32_t::Sqrt(x);
     double r     = std::sqrt(static_cast<double>(x));
     double delta = std::abs(static_cast<double>(e - r));
     max_error    = std::max(max_error, delta);
@@ -1325,62 +1324,62 @@ TEST(FixedPointTest, SQRT_16_16)
 
 TEST(FixedPointTest, SQRT_32_32)
 {
-  fetch::fixed_point::FixedPoint<32, 32> one(1);
-  fetch::fixed_point::FixedPoint<32, 32> one_point_five(1.5);
-  fetch::fixed_point::FixedPoint<32, 32> two(2);
-  fetch::fixed_point::FixedPoint<32, 32> four(4);
-  fetch::fixed_point::FixedPoint<32, 32> ten(10);
-  fetch::fixed_point::FixedPoint<32, 32> huge(1000000000);
-  fetch::fixed_point::FixedPoint<32, 32> small(0.0001);
-  fetch::fixed_point::FixedPoint<32, 32> tiny(0, fp64::SMALLEST_FRACTION);
-  fetch::fixed_point::FixedPoint<32, 32> e1 = fp64::Sqrt(one);
-  fetch::fixed_point::FixedPoint<32, 32> e2 = fp64::Sqrt(one_point_five);
-  fetch::fixed_point::FixedPoint<32, 32> e3 = fp64::Sqrt(two);
-  fetch::fixed_point::FixedPoint<32, 32> e4 = fp64::Sqrt(four);
-  fetch::fixed_point::FixedPoint<32, 32> e5 = fp64::Sqrt(ten);
-  fetch::fixed_point::FixedPoint<32, 32> e6 = fp64::Sqrt(huge);
-  fetch::fixed_point::FixedPoint<32, 32> e7 = fp64::Sqrt(small);
-  fetch::fixed_point::FixedPoint<32, 32> e8 = fp64::Sqrt(tiny);
+  FixedPoint<32, 32> one(1);
+  FixedPoint<32, 32> one_point_five(1.5);
+  FixedPoint<32, 32> two(2);
+  FixedPoint<32, 32> four(4);
+  FixedPoint<32, 32> ten(10);
+  FixedPoint<32, 32> huge(1000000000);
+  FixedPoint<32, 32> small(0.0001);
+  FixedPoint<32, 32> tiny(0, fp64_t::SMALLEST_FRACTION);
+  FixedPoint<32, 32> e1 = fp64_t::Sqrt(one);
+  FixedPoint<32, 32> e2 = fp64_t::Sqrt(one_point_five);
+  FixedPoint<32, 32> e3 = fp64_t::Sqrt(two);
+  FixedPoint<32, 32> e4 = fp64_t::Sqrt(four);
+  FixedPoint<32, 32> e5 = fp64_t::Sqrt(ten);
+  FixedPoint<32, 32> e6 = fp64_t::Sqrt(huge);
+  FixedPoint<32, 32> e7 = fp64_t::Sqrt(small);
+  FixedPoint<32, 32> e8 = fp64_t::Sqrt(tiny);
 
   double delta = static_cast<double>(e1) - std::sqrt(static_cast<double>(one));
   EXPECT_NEAR(delta / std::sqrt(static_cast<double>(one)), 0.0,
-              static_cast<double>(fp64::TOLERANCE));
+              static_cast<double>(fp64_t::TOLERANCE));
   delta = static_cast<double>(e2) - std::sqrt(static_cast<double>(one_point_five));
   EXPECT_NEAR(delta / std::sqrt(static_cast<double>(one_point_five)), 0.0,
-              static_cast<double>(fp64::TOLERANCE));
+              static_cast<double>(fp64_t::TOLERANCE));
   delta = static_cast<double>(e3) - std::sqrt(static_cast<double>(two));
   EXPECT_NEAR(delta / std::sqrt(static_cast<double>(two)), 0.0,
-              static_cast<double>(fp64::TOLERANCE));
-  delta = static_cast<double>(e3 - fp64::CONST_SQRT2);
-  EXPECT_NEAR(delta / static_cast<double>(fp64::CONST_SQRT2), 0.0,
-              static_cast<double>(fp64::TOLERANCE));
+              static_cast<double>(fp64_t::TOLERANCE));
+  delta = static_cast<double>(e3 - fp64_t::CONST_SQRT2);
+  EXPECT_NEAR(delta / static_cast<double>(fp64_t::CONST_SQRT2), 0.0,
+              static_cast<double>(fp64_t::TOLERANCE));
   delta = static_cast<double>(e4) - std::sqrt(static_cast<double>(four));
   EXPECT_NEAR(delta / std::sqrt(static_cast<double>(four)), 0.0,
-              static_cast<double>(fp64::TOLERANCE));
+              static_cast<double>(fp64_t::TOLERANCE));
   delta = static_cast<double>(e5) - std::sqrt(static_cast<double>(ten));
   EXPECT_NEAR(delta / std::sqrt(static_cast<double>(ten)), 0.0,
-              static_cast<double>(fp64::TOLERANCE));
+              static_cast<double>(fp64_t::TOLERANCE));
   delta = static_cast<double>(e6) - std::sqrt(static_cast<double>(huge));
   EXPECT_NEAR(delta / std::sqrt(static_cast<double>(huge)), 0.0,
-              static_cast<double>(fp64::TOLERANCE));
+              static_cast<double>(fp64_t::TOLERANCE));
   delta = static_cast<double>(e7) - std::sqrt(static_cast<double>(small));
   EXPECT_NEAR(delta / std::sqrt(static_cast<double>(small)), 0.0,
-              static_cast<double>(fp64::TOLERANCE));
+              static_cast<double>(fp64_t::TOLERANCE));
   delta = static_cast<double>(e8) - std::sqrt(static_cast<double>(tiny));
   EXPECT_NEAR(delta / std::sqrt(static_cast<double>(tiny)), 0.0,
-              static_cast<double>(fp64::TOLERANCE));
+              static_cast<double>(fp64_t::TOLERANCE));
 
   // Sqrt of a negative
-  EXPECT_TRUE(fp64::isNaN(fp64::Sqrt(-one)));
+  EXPECT_TRUE(fp64_t::isNaN(fp64_t::Sqrt(-one)));
 
-  fp64   step{0.001};
-  fp64   x{tiny}, max{huge};
+  fp64_t step{0.001};
+  fp64_t x{tiny}, max{huge};
   double max_error = 0, avg_error = 0;
   size_t iterations = 0;
-  double tolerance  = static_cast<double>(fp64::TOLERANCE);
+  double tolerance  = static_cast<double>(fp64_t::TOLERANCE);
   for (; x < 5.0; x += step)
   {
-    fp64   e     = fp64::Sqrt(x);
+    fp64_t e     = fp64_t::Sqrt(x);
     double r     = std::sqrt(static_cast<double>(x));
     double delta = std::abs(static_cast<double>(e - r));
     max_error    = std::max(max_error, delta);
@@ -1396,383 +1395,383 @@ TEST(FixedPointTest, SQRT_32_32)
 
 TEST(FixedPointTest, Sin_16_16)
 {
-  fetch::fixed_point::FixedPoint<16, 16> one(1);
-  fetch::fixed_point::FixedPoint<16, 16> one_point_five(1.5);
-  fetch::fixed_point::FixedPoint<16, 16> huge(2000);
-  fetch::fixed_point::FixedPoint<16, 16> small(0.0001);
-  fetch::fixed_point::FixedPoint<16, 16> tiny(0, fp32::SMALLEST_FRACTION);
-  fetch::fixed_point::FixedPoint<16, 16> e1  = fp32::Sin(one);
-  fetch::fixed_point::FixedPoint<16, 16> e2  = fp32::Sin(one_point_five);
-  fetch::fixed_point::FixedPoint<16, 16> e3  = fp32::Sin(fp32::_0);
-  fetch::fixed_point::FixedPoint<16, 16> e4  = fp32::Sin(huge);
-  fetch::fixed_point::FixedPoint<16, 16> e5  = fp32::Sin(small);
-  fetch::fixed_point::FixedPoint<16, 16> e6  = fp32::Sin(tiny);
-  fetch::fixed_point::FixedPoint<16, 16> e7  = fp32::Sin(fp32::CONST_PI);
-  fetch::fixed_point::FixedPoint<16, 16> e8  = fp32::Sin(-fp32::CONST_PI);
-  fetch::fixed_point::FixedPoint<16, 16> e9  = fp32::Sin(fp32::CONST_PI * 2);
-  fetch::fixed_point::FixedPoint<16, 16> e10 = fp32::Sin(fp32::CONST_PI * 4);
-  fetch::fixed_point::FixedPoint<16, 16> e11 = fp32::Sin(fp32::CONST_PI * 100);
-  fetch::fixed_point::FixedPoint<16, 16> e12 = fp32::Sin(fp32::CONST_PI_2);
-  fetch::fixed_point::FixedPoint<16, 16> e13 = fp32::Sin(-fp32::CONST_PI_2);
-  fetch::fixed_point::FixedPoint<16, 16> e14 = fp32::Sin(fp32::CONST_PI_4);
-  fetch::fixed_point::FixedPoint<16, 16> e15 = fp32::Sin(-fp32::CONST_PI_4);
-  fetch::fixed_point::FixedPoint<16, 16> e16 = fp32::Sin(fp32::CONST_PI_4 * 3);
+  FixedPoint<16, 16> one(1);
+  FixedPoint<16, 16> one_point_five(1.5);
+  FixedPoint<16, 16> huge(2000);
+  FixedPoint<16, 16> small(0.0001);
+  FixedPoint<16, 16> tiny(0, fp32_t::SMALLEST_FRACTION);
+  FixedPoint<16, 16> e1  = fp32_t::Sin(one);
+  FixedPoint<16, 16> e2  = fp32_t::Sin(one_point_five);
+  FixedPoint<16, 16> e3  = fp32_t::Sin(fp32_t::_0);
+  FixedPoint<16, 16> e4  = fp32_t::Sin(huge);
+  FixedPoint<16, 16> e5  = fp32_t::Sin(small);
+  FixedPoint<16, 16> e6  = fp32_t::Sin(tiny);
+  FixedPoint<16, 16> e7  = fp32_t::Sin(fp32_t::CONST_PI);
+  FixedPoint<16, 16> e8  = fp32_t::Sin(-fp32_t::CONST_PI);
+  FixedPoint<16, 16> e9  = fp32_t::Sin(fp32_t::CONST_PI * 2);
+  FixedPoint<16, 16> e10 = fp32_t::Sin(fp32_t::CONST_PI * 4);
+  FixedPoint<16, 16> e11 = fp32_t::Sin(fp32_t::CONST_PI * 100);
+  FixedPoint<16, 16> e12 = fp32_t::Sin(fp32_t::CONST_PI_2);
+  FixedPoint<16, 16> e13 = fp32_t::Sin(-fp32_t::CONST_PI_2);
+  FixedPoint<16, 16> e14 = fp32_t::Sin(fp32_t::CONST_PI_4);
+  FixedPoint<16, 16> e15 = fp32_t::Sin(-fp32_t::CONST_PI_4);
+  FixedPoint<16, 16> e16 = fp32_t::Sin(fp32_t::CONST_PI_4 * 3);
 
   double delta = static_cast<double>(e1) - std::sin(static_cast<double>(one));
   EXPECT_NEAR(delta / std::sin(static_cast<double>(one)), 0.0,
-              static_cast<double>(fp32::TOLERANCE));
+              static_cast<double>(fp32_t::TOLERANCE));
   delta = static_cast<double>(e2) - std::sin(static_cast<double>(one_point_five));
   EXPECT_NEAR(delta / std::sin(static_cast<double>(one_point_five)), 0.0,
-              static_cast<double>(fp32::TOLERANCE));
-  delta = static_cast<double>(e3) - std::sin(static_cast<double>(fp32::_0));
-  EXPECT_NEAR(delta, 0.0, static_cast<double>(fp32::TOLERANCE));
+              static_cast<double>(fp32_t::TOLERANCE));
+  delta = static_cast<double>(e3) - std::sin(static_cast<double>(fp32_t::_0));
+  EXPECT_NEAR(delta, 0.0, static_cast<double>(fp32_t::TOLERANCE));
   delta = static_cast<double>(e4) - std::sin(static_cast<double>(huge));
   EXPECT_NEAR(delta / std::sin(static_cast<double>(huge)), 0.0,
               0.002);  // Sin for larger arguments loses precision
   delta = static_cast<double>(e5) - std::sin(static_cast<double>(small));
   EXPECT_NEAR(delta / std::sin(static_cast<double>(small)), 0.0,
-              static_cast<double>(fp32::TOLERANCE));
+              static_cast<double>(fp32_t::TOLERANCE));
   delta = static_cast<double>(e6) - std::sin(static_cast<double>(tiny));
   EXPECT_NEAR(delta / std::sin(static_cast<double>(tiny)), 0.0,
-              static_cast<double>(fp32::TOLERANCE));
-  delta = static_cast<double>(e7) - std::sin(static_cast<double>(fp32::CONST_PI));
-  EXPECT_NEAR(delta, 0.0, static_cast<double>(fp32::TOLERANCE));
-  delta = static_cast<double>(e8) - std::sin(static_cast<double>((-fp32::CONST_PI)));
-  EXPECT_NEAR(delta, 0.0, static_cast<double>(fp32::TOLERANCE));
-  delta = static_cast<double>(e9) - std::sin(static_cast<double>((fp32::CONST_PI * 2)));
-  EXPECT_NEAR(delta, 0.0, static_cast<double>(fp32::TOLERANCE));
-  delta = static_cast<double>(e10) - std::sin(static_cast<double>((fp32::CONST_PI * 4)));
-  EXPECT_NEAR(delta, 0.0, static_cast<double>(fp32::TOLERANCE));
-  delta = static_cast<double>(e11) - std::sin(static_cast<double>((fp32::CONST_PI * 100)));
+              static_cast<double>(fp32_t::TOLERANCE));
+  delta = static_cast<double>(e7) - std::sin(static_cast<double>(fp32_t::CONST_PI));
+  EXPECT_NEAR(delta, 0.0, static_cast<double>(fp32_t::TOLERANCE));
+  delta = static_cast<double>(e8) - std::sin(static_cast<double>((-fp32_t::CONST_PI)));
+  EXPECT_NEAR(delta, 0.0, static_cast<double>(fp32_t::TOLERANCE));
+  delta = static_cast<double>(e9) - std::sin(static_cast<double>((fp32_t::CONST_PI * 2)));
+  EXPECT_NEAR(delta, 0.0, static_cast<double>(fp32_t::TOLERANCE));
+  delta = static_cast<double>(e10) - std::sin(static_cast<double>((fp32_t::CONST_PI * 4)));
+  EXPECT_NEAR(delta, 0.0, static_cast<double>(fp32_t::TOLERANCE));
+  delta = static_cast<double>(e11) - std::sin(static_cast<double>((fp32_t::CONST_PI * 100)));
   EXPECT_NEAR(delta, 0.0, 0.001);  // Sin for larger arguments loses precision
-  delta = static_cast<double>(e12) - std::sin(static_cast<double>((fp32::CONST_PI_2)));
-  EXPECT_NEAR(delta / std::sin(static_cast<double>(fp32::CONST_PI_2)), 0.0,
-              static_cast<double>(fp32::TOLERANCE));
-  delta = static_cast<double>(e13) - std::sin(static_cast<double>((-fp32::CONST_PI_2)));
-  EXPECT_NEAR(delta / std::sin(static_cast<double>(-fp32::CONST_PI_2)), 0.0,
-              static_cast<double>(fp32::TOLERANCE));
-  delta = static_cast<double>(e14) - std::sin(static_cast<double>((fp32::CONST_PI_4)));
-  EXPECT_NEAR(delta / std::sin(static_cast<double>(fp32::CONST_PI_4)), 0.0,
-              static_cast<double>(fp32::TOLERANCE));
-  delta = static_cast<double>(e15) - std::sin(static_cast<double>((-fp32::CONST_PI_4)));
-  EXPECT_NEAR(delta / std::sin(static_cast<double>(-fp32::CONST_PI_4)), 0.0,
-              static_cast<double>(fp32::TOLERANCE));
-  delta = static_cast<double>(e16) - std::sin(static_cast<double>((fp32::CONST_PI_4 * 3)));
-  EXPECT_NEAR(delta / std::sin(static_cast<double>(fp32::CONST_PI_4 * 3)), 0.0,
-              static_cast<double>(fp32::TOLERANCE));
+  delta = static_cast<double>(e12) - std::sin(static_cast<double>((fp32_t::CONST_PI_2)));
+  EXPECT_NEAR(delta / std::sin(static_cast<double>(fp32_t::CONST_PI_2)), 0.0,
+              static_cast<double>(fp32_t::TOLERANCE));
+  delta = static_cast<double>(e13) - std::sin(static_cast<double>((-fp32_t::CONST_PI_2)));
+  EXPECT_NEAR(delta / std::sin(static_cast<double>(-fp32_t::CONST_PI_2)), 0.0,
+              static_cast<double>(fp32_t::TOLERANCE));
+  delta = static_cast<double>(e14) - std::sin(static_cast<double>((fp32_t::CONST_PI_4)));
+  EXPECT_NEAR(delta / std::sin(static_cast<double>(fp32_t::CONST_PI_4)), 0.0,
+              static_cast<double>(fp32_t::TOLERANCE));
+  delta = static_cast<double>(e15) - std::sin(static_cast<double>((-fp32_t::CONST_PI_4)));
+  EXPECT_NEAR(delta / std::sin(static_cast<double>(-fp32_t::CONST_PI_4)), 0.0,
+              static_cast<double>(fp32_t::TOLERANCE));
+  delta = static_cast<double>(e16) - std::sin(static_cast<double>((fp32_t::CONST_PI_4 * 3)));
+  EXPECT_NEAR(delta / std::sin(static_cast<double>(fp32_t::CONST_PI_4 * 3)), 0.0,
+              static_cast<double>(fp32_t::TOLERANCE));
 
-  fp32 step{0.1};
-  fp32 x{-fp32::CONST_PI * 10};
-  for (; x < fp32::CONST_PI * 10; x += step)
+  fp32_t step{0.1};
+  fp32_t x{-fp32_t::CONST_PI * 10};
+  for (; x < fp32_t::CONST_PI * 10; x += step)
   {
-    fp32 e = fp32::Sin(x);
-    delta  = static_cast<double>(e) - std::sin(static_cast<double>(x));
-    EXPECT_NEAR(delta, 0.0, static_cast<double>(fp32::TOLERANCE));
+    fp32_t e = fp32_t::Sin(x);
+    delta    = static_cast<double>(e) - std::sin(static_cast<double>(x));
+    EXPECT_NEAR(delta, 0.0, static_cast<double>(fp32_t::TOLERANCE));
   }
 }
 
 TEST(FixedPointTest, Sin_32_32)
 {
-  fetch::fixed_point::FixedPoint<32, 32> one(1);
-  fetch::fixed_point::FixedPoint<32, 32> one_point_five(1.5);
-  fetch::fixed_point::FixedPoint<32, 32> huge(20000000);
-  fetch::fixed_point::FixedPoint<32, 32> small(0.0000001);
-  fetch::fixed_point::FixedPoint<32, 32> tiny(0, fp32::SMALLEST_FRACTION);
-  fetch::fixed_point::FixedPoint<32, 32> e1  = fp64::Sin(one);
-  fetch::fixed_point::FixedPoint<32, 32> e2  = fp64::Sin(one_point_five);
-  fetch::fixed_point::FixedPoint<32, 32> e3  = fp64::Sin(fp64::_0);
-  fetch::fixed_point::FixedPoint<32, 32> e4  = fp64::Sin(huge);
-  fetch::fixed_point::FixedPoint<32, 32> e5  = fp64::Sin(small);
-  fetch::fixed_point::FixedPoint<32, 32> e6  = fp64::Sin(tiny);
-  fetch::fixed_point::FixedPoint<32, 32> e7  = fp64::Sin(fp64::CONST_PI);
-  fetch::fixed_point::FixedPoint<32, 32> e8  = fp64::Sin(-fp64::CONST_PI);
-  fetch::fixed_point::FixedPoint<32, 32> e9  = fp64::Sin(fp64::CONST_PI * 2);
-  fetch::fixed_point::FixedPoint<32, 32> e10 = fp64::Sin(fp64::CONST_PI * 4);
-  fetch::fixed_point::FixedPoint<32, 32> e11 = fp64::Sin(fp64::CONST_PI * 100);
-  fetch::fixed_point::FixedPoint<32, 32> e12 = fp64::Sin(fp64::CONST_PI_2);
-  fetch::fixed_point::FixedPoint<32, 32> e13 = fp64::Sin(-fp64::CONST_PI_2);
-  fetch::fixed_point::FixedPoint<32, 32> e14 = fp64::Sin(fp64::CONST_PI_4);
-  fetch::fixed_point::FixedPoint<32, 32> e15 = fp64::Sin(-fp64::CONST_PI_4);
-  fetch::fixed_point::FixedPoint<32, 32> e16 = fp64::Sin(fp64::CONST_PI_4 * 3);
+  FixedPoint<32, 32> one(1);
+  FixedPoint<32, 32> one_point_five(1.5);
+  FixedPoint<32, 32> huge(20000000);
+  FixedPoint<32, 32> small(0.0000001);
+  FixedPoint<32, 32> tiny(0, fp32_t::SMALLEST_FRACTION);
+  FixedPoint<32, 32> e1  = fp64_t::Sin(one);
+  FixedPoint<32, 32> e2  = fp64_t::Sin(one_point_five);
+  FixedPoint<32, 32> e3  = fp64_t::Sin(fp64_t::_0);
+  FixedPoint<32, 32> e4  = fp64_t::Sin(huge);
+  FixedPoint<32, 32> e5  = fp64_t::Sin(small);
+  FixedPoint<32, 32> e6  = fp64_t::Sin(tiny);
+  FixedPoint<32, 32> e7  = fp64_t::Sin(fp64_t::CONST_PI);
+  FixedPoint<32, 32> e8  = fp64_t::Sin(-fp64_t::CONST_PI);
+  FixedPoint<32, 32> e9  = fp64_t::Sin(fp64_t::CONST_PI * 2);
+  FixedPoint<32, 32> e10 = fp64_t::Sin(fp64_t::CONST_PI * 4);
+  FixedPoint<32, 32> e11 = fp64_t::Sin(fp64_t::CONST_PI * 100);
+  FixedPoint<32, 32> e12 = fp64_t::Sin(fp64_t::CONST_PI_2);
+  FixedPoint<32, 32> e13 = fp64_t::Sin(-fp64_t::CONST_PI_2);
+  FixedPoint<32, 32> e14 = fp64_t::Sin(fp64_t::CONST_PI_4);
+  FixedPoint<32, 32> e15 = fp64_t::Sin(-fp64_t::CONST_PI_4);
+  FixedPoint<32, 32> e16 = fp64_t::Sin(fp64_t::CONST_PI_4 * 3);
 
   double delta = static_cast<double>(e1) - std::sin(static_cast<double>(one));
   EXPECT_NEAR(delta / std::sin(static_cast<double>(one)), 0.0,
-              static_cast<double>(fp64::TOLERANCE));
+              static_cast<double>(fp64_t::TOLERANCE));
   delta = static_cast<double>(e2) - std::sin(static_cast<double>(one_point_five));
   EXPECT_NEAR(delta / std::sin(static_cast<double>(one_point_five)), 0.0,
-              static_cast<double>(fp64::TOLERANCE));
-  delta = static_cast<double>(e3) - std::sin(static_cast<double>(fp64::_0));
-  EXPECT_NEAR(delta, 0.0, static_cast<double>(fp64::TOLERANCE));
+              static_cast<double>(fp64_t::TOLERANCE));
+  delta = static_cast<double>(e3) - std::sin(static_cast<double>(fp64_t::_0));
+  EXPECT_NEAR(delta, 0.0, static_cast<double>(fp64_t::TOLERANCE));
   delta = static_cast<double>(e4) - std::sin(static_cast<double>(huge));
   EXPECT_NEAR(delta / std::sin(static_cast<double>(huge)), 0.0,
               0.001);  // Sin for larger arguments loses precision
   delta = static_cast<double>(e5) - std::sin(static_cast<double>(small));
   EXPECT_NEAR(delta / std::sin(static_cast<double>(small)), 0.0,
-              static_cast<double>(fp64::TOLERANCE));
+              static_cast<double>(fp64_t::TOLERANCE));
   delta = static_cast<double>(e6) - std::sin(static_cast<double>(tiny));
   EXPECT_NEAR(delta / std::sin(static_cast<double>(tiny)), 0.0,
-              static_cast<double>(fp64::TOLERANCE));
-  delta = static_cast<double>(e7) - std::sin(static_cast<double>(fp64::CONST_PI));
-  EXPECT_NEAR(delta, 0.0, static_cast<double>(fp64::TOLERANCE));
-  delta = static_cast<double>(e8) - std::sin(static_cast<double>(-fp64::CONST_PI));
-  EXPECT_NEAR(delta, 0.0, static_cast<double>(fp64::TOLERANCE));
-  delta = static_cast<double>(e9) - std::sin(static_cast<double>(fp64::CONST_PI * 2));
-  EXPECT_NEAR(delta, 0.0, static_cast<double>(fp64::TOLERANCE));
-  delta = static_cast<double>(e10) - std::sin(static_cast<double>(fp64::CONST_PI * 4));
-  EXPECT_NEAR(delta, 0.0, static_cast<double>(fp64::TOLERANCE));
-  delta = static_cast<double>(e11) - std::sin(static_cast<double>(fp64::CONST_PI * 100));
+              static_cast<double>(fp64_t::TOLERANCE));
+  delta = static_cast<double>(e7) - std::sin(static_cast<double>(fp64_t::CONST_PI));
+  EXPECT_NEAR(delta, 0.0, static_cast<double>(fp64_t::TOLERANCE));
+  delta = static_cast<double>(e8) - std::sin(static_cast<double>(-fp64_t::CONST_PI));
+  EXPECT_NEAR(delta, 0.0, static_cast<double>(fp64_t::TOLERANCE));
+  delta = static_cast<double>(e9) - std::sin(static_cast<double>(fp64_t::CONST_PI * 2));
+  EXPECT_NEAR(delta, 0.0, static_cast<double>(fp64_t::TOLERANCE));
+  delta = static_cast<double>(e10) - std::sin(static_cast<double>(fp64_t::CONST_PI * 4));
+  EXPECT_NEAR(delta, 0.0, static_cast<double>(fp64_t::TOLERANCE));
+  delta = static_cast<double>(e11) - std::sin(static_cast<double>(fp64_t::CONST_PI * 100));
   EXPECT_NEAR(delta, 0.0,
-              static_cast<double>(fp64::TOLERANCE));  // Sin for larger arguments loses precision
-  delta = static_cast<double>(e12) - std::sin(static_cast<double>(fp64::CONST_PI_2));
-  EXPECT_NEAR(delta / std::sin(static_cast<double>(fp64::CONST_PI_2)), 0.0,
-              static_cast<double>(fp64::TOLERANCE));
-  delta = static_cast<double>(e13) - std::sin(static_cast<double>(-fp64::CONST_PI_2));
-  EXPECT_NEAR(delta / std::sin(static_cast<double>(-fp64::CONST_PI_2)), 0.0,
-              static_cast<double>(fp64::TOLERANCE));
-  delta = static_cast<double>(e14) - std::sin(static_cast<double>(fp64::CONST_PI_4));
-  EXPECT_NEAR(delta / std::sin(static_cast<double>(fp64::CONST_PI_4)), 0.0,
-              static_cast<double>(fp64::TOLERANCE));
-  delta = static_cast<double>(e15) - std::sin(static_cast<double>(-fp64::CONST_PI_4));
-  EXPECT_NEAR(delta / std::sin(static_cast<double>(-fp64::CONST_PI_4)), 0.0,
-              static_cast<double>(fp64::TOLERANCE));
-  delta = static_cast<double>(e16) - std::sin(static_cast<double>(fp64::CONST_PI_4 * 3));
-  EXPECT_NEAR(delta / std::sin(static_cast<double>(fp64::CONST_PI_4 * 3)), 0.0,
-              static_cast<double>(fp64::TOLERANCE));
+              static_cast<double>(fp64_t::TOLERANCE));  // Sin for larger arguments loses precision
+  delta = static_cast<double>(e12) - std::sin(static_cast<double>(fp64_t::CONST_PI_2));
+  EXPECT_NEAR(delta / std::sin(static_cast<double>(fp64_t::CONST_PI_2)), 0.0,
+              static_cast<double>(fp64_t::TOLERANCE));
+  delta = static_cast<double>(e13) - std::sin(static_cast<double>(-fp64_t::CONST_PI_2));
+  EXPECT_NEAR(delta / std::sin(static_cast<double>(-fp64_t::CONST_PI_2)), 0.0,
+              static_cast<double>(fp64_t::TOLERANCE));
+  delta = static_cast<double>(e14) - std::sin(static_cast<double>(fp64_t::CONST_PI_4));
+  EXPECT_NEAR(delta / std::sin(static_cast<double>(fp64_t::CONST_PI_4)), 0.0,
+              static_cast<double>(fp64_t::TOLERANCE));
+  delta = static_cast<double>(e15) - std::sin(static_cast<double>(-fp64_t::CONST_PI_4));
+  EXPECT_NEAR(delta / std::sin(static_cast<double>(-fp64_t::CONST_PI_4)), 0.0,
+              static_cast<double>(fp64_t::TOLERANCE));
+  delta = static_cast<double>(e16) - std::sin(static_cast<double>(fp64_t::CONST_PI_4 * 3));
+  EXPECT_NEAR(delta / std::sin(static_cast<double>(fp64_t::CONST_PI_4 * 3)), 0.0,
+              static_cast<double>(fp64_t::TOLERANCE));
 
-  fp64 step{0.001};
-  fp64 x{-fp64::CONST_PI * 100};
-  for (; x < fp64::CONST_PI * 100; x += step)
+  fp64_t step{0.001};
+  fp64_t x{-fp64_t::CONST_PI * 100};
+  for (; x < fp64_t::CONST_PI * 100; x += step)
   {
-    fp64 e = fp64::Sin(x);
-    delta  = static_cast<double>(e) - std::sin(static_cast<double>(x));
-    EXPECT_NEAR(delta, 0.0, static_cast<double>(fp64::TOLERANCE));
+    fp64_t e = fp64_t::Sin(x);
+    delta    = static_cast<double>(e) - std::sin(static_cast<double>(x));
+    EXPECT_NEAR(delta, 0.0, static_cast<double>(fp64_t::TOLERANCE));
   }
 }
 
 TEST(FixedPointTest, Cos_16_16)
 {
-  fetch::fixed_point::FixedPoint<16, 16> one(1);
-  fetch::fixed_point::FixedPoint<16, 16> one_point_five(1.5);
-  fetch::fixed_point::FixedPoint<16, 16> huge(2000);
-  fetch::fixed_point::FixedPoint<16, 16> small(0.0001);
-  fetch::fixed_point::FixedPoint<16, 16> tiny(0, fp32::SMALLEST_FRACTION);
-  fetch::fixed_point::FixedPoint<16, 16> e1  = fp32::Cos(one);
-  fetch::fixed_point::FixedPoint<16, 16> e2  = fp32::Cos(one_point_five);
-  fetch::fixed_point::FixedPoint<16, 16> e3  = fp32::Cos(fp32::_0);
-  fetch::fixed_point::FixedPoint<16, 16> e4  = fp32::Cos(huge);
-  fetch::fixed_point::FixedPoint<16, 16> e5  = fp32::Cos(small);
-  fetch::fixed_point::FixedPoint<16, 16> e6  = fp32::Cos(tiny);
-  fetch::fixed_point::FixedPoint<16, 16> e7  = fp32::Cos(fp32::CONST_PI);
-  fetch::fixed_point::FixedPoint<16, 16> e8  = fp32::Cos(-fp32::CONST_PI);
-  fetch::fixed_point::FixedPoint<16, 16> e9  = fp32::Cos(fp32::CONST_PI * 2);
-  fetch::fixed_point::FixedPoint<16, 16> e10 = fp32::Cos(fp32::CONST_PI * 4);
-  fetch::fixed_point::FixedPoint<16, 16> e11 = fp32::Cos(fp32::CONST_PI * 100);
-  fetch::fixed_point::FixedPoint<16, 16> e12 = fp32::Cos(fp32::CONST_PI_2);
-  fetch::fixed_point::FixedPoint<16, 16> e13 = fp32::Cos(-fp32::CONST_PI_2);
-  fetch::fixed_point::FixedPoint<16, 16> e14 = fp32::Cos(fp32::CONST_PI_4);
-  fetch::fixed_point::FixedPoint<16, 16> e15 = fp32::Cos(-fp32::CONST_PI_4);
-  fetch::fixed_point::FixedPoint<16, 16> e16 = fp32::Cos(fp32::CONST_PI_4 * 3);
+  FixedPoint<16, 16> one(1);
+  FixedPoint<16, 16> one_point_five(1.5);
+  FixedPoint<16, 16> huge(2000);
+  FixedPoint<16, 16> small(0.0001);
+  FixedPoint<16, 16> tiny(0, fp32_t::SMALLEST_FRACTION);
+  FixedPoint<16, 16> e1  = fp32_t::Cos(one);
+  FixedPoint<16, 16> e2  = fp32_t::Cos(one_point_five);
+  FixedPoint<16, 16> e3  = fp32_t::Cos(fp32_t::_0);
+  FixedPoint<16, 16> e4  = fp32_t::Cos(huge);
+  FixedPoint<16, 16> e5  = fp32_t::Cos(small);
+  FixedPoint<16, 16> e6  = fp32_t::Cos(tiny);
+  FixedPoint<16, 16> e7  = fp32_t::Cos(fp32_t::CONST_PI);
+  FixedPoint<16, 16> e8  = fp32_t::Cos(-fp32_t::CONST_PI);
+  FixedPoint<16, 16> e9  = fp32_t::Cos(fp32_t::CONST_PI * 2);
+  FixedPoint<16, 16> e10 = fp32_t::Cos(fp32_t::CONST_PI * 4);
+  FixedPoint<16, 16> e11 = fp32_t::Cos(fp32_t::CONST_PI * 100);
+  FixedPoint<16, 16> e12 = fp32_t::Cos(fp32_t::CONST_PI_2);
+  FixedPoint<16, 16> e13 = fp32_t::Cos(-fp32_t::CONST_PI_2);
+  FixedPoint<16, 16> e14 = fp32_t::Cos(fp32_t::CONST_PI_4);
+  FixedPoint<16, 16> e15 = fp32_t::Cos(-fp32_t::CONST_PI_4);
+  FixedPoint<16, 16> e16 = fp32_t::Cos(fp32_t::CONST_PI_4 * 3);
 
   double delta = static_cast<double>(e1) - std::cos(static_cast<double>(one));
   EXPECT_NEAR(delta / std::cos(static_cast<double>(one)), 0.0,
-              static_cast<double>(fp32::TOLERANCE));
+              static_cast<double>(fp32_t::TOLERANCE));
   delta = static_cast<double>(e2) - std::cos(static_cast<double>(one_point_five));
   EXPECT_NEAR(delta / std::cos(static_cast<double>(one_point_five)), 0.0,
-              static_cast<double>(fp32::TOLERANCE));
-  delta = static_cast<double>(e3) - std::cos(static_cast<double>(fp32::_0));
-  EXPECT_NEAR(delta / std::cos(static_cast<double>(fp32::_0)), 0.0,
-              static_cast<double>(fp32::TOLERANCE));
+              static_cast<double>(fp32_t::TOLERANCE));
+  delta = static_cast<double>(e3) - std::cos(static_cast<double>(fp32_t::_0));
+  EXPECT_NEAR(delta / std::cos(static_cast<double>(fp32_t::_0)), 0.0,
+              static_cast<double>(fp32_t::TOLERANCE));
   delta = static_cast<double>(e4) - std::cos(static_cast<double>(huge));
   EXPECT_NEAR(delta / std::cos(static_cast<double>(huge)), 0.0,
               0.012);  // Sin for larger arguments loses precision
   delta = static_cast<double>(e5) - std::cos(static_cast<double>(small));
   EXPECT_NEAR(delta / std::cos(static_cast<double>(small)), 0.0,
-              static_cast<double>(fp32::TOLERANCE));
+              static_cast<double>(fp32_t::TOLERANCE));
   delta = static_cast<double>(e6) - std::cos(static_cast<double>(tiny));
   EXPECT_NEAR(delta / std::cos(static_cast<double>(tiny)), 0.0,
-              static_cast<double>(fp32::TOLERANCE));
-  delta = static_cast<double>(e7) - std::cos(static_cast<double>(fp64::CONST_PI));
-  EXPECT_NEAR(delta, 0.0, static_cast<double>(fp32::TOLERANCE));
-  delta = static_cast<double>(e8) - std::cos(static_cast<double>(-fp64::CONST_PI));
-  EXPECT_NEAR(delta, 0.0, static_cast<double>(fp32::TOLERANCE));
-  delta = static_cast<double>(e9) - std::cos(static_cast<double>(fp64::CONST_PI * 2));
-  EXPECT_NEAR(delta, 0.0, static_cast<double>(fp32::TOLERANCE));
-  delta = static_cast<double>(e10) - std::cos(static_cast<double>(fp64::CONST_PI * 4));
-  EXPECT_NEAR(delta, 0.0, static_cast<double>(fp32::TOLERANCE));
-  delta = static_cast<double>(e11) - std::cos(static_cast<double>(fp64::CONST_PI * 100));
+              static_cast<double>(fp32_t::TOLERANCE));
+  delta = static_cast<double>(e7) - std::cos(static_cast<double>(fp64_t::CONST_PI));
+  EXPECT_NEAR(delta, 0.0, static_cast<double>(fp32_t::TOLERANCE));
+  delta = static_cast<double>(e8) - std::cos(static_cast<double>(-fp64_t::CONST_PI));
+  EXPECT_NEAR(delta, 0.0, static_cast<double>(fp32_t::TOLERANCE));
+  delta = static_cast<double>(e9) - std::cos(static_cast<double>(fp64_t::CONST_PI * 2));
+  EXPECT_NEAR(delta, 0.0, static_cast<double>(fp32_t::TOLERANCE));
+  delta = static_cast<double>(e10) - std::cos(static_cast<double>(fp64_t::CONST_PI * 4));
+  EXPECT_NEAR(delta, 0.0, static_cast<double>(fp32_t::TOLERANCE));
+  delta = static_cast<double>(e11) - std::cos(static_cast<double>(fp64_t::CONST_PI * 100));
   EXPECT_NEAR(delta, 0.0, 0.001);  // Sin for larger arguments loses precision
-  delta = static_cast<double>(e12) - std::cos(static_cast<double>(fp64::CONST_PI_2));
-  EXPECT_NEAR(delta, 0.0, static_cast<double>(fp32::TOLERANCE));
-  delta = static_cast<double>(e13) - std::cos(static_cast<double>(-fp64::CONST_PI_2));
-  EXPECT_NEAR(delta, 0.0, static_cast<double>(fp32::TOLERANCE));
-  delta = static_cast<double>(e14) - std::cos(static_cast<double>(fp64::CONST_PI_4));
-  EXPECT_NEAR(delta / std::cos(static_cast<double>(fp64::CONST_PI_4)), 0.0,
-              static_cast<double>(fp32::TOLERANCE));
-  delta = static_cast<double>(e15) - std::cos(static_cast<double>(-fp64::CONST_PI_4));
-  EXPECT_NEAR(delta / std::cos(static_cast<double>(-fp64::CONST_PI_4)), 0.0,
-              static_cast<double>(fp32::TOLERANCE));
-  delta = static_cast<double>(e16) - std::cos(static_cast<double>(fp64::CONST_PI_4 * 3));
-  EXPECT_NEAR(delta / std::cos(static_cast<double>(fp64::CONST_PI_4 * 3)), 0.0,
-              static_cast<double>(fp32::TOLERANCE));
+  delta = static_cast<double>(e12) - std::cos(static_cast<double>(fp64_t::CONST_PI_2));
+  EXPECT_NEAR(delta, 0.0, static_cast<double>(fp32_t::TOLERANCE));
+  delta = static_cast<double>(e13) - std::cos(static_cast<double>(-fp64_t::CONST_PI_2));
+  EXPECT_NEAR(delta, 0.0, static_cast<double>(fp32_t::TOLERANCE));
+  delta = static_cast<double>(e14) - std::cos(static_cast<double>(fp64_t::CONST_PI_4));
+  EXPECT_NEAR(delta / std::cos(static_cast<double>(fp64_t::CONST_PI_4)), 0.0,
+              static_cast<double>(fp32_t::TOLERANCE));
+  delta = static_cast<double>(e15) - std::cos(static_cast<double>(-fp64_t::CONST_PI_4));
+  EXPECT_NEAR(delta / std::cos(static_cast<double>(-fp64_t::CONST_PI_4)), 0.0,
+              static_cast<double>(fp32_t::TOLERANCE));
+  delta = static_cast<double>(e16) - std::cos(static_cast<double>(fp64_t::CONST_PI_4 * 3));
+  EXPECT_NEAR(delta / std::cos(static_cast<double>(fp64_t::CONST_PI_4 * 3)), 0.0,
+              static_cast<double>(fp32_t::TOLERANCE));
 
-  fp32 step{0.1};
-  fp32 x{-fp32::CONST_PI * 10};
-  for (; x < fp32::CONST_PI * 10; x += step)
+  fp32_t step{0.1};
+  fp32_t x{-fp32_t::CONST_PI * 10};
+  for (; x < fp32_t::CONST_PI * 10; x += step)
   {
-    fp32 e = fp32::Cos(x);
-    delta  = static_cast<double>(e) - std::cos(static_cast<double>(x));
-    EXPECT_NEAR(delta, 0.0, static_cast<double>(fp32::TOLERANCE));
+    fp32_t e = fp32_t::Cos(x);
+    delta    = static_cast<double>(e) - std::cos(static_cast<double>(x));
+    EXPECT_NEAR(delta, 0.0, static_cast<double>(fp32_t::TOLERANCE));
   }
 }
 
 TEST(FixedPointTest, Cos_32_32)
 {
-  fetch::fixed_point::FixedPoint<32, 32> one(1);
-  fetch::fixed_point::FixedPoint<32, 32> one_point_five(1.5);
-  fetch::fixed_point::FixedPoint<32, 32> huge(2000);
-  fetch::fixed_point::FixedPoint<32, 32> small(0.0001);
-  fetch::fixed_point::FixedPoint<32, 32> tiny(0, fp32::SMALLEST_FRACTION);
-  fetch::fixed_point::FixedPoint<32, 32> e1  = fp64::Cos(one);
-  fetch::fixed_point::FixedPoint<32, 32> e2  = fp64::Cos(one_point_five);
-  fetch::fixed_point::FixedPoint<32, 32> e3  = fp64::Cos(fp64::_0);
-  fetch::fixed_point::FixedPoint<32, 32> e4  = fp64::Cos(huge);
-  fetch::fixed_point::FixedPoint<32, 32> e5  = fp64::Cos(small);
-  fetch::fixed_point::FixedPoint<32, 32> e6  = fp64::Cos(tiny);
-  fetch::fixed_point::FixedPoint<32, 32> e7  = fp64::Cos(fp64::CONST_PI);
-  fetch::fixed_point::FixedPoint<32, 32> e8  = fp64::Cos(-fp64::CONST_PI);
-  fetch::fixed_point::FixedPoint<32, 32> e9  = fp64::Cos(fp64::CONST_PI * 2);
-  fetch::fixed_point::FixedPoint<32, 32> e10 = fp64::Cos(fp64::CONST_PI * 4);
-  fetch::fixed_point::FixedPoint<32, 32> e11 = fp64::Cos(fp64::CONST_PI * 100);
-  fetch::fixed_point::FixedPoint<32, 32> e12 = fp64::Cos(fp64::CONST_PI_2);
-  fetch::fixed_point::FixedPoint<32, 32> e13 = fp64::Cos(-fp64::CONST_PI_2);
-  fetch::fixed_point::FixedPoint<32, 32> e14 = fp64::Cos(fp64::CONST_PI_4);
-  fetch::fixed_point::FixedPoint<32, 32> e15 = fp64::Cos(-fp64::CONST_PI_4);
-  fetch::fixed_point::FixedPoint<32, 32> e16 = fp64::Cos(fp64::CONST_PI_4 * 3);
+  FixedPoint<32, 32> one(1);
+  FixedPoint<32, 32> one_point_five(1.5);
+  FixedPoint<32, 32> huge(2000);
+  FixedPoint<32, 32> small(0.0001);
+  FixedPoint<32, 32> tiny(0, fp32_t::SMALLEST_FRACTION);
+  FixedPoint<32, 32> e1  = fp64_t::Cos(one);
+  FixedPoint<32, 32> e2  = fp64_t::Cos(one_point_five);
+  FixedPoint<32, 32> e3  = fp64_t::Cos(fp64_t::_0);
+  FixedPoint<32, 32> e4  = fp64_t::Cos(huge);
+  FixedPoint<32, 32> e5  = fp64_t::Cos(small);
+  FixedPoint<32, 32> e6  = fp64_t::Cos(tiny);
+  FixedPoint<32, 32> e7  = fp64_t::Cos(fp64_t::CONST_PI);
+  FixedPoint<32, 32> e8  = fp64_t::Cos(-fp64_t::CONST_PI);
+  FixedPoint<32, 32> e9  = fp64_t::Cos(fp64_t::CONST_PI * 2);
+  FixedPoint<32, 32> e10 = fp64_t::Cos(fp64_t::CONST_PI * 4);
+  FixedPoint<32, 32> e11 = fp64_t::Cos(fp64_t::CONST_PI * 100);
+  FixedPoint<32, 32> e12 = fp64_t::Cos(fp64_t::CONST_PI_2);
+  FixedPoint<32, 32> e13 = fp64_t::Cos(-fp64_t::CONST_PI_2);
+  FixedPoint<32, 32> e14 = fp64_t::Cos(fp64_t::CONST_PI_4);
+  FixedPoint<32, 32> e15 = fp64_t::Cos(-fp64_t::CONST_PI_4);
+  FixedPoint<32, 32> e16 = fp64_t::Cos(fp64_t::CONST_PI_4 * 3);
 
   double delta = static_cast<double>(e1) - std::cos(static_cast<double>(one));
   EXPECT_NEAR(delta / std::cos(static_cast<double>(one)), 0.0,
-              static_cast<double>(fp32::TOLERANCE));
+              static_cast<double>(fp32_t::TOLERANCE));
   delta = static_cast<double>(e2) - std::cos(static_cast<double>(one_point_five));
   EXPECT_NEAR(delta / std::cos(static_cast<double>(one_point_five)), 0.0,
-              static_cast<double>(fp64::TOLERANCE));
-  delta = static_cast<double>(e3) - std::cos(static_cast<double>(fp64::_0));
-  EXPECT_NEAR(delta / std::cos(static_cast<double>(fp64::_0)), 0.0,
-              static_cast<double>(fp64::TOLERANCE));
+              static_cast<double>(fp64_t::TOLERANCE));
+  delta = static_cast<double>(e3) - std::cos(static_cast<double>(fp64_t::_0));
+  EXPECT_NEAR(delta / std::cos(static_cast<double>(fp64_t::_0)), 0.0,
+              static_cast<double>(fp64_t::TOLERANCE));
   delta = static_cast<double>(e4) - std::cos(static_cast<double>(huge));
   EXPECT_NEAR(delta / std::cos(static_cast<double>(huge)), 0.0,
               0.002);  // Sin for larger arguments loses precision
   delta = static_cast<double>(e5) - std::cos(static_cast<double>(small));
   EXPECT_NEAR(delta / std::cos(static_cast<double>(small)), 0.0,
-              static_cast<double>(fp64::TOLERANCE));
+              static_cast<double>(fp64_t::TOLERANCE));
   delta = static_cast<double>(e6) - std::cos(static_cast<double>(tiny));
   EXPECT_NEAR(delta / std::cos(static_cast<double>(tiny)), 0.0,
-              static_cast<double>(fp64::TOLERANCE));
-  delta = static_cast<double>(e7) - std::cos(static_cast<double>(fp64::CONST_PI));
-  EXPECT_NEAR(delta, 0.0, static_cast<double>(fp64::TOLERANCE));
-  delta = static_cast<double>(e8) - std::cos(static_cast<double>(-fp64::CONST_PI));
-  EXPECT_NEAR(delta, 0.0, static_cast<double>(fp64::TOLERANCE));
-  delta = static_cast<double>(e9) - std::cos(static_cast<double>(fp64::CONST_PI * 2));
-  EXPECT_NEAR(delta, 0.0, static_cast<double>(fp64::TOLERANCE));
-  delta = static_cast<double>(e10) - std::cos(static_cast<double>(fp64::CONST_PI * 4));
-  EXPECT_NEAR(delta, 0.0, static_cast<double>(fp64::TOLERANCE));
-  delta = static_cast<double>(e11) - std::cos(static_cast<double>(fp64::CONST_PI * 100));
+              static_cast<double>(fp64_t::TOLERANCE));
+  delta = static_cast<double>(e7) - std::cos(static_cast<double>(fp64_t::CONST_PI));
+  EXPECT_NEAR(delta, 0.0, static_cast<double>(fp64_t::TOLERANCE));
+  delta = static_cast<double>(e8) - std::cos(static_cast<double>(-fp64_t::CONST_PI));
+  EXPECT_NEAR(delta, 0.0, static_cast<double>(fp64_t::TOLERANCE));
+  delta = static_cast<double>(e9) - std::cos(static_cast<double>(fp64_t::CONST_PI * 2));
+  EXPECT_NEAR(delta, 0.0, static_cast<double>(fp64_t::TOLERANCE));
+  delta = static_cast<double>(e10) - std::cos(static_cast<double>(fp64_t::CONST_PI * 4));
+  EXPECT_NEAR(delta, 0.0, static_cast<double>(fp64_t::TOLERANCE));
+  delta = static_cast<double>(e11) - std::cos(static_cast<double>(fp64_t::CONST_PI * 100));
   EXPECT_NEAR(delta, 0.0, 0.001);  // Sin for larger arguments loses precision
-  delta = static_cast<double>(e12) - std::cos(static_cast<double>(fp64::CONST_PI_2));
-  EXPECT_NEAR(delta, 0.0, static_cast<double>(fp64::TOLERANCE));
-  delta = static_cast<double>(e13) - std::cos(static_cast<double>(-fp64::CONST_PI_2));
-  EXPECT_NEAR(delta, 0.0, static_cast<double>(fp64::TOLERANCE));
-  delta = static_cast<double>(e14) - std::cos(static_cast<double>(fp64::CONST_PI_4));
-  EXPECT_NEAR(delta / std::cos(static_cast<double>(fp64::CONST_PI_4)), 0.0,
-              static_cast<double>(fp64::TOLERANCE));
-  delta = static_cast<double>(e15) - std::cos(static_cast<double>(-fp64::CONST_PI_4));
-  EXPECT_NEAR(delta / std::cos(static_cast<double>(-fp64::CONST_PI_4)), 0.0,
-              static_cast<double>(fp64::TOLERANCE));
-  delta = static_cast<double>(e16) - std::cos(static_cast<double>(fp64::CONST_PI_4 * 3));
-  EXPECT_NEAR(delta / std::cos(static_cast<double>(fp64::CONST_PI_4 * 3)), 0.0,
-              static_cast<double>(fp64::TOLERANCE));
+  delta = static_cast<double>(e12) - std::cos(static_cast<double>(fp64_t::CONST_PI_2));
+  EXPECT_NEAR(delta, 0.0, static_cast<double>(fp64_t::TOLERANCE));
+  delta = static_cast<double>(e13) - std::cos(static_cast<double>(-fp64_t::CONST_PI_2));
+  EXPECT_NEAR(delta, 0.0, static_cast<double>(fp64_t::TOLERANCE));
+  delta = static_cast<double>(e14) - std::cos(static_cast<double>(fp64_t::CONST_PI_4));
+  EXPECT_NEAR(delta / std::cos(static_cast<double>(fp64_t::CONST_PI_4)), 0.0,
+              static_cast<double>(fp64_t::TOLERANCE));
+  delta = static_cast<double>(e15) - std::cos(static_cast<double>(-fp64_t::CONST_PI_4));
+  EXPECT_NEAR(delta / std::cos(static_cast<double>(-fp64_t::CONST_PI_4)), 0.0,
+              static_cast<double>(fp64_t::TOLERANCE));
+  delta = static_cast<double>(e16) - std::cos(static_cast<double>(fp64_t::CONST_PI_4 * 3));
+  EXPECT_NEAR(delta / std::cos(static_cast<double>(fp64_t::CONST_PI_4 * 3)), 0.0,
+              static_cast<double>(fp64_t::TOLERANCE));
 
-  fp64 step{0.1};
-  fp64 x{-fp64::CONST_PI * 100};
-  for (; x < fp64::CONST_PI * 100; x += step)
+  fp64_t step{0.1};
+  fp64_t x{-fp64_t::CONST_PI * 100};
+  for (; x < fp64_t::CONST_PI * 100; x += step)
   {
-    fp64 e = fp64::Cos(x);
-    delta  = static_cast<double>(e) - std::cos(static_cast<double>(x));
-    EXPECT_NEAR(delta, 0.0, static_cast<double>(fp64::TOLERANCE));
+    fp64_t e = fp64_t::Cos(x);
+    delta    = static_cast<double>(e) - std::cos(static_cast<double>(x));
+    EXPECT_NEAR(delta, 0.0, static_cast<double>(fp64_t::TOLERANCE));
   }
 }
 
 TEST(FixedPointTest, Tan_16_16)
 {
-  fetch::fixed_point::FixedPoint<16, 16> one(1);
-  fetch::fixed_point::FixedPoint<16, 16> one_point_five(1.5);
-  fetch::fixed_point::FixedPoint<16, 16> huge(2000);
-  fetch::fixed_point::FixedPoint<16, 16> small(0.0001);
-  fetch::fixed_point::FixedPoint<16, 16> tiny(0, fp32::SMALLEST_FRACTION);
-  fetch::fixed_point::FixedPoint<16, 16> e1  = fp32::Tan(one);
-  fetch::fixed_point::FixedPoint<16, 16> e2  = fp32::Tan(one_point_five);
-  fetch::fixed_point::FixedPoint<16, 16> e3  = fp32::Tan(fp32::_0);
-  fetch::fixed_point::FixedPoint<16, 16> e4  = fp32::Tan(huge);
-  fetch::fixed_point::FixedPoint<16, 16> e5  = fp32::Tan(small);
-  fetch::fixed_point::FixedPoint<16, 16> e6  = fp32::Tan(tiny);
-  fetch::fixed_point::FixedPoint<16, 16> e7  = fp32::Tan(fp32::CONST_PI);
-  fetch::fixed_point::FixedPoint<16, 16> e8  = fp32::Tan(-fp32::CONST_PI);
-  fetch::fixed_point::FixedPoint<16, 16> e9  = fp32::Tan(fp32::CONST_PI * 2);
-  fetch::fixed_point::FixedPoint<16, 16> e10 = fp32::Tan(fp32::CONST_PI * 4);
-  fetch::fixed_point::FixedPoint<16, 16> e11 = fp32::Tan(fp32::CONST_PI * 100);
-  fetch::fixed_point::FixedPoint<16, 16> e12 = fp32::Tan(fp32::CONST_PI_4);
-  fetch::fixed_point::FixedPoint<16, 16> e13 = fp32::Tan(-fp32::CONST_PI_4);
-  fetch::fixed_point::FixedPoint<16, 16> e14 = fp32::Tan(fp32::CONST_PI_4 * 3);
+  FixedPoint<16, 16> one(1);
+  FixedPoint<16, 16> one_point_five(1.5);
+  FixedPoint<16, 16> huge(2000);
+  FixedPoint<16, 16> small(0.0001);
+  FixedPoint<16, 16> tiny(0, fp32_t::SMALLEST_FRACTION);
+  FixedPoint<16, 16> e1  = fp32_t::Tan(one);
+  FixedPoint<16, 16> e2  = fp32_t::Tan(one_point_five);
+  FixedPoint<16, 16> e3  = fp32_t::Tan(fp32_t::_0);
+  FixedPoint<16, 16> e4  = fp32_t::Tan(huge);
+  FixedPoint<16, 16> e5  = fp32_t::Tan(small);
+  FixedPoint<16, 16> e6  = fp32_t::Tan(tiny);
+  FixedPoint<16, 16> e7  = fp32_t::Tan(fp32_t::CONST_PI);
+  FixedPoint<16, 16> e8  = fp32_t::Tan(-fp32_t::CONST_PI);
+  FixedPoint<16, 16> e9  = fp32_t::Tan(fp32_t::CONST_PI * 2);
+  FixedPoint<16, 16> e10 = fp32_t::Tan(fp32_t::CONST_PI * 4);
+  FixedPoint<16, 16> e11 = fp32_t::Tan(fp32_t::CONST_PI * 100);
+  FixedPoint<16, 16> e12 = fp32_t::Tan(fp32_t::CONST_PI_4);
+  FixedPoint<16, 16> e13 = fp32_t::Tan(-fp32_t::CONST_PI_4);
+  FixedPoint<16, 16> e14 = fp32_t::Tan(fp32_t::CONST_PI_4 * 3);
 
   double delta = static_cast<double>(e1) - std::tan(static_cast<double>(one));
   EXPECT_NEAR(delta / std::tan(static_cast<double>(one)), 0.0,
-              static_cast<double>(fp32::TOLERANCE));
+              static_cast<double>(fp32_t::TOLERANCE));
   delta = static_cast<double>(e2) - std::tan(static_cast<double>(one_point_five));
   EXPECT_NEAR(delta / std::tan(static_cast<double>(one_point_five)), 0.0,
-              static_cast<double>(fp32::TOLERANCE));
-  delta = static_cast<double>(e3) - std::tan(static_cast<double>(fp32::_0));
-  EXPECT_NEAR(delta, 0.0, static_cast<double>(fp32::TOLERANCE));
+              static_cast<double>(fp32_t::TOLERANCE));
+  delta = static_cast<double>(e3) - std::tan(static_cast<double>(fp32_t::_0));
+  EXPECT_NEAR(delta, 0.0, static_cast<double>(fp32_t::TOLERANCE));
   delta = static_cast<double>(e4) - std::tan(static_cast<double>(huge));
   // Tan for larger arguments loses precision
   EXPECT_NEAR(delta / std::tan(static_cast<double>(huge)), 0.0, 0.012);
   delta = static_cast<double>(e5) - std::tan(static_cast<double>(small));
   EXPECT_NEAR(delta / std::tan(static_cast<double>(small)), 0.0,
-              static_cast<double>(fp32::TOLERANCE));
+              static_cast<double>(fp32_t::TOLERANCE));
   delta = static_cast<double>(e6) - std::tan(static_cast<double>(tiny));
   EXPECT_NEAR(delta / std::tan(static_cast<double>(tiny)), 0.0,
-              static_cast<double>(fp32::TOLERANCE));
-  delta = static_cast<double>(e7) - std::tan(static_cast<double>(fp64::CONST_PI));
-  EXPECT_NEAR(delta, 0.0, static_cast<double>(fp32::TOLERANCE));
-  delta = static_cast<double>(e8) - std::tan(static_cast<double>(-fp64::CONST_PI));
-  EXPECT_NEAR(delta, 0.0, static_cast<double>(fp32::TOLERANCE));
-  delta = static_cast<double>(e9) - std::tan(static_cast<double>(fp64::CONST_PI * 2));
-  EXPECT_NEAR(delta, 0.0, static_cast<double>(fp32::TOLERANCE));
-  delta = static_cast<double>(e10) - std::tan(static_cast<double>(fp64::CONST_PI * 4));
-  EXPECT_NEAR(delta, 0.0, static_cast<double>(fp32::TOLERANCE));
-  delta = static_cast<double>(e11) - std::tan(static_cast<double>(fp64::CONST_PI * 100));
+              static_cast<double>(fp32_t::TOLERANCE));
+  delta = static_cast<double>(e7) - std::tan(static_cast<double>(fp64_t::CONST_PI));
+  EXPECT_NEAR(delta, 0.0, static_cast<double>(fp32_t::TOLERANCE));
+  delta = static_cast<double>(e8) - std::tan(static_cast<double>(-fp64_t::CONST_PI));
+  EXPECT_NEAR(delta, 0.0, static_cast<double>(fp32_t::TOLERANCE));
+  delta = static_cast<double>(e9) - std::tan(static_cast<double>(fp64_t::CONST_PI * 2));
+  EXPECT_NEAR(delta, 0.0, static_cast<double>(fp32_t::TOLERANCE));
+  delta = static_cast<double>(e10) - std::tan(static_cast<double>(fp64_t::CONST_PI * 4));
+  EXPECT_NEAR(delta, 0.0, static_cast<double>(fp32_t::TOLERANCE));
+  delta = static_cast<double>(e11) - std::tan(static_cast<double>(fp64_t::CONST_PI * 100));
   EXPECT_NEAR(delta, 0.0, 0.001);  // Sin for larger arguments loses precision
-  delta = static_cast<double>(e12) - std::tan(static_cast<double>(fp64::CONST_PI_4));
-  EXPECT_NEAR(delta / std::tan(static_cast<double>(fp64::CONST_PI_4)), 0.0,
-              static_cast<double>(fp32::TOLERANCE));
-  delta = static_cast<double>(e13) - std::tan(static_cast<double>(-fp64::CONST_PI_4));
-  EXPECT_NEAR(delta / std::tan(static_cast<double>(-fp64::CONST_PI_4)), 0.0,
-              static_cast<double>(fp32::TOLERANCE));
-  delta = static_cast<double>(e14) - std::tan(static_cast<double>(fp64::CONST_PI_4 * 3));
-  EXPECT_NEAR(delta / std::tan(static_cast<double>(fp64::CONST_PI_4 * 3)), 0.0,
-              static_cast<double>(fp32::TOLERANCE));
+  delta = static_cast<double>(e12) - std::tan(static_cast<double>(fp64_t::CONST_PI_4));
+  EXPECT_NEAR(delta / std::tan(static_cast<double>(fp64_t::CONST_PI_4)), 0.0,
+              static_cast<double>(fp32_t::TOLERANCE));
+  delta = static_cast<double>(e13) - std::tan(static_cast<double>(-fp64_t::CONST_PI_4));
+  EXPECT_NEAR(delta / std::tan(static_cast<double>(-fp64_t::CONST_PI_4)), 0.0,
+              static_cast<double>(fp32_t::TOLERANCE));
+  delta = static_cast<double>(e14) - std::tan(static_cast<double>(fp64_t::CONST_PI_4 * 3));
+  EXPECT_NEAR(delta / std::tan(static_cast<double>(fp64_t::CONST_PI_4 * 3)), 0.0,
+              static_cast<double>(fp32_t::TOLERANCE));
 
-  EXPECT_TRUE(fp32::isPosInfinity(fp32::Tan(fp32::CONST_PI_2)));
-  EXPECT_TRUE(fp32::isNegInfinity(fp32::Tan(-fp32::CONST_PI_2)));
+  EXPECT_TRUE(fp32_t::isPosInfinity(fp32_t::Tan(fp32_t::CONST_PI_2)));
+  EXPECT_TRUE(fp32_t::isNegInfinity(fp32_t::Tan(-fp32_t::CONST_PI_2)));
 
-  fp32 step{0.001}, offset{step * 10};
-  fp32 x{-fp32::CONST_PI_2}, max{fp32::CONST_PI_2};
+  fp32_t step{0.001}, offset{step * 10};
+  fp32_t x{-fp32_t::CONST_PI_2}, max{fp32_t::CONST_PI_2};
   x += offset;
   max -= offset;
   double max_error = 0, avg_error = 0;
   size_t iterations = 0;
-  double tolerance  = 2 * static_cast<double>(fp32::TOLERANCE);
+  double tolerance  = 2 * static_cast<double>(fp32_t::TOLERANCE);
   for (; x < max; x += step)
   {
-    fp32   e     = fp32::Tan(x);
+    fp32_t e     = fp32_t::Tan(x);
     double r     = std::tan(static_cast<double>(x));
     double delta = std::abs(static_cast<double>(e - r));
     max_error    = std::max(max_error, delta);
@@ -1788,71 +1787,71 @@ TEST(FixedPointTest, Tan_16_16)
 
 TEST(FixedPointTest, Tan_32_32)
 {
-  fetch::fixed_point::FixedPoint<32, 32> one(1);
-  fetch::fixed_point::FixedPoint<32, 32> one_point_five(1.5);
-  fetch::fixed_point::FixedPoint<32, 32> huge(2000);
-  fetch::fixed_point::FixedPoint<32, 32> tiny(0, fp32::SMALLEST_FRACTION);
-  fetch::fixed_point::FixedPoint<32, 32> e1  = fp64::Tan(one);
-  fetch::fixed_point::FixedPoint<32, 32> e2  = fp64::Tan(one_point_five);
-  fetch::fixed_point::FixedPoint<32, 32> e3  = fp64::Tan(fp64::_0);
-  fetch::fixed_point::FixedPoint<32, 32> e4  = fp64::Tan(huge);
-  fetch::fixed_point::FixedPoint<32, 32> e5  = fp64::Tan(tiny);
-  fetch::fixed_point::FixedPoint<32, 32> e6  = fp64::Tan(fp64::CONST_PI);
-  fetch::fixed_point::FixedPoint<32, 32> e7  = fp64::Tan(-fp64::CONST_PI);
-  fetch::fixed_point::FixedPoint<32, 32> e8  = fp64::Tan(fp64::CONST_PI * 2);
-  fetch::fixed_point::FixedPoint<32, 32> e9  = fp64::Tan(fp64::CONST_PI * 4);
-  fetch::fixed_point::FixedPoint<32, 32> e10 = fp64::Tan(fp64::CONST_PI * 100);
-  fetch::fixed_point::FixedPoint<32, 32> e11 = fp64::Tan(fp64::CONST_PI_4);
-  fetch::fixed_point::FixedPoint<32, 32> e12 = fp64::Tan(-fp64::CONST_PI_4);
-  fetch::fixed_point::FixedPoint<32, 32> e13 = fp64::Tan(fp64::CONST_PI_4 * 3);
+  FixedPoint<32, 32> one(1);
+  FixedPoint<32, 32> one_point_five(1.5);
+  FixedPoint<32, 32> huge(2000);
+  FixedPoint<32, 32> tiny(0, fp32_t::SMALLEST_FRACTION);
+  FixedPoint<32, 32> e1  = fp64_t::Tan(one);
+  FixedPoint<32, 32> e2  = fp64_t::Tan(one_point_five);
+  FixedPoint<32, 32> e3  = fp64_t::Tan(fp64_t::_0);
+  FixedPoint<32, 32> e4  = fp64_t::Tan(huge);
+  FixedPoint<32, 32> e5  = fp64_t::Tan(tiny);
+  FixedPoint<32, 32> e6  = fp64_t::Tan(fp64_t::CONST_PI);
+  FixedPoint<32, 32> e7  = fp64_t::Tan(-fp64_t::CONST_PI);
+  FixedPoint<32, 32> e8  = fp64_t::Tan(fp64_t::CONST_PI * 2);
+  FixedPoint<32, 32> e9  = fp64_t::Tan(fp64_t::CONST_PI * 4);
+  FixedPoint<32, 32> e10 = fp64_t::Tan(fp64_t::CONST_PI * 100);
+  FixedPoint<32, 32> e11 = fp64_t::Tan(fp64_t::CONST_PI_4);
+  FixedPoint<32, 32> e12 = fp64_t::Tan(-fp64_t::CONST_PI_4);
+  FixedPoint<32, 32> e13 = fp64_t::Tan(fp64_t::CONST_PI_4 * 3);
 
   double delta = static_cast<double>(e1) - std::tan(static_cast<double>(one));
   EXPECT_NEAR(delta / std::tan(static_cast<double>(one)), 0.0,
-              static_cast<double>(fp64::TOLERANCE));
+              static_cast<double>(fp64_t::TOLERANCE));
   delta = static_cast<double>(e2) - std::tan(static_cast<double>(one_point_five));
   EXPECT_NEAR(delta / std::tan(static_cast<double>(one_point_five)), 0.0,
-              static_cast<double>(fp64::TOLERANCE));
-  delta = static_cast<double>(e3) - std::tan(static_cast<double>(fp64::_0));
-  EXPECT_NEAR(delta, 0.0, static_cast<double>(fp64::TOLERANCE));
+              static_cast<double>(fp64_t::TOLERANCE));
+  delta = static_cast<double>(e3) - std::tan(static_cast<double>(fp64_t::_0));
+  EXPECT_NEAR(delta, 0.0, static_cast<double>(fp64_t::TOLERANCE));
   delta = static_cast<double>(e4) - std::tan(static_cast<double>(huge));
   EXPECT_NEAR(delta / std::tan(static_cast<double>(huge)), 0.0, 0.012);
   delta = static_cast<double>(e5) - std::tan(static_cast<double>(tiny));
   EXPECT_NEAR(delta / std::tan(static_cast<double>(tiny)), 0.0,
-              static_cast<double>(fp64::TOLERANCE));
-  delta = static_cast<double>(e6) - std::tan(static_cast<double>(fp64::CONST_PI));
-  EXPECT_NEAR(delta, 0.0, static_cast<double>(fp64::TOLERANCE));
-  delta = static_cast<double>(e7) - std::tan(static_cast<double>(-fp64::CONST_PI));
-  EXPECT_NEAR(delta, 0.0, static_cast<double>(fp64::TOLERANCE));
-  delta = static_cast<double>(e8) - std::tan(static_cast<double>(fp64::CONST_PI * 2));
-  EXPECT_NEAR(delta, 0.0, static_cast<double>(fp64::TOLERANCE));
-  delta = static_cast<double>(e9) - std::tan(static_cast<double>(fp64::CONST_PI * 4));
-  EXPECT_NEAR(delta, 0.0, static_cast<double>(fp64::TOLERANCE));
-  delta = static_cast<double>(e10) - std::tan(static_cast<double>(fp64::CONST_PI * 100));
+              static_cast<double>(fp64_t::TOLERANCE));
+  delta = static_cast<double>(e6) - std::tan(static_cast<double>(fp64_t::CONST_PI));
+  EXPECT_NEAR(delta, 0.0, static_cast<double>(fp64_t::TOLERANCE));
+  delta = static_cast<double>(e7) - std::tan(static_cast<double>(-fp64_t::CONST_PI));
+  EXPECT_NEAR(delta, 0.0, static_cast<double>(fp64_t::TOLERANCE));
+  delta = static_cast<double>(e8) - std::tan(static_cast<double>(fp64_t::CONST_PI * 2));
+  EXPECT_NEAR(delta, 0.0, static_cast<double>(fp64_t::TOLERANCE));
+  delta = static_cast<double>(e9) - std::tan(static_cast<double>(fp64_t::CONST_PI * 4));
+  EXPECT_NEAR(delta, 0.0, static_cast<double>(fp64_t::TOLERANCE));
+  delta = static_cast<double>(e10) - std::tan(static_cast<double>(fp64_t::CONST_PI * 100));
   EXPECT_NEAR(delta, 0.0, 0.001);  // Sin for larger arguments loses precision
-  delta = static_cast<double>(e11) - std::tan(static_cast<double>(fp64::CONST_PI_4));
-  EXPECT_NEAR(delta / std::tan(static_cast<double>(fp64::CONST_PI_4)), 0.0,
-              static_cast<double>(fp64::TOLERANCE));
-  delta = static_cast<double>(e12) - std::tan(static_cast<double>(-fp64::CONST_PI_4));
-  EXPECT_NEAR(delta / std::tan(static_cast<double>(-fp64::CONST_PI_4)), 0.0,
-              static_cast<double>(fp64::TOLERANCE));
-  delta = static_cast<double>(e13) - std::tan(static_cast<double>(fp64::CONST_PI_4 * 3));
-  EXPECT_NEAR(delta / std::tan(static_cast<double>(fp64::CONST_PI_4 * 3)), 0.0,
-              static_cast<double>(fp64::TOLERANCE));
+  delta = static_cast<double>(e11) - std::tan(static_cast<double>(fp64_t::CONST_PI_4));
+  EXPECT_NEAR(delta / std::tan(static_cast<double>(fp64_t::CONST_PI_4)), 0.0,
+              static_cast<double>(fp64_t::TOLERANCE));
+  delta = static_cast<double>(e12) - std::tan(static_cast<double>(-fp64_t::CONST_PI_4));
+  EXPECT_NEAR(delta / std::tan(static_cast<double>(-fp64_t::CONST_PI_4)), 0.0,
+              static_cast<double>(fp64_t::TOLERANCE));
+  delta = static_cast<double>(e13) - std::tan(static_cast<double>(fp64_t::CONST_PI_4 * 3));
+  EXPECT_NEAR(delta / std::tan(static_cast<double>(fp64_t::CONST_PI_4 * 3)), 0.0,
+              static_cast<double>(fp64_t::TOLERANCE));
 
   // (843, private) Replace with IsInfinity()
-  EXPECT_TRUE(fp64::isPosInfinity(fp64::Tan(fp64::CONST_PI_2)));
-  EXPECT_TRUE(fp64::isNegInfinity(fp64::Tan(-fp64::CONST_PI_2)));
+  EXPECT_TRUE(fp64_t::isPosInfinity(fp64_t::Tan(fp64_t::CONST_PI_2)));
+  EXPECT_TRUE(fp64_t::isNegInfinity(fp64_t::Tan(-fp64_t::CONST_PI_2)));
 
-  fp64 step{0.0001}, offset{step * 100};
-  fp64 x{-fp64::CONST_PI_2}, max{fp64::CONST_PI_2};
+  fp64_t step{0.0001}, offset{step * 100};
+  fp64_t x{-fp64_t::CONST_PI_2}, max{fp64_t::CONST_PI_2};
   x += offset;
   max -= offset;
   double max_error = 0, avg_error = 0;
   size_t iterations = 0;
-  double tolerance  = 2 * static_cast<double>(fp64::TOLERANCE);
+  double tolerance  = 2 * static_cast<double>(fp64_t::TOLERANCE);
   for (; x < max; x += step)
   {
-    fp64   e     = fp64::Tan(x);
+    fp64_t e     = fp64_t::Tan(x);
     double r     = std::tan(static_cast<double>(x));
     double delta = std::abs(static_cast<double>(e - r));
     max_error    = std::max(max_error, delta);
@@ -1868,14 +1867,14 @@ TEST(FixedPointTest, Tan_32_32)
 
 TEST(FixedPointTest, ASin_16_16)
 {
-  fp32   step{0.001};
-  fp32   x{-0.99};
+  fp32_t step{0.001};
+  fp32_t x{-0.99};
   double max_error = 0, avg_error = 0;
   size_t iterations = 0;
-  double tolerance  = static_cast<double>(fp32::TOLERANCE);
+  double tolerance  = static_cast<double>(fp32_t::TOLERANCE);
   for (; x < 1.0; x += step)
   {
-    fp32   e     = fp32::ASin(x);
+    fp32_t e     = fp32_t::ASin(x);
     double r     = std::asin(static_cast<double>(x));
     double delta = std::abs(static_cast<double>(e - r));
     max_error    = std::max(max_error, delta);
@@ -1891,14 +1890,14 @@ TEST(FixedPointTest, ASin_16_16)
 
 TEST(FixedPointTest, ASin_32_32)
 {
-  fp64   step{0.0001};
-  fp64   x{-0.999};
+  fp64_t step{0.0001};
+  fp64_t x{-0.999};
   double max_error = 0, avg_error = 0;
   size_t iterations = 0;
-  double tolerance  = static_cast<double>(fp64::TOLERANCE);
+  double tolerance  = static_cast<double>(fp64_t::TOLERANCE);
   for (; x < 1.0; x += step)
   {
-    fp64   e     = fp64::ASin(x);
+    fp64_t e     = fp64_t::ASin(x);
     double r     = std::asin(static_cast<double>(x));
     double delta = std::abs(static_cast<double>(e - r));
     max_error    = std::max(max_error, delta);
@@ -1914,14 +1913,14 @@ TEST(FixedPointTest, ASin_32_32)
 
 TEST(FixedPointTest, ACos_16_16)
 {
-  fp32   step{0.001};
-  fp32   x{-0.99};
+  fp32_t step{0.001};
+  fp32_t x{-0.99};
   double max_error = 0, avg_error = 0;
   size_t iterations = 0;
-  double tolerance  = static_cast<double>(fp32::TOLERANCE);
+  double tolerance  = static_cast<double>(fp32_t::TOLERANCE);
   for (; x < 1.0; x += step)
   {
-    fp32   e     = fp32::ACos(x);
+    fp32_t e     = fp32_t::ACos(x);
     double r     = std::acos(static_cast<double>(x));
     double delta = std::abs(static_cast<double>(e - r));
     max_error    = std::max(max_error, delta);
@@ -1937,14 +1936,14 @@ TEST(FixedPointTest, ACos_16_16)
 
 TEST(FixedPointTest, ACos_32_32)
 {
-  fp64   step{0.0001};
-  fp64   x{-1.0};
+  fp64_t step{0.0001};
+  fp64_t x{-1.0};
   double max_error = 0, avg_error = 0;
   size_t iterations = 0;
-  double tolerance  = static_cast<double>(fp64::TOLERANCE);
+  double tolerance  = static_cast<double>(fp64_t::TOLERANCE);
   for (; x < 1.0; x += step)
   {
-    fp64   e     = fp64::ACos(x);
+    fp64_t e     = fp64_t::ACos(x);
     double r     = std::acos(static_cast<double>(x));
     double delta = std::abs(static_cast<double>(e - r));
     max_error    = std::max(max_error, delta);
@@ -1960,14 +1959,14 @@ TEST(FixedPointTest, ACos_32_32)
 
 TEST(FixedPointTest, ATan_16_16)
 {
-  fp32   step{0.001};
-  fp32   x{-5.0};
+  fp32_t step{0.001};
+  fp32_t x{-5.0};
   double max_error = 0, avg_error = 0;
   size_t iterations = 0;
-  double tolerance  = static_cast<double>(fp32::TOLERANCE);
+  double tolerance  = static_cast<double>(fp32_t::TOLERANCE);
   for (; x < 5.0; x += step)
   {
-    fp32   e     = fp32::ATan(x);
+    fp32_t e     = fp32_t::ATan(x);
     double r     = std::atan(static_cast<double>(x));
     double delta = std::abs(static_cast<double>(e - r));
     max_error    = std::max(max_error, delta);
@@ -1983,14 +1982,14 @@ TEST(FixedPointTest, ATan_16_16)
 
 TEST(FixedPointTest, ATan_32_32)
 {
-  fp64   step{0.0001};
-  fp64   x{-5.0};
+  fp64_t step{0.0001};
+  fp64_t x{-5.0};
   double max_error = 0, avg_error = 0;
   size_t iterations = 0;
-  double tolerance  = static_cast<double>(fp64::TOLERANCE);
+  double tolerance  = static_cast<double>(fp64_t::TOLERANCE);
   for (; x < 5.0; x += step)
   {
-    fp64   e     = fp64::ATan(x);
+    fp64_t e     = fp64_t::ATan(x);
     double r     = std::atan(static_cast<double>(x));
     double delta = std::abs(static_cast<double>(e - r));
     max_error    = std::max(max_error, delta);
@@ -2006,17 +2005,17 @@ TEST(FixedPointTest, ATan_32_32)
 
 TEST(FixedPointTest, ATan2_16_16)
 {
-  fp32   step{0.01};
-  fp32   x{-2.0};
-  fp32   y{-2.0};
+  fp32_t step{0.01};
+  fp32_t x{-2.0};
+  fp32_t y{-2.0};
   double max_error = 0, avg_error = 0;
   size_t iterations = 0;
-  double tolerance  = static_cast<double>(fp32::TOLERANCE);
+  double tolerance  = static_cast<double>(fp32_t::TOLERANCE);
   for (; x < 2.0; x += step)
   {
     for (; y < 2.0; y += step)
     {
-      fp32   e     = fp32::ATan2(y, x);
+      fp32_t e     = fp32_t::ATan2(y, x);
       double r     = std::atan2(static_cast<double>(y), static_cast<double>(x));
       double delta = std::abs(static_cast<double>(e - r));
       max_error    = std::max(max_error, delta);
@@ -2033,17 +2032,17 @@ TEST(FixedPointTest, ATan2_16_16)
 
 TEST(FixedPointTest, ATan2_32_32)
 {
-  fp64   step{0.0001};
-  fp64   x{-2.0};
-  fp64   y{-2.0};
+  fp64_t step{0.0001};
+  fp64_t x{-2.0};
+  fp64_t y{-2.0};
   double max_error = 0, avg_error = 0;
   size_t iterations = 0;
-  double tolerance  = static_cast<double>(fp64::TOLERANCE);
+  double tolerance  = static_cast<double>(fp64_t::TOLERANCE);
   for (; x < 2.0; x += step)
   {
     for (; y < 2.0; y += step)
     {
-      fp64   e     = fp64::ATan2(y, x);
+      fp64_t e     = fp64_t::ATan2(y, x);
       double r     = std::atan2(static_cast<double>(y), static_cast<double>(x));
       double delta = std::abs(static_cast<double>(e - r));
       max_error    = std::max(max_error, delta);
@@ -2060,14 +2059,14 @@ TEST(FixedPointTest, ATan2_32_32)
 
 TEST(FixedPointTest, SinH_16_16)
 {
-  fp32   step{0.001};
-  fp32   x{-3.0};
+  fp32_t step{0.001};
+  fp32_t x{-3.0};
   double max_error = 0, avg_error = 0;
   size_t iterations = 0;
-  double tolerance  = 2.0 * static_cast<double>(fp32::TOLERANCE);
+  double tolerance  = 2.0 * static_cast<double>(fp32_t::TOLERANCE);
   for (; x < 3.0; x += step)
   {
-    fp32   e     = fp32::SinH(x);
+    fp32_t e     = fp32_t::SinH(x);
     double r     = std::sinh(static_cast<double>(x));
     double delta = std::abs(static_cast<double>(e - r));
     max_error    = std::max(max_error, delta);
@@ -2083,14 +2082,14 @@ TEST(FixedPointTest, SinH_16_16)
 
 TEST(FixedPointTest, SinH_32_32)
 {
-  fp64   step{0.0001};
-  fp64   x{-5.0};
+  fp64_t step{0.0001};
+  fp64_t x{-5.0};
   double max_error = 0, avg_error = 0;
   size_t iterations = 0;
-  double tolerance  = static_cast<double>(fp64::TOLERANCE);
+  double tolerance  = static_cast<double>(fp64_t::TOLERANCE);
   for (; x < 5.0; x += step)
   {
-    fp64   e     = fp64::SinH(x);
+    fp64_t e     = fp64_t::SinH(x);
     double r     = std::sinh(static_cast<double>(x));
     double delta = std::abs(static_cast<double>(e - r));
     max_error    = std::max(max_error, delta);
@@ -2106,14 +2105,14 @@ TEST(FixedPointTest, SinH_32_32)
 
 TEST(FixedPointTest, CosH_16_16)
 {
-  fp32   step{0.001};
-  fp32   x{-3.0};
+  fp32_t step{0.001};
+  fp32_t x{-3.0};
   double max_error = 0, avg_error = 0;
   size_t iterations = 0;
-  double tolerance  = 2.0 * static_cast<double>(fp32::TOLERANCE);
+  double tolerance  = 2.0 * static_cast<double>(fp32_t::TOLERANCE);
   for (; x < 3.0; x += step)
   {
-    fp32   e     = fp32::CosH(x);
+    fp32_t e     = fp32_t::CosH(x);
     double r     = std::cosh(static_cast<double>(x));
     double delta = std::abs(static_cast<double>(e - r));
     max_error    = std::max(max_error, delta);
@@ -2129,14 +2128,14 @@ TEST(FixedPointTest, CosH_16_16)
 
 TEST(FixedPointTest, CosH_32_32)
 {
-  fp64   step{0.0001};
-  fp64   x{-5.0};
+  fp64_t step{0.0001};
+  fp64_t x{-5.0};
   double max_error = 0, avg_error = 0;
   size_t iterations = 0;
-  double tolerance  = static_cast<double>(fp64::TOLERANCE);
+  double tolerance  = static_cast<double>(fp64_t::TOLERANCE);
   for (; x < 5.0; x += step)
   {
-    fp64   e     = fp64::CosH(x);
+    fp64_t e     = fp64_t::CosH(x);
     double r     = std::cosh(static_cast<double>(x));
     double delta = std::abs(static_cast<double>(e - r));
     max_error    = std::max(max_error, delta);
@@ -2152,14 +2151,14 @@ TEST(FixedPointTest, CosH_32_32)
 
 TEST(FixedPointTest, TanH_16_16)
 {
-  fp32   step{0.001};
-  fp32   x{-3.0};
+  fp32_t step{0.001};
+  fp32_t x{-3.0};
   double max_error = 0, avg_error = 0;
   size_t iterations = 0;
-  double tolerance  = static_cast<double>(fp32::TOLERANCE);
+  double tolerance  = static_cast<double>(fp32_t::TOLERANCE);
   for (; x < 3.0; x += step)
   {
-    fp32   e     = fp32::TanH(x);
+    fp32_t e     = fp32_t::TanH(x);
     double r     = std::tanh(static_cast<double>(x));
     double delta = std::abs(static_cast<double>(e - r));
     max_error    = std::max(max_error, delta);
@@ -2175,14 +2174,14 @@ TEST(FixedPointTest, TanH_16_16)
 
 TEST(FixedPointTest, TanH_32_32)
 {
-  fp64   step{0.0001};
-  fp64   x{-5.0};
+  fp64_t step{0.0001};
+  fp64_t x{-5.0};
   double max_error = 0, avg_error = 0;
   size_t iterations = 0;
-  double tolerance  = static_cast<double>(fp64::TOLERANCE);
+  double tolerance  = static_cast<double>(fp64_t::TOLERANCE);
   for (; x < 5.0; x += step)
   {
-    fp64   e     = fp64::TanH(x);
+    fp64_t e     = fp64_t::TanH(x);
     double r     = std::tanh(static_cast<double>(x));
     double delta = std::abs(static_cast<double>(e - r));
     max_error    = std::max(max_error, delta);
@@ -2198,14 +2197,14 @@ TEST(FixedPointTest, TanH_32_32)
 
 TEST(FixedPointTest, ASinH_16_16)
 {
-  fp32   step{0.001};
-  fp32   x{-3.0};
+  fp32_t step{0.001};
+  fp32_t x{-3.0};
   double max_error = 0, avg_error = 0;
   size_t iterations = 0;
-  double tolerance  = 2 * static_cast<double>(fp32::TOLERANCE);
+  double tolerance  = 2 * static_cast<double>(fp32_t::TOLERANCE);
   for (; x < 3.0; x += step)
   {
-    fp32   e     = fp32::ASinH(x);
+    fp32_t e     = fp32_t::ASinH(x);
     double r     = std::asinh(static_cast<double>(x));
     double delta = std::abs(static_cast<double>(e - r));
     max_error    = std::max(max_error, delta);
@@ -2221,14 +2220,14 @@ TEST(FixedPointTest, ASinH_16_16)
 
 TEST(FixedPointTest, ASinH_32_32)
 {
-  fp64   step{0.0001};
-  fp64   x{-5.0};
+  fp64_t step{0.0001};
+  fp64_t x{-5.0};
   double max_error = 0, avg_error = 0;
   size_t iterations = 0;
-  double tolerance  = 2 * static_cast<double>(fp64::TOLERANCE);
+  double tolerance  = 2 * static_cast<double>(fp64_t::TOLERANCE);
   for (; x < 5.0; x += step)
   {
-    fp64   e     = fp64::ASinH(x);
+    fp64_t e     = fp64_t::ASinH(x);
     double r     = std::asinh(static_cast<double>(x));
     double delta = std::abs(static_cast<double>(e - r));
     max_error    = std::max(max_error, delta);
@@ -2244,14 +2243,14 @@ TEST(FixedPointTest, ASinH_32_32)
 
 TEST(FixedPointTest, ACosH_16_16)
 {
-  fp32   step{0.001};
-  fp32   x{1.0};
+  fp32_t step{0.001};
+  fp32_t x{1.0};
   double max_error = 0, avg_error = 0;
   size_t iterations = 0;
-  double tolerance  = 2 * static_cast<double>(fp32::TOLERANCE);
+  double tolerance  = 2 * static_cast<double>(fp32_t::TOLERANCE);
   for (; x < 3.0; x += step)
   {
-    fp32   e     = fp32::ACosH(x);
+    fp32_t e     = fp32_t::ACosH(x);
     double r     = std::acosh(static_cast<double>(x));
     double delta = std::abs(static_cast<double>(e - r));
     max_error    = std::max(max_error, delta);
@@ -2267,14 +2266,14 @@ TEST(FixedPointTest, ACosH_16_16)
 
 TEST(FixedPointTest, ACosH_32_32)
 {
-  fp64   step{0.0001};
-  fp64   x{1.0};
+  fp64_t step{0.0001};
+  fp64_t x{1.0};
   double max_error = 0, avg_error = 0;
   size_t iterations = 0;
-  double tolerance  = 2 * static_cast<double>(fp64::TOLERANCE);
+  double tolerance  = 2 * static_cast<double>(fp64_t::TOLERANCE);
   for (; x < 5.0; x += step)
   {
-    fp64   e     = fp64::ACosH(x);
+    fp64_t e     = fp64_t::ACosH(x);
     double r     = std::acosh(static_cast<double>(x));
     double delta = std::abs(static_cast<double>(e - r));
     max_error    = std::max(max_error, delta);
@@ -2290,16 +2289,16 @@ TEST(FixedPointTest, ACosH_32_32)
 
 TEST(FixedPointTest, ATanH_16_16)
 {
-  fp32 step{0.001}, offset{step * 10};
-  fp32 x{-1.0}, max{1.0};
+  fp32_t step{0.001}, offset{step * 10};
+  fp32_t x{-1.0}, max{1.0};
   x += offset;
   max -= offset;
   double max_error = 0, avg_error = 0;
   size_t iterations = 0;
-  double tolerance  = 2 * static_cast<double>(fp32::TOLERANCE);
+  double tolerance  = 2 * static_cast<double>(fp32_t::TOLERANCE);
   for (; x < max; x += step)
   {
-    fp32   e     = fp32::ATanH(x);
+    fp32_t e     = fp32_t::ATanH(x);
     double r     = std::atanh(static_cast<double>(x));
     double delta = std::abs(static_cast<double>(e - r));
     max_error    = std::max(max_error, delta);
@@ -2315,16 +2314,16 @@ TEST(FixedPointTest, ATanH_16_16)
 
 TEST(FixedPointTest, ATanH_32_32)
 {
-  fp64 step{0.0001}, offset{step * 10};
-  fp64 x{-1.0}, max{1.0};
+  fp64_t step{0.0001}, offset{step * 10};
+  fp64_t x{-1.0}, max{1.0};
   x += offset;
   max -= offset;
   double max_error = 0, avg_error = 0;
   size_t iterations = 0;
-  double tolerance  = 2 * static_cast<double>(fp64::TOLERANCE);
+  double tolerance  = 2 * static_cast<double>(fp64_t::TOLERANCE);
   for (; x < max; x += step)
   {
-    fp64   e     = fp64::ATanH(x);
+    fp64_t e     = fp64_t::ATanH(x);
     double r     = std::atanh(static_cast<double>(x));
     double delta = std::abs(static_cast<double>(e - r));
     max_error    = std::max(max_error, delta);
@@ -2340,27 +2339,27 @@ TEST(FixedPointTest, ATanH_32_32)
 
 TEST(FixedPointTest, NanInfinity_16_16)
 {
-  // std::cout << fp32::NaN << std::endl;
-  // std::cout << fp32::POSITIVE_INFINITY << std::endl;
-  // std::cout << fp32::NEGATIVE_INFINITY << std::endl;
+  // std::cout << fp32_t::NaN << std::endl;
+  // std::cout << fp32_t::POSITIVE_INFINITY << std::endl;
+  // std::cout << fp32_t::NEGATIVE_INFINITY << std::endl;
 
-  fp32 m_inf{fp32::NEGATIVE_INFINITY};
-  fp32 p_inf{fp32::POSITIVE_INFINITY};
+  fp32_t m_inf{fp32_t::NEGATIVE_INFINITY};
+  fp32_t p_inf{fp32_t::POSITIVE_INFINITY};
 
   // Basic checks
-  EXPECT_TRUE(fp32::isInfinity(m_inf));
-  EXPECT_TRUE(fp32::isNegInfinity(m_inf));
-  EXPECT_TRUE(fp32::isInfinity(p_inf));
-  EXPECT_TRUE(fp32::isPosInfinity(p_inf));
-  EXPECT_FALSE(fp32::isNegInfinity(p_inf));
-  EXPECT_FALSE(fp32::isPosInfinity(m_inf));
+  EXPECT_TRUE(fp32_t::isInfinity(m_inf));
+  EXPECT_TRUE(fp32_t::isNegInfinity(m_inf));
+  EXPECT_TRUE(fp32_t::isInfinity(p_inf));
+  EXPECT_TRUE(fp32_t::isPosInfinity(p_inf));
+  EXPECT_FALSE(fp32_t::isNegInfinity(p_inf));
+  EXPECT_FALSE(fp32_t::isPosInfinity(m_inf));
 
   // TODO(843, add tests for Infinity and NaN)
   // Addition checks
-  // EXPECT_TRUE(fp32::isNegInfinity(m_inf + m_inf));
-  // EXPECT_TRUE(fp32::isPosInfinity(p_inf + p_inf));
-  // EXPECT_TRUE(fp32::isNaN(m_inf + p_inf));
-  // EXPECT_TRUE(fp32::isNaN(p_inf + m_inf));
+  // EXPECT_TRUE(fp32_t::isNegInfinity(m_inf + m_inf));
+  // EXPECT_TRUE(fp32_t::isPosInfinity(p_inf + p_inf));
+  // EXPECT_TRUE(fp32_t::isNaN(m_inf + p_inf));
+  // EXPECT_TRUE(fp32_t::isNaN(p_inf + m_inf));
 
   // Subtraction checks
   // Multiplication checks
@@ -2372,18 +2371,18 @@ TEST(FixedPointTest, NanInfinity_16_16)
 
 TEST(FixedPointTest, NanInfinity_32_32)
 {
-  // std::cout << fp64::NaN << std::endl;
-  // std::cout << fp64::POSITIVE_INFINITY << std::endl;
-  // std::cout << fp64::NEGATIVE_INFINITY << std::endl;
+  // std::cout << fp64_t::NaN << std::endl;
+  // std::cout << fp64_t::POSITIVE_INFINITY << std::endl;
+  // std::cout << fp64_t::NEGATIVE_INFINITY << std::endl;
 
-  fp64 m_inf{fp64::NEGATIVE_INFINITY};
-  fp64 p_inf{fp64::POSITIVE_INFINITY};
+  fp64_t m_inf{fp64_t::NEGATIVE_INFINITY};
+  fp64_t p_inf{fp64_t::POSITIVE_INFINITY};
 
   // Basic checks
-  EXPECT_TRUE(fp64::isInfinity(m_inf));
-  EXPECT_TRUE(fp64::isNegInfinity(m_inf));
-  EXPECT_TRUE(fp64::isInfinity(p_inf));
-  EXPECT_TRUE(fp64::isPosInfinity(p_inf));
-  EXPECT_FALSE(fp64::isNegInfinity(p_inf));
-  EXPECT_FALSE(fp64::isPosInfinity(m_inf));
+  EXPECT_TRUE(fp64_t::isInfinity(m_inf));
+  EXPECT_TRUE(fp64_t::isNegInfinity(m_inf));
+  EXPECT_TRUE(fp64_t::isInfinity(p_inf));
+  EXPECT_TRUE(fp64_t::isPosInfinity(p_inf));
+  EXPECT_FALSE(fp64_t::isNegInfinity(p_inf));
+  EXPECT_FALSE(fp64_t::isPosInfinity(m_inf));
 }

@@ -27,13 +27,16 @@
 #include <iomanip>
 #include <iostream>
 #include <limits>
-#include <sstream>
 
 namespace fetch {
 namespace fixed_point {
 
 template <std::uint16_t I, std::uint16_t F>
 class FixedPoint;
+
+using fp32_t  = FixedPoint<16, 16>;
+using fp64_t  = FixedPoint<32, 32>;
+using fp128_t = FixedPoint<64, 64>;
 
 namespace {
 
@@ -690,7 +693,7 @@ std::ostream &operator<<(std::ostream &s, FixedPoint<I, F> const &n)
   {
     s << double(n);
   }
-  s << " (0x" << std::hex << n.Data() << ")";
+  // s << " (0x" << std::hex << n.Data() << ")";
   s.flags(f);
   return s;
 }
