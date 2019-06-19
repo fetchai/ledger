@@ -54,7 +54,7 @@ using ObserverPtr   = std::unique_ptr<MockIoObserver>;
 class VmTestToolkit
 {
 public:
-  VmTestToolkit(std::ostream *stdout = nullptr)
+  explicit VmTestToolkit(std::ostream *stdout = nullptr)
     : stdout_{stdout ? stdout : &std::cout}
     , observer_{std::make_unique<MockIoObserver>()}
     , module_{fetch::vm_modules::VMFactory::GetModule()}
