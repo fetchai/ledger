@@ -17,14 +17,17 @@
 //------------------------------------------------------------------------------
 
 #include "math/tensor.hpp"
-#include "ml/dataloaders/mnist_loaders/mnist_loader.hpp"
 #include "ml/graph.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/ops/activation.hpp"
 #include "ml/ops/loss_functions/mean_square_error.hpp"
+
 #include "vm/module.hpp"
-#include "vm_modules/ml/cross_entropy.hpp"
+
+#include "vm_modules/ml/dataloader/mnist_dataloader.hpp"
 #include "vm_modules/ml/graph.hpp"
+#include "vm_modules/ml/optimisation/adam_optimiser.hpp"
+#include "vm_modules/ml/training_pair.hpp"
 
 #include <cstdint>
 #include <cstdlib>
@@ -56,76 +59,6 @@ struct System : public fetch::vm::Object
 };
 
 std::vector<std::string> System::args;
-
-class TrainingPairWrapper : public fetch::vm::Object,
-                            public std::pair<fetch::vm::Ptr<fetch::vm_modules::ml::TensorWrapper>,
-                                             fetch::vm::Ptr<fetch::vm_modules::ml::TensorWrapper>>
-{
-public:
-  TrainingPairWrapper(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
-                      fetch::vm::Ptr<fetch::vm_modules::ml::TensorWrapper> ta,
-                      fetch::vm::Ptr<fetch::vm_modules::ml::TensorWrapper> tb)
-    : fetch::vm::Object(vm, type_id)
-  {
-    this->first  = ta;
-    this->second = tb;
-  }
-
-  static fetch::vm::Ptr<TrainingPairWrapper> Constructor(
-      fetch::vm::VM *vm, fetch::vm::TypeId type_id,
-      fetch::vm::Ptr<fetch::vm_modules::ml::TensorWrapper> ta,
-      fetch::vm::Ptr<fetch::vm_modules::ml::TensorWrapper> tb)
-  {
-    return new TrainingPairWrapper(vm, type_id, ta, tb);
-  }
-
-  fetch::vm::Ptr<fetch::vm_modules::ml::TensorWrapper> data()
-  {
-    return this->second;
-  }
-
-  fetch::vm::Ptr<fetch::vm_modules::ml::TensorWrapper> label()
-  {
-    return this->first;
-  }
-};
-
-class DataLoaderWrapper : public fetch::vm::Object
-{
-public:
-  DataLoaderWrapper(fetch::vm::VM *vm, fetch::vm::TypeId type_id, std::string const &images_file,
-                    std::string const &labels_file)
-    : fetch::vm::Object(vm, type_id)
-    , loader_(images_file, labels_file)
-  {}
-
-  static fetch::vm::Ptr<DataLoaderWrapper> Constructor(
-      fetch::vm::VM *vm, fetch::vm::TypeId type_id,
-      fetch::vm::Ptr<fetch::vm::String> const &images_file,
-      fetch::vm::Ptr<fetch::vm::String> const &labels_file)
-  {
-    return new DataLoaderWrapper(vm, type_id, images_file->str, labels_file->str);
-  }
-
-  // Wont compile if parameter is not const &
-  // The actual fetch::vm::Ptr is const, but the pointed to memory is modified
-  fetch::vm::Ptr<TrainingPairWrapper> GetData(fetch::vm::Ptr<TrainingPairWrapper> const &dataHolder)
-  {
-    std::pair<fetch::math::Tensor<float>, std::vector<fetch::math::Tensor<float>>> d =
-        loader_.GetNext();
-    (*(dataHolder->first)).Copy(d.first);
-    (*(dataHolder->second)).Copy(d.second.at(0));
-    return dataHolder;
-  }
-
-  void Display(fetch::vm::Ptr<fetch::vm_modules::ml::TensorWrapper> const &d)
-  {
-    loader_.Display(*d);
-  }
-
-private:
-  fetch::ml::MNISTLoader<fetch::math::Tensor<float>, fetch::math::Tensor<float>> loader_;
-};
 
 template <typename T>
 static void PrintNumber(fetch::vm::VM * /*vm*/, T const &s)
@@ -177,20 +110,12 @@ int main(int argc, char **argv)
       .CreateStaticMemberFunction("Argc", &System::Argc)
       .CreateStaticMemberFunction("Argv", &System::Argv);
 
-  fetch::vm_modules::ml::CreateTensor(*module);
+  fetch::vm_modules::math::CreateTensor(*module);
   fetch::vm_modules::ml::CreateGraph(*module);
-  fetch::vm_modules::ml::CreateCrossEntropy(*module);
 
-  module->CreateClassType<TrainingPairWrapper>("TrainingPair")
-      .CreateConstuctor<fetch::vm::Ptr<fetch::vm_modules::ml::TensorWrapper>,
-                        fetch::vm::Ptr<fetch::vm_modules::ml::TensorWrapper>>()
-      .CreateMemberFunction("Data", &TrainingPairWrapper::data)
-      .CreateMemberFunction("Label", &TrainingPairWrapper::label);
-
-  module->CreateClassType<DataLoaderWrapper>("MNISTLoader")
-      .CreateConstuctor<fetch::vm::Ptr<fetch::vm::String>, fetch::vm::Ptr<fetch::vm::String>>()
-      .CreateMemberFunction("GetData", &DataLoaderWrapper::GetData)
-      .CreateMemberFunction("Display", &DataLoaderWrapper::Display);
+  fetch::vm_modules::ml::TrainingPair::Bind(*module);
+  fetch::vm_modules::ml::MnistDataLoader::Bind(*module);
+  fetch::vm_modules::ml::VMAdamOptimiser::Bind(*module);
 
   // Setting compiler up
   fetch::vm::Compiler *    compiler = new fetch::vm::Compiler(module.get());
