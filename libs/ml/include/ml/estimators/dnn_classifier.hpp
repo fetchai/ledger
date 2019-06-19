@@ -24,7 +24,7 @@
 #include "ml/layers/fully_connected.hpp"
 #include "ml/ops/placeholder.hpp"
 
-#include "ml/ops/loss_functions/softmax_cross_entropy.hpp"
+#include "ml/ops/loss_functions/cross_entropy.hpp"
 
 #include "ml/dataloaders/dataloader.hpp"
 #include "ml/estimators/estimator.hpp"
@@ -40,7 +40,7 @@ class DNNClassifier : public Estimator<TensorType>
 public:
   using SizeType         = fetch::math::SizeType;
   using DataType         = typename TensorType::Type;
-  using CostFunctionType = fetch::ml::ops::SoftmaxCrossEntropy<TensorType>;
+  using CostFunctionType = fetch::ml::ops::CrossEntropy<TensorType>;
   using OptimiserType    = fetch::ml::optimisers::AdamOptimiser<TensorType, CostFunctionType>;
 
   //  DNNClassifier(EstimatorConfig<DataType> estimator_config,
@@ -103,7 +103,7 @@ void DNNClassifier<TensorType>::SetupModel()
   layer_2_ = this->graph_ptr_->template AddNode<layers::FullyConnected<TensorType>>(
       "FC2", {layer_1_}, 10u, 10u, fetch::ml::details::ActivationType::RELU);
   output_ = this->graph_ptr_->template AddNode<layers::FullyConnected<TensorType>>(
-      "FC3", {layer_2_}, 10u, 10u);
+      "FC3", {layer_2_}, 10u, 10u, fetch::ml::details::ActivationType::SOFTMAX);
 }
 
 /**
@@ -122,7 +122,7 @@ bool DNNClassifier<TensorType>::Run(SizeType n_steps, RunMode const &run_mode)
     DataType loss;
     for (SizeType i{0}; i < n_steps; i++)
     {
-      loss = optimiser_ptr_->Run(*data_loader_ptr_, this->estimator_config_.batch_size, 1);
+      loss = optimiser_ptr_->Run(*data_loader_ptr_, this->estimator_config_.batch_size);
       std::cout << "Loss: " << loss << std::endl;
     }
     return true;

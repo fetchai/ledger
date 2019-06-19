@@ -60,8 +60,8 @@ int main(int ac, char **av)
   EstimatorConfig<DataType> estimator_config;
   estimator_config.batch_size     = 64;
   estimator_config.early_stopping = true;
-  estimator_config.learning_rate  = 0.5;
-  estimator_config.opt            = OptimiserType::ADAM;
+  //  estimator_config.learning_rate  = 0.5;
+  estimator_config.opt = OptimiserType::ADAM;
 
   // setup dataloader - TODO: make this go away by implementing default dataloader in estimator
   auto data_loader_ptr = std::make_shared<DataLoaderType>(av[1], av[2]);

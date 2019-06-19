@@ -45,8 +45,12 @@ struct EstimatorConfig
   EstimatorConfig() = default;
 
   bool     early_stopping = false;
-  DataType learning_rate  = DataType(0.1);
-  SizeType batch_size     = SizeType(32);
+  SizeType patience       = 10;
+
+  DataType learning_rate = DataType(0.001);
+  DataType epoch_decay   = DataType(0.9);
+
+  SizeType batch_size = SizeType(32);
 
   OptimiserType    opt  = OptimiserType::ADAM;
   CostFunctionType cost = CostFunctionType::SOFTMAX_CROSS_ENTROPY;
