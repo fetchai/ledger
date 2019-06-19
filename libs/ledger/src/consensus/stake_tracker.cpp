@@ -117,7 +117,7 @@ void StakeTracker::UpdateStake(Address const &address, uint64_t stake)
   auto it = address_index_.find(address);
   if (it == address_index_.end())
   {
-    // new staker
+    // new stake
     auto record = std::make_shared<Record>(Record{address, stake});
 
     // update all the indexes
