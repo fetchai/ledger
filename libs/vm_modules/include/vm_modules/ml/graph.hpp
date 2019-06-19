@@ -93,8 +93,7 @@ public:
                                                                         {input_name->str});
   }
 
-  void AddDropout(VMPtrString const &name,
-                  VMPtrString const &input_name, float const &prob)
+  void AddDropout(VMPtrString const &name, VMPtrString const &input_name, float const &prob)
   {
     graph_.AddNode<fetch::ml::ops::Dropout<MathTensorType>>(name->str, {input_name->str}, prob);
   }
