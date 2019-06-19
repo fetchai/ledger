@@ -73,7 +73,8 @@ def parse_commandline():
     parser.add_argument('build_path', type=os.path.abspath,
                         help='Path to build directory')
     # stack overflow 26727314
-    parser.add_argument('--only-these-files', nargs='+')
+    parser.add_argument('--only-these-files', nargs='+',
+                        help="If this is the last switch provided right before final positional argument `build _path`, then it is necessary to separate them using ` -- ` separator.")
     return parser.parse_args()
 
 
@@ -132,12 +133,14 @@ def main():
         return proc.wait() != 0
 
     def project_source_files(only_these_files=None):
+        otf = [os.path.abspath(
+            item) for item in only_these_files] if only_these_files else None
 
         for folder in PROJECT_FOLDERS:
             for root, _, files in os.walk(os.path.join(project_root, folder)):
                 for path in fnmatch.filter(files, '*.cpp'):
                     source_path = os.path.join(root, path)
-                    if only_these_files is not None and source_path not in only_these_files:
+                    if otf and source_path not in otf:
                         continue
                     yield source_path
 

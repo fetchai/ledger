@@ -18,6 +18,8 @@
 
 #include "vm_test_toolkit.hpp"
 
+#include "gmock/gmock.h"
+
 namespace {
 
 class ArrayTests : public ::testing::Test

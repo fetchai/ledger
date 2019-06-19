@@ -20,6 +20,8 @@
 #include "math/tensor.hpp"
 #include "meta/is_iterable.hpp"
 
+// TODO(1154): move to math library when implementing isiterable methods
+
 namespace fetch {
 namespace math {
 
@@ -54,7 +56,7 @@ fetch::meta::IsIterableTwoArg<T1, T2, void> Assign(T1 ret, T2 const &other)
   memory::TrivialRange range(0, std::size_t(ret.height()));
 
   // To vectorise this operation, we assign column by column
-  // as the framework garantuees continous aligned segments
+  // as the framework guarantees continuous aligned segments
   // of memory along the columns
   for (uint64_t j = 0; j < ret.width(); ++j)
   {

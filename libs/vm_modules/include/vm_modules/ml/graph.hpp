@@ -35,6 +35,7 @@ class VMGraph : public fetch::vm::Object
   using MathTensorType = fetch::math::Tensor<float>;
   using VMTensorType   = fetch::vm_modules::math::VMTensor;
   using GraphType      = fetch::ml::Graph<MathTensorType>;
+  using VMPtrString    = fetch::vm::Ptr<fetch::vm::String>;
 
 public:
   VMGraph(fetch::vm::VM *vm, fetch::vm::TypeId type_id)
@@ -47,13 +48,12 @@ public:
     return new VMGraph(vm, type_id);
   }
 
-  void SetInput(fetch::vm::Ptr<fetch::vm::String> const &name,
-                fetch::vm::Ptr<VMTensorType> const &     input)
+  void SetInput(VMPtrString const &name, fetch::vm::Ptr<VMTensorType> const &input)
   {
     graph_.SetInput(name->str, (*input).GetTensor());
   }
 
-  fetch::vm::Ptr<VMTensorType> Evaluate(fetch::vm::Ptr<fetch::vm::String> const &name)
+  fetch::vm::Ptr<VMTensorType> Evaluate(VMPtrString const &name)
   {
     MathTensorType               t   = graph_.Evaluate(name->str);
     fetch::vm::Ptr<VMTensorType> ret = this->vm_->CreateNewObject<math::VMTensor>(t.shape());
@@ -61,8 +61,7 @@ public:
     return ret;
   }
 
-  void Backpropagate(fetch::vm::Ptr<fetch::vm::String> const &name,
-                     fetch::vm::Ptr<math::VMTensor> const &   dt)
+  void Backpropagate(VMPtrString const &name, fetch::vm::Ptr<math::VMTensor> const &dt)
   {
     graph_.BackPropagate(name->str, (*dt).GetTensor());
   }
@@ -72,33 +71,30 @@ public:
     graph_.Step(lr);
   }
 
-  void AddPlaceholder(fetch::vm::Ptr<fetch::vm::String> const &name)
+  void AddPlaceholder(VMPtrString const &name)
   {
-    graph_.AddNode<fetch::ml::ops::PlaceHolder<fetch::math::Tensor<float>>>(name->str, {});
+    graph_.AddNode<fetch::ml::ops::PlaceHolder<MathTensorType>>(name->str, {});
   }
 
-  void AddFullyConnected(fetch::vm::Ptr<fetch::vm::String> const &name,
-                         fetch::vm::Ptr<fetch::vm::String> const &input_name, int in, int out)
+  void AddFullyConnected(VMPtrString const &name, VMPtrString const &input_name, int in, int out)
   {
-    graph_.AddNode<fetch::ml::layers::FullyConnected<fetch::math::Tensor<float>>>(
+    graph_.AddNode<fetch::ml::layers::FullyConnected<MathTensorType>>(
         name->str, {input_name->str}, std::size_t(in), std::size_t(out));
   }
 
-  void AddRelu(fetch::vm::Ptr<fetch::vm::String> const &name,
-               fetch::vm::Ptr<fetch::vm::String> const &input_name)
+  void AddRelu(VMPtrString const &name, VMPtrString const &input_name)
   {
-    graph_.AddNode<fetch::ml::ops::Relu<fetch::math::Tensor<float>>>(name->str, {input_name->str});
+    graph_.AddNode<fetch::ml::ops::Relu<MathTensorType>>(name->str, {input_name->str});
   }
 
-  void AddSoftmax(fetch::vm::Ptr<fetch::vm::String> const &name,
-                  fetch::vm::Ptr<fetch::vm::String> const &input_name)
+  void AddSoftmax(VMPtrString const &name, VMPtrString const &input_name)
   {
     graph_.AddNode<fetch::ml::ops::Softmax<fetch::math::Tensor<float>>>(name->str,
                                                                         {input_name->str});
   }
 
-  void AddDropout(fetch::vm::Ptr<fetch::vm::String> const &name,
-                  fetch::vm::Ptr<fetch::vm::String> const &input_name, float const &prob)
+  void AddDropout(VMPtrString const &name,
+                  VMPtrString const &input_name, float const &prob)
   {
     graph_.AddNode<fetch::ml::ops::Dropout<MathTensorType>>(name->str, {input_name->str}, prob);
   }

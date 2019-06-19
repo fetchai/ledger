@@ -18,33 +18,35 @@
 //------------------------------------------------------------------------------
 
 #include "math/meta/math_type_traits.hpp"
-#include "math/standard_functions/exp.hpp"
+#include "math/standard_functions/abs.hpp"
 #include "vm/module.hpp"
-
-#include <cmath>
 
 namespace fetch {
 namespace vm_modules {
 
+/**
+ * method for taking the absolute of a value
+ */
 template <typename T>
-fetch::math::meta::IfIsMath<T, T> Exp(fetch::vm::VM *, T const &a)
+fetch::math::meta::IfIsMath<T, T> Abs(fetch::vm::VM *, T const &a)
 {
   T x;
-  fetch::math::Exp(a, x);
+  fetch::math::Abs(a, x);
   return x;
 }
 
-inline void BindExp(fetch::vm::Module &module)
+static void CreateAbs(fetch::vm::Module &module)
 {
-  module.CreateFreeFunction<float_t>("exp", &Exp<float_t>);
-  module.CreateFreeFunction<double_t>("exp", &Exp<double_t>);
-  module.CreateFreeFunction<fixed_point::fp32_t>("exp", &Exp<fixed_point::fp32_t>);
-  module.CreateFreeFunction<fixed_point::fp64_t>("exp", &Exp<fixed_point::fp64_t>);
+  module.CreateFreeFunction<int32_t>("abs", &Abs<int32_t>);
+  module.CreateFreeFunction<float_t>("abs", &Abs<float_t>);
+  module.CreateFreeFunction<double_t>("abs", &Abs<double_t>);
+  module.CreateFreeFunction<fixed_point::fp32_t>("abs", &Abs<fixed_point::fp32_t>);
+  module.CreateFreeFunction<fixed_point::fp64_t>("abs", &Abs<fixed_point::fp64_t>);
 }
 
-inline void BindExp(std::shared_ptr<vm::Module> module)
+inline void CreateAbs(std::shared_ptr<vm::Module> module)
 {
-  BindExp(*module.get());
+  CreateAbs(*module.get());
 }
 
 }  // namespace vm_modules

@@ -297,6 +297,8 @@ private:
   void     HandleUnsignedInteger64(IRExpressionNodePtr const &node);
   void     HandleFloat32(IRExpressionNodePtr const &node);
   void     HandleFloat64(IRExpressionNodePtr const &node);
+  void     HandleFixed32(IRExpressionNodePtr const &node);
+  void     HandleFixed64(IRExpressionNodePtr const &node);
   void     HandleString(IRExpressionNodePtr const &node);
   void     HandleTrue(IRExpressionNodePtr const &node);
   void     HandleFalse(IRExpressionNodePtr const &node);
