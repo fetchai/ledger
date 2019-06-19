@@ -62,7 +62,7 @@ std::pair<math::SizeType, math::SizeType> count_rows_cols(std::string filename,
 }  // namespace
 
 template <typename LabelType, typename InputType>
-class CommodityDataLoader : DataLoader<LabelType, InputType>
+class CommodityDataLoader : public DataLoader<LabelType, InputType>
 {
 
 public:
@@ -189,7 +189,7 @@ private:
 
   void GetAtIndex(SizeType index)
   {
-    buffer_.first  = labels_.Slice(index).Copy();
+    buffer_.first  = labels_.Slice(index).Copy().Transpose();
     buffer_.second = std::vector<InputType>({data_.Slice(index).Copy()});
   }
 };

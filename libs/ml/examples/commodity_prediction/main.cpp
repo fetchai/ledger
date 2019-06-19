@@ -22,16 +22,20 @@
 #include "ml/graph.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/ops/activation.hpp"
+#include "ml/ops/loss_functions/cross_entropy.hpp"
 #include "ml/ops/transpose.hpp"
+#include "ml/optimisation/adam_optimiser.hpp"
 #include "ml/state_dict.hpp"
 
 #include <fstream>
 #include <iostream>
 #include <string>
 
-using DataType  = double;
-using ArrayType = fetch::math::Tensor<DataType>;
-using GraphType = fetch::ml::Graph<ArrayType>;
+using DataType         = double;
+using ArrayType        = fetch::math::Tensor<DataType>;
+using GraphType        = fetch::ml::Graph<ArrayType>;
+using CostFunctionType = typename fetch::ml::ops::CrossEntropy<ArrayType>;
+using OptimiserType    = typename fetch::ml::optimisers::AdamOptimiser<ArrayType, CostFunctionType>;
 
 using namespace fetch::ml::ops;
 using namespace fetch::ml::layers;
@@ -188,6 +192,7 @@ std::pair<std::string, std::vector<std::string>> read_architecture(
   ss >> input_layer_size >> delimiter;
   previous_layer_size = input_layer_size;
   previous_layer_name = layer_name;
+  node_names.emplace_back(previous_layer_name);
 
   g->AddNode<PlaceHolder<ArrayType>>(layer_name, {});  // add node for input
 
@@ -274,6 +279,7 @@ int main(int argc, char **argv)
   std::string input_dir           = "";
   SizeType    model_num           = 0;
   SizeType    output_feature_size = 0;
+  bool        testing             = false;
 
   /// READ ARGUMENTS
   if ((i = ArgPos((char *)"-model_num", argc, argv)) > 0)
@@ -283,6 +289,10 @@ int main(int argc, char **argv)
   if ((i = ArgPos((char *)"-input_dir", argc, argv)) > 0)
   {
     input_dir = argv[i + 1];
+  }
+  if ((i = ArgPos((char *)"-testing", argc, argv)) > 0)
+  {
+    testing = static_cast<bool>(std::stoi(argv[i + 1]));
   }
 
   if (input_dir.empty())
@@ -304,71 +314,99 @@ int main(int argc, char **argv)
   std::string test_y_file = input_dir + "/" + dataname + "_y_pred_test.csv";
   std::string weights_dir = input_dir + "/output/" + dataname + "/model_weights";
 
-  /// LOAD WEIGHTS INTO GRAPH ///
-  auto sd = g_ptr->StateDict();
+  /// LOAD DATA ///
 
-  for (auto const &name : node_names)
-  {
-    if (name.find("dense") != std::string::npos)
-    {
-      // if it is a dense layer there will be weights and bias files
-      std::vector<std::string> dir_list =
-          fetch::ml::examples::GetAllTextFiles(weights_dir + "/" + name, "");
-      std::vector<std::string> actual_dirs;
-      for (auto dir : dir_list)
-      {
-        if (dir != "." && dir != "..")
-        {
-          actual_dirs.emplace_back(dir);
-        }
-      }
-      assert(actual_dirs.size() == 1);
-
-      std::string node_weights_dir = weights_dir + "/" + name + "/" + actual_dirs[0];
-      // the weights array for the node has number of columns = number of features
-      ArrayType weights = read_csv(node_weights_dir + "/kernel:0.csv", 0, 0, true);
-      ArrayType bias    = read_csv(node_weights_dir + "/bias:0.csv", 0, 0, false);
-
-      assert(bias.shape()[0] == weights.shape()[0]);
-
-      auto weights_tensor = sd.dict_[name + "_FC_Weights"].weights_;
-      auto bias_tensor    = sd.dict_[name + "_FC_Bias"].weights_;
-
-      *weights_tensor     = weights;
-      *bias_tensor        = bias;
-      output_feature_size = weights.shape()[0];  // stores shape of last dense layer
-    }
-  }
-
-  // load state dict into graph (i.e. load pretrained weights)
-  g_ptr->LoadStateDict(sd);
-
-  /// FORWARD PASS PREDICTIONS ///
   fetch::ml::CommodityDataLoader<fetch::math::Tensor<DataType>, fetch::math::Tensor<DataType>>
       loader;
   loader.AddData(test_x_file, test_y_file);
 
-  ArrayType output({loader.Size(), output_feature_size});
-  ArrayType test_y({loader.Size(), output_feature_size});
-
-  SizeType j = 0;
-  while (!loader.IsDone())
+  if (testing)
   {
-    auto input = loader.GetNext();
-    g_ptr->SetInput("num_input", input.second.at(0).Transpose());
 
-    auto slice_output = g_ptr->Evaluate(node_names.back());
-    output.Slice(j).Assign(slice_output);
-    test_y.Slice(j).Assign(input.first);
-    j++;
-  }
+    /// LOAD WEIGHTS INTO GRAPH ///
 
-  if (output.AllClose(test_y, 0.00001f))
-  {
-    std::cout << "Graph output is the same as the test output - success!";
+    auto sd = g_ptr->StateDict();
+
+    for (auto const &name : node_names)
+    {
+      if (name.find("dense") != std::string::npos)
+      {
+        // if it is a dense layer there will be weights and bias files
+        std::vector<std::string> dir_list =
+            fetch::ml::examples::GetAllTextFiles(weights_dir + "/" + name, "");
+        std::vector<std::string> actual_dirs;
+        for (auto dir : dir_list)
+        {
+          if (dir != "." && dir != "..")
+          {
+            actual_dirs.emplace_back(dir);
+          }
+        }
+        assert(actual_dirs.size() == 1);
+
+        std::string node_weights_dir = weights_dir + "/" + name + "/" + actual_dirs[0];
+        // the weights array for the node has number of columns = number of features
+        ArrayType weights = read_csv(node_weights_dir + "/kernel:0.csv", 0, 0, true);
+        ArrayType bias    = read_csv(node_weights_dir + "/bias:0.csv", 0, 0, false);
+
+        assert(bias.shape()[0] == weights.shape()[0]);
+
+        auto weights_tensor = sd.dict_[name + "_FC_Weights"].weights_;
+        auto bias_tensor    = sd.dict_[name + "_FC_Bias"].weights_;
+
+        *weights_tensor     = weights;
+        *bias_tensor        = bias;
+        output_feature_size = weights.shape()[0];  // stores shape of last dense layer
+      }
+    }
+
+    // load state dict into graph (i.e. load pretrained weights)
+    g_ptr->LoadStateDict(sd);
+
+    /// FORWARD PASS PREDICTIONS ///
+
+    ArrayType output({loader.Size(), output_feature_size});
+    ArrayType test_y({loader.Size(), output_feature_size});
+
+    SizeType j = 0;
+    while (!loader.IsDone())
+    {
+      auto input = loader.GetNext();
+      g_ptr->SetInput("num_input", input.second.at(0).Transpose());
+
+      auto slice_output = g_ptr->Evaluate(node_names.back());
+      output.Slice(j).Assign(slice_output);
+      test_y.Slice(j).Assign(input.first);
+      j++;
+    }
+
+    if (output.AllClose(test_y, 0.00001f))
+    {
+      std::cout << "Graph output is the same as the test output - success!";
+    }
+    else
+    {
+      std::cout << "Graph output is the different from the test output - fail.";
+    }
   }
   else
   {
-    std::cout << "Graph output is the different from the test output - fail.";
+    /// TRAIN ///
+    DataType learning_rate{0.01f};
+    SizeType subset_size{100};
+    SizeType epochs{10};
+    SizeType batch_size{10};
+    // Initialise Optimiser
+    OptimiserType optimiser(g_ptr, {node_names.front()}, node_names.back(), learning_rate);
+
+    // Training loop
+    DataType loss{0};
+    for (SizeType j{0}; j < epochs; j++)
+    {
+      loss = optimiser.Run(loader, batch_size, subset_size);
+      std::cout << "Loss: " << loss << std::endl;
+    }
   }
+
+  return 0;
 }
