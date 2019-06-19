@@ -48,7 +48,7 @@ int main(int argc, char **argv)
 
   fetch::vm_modules::CreatePrint(*module);
   fetch::vm_modules::CreateToString(*module);
-  fetch::vm_modules::CreateAbs(*module);
+  /* fetch::vm_modules::CreateAbs(*module); */ // TODO(HUT): re-enable after improved abs
 
   // Setting compiler up
   fetch::vm::Compiler *    compiler = new fetch::vm::Compiler(module.get());
