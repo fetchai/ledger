@@ -28,7 +28,7 @@
 
 #include "ml/dataloaders/dataloader.hpp"
 #include "ml/estimators/estimator.hpp"
-#include "ml/optimisation/adam_optimiser.hpp"
+#include "ml/optimisation/types.hpp"
 
 namespace fetch {
 namespace ml {
@@ -41,14 +41,13 @@ public:
   using SizeType         = fetch::math::SizeType;
   using DataType         = typename TensorType::Type;
   using CostFunctionType = fetch::ml::ops::CrossEntropy<TensorType>;
-  using OptimiserType    = fetch::ml::optimisers::AdamOptimiser<TensorType, CostFunctionType>;
+  using OptimiserType    = fetch::ml::optimisers::OptimiserType;
+  //  using OptimiserType    = fetch::ml::optimisers::AdamOptimiser<TensorType, CostFunctionType>;
 
-  //  DNNClassifier(EstimatorConfig<DataType> estimator_config,
-  //  std::shared_ptr<DataLoader<TensorType, TensorType>> data_loader_ptr) :
-  //  Estimator(estimator_config), data_loader_ptr(data_loader_ptr_);
   DNNClassifier(EstimatorConfig<DataType>                           estimator_config,
                 std::shared_ptr<DataLoader<TensorType, TensorType>> data_loader_ptr,
-                std::vector<SizeType> const &                       hidden_layers);
+                std::vector<SizeType> const &                       hidden_layers,
+                OptimiserType optimiser_type = OptimiserType::ADAM);
 
   // construction setup methods
   void SetupModel(std::vector<SizeType> const &hidden_layers);
@@ -60,7 +59,7 @@ public:
 private:
   std::shared_ptr<DataLoader<TensorType, TensorType>> data_loader_ptr_;
 
-  std::shared_ptr<OptimiserType> optimiser_ptr_;
+  std::shared_ptr<optimisers::Optimiser<TensorType, CostFunctionType>> optimiser_ptr_;
   //  OptimiserType optimiser_;
 
   // TODO - implement arbitrary dataloader
@@ -80,22 +79,30 @@ template <typename TensorType>
 DNNClassifier<TensorType>::DNNClassifier(
     EstimatorConfig<DataType>                           estimator_config,
     std::shared_ptr<DataLoader<TensorType, TensorType>> data_loader_ptr,
-    std::vector<SizeType> const &                       hidden_layers)
+    std::vector<SizeType> const &hidden_layers, OptimiserType optimiser_type)
   : Estimator<TensorType>(estimator_config)
   , data_loader_ptr_(data_loader_ptr)
 {
+
   assert(hidden_layers.size() > 0);
 
   // instantiate feed forward network graph
   SetupModel(hidden_layers);
 
-  optimiser_ptr_.reset(new OptimiserType(this->graph_ptr_, {input_}, output_,
-                                         this->estimator_config_.learning_rate));
+  // instantiate optimiser
+  auto input = {input_};
+  if (!(fetch::ml::optimisers::AddOptimiser<TensorType, CostFunctionType>(
+          optimiser_type, optimiser_ptr_, this->graph_ptr_, input, output_,
+          this->estimator_config_.learning_rate)))
+  {
+    throw std::runtime_error("DNNClassifier initialised with unrecognised optimiser");
+  }
 }
 
 /**
- *
+ * Sets up the neural net classifier architecture
  * @tparam TensorType
+ * @param hidden_layers the input dimensions for all layers
  */
 template <typename TensorType>
 void DNNClassifier<TensorType>::SetupModel(std::vector<SizeType> const &hidden_layers)

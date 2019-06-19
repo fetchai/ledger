@@ -17,10 +17,13 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/base_types.hpp"
-#include "ml/dataloaders/dataloader.hpp"
-#include "ml/graph.hpp"
-#include "ml/ops/loss_functions/criterion.hpp"
+#include "ml/optimisation/optimiser.hpp"
+
+#include "ml/optimisation/adagrad_optimiser.hpp"
+#include "ml/optimisation/adam_optimiser.hpp"
+#include "ml/optimisation/momentum_optimiser.hpp"
+#include "ml/optimisation/rmsprop_optimiser.hpp"
+#include "ml/optimisation/sgd_optimiser.hpp"
 
 namespace fetch {
 namespace ml {
@@ -34,6 +37,45 @@ enum class OptimiserType
   RMSPROP,
   SGD
 };
+
+template <class T, class C, typename... Params>
+bool AddOptimiser(OptimiserType type, std::shared_ptr<Optimiser<T, C>> &optimiser_ptr,
+                  Params... params)
+{
+  switch (type)
+  {
+  case OptimiserType::ADAGRAD:
+  {
+    optimiser_ptr.reset(new fetch::ml::optimisers::AdaGradOptimiser<T, C>(params...));
+    return true;
+  }
+  case OptimiserType::ADAM:
+  {
+    optimiser_ptr.reset(new fetch::ml::optimisers::AdamOptimiser<T, C>(params...));
+    return true;
+  }
+  case OptimiserType::MOMENTUM:
+  {
+    optimiser_ptr.reset(new fetch::ml::optimisers::MomentumOptimiser<T, C>(params...));
+    return true;
+  }
+  case OptimiserType::RMSPROP:
+  {
+    optimiser_ptr.reset(new fetch::ml::optimisers::RMSPropOptimiser<T, C>(params...));
+    return true;
+  }
+  case OptimiserType::SGD:
+  {
+    optimiser_ptr.reset(new fetch::ml::optimisers::SGDOptimiser<T, C>(params...));
+    return true;
+  }
+  default:
+  {
+    return false;
+  }
+  }
 }
+
+}  // namespace optimisers
 }  // namespace ml
 }  // namespace fetch
