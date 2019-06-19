@@ -37,8 +37,8 @@ public:
   {}
 
   VMTensor(fetch::vm::VM *vm, fetch::vm::TypeId type_id, ArrayType tensor)
-      : fetch::vm::Object(vm, type_id)
-      , tensor_(std::move(tensor))
+    : fetch::vm::Object(vm, type_id)
+    , tensor_(std::move(tensor))
   {}
 
   static fetch::vm::Ptr<VMTensor> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id,

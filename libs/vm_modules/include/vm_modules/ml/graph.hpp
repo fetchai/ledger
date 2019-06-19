@@ -23,8 +23,8 @@
 #include "ml/layers/fully_connected.hpp"
 #include "ml/ops/activation.hpp"
 
-#include "vm/module.hpp"
 #include "state_dict.hpp"
+#include "vm/module.hpp"
 
 namespace fetch {
 namespace vm_modules {
@@ -98,14 +98,12 @@ public:
   }
 
   void AddDropout(fetch::vm::Ptr<fetch::vm::String> const &name,
-                  fetch::vm::Ptr<fetch::vm::String> const &input_name,
-                  float const & prob)
+                  fetch::vm::Ptr<fetch::vm::String> const &input_name, float const &prob)
   {
-    graph_.AddNode<fetch::ml::ops::Dropout<MathTensorType> >(name->str,
-                                                            {input_name->str}, prob);
+    graph_.AddNode<fetch::ml::ops::Dropout<MathTensorType>>(name->str, {input_name->str}, prob);
   }
 
-  void LoadStateDict(fetch::vm::Ptr<fetch::vm_modules::ml::VMStateDict> const & sd)
+  void LoadStateDict(fetch::vm::Ptr<fetch::vm_modules::ml::VMStateDict> const &sd)
   {
     graph_.LoadStateDict(sd->state_dict_);
   }
@@ -118,7 +116,6 @@ public:
   }
 
   GraphType graph_;
-
 };
 
 inline void CreateGraph(fetch::vm::Module &module)
@@ -135,8 +132,7 @@ inline void CreateGraph(fetch::vm::Module &module)
       .CreateMemberFunction("AddSoftmax", &VMGraph::AddSoftmax)
       .CreateMemberFunction("AddDropout", &VMGraph::AddDropout)
       .CreateMemberFunction("LoadStateDict", &VMGraph::LoadStateDict)
-      .CreateMemberFunction("StateDict", &VMGraph::StateDict)
-      ;
+      .CreateMemberFunction("StateDict", &VMGraph::StateDict);
 }
 
 }  // namespace ml

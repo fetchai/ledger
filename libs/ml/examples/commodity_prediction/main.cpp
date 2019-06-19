@@ -344,13 +344,14 @@ int main(int argc, char **argv)
   g_ptr->LoadStateDict(sd);
 
   /// FORWARD PASS PREDICTIONS ///
-  fetch::ml::CommodityDataLoader<fetch::math::Tensor<DataType>, fetch::math::Tensor<DataType> > loader;
+  fetch::ml::CommodityDataLoader<fetch::math::Tensor<DataType>, fetch::math::Tensor<DataType>>
+      loader;
   loader.AddData(test_x_file, test_y_file);
 
   ArrayType output({loader.Size(), output_feature_size});
   ArrayType test_y({loader.Size(), output_feature_size});
 
-  SizeType j=0;
+  SizeType j = 0;
   while (!loader.IsDone())
   {
     auto input = loader.GetNext();
@@ -361,7 +362,6 @@ int main(int argc, char **argv)
     test_y.Slice(j).Assign(input.first);
     j++;
   }
-
 
   if (output.AllClose(test_y, 0.00001f))
   {

@@ -23,10 +23,10 @@
 #include "ml/ops/activation.hpp"
 #include "ml/ops/loss_functions/mean_square_error.hpp"
 #include "vm/module.hpp"
+#include "vm_modules/core/print.hpp"
+#include "vm_modules/ml/dataloaders/commodity_dataloader.hpp"
 #include "vm_modules/ml/graph.hpp"
 #include "vm_modules/ml/state_dict.hpp"
-#include "vm_modules/ml/dataloaders/commodity_dataloader.hpp"
-#include "vm_modules/core/print.hpp"
 
 #include <cstdint>
 #include <cstdlib>
@@ -69,16 +69,14 @@ std::vector<std::string> System::args;
 // read the weights and bias csv files
 
 fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> read_csv(
-    fetch::vm::VM *vm,
-    fetch::vm::Ptr<fetch::vm::String> const &filename,
-    bool transpose = false)
+    fetch::vm::VM *vm, fetch::vm::Ptr<fetch::vm::String> const &filename, bool transpose = false)
 {
   std::ifstream file(filename->str);
   std::string   buf;
 
   // find number of rows and columns in the file
-  char delimiter = ',';
-  std::string field_value;
+  char                  delimiter = ',';
+  std::string           field_value;
   fetch::math::SizeType row{0};
   fetch::math::SizeType col{0};
 
@@ -120,7 +118,6 @@ fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> read_csv(
   return vm->CreateNewObject<fetch::vm_modules::math::VMTensor>(weights);
 }
 
-
 int main(int argc, char **argv)
 {
   if (argc < 2)
@@ -148,7 +145,8 @@ int main(int argc, char **argv)
       .CreateStaticMemberFunction("Argv", &System::Argv);
 
   fetch::vm_modules::math::CreateTensor(*module);
-  fetch::vm_modules::ml::CreateStateDict(*module);  // NB: things have to be created in the right order!
+  fetch::vm_modules::ml::CreateStateDict(
+      *module);  // NB: things have to be created in the right order!
   fetch::vm_modules::ml::CreateGraph(*module);
   fetch::vm_modules::ml::VMCommodityDataLoader::Bind(*module);
   fetch::vm_modules::CreatePrint(*module);
