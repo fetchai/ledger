@@ -69,7 +69,7 @@ public:
 
   virtual ~Estimator() = default;
 
-  virtual bool Run(SizeType n_steps, RunMode const &run_mode) = 0;
+  virtual bool Run(SizeType n_steps, RunMode const &run_mode, TensorType &input) = 0;
 
 protected:
   EstimatorConfig<DataType>          estimator_config_;

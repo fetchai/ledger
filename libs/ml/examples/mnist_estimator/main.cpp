@@ -66,10 +66,15 @@ int main(int ac, char **av)
 
   // setup dataloader - TODO: make this go away by implementing default dataloader in estimator
   auto data_loader_ptr = std::make_shared<DataLoaderType>(av[1], av[2]);
+  auto test_datum = (data_loader_ptr->GetNext()).second.at(0);
 
-  // run estimator
+  // run estimator in training mode
   EstimatorType estimator(estimator_config, data_loader_ptr, {784, 100, 20, 10});
-  estimator.Run(1000, RunMode::TRAIN);
+  estimator.Run(5, RunMode::TRAIN, test_datum);
+
+  // run estimator in testing mode
+  estimator.Run(5, RunMode::PREDICT, test_datum);
+
 
   return 0;
 }

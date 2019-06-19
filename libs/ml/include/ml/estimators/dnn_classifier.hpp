@@ -34,6 +34,8 @@ namespace fetch {
 namespace ml {
 namespace estimator {
 
+// TODO - implement arbitrary dataloader
+
 template <typename TensorType>
 class DNNClassifier : public Estimator<TensorType>
 {
@@ -49,25 +51,14 @@ public:
                 std::vector<SizeType> const &                       hidden_layers,
                 OptimiserType optimiser_type = OptimiserType::ADAM);
 
-  // construction setup methods
   void SetupModel(std::vector<SizeType> const &hidden_layers);
-  //  void SetupOptimiser();
-
-  // primary run method
-  bool Run(SizeType n_steps, RunMode const &rm) override;
+  bool Run(SizeType n_steps, RunMode const &rm, TensorType &input) override;
 
 private:
   std::shared_ptr<DataLoader<TensorType, TensorType>> data_loader_ptr_;
-
   std::shared_ptr<optimisers::Optimiser<TensorType, CostFunctionType>> optimiser_ptr_;
-  //  OptimiserType optimiser_;
-
-  // TODO - implement arbitrary dataloader
-  // TODO - implement arbitrary optimiser
 
   std::string input_;
-  std::string layer_1_;
-  std::string layer_2_;
   std::string output_;
 };
 
@@ -127,7 +118,7 @@ void DNNClassifier<TensorType>::SetupModel(std::vector<SizeType> const &hidden_l
  * @return
  */
 template <typename TensorType>
-bool DNNClassifier<TensorType>::Run(SizeType n_steps, RunMode const &run_mode)
+bool DNNClassifier<TensorType>::Run(SizeType n_steps, RunMode const &run_mode, TensorType &input)
 {
   switch (run_mode)
   {
@@ -144,12 +135,14 @@ bool DNNClassifier<TensorType>::Run(SizeType n_steps, RunMode const &run_mode)
   case (RunMode::VALIDATE):
   {
     return false;
-    break;
   }
   case (RunMode::PREDICT):
   {
-    return false;
-    break;
+    this->graph_ptr_->SetInput(input_, input);
+    auto pred = this->graph_ptr_->Evaluate(output_);
+    std::cout << "pred.ToString(): " << pred.ToString() << std::endl;
+
+    return true;
   }
   default:
   {
