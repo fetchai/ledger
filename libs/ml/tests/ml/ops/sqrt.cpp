@@ -69,9 +69,8 @@ TYPED_TEST(SqrtBothTest, forward_all_positive_test)
   TypeParam prediction(op.ComputeOutputShape({data}));
   op.Forward({data}, prediction);
 
-  ASSERT_TRUE(
-      prediction.AllClose(gt, fetch::math::function_tolerance<typename ArrayType::Type>(),
-                          fetch::math::function_tolerance<typename ArrayType::Type>()));
+  ASSERT_TRUE(prediction.AllClose(gt, fetch::math::function_tolerance<typename ArrayType::Type>(),
+                                  fetch::math::function_tolerance<typename ArrayType::Type>()));
 }
 
 TYPED_TEST(SqrtBothTest, backward_all_positive_test)
