@@ -71,15 +71,49 @@ def static_analysis()
   }
 }
 
+def stage_name_suffix(Platform platform, Configuration config)
+{
+  return "${platform.label} ${config.label}"
+}
+
+def fast_build_stages(Platform platform, Configuration config)
+{
+  return {
+    stage("Build ${stage_name_suffix(platform, config)}") {
+      sh "./scripts/ci-tool.py -B ${config.label}"
+    }
+
+    stage("Unit Tests ${stage_name_suffix(platform, config)}") {
+      sh "./scripts/ci-tool.py -T ${config.label}"
+    }
+  }
+}
+
+def slow_build_stages(Platform platform, Configuration config)
+{
+  return {
+    stage("Slow Tests ${stage_name_suffix(platform, config)}") {
+      sh "./scripts/ci-tool.py -S ${config.label}"
+    }
+
+    stage("Integration Tests ${stage_name_suffix(platform, config)}") {
+      sh "./scripts/ci-tool.py -I ${config.label}"
+    }
+
+    stage("End-to-End Tests ${stage_name_suffix(platform, config)}") {
+      sh './scripts/ci/install-test-dependencies.sh'
+      sh "./scripts/ci-tool.py -E ${config.label}"
+    }
+  }
+}
+
 def _create_build(
   Platform platform,
   Configuration config,
   node_label,
-  run_build_fn,
-  run_slow_tests)
+  stages_fn,
+  run_build_fn)
 {
-  def suffix = "${platform.label} ${config.label}"
-
   def environment = {
     return [
       "CC=${platform.env_cc}",
@@ -87,42 +121,16 @@ def _create_build(
     ]
   }
 
-  def stages = {
-    stage("Build ${suffix}") {
-      sh "./scripts/ci-tool.py -B ${config.label}"
-    }
-
-    stage("Unit Tests ${suffix}") {
-      sh "./scripts/ci-tool.py -T ${config.label}"
-    }
-
-    if (run_slow_tests)
-    {
-      stage("Slow Tests ${suffix}") {
-        sh "./scripts/ci-tool.py -S ${config.label}"
-      }
-
-      stage("Integration Tests ${suffix}") {
-        sh "./scripts/ci-tool.py -I ${config.label}"
-      }
-
-      stage("End-to-End Tests ${suffix}") {
-        sh './scripts/ci/install-test-dependencies.sh'
-        sh "./scripts/ci-tool.py -E ${config.label}"
-      }
-    }
-  }
-
   return {
-    stage(suffix) {
+    stage(stage_name_suffix(platform, config)) {
       node(node_label) {
         timeout(120) {
-          stage("SCM ${suffix}") {
+          stage("SCM ${stage_name_suffix(platform, config)}") {
             checkout scm
           }
 
           withEnv(environment()) {
-            run_build_fn(stages)
+            run_build_fn(stages_fn(platform, config))
           }
         }
       }
@@ -138,22 +146,34 @@ def create_docker_build(Platform platform, Configuration config)
     }
   }
 
+  def stages = { platform_, config_ ->
+    fast_build_stages(platform_, config_)
+    if (is_master_or_merge_branch())
+    {
+      slow_build_stages(platform_, config_)
+    }
+  }
+
   return _create_build(
     platform,
     config,
     HIGH_LOAD_NODE_LABEL,
-    dockerised_build,
-    is_master_or_merge_branch())
+    stages,
+    dockerised_build)
 }
 
 def create_macos_build(Platform platform, Configuration config)
 {
+  def stages = { platform_, config_ ->
+    fast_build_stages(platform_, config_)
+  }
+
   return _create_build(
     platform,
     config,
     MACOS_NODE_LABEL,
-    { build_stages -> build_stages() },
-    false)
+    stages,
+    { build_stages -> build_stages() })
 }
 
 def run_builds_in_parallel()
