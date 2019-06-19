@@ -173,13 +173,12 @@ def run_builds_in_parallel()
         config)
     }
 
-    // Only run macOS builds on master and merge branches
-    if (is_master_or_merge_branch())
-    {
-      stages["macOS Clang ${config.label}"] = create_macos_build(
-        Platform.DEFAULT_CLANG,
-        config)
-    }
+  // Only run macOS builds on master and merge branches
+  if (is_master_or_merge_branch())
+  {
+    stages["macOS Clang Release"] = create_macos_build(
+      Platform.DEFAULT_CLANG,
+      Configuration.RELEASE)
   }
 
   stages['Static Analysis'] = static_analysis()
