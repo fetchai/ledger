@@ -33,8 +33,6 @@
 #pragma clang diagnostic ignored "-Wsign-compare"
 #endif
 
-#define BACKWARD_HAS_BFD 1
-
 #include <backward.hpp>
 #include <signal.h>
 
