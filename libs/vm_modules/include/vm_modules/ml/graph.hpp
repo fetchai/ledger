@@ -75,20 +75,20 @@ public:
     graph_.AddNode<fetch::ml::ops::PlaceHolder<MathTensorType>>(name->str, {});
   }
 
-  void AddFullyConnected(VMPtrString const &name, VMPtrString const &inputName, int in, int out)
+  void AddFullyConnected(VMPtrString const &name, VMPtrString const &input_name, int in, int out)
   {
     graph_.AddNode<fetch::ml::layers::FullyConnected<MathTensorType>>(
-        name->str, {inputName->str}, std::size_t(in), std::size_t(out));
+        name->str, {input_name->str}, std::size_t(in), std::size_t(out));
   }
 
-  void AddRelu(VMPtrString const &name, VMPtrString const &inputName)
+  void AddRelu(VMPtrString const &name, VMPtrString const &input_name)
   {
-    graph_.AddNode<fetch::ml::ops::Relu<MathTensorType>>(name->str, {inputName->str});
+    graph_.AddNode<fetch::ml::ops::Relu<MathTensorType>>(name->str, {input_name->str});
   }
 
-  void AddSoftmax(VMPtrString const &name, VMPtrString const &inputName)
+  void AddSoftmax(VMPtrString const &name, VMPtrString const &input_name)
   {
-    graph_.AddNode<fetch::ml::ops::Softmax<MathTensorType>>(name->str, {inputName->str});
+    graph_.AddNode<fetch::ml::ops::Softmax<MathTensorType>>(name->str, {input_name->str});
   }
 
   GraphType graph_;
