@@ -159,6 +159,14 @@ BlockCoordinator::State BlockCoordinator::OnSynchronising()
     current_block_ = chain_.GetHeaviestBlock();
   }
 
+  if (current_block_->body.hash.empty())
+  {
+    FETCH_LOG_ERROR(LOGGING_NAME, "Invalid heaviest block, empty block hash");
+
+    state_machine_->Delay(std::chrono::milliseconds{500});
+    return State::RESET;
+  }
+
   // determine if extra debug is wanted or needed
   bool const extra_debug = syncing_periodic_.Poll();
 
