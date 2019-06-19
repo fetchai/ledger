@@ -147,7 +147,7 @@ def create_docker_build(Platform platform, Configuration config)
   }
 
   def stages = { platform_, config_ ->
-    {
+    return {
       fast_build_stages(platform_, config_)
       if (is_master_or_merge_branch())
       {
@@ -169,7 +169,7 @@ def create_macos_build(Platform platform, Configuration config)
   def build = { build_stages -> build_stages() }
 
   def stages = { platform_, config_ ->
-    fast_build_stages(platform_, config_)
+    return fast_build_stages(platform_, config_)
   }
 
   return _create_build(
