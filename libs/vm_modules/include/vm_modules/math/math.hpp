@@ -29,45 +29,45 @@ namespace vm_modules {
 ///**
 // * method for taking the absolute of a value
 // */
-//template <typename T>
-//fetch::math::meta::IfIsMath<T, T> Abs(fetch::vm::VM *, T const &a)
+// template <typename T>
+// fetch::math::meta::IfIsMath<T, T> Abs(fetch::vm::VM *, T const &a)
 //{
 //  T x;
 //  fetch::math::Abs(a, x);
 //  return x;
 //}
 //
-//template <typename T, typename R = void>
-//using IfIsNormalSignedInteger = meta::EnableIf<meta::IsSignedInteger<T> && sizeof(T) >= 4, R>;
+// template <typename T, typename R = void>
+// using IfIsNormalSignedInteger = meta::EnableIf<meta::IsSignedInteger<T> && sizeof(T) >= 4, R>;
 //
-//template <typename T, typename R = void>
-//using IfIsSmallSignedInteger = meta::EnableIf<meta::IsSignedInteger<T> && sizeof(T) < 4, R>;
+// template <typename T, typename R = void>
+// using IfIsSmallSignedInteger = meta::EnableIf<meta::IsSignedInteger<T> && sizeof(T) < 4, R>;
 //
-//template <typename T>
-//meta::EnableIf<sizeof(T) < 4, int32_t> ToAtLeastInt(T const &value)
+// template <typename T>
+// meta::EnableIf<sizeof(T) < 4, int32_t> ToAtLeastInt(T const &value)
 //{
 //  return static_cast<int32_t>(value);
 //}
 //
-//template <typename T>
-//IfIsSmallSignedInteger<T, T> IntegerAbs(fetch::vm::VM *, T const &value)
+// template <typename T>
+// IfIsSmallSignedInteger<T, T> IntegerAbs(fetch::vm::VM *, T const &value)
 //{
 //  return static_cast<T>(std::abs(value));
 //}
 //
-//template <typename T>
-//IfIsNormalSignedInteger<T, T> IntegerAbs(fetch::vm::VM *, T const &value)
+// template <typename T>
+// IfIsNormalSignedInteger<T, T> IntegerAbs(fetch::vm::VM *, T const &value)
 //{
 //  return std::abs(value);
 //}
 //
-//template <typename T>
-//meta::IfIsUnsignedInteger<T, T> IntegerAbs(fetch::vm::VM *, T const &value)
+// template <typename T>
+// meta::IfIsUnsignedInteger<T, T> IntegerAbs(fetch::vm::VM *, T const &value)
 //{
 //  return value;
 //}
 //
-//static void CreateAbs(fetch::vm::Module &module)
+// static void CreateAbs(fetch::vm::Module &module)
 //{
 //  module.CreateFreeFunction<int32_t>("abs", &Abs<int32_t>);
 //  module.CreateFreeFunction<float_t>("abs", &Abs<float_t>);
@@ -76,7 +76,7 @@ namespace vm_modules {
 //  module.CreateFreeFunction<fixed_point::fp64_t>("abs", &Abs<fixed_point::fp64_t>);
 //}
 //
-//inline void CreateAbs(std::shared_ptr<vm::Module> module)
+// inline void CreateAbs(std::shared_ptr<vm::Module> module)
 //{
 //  CreateAbs(*module.get());
 //}
