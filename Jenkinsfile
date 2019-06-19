@@ -140,17 +140,19 @@ def _create_build(
 
 def create_docker_build(Platform platform, Configuration config)
 {
-  def dockerised_build = { build_stages ->
+  def build = { build_stages ->
     docker.image(DOCKER_IMAGE_NAME).inside {
       build_stages()
     }
   }
 
   def stages = { platform_, config_ ->
-    fast_build_stages(platform_, config_)
-    if (is_master_or_merge_branch())
     {
-      slow_build_stages(platform_, config_)
+      fast_build_stages(platform_, config_)
+      if (is_master_or_merge_branch())
+      {
+        slow_build_stages(platform_, config_)
+      }
     }
   }
 
@@ -159,11 +161,13 @@ def create_docker_build(Platform platform, Configuration config)
     config,
     HIGH_LOAD_NODE_LABEL,
     stages,
-    dockerised_build)
+    build)
 }
 
 def create_macos_build(Platform platform, Configuration config)
 {
+  def build = { build_stages -> build_stages() }
+
   def stages = { platform_, config_ ->
     fast_build_stages(platform_, config_)
   }
@@ -173,7 +177,7 @@ def create_macos_build(Platform platform, Configuration config)
     config,
     MACOS_NODE_LABEL,
     stages,
-    { build_stages -> build_stages() })
+    build)
 }
 
 def run_builds_in_parallel()
