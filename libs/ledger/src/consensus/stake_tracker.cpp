@@ -29,6 +29,14 @@ namespace ledger {
 using AddressSet = std::unordered_set<Address>;
 using DRNG       = random::LinearCongruentialGenerator;
 
+/**
+ * Given the source of entropy, generate a selection of stakes addresses based on proportional
+ * probability against stakes.
+ *
+ * @param entropy The seed source of entropy
+ * @param count The size of the selection
+ * @return The selection of addresses
+ */
 StakeTracker::AddressArray StakeTracker::Sample(uint64_t entropy, std::size_t count)
 {
   AddressArray addresses;
@@ -95,6 +103,12 @@ StakeTracker::AddressArray StakeTracker::Sample(uint64_t entropy, std::size_t co
   return addresses;
 }
 
+/**
+ * Lookup stake for a given address
+ *
+ * @param address The address to be queried
+ * @return The stake amount
+ */
 uint64_t StakeTracker::LookupStake(Address const &address) const
 {
   FETCH_LOCK(lock_);
@@ -110,6 +124,14 @@ uint64_t StakeTracker::LookupStake(Address const &address) const
   return stake;
 }
 
+/**
+ * Update the stake for a specified address
+ *
+ * To delete someones stake simply set the stake to zero
+ *
+ * @param address The address to be updates
+ * @param stake The new absolute value of stake
+ */
 void StakeTracker::UpdateStake(Address const &address, uint64_t stake)
 {
   FETCH_LOCK(lock_);

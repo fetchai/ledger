@@ -25,6 +25,10 @@
 namespace fetch {
 namespace ledger {
 
+/**
+ * Object for keeping track of the current addresses which have stakes. Also facilitates the
+ * selection of addresses based on an entropy source.
+ */
 class StakeTracker
 {
 public:
@@ -66,24 +70,33 @@ private:
   using StakeIndex   = std::vector<RecordPtr>;
   using Mutex        = mutex::Mutex;
 
-  mutable Mutex lock_{__LINE__, __FILE__};
-  AddressIndex  address_index_{};
-  StakeIndex    stake_index_;
-  uint64_t      total_stake_{0};
+  mutable Mutex lock_{__LINE__, __FILE__};  ///< Class level lock
+  AddressIndex  address_index_{};           ///< Map of Address to Record
+  StakeIndex    stake_index_;               ///< Array of Records
+  uint64_t      total_stake_{0};            ///< Total stake cache
 };
 
+/**
+ * Get the total amount staked
+ *
+ * @return The value of the total amount staked
+ */
 inline uint64_t StakeTracker::total_stake() const
 {
   FETCH_LOCK(lock_);
   return total_stake_;
 }
 
+/**
+ * Get the number of addresses that have staked
+ *
+ * @return The number of unique addresses that have staked
+ */
 inline std::size_t StakeTracker::size() const
 {
   FETCH_LOCK(lock_);
   return address_index_.size();
 }
-
 
 }  // namespace ledger
 }  // namespace fetch
