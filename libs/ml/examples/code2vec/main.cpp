@@ -20,12 +20,14 @@
 #include "ml/dataloaders/code2vec_context_loaders/context_loader.hpp"
 #include "ml/graph.hpp"
 #include "ml/layers/fully_connected.hpp"
+#include "ml/ops/activations/batchwise_softmax.hpp"
 #include "ml/ops/activations/softmax.hpp"
 #include "ml/ops/concatenate.hpp"
 #include "ml/ops/embeddings.hpp"
 #include "ml/ops/loss_functions/cross_entropy.hpp"
 #include "ml/ops/matrix_multiply.hpp"
 #include "ml/ops/placeholder.hpp"
+#include "ml/ops/reshape.hpp"
 #include "ml/ops/tanh.hpp"
 #include "ml/ops/transpose.hpp"
 #include "ml/ops/weights.hpp"
@@ -51,6 +53,7 @@ using Weights        = fetch::ml::ops::Weights<ArrayType>;
 using Embeddings     = fetch::ml::ops::Embeddings<ArrayType>;
 using Transpose      = fetch::ml::ops::Transpose<ArrayType>;
 using MatrixMultiply = fetch::ml::ops::MatrixMultiply<ArrayType>;
+using Reshape        = fetch::ml::ops::Reshape<ArrayType>;
 
 using ContextVector           = typename std::vector<ArrayType>;
 using ContextTensorsLabelPair = typename std::pair<ArrayType, ContextVector>;
@@ -187,7 +190,7 @@ int main(int ac, char **av)
 
   // (Softmax) normalisation
   // Dimensions: (1, N_CONTEXTS)
-  std::string attention_weight = g->AddNode<fetch::ml::ops::Softmax<ArrayType>>(
+  std::string attention_weight = g->AddNode<fetch::ml::ops::BatchwiseSoftmax<ArrayType>>(
       "AttentionWeight", {scalar_product_contexts_with_attention_transposed});
 
   // Transposition
@@ -200,12 +203,17 @@ int main(int ac, char **av)
   std::string code_vector = g->AddNode<MatrixMultiply>(
       "CodeVector", {combined_context_vector, attention_weight_transposed});
 
+  std::vector<SizeType> shape = {0, 2};
+
+  std::string code_vector_reshaped =
+      g->AddNode<Reshape>("CodeVectorReshaped", {code_vector}, shape);
+
   // (Unnormalised) predictions for each function name in the vocab, by
   // matrix multiplication with the embedding tensor
   // Dimensions: (vocab_size_functions, 1) = (vocab_size_functions, EMBEDDING_SIZE) @
   // (EMBEDDING_SIZE, 1)
-  std::string prediction_softmax_kernel =
-      g->AddNode<MatrixMultiply>("PredictionSoftMaxKernel", {function_name_embedding, code_vector});
+  std::string prediction_softmax_kernel = g->AddNode<MatrixMultiply>(
+      "PredictionSoftMaxKernel", {function_name_embedding, code_vector_reshaped});
 
   // (Softmax) Normalisation of the prediction
   // Dimensions:  (vocab_size_functions,1)

@@ -257,7 +257,7 @@ TYPED_TEST(TensorIndexingTest, one_dimensional_unsqueeze_test)
 
   EXPECT_EQ(t.shape(), std::vector<std::uint64_t>({5}));
   t.Unsqueeze();
-  EXPECT_EQ(t.shape(), std::vector<std::uint64_t>({1, 5}));
+  EXPECT_EQ(t.shape(), std::vector<std::uint64_t>({5, 1}));
 
   EXPECT_EQ(t.size(), 5);
 
@@ -281,7 +281,7 @@ TYPED_TEST(TensorIndexingTest, two_dimentional_unsqueeze_test)
 
   EXPECT_EQ(t.shape(), std::vector<std::uint64_t>({3u, 5u}));
   t.Unsqueeze();
-  EXPECT_EQ(t.shape(), std::vector<std::uint64_t>({1u, 3u, 5u}));
+  EXPECT_EQ(t.shape(), std::vector<std::uint64_t>({3u, 5u, 1u}));
 
   EXPECT_EQ(t.size(), 15);
 
@@ -295,7 +295,7 @@ TYPED_TEST(TensorIndexingTest, two_dimentional_unsqueeze_test)
 
 TYPED_TEST(TensorIndexingTest, two_dimentional_squeeze_test)
 {
-  fetch::math::Tensor<TypeParam> t({1, 5});
+  fetch::math::Tensor<TypeParam> t({5, 1});
   TypeParam                      i(0);
   for (TypeParam &e : t)
   {
@@ -303,7 +303,7 @@ TYPED_TEST(TensorIndexingTest, two_dimentional_squeeze_test)
     i += TypeParam(1);
   }
 
-  EXPECT_EQ(t.shape(), std::vector<std::uint64_t>({1u, 5u}));
+  EXPECT_EQ(t.shape(), std::vector<std::uint64_t>({5u, 1u}));
   t.Squeeze();
   EXPECT_EQ(t.shape(), std::vector<std::uint64_t>({5u}));
 
@@ -317,7 +317,7 @@ TYPED_TEST(TensorIndexingTest, two_dimentional_squeeze_test)
 
 TYPED_TEST(TensorIndexingTest, three_dimentional_squeeze_test)
 {
-  fetch::math::Tensor<TypeParam> t({1, 3, 5});
+  fetch::math::Tensor<TypeParam> t({3, 5, 1});
 
   TypeParam i(0);
   for (TypeParam &e : t)
@@ -326,7 +326,7 @@ TYPED_TEST(TensorIndexingTest, three_dimentional_squeeze_test)
     i += TypeParam(1);
   }
 
-  EXPECT_EQ(t.shape(), std::vector<std::uint64_t>({1u, 3u, 5u}));
+  EXPECT_EQ(t.shape(), std::vector<std::uint64_t>({3u, 5u, 1u}));
   t.Squeeze();
   EXPECT_EQ(t.shape(), std::vector<std::uint64_t>({3u, 5u}));
 

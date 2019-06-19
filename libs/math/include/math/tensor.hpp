@@ -1580,7 +1580,7 @@ Tensor<T, C> &Tensor<T, C>::Squeeze()
 {
   // TODO(private issue 998): Make last dimension for efficiency
   auto shape = shape_;
-  shape.erase(shape.begin());
+  shape.erase(shape.end() - 1);
   Reshape(shape);
 
   return *this;
@@ -1596,7 +1596,7 @@ template <typename T, typename C>
 Tensor<T, C> &Tensor<T, C>::Unsqueeze()
 {
   auto shape = shape_;  // TODO: Make last dimension for efficiency
-  shape.insert(shape.begin(), 1);
+  shape.push_back(1);
 
   Reshape(shape);
 

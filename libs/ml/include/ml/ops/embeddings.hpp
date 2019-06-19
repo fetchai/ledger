@@ -55,20 +55,27 @@ public:
     ASSERT(inputs.size() == 1);
     ASSERT(inputs.front().get().shape().size() == 2);
 
+    SizeType batch_size = inputs.front().get().shape(1);
+
     if (!this->embeddings_output_ ||
-        this->embeddings_output_->shape()[0] != inputs.front().get().size() ||
+        this->embeddings_output_->shape()[0] != inputs.front().get().shape()[0] ||
         this->embeddings_output_->shape()[1] != this->output_->shape()[1])
     {
-      this->embeddings_output_ = std::make_shared<ArrayType>(
-          std::vector<SizeType>({inputs.front().get().size(), this->output_->shape()[1]}));
+      this->embeddings_output_ = std::make_shared<ArrayType>(std::vector<SizeType>(
+          {inputs.front().get().shape(0), this->output_->shape()[1], batch_size}));
     }
 
-    for (SizeType i{0}; i < inputs.front().get().shape().at(0); i++)
+    for (SizeType n{0}; n < batch_size; n++)
     {
-      SizeType e = static_cast<SizeType>(inputs.front().get().At(i, 0));
-      for (SizeType j{0}; j < this->output_->shape().at(1); j++)
+      for (SizeType i{0}; i < inputs.front().get().shape().at(0); i++)
       {
-        this->embeddings_output_->At(i, j) = this->output_->At(e, j);
+
+        SizeType e = static_cast<SizeType>(inputs.front().get().At(i, n));
+
+        for (SizeType j{0}; j < this->embeddings_output_->shape().at(1); j++)
+        {
+          this->embeddings_output_->At(i, j, n) = this->output_->At(e, j);
+        }
       }
     }
 
@@ -81,16 +88,30 @@ public:
     ASSERT(inputs.size() == 1);
     ASSERT(inputs.front().get().shape().size() == 2);
 
-    for (SizeType i{0}; i < inputs.front().get().shape().at(0); i++)
+    SizeType batch_size = inputs.front().get().shape(1);
+
+    for (SizeType n{0}; n < batch_size; n++)
     {
-      SizeType e = static_cast<SizeType>(inputs.front().get().At(i, 0));
-
-      updated_rows_.insert(typename ArrayType::SizeType(double(e)));
-
-      for (SizeType j{0}; j < inputs.front().get().shape().at(1); j++)
+      for (SizeType i{0}; i < inputs.front().get().shape().at(0); i++)
       {
-        this->gradient_accumulation_->At(e, j) = error_signal.At(i, j);
+        SizeType e = static_cast<SizeType>(inputs.front().get().At(i, n));
+        updated_rows_.insert(e);
+
+        for (SizeType j{0}; j < this->gradient_accumulation_->shape().at(1); j++)
+        {
+          this->gradient_accumulation_->At(e, j) += error_signal.At(i, j, n);
+        }
       }
+
+      // std::cout<<"EMBINPUT"<< n <<":"<<std::endl<<inputs.front().get().ToString()<<std::endl;
+      // std::cout<<this<<"-Gradient"<< n
+      // <<":"<<std::endl<<this->gradient_accumulation_->ToString()<<std::endl;
+    }
+
+    using SizeType = typename ArrayType::SizeType;
+    for (SizeType i{0}; i < error_signal.shape().at(2); i++)
+    {
+      // std::cout<<"EMBERR("<<i<<")"<<std::endl<<error_signal.Slice(i,2).Copy().Squeeze().ToString()<<std::endl;
     }
 
     return {ArrayType(error_signal.shape())};

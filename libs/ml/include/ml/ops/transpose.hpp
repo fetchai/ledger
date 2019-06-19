@@ -68,12 +68,12 @@ public:
 
   virtual std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const
   {
-    // Normal Matmul
+    // Normal transpose
     if (inputs.at(0).get().shape().size() == 2)
     {
       return {inputs.front().get().shape().at(1), inputs.front().get().shape().at(0)};
     }
-    // Batchwise matmul
+    // Batchwise transpose
     else
     {
       return {inputs.front().get().shape().at(1), inputs.front().get().shape().at(0),

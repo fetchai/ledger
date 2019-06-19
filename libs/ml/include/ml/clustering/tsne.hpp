@@ -423,20 +423,26 @@ private:
           continue;
         }
 
-        DataType tmp_p_i_j;
-        tmp_p_i_j = input_symmetric_affinities.At(i, j);
+        DataType p_i_j;
+        p_i_j = input_symmetric_affinities.At(i, j);
 
-        DataType tmp_q_i_j = output_symmetric_affinities.At(i, j);
+        DataType q_i_j = output_symmetric_affinities.At(i, j);
 
         // (Pij-Qij)
-        DataType tmp_val = tmp_p_i_j - tmp_q_i_j;
+        DataType val = p_i_j - q_i_j;
 
         // /(1+||yi-yj||^2)
-        fetch::math::Multiply(num.At(i, j), tmp_val, tmp_val);
+        fetch::math::Multiply(num.At(i, j), val, val);
 
         // tmp_val*(yi-yj), where tmp_val=(Pij-Qij)/(1+||yi-yj||^2)
-        tmp_slice += Multiply(tmp_val, (output_matrix.Slice(j).Copy().Squeeze()) -
-                                           (output_matrix.Slice(i).Copy().Squeeze()));
+
+        ArrayType diff = (output_matrix.Slice(j).Copy()) - (output_matrix.Slice(i).Copy());
+
+        auto shape = diff.shape();
+        shape.erase(shape.begin());
+        diff.Reshape(shape);
+
+        tmp_slice += Multiply(val, diff);
       }
 
       for (SizeType k = 0; k < output_matrix.shape().at(1); k++)

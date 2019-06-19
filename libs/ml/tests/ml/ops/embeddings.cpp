@@ -42,16 +42,16 @@ TYPED_TEST(EmbeddingsTest, forward_shape)
 {
   using SizeType = typename TypeParam::SizeType;
   fetch::ml::ops::Embeddings<TypeParam> e(SizeType(100), SizeType(60));
-  TypeParam                             input(std::vector<uint64_t>({10}));
+  TypeParam                             input(std::vector<uint64_t>({10, 1}));
   for (unsigned int i(0); i < 10; ++i)
   {
-    input.At(i) = typename TypeParam::Type(i);
+    input.At(i, 0) = typename TypeParam::Type(i);
   }
 
   TypeParam output(e.ComputeOutputShape({input}));
   e.Forward({input}, output);
 
-  ASSERT_EQ(output.shape(), std::vector<typename TypeParam::SizeType>({10, 60}));
+  ASSERT_EQ(output.shape(), std::vector<typename TypeParam::SizeType>({10, 60, 1}));
 }
 
 TYPED_TEST(EmbeddingsTest, forward)
@@ -69,14 +69,14 @@ TYPED_TEST(EmbeddingsTest, forward)
   }
 
   e.SetData(weights);
-  TypeParam input(std::vector<uint64_t>({2}));
-  input.At(0) = typename TypeParam::Type(3);
-  input.At(1) = typename TypeParam::Type(5);
+  TypeParam input(std::vector<uint64_t>({2, 1}));
+  input.At(0, 0) = typename TypeParam::Type(3);
+  input.At(1, 0) = typename TypeParam::Type(5);
 
   TypeParam output(e.ComputeOutputShape({input}));
   e.Forward({input}, output);
 
-  ASSERT_EQ(output.shape(), std::vector<typename TypeParam::SizeType>({2, 6}));
+  ASSERT_EQ(output.shape(), std::vector<typename TypeParam::SizeType>({2, 6, 1}));
 
   std::vector<int> gt{30, 31, 32, 33, 34, 35, 50, 51, 52, 53, 54, 55};
   std::cout << " ---- " << std::endl;
@@ -84,8 +84,8 @@ TYPED_TEST(EmbeddingsTest, forward)
   {
     for (unsigned int j{0}; j < 6; ++j)
     {
-      EXPECT_EQ(output.At(i, j), typename TypeParam::Type(gt[(i * 6) + j]));
-      if (output.At(i, j) != (typename TypeParam::Type(gt[(i * 6) + j])))
+      EXPECT_EQ(output.At(i, j, 0), typename TypeParam::Type(gt[(i * 6) + j]));
+      if (output.At(i, j, 0) != (typename TypeParam::Type(gt[(i * 6) + j])))
       {
         std::cerr << "ERROR: " << output.At(i, j) << " "
                   << typename TypeParam::Type(gt[(i * 6) + j]) << std::endl;
@@ -112,19 +112,19 @@ TYPED_TEST(EmbeddingsTest, backward)
   }
   e.SetData(weights);
 
-  ArrayType input(std::vector<uint64_t>({2}));
-  input.At(0) = DataType{3};
-  input.At(1) = DataType{5};
+  ArrayType input(std::vector<uint64_t>({2, 1}));
+  input.At(0, 0) = DataType{3};
+  input.At(1, 0) = DataType{5};
 
   ArrayType output(e.ComputeOutputShape({input}));
   e.Forward({input}, output);
 
-  ArrayType error_signal(std::vector<uint64_t>({2, 6}));
+  ArrayType error_signal(std::vector<uint64_t>({2, 6, 1}));
   for (SizeType j{0}; j < 2; ++j)
   {
     for (SizeType k{0}; k < 6; ++k)
     {
-      error_signal.Set(j, k, static_cast<DataType>((j * 6) + k));
+      error_signal.Set(j, k, 0, static_cast<DataType>((j * 6) + k));
     }
   }
 
@@ -136,8 +136,10 @@ TYPED_TEST(EmbeddingsTest, backward)
 
   // Get a copy of the gradients and check that they were zeroed out after Step
   ArrayType grads_copy = e.get_gradients();
-  EXPECT_TRUE(ArrayType::Zeroes({1, 6}).AllClose(grads_copy.Slice(SizeType(input.At(0))).Copy()));
-  EXPECT_TRUE(ArrayType::Zeroes({1, 6}).AllClose(grads_copy.Slice(SizeType(input.At(1))).Copy()));
+  EXPECT_TRUE(
+      ArrayType::Zeroes({1, 6}).AllClose(grads_copy.Slice(SizeType(input.At(0, 0))).Copy()));
+  EXPECT_TRUE(
+      ArrayType::Zeroes({1, 6}).AllClose(grads_copy.Slice(SizeType(input.At(1, 0))).Copy()));
 
   output = ArrayType(e.ComputeOutputShape({input}));
   e.Forward({input}, output);
@@ -148,7 +150,7 @@ TYPED_TEST(EmbeddingsTest, backward)
   {
     for (SizeType k{0}; k < 6; ++k)
     {
-      EXPECT_EQ(output.At(j, k), static_cast<DataType>(gt[(j * 6) + k]));
+      EXPECT_EQ(output.At(j, k, 0), static_cast<DataType>(gt[(j * 6) + k]));
     }
   }
 }
