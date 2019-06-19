@@ -205,9 +205,10 @@ BlockCoordinator::State BlockCoordinator::OnSynchronising()
 
   if (!current_block_)
   {
-    FETCH_LOG_ERROR(LOGGING_NAME, "Current block is still null!!!");
+    FETCH_LOG_ERROR(LOGGING_NAME, "Invalid heaviest block, empty block hash");
 
-    current_block_ = chain_.GetHeaviestBlock();
+    state_machine_->Delay(std::chrono::milliseconds{500});
+    return State::RESET;
   }
 
   // determine if extra debug is wanted or needed
