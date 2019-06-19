@@ -44,6 +44,7 @@ using SizeType   = typename TensorType::SizeType;
 
 using EstimatorType  = typename fetch::ml::estimator::DNNClassifier<TensorType>;
 using DataLoaderType = typename fetch::ml::MNISTLoader<TensorType, TensorType>;
+using GraphType      = typename fetch::ml::MNISTLoader<TensorType, TensorType>;
 
 int main(int ac, char **av)
 {
@@ -67,7 +68,7 @@ int main(int ac, char **av)
   auto data_loader_ptr = std::make_shared<DataLoaderType>(av[1], av[2]);
 
   // run estimator
-  EstimatorType estimator(estimator_config, data_loader_ptr);
+  EstimatorType estimator(estimator_config, data_loader_ptr, {784, 100, 20, 10});
   estimator.Run(1000, RunMode::TRAIN);
 
   return 0;

@@ -47,10 +47,11 @@ public:
   //  std::shared_ptr<DataLoader<TensorType, TensorType>> data_loader_ptr) :
   //  Estimator(estimator_config), data_loader_ptr(data_loader_ptr_);
   DNNClassifier(EstimatorConfig<DataType>                           estimator_config,
-                std::shared_ptr<DataLoader<TensorType, TensorType>> data_loader_ptr);
+                std::shared_ptr<DataLoader<TensorType, TensorType>> data_loader_ptr,
+                std::vector<SizeType> const &                       hidden_layers);
 
   // construction setup methods
-  void SetupModel();
+  void SetupModel(std::vector<SizeType> const &hidden_layers);
   //  void SetupOptimiser();
 
   // primary run method
@@ -62,7 +63,6 @@ private:
   std::shared_ptr<OptimiserType> optimiser_ptr_;
   //  OptimiserType optimiser_;
 
-  // TODO - implement model_function to use arbitrary neural nets
   // TODO - implement arbitrary dataloader
   // TODO - implement arbitrary optimiser
 
@@ -79,12 +79,15 @@ private:
 template <typename TensorType>
 DNNClassifier<TensorType>::DNNClassifier(
     EstimatorConfig<DataType>                           estimator_config,
-    std::shared_ptr<DataLoader<TensorType, TensorType>> data_loader_ptr)
+    std::shared_ptr<DataLoader<TensorType, TensorType>> data_loader_ptr,
+    std::vector<SizeType> const &                       hidden_layers)
   : Estimator<TensorType>(estimator_config)
   , data_loader_ptr_(data_loader_ptr)
 {
+  assert(hidden_layers.size() > 0);
+
   // instantiate feed forward network graph
-  SetupModel();
+  SetupModel(hidden_layers);
 
   optimiser_ptr_.reset(new OptimiserType(this->graph_ptr_, {input_}, output_,
                                          this->estimator_config_.learning_rate));
@@ -95,15 +98,19 @@ DNNClassifier<TensorType>::DNNClassifier(
  * @tparam TensorType
  */
 template <typename TensorType>
-void DNNClassifier<TensorType>::SetupModel()
+void DNNClassifier<TensorType>::SetupModel(std::vector<SizeType> const &hidden_layers)
 {
-  input_   = this->graph_ptr_->template AddNode<ops::PlaceHolder<TensorType>>("Input", {});
-  layer_1_ = this->graph_ptr_->template AddNode<layers::FullyConnected<TensorType>>(
-      "FC1", {input_}, 28u * 28u, 10u, fetch::ml::details::ActivationType::RELU);
-  layer_2_ = this->graph_ptr_->template AddNode<layers::FullyConnected<TensorType>>(
-      "FC2", {layer_1_}, 10u, 10u, fetch::ml::details::ActivationType::RELU);
+  input_ = this->graph_ptr_->template AddNode<ops::PlaceHolder<TensorType>>("Input", {});
+  std::string cur_input = input_;
+  for (SizeType cur_layer = 1; cur_layer < hidden_layers.size() - 1; ++cur_layer)
+  {
+    cur_input = this->graph_ptr_->template AddNode<layers::FullyConnected<TensorType>>(
+        "", {cur_input}, hidden_layers.at(cur_layer - 1), hidden_layers.at(cur_layer),
+        fetch::ml::details::ActivationType::RELU);
+  }
   output_ = this->graph_ptr_->template AddNode<layers::FullyConnected<TensorType>>(
-      "FC3", {layer_2_}, 10u, 10u, fetch::ml::details::ActivationType::SOFTMAX);
+      "Output", {cur_input}, hidden_layers.at(hidden_layers.size() - 2),
+      hidden_layers.at(hidden_layers.size() - 1), fetch::ml::details::ActivationType::SOFTMAX);
 }
 
 /**
