@@ -75,7 +75,7 @@ def _create_build(
   Platform platform,
   Configuration config,
   node_label,
-  use_docker,
+  run_build_fn,
   run_slow_tests)
 {
   def suffix = "${platform.label} ${config.label}"
@@ -113,16 +113,6 @@ def _create_build(
     }
   }
 
-  def build = use_docker
-    ? {
-        docker.image(DOCKER_IMAGE_NAME).inside {
-          stages()
-        }
-      }
-    : {
-        stages()
-      }
-
   return {
     stage(suffix) {
       node(node_label) {
@@ -132,7 +122,7 @@ def _create_build(
           }
 
           withEnv(environment()) {
-            build()
+            run_build_fn(stages)
           }
         }
       }
@@ -142,11 +132,17 @@ def _create_build(
 
 def create_docker_build(Platform platform, Configuration config)
 {
+  def dockerised_build = { build_stages ->
+    docker.image(DOCKER_IMAGE_NAME).inside {
+      build_stages()
+    }
+  }
+
   return _create_build(
     platform,
     config,
     HIGH_LOAD_NODE_LABEL,
-    true,
+    dockerised_build,
     is_master_or_merge_branch())
 }
 
@@ -156,7 +152,7 @@ def create_macos_build(Platform platform, Configuration config)
     platform,
     config,
     MACOS_NODE_LABEL,
-    false,
+    { build_stages -> build_stages() },
     false)
 }
 
@@ -172,6 +168,7 @@ def run_builds_in_parallel()
         platform,
         config)
     }
+  }
 
   // Only run macOS builds on master and merge branches
   if (is_master_or_merge_branch())
