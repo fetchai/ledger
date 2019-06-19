@@ -43,6 +43,8 @@ public:
   Optimiser(std::shared_ptr<Graph<T>> graph, std::vector<std::string> input_node_names,
             std::string output_node_name, DataType const &learning_rate = DataType{0.001f});
 
+  virtual ~Optimiser() = default;
+
   // TODO (private 1090): Optimise TensorSlice for graph-feeding without using .Copy
   DataType Run(std::vector<ArrayType> const &data, ArrayType const &labels,
                SizeType batch_size = 0);

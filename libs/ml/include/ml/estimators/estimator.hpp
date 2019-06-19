@@ -20,47 +20,58 @@
 //#include "ml/meta/ml_type_traits.hpp"
 
 #include "ml/graph.hpp"
+#include "ml/ops/loss_functions/types.hpp"
 #include "ml/optimisation/optimiser.hpp"
+#include "ml/optimisation/types.hpp"
 
 namespace fetch {
 namespace ml {
 namespace estimator {
 
-enum class OptimiserType
+enum class RunMode
 {
-  ADAGRAD,
-  ADAM,
-  MOMENTUM,
-  RMSPROP,
-  SGD
+  TRAIN,
+  VALIDATE,
+  PREDICT
 };
 
-struct Config
+template <typename DataType>
+struct EstimatorConfig
 {
-  bool early_stopping = false;
-  OptimiserType opt = OptimiserType::ADAM;
+  using SizeType         = fetch::math::SizeType;
+  using OptimiserType    = fetch::ml::optimisers::OptimiserType;
+  using CostFunctionType = fetch::ml::ops::CostFunctionType;
 
+  EstimatorConfig() = default;
 
+  bool     early_stopping = false;
+  DataType learning_rate  = DataType(0.1);
+  SizeType batch_size     = SizeType(32);
 
-
+  OptimiserType    opt  = OptimiserType::ADAM;
+  CostFunctionType cost = CostFunctionType::SOFTMAX_CROSS_ENTROPY;
 };
 
-template <typename ArrayType>
+template <typename TensorType>
 class Estimator
 {
-  Estimator() = default;
+public:
+  using DataType = typename TensorType::Type;
+  using SizeType = fetch::math::SizeType;
 
+  Estimator(EstimatorConfig<DataType> estimator_config = EstimatorConfig<DataType>())
+    : estimator_config_(estimator_config)
+  {}
 
-private:
-  Graph graph_;
-  Optimiser optimiser_;
+  virtual ~Estimator() = default;
+
+  virtual bool Run(SizeType n_steps, RunMode const &run_mode) = 0;
+
+protected:
+  EstimatorConfig<DataType>          estimator_config_;
+  std::shared_ptr<Graph<TensorType>> graph_ptr_ = std::make_shared<Graph<TensorType>>();
 };
 
-
-
-
-
-
-} // estimator
-} // ml
-} // fetch
+}  // namespace estimator
+}  // namespace ml
+}  // namespace fetch

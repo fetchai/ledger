@@ -32,7 +32,7 @@ namespace optimisers {
  * @tparam T ArrayType
  * @tparam C CriterionType
  */
-template <class T, class C>
+template <typename T, class C>
 class AdamOptimiser : public Optimiser<T, C>
 {
 public:
@@ -45,6 +45,8 @@ public:
                 DataType const &   learning_rate = DataType{0.001f},
                 DataType const &beta1 = DataType{0.9f}, DataType const &beta2 = DataType{0.999f},
                 DataType const &epsilon = DataType{1e-4f});
+
+  virtual ~AdamOptimiser() = default;
 
 private:
   std::vector<ArrayType> cache_;

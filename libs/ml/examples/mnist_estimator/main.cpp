@@ -16,16 +16,16 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/tensor.hpp"
+//#include "math/tensor.hpp"
+//#include "ml/graph.hpp"
+//#include "ml/layers/fully_connected.hpp"
+//#include "ml/ops/activation.hpp"
+//#include "ml/ops/loss_functions/cross_entropy.hpp"
+//#include "ml/optimisation/adam_optimiser.hpp"
+
 #include "ml/dataloaders/mnist_loaders/mnist_loader.hpp"
-#include "ml/graph.hpp"
-#include "ml/layers/fully_connected.hpp"
-#include "ml/ops/activation.hpp"
-#include "ml/ops/loss_functions/cross_entropy.hpp"
-#include "ml/optimisation/adam_optimiser.hpp"
-
-#include "ml/estimator.hpp"
-
+#include "ml/estimators/dnn_classifier.hpp"
+#include "ml/optimisation/types.hpp"
 
 #include <cstddef>
 #include <cstdint>
@@ -35,25 +35,18 @@
 #include <utility>
 #include <vector>
 
-using namespace fetch::ml::ops;
-using namespace fetch::ml::layers;
+using namespace fetch::ml::estimator;
+using namespace fetch::ml::optimisers;
 
-using DataType  = float;
-using ArrayType = fetch::math::Tensor<DataType>;
-using SizeType  = typename ArrayType::SizeType;
+using DataType   = float;
+using TensorType = fetch::math::Tensor<DataType>;
+using SizeType   = typename TensorType::SizeType;
 
-using GraphType        = typename fetch::ml::Graph<ArrayType>;
-using CostFunctionType = typename fetch::ml::ops::CrossEntropy<ArrayType>;
-using OptimiserType    = typename fetch::ml::optimisers::AdamOptimiser<ArrayType, CostFunctionType>;
-using DataLoaderType   = typename fetch::ml::MNISTLoader<ArrayType, ArrayType>;
+using EstimatorType  = typename fetch::ml::estimator::DNNClassifier<TensorType>;
+using DataLoaderType = typename fetch::ml::MNISTLoader<TensorType, TensorType>;
 
 int main(int ac, char **av)
 {
-  DataType learning_rate{0.01f};
-  SizeType subset_size{100};
-  SizeType epochs{10};
-  SizeType batch_size{10};
-
   if (ac < 3)
   {
     std::cout << "Usage : " << av[0]
@@ -63,64 +56,19 @@ int main(int ac, char **av)
 
   std::cout << "FETCH MNIST Demo" << std::endl;
 
+  // setup config
+  EstimatorConfig<DataType> estimator_config;
+  estimator_config.batch_size     = 64;
+  estimator_config.early_stopping = true;
+  estimator_config.learning_rate  = 0.5;
+  estimator_config.opt            = OptimiserType::ADAM;
 
-  // define input function
-  def input_fn(dataset):
-   ...  # manipulate dataset, extracting the feature dict and the label
-   return feature_dict, label
+  // setup dataloader - TODO: make this go away by implementing default dataloader in estimator
+  auto data_loader_ptr = std::make_shared<DataLoaderType>(av[1], av[2]);
 
-   // define feature columns
-  population = tf.feature_column.numeric_column('population')
-  crime_rate = tf.feature_column.numeric_column('crime_rate')
-  median_education = tf.feature_column.numeric_column('median_education',
-                    normalizer_fn=lambda x: x - global_education_mean)
-
-  // instantiate estimator
-  # Instantiate an estimator, passing the feature columns.
-  estimator = tf.estimator.LinearClassifier(feature_columns=[population, crime_rate, median_education])
-
-  //
-  estimator.train(input_fn = my_training_set, steps=2000)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  // Prepare graph
-  //  Input -> FC -> Relu -> FC -> Relu -> FC -> Softmax
-  auto g = std::make_shared<GraphType>();
-
-  std::string input   = g->AddNode<PlaceHolder<ArrayType>>("Input", {});
-  std::string layer_1 = g->AddNode<FullyConnected<ArrayType>>(
-      "FC1", {input}, 28u * 28u, 10u, fetch::ml::details::ActivationType::RELU);
-  std::string layer_2 = g->AddNode<FullyConnected<ArrayType>>(
-      "FC2", {layer_1}, 10u, 10u, fetch::ml::details::ActivationType::RELU);
-  std::string output = g->AddNode<FullyConnected<ArrayType>>(
-      "FC3", {layer_2}, 10u, 10u, fetch::ml::details::ActivationType::SOFTMAX);
-
-  // Initialise MNIST loader
-  DataLoaderType data_loader(av[1], av[2]);
-
-  // Initialise Optimiser
-  OptimiserType optimiser(g, {input}, output, learning_rate);
-
-  // Training loop
-  DataType loss;
-  for (SizeType i{0}; i < epochs; i++)
-  {
-    loss = optimiser.Run(data_loader, batch_size, subset_size);
-    std::cout << "Loss: " << loss << std::endl;
-  }
+  // run estimator
+  EstimatorType estimator(estimator_config, data_loader_ptr);
+  estimator.Run(1000, RunMode::TRAIN);
 
   return 0;
 }

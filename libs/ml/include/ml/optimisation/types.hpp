@@ -17,28 +17,23 @@
 //
 //------------------------------------------------------------------------------
 
-//#include "ml/meta/ml_type_traits.hpp"
-
-#include "ml/estimators/estimator.hpp"
+#include "math/base_types.hpp"
+#include "ml/dataloaders/dataloader.hpp"
+#include "ml/graph.hpp"
+#include "ml/ops/loss_functions/criterion.hpp"
 
 namespace fetch {
 namespace ml {
+namespace optimisers {
 
-template <typename ArrayType>
-class LinearEstimator : public Estimator
+enum class OptimiserType
 {
-  Estimator() = default;
-
-
-private:
-  Graph graph_;
+  ADAGRAD,
+  ADAM,
+  MOMENTUM,
+  RMSPROP,
+  SGD
 };
-
-
-
-
-
-
-
 }
-}
+}  // namespace ml
+}  // namespace fetch
