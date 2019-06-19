@@ -148,10 +148,10 @@ def create_docker_build(Platform platform, Configuration config)
 
   def stages = { platform_, config_ ->
     return {
-      fast_build_stages(platform_, config_)
+      fast_build_stages(platform_, config_)()
       if (is_master_or_merge_branch())
       {
-        slow_build_stages(platform_, config_)
+        slow_build_stages(platform_, config_)()
       }
     }
   }
