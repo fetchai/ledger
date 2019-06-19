@@ -21,8 +21,25 @@
 #include <string>
 #include <vector>
 
+#include "vm_modules/core/print.hpp"
+#include "vm_modules/core/type_convert.hpp"
 #include "vm_modules/math/math.hpp"
 #include "vm_modules/math/random.hpp"
+
+#include "vm_modules/math/tensor.hpp"
+#include "vm_modules/ml/graph.hpp"
+#include "vm_modules/ml/ops/loss_functions/cross_entropy.hpp"
+#include "vm_modules/ml/ops/loss_functions/mean_square_error.hpp"
+
+#include "vm_modules/core/byte_array_wrapper.hpp"
+#include "vm_modules/core/structured_data.hpp"
+#include "vm_modules/core/type_convert.hpp"
+#include "vm_modules/crypto/sha256.hpp"
+#include "vm_modules/math/bignumber.hpp"
+#include "vm_modules/math/exp.hpp"
+#include "vm_modules/math/sqrt.hpp"
+#include "vm_modules/polyfill/bitshifting.hpp"
+#include "vm_modules/polyfill/bitwise_ops.hpp"
 
 namespace fetch {
 namespace vm {
@@ -61,12 +78,81 @@ public:
     USE_ALL             = (~uint64_t(0)),
   };
 
-  // Module Creator
-  static ModulePtr GetModule(uint64_t enabled);
+  /**
+   * Get a module, the VMFactory will add whatever bindings etc. are considered in the 'standard
+   * library'
+   *
+   * @return: The module
+   */
+  static std::shared_ptr<fetch::vm::Module> GetModule(uint64_t enabled)
+  {
+    auto module = std::make_shared<fetch::vm::Module>();
 
-  // Utils
-  static Errors Compile(ModulePtr const &module, std::string const &source,
-                        vm::Executable &executable);
+    // core modules
+    if (MOD_CORE & enabled)
+    {
+      CreatePrint(*module);
+      CreateToString(*module);
+      CreateToBool(*module);
+
+      StructuredData::Bind(*module);
+    }
+
+    // math modules
+    if (MOD_MATH & enabled)
+    {
+      CreateAbs(*module);
+      CreateRand(module);
+    }
+
+    // synergetic modules
+    if (MOD_SYN & enabled)
+    {
+      ByteArrayWrapper::Bind(*module);
+      BigNumberWrapper::Bind(*module);
+      SHA256Wrapper::Bind(*module);
+
+      BindExp(*module);
+      BindSqrt(*module);
+      BindBitShift(*module);
+      BindBitwiseOps(*module);
+    }
+
+    // ml modules - order is important!!
+    if (MOD_ML & enabled)
+    {
+      math::CreateTensor(*module);
+      ml::CreateGraph(*module);
+      fetch::vm_modules::ml::VMCrossEntropyLoss::Bind(*module);
+      ml::CreateMeanSquareError(*module);
+    }
+
+    return module;
+  }
+
+  /**
+   * Compile a source file, returning a executable
+   *
+   * @param: module The module which the user might have added various bindings/classes to etc.
+   * @param: source The raw source to compile
+   * @param: executable executable to fill
+   *
+   * @return: Vector of strings which represent errors found during compilation
+   */
+  static std::vector<std::string> Compile(std::shared_ptr<fetch::vm::Module> const &module,
+                                          std::string const &                       source,
+                                          fetch::vm::Executable &                   executable);
+  /**
+   * Get an instance of the VM after binding to a module
+   *
+   * @param: module Module which the user has added bindings to
+   *
+   * @return: An instance of the VM
+   */
+  static std::unique_ptr<fetch::vm::VM> GetVM(std::shared_ptr<fetch::vm::Module> const &module)
+  {
+    return std::make_unique<fetch::vm::VM>(module.get());
+  }
 };
 
 }  // namespace vm_modules

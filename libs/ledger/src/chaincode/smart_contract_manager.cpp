@@ -84,7 +84,9 @@ Contract::Status SmartContractManager::OnCreate(Transaction const &tx, BlockInde
   // fail if the extraction fails
   if (!extract_success)
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Failed to parse contract source from transaction body");
+    FETCH_LOG_WARN(LOGGING_NAME,
+                   "Failed to parse contract source from transaction body. Debug: ", contract_hash,
+                   " ", contract_type, " : ", contract_source);
     return Status::FAILED;
   }
 

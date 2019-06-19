@@ -16,85 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm/module.hpp"
 #include "vm_modules/vm_factory.hpp"
-
-#include "vm_modules/core/print.hpp"
-#include "vm_modules/core/type_convert.hpp"
-
-#include "vm_modules/math/math.hpp"
-#include "vm_modules/math/random.hpp"
-
-#include "vm_modules/ml/cross_entropy.hpp"
-#include "vm_modules/ml/graph.hpp"
-#include "vm_modules/ml/mean_square_error.hpp"
-#include "vm_modules/ml/tensor.hpp"
-
-#include "vm_modules/core/byte_array_wrapper.hpp"
-#include "vm_modules/core/print.hpp"
-#include "vm_modules/core/structured_data.hpp"
-#include "vm_modules/core/type_convert.hpp"
-#include "vm_modules/crypto/sha256.hpp"
-#include "vm_modules/math/bignumber.hpp"
-#include "vm_modules/math/exp.hpp"
-#include "vm_modules/math/sqrt.hpp"
-#include "vm_modules/polyfill/bitshifting.hpp"
-#include "vm_modules/polyfill/bitwise_ops.hpp"
 
 namespace fetch {
 namespace vm_modules {
-
-/**
- * Get a module, the VMFactory will add whatever bindings etc. are considered in the 'standard
- * library'
- *
- * @return: The module
- */
-std::shared_ptr<vm::Module> VMFactory::GetModule(uint64_t enabled)
-{
-  auto module = std::make_shared<fetch::vm::Module>();
-
-  // core modules
-  if (MOD_CORE & enabled)
-  {
-    CreatePrint(*module);
-    CreateToString(*module);
-    CreateToBool(*module);
-
-    StructuredData::Bind(*module);
-  }
-
-  // math modules
-  if (MOD_MATH & enabled)
-  {
-    CreateAbs(*module);
-    /* CreateRand(module); */
-  }
-
-  // synergetic modules
-  if (MOD_SYN & enabled)
-  {
-    ByteArrayWrapper::Bind(*module);
-    BigNumberWrapper::Bind(*module);
-    SHA256Wrapper::Bind(*module);
-
-    BindExp(*module);
-    BindSqrt(*module);
-    BindBitShift(*module);
-    BindBitwiseOps(*module);
-  }
-
-  // ml modules - order is important!!
-  if (MOD_ML & enabled)
-  {
-    ml::CreateTensor(*module);
-    ml::CreateGraph(*module);
-    ml::CreateCrossEntropy(*module);
-    ml::CreateMeanSquareError(*module);
-  }
-
-  return module;
-}
 
 /**
  * Compile a source file, returning a executable

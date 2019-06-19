@@ -17,11 +17,8 @@ fetch_add_test(random_generator_gtest fetch-core random)
 fetch_add_test(json_gtest fetch-core json/gtest/)
 fetch_add_test(core_encode_decode_gtest fetch-core tokenizer/gtest/)
 
-fetch_add_test(fetch-core-unit-tests fetch-core unit/)
-
 fetch_add_slow_test(containers-tests
                     fetch-core
                     containers/
                     DISABLED)
-
 fetch_add_slow_test(sync_gtest fetch-core sync/)
