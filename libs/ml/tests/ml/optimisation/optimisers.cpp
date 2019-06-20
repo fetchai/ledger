@@ -140,7 +140,7 @@ TYPED_TEST(OptimisersTest, sgd_optimiser_training)
   DataType loss = optimiser.Run({data}, gt);
 
   // Test loss
-  EXPECT_NEAR(static_cast<double>(loss), 1.83612, 1e-5);
+  EXPECT_NEAR(static_cast<double>(loss), 0.45903, 1e-5);
 
   // Test weights
   std::vector<TypeParam> weights = g->get_weights();
@@ -176,7 +176,7 @@ TYPED_TEST(OptimisersTest, sgd_optimiser_training_2D)
   DataType loss = optimiser.Run({data}, gt);
 
   // Test loss
-  EXPECT_NEAR(static_cast<double>(loss), 117.98718, 1e-4);
+  EXPECT_NEAR(static_cast<double>(loss), 39.32906, 1e-4);
 
   // Test weights
   std::vector<TypeParam> weights = g->get_weights();
@@ -212,7 +212,7 @@ TYPED_TEST(OptimisersTest, momentum_optimiser_training)
   DataType loss = optimiser.Run({data}, gt);
 
   // Test loss
-  EXPECT_NEAR(static_cast<double>(loss), 1.11945, 1e-5);
+  EXPECT_NEAR(static_cast<double>(loss), 0.27986, 1e-5);
 
   // Test weights
   std::vector<TypeParam> weights = g->get_weights();
@@ -248,7 +248,7 @@ TYPED_TEST(OptimisersTest, momentum_optimiser_training_2D)
   DataType loss = optimiser.Run({data}, gt);
 
   // Test loss
-  EXPECT_NEAR(static_cast<double>(loss), 117.98717, 1e-4);
+  EXPECT_NEAR(static_cast<double>(loss), 39.32906, 1e-4);
 
   // Test weights
   std::vector<TypeParam> weights = g->get_weights();
@@ -284,7 +284,7 @@ TYPED_TEST(OptimisersTest, adagrad_optimiser_training)
   DataType loss = optimiser.Run({data}, gt);
 
   // Test loss
-  EXPECT_NEAR(static_cast<double>(loss), 2.04488, 1e-5);
+  EXPECT_NEAR(static_cast<double>(loss), 0.51122, 1e-5);
 
   // Test weights
   std::vector<TypeParam> weights = g->get_weights();
@@ -320,7 +320,7 @@ TYPED_TEST(OptimisersTest, adagrad_optimiser_training_2D)
   DataType loss = optimiser.Run({data}, gt);
 
   // Test loss
-  EXPECT_NEAR(static_cast<double>(loss), 13.57873, 1e-5);
+  EXPECT_NEAR(static_cast<double>(loss), 4.52624, 1e-5);
 
   // Test weights
   std::vector<TypeParam> weights = g->get_weights();
@@ -356,7 +356,7 @@ TYPED_TEST(OptimisersTest, rmsprop_optimiser_training)
   DataType loss = optimiser.Run({data}, gt);
 
   // Test loss
-  EXPECT_NEAR(static_cast<double>(loss), 2.58567, 1e-5);
+  EXPECT_NEAR(static_cast<double>(loss), 0.64642, 1e-5);
 
   // Test weights
   std::vector<TypeParam> weights = g->get_weights();
@@ -392,7 +392,7 @@ TYPED_TEST(OptimisersTest, rmsprop_optimiser_training_2D)
   DataType loss = optimiser.Run({data}, gt);
 
   // Test loss
-  EXPECT_NEAR(static_cast<double>(loss), 18.19288, 1e-5);
+  EXPECT_NEAR(static_cast<double>(loss), 6.06429, 1e-5);
 
   // Test weights
   std::vector<TypeParam> weights = g->get_weights();
@@ -428,7 +428,7 @@ TYPED_TEST(OptimisersTest, adam_optimiser_training)
   DataType loss = optimiser.Run({data}, gt);
 
   // Test loss
-  EXPECT_NEAR(static_cast<double>(loss), 4.21160, 1e-5);
+  EXPECT_NEAR(static_cast<double>(loss), 1.05290, 1e-5);
 
   // Test weights
   std::vector<TypeParam> weights = g->get_weights();
@@ -464,7 +464,7 @@ TYPED_TEST(OptimisersTest, adam_optimiser_training_2D)
   DataType loss = optimiser.Run({data}, gt);
 
   // Test loss
-  EXPECT_NEAR(static_cast<double>(loss), 32.87280, 1e-4);
+  EXPECT_NEAR(static_cast<double>(loss), 10.95760, 1e-4);
 
   // Test weights
   std::vector<TypeParam> weights = g->get_weights();
@@ -501,12 +501,12 @@ TYPED_TEST(OptimisersTest, adam_optimiser_minibatch_training)
   DataType loss = optimiser.Run({data}, gt, 2);
 
   // Test loss
-  EXPECT_NEAR(static_cast<double>(loss), 2.60907, 1e-5);
+  EXPECT_NEAR(static_cast<double>(loss), 1.29388, 1e-5);
 
   // Test weights
   std::vector<TypeParam> weights = g->get_weights();
-  EXPECT_NEAR(static_cast<double>(weights[0].At(9, 0)), 0.04839, 1e-5);
+  EXPECT_NEAR(static_cast<double>(weights[0].At(9, 0)), 0.05011, 1e-5);
   EXPECT_NEAR(static_cast<double>(weights[1].At(4, 0)), -0.18362, 1e-5);
-  EXPECT_NEAR(static_cast<double>(weights[2].At(0, 0)), 0.04817, 1e-5);
+  EXPECT_NEAR(static_cast<double>(weights[2].At(0, 0)), 0.04991, 1e-5);
   EXPECT_NEAR(static_cast<double>(weights[3].At(0, 2)), -0.01474, 1e-5);
 }
