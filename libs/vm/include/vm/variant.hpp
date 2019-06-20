@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "vectorise/fixed_point/fixed_point.hpp"
 #include "vm/object.hpp"
 
 namespace fetch {
@@ -106,6 +107,18 @@ union Primitive
     return f64;
   }
 
+  template <typename T>
+  typename std::enable_if_t<std::is_same<T, fixed_point::fp32_t>::value, T> Get() const
+  {
+    return fixed_point::fp32_t::FromBase(i32);
+  }
+
+  template <typename T>
+  typename std::enable_if_t<std::is_same<T, fixed_point::fp64_t>::value, T> Get() const
+  {
+    return fixed_point::fp64_t::FromBase(i64);
+  }
+
   void Set(bool value)
   {
     ui8 = uint8_t(value);
@@ -159,6 +172,16 @@ union Primitive
   void Set(double value)
   {
     f64 = value;
+  }
+
+  void Set(fixed_point::fp32_t value)
+  {
+    i32 = value.Data();
+  }
+
+  void Set(fixed_point::fp64_t value)
+  {
+    i64 = value.Data();
   }
 };
 
@@ -511,44 +534,69 @@ inline void Serialize(ByteArrayBuffer &buffer, Variant const &variant)
 
   switch (variant.type_id)
   {
+  case TypeIds::Unknown:
+  case TypeIds::Null:
+  case TypeIds::Void:
+    // No need to serialise the value (conceptually there is no value).
+    break;
+
   case TypeIds::Bool:
   case TypeIds::UInt8:
     buffer << variant.primitive.ui8;
     break;
+
   case TypeIds::Int8:
     buffer << variant.primitive.i8;
     break;
+
   case TypeIds::Int16:
     buffer << variant.primitive.i16;
     break;
+
   case TypeIds::UInt16:
     buffer << variant.primitive.ui16;
     break;
+
   case TypeIds::Int32:
     buffer << variant.primitive.i32;
     break;
+
   case TypeIds::UInt32:
     buffer << variant.primitive.ui32;
     break;
+
   case TypeIds::Int64:
     buffer << variant.primitive.i64;
     break;
+
   case TypeIds::UInt64:
     buffer << variant.primitive.ui64;
     break;
+
   case TypeIds::Float32:
     buffer << variant.primitive.f32;
     break;
+
   case TypeIds::Float64:
     buffer << variant.primitive.f64;
     break;
+
+  case TypeIds::Fixed32:
+    buffer << variant.primitive.i32;
+    break;
+
+  case TypeIds::Fixed64:
+    buffer << variant.primitive.i64;
+    break;
+
   default:
-    if (variant.object)
+    if (!variant.IsPrimitive())
     {
-      if (!variant.object->SerializeTo(buffer))
-      {
-        throw std::runtime_error("Unable to serialize type");
-      }
+      buffer << variant.object;
+    }
+    else
+    {
+      throw std::runtime_error("Unable to deserialize unexpected type.");
     }
     break;
   }
@@ -559,53 +607,85 @@ inline void Deserialize(ByteArrayBuffer &buffer, Variant &variant)
   TypeId id;
   buffer >> id;
 
-  if (id != variant.type_id)
+  // TODO (issue 1172): This check might not be necessary depending on serialisation principle
+  if (variant.type_id != id)
   {
-    throw std::runtime_error("Unable to deserialize the variant type");
+    throw std::runtime_error("Type of provided variant does not match type of serialised data.");
   }
 
-  switch (variant.type_id)
+  if (id <= TypeIds::PrimitiveMaxId)
   {
-  case TypeIds::Bool:
-  case TypeIds::UInt8:
-    buffer >> variant.primitive.ui8;
-    break;
-  case TypeIds::Int8:
-    buffer >> variant.primitive.i8;
-    break;
-  case TypeIds::Int16:
-    buffer >> variant.primitive.i16;
-    break;
-  case TypeIds::UInt16:
-    buffer >> variant.primitive.ui16;
-    break;
-  case TypeIds::Int32:
-    buffer >> variant.primitive.i32;
-    break;
-  case TypeIds::UInt32:
-    buffer >> variant.primitive.ui32;
-    break;
-  case TypeIds::Int64:
-    buffer >> variant.primitive.i64;
-    break;
-  case TypeIds::UInt64:
-    buffer >> variant.primitive.ui64;
-    break;
-  case TypeIds::Float32:
-    buffer >> variant.primitive.f32;
-    break;
-  case TypeIds::Float64:
-    buffer >> variant.primitive.f64;
-    break;
-  default:
-    if (variant.object)
+    // TODO (issue 1172): This might need to be used depending on serialisation principle.
+    // variant.Assign(0, id);
+    switch (id)
     {
-      if (!variant.object->DeserializeFrom(buffer))
-      {
-        throw std::runtime_error("Failed to the deserialize compound object");
-      }
+    case TypeIds::Unknown:
+    case TypeIds::Null:
+    case TypeIds::Void:
+      break;
+
+    case TypeIds::Bool:
+    case TypeIds::UInt8:
+      buffer >> variant.primitive.ui8;
+      break;
+
+    case TypeIds::Int8:
+      buffer >> variant.primitive.i8;
+      break;
+
+    case TypeIds::Int16:
+      buffer >> variant.primitive.i16;
+      break;
+
+    case TypeIds::UInt16:
+      buffer >> variant.primitive.ui16;
+      break;
+
+    case TypeIds::Int32:
+      buffer >> variant.primitive.i32;
+      break;
+
+    case TypeIds::UInt32:
+      buffer >> variant.primitive.ui32;
+      break;
+
+    case TypeIds::Int64:
+      buffer >> variant.primitive.i64;
+      break;
+
+    case TypeIds::UInt64:
+      buffer >> variant.primitive.ui64;
+      break;
+
+    case TypeIds::Float32:
+      buffer >> variant.primitive.f32;
+      break;
+
+    case TypeIds::Float64:
+      buffer >> variant.primitive.f64;
+      break;
+
+    case TypeIds::Fixed32:
+      buffer >> variant.primitive.i32;
+      break;
+
+    case TypeIds::Fixed64:
+      buffer >> variant.primitive.i64;
+      break;
+
+    default:
+      throw std::runtime_error("Unable to deserialise unexpected primitive type.");
     }
-    break;
+  }
+  else
+  {
+    // TODO (issue 1172): This won't work in general (not for nested variant types (e.g. Map of
+    // Maps ...).
+    //                       Current serialisation principle firmly requires types to be `default
+    //                       constructible`, reason being that in order for types to be
+    //                       deserializable they need to have default constructor (= non-parametric
+    //                       constructor))
+    buffer >> variant.object;
   }
 }
 

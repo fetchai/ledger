@@ -43,7 +43,7 @@ protected:
 
   void SetUp() override
   {
-    queue_ = std::make_unique<TransactionLayoutQueue>(1);
+    queue_ = std::make_unique<TransactionLayoutQueue>();
     generator_.Seed();
   }
 
@@ -252,7 +252,7 @@ TEST_F(TransactionLayoutQueueTests, CheckSplice)
   EXPECT_TRUE(queue_->Add(tx3));
   EXPECT_EQ(queue_->size(), 3u);
 
-  TransactionLayoutQueue other{1};
+  TransactionLayoutQueue other;
 
   auto const tx4 = generator_(2);
   auto const tx5 = generator_(2);
@@ -307,7 +307,7 @@ TEST_F(TransactionLayoutQueueTests, CheckSubSplicing)
   auto const tx4 = generator_(2);
 
   // create a basic queue
-  TransactionLayoutQueue other{1};
+  TransactionLayoutQueue other;
   EXPECT_TRUE(other.Add(tx1));
   EXPECT_TRUE(other.Add(tx2));
   EXPECT_TRUE(other.Add(tx3));
@@ -341,7 +341,7 @@ TEST_F(TransactionLayoutQueueTests, CheckDuplicateSubSplicing)
   auto const tx4 = generator_(2);
 
   // create a basic queue
-  TransactionLayoutQueue other{1};
+  TransactionLayoutQueue other;
   EXPECT_TRUE(other.Add(tx1));
   EXPECT_TRUE(other.Add(tx2));
   EXPECT_TRUE(other.Add(tx3));

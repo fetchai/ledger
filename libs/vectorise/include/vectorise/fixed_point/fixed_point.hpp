@@ -27,13 +27,16 @@
 #include <iomanip>
 #include <iostream>
 #include <limits>
-#include <sstream>
 
 namespace fetch {
 namespace fixed_point {
 
 template <std::uint16_t I, std::uint16_t F>
 class FixedPoint;
+
+using fp32_t  = FixedPoint<16, 16>;
+using fp64_t  = FixedPoint<32, 32>;
+using fp128_t = FixedPoint<64, 64>;
 
 namespace {
 
@@ -690,7 +693,7 @@ std::ostream &operator<<(std::ostream &s, FixedPoint<I, F> const &n)
   {
     s << double(n);
   }
-  s << " (0x" << std::hex << n.Data() << ")";
+  // s << " (0x" << std::hex << n.Data() << ")";
   s.flags(f);
   return s;
 }
@@ -872,7 +875,7 @@ constexpr FixedPoint<I, F> &FixedPoint<I, F>::operator=(FixedPoint<I, F> const &
 {
   if (isNaN(o))
   {
-    throw std::overflow_error("Cannot assing NaN value!");
+    throw std::overflow_error("Cannot assign NaN value!");
   }
   data_ = o.data_;
   return *this;
@@ -880,7 +883,7 @@ constexpr FixedPoint<I, F> &FixedPoint<I, F>::operator=(FixedPoint<I, F> const &
 
 /**
  * Assignment operator for primitive integer types
- * @param the primitive to assing the FixedPoint object from
+ * @param the primitive to assign the FixedPoint object from
  * @return copies the given primitive integer n
  */
 template <std::uint16_t I, std::uint16_t F>
@@ -2092,7 +2095,7 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::Sin(FixedPoint<I, F> const &x)
 
   FixedPoint quadrant = Floor(r / CONST_PI_2);
 
-  return SinPi2QuadrantFuncs[(size_t)quadrant](r - CONST_PI_2 * quadrant);
+  return SinPi2QuadrantFuncs[static_cast<std::size_t>(quadrant)](r - CONST_PI_2 * quadrant);
 }
 
 /**
@@ -2129,7 +2132,7 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::Cos(FixedPoint<I, F> const &x)
 
   FixedPoint quadrant = Floor(r / CONST_PI_2);
 
-  return CosPi2QuadrantFuncs[(size_t)quadrant](r - CONST_PI_2 * quadrant);
+  return CosPi2QuadrantFuncs[static_cast<std::size_t>(quadrant)](r - CONST_PI_2 * quadrant);
 }
 
 /**

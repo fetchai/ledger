@@ -75,14 +75,16 @@ public:
 
   virtual ReturnType GetNext()
   {
-    GetAtIndex(static_cast<SizeType>(cursor_++), buffer_);
-    return buffer_;
-  }
-
-  ReturnType GetRandom()
-  {
-    GetAtIndex((SizeType)rand() % Size(), buffer_);
-    return buffer_;
+    if (this->random_mode_)
+    {
+      GetAtIndex((SizeType)rand() % Size(), buffer_);
+      return buffer_;
+    }
+    else
+    {
+      GetAtIndex(static_cast<SizeType>(cursor_++), buffer_);
+      return buffer_;
+    }
   }
 
   void Display(T const &data) const

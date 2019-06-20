@@ -26,15 +26,18 @@
 #include "network/muddle/network_id.hpp"
 #include "network/muddle/packet.hpp"
 #include "network/muddle/subscription_registrar.hpp"
-#include "network/p2pservice/p2p_service_defs.hpp"
 
 #include <chrono>
+#include <cstddef>
+#include <cstdint>
 #include <memory>
+#include <string>
+#include <unordered_map>
+#include <unordered_set>
 
 namespace fetch {
 namespace muddle {
 
-class Packet;
 class Dispatcher;
 class MuddleRegister;
 

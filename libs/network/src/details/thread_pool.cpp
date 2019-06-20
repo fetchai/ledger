@@ -16,9 +16,18 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/assert.hpp"
+#include "core/logger.hpp"
+#include "core/threading.hpp"
 #include "network/details/thread_pool.hpp"
 
-#include "core/threading.hpp"
+#include <algorithm>
+#include <chrono>
+#include <exception>
+#include <memory>
+#include <mutex>
+#include <stdexcept>
+#include <utility>
 
 namespace fetch {
 namespace network {

@@ -31,7 +31,7 @@
 
 #include "ml/layers/self_attention.hpp"
 
-#include <gtest/gtest.h>
+#include "gtest/gtest.h"
 
 template <typename T>
 class OptimisersTest : public ::testing::Test

@@ -21,7 +21,7 @@
 #include "math/tensor.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 
-#include <gtest/gtest.h>
+#include "gtest/gtest.h"
 
 template <typename T>
 class MaxPool2DTest : public ::testing::Test

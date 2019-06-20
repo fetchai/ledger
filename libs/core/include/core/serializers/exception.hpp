@@ -19,9 +19,9 @@
 
 #include "core/logger.hpp"
 
+#include <cstdint>
 #include <exception>
 #include <string>
-#include <utility>
 
 namespace fetch {
 namespace byte_array {
@@ -40,8 +40,8 @@ public:
   /// @name Construction / Destruction
   /// @{
   SerializableException();
-  SerializableException(std::string explanation);
-  SerializableException(byte_array::ConstByteArray const &explanation);
+  explicit SerializableException(std::string explanation);
+  explicit SerializableException(byte_array::ConstByteArray const &explanation);
   SerializableException(error::error_type error_code, std::string explanation);
   SerializableException(error::error_type                 error_code,
                         byte_array::ConstByteArray const &explanation);

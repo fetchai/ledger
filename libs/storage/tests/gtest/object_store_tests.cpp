@@ -20,8 +20,10 @@
 #include "core/random/lfg.hpp"
 #include "storage/object_store.hpp"
 #include "testing/common_testing_functionality.hpp"
+
+#include "gtest/gtest.h"
+
 #include <algorithm>
-#include <gtest/gtest.h>
 
 using namespace fetch::storage;
 using namespace fetch::byte_array;

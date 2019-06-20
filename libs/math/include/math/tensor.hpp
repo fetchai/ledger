@@ -74,6 +74,7 @@ public:
 
   using SliceIteratorType      = TensorSliceIterator<T, ContainerType>;
   using ConstSliceIteratorType = ConstTensorSliceIterator<T, ContainerType>;
+  using ViewType               = TensorView<T, C>;
   using SizeType               = fetch::math::SizeType;
   using SizeVector             = fetch::math::SizeVector;
 
@@ -81,8 +82,8 @@ public:
 
   enum
   {
-    LOG_PADDING = TensorView<T, C>::LOG_PADDING,
-    PADDING     = TensorView<T, C>::PADDING
+    LOG_PADDING = ViewType::LOG_PADDING,
+    PADDING     = ViewType::PADDING
   };
 
 private:
@@ -199,60 +200,20 @@ public:
   /// memory management ///
   /////////////////////////
 
-  /**
-   * Resizes and reshapes tensor according to newly specified shape
-   * @param shape the new shape to set
-   * @param copy whether to copy old data to new container or not
-   */
   bool Resize(SizeVector const &shape, bool copy = false);
-
-  /**
-   * Resizes and reshapes tensor according to newly specified shape
-   * @param shape the new shape to set
-   */
-  bool Reshape(SizeVector const &shape)
-  {
-    return Resize(shape, true);
-  }
-
-  /**
-   * Resizes and reshapes tensor according to newly specified shape
-   * @param shape the new shape to set
-   */
-  bool ResizeFromShape(SizeVector const &shape)
-  {
-    // TODO(private issue 995): Get rid of this function
-    return Resize(shape, true);
-  }
+  bool Reshape(SizeVector const &shape);
+  bool ResizeFromShape(SizeVector const &shape);
 
   SizeVector const &stride() const;
   SizeVector const &shape() const;
   SizeType const &  shape(SizeType const &n) const;
   SizeType          size() const;
 
-  /**
-   * Sets a single value in the array using an n-dimensional index
-   * @param indices     index position in array
-   * @param val         value to write
-   */
-  // TODO(private issue 123)
   template <typename S>
-  fetch::meta::IfIsUnsignedInteger<S, void> Set(std::vector<S> const &indices, Type const &val)
-  {
-    assert(indices.size() == shape_.size());
-    this->operator[](ComputeColIndex(indices)) = val;
-  }
+  fetch::meta::IfIsUnsignedInteger<S, void> Set(std::vector<S> const &indices, Type const &val);
 
-  /**
-   * Gets a value from the array by N-dim index
-   * @param indices index to access
-   */
   template <typename S>
-  fetch::meta::IfIsUnsignedInteger<S, Type> Get(std::vector<S> const &indices) const
-  {
-    assert(indices.size() == shape_.size());
-    return this->operator[](ComputeColIndex(indices));
-  }
+  fetch::meta::IfIsUnsignedInteger<S, Type> Get(std::vector<S> const &indices) const;
 
   ///////////////////////
   /// MATH OPERATIONS ///
@@ -841,7 +802,7 @@ typename Tensor<T, C>::ConstIteratorType Tensor<T, C>::cend() const
 /// View Extraction ///
 ///////////////////////
 template <typename T, typename C>
-TensorView<T, C> Tensor<T, C>::View()
+typename Tensor<T, C>::ViewType Tensor<T, C>::View()
 {
   assert(shape_.size() >= 1);
 
@@ -851,7 +812,7 @@ TensorView<T, C> Tensor<T, C>::View()
 }
 
 template <typename T, typename C>
-TensorView<T, C> const Tensor<T, C>::View() const
+typename Tensor<T, C>::ViewType const Tensor<T, C>::View() const
 {
   assert(shape_.size() >= 1);
 
@@ -861,7 +822,7 @@ TensorView<T, C> const Tensor<T, C>::View() const
 }
 
 template <typename T, typename C>
-TensorView<T, C> Tensor<T, C>::View(SizeType index)
+typename Tensor<T, C>::ViewType Tensor<T, C>::View(SizeType index)
 {
   assert(shape_.size() >= 2);
 
@@ -874,7 +835,7 @@ TensorView<T, C> Tensor<T, C>::View(SizeType index)
 }
 
 template <typename T, typename C>
-TensorView<T, C> const Tensor<T, C>::View(SizeType index) const
+typename Tensor<T, C>::ViewType const Tensor<T, C>::View(SizeType index) const
 {
   assert(shape_.size() >= 2);
 
@@ -887,7 +848,7 @@ TensorView<T, C> const Tensor<T, C>::View(SizeType index) const
 }
 
 template <typename T, typename C>
-TensorView<T, C> Tensor<T, C>::View(std::vector<SizeType> indices)
+typename Tensor<T, C>::ViewType Tensor<T, C>::View(std::vector<SizeType> indices)
 {
   assert(shape_.size() >= 1 + indices.size());
 
@@ -1171,6 +1132,11 @@ Tensor<T, C> &Tensor<T, C>::operator=(TensorSlice const &slice)
   return *this;
 }
 
+/**
+ * Resizes and reshapes tensor according to newly specified shape
+ * @param shape the new shape to set
+ * @param copy whether to copy old data to new container or not
+ */
 template <typename T, typename C>
 bool Tensor<T, C>::Resize(SizeVector const &shape, bool copy)
 {
@@ -1200,6 +1166,27 @@ bool Tensor<T, C>::Resize(SizeVector const &shape, bool copy)
     return true;
   }
   return false;
+}
+
+/**
+ * Resizes and reshapes tensor according to newly specified shape
+ * @param shape the new shape to set
+ */
+template <typename T, typename C>
+bool Tensor<T, C>::Reshape(SizeVector const &shape)
+{
+  return Resize(shape, true);
+}
+
+/**
+ * Resizes and reshapes tensor according to newly specified shape
+ * @param shape the new shape to set
+ */
+template <typename T, typename C>
+bool Tensor<T, C>::ResizeFromShape(SizeVector const &shape)
+{
+  // TODO(private issue 995): Get rid of this function
+  return Resize(shape, true);
 }
 
 /**
@@ -1649,6 +1636,34 @@ template <typename T, typename C>
 typename Tensor<T, C>::SizeType Tensor<T, C>::size() const
 {
   return size_;
+}
+
+/**
+ * Sets a single value in the array using an n-dimensional index
+ * @param indices     index position in array
+ * @param val         value to write
+ */
+// TODO(private issue 123)
+template <typename T, typename C>
+template <typename S>
+fetch::meta::IfIsUnsignedInteger<S, void> Tensor<T, C>::Set(std::vector<S> const &indices,
+                                                            Type const &          val)
+{
+  assert(indices.size() == shape_.size());
+  this->operator[](ComputeColIndex(indices)) = val;
+}
+
+/**
+ * Gets a value from the array by N-dim index
+ * @param indices index to access
+ */
+template <typename T, typename C>
+template <typename S>
+fetch::meta::IfIsUnsignedInteger<S, typename Tensor<T, C>::Type> Tensor<T, C>::Get(
+    std::vector<S> const &indices) const
+{
+  assert(indices.size() == shape_.size());
+  return this->operator[](ComputeColIndex(indices));
 }
 
 ///////////////////////////////////////

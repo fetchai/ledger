@@ -16,24 +16,23 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chaincode/smart_contract.hpp"
-
 #include "core/byte_array/decoders.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "crypto/fnv.hpp"
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
 #include "ledger/chain/transaction.hpp"
+#include "ledger/chaincode/smart_contract.hpp"
 #include "ledger/chaincode/smart_contract_exception.hpp"
 #include "ledger/chaincode/vm_definition.hpp"
+#include "ledger/fetch_msgpack.hpp"
 #include "ledger/state_adapter.hpp"
 #include "ledger/storage_unit/cached_storage_adapter.hpp"
 #include "variant/variant.hpp"
 #include "variant/variant_utils.hpp"
+#include "vm/address.hpp"
 #include "vm/function_decorators.hpp"
 #include "vm_modules/vm_factory.hpp"
-
-#include "ledger/fetch_msgpack.hpp"
 
 #include <algorithm>
 #include <stdexcept>
@@ -586,6 +585,12 @@ SmartContract::Status SmartContract::InvokeQuery(std::string const &name, Query 
     break;
   case vm::TypeIds::Float64:
     response["result"] = output.Get<double>();
+    break;
+  case vm::TypeIds::Fixed32:
+    response["result"] = output.Get<fixed_point::fp32_t>();
+    break;
+  case vm::TypeIds::Fixed64:
+    response["result"] = output.Get<fixed_point::fp64_t>();
     break;
   case vm::TypeIds::String:
     response["result"] = output.Get<vm::Ptr<vm::String>>()->str;

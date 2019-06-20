@@ -17,6 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include "vectorise/fixed_point/fixed_point.hpp"
+#include "vectorise/fixed_point/serializers.hpp"
 #include "vm/vm.hpp"
 
 #include <algorithm>
@@ -26,6 +28,18 @@
 
 namespace fetch {
 namespace vm {
+
+template <typename T, typename = void>
+struct GetElementType
+{
+  using type = typename GetStorageType<T>::type;
+};
+template <typename T>
+struct GetElementType<T, typename std::enable_if_t<std::is_same<T, bool>::value>>
+{
+  // ElementType must NOT be bool because std::vector<bool> is a partial specialisation
+  using type = uint8_t;
+};
 
 class IArray : public Object
 {
@@ -58,7 +72,7 @@ protected:
 template <typename T>
 struct Array : public IArray
 {
-  using ElementType = typename GetStorageType<T>::type;
+  using ElementType = typename GetElementType<T>::type;
 
   Array()           = delete;
   ~Array() override = default;
@@ -211,7 +225,7 @@ struct Array : public IArray
 
   ElementType *Find(Variant const &index)
   {
-    size_t i;
+    std::size_t i;
     if (!GetNonNegativeInteger(index, i))
     {
       RuntimeError("negative index");
@@ -238,7 +252,8 @@ struct Array : public IArray
     return true;
   }
 
-  TypeId                   element_type_id;
+  TypeId element_type_id;
+  // ElementType must NOT be bool because std::vector<bool> is a partial specialisation
   std::vector<ElementType> elements;
 };
 
@@ -292,6 +307,16 @@ inline Ptr<IArray> IArray::Construct(VM *vm, TypeId type_id, Args &&... args)
   case TypeIds::Float64:
   {
     return new Array<double>(vm, type_id, element_type_id, std::forward<Args>(args)...);
+  }
+  case TypeIds::Fixed32:
+  {
+    return new Array<fixed_point::fp32_t>(vm, type_id, element_type_id,
+                                          std::forward<Args>(args)...);
+  }
+  case TypeIds::Fixed64:
+  {
+    return new Array<fixed_point::fp64_t>(vm, type_id, element_type_id,
+                                          std::forward<Args>(args)...);
   }
   default:
   {

@@ -24,6 +24,8 @@
 #include "vm/state.hpp"
 #include "vm/string.hpp"
 
+#include "vectorise/fixed_point/fixed_point.hpp"
+
 #include <cstddef>
 #include <cstdint>
 #include <ostream>
@@ -71,6 +73,10 @@ void Analyser::Initialise()
   CreatePrimitiveType("UInt64", TypeIndex(typeid(uint64_t)), true, TypeIds::UInt64, uint64_type_);
   CreatePrimitiveType("Float32", TypeIndex(typeid(float)), true, TypeIds::Float32, float32_type_);
   CreatePrimitiveType("Float64", TypeIndex(typeid(double)), true, TypeIds::Float64, float64_type_);
+  CreatePrimitiveType("Fixed32", TypeIndex(typeid(fixed_point::fp32_t)), true, TypeIds::Fixed32,
+                      fixed32_type_);
+  CreatePrimitiveType("Fixed64", TypeIndex(typeid(fixed_point::fp64_t)), true, TypeIds::Fixed64,
+                      fixed64_type_);
   CreateClassType("String", TypeIndex(typeid(String)), TypeIds::String, string_type_);
   EnableOperator(string_type_, Operator::Equal);
   EnableOperator(string_type_, Operator::NotEqual);
@@ -97,9 +103,9 @@ void Analyser::Initialise()
 
   TypePtrArray const integer_types = {int8_type_,  uint8_type_,  int16_type_, uint16_type_,
                                       int32_type_, uint32_type_, int64_type_, uint64_type_};
-  TypePtrArray const number_types  = {int8_type_,    uint8_type_,  int16_type_, uint16_type_,
-                                     int32_type_,   uint32_type_, int64_type_, uint64_type_,
-                                     float32_type_, float64_type_};
+  TypePtrArray const number_types  = {int8_type_,    uint8_type_,   int16_type_,   uint16_type_,
+                                     int32_type_,   uint32_type_,  int64_type_,   uint64_type_,
+                                     float32_type_, float64_type_, fixed32_type_, fixed64_type_};
   for (auto const &type : number_types)
   {
     EnableOperator(type, Operator::Equal);
@@ -145,7 +151,6 @@ void Analyser::Initialise()
                      map_type_);
   CreateTemplateType("State", TypeIndex(typeid(IState)), {any_type_}, TypeIds::Unknown,
                      state_type_);
-
   CreateTemplateType("ShardedState", TypeIndex(typeid(IShardedState)), {any_type_},
                      TypeIds::Unknown, sharded_state_type_);
 }
@@ -177,6 +182,8 @@ void Analyser::UnInitialise()
   uint64_type_              = nullptr;
   float32_type_             = nullptr;
   float64_type_             = nullptr;
+  fixed32_type_             = nullptr;
+  fixed64_type_             = nullptr;
   string_type_              = nullptr;
   address_type_             = nullptr;
   template_parameter1_type_ = nullptr;
@@ -297,7 +304,7 @@ bool Analyser::Analyse(BlockNodePtr const &root, std::vector<std::string> &error
 
 void Analyser::AddError(uint16_t line, std::string const &message)
 {
-  std::stringstream stream;
+  std::ostringstream stream;
   stream << "line " << line << ": "
          << "error: " << message;
   errors_.push_back(stream.str());
@@ -370,7 +377,6 @@ void Analyser::BuildFunctionDefinition(BlockNodePtr const &parent_block_node,
     SymbolPtr          symbol         = function_definition_node->symbols->Find(parameter_name);
     if (symbol)
     {
-      std::stringstream stream;
       AddError(parameter_node->line, "parameter name '" + parameter_name + "' is already defined");
       ++problems;
       continue;
@@ -511,7 +517,7 @@ void Analyser::AnnotateBlock(BlockNodePtr const &block_node)
     }
     case NodeKind::BreakStatement:
     {
-      if (!loops_.empty())
+      if (loops_.empty())
       {
         AddError(child->line, "break statement is not inside a while or for loop");
       }
@@ -519,7 +525,7 @@ void Analyser::AnnotateBlock(BlockNodePtr const &block_node)
     }
     case NodeKind::ContinueStatement:
     {
-      if (!loops_.empty())
+      if (loops_.empty())
       {
         AddError(child->line, "continue statement is not inside a while or for loop");
       }
@@ -1014,6 +1020,16 @@ bool Analyser::AnnotateExpression(ExpressionNodePtr const &node)
     SetRVExpression(node, float64_type_);
     break;
   }
+  case NodeKind::Fixed32:
+  {
+    SetRVExpression(node, fixed32_type_);
+    break;
+  }
+  case NodeKind::Fixed64:
+  {
+    SetRVExpression(node, fixed64_type_);
+    break;
+  }
   case NodeKind::String:
   {
     SetRVExpression(node, string_type_);
@@ -1203,7 +1219,7 @@ bool Analyser::AnnotateEqualityOp(ExpressionNodePtr const &node)
     else
     {
       // Comparing two nulls...
-      // Type-uninferable nulls will be transformed to boolean true
+      // Type-uninferable nulls will be transformed to boolean false
       lhs->type = bool_type_;
       rhs->type = bool_type_;
     }
@@ -1894,9 +1910,9 @@ bool Analyser::MatchTypes(TypePtr const &type, TypePtrArray const &supplied_type
     TypePtr expected_type = ConvertType(expected_types[i], type);
     if (supplied_type->IsNull())
     {
-      if (expected_type->IsPrimitive())
+      if (!expected_type->IsClass() && !expected_type->IsInstantiation())
       {
-        // Not a match
+        // Not a match, can only convert null to a known reference type
         return false;
       }
       actual_types.push_back(expected_type);

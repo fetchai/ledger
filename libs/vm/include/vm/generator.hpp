@@ -155,13 +155,13 @@ struct Executable
     }
     uint16_t AddVariable(std::string const &name, TypeId type_id, uint16_t scope_number)
     {
-      uint16_t const index = uint16_t(num_variables++);
+      auto const index = static_cast<uint16_t>(num_variables++);
       variables.push_back(Variable(name, type_id, scope_number));
       return index;
     }
     uint16_t AddInstruction(Instruction const &instruction)
     {
-      uint16_t const pc = uint16_t(instructions.size());
+      auto const pc = static_cast<uint16_t>(instructions.size());
       instructions.push_back(instruction);
       return pc;
     }
@@ -190,7 +190,7 @@ struct Executable
 
   uint16_t AddFunction(Function &function)
   {
-    uint16_t const index        = uint16_t(functions.size());
+    auto const index            = static_cast<uint16_t>(functions.size());
     function_map[function.name] = index;
     functions.push_back(std::move(function));
     return index;
@@ -198,7 +198,7 @@ struct Executable
 
   uint16_t AddType(TypeInfo const &type_info)
   {
-    uint16_t const index = uint16_t(types.size());
+    auto const index = static_cast<uint16_t>(types.size());
     types.push_back(type_info);
     return index;
   }
@@ -297,6 +297,8 @@ private:
   void     HandleUnsignedInteger64(IRExpressionNodePtr const &node);
   void     HandleFloat32(IRExpressionNodePtr const &node);
   void     HandleFloat64(IRExpressionNodePtr const &node);
+  void     HandleFixed32(IRExpressionNodePtr const &node);
+  void     HandleFixed64(IRExpressionNodePtr const &node);
   void     HandleString(IRExpressionNodePtr const &node);
   void     HandleTrue(IRExpressionNodePtr const &node);
   void     HandleFalse(IRExpressionNodePtr const &node);

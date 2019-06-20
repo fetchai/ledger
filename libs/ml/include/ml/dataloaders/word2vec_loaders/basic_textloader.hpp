@@ -22,8 +22,13 @@
 #include "ml/dataloaders/dataloader.hpp"
 #include "ml/dataloaders/text_loader.hpp"
 
-#include <algorithm>  // random_shuffle
-#include <numeric>    // std::iota
+#include <algorithm>
+#include <cassert>
+#include <numeric>
+#include <random>
+#include <stdexcept>
+#include <utility>
+#include <vector>
 
 namespace fetch {
 namespace ml {
@@ -36,8 +41,9 @@ struct TextParams
 public:
   using SizeType = typename T::SizeType;
 
-  TextParams(bool fw = false)
-    : full_window(fw){};
+  explicit TextParams(bool fw = false)
+    : full_window(fw)
+  {}
 
   SizeType min_sentence_length = 2;  // minimum number of words in a sentence
   SizeType max_sentences       = 0;  // maximum number of sentences in training set
@@ -71,9 +77,8 @@ public:
 
   // overloaded member from dataloader
   std::pair<T, std::vector<T>> GetNext() override;
-  std::pair<T, std::vector<T>> GetRandom() override;
   SizeType                     Size() const override;
-  virtual bool                 IsDone() const override;
+  bool                         IsDone() const override;
   void                         Reset() override;
 
   virtual std::pair<T, std::vector<T>> GetAtIndex(SizeType idx);
@@ -154,35 +159,31 @@ BasicTextLoader<T>::BasicTextLoader(TextParams<T> const &p, bool random_mode, Si
 /////////////////////////////////////
 
 /**
- * gets the next data point
+ * gets the next data point or a random data point depending on mode
  * @tparam T  Array type
  * @return  returns a pair of Array and Label
  */
 template <typename T>
 std::pair<T, std::vector<T>> BasicTextLoader<T>::GetNext()
 {
-  GetNextValidIndices();
-  if (cursor_set_)
+  if (this->random_mode_)
   {
-    return GetAtIndex(cursor_);
+    GetNextValidIndices();
+    if (ran_cursor_set_)
+    {
+      return GetAtIndex(ran_cursor_);
+    }
+    throw std::runtime_error("no valid cursor position set");
   }
-  throw std::runtime_error("no valid cursor position set");
-}
-
-/**
- * gets the next data point from the randomised list
- * @tparam T  Array type
- * @return  returns a pair of Array and Label
- */
-template <typename T>
-std::pair<T, std::vector<T>> BasicTextLoader<T>::GetRandom()
-{
-  GetNextValidIndices();
-  if (ran_cursor_set_)
+  else
   {
-    return GetAtIndex(ran_cursor_);
+    GetNextValidIndices();
+    if (cursor_set_)
+    {
+      return GetAtIndex(cursor_);
+    }
+    throw std::runtime_error("no valid cursor position set");
   }
-  throw std::runtime_error("no valid cursor position set");
 }
 
 /**
@@ -534,11 +535,7 @@ bool BasicTextLoader<T>::DiscardExample(SizeType word_frequency)
   prob_thresh *= (p_.discard_threshold / word_probability);
   double f = lfg_.AsDouble();
 
-  if (f < prob_thresh)
-  {
-    return false;
-  }
-  return true;
+  return !(f < prob_thresh);
 }
 
 }  // namespace dataloaders

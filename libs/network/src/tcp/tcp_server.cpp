@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "network/tcp/client_connection.hpp"
 #include "network/tcp/tcp_server.hpp"
 
 #include <chrono>

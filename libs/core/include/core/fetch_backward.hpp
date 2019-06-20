@@ -17,34 +17,29 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/meta/math_type_traits.hpp"
-#include "math/standard_functions/abs.hpp"
+#include "core/logger.hpp"
 
-namespace fetch {
-namespace vm_modules {
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wconversion"
+#pragma GCC diagnostic ignored "-Wpedantic"
+#pragma GCC diagnostic ignored "-Wsign-compare"
+#endif
 
-/**
- * method for taking the absolute of a value
- */
-template <typename T>
-fetch::math::meta::IfIsMath<T, T> Abs(fetch::vm::VM *, T const &a)
-{
-  T x;
-  fetch::math::Abs(a, x);
-  return x;
-}
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wconversion"
+#pragma clang diagnostic ignored "-Wpedantic"
+#pragma clang diagnostic ignored "-Wsign-compare"
+#endif
 
-static void CreateAbs(fetch::vm::Module &module)
-{
-  module.CreateFreeFunction<int32_t>("Abs", &Abs<int32_t>);
-  module.CreateFreeFunction<float_t>("Abs", &Abs<float_t>);
-  module.CreateFreeFunction<double_t>("Abs", &Abs<double_t>);
-}
+#include <backward.hpp>
+#include <signal.h>
 
-inline void CreateAbs(std::shared_ptr<vm::Module> module)
-{
-  CreateAbs(*module.get());
-}
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
 
-}  // namespace vm_modules
-}  // namespace fetch
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif

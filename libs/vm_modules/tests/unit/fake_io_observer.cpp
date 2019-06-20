@@ -16,9 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "fake_io_observer.hpp"
-
 #include "core/logger.hpp"
+#include "fake_io_observer.hpp"
 
 #include <cstdint>
 #include <string>
@@ -45,9 +44,9 @@ FakeIoObserver::Status FakeIoObserver::Read(std::string const &key, void *data, 
 
   // ensure the buffer is the correct size
   auto const &stored_data = it->second;
+  size                    = stored_data.size();
   if (size < stored_data.size())
   {
-    size = stored_data.size();
     return Status::BUFFER_TOO_SMALL;
   }
 

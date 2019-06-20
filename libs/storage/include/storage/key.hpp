@@ -53,7 +53,7 @@ struct Key
 
   using BlockType = BLOCK_TYPE;
 
-  enum : size_t
+  enum : std::size_t
   {
     BITS                 = V_BITS,
     BYTES                = BITS >> 3,

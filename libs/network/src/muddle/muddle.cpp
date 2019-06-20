@@ -16,20 +16,22 @@
 //
 //------------------------------------------------------------------------------
 
-#include "network/muddle/muddle.hpp"
-
 #include "core/logger.hpp"
 #include "core/serializers/byte_array.hpp"
 #include "core/serializers/byte_array_buffer.hpp"
 #include "core/serializers/stl_types.hpp"
+#include "network/muddle/muddle.hpp"
 #include "network/muddle/muddle_register.hpp"
 #include "network/muddle/muddle_server.hpp"
 #include "network/tcp/tcp_client.hpp"
 #include "network/tcp/tcp_server.hpp"
 
+#include <algorithm>
+#include <cassert>
 #include <chrono>
+#include <cstddef>
+#include <exception>
 #include <sstream>
-#include <thread>
 
 using fetch::byte_array::ByteArray;
 using fetch::byte_array::ConstByteArray;
