@@ -24,7 +24,7 @@
 
 #include "vm/module.hpp"
 
-#include "vm_modules/ml/dataloader/mnist_dataloader.hpp"
+#include "vm_modules/ml/dataloaders/mnist_dataloader.hpp"
 #include "vm_modules/ml/graph.hpp"
 #include "vm_modules/ml/optimisation/adam_optimiser.hpp"
 #include "vm_modules/ml/training_pair.hpp"
