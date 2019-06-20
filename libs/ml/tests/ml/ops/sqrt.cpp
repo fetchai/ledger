@@ -61,16 +61,16 @@ TYPED_TEST(SqrtBothTest, forward_all_positive_test)
 {
   using ArrayType = TypeParam;
 
-  ArrayType data = ArrayType::FromString("0, -0, 1, 2, 4, 10, 100");
-  ArrayType gt   = ArrayType::FromString("0, 0, 1, 1.41421356, 2, 3.1622776, 10");
+  ArrayType data = ArrayType::FromString("0, 1, 2, 4, 10, 100");
+  ArrayType gt   = ArrayType::FromString("0, 1, 1.41421356, 2, 3.1622776, 10");
 
   fetch::ml::ops::Sqrt<TypeParam> op;
 
   TypeParam prediction(op.ComputeOutputShape({data}));
   op.Forward({data}, prediction);
 
-  ASSERT_TRUE(
-      prediction.AllClose(gt, typename TypeParam::Type(1e-4), typename TypeParam::Type(1e-4)));
+  ASSERT_TRUE(prediction.AllClose(gt, fetch::math::function_tolerance<typename ArrayType::Type>(),
+                                  fetch::math::function_tolerance<typename ArrayType::Type>()));
 }
 
 TYPED_TEST(SqrtBothTest, backward_all_positive_test)
