@@ -74,12 +74,12 @@ TEST_F(StakeUpdateQueueTests, SimpleCheck)
   EXPECT_EQ(3, stake_update_queue_->size());
 
   // check to make sure the update map has been set correctly
-  stake_update_queue_->VisitUnderlyingList([&](auto const &map) {
+  stake_update_queue_->VisitUnderlyingQueue([&](auto const &map) {
     EXPECT_EQ(3, map.size());
 
-    EXPECT_TRUE(IsIn(map, 10));
-    EXPECT_TRUE(IsIn(map, 11));
-    EXPECT_TRUE(IsIn(map, 12));
+    EXPECT_TRUE(IsIn(map, 10u));
+    EXPECT_TRUE(IsIn(map, 11u));
+    EXPECT_TRUE(IsIn(map, 12u));
 
     EXPECT_TRUE(IsIn(map.at(10), address1));
     EXPECT_EQ(1, map.at(10).size());
