@@ -24,6 +24,13 @@
 namespace fetch {
 namespace ledger {
 
+/**
+ * Generate Entropy for a specified block period
+ *
+ * @param block_digest The specified block digest for the period
+ * @param block_number The block number
+ * @return The generated entropy
+ */
 uint64_t ledger::NaiveEntropyGenerator::GenerateEntropy(Digest block_digest, uint64_t block_number)
 {
   FETCH_UNUSED(block_number);

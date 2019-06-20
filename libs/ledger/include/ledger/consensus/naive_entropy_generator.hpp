@@ -22,6 +22,12 @@
 namespace fetch {
 namespace ledger {
 
+/**
+ * Simplistic Test Entropy Generator
+ *
+ * Entropy is generated from the block hash as a source. It is repeated hashed a number of times
+ * in order to generate the entropy source.
+ */
 class NaiveEntropyGenerator : public EntropyGeneratorInterface
 {
 public:
