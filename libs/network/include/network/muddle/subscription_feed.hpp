@@ -17,13 +17,17 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/mutex.hpp"
-#include "network/muddle/subscription.hpp"
+#include "network/muddle/packet.hpp"
 
+#include <cstdint>
 #include <memory>
+#include <mutex>
+#include <vector>
 
 namespace fetch {
 namespace muddle {
+
+class Subscription;
 
 /**
  * The aggregation of set of subscriptions to the same service and channel combination. This is an

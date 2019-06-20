@@ -17,10 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "mock_io_observer.hpp"
-
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/byte_array/decoders.hpp"
+#include "mock_io_observer.hpp"
 #include "vm/compiler.hpp"
 #include "vm/module.hpp"
 #include "vm/variant.hpp"

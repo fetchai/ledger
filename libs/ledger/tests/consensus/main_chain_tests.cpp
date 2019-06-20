@@ -19,8 +19,15 @@
 #include "core/random/lfg.hpp"
 #include "ledger/chain/consensus/dummy_miner.hpp"
 #include "ledger/chain/main_chain.hpp"
-#include <gtest/gtest.h>
-#include <list>
+
+#include "gtest/gtest.h"
+
+#include <chrono>
+#include <cstddef>
+#include <cstdint>
+#include <iostream>
+#include <map>
+#include <vector>
 
 using fetch::ledger::consensus::DummyMiner;
 using fetch::ledger::Block;

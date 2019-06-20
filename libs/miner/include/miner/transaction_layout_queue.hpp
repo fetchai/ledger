@@ -17,11 +17,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/bitvector.hpp"
-#include "crypto/fnv.hpp"
 #include "ledger/chain/digest.hpp"
 #include "ledger/chain/transaction_layout.hpp"
 
+#include <cstddef>
+#include <cstdint>
 #include <list>
 
 namespace fetch {

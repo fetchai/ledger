@@ -203,7 +203,7 @@ BlockCoordinator::State BlockCoordinator::OnSynchronising()
     current_block_ = chain_.GetHeaviestBlock();
   }
 
-  if (!current_block_)
+  if (!current_block_ || current_block_->body.hash.empty())
   {
     FETCH_LOG_ERROR(LOGGING_NAME, "Invalid heaviest block, empty block hash");
 

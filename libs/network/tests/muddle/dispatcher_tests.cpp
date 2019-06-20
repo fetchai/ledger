@@ -18,7 +18,8 @@
 
 #include "network/muddle/dispatcher.hpp"
 
-#include <gmock/gmock.h>
+#include "gmock/gmock.h"
+
 #include <memory>
 
 class DispatcherTests : public ::testing::Test

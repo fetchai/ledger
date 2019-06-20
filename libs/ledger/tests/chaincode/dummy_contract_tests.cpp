@@ -20,12 +20,10 @@
 #include "ledger/chain/transaction.hpp"
 #include "ledger/chain/transaction_builder.hpp"
 #include "ledger/chaincode/dummy_contract.hpp"
-
 #include "ledger/state_sentinel_adapter.hpp"
-
 #include "mock_storage_unit.hpp"
 
-#include <gmock/gmock.h>
+#include "gmock/gmock.h"
 
 #include <memory>
 

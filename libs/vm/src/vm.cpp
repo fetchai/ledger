@@ -16,11 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
+#include "vm/module.hpp"
 #include "vm/vm.hpp"
 
-#include "vm/module.hpp"
-
 #include <cstddef>
+#include <cstdint>
 
 namespace fetch {
 namespace vm {

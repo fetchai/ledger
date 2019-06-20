@@ -25,7 +25,7 @@
 #include "storage/new_revertible_document_store.hpp"
 #include "testing/common_testing_functionality.hpp"
 
-#include <gtest/gtest.h>
+#include "gtest/gtest.h"
 
 #include <algorithm>
 #include <iostream>

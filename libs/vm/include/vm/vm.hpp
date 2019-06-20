@@ -18,19 +18,33 @@
 //------------------------------------------------------------------------------
 
 #include "math/arithmetic/comparison.hpp"
+#include "vm/common.hpp"
 #include "vm/generator.hpp"
-#include "vm/io_observer_interface.hpp"
+#include "vm/object.hpp"
+#include "vm/opcodes.hpp"
 #include "vm/string.hpp"
 #include "vm/variant.hpp"
+
 #include <cassert>
+#include <cstddef>
+#include <cstdint>
+#include <functional>
 #include <iostream>
 #include <sstream>
+#include <stdexcept>
+#include <string>
+#include <type_traits>
+#include <typeinfo>
+#include <unordered_map>
+#include <utility>
+#include <vector>
 
 namespace fetch {
 namespace vm {
 
 template <typename T, typename = void>
 struct Getter;
+
 template <typename T>
 struct Getter<T, IfIsPrimitive<T>>
 {
@@ -59,6 +73,7 @@ struct Getter<T, typename std::enable_if_t<IsVariant<T>::value>>
 
 template <int POSITION, typename... Ts>
 struct AssignParameters;
+
 template <int POSITION, typename T, typename... Ts>
 struct AssignParameters<POSITION, T, Ts...>
 {
@@ -98,6 +113,8 @@ struct AssignParameters<POSITION>
 };
 
 // Forward declarations
+class IR;
+class IoObserverInterface;
 class Module;
 
 class ParameterPack

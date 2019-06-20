@@ -18,27 +18,34 @@
 
 #include "bootstrap_monitor.hpp"
 #include "constellation.hpp"
-#include "fetch_version.hpp"
-
+#include "core/byte_array/byte_array.hpp"
+#include "core/byte_array/const_byte_array.hpp"
+#include "core/byte_array/decoders.hpp"
 #include "core/commandline/cli_header.hpp"
-#include "core/commandline/parameter_parser.hpp"
 #include "core/commandline/params.hpp"
-#include "core/json/document.hpp"
+#include "core/logger.hpp"
 #include "core/macros.hpp"
+#include "core/runnable.hpp"
 #include "core/string/to_lower.hpp"
 #include "crypto/ecdsa.hpp"
 #include "crypto/fetch_identity.hpp"
+#include "crypto/identity.hpp"
 #include "crypto/prover.hpp"
-#include "metrics/metrics.hpp"
+#include "fetch_version.hpp"
+#include "ledger/chain/address.hpp"
 #include "network/adapters.hpp"
-#include "network/fetch_asio.hpp"
-#include "network/management/network_manager.hpp"
-#include "variant/variant.hpp"
+#include "network/p2pservice/manifest.hpp"
+#include "network/p2pservice/p2p_service_defs.hpp"
+#include "network/peer.hpp"
+#include "network/uri.hpp"
 
 #include <atomic>
 #include <csignal>
+#include <cstddef>
 #include <cstdint>
 #include <cstdlib>
+#include <exception>
+#include <fstream>
 #include <iostream>
 #include <memory>
 #include <stdexcept>

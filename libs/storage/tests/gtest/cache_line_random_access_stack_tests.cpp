@@ -19,7 +19,7 @@
 #include "core/random/lfg.hpp"
 #include "storage/cache_line_random_access_stack.hpp"
 
-#include <gtest/gtest.h>
+#include "gtest/gtest.h"
 
 using namespace fetch::storage;
 

@@ -16,24 +16,23 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chaincode/smart_contract.hpp"
-
 #include "core/byte_array/decoders.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "crypto/fnv.hpp"
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
 #include "ledger/chain/transaction.hpp"
+#include "ledger/chaincode/smart_contract.hpp"
 #include "ledger/chaincode/smart_contract_exception.hpp"
 #include "ledger/chaincode/vm_definition.hpp"
+#include "ledger/fetch_msgpack.hpp"
 #include "ledger/state_adapter.hpp"
 #include "ledger/storage_unit/cached_storage_adapter.hpp"
 #include "variant/variant.hpp"
 #include "variant/variant_utils.hpp"
+#include "vm/address.hpp"
 #include "vm/function_decorators.hpp"
 #include "vm_modules/vm_factory.hpp"
-
-#include "ledger/fetch_msgpack.hpp"
 
 #include <algorithm>
 #include <stdexcept>

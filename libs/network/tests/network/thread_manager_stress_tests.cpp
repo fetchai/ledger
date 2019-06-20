@@ -17,8 +17,10 @@
 //------------------------------------------------------------------------------
 
 #include "network/management/network_manager.hpp"
+
+#include "gtest/gtest.h"
+
 #include <cstdlib>
-#include <gtest/gtest.h>
 #include <iostream>
 #include <memory>
 
@@ -51,10 +53,7 @@ void TestCase1()
     tmanager.Start();
 
     tmanager.Post([]() { std::this_thread::sleep_for(std::chrono::milliseconds(100)); });
-    tmanager.Post([]() {
-      std::cout << "This thread prints stuff" << std::endl;
-      ;
-    });
+    tmanager.Post([]() { std::cout << "This thread prints stuff" << std::endl; });
     tmanager.Stop();
   }
 

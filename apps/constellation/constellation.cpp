@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "constellation.hpp"
+#include "health_check_http_module.hpp"
 #include "http/middleware/allow_origin.hpp"
 #include "ledger/chain/consensus/bad_miner.hpp"
 #include "ledger/chain/consensus/dummy_miner.hpp"
@@ -34,11 +35,10 @@
 #include "network/p2pservice/p2p_http_interface.hpp"
 #include "network/uri.hpp"
 
-#include "health_check_http_module.hpp"
-
 #include <chrono>
+#include <cstddef>
+#include <cstdint>
 #include <memory>
-#include <random>
 #include <stdexcept>
 #include <thread>
 #include <utility>
@@ -56,8 +56,6 @@ using fetch::network::Peer;
 using fetch::ledger::Address;
 
 using ExecutorPtr = std::shared_ptr<Executor>;
-using ConsensusMinerInterfacePtr =
-    std::shared_ptr<fetch::ledger::consensus::ConsensusMinerInterface>;
 
 namespace fetch {
 namespace {

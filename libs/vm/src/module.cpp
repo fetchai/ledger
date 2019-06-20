@@ -16,10 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include "vm/common.hpp"
 #include "vm/module.hpp"
 #include "vm/sharded_state.hpp"
-
-#include "vm/common.hpp"
 #include "vm/variant.hpp"
 #include "vm/vm.hpp"
 
@@ -106,6 +105,8 @@ To Cast(Variant const &from)
   default:
   {
     to = 0;
+    // Not a primitive
+    assert(false);
     break;
   }
   }  // switch

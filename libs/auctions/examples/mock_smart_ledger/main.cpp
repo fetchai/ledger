@@ -16,19 +16,22 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/commandline/params.hpp"
-#include <iostream>
-
 #include "auctions/mock_smart_ledger.hpp"
+#include "auctions/type_def.hpp"
+#include "core/commandline/params.hpp"
 #include "http/server.hpp"
 #include "network/management/network_manager.hpp"
 
 #include <chrono>
+#include <cstddef>
+#include <cstdint>
+#include <iostream>
+#include <string>
 #include <thread>
+#include <vector>
 
 int main(int argc, char **argv)
 {
-
   fetch::commandline::Params parser;
 
   std::string host;

@@ -19,7 +19,7 @@
 
 #include "fake_block_packer.hpp"
 
-#include <gmock/gmock.h>
+#include "gmock/gmock.h"
 
 class MockBlockPacker : public fetch::ledger::BlockPackerInterface
 {
