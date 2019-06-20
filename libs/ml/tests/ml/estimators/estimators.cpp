@@ -17,19 +17,6 @@
 //------------------------------------------------------------------------------
 
 #include "math/tensor.hpp"
-//#include "ml/graph.hpp"
-//#include "ml/ops/activations/relu.hpp"
-//#include "ml/ops/loss_functions.hpp"
-//#include "ml/ops/multiply.hpp"
-//#include "ml/ops/placeholder.hpp"
-//#include "ml/ops/subtract.hpp"
-//#include "ml/optimisation/adagrad_optimiser.hpp"
-//#include "ml/optimisation/adam_optimiser.hpp"
-//#include "ml/optimisation/momentum_optimiser.hpp"
-//#include "ml/optimisation/rmsprop_optimiser.hpp"
-//#include "ml/optimisation/sgd_optimiser.hpp"
-//
-//#include "ml/layers/self_attention.hpp"
 
 #include "ml/dataloaders/tensor_dataloader.hpp"
 #include "ml/estimators/dnn_classifier.hpp"
@@ -48,42 +35,42 @@ TYPED_TEST_CASE(EstimatorsTest, MyTypes);
 template <typename TypeParam>
 void PrepareTestDataAndLabels1D(TypeParam &data, TypeParam &gt, TypeParam &test_datum)
 {
-  data       = TypeParam::FromString("0, 1, 2, 3; 1, 2, 3, 4; 2, 3, 4, 5");
-  gt         = TypeParam::FromString("0, 1, 2, 3; 1, 2, 3, 4; 2, 3, 4, 5");
-  test_datum = TypeParam::FromString("0; 1; 2");
+  data       = TypeParam::FromString("0, 1, 0; 1, 0, 0; 0, 0, 1");
+  gt         = TypeParam::FromString("0, 1, 0; 1, 0, 0; 0, 0, 1");
+  test_datum = TypeParam::FromString("0; 1; 0");
 }
 
-template <typename TypeParam>
-void PrepareTestDataAndLabels2D(TypeParam &data, TypeParam &gt)
-{
-  using DataType = typename TypeParam::Type;
-
-  data.Resize({2, 2, 3});
-  data.Set(0, 0, 0, DataType(1));
-  data.Set(0, 1, 0, DataType(2));
-  data.Set(1, 0, 0, DataType(3));
-  data.Set(1, 1, 0, DataType(4));
-
-  data.Set(0, 0, 1, DataType(5));
-  data.Set(0, 1, 1, DataType(6));
-  data.Set(1, 0, 1, DataType(7));
-  data.Set(1, 1, 1, DataType(8));
-
-  data.Set(0, 0, 2, DataType(9));
-  data.Set(0, 1, 2, DataType(10));
-  data.Set(1, 0, 2, DataType(11));
-  data.Set(1, 1, 2, DataType(12));
-
-  gt.Resize({2, 3});
-  gt.Set(0, 0, DataType(2));
-  gt.Set(1, 0, DataType(3));
-
-  gt.Set(0, 1, DataType(6));
-  gt.Set(1, 1, DataType(7));
-
-  gt.Set(0, 2, DataType(10));
-  gt.Set(1, 2, DataType(11));
-}
+//template <typename TypeParam>
+//void PrepareTestDataAndLabels2D(TypeParam &data, TypeParam &gt)
+//{
+//  using DataType = typename TypeParam::Type;
+//
+//  data.Resize({2, 2, 3});
+//  data.Set(0, 0, 0, DataType(1));
+//  data.Set(0, 1, 0, DataType(2));
+//  data.Set(1, 0, 0, DataType(3));
+//  data.Set(1, 1, 0, DataType(4));
+//
+//  data.Set(0, 0, 1, DataType(5));
+//  data.Set(0, 1, 1, DataType(6));
+//  data.Set(1, 0, 1, DataType(7));
+//  data.Set(1, 1, 1, DataType(8));
+//
+//  data.Set(0, 0, 2, DataType(9));
+//  data.Set(0, 1, 2, DataType(10));
+//  data.Set(1, 0, 2, DataType(11));
+//  data.Set(1, 1, 2, DataType(12));
+//
+//  gt.Resize({2, 3});
+//  gt.Set(0, 0, DataType(2));
+//  gt.Set(1, 0, DataType(3));
+//
+//  gt.Set(0, 1, DataType(6));
+//  gt.Set(1, 1, DataType(7));
+//
+//  gt.Set(0, 2, DataType(10));
+//  gt.Set(1, 2, DataType(11));
+//}
 
 template <typename TypeParam, typename DataType, typename EstimatorType>
 EstimatorType SetupEstimator(fetch::ml::estimator::EstimatorConfig<DataType> &estimator_config,
@@ -95,7 +82,7 @@ EstimatorType SetupEstimator(fetch::ml::estimator::EstimatorConfig<DataType> &es
   data_loader_ptr->AddData(data, gt);
 
   // run estimator in training mode
-  return EstimatorType(estimator_config, data_loader_ptr, {3, 4, 3});
+  return EstimatorType(estimator_config, data_loader_ptr, {3, 100, 100, 3});
 }
 
 TYPED_TEST(EstimatorsTest, sgd_dnnclasifier)
@@ -107,7 +94,7 @@ TYPED_TEST(EstimatorsTest, sgd_dnnclasifier)
   fetch::math::SizeType n_training_steps = 10;
 
   fetch::ml::estimator::EstimatorConfig<DataType> estimator_config;
-  estimator_config.opt = fetch::ml::optimisers::OptimiserType::SGD;
+  estimator_config.opt           = fetch::ml::optimisers::OptimiserType::SGD;
 
   // set up data
   TypeParam data, gt, test_datum;
@@ -123,16 +110,25 @@ TYPED_TEST(EstimatorsTest, sgd_dnnclasifier)
   {
     DataType loss{0};
     DataType later_loss{0};
-    estimator.Train(1, loss);
-    estimator.Train(1, later_loss);
+    ASSERT_TRUE(estimator.Train(1, loss));
+    ASSERT_TRUE(estimator.Train(1, later_loss));
     EXPECT_LT(later_loss, loss);
     count++;
   }
 
+  ASSERT_TRUE(estimator.Train(100));
+
   // test prediction performance
   TypeParam pred({3, 1});
-  bool      success = estimator.Predict(test_datum, pred);
+
+  estimator.Train(100);
+  bool success = estimator.Predict(test_datum, pred);
+
   ASSERT_TRUE(success);
+
+  std::cout << "pred.ToString(): " << pred.ToString() << std::endl;
+  std::cout << "test_datum.ToString(): " << test_datum.ToString() << std::endl;
+
   EXPECT_TRUE(pred.AllClose(test_datum));
 }
 

@@ -48,9 +48,10 @@ public:
 
   void SetupModel(std::vector<SizeType> const &hidden_layers);
 
-  virtual bool Train(SizeType n_steps, DataType &loss);
-  virtual bool Validate();
-  virtual bool Predict(TensorType &input, TensorType &output);
+  virtual bool Train(SizeType n_steps) override;
+  virtual bool Train(SizeType n_steps, DataType &loss) override;
+  virtual bool Validate() override;
+  virtual bool Predict(TensorType &input, TensorType &output) override;
 
 private:
   std::shared_ptr<dataloaders::DataLoader<TensorType, TensorType>>     data_loader_ptr_;
@@ -109,6 +110,19 @@ void DNNClassifier<TensorType>::SetupModel(std::vector<SizeType> const &hidden_l
       hidden_layers.at(hidden_layers.size() - 1), fetch::ml::details::ActivationType::SOFTMAX);
 }
 
+/**
+ * An interface to train that doesn't report loss
+ * @tparam TensorType
+ * @param n_steps
+ * @return
+ */
+template <typename TensorType>
+bool DNNClassifier<TensorType>::Train(SizeType n_steps)
+{
+  DataType _;
+  return DNNClassifier<TensorType>::Train(n_steps, _);
+}
+
 template <typename TensorType>
 bool DNNClassifier<TensorType>::Train(SizeType n_steps, DataType &loss)
 {
@@ -129,7 +143,6 @@ bool DNNClassifier<TensorType>::Train(SizeType n_steps, DataType &loss)
     // run optimiser for one epoch
     loss = optimiser_ptr_->Run(*data_loader_ptr_, this->estimator_config_.batch_size,
                                this->estimator_config_.subset_size);
-    std::cout << "Loss: " << loss << std::endl;
 
     // update early stopping
     if (this->estimator_config_.early_stopping)
