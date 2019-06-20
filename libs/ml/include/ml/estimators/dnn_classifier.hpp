@@ -47,7 +47,11 @@ public:
                 OptimiserType optimiser_type = OptimiserType::ADAM);
 
   void SetupModel(std::vector<SizeType> const &hidden_layers);
-  bool Run(SizeType n_steps, RunMode const &rm, TensorType &input) override;
+
+
+  virtual bool Train(SizeType n_steps);
+  virtual bool Validate();
+  virtual bool Predict(TensorType &input);
 
 private:
   std::shared_ptr<DataLoader<TensorType, TensorType>>                  data_loader_ptr_;
@@ -106,44 +110,68 @@ void DNNClassifier<TensorType>::SetupModel(std::vector<SizeType> const &hidden_l
       hidden_layers.at(hidden_layers.size() - 1), fetch::ml::details::ActivationType::SOFTMAX);
 }
 
-/**
- *
- * @param steps
- * @param run_mode
- * @return
- */
-template <typename TensorType>
-bool DNNClassifier<TensorType>::Run(SizeType n_steps, RunMode const &run_mode, TensorType &input)
-{
-  switch (run_mode)
-  {
-  case (RunMode::TRAIN):
-  {
-    DataType loss;
-    for (SizeType i{0}; i < n_steps; i++)
-    {
-      loss = optimiser_ptr_->Run(*data_loader_ptr_, this->estimator_config_.batch_size);
-      std::cout << "Loss: " << loss << std::endl;
-    }
-    return true;
-  }
-  case (RunMode::VALIDATE):
-  {
-    return false;
-  }
-  case (RunMode::PREDICT):
-  {
-    this->graph_ptr_->SetInput(input_, input);
-    auto pred = this->graph_ptr_->Evaluate(output_);
-    std::cout << "pred.ToString(): " << pred.ToString() << std::endl;
 
-    return true;
-  }
-  default:
+template <typename TensorType>
+bool DNNClassifier<TensorType>::Train(SizeType n_steps)
+{
+  DataType loss;
+  DataType max_loss;
+  SizeType patience_count{0};
+  bool     stop_early = false;
+
+  // run for one epoch
+  loss     = optimiser_ptr_->Run(*data_loader_ptr_, this->estimator_config_.batch_size,
+                             this->estimator_config_.subset_size);
+  max_loss = loss;
+
+  // run for remaining epochs with early stopping
+  SizeType step{1};
+  while ((!stop_early) && (step < n_steps))
   {
-    return false;
+    // run optimiser for one epoch
+    loss = optimiser_ptr_->Run(*data_loader_ptr_, this->estimator_config_.batch_size,
+                               this->estimator_config_.subset_size);
+    std::cout << "Loss: " << loss << std::endl;
+
+    // update early stopping
+    if (this->estimator_config_.early_stopping)
+    {
+      if (loss < (max_loss - this->estimator_config_.min_delta))
+      {
+        max_loss       = loss;
+        patience_count = 0;
+      }
+      else
+      {
+        patience_count++;
+      }
+
+      if (patience_count >= this->estimator_config_.patience)
+      {
+        stop_early = true;
+      }
+    }
+
+    step++;
   }
-  }
+  return true;
+}
+
+template <typename TensorType>
+bool DNNClassifier<TensorType>::Validate()
+{
+  throw std::runtime_error("validate not implemented");
+  return true;
+}
+
+template <typename TensorType>
+bool DNNClassifier<TensorType>::Predict(TensorType &input)
+{
+  this->graph_ptr_->SetInput(input_, input);
+  auto pred = this->graph_ptr_->Evaluate(output_);
+  std::cout << "pred.ToString(): " << pred.ToString() << std::endl;
+
+  return true;
 }
 
 }  // namespace estimator

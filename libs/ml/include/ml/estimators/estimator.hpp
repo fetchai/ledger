@@ -28,13 +28,6 @@ namespace fetch {
 namespace ml {
 namespace estimator {
 
-enum class RunMode
-{
-  TRAIN,
-  VALIDATE,
-  PREDICT
-};
-
 template <typename DataType>
 struct EstimatorConfig
 {
@@ -46,11 +39,13 @@ struct EstimatorConfig
 
   bool     early_stopping = false;
   SizeType patience       = 10;
+  DataType min_delta      = DataType(0.0);
 
   DataType learning_rate = DataType(0.001);
   DataType epoch_decay   = DataType(0.9);
 
-  SizeType batch_size = SizeType(32);
+  SizeType batch_size  = SizeType(32);
+  SizeType subset_size = fetch::ml::optimisers::SIZE_NOT_SET;
 
   OptimiserType    opt  = OptimiserType::ADAM;
   CostFunctionType cost = CostFunctionType::SOFTMAX_CROSS_ENTROPY;
@@ -69,7 +64,9 @@ public:
 
   virtual ~Estimator() = default;
 
-  virtual bool Run(SizeType n_steps, RunMode const &run_mode, TensorType &input) = 0;
+  virtual bool Train(SizeType n_steps) = 0;
+  virtual bool Validate() = 0;
+  virtual bool Predict(TensorType &input) = 0;
 
 protected:
   EstimatorConfig<DataType>          estimator_config_;

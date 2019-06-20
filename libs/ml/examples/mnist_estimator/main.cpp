@@ -31,8 +31,8 @@ using EstimatorType  = typename fetch::ml::estimator::DNNClassifier<TensorType>;
 using DataLoaderType = typename fetch::ml::MNISTLoader<TensorType, TensorType>;
 
 // TODO: implement a default dataloader for estimators
-// TODO: implement early stopping
-// TODO: rationalise Run() interaface
+// TODO: rationalise Run() interface
+// TODO: add an estimator test
 
 int main(int ac, char **av)
 {
@@ -48,6 +48,7 @@ int main(int ac, char **av)
   // setup config
   EstimatorConfig<DataType> estimator_config;
   estimator_config.batch_size     = 64;
+  estimator_config.subset_size    = 1000;
   estimator_config.early_stopping = true;
   estimator_config.opt            = OptimiserType::ADAM;
 
@@ -57,10 +58,10 @@ int main(int ac, char **av)
 
   // run estimator in training mode
   EstimatorType estimator(estimator_config, data_loader_ptr, {784, 100, 20, 10});
-  estimator.Run(5, RunMode::TRAIN, test_datum);
+  estimator.Train(1000);
 
   // run estimator in testing mode
-  estimator.Run(5, RunMode::PREDICT, test_datum);
+  estimator.Predict(test_datum);
 
   return 0;
 }
