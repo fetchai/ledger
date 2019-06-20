@@ -252,7 +252,7 @@ struct Array : public IArray
     return true;
   }
 
-  TypeId                   element_type_id;
+  TypeId element_type_id;
   // ElementType must NOT be bool because std::vector<bool> is a partial specialisation
   std::vector<ElementType> elements;
 };
