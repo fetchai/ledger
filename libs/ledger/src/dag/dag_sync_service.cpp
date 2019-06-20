@@ -140,19 +140,19 @@ DAGSyncService::State DAGSyncService::OnQueryMissing()
 {
   auto missing = dag_->GetRecentlyMissing();
 
-  missing_dnodes_.clear();
+  missing_dag_nodes_.clear();
 
-  for (auto const &dnode : missing)
+  for (auto const &dag_node : missing)
   {
-    missing_dnodes_.insert(dnode);
+    missing_dag_nodes_.insert(dag_node);
   }
 
-  if (!missing_dnodes_.empty())
+  if (!missing_dag_nodes_.empty())
   {
     for (auto const &connection : muddle_endpoint_.GetDirectlyConnectedPeers())
     {
       auto promise = PromiseOfMissingNodes(client_->CallSpecificAddress(
-          connection, RPC_DAG_STORE_SYNC, DAGSyncProtocol::REQUEST_NODES, missing_dnodes_));
+          connection, RPC_DAG_STORE_SYNC, DAGSyncProtocol::REQUEST_NODES, missing_dag_nodes_));
       missing_pending_.Add(connection, promise);
     }
 

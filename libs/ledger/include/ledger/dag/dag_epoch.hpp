@@ -34,7 +34,7 @@ struct DAGEpoch
 
   uint64_t block_number;
 
-  // TODO(EJF): The order of these nodes will need to be revised
+  // TODO(issue 1229): The order of these nodes will need to be revised
   std::set<ConstByteArray> tips{};
   std::set<ConstByteArray> data_nodes{};
   std::set<ConstByteArray> solution_nodes{};

@@ -70,7 +70,7 @@ public:
   using MissingNodes           = DAG::MissingNodes;
   using RequestingMissingNodes = network::RequestingQueueOf<muddle::Packet::Address, MissingNodes>;
   using PromiseOfMissingNodes  = network::PromiseOf<MissingNodes>;
-  using MissingDNodes          = std::set<byte_array::ConstByteArray>;
+  using MissingDAGNodes        = std::set<byte_array::ConstByteArray>;
 
   DAGSyncService(MuddleEndpoint &muddle_endpoint, std::shared_ptr<ledger::DAGInterface> dag);
   ~DAGSyncService() = default;
@@ -102,9 +102,8 @@ private:
   RequestingMissingNodes missing_set_;
   RequestingMissingNodes missing_pending_;
 
-  MissingDNodes missing_dnodes_;
+  MissingDAGNodes missing_dag_nodes_;
 
-  uint64_t RETRY_TIMEOUT        = 500;
   uint64_t BROADCAST_BATCH_SIZE = 5;
 
   fetch::mutex::Mutex               mutex_{__LINE__, __FILE__};

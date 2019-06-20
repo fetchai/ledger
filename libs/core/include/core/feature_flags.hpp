@@ -37,10 +37,10 @@ public:
   using ConstIterator  = FlagSet::const_iterator;
 
   // Construction / Destruction
-  FeatureFlags()                     = default;
-  FeatureFlags(FeatureFlags const &) = delete;
-  FeatureFlags(FeatureFlags &&)      = default;
-  ~FeatureFlags()                    = default;
+  FeatureFlags()                         = default;
+  FeatureFlags(FeatureFlags const &)     = delete;
+  FeatureFlags(FeatureFlags &&) noexcept = default;
+  ~FeatureFlags()                        = default;
 
   // Parsing
   void Parse(ConstByteArray const &contents);
@@ -61,7 +61,7 @@ public:
 
   // Operators
   FeatureFlags &operator=(FeatureFlags const &) = delete;
-  FeatureFlags &operator=(FeatureFlags &&) = default;
+  FeatureFlags &operator=(FeatureFlags &&) noexcept = default;
 
 private:
   FlagSet flags_;  ///< Flag storage
@@ -76,17 +76,6 @@ private:
 inline bool FeatureFlags::IsEnabled(ConstByteArray const &value) const
 {
   return flags_.find(value) != flags_.end();
-}
-
-/**
- * Check to see if a feature is disabled (not present)
- *
- * @param value The feature being queried
- * @return true if not present, otherwise false
- */
-inline bool FeatureFlags::IsDisabled(ConstByteArray const &value) const
-{
-  return !IsEnabled(value);
 }
 
 /**

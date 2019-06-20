@@ -56,7 +56,7 @@ public:
   BigUnsigned(super_type const &other)
     : super_type(other.Copy())
   {}
-  BigUnsigned(BigUnsigned &&other) = default;
+  BigUnsigned(BigUnsigned &&other) noexcept = default;
 
   BigUnsigned(uint64_t const &number, std::size_t size = 256)
   {

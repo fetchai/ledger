@@ -35,7 +35,7 @@ DAG::DAG(std::string db_name, bool load, CertificatePtr certificate)
   auto CreateCleanState = [this]() {
     epochs_.New(db_name_ + "_epochs.db", db_name_ + "_epochs.index.db");
     all_stored_epochs_.New(db_name_ + "_all_epochs.db", db_name_ + "_all_epochs.index.db");
-    finalised_dnodes_.New(db_name_ + "_fin_nodes.db", db_name_ + "_fin_nodes.index.db");
+    finalised_dag_nodes_.New(db_name_ + "_fin_nodes.db", db_name_ + "_fin_nodes.index.db");
 
     most_recent_epoch_ = 0;
     previous_epochs_.clear();
@@ -108,7 +108,7 @@ DAG::DAG(std::string db_name, bool load, CertificatePtr certificate)
     // Attempt to load state
     epochs_.Load(db_name_ + "_epochs.db", db_name_ + "_epochs.index.db");
     all_stored_epochs_.Load(db_name_ + "_all_epochs.db", db_name_ + "_all_epochs.index.db");
-    finalised_dnodes_.Load(db_name_ + "_fin_nodes.db", db_name_ + "_fin_nodes.index.db");
+    finalised_dag_nodes_.Load(db_name_ + "_fin_nodes.db", db_name_ + "_fin_nodes.index.db");
 
     DAGEpoch recover_head;
 
@@ -498,7 +498,7 @@ std::shared_ptr<DAGNode> DAG::GetDAGNodeInternal(ConstByteArray hash, bool inclu
   // Find in long term storage
   DAGNodePtr ret = std::make_shared<DAGNode>();
 
-  if (finalised_dnodes_.Get(storage::ResourceID(hash), *ret))
+  if (finalised_dag_nodes_.Get(storage::ResourceID(hash), *ret))
   {
     return ret;
   }
@@ -680,7 +680,9 @@ DAGEpoch DAG::CreateEpoch(uint64_t block_number)
     case DAGNode::DATA:
       ret.data_nodes.insert(dag_node_to_add->hash);
       break;
-    default:
+    case DAGNode::ARBITRARY:
+      break;
+    case DAGNode::GENESIS:
       break;
     }
   }
@@ -723,14 +725,14 @@ bool DAG::CommitEpoch(DAGEpoch new_epoch)
     if (it_node_to_rmv != node_pool_.end())
     {
       DAGNodePtr &node_to_remove = it_node_to_rmv->second;
-      finalised_dnodes_.Set(storage::ResourceID(node_to_remove->hash), *node_to_remove);
+      finalised_dag_nodes_.Set(storage::ResourceID(node_to_remove->hash), *node_to_remove);
       node_pool_.erase(it_node_to_rmv);
     }
     else if (loose_nodes_.find(node_hash) != loose_nodes_.end())
     {
       auto        loose_node_it  = loose_nodes_.find(node_hash);
       DAGNodePtr &node_to_remove = loose_node_it->second;
-      finalised_dnodes_.Set(storage::ResourceID(node_to_remove->hash), *node_to_remove);
+      finalised_dag_nodes_.Set(storage::ResourceID(node_to_remove->hash), *node_to_remove);
       loose_nodes_.erase(loose_node_it);
 
       // TODO(HUT): check that there are no references in loose_nodes_lookup_
@@ -779,7 +781,7 @@ void DAG::Flush()
 {
   epochs_.Flush(false);
   all_stored_epochs_.Flush(false);
-  finalised_dnodes_.Flush(false);
+  finalised_dag_nodes_.Flush(false);
 }
 
 void DAG::TraverseFromTips(std::set<ConstByteArray> const &tip_hashes,

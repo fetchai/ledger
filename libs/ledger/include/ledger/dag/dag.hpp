@@ -151,7 +151,7 @@ private:
   EpochStackStore      epochs_;  // Past less-relevant epochs as a stack (key = index, value = hash)
   EpochStore all_stored_epochs_;  // All epochs, including from non-winning forks (key = epoch hash,
                                   // val = epoch)
-  DAGNodeStore finalised_dnodes_;  // Once an epoch arrives, all dag nodes inbetween go here
+  DAGNodeStore finalised_dag_nodes_;  // Once an epoch arrives, all dag nodes inbetween go here
   DAGEpoch     temp_recently_created_epoch_;  // Most recent epoch, not in deque for convenience
 
   // clang-format off

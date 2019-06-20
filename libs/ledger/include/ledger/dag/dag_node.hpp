@@ -188,7 +188,8 @@ constexpr char const *DAGNodeTypeToString(uint64_t type)
   case DAGNode::DATA:
     text = "Data";
     break;
-  default:
+  case DAGNode::ARBITRARY:
+    text = "Arbitrary";
     break;
   }
 

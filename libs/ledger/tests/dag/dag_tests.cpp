@@ -100,13 +100,14 @@ protected:
     for (std::size_t epoch_index = 1; epoch_index < epochs_to_create; ++epoch_index)
     {
       // 1000 nodes in each epoch
-      for (std::size_t dnode_index = 0; dnode_index < nodes_in_epoch; ++dnode_index)
+      for (std::size_t dag_node_index = 0; dag_node_index < nodes_in_epoch; ++dag_node_index)
       {
-        std::string dag_contents(std::to_string(epoch_index) + ":" + std::to_string(dnode_index));
+        std::string dag_contents(std::to_string(epoch_index) + ":" +
+                                 std::to_string(dag_node_index));
         epoch_history_[epoch_index].insert(dag_contents);
         dag_->AddArbitrary(dag_contents);
 
-        if (dnode_index == nodes_in_epoch - 1)
+        if (dag_node_index == nodes_in_epoch - 1)
         {
           auto epoch = dag_->CreateEpoch(epoch_index);
           EXPECT_EQ(epoch.block_number, epoch_index);
@@ -186,10 +187,10 @@ TEST_F(DagTests, CheckDagMaintainsTipsCorrectly)
 
   DAG dag_2 = MakeDAG("dag2", false);
 
-  for (std::size_t dnode_index = 0; dnode_index < nodes_to_push; ++dnode_index)
+  for (std::size_t dag_node_index = 0; dag_node_index < nodes_to_push; ++dag_node_index)
   {
-    std::string dag_contents_A("A:" + std::to_string(dnode_index));
-    std::string dag_contents_B("B:" + std::to_string(dnode_index));
+    std::string dag_contents_A("A:" + std::to_string(dag_node_index));
+    std::string dag_contents_B("B:" + std::to_string(dag_node_index));
 
     items_A.push_back(dag_contents_A);
     items_B.push_back(dag_contents_B);
@@ -201,9 +202,9 @@ TEST_F(DagTests, CheckDagMaintainsTipsCorrectly)
     dag_->AddArbitrary(item);
   }
 
-  for (auto const &newly_minted_dnode : dag_->GetRecentlyAdded())
+  for (auto const &newly_minted_dag_node : dag_->GetRecentlyAdded())
   {
-    dag_2->AddDAGNode(newly_minted_dnode);
+    dag_2->AddDAGNode(newly_minted_dag_node);
   }
 
   // Push items B
@@ -229,9 +230,9 @@ TEST_F(DagTests, CheckDagMaintainsTipsCorrectly)
 
   std::random_shuffle(recently_added.begin(), recently_added.end());
 
-  for (auto const &newly_minted_dnode : recently_added)
+  for (auto const &newly_minted_dag_node : recently_added)
   {
-    dag_2->AddDAGNode(newly_minted_dnode);
+    dag_2->AddDAGNode(newly_minted_dag_node);
   }
 
   ASSERT_EQ(dag_2->SatisfyEpoch(epoch_2), true);  // can now satisfy
@@ -277,11 +278,11 @@ TEST_F(DagTests, CheckDagGetNode)
 {
   dag_->AddArbitrary("one_dag_node");
 
-  auto dnodes = dag_->GetRecentlyAdded();
+  auto dag_nodes = dag_->GetRecentlyAdded();
 
-  EXPECT_EQ(dnodes.size(), 1);
+  EXPECT_EQ(dag_nodes.size(), 1);
 
   ledger::DAGNode dummy;
-  EXPECT_EQ(dag_->GetDAGNode(dnodes.back().hash, dummy), true);
+  EXPECT_EQ(dag_->GetDAGNode(dag_nodes.back().hash, dummy), true);
   EXPECT_EQ(dag_->GetDAGNode(crypto::Hash<crypto::SHA256>("not here"), dummy), false);
 }

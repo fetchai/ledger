@@ -53,7 +53,7 @@ public:
     Address  miner;              ///< The identity of the generated miner
     uint32_t log2_num_lanes{0};  ///< The log2(number of lanes)
     Slices   slices;             ///< The slice lists
-    DAGEpoch dag_epoch;          ///< DAG epoch containing information on new dnodes
+    DAGEpoch dag_epoch;          ///< DAG epoch containing information on new dag_nodes
     uint64_t timestamp{0u};      ///< The number of seconds elapsed since the Unix epoch
   };
 
