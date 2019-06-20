@@ -69,14 +69,7 @@ public:
         fetch::math::Dot(in1_slice, in2_slice, output_slice_tensor);
 
         // Copy data to original array
-        auto output_slice_it        = output_slice.begin();
-        auto output_slice_tensor_it = output_slice_tensor.begin();
-        while (output_slice_it.is_valid())
-        {
-          *output_slice_it = *output_slice_tensor_it;
-          ++output_slice_it;
-          ++output_slice_tensor_it;
-        }
+        output_slice.Assign(output_slice_tensor);
       }
     }
     // Broadcast matmul 2D @ 3D
@@ -98,14 +91,7 @@ public:
         fetch::math::Dot(inputs.at(0).get(), in2_slice, output_slice_tensor);
 
         // Copy data to original array
-        auto output_slice_it        = output_slice.begin();
-        auto output_slice_tensor_it = output_slice_tensor.begin();
-        while (output_slice_it.is_valid())
-        {
-          *output_slice_it = *output_slice_tensor_it;
-          ++output_slice_it;
-          ++output_slice_tensor_it;
-        }
+        output_slice.Assign(output_slice_tensor);
       }
     }
     // Broadcast matmul 3D @ 2D
@@ -127,14 +113,7 @@ public:
         fetch::math::Dot(in1_slice, inputs.at(1).get(), output_slice_tensor);
 
         // Copy data to original array
-        auto output_slice_it        = output_slice.begin();
-        auto output_slice_tensor_it = output_slice_tensor.begin();
-        while (output_slice_it.is_valid())
-        {
-          *output_slice_it = *output_slice_tensor_it;
-          ++output_slice_it;
-          ++output_slice_tensor_it;
-        }
+        output_slice.Assign(output_slice_tensor);
       }
     }
   }
@@ -146,13 +125,13 @@ public:
     ArrayType error_signal1(inputs.at(0).get().shape());
     ArrayType error_signal2(inputs.at(1).get().shape());
 
-    // Normal MatMul
+    // Normal MatMul 2D @ 2D
     if (inputs.at(0).get().shape().size() == 2 && inputs.at(1).get().shape().size() == 2)
     {
       fetch::math::DotTranspose(error_signal, inputs.at(1).get(), error_signal1);
       fetch::math::TransposeDot(inputs.at(0).get(), error_signal, error_signal2);
     }
-    // Batchwise MatMul
+    // Batchwise MatMul 3D @ 3D
     else if (inputs.at(0).get().shape().size() == 3 && inputs.at(1).get().shape().size() == 3)
     {
 
@@ -182,23 +161,8 @@ public:
         fetch::math::TransposeDot(in1_slice, err_sig_slice, err2_slice_tensor);
 
         // Copy data to original array
-        auto err1_slice_it        = err1_slice.begin();
-        auto err1_slice_tensor_it = err1_slice_tensor.begin();
-        while (err1_slice_it.is_valid())
-        {
-          *err1_slice_it = *err1_slice_tensor_it;
-          ++err1_slice_it;
-          ++err1_slice_tensor_it;
-        }
-
-        auto err2_slice_it        = err2_slice.begin();
-        auto err2_slice_tensor_it = err2_slice_tensor.begin();
-        while (err2_slice_it.is_valid())
-        {
-          *err2_slice_it = *err2_slice_tensor_it;
-          ++err2_slice_it;
-          ++err2_slice_tensor_it;
-        }
+        err1_slice.Assign(err1_slice_tensor);
+        err2_slice.Assign(err2_slice_tensor);
       }
     }
     // Broadcast matmul 2D @ 3D
@@ -227,14 +191,8 @@ public:
 
         fetch::math::Add(error_signal1, tmp_err, error_signal1);
 
-        auto err2_slice_it        = err2_slice.begin();
-        auto err2_slice_tensor_it = err2_slice_tensor.begin();
-        while (err2_slice_it.is_valid())
-        {
-          *err2_slice_it = *err2_slice_tensor_it;
-          ++err2_slice_it;
-          ++err2_slice_tensor_it;
-        }
+        // Copy data to original array
+        err2_slice.Assign(err2_slice_tensor);
       }
     }
     // Broadcast matmul 3D @ 2D
@@ -265,14 +223,7 @@ public:
         fetch::math::Add(error_signal2, tmp_err, error_signal2);
 
         // Copy data to original array
-        auto err1_slice_it        = err1_slice.begin();
-        auto err1_slice_tensor_it = err1_slice_tensor.begin();
-        while (err1_slice_it.is_valid())
-        {
-          *err1_slice_it = *err1_slice_tensor_it;
-          ++err1_slice_it;
-          ++err1_slice_tensor_it;
-        }
+        err1_slice.Assign(err1_slice_tensor);
       }
     }
 
