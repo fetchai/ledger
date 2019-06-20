@@ -375,16 +375,16 @@ void Convolution1D<ArrayType>::FillOutput(ArrayType const &gemm_output, ArrayTyp
                                           SizeType const output_channels,
                                           SizeType const output_height, SizeType const batch_size)
 {
-  SizeType i_tmp;
+  SizeType i_it;
   for (SizeType i_oc = 0; i_oc < output_channels; ++i_oc)  // Iterate over output channels
   {
-    i_tmp = 0;
+    i_it = 0;
     for (SizeType i_b{0}; i_b < batch_size; ++i_b)  // Iterate over batch
     {
       for (SizeType i_o = 0; i_o < output_height; ++i_o)  // Iterate over output height
       {
-        output(i_oc, i_o, i_b) = gemm_output(i_oc, i_tmp);
-        ++i_tmp;
+        output(i_oc, i_o, i_b) = gemm_output(i_oc, i_it);
+        ++i_it;
       }
     }
   }
@@ -405,16 +405,16 @@ void Convolution1D<ArrayType>::ReverseFillOutput(ArrayType &gemm_output, ArrayTy
                                                  SizeType const output_height,
                                                  SizeType const batch_size)
 {
-  SizeType i_tmp;
+  SizeType i_it;
   for (SizeType i_oc = 0; i_oc < output_channels; ++i_oc)  // Iterate over output channels
   {
-    i_tmp = 0;
+    i_it = 0;
     for (SizeType i_b{0}; i_b < batch_size; ++i_b)  // Iterate over batch
     {
       for (SizeType i_o = 0; i_o < output_height; ++i_o)  // Iterate over output height
       {
-        gemm_output(i_oc, i_tmp) = output(i_oc, i_o, i_b);
-        ++i_tmp;
+        gemm_output(i_oc, i_it) = output(i_oc, i_o, i_b);
+        ++i_it;
       }
     }
   }
