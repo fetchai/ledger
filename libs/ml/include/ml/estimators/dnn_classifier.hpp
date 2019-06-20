@@ -48,7 +48,6 @@ public:
 
   void SetupModel(std::vector<SizeType> const &hidden_layers);
 
-
   virtual bool Train(SizeType n_steps);
   virtual bool Validate();
   virtual bool Predict(TensorType &input);
@@ -109,7 +108,6 @@ void DNNClassifier<TensorType>::SetupModel(std::vector<SizeType> const &hidden_l
       "Output", {cur_input}, hidden_layers.at(hidden_layers.size() - 2),
       hidden_layers.at(hidden_layers.size() - 1), fetch::ml::details::ActivationType::SOFTMAX);
 }
-
 
 template <typename TensorType>
 bool DNNClassifier<TensorType>::Train(SizeType n_steps)

@@ -64,8 +64,8 @@ public:
 
   virtual ~Estimator() = default;
 
-  virtual bool Train(SizeType n_steps) = 0;
-  virtual bool Validate() = 0;
+  virtual bool Train(SizeType n_steps)    = 0;
+  virtual bool Validate()                 = 0;
   virtual bool Predict(TensorType &input) = 0;
 
 protected:

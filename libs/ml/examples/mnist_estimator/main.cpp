@@ -31,7 +31,6 @@ using EstimatorType  = typename fetch::ml::estimator::DNNClassifier<TensorType>;
 using DataLoaderType = typename fetch::ml::MNISTLoader<TensorType, TensorType>;
 
 // TODO: implement a default dataloader for estimators
-// TODO: rationalise Run() interface
 // TODO: add an estimator test
 
 int main(int ac, char **av)
