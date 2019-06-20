@@ -102,7 +102,6 @@ public:
 
   virtual void ApplyGradient(ArrayType const &grad)
   {
-    std::cout << this << "-Applly" << std::endl << grad.ToString() << std::endl;
     this->output_->InlineAdd(grad);
     ResetGradients();
   }

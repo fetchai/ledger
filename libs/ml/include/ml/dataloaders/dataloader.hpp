@@ -64,31 +64,15 @@ public:
     do
     {
       // Fill label slice
-      auto label_slice    = labels.Slice(i, label_batch_dimension);
-      auto label_slice_it = label_slice.begin();
-      auto label_it       = training_pair.first.begin();
-
-      while (label_slice_it.is_valid())
-      {
-        *label_slice_it = *label_it;
-        ++label_slice_it;
-        ++label_it;
-      }
+      auto label_slice = labels.Slice(i, label_batch_dimension);
+      label_slice.Assign(training_pair.first);
 
       // Fill all data from data vector
       for (SizeType j{0}; j < training_pair.second.size(); j++)
       {
         // Fill data[j] slice
-        auto data_slice    = data.at(j).Slice(i, training_pair.second.at(j).shape().size() - 1);
-        auto data_slice_it = data_slice.begin();
-        auto data_it       = training_pair.second.at(j).begin();
-
-        while (data_slice_it.is_valid())
-        {
-          *data_slice_it = *data_it;
-          ++data_slice_it;
-          ++data_it;
-        }
+        auto data_slice = data.at(j).Slice(i, training_pair.second.at(j).shape().size() - 1);
+        data_slice.Assign(training_pair.second.at(j));
       }
 
       i++;

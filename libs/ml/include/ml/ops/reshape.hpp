@@ -55,6 +55,7 @@ public:
     return {ret};
   }
 
+  // Output shape
   std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const
   {
     std::vector<SizeType> output_size;

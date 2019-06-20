@@ -301,8 +301,6 @@ public:
   }
 
   static constexpr char const *DESCRIPTOR = "MatrixMultiply";
-
-private:
 };
 
 }  // namespace ops

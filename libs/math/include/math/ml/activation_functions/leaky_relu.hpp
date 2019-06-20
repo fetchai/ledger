@@ -76,48 +76,52 @@ ArrayType LeakyRelu(ArrayType const &t, typename ArrayType::Type const &a)
 template <typename ArrayType>
 void LeakyRelu(ArrayType const &t, ArrayType const &a, ArrayType &ret)
 {
+  using DataType = typename ArrayType::Type;
+  using SizeType = typename ArrayType::SizeType;
+
+  // Test if input is broadcastable by batch dimension
+  assert(t.shape().size() == ret.shape().size());
+  assert(t.shape().size() == a.shape().size());
+  assert(a.shape().at(a.shape().size() - 1) == 1);
+
+  for (SizeType i{0}; i < t.shape().size() - 1; i++)
   {
-    assert(t.size() == ret.size());
+    assert(t.shape().at(i) == a.shape().at(i));
+    assert(t.shape().at(i) == ret.shape().at(i));
+  }
 
-    // Test broadcastability
-    // assert(t.size() == a.size());
+  SizeType t_batch_dimension   = t.shape().size() - 1;
+  SizeType a_batch_dimension   = a.shape().size() - 1;
+  SizeType ret_batch_dimension = ret.shape().size() - 1;
+  SizeType batch_size          = t.shape().at(t_batch_dimension);
 
-    using DataType = typename ArrayType::Type;
-    using SizeType = typename ArrayType::SizeType;
+  for (SizeType i{0}; i < batch_size; i++)
+  {
+    // Slice along batch dimension
+    auto t_slice   = t.Slice(i, t_batch_dimension);
+    auto a_slice   = a.Slice(0, a_batch_dimension);
+    auto ret_slice = ret.Slice(i, ret_batch_dimension);
 
-    SizeType t_batch_dimension   = t.shape().size() - 1;
-    SizeType a_batch_dimension   = a.shape().size() - 1;
-    SizeType ret_batch_dimension = ret.shape().size() - 1;
-    SizeType batch_size          = t.shape().at(t_batch_dimension);
+    auto it  = t_slice.begin();
+    auto rit = ret_slice.begin();
+    auto ait = a_slice.begin();
 
-    for (SizeType i{0}; i < batch_size; i++)
+    while (it.is_valid())
     {
-      // Slice along batch dimension
-      auto t_slice   = t.Slice(i, t_batch_dimension);
-      auto a_slice   = a.Slice(0, a_batch_dimension);
-      auto ret_slice = ret.Slice(i, ret_batch_dimension);
-
-      auto it  = t_slice.begin();
-      auto rit = ret_slice.begin();
-      auto ait = a_slice.begin();
-
-      while (it.is_valid())
+      *rit = fetch::math::Max(*it, typename ArrayType::Type(0));
+      if (*it >= DataType(0))
       {
-        *rit = fetch::math::Max(*it, typename ArrayType::Type(0));
-        if (*it >= DataType(0))
-        {
-          // f(x)=x for x>=0
-          *rit = *it;
-        }
-        else
-        {
-          // f(x)=a*x for x<0
-          *rit = Multiply(*ait, *it);
-        }
-        ++it;
-        ++rit;
-        ++ait;
+        // f(x)=x for x>=0
+        *rit = *it;
       }
+      else
+      {
+        // f(x)=a*x for x<0
+        *rit = Multiply(*ait, *it);
+      }
+      ++it;
+      ++rit;
+      ++ait;
     }
   }
 }

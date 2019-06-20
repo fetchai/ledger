@@ -42,7 +42,7 @@ public:
     assert(inputs.at(0).get().shape().at(0) == inputs.at(1).get().shape().at(0));
     assert(output.shape() == this->ComputeOutputShape(inputs));
 
-    fetch::math::BatchwiseAdd(inputs[0].get(), inputs[1].get(), output);
+    fetch::math::BatchwiseAdd(inputs.at(0).get(), inputs.at(1).get(), output);
   }
 
   virtual std::vector<ArrayType> Backward(VecTensorType const &inputs,

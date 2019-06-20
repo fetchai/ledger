@@ -32,7 +32,10 @@ public:
   using ArrayPtrType  = std::shared_ptr<ArrayType>;
   using VecTensorType = typename BatchOps<T>::VecTensorType;
 
-  Transpose()          = default;
+  Transpose(std::vector<SizeType> transpose_vector = {1, 0, 2})
+    : transpose_vector_(transpose_vector)
+  {}
+
   virtual ~Transpose() = default;
 
   virtual void Forward(VecTensorType const &inputs, ArrayType &output)
@@ -40,7 +43,7 @@ public:
     ASSERT(inputs.size() == 1);
     ASSERT(output.shape() == this->ComputeOutputShape(inputs));
 
-    if (output.shape().size() == 2)
+    if (inputs.front().get().shape().size() == 2)
     {
       output.Copy(inputs.front().get().Transpose());
     }
@@ -73,16 +76,24 @@ public:
     {
       return {inputs.front().get().shape().at(1), inputs.front().get().shape().at(0)};
     }
-    // Batchwise transpose
+    // Transpose with given vector
     else
     {
-      return {inputs.front().get().shape().at(1), inputs.front().get().shape().at(0),
-              inputs.at(0).get().shape().at(2)};
+      std::vector<SizeType> input_shape = inputs.front().get().shape();
+      std::vector<SizeType> shape;
+
+      shape.reserve(shape.size());
+      for (SizeType i{0}; i < transpose_vector_.size(); ++i)
+      {
+        shape.push_back(input_shape.at(transpose_vector_.at(i)));
+      }
+
+      return shape;
     }
   }
 
-  std::vector<SizeType>        transpose_vector_ = {1, 0, 2};
-  static constexpr char const *DESCRIPTOR        = "Transpose";
+  std::vector<SizeType>        transpose_vector_;
+  static constexpr char const *DESCRIPTOR = "Transpose";
 };
 
 }  // namespace ops

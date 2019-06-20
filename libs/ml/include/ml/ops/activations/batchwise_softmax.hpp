@@ -55,24 +55,13 @@ public:
     for (SizeType i{0}; i < inputs.at(0).get().shape().at(batch_dimension); i++)
     {
 
-      ArrayType input_slice_tensor  = inputs.at(0).get().Slice(i, batch_dimension).Copy();
+      ArrayType input_slice_tensor  = inputs.at(0).get().Slice(i, batch_dimension).Copy().Squeeze();
       auto      output_slice        = output.Slice(i, batch_dimension);
-      ArrayType output_slice_tensor = output_slice.Copy();
-
-      input_slice_tensor.Squeeze();
-      output_slice_tensor.Squeeze();
+      ArrayType output_slice_tensor = output_slice.Copy().Squeeze();
 
       fetch::math::Softmax(input_slice_tensor, output_slice_tensor, axis_);
 
-      auto output_slice_it        = output_slice.begin();
-      auto output_slice_tensor_it = output_slice_tensor.begin();
-
-      while (output_slice_tensor_it.is_valid())
-      {
-        *output_slice_it = *output_slice_tensor_it;
-        ++output_slice_it;
-        ++output_slice_tensor_it;
-      }
+      output_slice.Assign(output_slice_tensor);
     }
   }
 
@@ -118,32 +107,14 @@ public:
 
     for (SizeType i{0}; i < batch_size; i++)
     {
-      ArrayType input_slice        = inputs.front().get().Slice(i, batch_dimension).Copy();
-      ArrayType error_signal_slice = error_signal.Slice(i, batch_dimension).Copy();
-
-      input_slice.Squeeze();
-      error_signal_slice.Squeeze();
+      ArrayType input_slice = inputs.front().get().Slice(i, batch_dimension).Copy().Squeeze();
+      ArrayType error_signal_slice = error_signal.Slice(i, batch_dimension).Copy().Squeeze();
 
       ArrayType slice_return_signal = BackwardSlice(input_slice, error_signal_slice);
+      auto      return_signal_slice = return_signal.Slice(i, batch_dimension);
 
-      auto return_signal_slice    = return_signal.Slice(i, batch_dimension);
-      auto return_signal_slice_it = return_signal_slice.begin();
-      auto slice_return_signal_it = slice_return_signal.begin();
-      while (return_signal_slice_it.is_valid())
-      {
-        *return_signal_slice_it = *slice_return_signal_it;
-        ++slice_return_signal_it;
-        ++return_signal_slice_it;
-      }
+      return_signal_slice.Assign(slice_return_signal);
     }
-
-    /*
-    for(SizeType i{0};i<return_signal.shape().at(2);i++)
-    {
-    //std::cout<<"BatchSoftmaxRet("<<i<<")"<<std::endl<<return_signal.Slice(i,2).Copy().Squeeze().ToString()<<std::endl;
-        std::cout<<"BatchSoftmaxErr("<<i<<")"<<std::endl<<error_signal.Slice(i,2).Copy().Squeeze().ToString()<<std::endl;
-    }
-     */
 
     return {return_signal};
   }

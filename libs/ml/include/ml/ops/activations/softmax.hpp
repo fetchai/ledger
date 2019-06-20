@@ -50,7 +50,6 @@ public:
     assert(output.shape() == ComputeOutputShape(inputs));
     assert(inputs.size() == 1);
     fetch::math::Softmax(inputs.at(0).get(), output, axis_);
-    std::cout << "Softmax: " << std::endl << output.ToString() << std::endl;
   }
 
   std::vector<ArrayType> Backward(VecTensorType const &inputs, ArrayType const &error_signal)
@@ -83,9 +82,6 @@ public:
     }
 
     return_signal.InlineSubtract(t);
-
-    // std::cout<<"NormSoftmaxRet"<<std::endl<<return_signal.ToString()<<std::endl;
-
     return {return_signal};
   }
 
