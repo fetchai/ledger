@@ -52,7 +52,7 @@ public:
   DataType Run(std::vector<ArrayType> const &data, ArrayType const &labels,
                SizeType batch_size = SIZE_NOT_SET);
 
-  DataType Run(fetch::ml::DataLoader<ArrayType, ArrayType> &loader,
+  DataType Run(fetch::ml::dataloaders::DataLoader<ArrayType, ArrayType> &loader,
                SizeType batch_size = SIZE_NOT_SET, SizeType subset_size = SIZE_NOT_SET);
 
   void     UpdateLearningRate();
@@ -172,8 +172,9 @@ typename T::Type Optimiser<T, C>::Run(std::vector<ArrayType> const &data, ArrayT
  * @return Sum of losses from all mini-batches
  */
 template <class T, class C>
-typename T::Type Optimiser<T, C>::Run(fetch::ml::DataLoader<ArrayType, ArrayType> &loader,
-                                      SizeType batch_size, SizeType subset_size)
+typename T::Type Optimiser<T, C>::Run(
+    fetch::ml::dataloaders::DataLoader<ArrayType, ArrayType> &loader, SizeType batch_size,
+    SizeType subset_size)
 {
   if (loader.IsDone())
   {

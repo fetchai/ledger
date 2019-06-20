@@ -41,19 +41,19 @@ public:
   using CostFunctionType = fetch::ml::ops::CrossEntropy<TensorType>;
   using OptimiserType    = fetch::ml::optimisers::OptimiserType;
 
-  DNNClassifier(EstimatorConfig<DataType>                           estimator_config,
-                std::shared_ptr<DataLoader<TensorType, TensorType>> data_loader_ptr,
-                std::vector<SizeType> const &                       hidden_layers,
+  DNNClassifier(EstimatorConfig<DataType>                                        estimator_config,
+                std::shared_ptr<dataloaders::DataLoader<TensorType, TensorType>> data_loader_ptr,
+                std::vector<SizeType> const &                                    hidden_layers,
                 OptimiserType optimiser_type = OptimiserType::ADAM);
 
   void SetupModel(std::vector<SizeType> const &hidden_layers);
 
-  virtual bool Train(SizeType n_steps);
+  virtual bool Train(SizeType n_steps, DataType &loss);
   virtual bool Validate();
-  virtual bool Predict(TensorType &input);
+  virtual bool Predict(TensorType &input, TensorType &output);
 
 private:
-  std::shared_ptr<DataLoader<TensorType, TensorType>>                  data_loader_ptr_;
+  std::shared_ptr<dataloaders::DataLoader<TensorType, TensorType>>     data_loader_ptr_;
   std::shared_ptr<optimisers::Optimiser<TensorType, CostFunctionType>> optimiser_ptr_;
 
   std::string input_;
@@ -66,8 +66,8 @@ private:
  */
 template <typename TensorType>
 DNNClassifier<TensorType>::DNNClassifier(
-    EstimatorConfig<DataType>                           estimator_config,
-    std::shared_ptr<DataLoader<TensorType, TensorType>> data_loader_ptr,
+    EstimatorConfig<DataType>                                        estimator_config,
+    std::shared_ptr<dataloaders::DataLoader<TensorType, TensorType>> data_loader_ptr,
     std::vector<SizeType> const &hidden_layers, OptimiserType optimiser_type)
   : Estimator<TensorType>(estimator_config)
   , data_loader_ptr_(data_loader_ptr)
@@ -110,9 +110,9 @@ void DNNClassifier<TensorType>::SetupModel(std::vector<SizeType> const &hidden_l
 }
 
 template <typename TensorType>
-bool DNNClassifier<TensorType>::Train(SizeType n_steps)
+bool DNNClassifier<TensorType>::Train(SizeType n_steps, DataType &loss)
 {
-  DataType loss;
+  loss = DataType{0};
   DataType max_loss;
   SizeType patience_count{0};
   bool     stop_early = false;
@@ -163,11 +163,10 @@ bool DNNClassifier<TensorType>::Validate()
 }
 
 template <typename TensorType>
-bool DNNClassifier<TensorType>::Predict(TensorType &input)
+bool DNNClassifier<TensorType>::Predict(TensorType &input, TensorType &output)
 {
   this->graph_ptr_->SetInput(input_, input);
-  auto pred = this->graph_ptr_->Evaluate(output_);
-  std::cout << "pred.ToString(): " << pred.ToString() << std::endl;
+  output = this->graph_ptr_->Evaluate(output_);
 
   return true;
 }

@@ -28,9 +28,8 @@ using TensorType = fetch::math::Tensor<DataType>;
 using SizeType   = typename TensorType::SizeType;
 
 using EstimatorType  = typename fetch::ml::estimator::DNNClassifier<TensorType>;
-using DataLoaderType = typename fetch::ml::MNISTLoader<TensorType, TensorType>;
+using DataLoaderType = typename fetch::ml::dataloaders::MNISTLoader<TensorType, TensorType>;
 
-// TODO: implement a default dataloader for estimators
 // TODO: add an estimator test
 
 int main(int ac, char **av)
@@ -44,7 +43,7 @@ int main(int ac, char **av)
 
   std::cout << "FETCH MNIST Demo" << std::endl;
 
-  // setup config
+  /// setup config ///
   EstimatorConfig<DataType> estimator_config;
   estimator_config.batch_size     = 64;
   estimator_config.subset_size    = 1000;
@@ -52,15 +51,17 @@ int main(int ac, char **av)
   estimator_config.opt            = OptimiserType::ADAM;
 
   // setup dataloader
-  auto data_loader_ptr = std::make_shared<DataLoaderType>(av[1], av[2]);
-  auto test_datum      = (data_loader_ptr->GetNext()).second.at(0);
+  auto       data_loader_ptr = std::make_shared<DataLoaderType>(av[1], av[2]);
+  TensorType test_datum      = (data_loader_ptr->GetNext()).second.at(0);
+  TensorType prediction;
+  DataType   loss;
 
   // run estimator in training mode
   EstimatorType estimator(estimator_config, data_loader_ptr, {784, 100, 20, 10});
-  estimator.Train(1000);
+  estimator.Train(1000, loss);
 
   // run estimator in testing mode
-  estimator.Predict(test_datum);
+  estimator.Predict(test_datum, prediction);
 
   return 0;
 }
