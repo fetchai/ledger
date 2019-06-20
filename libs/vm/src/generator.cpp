@@ -1191,8 +1191,8 @@ void Generator::HandleNull(IRExpressionNodePtr const &node)
   }
   else
   {
-    // Type-uninferable nulls (e.g. in "null == null") are transformed to boolean true
-    Executable::Instruction instruction(Opcodes::PushTrue);
+    // Type-uninferable nulls (e.g. in "null == null") are transformed to boolean false
+    Executable::Instruction instruction(Opcodes::PushFalse);
     uint16_t                pc = function_->AddInstruction(instruction);
     AddLineNumber(node->line, pc);
   }
