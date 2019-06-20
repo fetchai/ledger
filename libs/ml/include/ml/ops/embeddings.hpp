@@ -76,7 +76,7 @@ public:
           this->embeddings_output_->At(i, j, n) = this->output_->At(e, j);
         }
       }
-    }git 
+    }
 
     output = *this->embeddings_output_;
   }
