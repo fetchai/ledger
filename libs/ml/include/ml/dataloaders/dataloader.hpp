@@ -43,7 +43,7 @@ public:
     {
       Reset();
     }
-    std::pair<LabelType, std::vector<DataType>> training_pair = GetNext();
+    std::pair<LabelType, std::vector<DataType>> training_pair = GetDataPair();
     std::vector<SizeType>                       labels_size   = training_pair.first.shape();
     std::vector<DataType>                       data;
 
@@ -82,7 +82,7 @@ public:
         {
           Reset();
         }
-        training_pair = GetNext();
+        training_pair = GetDataPair();
       }
     } while (i < subset_size);
 

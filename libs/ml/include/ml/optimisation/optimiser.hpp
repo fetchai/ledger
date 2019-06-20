@@ -51,10 +51,6 @@ public:
                bool     restart_after_epoch = false,
                SizeType subset_size         = fetch::math::numeric_max<SizeType>());
 
-  DataType RunBatch(fetch::ml::DataLoader<ArrayType, ArrayType> &loader, SizeType batch_size = 0,
-                    bool     restart_after_epoch = false,
-                    SizeType subset_size         = fetch::math::numeric_max<SizeType>());
-
 protected:
   std::shared_ptr<Graph<T>> graph_;
   CriterionType             criterion_;
@@ -172,71 +168,6 @@ template <class T, class C>
 typename T::Type Optimiser<T, C>::Run(fetch::ml::DataLoader<ArrayType, ArrayType> &loader,
                                       SizeType batch_size, bool restart_after_epoch,
                                       SizeType subset_size)
-{
-  if (loader.IsDone() || restart_after_epoch)
-  {
-    loader.Reset();
-  }
-
-  // If batch_size is not specified do full batch
-  if (batch_size == 0)
-  {
-    if (subset_size == fetch::math::numeric_max<SizeType>())
-    {
-      batch_size = loader.Size();
-    }
-    else
-    {
-      batch_size = subset_size;
-    }
-  }
-
-  DataType                                     loss{0};
-  DataType                                     loss_sum{0};
-  SizeType                                     step{0};
-  std::pair<ArrayType, std::vector<ArrayType>> input;
-  while (!loader.IsDone() && step < subset_size)
-  {
-    loss = DataType{0};
-
-    // Do batch back-propagation
-    for (SizeType it{step}; (it < step + batch_size) && (!loader.IsDone()) && (step < subset_size);
-         ++it)
-    {
-      input = loader.GetDataPair();
-
-      auto cur_input = input.second;
-
-      auto name_it = input_node_names_.begin();
-      for (auto &cur_input : input.second)
-      {
-        graph_->SetInput(*name_it, cur_input);
-        ++name_it;
-      }
-
-      auto cur_label  = input.first;
-      auto label_pred = graph_->Evaluate(output_node_name_);
-      loss += criterion_.Forward({label_pred, cur_label});
-      graph_->BackPropagate(output_node_name_, criterion_.Backward({label_pred, cur_label}));
-    }
-    // Compute and apply gradient
-    ApplyGradients(batch_size);
-
-    loss = loss / static_cast<DataType>(batch_size);
-    FETCH_LOG_INFO("ML_LIB", "Batch loss: ", loss);
-
-    step += batch_size;
-    loss_sum += loss;
-  }
-  epoch_++;
-
-  return loss_sum;
-}
-
-template <class T, class C>
-typename T::Type Optimiser<T, C>::RunBatch(fetch::ml::DataLoader<ArrayType, ArrayType> &loader,
-                                           SizeType batch_size, bool restart_after_epoch,
-                                           SizeType subset_size)
 {
   if (loader.IsDone() || restart_after_epoch)
   {
