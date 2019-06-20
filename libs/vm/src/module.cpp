@@ -106,6 +106,8 @@ To Cast(Variant const &from)
   default:
   {
     to = 0;
+    // Not a primitive
+    assert(false);
     break;
   }
   }  // switch
