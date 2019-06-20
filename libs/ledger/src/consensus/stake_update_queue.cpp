@@ -22,6 +22,12 @@
 namespace fetch {
 namespace ledger {
 
+/**
+ * Applies all relevant updates to the specified tracker for the given block index
+ *
+ * @param block_index The block index that is being triggered
+ * @param tracker The tracker to be updated
+ */
 void StakeUpdateQueue::ApplyUpdates(BlockIndex block_index, StakeTracker &tracker)
 {
   // make sure that the next block in the map is in fact the correct block index
