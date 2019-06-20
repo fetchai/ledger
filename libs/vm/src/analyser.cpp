@@ -1221,7 +1221,7 @@ bool Analyser::AnnotateEqualityOp(ExpressionNodePtr const &node)
     else
     {
       // Comparing two nulls...
-      // Type-uninferable nulls will be transformed to boolean true
+      // Type-uninferable nulls will be transformed to boolean false
       lhs->type = bool_type_;
       rhs->type = bool_type_;
     }
@@ -1912,9 +1912,9 @@ bool Analyser::MatchTypes(TypePtr const &type, TypePtrArray const &supplied_type
     TypePtr expected_type = ConvertType(expected_types[i], type);
     if (supplied_type->IsNull())
     {
-      if (expected_type->IsPrimitive())
+      if (!expected_type->IsClass() && !expected_type->IsInstantiation())
       {
-        // Not a match
+        // Not a match, can only convert null to a known reference type
         return false;
       }
       actual_types.push_back(expected_type);
