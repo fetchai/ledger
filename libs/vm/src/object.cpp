@@ -21,7 +21,6 @@
 
 #include <cstddef>
 #include <string>
-#include <unordered_map>
 
 namespace fetch {
 namespace vm {

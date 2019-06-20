@@ -213,7 +213,7 @@ struct Array : public IArray
 
   ElementType *Find(Variant const &index)
   {
-    size_t i;
+    std::size_t i;
     if (!GetNonNegativeInteger(index, i))
     {
       RuntimeError("negative index");

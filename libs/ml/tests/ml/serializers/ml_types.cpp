@@ -23,7 +23,7 @@
 #include "ml/layers/fully_connected.hpp"
 #include "vectorise/fixed_point/serializers.hpp"
 
-#include <gtest/gtest.h>
+#include "gtest/gtest.h"
 
 template <typename T>
 class SerializersTest : public ::testing::Test

@@ -16,12 +16,13 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/ops/weights.hpp"
-
 #include "math/tensor.hpp"
+#include "ml/ops/weights.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 
-#include <gtest/gtest.h>
+#include "gtest/gtest.h"
+
+#include <memory>
 
 template <typename T>
 class WeightsTest : public ::testing::Test

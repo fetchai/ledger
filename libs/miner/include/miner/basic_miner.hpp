@@ -23,9 +23,8 @@
 #include "ledger/chain/digest.hpp"
 #include "ledger/chain/transaction_layout.hpp"
 #include "meta/log2.hpp"
-#include "vectorise/threading/pool.hpp"
-
 #include "miner/transaction_layout_queue.hpp"
+#include "vectorise/threading/pool.hpp"
 
 #include <list>
 
@@ -70,12 +69,9 @@ public:
   BasicMiner &operator=(BasicMiner &&) = delete;
 
 private:
-  using Mutex           = mutex::Mutex;
-  using TransactionList = TransactionLayoutQueue::UnderlyingList;
-  using TransactionSet  = std::unordered_set<ledger::TransactionLayout>;
-  using ThreadPool      = threading::Pool;
-  using DigestSet       = ledger::DigestSet;
-  using Queue           = TransactionLayoutQueue;
+  using Mutex      = mutex::Mutex;
+  using ThreadPool = threading::Pool;
+  using Queue      = TransactionLayoutQueue;
 
   /// @name Packing Operations
   /// @{

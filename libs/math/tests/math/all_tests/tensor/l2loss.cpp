@@ -17,7 +17,10 @@
 //------------------------------------------------------------------------------
 
 #include "math/tensor.hpp"
-#include <gtest/gtest.h>
+
+#include "gtest/gtest.h"
+
+#include <cstddef>
 
 using namespace fetch::math;
 using data_type      = double;

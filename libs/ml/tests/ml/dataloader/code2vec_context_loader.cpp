@@ -21,7 +21,8 @@
 #include "ml/dataloaders/code2vec_context_loaders/context_loader.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 
-#include <gtest/gtest.h>
+#include "gtest/gtest.h"
+
 #include <string>
 
 using namespace fetch::ml;

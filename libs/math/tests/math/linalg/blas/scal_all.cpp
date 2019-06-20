@@ -16,12 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include <gtest/gtest.h>
-
 #include "math/linalg/blas/base.hpp"
 #include "math/linalg/blas/scal_all.hpp"
 #include "math/linalg/prototype.hpp"
 #include "math/tensor.hpp"
+
+#include "gtest/gtest.h"
 
 using namespace fetch;
 using namespace fetch::math;
@@ -29,7 +29,6 @@ using namespace fetch::math::linalg;
 
 TEST(blas_A_withA, blas_scal_all1)
 {
-
   Blas<double, Signature(_x <= _n, _alpha, _x, _m), Computes(_x <= _alpha * _x),
        platform::Parallelisation::NOT_PARALLEL>
       scal_all;
@@ -56,7 +55,6 @@ TEST(blas_A_withA, blas_scal_all1)
 
 TEST(blas_A_withA, blas_scal_all2)
 {
-
   Blas<double, Signature(_x <= _n, _alpha, _x, _m), Computes(_x <= _alpha * _x),
        platform::Parallelisation::NOT_PARALLEL>
       scal_all;
@@ -83,7 +81,6 @@ TEST(blas_A_withA, blas_scal_all2)
 
 TEST(blas_A_withA, blas_scal_all3)
 {
-
   Blas<double, Signature(_x <= _n, _alpha, _x, _m), Computes(_x <= _alpha * _x),
        platform::Parallelisation::NOT_PARALLEL>
       scal_all;
@@ -110,7 +107,6 @@ TEST(blas_A_withA, blas_scal_all3)
 
 TEST(blas_A_withA, blas_scal_all4)
 {
-
   Blas<double, Signature(_x <= _n, _alpha, _x, _m), Computes(_x <= _alpha * _x),
        platform::Parallelisation::NOT_PARALLEL>
       scal_all;

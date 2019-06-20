@@ -16,7 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/logger.hpp"
 #include "storage/new_revertible_document_store.hpp"
+#include "storage/resource_mapper.hpp"
 
 #include <cstddef>
 #include <string>
@@ -30,7 +32,9 @@ static constexpr char const *LOGGING_NAME = "NewRevertibleDocStore";
 
 namespace fetch {
 namespace storage {
+
 namespace {
+
 bool IsAllZeros(Hash const &hash)
 {
   bool all_zeros{true};

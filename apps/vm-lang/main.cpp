@@ -16,15 +16,25 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/byte_array/const_byte_array.hpp"
 #include "core/byte_array/decoders.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "core/commandline/cli_header.hpp"
-#include "core/commandline/params.hpp"
+#include "core/commandline/parameter_parser.hpp"
 #include "core/json/document.hpp"
+#include "core/serializers/byte_array.hpp"
 #include "variant/variant.hpp"
+#include "vm/common.hpp"
+#include "vm/generator.hpp"
+#include "vm/io_observer_interface.hpp"
 #include "vm/module.hpp"
+#include "vm/object.hpp"
+#include "vm/string.hpp"
+#include "vm/variant.hpp"
+#include "vm/vm.hpp"
 #include "vm_modules/vm_factory.hpp"
 
+#include <cstddef>
 #include <cstdint>
 #include <cstring>
 #include <fstream>

@@ -19,14 +19,14 @@
 #include "core/logger.hpp"
 #include "network/details/thread_pool.hpp"
 
+#include "gmock/gmock.h"
+
 #include <atomic>
 #include <chrono>
 #include <cstdlib>
 #include <memory>
 #include <thread>
 #include <vector>
-
-#include <gmock/gmock.h>
 
 namespace {
 

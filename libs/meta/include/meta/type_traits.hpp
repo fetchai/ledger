@@ -84,9 +84,6 @@ using EnableIf = std::enable_if_t<C, R>;
 template <typename T, typename U, typename R = void>
 using EnableIfSame = EnableIf<std::is_same<T, U>::value, R>;
 
-// template <typename T, typename R = T>
-// using IfIsArithmetic = EnableIf<std::is_arithmetic<T>::value, R>;
-
 template <typename T, typename R = void>
 using IfIsInteger = EnableIf<IsInteger<T>, R>;
 

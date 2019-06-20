@@ -16,12 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vectorise/fixed_point/fixed_point.hpp"
-#include "vm_modules/core/print.hpp"
-
 #include "meta/type_traits.hpp"
+#include "vectorise/fixed_point/fixed_point.hpp"
 #include "vm/module.hpp"
 #include "vm/vm.hpp"
+#include "vm_modules/core/print.hpp"
 
 #include <ostream>
 
@@ -200,11 +199,6 @@ void CreatePrint(vm::Module &module)
   module.CreateFreeFunction("print", &PrintArray<fixed_point::FixedPoint<32, 32>>);
   module.CreateFreeFunction("printLn", &PrintArray<fixed_point::FixedPoint<16, 16>, true>);
   module.CreateFreeFunction("printLn", &PrintArray<fixed_point::FixedPoint<32, 32>, true>);
-}
-
-inline void CreatePrint(std::shared_ptr<vm::Module> module)
-{
-  CreatePrint(*module.get());
 }
 
 }  // namespace vm_modules

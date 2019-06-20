@@ -16,15 +16,16 @@
 //
 //------------------------------------------------------------------------------
 
-#include <algorithm>
-#include <cstdlib>
-#include <gtest/gtest.h>
-#include <iostream>
-#include <memory>
-
 #include "core/byte_array/encoders.hpp"
 #include "network/tcp/tcp_client.hpp"
 #include "network/tcp/tcp_server.hpp"
+
+#include "gtest/gtest.h"
+
+#include <algorithm>
+#include <cstdlib>
+#include <iostream>
+#include <memory>
 
 // Test of the client and server.
 

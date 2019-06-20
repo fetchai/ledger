@@ -16,11 +16,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include <algorithm>
-#include <cstdlib>
-#include <iostream>
-#include <memory>
-
 #include "core/byte_array/encoders.hpp"
 #include "core/commandline/params.hpp"
 #include "helper_functions.hpp"
@@ -28,7 +23,12 @@
 #include "network/tcp/tcp_client.hpp"
 #include "network/tcp/tcp_server.hpp"
 
-#include <gtest/gtest.h>
+#include "gtest/gtest.h"
+
+#include <algorithm>
+#include <cstdlib>
+#include <iostream>
+#include <memory>
 
 // Test of the client. We use an echo server from the asio examples to ensure
 // that any problems must be in the NM or the client. In this way we can test
@@ -168,7 +168,7 @@ public:
 };
 
 // Create random data for testing
-std::vector<message_type> CreateTestData(size_t index)
+std::vector<message_type> CreateTestData(std::size_t index)
 {
   std::size_t messagesToSend = MID_CYCLES;
   globalMessages.clear();

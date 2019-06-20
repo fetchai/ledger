@@ -16,11 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include <gtest/gtest.h>
-
 #include "math/clustering/knn.hpp"
 #include "math/distance/euclidean.hpp"
 #include "math/tensor.hpp"
+
+#include "gtest/gtest.h"
 
 using namespace fetch::math;
 using namespace fetch::math::clustering;

@@ -191,34 +191,34 @@ public:
     , ref_count_(1)
   {}
 
-  virtual size_t GetHashCode();
-  virtual bool   IsEqual(Ptr<Object> const &lhso, Ptr<Object> const &rhso);
-  virtual bool   IsNotEqual(Ptr<Object> const &lhso, Ptr<Object> const &rhso);
-  virtual bool   IsLessThan(Ptr<Object> const &lhso, Ptr<Object> const &rhso);
-  virtual bool   IsLessThanOrEqual(Ptr<Object> const &lhso, Ptr<Object> const &rhso);
-  virtual bool   IsGreaterThan(Ptr<Object> const &lhso, Ptr<Object> const &rhso);
-  virtual bool   IsGreaterThanOrEqual(Ptr<Object> const &lhso, Ptr<Object> const &rhso);
-  virtual void   Negate(Ptr<Object> &object);
-  virtual void   Add(Ptr<Object> &lhso, Ptr<Object> &rhso);
-  virtual void   LeftAdd(Variant &lhsv, Variant &objectv);
-  virtual void   RightAdd(Variant &objectv, Variant &rhsv);
-  virtual void   InplaceAdd(Ptr<Object> const &lhso, Ptr<Object> const &rhso);
-  virtual void   InplaceRightAdd(Ptr<Object> const &lhso, Variant const &rhsv);
-  virtual void   Subtract(Ptr<Object> &lhso, Ptr<Object> &rhso);
-  virtual void   LeftSubtract(Variant &lhsv, Variant &objectv);
-  virtual void   RightSubtract(Variant &objectv, Variant &rhsv);
-  virtual void   InplaceSubtract(Ptr<Object> const &lhso, Ptr<Object> const &rhso);
-  virtual void   InplaceRightSubtract(Ptr<Object> const &lhso, Variant const &rhsv);
-  virtual void   Multiply(Ptr<Object> &lhso, Ptr<Object> &rhso);
-  virtual void   LeftMultiply(Variant &lhsv, Variant &objectv);
-  virtual void   RightMultiply(Variant &objectv, Variant &rhsv);
-  virtual void   InplaceMultiply(Ptr<Object> const &lhso, Ptr<Object> const &rhso);
-  virtual void   InplaceRightMultiply(Ptr<Object> const &lhso, Variant const &rhsv);
-  virtual void   Divide(Ptr<Object> &lhso, Ptr<Object> &rhso);
-  virtual void   LeftDivide(Variant &lhsv, Variant &objectv);
-  virtual void   RightDivide(Variant &objectv, Variant &rhsv);
-  virtual void   InplaceDivide(Ptr<Object> const &lhso, Ptr<Object> const &rhso);
-  virtual void   InplaceRightDivide(Ptr<Object> const &lhso, Variant const &rhsv);
+  virtual std::size_t GetHashCode();
+  virtual bool        IsEqual(Ptr<Object> const &lhso, Ptr<Object> const &rhso);
+  virtual bool        IsNotEqual(Ptr<Object> const &lhso, Ptr<Object> const &rhso);
+  virtual bool        IsLessThan(Ptr<Object> const &lhso, Ptr<Object> const &rhso);
+  virtual bool        IsLessThanOrEqual(Ptr<Object> const &lhso, Ptr<Object> const &rhso);
+  virtual bool        IsGreaterThan(Ptr<Object> const &lhso, Ptr<Object> const &rhso);
+  virtual bool        IsGreaterThanOrEqual(Ptr<Object> const &lhso, Ptr<Object> const &rhso);
+  virtual void        Negate(Ptr<Object> &object);
+  virtual void        Add(Ptr<Object> &lhso, Ptr<Object> &rhso);
+  virtual void        LeftAdd(Variant &lhsv, Variant &objectv);
+  virtual void        RightAdd(Variant &objectv, Variant &rhsv);
+  virtual void        InplaceAdd(Ptr<Object> const &lhso, Ptr<Object> const &rhso);
+  virtual void        InplaceRightAdd(Ptr<Object> const &lhso, Variant const &rhsv);
+  virtual void        Subtract(Ptr<Object> &lhso, Ptr<Object> &rhso);
+  virtual void        LeftSubtract(Variant &lhsv, Variant &objectv);
+  virtual void        RightSubtract(Variant &objectv, Variant &rhsv);
+  virtual void        InplaceSubtract(Ptr<Object> const &lhso, Ptr<Object> const &rhso);
+  virtual void        InplaceRightSubtract(Ptr<Object> const &lhso, Variant const &rhsv);
+  virtual void        Multiply(Ptr<Object> &lhso, Ptr<Object> &rhso);
+  virtual void        LeftMultiply(Variant &lhsv, Variant &objectv);
+  virtual void        RightMultiply(Variant &objectv, Variant &rhsv);
+  virtual void        InplaceMultiply(Ptr<Object> const &lhso, Ptr<Object> const &rhso);
+  virtual void        InplaceRightMultiply(Ptr<Object> const &lhso, Variant const &rhsv);
+  virtual void        Divide(Ptr<Object> &lhso, Ptr<Object> &rhso);
+  virtual void        LeftDivide(Variant &lhsv, Variant &objectv);
+  virtual void        RightDivide(Variant &objectv, Variant &rhsv);
+  virtual void        InplaceDivide(Ptr<Object> const &lhso, Ptr<Object> const &rhso);
+  virtual void        InplaceRightDivide(Ptr<Object> const &lhso, Variant const &rhsv);
 
   virtual bool SerializeTo(ByteArrayBuffer &buffer);
   virtual bool DeserializeFrom(ByteArrayBuffer &buffer);
@@ -234,11 +234,11 @@ protected:
   Variant &       Top();
   void            RuntimeError(std::string const &message);
   TypeInfo const &GetTypeInfo(TypeId type_id);
-  bool            GetNonNegativeInteger(Variant const &v, size_t &index);
+  bool            GetNonNegativeInteger(Variant const &v, std::size_t &index);
 
-  VM *   vm_;
-  TypeId type_id_;
-  size_t ref_count_;
+  VM *        vm_;
+  TypeId      type_id_;
+  std::size_t ref_count_;
 
 private:
   void AddRef()
@@ -382,7 +382,7 @@ public:
     return *ptr_;
   }
 
-  size_t RefCount() const
+  std::size_t RefCount() const
   {
     return ptr_->ref_count_;
   }

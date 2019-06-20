@@ -34,45 +34,49 @@
 #include "network/p2pservice/p2p_resolver_protocol.hpp"
 #include "network/p2pservice/p2p_service_defs.hpp"
 #include "network/p2pservice/p2ptrust_interface.hpp"
-#include "network/peer.hpp"
+#include "network/uri.hpp"
 
-#include <unordered_map>
+#include <chrono>
+#include <cstddef>
+#include <cstdint>
+#include <functional>
+#include <map>
+#include <memory>
+#include <unordered_set>
+#include <utility>
+#include <vector>
 
 namespace fetch {
-namespace ledger {
-class LaneRemoteControl;
-}
 namespace p2p {
+
+class LaneManagement;
 
 class P2PService
 {
 public:
-  using NetworkManager       = network::NetworkManager;
-  using Muddle               = muddle::Muddle;
-  using PortList             = Muddle::PortList;
-  using UriList              = Muddle::UriList;
-  using RpcServer            = muddle::rpc::Server;
-  using ThreadPool           = network::ThreadPool;
-  using CertificatePtr       = Muddle::CertificatePtr;
-  using MuddleEndpoint       = muddle::MuddleEndpoint;
-  using Identity             = crypto::Identity;
-  using Uri                  = network::Uri;
-  using Address              = Resolver::Address;
-  using TrustInterface       = P2PTrustInterface<Address>;
-  using LaneRemoteControl    = ledger::LaneRemoteControl;
-  using LaneRemoteControlPtr = std::shared_ptr<LaneRemoteControl>;
-  using LaneRemoteControls   = std::vector<LaneRemoteControlPtr>;
-  using Manifest             = network::Manifest;
-  using Client               = muddle::rpc::Client;
-  using PromisedManifests    = std::map<Identity, network::PromiseOf<network::Manifest>>;
-  using ServiceType          = network::ServiceType;
-  using ServiceIdentifier    = network::ServiceIdentifier;
-  using ConnectionState      = muddle::PeerConnectionList::ConnectionState;
-  using UriSet               = std::unordered_set<Uri>;
-  using AddressSet           = std::unordered_set<Address>;
-  using ConnectionMap        = muddle::Muddle::ConnectionMap;
-  using FutureTimepoint      = core::FutureTimepoint;
-  using PeerTrust            = TrustInterface::PeerTrust;
+  using NetworkManager    = network::NetworkManager;
+  using Muddle            = muddle::Muddle;
+  using PortList          = Muddle::PortList;
+  using UriList           = Muddle::UriList;
+  using RpcServer         = muddle::rpc::Server;
+  using ThreadPool        = network::ThreadPool;
+  using CertificatePtr    = Muddle::CertificatePtr;
+  using MuddleEndpoint    = muddle::MuddleEndpoint;
+  using Identity          = crypto::Identity;
+  using Uri               = network::Uri;
+  using Address           = Resolver::Address;
+  using TrustInterface    = P2PTrustInterface<Address>;
+  using Manifest          = network::Manifest;
+  using Client            = muddle::rpc::Client;
+  using PromisedManifests = std::map<Identity, network::PromiseOf<network::Manifest>>;
+  using ServiceType       = network::ServiceType;
+  using ServiceIdentifier = network::ServiceIdentifier;
+  using ConnectionState   = muddle::PeerConnectionList::ConnectionState;
+  using UriSet            = std::unordered_set<Uri>;
+  using AddressSet        = std::unordered_set<Address>;
+  using ConnectionMap     = muddle::Muddle::ConnectionMap;
+  using FutureTimepoint   = core::FutureTimepoint;
+  using PeerTrust         = TrustInterface::PeerTrust;
 
   static constexpr char const *LOGGING_NAME = "P2PService";
 

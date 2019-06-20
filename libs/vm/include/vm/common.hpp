@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "meta/type_util.hpp"
+
 #include <cmath>
 #include <cstdint>
 #include <functional>
