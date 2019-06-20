@@ -19,6 +19,7 @@
 
 #include "vectorise/fixed_point/fixed_point.hpp"
 #include "vm/module.hpp"
+#include "vm_modules/math/abs.hpp"
 #include "vm_modules/math/exp.hpp"
 #include "vm_modules/math/log.hpp"
 #include "vm_modules/math/math.hpp"

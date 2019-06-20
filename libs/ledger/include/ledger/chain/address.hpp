@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/const_byte_array.hpp"
+#include "core/serializers/byte_array.hpp"
 
 #include <array>
 #include <cstddef>
@@ -88,6 +89,7 @@ public:
   /// @{
   ConstByteArray const &address() const;
   ConstByteArray const &display() const;
+  bool                  empty() const;
   /// @}
 
   // Operators
@@ -101,6 +103,24 @@ private:
   ConstByteArray address_;  ///< The address representation
   ConstByteArray display_;  ///< The display representation
 };
+
+template <typename T>
+void Serialize(T &s, Address const &address)
+{
+  assert(!address.address().empty());
+  s << address.address();
+}
+
+template <typename T>
+void Deserialize(T &s, Address &address)
+{
+  // extract the data from the stream
+  byte_array::ConstByteArray data;
+  s >> data;
+
+  // create the address
+  address = Address{data};
+}
 
 /**
  * Get the raw bytes of the address
@@ -120,6 +140,16 @@ inline Address::ConstByteArray const &Address::address() const
 inline Address::ConstByteArray const &Address::display() const
 {
   return display_;
+}
+
+/**
+ * Determine if the address is empty or not
+ *
+ * @return true if empty otherwise false
+ */
+inline bool Address::empty() const
+{
+  return address_.empty();
 }
 
 /**

@@ -233,6 +233,7 @@ struct CommandLineArguments
     std::string bootstrap_address;
     std::string config_path;
     std::string raw_peers;
+    std::string experimental_features;
     ManifestPtr manifest;
     uint32_t    num_lanes{0};
 
@@ -264,6 +265,7 @@ struct CommandLineArguments
     p.add(args.cfg.sign_broadcasts,       "sign-broadcasts",       "Sign and verify broadcast packets",                                                            false);
     p.add(standalone_flag,                "standalone",            "Run node on its own (useful for testing and development). Incompatible with -private-network", false);
     p.add(private_flag,                   "private-network",       "Run node as part of a private network (disables bootstrap). Incompatible with -standalone",    false);
+    p.add(experimental_features,          "experimental",          "Enable selected experimental features",                                                        std::string{});
     // clang-format on
 
     // parse the args
@@ -295,7 +297,11 @@ struct CommandLineArguments
     UpdateConfigFromEnvironment(args.cfg.sign_broadcasts,       "CONSTELLATION_SIGN_BROADCASTS");
     UpdateConfigFromEnvironment(standalone_flag,                "CONSTELLATION_STANDALONE");
     UpdateConfigFromEnvironment(private_flag,                   "CONSTELLATION_PRIVATE_NETWORK");
+    UpdateConfigFromEnvironment(experimental_features,          "CONSTELLATION_EXPERIMENTAL");
     // clang-format on
+
+    // parse the feature flags (if they exist)
+    args.cfg.features.Parse(experimental_features);
 
     // update the peers
     args.SetPeers(raw_peers);
@@ -554,6 +560,16 @@ struct CommandLineArguments
       s << peer.uri() << ' ';
     }
 
+    // experimental features
+    if (!args.cfg.features.empty())
+    {
+      s << "\nexperimental features.....: ";
+      for (auto const &feature : args.cfg.features)
+      {
+        s << feature << ' ';
+      }
+    }
+
     s << '\n' << "manifest.......: " << args.cfg.manifest.ToString() << '\n';
 
     // terminate and flush
@@ -698,7 +714,8 @@ int main(int argc, char **argv)
     FETCH_LOG_INFO(LOGGING_NAME, "Configuration:\n", args);
 
     // create and run the constellation
-    auto constellation = std::make_unique<fetch::Constellation>(std::move(p2p_key), args.cfg);
+    auto constellation =
+        std::make_unique<fetch::Constellation>(std::move(p2p_key), std::move(args.cfg));
 
     // update the instance pointer
     gConstellationInstance = constellation.get();

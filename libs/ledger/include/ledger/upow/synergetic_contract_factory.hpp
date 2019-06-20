@@ -17,29 +17,32 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/byte_array.hpp"
-#include "ledger/chain/address.hpp"
+#include "ledger/upow/synergetic_contract.hpp"
 
 namespace fetch {
 namespace ledger {
 
-template <typename T>
-void Serialize(T &s, Address const &address)
-{
-  assert(!address.address().empty());
-  s << address.address();
-}
+class StorageInterface;
+class Address;
 
-template <typename T>
-void Deserialize(T &s, Address &address)
+class SynergeticContractFactory
 {
-  // extract the data from the stream
-  byte_array::ConstByteArray data;
-  s >> data;
+public:
+  // Construction / Destruction
+  explicit SynergeticContractFactory(StorageInterface &storage);
+  SynergeticContractFactory(SynergeticContractFactory const &) = delete;
+  SynergeticContractFactory(SynergeticContractFactory &&)      = delete;
+  ~SynergeticContractFactory()                                 = default;
 
-  // create the address
-  address = Address{data};
-}
+  SynergeticContractPtr Create(Digest const &digest);
+
+  // Operators
+  SynergeticContractFactory &operator=(SynergeticContractFactory const &) = delete;
+  SynergeticContractFactory &operator=(SynergeticContractFactory &&) = delete;
+
+private:
+  StorageInterface &storage_;
+};
 
 }  // namespace ledger
 }  // namespace fetch
