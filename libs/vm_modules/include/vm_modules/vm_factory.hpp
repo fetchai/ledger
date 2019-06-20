@@ -25,10 +25,7 @@
 #include "vm_modules/math/math.hpp"
 #include "vm_modules/math/random.hpp"
 
-#include "vm_modules/math/tensor.hpp"
-#include "vm_modules/ml/graph.hpp"
-#include "vm_modules/ml/ops/loss_functions/cross_entropy.hpp"
-#include "vm_modules/ml/ops/loss_functions/mean_square_error.hpp"
+#include "vm_modules/ml/ml.hpp"
 
 namespace fetch {
 namespace vm_modules {
@@ -59,12 +56,8 @@ public:
     CreateAbs(*module);
     CreateRand(module);
 
-    // ml modules - order is important!!
-    math::CreateTensor(*module);
-    ml::CreateStateDict(*module);
-    ml::CreateGraph(*module);
-    fetch::vm_modules::ml::VMCrossEntropyLoss::Bind(*module);
-    ml::CreateMeanSquareError(*module);
+    // ml modules
+    ml::BindAll(module);
 
     return module;
   }
