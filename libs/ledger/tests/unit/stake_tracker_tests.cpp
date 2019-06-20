@@ -16,6 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include "random_address.hpp"
+
 #include "core/random/lcg.hpp"
 #include "ledger/consensus/stake_tracker.hpp"
 
@@ -51,29 +53,13 @@ protected:
     stake_tracker_.reset();
   }
 
-  Address GenerateRandomAddress()
-  {
-    static constexpr std::size_t ADDRESS_WORD_SIZE = Address::RAW_LENGTH / sizeof(RNG::random_type);
-    static_assert((Address::RAW_LENGTH % sizeof(RNG::random_type)) == 0, "");
-
-    Address::RawAddress raw_address;
-    auto *raw = reinterpret_cast<RNG::random_type*>(raw_address.data());
-
-    for (std::size_t i = 0; i < ADDRESS_WORD_SIZE; ++i)
-    {
-      raw[i] = rng_();
-    }
-
-    return Address{raw_address};
-  }
-
   StakeMap GenerateRandomStakePool(std::size_t count)
   {
     StakeMap map{};
 
     for (std::size_t i = 0; i < count; ++i)
     {
-      auto const address = GenerateRandomAddress();
+      auto const address = GenerateRandomAddress(rng_);
       uint64_t   stake   = rng_() % MAXIMUM_SINGLE_STAKE;
 
       // randomness is not random enough
@@ -136,10 +122,10 @@ TEST_F(StakeTrackerTests, CheckStakeGenerate)
 
 TEST_F(StakeTrackerTests, CheckStateModifications)
 {
-  auto const address1 = GenerateRandomAddress();
-  auto const address2 = GenerateRandomAddress();
-  auto const address3 = GenerateRandomAddress();
-  auto const address4 = GenerateRandomAddress();
+  auto const address1 = GenerateRandomAddress(rng_);
+  auto const address2 = GenerateRandomAddress(rng_);
+  auto const address3 = GenerateRandomAddress(rng_);
+  auto const address4 = GenerateRandomAddress(rng_);
 
   // uniform staking
   stake_tracker_->UpdateStake(address1, 500);
