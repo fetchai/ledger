@@ -134,7 +134,7 @@ inline math::BigUnsigned Work::CreateHashedNonce() const
   hasher.Reset();
   hasher.Update(digest1);
 
-  return hasher.Final();
+  return math::BigUnsigned{hasher.Final()};
 }
 
 template <typename T>
