@@ -18,12 +18,12 @@
 //------------------------------------------------------------------------------
 
 #include "vm_modules/math/tensor.hpp"
+#include "vm_modules/ml/state_dict.hpp"
 
 #include "ml/graph.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/ops/activation.hpp"
 
-#include "state_dict.hpp"
 #include "vm/module.hpp"
 
 namespace fetch {
