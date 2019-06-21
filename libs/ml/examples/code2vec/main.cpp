@@ -20,7 +20,6 @@
 #include "ml/dataloaders/code2vec_context_loaders/context_loader.hpp"
 #include "ml/graph.hpp"
 #include "ml/layers/fully_connected.hpp"
-#include "ml/ops/activations/batchwise_softmax.hpp"
 #include "ml/ops/activations/softmax.hpp"
 #include "ml/ops/concatenate.hpp"
 #include "ml/ops/embeddings.hpp"
@@ -98,7 +97,7 @@ int main(int ac, char **av)
   std::shared_ptr<fetch::ml::Graph<ArrayType>> g(std::make_shared<fetch::ml::Graph<ArrayType>>());
 
   // Setting up the attention vector
-  // Dimension: (EMBEDDING_SIZE, 1)
+  // Dimension: (EMBEDDING_SIZE, BATCH_SIZE)
   std::string attention_vector = g->AddNode<Weights>("AttentionVector", {});
   ArrayType   attention_vector_data(SizeVector({EMBEDDING_SIZE, SizeType{1}}));
   Weights::Initialise(attention_vector_data, EMBEDDING_SIZE, SizeType{1});
@@ -127,7 +126,7 @@ int main(int ac, char **av)
 
   // Defining the input nodes
 
-  // Inputs have dimensions (N_CONTEXTS, )
+  // Inputs have dimensions (N_CONTEXTS, BATCH_SIZE)
   std::string input_paths = g->AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>("InputPaths", {});
   std::string input_source_words =
       g->AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>("InputSourceWords", {});
@@ -137,86 +136,92 @@ int main(int ac, char **av)
   // Retrieving the rows of the embedding tensors according to the input
 
   // Path embedding
-  // Dimension: (N_CONTEXTS, EMBEDDING_SIZE)
+  // Dimension: (N_CONTEXTS, EMBEDDING_SIZE, BATCH_SIZE)
   std::string embeddings_paths =
       g->AddNode<Embeddings>("EmbeddingPaths", {input_paths}, vocab_size_paths, EMBEDDING_SIZE);
 
   // Target word embedding
-  // Dimension: (N_CONTEXTS, EMBEDDING_SIZE)
+  // Dimension: (N_CONTEXTS, EMBEDDING_SIZE, BATCH_SIZE)
   std::string embedding_target_words =
       g->AddNode<Embeddings>("EmbeddingTargetwords", {input_target_words}, shared_embedding_tensor);
 
   // Source word embedding
-  // Dimension: (N_CONTEXTS, EMBEDDING_SIZE)
+  // Dimension: (N_CONTEXTS, EMBEDDING_SIZE, BATCH_SIZE)
   std::string embedding_source_words =
       g->AddNode<Embeddings>("EmbeddingSourcewords", {input_source_words}, shared_embedding_tensor);
 
   // Concatenate along axis = 1
-  // Dimension: (N_CONTEXTS, 3*EMBEDDING_SIZE) = Concatenate ((N_CONTEXTS, EMBEDDING_SIZE),
-  // (N_CONTEXTS, EMBEDDING_SIZE), (N_CONTEXTS, EMBEDDING_SIZE))
+  // Dimension: (N_CONTEXTS, 3*EMBEDDING_SIZE, BATCH_SIZE) = Concatenate ((N_CONTEXTS,
+  // EMBEDDING_SIZE, BATCH_SIZE), (N_CONTEXTS, EMBEDDING_SIZE, BATCH_SIZE), (N_CONTEXTS,
+  // EMBEDDING_SIZE, BATCH_SIZE))
   std::string context_vectors = g->AddNode<fetch::ml::ops::Concatenate<ArrayType>>(
       "ContextVectors", {embedding_source_words, embeddings_paths, embedding_target_words},
       SizeType(1));
 
   // Transposition
-  // Dimensions: (3*EMBEDDING_SIZE, N_CONTEXTS) = Transpose((N_CONTEXTS, 3*EMBEDDING_SIZE))
+  // Dimensions: (3*EMBEDDING_SIZE, N_CONTEXTS, BATCH_SIZE) = Transpose((N_CONTEXTS,
+  // 3*EMBEDDING_SIZE, BATCH_SIZE))
   std::string context_vector_transpose =
       g->AddNode<Transpose>("ContextVectorTransposed", {context_vectors});
 
   // Fully connected layer
-  // Dimensions: (EMBEDDING_SIZE, N_CONTEXTS) = (EMBEDDING_SIZE, 3*EMBEDDING_SIZE) @
-  // (3*EMBEDDING_SIZE, N_CONTEXTS)
+  // Dimensions: (EMBEDDING_SIZE, N_CONTEXTS, BATCH_SIZE) = (EMBEDDING_SIZE, 3*EMBEDDING_SIZE) @
+  // (3*EMBEDDING_SIZE, N_CONTEXTS, BATCH_SIZE)
   std::string fc1 = g->AddNode<MatrixMultiply>("FC1", {fc1_weights, context_vector_transpose});
 
   // (Elementwise) TanH Layer
-  // Dimensions: (EMBEDDING_SIZE, N_CONTEXTS)
+  // Dimensions: (EMBEDDING_SIZE, N_CONTEXTS, BATCH_SIZE)
   std::string combined_context_vector =
       g->AddNode<fetch::ml::ops::TanH<ArrayType>>("CombinedContextVector", {fc1});
 
   // Transposition
-  // Dimensions: (N_CONTEXTS, EMBEDDING_SIZE) = Transpose((EMBEDDING_SIZE, N_CONTEXTS))
+  // Dimensions: (N_CONTEXTS, EMBEDDING_SIZE, BATCH_SIZE) = Transpose((EMBEDDING_SIZE, N_CONTEXTS,
+  // BATCH_SIZE))
   std::string combined_context_vector_transpose =
       g->AddNode<Transpose>("CombinedContextVectorTransposed", {combined_context_vector});
 
   // (Dot) Multiplication with the Attention vector
-  // Dimensions: (N_CONTEXTS, 1) = (N_CONTEXTS, EMBEDDING_SIZE) @ (EMBEDDING_SIZE, 1)
+  // Dimensions: (N_CONTEXTS, 1, BATCH_SIZE) = (N_CONTEXTS, EMBEDDING_SIZE, BATCH_SIZE) @
+  // (EMBEDDING_SIZE, 1)
   std::string scalar_product_contexts_with_attention = g->AddNode<MatrixMultiply>(
       "ScalarProductContextsWithAttention", {combined_context_vector_transpose, attention_vector});
 
-  // Transposition
-  // DImension: (1, N_CONTEXTS) = Transpose((N_CONTEXTS, 1))
-  std::string scalar_product_contexts_with_attention_transposed = g->AddNode<Transpose>(
-      "ScalarProductContextsWithAttentionTransposed", {scalar_product_contexts_with_attention});
+  // Reshaping
+  // DImension: (N_CONTEXTS,BATCH_SIZE) = Reshape((N_CONTEXTS, 1, BATCH_SIZE))
+  std::string scalar_product_contexts_with_attention_reshaped =
+      g->AddNode<Reshape>("ScalarProductContextsWithAttentionTransposed",
+                          {scalar_product_contexts_with_attention}, std::vector<SizeType>{0u, 2u});
 
   // (Softmax) normalisation
-  // Dimensions: (1, N_CONTEXTS)
-  std::string attention_weight = g->AddNode<fetch::ml::ops::BatchwiseSoftmax<ArrayType>>(
-      "AttentionWeight", {scalar_product_contexts_with_attention_transposed});
+  // Dimensions: (N_CONTEXTS, BATCH_SIZE)
+  std::string attention_weight = g->AddNode<fetch::ml::ops::Softmax<ArrayType>>(
+      "AttentionWeight", {scalar_product_contexts_with_attention_reshaped}, 1);
 
-  // Transposition
-  //   Dimensions: (N_CONTEXTS, 1)
-  std::string attention_weight_transposed =
-      g->AddNode<Transpose>("AttentionWeightTransposed", {attention_weight});
+  // Reshaping
+  // Dimensions: (N_CONTEXTS, 1, BATCH_SIZE)
+  std::string attention_weight_reshaped = g->AddNode<Reshape>(
+      "AttentionWeightTransposed", {attention_weight}, std::vector<SizeType>{0u, 2u, 1u});
 
   // (Dot) Multiplication with attention weights; i.e. calculating the code vectors
-  // Dimensions: (EMBEDDING_SIZE, 1) = (EMBEDDING_SIZE, N_CONTEXTS) @ (N_CONTEXTS, 1)
+  // Dimensions: (EMBEDDING_SIZE, 1, BATCH_SIZE) = (EMBEDDING_SIZE, N_CONTEXTS) @ (N_CONTEXTS, 1,
+  // BATCH_SIZE)
   std::string code_vector = g->AddNode<MatrixMultiply>(
-      "CodeVector", {combined_context_vector, attention_weight_transposed});
+      "CodeVector", {combined_context_vector, attention_weight_reshaped});
 
-  std::vector<SizeType> shape = {0, 2};
-
+  // Reshaping
+  //   Dimensions: (N_CONTEXTS, BATCH_SIZE)
   std::string code_vector_reshaped =
-      g->AddNode<Reshape>("CodeVectorReshaped", {code_vector}, shape);
+      g->AddNode<Reshape>("CodeVectorReshaped", {code_vector}, std::vector<SizeType>{0u, 2u});
 
   // (Unnormalised) predictions for each function name in the vocab, by
   // matrix multiplication with the embedding tensor
-  // Dimensions: (vocab_size_functions, 1) = (vocab_size_functions, EMBEDDING_SIZE) @
-  // (EMBEDDING_SIZE, 1)
+  // Dimensions: (vocab_size_functions, BATCH_SIZE) = (vocab_size_functions, EMBEDDING_SIZE) @
+  // (EMBEDDING_SIZE, BATCH_SIZE)
   std::string prediction_softmax_kernel = g->AddNode<MatrixMultiply>(
       "PredictionSoftMaxKernel", {function_name_embedding, code_vector_reshaped});
 
   // (Softmax) Normalisation of the prediction
-  // Dimensions:  (vocab_size_functions,1)
+  // Dimensions:  (vocab_size_functions, BATCH_SIZE)
   std::string result = g->AddNode<fetch::ml::ops::Softmax<ArrayType>>(
       "PredictionSoftMax", {prediction_softmax_kernel}, SizeType{1});
 

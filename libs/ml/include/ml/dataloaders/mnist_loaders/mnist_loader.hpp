@@ -38,19 +38,19 @@ public:
   using DataType   = typename T::Type;
   using ReturnType = std::pair<LabelType, std::vector<T>>;
 
-  MNISTLoader(std::string const &imagesFile, std::string const &labelsFile,
+  MNISTLoader(std::string const &images_file, std::string const &labelsFile,
               bool random_mode = false)
     : DataLoader<LabelType, T>(random_mode)
     , cursor_(0)
   {
-    std::uint32_t recordLength(0);
-    data_          = read_mnist_images(imagesFile, size_, recordLength);
+    std::uint32_t record_length(0);
+    data_          = read_mnist_images(images_file, size_, record_length);
     labels_        = read_mnist_labels(labelsFile, size_);
     figure_size_   = 28 * 28;
     figure_width_  = 28;
     figure_height_ = 28;
     label_size_    = 10;
-    assert(recordLength == figure_size_);
+    assert(record_length == figure_size_);
 
     // Prepare return buffer
     buffer_.second.push_back(T({figure_width_, figure_height_, 1u}));
@@ -101,10 +101,9 @@ public:
     std::cout << std::endl;
   }
 
-  ReturnType SubsetToArray(SizeType subset_size)
+  ReturnType PrepareBatch(SizeType subset_size)
   {
-    typename LabelType::Type one{1};
-    T                        ret_labels({label_size_, subset_size});
+    T ret_labels({label_size_, subset_size});
 
     std::vector<T> ret_images;
     ret_images.push_back(T({figure_width_, figure_height_, subset_size}));
@@ -120,7 +119,7 @@ public:
         i++;
         ++it;
       }
-      ret_labels(labels_[cursor_], index) = one;
+      ret_labels(labels_[cursor_], index) = static_cast<typename LabelType::Type>(1);
 
       ++cursor_;
     }
@@ -130,7 +129,7 @@ public:
 
   std::pair<LabelType, std::vector<T>> ToArray()
   {
-    return SubsetToArray(size_);
+    return PrepareBatch(size_);
   }
 
 private:

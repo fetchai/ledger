@@ -48,8 +48,7 @@ public:
                SizeType batch_size = 0);
 
   DataType Run(fetch::ml::DataLoader<ArrayType, ArrayType> &loader, SizeType batch_size = 0,
-               bool     restart_after_epoch = false,
-               SizeType subset_size         = fetch::math::numeric_max<SizeType>());
+               SizeType subset_size = fetch::math::numeric_max<SizeType>());
 
 protected:
   std::shared_ptr<Graph<T>> graph_;
@@ -192,10 +191,9 @@ typename T::Type Optimiser<T, C>::Run(std::vector<ArrayType> const &data, ArrayT
  */
 template <class T, class C>
 typename T::Type Optimiser<T, C>::Run(fetch::ml::DataLoader<ArrayType, ArrayType> &loader,
-                                      SizeType batch_size, bool restart_after_epoch,
-                                      SizeType subset_size)
+                                      SizeType batch_size, SizeType subset_size)
 {
-  if (loader.IsDone() || restart_after_epoch)
+  if (loader.IsDone())
   {
     loader.Reset();
   }
@@ -222,7 +220,7 @@ typename T::Type Optimiser<T, C>::Run(fetch::ml::DataLoader<ArrayType, ArrayType
     loss = DataType{0};
 
     // Do batch back-propagation
-    input = loader.SubsetToArray(batch_size);
+    input = loader.PrepareBatch(batch_size);
 
     auto cur_input = input.second;
 

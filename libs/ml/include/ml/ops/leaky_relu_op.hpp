@@ -63,9 +63,6 @@ public:
     // Test if batch dimension for alpha is 1
     assert(inputs.at(1).get().shape().at(inputs.at(1).get().shape().size() - 1) == 1);
 
-    DataType zero{0};
-    DataType one{1};
-
     ArrayType return_signal1{inputs.at(0).get().shape()};
 
     SizeType a_size{1};
@@ -74,7 +71,7 @@ public:
       a_size *= inputs.at(0).get().shape().at(i);
     }
     ArrayType return_signal2({a_size, 1});
-    return_signal2.Fill(zero);
+    return_signal2.Fill(static_cast<DataType>(0));
 
     SizeType t_batch_dimension = inputs.at(0).get().shape().size() - 1;
     SizeType batch_size        = inputs.at(0).get().shape().at(t_batch_dimension);
@@ -95,9 +92,9 @@ public:
 
       while (input1_it.is_valid())
       {
-        if (*input1_it >= zero)
+        if (*input1_it >= static_cast<DataType>(0))
         {
-          *rs1_it = one * (*error_it);
+          *rs1_it = static_cast<DataType>(1) * (*error_it);
         }
         else
         {

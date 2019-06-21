@@ -61,7 +61,14 @@ public:
     std::vector<SizeType> output_size;
     for (SizeType i{0}; i < new_shape_.size(); i++)
     {
-      output_size.push_back(inputs.front().get().shape().at(new_shape_.at(i)));
+      if (new_shape_.at(i) < inputs.front().get().shape().size())
+      {
+        output_size.push_back(inputs.front().get().shape().at(new_shape_.at(i)));
+      }
+      else
+      {
+        output_size.push_back(1);
+      }
     }
 
     return output_size;

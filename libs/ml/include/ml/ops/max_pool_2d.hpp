@@ -156,8 +156,8 @@ public:
             }
 
             // Add error to max node
-            return_signal.Set(c, max_iterw, max_iterh, n_i,
-                              return_signal.At(c, max_iterw, max_iterh, n_i) + *erit);
+            return_signal(c, max_iterw, max_iterh, n_i) =
+                return_signal(c, max_iterw, max_iterh, n_i) + *erit;
             ++erit;
           }
         }

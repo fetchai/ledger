@@ -1546,10 +1546,12 @@ Tensor<T, C> Tensor<T, C>::Transpose(SizeVector &new_axes) const
 
   SizeVector new_shape;
   new_shape.reserve(new_shape.size());
-  for (SizeType i{0}; i < shape_.size(); ++i)
+
+  for (auto &val : new_axes)
   {
-    new_shape.push_back(shape_[new_axes[i]]);
+    new_shape.push_back(shape_.at(val));
   }
+
   Tensor ret(new_shape);
 
   TransposeImplementation(new_axes, ret);
@@ -1565,7 +1567,6 @@ Tensor<T, C> Tensor<T, C>::Transpose(SizeVector &new_axes) const
 template <typename T, typename C>
 Tensor<T, C> &Tensor<T, C>::Squeeze()
 {
-  // TODO(private issue 998): Make last dimension for efficiency
   auto shape = shape_;
   shape.erase(shape.end() - 1);
   Reshape(shape);
@@ -1582,7 +1583,7 @@ Tensor<T, C> &Tensor<T, C>::Squeeze()
 template <typename T, typename C>
 Tensor<T, C> &Tensor<T, C>::Unsqueeze()
 {
-  auto shape = shape_;  // TODO: Make last dimension for efficiency
+  auto shape = shape_;
   shape.push_back(1);
 
   Reshape(shape);

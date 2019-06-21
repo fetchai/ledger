@@ -47,18 +47,19 @@ public:
 template <class T>
 void MatrixMultiply<T>::Forward(VecTensorType const &inputs, ArrayType &output)
 {
-  ASSERT(inputs.size() == 2);
-  ASSERT(output.shape() == ComputeOutputShape(inputs));
+  assert(inputs.size() == 2);
+  assert(output.shape() == ComputeOutputShape(inputs));
 
   // Normal MatMul 2D @ 2D
   if (inputs.at(0).get().shape().size() == 2 && inputs.at(1).get().shape().size() == 2)
   {
+    assert((inputs.at(0).get().shape().size() == 2 && inputs.at(1).get().shape().size() == 2));
     fetch::math::Dot(inputs.at(0).get(), inputs.at(1).get(), output);
   }
   // Batchwise 3D @ 3D or broadcast matmul 2D @ 3D, 3D @ 2D
   else
   {
-    ASSERT((inputs.at(0).get().shape().size() == 3 || inputs.at(0).get().shape().size() == 2) &&
+    assert((inputs.at(0).get().shape().size() == 3 || inputs.at(0).get().shape().size() == 2) &&
            (inputs.at(1).get().shape().size() == 3 || inputs.at(1).get().shape().size() == 2));
 
     // Get batch size
@@ -119,7 +120,7 @@ template <class T>
 std::vector<T> MatrixMultiply<T>::Backward(VecTensorType const &inputs,
                                            ArrayType const &    error_signal)
 {
-  ASSERT(inputs.size() == 2);
+  assert(inputs.size() == 2);
 
   ArrayType error_signal1(inputs.at(0).get().shape());
   ArrayType error_signal2(inputs.at(1).get().shape());
@@ -133,7 +134,7 @@ std::vector<T> MatrixMultiply<T>::Backward(VecTensorType const &inputs,
   // Batchwise 3D @ 3D or broadcast matmul 2D @ 3D, 3D @ 2D
   else
   {
-    ASSERT((inputs.at(0).get().shape().size() == 3 || inputs.at(0).get().shape().size() == 2) &&
+    assert((inputs.at(0).get().shape().size() == 3 || inputs.at(0).get().shape().size() == 2) &&
            (inputs.at(1).get().shape().size() == 3 || inputs.at(1).get().shape().size() == 2));
 
     // Get batch size
