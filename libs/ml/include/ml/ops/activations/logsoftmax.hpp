@@ -28,7 +28,7 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class LogSoftmax : public fetch::ml::BatchOps<T>
+class LogSoftmax : public fetch::ml::Ops<T>
 {
 public:
   using ArrayType     = T;

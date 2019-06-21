@@ -25,7 +25,7 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class Convolution2D : public BatchOps<T>
+class Convolution2D : public Ops<T>
 {
 public:
   using ArrayType     = T;

@@ -101,28 +101,28 @@ int main(int ac, char **av)
   std::string attention_vector = g->AddNode<Weights>("AttentionVector", {});
   ArrayType   attention_vector_data(SizeVector({EMBEDDING_SIZE, SizeType{1}}));
   Weights::Initialise(attention_vector_data, EMBEDDING_SIZE, SizeType{1});
-  g->SetInput(attention_vector, attention_vector_data, false);
+  g->SetInput(attention_vector, attention_vector_data);
 
   // Setting up the weights of FC1
   // Dimension: (EMBEDDING_SIZE, 3*EMBEDDING_SIZE)
   std::string fc1_weights = g->AddNode<Weights>("FullyConnectedWeights", {});
   ArrayType   fc1_weights_data(SizeVector({EMBEDDING_SIZE, 3 * EMBEDDING_SIZE}));
   Weights::Initialise(fc1_weights_data, EMBEDDING_SIZE, 3 * EMBEDDING_SIZE);
-  g->SetInput(fc1_weights, fc1_weights_data, false);
+  g->SetInput(fc1_weights, fc1_weights_data);
 
   // Setting up the embedding matrix for the function names
   // Dimension: (VOCAB_SIZE_FUNCTION_NAMES, EMBEDDING_SIZE)
   std::string function_name_embedding = g->AddNode<Weights>("EmbeddingFunctionNames", {});
   ArrayType function_name_embedding_matrix(SizeVector({vocab_size_function_names, EMBEDDING_SIZE}));
   Weights::Initialise(function_name_embedding_matrix, vocab_size_function_names, EMBEDDING_SIZE);
-  g->SetInput(function_name_embedding, function_name_embedding_matrix, false);
+  g->SetInput(function_name_embedding, function_name_embedding_matrix);
 
   // Setting up shared embedding matrix for words
   // Dimension: (VOCAB_SIZE_WORDS, EMBEDDING_SIZE)
   std::string shared_embedding = g->AddNode<Weights>("SharedEmbedding", {});
   ArrayType   shared_embedding_tensor(SizeVector({vocab_size_words, EMBEDDING_SIZE}));
   Weights::Initialise(shared_embedding_tensor, vocab_size_words, EMBEDDING_SIZE);
-  g->SetInput(shared_embedding, shared_embedding_tensor, false);
+  g->SetInput(shared_embedding, shared_embedding_tensor);
 
   // Defining the input nodes
 

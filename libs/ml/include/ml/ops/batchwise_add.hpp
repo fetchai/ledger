@@ -25,7 +25,7 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class BatchwiseAddOp : public fetch::ml::BatchOps<T>
+class BatchwiseAddOp : public fetch::ml::Ops<T>
 {
 public:
   using ArrayType     = T;

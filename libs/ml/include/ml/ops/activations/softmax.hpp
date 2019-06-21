@@ -30,7 +30,7 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class Softmax : public fetch::ml::BatchOps<T>
+class Softmax : public fetch::ml::Ops<T>
 {
 public:
   using ArrayType     = T;

@@ -29,7 +29,7 @@ namespace ml {
  * @tparam T  the tensor/array type
  */
 template <class T>
-class SubGraph : public Graph<T>, public BatchOps<T>
+class SubGraph : public Graph<T>, public Ops<T>
 {
 public:
   using ArrayType     = T;
