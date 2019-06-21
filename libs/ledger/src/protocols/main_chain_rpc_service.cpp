@@ -387,7 +387,6 @@ MainChainRpcService::State MainChainRpcService::OnSynchronising()
         current_peer_address_, RPC_MAIN_CHAIN, MainChainProtocol::COMMON_SUB_CHAIN,
         current_missing_block_, chain_.GetHeaviestBlockHash(), MAX_SUB_CHAIN_SIZE);
 
-    state_machine_->Delay(std::chrono::milliseconds{500});
     next_state = State::WAITING_FOR_RESPONSE;
   }
 
