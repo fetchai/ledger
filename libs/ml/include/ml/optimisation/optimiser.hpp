@@ -44,7 +44,7 @@ public:
 
   Optimiser(std::shared_ptr<Graph<T>> graph, std::vector<std::string> input_node_names,
             std::string output_node_name, DataType const &learning_rate = DataType(0.001),
-            DataType const &delta_learning_rate = DataType(0.99));
+            DataType const &delta_learning_rate = DataType(1.0));
 
   virtual ~Optimiser() = default;
 

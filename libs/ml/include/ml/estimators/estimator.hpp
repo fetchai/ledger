@@ -42,7 +42,7 @@ struct EstimatorConfig
   DataType min_delta      = DataType(0.0);
 
   DataType learning_rate = DataType(0.001);
-  DataType epoch_decay   = DataType(0.9);
+  DataType lr_decay      = DataType(0.99);
 
   SizeType batch_size  = SizeType(32);
   SizeType subset_size = fetch::ml::optimisers::SIZE_NOT_SET;

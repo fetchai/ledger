@@ -67,7 +67,9 @@ TensorDataLoader<LabelType, InputType>::GetNext()
   }
   else
   {
-    ReturnType ret(labels_.Slice(label_cursor_, 1).Copy(), {data_.Slice(label_cursor_, 1).Copy()});
+    auto tmp = labels_.Slice(label_cursor_, 1).Copy();
+    auto tmp2 = {data_.Slice(label_cursor_, 1).Copy()};
+    ReturnType ret(tmp, tmp2);
     data_cursor_++;
     label_cursor_++;
     return ret;

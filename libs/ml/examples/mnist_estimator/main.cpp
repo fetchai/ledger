@@ -45,6 +45,8 @@ int main(int ac, char **av)
 
   /// setup config ///
   EstimatorConfig<DataType> estimator_config;
+  estimator_config.learning_rate  = 0.01f;
+  estimator_config.lr_decay       = 0.99f;
   estimator_config.batch_size     = 64;
   estimator_config.subset_size    = 1000;
   estimator_config.early_stopping = true;
@@ -52,16 +54,24 @@ int main(int ac, char **av)
 
   // setup dataloader
   auto       data_loader_ptr = std::make_shared<DataLoaderType>(av[1], av[2]);
-  TensorType test_datum      = (data_loader_ptr->GetNext()).second.at(0);
+  TensorType test_label      = (data_loader_ptr->GetNext()).second.at(0);
+  TensorType test_input      = (data_loader_ptr->GetNext()).second.at(0);
   TensorType prediction;
   DataType   loss;
 
   // run estimator in training mode
   EstimatorType estimator(estimator_config, data_loader_ptr, {784, 100, 20, 10});
-  estimator.Train(1000, loss);
+
+  for (std::size_t i = 0; i < 10; ++i)
+  {
+    estimator.Train(100, loss);
+    std::cout << "epoch: " << (i*100) << ", loss: " << loss << std::endl;
+  }
 
   // run estimator in testing mode
-  estimator.Predict(test_datum, prediction);
+  estimator.Predict(test_input, prediction);
+  std::cout << "test_label.ToString(): " << test_label.ToString() << std::endl;
+  std::cout << "prediction.ToString(): " << prediction.ToString() << std::endl;
 
   return 0;
 }
