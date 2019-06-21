@@ -635,6 +635,20 @@ TEST_F(ArrayTests, erase_fails_if_index_is_equal_to_size)
   ASSERT_FALSE(toolkit.Run());
 }
 
+TEST_F(ArrayTests, erase_fails_if_array_is_empty)
+{
+  static char const *TEXT = R"(
+    function main()
+      var data = Array<Int32>(0);
+
+      data.erase(0);
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_FALSE(toolkit.Run());
+}
+
 TEST_F(ArrayTests, erase_fails_if_index_is_negative)
 {
   static char const *TEXT = R"(
