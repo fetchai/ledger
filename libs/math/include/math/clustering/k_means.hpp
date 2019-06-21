@@ -791,7 +791,6 @@ ClusteringType KMeans(ArrayType const &data, typename ArrayType::SizeType const 
   assert(K <= n_points);  // you can't have more clusters than data points
   assert(K > 1);          // why would you run k means clustering with only one cluster?
 
-  //  std::vector<SizeType> ret_array_shape{n_points, 1};
   ClusteringType ret{n_points};
 
   if (n_points == K)  // very easy to cluster!
