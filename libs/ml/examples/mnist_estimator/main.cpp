@@ -48,7 +48,7 @@ int main(int ac, char **av)
   estimator_config.batch_size     = 64;      // minibatch training size
   estimator_config.subset_size    = 1000;    // only train on the first 1000 samples
   estimator_config.early_stopping = true;    // stop early if no improvement
-  estimator_config.patience       = 100;
+  estimator_config.patience       = 30;
   estimator_config.opt            = OptimiserType::ADAM;
   estimator_config.print_stats    = true;
 
