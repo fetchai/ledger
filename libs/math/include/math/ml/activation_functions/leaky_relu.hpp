@@ -81,14 +81,7 @@ void LeakyRelu(ArrayType const &t, ArrayType const &a, ArrayType &ret)
 
   // Test if input is broadcastable by batch dimension
   assert(t.shape().size() == ret.shape().size());
-  assert(t.shape().size() == a.shape().size());
   assert(a.shape().at(a.shape().size() - 1) == 1);
-
-  for (SizeType i{0}; i < t.shape().size() - 1; i++)
-  {
-    assert(t.shape().at(i) == a.shape().at(i));
-    assert(t.shape().at(i) == ret.shape().at(i));
-  }
 
   SizeType t_batch_dimension   = t.shape().size() - 1;
   SizeType a_batch_dimension   = a.shape().size() - 1;
