@@ -114,7 +114,7 @@ TYPED_TEST(EstimatorsTest, sgd_dnnclasifier)
     DataType later_loss{0};
     ASSERT_TRUE(estimator.Train(1, loss));
     ASSERT_TRUE(estimator.Train(1, later_loss));
-//    EXPECT_LT(later_loss, loss);
+    //    EXPECT_LT(later_loss, loss);
     count++;
   }
 

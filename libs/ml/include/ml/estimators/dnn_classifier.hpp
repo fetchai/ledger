@@ -61,7 +61,6 @@ private:
   std::string output_;
 
   void PrintStats(SizeType epoch, DataType loss);
-
 };
 
 /**
@@ -130,14 +129,14 @@ template <typename TensorType>
 bool DNNClassifier<TensorType>::Train(SizeType n_steps, DataType &loss)
 {
   loss = DataType{0};
-  DataType max_loss;
+  DataType min_loss;
   SizeType patience_count{0};
   bool     stop_early = false;
 
   // run for one epoch
   loss     = optimiser_ptr_->Run(*data_loader_ptr_, this->estimator_config_.batch_size,
                              this->estimator_config_.subset_size);
-  max_loss = loss;
+  min_loss = loss;
 
   // run for remaining epochs with early stopping
   SizeType step{1};
@@ -155,9 +154,9 @@ bool DNNClassifier<TensorType>::Train(SizeType n_steps, DataType &loss)
     // update early stopping
     if (this->estimator_config_.early_stopping)
     {
-      if (loss < (max_loss - this->estimator_config_.min_delta))
+      if (loss < (min_loss - this->estimator_config_.min_delta))
       {
-        max_loss       = loss;
+        min_loss       = loss;
         patience_count = 0;
       }
       else
@@ -197,7 +196,6 @@ void DNNClassifier<TensorType>::PrintStats(SizeType epoch, DataType loss)
 {
   std::cout << "epoch: " << epoch << ", loss: " << loss << std::endl;
 }
-
 
 }  // namespace estimator
 }  // namespace ml

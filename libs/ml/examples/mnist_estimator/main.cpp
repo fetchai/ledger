@@ -43,11 +43,12 @@ int main(int ac, char **av)
 
   /// setup config ///
   EstimatorConfig<DataType> estimator_config;
-  estimator_config.learning_rate  = 0.005f; // initial learning rate
-  estimator_config.lr_decay       = 0.99f;  // learning rate decay multiplier per epoch
-  estimator_config.batch_size     = 64;     // minibatch training size
-  estimator_config.subset_size    = 1000;   // only train on the first 1000 samples
-  estimator_config.early_stopping = true;   // stop early if no improvement
+  estimator_config.learning_rate  = 0.005f;  // initial learning rate
+  estimator_config.lr_decay       = 0.99f;   // learning rate decay multiplier per epoch
+  estimator_config.batch_size     = 64;      // minibatch training size
+  estimator_config.subset_size    = 1000;    // only train on the first 1000 samples
+  estimator_config.early_stopping = true;    // stop early if no improvement
+  estimator_config.patience       = 100;
   estimator_config.opt            = OptimiserType::ADAM;
   estimator_config.print_stats    = true;
 
