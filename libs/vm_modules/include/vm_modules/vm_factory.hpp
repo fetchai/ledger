@@ -61,8 +61,8 @@ public:
 
     // ml modules - order is important!!
     math::CreateTensor(*module);
-    ml::CreateStateDict(*module);
-    ml::CreateGraph(*module);
+    ml::VMStateDict::Bind(*module);
+    ml::VMGraph::Bind(*module);
     fetch::vm_modules::ml::VMCrossEntropyLoss::Bind(*module);
     ml::CreateMeanSquareError(*module);
 

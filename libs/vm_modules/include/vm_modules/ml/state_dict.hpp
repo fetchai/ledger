@@ -55,15 +55,15 @@ public:
     *weights_tensor     = weights->GetTensor();
   }
 
+  static void Bind(fetch::vm::Module &module)
+  {
+    module.CreateClassType<VMStateDict>("StateDict")
+        .CreateConstuctor<>()
+        .CreateMemberFunction("SetWeights", &VMStateDict::SetWeights);
+  }
+
   fetch::ml::StateDict<MathTensorType> state_dict_;
 };
-
-inline void CreateStateDict(fetch::vm::Module &module)
-{
-  module.CreateClassType<VMStateDict>("StateDict")
-      .CreateConstuctor<>()
-      .CreateMemberFunction("SetWeights", &VMStateDict::SetWeights);
-}
 
 }  // namespace ml
 }  // namespace vm_modules

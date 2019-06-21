@@ -1,30 +1,24 @@
-function main()
-
-if (System.Argc() != 2)
-  print("Usage: VM SCRIPT_FILE PATH/TO/model_files/ /PATH/TO/INPUT/file.csv");
-  return;
-endif
-
-var loader = CommodityDataLoader();
-loader.AddData(System.Argv(1));
-
-//print(loader.GetNext().ToString());
-
-// mkae graph with correct architecture
-var graph = Graph();
+function build_graph(graph: Graph)
+// make graph with correct architecture
+var dropout_prob = 1.0f;
+var input_size = 118;
+var first_dense_size = 216;
+var second_dense_size = 108;
+var output_size = 54;
 
 graph.AddPlaceholder("num_input");
-graph.AddDropout("dropout_0", "num_input", 1.0f);
-graph.AddFullyConnected("hidden_dense_1", "dropout_0", 118, 216);
+graph.AddDropout("dropout_0", "num_input", dropout_prob);
+graph.AddFullyConnected("hidden_dense_1", "dropout_0", input_size, first_dense_size);
 graph.AddSoftmax("softmax_1", "hidden_dense_1");
-graph.AddDropout("dropout_1", "softmax_1", 1.0f);
-graph.AddFullyConnected("hidden_dense_2", "dropout_1", 216, 108);
+graph.AddDropout("dropout_1", "softmax_1", dropout_prob);
+graph.AddFullyConnected("hidden_dense_2", "dropout_1", first_dense_size, second_dense_size);
 graph.AddSoftmax("softmax_2", "hidden_dense_2");
-graph.AddDropout("dropout_2", "softmax_2", 1.0f);
-graph.AddFullyConnected("output_dense", "dropout_2", 108, 54);
+graph.AddDropout("dropout_2", "softmax_2", dropout_prob);
+graph.AddFullyConnected("output_dense", "dropout_2", second_dense_size, output_size);
 graph.AddSoftmax("softmax_3", "output_dense");
+endfunction
 
-
+function read_weights(graph: Graph)
 // read in weights
 var file_weights0 = System.Argv(0) +  "/output/keras_h7_aluminium_px_last_us/model_weights/hidden_dense_1/hidden_dense_1_12/kernel:0.csv";
 var file_bias0    = System.Argv(0) +  "/output/keras_h7_aluminium_px_last_us/model_weights/hidden_dense_1/hidden_dense_1_12/bias:0.csv";
@@ -40,10 +34,7 @@ var bias1    = read_csv(file_bias1, false);
 var weights2 = read_csv(file_weights2, true);
 var bias2    = read_csv(file_bias2, false);
 
-//printLn(weights0.At(0u64,0u64));
-
 // load weights into graph
-
 var sd = graph.StateDict();
 sd.SetWeights("hidden_dense_1" + "_FC_Weights", weights0);
 sd.SetWeights("hidden_dense_1" + "_FC_Bias", bias0);
@@ -51,14 +42,28 @@ sd.SetWeights("hidden_dense_2" + "_FC_Weights", weights1);
 sd.SetWeights("hidden_dense_2" + "_FC_Bias", bias1);
 sd.SetWeights("output_dense" + "_FC_Weights", weights2);
 sd.SetWeights("output_dense" + "_FC_Bias", bias2);
-
 graph.LoadStateDict(sd);
+endfunction
 
-for(i in 0:354)
+function main()
+
+if (System.Argc() != 3)
+  print("Usage: VM SCRIPT_FILE PATH/TO/model_files/ /PATH/TO/input_file.csv /PATH/TO/label_file.csv");
+  return;
+endif
+
+var loader = CommodityDataLoader();
+loader.AddData(System.Argv(1), System.Argv(2));
+
+var graph = Graph();
+build_graph(graph);
+read_weights(graph);
+
+while(!loader.IsDone())
     var input_data = loader.GetNext();
-    graph.SetInput("num_input", input_data);
+    graph.SetInput("num_input", input_data.Data());
     var pred = graph.Evaluate("softmax_3");
     print(pred.ToString());
-endfor
+endwhile
 
 endfunction
