@@ -17,6 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include "vm_modules/ml/dataloaders/mnist_dataloader.hpp"
+#include "vm_modules/ml/dataloaders/commodity_dataloader.hpp"
 #include "ml/optimisation/adam_optimiser.hpp"
 #include "vm_modules/math/tensor.hpp"
 #include "vm_modules/ml/training_pair.hpp"
@@ -48,7 +50,8 @@ public:
     module.CreateClassType<fetch::vm_modules::ml::VMAdamOptimiser>("AdamOptimiser")
         .CreateConstuctor<fetch::vm::Ptr<fetch::vm_modules::ml::VMGraph>,
                           fetch::vm::Ptr<fetch::vm::String>, fetch::vm::Ptr<fetch::vm::String>>()
-        .CreateMemberFunction("Run", &fetch::vm_modules::ml::VMAdamOptimiser::Run);
+        .CreateMemberFunction("Run", &fetch::vm_modules::ml::VMAdamOptimiser::RunMnist)
+        .CreateMemberFunction("Run", &fetch::vm_modules::ml::VMAdamOptimiser::RunCommod);
   }
 
   static fetch::vm::Ptr<VMAdamOptimiser> Constructor(
@@ -61,7 +64,13 @@ public:
                                output_node_names->str);
   }
 
-  DataType Run(fetch::vm::Ptr<fetch::vm_modules::ml::MnistDataLoader> const &loader,
+  DataType RunMnist(fetch::vm::Ptr<fetch::vm_modules::ml::MnistDataLoader> const &loader,
+               uint64_t batch_size, uint64_t subset_size)
+  {
+    return optimiser_.Run(loader->loader_, batch_size, subset_size);
+  }
+
+  DataType RunCommod(fetch::vm::Ptr<fetch::vm_modules::ml::VMCommodityDataLoader> const &loader,
                uint64_t batch_size, uint64_t subset_size)
   {
     return optimiser_.Run(loader->loader_, batch_size, subset_size);
