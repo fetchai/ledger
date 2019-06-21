@@ -627,7 +627,7 @@ TEST_F(ArrayTests, erase_fails_if_index_is_equal_to_size)
       data[0] = 10;
       data[1] = 20;
 
-      data.erase(2);
+      data.erase(data.count());
     endfunction
   )";
 
