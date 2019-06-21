@@ -29,7 +29,7 @@ namespace fetch {
 namespace ml {
 
 namespace {
-std::pair<math::SizeType, math::SizeType> count_rows_cols(std::string const & filename)
+std::pair<math::SizeType, math::SizeType> count_rows_cols(std::string const &filename)
 {
   // find number of rows and columns in the file
   std::ifstream  file(filename);
@@ -72,7 +72,7 @@ public:
 
   virtual void Reset();
 
-  void AddData(std::string const & xfilename, std::string const & yfilename);
+  void AddData(std::string const &xfilename, std::string const &yfilename);
 
 private:
   bool      random_mode_ = false;
@@ -97,7 +97,8 @@ private:
  * @param yfilename name of the csv file with labels
  */
 template <typename LabelType, typename InputType>
-void CommodityDataLoader<LabelType, InputType>::AddData (std::string const & xfilename, std::string const & yfilename)
+void CommodityDataLoader<LabelType, InputType>::AddData(std::string const &xfilename,
+                                                        std::string const &yfilename)
 {
   std::pair<SizeType, SizeType> xshape = count_rows_cols(xfilename);
   std::pair<SizeType, SizeType> yshape = count_rows_cols(yfilename);
@@ -164,7 +165,6 @@ void CommodityDataLoader<LabelType, InputType>::AddData (std::string const & xfi
     }
     ++row;
   }
-
 }
 
 /**
@@ -173,8 +173,10 @@ void CommodityDataLoader<LabelType, InputType>::AddData (std::string const & xfi
  * @tparam InputType type for the data
  * @return Pair of input and output
  */
-template<typename LabelType, typename InputType>
-typename CommodityDataLoader<LabelType, InputType>::ReturnType CommodityDataLoader<LabelType, InputType>::GetNext() {
+template <typename LabelType, typename InputType>
+typename CommodityDataLoader<LabelType, InputType>::ReturnType
+CommodityDataLoader<LabelType, InputType>::GetNext()
+{
   if (this->random_mode_)
   {
     GetAtIndex(static_cast<SizeType>(rand.generator()) % Size());
@@ -193,31 +195,34 @@ typename CommodityDataLoader<LabelType, InputType>::ReturnType CommodityDataLoad
  * @tparam InputType Type for the data, usually tensor<float>
  * @param random_mode whether to access the data randomly
  */
-template<typename LabelType, typename InputType>
+template <typename LabelType, typename InputType>
 CommodityDataLoader<LabelType, InputType>::CommodityDataLoader(bool random_mode)
-    : DataLoader<LabelType, InputType>(random_mode)
+  : DataLoader<LabelType, InputType>(random_mode)
 {}
 
 /**
  * Returns the number of datapoints
  * @return number of datapoints
  */
-template<typename LabelType, typename InputType>
-typename CommodityDataLoader<LabelType, InputType>::SizeType CommodityDataLoader<LabelType, InputType>::Size() const {
+template <typename LabelType, typename InputType>
+typename CommodityDataLoader<LabelType, InputType>::SizeType
+CommodityDataLoader<LabelType, InputType>::Size() const
+{
   return static_cast<SizeType>(size_);
 }
 
-
-template<typename LabelType, typename InputType>
-bool CommodityDataLoader<LabelType, InputType>::IsDone() const {
+template <typename LabelType, typename InputType>
+bool CommodityDataLoader<LabelType, InputType>::IsDone() const
+{
   return cursor_ >= size_;
 }
 
 /**
  * Resets the cursor to 0
  */
-template<typename LabelType, typename InputType>
-void CommodityDataLoader<LabelType, InputType>::Reset() {
+template <typename LabelType, typename InputType>
+void CommodityDataLoader<LabelType, InputType>::Reset()
+{
   cursor_ = 0;
 }
 
@@ -225,8 +230,9 @@ void CommodityDataLoader<LabelType, InputType>::Reset() {
  * Returns the data pair at the given index
  * @param index index of the data
  */
-template<typename LabelType, typename InputType>
-void CommodityDataLoader<LabelType, InputType>::GetAtIndex(CommodityDataLoader::SizeType index) {
+template <typename LabelType, typename InputType>
+void CommodityDataLoader<LabelType, InputType>::GetAtIndex(CommodityDataLoader::SizeType index)
+{
   buffer_.first  = labels_.Slice(index).Copy();
   buffer_.second = std::vector<InputType>({data_.Slice(index).Copy()});
 }

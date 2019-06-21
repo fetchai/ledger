@@ -29,10 +29,8 @@
 #include <string>
 #include <vector>
 
-
-using DataType = typename fetch::vm_modules::math::VMTensor::DataType;
+using DataType  = typename fetch::vm_modules::math::VMTensor::DataType;
 using ArrayType = fetch::math::Tensor<DataType>;
-
 
 struct System : public fetch::vm::Object
 {

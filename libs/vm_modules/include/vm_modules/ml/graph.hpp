@@ -105,8 +105,7 @@ public:
 
   fetch::vm::Ptr<VMStateDict> StateDict()
   {
-    fetch::vm::Ptr<VMStateDict> ret =
-        this->vm_->CreateNewObject<VMStateDict>(graph_.StateDict());
+    fetch::vm::Ptr<VMStateDict> ret = this->vm_->CreateNewObject<VMStateDict>(graph_.StateDict());
     return ret;
   }
 
