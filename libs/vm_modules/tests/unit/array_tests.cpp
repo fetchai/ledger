@@ -577,4 +577,78 @@ TEST_F(ArrayTests, extend_does_not_mutate_its_argument)
   ASSERT_EQ(stdout.str(), "[50, 40, 30]");
 }
 
+TEST_F(ArrayTests, erase_removes_the_element_pointed_to_by_the_index)
+{
+  static char const *TEXT = R"(
+    function main()
+      var data = Array<Int32>(5);
+      data[0] = 10;
+      data[1] = 20;
+      data[2] = 30;
+      data[3] = 40;
+      data[4] = 50;
+
+      data.erase(3);
+      print(data);
+      data.erase(1);
+      print(data);
+      data.erase(0);
+      print(data);
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_TRUE(toolkit.Run());
+
+  ASSERT_EQ(stdout.str(), "[10, 20, 30, 50][10, 30, 50][30, 50]");
+}
+
+TEST_F(ArrayTests, erase_fails_if_index_exceeds_size)
+{
+  static char const *TEXT = R"(
+    function main()
+      var data = Array<Int32>(2);
+      data[0] = 10;
+      data[1] = 20;
+
+      data.erase(3);
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_FALSE(toolkit.Run());
+}
+
+TEST_F(ArrayTests, erase_fails_if_index_is_equal_to_size)
+{
+  static char const *TEXT = R"(
+    function main()
+      var data = Array<Int32>(2);
+      data[0] = 10;
+      data[1] = 20;
+
+      data.erase(2);
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_FALSE(toolkit.Run());
+}
+
+TEST_F(ArrayTests, erase_fails_if_index_is_negative)
+{
+  static char const *TEXT = R"(
+    function main()
+      var data = Array<Int32>(2);
+      data[0] = 10;
+      data[1] = 20;
+
+      data.erase(-2);
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_FALSE(toolkit.Run());
+}
+
 }  // namespace

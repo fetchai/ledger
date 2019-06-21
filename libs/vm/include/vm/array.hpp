@@ -56,6 +56,7 @@ public:
   virtual Ptr<IArray>        PopFrontMany(int32_t)              = 0;
   virtual void               Reverse()                          = 0;
   virtual void               Extend(Ptr<IArray> const &)        = 0;
+  virtual void               Erase(int32_t)                     = 0;
 
   virtual TemplateParameter1 GetIndexedValue(AnyInteger const &index)                    = 0;
   virtual void SetIndexedValue(AnyInteger const &index, TemplateParameter1 const &value) = 0;
@@ -201,6 +202,23 @@ struct Array : public IArray
     elements.reserve(elements.size() + other_elements.size());
 
     elements.insert(elements.cend(), other_elements.cbegin(), other_elements.cend());
+  }
+
+  void Erase(const int32_t index) override
+  {
+    if (index < 0)
+    {
+      RuntimeError("negative index");
+      return;
+    }
+
+    if (static_cast<std::size_t>(index) >= elements.size())
+    {
+      RuntimeError("index out of bounds");
+      return;
+    }
+
+    elements.erase(elements.begin() + index);
   }
 
   TemplateParameter1 GetIndexedValue(AnyInteger const &index) override
