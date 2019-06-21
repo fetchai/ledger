@@ -114,7 +114,6 @@ public:
   // We need this for the testing.
   bool IsReady()
   {
-    FETCH_LOCK(is_ready_mutex_);
     return is_ready_;
   }
 
@@ -168,10 +167,7 @@ private:
   uint64_t                                                     root_size_ = 0;
   std::unordered_map<PromiseOfTxList::PromiseCounter, uint8_t> promise_id_to_roots_;
 
-  Mutex mutex_{__LINE__, __FILE__};
-
-  Mutex is_ready_mutex_{__LINE__, __FILE__};
-  bool  is_ready_ = false;
+  std::atomic<bool>  is_ready_{false};
 };
 
 }  // namespace ledger
