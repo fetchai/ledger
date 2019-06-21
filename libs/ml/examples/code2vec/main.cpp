@@ -195,7 +195,7 @@ int main(int ac, char **av)
   // (Softmax) normalisation
   // Dimensions: (N_CONTEXTS, BATCH_SIZE)
   std::string attention_weight = g->AddNode<fetch::ml::ops::Softmax<ArrayType>>(
-      "AttentionWeight", {scalar_product_contexts_with_attention_reshaped}, 1);
+      "AttentionWeight", {scalar_product_contexts_with_attention_reshaped}, SizeType{1u});
 
   // Reshaping
   // Dimensions: (N_CONTEXTS, 1, BATCH_SIZE)

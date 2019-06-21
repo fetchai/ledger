@@ -368,8 +368,8 @@ private:
                                 fetch::math::DotTranspose(output_matrix, output_matrix));
 
     // num = 1 / (1 + (num+sum_y).T+sum_y)
-    ArrayType tmp_val((num + sum_y).Transpose());
-    num = fetch::math::Divide(DataType(1), fetch::math::Add(DataType(1), (tmp_val + sum_y)));
+    ArrayType val((num + sum_y).Transpose());
+    num = fetch::math::Divide(DataType(1), fetch::math::Add(DataType(1), (val + sum_y)));
 
     // num[range(n), range(n)] = 0.
     for (SizeType i{0}; i < num.shape().at(0); i++)
@@ -415,7 +415,7 @@ private:
 
     for (SizeType i{0}; i < output_matrix.shape().at(0); i++)
     {
-      ArrayType tmp_slice(output_matrix.shape().at(1));
+      ArrayType output_slice(output_matrix.shape().at(1));
       for (SizeType j{0}; j < output_matrix.shape().at(0); j++)
       {
         if (i == j)
@@ -434,7 +434,7 @@ private:
         // /(1+||yi-yj||^2)
         fetch::math::Multiply(num.At(i, j), val, val);
 
-        // tmp_val*(yi-yj), where tmp_val=(Pij-Qij)/(1+||yi-yj||^2)
+        // val*(yi-yj), where val=(Pij-Qij)/(1+||yi-yj||^2)
 
         ArrayType diff = (output_matrix.Slice(j).Copy()) - (output_matrix.Slice(i).Copy());
 
@@ -442,12 +442,12 @@ private:
         shape.erase(shape.begin());
         diff.Reshape(shape);
 
-        tmp_slice += Multiply(val, diff);
+        output_slice += Multiply(val, diff);
       }
 
       for (SizeType k = 0; k < output_matrix.shape().at(1); k++)
       {
-        ret.Set(i, k, fetch::math::Multiply(DataType(-1), tmp_slice.At(k)));
+        ret.Set(i, k, fetch::math::Multiply(DataType(-1), output_slice.At(k)));
       }
     }
 
