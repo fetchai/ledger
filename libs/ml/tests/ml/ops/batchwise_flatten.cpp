@@ -58,7 +58,7 @@ TYPED_TEST(BatchwiseFlattenTest, forward_test)
     }
   }
 
-  fetch::ml::ops::BatchwiseFlattenOp<TypeParam> op;
+  fetch::ml::ops::BatchwiseFlatten<TypeParam> op;
 
   TypeParam prediction(op.ComputeOutputShape({data}));
   op.Forward({data}, prediction);
@@ -94,7 +94,7 @@ TYPED_TEST(BatchwiseFlattenTest, backward_test)
     }
   }
 
-  fetch::ml::ops::BatchwiseFlattenOp<TypeParam> op;
+  fetch::ml::ops::BatchwiseFlatten<TypeParam> op;
 
   TypeParam prediction(op.ComputeOutputShape({data}));
   op.Forward({data}, prediction);

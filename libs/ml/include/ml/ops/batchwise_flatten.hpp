@@ -25,7 +25,7 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class BatchwiseFlattenOp : public fetch::ml::Ops<T>
+class BatchwiseFlatten : public fetch::ml::Ops<T>
 {
 public:
   using ArrayType     = T;
@@ -33,8 +33,8 @@ public:
   using ArrayPtrType  = std::shared_ptr<ArrayType>;
   using VecTensorType = typename Ops<T>::VecTensorType;
 
-  BatchwiseFlattenOp()          = default;
-  virtual ~BatchwiseFlattenOp() = default;
+  BatchwiseFlatten()          = default;
+  virtual ~BatchwiseFlatten() = default;
 
   virtual void Forward(VecTensorType const &inputs, ArrayType &output)
   {
@@ -42,7 +42,7 @@ public:
     ASSERT(output.shape() == ComputeOutputShape(inputs));
     input_shape_ = inputs.front().get().shape();
 
-    BatchwiseFlatten(inputs.front().get(), output);
+    BatchwiseFlattenImpl(inputs.front().get(), output);
   }
 
   virtual std::vector<ArrayType> Backward(VecTensorType const &inputs,
@@ -50,7 +50,7 @@ public:
   {
     ASSERT(inputs.size() == 1);
     ArrayType ret(input_shape_);
-    BatchwiseFlatten(error_signal, ret);
+    BatchwiseFlattenImpl(error_signal, ret);
 
     return {ret};
   }
@@ -72,6 +72,23 @@ public:
 
 private:
   std::vector<std::uint64_t> input_shape_;
+
+  void BatchwiseFlattenImpl(ArrayType const &A, ArrayType &ret)
+  {
+    // Test if batch dimensions are equal
+    assert(ret.shape().at(ret.shape().size() - 1) == A.shape().at(A.shape().size() - 1));
+
+    SizeType input_batch_dimension  = A.shape().size() - 1;
+    SizeType output_batch_dimension = ret.shape().size() - 1;
+    SizeType batch_size             = ret.shape().at(output_batch_dimension);
+
+    for (SizeType i{0}; i < batch_size; i++)
+    {
+      auto input_slice  = A.Slice(i, input_batch_dimension);
+      auto output_slice = ret.Slice(i, output_batch_dimension);
+      output_slice.Assign(input_slice);
+    }
+  }
 };
 
 }  // namespace ops

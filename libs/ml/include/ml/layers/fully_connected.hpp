@@ -48,7 +48,7 @@ public:
   {
     std::string input =
         this->template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>(name + "_Input", {});
-    std::string flat_input = this->template AddNode<fetch::ml::ops::BatchwiseFlattenOp<ArrayType>>(
+    std::string flat_input = this->template AddNode<fetch::ml::ops::BatchwiseFlatten<ArrayType>>(
         name + "_Flatten", {input});
     std::string weights =
         this->template AddNode<fetch::ml::ops::Weights<ArrayType>>(name + "_Weights", {});
@@ -56,7 +56,7 @@ public:
         name + "_MatrixMultiply", {weights, flat_input});
     std::string bias =
         this->template AddNode<fetch::ml::ops::Weights<ArrayType>>(name + "_Bias", {});
-    std::string output = this->template AddNode<fetch::ml::ops::BatchwiseAddOp<ArrayType>>(
+    std::string output = this->template AddNode<fetch::ml::ops::BatchwiseAdd<ArrayType>>(
         name + "_Add", {weights_matmul, bias});
 
     output = fetch::ml::details::AddActivationNode<T>(activation_type, this, name + "_Activation",

@@ -60,7 +60,7 @@ TYPED_TEST(BatchwiseAddTest, forward_test)
     }
   }
 
-  fetch::ml::ops::BatchwiseAddOp<TypeParam> op;
+  fetch::ml::ops::BatchwiseAdd<TypeParam> op;
 
   TypeParam prediction(op.ComputeOutputShape({data1, data2}));
   op.Forward({data1, data2}, prediction);
@@ -96,7 +96,7 @@ TYPED_TEST(BatchwiseAddTest, backward_test)
     }
   }
 
-  fetch::ml::ops::BatchwiseAddOp<TypeParam> op;
+  fetch::ml::ops::BatchwiseAdd<TypeParam> op;
 
   TypeParam prediction(op.ComputeOutputShape({data1, data2}));
   op.Forward({data1, data2}, prediction);
