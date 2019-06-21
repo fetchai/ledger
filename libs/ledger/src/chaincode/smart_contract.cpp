@@ -223,7 +223,7 @@ std::vector<uint8_t> Convert(ConstByteArray const &buffer)
  */
 void AddAddressToParameterPack(vm::VM *vm, vm::ParameterPack &pack, msgpack::object const &obj)
 {
-  static uint8_t const  ADDRESS_ID   = static_cast<uint8_t>(0x4d);  // 77
+  static auto const     ADDRESS_ID   = static_cast<uint8_t>(0x4d);  // 77
   static uint32_t const ADDRESS_SIZE = 32u;
 
   bool valid{false};
@@ -234,8 +234,8 @@ void AddAddressToParameterPack(vm::VM *vm, vm::ParameterPack &pack, msgpack::obj
 
     if ((ADDRESS_ID == ext.type()) && (ADDRESS_SIZE == ext.size))
     {
-      uint8_t const *start = reinterpret_cast<uint8_t const *>(ext.data());
-      uint8_t const *end   = start + ext.size;
+      auto start = reinterpret_cast<uint8_t const *>(ext.data());
+      auto end   = start + ext.size;
 
       // create the instance of the address
       vm::Ptr<vm::Address> address = vm::Address::Constructor(vm, vm::TypeIds::Address);

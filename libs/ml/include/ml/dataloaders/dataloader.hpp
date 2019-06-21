@@ -31,10 +31,11 @@ class DataLoader
   using SizeType = fetch::math::SizeType;
 
 public:
-  DataLoader(bool random_mode)
+  explicit DataLoader(bool random_mode)
     : random_mode_(random_mode)
   {}
-  virtual ~DataLoader()                                         = default;
+  virtual ~DataLoader() = default;
+
   virtual std::pair<LabelType, std::vector<DataType>> GetNext() = 0;
 
   virtual SizeType Size() const   = 0;
