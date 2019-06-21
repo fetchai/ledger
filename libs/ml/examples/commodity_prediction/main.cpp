@@ -363,22 +363,22 @@ int main(int argc, char **argv)
     // load state dict into graph (i.e. load pretrained weights)
     g_ptr->LoadStateDict(sd);
 
-    /// FORWARD PASS PREDICTIONS ///
+  /// FORWARD PASS PREDICTIONS ///
 
-    ArrayType output({loader.Size(), output_feature_size});
-    ArrayType test_y({loader.Size(), output_feature_size});
+  ArrayType output({loader.Size(), output_feature_size});
+  ArrayType test_y({loader.Size(), output_feature_size});
 
-    SizeType j = 0;
-    while (!loader.IsDone())
-    {
-      auto input = loader.GetNext();
-      g_ptr->SetInput("num_input", input.second.at(0).Transpose());
+  SizeType j = 0;
+  while (!loader.IsDone())
+  {
+    auto input = loader.GetNext();
+    g_ptr->SetInput("num_input", input.second.at(0).Transpose());
 
-      auto slice_output = g_ptr->Evaluate(node_names.back());
-      output.Slice(j).Assign(slice_output);
-      test_y.Slice(j).Assign(input.first);
-      j++;
-    }
+    auto slice_output = g_ptr->Evaluate(node_names.back());
+    output.Slice(j).Assign(slice_output);
+    test_y.Slice(j).Assign(input.first);
+    j++;
+  }
 
     if (output.AllClose(test_y, 0.00001f))
     {
