@@ -20,7 +20,7 @@
 #include "math/combinatorics.hpp"
 #include "math/tensor.hpp"
 
-#include <gtest/gtest.h>
+#include "gtest/gtest.h"
 
 #include <algorithm>
 #include <chrono>

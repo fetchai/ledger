@@ -25,7 +25,8 @@
 #include "ledger/storage_unit/lane_service.hpp"
 #include "storage/transient_object_store.hpp"
 
-#include <benchmark/benchmark.h>
+#include "benchmark/benchmark.h"
+
 #include <vector>
 
 namespace {

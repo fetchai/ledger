@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "math/bignumber.hpp"
+#include "math/standard_functions/log.hpp"
 
 #include "vm_modules/core/byte_array_wrapper.hpp"
 
@@ -65,7 +66,7 @@ public:
 
   double ToFloat64()
   {
-    return math::ToDouble(number_);
+    return ::fetch::math::ToDouble(number_);
   }
 
   int32_t ToInt32()
@@ -84,7 +85,7 @@ public:
 
   double LogValue()
   {
-    return math::Log(number_);
+    return ::fetch::math::Log(number_);
   }
 
   fetch::vm::Ptr<ByteArrayWrapper> ToBuffer()
@@ -108,7 +109,7 @@ public:
   }
 
 private:
-  math::BigUnsigned number_;
+  fetch::math::BigUnsigned number_;
 };
 
 }  // namespace vm_modules

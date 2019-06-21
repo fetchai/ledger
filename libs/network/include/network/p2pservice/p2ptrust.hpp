@@ -94,7 +94,7 @@ protected:
   };
 
   using TrustStore   = std::vector<PeerTrustRating>;
-  using RankingStore = std::unordered_map<IDENTITY, size_t>;
+  using RankingStore = std::unordered_map<IDENTITY, std::size_t>;
   using Mutex        = mutex::Mutex;
   using PeerTrusts   = typename P2PTrustInterface<IDENTITY>::PeerTrusts;
 
@@ -111,7 +111,7 @@ public:
   P2PTrust(P2PTrust &&rhs)      = delete;
   ~P2PTrust() override          = default;
 
-  virtual void Debug() const override
+  void Debug() const override
   {}
 
   void AddFeedback(IDENTITY const &peer_ident, TrustSubject subject, TrustQuality quality) override
@@ -127,7 +127,7 @@ public:
     auto ranking      = ranking_store_.find(peer_ident);
     auto current_time = GetCurrentTime();
 
-    size_t pos;
+    std::size_t pos;
     if (ranking == ranking_store_.end())
     {
       PeerTrustRating new_record{peer_ident, 0.0, current_time};
@@ -172,7 +172,7 @@ public:
     {
       FETCH_LOCK(mutex_);
 
-      for (size_t pos = 0; pos < trust_store_.size(); pos++)
+      for (std::size_t pos = 0; pos < trust_store_.size(); pos++)
       {
         if (trust_store_[pos].trust < minimum_trust)
         {
@@ -279,7 +279,7 @@ protected:
     }
     dirty_ = false;
 
-    for (size_t pos = 0; pos < trust_store_.size(); pos++)
+    for (std::size_t pos = 0; pos < trust_store_.size(); pos++)
     {
       trust_store_[pos].SetCurrentTrust(current_time);
     }

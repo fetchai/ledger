@@ -16,13 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/macros.hpp"
 #include "variant/variant.hpp"
 
-#include "core/macros.hpp"
-
+#include <cstddef>
 #include <iomanip>
 #include <ostream>
-#include <sstream>
 
 namespace fetch {
 namespace variant {
