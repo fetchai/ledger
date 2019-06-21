@@ -128,13 +128,6 @@ public:
 protected:
   void OnTransaction(TransactionPtr const &tx) override;
 
-  // Reverse bits in byte
-  uint8_t Reverse(uint8_t c)
-  {
-    // https://graphics.stanford.edu/~seander/bithacks.html#ReverseByteWith64Bits
-    return static_cast<uint8_t>(((c * 0x80200802ULL) & 0x0884422110ULL) * 0x0101010101ULL >> 32);
-  }
-
 private:
   State OnInitial();
   State OnQueryObjectCounts();
@@ -167,7 +160,7 @@ private:
   uint64_t                                                     root_size_ = 0;
   std::unordered_map<PromiseOfTxList::PromiseCounter, uint8_t> promise_id_to_roots_;
 
-  std::atomic<bool>  is_ready_{false};
+  std::atomic_bool is_ready_{false};
 };
 
 }  // namespace ledger

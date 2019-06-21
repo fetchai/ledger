@@ -17,31 +17,25 @@
 //------------------------------------------------------------------------------
 
 #include "math/tensor.hpp"
-#include "ml/graph.hpp"
-#include "ml/layers/fully_connected.hpp"
-#include "ml/ops/activation.hpp"
-#include "ml/ops/loss_functions/mean_square_error.hpp"
-
 #include "vm/module.hpp"
-
-#include "vm_modules/ml/dataloaders/mnist_dataloader.hpp"
+#include "vm_modules/core/print.hpp"
+#include "vm_modules/ml/dataloaders/commodity_dataloader.hpp"
 #include "vm_modules/ml/graph.hpp"
-#include "vm_modules/ml/optimisation/adam_optimiser.hpp"
 #include "vm_modules/ml/training_pair.hpp"
 
-#include <cstdint>
-#include <cstdlib>
 #include <fstream>
 #include <iostream>
 #include <memory>
 #include <string>
-#include <utility>
 #include <vector>
+
+using DataType  = typename fetch::vm_modules::math::VMTensor::DataType;
+using ArrayType = fetch::math::Tensor<DataType>;
 
 struct System : public fetch::vm::Object
 {
-  System()           = delete;
-  ~System() override = default;
+  System()          = delete;
+  virtual ~System() = default;
 
   static int32_t Argc(fetch::vm::VM * /*vm*/, fetch::vm::TypeId /*type_id*/)
   {
@@ -60,21 +54,56 @@ struct System : public fetch::vm::Object
 
 std::vector<std::string> System::args;
 
-template <typename T>
-static void PrintNumber(fetch::vm::VM * /*vm*/, T const &s)
-{
-  std::cout << s << std::endl;
-}
+// read the weights and bias csv files
 
-static void Print(fetch::vm::VM * /*vm*/, fetch::vm::Ptr<fetch::vm::String> const &s)
+fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> read_csv(
+    fetch::vm::VM *vm, fetch::vm::Ptr<fetch::vm::String> const &filename, bool transpose = false)
 {
-  std::cout << s->str << std::endl;
-}
+  std::ifstream file(filename->str);
+  std::string   buf;
 
-fetch::vm::Ptr<fetch::vm::String> toString(fetch::vm::VM *vm, float const &a)
-{
-  fetch::vm::Ptr<fetch::vm::String> ret(new fetch::vm::String(vm, std::to_string(a)));
-  return ret;
+  // find number of rows and columns in the file
+  char                  delimiter = ',';
+  std::string           field_value;
+  fetch::math::SizeType row{0};
+  fetch::math::SizeType col{0};
+
+  while (std::getline(file, buf, '\n'))
+  {
+    std::stringstream ss(buf);
+
+    while (row == 0 && std::getline(ss, field_value, delimiter))
+    {
+      ++col;
+    }
+    ++row;
+  }
+
+  ArrayType weights({row, col});
+
+  // read data into weights array
+  file.clear();
+  file.seekg(0, std::ios::beg);
+
+  row = 0;
+  while (std::getline(file, buf, '\n'))
+  {
+    col = 0;
+    std::stringstream ss(buf);
+    while (std::getline(ss, field_value, delimiter))
+    {
+      weights(row, col) = static_cast<DataType>(std::stod(field_value));
+      ++col;
+    }
+    ++row;
+  }
+
+  if (transpose)
+  {
+    weights = weights.Transpose();
+  }
+
+  return vm->CreateNewObject<fetch::vm_modules::math::VMTensor>(weights);
 }
 
 int main(int argc, char **argv)
@@ -87,7 +116,7 @@ int main(int argc, char **argv)
 
   for (int i = 2; i < argc; ++i)
   {
-    System::args.push_back(std::string(argv[i]));
+    System::args.emplace_back(std::string(argv[i]));
   }
 
   // Reading file
@@ -99,13 +128,6 @@ int main(int argc, char **argv)
 
   auto module = std::make_shared<fetch::vm::Module>();
 
-  module->CreateFreeFunction("print", &PrintNumber<int>);
-  module->CreateFreeFunction("print", &PrintNumber<uint64_t>);
-  module->CreateFreeFunction("print", &PrintNumber<float>);
-  module->CreateFreeFunction("print", &PrintNumber<double>);
-  module->CreateFreeFunction("print", &Print);
-  module->CreateFreeFunction("toString", &toString);
-
   module->CreateClassType<System>("System")
       .CreateStaticMemberFunction("Argc", &System::Argc)
       .CreateStaticMemberFunction("Argv", &System::Argv);
@@ -113,13 +135,14 @@ int main(int argc, char **argv)
   fetch::vm_modules::math::CreateTensor(*module);
   fetch::vm_modules::ml::VMStateDict::Bind(*module);
   fetch::vm_modules::ml::VMGraph::Bind(*module);
-
   fetch::vm_modules::ml::TrainingPair::Bind(*module);
-  fetch::vm_modules::ml::MnistDataLoader::Bind(*module);
-  fetch::vm_modules::ml::VMAdamOptimiser::Bind(*module);
+  fetch::vm_modules::ml::VMCommodityDataLoader::Bind(*module);
+  fetch::vm_modules::CreatePrint(*module);
+
+  module->CreateFreeFunction("read_csv", &read_csv);
 
   // Setting compiler up
-  auto                     compiler = std::make_unique<fetch::vm::Compiler>(module.get());
+  fetch::vm::Compiler *    compiler = new fetch::vm::Compiler(module.get());
   fetch::vm::Executable    executable;
   fetch::vm::IR            ir;
   std::vector<std::string> errors;
@@ -138,6 +161,10 @@ int main(int argc, char **argv)
   }
 
   fetch::vm::VM vm(module.get());
+
+  // attach std::cout for printing
+  vm.AttachOutputDevice("stdout", std::cout);
+
   if (!vm.GenerateExecutable(ir, "main_ir", executable, errors))
   {
     std::cout << "Failed to generate executable" << std::endl;
@@ -162,6 +189,6 @@ int main(int argc, char **argv)
   {
     std::cout << "Runtime error on line " << error << std::endl;
   }
-
+  delete compiler;
   return 0;
 }
