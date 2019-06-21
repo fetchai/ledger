@@ -17,13 +17,18 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm/variant.hpp"
+#include "vm/common.hpp"
+#include "vm/object.hpp"
 
 #include <cstddef>
 #include <cstdint>
+#include <string>
+#include <utility>
 
 namespace fetch {
 namespace vm {
+
+class VM;
 
 template <typename T>
 struct Array;

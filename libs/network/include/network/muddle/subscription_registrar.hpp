@@ -17,16 +17,20 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/mutex.hpp"
 #include "network/muddle/packet.hpp"
-#include "network/muddle/subscription.hpp"
 #include "network/muddle/subscription_feed.hpp"
 
+#include <cstdint>
 #include <map>
+#include <memory>
+#include <mutex>
+#include <string>
 #include <tuple>
 
 namespace fetch {
 namespace muddle {
+
+class Subscription;
 
 /**
  * Top level map of subscriptions that is kept by the muddle router

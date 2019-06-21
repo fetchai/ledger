@@ -20,7 +20,7 @@
 #include "http/response.hpp"
 #include "network/fetch_asio.hpp"
 
-#include <gtest/gtest.h>
+#include "gtest/gtest.h"
 #include <memory>
 
 class ResponseTests : public ::testing::Test

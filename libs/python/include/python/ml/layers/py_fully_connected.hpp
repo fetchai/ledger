@@ -30,7 +30,7 @@ template <typename T>
 void BuildFullyConnected(std::string const &custom_name, pybind11::module &module)
 {
   py::class_<fetch::ml::layers::FullyConnected<fetch::math::Tensor<T>>>(module, custom_name.c_str())
-      .def(py::init<size_t, size_t>())
+      .def(py::init<std::size_t, std::size_t>())
       .def("Forward", &fetch::ml::layers::FullyConnected<fetch::math::Tensor<T>>::Forward)
       .def("Backward", &fetch::ml::layers::FullyConnected<fetch::math::Tensor<T>>::Backward);
 }

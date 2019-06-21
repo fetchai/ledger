@@ -151,7 +151,6 @@ void Analyser::Initialise()
                      map_type_);
   CreateTemplateType("State", TypeIndex(typeid(IState)), {any_type_}, TypeIds::Unknown,
                      state_type_);
-
   CreateTemplateType("ShardedState", TypeIndex(typeid(IShardedState)), {any_type_},
                      TypeIds::Unknown, sharded_state_type_);
 }
@@ -305,7 +304,7 @@ bool Analyser::Analyse(BlockNodePtr const &root, std::vector<std::string> &error
 
 void Analyser::AddError(uint16_t line, std::string const &message)
 {
-  std::stringstream stream;
+  std::ostringstream stream;
   stream << "line " << line << ": "
          << "error: " << message;
   errors_.push_back(stream.str());
@@ -378,7 +377,6 @@ void Analyser::BuildFunctionDefinition(BlockNodePtr const &parent_block_node,
     SymbolPtr          symbol         = function_definition_node->symbols->Find(parameter_name);
     if (symbol)
     {
-      std::stringstream stream;
       AddError(parameter_node->line, "parameter name '" + parameter_name + "' is already defined");
       ++problems;
       continue;
@@ -1221,7 +1219,7 @@ bool Analyser::AnnotateEqualityOp(ExpressionNodePtr const &node)
     else
     {
       // Comparing two nulls...
-      // Type-uninferable nulls will be transformed to boolean true
+      // Type-uninferable nulls will be transformed to boolean false
       lhs->type = bool_type_;
       rhs->type = bool_type_;
     }
@@ -1912,9 +1910,9 @@ bool Analyser::MatchTypes(TypePtr const &type, TypePtrArray const &supplied_type
     TypePtr expected_type = ConvertType(expected_types[i], type);
     if (supplied_type->IsNull())
     {
-      if (expected_type->IsPrimitive())
+      if (!expected_type->IsClass() && !expected_type->IsInstantiation())
       {
-        // Not a match
+        // Not a match, can only convert null to a known reference type
         return false;
       }
       actual_types.push_back(expected_type);

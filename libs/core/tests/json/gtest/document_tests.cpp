@@ -18,7 +18,7 @@
 
 #include "core/json/document.hpp"
 
-#include <gtest/gtest.h>
+#include "gtest/gtest.h"
 
 using fetch::json::JSONDocument;
 using fetch::variant::Variant;

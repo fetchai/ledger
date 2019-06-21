@@ -16,11 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include <gtest/gtest.h>
-
 #include "math/base_types.hpp"
 #include "math/distance/euclidean.hpp"
 #include "math/tensor.hpp"
+
+#include "gtest/gtest.h"
 
 using namespace fetch::math::distance;
 using namespace fetch::math;

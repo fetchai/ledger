@@ -17,32 +17,20 @@
 //------------------------------------------------------------------------------
 
 #include "math/tensor.hpp"
-#include "ml/dataloaders/mnist_loaders/mnist_loader.hpp"
-#include "ml/graph.hpp"
-#include "ml/layers/fully_connected.hpp"
-#include "ml/ops/activation.hpp"
-#include "ml/ops/loss_functions/mean_square_error.hpp"
 #include "vm/module.hpp"
 #include "vm_modules/core/print.hpp"
 #include "vm_modules/ml/dataloaders/commodity_dataloader.hpp"
 #include "vm_modules/ml/graph.hpp"
-#include "vm_modules/ml/state_dict.hpp"
+#include "vm_modules/ml/training_pair.hpp"
 
-#include <cstdint>
-#include <cstdlib>
 #include <fstream>
 #include <iostream>
 #include <memory>
 #include <string>
-#include <utility>
 #include <vector>
 
-using DataType  = float;  // todo: setting this to double breaks Arch
+using DataType  = typename fetch::vm_modules::math::VMTensor::DataType;
 using ArrayType = fetch::math::Tensor<DataType>;
-
-using namespace fetch::ml::ops;
-using namespace fetch::ml::layers;
-using namespace fetch::math;
 
 struct System : public fetch::vm::Object
 {
@@ -128,7 +116,7 @@ int main(int argc, char **argv)
 
   for (int i = 2; i < argc; ++i)
   {
-    System::args.push_back(std::string(argv[i]));
+    System::args.emplace_back(std::string(argv[i]));
   }
 
   // Reading file
@@ -145,9 +133,9 @@ int main(int argc, char **argv)
       .CreateStaticMemberFunction("Argv", &System::Argv);
 
   fetch::vm_modules::math::CreateTensor(*module);
-  fetch::vm_modules::ml::CreateStateDict(
-      *module);  // NB: things have to be created in the right order!
-  fetch::vm_modules::ml::CreateGraph(*module);
+  fetch::vm_modules::ml::VMStateDict::Bind(*module);
+  fetch::vm_modules::ml::VMGraph::Bind(*module);
+  fetch::vm_modules::ml::TrainingPair::Bind(*module);
   fetch::vm_modules::ml::VMCommodityDataLoader::Bind(*module);
   fetch::vm_modules::CreatePrint(*module);
 

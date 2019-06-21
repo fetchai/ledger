@@ -19,6 +19,7 @@
 
 #include "ml/dataloaders/commodity_dataloader.hpp"
 #include "vm_modules/math/tensor.hpp"
+#include "vm_modules/ml/training_pair.hpp"
 
 namespace fetch {
 namespace vm_modules {
@@ -37,7 +38,8 @@ public:
     module.CreateClassType<VMCommodityDataLoader>("CommodityDataLoader")
         .CreateConstuctor<>()
         .CreateMemberFunction("AddData", &VMCommodityDataLoader::AddData)
-        .CreateMemberFunction("GetNext", &VMCommodityDataLoader::GetNext);
+        .CreateMemberFunction("GetNext", &VMCommodityDataLoader::GetNext)
+        .CreateMemberFunction("IsDone", &VMCommodityDataLoader::IsDone);
   }
 
   static fetch::vm::Ptr<VMCommodityDataLoader> Constructor(fetch::vm::VM *   vm,
@@ -46,16 +48,28 @@ public:
     return new VMCommodityDataLoader(vm, type_id);
   }
 
-  void AddData(fetch::vm::Ptr<fetch::vm::String> const &input_filename)
+  void AddData(fetch::vm::Ptr<fetch::vm::String> const &xfilename,
+               fetch::vm::Ptr<fetch::vm::String> const &yfilename)
   {
-    loader_.AddData(input_filename->str,
-                    input_filename->str);  // todo: this fills the output data with the input data
+    loader_.AddData(xfilename->str, yfilename->str);
   }
 
-  fetch::vm::Ptr<math::VMTensor> GetNext()
-  {                                       // todo: return first and second
-    auto temp = loader_.GetNext().first;  // this is a math tensor with shape (1, n_outputs)
-    return this->vm_->CreateNewObject<math::VMTensor>(temp);
+  fetch::vm::Ptr<TrainingPair> GetNext()
+  {
+    typename fetch::ml::CommodityDataLoader<fetch::math::Tensor<float>,
+                                            fetch::math::Tensor<float>>::ReturnType next =
+        loader_.GetNext();
+
+    auto first      = this->vm_->CreateNewObject<math::VMTensor>(next.first);
+    auto second     = this->vm_->CreateNewObject<math::VMTensor>(next.second.at(0));
+    auto dataHolder = this->vm_->CreateNewObject<TrainingPair>(first, second);
+
+    return dataHolder;
+  }
+
+  bool IsDone()
+  {
+    return loader_.IsDone();
   }
 
 private:

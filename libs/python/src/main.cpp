@@ -70,13 +70,14 @@
 
 #include "python/serializers/py_byte_array_buffer.hpp"
 
+#include <cstdint>
+
 namespace py = pybind11;
 
 PYBIND11_MODULE(fetch, module)
 {
 
   // Namespaces
-
   py::module ns_fetch_fixed_point      = module.def_submodule("fixed_point");
   py::module ns_fetch_random           = module.def_submodule("random");
   py::module ns_fetch_vectorize        = module.def_submodule("vectorize");

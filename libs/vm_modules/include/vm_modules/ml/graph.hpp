@@ -18,12 +18,12 @@
 //------------------------------------------------------------------------------
 
 #include "vm_modules/math/tensor.hpp"
+#include "vm_modules/ml/state_dict.hpp"
 
 #include "ml/graph.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/ops/activation.hpp"
 
-#include "state_dict.hpp"
 #include "vm/module.hpp"
 
 namespace fetch {
@@ -98,37 +98,36 @@ public:
     graph_.AddNode<fetch::ml::ops::Dropout<MathTensorType>>(name->str, {input_name->str}, prob);
   }
 
-  void LoadStateDict(fetch::vm::Ptr<fetch::vm_modules::ml::VMStateDict> const &sd)
+  void LoadStateDict(fetch::vm::Ptr<VMStateDict> const &sd)
   {
     graph_.LoadStateDict(sd->state_dict_);
   }
 
-  fetch::vm::Ptr<fetch::vm_modules::ml::VMStateDict> StateDict()
+  fetch::vm::Ptr<VMStateDict> StateDict()
   {
-    fetch::vm::Ptr<fetch::vm_modules::ml::VMStateDict> ret =
-        this->vm_->CreateNewObject<fetch::vm_modules::ml::VMStateDict>(graph_.StateDict());
+    fetch::vm::Ptr<VMStateDict> ret = this->vm_->CreateNewObject<VMStateDict>(graph_.StateDict());
     return ret;
+  }
+
+  static void Bind(fetch::vm::Module &module)
+  {
+    module.CreateClassType<VMGraph>("Graph")
+        .CreateConstuctor<>()
+        .CreateMemberFunction("SetInput", &VMGraph::SetInput)
+        .CreateMemberFunction("Evaluate", &VMGraph::Evaluate)
+        .CreateMemberFunction("Backpropagate", &VMGraph::Backpropagate)
+        .CreateMemberFunction("Step", &VMGraph::Step)
+        .CreateMemberFunction("AddPlaceholder", &VMGraph::AddPlaceholder)
+        .CreateMemberFunction("AddFullyConnected", &VMGraph::AddFullyConnected)
+        .CreateMemberFunction("AddRelu", &VMGraph::AddRelu)
+        .CreateMemberFunction("AddSoftmax", &VMGraph::AddSoftmax)
+        .CreateMemberFunction("AddDropout", &VMGraph::AddDropout)
+        .CreateMemberFunction("LoadStateDict", &VMGraph::LoadStateDict)
+        .CreateMemberFunction("StateDict", &VMGraph::StateDict);
   }
 
   GraphType graph_;
 };
-
-inline void CreateGraph(fetch::vm::Module &module)
-{
-  module.CreateClassType<VMGraph>("Graph")
-      .CreateConstuctor<>()
-      .CreateMemberFunction("SetInput", &VMGraph::SetInput)
-      .CreateMemberFunction("Evaluate", &VMGraph::Evaluate)
-      .CreateMemberFunction("Backpropagate", &VMGraph::Backpropagate)
-      .CreateMemberFunction("Step", &VMGraph::Step)
-      .CreateMemberFunction("AddPlaceholder", &VMGraph::AddPlaceholder)
-      .CreateMemberFunction("AddFullyConnected", &VMGraph::AddFullyConnected)
-      .CreateMemberFunction("AddRelu", &VMGraph::AddRelu)
-      .CreateMemberFunction("AddSoftmax", &VMGraph::AddSoftmax)
-      .CreateMemberFunction("AddDropout", &VMGraph::AddDropout)
-      .CreateMemberFunction("LoadStateDict", &VMGraph::LoadStateDict)
-      .CreateMemberFunction("StateDict", &VMGraph::StateDict);
-}
 
 }  // namespace ml
 }  // namespace vm_modules

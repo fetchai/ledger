@@ -23,14 +23,13 @@
 #include "ledger/chain/transaction.hpp"
 #include "ledger/chain/transaction_builder.hpp"
 #include "ledger/chaincode/contract.hpp"
+#include "ledger/fetch_msgpack.hpp"
 #include "ledger/identifier.hpp"
 #include "ledger/state_sentinel_adapter.hpp"
 #include "ledger/storage_unit/cached_storage_adapter.hpp"
 #include "mock_storage_unit.hpp"
 
-#include "ledger/fetch_msgpack.hpp"
-
-#include <gtest/gtest.h>
+#include "gtest/gtest.h"
 
 inline auto FullShards(std::size_t lane_count)
 {

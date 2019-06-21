@@ -16,13 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "moment/clocks.hpp"
-
 #include "core/mutex.hpp"
+#include "moment/clocks.hpp"
 #include "moment/detail/adjustable_clock.hpp"
 #include "moment/detail/steady_clock.hpp"
 
-#include <chrono>
 #include <memory>
 #include <string>
 #include <unordered_map>

@@ -24,7 +24,7 @@
 
 #include "vm/module.hpp"
 
-#include "vm_modules/ml/dataloader/mnist_dataloader.hpp"
+#include "vm_modules/ml/dataloaders/mnist_dataloader.hpp"
 #include "vm_modules/ml/graph.hpp"
 #include "vm_modules/ml/optimisation/adam_optimiser.hpp"
 #include "vm_modules/ml/training_pair.hpp"
@@ -40,8 +40,8 @@
 
 struct System : public fetch::vm::Object
 {
-  System()          = delete;
-  virtual ~System() = default;
+  System()           = delete;
+  ~System() override = default;
 
   static int32_t Argc(fetch::vm::VM * /*vm*/, fetch::vm::TypeId /*type_id*/)
   {
@@ -111,14 +111,15 @@ int main(int argc, char **argv)
       .CreateStaticMemberFunction("Argv", &System::Argv);
 
   fetch::vm_modules::math::CreateTensor(*module);
-  fetch::vm_modules::ml::CreateGraph(*module);
+  fetch::vm_modules::ml::VMStateDict::Bind(*module);
+  fetch::vm_modules::ml::VMGraph::Bind(*module);
 
   fetch::vm_modules::ml::TrainingPair::Bind(*module);
   fetch::vm_modules::ml::MnistDataLoader::Bind(*module);
   fetch::vm_modules::ml::VMAdamOptimiser::Bind(*module);
 
   // Setting compiler up
-  fetch::vm::Compiler *    compiler = new fetch::vm::Compiler(module.get());
+  auto                     compiler = std::make_unique<fetch::vm::Compiler>(module.get());
   fetch::vm::Executable    executable;
   fetch::vm::IR            ir;
   std::vector<std::string> errors;
@@ -161,6 +162,6 @@ int main(int argc, char **argv)
   {
     std::cout << "Runtime error on line " << error << std::endl;
   }
-  delete compiler;
+
   return 0;
 }

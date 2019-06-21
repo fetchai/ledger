@@ -19,7 +19,8 @@
 #include "core/random/lcg.hpp"
 #include "math/distance/manhattan.hpp"
 #include "math/tensor.hpp"
-#include <gtest/gtest.h>
+
+#include "gtest/gtest.h"
 
 using namespace fetch::math::distance;
 using namespace fetch::math;

@@ -20,7 +20,7 @@
 #include "fake_random_access_stack.hpp"
 #include "storage/file_object.hpp"
 
-#include <gmock/gmock.h>
+#include "gmock/gmock.h"
 
 class MockFileObject
   : public fetch::storage::FileObject<FakeRandomAccessStack<fetch::storage::FileBlockType<>>>

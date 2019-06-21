@@ -134,13 +134,13 @@ public:
   }
 
 private:
-  std::string     context_ = "(root)";
-  std::string     filename_;
-  int             line_ = 0;
-  shared_type     parent_;
-  shared_type     derived_from_;
-  std::thread::id id_       = std::this_thread::get_id();
-  void *          instance_ = nullptr;
+  std::string           context_ = "(root)";
+  std::string           filename_;
+  int                   line_ = 0;
+  shared_type           parent_;
+  shared_type           derived_from_;
+  std::thread::id const id_       = std::this_thread::get_id();
+  void *                instance_ = nullptr;
 };
 
 class Context
@@ -148,11 +148,11 @@ class Context
 public:
   using shared_type = std::shared_ptr<ContextDetails>;
 
-  Context(void *instance = nullptr);
+  explicit Context(void *instance = nullptr);
   Context(shared_type ctx, std::string const &context, std::string const &filename = "",
           int line = 0, void *instance = nullptr);
-  Context(std::string const &context, std::string const &filename = "", int line = 0,
-          void *instance = nullptr);
+  explicit Context(std::string const &context, std::string const &filename = "", int line = 0,
+                   void *instance = nullptr);
 
   Context(Context const &context)
     : details_{context.details_}

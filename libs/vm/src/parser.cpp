@@ -1753,7 +1753,7 @@ void Parser::AddOperand(NodeKind kind)
 
 void Parser::AddError(std::string const &message)
 {
-  std::stringstream stream;
+  std::ostringstream stream;
   stream << "line " << token_->line << ": ";
   if (token_->kind != Token::Kind::EndOfInput)
   {
