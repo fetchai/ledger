@@ -40,8 +40,8 @@ void PrepareTestDataAndLabels1D(TypeParam &data, TypeParam &gt, TypeParam &test_
   test_datum = TypeParam::FromString("0; 1; 0");
 }
 
-//template <typename TypeParam>
-//void PrepareTestDataAndLabels2D(TypeParam &data, TypeParam &gt)
+// template <typename TypeParam>
+// void PrepareTestDataAndLabels2D(TypeParam &data, TypeParam &gt)
 //{
 //  using DataType = typename TypeParam::Type;
 //
@@ -94,7 +94,7 @@ TYPED_TEST(EstimatorsTest, sgd_dnnclasifier)
   fetch::math::SizeType n_training_steps = 10;
 
   fetch::ml::estimator::EstimatorConfig<DataType> estimator_config;
-  estimator_config.opt           = fetch::ml::optimisers::OptimiserType::SGD;
+  estimator_config.opt = fetch::ml::optimisers::OptimiserType::SGD;
 
   // set up data
   TypeParam data, gt, test_datum;
