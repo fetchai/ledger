@@ -24,10 +24,7 @@
 
 #include "vm/module.hpp"
 
-#include "vm_modules/ml/dataloaders/mnist_dataloader.hpp"
-#include "vm_modules/ml/graph.hpp"
-#include "vm_modules/ml/optimisation/adam_optimiser.hpp"
-#include "vm_modules/ml/training_pair.hpp"
+#include "vm_modules/ml/ml.hpp"
 
 #include <cstdint>
 #include <cstdlib>
@@ -110,13 +107,7 @@ int main(int argc, char **argv)
       .CreateStaticMemberFunction("Argc", &System::Argc)
       .CreateStaticMemberFunction("Argv", &System::Argv);
 
-  fetch::vm_modules::math::CreateTensor(*module);
-  fetch::vm_modules::ml::VMStateDict::Bind(*module);
-  fetch::vm_modules::ml::VMGraph::Bind(*module);
-
-  fetch::vm_modules::ml::TrainingPair::Bind(*module);
-  fetch::vm_modules::ml::MnistDataLoader::Bind(*module);
-  fetch::vm_modules::ml::VMAdamOptimiser::Bind(*module);
+  fetch::vm_modules::ml::BindAll(module);
 
   // Setting compiler up
   auto                     compiler = std::make_unique<fetch::vm::Compiler>(module.get());

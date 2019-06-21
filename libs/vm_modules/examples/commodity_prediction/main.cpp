@@ -19,10 +19,7 @@
 #include "math/tensor.hpp"
 #include "vm/module.hpp"
 #include "vm_modules/core/print.hpp"
-#include "vm_modules/ml/dataloaders/commodity_dataloader.hpp"
-#include "vm_modules/ml/graph.hpp"
-#include "vm_modules/ml/training_pair.hpp"
-#include "vm_modules/ml/optimisation/adam_optimiser.hpp"
+#include "vm_modules/ml/ml.hpp"
 
 #include <fstream>
 #include <iostream>
@@ -133,13 +130,8 @@ int main(int argc, char **argv)
       .CreateStaticMemberFunction("Argc", &System::Argc)
       .CreateStaticMemberFunction("Argv", &System::Argv);
 
-  fetch::vm_modules::math::CreateTensor(*module);
-  fetch::vm_modules::ml::VMStateDict::Bind(*module);
-  fetch::vm_modules::ml::VMGraph::Bind(*module);
-  fetch::vm_modules::ml::TrainingPair::Bind(*module);
-  fetch::vm_modules::ml::VMCommodityDataLoader::Bind(*module);
-  fetch::vm_modules::ml::MnistDataLoader::Bind(*module);
-  fetch::vm_modules::ml::VMAdamOptimiser::Bind(*module);
+  fetch::vm_modules::ml::BindAll(module);
+
   fetch::vm_modules::CreatePrint(*module);
 
   module->CreateFreeFunction("read_csv", &read_csv);
