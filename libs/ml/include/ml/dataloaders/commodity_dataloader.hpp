@@ -35,7 +35,7 @@ std::pair<math::SizeType, math::SizeType> count_rows_cols(std::string const &fil
   std::ifstream  file(filename);
   std::string    buf;
   std::string    delimiter = ",";
-  ulong          pos;
+  math::SizeType pos;
   math::SizeType row{0};
   math::SizeType col{0};
   while (std::getline(file, buf, '\n'))
