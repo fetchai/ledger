@@ -149,7 +149,7 @@ public:
       std::cerr << desc_ << '\n' << std::endl;
     }
 
-    size_t w = 0;
+    std::size_t w = 0;
 
     for (auto helpText : helpTexts_)
     {

@@ -22,7 +22,7 @@
 #include "variant/variant.hpp"
 #include "variant/variant_utils.hpp"
 
-#include <gmock/gmock.h>
+#include "gmock/gmock.h"
 
 namespace fetch {
 namespace ledger {

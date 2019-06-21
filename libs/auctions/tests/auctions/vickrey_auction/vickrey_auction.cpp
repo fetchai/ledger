@@ -16,12 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
+#include "auctions/vickrey_auction.hpp"
+
+#include "gtest/gtest.h"
+
 #include <cstddef>
 #include <vector>
-
-#include <gtest/gtest.h>
-
-#include "auctions/vickrey_auction.hpp"
 
 using namespace fetch::auctions;
 

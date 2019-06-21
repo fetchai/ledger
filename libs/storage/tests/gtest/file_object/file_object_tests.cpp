@@ -16,15 +16,16 @@
 //
 //------------------------------------------------------------------------------
 
-#include <gtest/gtest.h>
-#include <random>
-#include <vector>
-
 #include "core/random/lcg.hpp"
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
 #include "mock_file_object.hpp"
 #include "storage/storage_exception.hpp"
+
+#include "gtest/gtest.h"
+
+#include <random>
+#include <vector>
 
 using namespace fetch;
 using namespace fetch::byte_array;

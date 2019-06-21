@@ -22,7 +22,7 @@
 #include "testing/bitset_array_conversion.hpp"
 #include "testing/common_testing_functionality.hpp"
 
-#include <gtest/gtest.h>
+#include "gtest/gtest.h"
 
 using namespace testing;
 using namespace fetch;

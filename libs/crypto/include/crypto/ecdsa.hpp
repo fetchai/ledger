@@ -17,11 +17,13 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/assert.hpp"
+#include "core/byte_array/const_byte_array.hpp"
 #include "core/threading/synchronised_state.hpp"
 #include "crypto/ecdsa_signature.hpp"
 #include "crypto/prover.hpp"
 #include "crypto/verifier.hpp"
+
+#include <utility>
 
 namespace fetch {
 namespace crypto {
@@ -32,7 +34,7 @@ class ECDSAVerifier : public Verifier
   using Signature = openssl::ECDSASignature<>;
 
 public:
-  ECDSAVerifier(Identity ident)
+  explicit ECDSAVerifier(Identity ident)
     : identity_{std::move(ident)}
     , public_key_{identity_ ? PublicKey(identity_.identifier()) : PublicKey()}
   {}
@@ -43,6 +45,12 @@ public:
     {
       return false;
     }
+
+    if (signature.empty())
+    {
+      return false;
+    }
+
     Signature sig{signature};
     return sig.Verify(public_key_, data);
   }

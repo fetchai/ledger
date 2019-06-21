@@ -37,11 +37,14 @@
 
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/byte_array/encoders.hpp"
-#include "core/logger.hpp"
 #include "crypto/fnv.hpp"
 #include "network/peer.hpp"
 
+#include <cassert>
+#include <cstddef>
 #include <functional>
+#include <stdexcept>
+#include <string>
 
 namespace fetch {
 namespace network {
@@ -63,10 +66,10 @@ public:
   // Construction / Destruction
   Uri() = default;
   explicit Uri(Peer const &peer);
-  Uri(ConstByteArray const &uri);
-  Uri(Uri const &) = default;
-  Uri(Uri &&)      = default;
-  ~Uri()           = default;
+  explicit Uri(ConstByteArray const &uri);
+  Uri(Uri const &)     = default;
+  Uri(Uri &&) noexcept = default;
+  ~Uri()               = default;
 
   bool Parse(ConstByteArray const &uri);
 

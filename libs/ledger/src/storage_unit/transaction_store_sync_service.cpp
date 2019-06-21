@@ -207,8 +207,17 @@ TransactionStoreSyncService::State TransactionStoreSyncService::OnQuerySubtree()
   assert(!roots_to_sync_.empty());
 
   FETCH_LOCK(mutex_);
+
+  // sanity check that this is not the case
   for (auto const &connection : muddle_->AsEndpoint().GetDirectlyConnectedPeers())
   {
+    // if there are no further roots to sync then we need to exit
+    if (roots_to_sync_.empty())
+    {
+      break;
+    }
+
+    // extract the next root to sync
     auto root = roots_to_sync_.front();
     roots_to_sync_.pop();
 

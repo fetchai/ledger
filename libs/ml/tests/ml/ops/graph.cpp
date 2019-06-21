@@ -25,7 +25,7 @@
 #include "ml/ops/placeholder.hpp"
 #include "ml/ops/subtract.hpp"
 
-#include <gtest/gtest.h>
+#include "gtest/gtest.h"
 
 template <typename T>
 class GraphTest : public ::testing::Test

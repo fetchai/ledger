@@ -63,7 +63,7 @@ struct H<fixed_point::fp64_t, void>
 template <typename T>
 struct H<T, typename std::enable_if_t<IsPrimitive<T>::value>>
 {
-  size_t operator()(TemplateParameter1 const &key) const
+  std::size_t operator()(TemplateParameter1 const &key) const
   {
     return std::hash<T>()(key.primitive.Get<T>());
   }
@@ -72,7 +72,7 @@ struct H<T, typename std::enable_if_t<IsPrimitive<T>::value>>
 template <typename T>
 struct H<T, typename std::enable_if_t<IsPtr<T>::value>>
 {
-  size_t operator()(TemplateParameter1 const &key) const
+  std::size_t operator()(TemplateParameter1 const &key) const
   {
     return key.object->GetHashCode();
   }

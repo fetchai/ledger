@@ -17,16 +17,28 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/byte_array/byte_array.hpp"
+#include "core/logger.hpp"
+#include "http/abstract_server.hpp"
 #include "http/connection.hpp"
 #include "http/http_connection_manager.hpp"
+#include "http/method.hpp"
+#include "http/mime_types.hpp"
 #include "http/module.hpp"
+#include "http/request.hpp"
+#include "http/response.hpp"
 #include "http/route.hpp"
+#include "http/status.hpp"
+#include "network/fetch_asio.hpp"
 #include "network/management/network_manager.hpp"
 
+#include <cstdint>
 #include <deque>
 #include <functional>
-#include <map>
-#include <regex>
+#include <memory>
+#include <mutex>
+#include <new>
+#include <system_error>
 #include <utility>
 #include <vector>
 
@@ -85,7 +97,8 @@ public:
       }
     });
 
-    manager_.reset();
+    // TODO (issue 1220): This appears to cause a double free due to a race
+    /* manager_.reset(); */
   }
 
   void Start(uint16_t port)

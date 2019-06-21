@@ -21,7 +21,7 @@
 #include "math/tensor.hpp"
 #include "ml/layers/fully_connected.hpp"
 
-#include <gtest/gtest.h>
+#include "gtest/gtest.h"
 
 template <typename T>
 class SelfAttentionTest : public ::testing::Test

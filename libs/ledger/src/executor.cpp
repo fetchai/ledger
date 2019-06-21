@@ -66,6 +66,10 @@ bool GenerateContractName(Transaction const &tx, Identifier &identifier)
   case ContractMode::CHAIN_CODE:
     contract_name = tx.chain_code() + "." + tx.action();
     break;
+
+  case ContractMode::SYNERGETIC:
+    // synergetic contracts are not supported through normal pipeline
+    break;
   }
 
   // if there is a contract present simply parse the name
