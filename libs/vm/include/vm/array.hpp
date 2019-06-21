@@ -218,7 +218,7 @@ struct Array : public IArray
       return;
     }
 
-    elements.erase(elements.cbegin() + index);
+    elements.erase(elements.begin() + index);
   }
 
   TemplateParameter1 GetIndexedValue(AnyInteger const &index) override
