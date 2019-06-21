@@ -42,11 +42,10 @@ public:
    */
   virtual void Forward(VecTensorType const &inputs, ArrayType &output)
   {
-    ASSERT(inputs.size() == 2);
-    ASSERT(inputs.at(0).get().size() == inputs.at(1).get().size());
+    ASSERT(inputs.size() == 1);
     ASSERT(output.shape() == this->ComputeOutputShape(inputs));
 
-    fetch::math::Multiply(inputs[0].get(), inputs[1].get(), output);
+    fetch::math::Square(inputs[0].get(), output);
   }
 
   /**
@@ -57,20 +56,16 @@ public:
   virtual std::vector<ArrayType> Backward(VecTensorType const &inputs,
                                           ArrayType const &    error_signal)
   {
-    ASSERT(inputs.size() == 2);
-    ASSERT(inputs.at(0).get().size() == inputs.at(1).get().size());
-    ASSERT(error_signal.size() == inputs.at(1).get().size());
+    ASSERT(inputs.size() == 1);
+    ASSERT(error_signal.size() == inputs.at(0).get().size());
 
     ArrayType error_signal1(inputs.at(0).get().shape());
-    ArrayType error_signal2(inputs.at(1).get().shape());
+    fetch::math::Multiply(inputs.at(0).get(), error_signal, error_signal1);
 
-    fetch::math::Multiply(inputs.at(1).get(), error_signal, error_signal1);
-    fetch::math::Multiply(inputs.at(0).get(), error_signal, error_signal2);
-
-    return {error_signal1, error_signal2};
+    return {error_signal1};
   }
 
-  static constexpr char const *DESCRIPTOR = "Multiply";
+  static constexpr char const *DESCRIPTOR = "Square";
 };
 
 }  // namespace ops
