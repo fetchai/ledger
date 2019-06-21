@@ -157,7 +157,7 @@ typename T::Type Optimiser<T, C>::Run(std::vector<ArrayType> const &data, ArrayT
   UpdateLearningRate();
   epoch_++;
 
-  return loss_sum / step;
+  return loss_sum / static_cast<DataType>(step);
 }
 
 /**
