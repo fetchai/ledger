@@ -123,7 +123,8 @@ public:
     if (MOD_ML & enabled)
     {
       math::CreateTensor(*module);
-      ml::CreateGraph(*module);
+      ml::VMStateDict::Bind(*module);
+      ml::VMGraph::Bind(*module);
       fetch::vm_modules::ml::VMCrossEntropyLoss::Bind(*module);
       ml::CreateMeanSquareError(*module);
     }
