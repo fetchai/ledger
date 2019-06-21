@@ -29,12 +29,13 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class LogSigmoid : public fetch::ml::ElementWiseOps<T>
+class LogSigmoid : public fetch::ml::Ops<T>
 {
 public:
   using ArrayType     = T;
   using DataType      = typename ArrayType::Type;
-  using VecTensorType = typename ElementWiseOps<T>::VecTensorType;
+  using SizeType      = typename ArrayType::SizeType;
+  using VecTensorType = typename Ops<T>::VecTensorType;
 
   LogSigmoid()          = default;
   virtual ~LogSigmoid() = default;
@@ -69,6 +70,11 @@ public:
     fetch::math::Multiply(error_signal, return_signal, return_signal);
 
     return {return_signal};
+  }
+
+  virtual std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const
+  {
+    return inputs.front().get().shape();
   }
 
   static constexpr char const *DESCRIPTOR = "LogSigmoid";

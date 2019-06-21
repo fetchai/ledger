@@ -32,7 +32,7 @@ public:
   using SizeType      = typename ArrayType::SizeType;
   using DataType      = typename ArrayType::Type;
   using ArrayPtrType  = std::shared_ptr<ArrayType>;
-  using VecTensorType = typename ElementWiseOps<T>::VecTensorType;
+  using VecTensorType = typename Ops<T>::VecTensorType;
 
   Convolution2D(SizeType stride_size = 1)
     : stride_size_(stride_size)

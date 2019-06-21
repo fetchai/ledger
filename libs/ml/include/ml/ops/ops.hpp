@@ -57,23 +57,5 @@ protected:
   bool is_training_ = true;
 };
 
-/*
- * Abstract class for Ops that works element wise (relu, sigmoid, ...)
- */
-template <class T>
-class ElementWiseOps : public Ops<T>
-{
-public:
-  using ArrayType     = T;
-  using SizeType      = typename ArrayType::SizeType;
-  using ArrayPtrType  = std::shared_ptr<ArrayType>;
-  using VecTensorType = typename Ops<T>::VecTensorType;
-
-  virtual std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const
-  {
-    return inputs.front().get().shape();
-  }
-};
-
 }  // namespace ml
 }  // namespace fetch

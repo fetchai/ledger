@@ -30,7 +30,7 @@ class BatchwiseAddOp : public fetch::ml::Ops<T>
 public:
   using ArrayType     = T;
   using DataType      = typename ArrayType::Type;
-  using VecTensorType = typename ElementWiseOps<T>::VecTensorType;
+  using VecTensorType = typename Ops<T>::VecTensorType;
   using SizeType      = typename ArrayType::SizeType;
 
   BatchwiseAddOp()          = default;

@@ -28,14 +28,14 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class Dropout : public fetch::ml::ElementWiseOps<T>
+class Dropout : public fetch::ml::Ops<T>
 {
 public:
   using ArrayType     = T;
   using DataType      = typename ArrayType::Type;
   using SizeType      = typename ArrayType::SizeType;
   using RNG           = fetch::random::LaggedFibonacciGenerator<>;
-  using VecTensorType = typename ElementWiseOps<T>::VecTensorType;
+  using VecTensorType = typename Ops<T>::VecTensorType;
 
   Dropout(DataType const probability, SizeType const &random_seed = 25102015)
     : probability_(probability)
@@ -47,7 +47,7 @@ public:
 
   virtual ~Dropout() = default;
 
-  virtual void Forward(VecTensorType const &inputs, ArrayType &output)
+  void Forward(VecTensorType const &inputs, ArrayType &output)
   {
     ASSERT(inputs.size() == 1);
     ASSERT(output.shape() == this->ComputeOutputShape(inputs));
@@ -67,8 +67,7 @@ public:
     fetch::math::Multiply(inputs.front().get(), drop_values_, output);
   }
 
-  virtual std::vector<ArrayType> Backward(VecTensorType const &inputs,
-                                          ArrayType const &    error_signal)
+  std::vector<ArrayType> Backward(VecTensorType const &inputs, ArrayType const &error_signal)
   {
     ASSERT(inputs.size() == 1);
     ASSERT(error_signal.shape() == inputs.front().get().shape());
@@ -88,6 +87,11 @@ public:
     }
 
     return {return_signal};
+  }
+
+  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const
+  {
+    return inputs.front().get().shape();
   }
 
   static constexpr char const *DESCRIPTOR = "Dropout";

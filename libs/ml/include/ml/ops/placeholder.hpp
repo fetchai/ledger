@@ -25,13 +25,13 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class PlaceHolder : public fetch::ml::ElementWiseOps<T>
+class PlaceHolder : public fetch::ml::Ops<T>
 {
 public:
   using ArrayType     = T;
   using SizeType      = typename ArrayType::SizeType;
   using ArrayPtrType  = std::shared_ptr<ArrayType>;
-  using VecTensorType = typename ElementWiseOps<T>::VecTensorType;
+  using VecTensorType = typename Ops<T>::VecTensorType;
 
   PlaceHolder() = default;
 

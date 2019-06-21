@@ -24,17 +24,18 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class Add : public fetch::ml::ElementWiseOps<T>
+class Add : public fetch::ml::Ops<T>
 {
 public:
   using ArrayType     = T;
   using DataType      = typename ArrayType::Type;
-  using VecTensorType = typename ElementWiseOps<T>::VecTensorType;
+  using SizeType      = typename ArrayType::SizeType;
+  using VecTensorType = typename Ops<T>::VecTensorType;
 
   Add()          = default;
   virtual ~Add() = default;
 
-  virtual void Forward(VecTensorType const &inputs, ArrayType &output)
+  void Forward(VecTensorType const &inputs, ArrayType &output)
   {
     assert(inputs.size() == 2);
     assert(inputs.at(0).get().size() == inputs.at(1).get().size());
@@ -42,8 +43,7 @@ public:
     fetch::math::Add(inputs[0].get(), inputs[1].get(), output);
   }
 
-  virtual std::vector<ArrayType> Backward(VecTensorType const &inputs,
-                                          ArrayType const &    error_signal)
+  std::vector<ArrayType> Backward(VecTensorType const &inputs, ArrayType const &error_signal)
   {
     (void)inputs;
     assert(inputs.size() == 2);
@@ -51,6 +51,11 @@ public:
     assert(error_signal.size() == inputs.at(1).get().size());
 
     return {error_signal, error_signal};
+  }
+
+  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const
+  {
+    return inputs.front().get().shape();
   }
 
   static constexpr char const *DESCRIPTOR = "Add";

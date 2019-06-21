@@ -34,7 +34,7 @@ public:
   using ArrayType     = T;
   using DataType      = typename ArrayType::Type;
   using SizeType      = typename ArrayType::SizeType;
-  using VecTensorType = typename ElementWiseOps<T>::VecTensorType;
+  using VecTensorType = typename Ops<T>::VecTensorType;
 
   LogSoftmax(SizeType axis = 0)
     : axis_(axis)

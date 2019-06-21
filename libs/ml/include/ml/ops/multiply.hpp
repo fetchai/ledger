@@ -25,12 +25,13 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class Multiply : public fetch::ml::ElementWiseOps<T>
+class Multiply : public fetch::ml::Ops<T>
 {
 public:
   using ArrayType     = T;
+  using SizeType      = typename ArrayType::SizeType;
   using ArrayPtrType  = std::shared_ptr<ArrayType>;
-  using VecTensorType = typename ElementWiseOps<T>::VecTensorType;
+  using VecTensorType = typename Ops<T>::VecTensorType;
 
   Multiply()          = default;
   virtual ~Multiply() = default;
@@ -68,6 +69,11 @@ public:
     fetch::math::Multiply(inputs.at(0).get(), error_signal, error_signal2);
 
     return {error_signal1, error_signal2};
+  }
+
+  virtual std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const
+  {
+    return inputs.front().get().shape();
   }
 
   static constexpr char const *DESCRIPTOR = "Multiply";
