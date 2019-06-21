@@ -49,6 +49,8 @@ struct EstimatorConfig
 
   OptimiserType    opt  = OptimiserType::ADAM;
   CostFunctionType cost = CostFunctionType::SOFTMAX_CROSS_ENTROPY;
+
+  bool print_stats = false;
 };
 
 template <typename TensorType>

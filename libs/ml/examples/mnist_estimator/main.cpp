@@ -30,8 +30,6 @@ using SizeType   = typename TensorType::SizeType;
 using EstimatorType  = typename fetch::ml::estimator::DNNClassifier<TensorType>;
 using DataLoaderType = typename fetch::ml::dataloaders::MNISTLoader<TensorType, TensorType>;
 
-// TODO: add an estimator test
-
 int main(int ac, char **av)
 {
   if (ac < 3)
@@ -45,16 +43,17 @@ int main(int ac, char **av)
 
   /// setup config ///
   EstimatorConfig<DataType> estimator_config;
-  estimator_config.learning_rate  = 0.01f;
-  estimator_config.lr_decay       = 0.99f;
-  estimator_config.batch_size     = 64;
-  estimator_config.subset_size    = 1000;
-  estimator_config.early_stopping = true;
+  estimator_config.learning_rate  = 0.005f; // initial learning rate
+  estimator_config.lr_decay       = 0.99f;  // learning rate decay multiplier per epoch
+  estimator_config.batch_size     = 64;     // minibatch training size
+  estimator_config.subset_size    = 1000;   // only train on the first 1000 samples
+  estimator_config.early_stopping = true;   // stop early if no improvement
   estimator_config.opt            = OptimiserType::ADAM;
+  estimator_config.print_stats    = true;
 
   // setup dataloader
   auto       data_loader_ptr = std::make_shared<DataLoaderType>(av[1], av[2]);
-  TensorType test_label      = (data_loader_ptr->GetNext()).second.at(0);
+  TensorType test_label      = (data_loader_ptr->GetNext()).first;
   TensorType test_input      = (data_loader_ptr->GetNext()).second.at(0);
   TensorType prediction;
   DataType   loss;
@@ -62,11 +61,16 @@ int main(int ac, char **av)
   // run estimator in training mode
   EstimatorType estimator(estimator_config, data_loader_ptr, {784, 100, 20, 10});
 
-  for (std::size_t i = 0; i < 10; ++i)
-  {
-    estimator.Train(100, loss);
-    std::cout << "epoch: " << (i*100) << ", loss: " << loss << std::endl;
-  }
+  // initial prediction (before trained)
+  estimator.Predict(test_input, prediction);
+  std::cout << "test_label.ToString(): " << test_label.ToString() << std::endl;
+  std::cout << "prediction.ToString(): " << prediction.ToString() << std::endl;
+
+  // training loop - early stopping will prevent long training time
+  estimator.Train(1, loss);
+  std::cout << "initial loss: " << loss << std::endl;
+  estimator.Train(1000000, loss);
+  std::cout << "final loss: " << loss << std::endl;
 
   // run estimator in testing mode
   estimator.Predict(test_input, prediction);

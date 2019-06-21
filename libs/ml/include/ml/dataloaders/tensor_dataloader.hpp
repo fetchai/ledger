@@ -67,9 +67,7 @@ TensorDataLoader<LabelType, InputType>::GetNext()
   }
   else
   {
-    auto tmp = labels_.Slice(label_cursor_, 1).Copy();
-    auto tmp2 = {data_.Slice(label_cursor_, 1).Copy()};
-    ReturnType ret(tmp, tmp2);
+    ReturnType ret(labels_.Slice(label_cursor_, 1).Copy(), {data_.Slice(label_cursor_, 1).Copy()});
     data_cursor_++;
     label_cursor_++;
     return ret;
@@ -100,7 +98,7 @@ TensorDataLoader<LabelType, InputType>::Size() const
 template <typename LabelType, typename InputType>
 bool TensorDataLoader<LabelType, InputType>::IsDone() const
 {
-  return (data_cursor_ > data_.shape()[0]);
+  return (data_cursor_ >= data_.shape()[0]);
 }
 
 template <typename LabelType, typename InputType>
