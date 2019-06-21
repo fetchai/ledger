@@ -21,8 +21,15 @@
 #include "math/standard_functions/pow.hpp"
 #include "math/tensor.hpp"
 
+#include <algorithm>
+#include <cassert>
+#include <cstdint>
+#include <iterator>
 #include <random>
 #include <set>
+#include <stdexcept>
+#include <unordered_map>
+#include <utility>
 #include <vector>
 
 namespace fetch {
