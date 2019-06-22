@@ -33,7 +33,7 @@ using fetch::ledger::StakeUpdateQueue;
 
 using RNG                 = fetch::random::LinearCongruentialGenerator;
 using StakeUpdateQueuePtr = std::unique_ptr<StakeUpdateQueue>;
-using StakeSnapshotPtr    = std::unique_ptr<StakeSnapshot>;
+using StakeSnapshotPtr    = std::shared_ptr<StakeSnapshot>;
 
 template <typename Container, typename Value>
 bool IsIn(Container const &container, Value const &value)
@@ -48,17 +48,14 @@ protected:
   {
     rng_.Seed(42);
     stake_update_queue_ = std::make_unique<StakeUpdateQueue>();
-    snapshot_ = std::make_unique<StakeSnapshot>();
   }
 
   void TearDown() override
   {
     stake_update_queue_.reset();
-    snapshot_.reset();
   }
 
   StakeUpdateQueuePtr stake_update_queue_;
-  StakeSnapshotPtr     snapshot_;
   RNG                 rng_;
 };
 
@@ -93,29 +90,44 @@ TEST_F(StakeUpdateQueueTests, SimpleCheck)
     EXPECT_EQ(500, map.at(12).at(address3));
   });
 
-  ASSERT_EQ(0, snapshot_->size());
-  ASSERT_EQ(0, snapshot_->total_stake());
+  StakeSnapshotPtr current_snapshot = std::make_shared<StakeSnapshot>();
+  ASSERT_EQ(0, current_snapshot->size());
+  ASSERT_EQ(0, current_snapshot->total_stake());
   EXPECT_EQ(3, stake_update_queue_->size());
 
   // apply some state updates
-  stake_update_queue_->ApplyUpdates(9, *snapshot_);
+  StakeSnapshotPtr next_snapshot{};
+  ASSERT_FALSE(stake_update_queue_->ApplyUpdates(9, current_snapshot, next_snapshot));
 
-  ASSERT_EQ(0, snapshot_->size());
-  ASSERT_EQ(0, snapshot_->total_stake());
+  ASSERT_EQ(0, current_snapshot->size());
+  ASSERT_EQ(0, current_snapshot->total_stake());
+  ASSERT_FALSE(static_cast<bool>(next_snapshot));
   EXPECT_EQ(3, stake_update_queue_->size());
 
   // apply some state updates
-  stake_update_queue_->ApplyUpdates(10, *snapshot_);
+  ASSERT_TRUE(stake_update_queue_->ApplyUpdates(10, current_snapshot, next_snapshot));
 
-  ASSERT_EQ(1, snapshot_->size());
-  ASSERT_EQ(500, snapshot_->total_stake());
+  // check the current snapshot has not been changed
+  ASSERT_EQ(0, current_snapshot->size());
+  ASSERT_EQ(0, current_snapshot->total_stake());
+
+  // check that the next snapshot has the new changes
+  ASSERT_TRUE(static_cast<bool>(next_snapshot));
+  ASSERT_EQ(1, next_snapshot->size());
+  ASSERT_EQ(500, next_snapshot->total_stake());
+
   EXPECT_EQ(2, stake_update_queue_->size());
+  std::swap(current_snapshot, next_snapshot);
 
   // apply some state updates
-  stake_update_queue_->ApplyUpdates(12, *snapshot_);
+  ASSERT_TRUE(stake_update_queue_->ApplyUpdates(12, current_snapshot, next_snapshot));
 
-  ASSERT_EQ(2, snapshot_->size());
-  ASSERT_EQ(1000, snapshot_->total_stake());
+  ASSERT_EQ(1, current_snapshot->size());
+  ASSERT_EQ(500, current_snapshot->total_stake());
+
+  ASSERT_EQ(2, next_snapshot->size());
+  ASSERT_EQ(1000, next_snapshot->total_stake());
+
   EXPECT_EQ(0, stake_update_queue_->size());
 }
 

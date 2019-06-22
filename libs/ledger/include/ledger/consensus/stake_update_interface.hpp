@@ -38,7 +38,6 @@ public:
   /// @name Stake Update Interface
   /// @{
   virtual void AddStakeUpdate(BlockIndex block_index, Address const &address, StakeAmount stake) = 0;
-  virtual void ApplyUpdates(BlockIndex block_index, StakeSnapshot &tracker) = 0;
   /// @}
 
 };

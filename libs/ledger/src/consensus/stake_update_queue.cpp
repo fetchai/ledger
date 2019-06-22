@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/consensus/stake_snapshot.hpp"
 #include "ledger/consensus/stake_update_queue.hpp"
+#include "ledger/consensus/stake_snapshot.hpp"
 
 namespace fetch {
 namespace ledger {
@@ -28,8 +28,14 @@ namespace ledger {
  * @param block_index The block index that is being triggered
  * @param tracker The tracker to be updated
  */
-void StakeUpdateQueue::ApplyUpdates(BlockIndex block_index, StakeSnapshot &tracker)
+bool StakeUpdateQueue::ApplyUpdates(BlockIndex block_index, StakeSnapshotPtr const &reference,
+                                    StakeSnapshotPtr &next)
 {
+  bool new_snapshot{false};
+
+  // ensure the output is empty (this should always be the case anyway)
+  next.reset();
+
   // make sure that the next block in the map is in fact the correct block index
   if (!updates_.empty())
   {
@@ -37,20 +43,32 @@ void StakeUpdateQueue::ApplyUpdates(BlockIndex block_index, StakeSnapshot &track
     if (block_index < next_update_it->first)
     {
       // no update to be applied
-      return;
+      return false;
     }
     else
     {
       // find the next appropriate update
       next_update_it = updates_.find(block_index);
 
+      // helpful references
+      BlockIndex const &next_update_block_index = next_update_it->first;
+      StakeMap const &  next_update_stake_map   = next_update_it->second;
+
       // ensure that this is the next block to be updated
-      if (next_update_it->first == block_index)
+      if (next_update_block_index == block_index)
       {
-        // apply all the updates to the specified tracker
-        for (auto const &element : next_update_it->second)
+        // this should always be the case currently:
+        if (!next_update_stake_map.empty())
         {
-          tracker.UpdateStake(element.first, element.second);
+          // make a full copy of the stake snapshot
+          next         = std::make_shared<StakeSnapshot>(*reference);
+          new_snapshot = true;
+        }
+
+        // apply all the updates to the specified tracker
+        for (auto const &element : next_update_stake_map)
+        {
+          next->UpdateStake(element.first, element.second);
         }
 
         // advance the iterator along so it points to be new next update
@@ -61,7 +79,9 @@ void StakeUpdateQueue::ApplyUpdates(BlockIndex block_index, StakeSnapshot &track
       updates_.erase(updates_.begin(), next_update_it);
     }
   }
+
+  return new_snapshot;
 }
 
-} // namespace ledger
-} // namespace fetch
+}  // namespace ledger
+}  // namespace fetch

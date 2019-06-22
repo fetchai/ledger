@@ -38,8 +38,8 @@ public:
 
   // Construction / Destruction
   StakeSnapshot()                      = default;
-  StakeSnapshot(StakeSnapshot const &) = delete;
-  StakeSnapshot(StakeSnapshot &&)      = delete;
+  StakeSnapshot(StakeSnapshot const &) = default;
+  StakeSnapshot(StakeSnapshot &&)      = default;
   ~StakeSnapshot()                     = default;
 
   AddressArray BuildCommittee(uint64_t entropy, std::size_t count);
@@ -57,8 +57,8 @@ public:
   /// @}
 
   // Operators
-  StakeSnapshot &operator=(StakeSnapshot const &) = delete;
-  StakeSnapshot &operator=(StakeSnapshot &&) = delete;
+  StakeSnapshot &operator=(StakeSnapshot const &) = default;
+  StakeSnapshot &operator=(StakeSnapshot &&) = default;
 
 private:
   struct Record

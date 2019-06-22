@@ -22,6 +22,7 @@
 
 #include <unordered_map>
 #include <map>
+#include <memory>
 
 namespace fetch {
 namespace ledger {
@@ -32,6 +33,7 @@ namespace ledger {
 class StakeUpdateQueue : public StakeUpdateInterface
 {
 public:
+  using StakeSnapshotPtr = std::shared_ptr<StakeSnapshot>;
 
   // Construction / Destruction
   StakeUpdateQueue() = default;
@@ -39,11 +41,12 @@ public:
   StakeUpdateQueue(StakeUpdateQueue &&) = delete;
   ~StakeUpdateQueue() override = default;
 
-  /// @name Basic Interaction
+  /// @name Stake Update Interface
   /// @{
   void AddStakeUpdate(BlockIndex block_index, Address const &address, StakeAmount stake) override;
-  void ApplyUpdates(BlockIndex block_index, StakeSnapshot &tracker) override;
   /// @}
+
+  bool ApplyUpdates(BlockIndex block_index, StakeSnapshotPtr const &reference, StakeSnapshotPtr &next);
 
   /// @name Accessors
   /// @{
