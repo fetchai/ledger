@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "ledger/chain/address.hpp"
+#include "ledger/consensus/stake_update_interface.hpp"
 
 #include <unordered_map>
 #include <map>
@@ -25,27 +26,23 @@
 namespace fetch {
 namespace ledger {
 
-class StakeTracker;
-
 /**
  * Holds a queue of stake updates that need to be applied at a block interval in the future
  */
-class StakeUpdateQueue
+class StakeUpdateQueue : public StakeUpdateInterface
 {
 public:
-  using StakeAmount = uint64_t;
-  using BlockIndex  = uint64_t;
 
   // Construction / Destruction
   StakeUpdateQueue() = default;
   StakeUpdateQueue(StakeUpdateQueue const &) = delete;
   StakeUpdateQueue(StakeUpdateQueue &&) = delete;
-  ~StakeUpdateQueue() = default;
+  ~StakeUpdateQueue() override = default;
 
   /// @name Basic Interaction
   /// @{
-  void AddStakeUpdate(BlockIndex block_index, Address const &address, StakeAmount stake);
-  void ApplyUpdates(BlockIndex block_index, StakeSnapshot &tracker);
+  void AddStakeUpdate(BlockIndex block_index, Address const &address, StakeAmount stake) override;
+  void ApplyUpdates(BlockIndex block_index, StakeSnapshot &tracker) override;
   /// @}
 
   /// @name Accessors
