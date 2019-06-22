@@ -175,6 +175,22 @@ class TestInstance():
 
         time.sleep(0.5)
 
+    def restart_node(self, index):
+        print('Restarting Node {}...'.format(index))
+
+        self._nodes[index].stop()
+
+        self.dump_debug(index)
+
+        pattern = ["*.db"]
+
+        for p in pattern:
+            [os.remove(x) for x in glob.iglob('./**/' + p, recursive=True)]
+
+        self.start_node(index)
+
+        time.sleep(3)
+
     def print_time_elapsed(self):
         output("Elapsed time: {}".format(
             time.perf_counter() - self._creation_time))
@@ -219,9 +235,13 @@ class TestInstance():
             self._watchdog.stop()
 
     # If something goes wrong, print out debug state (mainly node log files)
-    def dump_debug(self):
+    def dump_debug(self, only_node = None):
         if self._nodes:
             for n, node in enumerate(self._nodes):
+
+                if only_node is not None and n is not only_node:
+                    continue
+
                 print('\nNode debug. Node:{}'.format(n))
                 node_log_path = node.log_path
 
@@ -386,6 +406,12 @@ def verify_txs(parameters, test_instance):
 
     name = parameters["name"]
     nodes = parameters["nodes"]
+    expect_mined = False
+
+    try:
+        expect_mined = parameters["expect_mined"]
+    except:
+        pass
 
     # Currently assume there only one set of TXs
     tx_and_identity = test_instance._metadata
@@ -410,11 +436,11 @@ def verify_txs(parameters, test_instance):
         # Verify TXs - will block until they have executed
         for tx, identity, balance in tx_and_identity:
 
-            # Check TX has executed
+            # Check TX has executed, unless we expect it should already have been mined
             while True:
                 status = api.tx.status(tx)
 
-                if status == "Executed":
+                if status == "Executed" or expect_mined:
                     break
 
                 time.sleep(0.5)
@@ -431,6 +457,12 @@ def verify_txs(parameters, test_instance):
 
         output("Verified balances for node: {}".format(node_index))
 
+def restart_nodes(parameters, test_instance):
+
+    nodes = parameters["nodes"]
+
+    for node_index in nodes:
+        test_instance.restart_node(node_index)
 
 def add_node(parameters, test_instance):
 
@@ -472,6 +504,8 @@ def run_steps(test_yaml, test_instance):
             test_instance.print_time_elapsed()
         elif command == 'run_python_test':
             run_python_test(parameters, test_instance)
+        elif command == 'restart_nodes':
+            restart_nodes(parameters, test_instance)
         else:
             output(
                 "Found unknown command when running steps: '{}'".format(
