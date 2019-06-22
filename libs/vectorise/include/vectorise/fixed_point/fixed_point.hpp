@@ -159,7 +159,7 @@ inline void Multiply(FixedPoint<I, F> const &lhs, FixedPoint<I, F> const &rhs,
 template <typename T>
 constexpr inline int32_t HighestSetBit(T n_input)
 {
-  uint64_t n = static_cast<uint64_t>(n_input);
+  const auto n = static_cast<uint64_t>(n_input);
 
   if (n == 0)
   {
@@ -392,7 +392,7 @@ public:
   /////////////////////
 
   constexpr Type Data() const;
-  constexpr void SetData(Type const n) const;
+  constexpr void SetData(Type n) const;
 
   ///////////////////////////////////////////////////////////////////
   /// FixedPoint implementations of common mathematical functions ///
@@ -447,14 +447,7 @@ private:
   template <typename T>
   static constexpr bool CheckNoOverflow(T n)
   {
-    if (Type(n) <= MAX && Type(n) >= MIN)
-    {
-      return true;
-    }
-    else
-    {
-      return false;
-    }
+    return Type(n) <= MAX && Type(n) >= MIN;
   }
 
   /**
@@ -467,14 +460,7 @@ private:
   static constexpr bool CheckNoRounding()
   {
     // sufficient bits to guarantee no rounding
-    if (std::numeric_limits<T>::max_digits10 < DECIMAL_DIGITS)
-    {
-      return true;
-    }
-    else
-    {
-      return false;
-    }
+    return std::numeric_limits<T>::max_digits10 < DECIMAL_DIGITS;
   }
 
   static constexpr int ReduceSqrt(FixedPoint &x)

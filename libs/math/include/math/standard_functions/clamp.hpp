@@ -32,10 +32,8 @@ namespace math {
 /// IMPLEMENTATIONS ///
 ///////////////////////
 
-namespace {
-
 template <typename Type>
-void Clamp(Type const &min, Type const &max, Type &ret)
+inline void Clamp(Type const &min, Type const &max, Type &ret)
 {
   assert(min <= max);
 
@@ -48,8 +46,6 @@ void Clamp(Type const &min, Type const &max, Type &ret)
     ret = max;
   }
 }
-
-}  // namespace
 
 //////////////////
 /// INTERFACES ///
