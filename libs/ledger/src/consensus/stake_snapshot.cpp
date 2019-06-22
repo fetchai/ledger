@@ -37,7 +37,7 @@ using DRNG       = random::LinearCongruentialGenerator;
  * @param count The size of the selection
  * @return The selection of addresses
  */
-StakeSnapshot::AddressArray StakeSnapshot::Sample(uint64_t entropy, std::size_t count)
+StakeSnapshot::AddressArray StakeSnapshot::BuildCommittee(uint64_t entropy, std::size_t count)
 {
   AddressArray addresses;
   addresses.reserve(count);

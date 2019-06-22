@@ -42,7 +42,7 @@ public:
   StakeSnapshot(StakeSnapshot &&)      = delete;
   ~StakeSnapshot()                     = default;
 
-  AddressArray Sample(uint64_t entropy, std::size_t count);
+  AddressArray BuildCommittee(uint64_t entropy, std::size_t count);
 
   /// @name Stake Updates
   /// @{
