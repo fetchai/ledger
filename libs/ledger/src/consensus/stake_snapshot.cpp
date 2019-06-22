@@ -42,60 +42,57 @@ StakeSnapshot::AddressArray StakeSnapshot::Sample(uint64_t entropy, std::size_t 
   AddressArray addresses;
   addresses.reserve(count);
 
+  if (count >= address_index_.size())
   {
-    FETCH_LOCK(lock_);
-    if (count >= address_index_.size())
+    for (auto const &record : stake_index_)
     {
+      addresses.emplace_back(record->address);
+    }
+  }
+  else
+  {
+    AddressSet chosen_addresses;
+    DRNG rng(entropy);
+
+    // ensure the stake list is reset to a deterministic state
+    std::sort(stake_index_.begin(), stake_index_.end(), [](RecordPtr const &a, RecordPtr const &b) {
+      return a->address.address() < b->address.address();
+    });
+
+    for (std::size_t i = 0; i < count; ++i)
+    {
+      // shuffle the array
+      std::shuffle(stake_index_.begin(), stake_index_.end(), rng);
+
+      // make the selection
+      uint64_t selection = rng() % total_stake_;
+
+      std::size_t index{0};
       for (auto const &record : stake_index_)
       {
-        addresses.emplace_back(record->address);
-      }
-    }
-    else
-    {
-      AddressSet chosen_addresses;
-      DRNG rng(entropy);
-
-      // ensure the stake list is reset to a deterministic state
-      std::sort(stake_index_.begin(), stake_index_.end(), [](RecordPtr const &a, RecordPtr const &b) {
-        return a->address.address() < b->address.address();
-      });
-
-      for (std::size_t i = 0; i < count; ++i)
-      {
-        // shuffle the array
-        std::shuffle(stake_index_.begin(), stake_index_.end(), rng);
-
-        // make the selection
-        uint64_t selection = rng() % total_stake_;
-
-        std::size_t index{0};
-        for (auto const &record : stake_index_)
+        if (record->stake >= selection)
         {
-          if (record->stake >= selection)
+          // TODO(XXX) This ensures in the case of a collision, the next item in the list is
+          //           picked. However, there is an edge case here when this selection is at the
+          //           end of the stake_index_ array. In this case the output will contain fewer
+          //           items.
+          selection = 0;
+
+          if (chosen_addresses.find(record->address) == chosen_addresses.end())
           {
-            // TODO(XXX) This ensures in the case of a collision, the next item in the list is
-            //           picked. However, there is an edge case here when this selection is at the
-            //           end of the stake_index_ array. In this case the output will contain fewer
-            //           items.
-            selection = 0;
+            addresses.emplace_back(record->address);
+            chosen_addresses.emplace(record->address);
 
-            if (chosen_addresses.find(record->address) == chosen_addresses.end())
-            {
-              addresses.emplace_back(record->address);
-              chosen_addresses.emplace(record->address);
-
-              // exit from the search loop
-              break;
-            }
+            // exit from the search loop
+            break;
           }
-          else // (record->stake < selection)
-          {
-            selection -= record->stake;
-          }
-
-          ++index;
         }
+        else // (record->stake < selection)
+        {
+          selection -= record->stake;
+        }
+
+        ++index;
       }
     }
   }
@@ -111,8 +108,6 @@ StakeSnapshot::AddressArray StakeSnapshot::Sample(uint64_t entropy, std::size_t 
  */
 uint64_t StakeSnapshot::LookupStake(Address const &address) const
 {
-  FETCH_LOCK(lock_);
-
   uint64_t stake{0};
 
   auto const it = address_index_.find(address);
@@ -134,8 +129,6 @@ uint64_t StakeSnapshot::LookupStake(Address const &address) const
  */
 void StakeSnapshot::UpdateStake(Address const &address, uint64_t stake)
 {
-  FETCH_LOCK(lock_);
-
   auto it = address_index_.find(address);
   if (it == address_index_.end())
   {

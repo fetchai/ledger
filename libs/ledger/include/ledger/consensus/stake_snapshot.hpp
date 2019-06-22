@@ -17,7 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/mutex.hpp"
 #include "ledger/chain/address.hpp"
 
 #include <memory>
@@ -29,7 +28,8 @@ namespace ledger {
  * Object for keeping track of the current addresses which have stakes. Also facilitates the
  * selection of addresses based on an entropy source.
  *
- * Conceptually this object representats
+ * Conceptually this object represents a stake information for a single point of time, however, in
+ * general the stake snapshots will be reused for the entire period of a stake period.
  */
 class StakeSnapshot
 {
@@ -70,9 +70,7 @@ private:
   using RecordPtr    = std::shared_ptr<Record>;
   using AddressIndex = std::unordered_map<Address, RecordPtr>;
   using StakeIndex   = std::vector<RecordPtr>;
-  using Mutex        = mutex::Mutex;
 
-  mutable Mutex lock_{__LINE__, __FILE__};  ///< Class level lock
   AddressIndex  address_index_{};           ///< Map of Address to Record
   StakeIndex    stake_index_;               ///< Array of Records
   uint64_t      total_stake_{0};            ///< Total stake cache
@@ -85,7 +83,6 @@ private:
  */
 inline uint64_t StakeSnapshot::total_stake() const
 {
-  FETCH_LOCK(lock_);
   return total_stake_;
 }
 
@@ -96,7 +93,6 @@ inline uint64_t StakeSnapshot::total_stake() const
  */
 inline std::size_t StakeSnapshot::size() const
 {
-  FETCH_LOCK(lock_);
   return address_index_.size();
 }
 
