@@ -26,7 +26,22 @@ from multiprocessing import Lock, Pool
 from os.path import abspath, basename, commonpath, dirname, isdir, isfile, join
 
 PROJECT_ROOT = abspath(dirname(dirname(__file__)))
-CHECKED_IN_BINARY_FILE_PATTERNS = ('*.png', '*.npy')
+TEXT_FILE_PATTERNS = (
+    '*.cmake',
+    '*.cpp',
+    '*.etch',
+    '*.hpp',
+    '*.in',
+    '*.json',
+    '*.md',
+    '*.py',
+    '*.rst',
+    '*.sh',
+    '*.svg',
+    '*.txt',
+    '*.xml',
+    '*.yaml',
+    '*.yml')
 INCLUDE_GUARD = '#pragma once'
 DISALLOWED_HEADER_FILE_EXTENSIONS = ('*.h', '*.hxx', '*.hh')
 CMAKE_VERSION_REQUIREMENT = 'cmake_minimum_required(VERSION 3.5 FATAL_ERROR)'
@@ -217,9 +232,19 @@ def fix_missing_include_guards(text, path_to_file):
     return text
 
 
+@include_patterns('*')
+def fix_trailing_whitespace(text, path_to_file):
+    lines = text.split('\n')
+    output = ''
+    for line in lines:
+        output += line.rstrip() + '\n'
+
+    return output
+
+
 @include_patterns('CMakeLists.txt')
 def fix_cmake_version_requirements(text, path_to_file):
-    lines = text.splitlines()
+    lines = text.split('\n')
     counter = 0
     for line in lines:
         if not line.startswith('#') and line.startswith(CMAKE_VERSION_REQUIREMENT):
@@ -235,10 +260,10 @@ def fix_cmake_version_requirements(text, path_to_file):
 
 @include_patterns('*')
 def fix_terminal_newlines(text, path_to_file):
-    if len(text) and text[-1] != '\n':
-        return text + '\n'
+    if text.strip():
+        return text.rstrip() + '\n'
 
-    return text
+    return text.strip()
 
 
 def check_for_headers_with_non_hpp_extension(file_paths):
@@ -258,16 +283,13 @@ def check_for_headers_with_non_hpp_extension(file_paths):
         sys.exit(1)
 
 
-def is_checked_in_binary_file(absolute_path):
-    return any([fnmatch.fnmatch(basename(absolute_path), pattern) for pattern in CHECKED_IN_BINARY_FILE_PATTERNS])
-
-
 def get_changed_paths_from_git(commit):
     raw_relative_paths = subprocess.check_output(['git', 'diff', '--name-only', commit]) \
         .strip() \
-        .splitlines()
+        .decode('utf-8') \
+        .split('\n')
 
-    relative_paths = [rel_path.decode('utf-8').strip()
+    relative_paths = [rel_path.strip()
                       for rel_path in raw_relative_paths]
 
     return [abspath(join(PROJECT_ROOT, rel_path)) for rel_path in relative_paths
@@ -291,8 +313,7 @@ def files_of_interest(commit):
         ret = get_changed_paths_from_git(commit)
 
     # Filter out binary files and symbolic links
-    ret = [abs_path for abs_path in ret
-           if isfile(abs_path) and not is_checked_in_binary_file(abs_path)]
+    ret = [abs_path for abs_path in ret if isfile(abs_path)]
 
     total_files_to_process = len(ret)
 
@@ -343,6 +364,7 @@ TRANSFORMATIONS = [
     fix_cmake_version_requirements,
     fix_license_header,
     fix_missing_include_guards,
+    fix_trailing_whitespace,
     fix_terminal_newlines,
     external_formatter(**SUPPORTED_LANGUAGES['cpp']),
     external_formatter(**SUPPORTED_LANGUAGES['cmake']),
@@ -353,16 +375,20 @@ TRANSFORMATIONS = [
 def apply_transformations_to_file(path_to_file):
     try:
         with open(path_to_file, 'r+', encoding='utf-8') as f:
-            original_text = f.read()
-            text = original_text
+            if any([fnmatch.fnmatch(basename(path_to_file), pattern) for pattern in TEXT_FILE_PATTERNS]):
+                try:
+                    original_text = f.read()
+                    text = original_text
 
-            for transformation in TRANSFORMATIONS:
-                text = transformation(text, path_to_file)
+                    for transformation in TRANSFORMATIONS:
+                        text = transformation(text, path_to_file)
 
-            if text != original_text:
-                f.seek(0)
-                f.truncate(0)
-                f.write(text)
+                    if text != original_text:
+                        f.seek(0)
+                        f.truncate(0)
+                        f.write(text)
+                except:
+                    output('Error: could not read {}'.format(path_to_file))
     except:
         output(traceback.format_exc())
         raise
