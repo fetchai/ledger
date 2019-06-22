@@ -84,8 +84,8 @@ public:
     uint32_t     peers_update_cycle_ms{0};
     bool         disable_signing{false};
     bool         sign_broadcasts{false};
-    bool        dump_state_file{false};
-    bool        load_state_file{false};
+    bool         dump_state_file{false};
+    bool         load_state_file{false};
     NetworkMode  network_mode{NetworkMode::PUBLIC_NETWORK};
     FeatureFlags features{};
 
