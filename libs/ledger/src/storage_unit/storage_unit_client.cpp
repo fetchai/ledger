@@ -57,7 +57,8 @@ StorageUnitClient::StorageUnitClient(MuddleEndpoint &muddle, ShardConfigs const 
                                      uint32_t log2_num_lanes)
   : addresses_(GenerateAddressList(shards))
   , log2_num_lanes_(log2_num_lanes)
-  , rpc_client_{std::make_shared<Client>("STUC", muddle, MuddleEndpoint::Address{}, SERVICE_LANE_CTRL, CHANNEL_RPC)}
+  , rpc_client_{std::make_shared<Client>("STUC", muddle, MuddleEndpoint::Address{},
+                                         SERVICE_LANE_CTRL, CHANNEL_RPC)}
   , current_merkle_{num_lanes()}
 {
   if (num_lanes() != shards.size())
@@ -79,7 +80,7 @@ byte_array::ConstByteArray StorageUnitClient::CurrentHash()
   for (uint32_t i = 0; i < num_lanes(); ++i)
   {
     auto promise = rpc_client_->CallSpecificAddress(LookupAddress(i), RPC_STATE,
-                                                   RevertibleDocumentStoreProtocol::CURRENT_HASH);
+                                                    RevertibleDocumentStoreProtocol::CURRENT_HASH);
 
     promises.push_back(promise);
   }
@@ -184,8 +185,8 @@ bool StorageUnitClient::RevertToHash(Hash const &hash, uint64_t index)
 
     // make the call to the RPC server
     auto promise = rpc_client_->CallSpecificAddress(LookupAddress(lane_index++), RPC_STATE,
-                                                   RevertibleDocumentStoreProtocol::REVERT_TO_HASH,
-                                                   lane_merkle_hash);
+                                                    RevertibleDocumentStoreProtocol::REVERT_TO_HASH,
+                                                    lane_merkle_hash);
 
     // add the promise to the queue
     promises.emplace_back(std::move(promise));
@@ -237,7 +238,7 @@ byte_array::ConstByteArray StorageUnitClient::Commit(uint64_t commit_index)
   {
     // make the request to the RPC server
     auto promise = rpc_client_->CallSpecificAddress(LookupAddress(lane_idx), RPC_STATE,
-                                                   RevertibleDocumentStoreProtocol::COMMIT);
+                                                    RevertibleDocumentStoreProtocol::COMMIT);
 
     // add the promise to the waiting queue
     promises.push_back(promise);
@@ -338,7 +339,7 @@ void StorageUnitClient::AddTransaction(Transaction const &tx)
 
     // make the RPC request
     auto promise = rpc_client_->CallSpecificAddress(LookupAddress(resource), RPC_TX_STORE,
-                                                   TxStoreProtocol::SET, resource, tx);
+                                                    TxStoreProtocol::SET, resource, tx);
 
     // wait the for the response
     FETCH_LOG_PROMISE();
@@ -362,7 +363,7 @@ StorageUnitClient::TxLayouts StorageUnitClient::PollRecentTx(uint32_t max_to_pol
   {
     auto promise =
         rpc_client_->CallSpecificAddress(lane_address, RPC_TX_STORE, TxStoreProtocol::GET_RECENT,
-                                        uint32_t(max_to_poll / addresses_.size()));
+                                         uint32_t(max_to_poll / addresses_.size()));
     FETCH_LOG_PROMISE();
     promises.push_back(promise);
   }
@@ -388,7 +389,7 @@ bool StorageUnitClient::GetTransaction(byte_array::ConstByteArray const &digest,
 
     // make the request to the RPC server
     auto promise = rpc_client_->CallSpecificAddress(LookupAddress(resource), RPC_TX_STORE,
-                                                   TxStoreProtocol::GET, resource);
+                                                    TxStoreProtocol::GET, resource);
 
     // wait for the response to be delivered
     tx = promise->As<Transaction>();
@@ -413,7 +414,7 @@ bool StorageUnitClient::HasTransaction(ConstByteArray const &digest)
 
     // make the request to the RPC server
     auto promise = rpc_client_->CallSpecificAddress(LookupAddress(resource), RPC_TX_STORE,
-                                                   TxStoreProtocol::HAS, resource);
+                                                    TxStoreProtocol::HAS, resource);
 
     // wait for the response to be delivered
     present = promise->As<bool>();
@@ -442,8 +443,8 @@ void StorageUnitClient::IssueCallForMissingTxs(DigestSet const &tx_set)
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Request sent ", lane_resources.second.size(), " resources");
     rpc_client_->CallSpecificAddress(lane_resources.first, RPC_MISSING_TX_FINDER,
-                                    TxFinderProtocol::ISSUE_CALL_FOR_MISSING_TXS,
-                                    lane_resources.second);
+                                     TxFinderProtocol::ISSUE_CALL_FOR_MISSING_TXS,
+                                     lane_resources.second);
   }
 }
 
@@ -457,8 +458,8 @@ StorageUnitClient::Document StorageUnitClient::GetOrCreate(ResourceAddress const
   {
     // make the request to the RPC client
     auto promise = rpc_client_->CallSpecificAddress(LookupAddress(key), RPC_STATE,
-                                                   RevertibleDocumentStoreProtocol::GET_OR_CREATE,
-                                                   key.as_resource_id());
+                                                    RevertibleDocumentStoreProtocol::GET_OR_CREATE,
+                                                    key.as_resource_id());
 
     // wait for the document to be returned
     doc = promise->As<Document>();
@@ -527,7 +528,7 @@ bool StorageUnitClient::Lock(ShardIndex index)
   {
     // make the request to the RPC server
     auto promise = rpc_client_->CallSpecificAddress(LookupAddress(index), RPC_STATE,
-                                                   RevertibleDocumentStoreProtocol::LOCK);
+                                                    RevertibleDocumentStoreProtocol::LOCK);
 
     // wait for the promise
     success = promise->As<bool>();
@@ -548,7 +549,7 @@ bool StorageUnitClient::Unlock(ShardIndex index)
   {
     // make the request to the RPC server
     auto promise = rpc_client_->CallSpecificAddress(LookupAddress(index), RPC_STATE,
-                                                   RevertibleDocumentStoreProtocol::UNLOCK);
+                                                    RevertibleDocumentStoreProtocol::UNLOCK);
 
     // wait for the result
     success = promise->As<bool>();
@@ -571,7 +572,7 @@ StorageUnitClient::Keys StorageUnitClient::KeyDump() const
   for (uint32_t i = 0; i < num_lanes(); ++i)
   {
     auto promise = rpc_client_->CallSpecificAddress(LookupAddress(i), RPC_STATE,
-                                                   RevertibleDocumentStoreProtocol::KEY_DUMP);
+                                                    RevertibleDocumentStoreProtocol::KEY_DUMP);
 
     promises.push_back(promise);
   }
@@ -581,7 +582,7 @@ StorageUnitClient::Keys StorageUnitClient::KeyDump() const
     FETCH_LOG_PROMISE();
     StorageUnitClient::Keys keys = p->As<StorageUnitClient::Keys>();
 
-    for(auto const &key : keys)
+    for (auto const &key : keys)
     {
       all_keys.push_back(key);
     }
@@ -598,7 +599,7 @@ void StorageUnitClient::Reset()
   for (uint32_t i = 0; i < num_lanes(); ++i)
   {
     auto promise = rpc_client_->CallSpecificAddress(LookupAddress(i), RPC_STATE,
-                                                   RevertibleDocumentStoreProtocol::RESET);
+                                                    RevertibleDocumentStoreProtocol::RESET);
 
     promises.push_back(promise);
   }

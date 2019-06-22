@@ -235,7 +235,7 @@ class TestInstance():
             self._watchdog.stop()
 
     # If something goes wrong, print out debug state (mainly node log files)
-    def dump_debug(self, only_node = None):
+    def dump_debug(self, only_node=None):
         if self._nodes:
             for n, node in enumerate(self._nodes):
 
@@ -457,12 +457,14 @@ def verify_txs(parameters, test_instance):
 
         output("Verified balances for node: {}".format(node_index))
 
+
 def restart_nodes(parameters, test_instance):
 
     nodes = parameters["nodes"]
 
     for node_index in nodes:
         test_instance.restart_node(node_index)
+
 
 def add_node(parameters, test_instance):
 

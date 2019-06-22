@@ -453,8 +453,8 @@ TEST(storage_object_store_with_STL_gtest, iterator_over_basic_struct_with_key_in
     ObjectStore<testType> testStore;
     testStore.New("testFile.db", "testIndex.db");
 
-    std::set<ResourceID>                      all_keys;
-    std::set<ResourceID>                      all_keys_verify;
+    std::set<ResourceID> all_keys;
+    std::set<ResourceID> all_keys_verify;
 
     fetch::random::LaggedFibonacciGenerator<> lfg;
 
@@ -469,7 +469,8 @@ TEST(storage_object_store_with_STL_gtest, iterator_over_basic_struct_with_key_in
 
       test.third = std::to_string(random);
 
-      all_keys.insert(ResourceAddress(std::to_string(i))); // Set of all the keys in our store is created
+      all_keys.insert(
+          ResourceAddress(std::to_string(i)));  // Set of all the keys in our store is created
       testStore.Set(ResourceAddress(std::to_string(i)), test);
     }
 

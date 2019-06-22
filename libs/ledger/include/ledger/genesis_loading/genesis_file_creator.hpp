@@ -19,15 +19,15 @@
 
 #include "ledger/chain/block_coordinator.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
-#include "variant/variant.hpp"
 #include "storage/resource_mapper.hpp"
+#include "variant/variant.hpp"
 
 namespace fetch {
 
 class GenesisFileCreator
 {
 public:
-  using BlockCoordinator       = ledger::BlockCoordinator;
+  using BlockCoordinator     = ledger::BlockCoordinator;
   using StorageUnitInterface = ledger::StorageUnitInterface;
   using ResourceID           = storage::ResourceID;
   using ResourceAddress      = storage::ResourceAddress;
@@ -43,9 +43,8 @@ public:
   void LoadFile(std::string const &name);
 
 private:
-  BlockCoordinator     &block_coordinator_;
+  BlockCoordinator &    block_coordinator_;
   StorageUnitInterface &storage_unit_;
 };
 
 }  // namespace fetch
-

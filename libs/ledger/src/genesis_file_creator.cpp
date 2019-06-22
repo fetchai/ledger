@@ -16,25 +16,24 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/genesis_loading/genesis_file_creator.hpp"
-#include "ledger/chain/block.hpp"
 #include "ledger/chain/address.hpp"
+#include "ledger/chain/block.hpp"
 #include "ledger/chain/constants.hpp"
+#include "ledger/genesis_loading/genesis_file_creator.hpp"
 
-#include "core/json/document.hpp"
 #include "core/byte_array/decoders.hpp"
+#include "core/json/document.hpp"
 
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
 
-namespace fetch
-{
+namespace fetch {
 
-GenesisFileCreator::GenesisFileCreator(BlockCoordinator &block_coordinator, StorageUnitInterface &storage_unit)
+GenesisFileCreator::GenesisFileCreator(BlockCoordinator &    block_coordinator,
+                                       StorageUnitInterface &storage_unit)
   : block_coordinator_{block_coordinator}
   , storage_unit_{storage_unit}
-{
-}
+{}
 
 // Create a 'state file' with a given name
 void GenesisFileCreator::CreateFile(std::string const &name)
@@ -46,13 +45,13 @@ void GenesisFileCreator::CreateFile(std::string const &name)
 
   FETCH_LOG_INFO(LOGGING_NAME, "Got: ", keys.size(), " keys.");
 
-  Variant json       = Variant::Object();
+  Variant json = Variant::Object();
 
-  for(auto const &key : keys)
+  for (auto const &key : keys)
   {
     auto corresponding_object_document = storage_unit_.Get(ResourceAddress(key));
 
-    if(corresponding_object_document.failed)
+    if (corresponding_object_document.failed)
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "Failed to get a valid key value pair from the state database");
     }
@@ -78,21 +77,21 @@ void GenesisFileCreator::CreateFile(std::string const &name)
 void GenesisFileCreator::LoadFile(std::string const &name)
 {
   std::streampos size;
-  ByteArray array;
-  std::ifstream file (name, std::ios::in|std::ios::binary|std::ios::ate);
+  ByteArray      array;
+  std::ifstream  file(name, std::ios::in | std::ios::binary | std::ios::ate);
 
   if (file.is_open())
   {
     size = file.tellg();
 
-    if(size == 0)
+    if (size == 0)
     {
       return;
     }
 
     array.Resize(std::size_t(size));
-    file.seekg (0, std::ios::beg);
-    file.read (array.char_pointer(), size);
+    file.seekg(0, std::ios::beg);
+    file.read(array.char_pointer(), size);
     file.close();
 
     FETCH_LOG_DEBUG(LOGGING_NAME, "parsed: ", array);
@@ -108,17 +107,15 @@ void GenesisFileCreator::LoadFile(std::string const &name)
   storage_unit_.Reset();
 
   json::JSONDocument doc(array);
-  Variant root = doc.root();
+  Variant            root = doc.root();
 
   // Set our state
-  root.IterateObject([this](ConstByteArray const &key,
-                            variant::Variant const   &value)
-  {
+  root.IterateObject([this](ConstByteArray const &key, variant::Variant const &value) {
     FETCH_LOG_DEBUG(LOGGING_NAME, "key ", key);
     FETCH_LOG_DEBUG(LOGGING_NAME, "value ", value);
 
     ResourceAddress key_raw(ResourceID(FromBase64(key)));
-    ConstByteArray value_raw(byte_array::FromBase64(value.As<ConstByteArray>()));
+    ConstByteArray  value_raw(byte_array::FromBase64(value.As<ConstByteArray>()));
 
     storage_unit_.Set(key_raw, value_raw);
 
@@ -132,9 +129,9 @@ void GenesisFileCreator::LoadFile(std::string const &name)
 
   ledger::Block genesis_block;
 
-  genesis_block.body.merkle_hash = merkle_commit_hash;
+  genesis_block.body.merkle_hash  = merkle_commit_hash;
   genesis_block.body.block_number = 0;
-  genesis_block.body.miner = ledger::Address(crypto::Hash<crypto::SHA256>(""));
+  genesis_block.body.miner        = ledger::Address(crypto::Hash<crypto::SHA256>(""));
   genesis_block.UpdateDigest();
 
   FETCH_LOG_INFO(LOGGING_NAME, "Created genesis block hash: ", genesis_block.body.hash.ToBase64());
@@ -146,4 +143,3 @@ void GenesisFileCreator::LoadFile(std::string const &name)
 }
 
 }  // namespace fetch
-

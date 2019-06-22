@@ -315,7 +315,7 @@ void Constellation::Run(UriList const &initial_peers, core::WeakRunnable bootstr
   http_.Start(http_port_);
 
   // BEFORE the block coordinator starts its state set up special genesis
-  if(cfg_.load_state_file)
+  if (cfg_.load_state_file)
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Loading from genesis save file.");
 
@@ -372,7 +372,7 @@ void Constellation::Run(UriList const &initial_peers, core::WeakRunnable bootstr
 
   FETCH_LOG_INFO(LOGGING_NAME, "Shutting down...");
 
-  if(cfg_.dump_state_file)
+  if (cfg_.dump_state_file)
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Creating genesis save file.");
 

@@ -21,10 +21,10 @@
 
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/encoders.hpp"
-#include "ledger/chain/transaction_layout_rpc_serializers.hpp"
-#include "network/generics/milli_timer.hpp"
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
+#include "ledger/chain/transaction_layout_rpc_serializers.hpp"
+#include "network/generics/milli_timer.hpp"
 
 #include <algorithm>
 #include <utility>
@@ -78,11 +78,12 @@ void MainChain::Reset()
   block_chain_.clear();
   references_.clear();
 
-  if(block_store_)
+  if (block_store_)
   {
     block_store_->New("chain.db", "chain.index.db");
     head_store_.close();
-    head_store_.open("chain.head.db", std::ios::binary | std::ios::in | std::ios::out | std::ios::trunc);
+    head_store_.open("chain.head.db",
+                     std::ios::binary | std::ios::in | std::ios::out | std::ios::trunc);
   }
 
   auto genesis = CreateGenesisBlock();

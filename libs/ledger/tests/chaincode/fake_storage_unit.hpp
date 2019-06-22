@@ -40,7 +40,7 @@ public:
   using mutex_type      = std::mutex;
   using lock_guard_type = std::lock_guard<mutex_type>;
   using hash_type       = fetch::byte_array::ConstByteArray;
-  using ResourceID  = fetch::storage::ResourceID;
+  using ResourceID      = fetch::storage::ResourceID;
 
   Document GetOrCreate(ResourceAddress const &key) override
   {
