@@ -22,7 +22,8 @@
 #include "ml/ops/activation.hpp"
 #include "ml/ops/loss_functions.hpp"
 #include "ml/ops/weights.hpp"
-#include <gtest/gtest.h>
+
+#include "gtest/gtest.h"
 
 template <typename ArrayType>
 ArrayType GenerateXorData()

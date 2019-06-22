@@ -17,13 +17,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/logger.hpp"
-#include "core/mutex.hpp"
 #include "network/fetch_asio.hpp"
 #include "network/generics/atomic_inflight_counter.hpp"
-#include "network/management/connection_register.hpp"
+#include "network/management/abstract_connection.hpp"
 #include "network/management/network_manager.hpp"
-#include "network/tcp/client_connection.hpp"
+#include "network/message.hpp"
+#include "network/tcp/abstract_server.hpp"
 
 #include <cstdint>
 #include <deque>
@@ -33,6 +32,9 @@
 
 namespace fetch {
 namespace network {
+
+class AbstractConnectionRegister;
+class ClientManager;
 
 /*
  * Handle TCP connections. Spawn new ClientConnections on connect and adds

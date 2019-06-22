@@ -138,14 +138,19 @@ private:
   /// @{
   void SetSuccessCallback(Callback const &cb)
   {
+    FETCH_LOCK(callback_lock_);
     callback_success_ = cb;
   }
+
   void SetFailureCallback(Callback const &cb)
   {
+    FETCH_LOCK(callback_lock_);
     callback_failure_ = cb;
   }
+
   void SetCompletionCallback(Callback const &cb)
   {
+    FETCH_LOCK(callback_lock_);
     callback_completion_ = cb;
   }
   /// @}
@@ -254,10 +259,12 @@ private:
   AtomicState    state_{State::WAITING};
   ConstByteArray value_;
   ExceptionPtr   exception_;
-  Callback       callback_success_;
-  Callback       callback_failure_;
-  Callback       callback_completion_;
   std::string    name_;
+
+  mutable Mutex callback_lock_{__LINE__, __FILE__};
+  Callback      callback_success_;
+  Callback      callback_failure_;
+  Callback      callback_completion_;
 
 #define FETCH_PROMISE_CV
 #ifdef FETCH_PROMISE_CV

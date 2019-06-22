@@ -20,8 +20,8 @@
 #include "core/serializers/byte_array_buffer.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 #include "vectorise/fixed_point/type_traits.hpp"
-
 #include "vm/address.hpp"
+#include "vm/io_observer_interface.hpp"
 #include "vm/vm.hpp"
 
 namespace fetch {
@@ -30,8 +30,8 @@ namespace vm {
 class IState : public Object
 {
 public:
-  IState()          = delete;
-  virtual ~IState() = default;
+  IState()           = delete;
+  ~IState() override = default;
 
   static Ptr<IState> Constructor(VM *vm, TypeId type_id, Ptr<String> const &name,
                                  TemplateParameter1 const &value);

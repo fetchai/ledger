@@ -16,10 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include "vm/common.hpp"
 #include "vm/module.hpp"
 #include "vm/sharded_state.hpp"
-
-#include "vm/common.hpp"
 #include "vm/variant.hpp"
 #include "vm/vm.hpp"
 
@@ -106,6 +105,8 @@ To Cast(Variant const &from)
   default:
   {
     to = 0;
+    // Not a primitive
+    assert(false);
     break;
   }
   }  // switch
@@ -197,14 +198,15 @@ Module::Module()
 
   GetClassInterface<IArray>()
       .CreateConstuctor<int32_t>()
-      .CreateMemberFunction("count", &IArray::Count)
       .CreateMemberFunction("append", &IArray::Append)
+      .CreateMemberFunction("count", &IArray::Count)
+      .CreateMemberFunction("erase", &IArray::Erase)
+      .CreateMemberFunction("extend", &IArray::Extend)
       .CreateMemberFunction("popBack", &IArray::PopBackOne)
       .CreateMemberFunction("popBack", &IArray::PopBackMany)
       .CreateMemberFunction("popFront", &IArray::PopFrontOne)
       .CreateMemberFunction("popFront", &IArray::PopFrontMany)
       .CreateMemberFunction("reverse", &IArray::Reverse)
-      .CreateMemberFunction("extend", &IArray::Extend)
       .EnableIndexOperator<AnyInteger, TemplateParameter1>()
       .CreateInstantiationType<Array<bool>>()
       .CreateInstantiationType<Array<int8_t>>()

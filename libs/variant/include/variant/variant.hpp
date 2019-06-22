@@ -24,6 +24,7 @@
 #include "vectorise/fixed_point/fixed_point.hpp"
 
 #include <cassert>
+#include <cstddef>
 #include <cstdint>
 #include <iosfwd>
 #include <stdexcept>
@@ -76,9 +77,9 @@ public:
 
   // Construction / Destruction
   Variant() = default;
-  Variant(std::size_t pool_reserve);
+  explicit Variant(std::size_t pool_reserve);
   Variant(Variant const &);
-  Variant(Variant &&) = default;
+  Variant(Variant &&) noexcept = default;
   ~Variant();
 
   template <typename T>

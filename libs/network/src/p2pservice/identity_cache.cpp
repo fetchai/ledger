@@ -18,6 +18,9 @@
 
 #include "network/p2pservice/identity_cache.hpp"
 
+#include <algorithm>
+#include <iterator>
+
 namespace fetch {
 namespace p2p {
 

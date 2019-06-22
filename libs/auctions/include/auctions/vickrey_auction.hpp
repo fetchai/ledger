@@ -18,6 +18,10 @@
 //------------------------------------------------------------------------------
 
 #include "auctions/auction.hpp"
+#include "auctions/error_codes.hpp"
+
+#include <cstddef>
+#include <limits>
 
 namespace fetch {
 namespace auctions {

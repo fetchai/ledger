@@ -16,11 +16,14 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/byte_array/encoders.hpp"
 #include "crypto/fnv.hpp"
 
-#include "core/byte_array/encoders.hpp"
-
 #include "gtest/gtest.h"
+
+#include <cstddef>
+#include <cstdint>
+#include <typeinfo>
 
 namespace fetch {
 namespace crypto {

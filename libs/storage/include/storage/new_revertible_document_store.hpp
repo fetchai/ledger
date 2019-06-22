@@ -20,10 +20,13 @@
 #include "storage/document_store.hpp"
 #include "storage/new_versioned_random_access_stack.hpp"
 
+#include <cstddef>
 #include <string>
 
 namespace fetch {
 namespace storage {
+
+class ResourceID;
 
 class NewRevertibleDocumentStore
 {

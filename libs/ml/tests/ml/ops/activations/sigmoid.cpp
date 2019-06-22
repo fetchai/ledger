@@ -16,12 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/ops/activations/sigmoid.hpp"
-
 #include "math/tensor.hpp"
+#include "ml/ops/activations/sigmoid.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 
-#include <gtest/gtest.h>
+#include "gtest/gtest.h"
 
 template <typename T>
 class SigmoidTest : public ::testing::Test

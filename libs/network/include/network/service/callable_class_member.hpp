@@ -25,7 +25,13 @@
 #include "core/serializers/stl_types.hpp"
 #include "core/serializers/typed_byte_array_buffer.hpp"
 #include "network/service/abstract_callable.hpp"
+
+#include <cassert>
+#include <cstddef>
+#include <cstdint>
+#include <type_traits>
 #include <typeinfo>
+
 namespace fetch {
 namespace service {
 

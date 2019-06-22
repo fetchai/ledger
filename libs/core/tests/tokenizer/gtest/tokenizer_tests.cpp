@@ -18,8 +18,10 @@
 
 #include "core/byte_array/consumers.hpp"
 #include "core/byte_array/tokenizer/tokenizer.hpp"
+
+#include "gtest/gtest.h"
+
 #include <fstream>
-#include <gtest/gtest.h>
 #include <string>
 #include <vector>
 

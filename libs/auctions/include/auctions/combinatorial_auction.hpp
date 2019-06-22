@@ -18,17 +18,23 @@
 //------------------------------------------------------------------------------
 
 #include "auctions/auction.hpp"
+#include "auctions/error_codes.hpp"
+#include "auctions/type_def.hpp"
+#include "core/random/lcg.hpp"
 #include "math/tensor.hpp"
 
-#include "core/random/lcg.hpp"
-#include "core/random/lfg.hpp"
+#include <cstddef>
+#include <cstdint>
+#include <limits>
 
 namespace fetch {
 namespace auctions {
 
+class Bid;
+class Item;
+
 class CombinatorialAuction : public Auction
 {
-
   using RandomInt = typename fetch::random::LinearCongruentialGenerator::random_type;
 
 public:

@@ -537,6 +537,10 @@ MainChain::BlockPtr MainChain::GetBlock(BlockHash hash) const
     // convert the pointer type to per const
     output_block = std::static_pointer_cast<Block const>(internal_block);
   }
+  else
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "main chain failed to lookup block!");
+  }
 
   return output_block;
 }

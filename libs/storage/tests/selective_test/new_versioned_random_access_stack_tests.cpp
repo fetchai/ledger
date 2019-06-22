@@ -23,7 +23,7 @@
 #include "storage/new_versioned_random_access_stack.hpp"
 #include "testing/common_testing_functionality.hpp"
 
-#include <gtest/gtest.h>
+#include "gtest/gtest.h"
 
 #include <algorithm>
 #include <string>

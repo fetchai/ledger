@@ -19,7 +19,7 @@
 #include "vectorise/arch/sse.hpp"
 #include "vectorise/register.hpp"
 
-#include <gtest/gtest.h>
+#include "gtest/gtest.h"
 
 using namespace fetch::vectorize;
 

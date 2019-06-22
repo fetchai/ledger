@@ -19,7 +19,7 @@
 
 #include "fake_storage_unit.hpp"
 
-#include <gmock/gmock.h>
+#include "gmock/gmock.h"
 
 class MockStorageUnit : public fetch::ledger::StorageUnitInterface
 {
