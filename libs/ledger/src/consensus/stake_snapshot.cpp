@@ -16,9 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ledger/consensus/stake_snapshot.hpp"
 #include "core/random/lcg.hpp"
 #include "ledger/chain/digest.hpp"
-#include "ledger/consensus/stake_tracker.hpp"
 
 #include <algorithm>
 #include <unordered_set>
@@ -37,7 +37,7 @@ using DRNG       = random::LinearCongruentialGenerator;
  * @param count The size of the selection
  * @return The selection of addresses
  */
-StakeTracker::AddressArray StakeTracker::Sample(uint64_t entropy, std::size_t count)
+StakeSnapshot::AddressArray StakeSnapshot::Sample(uint64_t entropy, std::size_t count)
 {
   AddressArray addresses;
   addresses.reserve(count);
@@ -109,7 +109,7 @@ StakeTracker::AddressArray StakeTracker::Sample(uint64_t entropy, std::size_t co
  * @param address The address to be queried
  * @return The stake amount
  */
-uint64_t StakeTracker::LookupStake(Address const &address) const
+uint64_t StakeSnapshot::LookupStake(Address const &address) const
 {
   FETCH_LOCK(lock_);
 
@@ -132,7 +132,7 @@ uint64_t StakeTracker::LookupStake(Address const &address) const
  * @param address The address to be updates
  * @param stake The new absolute value of stake
  */
-void StakeTracker::UpdateStake(Address const &address, uint64_t stake)
+void StakeSnapshot::UpdateStake(Address const &address, uint64_t stake)
 {
   FETCH_LOCK(lock_);
 

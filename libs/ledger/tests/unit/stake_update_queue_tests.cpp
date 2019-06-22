@@ -19,7 +19,7 @@
 #include "random_address.hpp"
 
 #include "core/random/lcg.hpp"
-#include "ledger/consensus/stake_tracker.hpp"
+#include "ledger/consensus/stake_snapshot.hpp"
 #include "ledger/consensus/stake_update_queue.hpp"
 
 #include "gtest/gtest.h"
@@ -28,12 +28,12 @@
 
 namespace {
 
-using fetch::ledger::StakeTracker;
+using fetch::ledger::StakeSnapshot;
 using fetch::ledger::StakeUpdateQueue;
 
 using RNG                 = fetch::random::LinearCongruentialGenerator;
 using StakeUpdateQueuePtr = std::unique_ptr<StakeUpdateQueue>;
-using StakeTrackerPtr     = std::unique_ptr<StakeTracker>;
+using StakeSnapshotPtr    = std::unique_ptr<StakeSnapshot>;
 
 template <typename Container, typename Value>
 bool IsIn(Container const &container, Value const &value)
@@ -48,17 +48,17 @@ protected:
   {
     rng_.Seed(42);
     stake_update_queue_ = std::make_unique<StakeUpdateQueue>();
-    stake_tracker_ = std::make_unique<StakeTracker>();
+    snapshot_ = std::make_unique<StakeSnapshot>();
   }
 
   void TearDown() override
   {
     stake_update_queue_.reset();
-    stake_tracker_.reset();
+    snapshot_.reset();
   }
 
   StakeUpdateQueuePtr stake_update_queue_;
-  StakeTrackerPtr     stake_tracker_;
+  StakeSnapshotPtr     snapshot_;
   RNG                 rng_;
 };
 
@@ -93,29 +93,29 @@ TEST_F(StakeUpdateQueueTests, SimpleCheck)
     EXPECT_EQ(500, map.at(12).at(address3));
   });
 
-  ASSERT_EQ(0, stake_tracker_->size());
-  ASSERT_EQ(0, stake_tracker_->total_stake());
+  ASSERT_EQ(0, snapshot_->size());
+  ASSERT_EQ(0, snapshot_->total_stake());
   EXPECT_EQ(3, stake_update_queue_->size());
 
   // apply some state updates
-  stake_update_queue_->ApplyUpdates(9, *stake_tracker_);
+  stake_update_queue_->ApplyUpdates(9, *snapshot_);
 
-  ASSERT_EQ(0, stake_tracker_->size());
-  ASSERT_EQ(0, stake_tracker_->total_stake());
+  ASSERT_EQ(0, snapshot_->size());
+  ASSERT_EQ(0, snapshot_->total_stake());
   EXPECT_EQ(3, stake_update_queue_->size());
 
   // apply some state updates
-  stake_update_queue_->ApplyUpdates(10, *stake_tracker_);
+  stake_update_queue_->ApplyUpdates(10, *snapshot_);
 
-  ASSERT_EQ(1, stake_tracker_->size());
-  ASSERT_EQ(500, stake_tracker_->total_stake());
+  ASSERT_EQ(1, snapshot_->size());
+  ASSERT_EQ(500, snapshot_->total_stake());
   EXPECT_EQ(2, stake_update_queue_->size());
 
   // apply some state updates
-  stake_update_queue_->ApplyUpdates(12, *stake_tracker_);
+  stake_update_queue_->ApplyUpdates(12, *snapshot_);
 
-  ASSERT_EQ(2, stake_tracker_->size());
-  ASSERT_EQ(1000, stake_tracker_->total_stake());
+  ASSERT_EQ(2, snapshot_->size());
+  ASSERT_EQ(1000, snapshot_->total_stake());
   EXPECT_EQ(0, stake_update_queue_->size());
 }
 

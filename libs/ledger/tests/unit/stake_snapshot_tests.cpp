@@ -19,7 +19,7 @@
 #include "random_address.hpp"
 
 #include "core/random/lcg.hpp"
-#include "ledger/consensus/stake_tracker.hpp"
+#include "ledger/consensus/stake_snapshot.hpp"
 
 #include "gtest/gtest.h"
 
@@ -29,15 +29,15 @@
 
 namespace {
 
-using fetch::ledger::StakeTracker;
+using fetch::ledger::StakeSnapshot;
 using fetch::ledger::Address;
 
 using RNG             = fetch::random::LinearCongruentialGenerator;
-using StakeTrackerPtr = std::unique_ptr<StakeTracker>;
+using StakeSnapshotPtr = std::unique_ptr<StakeSnapshot>;
 using StakeMap        = std::unordered_map<Address, uint64_t>;
 using AddressSet      = std::unordered_set<Address>;
 
-class StakeTrackerTests : public ::testing::Test
+class StakeSnapshotTests : public ::testing::Test
 {
 protected:
   static constexpr uint64_t MAXIMUM_SINGLE_STAKE = 10000;
@@ -45,12 +45,12 @@ protected:
   void SetUp() override
   {
     rng_.Seed(42);
-    stake_tracker_ = std::make_unique<StakeTracker>();
+    snapshot_ = std::make_unique<StakeSnapshot>();
   }
 
   void TearDown() override
   {
-    stake_tracker_.reset();
+    snapshot_.reset();
   }
 
   StakeMap GenerateRandomStakePool(std::size_t count)
@@ -72,17 +72,17 @@ protected:
       map[address] = stake;
 
       // update the stake tracker
-      stake_tracker_->UpdateStake(address, stake);
+      snapshot_->UpdateStake(address, stake);
     }
 
     return map;
   }
 
   RNG rng_;
-  StakeTrackerPtr stake_tracker_;
+  StakeSnapshotPtr snapshot_;
 };
 
-TEST_F(StakeTrackerTests, CheckStakeGenerate)
+TEST_F(StakeSnapshotTests, CheckStakeGenerate)
 {
   // generate a random stake pool
   auto const pool = GenerateRandomStakePool(200);
@@ -92,21 +92,21 @@ TEST_F(StakeTrackerTests, CheckStakeGenerate)
   uint64_t aggregate_stake{0};
   for (auto const &element : pool)
   {
-    auto const retrieved_stake = stake_tracker_->LookupStake(element.first);
+    auto const retrieved_stake = snapshot_->LookupStake(element.first);
     EXPECT_EQ(element.second, retrieved_stake);
     aggregate_stake += retrieved_stake;
   }
 
-  EXPECT_EQ(aggregate_stake, stake_tracker_->total_stake());
+  EXPECT_EQ(aggregate_stake, snapshot_->total_stake());
 
   // make a reference sample
-  auto const reference = stake_tracker_->Sample(42, 4);
+  auto const reference = snapshot_->Sample(42, 4);
   ASSERT_EQ(4, reference.size());
 
   // basic check to see if it is deterministic
   for (std::size_t i = 0; i < 5; ++i)
   {
-    auto const other = stake_tracker_->Sample(42, 4);
+    auto const other = snapshot_->Sample(42, 4);
 
     EXPECT_EQ(reference, other);
   }
@@ -120,7 +120,7 @@ TEST_F(StakeTrackerTests, CheckStakeGenerate)
   EXPECT_EQ(address_set.size(), reference.size());
 }
 
-TEST_F(StakeTrackerTests, CheckStateModifications)
+TEST_F(StakeSnapshotTests, CheckStateModifications)
 {
   auto const address1 = GenerateRandomAddress(rng_);
   auto const address2 = GenerateRandomAddress(rng_);
@@ -128,37 +128,37 @@ TEST_F(StakeTrackerTests, CheckStateModifications)
   auto const address4 = GenerateRandomAddress(rng_);
 
   // uniform staking
-  stake_tracker_->UpdateStake(address1, 500);
-  stake_tracker_->UpdateStake(address2, 500);
-  stake_tracker_->UpdateStake(address3, 500);
-  stake_tracker_->UpdateStake(address4, 500);
+  snapshot_->UpdateStake(address1, 500);
+  snapshot_->UpdateStake(address2, 500);
+  snapshot_->UpdateStake(address3, 500);
+  snapshot_->UpdateStake(address4, 500);
 
-  ASSERT_EQ(2000, stake_tracker_->total_stake());
-  ASSERT_EQ(4, stake_tracker_->size());
+  ASSERT_EQ(2000, snapshot_->total_stake());
+  ASSERT_EQ(4, snapshot_->size());
 
-  stake_tracker_->UpdateStake(address1, 1000);
-  ASSERT_EQ(2500, stake_tracker_->total_stake());
-  ASSERT_EQ(4, stake_tracker_->size());
+  snapshot_->UpdateStake(address1, 1000);
+  ASSERT_EQ(2500, snapshot_->total_stake());
+  ASSERT_EQ(4, snapshot_->size());
 
-  stake_tracker_->UpdateStake(address2, 250);
-  ASSERT_EQ(2250, stake_tracker_->total_stake());
-  ASSERT_EQ(4, stake_tracker_->size());
+  snapshot_->UpdateStake(address2, 250);
+  ASSERT_EQ(2250, snapshot_->total_stake());
+  ASSERT_EQ(4, snapshot_->size());
 
   // no change
-  stake_tracker_->UpdateStake(address3, 500);
-  ASSERT_EQ(2250, stake_tracker_->total_stake());
-  ASSERT_EQ(4, stake_tracker_->size());
+  snapshot_->UpdateStake(address3, 500);
+  ASSERT_EQ(2250, snapshot_->total_stake());
+  ASSERT_EQ(4, snapshot_->size());
 
   // removing stake
-  stake_tracker_->UpdateStake(address4, 0);
-  ASSERT_EQ(1750, stake_tracker_->total_stake());
-  ASSERT_EQ(3, stake_tracker_->size());
+  snapshot_->UpdateStake(address4, 0);
+  ASSERT_EQ(1750, snapshot_->total_stake());
+  ASSERT_EQ(3, snapshot_->size());
 }
 
-TEST_F(StakeTrackerTests, TooSmallSampleSize)
+TEST_F(StakeSnapshotTests, TooSmallSampleSize)
 {
   auto const pool = GenerateRandomStakePool(3);
-  auto const sample = stake_tracker_->Sample(200, 10);
+  auto const sample = snapshot_->Sample(200, 10);
 
   ASSERT_EQ(pool.size(), sample.size());
 }

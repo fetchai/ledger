@@ -16,7 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/consensus/stake_tracker.hpp"
+#include "ledger/consensus/stake_snapshot.hpp"
 #include "ledger/consensus/stake_update_queue.hpp"
 
 namespace fetch {
@@ -28,7 +28,7 @@ namespace ledger {
  * @param block_index The block index that is being triggered
  * @param tracker The tracker to be updated
  */
-void StakeUpdateQueue::ApplyUpdates(BlockIndex block_index, StakeTracker &tracker)
+void StakeUpdateQueue::ApplyUpdates(BlockIndex block_index, StakeSnapshot &tracker)
 {
   // make sure that the next block in the map is in fact the correct block index
   if (!updates_.empty())

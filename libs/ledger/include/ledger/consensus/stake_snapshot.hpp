@@ -28,17 +28,19 @@ namespace ledger {
 /**
  * Object for keeping track of the current addresses which have stakes. Also facilitates the
  * selection of addresses based on an entropy source.
+ *
+ * Conceptually this object representats
  */
-class StakeTracker
+class StakeSnapshot
 {
 public:
   using AddressArray = std::vector<Address>;
 
   // Construction / Destruction
-  StakeTracker()                     = default;
-  StakeTracker(StakeTracker const &) = delete;
-  StakeTracker(StakeTracker &&)      = delete;
-  ~StakeTracker()                    = default;
+  StakeSnapshot()                      = default;
+  StakeSnapshot(StakeSnapshot const &) = delete;
+  StakeSnapshot(StakeSnapshot &&)      = delete;
+  ~StakeSnapshot()                     = default;
 
   AddressArray Sample(uint64_t entropy, std::size_t count);
 
@@ -55,8 +57,8 @@ public:
   /// @}
 
   // Operators
-  StakeTracker &operator=(StakeTracker const &) = delete;
-  StakeTracker &operator=(StakeTracker &&) = delete;
+  StakeSnapshot &operator=(StakeSnapshot const &) = delete;
+  StakeSnapshot &operator=(StakeSnapshot &&) = delete;
 
 private:
   struct Record
@@ -81,7 +83,7 @@ private:
  *
  * @return The value of the total amount staked
  */
-inline uint64_t StakeTracker::total_stake() const
+inline uint64_t StakeSnapshot::total_stake() const
 {
   FETCH_LOCK(lock_);
   return total_stake_;
@@ -92,7 +94,7 @@ inline uint64_t StakeTracker::total_stake() const
  *
  * @return The number of unique addresses that have staked
  */
-inline std::size_t StakeTracker::size() const
+inline std::size_t StakeSnapshot::size() const
 {
   FETCH_LOCK(lock_);
   return address_index_.size();
