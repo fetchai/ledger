@@ -180,15 +180,15 @@ class TestInstance():
 
         self._nodes[index].stop()
 
-        self.dump_debug(index)
+        # Optically remove db files when testing recovering from a genesis file
+        if False:
+            self.dump_debug(index)
 
-        pattern = ["*.db"]
-
-        for p in pattern:
-            [os.remove(x) for x in glob.iglob('./**/' + p, recursive=True)]
+            pattern = ["*.db"]
+            for p in pattern:
+                [os.remove(x) for x in glob.iglob('./**/' + p, recursive=True)]
 
         self.start_node(index)
-
         time.sleep(3)
 
     def print_time_elapsed(self):

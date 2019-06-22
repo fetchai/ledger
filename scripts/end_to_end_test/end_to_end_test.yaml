@@ -1,102 +1,102 @@
 # YAML file to dictate integration tests
 
-#---
-#test_description: >
-#        Single standalone node can mine transactions which are then queried
-#
-#setup_conditions:
-#    test_name : "basic_standalone"
-#    number_of_nodes: 1
-#    mining_nodes: [0]
-#    max_test_time: 60
-#
-#steps:
-#    - send_txs : { "name": "batch1", "amount": 10, "nodes" : [0] }
-#    - verify_txs : { "name": "batch1", "nodes" : [0] }
-#...
-#
-#---
-#test_description: >
-#        Transactions sync and are executed across nodes
-#
-#setup_conditions:
-#    test_name : "basic_multinode"
-#    number_of_nodes: 2
-#    node_connections: [[0, 1]]
-#    mining_nodes: [0]
-#    max_test_time: 60
-#
-#steps:
-#    - send_txs : { "name": "batch1", "amount": 10, "nodes" : [1] }
-#    - verify_txs : { "name": "batch1", "nodes" : [0, 1] }
-#...
-#
-#---
-#test_description: >
-#        DISABLED - Transactions sync - corner case with connection order
-#
-#setup_conditions:
-#    test_name : "basic_multinode_corner_case"
-#    number_of_nodes: 2
-#    node_connections: [[1, 0]]
-#    mining_nodes: [0]
-#    max_test_time: 60
-#
-#steps:
-#    - send_txs : { "name": "batch1", "amount": 10, "nodes" : [1] }
-#    - verify_txs : { "name": "batch1", "nodes" : [0, 1] }
-#...
-#
-#---
-#test_description: >
-#        Two nodes are having a fun time and then a third connects - tune in to find out if they can sync
-#
-#setup_conditions:
-#    test_name : "third_node_syncs"
-#    number_of_nodes: 2
-#    node_connections: [[0, 1]]
-#    mining_nodes: [0]
-#    max_test_time: 60
-#
-#steps:
-#    - send_txs : { "name": "batch1", "amount": 10, "nodes" : [1] }
-#    - verify_txs : { "name": "batch1", "nodes" : [0, 1] }
-#    - add_node : { "index" : 2, "node_connections": [[2, 1]] }
-#    - sleep : 3
-#    - verify_txs : { "name": "batch1", "nodes" : [2] }
-#...
-#
-#---
-#test_description: >
-#    Send lots of transactions to a node
-#
-#setup_conditions:
-#    test_name : "miner_recieves_more_tx"
-#    number_of_nodes: 1
-#    mining_nodes: [0]
-#    max_test_time: 60
-#
-#steps:
-#    - send_txs : { "name": "100_identities", "amount": 100, "nodes" : [0] }
-#    - print_time_elapsed
-#    - verify_txs : { "name": "100_identities", "nodes" : [0] }
-#...
-#
-#---
-#test_description: >
-#        Run a smart contract which calls getBlockNumber()
-#
-#setup_conditions:
-#    test_name : "block_number_accessible_from_smart_contract"
-#    number_of_nodes: 1
-#    mining_nodes: [0]
-#    max_test_time: 60
-#
-#steps:
-#    - sleep : 5
-#    - run_python_test : { "script": ".smart_contract_tests.block_number" }
-#
-#...
+---
+test_description: >
+        Single standalone node can mine transactions which are then queried
+
+setup_conditions:
+    test_name : "basic_standalone"
+    number_of_nodes: 1
+    mining_nodes: [0]
+    max_test_time: 60
+
+steps:
+    - send_txs : { "name": "batch1", "amount": 10, "nodes" : [0] }
+    - verify_txs : { "name": "batch1", "nodes" : [0] }
+...
+
+---
+test_description: >
+        Transactions sync and are executed across nodes
+
+setup_conditions:
+    test_name : "basic_multinode"
+    number_of_nodes: 2
+    node_connections: [[0, 1]]
+    mining_nodes: [0]
+    max_test_time: 60
+
+steps:
+    - send_txs : { "name": "batch1", "amount": 10, "nodes" : [1] }
+    - verify_txs : { "name": "batch1", "nodes" : [0, 1] }
+...
+
+---
+test_description: >
+        DISABLED - Transactions sync - corner case with connection order
+
+setup_conditions:
+    test_name : "basic_multinode_corner_case"
+    number_of_nodes: 2
+    node_connections: [[1, 0]]
+    mining_nodes: [0]
+    max_test_time: 60
+
+steps:
+    - send_txs : { "name": "batch1", "amount": 10, "nodes" : [1] }
+    - verify_txs : { "name": "batch1", "nodes" : [0, 1] }
+...
+
+---
+test_description: >
+        Two nodes are having a fun time and then a third connects - tune in to find out if they can sync
+
+setup_conditions:
+    test_name : "third_node_syncs"
+    number_of_nodes: 2
+    node_connections: [[0, 1]]
+    mining_nodes: [0]
+    max_test_time: 60
+
+steps:
+    - send_txs : { "name": "batch1", "amount": 10, "nodes" : [1] }
+    - verify_txs : { "name": "batch1", "nodes" : [0, 1] }
+    - add_node : { "index" : 2, "node_connections": [[2, 1]] }
+    - sleep : 3
+    - verify_txs : { "name": "batch1", "nodes" : [2] }
+...
+
+---
+test_description: >
+    Send lots of transactions to a node
+
+setup_conditions:
+    test_name : "miner_recieves_more_tx"
+    number_of_nodes: 1
+    mining_nodes: [0]
+    max_test_time: 60
+
+steps:
+    - send_txs : { "name": "100_identities", "amount": 100, "nodes" : [0] }
+    - print_time_elapsed
+    - verify_txs : { "name": "100_identities", "nodes" : [0] }
+...
+
+---
+test_description: >
+        Run a smart contract which calls getBlockNumber()
+
+setup_conditions:
+    test_name : "block_number_accessible_from_smart_contract"
+    number_of_nodes: 1
+    mining_nodes: [0]
+    max_test_time: 60
+
+steps:
+    - sleep : 5
+    - run_python_test : { "script": ".smart_contract_tests.block_number" }
+
+...
 
 ---
 test_description: >
