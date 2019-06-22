@@ -31,6 +31,7 @@ public:
   using Hash           = byte_array::ConstByteArray;
   using ByteArray      = byte_array::ConstByteArray;
   using UnderlyingType = storage::Document;
+  using Keys           = std::vector<ResourceID>;
 
   bool New(std::string const &state, std::string const &state_history, std::string const &index,
            std::string const &index_history, bool create_if_not_exist);
@@ -46,6 +47,7 @@ public:
   bool RevertToHash(Hash const &hash);
   Hash CurrentHash();
   bool HashExists(Hash const &hash);
+  Keys KeyDump();
 
   std::size_t size() const;
 

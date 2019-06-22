@@ -31,6 +31,7 @@
 #include "ledger/storage_unit/storage_unit_client.hpp"
 #include "ledger/transaction_processor.hpp"
 #include "ledger/transaction_status_cache.hpp"
+#include "ledger/genesis_loading/genesis_file_creator.hpp"
 #include "miner/basic_miner.hpp"
 #include "network/muddle/muddle.hpp"
 #include "network/p2pservice/manifest.hpp"
@@ -78,6 +79,7 @@ public:
     uint32_t    peers_update_cycle_ms{0};
     bool        disable_signing{false};
     bool        sign_broadcasts{false};
+    bool        dump_state_file{true};
     NetworkMode network_mode{NetworkMode::PUBLIC_NETWORK};
 
     uint32_t num_lanes() const

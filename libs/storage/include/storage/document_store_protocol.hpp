@@ -23,7 +23,6 @@
 #include "network/service/protocol.hpp"
 #include "storage/document_store.hpp"
 #include "storage/new_revertible_document_store.hpp"
-#include "storage/revertible_document_store.hpp"
 
 #include <map>
 
@@ -52,6 +51,7 @@ public:
     REVERT_TO_HASH,
     CURRENT_HASH,
     HASH_EXISTS,
+    KEY_DUMP,
 
     LOCK = 20,
     UNLOCK,
@@ -71,6 +71,7 @@ public:
     this->Expose(REVERT_TO_HASH, doc_store, &NewRevertibleDocumentStore::RevertToHash);
     this->Expose(CURRENT_HASH, doc_store, &NewRevertibleDocumentStore::CurrentHash);
     this->Expose(HASH_EXISTS, doc_store, &NewRevertibleDocumentStore::HashExists);
+    this->Expose(KEY_DUMP, doc_store, &NewRevertibleDocumentStore::KeyDump);
 
     this->ExposeWithClientContext(LOCK, this, &RevertibleDocumentStoreProtocol::LockResource);
     this->ExposeWithClientContext(UNLOCK, this, &RevertibleDocumentStoreProtocol::UnlockResource);

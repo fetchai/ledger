@@ -73,6 +73,7 @@ public:
   Document GetOrCreate(ResourceAddress const &key) override;
   Document Get(ResourceAddress const &key) override;
   void     Set(ResourceAddress const &key, StateValue const &value) override;
+  Keys KeyDump() const override;
 
   // state hash functions
   byte_array::ConstByteArray CurrentHash() override;
@@ -155,7 +156,7 @@ private:
   /// @{
   AddressList const addresses_;
   uint32_t const    log2_num_lanes_ = 0;
-  Client            rpc_client_;
+  ClientPtr         rpc_client_;
   /// @}
 
   /// @name State Hash Support

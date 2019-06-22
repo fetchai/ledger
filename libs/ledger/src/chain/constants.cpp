@@ -18,14 +18,15 @@
 
 #include "core/byte_array/decoders.hpp"
 #include "ledger/chain/digest.hpp"
+#include "ledger/chain/constants.hpp"
 
 namespace fetch {
 namespace ledger {
 
 using byte_array::FromBase64;
 
-extern const Digest GENESIS_DIGEST = FromBase64("0+++++++++++++++++Genesis+++++++++++++++++0=");
-extern const Digest GENESIS_MERKLE_ROOT =
+Digest GENESIS_DIGEST = FromBase64("0+++++++++++++++++Genesis+++++++++++++++++0=");
+Digest GENESIS_MERKLE_ROOT =
     FromBase64("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=");
 
 }  // namespace ledger

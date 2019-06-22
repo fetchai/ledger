@@ -69,6 +69,8 @@ public:
 
   MOCK_METHOD1(PollRecentTx, TxLayouts(uint32_t));
 
+  MOCK_CONST_METHOD0(KeyDump, Keys());
+
   FakeStorageUnit &GetFake()
   {
     return fake_;

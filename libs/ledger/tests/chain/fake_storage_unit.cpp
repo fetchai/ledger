@@ -201,3 +201,15 @@ FakeStorageUnit::Hash FakeStorageUnit::EmulateCommit(Hash const &commit_hash, ui
 
   return commit_hash;
 }
+
+FakeStorageUnit::Keys FakeStorageUnit::KeyDump() const
+{
+  FakeStorageUnit::Keys keys;
+
+  for (auto it = state_->begin(); it != state_->end(); ++it)
+  {
+    keys.push_back(ResourceID(it->first));
+  }
+
+  return keys;
+}

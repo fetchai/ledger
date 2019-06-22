@@ -27,12 +27,13 @@
 #include <unordered_map>
 #include <vector>
 
-class FakeStorageUnit : public fetch::ledger::StorageUnitInterface
+class FakeStorageUnit final : public fetch::ledger::StorageUnitInterface
 {
 public:
   using Transaction = fetch::ledger::Transaction;
   using Digest      = fetch::ledger::Digest;
   using DigestSet   = fetch::ledger::DigestSet;
+  using ResourceID  = fetch::storage::ResourceID;
 
   /// @name State Interface
   /// @{
@@ -73,6 +74,8 @@ public:
 
   // Use the current state to set the hash
   void UpdateHash();
+
+  Keys KeyDump() const override;
 
 private:
   using TransactionStore = std::map<Digest, Transaction>;

@@ -314,6 +314,17 @@ void Constellation::Run(UriList const &initial_peers, core::WeakRunnable bootstr
   // Finally start the HTTP server
   http_.Start(http_port_);
 
+  // BEFORE the block coordinator starts its state set up special genesis
+  if(cfg_.dump_state_file)
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "Loading from genesis save file.");
+
+    GenesisFileCreator creator(chain_, *storage_);
+    creator.LoadFile("genesis_snapshot.json");
+
+    FETCH_LOG_INFO(LOGGING_NAME, "Loaded from genesis save file.");
+  }
+
   // The block coordinator needs to access correctly started lanes to recover state in the case of
   // a crash.
   reactor_.Attach(block_coordinator_.GetWeakRunnable());
@@ -360,6 +371,14 @@ void Constellation::Run(UriList const &initial_peers, core::WeakRunnable bootstr
   //---------------------------------------------------------------
 
   FETCH_LOG_INFO(LOGGING_NAME, "Shutting down...");
+
+  if(cfg_.dump_state_file)
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "Creating genesis save file.");
+
+    GenesisFileCreator creator(chain_, *storage_);
+    creator.CreateFile("genesis_snapshot.json");
+  }
 
   http_.Stop();
   p2p_.Stop();

@@ -144,5 +144,20 @@ std::size_t NewRevertibleDocumentStore::size() const
   return storage_.size();
 }
 
+NewRevertibleDocumentStore::Keys NewRevertibleDocumentStore::KeyDump()
+{
+  NewRevertibleDocumentStore::Keys all_keys;
+
+  auto it = storage_.begin();
+  while (it != storage_.end())
+  {
+    ResourceID key = ResourceID{it.GetKey()};
+    all_keys.push_back(key);
+    ++it;
+  }
+
+  return all_keys;
+}
+
 }  // namespace storage
 }  // namespace fetch

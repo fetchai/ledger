@@ -40,6 +40,7 @@ public:
   using mutex_type      = std::mutex;
   using lock_guard_type = std::lock_guard<mutex_type>;
   using hash_type       = fetch::byte_array::ConstByteArray;
+  using ResourceID  = fetch::storage::ResourceID;
 
   Document GetOrCreate(ResourceAddress const &key) override
   {
@@ -173,6 +174,18 @@ public:
   TxLayouts PollRecentTx(uint32_t) override
   {
     return {};
+  }
+
+  Keys KeyDump() const override
+  {
+    Keys keys;
+
+    for (auto it = state_.begin(); it != state_.end(); ++it)
+    {
+      keys.push_back(ResourceID(it->first));
+    }
+
+    return keys;
   }
 
 private:
