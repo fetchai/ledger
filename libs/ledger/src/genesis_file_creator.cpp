@@ -17,14 +17,21 @@
 //------------------------------------------------------------------------------
 
 #include "ledger/genesis_loading/genesis_file_creator.hpp"
+#include "ledger/chain/block.hpp"
+#include "ledger/chain/address.hpp"
+#include "ledger/chain/constants.hpp"
+
 #include "core/json/document.hpp"
 #include "core/byte_array/decoders.hpp"
+
+#include "crypto/hash.hpp"
+#include "crypto/sha256.hpp"
 
 namespace fetch
 {
 
-GenesisFileCreator::GenesisFileCreator(MainChain &chain, StorageUnitInterface &storage_unit)
-  : chain_{chain}
+GenesisFileCreator::GenesisFileCreator(BlockCoordinator &block_coordinator, StorageUnitInterface &storage_unit)
+  : block_coordinator_{block_coordinator}
   , storage_unit_{storage_unit}
 {
 }
@@ -65,11 +72,6 @@ void GenesisFileCreator::CreateFile(std::string const &name)
     myfile << res.str();
     myfile.close();
   }
-
-  // TODO(HUT): delete these
-  FETCH_UNUSED(keys);
-  FETCH_UNUSED(name);
-  FETCH_UNUSED(chain_);
 }
 
 // Load a 'state file' with a given name
@@ -100,10 +102,15 @@ void GenesisFileCreator::LoadFile(std::string const &name)
     return;
   }
 
-  json::JSONDocument doc(array);
+  FETCH_LOG_INFO(LOGGING_NAME, "Clearing state and installing genesis");
 
+  // Reset storage unit
+  storage_unit_.Reset();
+
+  json::JSONDocument doc(array);
   Variant root = doc.root();
 
+  // Set our state
   root.IterateObject([this](ConstByteArray const &key,
                             variant::Variant const   &value)
   {
@@ -118,6 +125,24 @@ void GenesisFileCreator::LoadFile(std::string const &name)
     return true;
   });
 
+  // Commit this state
+  auto merkle_commit_hash = storage_unit_.Commit(0);
+
+  FETCH_LOG_INFO(LOGGING_NAME, "Committed genesis merkle hash: ", merkle_commit_hash.ToBase64());
+
+  ledger::Block genesis_block;
+
+  genesis_block.body.merkle_hash = merkle_commit_hash;
+  genesis_block.body.block_number = 0;
+  genesis_block.body.miner = ledger::Address(crypto::Hash<crypto::SHA256>(""));
+  genesis_block.UpdateDigest();
+
+  FETCH_LOG_INFO(LOGGING_NAME, "Created genesis block hash: ", genesis_block.body.hash.ToBase64());
+
+  ledger::GENESIS_MERKLE_ROOT = merkle_commit_hash;
+  ledger::GENESIS_DIGEST      = genesis_block.body.hash;
+
+  block_coordinator_.Reset();
 }
 
 }  // namespace fetch

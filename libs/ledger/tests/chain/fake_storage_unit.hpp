@@ -76,6 +76,7 @@ public:
   void UpdateHash();
 
   Keys KeyDump() const override;
+  void Reset() override;
 
 private:
   using TransactionStore = std::map<Digest, Transaction>;

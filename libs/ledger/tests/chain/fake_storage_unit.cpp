@@ -213,3 +213,9 @@ FakeStorageUnit::Keys FakeStorageUnit::KeyDump() const
 
   return keys;
 }
+
+void FakeStorageUnit::Reset()
+{
+  state_.reset();
+  transaction_store_.clear();
+}

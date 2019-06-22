@@ -590,5 +590,29 @@ StorageUnitClient::Keys StorageUnitClient::KeyDump() const
   return all_keys;
 }
 
+void StorageUnitClient::Reset()
+{
+  // Reset all lanes
+  std::vector<service::Promise> promises;
+
+  for (uint32_t i = 0; i < num_lanes(); ++i)
+  {
+    auto promise = rpc_client_->CallSpecificAddress(LookupAddress(i), RPC_STATE,
+                                                   RevertibleDocumentStoreProtocol::RESET);
+
+    promises.push_back(promise);
+  }
+
+  for (auto &p : promises)
+  {
+    p->Wait();
+  }
+
+  // Clear merkle stack etc.
+  FETCH_LOCK(merkle_mutex_);
+  current_merkle_ = MerkleTree{num_lanes()};
+  permanent_state_merkle_stack_.New(MERKLE_FILENAME);
+}
+
 }  // namespace ledger
 }  // namespace fetch

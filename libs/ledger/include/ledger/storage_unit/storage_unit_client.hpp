@@ -73,7 +73,9 @@ public:
   Document GetOrCreate(ResourceAddress const &key) override;
   Document Get(ResourceAddress const &key) override;
   void     Set(ResourceAddress const &key, StateValue const &value) override;
+
   Keys KeyDump() const override;
+  void Reset() override;
 
   // state hash functions
   byte_array::ConstByteArray CurrentHash() override;

@@ -946,5 +946,12 @@ char const *BlockCoordinator::ToString(ExecutionStatus state)
   return text;
 }
 
+void BlockCoordinator::Reset()
+{
+  last_executed_block_.Set(GENESIS_DIGEST);
+  execution_manager_.SetLastProcessedBlock(GENESIS_DIGEST);
+  chain_.Reset();
+}
+
 }  // namespace ledger
 }  // namespace fetch

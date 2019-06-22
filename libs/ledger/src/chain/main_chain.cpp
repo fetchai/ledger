@@ -23,6 +23,8 @@
 #include "core/byte_array/encoders.hpp"
 #include "ledger/chain/transaction_layout_rpc_serializers.hpp"
 #include "network/generics/milli_timer.hpp"
+#include "crypto/hash.hpp"
+#include "crypto/sha256.hpp"
 
 #include <algorithm>
 #include <utility>
@@ -64,6 +66,32 @@ MainChain::~MainChain()
   {
     block_store_->Flush(false);
   }
+}
+
+void MainChain::Reset()
+{
+  FETCH_LOCK(lock_);
+
+  tips_.clear();
+  heaviest_ = HeaviestTip{};
+  loose_blocks_.clear();
+  block_chain_.clear();
+  references_.clear();
+
+  if(block_store_)
+  {
+    block_store_->New("chain.db", "chain.index.db");
+    head_store_.close();
+    head_store_.open("chain.head.db", std::ios::binary | std::ios::in | std::ios::out | std::ios::trunc);
+  }
+
+  auto genesis = CreateGenesisBlock();
+
+  // add the block to the cache
+  AddBlockToCache(genesis);
+
+  // add the tip for this block
+  AddTip(genesis);
 }
 
 /**
@@ -1318,7 +1346,7 @@ MainChain::IntBlockPtr MainChain::CreateGenesisBlock()
   auto genesis                = std::make_shared<Block>();
   genesis->body.previous_hash = GENESIS_DIGEST;
   genesis->body.merkle_hash   = GENESIS_MERKLE_ROOT;
-  genesis->body.miner         = Address{GENESIS_DIGEST};
+  genesis->body.miner         = Address{crypto::Hash<crypto::SHA256>("")};
   genesis->is_loose           = false;
   genesis->UpdateDigest();
 

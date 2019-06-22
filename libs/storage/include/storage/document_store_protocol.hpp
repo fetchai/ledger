@@ -52,6 +52,7 @@ public:
     CURRENT_HASH,
     HASH_EXISTS,
     KEY_DUMP,
+    RESET,
 
     LOCK = 20,
     UNLOCK,
@@ -72,6 +73,7 @@ public:
     this->Expose(CURRENT_HASH, doc_store, &NewRevertibleDocumentStore::CurrentHash);
     this->Expose(HASH_EXISTS, doc_store, &NewRevertibleDocumentStore::HashExists);
     this->Expose(KEY_DUMP, doc_store, &NewRevertibleDocumentStore::KeyDump);
+    this->Expose(RESET, doc_store, &NewRevertibleDocumentStore::Reset);
 
     this->ExposeWithClientContext(LOCK, this, &RevertibleDocumentStoreProtocol::LockResource);
     this->ExposeWithClientContext(UNLOCK, this, &RevertibleDocumentStoreProtocol::UnlockResource);

@@ -188,6 +188,12 @@ public:
     return keys;
   }
 
+  void Reset() override
+  {
+    state_.clear();
+    transactions_.clear();
+  }
+
 private:
   mutex_type             mutex_;
   transaction_store_type transactions_;

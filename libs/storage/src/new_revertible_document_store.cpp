@@ -159,5 +159,10 @@ NewRevertibleDocumentStore::Keys NewRevertibleDocumentStore::KeyDump()
   return all_keys;
 }
 
+void NewRevertibleDocumentStore::Reset()
+{
+  storage_.New(state_path_, state_history_path_, index_path_, index_history_path_);
+}
+
 }  // namespace storage
 }  // namespace fetch

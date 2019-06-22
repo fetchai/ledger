@@ -50,6 +50,7 @@ public:
   bool     Lock(ShardIndex index) override;
   bool     Unlock(ShardIndex index) override;
   Keys     KeyDump() const override;
+  void     Reset() override;
   /// @}
 
 private:

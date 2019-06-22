@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chain/main_chain.hpp"
+#include "ledger/chain/block_coordinator.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 #include "variant/variant.hpp"
 #include "storage/resource_mapper.hpp"
@@ -27,7 +27,7 @@ namespace fetch {
 class GenesisFileCreator
 {
 public:
-  using MainChain            = ledger::MainChain;
+  using BlockCoordinator       = ledger::BlockCoordinator;
   using StorageUnitInterface = ledger::StorageUnitInterface;
   using ResourceID           = storage::ResourceID;
   using ResourceAddress      = storage::ResourceAddress;
@@ -37,13 +37,13 @@ public:
 
   static constexpr char const *LOGGING_NAME = "GenesisFileCreator";
 
-  GenesisFileCreator(MainChain &chain, StorageUnitInterface &storage_unit);
+  GenesisFileCreator(BlockCoordinator &block_coordinator, StorageUnitInterface &storage_unit);
 
   void CreateFile(std::string const &name);
   void LoadFile(std::string const &name);
 
 private:
-  MainChain            &chain_;
+  BlockCoordinator     &block_coordinator_;
   StorageUnitInterface &storage_unit_;
 };
 

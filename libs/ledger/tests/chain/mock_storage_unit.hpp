@@ -75,6 +75,7 @@ public:
   MOCK_METHOD2(HashExists, bool(Hash const &, uint64_t));
 
   MOCK_CONST_METHOD0(KeyDump, Keys());
+  MOCK_METHOD0(Reset, void());
 
   FakeStorageUnit fake;
 };

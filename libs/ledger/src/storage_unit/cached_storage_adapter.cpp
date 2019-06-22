@@ -243,5 +243,14 @@ CachedStorageAdapter::Keys CachedStorageAdapter::KeyDump() const
   return storage_.KeyDump();
 }
 
+/**
+ * Reset the database
+ *
+ */
+void CachedStorageAdapter::Reset()
+{
+  return storage_.Reset();
+}
+
 }  // namespace ledger
 }  // namespace fetch
