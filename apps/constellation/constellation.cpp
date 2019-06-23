@@ -29,6 +29,7 @@
 #include "ledger/storage_unit/lane_remote_control.hpp"
 #include "ledger/tx_query_http_interface.hpp"
 #include "ledger/tx_status_http_interface.hpp"
+#include "ledger/consensus/naive_entropy_generator.hpp"
 #include "network/generics/atomic_inflight_counter.hpp"
 #include "network/muddle/rpc/client.hpp"
 #include "network/muddle/rpc/server.hpp"
@@ -60,7 +61,9 @@ using ExecutorPtr = std::shared_ptr<Executor>;
 namespace fetch {
 namespace {
 
-using LaneIndex = fetch::ledger::LaneIdentity::lane_type;
+using LaneIndex       = fetch::ledger::LaneIdentity::lane_type;
+using StakeManagerPtr = std::shared_ptr<ledger::StakeManager>;
+using EntropyPtr      = std::unique_ptr<ledger::EntropyGeneratorInterface>;
 
 static const std::size_t HTTP_THREADS{4};
 
@@ -141,6 +144,23 @@ ledger::ShardConfigs GenerateShardsConfig(uint32_t num_lanes, uint16_t start_por
   return configs;
 }
 
+EntropyPtr CreateEntropy()
+{
+  return std::make_unique<ledger::NaiveEntropyGenerator>();
+}
+
+StakeManagerPtr CreateStakeManager(bool enabled, ledger::EntropyGeneratorInterface &entropy)
+{
+  StakeManagerPtr mgr{};
+
+  if (enabled)
+  {
+    mgr = std::make_shared<ledger::StakeManager>(entropy);
+  }
+
+  return mgr;
+}
+
 }  // namespace
 
 /**
@@ -180,10 +200,13 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
   , execution_manager_{std::make_shared<ExecutionManager>(
         cfg_.num_executors, cfg_.log2_num_lanes, storage_,
         [this] { return std::make_shared<Executor>(storage_); })}
+  , entropy_{CreateEntropy()}
+  , stake_{CreateStakeManager(cfg_.proof_of_stake, *entropy_)}
   , chain_{ledger::MainChain::Mode::LOAD_PERSISTENT_DB}
   , block_packer_{cfg_.log2_num_lanes}
   , block_coordinator_{chain_,
                        dag_,
+                       stake_,
                        *execution_manager_,
                        *storage_,
                        block_packer_,

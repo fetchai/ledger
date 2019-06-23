@@ -79,7 +79,7 @@ SynergeticExecMgrPtr CreateSynergeticExecutor(core::FeatureFlags const &features
  * @param chain The reference to the main change
  * @param execution_manager  The reference to the execution manager
  */
-BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr const &dag,
+BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag, StakeManagerPtr stake,
                                    ExecutionManagerInterface &execution_manager,
                                    StorageUnitInterface &storage_unit, BlockPackerInterface &packer,
                                    BlockSinkInterface &      block_sink,
@@ -88,7 +88,8 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr const &dag,
                                    std::size_t num_lanes, std::size_t num_slices,
                                    std::size_t block_difficulty)
   : chain_{chain}
-  , dag_{dag}
+  , dag_{std::move(dag)}
+  , stake_{std::move(stake)}
   , execution_manager_{execution_manager}
   , storage_unit_{storage_unit}
   , block_packer_{packer}

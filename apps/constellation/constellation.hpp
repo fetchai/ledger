@@ -33,6 +33,8 @@
 #include "ledger/storage_unit/storage_unit_client.hpp"
 #include "ledger/transaction_processor.hpp"
 #include "ledger/transaction_status_cache.hpp"
+#include "ledger/consensus/stake_manager.hpp"
+#include "ledger/consensus/entropy_generator_interface.hpp"
 #include "miner/basic_miner.hpp"
 #include "network/muddle/muddle.hpp"
 #include "network/p2pservice/manifest.hpp"
@@ -86,6 +88,7 @@ public:
     bool         sign_broadcasts{false};
     bool         dump_state_file{false};
     bool         load_state_file{false};
+    bool         proof_of_stake{false};
     NetworkMode  network_mode{NetworkMode::PUBLIC_NETWORK};
     FeatureFlags features{};
 
@@ -133,6 +136,8 @@ private:
   using DAGServicePtr          = std::shared_ptr<ledger::DAGService>;
   using SynergeticMinerPtr     = std::unique_ptr<ledger::SynergeticMinerInterface>;
   using NaiveSynergeticMiner   = ledger::NaiveSynergeticMiner;
+  using StakeManagerPtr        = std::shared_ptr<ledger::StakeManager>;
+  using EntropyPtr             = std::unique_ptr<ledger::EntropyGeneratorInterface>;
 
   using ShardConfigs  = ledger::ShardConfigs;
   using TxStatusCache = ledger::TransactionStatusCache;
@@ -178,6 +183,8 @@ private:
 
   /// @name Blockchain and Mining
   /// @[
+  EntropyPtr            entropy_;            ///< The entropy system
+  StakeManagerPtr       stake_;              ///< The stake system
   MainChain             chain_;              ///< The main block chain component
   BlockPackingAlgorithm block_packer_;       ///< The block packing / mining algorithm
   BlockCoordinator      block_coordinator_;  ///< The block execution coordinator
