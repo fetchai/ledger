@@ -110,7 +110,7 @@ TEST_F(StakeSnapshotTests, CheckStakeGenerate)
     auto const other = snapshot_->BuildCommittee(42, 4);
 
     ASSERT_TRUE(static_cast<bool>(other));
-    EXPECT_EQ(reference, other);
+    EXPECT_EQ(*reference, *other);
   }
 
   // check that the reference sample is unique
