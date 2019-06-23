@@ -32,7 +32,8 @@ class EntropyGeneratorInterface;
 class StakeManager : public StakeManagerInterface
 {
 public:
-  using Committee = std::vector<Address>;
+  using Committee        = std::vector<Address>;
+  using CommitteePtr     = std::shared_ptr<Committee const>;
 
   // Construction / Destruction
   explicit StakeManager(EntropyGeneratorInterface &entropy);
@@ -43,14 +44,16 @@ public:
   /// @name Stake Manager Interface
   /// @{
   Validity Validate(Block const &block) const override;
-  void UpdateCurrentBlock(Block const &current) override;
+
   bool ShouldGenerateBlock(Block const &previous) override;
   /// @}
 
+  // Accessors
   StakeUpdateQueue &update_queue();
   StakeUpdateQueue const &update_queue() const;
 
-  Committee const &GetCommittee(Block const &previous);
+  void UpdateCurrentBlock(Block const &current) override;
+  CommitteePtr GetCommittee(Block const &previous);
   std::size_t GetBlockGenerationWeight(Block const &previous, Address const &address);
 
   void Reset(StakeSnapshot const &snapshot, std::size_t committee_size);
@@ -67,17 +70,16 @@ private:
   using StakeSnapshotPtr = std::shared_ptr<StakeSnapshot>;
   using StakeHistory     = std::map<BlockIndex, StakeSnapshotPtr>;
 
+  StakeSnapshotPtr LookupStakeSnapshot(BlockIndex block);
   void ResetInternal(StakeSnapshotPtr &&snapshot, std::size_t committee_size);
 
-  EntropyGeneratorInterface &entropy_;
-
-  StakeUpdateQueue update_queue_;
-
-  Committee cached_committee_;
-
-  std::size_t committee_size_{0};
-  StakeHistory history_{};
-  StakeSnapshotPtr current_{};
+  // Config & Components
+  std::size_t                committee_size_{0};      ///< The "static" size of the committee
+  EntropyGeneratorInterface &entropy_;                ///< The reference to entropy module
+  StakeUpdateQueue           update_queue_;           ///< The update queue of events
+  StakeHistory               history_{};              ///< Cache of historical snapshots
+  StakeSnapshotPtr           current_{};              ///< Most recent snapshot
+  BlockIndex                 current_block_index_{0}; ///< Block index of most recent snapshot
 };
 
 inline StakeUpdateQueue &StakeManager::update_queue()

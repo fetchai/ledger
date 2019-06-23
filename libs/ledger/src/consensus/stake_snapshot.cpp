@@ -37,16 +37,16 @@ using DRNG       = random::LinearCongruentialGenerator;
  * @param count The size of the selection
  * @return The selection of addresses
  */
-StakeSnapshot::AddressArray StakeSnapshot::BuildCommittee(uint64_t entropy, std::size_t count)
+StakeSnapshot::CommitteePtr StakeSnapshot::BuildCommittee(uint64_t entropy, std::size_t count)
 {
-  AddressArray addresses;
-  addresses.reserve(count);
+  CommitteePtr committee = std::make_shared<Committee>();
+  committee->reserve(count);
 
   if (count >= address_index_.size())
   {
     for (auto const &record : stake_index_)
     {
-      addresses.emplace_back(record->address);
+      committee->emplace_back(record->address);
     }
   }
   else
@@ -80,7 +80,7 @@ StakeSnapshot::AddressArray StakeSnapshot::BuildCommittee(uint64_t entropy, std:
 
           if (chosen_addresses.find(record->address) == chosen_addresses.end())
           {
-            addresses.emplace_back(record->address);
+            committee->emplace_back(record->address);
             chosen_addresses.emplace(record->address);
 
             // exit from the search loop
@@ -97,7 +97,7 @@ StakeSnapshot::AddressArray StakeSnapshot::BuildCommittee(uint64_t entropy, std:
     }
   }
 
-  return addresses;
+  return committee;
 }
 
 /**

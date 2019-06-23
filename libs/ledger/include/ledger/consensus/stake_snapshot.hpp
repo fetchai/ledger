@@ -34,7 +34,9 @@ namespace ledger {
 class StakeSnapshot
 {
 public:
-  using AddressArray = std::vector<Address>;
+  using Committee = std::vector<Address>;
+  using CommitteePtr = std::shared_ptr<Committee>;
+
 
   // Construction / Destruction
   StakeSnapshot()                      = default;
@@ -42,7 +44,7 @@ public:
   StakeSnapshot(StakeSnapshot &&)      = default;
   ~StakeSnapshot()                     = default;
 
-  AddressArray BuildCommittee(uint64_t entropy, std::size_t count);
+  CommitteePtr BuildCommittee(uint64_t entropy, std::size_t count);
 
   /// @name Stake Updates
   /// @{

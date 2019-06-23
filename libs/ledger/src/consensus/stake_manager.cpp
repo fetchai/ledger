@@ -27,6 +27,8 @@ namespace fetch {
 namespace ledger {
 namespace {
 
+constexpr char const *LOGGING_NAME = "StakeMgr";
+
 std::size_t SafeDecrement(std::size_t value, std::size_t decrement)
 {
   if (decrement >= value)
@@ -61,7 +63,8 @@ void StakeManager::UpdateCurrentBlock(Block const &current)
     history_[current.body.block_number] = next;
 
     // the current stake snapshot has been replaced
-    current_ = std::move(next);
+    current_             = std::move(next);
+    current_block_index_ = current.body.block_number;
   }
 }
 
@@ -70,25 +73,39 @@ bool StakeManager::ShouldGenerateBlock(Block const &previous)
   return false;
 }
 
-StakeManager::Committee const &StakeManager::GetCommittee(Block const &previous)
+StakeManager::CommitteePtr StakeManager::GetCommittee(Block const &previous)
 {
   assert(static_cast<bool>(current_));
 
+  // generate the entropy for the previous block
   auto const entropy = entropy_.GenerateEntropy(previous.body.hash, previous.body.block_number);
 
-  cached_committee_ = current_->BuildCommittee(entropy, committee_size_);
+  // lookup the snapshot associated
+  auto snapshot = LookupStakeSnapshot(previous.body.block_number);
+  if (!snapshot)
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Unable to lookup committee for ", previous.body.block_number);
+    return {};
+  }
 
-  return cached_committee_;
+  // TODO(EJF): Committees can be directly cached
+  return snapshot->BuildCommittee(entropy, committee_size_);
 }
 
 std::size_t StakeManager::GetBlockGenerationWeight(Block const &previous, Address const &address)
 {
-  auto const &committee = GetCommittee(previous);
+  auto const committee = GetCommittee(previous);
 
-  std::size_t weight{committee.size()};
+  if (!committee)
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Unable to determine block generation weight");
+    return 0;
+  }
+
+  std::size_t weight{committee->size()};
 
   // TODO(EJF): Depending on the committee sizes this would need to be improved
-  for (auto const &member : committee)
+  for (auto const &member : *committee)
   {
     if (address == member)
     {
@@ -111,12 +128,44 @@ void StakeManager::Reset(StakeSnapshot &&snapshot, std::size_t committee_size)
   ResetInternal(std::make_shared<StakeSnapshot>(std::move(snapshot)), committee_size);
 }
 
+StakeManager::StakeSnapshotPtr StakeManager::LookupStakeSnapshot(BlockIndex block)
+{
+  // 9/10 time during normal operation the current stake snapshot will be used
+  if (block >= current_block_index_)
+  {
+    return current_;
+  }
+  else
+  {
+    // on catchup, or in the case of multiple forks historical entries will be used
+    auto upper_bound = history_.upper_bound(block);
+
+    if (upper_bound == history_.begin())
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Update to lookup stake snapshot for block ", block);
+      return {};
+    }
+    else
+    {
+      // we are not interested in the upper bound, but the preceeding historical elemeent i.e.
+      // the previous block change
+      return (--upper_bound)->second;
+    }
+  }
+}
+
 void StakeManager::ResetInternal(StakeSnapshotPtr &&snapshot, std::size_t committee_size)
 {
+  // config
   committee_size_ = committee_size;
+
+  // history
   history_.clear();
   history_[0] = snapshot;
-  current_ = std::move(snapshot);
+
+  // current
+  current_             = std::move(snapshot);
+  current_block_index_ = 0;
 }
 
 } // namespace ledger

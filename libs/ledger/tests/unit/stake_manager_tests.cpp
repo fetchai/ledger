@@ -105,14 +105,15 @@ protected:
     {
       // validate the committee vs the generation weight
       auto const committee = stake_manager_->GetCommittee(block);
-      ASSERT_EQ(committee.size(), committee_size);
+      ASSERT_TRUE(static_cast<bool>(committee));
+      ASSERT_EQ(committee->size(), committee_size);
 
       // update the statistics
-      stats.at(committee.at(0)) += 1;
+      stats.at(committee->at(0)) += 1;
 
       for (auto const &address : addresses)
       {
-        EXPECT_EQ(WeightOf(committee, address),
+        EXPECT_EQ(WeightOf(*committee, address),
                   stake_manager_->GetBlockGenerationWeight(block, address));
       }
 
