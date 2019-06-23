@@ -24,6 +24,7 @@
 namespace fetch {
 namespace ledger {
 
+class Address;
 class Block;
 
 class StakeManagerInterface
@@ -45,7 +46,7 @@ public:
   /// @{
   virtual Validity Validate(Block const &block) const = 0;
   virtual void UpdateCurrentBlock(Block const &current) = 0;
-  virtual bool ShouldGenerateBlock(Block const &previous) = 0;
+  virtual bool ShouldGenerateBlock(Block const &previous, Address const &address) = 0;
   /// @}
 
 private:

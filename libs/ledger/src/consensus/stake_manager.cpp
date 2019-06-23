@@ -68,9 +68,23 @@ void StakeManager::UpdateCurrentBlock(Block const &current)
   }
 }
 
-bool StakeManager::ShouldGenerateBlock(Block const &previous)
+bool StakeManager::ShouldGenerateBlock(Block const &previous, Address const &address)
 {
-  return false;
+  bool generate{false};
+
+  auto const committee = GetCommittee(previous);
+  if (!committee || committee->empty())
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Unable to determine committee for block generation");
+  }
+  else
+  {
+    // TODO(EJF): A reporting back mechanism will need to be added in order to handle the cases
+    //            where blocks are not generated in a given time interval
+    generate = (*committee)[0] == address;
+  }
+
+  return generate;
 }
 
 StakeManager::CommitteePtr StakeManager::GetCommittee(Block const &previous)

@@ -45,7 +45,7 @@ public:
   /// @{
   Validity Validate(Block const &block) const override;
 
-  bool ShouldGenerateBlock(Block const &previous) override;
+  bool ShouldGenerateBlock(Block const &previous, Address const &address) override;
   /// @}
 
   // Accessors

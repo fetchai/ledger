@@ -29,6 +29,7 @@
 #include "ledger/execution_manager_interface.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 #include "ledger/transaction_status_cache.hpp"
+#include "ledger/consensus/stake_manager.hpp" // TODO(EJF): Change to interface
 
 #include "ledger/dag/dag_interface.hpp"
 #include "ledger/upow/synergetic_execution_manager.hpp"
@@ -397,6 +398,22 @@ BlockCoordinator::State BlockCoordinator::OnSynchronised(State current, State pr
   }
   else if (mining_ && mining_enabled_ && (Clock::now() >= next_block_time_))
   {
+    // POS: Additional check, are we able to mine?
+    if (stake_)
+    {
+      if (!stake_->ShouldGenerateBlock(*current_block_, mining_address_))
+      {
+        // delay the invocation of this state machine
+        state_machine_->Delay(std::chrono::milliseconds{100});
+
+        // TODO(EJF): Refactor this stage, getting a little complicated
+        return State::SYNCHRONISED;
+      }
+
+      // TODO(EJF): Remove
+      FETCH_LOG_WARN(LOGGING_NAME, "!!!!! -> I am mining block: ", current_block_->body.block_number + 1, " <- !!!!!");
+    }
+
     // create a new block
     next_block_                     = std::make_unique<Block>();
     next_block_->body.previous_hash = current_block_->body.hash;

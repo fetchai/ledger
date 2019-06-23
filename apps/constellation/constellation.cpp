@@ -25,6 +25,7 @@
 #include "ledger/chaincode/contract_http_interface.hpp"
 #include "ledger/dag/dag_interface.hpp"
 
+#include "ledger/consensus/stake_snapshot.hpp"
 #include "ledger/execution_manager.hpp"
 #include "ledger/storage_unit/lane_remote_control.hpp"
 #include "ledger/tx_query_http_interface.hpp"
@@ -55,6 +56,7 @@ using fetch::network::AtomicCounterName;
 using fetch::network::Uri;
 using fetch::network::Peer;
 using fetch::ledger::Address;
+using fetch::ledger::StakeSnapshot;
 
 using ExecutorPtr = std::shared_ptr<Executor>;
 
@@ -64,6 +66,7 @@ namespace {
 using LaneIndex       = fetch::ledger::LaneIdentity::lane_type;
 using StakeManagerPtr = std::shared_ptr<ledger::StakeManager>;
 using EntropyPtr      = std::unique_ptr<ledger::EntropyGeneratorInterface>;
+using ConstByteArray  = byte_array::ConstByteArray;
 
 static const std::size_t HTTP_THREADS{4};
 
@@ -266,6 +269,35 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
   {
     http_.AddModule(*module);
   }
+
+  // TODO(EJF): Remove
+#if 1
+
+  if (stake_)
+  {
+    std::vector<ConstByteArray> initial_addresses = {
+        "2bBYqHp5uK8fQgTqeBP3B3rogHQPYiC6wZcnBP2WVocsuiMgg9",
+        "BgrwqWGtyCmSKc83Ht3XSNyNujrNgiFp8kQjwhPXTsPvxcXbJ",
+    };
+
+    // build up the stake snapshot
+    StakeSnapshot snapshot;
+
+    Address address;
+    for (auto const &display_address : initial_addresses)
+    {
+      if (Address::Parse(display_address, address))
+      {
+        FETCH_LOG_INFO(LOGGING_NAME, "Adding staker: ", display_address);
+
+        snapshot.UpdateStake(address, 500);
+      }
+    }
+
+    // reset the stake
+    stake_->Reset(snapshot, 1);
+  }
+#endif
 }
 
 /**
