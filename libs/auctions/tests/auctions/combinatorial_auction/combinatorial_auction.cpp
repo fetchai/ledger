@@ -16,11 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include <gtest/gtest.h>
-#include <iostream>
-
 #include "auctions/combinatorial_auction.hpp"
 #include "math/tensor.hpp"
+
+#include "gtest/gtest.h"
+
+#include <iostream>
 
 using namespace fetch::auctions;
 

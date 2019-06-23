@@ -17,7 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/random/lcg.hpp"
 #include "core/random/lfg.hpp"
 
 namespace fetch {

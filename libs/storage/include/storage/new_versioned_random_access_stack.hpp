@@ -427,7 +427,7 @@ public:
   {
     if (hash_history_.empty())
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Attempted to find if hash exists, but history is empty!");
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Attempted to find if hash exists, but history is empty!");
       return false;
     }
 

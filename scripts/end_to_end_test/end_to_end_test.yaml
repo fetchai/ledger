@@ -97,3 +97,20 @@ steps:
     - run_python_test : { "script": ".smart_contract_tests.block_number" }
 
 ...
+
+---
+test_description: >
+        Shut down node cleanly and recover state
+
+setup_conditions:
+    test_name : "basic_node_recovery"
+    number_of_nodes: 1
+    mining_nodes: [0]
+    max_test_time: 60
+
+steps:
+    - send_txs : { "name": "batch1", "amount": 10, "nodes" : [0] }
+    - verify_txs : { "name": "batch1", "nodes" : [0] }
+    - restart_nodes : { "nodes" : [0] }
+    - verify_txs : { "name": "batch1", "nodes" : [0], "expect_mined" : true }
+...

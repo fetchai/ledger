@@ -16,12 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include <gtest/gtest.h>
-
 #include "math/linalg/blas/base.hpp"
 #include "math/linalg/blas/gemm_tn_novector.hpp"
 #include "math/linalg/prototype.hpp"
 #include "math/tensor.hpp"
+
+#include "gtest/gtest.h"
 
 using namespace fetch;
 using namespace fetch::math;
@@ -29,7 +29,6 @@ using namespace fetch::math::linalg;
 
 TEST(blas_DGEMM, blas_gemm_tn_novector1)
 {
-
   Blas<double, Signature(_C <= _alpha, _A, _B, _beta, _C),
        Computes(_C <= _alpha * T(_A) * _B + _beta * _C), platform::Parallelisation::NOT_PARALLEL>
       gemm_tn_novector;
@@ -68,7 +67,6 @@ TEST(blas_DGEMM, blas_gemm_tn_novector1)
 
 TEST(blas_DGEMM, blas_gemm_tn_novector2)
 {
-
   Blas<double, Signature(_C <= _alpha, _A, _B, _beta, _C),
        Computes(_C <= _alpha * T(_A) * _B + _beta * _C), platform::Parallelisation::NOT_PARALLEL>
       gemm_tn_novector;
@@ -107,7 +105,6 @@ TEST(blas_DGEMM, blas_gemm_tn_novector2)
 
 TEST(blas_DGEMM, blas_gemm_tn_novector3)
 {
-
   Blas<double, Signature(_C <= _alpha, _A, _B, _beta, _C),
        Computes(_C <= _alpha * T(_A) * _B + _beta * _C), platform::Parallelisation::NOT_PARALLEL>
       gemm_tn_novector;
@@ -146,7 +143,6 @@ TEST(blas_DGEMM, blas_gemm_tn_novector3)
 
 TEST(blas_DGEMM, blas_gemm_tn_novector4)
 {
-
   Blas<double, Signature(_C <= _alpha, _A, _B, _beta, _C),
        Computes(_C <= _alpha * T(_A) * _B + _beta * _C), platform::Parallelisation::NOT_PARALLEL>
       gemm_tn_novector;
@@ -185,7 +181,6 @@ TEST(blas_DGEMM, blas_gemm_tn_novector4)
 
 TEST(blas_DGEMM, blas_gemm_tn_novector5)
 {
-
   Blas<double, Signature(_C <= _alpha, _A, _B, _beta, _C),
        Computes(_C <= _alpha * T(_A) * _B + _beta * _C), platform::Parallelisation::NOT_PARALLEL>
       gemm_tn_novector;
@@ -230,7 +225,6 @@ TEST(blas_DGEMM, blas_gemm_tn_novector5)
 
 TEST(blas_DGEMM, blas_gemm_tn_novector6)
 {
-
   Blas<double, Signature(_C <= _alpha, _A, _B, _beta, _C),
        Computes(_C <= _alpha * T(_A) * _B + _beta * _C), platform::Parallelisation::NOT_PARALLEL>
       gemm_tn_novector;
@@ -269,7 +263,6 @@ TEST(blas_DGEMM, blas_gemm_tn_novector6)
 
 TEST(blas_DGEMM, blas_gemm_tn_novector7)
 {
-
   Blas<double, Signature(_C <= _alpha, _A, _B, _beta, _C),
        Computes(_C <= _alpha * T(_A) * _B + _beta * _C), platform::Parallelisation::NOT_PARALLEL>
       gemm_tn_novector;

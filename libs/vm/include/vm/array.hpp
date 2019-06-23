@@ -29,6 +29,18 @@
 namespace fetch {
 namespace vm {
 
+template <typename T, typename = void>
+struct GetElementType
+{
+  using type = typename GetStorageType<T>::type;
+};
+template <typename T>
+struct GetElementType<T, typename std::enable_if_t<std::is_same<T, bool>::value>>
+{
+  // ElementType must NOT be bool because std::vector<bool> is a partial specialisation
+  using type = uint8_t;
+};
+
 class IArray : public Object
 {
 public:
@@ -44,6 +56,7 @@ public:
   virtual Ptr<IArray>        PopFrontMany(int32_t)              = 0;
   virtual void               Reverse()                          = 0;
   virtual void               Extend(Ptr<IArray> const &)        = 0;
+  virtual void               Erase(int32_t)                     = 0;
 
   virtual TemplateParameter1 GetIndexedValue(AnyInteger const &index)                    = 0;
   virtual void SetIndexedValue(AnyInteger const &index, TemplateParameter1 const &value) = 0;
@@ -60,7 +73,7 @@ protected:
 template <typename T>
 struct Array : public IArray
 {
-  using ElementType = typename GetStorageType<T>::type;
+  using ElementType = typename GetElementType<T>::type;
 
   Array()           = delete;
   ~Array() override = default;
@@ -191,6 +204,23 @@ struct Array : public IArray
     elements.insert(elements.cend(), other_elements.cbegin(), other_elements.cend());
   }
 
+  void Erase(const int32_t index) override
+  {
+    if (index < 0)
+    {
+      RuntimeError("negative index");
+      return;
+    }
+
+    if (static_cast<std::size_t>(index) >= elements.size())
+    {
+      RuntimeError("index out of bounds");
+      return;
+    }
+
+    elements.erase(elements.cbegin() + index);
+  }
+
   TemplateParameter1 GetIndexedValue(AnyInteger const &index) override
   {
     ElementType *ptr = Find(index);
@@ -213,7 +243,7 @@ struct Array : public IArray
 
   ElementType *Find(Variant const &index)
   {
-    size_t i;
+    std::size_t i;
     if (!GetNonNegativeInteger(index, i))
     {
       RuntimeError("negative index");
@@ -240,7 +270,8 @@ struct Array : public IArray
     return true;
   }
 
-  TypeId                   element_type_id;
+  TypeId element_type_id;
+  // ElementType must NOT be bool because std::vector<bool> is a partial specialisation
   std::vector<ElementType> elements;
 };
 

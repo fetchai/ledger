@@ -19,8 +19,10 @@
 
 #include "core/logger.hpp"
 #include "network/service/server.hpp"
-#include "protocols/fetch_protocols.hpp"  // defines enum
+#include "network/tcp/tcp_server.hpp"
+#include "protocols/fetch_protocols.hpp"
 #include "protocols/subscribe/protocol.hpp"
+
 #include <memory>
 
 namespace fetch {

@@ -17,10 +17,21 @@
 //
 //------------------------------------------------------------------------------
 
-#include "network/fetch_asio.hpp"  // required to avoid failing build due to -Werror
+#include "core/logger.hpp"
+#include "network/fetch_asio.hpp"
 #include "network/management/network_manager.hpp"
 #include "network/message.hpp"
+
+#include <atomic>
+#include <chrono>
+#include <cstddef>
+#include <cstdint>
+#include <iostream>
 #include <memory>
+#include <new>
+#include <string>
+#include <system_error>
+#include <thread>
 #include <utility>
 
 namespace fetch {
@@ -31,7 +42,7 @@ std::atomic<std::size_t> openSessions{0};
 class BasicLoopback : public std::enable_shared_from_this<BasicLoopback>
 {
 public:
-  BasicLoopback(asio::ip::tcp::tcp::socket socket)
+  explicit BasicLoopback(asio::ip::tcp::tcp::socket socket)
     : socket_(std::move(socket))
   {
     openSessions++;

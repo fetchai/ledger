@@ -16,11 +16,14 @@
 //
 //------------------------------------------------------------------------------
 
-#include "crypto/merkle_tree.hpp"
-
 #include "crypto/hash.hpp"
+#include "crypto/merkle_tree.hpp"
 #include "crypto/sha256.hpp"
 #include "vectorise/platform.hpp"
+
+#include <cassert>
+#include <cstddef>
+#include <cstdint>
 
 namespace fetch {
 namespace crypto {

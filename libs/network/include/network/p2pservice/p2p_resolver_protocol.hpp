@@ -17,13 +17,13 @@
 //
 //------------------------------------------------------------------------------
 
-#include "network/p2pservice/p2p_resolver.hpp"
 #include "network/service/protocol.hpp"
 
 namespace fetch {
 namespace p2p {
 
 class P2PService;
+class Resolver;
 
 /**
  * Protocol for the P2P address resolution protocol

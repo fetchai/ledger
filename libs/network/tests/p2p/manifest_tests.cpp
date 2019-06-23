@@ -18,7 +18,9 @@
 
 #include "network/p2pservice/manifest.hpp"
 
-#include <gtest/gtest.h>
+#include "gtest/gtest.h"
+
+#include <ostream>
 #include <vector>
 
 namespace {

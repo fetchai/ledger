@@ -18,7 +18,8 @@
 
 #include "math/ml/activation_functions/relu.hpp"
 #include "math/tensor.hpp"
-#include <gtest/gtest.h>
+
+#include "gtest/gtest.h"
 
 template <typename T>
 class ReluTest : public ::testing::Test

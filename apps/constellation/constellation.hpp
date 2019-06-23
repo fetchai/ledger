@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/feature_flags.hpp"
 #include "core/reactor.hpp"
 #include "http/module.hpp"
 #include "http/server.hpp"
@@ -25,6 +26,7 @@
 #include "ledger/chain/consensus/consensus_miner_interface.hpp"
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/execution_manager.hpp"
+#include "ledger/genesis_loading/genesis_file_creator.hpp"
 #include "ledger/protocols/main_chain_rpc_service.hpp"
 #include "ledger/storage_unit/lane_remote_control.hpp"
 #include "ledger/storage_unit/storage_unit_bundled_service.hpp"
@@ -36,6 +38,9 @@
 #include "network/p2pservice/manifest.hpp"
 #include "network/p2pservice/p2p_service.hpp"
 #include "network/p2pservice/p2ptrust_bayrank.hpp"
+
+#include "ledger/dag/dag_interface.hpp"
+#include "ledger/protocols/dag_service.hpp"
 
 #include <atomic>
 #include <cstddef>
@@ -58,27 +63,31 @@ public:
   using UriList          = std::vector<network::Uri>;
   using Manifest         = network::Manifest;
   using NetworkMode      = ledger::MainChainRpcService::Mode;
+  using FeatureFlags     = core::FeatureFlags;
 
   static constexpr uint32_t DEFAULT_BLOCK_DIFFICULTY = 6;
 
   struct Config
   {
-    Manifest    manifest{};
-    uint32_t    log2_num_lanes{0};
-    uint32_t    num_slices{0};
-    uint32_t    num_executors{0};
-    std::string interface_address{};
-    std::string db_prefix{};
-    uint32_t    processor_threads{0};
-    uint32_t    verification_threads{0};
-    uint32_t    max_peers{0};
-    uint32_t    transient_peers{0};
-    uint32_t    block_interval_ms{0};
-    uint32_t    block_difficulty{DEFAULT_BLOCK_DIFFICULTY};
-    uint32_t    peers_update_cycle_ms{0};
-    bool        disable_signing{false};
-    bool        sign_broadcasts{false};
-    NetworkMode network_mode{NetworkMode::PUBLIC_NETWORK};
+    Manifest     manifest{};
+    uint32_t     log2_num_lanes{0};
+    uint32_t     num_slices{0};
+    uint32_t     num_executors{0};
+    std::string  interface_address{};
+    std::string  db_prefix{};
+    uint32_t     processor_threads{0};
+    uint32_t     verification_threads{0};
+    uint32_t     max_peers{0};
+    uint32_t     transient_peers{0};
+    uint32_t     block_interval_ms{0};
+    uint32_t     block_difficulty{DEFAULT_BLOCK_DIFFICULTY};
+    uint32_t     peers_update_cycle_ms{0};
+    bool         disable_signing{false};
+    bool         sign_broadcasts{false};
+    bool         dump_state_file{false};
+    bool         load_state_file{false};
+    NetworkMode  network_mode{NetworkMode::PUBLIC_NETWORK};
+    FeatureFlags features{};
 
     uint32_t num_lanes() const
     {
@@ -88,7 +97,9 @@ public:
 
   static constexpr char const *LOGGING_NAME = "constellation";
 
-  explicit Constellation(CertificatePtr &&certificate, Config config);
+  // Construction / Destruction
+  Constellation(CertificatePtr certificate, Config config);
+  ~Constellation() override = default;
 
   void Run(UriList const &initial_peers, core::WeakRunnable bootstrap_monitor);
   void SignalStop();
@@ -97,8 +108,6 @@ protected:
   void OnBlock(ledger::Block const &block) override;
 
 private:
-  void CreateInfoFile(std::string const &filename);
-
   using Muddle                 = muddle::Muddle;
   using NetworkManager         = network::NetworkManager;
   using BlockPackingAlgorithm  = miner::BasicMiner;
@@ -120,8 +129,13 @@ private:
   using HttpModules            = std::vector<HttpModulePtr>;
   using TransactionProcessor   = ledger::TransactionProcessor;
   using TrustSystem            = p2p::P2PTrustBayRank<Muddle::Address>;
-  using ShardConfigs           = ledger::ShardConfigs;
-  using TxStatusCache          = ledger::TransactionStatusCache;
+  using DAGPtr                 = std::shared_ptr<ledger::DAGInterface>;
+  using DAGServicePtr          = std::shared_ptr<ledger::DAGService>;
+  using SynergeticMinerPtr     = std::unique_ptr<ledger::SynergeticMinerInterface>;
+  using NaiveSynergeticMiner   = ledger::NaiveSynergeticMiner;
+
+  using ShardConfigs  = ledger::ShardConfigs;
+  using TxStatusCache = ledger::TransactionStatusCache;
 
   /// @name Configuration
   /// @{
@@ -151,6 +165,10 @@ private:
   LaneServices         lane_services_;    ///< The lane services
   StorageUnitClientPtr storage_;          ///< The storage client to the lane services
   LaneRemoteControl    lane_control_;     ///< The lane control client for the lane services
+
+  DAGPtr             dag_;
+  DAGServicePtr      dag_service_;
+  SynergeticMinerPtr synergetic_miner_;
   /// @}
 
   /// @name Block Processing

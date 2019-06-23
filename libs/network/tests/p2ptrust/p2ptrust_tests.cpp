@@ -16,11 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
+#include "network/p2pservice/p2ptrust.hpp"
+
+#include "gtest/gtest.h"
+
 #include <cstdlib>
 #include <memory>
-
-#include "network/p2pservice/p2ptrust.hpp"
-#include <gtest/gtest.h>
 
 using namespace fetch::p2p;
 using fetch::byte_array::ConstByteArray;

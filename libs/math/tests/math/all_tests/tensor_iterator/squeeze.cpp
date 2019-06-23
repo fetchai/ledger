@@ -16,10 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include <gtest/gtest.h>
-
 #include "math/tensor.hpp"
 #include "math/tensor_squeeze.hpp"
+
+#include "gtest/gtest.h"
 
 using namespace fetch::math;
 

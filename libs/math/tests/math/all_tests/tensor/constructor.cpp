@@ -17,7 +17,8 @@
 //------------------------------------------------------------------------------
 
 #include "math/tensor.hpp"
-#include <gtest/gtest.h>
+
+#include "gtest/gtest.h"
 
 template <typename T>
 class TensorConstructorTest : public ::testing::Test

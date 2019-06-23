@@ -17,12 +17,15 @@
 //
 //------------------------------------------------------------------------------
 
-#include <utility>
-
 #include "core/byte_array/encoders.hpp"
 #include "crypto/hash.hpp"
 #include "crypto/openssl_ecdsa_private_key.hpp"
 #include "crypto/sha256.hpp"
+
+#include <cstddef>
+#include <memory>
+#include <stdexcept>
+#include <utility>
 
 namespace fetch {
 namespace crypto {
