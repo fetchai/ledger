@@ -162,11 +162,10 @@ TEST_F(StakeManagerTests, CheckBasicStakeChangeScenarios)
 
   for (auto const &address : addresses)
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Address: ", address.display(), " rounds: ", stats.at(address));
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Address: ", address.display(), " rounds: ", stats.at(address));
 
     EXPECT_GT(stats.at(address), 0);
   }
-  FETCH_LOG_INFO(LOGGING_NAME, "---");
 
   // along comes another staker
   addresses.emplace_back(GenerateRandomAddress(rng_));
@@ -177,11 +176,8 @@ TEST_F(StakeManagerTests, CheckBasicStakeChangeScenarios)
 
   for (auto const &address : addresses)
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Address: ", address.display(), " rounds: ", stats.at(address));
-
     EXPECT_GT(stats.at(address), 0);
   }
-  FETCH_LOG_INFO(LOGGING_NAME, "---");
 
   // stakers have been removed
   for (std::size_t i = 1; i < addresses.size(); ++i)
@@ -194,11 +190,8 @@ TEST_F(StakeManagerTests, CheckBasicStakeChangeScenarios)
 
   for (auto const &address : addresses)
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Address: ", address.display(), " rounds: ", stats.at(address));
-
     EXPECT_GT(stats.at(address), 0);
   }
-  FETCH_LOG_INFO(LOGGING_NAME, "---");
 
   stats.clear();
   SimulateRounds(addresses, block, 100, COMMITTEE_SIZE, stats);
@@ -206,8 +199,6 @@ TEST_F(StakeManagerTests, CheckBasicStakeChangeScenarios)
   std::size_t idx{0};
   for (auto const &address : addresses)
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Address: ", address.display(), " rounds: ", stats.at(address));
-
     if (idx == 0)
     {
       EXPECT_GT(stats.at(address), 0);
@@ -219,12 +210,6 @@ TEST_F(StakeManagerTests, CheckBasicStakeChangeScenarios)
 
     ++idx;
   }
-  FETCH_LOG_INFO(LOGGING_NAME, "---");
-}
-
-TEST_F(StakeManagerTests, CheckCommitteeCaching)
-{
-
 }
 
 }  // namespace
