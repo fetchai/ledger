@@ -49,6 +49,7 @@ public:
   using type            = T;
   using self_type       = ObjectStore<T, S>;
   using serializer_type = serializers::TypedByteArrayBuffer;
+
   class Iterator;
 
   ObjectStore()                       = default;
@@ -246,6 +247,11 @@ public:
     bool operator!=(Iterator const &rhs) const
     {
       return !(wrapped_iterator_ == rhs.wrapped_iterator_);
+    }
+
+    ResourceID GetKey() const
+    {
+      return ResourceID{wrapped_iterator_.GetKey()};
     }
 
     /**

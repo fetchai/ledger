@@ -229,6 +229,8 @@ public:
            (last_executed_block_.Get() == chain_.GetHeaviestBlockHash());
   }
 
+  void Reset();
+
   // Operators
   BlockCoordinator &operator=(BlockCoordinator const &) = delete;
   BlockCoordinator &operator=(BlockCoordinator &&) = delete;
