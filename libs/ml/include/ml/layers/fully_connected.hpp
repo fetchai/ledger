@@ -20,7 +20,7 @@
 #include "ml/meta/ml_type_traits.hpp"
 #include "ml/ops/activation.hpp"
 #include "ml/ops/batchwise_add.hpp"
-#include "ml/ops/batchwise_flatten.hpp"
+#include "ml/ops/flatten.hpp"
 #include "ml/ops/matrix_multiply.hpp"
 #include "ml/ops/weights.hpp"
 #include "ml/subgraph.hpp"
@@ -48,8 +48,8 @@ public:
   {
     std::string input =
         this->template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>(name + "_Input", {});
-    std::string flat_input = this->template AddNode<fetch::ml::ops::BatchwiseFlatten<ArrayType>>(
-        name + "_Flatten", {input});
+    std::string flat_input =
+        this->template AddNode<fetch::ml::ops::Flatten<ArrayType>>(name + "_Flatten", {input});
     std::string weights =
         this->template AddNode<fetch::ml::ops::Weights<ArrayType>>(name + "_Weights", {});
     std::string weights_matmul = this->template AddNode<fetch::ml::ops::MatrixMultiply<ArrayType>>(
