@@ -21,14 +21,6 @@ endfunction
 
 function main()
 
-  // uint8
-  var x_int = 1 : UInt8;
-  do_abs(x_int);
-
-  // uint16
-  var x_int = 1 : UInt16;
-  do_abs(x_int);
-
   // positive int 32
   var x_int = 1;
   do_abs(x_int);
