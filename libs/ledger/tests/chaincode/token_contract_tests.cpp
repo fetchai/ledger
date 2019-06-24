@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "contract_test.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "core/json/document.hpp"
 #include "core/serializers/byte_array_buffer.hpp"
@@ -24,9 +25,7 @@
 #include "ledger/chaincode/token_contract.hpp"
 #include "mock_storage_unit.hpp"
 
-#include "contract_test.hpp"
-
-#include <gmock/gmock.h>
+#include "gmock/gmock.h"
 
 #include <memory>
 #include <random>

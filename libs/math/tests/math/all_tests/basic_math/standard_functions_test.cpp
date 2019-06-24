@@ -16,10 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include <gtest/gtest.h>
-
 #include "math/standard_functions/clamp.hpp"
 #include "math/tensor.hpp"
+
+#include "gtest/gtest.h"
 
 using namespace fetch::math;
 

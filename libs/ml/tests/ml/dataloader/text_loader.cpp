@@ -20,7 +20,9 @@
 #include "math/tensor.hpp"
 #include "ml/dataloaders/word2vec_loaders/basic_textloader.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
-#include <gtest/gtest.h>
+
+#include "gtest/gtest.h"
+
 #include <string>
 
 using namespace fetch::ml;

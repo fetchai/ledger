@@ -21,7 +21,7 @@
 
 #include "fake_execution_manager.hpp"
 
-#include <gmock/gmock.h>
+#include "gmock/gmock.h"
 
 class MockExecutionManager : public fetch::ledger::ExecutionManagerInterface
 {

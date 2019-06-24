@@ -16,3 +16,5 @@ fetch_add_test(ledger-chain-tests fetch-ledger chain)
 
 fetch_add_slow_test(ledger-executor-tests fetch-ledger executors)
 target_include_directories(ledger-executor-tests PRIVATE chaincode)
+
+fetch_add_slow_test(ledger-dag-tests fetch-ledger dag)

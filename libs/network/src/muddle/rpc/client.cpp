@@ -16,11 +16,13 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/threading.hpp"
 #include "network/muddle/rpc/client.hpp"
 
-#include "core/threading.hpp"
-
+#include <chrono>
+#include <exception>
 #include <list>
+#include <memory>
 
 namespace fetch {
 namespace muddle {

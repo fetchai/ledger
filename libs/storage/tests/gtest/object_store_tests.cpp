@@ -20,8 +20,10 @@
 #include "core/random/lfg.hpp"
 #include "storage/object_store.hpp"
 #include "testing/common_testing_functionality.hpp"
+
+#include "gtest/gtest.h"
+
 #include <algorithm>
-#include <gtest/gtest.h>
 
 using namespace fetch::storage;
 using namespace fetch::byte_array;
@@ -442,4 +444,52 @@ TEST(storage_object_store, correlated_strings_work_correctly)
   }
 
   ASSERT_EQ(testStore.size(), unique_ids.size()) << "ERROR: Failed to verify final size!";
+}
+
+TEST(storage_object_store_with_STL_gtest, iterator_over_basic_struct_with_key_info)
+{
+  std::vector<std::size_t> keyTests{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 99, 100, 1010, 9999};
+  for (auto const &numberOfKeys : keyTests)
+  {
+    using testType = TestSerDeser;
+    ObjectStore<testType> testStore;
+    testStore.New("testFile.db", "testIndex.db");
+
+    std::set<ResourceID> all_keys;
+    std::set<ResourceID> all_keys_verify;
+
+    fetch::random::LaggedFibonacciGenerator<> lfg;
+
+    // Create vector of random numbers
+    for (std::size_t i = 0; i < numberOfKeys; ++i)
+    {
+      uint64_t random = lfg();
+
+      testType test;
+      test.first  = int(-random);
+      test.second = random;
+
+      test.third = std::to_string(random);
+
+      all_keys.insert(
+          ResourceAddress(std::to_string(i)));  // Set of all the keys in our store is created
+      testStore.Set(ResourceAddress(std::to_string(i)), test);
+    }
+
+    ASSERT_EQ(all_keys.size(), numberOfKeys);
+
+    auto it = testStore.begin();
+    while (it != testStore.end())
+    {
+      ResourceID key = it.GetKey();
+
+      EXPECT_EQ(all_keys_verify.find(key) == all_keys_verify.end(), true);
+
+      all_keys_verify.insert(key);
+
+      ++it;
+    }
+
+    EXPECT_EQ(all_keys_verify.size(), all_keys.size());
+  }
 }

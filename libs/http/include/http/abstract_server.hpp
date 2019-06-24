@@ -18,12 +18,13 @@
 //------------------------------------------------------------------------------
 
 #include "core/mutex.hpp"
-#include "http/request.hpp"
 
 #include <cstdint>
 
 namespace fetch {
 namespace http {
+
+class HTTPRequest;
 
 class AbstractHTTPServer
 {

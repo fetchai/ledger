@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/byte_array.hpp"
+#include "core/byte_array/const_byte_array.hpp"
 #include "crypto/openssl_memory.hpp"
 
 #include <openssl/obj_mac.h>

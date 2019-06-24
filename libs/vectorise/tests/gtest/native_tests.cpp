@@ -19,7 +19,8 @@
 #include "core/random/lfg.hpp"
 #include "vectorise/register.hpp"
 
-#include <gtest/gtest.h>
+#include "gtest/gtest.h"
+
 using namespace fetch::vectorize;
 
 template <typename T>
