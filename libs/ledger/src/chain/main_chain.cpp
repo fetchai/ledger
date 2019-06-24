@@ -1442,8 +1442,7 @@ DigestSet MainChain::DetectDuplicateTransactions(BlockHash const &starting_hash,
 
   // Need a set for quickly checking whether transactions are in our container
   DigestSet duplicates{};
-  bool      searching{true};
-  while (searching)
+  for (;;)
   {
     // Traversing the chain fully is costly: break out early if we know the transactions are all
     // duplicated (or empty)
