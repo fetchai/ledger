@@ -183,6 +183,10 @@ void GenesisFileCreator::LoadFile(std::string const &name)
       {
         LoadStake(doc["stake"]);
       }
+      else
+      {
+        FETCH_LOG_WARN(LOGGING_NAME, "No stake manager provided when loading from stake file!");
+      }
     }
   }
 }
@@ -329,6 +333,12 @@ void GenesisFileCreator::LoadStake(Variant const &object)
         }
       }
     }
+
+    stake_manager_->Reset(*snapshot, committee_size);
+  }
+  else
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "No stake manager!");
   }
 }
 

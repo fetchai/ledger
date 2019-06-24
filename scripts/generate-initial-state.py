@@ -13,8 +13,10 @@ TOTAL_SUPPLY = 11529975750000000000
 def parse_commandline():
     parser = argparse.ArgumentParser()
     parser.add_argument('address', help='The initial staker address')
-    parser.add_argument('stake', nargs='?', type=int, default=TOTAL_SUPPLY // 100, help='The initial stake amount')
-    parser.add_argument('-o', '--output', default='snapshot.json', help='Path to generated file')
+    parser.add_argument('stake', nargs='?', type=int,
+                        default=TOTAL_SUPPLY // 100, help='The initial stake amount')
+    parser.add_argument(
+        '-o', '--output', default='snapshot.json', help='Path to generated file')
     return parser.parse_args()
 
 
@@ -33,7 +35,8 @@ def main():
 
     # calculate the entry in the state database
     resource_id = calc_resource_id('fetch.token.state.' + args.address)
-    resource_value = base64.b64encode(struct.pack('<QQB', balance, stake, 0)).decode()
+    resource_value = base64.b64encode(
+        struct.pack('<QQB', balance, stake, 0)).decode()
 
     # form the snapshot data
     snapshot = {
