@@ -28,6 +28,7 @@
 #include "crypto/sha256.hpp"
 
 #include <algorithm>
+#include <random>
 
 using namespace fetch;
 
@@ -228,7 +229,9 @@ TEST_F(DagTests, CheckDagMaintainsTipsCorrectly)
   // Provide dag 2 the missing nodes
   auto recently_added = dag_->GetRecentlyAdded();
 
-  std::random_shuffle(recently_added.begin(), recently_added.end());
+  std::random_device rd;
+  std::mt19937       g(rd());
+  std::shuffle(recently_added.begin(), recently_added.end(), g);
 
   for (auto const &newly_minted_dag_node : recently_added)
   {
