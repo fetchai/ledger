@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "math/meta/math_type_traits.hpp"
+#include "math/tensor_broadcast.hpp"
 
 #include <cassert>
 
@@ -315,9 +316,6 @@ template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, void> Add(ArrayType const &array1, ArrayType const &array2,
                                          ArrayType &ret)
 {
-  assert(array1.shape() == array2.shape());
-  assert(array1.shape() == ret.shape());
-
   if (array1.shape() == array2.shape())
   {
     auto it1 = array1.cbegin();
@@ -329,6 +327,16 @@ meta::IfIsMathArray<ArrayType, void> Add(ArrayType const &array1, ArrayType cons
       ++it1;
       ++it2;
       ++rit;
+    }
+  }
+  else
+  {
+    ArrayType a = array1.Copy();
+    ArrayType b = array2.Copy();
+    if (!(Broadcast([](typename ArrayType::Type x, typename ArrayType::Type y) { return x + y; }, a,
+                    b, ret)))
+    {
+      throw std::runtime_error("arrays not broadcastable for InlineAdd!");
     }
   }
 }
@@ -591,7 +599,7 @@ template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, ArrayType> Add(ArrayType const &array1, ArrayType const &array2,
                                               ArrayType &ret)
 {
-  assert(array1.shape() == array2.shape());
+  //  assert(array1.shape() == array2.shape());
   assert(array1.shape() == ret.shape());
   implementations::Add(array1, array2, ret);
   return ret;

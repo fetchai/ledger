@@ -19,7 +19,7 @@
 
 #include "ml/meta/ml_type_traits.hpp"
 #include "ml/ops/activation.hpp"
-#include "ml/ops/batchwise_add.hpp"
+#include "ml/ops/add.hpp"
 #include "ml/ops/flatten.hpp"
 #include "ml/ops/matrix_multiply.hpp"
 #include "ml/ops/weights.hpp"
@@ -56,7 +56,7 @@ public:
         name + "_MatrixMultiply", {weights, flat_input});
     std::string bias =
         this->template AddNode<fetch::ml::ops::Weights<ArrayType>>(name + "_Bias", {});
-    std::string output = this->template AddNode<fetch::ml::ops::BatchwiseAdd<ArrayType>>(
+    std::string output = this->template AddNode<fetch::ml::ops::Add<ArrayType>>(
         name + "_Add", {weights_matmul, bias});
 
     output = fetch::ml::details::AddActivationNode<T>(activation_type, this, name + "_Activation",

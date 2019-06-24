@@ -1679,19 +1679,7 @@ fetch::meta::IfIsUnsignedInteger<S, typename Tensor<T, C>::Type> Tensor<T, C>::G
 template <typename T, typename C>
 Tensor<T, C> Tensor<T, C>::InlineAdd(Tensor const &other)
 {
-  if (other.shape() == shape_)
-  {
-    Add(*this, other, *this);
-  }
-  else
-  {
-    Tensor self_copy  = this->Copy();
-    Tensor other_copy = other.Copy();
-    if (!(Broadcast([](T x, T y) { return x + y; }, self_copy, other_copy, *this)))
-    {
-      throw std::runtime_error("arrays not broadcastable for InlineAdd!");
-    }
-  }
+  Add(*this, other, *this);
   return *this;
 }
 
