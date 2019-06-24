@@ -176,6 +176,12 @@ private:
   SynergeticMinerPtr synergetic_miner_;
   /// @}
 
+  /// @name Staking
+  /// @{
+  EntropyPtr            entropy_;            ///< The entropy system
+  StakeManagerPtr       stake_;              ///< The stake system
+  /// @}
+
   /// @name Block Processing
   /// @{
   ExecutionManagerPtr execution_manager_;  ///< The transaction execution manager
@@ -183,8 +189,6 @@ private:
 
   /// @name Blockchain and Mining
   /// @[
-  EntropyPtr            entropy_;            ///< The entropy system
-  StakeManagerPtr       stake_;              ///< The stake system
   MainChain             chain_;              ///< The main block chain component
   BlockPackingAlgorithm block_packer_;       ///< The block packing / mining algorithm
   BlockCoordinator      block_coordinator_;  ///< The block execution coordinator

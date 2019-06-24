@@ -56,7 +56,7 @@ class ExecutionManagerInterface;
 class MainChain;
 class StorageUnitInterface;
 class BlockSinkInterface;
-class StakeManager;
+class StakeManagerInterface;
 
 /**
  * The Block Coordinator is in charge of executing all the blocks that come into the system. It will
@@ -146,7 +146,7 @@ public:
   using ConstByteArray  = byte_array::ConstByteArray;
   using DAGPtr          = std::shared_ptr<ledger::DAGInterface>;
   using ProverPtr       = std::shared_ptr<crypto::Prover>;
-  using StakeManagerPtr = std::shared_ptr<StakeManager>;
+  using StakeManagerPtr = std::shared_ptr<StakeManagerInterface>;
 
   enum class State
   {

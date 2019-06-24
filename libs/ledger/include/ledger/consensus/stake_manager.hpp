@@ -32,8 +32,8 @@ class EntropyGeneratorInterface;
 class StakeManager : public StakeManagerInterface
 {
 public:
-  using Committee        = std::vector<Address>;
-  using CommitteePtr     = std::shared_ptr<Committee const>;
+  using Committee    = std::vector<Address>;
+  using CommitteePtr = std::shared_ptr<Committee const>;
 
   // Construction / Destruction
   explicit StakeManager(EntropyGeneratorInterface &entropy);
@@ -43,8 +43,8 @@ public:
 
   /// @name Stake Manager Interface
   /// @{
-  Validity Validate(Block const &block) const override;
-
+  void UpdateCurrentBlock(Block const &current) override;
+  std::size_t GetBlockGenerationWeight(Block const &previous, Address const &address) override;
   bool ShouldGenerateBlock(Block const &previous, Address const &address) override;
   /// @}
 
@@ -52,9 +52,7 @@ public:
   StakeUpdateQueue &update_queue();
   StakeUpdateQueue const &update_queue() const;
 
-  void UpdateCurrentBlock(Block const &current) override;
   CommitteePtr GetCommittee(Block const &previous);
-  std::size_t GetBlockGenerationWeight(Block const &previous, Address const &address);
 
   void Reset(StakeSnapshot const &snapshot, std::size_t committee_size);
   void Reset(StakeSnapshot &&snapshot, std::size_t committee_size);

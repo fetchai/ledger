@@ -29,7 +29,7 @@
 #include "ledger/execution_manager_interface.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 #include "ledger/transaction_status_cache.hpp"
-#include "ledger/consensus/stake_manager.hpp" // TODO(EJF): Change to interface
+#include "ledger/consensus/stake_manager_interface.hpp"
 
 #include "ledger/dag/dag_interface.hpp"
 #include "ledger/upow/synergetic_execution_manager.hpp"
@@ -962,6 +962,19 @@ BlockCoordinator::State BlockCoordinator::OnTransmitBlock()
 
 BlockCoordinator::State BlockCoordinator::OnReset()
 {
+  // trigger stake updates at the end of the block lifecycle
+  if (stake_)
+  {
+    if (next_block_)
+    {
+      stake_->UpdateCurrentBlock(*next_block_);
+    }
+    else if (current_block_)
+    {
+      stake_->UpdateCurrentBlock(*current_block_);
+    }
+  }
+
   current_block_.reset();
   next_block_.reset();
   pending_txs_.reset();

@@ -48,11 +48,6 @@ StakeManager::StakeManager(EntropyGeneratorInterface &entropy)
 {
 }
 
-StakeManager::Validity StakeManager::Validate(Block const &block) const
-{
-  return Validity::INDETERMINATE;
-}
-
 void StakeManager::UpdateCurrentBlock(Block const &current)
 {
   // need to evaluate any of the updates from the update queue

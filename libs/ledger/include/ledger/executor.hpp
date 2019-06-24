@@ -33,6 +33,7 @@ class Address;
 class TokenContract;
 class CachedStorageAdapter;
 class StateSentinelAdapter;
+class StakeUpdateInterface;
 
 /**
  * The executor object is designed to process incoming transactions
@@ -44,7 +45,7 @@ public:
   using ConstByteArray = byte_array::ConstByteArray;
 
   // Construction / Destruction
-  explicit Executor(StorageUnitPtr storage);
+  explicit Executor(StorageUnitPtr storage, StakeUpdateInterface *stake_updates);
   ~Executor() override = default;
 
   /// @name Executor Interface
@@ -68,6 +69,7 @@ private:
 
   /// @name Resources
   /// @{
+  StakeUpdateInterface *stake_updates_{nullptr};
   StorageUnitPtr   storage_;             ///< The collection of resources
   ChainCodeCache   chain_code_cache_{};  //< The factory to create new chain code instances
   TokenContractPtr token_contract_;

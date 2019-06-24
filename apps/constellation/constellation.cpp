@@ -200,11 +200,11 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
                                                  cfg_.log2_num_lanes))
   , lane_control_(internal_muddle_.AsEndpoint(), shard_cfgs_, cfg_.log2_num_lanes)
   , dag_{GenerateDAG(cfg_.features.IsEnabled("synergetic"), "dag_db_", true, certificate)}
-  , execution_manager_{std::make_shared<ExecutionManager>(
-        cfg_.num_executors, cfg_.log2_num_lanes, storage_,
-        [this] { return std::make_shared<Executor>(storage_); })}
   , entropy_{CreateEntropy()}
   , stake_{CreateStakeManager(cfg_.proof_of_stake, *entropy_)}
+  , execution_manager_{std::make_shared<ExecutionManager>(
+        cfg_.num_executors, cfg_.log2_num_lanes, storage_,
+        [this] { return std::make_shared<Executor>(storage_, stake_ ? &stake_->update_queue() : nullptr); })}
   , chain_{ledger::MainChain::Mode::LOAD_PERSISTENT_DB}
   , block_packer_{cfg_.log2_num_lanes}
   , block_coordinator_{chain_,
@@ -277,7 +277,7 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
   {
     std::vector<ConstByteArray> initial_addresses = {
         "2bBYqHp5uK8fQgTqeBP3B3rogHQPYiC6wZcnBP2WVocsuiMgg9",
-        "BgrwqWGtyCmSKc83Ht3XSNyNujrNgiFp8kQjwhPXTsPvxcXbJ",
+//        "BgrwqWGtyCmSKc83Ht3XSNyNujrNgiFp8kQjwhPXTsPvxcXbJ",
     };
 
     // build up the stake snapshot
