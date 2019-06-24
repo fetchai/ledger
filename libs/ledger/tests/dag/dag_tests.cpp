@@ -30,7 +30,6 @@
 #include <algorithm>
 #include <random>
 
-
 using namespace fetch;
 
 static constexpr char const *LOGGING_NAME = "DagTests";
@@ -233,7 +232,6 @@ TEST_F(DagTests, CheckDagMaintainsTipsCorrectly)
   std::random_device rd;
   std::mt19937       g(rd());
   std::shuffle(recently_added.begin(), recently_added.end(), g);
-
 
   for (auto const &newly_minted_dag_node : recently_added)
   {
