@@ -73,8 +73,9 @@ TokenContract::TokenContract()
   OnTransaction("deed", this, &TokenContract::Deed);
   OnTransaction("wealth", this, &TokenContract::CreateWealth);
   OnTransaction("transfer", this, &TokenContract::Transfer);
-  OnTransaction("stake", this, &TokenContract::Stake);
+  OnTransaction("addStake", this, &TokenContract::AddStake);
   OnQuery("balance", this, &TokenContract::Balance);
+  OnQuery("stake", this, &TokenContract::Stake);
 }
 
 uint64_t TokenContract::GetBalance(Address const &address)
@@ -245,7 +246,7 @@ Contract::Status TokenContract::Transfer(Transaction const &tx, BlockIndex)
   return Status::FAILED;
 }
 
-Contract::Status TokenContract::Stake(Transaction const &tx, BlockIndex block)
+Contract::Status TokenContract::AddStake(Transaction const &tx, BlockIndex block)
 {
   Status status{Status::FAILED};
 
@@ -268,7 +269,7 @@ Contract::Status TokenContract::Stake(Transaction const &tx, BlockIndex block)
           if (record.balance >= amount)
           {
             record.balance -= amount;
-            record.stake -= amount;
+            record.stake += amount;
 
             // record the stake update event
             stake_updates_.emplace_back(StakeUpdate{tx.from(), block + STAKE_WARM_UP_PERIOD, amount});
@@ -304,6 +305,36 @@ Contract::Status TokenContract::Balance(Query const &query, Query &response)
       // formulate the response
       response            = Variant::Object();
       response["balance"] = record.balance;
+
+      status = Status::OK;
+    }
+  }
+  else
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Incorrect parameters to balance query");
+  }
+
+  return status;
+}
+
+Contract::Status TokenContract::Stake(Query const &query, Query &response)
+{
+  Status status = Status::FAILED;
+
+  ConstByteArray input;
+  if (Extract(query, ADDRESS_NAME, input))
+  {
+    // attempt to parse the input address
+    Address address{};
+    if (Address::Parse(input, address))
+    {
+      // lookup the record
+      WalletRecord record{};
+      GetStateRecord(record, address.display());
+
+      // formulate the response
+      response          = Variant::Object();
+      response["stake"] = record.stake;
 
       status = Status::OK;
     }

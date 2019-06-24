@@ -57,10 +57,11 @@ public:
   Status CreateWealth(Transaction const &tx, BlockIndex);
   Status Deed(Transaction const &tx, BlockIndex);
   Status Transfer(Transaction const &tx, BlockIndex);
-  Status Stake(Transaction const &tx, BlockIndex);
+  Status AddStake(Transaction const &tx, BlockIndex);
 
   // queries
   Status Balance(Query const &query, Query &response);
+  Status Stake(Query const &query, Query &response);
 
   void ClearStakeUpdates();
   StakeUpdates stake_updates() const;
