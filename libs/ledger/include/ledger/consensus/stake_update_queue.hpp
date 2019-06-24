@@ -20,9 +20,9 @@
 #include "ledger/chain/address.hpp"
 #include "ledger/consensus/stake_update_interface.hpp"
 
-#include <unordered_map>
 #include <map>
 #include <memory>
+#include <unordered_map>
 
 namespace fetch {
 namespace ledger {
@@ -36,17 +36,18 @@ public:
   using StakeSnapshotPtr = std::shared_ptr<StakeSnapshot>;
 
   // Construction / Destruction
-  StakeUpdateQueue() = default;
+  StakeUpdateQueue()                         = default;
   StakeUpdateQueue(StakeUpdateQueue const &) = delete;
-  StakeUpdateQueue(StakeUpdateQueue &&) = delete;
-  ~StakeUpdateQueue() override = default;
+  StakeUpdateQueue(StakeUpdateQueue &&)      = delete;
+  ~StakeUpdateQueue() override               = default;
 
   /// @name Stake Update Interface
   /// @{
   void AddStakeUpdate(BlockIndex block_index, Address const &address, StakeAmount stake) override;
   /// @}
 
-  bool ApplyUpdates(BlockIndex block_index, StakeSnapshotPtr const &reference, StakeSnapshotPtr &next);
+  bool ApplyUpdates(BlockIndex block_index, StakeSnapshotPtr const &reference,
+                    StakeSnapshotPtr &next);
 
   /// @name Accessors
   /// @{
@@ -102,5 +103,5 @@ void StakeUpdateQueue::VisitUnderlyingQueue(Visitor &&visitor)
   visitor(updates_);
 }
 
-} // namespace ledger
-} // namespace fetch
+}  // namespace ledger
+}  // namespace fetch

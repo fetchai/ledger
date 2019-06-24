@@ -38,22 +38,22 @@ public:
   // Construction / Destruction
   explicit StakeManager(EntropyGeneratorInterface &entropy);
   StakeManager(StakeManager const &) = delete;
-  StakeManager(StakeManager &&) = delete;
-  ~StakeManager() override = default;
+  StakeManager(StakeManager &&)      = delete;
+  ~StakeManager() override           = default;
 
   /// @name Stake Manager Interface
   /// @{
-  void UpdateCurrentBlock(Block const &current) override;
+  void        UpdateCurrentBlock(Block const &current) override;
   std::size_t GetBlockGenerationWeight(Block const &previous, Address const &address) override;
-  bool ShouldGenerateBlock(Block const &previous, Address const &address) override;
+  bool        ShouldGenerateBlock(Block const &previous, Address const &address) override;
   /// @}
 
   // Accessors
-  StakeUpdateQueue &update_queue();
+  StakeUpdateQueue &      update_queue();
   StakeUpdateQueue const &update_queue() const;
-  std::size_t committee_size() const;
+  std::size_t             committee_size() const;
 
-  CommitteePtr GetCommittee(Block const &previous);
+  CommitteePtr                         GetCommittee(Block const &previous);
   std::shared_ptr<StakeSnapshot const> GetCurrentStakeSnapshot() const;
 
   void Reset(StakeSnapshot const &snapshot, std::size_t committee_size);
@@ -71,15 +71,15 @@ private:
   using StakeHistory     = std::map<BlockIndex, StakeSnapshotPtr>;
 
   StakeSnapshotPtr LookupStakeSnapshot(BlockIndex block);
-  void ResetInternal(StakeSnapshotPtr &&snapshot, std::size_t committee_size);
+  void             ResetInternal(StakeSnapshotPtr &&snapshot, std::size_t committee_size);
 
   // Config & Components
-  std::size_t                committee_size_{0};      ///< The "static" size of the committee
-  EntropyGeneratorInterface &entropy_;                ///< The reference to entropy module
-  StakeUpdateQueue           update_queue_;           ///< The update queue of events
-  StakeHistory               history_{};              ///< Cache of historical snapshots
-  StakeSnapshotPtr           current_{};              ///< Most recent snapshot
-  BlockIndex                 current_block_index_{0}; ///< Block index of most recent snapshot
+  std::size_t                committee_size_{0};       ///< The "static" size of the committee
+  EntropyGeneratorInterface &entropy_;                 ///< The reference to entropy module
+  StakeUpdateQueue           update_queue_;            ///< The update queue of events
+  StakeHistory               history_{};               ///< Cache of historical snapshots
+  StakeSnapshotPtr           current_{};               ///< Most recent snapshot
+  BlockIndex                 current_block_index_{0};  ///< Block index of most recent snapshot
 };
 
 inline std::size_t StakeManager::committee_size() const
@@ -102,5 +102,5 @@ inline std::shared_ptr<StakeSnapshot const> StakeManager::GetCurrentStakeSnapsho
   return current_;
 }
 
-} // namespace ledger
-} // namespace fetch
+}  // namespace ledger
+}  // namespace fetch

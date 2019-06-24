@@ -25,9 +25,8 @@ namespace ledger {
 class EntropyGeneratorInterface
 {
 public:
-
   // Construction / Destruction
-  EntropyGeneratorInterface() = default;
+  EntropyGeneratorInterface()          = default;
   virtual ~EntropyGeneratorInterface() = default;
 
   /// @name Entropy Generator
@@ -36,5 +35,5 @@ public:
   /// @}
 };
 
-} // namespace ledger
-} // namespace fetch
+}  // namespace ledger
+}  // namespace fetch

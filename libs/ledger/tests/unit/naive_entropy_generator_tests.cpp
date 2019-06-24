@@ -19,8 +19,8 @@
 #include "random_address.hpp"
 
 #include "core/random/lcg.hpp"
-#include "crypto/sha256.hpp"
 #include "crypto/hash.hpp"
+#include "crypto/sha256.hpp"
 #include "ledger/consensus/naive_entropy_generator.hpp"
 
 #include "gtest/gtest.h"
@@ -35,13 +35,12 @@ using fetch::random::LinearCongruentialGenerator;
 using fetch::ledger::NaiveEntropyGenerator;
 using fetch::ledger::Digest;
 
-using RNG = LinearCongruentialGenerator;
+using RNG                      = LinearCongruentialGenerator;
 using NaiveEntropyGeneratorPtr = std::unique_ptr<NaiveEntropyGenerator>;
 
 class NaiveEntropyGeneratorTests : public ::testing::Test
 {
 protected:
-
   void SetUp() override
   {
     rng_.Seed(58);
@@ -56,7 +55,7 @@ protected:
   Digest GenerateRandomDigest()
   {
     auto address = GenerateRandomAddress(rng_);
-    return address.address(); // take advantage that these are the same length
+    return address.address();  // take advantage that these are the same length
   }
 
   uint64_t CalculateEntropy(Digest reference)
@@ -67,23 +66,22 @@ protected:
     }
 
     auto const &digest_ref = reference;
-    auto const *entropy = reinterpret_cast<uint64_t const *>(digest_ref.pointer());
+    auto const *entropy    = reinterpret_cast<uint64_t const *>(digest_ref.pointer());
     return *entropy;
   }
 
-  RNG rng_;
+  RNG                      rng_;
   NaiveEntropyGeneratorPtr naive_entropy_generator_;
 };
-
 
 TEST_F(NaiveEntropyGeneratorTests, SimpleCheck)
 {
   Digest reference_digest = GenerateRandomDigest();
 
   uint64_t const expected_entropy = CalculateEntropy(reference_digest);
-  uint64_t const actual_entropy = naive_entropy_generator_->GenerateEntropy(reference_digest, 0);
+  uint64_t const actual_entropy   = naive_entropy_generator_->GenerateEntropy(reference_digest, 0);
 
   EXPECT_EQ(expected_entropy, actual_entropy);
 }
 
-} // namespace
+}  // namespace

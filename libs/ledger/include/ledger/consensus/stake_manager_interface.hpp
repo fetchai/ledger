@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include <map>
 #include <cstdint>
+#include <map>
 #include <memory>
 
 namespace fetch {
@@ -30,21 +30,19 @@ class Block;
 class StakeManagerInterface
 {
 public:
-
   // Construction / Destruction
-  StakeManagerInterface() = default;
+  StakeManagerInterface()          = default;
   virtual ~StakeManagerInterface() = default;
 
   /// @name Stake Manager Interface
   /// @{
-  virtual void UpdateCurrentBlock(Block const &current) = 0;
+  virtual void        UpdateCurrentBlock(Block const &current)                                = 0;
   virtual std::size_t GetBlockGenerationWeight(Block const &previous, Address const &address) = 0;
-  virtual bool ShouldGenerateBlock(Block const &previous, Address const &address) = 0;
+  virtual bool        ShouldGenerateBlock(Block const &previous, Address const &address)      = 0;
   /// @}
 
 private:
-
 };
 
-} // namespace ledger
-} // namespace fetch
+}  // namespace ledger
+}  // namespace fetch

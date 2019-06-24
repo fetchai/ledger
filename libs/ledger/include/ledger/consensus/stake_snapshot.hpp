@@ -34,7 +34,7 @@ namespace ledger {
 class StakeSnapshot
 {
 public:
-  using Committee = std::vector<Address>;
+  using Committee    = std::vector<Address>;
   using CommitteePtr = std::shared_ptr<Committee>;
 
   // Construction / Destruction
@@ -53,7 +53,7 @@ public:
 
   /// @name Basic Accessors
   /// @{
-  uint64_t total_stake() const;
+  uint64_t    total_stake() const;
   std::size_t size() const;
   /// @}
 
@@ -75,9 +75,9 @@ private:
   using AddressIndex = std::unordered_map<Address, RecordPtr>;
   using StakeIndex   = std::vector<RecordPtr>;
 
-  AddressIndex  address_index_{};           ///< Map of Address to Record
-  StakeIndex    stake_index_;               ///< Array of Records
-  uint64_t      total_stake_{0};            ///< Total stake cache
+  AddressIndex address_index_{};  ///< Map of Address to Record
+  StakeIndex   stake_index_;      ///< Array of Records
+  uint64_t     total_stake_{0};   ///< Total stake cache
 };
 
 /**
@@ -114,7 +114,6 @@ void StakeSnapshot::IterateOver(Functor &&functor) const
     functor(element.first, element.second->stake);
   }
 }
-
 
 }  // namespace ledger
 }  // namespace fetch

@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/consensus/stake_update_queue.hpp"
 #include "ledger/consensus/stake_snapshot.hpp"
+#include "ledger/consensus/stake_update_queue.hpp"
 
 namespace fetch {
 namespace ledger {

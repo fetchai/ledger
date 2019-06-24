@@ -26,10 +26,10 @@
 #include "ledger/chain/consensus/dummy_miner.hpp"
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/chain/transaction.hpp"
+#include "ledger/consensus/stake_manager_interface.hpp"
 #include "ledger/execution_manager_interface.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 #include "ledger/transaction_status_cache.hpp"
-#include "ledger/consensus/stake_manager_interface.hpp"
 
 #include "ledger/dag/dag_interface.hpp"
 #include "ledger/upow/synergetic_execution_manager.hpp"
@@ -411,7 +411,9 @@ BlockCoordinator::State BlockCoordinator::OnSynchronised(State current, State pr
       }
 
       // TODO(EJF): Remove
-      FETCH_LOG_WARN(LOGGING_NAME, "!!!!! -> I am mining block: ", current_block_->body.block_number + 1, " <- !!!!!");
+      FETCH_LOG_WARN(LOGGING_NAME,
+                     "!!!!! -> I am mining block: ", current_block_->body.block_number + 1,
+                     " <- !!!!!");
     }
 
     // create a new block

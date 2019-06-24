@@ -25,6 +25,8 @@
 #include "ledger/chain/block_coordinator.hpp"
 #include "ledger/chain/consensus/consensus_miner_interface.hpp"
 #include "ledger/chain/main_chain.hpp"
+#include "ledger/consensus/entropy_generator_interface.hpp"
+#include "ledger/consensus/stake_manager.hpp"
 #include "ledger/execution_manager.hpp"
 #include "ledger/genesis_loading/genesis_file_creator.hpp"
 #include "ledger/protocols/main_chain_rpc_service.hpp"
@@ -33,8 +35,6 @@
 #include "ledger/storage_unit/storage_unit_client.hpp"
 #include "ledger/transaction_processor.hpp"
 #include "ledger/transaction_status_cache.hpp"
-#include "ledger/consensus/stake_manager.hpp"
-#include "ledger/consensus/entropy_generator_interface.hpp"
 #include "miner/basic_miner.hpp"
 #include "network/muddle/muddle.hpp"
 #include "network/p2pservice/manifest.hpp"
@@ -178,8 +178,8 @@ private:
 
   /// @name Staking
   /// @{
-  EntropyPtr            entropy_;            ///< The entropy system
-  StakeManagerPtr       stake_;              ///< The stake system
+  EntropyPtr      entropy_;  ///< The entropy system
+  StakeManagerPtr stake_;    ///< The stake system
   /// @}
 
   /// @name Block Processing

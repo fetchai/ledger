@@ -17,9 +17,9 @@
 //------------------------------------------------------------------------------
 
 #include "ledger/chain/block.hpp"
-#include "ledger/consensus/stake_snapshot.hpp"
-#include "ledger/consensus/stake_manager.hpp"
 #include "ledger/consensus/entropy_generator_interface.hpp"
+#include "ledger/consensus/stake_manager.hpp"
+#include "ledger/consensus/stake_snapshot.hpp"
 
 #include <algorithm>
 
@@ -41,12 +41,11 @@ std::size_t SafeDecrement(std::size_t value, std::size_t decrement)
   }
 }
 
-} // namespace
+}  // namespace
 
 StakeManager::StakeManager(EntropyGeneratorInterface &entropy)
   : entropy_{entropy}
-{
-}
+{}
 
 void StakeManager::UpdateCurrentBlock(Block const &current)
 {
@@ -177,5 +176,5 @@ void StakeManager::ResetInternal(StakeSnapshotPtr &&snapshot, std::size_t commit
   current_block_index_ = 0;
 }
 
-} // namespace ledger
-} // namespace fetch
+}  // namespace ledger
+}  // namespace fetch

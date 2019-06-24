@@ -16,9 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/consensus/stake_snapshot.hpp"
 #include "core/random/lcg.hpp"
 #include "ledger/chain/digest.hpp"
+#include "ledger/consensus/stake_snapshot.hpp"
 
 #include <algorithm>
 #include <unordered_set>
@@ -52,7 +52,7 @@ StakeSnapshot::CommitteePtr StakeSnapshot::BuildCommittee(uint64_t entropy, std:
   else
   {
     AddressSet chosen_addresses;
-    DRNG rng(entropy);
+    DRNG       rng(entropy);
 
     // ensure the stake list is reset to a deterministic state
     std::sort(stake_index_.begin(), stake_index_.end(), [](RecordPtr const &a, RecordPtr const &b) {
@@ -87,7 +87,7 @@ StakeSnapshot::CommitteePtr StakeSnapshot::BuildCommittee(uint64_t entropy, std:
             break;
           }
         }
-        else // (record->stake < selection)
+        else  // (record->stake < selection)
         {
           selection -= record->stake;
         }
@@ -186,5 +186,5 @@ void StakeSnapshot::UpdateStake(Address const &address, uint64_t stake)
   }
 }
 
-} // namespace ledger
-} // namespace fetch
+}  // namespace ledger
+}  // namespace fetch

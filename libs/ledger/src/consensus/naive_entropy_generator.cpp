@@ -17,8 +17,8 @@
 //------------------------------------------------------------------------------
 
 #include "core/macros.hpp"
-#include "crypto/sha256.hpp"
 #include "crypto/hash.hpp"
+#include "crypto/sha256.hpp"
 #include "ledger/consensus/naive_entropy_generator.hpp"
 
 namespace fetch {
@@ -42,9 +42,9 @@ uint64_t ledger::NaiveEntropyGenerator::GenerateEntropy(Digest block_digest, uin
   }
 
   auto const &digest_ref = block_digest;
-  auto const *entropy = reinterpret_cast<uint64_t const *>(digest_ref.pointer());
+  auto const *entropy    = reinterpret_cast<uint64_t const *>(digest_ref.pointer());
   return *entropy;
 }
 
-} // namespace ledger
-} // namespace fetch
+}  // namespace ledger
+}  // namespace fetch

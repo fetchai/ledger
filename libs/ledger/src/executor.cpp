@@ -26,8 +26,8 @@
 #include "ledger/chain/transaction.hpp"
 #include "ledger/chaincode/contract.hpp"
 #include "ledger/chaincode/token_contract.hpp"
-#include "ledger/storage_unit/cached_storage_adapter.hpp"
 #include "ledger/consensus/stake_update_interface.hpp"
+#include "ledger/storage_unit/cached_storage_adapter.hpp"
 #include "metrics/metrics.hpp"
 
 #include "ledger/state_sentinel_adapter.hpp"
@@ -285,7 +285,9 @@ bool Executor::ExecuteTransactionContract(Result &result)
     // lookup or create the instance of the contract as is needed
     auto const is_token_contract = (contract_id.GetParent().full_name() == "fetch.token");
 
-    auto contract = is_token_contract ? token_contract_ : chain_code_cache_.Lookup(contract_id.GetParent(), *storage_);
+    auto contract = is_token_contract
+                        ? token_contract_
+                        : chain_code_cache_.Lookup(contract_id.GetParent(), *storage_);
     if (!contract)
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Contract lookup failure: ", contract_id.full_name());
@@ -360,7 +362,8 @@ bool Executor::ExecuteTransactionContract(Result &result)
       {
         for (auto const &update : token_contract_->stake_updates())
         {
-          FETCH_LOG_INFO(LOGGING_NAME, "Applying stake update from: ", update.from, " for: ", update.address.display(), " amount: ", update.amount);
+          FETCH_LOG_INFO(LOGGING_NAME, "Applying stake update from: ", update.from,
+                         " for: ", update.address.display(), " amount: ", update.amount);
 
           stake_updates_->AddStakeUpdate(update.from, update.address, update.amount);
         }

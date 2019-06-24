@@ -38,7 +38,7 @@ fetch::ledger::Address GenerateRandomAddress(RNG &&rng)
   static_assert((Address::RAW_LENGTH % sizeof(RngWord)) == 0, "");
 
   Address::RawAddress raw_address{};
-  auto *raw = reinterpret_cast<RngWord*>(raw_address.data());
+  auto *              raw = reinterpret_cast<RngWord *>(raw_address.data());
 
   for (std::size_t i = 0; i < ADDRESS_WORD_SIZE; ++i)
   {

@@ -36,12 +36,12 @@ class StorageUnitInterface;
 class GenesisFileCreator
 {
 public:
-
   // Construction / Destruction
-  GenesisFileCreator(BlockCoordinator &block_coordinator, StorageUnitInterface &storage_unit, StakeManager *stake_manager);
+  GenesisFileCreator(BlockCoordinator &block_coordinator, StorageUnitInterface &storage_unit,
+                     StakeManager *stake_manager);
   GenesisFileCreator(GenesisFileCreator const &) = delete;
-  GenesisFileCreator(GenesisFileCreator &&) = delete;
-  ~GenesisFileCreator() = default;
+  GenesisFileCreator(GenesisFileCreator &&)      = delete;
+  ~GenesisFileCreator()                          = default;
 
   void CreateFile(std::string const &name);
   void LoadFile(std::string const &name);
@@ -51,7 +51,6 @@ public:
   GenesisFileCreator &operator=(GenesisFileCreator &&) = delete;
 
 private:
-
   void DumpState(variant::Variant &object);
   void DumpStake(variant::Variant &object);
   void LoadState(variant::Variant const &object);
@@ -62,12 +61,13 @@ private:
   StakeManager *        stake_manager_{nullptr};
 };
 
-inline GenesisFileCreator::GenesisFileCreator(BlockCoordinator &block_coordinator, StorageUnitInterface &storage_unit, StakeManager *stake_manager)
+inline GenesisFileCreator::GenesisFileCreator(BlockCoordinator &    block_coordinator,
+                                              StorageUnitInterface &storage_unit,
+                                              StakeManager *        stake_manager)
   : block_coordinator_{block_coordinator}
   , storage_unit_{storage_unit}
   , stake_manager_{stake_manager}
-{
-}
+{}
 
-} // namespace ledger
+}  // namespace ledger
 }  // namespace fetch

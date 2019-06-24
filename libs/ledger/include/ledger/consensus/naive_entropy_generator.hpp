@@ -34,7 +34,7 @@ public:
   static constexpr std::size_t ROUNDS = 5;
 
   // Construction / Destruction
-  NaiveEntropyGenerator() = default;
+  NaiveEntropyGenerator()           = default;
   ~NaiveEntropyGenerator() override = default;
 
   /// @name Entropy Generator Interface
@@ -43,5 +43,5 @@ public:
   /// @}
 };
 
-} // namespace ledger
-} // namespace fetch
+}  // namespace ledger
+}  // namespace fetch

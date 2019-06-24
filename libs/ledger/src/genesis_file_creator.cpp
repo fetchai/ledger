@@ -18,18 +18,18 @@
 
 #include "ledger/chain/address.hpp"
 #include "ledger/chain/block.hpp"
-#include "ledger/chain/constants.hpp"
-#include "storage/resource_mapper.hpp"
-#include "ledger/storage_unit/storage_unit_interface.hpp"
-#include "ledger/genesis_loading/genesis_file_creator.hpp"
 #include "ledger/chain/block_coordinator.hpp"
+#include "ledger/chain/constants.hpp"
 #include "ledger/consensus/stake_manager.hpp"
 #include "ledger/consensus/stake_snapshot.hpp"
+#include "ledger/genesis_loading/genesis_file_creator.hpp"
+#include "ledger/storage_unit/storage_unit_interface.hpp"
+#include "storage/resource_mapper.hpp"
 
-#include "variant/variant.hpp"
-#include "variant/variant_utils.hpp"
 #include "core/byte_array/decoders.hpp"
 #include "core/json/document.hpp"
+#include "variant/variant.hpp"
+#include "variant/variant_utils.hpp"
 
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
@@ -48,7 +48,7 @@ using fetch::byte_array::ConstByteArray;
 using fetch::json::JSONDocument;
 
 constexpr char const *LOGGING_NAME = "GenesisFile";
-constexpr int VERSION  = 1;
+constexpr int         VERSION      = 1;
 
 /**
  * Dump the contents of the variant as JSON to the target file
@@ -130,8 +130,7 @@ bool LoadFromFile(JSONDocument &document, std::string const &file_path)
   return success;
 }
 
-} // namespace
-
+}  // namespace
 
 /**
  * Create a 'state file' with the specified name
@@ -142,7 +141,7 @@ void GenesisFileCreator::CreateFile(std::string const &name)
 {
   FETCH_LOG_INFO(LOGGING_NAME, "Getting keys from state database");
 
-  Variant payload = Variant::Object();
+  Variant payload    = Variant::Object();
   payload["version"] = VERSION;
 
   Variant &state = payload["state"] = Variant::Object();
@@ -172,8 +171,9 @@ void GenesisFileCreator::LoadFile(std::string const &name)
   if (LoadFromFile(doc, name))
   {
     // check the version
-    int version{0};
-    bool const is_correct_version = variant::Extract(doc.root(), "version", version) && (version == VERSION);
+    int        version{0};
+    bool const is_correct_version =
+        variant::Extract(doc.root(), "version", version) && (version == VERSION);
 
     if (is_correct_version)
     {
@@ -238,7 +238,7 @@ void GenesisFileCreator::DumpStake(Variant &object)
       Variant &entry = stake_array[idx] = Variant::Object();
 
       entry["address"] = address.display();
-      entry["amount"] = stake;
+      entry["amount"]  = stake;
     });
   }
 }
@@ -315,22 +315,22 @@ void GenesisFileCreator::LoadStake(Variant const &object)
     for (std::size_t i = 0, end = stake_array.size(); i < end; ++i)
     {
       ConstByteArray display_address{};
-      uint64_t amount{0};
+      uint64_t       amount{0};
 
-      if (variant::Extract(stake_array[i], "address", display_address) && variant::Extract(stake_array[i], "amount", amount))
+      if (variant::Extract(stake_array[i], "address", display_address) &&
+          variant::Extract(stake_array[i], "amount", amount))
       {
         if (Address::Parse(display_address, address))
         {
-          FETCH_LOG_INFO(LOGGING_NAME, "Restoring stake. Address: ", display_address, " amount: ", amount);
+          FETCH_LOG_INFO(LOGGING_NAME, "Restoring stake. Address: ", display_address,
+                         " amount: ", amount);
 
           snapshot->UpdateStake(address, amount);
         }
       }
     }
-
-
   }
 }
 
-} // namespace ledger
+}  // namespace ledger
 }  // namespace fetch

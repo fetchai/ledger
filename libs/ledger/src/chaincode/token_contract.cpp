@@ -33,7 +33,8 @@ namespace fetch {
 namespace ledger {
 namespace {
 
-bool IsOperationValid(WalletRecord const &record, Transaction const &tx, ConstByteArray const &operation)
+bool IsOperationValid(WalletRecord const &record, Transaction const &tx,
+                      ConstByteArray const &operation)
 {
   // perform validation checks
   if (record.deed)
@@ -64,8 +65,7 @@ bool IsOperationValid(WalletRecord const &record, Transaction const &tx, ConstBy
 constexpr uint64_t MAX_TOKENS           = 0xFFFFFFFFFFFFFFFFull;
 constexpr uint64_t STAKE_WARM_UP_PERIOD = 5;
 
-} // namespace
-
+}  // namespace
 
 TokenContract::TokenContract()
 {
@@ -272,7 +272,8 @@ Contract::Status TokenContract::AddStake(Transaction const &tx, BlockIndex block
             record.stake += amount;
 
             // record the stake update event
-            stake_updates_.emplace_back(StakeUpdate{tx.from(), block + STAKE_WARM_UP_PERIOD, amount});
+            stake_updates_.emplace_back(
+                StakeUpdate{tx.from(), block + STAKE_WARM_UP_PERIOD, amount});
 
             // save the state
             SetStateRecord(record, tx.from().display());

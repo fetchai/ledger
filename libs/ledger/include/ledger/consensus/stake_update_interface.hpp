@@ -32,15 +32,15 @@ public:
   using BlockIndex  = uint64_t;
 
   // Construction / Destruction
-  StakeUpdateInterface() = default;
+  StakeUpdateInterface()          = default;
   virtual ~StakeUpdateInterface() = default;
 
   /// @name Stake Update Interface
   /// @{
-  virtual void AddStakeUpdate(BlockIndex block_index, Address const &address, StakeAmount stake) = 0;
+  virtual void AddStakeUpdate(BlockIndex block_index, Address const &address,
+                              StakeAmount stake) = 0;
   /// @}
-
 };
 
-} // namespace ledger
-} // namespace fetch
+}  // namespace ledger
+}  // namespace fetch

@@ -32,10 +32,10 @@ namespace {
 using fetch::ledger::StakeSnapshot;
 using fetch::ledger::Address;
 
-using RNG             = fetch::random::LinearCongruentialGenerator;
+using RNG              = fetch::random::LinearCongruentialGenerator;
 using StakeSnapshotPtr = std::unique_ptr<StakeSnapshot>;
-using StakeMap        = std::unordered_map<Address, uint64_t>;
-using AddressSet      = std::unordered_set<Address>;
+using StakeMap         = std::unordered_map<Address, uint64_t>;
+using AddressSet       = std::unordered_set<Address>;
 
 class StakeSnapshotTests : public ::testing::Test
 {
@@ -78,7 +78,7 @@ protected:
     return map;
   }
 
-  RNG rng_;
+  RNG              rng_;
   StakeSnapshotPtr snapshot_;
 };
 
@@ -159,11 +159,11 @@ TEST_F(StakeSnapshotTests, CheckStateModifications)
 
 TEST_F(StakeSnapshotTests, TooSmallSampleSize)
 {
-  auto const pool = GenerateRandomStakePool(3);
+  auto const pool   = GenerateRandomStakePool(3);
   auto const sample = snapshot_->BuildCommittee(200, 10);
 
   ASSERT_TRUE(static_cast<bool>(sample));
   ASSERT_EQ(pool.size(), sample->size());
 }
 
-} // namespace
+}  // namespace

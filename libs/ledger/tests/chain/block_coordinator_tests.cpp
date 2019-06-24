@@ -24,6 +24,7 @@
 #include "ledger/chain/constants.hpp"
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/chain/transaction_layout.hpp"
+#include "ledger/consensus/stake_manager_interface.hpp"
 #include "ledger/testing/block_generator.hpp"
 #include "ledger/transaction_status_cache.hpp"
 #include "testing/common_testing_functionality.hpp"
@@ -85,6 +86,7 @@ using TxCachePtr          = std::unique_ptr<TransactionStatusCache>;
 using State               = fetch::ledger::BlockCoordinator::State;
 using AddressPtr          = std::unique_ptr<Address>;
 using DAGPtr              = BlockCoordinator::DAGPtr;
+using StakeManagerPtr     = std::shared_ptr<fetch::ledger::StakeManagerInterface>;
 
 static constexpr char const *LOGGING_NAME = "BlockCoordinatorTests";
 static constexpr std::size_t NUM_LANES    = 1;
@@ -110,8 +112,8 @@ protected:
     block_sink_        = std::make_unique<FakeBlockSink>();
     tx_status_         = std::make_unique<TransactionStatusCache>();
     block_coordinator_ = std::make_unique<BlockCoordinator>(
-        *main_chain_, DAGPtr{}, *execution_manager_, *storage_unit_, *packer_, *block_sink_,
-        *tx_status_, FeatureFlags{}, signer, NUM_LANES, NUM_SLICES, 1u);
+        *main_chain_, DAGPtr{}, StakeManagerPtr{}, *execution_manager_, *storage_unit_, *packer_,
+        *block_sink_, *tx_status_, FeatureFlags{}, signer, NUM_LANES, NUM_SLICES, 1u);
 
     block_coordinator_->SetBlockPeriod(std::chrono::seconds{10});
     block_coordinator_->EnableMining(true);
@@ -207,6 +209,7 @@ protected:
     ASSERT_EQ(final_state, state_machine.state());
   }
 
+  StakeManagerPtr     stake_mgr_;
   AddressPtr          address_;
   MainChainPtr        main_chain_;
   ExecutionMgrPtr     execution_manager_;
@@ -1037,8 +1040,8 @@ protected:
     block_sink_        = std::make_unique<FakeBlockSink>();
     tx_status_         = std::make_unique<TransactionStatusCache>();
     block_coordinator_ = std::make_unique<BlockCoordinator>(
-        *main_chain_, DAGPtr{}, *execution_manager_, *storage_unit_, *packer_, *block_sink_,
-        *tx_status_, FeatureFlags{}, signer, NUM_LANES, NUM_SLICES, 1u);
+        *main_chain_, DAGPtr{}, StakeManagerPtr{}, *execution_manager_, *storage_unit_, *packer_,
+        *block_sink_, *tx_status_, FeatureFlags{}, signer, NUM_LANES, NUM_SLICES, 1u);
 
     block_coordinator_->SetBlockPeriod(std::chrono::seconds{10});
     block_coordinator_->EnableMining(true);

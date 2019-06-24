@@ -25,12 +25,12 @@
 #include "ledger/chaincode/contract_http_interface.hpp"
 #include "ledger/dag/dag_interface.hpp"
 
+#include "ledger/consensus/naive_entropy_generator.hpp"
 #include "ledger/consensus/stake_snapshot.hpp"
 #include "ledger/execution_manager.hpp"
 #include "ledger/storage_unit/lane_remote_control.hpp"
 #include "ledger/tx_query_http_interface.hpp"
 #include "ledger/tx_status_http_interface.hpp"
-#include "ledger/consensus/naive_entropy_generator.hpp"
 #include "network/generics/atomic_inflight_counter.hpp"
 #include "network/muddle/rpc/client.hpp"
 #include "network/muddle/rpc/server.hpp"
@@ -70,7 +70,7 @@ using EntropyPtr      = std::unique_ptr<ledger::EntropyGeneratorInterface>;
 using ConstByteArray  = byte_array::ConstByteArray;
 
 static const std::size_t HTTP_THREADS{4};
-static char const *SNAPSHOT_FILENAME = "snapshot.json";
+static char const *      SNAPSHOT_FILENAME = "snapshot.json";
 
 bool WaitForLaneServersToStart()
 {
@@ -206,7 +206,9 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
   , stake_{CreateStakeManager(cfg_.proof_of_stake, *entropy_)}
   , execution_manager_{std::make_shared<ExecutionManager>(
         cfg_.num_executors, cfg_.log2_num_lanes, storage_,
-        [this] { return std::make_shared<Executor>(storage_, stake_ ? &stake_->update_queue() : nullptr); })}
+        [this] {
+          return std::make_shared<Executor>(storage_, stake_ ? &stake_->update_queue() : nullptr);
+        })}
   , chain_{ledger::MainChain::Mode::LOAD_PERSISTENT_DB}
   , block_packer_{cfg_.log2_num_lanes}
   , block_coordinator_{chain_,
