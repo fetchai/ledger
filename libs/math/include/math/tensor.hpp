@@ -1703,19 +1703,7 @@ Tensor<T, C> Tensor<T, C>::InlineAdd(Type const &scalar)
 template <typename T, typename C>
 Tensor<T, C> Tensor<T, C>::InlineSubtract(Tensor const &other)
 {
-  if (other.shape() == shape_)
-  {
-    Subtract(*this, other, *this);
-  }
-  else
-  {
-    Tensor self_copy  = this->Copy();
-    Tensor other_copy = other.Copy();
-    if (!(Broadcast([](T x, T y) { return x - y; }, self_copy, other_copy, *this)))
-    {
-      throw std::runtime_error("arrays not broadcastable for InlineSubtract!");
-    }
-  }
+  Subtract(*this, other, *this);
   return *this;
 }
 
@@ -1739,19 +1727,7 @@ Tensor<T, C> Tensor<T, C>::InlineSubtract(Type const &scalar)
 template <typename T, typename C>
 Tensor<T, C> Tensor<T, C>::InlineReverseSubtract(Tensor const &other)
 {
-  if (other.shape() == shape_)
-  {
-    Subtract(other, *this, *this);
-  }
-  else
-  {
-    Tensor self_copy  = this->Copy();
-    Tensor other_copy = other.Copy();
-    if (!(Broadcast([](T x, T y) { return x - y; }, other_copy, self_copy, *this)))
-    {
-      throw std::runtime_error("arrays not broadcastable for InlineReverseSubtract!");
-    }
-  }
+  Subtract(other, *this, *this);
   return *this;
 }
 
@@ -1777,19 +1753,7 @@ Tensor<T, C> Tensor<T, C>::InlineReverseSubtract(Type const &scalar)
 template <typename T, typename C>
 Tensor<T, C> Tensor<T, C>::InlineMultiply(Tensor const &other)
 {
-  if (other.shape() == shape_)
-  {
-    Multiply(*this, other, *this);
-  }
-  else
-  {
-    Tensor self_copy  = this->Copy();
-    Tensor other_copy = other.Copy();
-    if (!(Broadcast([](T x, T y) { return x * y; }, other_copy, self_copy, *this)))
-    {
-      throw std::runtime_error("arrays not broadcastable for InlineMultiply!");
-    }
-  }
+  Multiply(*this, other, *this);
   return *this;
 }
 
@@ -1813,19 +1777,7 @@ Tensor<T, C> Tensor<T, C>::InlineMultiply(Type const &scalar)
 template <typename T, typename C>
 Tensor<T, C> Tensor<T, C>::InlineDivide(Tensor const &other)
 {
-  if (other.shape() == shape_)
-  {
-    Divide(*this, other, *this);
-  }
-  else
-  {
-    Tensor self_copy  = this->Copy();
-    Tensor other_copy = other.Copy();
-    if (!(Broadcast([](T x, T y) { return x / y; }, self_copy, other_copy, *this)))
-    {
-      throw std::runtime_error("arrays not broadcastable for InlineDivide!");
-    }
-  }
+  Divide(*this, other, *this);
   return *this;
 }
 
@@ -1849,19 +1801,7 @@ Tensor<T, C> Tensor<T, C>::InlineDivide(Type const &scalar)
 template <typename T, typename C>
 Tensor<T, C> Tensor<T, C>::InlineReverseDivide(Tensor const &other)
 {
-  if (other.shape() == shape_)
-  {
-    Divide(other, *this, *this);
-  }
-  else
-  {
-    Tensor self_copy  = this->Copy();
-    Tensor other_copy = other.Copy();
-    if (!(Broadcast([](T x, T y) { return x / y; }, other_copy, self_copy, *this)))
-    {
-      throw std::runtime_error("arrays not broadcastable for InlineReverseDivide!");
-    }
-  }
+  Divide(other, *this, *this);
   return *this;
 }
 

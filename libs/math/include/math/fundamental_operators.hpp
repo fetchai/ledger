@@ -408,19 +408,28 @@ template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, void> Subtract(ArrayType const &array1, ArrayType const &array2,
                                               ArrayType &ret)
 {
-  assert(array1.shape() == array2.shape());
-  assert(array1.shape() == ret.shape());
-
-  auto it1 = array1.cbegin();
-  auto it2 = array2.cbegin();
-  auto rit = ret.begin();
-
-  while (it1.is_valid())
+  if (array1.shape() == array2.shape())
   {
-    *rit = (*it1) - (*it2);
-    ++it1;
-    ++it2;
-    ++rit;
+    auto it1 = array1.cbegin();
+    auto it2 = array2.cbegin();
+    auto rit = ret.begin();
+    while (it1.is_valid())
+    {
+      *rit = (*it1) - (*it2);
+      ++it1;
+      ++it2;
+      ++rit;
+    }
+  }
+  else
+  {
+    ArrayType a = array1.Copy();
+    ArrayType b = array2.Copy();
+    if (!(Broadcast([](typename ArrayType::Type x, typename ArrayType::Type y) { return x - y; }, a,
+                    b, ret)))
+    {
+      throw std::runtime_error("arrays not broadcastable for InlineAdd!");
+    }
   }
 }
 
@@ -428,17 +437,28 @@ template <typename ArrayType>
 ::fetch::math::meta::IfIsMathArray<ArrayType, void> Multiply(ArrayType const &obj1,
                                                              ArrayType const &obj2, ArrayType &ret)
 {
-  assert(obj1.size() == obj2.size());
-  assert(ret.size() == obj2.size());
-  auto it1 = obj1.begin();
-  auto it2 = obj2.begin();
-  auto rit = ret.begin();
-  while (it1.is_valid())
+  if (obj1.shape() == obj2.shape())
   {
-    *rit = (*it1) * (*it2);
-    ++it1;
-    ++it2;
-    ++rit;
+    auto it1 = obj1.cbegin();
+    auto it2 = obj2.cbegin();
+    auto rit = ret.begin();
+    while (it1.is_valid())
+    {
+      *rit = (*it1) * (*it2);
+      ++it1;
+      ++it2;
+      ++rit;
+    }
+  }
+  else
+  {
+    ArrayType a = obj1.Copy();
+    ArrayType b = obj2.Copy();
+    if (!(Broadcast([](typename ArrayType::Type x, typename ArrayType::Type y) { return x * y; }, a,
+                    b, ret)))
+    {
+      throw std::runtime_error("arrays not broadcastable for InlineAdd!");
+    }
   }
 }
 
@@ -459,7 +479,7 @@ meta::IfIsMathArray<ArrayType, void> Multiply(ArrayType const &array, T const &s
 }
 
 /**
- * Divide ony array by another elementwise
+ * Divide any array by another elementwise
  * @tparam ArrayType
  * @param array1
  * @param array2
@@ -468,17 +488,28 @@ meta::IfIsMathArray<ArrayType, void> Multiply(ArrayType const &array, T const &s
 template <typename ArrayType>
 void Divide(ArrayType const &array1, ArrayType const &array2, ArrayType &ret)
 {
-  assert(array1.shape() == array2.shape());
-  assert(ret.shape() == array2.shape());
-  auto it1 = array1.begin();
-  auto it2 = array2.begin();
-  auto rit = ret.begin();
-  while (it1.is_valid())
+  if (array1.shape() == array2.shape())
   {
-    *rit = (*it1) / (*it2);
-    ++rit;
-    ++it1;
-    ++it2;
+    auto it1 = array1.cbegin();
+    auto it2 = array2.cbegin();
+    auto rit = ret.begin();
+    while (it1.is_valid())
+    {
+      *rit = (*it1) / (*it2);
+      ++it1;
+      ++it2;
+      ++rit;
+    }
+  }
+  else
+  {
+    ArrayType a = array1.Copy();
+    ArrayType b = array2.Copy();
+    if (!(Broadcast([](typename ArrayType::Type x, typename ArrayType::Type y) { return x / y; }, a,
+                    b, ret)))
+    {
+      throw std::runtime_error("arrays not broadcastable for InlineAdd!");
+    }
   }
 }
 
