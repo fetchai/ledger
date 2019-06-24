@@ -64,8 +64,12 @@ private:
 };
 
 /**
- *
+ * constructor sets up the neural net architecture and optimiser
  * @tparam TensorType
+ * @param estimator_config config parameters for setting up the network
+ * @param data_loader_ptr pointer to the dataloader for running the optimiser
+ * @param hidden_layers vector of hidden layers for defining the architecture
+ * @param optimiser_type type of optimiser to run
  */
 template <typename TensorType>
 DNNClassifier<TensorType>::DNNClassifier(
