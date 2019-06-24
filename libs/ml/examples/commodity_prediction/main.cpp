@@ -344,7 +344,8 @@ int main(int argc, char **argv)
   g_ptr->LoadStateDict(sd);
 
   /// FORWARD PASS PREDICTIONS ///
-  fetch::ml::CommodityDataLoader<fetch::math::Tensor<DataType>, fetch::math::Tensor<DataType>>
+  fetch::ml::dataloaders::CommodityDataLoader<fetch::math::Tensor<DataType>,
+                                              fetch::math::Tensor<DataType>>
       loader;
   loader.AddData(test_x_file, test_y_file);
 
