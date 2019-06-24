@@ -1,13 +1,3 @@
-function do_abs(value: UInt8)
-  printLn("Abs of " + toString(value) + ": ");
-  printLn(toString(abs(value)));
-endfunction
-
-function do_abs(value: UInt16)
-  printLn("Abs of " + toString(value) + ": ");
-  printLn(toString(abs(value)));
-endfunction
-
 function do_abs(value: Int32)
   printLn("Abs of " + toString(value) + ": ");
   printLn(toString(abs(value)));
