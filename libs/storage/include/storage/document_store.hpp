@@ -59,6 +59,8 @@ public:
 
   using index_type = typename key_value_index_type::index_type;
 
+  using ByteArray = byte_array::ByteArray;
+
   static constexpr char const *LOGGING_NAME = "DocumentStore";
 
   DocumentStore()                         = default;
@@ -224,6 +226,13 @@ public:
     bool operator!=(Iterator const &rhs) const
     {
       return !(wrapped_iterator_ == rhs.wrapped_iterator_);
+    }
+
+    ByteArray GetKey() const
+    {
+      auto kv = *wrapped_iterator_;
+
+      return kv.first;
     }
 
     Document operator*() const

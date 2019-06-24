@@ -27,6 +27,7 @@
 
 namespace fetch {
 namespace ml {
+namespace dataloaders {
 
 namespace {
 std::pair<math::SizeType, math::SizeType> count_rows_cols(std::string const &filename)
@@ -35,7 +36,7 @@ std::pair<math::SizeType, math::SizeType> count_rows_cols(std::string const &fil
   std::ifstream  file(filename);
   std::string    buf;
   std::string    delimiter = ",";
-  ulong          pos;
+  math::SizeType pos;
   math::SizeType row{0};
   math::SizeType col{0};
   while (std::getline(file, buf, '\n'))
@@ -237,5 +238,6 @@ void CommodityDataLoader<LabelType, InputType>::GetAtIndex(CommodityDataLoader::
   buffer_.second = std::vector<InputType>({data_.Slice(index).Copy()});
 }
 
+}  // namespace dataloaders
 }  // namespace ml
 }  // namespace fetch

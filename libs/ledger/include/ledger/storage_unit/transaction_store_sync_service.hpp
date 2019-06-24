@@ -114,7 +114,6 @@ public:
   // We need this for the testing.
   bool IsReady()
   {
-    FETCH_LOCK(is_ready_mutex_);
     return is_ready_;
   }
 
@@ -128,13 +127,6 @@ public:
 
 protected:
   void OnTransaction(TransactionPtr const &tx) override;
-
-  // Reverse bits in byte
-  uint8_t Reverse(uint8_t c)
-  {
-    // https://graphics.stanford.edu/~seander/bithacks.html#ReverseByteWith64Bits
-    return static_cast<uint8_t>(((c * 0x80200802ULL) & 0x0884422110ULL) * 0x0101010101ULL >> 32);
-  }
 
 private:
   State OnInitial();
@@ -168,10 +160,7 @@ private:
   uint64_t                                                     root_size_ = 0;
   std::unordered_map<PromiseOfTxList::PromiseCounter, uint8_t> promise_id_to_roots_;
 
-  Mutex mutex_{__LINE__, __FILE__};
-
-  Mutex is_ready_mutex_{__LINE__, __FILE__};
-  bool  is_ready_ = false;
+  std::atomic_bool is_ready_{false};
 };
 
 }  // namespace ledger

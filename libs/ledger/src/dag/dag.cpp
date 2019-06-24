@@ -24,6 +24,8 @@
 #include "ledger/dag/dag.hpp"
 #include "ledger/dag/dag_node.hpp"
 
+#include <random>
+
 using namespace fetch::ledger;
 
 DAG::DAG(std::string db_name, bool load, CertificatePtr certificate)
@@ -267,7 +269,10 @@ void DAG::SetReferencesInternal(DAGNodePtr node)
       dag_ids.push_back(it->first);
     }
 
-    std::random_shuffle(dag_ids.begin(), dag_ids.end());
+    // TODO (1223) probably not the best place to instantiate/store the random device
+    std::random_device rd;
+    std::mt19937       g(rd());
+    std::shuffle(dag_ids.begin(), dag_ids.end(), g);
 
     while (prevs.size() < PARAMETER_REFERENCES_TO_BE_TIP && !dag_ids.empty())
     {

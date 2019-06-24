@@ -234,5 +234,23 @@ bool CachedStorageAdapter::HasCacheEntry(ResourceAddress const &address) const
   return cache_.find(address) != cache_.end();
 }
 
+/**
+ * Return all valid keys
+ *
+ */
+CachedStorageAdapter::Keys CachedStorageAdapter::KeyDump() const
+{
+  return storage_.KeyDump();
+}
+
+/**
+ * Reset the database
+ *
+ */
+void CachedStorageAdapter::Reset()
+{
+  return storage_.Reset();
+}
+
 }  // namespace ledger
 }  // namespace fetch

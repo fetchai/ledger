@@ -327,6 +327,17 @@ void Constellation::Run(UriList const &initial_peers, core::WeakRunnable bootstr
     }
   }
 
+  // BEFORE the block coordinator starts its state set up special genesis
+  if (cfg_.load_state_file)
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "Loading from genesis save file.");
+
+    GenesisFileCreator creator(block_coordinator_, *storage_);
+    creator.LoadFile("genesis_snapshot.json");
+
+    FETCH_LOG_INFO(LOGGING_NAME, "Loaded from genesis save file.");
+  }
+
   // reactor important to run the block/chain state machine
   reactor_.Start();
 
@@ -396,6 +407,14 @@ void Constellation::Run(UriList const &initial_peers, core::WeakRunnable bootstr
   //---------------------------------------------------------------
 
   FETCH_LOG_INFO(LOGGING_NAME, "Shutting down...");
+
+  if (cfg_.dump_state_file)
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "Creating genesis save file.");
+
+    GenesisFileCreator creator(block_coordinator_, *storage_);
+    creator.CreateFile("genesis_snapshot.json");
+  }
 
   http_.Stop();
   p2p_.Stop();

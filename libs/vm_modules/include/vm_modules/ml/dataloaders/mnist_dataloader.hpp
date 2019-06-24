@@ -66,7 +66,8 @@ public:
     loader_.Display((*d).GetTensor());
   }
 
-  fetch::ml::MNISTLoader<fetch::math::Tensor<float>, fetch::math::Tensor<float>> loader_;
+  fetch::ml::dataloaders::MNISTLoader<fetch::math::Tensor<float>, fetch::math::Tensor<float>>
+      loader_;
 };
 
 }  // namespace ml
