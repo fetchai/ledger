@@ -37,7 +37,6 @@ public:
   using Committee = std::vector<Address>;
   using CommitteePtr = std::shared_ptr<Committee>;
 
-
   // Construction / Destruction
   StakeSnapshot()                      = default;
   StakeSnapshot(StakeSnapshot const &) = default;
@@ -57,6 +56,9 @@ public:
   uint64_t total_stake() const;
   std::size_t size() const;
   /// @}
+
+  template <typename Functor>
+  void IterateOver(Functor &&functor) const;
 
   // Operators
   StakeSnapshot &operator=(StakeSnapshot const &) = default;
@@ -97,6 +99,22 @@ inline std::size_t StakeSnapshot::size() const
 {
   return address_index_.size();
 }
+
+/**
+ * Iterate over the contents of the snapshot
+ *
+ * @tparam Functor The type of the functor
+ * @param functor The reference to the functor
+ */
+template <typename Functor>
+void StakeSnapshot::IterateOver(Functor &&functor) const
+{
+  for (auto const &element : address_index_)
+  {
+    functor(element.first, element.second->stake);
+  }
+}
+
 
 }  // namespace ledger
 }  // namespace fetch

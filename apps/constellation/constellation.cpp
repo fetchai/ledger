@@ -57,6 +57,7 @@ using fetch::network::Uri;
 using fetch::network::Peer;
 using fetch::ledger::Address;
 using fetch::ledger::StakeSnapshot;
+using fetch::ledger::GenesisFileCreator;
 
 using ExecutorPtr = std::shared_ptr<Executor>;
 
@@ -69,6 +70,7 @@ using EntropyPtr      = std::unique_ptr<ledger::EntropyGeneratorInterface>;
 using ConstByteArray  = byte_array::ConstByteArray;
 
 static const std::size_t HTTP_THREADS{4};
+static char const *SNAPSHOT_FILENAME = "snapshot.json";
 
 bool WaitForLaneServersToStart()
 {
@@ -269,35 +271,6 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
   {
     http_.AddModule(*module);
   }
-
-  // TODO(EJF): Remove
-#if 1
-
-  if (stake_)
-  {
-    std::vector<ConstByteArray> initial_addresses = {
-        "2bBYqHp5uK8fQgTqeBP3B3rogHQPYiC6wZcnBP2WVocsuiMgg9",
-//        "BgrwqWGtyCmSKc83Ht3XSNyNujrNgiFp8kQjwhPXTsPvxcXbJ",
-    };
-
-    // build up the stake snapshot
-    StakeSnapshot snapshot;
-
-    Address address;
-    for (auto const &display_address : initial_addresses)
-    {
-      if (Address::Parse(display_address, address))
-      {
-        FETCH_LOG_INFO(LOGGING_NAME, "Adding staker: ", display_address);
-
-        snapshot.UpdateStake(address, 500);
-      }
-    }
-
-    // reset the stake
-    stake_->Reset(snapshot, 1);
-  }
-#endif
 }
 
 /**
@@ -387,8 +360,8 @@ void Constellation::Run(UriList const &initial_peers, core::WeakRunnable bootstr
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Loading from genesis save file.");
 
-    GenesisFileCreator creator(block_coordinator_, *storage_);
-    creator.LoadFile("genesis_snapshot.json");
+    GenesisFileCreator creator(block_coordinator_, *storage_, stake_.get());
+    creator.LoadFile(SNAPSHOT_FILENAME);
 
     FETCH_LOG_INFO(LOGGING_NAME, "Loaded from genesis save file.");
   }
@@ -467,8 +440,8 @@ void Constellation::Run(UriList const &initial_peers, core::WeakRunnable bootstr
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Creating genesis save file.");
 
-    GenesisFileCreator creator(block_coordinator_, *storage_);
-    creator.CreateFile("genesis_snapshot.json");
+    GenesisFileCreator creator(block_coordinator_, *storage_, stake_.get());
+    creator.CreateFile(SNAPSHOT_FILENAME);
   }
 
   http_.Stop();

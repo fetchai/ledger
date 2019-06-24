@@ -51,8 +51,10 @@ public:
   // Accessors
   StakeUpdateQueue &update_queue();
   StakeUpdateQueue const &update_queue() const;
+  std::size_t committee_size() const;
 
   CommitteePtr GetCommittee(Block const &previous);
+  std::shared_ptr<StakeSnapshot const> GetCurrentStakeSnapshot() const;
 
   void Reset(StakeSnapshot const &snapshot, std::size_t committee_size);
   void Reset(StakeSnapshot &&snapshot, std::size_t committee_size);
@@ -80,6 +82,11 @@ private:
   BlockIndex                 current_block_index_{0}; ///< Block index of most recent snapshot
 };
 
+inline std::size_t StakeManager::committee_size() const
+{
+  return committee_size_;
+}
+
 inline StakeUpdateQueue &StakeManager::update_queue()
 {
   return update_queue_;
@@ -88,6 +95,11 @@ inline StakeUpdateQueue &StakeManager::update_queue()
 inline StakeUpdateQueue const &StakeManager::update_queue() const
 {
   return update_queue_;
+}
+
+inline std::shared_ptr<StakeSnapshot const> StakeManager::GetCurrentStakeSnapshot() const
+{
+  return current_;
 }
 
 } // namespace ledger
