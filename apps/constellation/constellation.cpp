@@ -56,7 +56,6 @@ using fetch::network::AtomicCounterName;
 using fetch::network::Uri;
 using fetch::network::Peer;
 using fetch::ledger::Address;
-using fetch::ledger::StakeSnapshot;
 using fetch::ledger::GenesisFileCreator;
 
 using ExecutorPtr = std::shared_ptr<Executor>;
