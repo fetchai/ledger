@@ -2369,30 +2369,28 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::Pow(FixedPoint<I, F> const &x,
       return POSITIVE_INFINITY;
     }
   }
-  else if (x < _0)
+  else if (y.Fraction() == 0)
   {
-    if (y.Fraction() != 0)
+    FixedPoint pow{x};
+    FixedPoint t{Abs(y)};
+    while (--t)
     {
-      fp_state |= STATE_NAN;
-      return NaN;
+      pow *= x;
+    }
+    if (y > _0)
+    {
+      return pow;
     }
     else
     {
-      FixedPoint pow{x};
-      FixedPoint t{Abs(y)};
-      while (--t)
-      {
-        pow *= x;
-      }
-      if (y > _0)
-      {
-        return pow;
-      }
-      else
-      {
-        return _1 / pow;
-      }
+      return _1 / pow;
     }
+  }
+  else if (x < _0)
+  {
+    // Already checked the case for integer y
+    fp_state |= STATE_NAN;
+    return NaN;
   }
 
   FixedPoint s   = _1 * ((y.Integer() + 1) & 1) + Sign(x) * (y.Integer() & 1);
