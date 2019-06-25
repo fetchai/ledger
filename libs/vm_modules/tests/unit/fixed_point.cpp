@@ -33,7 +33,6 @@ public:
 
 bool RunTest(VmTestToolkit &toolkit, std::stringstream &stdout, char const *TEXT, double gt)
 {
-  auto m = toolkit.module();
   EXPECT_TRUE(toolkit.Compile(TEXT));
   EXPECT_TRUE(toolkit.Run());
   EXPECT_NEAR(std::stod(stdout.str()), gt,
