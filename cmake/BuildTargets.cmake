@@ -239,6 +239,9 @@ function (configure_vendor_targets)
   target_include_directories(vendor-msgpack INTERFACE ${FETCH_ROOT_VENDOR_DIR}/msgpack/include)
   target_compile_definitions(vendor-msgpack INTERFACE -DMSGPACK_CXX11=ON)
 
+  # Spdlog
+  add_subdirectory(${FETCH_ROOT_VENDOR_DIR}/spdlog)
+
 endfunction (configure_vendor_targets)
 
 function (configure_library_targets)
