@@ -54,16 +54,14 @@ AUTOPEP8_REQUIRED_VERSION = '1.4.4'
 
 
 def find_excluded_dirs():
-    def get_abspath(name):
-        return abspath(join(PROJECT_ROOT, name))
-
     def is_cmake_build_tree_root(dir_path):
         return isfile(join(dir_path, 'CMakeCache.txt'))
 
     def is_git_dir(dir_path):
         return basename(dir_path) == '.git'
 
-    directories_to_exclude = [get_abspath('vendor')]
+    directories_to_exclude = [abspath(join(PROJECT_ROOT, name))
+                              for name in ('vendor',)]
     for root, dirs, files in os.walk(PROJECT_ROOT):
         if is_cmake_build_tree_root(root) or is_git_dir(root):
             directories_to_exclude += [root]
@@ -220,10 +218,7 @@ def fix_license_header(text, path_to_file):
 
 @include_patterns('*.py')
 def format_python(text, path_to_file):
-    if text.strip():
-        return autopep8.fix_code(text)
-
-    return text.strip()
+    return autopep8.fix_code(text)
 
 
 @include_patterns('*.hpp')
@@ -262,10 +257,7 @@ def fix_cmake_version_requirements(text, path_to_file):
 
 @include_patterns('*')
 def fix_terminal_newlines(text, path_to_file):
-    if text.strip():
-        return text.rstrip() + '\n'
-
-    return text.strip()
+    return text.strip() + '\n'
 
 
 def check_for_headers_with_non_hpp_extension(file_paths):
@@ -376,22 +368,24 @@ TRANSFORMATIONS = [
 
 def apply_transformations_to_file(path_to_file):
     try:
-        with open(path_to_file, 'r+', encoding='utf-8') as f:
-            if any([fnmatch.fnmatch(basename(path_to_file), pattern) for pattern in TEXT_FILE_PATTERNS]):
-                try:
-                    original_text = f.read()
-                    text = original_text
+        if any([fnmatch.fnmatch(basename(path_to_file), pattern)
+                for pattern in TEXT_FILE_PATTERNS]):
+            with open(path_to_file, 'r+', encoding='utf-8') as f:
+                original_text = f.read()
+                text = original_text
 
+                if text.strip():
                     for transformation in TRANSFORMATIONS:
                         text = transformation(text, path_to_file)
+                else:
+                    text = text.strip()
 
-                    if text != original_text:
-                        f.seek(0)
-                        f.truncate(0)
-                        f.write(text)
-                except:
-                    output('Error: could not read {}'.format(path_to_file))
+                if text != original_text:
+                    f.seek(0)
+                    f.truncate(0)
+                    f.write(text)
     except:
+        output('Error: failed to process {}'.format(path_to_file))
         output(traceback.format_exc())
         raise
 
