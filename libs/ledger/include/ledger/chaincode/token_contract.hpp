@@ -33,9 +33,9 @@ class TokenContract : public Contract
 public:
   struct StakeUpdate
   {
-    Address  address;         ///< The address of the staker
-    uint64_t from;            ///< The block index from which the stake becomes active
-    uint64_t amount;          ///< The amount to stake
+    Address  address;  ///< The address of the staker
+    uint64_t from;     ///< The block index from which the stake becomes active
+    uint64_t amount;   ///< The amount to stake
   };
 
   using StakeUpdates = std::vector<StakeUpdate>;

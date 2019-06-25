@@ -162,10 +162,10 @@ struct WalletRecord
   {
     // Point to stake equal to or greater than block index
     auto stop_point = cooldown_stake.lower_bound(block_index);
-    auto it = cooldown_stake.begin();
+    auto it         = cooldown_stake.begin();
 
     // Iterate upwards collecting stake
-    while(it != cooldown_stake.end() && it != stop_point)
+    while (it != cooldown_stake.end() && it != stop_point)
     {
       balance += it->second;
       it = cooldown_stake.erase(it);
@@ -189,7 +189,7 @@ struct WalletRecord
   friend void Deserialize(T &serializer, WalletRecord &b)
   {
     bool has_deed = false;
-    serializer >>  b.balance >> b.stake >> has_deed;
+    serializer >> b.balance >> b.stake >> has_deed;
     if (has_deed)
     {
       if (!b.deed)
@@ -199,7 +199,7 @@ struct WalletRecord
       serializer >> *b.deed;
     }
 
-    serializer >>  b.cooldown_stake;
+    serializer >> b.cooldown_stake;
   }
 };
 
