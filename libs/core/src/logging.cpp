@@ -39,6 +39,7 @@ public:
 
   void Log(LogLevel level, char const *name, std::string &&message);
   void SetLevel(char const *name, LogLevel level);
+  LogLevelMap GetLogLevelMap();
 
   // Operators
   LogRegistry &operator=(LogRegistry const &) = delete;
@@ -57,9 +58,42 @@ private:
   Registry registry_;
 };
 
+constexpr LogLevel DEFAULT_LEVEL = LogLevel::INFO;
+
 LogRegistry registry_;
 
-spdlog::level::level_enum ConvertLevel(LogLevel level)
+LogLevel ConvertToLevel(spdlog::level::level_enum level)
+{
+  LogLevel new_level = LogLevel::INFO;
+
+  switch (level)
+  {
+  case spdlog::level::trace:
+    new_level = LogLevel::TRACE;
+    break;
+  case spdlog::level::debug:
+    new_level = LogLevel::DEBUG;
+    break;
+  case spdlog::level::info:
+    new_level = LogLevel::INFO;
+    break;
+  case spdlog::level::warn:
+    new_level = LogLevel::WARNING;
+    break;
+  case spdlog::level::err:
+    new_level = LogLevel::ERROR;
+    break;
+  case spdlog::level::critical:
+    new_level = LogLevel::CRITICAL;
+    break;
+  case spdlog::level::off:
+    break;
+  }
+
+  return new_level;
+}
+
+spdlog::level::level_enum ConvertFromLevel(LogLevel level)
 {
   spdlog::level::level_enum new_level = spdlog::level::info;
 
@@ -97,13 +131,28 @@ LogRegistry::LogRegistry()
 void LogRegistry::Log(LogLevel level, char const *name, std::string &&message)
 {
   FETCH_LOCK(lock_);
-  GetLogger(name).log(ConvertLevel(level), message);
+  GetLogger(name).log(ConvertFromLevel(level), message);
 }
 
 void LogRegistry::SetLevel(char const *name, LogLevel level)
 {
   FETCH_LOCK(lock_);
-  GetLogger(name).set_level(ConvertLevel(level));
+  GetLogger(name).set_level(ConvertFromLevel(level));
+}
+
+LogLevelMap LogRegistry::GetLogLevelMap()
+{
+  FETCH_LOCK(lock_);
+
+  LogLevelMap level_map{};
+  level_map.reserve(registry_.size());
+
+  for (auto const &element : registry_)
+  {
+    level_map[element.first] = ConvertToLevel(element.second->level());
+  }
+
+  return level_map;
 }
 
 LogRegistry::Logger &LogRegistry::GetLogger(char const *name)
@@ -113,7 +162,7 @@ LogRegistry::Logger &LogRegistry::GetLogger(char const *name)
   {
     // create the new logger instance
     auto logger = spdlog::stdout_color_mt(name, spdlog::color_mode::automatic);
-    logger->set_level(ConvertLevel(DEFAULT_LEVEL));
+    logger->set_level(ConvertFromLevel(DEFAULT_LEVEL));
 
     // keep a reference of it
     registry_[name] = logger;
@@ -136,6 +185,11 @@ void SetLogLevel(char const *name, LogLevel level)
 void Log(LogLevel level, char const *name, std::string &&message)
 {
   registry_.Log(level, name, std::move(message));
+}
+
+LogLevelMap GetLogLevelMap()
+{
+  return registry_.GetLogLevelMap();
 }
 
 } // namespace fetch

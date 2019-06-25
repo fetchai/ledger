@@ -18,6 +18,8 @@
 //------------------------------------------------------------------------------
 
 #include <sstream>
+#include <string>
+#include <unordered_map>
 
 namespace fetch {
 namespace detail {
@@ -68,7 +70,8 @@ enum class LogLevel
   CRITICAL,
 };
 
-constexpr LogLevel DEFAULT_LEVEL = LogLevel::INFO;
+using LogLevelMap = std::unordered_map<std::string, LogLevel>;
+
 
 /// @name Log Library Functions
 /// @{
@@ -89,6 +92,13 @@ void SetLogLevel(char const *name, LogLevel level);
  * @param message The message
  */
 void Log(LogLevel level, char const *name, std::string &&message);
+
+/**
+ * Retrieve the current map of active loggers and the configured level
+ *
+ * @return The current map of levels
+ */
+LogLevelMap GetLogLevelMap();
 
 /// @}
 
@@ -138,7 +148,15 @@ void LogCriticalV2(char const *name, Args &&... args)
 /// @{
 
 // Debug
-#if FETCH_COMPILE_LOGGING_LEVEL >= 4
+#if FETCH_COMPILE_LOGGING_LEVEL >= 6
+#define FETCH_LOG_TRACE_ENABLED
+#define FETCH_LOG_TRACE(name, ...) fetch::LogTraceV2(name, __VA_ARGS__)
+#else
+#define FETCH_LOG_TRACE(name, ...) (void)name
+#endif
+
+// Debug
+#if FETCH_COMPILE_LOGGING_LEVEL >= 5
 #define FETCH_LOG_DEBUG_ENABLED
 #define FETCH_LOG_DEBUG(name, ...) fetch::LogDebugV2(name, __VA_ARGS__)
 #else
@@ -146,7 +164,7 @@ void LogCriticalV2(char const *name, Args &&... args)
 #endif
 
 // Info
-#if FETCH_COMPILE_LOGGING_LEVEL >= 3
+#if FETCH_COMPILE_LOGGING_LEVEL >= 4
 #define FETCH_LOG_INFO_ENABLED
 #define FETCH_LOG_INFO(name, ...) fetch::LogInfoV2(name, __VA_ARGS__)
 #else
@@ -154,7 +172,7 @@ void LogCriticalV2(char const *name, Args &&... args)
 #endif
 
 // Warn
-#if FETCH_COMPILE_LOGGING_LEVEL >= 2
+#if FETCH_COMPILE_LOGGING_LEVEL >= 3
 #define FETCH_LOG_WARN_ENABLED
 #define FETCH_LOG_WARN(name, ...) fetch::LogWarningV2(name, __VA_ARGS__)
 #else
@@ -162,11 +180,19 @@ void LogCriticalV2(char const *name, Args &&... args)
 #endif
 
 // Error
-#if FETCH_COMPILE_LOGGING_LEVEL >= 1
+#if FETCH_COMPILE_LOGGING_LEVEL >= 2
 #define FETCH_LOG_ERROR_ENABLED
 #define FETCH_LOG_ERROR(name, ...) fetch::LogErrorV2(name, __VA_ARGS__)
 #else
 #define FETCH_LOG_ERROR(name, ...) (void)name
+#endif
+
+// Critical
+#if FETCH_COMPILE_LOGGING_LEVEL >= 1
+#define FETCH_LOG_CRITICAL_ENABLED
+#define FETCH_LOG_CRITICAL(name, ...) fetch::LogCriticalV2(name, __VA_ARGS__)
+#else
+#define FETCH_LOG_CRITICAL(name, ...) (void)name
 #endif
 
 #define FETCH_LOG_VARIABLE(x) (void)x
