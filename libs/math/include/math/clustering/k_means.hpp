@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/vector.hpp"
 #include "math/distance/euclidean.hpp"
 #include "math/standard_functions/pow.hpp"
 #include "math/tensor.hpp"
@@ -180,8 +181,8 @@ public:
     }
 
     // initialise size of euclidean distance container
-    k_euclids_      = std::vector<ArrayType>(n_clusters_);
-    empty_clusters_ = std::vector<SizeType>(n_clusters_);
+    k_euclids_      = fetch::core::Vector<ArrayType>(n_clusters_);
+    empty_clusters_ = fetch::core::Vector<SizeType>(n_clusters_);
   };
 
 private:
@@ -205,10 +206,10 @@ private:
    */
   void InitialiseKMeans(ArrayType const &data)
   {
-    data_idxs_ = std::vector<SizeType>(n_points_);
+    data_idxs_ = fetch::core::Vector<SizeType>(n_points_);
     if (k_inference_mode_ == KInferenceMode::Off)
     {
-      k_count_ = std::vector<SizeType>(n_clusters_, 0);
+      k_count_ = fetch::core::Vector<SizeType>(n_clusters_, 0);
 
       // shuffle the data
       std::iota(std::begin(data_idxs_), std::end(data_idxs_), 0);
@@ -443,14 +444,14 @@ private:
     SizeType n_remaining_data_points = n_points_ - 1;
     SizeType n_remaining_clusters    = n_clusters_ - 1;
 
-    std::vector<SizeType> assigned_data_points{data_idxs_[0]};
+    fetch::core::Vector<SizeType> assigned_data_points{data_idxs_[0]};
 
-    std::vector<ArrayType> cluster_distances(n_clusters_);
-    SizeType               assigned_cluster = 0;
+    fetch::core::Vector<ArrayType> cluster_distances(n_clusters_);
+    SizeType                       assigned_cluster = 0;
 
-    std::vector<typename ArrayType::Type> weights(
+    fetch::core::Vector<typename ArrayType::Type> weights(
         n_points_);  // weight for choosing each data point
-    std::vector<typename ArrayType::Type> interval(
+    fetch::core::Vector<typename ArrayType::Type> interval(
         n_points_);  // interval for defining random distribution
     std::iota(std::begin(interval), std::end(interval), 0);  // fill interval with range
 
@@ -739,8 +740,8 @@ private:
 
   std::default_random_engine rng_;
 
-  std::vector<SizeType> data_idxs_;       // a vector of indices to the data used for shuffling
-  std::vector<SizeType> empty_clusters_;  // a vector tracking whenever a cluster goes empty
+  fetch::core::Vector<SizeType> data_idxs_;  // a vector of indices to the data used for shuffling
+  fetch::core::Vector<SizeType> empty_clusters_;  // a vector tracking whenever a cluster goes empty
 
   ArrayType k_means_;       // current cluster centres
   ArrayType prev_k_means_;  // previous cluster centres (for checking convergence)
@@ -751,8 +752,8 @@ private:
                  prev_k_assignment_;  // previous data to cluster assignment (for checkign convergence)
   ClusteringType reassigned_k_;       // reassigned data to cluster assignment
 
-  std::vector<SizeType>  k_count_;    // count of how many data points assigned per cluster
-  std::vector<ArrayType> k_euclids_;  // container for current euclid distances
+  fetch::core::Vector<SizeType>  k_count_;    // count of how many data points assigned per cluster
+  fetch::core::Vector<ArrayType> k_euclids_;  // container for current euclid distances
 
   // map previously assigned clusters to current clusters
   std::unordered_map<SizeType, SizeType>
