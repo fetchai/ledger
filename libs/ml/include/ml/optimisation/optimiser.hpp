@@ -22,6 +22,8 @@
 #include "ml/graph.hpp"
 #include "ml/ops/loss_functions/criterion.hpp"
 
+using namespace std::chrono;
+
 namespace fetch {
 namespace ml {
 namespace optimisers {
@@ -188,8 +190,34 @@ typename T::Type Optimiser<T, C>::Run(
   DataType                                     loss_sum{0};
   SizeType                                     step{0};
   std::pair<ArrayType, std::vector<ArrayType>> input;
+
+  high_resolution_clock::time_point  curTime;
+  high_resolution_clock::time_point  prevTime = high_resolution_clock::now();
+  SizeType prevStep{0};
+
   while (!loader.IsDone() && step < subset_size)
   {
+      // print the training stats every batch
+      curTime = high_resolution_clock::now();
+      duration<double> time_span = duration_cast<duration<double>>(curTime - prevTime);
+      if (subset_size == fetch::math::numeric_max<math::SizeType>()){
+          std::cout << "\r" << step  << " (??%) -- "
+                    << "learning rate: " << learning_rate_ << " -- "
+                    << static_cast<double>(step - prevStep) / time_span.count() << " words / sec"
+                    << std::flush;
+      }else{
+          std::cout << "\r" << step << " / " << subset_size << " ("
+                    << static_cast<SizeType>(100.0 * static_cast<double>(step) /
+                                             static_cast<double>(subset_size))
+                    << "%) -- "
+                    << "learning rate: " << learning_rate_ << " -- "
+                    << static_cast<double>(step - prevStep) / time_span.count() << " words / sec"
+                    << std::flush;
+      }
+      prevTime = curTime;
+      prevStep = step;
+
+
     loss = DataType{0};
 
     // Do batch back-propagation
@@ -222,6 +250,8 @@ typename T::Type Optimiser<T, C>::Run(
 
   UpdateLearningRate();
   epoch_++;
+
+  std::cout << std::endl << "One epoch done!!" << std::endl;
 
   return loss_sum / static_cast<DataType>(step);
 }

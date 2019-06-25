@@ -56,10 +56,13 @@ struct TrainingParams
   SizeType    output_size     = 1;
   SizeType    batch_size      = 128;            // training data batch size
   SizeType    embedding_size  = 32;             // dimension of embedding vec
-  SizeType    training_epochs = 100000;         // total number of training epochs
+  SizeType    training_epochs = 5;         // total number of training epochs
   double      learning_rate   = 0.1;            // alpha - the learning rate
   SizeType    k               = 10;             // how many nearest neighbours to compare against
-  std::string test_word       = "action";       // test word to consider
+  std::string word0       = "three";       // test word to consider
+  std::string word1       = "France";
+  std::string word2       = "Paris";
+  std::string word3       = "Italy";
   std::string save_loc        = "./model.fba";  // save file location for exporting graph
 };
 
@@ -99,18 +102,67 @@ std::string Model(fetch::ml::Graph<ArrayType> &g, SizeType embeddings_size, Size
   return ret_name;
 }
 
+void NormVector(ArrayType &vector)
+{
+    ArrayType::Type l2 = 0;
+    for (auto &val : vector)
+    {
+        l2 += (val * val);
+    }
+    l2 = sqrt(l2);
+    for (auto &val : vector)
+    {
+        val /= l2;
+    }
+}
+
+void PrintWordAnology(SkipGramLoader<ArrayType> const &dl, ArrayType const &embeddings,
+        std::string const &word1, std::string const &word2, std::string const &word3, SizeType k){
+    ArrayType arr = embeddings;
+
+    SizeType word1_idx = dl.VocabLookup(word1);
+    SizeType word2_idx = dl.VocabLookup(word2);
+    SizeType word3_idx = dl.VocabLookup(word3);
+
+    if(word1_idx > dl.VocabSize() || word2_idx > dl.VocabSize() || word3_idx > dl.VocabSize()){
+        std::cout << "WARNING! not all to-be-tested words are in vocabulary" << std::endl;
+    }else{
+        std::cout << "Find word that to " << word3 << " is what " << word2 << " is to " << word1 << std::endl;
+    }
+
+    ArrayType word1_vec = embeddings.Slice(word1_idx).Copy();
+    ArrayType word2_vec = embeddings.Slice(word2_idx).Copy();
+    ArrayType word3_vec = embeddings.Slice(word3_idx).Copy();
+
+    NormVector(word1_vec);
+    NormVector(word2_vec);
+    NormVector(word3_vec);
+
+    ArrayType word4_vec = word2_vec - word1_vec + word3_vec;
+
+    std::vector<std::pair<typename ArrayType::SizeType, typename ArrayType::Type>> output =
+            fetch::math::clustering::KNNCosine(arr, word4_vec, k);
+
+    for (std::size_t j = 0; j < output.size(); ++j)
+    {
+        std::cout << "output.at(j).first: " << dl.VocabLookup(output.at(j).first) << std::endl;
+        std::cout << "output.at(j).second: " << output.at(j).second << "\n" << std::endl;
+    }
+}
+
 void PrintKNN(SkipGramLoader<ArrayType> const &dl, ArrayType const &embeddings,
-              std::string const &word, SizeType k)
+              std::string const &word0, SizeType k)
 {
   ArrayType arr = embeddings;
 
-  if (dl.VocabLookup(word) > dl.VocabSize())
+  if (dl.VocabLookup(word0) > dl.VocabSize())
   {
-    std::cout << "WARNING! could not find [" + word + "] in vocabulary" << std::endl;
+    std::cout << "WARNING! could not find [" + word0 + "] in vocabulary" << std::endl;
   }
   else
   {
-    ArrayType one_vector = embeddings.Slice(dl.VocabLookup(word)).Copy();
+      SizeType idx = dl.VocabLookup(word0);
+    ArrayType one_vector = embeddings.Slice(idx).Copy();
     std::vector<std::pair<typename ArrayType::SizeType, typename ArrayType::Type>> output =
         fetch::math::clustering::KNNCosine(arr, one_vector, k);
 
@@ -122,8 +174,28 @@ void PrintKNN(SkipGramLoader<ArrayType> const &dl, ArrayType const &embeddings,
   }
 }
 
+void PrintEmbedding(Graph<ArrayType> const &g, std::string const &skip_gram_name,
+                    SkipGramLoader<ArrayType> const &dl, std::string word0){
+    // first get hold of the skipgram layer by searching the return name in the graph
+    std::shared_ptr<fetch::ml::layers::SkipGram<ArrayType>> sg_layer =
+            std::dynamic_pointer_cast<fetch::ml::layers::SkipGram<ArrayType>>(g.GetNode(skip_gram_name));
+
+    // next get hold of the embeddings
+    ArrayType embeddings = sg_layer->GetEmbeddings(sg_layer)->get_weights();
+
+    if (dl.VocabLookup(word0) > dl.VocabSize())
+    {
+        std::cout << "WARNING! could not find [" + word0 + "] in vocabulary" << std::endl;
+    }
+    else {
+        SizeType idx = dl.VocabLookup(word0);
+        ArrayType one_vector = embeddings.Slice(idx).Copy();
+        std::cout << "w2v vector: " << one_vector.ToString() << std::endl;
+    }
+}
+
 void TestEmbeddings(Graph<ArrayType> const &g, std::string const &skip_gram_name,
-                    SkipGramLoader<ArrayType> const &dl, std::string test_word, SizeType K)
+                    SkipGramLoader<ArrayType> const &dl, std::string word0, std::string word1, std::string word2, std::string word3, SizeType K)
 {
 
   // first get hold of the skipgram layer by searching the return name in the graph
@@ -134,7 +206,8 @@ void TestEmbeddings(Graph<ArrayType> const &g, std::string const &skip_gram_name
   std::shared_ptr<fetch::ml::ops::Embeddings<ArrayType>> embeddings =
       sg_layer->GetEmbeddings(sg_layer);
 
-  PrintKNN(dl, embeddings->get_weights(), test_word, K);
+  PrintKNN(dl, embeddings->get_weights(), word0, K);
+  PrintWordAnology(dl, embeddings->get_weights(), word1, word2, word3, K);
 }
 
 int main(int argc, char **argv)
@@ -165,7 +238,7 @@ int main(int argc, char **argv)
   SkipGramLoader<ArrayType> data_loader(sp, true);
 
   // load text from files as necessary and process text with dataloader
-  data_loader.AddData(fetch::ml::examples::GetTextString(training_text));
+  data_loader.AddData(fetch::ml::examples::GetTextString(training_text)); // N.B. make sure training_text is a directory, under which the relevent text file must be .txt file
 
   std::cout << "dataloader.VocabSize(): " << data_loader.VocabSize() << std::endl;
   std::cout << "dataloader.Size(): " << data_loader.Size() << std::endl;
@@ -196,8 +269,9 @@ int main(int argc, char **argv)
   DataType loss;
   for (SizeType i{0}; i < tp.training_epochs; i++)
   {
-    loss = optimiser.Run(data_loader, tp.batch_size, tp.batch_size);
+    loss = optimiser.Run(data_loader, tp.batch_size);
     std::cout << "Loss: " << loss << std::endl;
+    PrintEmbedding(*g, output_name, data_loader, tp.word0);
   }
 
   //////////////////////////////////////
@@ -205,7 +279,7 @@ int main(int argc, char **argv)
   //////////////////////////////////////
 
   // Test trained embeddings
-  TestEmbeddings(*g, output_name, data_loader, tp.test_word, tp.k);
+  TestEmbeddings(*g, output_name, data_loader, tp.word0, tp.word1, tp.word2, tp.word3, tp.k);
 
   return 0;
 }
