@@ -54,7 +54,7 @@ TYPED_TEST(MaxPool2DTest, forward_test_3_2)
   {
     for (SizeType j{0}; j < input_height; ++j)
     {
-      data.Set(0, i, j, 0, static_cast<DataType>(i * j));
+      data(0, i, j, 0) = static_cast<DataType>(i * j);
     }
   }
 
@@ -62,7 +62,7 @@ TYPED_TEST(MaxPool2DTest, forward_test_3_2)
   {
     for (SizeType j{0}; j < output_height; ++j)
     {
-      gt.Set(0, i, j, 0, static_cast<DataType>(gt_input[i + j * output_width]));
+      gt(0, i, j, 0) = static_cast<DataType>(gt_input[i + j * output_width]);
     }
   }
 
@@ -100,7 +100,7 @@ TYPED_TEST(MaxPool2DTest, forward_2_channels_test_3_2)
     {
       for (SizeType j{0}; j < input_height; ++j)
       {
-        data.Set(c, i, j, 0, static_cast<DataType>((c + 1) * i * j));
+        data(c, i, j, 0) = static_cast<DataType>((c + 1) * i * j);
       }
     }
   }
@@ -111,9 +111,8 @@ TYPED_TEST(MaxPool2DTest, forward_2_channels_test_3_2)
     {
       for (SizeType j{0}; j < output_height; ++j)
       {
-        gt.Set(c, i, j, 0,
-               static_cast<DataType>(
-                   gt_input[c * output_width * output_height + (i + j * output_width)]));
+        gt(c, i, j, 0) = static_cast<DataType>(
+            gt_input[c * output_width * output_height + (i + j * output_width)]);
       }
     }
   }
@@ -146,8 +145,8 @@ TYPED_TEST(MaxPool2DTest, backward_test)
   {
     for (SizeType j{0}; j < input_height; ++j)
     {
-      data.Set(0, i, j, 0, static_cast<DataType>(i * j));
-      gt.Set(0, i, j, 0, DataType{0});
+      data(0, i, j, 0) = static_cast<DataType>(i * j);
+      gt(0, i, j, 0)   = DataType{0};
     }
   }
 
@@ -155,14 +154,14 @@ TYPED_TEST(MaxPool2DTest, backward_test)
   {
     for (SizeType j{0}; j < output_height; ++j)
     {
-      error.Set(0, i, j, 0, static_cast<DataType>(1 + i + j));
+      error(0, i, j, 0) = static_cast<DataType>(1 + i + j);
     }
   }
 
-  gt.Set(0, 2, 2, 0, DataType{1});
-  gt.Set(0, 4, 2, 0, DataType{2});
-  gt.Set(0, 2, 4, 0, DataType{2});
-  gt.Set(0, 4, 4, 0, DataType{3});
+  gt(0, 2, 2, 0) = DataType{1};
+  gt(0, 4, 2, 0) = DataType{2};
+  gt(0, 2, 4, 0) = DataType{2};
+  gt(0, 4, 4, 0) = DataType{3};
 
   fetch::ml::ops::MaxPool2D<ArrayType> op(3, 2);
   std::vector<ArrayType>               prediction = op.Backward({data}, error);
@@ -194,8 +193,8 @@ TYPED_TEST(MaxPool2DTest, backward_2_channels_test)
     {
       for (SizeType j{0}; j < input_height; ++j)
       {
-        data.Set(c, i, j, 0, static_cast<DataType>((c + 1) * i * j));
-        gt.Set(c, i, j, 0, DataType{0});
+        data(c, i, j, 0) = static_cast<DataType>((c + 1) * i * j);
+        gt(c, i, j, 0)   = DataType{0};
       }
     }
   }
@@ -206,19 +205,19 @@ TYPED_TEST(MaxPool2DTest, backward_2_channels_test)
     {
       for (SizeType j{0}; j < output_height; ++j)
       {
-        error.Set(c, i, j, 0, static_cast<DataType>((c + 1) * (1 + i + j)));
+        error(c, i, j, 0) = static_cast<DataType>((c + 1) * (1 + i + j));
       }
     }
   }
 
-  gt.Set(0, 2, 2, 0, DataType{1});
-  gt.Set(0, 4, 2, 0, DataType{2});
-  gt.Set(0, 2, 4, 0, DataType{2});
-  gt.Set(0, 4, 4, 0, DataType{3});
-  gt.Set(1, 2, 2, 0, DataType{2});
-  gt.Set(1, 4, 2, 0, DataType{4});
-  gt.Set(1, 2, 4, 0, DataType{4});
-  gt.Set(1, 4, 4, 0, DataType{6});
+  gt(0, 2, 2, 0) = DataType{1};
+  gt(0, 4, 2, 0) = DataType{2};
+  gt(0, 2, 4, 0) = DataType{2};
+  gt(0, 4, 4, 0) = DataType{3};
+  gt(1, 2, 2, 0) = DataType{2};
+  gt(1, 4, 2, 0) = DataType{4};
+  gt(1, 2, 4, 0) = DataType{4};
+  gt(1, 4, 4, 0) = DataType{6};
 
   fetch::ml::ops::MaxPool2D<ArrayType> op(3, 2);
   std::vector<ArrayType>               prediction = op.Backward({data}, error);

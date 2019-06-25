@@ -24,14 +24,14 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class MaxPool1D : public BatchOps<T>
+class MaxPool1D : public Ops<T>
 {
 public:
   using ArrayType     = T;
   using SizeType      = typename ArrayType::SizeType;
   using DataType      = typename ArrayType::Type;
   using ArrayPtrType  = std::shared_ptr<ArrayType>;
-  using VecTensorType = typename BatchOps<T>::VecTensorType;
+  using VecTensorType = typename Ops<T>::VecTensorType;
 
   MaxPool1D(SizeType const kernel_size, SizeType const stride_size)
     : kernel_size_{kernel_size}

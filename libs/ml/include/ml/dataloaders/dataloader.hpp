@@ -24,21 +24,22 @@
 
 namespace fetch {
 namespace ml {
+namespace dataloaders {
 
 template <typename LabelType, typename DataType>
 class DataLoader
 {
 public:
+  using SizeType   = fetch::math::SizeType;
+  using ReturnType = std::pair<LabelType, std::vector<DataType>>;
+
   DataLoader(bool random_mode)
     : random_mode_(random_mode)
   {}
 
-  using SizeType = fetch::math::SizeType;
-
-  virtual ~DataLoader()                                         = default;
-  virtual std::pair<LabelType, std::vector<DataType>> GetNext() = 0;
-  virtual std::pair<LabelType, std::vector<DataType>> SubsetToArray(
-      fetch::math::SizeType subset_size);
+  virtual ~DataLoader()           = default;
+  virtual ReturnType    GetNext() = 0;
+  virtual ReturnType    PrepareBatch(fetch::math::SizeType subset_size);
   virtual std::uint64_t Size() const   = 0;
   virtual bool          IsDone() const = 0;
   virtual void          Reset()        = 0;
@@ -48,7 +49,7 @@ protected:
 };
 
 template <typename LabelType, typename DataType>
-std::pair<LabelType, std::vector<DataType>> DataLoader<LabelType, DataType>::SubsetToArray(
+std::pair<LabelType, std::vector<DataType>> DataLoader<LabelType, DataType>::PrepareBatch(
     fetch::math::SizeType subset_size)
 {
   if (IsDone())
@@ -101,5 +102,6 @@ std::pair<LabelType, std::vector<DataType>> DataLoader<LabelType, DataType>::Sub
   return std::make_pair(labels, data);
 }
 
+}  // namespace dataloaders
 }  // namespace ml
 }  // namespace fetch

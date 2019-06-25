@@ -24,14 +24,14 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class MaxPool2D : public BatchOps<T>
+class MaxPool2D : public Ops<T>
 {
 public:
   using ArrayType     = T;
   using SizeType      = typename ArrayType::SizeType;
   using DataType      = typename ArrayType::Type;
   using ArrayPtrType  = std::shared_ptr<ArrayType>;
-  using VecTensorType = typename BatchOps<T>::VecTensorType;
+  using VecTensorType = typename Ops<T>::VecTensorType;
 
   MaxPool2D(SizeType const kernel_size, SizeType const stride_size)
     : kernel_size_{kernel_size}
@@ -156,8 +156,8 @@ public:
             }
 
             // Add error to max node
-            return_signal.Set(c, max_iterw, max_iterh, n_i,
-                              return_signal.At(c, max_iterw, max_iterh, n_i) + *erit);
+            return_signal(c, max_iterw, max_iterh, n_i) =
+                return_signal(c, max_iterw, max_iterh, n_i) + *erit;
             ++erit;
           }
         }

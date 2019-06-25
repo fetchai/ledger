@@ -24,7 +24,7 @@
 
 #include "vm/module.hpp"
 
-#include "vm_modules/ml/dataloader/mnist_dataloader.hpp"
+#include "vm_modules/ml/dataloaders/mnist_dataloader.hpp"
 #include "vm_modules/ml/graph.hpp"
 #include "vm_modules/ml/optimisation/adam_optimiser.hpp"
 #include "vm_modules/ml/training_pair.hpp"
@@ -111,7 +111,8 @@ int main(int argc, char **argv)
       .CreateStaticMemberFunction("Argv", &System::Argv);
 
   fetch::vm_modules::math::CreateTensor(*module);
-  fetch::vm_modules::ml::CreateGraph(*module);
+  fetch::vm_modules::ml::VMStateDict::Bind(*module);
+  fetch::vm_modules::ml::VMGraph::Bind(*module);
 
   fetch::vm_modules::ml::TrainingPair::Bind(*module);
   fetch::vm_modules::ml::MnistDataLoader::Bind(*module);

@@ -97,7 +97,8 @@ public:
       }
     });
 
-    manager_.reset();
+    // TODO (issue 1220): This appears to cause a double free due to a race
+    /* manager_.reset(); */
   }
 
   void Start(uint16_t port)

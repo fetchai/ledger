@@ -42,13 +42,13 @@ using SizeType  = typename ArrayType::SizeType;
 using GraphType        = typename fetch::ml::Graph<ArrayType>;
 using CostFunctionType = typename fetch::ml::ops::CrossEntropy<ArrayType>;
 using OptimiserType    = typename fetch::ml::optimisers::AdamOptimiser<ArrayType, CostFunctionType>;
-using DataLoaderType   = typename fetch::ml::MNISTLoader<ArrayType, ArrayType>;
+using DataLoaderType   = typename fetch::ml::dataloaders::MNISTLoader<ArrayType, ArrayType>;
 
 int main(int ac, char **av)
 {
   DataType learning_rate{0.01f};
   SizeType subset_size{100};
-  SizeType epochs{30};
+  SizeType epochs{10};
   SizeType batch_size{10};
 
   if (ac < 3)
@@ -82,7 +82,7 @@ int main(int ac, char **av)
   DataType loss;
   for (SizeType i{0}; i < epochs; i++)
   {
-    loss = optimiser.Run(data_loader, batch_size, true, subset_size);
+    loss = optimiser.Run(data_loader, batch_size, subset_size);
     std::cout << "Loss: " << loss << std::endl;
   }
 

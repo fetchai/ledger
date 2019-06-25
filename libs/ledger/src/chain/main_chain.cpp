@@ -21,6 +21,8 @@
 
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/encoders.hpp"
+#include "crypto/hash.hpp"
+#include "crypto/sha256.hpp"
 #include "ledger/chain/transaction_layout_rpc_serializers.hpp"
 #include "network/generics/milli_timer.hpp"
 
@@ -64,6 +66,33 @@ MainChain::~MainChain()
   {
     block_store_->Flush(false);
   }
+}
+
+void MainChain::Reset()
+{
+  FETCH_LOCK(lock_);
+
+  tips_.clear();
+  heaviest_ = HeaviestTip{};
+  loose_blocks_.clear();
+  block_chain_.clear();
+  references_.clear();
+
+  if (block_store_)
+  {
+    block_store_->New("chain.db", "chain.index.db");
+    head_store_.close();
+    head_store_.open("chain.head.db",
+                     std::ios::binary | std::ios::in | std::ios::out | std::ios::trunc);
+  }
+
+  auto genesis = CreateGenesisBlock();
+
+  // add the block to the cache
+  AddBlockToCache(genesis);
+
+  // add the tip for this block
+  AddTip(genesis);
 }
 
 /**
@@ -507,6 +536,10 @@ MainChain::BlockPtr MainChain::GetBlock(BlockHash hash) const
   {
     // convert the pointer type to per const
     output_block = std::static_pointer_cast<Block const>(internal_block);
+  }
+  else
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "main chain failed to lookup block!");
   }
 
   return output_block;
@@ -1318,7 +1351,7 @@ MainChain::IntBlockPtr MainChain::CreateGenesisBlock()
   auto genesis                = std::make_shared<Block>();
   genesis->body.previous_hash = GENESIS_DIGEST;
   genesis->body.merkle_hash   = GENESIS_MERKLE_ROOT;
-  genesis->body.miner         = Address{GENESIS_DIGEST};
+  genesis->body.miner         = Address{crypto::Hash<crypto::SHA256>("")};
   genesis->is_loose           = false;
   genesis->UpdateDigest();
 

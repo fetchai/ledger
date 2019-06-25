@@ -24,13 +24,13 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class Transpose : public fetch::ml::BatchOps<T>
+class Transpose : public fetch::ml::Ops<T>
 {
 public:
   using ArrayType     = T;
   using SizeType      = typename ArrayType::SizeType;
   using ArrayPtrType  = std::shared_ptr<ArrayType>;
-  using VecTensorType = typename BatchOps<T>::VecTensorType;
+  using VecTensorType = typename Ops<T>::VecTensorType;
 
   Transpose(std::vector<SizeType> transpose_vector = {1, 0, 2})
     : transpose_vector_(transpose_vector)
@@ -71,21 +71,21 @@ public:
 
   virtual std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const
   {
-    // Normal transpose
+    // 2D transpose
     if (inputs.at(0).get().shape().size() == 2)
     {
       return {inputs.front().get().shape().at(1), inputs.front().get().shape().at(0)};
     }
-    // Transpose with given vector
+    // Transpose by given vector
     else
     {
       std::vector<SizeType> input_shape = inputs.front().get().shape();
       std::vector<SizeType> shape;
 
       shape.reserve(shape.size());
-      for (SizeType i{0}; i < transpose_vector_.size(); ++i)
+      for (auto &current_size : transpose_vector_)
       {
-        shape.push_back(input_shape.at(transpose_vector_.at(i)));
+        shape.push_back(input_shape.at(current_size));
       }
 
       return shape;

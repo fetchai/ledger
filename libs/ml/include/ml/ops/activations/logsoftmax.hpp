@@ -28,13 +28,13 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class LogSoftmax : public fetch::ml::BatchOps<T>
+class LogSoftmax : public fetch::ml::Ops<T>
 {
 public:
   using ArrayType     = T;
   using DataType      = typename ArrayType::Type;
   using SizeType      = typename ArrayType::SizeType;
-  using VecTensorType = typename ElementWiseOps<T>::VecTensorType;
+  using VecTensorType = typename Ops<T>::VecTensorType;
 
   LogSoftmax(SizeType axis = 0)
     : axis_(axis)

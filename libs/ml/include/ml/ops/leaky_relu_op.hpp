@@ -28,20 +28,20 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class LeakyReluOp : public fetch::ml::ElementWiseOps<T>
+class LeakyReluOp : public fetch::ml::Ops<T>
 {
 public:
   using ArrayType     = T;
   using DataType      = typename ArrayType::Type;
   using SizeType      = typename ArrayType::SizeType;
   using ArrayPtrType  = std::shared_ptr<ArrayType>;
-  using VecTensorType = typename ElementWiseOps<T>::VecTensorType;
+  using VecTensorType = typename Ops<T>::VecTensorType;
 
   LeakyReluOp()          = default;
   virtual ~LeakyReluOp() = default;
 
   // LeakyRelu(x,alpha)=max(0,x)+alpha*min(0,x)
-  virtual void Forward(VecTensorType const &inputs, ArrayType &output)
+  void Forward(VecTensorType const &inputs, ArrayType &output)
   {
     ASSERT(inputs.size() == 2);
     ASSERT(inputs.at(0).get().shape() == output.shape());
@@ -54,17 +54,13 @@ public:
   //    x>=0 f'(x)=1, x<0 f'(x)=alpha
   // Gradient of input.at(1)=alpha is:
   //    f'(alpha)=-Relu(-x)=min(0,x); x>=0 f'(alpha)=0, x<0 f'(alpha)=x
-  virtual std::vector<ArrayType> Backward(VecTensorType const &inputs,
-                                          ArrayType const &    error_signal)
+  std::vector<ArrayType> Backward(VecTensorType const &inputs, ArrayType const &error_signal)
   {
     ASSERT(inputs.size() == 2);
     ASSERT(inputs.at(0).get().size() == error_signal.size());
 
     // Test if batch dimension for alpha is 1
     assert(inputs.at(1).get().shape().at(inputs.at(1).get().shape().size() - 1) == 1);
-
-    DataType zero{0};
-    DataType one{1};
 
     ArrayType return_signal1{inputs.at(0).get().shape()};
 
@@ -74,7 +70,7 @@ public:
       a_size *= inputs.at(0).get().shape().at(i);
     }
     ArrayType return_signal2({a_size, 1});
-    return_signal2.Fill(zero);
+    return_signal2.Fill(static_cast<DataType>(0));
 
     SizeType t_batch_dimension = inputs.at(0).get().shape().size() - 1;
     SizeType batch_size        = inputs.at(0).get().shape().at(t_batch_dimension);
@@ -95,9 +91,9 @@ public:
 
       while (input1_it.is_valid())
       {
-        if (*input1_it >= zero)
+        if (*input1_it >= static_cast<DataType>(0))
         {
-          *rs1_it = one * (*error_it);
+          *rs1_it = static_cast<DataType>(1) * (*error_it);
         }
         else
         {
@@ -113,6 +109,11 @@ public:
     }
 
     return {return_signal1, return_signal2};
+  }
+
+  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const
+  {
+    return inputs.front().get().shape();
   }
 
   static constexpr char const *DESCRIPTOR = "LeakyReluOp";

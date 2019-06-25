@@ -45,6 +45,8 @@ public:
                std::string const &             output_node_name,
                DataType const &                learning_rate = DataType{0.001f});
 
+  virtual ~SGDOptimiser() = default;
+
 private:
   void ApplyGradients(SizeType batch_size) override;
 };

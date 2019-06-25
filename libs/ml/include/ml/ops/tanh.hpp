@@ -27,12 +27,13 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class TanH : public fetch::ml::ElementWiseOps<T>
+class TanH : public fetch::ml::Ops<T>
 {
 public:
   using ArrayType     = T;
   using DataType      = typename ArrayType::Type;
-  using VecTensorType = typename ElementWiseOps<T>::VecTensorType;
+  using SizeType      = typename ArrayType::SizeType;
+  using VecTensorType = typename Ops<T>::VecTensorType;
 
   TanH()          = default;
   virtual ~TanH() = default;
@@ -72,6 +73,11 @@ public:
     fetch::math::Multiply(error_signal, t, return_signal);
 
     return {return_signal};
+  }
+
+  virtual std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const
+  {
+    return inputs.front().get().shape();
   }
 
   static constexpr char const *DESCRIPTOR = "TanH";

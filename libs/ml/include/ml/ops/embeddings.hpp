@@ -35,10 +35,10 @@ public:
   using SizeType      = typename ArrayType::SizeType;
   using VecTensorType = typename Weights<T>::VecTensorType;
 
-  Embeddings(SizeType dataPoints, SizeType dimensions)
+  Embeddings(SizeType dimensions, SizeType dataPoints)
   {
-    ArrayType weights = ArrayType(std::vector<SizeType>({dataPoints, dimensions}));
-    fetch::ml::ops::Weights<ArrayType>::Initialise(weights, dataPoints, dimensions);
+    ArrayType weights = ArrayType(std::vector<SizeType>({dimensions, dataPoints}));
+    fetch::ml::ops::Weights<ArrayType>::Initialise(weights, dimensions, dataPoints);
     this->SetData(weights);
   }
 
@@ -58,23 +58,28 @@ public:
     SizeType batch_size = inputs.front().get().shape(1);
 
     if (!this->embeddings_output_ ||
-        this->embeddings_output_->shape().at(0) != inputs.front().get().shape().at(0) ||
-        this->embeddings_output_->shape().at(1) != this->output_->shape().at(1))
+        this->embeddings_output_->shape().at(1) != inputs.front().get().shape().at(0) ||
+        this->embeddings_output_->shape().at(0) != this->output_->shape().at(0))
     {
       this->embeddings_output_ = std::make_shared<ArrayType>(std::vector<SizeType>(
-          {inputs.front().get().shape(0), this->output_->shape().at(1), batch_size}));
+          {this->output_->shape().at(0), inputs.front().get().shape(0), batch_size}));
     }
 
-    for (SizeType n{0}; n < batch_size; n++)
+    ArrayType transposed_input = inputs.front().get().Transpose();
+    auto      e_it             = transposed_input.begin();
+    for (SizeType i{0}; i < inputs.front().get().shape().at(0); i++)
     {
-      for (SizeType i{0}; i < inputs.front().get().shape().at(0); i++)
+      for (SizeType n{0}; n < batch_size; n++)
       {
-        SizeType e = static_cast<SizeType>(inputs.front().get().At(i, n));
 
-        for (SizeType j{0}; j < this->embeddings_output_->shape().at(1); j++)
-        {
-          this->embeddings_output_->At(i, j, n) = this->output_->At(e, j);
-        }
+        indices1.at(0)       = i;
+        indices1.at(1)       = n;
+        auto embedding_slice = this->embeddings_output_->View(indices1);
+        indices2.at(0)       = static_cast<SizeType>(*e_it);
+        auto output_slice    = this->output_->View(indices2);
+
+        embedding_slice.Assign(output_slice);
+        ++e_it;
       }
     }
 
@@ -89,17 +94,28 @@ public:
 
     SizeType batch_size = inputs.front().get().shape(1);
 
-    for (SizeType n{0}; n < batch_size; n++)
+    ArrayType transposed_input = inputs.front().get().Transpose();
+    auto      e_it             = transposed_input.begin();
+    for (SizeType i{0}; i < inputs.front().get().shape().at(0); i++)
     {
-      for (SizeType i{0}; i < inputs.front().get().shape().at(0); i++)
+      for (SizeType n{0}; n < batch_size; n++)
       {
-        SizeType e = static_cast<SizeType>(inputs.front().get().At(i, n));
-        updated_rows_.insert(e);
 
-        for (SizeType j{0}; j < this->gradient_accumulation_->shape().at(1); j++)
+        indices1.at(0)      = i;
+        indices1.at(1)      = n;
+        auto error_slice    = error_signal.View(indices1);
+        indices2.at(0)      = static_cast<SizeType>(*e_it);
+        auto gradient_slice = this->gradient_accumulation_->View(indices2);
+
+        auto error_slice_it    = error_slice.cbegin();
+        auto gradient_slice_it = gradient_slice.begin();
+        while (error_slice_it.is_valid())
         {
-          this->gradient_accumulation_->At(e, j) += error_signal.At(i, j, n);
+          *gradient_slice_it += *error_slice_it;
+          ++error_slice_it;
+          ++gradient_slice_it;
         }
+        ++e_it;
       }
     }
 
@@ -113,8 +129,8 @@ public:
     for (auto const &r : updated_rows_)
     {
       // get the relevant slice from gradients and embeddings
-      auto grad_slice = this->gradient_accumulation_->Slice(r);
-      auto out_slice  = this->output_->Slice(r);
+      auto grad_slice = this->gradient_accumulation_->Slice(r, 1);
+      auto out_slice  = this->output_->Slice(r, 1);
 
       embedding_slice = out_slice.Copy();
 
@@ -131,6 +147,8 @@ public:
 private:
   ArrayPtrType                           embeddings_output_;
   std::set<typename ArrayType::SizeType> updated_rows_;
+  std::vector<SizeType>                  indices1 = {0, 0};
+  std::vector<SizeType>                  indices2 = {0};
 };
 
 }  // namespace ops

@@ -18,6 +18,7 @@
 
 #include "file_loader.hpp"
 #include "math/tensor.hpp"
+#include "ml/dataloaders/commodity_dataloader.hpp"
 #include "ml/graph.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/ops/activation.hpp"
@@ -343,22 +344,24 @@ int main(int argc, char **argv)
   g_ptr->LoadStateDict(sd);
 
   /// FORWARD PASS PREDICTIONS ///
-  // the test_x array needs to have number of columns equal to number of features
-  ArrayType test_x = read_csv(test_x_file, 1, 1);
-  // the test_y array needs to have number of columns equal to number of output features
-  ArrayType test_y           = read_csv(test_y_file, 1, 1);
-  SizeType  output_data_size = test_y.shape()[0];
-  assert(output_feature_size == test_y.shape()[1]);
-  assert(test_y.shape()[0] == test_x.shape()[0]);
+  fetch::ml::dataloaders::CommodityDataLoader<fetch::math::Tensor<DataType>,
+                                              fetch::math::Tensor<DataType>>
+      loader;
+  loader.AddData(test_x_file, test_y_file);
 
-  ArrayType output({output_data_size, output_feature_size});
+  ArrayType output({loader.Size(), output_feature_size});
+  ArrayType test_y({loader.Size(), output_feature_size});
 
-  for (SizeType j = 0; j < output_data_size; j++)
+  SizeType j = 0;
+  while (!loader.IsDone())
   {
-    auto current_input = test_x.Slice(j).Copy().Transpose();
-    g_ptr->SetInput("num_input", current_input);
+    auto input = loader.GetNext();
+    g_ptr->SetInput("num_input", input.second.at(0).Transpose());
+
     auto slice_output = g_ptr->Evaluate(node_names.back());
     output.Slice(j).Assign(slice_output);
+    test_y.Slice(j).Assign(input.first);
+    j++;
   }
 
   if (output.AllClose(test_y, 0.00001f))

@@ -47,7 +47,7 @@ public:
     std::string alpha =
         this->template AddNode<fetch::ml::ops::Weights<ArrayType>>(name + "_Alpha", {});
 
-    ArrayType alpha_data(std::vector<std::uint64_t>({in, 1}));
+    ArrayType alpha_data(std::vector<SizeType>({in, 1}));
     fetch::ml::ops::Weights<ArrayType>::Initialise(alpha_data, in, in, init_mode);
 
     this->SetInput(alpha, alpha_data);

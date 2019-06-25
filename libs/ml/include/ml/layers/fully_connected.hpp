@@ -19,8 +19,8 @@
 
 #include "ml/meta/ml_type_traits.hpp"
 #include "ml/ops/activation.hpp"
-#include "ml/ops/batchwise_add.hpp"
-#include "ml/ops/batchwise_flatten.hpp"
+#include "ml/ops/add.hpp"
+#include "ml/ops/flatten.hpp"
 #include "ml/ops/matrix_multiply.hpp"
 #include "ml/ops/weights.hpp"
 #include "ml/subgraph.hpp"
@@ -48,15 +48,15 @@ public:
   {
     std::string input =
         this->template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>(name + "_Input", {});
-    std::string flat_input = this->template AddNode<fetch::ml::ops::BatchwiseFlattenOp<ArrayType>>(
-        name + "_Flatten", {input});
+    std::string flat_input =
+        this->template AddNode<fetch::ml::ops::Flatten<ArrayType>>(name + "_Flatten", {input});
     std::string weights =
         this->template AddNode<fetch::ml::ops::Weights<ArrayType>>(name + "_Weights", {});
     std::string weights_matmul = this->template AddNode<fetch::ml::ops::MatrixMultiply<ArrayType>>(
         name + "_MatrixMultiply", {weights, flat_input});
     std::string bias =
         this->template AddNode<fetch::ml::ops::Weights<ArrayType>>(name + "_Bias", {});
-    std::string output = this->template AddNode<fetch::ml::ops::BatchwiseAddOp<ArrayType>>(
+    std::string output = this->template AddNode<fetch::ml::ops::Add<ArrayType>>(
         name + "_Add", {weights_matmul, bias});
 
     output = fetch::ml::details::AddActivationNode<T>(activation_type, this, name + "_Activation",
@@ -67,10 +67,10 @@ public:
 
     ArrayType weights_data(std::vector<SizeType>({out, in}));
     this->Initialise(weights_data, init_mode);
-    this->SetInput(weights, weights_data, false);
+    this->SetInput(weights, weights_data);
 
     ArrayType bias_data(std::vector<SizeType>({out, 1}));
-    this->SetInput(bias, bias_data, false);
+    this->SetInput(bias, bias_data);
   }
 
   std::vector<SizeType> ComputeOutputShape(

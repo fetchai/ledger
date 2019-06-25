@@ -39,13 +39,9 @@ public:
 
   virtual ~Ops() = default;
 
-  virtual void                   Forward(VecTensorType const &inputs, ArrayType &output)      = 0;
+  virtual void                   Forward(VecTensorType const &inputs, ArrayType &output) = 0;
   virtual std::vector<ArrayType> Backward(VecTensorType const &inputs,
-                                          ArrayType const &    error_signal)                      = 0;
-  virtual void                   ForwardBatch(VecTensorType const &inputs, ArrayType &output) = 0;
-  virtual std::vector<ArrayType> BackwardBatch(VecTensorType const &inputs,
-                                               ArrayType const &    error_signal)                 = 0;
-
+                                          ArrayType const &    error_signal)                 = 0;
   /*
    * ComputeOutputShape is usually expensive function and should be used only for initialization or
    * in ASSERT. On Forward you can use output.shape() and on Backward there is error_signal.shape()
@@ -59,96 +55,6 @@ public:
 
 protected:
   bool is_training_ = true;
-};
-
-/*
- * Abstract class for Ops that works element wise (relu, sigmoid, ...)
- */
-template <class T>
-class ElementWiseOps : public Ops<T>
-{
-public:
-  using ArrayType     = T;
-  using SizeType      = typename ArrayType::SizeType;
-  using ArrayPtrType  = std::shared_ptr<ArrayType>;
-  using VecTensorType = typename Ops<T>::VecTensorType;
-
-  virtual void ForwardBatch(VecTensorType const &inputs, ArrayType &output)
-  {
-    this->Forward(inputs, output);
-  }
-
-  virtual std::vector<ArrayType> BackwardBatch(VecTensorType const &inputs,
-                                               ArrayType const &    error_signal)
-  {
-    return this->Backward(inputs, error_signal);
-  }
-
-  virtual std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const
-  {
-    return inputs.front().get().shape();
-  }
-};
-
-/*
- * Abstract class for Ops that works with batch (convolution, softmax, ...)
- * (assuming a structure like [BATCH x OTHER_DIMS x ...])
- */
-template <class T>
-class BatchOps : public Ops<T>
-{
-public:
-  using ArrayType     = T;
-  using SizeType      = typename ArrayType::SizeType;
-  using ArrayPtrType  = std::shared_ptr<ArrayType>;
-  using VecTensorType = typename Ops<T>::VecTensorType;
-
-  // Individual ops are likely to overload this method for optimisation
-  virtual void ForwardBatch(VecTensorType const &inputs, ArrayType &output)
-  {
-
-    // TODO (1048) - this implementation needs fixing
-
-    assert(inputs.size() == 1);
-    assert(output.shape()[output.shape().size() - 1] ==
-           inputs.front().get().shape()[inputs.front().get().shape().size() - 1]);
-
-    std::vector<ArrayType> results;
-    for (typename ArrayType::SizeType b{0}; b < inputs.front().get().shape().at(0); ++b)
-    {
-      ArrayType slice = inputs.front().get().Slice(b).Copy();
-      this->Forward({slice}, output);
-      results.emplace_back(output);
-    }
-    output = ArrayType::Stack(results);
-  }
-
-  virtual std::vector<ArrayType> BackwardBatch(VecTensorType const &inputs,
-                                               ArrayType const &    error_signal)
-  {
-    return this->Backward(inputs, error_signal);
-
-    // TODO (1048) - deal with the following dead code
-    assert(inputs.size() == 1);
-    assert(inputs.front().get().shape()[0] == error_signal.shape()[0]);
-    std::vector<std::vector<ArrayType>> results;
-    for (typename ArrayType::SizeType b(0); b < inputs.front().get().shape()[0]; ++b)
-    {
-      auto input     = inputs.front().get().Slice(b).Copy();
-      auto err_slice = error_signal.Slice(b).Copy();
-      auto ret       = this->Backward({input}, err_slice);
-      for (std::size_t i(0); i < ret.size(); ++i)
-      {
-        results[i].push_back(ret[i]);
-      }
-    }
-    std::vector<ArrayType> concatenated_results;
-    for (auto const &tensorList : results)
-    {
-      concatenated_results.push_back(ArrayType::Stack(tensorList));
-    }
-    return concatenated_results;
-  }
 };
 
 }  // namespace ml

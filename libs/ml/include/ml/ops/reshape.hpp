@@ -25,13 +25,13 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class Reshape : public fetch::ml::BatchOps<T>
+class Reshape : public fetch::ml::Ops<T>
 {
 public:
   using ArrayType     = T;
   using SizeType      = typename ArrayType::SizeType;
   using ArrayPtrType  = std::shared_ptr<ArrayType>;
-  using VecTensorType = typename BatchOps<T>::VecTensorType;
+  using VecTensorType = typename Ops<T>::VecTensorType;
 
   Reshape(std::vector<SizeType> new_shape)
     : new_shape_(new_shape)
@@ -61,7 +61,14 @@ public:
     std::vector<SizeType> output_size;
     for (SizeType i{0}; i < new_shape_.size(); i++)
     {
-      output_size.push_back(inputs.front().get().shape().at(new_shape_.at(i)));
+      if (new_shape_.at(i) < inputs.front().get().shape().size())
+      {
+        output_size.push_back(inputs.front().get().shape().at(new_shape_.at(i)));
+      }
+      else
+      {
+        output_size.push_back(1);
+      }
     }
 
     return output_size;

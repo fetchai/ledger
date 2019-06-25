@@ -8,6 +8,7 @@ import argparse
 import fnmatch
 import multiprocessing
 import os
+from os.path import abspath, dirname, exists, isdir, isfile, join
 import re
 import shutil
 import subprocess
@@ -53,7 +54,7 @@ def parse_ctest_format(path):
             status = test.find(
                 "./Results/NamedMeasurement[@name='Exit Code']/Value").text.lower()
 
-        output = test.find("./Results/Measurement/Value").text
+        output = test.find('./Results/Measurement/Value').text
 
         # extract the test library
         match = re.match(r'./libs/(\w+)/tests', test_path)
@@ -73,7 +74,7 @@ def parse_ctest_format(path):
 def create_junit_format(output_path, data):
     testsuite_names = data.keys()
 
-    testsuites = ET.Element("testsuites")
+    testsuites = ET.Element('testsuites')
 
     all_tests = 0
     all_time = 0
@@ -94,7 +95,7 @@ def create_junit_format(output_path, data):
         # get all the test data for this suite
         testsuite = ET.SubElement(
             testsuites,
-            "testsuite",
+            'testsuite',
             id='0',
             name=group,
             tests=str(group_size),
@@ -104,14 +105,14 @@ def create_junit_format(output_path, data):
         # iterate through test cases
         for name, path, _, time, status, output in group_data:
             testcase = ET.SubElement(
-                testsuite, "testcase", id='0', name=name, time=str(time))
+                testsuite, 'testcase', id='0', name=name, time=str(time))
             if status != 'passed':
                 # extract more status
                 failure = ET.SubElement(
                     testcase,
                     'failure',
                     type=status,
-                    message="Test {}".format(status))
+                    message='Test {}'.format(status))
                 stdout = ET.SubElement(testcase, 'system-out').text = output
 
     # update the final aggregations
@@ -122,7 +123,7 @@ def create_junit_format(output_path, data):
     # generate the output file
     with open(output_path, 'w') as output_file:
         output_file.write('<?xml version="1.0" encoding="UTF-8" ?>')
-        output_file.write(ET.tostring(testsuites, encoding="utf-8").decode())
+        output_file.write(ET.tostring(testsuites, encoding='utf-8').decode())
 
 
 def build_type(text):
@@ -174,38 +175,34 @@ def build_project(project_root, build_root, options, concurrency):
     output('\n')
 
     # determine if this is the first time that we are building the project
-    new_build_folder = not os.path.exists(build_root)
+    new_build_folder = not exists(build_root)
 
     # ensure the build directory exists
     os.makedirs(build_root, exist_ok=True)
 
-    # run cmake
-    cmd = ['cmake']
+    cmake_cmd = ['cmake']
 
     # determine if this system has the ninja build system
     if new_build_folder and shutil.which('ninja') is not None:
-        cmd += ['-G', 'Ninja']
+        cmake_cmd += ['-G', 'Ninja']
 
-        # add all the configuration options
-    cmd += ['-D{}={}'.format(k, v) for k, v in options.items()]
-    cmd += [project_root]
+    # add all the configuration options
+    cmake_cmd += ['-D{}={}'.format(k, v) for k, v in options.items()]
+    cmake_cmd += [project_root]
 
     # execute the cmake configurations
-    exit_code = subprocess.call(cmd, cwd=build_root)
+    exit_code = subprocess.call(cmake_cmd, cwd=build_root)
     if exit_code != 0:
         output('Failed to configure cmake project')
         sys.exit(exit_code)
 
-    # make the project
-    if os.path.exists(os.path.join(build_root, "build.ninja")):
-        cmd = ["ninja"]
-
-    else:
-        cmd = ['make', '-j{}'.format(concurrency)]
+    build_cmd = ['ninja'] if exists(
+        join(build_root, 'build.ninja')) else ['make']
+    build_cmd += ['-j{}'.format(concurrency)]
 
     output('Building project with command: {} (detected cpus: {})'.format(
-        ' '.join(cmd), AVAILABLE_CPUS))
-    exit_code = subprocess.call(cmd, cwd=build_root)
+        ' '.join(build_cmd), AVAILABLE_CPUS))
+    exit_code = subprocess.call(build_cmd, cwd=build_root)
     if exit_code != 0:
         output('Failed to make the project')
         sys.exit(exit_code)
@@ -215,7 +212,7 @@ def clean_files(build_root):
     """Clean files that are likely to interfere with testing"""
     for root, _, files in os.walk(build_root):
         for path in fnmatch.filter(files, '*.db'):
-            data_path = os.path.join(root, path)
+            data_path = join(root, path)
             print('Removing file:', data_path)
             os.remove(data_path)
 
@@ -223,7 +220,7 @@ def clean_files(build_root):
 def test_project(build_root, include_regex=None, exclude_regex=None):
     TEST_NAME = 'Test'
 
-    if not os.path.isdir(build_root):
+    if not isdir(build_root):
         raise RuntimeError('Build Root doesn\'t exist, unable to test project')
 
     clean_files(build_root)
@@ -242,21 +239,20 @@ def test_project(build_root, include_regex=None, exclude_regex=None):
     if exclude_regex is not None:
         cmd = cmd + ['-LE', str(exclude_regex)]
 
-    env = {"CTEST_OUTPUT_ON_FAILURE": "1"}
-    exit_code = subprocess.call(cmd, cwd=build_root, env=env)
+    exit_code = subprocess.call(cmd, cwd=build_root)
 
     # load the test format
-    test_tag_path = os.path.join(build_root, 'Testing', 'TAG')
-    if not os.path.isfile(test_tag_path):
+    test_tag_path = join(build_root, 'Testing', 'TAG')
+    if not isfile(test_tag_path):
         output('Unable to detect ctest output path:', test_tag_path)
         sys.exit(1)
 
     # load the tag
     tag_folder = open(test_tag_path, 'r').read().splitlines()[0]
-    tag_folder_path = os.path.join(
-        build_root, 'Testing', tag_folder, '{}.xml'.format(TEST_NAME))
+    tag_folder_path = join(build_root, 'Testing',
+                           tag_folder, '{}.xml'.format(TEST_NAME))
 
-    if not os.path.isfile(tag_folder_path):
+    if not isfile(tag_folder_path):
         output('Unable to locate CTest summary XML:', tag_folder_path)
         sys.exit(1)
 
@@ -264,7 +260,7 @@ def test_project(build_root, include_regex=None, exclude_regex=None):
     test_data = parse_ctest_format(tag_folder_path)
 
     # convert the data to the Jenkins Junit
-    test_results = os.path.join(build_root, 'TestResults.xml')
+    test_results = join(build_root, 'TestResults.xml')
     create_junit_format(test_results, test_data)
 
     if exit_code != 0:
@@ -275,18 +271,17 @@ def test_project(build_root, include_regex=None, exclude_regex=None):
 def test_end_to_end(project_root, build_root):
     from end_to_end_test import run_end_to_end_test
 
-    yaml_file = os.path.join(
-        project_root, "scripts/end_to_end_test/end_to_end_test.yaml")
+    yaml_file = join(
+        project_root, 'scripts/end_to_end_test/end_to_end_test.yaml')
 
     # Check that the YAML file does exist
-    if not os.path.exists(yaml_file):
+    if not exists(yaml_file):
         output('Failed to find yaml file for end_to_end testing:')
         output(yaml_file)
         sys.exit(1)
 
     # should be the location of constellation exe - if not the test will catch
-    constellation_exe = os.path.join(
-        build_root, "apps/constellation/constellation")
+    constellation_exe = join(build_root, 'apps/constellation/constellation')
 
     clean_files(build_root)
 
@@ -302,14 +297,14 @@ def main():
     concurrency = AVAILABLE_CPUS if args.jobs == 0 else args.jobs
 
     # define all the build roots
-    project_root = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
-    build_root = os.path.join(project_root, '{}{}'.format(
+    project_root = abspath(dirname(dirname(__file__)))
+    build_root = join(project_root, '{}{}'.format(
         args.build_path_prefix, args.build_type.lower()))
     if args.force_build_folder:
-        build_root = os.path.abspath(args.force_build_folder)
+        build_root = abspath(args.force_build_folder)
 
     options = {
-        'CMAKE_BUILD_TYPE': args.build_type,
+        'CMAKE_BUILD_TYPE': args.build_type
     }
 
     if args.metrics:
