@@ -17,24 +17,21 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/layers/fully_connected.hpp"
-#include "python/fetch_pybind.hpp"
+#include "service/callable_class_member.hpp"
 
-namespace py = pybind11;
+#include "fetch_pybind.hpp"
 
 namespace fetch {
-namespace ml {
-namespace ops {
+namespace service {
 
-template <typename T>
-void BuildFullyConnected(std::string const &custom_name, pybind11::module &module)
+template <typename C, typename F>
+void BuildCallableClassMember(std::string const &custom_name, pybind11::module &module)
 {
-  py::class_<fetch::ml::layers::FullyConnected<fetch::math::Tensor<T>>>(module, custom_name.c_str())
-      .def(py::init<size_t, size_t>())
-      .def("Forward", &fetch::ml::layers::FullyConnected<fetch::math::Tensor<T>>::Forward)
-      .def("Backward", &fetch::ml::layers::FullyConnected<fetch::math::Tensor<T>>::Backward);
+
+  namespace py = pybind11;
+  py::class_<CallableClassMember<C, F>>(module, custom_name)
+      .def(py::init<>()) /* No constructors found */;
 }
 
-}  // namespace ops
-}  // namespace ml
-}  // namespace fetch
+};  // namespace service
+};  // namespace fetch

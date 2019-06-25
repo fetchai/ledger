@@ -17,24 +17,23 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/layers/fully_connected.hpp"
-#include "python/fetch_pybind.hpp"
+#include "service/feed_subscription_manager.hpp"
 
-namespace py = pybind11;
+#include "fetch_pybind.hpp"
 
 namespace fetch {
-namespace ml {
-namespace ops {
+namespace service {
 
-template <typename T>
-void BuildFullyConnected(std::string const &custom_name, pybind11::module &module)
+void BuildFeedSubscriptionManager(pybind11::module &module)
 {
-  py::class_<fetch::ml::layers::FullyConnected<fetch::math::Tensor<T>>>(module, custom_name.c_str())
-      .def(py::init<size_t, size_t>())
-      .def("Forward", &fetch::ml::layers::FullyConnected<fetch::math::Tensor<T>>::Forward)
-      .def("Backward", &fetch::ml::layers::FullyConnected<fetch::math::Tensor<T>>::Backward);
+  namespace py = pybind11;
+  py::class_<FeedSubscriptionManager>(module, "FeedSubscriptionManager")
+      .def(py::init<const fetch::service::feed_handler_type &,
+                    fetch::service::AbstractPublicationFeed *>())
+      .def("feed", &FeedSubscriptionManager::feed)
+      .def("Subscribe", &FeedSubscriptionManager::Subscribe)
+      .def("Unsubscribe", &FeedSubscriptionManager::Unsubscribe)
+      .def("publisher", &FeedSubscriptionManager::publisher);
 }
-
-}  // namespace ops
-}  // namespace ml
-}  // namespace fetch
+};  // namespace service
+};  // namespace fetch

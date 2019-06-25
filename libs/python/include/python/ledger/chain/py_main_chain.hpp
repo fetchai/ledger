@@ -17,24 +17,27 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/layers/fully_connected.hpp"
-#include "python/fetch_pybind.hpp"
+#include <string>
 
-namespace py = pybind11;
+#include "ledger/chain/main_chain.hpp"
 
 namespace fetch {
-namespace ml {
-namespace ops {
+namespace ledger {
 
-template <typename T>
-void BuildFullyConnected(std::string const &custom_name, pybind11::module &module)
+void BuildMainChain(pybind11::module &module)
 {
-  py::class_<fetch::ml::layers::FullyConnected<fetch::math::Tensor<T>>>(module, custom_name.c_str())
-      .def(py::init<size_t, size_t>())
-      .def("Forward", &fetch::ml::layers::FullyConnected<fetch::math::Tensor<T>>::Forward)
-      .def("Backward", &fetch::ml::layers::FullyConnected<fetch::math::Tensor<T>>::Backward);
+  //  pybind11::class_<fetch::ledger::MainChain::block_type>(module,
+  //  "MainChainBlock")
+  //    .def(pybind11::init<>())
+  //    ;
+  //  pybind11::class_<fetch::ledger::MainChain,
+  //  std::shared_ptr<fetch::ledger::MainChain>>(module, "MainChain")
+  //    .def(pybind11::init<fetch::ledger::MainChain::block_type &>())
+  //    .def("AddBlock", &MainChain::AddBlock)
+  //    .def("HeaviestBlock", &MainChain::HeaviestBlock)
+  //    .def("totalBlocks", &MainChain::totalBlocks)
+  //    ;
 }
 
-}  // namespace ops
-}  // namespace ml
+}  // namespace ledger
 }  // namespace fetch

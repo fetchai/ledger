@@ -17,24 +17,24 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/layers/fully_connected.hpp"
-#include "python/fetch_pybind.hpp"
+#include "chain/block_generator.hpp"
 
-namespace py = pybind11;
-
+#include "fetch_pybind.hpp"
 namespace fetch {
-namespace ml {
-namespace ops {
+namespace ledger {
 
-template <typename T>
-void BuildFullyConnected(std::string const &custom_name, pybind11::module &module)
+void BuildBlockGenerator(pybind11::module &module)
 {
-  py::class_<fetch::ml::layers::FullyConnected<fetch::math::Tensor<T>>>(module, custom_name.c_str())
-      .def(py::init<size_t, size_t>())
-      .def("Forward", &fetch::ml::layers::FullyConnected<fetch::math::Tensor<T>>::Forward)
-      .def("Backward", &fetch::ml::layers::FullyConnected<fetch::math::Tensor<T>>::Backward);
+  namespace py = pybind11;
+  py::class_<BlockGenerator>(module, "BlockGenerator")
+      .def(py::init<>()) /* No constructors found */
+      .def("SwitchBranch", &BlockGenerator::SwitchBranch)
+      .def("unspent", &BlockGenerator::unspent)
+      .def("PrintBlock", &BlockGenerator::PrintBlock)
+      .def("GenerateBlock", &BlockGenerator::GenerateBlock)
+      .def("set_group_count", &BlockGenerator::set_group_count)
+      .def("PushTransactionSummary", &BlockGenerator::PushTransactionSummary)
+      .def("PrintTransactionSummary", &BlockGenerator::PrintTransactionSummary);
 }
-
-}  // namespace ops
-}  // namespace ml
-}  // namespace fetch
+};  // namespace ledger
+};  // namespace fetch

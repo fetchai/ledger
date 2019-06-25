@@ -17,24 +17,27 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/layers/fully_connected.hpp"
-#include "python/fetch_pybind.hpp"
+#include "crypto/ecdsa.hpp"
 
-namespace py = pybind11;
+#include "fetch_pybind.hpp"
 
 namespace fetch {
-namespace ml {
-namespace ops {
+namespace crypto {
 
-template <typename T>
-void BuildFullyConnected(std::string const &custom_name, pybind11::module &module)
+void BuildECDSASigner(pybind11::module &module)
 {
-  py::class_<fetch::ml::layers::FullyConnected<fetch::math::Tensor<T>>>(module, custom_name.c_str())
-      .def(py::init<size_t, size_t>())
-      .def("Forward", &fetch::ml::layers::FullyConnected<fetch::math::Tensor<T>>::Forward)
-      .def("Backward", &fetch::ml::layers::FullyConnected<fetch::math::Tensor<T>>::Backward);
+  namespace py = pybind11;
+  py::class_<ECDSASigner, fetch::crypto::Prover>(module, "ECDSASigner")
+      .def(py::init<>()) /* No constructors found */
+      .def("Load", &ECDSASigner::Load)
+      .def("public_key", &ECDSASigner::public_key)
+      .def("private_key", &ECDSASigner::private_key)
+      .def("GenerateKeys", &ECDSASigner::GenerateKeys)
+      .def("SetPrivateKey", &ECDSASigner::SetPrivateKey)
+      .def("Sign", &ECDSASigner::Sign)
+      .def("Verify", &ECDSASigner::Verify)
+      .def("signature", &ECDSASigner::signature)
+      .def("document_hash", &ECDSASigner::document_hash);
 }
-
-}  // namespace ops
-}  // namespace ml
-}  // namespace fetch
+};  // namespace crypto
+};  // namespace fetch

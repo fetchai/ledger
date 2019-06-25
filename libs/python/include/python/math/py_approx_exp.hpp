@@ -17,24 +17,22 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/layers/fully_connected.hpp"
+#include "math/approx_exp.hpp"
 #include "python/fetch_pybind.hpp"
 
-namespace py = pybind11;
-
 namespace fetch {
-namespace ml {
-namespace ops {
+namespace math {
 
-template <typename T>
-void BuildFullyConnected(std::string const &custom_name, pybind11::module &module)
+template <uint8_t N, uint64_t C, bool O>
+void BuildApproxExp(std::string const &custom_name, pybind11::module &module)
 {
-  py::class_<fetch::ml::layers::FullyConnected<fetch::math::Tensor<T>>>(module, custom_name.c_str())
-      .def(py::init<size_t, size_t>())
-      .def("Forward", &fetch::ml::layers::FullyConnected<fetch::math::Tensor<T>>::Forward)
-      .def("Backward", &fetch::ml::layers::FullyConnected<fetch::math::Tensor<T>>::Backward);
-}
 
-}  // namespace ops
-}  // namespace ml
-}  // namespace fetch
+  namespace py = pybind11;
+  py::class_<ApproxExp<N, C, O>>(module, custom_name.c_str())
+      .def(py::init<const ApproxExp<N, C, O> &>())
+      .def(py::init<>())
+      //    .def(py::self = py::self )
+      .def("SetCoefficient", &ApproxExp<N, C, O>::SetCoefficient);
+}
+};  // namespace math
+};  // namespace fetch

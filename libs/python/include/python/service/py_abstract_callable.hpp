@@ -17,24 +17,34 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/layers/fully_connected.hpp"
-#include "python/fetch_pybind.hpp"
+#include "service/abstract_callable.hpp"
 
-namespace py = pybind11;
+#include "fetch_pybind.hpp"
 
 namespace fetch {
-namespace ml {
-namespace ops {
+namespace service {
+namespace details {
 
-template <typename T>
-void BuildFullyConnected(std::string const &custom_name, pybind11::module &module)
+template <typename T, typename arguments>
+void BuildPacker(std::string const &custom_name, pybind11::module &module)
 {
-  py::class_<fetch::ml::layers::FullyConnected<fetch::math::Tensor<T>>>(module, custom_name.c_str())
-      .def(py::init<size_t, size_t>())
-      .def("Forward", &fetch::ml::layers::FullyConnected<fetch::math::Tensor<T>>::Forward)
-      .def("Backward", &fetch::ml::layers::FullyConnected<fetch::math::Tensor<T>>::Backward);
-}
 
-}  // namespace ops
-}  // namespace ml
-}  // namespace fetch
+  namespace py = pybind11;
+  py::class_<Packer<T, arguments>>(module, custom_name)
+      .def(py::init<>()) /* No constructors found */;
+}
+};  // namespace details
+};  // namespace service
+};  // namespace fetch
+namespace fetch {
+namespace service {
+
+void BuildAbstractCallable(pybind11::module &module)
+{
+  namespace py = pybind11;
+  py::class_<AbstractCallable>(module, "AbstractCallable")
+      .def(py::init<uint64_t>())
+      .def("meta_data", &AbstractCallable::meta_data);
+}
+};  // namespace service
+};  // namespace fetch

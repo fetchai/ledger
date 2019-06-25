@@ -17,24 +17,26 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/layers/fully_connected.hpp"
-#include "python/fetch_pybind.hpp"
+#include "commandline/parameter_parser.hpp"
 
-namespace py = pybind11;
+#include "fetch_pybind.hpp"
 
 namespace fetch {
-namespace ml {
-namespace ops {
+namespace commandline {
 
-template <typename T>
-void BuildFullyConnected(std::string const &custom_name, pybind11::module &module)
+void BuildParamsParser(pybind11::module &module)
 {
-  py::class_<fetch::ml::layers::FullyConnected<fetch::math::Tensor<T>>>(module, custom_name.c_str())
-      .def(py::init<size_t, size_t>())
-      .def("Forward", &fetch::ml::layers::FullyConnected<fetch::math::Tensor<T>>::Forward)
-      .def("Backward", &fetch::ml::layers::FullyConnected<fetch::math::Tensor<T>>::Backward);
+  namespace py = pybind11;
+  py::class_<ParamsParser>(module, "ParamsParser")
+      .def(py::init<>()) /* No constructors found */
+      .def("Parse", &ParamsParser::Parse)
+      .def("arg_size", &ParamsParser::arg_size)
+      .def("GetArg",
+           (std::string(ParamsParser::*)(const std::size_t &) const) & ParamsParser::GetArg)
+      .def("GetArg",
+           (std::string(ParamsParser::*)(const std::size_t &, const std::string &) const) &
+               ParamsParser::GetArg);
+  //    .def("GetParam", &ParamsParser::GetParam);
 }
-
-}  // namespace ops
-}  // namespace ml
-}  // namespace fetch
+};  // namespace commandline
+};  // namespace fetch

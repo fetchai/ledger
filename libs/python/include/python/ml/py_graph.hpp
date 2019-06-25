@@ -49,7 +49,7 @@ void BuildGraph(std::string const &custom_name, pybind11::module &module)
            })
       .def("AddFullyConnected",
            [](fetch::ml::Graph<ArrayType> &g, std::string const &name, std::string const &input,
-              std::size_t in, std::size_t out) {
+              size_t in, size_t out) {
              g.template AddNode<fetch::ml::layers::FullyConnected<ArrayType>>(name, {input}, in,
                                                                               out);
            })

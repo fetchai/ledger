@@ -17,24 +17,27 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/layers/fully_connected.hpp"
-#include "python/fetch_pybind.hpp"
+#include "chain/consensus/proof_of_work.hpp"
 
-namespace py = pybind11;
+#include "fetch_pybind.hpp"
 
 namespace fetch {
-namespace ml {
-namespace ops {
+namespace ledger {
+namespace consensus {
 
-template <typename T>
-void BuildFullyConnected(std::string const &custom_name, pybind11::module &module)
+void BuildProofOfWork(pybind11::module &module)
 {
-  py::class_<fetch::ml::layers::FullyConnected<fetch::math::Tensor<T>>>(module, custom_name.c_str())
-      .def(py::init<size_t, size_t>())
-      .def("Forward", &fetch::ml::layers::FullyConnected<fetch::math::Tensor<T>>::Forward)
-      .def("Backward", &fetch::ml::layers::FullyConnected<fetch::math::Tensor<T>>::Backward);
+  namespace py = pybind11;
+  py::class_<ProofOfWork, math::BigUnsigned>(module, "ProofOfWork")
+      .def(py::init<>())
+      .def(py::init<fetch::ledger::consensus::ProofOfWork::header_type>())
+      .def("target", &ProofOfWork::target)
+      .def("SetTarget", &ProofOfWork::SetTarget)
+      .def("operator()", &ProofOfWork::operator())
+      .def("header", &ProofOfWork::header)
+      .def("SetHeader", &ProofOfWork::SetHeader)
+      .def("digest", &ProofOfWork::digest);
 }
-
-}  // namespace ops
-}  // namespace ml
-}  // namespace fetch
+};  // namespace consensus
+};  // namespace ledger
+};  // namespace fetch

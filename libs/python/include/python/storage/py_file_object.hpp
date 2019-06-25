@@ -17,24 +17,26 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/layers/fully_connected.hpp"
-#include "python/fetch_pybind.hpp"
-
-namespace py = pybind11;
+#include "fetch_pybind.hpp"
 
 namespace fetch {
-namespace ml {
-namespace ops {
+namespace storage {
 
-template <typename T>
-void BuildFullyConnected(std::string const &custom_name, pybind11::module &module)
+template <typename S>
+void BuildFileObjectImplementation(std::string const &custom_name, pybind11::module &module)
 {
-  py::class_<fetch::ml::layers::FullyConnected<fetch::math::Tensor<T>>>(module, custom_name.c_str())
-      .def(py::init<size_t, size_t>())
-      .def("Forward", &fetch::ml::layers::FullyConnected<fetch::math::Tensor<T>>::Forward)
-      .def("Backward", &fetch::ml::layers::FullyConnected<fetch::math::Tensor<T>>::Backward);
+  /*
+  namespace py = pybind11;
+  py::class_<FileObjectImplementation< S >>(module, custom_name )
+    .def(py::init< const uint64_t &,
+  fetch::storage::FileObjectImplementation::stack_type & >()) .def("Read",
+  &FileObjectImplementation< S >::Read) .def("tell", &FileObjectImplementation<
+  S >::tell) .def("Write", &FileObjectImplementation< S >::Write)
+    .def("file_position", &FileObjectImplementation< S >::file_position)
+    .def("seek", &FileObjectImplementation< S >::seek)
+    .def("Shrink", &FileObjectImplementation< S >::Shrink)
+    .def("Size", &FileObjectImplementation< S >::Size);
+  */
 }
-
-}  // namespace ops
-}  // namespace ml
-}  // namespace fetch
+};  // namespace storage
+};  // namespace fetch

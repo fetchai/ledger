@@ -17,24 +17,20 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/layers/fully_connected.hpp"
-#include "python/fetch_pybind.hpp"
+#include "protocols/swarm/protocol.hpp"
 
-namespace py = pybind11;
+#include "fetch_pybind.hpp"
 
 namespace fetch {
-namespace ml {
-namespace ops {
+namespace protocols {
 
-template <typename T>
-void BuildFullyConnected(std::string const &custom_name, pybind11::module &module)
+void BuildSwarmProtocol(pybind11::module &module)
 {
-  py::class_<fetch::ml::layers::FullyConnected<fetch::math::Tensor<T>>>(module, custom_name.c_str())
-      .def(py::init<size_t, size_t>())
-      .def("Forward", &fetch::ml::layers::FullyConnected<fetch::math::Tensor<T>>::Forward)
-      .def("Backward", &fetch::ml::layers::FullyConnected<fetch::math::Tensor<T>>::Backward);
+  namespace py = pybind11;
+  py::class_<SwarmProtocol, fetch::protocols::SwarmController, fetch::service::Protocol,
+             fetch::http::HTTPModule>(module, "SwarmProtocol")
+      .def(py::init<network::NetworkManager *, const uint64_t &,
+                    fetch::protocols::SharedNodeDetails &>());
 }
-
-}  // namespace ops
-}  // namespace ml
-}  // namespace fetch
+};  // namespace protocols
+};  // namespace fetch

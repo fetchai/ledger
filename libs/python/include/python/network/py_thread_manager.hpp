@@ -17,24 +17,26 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/layers/fully_connected.hpp"
-#include "python/fetch_pybind.hpp"
+#include "network/network_manager.hpp"
 
-namespace py = pybind11;
+#include "fetch_pybind.hpp"
 
 namespace fetch {
-namespace ml {
-namespace ops {
+namespace network {
 
-template <typename T>
-void BuildFullyConnected(std::string const &custom_name, pybind11::module &module)
+void BuildNetworkManager(pybind11::module &module)
 {
-  py::class_<fetch::ml::layers::FullyConnected<fetch::math::Tensor<T>>>(module, custom_name.c_str())
-      .def(py::init<size_t, size_t>())
-      .def("Forward", &fetch::ml::layers::FullyConnected<fetch::math::Tensor<T>>::Forward)
-      .def("Backward", &fetch::ml::layers::FullyConnected<fetch::math::Tensor<T>>::Backward);
+  namespace py = pybind11;
+  py::class_<NetworkManager>(module, "NetworkManager")
+      .def(py::init<std::size_t>())
+      .def("io_service", &NetworkManager::io_service)
+      .def("OnBeforeStart", &NetworkManager::OnBeforeStart)
+      .def("OnAfterStop", &NetworkManager::OnAfterStop)
+      .def("OnAfterStart", &NetworkManager::OnAfterStart)
+      .def("Stop", &NetworkManager::Stop)
+      .def("OnBeforeStop", &NetworkManager::OnBeforeStop)
+      .def("Start", &NetworkManager::Start)
+      .def("Off", &NetworkManager::Off);
 }
-
-}  // namespace ops
-}  // namespace ml
-}  // namespace fetch
+};  // namespace network
+};  // namespace fetch

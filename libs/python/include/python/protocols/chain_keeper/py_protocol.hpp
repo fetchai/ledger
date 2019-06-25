@@ -17,24 +17,20 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/layers/fully_connected.hpp"
-#include "python/fetch_pybind.hpp"
+#include "protocols/chain_keeper/protocol.hpp"
 
-namespace py = pybind11;
+#include "fetch_pybind.hpp"
 
 namespace fetch {
-namespace ml {
-namespace ops {
+namespace protocols {
 
-template <typename T>
-void BuildFullyConnected(std::string const &custom_name, pybind11::module &module)
+void BuildChainKeeperProtocol(pybind11::module &module)
 {
-  py::class_<fetch::ml::layers::FullyConnected<fetch::math::Tensor<T>>>(module, custom_name.c_str())
-      .def(py::init<size_t, size_t>())
-      .def("Forward", &fetch::ml::layers::FullyConnected<fetch::math::Tensor<T>>::Forward)
-      .def("Backward", &fetch::ml::layers::FullyConnected<fetch::math::Tensor<T>>::Backward);
+  namespace py = pybind11;
+  py::class_<ChainKeeperProtocol, fetch::protocols::ChainKeeperController, fetch::service::Protocol,
+             fetch::http::HTTPModule>(module, "ChainKeeperProtocol")
+      .def(py::init<network::NetworkManager *, const uint64_t &, fetch::protocols::EntryPoint &>())
+      .def("Ping", &ChainKeeperProtocol::Ping);
 }
-
-}  // namespace ops
-}  // namespace ml
-}  // namespace fetch
+};  // namespace protocols
+};  // namespace fetch

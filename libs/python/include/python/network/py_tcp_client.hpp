@@ -17,24 +17,24 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/layers/fully_connected.hpp"
-#include "python/fetch_pybind.hpp"
+#include "network/tcp_client.hpp"
 
-namespace py = pybind11;
+#include "fetch_pybind.hpp"
 
 namespace fetch {
-namespace ml {
-namespace ops {
+namespace network {
 
-template <typename T>
-void BuildFullyConnected(std::string const &custom_name, pybind11::module &module)
+void BuildTCPClient(pybind11::module &module)
 {
-  py::class_<fetch::ml::layers::FullyConnected<fetch::math::Tensor<T>>>(module, custom_name.c_str())
-      .def(py::init<size_t, size_t>())
-      .def("Forward", &fetch::ml::layers::FullyConnected<fetch::math::Tensor<T>>::Forward)
-      .def("Backward", &fetch::ml::layers::FullyConnected<fetch::math::Tensor<T>>::Backward);
+  namespace py = pybind11;
+  py::class_<TCPClient>(module, "TCPClient")
+      .def(py::init<const std::string &, const std::string &,
+                    fetch::network::TCPClient::network_manager_ptr_type>())
+      .def(py::init<const std::string &, const uint16_t &,
+                    fetch::network::TCPClient::network_manager_ptr_type>())
+      .def("handle", &TCPClient::handle)
+      .def("Send", &TCPClient::Send)
+      .def("Address", &TCPClient::Address);
 }
-
-}  // namespace ops
-}  // namespace ml
-}  // namespace fetch
+};  // namespace network
+};  // namespace fetch

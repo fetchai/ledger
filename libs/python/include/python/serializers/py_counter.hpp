@@ -17,24 +17,30 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/layers/fully_connected.hpp"
-#include "python/fetch_pybind.hpp"
+#include "serializers/counter.hpp"
 
-namespace py = pybind11;
+#include "fetch_pybind.hpp"
 
 namespace fetch {
-namespace ml {
-namespace ops {
+namespace serializers {
 
-template <typename T>
-void BuildFullyConnected(std::string const &custom_name, pybind11::module &module)
+template <typename S>
+void BuildSizeCounter(std::string const &custom_name, pybind11::module &module)
 {
-  py::class_<fetch::ml::layers::FullyConnected<fetch::math::Tensor<T>>>(module, custom_name.c_str())
-      .def(py::init<size_t, size_t>())
-      .def("Forward", &fetch::ml::layers::FullyConnected<fetch::math::Tensor<T>>::Forward)
-      .def("Backward", &fetch::ml::layers::FullyConnected<fetch::math::Tensor<T>>::Backward);
+
+  namespace py = pybind11;
+  py::class_<SizeCounter<S>>(module, custom_name)
+      .def(py::init<>()) /* No constructors found */
+      .def("WriteBytes", &SizeCounter<S>::WriteBytes)
+      .def("bytes_left", &SizeCounter<S>::bytes_left)
+      .def("SkipBytes", &SizeCounter<S>::SkipBytes)
+      .def("ReadBytes", &SizeCounter<S>::ReadBytes)
+      .def("Allocate", &SizeCounter<S>::Allocate)
+      .def("size", &SizeCounter<S>::size)
+      .def("seek", &SizeCounter<S>::seek)
+      .def("tell", &SizeCounter<S>::tell)
+      .def("Reserve", &SizeCounter<S>::Reserve);
 }
 
-}  // namespace ops
-}  // namespace ml
-}  // namespace fetch
+};  // namespace serializers
+};  // namespace fetch

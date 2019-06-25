@@ -17,24 +17,28 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/layers/fully_connected.hpp"
-#include "python/fetch_pybind.hpp"
+#include "http/request.hpp"
 
-namespace py = pybind11;
+#include "fetch_pybind.hpp"
 
 namespace fetch {
-namespace ml {
-namespace ops {
+namespace http {
 
-template <typename T>
-void BuildFullyConnected(std::string const &custom_name, pybind11::module &module)
+void BuildHTTPRequest(pybind11::module &module)
 {
-  py::class_<fetch::ml::layers::FullyConnected<fetch::math::Tensor<T>>>(module, custom_name.c_str())
-      .def(py::init<size_t, size_t>())
-      .def("Forward", &fetch::ml::layers::FullyConnected<fetch::math::Tensor<T>>::Forward)
-      .def("Backward", &fetch::ml::layers::FullyConnected<fetch::math::Tensor<T>>::Backward);
+  namespace py = pybind11;
+  py::class_<HTTPRequest>(module, "HTTPRequest")
+      .def(py::init<>())
+      .def("content_length", &HTTPRequest::content_length)
+      .def("body", &HTTPRequest::body)
+      .def("header_length", &HTTPRequest::header_length)
+      .def("protocol", &HTTPRequest::protocol)
+      .def("uri", &HTTPRequest::uri)
+      .def("header", &HTTPRequest::header)
+      .def("JSON", &HTTPRequest::JSON)
+      .def("is_valid", &HTTPRequest::is_valid)
+      .def("query", &HTTPRequest::query)
+      .def("method", &HTTPRequest::method);
 }
-
-}  // namespace ops
-}  // namespace ml
-}  // namespace fetch
+};  // namespace http
+};  // namespace fetch

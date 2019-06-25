@@ -17,24 +17,25 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/layers/fully_connected.hpp"
-#include "python/fetch_pybind.hpp"
+#include "protocols/swarm/node_details.hpp"
 
-namespace py = pybind11;
+#include "fetch_pybind.hpp"
 
 namespace fetch {
-namespace ml {
-namespace ops {
+namespace protocols {
 
-template <typename T>
-void BuildFullyConnected(std::string const &custom_name, pybind11::module &module)
+void BuildSharedNodeDetails(pybind11::module &module)
 {
-  py::class_<fetch::ml::layers::FullyConnected<fetch::math::Tensor<T>>>(module, custom_name.c_str())
-      .def(py::init<size_t, size_t>())
-      .def("Forward", &fetch::ml::layers::FullyConnected<fetch::math::Tensor<T>>::Forward)
-      .def("Backward", &fetch::ml::layers::FullyConnected<fetch::math::Tensor<T>>::Backward);
+  namespace py = pybind11;
+  py::class_<SharedNodeDetails>(module, "SharedNodeDetails")
+      .def(py::init<>())
+      .def(py::init<const fetch::protocols::SharedNodeDetails &>())
+      .def("with_details", &SharedNodeDetails::with_details)
+      .def("AddEntryPoint", &SharedNodeDetails::AddEntryPoint)
+      .def(py::self == fetch::protocols::SharedNodeDetails())
+      .def("details", &SharedNodeDetails::details)
+      .def("default_port", &SharedNodeDetails::default_port)
+      .def("default_http_port", &SharedNodeDetails::default_http_port);
 }
-
-}  // namespace ops
-}  // namespace ml
-}  // namespace fetch
+};  // namespace protocols
+};  // namespace fetch

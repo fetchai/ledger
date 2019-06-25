@@ -17,24 +17,23 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/layers/fully_connected.hpp"
-#include "python/fetch_pybind.hpp"
+#include "http/http_connection_manager.hpp"
 
-namespace py = pybind11;
+#include "fetch_pybind.hpp"
 
 namespace fetch {
-namespace ml {
-namespace ops {
+namespace http {
 
-template <typename T>
-void BuildFullyConnected(std::string const &custom_name, pybind11::module &module)
+void BuildHTTPConnectionManager(pybind11::module &module)
 {
-  py::class_<fetch::ml::layers::FullyConnected<fetch::math::Tensor<T>>>(module, custom_name.c_str())
-      .def(py::init<size_t, size_t>())
-      .def("Forward", &fetch::ml::layers::FullyConnected<fetch::math::Tensor<T>>::Forward)
-      .def("Backward", &fetch::ml::layers::FullyConnected<fetch::math::Tensor<T>>::Backward);
+  namespace py = pybind11;
+  py::class_<HTTPConnectionManager>(module, "HTTPConnectionManager")
+      .def(py::init<fetch::http::AbstractHTTPServer &>())
+      .def("Leave", &HTTPConnectionManager::Leave)
+      .def("PushRequest", &HTTPConnectionManager::PushRequest)
+      .def("Join", &HTTPConnectionManager::Join)
+      .def("GetAddress", &HTTPConnectionManager::GetAddress)
+      .def("Send", &HTTPConnectionManager::Send);
 }
-
-}  // namespace ops
-}  // namespace ml
-}  // namespace fetch
+};  // namespace http
+};  // namespace fetch

@@ -17,24 +17,27 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/layers/fully_connected.hpp"
-#include "python/fetch_pybind.hpp"
+#include "http/connection.hpp"
 
-namespace py = pybind11;
+#include "fetch_pybind.hpp"
 
 namespace fetch {
-namespace ml {
-namespace ops {
+namespace http {
 
-template <typename T>
-void BuildFullyConnected(std::string const &custom_name, pybind11::module &module)
+void BuildHTTPConnection(pybind11::module &module)
 {
-  py::class_<fetch::ml::layers::FullyConnected<fetch::math::Tensor<T>>>(module, custom_name.c_str())
-      .def(py::init<size_t, size_t>())
-      .def("Forward", &fetch::ml::layers::FullyConnected<fetch::math::Tensor<T>>::Forward)
-      .def("Backward", &fetch::ml::layers::FullyConnected<fetch::math::Tensor<T>>::Backward);
+  namespace py = pybind11;
+  py::class_<HTTPConnection, fetch::http::AbstractHTTPConnection>(module, "HTTPConnection")
+      .def(py::init<asio::ip::tcp::tcp::socket, fetch::http::HTTPConnectionManager &>())
+      .def("socket", &HTTPConnection::socket)
+      .def("ReadHeader", &HTTPConnection::ReadHeader)
+      .def("ReadBody", &HTTPConnection::ReadBody)
+      .def("HandleError", &HTTPConnection::HandleError)
+      .def("Send", &HTTPConnection::Send)
+      .def("Write", &HTTPConnection::Write)
+      .def("Start", &HTTPConnection::Start)
+      .def("Address", &HTTPConnection::Address)
+      .def("Close", &HTTPConnection::Close);
 }
-
-}  // namespace ops
-}  // namespace ml
-}  // namespace fetch
+};  // namespace http
+};  // namespace fetch

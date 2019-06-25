@@ -17,24 +17,28 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/layers/fully_connected.hpp"
+#include "math/standard_functions/exp.hpp"
+#include "math/tensor.hpp"
 #include "python/fetch_pybind.hpp"
 
-namespace py = pybind11;
-
 namespace fetch {
-namespace ml {
-namespace ops {
+namespace math {
 
-template <typename T>
-void BuildFullyConnected(std::string const &custom_name, pybind11::module &module)
+template <typename A>
+inline A WrapperExp(A const &a, A &b)
 {
-  py::class_<fetch::ml::layers::FullyConnected<fetch::math::Tensor<T>>>(module, custom_name.c_str())
-      .def(py::init<size_t, size_t>())
-      .def("Forward", &fetch::ml::layers::FullyConnected<fetch::math::Tensor<T>>::Forward)
-      .def("Backward", &fetch::ml::layers::FullyConnected<fetch::math::Tensor<T>>::Backward);
+  Exp(a, b);
+  return b;
 }
 
-}  // namespace ops
-}  // namespace ml
+inline void BuildExpStatistics(std::string const &custom_name, pybind11::module &module)
+{
+  using namespace fetch::math;
+  using namespace fetch::memory;
+
+  namespace py = pybind11;
+  module.def(custom_name.c_str(), &WrapperExp<Tensor<double>>)
+      .def(custom_name.c_str(), &WrapperExp<Tensor<float>>);
+}
+}  // namespace math
 }  // namespace fetch
