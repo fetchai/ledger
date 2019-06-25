@@ -19,6 +19,8 @@
 #include "vectorise/fixed_point/fixed_point.hpp"
 #include "vm_test_toolkit.hpp"
 
+#include "math/trigonometry.hpp"
+
 namespace {
 
 class FixedPointTest : public ::testing::Test
@@ -148,31 +150,31 @@ TEST_F(FixedPointTest, array_64_fixed_point)
 //  double      gt   = static_cast<double>(fetch::fixed_point::fp32_t(1));
 //  EXPECT_TRUE(RunTest(toolkit, stdout, TEXT, gt));
 //}
-//
-// TEST_F(FixedPointTest, sin_pi_32_fixed_point)
-//{
-//  char const *TEXT = R"(
-//    function main()
-//      var pi : Fixed64 = 3.1415fp64;
-//      print(sin(pi));
-//    endfunction
-//  )";
-//  double gt = static_cast<double>(fetch::fixed_point::fp32_t(0));
-//  EXPECT_TRUE(RunTest(toolkit, stdout, TEXT, gt));
-//}
-//
-// TEST_F(FixedPointTest, cos_pi_32_fixed_point)
-//{
-//  char const *TEXT = R"(
-//    function main()
-//      var pi : Fixed64 = 3.1415fp64;
-//      print(cos(pi));
-//    endfunction
-//  )";
-//  double gt = static_cast<double>(fetch::fixed_point::fp32_t(1));
-//  EXPECT_TRUE(RunTest(toolkit, stdout, TEXT, gt));
-//}
-//
+
+TEST_F(FixedPointTest, sin_pi_32_fixed_point)
+{
+  char const *TEXT = R"(
+    function main()
+      var pi : Fixed32 = 3.1415fp32;
+      print(sin(pi));
+    endfunction
+  )";
+  double      gt   = static_cast<double>(fetch::math::Sin(fetch::fixed_point::fp32_t(3.1415)));
+  EXPECT_TRUE(RunTest(toolkit, stdout, TEXT, gt));
+}
+
+TEST_F(FixedPointTest, cos_pi_32_fixed_point)
+{
+  char const *TEXT = R"(
+    function main()
+      var pi : Fixed32 = 3.1415fp32;
+      print(cos(pi));
+    endfunction
+  )";
+  double      gt   = static_cast<double>(fetch::math::Cos(fetch::fixed_point::fp32_t(3.1415)));
+  EXPECT_TRUE(RunTest(toolkit, stdout, TEXT, gt));
+}
+
 // TEST_F(FixedPointTest, exp_64_fixed_point)
 //{
 //  char const *TEXT = R"(
