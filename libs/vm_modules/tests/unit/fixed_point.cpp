@@ -155,11 +155,11 @@ TEST_F(FixedPointTest, sin_pi_32_fixed_point)
 {
   char const *TEXT = R"(
     function main()
-      var pi : Fixed32 = 3.1415fp32;
+      var pi : Fixed32 = 2fp32;
       print(sin(pi));
     endfunction
   )";
-  double      gt   = static_cast<double>(fetch::math::Sin(fetch::fixed_point::fp32_t(3.1415)));
+  double      gt   = static_cast<double>(fetch::math::Sin(fetch::fixed_point::fp32_t(2)));
   EXPECT_TRUE(RunTest(toolkit, stdout, TEXT, gt));
 }
 
@@ -171,7 +171,7 @@ TEST_F(FixedPointTest, cos_pi_32_fixed_point)
       print(cos(pi));
     endfunction
   )";
-  double      gt   = static_cast<double>(fetch::math::Cos(fetch::fixed_point::fp32_t(3.1415)));
+  double      gt   = static_cast<double>(fetch::math::Cos(fetch::fixed_point::fp32_t(fetch::fixed_point::fp32_t::CONST_PI)));
   EXPECT_TRUE(RunTest(toolkit, stdout, TEXT, gt));
 }
 
