@@ -56,8 +56,8 @@ public:
 
   fetch::vm::Ptr<TrainingPair> GetNext()
   {
-    typename fetch::ml::CommodityDataLoader<fetch::math::Tensor<float>,
-                                            fetch::math::Tensor<float>>::ReturnType next =
+    typename fetch::ml::dataloaders::CommodityDataLoader<
+        fetch::math::Tensor<float>, fetch::math::Tensor<float>>::ReturnType next =
         loader_.GetNext();
 
     auto first      = this->vm_->CreateNewObject<math::VMTensor>(next.first);
@@ -73,7 +73,9 @@ public:
   }
 
 private:
-  fetch::ml::CommodityDataLoader<fetch::math::Tensor<float>, fetch::math::Tensor<float>> loader_;
+  fetch::ml::dataloaders::CommodityDataLoader<fetch::math::Tensor<float>,
+                                              fetch::math::Tensor<float>>
+      loader_;
 };
 
 }  // namespace ml

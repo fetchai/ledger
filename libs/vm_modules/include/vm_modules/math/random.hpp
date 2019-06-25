@@ -24,6 +24,7 @@
 
 namespace fetch {
 namespace vm_modules {
+namespace math {
 
 template <typename T>
 fetch::meta::IfIsInteger<T, T> Rand(fetch::vm::VM *vm, T const &a = T{0}, T const &b = T{100})
@@ -55,17 +56,23 @@ fetch::meta::IfIsFloat<T, T> Rand(fetch::vm::VM *vm, T const &a = T{.0}, T const
   return std::uniform_real_distribution<T>{a, b}(mt);
 }
 
-static void CreateRand(std::shared_ptr<fetch::vm::Module> module)
+static void BindRand(fetch::vm::Module &module)
 {
-  module->CreateFreeFunction<int16_t>("Rand", &Rand<int16_t>);
-  module->CreateFreeFunction<int32_t>("Rand", &Rand<int32_t>);
-  module->CreateFreeFunction<int64_t>("Rand", &Rand<int64_t>);
-  module->CreateFreeFunction<uint16_t>("Rand", &Rand<uint16_t>);
-  module->CreateFreeFunction<uint32_t>("Rand", &Rand<uint32_t>);
-  module->CreateFreeFunction<uint64_t>("Rand", &Rand<uint64_t>);
-  module->CreateFreeFunction<float_t>("Rand", &Rand<float_t>);
-  module->CreateFreeFunction<double_t>("Rand", &Rand<double_t>);
+  module.CreateFreeFunction<int16_t>("Rand", &Rand<int16_t>);
+  module.CreateFreeFunction<int32_t>("Rand", &Rand<int32_t>);
+  module.CreateFreeFunction<int64_t>("Rand", &Rand<int64_t>);
+  module.CreateFreeFunction<uint16_t>("Rand", &Rand<uint16_t>);
+  module.CreateFreeFunction<uint32_t>("Rand", &Rand<uint32_t>);
+  module.CreateFreeFunction<uint64_t>("Rand", &Rand<uint64_t>);
+  module.CreateFreeFunction<float_t>("Rand", &Rand<float_t>);
+  module.CreateFreeFunction<double_t>("Rand", &Rand<double_t>);
 }
 
+inline void BindRand(std::shared_ptr<fetch::vm::Module> module)
+{
+  BindRand(*module.get());
+}
+
+}  // namespace math
 }  // namespace vm_modules
 }  // namespace fetch
