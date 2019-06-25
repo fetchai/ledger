@@ -668,33 +668,3 @@ extern log::details::LogWrapper logger;
 #define LOG_PRINT_STACK_TRACE(name, custom_name)
 
 #endif
-
-#define ERROR_BACKTRACE                                         \
-  {                                                             \
-    constexpr int            framesMax = 20;                    \
-    std::vector<std::string> results;                           \
-                                                                \
-    void *callstack[framesMax];                                 \
-                                                                \
-    int frames = backtrace(callstack, framesMax);               \
-                                                                \
-    char **frameStrings = backtrace_symbols(callstack, frames); \
-                                                                \
-    std::ostringstream trace;                                   \
-                                                                \
-    for (int i = 0; i < frames; ++i)                            \
-    {                                                           \
-      trace << frameStrings[i] << std::endl;                    \
-    }                                                           \
-    free(frameStrings);                                         \
-                                                                \
-    FETCH_LOG_INFO(LOGGING_NAME, "Trace: \n", trace.str());     \
-  }
-
-#if 1
-#define FETCH_LOG_PROMISE()
-#else
-#define FETCH_LOG_PROMISE() FETCH_LOG_WARN(LOGGING_NAME, "Promise wait: ", __FILE__, ":", __LINE__)
-#endif
-
-// Logging macros
