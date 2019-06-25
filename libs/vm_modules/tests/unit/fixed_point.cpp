@@ -124,19 +124,18 @@ TEST_F(FixedPointTest, array_32_fixed_point)
   EXPECT_TRUE(RunTest(toolkit, stdout, TEXT, gt));
 }
 
-//
-// TEST_F(FixedPointTest, map_32_fixed_point)
-//{
-//  char const *TEXT = R"(
-//    function main()
-//      var mymap = Map<Fixed32, Fixed32>();
-//      mymap[0] = 1;
-//      print(mymap[0]);
-//    endfunction
-//  )";
-//  double      gt   = static_cast<double>(fetch::fixed_point::fp32_t(1));
-//  EXPECT_TRUE(RunTest(toolkit, stdout, TEXT, gt));
-//}
+TEST_F(FixedPointTest, map_32_fixed_point)
+{
+  char const *TEXT = R"(
+    function main()
+      var mymap = Map<Fixed32, Fixed32>();
+      mymap[0fp32] = 1fp32;
+      print(mymap[0]);
+    endfunction
+  )";
+  double      gt   = static_cast<double>(fetch::fixed_point::fp32_t(1));
+  EXPECT_TRUE(RunTest(toolkit, stdout, TEXT, gt));
+}
 
 TEST_F(FixedPointTest, sin_pi_32_fixed_point)
 {
