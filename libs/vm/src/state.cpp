@@ -55,13 +55,15 @@ inline bool ReadHelper(TypeId type, std::string const &name, Ptr<Object> &val, V
 
   if (!vm->HasIoObserver())
   {
-    return false;
+    return true;
   }
 
   if (!vm->IsDefaultSerializeConstructable(type))
   {
     vm->RuntimeError("Cannot deserialise object of type " + vm->GetUniqueId(type) +
                      " for which no serialisation constructor exists.");
+
+    return false;
   }
 
   val = vm->DefaultSerializeConstruct(type);
@@ -123,6 +125,7 @@ inline bool WriteHelper(std::string const &name, Ptr<Object> const &val, VM *vm)
   if (val == nullptr)
   {
     vm->RuntimeError("Cannot serialise null reference");
+    return false;
   }
 
   if (!val->SerializeTo(buffer))
