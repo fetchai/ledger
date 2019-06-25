@@ -28,6 +28,7 @@ class LinearCongruentialGenerator
 {
 public:
   using random_type = uint64_t;
+  using result_type = random_type;
 
   LinearCongruentialGenerator(random_type seed = 42)
   {
