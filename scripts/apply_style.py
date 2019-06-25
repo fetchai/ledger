@@ -57,18 +57,20 @@ def find_excluded_dirs():
     def get_abspath(name):
         return abspath(join(PROJECT_ROOT, name))
 
-    def cmake_build_tree_roots():
-        direct_subdirectories = os.listdir(PROJECT_ROOT)
+    def is_cmake_build_tree_root(dir_path):
+        return isfile(join(dir_path, 'CMakeCache.txt'))
 
-        return [name for name in direct_subdirectories
-                if isfile(join(get_abspath(name), 'CMakeCache.txt'))]
+    def is_git_dir(dir_path):
+        return basename(dir_path) == '.git'
 
-    directories_to_exclude = ['.git', 'vendor'] + \
-        cmake_build_tree_roots()
+    directories_to_exclude = [get_abspath('vendor')]
+    for root, dirs, files in os.walk(PROJECT_ROOT):
+        if is_cmake_build_tree_root(root) or is_git_dir(root):
+            directories_to_exclude += [root]
 
-    return [get_abspath(name)
-            for name in directories_to_exclude
-            if isdir(get_abspath(name))]
+    return sorted(set([dir_path
+                       for dir_path in directories_to_exclude
+                       if isdir(dir_path)]))
 
 
 EXCLUDED_DIRS = find_excluded_dirs()
