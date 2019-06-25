@@ -72,10 +72,10 @@ StakeSnapshot::CommitteePtr StakeSnapshot::BuildCommittee(uint64_t entropy, std:
       {
         if (record->stake >= selection)
         {
-          // TODO(XXX) This ensures in the case of a collision, the next item in the list is
-          //           picked. However, there is an edge case here when this selection is at the
-          //           end of the stake_index_ array. In this case the output will contain fewer
-          //           items.
+          // TODO(issue 1247): This ensures in the case of a collision, the next item in the list is
+          //                   picked. However, there is an edge case here when this selection is at
+          //                   the  end of the stake_index_ array. In this case the output will
+          //                   contain fewer items.
           selection = 0;
 
           if (chosen_addresses.find(record->address) == chosen_addresses.end())

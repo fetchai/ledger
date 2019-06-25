@@ -25,6 +25,7 @@
 
 namespace fetch {
 namespace vm_modules {
+namespace math {
 
 template <typename T>
 fetch::math::meta::IfIsMath<T, T> Exp(fetch::vm::VM *, T const &a)
@@ -47,5 +48,6 @@ inline void BindExp(std::shared_ptr<vm::Module> module)
   BindExp(*module.get());
 }
 
+}  // namespace math
 }  // namespace vm_modules
 }  // namespace fetch

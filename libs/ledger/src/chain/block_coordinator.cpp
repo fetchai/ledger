@@ -406,14 +406,9 @@ BlockCoordinator::State BlockCoordinator::OnSynchronised(State current, State pr
         // delay the invocation of this state machine
         state_machine_->Delay(std::chrono::milliseconds{100});
 
-        // TODO(EJF): Refactor this stage, getting a little complicated
+        // TODO(issue 1245): Refactor this stage, getting a little complicated
         return State::SYNCHRONISED;
       }
-
-      // TODO(EJF): Remove
-      FETCH_LOG_WARN(LOGGING_NAME,
-                     "!!!!! -> I am mining block: ", current_block_->body.block_number + 1,
-                     " <- !!!!!");
     }
 
     // create a new block

@@ -17,27 +17,16 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vectorise/fixed_point/fixed_point.hpp"
-#include "vm/module.hpp"
-#include "vm_modules/math/abs.hpp"
-#include "vm_modules/math/exp.hpp"
-#include "vm_modules/math/log.hpp"
-#include "vm_modules/math/math.hpp"
-#include "vm_modules/math/pow.hpp"
-#include "vm_modules/math/sqrt.hpp"
-#include "vm_modules/math/trigonometry.hpp"
-
 namespace fetch {
-namespace vm_modules {
+namespace ml {
+namespace ops {
 
-inline void CreateFixedPoint(std::shared_ptr<vm::Module> module)
+enum class CostFunctionType
 {
-  CreateAbs(*module.get());
-  CreateTrigonometry(*module.get());
-  BindExp(*module.get());
-  BindLog(*module.get());
-  BindPow(*module.get());
+  CROSS_ENTROPY,
+  MEAN_SQUARE_ERROR,
+  SOFTMAX_CROSS_ENTROPY
+};
 }
-
-}  // namespace vm_modules
+}  // namespace ml
 }  // namespace fetch

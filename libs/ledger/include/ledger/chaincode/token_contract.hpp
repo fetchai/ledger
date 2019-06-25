@@ -35,7 +35,7 @@ public:
   {
     Address  address;  ///< The address of the staker
     uint64_t from;     ///< The block index from which the stake becomes active
-    uint64_t amount;   ///< The amount to stake
+    uint64_t amount;   ///< The amount being staked
   };
 
   using StakeUpdates = std::vector<StakeUpdate>;

@@ -56,7 +56,7 @@ private:
   ArrayType error_words_;
   ArrayType error_target_weights_;
 
-  W2VLoader<DataType> &data_loader_;
+  dataloaders::W2VLoader<DataType> &data_loader_;
 
   high_resolution_clock::time_point       cur_time_;
   high_resolution_clock::time_point       last_time_;
@@ -64,7 +64,7 @@ private:
 
 public:
   W2VModel(SizeType embeddings_size, SizeType negative, DataType starting_alpha,
-           W2VLoader<DataType> &data_loader);
+           dataloaders::W2VLoader<DataType> &data_loader);
 
   void PrintStats(SizeType const &i, SizeType const &iter, SizeType const &iterations,
                   SizeType const &print_frequency);
@@ -79,7 +79,7 @@ public:
 
 template <typename ArrayType>
 W2VModel<ArrayType>::W2VModel(SizeType embeddings_size, SizeType negative, DataType starting_alpha,
-                              W2VLoader<DataType> &data_loader)
+                              dataloaders::W2VLoader<DataType> &data_loader)
   : embeddings_size_(embeddings_size)
   , negative_(negative)
   , alpha_(starting_alpha)
@@ -427,10 +427,10 @@ void W2VModel<ArrayType>::SGNSTrain(ArrayType const &target, ArrayType const &co
         auto ii = fetch::math::SizeType(double(i));
         updated_rows_weights_.push_back(ii);
 
-        auto view1 = gradient_weights_.View(fetch::math::SizeType(double(i)));
-        auto view2 = error_target_weights_.View(j);
+        auto view2 = gradient_weights_.View(fetch::math::SizeType(double(i)));
+        auto view3 = error_target_weights_.View(j);
 
-        PolyfillInlineAdd(view1, view2);
+        PolyfillInlineAdd(view2, view3);
 
         j++;
       }
