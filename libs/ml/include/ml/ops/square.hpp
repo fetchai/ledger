@@ -50,8 +50,7 @@ public:
 
   /**
    * elementwise multiplication gradient is:
-   * f'(input0)=input1*error_signal
-   * f'(input1)=input0*error_signal
+   * f'(input0)=2*input*error_signal
    */
   virtual std::vector<ArrayType> Backward(VecTensorType const &inputs,
                                           ArrayType const &    error_signal)
@@ -59,10 +58,11 @@ public:
     ASSERT(inputs.size() == 1);
     ASSERT(error_signal.size() == inputs.at(0).get().size());
 
-    ArrayType error_signal1(inputs.at(0).get().shape());
-    fetch::math::Multiply(inputs.at(0).get(), error_signal, error_signal1);
+    ArrayType return_signal(inputs.at(0).get().shape());
+    fetch::math::Multiply(inputs.at(0).get(), error_signal, return_signal);
+    fetch::math::Multiply(return_signal,DataType{2},return_signal);
 
-    return {error_signal1};
+    return {return_signal};
   }
 
   static constexpr char const *DESCRIPTOR = "Square";

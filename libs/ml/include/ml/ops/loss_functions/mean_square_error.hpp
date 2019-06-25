@@ -52,7 +52,12 @@ public:
   {
     assert(inputs.size() == 2);
     assert(inputs[0].shape() == inputs[1].shape());
-    return fetch::math::Subtract(inputs[0], inputs[1]);
+
+    ArrayType return_signal(inputs.front().shape());
+    fetch::math::Subtract(inputs[0], inputs[1],return_signal);
+    fetch::math::Multiply(return_signal,Datatype{2},return_signal);
+
+    return return_signal;
   }
 
   static constexpr char const *DESCRIPTOR = "MeanSquareError";

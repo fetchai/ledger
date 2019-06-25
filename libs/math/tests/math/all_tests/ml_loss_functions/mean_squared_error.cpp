@@ -89,5 +89,5 @@ TYPED_TEST(MeanSquareErrorTest, value_test)
   score = fetch::math::MeanSquareError(test_array, gt_array);
 
   // test correct values
-  ASSERT_NEAR(double(score), double(191.18f / 8.0f / 2.0f), double(1.0e-5f));
+  ASSERT_NEAR(double(score), double(191.18f / 8.0f), double(1.0e-5f));
 }
