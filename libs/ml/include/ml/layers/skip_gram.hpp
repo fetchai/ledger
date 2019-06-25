@@ -72,13 +72,17 @@ public:
     std::string in_ctx_matmul = this->template AddNode<fetch::ml::ops::MatrixMultiply<ArrayType>>(
         name + "_In_Ctx_MatMul", {embed_in_, transpose_ctx});
 
-    // dense layer
-    std::string fc_out = this->template AddNode<fetch::ml::layers::FullyConnected<ArrayType>>(
-        name + "_Dense", {in_ctx_matmul}, in_size, out);
-
-    // sigmoid activation
+//    // dense layer
+//    std::string fc_out = this->template AddNode<fetch::ml::layers::FullyConnected<ArrayType>>(
+//        name + "_Dense", {in_ctx_matmul}, in_size, out);
+//
+//    // sigmoid activation
+//    std::string output =
+//        this->template AddNode<fetch::ml::ops::Sigmoid<ArrayType>>(name + "_Sigmoid", {fc_out});
+      // sigmoid activation
+      
     std::string output =
-        this->template AddNode<fetch::ml::ops::Sigmoid<ArrayType>>(name + "_Sigmoid", {fc_out});
+        this->template AddNode<fetch::ml::ops::Sigmoid<ArrayType>>(name + "_Sigmoid", {in_ctx_matmul});
 
     this->AddInputNode(input);
     this->AddInputNode(context);

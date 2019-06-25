@@ -150,7 +150,7 @@ typename T::Type Optimiser<T, C>::Run(std::vector<ArrayType> const &data, ArrayT
     // Compute and apply gradient
     ApplyGradients(batch_size);
 
-    FETCH_LOG_INFO("ML_LIB", "Batch loss: ", loss);
+    // FETCH_LOG_INFO("ML_LIB", "Batch loss: ", loss);
 
     step += batch_size;
     loss_sum += loss;
@@ -191,19 +191,19 @@ typename T::Type Optimiser<T, C>::Run(
   SizeType                                     step{0};
   std::pair<ArrayType, std::vector<ArrayType>> input;
 
-  high_resolution_clock::time_point  curTime;
-  high_resolution_clock::time_point  prevTime = high_resolution_clock::now();
-  SizeType prevStep{0};
+  high_resolution_clock::time_point  cur_time;
+  high_resolution_clock::time_point  prev_time = high_resolution_clock::now();
+  SizeType prev_step{0};
 
   while (!loader.IsDone() && step < subset_size)
   {
       // print the training stats every batch
-      curTime = high_resolution_clock::now();
-      duration<double> time_span = duration_cast<duration<double>>(curTime - prevTime);
+      cur_time = high_resolution_clock::now();
+      duration<double> time_span = duration_cast<duration<double>>(cur_time - prev_time);
       if (subset_size == fetch::math::numeric_max<math::SizeType>()){
           std::cout << "\r" << step  << " (??%) -- "
                     << "learning rate: " << learning_rate_ << " -- "
-                    << static_cast<double>(step - prevStep) / time_span.count() << " words / sec"
+                    << static_cast<double>(step - prev_step) / time_span.count() << " words / sec"
                     << std::flush;
       }else{
           std::cout << "\r" << step << " / " << subset_size << " ("
@@ -211,11 +211,11 @@ typename T::Type Optimiser<T, C>::Run(
                                              static_cast<double>(subset_size))
                     << "%) -- "
                     << "learning rate: " << learning_rate_ << " -- "
-                    << static_cast<double>(step - prevStep) / time_span.count() << " words / sec"
+                    << static_cast<double>(step - prev_step) / time_span.count() << " words / sec"
                     << std::flush;
       }
-      prevTime = curTime;
-      prevStep = step;
+      prev_time = cur_time;
+      prev_step = step;
 
 
     loss = DataType{0};
@@ -242,7 +242,7 @@ typename T::Type Optimiser<T, C>::Run(
     // Compute and apply gradient
     ApplyGradients(batch_size);
 
-    FETCH_LOG_INFO("ML_LIB", "Batch loss: ", loss);
+    // FETCH_LOG_INFO("ML_LIB", "Batch loss: ", loss);
 
     step += batch_size;
     loss_sum += loss;
