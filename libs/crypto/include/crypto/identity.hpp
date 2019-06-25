@@ -73,7 +73,7 @@ public:
 
   operator bool() const
   {
-    return TestIdentityParameterSize(identity_parameters_, identifier_.size()) ;
+    return TestIdentityParameterSize(identity_parameters_, identifier_.size());
   }
 
   static Identity CreateInvalid()
@@ -103,11 +103,11 @@ public:
 
   void Clone()
   {
-    identifier_          = identifier_.Copy();
+    identifier_ = identifier_.Copy();
   }
 
 private:
-  uint8_t identity_parameters_{edcsa_curve_type::sn};
+  uint8_t                    identity_parameters_{edcsa_curve_type::sn};
   byte_array::ConstByteArray identifier_;
 };
 
@@ -128,7 +128,7 @@ T &Serialize(T &serializer, Identity const &data)
 template <typename T>
 T &Deserialize(T &serializer, Identity &data)
 {
-  uint8_t params;
+  uint8_t               params;
   byte_array::ByteArray id;
   serializer >> id;
   serializer >> params;

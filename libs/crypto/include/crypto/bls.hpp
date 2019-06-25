@@ -21,20 +21,19 @@
 #include "core/threading/synchronised_state.hpp"
 #include "crypto/ecdsa_signature.hpp"
 #include "crypto/prover.hpp"
-#include "crypto/verifier.hpp"
 #include "crypto/signature_register.hpp"
+#include "crypto/verifier.hpp"
 
 #include "fetch_bls.hpp"
 
-#include <utility>
-#include <sstream>
 #include <atomic>
+#include <sstream>
+#include <utility>
 
 namespace fetch {
 namespace crypto {
 
-namespace details
-{
+namespace details {
 
 struct BLSInitialiser
 {
@@ -42,9 +41,9 @@ struct BLSInitialiser
   {
     bool a{true};
     a = was_initialised.exchange(a);
-    if(!a)
+    if (!a)
     {
-      // use BN254      
+      // use BN254
       bls::init();
     }
   }
@@ -53,7 +52,7 @@ struct BLSInitialiser
 };
 
 std::atomic<bool> BLSInitialiser::was_initialised{false};
-}
+}  // namespace details
 
 class BLSVerifier : public Verifier
 {
@@ -79,7 +78,7 @@ public:
       return false;
     }
 
-    bls::Signature sign;
+    bls::Signature    sign;
     std::stringstream ssig{static_cast<std::string>(signature)};
     ssig >> sign;
 
@@ -97,16 +96,16 @@ public:
   }
 
 private:
-  Identity  identity_;
+  Identity       identity_;
   bls::PublicKey public_key_;
 };
 
 class BLSSigner : public Prover
 {
 public:
-  BLSSigner() 
+  BLSSigner()
   {
-    details::BLSInitialiser();    
+    details::BLSInitialiser();
   }
 
   explicit BLSSigner(ConstByteArray const &private_key)
@@ -129,38 +128,37 @@ public:
 
   ConstByteArray Sign(ConstByteArray const &text) const final
   {
-    std::string m = static_cast<std::string>(text);
+    std::string    m = static_cast<std::string>(text);
     bls::Signature s;
     private_key_.sign(s, m.c_str());
     std::stringstream signature;
     signature << s;
-    return static_cast< ConstByteArray >(signature.str());
+    return static_cast<ConstByteArray>(signature.str());
   }
 
   Identity identity() const final
   {
-    // TODO: Fix this 
+    // TODO: Fix this
     return Identity(BLS_BN256_UNCOMPRESSED, public_key());
   }
 
   ConstByteArray public_key() const
   {
     std::stringstream buffer;
-    buffer << public_key_;    
+    buffer << public_key_;
     return static_cast<ConstByteArray>(buffer.str());
   }
 
   ConstByteArray private_key()
   {
     std::stringstream buffer;
-    buffer << private_key_;    
+    buffer << private_key_;
     return static_cast<ConstByteArray>(buffer.str());
   }
 
 private:
   bls::SecretKey private_key_;
   bls::PublicKey public_key_;
-
 };
 
 }  // namespace crypto
