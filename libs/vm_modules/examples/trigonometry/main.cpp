@@ -51,7 +51,7 @@ int main(int argc, char **argv)
 
   fetch::vm_modules::CreatePrint(*module);
   fetch::vm_modules::CreateToString(*module);
-  fetch::vm_modules::CreateTrigonometry(*module);
+  fetch::vm_modules::math::BindTrigonometry(*module);
 
   // Setting compiler up
   auto                     compiler = std::make_unique<fetch::vm::Compiler>(module.get());

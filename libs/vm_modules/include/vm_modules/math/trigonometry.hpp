@@ -22,6 +22,7 @@
 
 namespace fetch {
 namespace vm_modules {
+namespace math {
 
 /**
  * method for taking the sine of a value
@@ -166,7 +167,7 @@ fetch::math::meta::IfIsMath<T, T> ATanH(fetch::vm::VM *, T const &a)
   return x;
 }
 
-inline void CreateTrigonometry(fetch::vm::Module &module)
+inline void BindTrigonometry(fetch::vm::Module &module)
 {
   module.CreateFreeFunction<float_t>("sin", &Sin<float_t>);
   module.CreateFreeFunction<float_t>("cos", &Cos<float_t>);
@@ -225,9 +226,11 @@ inline void CreateTrigonometry(fetch::vm::Module &module)
   module.CreateFreeFunction<fixed_point::fp64_t>("atanh", &ATanH<fixed_point::fp64_t>);
 }
 
-inline void CreateTrigonometry(std::shared_ptr<vm::Module> module)
+inline void BindTrigonometry(std::shared_ptr<vm::Module> module)
 {
-  CreateTrigonometry(*module.get());
+  BindTrigonometry(*module.get());
 }
+
+}  // namespace math
 }  // namespace vm_modules
 }  // namespace fetch
