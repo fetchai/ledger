@@ -22,13 +22,8 @@
 #include "ml/dataloaders/dataloader.hpp"
 #include "ml/dataloaders/text_loader.hpp"
 
-#include <algorithm>
-#include <cassert>
-#include <numeric>
-#include <random>
-#include <stdexcept>
-#include <utility>
-#include <vector>
+#include <algorithm>  // random_shuffle
+#include <numeric>    // std::iota
 
 namespace fetch {
 namespace ml {
@@ -41,9 +36,8 @@ struct TextParams
 public:
   using SizeType = typename T::SizeType;
 
-  explicit TextParams(bool fw = false)
-    : full_window(fw)
-  {}
+  TextParams(bool fw = false)
+    : full_window(fw){};
 
   SizeType min_sentence_length = 2;  // minimum number of words in a sentence
   SizeType max_sentences       = 0;  // maximum number of sentences in training set
@@ -78,7 +72,7 @@ public:
   // overloaded member from dataloader
   std::pair<T, std::vector<T>> GetNext() override;
   SizeType                     Size() const override;
-  bool                         IsDone() const override;
+  virtual bool                 IsDone() const override;
   void                         Reset() override;
 
   virtual std::pair<T, std::vector<T>> GetAtIndex(SizeType idx);
@@ -535,7 +529,11 @@ bool BasicTextLoader<T>::DiscardExample(SizeType word_frequency)
   prob_thresh *= (p_.discard_threshold / word_probability);
   double f = lfg_.AsDouble();
 
-  return !(f < prob_thresh);
+  if (f < prob_thresh)
+  {
+    return false;
+  }
+  return true;
 }
 
 }  // namespace dataloaders
