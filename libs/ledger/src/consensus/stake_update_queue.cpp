@@ -33,52 +33,54 @@ bool StakeUpdateQueue::ApplyUpdates(BlockIndex block_index, StakeSnapshotPtr con
 {
   bool new_snapshot{false};
 
-  // ensure the output is empty (this should always be the case anyway)
-  next.reset();
+  updates_.Apply([&](BlockUpdates &updates) {
+    // ensure the output is empty (this should always be the case anyway)
+    next.reset();
 
-  // make sure that the next block in the map is in fact the correct block index
-  if (!updates_.empty())
-  {
-    auto next_update_it = updates_.begin();
-    if (block_index < next_update_it->first)
+    // make sure that the next block in the map is in fact the correct block index
+    if (!updates.empty())
     {
-      // no update to be applied
-      return false;
-    }
-    else
-    {
-      // find the next appropriate update
-      next_update_it = updates_.find(block_index);
-
-      // helpful references
-      BlockIndex const &next_update_block_index = next_update_it->first;
-      StakeMap const &  next_update_stake_map   = next_update_it->second;
-
-      // ensure that this is the next block to be updated
-      if (next_update_block_index == block_index)
+      auto next_update_it = updates.begin();
+      if (block_index < next_update_it->first)
       {
-        // this should always be the case currently:
-        if (!next_update_stake_map.empty())
-        {
-          // make a full copy of the stake snapshot
-          next         = std::make_shared<StakeSnapshot>(*reference);
-          new_snapshot = true;
-        }
-
-        // apply all the updates to the specified tracker
-        for (auto const &element : next_update_stake_map)
-        {
-          next->UpdateStake(element.first, element.second);
-        }
-
-        // advance the iterator along so it points to be new next update
-        ++next_update_it;
+        // no update to be applied
+        return;
       }
+      else
+      {
+        // find the next appropriate update
+        next_update_it = updates.find(block_index);
 
-      // remove all the redundant entries
-      updates_.erase(updates_.begin(), next_update_it);
+        // helpful references
+        BlockIndex const &next_update_block_index = next_update_it->first;
+        StakeMap const &  next_update_stake_map   = next_update_it->second;
+
+        // ensure that this is the next block to be updated
+        if (next_update_block_index == block_index)
+        {
+          // this should always be the case currently:
+          if (!next_update_stake_map.empty())
+          {
+            // make a full copy of the stake snapshot
+            next         = std::make_shared<StakeSnapshot>(*reference);
+            new_snapshot = true;
+          }
+
+          // apply all the updates to the specified tracker
+          for (auto const &element : next_update_stake_map)
+          {
+            next->UpdateStake(element.first, element.second);
+          }
+
+          // advance the iterator along so it points to be new next update
+          ++next_update_it;
+        }
+
+        // remove all the redundant entries
+        updates.erase(updates.begin(), next_update_it);
+      }
     }
-  }
+  });
 
   return new_snapshot;
 }
