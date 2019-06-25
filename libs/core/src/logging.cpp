@@ -137,7 +137,12 @@ void LogRegistry::Log(LogLevel level, char const *name, std::string &&message)
 void LogRegistry::SetLevel(char const *name, LogLevel level)
 {
   FETCH_LOCK(lock_);
-  GetLogger(name).set_level(ConvertFromLevel(level));
+
+  auto it = registry_.find(name);
+  if (it != registry_.end())
+  {
+    it->second->set_level(ConvertFromLevel(level));
+  }
 }
 
 LogLevelMap LogRegistry::GetLogLevelMap()
