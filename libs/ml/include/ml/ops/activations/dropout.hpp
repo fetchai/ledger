@@ -54,17 +54,16 @@ public:
 
     if (!this->is_training_)
     {
-      output.Copy(inputs.front().get());
-      return;
-    }
-
-    if (drop_values_.shape() != output.shape())
+      fetch::math::Multiply(inputs.front().get(), probability_, output);
+    } else
     {
-      drop_values_ = ArrayType(inputs.front().get().shape());
-    }
-    UpdateRandomValues();
+      if (drop_values_.shape() != output.shape()) {
+        drop_values_ = ArrayType(inputs.front().get().shape());
+      }
+      UpdateRandomValues();
 
-    fetch::math::Multiply(inputs.front().get(), drop_values_, output);
+      fetch::math::Multiply(inputs.front().get(), drop_values_, output);
+    }
   }
 
   virtual std::vector<ArrayType> Backward(VecTensorType const &inputs,
