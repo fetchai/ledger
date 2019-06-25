@@ -16,10 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/serializers/byte_array.hpp"
 #include "crypto/ecdsa.hpp"
 #include "network/muddle/packet.hpp"
 
-#include <gmock/gmock.h>
+#include "gmock/gmock.h"
+
 #include <memory>
 
 class PacketTests : public ::testing::Test
@@ -56,7 +58,7 @@ protected:
   PacketPtr packet_;
 };
 
-TEST_F(PacketTests, CheckInvaldation)
+TEST_F(PacketTests, CheckInvalidation)
 {
   EXPECT_FALSE(packet_->IsStamped());
   EXPECT_FALSE(packet_->Verify());

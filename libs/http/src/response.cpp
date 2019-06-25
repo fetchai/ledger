@@ -16,15 +16,16 @@
 //
 //------------------------------------------------------------------------------
 
-#include "http/response.hpp"
-
 #include "core/byte_array/byte_array.hpp"
+#include "core/logger.hpp"
 #include "core/string/to_lower.hpp"
 #include "core/string/trim.hpp"
+#include "http/response.hpp"
 
+#include <cstddef>
+#include <cstdint>
 #include <cstdlib>
-#include <cstring>
-#include <ostream>
+#include <iostream>
 
 namespace fetch {
 namespace http {

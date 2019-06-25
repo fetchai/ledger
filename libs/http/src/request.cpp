@@ -16,7 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/assert.hpp"
 #include "http/request.hpp"
+
+#include <algorithm>
+#include <iostream>
 
 namespace fetch {
 namespace http {

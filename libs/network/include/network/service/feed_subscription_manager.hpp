@@ -17,27 +17,29 @@
 //
 //------------------------------------------------------------------------------
 
-namespace fetch {
-namespace service {
-class Protocol;
-class FeedSubscriptionManager;
-}  // namespace service
-}  // namespace fetch
-
+#include "core/logger.hpp"
 #include "core/mutex.hpp"
 #include "network/details/thread_pool.hpp"
 #include "network/generics/work_items_queue.hpp"
 #include "network/message.hpp"
-#include "network/service/abstract_publication_feed.hpp"
-#include "network/service/message_types.hpp"
 #include "network/service/types.hpp"
 
-#include <condition_variable>
+#include <algorithm>
+#include <cstddef>
+#include <cstdint>
 #include <iterator>
+#include <memory>
+#include <mutex>
+#include <tuple>
+#include <utility>
 #include <vector>
 
 namespace fetch {
 namespace service {
+
+class ServiceServerInterface;
+class AbstractPublicationFeed;
+
 /* This is a subscription manager that is used on the server side.
  *
  * This class manages the client subscriptions. It is added to the
@@ -47,9 +49,6 @@ namespace service {
  * multi-service support yet. This is, however, easily implmented at a
  * later point.
  */
-
-class ServiceServerInterface;
-
 class FeedSubscriptionManager
 {
 public:

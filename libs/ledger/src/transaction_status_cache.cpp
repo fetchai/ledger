@@ -44,6 +44,9 @@ char const *ToString(TransactionStatus status)
   case TransactionStatus::EXECUTED:
     text = "Executed";
     break;
+  case TransactionStatus::SUBMITTED:
+    text = "Submitted";
+    break;
   }
 
   return text;

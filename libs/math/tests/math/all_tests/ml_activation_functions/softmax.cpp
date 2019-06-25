@@ -19,7 +19,7 @@
 #include "math/ml/activation_functions/softmax.hpp"
 #include "math/tensor.hpp"
 
-#include <gtest/gtest.h>
+#include "gtest/gtest.h"
 
 template <typename T>
 class SoftmaxTest : public ::testing::Test

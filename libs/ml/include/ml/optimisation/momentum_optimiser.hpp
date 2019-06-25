@@ -47,6 +47,8 @@ public:
                     DataType const &                learning_rate   = DataType{0.001f},
                     DataType const &                momentum_update = DataType{0.9f});
 
+  virtual ~MomentumOptimiser() = default;
+
 private:
   std::vector<ArrayType> momentum_;
   DataType               momentum_update_;

@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/byte_array/const_byte_array.hpp"
 #include "core/mutex.hpp"
 #include "metrics/metric_handler.hpp"
 

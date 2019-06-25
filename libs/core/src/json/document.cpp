@@ -17,9 +17,12 @@
 //------------------------------------------------------------------------------
 
 #include "core/json/document.hpp"
+#include "core/json/exceptions.hpp"
 
+#include <cassert>
+#include <cerrno>
+#include <cstdint>
 #include <cstdlib>
-#include <stdexcept>
 #include <string>
 
 namespace fetch {
@@ -323,9 +326,9 @@ void JSONDocument::Tokenise(ConstByteArray const &document)
   char const *ptr = reinterpret_cast<char const *>(document.pointer());
   while (pos < document.size())
   {
-    uint16_t const *words16 = reinterpret_cast<uint16_t const *>(ptr + pos);
-    uint32_t const *words   = reinterpret_cast<uint32_t const *>(ptr + pos);
-    char const &    c       = *(ptr + pos);
+    auto        words16 = reinterpret_cast<uint16_t const *>(ptr + pos);
+    auto        words   = reinterpret_cast<uint32_t const *>(ptr + pos);
+    char const &c       = *(ptr + pos);
     if ((document.size() - pos) > 2)
     {
       // Handling white spaces

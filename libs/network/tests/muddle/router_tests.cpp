@@ -22,9 +22,10 @@
 #include "network/muddle/muddle.hpp"
 #include "network/muddle/router.hpp"
 
+#include "gtest/gtest.h"
+
 #include <atomic>
 #include <chrono>
-#include <gtest/gtest.h>
 #include <memory>
 #include <thread>
 

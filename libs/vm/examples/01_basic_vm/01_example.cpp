@@ -94,8 +94,8 @@ int main(int argc, char **argv)
       .CreateStaticMemberFunction("Argv", &System::Argv);
 
   // Setting compiler up
-  auto compiler = new fetch::vm::Compiler(&module);
-  auto vm       = new fetch::vm::VM(&module);
+  auto compiler = std::make_unique<fetch::vm::Compiler>(&module);
+  auto vm       = std::make_unique<fetch::vm::VM>(&module);
 
   fetch::vm::Executable    executable;
   fetch::vm::IR            ir;
@@ -137,9 +137,6 @@ int main(int argc, char **argv)
   {
     std::cout << "Runtime error: " << error << std::endl;
   }
-
-  delete compiler;
-  delete vm;
 
   return 0;
 }

@@ -22,10 +22,13 @@
 #include "network/management/abstract_connection_register.hpp"
 
 #include <functional>
-#include <thread>
+#include <memory>
 #include <unordered_map>
 
 namespace fetch {
+namespace network {
+class AbstractConnection;
+}  // namespace network
 namespace muddle {
 
 class Dispatcher;
@@ -46,10 +49,10 @@ public:
   static constexpr char const *LOGGING_NAME = "MuddleReg";
 
   // Construction / Destruction
-  MuddleRegister(Dispatcher &dispatcher);
+  explicit MuddleRegister(Dispatcher &dispatcher);
   MuddleRegister(MuddleRegister const &) = delete;
   MuddleRegister(MuddleRegister &&)      = delete;
-  ~MuddleRegister()                      = default;
+  ~MuddleRegister() override             = default;
 
   // Operators
   MuddleRegister &operator=(MuddleRegister const &) = delete;

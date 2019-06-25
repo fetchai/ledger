@@ -17,26 +17,27 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vectorise/fixed_point/fixed_point.hpp"
-#include "vm/module.hpp"
-#include "vm_modules/math/exp.hpp"
-#include "vm_modules/math/log.hpp"
-#include "vm_modules/math/math.hpp"
-#include "vm_modules/math/pow.hpp"
-#include "vm_modules/math/sqrt.hpp"
-#include "vm_modules/math/trigonometry.hpp"
+#include "ledger/upow/work_queue.hpp"
 
 namespace fetch {
-namespace vm_modules {
+namespace ledger {
 
-inline void CreateFixedPoint(std::shared_ptr<vm::Module> module)
+class SynergeticExecutorInterface
 {
-  CreateAbs(*module.get());
-  CreateTrigonometry(*module.get());
-  BindExp(*module.get());
-  BindLog(*module.get());
-  BindPow(*module.get());
-}
+public:
+  using ConstByteArray = byte_array::ConstByteArray;
+  using ProblemData    = std::vector<ConstByteArray>;
 
-}  // namespace vm_modules
+  // Construction / Destruction
+  SynergeticExecutorInterface()          = default;
+  virtual ~SynergeticExecutorInterface() = default;
+
+  /// @name Executor Interface
+  /// @{
+  virtual void Verify(WorkQueue &solutions, ProblemData const &problem_data, uint64_t block,
+                      std::size_t num_lanes) = 0;
+  /// @}
+};
+
+}  // namespace ledger
 }  // namespace fetch

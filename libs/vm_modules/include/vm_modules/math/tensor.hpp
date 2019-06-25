@@ -23,6 +23,7 @@
 namespace fetch {
 namespace vm_modules {
 namespace math {
+
 class VMTensor : public fetch::vm::Object
 {
 
@@ -36,10 +37,26 @@ public:
     , tensor_(shape)
   {}
 
+  VMTensor(fetch::vm::VM *vm, fetch::vm::TypeId type_id, ArrayType tensor)
+    : fetch::vm::Object(vm, type_id)
+    , tensor_(std::move(tensor))
+  {}
+
   static fetch::vm::Ptr<VMTensor> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
                                               fetch::vm::Ptr<fetch::vm::Array<SizeType>> shape)
   {
     return {new VMTensor(vm, type_id, shape->elements)};
+  }
+
+  static void Bind(fetch::vm::Module &module)
+  {
+    module.CreateClassType<VMTensor>("Tensor")
+        .CreateConstuctor<fetch::vm::Ptr<fetch::vm::Array<VMTensor::SizeType>>>()
+        .CreateMemberFunction("At", &VMTensor::AtOne)
+        .CreateMemberFunction("At", &VMTensor::AtTwo)
+        .CreateMemberFunction("At", &VMTensor::AtThree)
+        .CreateMemberFunction("SetAt", &VMTensor::SetAt)
+        .CreateMemberFunction("ToString", &VMTensor::ToString);
   }
 
   DataType AtOne(uint64_t const &idx1)
@@ -85,17 +102,6 @@ public:
 private:
   ArrayType tensor_;
 };
-
-inline void CreateTensor(fetch::vm::Module &module)
-{
-  module.CreateClassType<VMTensor>("Tensor")
-      .CreateConstuctor<fetch::vm::Ptr<fetch::vm::Array<VMTensor::SizeType>>>()
-      .CreateMemberFunction("At", &VMTensor::AtOne)
-      .CreateMemberFunction("At", &VMTensor::AtTwo)
-      .CreateMemberFunction("At", &VMTensor::AtThree)
-      .CreateMemberFunction("SetAt", &VMTensor::SetAt)
-      .CreateMemberFunction("ToString", &VMTensor::ToString);
-}
 
 }  // namespace math
 }  // namespace vm_modules
