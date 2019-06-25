@@ -120,8 +120,8 @@ int main(int ac, char **av)
   // Setting up shared embedding matrix for words
   // Dimension: (VOCAB_SIZE_WORDS, EMBEDDING_SIZE)
   std::string shared_embedding = g->AddNode<Weights>("SharedEmbedding", {});
-  ArrayType   shared_embedding_tensor(SizeVector({vocab_size_words, EMBEDDING_SIZE}));
-  Weights::Initialise(shared_embedding_tensor, vocab_size_words, EMBEDDING_SIZE);
+  ArrayType   shared_embedding_tensor(SizeVector({EMBEDDING_SIZE, vocab_size_words}));
+  Weights::Initialise(shared_embedding_tensor, EMBEDDING_SIZE, vocab_size_words);
   g->SetInput(shared_embedding, shared_embedding_tensor);
 
   // Defining the input nodes
@@ -138,7 +138,7 @@ int main(int ac, char **av)
   // Path embedding
   // Dimension: (N_CONTEXTS, EMBEDDING_SIZE, BATCH_SIZE)
   std::string embeddings_paths =
-      g->AddNode<Embeddings>("EmbeddingPaths", {input_paths}, vocab_size_paths, EMBEDDING_SIZE);
+      g->AddNode<Embeddings>("EmbeddingPaths", {input_paths}, EMBEDDING_SIZE, vocab_size_paths);
 
   // Target word embedding
   // Dimension: (N_CONTEXTS, EMBEDDING_SIZE, BATCH_SIZE)
@@ -156,18 +156,12 @@ int main(int ac, char **av)
   // EMBEDDING_SIZE, BATCH_SIZE))
   std::string context_vectors = g->AddNode<fetch::ml::ops::Concatenate<ArrayType>>(
       "ContextVectors", {embedding_source_words, embeddings_paths, embedding_target_words},
-      SizeType(1));
-
-  // Transposition
-  // Dimensions: (3*EMBEDDING_SIZE, N_CONTEXTS, BATCH_SIZE) = Transpose((N_CONTEXTS,
-  // 3*EMBEDDING_SIZE, BATCH_SIZE))
-  std::string context_vector_transpose =
-      g->AddNode<Transpose>("ContextVectorTransposed", {context_vectors});
+      SizeType(0));
 
   // Fully connected layer
   // Dimensions: (EMBEDDING_SIZE, N_CONTEXTS, BATCH_SIZE) = (EMBEDDING_SIZE, 3*EMBEDDING_SIZE) @
   // (3*EMBEDDING_SIZE, N_CONTEXTS, BATCH_SIZE)
-  std::string fc1 = g->AddNode<MatrixMultiply>("FC1", {fc1_weights, context_vector_transpose});
+  std::string fc1 = g->AddNode<MatrixMultiply>("FC1", {fc1_weights, context_vectors});
 
   // (Elementwise) TanH Layer
   // Dimensions: (EMBEDDING_SIZE, N_CONTEXTS, BATCH_SIZE)

@@ -35,10 +35,10 @@ public:
   using SizeType      = typename ArrayType::SizeType;
   using VecTensorType = typename Weights<T>::VecTensorType;
 
-  Embeddings(SizeType dataPoints, SizeType dimensions)
+  Embeddings(SizeType dimensions, SizeType dataPoints)
   {
-    ArrayType weights = ArrayType(std::vector<SizeType>({dataPoints, dimensions}));
-    fetch::ml::ops::Weights<ArrayType>::Initialise(weights, dataPoints, dimensions);
+    ArrayType weights = ArrayType(std::vector<SizeType>({dimensions, dataPoints}));
+    fetch::ml::ops::Weights<ArrayType>::Initialise(weights, dimensions, dataPoints);
     this->SetData(weights);
   }
 
@@ -58,23 +58,35 @@ public:
     SizeType batch_size = inputs.front().get().shape(1);
 
     if (!this->embeddings_output_ ||
-        this->embeddings_output_->shape().at(0) != inputs.front().get().shape().at(0) ||
-        this->embeddings_output_->shape().at(1) != this->output_->shape().at(1))
+        this->embeddings_output_->shape().at(1) != inputs.front().get().shape().at(0) ||
+        this->embeddings_output_->shape().at(0) != this->output_->shape().at(0))
     {
       this->embeddings_output_ = std::make_shared<ArrayType>(std::vector<SizeType>(
-          {inputs.front().get().shape(0), this->output_->shape().at(1), batch_size}));
+          {this->output_->shape().at(0), inputs.front().get().shape(0), batch_size}));
     }
 
-    for (SizeType n{0}; n < batch_size; n++)
+    ArrayType transposed_input = inputs.front().get().Transpose();
+    auto      e_it             = transposed_input.begin();
+    for (SizeType i{0}; i < inputs.front().get().shape().at(0); i++)
     {
-      for (SizeType i{0}; i < inputs.front().get().shape().at(0); i++)
+      for (SizeType n{0}; n < batch_size; n++)
       {
-        SizeType e = static_cast<SizeType>(inputs.front().get().At(i, n));
 
-        for (SizeType j{0}; j < this->embeddings_output_->shape().at(1); j++)
+        indices1.at(0)       = i;
+        indices1.at(1)       = n;
+        auto embedding_slice = this->embeddings_output_->View(indices1);
+        indices2.at(0)       = static_cast<SizeType>(*e_it);
+        auto output_slice    = this->output_->View(indices2);
+
+        auto embedding_slice_it = embedding_slice.begin();
+        auto output_slice_it    = output_slice.begin();
+        while (embedding_slice_it.is_valid())
         {
-          this->embeddings_output_->At(i, j, n) = this->output_->At(e, j);
+          *embedding_slice_it = *output_slice_it;
+          ++embedding_slice_it;
+          ++output_slice_it;
         }
+        ++e_it;
       }
     }
 
@@ -96,9 +108,9 @@ public:
         SizeType e = static_cast<SizeType>(inputs.front().get().At(i, n));
         updated_rows_.insert(e);
 
-        for (SizeType j{0}; j < this->gradient_accumulation_->shape().at(1); j++)
+        for (SizeType j{0}; j < this->gradient_accumulation_->shape().at(0); j++)
         {
-          this->gradient_accumulation_->At(e, j) += error_signal.At(i, j, n);
+          this->gradient_accumulation_->At(j, e) += error_signal.At(j, i, n);
         }
       }
     }
@@ -131,6 +143,8 @@ public:
 private:
   ArrayPtrType                           embeddings_output_;
   std::set<typename ArrayType::SizeType> updated_rows_;
+  std::vector<SizeType>                  indices1 = {0, 0};
+  std::vector<SizeType>                  indices2 = {0};
 };
 
 }  // namespace ops
