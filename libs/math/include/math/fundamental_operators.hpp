@@ -621,7 +621,6 @@ meta::IfIsMathArray<ArrayType, void> Add(ArrayType const &array, T const &scalar
 template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, ArrayType> Add(ArrayType const &array1, ArrayType const &array2)
 {
-  assert(array1.shape() == array2.shape());
   ArrayType ret{array1.shape()};
   implementations::Add(array1, array2, ret);
   return ret;
@@ -630,8 +629,6 @@ template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, ArrayType> Add(ArrayType const &array1, ArrayType const &array2,
                                               ArrayType &ret)
 {
-  //  assert(array1.shape() == array2.shape());
-  assert(array1.shape() == ret.shape());
   implementations::Add(array1, array2, ret);
   return ret;
 }
@@ -700,7 +697,6 @@ meta::IfIsMathArray<ArrayType, ArrayType> Subtract(ArrayType const &array, T con
 template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, ArrayType> Subtract(ArrayType const &obj1, ArrayType const &obj2)
 {
-  assert(obj1.shape() == obj2.shape());
   ArrayType ret{obj1.shape()};
   implementations::Subtract(obj1, obj2, ret);
   return ret;
@@ -710,8 +706,6 @@ template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, ArrayType> Subtract(ArrayType const &obj1, ArrayType const &obj2,
                                                    ArrayType &ret)
 {
-  assert(obj1.shape() == obj2.shape());
-  assert(obj1.shape() == ret.shape());
   implementations::Subtract(obj1, obj2, ret);
   return ret;
 }
@@ -861,8 +855,6 @@ template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, void> Divide(ArrayType const &obj1, ArrayType const &obj2,
                                             ArrayType &ret)
 {
-  assert(obj1.shape() == obj2.shape());
-  assert(ret.shape() == obj2.shape());
   implementations::Divide(obj1, obj2, ret);
 }
 
@@ -876,7 +868,6 @@ meta::IfIsMathArray<ArrayType, void> Divide(ArrayType const &obj1, ArrayType con
 template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, ArrayType> Divide(ArrayType const &obj1, ArrayType const &obj2)
 {
-  assert(obj1.shape() == obj2.shape());
   ArrayType ret{obj1.shape()};
   Divide(obj1, obj2, ret);
   return ret;
