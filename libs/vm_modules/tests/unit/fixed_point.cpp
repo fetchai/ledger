@@ -112,7 +112,6 @@ TEST_F(FixedPointTest, array_32_fixed_point)
 
       for (i in 0:4)
         myArray[i] = toFixed32(i);
-        printLn(myArray[i]);
       endfor
       print(myArray[3]);
     endfunction
@@ -129,7 +128,6 @@ TEST_F(FixedPointTest, array_64_fixed_point)
 
       for (i in 0:4)
         myArray[i] = toFixed64(i);
-        printLn(myArray[i]);
       endfor
       print(myArray[3]);
     endfunction
@@ -137,19 +135,19 @@ TEST_F(FixedPointTest, array_64_fixed_point)
   double      gt   = static_cast<double>(fetch::fixed_point::fp64_t(3));
   EXPECT_TRUE(RunTest(toolkit, stdout, TEXT, gt));
 }
-
-TEST_F(FixedPointTest, map_32_fixed_point)
-{
-  char const *TEXT = R"(
-    function main()
-      var mymap = Map<Fixed32, Fixed32>();
-      mymap[0] = 1;
-      print(mymap[0]);
-    endfunction
-  )";
-  double      gt   = static_cast<double>(fetch::fixed_point::fp32_t(1));
-  EXPECT_TRUE(RunTest(toolkit, stdout, TEXT, gt));
-}
+//
+// TEST_F(FixedPointTest, map_32_fixed_point)
+//{
+//  char const *TEXT = R"(
+//    function main()
+//      var mymap = Map<Fixed32, Fixed32>();
+//      mymap[0] = 1;
+//      print(mymap[0]);
+//    endfunction
+//  )";
+//  double      gt   = static_cast<double>(fetch::fixed_point::fp32_t(1));
+//  EXPECT_TRUE(RunTest(toolkit, stdout, TEXT, gt));
+//}
 //
 // TEST_F(FixedPointTest, sin_pi_32_fixed_point)
 //{
