@@ -2490,7 +2490,7 @@ TEST(FixedPointTest, NanInfinity_16_16)
   // Exponential checks
   // e ^ (0/0) = NaN
   fp32_t::stateClear();
-  EXPECT_TRUE(fp32_t::isNaN(fp32_t::Exp(fp32_t::_0/fp32_t::_0)));
+  EXPECT_TRUE(fp32_t::isNaN(fp32_t::Exp(fp32_t::_0 / fp32_t::_0)));
   EXPECT_TRUE(fp32_t::isStateNaN());
 
   // e ^ (+∞) = +∞
@@ -2566,7 +2566,7 @@ TEST(FixedPointTest, NanInfinity_16_16)
   // Logarithm checks
   // Log(NaN) = NaN
   fp32_t::stateClear();
-  EXPECT_TRUE(fp32_t::isNaN(fp32_t::Log(fp32_t::_0/fp32_t::_0)));
+  EXPECT_TRUE(fp32_t::isNaN(fp32_t::Log(fp32_t::_0 / fp32_t::_0)));
   EXPECT_TRUE(fp32_t::isStateNaN());
 
   // Log(-∞) = NaN
@@ -2582,13 +2582,13 @@ TEST(FixedPointTest, NanInfinity_16_16)
   // Trigonometry checks
   // Sin/Cos/Tan(NaN)
   fp32_t::stateClear();
-  EXPECT_TRUE(fp32_t::isNaN(fp32_t::Sin(fp32_t::_0/fp32_t::_0)));
+  EXPECT_TRUE(fp32_t::isNaN(fp32_t::Sin(fp32_t::_0 / fp32_t::_0)));
   EXPECT_TRUE(fp32_t::isStateNaN());
   fp32_t::stateClear();
-  EXPECT_TRUE(fp32_t::isNaN(fp32_t::Cos(fp32_t::_0/fp32_t::_0)));
+  EXPECT_TRUE(fp32_t::isNaN(fp32_t::Cos(fp32_t::_0 / fp32_t::_0)));
   EXPECT_TRUE(fp32_t::isStateNaN());
   fp32_t::stateClear();
-  EXPECT_TRUE(fp32_t::isNaN(fp32_t::Tan(fp32_t::_0/fp32_t::_0)));
+  EXPECT_TRUE(fp32_t::isNaN(fp32_t::Tan(fp32_t::_0 / fp32_t::_0)));
   EXPECT_TRUE(fp32_t::isStateNaN());
 
   // Sin/Cos/Tan(+/-∞)
@@ -2613,19 +2613,19 @@ TEST(FixedPointTest, NanInfinity_16_16)
 
   // ASin/ACos/ATan/ATan2(NaN)
   fp32_t::stateClear();
-  EXPECT_TRUE(fp32_t::isNaN(fp32_t::ASin(fp32_t::_0/fp32_t::_0)));
+  EXPECT_TRUE(fp32_t::isNaN(fp32_t::ASin(fp32_t::_0 / fp32_t::_0)));
   EXPECT_TRUE(fp32_t::isStateNaN());
   fp32_t::stateClear();
-  EXPECT_TRUE(fp32_t::isNaN(fp32_t::ACos(fp32_t::_0/fp32_t::_0)));
+  EXPECT_TRUE(fp32_t::isNaN(fp32_t::ACos(fp32_t::_0 / fp32_t::_0)));
   EXPECT_TRUE(fp32_t::isStateNaN());
   fp32_t::stateClear();
-  EXPECT_TRUE(fp32_t::isNaN(fp32_t::ATan(fp32_t::_0/fp32_t::_0)));
+  EXPECT_TRUE(fp32_t::isNaN(fp32_t::ATan(fp32_t::_0 / fp32_t::_0)));
   EXPECT_TRUE(fp32_t::isStateNaN());
   fp32_t::stateClear();
-  EXPECT_TRUE(fp32_t::isNaN(fp32_t::ATan2(fp32_t::_0/fp32_t::_0, fp32_t::_0)));
+  EXPECT_TRUE(fp32_t::isNaN(fp32_t::ATan2(fp32_t::_0 / fp32_t::_0, fp32_t::_0)));
   EXPECT_TRUE(fp32_t::isStateNaN());
   fp32_t::stateClear();
-  EXPECT_TRUE(fp32_t::isNaN(fp32_t::ATan2(fp32_t::_0, fp32_t::_0/fp32_t::_0)));
+  EXPECT_TRUE(fp32_t::isNaN(fp32_t::ATan2(fp32_t::_0, fp32_t::_0 / fp32_t::_0)));
   EXPECT_TRUE(fp32_t::isStateNaN());
 
   // ASin/ACos/ATan(+/-∞)
@@ -2658,13 +2658,13 @@ TEST(FixedPointTest, NanInfinity_16_16)
 
   // SinH/CosH/TanH(NaN)
   fp32_t::stateClear();
-  EXPECT_TRUE(fp32_t::isNaN(fp32_t::SinH(fp32_t::_0/fp32_t::_0)));
+  EXPECT_TRUE(fp32_t::isNaN(fp32_t::SinH(fp32_t::_0 / fp32_t::_0)));
   EXPECT_TRUE(fp32_t::isStateNaN());
   fp32_t::stateClear();
-  EXPECT_TRUE(fp32_t::isNaN(fp32_t::CosH(fp32_t::_0/fp32_t::_0)));
+  EXPECT_TRUE(fp32_t::isNaN(fp32_t::CosH(fp32_t::_0 / fp32_t::_0)));
   EXPECT_TRUE(fp32_t::isStateNaN());
   fp32_t::stateClear();
-  EXPECT_TRUE(fp32_t::isNaN(fp32_t::TanH(fp32_t::_0/fp32_t::_0)));
+  EXPECT_TRUE(fp32_t::isNaN(fp32_t::TanH(fp32_t::_0 / fp32_t::_0)));
   EXPECT_TRUE(fp32_t::isStateNaN());
 
   // SinH/CosH/TanH(+/-∞)
@@ -2689,13 +2689,13 @@ TEST(FixedPointTest, NanInfinity_16_16)
 
   // ASinH/ACosH/ATanH(NaN)
   fp32_t::stateClear();
-  EXPECT_TRUE(fp32_t::isNaN(fp32_t::ASinH(fp32_t::_0/fp32_t::_0)));
+  EXPECT_TRUE(fp32_t::isNaN(fp32_t::ASinH(fp32_t::_0 / fp32_t::_0)));
   EXPECT_TRUE(fp32_t::isStateNaN());
   fp32_t::stateClear();
-  EXPECT_TRUE(fp32_t::isNaN(fp32_t::ACosH(fp32_t::_0/fp32_t::_0)));
+  EXPECT_TRUE(fp32_t::isNaN(fp32_t::ACosH(fp32_t::_0 / fp32_t::_0)));
   EXPECT_TRUE(fp32_t::isStateNaN());
   fp32_t::stateClear();
-  EXPECT_TRUE(fp32_t::isNaN(fp32_t::ATanH(fp32_t::_0/fp32_t::_0)));
+  EXPECT_TRUE(fp32_t::isNaN(fp32_t::ATanH(fp32_t::_0 / fp32_t::_0)));
   EXPECT_TRUE(fp32_t::isStateNaN());
 
   // SinH/CosH/TanH(+/-∞)
