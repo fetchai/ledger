@@ -130,7 +130,7 @@ TEST_F(FixedPointTest, map_32_fixed_point)
     function main()
       var mymap = Map<Fixed32, Fixed32>();
       mymap[0fp32] = 1fp32;
-      print(mymap[0]);
+      print(mymap[0fp32]);
     endfunction
   )";
   double      gt   = static_cast<double>(fetch::fixed_point::fp32_t(1));
