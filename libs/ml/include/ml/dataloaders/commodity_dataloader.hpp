@@ -61,7 +61,9 @@ public:
   using ReturnType = std::pair<LabelType, std::vector<InputType>>;
   using SizeType   = math::SizeType;
 
-  explicit CommodityDataLoader(bool random_mode = false);
+  explicit CommodityDataLoader(bool random_mode = false)
+  : DataLoader<LabelType, InputType>(random_mode)
+  {}
 
   ~CommodityDataLoader() = default;
 
@@ -114,6 +116,12 @@ void CommodityDataLoader<LabelType, InputType>::AddData(std::string const &xfile
 
   // read csv data into buffer_ array
   std::ifstream file(xfilename);
+  if (file.fail())
+  {
+    throw std::runtime_error("Dataloader cannot open file " + xfilename);
+  }
+
+
   std::string   buf;
   char          delimiter = ',';
   std::string   field_value;
@@ -144,6 +152,10 @@ void CommodityDataLoader<LabelType, InputType>::AddData(std::string const &xfile
   file.close();
 
   file.open(yfilename);
+  if (file.fail())
+  {
+    throw std::runtime_error("Dataloader cannot open file " + yfilename);
+  }
   for (SizeType i = 0; i < rows_to_skip_; i++)
   {
     std::getline(file, buf, '\n');
@@ -189,17 +201,6 @@ CommodityDataLoader<LabelType, InputType>::GetNext()
     return buffer_;
   }
 }
-
-/**
- * Constructor for CommodityDataLoader
- * @tparam LabelType Type for the labels, usually tensor<float>
- * @tparam InputType Type for the data, usually tensor<float>
- * @param random_mode whether to access the data randomly
- */
-template <typename LabelType, typename InputType>
-CommodityDataLoader<LabelType, InputType>::CommodityDataLoader(bool random_mode)
-  : DataLoader<LabelType, InputType>(random_mode)
-{}
 
 /**
  * Returns the number of datapoints
