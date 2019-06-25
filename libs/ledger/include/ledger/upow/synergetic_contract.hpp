@@ -40,11 +40,10 @@ namespace byte_array {
 class ConstByteArray;
 }  // namespace byte_array
 
-namespace math {
-
-class BigUnsigned;
-
-}  // namespace math
+namespace vectorise {
+template <uint16_t S>
+class UInt;
+}
 
 namespace vm {
 
@@ -91,7 +90,7 @@ public:
   /// @name Actions to be taken on the synergetic contract
   /// @{
   Status DefineProblem(ProblemData const &problem_data);
-  Status Work(math::BigUnsigned const &nonce, WorkScore &score);
+  Status Work(vectorise::UInt<256> const &nonce, WorkScore &score);
   Status Complete(uint64_t block, BitVector const &shards);
   /// @}
 

@@ -22,6 +22,8 @@
 #include "ledger/state_sentinel_adapter.hpp"
 #include "ledger/storage_unit/cached_storage_adapter.hpp"
 #include "ledger/upow/synergetic_contract.hpp"
+#include "vectorise/uint/uint.hpp"
+
 #include "vm/compiler.hpp"
 #include "vm/vm.hpp"
 #include "vm_modules/vm_factory.hpp"
@@ -36,7 +38,7 @@ namespace fetch {
 namespace ledger {
 namespace {
 
-using vm_modules::BigNumberWrapper;
+using vm_modules::UInt256Wrapper;
 using vm_modules::VMFactory;
 using vm_modules::StructuredData;
 using byte_array::ConstByteArray;
@@ -274,7 +276,7 @@ Status SynergeticContract::DefineProblem(ProblemData const &problem_data)
  * @param score The score for the piece of work
  * @return The assoicated status for the operation
  */
-Status SynergeticContract::Work(math::BigUnsigned const &nonce, WorkScore &score)
+Status SynergeticContract::Work(vectorise::UInt<256> const &nonce, WorkScore &score)
 {
   // overriding assumption that the problem has previously been defined
   assert(static_cast<bool>(problem_));
@@ -285,7 +287,7 @@ Status SynergeticContract::Work(math::BigUnsigned const &nonce, WorkScore &score
   auto vm = std::make_unique<vm::VM>(module_.get());
 
   // create the nonce object to be passed into the work function
-  auto hashed_nonce = vm->CreateNewObject<BigNumberWrapper>(nonce);
+  auto hashed_nonce = vm->CreateNewObject<UInt256Wrapper>(nonce);
 
   // execute the work function of the contract
   std::string error{};

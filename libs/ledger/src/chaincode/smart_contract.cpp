@@ -262,6 +262,7 @@ void AddAddressToParameterPack(vm::VM *vm, vm::ParameterPack &pack, msgpack::obj
  */
 void AddAddressToParameterPack(vm::VM *vm, vm::ParameterPack &pack, variant::Variant const &obj)
 {
+  // TODO(tfr): Consider using the FromJSON overloaded function.
   Address address{};
   if (!Address::Parse(obj.As<ConstByteArray>(), address))
   {
@@ -276,6 +277,45 @@ void AddAddressToParameterPack(vm::VM *vm, vm::ParameterPack &pack, variant::Var
 
   // add it to the parameter list
   pack.Add(vm_address);
+}
+
+/**
+ * Extract an address from a msgpack::object
+ *
+ * @param vm The instance to the VM
+ * @param pack The reference to the parameter pack to be populated
+ * @param obj The object to extract the address from
+ */
+void AddGenericJSONObjectToParameterPack(vm::VM *vm, vm::TypeId expected_type,
+                                         vm::ParameterPack &pack, variant::Variant const &obj)
+{
+  // TODO(tfr): Review design and implement equivalent for msgpack
+  if (!vm->IsDefaultSerializeConstructable(expected_type))
+  {
+    throw std::runtime_error("Type is not constructable: " + vm->GetUniqueId(expected_type));
+  }
+
+  // Creating a new object and deserialise
+  vm::Ptr<vm::Object> object = vm->DefaultSerializeConstruct(expected_type);
+  object->FromJSON(obj);
+
+  if (!pack.Add(object))
+  {
+    throw std::runtime_error("Could not add parameter " + vm->GetUniqueId(expected_type));
+  }
+}
+
+void AddGenericJSONObjectToParameterPack(vm::VM *vm, vm::TypeId expected_type,
+                                         vm::ParameterPack & /*pack*/,
+                                         msgpack::object const & /*obj*/)
+{
+  // TODO(tfr): Review design and implement equivalent for msgpack
+  if (!vm->IsDefaultSerializeConstructable(expected_type))
+  {
+    throw std::runtime_error("Type is not constructable: " + vm->GetUniqueId(expected_type));
+  }
+
+  throw std::runtime_error("No msgpack support for type " + vm->GetUniqueId(expected_type));
 }
 
 /**
@@ -334,7 +374,8 @@ void AddToParameterPack(vm::VM *vm, vm::ParameterPack &params, vm::TypeId expect
     break;
 
   default:
-    throw std::runtime_error("Unable to map data type to VM entity");
+    // TODO(tfr): Add support for msgpack
+    AddGenericJSONObjectToParameterPack(vm, expected_type, params, variant);
   }
 }
 
@@ -522,6 +563,10 @@ SmartContract::Status SmartContract::InvokeQuery(std::string const &name, Query 
       if (!request.Has(parameter.name))
       {
         FETCH_LOG_WARN(LOGGING_NAME, "Unable to lookup variable: ", parameter.name);
+        response["status"] = "failed";
+        response["msg"] = "Unable to lookup variable: " + static_cast<std::string>(parameter.name);
+        response["console"] = "";
+        response["result"]  = variant::Variant::Null();
         return Status::FAILED;
       }
 
@@ -531,6 +576,11 @@ SmartContract::Status SmartContract::InvokeQuery(std::string const &name, Query 
   }
   catch (std::exception const &ex)
   {
+    FETCH_LOG_WARN(LOGGING_NAME, "Query failed during parameter packing: ", ex.what());
+    response["status"]  = "failed";
+    response["msg"]     = ex.what();
+    response["console"] = "";
+    response["result"]  = variant::Variant::Null();
     return Status::FAILED;
   }
 
@@ -545,15 +595,20 @@ SmartContract::Status SmartContract::InvokeQuery(std::string const &name, Query 
 
   if (!vm->Execute(*executable_, name, error, output, params))
   {
+    FETCH_LOG_WARN(LOGGING_NAME, "Query failed during execution: ", error);
     response["status"]  = "failed";
     response["msg"]     = error;
     response["console"] = console.str();
+    response["result"]  = variant::Variant::Null();
     return Status::FAILED;
   }
 
   // extract the result from the contract output
   switch (output.type_id)
   {
+  case vm::TypeIds::Null:
+    response["result"] = variant::Variant::Null();
+    break;
   case vm::TypeIds::Bool:
     response["result"] = output.Get<bool>();
     break;
@@ -597,7 +652,34 @@ SmartContract::Status SmartContract::InvokeQuery(std::string const &name, Query 
     response["result"] = output.Get<vm::Ptr<vm::String>>()->str;
     break;
   default:
-    // TODO(private 900): Deal with general data structures
+    if (output.IsPrimitive())
+    {
+      // TODO(tfr): add error - all types not covered
+      response["result"] = variant::Variant::Null();
+      FETCH_LOG_WARN(LOGGING_NAME, "Could not serialise result - possibly Void return-type");
+      return Status::OK;
+    }
+    else
+    {
+      variant::Variant var;
+      if (output.object == nullptr)
+      {
+        var = variant::Variant::Null();
+      }
+      else
+      {
+        if (!output.object->ToJSON(var))
+        {
+          response["status"] = "failed";
+          response["result"] = "Failed to serialise object to JSON variant";
+          FETCH_LOG_WARN(LOGGING_NAME, "Failed to serialise object to JSON variant for " +
+                                           output.object->GetUniqueId());
+          return Status::FAILED;
+        }
+      }
+      response["result"] = var;
+    }
+
     break;
   }
 

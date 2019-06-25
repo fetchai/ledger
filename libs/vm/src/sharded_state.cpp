@@ -39,6 +39,8 @@ public:
   }
 
 protected:
+  // TODO(private): Support for indexing operators will remain disabled for now just due to keeping
+  // similarity of the interface with State interface.
   TemplateParameter1 GetIndexedValue(Ptr<String> const &key) override
   {
     return GetIndexedValueInternal(key);
@@ -82,28 +84,68 @@ private:
 
   inline TemplateParameter1 GetIndexedValueInternal(Ptr<String> const &index)
   {
-    if (!vm_->HasIoObserver())
-    {
-      RuntimeError("No IOObserver registered in VM.");
-      return {};
-    }
-
-    auto state{IState::ConstructIntrinsic(vm_, TypeIds::Unknown, value_type_id_,
-                                          ComposeFullKey(index), TemplateParameter1{})};
+    auto state{
+        IState::ConstructIntrinsic(vm_, TypeIds::Unknown, value_type_id_, ComposeFullKey(index))};
     return state->Get();
+  }
+
+  inline TemplateParameter1 GetIndexedValueInternal(Ptr<String> const &      index,
+                                                    TemplateParameter1 const default_value)
+  {
+    auto state{
+        IState::ConstructIntrinsic(vm_, TypeIds::Unknown, value_type_id_, ComposeFullKey(index))};
+    return state->Get(default_value);
   }
 
   inline void SetIndexedValueInternal(Ptr<String> const &index, TemplateParameter1 const &value_v)
   {
-    if (!vm_->HasIoObserver())
-    {
-      RuntimeError("No IOObserver registered in VM.");
-      return;
-    }
-
-    auto state{IState::ConstructIntrinsic(vm_, TypeIds::Unknown, value_type_id_,
-                                          ComposeFullKey(index), value_v)};
+    auto state{
+        IState::ConstructIntrinsic(vm_, TypeIds::Unknown, value_type_id_, ComposeFullKey(index))};
     state->Set(value_v);
+  }
+
+  TemplateParameter1 Get(Ptr<String> const &key) override
+  {
+    return GetIndexedValueInternal(key);
+  }
+
+  TemplateParameter1 Get(Ptr<Address> const &key) override
+  {
+    if (!key)
+    {
+      RuntimeError("Index is null reference.");
+      return {};
+    }
+    return GetIndexedValueInternal(key->AsString());
+  }
+
+  TemplateParameter1 Get(Ptr<String> const &key, TemplateParameter1 const &default_value) override
+  {
+    return GetIndexedValueInternal(key, default_value);
+  }
+
+  TemplateParameter1 Get(Ptr<Address> const &key, TemplateParameter1 const &default_value) override
+  {
+    if (!key)
+    {
+      RuntimeError("Index is null reference.");
+      return {};
+    }
+    return GetIndexedValueInternal(key->AsString(), default_value);
+  }
+
+  void Set(Ptr<String> const &key, TemplateParameter1 const &value) override
+  {
+    SetIndexedValueInternal(key, value);
+  }
+
+  void Set(Ptr<Address> const &key, TemplateParameter1 const &value) override
+  {
+    if (!key)
+    {
+      RuntimeError("Index is null reference.");
+    }
+    SetIndexedValueInternal(key->AsString(), value);
   }
 };
 
