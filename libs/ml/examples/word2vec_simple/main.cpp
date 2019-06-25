@@ -39,6 +39,7 @@
 #include "word_analogy.hpp"
 
 using namespace fetch::ml;
+using namespace fetch::ml::dataloaders;
 
 using SizeType  = fetch::math::SizeType;
 using FloatType = float;

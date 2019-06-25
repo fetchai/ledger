@@ -17,34 +17,16 @@
 //
 //------------------------------------------------------------------------------
 
-#include <memory>
-#include <utility>
-#include <vector>
-
 namespace fetch {
 namespace ml {
-namespace dataloaders {
+namespace ops {
 
-template <typename LabelType, typename DataType>
-class DataLoader
+enum class CostFunctionType
 {
-  using SizeType = fetch::math::SizeType;
-
-public:
-  DataLoader(bool random_mode)
-    : random_mode_(random_mode)
-  {}
-  virtual ~DataLoader()                                         = default;
-  virtual std::pair<LabelType, std::vector<DataType>> GetNext() = 0;
-
-  virtual SizeType Size() const   = 0;
-  virtual bool     IsDone() const = 0;
-  virtual void     Reset()        = 0;
-
-protected:
-  bool random_mode_ = false;
+  CROSS_ENTROPY,
+  MEAN_SQUARE_ERROR,
+  SOFTMAX_CROSS_ENTROPY
 };
-
-}  // namespace dataloaders
+}
 }  // namespace ml
 }  // namespace fetch
