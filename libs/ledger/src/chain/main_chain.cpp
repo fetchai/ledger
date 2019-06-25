@@ -140,7 +140,7 @@ void MainChain::CacheBlock(IntBlockPtr const &block) const
  * @param hash The hash of the block to be erased
  * @return amount of blocks erased (1 or 0, if not found)
  */
-MainChain::BlockMap::size_type MainChain::UncacheBlock(BlockHash hash) const
+MainChain::BlockMap::size_type MainChain::UncacheBlock(BlockHash const &hash) const
 {
   return block_chain_.erase(hash);
   // references are kept intact while this cache is alive
@@ -285,7 +285,7 @@ bool MainChain::RemoveTree(BlockHash const &removed_hash, BlockHashSet &invalida
  * @param hash The hash to be removed
  * @return True if successful, otherwise false
  */
-bool MainChain::RemoveBlock(BlockHash hash)
+bool MainChain::RemoveBlock(BlockHash const &hash)
 {
   FETCH_LOCK(lock_);
 
@@ -358,7 +358,7 @@ MainChain::Blocks MainChain::GetHeaviestChain(uint64_t limit) const
  */
 MainChain::Blocks MainChain::GetChainPreceding(BlockHash start, uint64_t limit) const
 {
-  limit = std::min(limit, uint64_t{MainChain::UPPER_BOUND});
+  limit = std::min(limit, static_cast<uint64_t>(MainChain::UPPER_BOUND));
   MilliTimer myTimer("MainChain::ChainPreceding");
 
   FETCH_LOCK(lock_);
@@ -519,7 +519,7 @@ bool MainChain::GetPathToCommonAncestor(Blocks &blocks, BlockHash tip, BlockHash
  * @param hash The hash being queried
  * @return The a valid shared pointer to the block if found, otherwise an empty pointer
  */
-MainChain::BlockPtr MainChain::GetBlock(BlockHash hash) const
+MainChain::BlockPtr MainChain::GetBlock(BlockHash const &hash) const
 {
   FETCH_LOCK(lock_);
 
@@ -527,7 +527,7 @@ MainChain::BlockPtr MainChain::GetBlock(BlockHash hash) const
 
   // attempt to lookup the block
   auto internal_block = std::make_shared<Block>();
-  if (LookupBlock(std::move(hash), internal_block))
+  if (LookupBlock(hash, internal_block))
   {
     // convert the pointer type to per const
     output_block = std::static_pointer_cast<Block const>(internal_block);
@@ -1141,7 +1141,7 @@ BlockStatus MainChain::InsertBlock(IntBlockPtr const &block, bool evaluate_loose
  *
  * @return true if successful, otherwise false
  */
-bool MainChain::LookupBlock(BlockHash hash, IntBlockPtr &block, bool add_to_cache) const
+bool MainChain::LookupBlock(BlockHash const &hash, IntBlockPtr &block, bool add_to_cache) const
 {
   return LookupBlockFromCache(hash, block) || LookupBlockFromStorage(hash, block, add_to_cache);
 }
@@ -1153,7 +1153,7 @@ bool MainChain::LookupBlock(BlockHash hash, IntBlockPtr &block, bool add_to_cach
  * @param block The output block to be populated
  * @return true if successful, otherwise false
  */
-bool MainChain::LookupBlockFromCache(BlockHash hash, IntBlockPtr &block) const
+bool MainChain::LookupBlockFromCache(BlockHash const &hash, IntBlockPtr &block) const
 {
   bool success{false};
 
@@ -1177,7 +1177,8 @@ bool MainChain::LookupBlockFromCache(BlockHash hash, IntBlockPtr &block) const
  * @param block The output block to be populated
  * @return true if successful, otherwise false
  */
-bool MainChain::LookupBlockFromStorage(BlockHash hash, IntBlockPtr &block, bool add_to_cache) const
+bool MainChain::LookupBlockFromStorage(BlockHash const &hash, IntBlockPtr &block,
+                                       bool add_to_cache) const
 {
   bool success{false};
 
@@ -1187,7 +1188,7 @@ bool MainChain::LookupBlockFromStorage(BlockHash hash, IntBlockPtr &block, bool 
     auto output_block = std::make_shared<Block>();
 
     // attempt to read the block from the storage engine
-    success = LoadBlock(std::move(hash), *output_block);
+    success = LoadBlock(hash, *output_block);
 
     if (success)
     {
@@ -1214,7 +1215,7 @@ bool MainChain::LookupBlockFromStorage(BlockHash hash, IntBlockPtr &block, bool 
  * @param hash The hash to query
  * @return true if the block is present, otherwise false
  */
-bool MainChain::IsBlockInCache(BlockHash hash) const
+bool MainChain::IsBlockInCache(BlockHash const &hash) const
 {
   return block_chain_.find(hash) != block_chain_.end();
 }
@@ -1425,7 +1426,7 @@ void MainChain::SetHeadHash(BlockHash const &hash)
  *
  * @return: bool whether the starting hash referred to a valid block on a valid chain
  */
-DigestSet MainChain::DetectDuplicateTransactions(BlockHash        starting_hash,
+DigestSet MainChain::DetectDuplicateTransactions(BlockHash const &starting_hash,
                                                  DigestSet const &transactions) const
 {
   MilliTimer const timer{"DuplicateTransactionsCheck", 100};
@@ -1433,7 +1434,7 @@ DigestSet MainChain::DetectDuplicateTransactions(BlockHash        starting_hash,
   FETCH_LOG_DEBUG(LOGGING_NAME, "Starting TX uniqueness verify");
 
   IntBlockPtr block;
-  if (!LookupBlock(std::move(starting_hash), block, false) || block->is_loose)
+  if (!LookupBlock(starting_hash, block, false) || block->is_loose)
   {
     FETCH_LOG_WARN(LOGGING_NAME, "TX uniqueness verify on bad block hash");
     return {};
