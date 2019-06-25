@@ -101,6 +101,7 @@ TEST(FixedPointTest, Conversion_16_16)
   EXPECT_EQ(smallest_int.Data(), fp32_t::MIN_INT);
   EXPECT_EQ(largest_fixed_point.Data(), fp32_t::MAX);
   EXPECT_EQ(smallest_fixed_point.Data(), fp32_t::MIN);
+
   EXPECT_EQ(fp32_t::MIN, 0x8000ffff);
   EXPECT_EQ(fp32_t::MAX, 0x7fffffff);
 
@@ -471,8 +472,12 @@ TEST(FixedPointTest, Division_16_16)
   EXPECT_EQ(one / huge, infinitesimal * 4);
   EXPECT_EQ(huge / infinitesimal, zero);
 
-  EXPECT_THROW(two / zero, std::overflow_error);
-  EXPECT_THROW(zero / zero, std::overflow_error);
+  fp32_t::stateClear();
+  EXPECT_TRUE(fp32_t::isNaN(two / zero));
+  EXPECT_TRUE(fp32_t::isStateDivisionByZero());
+  fp32_t::stateClear();
+  EXPECT_TRUE(fp32_t::isNaN(zero / zero));
+  EXPECT_TRUE(fp32_t::isStateNaN());
 }
 
 TEST(FixedPointTest, Division_32_32)
@@ -500,8 +505,12 @@ TEST(FixedPointTest, Division_32_32)
   EXPECT_EQ(one / huge, infinitesimal * 4);
   EXPECT_EQ(huge / infinitesimal, zero);
 
-  EXPECT_THROW(two / zero, std::overflow_error);
-  EXPECT_THROW(zero / zero, std::overflow_error);
+  fp64_t::stateClear();
+  EXPECT_TRUE(fp64_t::isNaN(two / zero));
+  EXPECT_TRUE(fp64_t::isStateDivisionByZero());
+  fp64_t::stateClear();
+  EXPECT_TRUE(fp64_t::isNaN(zero / zero));
+  EXPECT_TRUE(fp64_t::isStateNaN());
 }
 
 TEST(FixedPointTest, Comparison_16_16)
@@ -753,7 +762,10 @@ TEST(FixedPointTest, Exponential_16_16)
               0, static_cast<double>(fp32_t::TOLERANCE));
   EXPECT_NEAR(static_cast<double>(e_max) / std::exp(static_cast<double>(fp32_t::MAX_EXP)), 1.0,
               static_cast<double>(fp32_t::TOLERANCE));
-  EXPECT_THROW(fp32_t::Exp(fp32_t::MAX_EXP + 1), std::overflow_error);
+
+  fp32_t::stateClear();
+  EXPECT_EQ(fp32_t::Exp(fp32_t::MAX_EXP + 1), fp32_t::CONST_MAX);
+  EXPECT_TRUE(fp32_t::isStateOverflow());
 
   fp32_t step{0.001};
   fp32_t x{-10.0};
@@ -812,7 +824,9 @@ TEST(FixedPointTest, Exponential_32_32)
               0, static_cast<double>(fp64_t::TOLERANCE));
 
   // Out of range
-  EXPECT_THROW(fp64_t::Exp(fp64_t::MAX_EXP + 1), std::overflow_error);
+  fp64_t::stateClear();
+  EXPECT_EQ(fp64_t::Exp(fp64_t::MAX_EXP + 1), fp64_t::CONST_MAX);
+  EXPECT_TRUE(fp64_t::isStateOverflow());
 
   // Negative values
   EXPECT_NEAR(static_cast<double>(fp64_t::Exp(-one)) - std::exp(-static_cast<double>(one)), 0,
@@ -869,7 +883,6 @@ TEST(FixedPointTest, Pow_16_16_positive_x)
               static_cast<double>(fp32_t::TOLERANCE));
   EXPECT_NEAR(static_cast<double>(e3 / std::pow(2, 1.8464393615723)), 1.0,
               static_cast<double>(fp32_t::TOLERANCE));
-  EXPECT_TRUE(fp32_t::isNaN(fp32_t::Pow(fp32_t::_0, fp32_t::_0)));
   EXPECT_TRUE(fp32_t::isNaN(fp32_t::Pow(a, a)));
 
   fp32_t step{0.001};
@@ -940,7 +953,6 @@ TEST(FixedPointTest, Pow_32_32_positive_x)
               static_cast<double>(fp64_t::TOLERANCE));
   EXPECT_NEAR(static_cast<double>(e3 / std::pow(2, 1.8464393615723)), 1.0,
               static_cast<double>(fp64_t::TOLERANCE));
-  EXPECT_TRUE(fp64_t::isNaN(fp64_t::Pow(fp64_t::_0, fp64_t::_0)));
   EXPECT_TRUE(fp64_t::isNaN(fp64_t::Pow(a, a)));
 
   fp64_t step{0.0001};
@@ -2354,19 +2366,357 @@ TEST(FixedPointTest, NanInfinity_16_16)
   EXPECT_FALSE(fp32_t::isNegInfinity(p_inf));
   EXPECT_FALSE(fp32_t::isPosInfinity(m_inf));
 
-  // TODO(843, add tests for Infinity and NaN)
+  // Absolute value
+  EXPECT_TRUE(fp32_t::isPosInfinity(fp32_t::Abs(m_inf)));
+  EXPECT_TRUE(fp32_t::isPosInfinity(fp32_t::Abs(p_inf)));
+  EXPECT_EQ(fp32_t::Sign(m_inf), -fp32_t::_1);
+  EXPECT_EQ(fp32_t::Sign(p_inf), fp32_t::_1);
+
+  // Comparison checks
+  EXPECT_FALSE(m_inf < m_inf);
+  EXPECT_TRUE(m_inf <= m_inf);
+  EXPECT_TRUE(m_inf < p_inf);
+  EXPECT_TRUE(m_inf < fp32_t::_0);
+  EXPECT_TRUE(m_inf < fp32_t::CONST_MIN);
+  EXPECT_TRUE(m_inf < fp32_t::CONST_MAX);
+  EXPECT_TRUE(m_inf < fp32_t::CONST_MAX);
+  EXPECT_FALSE(p_inf > p_inf);
+  EXPECT_TRUE(p_inf >= p_inf);
+  EXPECT_TRUE(p_inf > m_inf);
+  EXPECT_TRUE(p_inf > fp32_t::_0);
+  EXPECT_TRUE(p_inf > fp32_t::CONST_MIN);
+  EXPECT_TRUE(p_inf > fp32_t::CONST_MAX);
+
   // Addition checks
-  // EXPECT_TRUE(fp32_t::isNegInfinity(m_inf + m_inf));
-  // EXPECT_TRUE(fp32_t::isPosInfinity(p_inf + p_inf));
-  // EXPECT_TRUE(fp32_t::isNaN(m_inf + p_inf));
-  // EXPECT_TRUE(fp32_t::isNaN(p_inf + m_inf));
+  // (-∞) + (-∞) = -∞
+  fp32_t::stateClear();
+  EXPECT_TRUE(fp32_t::isNegInfinity(m_inf + m_inf));
+  EXPECT_TRUE(fp32_t::isStateInfinity());
+
+  // (+∞) + (+∞) = +∞
+  fp32_t::stateClear();
+  EXPECT_TRUE(fp32_t::isPosInfinity(p_inf + p_inf));
+  EXPECT_TRUE(fp32_t::isStateInfinity());
+
+  // (-∞) + (+∞) = NaN
+  fp32_t::stateClear();
+  EXPECT_TRUE(fp32_t::isNaN(m_inf + p_inf));
+  EXPECT_TRUE(fp32_t::isStateNaN());
+
+  // (+∞) + (-∞) = NaN
+  fp32_t::stateClear();
+  EXPECT_TRUE(fp32_t::isNaN(p_inf + m_inf));
+  EXPECT_TRUE(fp32_t::isStateNaN());
 
   // Subtraction checks
+  // (-∞) - (+∞) = -∞
+  fp32_t::stateClear();
+  EXPECT_TRUE(fp32_t::isNegInfinity(m_inf - p_inf));
+  EXPECT_TRUE(fp32_t::isStateInfinity());
+
+  // (+∞) - (-∞) = +∞
+  fp32_t::stateClear();
+  EXPECT_TRUE(fp32_t::isPosInfinity(p_inf - m_inf));
+  EXPECT_TRUE(fp32_t::isStateInfinity());
+
+  // (-∞) - (-∞) = NaN
+  fp32_t::stateClear();
+  EXPECT_TRUE(fp32_t::isNaN(m_inf - m_inf));
+  EXPECT_TRUE(fp32_t::isStateNaN());
+
+  // (+∞) - (+∞) = NaN
+  fp32_t::stateClear();
+  EXPECT_TRUE(fp32_t::isNaN(p_inf - p_inf));
+  EXPECT_TRUE(fp32_t::isStateNaN());
+
   // Multiplication checks
+  // (-∞) * (+∞) = -∞
+  fp32_t::stateClear();
+  EXPECT_TRUE(fp32_t::isNegInfinity(m_inf * p_inf));
+  EXPECT_TRUE(fp32_t::isStateInfinity());
+
+  // (+∞) * (+∞) = +∞
+  fp32_t::stateClear();
+  EXPECT_TRUE(fp32_t::isPosInfinity(p_inf * p_inf));
+  EXPECT_TRUE(fp32_t::isStateInfinity());
+
+  // 0 * (+∞) = NaN
+  fp32_t::stateClear();
+  EXPECT_TRUE(fp32_t::isNaN(fp32_t::_0 * p_inf));
+  EXPECT_TRUE(fp32_t::isStateNaN());
+
+  // 0 * (-∞) = NaN
+  fp32_t::stateClear();
+  EXPECT_TRUE(fp32_t::isNaN(fp32_t::_0 * m_inf));
+  EXPECT_TRUE(fp32_t::isStateNaN());
+
   // Division checks
+  // 0 / (+∞) = 0
+  fp32_t::stateClear();
+  EXPECT_EQ(fp32_t::_0 / p_inf, fp32_t::_0);
+  // 0 * (-∞) = 0
+  EXPECT_EQ(fp32_t::_0 / m_inf, fp32_t::_0);
+
+  // (-∞) / MAX_INT = -∞
+  fp32_t::stateClear();
+  EXPECT_TRUE(fp32_t::isNegInfinity(m_inf / fp32_t::CONST_MAX));
+  EXPECT_TRUE(fp32_t::isStateInfinity());
+
+  // (+∞) / MAX_INT = +∞
+  fp32_t::stateClear();
+  EXPECT_TRUE(fp32_t::isPosInfinity(p_inf / fp32_t::CONST_MAX));
+  EXPECT_TRUE(fp32_t::isStateInfinity());
+
+  // (-∞) / MIN_INT = +∞
+  fp32_t::stateClear();
+  EXPECT_TRUE(fp32_t::isPosInfinity(m_inf / fp32_t::CONST_MIN));
+  EXPECT_TRUE(fp32_t::isStateInfinity());
+
+  // (+∞) / MIN_INT = -∞
+  fp32_t::stateClear();
+  EXPECT_TRUE(fp32_t::isNegInfinity(p_inf / fp32_t::CONST_MIN));
+  EXPECT_TRUE(fp32_t::isStateInfinity());
+
+  // (+∞) / (+∞) = NaN
+  fp32_t::stateClear();
+  EXPECT_TRUE(fp32_t::isNaN(p_inf / p_inf));
+  EXPECT_TRUE(fp32_t::isStateNaN());
+
+  // (-∞) / (+∞) = NaN
+  fp32_t::stateClear();
+  EXPECT_TRUE(fp32_t::isNaN(m_inf / p_inf));
+  EXPECT_TRUE(fp32_t::isStateNaN());
+
   // Exponential checks
+  // e ^ (0/0) = NaN
+  fp32_t::stateClear();
+  EXPECT_TRUE(fp32_t::isNaN(fp32_t::Exp(fp32_t::_0/fp32_t::_0)));
+  EXPECT_TRUE(fp32_t::isStateNaN());
+
+  // e ^ (+∞) = +∞
+  fp32_t::stateClear();
+  EXPECT_TRUE(fp32_t::isPosInfinity(fp32_t::Exp(p_inf)));
+  EXPECT_TRUE(fp32_t::isStateInfinity());
+
+  // this is actually normal operation, does not modify the state
+  // e ^ (-∞) = 0
+  fp32_t::stateClear();
+  EXPECT_EQ(fp32_t::Exp(m_inf), fp32_t::_0);
+
+  // x^y checks
+  // (-∞) ^ (-∞) = 0
+  fp32_t::stateClear();
+  EXPECT_EQ(fp32_t::Pow(m_inf, m_inf), fp32_t::_0);
+
+  // (-∞) ^ 0 = 1
+  fp32_t::stateClear();
+  EXPECT_EQ(fp32_t::Pow(m_inf, fp32_t::_0), fp32_t::_1);
+
+  // (+∞) ^ 0 = 1
+  EXPECT_EQ(fp32_t::Pow(p_inf, fp32_t::_0), fp32_t::_1);
+
+  // 0 ^ 0 = 1
+  EXPECT_EQ(fp32_t::Pow(fp32_t::_0, fp32_t::_0), fp32_t::_1);
+
+  // 0 ^ (-1) = NaN
+  fp32_t::stateClear();
+  EXPECT_TRUE(fp32_t::isNaN(fp32_t::Pow(fp32_t::_0, -fp32_t::_1)));
+  EXPECT_TRUE(fp32_t::isStateNaN());
+
+  // (-∞) ^ 1 = -∞
+  fp32_t::stateClear();
+  EXPECT_TRUE(fp32_t::isNegInfinity(fp32_t::Pow(m_inf, fp32_t::_1)));
+  EXPECT_TRUE(fp32_t::isStateInfinity());
+
+  // (+∞) ^ 1 = +∞
+  fp32_t::stateClear();
+  EXPECT_TRUE(fp32_t::isPosInfinity(fp32_t::Pow(p_inf, fp32_t::_1)));
+  EXPECT_TRUE(fp32_t::isStateInfinity());
+
+  // x ^ (+∞) = +∞, |x| > 1
+  fp32_t x1{1.5};
+  fp32_t::stateClear();
+  EXPECT_TRUE(fp32_t::isPosInfinity(fp32_t::Pow(x1, p_inf)));
+  EXPECT_TRUE(fp32_t::isStateInfinity());
+
+  // x ^ (-∞) = 0, |x| > 1
+  EXPECT_EQ(fp32_t::Pow(x1, m_inf), fp32_t::_0);
+
+  // x ^ (+∞) = 0, |x| < 1
+  fp32_t x2{0.5};
+  EXPECT_EQ(fp32_t::Pow(x2, p_inf), fp32_t::_0);
+
+  // x ^ (-∞) = 0, |x| < 1
+  fp32_t::stateClear();
+  EXPECT_TRUE(fp32_t::isPosInfinity(fp32_t::Pow(x2, m_inf)));
+  EXPECT_TRUE(fp32_t::isStateInfinity());
+
+  // 1 ^ (-∞) = 1
+  EXPECT_EQ(fp32_t::Pow(fp32_t::_1, m_inf), fp32_t::_1);
+
+  // 1 ^ (-∞) = 1
+  EXPECT_EQ(fp32_t::Pow(fp32_t::_1, p_inf), fp32_t::_1);
+
+  // (-1) ^ (-∞) = 1
+  EXPECT_EQ(fp32_t::Pow(-fp32_t::_1, m_inf), fp32_t::_1);
+
+  // (-1) ^ (-∞) = 1
+  EXPECT_EQ(fp32_t::Pow(-fp32_t::_1, p_inf), fp32_t::_1);
+
   // Logarithm checks
+  // Log(NaN) = NaN
+  fp32_t::stateClear();
+  EXPECT_TRUE(fp32_t::isNaN(fp32_t::Log(fp32_t::_0/fp32_t::_0)));
+  EXPECT_TRUE(fp32_t::isStateNaN());
+
+  // Log(-∞) = NaN
+  fp32_t::stateClear();
+  EXPECT_TRUE(fp32_t::isNaN(fp32_t::Log(m_inf)));
+  EXPECT_TRUE(fp32_t::isStateNaN());
+
+  // Log(+∞) = +∞
+  fp32_t::stateClear();
+  EXPECT_TRUE(fp32_t::isInfinity(fp32_t::Log(p_inf)));
+  EXPECT_TRUE(fp32_t::isStateInfinity());
+
   // Trigonometry checks
+  // Sin/Cos/Tan(NaN)
+  fp32_t::stateClear();
+  EXPECT_TRUE(fp32_t::isNaN(fp32_t::Sin(fp32_t::_0/fp32_t::_0)));
+  EXPECT_TRUE(fp32_t::isStateNaN());
+  fp32_t::stateClear();
+  EXPECT_TRUE(fp32_t::isNaN(fp32_t::Cos(fp32_t::_0/fp32_t::_0)));
+  EXPECT_TRUE(fp32_t::isStateNaN());
+  fp32_t::stateClear();
+  EXPECT_TRUE(fp32_t::isNaN(fp32_t::Tan(fp32_t::_0/fp32_t::_0)));
+  EXPECT_TRUE(fp32_t::isStateNaN());
+
+  // Sin/Cos/Tan(+/-∞)
+  fp32_t::stateClear();
+  EXPECT_TRUE(fp32_t::isNaN(fp32_t::Sin(m_inf)));
+  EXPECT_TRUE(fp32_t::isStateNaN());
+  fp32_t::stateClear();
+  EXPECT_TRUE(fp32_t::isNaN(fp32_t::Sin(p_inf)));
+  EXPECT_TRUE(fp32_t::isStateNaN());
+  fp32_t::stateClear();
+  EXPECT_TRUE(fp32_t::isNaN(fp32_t::Cos(m_inf)));
+  EXPECT_TRUE(fp32_t::isStateNaN());
+  fp32_t::stateClear();
+  EXPECT_TRUE(fp32_t::isNaN(fp32_t::Cos(p_inf)));
+  EXPECT_TRUE(fp32_t::isStateNaN());
+  fp32_t::stateClear();
+  EXPECT_TRUE(fp32_t::isNaN(fp32_t::Tan(m_inf)));
+  EXPECT_TRUE(fp32_t::isStateNaN());
+  fp32_t::stateClear();
+  EXPECT_TRUE(fp32_t::isNaN(fp32_t::Tan(p_inf)));
+  EXPECT_TRUE(fp32_t::isStateNaN());
+
+  // ASin/ACos/ATan/ATan2(NaN)
+  fp32_t::stateClear();
+  EXPECT_TRUE(fp32_t::isNaN(fp32_t::ASin(fp32_t::_0/fp32_t::_0)));
+  EXPECT_TRUE(fp32_t::isStateNaN());
+  fp32_t::stateClear();
+  EXPECT_TRUE(fp32_t::isNaN(fp32_t::ACos(fp32_t::_0/fp32_t::_0)));
+  EXPECT_TRUE(fp32_t::isStateNaN());
+  fp32_t::stateClear();
+  EXPECT_TRUE(fp32_t::isNaN(fp32_t::ATan(fp32_t::_0/fp32_t::_0)));
+  EXPECT_TRUE(fp32_t::isStateNaN());
+  fp32_t::stateClear();
+  EXPECT_TRUE(fp32_t::isNaN(fp32_t::ATan2(fp32_t::_0/fp32_t::_0, fp32_t::_0)));
+  EXPECT_TRUE(fp32_t::isStateNaN());
+  fp32_t::stateClear();
+  EXPECT_TRUE(fp32_t::isNaN(fp32_t::ATan2(fp32_t::_0, fp32_t::_0/fp32_t::_0)));
+  EXPECT_TRUE(fp32_t::isStateNaN());
+
+  // ASin/ACos/ATan(+/-∞)
+  fp32_t::stateClear();
+  EXPECT_TRUE(fp32_t::isNaN(fp32_t::ASin(m_inf)));
+  EXPECT_TRUE(fp32_t::isStateNaN());
+  fp32_t::stateClear();
+  EXPECT_TRUE(fp32_t::isNaN(fp32_t::ASin(p_inf)));
+  EXPECT_TRUE(fp32_t::isStateNaN());
+  fp32_t::stateClear();
+  EXPECT_TRUE(fp32_t::isNaN(fp32_t::ACos(m_inf)));
+  EXPECT_TRUE(fp32_t::isStateNaN());
+  fp32_t::stateClear();
+  EXPECT_TRUE(fp32_t::isNaN(fp32_t::ACos(p_inf)));
+  EXPECT_TRUE(fp32_t::isStateNaN());
+
+  // ATan2(+/-∞)
+  fp32_t::stateClear();
+  EXPECT_EQ(fp32_t::ATan(m_inf), -fp32_t::CONST_PI_2);
+  EXPECT_EQ(fp32_t::ATan(p_inf), fp32_t::CONST_PI_2);
+  EXPECT_EQ(fp32_t::ATan2(fp32_t::_1, m_inf), fp32_t::CONST_PI);
+  EXPECT_EQ(fp32_t::ATan2(-fp32_t::_1, m_inf), -fp32_t::CONST_PI);
+  EXPECT_EQ(fp32_t::ATan2(fp32_t::_1, p_inf), fp32_t::_0);
+  EXPECT_EQ(fp32_t::ATan2(m_inf, m_inf), -fp32_t::CONST_PI_4 * 3);
+  EXPECT_EQ(fp32_t::ATan2(p_inf, m_inf), fp32_t::CONST_PI_4 * 3);
+  EXPECT_EQ(fp32_t::ATan2(m_inf, p_inf), -fp32_t::CONST_PI_4);
+  EXPECT_EQ(fp32_t::ATan2(p_inf, p_inf), fp32_t::CONST_PI_4);
+  EXPECT_EQ(fp32_t::ATan2(m_inf, fp32_t::_1), -fp32_t::CONST_PI_2);
+  EXPECT_EQ(fp32_t::ATan2(p_inf, fp32_t::_1), fp32_t::CONST_PI_2);
+
+  // SinH/CosH/TanH(NaN)
+  fp32_t::stateClear();
+  EXPECT_TRUE(fp32_t::isNaN(fp32_t::SinH(fp32_t::_0/fp32_t::_0)));
+  EXPECT_TRUE(fp32_t::isStateNaN());
+  fp32_t::stateClear();
+  EXPECT_TRUE(fp32_t::isNaN(fp32_t::CosH(fp32_t::_0/fp32_t::_0)));
+  EXPECT_TRUE(fp32_t::isStateNaN());
+  fp32_t::stateClear();
+  EXPECT_TRUE(fp32_t::isNaN(fp32_t::TanH(fp32_t::_0/fp32_t::_0)));
+  EXPECT_TRUE(fp32_t::isStateNaN());
+
+  // SinH/CosH/TanH(+/-∞)
+  fp32_t::stateClear();
+  EXPECT_TRUE(fp32_t::isNegInfinity(fp32_t::SinH(m_inf)));
+  EXPECT_TRUE(fp32_t::isStateInfinity());
+  fp32_t::stateClear();
+  EXPECT_TRUE(fp32_t::isPosInfinity(fp32_t::SinH(p_inf)));
+  EXPECT_TRUE(fp32_t::isStateInfinity());
+  fp32_t::stateClear();
+  EXPECT_TRUE(fp32_t::isPosInfinity(fp32_t::CosH(m_inf)));
+  EXPECT_TRUE(fp32_t::isStateInfinity());
+  fp32_t::stateClear();
+  EXPECT_TRUE(fp32_t::isPosInfinity(fp32_t::CosH(p_inf)));
+  EXPECT_TRUE(fp32_t::isStateInfinity());
+  fp32_t::stateClear();
+  EXPECT_TRUE(fp32_t::isNegInfinity(fp32_t::TanH(m_inf)));
+  EXPECT_TRUE(fp32_t::isStateInfinity());
+  fp32_t::stateClear();
+  EXPECT_TRUE(fp32_t::isPosInfinity(fp32_t::TanH(p_inf)));
+  EXPECT_TRUE(fp32_t::isStateInfinity());
+
+  // ASinH/ACosH/ATanH(NaN)
+  fp32_t::stateClear();
+  EXPECT_TRUE(fp32_t::isNaN(fp32_t::ASinH(fp32_t::_0/fp32_t::_0)));
+  EXPECT_TRUE(fp32_t::isStateNaN());
+  fp32_t::stateClear();
+  EXPECT_TRUE(fp32_t::isNaN(fp32_t::ACosH(fp32_t::_0/fp32_t::_0)));
+  EXPECT_TRUE(fp32_t::isStateNaN());
+  fp32_t::stateClear();
+  EXPECT_TRUE(fp32_t::isNaN(fp32_t::ATanH(fp32_t::_0/fp32_t::_0)));
+  EXPECT_TRUE(fp32_t::isStateNaN());
+
+  // SinH/CosH/TanH(+/-∞)
+  fp32_t::stateClear();
+  EXPECT_TRUE(fp32_t::isNegInfinity(fp32_t::ASinH(m_inf)));
+  EXPECT_TRUE(fp32_t::isStateInfinity());
+  fp32_t::stateClear();
+  EXPECT_TRUE(fp32_t::isPosInfinity(fp32_t::ASinH(p_inf)));
+  EXPECT_TRUE(fp32_t::isStateInfinity());
+  fp32_t::stateClear();
+  EXPECT_TRUE(fp32_t::isNaN(fp32_t::ACosH(m_inf)));
+  EXPECT_TRUE(fp32_t::isStateNaN());
+  fp32_t::stateClear();
+  EXPECT_TRUE(fp32_t::isPosInfinity(fp32_t::ACosH(p_inf)));
+  EXPECT_TRUE(fp32_t::isStateInfinity());
+  fp32_t::stateClear();
+  EXPECT_TRUE(fp32_t::isNaN(fp32_t::ATanH(m_inf)));
+  EXPECT_TRUE(fp32_t::isStateNaN());
+  fp32_t::stateClear();
+  EXPECT_TRUE(fp32_t::isNaN(fp32_t::ATanH(p_inf)));
+  EXPECT_TRUE(fp32_t::isStateNaN());
 }
 
 TEST(FixedPointTest, NanInfinity_32_32)
