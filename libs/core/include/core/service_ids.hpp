@@ -27,6 +27,7 @@ static constexpr uint16_t SERVICE_MAIN_CHAIN = 2002;
 static constexpr uint16_t SERVICE_LANE       = 3003;
 static constexpr uint16_t SERVICE_LANE_CTRL  = 3004;
 static constexpr uint16_t SERVICE_EXECUTOR   = 4004;
+static constexpr uint16_t SERVICE_DAG        = 4005;
 
 // Common Service Channels
 static constexpr uint16_t CHANNEL_RPC = 1;  // for convenience we essentially
@@ -42,8 +43,12 @@ static constexpr uint16_t CHANNEL_ROUTING = 1;
 // Main Chain Service Channels
 static constexpr uint16_t CHANNEL_BLOCKS = 2;
 
+// DAG Service Channels
+static constexpr uint16_t CHANNEL_NODES         = 300;
+static constexpr uint64_t CHANNEL_RPC_BROADCAST = 301;
+
 // RPC Protocol identifiers
-static constexpr uint64_t RPC_MAIN_CHAIN = 128;
+static constexpr uint64_t RPC_MAIN_CHAIN = 199;
 
 static constexpr uint64_t RPC_IDENTITY          = 200;
 static constexpr uint64_t RPC_STATE             = 201;
@@ -56,5 +61,5 @@ static constexpr uint64_t RPC_EXECUTION_MANAGER = 207;
 static constexpr uint64_t RPC_EXECUTOR          = 208;
 static constexpr uint64_t RPC_P2P_RESOLVER      = 209;
 static constexpr uint64_t RPC_MISSING_TX_FINDER = 210;
-
+static constexpr uint64_t RPC_DAG_STORE_SYNC    = 211;
 }  // namespace fetch

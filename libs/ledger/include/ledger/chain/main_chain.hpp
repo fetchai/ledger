@@ -123,6 +123,8 @@ public:
   MainChain(MainChain &&rhs)      = delete;
   ~MainChain();
 
+  void Reset();
+
   /// @name Block Management
   /// @{
   BlockStatus AddBlock(Block const &block);

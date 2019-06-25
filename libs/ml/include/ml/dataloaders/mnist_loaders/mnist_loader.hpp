@@ -29,6 +29,7 @@
 
 namespace fetch {
 namespace ml {
+namespace dataloaders {
 
 template <typename LabelType, typename T>
 class MNISTLoader : public DataLoader<LabelType, T>
@@ -252,5 +253,6 @@ private:
   unsigned char **data_;
   unsigned char * labels_;
 };
+}  // namespace dataloaders
 }  // namespace ml
 }  // namespace fetch

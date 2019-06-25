@@ -210,8 +210,6 @@ public:
   /// @name Iteration
   /// @{
   template <typename Function>
-  void IterateObject(Function const &function);
-  template <typename Function>
   void IterateObject(Function const &function) const;
   /// @}
 
@@ -927,45 +925,6 @@ inline void Variant::ResizeArray(std::size_t length)
 inline bool Variant::operator!=(Variant const &other) const
 {
   return !(*this == other);
-}
-
-/**
- * Iterates through items contained in variant Object
- *
- * @details This method iterates though items in Object, thus variant instance
- * **MUST** be of `Object` type! This is non-const version of the method, thus
- * it is possible to modify value of items iterated through.
- *
- * @tparam Function - General type of which instance represents functor going
- * to be called per each item in Variant Object. The `Function` **MUST** return
- * boolean value indicating whether iteration is supposed to continue (`true`
- * value to CONTINUE, or `false` to STOP iteration). Functor receives non-const
- * reference to an item = it is MUTABLE.
- * Signature of the `Function` instance is: `bool(Variant & item)`.
- *
- * @param function - Instance of Function type, which will be called per each
- * item contained in the Variant Object, please see description of the the
- * @refitem(Function) for details.
- *
- * @return true if deserialisation passed successfully, false otherwise.
- */
-template <typename Function>
-void Variant::IterateObject(Function const &function)
-{
-  if (IsObject())
-  {
-    for (auto &variant : object_)
-    {
-      if (!function(variant.first, *variant.second))
-      {
-        break;
-      }
-    }
-  }
-  else
-  {
-    throw std::runtime_error("Variant type mismatch, expected `object` type.");
-  }
 }
 
 /**

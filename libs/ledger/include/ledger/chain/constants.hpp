@@ -24,8 +24,8 @@ namespace ledger {
 
 constexpr uint64_t FINALITY_PERIOD = 10;
 
-extern const Digest GENESIS_DIGEST;
-extern const Digest GENESIS_MERKLE_ROOT;
+extern Digest GENESIS_DIGEST;
+extern Digest GENESIS_MERKLE_ROOT;
 
 }  // namespace ledger
 }  // namespace fetch

@@ -87,7 +87,7 @@ int main(int ac, char **av)
   }
 
   std::cout << "Loading input data. " << std::endl;
-  fetch::ml::MNISTLoader<ArrayType, ArrayType> data_loader(av[1], av[2]);
+  fetch::ml::dataloaders::MNISTLoader<ArrayType, ArrayType> data_loader(av[1], av[2]);
   std::pair<ArrayType, std::vector<ArrayType>> input = data_loader.PrepareBatch(SUBSET_SIZE);
 
   // Initialize TSNE

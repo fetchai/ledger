@@ -167,6 +167,11 @@ public:
     , address_{address}
   {}
 
+  explicit ResourceAddress(ResourceID const &rid)
+    : ResourceID(rid)
+    , address_{}
+  {}
+
   ResourceAddress() = default;
 
   /**
