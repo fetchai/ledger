@@ -19,7 +19,8 @@ target_link_libraries(fetch-crypto
                       PUBLIC fetch-core
                              fetch-meta
                              fetch-vectorise
-                             vendor-openssl)
+                             vendor-openssl
+                             vendor-bls)
 
 add_test_target()
 
