@@ -43,13 +43,13 @@ public:
       try
       {
         json::JSONDocument doc{req.body()};
-        auto const &root = doc.root();
+        auto const &       root = doc.root();
 
         if (root.IsObject())
         {
           root.IterateObject([&error](ConstByteArray const &k, Variant const &value) {
             std::string const key{k};
-            LogLevel level{LogLevel::INFO};
+            LogLevel          level{LogLevel::INFO};
 
             if (!(value.IsString() && Parse(value.As<ConstByteArray>(), level)))
             {
@@ -153,7 +153,6 @@ private:
 
     return text;
   }
-
 };
 
-} // namespace fetch
+}  // namespace fetch

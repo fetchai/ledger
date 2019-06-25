@@ -16,11 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/mutex.hpp"
 #include "core/logging.hpp"
+#include "core/mutex.hpp"
 
-#include "spdlog/spdlog.h"
 #include "spdlog/sinks/stdout_color_sinks.h"
+#include "spdlog/spdlog.h"
 
 #include <unordered_map>
 
@@ -30,21 +30,19 @@ namespace {
 class LogRegistry
 {
 public:
-
   // Construction / Destruction
   LogRegistry();
   LogRegistry(LogRegistry const &) = delete;
-  LogRegistry(LogRegistry &&) = delete;
-  ~LogRegistry() = default;
+  LogRegistry(LogRegistry &&)      = delete;
+  ~LogRegistry()                   = default;
 
-  void Log(LogLevel level, char const *name, std::string &&message);
-  void SetLevel(char const *name, LogLevel level);
+  void        Log(LogLevel level, char const *name, std::string &&message);
+  void        SetLevel(char const *name, LogLevel level);
   LogLevelMap GetLogLevelMap();
 
   // Operators
   LogRegistry &operator=(LogRegistry const &) = delete;
   LogRegistry &operator=(LogRegistry &&) = delete;
-
 
 private:
   using Logger    = spdlog::logger;
@@ -124,7 +122,8 @@ spdlog::level::level_enum ConvertFromLevel(LogLevel level)
 
 LogRegistry::LogRegistry()
 {
-  spdlog::set_level(spdlog::level::trace); // this should be kept in sync with the compilation level
+  spdlog::set_level(
+      spdlog::level::trace);  // this should be kept in sync with the compilation level
   spdlog::set_pattern("%^[%L]%$ %Y/%m/%d %T | %-30n : %v");
 }
 
@@ -180,7 +179,7 @@ LogRegistry::Logger &LogRegistry::GetLogger(char const *name)
   }
 }
 
-} // namespace
+}  // namespace
 
 void SetLogLevel(char const *name, LogLevel level)
 {
@@ -197,4 +196,4 @@ LogLevelMap GetLogLevelMap()
   return registry_.GetLogLevelMap();
 }
 
-} // namespace fetch
+}  // namespace fetch
