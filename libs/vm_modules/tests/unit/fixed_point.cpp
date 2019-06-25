@@ -19,6 +19,7 @@
 #include "vectorise/fixed_point/fixed_point.hpp"
 #include "vm_test_toolkit.hpp"
 
+#include "math/base_types.hpp"
 #include "math/trigonometry.hpp"
 
 namespace {
@@ -35,7 +36,8 @@ bool RunTest(VmTestToolkit &toolkit, std::stringstream &stdout, char const *TEXT
   auto m = toolkit.module();
   EXPECT_TRUE(toolkit.Compile(TEXT));
   EXPECT_TRUE(toolkit.Run());
-  EXPECT_EQ(std::stod(stdout.str()), gt);
+  EXPECT_NEAR(std::stod(stdout.str()), gt,
+              double(fetch::math::function_tolerance<fetch::fixed_point::fp32_t>()));
   return true;
 }
 
@@ -122,21 +124,6 @@ TEST_F(FixedPointTest, array_32_fixed_point)
   EXPECT_TRUE(RunTest(toolkit, stdout, TEXT, gt));
 }
 
-TEST_F(FixedPointTest, array_64_fixed_point)
-{
-  char const *TEXT = R"(
-    function main()
-      var myArray = Array<Fixed64>(5);
-
-      for (i in 0:4)
-        myArray[i] = toFixed64(i);
-      endfor
-      print(myArray[3]);
-    endfunction
-  )";
-  double      gt   = static_cast<double>(fetch::fixed_point::fp64_t(3));
-  EXPECT_TRUE(RunTest(toolkit, stdout, TEXT, gt));
-}
 //
 // TEST_F(FixedPointTest, map_32_fixed_point)
 //{
@@ -171,32 +158,33 @@ TEST_F(FixedPointTest, cos_pi_32_fixed_point)
       print(cos(pi));
     endfunction
   )";
-  double      gt   = static_cast<double>(fetch::math::Cos(fetch::fixed_point::fp32_t(fetch::fixed_point::fp32_t::CONST_PI)));
+  double      gt   = static_cast<double>(
+      fetch::math::Cos(fetch::fixed_point::fp32_t(fetch::fixed_point::fp32_t::CONST_PI)));
   EXPECT_TRUE(RunTest(toolkit, stdout, TEXT, gt));
 }
 
-// TEST_F(FixedPointTest, exp_64_fixed_point)
-//{
-//  char const *TEXT = R"(
-//    function main()
-//      var val : Fixed64 = 1fp64;
-//      print(exp(val));
-//    endfunction
-//  )";
-//  double gt = static_cast<double>(fetch::fixed_point::fp64_t(2.71828182846));
-//  EXPECT_TRUE(RunTest(toolkit, stdout, TEXT, gt));
-//}
-//
-// TEST_F(FixedPointTest, pow_64_fixed_point)
-//{
-//  char const *TEXT = R"(
-//    function main()
-//      var val : Fixed64 = 2fp64;
-//      print(pow(val, val));
-//    endfunction
-//  )";
-//  double gt = static_cast<double>(fetch::fixed_point::fp64_t(4));
-//  EXPECT_TRUE(RunTest(toolkit, stdout, TEXT, gt));
-//}
+TEST_F(FixedPointTest, exp_32_fixed_point)
+{
+  char const *TEXT = R"(
+    function main()
+      var val : Fixed32 = 1fp32;
+      print(exp(val));
+    endfunction
+  )";
+  double      gt   = static_cast<double>(fetch::fixed_point::fp32_t(2.71828182846));
+  EXPECT_TRUE(RunTest(toolkit, stdout, TEXT, gt));
+}
+
+TEST_F(FixedPointTest, pow_32_fixed_point)
+{
+  char const *TEXT = R"(
+    function main()
+      var val : Fixed32 = 2fp32;
+      print(pow(val, val));
+    endfunction
+  )";
+  double      gt   = static_cast<double>(fetch::fixed_point::fp32_t(4));
+  EXPECT_TRUE(RunTest(toolkit, stdout, TEXT, gt));
+}
 
 }  // namespace
