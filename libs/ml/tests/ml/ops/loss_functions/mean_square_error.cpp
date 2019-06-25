@@ -89,13 +89,14 @@ TYPED_TEST(MeanSquareErrorTest, one_dimensional_backward_test)
     i++;
   }
   i = 0;
-  for (float e : {0.0f, -8.8f, -8.8f, -22.0f, 11.0f, 0.0f, 0.0f, 2.2f})
+  for (float e : {0.0f, -1.1f, -1.1f, -2.75f, 1.375f, 0.0f, 0.0f, 0.275f})
   {
     gt.Set(i, typename TypeParam::Type(e));
     i++;
   }
 
   fetch::ml::ops::MeanSquareError<TypeParam> op;
+  std::cout << op.Backward({data1, data2}).ToString() << std::endl;
   EXPECT_TRUE(op.Backward({data1, data2})
                   .AllClose(gt, typename TypeParam::Type(1e-5), typename TypeParam::Type(1e-5)));
 }

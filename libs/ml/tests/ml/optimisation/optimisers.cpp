@@ -118,7 +118,7 @@ TYPED_TEST(OptimisersTest, sgd_optimiser_training)
 {
   using DataType = typename TypeParam::Type;
 
-  DataType learning_rate = DataType{0.1f};
+  DataType learning_rate = DataType{0.05f};
 
   // Prepare model
   std::string                                  input_name;
@@ -140,7 +140,7 @@ TYPED_TEST(OptimisersTest, sgd_optimiser_training)
   DataType loss = optimiser.Run({data}, gt);
 
   // Test loss
-  EXPECT_NEAR(static_cast<double>(loss), 0.459031165, 1e-5);
+  EXPECT_NEAR(static_cast<double>(loss), 3.67224931, 1e-5);
 
   // Test weights
   std::vector<TypeParam> weights = g->get_weights();
@@ -176,7 +176,7 @@ TYPED_TEST(OptimisersTest, sgd_optimiser_training_2D)
   DataType loss = optimiser.Run({data}, gt);
 
   // Test loss
-  EXPECT_NEAR(static_cast<double>(loss), 39.3290558, 1e-4);
+  EXPECT_NEAR(static_cast<double>(loss), 235.97433471679688, 1e-4);git a
 
   // Test weights
   std::vector<TypeParam> weights = g->get_weights();
@@ -190,7 +190,7 @@ TYPED_TEST(OptimisersTest, momentum_optimiser_training)
 {
   using DataType = typename TypeParam::Type;
 
-  DataType learning_rate = DataType{0.04f};
+  DataType learning_rate = DataType{0.02f};
 
   // Prepare model
   std::string                                  input_name;
@@ -212,7 +212,7 @@ TYPED_TEST(OptimisersTest, momentum_optimiser_training)
   DataType loss = optimiser.Run({data}, gt);
 
   // Test loss
-  EXPECT_NEAR(static_cast<double>(loss), 0.279862642, 1e-5);
+  EXPECT_NEAR(static_cast<double>(loss), 2.2389011383056641, 1e-5);
 
   // Test weights
   std::vector<TypeParam> weights = g->get_weights();
@@ -248,7 +248,7 @@ TYPED_TEST(OptimisersTest, momentum_optimiser_training_2D)
   DataType loss = optimiser.Run({data}, gt);
 
   // Test loss
-  EXPECT_NEAR(static_cast<double>(loss), 39.3290558, 1e-4);
+  EXPECT_NEAR(static_cast<double>(loss), 235.97433471679688, 1e-4);
 
   // Test weights
   std::vector<TypeParam> weights = g->get_weights();
@@ -284,7 +284,7 @@ TYPED_TEST(OptimisersTest, adagrad_optimiser_training)
   DataType loss = optimiser.Run({data}, gt);
 
   // Test loss
-  EXPECT_NEAR(static_cast<double>(loss), 0.511220098, 1e-5);
+  EXPECT_NEAR(static_cast<double>(loss), 4.0897607803344727, 1e-5);
 
   // Test weights
   std::vector<TypeParam> weights = g->get_weights();
@@ -320,7 +320,7 @@ TYPED_TEST(OptimisersTest, adagrad_optimiser_training_2D)
   DataType loss = optimiser.Run({data}, gt);
 
   // Test loss
-  EXPECT_NEAR(static_cast<double>(loss), 4.52624369, 1e-5);
+  EXPECT_NEAR(static_cast<double>(loss), 27.157461166381836, 1e-5);
 
   // Test weights
   std::vector<TypeParam> weights = g->get_weights();
@@ -356,7 +356,7 @@ TYPED_TEST(OptimisersTest, rmsprop_optimiser_training)
   DataType loss = optimiser.Run({data}, gt);
 
   // Test loss
-  EXPECT_NEAR(static_cast<double>(loss), 0.646417379, 1e-5);
+  EXPECT_NEAR(static_cast<double>(loss), 5.1713390350341797, 1e-5);
 
   // Test weights
   std::vector<TypeParam> weights = g->get_weights();
@@ -392,7 +392,7 @@ TYPED_TEST(OptimisersTest, rmsprop_optimiser_training_2D)
   DataType loss = optimiser.Run({data}, gt);
 
   // Test loss
-  EXPECT_NEAR(static_cast<double>(loss), 6.06429482, 1e-5);
+  EXPECT_NEAR(static_cast<double>(loss), 36.385768890380859, 1e-5);
 
   // Test weights
   std::vector<TypeParam> weights = g->get_weights();
@@ -428,7 +428,7 @@ TYPED_TEST(OptimisersTest, adam_optimiser_training)
   DataType loss = optimiser.Run({data}, gt);
 
   // Test loss
-  EXPECT_NEAR(static_cast<double>(loss), 1.05289948, 1e-5);
+  EXPECT_NEAR(static_cast<double>(loss), 8.4231204986572266, 1e-5);
 
   // Test weights
   std::vector<TypeParam> weights = g->get_weights();
@@ -464,7 +464,7 @@ TYPED_TEST(OptimisersTest, adam_optimiser_training_2D)
   DataType loss = optimiser.Run({data}, gt);
 
   // Test loss
-  EXPECT_NEAR(static_cast<double>(loss), 10.9575987, 1e-4);
+  EXPECT_NEAR(static_cast<double>(loss), 65.745590209960938, 1e-4);
 
   // Test weights
   std::vector<TypeParam> weights = g->get_weights();
@@ -501,7 +501,7 @@ TYPED_TEST(OptimisersTest, adam_optimiser_minibatch_training)
   DataType loss = optimiser.Run({data}, gt, 2);
 
   // Test loss
-  EXPECT_NEAR(static_cast<double>(loss), 1.29388, 1e-5);
+  EXPECT_NEAR(static_cast<double>(loss), 5.1753158569335938, 1e-5);
 
   // Test weights
   std::vector<TypeParam> weights = g->get_weights();

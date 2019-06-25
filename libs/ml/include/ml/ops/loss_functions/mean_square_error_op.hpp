@@ -60,14 +60,15 @@ public:
     ArrayType return_signal2(inputs.front().shape());
 
     // return_signal=in[0]-in[1]
-    fetch::math::Subtract(inputs.at(0).inputs.at(1),return_signal1);
+    fetch::math::Subtract(inputs.at(0).inputs.at(1), return_signal1);
 
     // return_signal=err*(in[0]-in[1])
     fetch::math::Multiply(return_signal1, error_signal, return_signal1);
 
     // return_signal=(2*err*(in[0]-in[1]))/batch_size
-    DataType batch_size=static_cast<DataType>(inputs.at(0).shape().at(inputs.at(0).shape().size()-1));
-    fetch::math::Multiply(return_signal1, DataType{2}/batch_size, return_signal1);
+    DataType batch_size =
+        static_cast<DataType>(inputs.at(0).shape().at(inputs.at(0).shape().size() - 1));
+    fetch::math::Multiply(return_signal1, DataType{2} / batch_size, return_signal1);
 
     fetch::math::Multiply(return_signal1, Datatype{-1}, return_signal2);
     return {return_signal1, return_signal2};

@@ -28,7 +28,7 @@ typename ArrayType::Type MeanSquareError(ArrayType const &A, ArrayType const &B)
 {
   typename ArrayType::Type ret = distance::SquareDistance(A, B);
 
-  ret = Divide(ret, typename ArrayType::Type(A.size()));
+  ret = Divide(ret, typename ArrayType::Type(A.shape().at(0)));
 
   return ret;
 }

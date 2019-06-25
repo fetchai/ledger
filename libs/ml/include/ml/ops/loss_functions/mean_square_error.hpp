@@ -33,7 +33,7 @@ class MeanSquareError : public Criterion<T>
 {
 public:
   using ArrayType    = T;
-  using Datatype     = typename ArrayType::Type;
+  using DataType     = typename ArrayType::Type;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
 
   MeanSquareError()          = default;
@@ -54,8 +54,10 @@ public:
     assert(inputs[0].shape() == inputs[1].shape());
 
     ArrayType return_signal(inputs.front().shape());
-    fetch::math::Subtract(inputs[0], inputs[1],return_signal);
-    fetch::math::Multiply(return_signal,Datatype{2},return_signal);
+    fetch::math::Subtract(inputs[0], inputs[1], return_signal);
+    fetch::math::Multiply(return_signal, DataType{2}, return_signal);
+    fetch::math::Divide(return_signal, static_cast<DataType>(inputs.at(0).shape().at(0)),
+                        return_signal);
 
     return return_signal;
   }

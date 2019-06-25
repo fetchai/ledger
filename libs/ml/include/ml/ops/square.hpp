@@ -60,7 +60,7 @@ public:
 
     ArrayType return_signal(inputs.at(0).get().shape());
     fetch::math::Multiply(inputs.at(0).get(), error_signal, return_signal);
-    fetch::math::Multiply(return_signal,DataType{2},return_signal);
+    fetch::math::Multiply(return_signal, DataType{2}, return_signal);
 
     return {return_signal};
   }
