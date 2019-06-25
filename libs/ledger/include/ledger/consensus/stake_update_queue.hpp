@@ -79,9 +79,7 @@ inline std::size_t StakeUpdateQueue::size() const
 {
   std::size_t size{0};
 
-  updates_.Apply([&size](BlockUpdates const &updates) {
-    size = updates.size();
-  });
+  updates_.Apply([&size](BlockUpdates const &updates) { size = updates.size(); });
 
   return size;
 }
@@ -96,9 +94,7 @@ inline std::size_t StakeUpdateQueue::size() const
 inline void StakeUpdateQueue::AddStakeUpdate(BlockIndex block_index, Address const &address,
                                              StakeAmount stake)
 {
-  updates_.Apply([&](BlockUpdates &updates) {
-    updates[block_index][address] = stake;
-  });
+  updates_.Apply([&](BlockUpdates &updates) { updates[block_index][address] = stake; });
 }
 
 /**
@@ -110,9 +106,7 @@ inline void StakeUpdateQueue::AddStakeUpdate(BlockIndex block_index, Address con
 template <typename Visitor>
 void StakeUpdateQueue::VisitUnderlyingQueue(Visitor &&visitor)
 {
-  updates_.Apply([&](BlockUpdates &updates) {
-    visitor(updates);
-  });
+  updates_.Apply([&](BlockUpdates &updates) { visitor(updates); });
 }
 
 }  // namespace ledger
