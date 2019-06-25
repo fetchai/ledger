@@ -282,14 +282,15 @@ public:
   ConstSliceType Slice(SizeType i, SizeType axis = 0) const;
   TensorSlice    Slice(SizeType i, SizeType axis = 0);
 
-  //////////////
-  /// Views  ///
-  //////////////
+  /////////////
+  /// Views ///
+  /////////////
   TensorView<Type, ContainerType>       View();
   TensorView<Type, ContainerType> const View() const;
   TensorView<Type, ContainerType>       View(SizeType index);
   TensorView<Type, ContainerType> const View(SizeType index) const;
   TensorView<Type, ContainerType>       View(std::vector<SizeType> indices);
+  TensorView<Type, ContainerType> const View(std::vector<SizeType> indices) const;
 
   /////////////////////////
   /// general utilities ///
@@ -849,6 +850,26 @@ typename Tensor<T, C>::ViewType const Tensor<T, C>::View(SizeType index) const
 
 template <typename T, typename C>
 typename Tensor<T, C>::ViewType Tensor<T, C>::View(std::vector<SizeType> indices)
+{
+  assert(shape_.size() >= 1 + indices.size());
+
+  SizeType N                = shape_.size() - 1 - indices.size();
+  SizeType dimension_length = (N == 0 ? padded_height_ : shape_[N]);
+  SizeType volume           = dimension_length * stride_[N];
+  SizeType width            = volume / padded_height_;
+  SizeType offset           = 0;
+
+  for (SizeType i = 0; i < indices.size(); ++i)
+  {
+    SizeType g = N + i + 1;
+    offset += stride_[g] * indices[i];
+  }
+
+  return TensorView<Type, ContainerType>(data_, height(), width, offset);
+}
+
+template <typename T, typename C>
+typename Tensor<T, C>::ViewType const Tensor<T, C>::View(std::vector<SizeType> indices) const
 {
   assert(shape_.size() >= 1 + indices.size());
 

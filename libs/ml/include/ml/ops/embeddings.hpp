@@ -78,14 +78,7 @@ public:
         indices2.at(0)       = static_cast<SizeType>(*e_it);
         auto output_slice    = this->output_->View(indices2);
 
-        auto embedding_slice_it = embedding_slice.begin();
-        auto output_slice_it    = output_slice.begin();
-        while (embedding_slice_it.is_valid())
-        {
-          *embedding_slice_it = *output_slice_it;
-          ++embedding_slice_it;
-          ++output_slice_it;
-        }
+        embedding_slice.Assign(output_slice);
         ++e_it;
       }
     }
@@ -101,17 +94,28 @@ public:
 
     SizeType batch_size = inputs.front().get().shape(1);
 
-    for (SizeType n{0}; n < batch_size; n++)
+    ArrayType transposed_input = inputs.front().get().Transpose();
+    auto      e_it             = transposed_input.begin();
+    for (SizeType i{0}; i < inputs.front().get().shape().at(0); i++)
     {
-      for (SizeType i{0}; i < inputs.front().get().shape().at(0); i++)
+      for (SizeType n{0}; n < batch_size; n++)
       {
-        SizeType e = static_cast<SizeType>(inputs.front().get().At(i, n));
-        updated_rows_.insert(e);
 
-        for (SizeType j{0}; j < this->gradient_accumulation_->shape().at(0); j++)
+        indices1.at(0)      = i;
+        indices1.at(1)      = n;
+        auto error_slice    = error_signal.View(indices1);
+        indices2.at(0)      = static_cast<SizeType>(*e_it);
+        auto gradient_slice = this->gradient_accumulation_->View(indices2);
+
+        auto error_slice_it    = error_slice.cbegin();
+        auto gradient_slice_it = gradient_slice.begin();
+        while (error_slice_it.is_valid())
         {
-          this->gradient_accumulation_->At(j, e) += error_signal.At(j, i, n);
+          *gradient_slice_it += *error_slice_it;
+          ++error_slice_it;
+          ++gradient_slice_it;
         }
+        ++e_it;
       }
     }
 
@@ -125,8 +129,8 @@ public:
     for (auto const &r : updated_rows_)
     {
       // get the relevant slice from gradients and embeddings
-      auto grad_slice = this->gradient_accumulation_->Slice(r);
-      auto out_slice  = this->output_->Slice(r);
+      auto grad_slice = this->gradient_accumulation_->Slice(r, 1);
+      auto out_slice  = this->output_->Slice(r, 1);
 
       embedding_slice = out_slice.Copy();
 
