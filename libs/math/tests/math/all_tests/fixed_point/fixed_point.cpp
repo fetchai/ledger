@@ -2351,10 +2351,6 @@ TEST(FixedPointTest, ATanH_32_32)
 
 TEST(FixedPointTest, NanInfinity_16_16)
 {
-  // std::cout << fp32_t::NaN << std::endl;
-  // std::cout << fp32_t::POSITIVE_INFINITY << std::endl;
-  // std::cout << fp32_t::NEGATIVE_INFINITY << std::endl;
-
   fp32_t m_inf{fp32_t::NEGATIVE_INFINITY};
   fp32_t p_inf{fp32_t::POSITIVE_INFINITY};
 
@@ -2735,4 +2731,356 @@ TEST(FixedPointTest, NanInfinity_32_32)
   EXPECT_TRUE(fp64_t::isPosInfinity(p_inf));
   EXPECT_FALSE(fp64_t::isNegInfinity(p_inf));
   EXPECT_FALSE(fp64_t::isPosInfinity(m_inf));
+
+  // Absolute value
+  EXPECT_TRUE(fp64_t::isPosInfinity(fp64_t::Abs(m_inf)));
+  EXPECT_TRUE(fp64_t::isPosInfinity(fp64_t::Abs(p_inf)));
+  EXPECT_EQ(fp64_t::Sign(m_inf), -fp64_t::_1);
+  EXPECT_EQ(fp64_t::Sign(p_inf), fp64_t::_1);
+
+  // Comparison checks
+  EXPECT_FALSE(m_inf < m_inf);
+  EXPECT_TRUE(m_inf <= m_inf);
+  EXPECT_TRUE(m_inf < p_inf);
+  EXPECT_TRUE(m_inf < fp64_t::_0);
+  EXPECT_TRUE(m_inf < fp64_t::CONST_MIN);
+  EXPECT_TRUE(m_inf < fp64_t::CONST_MAX);
+  EXPECT_TRUE(m_inf < fp64_t::CONST_MAX);
+  EXPECT_FALSE(p_inf > p_inf);
+  EXPECT_TRUE(p_inf >= p_inf);
+  EXPECT_TRUE(p_inf > m_inf);
+  EXPECT_TRUE(p_inf > fp64_t::_0);
+  EXPECT_TRUE(p_inf > fp64_t::CONST_MIN);
+  EXPECT_TRUE(p_inf > fp64_t::CONST_MAX);
+
+  // Addition checks
+  // (-∞) + (-∞) = -∞
+  fp64_t::stateClear();
+  EXPECT_TRUE(fp64_t::isNegInfinity(m_inf + m_inf));
+  EXPECT_TRUE(fp64_t::isStateInfinity());
+
+  // (+∞) + (+∞) = +∞
+  fp64_t::stateClear();
+  EXPECT_TRUE(fp64_t::isPosInfinity(p_inf + p_inf));
+  EXPECT_TRUE(fp64_t::isStateInfinity());
+
+  // (-∞) + (+∞) = NaN
+  fp64_t::stateClear();
+  EXPECT_TRUE(fp64_t::isNaN(m_inf + p_inf));
+  EXPECT_TRUE(fp64_t::isStateNaN());
+
+  // (+∞) + (-∞) = NaN
+  fp64_t::stateClear();
+  EXPECT_TRUE(fp64_t::isNaN(p_inf + m_inf));
+  EXPECT_TRUE(fp64_t::isStateNaN());
+
+  // Subtraction checks
+  // (-∞) - (+∞) = -∞
+  fp64_t::stateClear();
+  EXPECT_TRUE(fp64_t::isNegInfinity(m_inf - p_inf));
+  EXPECT_TRUE(fp64_t::isStateInfinity());
+
+  // (+∞) - (-∞) = +∞
+  fp64_t::stateClear();
+  EXPECT_TRUE(fp64_t::isPosInfinity(p_inf - m_inf));
+  EXPECT_TRUE(fp64_t::isStateInfinity());
+
+  // (-∞) - (-∞) = NaN
+  fp64_t::stateClear();
+  EXPECT_TRUE(fp64_t::isNaN(m_inf - m_inf));
+  EXPECT_TRUE(fp64_t::isStateNaN());
+
+  // (+∞) - (+∞) = NaN
+  fp64_t::stateClear();
+  EXPECT_TRUE(fp64_t::isNaN(p_inf - p_inf));
+  EXPECT_TRUE(fp64_t::isStateNaN());
+
+  // Multiplication checks
+  // (-∞) * (+∞) = -∞
+  fp64_t::stateClear();
+  EXPECT_TRUE(fp64_t::isNegInfinity(m_inf * p_inf));
+  EXPECT_TRUE(fp64_t::isStateInfinity());
+
+  // (+∞) * (+∞) = +∞
+  fp64_t::stateClear();
+  EXPECT_TRUE(fp64_t::isPosInfinity(p_inf * p_inf));
+  EXPECT_TRUE(fp64_t::isStateInfinity());
+
+  // 0 * (+∞) = NaN
+  fp64_t::stateClear();
+  EXPECT_TRUE(fp64_t::isNaN(fp64_t::_0 * p_inf));
+  EXPECT_TRUE(fp64_t::isStateNaN());
+
+  // 0 * (-∞) = NaN
+  fp64_t::stateClear();
+  EXPECT_TRUE(fp64_t::isNaN(fp64_t::_0 * m_inf));
+  EXPECT_TRUE(fp64_t::isStateNaN());
+
+  // Division checks
+  // 0 / (+∞) = 0
+  fp64_t::stateClear();
+  EXPECT_EQ(fp64_t::_0 / p_inf, fp64_t::_0);
+  // 0 * (-∞) = 0
+  EXPECT_EQ(fp64_t::_0 / m_inf, fp64_t::_0);
+
+  // (-∞) / MAX_INT = -∞
+  fp64_t::stateClear();
+  EXPECT_TRUE(fp64_t::isNegInfinity(m_inf / fp64_t::CONST_MAX));
+  EXPECT_TRUE(fp64_t::isStateInfinity());
+
+  // (+∞) / MAX_INT = +∞
+  fp64_t::stateClear();
+  EXPECT_TRUE(fp64_t::isPosInfinity(p_inf / fp64_t::CONST_MAX));
+  EXPECT_TRUE(fp64_t::isStateInfinity());
+
+  // (-∞) / MIN_INT = +∞
+  fp64_t::stateClear();
+  EXPECT_TRUE(fp64_t::isPosInfinity(m_inf / fp64_t::CONST_MIN));
+  EXPECT_TRUE(fp64_t::isStateInfinity());
+
+  // (+∞) / MIN_INT = -∞
+  fp64_t::stateClear();
+  EXPECT_TRUE(fp64_t::isNegInfinity(p_inf / fp64_t::CONST_MIN));
+  EXPECT_TRUE(fp64_t::isStateInfinity());
+
+  // (+∞) / (+∞) = NaN
+  fp64_t::stateClear();
+  EXPECT_TRUE(fp64_t::isNaN(p_inf / p_inf));
+  EXPECT_TRUE(fp64_t::isStateNaN());
+
+  // (-∞) / (+∞) = NaN
+  fp64_t::stateClear();
+  EXPECT_TRUE(fp64_t::isNaN(m_inf / p_inf));
+  EXPECT_TRUE(fp64_t::isStateNaN());
+
+  // Exponential checks
+  // e ^ (0/0) = NaN
+  fp64_t::stateClear();
+  EXPECT_TRUE(fp64_t::isNaN(fp64_t::Exp(fp64_t::_0 / fp64_t::_0)));
+  EXPECT_TRUE(fp64_t::isStateNaN());
+
+  // e ^ (+∞) = +∞
+  fp64_t::stateClear();
+  EXPECT_TRUE(fp64_t::isPosInfinity(fp64_t::Exp(p_inf)));
+  EXPECT_TRUE(fp64_t::isStateInfinity());
+
+  // this is actually normal operation, does not modify the state
+  // e ^ (-∞) = 0
+  fp64_t::stateClear();
+  EXPECT_EQ(fp64_t::Exp(m_inf), fp64_t::_0);
+
+  // x^y checks
+  // (-∞) ^ (-∞) = 0
+  fp64_t::stateClear();
+  EXPECT_EQ(fp64_t::Pow(m_inf, m_inf), fp64_t::_0);
+
+  // (-∞) ^ 0 = 1
+  fp64_t::stateClear();
+  EXPECT_EQ(fp64_t::Pow(m_inf, fp64_t::_0), fp64_t::_1);
+
+  // (+∞) ^ 0 = 1
+  EXPECT_EQ(fp64_t::Pow(p_inf, fp64_t::_0), fp64_t::_1);
+
+  // 0 ^ 0 = 1
+  EXPECT_EQ(fp64_t::Pow(fp64_t::_0, fp64_t::_0), fp64_t::_1);
+
+  // 0 ^ (-1) = NaN
+  fp64_t::stateClear();
+  EXPECT_TRUE(fp64_t::isNaN(fp64_t::Pow(fp64_t::_0, -fp64_t::_1)));
+  EXPECT_TRUE(fp64_t::isStateNaN());
+
+  // (-∞) ^ 1 = -∞
+  fp64_t::stateClear();
+  EXPECT_TRUE(fp64_t::isNegInfinity(fp64_t::Pow(m_inf, fp64_t::_1)));
+  EXPECT_TRUE(fp64_t::isStateInfinity());
+
+  // (+∞) ^ 1 = +∞
+  fp64_t::stateClear();
+  EXPECT_TRUE(fp64_t::isPosInfinity(fp64_t::Pow(p_inf, fp64_t::_1)));
+  EXPECT_TRUE(fp64_t::isStateInfinity());
+
+  // x ^ (+∞) = +∞, |x| > 1
+  fp64_t x1{1.5};
+  fp64_t::stateClear();
+  EXPECT_TRUE(fp64_t::isPosInfinity(fp64_t::Pow(x1, p_inf)));
+  EXPECT_TRUE(fp64_t::isStateInfinity());
+
+  // x ^ (-∞) = 0, |x| > 1
+  EXPECT_EQ(fp64_t::Pow(x1, m_inf), fp64_t::_0);
+
+  // x ^ (+∞) = 0, |x| < 1
+  fp64_t x2{0.5};
+  EXPECT_EQ(fp64_t::Pow(x2, p_inf), fp64_t::_0);
+
+  // x ^ (-∞) = 0, |x| < 1
+  fp64_t::stateClear();
+  EXPECT_TRUE(fp64_t::isPosInfinity(fp64_t::Pow(x2, m_inf)));
+  EXPECT_TRUE(fp64_t::isStateInfinity());
+
+  // 1 ^ (-∞) = 1
+  EXPECT_EQ(fp64_t::Pow(fp64_t::_1, m_inf), fp64_t::_1);
+
+  // 1 ^ (-∞) = 1
+  EXPECT_EQ(fp64_t::Pow(fp64_t::_1, p_inf), fp64_t::_1);
+
+  // (-1) ^ (-∞) = 1
+  EXPECT_EQ(fp64_t::Pow(-fp64_t::_1, m_inf), fp64_t::_1);
+
+  // (-1) ^ (-∞) = 1
+  EXPECT_EQ(fp64_t::Pow(-fp64_t::_1, p_inf), fp64_t::_1);
+
+  // Logarithm checks
+  // Log(NaN) = NaN
+  fp64_t::stateClear();
+  EXPECT_TRUE(fp64_t::isNaN(fp64_t::Log(fp64_t::_0 / fp64_t::_0)));
+  EXPECT_TRUE(fp64_t::isStateNaN());
+
+  // Log(-∞) = NaN
+  fp64_t::stateClear();
+  EXPECT_TRUE(fp64_t::isNaN(fp64_t::Log(m_inf)));
+  EXPECT_TRUE(fp64_t::isStateNaN());
+
+  // Log(+∞) = +∞
+  fp64_t::stateClear();
+  EXPECT_TRUE(fp64_t::isInfinity(fp64_t::Log(p_inf)));
+  EXPECT_TRUE(fp64_t::isStateInfinity());
+
+  // Trigonometry checks
+  // Sin/Cos/Tan(NaN)
+  fp64_t::stateClear();
+  EXPECT_TRUE(fp64_t::isNaN(fp64_t::Sin(fp64_t::_0 / fp64_t::_0)));
+  EXPECT_TRUE(fp64_t::isStateNaN());
+  fp64_t::stateClear();
+  EXPECT_TRUE(fp64_t::isNaN(fp64_t::Cos(fp64_t::_0 / fp64_t::_0)));
+  EXPECT_TRUE(fp64_t::isStateNaN());
+  fp64_t::stateClear();
+  EXPECT_TRUE(fp64_t::isNaN(fp64_t::Tan(fp64_t::_0 / fp64_t::_0)));
+  EXPECT_TRUE(fp64_t::isStateNaN());
+
+  // Sin/Cos/Tan(+/-∞)
+  fp64_t::stateClear();
+  EXPECT_TRUE(fp64_t::isNaN(fp64_t::Sin(m_inf)));
+  EXPECT_TRUE(fp64_t::isStateNaN());
+  fp64_t::stateClear();
+  EXPECT_TRUE(fp64_t::isNaN(fp64_t::Sin(p_inf)));
+  EXPECT_TRUE(fp64_t::isStateNaN());
+  fp64_t::stateClear();
+  EXPECT_TRUE(fp64_t::isNaN(fp64_t::Cos(m_inf)));
+  EXPECT_TRUE(fp64_t::isStateNaN());
+  fp64_t::stateClear();
+  EXPECT_TRUE(fp64_t::isNaN(fp64_t::Cos(p_inf)));
+  EXPECT_TRUE(fp64_t::isStateNaN());
+  fp64_t::stateClear();
+  EXPECT_TRUE(fp64_t::isNaN(fp64_t::Tan(m_inf)));
+  EXPECT_TRUE(fp64_t::isStateNaN());
+  fp64_t::stateClear();
+  EXPECT_TRUE(fp64_t::isNaN(fp64_t::Tan(p_inf)));
+  EXPECT_TRUE(fp64_t::isStateNaN());
+
+  // ASin/ACos/ATan/ATan2(NaN)
+  fp64_t::stateClear();
+  EXPECT_TRUE(fp64_t::isNaN(fp64_t::ASin(fp64_t::_0 / fp64_t::_0)));
+  EXPECT_TRUE(fp64_t::isStateNaN());
+  fp64_t::stateClear();
+  EXPECT_TRUE(fp64_t::isNaN(fp64_t::ACos(fp64_t::_0 / fp64_t::_0)));
+  EXPECT_TRUE(fp64_t::isStateNaN());
+  fp64_t::stateClear();
+  EXPECT_TRUE(fp64_t::isNaN(fp64_t::ATan(fp64_t::_0 / fp64_t::_0)));
+  EXPECT_TRUE(fp64_t::isStateNaN());
+  fp64_t::stateClear();
+  EXPECT_TRUE(fp64_t::isNaN(fp64_t::ATan2(fp64_t::_0 / fp64_t::_0, fp64_t::_0)));
+  EXPECT_TRUE(fp64_t::isStateNaN());
+  fp64_t::stateClear();
+  EXPECT_TRUE(fp64_t::isNaN(fp64_t::ATan2(fp64_t::_0, fp64_t::_0 / fp64_t::_0)));
+  EXPECT_TRUE(fp64_t::isStateNaN());
+
+  // ASin/ACos/ATan(+/-∞)
+  fp64_t::stateClear();
+  EXPECT_TRUE(fp64_t::isNaN(fp64_t::ASin(m_inf)));
+  EXPECT_TRUE(fp64_t::isStateNaN());
+  fp64_t::stateClear();
+  EXPECT_TRUE(fp64_t::isNaN(fp64_t::ASin(p_inf)));
+  EXPECT_TRUE(fp64_t::isStateNaN());
+  fp64_t::stateClear();
+  EXPECT_TRUE(fp64_t::isNaN(fp64_t::ACos(m_inf)));
+  EXPECT_TRUE(fp64_t::isStateNaN());
+  fp64_t::stateClear();
+  EXPECT_TRUE(fp64_t::isNaN(fp64_t::ACos(p_inf)));
+  EXPECT_TRUE(fp64_t::isStateNaN());
+
+  // ATan2(+/-∞)
+  fp64_t::stateClear();
+  EXPECT_EQ(fp64_t::ATan(m_inf), -fp64_t::CONST_PI_2);
+  EXPECT_EQ(fp64_t::ATan(p_inf), fp64_t::CONST_PI_2);
+  EXPECT_EQ(fp64_t::ATan2(fp64_t::_1, m_inf), fp64_t::CONST_PI);
+  EXPECT_EQ(fp64_t::ATan2(-fp64_t::_1, m_inf), -fp64_t::CONST_PI);
+  EXPECT_EQ(fp64_t::ATan2(fp64_t::_1, p_inf), fp64_t::_0);
+  EXPECT_EQ(fp64_t::ATan2(m_inf, m_inf), -fp64_t::CONST_PI_4 * 3);
+  EXPECT_EQ(fp64_t::ATan2(p_inf, m_inf), fp64_t::CONST_PI_4 * 3);
+  EXPECT_EQ(fp64_t::ATan2(m_inf, p_inf), -fp64_t::CONST_PI_4);
+  EXPECT_EQ(fp64_t::ATan2(p_inf, p_inf), fp64_t::CONST_PI_4);
+  EXPECT_EQ(fp64_t::ATan2(m_inf, fp64_t::_1), -fp64_t::CONST_PI_2);
+  EXPECT_EQ(fp64_t::ATan2(p_inf, fp64_t::_1), fp64_t::CONST_PI_2);
+
+  // SinH/CosH/TanH(NaN)
+  fp64_t::stateClear();
+  EXPECT_TRUE(fp64_t::isNaN(fp64_t::SinH(fp64_t::_0 / fp64_t::_0)));
+  EXPECT_TRUE(fp64_t::isStateNaN());
+  fp64_t::stateClear();
+  EXPECT_TRUE(fp64_t::isNaN(fp64_t::CosH(fp64_t::_0 / fp64_t::_0)));
+  EXPECT_TRUE(fp64_t::isStateNaN());
+  fp64_t::stateClear();
+  EXPECT_TRUE(fp64_t::isNaN(fp64_t::TanH(fp64_t::_0 / fp64_t::_0)));
+  EXPECT_TRUE(fp64_t::isStateNaN());
+
+  // SinH/CosH/TanH(+/-∞)
+  fp64_t::stateClear();
+  EXPECT_TRUE(fp64_t::isNegInfinity(fp64_t::SinH(m_inf)));
+  EXPECT_TRUE(fp64_t::isStateInfinity());
+  fp64_t::stateClear();
+  EXPECT_TRUE(fp64_t::isPosInfinity(fp64_t::SinH(p_inf)));
+  EXPECT_TRUE(fp64_t::isStateInfinity());
+  fp64_t::stateClear();
+  EXPECT_TRUE(fp64_t::isPosInfinity(fp64_t::CosH(m_inf)));
+  EXPECT_TRUE(fp64_t::isStateInfinity());
+  fp64_t::stateClear();
+  EXPECT_TRUE(fp64_t::isPosInfinity(fp64_t::CosH(p_inf)));
+  EXPECT_TRUE(fp64_t::isStateInfinity());
+  fp64_t::stateClear();
+  EXPECT_TRUE(fp64_t::isNegInfinity(fp64_t::TanH(m_inf)));
+  EXPECT_TRUE(fp64_t::isStateInfinity());
+  fp64_t::stateClear();
+  EXPECT_TRUE(fp64_t::isPosInfinity(fp64_t::TanH(p_inf)));
+  EXPECT_TRUE(fp64_t::isStateInfinity());
+
+  // ASinH/ACosH/ATanH(NaN)
+  fp64_t::stateClear();
+  EXPECT_TRUE(fp64_t::isNaN(fp64_t::ASinH(fp64_t::_0 / fp64_t::_0)));
+  EXPECT_TRUE(fp64_t::isStateNaN());
+  fp64_t::stateClear();
+  EXPECT_TRUE(fp64_t::isNaN(fp64_t::ACosH(fp64_t::_0 / fp64_t::_0)));
+  EXPECT_TRUE(fp64_t::isStateNaN());
+  fp64_t::stateClear();
+  EXPECT_TRUE(fp64_t::isNaN(fp64_t::ATanH(fp64_t::_0 / fp64_t::_0)));
+  EXPECT_TRUE(fp64_t::isStateNaN());
+
+  // SinH/CosH/TanH(+/-∞)
+  fp64_t::stateClear();
+  EXPECT_TRUE(fp64_t::isNegInfinity(fp64_t::ASinH(m_inf)));
+  EXPECT_TRUE(fp64_t::isStateInfinity());
+  fp64_t::stateClear();
+  EXPECT_TRUE(fp64_t::isPosInfinity(fp64_t::ASinH(p_inf)));
+  EXPECT_TRUE(fp64_t::isStateInfinity());
+  fp64_t::stateClear();
+  EXPECT_TRUE(fp64_t::isNaN(fp64_t::ACosH(m_inf)));
+  EXPECT_TRUE(fp64_t::isStateNaN());
+  fp64_t::stateClear();
+  EXPECT_TRUE(fp64_t::isPosInfinity(fp64_t::ACosH(p_inf)));
+  EXPECT_TRUE(fp64_t::isStateInfinity());
+  fp64_t::stateClear();
+  EXPECT_TRUE(fp64_t::isNaN(fp64_t::ATanH(m_inf)));
+  EXPECT_TRUE(fp64_t::isStateNaN());
+  fp64_t::stateClear();
+  EXPECT_TRUE(fp64_t::isNaN(fp64_t::ATanH(p_inf)));
+  EXPECT_TRUE(fp64_t::isStateNaN());
 }
