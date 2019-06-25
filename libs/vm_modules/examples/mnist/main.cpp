@@ -110,7 +110,7 @@ int main(int argc, char **argv)
       .CreateStaticMemberFunction("Argc", &System::Argc)
       .CreateStaticMemberFunction("Argv", &System::Argv);
 
-  fetch::vm_modules::math::CreateTensor(*module);
+  fetch::vm_modules::math::VMTensor::Bind(*module);
   fetch::vm_modules::ml::VMStateDict::Bind(*module);
   fetch::vm_modules::ml::VMGraph::Bind(*module);
 
