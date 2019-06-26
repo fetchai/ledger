@@ -46,6 +46,7 @@ public:
   void      decrement();
   void      add(ValueType const &value);
   void      remove(ValueType const &value);
+  void      max(ValueType const &value);
   /// @}
 
   /// @name Metric Interface
@@ -103,6 +104,15 @@ template <typename V>
 void Gauge<V>::remove(V const &value)
 {
   value_ -= value;
+}
+
+template <typename V>
+void Gauge<V>::max(V const &value)
+{
+  if (value > value_)
+  {
+    value_ = value;
+  }
 }
 
 template <typename V>

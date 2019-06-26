@@ -18,6 +18,7 @@ setup_library(fetch-core)
 target_link_libraries(fetch-core
                       PUBLIC fetch-vectorise
                              fetch-variant
+			     fetch-telemetry
                              vendor-backward-cpp
                              vendor-spdlog)
 

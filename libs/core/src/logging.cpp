@@ -18,6 +18,9 @@
 
 #include "core/logging.hpp"
 #include "core/mutex.hpp"
+#include "telemetry/registry.hpp"
+#include "telemetry/counter.hpp"
+
 
 #include "spdlog/sinks/stdout_color_sinks.h"
 #include "spdlog/spdlog.h"
@@ -43,17 +46,20 @@ public:
   // Operators
   LogRegistry &operator=(LogRegistry const &) = delete;
   LogRegistry &operator=(LogRegistry &&) = delete;
-
 private:
-  using Logger    = spdlog::logger;
-  using LoggerPtr = std::shared_ptr<Logger>;
-  using Registry  = std::unordered_map<std::string, LoggerPtr>;
-  using Mutex     = std::mutex;
+  using Logger     = spdlog::logger;
+  using LoggerPtr  = std::shared_ptr<Logger>;
+  using Registry   = std::unordered_map<std::string, LoggerPtr>;
+  using Mutex      = std::mutex;
+  using CounterPtr = telemetry::CounterPtr;
 
   Logger &GetLogger(char const *name);
 
   Mutex    lock_;
   Registry registry_;
+
+  // Telemetry
+  CounterPtr log_messages_{telemetry::Registry::Instance().CreateCounter("ledger_log_messages", "The number of log messages printed")};
 };
 
 constexpr LogLevel DEFAULT_LEVEL = LogLevel::INFO;
@@ -129,8 +135,12 @@ LogRegistry::LogRegistry()
 
 void LogRegistry::Log(LogLevel level, char const *name, std::string &&message)
 {
-  FETCH_LOCK(lock_);
-  GetLogger(name).log(ConvertFromLevel(level), message);
+  {
+    FETCH_LOCK(lock_);
+    GetLogger(name).log(ConvertFromLevel(level), message);
+  }
+
+  log_messages_->increment();
 }
 
 void LogRegistry::SetLevel(char const *name, LogLevel level)

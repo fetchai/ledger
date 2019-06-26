@@ -17,6 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include "telemetry/telemetry.hpp"
+
 #include <memory>
 #include <unordered_map>
 #include <string>
@@ -39,7 +41,6 @@ class Registry
 {
 public:
   using Labels     = std::unordered_map<std::string, std::string>;
-  using CounterPtr = std::shared_ptr<Counter>;
 
   template <typename T>
   using GaugePtr = std::shared_ptr<Gauge<T>>;
@@ -54,11 +55,13 @@ public:
 
   /// @name Metric Helpers
   /// @{
-  CounterPtr CreateCounter(std::string name, std::string description, Labels labels = Labels{});
+  CounterPtr CreateCounter(std::string name, std::string description = "", Labels labels = Labels{});
 
   template <typename T>
-  GaugePtr<T> CreateGauge(std::string name, std::string description, Labels labels = Labels{});
+  GaugePtr<T> CreateGauge(std::string name, std::string description = "", Labels labels = Labels{});
   /// @}
+
+  void Collect(std::ostream &stream);
 
   // Operators
   Registry &operator=(Registry const &) = delete;

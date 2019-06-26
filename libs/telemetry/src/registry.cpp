@@ -22,10 +22,6 @@
 
 namespace fetch {
 namespace telemetry {
-namespace {
-
-
-} // namespace
 
 /**
  * Get reference to singleton instance
@@ -69,7 +65,7 @@ bool Registry::ValidateName(std::string const &name)
  * @param labels The labels associated with the metric
  * @return The pointer to the created metric if successful, otherwise a nullptr
  */
-Registry::CounterPtr Registry::CreateCounter(std::string name, std::string description,
+CounterPtr Registry::CreateCounter(std::string name, std::string description,
                                              Labels labels)
 {
   CounterPtr counter{};
@@ -87,6 +83,20 @@ Registry::CounterPtr Registry::CreateCounter(std::string name, std::string descr
   }
 
   return counter;
+}
+
+/**
+ * Collect up all the metrics into a single stream to be presented to the requestor
+ *
+ * @param stream The reference to the stream to be populated
+ */
+void Registry::Collect(std::ostream &stream)
+{
+  LockGuard guard(lock_);
+  for (auto const &metric : metrics_)
+  {
+    metric->ToStream(stream);
+  }
 }
 
 } // namespace telemetry

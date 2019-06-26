@@ -23,6 +23,9 @@
 #include "ledger/chain/block.hpp"
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/chain/transaction.hpp"
+#include "telemetry/registry.hpp"
+#include "telemetry/gauge.hpp"
+#include "telemetry/counter.hpp"
 
 #include <algorithm>
 
@@ -59,6 +62,11 @@ BasicMiner::BasicMiner(uint32_t log2_num_lanes)
   , thread_pool_{max_num_threads_, "Miner"}
   , pending_{}
   , mining_pool_{}
+  , mining_pool_size_{telemetry::Registry::Instance().CreateGauge<uint64_t>("ledger_miner_mining_pool_size")}
+  , max_mining_pool_size_{telemetry::Registry::Instance().CreateGauge<uint64_t>("ledger_miner_max_mining_pool_size")}
+  , max_pending_pool_size_{telemetry::Registry::Instance().CreateGauge<uint64_t>("ledger_miner_max_pending_pool_size")}
+  , duplicate_count_{telemetry::Registry::Instance().CreateCounter("ledger_miner_duplicate_count")}
+  , duplicate_filtered_count_{telemetry::Registry::Instance().CreateCounter("ledger_miner_duplicate_filtered_count")}
 {}
 
 /**
@@ -91,10 +99,12 @@ void BasicMiner::EnqueueTransaction(ledger::TransactionLayout const &layout)
 
   if (pending_.Add(layout))
   {
+    max_pending_pool_size_->max(pending_.size());
     FETCH_LOG_DEBUG(LOGGING_NAME, "Enqueued Transaction (added) 0x", layout.digest().ToHex());
   }
   else
   {
+    duplicate_count_->increment();
     FETCH_LOG_DEBUG(LOGGING_NAME, "Enqueued Transaction (duplicate) ", layout.digest().ToHex());
   }
 }
@@ -122,8 +132,13 @@ void BasicMiner::GenerateBlock(Block &block, std::size_t num_lanes, std::size_t 
   auto const duplicates =
       chain.DetectDuplicateTransactions(block.body.previous_hash, mining_pool_.digests());
 
+  duplicate_filtered_count_->add(duplicates.size());
+
   // remove the duplicates
   mining_pool_.Remove(duplicates);
+
+  mining_pool_size_->set(mining_pool_.size());
+  max_mining_pool_size_->max(mining_pool_.size());
 
   // cache the size of the mining pool
   std::size_t const pool_size_before = mining_pool_.size();

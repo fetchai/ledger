@@ -22,6 +22,7 @@
 #include "core/periodic_action.hpp"
 #include "core/state_machine.hpp"
 #include "core/threading/synchronised_state.hpp"
+#include "telemetry/telemetry.hpp"
 #include "ledger/chain/block.hpp"
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/chain/transaction.hpp"
@@ -348,6 +349,26 @@ private:
   /// @{
   SynergeticExecMgrPtr synergetic_exec_mgr_;
   /// }
+
+  /// @name Telemetry
+  /// @{
+  telemetry::CounterPtr reload_state_count_;
+  telemetry::CounterPtr synchronising_state_count_;
+  telemetry::CounterPtr synchronised_state_count_;
+  telemetry::CounterPtr pre_valid_state_count_;
+  telemetry::CounterPtr wait_tx_state_count_;
+  telemetry::CounterPtr syn_exec_state_count_;
+  telemetry::CounterPtr sch_block_state_count_;
+  telemetry::CounterPtr wait_exec_state_count_;
+  telemetry::CounterPtr post_valid_state_count_;
+  telemetry::CounterPtr pack_block_state_count_;
+  telemetry::CounterPtr new_syn_state_count_;
+  telemetry::CounterPtr new_exec_state_count_;
+  telemetry::CounterPtr new_wait_exec_state_count_;
+  telemetry::CounterPtr proof_search_state_count_;
+  telemetry::CounterPtr transmit_state_count_;
+  telemetry::CounterPtr reset_state_count_;
+  /// @}
 };
 
 template <typename R, typename P>
