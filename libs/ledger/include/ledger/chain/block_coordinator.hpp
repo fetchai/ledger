@@ -22,7 +22,6 @@
 #include "core/periodic_action.hpp"
 #include "core/state_machine.hpp"
 #include "core/threading/synchronised_state.hpp"
-#include "telemetry/telemetry.hpp"
 #include "ledger/chain/block.hpp"
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/chain/transaction.hpp"
@@ -31,6 +30,7 @@
 #include "ledger/upow/synergetic_execution_manager_interface.hpp"
 #include "ledger/upow/synergetic_miner_interface.hpp"
 #include "moment/deadline_timer.hpp"
+#include "telemetry/telemetry.hpp"
 
 #include <atomic>
 #include <chrono>

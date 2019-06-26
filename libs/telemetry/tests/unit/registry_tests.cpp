@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "telemetry/registry.hpp"
 #include "telemetry/counter.hpp"
+#include "telemetry/registry.hpp"
 
 #include "gtest/gtest.h"
 
@@ -32,7 +32,6 @@ using RegistryPtr = std::unique_ptr<Registry>;
 class RegistryTests : public ::testing::Test
 {
 protected:
-
   void SetUp() override
   {
     registry_ = std::make_unique<Registry>();
@@ -46,11 +45,10 @@ protected:
   RegistryPtr registry_;
 };
 
-
 TEST_F(RegistryTests, SimpleCheck)
 {
   auto counter = registry_->CreateCounter("foo_bar_baz", "Description");
   counter->add(200);
 }
 
-} // namespace
+}  // namespace

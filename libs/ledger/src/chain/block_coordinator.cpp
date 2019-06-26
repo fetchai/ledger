@@ -27,14 +27,14 @@
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "ledger/consensus/stake_manager_interface.hpp"
+#include "ledger/dag/dag_interface.hpp"
 #include "ledger/execution_manager_interface.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 #include "ledger/transaction_status_cache.hpp"
-#include "ledger/dag/dag_interface.hpp"
 #include "ledger/upow/synergetic_execution_manager.hpp"
 #include "ledger/upow/synergetic_executor.hpp"
-#include "telemetry/registry.hpp"
 #include "telemetry/counter.hpp"
+#include "telemetry/registry.hpp"
 
 #include <chrono>
 
@@ -110,22 +110,38 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag, StakeManagerPtr
   , exec_wait_periodic_{EXEC_NOTIFY_INTERVAL}
   , syncing_periodic_{NOTIFY_INTERVAL}
   , synergetic_exec_mgr_{CreateSynergeticExecutor(features, dag, storage_unit_)}
-  , reload_state_count_{telemetry::Registry::Instance().CreateCounter("ledger_block_coordinator_reload_state_count")}
-  , synchronising_state_count_{telemetry::Registry::Instance().CreateCounter("ledger_block_coordinator_synchronising_state_count")}
-  , synchronised_state_count_{telemetry::Registry::Instance().CreateCounter("ledger_block_coordinator_synchronised_state_count")}
-  , pre_valid_state_count_{telemetry::Registry::Instance().CreateCounter("ledger_block_coordinator_pre_valid_state_count")}
-  , wait_tx_state_count_{telemetry::Registry::Instance().CreateCounter("ledger_block_coordinator_wait_tx_state_count")}
-  , syn_exec_state_count_{telemetry::Registry::Instance().CreateCounter("ledger_block_coordinator_syn_exec_state_count")}
-  , sch_block_state_count_{telemetry::Registry::Instance().CreateCounter("ledger_block_coordinator_sch_block_state_count")}
-  , wait_exec_state_count_{telemetry::Registry::Instance().CreateCounter("ledger_block_coordinator_wait_exec_state_count")}
-  , post_valid_state_count_{telemetry::Registry::Instance().CreateCounter("ledger_block_coordinator_post_valid_state_count")}
-  , pack_block_state_count_{telemetry::Registry::Instance().CreateCounter("ledger_block_coordinator_pack_block_state_count")}
-  , new_syn_state_count_{telemetry::Registry::Instance().CreateCounter("ledger_block_coordinator_new_syn_state_count")}
-  , new_exec_state_count_{telemetry::Registry::Instance().CreateCounter("ledger_block_coordinator_new_exec_state_count")}
-  , new_wait_exec_state_count_{telemetry::Registry::Instance().CreateCounter("ledger_block_coordinator_new_wait_exec_state_count")}
-  , proof_search_state_count_{telemetry::Registry::Instance().CreateCounter("ledger_block_coordinator_proof_search_state_count")}
-  , transmit_state_count_{telemetry::Registry::Instance().CreateCounter("ledger_block_coordinator_transmit_state_count")}
-  , reset_state_count_{telemetry::Registry::Instance().CreateCounter("ledger_block_coordinator_reset_state_count")}
+  , reload_state_count_{telemetry::Registry::Instance().CreateCounter(
+        "ledger_block_coordinator_reload_state_count")}
+  , synchronising_state_count_{telemetry::Registry::Instance().CreateCounter(
+        "ledger_block_coordinator_synchronising_state_count")}
+  , synchronised_state_count_{telemetry::Registry::Instance().CreateCounter(
+        "ledger_block_coordinator_synchronised_state_count")}
+  , pre_valid_state_count_{telemetry::Registry::Instance().CreateCounter(
+        "ledger_block_coordinator_pre_valid_state_count")}
+  , wait_tx_state_count_{telemetry::Registry::Instance().CreateCounter(
+        "ledger_block_coordinator_wait_tx_state_count")}
+  , syn_exec_state_count_{telemetry::Registry::Instance().CreateCounter(
+        "ledger_block_coordinator_syn_exec_state_count")}
+  , sch_block_state_count_{telemetry::Registry::Instance().CreateCounter(
+        "ledger_block_coordinator_sch_block_state_count")}
+  , wait_exec_state_count_{telemetry::Registry::Instance().CreateCounter(
+        "ledger_block_coordinator_wait_exec_state_count")}
+  , post_valid_state_count_{telemetry::Registry::Instance().CreateCounter(
+        "ledger_block_coordinator_post_valid_state_count")}
+  , pack_block_state_count_{telemetry::Registry::Instance().CreateCounter(
+        "ledger_block_coordinator_pack_block_state_count")}
+  , new_syn_state_count_{telemetry::Registry::Instance().CreateCounter(
+        "ledger_block_coordinator_new_syn_state_count")}
+  , new_exec_state_count_{telemetry::Registry::Instance().CreateCounter(
+        "ledger_block_coordinator_new_exec_state_count")}
+  , new_wait_exec_state_count_{telemetry::Registry::Instance().CreateCounter(
+        "ledger_block_coordinator_new_wait_exec_state_count")}
+  , proof_search_state_count_{telemetry::Registry::Instance().CreateCounter(
+        "ledger_block_coordinator_proof_search_state_count")}
+  , transmit_state_count_{telemetry::Registry::Instance().CreateCounter(
+        "ledger_block_coordinator_transmit_state_count")}
+  , reset_state_count_{
+        telemetry::Registry::Instance().CreateCounter("ledger_block_coordinator_reset_state_count")}
 {
   // configure the state machine
   // clang-format off
@@ -1004,7 +1020,7 @@ BlockCoordinator::State BlockCoordinator::OnTransmitBlock()
 
 BlockCoordinator::State BlockCoordinator::OnReset()
 {
-   reset_state_count_->increment();
+  reset_state_count_->increment();
 
   // trigger stake updates at the end of the block lifecycle
   if (stake_)

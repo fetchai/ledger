@@ -26,7 +26,7 @@
 namespace {
 
 using IntegerTypes = ::testing::Types<uint8_t, uint16_t, uint32_t, uint64_t>;
-using AllTypes = ::testing::Types<uint8_t, uint16_t, uint32_t, uint64_t, float, double>;
+using AllTypes     = ::testing::Types<uint8_t, uint16_t, uint32_t, uint64_t, float, double>;
 
 template <typename T>
 class GeneralGaugeTests : public ::testing::Test
@@ -49,7 +49,9 @@ public:
 };
 
 template <typename T>
-class IntegerGaugeTests : public GeneralGaugeTests<T> {};
+class IntegerGaugeTests : public GeneralGaugeTests<T>
+{
+};
 
 TYPED_TEST_CASE(IntegerGaugeTests, IntegerTypes);
 TYPED_TEST_CASE(GeneralGaugeTests, AllTypes);
@@ -88,5 +90,4 @@ TYPED_TEST(GeneralGaugeTests, SetValue)
   EXPECT_EQ(this->gauge_->get(), 2);
 }
 
-
-} // namespace
+}  // namespace

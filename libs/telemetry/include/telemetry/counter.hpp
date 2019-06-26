@@ -19,8 +19,8 @@
 
 #include "telemetry/metric.hpp"
 
-#include <string>
 #include <atomic>
+#include <string>
 
 namespace fetch {
 namespace telemetry {
@@ -28,12 +28,11 @@ namespace telemetry {
 class Counter : public Metric
 {
 public:
-
   // Construction / Destruction
   explicit Counter(std::string name, std::string description, Labels labels = Labels{});
   Counter(Counter const &) = delete;
-  Counter(Counter &&) = delete;
-  ~Counter() override = default;
+  Counter(Counter &&)      = delete;
+  ~Counter() override      = default;
 
   /// @name Accessors
   /// @{
@@ -52,15 +51,14 @@ public:
   Counter &operator+=(uint64_t value);
   Counter &operator=(Counter const &) = delete;
   Counter &operator=(Counter &&) = delete;
-  
+
 private:
   std::atomic<uint64_t> counter_{0};
 };
 
 inline Counter::Counter(std::string name, std::string description, Labels labels)
   : Metric(std::move(name), std::move(description), std::move(labels))
-{
-}
+{}
 
 inline uint64_t Counter::count() const
 {
@@ -89,5 +87,5 @@ inline Counter &Counter::operator+=(uint64_t value)
   return *this;
 }
 
-} // namespace telemetry
-} // namespace fetch
+}  // namespace telemetry
+}  // namespace fetch

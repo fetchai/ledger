@@ -32,5 +32,5 @@ using CounterPtr = std::shared_ptr<Counter>;
 template <typename T>
 using GaugePtr = std::shared_ptr<Gauge<T>>;
 
-} // namespace telemetry
-} // namespace fetch
+}  // namespace telemetry
+}  // namespace fetch

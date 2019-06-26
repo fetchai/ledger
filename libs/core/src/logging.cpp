@@ -18,9 +18,8 @@
 
 #include "core/logging.hpp"
 #include "core/mutex.hpp"
-#include "telemetry/registry.hpp"
 #include "telemetry/counter.hpp"
-
+#include "telemetry/registry.hpp"
 
 #include "spdlog/sinks/stdout_color_sinks.h"
 #include "spdlog/spdlog.h"
@@ -46,6 +45,7 @@ public:
   // Operators
   LogRegistry &operator=(LogRegistry const &) = delete;
   LogRegistry &operator=(LogRegistry &&) = delete;
+
 private:
   using Logger     = spdlog::logger;
   using LoggerPtr  = std::shared_ptr<Logger>;
@@ -59,7 +59,8 @@ private:
   Registry registry_;
 
   // Telemetry
-  CounterPtr log_messages_{telemetry::Registry::Instance().CreateCounter("ledger_log_messages", "The number of log messages printed")};
+  CounterPtr log_messages_{telemetry::Registry::Instance().CreateCounter(
+      "ledger_log_messages", "The number of log messages printed")};
 };
 
 constexpr LogLevel DEFAULT_LEVEL = LogLevel::INFO;

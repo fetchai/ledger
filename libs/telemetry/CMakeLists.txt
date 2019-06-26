@@ -15,12 +15,8 @@ setup_compiler()
 # ------------------------------------------------------------------------------
 
 setup_library(fetch-telemetry)
-#target_link_libraries(fetch-telemetry
-#  PUBLIC fetch-core
-#  fetch-crypto
-#  fetch-ledger
-#  fetch-testing
-#  vendor-mio)
+# target_link_libraries(fetch-telemetry PUBLIC fetch-core fetch-crypto fetch-ledger fetch-testing
+# vendor-mio)
 
 # ------------------------------------------------------------------------------
 # Test Targets
@@ -32,4 +28,4 @@ add_test_target()
 # Benchmark Targets
 # ------------------------------------------------------------------------------
 
-#add_benchmark_target()
+# add_benchmark_target()

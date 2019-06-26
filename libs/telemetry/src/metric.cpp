@@ -21,6 +21,5 @@
 namespace fetch {
 namespace telemetry {
 
-
-} // namespace telemetry
-} // namespace fetch
+}  // namespace telemetry
+}  // namespace fetch

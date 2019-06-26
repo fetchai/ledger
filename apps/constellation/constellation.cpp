@@ -18,11 +18,11 @@
 
 #include "constellation.hpp"
 #include "health_check_http_module.hpp"
-#include "telemetry_http_module.hpp"
 #include "http/middleware/allow_origin.hpp"
 #include "ledger/chain/consensus/bad_miner.hpp"
 #include "ledger/chain/consensus/dummy_miner.hpp"
 #include "logging_http_module.hpp"
+#include "telemetry_http_module.hpp"
 
 #include "ledger/chaincode/contract_http_interface.hpp"
 #include "ledger/dag/dag_interface.hpp"

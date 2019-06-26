@@ -23,9 +23,9 @@
 #include "ledger/chain/block.hpp"
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/chain/transaction.hpp"
-#include "telemetry/registry.hpp"
-#include "telemetry/gauge.hpp"
 #include "telemetry/counter.hpp"
+#include "telemetry/gauge.hpp"
+#include "telemetry/registry.hpp"
 
 #include <algorithm>
 
@@ -62,11 +62,15 @@ BasicMiner::BasicMiner(uint32_t log2_num_lanes)
   , thread_pool_{max_num_threads_, "Miner"}
   , pending_{}
   , mining_pool_{}
-  , mining_pool_size_{telemetry::Registry::Instance().CreateGauge<uint64_t>("ledger_miner_mining_pool_size")}
-  , max_mining_pool_size_{telemetry::Registry::Instance().CreateGauge<uint64_t>("ledger_miner_max_mining_pool_size")}
-  , max_pending_pool_size_{telemetry::Registry::Instance().CreateGauge<uint64_t>("ledger_miner_max_pending_pool_size")}
+  , mining_pool_size_{telemetry::Registry::Instance().CreateGauge<uint64_t>(
+        "ledger_miner_mining_pool_size")}
+  , max_mining_pool_size_{telemetry::Registry::Instance().CreateGauge<uint64_t>(
+        "ledger_miner_max_mining_pool_size")}
+  , max_pending_pool_size_{telemetry::Registry::Instance().CreateGauge<uint64_t>(
+        "ledger_miner_max_pending_pool_size")}
   , duplicate_count_{telemetry::Registry::Instance().CreateCounter("ledger_miner_duplicate_count")}
-  , duplicate_filtered_count_{telemetry::Registry::Instance().CreateCounter("ledger_miner_duplicate_filtered_count")}
+  , duplicate_filtered_count_{
+        telemetry::Registry::Instance().CreateCounter("ledger_miner_duplicate_filtered_count")}
 {}
 
 /**

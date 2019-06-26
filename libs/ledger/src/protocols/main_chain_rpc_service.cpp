@@ -86,16 +86,26 @@ MainChainRpcService::MainChainRpcService(MuddleEndpoint &endpoint, MainChain &ch
   , rpc_client_("R:MChain", endpoint, Address{}, SERVICE_MAIN_CHAIN, CHANNEL_RPC)
   , state_machine_{std::make_shared<StateMachine>("MainChain", GetInitialState(mode_),
                                                   [](State state) { return ToString(state); })}
-  , recv_block_count_{telemetry::Registry::Instance().CreateCounter("ledger_mainchain_service_recv_block_count")}
-  , recv_block_valid_count_{telemetry::Registry::Instance().CreateCounter("ledger_mainchain_service_recv_block_valid_count")}
-  , recv_block_loose_count_{telemetry::Registry::Instance().CreateCounter("ledger_mainchain_service_recv_block_loose_count")}
-  , recv_block_duplicate_count_{telemetry::Registry::Instance().CreateCounter("ledger_mainchain_service_recv_block_duplicate_count")}
-  , recv_block_invalid_count_{telemetry::Registry::Instance().CreateCounter("ledger_mainchain_service_recv_block_invalid_count")}
-  , state_request_heaviest_{telemetry::Registry::Instance().CreateCounter("ledger_mainchain_service_state_request_heaviest")}
-  , state_wait_heaviest_{telemetry::Registry::Instance().CreateCounter("ledger_mainchain_service_state_wait_heaviest")}
-  , state_synchronising_{telemetry::Registry::Instance().CreateCounter("ledger_mainchain_service_state_synchronising")}
-  , state_wait_response_{telemetry::Registry::Instance().CreateCounter("ledger_mainchain_service_state_wait_response")}
-  , state_synchronised_{telemetry::Registry::Instance().CreateCounter("ledger_mainchain_service_state_synchronised")}
+  , recv_block_count_{telemetry::Registry::Instance().CreateCounter(
+        "ledger_mainchain_service_recv_block_count")}
+  , recv_block_valid_count_{telemetry::Registry::Instance().CreateCounter(
+        "ledger_mainchain_service_recv_block_valid_count")}
+  , recv_block_loose_count_{telemetry::Registry::Instance().CreateCounter(
+        "ledger_mainchain_service_recv_block_loose_count")}
+  , recv_block_duplicate_count_{telemetry::Registry::Instance().CreateCounter(
+        "ledger_mainchain_service_recv_block_duplicate_count")}
+  , recv_block_invalid_count_{telemetry::Registry::Instance().CreateCounter(
+        "ledger_mainchain_service_recv_block_invalid_count")}
+  , state_request_heaviest_{telemetry::Registry::Instance().CreateCounter(
+        "ledger_mainchain_service_state_request_heaviest")}
+  , state_wait_heaviest_{telemetry::Registry::Instance().CreateCounter(
+        "ledger_mainchain_service_state_wait_heaviest")}
+  , state_synchronising_{telemetry::Registry::Instance().CreateCounter(
+        "ledger_mainchain_service_state_synchronising")}
+  , state_wait_response_{telemetry::Registry::Instance().CreateCounter(
+        "ledger_mainchain_service_state_wait_response")}
+  , state_synchronised_{telemetry::Registry::Instance().CreateCounter(
+        "ledger_mainchain_service_state_synchronised")}
 {
   // register the main chain protocol
   Add(RPC_MAIN_CHAIN, &main_chain_protocol_);

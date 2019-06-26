@@ -42,7 +42,6 @@ public:
       return http::HTTPResponse(stream.str(), TXT_MIME_TYPE);
     });
   }
-
 };
 
-} // namespace fetch
+}  // namespace fetch

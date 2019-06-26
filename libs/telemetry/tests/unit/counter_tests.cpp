@@ -31,7 +31,6 @@ using CounterPtr = std::unique_ptr<Counter>;
 class CounterTests : public ::testing::Test
 {
 protected:
-
   void SetUp() override
   {
     counter_ = std::make_unique<Counter>("test_counter", "Simple test counter");
@@ -44,7 +43,6 @@ protected:
 
   CounterPtr counter_;
 };
-
 
 TEST_F(CounterTests, SimpleCheck)
 {
@@ -83,4 +81,4 @@ test_counter 500
   EXPECT_EQ(oss.str(), std::string{EXPECTED_TEXT});
 }
 
-} // namespace
+}  // namespace

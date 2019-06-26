@@ -108,8 +108,8 @@ private:
   telemetry::GaugePtr<uint64_t> mining_pool_size_;
   telemetry::GaugePtr<uint64_t> max_mining_pool_size_;
   telemetry::GaugePtr<uint64_t> max_pending_pool_size_;
-  telemetry::CounterPtr duplicate_count_;
-  telemetry::CounterPtr duplicate_filtered_count_;
+  telemetry::CounterPtr         duplicate_count_;
+  telemetry::CounterPtr         duplicate_filtered_count_;
   /// @}
 };
 

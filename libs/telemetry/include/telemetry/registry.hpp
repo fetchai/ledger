@@ -20,9 +20,9 @@
 #include "telemetry/telemetry.hpp"
 
 #include <memory>
-#include <unordered_map>
-#include <string>
 #include <mutex>
+#include <string>
+#include <unordered_map>
 #include <vector>
 
 namespace fetch {
@@ -40,7 +40,7 @@ class Gauge;
 class Registry
 {
 public:
-  using Labels     = std::unordered_map<std::string, std::string>;
+  using Labels = std::unordered_map<std::string, std::string>;
 
   template <typename T>
   using GaugePtr = std::shared_ptr<Gauge<T>>;
@@ -48,14 +48,15 @@ public:
   static Registry &Instance();
 
   // Construction / Destruction
-  Registry() = default;
+  Registry()                 = default;
   Registry(Registry const &) = delete;
-  Registry(Registry &&) = delete;
-  ~Registry() = default;
+  Registry(Registry &&)      = delete;
+  ~Registry()                = default;
 
   /// @name Metric Helpers
   /// @{
-  CounterPtr CreateCounter(std::string name, std::string description = "", Labels labels = Labels{});
+  CounterPtr CreateCounter(std::string name, std::string description = "",
+                           Labels labels = Labels{});
 
   template <typename T>
   GaugePtr<T> CreateGauge(std::string name, std::string description = "", Labels labels = Labels{});
@@ -89,7 +90,8 @@ private:
  * @return The pointer to the created metric if successful, otherwise a nullptr
  */
 template <typename T>
-Registry::GaugePtr<T> Registry::CreateGauge(std::string name, std::string description, Labels labels)
+Registry::GaugePtr<T> Registry::CreateGauge(std::string name, std::string description,
+                                            Labels labels)
 {
   GaugePtr<T> gauge{};
 
@@ -107,5 +109,5 @@ Registry::GaugePtr<T> Registry::CreateGauge(std::string name, std::string descri
   return gauge;
 }
 
-} // namespace telemetry
-} // namespace fetch
+}  // namespace telemetry
+}  // namespace fetch

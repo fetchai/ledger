@@ -45,18 +45,16 @@ public:
   /// @}
 
 private:
-
   std::string const name_;
   std::string const description_;
-  Labels labels_;
+  Labels            labels_;
 };
 
 inline Metric::Metric(std::string name, std::string description, Labels labels)
   : name_{std::move(name)}
   , description_{std::move(description)}
   , labels_{std::move(labels)}
-{
-}
+{}
 
 inline std::string const &Metric::name() const
 {
@@ -68,6 +66,5 @@ inline std::string const &Metric::description() const
   return description_;
 }
 
-
-} // namespace telemetry
-} // namespace fetch
+}  // namespace telemetry
+}  // namespace fetch

@@ -65,8 +65,7 @@ bool Registry::ValidateName(std::string const &name)
  * @param labels The labels associated with the metric
  * @return The pointer to the created metric if successful, otherwise a nullptr
  */
-CounterPtr Registry::CreateCounter(std::string name, std::string description,
-                                             Labels labels)
+CounterPtr Registry::CreateCounter(std::string name, std::string description, Labels labels)
 {
   CounterPtr counter{};
 
@@ -99,5 +98,5 @@ void Registry::Collect(std::ostream &stream)
   }
 }
 
-} // namespace telemetry
-} // namespace fetch
+}  // namespace telemetry
+}  // namespace fetch

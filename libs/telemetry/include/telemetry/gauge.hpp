@@ -19,9 +19,9 @@
 
 #include "telemetry/metric.hpp"
 
-#include <iostream>
-#include <iomanip>
 #include <atomic>
+#include <iomanip>
+#include <iostream>
 #include <type_traits>
 
 namespace fetch {
@@ -31,12 +31,12 @@ template <typename ValueType>
 class Gauge : public Metric
 {
 public:
-
   // Construction / Destruction
-  explicit Gauge(std::string const &name, std::string const &description, Labels const &labels = Labels{});
+  explicit Gauge(std::string const &name, std::string const &description,
+                 Labels const &labels = Labels{});
   Gauge(Gauge const &) = delete;
-  Gauge(Gauge &&) = delete;
-  ~Gauge() override = default;
+  Gauge(Gauge &&)      = delete;
+  ~Gauge() override    = default;
 
   /// @name Accessors
   /// @{
@@ -67,8 +67,7 @@ private:
 template <typename V>
 Gauge<V>::Gauge(std::string const &name, std::string const &description, Labels const &labels)
   : Metric(name, description, labels)
-{
-}
+{}
 
 template <typename V>
 V Gauge<V>::get() const
@@ -116,7 +115,8 @@ void Gauge<V>::max(V const &value)
 }
 
 template <typename V>
-typename std::enable_if<std::is_integral<V>::value>::type GaugeToStream(Gauge<V> const &gauge, std::ostream &stream)
+typename std::enable_if<std::is_integral<V>::value>::type GaugeToStream(Gauge<V> const &gauge,
+                                                                        std::ostream &  stream)
 {
   stream << "# HELP " << gauge.name() << ' ' << gauge.description() << '\n'
          << "# TYPE " << gauge.name() << " gauge\n"
@@ -124,7 +124,8 @@ typename std::enable_if<std::is_integral<V>::value>::type GaugeToStream(Gauge<V>
 }
 
 template <typename V>
-typename std::enable_if<std::is_floating_point<V>::value>::type GaugeToStream(Gauge<V> const &gauge, std::ostream &stream)
+typename std::enable_if<std::is_floating_point<V>::value>::type GaugeToStream(Gauge<V> const &gauge,
+                                                                              std::ostream &stream)
 {
   stream << "# HELP " << gauge.name() << ' ' << gauge.description() << '\n'
          << "# TYPE " << gauge.name() << " gauge\n"
@@ -138,5 +139,5 @@ bool Gauge<V>::ToStream(std::ostream &stream) const
   return true;
 }
 
-} // namespace telemetry
-} // namespace fetch
+}  // namespace telemetry
+}  // namespace fetch
