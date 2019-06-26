@@ -233,8 +233,8 @@ function (configure_vendor_targets)
 
   # BLS
   add_library(vendor-bls STATIC ${FETCH_ROOT_VENDOR_DIR}/bls/src/bls_c256.cpp
-                                ${FETCH_ROOT_VENDOR_DIR}/bls/src/bls_c384.cpp
                                 ${FETCH_ROOT_VENDOR_DIR}/bls/src/bls_c384_256.cpp)
+#                               ${FETCH_ROOT_VENDOR_DIR}/bls/src/bls_c384.cpp  
   target_link_libraries(vendor-bls PUBLIC vendor-mcl)
   target_include_directories(vendor-bls PUBLIC ${FETCH_ROOT_VENDOR_DIR}/bls/include)
   target_compile_definitions(vendor-bls
