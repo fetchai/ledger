@@ -21,7 +21,6 @@
 #include <cstdlib>
 
 #include "vm_modules/math/abs.hpp"
-#include "vm_modules/math/bignumber.hpp"
 #include "vm_modules/math/exp.hpp"
 #include "vm_modules/math/log.hpp"
 #include "vm_modules/math/pow.hpp"
@@ -46,7 +45,6 @@ inline void BindMath(fetch::vm::Module &module)
   BindTrigonometry(module);
 
   // bind math classes
-  BigNumberWrapper::Bind(module);
   VMTensor::Bind(module);
 }
 
