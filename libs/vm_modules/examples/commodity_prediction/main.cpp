@@ -142,7 +142,7 @@ int main(int argc, char **argv)
   module->CreateFreeFunction("read_csv", &read_csv);
 
   // Setting compiler up
-  auto compiler = std::make_unique<fetch::vm::Compiler>(module.get());
+  auto                     compiler = std::make_unique<fetch::vm::Compiler>(module.get());
   fetch::vm::Executable    executable;
   fetch::vm::IR            ir;
   std::vector<std::string> errors;

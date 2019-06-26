@@ -40,7 +40,7 @@ TYPED_TEST(DropoutTest, forward_test)
 
   ArrayType data = ArrayType::FromString(R"(1, -2, 3, -4, 5, -6, 7, -8)");
   ArrayType gt   = ArrayType::FromString(R"(0, -2, 0,  0, 5, -6, 7, -8)");
-  DataType prob{0.5};
+  DataType  prob{0.5};
 
   fetch::ml::ops::Dropout<ArrayType> op(prob, 12345);
 

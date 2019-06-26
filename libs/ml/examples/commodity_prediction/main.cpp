@@ -17,8 +17,8 @@
 //------------------------------------------------------------------------------
 
 #include "file_loader.hpp"
-#include "math/tensor.hpp"
 #include "math/distance/cosine.hpp"
+#include "math/tensor.hpp"
 #include "ml/dataloaders/commodity_dataloader.hpp"
 #include "ml/graph.hpp"
 #include "ml/layers/fully_connected.hpp"
@@ -98,9 +98,9 @@ ArrayType read_csv(std::string const &filename, SizeType const cols_to_skip = 0,
     throw std::runtime_error("read_csv cannot open file " + filename);
   }
 
-  std::string   buf;
-  const char    delimiter = ',';
-  std::string    field_value;
+  std::string           buf;
+  const char            delimiter = ',';
+  std::string           field_value;
   fetch::math::SizeType row{0};
   fetch::math::SizeType col{0};
 
@@ -110,7 +110,8 @@ ArrayType read_csv(std::string const &filename, SizeType const cols_to_skip = 0,
     if (row == 0)
     {
       std::stringstream ss(buf);
-      while (std::getline(ss, field_value, delimiter)) {
+      while (std::getline(ss, field_value, delimiter))
+      {
         ++col;
       }
     }
@@ -182,7 +183,7 @@ std::pair<std::string, std::vector<std::string>> read_architecture(
   std::string              layer_activation;
   DataType                 dropout_prob = 1.0;
   std::vector<std::string> node_names({});
-  LayerType layer_type;
+  LayerType                layer_type;
 
   if (file.fail())
   {
@@ -279,15 +280,13 @@ int ArgPos(char *str, int argc, char **argv)
   return -1;
 }
 
-
-DataType get_loss(std::shared_ptr<GraphType> const & g_ptr, std::string const & test_x_file,
-    std::string const & test_y_file,
-    std::vector<std::string> node_names)
+DataType get_loss(std::shared_ptr<GraphType> const &g_ptr, std::string const &test_x_file,
+                  std::string const &test_y_file, std::vector<std::string> node_names)
 {
-  DataType loss = 0;
-  DataType loss_counter = 0;
-  CostFunctionType criterion;
-  fetch::ml::dataloaders::CommodityDataLoader<ArrayType , ArrayType > loader;
+  DataType                                                          loss         = 0;
+  DataType                                                          loss_counter = 0;
+  CostFunctionType                                                  criterion;
+  fetch::ml::dataloaders::CommodityDataLoader<ArrayType, ArrayType> loader;
 
   loader.AddData(test_x_file, test_y_file);
 
@@ -297,13 +296,12 @@ DataType get_loss(std::shared_ptr<GraphType> const & g_ptr, std::string const & 
     g_ptr->SetInput(node_names.front(), input.second.at(0).Transpose());
 
     auto slice_output = g_ptr->Evaluate(node_names.back(), false);
-    loss +=  criterion.Forward({slice_output, input.first});
+    loss += criterion.Forward({slice_output, input.first});
     loss_counter++;
   }
 
-  return loss/loss_counter;
+  return loss / loss_counter;
 }
-
 
 /**
  * Loads in a model, evaluates it on test inputs and compares this with test outputs.
@@ -347,12 +345,11 @@ int main(int argc, char **argv)
   std::string              dataname   = arch_tuple.first;
   std::vector<std::string> node_names = arch_tuple.second;
 
-
   if (testing)
   {
     /// LOAD WEIGHTS INTO GRAPH ///
     std::string weights_dir = input_dir + "/output/" + dataname + "/model_weights";
-    auto sd = g_ptr->StateDict();
+    auto        sd          = g_ptr->StateDict();
 
     for (auto const &name : node_names)
     {
@@ -426,7 +423,7 @@ int main(int argc, char **argv)
   else
   {
     /// TRAIN ///
-    bool use_random = false;
+    bool     use_random = false;
     DataType learning_rate{0.1f};
     SizeType epochs{200};
     SizeType batch_size{64};
@@ -436,11 +433,11 @@ int main(int argc, char **argv)
     // Initialise Optimiser
     OptimiserType optimiser(g_ptr, {node_names.front()}, node_names.back(), learning_rate);
 
-    fetch::ml::dataloaders::CommodityDataLoader<ArrayType, ArrayType>
-        loader;
+    fetch::ml::dataloaders::CommodityDataLoader<ArrayType, ArrayType> loader;
 
     // three training rounds
-    for(SizeType j=0; j<3; j++) {
+    for (SizeType j = 0; j < 3; j++)
+    {
       std::cout << std::endl << "Starting training loop " << j << std::endl;
 
       std::string commod = "/keras_aluminium_px_last_us_";
@@ -449,13 +446,14 @@ int main(int argc, char **argv)
       if (use_random)
       {
         train_x_file = input_dir + commod + "random_" + std::to_string(j) + "_x_train.csv";
-      } else
+      }
+      else
       {
         train_x_file = input_dir + commod + std::to_string(j) + "_x_train.csv";
       }
       std::string train_y_file = input_dir + commod + std::to_string(j) + "_y_train.csv";
-      std::string test_x_file = input_dir + commod + std::to_string(j) + "_x_test.csv";
-      std::string test_y_file = input_dir + commod + std::to_string(j) + "_y_test.csv";
+      std::string test_x_file  = input_dir + commod + std::to_string(j) + "_x_test.csv";
+      std::string test_y_file  = input_dir + commod + std::to_string(j) + "_y_test.csv";
       std::string valid_x_file = input_dir + commod + std::to_string(j) + "_x_val.csv";
       std::string valid_y_file = input_dir + commod + std::to_string(j) + "_y_val.csv";
 
@@ -465,10 +463,11 @@ int main(int argc, char **argv)
       // Training loop
       // run first loop to get loss
 
-      DataType min_loss = std::numeric_limits<DataType>::max();
+      DataType min_loss       = std::numeric_limits<DataType>::max();
       SizeType patience_count = 0;
 
-      for (SizeType k{0}; k < epochs; k++) {
+      for (SizeType k{0}; k < epochs; k++)
+      {
         loss = optimiser.Run(loader, batch_size);
         std::cout << "Training Loss: " << loss << std::endl;
 
@@ -480,7 +479,8 @@ int main(int argc, char **argv)
         {
           min_loss       = loss;
           patience_count = 0;
-        } else
+        }
+        else
         {
           patience_count++;
           if (patience_count >= patience)
@@ -503,12 +503,13 @@ int main(int argc, char **argv)
     loader.Reset();
     loader.AddData(test_x_file, test_y_file);
 
-    DataType distance = 0;
-    DataType distance_counter = 0;
-    std::string our_y_output = input_dir + "/" + dataname + "_y_pred_test_fetch_" +
-        std::to_string(epochs) + "_" + std::to_string(use_random) + "_" + std::to_string(learning_rate) + ".csv";
+    DataType    distance         = 0;
+    DataType    distance_counter = 0;
+    std::string our_y_output     = input_dir + "/" + dataname + "_y_pred_test_fetch_" +
+                               std::to_string(epochs) + "_" + std::to_string(use_random) + "_" +
+                               std::to_string(learning_rate) + ".csv";
 
-    bool first = true;
+    bool          first = true;
     std::ofstream file(our_y_output);
     while (!loader.IsDone())
     {
@@ -517,8 +518,9 @@ int main(int argc, char **argv)
 
       auto slice_output = g_ptr->Evaluate(node_names.back(), false);
       // write slice_output to csv
-      if (first){
-        for (SizeType k=0; k<slice_output.shape(0); k++)
+      if (first)
+      {
+        for (SizeType k = 0; k < slice_output.shape(0); k++)
         {
           file << "," << k;
         }
@@ -527,7 +529,7 @@ int main(int argc, char **argv)
       }
 
       file << distance_counter;
-      for(SizeType k=0; k<slice_output.shape(0); k++)
+      for (SizeType k = 0; k < slice_output.shape(0); k++)
       {
         file << "," << slice_output[k];
       }
@@ -539,8 +541,7 @@ int main(int argc, char **argv)
     }
     file.close();
 
-    std::cout << "Average cosine distance: " << distance/ distance_counter << std::endl;
-
+    std::cout << "Average cosine distance: " << distance / distance_counter << std::endl;
   }
 
   return 0;

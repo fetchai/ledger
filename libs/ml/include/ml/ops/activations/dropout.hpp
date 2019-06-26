@@ -55,9 +55,11 @@ public:
     if (!this->is_training_)
     {
       fetch::math::Multiply(inputs.front().get(), probability_, output);
-    } else
+    }
+    else
     {
-      if (drop_values_.shape() != output.shape()) {
+      if (drop_values_.shape() != output.shape())
+      {
         drop_values_ = ArrayType(inputs.front().get().shape());
       }
       UpdateRandomValues();

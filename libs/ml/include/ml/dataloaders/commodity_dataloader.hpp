@@ -35,7 +35,7 @@ std::pair<math::SizeType, math::SizeType> count_rows_cols(std::string const &fil
   // find number of rows and columns in the file
   std::ifstream  file(filename);
   std::string    buf;
-  const char    delimiter = ',';
+  const char     delimiter = ',';
   std::string    field_value;
   math::SizeType row{0};
   math::SizeType col{0};
@@ -45,7 +45,8 @@ std::pair<math::SizeType, math::SizeType> count_rows_cols(std::string const &fil
     if (row == 0)
     {
       std::stringstream ss(buf);
-      while (std::getline(ss, field_value, delimiter)) {
+      while (std::getline(ss, field_value, delimiter))
+      {
         ++col;
       }
     }
@@ -66,7 +67,7 @@ public:
   using SizeType   = math::SizeType;
 
   explicit CommodityDataLoader(bool random_mode = false)
-  : DataLoader<LabelType, InputType>(random_mode)
+    : DataLoader<LabelType, InputType>(random_mode)
   {}
 
   ~CommodityDataLoader() = default;
@@ -125,10 +126,9 @@ void CommodityDataLoader<LabelType, InputType>::AddData(std::string const &xfile
     throw std::runtime_error("Dataloader cannot open file " + xfilename);
   }
 
-
-  std::string   buf;
-  char          delimiter = ',';
-  std::string   field_value;
+  std::string buf;
+  char        delimiter = ',';
+  std::string field_value;
 
   for (SizeType i = 0; i < rows_to_skip_; i++)
   {

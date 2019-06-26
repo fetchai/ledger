@@ -53,7 +53,7 @@ public:
 
   virtual ~Graph() = default;
 
-  ArrayType    Evaluate(std::string const &node_name, bool is_training=true);
+  ArrayType    Evaluate(std::string const &node_name, bool is_training = true);
   void         BackPropagate(std::string const &node_name, ArrayType const &error_signal);
   virtual void Step(Datatype learning_rate);
 
