@@ -46,11 +46,17 @@ public:
 
 protected:
   bool random_mode_ = false;
+
+private:
+  std::vector<SizeType> labels_size_vec_;
+  std::vector<DataType> data_vec_;
+  LabelType             labels_;
 };
 
 /**
  * Creates pair of label tensor and vector of data tensors
- * Size of each tensor is [data,subset_size], where data can have any dimensions and trailing dimension is subset_size
+ * Size of each tensor is [data,subset_size], where data can have any dimensions and trailing
+ * dimension is subset_size
  * @tparam LabelType
  * @tparam DataType
  * @param subset_size i.e. batch size of returned Tensors
@@ -65,34 +71,49 @@ std::pair<LabelType, std::vector<DataType>> DataLoader<LabelType, DataType>::Pre
     Reset();
   }
   ReturnType training_pair = GetNext();
-  std::vector<SizeType>                       labels_size   = training_pair.first.shape();
-  std::vector<DataType>                       data;
+
+  if (data_vec_.size() != training_pair.second.size())
+  {
+    data_vec_.resize(training_pair.second.size());
+  }
 
   // Prepare output data tensors
   for (SizeType i{0}; i < training_pair.second.size(); i++)
   {
     std::vector<SizeType> current_data_shape             = training_pair.second.at(i).shape();
     current_data_shape.at(current_data_shape.size() - 1) = subset_size;
-    data.push_back(DataType{current_data_shape});
+
+    if (data_vec_.at(i).shape() != current_data_shape)
+    {
+      data_vec_.at(i) = DataType{current_data_shape};
+    }
   }
 
   // Prepare output label tensor
-  SizeType label_batch_dimension        = labels_size.size() - 1;
-  labels_size.at(label_batch_dimension) = subset_size;
-  LabelType labels{labels_size};
+  if (labels_size_vec_ != training_pair.first.shape())
+  {
+    labels_size_vec_ = training_pair.first.shape();
+  }
+
+  SizeType label_batch_dimension             = labels_size_vec_.size() - 1;
+  labels_size_vec_.at(label_batch_dimension) = subset_size;
+  if (labels_.shape() != labels_size_vec_)
+  {
+    labels_ = LabelType{labels_size_vec_};
+  }
 
   SizeType i{0};
   do
   {
     // Fill label slice
-    auto label_slice = labels.Slice(i, label_batch_dimension);
+    auto label_slice = labels_.Slice(i, label_batch_dimension);
     label_slice.Assign(training_pair.first);
 
     // Fill all data from data vector
     for (SizeType j{0}; j < training_pair.second.size(); j++)
     {
       // Fill data[j] slice
-      auto data_slice = data.at(j).Slice(i, training_pair.second.at(j).shape().size() - 1);
+      auto data_slice = data_vec_.at(j).Slice(i, training_pair.second.at(j).shape().size() - 1);
       data_slice.Assign(training_pair.second.at(j));
     }
 
@@ -107,7 +128,7 @@ std::pair<LabelType, std::vector<DataType>> DataLoader<LabelType, DataType>::Pre
     }
   } while (i < subset_size);
 
-  return std::make_pair(labels, data);
+  return std::make_pair(labels_, data_vec_);
 }
 
 }  // namespace dataloaders
