@@ -221,8 +221,8 @@ function (configure_vendor_targets)
   add_subdirectory(${FETCH_ROOT_VENDOR_DIR}/googletest)
 
   # MCL
-  set(USE_GMP FALSE)
-  set(USE_OPENSSL FALSE)
+  set(USE_GMP OFF CACHE BOOL "use gmp")
+  set(USE_OPENSSL OFF CACHE BOOL "use openssl")
   # TODO: Work out how to get this to work with the already found version of OpenSSL
 
   add_subdirectory(${FETCH_ROOT_VENDOR_DIR}/mcl)
