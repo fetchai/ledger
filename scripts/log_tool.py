@@ -31,7 +31,7 @@ def parse_commandline():
     parser.add_argument('-H', '--host', default='127.0.0.1',
                         help='The target host')
     parser.add_argument('-P', '--port', type=int,
-                        default=8000, help='The tareget port')
+                        default=8000, help='The target port')
     return parser.parse_args()
 
 
