@@ -53,7 +53,10 @@ void Analyser::Initialise()
                    {NodeKind::InplaceAdd, Operator::InplaceAdd},
                    {NodeKind::InplaceSubtract, Operator::InplaceSubtract},
                    {NodeKind::InplaceMultiply, Operator::InplaceMultiply},
-                   {NodeKind::InplaceDivide, Operator::InplaceDivide}};
+                   {NodeKind::InplaceDivide, Operator::InplaceDivide},
+                   {NodeKind::ArraySeq, Operator::ArraySeq},
+                   {NodeKind::ArrayMul, Operator::ArrayMul}};
+
   type_map_            = TypeMap();
   type_info_array_     = TypeInfoArray(TypeIds::NumReserved);
   type_info_map_       = TypeInfoMap();
@@ -1145,6 +1148,10 @@ bool Analyser::AnnotateExpression(ExpressionNodePtr const &node)
     }
     break;
   }
+  case NodeKind::ArraySeq:
+  case NodeKind::ArrayMul:
+    return AnnotateArrayExpr(node);
+
   default:
   {
     AddError(node->line, "internal error at '" + node->text + "'");

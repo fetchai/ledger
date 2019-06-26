@@ -40,7 +40,9 @@ enum class Operator : uint8_t
   InplaceAdd         = 12,
   InplaceSubtract    = 13,
   InplaceMultiply    = 14,
-  InplaceDivide      = 15
+  InplaceDivide      = 15,
+  ArraySeq           = 16,
+  ArrayMul           = 17
 };
 
 enum class SymbolKind : uint8_t

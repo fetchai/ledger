@@ -120,11 +120,50 @@ private:
   bool HandleCloser(bool is_conditional_expression);
   bool HandleComma();
   void HandleOp(NodeKind kind, OpInfo const &op_info);
+  bool HandleArrayExpression();
+  bool HandleArraySequence();
+  bool HandleArrayRepetition();
+  bool HandleArrayEmpty();
   void AddGroup(NodeKind kind, int arity, Token::Kind closer_token_kind,
                 std::string const &closer_token_text);
   void AddOp(NodeKind kind, OpInfo const &op_info);
   void AddOperand(NodeKind kind);
   void AddError(std::string const &message);
+
+  bool MatchLiteral(Token::Kind token);
+
+  template <class F>
+  auto AttemptBranch(F &&f)
+  {
+    return std::forward<F>(f)();
+  }
+
+  template <class RV>
+  auto AttemptBranch(RV (Parser::*f)())
+  {
+    return (this->*f)();
+  }
+
+  template <class... Fs>
+  auto Either(Fs &&... fs)
+  {
+    using RetVal     = meta::InvokeResultT<type_util::HeadT<Fs...>>;
+    const auto index = Index();
+    return value_util::Accumulate(
+        [this, index](RetVal accum, auto &&f) {
+          if (accum)
+          {
+            return accum;
+          }
+          auto rv{AttemptBranch(std::forward<decltype(f)>(f))};
+          if (!rv)
+          {
+            Rewind(index);
+          }
+          return rv;
+        },
+        RetVal{}, std::forward<Fs>(fs)...);
+  }
 
   void IncrementGroupMembers()
   {

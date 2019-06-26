@@ -1021,6 +1021,16 @@ void Generator::HandleExpression(IRExpressionNodePtr const &node)
     HandleInvokeOp(node);
     break;
   }
+  case NodeKind::ArraySeq:
+  {
+    HandleArraySeq(node);
+    break;
+  }
+  case NodeKind::ArrayMul:
+  {
+    HandleArrayMul(node);
+    break;
+  }
   default:
   {
     break;

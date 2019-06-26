@@ -1283,8 +1283,7 @@ ExpressionNodePtr Parser::ParseExpression(bool is_conditional_expression)
     }
     case Token::Kind::LeftSquareBracket:
     {
-      if (HandleOpener(NodeKind::Unknown, NodeKind::Index, Token::Kind::RightSquareBracket, "]") ==
-          false)
+      if (!HandleLeftSquareBracket())
       {
         return nullptr;
       }
@@ -1552,6 +1551,104 @@ bool Parser::HandleDot()
   expr.num_members       = 0;
   rpn_.push_back(std::move(expr));
   state_ = State::PostOperand;
+  return true;
+}
+
+bool Parser::HandleLeftSquareBracket()
+{
+  if (state_ == State::PreOperand)
+  {
+    return HandleArrayExpression();
+  }
+  return HandleOpener(NodeKind::Unknown, NodeKind::Index, Token::Kind::RightSquareBracket, "]");
+}
+
+bool Parser::MatchLiteral(Token::Kind literal_kind)
+{
+  Next();
+  return token_->kind == literal_kind;
+}
+
+bool Parser::HandleArrayExpression()
+{
+  // ArrayExpression ::= "[" Array
+  // Left square bracket has been already consumed.
+  //
+  // Array ::= ArraySequence | ArrayRepetition | ArrayEmpty
+  return Either(&Parser::HandleArraySequence, &Parser::HandleArrayRepetition,
+                &Parser::HandleArrayEmpty);
+}
+
+bool Parser::HandleArraySequence()
+{
+  // ArraySequence ::= Expr ("," Expr)* "]"
+  NodePtrArray   elements;
+  std::string    text(1, '[');
+  const uint16_t line{token_->line};
+
+  for (auto element{ParseExpression()} /* Expr */; element;)
+  {
+    elements.push_back(std::move(element));
+    text += element->text;
+    if (MatchLiteral(Token::Kind::Comma))
+    {
+      text += ", ";
+      element = ParseExpression();
+    }
+    else
+    {
+      element.reset();
+    }
+  }
+
+  if (elements.empty() || !MatchLiteral(Token::Kind::RightSquareBracket) /* "]" */)
+  {
+    // token stream does not match this rule
+    return false;
+  }
+
+  OpInfo array_sequence_info{0, Association::Left, static_cast<int>(elements.size())};
+
+  // token stream conforms to this rule
+  Expr expr{};
+  expr.is_operator           = true;
+  expr.op_info               = array_sequence_info;
+  expr.node                  = CreateExpressionNode(NodeKind::ArraySeq, text, line, elements);
+  expr.node->expression_kind = ExpressionKind::RV;
+  rpn_.push_back(std::move(expr));
+
+  return true;
+}
+
+// ArrayRepetition ::= Expr ";" Number "]"
+bool Parser::HandleArrayRepetition()
+{
+  const uint16_t line{token_->line};
+
+  auto repeated_element{ParseExpression()};                        // Expr
+  if (!repeated_element || !MatchLiteral(Token::Kind::Semicolon))  // ";"
+  {
+    return false;
+  }
+
+  auto amount{ParseExpression()};  // Number
+  if (!amount
+      || !MatchLiteral(Token::Kind::RightSquareBracket))  // "]"
+  {
+    return false;
+  }
+
+  static const OpInfo array_repetition_info{0, Association::Left, 2};
+
+  Expr expr;
+  expr.is_operator           = true;
+  expr.op_info               = array_repetition_info;
+  expr.node                  = CreateExpressionNode(NodeKind::ArrayMul,
+                                   '[' + repeated_element->text + "; " + amount->text + ']', line,
+                                   {repeated_element, amount});
+  expr.node->expression_kind = ExpressionKind::RV;
+  rpn_.push_back(std::move(expr));
+
   return true;
 }
 

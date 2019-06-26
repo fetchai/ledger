@@ -688,5 +688,58 @@ void VM::Handler__VariablePrimitiveInplaceModulo()
   DoVariableIntegralInplaceOp<PrimitiveModulo>();
 }
 
+void VM::Handler__VariablePrimitiveInplaceModulo()
+{
+  DoVariableIntegralInplaceOp<PrimitiveModulo>();
+}
+
+void VM::Handler__ArraySeq()
+{
+  auto seq_size{instruction_->data};
+
+  auto ret_val{IArray::Constructor(this, instruction_->type_id, seq_size)};
+  TemplateParameter1 element;
+  for (AnyInteger i(seq_size, TypeIds::UInt16); i.primitive.ui16 > 0;)
+  {
+	  --i.primitive.ui16;
+	  element.Construct(Pop());
+	  ret_val->SetIndexedValue(i, element);
+  }
+
+  Push().Construct(ret_val, instruction_->type_id);
+}
+
+void VM::Handler__ArrayMul()
+{
+  AnyInteger size;
+  size.Construct(Pop());
+  if (!value_util::IsAnyOf(size.type_id, TypeIds::UInt8, TypeIds::UInt16, TypeIds::UInt32, TypeIds::UInt64)
+      && !ApplyFunctor<TypeIds::Int8, TypeIds::Int16, TypeIds::Int32, TypeIds::Int64>(
+	      size.type_id,
+	      [](auto &&value){ return value.Value() >= 0; },
+	      size))
+  {
+	  throw std::runtime_error("[x; n]: size is not a non-negative integer");
+  }
+
+  auto ret_val{IArray::Constructor(this, instruction_->type_id, GetNatural<int>(size))};
+
+  TemplateParameter1 element;
+  element.Construct(Pop());
+
+  ApplyIntegralFunctor(
+	  size.type_id,
+	  [&ret_val, &element, &size](auto &&i){
+		  while (i.Value() > 0)
+		  {
+			  i = i.Value() - 1;
+			  ret_val->SetIndexedValue(size, element);
+		  }
+	  },
+	  size);
+
+  Push().Construct(ret_val, instruction_->type_id);
+}
+
 }  // namespace vm
 }  // namespace fetch
