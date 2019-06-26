@@ -140,7 +140,7 @@ TEST_F(FixedPointTest, sin_pi_32_fixed_point)
 {
   char const *TEXT = R"(
     function main()
-      var pi = 2fp32;
+      var pi = 3.1415fp32;
       print(sin(pi));
     endfunction
   )";
