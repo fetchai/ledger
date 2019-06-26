@@ -47,7 +47,6 @@ public:
 
   // Queries
   bool IsEnabled(ConstByteArray const &value) const;
-  bool IsDisabled(ConstByteArray const &value) const;
 
   // Iteration
   Iterator      begin();

@@ -105,15 +105,12 @@ std::shared_ptr<ledger::DAGInterface> GenerateDAG(bool generate, std::string con
                                                   bool                          load_on_start,
                                                   Constellation::CertificatePtr certificate)
 {
-  std::shared_ptr<ledger::DAGInterface> ret;
-
   if (generate)
   {
-    ledger::DAG *new_dag = new ledger::DAG{db_name, load_on_start, certificate};
-    ret.reset(new_dag);
+    return std::make_shared<ledger::DAG>(db_name, load_on_start, certificate);
   }
 
-  return ret;
+  return nullptr;
 }
 
 ledger::ShardConfigs GenerateShardsConfig(uint32_t num_lanes, uint16_t start_port,
