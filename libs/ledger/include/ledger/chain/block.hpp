@@ -69,7 +69,7 @@ public:
   /// @}
 
   // TODO(HUT): This should be part of body since it's no longer going to be metadata
-  uint64_t weight       = 1;
+  uint64_t weight = 1;
 
   /// @name Metadata for block management
   /// @{
