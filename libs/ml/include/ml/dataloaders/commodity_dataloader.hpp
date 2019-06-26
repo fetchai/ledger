@@ -35,20 +35,24 @@ std::pair<math::SizeType, math::SizeType> count_rows_cols(std::string const &fil
   // find number of rows and columns in the file
   std::ifstream  file(filename);
   std::string    buf;
-  std::string    delimiter = ",";
-  math::SizeType pos;
+  const char    delimiter = ',';
+  std::string    field_value;
   math::SizeType row{0};
   math::SizeType col{0};
+
   while (std::getline(file, buf, '\n'))
   {
-    while ((row == 0) && ((pos = buf.find(delimiter)) != std::string::npos))
+    if (row == 0)
     {
-      buf.erase(0, pos + delimiter.length());
-      ++col;
+      std::stringstream ss(buf);
+      while (std::getline(ss, field_value, delimiter)) {
+        ++col;
+      }
     }
     ++row;
   }
-  return std::make_pair(row, col + 1);
+
+  return std::make_pair(row, col);
 }
 }  // namespace
 

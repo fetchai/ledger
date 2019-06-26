@@ -18,11 +18,12 @@
 
 #include "file_loader.hpp"
 #include "math/tensor.hpp"
+#include "math/distance/cosine.hpp"
 #include "ml/dataloaders/commodity_dataloader.hpp"
 #include "ml/graph.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/ops/activation.hpp"
-#include "ml/ops/loss_functions/cross_entropy.hpp"
+#include "ml/ops/loss_functions/mean_square_error.hpp"
 #include "ml/ops/transpose.hpp"
 #include "ml/optimisation/adam_optimiser.hpp"
 #include "ml/state_dict.hpp"
@@ -34,7 +35,7 @@
 using DataType         = double;
 using ArrayType        = fetch::math::Tensor<DataType>;
 using GraphType        = fetch::ml::Graph<ArrayType>;
-using CostFunctionType = typename fetch::ml::ops::CrossEntropy<ArrayType>;
+using CostFunctionType = typename fetch::ml::ops::MeanSquareError<ArrayType>;
 using OptimiserType    = typename fetch::ml::optimisers::AdamOptimiser<ArrayType, CostFunctionType>;
 
 using namespace fetch::ml::ops;
@@ -92,24 +93,31 @@ ArrayType read_csv(std::string const &filename, SizeType const cols_to_skip = 0,
                    SizeType rows_to_skip = 0, bool transpose = false)
 {
   std::ifstream file(filename);
-  std::string   buf;
+  if (file.fail())
+  {
+    throw std::runtime_error("read_csv cannot open file " + filename);
+  }
 
-  // find number of rows and columns in the file
-  std::string           delimiter = ",";
-  SizeType              pos;
+  std::string   buf;
+  const char    delimiter = ',';
+  std::string    field_value;
   fetch::math::SizeType row{0};
   fetch::math::SizeType col{0};
+
+  // find number of rows and columns in the file
   while (std::getline(file, buf, '\n'))
   {
-    while (row == 0 && ((pos = buf.find(delimiter)) != std::string::npos))
+    if (row == 0)
     {
-      buf.erase(0, pos + delimiter.length());
-      ++col;
+      std::stringstream ss(buf);
+      while (std::getline(ss, field_value, delimiter)) {
+        ++col;
+      }
     }
     ++row;
   }
 
-  ArrayType weights({row - rows_to_skip, col + 1 - cols_to_skip});
+  ArrayType weights({row - rows_to_skip, col - cols_to_skip});
 
   // read data into weights array
   std::string token;
@@ -126,18 +134,16 @@ ArrayType read_csv(std::string const &filename, SizeType const cols_to_skip = 0,
   while (std::getline(file, buf, '\n'))
   {
     col = 0;
+    std::stringstream ss(buf);
     for (SizeType i = 0; i < cols_to_skip; i++)
     {
-      pos = buf.find(delimiter);
-      buf.erase(0, pos + delimiter.length());
+      std::getline(ss, field_value, delimiter);
     }
-    while ((pos = buf.find(delimiter)) != std::string::npos)
+    while (std::getline(ss, field_value, delimiter))
     {
-      weights(row, col) = static_cast<DataType>(std::stod(buf.substr(0, pos)));
-      buf.erase(0, pos + delimiter.length());
+      weights(row, col) = static_cast<DataType>(stod(field_value));
       ++col;
     }
-    weights(row, col) = static_cast<DataType>(std::stod(buf));
     ++row;
   }
 
@@ -176,8 +182,12 @@ std::pair<std::string, std::vector<std::string>> read_architecture(
   std::string              layer_activation;
   DataType                 dropout_prob = 1.0;
   std::vector<std::string> node_names({});
-
   LayerType layer_type;
+
+  if (file.fail())
+  {
+    throw std::runtime_error("read_architecture cannot open file " + filename);
+  }
 
   while (line_num--)  // continue reading until we get to the desired line
   {
@@ -212,6 +222,7 @@ std::pair<std::string, std::vector<std::string>> read_architecture(
     }
     case LayerType::DROPOUT:
     {
+      ss >> dropout_prob >> delimiter;
       previous_layer_name =
           g->AddNode<Dropout<ArrayType>>(layer_name, {previous_layer_name}, dropout_prob);
       break;
@@ -268,6 +279,32 @@ int ArgPos(char *str, int argc, char **argv)
   return -1;
 }
 
+
+DataType get_loss(std::shared_ptr<GraphType> const & g_ptr, std::string const & test_x_file,
+    std::string const & test_y_file,
+    std::vector<std::string> node_names)
+{
+  DataType loss = 0;
+  DataType loss_counter = 0;
+  CostFunctionType criterion;
+  fetch::ml::dataloaders::CommodityDataLoader<ArrayType , ArrayType > loader;
+
+  loader.AddData(test_x_file, test_y_file);
+
+  while (!loader.IsDone())
+  {
+    auto input = loader.GetNext();
+    g_ptr->SetInput(node_names.front(), input.second.at(0).Transpose());
+
+    auto slice_output = g_ptr->Evaluate(node_names.back(), false);
+    loss +=  criterion.Forward({slice_output, input.first});
+    loss_counter++;
+  }
+
+  return loss/loss_counter;
+}
+
+
 /**
  * Loads in a model, evaluates it on test inputs and compares this with test outputs.
  * Usage: -model_num 2 (line in the model file to read) and -input_dir (directory with
@@ -276,7 +313,7 @@ int ArgPos(char *str, int argc, char **argv)
 int main(int argc, char **argv)
 {
   int         i;
-  std::string input_dir           = "";
+  std::string input_dir;
   SizeType    model_num           = 0;
   SizeType    output_feature_size = 0;
   bool        testing             = false;
@@ -310,21 +347,11 @@ int main(int argc, char **argv)
   std::string              dataname   = arch_tuple.first;
   std::vector<std::string> node_names = arch_tuple.second;
 
-  std::string test_x_file = input_dir + "/" + dataname + "_x_test.csv";
-  std::string test_y_file = input_dir + "/" + dataname + "_y_pred_test.csv";
-  std::string weights_dir = input_dir + "/output/" + dataname + "/model_weights";
-
-  /// LOAD DATA ///
-
-  fetch::ml::dataloaders::CommodityDataLoader<fetch::math::Tensor<DataType>, fetch::math::Tensor<DataType>>
-      loader;
-  loader.AddData(test_x_file, test_y_file);
 
   if (testing)
   {
-
     /// LOAD WEIGHTS INTO GRAPH ///
-
+    std::string weights_dir = input_dir + "/output/" + dataname + "/model_weights";
     auto sd = g_ptr->StateDict();
 
     for (auto const &name : node_names)
@@ -363,22 +390,29 @@ int main(int argc, char **argv)
     // load state dict into graph (i.e. load pretrained weights)
     g_ptr->LoadStateDict(sd);
 
-  /// FORWARD PASS PREDICTIONS ///
+    /// LOAD DATA ///
 
-  ArrayType output({loader.Size(), output_feature_size});
-  ArrayType test_y({loader.Size(), output_feature_size});
+    std::string test_x_file = input_dir + "/" + dataname + "_x_test.csv";
+    std::string test_y_file = input_dir + "/" + dataname + "_y_pred_test.csv";
+    fetch::ml::dataloaders::CommodityDataLoader<ArrayType, ArrayType> loader;
+    loader.AddData(test_x_file, test_y_file);
 
-  SizeType j = 0;
-  while (!loader.IsDone())
-  {
-    auto input = loader.GetNext();
-    g_ptr->SetInput("num_input", input.second.at(0).Transpose());
+    /// FORWARD PASS PREDICTIONS ///
 
-    auto slice_output = g_ptr->Evaluate(node_names.back());
-    output.Slice(j).Assign(slice_output);
-    test_y.Slice(j).Assign(input.first);
-    j++;
-  }
+    ArrayType output({loader.Size(), output_feature_size});
+    ArrayType test_y({loader.Size(), output_feature_size});
+
+    SizeType j = 0;
+    while (!loader.IsDone())
+    {
+      auto input = loader.GetNext();
+      g_ptr->SetInput("num_input", input.second.at(0).Transpose());
+
+      auto slice_output = g_ptr->Evaluate(node_names.back(), false);
+      output.Slice(j).Assign(slice_output);
+      test_y.Slice(j).Assign(input.first);
+      j++;
+    }
 
     if (output.AllClose(test_y, 0.00001f))
     {
@@ -392,20 +426,121 @@ int main(int argc, char **argv)
   else
   {
     /// TRAIN ///
-    DataType learning_rate{0.01f};
-    SizeType subset_size{100};
-    SizeType epochs{10};
-    SizeType batch_size{10};
+    bool use_random = false;
+    DataType learning_rate{0.1f};
+    SizeType epochs{200};
+    SizeType batch_size{64};
+    DataType loss{0};
+    SizeType patience = 25;
+
     // Initialise Optimiser
     OptimiserType optimiser(g_ptr, {node_names.front()}, node_names.back(), learning_rate);
 
-    // Training loop
-    DataType loss{0};
-    for (SizeType j{0}; j < epochs; j++)
-    {
-      loss = optimiser.Run(loader, batch_size, subset_size);
-      std::cout << "Loss: " << loss << std::endl;
+    fetch::ml::dataloaders::CommodityDataLoader<ArrayType, ArrayType>
+        loader;
+
+    // three training rounds
+    for(SizeType j=0; j<3; j++) {
+      std::cout << std::endl << "Starting training loop " << j << std::endl;
+
+      std::string commod = "/keras_aluminium_px_last_us_";
+      std::string train_x_file;
+
+      if (use_random)
+      {
+        train_x_file = input_dir + commod + "random_" + std::to_string(j) + "_x_train.csv";
+      } else
+      {
+        train_x_file = input_dir + commod + std::to_string(j) + "_x_train.csv";
+      }
+      std::string train_y_file = input_dir + commod + std::to_string(j) + "_y_train.csv";
+      std::string test_x_file = input_dir + commod + std::to_string(j) + "_x_test.csv";
+      std::string test_y_file = input_dir + commod + std::to_string(j) + "_y_test.csv";
+      std::string valid_x_file = input_dir + commod + std::to_string(j) + "_x_val.csv";
+      std::string valid_y_file = input_dir + commod + std::to_string(j) + "_y_val.csv";
+
+      loader.Reset();
+      loader.AddData(train_x_file, train_y_file);
+
+      // Training loop
+      // run first loop to get loss
+
+      DataType min_loss = std::numeric_limits<DataType>::max();
+      SizeType patience_count = 0;
+
+      for (SizeType k{0}; k < epochs; k++) {
+        loss = optimiser.Run(loader, batch_size);
+        std::cout << "Training Loss: " << loss << std::endl;
+
+        loss = get_loss(g_ptr, valid_x_file, valid_y_file, node_names);
+        std::cout << "Validation loss: " << loss << std::endl;
+
+        // update early stopping
+        if (loss < min_loss)
+        {
+          min_loss       = loss;
+          patience_count = 0;
+        } else
+        {
+          patience_count++;
+          if (patience_count >= patience)
+          {
+            std::cout << "Stopping early" << std::endl;
+            break;
+          }
+        }
+      }
+
+      loss = get_loss(g_ptr, test_x_file, test_y_file, node_names);
+      std::cout << "Testing loss: " << loss << std::endl;
     }
+    std::cout << std::endl << "Finished training" << std::endl;
+
+    /// Final testing ///
+    std::string test_x_file = input_dir + "/" + dataname + "_x_test.csv";
+    std::string test_y_file = input_dir + "/" + dataname + "_y_pred_test.csv";
+
+    loader.Reset();
+    loader.AddData(test_x_file, test_y_file);
+
+    DataType distance = 0;
+    DataType distance_counter = 0;
+    std::string our_y_output = input_dir + "/" + dataname + "_y_pred_test_fetch_" +
+        std::to_string(epochs) + "_" + std::to_string(use_random) + "_" + std::to_string(learning_rate) + ".csv";
+
+    bool first = true;
+    std::ofstream file(our_y_output);
+    while (!loader.IsDone())
+    {
+      auto input = loader.GetNext();
+      g_ptr->SetInput("num_input", input.second.at(0).Transpose());
+
+      auto slice_output = g_ptr->Evaluate(node_names.back(), false);
+      // write slice_output to csv
+      if (first){
+        for (SizeType k=0; k<slice_output.shape(0); k++)
+        {
+          file << "," << k;
+        }
+        file << std::endl;
+        first = false;
+      }
+
+      file << distance_counter;
+      for(SizeType k=0; k<slice_output.shape(0); k++)
+      {
+        file << "," << slice_output[k];
+      }
+      file << std::endl;
+
+      auto cos = fetch::math::correlation::Cosine(slice_output, input.first);
+      distance += cos;
+      distance_counter++;
+    }
+    file.close();
+
+    std::cout << "Average cosine distance: " << distance/ distance_counter << std::endl;
+
   }
 
   return 0;
