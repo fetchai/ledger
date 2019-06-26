@@ -63,8 +63,8 @@ bool IsOperationValid(WalletRecord const &record, Transaction const &tx,
 }
 
 constexpr uint64_t MAX_TOKENS             = 0xFFFFFFFFFFFFFFFFull;
-constexpr uint64_t STAKE_WARM_UP_PERIOD   = 5;
-constexpr uint64_t STAKE_COOL_DOWN_PERIOD = 5;
+constexpr uint64_t STAKE_WARM_UP_PERIOD   = 120;
+constexpr uint64_t STAKE_COOL_DOWN_PERIOD = 120;
 
 }  // namespace
 
@@ -311,7 +311,7 @@ Contract::Status TokenContract::DeStake(Transaction const &tx, BlockIndex block)
         // ensure the transaction has authority over this deed
         if (IsOperationValid(record, tx, STAKE_NAME))
         {
-          FETCH_LOG_WARN(LOGGING_NAME, "Destaking! : ", amount, " of ", record.stake);
+          FETCH_LOG_DEBUG(LOGGING_NAME, "Destaking! : ", amount, " of ", record.stake);
           // destake the amount
           if (record.stake >= amount)
           {
