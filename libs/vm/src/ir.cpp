@@ -144,12 +144,15 @@ IRTypePtr IR::CloneType(IRTypePtr const &type)
   {
     return clone_type;
   }
+  IRTypePtr      clone_template_type;
   IRTypePtrArray clone_parameter_types;
   if (type->IsInstantiation())
   {
+    clone_template_type   = CloneType(type->template_type);
     clone_parameter_types = CloneTypes(type->parameter_types);
   }
-  clone_type = CreateIRType(type->type_kind, type->name, clone_parameter_types);
+  clone_type =
+      CreateIRType(type->type_kind, type->name, clone_template_type, clone_parameter_types);
   type_map_.AddPair(type, clone_type);
   AddType(clone_type);
   return clone_type;
