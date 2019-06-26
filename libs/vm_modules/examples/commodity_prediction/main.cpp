@@ -135,7 +135,7 @@ int main(int argc, char **argv)
   fetch::vm_modules::math::VMTensor::Bind(*module);
   fetch::vm_modules::ml::VMStateDict::Bind(*module);
   fetch::vm_modules::ml::VMGraph::Bind(*module);
-  fetch::vm_modules::ml::TrainingPair::Bind(*module);
+  fetch::vm_modules::ml::VMTrainingPair::Bind(*module);
   fetch::vm_modules::ml::VMCommodityDataLoader::Bind(*module);
   fetch::vm_modules::CreatePrint(*module);
 

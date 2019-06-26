@@ -52,13 +52,13 @@ public:
 
   // Wont compile if parameter is not const &
   // The actual fetch::vm::Ptr is const, but the pointed to memory is modified
-  fetch::vm::Ptr<TrainingPair> GetData(fetch::vm::Ptr<TrainingPair> const &dataHolder)
+  fetch::vm::Ptr<VMTrainingPair> GetData(fetch::vm::Ptr<VMTrainingPair> const &data_holder)
   {
     std::pair<fetch::math::Tensor<float>, std::vector<fetch::math::Tensor<float>>> d =
         loader_.GetNext();
-    (*(dataHolder->first)).Copy(d.first);
-    (*(dataHolder->second)).Copy(d.second.at(0));
-    return dataHolder;
+    (*(data_holder->first)).Copy(d.first);
+    (*(data_holder->second)).Copy(d.second.at(0));
+    return data_holder;
   }
 
   void Display(fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> const &d)

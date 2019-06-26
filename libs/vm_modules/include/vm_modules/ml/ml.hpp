@@ -38,6 +38,11 @@ namespace ml {
 
 inline void BindML(fetch::vm::Module &module)
 {
+  // ml fundamentals
+  VMStateDict::Bind(module);
+  VMGraph::Bind(module);
+  VMTrainingPair::Bind(module);
+
   // dataloaders
   VMMnistDataLoader::Bind(module);
   VMCommodityDataLoader::Bind(module);
@@ -48,11 +53,6 @@ inline void BindML(fetch::vm::Module &module)
 
   // optimisers
   VMAdamOptimiser::Bind(module);
-
-  // ml fundamentals
-  VMGraph::Bind(module);
-  VMStateDict::Bind(module);
-  VMTrainingPair::Bind(module);
 }
 
 }  // namespace ml
