@@ -70,7 +70,7 @@ void PrepareTestDataAndLabels1D(TypeParam &data, TypeParam &gt)
   using DataType = typename TypeParam::Type;
 
   data.Resize({1, 4});
-  data.Set(0, 0, DataType(1));
+  data.Set(0, 0, static_cast<DataType>(1));
   data.Set(0, 1, DataType(2));
   data.Set(0, 2, DataType(3));
   data.Set(0, 3, DataType(4));
@@ -88,7 +88,7 @@ void PrepareTestDataAndLabels2D(TypeParam &data, TypeParam &gt)
   using DataType = typename TypeParam::Type;
 
   data.Resize({2, 2, 3});
-  data.Set(0, 0, 0, DataType(1));
+  data.Set(0, 0, 0, static_cast<DataType>(1));
   data.Set(0, 1, 0, DataType(2));
   data.Set(1, 0, 0, DataType(3));
   data.Set(1, 1, 0, DataType(4));

@@ -318,6 +318,7 @@ meta::IfIsMathArray<ArrayType, void> Add(ArrayType const &array1, ArrayType cons
 {
   if (array1.shape() == array2.shape())
   {
+    assert(array1.shape() == ret.shape());
     auto it1 = array1.cbegin();
     auto it2 = array2.cbegin();
     auto rit = ret.begin();
@@ -331,6 +332,7 @@ meta::IfIsMathArray<ArrayType, void> Add(ArrayType const &array1, ArrayType cons
   }
   else
   {
+    // TODO(issue 1257): Implement const version of Tensor::Broadcast
     ArrayType a = array1.Copy();
     ArrayType b = array2.Copy();
     if (!(Broadcast([](typename ArrayType::Type x, typename ArrayType::Type y) { return x + y; }, a,
@@ -410,6 +412,7 @@ meta::IfIsMathArray<ArrayType, void> Subtract(ArrayType const &array1, ArrayType
 {
   if (array1.shape() == array2.shape())
   {
+    assert(array1.shape() == ret.shape());
     auto it1 = array1.cbegin();
     auto it2 = array2.cbegin();
     auto rit = ret.begin();
@@ -423,6 +426,7 @@ meta::IfIsMathArray<ArrayType, void> Subtract(ArrayType const &array1, ArrayType
   }
   else
   {
+    // TODO(issue 1257): Implement const version of Tensor::Broadcast
     ArrayType a = array1.Copy();
     ArrayType b = array2.Copy();
     if (!(Broadcast([](typename ArrayType::Type x, typename ArrayType::Type y) { return x - y; }, a,
@@ -490,6 +494,7 @@ void Divide(ArrayType const &array1, ArrayType const &array2, ArrayType &ret)
 {
   if (array1.shape() == array2.shape())
   {
+    assert(array1.shape() == ret.shape());
     auto it1 = array1.cbegin();
     auto it2 = array2.cbegin();
     auto rit = ret.begin();
@@ -503,6 +508,7 @@ void Divide(ArrayType const &array1, ArrayType const &array2, ArrayType &ret)
   }
   else
   {
+    // TODO(issue 1257): Implement const version of Tensor::Broadcast
     ArrayType a = array1.Copy();
     ArrayType b = array2.Copy();
     if (!(Broadcast([](typename ArrayType::Type x, typename ArrayType::Type y) { return x / y; }, a,

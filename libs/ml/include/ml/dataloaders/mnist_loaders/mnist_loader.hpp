@@ -128,11 +128,6 @@ public:
     return std::make_pair(ret_labels, ret_images);
   }
 
-  std::pair<LabelType, std::vector<T>> ToArray()
-  {
-    return PrepareBatch(size_);
-  }
-
 private:
   using uchar = unsigned char;
 

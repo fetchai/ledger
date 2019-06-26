@@ -40,8 +40,8 @@ public:
 
   virtual void Forward(VecTensorType const &inputs, ArrayType &output)
   {
-    ASSERT(inputs.size() == 1);
-    ASSERT(output.shape() == this->ComputeOutputShape(inputs));
+    assert(inputs.size() == 1);
+    assert(output.shape() == this->ComputeOutputShape(inputs));
 
     if (inputs.front().get().shape().size() == 2)
     {
@@ -56,8 +56,9 @@ public:
   virtual std::vector<ArrayType> Backward(VecTensorType const &inputs,
                                           ArrayType const &    error_signal)
   {
-    ASSERT(inputs.size() == 1);
-    ASSERT(error_signal.shape() == this->ComputeOutputShape(inputs));
+    FETCH_UNUSED(inputs);
+    assert(inputs.size() == 1);
+    assert(error_signal.shape() == this->ComputeOutputShape(inputs));
 
     if (error_signal.shape().size() == 2)
     {

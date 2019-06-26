@@ -43,14 +43,14 @@ public:
 
   void Forward(VecTensorType const &inputs, ArrayType &output)
   {
-    ASSERT(inputs.size() == 1);
+    assert(inputs.size() == 1);
     fetch::math::Elu(inputs.front().get(), a_, output);
   }
 
   std::vector<ArrayType> Backward(VecTensorType const &inputs, ArrayType const &error_signal)
   {
-    ASSERT(inputs.size() == 1);
-    ASSERT(inputs.front().get().shape() == error_signal.shape());
+    assert(inputs.size() == 1);
+    assert(inputs.front().get().shape() == error_signal.shape());
     ArrayType ret{error_signal.shape()};
 
     DataType zero{0};

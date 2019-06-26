@@ -43,9 +43,9 @@ public:
   // LeakyRelu(x,alpha)=max(0,x)+alpha*min(0,x)
   void Forward(VecTensorType const &inputs, ArrayType &output)
   {
-    ASSERT(inputs.size() == 2);
-    ASSERT(inputs.at(0).get().shape() == output.shape());
-    ASSERT(inputs.at(1).get().shape().at(inputs.at(1).get().shape().size() - 1) == 1);
+    assert(inputs.size() == 2);
+    assert(inputs.at(0).get().shape() == output.shape());
+    assert(inputs.at(1).get().shape().at(inputs.at(1).get().shape().size() - 1) == 1);
 
     fetch::math::LeakyRelu(inputs.at(0).get(), inputs.at(1).get(), output);
   }
@@ -56,21 +56,20 @@ public:
   //    f'(alpha)=-Relu(-x)=min(0,x); x>=0 f'(alpha)=0, x<0 f'(alpha)=x
   std::vector<ArrayType> Backward(VecTensorType const &inputs, ArrayType const &error_signal)
   {
-    ASSERT(inputs.size() == 2);
-    ASSERT(inputs.at(0).get().size() == error_signal.size());
+    assert(inputs.size() == 2);
+    assert(inputs.at(0).get().size() == error_signal.size());
 
     // Test if batch dimension for alpha is 1
     assert(inputs.at(1).get().shape().at(inputs.at(1).get().shape().size() - 1) == 1);
 
-    ArrayType return_signal1{inputs.at(0).get().shape()};
+    ArrayType return_signal_1{inputs.at(0).get().shape()};
 
     SizeType a_size{1};
     for (SizeType i{0}; i < inputs.at(0).get().shape().size() - 1; i++)
     {
       a_size *= inputs.at(0).get().shape().at(i);
     }
-    ArrayType return_signal2({a_size, 1});
-    return_signal2.Fill(static_cast<DataType>(0));
+    ArrayType return_signal_2({a_size, 1});
 
     SizeType t_batch_dimension = inputs.at(0).get().shape().size() - 1;
     SizeType batch_size        = inputs.at(0).get().shape().at(t_batch_dimension);
@@ -80,11 +79,11 @@ public:
 
       // Slice along batch dimension
       auto input1_slice = inputs.at(0).get().Slice(i, t_batch_dimension);
-      auto rs1_slice    = return_signal1.Slice(i, t_batch_dimension);
+      auto rs1_slice    = return_signal_1.Slice(i, t_batch_dimension);
       auto error_slice  = error_signal.Slice(i, 1);
 
       auto rs1_it    = rs1_slice.begin();
-      auto rs2_it    = return_signal2.begin();
+      auto rs2_it    = return_signal_2.begin();
       auto input1_it = input1_slice.begin();
       auto input2_it = inputs.at(1).get().begin();
       auto error_it  = error_slice.begin();
@@ -108,7 +107,7 @@ public:
       }
     }
 
-    return {return_signal1, return_signal2};
+    return {return_signal_1, return_signal_2};
   }
 
   std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const

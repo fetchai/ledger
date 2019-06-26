@@ -30,7 +30,6 @@ class Reshape : public fetch::ml::Ops<T>
 public:
   using ArrayType     = T;
   using SizeType      = typename ArrayType::SizeType;
-  using ArrayPtrType  = std::shared_ptr<ArrayType>;
   using VecTensorType = typename Ops<T>::VecTensorType;
 
   Reshape(std::vector<SizeType> new_shape)
@@ -40,16 +39,16 @@ public:
 
   void Forward(VecTensorType const &inputs, ArrayType &output)
   {
-    ASSERT(inputs.size() == 1);
-    ASSERT(output.shape() == ComputeOutputShape(inputs));
-    ASSERT(inputs.front().get().size() == output.size());
+    assert(inputs.size() == 1);
+    assert(output.shape() == ComputeOutputShape(inputs));
+    assert(inputs.front().get().size() == output.size());
 
     output.Assign(inputs.front().get());
   }
 
   std::vector<ArrayType> Backward(VecTensorType const &inputs, ArrayType const &error_signal)
   {
-    ASSERT(inputs.size() == 1);
+    assert(inputs.size() == 1);
     ArrayType ret(inputs.front().get().shape());
     ret.Assign(error_signal);
     return {ret};

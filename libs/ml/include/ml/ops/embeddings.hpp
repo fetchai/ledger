@@ -35,10 +35,10 @@ public:
   using SizeType      = typename ArrayType::SizeType;
   using VecTensorType = typename Weights<T>::VecTensorType;
 
-  Embeddings(SizeType dimensions, SizeType dataPoints)
+  Embeddings(SizeType dimensions, SizeType data_points)
   {
-    ArrayType weights = ArrayType(std::vector<SizeType>({dimensions, dataPoints}));
-    fetch::ml::ops::Weights<ArrayType>::Initialise(weights, dimensions, dataPoints);
+    ArrayType weights = ArrayType(std::vector<SizeType>({dimensions, data_points}));
+    fetch::ml::ops::Weights<ArrayType>::Initialise(weights, dimensions, data_points);
     this->SetData(weights);
   }
 
@@ -51,9 +51,9 @@ public:
 
   virtual void Forward(VecTensorType const &inputs, ArrayType &output)
   {
-    ASSERT(this->output_);
-    ASSERT(inputs.size() == 1);
-    ASSERT(inputs.front().get().shape().size() == 2);
+    assert(this->output_);
+    assert(inputs.size() == 1);
+    assert(inputs.front().get().shape().size() == 2);
 
     SizeType batch_size = inputs.front().get().shape(1);
 
@@ -71,12 +71,11 @@ public:
     {
       for (SizeType n{0}; n < batch_size; n++)
       {
-
-        indices1.at(0)       = i;
-        indices1.at(1)       = n;
-        auto embedding_slice = this->embeddings_output_->View(indices1);
-        indices2.at(0)       = static_cast<SizeType>(*e_it);
-        auto output_slice    = this->output_->View(indices2);
+        trailing_indices1.at(0) = i;
+        trailing_indices1.at(1) = n;
+        auto embedding_slice    = this->embeddings_output_->View(trailing_indices1);
+        trailing_indices2.at(0) = static_cast<SizeType>(*e_it);
+        auto output_slice       = this->output_->View(trailing_indices2);
 
         embedding_slice.Assign(output_slice);
         ++e_it;
@@ -89,8 +88,8 @@ public:
   virtual std::vector<ArrayType> Backward(VecTensorType const &inputs,
                                           ArrayType const &    error_signal)
   {
-    ASSERT(inputs.size() == 1);
-    ASSERT(inputs.front().get().shape().size() == 2);
+    assert(inputs.size() == 1);
+    assert(inputs.front().get().shape().size() == 2);
 
     SizeType batch_size = inputs.front().get().shape(1);
 
@@ -101,11 +100,11 @@ public:
       for (SizeType n{0}; n < batch_size; n++)
       {
 
-        indices1.at(0)      = i;
-        indices1.at(1)      = n;
-        auto error_slice    = error_signal.View(indices1);
-        indices2.at(0)      = static_cast<SizeType>(*e_it);
-        auto gradient_slice = this->gradient_accumulation_->View(indices2);
+        trailing_indices1.at(0) = i;
+        trailing_indices1.at(1) = n;
+        auto error_slice        = error_signal.View(trailing_indices1);
+        trailing_indices2.at(0) = static_cast<SizeType>(*e_it);
+        auto gradient_slice     = this->gradient_accumulation_->View(trailing_indices2);
 
         auto error_slice_it    = error_slice.cbegin();
         auto gradient_slice_it = gradient_slice.begin();
@@ -147,8 +146,8 @@ public:
 private:
   ArrayPtrType                           embeddings_output_;
   std::set<typename ArrayType::SizeType> updated_rows_;
-  std::vector<SizeType>                  indices1 = {0, 0};
-  std::vector<SizeType>                  indices2 = {0};
+  std::vector<SizeType>                  trailing_indices1 = {0, 0};
+  std::vector<SizeType>                  trailing_indices2 = {0};
 };
 
 }  // namespace ops

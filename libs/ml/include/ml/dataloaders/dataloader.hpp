@@ -48,6 +48,14 @@ protected:
   bool random_mode_ = false;
 };
 
+/**
+ * Creates pair of label tensor and vector of data tensors
+ * Size of each tensor is [data,subset_size], where data can have any dimensions and trailing dimension is subset_size
+ * @tparam LabelType
+ * @tparam DataType
+ * @param subset_size i.e. batch size of returned Tensors
+ * @return pair of label tensor and vector of data tensors with specified batch size
+ */
 template <typename LabelType, typename DataType>
 std::pair<LabelType, std::vector<DataType>> DataLoader<LabelType, DataType>::PrepareBatch(
     fetch::math::SizeType subset_size)
@@ -56,7 +64,7 @@ std::pair<LabelType, std::vector<DataType>> DataLoader<LabelType, DataType>::Pre
   {
     Reset();
   }
-  std::pair<LabelType, std::vector<DataType>> training_pair = GetNext();
+  ReturnType training_pair = GetNext();
   std::vector<SizeType>                       labels_size   = training_pair.first.shape();
   std::vector<DataType>                       data;
 

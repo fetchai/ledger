@@ -41,7 +41,7 @@ public:
   virtual void Forward(VecTensorType const &inputs, ArrayType &output)
   {
     assert(inputs.size() == 1);
-    ASSERT(output.shape() == this->ComputeOutputShape(inputs));
+    assert(output.shape() == this->ComputeOutputShape(inputs));
     fetch::math::TanH(inputs.front().get(), output);
     // ensures numerical stability
     for (auto &val : output)
@@ -49,7 +49,7 @@ public:
       // Minimum value of tanh is restricted to -1+epsilon
       fetch::math::Max(val, fetch::math::Add(DataType(-1), epsilon_), val);
       // Maximum value of tanh is restricted to 1-epsilon
-      fetch::math::Min(val, fetch::math::Subtract(DataType(1), epsilon_), val);
+      fetch::math::Min(val, fetch::math::Subtract(static_cast<DataType>(1), epsilon_), val);
     }
   }
 
@@ -67,7 +67,7 @@ public:
 
     // gradient of tanh: 1 - tanh(x)^2
     fetch::math::Multiply(t, t, t);
-    fetch::math::Subtract(DataType(1), t, t);
+    fetch::math::Subtract(static_cast<DataType>(1), t, t);
 
     // apply chain rule
     fetch::math::Multiply(error_signal, t, return_signal);

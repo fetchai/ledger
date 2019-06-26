@@ -59,7 +59,7 @@ public:
 
     // gradient of sigmoid function is s(x)(1 - s(x))
     Forward(inputs, t);
-    fetch::math::Subtract(DataType(1), t, return_signal);
+    fetch::math::Subtract(static_cast<DataType>(1), t, return_signal);
     fetch::math::Multiply(t, return_signal, return_signal);
 
     // multiply by error_signal (chain rule)
