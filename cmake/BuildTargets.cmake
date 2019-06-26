@@ -232,16 +232,15 @@ function (configure_vendor_targets)
                              -DMCL_USE_VINT
                              -DMCL_VINT_FIXED_BUFFER)
 
-
   add_library(vendor-mcl INTERFACE)
   target_link_libraries(vendor-mcl INTERFACE mcl)
   target_compile_definitions(vendor-mcl INTERFACE -DMCLBN_FP_UNIT_SIZE=4)
 
   # BLS
   add_library(libbls-internal STATIC ${FETCH_ROOT_VENDOR_DIR}/bls/src/bls_c256.cpp
-                                ${FETCH_ROOT_VENDOR_DIR}/bls/src/bls_c384.cpp
-                                ${FETCH_ROOT_VENDOR_DIR}/bls/src/bls_c384_256.cpp)
-  target_link_libraries(libbls-internal PUBLIC mcl)  
+                                     ${FETCH_ROOT_VENDOR_DIR}/bls/src/bls_c384.cpp
+                                     ${FETCH_ROOT_VENDOR_DIR}/bls/src/bls_c384_256.cpp)
+  target_link_libraries(libbls-internal PUBLIC mcl)
   target_include_directories(libbls-internal PUBLIC ${FETCH_ROOT_VENDOR_DIR}/bls/include)
   target_compile_definitions(libbls-internal
                              PUBLIC
@@ -250,9 +249,7 @@ function (configure_vendor_targets)
 
   add_library(vendor-bls INTERFACE)
   target_link_libraries(vendor-bls INTERFACE libbls-internal)
-  target_compile_definitions(vendor-bls
-                             INTERFACE
-                             -DMCLBN_FP_UNIT_SIZE=4)
+  target_compile_definitions(vendor-bls INTERFACE -DMCLBN_FP_UNIT_SIZE=4)
 
   # Google Benchmark Do not build the google benchmark library tests
   if (FETCH_ENABLE_BENCHMARKS)
