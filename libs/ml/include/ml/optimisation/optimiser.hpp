@@ -193,7 +193,7 @@ typename T::Type Optimiser<T, C>::Run(
 
   high_resolution_clock::time_point  cur_time;
   high_resolution_clock::time_point  prev_time = high_resolution_clock::now();
-  SizeType prev_step{0};
+  SizeType prevStep{0};
 
   while (!loader.IsDone() && step < subset_size)
   {
@@ -203,7 +203,7 @@ typename T::Type Optimiser<T, C>::Run(
       if (subset_size == fetch::math::numeric_max<math::SizeType>()){
           std::cout << "\r" << step  << " (??%) -- "
                     << "learning rate: " << learning_rate_ << " -- "
-                    << static_cast<double>(step - prev_step) / time_span.count() << " words / sec"
+                    << static_cast<double>(step - prevStep) / time_span.count() << " words / sec"
                     << std::flush;
       }else{
           std::cout << "\r" << step << " / " << subset_size << " ("
@@ -211,11 +211,11 @@ typename T::Type Optimiser<T, C>::Run(
                                              static_cast<double>(subset_size))
                     << "%) -- "
                     << "learning rate: " << learning_rate_ << " -- "
-                    << static_cast<double>(step - prev_step) / time_span.count() << " words / sec"
+                    << static_cast<double>(step - prevStep) / time_span.count() << " words / sec"
                     << std::flush;
       }
       prev_time = cur_time;
-      prev_step = step;
+      prevStep = step;
 
 
     loss = DataType{0};
