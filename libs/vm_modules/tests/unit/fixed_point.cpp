@@ -140,7 +140,7 @@ TEST_F(FixedPointTest, sin_pi_32_fixed_point)
 {
   char const *TEXT = R"(
     function main()
-      var pi : Fixed32 = 2fp32;
+      var pi = 2fp32;
       print(sin(pi));
     endfunction
   )";
@@ -152,7 +152,7 @@ TEST_F(FixedPointTest, cos_pi_32_fixed_point)
 {
   char const *TEXT = R"(
     function main()
-      var pi : Fixed32 = 3.1415fp32;
+      var pi = 3.1415fp32;
       print(cos(pi));
     endfunction
   )";
@@ -165,11 +165,11 @@ TEST_F(FixedPointTest, exp_32_fixed_point)
 {
   char const *TEXT = R"(
     function main()
-      var val : Fixed32 = 1fp32;
+      var val = 1fp32;
       print(exp(val));
     endfunction
   )";
-  double      gt   = static_cast<double>(fetch::fixed_point::fp32_t(2.71828182846));
+  double gt = static_cast<double>(fetch::fixed_point::fp32_t(fetch::fixed_point::fp32_t::CONST_E));
   EXPECT_TRUE(RunTest(toolkit, stdout, TEXT, gt));
 }
 
@@ -177,7 +177,7 @@ TEST_F(FixedPointTest, pow_32_fixed_point)
 {
   char const *TEXT = R"(
     function main()
-      var val : Fixed32 = 2fp32;
+      var val = 2fp32;
       print(pow(val, val));
     endfunction
   )";

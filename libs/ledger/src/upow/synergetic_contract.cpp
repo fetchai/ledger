@@ -36,7 +36,7 @@ namespace fetch {
 namespace ledger {
 namespace {
 
-using vm_modules::BigNumberWrapper;
+using vm_modules::math::BigNumberWrapper;
 using vm_modules::VMFactory;
 using vm_modules::StructuredData;
 using byte_array::ConstByteArray;

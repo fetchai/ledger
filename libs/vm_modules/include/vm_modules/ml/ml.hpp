@@ -20,36 +20,41 @@
 #include "vm/module.hpp"
 #include <cstdlib>
 
-#include "vm_modules/math/abs.hpp"
-#include "vm_modules/math/bignumber.hpp"
-#include "vm_modules/math/exp.hpp"
-#include "vm_modules/math/log.hpp"
-#include "vm_modules/math/pow.hpp"
-#include "vm_modules/math/random.hpp"
-#include "vm_modules/math/sqrt.hpp"
-#include "vm_modules/math/tensor.hpp"
-#include "vm_modules/math/trigonometry.hpp"
+#include "vm_modules/ml/dataloaders/commodity_dataloader.hpp"
+#include "vm_modules/ml/dataloaders/mnist_dataloader.hpp"
+
+#include "vm_modules/ml/ops/loss_functions/cross_entropy.hpp"
+#include "vm_modules/ml/ops/loss_functions/mean_square_error.hpp"
+
+#include "vm_modules/ml/optimisation/adam_optimiser.hpp"
+
+#include "vm_modules/ml/graph.hpp"
+#include "vm_modules/ml/state_dict.hpp"
+#include "vm_modules/ml/training_pair.hpp"
 
 namespace fetch {
 namespace vm_modules {
-namespace math {
+namespace ml {
 
-inline void BindMath(fetch::vm::Module &module)
+inline void BindML(fetch::vm::Module &module)
 {
-  // bind math functions
-  BindAbs(module);
-  BindExp(module);
-  BindLog(module);
-  BindPow(module);
-  BindRand(module);
-  BindSqrt(module);
-  BindTrigonometry(module);
+  // dataloaders
+  VMMnistDataLoader::Bind(module);
+  VMCommodityDataLoader::Bind(module);
 
-  // bind math classes
-  BigNumberWrapper::Bind(module);
-  VMTensor::Bind(module);
+  // loss functions
+  VMCrossEntropyLoss::Bind(module);
+  VMMeanSquareError::Bind(module);
+
+  // optimisers
+  VMAdamOptimiser::Bind(module);
+
+  // ml fundamentals
+  VMGraph::Bind(module);
+  VMStateDict::Bind(module);
+  VMTrainingPair::Bind(module);
 }
 
-}  // namespace math
+}  // namespace ml
 }  // namespace vm_modules
 }  // namespace fetch

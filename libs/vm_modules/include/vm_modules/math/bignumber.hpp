@@ -26,6 +26,7 @@
 
 namespace fetch {
 namespace vm_modules {
+namespace math {
 
 // TODO: Make templated
 class BigNumberWrapper : public fetch::vm::Object
@@ -112,5 +113,6 @@ private:
   fetch::math::BigUnsigned number_;
 };
 
+}  // namespace math
 }  // namespace vm_modules
 }  // namespace fetch

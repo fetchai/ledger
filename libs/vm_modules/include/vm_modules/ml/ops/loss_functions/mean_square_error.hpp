@@ -35,7 +35,7 @@ public:
 
   static void Bind(vm::Module &module)
   {
-    module.CreateClassType<VMMeanSquareError>("CrossEntropy")
+    module.CreateClassType<VMMeanSquareError>("MeanSquareError")
         .CreateConstuctor<>()
         .CreateMemberFunction("Forward", &VMMeanSquareError::ForwardWrapper)
         .CreateMemberFunction("Backward", &VMMeanSquareError::BackwardWrapper);

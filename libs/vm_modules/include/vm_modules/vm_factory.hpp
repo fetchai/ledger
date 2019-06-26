@@ -23,12 +23,15 @@
 
 #include "vm_modules/core/print.hpp"
 #include "vm_modules/core/type_convert.hpp"
+
 #include "vm_modules/math/math.hpp"
 
-#include "vm_modules/math/tensor.hpp"
-#include "vm_modules/ml/graph.hpp"
-#include "vm_modules/ml/ops/loss_functions/cross_entropy.hpp"
-#include "vm_modules/ml/ops/loss_functions/mean_square_error.hpp"
+#include "vm_modules/ml/ml.hpp"
+//
+//
+//#include "vm_modules/ml/graph.hpp"
+//#include "vm_modules/ml/ops/loss_functions/cross_entropy.hpp"
+//#include "vm_modules/ml/ops/loss_functions/mean_square_error.hpp"
 
 #include "vm_modules/core/byte_array_wrapper.hpp"
 #include "vm_modules/core/structured_data.hpp"
@@ -107,7 +110,7 @@ public:
     if (MOD_SYN & enabled)
     {
       ByteArrayWrapper::Bind(*module);
-      BigNumberWrapper::Bind(*module);
+      math::BigNumberWrapper::Bind(*module);
       SHA256Wrapper::Bind(*module);
 
       math::BindExp(*module);
@@ -120,10 +123,8 @@ public:
     if (MOD_ML & enabled)
     {
       math::VMTensor::Bind(*module);
-      ml::VMStateDict::Bind(*module);
-      ml::VMGraph::Bind(*module);
-      fetch::vm_modules::ml::VMCrossEntropyLoss::Bind(*module);
-      ml::CreateMeanSquareError(*module);
+
+      ml::BindML(*module);
     }
 
     return module;

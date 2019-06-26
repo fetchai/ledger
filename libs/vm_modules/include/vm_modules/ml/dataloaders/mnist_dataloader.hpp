@@ -25,29 +25,29 @@ namespace fetch {
 namespace vm_modules {
 namespace ml {
 
-class MnistDataLoader : public fetch::vm::Object
+class VMMnistDataLoader : public fetch::vm::Object
 {
 public:
-  MnistDataLoader(fetch::vm::VM *vm, fetch::vm::TypeId type_id, std::string const &images_file,
-                  std::string const &labels_file)
+  VMMnistDataLoader(fetch::vm::VM *vm, fetch::vm::TypeId type_id, std::string const &images_file,
+                    std::string const &labels_file)
     : fetch::vm::Object(vm, type_id)
     , loader_(images_file, labels_file)
   {}
 
   static void Bind(vm::Module &module)
   {
-    module.CreateClassType<fetch::vm_modules::ml::MnistDataLoader>("MNISTLoader")
+    module.CreateClassType<fetch::vm_modules::ml::VMMnistDataLoader>("MNISTLoader")
         .CreateConstuctor<fetch::vm::Ptr<fetch::vm::String>, fetch::vm::Ptr<fetch::vm::String>>()
-        .CreateMemberFunction("GetData", &fetch::vm_modules::ml::MnistDataLoader::GetData)
-        .CreateMemberFunction("Display", &fetch::vm_modules::ml::MnistDataLoader::Display);
+        .CreateMemberFunction("GetData", &fetch::vm_modules::ml::VMMnistDataLoader::GetData)
+        .CreateMemberFunction("Display", &fetch::vm_modules::ml::VMMnistDataLoader::Display);
   }
 
-  static fetch::vm::Ptr<MnistDataLoader> Constructor(
+  static fetch::vm::Ptr<VMMnistDataLoader> Constructor(
       fetch::vm::VM *vm, fetch::vm::TypeId type_id,
       fetch::vm::Ptr<fetch::vm::String> const &images_file,
       fetch::vm::Ptr<fetch::vm::String> const &labels_file)
   {
-    return new MnistDataLoader(vm, type_id, images_file->str, labels_file->str);
+    return new VMMnistDataLoader(vm, type_id, images_file->str, labels_file->str);
   }
 
   // Wont compile if parameter is not const &
