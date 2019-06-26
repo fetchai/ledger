@@ -17,9 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm_modules/ml/dataloaders/mnist_dataloader.hpp"
-#include "vm_modules/ml/dataloaders/commodity_dataloader.hpp"
 #include "vm_modules/math/tensor.hpp"
+#include "vm_modules/ml/dataloaders/commodity_dataloader.hpp"
+#include "vm_modules/ml/dataloaders/mnist_dataloader.hpp"
 #include "vm_modules/ml/graph.hpp"
 #include "vm_modules/ml/training_pair.hpp"
 
@@ -66,13 +66,13 @@ public:
   }
 
   DataType RunMnist(fetch::vm::Ptr<fetch::vm_modules::ml::MnistDataLoader> const &loader,
-               uint64_t batch_size, uint64_t subset_size)
+                    uint64_t batch_size, uint64_t subset_size)
   {
     return optimiser_.Run(loader->loader_, batch_size, subset_size);
   }
 
   DataType RunCommod(fetch::vm::Ptr<fetch::vm_modules::ml::VMCommodityDataLoader> const &loader,
-               uint64_t batch_size, uint64_t subset_size)
+                     uint64_t batch_size, uint64_t subset_size)
   {
     return optimiser_.Run(loader->loader_, batch_size, subset_size);
   }
