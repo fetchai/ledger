@@ -33,7 +33,7 @@ namespace math {
 ///////////////////////
 
 template <typename Type>
-inline void Clamp(Type const &min, Type const &max, Type &ret)
+void Clamp(Type const &min, Type const &max, Type &ret)
 {
   assert(min <= max);
 

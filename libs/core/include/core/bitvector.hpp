@@ -281,7 +281,7 @@ inline bool BitVector::Contract(BitVector const &src, BitVector &dst)
 
     // in the case of even number of loops we need to swap the intermediate and destination buffers
     // to ensure the correct final destination
-    if ((num_loops & 1u) == 0)
+    if ((num_loops & 0x1u) == 0)
     {
       std::swap(int_buffer, dst_buffer);
     }
