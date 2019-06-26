@@ -43,10 +43,9 @@ public:
 
                                                     graph,
                     std::vector<std::string> const &input_node_names,
-                            std::string const &label_node_name,
-                    std::string const &             output_node_name,
-                    DataType const &                learning_rate   = DataType{0.001f},
-                    DataType const &                momentum_update = DataType{0.9f});
+                    std::string const &label_node_name, std::string const &output_node_name,
+                    DataType const &learning_rate   = DataType{0.001f},
+                    DataType const &momentum_update = DataType{0.9f});
 
   virtual ~MomentumOptimiser() = default;
 
@@ -65,7 +64,7 @@ MomentumOptimiser<T, C>::MomentumOptimiser(std::shared_ptr<Graph<T>>
 
                                                                            graph,
                                            std::vector<std::string> const &input_node_names,
-                                                   std::string const &label_node_name,
+                                           std::string const &             label_node_name,
                                            std::string const &             output_node_name,
                                            DataType const &                learning_rate,
                                            DataType const &                momentum_update)

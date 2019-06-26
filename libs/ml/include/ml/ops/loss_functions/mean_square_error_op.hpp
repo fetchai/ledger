@@ -46,14 +46,13 @@ public:
     assert(inputs.size() == 2);
     assert(inputs[0].get().shape() == inputs[1].get().shape());
 
-
-    SizeType batch_dim=inputs.at(0).get().shape().size()-1;
-    for(SizeType i{0};i<inputs.at(0).get().shape().at(batch_dim);i++)
+    SizeType batch_dim = inputs.at(0).get().shape().size() - 1;
+    for (SizeType i{0}; i < inputs.at(0).get().shape().at(batch_dim); i++)
     {
-    typename ArrayType::Type ret = fetch::math::MeanSquareError(inputs[0].get().Slice(i,batch_dim), inputs[1].get().Slice(i,batch_dim));
-    output(0,i)=ret;
+      typename ArrayType::Type ret = fetch::math::MeanSquareError(
+          inputs[0].get().Slice(i, batch_dim), inputs[1].get().Slice(i, batch_dim));
+      output(0, i) = ret;
     }
-
   }
 
   // grad[0]=2*err*(in[0]-in[1])/batch_size, grad[1]=-2*err*(in[0]-in[1])/batch_size,
@@ -67,7 +66,7 @@ public:
     ArrayType return_signal2(inputs.front().get().shape());
 
     // return_signal=in[0]-in[1]
-    fetch::math::Subtract(inputs.at(0).get(),inputs.at(1).get(), return_signal1);
+    fetch::math::Subtract(inputs.at(0).get(), inputs.at(1).get(), return_signal1);
 
     // return_signal=err*(in[0]-in[1])
     fetch::math::Multiply(return_signal1, error_signal, return_signal1);

@@ -58,9 +58,9 @@ private:
   std::shared_ptr<optimisers::Optimiser<TensorType, CostFunctionType>> optimiser_ptr_;
 
   std::string input_;
-    std::string label_;
-    std::string output_;
-    std::string error_;
+  std::string label_;
+  std::string output_;
+  std::string error_;
 
   void PrintStats(SizeType epoch, DataType loss);
 };
@@ -90,7 +90,7 @@ DNNClassifier<TensorType>::DNNClassifier(
   // instantiate optimiser
   auto input = {input_};
   if (!(fetch::ml::optimisers::AddOptimiser<TensorType, CostFunctionType>(
-          optimiser_type, optimiser_ptr_, this->graph_ptr_, input,label_, error_,
+          optimiser_type, optimiser_ptr_, this->graph_ptr_, input, label_, error_,
           this->estimator_config_.learning_rate)))
   {
     throw std::runtime_error("DNNClassifier initialised with unrecognised optimiser");
@@ -117,11 +117,8 @@ void DNNClassifier<TensorType>::SetupModel(std::vector<SizeType> const &hidden_l
       "Output", {cur_input}, hidden_layers.at(hidden_layers.size() - 2),
       hidden_layers.at(hidden_layers.size() - 1), fetch::ml::details::ActivationType::SOFTMAX);
 
-    label_=this->graph_ptr_->template AddNode<ops::PlaceHolder<TensorType>>("Label", {});
-  error_ = this->graph_ptr_->template AddNode<CostFunctionType>(
-            "Error", {output_,label_});
-
-
+  label_ = this->graph_ptr_->template AddNode<ops::PlaceHolder<TensorType>>("Label", {});
+  error_ = this->graph_ptr_->template AddNode<CostFunctionType>("Error", {output_, label_});
 }
 
 /**
@@ -198,7 +195,7 @@ template <typename TensorType>
 bool DNNClassifier<TensorType>::Predict(TensorType &input, TensorType &output)
 {
   this->graph_ptr_->SetInput(input_, input);
-    output = this->graph_ptr_->Evaluate(output_);
+  output = this->graph_ptr_->Evaluate(output_);
 
   return true;
 }

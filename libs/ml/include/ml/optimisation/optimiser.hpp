@@ -42,8 +42,9 @@ public:
   using DataType      = typename ArrayType::Type;
   using SizeType      = typename ArrayType::SizeType;
 
-  Optimiser(std::shared_ptr<Graph<T>> graph, std::vector<std::string> input_node_names,  std::string label_node_name,
-            std::string output_node_name, DataType const &learning_rate = DataType(0.001),
+  Optimiser(std::shared_ptr<Graph<T>> graph, std::vector<std::string> input_node_names,
+            std::string label_node_name, std::string output_node_name,
+            DataType const &learning_rate       = DataType(0.001),
             DataType const &delta_learning_rate = DataType(1.0));
 
   virtual ~Optimiser() = default;
@@ -63,7 +64,7 @@ protected:
   std::shared_ptr<Graph<T>> graph_;
   CriterionType             criterion_;
   std::vector<std::string>  input_node_names_ = {};
-    std::string  label_node_name_ = {};
+  std::string               label_node_name_  = {};
   std::string               output_node_name_ = "";
 
   DataType learning_rate_       = fetch::math::numeric_max<DataType>();
@@ -79,8 +80,9 @@ private:
 
 template <class T, class C>
 Optimiser<T, C>::Optimiser(std::shared_ptr<Graph<T>> graph,
-                           std::vector<std::string> input_node_names,std::string label_node_name , std::string output_node_name,
-                           DataType const &learning_rate, DataType const &delta_learning_rate)
+                           std::vector<std::string> input_node_names, std::string label_node_name,
+                           std::string output_node_name, DataType const &learning_rate,
+                           DataType const &delta_learning_rate)
   : graph_(graph)
   , input_node_names_(std::move(input_node_names))
   , label_node_name_(std::move(label_node_name))
@@ -239,13 +241,13 @@ typename T::Type Optimiser<T, C>::Run(
     // Set Label
     graph_->SetInput(label_node_name_, input.first);
 
-    //auto cur_label  = input.first;
+    // auto cur_label  = input.first;
     auto loss_tensor = graph_->Evaluate(output_node_name_);
     graph_->BackPropagate(output_node_name_, loss_tensor);
 
-    auto loss_tensor_it=loss_tensor.begin();
+    auto loss_tensor_it = loss_tensor.begin();
     {
-    loss+=*loss_tensor_it;
+      loss += *loss_tensor_it;
       ++loss_tensor_it;
     }
     // Compute and apply gradient

@@ -72,16 +72,15 @@ int main(int ac, char **av)
   std::string output = g->AddNode<FullyConnected<ArrayType>>(
       "FC3", {layer_2}, 10u, 10u, fetch::ml::details::ActivationType::SOFTMAX);
 
-  std::string label   = g->AddNode<PlaceHolder<ArrayType>>("Label", {});
+  std::string label = g->AddNode<PlaceHolder<ArrayType>>("Label", {});
 
-  std::string error = g->AddNode<CrossEntropyOp<ArrayType>>(
-          "Error", {output,label});
+  std::string error = g->AddNode<CrossEntropyOp<ArrayType>>("Error", {output, label});
 
   // Initialise MNIST loader
   DataLoaderType data_loader(av[1], av[2]);
 
   // Initialise Optimiser
-  OptimiserType optimiser(g, {input},label, error, learning_rate);
+  OptimiserType optimiser(g, {input}, label, error, learning_rate);
 
   // Training loop
   DataType loss;

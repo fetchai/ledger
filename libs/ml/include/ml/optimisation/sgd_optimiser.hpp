@@ -41,10 +41,9 @@ public:
   SGDOptimiser(std::shared_ptr<Graph<T>>
 
                                                graph,
-               std::vector<std::string> const &input_node_names,
-                       std::string const &label_node_name,
-               std::string const &             output_node_name,
-               DataType const &                learning_rate = DataType{0.001f});
+               std::vector<std::string> const &input_node_names, std::string const &label_node_name,
+               std::string const &output_node_name,
+               DataType const &   learning_rate = DataType{0.001f});
 
   virtual ~SGDOptimiser() = default;
 
@@ -57,7 +56,7 @@ SGDOptimiser<T, C>::SGDOptimiser(std::shared_ptr<Graph<T>>
 
                                                                  graph,
                                  std::vector<std::string> const &input_node_names,
-                                         std::string const &label_node_name,
+                                 std::string const &             label_node_name,
                                  std::string const &output_node_name, DataType const &learning_rate)
   : Optimiser<T, C>(graph, input_node_names, label_node_name, output_node_name, learning_rate)
 {}

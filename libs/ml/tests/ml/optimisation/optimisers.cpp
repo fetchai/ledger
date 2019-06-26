@@ -133,7 +133,7 @@ TYPED_TEST(OptimisersTest, sgd_optimiser_training)
 
   // Initialize Optimiser
   fetch::ml::optimisers::SGDOptimiser<TypeParam, fetch::ml::ops::MeanSquareError<TypeParam>>
-      optimiser(g, {input_name},"", output_name, learning_rate);
+      optimiser(g, {input_name}, "", output_name, learning_rate);
 
   // Do 2 optimiser steps
   optimiser.Run({data}, gt);
@@ -169,7 +169,7 @@ TYPED_TEST(OptimisersTest, sgd_optimiser_training_2D)
 
   // Initialize Optimiser
   fetch::ml::optimisers::SGDOptimiser<TypeParam, fetch::ml::ops::MeanSquareError<TypeParam>>
-      optimiser(g, {input_name},"", output_name, learning_rate);
+      optimiser(g, {input_name}, "", output_name, learning_rate);
 
   // Do 2 optimiser steps
   optimiser.Run({data}, gt);
@@ -205,7 +205,7 @@ TYPED_TEST(OptimisersTest, momentum_optimiser_training)
 
   // Initialize Optimiser
   fetch::ml::optimisers::MomentumOptimiser<TypeParam, fetch::ml::ops::MeanSquareError<TypeParam>>
-      optimiser(g, {input_name},"", output_name, learning_rate);
+      optimiser(g, {input_name}, "", output_name, learning_rate);
 
   // Do 2 optimiser steps to ensure that momentum was applied
   optimiser.Run({data}, gt);
@@ -241,7 +241,7 @@ TYPED_TEST(OptimisersTest, momentum_optimiser_training_2D)
 
   // Initialize Optimiser
   fetch::ml::optimisers::MomentumOptimiser<TypeParam, fetch::ml::ops::MeanSquareError<TypeParam>>
-      optimiser(g, {input_name},"", output_name, learning_rate);
+      optimiser(g, {input_name}, "", output_name, learning_rate);
 
   // Do 2 optimiser steps
   optimiser.Run({data}, gt);
@@ -277,7 +277,7 @@ TYPED_TEST(OptimisersTest, adagrad_optimiser_training)
 
   // Initialize Optimiser
   fetch::ml::optimisers::AdaGradOptimiser<TypeParam, fetch::ml::ops::MeanSquareError<TypeParam>>
-      optimiser(g, {input_name},"", output_name, learning_rate);
+      optimiser(g, {input_name}, "", output_name, learning_rate);
 
   // Do multiple steps
   optimiser.Run({data}, gt);
@@ -313,7 +313,7 @@ TYPED_TEST(OptimisersTest, adagrad_optimiser_training_2D)
 
   // Initialize Optimiser
   fetch::ml::optimisers::AdaGradOptimiser<TypeParam, fetch::ml::ops::MeanSquareError<TypeParam>>
-      optimiser(g, {input_name},"", output_name, learning_rate);
+      optimiser(g, {input_name}, "", output_name, learning_rate);
 
   // Do multiple steps
   optimiser.Run({data}, gt);
@@ -349,7 +349,7 @@ TYPED_TEST(OptimisersTest, rmsprop_optimiser_training)
 
   // Initialize Optimiser
   fetch::ml::optimisers::RMSPropOptimiser<TypeParam, fetch::ml::ops::MeanSquareError<TypeParam>>
-      optimiser(g, {input_name},"", output_name, learning_rate);
+      optimiser(g, {input_name}, "", output_name, learning_rate);
 
   // Do multiple steps
   optimiser.Run({data}, gt);
@@ -385,7 +385,7 @@ TYPED_TEST(OptimisersTest, rmsprop_optimiser_training_2D)
 
   // Initialize Optimiser
   fetch::ml::optimisers::RMSPropOptimiser<TypeParam, fetch::ml::ops::MeanSquareError<TypeParam>>
-      optimiser(g, {input_name},"", output_name, learning_rate);
+      optimiser(g, {input_name}, "", output_name, learning_rate);
 
   // Do multiple steps
   optimiser.Run({data}, gt);
@@ -421,7 +421,7 @@ TYPED_TEST(OptimisersTest, adam_optimiser_training)
 
   // Initialize Optimiser
   fetch::ml::optimisers::AdamOptimiser<TypeParam, fetch::ml::ops::MeanSquareError<TypeParam>>
-      optimiser(g, {input_name},"", output_name, learning_rate);
+      optimiser(g, {input_name}, "", output_name, learning_rate);
 
   // Do multiple steps
   optimiser.Run({data}, gt);
@@ -457,7 +457,7 @@ TYPED_TEST(OptimisersTest, adam_optimiser_training_2D)
 
   // Initialize Optimiser
   fetch::ml::optimisers::AdamOptimiser<TypeParam, fetch::ml::ops::MeanSquareError<TypeParam>>
-      optimiser(g, {input_name},"", output_name, learning_rate);
+      optimiser(g, {input_name}, "", output_name, learning_rate);
 
   // Do multiple steps
   optimiser.Run({data}, gt);
@@ -494,7 +494,7 @@ TYPED_TEST(OptimisersTest, adam_optimiser_minibatch_training)
 
   // Initialize Optimiser
   fetch::ml::optimisers::AdamOptimiser<TypeParam, fetch::ml::ops::MeanSquareError<TypeParam>>
-  optimiser(g, {input_name},"", output_name, learning_rate);
+      optimiser(g, {input_name}, "", output_name, learning_rate);
 
   // Do multiple steps
   optimiser.Run({data}, gt, 3);

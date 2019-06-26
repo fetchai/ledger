@@ -42,10 +42,9 @@ public:
 
   AdaGradOptimiser(std::shared_ptr<Graph<T>>       graph,
                    std::vector<std::string> const &input_node_names,
-                   std::string const              &label_node_name,
-                   std::string const &             output_node_name,
-                   DataType const &                learning_rate = DataType{0.001f},
-                   DataType const &                epsilon       = DataType{1e-8f});
+                   std::string const &label_node_name, std::string const &output_node_name,
+                   DataType const &learning_rate = DataType{0.001f},
+                   DataType const &epsilon       = DataType{1e-8f});
 
   virtual ~AdaGradOptimiser() = default;
 
@@ -60,10 +59,10 @@ private:
 template <class T, class C>
 AdaGradOptimiser<T, C>::AdaGradOptimiser(std::shared_ptr<Graph<T>>       graph,
                                          std::vector<std::string> const &input_node_names,
-                                         std::string const              &label_node_name,
+                                         std::string const &             label_node_name,
                                          std::string const &             output_node_name,
                                          DataType const &learning_rate, DataType const &epsilon)
-  : Optimiser<T, C>(graph, input_node_names,label_node_name, output_node_name, learning_rate)
+  : Optimiser<T, C>(graph, input_node_names, label_node_name, output_node_name, learning_rate)
   , epsilon_(epsilon)
 {
   for (auto &train : this->graph_trainables_)
