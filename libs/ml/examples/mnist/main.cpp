@@ -42,7 +42,7 @@ using SizeType  = typename ArrayType::SizeType;
 using GraphType        = typename fetch::ml::Graph<ArrayType>;
 using CostFunctionType = typename fetch::ml::ops::CrossEntropy<ArrayType>;
 using OptimiserType    = typename fetch::ml::optimisers::AdamOptimiser<ArrayType, CostFunctionType>;
-using DataLoaderType   = typename fetch::ml::MNISTLoader<ArrayType, ArrayType>;
+using DataLoaderType   = typename fetch::ml::dataloaders::MNISTLoader<ArrayType, ArrayType>;
 
 int main(int ac, char **av)
 {

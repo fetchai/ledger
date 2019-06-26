@@ -23,9 +23,7 @@
 
 #include "vm_modules/core/print.hpp"
 #include "vm_modules/core/type_convert.hpp"
-#include "vm_modules/math/abs.hpp"
 #include "vm_modules/math/math.hpp"
-#include "vm_modules/math/random.hpp"
 
 #include "vm_modules/math/tensor.hpp"
 #include "vm_modules/ml/graph.hpp"
@@ -102,8 +100,7 @@ public:
     // math modules
     if (MOD_MATH & enabled)
     {
-      CreateAbs(*module);
-      CreateRand(module);
+      math::BindMath(*module);
     }
 
     // synergetic modules
@@ -113,8 +110,8 @@ public:
       BigNumberWrapper::Bind(*module);
       SHA256Wrapper::Bind(*module);
 
-      BindExp(*module);
-      BindSqrt(*module);
+      math::BindExp(*module);
+      math::BindSqrt(*module);
       BindBitShift(*module);
       BindBitwiseOps(*module);
     }
@@ -122,7 +119,7 @@ public:
     // ml modules - order is important!!
     if (MOD_ML & enabled)
     {
-      math::CreateTensor(*module);
+      math::VMTensor::Bind(*module);
       ml::VMStateDict::Bind(*module);
       ml::VMGraph::Bind(*module);
       fetch::vm_modules::ml::VMCrossEntropyLoss::Bind(*module);
