@@ -287,6 +287,10 @@ def files_of_interest(commit):
             for file_name in files:
                 absolute_path = abspath(join(root, file_name))
                 ret.append(absolute_path)
+    elif isinstance(commit, list):
+        for file_name in commit:
+            absolute_path = abspath(join(PROJECT_ROOT, file_name))
+            ret.append(absolute_path)
     else:
         ret = get_changed_paths_from_git(commit)
 
@@ -307,6 +311,22 @@ def print_diff_and_fail():
         output(diff)
         output('*' * 80)
         sys.exit(1)
+
+
+def find_names(root, names):
+    ret_val = []
+    for name in names:
+        file_path = join(root, name)
+        if isfile(file_path):
+            if os.access(file_path, os.R_OK | os.W_OK):
+                ret_val.append(file_path)
+            else:
+                print('Cannot get RW access to', file_path, file=sys.stderr)
+        elif isdir(file_path):
+            ret_val.extend(find_names(file_path, os.listdir(file_path)))
+        else:
+            print('Unknown file_path', file_path, file=sys.stderr)
+    return ret_val
 
 
 def parse_commandline():
@@ -331,13 +351,15 @@ def parse_commandline():
         type=int,
         default=min(multiprocessing.cpu_count(), 7),
         help='the maximum number of parallel jobs')
+    parser.add_argument(
+        'files',
+        nargs='*')
 
     args = parser.parse_args()
 
-    return args.commit if args.commit is None else args.commit[0], \
+    return find_names('.', args.files) if args.commit is None else args.commit[0], \
         args.diff, \
         args.jobs
-
 
 TRANSFORMATIONS = [
     fix_cmake_version_requirements,

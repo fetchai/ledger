@@ -118,7 +118,7 @@ private:
 
   /// @name Utilities
   /// @{
-  static char const *ToString(State state);
+  static constexpr char const *ToString(State state) noexcept;
   Address            GetRandomTrustedPeer() const;
   void               HandleChainResponse(Address const &peer, BlockList block_list);
   bool               IsBlockValid(Block &block) const;
@@ -156,6 +156,25 @@ private:
   Promise         current_request_;
   /// @}
 };
+
+constexpr char const *MainChainRpcService::ToString(State state) noexcept
+{
+  switch (state)
+  {
+  case State::REQUEST_HEAVIEST_CHAIN:
+    return "Requesting Heaviest Chain";
+  case State::WAIT_FOR_HEAVIEST_CHAIN:
+    return "Waiting for Heaviest Chain";
+  case State::SYNCHRONISING:
+    return "Synchronising";
+  case State::WAITING_FOR_RESPONSE:
+    return "Waiting for Sync Response";
+  case State::SYNCHRONISED:
+    return "Synchronised";
+  default:
+    return "unknown";
+  }
+}
 
 }  // namespace ledger
 }  // namespace fetch
