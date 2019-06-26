@@ -17,27 +17,23 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vectorise/fixed_point/fixed_point.hpp"
-#include "vm/module.hpp"
-#include "vm_modules/math/abs.hpp"
-#include "vm_modules/math/exp.hpp"
-#include "vm_modules/math/log.hpp"
-#include "vm_modules/math/math.hpp"
-#include "vm_modules/math/pow.hpp"
-#include "vm_modules/math/sqrt.hpp"
-#include "vm_modules/math/trigonometry.hpp"
+#include "ledger/chain/digest.hpp"
 
 namespace fetch {
-namespace vm_modules {
+namespace ledger {
 
-inline void CreateFixedPoint(std::shared_ptr<vm::Module> module)
+class EntropyGeneratorInterface
 {
-  CreateAbs(*module.get());
-  CreateTrigonometry(*module.get());
-  BindExp(*module.get());
-  BindLog(*module.get());
-  BindPow(*module.get());
-}
+public:
+  // Construction / Destruction
+  EntropyGeneratorInterface()          = default;
+  virtual ~EntropyGeneratorInterface() = default;
 
-}  // namespace vm_modules
+  /// @name Entropy Generator
+  /// @{
+  virtual uint64_t GenerateEntropy(Digest block_digest, uint64_t block_number) = 0;
+  /// @}
+};
+
+}  // namespace ledger
 }  // namespace fetch

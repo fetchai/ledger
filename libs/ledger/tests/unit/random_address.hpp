@@ -17,37 +17,33 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm/module.hpp"
-#include <cstdlib>
+#include "ledger/chain/address.hpp"
 
-#include "vm_modules/math/abs.hpp"
-#include "vm_modules/math/exp.hpp"
-#include "vm_modules/math/log.hpp"
-#include "vm_modules/math/pow.hpp"
-#include "vm_modules/math/random.hpp"
-#include "vm_modules/math/sqrt.hpp"
-#include "vm_modules/math/tensor.hpp"
-#include "vm_modules/math/trigonometry.hpp"
+#include <type_traits>
 
-namespace fetch {
-namespace vm_modules {
-namespace math {
-
-inline void BindMath(fetch::vm::Module &module)
+/**
+ * Generate a random address based on a specified RNG
+ *
+ * @tparam RNG The RNG type
+ * @param rng The reference to the RNG to be used
+ * @return The generated address
+ */
+template <typename RNG>
+fetch::ledger::Address GenerateRandomAddress(RNG &&rng)
 {
-  // bind math functions
-  BindAbs(module);
-  BindExp(module);
-  BindLog(module);
-  BindPow(module);
-  BindRand(module);
-  BindSqrt(module);
-  BindTrigonometry(module);
+  using Address = fetch::ledger::Address;
+  using RngWord = typename std::decay_t<RNG>::random_type;
 
-  // bind math classes
-  VMTensor::Bind(module);
+  static constexpr std::size_t ADDRESS_WORD_SIZE = Address::RAW_LENGTH / sizeof(RngWord);
+  static_assert((Address::RAW_LENGTH % sizeof(RngWord)) == 0, "");
+
+  Address::RawAddress raw_address{};
+  auto *              raw = reinterpret_cast<RngWord *>(raw_address.data());
+
+  for (std::size_t i = 0; i < ADDRESS_WORD_SIZE; ++i)
+  {
+    raw[i] = rng();
+  }
+
+  return Address{raw_address};
 }
-
-}  // namespace math
-}  // namespace vm_modules
-}  // namespace fetch

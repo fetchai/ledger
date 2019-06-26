@@ -1,3 +1,4 @@
+#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -16,33 +17,32 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vectorise/fixed_point/fixed_point.hpp"
-#include "vm_test_toolkit.hpp"
+#include <cstdint>
+#include <map>
+#include <memory>
 
-namespace {
+namespace fetch {
+namespace ledger {
 
-class FixedPointTest : public ::testing::Test
+class Address;
+class Block;
+
+class StakeManagerInterface
 {
 public:
-  std::stringstream stdout;
-  VmTestToolkit     toolkit{&stdout};
+  // Construction / Destruction
+  StakeManagerInterface()          = default;
+  virtual ~StakeManagerInterface() = default;
+
+  /// @name Stake Manager Interface
+  /// @{
+  virtual void        UpdateCurrentBlock(Block const &current)                                = 0;
+  virtual std::size_t GetBlockGenerationWeight(Block const &previous, Address const &address) = 0;
+  virtual bool        ShouldGenerateBlock(Block const &previous, Address const &address)      = 0;
+  /// @}
+
+private:
 };
 
-TEST_F(FixedPointTest, create_fixed_point)
-{
-  auto m = toolkit.module();
-
-  static char const *TEXT = R"(
-    function main()
-      print(1.0fp32);
-    endfunction
-  )";
-
-  ASSERT_TRUE(toolkit.Compile(TEXT));
-  ASSERT_TRUE(toolkit.Run());
-
-  double gt = static_cast<double>(fetch::fixed_point::fp32_t(1));
-  EXPECT_EQ(std::stod(stdout.str()), gt);
-}
-
-}  // namespace
+}  // namespace ledger
+}  // namespace fetch

@@ -1,3 +1,4 @@
+#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -16,33 +17,31 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vectorise/fixed_point/fixed_point.hpp"
-#include "vm_test_toolkit.hpp"
+#include "ledger/consensus/entropy_generator_interface.hpp"
 
-namespace {
+namespace fetch {
+namespace ledger {
 
-class FixedPointTest : public ::testing::Test
+/**
+ * Simplistic Test Entropy Generator
+ *
+ * Entropy is generated from the block hash as a source. It is repeated hashed a number of times
+ * in order to generate the entropy source.
+ */
+class NaiveEntropyGenerator : public EntropyGeneratorInterface
 {
 public:
-  std::stringstream stdout;
-  VmTestToolkit     toolkit{&stdout};
+  static constexpr std::size_t ROUNDS = 5;
+
+  // Construction / Destruction
+  NaiveEntropyGenerator()           = default;
+  ~NaiveEntropyGenerator() override = default;
+
+  /// @name Entropy Generator Interface
+  /// @{
+  uint64_t GenerateEntropy(Digest block_digest, uint64_t block_number) override;
+  /// @}
 };
 
-TEST_F(FixedPointTest, create_fixed_point)
-{
-  auto m = toolkit.module();
-
-  static char const *TEXT = R"(
-    function main()
-      print(1.0fp32);
-    endfunction
-  )";
-
-  ASSERT_TRUE(toolkit.Compile(TEXT));
-  ASSERT_TRUE(toolkit.Run());
-
-  double gt = static_cast<double>(fetch::fixed_point::fp32_t(1));
-  EXPECT_EQ(std::stod(stdout.str()), gt);
-}
-
-}  // namespace
+}  // namespace ledger
+}  // namespace fetch
