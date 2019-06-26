@@ -7,7 +7,7 @@ function main()
 
   // Additional (uninitialised) variables
   var world : String;
-  world = "Fetch";  
+  world = "Fetch";
 
   // More program code
   print(hello + " " + world);
