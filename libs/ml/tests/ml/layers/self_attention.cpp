@@ -43,7 +43,7 @@ TYPED_TEST(SelfAttentionTest, output_shape_test)  // Use the class as a Node
   TypeParam data({5, 10});
   g.SetInput("Input", data);
 
-  TypeParam prediction = g.Evaluate("SelfAttention");
+  TypeParam prediction = g.Evaluate("SelfAttention", true);
   ASSERT_EQ(prediction.shape().size(), 2);
   ASSERT_EQ(prediction.shape()[0], 42);
   ASSERT_EQ(prediction.shape()[1], 1);
