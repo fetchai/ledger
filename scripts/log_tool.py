@@ -26,9 +26,12 @@ def _level(text):
 def parse_commandline():
     parser = argparse.ArgumentParser()
     parser.add_argument('logger', nargs='?', help='The target logger')
-    parser.add_argument('level', nargs='?', type=_level, help='The level to be set')
-    parser.add_argument('-H', '--host', default='127.0.0.1', help='The target host')
-    parser.add_argument('-P', '--port', type=int, default=8000, help='The tareget port')
+    parser.add_argument('level', nargs='?', type=_level,
+                        help='The level to be set')
+    parser.add_argument('-H', '--host', default='127.0.0.1',
+                        help='The target host')
+    parser.add_argument('-P', '--port', type=int,
+                        default=8000, help='The tareget port')
     return parser.parse_args()
 
 

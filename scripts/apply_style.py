@@ -363,7 +363,10 @@ def apply_transformations_to_file(path_to_file):
                 f.seek(0)
                 f.truncate(0)
                 f.write(text)
+    except UnicodeDecodeError:
+        output('Unable to parse file: ' + path_to_file)
     except:
+        output('Error when processing file: ' + path_to_file)
         output(traceback.format_exc())
         raise
 

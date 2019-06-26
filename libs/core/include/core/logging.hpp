@@ -58,7 +58,7 @@ std::string Format(Args &&... args)
   return oss.str();
 }
 
-} // namespace detail
+}  // namespace detail
 
 enum class LogLevel
 {
@@ -71,7 +71,6 @@ enum class LogLevel
 };
 
 using LogLevelMap = std::unordered_map<std::string, LogLevel>;
-
 
 /// @name Log Library Functions
 /// @{
@@ -101,7 +100,6 @@ void Log(LogLevel level, char const *name, std::string &&message);
 LogLevelMap GetLogLevelMap();
 
 /// @}
-
 
 /// @name Helper Wrappers
 /// @{
@@ -199,4 +197,4 @@ void LogCriticalV2(char const *name, Args &&... args)
 
 /// @}
 
-} // namespace fetch
+}  // namespace fetch

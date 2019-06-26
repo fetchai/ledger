@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/logging.hpp" // temporary
+#include "core/logging.hpp"  // temporary
 
 #include "core/abstract_mutex.hpp"
 #include "core/commandline/vt100.hpp"
@@ -44,7 +44,6 @@
 
 namespace fetch {
 namespace log {
-
 
 class ReadableThread
 {
