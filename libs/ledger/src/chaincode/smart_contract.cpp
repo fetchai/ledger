@@ -221,6 +221,7 @@ std::vector<uint8_t> Convert(ConstByteArray const &buffer)
  * @param pack The reference to the parameter pack to be populated
  * @param obj The object to extract the address from
  */
+// TODO(issue 1256): Whole this function can be dropped once issue the is resolved
 void AddAddressToParameterPack(vm::VM *vm, vm::ParameterPack &pack, msgpack::object const &obj)
 {
   static uint8_t const  ADDRESS_ID   = static_cast<uint8_t>(0x4d);  // 77
@@ -260,9 +261,9 @@ void AddAddressToParameterPack(vm::VM *vm, vm::ParameterPack &pack, msgpack::obj
  * @param pack The parameter pack to be populated
  * @param obj The variant to extract the address from
  */
+// TODO(issue 1256): Whole this function can be dropped once the issue is resolved
 void AddAddressToParameterPack(vm::VM *vm, vm::ParameterPack &pack, variant::Variant const &obj)
 {
-  // TODO(tfr): Consider using the FromJSON overloaded function.
   Address address{};
   if (!Address::Parse(obj.As<ConstByteArray>(), address))
   {
@@ -289,7 +290,6 @@ void AddAddressToParameterPack(vm::VM *vm, vm::ParameterPack &pack, variant::Var
 void AddStructuredDataObjectToParameterPack(vm::VM *vm, vm::TypeId expected_type,
                                             vm::ParameterPack &pack, variant::Variant const &obj)
 {
-  // TODO(tfr): Review design and implement equivalent for msgpack
   if (!vm->IsDefaultSerializeConstructable(expected_type))
   {
     throw std::runtime_error("Type is not constructable: " + vm->GetUniqueId(expected_type));
@@ -316,12 +316,12 @@ void AddStructuredDataObjectToParameterPack(vm::VM *vm, vm::TypeId expected_type
                                             vm::ParameterPack & /*pack*/,
                                             msgpack::object const & /*obj*/)
 {
-  // TODO(issue 1256): Review design and implement equivalent for msgpack
   if (!vm->IsDefaultSerializeConstructable(expected_type))
   {
     throw std::runtime_error("Type is not constructable: " + vm->GetUniqueId(expected_type));
   }
 
+  // TODO(issue 1256): Review design and implement equivalent for msgpack
   throw std::runtime_error("No msgpack support for type " + vm->GetUniqueId(expected_type));
 }
 
@@ -376,12 +376,12 @@ void AddToParameterPack(vm::VM *vm, vm::ParameterPack &params, vm::TypeId expect
     AddToParameterPack<uint64_t>(params, variant);
     break;
 
+  // TODO(issue 1256): Whole this case section can be dropped once the issue is resolved
   case vm::TypeIds::Address:
     AddAddressToParameterPack(vm, params, variant);
     break;
 
   default:
-    // TODO(issue 1256): Add support for msgpack
     AddStructuredDataObjectToParameterPack(vm, expected_type, params, variant);
   }
 }

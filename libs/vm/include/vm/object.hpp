@@ -26,7 +26,7 @@
 namespace fetch {
 namespace vm {
 
-// TODO(tfr): We should rename variants to VMVariant and JSONVariant, respectively
+// TODO(issue 648): We should rename variants to VMVariant and JSONVariant, respectively
 // to avoid name clash.
 using JSONVariant     = fetch::variant::Variant;
 using ByteArrayBuffer = fetch::serializers::ByteArrayBuffer;

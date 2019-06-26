@@ -266,8 +266,7 @@ public:
       return false;
     }
 
-    // TODO: Test if can decode
-
+    // TODO(issue 1262): Caller can't unambiguously detect whether the conversion failed or not
     auto const value = FromHex(variant["value"].As<byte_array::ConstByteArray>());
 
     uint64_t i = 0;

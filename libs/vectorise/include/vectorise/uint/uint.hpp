@@ -96,17 +96,6 @@ public:
     *this = std::forward<T>(other);
   }
 
-  explicit UInt(byte_array::ConstByteArray const &other)
-  {
-    if (other.size() != (UINT_SIZE / 8))
-    {
-      std::runtime_error("Size of provided byte array does not match size of UInt");
-    }
-
-    uint8_t *data = reinterpret_cast<uint8_t *>(data_.data());
-    std::copy(other.pointer(), other.pointer() + other.size(), data);
-  }
-
   explicit UInt(uint64_t const &number)
   {
     union
@@ -153,7 +142,8 @@ public:
   template <typename ArrayType>
   meta::HasIndex<ArrayType, UInt> &operator=(ArrayType const &v)
   {
-    // TODO: Assert that index return type is the same size
+    // TODO(issue 1260): It is not enough to compare just sizes of arrays (see issue desc and note
+    // bellow)
     if (data_.size() < v.size())
     {
       throw std::runtime_error("Array size is greater than UInt capacity");
@@ -162,6 +152,8 @@ public:
     uint64_t i = 0;
     for (; i < v.size(); ++i)
     {
+      // TODO(issue 1260): Potential loss of data if `sizeof(decltype(v[i])) >
+      // sizeof(decltype(data_[i]))`
       data_[i] = static_cast<BaseType>(v[i]);
     }
 

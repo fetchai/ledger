@@ -35,8 +35,8 @@ public:
     : Object(vm, type_id)
   {}
 
-  // TODO(private): Support for indexing operators will remain disabled for now just due to keeping
-  // similarity of the interface with State interface..
+  // TODO(issue 1259): Support for indexing operators will remain disabled for now just due to
+  // keeping similarity of the interface with State interface..
   virtual TemplateParameter1 GetIndexedValue(Ptr<String> const &key)                     = 0;
   virtual void SetIndexedValue(Ptr<String> const &key, TemplateParameter1 const &value)  = 0;
   virtual TemplateParameter1 GetIndexedValue(Ptr<Address> const &key)                    = 0;
