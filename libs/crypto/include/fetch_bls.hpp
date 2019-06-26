@@ -1,3 +1,4 @@
+#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -16,22 +17,24 @@
 //
 //------------------------------------------------------------------------------
 
-#include "crypto/openssl_common.hpp"
-#include "crypto/signature_register.hpp"
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wconversion"
+#pragma GCC diagnostic ignored "-Wpedantic"
+#endif
 
-namespace fetch {
-namespace crypto {
-namespace openssl {
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wconversion"
+#pragma clang diagnostic ignored "-Wpedantic"
+#endif
 
-template <>
-uint8_t const ECDSACurve<NID_secp256k1>::sn = SECP256K1_UNCOMPRESSED;
-template <>
-std::size_t const ECDSACurve<NID_secp256k1>::privateKeySize = 32;
-template <>
-std::size_t const ECDSACurve<NID_secp256k1>::publicKeySize = 64;
-template <>
-std::size_t const ECDSACurve<NID_secp256k1>::signatureSize = 64;
+#include <bls/bls.hpp>
 
-}  // namespace openssl
-}  // namespace crypto
-}  // namespace fetch
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
+
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif

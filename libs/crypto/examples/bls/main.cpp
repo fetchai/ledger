@@ -16,22 +16,23 @@
 //
 //------------------------------------------------------------------------------
 
-#include "crypto/openssl_common.hpp"
-#include "crypto/signature_register.hpp"
+#include "crypto/bls.hpp"
+#include <iostream>
+using namespace fetch::crypto;
 
-namespace fetch {
-namespace crypto {
-namespace openssl {
+int main()
+{
+  bls::init();
+  std::cout << "Running BLS signature" << std::endl;
+  BLSSigner signer;
+  signer.GenerateKeys();
 
-template <>
-uint8_t const ECDSACurve<NID_secp256k1>::sn = SECP256K1_UNCOMPRESSED;
-template <>
-std::size_t const ECDSACurve<NID_secp256k1>::privateKeySize = 32;
-template <>
-std::size_t const ECDSACurve<NID_secp256k1>::publicKeySize = 64;
-template <>
-std::size_t const ECDSACurve<NID_secp256k1>::signatureSize = 64;
+  BLSVerifier verifier{signer.identity()};
+  auto        sig = signer.Sign("Hello world");
 
-}  // namespace openssl
-}  // namespace crypto
-}  // namespace fetch
+  if (verifier.Verify("Hello world", sig))
+  {
+    std::cout << "Signature verified." << std::endl;
+  }
+  return 0;
+}

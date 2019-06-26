@@ -220,6 +220,29 @@ function (configure_vendor_targets)
   # Google Test
   add_subdirectory(${FETCH_ROOT_VENDOR_DIR}/googletest)
 
+  # MCL
+  set(USE_GMP FALSE) #OFF CACHE BOOL "use gmp")
+  set(USE_OPENSSL FALSE) #OFF CACHE BOOL "use openssl")
+  # TODO: Work out how to get this to work with the already found version of OpenSSL
+
+  add_subdirectory(${FETCH_ROOT_VENDOR_DIR}/mcl)
+  target_include_directories(mcl INTERFACE ${FETCH_ROOT_VENDOR_DIR}/mcl/include)
+  target_compile_definitions(mcl INTERFACE -DMCLBN_FP_UNIT_SIZE=4)
+  add_library(vendor-mcl INTERFACE)
+  target_link_libraries(vendor-mcl INTERFACE mcl) # TODO: Work out if can be renamed
+
+  # BLS
+  add_library(vendor-bls STATIC ${FETCH_ROOT_VENDOR_DIR}/bls/src/bls_c256.cpp
+                                ${FETCH_ROOT_VENDOR_DIR}/bls/src/bls_c384_256.cpp)
+  # ${FETCH_ROOT_VENDOR_DIR}/bls/src/bls_c384.cpp
+  target_link_libraries(vendor-bls PUBLIC vendor-mcl)
+  target_include_directories(vendor-bls PUBLIC ${FETCH_ROOT_VENDOR_DIR}/bls/include)
+  target_compile_definitions(vendor-bls
+                             PUBLIC
+                             -DMCL_USE_VINT
+                             -DMCL_VINT_FIXED_BUFFER
+                             -DMCLBN_FP_UNIT_SIZE=4)
+
   # Google Benchmark Do not build the google benchmark library tests
   if (FETCH_ENABLE_BENCHMARKS)
     set(BENCHMARK_ENABLE_TESTING OFF CACHE BOOL "Suppress google benchmark default tests" FORCE)

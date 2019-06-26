@@ -1,3 +1,4 @@
+#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -16,22 +17,46 @@
 //
 //------------------------------------------------------------------------------
 
-#include "crypto/openssl_common.hpp"
-#include "crypto/signature_register.hpp"
-
 namespace fetch {
 namespace crypto {
-namespace openssl {
 
-template <>
-uint8_t const ECDSACurve<NID_secp256k1>::sn = SECP256K1_UNCOMPRESSED;
-template <>
-std::size_t const ECDSACurve<NID_secp256k1>::privateKeySize = 32;
-template <>
-std::size_t const ECDSACurve<NID_secp256k1>::publicKeySize = 64;
-template <>
-std::size_t const ECDSACurve<NID_secp256k1>::signatureSize = 64;
+enum SignatureType : uint8_t
+{
+  SECP256K1_COMPRESSED   = 0x02,
+  SECP256K1_COMPRESSED2  = 0x03,
+  SECP256K1_UNCOMPRESSED = 0x04,
+  BLS_BN256_UNCOMPRESSED = 0x20
+};
 
-}  // namespace openssl
+constexpr bool IdentityParameterTypeDefined(uint8_t x)
+{
+  switch (x)
+  {
+  case SECP256K1_COMPRESSED:
+  case SECP256K1_COMPRESSED2:
+  case SECP256K1_UNCOMPRESSED:
+  case BLS_BN256_UNCOMPRESSED:
+    return true;
+  }
+
+  return false;
+}
+
+constexpr bool TestIdentityParameterSize(uint8_t x, uint64_t s)
+{
+  switch (x)
+  {
+  case SECP256K1_COMPRESSED:
+  case SECP256K1_COMPRESSED2:
+    return s == 32;
+  case SECP256K1_UNCOMPRESSED:
+    return s == 64;
+  case BLS_BN256_UNCOMPRESSED:
+    return true;
+  }
+
+  return false;
+}
+
 }  // namespace crypto
 }  // namespace fetch
