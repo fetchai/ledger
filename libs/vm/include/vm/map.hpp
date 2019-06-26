@@ -179,10 +179,6 @@ struct Map : public IMap
 
   bool SerializeTo(ByteArrayBuffer &buffer) override
   {
-    //    TypeInfo const &type_info     = vm_->GetTypeInfo(GetTypeId());
-    //    TypeId const    key_type_id   = type_info.parameter_type_ids[0];
-    //    TypeId const    value_type_id = type_info.parameter_type_ids[1];
-
     buffer << GetUniqueId() << static_cast<uint64_t>(map.size());
     for (auto const &v : map)
     {

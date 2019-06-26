@@ -28,12 +28,9 @@ namespace detail {
 template <class T, class Index>
 struct HasIndexImpl
 {
-  template <class T1,
-            class IndexDeduced = Index,  // <--- here
-            class Reference    = decltype(
-                (*std::declval<T *>())[std::declval<IndexDeduced>()]  // and use that here
-                ),
-            class = typename std::enable_if<!std::is_void<Reference>::value>::type>
+  template <class T1, class IndexDeduced = Index,
+            class Reference = decltype((std::declval<T>())[std::declval<IndexDeduced>()]),
+            class           = typename std::enable_if<!std::is_void<Reference>::value>::type>
   static std::true_type test(int);
 
   template <class>

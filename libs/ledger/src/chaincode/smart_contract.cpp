@@ -280,14 +280,14 @@ void AddAddressToParameterPack(vm::VM *vm, vm::ParameterPack &pack, variant::Var
 }
 
 /**
- * Extract an address from a msgpack::object
+ * Adds structured data object represented by generic JSON type in to parameter pack
  *
  * @param vm The instance to the VM
  * @param pack The reference to the parameter pack to be populated
- * @param obj The object to extract the address from
+ * @param obj structured data object represented by generic fetch::variant::Variant type
  */
-void AddGenericJSONObjectToParameterPack(vm::VM *vm, vm::TypeId expected_type,
-                                         vm::ParameterPack &pack, variant::Variant const &obj)
+void AddStructuredDataObjectToParameterPack(vm::VM *vm, vm::TypeId expected_type,
+                                            vm::ParameterPack &pack, variant::Variant const &obj)
 {
   // TODO(tfr): Review design and implement equivalent for msgpack
   if (!vm->IsDefaultSerializeConstructable(expected_type))
@@ -305,11 +305,18 @@ void AddGenericJSONObjectToParameterPack(vm::VM *vm, vm::TypeId expected_type,
   }
 }
 
-void AddGenericJSONObjectToParameterPack(vm::VM *vm, vm::TypeId expected_type,
-                                         vm::ParameterPack & /*pack*/,
-                                         msgpack::object const & /*obj*/)
+/**
+ * Adds structured data object represented by MsgPack type in to parameter pack
+ *
+ * @param vm The instance to the VM
+ * @param pack The reference to the parameter pack to be populated
+ * @param obj structured data object represented by generic MsgPack type
+ */
+void AddStructuredDataObjectToParameterPack(vm::VM *vm, vm::TypeId expected_type,
+                                            vm::ParameterPack & /*pack*/,
+                                            msgpack::object const & /*obj*/)
 {
-  // TODO(tfr): Review design and implement equivalent for msgpack
+  // TODO(issue 1256): Review design and implement equivalent for msgpack
   if (!vm->IsDefaultSerializeConstructable(expected_type))
   {
     throw std::runtime_error("Type is not constructable: " + vm->GetUniqueId(expected_type));
@@ -319,7 +326,7 @@ void AddGenericJSONObjectToParameterPack(vm::VM *vm, vm::TypeId expected_type,
 }
 
 /**
- * Extract a value from the variant type specified based on the expected type id and add it to the
+ * Extract a value from the variant type specified based on the expected type id and adds it to the
  * given parameter pack
  *
  * @tparam T The variant type
@@ -374,8 +381,8 @@ void AddToParameterPack(vm::VM *vm, vm::ParameterPack &params, vm::TypeId expect
     break;
 
   default:
-    // TODO(tfr): Add support for msgpack
-    AddGenericJSONObjectToParameterPack(vm, expected_type, params, variant);
+    // TODO(issue 1256): Add support for msgpack
+    AddStructuredDataObjectToParameterPack(vm, expected_type, params, variant);
   }
 }
 
