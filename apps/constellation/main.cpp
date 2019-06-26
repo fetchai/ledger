@@ -267,6 +267,7 @@ struct CommandLineArguments
     p.add(standalone_flag,                "standalone",            "Run node on its own (useful for testing and development). Incompatible with -private-network", false);
     p.add(private_flag,                   "private-network",       "Run node as part of a private network (disables bootstrap). Incompatible with -standalone",    false);
     p.add(experimental_features,          "experimental",          "Enable selected experimental features",                                                        std::string{});
+    p.add(args.cfg.proof_of_stake,        "pos",                   "Enable proof of stake features",                                                               false);
     // clang-format on
 
     // parse the args
@@ -301,6 +302,7 @@ struct CommandLineArguments
     UpdateConfigFromEnvironment(standalone_flag,                "CONSTELLATION_STANDALONE");
     UpdateConfigFromEnvironment(private_flag,                   "CONSTELLATION_PRIVATE_NETWORK");
     UpdateConfigFromEnvironment(experimental_features,          "CONSTELLATION_EXPERIMENTAL");
+    UpdateConfigFromEnvironment(args.cfg.proof_of_stake,        "CONSTELLATION_POS");
     // clang-format on
 
     // parse the feature flags (if they exist)

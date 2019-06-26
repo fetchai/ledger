@@ -31,8 +31,42 @@
 
 namespace fetch {
 namespace ledger {
+namespace {
 
-constexpr uint64_t MAX_TOKENS = 0xFFFFFFFFFFFFFFFFull;
+bool IsOperationValid(WalletRecord const &record, Transaction const &tx,
+                      ConstByteArray const &operation)
+{
+  // perform validation checks
+  if (record.deed)
+  {
+    // There is current deed in effect.
+
+    // Verify that current transaction possesses authority to perform the transfer
+    if (!record.deed->Verify(tx, operation))
+    {
+      return false;
+    }
+  }
+  else
+  {
+    // There is NO deed associated with the SOURCE address.
+
+    // NECESSARY & SUFFICIENT CONDITION to perform transfer: Signature of the
+    // SOURCE address MUST be present when NO preceding deed exists.
+    if (!tx.IsSignedByFromAddress())
+    {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+constexpr uint64_t MAX_TOKENS             = 0xFFFFFFFFFFFFFFFFull;
+constexpr uint64_t STAKE_WARM_UP_PERIOD   = 120;
+constexpr uint64_t STAKE_COOL_DOWN_PERIOD = 120;
+
+}  // namespace
 
 TokenContract::TokenContract()
 {
@@ -40,7 +74,12 @@ TokenContract::TokenContract()
   OnTransaction("deed", this, &TokenContract::Deed);
   OnTransaction("wealth", this, &TokenContract::CreateWealth);
   OnTransaction("transfer", this, &TokenContract::Transfer);
+  OnTransaction("addStake", this, &TokenContract::AddStake);
+  OnTransaction("deStake", this, &TokenContract::DeStake);
+  OnTransaction("collectStake", this, &TokenContract::CollectStake);
   OnQuery("balance", this, &TokenContract::Balance);
+  OnQuery("stake", this, &TokenContract::Stake);
+  OnQuery("cooldownStake", this, &TokenContract::CooldownStake);
 }
 
 uint64_t TokenContract::GetBalance(Address const &address)
@@ -211,6 +250,112 @@ Contract::Status TokenContract::Transfer(Transaction const &tx, BlockIndex)
   return Status::FAILED;
 }
 
+Contract::Status TokenContract::AddStake(Transaction const &tx, BlockIndex block)
+{
+  Status status{Status::FAILED};
+
+  // parse the payload as JSON
+  Variant data;
+  if (ParseAsJson(tx, data))
+  {
+    // attempt to extract the amount field
+    uint64_t amount{0};
+    if (Extract(data, AMOUNT_NAME, amount))
+    {
+      // look up the state record (to see if there is a deed associated with this address)
+      WalletRecord record{};
+      if (GetStateRecord(record, tx.from().display()))
+      {
+        // ensure the transaction has authority over this deed
+        if (IsOperationValid(record, tx, STAKE_NAME))
+        {
+          // stake the amount
+          if (record.balance >= amount)
+          {
+            record.balance -= amount;
+            record.stake += amount;
+
+            // record the stake update event
+            stake_updates_.emplace_back(
+                StakeUpdate{tx.from(), block + STAKE_WARM_UP_PERIOD, amount});
+
+            // save the state
+            SetStateRecord(record, tx.from().display());
+
+            status = Status::OK;
+          }
+        }
+      }
+    }
+  }
+
+  return status;
+}
+
+Contract::Status TokenContract::DeStake(Transaction const &tx, BlockIndex block)
+{
+  Status status{Status::FAILED};
+
+  // parse the payload as JSON
+  Variant data;
+  if (ParseAsJson(tx, data))
+  {
+    // attempt to extract the amount field
+    uint64_t amount{0};
+    if (Extract(data, AMOUNT_NAME, amount))
+    {
+      // look up the state record (to see if there is a deed associated with this address)
+      WalletRecord record{};
+      if (GetStateRecord(record, tx.from().display()))
+      {
+        // ensure the transaction has authority over this deed
+        if (IsOperationValid(record, tx, STAKE_NAME))
+        {
+          FETCH_LOG_DEBUG(LOGGING_NAME, "Destaking! : ", amount, " of ", record.stake);
+          // destake the amount
+          if (record.stake >= amount)
+          {
+            record.stake -= amount;
+
+            // Put it in a cool down state
+            record.cooldown_stake[block + STAKE_COOL_DOWN_PERIOD] += amount;
+
+            // save the state
+            SetStateRecord(record, tx.from().display());
+
+            FETCH_LOG_WARN(LOGGING_NAME, "Destaked!!!!");
+            status = Status::OK;
+          }
+        }
+      }
+    }
+  }
+
+  return status;
+}
+
+Contract::Status TokenContract::CollectStake(Transaction const &tx, BlockIndex block)
+{
+  Status status{Status::FAILED};
+
+  WalletRecord record{};
+
+  if (GetStateRecord(record, tx.from().display()))
+  {
+    // ensure the transaction has authority over this deed
+    if (IsOperationValid(record, tx, STAKE_NAME))
+    {
+      // Collect all cooled down stakes and put them back into the account
+      record.CollectStake(block);
+      SetStateRecord(record, tx.from().display());
+
+      return Status::OK;
+    }
+  }
+
+  return status;
+}
+
 Contract::Status TokenContract::Balance(Query const &query, Query &response)
 {
   Status status = Status::FAILED;
@@ -236,6 +381,73 @@ Contract::Status TokenContract::Balance(Query const &query, Query &response)
   else
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Incorrect parameters to balance query");
+  }
+
+  return status;
+}
+
+Contract::Status TokenContract::Stake(Query const &query, Query &response)
+{
+  Status status = Status::FAILED;
+
+  ConstByteArray input;
+  if (Extract(query, ADDRESS_NAME, input))
+  {
+    // attempt to parse the input address
+    Address address{};
+    if (Address::Parse(input, address))
+    {
+      // lookup the record
+      WalletRecord record{};
+      GetStateRecord(record, address.display());
+
+      // formulate the response
+      response          = Variant::Object();
+      response["stake"] = record.stake;
+
+      status = Status::OK;
+    }
+  }
+  else
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Incorrect parameters to balance query");
+  }
+
+  return status;
+}
+
+Contract::Status TokenContract::CooldownStake(Query const &query, Query &response)
+{
+  Status status = Status::FAILED;
+
+  ConstByteArray input;
+  if (Extract(query, ADDRESS_NAME, input))
+  {
+    // attempt to parse the input address
+    Address address{};
+    if (Address::Parse(input, address))
+    {
+      // lookup the record
+      WalletRecord record{};
+      GetStateRecord(record, address.display());
+
+      // formulate the response
+      response  = Variant::Object();
+      auto keys = Variant::Object();
+
+      for (auto it = record.cooldown_stake.begin(); it != record.cooldown_stake.end(); ++it)
+      {
+        keys[std::to_string(it->first)] = it->second;
+      }
+
+      response["cooldownStake"] = keys;
+
+      status = Status::OK;
+    }
+  }
+  else
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Incorrect parameters to cooldown stake query");
   }
 
   return status;
