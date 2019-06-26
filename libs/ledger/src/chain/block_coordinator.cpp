@@ -398,7 +398,7 @@ BlockCoordinator::State BlockCoordinator::OnSynchronised(State current, State pr
   }
   else if (mining_ && mining_enabled_ && (Clock::now() >= next_block_time_))
   {
-    // POS: Additional check, are we able to mine?going to be used for
+    // POS: Additional check, are we able to mine?
     if (stake_)
     {
       if (!stake_->ShouldGenerateBlock(*current_block_, mining_address_))
