@@ -75,5 +75,3 @@ If the developer would like `clang-tidy` to apply all the changes then the follo
 	$ ./scripts/run_static_analysis.py <path to cmake build dir> --fix
 
 .. warning:: It should be noted that the automatic updates provided by ``clang-tidy`` are seldom applied 100% cleanly. To the point that the project might not compile afterwards. Developers must be aware of this and carefully check the changed generated manually.
-
-

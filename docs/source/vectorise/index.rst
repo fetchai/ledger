@@ -105,17 +105,17 @@ After building the example codes, the can be ran as follows:
                 6.08465 s
                 $ ./examples/element_wise_manip_fetch 1000000
                 6.06036 s
-                
+
 The difference in performance is hardly noticable. The reason for this
 is that modern compilers are very good at optimising the instructions
 according to the architecture.
 
-           
+
 Reduction
 ---------
 Another common activity is simple reductions. The ParallelDispatcher
 makes it easy to perform these as well. In this example we will consider
-the reduction of a single array A through 
+the reduction of a single array A through
 
 .. math::
    r = \sum_{i=1}^N A_{i}
@@ -140,7 +140,7 @@ This implementation can be found in
 examples/02_reduction/fetch_solution.cpp.
 
 .. code-block:: bash
-                
+
                 $ ./examples/reduction_ordinary 1000000000
                 Preparing
                 Computing
@@ -148,16 +148,16 @@ examples/02_reduction/fetch_solution.cpp.
                 $ ./examples/reduction_fetch 1000000000
                 Preparing
                 Computing
-                0.330216 s to get 10.5083                
+                0.330216 s to get 10.5083
 
 Again, we see that we get a bit more than a factor of three in
-performance increase without much extra coding effort. 
-                
+performance increase without much extra coding effort.
+
 Sum Reduce
 ----------
 The Fetch vectorisation library also supports more advanced reductions
 such as the inner product between two vectors A and B. Consider
-implementing the following functionality: 
+implementing the following functionality:
 
 .. math::
    r = \sum_{i=1}^N (A_{i}-B_{i})^2
@@ -189,7 +189,7 @@ following results with SSE enabled:
                 $ ./examples/sum_reduce_ordinary 100000
                 0.890618 s to get 0.100001
                 $ ./examples/sum_reduce_fetch 100000
-                0.44335 s to get 0.100001          
+                0.44335 s to get 0.100001
 
 In this case we get exactly the factor of two we would expect by
 vectorising a double precision implementation.
@@ -229,7 +229,7 @@ compute the as the kernel is applied. Notebly, the code is not more
 complex than the intutitve standard implementation, but does it work better?
 
 .. code-block:: bash
-                
+
                 $ ./examples/softmax_approx_ordinary 100000
                 6.15118 s giving 7.89726e-06 for first element
                 $ ./examples/softmax_approx_fetch 100000
@@ -243,22 +243,22 @@ execution.
 
 Ranges: Operating on a subset
 -----------------------------
-In many cases we do not want to operate on the full range of a shared array, but manipulate a subset of sequently occuring elements. To this end, the Fetch vectorisation framework introduces ranges which specify starting and ending elements for a vectorised operation. 
+In many cases we do not want to operate on the full range of a shared array, but manipulate a subset of sequently occuring elements. To this end, the Fetch vectorisation framework introduces ranges which specify starting and ending elements for a vectorised operation.
 
 
 .. todo::
-        
+
         Write the rest of the example
 
 Slicing: Operating on shifted arrays
 ------------------------------------
-In a lot of cases, we do not want to manipulate arrays elementwise at the same indices. This is for instance the case when 
+In a lot of cases, we do not want to manipulate arrays elementwise at the same indices. This is for instance the case when
 caclulating the dot product of a matrix :math:`A` with the transposed of another matrix :math:`B` which leads to elements calculated as
 
 .. math::
     \left[ A\cdot B^T \right]_{i,j} = \sum_{k=0}^{N-1} A(i, k)\cdot B(j, k) .
 
-In this case we would vectorise over the index :math:`k`. We note that size of :math:`A` and :math:`B` may be different and therefore the meaning of :math:`k` is relative to some starting position that differs if :math:`A` and :math:`B` are represented internally as continous arrays. 
+In this case we would vectorise over the index :math:`k`. We note that size of :math:`A` and :math:`B` may be different and therefore the meaning of :math:`k` is relative to some starting position that differs if :math:`A` and :math:`B` are represented internally as continous arrays.
 
 To make it possible to implement routines like the one above we introduce the notation of slicing which represent a subview of a shared array with the constratint that starting position much be a multitude of the SIMD size. Any vectorisation method must use slices of same size.
 
@@ -280,6 +280,3 @@ over an array and use vector operations to compute the reduction of a
 .. literalinclude:: ../../../libs/vectorise/examples/08_dot_product/main.cpp
    :language: c++
    :lines: 0-5
-
-
-
