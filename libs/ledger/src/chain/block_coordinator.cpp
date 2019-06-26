@@ -398,7 +398,7 @@ BlockCoordinator::State BlockCoordinator::OnSynchronised(State current, State pr
   }
   else if (mining_ && mining_enabled_ && (Clock::now() >= next_block_time_))
   {
-    // POS: Additional check, are we able to mine?
+    // POS: Additional check, are we able to mine?going to be used for 
     if (stake_)
     {
       if (!stake_->ShouldGenerateBlock(*current_block_, mining_address_))
@@ -416,6 +416,11 @@ BlockCoordinator::State BlockCoordinator::OnSynchronised(State current, State pr
     next_block_->body.previous_hash = current_block_->body.hash;
     next_block_->body.block_number  = current_block_->body.block_number + 1;
     next_block_->body.miner         = mining_address_;
+
+    if(stake_)
+    {
+      next_block_->weight = stake_->GetBlockGenerationWeight(*current_block_, mining_address_);
+    }
 
     // Attach current DAG state
     if (dag_)
@@ -467,6 +472,20 @@ BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
     if (!previous)
     {
       return fail("No previous block in chain");
+    }
+
+    // Check that the weight as given by the proof is correct
+    if(stake_)
+    {
+      if(!stake_->ValidMinerForBlock(*previous, current_block_->body.miner))
+      {
+        return fail("Block signed by miner deemed invalid by the staking mechanism");
+      }
+
+      if(current_block_->weight != stake_->GetBlockGenerationWeight(*previous, current_block_->body.miner))
+      {
+        return fail("Incorrect stake weight found for block");
+      }
     }
 
     // Check: Ensure the block number is continuous
