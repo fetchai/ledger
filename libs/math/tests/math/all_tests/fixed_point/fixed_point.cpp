@@ -755,11 +755,11 @@ TEST(FixedPointTest, Exponential_16_16)
               static_cast<double>(fp32_t::TOLERANCE));
   EXPECT_THROW(fp32_t::Exp(fp32_t::MAX_EXP + 1), std::overflow_error);
 
-  fp32_t step{0.001};
-  fp32_t x{-10.0};
-  double max_error = 0, avg_error = 0;
-  size_t iterations = 0;
-  double tolerance  = 2 * static_cast<double>(fp32_t::TOLERANCE);
+  fp32_t      step{0.001};
+  fp32_t      x{-10.0};
+  double      max_error = 0, avg_error = 0;
+  std::size_t iterations = 0;
+  double      tolerance  = 2 * static_cast<double>(fp32_t::TOLERANCE);
   for (; x < 5.0; x += step)
   {
     fp32_t e     = fp32_t::Exp(x);
@@ -832,11 +832,11 @@ TEST(FixedPointTest, Exponential_32_32)
                   std::exp(static_cast<double>(fp64_t::MIN_EXP)),
               0, static_cast<double>(fp64_t::TOLERANCE));
 
-  fp64_t step{0.0001};
-  fp64_t x{-10.0};
-  double max_error = 0, avg_error = 0;
-  size_t iterations = 0;
-  double tolerance  = static_cast<double>(fp64_t::TOLERANCE);
+  fp64_t      step{0.0001};
+  fp64_t      x{-10.0};
+  double      max_error = 0, avg_error = 0;
+  std::size_t iterations = 0;
+  double      tolerance  = static_cast<double>(fp64_t::TOLERANCE);
   for (; x < 5.0; x += step)
   {
     fp64_t e     = fp64_t::Exp(x);
@@ -872,12 +872,12 @@ TEST(FixedPointTest, Pow_16_16_positive_x)
   EXPECT_TRUE(fp32_t::isNaN(fp32_t::Pow(fp32_t::_0, fp32_t::_0)));
   EXPECT_TRUE(fp32_t::isNaN(fp32_t::Pow(a, a)));
 
-  fp32_t step{0.001};
-  fp32_t x{0.001};
-  fp32_t y{0.001};
-  double max_error = 0, avg_error = 0;
-  size_t iterations = 0;
-  double tolerance  = static_cast<double>(fp32_t::TOLERANCE);
+  fp32_t      step{0.001};
+  fp32_t      x{0.001};
+  fp32_t      y{0.001};
+  double      max_error = 0, avg_error = 0;
+  std::size_t iterations = 0;
+  double      tolerance  = static_cast<double>(fp32_t::TOLERANCE);
   for (; x < 100.0; x += step)
   {
     for (; y < 10.5; y += step)
@@ -899,12 +899,12 @@ TEST(FixedPointTest, Pow_16_16_positive_x)
 
 TEST(FixedPointTest, Pow_16_16_negative_x)
 {
-  fp32_t step{0.01};
-  fp32_t x{-10};
-  fp32_t y{-4};
-  double max_error = 0, avg_error = 0;
-  size_t iterations = 0;
-  double tolerance  = static_cast<double>(fp32_t::TOLERANCE);
+  fp32_t      step{0.01};
+  fp32_t      x{-10};
+  fp32_t      y{-4};
+  double      max_error = 0, avg_error = 0;
+  std::size_t iterations = 0;
+  double      tolerance  = static_cast<double>(fp32_t::TOLERANCE);
   for (; x < 10.0; x += step)
   {
     for (; y < 4; ++y)
@@ -943,12 +943,12 @@ TEST(FixedPointTest, Pow_32_32_positive_x)
   EXPECT_TRUE(fp64_t::isNaN(fp64_t::Pow(fp64_t::_0, fp64_t::_0)));
   EXPECT_TRUE(fp64_t::isNaN(fp64_t::Pow(a, a)));
 
-  fp64_t step{0.0001};
-  fp64_t x{0.0001};
-  fp64_t y{0.001};
-  double max_error = 0, avg_error = 0;
-  size_t iterations = 0;
-  double tolerance  = static_cast<double>(fp64_t::TOLERANCE);
+  fp64_t      step{0.0001};
+  fp64_t      x{0.0001};
+  fp64_t      y{0.001};
+  double      max_error = 0, avg_error = 0;
+  std::size_t iterations = 0;
+  double      tolerance  = static_cast<double>(fp64_t::TOLERANCE);
   for (; x < 100.0; x += step)
   {
     for (; y < 40.5; y += step)
@@ -970,12 +970,12 @@ TEST(FixedPointTest, Pow_32_32_positive_x)
 
 TEST(FixedPointTest, Pow_32_32_negative_x)
 {
-  fp64_t step{0.01};
-  fp64_t x{-10};
-  fp64_t y{-9};
-  double max_error = 0, avg_error = 0;
-  size_t iterations = 0;
-  double tolerance  = static_cast<double>(fp64_t::TOLERANCE);
+  fp64_t      step{0.01};
+  fp64_t      x{-10};
+  fp64_t      y{-9};
+  double      max_error = 0, avg_error = 0;
+  std::size_t iterations = 0;
+  double      tolerance  = static_cast<double>(fp64_t::TOLERANCE);
   for (; x < 10.0; x += step)
   {
     for (; y < 9; ++y)
@@ -1023,11 +1023,11 @@ TEST(FixedPointTest, Logarithm_16_16)
   EXPECT_NEAR(static_cast<double>(e6), std::log2(static_cast<double>(tiny)),
               static_cast<double>(fp32_t::TOLERANCE));
 
-  fp32_t step{0.001};
-  fp32_t x{tiny};
-  double max_error = 0, avg_error = 0;
-  size_t iterations = 0;
-  double tolerance  = static_cast<double>(fp32_t::TOLERANCE);
+  fp32_t      step{0.001};
+  fp32_t      x{tiny};
+  double      max_error = 0, avg_error = 0;
+  std::size_t iterations = 0;
+  double      tolerance  = static_cast<double>(fp32_t::TOLERANCE);
   for (; x < 5.0; x += step)
   {
     fp32_t e     = fp32_t::Log(x);
@@ -1072,11 +1072,11 @@ TEST(FixedPointTest, Logarithm_32_32)
   EXPECT_NEAR(static_cast<double>(e6), std::log2(static_cast<double>(tiny)),
               static_cast<double>(fp64_t::TOLERANCE));
 
-  fp64_t step{0.0001};
-  fp64_t x{tiny};
-  double max_error = 0, avg_error = 0;
-  size_t iterations = 0;
-  double tolerance  = 2 * static_cast<double>(fp64_t::TOLERANCE);
+  fp64_t      step{0.0001};
+  fp64_t      x{tiny};
+  double      max_error = 0, avg_error = 0;
+  std::size_t iterations = 0;
+  double      tolerance  = 2 * static_cast<double>(fp64_t::TOLERANCE);
   for (; x < 5.0; x += step)
   {
     fp64_t e     = fp64_t::Log(x);
@@ -1301,11 +1301,11 @@ TEST(FixedPointTest, SQRT_16_16)
   // Sqrt of a negative
   EXPECT_TRUE(fp32_t::isNaN(fp32_t::Sqrt(-one)));
 
-  fp32_t step{0.01};
-  fp32_t x{tiny}, max{huge};
-  double max_error = 0, avg_error = 0;
-  size_t iterations = 0;
-  double tolerance  = 4 * static_cast<double>(fp32_t::TOLERANCE);
+  fp32_t      step{0.01};
+  fp32_t      x{tiny}, max{huge};
+  double      max_error = 0, avg_error = 0;
+  std::size_t iterations = 0;
+  double      tolerance  = 4 * static_cast<double>(fp32_t::TOLERANCE);
   for (; x < max; x += step)
   {
     fp32_t e     = fp32_t::Sqrt(x);
@@ -1372,11 +1372,11 @@ TEST(FixedPointTest, SQRT_32_32)
   // Sqrt of a negative
   EXPECT_TRUE(fp64_t::isNaN(fp64_t::Sqrt(-one)));
 
-  fp64_t step{0.001};
-  fp64_t x{tiny}, max{huge};
-  double max_error = 0, avg_error = 0;
-  size_t iterations = 0;
-  double tolerance  = static_cast<double>(fp64_t::TOLERANCE);
+  fp64_t      step{0.001};
+  fp64_t      x{tiny}, max{huge};
+  double      max_error = 0, avg_error = 0;
+  std::size_t iterations = 0;
+  double      tolerance  = static_cast<double>(fp64_t::TOLERANCE);
   for (; x < 5.0; x += step)
   {
     fp64_t e     = fp64_t::Sqrt(x);
@@ -1766,9 +1766,9 @@ TEST(FixedPointTest, Tan_16_16)
   fp32_t x{-fp32_t::CONST_PI_2}, max{fp32_t::CONST_PI_2};
   x += offset;
   max -= offset;
-  double max_error = 0, avg_error = 0;
-  size_t iterations = 0;
-  double tolerance  = 2 * static_cast<double>(fp32_t::TOLERANCE);
+  double      max_error = 0, avg_error = 0;
+  std::size_t iterations = 0;
+  double      tolerance  = 2 * static_cast<double>(fp32_t::TOLERANCE);
   for (; x < max; x += step)
   {
     fp32_t e     = fp32_t::Tan(x);
@@ -1846,9 +1846,9 @@ TEST(FixedPointTest, Tan_32_32)
   fp64_t x{-fp64_t::CONST_PI_2}, max{fp64_t::CONST_PI_2};
   x += offset;
   max -= offset;
-  double max_error = 0, avg_error = 0;
-  size_t iterations = 0;
-  double tolerance  = 2 * static_cast<double>(fp64_t::TOLERANCE);
+  double      max_error = 0, avg_error = 0;
+  std::size_t iterations = 0;
+  double      tolerance  = 2 * static_cast<double>(fp64_t::TOLERANCE);
   for (; x < max; x += step)
   {
     fp64_t e     = fp64_t::Tan(x);
@@ -1867,11 +1867,11 @@ TEST(FixedPointTest, Tan_32_32)
 
 TEST(FixedPointTest, ASin_16_16)
 {
-  fp32_t step{0.001};
-  fp32_t x{-0.99};
-  double max_error = 0, avg_error = 0;
-  size_t iterations = 0;
-  double tolerance  = static_cast<double>(fp32_t::TOLERANCE);
+  fp32_t      step{0.001};
+  fp32_t      x{-0.99};
+  double      max_error = 0, avg_error = 0;
+  std::size_t iterations = 0;
+  double      tolerance  = static_cast<double>(fp32_t::TOLERANCE);
   for (; x < 1.0; x += step)
   {
     fp32_t e     = fp32_t::ASin(x);
@@ -1890,11 +1890,11 @@ TEST(FixedPointTest, ASin_16_16)
 
 TEST(FixedPointTest, ASin_32_32)
 {
-  fp64_t step{0.0001};
-  fp64_t x{-0.999};
-  double max_error = 0, avg_error = 0;
-  size_t iterations = 0;
-  double tolerance  = static_cast<double>(fp64_t::TOLERANCE);
+  fp64_t      step{0.0001};
+  fp64_t      x{-0.999};
+  double      max_error = 0, avg_error = 0;
+  std::size_t iterations = 0;
+  double      tolerance  = static_cast<double>(fp64_t::TOLERANCE);
   for (; x < 1.0; x += step)
   {
     fp64_t e     = fp64_t::ASin(x);
@@ -1913,11 +1913,11 @@ TEST(FixedPointTest, ASin_32_32)
 
 TEST(FixedPointTest, ACos_16_16)
 {
-  fp32_t step{0.001};
-  fp32_t x{-0.99};
-  double max_error = 0, avg_error = 0;
-  size_t iterations = 0;
-  double tolerance  = static_cast<double>(fp32_t::TOLERANCE);
+  fp32_t      step{0.001};
+  fp32_t      x{-0.99};
+  double      max_error = 0, avg_error = 0;
+  std::size_t iterations = 0;
+  double      tolerance  = static_cast<double>(fp32_t::TOLERANCE);
   for (; x < 1.0; x += step)
   {
     fp32_t e     = fp32_t::ACos(x);
@@ -1936,11 +1936,11 @@ TEST(FixedPointTest, ACos_16_16)
 
 TEST(FixedPointTest, ACos_32_32)
 {
-  fp64_t step{0.0001};
-  fp64_t x{-1.0};
-  double max_error = 0, avg_error = 0;
-  size_t iterations = 0;
-  double tolerance  = static_cast<double>(fp64_t::TOLERANCE);
+  fp64_t      step{0.0001};
+  fp64_t      x{-1.0};
+  double      max_error = 0, avg_error = 0;
+  std::size_t iterations = 0;
+  double      tolerance  = static_cast<double>(fp64_t::TOLERANCE);
   for (; x < 1.0; x += step)
   {
     fp64_t e     = fp64_t::ACos(x);
@@ -1959,11 +1959,11 @@ TEST(FixedPointTest, ACos_32_32)
 
 TEST(FixedPointTest, ATan_16_16)
 {
-  fp32_t step{0.001};
-  fp32_t x{-5.0};
-  double max_error = 0, avg_error = 0;
-  size_t iterations = 0;
-  double tolerance  = static_cast<double>(fp32_t::TOLERANCE);
+  fp32_t      step{0.001};
+  fp32_t      x{-5.0};
+  double      max_error = 0, avg_error = 0;
+  std::size_t iterations = 0;
+  double      tolerance  = static_cast<double>(fp32_t::TOLERANCE);
   for (; x < 5.0; x += step)
   {
     fp32_t e     = fp32_t::ATan(x);
@@ -1982,11 +1982,11 @@ TEST(FixedPointTest, ATan_16_16)
 
 TEST(FixedPointTest, ATan_32_32)
 {
-  fp64_t step{0.0001};
-  fp64_t x{-5.0};
-  double max_error = 0, avg_error = 0;
-  size_t iterations = 0;
-  double tolerance  = static_cast<double>(fp64_t::TOLERANCE);
+  fp64_t      step{0.0001};
+  fp64_t      x{-5.0};
+  double      max_error = 0, avg_error = 0;
+  std::size_t iterations = 0;
+  double      tolerance  = static_cast<double>(fp64_t::TOLERANCE);
   for (; x < 5.0; x += step)
   {
     fp64_t e     = fp64_t::ATan(x);
@@ -2005,12 +2005,12 @@ TEST(FixedPointTest, ATan_32_32)
 
 TEST(FixedPointTest, ATan2_16_16)
 {
-  fp32_t step{0.01};
-  fp32_t x{-2.0};
-  fp32_t y{-2.0};
-  double max_error = 0, avg_error = 0;
-  size_t iterations = 0;
-  double tolerance  = static_cast<double>(fp32_t::TOLERANCE);
+  fp32_t      step{0.01};
+  fp32_t      x{-2.0};
+  fp32_t      y{-2.0};
+  double      max_error = 0, avg_error = 0;
+  std::size_t iterations = 0;
+  double      tolerance  = static_cast<double>(fp32_t::TOLERANCE);
   for (; x < 2.0; x += step)
   {
     for (; y < 2.0; y += step)
@@ -2032,12 +2032,12 @@ TEST(FixedPointTest, ATan2_16_16)
 
 TEST(FixedPointTest, ATan2_32_32)
 {
-  fp64_t step{0.0001};
-  fp64_t x{-2.0};
-  fp64_t y{-2.0};
-  double max_error = 0, avg_error = 0;
-  size_t iterations = 0;
-  double tolerance  = static_cast<double>(fp64_t::TOLERANCE);
+  fp64_t      step{0.0001};
+  fp64_t      x{-2.0};
+  fp64_t      y{-2.0};
+  double      max_error = 0, avg_error = 0;
+  std::size_t iterations = 0;
+  double      tolerance  = static_cast<double>(fp64_t::TOLERANCE);
   for (; x < 2.0; x += step)
   {
     for (; y < 2.0; y += step)
@@ -2059,11 +2059,11 @@ TEST(FixedPointTest, ATan2_32_32)
 
 TEST(FixedPointTest, SinH_16_16)
 {
-  fp32_t step{0.001};
-  fp32_t x{-3.0};
-  double max_error = 0, avg_error = 0;
-  size_t iterations = 0;
-  double tolerance  = 2.0 * static_cast<double>(fp32_t::TOLERANCE);
+  fp32_t      step{0.001};
+  fp32_t      x{-3.0};
+  double      max_error = 0, avg_error = 0;
+  std::size_t iterations = 0;
+  double      tolerance  = 2.0 * static_cast<double>(fp32_t::TOLERANCE);
   for (; x < 3.0; x += step)
   {
     fp32_t e     = fp32_t::SinH(x);
@@ -2082,11 +2082,11 @@ TEST(FixedPointTest, SinH_16_16)
 
 TEST(FixedPointTest, SinH_32_32)
 {
-  fp64_t step{0.0001};
-  fp64_t x{-5.0};
-  double max_error = 0, avg_error = 0;
-  size_t iterations = 0;
-  double tolerance  = static_cast<double>(fp64_t::TOLERANCE);
+  fp64_t      step{0.0001};
+  fp64_t      x{-5.0};
+  double      max_error = 0, avg_error = 0;
+  std::size_t iterations = 0;
+  double      tolerance  = static_cast<double>(fp64_t::TOLERANCE);
   for (; x < 5.0; x += step)
   {
     fp64_t e     = fp64_t::SinH(x);
@@ -2105,11 +2105,11 @@ TEST(FixedPointTest, SinH_32_32)
 
 TEST(FixedPointTest, CosH_16_16)
 {
-  fp32_t step{0.001};
-  fp32_t x{-3.0};
-  double max_error = 0, avg_error = 0;
-  size_t iterations = 0;
-  double tolerance  = 2.0 * static_cast<double>(fp32_t::TOLERANCE);
+  fp32_t      step{0.001};
+  fp32_t      x{-3.0};
+  double      max_error = 0, avg_error = 0;
+  std::size_t iterations = 0;
+  double      tolerance  = 2.0 * static_cast<double>(fp32_t::TOLERANCE);
   for (; x < 3.0; x += step)
   {
     fp32_t e     = fp32_t::CosH(x);
@@ -2128,11 +2128,11 @@ TEST(FixedPointTest, CosH_16_16)
 
 TEST(FixedPointTest, CosH_32_32)
 {
-  fp64_t step{0.0001};
-  fp64_t x{-5.0};
-  double max_error = 0, avg_error = 0;
-  size_t iterations = 0;
-  double tolerance  = static_cast<double>(fp64_t::TOLERANCE);
+  fp64_t      step{0.0001};
+  fp64_t      x{-5.0};
+  double      max_error = 0, avg_error = 0;
+  std::size_t iterations = 0;
+  double      tolerance  = static_cast<double>(fp64_t::TOLERANCE);
   for (; x < 5.0; x += step)
   {
     fp64_t e     = fp64_t::CosH(x);
@@ -2151,11 +2151,11 @@ TEST(FixedPointTest, CosH_32_32)
 
 TEST(FixedPointTest, TanH_16_16)
 {
-  fp32_t step{0.001};
-  fp32_t x{-3.0};
-  double max_error = 0, avg_error = 0;
-  size_t iterations = 0;
-  double tolerance  = static_cast<double>(fp32_t::TOLERANCE);
+  fp32_t      step{0.001};
+  fp32_t      x{-3.0};
+  double      max_error = 0, avg_error = 0;
+  std::size_t iterations = 0;
+  double      tolerance  = static_cast<double>(fp32_t::TOLERANCE);
   for (; x < 3.0; x += step)
   {
     fp32_t e     = fp32_t::TanH(x);
@@ -2174,11 +2174,11 @@ TEST(FixedPointTest, TanH_16_16)
 
 TEST(FixedPointTest, TanH_32_32)
 {
-  fp64_t step{0.0001};
-  fp64_t x{-5.0};
-  double max_error = 0, avg_error = 0;
-  size_t iterations = 0;
-  double tolerance  = static_cast<double>(fp64_t::TOLERANCE);
+  fp64_t      step{0.0001};
+  fp64_t      x{-5.0};
+  double      max_error = 0, avg_error = 0;
+  std::size_t iterations = 0;
+  double      tolerance  = static_cast<double>(fp64_t::TOLERANCE);
   for (; x < 5.0; x += step)
   {
     fp64_t e     = fp64_t::TanH(x);
@@ -2197,11 +2197,11 @@ TEST(FixedPointTest, TanH_32_32)
 
 TEST(FixedPointTest, ASinH_16_16)
 {
-  fp32_t step{0.001};
-  fp32_t x{-3.0};
-  double max_error = 0, avg_error = 0;
-  size_t iterations = 0;
-  double tolerance  = 2 * static_cast<double>(fp32_t::TOLERANCE);
+  fp32_t      step{0.001};
+  fp32_t      x{-3.0};
+  double      max_error = 0, avg_error = 0;
+  std::size_t iterations = 0;
+  double      tolerance  = 2 * static_cast<double>(fp32_t::TOLERANCE);
   for (; x < 3.0; x += step)
   {
     fp32_t e     = fp32_t::ASinH(x);
@@ -2220,11 +2220,11 @@ TEST(FixedPointTest, ASinH_16_16)
 
 TEST(FixedPointTest, ASinH_32_32)
 {
-  fp64_t step{0.0001};
-  fp64_t x{-5.0};
-  double max_error = 0, avg_error = 0;
-  size_t iterations = 0;
-  double tolerance  = 2 * static_cast<double>(fp64_t::TOLERANCE);
+  fp64_t      step{0.0001};
+  fp64_t      x{-5.0};
+  double      max_error = 0, avg_error = 0;
+  std::size_t iterations = 0;
+  double      tolerance  = 2 * static_cast<double>(fp64_t::TOLERANCE);
   for (; x < 5.0; x += step)
   {
     fp64_t e     = fp64_t::ASinH(x);
@@ -2243,11 +2243,11 @@ TEST(FixedPointTest, ASinH_32_32)
 
 TEST(FixedPointTest, ACosH_16_16)
 {
-  fp32_t step{0.001};
-  fp32_t x{1.0};
-  double max_error = 0, avg_error = 0;
-  size_t iterations = 0;
-  double tolerance  = 2 * static_cast<double>(fp32_t::TOLERANCE);
+  fp32_t      step{0.001};
+  fp32_t      x{1.0};
+  double      max_error = 0, avg_error = 0;
+  std::size_t iterations = 0;
+  double      tolerance  = 2 * static_cast<double>(fp32_t::TOLERANCE);
   for (; x < 3.0; x += step)
   {
     fp32_t e     = fp32_t::ACosH(x);
@@ -2266,11 +2266,11 @@ TEST(FixedPointTest, ACosH_16_16)
 
 TEST(FixedPointTest, ACosH_32_32)
 {
-  fp64_t step{0.0001};
-  fp64_t x{1.0};
-  double max_error = 0, avg_error = 0;
-  size_t iterations = 0;
-  double tolerance  = 2 * static_cast<double>(fp64_t::TOLERANCE);
+  fp64_t      step{0.0001};
+  fp64_t      x{1.0};
+  double      max_error = 0, avg_error = 0;
+  std::size_t iterations = 0;
+  double      tolerance  = 2 * static_cast<double>(fp64_t::TOLERANCE);
   for (; x < 5.0; x += step)
   {
     fp64_t e     = fp64_t::ACosH(x);
@@ -2293,9 +2293,9 @@ TEST(FixedPointTest, ATanH_16_16)
   fp32_t x{-1.0}, max{1.0};
   x += offset;
   max -= offset;
-  double max_error = 0, avg_error = 0;
-  size_t iterations = 0;
-  double tolerance  = 2 * static_cast<double>(fp32_t::TOLERANCE);
+  double      max_error = 0, avg_error = 0;
+  std::size_t iterations = 0;
+  double      tolerance  = 2 * static_cast<double>(fp32_t::TOLERANCE);
   for (; x < max; x += step)
   {
     fp32_t e     = fp32_t::ATanH(x);
@@ -2318,9 +2318,9 @@ TEST(FixedPointTest, ATanH_32_32)
   fp64_t x{-1.0}, max{1.0};
   x += offset;
   max -= offset;
-  double max_error = 0, avg_error = 0;
-  size_t iterations = 0;
-  double tolerance  = 2 * static_cast<double>(fp64_t::TOLERANCE);
+  double      max_error = 0, avg_error = 0;
+  std::size_t iterations = 0;
+  double      tolerance  = 2 * static_cast<double>(fp64_t::TOLERANCE);
   for (; x < max; x += step)
   {
     fp64_t e     = fp64_t::ATanH(x);
