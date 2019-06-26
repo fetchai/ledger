@@ -21,7 +21,7 @@
 #include "ml/graph.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/ops/activation.hpp"
-#include "ml/ops/loss_functions/cross_entropy.hpp"
+#include "ml/ops/loss_functions/cross_entropy_op.hpp"
 #include "ml/optimisation/adam_optimiser.hpp"
 
 #include <cstddef>
@@ -40,7 +40,7 @@ using ArrayType = fetch::math::Tensor<DataType>;
 using SizeType  = typename ArrayType::SizeType;
 
 using GraphType        = typename fetch::ml::Graph<ArrayType>;
-using CostFunctionType = typename fetch::ml::ops::CrossEntropy<ArrayType>;
+using CostFunctionType = typename fetch::ml::ops::CrossEntropyOp<ArrayType>;
 using OptimiserType    = typename fetch::ml::optimisers::AdamOptimiser<ArrayType, CostFunctionType>;
 using DataLoaderType   = typename fetch::ml::dataloaders::MNISTLoader<ArrayType, ArrayType>;
 
@@ -72,11 +72,16 @@ int main(int ac, char **av)
   std::string output = g->AddNode<FullyConnected<ArrayType>>(
       "FC3", {layer_2}, 10u, 10u, fetch::ml::details::ActivationType::SOFTMAX);
 
+  std::string label   = g->AddNode<PlaceHolder<ArrayType>>("Label", {});
+
+  std::string error = g->AddNode<CrossEntropyOp<ArrayType>>(
+          "Error", {output,label});
+
   // Initialise MNIST loader
   DataLoaderType data_loader(av[1], av[2]);
 
   // Initialise Optimiser
-  OptimiserType optimiser(g, {input}, output, learning_rate);
+  OptimiserType optimiser(g, {input},label, error, learning_rate);
 
   // Training loop
   DataType loss;
@@ -84,6 +89,7 @@ int main(int ac, char **av)
   {
     loss = optimiser.Run(data_loader, batch_size, subset_size);
     std::cout << "Loss: " << loss << std::endl;
+    std::cout << std::endl;
   }
 
   return 0;

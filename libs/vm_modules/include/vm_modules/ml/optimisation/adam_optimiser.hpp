@@ -38,16 +38,17 @@ public:
 
   VMAdamOptimiser(fetch::vm::VM *vm, fetch::vm::TypeId type_id, GraphType const &graph,
                   std::vector<std::string> const &input_node_names,
+                  std::string const &label_node_name,
                   std::string const &             output_node_name)
     : fetch::vm::Object(vm, type_id)
-    , optimiser_(std::make_shared<GraphType>(graph), input_node_names, output_node_name)
+    , optimiser_(std::make_shared<GraphType>(graph), input_node_names,label_node_name , output_node_name)
   {}
 
   static void Bind(vm::Module &module)
   {
     module.CreateClassType<fetch::vm_modules::ml::VMAdamOptimiser>("AdamOptimiser")
         .CreateConstuctor<fetch::vm::Ptr<fetch::vm_modules::ml::VMGraph>,
-                          fetch::vm::Ptr<fetch::vm::String>, fetch::vm::Ptr<fetch::vm::String>>()
+                          fetch::vm::Ptr<fetch::vm::String>, fetch::vm::Ptr<fetch::vm::String>,fetch::vm::Ptr<fetch::vm::String>>()
         .CreateMemberFunction("Run", &fetch::vm_modules::ml::VMAdamOptimiser::Run);
   }
 
@@ -55,10 +56,11 @@ public:
       fetch::vm::VM *vm, fetch::vm::TypeId type_id,
       fetch::vm::Ptr<fetch::vm_modules::ml::VMGraph> const &graph,
       fetch::vm::Ptr<fetch::vm::String> const &             input_node_names,
+      fetch::vm::Ptr<fetch::vm::String> const &             label_node_name,
       fetch::vm::Ptr<fetch::vm::String> const &             output_node_names)
   {
     return new VMAdamOptimiser(vm, type_id, graph->graph_, {input_node_names->str},
-                               output_node_names->str);
+                               label_node_name->str,output_node_names->str);
   }
 
   DataType Run(fetch::vm::Ptr<fetch::vm_modules::ml::MnistDataLoader> const &loader,

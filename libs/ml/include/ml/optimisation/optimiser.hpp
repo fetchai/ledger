@@ -42,7 +42,7 @@ public:
   using DataType      = typename ArrayType::Type;
   using SizeType      = typename ArrayType::SizeType;
 
-  Optimiser(std::shared_ptr<Graph<T>> graph, std::vector<std::string> input_node_names,
+  Optimiser(std::shared_ptr<Graph<T>> graph, std::vector<std::string> input_node_names,  std::string label_node_name,
             std::string output_node_name, DataType const &learning_rate = DataType(0.001),
             DataType const &delta_learning_rate = DataType(1.0));
 
@@ -63,6 +63,7 @@ protected:
   std::shared_ptr<Graph<T>> graph_;
   CriterionType             criterion_;
   std::vector<std::string>  input_node_names_ = {};
+    std::string  label_node_name_ = {};
   std::string               output_node_name_ = "";
 
   DataType learning_rate_       = fetch::math::numeric_max<DataType>();
@@ -78,10 +79,11 @@ private:
 
 template <class T, class C>
 Optimiser<T, C>::Optimiser(std::shared_ptr<Graph<T>> graph,
-                           std::vector<std::string> input_node_names, std::string output_node_name,
+                           std::vector<std::string> input_node_names,std::string label_node_name , std::string output_node_name,
                            DataType const &learning_rate, DataType const &delta_learning_rate)
   : graph_(graph)
   , input_node_names_(std::move(input_node_names))
+  , label_node_name_(std::move(label_node_name))
   , output_node_name_(std::move(output_node_name))
   , learning_rate_(learning_rate)
   , delta_learning_rate_(delta_learning_rate)
@@ -209,6 +211,7 @@ typename T::Type Optimiser<T, C>::Run(
   {
     loader.Reset();
   }
+  loader.Reset();
 
   // for some input combinations batch size will be modified
   batch_size = UpdateBatchSize(batch_size, loader.Size(), subset_size);
@@ -233,11 +236,18 @@ typename T::Type Optimiser<T, C>::Run(
       ++name_it;
     }
 
-    auto cur_label  = input.first;
-    auto label_pred = graph_->Evaluate(output_node_name_);
-    loss            = criterion_.Forward({label_pred, cur_label});
-    graph_->BackPropagate(output_node_name_, criterion_.Backward({label_pred, cur_label}));
+    // Set Label
+    graph_->SetInput(label_node_name_, input.first);
 
+    //auto cur_label  = input.first;
+    auto loss_tensor = graph_->Evaluate(output_node_name_);
+    graph_->BackPropagate(output_node_name_, loss_tensor);
+
+    auto loss_tensor_it=loss_tensor.begin();
+    {
+    loss+=*loss_tensor_it;
+      ++loss_tensor_it;
+    }
     // Compute and apply gradient
     ApplyGradients(batch_size);
 
