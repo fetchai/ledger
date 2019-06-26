@@ -54,7 +54,7 @@ public:
   template <typename DataType>
   static constexpr math::meta::IfIsFixedPoint<DataType, DataType> tsne_tolerance()
   {
-    return DataType::Constants::SMALLEST_FRACTION;
+    return DataType::Constants.SMALLEST_FRACTION;
   }
 
   template <typename DataType>

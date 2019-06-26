@@ -42,7 +42,7 @@ static constexpr meta::IfIsNonFixedPointArithmetic<T, T> numeric_max()
 template <typename T>
 static constexpr meta::IfIsFixedPoint<T, T> numeric_max()
 {
-  return T::Constants::MAX;
+  return T::Constants.MAX;
 }
 
 template <typename T>
@@ -66,7 +66,7 @@ static constexpr meta::IfIsNonFixedPointArithmetic<T, T> numeric_lowest()
 template <typename T>
 static constexpr meta::IfIsFixedPoint<T, T> numeric_lowest()
 {
-  return T::Constants::MIN;
+  return T::Constants.MIN;
 }
 
 template <typename T>
