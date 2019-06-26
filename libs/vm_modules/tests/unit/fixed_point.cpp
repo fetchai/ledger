@@ -144,7 +144,7 @@ TEST_F(FixedPointTest, sin_pi_32_fixed_point)
       print(sin(pi));
     endfunction
   )";
-  double      gt   = static_cast<double>(fetch::math::Sin(fetch::fixed_point::fp32_t(2)));
+  double      gt   = static_cast<double>(fetch::math::Sin(fetch::fixed_point::fp32_t::CONST_PI));
   EXPECT_TRUE(RunTest(toolkit, stdout, TEXT, gt));
 }
 
