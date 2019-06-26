@@ -26,11 +26,17 @@ from multiprocessing import Lock, Pool
 from os.path import abspath, basename, commonpath, dirname, isdir, isfile, join
 
 PROJECT_ROOT = abspath(dirname(dirname(__file__)))
-TEXT_FILE_PATTERNS = (
+SUPPORTED_TEXT_FILE_PATTERNS = (
     '*.cmake',
+    '*.c',
+    '*.cc',
     '*.cpp',
+    '*.cxx',
     '*.etch',
+    '*.h',
+    '*.hh',
     '*.hpp',
+    '*.hxx',
     '*.in',
     '*.json',
     '*.md',
@@ -60,10 +66,20 @@ def find_excluded_dirs():
     def is_git_dir(dir_path):
         return basename(dir_path) == '.git'
 
+    def is_nested_git_submodule(dir_path):
+        return isfile(join(dir_path, '.git'))
+
+    def is_nested_git_repo(dir_path):
+        return dir_path != PROJECT_ROOT and isdir(join(dir_path, '.git'))
+
     directories_to_exclude = [abspath(join(PROJECT_ROOT, name))
                               for name in ('vendor',)]
+
     for root, dirs, files in os.walk(PROJECT_ROOT):
-        if is_cmake_build_tree_root(root) or is_git_dir(root):
+        if is_cmake_build_tree_root(root) or \
+                is_git_dir(root) or \
+                is_nested_git_submodule(root) or \
+                is_nested_git_repo(root):
             directories_to_exclude += [root]
 
     return sorted(set([dir_path
@@ -277,6 +293,11 @@ def check_for_headers_with_non_hpp_extension(file_paths):
         sys.exit(1)
 
 
+def is_supported_text_file(absolute_path):
+    return any([fnmatch.fnmatch(basename(absolute_path), pattern)
+                for pattern in SUPPORTED_TEXT_FILE_PATTERNS])
+
+
 def get_changed_paths_from_git(commit):
     raw_relative_paths = subprocess.check_output(['git', 'diff', '--name-only', commit]) \
         .strip() \
@@ -306,8 +327,9 @@ def files_of_interest(commit):
     else:
         ret = get_changed_paths_from_git(commit)
 
-    # Filter out binary files and symbolic links
-    ret = [abs_path for abs_path in ret if isfile(abs_path)]
+    # Filter out unsupported files and symbolic links
+    ret = [abs_path for abs_path in ret
+           if is_supported_text_file(abs_path) and isfile(abs_path)]
 
     total_files_to_process = len(ret)
 
@@ -368,22 +390,20 @@ TRANSFORMATIONS = [
 
 def apply_transformations_to_file(path_to_file):
     try:
-        if any([fnmatch.fnmatch(basename(path_to_file), pattern)
-                for pattern in TEXT_FILE_PATTERNS]):
-            with open(path_to_file, 'r+', encoding='utf-8') as f:
-                original_text = f.read()
-                text = original_text
+        with open(path_to_file, 'r+', encoding='utf-8') as f:
+            original_text = f.read()
+            text = original_text
 
-                if text.strip():
-                    for transformation in TRANSFORMATIONS:
-                        text = transformation(text, path_to_file)
-                else:
-                    text = text.strip()
+            if text.strip():
+                for transformation in TRANSFORMATIONS:
+                    text = transformation(text, path_to_file)
+            else:
+                text = text.strip()
 
-                if text != original_text:
-                    f.seek(0)
-                    f.truncate(0)
-                    f.write(text)
+            if text != original_text:
+                f.seek(0)
+                f.truncate(0)
+                f.write(text)
     except:
         output('Error: failed to process {}'.format(path_to_file))
         output(traceback.format_exc())
