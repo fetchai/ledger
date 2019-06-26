@@ -35,6 +35,7 @@ byte_array::ConstByteArray const FROM_NAME{"from"};
 byte_array::ConstByteArray const TO_NAME{"to"};
 byte_array::ConstByteArray const AMOUNT_NAME{"amount"};
 byte_array::ConstByteArray const TRANSFER_NAME{"transfer"};
+byte_array::ConstByteArray const STAKE_NAME{"stake"};
 byte_array::ConstByteArray const AMEND_NAME{"amend"};
 byte_array::ConstByteArray const THRESHOLDS_NAME{"thresholds"};
 byte_array::ConstByteArray const SIGNEES_NAME{"signees"};
@@ -112,6 +113,7 @@ bool DeedFromVariant(Variant const &variant_deed, DeedShrdPtr &deed)
 struct WalletRecord
 {
   uint64_t              balance{0};
+  uint64_t              stake{0};
   std::shared_ptr<Deed> deed;
 
   /**
@@ -156,11 +158,11 @@ struct WalletRecord
   {
     if (b.deed)
     {
-      serializer.Append(b.balance, true, *b.deed);
+      serializer.Append(b.balance, b.stake, true, *b.deed);
     }
     else
     {
-      serializer.Append(b.balance, false);
+      serializer.Append(b.balance, b.stake, false);
     }
   }
 
@@ -168,7 +170,7 @@ struct WalletRecord
   friend void Deserialize(T &serializer, WalletRecord &b)
   {
     bool has_deed = false;
-    serializer >> b.balance >> has_deed;
+    serializer >> b.balance >> b.stake >> has_deed;
     if (has_deed)
     {
       if (!b.deed)

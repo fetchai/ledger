@@ -25,6 +25,8 @@
 #include "ledger/chaincode/contract_http_interface.hpp"
 #include "ledger/dag/dag_interface.hpp"
 
+#include "ledger/consensus/naive_entropy_generator.hpp"
+#include "ledger/consensus/stake_snapshot.hpp"
 #include "ledger/execution_manager.hpp"
 #include "ledger/storage_unit/lane_remote_control.hpp"
 #include "ledger/tx_query_http_interface.hpp"
@@ -54,15 +56,20 @@ using fetch::network::AtomicCounterName;
 using fetch::network::Uri;
 using fetch::network::Peer;
 using fetch::ledger::Address;
+using fetch::ledger::GenesisFileCreator;
 
 using ExecutorPtr = std::shared_ptr<Executor>;
 
 namespace fetch {
 namespace {
 
-using LaneIndex = fetch::ledger::LaneIdentity::lane_type;
+using LaneIndex       = fetch::ledger::LaneIdentity::lane_type;
+using StakeManagerPtr = std::shared_ptr<ledger::StakeManager>;
+using EntropyPtr      = std::unique_ptr<ledger::EntropyGeneratorInterface>;
+using ConstByteArray  = byte_array::ConstByteArray;
 
 static const std::size_t HTTP_THREADS{4};
+static char const *      SNAPSHOT_FILENAME = "snapshot.json";
 
 bool WaitForLaneServersToStart()
 {
@@ -141,6 +148,23 @@ ledger::ShardConfigs GenerateShardsConfig(uint32_t num_lanes, uint16_t start_por
   return configs;
 }
 
+EntropyPtr CreateEntropy()
+{
+  return std::make_unique<ledger::NaiveEntropyGenerator>();
+}
+
+StakeManagerPtr CreateStakeManager(bool enabled, ledger::EntropyGeneratorInterface &entropy)
+{
+  StakeManagerPtr mgr{};
+
+  if (enabled)
+  {
+    mgr = std::make_shared<ledger::StakeManager>(entropy);
+  }
+
+  return mgr;
+}
+
 }  // namespace
 
 /**
@@ -177,13 +201,18 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
                                                  cfg_.log2_num_lanes))
   , lane_control_(internal_muddle_.AsEndpoint(), shard_cfgs_, cfg_.log2_num_lanes)
   , dag_{GenerateDAG(cfg_.features.IsEnabled("synergetic"), "dag_db_", true, certificate)}
+  , entropy_{CreateEntropy()}
+  , stake_{CreateStakeManager(cfg_.proof_of_stake, *entropy_)}
   , execution_manager_{std::make_shared<ExecutionManager>(
         cfg_.num_executors, cfg_.log2_num_lanes, storage_,
-        [this] { return std::make_shared<Executor>(storage_); })}
+        [this] {
+          return std::make_shared<Executor>(storage_, stake_ ? &stake_->update_queue() : nullptr);
+        })}
   , chain_{ledger::MainChain::Mode::LOAD_PERSISTENT_DB}
   , block_packer_{cfg_.log2_num_lanes}
   , block_coordinator_{chain_,
                        dag_,
+                       stake_,
                        *execution_manager_,
                        *storage_,
                        block_packer_,
@@ -332,8 +361,8 @@ void Constellation::Run(UriList const &initial_peers, core::WeakRunnable bootstr
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Loading from genesis save file.");
 
-    GenesisFileCreator creator(block_coordinator_, *storage_);
-    creator.LoadFile("genesis_snapshot.json");
+    GenesisFileCreator creator(block_coordinator_, *storage_, stake_.get());
+    creator.LoadFile(SNAPSHOT_FILENAME);
 
     FETCH_LOG_INFO(LOGGING_NAME, "Loaded from genesis save file.");
   }
@@ -412,8 +441,8 @@ void Constellation::Run(UriList const &initial_peers, core::WeakRunnable bootstr
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Creating genesis save file.");
 
-    GenesisFileCreator creator(block_coordinator_, *storage_);
-    creator.CreateFile("genesis_snapshot.json");
+    GenesisFileCreator creator(block_coordinator_, *storage_, stake_.get());
+    creator.CreateFile(SNAPSHOT_FILENAME);
   }
 
   http_.Stop();
