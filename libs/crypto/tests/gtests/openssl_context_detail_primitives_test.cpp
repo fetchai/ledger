@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "crypto/openssl_context_detail.hpp"
+
 #include "gtest/gtest.h"
 
 namespace fetch {
@@ -30,12 +31,6 @@ namespace {
 
 class SessionPrimitiveTest : public ::testing::Test
 {
-protected:
-  virtual void SetUp()
-  {}
-
-  virtual void TearDown()
-  {}
 };
 
 TEST_F(SessionPrimitiveTest, test_BN_CTX_start)

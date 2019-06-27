@@ -33,7 +33,6 @@
 #include "python/math/distance/py_manhattan.hpp"
 #include "python/math/distance/py_pearson.hpp"
 
-#include "python/math/py_bignumber.hpp"
 #include "python/math/py_tensor.hpp"
 #include "python/math/spline/py_linear.hpp"
 

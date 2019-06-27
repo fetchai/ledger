@@ -84,7 +84,6 @@ void LaneRemoteControl::Shutdown(LaneIndex lane)
     auto p = rpc_client_.CallSpecificAddress(LookupAddress(lane), RPC_CONTROLLER,
                                              LaneControllerProtocol::SHUTDOWN);
 
-    FETCH_LOG_PROMISE();
     p->Wait();
   }
   catch (std::exception const &ex)

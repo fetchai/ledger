@@ -20,6 +20,7 @@
 #include "crypto/sha256.hpp"
 
 #include "vm_modules/core/byte_array_wrapper.hpp"
+#include "vm_modules/math/bignumber.hpp"
 
 #include "vm/module.hpp"
 
@@ -42,10 +43,16 @@ public:
   {
     module.CreateClassType<SHA256Wrapper>("SHA256")
         .CreateConstuctor<>()
+        .CreateMemberFunction("update", &SHA256Wrapper::UpdateUInt256)
         .CreateMemberFunction("update", &SHA256Wrapper::UpdateString)
         .CreateMemberFunction("update", &SHA256Wrapper::UpdateBuffer)
         .CreateMemberFunction("final", &SHA256Wrapper::Final)
         .CreateMemberFunction("reset", &SHA256Wrapper::Reset);
+  }
+
+  void UpdateUInt256(vm::Ptr<vm_modules::UInt256Wrapper> const &uint)
+  {
+    hasher_.Update(uint->number());
   }
 
   void UpdateString(vm::Ptr<vm::String> const &str)
@@ -63,7 +70,12 @@ public:
     hasher_.Reset();
   }
 
-  Ptr<ByteArrayWrapper> Final()
+  Ptr<UInt256Wrapper> Final()
+  {
+    return vm_->CreateNewObject<UInt256Wrapper>(hasher_.Final());
+  }
+
+  Ptr<ByteArrayWrapper> FinalAsBuffer()
   {
     return vm_->CreateNewObject<ByteArrayWrapper>(hasher_.Final());
   }

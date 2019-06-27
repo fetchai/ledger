@@ -36,7 +36,7 @@ def main():
     # calculate the entry in the state database
     resource_id = calc_resource_id('fetch.token.state.' + args.address)
     resource_value = base64.b64encode(
-        struct.pack('<QQB', balance, stake, 0)).decode()
+        struct.pack('<QQBQ', balance, stake, 0, 0)).decode()
 
     # form the snapshot data
     snapshot = {
