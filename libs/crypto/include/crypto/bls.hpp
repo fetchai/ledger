@@ -35,7 +35,7 @@ namespace crypto {
 
 namespace details {
 // TODO: This entire file should be updated using the `bls_base.hpp` instead.
-  
+
 struct BLSInitialiser
 {
   BLSInitialiser()

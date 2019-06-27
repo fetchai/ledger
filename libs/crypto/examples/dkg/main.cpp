@@ -16,30 +16,30 @@
 //
 //------------------------------------------------------------------------------
 
-#include <iostream>
 #include "crypto/bls_base.hpp"
 #include "crypto/bls_dkg.hpp"
+#include <iostream>
 
 using namespace fetch::crypto;
 using namespace fetch::byte_array;
 
-struct Member 
+struct Member
 {
-  ConstByteArray seed;
-  bls::Id id;
-  bls::PrivateKey sk;
+  ConstByteArray      seed;
+  bls::Id             id;
+  bls::PrivateKey     sk;
   bls::PrivateKeyList received_shares;
-  bls::PrivateKey secret_key_share;
+  bls::PrivateKey     secret_key_share;
 };
 
 void Test()
 {
-  ConstByteArray message = "Hello world";
-  auto private_key = bls::HashToPrivateKey("my really long phrase to generate a key"); 
-  auto public_key  = bls::PublicKeyFromPrivate(private_key);
-  
-  auto signature   = bls::Sign(private_key, message);
-  if(bls::Verify(signature, public_key, message))
+  ConstByteArray message     = "Hello world";
+  auto           private_key = bls::HashToPrivateKey("my really long phrase to generate a key");
+  auto           public_key  = bls::PublicKeyFromPrivate(private_key);
+
+  auto signature = bls::Sign(private_key, message);
+  if (bls::Verify(signature, public_key, message))
   {
     std::cout << "'Hello world' was signed." << std::endl;
   }
@@ -48,47 +48,47 @@ void Test()
 int main()
 {
   using VerificationVector = bls::dkg::VerificationVector;
-  using ParticipantVector  = bls::dkg::ParticipantVector;  
+  using ParticipantVector  = bls::dkg::ParticipantVector;
 
   bls::Init();
 
   // Creating members from predefined seeds
-  std::vector< ConstByteArray > member_seeds = {"12122", "454323", "547456", "54", "23423423", "68565", "56465"};
-  std::vector< Member > members;
-  uint32_t threshold = 4;
+  std::vector<ConstByteArray> member_seeds = {"12122",    "454323", "547456", "54",
+                                              "23423423", "68565",  "56465"};
+  std::vector<Member>         members;
+  uint32_t                    threshold = 4;
 
-
-  for(auto &seed: member_seeds)
+  for (auto &seed : member_seeds)
   {
     Member member;
     member.seed = seed;
-    member.sk = bls::HashToPrivateKey(seed);
+    member.sk   = bls::HashToPrivateKey(seed);
     members.push_back(member);
   }
 
   // Creating participant list
-  ParticipantVector participants;  
-  for(auto & member: members)
+  ParticipantVector participants;
+  for (auto &member : members)
   {
-    member.id.v = member.sk.v;  
+    member.id.v = member.sk.v;
     participants.push_back(member.id);
   }
 
   // Generating secret and collecting secrets.
-  std::vector< VerificationVector > verification_vectors;
-  for(uint64_t i=0; i < members.size(); ++i)
+  std::vector<VerificationVector> verification_vectors;
+  for (uint64_t i = 0; i < members.size(); ++i)
   {
     auto contrib = bls::dkg::GenerateContribution(participants, threshold);
     // Note that the verfication vector can be posted publicly.
     verification_vectors.push_back(contrib.verification);
 
-    for(uint64_t i=0; i < contrib.contributions.size(); ++i)
+    for (uint64_t i = 0; i < contrib.contributions.size(); ++i)
     {
-      auto spk = contrib.contributions[i];
-      auto &member = members[i];
-      bool verified = bls::dkg::VerifyContributionShare(member.id, spk, contrib.verification);
+      auto  spk      = contrib.contributions[i];
+      auto &member   = members[i];
+      bool  verified = bls::dkg::VerifyContributionShare(member.id, spk, contrib.verification);
 
-      if(!verified)
+      if (!verified)
       {
         throw std::runtime_error("share could not be verified.");
       }
@@ -98,7 +98,7 @@ int main()
   }
 
   // Generating secret key share
-  for(auto &member: members)
+  for (auto &member : members)
   {
     member.secret_key_share = bls::dkg::AccumulateContributionShares(member.received_shares);
   }
@@ -107,21 +107,20 @@ int main()
   VerificationVector group_vectors = bls::dkg::AccumulateVerificationVectors(verification_vectors);
 
   // The groups public key is the first vector.
-  auto groups_pk  = group_vectors[0];
-
+  auto groups_pk = group_vectors[0];
 
   // We now sign the message
-  ConstByteArray message = "Hello world";
-  bls::SignatureList  signatures;
-  bls::IdList signer_ids;
+  ConstByteArray     message = "Hello world";
+  bls::SignatureList signatures;
+  bls::IdList        signer_ids;
 
-  for(uint64_t i=0; i < threshold; ++i)
+  for (uint64_t i = 0; i < threshold; ++i)
   {
     auto private_key = members[i].secret_key_share;
-    auto signature =  bls::Sign(private_key, message);
-    auto public_key = bls::PublicKeyFromPrivate(private_key);
+    auto signature   = bls::Sign(private_key, message);
+    auto public_key  = bls::PublicKeyFromPrivate(private_key);
 
-    if(!bls::Verify(signature, public_key, message))   
+    if (!bls::Verify(signature, public_key, message))
     {
       throw std::runtime_error("Failed to sign using share");
     }
@@ -132,7 +131,7 @@ int main()
 
   // And finally we test the signature
   auto signature = bls::RecoverSignature(signatures, signer_ids);
-  if(bls::Verify(signature, groups_pk, message))
+  if (bls::Verify(signature, groups_pk, message))
   {
     std::cout << " -> Hurray, the signature is valid!" << std::endl;
   }
