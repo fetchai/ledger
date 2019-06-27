@@ -66,11 +66,10 @@ public:
   SizeType         IndexFromWord(std::string const &word) const;
   SizeType         window_size();
 
-    // temporary sample and labels for buffering samples
-    ReturnType tmp_sample;
-    LabelType label_one, label_zero;
-    DataType tmp_input, tmp_output;
-
+  // temporary sample and labels for buffering samples
+  ReturnType tmp_sample;
+  LabelType  label_one, label_zero;
+  DataType   tmp_input, tmp_output;
 
 private:
   SizeType                                   current_sentence_;
@@ -86,8 +85,8 @@ private:
   fetch::math::Tensor<T> target_;  // reusable target tensor
   fetch::math::Tensor<T> label_;   // reusable label tensor
 
-  std::vector<ReturnType> buffer; // buffer for available samples
-  ReturnType sample;              // reusable sample to create buffer
+  std::vector<ReturnType> buffer;  // buffer for available samples
+  ReturnType              sample;  // reusable sample to create buffer
 
   std::vector<SizeType>    StringsToIndices(std::vector<std::string> const &strings);
   std::vector<std::string> PreprocessString(std::string const &s);
@@ -97,7 +96,8 @@ private:
  *
  * @tparam T
  * @param window_size the size of the context window (one side only)
- * @param negative_samples the number of total samples (all but one being negat  SkipGramTextParams<ArrayType> sp = SetParams<ArrayType>();ive)
+ * @param negative_samples the number of total samples (all but one being negat
+ * SkipGramTextParams<ArrayType> sp = SetParams<ArrayType>();ive)
  * @param mode
  */
 template <typename T>
@@ -111,13 +111,13 @@ W2VLoader<T>::W2VLoader(SizeType window_size, SizeType negative_samples, bool mo
   , target_({window_size_ * 2, 1})
   , label_({negative_samples_, 1})
 {
-      // setup temporary buffers for training purpose
-      label_one = LabelType({1});
-      label_one(0) = 1;
-      label_zero = LabelType({1});
-      label_zero(0) = 0;
-      tmp_input = DataType({1});
-      tmp_output = DataType({1});
+  // setup temporary buffers for training purpose
+  label_one     = LabelType({1});
+  label_one(0)  = 1;
+  label_zero    = LabelType({1});
+  label_zero(0) = 0;
+  tmp_input     = DataType({1});
+  tmp_output    = DataType({1});
 }
 
 /**
@@ -221,68 +221,77 @@ void W2VLoader<T>::InitUnigramTable()
 }
 
 template <typename T>
-void W2VLoader<T>::BufferNextSamples() {
-    // clear the buffer
-    buffer.clear();
+void W2VLoader<T>::BufferNextSamples()
+{
+  // clear the buffer
+  buffer.clear();
 
-    // the current word should start from position that allows full context window
-    if (current_word_ < window_size_) {
-        current_word_ = window_size_;
-    }
+  // the current word should start from position that allows full context window
+  if (current_word_ < window_size_)
+  {
+    current_word_ = window_size_;
+  }
 
-    // select random window size
-    SizeType dynamic_size = rng_() % window_size_ + 1;
+  // select random window size
+  SizeType dynamic_size = rng_() % window_size_ + 1;
 
-    // for the interested one word
-    tmp_input(0) = T(data_[current_sentence_][current_word_]);
+  // for the interested one word
+  tmp_input(0) = T(data_[current_sentence_][current_word_]);
 
-    // set the context samples
-    for (SizeType i = 0; i < dynamic_size; ++i) {
-        tmp_output(0) = T(data_[current_sentence_][current_word_ - i - 1]);
-        buffer.push_back(ReturnType(label_one, {tmp_input, tmp_output}));
+  // set the context samples
+  for (SizeType i = 0; i < dynamic_size; ++i)
+  {
+    tmp_output(0) = T(data_[current_sentence_][current_word_ - i - 1]);
+    buffer.push_back(ReturnType(label_one, {tmp_input, tmp_output}));
 
-        tmp_output(0) = T(data_[current_sentence_][current_word_ + i + 1]);
-        buffer.push_back(ReturnType(label_one, {tmp_input, tmp_output}));
-    }
+    tmp_output(0) = T(data_[current_sentence_][current_word_ + i + 1]);
+    buffer.push_back(ReturnType(label_one, {tmp_input, tmp_output}));
+  }
 
-    // negative sampling for every context word
-    SizeType neg_sample;
-    for (SizeType i = 1; i < negative_samples_ * window_size_ * 2; ++i) {
-        bool success =
-                unigram_table_.SampleNegative(SizeType(tmp_input(0)), neg_sample);
-        if (success) {
-            tmp_output(0) = T(neg_sample);
-            buffer.push_back(ReturnType(label_zero, {tmp_input, tmp_output}));
-        } else {
-            throw std::runtime_error(
-                    "unigram table timed out looking for a negative sample. check window size for sentence "
-                    "length and that data loaded correctly.");
-        }
-    }
-
-    current_word_++;
-    // check if the word is window size away form either end of the sentence
-    if (current_word_ >= data_.at(current_sentence_).size() -
-                         window_size_) // the current word end when a full context window can be allowed
+  // negative sampling for every context word
+  SizeType neg_sample;
+  for (SizeType i = 1; i < negative_samples_ * window_size_ * 2; ++i)
+  {
+    bool success = unigram_table_.SampleNegative(SizeType(tmp_input(0)), neg_sample);
+    if (success)
     {
-        current_word_ = window_size_; // the current word start from position that allows full context window
-        current_sentence_++;
+      tmp_output(0) = T(neg_sample);
+      buffer.push_back(ReturnType(label_zero, {tmp_input, tmp_output}));
     }
+    else
+    {
+      throw std::runtime_error(
+          "unigram table timed out looking for a negative sample. check window size for sentence "
+          "length and that data loaded correctly.");
+    }
+  }
+
+  current_word_++;
+  // check if the word is window size away form either end of the sentence
+  if (current_word_ >=
+      data_.at(current_sentence_).size() -
+          window_size_)  // the current word end when a full context window can be allowed
+  {
+    current_word_ =
+        window_size_;  // the current word start from position that allows full context window
+    current_sentence_++;
+  }
 }
 
 template <typename T>
 typename W2VLoader<T>::ReturnType W2VLoader<T>::GetNext()
 {
 
-    ReturnType output;
-    if(buffer.size() == 0) {
-        BufferNextSamples();
-    }
+  ReturnType output;
+  if (buffer.size() == 0)
+  {
+    BufferNextSamples();
+  }
 
-    output = buffer.back();
-    buffer.pop_back();
+  output = buffer.back();
+  buffer.pop_back();
 
-    return output;
+  return output;
 }
 
 /**
@@ -295,7 +304,9 @@ template <typename T>
 bool W2VLoader<T>::BuildVocab(std::string const &s)
 {
   std::vector<SizeType> indexes = StringsToIndices(PreprocessString(s));
-  if (indexes.size() >= 2 * window_size_ + 1) // each sentence stored in the data_ are guaranteed to have minimum length to handle window_size context sampling
+  if (indexes.size() >=
+      2 * window_size_ + 1)  // each sentence stored in the data_ are guaranteed to have minimum
+                             // length to handle window_size context sampling
   {
     data_.push_back(std::move(indexes));
     return true;
@@ -384,7 +395,9 @@ typename W2VLoader<T>::SizeType W2VLoader<T>::window_size()
  * @return
  */
 template <typename T>
-std::vector<math::SizeType> W2VLoader<T>::StringsToIndices(std::vector<std::string> const &strings) // it is more like words to indices (each string is a word not a sentence)
+std::vector<math::SizeType> W2VLoader<T>::StringsToIndices(
+    std::vector<std::string> const
+        &strings)  // it is more like words to indices (each string is a word not a sentence)
 {
   std::vector<SizeType> indexes;
   if (strings.size() >= 2 * window_size_ + 1)  // Don't bother processing too short inputs
@@ -392,8 +405,9 @@ std::vector<math::SizeType> W2VLoader<T>::StringsToIndices(std::vector<std::stri
     indexes.reserve(strings.size());
     for (std::string const &s : strings)
     {
-      auto value =
-          vocab_.data.insert(std::make_pair(s, std::make_pair((SizeType)(vocab_.data.size()+1), 0))); // this line allows index is 0 right???
+      auto value = vocab_.data.insert(
+          std::make_pair(s, std::make_pair((SizeType)(vocab_.data.size() + 1),
+                                           0)));  // this line allows index is 0 right???
       indexes.push_back((*value.first).second.first);
       value.first->second.second++;
     }

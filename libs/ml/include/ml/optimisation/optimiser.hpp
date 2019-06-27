@@ -232,31 +232,34 @@ typename T::Type Optimiser<T, C>::Run(
   SizeType                                     step{0};
   std::pair<ArrayType, std::vector<ArrayType>> input;
 
-  high_resolution_clock::time_point  cur_time;
-  high_resolution_clock::time_point  prev_time = high_resolution_clock::now();
-  SizeType prevStep{0};
+  high_resolution_clock::time_point cur_time;
+  high_resolution_clock::time_point prev_time = high_resolution_clock::now();
+  SizeType                          prevStep{0};
 
   while (!loader.IsDone() && step < subset_size)
   {
-      // print the training stats every batch
-      cur_time = high_resolution_clock::now();
-      duration<double> time_span = duration_cast<duration<double>>(cur_time - prev_time);
-      if (subset_size == fetch::math::numeric_max<math::SizeType>()){
-          std::cout << "\r" << step  << " (??%) -- "
-                    << "learning rate: " << learning_rate_ << " -- "
-                    << static_cast<double>(step - prevStep) / time_span.count() << " words / sec"
-                    << std::flush;
-      }else{
-          std::cout << "\r" << step << " / " << subset_size << " ("
-                    << static_cast<SizeType>(100.0 * static_cast<double>(step) /
-                                             static_cast<double>(subset_size))
-                    << "%) -- "
-                    << "learning rate: " << learning_rate_ << " -- "
-                    << static_cast<double>(step - prevStep) / time_span.count() << " words / sec"
-                    << std::flush;
-      }
-      prev_time = cur_time;
-      prevStep = step;
+    // print the training stats every batch
+    cur_time                   = high_resolution_clock::now();
+    duration<double> time_span = duration_cast<duration<double>>(cur_time - prev_time);
+    if (subset_size == fetch::math::numeric_max<math::SizeType>())
+    {
+      std::cout << "\r" << step << " (??%) -- "
+                << "learning rate: " << learning_rate_ << " -- "
+                << static_cast<double>(step - prevStep) / time_span.count() << " samples / sec"
+                << std::flush;
+    }
+    else
+    {
+      std::cout << "\r" << step << " / " << subset_size << " ("
+                << static_cast<SizeType>(100.0 * static_cast<double>(step) /
+                                         static_cast<double>(subset_size))
+                << "%) -- "
+                << "learning rate: " << learning_rate_ << " -- "
+                << static_cast<double>(step - prevStep) / time_span.count() << " samples / sec"
+                << std::flush;
+    }
+    prev_time = cur_time;
+    prevStep  = step;
 
     loss = DataType{0};
 

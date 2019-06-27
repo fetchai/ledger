@@ -211,56 +211,59 @@ void W2VLoader<T>::InitUnigramTable()
 template <typename T>
 void W2VLoader<T>::GetNext(ReturnType &ret)
 {
-    // the current word should start from position that allows full context window
-    if(current_word_ < window_size_){
-        current_word_ = window_size_;
-    }
+  // the current word should start from position that allows full context window
+  if (current_word_ < window_size_)
+  {
+    current_word_ = window_size_;
+  }
 
-    // select random window size
-    SizeType dynamic_size = rng_() % window_size_ + 1;
+  // select random window size
+  SizeType dynamic_size = rng_() % window_size_ + 1;
 
-    // for the interested one word
-    ret.first.Set(0, 0, T(data_[current_sentence_][current_word_]));
+  // for the interested one word
+  ret.first.Set(0, 0, T(data_[current_sentence_][current_word_]));
 
-    // set the context samples
-    for (SizeType i = 0; i < dynamic_size; ++i)
+  // set the context samples
+  for (SizeType i = 0; i < dynamic_size; ++i)
+  {
+    ret.second.at(0).Set(i, 0, T(data_[current_sentence_][current_word_ - i - 1]));
+    ret.second.at(0).Set(i + dynamic_size, 0, T(data_[current_sentence_][current_word_ + i + 1]));
+  }
+
+  // denote the unused part of the window
+  for (SizeType i = (dynamic_size * 2); i < ret.second.at(0).size(); ++i)
+  {
+    ret.second.at(0)(i, 0) = -1;  // set the max of SizeType as a tag for un-updated positions
+  }
+
+  // negative sampling
+  for (SizeType i = 1; i < negative_samples_; ++i)
+  {
+    SizeType neg_sample;
+    bool     success =
+        unigram_table_.SampleNegative(static_cast<SizeType>(ret.first(0, 0)), neg_sample);
+    if (success)
     {
-        ret.second.at(0).Set(i, 0, T(data_[current_sentence_][current_word_ - i - 1]));
-        ret.second.at(0).Set(i + dynamic_size, 0,
-                             T(data_[current_sentence_][current_word_ + i + 1]));
+      ret.first(i, 0) = static_cast<T>(neg_sample);
     }
-
-    // denote the unused part of the window
-    for (SizeType i = (dynamic_size * 2); i < ret.second.at(0).size(); ++i)
+    else
     {
-        ret.second.at(0)(i, 0) = -1; // set the max of SizeType as a tag for un-updated positions
+      throw std::runtime_error(
+          "unigram table timed out looking for a negative sample. check window size for sentence "
+          "length and that data loaded correctly.");
     }
+  }
 
-    // negative sampling
-    for (SizeType i = 1; i < negative_samples_; ++i)
-    {
-        SizeType neg_sample;
-        bool     success =
-                unigram_table_.SampleNegative(static_cast<SizeType>(ret.first(0, 0)), neg_sample);
-        if (success)
-        {
-            ret.first(i, 0) = static_cast<T>(neg_sample);
-        }
-        else
-        {
-            throw std::runtime_error(
-                    "unigram table timed out looking for a negative sample. check window size for sentence "
-                    "length and that data loaded correctly.");
-        }
-    }
-
-    current_word_++;
-    // check if the word is window size away form either end of the sentence
-    if (current_word_ >= data_.at(current_sentence_).size() - window_size_) // the current word end when a full context window can be allowed
-    {
-        current_word_ = window_size_; // the current word start from position that allows full context window
-        current_sentence_++;
-    }
+  current_word_++;
+  // check if the word is window size away form either end of the sentence
+  if (current_word_ >=
+      data_.at(current_sentence_).size() -
+          window_size_)  // the current word end when a full context window can be allowed
+  {
+    current_word_ =
+        window_size_;  // the current word start from position that allows full context window
+    current_sentence_++;
+  }
 }
 
 template <typename T>
@@ -281,7 +284,9 @@ template <typename T>
 bool W2VLoader<T>::BuildVocab(std::string const &s)
 {
   std::vector<SizeType> indexes = StringsToIndices(PreprocessString(s));
-  if (indexes.size() >= 2 * window_size_ + 1) // each sentence stored in the data_ are guaranteed to have minimum length to handle window_size context sampling
+  if (indexes.size() >=
+      2 * window_size_ + 1)  // each sentence stored in the data_ are guaranteed to have minimum
+                             // length to handle window_size context sampling
   {
     data_.push_back(std::move(indexes));
     return true;
@@ -378,8 +383,8 @@ std::vector<math::SizeType> W2VLoader<T>::StringsToIndices(std::vector<std::stri
     indexes.reserve(strings.size());
     for (std::string const &s : strings)
     {
-      auto value =
-          vocab_.data.insert(std::make_pair(s, std::make_pair((SizeType)(vocab_.data.size() + 1), 0)));
+      auto value = vocab_.data.insert(
+          std::make_pair(s, std::make_pair((SizeType)(vocab_.data.size() + 1), 0)));
       indexes.push_back((*value.first).second.first);
       value.first->second.second++;
     }
