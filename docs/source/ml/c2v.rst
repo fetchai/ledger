@@ -25,7 +25,7 @@ where `fct_i` is the index of the function i, and the tensors have shape (MAX_CO
 
 # Graph
 In the following, we consider only one function per training loop is read in.
- 
+
 We have the following trainable tensors
  - SE: Word embedding (shared embedding for both, the source and target words), Dimension (WORD_VOCABULARY, EMBEDDING_SIZE)
  - PE: Path embedding, Dimension (PATH_VOCABULARY, EMBEDDING_SIZE)
@@ -41,7 +41,7 @@ k denotes the index of an embedding (i.e. j runs from 0 to EMBEDDING_SIZE)
 m denotes the index of the function name vocab
 \vec SE_{i} (\vec PE_{i}, \vec FE_{i}) gives the representation of the word/path/.. of sample i
 
-## Model architecture 
+## Model architecture
 
 1. Data feed into the model gives us \vec SE_{i} (\vec PE_{i}, \vec FE_{i})
 
@@ -70,12 +70,12 @@ PR_{1,m} = Softmax{UP_{1,m}}
 L = CrossEntropy(PR_{1,m}, GT_{1,m})
 
 
-# Extensions: 
+# Extensions:
  - In the TF implemention, the SE, PE, FE are initialised with a variance_scaling_initializer. AV and FC with a glorot_uniform_initializer.
  - Adding a Softmax function to the fetch lib, which can normalise along any axis. (Currently it works only for axis 0, that's the reason for the many transposition operations)
  - In the data loader, the whole "corpus" (i.e. the umaps etc.) are created based on a c2v file. In the TF implementation, this corpus is created once, and then persisted, such that it can be reused next time (e.g. for model evaluation)
  - Bringing the AST extraction into fetch
- - Extension to "real" batch training, s.t. contexts of more than one function can be digested simultaneously. (I.e. it would require, that several tensors get a new dimension, and all operations can handle the extra dim). To be more precise, I give some examples how some steps would be modified (the numbers refer to the step numbers in the section above). The batch index is called "b": 
+ - Extension to "real" batch training, s.t. contexts of more than one function can be digested simultaneously. (I.e. it would require, that several tensors get a new dimension, and all operations can handle the extra dim). To be more precise, I give some examples how some steps would be modified (the numbers refer to the step numbers in the section above). The batch index is called "b":
 1. The inputs: \vec SE_{i} (\vec PE_{i}, \vec FE_{i}) =>  \vec SE_{b, i} (\vec PE_{b, i}, \vec FE_{b, i})
 2. The combined, concatenated context vector: CC_{k, i} =>  CC_{b, k, i}. After this, we would ned a flattening step from CC_{b, k, i} to CC'_{b*k, i}, s.t. the matmul afterwards work.
 5. AW_{1,i} = Softmax(CA{1,i}) => AW_{b,i} = Softmax(CA{b, i})

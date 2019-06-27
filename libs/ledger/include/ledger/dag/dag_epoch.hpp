@@ -68,23 +68,15 @@ struct DAGEpoch
 template <typename T>
 void Serialize(T &serializer, DAGEpoch const &node)
 {
-  serializer << node.block_number;
-  serializer << node.tips;
-  serializer << node.data_nodes;
-  serializer << node.solution_nodes;
-  serializer << node.hash;
-  serializer << node.all_nodes;
+  serializer << node.block_number << node.tips << node.data_nodes << node.solution_nodes
+             << node.hash << node.all_nodes;
 }
 
 template <typename T>
 void Deserialize(T &serializer, DAGEpoch &node)
 {
-  serializer >> node.block_number;
-  serializer >> node.tips;
-  serializer >> node.data_nodes;
-  serializer >> node.solution_nodes;
-  serializer >> node.hash;
-  serializer >> node.all_nodes;
+  serializer >> node.block_number >> node.tips >> node.data_nodes >> node.solution_nodes >>
+      node.hash >> node.all_nodes;
 }
 
 }  // namespace ledger

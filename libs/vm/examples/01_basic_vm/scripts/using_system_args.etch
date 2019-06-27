@@ -5,7 +5,7 @@ function main()
 
   for(i in 0:System.Argc() - 1)
     message = toString(i) + " = " + System.Argv(i);
-    Print(message); 
+    Print(message);
   endfor
 
 endfunction

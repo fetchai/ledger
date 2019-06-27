@@ -86,6 +86,7 @@ ConstByteArray FromBase64(ConstByteArray const &str) noexcept
   return std::move(ret);
 }
 
+// TODO(issue 1262): Caller can't unambiguously detect whether the conversion failed or not
 ConstByteArray FromHex(ConstByteArray const &str) noexcept
 {
   char const *data = reinterpret_cast<char const *>(str.pointer());

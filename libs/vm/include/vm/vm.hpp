@@ -192,22 +192,31 @@ public:
 
 private:
   template <typename T>
-  bool AddInternal(T &&value)
+  bool AddInternal(T const &value)
   {
-    bool success{false};
-
+    bool         success{false};
     TypeId const type_id = Getter<T>::GetTypeId(registered_types_, value);
 
     if (TypeIds::Unknown != type_id)
     {
       // add the value to the map
-      params_.emplace_back(std::forward<T>(value), type_id);
+      params_.emplace_back(value, type_id);
 
       // signal great success
       success = true;
     }
 
     return success;
+  }
+
+  bool AddInternal(Ptr<Object> const &value)
+  {
+    // add the value to the map
+    Variant v;
+    v.Construct(value, value->GetTypeId());
+    params_.emplace_back(std::move(v));
+
+    return true;
   }
 
   using VariantArray = std::vector<Variant>;
@@ -271,8 +280,9 @@ public:
           // type check
           if (parameter.type_id != f->variables[i].type_id)
           {
-            error = "mismatched parameters";
-
+            error = "mismatched parameters: expected argument " + std::to_string(i);
+            error += "to be of type " + GetUniqueId(f->variables[i].type_id) + " but got ";
+            error += GetUniqueId(parameter.type_id);
             // clean up
             for (std::size_t j = 0; j < num_parameters; ++j)
             {
@@ -294,7 +304,8 @@ public:
       }
       else
       {
-        error = "mismatched parameters";
+        error = "mismatched parameters: expected " + std::to_string(num_parameters) + " arguments";
+        error += ", but got " + std::to_string(parameters.size());
       }
     }
     else
@@ -303,6 +314,12 @@ public:
     }
 
     return success;
+  }
+
+  std::string GetUniqueId(TypeId type_id) const
+  {
+    auto info = GetTypeInfo(type_id);
+    return info.name;
   }
 
   template <typename T>
@@ -416,6 +433,54 @@ public:
     return type_info_array_[type_id];
   }
 
+  bool IsDefaultSerializeConstructable(TypeId type_id) const
+  {
+    TypeIndex idx = registered_types_.GetTypeIndex(type_id);
+    auto      it  = deserialization_constructors_.find(idx);
+
+    if (it == deserialization_constructors_.end())
+    {
+      TypeInfo tinfo = GetTypeInfo(type_id);
+
+      if (tinfo.template_type_id == TypeIds::Unknown)
+      {
+        return false;
+      }
+
+      idx = registered_types_.GetTypeIndex(tinfo.template_type_id);
+      it  = deserialization_constructors_.find(idx);
+      return (it != deserialization_constructors_.end());
+    }
+    return true;
+  }
+
+  Ptr<Object> DefaultSerializeConstruct(TypeId type_id)
+  {
+    // Resolving constructor
+    TypeIndex idx = registered_types_.GetTypeIndex(type_id);
+    auto      it  = deserialization_constructors_.find(idx);
+
+    if (it == deserialization_constructors_.end())
+    {
+      // Testing if there is an interface constructor
+      TypeInfo tinfo = GetTypeInfo(type_id);
+      if (tinfo.template_type_id != TypeIds::Unknown)
+      {
+        idx = registered_types_.GetTypeIndex(tinfo.template_type_id);
+        it  = deserialization_constructors_.find(idx);
+      }
+    }
+
+    if (it == deserialization_constructors_.end())
+    {
+      RuntimeError("object is not default constructible.");
+      return nullptr;
+    }
+
+    auto &constructor = it->second;
+    return constructor(this, type_id);
+  }
+
 private:
   static const int FRAME_STACK_SIZE = 50;
   static const int STACK_SIZE       = 5000;
@@ -504,6 +569,7 @@ private:
   IoObserverInterface *          io_observer_{nullptr};
   OutputDeviceMap                output_devices_;
   InputDeviceMap                 input_devices_;
+  DeserializeConstructorMap      deserialization_constructors_;
 
   void AddOpcodeInfo(uint16_t opcode, std::string const &name, Handler const &handler)
   {

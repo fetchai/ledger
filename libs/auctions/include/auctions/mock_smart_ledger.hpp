@@ -188,9 +188,9 @@ private:
         {
           std::cout << "bidder: " << bidder_id << " placed bid of value: " << bid_price
                     << ", on item_ids: ";
-          for (std::size_t i = 0; i < item_ids.size(); ++i)
+          for (auto const &id : item_ids)
           {
-            std::cout << item_ids[i] << ", ";
+            std::cout << id << ", ";
           }
           std::cout << std::endl;
         }

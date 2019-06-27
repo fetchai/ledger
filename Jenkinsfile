@@ -55,7 +55,7 @@ def static_analysis()
         stage('SCM Static Analysis') {
           checkout scm
         }
-                        
+
         stage('Run Static Analysis') {
           docker.image(DOCKER_IMAGE_NAME).inside {
             sh '''\

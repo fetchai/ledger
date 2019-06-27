@@ -66,6 +66,12 @@ public:
   SizeType         IndexFromWord(std::string const &word) const;
   SizeType         window_size();
 
+    // temporary sample and labels for buffering samples
+    ReturnType tmp_sample;
+    LabelType label_one, label_zero;
+    DataType tmp_input, tmp_output;
+
+
 private:
   SizeType                                   current_sentence_;
   SizeType                                   current_word_;
@@ -91,7 +97,7 @@ private:
  *
  * @tparam T
  * @param window_size the size of the context window (one side only)
- * @param negative_samples the number of total samples (all but one being negative)
+ * @param negative_samples the number of total samples (all but one being negat  SkipGramTextParams<ArrayType> sp = SetParams<ArrayType>();ive)
  * @param mode
  */
 template <typename T>
@@ -104,7 +110,15 @@ W2VLoader<T>::W2VLoader(SizeType window_size, SizeType negative_samples, bool mo
   , mode_(mode)
   , target_({window_size_ * 2, 1})
   , label_({negative_samples_, 1})
-{}
+{
+      // setup temporary buffers for training purpose
+      label_one = LabelType({1});
+      label_one(0) = 1;
+      label_zero = LabelType({1});
+      label_zero(0) = 0;
+      tmp_input = DataType({1});
+      tmp_output = DataType({1});
+}
 
 /**
  * reports the total size of the outputs iterating through the dataloader
@@ -134,11 +148,11 @@ math::SizeType W2VLoader<T>::Size() const
 template <typename T>
 bool W2VLoader<T>::IsDone() const
 {
-  if (current_sentence_ >= data_.size())
+  if (current_sentence_ == data_.size())
   {
     return true;
   }
-  else if (current_sentence_ >= data_.size() - 1)  // In the last sentence
+  else if (current_sentence_ == data_.size() - 1)  // In the last sentence
   {
     if (current_word_ >= data_.at(current_sentence_).size() - window_size_)
     {
@@ -211,9 +225,6 @@ void W2VLoader<T>::BufferNextSamples() {
     // clear the buffer
     buffer.clear();
 
-    // setup temporary sample
-    ReturnType tmp_sample;
-
     // the current word should start from position that allows full context window
     if (current_word_ < window_size_) {
         current_word_ = window_size_;
@@ -223,28 +234,25 @@ void W2VLoader<T>::BufferNextSamples() {
     SizeType dynamic_size = rng_() % window_size_ + 1;
 
     // for the interested one word
-    SizeType the_word = SizeType(data_[current_sentence_][current_word_]);
+    tmp_input(0) = T(data_[current_sentence_][current_word_]);
 
     // set the context samples
-    SizeType context_word;
     for (SizeType i = 0; i < dynamic_size; ++i) {
-        context_word = SizeType(data_[current_sentence_][current_word_ - i - 1]);
-        tmp_sample(SizeType(1), {the_word, context_word});
-        buffer.push_back(std::move(tmp_sample));
+        tmp_output(0) = T(data_[current_sentence_][current_word_ - i - 1]);
+        buffer.push_back(ReturnType(label_one, {tmp_input, tmp_output}));
 
-        context_word = SizeType(data_[current_sentence_][current_word_ + i + 1]);
-        tmp_sample(SizeType(1), {the_word, context_word});
-        buffer.push_back(std::move(tmp_sample));
+        tmp_output(0) = T(data_[current_sentence_][current_word_ + i + 1]);
+        buffer.push_back(ReturnType(label_one, {tmp_input, tmp_output}));
     }
 
     // negative sampling for every context word
     SizeType neg_sample;
     for (SizeType i = 1; i < negative_samples_ * window_size_ * 2; ++i) {
         bool success =
-                unigram_table_.SampleNegative(the_word, neg_sample);
+                unigram_table_.SampleNegative(SizeType(tmp_input(0)), neg_sample);
         if (success) {
-            tmp_sample(SizeType(0), {the_word, neg_sample});
-            buffer.push_back(std::move(tmp_sample));
+            tmp_output(0) = T(neg_sample);
+            buffer.push_back(ReturnType(label_zero, {tmp_input, tmp_output}));
         } else {
             throw std::runtime_error(
                     "unigram table timed out looking for a negative sample. check window size for sentence "
@@ -376,7 +384,7 @@ typename W2VLoader<T>::SizeType W2VLoader<T>::window_size()
  * @return
  */
 template <typename T>
-std::vector<math::SizeType> W2VLoader<T>::StringsToIndices(std::vector<std::string> const &strings)
+std::vector<math::SizeType> W2VLoader<T>::StringsToIndices(std::vector<std::string> const &strings) // it is more like words to indices (each string is a word not a sentence)
 {
   std::vector<SizeType> indexes;
   if (strings.size() >= 2 * window_size_ + 1)  // Don't bother processing too short inputs
@@ -385,7 +393,7 @@ std::vector<math::SizeType> W2VLoader<T>::StringsToIndices(std::vector<std::stri
     for (std::string const &s : strings)
     {
       auto value =
-          vocab_.data.insert(std::make_pair(s, std::make_pair((SizeType)(vocab_.data.size()), 0)));
+          vocab_.data.insert(std::make_pair(s, std::make_pair((SizeType)(vocab_.data.size()+1), 0))); // this line allows index is 0 right???
       indexes.push_back((*value.first).second.first);
       value.first->second.second++;
     }

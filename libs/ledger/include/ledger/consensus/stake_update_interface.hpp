@@ -17,26 +17,30 @@
 //
 //------------------------------------------------------------------------------
 
-#include "network/p2pservice/p2p_peer_details.hpp"
+#include <cstdint>
 
 namespace fetch {
-namespace p2p {
-namespace details {
+namespace ledger {
 
-struct NodeDetailsImplementation
+class Address;
+class StakeSnapshot;
+
+class StakeUpdateInterface
 {
-  mutable mutex::Mutex mutex{__LINE__, __FILE__};
-  PeerDetails          details;
+public:
+  using StakeAmount = uint64_t;
+  using BlockIndex  = uint64_t;
+
+  // Construction / Destruction
+  StakeUpdateInterface()          = default;
+  virtual ~StakeUpdateInterface() = default;
+
+  /// @name Stake Update Interface
+  /// @{
+  virtual void AddStakeUpdate(BlockIndex block_index, Address const &address,
+                              StakeAmount stake) = 0;
+  /// @}
 };
 
-}  // namespace details
-
-using NodeDetails = std::shared_ptr<details::NodeDetailsImplementation>;
-
-inline NodeDetails MakeNodeDetails()
-{
-  return std::make_shared<details::NodeDetailsImplementation>();
-}
-
-}  // namespace p2p
+}  // namespace ledger
 }  // namespace fetch

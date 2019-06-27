@@ -56,7 +56,7 @@ public:
     std::string context =
         this->template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>(name + "_Context", {});
 
-    ArrayType weights = std::vector<SizeType>({vocab_size, embedding_size});
+    ArrayType weights = std::vector<SizeType>({embedding_size, vocab_size});
     this->Initialise(weights, init_mode);
 
     // embed both inputs
@@ -70,7 +70,7 @@ public:
         name + "_TransposeCtx", {embed_ctx});
 
     std::string in_ctx_matmul = this->template AddNode<fetch::ml::ops::MatrixMultiply<ArrayType>>(
-        name + "_In_Ctx_MatMul", {embed_in_, transpose_ctx});
+        name + "_In_Ctx_MatMul", {transpose_ctx, embed_in_});
 
 //    // dense layer
 //    std::string fc_out = this->template AddNode<fetch::ml::layers::FullyConnected<ArrayType>>(
@@ -87,22 +87,6 @@ public:
     this->AddInputNode(input);
     this->AddInputNode(context);
     this->SetOutputNode(output);
-  }
-
-  // Overload that method for optimisation purposes
-  virtual void ForwardBatch(std::vector<std::reference_wrapper<const ArrayType>> const &inputs,
-                            ArrayType &                                                 output)
-  {
-    std::vector<ArrayType> results;
-    for (typename ArrayType::SizeType b{0}; b < inputs.front().get().shape()[0]; ++b)
-    {
-      ArrayType slice_input   = inputs.front().get().Slice(b).Copy();
-      ArrayType slice_context = inputs.back().get().Slice(b).Copy();
-      ArrayType output(ComputeOutputShape({slice_input, slice_context}));
-      this->Forward({slice_input, slice_context}, output);
-      results.push_back(output);
-    }
-    output = ArrayType::Stack(results);
   }
 
   std::shared_ptr<ops::Embeddings<ArrayType>> GetEmbeddings(std::shared_ptr<SkipGram<ArrayType>> &g)

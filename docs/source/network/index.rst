@@ -8,7 +8,7 @@ Network Framework
 
 Objective
 ---------
-The objective of the Fetch network library is to make it easy to network, 
+The objective of the Fetch network library is to make it easy to network,
 in particular to make it easy to create protocols using our rpc framework.
 fetch-networking handles low level internet protocol (TCP) and RPCs and serialization.
 
@@ -17,13 +17,13 @@ Quick start
 So you want to create a P2P network making RPC calls to each other. To this end, there is a basic
 `quick start` example program. This will illustrate all of the components working together to
 create basic network communications.
-This will use the example program 
+This will use the example program
 `examples/quick_start/quick_start.cpp`
 . You should have compiled it into build/examples if you followed the README.
 
-.. image:: quickstart.png 
+.. image:: quickstart.png
 
-As can be seen above, we are going to use the rpc framework to create a simple bi-directional 
+As can be seen above, we are going to use the rpc framework to create a simple bi-directional
 message sending program. We will do this on localhost, although this could be in any
 two network locations.
 
@@ -39,7 +39,7 @@ It is not actually required that both sides are running a tcp server.
 To test the program:
 
 .. code-block:: bash
-                
+
                 term1$ ./build/examples/quick_start 8000 8001
                 term2$ ./build/examples/quick_start 8001 8000
 
@@ -62,25 +62,25 @@ To test out the code, there is going to be one server with one or more listeners
 are hard coded for ease of use.
 
 .. code-block:: bash
-                
+
                 term1$ ./build/examples/subscribe_server
                 term2$ ./build/examples/subscribe_listener
                 term3$ ./build/examples/subscribe_listener
                 term4$ ./build/examples/subscribe_listener
 
-It should now be possible for the server to send messages that are broadcast to all of the 
+It should now be possible for the server to send messages that are broadcast to all of the
 listeners. Note that although this is done on localhost this is of course possible across a network
 connection.
 
 .. image:: subscribeOverview.png
 
 
-This is very similar to the quick_start example in that you create a protocol and add it to 
+This is very similar to the quick_start example in that you create a protocol and add it to
 a service. However, in this example instead of creating callables that point to our node class
-it is our node class that will publish to the service. 
+it is our node class that will publish to the service.
 
-For ease of use, and to demonstrate a slightly different paradigm, inheritance is used to 
-create only two objects, the service and the protocol. This allows the user to make calls 
+For ease of use, and to demonstrate a slightly different paradigm, inheritance is used to
+create only two objects, the service and the protocol. This allows the user to make calls
 directly to the protocol.
 
 Anatomy of an RPC call

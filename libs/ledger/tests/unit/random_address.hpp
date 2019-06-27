@@ -17,36 +17,33 @@
 //
 //------------------------------------------------------------------------------
 
-#include <typeindex>
-#include <typeinfo>
-#include <unordered_map>
+#include "ledger/chain/address.hpp"
 
-namespace fetch {
-namespace vm {
+#include <type_traits>
 
-class PointerRegister
+/**
+ * Generate a random address based on a specified RNG
+ *
+ * @tparam RNG The RNG type
+ * @param rng The reference to the RNG to be used
+ * @return The generated address
+ */
+template <typename RNG>
+fetch::ledger::Address GenerateRandomAddress(RNG &&rng)
 {
-public:
-  template <typename T>
-  void Set(T *val)
+  using Address = fetch::ledger::Address;
+  using RngWord = typename std::decay_t<RNG>::random_type;
+
+  static constexpr std::size_t ADDRESS_WORD_SIZE = Address::RAW_LENGTH / sizeof(RngWord);
+  static_assert((Address::RAW_LENGTH % sizeof(RngWord)) == 0, "");
+
+  Address::RawAddress raw_address{};
+  auto *              raw = reinterpret_cast<RngWord *>(raw_address.data());
+
+  for (std::size_t i = 0; i < ADDRESS_WORD_SIZE; ++i)
   {
-    pointers_[std::type_index(typeid(T))] = static_cast<void *>(val);
+    raw[i] = rng();
   }
 
-  template <typename T>
-  T *Get()
-  {
-    if (pointers_.find(std::type_index(typeid(T))) == pointers_.end())
-    {
-      return nullptr;
-    }
-
-    return static_cast<T *>(pointers_[std::type_index(typeid(T))]);
-  }
-
-private:
-  std::unordered_map<std::type_index, void *> pointers_;
-};
-
-}  // namespace vm
-}  // namespace fetch
+  return Address{raw_address};
+}

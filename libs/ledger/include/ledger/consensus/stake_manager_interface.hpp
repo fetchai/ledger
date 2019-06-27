@@ -17,12 +17,32 @@
 //
 //------------------------------------------------------------------------------
 
+#include <cstdint>
+#include <map>
+#include <memory>
+
 namespace fetch {
-namespace value_util {
+namespace ledger {
 
-template <class... Ts>
-constexpr void no_op(Ts &&... /*ts*/) noexcept
-{}
+class Address;
+class Block;
 
-}  // namespace value_util
+class StakeManagerInterface
+{
+public:
+  // Construction / Destruction
+  StakeManagerInterface()          = default;
+  virtual ~StakeManagerInterface() = default;
+
+  /// @name Stake Manager Interface
+  /// @{
+  virtual void        UpdateCurrentBlock(Block const &current)                                = 0;
+  virtual std::size_t GetBlockGenerationWeight(Block const &previous, Address const &address) = 0;
+  virtual bool        ShouldGenerateBlock(Block const &previous, Address const &address)      = 0;
+  /// @}
+
+private:
+};
+
+}  // namespace ledger
 }  // namespace fetch

@@ -17,14 +17,23 @@
 //
 //------------------------------------------------------------------------------
 
-namespace fetch {
-namespace service {
+#include "ledger/chain/digest.hpp"
 
-class AbstractDecorator
+namespace fetch {
+namespace ledger {
+
+class EntropyGeneratorInterface
 {
 public:
-  virtual void Apply(serializer_type &serializer, byte_array::ConstByteArray const &data)   = 0;
-  virtual void Unapply(serializer_type &serializer, byte_array::ConstByteArray const &data) = 0;
+  // Construction / Destruction
+  EntropyGeneratorInterface()          = default;
+  virtual ~EntropyGeneratorInterface() = default;
+
+  /// @name Entropy Generator
+  /// @{
+  virtual uint64_t GenerateEntropy(Digest block_digest, uint64_t block_number) = 0;
+  /// @}
 };
-}  // namespace service
+
+}  // namespace ledger
 }  // namespace fetch

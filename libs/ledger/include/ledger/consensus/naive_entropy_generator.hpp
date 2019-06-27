@@ -17,41 +17,31 @@
 //
 //------------------------------------------------------------------------------
 
-#include "network/muddle/packet.hpp"
-#include "network/p2pservice/state_machine.hpp"
+#include "ledger/consensus/entropy_generator_interface.hpp"
 
 namespace fetch {
-namespace p2p {
+namespace ledger {
 
-class IdentityCache;
-
-class Resolver
+/**
+ * Simplistic Test Entropy Generator
+ *
+ * Entropy is generated from the block hash as a source. It is repeated hashed a number of times
+ * in order to generate the entropy source.
+ */
+class NaiveEntropyGenerator : public EntropyGeneratorInterface
 {
 public:
-  using Address = muddle::Packet::Address;
-
-  enum class State
-  {
-    RESOLVE_ADDRESS,
-    LOOKUP_MANIFEST,
-    COMPLETE
-  };
+  static constexpr std::size_t ROUNDS = 5;
 
   // Construction / Destruction
-  Resolver(IdentityCache &cache);
-  Resolver(Resolver const &) = delete;
-  Resolver(Resolver &&)      = delete;
-  ~Resolver()                = default;
+  NaiveEntropyGenerator()           = default;
+  ~NaiveEntropyGenerator() override = default;
 
-  void Resolve(Address const &address);
-
-  // Operators
-  Resolver &operator=(Resolver const &) = delete;
-  Resolver &operator=(Resolver &&) = delete;
-
-private:
-  IdentityCache &cache_;
+  /// @name Entropy Generator Interface
+  /// @{
+  uint64_t GenerateEntropy(Digest block_digest, uint64_t block_number) override;
+  /// @}
 };
 
-}  // namespace p2p
+}  // namespace ledger
 }  // namespace fetch

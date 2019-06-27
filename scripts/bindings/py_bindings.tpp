@@ -29,7 +29,7 @@ void Build{{classname}}(pybind11::module &module) {
 {%- endif %}
   namespace py = pybind11;
   {% set params = [class.qualified_class_name] + class.bases -%}
-  
+
   py::class_<{{", ".join(params)}}>(module, {{custom_name}} )
     {%- if len(constructors) == 0 %}
     .def(py::init<>()) /* No constructors found */

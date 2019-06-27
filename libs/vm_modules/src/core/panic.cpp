@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -17,20 +16,26 @@
 //
 //------------------------------------------------------------------------------
 
-#include "network/muddle/muddle.hpp"
-#include "network/muddle/rpc/client.hpp"
-#include "network/muddle/rpc/server.hpp"
-#include "network/uri.hpp"
+#include "vm_modules/core/print.hpp"
 
-using Uri     = fetch::network::Uri;
-using Muddle  = fetch::muddle::Muddle;
-using Server  = fetch::muddle::rpc::Server;
-using Client  = fetch::muddle::rpc::Client;
-using Address = Muddle::Address;  // == a crypto::Identity.identifier_
+#include "meta/type_traits.hpp"
+#include "vm/module.hpp"
+#include "vm/vm.hpp"
 
-using MuddlePtr = std::shared_ptr<Muddle>;
-using ServerPtr = std::shared_ptr<Server>;
-using ClientPtr = std::shared_ptr<Client>;
+#include <ostream>
 
-const int SERVICE_TEST = 1;
-const int CHANNEL_RPC  = 1;
+namespace fetch {
+namespace vm_modules {
+
+void Panic(fetch::vm::VM *vm, fetch::vm::Ptr<fetch::vm::String> const &s)
+{
+  vm->RuntimeError(s->str);
+}
+
+void CreatePanic(vm::Module &module)
+{
+  module.CreateFreeFunction("panic", &Panic);
+}
+
+}  // namespace vm_modules
+}  // namespace fetch
