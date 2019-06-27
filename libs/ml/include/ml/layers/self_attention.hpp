@@ -20,6 +20,7 @@
 #include "ml/layers/fully_connected.hpp"
 #include "ml/ops/activations/softmax.hpp"
 #include "ml/ops/add.hpp"
+#include "ml/ops/flatten.hpp"
 #include "ml/ops/matrix_multiply.hpp"
 #include "ml/ops/placeholder.hpp"
 #include "ml/ops/transpose.hpp"

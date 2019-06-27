@@ -28,13 +28,13 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class LogSoftmax : public fetch::ml::BatchOps<T>
+class LogSoftmax : public fetch::ml::Ops<T>
 {
 public:
   using ArrayType     = T;
   using DataType      = typename ArrayType::Type;
   using SizeType      = typename ArrayType::SizeType;
-  using VecTensorType = typename ElementWiseOps<T>::VecTensorType;
+  using VecTensorType = typename Ops<T>::VecTensorType;
 
   LogSoftmax(SizeType axis = 0)
     : axis_(axis)
@@ -44,16 +44,16 @@ public:
 
   void Forward(VecTensorType const &inputs, ArrayType &output)
   {
-    ASSERT(output.shape() == ComputeOutputShape(inputs));
-    ASSERT(inputs.size() == 1);
+    assert(output.shape() == ComputeOutputShape(inputs));
+    assert(inputs.size() == 1);
     fetch::math::Softmax(inputs.front().get(), output, axis_);
     fetch::math::Log(output, output);
   }
 
   std::vector<ArrayType> Backward(VecTensorType const &inputs, ArrayType const &error_signal)
   {
-    ASSERT(inputs.size() == 1);
-    ASSERT(inputs.front().get().shape() == error_signal.shape());
+    assert(inputs.size() == 1);
+    assert(inputs.front().get().shape() == error_signal.shape());
 
     ArrayType return_signal = error_signal.Copy();
     ArrayType t(error_signal.shape());

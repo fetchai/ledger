@@ -115,20 +115,15 @@ template <typename T>
 void SkipGramLoader<T>::GetData(SizeType idx, std::vector<T> &data_buffer)
 {
   std::vector<typename SkipGramLoader<T>::SizeType> lookup_idxs;
-
   lookup_idxs = SelectValence() ? GeneratePositive(idx) : GenerateNegative(idx);
 
-  SizeType buffer_count = 0;
   for (SizeType j = 0; j < p_.n_data_buffers; ++j)
   {
-    SizeType sentence_idx = this->word_idx_sentence_idx.at(lookup_idxs.at(buffer_count));
-    SizeType word_idx     = this->GetWordOffsetFromWordIdx(lookup_idxs.at(buffer_count));
+    SizeType sentence_idx = this->word_idx_sentence_idx.at(lookup_idxs.at(j));
+    SizeType word_idx     = this->GetWordOffsetFromWordIdx(lookup_idxs.at(j));
 
     data_buffer.at(j).At(0, 0) = DataType(this->data_.at(sentence_idx).at(word_idx));
-
-    ++buffer_count;
   }
-
   cur_label_ = lookup_idxs.at(p_.n_data_buffers);
 }
 

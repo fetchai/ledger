@@ -73,6 +73,9 @@ protected:
   SizeType                                                           epoch_ = SIZE_NOT_SET;
 
 private:
+  std::vector<ArrayType> batch_data_;
+  ArrayType              batch_labels_;
+
   virtual void ApplyGradients(SizeType batch_size) = 0;
 };
 
@@ -111,9 +114,8 @@ typename T::Type Optimiser<T, C>::Run(std::vector<ArrayType> const &data, ArrayT
   assert(data.size() > 0);
 
   // Get trailing dimensions
-  SizeType n_data_dimm  = data.at(0).shape().size() - 1;
-  SizeType n_label_dimm = labels.shape().size() - 1;
-  SizeType n_data       = data.at(0).shape().at(n_data_dimm);
+  SizeType n_data_dimm = data.at(0).shape().size() - 1;
+  SizeType n_data      = data.at(0).shape().at(n_data_dimm);
 
   // for some input combinations batch size will be modified
   batch_size = UpdateBatchSize(batch_size, n_data);
@@ -122,28 +124,67 @@ typename T::Type Optimiser<T, C>::Run(std::vector<ArrayType> const &data, ArrayT
   DataType loss_sum{0};
 
   SizeType step{0};
+
+  // Prepare output data tensors
+  if (batch_data_.size() != data.size())
+  {
+    batch_data_.resize(data.size());
+  }
+  for (SizeType i{0}; i < data.size(); i++)
+  {
+    std::vector<SizeType> current_data_shape             = data.at(i).shape();
+    current_data_shape.at(current_data_shape.size() - 1) = batch_size;
+    if (batch_data_.at(i).shape() != current_data_shape)
+    {
+      batch_data_.at(i) = (ArrayType{current_data_shape});
+    }
+  }
+
+  // Prepare output label tensor
+  std::vector<SizeType> labels_size           = labels.shape();
+  SizeType              label_batch_dimension = labels_size.size() - 1;
+  labels_size.at(label_batch_dimension)       = batch_size;
+  if (batch_labels_.shape() != labels_size)
+  {
+    batch_labels_ = ArrayType{labels_size};
+  }
+
   while (step < n_data)
   {
-    loss = DataType{0};
-
-    // Do batch back-propagation
-    for (SizeType it{step}; (it < step + batch_size) && (it < n_data); ++it)
+    // Prepare batch
+    SizeType it{step};
+    for (SizeType i{0}; i < batch_size; i++)
     {
-
-      auto name_it = input_node_names_.begin();
-      for (auto &input : data)
+      if (it >= n_data)
       {
-
-        auto cur_input = input.Slice(it, n_data_dimm).Copy();
-        graph_->SetInput(*name_it, cur_input);
-        ++name_it;
+        it = 0;
       }
 
-      auto cur_label  = labels.Slice(it, n_label_dimm).Copy();
-      auto label_pred = graph_->Evaluate(output_node_name_);
-      loss += criterion_.Forward({label_pred, cur_label});
-      graph_->BackPropagate(output_node_name_, criterion_.Backward({label_pred, cur_label}));
+      // Fill label slice
+      auto label_slice = batch_labels_.Slice(i, label_batch_dimension);
+      label_slice.Assign(labels.Slice(it, label_batch_dimension));
+
+      // Fill all data from data vector
+      for (SizeType j{0}; j < data.size(); j++)
+      {
+        // Fill data[j] slice
+        SizeType cur_data_batch_dim = data.at(j).shape().size() - 1;
+        auto     data_slice         = batch_data_.at(j).Slice(i, cur_data_batch_dim);
+        data_slice.Assign(data.at(j).Slice(it, cur_data_batch_dim));
+      }
+      it++;
     }
+
+    auto name_it = input_node_names_.begin();
+    for (auto &input : batch_data_)
+    {
+      graph_->SetInput(*name_it, input);
+      ++name_it;
+    }
+
+    auto label_pred = graph_->Evaluate(output_node_name_);
+    loss            = criterion_.Forward({label_pred, batch_labels_});
+    graph_->BackPropagate(output_node_name_, criterion_.Backward({label_pred, batch_labels_}));
 
     // Compute and apply gradient
     ApplyGradients(batch_size);
@@ -157,7 +198,7 @@ typename T::Type Optimiser<T, C>::Run(std::vector<ArrayType> const &data, ArrayT
   UpdateLearningRate();
   epoch_++;
 
-  return loss_sum / static_cast<DataType>(step);
+  return loss_sum;
 }
 
 /**
@@ -193,24 +234,22 @@ typename T::Type Optimiser<T, C>::Run(
     loss = DataType{0};
 
     // Do batch back-propagation
-    for (SizeType it{step}; (it < step + batch_size) && (!loader.IsDone()) && (step < subset_size);
-         ++it)
+    input = loader.PrepareBatch(batch_size);
+
+    auto cur_input = input.second;
+
+    auto name_it = input_node_names_.begin();
+    for (auto &cur_input : input.second)
     {
-      input = loader.GetNext();
-
-      auto name_it = input_node_names_.begin();
-      for (auto &cur_input : input.second)
-      {
-        graph_->SetInput(*name_it, cur_input);
-        ++name_it;
-      }
-
-      auto cur_label  = input.first;
-      auto label_pred = graph_->Evaluate(output_node_name_);
-
-      loss += criterion_.Forward({label_pred, cur_label});
-      graph_->BackPropagate(output_node_name_, criterion_.Backward({label_pred, cur_label}));
+      graph_->SetInput(*name_it, cur_input);
+      ++name_it;
     }
+
+    auto cur_label  = input.first;
+    auto label_pred = graph_->Evaluate(output_node_name_);
+    loss            = criterion_.Forward({label_pred, cur_label});
+    graph_->BackPropagate(output_node_name_, criterion_.Backward({label_pred, cur_label}));
+
     // Compute and apply gradient
     ApplyGradients(batch_size);
 
@@ -223,7 +262,7 @@ typename T::Type Optimiser<T, C>::Run(
   UpdateLearningRate();
   epoch_++;
 
-  return loss_sum / static_cast<DataType>(step);
+  return loss_sum;
 }
 
 /**
