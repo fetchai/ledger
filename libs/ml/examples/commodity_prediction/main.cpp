@@ -507,9 +507,9 @@ int main(int argc, char **argv)
 
     DataType    distance         = 0;
     DataType    distance_counter = 0;
-    std::string our_y_output     = filename_root + "y_pred_test_fetch_" +
-                               std::to_string(EPOCHS) + "_" + std::to_string(use_random) + "_" +
-                               std::to_string(LEARNING_RATE) + ".csv";
+    std::string our_y_output = filename_root + "y_pred_test_fetch_" + std::to_string(EPOCHS) + "_" +
+                               std::to_string(use_random) + "_" + std::to_string(LEARNING_RATE) +
+                               ".csv";
 
     bool          first = true;
     std::ofstream file(our_y_output);
