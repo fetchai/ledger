@@ -21,49 +21,63 @@
 #include <memory>
 #include <vector>
 
+#include "math/fundamental_operators.hpp"
+#include "math/ml/activation_functions/sigmoid.hpp"
 #include "math/ml/activation_functions/softmax.hpp"
 #include "math/ml/loss_functions/cross_entropy.hpp"
-#include "ml/ops/loss_functions/criterion.hpp"
+#include "ml/ops/ops.hpp"
 
 namespace fetch {
 namespace ml {
 namespace ops {
 
 template <class T>
-class SoftmaxCrossEntropy : public Criterion<T>
+class SoftmaxCrossEntropy : public Ops<T>
 {
 public:
-  using ArrayType    = T;
-  using DataType     = typename ArrayType::Type;
-  using SizeType     = typename ArrayType::SizeType;
-  using ArrayPtrType = std::shared_ptr<ArrayType>;
+  using ArrayType     = T;
+  using DataType      = typename ArrayType::Type;
+  using SizeType      = typename ArrayType::SizeType;
+  using ArrayPtrType  = std::shared_ptr<ArrayType>;
+  using VecTensorType = typename Ops<T>::VecTensorType;
 
   SoftmaxCrossEntropy()          = default;
   virtual ~SoftmaxCrossEntropy() = default;
 
-  virtual typename ArrayType::Type Forward(std::vector<ArrayType> const &inputs)
+  virtual void Forward(VecTensorType const &inputs, ArrayType &output)
   {
     // third term may be present for specifying n_classes
     assert(inputs.size() == 2);
-    assert(inputs.at(0).size() == inputs.at(1).size());
+    assert(inputs.at(0).get().size() == inputs.at(1).get().size());
 
     // sanity check the softmax adds up to 1
-    assert(Sum(fetch::math::Softmax(inputs.at(0))) - (DataType(inputs.at(0).shape().at(0))) <
+    assert(Sum(fetch::math::Softmax(inputs.at(0).get())) -
+               (DataType(inputs.at(0).get().shape().at(0))) <
            0.0001);
 
     // softmax forward & then CrossEntropy
-    typename ArrayType::Type result =
-        fetch::math::CrossEntropyLoss(fetch::math::Softmax(inputs[0]), inputs[1]);
-
-    return result;
+    output(0, 0) =
+        fetch::math::CrossEntropyLoss(fetch::math::Softmax(inputs[0].get()), inputs[1].get());
   }
 
-  virtual ArrayType Backward(std::vector<ArrayType> const &inputs)
+  virtual std::vector<ArrayType> Backward(VecTensorType const &inputs,
+                                          ArrayType const &    error_signal)
   {
     assert(inputs.size() == 2);
-    assert(inputs[0].size() == inputs[1].size());
+    assert(inputs[0].get().size() == inputs[1].get().size());
 
-    return fetch::math::Subtract(fetch::math::Softmax(inputs[0]), inputs[1]);
+    ArrayType ret = fetch::math::Subtract(fetch::math::Softmax(inputs[0].get()), inputs[1].get());
+
+    // chain rule
+    fetch::math::Multiply(ret, error_signal, ret);
+
+    return {ret, ret};
+  }
+
+  std::vector<typename T::SizeType> ComputeOutputShape(VecTensorType const &inputs) const
+  {
+    (void)inputs;
+    return {1, 1};
   }
 
   static constexpr char const *DESCRIPTOR = "SoftmaxCrossEntropy";

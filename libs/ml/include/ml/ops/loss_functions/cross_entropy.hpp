@@ -25,64 +25,64 @@
 #include "math/ml/activation_functions/sigmoid.hpp"
 #include "math/ml/activation_functions/softmax.hpp"
 #include "math/ml/loss_functions/cross_entropy.hpp"
-#include "ml/ops/loss_functions/criterion.hpp"
+#include "ml/ops/ops.hpp"
 
 namespace fetch {
 namespace ml {
 namespace ops {
 
 template <class T>
-class CrossEntropy : public Criterion<T>
+class CrossEntropy : public Ops<T>
 {
 public:
-  using ArrayType    = T;
-  using DataType     = typename ArrayType::Type;
-  using SizeType     = typename ArrayType::SizeType;
-  using ArrayPtrType = std::shared_ptr<ArrayType>;
+  using ArrayType     = T;
+  using DataType      = typename ArrayType::Type;
+  using SizeType      = typename ArrayType::SizeType;
+  using ArrayPtrType  = std::shared_ptr<ArrayType>;
+  using VecTensorType = typename Ops<T>::VecTensorType;
 
   CrossEntropy()          = default;
   virtual ~CrossEntropy() = default;
 
-  /**
-   * @param inputs vector of 2 Tensors
-   * @return CrossEntropy value of 2 inputs
-   */
-  virtual DataType Forward(std::vector<ArrayType> const &inputs)
+  virtual void Forward(VecTensorType const &inputs, ArrayType &output)
   {
     assert(inputs.size() == 2);
-    assert(inputs.at(0).size() == inputs.at(1).size());
+    assert(inputs.at(0).get().size() == inputs.at(1).get().size());
 
-    DataType result = fetch::math::CrossEntropyLoss(inputs[0], inputs[1]);
-
-    return result;
+    output(0, 0) = fetch::math::CrossEntropyLoss(inputs[0].get(), inputs[1].get());
   }
 
-  /**
-   * @param inputs vector of 2 Tensors
-   * @return gradient of CrossEntropy of 2 inputs
-   */
-
-  virtual ArrayType Backward(std::vector<ArrayType> const &inputs)
+  virtual std::vector<ArrayType> Backward(VecTensorType const &inputs,
+                                          ArrayType const &    error_signal)
   {
     assert(inputs.size() == 2);
-    assert(inputs[0].size() == inputs[1].size());
-    assert(inputs[0].shape().size() == 2);
+    assert(inputs[0].get().size() == inputs[1].get().size());
+    assert(inputs[0].get().shape().size() == 2);
 
     ArrayType ret;
-    if (inputs[0].shape().at(0) == 1)  // not one-hot
+    if (inputs[0].get().shape().at(0) == 1)  // not one-hot
     {
-      ret = fetch::math::Sigmoid(inputs[0]);
-      fetch::math::Subtract(ret, inputs[1], ret);
-      fetch::math::Multiply(ret, inputs[0], ret);
+      ret = fetch::math::Sigmoid(inputs[0].get());
+      fetch::math::Subtract(ret, inputs[1].get(), ret);
+      fetch::math::Multiply(ret, inputs[0].get(), ret);
     }
-    else if (inputs[0].shape().size())  // one-hot
+    else if (inputs[0].get().shape().size())  // one-hot
     {
-      ret = fetch::math::Softmax(inputs[0], 1);
-      fetch::math::Divide(inputs[1], ret, ret);
+      ret = fetch::math::Softmax(inputs[0].get(), 1);
+      fetch::math::Divide(inputs[1].get(), ret, ret);
       fetch::math::Multiply(DataType(-1), ret, ret);
     }
 
-    return ret;
+    // chain rule
+    fetch::math::Multiply(ret, error_signal, ret);
+
+    return {ret, ret};
+  }
+
+  std::vector<typename T::SizeType> ComputeOutputShape(VecTensorType const &inputs) const
+  {
+    (void)inputs;
+    return {1, 1};
   }
 
   static constexpr char const *DESCRIPTOR = "CrossEntropy";

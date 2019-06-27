@@ -32,8 +32,8 @@ namespace optimisers {
  * @tparam T ArrayType
  * @tparam C CriterionType
  */
-template <class T, class C>
-class AdamOptimiser : public Optimiser<T, C>
+template <class T>
+class AdamOptimiser : public Optimiser<T>
 {
 public:
   using ArrayType = T;
@@ -65,8 +65,8 @@ private:
   void ResetCache();
 };
 
-template <class T, class C>
-AdamOptimiser<T, C>::AdamOptimiser(std::shared_ptr<Graph<T>>
+template <class T>
+AdamOptimiser<T>::AdamOptimiser(std::shared_ptr<Graph<T>>
 
                                                                    graph,
                                    std::vector<std::string> const &input_node_names,
@@ -74,7 +74,7 @@ AdamOptimiser<T, C>::AdamOptimiser(std::shared_ptr<Graph<T>>
                                    std::string const &             output_node_name,
                                    DataType const &learning_rate, DataType const &beta1,
                                    DataType const &beta2, DataType const &epsilon)
-  : Optimiser<T, C>(graph, input_node_names, label_node_name, output_node_name, learning_rate)
+  : Optimiser<T>(graph, input_node_names, label_node_name, output_node_name, learning_rate)
   , beta1_(beta1)
   , beta2_(beta2)
   , beta1_t_(beta1)
@@ -93,8 +93,8 @@ AdamOptimiser<T, C>::AdamOptimiser(std::shared_ptr<Graph<T>>
 
 // private
 
-template <class T, class C>
-void AdamOptimiser<T, C>::ApplyGradients(SizeType batch_size)
+template <class T>
+void AdamOptimiser<T>::ApplyGradients(SizeType batch_size)
 {
   // Do operation with gradient
   auto cached_weight_it = cache_.begin();
@@ -152,8 +152,8 @@ void AdamOptimiser<T, C>::ApplyGradients(SizeType batch_size)
   }
 }
 
-template <class T, class C>
-void AdamOptimiser<T, C>::ResetCache()
+template <class T>
+void AdamOptimiser<T>::ResetCache()
 {
   for (auto &val : this->cache_)
   {

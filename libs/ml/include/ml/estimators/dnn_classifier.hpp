@@ -22,7 +22,7 @@
 #include "ml/layers/fully_connected.hpp"
 #include "ml/ops/placeholder.hpp"
 
-#include "ml/ops/loss_functions/cross_entropy_op.hpp"
+#include "ml/ops/loss_functions/cross_entropy.hpp"
 
 #include "ml/dataloaders/dataloader.hpp"
 #include "ml/estimators/estimator.hpp"
@@ -38,7 +38,7 @@ class DNNClassifier : public Estimator<TensorType>
 public:
   using SizeType         = fetch::math::SizeType;
   using DataType         = typename TensorType::Type;
-  using CostFunctionType = fetch::ml::ops::CrossEntropyOp<TensorType>;
+  using CostFunctionType = fetch::ml::ops::CrossEntropy<TensorType>;
   using OptimiserType    = fetch::ml::optimisers::OptimiserType;
 
   DNNClassifier(EstimatorConfig<DataType>                                        estimator_config,
@@ -55,7 +55,7 @@ public:
 
 private:
   std::shared_ptr<dataloaders::DataLoader<TensorType, TensorType>>     data_loader_ptr_;
-  std::shared_ptr<optimisers::Optimiser<TensorType, CostFunctionType>> optimiser_ptr_;
+  std::shared_ptr<optimisers::Optimiser<TensorType>> optimiser_ptr_;
 
   std::string input_;
   std::string label_;
