@@ -178,9 +178,8 @@ int main(int argc, char **argv)
   std::cout << "building model architecture...: " << std::endl;
   std::shared_ptr<fetch::ml::Graph<ArrayType>> g(std::make_shared<fetch::ml::Graph<ArrayType>>());
   std::string output_name = Model(*g, tp.embedding_size, data_loader.VocabSize());
-
-  // set up loss
-  CrossEntropy<ArrayType> criterion;
+  std::string label_name  = g->AddNode<PlaceHolder<ArrayType>>("Label", {});
+  std::string error_name  = g->AddNode<CrossEntropy<ArrayType>>("Error", {output_name, label_name});
 
   /////////////////////////////////
   /// TRAIN THE WORD EMBEDDINGS ///
@@ -189,8 +188,8 @@ int main(int argc, char **argv)
   std::cout << "beginning training...: " << std::endl;
 
   // Initialise Optimiser
-  fetch::ml::optimisers::AdamOptimiser<ArrayType, fetch::ml::ops::CrossEntropy<ArrayType>>
-      optimiser(g, {"Input", "Context"}, "", output_name, tp.learning_rate);
+  fetch::ml::optimisers::AdamOptimiser<ArrayType> optimiser(g, {"Input", "Context"}, label_name,
+                                                            error_name, tp.learning_rate);
 
   // Training loop
   DataType loss;

@@ -33,7 +33,7 @@ TYPED_TEST_CASE(CrossEntropyTest, MyTypes);
 
 TYPED_TEST(CrossEntropyTest, perfect_match_forward_test)
 {
-  using DataType=typename TypeParam::Type;
+  using DataType = typename TypeParam::Type;
 
   std::uint64_t n_classes     = 4;
   std::uint64_t n_data_points = 8;
@@ -59,13 +59,13 @@ TYPED_TEST(CrossEntropyTest, perfect_match_forward_test)
     }
   }
 
-  TypeParam error_signal({1,1});
-  error_signal(0,0)=DataType{1};
-
   fetch::ml::ops::CrossEntropy<TypeParam> op;
-  EXPECT_EQ(op.Forward({data1, data2},error_signal), typename TypeParam::Type(0));
+  TypeParam                               result({1, 1});
+  op.Forward({data1, data2}, result);
+
+  EXPECT_EQ(result(0, 0), typename TypeParam::Type(0));
 }
-/*
+
 TYPED_TEST(CrossEntropyTest, one_dimensional_forward_test)
 {
   std::uint64_t n_classes     = 4;
@@ -107,7 +107,10 @@ TYPED_TEST(CrossEntropyTest, one_dimensional_forward_test)
   }
 
   fetch::ml::ops::CrossEntropy<TypeParam> op;
-  EXPECT_NEAR(double(op.Forward({data1, data2})), double(0.893887639), 3e-7);
+  TypeParam                               result({1, 1});
+  op.Forward({data1, data2}, result);
+
+  EXPECT_NEAR(static_cast<double>(result(0, 0)), static_cast<double>(0.893887639), 3e-7);
 }
 
 TYPED_TEST(CrossEntropyTest, non_one_hot_forward_test)
@@ -144,13 +147,16 @@ TYPED_TEST(CrossEntropyTest, non_one_hot_forward_test)
   }
 
   fetch::ml::ops::CrossEntropy<TypeParam> op;
+  TypeParam                               result({1, 1});
+  op.Forward({data1, data2}, result);
 
-  ASSERT_FLOAT_EQ(float(op.Forward({data1, data2})), float(2.6491587));
+  ASSERT_FLOAT_EQ(static_cast<float>(result(0, 0)), float(2.6491587));
 }
 
 TYPED_TEST(CrossEntropyTest, trivial_one_dimensional_backward_test)
 {
   using SizeType = typename TypeParam::SizeType;
+  using DataType = typename TypeParam::Type;
 
   std::uint64_t n_classes     = 3;
   std::uint64_t n_data_points = 1;
@@ -175,13 +181,19 @@ TYPED_TEST(CrossEntropyTest, trivial_one_dimensional_backward_test)
     data2.Set(i, SizeType{0}, typename TypeParam::Type(targets[i]));
   }
 
+  TypeParam error_signal({1, 1});
+  error_signal(0, 0) = DataType{1};
+
   fetch::ml::ops::CrossEntropy<TypeParam> op;
-  EXPECT_TRUE(op.Backward({data1, data2})
+  EXPECT_TRUE(op.Backward({data1, data2}, error_signal)
+                  .at(0)
                   .AllClose(gt, typename TypeParam::Type(1e-5), typename TypeParam::Type(1e-5)));
 }
 
 TYPED_TEST(CrossEntropyTest, one_dimensional_backward_test)
 {
+  using DataType = typename TypeParam::Type;
+
   std::uint64_t n_classes     = 4;
   std::uint64_t n_data_points = 8;
 
@@ -223,8 +235,12 @@ TYPED_TEST(CrossEntropyTest, one_dimensional_backward_test)
     }
   }
 
+  TypeParam error_signal({1, 1});
+  error_signal(0, 0) = DataType{1};
+
   fetch::ml::ops::CrossEntropy<TypeParam> op;
-  EXPECT_TRUE(op.Backward({data1, data2})
+  EXPECT_TRUE(op.Backward({data1, data2}, error_signal)
+                  .at(0)
                   .AllClose(gt, typename TypeParam::Type(1e-5), typename TypeParam::Type(1e-5)));
 }
 
@@ -253,11 +269,11 @@ TYPED_TEST(CrossEntropyTest, non_one_hot_dimensional_backward_test)
     data2.Set(0, i, typename TypeParam::Type(target[i]));
   }
 
-  TypeParam error_signal({1,1});
-  error_signal(0,0)=typename TypeParam::Type{1};
+  TypeParam error_signal({1, 1});
+  error_signal(0, 0) = typename TypeParam::Type{1};
 
   fetch::ml::ops::CrossEntropy<TypeParam> op;
-  EXPECT_TRUE(op.Backward({data1, data2},error_signal)
+  EXPECT_TRUE(op.Backward({data1, data2}, error_signal)
+                  .at(0)
                   .AllClose(gt, typename TypeParam::Type(1e-5), typename TypeParam::Type(1e-5)));
 }
-*/

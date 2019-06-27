@@ -31,10 +31,9 @@ namespace ml {
 class VMAdamOptimiser : public fetch::vm::Object
 {
 public:
-  using DataType      = float;
-  using ArrayType     = fetch::math::Tensor<DataType>;
-  using CriterionType = fetch::ml::ops::CrossEntropy<ArrayType>;
-  using GraphType     = fetch::ml::Graph<ArrayType>;
+  using DataType  = float;
+  using ArrayType = fetch::math::Tensor<DataType>;
+  using GraphType = fetch::ml::Graph<ArrayType>;
 
   VMAdamOptimiser(fetch::vm::VM *vm, fetch::vm::TypeId type_id, GraphType const &graph,
                   std::vector<std::string> const &input_node_names,
@@ -71,7 +70,7 @@ public:
   }
 
 private:
-  fetch::ml::optimisers::AdamOptimiser<ArrayType, CriterionType> optimiser_;
+  fetch::ml::optimisers::AdamOptimiser<ArrayType> optimiser_;
 };
 
 }  // namespace ml

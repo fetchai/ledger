@@ -20,7 +20,6 @@
 #include "math/base_types.hpp"
 #include "ml/dataloaders/dataloader.hpp"
 #include "ml/graph.hpp"
-#include "ml/ops/loss_functions/criterion.hpp"
 
 namespace fetch {
 namespace ml {
@@ -37,9 +36,9 @@ template <class T>
 class Optimiser
 {
 public:
-  using ArrayType     = T;
-  using DataType      = typename ArrayType::Type;
-  using SizeType      = typename ArrayType::SizeType;
+  using ArrayType = T;
+  using DataType  = typename ArrayType::Type;
+  using SizeType  = typename ArrayType::SizeType;
 
   Optimiser(std::shared_ptr<Graph<T>> graph, std::vector<std::string> input_node_names,
             std::string label_node_name, std::string output_node_name,
@@ -77,10 +76,9 @@ private:
 };
 
 template <class T>
-Optimiser<T>::Optimiser(std::shared_ptr<Graph<T>> graph,
-                           std::vector<std::string> input_node_names, std::string label_node_name,
-                           std::string output_node_name, DataType const &learning_rate,
-                           DataType const &delta_learning_rate)
+Optimiser<T>::Optimiser(std::shared_ptr<Graph<T>> graph, std::vector<std::string> input_node_names,
+                        std::string label_node_name, std::string output_node_name,
+                        DataType const &learning_rate, DataType const &delta_learning_rate)
   : graph_(graph)
   , input_node_names_(std::move(input_node_names))
   , label_node_name_(std::move(label_node_name))
@@ -108,7 +106,7 @@ Optimiser<T>::Optimiser(std::shared_ptr<Graph<T>> graph,
 // TODO (private 1090): Optimise TensorSlice for graph-feeding without using .Copy
 template <class T>
 typename T::Type Optimiser<T>::Run(std::vector<ArrayType> const &data, ArrayType const &labels,
-                                      SizeType batch_size)
+                                   SizeType batch_size)
 {
   assert(data.size() > 0);
 
@@ -172,12 +170,14 @@ typename T::Type Optimiser<T>::Run(std::vector<ArrayType> const &data, ArrayType
       ++name_it;
     }
 
-    // auto cur_label  = input.first;
+    // Set Label
+    graph_->SetInput(label_node_name_, batch_labels);
+
     auto loss_tensor = graph_->Evaluate(output_node_name_);
     graph_->BackPropagate(output_node_name_, loss_tensor);
 
     auto loss_tensor_it = loss_tensor.begin();
-    while(loss_tensor_it.is_valid())
+    while (loss_tensor_it.is_valid())
     {
       loss += *loss_tensor_it;
       ++loss_tensor_it;
@@ -210,9 +210,8 @@ typename T::Type Optimiser<T>::Run(std::vector<ArrayType> const &data, ArrayType
  * @return Sum of losses from all mini-batches
  */
 template <class T>
-typename T::Type Optimiser<T>::Run(
-    fetch::ml::dataloaders::DataLoader<ArrayType, ArrayType> &loader, SizeType batch_size,
-    SizeType subset_size)
+typename T::Type Optimiser<T>::Run(fetch::ml::dataloaders::DataLoader<ArrayType, ArrayType> &loader,
+                                   SizeType batch_size, SizeType subset_size)
 {
   if (loader.IsDone())
   {
@@ -251,7 +250,7 @@ typename T::Type Optimiser<T>::Run(
     graph_->BackPropagate(output_node_name_, loss_tensor);
 
     auto loss_tensor_it = loss_tensor.begin();
-    while(loss_tensor_it.is_valid())
+    while (loss_tensor_it.is_valid())
     {
       loss += *loss_tensor_it;
       ++loss_tensor_it;
@@ -295,8 +294,8 @@ void Optimiser<T>::UpdateLearningRate()
  */
 template <class T>
 typename Optimiser<T>::SizeType Optimiser<T>::UpdateBatchSize(SizeType const &batch_size,
-                                                                    SizeType const &data_size,
-                                                                    SizeType const &subset_size)
+                                                              SizeType const &data_size,
+                                                              SizeType const &subset_size)
 {
   SizeType updated_batch_size = batch_size;
   // If batch_size not specified do full batch

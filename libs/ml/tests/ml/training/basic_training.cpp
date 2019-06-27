@@ -67,7 +67,7 @@ void PlusOneTest()
   using SizeType = typename TypeParam::SizeType;
   using DataType = typename TypeParam::Type;
 
-  DataType alpha       = DataType(0.01);
+  DataType alpha       = DataType(0.005);
   SizeType input_size  = SizeType(1);
   SizeType output_size = SizeType(1);
   SizeType n_batches   = SizeType(300);
@@ -82,7 +82,9 @@ void PlusOneTest()
   std::string output_name = g.template AddNode<fetch::ml::layers::FullyConnected<TypeParam>>(
       "FC2", {act_name}, hidden_size, output_size);
 
-  CriterionType criterion;
+  std::string label_name = g.template AddNode<fetch::ml::ops::PlaceHolder<TypeParam>>("", {});
+
+  std::string error_name = g.template AddNode<CriterionType>("Error", {output_name, label_name});
 
   ////////////////////////////////////////
   /// DEFINING DATA AND LABELS FOR XOR ///
@@ -113,11 +115,11 @@ void PlusOneTest()
     cur_input.At(0, 0) = data.At(step, 0);
     g.SetInput(input_name, cur_input);
     cur_gt.At(0, 0) = gt.At(step, 0);
+    g.SetInput(label_name, cur_gt);
 
-    auto results = g.Evaluate(output_name);
-    loss += criterion.Forward({results, cur_gt});
-
-    g.BackPropagate(output_name, criterion.Backward({results, cur_gt}));
+    auto error_tensor = g.Evaluate(error_name);
+    loss += error_tensor(0, 0);
+    g.BackPropagate(error_name, error_tensor);
   }
 
   for (auto &w : g.get_trainables())
@@ -142,10 +144,11 @@ void PlusOneTest()
       cur_input.At(0, 0) = data.At(step, 0);
       g.SetInput(input_name, cur_input);
       cur_gt.At(0, 0) = gt.At(step, 0);
+      g.SetInput(label_name, cur_gt);
 
-      auto results = g.Evaluate(output_name);
-      loss += criterion.Forward({results, cur_gt});
-      g.BackPropagate(output_name, criterion.Backward({results, cur_gt}));
+      auto error_tensor = g.Evaluate(error_name);
+      loss += error_tensor(0, 0);
+      g.BackPropagate(error_name, error_tensor);
     }
 
     // This task is so easy the loss should fall on every training step
@@ -190,7 +193,9 @@ void CategoricalPlusOneTest(bool add_softmax = false)
     output_name = g.template AddNode<fetch::ml::ops::Softmax<TypeParam>>("", {output_name});
   }
 
-  CriterionType criterion;
+  std::string label_name = g.template AddNode<fetch::ml::ops::PlaceHolder<TypeParam>>("", {});
+
+  std::string error_name = g.template AddNode<CriterionType>("Error", {output_name, label_name});
 
   ////////////////////////////////////////
   /// DEFINING DATA AND LABELS FOR XOR ///
@@ -220,10 +225,12 @@ void CategoricalPlusOneTest(bool add_softmax = false)
   {
     auto cur_input = data.Slice(step, 1).Copy();
     g.SetInput(input_name, cur_input);
-    auto cur_gt  = gt.Slice(step, 1).Copy();
-    auto results = g.Evaluate(output_name);
-    loss += criterion.Forward({results, cur_gt});
-    g.BackPropagate(output_name, criterion.Backward({results, cur_gt}));
+    auto cur_gt = gt.Slice(step, 1).Copy();
+    g.SetInput(label_name, cur_gt);
+
+    auto error_tensor = g.Evaluate(error_name);
+    loss += error_tensor(0, 0);
+    g.BackPropagate(error_name, error_tensor);
   }
 
   for (auto &w : g.get_trainables())
@@ -247,10 +254,12 @@ void CategoricalPlusOneTest(bool add_softmax = false)
     {
       auto cur_input = data.Slice(step, 1).Copy();
       g.SetInput(input_name, cur_input);
-      auto cur_gt  = gt.Slice(step, 1).Copy();
-      auto results = g.Evaluate(output_name);
-      loss += criterion.Forward({results, cur_gt});
-      g.BackPropagate(output_name, criterion.Backward({results, cur_gt}));
+      auto cur_gt = gt.Slice(step, 1).Copy();
+      g.SetInput(label_name, cur_gt);
+
+      auto error_tensor = g.Evaluate(error_name);
+      loss += error_tensor(0, 0);
+      g.BackPropagate(error_name, error_tensor);
     }
 
     // This task is so easy the loss should fall on every training step
@@ -295,7 +304,9 @@ void CategoricalXorTest(bool add_softmax = false)
     output_name = g.template AddNode<fetch::ml::ops::Softmax<TypeParam>>("", {output_name});
   }
 
-  CriterionType criterion;
+  std::string label_name = g.template AddNode<fetch::ml::ops::PlaceHolder<TypeParam>>("", {});
+
+  std::string error_name = g.template AddNode<CriterionType>("Error", {output_name, label_name});
 
   ////////////////////////////////////////
   /// DEFINING DATA AND LABELS FOR XOR ///
@@ -316,10 +327,12 @@ void CategoricalXorTest(bool add_softmax = false)
   {
     cur_input = data.Slice(step, 1).Copy();
     g.SetInput(input_name, cur_input);
-    auto results = g.Evaluate(output_name);
-    cur_gt       = gt.Slice(step, 1).Copy();
-    loss += criterion.Forward({results, cur_gt});
-    g.BackPropagate(output_name, criterion.Backward({results, cur_gt}));
+    cur_gt = gt.Slice(step, 1).Copy();
+    g.SetInput(label_name, cur_gt);
+
+    auto error_tensor = g.Evaluate(error_name);
+    loss += error_tensor(0, 0);
+    g.BackPropagate(error_name, error_tensor);
   }
 
   for (auto &w : g.get_trainables())
@@ -343,10 +356,10 @@ void CategoricalXorTest(bool add_softmax = false)
     {
       cur_input = data.Slice(step, 1).Copy();
       g.SetInput(input_name, cur_input);
-      cur_gt       = gt.Slice(step, 1).Copy();
-      auto results = g.Evaluate(output_name);
-      loss += criterion.Forward({results, cur_gt});
-      g.BackPropagate(output_name, criterion.Backward({results, cur_gt}));
+      cur_gt            = gt.Slice(step, 1).Copy();
+      auto error_tensor = g.Evaluate(error_name);
+      loss += error_tensor(0, 0);
+      g.BackPropagate(error_name, error_tensor);
     }
 
     EXPECT_GE(current_loss, loss);

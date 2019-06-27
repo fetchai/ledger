@@ -49,8 +49,10 @@ public:
   float ForwardWrapper(fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> const &pred,
                        fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> const &groundTruth)
   {
-    return fetch::ml::ops::CrossEntropy<fetch::math::Tensor<float>>::Forward(
-        {(*pred).GetTensor(), (*groundTruth).GetTensor()});
+    fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> output;
+    fetch::ml::ops::CrossEntropy<fetch::math::Tensor<float>>::Forward(
+        {(*pred).GetTensor(), (*groundTruth).GetTensor()}, (*output).GetTensor());
+    return (*output).GetTensor()(0, 0);
   }
 
   fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> BackwardWrapper(
@@ -59,7 +61,8 @@ public:
   {
     fetch::math::Tensor<float> dt =
         fetch::ml::ops::CrossEntropy<fetch::math::Tensor<float>>::Backward(
-            {(*pred).GetTensor(), (*groundTruth).GetTensor()});
+            {(*pred).GetTensor(), (*groundTruth).GetTensor()}, (*pred).GetTensor())
+            .at(0);
     fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> ret =
         this->vm_->CreateNewObject<fetch::vm_modules::math::VMTensor>(dt.shape());
     (*ret).Copy(dt);

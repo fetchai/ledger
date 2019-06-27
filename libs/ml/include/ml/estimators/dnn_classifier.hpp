@@ -54,8 +54,8 @@ public:
   virtual bool Predict(TensorType &input, TensorType &output) override;
 
 private:
-  std::shared_ptr<dataloaders::DataLoader<TensorType, TensorType>>     data_loader_ptr_;
-  std::shared_ptr<optimisers::Optimiser<TensorType>> optimiser_ptr_;
+  std::shared_ptr<dataloaders::DataLoader<TensorType, TensorType>> data_loader_ptr_;
+  std::shared_ptr<optimisers::Optimiser<TensorType>>               optimiser_ptr_;
 
   std::string input_;
   std::string label_;

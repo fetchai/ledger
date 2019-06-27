@@ -219,10 +219,13 @@ int main(int ac, char **av)
   std::string result = g->AddNode<fetch::ml::ops::Softmax<ArrayType>>(
       "PredictionSoftMax", {prediction_softmax_kernel}, SizeType{1});
 
+  std::string label = g->AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>("Label", {});
+
+  std::string error = g->AddNode<fetch::ml::ops::CrossEntropy<ArrayType>>("Error", {result, label});
+
   // Initialise Optimiser
-  fetch::ml::optimisers::AdamOptimiser<ArrayType, fetch::ml::ops::CrossEntropy<ArrayType>>
-      optimiser(g, {input_source_words, input_paths, input_target_words}, "", result,
-                LEARNING_RATE);
+  fetch::ml::optimisers::AdamOptimiser<ArrayType> optimiser(
+      g, {input_source_words, input_paths, input_target_words}, label, error, LEARNING_RATE);
 
   // Training loop
   DataType loss;

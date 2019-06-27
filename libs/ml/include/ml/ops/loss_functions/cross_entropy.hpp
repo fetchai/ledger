@@ -74,7 +74,9 @@ public:
     }
 
     // chain rule
-    fetch::math::Multiply(ret, error_signal, ret);
+    // Not sure
+    (void)error_signal;
+    // fetch::math::Multiply(ret, error_signal, ret);
 
     return {ret, ret};
   }

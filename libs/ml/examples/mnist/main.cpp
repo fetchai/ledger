@@ -39,9 +39,9 @@ using DataType  = float;
 using ArrayType = fetch::math::Tensor<DataType>;
 using SizeType  = typename ArrayType::SizeType;
 
-using GraphType        = typename fetch::ml::Graph<ArrayType>;
-using OptimiserType    = typename fetch::ml::optimisers::AdamOptimiser<ArrayType>;
-using DataLoaderType   = typename fetch::ml::dataloaders::MNISTLoader<ArrayType, ArrayType>;
+using GraphType      = typename fetch::ml::Graph<ArrayType>;
+using OptimiserType  = typename fetch::ml::optimisers::AdamOptimiser<ArrayType>;
+using DataLoaderType = typename fetch::ml::dataloaders::MNISTLoader<ArrayType, ArrayType>;
 
 int main(int ac, char **av)
 {

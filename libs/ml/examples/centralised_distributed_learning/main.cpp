@@ -62,6 +62,8 @@ public:
     g_.AddNode<Relu<ArrayType>>("Relu2", {"FC1"});
     g_.AddNode<FullyConnected<ArrayType>>("FC3", {"Relu2"}, 10u, 10u);
     g_.AddNode<Softmax<ArrayType>>("Softmax", {"FC3"});
+    g_.AddNode<PlaceHolder<ArrayType>>("Label", {});
+    g_.AddNode<CrossEntropy<ArrayType>>("Error", {"Softmax", "Label"});
   }
 
   void Train(unsigned int number_of_batches)
@@ -78,10 +80,11 @@ public:
         // training data is low
         input = dataloader_.GetNext();
         g_.SetInput("Input", input.second.at(0));
+        g_.SetInput("Label", input.first);
 
-        ArrayType results = g_.Evaluate("Softmax").Copy();
-        loss += criterion.Forward({results, input.first});
-        g_.BackPropagate("Softmax", criterion.Backward({results, input.first}));
+        ArrayType loss_tensor = g_.Evaluate("Error").Copy();
+        loss += loss_tensor(0, 0);
+        g_.BackPropagate("Error", loss_tensor);
       }
       losses_values_.push_back(loss);
 

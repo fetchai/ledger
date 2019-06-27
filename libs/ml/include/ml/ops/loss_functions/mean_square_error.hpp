@@ -22,7 +22,7 @@
 #include <vector>
 
 #include "math/ml/loss_functions/mean_square_error.hpp"
-#include "ml/ops/loss_functions/criterion.hpp"
+#include "ml/ops/ops.hpp"
 
 namespace fetch {
 namespace ml {
@@ -55,7 +55,7 @@ public:
     }
   }
 
-  // grad[0]=2*err*(in[0]-in[1])/batch_size, grad[1]=-2*err*(in[0]-in[1])/batch_size,
+  // grad[0]=2*err*(in[0]-in[1])/mean_size, grad[1]=-2*err*(in[0]-in[1])/mean_size,
   virtual std::vector<ArrayType> Backward(VecTensorType const &inputs,
                                           ArrayType const &    error_signal)
   {
@@ -69,12 +69,13 @@ public:
     fetch::math::Subtract(inputs.at(0).get(), inputs.at(1).get(), return_signal1);
 
     // return_signal=err*(in[0]-in[1])
-    fetch::math::Multiply(return_signal1, error_signal, return_signal1);
+    // I am not sure about that
+    (void)error_signal;
+    // fetch::math::Multiply(return_signal1, error_signal, return_signal1);
 
-    // return_signal=(2*err*(in[0]-in[1]))/batch_size
-    DataType batch_size =
-        static_cast<DataType>(inputs.at(0).get().shape().at(inputs.at(0).get().shape().size() - 1));
-    fetch::math::Multiply(return_signal1, DataType{2} / batch_size, return_signal1);
+    // return_signal=(2*err*(in[0]-in[1]))/mean_size
+    DataType mean_size = static_cast<DataType>(inputs.at(0).get().shape().at(0));
+    fetch::math::Multiply(return_signal1, DataType{2} / mean_size, return_signal1);
 
     fetch::math::Multiply(return_signal1, DataType{-1}, return_signal2);
     return {return_signal1, return_signal2};

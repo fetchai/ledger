@@ -45,7 +45,7 @@ TYPED_TEST_CASE(OptimisersTest, MyTypes);
 template <typename TypeParam>
 std::shared_ptr<fetch::ml::Graph<TypeParam>> PrepareTestGraph(
     typename TypeParam::SizeType input_size, typename TypeParam::SizeType output_size,
-    std::string &input_name, std::string &output_name)
+    std::string &input_name, std::string &label_name, std::string &error_name)
 {
   using SizeType = typename TypeParam::SizeType;
 
@@ -57,9 +57,14 @@ std::shared_ptr<fetch::ml::Graph<TypeParam>> PrepareTestGraph(
 
   std::string fc1_name = g->template AddNode<fetch::ml::layers::FullyConnected<TypeParam>>(
       "FC1", {input_name}, input_size, hidden_size);
-  std::string act_name = g->template AddNode<fetch::ml::ops::Relu<TypeParam>>("", {fc1_name});
-  output_name          = g->template AddNode<fetch::ml::layers::FullyConnected<TypeParam>>(
+  std::string act_name    = g->template AddNode<fetch::ml::ops::Relu<TypeParam>>("", {fc1_name});
+  std::string output_name = g->template AddNode<fetch::ml::layers::FullyConnected<TypeParam>>(
       "FC2", {act_name}, hidden_size, output_size);
+
+  label_name = g->template AddNode<fetch::ml::ops::PlaceHolder<TypeParam>>("", {});
+
+  error_name = g->template AddNode<fetch::ml::ops::MeanSquareError<TypeParam>>(
+      "Error", {output_name, label_name});
 
   return g;
 }
@@ -122,9 +127,10 @@ TYPED_TEST(OptimisersTest, sgd_optimiser_training)
 
   // Prepare model
   std::string                                  input_name;
+  std::string                                  label_name;
   std::string                                  output_name;
   std::shared_ptr<fetch::ml::Graph<TypeParam>> g =
-      PrepareTestGraph<TypeParam>(1, 1, input_name, output_name);
+      PrepareTestGraph<TypeParam>(1, 1, input_name, label_name, output_name);
 
   // Prepare data and labels
   TypeParam data;
@@ -132,8 +138,8 @@ TYPED_TEST(OptimisersTest, sgd_optimiser_training)
   PrepareTestDataAndLabels1D(data, gt);
 
   // Initialize Optimiser
-  fetch::ml::optimisers::SGDOptimiser<TypeParam, fetch::ml::ops::MeanSquareError<TypeParam>>
-      optimiser(g, {input_name}, "", output_name, learning_rate);
+  fetch::ml::optimisers::SGDOptimiser<TypeParam> optimiser(g, {input_name}, label_name, output_name,
+                                                           learning_rate);
 
   // Do 2 optimiser steps
   optimiser.Run({data}, gt);
@@ -158,9 +164,10 @@ TYPED_TEST(OptimisersTest, sgd_optimiser_training_2D)
 
   // Prepare model
   std::string                                  input_name;
+  std::string                                  label_name;
   std::string                                  output_name;
   std::shared_ptr<fetch::ml::Graph<TypeParam>> g =
-      PrepareTestGraph<TypeParam>(4, 2, input_name, output_name);
+      PrepareTestGraph<TypeParam>(4, 2, input_name, label_name, output_name);
 
   // Prepare data and labels
   TypeParam data;
@@ -168,8 +175,8 @@ TYPED_TEST(OptimisersTest, sgd_optimiser_training_2D)
   PrepareTestDataAndLabels2D(data, gt);
 
   // Initialize Optimiser
-  fetch::ml::optimisers::SGDOptimiser<TypeParam, fetch::ml::ops::MeanSquareError<TypeParam>>
-      optimiser(g, {input_name}, "", output_name, learning_rate);
+  fetch::ml::optimisers::SGDOptimiser<TypeParam> optimiser(g, {input_name}, label_name, output_name,
+                                                           learning_rate);
 
   // Do 2 optimiser steps
   optimiser.Run({data}, gt);
@@ -194,9 +201,10 @@ TYPED_TEST(OptimisersTest, momentum_optimiser_training)
 
   // Prepare model
   std::string                                  input_name;
+  std::string                                  label_name;
   std::string                                  output_name;
   std::shared_ptr<fetch::ml::Graph<TypeParam>> g =
-      PrepareTestGraph<TypeParam>(1, 1, input_name, output_name);
+      PrepareTestGraph<TypeParam>(1, 1, input_name, label_name, output_name);
 
   // Prepare data and labels
   TypeParam data;
@@ -204,8 +212,8 @@ TYPED_TEST(OptimisersTest, momentum_optimiser_training)
   PrepareTestDataAndLabels1D(data, gt);
 
   // Initialize Optimiser
-  fetch::ml::optimisers::MomentumOptimiser<TypeParam, fetch::ml::ops::MeanSquareError<TypeParam>>
-      optimiser(g, {input_name}, "", output_name, learning_rate);
+  fetch::ml::optimisers::MomentumOptimiser<TypeParam> optimiser(g, {input_name}, label_name,
+                                                                output_name, learning_rate);
 
   // Do 2 optimiser steps to ensure that momentum was applied
   optimiser.Run({data}, gt);
@@ -230,9 +238,10 @@ TYPED_TEST(OptimisersTest, momentum_optimiser_training_2D)
 
   // Prepare model
   std::string                                  input_name;
+  std::string                                  label_name;
   std::string                                  output_name;
   std::shared_ptr<fetch::ml::Graph<TypeParam>> g =
-      PrepareTestGraph<TypeParam>(4, 2, input_name, output_name);
+      PrepareTestGraph<TypeParam>(4, 2, input_name, label_name, output_name);
 
   // Prepare data and labels
   TypeParam data;
@@ -240,8 +249,8 @@ TYPED_TEST(OptimisersTest, momentum_optimiser_training_2D)
   PrepareTestDataAndLabels2D(data, gt);
 
   // Initialize Optimiser
-  fetch::ml::optimisers::MomentumOptimiser<TypeParam, fetch::ml::ops::MeanSquareError<TypeParam>>
-      optimiser(g, {input_name}, "", output_name, learning_rate);
+  fetch::ml::optimisers::MomentumOptimiser<TypeParam> optimiser(g, {input_name}, label_name,
+                                                                output_name, learning_rate);
 
   // Do 2 optimiser steps
   optimiser.Run({data}, gt);
@@ -266,9 +275,10 @@ TYPED_TEST(OptimisersTest, adagrad_optimiser_training)
 
   // Prepare model
   std::string                                  input_name;
+  std::string                                  label_name;
   std::string                                  output_name;
   std::shared_ptr<fetch::ml::Graph<TypeParam>> g =
-      PrepareTestGraph<TypeParam>(1, 1, input_name, output_name);
+      PrepareTestGraph<TypeParam>(1, 1, input_name, label_name, output_name);
 
   // Prepare data and labels
   TypeParam data;
@@ -276,8 +286,8 @@ TYPED_TEST(OptimisersTest, adagrad_optimiser_training)
   PrepareTestDataAndLabels1D(data, gt);
 
   // Initialize Optimiser
-  fetch::ml::optimisers::AdaGradOptimiser<TypeParam, fetch::ml::ops::MeanSquareError<TypeParam>>
-      optimiser(g, {input_name}, "", output_name, learning_rate);
+  fetch::ml::optimisers::AdaGradOptimiser<TypeParam> optimiser(g, {input_name}, label_name,
+                                                               output_name, learning_rate);
 
   // Do multiple steps
   optimiser.Run({data}, gt);
@@ -302,9 +312,10 @@ TYPED_TEST(OptimisersTest, adagrad_optimiser_training_2D)
 
   // Prepare model
   std::string                                  input_name;
+  std::string                                  label_name;
   std::string                                  output_name;
   std::shared_ptr<fetch::ml::Graph<TypeParam>> g =
-      PrepareTestGraph<TypeParam>(4, 2, input_name, output_name);
+      PrepareTestGraph<TypeParam>(4, 2, input_name, label_name, output_name);
 
   // Prepare data and labels
   TypeParam data;
@@ -312,8 +323,8 @@ TYPED_TEST(OptimisersTest, adagrad_optimiser_training_2D)
   PrepareTestDataAndLabels2D(data, gt);
 
   // Initialize Optimiser
-  fetch::ml::optimisers::AdaGradOptimiser<TypeParam, fetch::ml::ops::MeanSquareError<TypeParam>>
-      optimiser(g, {input_name}, "", output_name, learning_rate);
+  fetch::ml::optimisers::AdaGradOptimiser<TypeParam> optimiser(g, {input_name}, label_name,
+                                                               output_name, learning_rate);
 
   // Do multiple steps
   optimiser.Run({data}, gt);
@@ -338,9 +349,10 @@ TYPED_TEST(OptimisersTest, rmsprop_optimiser_training)
 
   // Prepare model
   std::string                                  input_name;
+  std::string                                  label_name;
   std::string                                  output_name;
   std::shared_ptr<fetch::ml::Graph<TypeParam>> g =
-      PrepareTestGraph<TypeParam>(1, 1, input_name, output_name);
+      PrepareTestGraph<TypeParam>(1, 1, input_name, label_name, output_name);
 
   // Prepare data and labels
   TypeParam data;
@@ -348,8 +360,8 @@ TYPED_TEST(OptimisersTest, rmsprop_optimiser_training)
   PrepareTestDataAndLabels1D(data, gt);
 
   // Initialize Optimiser
-  fetch::ml::optimisers::RMSPropOptimiser<TypeParam, fetch::ml::ops::MeanSquareError<TypeParam>>
-      optimiser(g, {input_name}, "", output_name, learning_rate);
+  fetch::ml::optimisers::RMSPropOptimiser<TypeParam> optimiser(g, {input_name}, label_name,
+                                                               output_name, learning_rate);
 
   // Do multiple steps
   optimiser.Run({data}, gt);
@@ -374,9 +386,10 @@ TYPED_TEST(OptimisersTest, rmsprop_optimiser_training_2D)
 
   // Prepare model
   std::string                                  input_name;
+  std::string                                  label_name;
   std::string                                  output_name;
   std::shared_ptr<fetch::ml::Graph<TypeParam>> g =
-      PrepareTestGraph<TypeParam>(4, 2, input_name, output_name);
+      PrepareTestGraph<TypeParam>(4, 2, input_name, label_name, output_name);
 
   // Prepare data and labels
   TypeParam data;
@@ -384,8 +397,8 @@ TYPED_TEST(OptimisersTest, rmsprop_optimiser_training_2D)
   PrepareTestDataAndLabels2D(data, gt);
 
   // Initialize Optimiser
-  fetch::ml::optimisers::RMSPropOptimiser<TypeParam, fetch::ml::ops::MeanSquareError<TypeParam>>
-      optimiser(g, {input_name}, "", output_name, learning_rate);
+  fetch::ml::optimisers::RMSPropOptimiser<TypeParam> optimiser(g, {input_name}, label_name,
+                                                               output_name, learning_rate);
 
   // Do multiple steps
   optimiser.Run({data}, gt);
@@ -410,9 +423,10 @@ TYPED_TEST(OptimisersTest, adam_optimiser_training)
 
   // Prepare model
   std::string                                  input_name;
+  std::string                                  label_name;
   std::string                                  output_name;
   std::shared_ptr<fetch::ml::Graph<TypeParam>> g =
-      PrepareTestGraph<TypeParam>(1, 1, input_name, output_name);
+      PrepareTestGraph<TypeParam>(1, 1, input_name, label_name, output_name);
 
   // Prepare data and labels
   TypeParam data;
@@ -420,8 +434,8 @@ TYPED_TEST(OptimisersTest, adam_optimiser_training)
   PrepareTestDataAndLabels1D(data, gt);
 
   // Initialize Optimiser
-  fetch::ml::optimisers::AdamOptimiser<TypeParam, fetch::ml::ops::MeanSquareError<TypeParam>>
-      optimiser(g, {input_name}, "", output_name, learning_rate);
+  fetch::ml::optimisers::AdamOptimiser<TypeParam> optimiser(g, {input_name}, label_name,
+                                                            output_name, learning_rate);
 
   // Do multiple steps
   optimiser.Run({data}, gt);
@@ -446,9 +460,10 @@ TYPED_TEST(OptimisersTest, adam_optimiser_training_2D)
 
   // Prepare model
   std::string                                  input_name;
+  std::string                                  label_name;
   std::string                                  output_name;
   std::shared_ptr<fetch::ml::Graph<TypeParam>> g =
-      PrepareTestGraph<TypeParam>(4, 2, input_name, output_name);
+      PrepareTestGraph<TypeParam>(4, 2, input_name, label_name, output_name);
 
   // Prepare data and labels
   TypeParam data;
@@ -456,8 +471,8 @@ TYPED_TEST(OptimisersTest, adam_optimiser_training_2D)
   PrepareTestDataAndLabels2D(data, gt);
 
   // Initialize Optimiser
-  fetch::ml::optimisers::AdamOptimiser<TypeParam, fetch::ml::ops::MeanSquareError<TypeParam>>
-      optimiser(g, {input_name}, "", output_name, learning_rate);
+  fetch::ml::optimisers::AdamOptimiser<TypeParam> optimiser(g, {input_name}, label_name,
+                                                            output_name, learning_rate);
 
   // Do multiple steps
   optimiser.Run({data}, gt);
@@ -482,10 +497,11 @@ TYPED_TEST(OptimisersTest, adam_optimiser_minibatch_training)
 
   // Prepare model
   std::string                                  input_name;
+  std::string                                  label_name;
   std::string                                  output_name;
   std::shared_ptr<fetch::ml::Graph<TypeParam>> g =
 
-      PrepareTestGraph<TypeParam>(1, 1, input_name, output_name);
+      PrepareTestGraph<TypeParam>(1, 1, input_name, label_name, output_name);
 
   // Prepare data and labels
   TypeParam data;
@@ -493,15 +509,15 @@ TYPED_TEST(OptimisersTest, adam_optimiser_minibatch_training)
   PrepareTestDataAndLabels1D(data, gt);
 
   // Initialize Optimiser
-  fetch::ml::optimisers::AdamOptimiser<TypeParam, fetch::ml::ops::MeanSquareError<TypeParam>>
-      optimiser(g, {input_name}, "", output_name, learning_rate);
+  fetch::ml::optimisers::AdamOptimiser<TypeParam> optimiser(g, {input_name}, label_name,
+                                                            output_name, learning_rate);
 
   // Do multiple steps
   optimiser.Run({data}, gt, 3);
   DataType loss = optimiser.Run({data}, gt, 2);
 
   // Test loss
-  EXPECT_NEAR(static_cast<double>(loss), 5.1753158569335938, 1e-5);
+  EXPECT_NEAR(static_cast<double>(loss), 7.6924142837524414, 1e-5);
 
   // Test weights
   std::vector<TypeParam> weights = g->get_weights();

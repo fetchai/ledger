@@ -40,7 +40,7 @@ TYPED_TEST(SoftmaxCrossEntropyTest, perfect_match_forward_test)
   SizeType n_data_points = 1;
 
   TypeParam data1({n_data_points, n_classes});
-  TypeParam gt({n_data_points, n_classes});
+  TypeParam data2({n_data_points, n_classes});
 
   // these are not logits - a softmax will get called on this
   data1.At(0, 0) = DataType(0);
@@ -48,12 +48,15 @@ TYPED_TEST(SoftmaxCrossEntropyTest, perfect_match_forward_test)
   data1.At(0, 2) = DataType(999999.);
 
   //
-  gt.At(0, 0) = DataType(0);
-  gt.At(0, 1) = DataType(0);
-  gt.At(0, 2) = DataType(1);
+  data2.At(0, 0) = DataType(0);
+  data2.At(0, 1) = DataType(0);
+  data2.At(0, 2) = DataType(1);
 
   fetch::ml::ops::SoftmaxCrossEntropy<TypeParam> op;
-  EXPECT_EQ(op.Forward({data1, gt}), DataType(0));
+  TypeParam                                      result({1, 1});
+  op.Forward({data1, data2}, result);
+
+  EXPECT_EQ(result(0, 0), DataType(0));
 }
 
 TYPED_TEST(SoftmaxCrossEntropyTest, simple_forward_test)
@@ -66,12 +69,12 @@ TYPED_TEST(SoftmaxCrossEntropyTest, simple_forward_test)
 
   TypeParam data1(std::vector<SizeType>{n_data_points, n_classes});
 
-  TypeParam gt(std::vector<SizeType>{n_data_points, n_classes});
-  gt.Fill(DataType(0));
-  gt.At(0, 1) = DataType(1);
-  gt.At(1, 2) = DataType(1);
-  gt.At(2, 3) = DataType(1);
-  gt.At(3, 0) = DataType(1);
+  TypeParam data2(std::vector<SizeType>{n_data_points, n_classes});
+  data2.Fill(DataType(0));
+  data2.At(0, 1) = DataType(1);
+  data2.At(1, 2) = DataType(1);
+  data2.At(2, 3) = DataType(1);
+  data2.At(3, 0) = DataType(1);
 
   std::vector<double> vals{0.1,  0.8,  0.05, 0.05, 0.2, 0.5, 0.2, 0.1,
                            0.05, 0.05, 0.8,  0.1,  0.5, 0.1, 0.1, 0.3};
@@ -86,9 +89,13 @@ TYPED_TEST(SoftmaxCrossEntropyTest, simple_forward_test)
   }
 
   fetch::ml::ops::SoftmaxCrossEntropy<TypeParam> op;
-  ASSERT_FLOAT_EQ(float(op.Forward({data1, gt})), float((1.4480233671411693 + 0.8925382250479597 +
-                                                         1.5925382250479596 + 1.1503729081395468) /
-                                                        double(n_data_points)));
+  TypeParam                                      result({1, 1});
+  op.Forward({data1, data2}, result);
+
+  ASSERT_FLOAT_EQ(static_cast<float>(result(0, 0)),
+                  static_cast<float>((1.4480233671411693 + 0.8925382250479597 + 1.5925382250479596 +
+                                      1.1503729081395468) /
+                                     static_cast<double>(n_data_points)));
 }
 
 TYPED_TEST(SoftmaxCrossEntropyTest, trivial_one_dimensional_backward_test)
@@ -120,8 +127,12 @@ TYPED_TEST(SoftmaxCrossEntropyTest, trivial_one_dimensional_backward_test)
     data2.Set(SizeType{0}, i, DataType(targets[i]));
   }
 
+  TypeParam error_signal({1, 1});
+  error_signal(0, 0) = DataType{1};
+
   fetch::ml::ops::SoftmaxCrossEntropy<TypeParam> op;
-  EXPECT_TRUE(op.Backward({data1, data2}).AllClose(gt, DataType(1e-5), DataType(1e-5)));
+  EXPECT_TRUE(
+      op.Backward({data1, data2}, error_signal).at(0).AllClose(gt, DataType(1e-5), DataType(1e-5)));
 }
 
 TYPED_TEST(SoftmaxCrossEntropyTest, backward_test)
@@ -133,7 +144,7 @@ TYPED_TEST(SoftmaxCrossEntropyTest, backward_test)
   SizeType n_data_points = 4;
 
   TypeParam data1(std::vector<SizeType>{n_data_points, n_classes});
-  TypeParam err_sig(std::vector<SizeType>{n_data_points, n_classes});
+  TypeParam data2(std::vector<SizeType>{n_data_points, n_classes});
   TypeParam gt(std::vector<SizeType>{n_data_points, n_classes});
 
   /// python script computing these values can be found at
@@ -167,12 +178,16 @@ TYPED_TEST(SoftmaxCrossEntropyTest, backward_test)
     for (SizeType j = 0; j < n_classes; ++j)
     {
       data1.Set(i, j, DataType(vals[idx_count]));
-      err_sig.Set(i, j, DataType(err[idx_count]));
+      data2.Set(i, j, DataType(err[idx_count]));
       ++idx_count;
     }
   }
 
   fetch::ml::ops::SoftmaxCrossEntropy<TypeParam> op;
 
-  EXPECT_TRUE(op.Backward({data1, err_sig}).AllClose(gt, DataType(1e-7), DataType(1e-7)));
+  TypeParam error_signal({1, 1});
+  error_signal(0, 0) = DataType{1};
+
+  EXPECT_TRUE(
+      op.Backward({data1, data2}, error_signal).at(0).AllClose(gt, DataType(1e-7), DataType(1e-7)));
 }

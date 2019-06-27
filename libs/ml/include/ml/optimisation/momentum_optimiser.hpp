@@ -18,7 +18,6 @@
 //------------------------------------------------------------------------------
 
 #include "ml/graph.hpp"
-#include "ml/ops/loss_functions/criterion.hpp"
 #include "ml/optimisation/optimiser.hpp"
 
 namespace fetch {
@@ -62,12 +61,12 @@ private:
 template <class T>
 MomentumOptimiser<T>::MomentumOptimiser(std::shared_ptr<Graph<T>>
 
-                                                                           graph,
-                                           std::vector<std::string> const &input_node_names,
-                                           std::string const &             label_node_name,
-                                           std::string const &             output_node_name,
-                                           DataType const &                learning_rate,
-                                           DataType const &                momentum_update)
+                                                                        graph,
+                                        std::vector<std::string> const &input_node_names,
+                                        std::string const &             label_node_name,
+                                        std::string const &             output_node_name,
+                                        DataType const &                learning_rate,
+                                        DataType const &                momentum_update)
   : Optimiser<T>(graph, input_node_names, label_node_name, output_node_name, learning_rate)
   , momentum_update_(momentum_update)
 {

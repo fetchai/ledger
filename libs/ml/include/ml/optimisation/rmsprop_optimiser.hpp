@@ -19,7 +19,6 @@
 
 #include "math/standard_functions/sqrt.hpp"
 #include "ml/graph.hpp"
-#include "ml/ops/loss_functions/criterion.hpp"
 #include "optimiser.hpp"
 
 namespace fetch {
@@ -64,12 +63,12 @@ private:
 template <class T>
 RMSPropOptimiser<T>::RMSPropOptimiser(std::shared_ptr<Graph<T>>
 
-                                                                         graph,
-                                         std::vector<std::string> const &input_node_names,
-                                         std::string const &             label_node_name,
-                                         std::string const &             output_node_name,
-                                         DataType const &learning_rate, DataType const &decay_rate,
-                                         DataType const &epsilon)
+                                                                      graph,
+                                      std::vector<std::string> const &input_node_names,
+                                      std::string const &             label_node_name,
+                                      std::string const &             output_node_name,
+                                      DataType const &learning_rate, DataType const &decay_rate,
+                                      DataType const &epsilon)
   : Optimiser<T>(graph, input_node_names, label_node_name, output_node_name, learning_rate)
   ,
 
