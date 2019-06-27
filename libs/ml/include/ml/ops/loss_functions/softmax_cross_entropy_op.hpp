@@ -31,7 +31,7 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class CrossEntropyOp : public Ops<T>
+class SoftmaxCrossEntropyOp : public Ops<T>
 {
 public:
   using ArrayType     = T;
@@ -40,15 +40,23 @@ public:
   using ArrayPtrType  = std::shared_ptr<ArrayType>;
   using VecTensorType = typename Ops<T>::VecTensorType;
 
-  CrossEntropyOp()          = default;
-  virtual ~CrossEntropyOp() = default;
+  SoftmaxCrossEntropyOp()          = default;
+  virtual ~SoftmaxCrossEntropyOp() = default;
 
   virtual void Forward(VecTensorType const &inputs, ArrayType &output)
   {
+    // third term may be present for specifying n_classes
     assert(inputs.size() == 2);
     assert(inputs.at(0).get().size() == inputs.at(1).get().size());
 
-    output(0, 0) = fetch::math::CrossEntropyLoss(inputs[0].get(), inputs[1].get());
+    // sanity check the softmax adds up to 1
+    assert(Sum(fetch::math::Softmax(inputs.at(0).get())) -
+               (DataType(inputs.at(0).get().shape().at(0))) <
+           0.0001);
+
+    // softmax forward & then CrossEntropy
+    output(0, 0) =
+        fetch::math::CrossEntropyLoss(fetch::math::Softmax(inputs[0].get()), inputs[1].get());
   }
 
   virtual std::vector<ArrayType> Backward(VecTensorType const &inputs,
@@ -56,21 +64,8 @@ public:
   {
     assert(inputs.size() == 2);
     assert(inputs[0].get().size() == inputs[1].get().size());
-    assert(inputs[0].get().shape().size() == 2);
 
-    ArrayType ret;
-    if (inputs[0].get().shape().at(0) == 1)  // not one-hot
-    {
-      ret = fetch::math::Sigmoid(inputs[0].get());
-      fetch::math::Subtract(ret, inputs[1].get(), ret);
-      fetch::math::Multiply(ret, inputs[0].get(), ret);
-    }
-    else if (inputs[0].get().shape().size())  // one-hot
-    {
-      ret = fetch::math::Softmax(inputs[0].get(), 1);
-      fetch::math::Divide(inputs[1].get(), ret, ret);
-      fetch::math::Multiply(DataType(-1), ret, ret);
-    }
+    ArrayType ret = fetch::math::Subtract(fetch::math::Softmax(inputs[0].get()), inputs[1].get());
 
     // chain rule
     fetch::math::Multiply(ret, error_signal, ret);
@@ -84,7 +79,7 @@ public:
     return {1, 1};
   }
 
-  static constexpr char const *DESCRIPTOR = "CrossEntropyOp";
+  static constexpr char const *DESCRIPTOR = "SoftmaxCrossEntropyOp";
 };
 
 }  // namespace ops

@@ -88,7 +88,6 @@ int main(int ac, char **av)
   {
     loss = optimiser.Run(data_loader, batch_size, subset_size);
     std::cout << "Loss: " << loss << std::endl;
-    std::cout << std::endl;
   }
 
   return 0;
