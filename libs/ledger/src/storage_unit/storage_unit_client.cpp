@@ -88,7 +88,6 @@ byte_array::ConstByteArray StorageUnitClient::CurrentHash()
   std::size_t index = 0;
   for (auto &p : promises)
   {
-    FETCH_LOG_PROMISE();
     tree[index] = p->As<byte_array::ByteArray>();
 
     FETCH_LOG_DEBUG(LOGGING_NAME, "Merkle Hash ", index, ": 0x", tree[index].ToHex());
@@ -196,8 +195,6 @@ bool StorageUnitClient::RevertToHash(Hash const &hash, uint64_t index)
   bool all_success{true};
   for (auto &p : promises)
   {
-    FETCH_LOG_PROMISE();
-
     if (!p->As<bool>())
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Failed to revert shard ", lane_index, " to ",
@@ -247,7 +244,6 @@ byte_array::ConstByteArray StorageUnitClient::Commit(uint64_t commit_index)
   std::size_t index = 0;
   for (auto &p : promises)
   {
-    FETCH_LOG_PROMISE();
     tree[index] = p->As<byte_array::ByteArray>();
 
     ++index;
@@ -342,7 +338,6 @@ void StorageUnitClient::AddTransaction(Transaction const &tx)
                                                     TxStoreProtocol::SET, resource, tx);
 
     // wait the for the response
-    FETCH_LOG_PROMISE();
     promise->Wait();
   }
   catch (std::exception const &ex)
@@ -364,7 +359,6 @@ StorageUnitClient::TxLayouts StorageUnitClient::PollRecentTx(uint32_t max_to_pol
     auto promise =
         rpc_client_->CallSpecificAddress(lane_address, RPC_TX_STORE, TxStoreProtocol::GET_RECENT,
                                          uint32_t(max_to_poll / addresses_.size()));
-    FETCH_LOG_PROMISE();
     promises.push_back(promise);
   }
 
@@ -509,8 +503,6 @@ void StorageUnitClient::Set(ResourceAddress const &key, StateValue const &value)
         LookupAddress(key), RPC_STATE, fetch::storage::RevertibleDocumentStoreProtocol::SET,
         key.as_resource_id(), value);
 
-    FETCH_LOG_PROMISE();
-
     // wait for the response
     promise->Wait();
   }
@@ -579,7 +571,6 @@ StorageUnitClient::Keys StorageUnitClient::KeyDump() const
 
   for (auto &p : promises)
   {
-    FETCH_LOG_PROMISE();
     StorageUnitClient::Keys keys = p->As<StorageUnitClient::Keys>();
 
     for (auto const &key : keys)
