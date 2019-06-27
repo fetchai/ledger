@@ -106,13 +106,8 @@ BlockStatus MainChain::AddBlock(Block const &blk)
   // create a copy of the block
   auto block = std::make_shared<Block>(blk);
 
-  // update the weight based on the proof and the number of transactions
-  block->weight       = 1;
+  // At this point we assume that the weight has been correctly set by the miner
   block->total_weight = 1;
-  for (auto const &slice : block->body.slices)
-  {
-    block->weight += slice.size();
-  }
 
   // pass the block to the
   auto const status = InsertBlock(block);
