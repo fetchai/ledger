@@ -29,12 +29,13 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class LogSigmoid : public fetch::ml::ElementWiseOps<T>
+class LogSigmoid : public fetch::ml::Ops<T>
 {
 public:
   using ArrayType     = T;
   using DataType      = typename ArrayType::Type;
-  using VecTensorType = typename ElementWiseOps<T>::VecTensorType;
+  using SizeType      = typename ArrayType::SizeType;
+  using VecTensorType = typename Ops<T>::VecTensorType;
 
   LogSigmoid()          = default;
   virtual ~LogSigmoid() = default;
@@ -42,7 +43,7 @@ public:
   virtual void Forward(VecTensorType const &inputs, ArrayType &output)
   {
     assert(inputs.size() == 1);
-    ASSERT(output.shape() == this->ComputeOutputShape(inputs));
+    assert(output.shape() == this->ComputeOutputShape(inputs));
 
     fetch::math::Sigmoid(inputs.front().get(), output);
     fetch::math::Log(output, output);
@@ -62,13 +63,19 @@ public:
     ArrayType return_signal{error_signal.shape()};
 
     // gradient of log-sigmoid function is 1/(e^x + 1))
-    fetch::math::Add(fetch::math::Exp(inputs.front().get()), DataType(1), return_signal);
-    fetch::math::Divide(DataType(1), return_signal, return_signal);
+    fetch::math::Add(fetch::math::Exp(inputs.front().get()), static_cast<DataType>(1),
+                     return_signal);
+    fetch::math::Divide(static_cast<DataType>(1), return_signal, return_signal);
 
     // multiply by error_signal (chain rule)
     fetch::math::Multiply(error_signal, return_signal, return_signal);
 
     return {return_signal};
+  }
+
+  virtual std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const
+  {
+    return inputs.front().get().shape();
   }
 
   static constexpr char const *DESCRIPTOR = "LogSigmoid";
