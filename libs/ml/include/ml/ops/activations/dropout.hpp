@@ -65,7 +65,7 @@ public:
       UpdateRandomValues();
 
       fetch::math::Multiply(inputs.front().get(), drop_values_, output);
-      fetch::math::Multiply(output, 1.0 / probability_, output);
+      fetch::math::Multiply(output, DataType{1.0} / probability_, output);
     }
   }
 
