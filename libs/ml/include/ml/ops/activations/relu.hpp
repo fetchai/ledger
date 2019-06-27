@@ -40,8 +40,8 @@ public:
   // f(x)=max(0,x);
   void Forward(VecTensorType const &inputs, ArrayType &output)
   {
-    ASSERT(inputs.size() == 1);
-    ASSERT(output.shape() == this->ComputeOutputShape(inputs));
+    assert(inputs.size() == 1);
+    assert(output.shape() == this->ComputeOutputShape(inputs));
     fetch::math::Relu(inputs.front().get(), output);
   }
 
@@ -55,8 +55,8 @@ public:
    */
   std::vector<ArrayType> Backward(VecTensorType const &inputs, ArrayType const &error_signal)
   {
-    ASSERT(inputs.size() == 1);
-    ASSERT(inputs[0].get().shape() == error_signal.shape());
+    assert(inputs.size() == 1);
+    assert(inputs[0].get().shape() == error_signal.shape());
 
     ArrayType const &input = inputs.front().get();
     ArrayType        return_signal{error_signal.shape()};
@@ -67,7 +67,7 @@ public:
 
     while (it1.is_valid())
     {
-      if (*it1 <= DataType(0))
+      if (*it1 <= static_cast<DataType>(0))
       {
         *it2 = static_cast<DataType>(0);
       }

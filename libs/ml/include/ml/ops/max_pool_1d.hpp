@@ -50,10 +50,10 @@ public:
    */
   void Forward(VecTensorType const &inputs, ArrayType &output) override
   {
-    ASSERT(inputs.size() == 1);
+    assert(inputs.size() == 1);
     // Input must be a 3D tensor [C x W x N]
-    ASSERT(inputs.at(0).get().shape().size() == 3);
-    ASSERT(output.shape() == ComputeOutputShape(inputs));
+    assert(inputs.at(0).get().shape().size() == 3);
+    assert(output.shape() == ComputeOutputShape(inputs));
 
     SizeType iter;
     DataType max;
@@ -102,8 +102,8 @@ public:
   std::vector<ArrayType> Backward(VecTensorType const &inputs,
                                   ArrayType const &    error_signal) override
   {
-    ASSERT(inputs.size() == 1);
-    ASSERT(error_signal.shape() == ComputeOutputShape(inputs));
+    assert(inputs.size() == 1);
+    assert(error_signal.shape() == ComputeOutputShape(inputs));
 
     ArrayType return_signal{inputs.at(0).get().shape()};
 

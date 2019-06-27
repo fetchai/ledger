@@ -19,7 +19,8 @@
 #include "vm/module.hpp"
 #include "vm_modules/core/print.hpp"
 #include "vm_modules/core/type_convert.hpp"
-#include "vm_modules/math/fixed_point.hpp"
+
+#include "vm_modules/math/math.hpp"
 
 #include <cstdlib>
 #include <fstream>
@@ -48,7 +49,7 @@ int main(int argc, char **argv)
 
   fetch::vm_modules::CreatePrint(*module);
   fetch::vm_modules::CreateToString(*module);
-  fetch::vm_modules::CreateFixedPoint(module);
+  fetch::vm_modules::math::BindMath(*module);
 
   // Setting compiler up
   fetch::vm::Compiler *    compiler = new fetch::vm::Compiler(module.get());

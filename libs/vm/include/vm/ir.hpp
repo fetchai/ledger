@@ -28,16 +28,19 @@ using IRTypePtr      = std::shared_ptr<IRType>;
 using IRTypePtrArray = std::vector<IRTypePtr>;
 struct IRType
 {
-  IRType(TypeKind type_kind__, std::string const &name__, IRTypePtrArray const &parameter_types__)
+  IRType(TypeKind type_kind__, std::string const &name__, IRTypePtr const &template_type__,
+         IRTypePtrArray const &parameter_types__)
   {
     type_kind       = type_kind__;
     name            = name__;
+    template_type   = template_type__;
     parameter_types = parameter_types__;
     resolved_id     = TypeIds::Unknown;
   }
   virtual ~IRType() = default;
   virtual void Reset()
   {
+    template_type = nullptr;
     parameter_types.clear();
   }
   bool IsNull() const
@@ -59,14 +62,15 @@ struct IRType
   }
   TypeKind       type_kind;
   std::string    name;
+  IRTypePtr      template_type;
   IRTypePtrArray parameter_types;
   uint16_t       resolved_id;
 };
 
 inline IRTypePtr CreateIRType(TypeKind type_kind, std::string const &name,
-                              IRTypePtrArray const &parameter_types)
+                              IRTypePtr const &template_type, IRTypePtrArray const &parameter_types)
 {
-  return std::make_shared<IRType>(IRType(type_kind, name, parameter_types));
+  return std::make_shared<IRType>(IRType(type_kind, name, template_type, parameter_types));
 }
 
 struct IRVariable

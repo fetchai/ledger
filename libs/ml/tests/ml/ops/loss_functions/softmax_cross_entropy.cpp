@@ -43,8 +43,8 @@ TYPED_TEST(SoftmaxCrossEntropyTest, perfect_match_forward_test)
   TypeParam data2({n_data_points, n_classes});
 
   // these are not logits - a softmax will get called on this
-  data1.At(0, 0) = DataType(0);
-  data1.At(0, 1) = DataType(0);
+  data1.At(0, 0) = static_cast<DataType>(0);
+  data1.At(0, 1) = static_cast<DataType>(0);
   data1.At(0, 2) = DataType(999999.);
 
   //
@@ -149,7 +149,7 @@ TYPED_TEST(SoftmaxCrossEntropyTest, backward_test)
 
   /// python script computing these values can be found at
   /// scripts/python_ml_lib/cross_entropy_test.py
-  gt.Fill(DataType(0));
+  gt.Fill(static_cast<DataType>(0));
   std::vector<double> gt_vals{
       0.20340865850448608398, 0.30961471796035766602, 0.19348828494548797607,
       0.19348828494548797607, 0.23503439128398895264, 0.31726324558258056641,

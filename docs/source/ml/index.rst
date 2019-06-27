@@ -65,4 +65,3 @@ General Notes for Working with the Machine Learning Library
 - Function ComputeOutputShape for classes that inherits from Ops is usually expensive and should be used only for initialization or in ASSERT. On Forward you can use output.shape() instead and for Backward there is error_signal.shape()
 - Batch dimension is always trailing dimension, if you work with single datapoint it needs to have trailing dimension of size 1.
 - Dataloaders are designed to reteturn pair of {Label,{Data}}, where Data are in vector.
-

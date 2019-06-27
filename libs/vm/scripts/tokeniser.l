@@ -38,7 +38,7 @@ int Set(fetch::vm::Token* token, const fetch::vm::Token::Kind kind, const char* 
 }
 
 %}
-	 
+
 
 EXP			[Ee][+-]?[0-9]+
 STR1			([^"\\\n]|\\.)*
@@ -49,7 +49,7 @@ REAL2		[0-9]+{EXP}
 FIXED1		([0-9]*\.[0-9]+|[0-9]+\.)
 FIXED2		[0-9]
 IDENT		[_a-zA-Z][_a-zA-Z0-9]*
-		
+
 %%
 
 	/* whitespace */
@@ -84,9 +84,9 @@ IDENT		[_a-zA-Z][_a-zA-Z0-9]*
 	yyextra->offset += yyleng;
 	yyextra->line++;
 }
-	
+
 	/* numbers */
-		
+
 {INTEGER}i8 {
 	return Set(yylval, fetch::vm::Token::Kind::Integer8, yytext, yyleng, yyextra);
 }
@@ -150,7 +150,7 @@ IDENT		[_a-zA-Z][_a-zA-Z0-9]*
 }
 
 \"{STR1}\n |
-\'{STR2}\n { 
+\'{STR2}\n {
 	Set(yylval, fetch::vm::Token::Kind::BadString, yytext, yyleng, yyextra);
 	yyextra->line++;
 	return 1;

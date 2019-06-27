@@ -91,7 +91,7 @@ void PlusOneTest()
   ////////////////////////////////////////
 
   TypeParam data{{4, 1}};
-  data.Set(0, 0, DataType(1));
+  data.Set(0, 0, static_cast<DataType>(1));
   data.Set(1, 0, DataType(2));
   data.Set(2, 0, DataType(3));
   data.Set(3, 0, DataType(4));
@@ -108,7 +108,7 @@ void PlusOneTest()
 
   TypeParam cur_gt{{1, 1}};
   TypeParam cur_input{{1, 1}};
-  DataType  loss = DataType(0);
+  DataType  loss = static_cast<DataType>(0);
 
   for (SizeType step{0}; step < 4; ++step)
   {
@@ -137,7 +137,7 @@ void PlusOneTest()
 
   for (std::size_t i = 0; i < n_batches; ++i)
   {
-    loss = DataType(0);
+    loss = static_cast<DataType>(0);
 
     for (SizeType step{0}; step < 4; ++step)
     {
@@ -202,24 +202,24 @@ void CategoricalPlusOneTest(bool add_softmax = false)
   ////////////////////////////////////////
 
   TypeParam data{{n_data, SizeType(n_classes.At(0))}};
-  data.Fill(DataType(0));
-  data.Set(0, 0, DataType(1));
-  data.Set(1, 1, DataType(1));
-  data.Set(2, 2, DataType(1));
-  data.Set(3, 3, DataType(1));
+  data.Fill(static_cast<DataType>(0));
+  data.Set(0, 0, static_cast<DataType>(1));
+  data.Set(1, 1, static_cast<DataType>(1));
+  data.Set(2, 2, static_cast<DataType>(1));
+  data.Set(3, 3, static_cast<DataType>(1));
 
   TypeParam gt{{n_data, SizeType(n_classes.At(0))}};
-  gt.Fill(DataType(0));
-  gt.Set(0, 1, DataType(1));
-  gt.Set(1, 2, DataType(1));
-  gt.Set(2, 3, DataType(1));
-  gt.Set(3, 0, DataType(1));
+  gt.Fill(static_cast<DataType>(0));
+  gt.Set(0, 1, static_cast<DataType>(1));
+  gt.Set(1, 2, static_cast<DataType>(1));
+  gt.Set(2, 3, static_cast<DataType>(1));
+  gt.Set(3, 0, static_cast<DataType>(1));
 
   /////////////////////////
   /// ONE TRAINING STEP ///
   /////////////////////////
 
-  DataType loss = DataType(0);
+  DataType loss = static_cast<DataType>(0);
 
   for (SizeType step{0}; step < n_data; ++step)
   {
@@ -248,7 +248,7 @@ void CategoricalPlusOneTest(bool add_softmax = false)
 
   for (std::size_t i = 0; i < n_batches; ++i)
   {
-    loss = DataType(0);
+    loss = static_cast<DataType>(0);
 
     for (SizeType step{0}; step < n_data; ++step)
     {
@@ -321,7 +321,7 @@ void CategoricalXorTest(bool add_softmax = false)
 
   TypeParam cur_gt{{SizeType(1), SizeType(n_classes.At(0))}};
   TypeParam cur_input{{SizeType(1), SizeType(n_classes.At(0))}};
-  DataType  loss = DataType(0);
+  DataType  loss = static_cast<DataType>(0);
 
   for (SizeType step{0}; step < n_data; ++step)
   {
@@ -350,7 +350,7 @@ void CategoricalXorTest(bool add_softmax = false)
 
   for (std::size_t i = 0; i < n_batches; ++i)
   {
-    loss = DataType(0);
+    loss = static_cast<DataType>(0);
 
     for (SizeType step{0}; step < n_data; ++step)
     {

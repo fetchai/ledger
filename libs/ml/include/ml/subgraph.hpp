@@ -61,7 +61,7 @@ private:
 template <typename T>
 void SubGraph<T>::Forward(VecTensorType const &inputs, ArrayType &output)
 {
-  ASSERT(inputs.size() == this->input_nodes_.size());
+  assert(inputs.size() == this->input_nodes_.size());
   for (uint64_t i(0); i < inputs.size(); ++i)
   {
     this->SetInput(input_nodes_[i], inputs.at(i));
@@ -72,7 +72,8 @@ void SubGraph<T>::Forward(VecTensorType const &inputs, ArrayType &output)
 template <typename T>
 std::vector<T> SubGraph<T>::Backward(VecTensorType const &inputs, ArrayType const &error_signal)
 {
-  ASSERT(inputs.size() == this->input_nodes_.size());
+  assert(inputs.size() == this->input_nodes_.size());
+  FETCH_UNUSED(inputs);
   std::vector<std::pair<NodeInterface<T> *, ArrayType>> non_back_prop_err_signal =
       this->output_node_->BackPropagate(error_signal);
   std::vector<ArrayType> back_prop_err_signal;

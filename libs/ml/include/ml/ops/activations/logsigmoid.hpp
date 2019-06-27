@@ -43,7 +43,7 @@ public:
   virtual void Forward(VecTensorType const &inputs, ArrayType &output)
   {
     assert(inputs.size() == 1);
-    ASSERT(output.shape() == this->ComputeOutputShape(inputs));
+    assert(output.shape() == this->ComputeOutputShape(inputs));
 
     fetch::math::Sigmoid(inputs.front().get(), output);
     fetch::math::Log(output, output);
@@ -63,8 +63,9 @@ public:
     ArrayType return_signal{error_signal.shape()};
 
     // gradient of log-sigmoid function is 1/(e^x + 1))
-    fetch::math::Add(fetch::math::Exp(inputs.front().get()), DataType(1), return_signal);
-    fetch::math::Divide(DataType(1), return_signal, return_signal);
+    fetch::math::Add(fetch::math::Exp(inputs.front().get()), static_cast<DataType>(1),
+                     return_signal);
+    fetch::math::Divide(static_cast<DataType>(1), return_signal, return_signal);
 
     // multiply by error_signal (chain rule)
     fetch::math::Multiply(error_signal, return_signal, return_signal);

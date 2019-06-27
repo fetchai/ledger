@@ -40,7 +40,7 @@ public:
   Dropout(DataType const probability, SizeType const &random_seed = 25102015)
     : probability_(probability)
   {
-    ASSERT(probability >= 0.0 && probability <= 1.0);
+    assert(probability >= 0.0 && probability <= 1.0);
     rng_.Seed(random_seed);
     drop_values_ = ArrayType{0};
   }
@@ -49,8 +49,8 @@ public:
 
   void Forward(VecTensorType const &inputs, ArrayType &output)
   {
-    ASSERT(inputs.size() == 1);
-    ASSERT(output.shape() == this->ComputeOutputShape(inputs));
+    assert(inputs.size() == 1);
+    assert(output.shape() == this->ComputeOutputShape(inputs));
 
     if (!this->is_training_)
     {
@@ -69,9 +69,10 @@ public:
 
   std::vector<ArrayType> Backward(VecTensorType const &inputs, ArrayType const &error_signal)
   {
-    ASSERT(inputs.size() == 1);
-    ASSERT(error_signal.shape() == inputs.front().get().shape());
-    ASSERT(drop_values_.shape() == inputs.front().get().shape());
+    FETCH_UNUSED(inputs);
+    assert(inputs.size() == 1);
+    assert(error_signal.shape() == inputs.front().get().shape());
+    assert(drop_values_.shape() == inputs.front().get().shape());
 
     ArrayType return_signal{error_signal.shape()};
 

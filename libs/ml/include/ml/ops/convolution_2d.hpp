@@ -93,12 +93,12 @@ private:
 template <class ArrayType>
 void Convolution2D<ArrayType>::Forward(VecTensorType const &inputs, ArrayType &output)
 {
-  ASSERT(inputs.size() == 2);
+  assert(inputs.size() == 2);
   // Input should be a 3D tensor [C x H x W x N]
-  ASSERT(inputs.at(0).get().shape().size() == 4);
+  assert(inputs.at(0).get().shape().size() == 4);
   // Kernels should be a 4D tensor [oC x iC x H x W x N]
-  ASSERT(inputs.at(1).get().shape().size() == 5);
-  ASSERT(output.shape() == ComputeOutputShape(inputs));
+  assert(inputs.at(1).get().shape().size() == 5);
+  assert(output.shape() == ComputeOutputShape(inputs));
 
   ArrayType input   = inputs.at(0).get();
   ArrayType kernels = inputs.at(1).get();
@@ -151,12 +151,12 @@ template <class ArrayType>
 std::vector<ArrayType> Convolution2D<ArrayType>::Backward(VecTensorType const &inputs,
                                                           ArrayType const &    error_signal)
 {
-  ASSERT(inputs.size() == 2);
+  assert(inputs.size() == 2);
   // Input should be a 3D tensor [C x H x W x N]
-  ASSERT(inputs.at(0).get().shape().size() == 4);
+  assert(inputs.at(0).get().shape().size() == 4);
   // Kernels should be a 4D tensor [oC x iC x H x W x N]
-  ASSERT(inputs.at(1).get().shape().size() == 5);
-  ASSERT(error_signal.shape() == ComputeOutputShape(inputs));
+  assert(inputs.at(1).get().shape().size() == 5);
+  assert(error_signal.shape() == ComputeOutputShape(inputs));
 
   SizeType output_height = error_signal.shape().at(1);
   SizeType output_width  = error_signal.shape().at(2);

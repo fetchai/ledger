@@ -72,6 +72,9 @@ protected:
   SizeType                                                           epoch_ = SIZE_NOT_SET;
 
 private:
+  std::vector<ArrayType> batch_data_;
+  ArrayType              batch_labels_;
+
   virtual void ApplyGradients(SizeType batch_size) = 0;
 };
 
@@ -123,19 +126,28 @@ typename T::Type Optimiser<T>::Run(std::vector<ArrayType> const &data, ArrayType
   SizeType step{0};
 
   // Prepare output data tensors
-  std::vector<ArrayType> batch_data;
+  if (batch_data_.size() != data.size())
+  {
+    batch_data_.resize(data.size());
+  }
   for (SizeType i{0}; i < data.size(); i++)
   {
     std::vector<SizeType> current_data_shape             = data.at(i).shape();
     current_data_shape.at(current_data_shape.size() - 1) = batch_size;
-    batch_data.push_back(ArrayType{current_data_shape});
+    if (batch_data_.at(i).shape() != current_data_shape)
+    {
+      batch_data_.at(i) = (ArrayType{current_data_shape});
+    }
   }
 
   // Prepare output label tensor
   std::vector<SizeType> labels_size           = labels.shape();
   SizeType              label_batch_dimension = labels_size.size() - 1;
   labels_size.at(label_batch_dimension)       = batch_size;
-  ArrayType batch_labels{labels_size};
+  if (batch_labels_.shape() != labels_size)
+  {
+    batch_labels_ = ArrayType{labels_size};
+  }
 
   while (step < n_data)
   {
@@ -149,7 +161,7 @@ typename T::Type Optimiser<T>::Run(std::vector<ArrayType> const &data, ArrayType
       }
 
       // Fill label slice
-      auto label_slice = batch_labels.Slice(i, label_batch_dimension);
+      auto label_slice = batch_labels_.Slice(i, label_batch_dimension);
       label_slice.Assign(labels.Slice(it, label_batch_dimension));
 
       // Fill all data from data vector
@@ -157,21 +169,21 @@ typename T::Type Optimiser<T>::Run(std::vector<ArrayType> const &data, ArrayType
       {
         // Fill data[j] slice
         SizeType cur_data_batch_dim = data.at(j).shape().size() - 1;
-        auto     data_slice         = batch_data.at(j).Slice(i, cur_data_batch_dim);
+        auto     data_slice         = batch_data_.at(j).Slice(i, cur_data_batch_dim);
         data_slice.Assign(data.at(j).Slice(it, cur_data_batch_dim));
       }
       it++;
     }
 
     auto name_it = input_node_names_.begin();
-    for (auto &input : batch_data)
+    for (auto &input : batch_data_)
     {
       graph_->SetInput(*name_it, input);
       ++name_it;
     }
 
     // Set Label
-    graph_->SetInput(label_node_name_, batch_labels);
+    graph_->SetInput(label_node_name_, batch_labels_);
 
     auto loss_tensor = graph_->Evaluate(output_node_name_);
     graph_->BackPropagate(output_node_name_, loss_tensor);
@@ -255,6 +267,7 @@ typename T::Type Optimiser<T>::Run(fetch::ml::dataloaders::DataLoader<ArrayType,
       loss += *loss_tensor_it;
       ++loss_tensor_it;
     }
+
     // Compute and apply gradient
     ApplyGradients(batch_size);
 
