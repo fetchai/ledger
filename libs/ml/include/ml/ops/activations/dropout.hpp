@@ -71,7 +71,7 @@ public:
   {
     FETCH_UNUSED(inputs);
     assert(inputs.size() == 1);
-    assert(error_signal.shape() == inputs.front(static_cast<DataType>(1)).get().shape());
+    assert(error_signal.shape() == inputs.front().get().shape());
     assert(drop_values_.shape() == inputs.front().get().shape());
 
     ArrayType return_signal{error_signal.shape()};
