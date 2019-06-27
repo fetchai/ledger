@@ -36,7 +36,7 @@ namespace {
 
 constexpr char const *LOGGING_NAME = "NaiveSynMiner";
 
-using math::BigUnsigned;
+using UInt256 = vectorise::UInt<256>;
 using serializers::ByteArrayBuffer;
 using byte_array::ConstByteArray;
 
@@ -220,7 +220,7 @@ WorkPtr NaiveSynergeticMiner::MineSolution(Digest const &     contract_digest,
 
   // update the initial nonce
   std::random_device rd;
-  BigUnsigned        nonce{rd()};
+  UInt256            nonce{rd()};
 
   // generate a series of solutions for each of the problems
   WorkPtr best_work{};

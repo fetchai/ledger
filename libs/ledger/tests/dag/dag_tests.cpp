@@ -91,8 +91,8 @@ protected:
   {
     EXPECT_EQ(dag_->CurrentEpoch(), 0);
 
-    const size_t epochs_to_create = 10;
-    const size_t nodes_in_epoch   = 1000;
+    const size_t epochs_to_create = 5;
+    const size_t nodes_in_epoch   = 100;
 
     epoch_history_.resize(epochs_to_create);
     epochs_.resize(epochs_to_create);

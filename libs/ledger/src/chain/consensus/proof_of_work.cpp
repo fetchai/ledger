@@ -48,10 +48,10 @@ bool ProofOfWork::operator()()
 void ProofOfWork::SetTarget(std::size_t zeros)
 {
   target_ = 1;
-  target_ <<= 8 * sizeof(uint8_t) * super_type::size() - 1 - zeros;
+  target_ <<= 8 * sizeof(uint8_t) * UInt256::size() - 1 - zeros;
 }
 
-void ProofOfWork::SetTarget(math::BigUnsigned &&target)
+void ProofOfWork::SetTarget(vectorise::UInt<256> &&target)
 {
   target_ = std::move(target);
 }

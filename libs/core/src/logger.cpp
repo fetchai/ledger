@@ -19,13 +19,6 @@
 #include "core/fetch_backward.hpp"
 #include "core/logger.hpp"
 
-#include <chrono>
-#include <map>
-#include <memory>
-#include <mutex>
-#include <string>
-#include <thread>
-
 // Add functionality to print a stack trace when program-terminating signals such as sigsegv are
 // found
 std::function<void(std::string)> backward::SignalHandling::_on_signal;
@@ -34,7 +27,6 @@ backward::SignalHandling         sh([](std::string const &fatal_msg) {
 });
 
 namespace fetch {
-
 std::map<std::thread::id, int> fetch::log::ReadableThread::thread_number_ =
     std::map<std::thread::id, int>();
 int        fetch::log::ReadableThread::thread_count_ = 0;
@@ -81,6 +73,6 @@ Context::~Context()
     fetch::logger.SetContext(details_->parent());
   }
 }
-
 }  // namespace log
+
 }  // namespace fetch
