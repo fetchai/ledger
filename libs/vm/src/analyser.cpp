@@ -2105,7 +2105,7 @@ void Analyser::CreatePrimitiveType(std::string const &type_name, TypeIndex type_
   }
   type = CreateType(TypeKind::Primitive, type_name);
   type_map_.Add(type_index, type);
-  AddTypeInfo(TypeInfo(TypeKind::Primitive, type_name, {}), type_id, type);
+  AddTypeInfo(TypeInfo(TypeKind::Primitive, type_name, TypeIds::Unknown, {}), type_id, type);
   registered_types_.Add(type_index, type->id);
   if (add_to_symbol_table)
   {
@@ -2123,7 +2123,7 @@ void Analyser::CreateMetaType(std::string const &type_name, TypeIndex type_index
   }
   type = CreateType(TypeKind::Meta, type_name);
   type_map_.Add(type_index, type);
-  AddTypeInfo(TypeInfo(TypeKind::Meta, type_name, {}), type_id, type);
+  AddTypeInfo(TypeInfo(TypeKind::Meta, type_name, TypeIds::Unknown, {}), type_id, type);
   registered_types_.Add(type_index, type->id);
 }
 
@@ -2138,7 +2138,7 @@ void Analyser::CreateClassType(std::string const &type_name, TypeIndex type_inde
   type          = CreateType(TypeKind::Class, type_name);
   type->symbols = CreateSymbolTable();
   type_map_.Add(type_index, type);
-  AddTypeInfo(TypeInfo(TypeKind::Class, type_name, {}), type_id, type);
+  AddTypeInfo(TypeInfo(TypeKind::Class, type_name, TypeIds::Unknown, {}), type_id, type);
   registered_types_.Add(type_index, type->id);
   symbols_->Add(type);
 }
@@ -2155,7 +2155,7 @@ void Analyser::CreateTemplateType(std::string const &type_name, TypeIndex type_i
   type->symbols = CreateSymbolTable();
   type->types   = allowed_types;
   type_map_.Add(type_index, type);
-  AddTypeInfo(TypeInfo(TypeKind::Template, type_name, {}), type_id, type);
+  AddTypeInfo(TypeInfo(TypeKind::Template, type_name, TypeIds::Unknown, {}), type_id, type);
   registered_types_.Add(type_index, type->id);
   symbols_->Add(type);
 }
@@ -2176,7 +2176,8 @@ void Analyser::CreateInstantiationType(TypeIndex type_index, TypePtr const &temp
     parameter_type_ids.push_back(parameter_type->id);
   }
   type_map_.Add(type_index, type);
-  AddTypeInfo(TypeInfo(TypeKind::Instantiation, type->name, parameter_type_ids), type_id, type);
+  AddTypeInfo(TypeInfo(TypeKind::Instantiation, type->name, template_type->id, parameter_type_ids),
+              type_id, type);
   registered_types_.Add(type_index, type->id);
   symbols_->Add(type);
 }
@@ -2192,7 +2193,7 @@ void Analyser::CreateGroupType(std::string const &type_name, TypeIndex type_inde
   type        = CreateType(TypeKind::Group, type_name);
   type->types = allowed_types;
   type_map_.Add(type_index, type);
-  AddTypeInfo(TypeInfo(TypeKind::Group, type_name, {}), type_id, type);
+  AddTypeInfo(TypeInfo(TypeKind::Group, type_name, TypeIds::Unknown, {}), type_id, type);
   registered_types_.Add(type_index, type->id);
 }
 
