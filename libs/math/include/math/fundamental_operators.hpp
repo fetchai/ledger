@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "math/meta/math_type_traits.hpp"
+#include "math/tensor_broadcast.hpp"
 
 #include <cassert>
 
@@ -315,11 +316,9 @@ template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, void> Add(ArrayType const &array1, ArrayType const &array2,
                                          ArrayType &ret)
 {
-  assert(array1.shape() == array2.shape());
-  assert(array1.shape() == ret.shape());
-
   if (array1.shape() == array2.shape())
   {
+    assert(array1.shape() == ret.shape());
     auto it1 = array1.cbegin();
     auto it2 = array2.cbegin();
     auto rit = ret.begin();
@@ -329,6 +328,17 @@ meta::IfIsMathArray<ArrayType, void> Add(ArrayType const &array1, ArrayType cons
       ++it1;
       ++it2;
       ++rit;
+    }
+  }
+  else
+  {
+    // TODO(issue 1257): Implement const version of Tensor::Broadcast
+    ArrayType a = array1.Copy();
+    ArrayType b = array2.Copy();
+    if (!(Broadcast([](typename ArrayType::Type x, typename ArrayType::Type y) { return x + y; }, a,
+                    b, ret)))
+    {
+      throw std::runtime_error("arrays not broadcastable for InlineAdd!");
     }
   }
 }
@@ -400,19 +410,30 @@ template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, void> Subtract(ArrayType const &array1, ArrayType const &array2,
                                               ArrayType &ret)
 {
-  assert(array1.shape() == array2.shape());
-  assert(array1.shape() == ret.shape());
-
-  auto it1 = array1.cbegin();
-  auto it2 = array2.cbegin();
-  auto rit = ret.begin();
-
-  while (it1.is_valid())
+  if (array1.shape() == array2.shape())
   {
-    *rit = (*it1) - (*it2);
-    ++it1;
-    ++it2;
-    ++rit;
+    assert(array1.shape() == ret.shape());
+    auto it1 = array1.cbegin();
+    auto it2 = array2.cbegin();
+    auto rit = ret.begin();
+    while (it1.is_valid())
+    {
+      *rit = (*it1) - (*it2);
+      ++it1;
+      ++it2;
+      ++rit;
+    }
+  }
+  else
+  {
+    // TODO(issue 1257): Implement const version of Tensor::Broadcast
+    ArrayType a = array1.Copy();
+    ArrayType b = array2.Copy();
+    if (!(Broadcast([](typename ArrayType::Type x, typename ArrayType::Type y) { return x - y; }, a,
+                    b, ret)))
+    {
+      throw std::runtime_error("arrays not broadcastable for InlineAdd!");
+    }
   }
 }
 
@@ -420,17 +441,28 @@ template <typename ArrayType>
 ::fetch::math::meta::IfIsMathArray<ArrayType, void> Multiply(ArrayType const &obj1,
                                                              ArrayType const &obj2, ArrayType &ret)
 {
-  assert(obj1.size() == obj2.size());
-  assert(ret.size() == obj2.size());
-  auto it1 = obj1.begin();
-  auto it2 = obj2.begin();
-  auto rit = ret.begin();
-  while (it1.is_valid())
+  if (obj1.shape() == obj2.shape())
   {
-    *rit = (*it1) * (*it2);
-    ++it1;
-    ++it2;
-    ++rit;
+    auto it1 = obj1.cbegin();
+    auto it2 = obj2.cbegin();
+    auto rit = ret.begin();
+    while (it1.is_valid())
+    {
+      *rit = (*it1) * (*it2);
+      ++it1;
+      ++it2;
+      ++rit;
+    }
+  }
+  else
+  {
+    ArrayType a = obj1.Copy();
+    ArrayType b = obj2.Copy();
+    if (!(Broadcast([](typename ArrayType::Type x, typename ArrayType::Type y) { return x * y; }, a,
+                    b, ret)))
+    {
+      throw std::runtime_error("arrays not broadcastable for InlineAdd!");
+    }
   }
 }
 
@@ -451,7 +483,7 @@ meta::IfIsMathArray<ArrayType, void> Multiply(ArrayType const &array, T const &s
 }
 
 /**
- * Divide ony array by another elementwise
+ * Divide any array by another elementwise
  * @tparam ArrayType
  * @param array1
  * @param array2
@@ -460,17 +492,30 @@ meta::IfIsMathArray<ArrayType, void> Multiply(ArrayType const &array, T const &s
 template <typename ArrayType>
 void Divide(ArrayType const &array1, ArrayType const &array2, ArrayType &ret)
 {
-  assert(array1.shape() == array2.shape());
-  assert(ret.shape() == array2.shape());
-  auto it1 = array1.begin();
-  auto it2 = array2.begin();
-  auto rit = ret.begin();
-  while (it1.is_valid())
+  if (array1.shape() == array2.shape())
   {
-    *rit = (*it1) / (*it2);
-    ++rit;
-    ++it1;
-    ++it2;
+    assert(array1.shape() == ret.shape());
+    auto it1 = array1.cbegin();
+    auto it2 = array2.cbegin();
+    auto rit = ret.begin();
+    while (it1.is_valid())
+    {
+      *rit = (*it1) / (*it2);
+      ++it1;
+      ++it2;
+      ++rit;
+    }
+  }
+  else
+  {
+    // TODO(issue 1257): Implement const version of Tensor::Broadcast
+    ArrayType a = array1.Copy();
+    ArrayType b = array2.Copy();
+    if (!(Broadcast([](typename ArrayType::Type x, typename ArrayType::Type y) { return x / y; }, a,
+                    b, ret)))
+    {
+      throw std::runtime_error("arrays not broadcastable for InlineAdd!");
+    }
   }
 }
 
@@ -582,7 +627,6 @@ meta::IfIsMathArray<ArrayType, void> Add(ArrayType const &array, T const &scalar
 template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, ArrayType> Add(ArrayType const &array1, ArrayType const &array2)
 {
-  assert(array1.shape() == array2.shape());
   ArrayType ret{array1.shape()};
   implementations::Add(array1, array2, ret);
   return ret;
@@ -591,8 +635,6 @@ template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, ArrayType> Add(ArrayType const &array1, ArrayType const &array2,
                                               ArrayType &ret)
 {
-  assert(array1.shape() == array2.shape());
-  assert(array1.shape() == ret.shape());
   implementations::Add(array1, array2, ret);
   return ret;
 }
@@ -661,7 +703,6 @@ meta::IfIsMathArray<ArrayType, ArrayType> Subtract(ArrayType const &array, T con
 template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, ArrayType> Subtract(ArrayType const &obj1, ArrayType const &obj2)
 {
-  assert(obj1.shape() == obj2.shape());
   ArrayType ret{obj1.shape()};
   implementations::Subtract(obj1, obj2, ret);
   return ret;
@@ -671,8 +712,6 @@ template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, ArrayType> Subtract(ArrayType const &obj1, ArrayType const &obj2,
                                                    ArrayType &ret)
 {
-  assert(obj1.shape() == obj2.shape());
-  assert(obj1.shape() == ret.shape());
   implementations::Subtract(obj1, obj2, ret);
   return ret;
 }
@@ -822,8 +861,6 @@ template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, void> Divide(ArrayType const &obj1, ArrayType const &obj2,
                                             ArrayType &ret)
 {
-  assert(obj1.shape() == obj2.shape());
-  assert(ret.shape() == obj2.shape());
   implementations::Divide(obj1, obj2, ret);
 }
 
@@ -837,7 +874,6 @@ meta::IfIsMathArray<ArrayType, void> Divide(ArrayType const &obj1, ArrayType con
 template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, ArrayType> Divide(ArrayType const &obj1, ArrayType const &obj2)
 {
-  assert(obj1.shape() == obj2.shape());
   ArrayType ret{obj1.shape()};
   Divide(obj1, obj2, ret);
   return ret;

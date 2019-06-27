@@ -412,8 +412,8 @@ TEST_P(JsonTests, CheckParsing)
 {
   TestCase const &config = GetParam();
 
-  JSONDocument      doc;
-  std::stringstream ss;
+  JSONDocument       doc;
+  std::ostringstream ss;
 
   bool did_throw = false;
 

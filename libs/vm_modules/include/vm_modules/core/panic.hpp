@@ -17,41 +17,15 @@
 //
 //------------------------------------------------------------------------------
 
-#include "network/muddle/packet.hpp"
-#include "network/p2pservice/state_machine.hpp"
-
 namespace fetch {
-namespace p2p {
 
-class IdentityCache;
+namespace vm {
+class Module;
+}
 
-class Resolver
-{
-public:
-  using Address = muddle::Packet::Address;
+namespace vm_modules {
 
-  enum class State
-  {
-    RESOLVE_ADDRESS,
-    LOOKUP_MANIFEST,
-    COMPLETE
-  };
+void CreatePanic(vm::Module &module);
 
-  // Construction / Destruction
-  Resolver(IdentityCache &cache);
-  Resolver(Resolver const &) = delete;
-  Resolver(Resolver &&)      = delete;
-  ~Resolver()                = default;
-
-  void Resolve(Address const &address);
-
-  // Operators
-  Resolver &operator=(Resolver const &) = delete;
-  Resolver &operator=(Resolver &&) = delete;
-
-private:
-  IdentityCache &cache_;
-};
-
-}  // namespace p2p
+}  // namespace vm_modules
 }  // namespace fetch

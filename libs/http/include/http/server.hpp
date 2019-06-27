@@ -160,6 +160,12 @@ public:
 
     for (auto &v : views_)
     {
+      // skip all views that don't match the required method
+      if (v.method != req.method())
+      {
+        continue;
+      }
+
       if (v.route.Match(req.uri(), params))
       {
         res = v.view(params, req);

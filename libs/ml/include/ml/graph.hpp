@@ -61,7 +61,7 @@ public:
   std::string AddNode(std::string const &node_name, std::vector<std::string> const &inputs,
                       Params... params);
   NodePtrType GetNode(std::string const &node_name) const;
-  void        SetInput(std::string const &node_name, ArrayType data, bool batch = false);
+  void        SetInput(std::string const &node_name, ArrayType data);
   void        ResetGraphCache(std::shared_ptr<NodeInterface<T>> const &n, bool input_size_changed);
 
   virtual struct fetch::ml::StateDict<ArrayType> StateDict() const;
@@ -188,10 +188,9 @@ typename Graph<ArrayType>::NodePtrType Graph<ArrayType>::GetNode(std::string con
  * Also resets the graph cache to avoid erroneous leftover outputs
  * @param node_name name of the placeholder node in the graph (must be unique)
  * @param data the pointer to a tensor to assign to the placeholder
- * @param batch flag to indicate if input should be treated as batch
  */
 template <typename ArrayType>
-void Graph<ArrayType>::SetInput(std::string const &node_name, ArrayType data, bool batch)
+void Graph<ArrayType>::SetInput(std::string const &node_name, ArrayType data)
 {
   PlaceholderPtrType placeholder = std::dynamic_pointer_cast<PlaceholderType>(nodes_[node_name]);
 
@@ -203,10 +202,6 @@ void Graph<ArrayType>::SetInput(std::string const &node_name, ArrayType data, bo
   else
   {
     throw std::runtime_error("No placeholder node with name [" + node_name + "] found in graph!");
-  }
-  for (auto &n : nodes_)
-  {
-    n.second->SetBatch(batch);
   }
 }
 

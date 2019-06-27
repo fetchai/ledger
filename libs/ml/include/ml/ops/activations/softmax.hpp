@@ -30,14 +30,14 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class Softmax : public fetch::ml::BatchOps<T>
+class Softmax : public fetch::ml::Ops<T>
 {
 public:
   using ArrayType     = T;
   using DataType      = typename ArrayType::Type;
   using SizeType      = typename ArrayType::SizeType;
   using ArrayPtrType  = std::shared_ptr<ArrayType>;
-  using VecTensorType = typename ElementWiseOps<T>::VecTensorType;
+  using VecTensorType = typename Ops<T>::VecTensorType;
 
   Softmax(SizeType axis = 1)
     : axis_(axis)
@@ -49,7 +49,7 @@ public:
   {
     assert(output.shape() == ComputeOutputShape(inputs));
     assert(inputs.size() == 1);
-    fetch::math::Softmax(inputs[0].get(), output, axis_);
+    fetch::math::Softmax(inputs.at(0).get(), output, axis_);
   }
 
   std::vector<ArrayType> Backward(VecTensorType const &inputs, ArrayType const &error_signal)

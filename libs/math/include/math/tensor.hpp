@@ -282,14 +282,15 @@ public:
   ConstSliceType Slice(SizeType i, SizeType axis = 0) const;
   TensorSlice    Slice(SizeType i, SizeType axis = 0);
 
-  //////////////
-  /// Views  ///
-  //////////////
+  /////////////
+  /// Views ///
+  /////////////
   TensorView<Type, ContainerType>       View();
   TensorView<Type, ContainerType> const View() const;
   TensorView<Type, ContainerType>       View(SizeType index);
   TensorView<Type, ContainerType> const View(SizeType index) const;
   TensorView<Type, ContainerType>       View(std::vector<SizeType> indices);
+  TensorView<Type, ContainerType> const View(std::vector<SizeType> indices) const;
 
   /////////////////////////
   /// general utilities ///
@@ -849,6 +850,26 @@ typename Tensor<T, C>::ViewType const Tensor<T, C>::View(SizeType index) const
 
 template <typename T, typename C>
 typename Tensor<T, C>::ViewType Tensor<T, C>::View(std::vector<SizeType> indices)
+{
+  assert(shape_.size() >= 1 + indices.size());
+
+  SizeType N                = shape_.size() - 1 - indices.size();
+  SizeType dimension_length = (N == 0 ? padded_height_ : shape_[N]);
+  SizeType volume           = dimension_length * stride_[N];
+  SizeType width            = volume / padded_height_;
+  SizeType offset           = 0;
+
+  for (SizeType i = 0; i < indices.size(); ++i)
+  {
+    SizeType g = N + i + 1;
+    offset += stride_[g] * indices[i];
+  }
+
+  return TensorView<Type, ContainerType>(data_, height(), width, offset);
+}
+
+template <typename T, typename C>
+typename Tensor<T, C>::ViewType const Tensor<T, C>::View(std::vector<SizeType> indices) const
 {
   assert(shape_.size() >= 1 + indices.size());
 
@@ -1544,7 +1565,16 @@ Tensor<T, C> Tensor<T, C>::Transpose(SizeVector &new_axes) const
   assert(shape_.size() > 1);
   assert(shape_.size() == new_axes.size());
 
-  Tensor ret(shape());
+  SizeVector new_shape;
+  new_shape.reserve(new_shape.size());
+
+  for (auto &val : new_axes)
+  {
+    new_shape.push_back(shape_.at(val));
+  }
+
+  Tensor ret(new_shape);
+
   TransposeImplementation(new_axes, ret);
   return ret;
 }
@@ -1558,9 +1588,8 @@ Tensor<T, C> Tensor<T, C>::Transpose(SizeVector &new_axes) const
 template <typename T, typename C>
 Tensor<T, C> &Tensor<T, C>::Squeeze()
 {
-  // TODO(private issue 998): Make last dimension for efficiency
   auto shape = shape_;
-  shape.erase(shape.begin());
+  shape.erase(shape.end() - 1);
   Reshape(shape);
 
   return *this;
@@ -1575,8 +1604,8 @@ Tensor<T, C> &Tensor<T, C>::Squeeze()
 template <typename T, typename C>
 Tensor<T, C> &Tensor<T, C>::Unsqueeze()
 {
-  auto shape = shape_;  // TODO: Make last dimension for efficiency
-  shape.insert(shape.begin(), 1);
+  auto shape = shape_;
+  shape.push_back(1);
 
   Reshape(shape);
 
@@ -1671,19 +1700,7 @@ fetch::meta::IfIsUnsignedInteger<S, typename Tensor<T, C>::Type> Tensor<T, C>::G
 template <typename T, typename C>
 Tensor<T, C> Tensor<T, C>::InlineAdd(Tensor const &other)
 {
-  if (other.shape() == shape_)
-  {
-    Add(*this, other, *this);
-  }
-  else
-  {
-    Tensor self_copy  = this->Copy();
-    Tensor other_copy = other.Copy();
-    if (!(Broadcast([](T x, T y) { return x + y; }, self_copy, other_copy, *this)))
-    {
-      throw std::runtime_error("arrays not broadcastable for InlineAdd!");
-    }
-  }
+  Add(*this, other, *this);
   return *this;
 }
 
@@ -1707,19 +1724,7 @@ Tensor<T, C> Tensor<T, C>::InlineAdd(Type const &scalar)
 template <typename T, typename C>
 Tensor<T, C> Tensor<T, C>::InlineSubtract(Tensor const &other)
 {
-  if (other.shape() == shape_)
-  {
-    Subtract(*this, other, *this);
-  }
-  else
-  {
-    Tensor self_copy  = this->Copy();
-    Tensor other_copy = other.Copy();
-    if (!(Broadcast([](T x, T y) { return x - y; }, self_copy, other_copy, *this)))
-    {
-      throw std::runtime_error("arrays not broadcastable for InlineSubtract!");
-    }
-  }
+  Subtract(*this, other, *this);
   return *this;
 }
 
@@ -1743,19 +1748,7 @@ Tensor<T, C> Tensor<T, C>::InlineSubtract(Type const &scalar)
 template <typename T, typename C>
 Tensor<T, C> Tensor<T, C>::InlineReverseSubtract(Tensor const &other)
 {
-  if (other.shape() == shape_)
-  {
-    Subtract(other, *this, *this);
-  }
-  else
-  {
-    Tensor self_copy  = this->Copy();
-    Tensor other_copy = other.Copy();
-    if (!(Broadcast([](T x, T y) { return x - y; }, other_copy, self_copy, *this)))
-    {
-      throw std::runtime_error("arrays not broadcastable for InlineReverseSubtract!");
-    }
-  }
+  Subtract(other, *this, *this);
   return *this;
 }
 
@@ -1781,19 +1774,7 @@ Tensor<T, C> Tensor<T, C>::InlineReverseSubtract(Type const &scalar)
 template <typename T, typename C>
 Tensor<T, C> Tensor<T, C>::InlineMultiply(Tensor const &other)
 {
-  if (other.shape() == shape_)
-  {
-    Multiply(*this, other, *this);
-  }
-  else
-  {
-    Tensor self_copy  = this->Copy();
-    Tensor other_copy = other.Copy();
-    if (!(Broadcast([](T x, T y) { return x * y; }, other_copy, self_copy, *this)))
-    {
-      throw std::runtime_error("arrays not broadcastable for InlineMultiply!");
-    }
-  }
+  Multiply(*this, other, *this);
   return *this;
 }
 
@@ -1817,19 +1798,7 @@ Tensor<T, C> Tensor<T, C>::InlineMultiply(Type const &scalar)
 template <typename T, typename C>
 Tensor<T, C> Tensor<T, C>::InlineDivide(Tensor const &other)
 {
-  if (other.shape() == shape_)
-  {
-    Divide(*this, other, *this);
-  }
-  else
-  {
-    Tensor self_copy  = this->Copy();
-    Tensor other_copy = other.Copy();
-    if (!(Broadcast([](T x, T y) { return x / y; }, self_copy, other_copy, *this)))
-    {
-      throw std::runtime_error("arrays not broadcastable for InlineDivide!");
-    }
-  }
+  Divide(*this, other, *this);
   return *this;
 }
 
@@ -1853,19 +1822,7 @@ Tensor<T, C> Tensor<T, C>::InlineDivide(Type const &scalar)
 template <typename T, typename C>
 Tensor<T, C> Tensor<T, C>::InlineReverseDivide(Tensor const &other)
 {
-  if (other.shape() == shape_)
-  {
-    Divide(other, *this, *this);
-  }
-  else
-  {
-    Tensor self_copy  = this->Copy();
-    Tensor other_copy = other.Copy();
-    if (!(Broadcast([](T x, T y) { return x / y; }, other_copy, self_copy, *this)))
-    {
-      throw std::runtime_error("arrays not broadcastable for InlineReverseDivide!");
-    }
-  }
+  Divide(other, *this, *this);
   return *this;
 }
 
