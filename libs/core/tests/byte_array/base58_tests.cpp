@@ -359,6 +359,22 @@ TEST_P(Base58Tests, CheckDecode)
   EXPECT_EQ(expected, actual);
 }
 
+TEST_P(Base58Tests, CheckDecodeWithTrailingSpaces)
+{
+  auto const &test = GetParam();
+
+  ConstByteArray const original_b58_value{test.base58};
+  ConstByteArray const trailing_spaces{' ', ' ', ' ', ' ', ' '};
+  ConstByteArray const input{
+      (original_b58_value + trailing_spaces).SubArray(0, original_b58_value.size())};
+  ASSERT_EQ(original_b58_value, input);
+
+  ConstByteArray const expected{test.hex};
+  ConstByteArray const actual{ToHex(FromBase58(input))};
+
+  EXPECT_EQ(expected, actual);
+}
+
 }  // namespace
 
 INSTANTIATE_TEST_CASE_P(ParamBased, Base58Tests, ::testing::ValuesIn(TEST_CASES), );
