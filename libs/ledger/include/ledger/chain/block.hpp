@@ -122,7 +122,7 @@ void Deserialize(T &serializer, Block::Body &body)
 template <typename T>
 inline void Serialize(T &serializer, Block const &block)
 {
-  serializer << block.body << block.nonce << block.proof << block.weight;
+  serializer << block.body << block.nonce << block.proof << block.weight << block.total_weight;
 }
 
 /**
@@ -135,7 +135,7 @@ inline void Serialize(T &serializer, Block const &block)
 template <typename T>
 inline void Deserialize(T &serializer, Block &block)
 {
-  serializer >> block.body >> block.nonce >> block.proof >> block.weight;
+  serializer >> block.body >> block.nonce >> block.proof >> block.weight >> block.total_weight;
 }
 
 }  // namespace ledger
