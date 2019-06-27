@@ -34,12 +34,6 @@ enum class ePadding : uint8_t
 class OpenSslBIGNUMPaddingTest : public testing::Test
 {
 protected:
-  virtual void SetUp()
-  {}
-
-  virtual void TearDown()
-  {}
-
   void test_convert_from_bin_to_BN_with_padding(byte_array::ConstByteArray const &orig_bin_bn,
                                                 std::size_t const num_of_padding_bytes,
                                                 ePadding const    padding,

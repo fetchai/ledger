@@ -63,6 +63,10 @@ bool ToBool(fetch::vm::VM * /*vm*/, T const &a)
 
 inline void CreateToString(fetch::vm::Module &module)
 {
+  module.CreateFreeFunction("toString", &ToString<int8_t>);
+  module.CreateFreeFunction("toString", &ToString<uint8_t>);
+  module.CreateFreeFunction("toString", &ToString<int16_t>);
+  module.CreateFreeFunction("toString", &ToString<uint16_t>);
   module.CreateFreeFunction("toString", &ToString<int32_t>);
   module.CreateFreeFunction("toString", &ToString<uint32_t>);
   module.CreateFreeFunction("toString", &ToString<int64_t>);

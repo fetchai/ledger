@@ -147,13 +147,17 @@ macro (setup_compiler)
   endif ()
 
   # based on the configued logging level
-  if ("${FETCH_COMPILE_LOGGING_LEVEL}" STREQUAL "debug")
-    add_definitions(-DFETCH_COMPILE_LOGGING_LEVEL=4)
+  if ("${FETCH_COMPILE_LOGGING_LEVEL}" STREQUAL "trace")
+    add_definitions(-DFETCH_COMPILE_LOGGING_LEVEL=6)
+  elseif ("${FETCH_COMPILE_LOGGING_LEVEL}" STREQUAL "debug")
+    add_definitions(-DFETCH_COMPILE_LOGGING_LEVEL=5)
   elseif ("${FETCH_COMPILE_LOGGING_LEVEL}" STREQUAL "info")
-    add_definitions(-DFETCH_COMPILE_LOGGING_LEVEL=3)
+    add_definitions(-DFETCH_COMPILE_LOGGING_LEVEL=4)
   elseif ("${FETCH_COMPILE_LOGGING_LEVEL}" STREQUAL "warn")
-    add_definitions(-DFETCH_COMPILE_LOGGING_LEVEL=2)
+    add_definitions(-DFETCH_COMPILE_LOGGING_LEVEL=3)
   elseif ("${FETCH_COMPILE_LOGGING_LEVEL}" STREQUAL "error")
+    add_definitions(-DFETCH_COMPILE_LOGGING_LEVEL=2)
+  elseif ("${FETCH_COMPILE_LOGGING_LEVEL}" STREQUAL "critical")
     add_definitions(-DFETCH_COMPILE_LOGGING_LEVEL=1)
   elseif ("${FETCH_COMPILE_LOGGING_LEVEL}" STREQUAL "none")
     add_definitions(-DFETCH_DISABLE_COUT_LOGGING)
@@ -238,6 +242,10 @@ function (configure_vendor_targets)
   add_library(vendor-msgpack INTERFACE)
   target_include_directories(vendor-msgpack INTERFACE ${FETCH_ROOT_VENDOR_DIR}/msgpack/include)
   target_compile_definitions(vendor-msgpack INTERFACE -DMSGPACK_CXX11=ON)
+
+  # Spdlog
+  add_library(vendor-spdlog INTERFACE)
+  target_include_directories(vendor-spdlog INTERFACE ${FETCH_ROOT_VENDOR_DIR}/spdlog/include)
 
 endfunction (configure_vendor_targets)
 

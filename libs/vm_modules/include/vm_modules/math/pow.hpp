@@ -25,6 +25,7 @@
 
 namespace fetch {
 namespace vm_modules {
+namespace math {
 
 template <typename T>
 fetch::math::meta::IfIsMath<T, T> Pow(fetch::vm::VM *, T const &a, T const &b)
@@ -47,5 +48,6 @@ inline void BindPow(std::shared_ptr<vm::Module> module)
   BindExp(*module.get());
 }
 
+}  // namespace math
 }  // namespace vm_modules
 }  // namespace fetch

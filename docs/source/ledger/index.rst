@@ -33,7 +33,7 @@ In order to get started with the constellation application, go to the Fetch sour
 		cmake ..
 		make constellation
 
-This will compile the constellation binary and allow you to get started with the Fetch ledger. 
+This will compile the constellation binary and allow you to get started with the Fetch ledger.
 
 Generally, a Fetch node is comprised of a multitude of services that can be spread across computing units to archive the necessary scalability. A service is a server that provides a number of RPC protocol and each RPC protocol provides a number of functions associated with it. For more details on this, read the page on :ref:`service-composition`.
 
@@ -46,14 +46,14 @@ In the following section, we describe the various services inside the constellat
 		A --> C[Storage Unit Controller]
 		D[Wallet API] --> B
 		D --> C
-		C --> E[Lane 1]	
-		C --> F[Lane 2]		
-		C --> G[Lane N]		
+		C --> E[Lane 1]
+		C --> F[Lane 2]
+		C --> G[Lane N]
 		X[Execution Manager] --> B
 		X --> C
 		X --> Y1[Executor 1]
 		X --> Y2[Executor 2]
-		X --> YM[Executor M]		
+		X --> YM[Executor M]
 
 The ``StorageUnitRemote`` serves two purposes: the first is to act as a direct interface to the storage components inside the lanes and the second is to receive feedback from these lanes about other Fetch nodes' behaviour in order to update a node trust model that is managed inside the ``P2PService``. This will be described in more details in the sections below.
 

@@ -33,7 +33,7 @@ public:
   using SizeType   = fetch::math::SizeType;
   using ReturnType = std::pair<LabelType, std::vector<DataType>>;
 
-  DataLoader(bool random_mode)
+  explicit DataLoader(bool random_mode)
     : random_mode_(random_mode)
   {}
 

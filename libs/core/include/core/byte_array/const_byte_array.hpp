@@ -138,6 +138,24 @@ public:
     return arr_pointer_[n];
   }
 
+  bool operator<=(self_type const &other) const
+  {
+    std::size_t n = std::min(length_, other.length_);
+    std::size_t i = 0;
+    for (; i < n; ++i)
+    {
+      if (arr_pointer_[i] != other.arr_pointer_[i])
+      {
+        break;
+      }
+    }
+    if (i < n)
+    {
+      return arr_pointer_[i] <= other.arr_pointer_[i];
+    }
+    return length_ <= other.length_;
+  }
+
   bool operator<(self_type const &other) const
   {
     std::size_t n = std::min(length_, other.length_);
@@ -159,6 +177,11 @@ public:
   bool operator>(self_type const &other) const
   {
     return other < (*this);
+  }
+
+  bool operator>=(self_type const &other) const
+  {
+    return other <= (*this);
   }
 
   bool operator==(self_type const &other) const

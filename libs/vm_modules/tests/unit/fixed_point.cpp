@@ -17,7 +17,6 @@
 //------------------------------------------------------------------------------
 
 #include "vectorise/fixed_point/fixed_point.hpp"
-#include "vm_modules/math/fixed_point.hpp"
 #include "vm_test_toolkit.hpp"
 
 namespace {
@@ -32,7 +31,6 @@ public:
 TEST_F(FixedPointTest, create_fixed_point)
 {
   auto m = toolkit.module();
-  fetch::vm_modules::CreateFixedPoint(m);
 
   static char const *TEXT = R"(
     function main()
