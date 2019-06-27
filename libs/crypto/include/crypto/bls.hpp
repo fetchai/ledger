@@ -34,7 +34,8 @@ namespace fetch {
 namespace crypto {
 
 namespace details {
-
+// TODO: This entire file should be updated using the `bls_base.hpp` instead.
+  
 struct BLSInitialiser
 {
   BLSInitialiser()
@@ -138,7 +139,6 @@ public:
 
   Identity identity() const final
   {
-    // TODO: Fix this
     return Identity(BLS_BN256_UNCOMPRESSED, public_key());
   }
 
