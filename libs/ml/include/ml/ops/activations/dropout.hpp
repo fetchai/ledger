@@ -54,7 +54,7 @@ public:
 
     if (!this->is_training_)
     {
-      fetch::math::Multiply(inputs.front().get(), probability_, output);
+      output.Copy(inputs.front().get());
     }
     else
     {
@@ -65,6 +65,7 @@ public:
       UpdateRandomValues();
 
       fetch::math::Multiply(inputs.front().get(), drop_values_, output);
+      fetch::math::Multiply(output, 1.0/probability_, output);
     }
   }
 
