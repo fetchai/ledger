@@ -37,7 +37,7 @@ public:
   using RNG           = fetch::random::LaggedFibonacciGenerator<>;
   using VecTensorType = typename ElementWiseOps<T>::VecTensorType;
 
-  Dropout(DataType const probability, SizeType const &random_seed = 25102015)
+  explicit Dropout(DataType const probability, SizeType const &random_seed = 25102015)
     : probability_(probability)
   {
     ASSERT(probability >= 0.0 && probability <= 1.0);
@@ -60,12 +60,28 @@ public:
     {
       if (drop_values_.shape() != output.shape())
       {
-        drop_values_ = ArrayType(inputs.front().get().shape());
+        drop_values_ = ArrayType(output.shape());
       }
-      UpdateRandomValues();
 
-      fetch::math::Multiply(inputs.front().get(), drop_values_, output);
-      fetch::math::Multiply(output, DataType{1.0} / probability_, output);
+      auto out_it = output.begin();
+      auto in_it  = inputs.front().get().cbegin();
+      auto it     = drop_values_.begin();
+      while (it.is_valid())
+      {
+        if (rng_.AsDouble() <= static_cast<double>(probability_))
+        {
+          *it     = static_cast<DataType>(1) / probability_;
+          *out_it = (*it) * (*in_it);
+        }
+        else
+        {
+          *it     = static_cast<DataType>(0);
+          *out_it = static_cast<DataType>(0);
+        }
+        ++it;
+        ++in_it;
+        ++out_it;
+      }
     }
   }
 
@@ -75,19 +91,14 @@ public:
     ASSERT(inputs.size() == 1);
     ASSERT(error_signal.shape() == inputs.front().get().shape());
     ASSERT(drop_values_.shape() == inputs.front().get().shape());
+    assert(this->is_training_);
 
     ArrayType return_signal{error_signal.shape()};
 
-    // gradient of dropout is 1.0 for enabled neurons and 0.0 for disabled
+    // gradient of dropout is 1.0/keep_prob for enabled neurons and 0.0 for disabled
     // multiply by error_signal (chain rule)
-    if (this->is_training_)
-    {
-      fetch::math::Multiply(error_signal, drop_values_, return_signal);
-    }
-    else
-    {
-      return_signal.Copy(error_signal);
-    }
+
+    fetch::math::Multiply(error_signal, drop_values_, return_signal);
 
     return {return_signal};
   }
@@ -95,27 +106,6 @@ public:
   static constexpr char const *DESCRIPTOR = "Dropout";
 
 private:
-  void UpdateRandomValues()
-  {
-    DataType zero{0};
-    DataType one{1};
-
-    double d_probability = static_cast<double>(probability_);
-    auto   it            = drop_values_.begin();
-    while (it.is_valid())
-    {
-      if (rng_.AsDouble() <= d_probability)
-      {
-        *it = one;
-      }
-      else
-      {
-        *it = zero;
-      }
-      ++it;
-    }
-  }
-
   ArrayType drop_values_;
   DataType  probability_;
   RNG       rng_;
