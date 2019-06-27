@@ -359,17 +359,31 @@ TEST_P(Base58Tests, CheckDecode)
   EXPECT_EQ(expected, actual);
 }
 
-TEST_P(Base58Tests, CheckDecodeWithTrailingSpaces)
+TEST_P(Base58Tests, CheckDecodeWithTrailingSpacesGoingBeyondBufferEndBoundary)
 {
   auto const &test = GetParam();
 
   ConstByteArray const original_b58_value{test.base58};
-  ConstByteArray const trailing_spaces{' ', ' ', ' ', ' ', ' '};
+  ConstByteArray const trailing_spaces{"          "};
   ConstByteArray const input{
       (original_b58_value + trailing_spaces).SubArray(0, original_b58_value.size())};
   ASSERT_EQ(original_b58_value, input);
 
   ConstByteArray const expected{test.hex};
+  ConstByteArray const actual{ToHex(FromBase58(input))};
+
+  EXPECT_EQ(expected, actual);
+}
+
+TEST_F(Base58Tests, CheckDecodeContinuous1GoingBeyondBufferEndBoundary)
+{
+  ConstByteArray const original_b58_value{"111111"};
+  ConstByteArray const characters_beyond_end_boundary{"111111111111"};
+  ConstByteArray const input{
+      (original_b58_value + characters_beyond_end_boundary).SubArray(0, original_b58_value.size())};
+  ASSERT_EQ(original_b58_value, input);
+
+  ConstByteArray const expected{"000000000000"};
   ConstByteArray const actual{ToHex(FromBase58(input))};
 
   EXPECT_EQ(expected, actual);
