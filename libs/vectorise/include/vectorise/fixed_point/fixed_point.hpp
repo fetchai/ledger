@@ -1488,14 +1488,7 @@ constexpr FixedPoint<I, F> &FixedPoint<I, F>::operator<<=(const int &n)
 template <std::uint16_t I, std::uint16_t F>
 constexpr bool FixedPoint<I, F>::isNaN(FixedPoint<I, F> const &x)
 {
-  if (x.Data() == NaN.Data())
-  {
-    return true;
-  }
-  else
-  {
-    return false;
-  }
+  return x.Data() == NaN.Data();
 }
 
 /**
@@ -1506,14 +1499,7 @@ constexpr bool FixedPoint<I, F>::isNaN(FixedPoint<I, F> const &x)
 template <std::uint16_t I, std::uint16_t F>
 constexpr bool FixedPoint<I, F>::isPosInfinity(FixedPoint<I, F> const &x)
 {
-  if (x.Data() == POSITIVE_INFINITY.Data())
-  {
-    return true;
-  }
-  else
-  {
-    return false;
-  }
+  return x.Data() == POSITIVE_INFINITY.Data();
 }
 
 /**
@@ -1524,14 +1510,7 @@ constexpr bool FixedPoint<I, F>::isPosInfinity(FixedPoint<I, F> const &x)
 template <std::uint16_t I, std::uint16_t F>
 constexpr bool FixedPoint<I, F>::isNegInfinity(FixedPoint<I, F> const &x)
 {
-  if (x.Data() == NEGATIVE_INFINITY.Data())
-  {
-    return true;
-  }
-  else
-  {
-    return false;
-  }
+  return x.Data() == NEGATIVE_INFINITY.Data();
 }
 
 /**
@@ -1542,14 +1521,7 @@ constexpr bool FixedPoint<I, F>::isNegInfinity(FixedPoint<I, F> const &x)
 template <std::uint16_t I, std::uint16_t F>
 constexpr bool FixedPoint<I, F>::isInfinity(FixedPoint<I, F> const &x)
 {
-  if (isPosInfinity(x) || isNegInfinity(x))
-  {
-    return true;
-  }
-  else
-  {
-    return false;
-  }
+  return isPosInfinity(x) || isNegInfinity(x);
 }
 
 ////////////
