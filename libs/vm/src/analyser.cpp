@@ -2257,7 +2257,7 @@ void Analyser::CreateStaticMemberFunction(TypePtr const &type, std::string const
     return;
   }
   function_set_.Add(unique_id);
-  FunctionPtr f         = CreateFunction(FunctionKind::StaticMemberFunction, name, unique_id,
+  FunctionPtr f = CreateFunction(FunctionKind::StaticMemberFunction, name, unique_id,
                                  parameter_types, VariablePtrArray(), return_type);
   AddFunctionToSymbolTable(type->symbols, f);
   AddFunctionInfo(f, handler);
