@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -17,14 +16,26 @@
 //
 //------------------------------------------------------------------------------
 
-namespace fetch {
-namespace service {
+#include "vm_modules/core/print.hpp"
 
-class AbstractDecorator
+#include "meta/type_traits.hpp"
+#include "vm/module.hpp"
+#include "vm/vm.hpp"
+
+#include <ostream>
+
+namespace fetch {
+namespace vm_modules {
+
+void Panic(fetch::vm::VM *vm, fetch::vm::Ptr<fetch::vm::String> const &s)
 {
-public:
-  virtual void Apply(serializer_type &serializer, byte_array::ConstByteArray const &data)   = 0;
-  virtual void Unapply(serializer_type &serializer, byte_array::ConstByteArray const &data) = 0;
-};
-}  // namespace service
+  vm->RuntimeError(s->str);
+}
+
+void CreatePanic(vm::Module &module)
+{
+  module.CreateFreeFunction("panic", &Panic);
+}
+
+}  // namespace vm_modules
 }  // namespace fetch

@@ -21,6 +21,7 @@
 #include "http/middleware/allow_origin.hpp"
 #include "ledger/chain/consensus/bad_miner.hpp"
 #include "ledger/chain/consensus/dummy_miner.hpp"
+#include "logging_http_module.hpp"
 
 #include "ledger/chaincode/contract_http_interface.hpp"
 #include "ledger/dag/dag_interface.hpp"
@@ -104,15 +105,12 @@ std::shared_ptr<ledger::DAGInterface> GenerateDAG(bool generate, std::string con
                                                   bool                          load_on_start,
                                                   Constellation::CertificatePtr certificate)
 {
-  std::shared_ptr<ledger::DAGInterface> ret;
-
   if (generate)
   {
-    ledger::DAG *new_dag = new ledger::DAG{db_name, load_on_start, certificate};
-    ret.reset(new_dag);
+    return std::make_shared<ledger::DAG>(db_name, load_on_start, certificate);
   }
 
-  return ret;
+  return nullptr;
 }
 
 ledger::ShardConfigs GenerateShardsConfig(uint32_t num_lanes, uint16_t start_port,
@@ -235,6 +233,7 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
         std::make_shared<ledger::TxStatusHttpInterface>(tx_status_cache_),
         std::make_shared<ledger::TxQueryHttpInterface>(*storage_),
         std::make_shared<ledger::ContractHttpInterface>(*storage_, tx_processor_),
+        std::make_shared<LoggingHttpModule>(),
         std::make_shared<HealthCheckHttpModule>(chain_, *main_chain_service_, block_coordinator_)}
 {
 

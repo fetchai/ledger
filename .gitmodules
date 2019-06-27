@@ -19,3 +19,6 @@
 [submodule "vendor/backward-cpp"]
 	path = vendor/backward-cpp
 	url = https://github.com/n-hutton/backward-cpp.git
+[submodule "vendor/spdlog"]
+	path = vendor/spdlog
+	url = https://github.com/gabime/spdlog.git

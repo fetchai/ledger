@@ -4,7 +4,7 @@ if (System.Argc() != 2)
   print("Usage: VM SCRIPT_FILE PATH/TO/train-images-idx3-ubyte PATH/TO/train-labels-idx1-ubyte");
   return;
 endif
-  
+
 var training_iterations = 100;
 
 // Define the neural network

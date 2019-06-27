@@ -17,8 +17,12 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/logging.hpp"  // temporary
+
 #include "core/abstract_mutex.hpp"
 #include "core/commandline/vt100.hpp"
+
+#include "spdlog/spdlog.h"
 
 #include <execinfo.h>
 
@@ -310,74 +314,6 @@ public:
     if (log_)
     {
       log_.reset();
-    }
-  }
-
-  template <typename... Args>
-  void Info(Args &&... args)
-  {
-    InfoWithName(nullptr, std::forward<Args>(args)...);
-  }
-
-  template <typename... Args>
-  void InfoWithName(char const *name, Args &&... args)
-  {
-    Log(DefaultLogger::Level::INFO, name, std::forward<Args>(args)...);
-  }
-
-  template <typename... Args>
-  void Warn(Args &&... args)
-  {
-    WarnWithName(nullptr, std::forward<Args>(args)...);
-  }
-
-  template <typename... Args>
-  void WarnWithName(char const *name, Args &&... args)
-  {
-    Log(DefaultLogger::Level::WARNING, name, std::forward<Args>(args)...);
-  }
-
-  template <typename... Args>
-  void Highlight(Args &&... args)
-  {
-    HighlightWithName(nullptr, std::forward<Args>(args)...);
-  }
-
-  template <typename... Args>
-  void HighlightWithName(char const *name, Args &&... args)
-  {
-    Log(DefaultLogger::Level::HIGHLIGHT, name, std::forward<Args>(args)...);
-  }
-
-  template <typename... Args>
-  void Debug(Args &&... args)
-  {
-    DebugWithName(nullptr, std::forward<Args>(args)...);
-  }
-
-  template <typename... Args>
-  void DebugWithName(char const *name, Args &&... args)
-  {
-    Log(DefaultLogger::Level::DEBUG, name, std::forward<Args>(args)...);
-  }
-
-  template <typename... Args>
-  void Error(Args &&... args)
-  {
-    ErrorWithName(nullptr, std::forward<Args>(args)...);
-  }
-
-  template <typename... Args>
-  void ErrorWithName(char const *name, Args &&... args)
-  {
-    std::lock_guard<std::mutex> lock(mutex_);
-    if (log_)
-    {
-      log_->StartEntry(DefaultLogger::Level::ERROR, name, TopContextImpl());
-      Unroll<Args...>::Append(this, std::forward<Args>(args)...);
-      log_->CloseEntry(DefaultLogger::Level::ERROR);
-
-      StackTrace();
     }
   }
 
@@ -731,67 +667,3 @@ extern log::details::LogWrapper logger;
 #define LOG_PRINT_STACK_TRACE(name, custom_name)
 
 #endif
-
-#define ERROR_BACKTRACE                                         \
-  {                                                             \
-    constexpr int            framesMax = 20;                    \
-    std::vector<std::string> results;                           \
-                                                                \
-    void *callstack[framesMax];                                 \
-                                                                \
-    int frames = backtrace(callstack, framesMax);               \
-                                                                \
-    char **frameStrings = backtrace_symbols(callstack, frames); \
-                                                                \
-    std::ostringstream trace;                                   \
-                                                                \
-    for (int i = 0; i < frames; ++i)                            \
-    {                                                           \
-      trace << frameStrings[i] << std::endl;                    \
-    }                                                           \
-    free(frameStrings);                                         \
-                                                                \
-    FETCH_LOG_INFO(LOGGING_NAME, "Trace: \n", trace.str());     \
-  }
-
-#if 1
-#define FETCH_LOG_PROMISE()
-#else
-#define FETCH_LOG_PROMISE() FETCH_LOG_WARN(LOGGING_NAME, "Promise wait: ", __FILE__, ":", __LINE__)
-#endif
-
-// Logging macros
-
-// Debug
-#if FETCH_COMPILE_LOGGING_LEVEL >= 4
-#define FETCH_LOG_DEBUG_ENABLED
-#define FETCH_LOG_DEBUG(name, ...) fetch::logger.DebugWithName(name, __VA_ARGS__)
-#else
-#define FETCH_LOG_DEBUG(name, ...) (void)name
-#endif
-
-// Info
-#if FETCH_COMPILE_LOGGING_LEVEL >= 3
-#define FETCH_LOG_INFO_ENABLED
-#define FETCH_LOG_INFO(name, ...) fetch::logger.InfoWithName(name, __VA_ARGS__)
-#else
-#define FETCH_LOG_INFO(name, ...) (void)name
-#endif
-
-// Warn
-#if FETCH_COMPILE_LOGGING_LEVEL >= 2
-#define FETCH_LOG_WARN_ENABLED
-#define FETCH_LOG_WARN(name, ...) fetch::logger.WarnWithName(name, __VA_ARGS__)
-#else
-#define FETCH_LOG_WARN(name, ...) (void)name
-#endif
-
-// Error
-#if FETCH_COMPILE_LOGGING_LEVEL >= 1
-#define FETCH_LOG_ERROR_ENABLED
-#define FETCH_LOG_ERROR(name, ...) fetch::logger.ErrorWithName(name, __VA_ARGS__)
-#else
-#define FETCH_LOG_ERROR(name, ...) (void)name
-#endif
-
-#define FETCH_LOG_VARIABLE(x) (void)x
