@@ -29,8 +29,7 @@ namespace fetch {
 namespace ml {
 namespace dataloaders {
 
-namespace {
-std::pair<math::SizeType, math::SizeType> count_rows_cols(std::string const &filename)
+inline std::pair<math::SizeType, math::SizeType> count_rows_cols(std::string const &filename)
 {
   // find number of rows and columns in the file
   std::ifstream  file(filename);
@@ -50,12 +49,10 @@ std::pair<math::SizeType, math::SizeType> count_rows_cols(std::string const &fil
   }
   return std::make_pair(row, col + 1);
 }
-}  // namespace
 
 template <typename LabelType, typename InputType>
 class CommodityDataLoader : DataLoader<LabelType, InputType>
 {
-
 public:
   using DataType   = typename InputType::Type;
   using ReturnType = std::pair<LabelType, std::vector<InputType>>;
