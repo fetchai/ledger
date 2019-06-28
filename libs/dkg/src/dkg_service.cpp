@@ -117,7 +117,7 @@ DkgService::DkgService(Endpoint &endpoint, ConstByteArray address, ConstByteArra
   , rpc_server_{endpoint_, SERVICE_DKG, CHANNEL_RPC}
   , rpc_client_{"dkg", endpoint_, SERVICE_DKG, CHANNEL_RPC}
   , state_machine_{std::make_shared<StateMachine>("dkg", State::REGISTER, ToString)}
-  , current_entropy_source_{}
+//  , current_entropy_source_{}
 //  , contribution_subscription_{endpoint_.Subscribe(SERVICE_DKG, CHANNEL_CONTRIBUTIONS)}
 //  , secret_key_subscription_{endpoint_.Subscribe(SERVICE_DKG, CHANNEL_SECRET_KEY)}
 {
@@ -195,17 +195,16 @@ DkgService::SecretKeyReq DkgService::RequestSecretKey(MuddleAddress const &addre
   return req;
 }
 
-void DkgService::SubmitSignatureShare(crypto::bls::Id const &       id,
+void DkgService::SubmitSignatureShare(uint64_t round, crypto::bls::Id const &id,
                                       crypto::bls::PublicKey const &public_key,
                                       crypto::bls::Signature const &signature)
 {
-  FETCH_LOG_WARN(LOGGING_NAME, "Submit of signature");
+  FETCH_LOG_WARN(LOGGING_NAME, "Submit of signature for round ", round);
 
-  if (crypto::bls::Verify(signature, public_key, current_entropy_source_))
+  if (crypto::bls::Verify(signature, public_key, GenerateMessage(round)))
   {
-    FETCH_LOCK(sig_lock_);
-    sig_ids_.push_back(id);
-    sig_shares_.push_back(signature);
+    auto const round_obj = LookupRound(round, true);
+    round_obj->AddShare(id, signature);
   }
   else
   {
@@ -221,43 +220,38 @@ void DkgService::OnNewBlock(uint64_t block_index)
 DkgService::Status DkgService::GenerateEntropy(Digest block_digest, uint64_t block_number, uint64_t &entropy)
 {
   FETCH_UNUSED(block_digest);
-  FETCH_LOCK(sig_lock_);
-  FETCH_LOCK(entropy_lock_);
+  FETCH_LOCK(round_lock_);
+//  FETCH_LOCK(sig_lock_);
 
-  // historical requests for entropy
-  if(block_number <= current_iteration_)
-  {
-    entropy = entropy_history_.at(block_number);
-  }
+  FETCH_LOG_CRITICAL(LOGGING_NAME, "Generating Entropy: ", block_number);
 
-  if(block_number != current_iteration_ + 1)
+  // lookup the associated round
+  auto const round_it = rounds_.find(block_number);
+  if (round_it == rounds_.end())
   {
     FETCH_LOG_ERROR(LOGGING_NAME, "Trying to generate entropy ahead in time! block_number: " , block_number, " current_iteration: ", current_iteration_);
     return Status::NOT_READY;
   }
 
-  if (!aeon_signature_)
+  Round const &round = *(round_it->second);
+
+  // ensure the the requested signature is preent
+  if (!round.HasSignature())
   {
     FETCH_LOG_CRITICAL(LOGGING_NAME, "No signature present for: ", block_number);
      return Status::NOT_READY;
   }
 
-  auto const *raw_entropy = reinterpret_cast<uint64_t const *>(aeon_signature_.get());
-  entropy = *raw_entropy;
-  aeon_signature_.reset();
+  // update the entropy
+  entropy = round.GetEntropy();
 
   FETCH_LOG_INFO(LOGGING_NAME, "Returning entropy for block: ", block_number, " which is : ", entropy);
 
-  // Save this result
-  entropy_history_[current_iteration_] = entropy;
+  ++current_iteration_;
 
-  // Kick off the next entropy generation cycle
-  current_iteration_++;
-  assert(block_number == current_iteration_);
-
-  current_entropy_source_ = block_digest.Copy();
-
-  FETCH_LOG_INFO(LOGGING_NAME, "Setting new entropy source: ", current_entropy_source_);
+//  current_entropy_source_ = block_digest.Copy();
+//
+//  FETCH_LOG_INFO(LOGGING_NAME, "Setting new entropy source: ", current_entropy_source_);
 
   return Status::OK;
 }
@@ -331,18 +325,11 @@ State DkgService::OnBuildAeonKeysState()
 {
   State next_state{State::REQUEST_SECRET_KEY};
 
-  //if (is_dealer_)
-  //{
-  //  next_state = State::BROADCAST_SIGNATURE;
-  //}
-
   if (is_dealer_)
   {
     if (CanBuildAeonKeys())
     {
       BuildAeonKeys();
-
-      FETCH_LOG_INFO(LOGGING_NAME, "\n\nDealer is building aeon keys!");
     }
     else
     {
@@ -419,9 +406,7 @@ State DkgService::OnBroadcastSignatureState()
 {
   State next_state{State::COLLECT_SIGNATURES};
 
-  FETCH_LOCK(entropy_lock_);
-
-  auto signature   = crypto::bls::Sign(sig_private_key_, current_entropy_source_);
+  auto signature   = crypto::bls::Sign(sig_private_key_, GenerateMessage(requesting_iteration_));
   auto public_key  = crypto::bls::PublicKeyFromPrivate(sig_private_key_);
 
   // TODO(EJF): Thread safety when this is dynamic
@@ -436,7 +421,7 @@ State DkgService::OnBroadcastSignatureState()
     // TODO(EJF): multiple promises
     // request from the beacon for the secret key
     pending_promise_ = rpc_client_.CallSpecificAddress(member, RPC_DKG_BEACON,
-                                                       DkgRpcProtocol::SUBMIT_SIGNATURE, id_,
+                                                       DkgRpcProtocol::SUBMIT_SIGNATURE, requesting_iteration_.load(), id_,
                                                        public_key, signature);
   }
 
@@ -447,26 +432,27 @@ State DkgService::OnCollectSignaturesState()
 {
   State next_state{State::COLLECT_SIGNATURES};
 
-  FETCH_LOG_INFO(LOGGING_NAME, "Waiting for signatures");
+  FETCH_LOG_INFO(LOGGING_NAME, "Waiting for signatures for round: ", requesting_iteration_.load());
 
   {
-    FETCH_LOCK(sig_lock_);
+    // lookup the requesting round
+    auto const round = LookupRound(requesting_iteration_, true);
 
-    if (sig_shares_.size() >= current_threshold_)
+    if (!round->HasSignature() && round->GetNumShares() >= current_threshold_)
     {
       // And finally we test the signature
-      aeon_signature_ = std::make_unique<crypto::bls::Signature>(crypto::bls::RecoverSignature(sig_shares_, sig_ids_));
+      round->RecoverSignature();
 
-      auto const *raw = reinterpret_cast<uint8_t const *>(aeon_signature_.get());
-      ConstByteArray sig_value{raw, sizeof(crypto::bls::Signature)};
-
-      FETCH_LOG_ERROR(LOGGING_NAME, "Generated Signature: ", sig_value.ToBase64());
+      FETCH_LOG_ERROR(LOGGING_NAME, "Generated Signature: ", round->GetRoundMessage().ToBase64(), " round: ", round->round(), " check: ", requesting_iteration_.load());
 
       // TODO(EJF): This signature needs to be verified
 //      if (crypto::bls::Verify(*aeon_signature_, groups_pk, current_entropy_source_))
 //      {
 //        FETCH_LOG_ERROR(LOGGING_NAME, "GREATE SUCCESSE !!!!");
 //      }
+
+      // have completed this iteration now
+      ++requesting_iteration_;
 
       next_state = State::COMPLETE;
     }
@@ -483,31 +469,51 @@ State DkgService::OnCollectSignaturesState()
 State DkgService::OnCompleteState()
 {
   FETCH_LOG_INFO(LOGGING_NAME, "State: Complete");
-  state_machine_->Delay(500ms);
 
-  // The signature is consumed on block generation
-  FETCH_LOCK(sig_lock_);
-
-  if(!aeon_signature_)
+  // calculate the current number of signatures ahead
+  if (requesting_iteration_ <= current_iteration_)
   {
-    {
-      FETCH_LOCK(cabinet_lock_);
-      // Reset transient state
-      current_cabinet_ids_.clear();
-      current_cabinet_ids_[address_] = id_; // register ourselves
-      current_cabinet_secrets_.clear();
-      current_cabinet_public_keys_.clear();
-      current_cabinet_secrets_.clear();
-    }
-
-    // sig lock already
-    {
-    sig_ids_    = crypto::bls::IdList{};
-    sig_shares_ = crypto::bls::SignatureList{};
-    }
-
-    return State::REGISTER;
+    return State::BROADCAST_SIGNATURE;
   }
+  else
+  {
+    uint64_t const delta = requesting_iteration_ - current_iteration_;
+    if (delta < 10)
+    {
+      return State::BROADCAST_SIGNATURE;
+    }
+  }
+
+  // TODO(EJF): Clean up of round cache
+
+
+
+//  // The signature is consumed on block generation
+//  FETCH_LOCK(sig_lock_);
+//
+//  if(!aeon_signature_)
+//  {
+//    {
+//      FETCH_LOCK(cabinet_lock_);
+//      // Reset transient state
+//      current_cabinet_ids_.clear();
+//      current_cabinet_ids_[address_] = id_; // register ourselves
+//      current_cabinet_secrets_.clear();
+//      current_cabinet_public_keys_.clear();
+//      current_cabinet_secrets_.clear();
+//    }
+//
+//    // sig lock already
+//    {
+//    sig_ids_    = crypto::bls::IdList{};
+//    sig_shares_ = crypto::bls::SignatureList{};
+//    }
+//
+//    return State::REGISTER;
+//  }
+
+
+  state_machine_->Delay(500ms);
 
   return State::COMPLETE;
 }
@@ -561,6 +567,56 @@ bool DkgService::BuildAeonKeys()
   }
 
   return true;
+}
+
+ConstByteArray DkgService::GenerateMessage(uint64_t round)
+{
+  ConstByteArray message{};
+
+  if (round == 0)
+  {
+    message = "Genesis";
+  }
+  else
+  {
+    auto const round_info = LookupRound(round);
+
+    if (!round_info)
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Unable to lookup prev. round to generate message");
+    }
+    else
+    {
+      message = round_info->GetRoundMessage();
+    }
+  }
+
+  return message;
+}
+
+DkgService::RoundPtr DkgService::LookupRound(uint64_t round, bool create)
+{
+  RoundPtr round_ptr{};
+  FETCH_LOCK(round_lock_);
+
+  auto it = rounds_.find(round);
+  if (it == rounds_.end())
+  {
+    if (create)
+    {
+      // create the new round
+      round_ptr = std::make_shared<Round>(round);
+
+      // store it in the map
+      rounds_[round] = round_ptr;
+    }
+  }
+  else
+  {
+    round_ptr = it->second;
+  }
+
+  return round_ptr;
 }
 
 } // namespace dkg

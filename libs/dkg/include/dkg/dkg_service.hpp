@@ -85,7 +85,7 @@ public:
   };
   SecretKeyReq RequestSecretKey(MuddleAddress const &address);
 
-  void SubmitSignatureShare(crypto::bls::Id const &id, crypto::bls::PublicKey  const &public_key, crypto::bls::Signature const &signature);
+  void SubmitSignatureShare(uint64_t round, crypto::bls::Id const &id, crypto::bls::PublicKey  const &public_key, crypto::bls::Signature const &signature);
 
   void OnNewBlock(uint64_t block_index);
   /// @}
@@ -125,6 +125,8 @@ private:
   using Promise = service::Promise;
   using RMutex = std::recursive_mutex;
   using Mutex  = std::mutex;
+  using SignaturePtr = std::unique_ptr<crypto::bls::Signature>;
+  using SignatureMap = std::map<uint64_t, SignaturePtr>;
 
   /// @name State Handlers
   /// @{
@@ -140,6 +142,8 @@ private:
 
   bool CanBuildAeonKeys() const;
   bool BuildAeonKeys();
+
+  ConstByteArray GenerateMessage(uint64_t round);
 
 
   ConstByteArray const  address_;
@@ -160,27 +164,107 @@ private:
 
   /// @name State Spectific
   /// @{
-  Promise pending_promise_;
-  crypto::bls::PrivateKey     sig_private_key_{};
+  Promise                 pending_promise_;
+  crypto::bls::PrivateKey sig_private_key_{};
   /// @}
 
   /// @name Current Signature
   /// @{
-  mutable RMutex              sig_lock_{};
-  std::unique_ptr<crypto::bls::Signature> aeon_signature_{};
-  crypto::bls::IdList         sig_ids_{};
-  crypto::bls::SignatureList  sig_shares_{};
+//  mutable RMutex sig_lock_{}; // Priority 3.
+//  crypto::bls::IdList         sig_ids_{};
+//  crypto::bls::SignatureList  sig_shares_{};
   /// @}
 
-  // Current entropy statefullness
-  mutable RMutex entropy_lock_{};
-  uint64_t       current_iteration_ = 0;
-  EntropyHistory entropy_history_;
-  Digest         current_entropy_source_;
+  /// @name Current entropy / signatures
+  /// @{
+  class Round
+  {
+  public:
+
+    // Construction / Destruction
+    explicit Round(uint64_t round)
+      : round_{round}
+    {}
+    Round(Round const &) = delete;
+    Round(Round &&) = delete;
+    ~Round() = default;
+
+    void AddShare(crypto::bls::Id const &id, crypto::bls::Signature const &sig)
+    {
+      FETCH_LOCK(lock_);
+      sig_ids_.push_back(id);
+      sig_shares_.push_back(sig);
+      ++num_shares_;
+    }
+
+    uint64_t round() const
+    {
+      return round_;
+    }
+
+    bool HasSignature() const
+    {
+      return has_signature_;
+    }
+
+    std::size_t GetNumShares() const
+    {
+      return num_shares_;
+    }
+
+    uint64_t GetEntropy() const
+    {
+      FETCH_LOCK(lock_);
+      return *reinterpret_cast<uint64_t const *>(&round_signature_);
+    }
+
+    void SetSignature(crypto::bls::Signature const &sig)
+    {
+      FETCH_LOCK(lock_);
+      round_signature_ = sig;
+    }
+
+    ConstByteArray GetRoundMessage() const
+    {
+      FETCH_LOCK(lock_);
+      auto const *raw = reinterpret_cast<uint8_t const *>(&round_signature_);
+      return {raw, sizeof(crypto::bls::Signature)};
+    }
+
+    void RecoverSignature()
+    {
+      FETCH_LOCK(lock_);
+      round_signature_ = crypto::bls::RecoverSignature(sig_shares_, sig_ids_);
+      has_signature_   = true;
+    }
+
+    // Operators
+    Round &operator=(Round const &) = delete;
+    Round &operator=(Round &&) = delete;
+
+  private:
+    uint64_t const             round_;
+    mutable std::mutex         lock_{};
+    crypto::bls::IdList        sig_ids_{};
+    crypto::bls::SignatureList sig_shares_{};
+    crypto::bls::Signature     round_signature_{};
+    std::atomic<std::size_t>   num_shares_{0};
+    std::atomic<bool>          has_signature_{};
+  };
+  using RoundPtr = std::shared_ptr<Round>;
+  using RoundMap = std::map<uint64_t, RoundPtr>;
+
+  RoundPtr LookupRound(uint64_t round, bool create = false);
+
+  mutable RMutex round_lock_{}; // Priority 2.
+  std::atomic<uint64_t>       current_iteration_{0};
+  std::atomic<uint64_t>       requesting_iteration_{0};
+  RoundMap       rounds_{};
+  /// @}
 
   /// @name Beacon / Secret Generation
   /// @{
-  mutable RMutex cabinet_lock_;
+  mutable RMutex cabinet_lock_; // Priority 1.
   CabinetMembers current_cabinet_{};
   CabinetIds current_cabinet_ids_{};
   crypto::bls::PublicKeyList current_cabinet_public_keys_{}; // aeon
