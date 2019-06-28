@@ -45,7 +45,7 @@ Status NaiveEntropyGenerator::GenerateEntropy(Digest block_digest, uint64_t bloc
   }
 
   auto const &digest_ref = block_digest;
-  entropy = *reinterpret_cast<uint64_t const *>(digest_ref.pointer());
+  entropy                = *reinterpret_cast<uint64_t const *>(digest_ref.pointer());
 
   return Status::OK;
 }

@@ -17,15 +17,15 @@
 //------------------------------------------------------------------------------
 
 #include "core/logging.hpp"
-#include "core/service_ids.hpp"
-#include "core/serializers/byte_array_buffer.hpp"
 #include "core/serializers/byte_array.hpp"
-#include "network/muddle/muddle_endpoint.hpp"
-#include "network/muddle/subscription.hpp"
-#include "network/muddle/packet.hpp"
-#include "dkg/dkg_service.hpp"
+#include "core/serializers/byte_array_buffer.hpp"
+#include "core/service_ids.hpp"
 #include "crypto/bls_dkg.hpp"
 #include "crypto/sha256.hpp"
+#include "dkg/dkg_service.hpp"
+#include "network/muddle/muddle_endpoint.hpp"
+#include "network/muddle/packet.hpp"
+#include "network/muddle/subscription.hpp"
 
 #include <chrono>
 
@@ -105,7 +105,7 @@ char const *ToString(DkgService::State state)
   return text;
 }
 
-} // namespace
+}  // namespace
 
 DkgService::DkgService(Endpoint &endpoint, ConstByteArray address, ConstByteArray beacon_address,
                        std::size_t key_lifetime)
@@ -129,23 +129,29 @@ DkgService::DkgService(Endpoint &endpoint, ConstByteArray address, ConstByteArra
 
   // configure the state handlers
   state_machine_->RegisterHandler(State::REGISTER, this, &DkgService::OnRegisterState);
-  state_machine_->RegisterHandler(State::WAIT_FOR_REGISTRATION, this, &DkgService::OnWaitForRegistrationState);
+  state_machine_->RegisterHandler(State::WAIT_FOR_REGISTRATION, this,
+                                  &DkgService::OnWaitForRegistrationState);
   state_machine_->RegisterHandler(State::BUILD_AEON_KEYS, this, &DkgService::OnBuildAeonKeysState);
-  state_machine_->RegisterHandler(State::REQUEST_SECRET_KEY, this, &DkgService::OnRequestSecretKeyState);
-  state_machine_->RegisterHandler(State::WAIT_FOR_SECRET_KEY, this, &DkgService::OnWaitForSecretKeyState);
-  state_machine_->RegisterHandler(State::BROADCAST_SIGNATURE, this, &DkgService::OnBroadcastSignatureState);
-  state_machine_->RegisterHandler(State::COLLECT_SIGNATURES, this, &DkgService::OnCollectSignaturesState);
+  state_machine_->RegisterHandler(State::REQUEST_SECRET_KEY, this,
+                                  &DkgService::OnRequestSecretKeyState);
+  state_machine_->RegisterHandler(State::WAIT_FOR_SECRET_KEY, this,
+                                  &DkgService::OnWaitForSecretKeyState);
+  state_machine_->RegisterHandler(State::BROADCAST_SIGNATURE, this,
+                                  &DkgService::OnBroadcastSignatureState);
+  state_machine_->RegisterHandler(State::COLLECT_SIGNATURES, this,
+                                  &DkgService::OnCollectSignaturesState);
   state_machine_->RegisterHandler(State::COMPLETE, this, &DkgService::OnCompleteState);
 
   // TODO(EJF): Remove
   state_machine_->OnStateChange([](State current, State previous) {
-    FETCH_LOG_WARN(LOGGING_NAME, "State changed to: ", ToString(current), " was: ", ToString(previous));
+    FETCH_LOG_WARN(LOGGING_NAME, "State changed to: ", ToString(current),
+                   " was: ", ToString(previous));
   });
 
   // consistency
   if (current_cabinet_.find(address_) != current_cabinet_.end())
   {
-    current_cabinet_ids_[address_] = id_; // register ourselves
+    current_cabinet_ids_[address_] = id_;  // register ourselves
   }
 
   FETCH_LOG_INFO(LOGGING_NAME, "#LivingTheDream...");
@@ -218,35 +224,39 @@ void DkgService::OnNewBlock(uint64_t block_index)
   FETCH_LOG_INFO(LOGGING_NAME, "On new block ", block_index);
 }
 
-DkgService::Status DkgService::GenerateEntropy(Digest block_digest, uint64_t block_number, uint64_t &entropy)
+DkgService::Status DkgService::GenerateEntropy(Digest block_digest, uint64_t block_number,
+                                               uint64_t &entropy)
 {
   FETCH_UNUSED(block_digest);
   FETCH_LOCK(sig_lock_);
   FETCH_LOCK(entropy_lock_);
 
   // historical requests for entropy
-  if(block_number <= current_iteration_)
+  if (block_number <= current_iteration_)
   {
     entropy = entropy_history_.at(block_number);
   }
 
-  if(block_number != current_iteration_ + 1)
+  if (block_number != current_iteration_ + 1)
   {
-    FETCH_LOG_ERROR(LOGGING_NAME, "Trying to generate entropy ahead in time! block_number: " , block_number, " current_iteration: ", current_iteration_);
+    FETCH_LOG_ERROR(LOGGING_NAME,
+                    "Trying to generate entropy ahead in time! block_number: ", block_number,
+                    " current_iteration: ", current_iteration_);
     return Status::NOT_READY;
   }
 
   if (!aeon_signature_)
   {
     FETCH_LOG_CRITICAL(LOGGING_NAME, "No signature present for: ", block_number);
-     return Status::NOT_READY;
+    return Status::NOT_READY;
   }
 
   auto const *raw_entropy = reinterpret_cast<uint64_t const *>(aeon_signature_.get());
-  entropy = *raw_entropy;
+  entropy                 = *raw_entropy;
   aeon_signature_.reset();
 
-  FETCH_LOG_INFO(LOGGING_NAME, "Returning entropy for block: ", block_number, " which is : ", entropy);
+  FETCH_LOG_INFO(LOGGING_NAME, "Returning entropy for block: ", block_number,
+                 " which is : ", entropy);
 
   // Save this result
   entropy_history_[current_iteration_] = entropy;
@@ -331,7 +341,7 @@ State DkgService::OnBuildAeonKeysState()
 {
   State next_state{State::REQUEST_SECRET_KEY};
 
-  //if (is_dealer_)
+  // if (is_dealer_)
   //{
   //  next_state = State::BROADCAST_SIGNATURE;
   //}
@@ -401,7 +411,7 @@ State DkgService::OnWaitForSecretKeyState()
     }
     case PromiseState::FAILED:
     case PromiseState::TIMEDOUT:
-        FETCH_LOG_INFO(LOGGING_NAME, "\n\nResponse timed out, retrying");
+      FETCH_LOG_INFO(LOGGING_NAME, "\n\nResponse timed out, retrying");
       next_state = State::REQUEST_SECRET_KEY;
       break;
     }
@@ -421,8 +431,8 @@ State DkgService::OnBroadcastSignatureState()
 
   FETCH_LOCK(entropy_lock_);
 
-  auto signature   = crypto::bls::Sign(sig_private_key_, current_entropy_source_);
-  auto public_key  = crypto::bls::PublicKeyFromPrivate(sig_private_key_);
+  auto signature  = crypto::bls::Sign(sig_private_key_, current_entropy_source_);
+  auto public_key = crypto::bls::PublicKeyFromPrivate(sig_private_key_);
 
   // TODO(EJF): Thread safety when this is dynamic
   for (auto const &member : current_cabinet_)
@@ -435,9 +445,8 @@ State DkgService::OnBroadcastSignatureState()
 
     // TODO(EJF): multiple promises
     // request from the beacon for the secret key
-    pending_promise_ = rpc_client_.CallSpecificAddress(member, RPC_DKG_BEACON,
-                                                       DkgRpcProtocol::SUBMIT_SIGNATURE, id_,
-                                                       public_key, signature);
+    pending_promise_ = rpc_client_.CallSpecificAddress(
+        member, RPC_DKG_BEACON, DkgRpcProtocol::SUBMIT_SIGNATURE, id_, public_key, signature);
   }
 
   return next_state;
@@ -455,18 +464,19 @@ State DkgService::OnCollectSignaturesState()
     if (sig_shares_.size() >= current_threshold_)
     {
       // And finally we test the signature
-      aeon_signature_ = std::make_unique<crypto::bls::Signature>(crypto::bls::RecoverSignature(sig_shares_, sig_ids_));
+      aeon_signature_ = std::make_unique<crypto::bls::Signature>(
+          crypto::bls::RecoverSignature(sig_shares_, sig_ids_));
 
-      auto const *raw = reinterpret_cast<uint8_t const *>(aeon_signature_.get());
+      auto const *   raw = reinterpret_cast<uint8_t const *>(aeon_signature_.get());
       ConstByteArray sig_value{raw, sizeof(crypto::bls::Signature)};
 
       FETCH_LOG_ERROR(LOGGING_NAME, "Generated Signature: ", sig_value.ToBase64());
 
       // TODO(EJF): This signature needs to be verified
-//      if (crypto::bls::Verify(*aeon_signature_, groups_pk, current_entropy_source_))
-//      {
-//        FETCH_LOG_ERROR(LOGGING_NAME, "GREATE SUCCESSE !!!!");
-//      }
+      //      if (crypto::bls::Verify(*aeon_signature_, groups_pk, current_entropy_source_))
+      //      {
+      //        FETCH_LOG_ERROR(LOGGING_NAME, "GREATE SUCCESSE !!!!");
+      //      }
 
       next_state = State::COMPLETE;
     }
@@ -479,7 +489,7 @@ State DkgService::OnCollectSignaturesState()
   return next_state;
 }
 
-// Wait in this state until it is time to 
+// Wait in this state until it is time to
 State DkgService::OnCompleteState()
 {
   FETCH_LOG_INFO(LOGGING_NAME, "State: Complete");
@@ -488,13 +498,13 @@ State DkgService::OnCompleteState()
   // The signature is consumed on block generation
   FETCH_LOCK(sig_lock_);
 
-  if(!aeon_signature_)
+  if (!aeon_signature_)
   {
     {
       FETCH_LOCK(cabinet_lock_);
       // Reset transient state
       current_cabinet_ids_.clear();
-      current_cabinet_ids_[address_] = id_; // register ourselves
+      current_cabinet_ids_[address_] = id_;  // register ourselves
       current_cabinet_secrets_.clear();
       current_cabinet_public_keys_.clear();
       current_cabinet_secrets_.clear();
@@ -502,8 +512,8 @@ State DkgService::OnCompleteState()
 
     // sig lock already
     {
-    sig_ids_    = crypto::bls::IdList{};
-    sig_shares_ = crypto::bls::SignatureList{};
+      sig_ids_    = crypto::bls::IdList{};
+      sig_shares_ = crypto::bls::SignatureList{};
     }
 
     return State::REGISTER;
@@ -563,5 +573,5 @@ bool DkgService::BuildAeonKeys()
   return true;
 }
 
-} // namespace dkg
-} // namespace fetch
+}  // namespace dkg
+}  // namespace fetch

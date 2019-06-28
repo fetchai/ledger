@@ -21,6 +21,4 @@
 
 namespace fetch {
 
-
-
-} // namespace fetch
+}  // namespace fetch

@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "dkg/dkg_service.hpp"
 #include "ledger/chain/address.hpp"
 #include "ledger/chain/block.hpp"
 #include "ledger/chain/block_coordinator.hpp"
@@ -25,7 +26,6 @@
 #include "ledger/genesis_loading/genesis_file_creator.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 #include "storage/resource_mapper.hpp"
-#include "dkg/dkg_service.hpp"
 
 #include "core/byte_array/decoders.hpp"
 #include "core/json/document.hpp"

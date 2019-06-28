@@ -21,7 +21,7 @@
 
 // Add functionality to print a stack trace when program-terminating signals such as sigsegv are
 // found
-#if 0
+#if 1
 std::function<void(std::string)> backward::SignalHandling::_on_signal;
 backward::SignalHandling         sh([](std::string const &fatal_msg) {
   FETCH_LOG_ERROR("FETCH_FATAL_SIGNAL_HANDLER", fatal_msg);

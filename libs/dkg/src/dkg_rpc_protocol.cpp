@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "dkg/dkg_service.hpp"
 #include "dkg/dkg_rpc_protocol.hpp"
+#include "dkg/dkg_service.hpp"
 
 namespace fetch {
 namespace dkg {
@@ -30,5 +30,5 @@ DkgRpcProtocol::DkgRpcProtocol(DkgService &service)
   Expose(SUBMIT_SIGNATURE, &service_, &DkgService::SubmitSignatureShare);
 }
 
-} // namespace dkg
-} // namespace fetch
+}  // namespace dkg
+}  // namespace fetch

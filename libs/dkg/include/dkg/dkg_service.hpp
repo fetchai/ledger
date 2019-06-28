@@ -17,18 +17,18 @@
 //
 //------------------------------------------------------------------------------
 
-#include "dkg/dkg_rpc_serializers.hpp"
+#include "core/byte_array/const_byte_array.hpp"
 #include "core/byte_array/decoders.hpp"
-#include "core/state_machine.hpp"
 #include "core/containers/mapping.hpp"
 #include "core/mutex.hpp"
-#include "core/byte_array/const_byte_array.hpp"
+#include "core/state_machine.hpp"
 #include "crypto/bls_base.hpp"
+#include "dkg/dkg_rpc_protocol.hpp"
+#include "dkg/dkg_rpc_serializers.hpp"
 #include "ledger/chain/address.hpp"
 #include "ledger/consensus/entropy_generator_interface.hpp"
-#include "dkg/dkg_rpc_protocol.hpp"
-#include "network/muddle/rpc/server.hpp"
 #include "network/muddle/rpc/client.hpp"
+#include "network/muddle/rpc/server.hpp"
 
 #include <memory>
 #include <unordered_map>
@@ -40,14 +40,13 @@ namespace muddle {
 class MuddleEndpoint;
 class Subscription;
 
-} // namespace network
+}  // namespace muddle
 
 namespace dkg {
 
 class DkgService : public ledger::EntropyGeneratorInterface
 {
 public:
-
   enum class State
   {
     REGISTER,
@@ -64,14 +63,14 @@ public:
   using Digest         = ledger::Digest;
   using ConstByteArray = byte_array::ConstByteArray;
   using MuddleAddress  = ConstByteArray;
-  using CabinetMembers  = std::unordered_set<MuddleAddress>;
+  using CabinetMembers = std::unordered_set<MuddleAddress>;
 
   // Construction / Destruction
   explicit DkgService(Endpoint &endpoint, ConstByteArray address, ConstByteArray beacon_address,
                       std::size_t key_lifetime);
   DkgService(DkgService const &) = delete;
-  DkgService(DkgService &&) = delete;
-  ~DkgService() override = default;
+  DkgService(DkgService &&)      = delete;
+  ~DkgService() override         = default;
 
   /// @name External Events
   /// @{
@@ -85,7 +84,8 @@ public:
   };
   SecretKeyReq RequestSecretKey(MuddleAddress const &address);
 
-  void SubmitSignatureShare(crypto::bls::Id const &id, crypto::bls::PublicKey  const &public_key, crypto::bls::Signature const &signature);
+  void SubmitSignatureShare(crypto::bls::Id const &id, crypto::bls::PublicKey const &public_key,
+                            crypto::bls::Signature const &signature);
 
   void OnNewBlock(uint64_t block_index);
   /// @}
@@ -122,9 +122,9 @@ private:
   using StateMachine    = core::StateMachine<State>;
   using StateMachinePtr = std::shared_ptr<StateMachine>;
   using RpcProtocolPtr  = std::unique_ptr<DkgRpcProtocol>;
-  using Promise = service::Promise;
-  using RMutex = std::recursive_mutex;
-  using Mutex  = std::mutex;
+  using Promise         = service::Promise;
+  using RMutex          = std::recursive_mutex;
+  using Mutex           = std::mutex;
 
   /// @name State Handlers
   /// @{
@@ -141,18 +141,15 @@ private:
   bool CanBuildAeonKeys() const;
   bool BuildAeonKeys();
 
-
   ConstByteArray const  address_;
   crypto::bls::Id const id_;
   ConstByteArray const  beacon_address_;
   bool const            is_dealer_;
   Endpoint &            endpoint_;
 
-
   muddle::rpc::Server rpc_server_;
   muddle::rpc::Client rpc_client_;
   RpcProtocolPtr      rpc_proto_;
-
 
   StateMachinePtr state_machine_;
 
@@ -160,16 +157,16 @@ private:
 
   /// @name State Spectific
   /// @{
-  Promise pending_promise_;
-  crypto::bls::PrivateKey     sig_private_key_{};
+  Promise                 pending_promise_;
+  crypto::bls::PrivateKey sig_private_key_{};
   /// @}
 
   /// @name Current Signature
   /// @{
-  mutable RMutex              sig_lock_{};
+  mutable RMutex                          sig_lock_{};
   std::unique_ptr<crypto::bls::Signature> aeon_signature_{};
-  crypto::bls::IdList         sig_ids_{};
-  crypto::bls::SignatureList  sig_shares_{};
+  crypto::bls::IdList                     sig_ids_{};
+  crypto::bls::SignatureList              sig_shares_{};
   /// @}
 
   // Current entropy statefullness
@@ -180,14 +177,14 @@ private:
 
   /// @name Beacon / Secret Generation
   /// @{
-  mutable RMutex cabinet_lock_;
-  CabinetMembers current_cabinet_{};
-  CabinetIds current_cabinet_ids_{};
-  crypto::bls::PublicKeyList current_cabinet_public_keys_{}; // aeon
-  CabinetKeys current_cabinet_secrets_{};
+  mutable RMutex             cabinet_lock_;
+  CabinetMembers             current_cabinet_{};
+  CabinetIds                 current_cabinet_ids_{};
+  crypto::bls::PublicKeyList current_cabinet_public_keys_{};  // aeon
+  CabinetKeys                current_cabinet_secrets_{};
   /// @}
 
-  //AddressMapping address_mapper_{}; ///< Muddle <-> Token Address mapping
+  // AddressMapping address_mapper_{}; ///< Muddle <-> Token Address mapping
 };
 
 template <typename T>
@@ -212,5 +209,5 @@ void Deserialize(T &stream, DkgService::SecretKeyReq &req)
   }
 }
 
-} // namespace dkg
-} // namespace fetch
+}  // namespace dkg
+}  // namespace fetch

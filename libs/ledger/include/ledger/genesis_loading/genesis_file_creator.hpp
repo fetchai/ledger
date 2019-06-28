@@ -64,7 +64,7 @@ private:
   BlockCoordinator &    block_coordinator_;
   StorageUnitInterface &storage_unit_;
   StakeManager *        stake_manager_{nullptr};
-  dkg::DkgService * dkg_{nullptr};
+  dkg::DkgService *     dkg_{nullptr};
 };
 
 inline GenesisFileCreator::GenesisFileCreator(BlockCoordinator &    block_coordinator,

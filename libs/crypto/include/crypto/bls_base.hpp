@@ -85,7 +85,8 @@ inline Signature Sign(PrivateKey const &priv, byte_array::ConstByteArray const &
   return ret;
 }
 
-inline bool Verify(Signature const &signature, PublicKey const &pub, byte_array::ConstByteArray const &msg)
+inline bool Verify(Signature const &signature, PublicKey const &pub,
+                   byte_array::ConstByteArray const &msg)
 {
   return blsVerify(&signature, &pub, msg.pointer(), msg.size());
 }
@@ -150,13 +151,10 @@ inline Signature RecoverSignature(SignatureList const &sigs, IdList const &ids)
   return ret;
 }
 
-
-
 };  // namespace bls
 
 }  // namespace crypto
 }  // namespace fetch
-
 
 template <typename T>
 void Serialize(T &stream, ::blsId const &id)

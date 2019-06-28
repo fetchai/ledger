@@ -26,6 +26,7 @@
 #include "ledger/chaincode/contract_http_interface.hpp"
 #include "ledger/dag/dag_interface.hpp"
 
+#include "dkg/dkg_service.hpp"
 #include "ledger/consensus/naive_entropy_generator.hpp"
 #include "ledger/consensus/stake_snapshot.hpp"
 #include "ledger/execution_manager.hpp"
@@ -37,7 +38,6 @@
 #include "network/muddle/rpc/server.hpp"
 #include "network/p2pservice/p2p_http_interface.hpp"
 #include "network/uri.hpp"
-#include "dkg/dkg_service.hpp"
 
 #include <chrono>
 #include <cstddef>
@@ -166,7 +166,8 @@ StakeManagerPtr CreateStakeManager(bool enabled, ledger::EntropyGeneratorInterfa
   return mgr;
 }
 
-DkgServicePtr CreateDkgService(Constellation::Config const &cfg, ConstByteArray address, MuddleEndpoint &endpoint)
+DkgServicePtr CreateDkgService(Constellation::Config const &cfg, ConstByteArray address,
+                               MuddleEndpoint &endpoint)
 {
   DkgServicePtr dkg{};
 
@@ -297,7 +298,6 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
   {
     stake_->UpdateEntropy(*dkg_);
   }
-
 }
 
 /**

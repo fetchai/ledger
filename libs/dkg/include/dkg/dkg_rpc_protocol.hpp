@@ -28,7 +28,6 @@ class DkgService;
 class DkgRpcProtocol : public service::Protocol
 {
 public:
-
   enum
   {
     REGISTER,
@@ -39,17 +38,16 @@ public:
   // Construction / Destruction
   explicit DkgRpcProtocol(DkgService &service);
   DkgRpcProtocol(DkgRpcProtocol const &) = delete;
-  DkgRpcProtocol(DkgRpcProtocol &&) = delete;
-  ~DkgRpcProtocol() override = default;
+  DkgRpcProtocol(DkgRpcProtocol &&)      = delete;
+  ~DkgRpcProtocol() override             = default;
 
   // Operators
   DkgRpcProtocol &operator=(DkgRpcProtocol const &) = delete;
   DkgRpcProtocol &operator=(DkgRpcProtocol &&) = delete;
 
 private:
-
   DkgService &service_;
 };
 
-} // namespace dkg
-} // namespace fetch
+}  // namespace dkg
+}  // namespace fetch

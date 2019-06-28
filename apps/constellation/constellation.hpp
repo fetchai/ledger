@@ -56,7 +56,6 @@ namespace fetch {
 namespace dkg {
 
 class DkgService;
-
 }
 
 /**
