@@ -97,6 +97,12 @@ inline PrivateKey HashToPrivateKey(byte_array::ConstByteArray const &seed)
   return priv;
 }
 
+///------------- Jon's edit --------------------/
+
+
+
+//----------------------------------------------/
+
 template <typename KeyType>
 KeyType PrivateKeyShare(std::vector<KeyType> &kl, Id const &id)
 {

@@ -494,8 +494,13 @@ bool DkgService::BuildAeonKeys()
   FETCH_LOCK(cabinet_lock_);
 
   current_cabinet_public_keys_.clear();
+  auto global_sk = crypto::bls::PrivateKeyByCSPRNG();
+  global_pk_ = crypto::bls::PublicKeyFromPrivate(global_sk);
 
   crypto::bls::PrivateKeyList private_keys;
+  crypto::bls::IdList ids; 
+
+
   for (std::size_t i = 0; i < current_threshold_; ++i)
   {
     auto sk = crypto::bls::PrivateKeyByCSPRNG();

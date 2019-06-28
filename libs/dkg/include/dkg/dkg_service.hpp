@@ -176,6 +176,7 @@ private:
 //  crypto::bls::PublicKeyList  sig_public_keys_{};
   crypto::bls::IdList         sig_ids_{};
   crypto::bls::SignatureList  sig_shares_{};
+  crypto::bls::PublicKey      global_pk_{};
 
 //  crypto::bls::PrivateKeyList sig_private_shares_{};
   /// @}
