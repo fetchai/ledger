@@ -67,6 +67,7 @@ public:
   using Digest         = ledger::Digest;
   using ConstByteArray = byte_array::ConstByteArray;
   using MuddleAddress  = ConstByteArray;
+  using CabinetMembers  = std::unordered_set<MuddleAddress>;
 
   // Construction / Destruction
   explicit DkgService(Endpoint &endpoint, ConstByteArray address, ConstByteArray beacon_address,
@@ -102,6 +103,12 @@ public:
     return state_machine_;
   }
 
+  void ResetCabinet(CabinetMembers cabinet)
+  {
+    FETCH_LOCK(cabinet_lock_);
+    current_cabinet_ = std::move(cabinet);
+  }
+
   // Operators
   DkgService &operator=(DkgService const &) = delete;
   DkgService &operator=(DkgService &&) = delete;
@@ -110,7 +117,7 @@ private:
   using Address         = ledger::Address;
   using SubscriptionPtr = std::shared_ptr<muddle::Subscription>;
   using AddressMapping  = core::Mapping<MuddleAddress, Address>;
-  using CabinetMembers  = std::unordered_set<MuddleAddress>;
+
   using CabinetIds      = std::unordered_map<MuddleAddress, crypto::bls::Id>;
   using CabinetKeys     = std::unordered_map<MuddleAddress, crypto::bls::PrivateKey>;
   using StateMachine    = core::StateMachine<State>;
