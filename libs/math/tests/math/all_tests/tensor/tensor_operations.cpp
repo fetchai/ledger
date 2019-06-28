@@ -205,7 +205,7 @@ TYPED_TEST(TensorOperationsTest, transpose_and_slice_test)
 
 TYPED_TEST(TensorOperationsTest, slice_and_transpose_test)
 {
-  fetch::math::Tensor<TypeParam> t1(std::vector<std::uint64_t>({2, 3, 5}));
+  fetch::math::Tensor<TypeParam> t1(std::vector<std::uint64_t>({3, 5, 2}));
   std::uint64_t                  count = 0;
   for (std::uint64_t i{0}; i < 2; ++i)
   {
@@ -213,30 +213,30 @@ TYPED_TEST(TensorOperationsTest, slice_and_transpose_test)
     {
       for (std::uint64_t k{0}; k < 5; ++k)
       {
-        t1.At(i, j, k) = TypeParam(count);
+        t1.At(j, k, i) = TypeParam(count);
         ++count;
       }
     }
   }
 
-  fetch::math::Tensor<TypeParam> t2 = t1.Slice(1).Copy();
-  EXPECT_EQ(t2.shape(), std::vector<std::uint64_t>({1, 3, 5}));
+  fetch::math::Tensor<TypeParam> t2 = t1.Slice(1, 2).Copy();
+  EXPECT_EQ(t2.shape(), std::vector<std::uint64_t>({3, 5, 1}));
 
   EXPECT_EQ(t2.At(0, 0, 0), TypeParam(15));
-  EXPECT_EQ(t2.At(0, 1, 0), TypeParam(20));
-  EXPECT_EQ(t2.At(0, 2, 0), TypeParam(25));
-  EXPECT_EQ(t2.At(0, 0, 1), TypeParam(16));
-  EXPECT_EQ(t2.At(0, 1, 1), TypeParam(21));
-  EXPECT_EQ(t2.At(0, 2, 1), TypeParam(26));
-  EXPECT_EQ(t2.At(0, 0, 2), TypeParam(17));
-  EXPECT_EQ(t2.At(0, 1, 2), TypeParam(22));
-  EXPECT_EQ(t2.At(0, 2, 2), TypeParam(27));
-  EXPECT_EQ(t2.At(0, 0, 3), TypeParam(18));
-  EXPECT_EQ(t2.At(0, 1, 3), TypeParam(23));
-  EXPECT_EQ(t2.At(0, 2, 3), TypeParam(28));
-  EXPECT_EQ(t2.At(0, 0, 4), TypeParam(19));
-  EXPECT_EQ(t2.At(0, 1, 4), TypeParam(24));
-  EXPECT_EQ(t2.At(0, 2, 4), TypeParam(29));
+  EXPECT_EQ(t2.At(1, 0, 0), TypeParam(20));
+  EXPECT_EQ(t2.At(2, 0, 0), TypeParam(25));
+  EXPECT_EQ(t2.At(0, 1, 0), TypeParam(16));
+  EXPECT_EQ(t2.At(1, 1, 0), TypeParam(21));
+  EXPECT_EQ(t2.At(2, 1, 0), TypeParam(26));
+  EXPECT_EQ(t2.At(0, 2, 0), TypeParam(17));
+  EXPECT_EQ(t2.At(1, 2, 0), TypeParam(22));
+  EXPECT_EQ(t2.At(2, 2, 0), TypeParam(27));
+  EXPECT_EQ(t2.At(0, 3, 0), TypeParam(18));
+  EXPECT_EQ(t2.At(1, 3, 0), TypeParam(23));
+  EXPECT_EQ(t2.At(2, 3, 0), TypeParam(28));
+  EXPECT_EQ(t2.At(0, 4, 0), TypeParam(19));
+  EXPECT_EQ(t2.At(1, 4, 0), TypeParam(24));
+  EXPECT_EQ(t2.At(2, 4, 0), TypeParam(29));
 
   fetch::math::Tensor<TypeParam> t3 = (t2.Squeeze()).Transpose();
   EXPECT_EQ(t3.shape(), std::vector<std::uint64_t>({5, 3}));

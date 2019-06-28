@@ -19,15 +19,15 @@
 #include "core/byte_array/byte_array.hpp"
 #include "core/commandline/params.hpp"
 #include "crypto/ecdsa.hpp"
-#include "network/management/network_manager.hpp"
-#include "network/muddle/muddle_endpoint.hpp"
-#include "network/muddle/muddle.hpp"
 #include "dkg/dkg_service.hpp"
+#include "network/management/network_manager.hpp"
+#include "network/muddle/muddle.hpp"
+#include "network/muddle/muddle_endpoint.hpp"
 
-#include <iostream>
 #include <chrono>
-#include <memory>
 #include <fstream>
+#include <iostream>
+#include <memory>
 
 using namespace std::literals::chrono_literals;
 
@@ -83,7 +83,8 @@ static CertificatePtr LoadCertificate()
 
     // flush the dsit
     std::ofstream key_stream{FILENAME, std::ios::out | std::ios::binary};
-    key_stream.write(private_key_bytes.char_pointer(), static_cast<std::streamsize>(private_key_bytes.size()));
+    key_stream.write(private_key_bytes.char_pointer(),
+                     static_cast<std::streamsize>(private_key_bytes.size()));
   }
 
   return cert;
@@ -91,7 +92,7 @@ static CertificatePtr LoadCertificate()
 
 int main(int argc, char **argv)
 {
-  uint16_t port{0};
+  uint16_t    port{0};
   std::string peers{};
   std::string dealer_raw{};
 
@@ -128,7 +129,6 @@ int main(int argc, char **argv)
   }
 
   nm.Stop();
-
 
   return 0;
 }

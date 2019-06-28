@@ -24,10 +24,14 @@ def _muddle_address(text):
 
 def parse_commandline():
     parser = argparse.ArgumentParser()
-    parser.add_argument('addresses', nargs='+', type=_muddle_address, help='The initial set of base64 encoded muddle addresses')
-    parser.add_argument('-s', '--stake-percentage', nargs='?', type=int, default=1, help='The percentage of tokens to be staked')
-    parser.add_argument('-o', '--output', default='snapshot.json', help='Path to generated file')
-    parser.add_argument('-t', '--threshold', type=int, help='The required threshold')
+    parser.add_argument('addresses', nargs='+', type=_muddle_address,
+                        help='The initial set of base64 encoded muddle addresses')
+    parser.add_argument('-s', '--stake-percentage', nargs='?', type=int,
+                        default=1, help='The percentage of tokens to be staked')
+    parser.add_argument(
+        '-o', '--output', default='snapshot.json', help='Path to generated file')
+    parser.add_argument('-t', '--threshold', type=int,
+                        help='The required threshold')
     return parser.parse_args()
 
 
@@ -77,7 +81,8 @@ def main():
 
     # build up the stake information
     individual_balance = TOTAL_SUPPLY // len(args.addresses)
-    individual_stake = (min(args.stake_percentage, 100) * individual_balance) // 100
+    individual_stake = (min(args.stake_percentage, 100)
+                        * individual_balance) // 100
     stakes = []
     state = {}
     cabinet = []
@@ -93,7 +98,8 @@ def main():
         })
 
         # update the initial state
-        key, value = create_record(token_address, individual_balance, individual_stake)
+        key, value = create_record(
+            token_address, individual_balance, individual_stake)
         state[key] = value
 
         # update the random beacon config
@@ -103,7 +109,7 @@ def main():
     snapshot = {
         'version': 1,
         'stake': {
-            'committeeSize': 1, # sort of needed at the moment
+            'committeeSize': 1,  # sort of needed at the moment
             'stakes': stakes,
         },
         'beacon': {

@@ -118,17 +118,18 @@ private:
   using SubscriptionPtr = std::shared_ptr<muddle::Subscription>;
   using AddressMapping  = core::Mapping<MuddleAddress, Address>;
   using EntropyHistory  = std::unordered_map<uint64_t, uint64_t>;
-
   using CabinetIds      = std::unordered_map<MuddleAddress, crypto::bls::Id>;
   using CabinetKeys     = std::unordered_map<MuddleAddress, crypto::bls::PrivateKey>;
   using StateMachine    = core::StateMachine<State>;
   using StateMachinePtr = std::shared_ptr<StateMachine>;
   using RpcProtocolPtr  = std::unique_ptr<DkgRpcProtocol>;
-  using Promise = service::Promise;
-  using RMutex = std::recursive_mutex;
-  using Mutex  = std::mutex;
-  using SignaturePtr = std::unique_ptr<crypto::bls::Signature>;
-  using SignatureMap = std::map<uint64_t, SignaturePtr>;
+  using Promise         = service::Promise;
+  using RMutex          = std::recursive_mutex;
+  using Mutex           = std::mutex;
+  using SignaturePtr    = std::unique_ptr<crypto::bls::Signature>;
+  using SignatureMap    = std::map<uint64_t, SignaturePtr>;
+  using RoundMap        = std::map<uint64_t, RoundPtr>;
+  using PublicKeyList   = crypto::bls::PublicKeyList;
 
   /// @name State Handlers
   /// @{
@@ -142,64 +143,52 @@ private:
   State OnCompleteState();
   /// @}
 
+  /// @name Utils
+  /// @{
   bool CanBuildAeonKeys() const;
   bool BuildAeonKeys();
-
   ConstByteArray GenerateMessage(uint64_t round);
-
+  RoundPtr LookupRound(uint64_t round, bool create = false);
+  /// @}
 
   ConstByteArray const  address_;
   crypto::bls::Id const id_;
   ConstByteArray const  beacon_address_;
   bool const            is_dealer_;
   Endpoint &            endpoint_;
+  muddle::rpc::Server   rpc_server_;
+  muddle::rpc::Client   rpc_client_;
+  RpcProtocolPtr        rpc_proto_;
+  StateMachinePtr       state_machine_;
 
-
-  muddle::rpc::Server rpc_server_;
-  muddle::rpc::Client rpc_client_;
-  RpcProtocolPtr      rpc_proto_;
-
-
-  StateMachinePtr state_machine_;
-
-  std::size_t current_threshold_{1};
-
-  /// @name State Spectific
+  /// @name State Machine Data
   /// @{
   Promise                 pending_promise_;
   crypto::bls::PrivateKey sig_private_key_{};
   /// @}
 
-  /// @name Current Signature
+   /// @name Cabinet / Aeon Data
   /// @{
-//  mutable RMutex sig_lock_{}; // Priority 3.
-//  crypto::bls::IdList         sig_ids_{};
-//  crypto::bls::SignatureList  sig_shares_{};
-  /// @}
-
-  /// @name Current entropy / signatures
-  /// @{
-
-  using RoundMap = std::map<uint64_t, RoundPtr>;
-
-  RoundPtr LookupRound(uint64_t round, bool create = false);
-
-  mutable RMutex round_lock_{}; // Priority 2.
-  std::atomic<uint64_t>       current_iteration_{0};
-  std::atomic<uint64_t>       requesting_iteration_{0};
-  RoundMap       rounds_{};
-  /// @}
-
-  /// @name Beacon / Secret Generation
-  /// @{
-  mutable RMutex cabinet_lock_; // Priority 1.
+  mutable RMutex cabinet_lock_{};  // Priority 1.
+  std::size_t    current_threshold_{1};
   CabinetMembers current_cabinet_{};
-  CabinetIds current_cabinet_ids_{};
-  crypto::bls::PublicKeyList current_cabinet_public_keys_{}; // aeon
-  CabinetKeys current_cabinet_secrets_{};
   /// @}
 
-  //AddressMapping address_mapper_{}; ///< Muddle <-> Token Address mapping
+  /// @name Dealer Specific Data
+  /// @{
+  mutable RMutex dealer_lock_;  // Priority 2.
+  CabinetIds     current_cabinet_ids_{};
+  PublicKeyList  current_cabinet_public_keys_{};
+  CabinetKeys    current_cabinet_secrets_{};
+  /// @}
+
+  /// @name Round Data
+  /// @{
+  mutable RMutex        round_lock_{};  // Priority 3.
+  std::atomic<uint64_t> current_iteration_{0};
+  std::atomic<uint64_t> requesting_iteration_{0};
+  RoundMap              rounds_{};
+  /// @}
 };
 
 template <typename T>

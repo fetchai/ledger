@@ -15,4 +15,8 @@ setup_compiler()
 # ------------------------------------------------------------------------------
 
 setup_library(fetch-dkg)
-target_link_libraries(fetch-dkg PUBLIC fetch-core fetch-crypto fetch-network fetch-ledger)
+target_link_libraries(fetch-dkg
+                      PUBLIC fetch-core
+                             fetch-crypto
+                             fetch-network
+                             fetch-ledger)

@@ -19,7 +19,5 @@
 namespace fetch {
 namespace dkg {
 
-
-
-} // namespace dkg
-} // namespace fetch
+}  // namespace dkg
+}  // namespace fetch

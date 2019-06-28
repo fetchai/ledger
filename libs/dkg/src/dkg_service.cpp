@@ -43,6 +43,7 @@ using State         = DkgService::State;
 using PromiseState  = service::PromiseState;
 
 constexpr char const *LOGGING_NAME = "DkgService";
+constexpr uint64_t    READ_AHEAD   = 5;
 
 crypto::bls::Id CreateIdFromAddress(ConstByteArray const &address)
 {
@@ -135,6 +136,8 @@ bool DkgService::RegisterCabinetMember(MuddleAddress const &address, crypto::bls
   FETCH_LOG_WARN(LOGGING_NAME, "Attempting to register that cabinet member: ", address.ToBase64());
 
   FETCH_LOCK(cabinet_lock_);
+  FETCH_LOCK(dealer_lock_);
+
   if (current_cabinet_.find(address) != current_cabinet_.end())
   {
     // create or update the id
@@ -156,6 +159,8 @@ DkgService::SecretKeyReq DkgService::RequestSecretKey(MuddleAddress const &addre
   FETCH_LOG_WARN(LOGGING_NAME, "Node is requesting secret information");
 
   FETCH_LOCK(cabinet_lock_);
+  FETCH_LOCK(dealer_lock_);
+
   auto it = current_cabinet_secrets_.find(address);
   if (it != current_cabinet_secrets_.end())
   {
@@ -219,11 +224,8 @@ DkgService::Status DkgService::GenerateEntropy(Digest block_digest, uint64_t blo
 
   FETCH_LOG_INFO(LOGGING_NAME, "Returning entropy for block: ", block_number, " which is : ", entropy);
 
+  // signal that the round has been consumed
   ++current_iteration_;
-
-//  current_entropy_source_ = block_digest.Copy();
-//
-//  FETCH_LOG_INFO(LOGGING_NAME, "Setting new entropy source: ", current_entropy_source_);
 
   return Status::OK;
 }
@@ -237,6 +239,7 @@ State DkgService::OnRegisterState()
   if (is_dealer_)
   {
     FETCH_LOCK(cabinet_lock_);
+    FETCH_LOCK(dealer_lock_);
 
     // consistency
     if (current_cabinet_.find(address_) != current_cabinet_.end())
@@ -381,6 +384,8 @@ State DkgService::OnBroadcastSignatureState()
   auto signature   = crypto::bls::Sign(sig_private_key_, GenerateMessage(requesting_iteration_));
   auto public_key  = crypto::bls::PublicKeyFromPrivate(sig_private_key_);
 
+  FETCH_LOCK(cabinet_lock_);
+
   // TODO(EJF): Thread safety when this is dynamic
   for (auto const &member : current_cabinet_)
   {
@@ -404,32 +409,30 @@ State DkgService::OnCollectSignaturesState()
 
   FETCH_LOG_INFO(LOGGING_NAME, "Waiting for signatures for round: ", requesting_iteration_.load());
 
+  // lookup the requesting round
+  auto const round = LookupRound(requesting_iteration_, true);
+
+  if (!round->HasSignature() && round->GetNumShares() >= current_threshold_)
   {
-    // lookup the requesting round
-    auto const round = LookupRound(requesting_iteration_, true);
+    // And finally we test the signature
+    round->RecoverSignature();
 
-    if (!round->HasSignature() && round->GetNumShares() >= current_threshold_)
-    {
-      // And finally we test the signature
-      round->RecoverSignature();
+    FETCH_LOG_ERROR(LOGGING_NAME, "Generated Signature: ", round->GetRoundMessage().ToBase64(), " round: ", round->round(), " check: ", requesting_iteration_.load());
 
-      FETCH_LOG_ERROR(LOGGING_NAME, "Generated Signature: ", round->GetRoundMessage().ToBase64(), " round: ", round->round(), " check: ", requesting_iteration_.load());
-
-      // TODO(EJF): This signature needs to be verified
+    // TODO(EJF): This signature needs to be verified
 //      if (crypto::bls::Verify(*aeon_signature_, groups_pk, current_entropy_source_))
 //      {
 //        FETCH_LOG_ERROR(LOGGING_NAME, "GREATE SUCCESSE !!!!");
 //      }
 
-      // have completed this iteration now
-      ++requesting_iteration_;
+    // have completed this iteration now
+    ++requesting_iteration_;
 
-      next_state = State::COMPLETE;
-    }
-    else
-    {
-      state_machine_->Delay(500ms);
-    }
+    next_state = State::COMPLETE;
+  }
+  else
+  {
+    state_machine_->Delay(500ms);
   }
 
   return next_state;
@@ -448,7 +451,7 @@ State DkgService::OnCompleteState()
   else
   {
     uint64_t const delta = requesting_iteration_ - current_iteration_;
-    if (delta < 10)
+    if (delta < READ_AHEAD)
     {
       return State::BROADCAST_SIGNATURE;
     }
@@ -464,6 +467,7 @@ State DkgService::OnCompleteState()
 bool DkgService::CanBuildAeonKeys() const
 {
   FETCH_LOCK(cabinet_lock_);
+  FETCH_LOCK(dealer_lock_);
 
   for (auto const &address : current_cabinet_)
   {
@@ -482,7 +486,9 @@ bool DkgService::CanBuildAeonKeys() const
 bool DkgService::BuildAeonKeys()
 {
   FETCH_LOG_INFO(LOGGING_NAME, "Building keys for the start of the aeon");
+
   FETCH_LOCK(cabinet_lock_);
+  FETCH_LOCK(dealer_lock_);
 
   current_cabinet_public_keys_.clear();
 
