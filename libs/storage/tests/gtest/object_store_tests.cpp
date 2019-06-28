@@ -70,7 +70,7 @@ struct TestSerDeser
  * @param: b The class to serialize
  */
 template <typename T>
-inline void Serialize(T &serializer, TestSerDeser const &b)
+void Serialize(T &serializer, TestSerDeser const &b)
 {
   serializer << b.first;
   serializer << b.second;
@@ -84,7 +84,7 @@ inline void Serialize(T &serializer, TestSerDeser const &b)
  * @param: b The class to deserialize
  */
 template <typename T>
-inline void Deserialize(T &serializer, TestSerDeser &b)
+void Deserialize(T &serializer, TestSerDeser &b)
 {
   serializer >> b.first;
   serializer >> b.second;

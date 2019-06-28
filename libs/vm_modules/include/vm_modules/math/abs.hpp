@@ -20,6 +20,7 @@
 #include "math/meta/math_type_traits.hpp"
 #include "math/standard_functions/abs.hpp"
 
+#include <cstdint>
 #include <cstdlib>
 
 namespace fetch {
@@ -85,11 +86,6 @@ static void BindAbs(fetch::vm::Module &module)
 
   module.CreateFreeFunction<fixed_point::fp32_t>("abs", &Abs<fixed_point::fp32_t>);
   module.CreateFreeFunction<fixed_point::fp64_t>("abs", &Abs<fixed_point::fp64_t>);
-}
-
-inline void BindAbs(std::shared_ptr<vm::Module> module)
-{
-  BindAbs(*module.get());
 }
 
 }  // namespace math
