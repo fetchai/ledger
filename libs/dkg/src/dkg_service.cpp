@@ -24,7 +24,6 @@
 #include "network/muddle/subscription.hpp"
 #include "network/muddle/packet.hpp"
 #include "dkg/dkg_service.hpp"
-#include "dkg/dkg_messages.hpp"
 #include "crypto/bls_dkg.hpp"
 #include "crypto/sha256.hpp"
 
@@ -121,6 +120,8 @@ DkgService::DkgService(Endpoint &endpoint, ConstByteArray address, ConstByteArra
 //  , contribution_subscription_{endpoint_.Subscribe(SERVICE_DKG, CHANNEL_CONTRIBUTIONS)}
 //  , secret_key_subscription_{endpoint_.Subscribe(SERVICE_DKG, CHANNEL_SECRET_KEY)}
 {
+  FETCH_UNUSED(key_lifetime);
+
   // RPC server registration
   rpc_proto_ = std::make_unique<DkgRpcProtocol>(*this);
   rpc_server_.Add(RPC_DKG_BEACON, rpc_proto_.get());
@@ -245,6 +246,7 @@ void DkgService::OnNewBlock(uint64_t block_index)
 
 DkgService::Status DkgService::GenerateEntropy(Digest block_digest, uint64_t block_number, uint64_t &entropy)
 {
+  FETCH_UNUSED(block_digest);
   FETCH_LOCK(sig_lock_);
 
   if (!aeon_signature_)
