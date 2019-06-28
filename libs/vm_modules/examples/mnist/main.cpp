@@ -114,8 +114,8 @@ int main(int argc, char **argv)
   fetch::vm_modules::ml::VMStateDict::Bind(*module);
   fetch::vm_modules::ml::VMGraph::Bind(*module);
 
-  fetch::vm_modules::ml::TrainingPair::Bind(*module);
-  fetch::vm_modules::ml::MnistDataLoader::Bind(*module);
+  fetch::vm_modules::ml::VMTrainingPair::Bind(*module);
+  fetch::vm_modules::ml::VMMnistDataLoader::Bind(*module);
   fetch::vm_modules::ml::VMAdamOptimiser::Bind(*module);
 
   // Setting compiler up
