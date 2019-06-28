@@ -39,7 +39,7 @@ TYPED_TEST(PReluTest, set_input_and_evaluate_test)  // Use the class as a subgra
   fetch::ml::layers::PRelu<TypeParam> fc(100u);
   TypeParam input_data(std::vector<typename TypeParam::SizeType>({10, 10, 2}));
   fc.SetInput("PRelu_Input", input_data);
-  TypeParam output = fc.Evaluate("PRelu_LeakyReluOp");
+  TypeParam output = fc.Evaluate("PRelu_LeakyReluOp", true);
 
   ASSERT_EQ(output.shape().size(), 3);
   ASSERT_EQ(output.shape()[0], 10);
@@ -94,7 +94,7 @@ TYPED_TEST(PReluTest, node_forward_test)  // Use the class as a Node
   fetch::ml::Node<TypeParam, fetch::ml::layers::PRelu<TypeParam>> fc("PRelu", 50u, "PRelu");
   fc.AddInput(placeholder);
 
-  TypeParam prediction = fc.Evaluate();
+  TypeParam prediction = fc.Evaluate(true);
 
   ASSERT_EQ(prediction.shape().size(), 3);
   ASSERT_EQ(prediction.shape()[0], 5);
@@ -111,7 +111,7 @@ TYPED_TEST(PReluTest, node_backward_test)  // Use the class as a Node
 
   fetch::ml::Node<TypeParam, fetch::ml::layers::PRelu<TypeParam>> fc("PRelu", 50u, "PRelu");
   fc.AddInput(placeholder);
-  TypeParam prediction = fc.Evaluate();
+  TypeParam prediction = fc.Evaluate(true);
 
   TypeParam error_signal(std::vector<typename TypeParam::SizeType>({5, 10, 2}));
   auto      bp_err = fc.BackPropagate(error_signal);
@@ -133,7 +133,7 @@ TYPED_TEST(PReluTest, graph_forward_test)  // Use the class as a Node
   TypeParam data({5, 10, 2});
   g.SetInput("Input", data);
 
-  TypeParam prediction = g.Evaluate("PRelu");
+  TypeParam prediction = g.Evaluate("PRelu", true);
   ASSERT_EQ(prediction.shape().size(), 3);
   ASSERT_EQ(prediction.shape()[0], 5);
   ASSERT_EQ(prediction.shape()[1], 10);

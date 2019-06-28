@@ -45,7 +45,7 @@ public:
                  details::ActivationType activation_type = details::ActivationType::NOTHING,
                  fetch::ml::details::RegularizationType regularization =
                      fetch::ml::details::RegularizationType::NONE,
-                 DataType regularization_rate = DataType{0.0}, std::string const &name = "FC",
+                 DataType regularization_rate = static_cast<DataType>(0), std::string const &name = "FC",
                  WeightsInit init_mode = WeightsInit::XAVIER_GLOROT)
     : in_size_(in)
     , out_size_(out)

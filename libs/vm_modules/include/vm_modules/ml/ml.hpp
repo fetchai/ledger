@@ -17,31 +17,44 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/standard_functions/sqrt.hpp"
 #include "vm/module.hpp"
+#include <cstdlib>
 
-#include <cmath>
+#include "vm_modules/ml/dataloaders/commodity_dataloader.hpp"
+#include "vm_modules/ml/dataloaders/mnist_dataloader.hpp"
+
+#include "vm_modules/ml/ops/loss_functions/cross_entropy.hpp"
+#include "vm_modules/ml/ops/loss_functions/mean_square_error.hpp"
+
+#include "vm_modules/ml/optimisation/adam_optimiser.hpp"
+
+#include "vm_modules/ml/graph.hpp"
+#include "vm_modules/ml/state_dict.hpp"
+#include "vm_modules/ml/training_pair.hpp"
 
 namespace fetch {
 namespace vm_modules {
-namespace math {
+namespace ml {
 
-template <typename T>
-fetch::math::meta::IfIsMath<T, T> Sqrt(fetch::vm::VM *, T const &a)
+inline void BindML(fetch::vm::Module &module)
 {
-  T x;
-  fetch::math::Sqrt(a, x);
-  return x;
+  // ml fundamentals
+  VMStateDict::Bind(module);
+  VMGraph::Bind(module);
+  VMTrainingPair::Bind(module);
+
+  // dataloaders
+  VMMnistDataLoader::Bind(module);
+  VMCommodityDataLoader::Bind(module);
+
+  // loss functions
+  VMCrossEntropyLoss::Bind(module);
+  VMMeanSquareError::Bind(module);
+
+  // optimisers
+  VMAdamOptimiser::Bind(module);
 }
 
-inline void BindSqrt(fetch::vm::Module &module)
-{
-  module.CreateFreeFunction<float_t>("sqrt", &Sqrt<float_t>);
-  module.CreateFreeFunction<double_t>("sqrt", &Sqrt<double_t>);
-  module.CreateFreeFunction<fixed_point::fp32_t>("sqrt", &Sqrt<fixed_point::fp32_t>);
-  module.CreateFreeFunction<fixed_point::fp64_t>("sqrt", &Sqrt<fixed_point::fp64_t>);
-}
-
-}  // namespace math
+}  // namespace ml
 }  // namespace vm_modules
 }  // namespace fetch

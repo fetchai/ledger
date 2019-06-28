@@ -110,7 +110,7 @@ private:
   Muddle::Address         address_;
   BackgroundedWork        bg_work_;
   BackgroundedWorkThreadP workthread_;
-  size_t                  connections_ = 0;
+  std::size_t             connections_ = 0;
 };
 
 }  // namespace ledger

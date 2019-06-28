@@ -83,7 +83,7 @@ public:
     std::swap(this->pointer_, other.pointer_);
   }
 
-  SharedArray &operator=(SharedArray &&other)
+  SharedArray &operator=(SharedArray &&other) noexcept
   {
     std::swap(this->size_, other.size_);
     std::swap(this->data_, other.data_);

@@ -55,9 +55,8 @@ public:
 
   virtual ~Graph() = default;
 
-  ArrayType Evaluate(std::string const &node_name);
-  void      BackPropagate(std::string const &node_name, ArrayType const &error_signal);
-
+  ArrayType    Evaluate(std::string const &node_name, bool is_training = true);
+  void         BackPropagate(std::string const &node_name, ArrayType const &error_signal);
   virtual void Step(DataType learning_rate);
 
   template <class OperationType, typename... Params>
@@ -108,7 +107,7 @@ protected:
 
   fetch::ml::details::RegularizationType regularization_ =
       fetch::ml::details::RegularizationType::NONE;
-  DataType regularization_rate_ = DataType{0.0};
+  DataType regularization_rate_ = static_cast<DataType>(0);
 };
 
 template <typename ArrayType>
@@ -125,11 +124,11 @@ void Graph<ArrayType>::SetRegularization(fetch::ml::details::RegularizationType 
  * @return pointer to array containing node output
  */
 template <typename ArrayType>
-ArrayType Graph<ArrayType>::Evaluate(std::string const &node_name)
+ArrayType Graph<ArrayType>::Evaluate(std::string const &node_name, bool is_training)
 {
   if (nodes_[node_name])
   {
-    return nodes_[node_name]->Evaluate();
+    return nodes_[node_name]->Evaluate(is_training);
   }
   else
   {
