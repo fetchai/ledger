@@ -51,10 +51,10 @@ public:
 
   bool Parse(byte_array_type const &contents, bool clear = true)
   {
-    uint64_t                               pos        = 0;
-    int                                    line       = 0;
-    uint64_t                               char_index = 0;
-    byte_array_type::container_type const *str        = contents.pointer();
+    uint64_t                           pos        = 0;
+    int                                line       = 0;
+    uint64_t                           char_index = 0;
+    byte_array_type::value_type const *str        = contents.pointer();
     if (clear)
     {
       this->clear();

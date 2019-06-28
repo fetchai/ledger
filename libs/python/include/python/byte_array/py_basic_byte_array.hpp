@@ -27,8 +27,7 @@ fetch::byte_array::ConstByteArray BytesToFetchBytes(py::bytes const &b)
 {
   std::string s{b};
   using ConstByteArray = fetch::byte_array::ConstByteArray;
-  return ConstByteArray(reinterpret_cast<ConstByteArray::container_type const *>(s.c_str()),
-                        s.size());
+  return ConstByteArray(reinterpret_cast<ConstByteArray::value_type const *>(s.c_str()), s.size());
 }
 
 void BuildConstByteArray(pybind11::module &module)
@@ -39,7 +38,7 @@ void BuildConstByteArray(pybind11::module &module)
       .def(py::init<const std::size_t &>())
       .def(py::init<const char *>())
       .def(py::init<const unsigned char *const, std::size_t>())
-      .def(py::init<std::initializer_list<ConstByteArray::container_type>>())
+      .def(py::init<std::initializer_list<ConstByteArray::value_type>>())
       .def(py::init<const std::string &>())
       .def(py::init<const fetch::byte_array::ConstByteArray::self_type &>())
       .def(py::init<const fetch::byte_array::ConstByteArray::self_type &, const std::size_t &,
@@ -60,10 +59,9 @@ void BuildConstByteArray(pybind11::module &module)
       .def("Match", (bool (ConstByteArray::*)(const fetch::byte_array::ConstByteArray::self_type &,
                                               std::size_t) const) &
                         ConstByteArray::Match)
-      .def("Match",
-           (bool (ConstByteArray::*)(const fetch::byte_array::ConstByteArray::container_type *,
-                                     std::size_t) const) &
-               ConstByteArray::Match)
+      .def("Match", (bool (ConstByteArray::*)(const fetch::byte_array::ConstByteArray::value_type *,
+                                              std::size_t) const) &
+                        ConstByteArray::Match)
       .def("size", &ConstByteArray::size)
       .def("AsBytes",
            [](ConstByteArray const &a) { return py::bytes(a.char_pointer(), a.size()); });
