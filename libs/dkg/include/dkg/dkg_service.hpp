@@ -187,7 +187,7 @@ private:
   CabinetKeys current_cabinet_secrets_{};
   /// @}
 
-  AddressMapping address_mapper_{}; ///< Muddle <-> Token Address mapping
+  //AddressMapping address_mapper_{}; ///< Muddle <-> Token Address mapping
 };
 
 template <typename T>

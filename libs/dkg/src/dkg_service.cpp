@@ -487,9 +487,26 @@ State DkgService::OnCompleteState()
 
   // The signature is consumed on block generation
   FETCH_LOCK(sig_lock_);
+
   if(!aeon_signature_)
   {
-    return State::BUILD_AEON_KEYS;
+    {
+      FETCH_LOCK(cabinet_lock_);
+      // Reset transient state
+      current_cabinet_ids_.clear();
+      current_cabinet_ids_[address_] = id_; // register ourselves
+      current_cabinet_secrets_.clear();
+      current_cabinet_public_keys_.clear();
+      current_cabinet_secrets_.clear();
+    }
+
+    // sig lock already
+    {
+    sig_ids_    = crypto::bls::IdList{};
+    sig_shares_ = crypto::bls::SignatureList{};
+    }
+
+    return State::REGISTER;
   }
 
   return State::COMPLETE;
