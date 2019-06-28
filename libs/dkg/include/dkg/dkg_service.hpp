@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "dkg/round.hpp"
 #include "dkg/dkg_rpc_serializers.hpp"
 #include "core/byte_array/decoders.hpp"
 #include "core/state_machine.hpp"
@@ -86,8 +87,6 @@ public:
   SecretKeyReq RequestSecretKey(MuddleAddress const &address);
 
   void SubmitSignatureShare(uint64_t round, crypto::bls::Id const &id, crypto::bls::PublicKey  const &public_key, crypto::bls::Signature const &signature);
-
-  void OnNewBlock(uint64_t block_index);
   /// @}
 
   /// @name Entropy Generator
@@ -95,6 +94,8 @@ public:
   Status GenerateEntropy(Digest block_digest, uint64_t block_number, uint64_t &entropy) override;
   /// @}
 
+  /// @name Helper Methods
+  /// @{
   std::weak_ptr<core::Runnable> GetWeakRunnable()
   {
     return state_machine_;
@@ -106,6 +107,7 @@ public:
     current_cabinet_   = std::move(cabinet);
     current_threshold_ = threshold;
   }
+  /// @}
 
   // Operators
   DkgService &operator=(DkgService const &) = delete;
@@ -177,81 +179,7 @@ private:
 
   /// @name Current entropy / signatures
   /// @{
-  class Round
-  {
-  public:
 
-    // Construction / Destruction
-    explicit Round(uint64_t round)
-      : round_{round}
-    {}
-    Round(Round const &) = delete;
-    Round(Round &&) = delete;
-    ~Round() = default;
-
-    void AddShare(crypto::bls::Id const &id, crypto::bls::Signature const &sig)
-    {
-      FETCH_LOCK(lock_);
-      sig_ids_.push_back(id);
-      sig_shares_.push_back(sig);
-      ++num_shares_;
-    }
-
-    uint64_t round() const
-    {
-      return round_;
-    }
-
-    bool HasSignature() const
-    {
-      return has_signature_;
-    }
-
-    std::size_t GetNumShares() const
-    {
-      return num_shares_;
-    }
-
-    uint64_t GetEntropy() const
-    {
-      FETCH_LOCK(lock_);
-      return *reinterpret_cast<uint64_t const *>(&round_signature_);
-    }
-
-    void SetSignature(crypto::bls::Signature const &sig)
-    {
-      FETCH_LOCK(lock_);
-      round_signature_ = sig;
-    }
-
-    ConstByteArray GetRoundMessage() const
-    {
-      FETCH_LOCK(lock_);
-      auto const *raw = reinterpret_cast<uint8_t const *>(&round_signature_);
-      return {raw, sizeof(crypto::bls::Signature)};
-    }
-
-    void RecoverSignature()
-    {
-      FETCH_LOCK(lock_);
-      round_signature_ = crypto::bls::RecoverSignature(sig_shares_, sig_ids_);
-      has_signature_   = true;
-    }
-
-    // Operators
-    Round &operator=(Round const &) = delete;
-    Round &operator=(Round &&) = delete;
-
-  private:
-    uint64_t const             round_;
-    mutable std::mutex         lock_{};
-    crypto::bls::IdList        sig_ids_{};
-    crypto::bls::SignatureList sig_shares_{};
-    crypto::bls::Signature     round_signature_{};
-    std::atomic<std::size_t>   num_shares_{0};
-    std::atomic<bool>          has_signature_{};
-  };
-  using RoundPtr = std::shared_ptr<Round>;
   using RoundMap = std::map<uint64_t, RoundPtr>;
 
   RoundPtr LookupRound(uint64_t round, bool create = false);

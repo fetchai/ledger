@@ -44,26 +44,6 @@ using PromiseState  = service::PromiseState;
 
 constexpr char const *LOGGING_NAME = "DkgService";
 
-template <typename T>
-bool ParseMessage(ConstByteArray const &payload, T &message)
-{
-  bool success{false};
-
-  try
-  {
-    ByteArrayBuffer buffer{payload};
-    buffer >> message;
-
-    success = true;
-  }
-  catch (std::exception const &ex)
-  {
-    FETCH_LOG_WARN(LOGGING_NAME, "Failed to parse network message: ", ex.what());
-  }
-
-  return success;
-}
-
 crypto::bls::Id CreateIdFromAddress(ConstByteArray const &address)
 {
   auto const seed = crypto::bls::HashToPrivateKey(address);
@@ -117,9 +97,6 @@ DkgService::DkgService(Endpoint &endpoint, ConstByteArray address, ConstByteArra
   , rpc_server_{endpoint_, SERVICE_DKG, CHANNEL_RPC}
   , rpc_client_{"dkg", endpoint_, SERVICE_DKG, CHANNEL_RPC}
   , state_machine_{std::make_shared<StateMachine>("dkg", State::REGISTER, ToString)}
-//  , current_entropy_source_{}
-//  , contribution_subscription_{endpoint_.Subscribe(SERVICE_DKG, CHANNEL_CONTRIBUTIONS)}
-//  , secret_key_subscription_{endpoint_.Subscribe(SERVICE_DKG, CHANNEL_SECRET_KEY)}
 {
   FETCH_UNUSED(key_lifetime);
 
@@ -210,11 +187,6 @@ void DkgService::SubmitSignatureShare(uint64_t round, crypto::bls::Id const &id,
   {
     FETCH_LOG_ERROR(LOGGING_NAME, "Recv. Invalid signature share");
   }
-}
-
-void DkgService::OnNewBlock(uint64_t block_index)
-{
-  FETCH_LOG_INFO(LOGGING_NAME, "On new block ", block_index);
 }
 
 DkgService::Status DkgService::GenerateEntropy(Digest block_digest, uint64_t block_number, uint64_t &entropy)
@@ -418,11 +390,9 @@ State DkgService::OnBroadcastSignatureState()
       continue;
     }
 
-    // TODO(EJF): multiple promises
     // request from the beacon for the secret key
-    pending_promise_ = rpc_client_.CallSpecificAddress(member, RPC_DKG_BEACON,
-                                                       DkgRpcProtocol::SUBMIT_SIGNATURE, requesting_iteration_.load(), id_,
-                                                       public_key, signature);
+    rpc_client_.CallSpecificAddress(member, RPC_DKG_BEACON, DkgRpcProtocol::SUBMIT_SIGNATURE,
+                                    requesting_iteration_.load(), id_, public_key, signature);
   }
 
   return next_state;
@@ -485,33 +455,6 @@ State DkgService::OnCompleteState()
   }
 
   // TODO(EJF): Clean up of round cache
-
-
-
-//  // The signature is consumed on block generation
-//  FETCH_LOCK(sig_lock_);
-//
-//  if(!aeon_signature_)
-//  {
-//    {
-//      FETCH_LOCK(cabinet_lock_);
-//      // Reset transient state
-//      current_cabinet_ids_.clear();
-//      current_cabinet_ids_[address_] = id_; // register ourselves
-//      current_cabinet_secrets_.clear();
-//      current_cabinet_public_keys_.clear();
-//      current_cabinet_secrets_.clear();
-//    }
-//
-//    // sig lock already
-//    {
-//    sig_ids_    = crypto::bls::IdList{};
-//    sig_shares_ = crypto::bls::SignatureList{};
-//    }
-//
-//    return State::REGISTER;
-//  }
-
 
   state_machine_->Delay(500ms);
 
@@ -594,7 +537,7 @@ ConstByteArray DkgService::GenerateMessage(uint64_t round)
   return message;
 }
 
-DkgService::RoundPtr DkgService::LookupRound(uint64_t round, bool create)
+RoundPtr DkgService::LookupRound(uint64_t round, bool create)
 {
   RoundPtr round_ptr{};
   FETCH_LOCK(round_lock_);
