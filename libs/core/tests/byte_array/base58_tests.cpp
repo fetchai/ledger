@@ -359,6 +359,52 @@ TEST_P(Base58Tests, CheckDecode)
   EXPECT_EQ(expected, actual);
 }
 
+TEST_P(Base58Tests, CheckDecodeWithTrailingSpacesGoingBeyondBufferEndBoundary)
+{
+  auto const &test = GetParam();
+
+  ConstByteArray const original_b58_value{test.base58};
+  ConstByteArray const characters_beyond_end_boundary{"          "};
+  ConstByteArray const concatenated_array{original_b58_value + characters_beyond_end_boundary};
+  ConstByteArray const input{concatenated_array.SubArray(0, original_b58_value.size())};
+  ASSERT_EQ(original_b58_value, input);
+  // This verifies that `input` sub-array points to the same memory as `concatenated_array`
+  ASSERT_EQ(concatenated_array.pointer(), input.pointer());
+  // The following verifies expected content beyond end boundary of the `input` array and is ought
+  // fail when run with address sanitizer, Valgrind, etc. ...
+  ASSERT_TRUE(
+      std::equal(characters_beyond_end_boundary.pointer(),
+                 characters_beyond_end_boundary.pointer() + characters_beyond_end_boundary.size(),
+                 input.pointer() + input.size()));
+
+  ConstByteArray const expected{test.hex};
+  ConstByteArray const actual{ToHex(FromBase58(input))};
+
+  EXPECT_EQ(expected, actual);
+}
+
+TEST_F(Base58Tests, CheckDecodeContinuous1GoingBeyondBufferEndBoundary)
+{
+  ConstByteArray const original_b58_value{"111111"};
+  ConstByteArray const characters_beyond_end_boundary{"111111111111"};
+  ConstByteArray const concatenated_array{original_b58_value + characters_beyond_end_boundary};
+  ConstByteArray const input{concatenated_array.SubArray(0, original_b58_value.size())};
+  ASSERT_EQ(original_b58_value, input);
+  // This verifies that `input` sub-array points to the same emory as `concatenated_array`
+  ASSERT_EQ(concatenated_array.pointer(), input.pointer());
+  // The following verifies expected content beyond end boundary of the `input` array and is ought
+  // fail when run with address sanitizer, Valgrind, etc. ...
+  ASSERT_TRUE(
+      std::equal(characters_beyond_end_boundary.pointer(),
+                 characters_beyond_end_boundary.pointer() + characters_beyond_end_boundary.size(),
+                 input.pointer() + input.size()));
+
+  ConstByteArray const expected{"000000000000"};
+  ConstByteArray const actual{ToHex(FromBase58(input))};
+
+  EXPECT_EQ(expected, actual);
+}
+
 }  // namespace
 
 INSTANTIATE_TEST_CASE_P(ParamBased, Base58Tests, ::testing::ValuesIn(TEST_CASES), );
