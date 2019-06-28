@@ -53,7 +53,7 @@ public:
 
   virtual ~Graph() = default;
 
-  ArrayType    Evaluate(std::string const &node_name);
+  ArrayType    Evaluate(std::string const &node_name, bool is_training = true);
   void         BackPropagate(std::string const &node_name, ArrayType const &error_signal);
   virtual void Step(Datatype learning_rate);
 
@@ -102,11 +102,11 @@ protected:
  * @return pointer to array containing node output
  */
 template <typename ArrayType>
-ArrayType Graph<ArrayType>::Evaluate(std::string const &node_name)
+ArrayType Graph<ArrayType>::Evaluate(std::string const &node_name, bool is_training)
 {
   if (nodes_[node_name])
   {
-    return nodes_[node_name]->Evaluate();
+    return nodes_[node_name]->Evaluate(is_training);
   }
   else
   {
