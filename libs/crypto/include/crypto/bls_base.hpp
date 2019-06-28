@@ -151,7 +151,7 @@ inline Signature RecoverSignature(SignatureList const &sigs, IdList const &ids)
   return ret;
 }
 
-};  // namespace bls
+}  // namespace bls
 
 }  // namespace crypto
 }  // namespace fetch
