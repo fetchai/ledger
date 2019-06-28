@@ -87,10 +87,7 @@ StakeManager::CommitteePtr StakeManager::GetCommittee(Block const &previous)
 
   // generate the entropy for the previous block
   uint64_t entropy{0};
-  auto const status =
-      entropy_->GenerateEntropy(previous.body.hash, previous.body.block_number, entropy);
-
-  if (EntropyGeneratorInterface::Status::OK != status)
+  if (!LookupEntropy(previous, entropy))
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Unable to lookup committee for ", previous.body.block_number, " (entropy not ready)");
     return {};
@@ -182,6 +179,36 @@ void StakeManager::ResetInternal(StakeSnapshotPtr &&snapshot, std::size_t commit
   // current
   current_             = std::move(snapshot);
   current_block_index_ = 0;
+}
+
+bool StakeManager::LookupEntropy(Block const &previous, uint64_t &entropy)
+{
+  bool success{false};
+
+  auto const it = entropy_cache_.find(previous.body.block_number);
+  if (entropy_cache_.end() != it)
+  {
+    entropy = it->second;
+    success = true;
+  }
+  else
+  {
+    // generate the entropy for the previous block
+    auto const status =
+        entropy_->GenerateEntropy(previous.body.hash, previous.body.block_number, entropy);
+
+    if (EntropyGeneratorInterface::Status::OK == status)
+    {
+      entropy_cache_[previous.body.block_number] = entropy;
+      success                                    = true;
+    }
+    else
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Unable to lookup entropy for block ", previous.body.block_number);
+    }
+  }
+
+  return success;
 }
 
 }  // namespace ledger

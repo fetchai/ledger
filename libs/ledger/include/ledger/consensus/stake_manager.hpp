@@ -74,9 +74,11 @@ private:
   using BlockIndex       = uint64_t;
   using StakeSnapshotPtr = std::shared_ptr<StakeSnapshot>;
   using StakeHistory     = std::map<BlockIndex, StakeSnapshotPtr>;
+  using EntropyCache     = std::map<BlockIndex, uint64_t>;
 
   StakeSnapshotPtr LookupStakeSnapshot(BlockIndex block);
   void             ResetInternal(StakeSnapshotPtr &&snapshot, std::size_t committee_size);
+  bool             LookupEntropy(Block const &block, uint64_t &entropy);
 
   // Config & Components
   std::size_t                committee_size_{0};       ///< The "static" size of the committee
@@ -85,6 +87,7 @@ private:
   StakeHistory               history_{};               ///< Cache of historical snapshots
   StakeSnapshotPtr           current_{};               ///< Most recent snapshot
   BlockIndex                 current_block_index_{0};  ///< Block index of most recent snapshot
+  EntropyCache               entropy_cache_{};
 };
 
 inline std::size_t StakeManager::committee_size() const
