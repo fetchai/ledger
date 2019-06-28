@@ -50,7 +50,7 @@ def is_master_branch()
 
 def is_master_or_pull_request_head_branch()
 {
-  return BRANCH_NAME == 'master' || BRANCH_NAME ==~ /^PR-\d+-head$/
+  return is_master_branch() || BRANCH_NAME ==~ /^PR-\d+-head$/
 }
 
 def static_analysis()
