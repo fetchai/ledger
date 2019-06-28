@@ -21,8 +21,10 @@
 #include "crypto/fnv.hpp"
 #include "meta/type_traits.hpp"
 #include "variant/detail/element_pool.hpp"
+#include "vectorise/fixed_point/fixed_point.hpp"
 
 #include <cassert>
+#include <cstddef>
 #include <cstdint>
 #include <iosfwd>
 #include <stdexcept>
@@ -57,6 +59,7 @@ public:
     UNDEFINED,
     INTEGER,
     FLOATING_POINT,
+    FIXED_POINT,
     BOOLEAN,
     STRING,
     NULL_VALUE,
@@ -74,9 +77,9 @@ public:
 
   // Construction / Destruction
   Variant() = default;
-  Variant(std::size_t pool_reserve);
+  explicit Variant(std::size_t pool_reserve);
   Variant(Variant const &);
-  Variant(Variant &&) = default;
+  Variant(Variant &&) noexcept = default;
   ~Variant();
 
   template <typename T>
@@ -85,6 +88,8 @@ public:
   explicit Variant(T const &value, meta::IfIsInteger<T> * = nullptr);
   template <typename T>
   explicit Variant(T const &value, meta::IfIsFloat<T> * = nullptr);
+  template <typename T>
+  explicit Variant(T const &value, meta::IfIsFixedPoint<T> * = nullptr);
   template <typename T>
   explicit Variant(T &&value, meta::IfIsString<T> * = nullptr);
   explicit Variant(char const *value);
@@ -107,6 +112,10 @@ public:
   bool IsFloatingPoint() const
   {
     return type() == Type::FLOATING_POINT;
+  }
+  bool IsFixedPoint() const
+  {
+    return type() == Type::FIXED_POINT;
   }
   bool IsBoolean() const
   {
@@ -139,6 +148,8 @@ public:
   template <typename T>
   meta::IfIsFloat<T, bool> Is() const;
   template <typename T>
+  meta::IfIsFixedPoint<T, bool> Is() const;
+  template <typename T>
   meta::IfIsString<T, bool> Is() const;
   /// @}
 
@@ -150,6 +161,8 @@ public:
   meta::IfIsInteger<T, T> As() const;
   template <typename T>
   meta::IfIsFloat<T, T> As() const;
+  template <typename T>
+  meta::IfIsFixedPoint<T, T> As() const;
   template <typename T>
   meta::IfIsConstByteArray<T, ConstByteArray const &> As() const;
   template <typename T>
@@ -181,6 +194,8 @@ public:
   template <typename T>
   meta::IfIsFloat<T, Variant &> operator=(T const &value);
   template <typename T>
+  meta::IfIsFixedPoint<T, Variant &> operator=(T const &value);
+  template <typename T>
   meta::IfIsAByteArray<T, Variant &> operator=(T const &value);
   template <typename T>
   meta::IfIsStdString<T, Variant &> operator=(T const &value);
@@ -194,8 +209,6 @@ public:
 
   /// @name Iteration
   /// @{
-  template <typename Function>
-  void IterateObject(Function const &function);
   template <typename Function>
   void IterateObject(Function const &function) const;
   /// @}
@@ -354,6 +367,20 @@ Variant::Variant(T const &value, meta::IfIsFloat<T> *)
 }
 
 /**
+ * Fixed point constructor
+ *
+ * @tparam T A fixed point type
+ * @param value The value to be set
+ */
+template <typename T>
+Variant::Variant(T const &value, meta::IfIsFixedPoint<T> *)
+  : Variant()
+{
+  type_              = Type::FIXED_POINT;
+  primitive_.integer = value.Data();
+}
+
+/**
  * String constructor
  *
  * @tparam T A string like object
@@ -413,6 +440,18 @@ template <typename T>
 meta::IfIsFloat<T, bool> Variant::Is() const
 {
   return type() == Type::FLOATING_POINT;
+}
+
+/**
+ * Fixedpoint compatibility checker
+ *
+ * @tparam T A fixed point type
+ * @return true if the value is compatible fixed point, otherwise false
+ */
+template <typename T>
+meta::IfIsFixedPoint<T, bool> Variant::Is() const
+{
+  return type() == Type::FIXED_POINT;
 }
 
 /**
@@ -479,6 +518,24 @@ meta::IfIsFloat<T, T> Variant::As() const
   }
 
   return static_cast<T>(primitive_.float_point);
+}
+
+/**
+ * Fixed point conversion accessor
+ *
+ * @tparam T A fixed point type
+ * @return The converted value
+ * @throws std::runtime_error in the case where the conversion is not possible
+ */
+template <typename T>
+meta::IfIsFixedPoint<T, T> Variant::As() const
+{
+  if (type() != Type::FIXED_POINT)
+  {
+    throw std::runtime_error("Variant type mismatch, unable to extract floating point value");
+  }
+
+  return static_cast<T>(fixed_point::fp64_t::FromBase(primitive_.integer));
 }
 
 /**
@@ -567,6 +624,24 @@ meta::IfIsFloat<T, Variant &> Variant::operator=(T const &value)
 
   type_                  = Type::FLOATING_POINT;
   primitive_.float_point = static_cast<double>(value);
+
+  return *this;
+}
+
+/**
+ * Fixed point assignment operator
+ *
+ * @tparam T A fixed point type
+ * @param value The value to assign
+ * @return The reference to the updated variant
+ */
+template <typename T>
+meta::IfIsFixedPoint<T, Variant &> Variant::operator=(T const &value)
+{
+  Reset();
+
+  type_              = Type::FIXED_POINT;
+  primitive_.integer = value.Data();
 
   return *this;
 }
@@ -751,6 +826,7 @@ inline std::size_t Variant::size() const
   case Type::UNDEFINED:
   case Type::INTEGER:
   case Type::FLOATING_POINT:
+  case Type::FIXED_POINT:
   case Type::BOOLEAN:
   case Type::NULL_VALUE:
     break;
@@ -849,45 +925,6 @@ inline void Variant::ResizeArray(std::size_t length)
 inline bool Variant::operator!=(Variant const &other) const
 {
   return !(*this == other);
-}
-
-/**
- * Iterates through items contained in variant Object
- *
- * @details This method iterates though items in Object, thus variant instance
- * **MUST** be of `Object` type! This is non-const version of the method, thus
- * it is possible to modify value of items iterated through.
- *
- * @tparam Function - General type of which instance represents functor going
- * to be called per each item in Variant Object. The `Function` **MUST** return
- * boolean value indicating whether iteration is supposed to continue (`true`
- * value to CONTINUE, or `false` to STOP iteration). Functor receives non-const
- * reference to an item = it is MUTABLE.
- * Signature of the `Function` instance is: `bool(Variant & item)`.
- *
- * @param function - Instance of Function type, which will be called per each
- * item contained in the Variant Object, please see description of the the
- * @refitem(Function) for details.
- *
- * @return true if deserialisation passed successfully, false otherwise.
- */
-template <typename Function>
-void Variant::IterateObject(Function const &function)
-{
-  if (IsObject())
-  {
-    for (auto &variant : object_)
-    {
-      if (!function(variant.first, *variant.second))
-      {
-        break;
-      }
-    }
-  }
-  else
-  {
-    throw std::runtime_error("Variant type mismatch, expected `object` type.");
-  }
 }
 
 /**

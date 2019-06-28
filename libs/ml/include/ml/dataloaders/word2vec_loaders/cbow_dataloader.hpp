@@ -46,19 +46,20 @@ class CBoWLoader : public BasicTextLoader<T>
   using SizeType  = typename T::SizeType;
 
 public:
-  explicit CBoWLoader(CBoWTextParams<T> p, SizeType seed = 123456789);
+  explicit CBoWLoader(CBoWTextParams<T> p, bool random_mode = false, SizeType seed = 123456789);
+
   bool AddData(std::string const &training_data) override;
 
 private:
   CBoWTextParams<T> p_;
 
-  void     GetData(SizeType idx, ArrayType &ret) override;
+  void     GetData(SizeType idx, std::vector<ArrayType> &ret) override;
   SizeType GetLabel(SizeType idx) override;
 };
 
 template <typename T>
-CBoWLoader<T>::CBoWLoader(CBoWTextParams<T> p, SizeType seed)
-  : BasicTextLoader<T>(p, seed)
+CBoWLoader<T>::CBoWLoader(CBoWTextParams<T> p, bool random_mode, SizeType seed)
+  : BasicTextLoader<T>(p, random_mode, seed)
   , p_(p)
 {
 
@@ -72,24 +73,24 @@ CBoWLoader<T>::CBoWLoader(CBoWTextParams<T> p, SizeType seed)
  * @return
  */
 template <typename T>
-void CBoWLoader<T>::GetData(SizeType idx, T &ret)
+void CBoWLoader<T>::GetData(SizeType idx, std::vector<T> &ret)
 {
   // the data assignment - left window
   SizeType buffer_count = 0;
   for (SizeType i = idx - p_.window_size; i < idx; ++i)
   {
-    SizeType sentence_idx = this->word_idx_sentence_idx.at(i);
-    SizeType word_idx     = this->GetWordOffsetFromWordIdx(i);
-    ret.At(buffer_count)  = DataType(this->data_.at(sentence_idx).at(word_idx));
+    SizeType sentence_idx         = this->word_idx_sentence_idx.at(i);
+    SizeType word_idx             = this->GetWordOffsetFromWordIdx(i);
+    ret.at(buffer_count).At(0, 0) = DataType(this->data_.at(sentence_idx).at(word_idx));
     ++buffer_count;
   }
 
   // the data assignment - left window
   for (SizeType i = idx + 1; i < idx + p_.window_size + 1; ++i)
   {
-    SizeType sentence_idx = this->word_idx_sentence_idx.at(i);
-    SizeType word_idx     = this->GetWordOffsetFromWordIdx(i);
-    ret.At(buffer_count)  = DataType(this->data_.at(sentence_idx).at(word_idx));
+    SizeType sentence_idx         = this->word_idx_sentence_idx.at(i);
+    SizeType word_idx             = this->GetWordOffsetFromWordIdx(i);
+    ret.at(buffer_count).At(0, 0) = DataType(this->data_.at(sentence_idx).at(word_idx));
     ++buffer_count;
   }
 }

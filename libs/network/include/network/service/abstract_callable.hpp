@@ -20,6 +20,7 @@
 #include "core/byte_array/byte_array.hpp"
 #include "core/logger.hpp"
 #include "network/service/types.hpp"
+
 namespace fetch {
 namespace service {
 
@@ -250,11 +251,11 @@ public:
 class AbstractCallable
 {
 public:
-  AbstractCallable(uint64_t meta_data = 0)
+  explicit AbstractCallable(uint64_t meta_data = 0)
     : meta_data_(meta_data)
   {}
 
-  virtual ~AbstractCallable(){};
+  virtual ~AbstractCallable() = default;
 
   /* Call operator that implements deserialization and invocation of function.
    * @result is a serializer used to serialize the result.

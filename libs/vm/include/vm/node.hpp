@@ -143,9 +143,17 @@ struct Type : public Symbol
   {
     return (type_kind == TypeKind::Primitive);
   }
+  bool IsMeta() const
+  {
+    return (type_kind == TypeKind::Meta);
+  }
   bool IsGroup() const
   {
     return (type_kind == TypeKind::Group);
+  }
+  bool IsClass() const
+  {
+    return (type_kind == TypeKind::Class);
   }
   bool IsInstantiation() const
   {

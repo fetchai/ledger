@@ -17,10 +17,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include <utility>
-
 #include "crypto/openssl_context_detail.hpp"
 #include "crypto/openssl_memory.hpp"
+
+#include <utility>
 
 namespace fetch {
 namespace crypto {
@@ -48,7 +48,7 @@ public:
     start();
   }
 
-  explicit Session()
+  Session()
     : Session(context_smart_ptr(BN_CTX_new()))
   {}
 

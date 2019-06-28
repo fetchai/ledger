@@ -17,8 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/assert.hpp"
 #include "math/meta/math_type_traits.hpp"
+
+#include <cassert>
 
 /**
  * natural logarithm of x
@@ -39,8 +40,6 @@ fetch::meta::EnableIf<fetch::meta::IsInteger<Type> || fetch::meta::IsFloat<Type>
   ret = static_cast<Type>(std::log(x));
 }
 
-// TODO(800) - native implementations of fixed point are required; casting to double will not be
-// permissible
 template <typename T>
 meta::IfIsFixedPoint<T, void> Log(T const &n, T &ret)
 {
@@ -54,12 +53,23 @@ fetch::meta::EnableIf<fetch::meta::IsInteger<Type> || fetch::meta::IsFloat<Type>
   ret = std::log2(x);
 }
 
-// TODO(800) - native implementations of fixed point are required; casting to double will not be
-// permissible
 template <typename T>
 meta::IfIsFixedPoint<T, void> Log2(T const &n, T &ret)
 {
   ret = T::Log2(n);
+}
+
+template <typename Type>
+fetch::meta::EnableIf<fetch::meta::IsInteger<Type> || fetch::meta::IsFloat<Type>, void> Log10(
+    Type const &x, Type &ret)
+{
+  ret = std::log10(x);
+}
+
+template <typename T>
+meta::IfIsFixedPoint<T, void> Log10(T const &n, T &ret)
+{
+  ret = T::Log10(n);
 }
 
 //////////////////
@@ -123,6 +133,28 @@ meta::IfIsMathArray<ArrayType, ArrayType> Log2(ArrayType const &array)
 {
   ArrayType ret{array.shape()};
   Log2(array, ret);
+  return ret;
+}
+
+template <typename ArrayType>
+meta::IfIsMathArray<ArrayType, void> Log10(ArrayType const &array, ArrayType &ret)
+{
+  assert(ret.shape() == array.shape());
+  auto it1 = array.cbegin();
+  auto rit = ret.begin();
+  while (it1.is_valid())
+  {
+    Log10(*it1, *rit);
+    ++it1;
+    ++rit;
+  }
+}
+
+template <typename ArrayType>
+meta::IfIsMathArray<ArrayType, ArrayType> Log10(ArrayType const &array)
+{
+  ArrayType ret{array.shape()};
+  Log10(array, ret);
   return ret;
 }
 

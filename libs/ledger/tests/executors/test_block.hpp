@@ -30,8 +30,6 @@ struct TestBlock
   using BlockBody     = fetch::ledger::Block::Body;
   using Digest        = fetch::ledger::Digest;
 
-  static constexpr char const *LOGGING_NAME = "TestBlock";
-
   static constexpr uint64_t    IV          = uint64_t(-1);
   static constexpr std::size_t HASH_LENGTH = 32;
 
@@ -59,8 +57,6 @@ struct TestBlock
 
     ResourceIdMap     resources = BuildResourceMap(log2_num_lanes);
     std::size_t const num_lanes = 1u << log2_num_lanes;
-
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Generating block: ", num_lanes, " x ", num_slices);
 
     // generate the block hash and assign the previous hash
     fetch::byte_array::ByteArray digest;

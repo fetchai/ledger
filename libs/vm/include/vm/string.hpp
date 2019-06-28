@@ -17,13 +17,21 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm/variant.hpp"
+#include "vm/common.hpp"
+#include "vm/object.hpp"
 
 #include <cstddef>
 #include <cstdint>
+#include <string>
+#include <utility>
 
 namespace fetch {
 namespace vm {
+
+class VM;
+
+template <typename T>
+struct Array;
 
 struct String : public Object
 {
@@ -36,11 +44,12 @@ struct String : public Object
     , is_literal(is_literal__)
   {}
 
-  int32_t     Length() const;
-  void        Trim();
-  int32_t     Find(Ptr<String> const &substring) const;
-  Ptr<String> Substring(int32_t start_index, int32_t end_index);
-  void        Reverse();
+  int32_t                 Length() const;
+  void                    Trim();
+  int32_t                 Find(Ptr<String> const &substring) const;
+  Ptr<String>             Substring(int32_t start_index, int32_t end_index);
+  void                    Reverse();
+  Ptr<Array<Ptr<String>>> Split(Ptr<String> const &) const;
 
   std::size_t GetHashCode() override;
   bool        IsEqual(Ptr<Object> const &lhso, Ptr<Object> const &rhso) override;

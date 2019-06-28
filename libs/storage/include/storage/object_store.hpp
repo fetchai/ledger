@@ -21,7 +21,6 @@
 #include "core/serializers/byte_array_buffer.hpp"
 #include "core/serializers/stl_types.hpp"
 #include "core/serializers/typed_byte_array_buffer.hpp"
-
 #include "storage/key_byte_array_store.hpp"
 
 namespace fetch {
@@ -50,9 +49,10 @@ public:
   using type            = T;
   using self_type       = ObjectStore<T, S>;
   using serializer_type = serializers::TypedByteArrayBuffer;
+
   class Iterator;
 
-  ObjectStore(){};
+  ObjectStore()                       = default;
   ObjectStore(ObjectStore const &rhs) = delete;
   ObjectStore(ObjectStore &&rhs)      = delete;
   ObjectStore &operator=(ObjectStore const &rhs) = delete;
@@ -124,7 +124,7 @@ public:
   void Set(ResourceID const &rid, type const &object)
   {
     std::lock_guard<mutex::Mutex> lock(mutex_);
-    return LocklessSet(rid, object);
+    LocklessSet(rid, object);
   }
 
   /**
@@ -134,7 +134,8 @@ public:
    *
    * @param: f The closure
    */
-  void WithLock(std::function<void()> const &f)
+  template <typename F>
+  void WithLock(F &&f)
   {
     std::lock_guard<mutex::Mutex> lock(mutex_);
     f();
@@ -224,14 +225,14 @@ public:
   class Iterator
   {
   public:
-    Iterator(typename KeyByteArrayStore<S>::Iterator it)
+    explicit Iterator(typename KeyByteArrayStore<S>::Iterator it)
       : wrapped_iterator_{it}
     {}
-    Iterator()                    = default;
-    Iterator(Iterator const &rhs) = default;
-    Iterator(Iterator &&rhs)      = default;
+    Iterator()                        = default;
+    Iterator(Iterator const &rhs)     = default;
+    Iterator(Iterator &&rhs) noexcept = default;
     Iterator &operator=(Iterator const &rhs) = default;
-    Iterator &operator=(Iterator &&rhs) = default;
+    Iterator &operator=(Iterator &&rhs) noexcept = default;
 
     void operator++()
     {
@@ -246,6 +247,11 @@ public:
     bool operator!=(Iterator const &rhs) const
     {
       return !(wrapped_iterator_ == rhs.wrapped_iterator_);
+    }
+
+    ResourceID GetKey() const
+    {
+      return ResourceID{wrapped_iterator_.GetKey()};
     }
 
     /**

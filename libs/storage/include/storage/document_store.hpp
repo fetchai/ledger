@@ -59,9 +59,11 @@ public:
 
   using index_type = typename key_value_index_type::index_type;
 
+  using ByteArray = byte_array::ByteArray;
+
   static constexpr char const *LOGGING_NAME = "DocumentStore";
 
-  DocumentStore(){};
+  DocumentStore()                         = default;
   DocumentStore(DocumentStore const &rhs) = delete;
   DocumentStore(DocumentStore &&rhs)      = delete;
   DocumentStore &operator=(DocumentStore const &rhs) = delete;
@@ -226,6 +228,13 @@ public:
       return !(wrapped_iterator_ == rhs.wrapped_iterator_);
     }
 
+    ByteArray GetKey() const
+    {
+      auto kv = *wrapped_iterator_;
+
+      return kv.first;
+    }
+
     Document operator*() const
     {
       auto kv = *wrapped_iterator_;
@@ -287,7 +296,7 @@ public:
     if (key_index_.underlying_stack().HashExists(hash) ||
         file_object_.underlying_stack().HashExists(hash))
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Attempted to commit an already committed hash");
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Attempted to commit an already committed hash");
       return hash;
     }
 

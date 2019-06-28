@@ -16,15 +16,25 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/byte_array/const_byte_array.hpp"
 #include "core/byte_array/decoders.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "core/commandline/cli_header.hpp"
-#include "core/commandline/params.hpp"
+#include "core/commandline/parameter_parser.hpp"
 #include "core/json/document.hpp"
+#include "core/serializers/byte_array.hpp"
 #include "variant/variant.hpp"
+#include "vm/common.hpp"
+#include "vm/generator.hpp"
+#include "vm/io_observer_interface.hpp"
 #include "vm/module.hpp"
+#include "vm/object.hpp"
+#include "vm/string.hpp"
+#include "vm/variant.hpp"
+#include "vm/vm.hpp"
 #include "vm_modules/vm_factory.hpp"
 
+#include <cstddef>
 #include <cstdint>
 #include <cstring>
 #include <fstream>
@@ -266,7 +276,7 @@ int main(int argc, char **argv)
   auto const source = ReadFileContents(params.program().GetArg(1));
 
   auto executable = std::make_unique<Executable>();
-  auto module     = VMFactory::GetModule();
+  auto module     = VMFactory::GetModule(VMFactory::USE_SMART_CONTRACTS);
 
   // additional module bindings
   module->CreateClassType<System>("System")
@@ -290,7 +300,7 @@ int main(int argc, char **argv)
   }
 
   // create the VM instance
-  auto vm = VMFactory::GetVM(module);
+  auto vm = std::make_unique<VM>(module.get());
 
   std::string const data_path = params.program().GetParam("data", "");
 
@@ -304,7 +314,6 @@ int main(int argc, char **argv)
   }
 
   vm->AttachOutputDevice(fetch::vm::VM::STDOUT, std::cout);
-  vm->AttachOutputDevice("stderr", std::cerr);
 
   // Execute the requested function
   std::string        error;
@@ -324,17 +333,11 @@ int main(int argc, char **argv)
     std::cout << console << std::endl;
   }
 
-  // display the error message if the script execution was not successful
-  if (!success)
-  {
-    std::cerr << error << std::endl;
-  }
-
   // save any specified data file
   if (!data_path.empty())
   {
     state_map.SaveToFile(data_path.c_str());
   }
 
-  return (success) ? 0 : 1;
+  return 0;
 }

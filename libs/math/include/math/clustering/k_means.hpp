@@ -20,23 +20,24 @@
 #include "core/vector.hpp"
 #include "math/distance/euclidean.hpp"
 #include "math/standard_functions/pow.hpp"
-#include "random"
-
 #include "math/tensor.hpp"
 
+#include <algorithm>
+#include <cassert>
+#include <cstdint>
+#include <iterator>
+#include <random>
 #include <set>
-
-/**
- * assigns the absolute of x to this array
- * @param x
- */
+#include <stdexcept>
+#include <unordered_map>
+#include <utility>
+#include <vector>
 
 namespace fetch {
 namespace math {
 namespace clustering {
 
 using ClusteringType = Tensor<std::int64_t>;
-// using SizeType = typename Tensor<DataType>::SizeType;
 
 enum class InitMode
 {
@@ -791,7 +792,6 @@ ClusteringType KMeans(ArrayType const &data, typename ArrayType::SizeType const 
   assert(K <= n_points);  // you can't have more clusters than data points
   assert(K > 1);          // why would you run k means clustering with only one cluster?
 
-  //  fetch::core::Vector<SizeType> ret_array_shape{n_points, 1};
   ClusteringType ret{n_points};
 
   if (n_points == K)  // very easy to cluster!

@@ -16,10 +16,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include <chrono>
-#include <gtest/gtest.h>
-#include <thread>
-
 #include "core/byte_array/decoders.hpp"
 #include "core/macros.hpp"
 #include "crypto/ecdsa.hpp"
@@ -29,6 +25,11 @@
 #include "network/muddle/rpc/server.hpp"
 #include "network/peer.hpp"
 #include "network/service/protocol.hpp"
+
+#include "gtest/gtest.h"
+
+#include <chrono>
+#include <thread>
 
 using std::this_thread::sleep_for;
 using std::chrono::seconds;

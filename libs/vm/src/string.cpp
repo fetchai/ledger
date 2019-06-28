@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "vm/array.hpp"
 #include "vm/string.hpp"
 
 #include <algorithm>
@@ -97,6 +98,54 @@ Ptr<String> String::Substring(int32_t start_index, int32_t end_index)
 void String::Reverse()
 {
   std::reverse(str.begin(), str.end());
+}
+
+Ptr<Array<Ptr<String>>> String::Split(Ptr<String> const &separator) const
+{
+  if (separator == nullptr)
+  {
+    vm_->RuntimeError("split: argument must not be null");
+    return new Array<Ptr<String>>(vm_, vm_->GetTypeId<Array<Ptr<String>>>(), type_id_, 0);
+  }
+
+  if (separator->str.empty())
+  {
+    vm_->RuntimeError("split: argument must not be the empty string");
+    return new Array<Ptr<String>>(vm_, vm_->GetTypeId<Array<Ptr<String>>>(), type_id_, 0);
+  }
+
+  std::vector<std::size_t> segment_boundaries{0};
+
+  for (std::size_t i = str.find(separator->str); i != std::string::npos;
+       i             = str.find(separator->str, i + separator->str.length()))
+  {
+    segment_boundaries.push_back(i + separator->str.length());
+  }
+
+  // separator not found
+  if (segment_boundaries.size() == 1)
+  {
+    auto ret = new Array<Ptr<String>>(vm_, vm_->GetTypeId<Array<Ptr<String>>>(), type_id_, 1);
+    ret->elements[0] = new String(vm_, str);
+
+    return ret;
+  }
+
+  segment_boundaries.push_back(str.length() + separator->str.length());
+
+  assert(segment_boundaries.size() > 2u);
+
+  auto ret = new Array<Ptr<String>>(vm_, vm_->GetTypeId<Array<Ptr<String>>>(), type_id_,
+                                    static_cast<int32_t>(segment_boundaries.size() - 1));
+
+  for (std::size_t i = 0; i + 1 < segment_boundaries.size(); ++i)
+  {
+    std::size_t begin  = segment_boundaries[i];
+    std::size_t length = segment_boundaries[i + 1] - begin - separator->str.length();
+    ret->elements[i]   = new String(vm_, str.substr(begin, length));
+  }
+
+  return ret;
 }
 
 int32_t String::Length() const

@@ -17,6 +17,11 @@
 //
 //------------------------------------------------------------------------------
 
+#include "vectorise/fixed_point/fixed_point.hpp"
+#include "vm/module.hpp"
+
+#include <cstdint>
+
 namespace fetch {
 namespace vm_modules {
 
@@ -24,12 +29,13 @@ namespace vm_modules {
  * method for type converting from arithmetic to string
  */
 template <typename T>
-fetch::math::meta::IfIsArithmetic<T, fetch::vm::Ptr<fetch::vm::String>> ToString(fetch::vm::VM *vm,
-                                                                                 T const &      a)
+fetch::math::meta::IfIsNonFixedPointArithmetic<T, fetch::vm::Ptr<fetch::vm::String>> ToString(
+    fetch::vm::VM *vm, T const &a)
 {
   if (std::is_same<T, bool>::value)
   {
-    fetch::vm::Ptr<fetch::vm::String> ret(new fetch::vm::String(vm, a ? "True" : "False"));
+    fetch::vm::Ptr<fetch::vm::String> ret(
+        new fetch::vm::String(vm, static_cast<bool>(a) ? "true" : "false"));
     return ret;
   }
   else
@@ -40,6 +46,16 @@ fetch::math::meta::IfIsArithmetic<T, fetch::vm::Ptr<fetch::vm::String>> ToString
 }
 
 template <typename T>
+fetch::math::meta::IfIsFixedPoint<T, fetch::vm::Ptr<fetch::vm::String>> ToString(fetch::vm::VM *vm,
+                                                                                 T const &      a)
+{
+  std::stringstream stream;
+  stream << a;
+  fetch::vm::Ptr<fetch::vm::String> ret(new fetch::vm::String(vm, stream.str()));
+  return ret;
+}
+
+template <typename T>
 bool ToBool(fetch::vm::VM * /*vm*/, T const &a)
 {
   return static_cast<bool>(a);
@@ -47,6 +63,10 @@ bool ToBool(fetch::vm::VM * /*vm*/, T const &a)
 
 inline void CreateToString(fetch::vm::Module &module)
 {
+  module.CreateFreeFunction("toString", &ToString<int8_t>);
+  module.CreateFreeFunction("toString", &ToString<uint8_t>);
+  module.CreateFreeFunction("toString", &ToString<int16_t>);
+  module.CreateFreeFunction("toString", &ToString<uint16_t>);
   module.CreateFreeFunction("toString", &ToString<int32_t>);
   module.CreateFreeFunction("toString", &ToString<uint32_t>);
   module.CreateFreeFunction("toString", &ToString<int64_t>);
@@ -54,11 +74,8 @@ inline void CreateToString(fetch::vm::Module &module)
   module.CreateFreeFunction("toString", &ToString<float_t>);
   module.CreateFreeFunction("toString", &ToString<double_t>);
   module.CreateFreeFunction("toString", &ToString<bool>);
-}
-
-inline void CreateToString(std::shared_ptr<vm::Module> module)
-{
-  CreateToString(*module.get());
+  module.CreateFreeFunction("toString", &ToString<fixed_point::fp32_t>);
+  module.CreateFreeFunction("toString", &ToString<fixed_point::fp64_t>);
 }
 
 inline void CreateToBool(fetch::vm::Module &module)

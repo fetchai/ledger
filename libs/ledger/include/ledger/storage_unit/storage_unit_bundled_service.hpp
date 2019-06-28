@@ -20,7 +20,6 @@
 #include "storage/document_store_protocol.hpp"
 #include "storage/object_store.hpp"
 #include "storage/object_store_protocol.hpp"
-#include "storage/revertible_document_store.hpp"
 
 #include "network/muddle/muddle_endpoint.hpp"
 #include "network/p2pservice/p2p_service_defs.hpp"

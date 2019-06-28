@@ -20,7 +20,9 @@
 #include "math/tensor.hpp"
 #include "ml/dataloaders/word2vec_loaders/skipgram_dataloader.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
-#include <gtest/gtest.h>
+
+#include "gtest/gtest.h"
+
 #include <string>
 
 using namespace fetch::ml;
@@ -84,16 +86,16 @@ TYPED_TEST(SkipGramDataloaderTest, loader_test)
        std::pair<std::string, std::string>("ten", "words"),
        std::pair<std::string, std::string>("words", "ten")});
 
-  TypeParam left_and_right;
+  std::vector<TypeParam> left_and_right;
   for (std::size_t j = 0; j < 100; ++j)
   {
     if (loader.IsDone())
     {
       loader.Reset();
     }
-    left_and_right            = loader.GetNext().first;
-    std::string input         = loader.VocabLookup(SizeType(double(left_and_right.At(0))));
-    std::string context       = loader.VocabLookup(SizeType(double(left_and_right.At(1))));
+    left_and_right            = loader.GetNext().second;
+    std::string input         = loader.VocabLookup(SizeType(double(left_and_right.at(0).At(0, 0))));
+    std::string context       = loader.VocabLookup(SizeType(double(left_and_right.at(1).At(0, 0))));
     auto        input_context = std::make_pair(input, context);
 
     if (j % total_words == 0)

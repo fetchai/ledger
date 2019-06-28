@@ -16,11 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include <benchmark/benchmark.h>
-#include <gtest/gtest.h>
-
 #include "core/random/lfg.hpp"
 #include "storage/cache_line_random_access_stack.hpp"
+
+#include "benchmark/benchmark.h"
+#include "gtest/gtest.h"
 
 using fetch::storage::CacheLineRandomAccessStack;
 
@@ -46,12 +46,12 @@ static void CacheLineRandomAccessStackBench_misshit(benchmark::State &st)
   EXPECT_TRUE(stack_.is_open());
   EXPECT_TRUE(stack_.DirectWrite()) << "Expected cache line random access stack to be direct write";
 
-  stack_.SetMemoryLimit(std::size_t(1ULL << 22));
+  stack_.SetMemoryLimit(std::size_t(1ULL << 22u));
   N        dummy;
   uint64_t line_count = 0;
 
   // Pushing elements till the cache gets full
-  while (line_count * sizeof(CachedDataItem<N>) < std::size_t(1ULL << 22))
+  while (line_count * sizeof(CachedDataItem<N>) < std::size_t(1ULL << 22u))
   {
     // Each cache line contains 8192 elements
     for (int i = 0; i < 8192; i++)

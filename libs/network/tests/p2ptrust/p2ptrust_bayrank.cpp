@@ -19,8 +19,8 @@
 #include <cstdlib>
 #include <memory>
 
+#include "gtest/gtest.h"
 #include "network/p2pservice/p2ptrust_bayrank.hpp"
-#include <gtest/gtest.h>
 
 using namespace fetch::p2p;
 using fetch::byte_array::ConstByteArray;

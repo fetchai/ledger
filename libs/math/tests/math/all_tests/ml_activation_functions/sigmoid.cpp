@@ -18,7 +18,8 @@
 
 #include "math/ml/activation_functions/sigmoid.hpp"
 #include "math/tensor.hpp"
-#include <gtest/gtest.h>
+
+#include "gtest/gtest.h"
 
 template <typename T>
 class SigmoidTest : public ::testing::Test

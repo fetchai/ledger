@@ -17,10 +17,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/assert.hpp"
 #include "math/comparison.hpp"
 #include "math/fundamental_operators.hpp"
 #include "math/standard_functions/exp.hpp"
+
+#include <cassert>
 
 namespace fetch {
 namespace math {

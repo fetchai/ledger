@@ -20,10 +20,13 @@
 #include "storage/document_store.hpp"
 #include "storage/new_versioned_random_access_stack.hpp"
 
+#include <cstddef>
 #include <string>
 
 namespace fetch {
 namespace storage {
+
+class ResourceID;
 
 class NewRevertibleDocumentStore
 {
@@ -31,6 +34,7 @@ public:
   using Hash           = byte_array::ConstByteArray;
   using ByteArray      = byte_array::ConstByteArray;
   using UnderlyingType = storage::Document;
+  using Keys           = std::vector<ResourceID>;
 
   bool New(std::string const &state, std::string const &state_history, std::string const &index,
            std::string const &index_history, bool create_if_not_exist);
@@ -46,6 +50,8 @@ public:
   bool RevertToHash(Hash const &hash);
   Hash CurrentHash();
   bool HashExists(Hash const &hash);
+  Keys KeyDump();
+  void Reset();
 
   std::size_t size() const;
 

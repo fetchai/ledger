@@ -16,10 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include <gtest/gtest.h>
-
 #include "math/combinatorics.hpp"
 #include "math/tensor.hpp"
+
+#include "gtest/gtest.h"
 
 using namespace fetch::math::combinatorics;
 

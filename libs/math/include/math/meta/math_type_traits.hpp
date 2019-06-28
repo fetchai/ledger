@@ -17,13 +17,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/byte_array/byte_array.hpp"
+#include <type_traits>
 
+#include "core/byte_array/byte_array.hpp"
 #include "math/tensor_declaration.hpp"
 #include "meta/type_traits.hpp"
-#include "vectorise/fixed_point/fixed_point.hpp"
-
-#include <type_traits>
+#include "vectorise/fixed_point/type_traits.hpp"
 
 namespace fetch {
 namespace math {
@@ -69,40 +68,9 @@ using IfVectorSupportFor = typename std::enable_if<HasVectorSupport<T>::value, R
 template <typename T, typename R>
 using IfNoVectorSupportFor = typename std::enable_if<!HasVectorSupport<T>::value, R>::type;
 
-////////////////////////////
-/// FIXED POINT CHECKING ///
-////////////////////////////
-
-template <typename DataType>
-constexpr bool IsFixedPoint = std::is_base_of<fixed_point::BaseFixedpointType, DataType>::value;
-
-template <typename DataType>
-constexpr bool IsNotFixedPoint = !IsFixedPoint<DataType>;
-
-template <typename DataType>
-constexpr bool IsArithmetic = std::is_arithmetic<DataType>::value || IsFixedPoint<DataType>;
-
-template <typename DataType>
-constexpr bool IsIntegerOrFixedPoint = fetch::meta::IsInteger<DataType> || IsFixedPoint<DataType>;
-
-template <typename DataType>
-constexpr bool IsNonFixedPointArithmetic = std::is_arithmetic<DataType>::value;
-
-template <typename DataType, typename ReturnType>
-using IfIsFixedPoint = typename std::enable_if<IsFixedPoint<DataType>, ReturnType>::type;
-
-template <typename DataType, typename ReturnType>
-using IfIsNotFixedPoint = typename std::enable_if<IsNotFixedPoint<DataType>, ReturnType>::type;
-
 ////////////////////////////////////////////////
 /// TYPES INDIRECTED FROM META / TYPE_TRAITS ///
 ////////////////////////////////////////////////
-
-template <typename DataType, typename ReturnType>
-using IfIsArithmetic = EnableIf<IsArithmetic<DataType>, ReturnType>;
-
-template <typename DataType, typename ReturnType>
-using IfIsNonFixedPointArithmetic = EnableIf<IsNonFixedPointArithmetic<DataType>, ReturnType>;
 
 template <typename DataType, typename ReturnType>
 using IfIsNotImplemented = fetch::meta::IfIsNotImplemented<DataType, ReturnType>;
@@ -130,6 +98,16 @@ struct IsMathImpl<float, ReturnType>
 };
 template <typename ReturnType>
 struct IsMathImpl<int, ReturnType>
+{
+  using Type = ReturnType;
+};
+template <typename ReturnType>
+struct IsMathImpl<fixed_point::fp32_t, ReturnType>
+{
+  using Type = ReturnType;
+};
+template <typename ReturnType>
+struct IsMathImpl<fixed_point::fp64_t, ReturnType>
 {
   using Type = ReturnType;
 };

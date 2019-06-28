@@ -16,12 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include "variant/variant.hpp"
 #include "core/macros.hpp"
+#include "variant/variant.hpp"
 
+#include <cstddef>
 #include <iomanip>
 #include <ostream>
-#include <sstream>
 
 namespace fetch {
 namespace variant {
@@ -50,6 +50,7 @@ Variant &Variant::operator=(Variant const &value)
   case Type::BOOLEAN:
   case Type::INTEGER:
   case Type::FLOATING_POINT:
+  case Type::FIXED_POINT:
     primitive_ = value.primitive_;
     break;
 
@@ -111,6 +112,10 @@ bool Variant::operator==(Variant const &other) const
 
     case Type::FLOATING_POINT:
       equal = primitive_.float_point == other.primitive_.float_point;
+      break;
+
+    case Type::FIXED_POINT:
+      equal = primitive_.integer == other.primitive_.integer;
       break;
 
     case Type::BOOLEAN:
@@ -182,6 +187,7 @@ void Variant::Reset()
   case Type::NULL_VALUE:
   case Type::INTEGER:
   case Type::FLOATING_POINT:
+  case Type::FIXED_POINT:
   case Type::BOOLEAN:
     break;
   case Type::STRING:
@@ -240,6 +246,10 @@ std::ostream &operator<<(std::ostream &stream, Variant const &variant)
 
   case Variant::Type::FLOATING_POINT:
     stream << variant.As<double>();
+    break;
+
+  case Variant::Type::FIXED_POINT:
+    stream << variant.As<fixed_point::fp64_t>();
     break;
 
   case Variant::Type::STRING:

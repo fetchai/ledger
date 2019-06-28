@@ -39,6 +39,8 @@ struct Token
     UnsignedInteger64,
     Float32,
     Float64,
+    Fixed32,
+    Fixed64,
     String,
     BadString,
     True,

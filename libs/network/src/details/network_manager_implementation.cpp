@@ -16,8 +16,14 @@
 //
 //------------------------------------------------------------------------------
 
-#include "network/details/network_manager_implementation.hpp"
 #include "core/threading.hpp"
+#include "network/details/network_manager_implementation.hpp"
+#include "network/fetch_asio.hpp"
+
+#include <chrono>
+#include <memory>
+#include <mutex>
+#include <thread>
 
 namespace fetch {
 namespace network {
@@ -28,7 +34,7 @@ void NetworkManagerImplementation::Start()
   FETCH_LOCK(thread_mutex_);
   running_ = true;
 
-  if (threads_.size() == 0)
+  if (threads_.empty())
   {
     owning_thread_ = std::this_thread::get_id();
     shared_work_   = std::make_shared<asio::io_service::work>(*io_service_);

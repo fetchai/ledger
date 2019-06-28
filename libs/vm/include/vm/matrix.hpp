@@ -30,9 +30,9 @@ public:
   IMatrix()          = delete;
   virtual ~IMatrix() = default;
   static Ptr<IMatrix> Constructor(VM *vm, TypeId type_id, int32_t num_rows, int32_t num_columns);
-  virtual TemplateParameter GetIndexedValue(AnyInteger const &row, AnyInteger const &column) = 0;
-  virtual void              SetIndexedValue(AnyInteger const &row, AnyInteger const &column,
-                                            TemplateParameter const &value)                  = 0;
+  virtual TemplateParameter1 GetIndexedValue(AnyInteger const &row, AnyInteger const &column) = 0;
+  virtual void               SetIndexedValue(AnyInteger const &row, AnyInteger const &column,
+                                             TemplateParameter1 const &value)                 = 0;
 
 protected:
   IMatrix(VM *vm, TypeId type_id)
@@ -46,25 +46,26 @@ struct Matrix : public IMatrix
   Matrix()          = delete;
   virtual ~Matrix() = default;
 
-  Matrix(VM *vm, TypeId type_id, TypeId element_type_id__, size_t num_rows, size_t num_columns)
+  Matrix(VM *vm, TypeId type_id, TypeId element_type_id__, std::size_t num_rows,
+         std::size_t num_columns)
     : IMatrix(vm, type_id)
     , matrix(std::vector<typename fetch::math::Tensor<T>::SizeType>(num_columns, num_rows))
   {
     element_type_id_ = element_type_id__;
   }
 
-  static Ptr<Matrix> AcquireMatrix(VM *vm, TypeId type_id, TypeId element_type_id, size_t num_rows,
-                                   size_t num_columns)
+  static Ptr<Matrix> AcquireMatrix(VM *vm, TypeId type_id, TypeId element_type_id,
+                                   std::size_t num_rows, std::size_t num_columns)
   {
     return Ptr<Matrix>(new Matrix(vm, type_id, element_type_id, num_rows, num_columns));
   }
 
   virtual void Negate(Ptr<Object> &object) override
   {
-    bool const   matrix_is_modifiable = object.RefCount() == 1;
-    Ptr<Matrix>  operand              = object;
-    size_t const rows                 = operand->matrix.shape()[0];
-    size_t const columns              = operand->matrix.shape()[1];
+    bool const        matrix_is_modifiable = object.RefCount() == 1;
+    Ptr<Matrix>       operand              = object;
+    std::size_t const rows                 = operand->matrix.shape()[0];
+    std::size_t const columns              = operand->matrix.shape()[1];
 
     // TODO(tfr): implement negate
     if (matrix_is_modifiable)
@@ -79,14 +80,14 @@ struct Matrix : public IMatrix
 
   virtual void Add(Ptr<Object> &lhso, Ptr<Object> &rhso) override
   {
-    bool const   lhs_matrix_is_modifiable = lhso.RefCount() == 1;
-    bool const   rhs_matrix_is_modifiable = rhso.RefCount() == 1;
-    Ptr<Matrix>  lhs                      = lhso;
-    Ptr<Matrix>  rhs                      = rhso;
-    size_t const lhs_rows                 = lhs->matrix.shape()[0];
-    size_t const lhs_columns              = lhs->matrix.shape()[1];
-    size_t const rhs_rows                 = rhs->matrix.shape()[0];
-    size_t const rhs_columns              = rhs->matrix.shape()[1];
+    bool const        lhs_matrix_is_modifiable = lhso.RefCount() == 1;
+    bool const        rhs_matrix_is_modifiable = rhso.RefCount() == 1;
+    Ptr<Matrix>       lhs                      = lhso;
+    Ptr<Matrix>       rhs                      = rhso;
+    std::size_t const lhs_rows                 = lhs->matrix.shape()[0];
+    std::size_t const lhs_columns              = lhs->matrix.shape()[1];
+    std::size_t const rhs_rows                 = rhs->matrix.shape()[0];
+    std::size_t const rhs_columns              = rhs->matrix.shape()[1];
     if ((lhs_rows != rhs_rows) || (lhs_columns != rhs_columns))
     {
       RuntimeError("invalid operation");
@@ -110,11 +111,11 @@ struct Matrix : public IMatrix
 
   virtual void RightAdd(Variant &objectv, Variant &rhsv) override
   {
-    bool const   lhs_matrix_is_modifiable = objectv.object.RefCount() == 1;
-    Ptr<Matrix>  lhs                      = objectv.object;
-    T            rhs                      = rhsv.primitive.Get<T>();
-    size_t const lhs_rows                 = lhs->matrix.shape()[0];
-    size_t const lhs_columns              = lhs->matrix.shape()[1];
+    bool const        lhs_matrix_is_modifiable = objectv.object.RefCount() == 1;
+    Ptr<Matrix>       lhs                      = objectv.object;
+    T                 rhs                      = rhsv.primitive.Get<T>();
+    std::size_t const lhs_rows                 = lhs->matrix.shape()[0];
+    std::size_t const lhs_columns              = lhs->matrix.shape()[1];
     if (lhs_matrix_is_modifiable)
     {
       lhs->matrix.InlineAdd(rhs);
@@ -127,12 +128,12 @@ struct Matrix : public IMatrix
 
   virtual void InplaceAdd(Ptr<Object> const &lhso, Ptr<Object> const &rhso) override
   {
-    Ptr<Matrix>  lhs         = lhso;
-    Ptr<Matrix>  rhs         = rhso;
-    size_t const lhs_rows    = lhs->matrix.shape()[0];
-    size_t const lhs_columns = lhs->matrix.shape()[1];
-    size_t const rhs_rows    = rhs->matrix.shape()[0];
-    size_t const rhs_columns = rhs->matrix.shape()[1];
+    Ptr<Matrix>       lhs         = lhso;
+    Ptr<Matrix>       rhs         = rhso;
+    std::size_t const lhs_rows    = lhs->matrix.shape()[0];
+    std::size_t const lhs_columns = lhs->matrix.shape()[1];
+    std::size_t const rhs_rows    = rhs->matrix.shape()[0];
+    std::size_t const rhs_columns = rhs->matrix.shape()[1];
     if ((lhs_rows != rhs_rows) || (lhs_columns != rhs_columns))
     {
       RuntimeError("invalid operation");
@@ -150,14 +151,14 @@ struct Matrix : public IMatrix
 
   virtual void Subtract(Ptr<Object> &lhso, Ptr<Object> &rhso) override
   {
-    bool const   lhs_matrix_is_modifiable = lhso.RefCount() == 1;
-    bool const   rhs_matrix_is_modifiable = rhso.RefCount() == 1;
-    Ptr<Matrix>  lhs                      = lhso;
-    Ptr<Matrix>  rhs                      = rhso;
-    size_t const lhs_rows                 = lhs->matrix.shape()[0];
-    size_t const lhs_columns              = lhs->matrix.shape()[1];
-    size_t const rhs_rows                 = rhs->matrix.shape()[0];
-    size_t const rhs_columns              = rhs->matrix.shape()[1];
+    bool const        lhs_matrix_is_modifiable = lhso.RefCount() == 1;
+    bool const        rhs_matrix_is_modifiable = rhso.RefCount() == 1;
+    Ptr<Matrix>       lhs                      = lhso;
+    Ptr<Matrix>       rhs                      = rhso;
+    std::size_t const lhs_rows                 = lhs->matrix.shape()[0];
+    std::size_t const lhs_columns              = lhs->matrix.shape()[1];
+    std::size_t const rhs_rows                 = rhs->matrix.shape()[0];
+    std::size_t const rhs_columns              = rhs->matrix.shape()[1];
     if ((lhs_rows != rhs_rows) || (lhs_columns != rhs_columns))
     {
       RuntimeError("invalid operation");
@@ -181,11 +182,11 @@ struct Matrix : public IMatrix
 
   virtual void RightSubtract(Variant &objectv, Variant &rhsv) override
   {
-    bool const   lhs_matrix_is_modifiable = objectv.object.RefCount() == 1;
-    Ptr<Matrix>  lhs                      = objectv.object;
-    T            rhs                      = rhsv.primitive.Get<T>();
-    size_t const lhs_rows                 = lhs->matrix.shape()[0];
-    size_t const lhs_columns              = lhs->matrix.shape()[1];
+    bool const        lhs_matrix_is_modifiable = objectv.object.RefCount() == 1;
+    Ptr<Matrix>       lhs                      = objectv.object;
+    T                 rhs                      = rhsv.primitive.Get<T>();
+    std::size_t const lhs_rows                 = lhs->matrix.shape()[0];
+    std::size_t const lhs_columns              = lhs->matrix.shape()[1];
     if (lhs_matrix_is_modifiable)
     {
       lhs->matrix.InlineSubtract(rhs);
@@ -198,12 +199,12 @@ struct Matrix : public IMatrix
 
   virtual void InplaceSubtract(Ptr<Object> const &lhso, Ptr<Object> const &rhso) override
   {
-    Ptr<Matrix>  lhs         = lhso;
-    Ptr<Matrix>  rhs         = rhso;
-    size_t const lhs_rows    = lhs->matrix.shape()[0];
-    size_t const lhs_columns = lhs->matrix.shape()[1];
-    size_t const rhs_rows    = rhs->matrix.shape()[0];
-    size_t const rhs_columns = rhs->matrix.shape()[1];
+    Ptr<Matrix>       lhs         = lhso;
+    Ptr<Matrix>       rhs         = rhso;
+    std::size_t const lhs_rows    = lhs->matrix.shape()[0];
+    std::size_t const lhs_columns = lhs->matrix.shape()[1];
+    std::size_t const rhs_rows    = rhs->matrix.shape()[0];
+    std::size_t const rhs_columns = rhs->matrix.shape()[1];
     if ((lhs_rows != rhs_rows) || (lhs_columns != rhs_columns))
     {
       RuntimeError("invalid operation");
@@ -221,12 +222,12 @@ struct Matrix : public IMatrix
 
   virtual void Multiply(Ptr<Object> &lhso, Ptr<Object> &rhso) override
   {
-    Ptr<Matrix>  lhs         = lhso;
-    Ptr<Matrix>  rhs         = rhso;
-    size_t const lhs_rows    = lhs->matrix.shape()[0];
-    size_t const lhs_columns = lhs->matrix.shape()[1];
-    size_t const rhs_rows    = rhs->matrix.shape()[0];
-    size_t const rhs_columns = rhs->matrix.shape()[1];
+    Ptr<Matrix>       lhs         = lhso;
+    Ptr<Matrix>       rhs         = rhso;
+    std::size_t const lhs_rows    = lhs->matrix.shape()[0];
+    std::size_t const lhs_columns = lhs->matrix.shape()[1];
+    std::size_t const rhs_rows    = rhs->matrix.shape()[0];
+    std::size_t const rhs_columns = rhs->matrix.shape()[1];
     if (lhs_columns != rhs_rows)
     {
       RuntimeError("invalid operation");
@@ -240,11 +241,11 @@ struct Matrix : public IMatrix
 
   virtual void LeftMultiply(Variant &lhsv, Variant &objectv) override
   {
-    bool const   rhs_matrix_is_modifiable = objectv.object.RefCount() == 1;
-    T            lhs                      = lhsv.primitive.Get<T>();
-    Ptr<Matrix>  rhs                      = objectv.object;
-    size_t const rhs_rows                 = rhs->matrix.shape()[0];
-    size_t const rhs_columns              = rhs->matrix.shape()[1];
+    bool const        rhs_matrix_is_modifiable = objectv.object.RefCount() == 1;
+    T                 lhs                      = lhsv.primitive.Get<T>();
+    Ptr<Matrix>       rhs                      = objectv.object;
+    std::size_t const rhs_rows                 = rhs->matrix.shape()[0];
+    std::size_t const rhs_columns              = rhs->matrix.shape()[1];
     if (rhs_matrix_is_modifiable)
     {
       rhs->matrix.InlineMultiply(lhs);
@@ -258,11 +259,11 @@ struct Matrix : public IMatrix
 
   virtual void RightMultiply(Variant &objectv, Variant &rhsv) override
   {
-    bool const   lhs_matrix_is_modifiable = objectv.object.RefCount() == 1;
-    Ptr<Matrix>  lhs                      = objectv.object;
-    T            rhs                      = rhsv.primitive.Get<T>();
-    size_t const lhs_rows                 = lhs->matrix.shape()[0];
-    size_t const lhs_columns              = lhs->matrix.shape()[1];
+    bool const        lhs_matrix_is_modifiable = objectv.object.RefCount() == 1;
+    Ptr<Matrix>       lhs                      = objectv.object;
+    T                 rhs                      = rhsv.primitive.Get<T>();
+    std::size_t const lhs_rows                 = lhs->matrix.shape()[0];
+    std::size_t const lhs_columns              = lhs->matrix.shape()[1];
     if (lhs_matrix_is_modifiable)
     {
       lhs->matrix.InlineMultiply(rhs);
@@ -290,8 +291,8 @@ struct Matrix : public IMatrix
       RuntimeError("division by zero");
       return;
     }
-    size_t const lhs_rows    = lhs->matrix.shape()[0];
-    size_t const lhs_columns = lhs->matrix.shape()[1];
+    std::size_t const lhs_rows    = lhs->matrix.shape()[0];
+    std::size_t const lhs_columns = lhs->matrix.shape()[1];
     if (lhs_matrix_is_modifiable)
     {
       lhs->matrix.InlineDivide(rhs);
@@ -316,8 +317,8 @@ struct Matrix : public IMatrix
 
   T *Find(AnyInteger const &row, AnyInteger const &column)
   {
-    size_t r;
-    size_t c;
+    std::size_t r;
+    std::size_t c;
     if (!GetNonNegativeInteger(column, c))
     {
       RuntimeError("negative index");
@@ -328,8 +329,8 @@ struct Matrix : public IMatrix
       RuntimeError("negative index");
       return nullptr;
     }
-    size_t const num_rows    = matrix.shape()[0];
-    size_t const num_columns = matrix.shape()[1];
+    std::size_t const num_rows    = matrix.shape()[0];
+    std::size_t const num_columns = matrix.shape()[1];
     if ((r >= num_rows) || (c >= num_columns))
     {
       RuntimeError("index out of bounds");
@@ -338,20 +339,20 @@ struct Matrix : public IMatrix
     return &matrix.At(c, r);
   }
 
-  virtual TemplateParameter GetIndexedValue(AnyInteger const &row,
-                                            AnyInteger const &column) override
+  virtual TemplateParameter1 GetIndexedValue(AnyInteger const &row,
+                                             AnyInteger const &column) override
   {
     T *ptr = Find(row, column);
     if (ptr)
     {
-      return TemplateParameter(*ptr, element_type_id_);
+      return TemplateParameter1(*ptr, element_type_id_);
     }
     // Not found
-    return TemplateParameter();
+    return TemplateParameter1();
   }
 
   virtual void SetIndexedValue(AnyInteger const &row, AnyInteger const &column,
-                               TemplateParameter const &value) override
+                               TemplateParameter1 const &value) override
   {
     T *ptr = Find(row, column);
     if (ptr)
@@ -376,13 +377,13 @@ inline Ptr<IMatrix> IMatrix::Constructor(VM *vm, TypeId type_id, int32_t num_row
   }
   if (element_type_id == TypeIds::Float32)
   {
-    return Ptr<IMatrix>(
-        new Matrix<float>(vm, type_id, element_type_id, size_t(num_rows), size_t(num_columns)));
+    return Ptr<IMatrix>(new Matrix<float>(vm, type_id, element_type_id, std::size_t(num_rows),
+                                          std::size_t(num_columns)));
   }
   else
   {
-    return Ptr<IMatrix>(
-        new Matrix<double>(vm, type_id, element_type_id, size_t(num_rows), size_t(num_columns)));
+    return Ptr<IMatrix>(new Matrix<double>(vm, type_id, element_type_id, std::size_t(num_rows),
+                                           std::size_t(num_columns)));
   }
 }
 

@@ -16,14 +16,16 @@
 //
 //------------------------------------------------------------------------------
 
-#include <gtest/gtest.h>
-#include <vector>
-
 #include "core/random/lcg.hpp"
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
 #include "mock_file_object.hpp"
 #include "storage/storage_exception.hpp"
+
+#include "gtest/gtest.h"
+
+#include <random>
+#include <vector>
 
 using namespace fetch;
 using namespace fetch::byte_array;
@@ -193,9 +195,12 @@ TEST_F(FileObjectTests, ResizeAndWriteFiles)
 
   ASSERT_EQ(file_ids.size(), strings_to_set.size());
 
+  std::random_device rd;
+  std::mt19937       g(rd());
+
   for (std::size_t i = 0; i < 10; ++i)
   {
-    std::random_shuffle(consistency_check_.begin(), consistency_check_.end());
+    std::shuffle(consistency_check_.begin(), consistency_check_.end(), g);
 
     for (auto const &index : consistency_check_)
     {

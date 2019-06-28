@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/reactor.hpp"
 #include "core/logger.hpp"
+#include "core/reactor.hpp"
 #include "core/runnable.hpp"
 #include "core/threading.hpp"
 

@@ -19,9 +19,9 @@
 
 #include "fake_storage_unit.hpp"
 
-#include <gmock/gmock.h>
+#include "gmock/gmock.h"
 
-class MockStorageUnit final : public fetch::ledger::StorageUnitInterface
+class MockStorageUnit : public fetch::ledger::StorageUnitInterface
 {
 public:
   MockStorageUnit()
@@ -68,6 +68,9 @@ public:
   MOCK_METHOD1(IssueCallForMissingTxs, void(fetch::ledger::DigestSet const &));
 
   MOCK_METHOD1(PollRecentTx, TxLayouts(uint32_t));
+
+  MOCK_CONST_METHOD0(KeyDump, Keys());
+  MOCK_METHOD0(Reset, void());
 
   FakeStorageUnit &GetFake()
   {

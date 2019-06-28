@@ -18,7 +18,8 @@
 
 #include "network/uri.hpp"
 
-#include <gtest/gtest.h>
+#include "gtest/gtest.h"
+
 #include <memory>
 
 using fetch::network::Uri;

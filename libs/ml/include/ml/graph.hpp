@@ -53,7 +53,7 @@ public:
 
   virtual ~Graph() = default;
 
-  ArrayType    Evaluate(std::string const &node_name);
+  ArrayType    Evaluate(std::string const &node_name, bool is_training = true);
   void         BackPropagate(std::string const &node_name, ArrayType const &error_signal);
   virtual void Step(Datatype learning_rate);
 
@@ -61,7 +61,7 @@ public:
   std::string AddNode(std::string const &node_name, std::vector<std::string> const &inputs,
                       Params... params);
   NodePtrType GetNode(std::string const &node_name) const;
-  void        SetInput(std::string const &node_name, ArrayType data, bool batch = false);
+  void        SetInput(std::string const &node_name, ArrayType data);
   void        ResetGraphCache(std::shared_ptr<NodeInterface<T>> const &n, bool input_size_changed);
 
   virtual struct fetch::ml::StateDict<ArrayType> StateDict() const;
@@ -102,11 +102,11 @@ protected:
  * @return pointer to array containing node output
  */
 template <typename ArrayType>
-ArrayType Graph<ArrayType>::Evaluate(std::string const &node_name)
+ArrayType Graph<ArrayType>::Evaluate(std::string const &node_name, bool is_training)
 {
   if (nodes_[node_name])
   {
-    return nodes_[node_name]->Evaluate();
+    return nodes_[node_name]->Evaluate(is_training);
   }
   else
   {
@@ -188,10 +188,9 @@ typename Graph<ArrayType>::NodePtrType Graph<ArrayType>::GetNode(std::string con
  * Also resets the graph cache to avoid erroneous leftover outputs
  * @param node_name name of the placeholder node in the graph (must be unique)
  * @param data the pointer to a tensor to assign to the placeholder
- * @param batch flag to indicate if input should be treated as batch
  */
 template <typename ArrayType>
-void Graph<ArrayType>::SetInput(std::string const &node_name, ArrayType data, bool batch)
+void Graph<ArrayType>::SetInput(std::string const &node_name, ArrayType data)
 {
   PlaceholderPtrType placeholder = std::dynamic_pointer_cast<PlaceholderType>(nodes_[node_name]);
 
@@ -203,10 +202,6 @@ void Graph<ArrayType>::SetInput(std::string const &node_name, ArrayType data, bo
   else
   {
     throw std::runtime_error("No placeholder node with name [" + node_name + "] found in graph!");
-  }
-  for (auto &n : nodes_)
-  {
-    n.second->SetBatch(batch);
   }
 }
 
@@ -341,13 +336,16 @@ template <class OperationType>
 meta::IfIsGraph<ArrayType, OperationType, void> Graph<ArrayType>::AddTrainable(
     std::string const &name, std::shared_ptr<Node<ArrayType, OperationType>> op)
 {
-
   for (auto &trainable : op->trainable_lookup_)
   {
-    FETCH_LOG_INFO("ML_LIB", "Created trainable node [", name, "]");
+    // guarantee unique op name
+    std::string node_name(name + "_" + trainable.first);
+    std::string resolved_name = UpdateVariableName<OperationType>(node_name);
+
+    FETCH_LOG_INFO("ML_LIB", "Created trainable node [", resolved_name, "]");
 
     trainable_.emplace_back(op->trainable_.at(trainable.second));
-    trainable_lookup_[trainable.first] = trainable_.size() - 1;
+    trainable_lookup_[resolved_name] = trainable_.size() - 1;
   }
 }
 

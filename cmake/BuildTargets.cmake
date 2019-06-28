@@ -13,6 +13,12 @@ macro (setup_compiler)
   set(CMAKE_CXX_STANDARD 14)
   set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
 
+  set(_is_clang_compiler FALSE)
+  if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang"
+      OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "AppleClang")
+    set(_is_clang_compiler TRUE)
+  endif ()
+
   # ensure that only one architecture is enable
   set(_num_architectures_compiler 0)
   set(_list_architectures_compiler)
@@ -74,22 +80,17 @@ macro (setup_compiler)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility=hidden")
 
   if (${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-pragmas")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-pragmas -Wno-unknown-pragmas")
+  elseif (_is_clang_compiler)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unknown-warning-option")
   endif ()
 
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
   if (FETCH_WARNINGS_AS_ERRORS)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
   endif (FETCH_WARNINGS_AS_ERRORS)
 
   # prefer PIC
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
-
-  set(_is_clang_compiler FALSE)
-  if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang"
-      OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "AppleClang")
-    set(_is_clang_compiler TRUE)
-  endif ()
 
   if (FETCH_ENABLE_COVERAGE)
     if (_is_clang_compiler)
@@ -146,13 +147,17 @@ macro (setup_compiler)
   endif ()
 
   # based on the configued logging level
-  if ("${FETCH_COMPILE_LOGGING_LEVEL}" STREQUAL "debug")
-    add_definitions(-DFETCH_COMPILE_LOGGING_LEVEL=4)
+  if ("${FETCH_COMPILE_LOGGING_LEVEL}" STREQUAL "trace")
+    add_definitions(-DFETCH_COMPILE_LOGGING_LEVEL=6)
+  elseif ("${FETCH_COMPILE_LOGGING_LEVEL}" STREQUAL "debug")
+    add_definitions(-DFETCH_COMPILE_LOGGING_LEVEL=5)
   elseif ("${FETCH_COMPILE_LOGGING_LEVEL}" STREQUAL "info")
-    add_definitions(-DFETCH_COMPILE_LOGGING_LEVEL=3)
+    add_definitions(-DFETCH_COMPILE_LOGGING_LEVEL=4)
   elseif ("${FETCH_COMPILE_LOGGING_LEVEL}" STREQUAL "warn")
-    add_definitions(-DFETCH_COMPILE_LOGGING_LEVEL=2)
+    add_definitions(-DFETCH_COMPILE_LOGGING_LEVEL=3)
   elseif ("${FETCH_COMPILE_LOGGING_LEVEL}" STREQUAL "error")
+    add_definitions(-DFETCH_COMPILE_LOGGING_LEVEL=2)
+  elseif ("${FETCH_COMPILE_LOGGING_LEVEL}" STREQUAL "critical")
     add_definitions(-DFETCH_COMPILE_LOGGING_LEVEL=1)
   elseif ("${FETCH_COMPILE_LOGGING_LEVEL}" STREQUAL "none")
     add_definitions(-DFETCH_DISABLE_COUT_LOGGING)
@@ -229,10 +234,18 @@ function (configure_vendor_targets)
   add_library(vendor-mio INTERFACE)
   target_include_directories(vendor-mio INTERFACE ${FETCH_ROOT_VENDOR_DIR}/mio/include)
 
+  # backtrace stack vendor library
+  add_library(vendor-backward-cpp INTERFACE)
+  target_include_directories(vendor-backward-cpp INTERFACE ${FETCH_ROOT_VENDOR_DIR}/backward-cpp/)
+
   # MsgPack
   add_library(vendor-msgpack INTERFACE)
   target_include_directories(vendor-msgpack INTERFACE ${FETCH_ROOT_VENDOR_DIR}/msgpack/include)
   target_compile_definitions(vendor-msgpack INTERFACE -DMSGPACK_CXX11=ON)
+
+  # Spdlog
+  add_library(vendor-spdlog INTERFACE)
+  target_include_directories(vendor-spdlog INTERFACE ${FETCH_ROOT_VENDOR_DIR}/spdlog/include)
 
 endfunction (configure_vendor_targets)
 

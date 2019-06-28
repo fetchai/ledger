@@ -25,27 +25,29 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class PlaceHolder : public fetch::ml::ElementWiseOps<T>
+class PlaceHolder : public fetch::ml::Ops<T>
 {
 public:
   using ArrayType     = T;
   using SizeType      = typename ArrayType::SizeType;
   using ArrayPtrType  = std::shared_ptr<ArrayType>;
-  using VecTensorType = typename ElementWiseOps<T>::VecTensorType;
+  using VecTensorType = typename Ops<T>::VecTensorType;
 
   PlaceHolder() = default;
 
   virtual void Forward(VecTensorType const &inputs, ArrayType &output)
   {
-    ASSERT(inputs.empty());
-    ASSERT(this->output_);
+    FETCH_UNUSED(inputs);
+    assert(inputs.empty());
+    assert(this->output_);
     output = *(this->output_);
   }
 
   virtual std::vector<ArrayType> Backward(VecTensorType const &inputs,
                                           ArrayType const &    error_signal)
   {
-    ASSERT(inputs.empty());
+    FETCH_UNUSED(inputs);
+    assert(inputs.empty());
     return {error_signal};
   }
 
@@ -62,7 +64,7 @@ public:
 
   virtual std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const
   {
-    (void)inputs;
+    FETCH_UNUSED(inputs);
     return this->output_->shape();
   }
 

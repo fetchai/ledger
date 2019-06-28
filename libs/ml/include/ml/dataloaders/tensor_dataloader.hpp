@@ -19,44 +19,95 @@
 
 #include "ml/dataloaders/dataloader.hpp"
 
-#include <vector>
+//#include <memory>
+//#include <utility>
+//#include <vector>
 
 namespace fetch {
 namespace ml {
+namespace dataloaders {
 
-template <typename DataType, typename LabelType>
-class TensorDataLoader : DataLoader<DataType, LabelType>
+template <typename LabelType, typename InputType>
+class TensorDataLoader : public DataLoader<LabelType, InputType>
 {
+  using TensorType = InputType;
+  using DataType   = typename TensorType::Type;
+
+  using SizeType     = fetch::math::SizeType;
+  using ReturnType   = std::pair<LabelType, std::vector<TensorType>>;
+  using IteratorType = typename TensorType::IteratorType;
+
 public:
-  virtual std::pair<DataType, LabelType> GetNext()
-  {
-    return data_.at(cursor_++);
-  }
+  TensorDataLoader(bool random_mode = false)
+    : DataLoader<LabelType, TensorType>(random_mode){};
+  virtual ~TensorDataLoader() = default;
 
-  virtual uint64_t Size() const
-  {
-    return data_.size();
-  }
+  virtual ReturnType GetNext();
+  virtual bool       AddData(TensorType const &data, TensorType const &labels);
 
-  virtual bool IsDone() const
-  {
-    return (data_.empty() || cursor_ >= data_.size());
-  }
+  virtual SizeType Size() const;
+  virtual bool     IsDone() const;
+  virtual void     Reset();
 
-  virtual void Reset()
-  {
-    cursor_ = 0;
-  }
+protected:
+  SizeType data_cursor_;
+  SizeType label_cursor_;
 
-  void Add(std::pair<DataType, LabelType> const &data)
-  {
-    data_.push_back(data);
-  }
-
-private:
-  uint64_t                                    cursor_ = 0;
-  std::vector<std::pair<DataType, LabelType>> data_;
+  TensorType data_;
+  TensorType labels_;
 };
 
+template <typename LabelType, typename InputType>
+typename TensorDataLoader<LabelType, InputType>::ReturnType
+TensorDataLoader<LabelType, InputType>::GetNext()
+{
+  if (this->random_mode_)
+  {
+    throw std::runtime_error("random mode not implemented for tensor dataloader");
+  }
+  else
+  {
+    ReturnType ret(labels_.Slice(label_cursor_, 1).Copy(), {data_.Slice(label_cursor_, 1).Copy()});
+    data_cursor_++;
+    label_cursor_++;
+    return ret;
+  }
+}
+
+template <typename LabelType, typename InputType>
+bool TensorDataLoader<LabelType, InputType>::AddData(TensorType const &data,
+                                                     TensorType const &labels)
+{
+  assert(data.shape().size() == 2);
+  assert(labels.shape().size() == 2);
+  data_         = data.Copy();
+  labels_       = labels.Copy();
+  data_cursor_  = 0;
+  label_cursor_ = 0;
+
+  return true;
+}
+
+template <typename LabelType, typename InputType>
+typename TensorDataLoader<LabelType, InputType>::SizeType
+TensorDataLoader<LabelType, InputType>::Size() const
+{
+  return data_.size();
+}
+
+template <typename LabelType, typename InputType>
+bool TensorDataLoader<LabelType, InputType>::IsDone() const
+{
+  return (data_cursor_ >= data_.shape()[0]);
+}
+
+template <typename LabelType, typename InputType>
+void TensorDataLoader<LabelType, InputType>::Reset()
+{
+  data_cursor_  = 0;
+  label_cursor_ = 0;
+}
+
+}  // namespace dataloaders
 }  // namespace ml
 }  // namespace fetch

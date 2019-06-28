@@ -18,7 +18,8 @@
 
 #include "math/ml/loss_functions/l2_norm.hpp"
 #include "math/tensor.hpp"
-#include <gtest/gtest.h>
+
+#include "gtest/gtest.h"
 
 template <typename T>
 class L2NormTest : public ::testing::Test

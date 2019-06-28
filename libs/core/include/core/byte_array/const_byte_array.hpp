@@ -137,6 +137,24 @@ public:
     return arr_pointer_[n];
   }
 
+  bool operator<=(self_type const &other) const
+  {
+    std::size_t n = std::min(length_, other.length_);
+    std::size_t i = 0;
+    for (; i < n; ++i)
+    {
+      if (arr_pointer_[i] != other.arr_pointer_[i])
+      {
+        break;
+      }
+    }
+    if (i < n)
+    {
+      return arr_pointer_[i] <= other.arr_pointer_[i];
+    }
+    return length_ <= other.length_;
+  }
+
   bool operator<(self_type const &other) const
   {
     if (length_ == 0)
@@ -157,6 +175,11 @@ public:
   bool operator>(self_type const &other) const
   {
     return other < (*this);
+  }
+
+  bool operator>=(self_type const &other) const
+  {
+    return other <= (*this);
   }
 
   bool operator==(self_type const &other) const
@@ -479,6 +502,9 @@ private:
     constexpr std::size_t operator()(std::size_t counter, std::uint8_t) noexcept
     {
       return counter + 1;
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wrestrict"
+#pragma GCC diagnostic pop
     }
 
     constexpr std::size_t operator()(std::size_t counter, std::int8_t) noexcept

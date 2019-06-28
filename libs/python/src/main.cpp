@@ -33,7 +33,6 @@
 #include "python/math/distance/py_manhattan.hpp"
 #include "python/math/distance/py_pearson.hpp"
 
-#include "python/math/py_bignumber.hpp"
 #include "python/math/py_tensor.hpp"
 #include "python/math/spline/py_linear.hpp"
 
@@ -70,13 +69,14 @@
 
 #include "python/serializers/py_byte_array_buffer.hpp"
 
+#include <cstdint>
+
 namespace py = pybind11;
 
 PYBIND11_MODULE(fetch, module)
 {
 
   // Namespaces
-
   py::module ns_fetch_fixed_point      = module.def_submodule("fixed_point");
   py::module ns_fetch_random           = module.def_submodule("random");
   py::module ns_fetch_vectorize        = module.def_submodule("vectorize");

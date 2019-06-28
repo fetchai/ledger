@@ -1,10 +1,14 @@
-DOCKER_IMAGE_NAME = 'gcr.io/organic-storm-201412/fetch-ledger-develop:v0.2.0'
+DOCKER_IMAGE_NAME = 'gcr.io/organic-storm-201412/fetch-ledger-develop:v0.3.0'
 HIGH_LOAD_NODE_LABEL = 'ledger'
+MACOS_NODE_LABEL = 'mac-mini'
 
 enum Platform
 {
-  CLANG6('Clang 6', 'clang-6.0', 'clang++-6.0'),
-  GCC7  ('GCC 7',   'gcc',       'g++')
+  DEFAULT_CLANG('Clang',      'clang',     'clang++'    ),
+  CLANG6       ('Clang 6',    'clang-6.0', 'clang++-6.0'),
+  CLANG7       ('Clang 7',    'clang-7',   'clang++-7'  ),
+  GCC7         ('GCC 7',      'gcc-7',     'g++-7'      ),
+  GCC8         ('GCC 8',      'gcc-8',     'g++-8'      )
 
   public Platform(label, cc, cxx)
   {
@@ -17,6 +21,12 @@ enum Platform
   public final String env_cc
   public final String env_cxx
 }
+
+LINUX_PLATFORMS = [
+  Platform.CLANG6,
+  Platform.CLANG7,
+  Platform.GCC7,
+  Platform.GCC8]
 
 enum Configuration
 {
@@ -32,7 +42,7 @@ enum Configuration
 }
 
 // Only execute long-running tests on master and merge branches
-def should_run_slow_tests()
+def is_master_or_merge_branch()
 {
   return BRANCH_NAME == 'master' || BRANCH_NAME ==~ /^PR-\d+-merge$/
 }
@@ -45,7 +55,7 @@ def static_analysis()
         stage('SCM Static Analysis') {
           checkout scm
         }
-                        
+
         stage('Run Static Analysis') {
           docker.image(DOCKER_IMAGE_NAME).inside {
             sh '''\
@@ -61,18 +71,49 @@ def static_analysis()
   }
 }
 
-def SLOW_stage(name, steps)
+def stage_name_suffix(Platform platform, Configuration config)
 {
-  if (should_run_slow_tests())
-  {
-    stage(name) { steps() }
+  return "${platform.label} ${config.label}"
+}
+
+def fast_build_stages(Platform platform, Configuration config)
+{
+  return {
+    stage("Build ${stage_name_suffix(platform, config)}") {
+      sh "./scripts/ci-tool.py -B ${config.label}"
+    }
+
+    stage("Unit Tests ${stage_name_suffix(platform, config)}") {
+      sh "./scripts/ci-tool.py -T ${config.label}"
+    }
   }
 }
 
-def create_build(Platform platform, Configuration config)
+def slow_build_stages(Platform platform, Configuration config)
 {
-  def suffix = "${platform.label} ${config.label}"
+  return {
+    stage("Slow Tests ${stage_name_suffix(platform, config)}") {
+      sh "./scripts/ci-tool.py -S ${config.label}"
+    }
 
+    stage("Integration Tests ${stage_name_suffix(platform, config)}") {
+      sh "./scripts/ci-tool.py -I ${config.label}"
+    }
+
+    stage("End-to-End Tests ${stage_name_suffix(platform, config)}") {
+      sh './scripts/ci/install-test-dependencies.sh'
+      sh "./scripts/ci-tool.py -E ${config.label}"
+    }
+  }
+}
+
+def _create_build(
+  Platform platform,
+  Configuration config,
+  node_label,
+  stages_fn,
+  run_build_fn)
+{
   def environment = {
     return [
       "CC=${platform.env_cc}",
@@ -81,36 +122,15 @@ def create_build(Platform platform, Configuration config)
   }
 
   return {
-    stage(suffix) {
-      node(HIGH_LOAD_NODE_LABEL) {
+    stage(stage_name_suffix(platform, config)) {
+      node(node_label) {
         timeout(120) {
-          stage("SCM ${suffix}") {
+          stage("SCM ${stage_name_suffix(platform, config)}") {
             checkout scm
           }
 
           withEnv(environment()) {
-            docker.image(DOCKER_IMAGE_NAME).inside {
-              stage("Build ${suffix}") {
-                sh "./scripts/ci-tool.py -B ${config.label}"
-              }
-
-              stage("Unit Tests ${suffix}") {
-                sh "./scripts/ci-tool.py -T ${config.label}"
-              }
-
-              SLOW_stage("Slow Tests ${suffix}") {
-                sh "./scripts/ci-tool.py -S ${config.label}"
-              }
-
-              SLOW_stage("Integration Tests ${suffix}") {
-                sh "./scripts/ci-tool.py -I ${config.label}"
-              }
-
-              SLOW_stage("End-to-End Tests ${suffix}") {
-                sh './scripts/ci/install-test-dependencies.sh'
-                sh "./scripts/ci-tool.py -E ${config.label}"
-              }
-            }
+            run_build_fn(stages_fn(platform, config))
           }
         }
       }
@@ -118,14 +138,68 @@ def create_build(Platform platform, Configuration config)
   }
 }
 
+def create_docker_build(Platform platform, Configuration config)
+{
+  def build = { build_stages ->
+    docker.image(DOCKER_IMAGE_NAME).inside {
+      build_stages()
+    }
+  }
+
+  def stages = { platform_, config_ ->
+    return {
+      fast_build_stages(platform_, config_)()
+      if (is_master_or_merge_branch())
+      {
+        slow_build_stages(platform_, config_)()
+      }
+    }
+  }
+
+  return _create_build(
+    platform,
+    config,
+    HIGH_LOAD_NODE_LABEL,
+    stages,
+    build)
+}
+
+def create_macos_build(Platform platform, Configuration config)
+{
+  def build = { build_stages -> build_stages() }
+
+  def stages = { platform_, config_ ->
+    fast_build_stages(platform_, config_)
+  }
+
+  return _create_build(
+    platform,
+    config,
+    MACOS_NODE_LABEL,
+    stages,
+    build)
+}
+
 def run_builds_in_parallel()
 {
   def stages = [:]
 
-  for (config in Configuration.values()) {
-    for (platform in Platform.values()) {
-      stages["${platform.label} ${config.label}"] = create_build(platform, config)
+  for (config in Configuration.values())
+  {
+    for (platform in LINUX_PLATFORMS)
+    {
+      stages["${platform.label} ${config.label}"] = create_docker_build(
+        platform,
+        config)
     }
+  }
+
+  // Only run macOS builds on master and merge branches
+  if (is_master_or_merge_branch())
+  {
+    stages["macOS Clang Release"] = create_macos_build(
+      Platform.DEFAULT_CLANG,
+      Configuration.RELEASE)
   }
 
   stages['Static Analysis'] = static_analysis()
@@ -145,14 +219,8 @@ def run_basic_checks()
       }
 
       docker.image(DOCKER_IMAGE_NAME).inside {
-        stage('License Check') {
-          sh './scripts/check_license_header.py'
-        }
         stage('Style Check') {
-          sh './scripts/apply_style.py -ad'
-        }
-        stage('CMake Version Check') {
-          sh './scripts/check-cmake-versions.py'
+          sh './scripts/apply_style.py -d'
         }
       }
     }

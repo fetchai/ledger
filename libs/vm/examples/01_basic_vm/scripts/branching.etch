@@ -5,7 +5,7 @@ function main()
     print("Please supply some more command line arguments.");
   elseif( System.Argc() <= 3)
     print("Com'on supply a few more.");
-  else 
+  else
     print("Thank you.");
   endif
 

@@ -23,7 +23,8 @@
 #include "core/json/exceptions.hpp"
 #include "variant/variant.hpp"
 
-#include <memory>
+#include <cstddef>
+#include <cstdint>
 #include <vector>
 
 namespace fetch {

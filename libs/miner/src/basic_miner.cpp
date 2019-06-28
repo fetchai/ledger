@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "miner/basic_miner.hpp"
+
 #include "core/logger.hpp"
 #include "ledger/chain/address.hpp"
 #include "ledger/chain/block.hpp"
@@ -28,8 +29,6 @@
 namespace fetch {
 namespace miner {
 namespace {
-
-using ledger::Transaction;
 
 /**
  * Clip the specified to the bounds: [min_value, max_value]
@@ -58,8 +57,8 @@ BasicMiner::BasicMiner(uint32_t log2_num_lanes)
   : log2_num_lanes_{log2_num_lanes}
   , max_num_threads_{std::thread::hardware_concurrency()}
   , thread_pool_{max_num_threads_, "Miner"}
-  , pending_{log2_num_lanes}
-  , mining_pool_{log2_num_lanes}
+  , pending_{}
+  , mining_pool_{}
 {}
 
 /**
@@ -132,8 +131,7 @@ void BasicMiner::GenerateBlock(Block &block, std::size_t num_lanes, std::size_t 
   FETCH_LOG_INFO(LOGGING_NAME, "Starting block packing. Pool Size: ", pool_size_before);
 
   // determine how many of the threads should be used in this block generation
-  std::size_t const num_threads =
-      Clip3<std::size_t>(mining_pool_.size() / 1000u, 1u, max_num_threads_);
+  auto const num_threads = Clip3<std::size_t>(mining_pool_.size() / 1000u, 1u, max_num_threads_);
 
   // prepare the basic formatting for the block
   block.body.slices.resize(num_slices);
@@ -145,20 +143,14 @@ void BasicMiner::GenerateBlock(Block &block, std::size_t num_lanes, std::size_t 
   }
   else
   {
-    using QueuePtr = std::unique_ptr<Queue>;
-
     // split the main queue into a series of smaller queues that can be executed in parallel
-    std::vector<QueuePtr> transaction_lists(num_threads);
-    for (auto &queue : transaction_lists)
-    {
-      queue = std::make_unique<Queue>(log2_num_lanes_);
-    }
+    std::vector<Queue> transaction_lists(num_threads);
 
     std::size_t const num_tx_per_thread = mining_pool_.size() / num_threads;
 
     for (std::size_t i = 0; i < num_threads; ++i)
     {
-      QueuePtr const &txs = transaction_lists[i];
+      Queue &txs = transaction_lists[i];
 
       auto start = mining_pool_.begin();
       auto end   = start;
@@ -169,10 +161,10 @@ void BasicMiner::GenerateBlock(Block &block, std::size_t num_lanes, std::size_t 
       //  should be updated to maximise collected fees for the miner.
 
       // splice in the contents of the array
-      txs->Splice(mining_pool_, start, end);
+      txs.Splice(mining_pool_, start, end);
 
       thread_pool_.Dispatch([&txs, &block, i, num_threads, num_lanes]() {
-        GenerateSlices(*txs, block.body, i, num_threads, num_lanes);
+        GenerateSlices(txs, block.body, i, num_threads, num_lanes);
       });
     }
 
@@ -182,9 +174,11 @@ void BasicMiner::GenerateBlock(Block &block, std::size_t num_lanes, std::size_t 
     // return all the transactions to the main queue
     for (std::size_t i = 0; i < num_threads; ++i)
     {
-      mining_pool_.Splice(*transaction_lists[i]);
+      mining_pool_.Splice(transaction_lists[i]);
     }
   }
+
+  block.UpdateTimestamp();
 
   std::size_t const remaining_transactions = mining_pool_.size();
   std::size_t const packed_transactions    = pool_size_before - remaining_transactions;

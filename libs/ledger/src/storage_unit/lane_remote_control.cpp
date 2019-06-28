@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "ledger/storage_unit/lane_remote_control.hpp"
+
 #include "core/service_ids.hpp"
 #include "ledger/storage_unit/lane_controller_protocol.hpp"
 #include "ledger/storage_unit/lane_identity_protocol.hpp"
@@ -83,7 +84,6 @@ void LaneRemoteControl::Shutdown(LaneIndex lane)
     auto p = rpc_client_.CallSpecificAddress(LookupAddress(lane), RPC_CONTROLLER,
                                              LaneControllerProtocol::SHUTDOWN);
 
-    FETCH_LOG_PROMISE();
     p->Wait();
   }
   catch (std::exception const &ex)

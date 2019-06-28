@@ -16,10 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include <gtest/gtest.h>
-
 #include "math/normalize_array.hpp"
 #include "math/tensor.hpp"
+
+#include "gtest/gtest.h"
 
 using namespace fetch::math;
 
@@ -42,7 +42,7 @@ TYPED_TEST(NormalizeArrayTest, conditional_distance)
 
   ArrayType A = ArrayType({4});
 
-  A.Set(SizeType{0}, DataType(1));
+  A.Set(SizeType{0}, static_cast<DataType>(1));
   A.Set(SizeType{1}, DataType(2));
   A.Set(SizeType{2}, DataType(3));
   A.Set(SizeType{3}, DataType(4));
