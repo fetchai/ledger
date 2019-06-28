@@ -20,10 +20,11 @@
 #include "core/byte_array/byte_array.hpp"
 #include "core/serializers/stl_types.hpp"
 #include "ledger/chain/address.hpp"
-#include "ledger/chain/address_rpc_serializer.hpp"
 #include "ledger/chain/consensus/proof_of_work.hpp"
 #include "ledger/chain/digest.hpp"
 #include "ledger/chain/transaction_layout.hpp"
+
+#include "ledger/dag/dag_epoch.hpp"
 
 #include <memory>
 
@@ -38,13 +39,13 @@ namespace ledger {
 class Block
 {
 public:
-  using Proof  = consensus::ProofOfWork;
-  using Slice  = std::vector<TransactionLayout>;
-  using Slices = std::vector<Slice>;
+  using Proof    = consensus::ProofOfWork;
+  using Slice    = std::vector<TransactionLayout>;
+  using Slices   = std::vector<Slice>;
+  using DAGEpoch = fetch::ledger::DAGEpoch;
 
   struct Body
   {
-    // TODO(private issue 496): Populate the state hash
     Digest   hash;               ///< The hash of the block
     Digest   previous_hash;      ///< The hash of the previous block
     Digest   merkle_hash;        ///< The merkle state hash across all shards
@@ -52,6 +53,8 @@ public:
     Address  miner;              ///< The identity of the generated miner
     uint32_t log2_num_lanes{0};  ///< The log2(number of lanes)
     Slices   slices;             ///< The slice lists
+    DAGEpoch dag_epoch;          ///< DAG epoch containing information on new dag_nodes
+    uint64_t timestamp{0u};      ///< The number of seconds elapsed since the Unix epoch
   };
 
   /// @name Block Contents
@@ -65,9 +68,11 @@ public:
   Proof    proof;     ///< The consensus proof
   /// @}
 
+  // TODO(HUT): This should be part of body since it's no longer going to be metadata
+  uint64_t weight = 1;
+
   /// @name Metadata for block management
   /// @{
-  uint64_t weight       = 1;
   uint64_t total_weight = 1;
   bool     is_loose     = false;
   /// @}
@@ -75,6 +80,7 @@ public:
   // Helper functions
   std::size_t GetTransactionCount() const;
   void        UpdateDigest();
+  void        UpdateTimestamp();
 };
 
 /**
@@ -88,7 +94,8 @@ template <typename T>
 void Serialize(T &serializer, Block::Body const &body)
 {
   serializer << body.hash << body.previous_hash << body.merkle_hash << body.block_number
-             << body.miner << body.log2_num_lanes << body.slices;
+             << body.miner << body.log2_num_lanes << body.slices << body.dag_epoch
+             << body.timestamp;
 }
 
 /**
@@ -102,7 +109,7 @@ template <typename T>
 void Deserialize(T &serializer, Block::Body &body)
 {
   serializer >> body.hash >> body.previous_hash >> body.merkle_hash >> body.block_number >>
-      body.miner >> body.log2_num_lanes >> body.slices;
+      body.miner >> body.log2_num_lanes >> body.slices >> body.dag_epoch >> body.timestamp;
 }
 
 /**

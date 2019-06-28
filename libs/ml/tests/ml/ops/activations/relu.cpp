@@ -19,7 +19,10 @@
 #include "math/tensor.hpp"
 #include "ml/ops/activation.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
-#include <gtest/gtest.h>
+
+#include "gtest/gtest.h"
+
+#include <vector>
 
 template <typename T>
 class ReluTest : public ::testing::Test
@@ -37,8 +40,8 @@ TYPED_TEST(ReluTest, forward_all_positive_test)
   using ArrayType     = TypeParam;
   using VecTensorType = typename fetch::ml::Ops<TypeParam>::VecTensorType;
 
-  ArrayType data = ArrayType::FromString("1, 2, 3, 4, 5, 6, 7, 8");
-  ArrayType gt   = ArrayType::FromString("1, 2, 3, 4, 5, 6, 7, 8");
+  ArrayType data = ArrayType::FromString(R"(1, 2, 3, 4, 5, 6, 7, 8)");
+  ArrayType gt   = ArrayType::FromString(R"(1, 2, 3, 4, 5, 6, 7, 8)");
 
   fetch::ml::ops::Relu<ArrayType> op;
   ArrayType                       prediction(op.ComputeOutputShape({data}));
@@ -83,8 +86,8 @@ TYPED_TEST(ReluTest, forward_all_negative_integer_test)
 {
   using ArrayType = TypeParam;
 
-  ArrayType data = ArrayType::FromString("-1, -2, -3, -4, -5, -6, -7, -8");
-  ArrayType gt   = ArrayType::FromString("0, 0, 0, 0, 0, 0, 0, 0");
+  ArrayType data = ArrayType::FromString(R"(-1, -2, -3, -4, -5, -6, -7, -8)");
+  ArrayType gt   = ArrayType::FromString(R"(0, 0, 0, 0, 0, 0, 0, 0)");
 
   fetch::ml::ops::Relu<ArrayType> op;
   ArrayType                       prediction(op.ComputeOutputShape({data}));
@@ -98,8 +101,8 @@ TYPED_TEST(ReluTest, forward_mixed_test)
 {
   using ArrayType = TypeParam;
 
-  ArrayType data = ArrayType::FromString("1, -2, 3, -4, 5, -6, 7, -8");
-  ArrayType gt   = ArrayType::FromString("1, 0, 3, 0, 5, 0, 7, 0");
+  ArrayType data = ArrayType::FromString(R"(1, -2, 3, -4, 5, -6, 7, -8)");
+  ArrayType gt   = ArrayType::FromString(R"(1, 0, 3, 0, 5, 0, 7, 0)");
 
   fetch::ml::ops::Relu<ArrayType> op;
   ArrayType                       prediction(op.ComputeOutputShape({data}));
@@ -113,9 +116,9 @@ TYPED_TEST(ReluTest, backward_mixed_test)
 {
   using ArrayType = TypeParam;
 
-  ArrayType data  = ArrayType::FromString("1, -2, 3, -4, 5, -6, 7, -8");
-  ArrayType error = ArrayType::FromString("-1, 2, 3, -5, -8, 13, -21, -34");
-  ArrayType gt    = ArrayType::FromString("-1, 0, 3, 0, -8, 0, -21, 0");
+  ArrayType data  = ArrayType::FromString(R"(1, -2, 3, -4, 5, -6, 7, -8)");
+  ArrayType error = ArrayType::FromString(R"(-1, 2, 3, -5, -8, 13, -21, -34)");
+  ArrayType gt    = ArrayType::FromString(R"(-1, 0, 3, 0, -8, 0, -21, 0)");
 
   fetch::ml::ops::Relu<ArrayType> op;
   std::vector<ArrayType>          prediction = op.Backward({data}, error);

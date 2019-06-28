@@ -28,23 +28,24 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class LeakyReluOp : public fetch::ml::ElementWiseOps<T>
+class LeakyReluOp : public fetch::ml::Ops<T>
 {
 public:
   using ArrayType     = T;
   using DataType      = typename ArrayType::Type;
+  using SizeType      = typename ArrayType::SizeType;
   using ArrayPtrType  = std::shared_ptr<ArrayType>;
-  using VecTensorType = typename ElementWiseOps<T>::VecTensorType;
+  using VecTensorType = typename Ops<T>::VecTensorType;
 
   LeakyReluOp()          = default;
   virtual ~LeakyReluOp() = default;
 
   // LeakyRelu(x,alpha)=max(0,x)+alpha*min(0,x)
-  virtual void Forward(VecTensorType const &inputs, ArrayType &output)
+  void Forward(VecTensorType const &inputs, ArrayType &output)
   {
-    ASSERT(inputs.size() == 2);
-    ASSERT(inputs.at(0).get().shape() == output.shape());
-    ASSERT(inputs.at(1).get().size() == output.size());
+    assert(inputs.size() == 2);
+    assert(inputs.at(0).get().shape() == output.shape());
+    assert(inputs.at(1).get().shape().at(inputs.at(1).get().shape().size() - 1) == 1);
 
     fetch::math::LeakyRelu(inputs.at(0).get(), inputs.at(1).get(), output);
   }
@@ -53,47 +54,65 @@ public:
   //    x>=0 f'(x)=1, x<0 f'(x)=alpha
   // Gradient of input.at(1)=alpha is:
   //    f'(alpha)=-Relu(-x)=min(0,x); x>=0 f'(alpha)=0, x<0 f'(alpha)=x
-  virtual std::vector<ArrayType> Backward(VecTensorType const &inputs,
-                                          ArrayType const &    error_signal)
+  std::vector<ArrayType> Backward(VecTensorType const &inputs, ArrayType const &error_signal)
   {
-    ASSERT(inputs.size() == 2);
-    ASSERT(inputs.at(0).get().size() == error_signal.size());
-    ASSERT(inputs.at(1).get().size() == error_signal.size());
-    ASSERT(error_signal.size() == inputs.at(1).get().size());
+    assert(inputs.size() == 2);
+    assert(inputs.at(0).get().size() == error_signal.size());
 
-    ArrayType return_signal1{error_signal.shape()};
-    ArrayType return_signal2{error_signal.shape()};
+    // Test if batch dimension for alpha is 1
+    assert(inputs.at(1).get().shape().at(inputs.at(1).get().shape().size() - 1) == 1);
 
-    auto     rs1_it    = return_signal1.begin();
-    auto     rs2_it    = return_signal2.begin();
-    auto     input1_it = inputs.at(0).get().begin();
-    auto     input2_it = inputs.at(1).get().begin();
-    DataType zero{0};
-    DataType one{1};
+    ArrayType return_signal_1{inputs.at(0).get().shape()};
 
-    while (input1_it.is_valid())
+    SizeType a_size{1};
+    for (SizeType i{0}; i < inputs.at(0).get().shape().size() - 1; i++)
     {
-      if (*input1_it >= zero)
+      a_size *= inputs.at(0).get().shape().at(i);
+    }
+    ArrayType return_signal_2({a_size, 1});
+
+    SizeType t_batch_dimension = inputs.at(0).get().shape().size() - 1;
+    SizeType batch_size        = inputs.at(0).get().shape().at(t_batch_dimension);
+
+    for (SizeType i{0}; i < batch_size; i++)
+    {
+
+      // Slice along batch dimension
+      auto input1_slice = inputs.at(0).get().Slice(i, t_batch_dimension);
+      auto rs1_slice    = return_signal_1.Slice(i, t_batch_dimension);
+      auto error_slice  = error_signal.Slice(i, 1);
+
+      auto rs1_it    = rs1_slice.begin();
+      auto rs2_it    = return_signal_2.begin();
+      auto input1_it = input1_slice.begin();
+      auto input2_it = inputs.at(1).get().begin();
+      auto error_it  = error_slice.begin();
+
+      while (input1_it.is_valid())
       {
-        *rs1_it = one;
-        *rs2_it = zero;
+        if (*input1_it >= static_cast<DataType>(0))
+        {
+          *rs1_it = static_cast<DataType>(1) * (*error_it);
+        }
+        else
+        {
+          *rs1_it = (*input2_it) * (*error_it);
+          *rs2_it += (*input1_it) * (*error_it);
+        }
+        ++rs1_it;
+        ++rs2_it;
+        ++input1_it;
+        ++input2_it;
+        ++error_it;
       }
-      else
-      {
-        *rs1_it = *input2_it;
-        *rs2_it = *input1_it;
-      }
-      ++rs1_it;
-      ++rs2_it;
-      ++input1_it;
-      ++input2_it;
     }
 
-    // multiply by error_signal (chain rule)
-    fetch::math::Multiply(error_signal, return_signal1, return_signal1);
-    fetch::math::Multiply(error_signal, return_signal2, return_signal2);
+    return {return_signal_1, return_signal_2};
+  }
 
-    return {return_signal1, return_signal2};
+  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const
+  {
+    return inputs.front().get().shape();
   }
 
   static constexpr char const *DESCRIPTOR = "LeakyReluOp";

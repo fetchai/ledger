@@ -16,10 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include <gtest/gtest.h>
-
 #include "math/tensor.hpp"
 #include "math/tensor_slice_iterator.hpp"
+
+#include "gtest/gtest.h"
 
 using namespace fetch::math;
 

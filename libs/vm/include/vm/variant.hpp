@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "vectorise/fixed_point/fixed_point.hpp"
 #include "vm/object.hpp"
 
 namespace fetch {
@@ -106,6 +107,18 @@ union Primitive
     return f64;
   }
 
+  template <typename T>
+  typename std::enable_if_t<std::is_same<T, fixed_point::fp32_t>::value, T> Get() const
+  {
+    return fixed_point::fp32_t::FromBase(i32);
+  }
+
+  template <typename T>
+  typename std::enable_if_t<std::is_same<T, fixed_point::fp64_t>::value, T> Get() const
+  {
+    return fixed_point::fp64_t::FromBase(i64);
+  }
+
   void Set(bool value)
   {
     ui8 = uint8_t(value);
@@ -159,6 +172,16 @@ union Primitive
   void Set(double value)
   {
     f64 = value;
+  }
+
+  void Set(fixed_point::fp32_t value)
+  {
+    i32 = value.Data();
+  }
+
+  void Set(fixed_point::fp64_t value)
+  {
+    i64 = value.Data();
   }
 };
 
@@ -480,8 +503,6 @@ struct TemplateParameter1 : public Variant
   using Variant::Variant;
 };
 
-using TemplateParameter = TemplateParameter1;
-
 struct TemplateParameter2 : public Variant
 {
   using Variant::Variant;
@@ -506,112 +527,6 @@ struct AnyFloatingPoint : public Variant
 {
   using Variant::Variant;
 };
-
-inline void Serialize(ByteArrayBuffer &buffer, Variant const &variant)
-{
-  buffer << variant.type_id;
-
-  switch (variant.type_id)
-  {
-  case TypeIds::Bool:
-  case TypeIds::Byte:
-    buffer << variant.primitive.ui8;
-    break;
-  case TypeIds::Int8:
-    buffer << variant.primitive.i8;
-    break;
-  case TypeIds::Int16:
-    buffer << variant.primitive.i16;
-    break;
-  case TypeIds::UInt16:
-    buffer << variant.primitive.ui16;
-    break;
-  case TypeIds::Int32:
-    buffer << variant.primitive.i32;
-    break;
-  case TypeIds::UInt32:
-    buffer << variant.primitive.ui32;
-    break;
-  case TypeIds::Int64:
-    buffer << variant.primitive.i64;
-    break;
-  case TypeIds::UInt64:
-    buffer << variant.primitive.ui64;
-    break;
-  case TypeIds::Float32:
-    buffer << variant.primitive.f32;
-    break;
-  case TypeIds::Float64:
-    buffer << variant.primitive.f64;
-    break;
-  default:
-    break;
-  }
-
-  if (variant.object)
-  {
-    if (!variant.object->SerializeTo(buffer))
-    {
-      throw std::runtime_error("Unable to serialize type");
-    }
-  }
-}
-
-inline void Deserialize(ByteArrayBuffer &buffer, Variant &variant)
-{
-  TypeId id;
-  buffer >> id;
-
-  if (id != variant.type_id)
-  {
-    throw std::runtime_error("Unable to deserialize the variant type");
-  }
-
-  switch (variant.type_id)
-  {
-  case TypeIds::Bool:
-  case TypeIds::Byte:
-    buffer >> variant.primitive.ui8;
-    break;
-  case TypeIds::Int8:
-    buffer >> variant.primitive.i8;
-    break;
-  case TypeIds::Int16:
-    buffer >> variant.primitive.i16;
-    break;
-  case TypeIds::UInt16:
-    buffer >> variant.primitive.ui16;
-    break;
-  case TypeIds::Int32:
-    buffer >> variant.primitive.i32;
-    break;
-  case TypeIds::UInt32:
-    buffer >> variant.primitive.ui32;
-    break;
-  case TypeIds::Int64:
-    buffer >> variant.primitive.i64;
-    break;
-  case TypeIds::UInt64:
-    buffer >> variant.primitive.ui64;
-    break;
-  case TypeIds::Float32:
-    buffer >> variant.primitive.f32;
-    break;
-  case TypeIds::Float64:
-    buffer >> variant.primitive.f64;
-    break;
-  default:
-    break;
-  }
-
-  if (variant.object)
-  {
-    if (!variant.object->DeserializeFrom(buffer))
-    {
-      throw std::runtime_error("Failed to the deserialize compound object");
-    }
-  }
-}
 
 }  // namespace vm
 }  // namespace fetch

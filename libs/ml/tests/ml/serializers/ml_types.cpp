@@ -17,11 +17,13 @@
 //------------------------------------------------------------------------------
 
 #include "ml/serializers/ml_types.hpp"
+
 #include "core/serializers/byte_array_buffer.hpp"
-#include "math/serializers/fixed_point.hpp"
 #include "math/tensor.hpp"
 #include "ml/layers/fully_connected.hpp"
-#include <gtest/gtest.h>
+#include "vectorise/fixed_point/serializers.hpp"
+
+#include "gtest/gtest.h"
 
 template <typename T>
 class SerializersTest : public ::testing::Test

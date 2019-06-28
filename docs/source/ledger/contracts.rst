@@ -1,16 +1,16 @@
 Static and dynamic contracts
 ============================
 The Fetch ledger makes use of multiple types of ledger programs. The first and most fundamental
-type of programs is static contracts. Static contracts are business logic that is built at the 
+type of programs is static contracts. Static contracts are business logic that is built at the
 time when the ledger is compiled and the code is "unchangable" in the sense that the only way to update
 the code or new contracts is recompile the ledger and distribute new executables to all participants. Smart contracts
-is the second type business logic (dynamic contracts) found in the Fetch ledger. Smart contracts are 
+is the second type business logic (dynamic contracts) found in the Fetch ledger. Smart contracts are
 programmable at run time and are smart peices of business logic running in the Fetch VM.
 
 
 Contract execution
 ------------------
-``Contracts`` are instantiated by ``Executors`` who run the contract. The execution itself is managed 
+``Contracts`` are instantiated by ``Executors`` who run the contract. The execution itself is managed
 and orchestrated by the ``ExecutionManager``.
 
 
@@ -19,7 +19,7 @@ and orchestrated by the ``ExecutionManager``.
 Static contracts: The Fetch token
 ---------------------------------
 In order to implement a static contract, we need to create a new class that inherits from
-the ``Contract`` class and expose the functions that we want available in the contract. In 
+the ``Contract`` class and expose the functions that we want available in the contract. In
 the following we will describe an implementation of the the Fetch token. In order to create
 a new contract code, we define the body of the contract as below:
 

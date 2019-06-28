@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "network/service/server.hpp"
+
 #include "core/threading/synchronised_state.hpp"
 #include "network/muddle/muddle.hpp"
 #include "network/muddle/rpc/client.hpp"

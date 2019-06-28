@@ -24,14 +24,14 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class MaxPool1D : public BatchOps<T>
+class MaxPool1D : public Ops<T>
 {
 public:
   using ArrayType     = T;
   using SizeType      = typename ArrayType::SizeType;
   using DataType      = typename ArrayType::Type;
   using ArrayPtrType  = std::shared_ptr<ArrayType>;
-  using VecTensorType = typename BatchOps<T>::VecTensorType;
+  using VecTensorType = typename Ops<T>::VecTensorType;
 
   MaxPool1D(SizeType const kernel_size, SizeType const stride_size)
     : kernel_size_{kernel_size}
@@ -50,36 +50,40 @@ public:
    */
   void Forward(VecTensorType const &inputs, ArrayType &output) override
   {
-    ASSERT(inputs.size() == 1);
-    // Input should be a 2D tensor [C x W]
-    ASSERT(inputs.at(0).get().shape().size() == 2);
-    ASSERT(output.shape() == ComputeOutputShape(inputs));
+    assert(inputs.size() == 1);
+    // Input must be a 3D tensor [C x W x N]
+    assert(inputs.at(0).get().shape().size() == 3);
+    assert(output.shape() == ComputeOutputShape(inputs));
 
     SizeType iter;
     DataType max;
     DataType val;
-    auto     oit = output.begin();
-    // output_channels = input_channels
-    for (SizeType i{0}; i < output.shape().at(1); i++)  // Iterate over kernel stride
+    auto     out_it = output.begin();
+
+    for (SizeType n_i{0}; n_i < output.shape().at(2); n_i++)  // iterate over batch
     {
-      iter = i * stride_size_;
-      for (SizeType c{0}; c < output.shape().at(0); ++c)  // Iterate over output channels
+      // output_channels = input_channels
+      for (SizeType i{0}; i < output.shape().at(1); i++)  // Iterate over kernel stride
       {
-        max = inputs.at(0).get().At(c, iter);
-
-        // Get maximum value on kernel_size_ window
-        for (SizeType j{1}; j < kernel_size_; j++)  // Iterate over kernel width
+        iter = i * stride_size_;
+        for (SizeType c{0}; c < output.shape().at(0); ++c)  // Iterate over output channels
         {
-          val = inputs.at(0).get().At(c, iter + j);
-          if (val > max)
-          {
-            max = val;
-          }
-        }
+          max = inputs.at(0).get().At(c, iter, n_i);
 
-        // Set maximum value for each [kernel_size_] window to output
-        *oit = max;
-        ++oit;
+          // Get maximum value on kernel_size_ window
+          for (SizeType j{1}; j < kernel_size_; j++)  // Iterate over kernel width
+          {
+            val = inputs.at(0).get().At(c, iter + j, n_i);
+            if (val > max)
+            {
+              max = val;
+            }
+          }
+
+          // Set maximum value for each [kernel_size_] window to output
+          *out_it = max;
+          ++out_it;
+        }
       }
     }
   }
@@ -98,8 +102,8 @@ public:
   std::vector<ArrayType> Backward(VecTensorType const &inputs,
                                   ArrayType const &    error_signal) override
   {
-    ASSERT(inputs.size() == 1);
-    ASSERT(error_signal.shape() == ComputeOutputShape(inputs));
+    assert(inputs.size() == 1);
+    assert(error_signal.shape() == ComputeOutputShape(inputs));
 
     ArrayType return_signal{inputs.at(0).get().shape()};
 
@@ -109,29 +113,33 @@ public:
     DataType max;
     DataType val;
     SizeType max_iter;
-    auto     erit = error_signal.cbegin();
-    for (SizeType i{0}; i < output_shape.at(1); i++)  // Iterate over kernel stride
+    auto     er_it = error_signal.cbegin();
+
+    for (SizeType n_i{0}; n_i < output_shape.at(2); n_i++)  // iterate over batch
     {
-      iter = i * stride_size_;
-      for (SizeType c{0}; c < output_shape.at(0); ++c)  // Iterate over output channels
+      for (SizeType i{0}; i < output_shape.at(1); i++)  // Iterate over kernel stride
       {
-        max      = inputs.at(0).get().At(c, iter);
-        max_iter = iter;
-
-        // Find max node
-        for (SizeType j{0}; j < kernel_size_; j++)  // Iterate over kernel width
+        iter = i * stride_size_;
+        for (SizeType c{0}; c < output_shape.at(0); ++c)  // Iterate over output channels
         {
-          val = inputs.at(0).get().At(c, iter + j);
-          if (val > max)
-          {
-            max      = val;
-            max_iter = iter + j;
-          }
-        }
+          max      = inputs.at(0).get().At(c, iter, n_i);
+          max_iter = iter;
 
-        // Add error to max node
-        return_signal.Set(c, max_iter, return_signal.At(c, max_iter) + *erit);
-        ++erit;
+          // Find max node
+          for (SizeType j{0}; j < kernel_size_; j++)  // Iterate over kernel width
+          {
+            val = inputs.at(0).get().At(c, iter + j, n_i);
+            if (val > max)
+            {
+              max      = val;
+              max_iter = iter + j;
+            }
+          }
+
+          // Add error to max node
+          return_signal.Set(c, max_iter, n_i, return_signal.At(c, max_iter, n_i) + *er_it);
+          ++er_it;
+        }
       }
     }
 
@@ -147,6 +155,8 @@ public:
     // output_shape_[1]=number of stride_size steps over input size
     output_shape.emplace_back((inputs.at(0).get().shape().at(1) - (kernel_size_ - stride_size_)) /
                               stride_size_);
+    // output_shape_[2]=batch dimension
+    output_shape.emplace_back(inputs.at(0).get().shape().at(2));
     return output_shape;
   }
 

@@ -17,12 +17,15 @@
 //
 //------------------------------------------------------------------------------
 
-#include <unordered_map>
-
 #include "auctions/bid.hpp"
 #include "auctions/error_codes.hpp"
 #include "auctions/item.hpp"
 #include "auctions/type_def.hpp"
+
+#include <cassert>
+#include <cstddef>
+#include <limits>
+#include <vector>
 
 namespace fetch {
 namespace auctions {

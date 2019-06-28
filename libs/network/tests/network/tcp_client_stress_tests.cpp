@@ -16,11 +16,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include <algorithm>
-#include <cstdlib>
-#include <iostream>
-#include <memory>
-
 #include "core/byte_array/encoders.hpp"
 #include "core/commandline/params.hpp"
 #include "helper_functions.hpp"
@@ -28,7 +23,12 @@
 #include "network/tcp/tcp_client.hpp"
 #include "network/tcp/tcp_server.hpp"
 
-#include <gtest/gtest.h>
+#include "gtest/gtest.h"
+
+#include <algorithm>
+#include <cstdlib>
+#include <iostream>
+#include <memory>
 
 // Test of the client. We use an echo server from the asio examples to ensure
 // that any problems must be in the NM or the client. In this way we can test
@@ -38,14 +38,14 @@ using namespace fetch::network;
 using namespace fetch::common;
 using namespace fetch::byte_array;
 
-// static constexpr char const *LOGGING_NAME = "TcpClientStressTests";
 static constexpr std::size_t MANY_CYCLES = 200;
 static constexpr std::size_t MID_CYCLES  = 50;
 static constexpr std::size_t FEW_CYCLES  = 10;
-std::string                  host        = "localhost";
-uint16_t                     portNumber  = 8080;
-std::string                  port        = std::to_string(portNumber);
-std::size_t                  N           = 1;
+
+std::string host       = "localhost";
+uint16_t    portNumber = 8080;
+std::string port       = std::to_string(portNumber);
+std::size_t N          = 1;
 
 std::atomic<std::size_t> clientReceivedCount{0};
 bool                     printingClientResponses = false;
@@ -168,7 +168,7 @@ public:
 };
 
 // Create random data for testing
-std::vector<message_type> CreateTestData(size_t index)
+std::vector<message_type> CreateTestData(std::size_t index)
 {
   std::size_t messagesToSend = MID_CYCLES;
   globalMessages.clear();

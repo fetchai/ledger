@@ -19,11 +19,16 @@
 
 #include "core/serializers/byte_array_buffer.hpp"
 #include "core/serializers/stl_types.hpp"
+#include "variant/variant.hpp"
+#include "vectorise/fixed_point/fixed_point.hpp"
 #include "vm/common.hpp"
 
 namespace fetch {
 namespace vm {
 
+// TODO(issue 648): We should rename variants to VMVariant and JSONVariant, respectively
+// to avoid name clash.
+using JSONVariant     = fetch::variant::Variant;
 using ByteArrayBuffer = fetch::serializers::ByteArrayBuffer;
 
 // Forward declarations
@@ -32,15 +37,17 @@ template <typename T>
 class Ptr;
 struct Variant;
 class Address;
+struct String;
 
 template <typename T, typename = void>
 struct IsPrimitive : std::false_type
 {
 };
 template <typename T>
-struct IsPrimitive<T, typename std::enable_if_t<
-                          type_util::IsAnyOfV<T, void, bool, int8_t, uint8_t, int16_t, uint16_t,
-                                              int32_t, uint32_t, int64_t, uint64_t, float, double>>>
+struct IsPrimitive<
+    T, std::enable_if_t<type_util::IsAnyOfV<T, void, bool, int8_t, uint8_t, int16_t, uint16_t,
+                                            int32_t, uint32_t, int64_t, uint64_t, float, double,
+                                            fixed_point::fp32_t, fixed_point::fp64_t>>>
   : std::true_type
 {
 };
@@ -84,6 +91,16 @@ struct IsAddress : std::false_type
 };
 template <typename T>
 struct IsAddress<T, typename std::enable_if_t<std::is_base_of<Address, T>::value>> : std::true_type
+{
+};
+
+template <typename T, typename = void>
+struct IsString : std::false_type
+{
+};
+template <typename T>
+struct IsString<T, std::enable_if_t<std::is_base_of<String, std::decay_t<T>>::value>>
+  : std::true_type
 {
 };
 
@@ -171,43 +188,52 @@ public:
   virtual ~Object() = default;
 
   Object(VM *vm, TypeId type_id)
-  {
-    vm_        = vm;
-    type_id_   = type_id;
-    ref_count_ = 1;
-  }
+    : vm_(vm)
+    , type_id_(type_id)
+    , ref_count_(1)
+  {}
 
-  virtual size_t GetHashCode();
-  virtual bool   IsEqual(Ptr<Object> const &lhso, Ptr<Object> const &rhso);
-  virtual bool   IsNotEqual(Ptr<Object> const &lhso, Ptr<Object> const &rhso);
-  virtual bool   IsLessThan(Ptr<Object> const &lhso, Ptr<Object> const &rhso);
-  virtual bool   IsLessThanOrEqual(Ptr<Object> const &lhso, Ptr<Object> const &rhso);
-  virtual bool   IsGreaterThan(Ptr<Object> const &lhso, Ptr<Object> const &rhso);
-  virtual bool   IsGreaterThanOrEqual(Ptr<Object> const &lhso, Ptr<Object> const &rhso);
-  virtual void   Negate(Ptr<Object> &object);
-  virtual void   Add(Ptr<Object> &lhso, Ptr<Object> &rhso);
-  virtual void   LeftAdd(Variant &lhsv, Variant &objectv);
-  virtual void   RightAdd(Variant &objectv, Variant &rhsv);
-  virtual void   InplaceAdd(Ptr<Object> const &lhso, Ptr<Object> const &rhso);
-  virtual void   InplaceRightAdd(Ptr<Object> const &lhso, Variant const &rhsv);
-  virtual void   Subtract(Ptr<Object> &lhso, Ptr<Object> &rhso);
-  virtual void   LeftSubtract(Variant &lhsv, Variant &objectv);
-  virtual void   RightSubtract(Variant &objectv, Variant &rhsv);
-  virtual void   InplaceSubtract(Ptr<Object> const &lhso, Ptr<Object> const &rhso);
-  virtual void   InplaceRightSubtract(Ptr<Object> const &lhso, Variant const &rhsv);
-  virtual void   Multiply(Ptr<Object> &lhso, Ptr<Object> &rhso);
-  virtual void   LeftMultiply(Variant &lhsv, Variant &objectv);
-  virtual void   RightMultiply(Variant &objectv, Variant &rhsv);
-  virtual void   InplaceMultiply(Ptr<Object> const &lhso, Ptr<Object> const &rhso);
-  virtual void   InplaceRightMultiply(Ptr<Object> const &lhso, Variant const &rhsv);
-  virtual void   Divide(Ptr<Object> &lhso, Ptr<Object> &rhso);
-  virtual void   LeftDivide(Variant &lhsv, Variant &objectv);
-  virtual void   RightDivide(Variant &objectv, Variant &rhsv);
-  virtual void   InplaceDivide(Ptr<Object> const &lhso, Ptr<Object> const &rhso);
-  virtual void   InplaceRightDivide(Ptr<Object> const &lhso, Variant const &rhsv);
+  virtual std::size_t GetHashCode();
+  virtual bool        IsEqual(Ptr<Object> const &lhso, Ptr<Object> const &rhso);
+  virtual bool        IsNotEqual(Ptr<Object> const &lhso, Ptr<Object> const &rhso);
+  virtual bool        IsLessThan(Ptr<Object> const &lhso, Ptr<Object> const &rhso);
+  virtual bool        IsLessThanOrEqual(Ptr<Object> const &lhso, Ptr<Object> const &rhso);
+  virtual bool        IsGreaterThan(Ptr<Object> const &lhso, Ptr<Object> const &rhso);
+  virtual bool        IsGreaterThanOrEqual(Ptr<Object> const &lhso, Ptr<Object> const &rhso);
+  virtual void        Negate(Ptr<Object> &object);
+  virtual void        Add(Ptr<Object> &lhso, Ptr<Object> &rhso);
+  virtual void        LeftAdd(Variant &lhsv, Variant &objectv);
+  virtual void        RightAdd(Variant &objectv, Variant &rhsv);
+  virtual void        InplaceAdd(Ptr<Object> const &lhso, Ptr<Object> const &rhso);
+  virtual void        InplaceRightAdd(Ptr<Object> const &lhso, Variant const &rhsv);
+  virtual void        Subtract(Ptr<Object> &lhso, Ptr<Object> &rhso);
+  virtual void        LeftSubtract(Variant &lhsv, Variant &objectv);
+  virtual void        RightSubtract(Variant &objectv, Variant &rhsv);
+  virtual void        InplaceSubtract(Ptr<Object> const &lhso, Ptr<Object> const &rhso);
+  virtual void        InplaceRightSubtract(Ptr<Object> const &lhso, Variant const &rhsv);
+  virtual void        Multiply(Ptr<Object> &lhso, Ptr<Object> &rhso);
+  virtual void        LeftMultiply(Variant &lhsv, Variant &objectv);
+  virtual void        RightMultiply(Variant &objectv, Variant &rhsv);
+  virtual void        InplaceMultiply(Ptr<Object> const &lhso, Ptr<Object> const &rhso);
+  virtual void        InplaceRightMultiply(Ptr<Object> const &lhso, Variant const &rhsv);
+  virtual void        Divide(Ptr<Object> &lhso, Ptr<Object> &rhso);
+  virtual void        LeftDivide(Variant &lhsv, Variant &objectv);
+  virtual void        RightDivide(Variant &objectv, Variant &rhsv);
+  virtual void        InplaceDivide(Ptr<Object> const &lhso, Ptr<Object> const &rhso);
+  virtual void        InplaceRightDivide(Ptr<Object> const &lhso, Variant const &rhsv);
 
   virtual bool SerializeTo(ByteArrayBuffer &buffer);
   virtual bool DeserializeFrom(ByteArrayBuffer &buffer);
+
+  virtual bool ToJSON(JSONVariant &variant);
+  virtual bool FromJSON(JSONVariant const &variant);
+
+  TypeId GetTypeId() const
+  {
+    return type_id_;
+  }
+
+  std::string GetUniqueId() const;
 
 protected:
   Variant &       Push();
@@ -215,11 +241,11 @@ protected:
   Variant &       Top();
   void            RuntimeError(std::string const &message);
   TypeInfo const &GetTypeInfo(TypeId type_id);
-  bool            GetNonNegativeInteger(Variant const &v, size_t &index);
+  bool            GetNonNegativeInteger(Variant const &v, std::size_t &index);
 
-  VM *   vm_;
-  TypeId type_id_;
-  size_t ref_count_;
+  VM *        vm_;
+  TypeId      type_id_;
+  std::size_t ref_count_;
 
 private:
   void AddRef()
@@ -363,7 +389,7 @@ public:
     return *ptr_;
   }
 
-  size_t RefCount() const
+  std::size_t RefCount() const
   {
     return ptr_->ref_count_;
   }
@@ -445,20 +471,64 @@ inline bool operator!=(std::nullptr_t /* lhs */, Ptr<R> const &rhs)
   return (nullptr != rhs.ptr_);
 }
 
-inline void Serialize(ByteArrayBuffer &buffer, Ptr<Object> const &object)
-{
-  if (!object->SerializeTo(buffer))
-  {
-    throw std::runtime_error("Unable to serialize requested object");
-  }
-}
+class Unknown;
 
-inline void Deserialize(ByteArrayBuffer &buffer, Ptr<Object> &object)
+template <template <typename T, typename... Args> class Functor, typename... Args>
+inline auto TypeIdAsCanonicalType(TypeId const type_id, Args &&... args)
 {
-  if (!object->DeserializeFrom(buffer))
+  switch (type_id)
   {
-    throw std::runtime_error("Unable to deserialize request object");
-  }
+  case TypeIds::Unknown:
+    return Functor<Unknown>{}(std::forward<Args>(args)...);
+
+  case TypeIds::Null:
+    return Functor<std::nullptr_t>{}(std::forward<Args>(args)...);
+
+  case TypeIds::Void:
+    return Functor<void>{}(std::forward<Args>(args)...);
+
+  case TypeIds::Bool:
+    return Functor<uint8_t>{}(std::forward<Args>(args)...);
+
+  case TypeIds::Int8:
+    return Functor<int8_t>{}(std::forward<Args>(args)...);
+
+  case TypeIds::UInt8:
+    return Functor<uint8_t>{}(std::forward<Args>(args)...);
+
+  case TypeIds::Int16:
+    return Functor<int16_t>{}(std::forward<Args>(args)...);
+
+  case TypeIds::UInt16:
+    return Functor<uint16_t>{}(std::forward<Args>(args)...);
+
+  case TypeIds::Int32:
+    return Functor<int32_t>{}(std::forward<Args>(args)...);
+
+  case TypeIds::UInt32:
+    return Functor<uint32_t>{}(std::forward<Args>(args)...);
+
+  case TypeIds::Int64:
+    return Functor<int64_t>{}(std::forward<Args>(args)...);
+
+  case TypeIds::UInt64:
+    return Functor<uint64_t>{}(std::forward<Args>(args)...);
+
+  case TypeIds::Float32:
+    return Functor<float>{}(std::forward<Args>(args)...);
+
+  case TypeIds::Float64:
+    return Functor<double>{}(std::forward<Args>(args)...);
+
+  case TypeIds::String:
+    return Functor<Ptr<String>>{}(std::forward<Args>(args)...);
+
+  case TypeIds::Address:
+    return Functor<Ptr<Address>>{}(std::forward<Args>(args)...);
+
+  default:
+    return Functor<Ptr<Object>>{}(std::forward<Args>(args)...);
+  }  // switch
 }
 
 }  // namespace vm

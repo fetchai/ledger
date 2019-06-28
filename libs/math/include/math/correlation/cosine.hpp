@@ -32,26 +32,52 @@ template <typename ArrayType>
 void Cosine(ArrayType const &a, ArrayType const &b, typename ArrayType::Type &r)
 {
   assert(a.size() == b.size());
+  // self products
+  typename ArrayType::Type a_r, b_r, denom_r;
+  ArrayType                dp_ret;
 
   // get inner product
-  ArrayType dp_ret = fetch::math::DotTranspose(a, b);
+  if ((b.shape()[0] == 1) && (a.shape()[0] == 1))
+  {
+    dp_ret = fetch::math::DotTranspose(a, b);
+  }
+  else
+  {
+    dp_ret = fetch::math::TransposeDot(a, b);
+  }
   assert(dp_ret.size() == 1);
   r = dp_ret[0];
 
-  // self products
-  typename ArrayType::Type a_r, b_r, denom_r;
-
-  dp_ret = fetch::math::DotTranspose(a, a);
+  if (b.shape()[0] == 1)
+  {
+    dp_ret = fetch::math::DotTranspose(a, a);
+  }
+  else
+  {
+    dp_ret = fetch::math::TransposeDot(a, a);
+  }
   assert(dp_ret.size() == 1);
   a_r = dp_ret[0];
+  fetch::math::Sqrt(a_r, a_r);
 
-  dp_ret = fetch::math::DotTranspose(b, b);
+  if (b.shape()[0] == 1)
+  {
+    dp_ret = fetch::math::DotTranspose(b, b);
+  }
+  else
+  {
+    dp_ret = fetch::math::TransposeDot(b, b);
+  }
   assert(dp_ret.size() == 1);
   b_r = dp_ret[0];
+  fetch::math::Sqrt(b_r, b_r);
 
-  denom_r = fetch::math::Sqrt(fetch::math::Multiply(a_r, b_r));
+  fetch::math::Multiply(a_r, b_r, denom_r);
 
   fetch::math::Divide(r, denom_r, r);
+
+  assert(r <= 1.0);
+  assert(r >= -1.0);
 }
 
 template <typename ArrayType>

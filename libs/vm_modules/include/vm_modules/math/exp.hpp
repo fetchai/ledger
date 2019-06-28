@@ -17,22 +17,37 @@
 //
 //------------------------------------------------------------------------------
 
+#include "math/meta/math_type_traits.hpp"
+#include "math/standard_functions/exp.hpp"
 #include "vm/module.hpp"
 
 #include <cmath>
 
 namespace fetch {
 namespace vm_modules {
+namespace math {
 
-inline double Exp(fetch::vm::VM * /*vm*/, double x)
+template <typename T>
+fetch::math::meta::IfIsMath<T, T> Exp(fetch::vm::VM *, T const &a)
 {
-  return std::exp(x);
+  T x;
+  fetch::math::Exp(a, x);
+  return x;
 }
 
-inline void BindExp(vm::Module &module)
+inline void BindExp(fetch::vm::Module &module)
 {
-  module.CreateFreeFunction("exp", &Exp);
+  module.CreateFreeFunction<float_t>("exp", &Exp<float_t>);
+  module.CreateFreeFunction<double_t>("exp", &Exp<double_t>);
+  module.CreateFreeFunction<fixed_point::fp32_t>("exp", &Exp<fixed_point::fp32_t>);
+  module.CreateFreeFunction<fixed_point::fp64_t>("exp", &Exp<fixed_point::fp64_t>);
 }
 
+inline void BindExp(std::shared_ptr<vm::Module> module)
+{
+  BindExp(*module.get());
+}
+
+}  // namespace math
 }  // namespace vm_modules
 }  // namespace fetch

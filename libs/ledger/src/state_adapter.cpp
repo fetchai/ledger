@@ -177,7 +177,7 @@ void StateAdapter::PopContext()
 
 std::string StateAdapter::WrapKeyWithScope(std::string const &key)
 {
-  return std::string{scope_.back().full_name() + ".state." + std::string{key}};
+  return std::string{scope_.back().full_name() + ".state." + key};
 }
 
 }  // namespace ledger

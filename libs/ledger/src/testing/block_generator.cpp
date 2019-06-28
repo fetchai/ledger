@@ -20,6 +20,8 @@
 #include "ledger/chain/constants.hpp"
 #include "vectorise/platform.hpp"
 
+#include "crypto/hash.hpp"
+#include "crypto/sha256.hpp"
 #include "ledger/testing/block_generator.hpp"
 
 #include <cstring>
@@ -90,8 +92,10 @@ BlockGenerator::BlockPtr BlockGenerator::Generate(BlockPtr const &from, uint64_t
     // update the previous hash
     block->body.previous_hash = fetch::ledger::GENESIS_DIGEST;
     block->body.merkle_hash   = fetch::ledger::GENESIS_MERKLE_ROOT;
-    block->body.miner         = Address{fetch::ledger::GENESIS_DIGEST};
+    block->body.miner         = Address{crypto::Hash<crypto::SHA256>("")};
   }
+
+  block->UpdateTimestamp();
 
   // compute the digest for the block
   block->UpdateDigest();

@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "metrics/metric_file_handler.hpp"
+
 #include "core/byte_array/encoders.hpp"
 
 #include <fstream>

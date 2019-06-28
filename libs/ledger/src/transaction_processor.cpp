@@ -16,7 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include <utility>
+
 #include "ledger/transaction_processor.hpp"
+
 #include "core/threading.hpp"
 #include "ledger/block_packer_interface.hpp"
 #include "ledger/chain/transaction.hpp"
@@ -34,11 +37,12 @@ namespace ledger {
  * @param storage The reference to the storage unit
  * @param miner The reference to the system miner
  */
-TransactionProcessor::TransactionProcessor(StorageUnitInterface &  storage,
+TransactionProcessor::TransactionProcessor(DAGPtr dag, StorageUnitInterface &storage,
                                            BlockPackerInterface &  packer,
                                            TransactionStatusCache &tx_status_cache,
                                            std::size_t             num_threads)
-  : storage_{storage}
+  : dag_{std::move(dag)}
+  , storage_{storage}
   , packer_{packer}
   , status_cache_{tx_status_cache}
   , verifier_{*this, num_threads, "TxV-P"}
@@ -54,7 +58,7 @@ void TransactionProcessor::OnTransaction(TransactionPtr const &tx)
 {
   FETCH_METRIC_TX_SUBMITTED(tx->digest());
 
-  FETCH_LOG_INFO(LOGGING_NAME, "Verified Input Transaction: 0x", tx->digest().ToHex());
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Verified Input Transaction: 0x", tx->digest().ToHex());
 
   // dispatch the transaction to the storage engine
   try
@@ -70,11 +74,31 @@ void TransactionProcessor::OnTransaction(TransactionPtr const &tx)
 
   FETCH_METRIC_TX_STORED(tx->digest());
 
-  // dispatch the summary to the miner
-  packer_.EnqueueTransaction(*tx);
+  switch (tx->contract_mode())
+  {
+  case Transaction::ContractMode::NOT_PRESENT:
+  case Transaction::ContractMode::PRESENT:
+  case Transaction::ContractMode::CHAIN_CODE:
 
-  // update the status cache with the state of this transaction
-  status_cache_.Update(tx->digest(), TransactionStatus::PENDING);
+    // dispatch the summary to the miner
+    packer_.EnqueueTransaction(*tx);
+
+    // update the status cache with the state of this transaction
+    status_cache_.Update(tx->digest(), TransactionStatus::PENDING);
+    break;
+
+  case Transaction::ContractMode::SYNERGETIC:
+
+    if (tx->action() == "data" && dag_)
+    {
+      dag_->AddTransaction(*tx, DAGInterface::DAGTypes::DATA);
+
+      // update the status cache with the state of this transaction
+      status_cache_.Update(tx->digest(), TransactionStatus::SUBMITTED);
+    }
+
+    break;
+  }
 
   FETCH_METRIC_TX_QUEUED(tx->digest());
 }

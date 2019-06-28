@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "ledger/chain/transaction_builder.hpp"
+
 #include "core/logger.hpp"
 #include "core/macros.hpp"
 #include "crypto/prover.hpp"
@@ -266,6 +267,22 @@ TransactionBuilder &TransactionBuilder::TargetChainCode(byte_array::ConstByteArr
   partial_transaction_->contract_address_ = Address{};
   partial_transaction_->chain_code_       = ref;
   partial_transaction_->shard_mask_       = shard_mask;
+  return *this;
+}
+
+/**
+ * Set the target as a synergetic contract
+ *
+ * @param digest The target digest of the synergetic contract
+ * @return The current builder instance
+ */
+TransactionBuilder &TransactionBuilder::TargetSynergetic(Address const &digest)
+{
+  partial_transaction_->contract_mode_    = Transaction::ContractMode ::SYNERGETIC;
+  partial_transaction_->contract_digest_  = digest;
+  partial_transaction_->contract_address_ = Address{};
+  partial_transaction_->chain_code_       = byte_array::ConstByteArray{};
+  partial_transaction_->shard_mask_       = BitVector{};
   return *this;
 }
 

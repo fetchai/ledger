@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "http/json_client.hpp"
+
 #include "core/commandline/params.hpp"
 
 #include <iostream>

@@ -21,7 +21,8 @@
 #include "vectorise/memory/iterator.hpp"
 #include "vectorise/memory/parallel_dispatcher.hpp"
 #include "vectorise/memory/vector_slice.hpp"
-//#include "meta/type_traits.hpp"
+
+#include <mm_malloc.h>
 
 #include <algorithm>
 #include <atomic>
@@ -30,8 +31,8 @@
 #include <cstdlib>
 #include <cstring>
 #include <memory>
-#include <mm_malloc.h>
-#include <type_traits>
+#include <utility>
+
 namespace fetch {
 namespace memory {
 
@@ -50,7 +51,7 @@ public:
   using self_type  = SharedArray<T, type_size>;
   using type       = T;
 
-  SharedArray(std::size_t const &n)
+  explicit SharedArray(std::size_t const &n)
     : super_type()
   {
     this->size_ = n;

@@ -17,13 +17,29 @@
 //
 //------------------------------------------------------------------------------
 
+#include "vectorise/fixed_point/fixed_point.hpp"
+#include "vectorise/fixed_point/serializers.hpp"
 #include "vm/vm.hpp"
 
+#include <algorithm>
 #include <cstddef>
 #include <cstdint>
+#include <iterator>
 
 namespace fetch {
 namespace vm {
+
+template <typename T, typename = void>
+struct GetElementType
+{
+  using type = typename GetStorageType<T>::type;
+};
+template <typename T>
+struct GetElementType<T, typename std::enable_if_t<std::is_same<T, bool>::value>>
+{
+  // ElementType must NOT be bool because std::vector<bool> is a partial specialisation
+  using type = uint8_t;
+};
 
 class IArray : public Object
 {
@@ -32,16 +48,18 @@ public:
   ~IArray() override = default;
   static Ptr<IArray> Constructor(VM *vm, TypeId type_id, int32_t size);
 
-  virtual int32_t           Count() const                     = 0;
-  virtual void              Append(TemplateParameter const &) = 0;
-  virtual TemplateParameter PopBackOne()                      = 0;
-  virtual Ptr<IArray>       PopBackMany(int32_t)              = 0;
-  virtual TemplateParameter PopFrontOne()                     = 0;
-  virtual Ptr<IArray>       PopFrontMany(int32_t)             = 0;
-  virtual void              Reverse()                         = 0;
+  virtual int32_t            Count() const                      = 0;
+  virtual void               Append(TemplateParameter1 const &) = 0;
+  virtual TemplateParameter1 PopBackOne()                       = 0;
+  virtual Ptr<IArray>        PopBackMany(int32_t)               = 0;
+  virtual TemplateParameter1 PopFrontOne()                      = 0;
+  virtual Ptr<IArray>        PopFrontMany(int32_t)              = 0;
+  virtual void               Reverse()                          = 0;
+  virtual void               Extend(Ptr<IArray> const &)        = 0;
+  virtual void               Erase(int32_t)                     = 0;
 
-  virtual TemplateParameter GetIndexedValue(AnyInteger const &index)                    = 0;
-  virtual void SetIndexedValue(AnyInteger const &index, TemplateParameter const &value) = 0;
+  virtual TemplateParameter1 GetIndexedValue(AnyInteger const &index)                    = 0;
+  virtual void SetIndexedValue(AnyInteger const &index, TemplateParameter1 const &value) = 0;
 
 protected:
   IArray(VM *vm, TypeId type_id)
@@ -55,7 +73,7 @@ protected:
 template <typename T>
 struct Array : public IArray
 {
-  using ElementType = typename GetStorageType<T>::type;
+  using ElementType = typename GetElementType<T>::type;
 
   Array()           = delete;
   ~Array() override = default;
@@ -63,7 +81,7 @@ struct Array : public IArray
   Array(VM *vm, TypeId type_id, TypeId element_type_id__, int32_t size)
     : IArray(vm, type_id)
     , element_type_id(element_type_id__)
-    , elements(static_cast<std::size_t>(size), ElementType(0))
+    , elements(static_cast<std::size_t>(size), ElementType{})
   {}
 
   int32_t Count() const override
@@ -71,7 +89,7 @@ struct Array : public IArray
     return int32_t(elements.size());
   }
 
-  void Append(TemplateParameter const &element) override
+  void Append(TemplateParameter1 const &element) override
   {
     if (element.type_id != element_type_id)
     {
@@ -81,34 +99,32 @@ struct Array : public IArray
     elements.push_back(element.Get<ElementType>());
   }
 
-  TemplateParameter PopBackOne() override
+  TemplateParameter1 PopBackOne() override
   {
     if (elements.empty())
     {
-      RuntimeError("Failed to pop_back: array is empty");
+      RuntimeError("Failed to popBack: array is empty");
       return {};
     }
 
-    auto element =
-        GetIndexedValue(AnyInteger(static_cast<uint64_t>(elements.size() - 1u), TypeIds::Int32))
-            .template Move<TemplateParameter>();
+    auto element = std::move(elements[elements.size() - 1u]);
 
     elements.pop_back();
 
-    return element;
+    return TemplateParameter1(element, element_type_id);
   }
 
   Ptr<IArray> PopBackMany(int32_t num_to_pop) override
   {
     if (num_to_pop < 0)
     {
-      RuntimeError("Failed to pop_back: argument must be non-negative");
+      RuntimeError("Failed to popBack: argument must be non-negative");
       return {};
     }
 
     if (elements.size() < static_cast<std::size_t>(num_to_pop))
     {
-      RuntimeError("Failed to pop_back: not enough elements in array");
+      RuntimeError("Failed to popBack: not enough elements in array");
       return {};
     }
 
@@ -121,16 +137,15 @@ struct Array : public IArray
     return array;
   }
 
-  TemplateParameter PopFrontOne() override
+  TemplateParameter1 PopFrontOne() override
   {
     if (elements.empty())
     {
-      RuntimeError("Failed to pop_front: array is empty");
+      RuntimeError("Failed to popFront: array is empty");
       return {};
     }
 
-    TemplateParameter element =
-        GetIndexedValue(AnyInteger(0u, TypeIds::Int32)).template Move<TemplateParameter>();
+    auto element = std::move(elements[0]);
 
     // Shift remaining elements to the right
     for (std::size_t i = 1u; i < elements.size(); ++i)
@@ -140,20 +155,20 @@ struct Array : public IArray
 
     elements.resize(elements.size() - 1);
 
-    return element;
+    return TemplateParameter1(element, element_type_id);
   }
 
   Ptr<IArray> PopFrontMany(int32_t num_to_pop) override
   {
     if (num_to_pop < 0)
     {
-      RuntimeError("Failed to pop_front: argument must be non-negative");
+      RuntimeError("Failed to popFront: argument must be non-negative");
       return {};
     }
 
     if (elements.size() < static_cast<std::size_t>(num_to_pop))
     {
-      RuntimeError("Failed to pop_front: not enough elements in array");
+      RuntimeError("Failed to popFront: not enough elements in array");
       return {};
     }
 
@@ -179,18 +194,45 @@ struct Array : public IArray
     std::reverse(elements.begin(), elements.end());
   }
 
-  TemplateParameter GetIndexedValue(AnyInteger const &index) override
+  void Extend(Ptr<IArray> const &other) override
+  {
+    Ptr<Array<ElementType>> const &other_array    = other;
+    auto const &                   other_elements = other_array->elements;
+
+    elements.reserve(elements.size() + other_elements.size());
+
+    elements.insert(elements.cend(), other_elements.cbegin(), other_elements.cend());
+  }
+
+  void Erase(const int32_t index) override
+  {
+    if (index < 0)
+    {
+      RuntimeError("negative index");
+      return;
+    }
+
+    if (static_cast<std::size_t>(index) >= elements.size())
+    {
+      RuntimeError("index out of bounds");
+      return;
+    }
+
+    elements.erase(elements.cbegin() + index);
+  }
+
+  TemplateParameter1 GetIndexedValue(AnyInteger const &index) override
   {
     ElementType *ptr = Find(index);
     if (ptr)
     {
-      return TemplateParameter(*ptr, element_type_id);
+      return TemplateParameter1(*ptr, element_type_id);
     }
     // Not found
-    return TemplateParameter();
+    return TemplateParameter1();
   }
 
-  void SetIndexedValue(AnyInteger const &index, TemplateParameter const &value) override
+  void SetIndexedValue(AnyInteger const &index, TemplateParameter1 const &value) override
   {
     ElementType *ptr = Find(index);
     if (ptr)
@@ -201,7 +243,7 @@ struct Array : public IArray
 
   ElementType *Find(Variant const &index)
   {
-    size_t i;
+    std::size_t i;
     if (!GetNonNegativeInteger(index, i))
     {
       RuntimeError("negative index");
@@ -218,18 +260,112 @@ struct Array : public IArray
 
   bool SerializeTo(ByteArrayBuffer &buffer) override
   {
-    buffer << element_type_id << elements;
-    return true;
+    return ApplySerialize(buffer, elements);
   }
 
   bool DeserializeFrom(ByteArrayBuffer &buffer) override
   {
-    buffer >> element_type_id >> elements;
+    return ApplyDeserialize(buffer, elements);
+  }
+
+  TypeId element_type_id;
+  // ElementType must NOT be bool because std::vector<bool> is a partial specialisation
+  std::vector<ElementType> elements;
+
+private:
+  bool ApplySerialize(ByteArrayBuffer &buffer, std::vector<Ptr<Object>> const &data)
+  {
+    if (!vm_->IsDefaultSerializeConstructable(element_type_id))
+    {
+      vm_->RuntimeError("Cannot deserialize type " + vm_->GetUniqueId(element_type_id) +
+                        " as no serialisation constructor exists.");
+      return false;
+    }
+
+    buffer << GetUniqueId() << static_cast<uint64_t>(elements.size());
+    for (Ptr<Object> v : data)
+    {
+      if (!v)
+      {
+        RuntimeError("Cannot serialise null reference element in " + GetUniqueId());
+        return false;
+      }
+
+      if (!v->SerializeTo(buffer))
+      {
+        return false;
+      }
+    }
     return true;
   }
 
-  TypeId                   element_type_id;
-  std::vector<ElementType> elements;
+  template <typename G>
+  typename std::enable_if<IsPrimitive<G>::value, bool>::type ApplySerialize(
+      ByteArrayBuffer &buffer, std::vector<G> const &data)
+  {
+    buffer << GetUniqueId() << static_cast<uint64_t>(elements.size());
+    for (G const &v : data)
+    {
+      buffer << v;
+    }
+    return true;
+  }
+
+  bool ApplyDeserialize(ByteArrayBuffer &buffer, std::vector<Ptr<Object>> &data)
+  {
+    uint64_t    size;
+    std::string uid;
+    buffer >> uid >> size;
+
+    if (uid != GetUniqueId())
+    {
+      vm_->RuntimeError("Type mismatch during deserialization. Got " + uid + " but expected " +
+                        GetUniqueId());
+      return false;
+    }
+
+    data.resize(size);
+
+    if (!vm_->IsDefaultSerializeConstructable(element_type_id))
+    {
+      vm_->RuntimeError("Cannot deserialize type " + vm_->GetUniqueId(element_type_id) +
+                        " as no serialisation constructor exists.");
+      return false;
+    }
+
+    data.resize(size);
+    for (Ptr<Object> &v : data)
+    {
+      v = vm_->DefaultSerializeConstruct(element_type_id);
+      if (!v || !v->DeserializeFrom(buffer))
+      {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  template <typename G>
+  typename std::enable_if<IsPrimitive<G>::value, bool>::type ApplyDeserialize(
+      ByteArrayBuffer &buffer, std::vector<G> &data)
+  {
+    uint64_t    size;
+    std::string uid;
+    buffer >> uid >> size;
+    if (uid != GetUniqueId())
+    {
+      vm_->RuntimeError("Type mismatch during deserialization. Got " + uid + " but expected " +
+                        GetUniqueId());
+      return false;
+    }
+
+    data.resize(size);
+    for (G &v : data)
+    {
+      buffer >> v;
+    }
+    return true;
+  }
 };
 
 template <typename... Args>
@@ -247,7 +383,7 @@ inline Ptr<IArray> IArray::Construct(VM *vm, TypeId type_id, Args &&... args)
   {
     return new Array<int8_t>(vm, type_id, element_type_id, std::forward<Args>(args)...);
   }
-  case TypeIds::Byte:
+  case TypeIds::UInt8:
   {
     return new Array<uint8_t>(vm, type_id, element_type_id, std::forward<Args>(args)...);
   }
@@ -283,6 +419,16 @@ inline Ptr<IArray> IArray::Construct(VM *vm, TypeId type_id, Args &&... args)
   {
     return new Array<double>(vm, type_id, element_type_id, std::forward<Args>(args)...);
   }
+  case TypeIds::Fixed32:
+  {
+    return new Array<fixed_point::fp32_t>(vm, type_id, element_type_id,
+                                          std::forward<Args>(args)...);
+  }
+  case TypeIds::Fixed64:
+  {
+    return new Array<fixed_point::fp64_t>(vm, type_id, element_type_id,
+                                          std::forward<Args>(args)...);
+  }
   default:
   {
     return new Array<Ptr<Object>>(vm, type_id, element_type_id, std::forward<Args>(args)...);
@@ -296,7 +442,7 @@ inline Ptr<IArray> IArray::Constructor(VM *vm, TypeId type_id, int32_t size)
   {
     vm->RuntimeError("negative size");
 
-    return nullptr;
+    return {};
   }
   return Construct(vm, type_id, size);
 }

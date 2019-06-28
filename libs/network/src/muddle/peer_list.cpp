@@ -16,11 +16,14 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/logger.hpp"
 #include "network/muddle/peer_list.hpp"
-#include "core/serializers/byte_array_buffer.hpp"
-#include "core/service_ids.hpp"
-#include "network/muddle/packet.hpp"
 #include "network/muddle/router.hpp"
+
+#include <algorithm>
+#include <cstddef>
+#include <string>
+#include <utility>
 
 static constexpr std::size_t MAX_LOG2_BACKOFF = 11;  // 2048
 

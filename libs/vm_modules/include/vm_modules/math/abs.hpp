@@ -20,8 +20,11 @@
 #include "math/meta/math_type_traits.hpp"
 #include "math/standard_functions/abs.hpp"
 
+#include <cstdlib>
+
 namespace fetch {
 namespace vm_modules {
+namespace math {
 
 /**
  * method for taking the absolute of a value
@@ -29,22 +32,66 @@ namespace vm_modules {
 template <typename T>
 fetch::math::meta::IfIsMath<T, T> Abs(fetch::vm::VM *, T const &a)
 {
-  T x = T(a);
-  fetch::math::Abs(x, x);
+  T x;
+  fetch::math::Abs(a, x);
   return x;
 }
 
-static void CreateAbs(fetch::vm::Module &module)
+template <typename T, typename R = void>
+using IfIsNormalSignedInteger = meta::EnableIf<meta::IsSignedInteger<T> && sizeof(T) >= 4, R>;
+
+template <typename T, typename R = void>
+using IfIsSmallSignedInteger = meta::EnableIf<meta::IsSignedInteger<T> && sizeof(T) < 4, R>;
+
+template <typename T>
+meta::EnableIf<sizeof(T) < 4, int32_t> ToAtLeastInt(T const &value)
 {
-  module.CreateFreeFunction<int32_t>("Abs", &Abs<int32_t>);
-  module.CreateFreeFunction<float_t>("Abs", &Abs<float_t>);
-  module.CreateFreeFunction<double_t>("Abs", &Abs<double_t>);
+  return static_cast<int32_t>(value);
 }
 
-inline void CreateAbs(std::shared_ptr<vm::Module> module)
+template <typename T>
+IfIsSmallSignedInteger<T, T> IntegerAbs(fetch::vm::VM *, T const &value)
 {
-  CreateAbs(*module.get());
+  return static_cast<T>(std::abs(value));
 }
 
+template <typename T>
+IfIsNormalSignedInteger<T, T> IntegerAbs(fetch::vm::VM *, T const &value)
+{
+  return std::abs(value);
+}
+
+template <typename T>
+meta::IfIsUnsignedInteger<T, T> IntegerAbs(fetch::vm::VM *, T const &value)
+{
+  return value;
+}
+
+static void BindAbs(fetch::vm::Module &module)
+{
+  module.CreateFreeFunction<int8_t>("abs", &IntegerAbs<int8_t>);
+  module.CreateFreeFunction<int16_t>("abs", &IntegerAbs<int16_t>);
+  module.CreateFreeFunction<int32_t>("abs", &IntegerAbs<int32_t>);
+  module.CreateFreeFunction<int64_t>("abs", &IntegerAbs<int64_t>);
+
+  // included for completeness sake
+  module.CreateFreeFunction<uint8_t>("abs", &IntegerAbs<uint8_t>);
+  module.CreateFreeFunction<uint16_t>("abs", &IntegerAbs<uint16_t>);
+  module.CreateFreeFunction<uint32_t>("abs", &IntegerAbs<uint32_t>);
+  module.CreateFreeFunction<uint64_t>("abs", &IntegerAbs<uint64_t>);
+
+  module.CreateFreeFunction<float_t>("abs", &Abs<float_t>);
+  module.CreateFreeFunction<double_t>("abs", &Abs<double_t>);
+
+  module.CreateFreeFunction<fixed_point::fp32_t>("abs", &Abs<fixed_point::fp32_t>);
+  module.CreateFreeFunction<fixed_point::fp64_t>("abs", &Abs<fixed_point::fp64_t>);
+}
+
+inline void BindAbs(std::shared_ptr<vm::Module> module)
+{
+  BindAbs(*module.get());
+}
+
+}  // namespace math
 }  // namespace vm_modules
 }  // namespace fetch

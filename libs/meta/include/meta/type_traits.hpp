@@ -77,6 +77,9 @@ template <class C>
 static constexpr bool IsPOD = type_util::SatisfiesAllV<C, std::is_trivial, std::is_standard_layout>;
 
 template <typename T>
+constexpr bool IsAny8BitInteger = std::is_same<T, int8_t>::value || std::is_same<T, uint8_t>::value;
+
+template <typename T>
 using Decay = typename std::decay<T>::type;
 
 template <bool C, typename R = void>
@@ -84,9 +87,6 @@ using EnableIf = std::enable_if_t<C, R>;
 
 template <typename T, typename U, typename R = void>
 using EnableIfSame = EnableIf<std::is_same<T, U>::value, R>;
-
-// template <typename T, typename R = T>
-// using IfIsArithmetic = EnableIf<std::is_arithmetic<T>::value, R>;
 
 template <typename T, typename R = void>
 using IfIsInteger = EnableIf<IsInteger<T>, R>;

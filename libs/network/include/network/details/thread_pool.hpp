@@ -17,21 +17,20 @@
 //
 //------------------------------------------------------------------------------
 
-#include <condition_variable>
-#include <functional>
-#include <list>
-#include <memory>
-#include <queue>
-#include <string>
-
-#include "core/assert.hpp"
-#include "core/logger.hpp"
 #include "core/mutex.hpp"
-
 #include "network/details/future_work_store.hpp"
 #include "network/details/idle_work_store.hpp"
 #include "network/details/work_store.hpp"
-#include "network/generics/milli_timer.hpp"
+
+#include <atomic>
+#include <condition_variable>
+#include <cstddef>
+#include <cstdint>
+#include <functional>
+#include <memory>
+#include <string>
+#include <thread>
+#include <vector>
 
 namespace fetch {
 namespace network {
@@ -85,7 +84,7 @@ public:
 
   explicit ThreadPoolImplementation(std::size_t threads, std::string name);
   ThreadPoolImplementation(ThreadPoolImplementation const &) = delete;
-  ThreadPoolImplementation(ThreadPoolImplementation &&)      = default;
+  ThreadPoolImplementation(ThreadPoolImplementation &&)      = delete;
   ~ThreadPoolImplementation();
 
   /// @name Current / Future Work

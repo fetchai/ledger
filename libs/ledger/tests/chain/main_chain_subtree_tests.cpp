@@ -21,7 +21,7 @@
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/testing/block_generator.hpp"
 
-#include <gtest/gtest.h>
+#include "gtest/gtest.h"
 
 #include <algorithm>
 #include <initializer_list>
@@ -90,15 +90,8 @@ static Blocks Extract(Blocks const &input, std::initializer_list<std::size_t> co
 
 static bool AreEqual(MainChain::Blocks const &actual, Blocks const &expected)
 {
-  bool equal{false};
-
-  if (actual.size() == expected.size())
-  {
-    equal = std::equal(actual.begin(), actual.end(), expected.begin(), expected.end(),
-                       [](auto const &a, auto const &b) { return a->body.hash == b->body.hash; });
-  }
-
-  return equal;
+  return std::equal(actual.begin(), actual.end(), expected.begin(), expected.end(),
+                    [](auto const &a, auto const &b) { return a->body.hash == b->body.hash; });
 }
 
 TEST_F(MainChainSubTreeTests, CheckSimpleTree)

@@ -27,12 +27,13 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class TanH : public fetch::ml::ElementWiseOps<T>
+class TanH : public fetch::ml::Ops<T>
 {
 public:
   using ArrayType     = T;
   using DataType      = typename ArrayType::Type;
-  using VecTensorType = typename ElementWiseOps<T>::VecTensorType;
+  using SizeType      = typename ArrayType::SizeType;
+  using VecTensorType = typename Ops<T>::VecTensorType;
 
   TanH()          = default;
   virtual ~TanH() = default;
@@ -40,7 +41,7 @@ public:
   virtual void Forward(VecTensorType const &inputs, ArrayType &output)
   {
     assert(inputs.size() == 1);
-    ASSERT(output.shape() == this->ComputeOutputShape(inputs));
+    assert(output.shape() == this->ComputeOutputShape(inputs));
     fetch::math::TanH(inputs.front().get(), output);
     // ensures numerical stability
     for (auto &val : output)
@@ -48,7 +49,7 @@ public:
       // Minimum value of tanh is restricted to -1+epsilon
       fetch::math::Max(val, fetch::math::Add(DataType(-1), epsilon_), val);
       // Maximum value of tanh is restricted to 1-epsilon
-      fetch::math::Min(val, fetch::math::Subtract(DataType(1), epsilon_), val);
+      fetch::math::Min(val, fetch::math::Subtract(static_cast<DataType>(1), epsilon_), val);
     }
   }
 
@@ -66,12 +67,17 @@ public:
 
     // gradient of tanh: 1 - tanh(x)^2
     fetch::math::Multiply(t, t, t);
-    fetch::math::Subtract(DataType(1), t, t);
+    fetch::math::Subtract(static_cast<DataType>(1), t, t);
 
     // apply chain rule
     fetch::math::Multiply(error_signal, t, return_signal);
 
     return {return_signal};
+  }
+
+  virtual std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const
+  {
+    return inputs.front().get().shape();
   }
 
   static constexpr char const *DESCRIPTOR = "TanH";

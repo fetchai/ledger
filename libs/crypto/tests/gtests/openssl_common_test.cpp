@@ -28,12 +28,6 @@ namespace {
 class ECDSACurveTest : public testing::Test
 {
 protected:
-  virtual void SetUp()
-  {}
-
-  virtual void TearDown()
-  {}
-
   template <int P_ECDSA_Curve_NID>
   void test_ECDSACurve(const char *const expected_sn, const std::size_t expected_privateKeySize,
                        const std::size_t expected_publicKeySize,
@@ -56,12 +50,6 @@ TEST_F(ECDSACurveTest, test_ECDSACurve_for_NID_secp256k1)
 class ECDSAAffineCoordinatesConversionTest : public testing::Test
 {
 protected:
-  virtual void SetUp()
-  {}
-
-  virtual void TearDown()
-  {}
-
   void test_convert_canonical_with_padding(shrd_ptr_type<BIGNUM const> const x,
                                            shrd_ptr_type<BIGNUM const> const y)
   {

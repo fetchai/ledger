@@ -17,19 +17,15 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/assert.hpp"
+#include "math/comparison.hpp"
+#include "math/fundamental_operators.hpp"
+#include "math/matrix_operations.hpp"
 #include "math/meta/math_type_traits.hpp"
-
-#include <algorithm>
-#include <cassert>
-#include <numeric>
-#include <vector>
-
-#include "math/fundamental_operators.hpp"  // add, subtract etc.
 #include "math/standard_functions/exp.hpp"
 
-#include "math/comparison.hpp"
-#include "math/matrix_operations.hpp"
+#include <cassert>
+#include <cstddef>
+#include <stdexcept>
 
 namespace fetch {
 namespace math {
@@ -78,14 +74,13 @@ void Softmax2DImplementation(ArrayType const &array, ArrayType &ret,
   assert(array.shape().size() == 2);
   assert(ret.shape().size() == 2);
   assert((axis == 0) || (axis == 1));
-  assert(axis == 0);  // arbitrary dimension slicing not yet implemented
 
   for (std::size_t i = 0; i < array.shape()[axis]; ++i)
   {
-    auto cur_slice = array.Slice(i).Copy();
-    auto ret_slice = ret.Slice(i).Copy();
+    auto cur_slice = array.Slice(i, axis).Copy();
+    auto ret_slice = ret.Slice(i, axis).Copy();
     Softmax1DImplementation(cur_slice, ret_slice);
-    ret.Slice(i).Assign(ret_slice);
+    ret.Slice(i, axis).Assign(ret_slice);
   }
 }
 }  // namespace details

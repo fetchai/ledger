@@ -224,16 +224,9 @@ struct IndexedValueSetter<Type, std::tuple<InputTypes...>, OutputType>
 template <typename F>
 struct FunctorTraits;
 template <typename F>
-struct FunctorTraits
+struct FunctorTraits : FunctorTraits<decltype(&std::remove_reference_t<F>::operator())>
 {
-  using class_type =
-      typename FunctorTraits<decltype(&std::remove_reference_t<F>::operator())>::class_type;
-  using return_type =
-      typename FunctorTraits<decltype(&std::remove_reference_t<F>::operator())>::return_type;
-  using args_tuple_type =
-      typename FunctorTraits<decltype(&std::remove_reference_t<F>::operator())>::args_tuple_type;
 };
-
 template <typename ReturnType, typename Class_, typename... Args>
 struct FunctorTraits<ReturnType (Class_::*)(Args...) const>
 {
