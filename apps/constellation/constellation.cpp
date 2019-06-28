@@ -435,6 +435,24 @@ void Constellation::Run(UriList const &initial_peers, core::WeakRunnable bootstr
       }
     }
 
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+    static uint64_t block_number = 1;
+    uint64_t dummy = 0;
+
+    auto result = dkg_->GenerateEntropy(std::to_string(block_number), block_number, dummy);
+
+    if(result != ledger::EntropyGeneratorInterface::Status::NOT_READY)
+    {
+      FETCH_LOG_INFO(LOGGING_NAME, "DKG is ready!");
+      block_number++;
+    }
+    else
+    {
+      FETCH_LOG_INFO(LOGGING_NAME, "DKG not ready");
+    }
+
+    continue;
+
     // determine the status of the main chain server
     bool const is_in_sync = main_chain_service_->IsSynced() && block_coordinator_.IsSynced();
 

@@ -118,6 +118,7 @@ DkgService::DkgService(Endpoint &endpoint, ConstByteArray address, ConstByteArra
   , rpc_server_{endpoint_, SERVICE_DKG, CHANNEL_RPC}
   , rpc_client_{"dkg", endpoint_, SERVICE_DKG, CHANNEL_RPC}
   , state_machine_{std::make_shared<StateMachine>("dkg", State::REGISTER, ToString)}
+  , current_entropy_source_{}
 //  , contribution_subscription_{endpoint_.Subscribe(SERVICE_DKG, CHANNEL_CONTRIBUTIONS)}
 //  , secret_key_subscription_{endpoint_.Subscribe(SERVICE_DKG, CHANNEL_SECRET_KEY)}
 {
@@ -226,7 +227,7 @@ void DkgService::SubmitSignatureShare(crypto::bls::Id const &       id,
 {
   FETCH_LOG_WARN(LOGGING_NAME, "Submit of signature");
 
-  if (crypto::bls::Verify(signature, public_key, "foo bar baz"))
+  if (crypto::bls::Verify(signature, public_key, current_entropy_source_))
   {
     FETCH_LOCK(sig_lock_);
     sig_ids_.push_back(id);
@@ -246,15 +247,40 @@ void DkgService::OnNewBlock(uint64_t block_index)
 DkgService::Status DkgService::GenerateEntropy(Digest block_digest, uint64_t block_number, uint64_t &entropy)
 {
   FETCH_LOCK(sig_lock_);
+  FETCH_LOCK(entropy_lock_);
+
+  // historical requests for entropy
+  if(block_number <= current_iteration_)
+  {
+    entropy = entropy_history_.at(block_number);
+  }
+
+  if(block_number != current_iteration_ + 1)
+  {
+    FETCH_LOG_ERROR(LOGGING_NAME, "Trying to generate entropy ahead in time! block_number: " , block_number, " current_iteration: ", current_iteration_);
+    return Status::NOT_READY;
+  }
 
   if (!aeon_signature_)
   {
      return Status::NOT_READY;
   }
-
   auto const *raw_entropy = reinterpret_cast<uint64_t const *>(aeon_signature_.get());
   entropy = *raw_entropy;
   aeon_signature_.reset();
+
+  FETCH_LOG_INFO(LOGGING_NAME, "Returning entropy for block: ", block_number, " which is : ", entropy);
+
+  // Save this result
+  entropy_history_[current_iteration_] = entropy;
+
+  // Kick off the next entropy generation cycle
+  current_iteration_++;
+  assert(block_number == current_iteration_);
+
+  current_entropy_source_ = block_digest.Copy();
+
+  FETCH_LOG_INFO(LOGGING_NAME, "Setting new entropy source: ", current_entropy_source_);
 
   return Status::OK;
 }
@@ -407,7 +433,9 @@ State DkgService::OnBroadcastSignatureState()
 {
   State next_state{State::COLLECT_SIGNATURES};
 
-  auto signature   = crypto::bls::Sign(sig_private_key_, "foo bar baz");
+  FETCH_LOCK(entropy_lock_);
+
+  auto signature   = crypto::bls::Sign(sig_private_key_, current_entropy_source_);
   auto public_key  = crypto::bls::PublicKeyFromPrivate(sig_private_key_);
 
   // TODO(EJF): Thread safety when this is dynamic
@@ -449,7 +477,7 @@ State DkgService::OnCollectSignaturesState()
       FETCH_LOG_ERROR(LOGGING_NAME, "Generated Signature: ", sig_value.ToBase64());
 
       // TODO(EJF): This signature needs to be verified
-//      if (crypto::bls::Verify(*aeon_signature_, groups_pk, "foo bar baz"))
+//      if (crypto::bls::Verify(*aeon_signature_, groups_pk, current_entropy_source_))
 //      {
 //        FETCH_LOG_ERROR(LOGGING_NAME, "GREATE SUCCESSE !!!!");
 //      }

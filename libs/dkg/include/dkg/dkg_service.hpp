@@ -110,6 +110,7 @@ private:
   using Address         = ledger::Address;
   using SubscriptionPtr = std::shared_ptr<muddle::Subscription>;
   using AddressMapping  = core::Mapping<MuddleAddress, Address>;
+  using EntropyHistory  = std::unordered_map<uint64_t, uint64_t>;
   using CabinetMembers  = std::unordered_set<MuddleAddress>;
   using CabinetIds      = std::unordered_map<MuddleAddress, crypto::bls::Id>;
   using CabinetKeys     = std::unordered_map<MuddleAddress, crypto::bls::PrivateKey>;
@@ -118,6 +119,7 @@ private:
   using RpcProtocolPtr  = std::unique_ptr<DkgRpcProtocol>;
   using Promise = service::Promise;
   using RMutex = std::recursive_mutex;
+  using Mutex  = std::mutex;
 
   /// @name State Handlers
   /// @{
@@ -179,6 +181,12 @@ private:
 
 //  crypto::bls::PrivateKeyList sig_private_shares_{};
   /// @}
+
+  // Current entropy statefullness
+  mutable RMutex entropy_lock_{};
+  uint64_t       current_iteration_ = 0;
+  EntropyHistory entropy_history_;
+  Digest         current_entropy_source_;
 
   /// @name Beacon / Secret Generation
   /// @{
