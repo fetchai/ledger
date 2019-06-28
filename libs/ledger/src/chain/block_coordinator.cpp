@@ -26,6 +26,7 @@
 #include "ledger/chain/consensus/dummy_miner.hpp"
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/chain/transaction.hpp"
+#include "ledger/consensus/stake_manager_interface.hpp"
 #include "ledger/execution_manager_interface.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 #include "ledger/transaction_status_cache.hpp"
@@ -79,7 +80,7 @@ SynergeticExecMgrPtr CreateSynergeticExecutor(core::FeatureFlags const &features
  * @param chain The reference to the main change
  * @param execution_manager  The reference to the execution manager
  */
-BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr const &dag,
+BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag, StakeManagerPtr stake,
                                    ExecutionManagerInterface &execution_manager,
                                    StorageUnitInterface &storage_unit, BlockPackerInterface &packer,
                                    BlockSinkInterface &      block_sink,
@@ -88,7 +89,8 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr const &dag,
                                    std::size_t num_lanes, std::size_t num_slices,
                                    std::size_t block_difficulty)
   : chain_{chain}
-  , dag_{dag}
+  , dag_{std::move(dag)}
+  , stake_{std::move(stake)}
   , execution_manager_{execution_manager}
   , storage_unit_{storage_unit}
   , block_packer_{packer}
@@ -119,7 +121,7 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr const &dag,
   state_machine_->RegisterHandler(State::SYNERGETIC_EXECUTION,         this, &BlockCoordinator::OnSynergeticExecution);
   state_machine_->RegisterHandler(State::WAIT_FOR_TRANSACTIONS,        this, &BlockCoordinator::OnWaitForTransactions);
   state_machine_->RegisterHandler(State::SCHEDULE_BLOCK_EXECUTION,     this, &BlockCoordinator::OnScheduleBlockExecution);
-  state_machine_->RegisterHandler(State::WAIT_FOR_EXECUTION,           this, &BlockCoordinator::OnWaitForExecution);  
+  state_machine_->RegisterHandler(State::WAIT_FOR_EXECUTION,           this, &BlockCoordinator::OnWaitForExecution);
   state_machine_->RegisterHandler(State::POST_EXEC_BLOCK_VALIDATION,   this, &BlockCoordinator::OnPostExecBlockValidation);
 
   // Pipe 2
@@ -396,11 +398,29 @@ BlockCoordinator::State BlockCoordinator::OnSynchronised(State current, State pr
   }
   else if (mining_ && mining_enabled_ && (Clock::now() >= next_block_time_))
   {
+    // POS: Additional check, are we able to mine?
+    if (stake_)
+    {
+      if (!stake_->ShouldGenerateBlock(*current_block_, mining_address_))
+      {
+        // delay the invocation of this state machine
+        state_machine_->Delay(std::chrono::milliseconds{100});
+
+        // TODO(issue 1245): Refactor this stage, getting a little complicated
+        return State::SYNCHRONISED;
+      }
+    }
+
     // create a new block
     next_block_                     = std::make_unique<Block>();
     next_block_->body.previous_hash = current_block_->body.hash;
     next_block_->body.block_number  = current_block_->body.block_number + 1;
     next_block_->body.miner         = mining_address_;
+
+    if (stake_)
+    {
+      next_block_->weight = stake_->GetBlockGenerationWeight(*current_block_, mining_address_);
+    }
 
     // Attach current DAG state
     if (dag_)
@@ -452,6 +472,21 @@ BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
     if (!previous)
     {
       return fail("No previous block in chain");
+    }
+
+    // Check that the weight as given by the proof is correct
+    if (stake_)
+    {
+      if (!stake_->ValidMinerForBlock(*previous, current_block_->body.miner))
+      {
+        return fail("Block signed by miner deemed invalid by the staking mechanism");
+      }
+
+      if (current_block_->weight !=
+          stake_->GetBlockGenerationWeight(*previous, current_block_->body.miner))
+      {
+        return fail("Incorrect stake weight found for block");
+      }
     }
 
     // Check: Ensure the block number is continuous
@@ -944,6 +979,19 @@ BlockCoordinator::State BlockCoordinator::OnTransmitBlock()
 
 BlockCoordinator::State BlockCoordinator::OnReset()
 {
+  // trigger stake updates at the end of the block lifecycle
+  if (stake_)
+  {
+    if (next_block_)
+    {
+      stake_->UpdateCurrentBlock(*next_block_);
+    }
+    else if (current_block_)
+    {
+      stake_->UpdateCurrentBlock(*current_block_);
+    }
+  }
+
   current_block_.reset();
   next_block_.reset();
   pending_txs_.reset();

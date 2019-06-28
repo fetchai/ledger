@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "math/matrix_operations.hpp"
 #include "ml/ops/ops.hpp"
 
 namespace fetch {
@@ -24,43 +25,71 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class Flatten : public fetch::ml::BatchOps<T>
+class Flatten : public fetch::ml::Ops<T>
 {
 public:
   using ArrayType     = T;
   using SizeType      = typename ArrayType::SizeType;
   using ArrayPtrType  = std::shared_ptr<ArrayType>;
-  using VecTensorType = typename BatchOps<T>::VecTensorType;
+  using VecTensorType = typename Ops<T>::VecTensorType;
 
   Flatten()          = default;
   virtual ~Flatten() = default;
 
   virtual void Forward(VecTensorType const &inputs, ArrayType &output)
   {
-    ASSERT(inputs.size() == 1);
-    ASSERT(output.shape() == ComputeOutputShape(inputs));
+    assert(inputs.size() == 1);
+    assert(output.shape() == ComputeOutputShape(inputs));
     input_shape_ = inputs.front().get().shape();
-    output.Assign(inputs.front().get());
+
+    FlattenImpl(inputs.front().get(), output);
   }
 
   virtual std::vector<ArrayType> Backward(VecTensorType const &inputs,
                                           ArrayType const &    error_signal)
   {
-    ASSERT(inputs.size() == 1);
+    FETCH_UNUSED(inputs);
+    assert(inputs.size() == 1);
     ArrayType ret(input_shape_);
-    ret.Assign(error_signal);
+    FlattenImpl(error_signal, ret);
+
     return {ret};
   }
 
   virtual std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const
   {
-    return {inputs.front().get().size(), 1};
+    SizeType batch_size =
+        inputs.at(0).get().shape().at(inputs.at(0).get().shape().size() - SizeType{1});
+    SizeType data_size = 1;
+    for (SizeType i{0}; i < inputs.at(0).get().shape().size() - SizeType{1}; i++)
+    {
+      data_size *= inputs.at(0).get().shape().at(i);
+    }
+
+    return {data_size, batch_size};
   }
 
   static constexpr char const *DESCRIPTOR = "Flatten";
 
 private:
   std::vector<std::uint64_t> input_shape_;
+
+  void FlattenImpl(ArrayType const &A, ArrayType &ret)
+  {
+    // Test if batch dimensions are equal
+    assert(ret.shape().at(ret.shape().size() - 1) == A.shape().at(A.shape().size() - 1));
+
+    SizeType input_batch_dimension  = A.shape().size() - 1;
+    SizeType output_batch_dimension = ret.shape().size() - 1;
+    SizeType batch_size             = ret.shape().at(output_batch_dimension);
+
+    for (SizeType i{0}; i < batch_size; i++)
+    {
+      auto input_slice  = A.Slice(i, input_batch_dimension);
+      auto output_slice = ret.Slice(i, output_batch_dimension);
+      output_slice.Assign(input_slice);
+    }
+  }
 };
 
 }  // namespace ops

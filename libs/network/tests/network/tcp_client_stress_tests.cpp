@@ -38,14 +38,14 @@ using namespace fetch::network;
 using namespace fetch::common;
 using namespace fetch::byte_array;
 
-// static constexpr char const *LOGGING_NAME = "TcpClientStressTests";
 static constexpr std::size_t MANY_CYCLES = 200;
 static constexpr std::size_t MID_CYCLES  = 50;
 static constexpr std::size_t FEW_CYCLES  = 10;
-std::string                  host        = "localhost";
-uint16_t                     portNumber  = 8080;
-std::string                  port        = std::to_string(portNumber);
-std::size_t                  N           = 1;
+
+std::string host       = "localhost";
+uint16_t    portNumber = 8080;
+std::string port       = std::to_string(portNumber);
+std::size_t N          = 1;
 
 std::atomic<std::size_t> clientReceivedCount{0};
 bool                     printingClientResponses = false;

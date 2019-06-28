@@ -40,8 +40,11 @@ TYPED_TEST(DropoutTest, forward_test)
 
   ArrayType data = ArrayType::FromString(R"(1, -2, 3, -4, 5, -6, 7, -8)");
   ArrayType gt   = ArrayType::FromString(R"(0, -2, 0,  0, 5, -6, 7, -8)");
+  DataType  prob{0.5};
 
-  fetch::ml::ops::Dropout<ArrayType> op(DataType{0.5}, 12345);
+  fetch::math::Multiply(gt, DataType{1} / prob, gt);
+
+  fetch::ml::ops::Dropout<ArrayType> op(prob, 12345);
 
   ArrayType     prediction(op.ComputeOutputShape({data}));
   VecTensorType vec_data({data});
@@ -49,15 +52,16 @@ TYPED_TEST(DropoutTest, forward_test)
   op.Forward(vec_data, prediction);
 
   // test correct values
-  ASSERT_TRUE(prediction.AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
+  EXPECT_TRUE(prediction.AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
 
   // Test after generating new random alpha value
   gt = ArrayType::FromString(R"(1, -2, 3, 0, 5, 0, 7, 0)");
+  fetch::math::Multiply(gt, DataType{1} / prob, gt);
 
   op.Forward(VecTensorType({data}), prediction);
 
   // test correct values
-  ASSERT_TRUE(prediction.AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
+  EXPECT_TRUE(prediction.AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
 
   // Test with is_training set to false
   op.SetTraining(false);
@@ -67,7 +71,7 @@ TYPED_TEST(DropoutTest, forward_test)
   op.Forward(VecTensorType({data}), prediction);
 
   // test correct values
-  ASSERT_TRUE(prediction.AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
+  EXPECT_TRUE(prediction.AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
 }
 
 TYPED_TEST(DropoutTest, forward_3d_tensor_test)
@@ -81,6 +85,7 @@ TYPED_TEST(DropoutTest, forward_3d_tensor_test)
   ArrayType           gt({2, 2, 2});
   std::vector<double> data_input({1, -2, 3, -4, 5, -6, 7, -8});
   std::vector<double> gt_input({0, -2, 0, 0, 5, -6, 7, -8});
+  DataType            prob{0.5};
 
   for (SizeType i{0}; i < 2; ++i)
   {
@@ -93,13 +98,14 @@ TYPED_TEST(DropoutTest, forward_3d_tensor_test)
       }
     }
   }
+  fetch::math::Multiply(gt, DataType{1} / prob, gt);
 
-  fetch::ml::ops::Dropout<ArrayType> op(DataType{0.5f}, 12345);
+  fetch::ml::ops::Dropout<ArrayType> op(prob, 12345);
   TypeParam                          prediction(op.ComputeOutputShape({data}));
   op.Forward(VecTensorType({data}), prediction);
 
   // test correct values
-  ASSERT_TRUE(prediction.AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
+  EXPECT_TRUE(prediction.AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
 }
 
 TYPED_TEST(DropoutTest, backward_test)
@@ -111,8 +117,10 @@ TYPED_TEST(DropoutTest, backward_test)
   ArrayType data  = ArrayType::FromString(R"(1, -2, 3, -4, 5, -6, 7, -8)");
   ArrayType error = ArrayType::FromString(R"(0, 0, 0, 0, 1, 1, 0, 0)");
   ArrayType gt    = ArrayType::FromString(R"(0, 0, 0, 0, 1, 1, 0, 0)");
+  DataType  prob{0.5};
+  fetch::math::Multiply(gt, DataType{1} / prob, gt);
 
-  fetch::ml::ops::Dropout<ArrayType> op(DataType{0.5f}, 12345);
+  fetch::ml::ops::Dropout<ArrayType> op(prob, 12345);
 
   // It's necessary to do Forward pass first
   ArrayType output(op.ComputeOutputShape({data}));
@@ -121,26 +129,18 @@ TYPED_TEST(DropoutTest, backward_test)
   std::vector<ArrayType> prediction = op.Backward({data}, error);
 
   // test correct values
-  ASSERT_TRUE(prediction[0].AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
+  EXPECT_TRUE(prediction[0].AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
 
   // Test after generating new random alpha value
   // Forward pass will update random value
   op.Forward(VecTensorType({data}), output);
 
-  gt         = ArrayType::FromString(R"(0, 0, 0, 0, 1, 0, 0, 0)");
+  gt = ArrayType::FromString(R"(0, 0, 0, 0, 1, 0, 0, 0)");
+  fetch::math::Multiply(gt, DataType{1} / prob, gt);
   prediction = op.Backward({data}, error);
 
   // test correct values
-  ASSERT_TRUE(prediction[0].AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
-
-  // Test with is_training set to false
-  op.SetTraining(false);
-
-  gt         = ArrayType::FromString(R"(0, 0, 0, 0, 1, 1, 0, 0)");
-  prediction = op.Backward({data}, error);
-
-  // test correct values
-  ASSERT_TRUE(prediction[0].AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
+  EXPECT_TRUE(prediction[0].AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
 }
 
 TYPED_TEST(DropoutTest, backward_3d_tensor_test)
@@ -149,6 +149,7 @@ TYPED_TEST(DropoutTest, backward_3d_tensor_test)
   using ArrayType     = TypeParam;
   using SizeType      = typename TypeParam::SizeType;
   using VecTensorType = typename fetch::ml::Ops<ArrayType>::VecTensorType;
+  DataType prob{0.5};
 
   ArrayType           data({2, 2, 2});
   ArrayType           error({2, 2, 2});
@@ -169,8 +170,9 @@ TYPED_TEST(DropoutTest, backward_3d_tensor_test)
       }
     }
   }
+  fetch::math::Multiply(gt, DataType{1} / prob, gt);
 
-  fetch::ml::ops::Dropout<ArrayType> op(DataType{0.5f}, 12345);
+  fetch::ml::ops::Dropout<ArrayType> op(prob, 12345);
 
   // It's necessary to do Forward pass first
   ArrayType output(op.ComputeOutputShape({data}));
@@ -179,5 +181,5 @@ TYPED_TEST(DropoutTest, backward_3d_tensor_test)
   std::vector<ArrayType> prediction = op.Backward({data}, error);
 
   // test correct values
-  ASSERT_TRUE(prediction[0].AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
+  EXPECT_TRUE(prediction[0].AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
 }

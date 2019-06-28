@@ -25,6 +25,8 @@
 #include "ledger/chain/block_coordinator.hpp"
 #include "ledger/chain/consensus/consensus_miner_interface.hpp"
 #include "ledger/chain/main_chain.hpp"
+#include "ledger/consensus/entropy_generator_interface.hpp"
+#include "ledger/consensus/stake_manager.hpp"
 #include "ledger/execution_manager.hpp"
 #include "ledger/genesis_loading/genesis_file_creator.hpp"
 #include "ledger/protocols/main_chain_rpc_service.hpp"
@@ -86,6 +88,7 @@ public:
     bool         sign_broadcasts{false};
     bool         dump_state_file{false};
     bool         load_state_file{false};
+    bool         proof_of_stake{false};
     NetworkMode  network_mode{NetworkMode::PUBLIC_NETWORK};
     FeatureFlags features{};
 
@@ -133,6 +136,8 @@ private:
   using DAGServicePtr          = std::shared_ptr<ledger::DAGService>;
   using SynergeticMinerPtr     = std::unique_ptr<ledger::SynergeticMinerInterface>;
   using NaiveSynergeticMiner   = ledger::NaiveSynergeticMiner;
+  using StakeManagerPtr        = std::shared_ptr<ledger::StakeManager>;
+  using EntropyPtr             = std::unique_ptr<ledger::EntropyGeneratorInterface>;
 
   using ShardConfigs  = ledger::ShardConfigs;
   using TxStatusCache = ledger::TransactionStatusCache;
@@ -169,6 +174,12 @@ private:
   DAGPtr             dag_;
   DAGServicePtr      dag_service_;
   SynergeticMinerPtr synergetic_miner_;
+  /// @}
+
+  /// @name Staking
+  /// @{
+  EntropyPtr      entropy_;  ///< The entropy system
+  StakeManagerPtr stake_;    ///< The stake system
   /// @}
 
   /// @name Block Processing

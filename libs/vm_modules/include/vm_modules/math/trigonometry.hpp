@@ -226,11 +226,6 @@ inline void BindTrigonometry(fetch::vm::Module &module)
   module.CreateFreeFunction<fixed_point::fp64_t>("atanh", &ATanH<fixed_point::fp64_t>);
 }
 
-inline void BindTrigonometry(std::shared_ptr<vm::Module> module)
-{
-  BindTrigonometry(*module.get());
-}
-
 }  // namespace math
 }  // namespace vm_modules
 }  // namespace fetch

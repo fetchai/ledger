@@ -17,34 +17,57 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chain/block_coordinator.hpp"
-#include "ledger/storage_unit/storage_unit_interface.hpp"
-#include "storage/resource_mapper.hpp"
-#include "variant/variant.hpp"
+//#include "ledger/chain/block_coordinator.hpp"
+//#include "ledger/storage_unit/storage_unit_interface.hpp"
+//#include "storage/resource_mapper.hpp"
+//#include "variant/variant.hpp"
 
 namespace fetch {
+namespace variant {
+class Variant;
+}
+
+namespace ledger {
+
+class StakeManager;
+class BlockCoordinator;
+class StorageUnitInterface;
 
 class GenesisFileCreator
 {
 public:
-  using BlockCoordinator     = ledger::BlockCoordinator;
-  using StorageUnitInterface = ledger::StorageUnitInterface;
-  using ResourceID           = storage::ResourceID;
-  using ResourceAddress      = storage::ResourceAddress;
-  using Variant              = variant::Variant;
-  using ByteArray            = byte_array::ByteArray;
-  using ConstByteArray       = byte_array::ConstByteArray;
-
-  static constexpr char const *LOGGING_NAME = "GenesisFileCreator";
-
-  GenesisFileCreator(BlockCoordinator &block_coordinator, StorageUnitInterface &storage_unit);
+  // Construction / Destruction
+  GenesisFileCreator(BlockCoordinator &block_coordinator, StorageUnitInterface &storage_unit,
+                     StakeManager *stake_manager);
+  GenesisFileCreator(GenesisFileCreator const &) = delete;
+  GenesisFileCreator(GenesisFileCreator &&)      = delete;
+  ~GenesisFileCreator()                          = default;
 
   void CreateFile(std::string const &name);
   void LoadFile(std::string const &name);
 
+  // Operators
+  GenesisFileCreator &operator=(GenesisFileCreator const &) = delete;
+  GenesisFileCreator &operator=(GenesisFileCreator &&) = delete;
+
 private:
+  void DumpState(variant::Variant &object);
+  void DumpStake(variant::Variant &object);
+  void LoadState(variant::Variant const &object);
+  void LoadStake(variant::Variant const &object);
+
   BlockCoordinator &    block_coordinator_;
   StorageUnitInterface &storage_unit_;
+  StakeManager *        stake_manager_{nullptr};
 };
 
+inline GenesisFileCreator::GenesisFileCreator(BlockCoordinator &    block_coordinator,
+                                              StorageUnitInterface &storage_unit,
+                                              StakeManager *        stake_manager)
+  : block_coordinator_{block_coordinator}
+  , storage_unit_{storage_unit}
+  , stake_manager_{stake_manager}
+{}
+
+}  // namespace ledger
 }  // namespace fetch

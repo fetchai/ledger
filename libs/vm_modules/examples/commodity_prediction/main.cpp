@@ -135,14 +135,14 @@ int main(int argc, char **argv)
   fetch::vm_modules::math::VMTensor::Bind(*module);
   fetch::vm_modules::ml::VMStateDict::Bind(*module);
   fetch::vm_modules::ml::VMGraph::Bind(*module);
-  fetch::vm_modules::ml::TrainingPair::Bind(*module);
+  fetch::vm_modules::ml::VMTrainingPair::Bind(*module);
   fetch::vm_modules::ml::VMCommodityDataLoader::Bind(*module);
   fetch::vm_modules::CreatePrint(*module);
 
   module->CreateFreeFunction("read_csv", &read_csv);
 
   // Setting compiler up
-  fetch::vm::Compiler *    compiler = new fetch::vm::Compiler(module.get());
+  auto                     compiler = std::make_unique<fetch::vm::Compiler>(module.get());
   fetch::vm::Executable    executable;
   fetch::vm::IR            ir;
   std::vector<std::string> errors;
@@ -189,6 +189,5 @@ int main(int argc, char **argv)
   {
     std::cout << "Runtime error on line " << error << std::endl;
   }
-  delete compiler;
   return 0;
 }

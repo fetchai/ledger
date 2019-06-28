@@ -103,41 +103,57 @@ private:
     std::unordered_map<TypeIndex, TypePtr> map;
   };
 
+  struct FunctionSet
+  {
+    void Add(std::string const &unique_id)
+    {
+      set.insert(unique_id);
+    }
+    bool Find(std::string const &unique_id)
+    {
+      auto it = set.find(unique_id);
+      return it != set.end();
+    }
+    std::unordered_set<std::string> set;
+  };
+
   OperatorMap       operator_map_;
   TypeMap           type_map_;
   TypeInfoArray     type_info_array_;
   TypeInfoMap       type_info_map_;
   RegisteredTypes   registered_types_;
   FunctionInfoArray function_info_array_;
-  SymbolTablePtr    symbols_;
-  TypePtr           null_type_;
-  TypePtr           void_type_;
-  TypePtr           bool_type_;
-  TypePtr           int8_type_;
-  TypePtr           uint8_type_;
-  TypePtr           int16_type_;
-  TypePtr           uint16_type_;
-  TypePtr           int32_type_;
-  TypePtr           uint32_type_;
-  TypePtr           int64_type_;
-  TypePtr           uint64_type_;
-  TypePtr           float32_type_;
-  TypePtr           float64_type_;
-  TypePtr           fixed32_type_;
-  TypePtr           fixed64_type_;
-  TypePtr           string_type_;
-  TypePtr           address_type_;
-  TypePtr           template_parameter1_type_;
-  TypePtr           template_parameter2_type_;
-  TypePtr           any_type_;
-  TypePtr           any_primitive_type_;
-  TypePtr           any_integer_type_;
-  TypePtr           any_floating_point_type_;
-  TypePtr           matrix_type_;
-  TypePtr           array_type_;
-  TypePtr           map_type_;
-  TypePtr           sharded_state_type_;
-  TypePtr           state_type_;
+  FunctionSet       function_set_;
+
+  SymbolTablePtr symbols_;
+  TypePtr        null_type_;
+  TypePtr        void_type_;
+  TypePtr        bool_type_;
+  TypePtr        int8_type_;
+  TypePtr        uint8_type_;
+  TypePtr        int16_type_;
+  TypePtr        uint16_type_;
+  TypePtr        int32_type_;
+  TypePtr        uint32_type_;
+  TypePtr        int64_type_;
+  TypePtr        uint64_type_;
+  TypePtr        float32_type_;
+  TypePtr        float64_type_;
+  TypePtr        fixed32_type_;
+  TypePtr        fixed64_type_;
+  TypePtr        string_type_;
+  TypePtr        address_type_;
+  TypePtr        template_parameter1_type_;
+  TypePtr        template_parameter2_type_;
+  TypePtr        any_type_;
+  TypePtr        any_primitive_type_;
+  TypePtr        any_integer_type_;
+  TypePtr        any_floating_point_type_;
+  TypePtr        matrix_type_;
+  TypePtr        array_type_;
+  TypePtr        map_type_;
+  TypePtr        sharded_state_type_;
+  TypePtr        state_type_;
 
   BlockNodePtr             root_;
   BlockNodePtrArray        blocks_;
@@ -217,6 +233,7 @@ private:
                                  TypePtr const &return_type, Handler const &handler);
   void        CreateConstructor(TypePtr const &type, TypePtrArray const &parameter_types,
                                 Handler const &handler);
+
   void        CreateStaticMemberFunction(TypePtr const &type, std::string const &name,
                                          TypePtrArray const &parameter_types, TypePtr const &return_type,
                                          Handler const &handler);
@@ -232,6 +249,7 @@ private:
                                   Handler const &set_handler);
   void        AddTypeInfo(TypeInfo const &info, TypeId type_id, TypePtr const &type);
   void        AddFunctionInfo(FunctionPtr const &function, Handler const &handler);
+
   std::string BuildUniqueId(TypePtr const &type, std::string const &function_name,
                             TypePtrArray const &parameter_types, TypePtr const &return_type);
   void        AddFunctionToSymbolTable(SymbolTablePtr const &symbols, FunctionPtr const &function);

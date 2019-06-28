@@ -159,7 +159,7 @@ inline void Multiply(FixedPoint<I, F> const &lhs, FixedPoint<I, F> const &rhs,
 template <typename T>
 constexpr inline int32_t HighestSetBit(T n_input)
 {
-  uint64_t n = static_cast<uint64_t>(n_input);
+  const auto n = static_cast<uint64_t>(n_input);
 
   if (n == 0)
   {
@@ -419,7 +419,7 @@ public:
   /////////////////////
 
   constexpr Type Data() const;
-  constexpr void SetData(Type const n) const;
+  constexpr void SetData(Type n) const;
 
   ///////////////////////////////////////////////////////////////////
   /// FixedPoint implementations of common mathematical functions ///
@@ -474,14 +474,9 @@ private:
   template <typename T>
   static constexpr bool CheckNoOverflow(T n)
   {
-    if (Type(n) <= MAX && Type(n) >= MIN)
-    {
-      return true;
-    }
-    else
-    {
-      return false;
-    }
+    auto const x = static_cast<Type>(n);
+
+    return MIN <= x && x <= MAX;
   }
 
   /**
@@ -494,14 +489,7 @@ private:
   static constexpr bool CheckNoRounding()
   {
     // sufficient bits to guarantee no rounding
-    if (std::numeric_limits<T>::max_digits10 < DECIMAL_DIGITS)
-    {
-      return true;
-    }
-    else
-    {
-      return false;
-    }
+    return std::numeric_limits<T>::max_digits10 < DECIMAL_DIGITS;
   }
 
   static constexpr int ReduceSqrt(FixedPoint &x)
@@ -1717,14 +1705,7 @@ constexpr FixedPoint<I, F> &FixedPoint<I, F>::operator<<=(const int &n)
 template <std::uint16_t I, std::uint16_t F>
 constexpr bool FixedPoint<I, F>::IsNaN(FixedPoint<I, F> const &x)
 {
-  if (x.Data() == NaN.Data())
-  {
-    return true;
-  }
-  else
-  {
-    return false;
-  }
+  return x.Data() == NaN.Data();
 }
 
 /**
@@ -1735,14 +1716,7 @@ constexpr bool FixedPoint<I, F>::IsNaN(FixedPoint<I, F> const &x)
 template <std::uint16_t I, std::uint16_t F>
 constexpr bool FixedPoint<I, F>::IsPosInfinity(FixedPoint<I, F> const &x)
 {
-  if (x.Data() == POSITIVE_INFINITY.Data())
-  {
-    return true;
-  }
-  else
-  {
-    return false;
-  }
+  return x.Data() == POSITIVE_INFINITY.Data();
 }
 
 /**
@@ -1753,14 +1727,7 @@ constexpr bool FixedPoint<I, F>::IsPosInfinity(FixedPoint<I, F> const &x)
 template <std::uint16_t I, std::uint16_t F>
 constexpr bool FixedPoint<I, F>::IsNegInfinity(FixedPoint<I, F> const &x)
 {
-  if (x.Data() == NEGATIVE_INFINITY.Data())
-  {
-    return true;
-  }
-  else
-  {
-    return false;
-  }
+  return x.Data() == NEGATIVE_INFINITY.Data();
 }
 
 /**
@@ -1771,14 +1738,7 @@ constexpr bool FixedPoint<I, F>::IsNegInfinity(FixedPoint<I, F> const &x)
 template <std::uint16_t I, std::uint16_t F>
 constexpr bool FixedPoint<I, F>::IsInfinity(FixedPoint<I, F> const &x)
 {
-  if (IsPosInfinity(x) || IsNegInfinity(x))
-  {
-    return true;
-  }
-  else
-  {
-    return false;
-  }
+  return IsPosInfinity(x) || IsNegInfinity(x);
 }
 
 /**

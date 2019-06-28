@@ -128,8 +128,8 @@ public:
   /// @name Block Management
   /// @{
   BlockStatus AddBlock(Block const &block);
-  BlockPtr    GetBlock(BlockHash hash) const;
-  bool        RemoveBlock(BlockHash hash);
+  BlockPtr    GetBlock(BlockHash const &hash) const;
+  bool        RemoveBlock(BlockHash const &hash);
   /// @}
 
   /// @name Chain Queries
@@ -158,7 +158,7 @@ public:
 
   /// @name Transaction Duplication Filtering
   /// @{
-  DigestSet DetectDuplicateTransactions(BlockHash        starting_hash,
+  DigestSet DetectDuplicateTransactions(BlockHash const &starting_hash,
                                         DigestSet const &transactions) const;
   /// @}
 
@@ -216,17 +216,17 @@ private:
   /// @name Block Lookup
   /// @{
   BlockStatus InsertBlock(IntBlockPtr const &block, bool evaluate_loose_blocks = true);
-  bool        LookupBlock(BlockHash hash, IntBlockPtr &block, bool add_to_cache = false) const;
-  bool        LookupBlockFromCache(BlockHash hash, IntBlockPtr &block) const;
-  bool        LookupBlockFromStorage(BlockHash hash, IntBlockPtr &block, bool add_to_cache) const;
-  bool        IsBlockInCache(BlockHash hash) const;
-  void        AddBlockToCache(IntBlockPtr const &) const;
+  bool LookupBlock(BlockHash const &hash, IntBlockPtr &block, bool add_to_cache = false) const;
+  bool LookupBlockFromCache(BlockHash const &hash, IntBlockPtr &block) const;
+  bool LookupBlockFromStorage(BlockHash const &hash, IntBlockPtr &block, bool add_to_cache) const;
+  bool IsBlockInCache(BlockHash const &hash) const;
+  void AddBlockToCache(IntBlockPtr const &) const;
   /// @}
 
   /// @name Low-level storage interface
   /// @{
   void                CacheBlock(IntBlockPtr const &block) const;
-  BlockMap::size_type UncacheBlock(BlockHash hash) const;
+  BlockMap::size_type UncacheBlock(BlockHash const &hash) const;
   void                KeepBlock(IntBlockPtr const &block) const;
   bool                LoadBlock(BlockHash const &hash, Block &block) const;
   /// @}

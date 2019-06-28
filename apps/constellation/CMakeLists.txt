@@ -6,11 +6,6 @@ project(fetch-constellation)
 
 setup_compiler()
 
-add_executable(constellation
-               bootstrap_monitor.cpp
-               bootstrap_monitor.hpp
-               constellation.cpp
-               constellation.hpp
-               main.cpp)
+add_executable(constellation bootstrap_monitor.cpp constellation.cpp main.cpp)
 target_link_libraries(constellation PRIVATE fetch-ledger fetch-miner)
 target_include_directories(constellation PRIVATE ${FETCH_ROOT_DIR}/libs/python/include)

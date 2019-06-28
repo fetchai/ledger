@@ -56,6 +56,7 @@ class ExecutionManagerInterface;
 class MainChain;
 class StorageUnitInterface;
 class BlockSinkInterface;
+class StakeManagerInterface;
 
 /**
  * The Block Coordinator is in charge of executing all the blocks that come into the system. It will
@@ -142,9 +143,10 @@ class BlockCoordinator
 public:
   static constexpr char const *LOGGING_NAME = "BlockCoordinator";
 
-  using ConstByteArray = byte_array::ConstByteArray;
-  using DAGPtr         = std::shared_ptr<ledger::DAGInterface>;
-  using ProverPtr      = std::shared_ptr<crypto::Prover>;
+  using ConstByteArray  = byte_array::ConstByteArray;
+  using DAGPtr          = std::shared_ptr<ledger::DAGInterface>;
+  using ProverPtr       = std::shared_ptr<crypto::Prover>;
+  using StakeManagerPtr = std::shared_ptr<StakeManagerInterface>;
 
   enum class State
   {
@@ -178,7 +180,7 @@ public:
   static char const *ToString(State state);
 
   // Construction / Destruction
-  BlockCoordinator(MainChain &chain, DAGPtr const &dag,
+  BlockCoordinator(MainChain &chain, DAGPtr dag, StakeManagerPtr stake_mgr,
                    ExecutionManagerInterface &execution_manager, StorageUnitInterface &storage_unit,
                    BlockPackerInterface &packer, BlockSinkInterface &block_sink,
                    TransactionStatusCache &status_cache, core::FeatureFlags const &features,
@@ -301,6 +303,7 @@ private:
   /// @{
   MainChain &                chain_;              ///< Ref to system chain
   DAGPtr                     dag_;                ///< Ref to DAG
+  StakeManagerPtr            stake_;              ///< Ref to Stake manager
   ExecutionManagerInterface &execution_manager_;  ///< Ref to system execution manager
   StorageUnitInterface &     storage_unit_;       ///< Ref to the storage unit
   BlockPackerInterface &     block_packer_;       ///< Ref to the block packer

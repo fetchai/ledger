@@ -138,6 +138,24 @@ public:
     return arr_pointer_[n];
   }
 
+  bool operator<=(self_type const &other) const
+  {
+    std::size_t n = std::min(length_, other.length_);
+    std::size_t i = 0;
+    for (; i < n; ++i)
+    {
+      if (arr_pointer_[i] != other.arr_pointer_[i])
+      {
+        break;
+      }
+    }
+    if (i < n)
+    {
+      return arr_pointer_[i] <= other.arr_pointer_[i];
+    }
+    return length_ <= other.length_;
+  }
+
   bool operator<(self_type const &other) const
   {
     std::size_t n = std::min(length_, other.length_);
@@ -159,6 +177,11 @@ public:
   bool operator>(self_type const &other) const
   {
     return other < (*this);
+  }
+
+  bool operator>=(self_type const &other) const
+  {
+    return other <= (*this);
   }
 
   bool operator==(self_type const &other) const
@@ -487,7 +510,7 @@ private:
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wrestrict"
     memcpy(pointer() + acc_size, other.pointer(),
-           static_cast<size_t>(other.size()) & 0x7FFFFFFFFFFFFFFFull);
+           static_cast<std::size_t>(other.size()) & 0x7FFFFFFFFFFFFFFFull);
 #pragma GCC diagnostic pop
   }
 
