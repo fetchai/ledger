@@ -22,10 +22,12 @@ enum Platform
   public final String env_cxx
 }
 
-LINUX_PLATFORMS = [
+LINUX_PLATFORMS_ALL_TESTS = [
   Platform.CLANG6,
+  Platform.GCC7]
+
+LINUX_PLATFORMS_FAST_TESTS = [
   Platform.CLANG7,
-  Platform.GCC7,
   Platform.GCC8]
 
 enum Configuration
@@ -76,20 +78,25 @@ def stage_name_suffix(Platform platform, Configuration config)
   return "${platform.label} ${config.label}"
 }
 
-def fast_build_stages(Platform platform, Configuration config)
+def build_stage(Platform platform, Configuration config)
 {
   return {
     stage("Build ${stage_name_suffix(platform, config)}") {
       sh "./scripts/ci-tool.py -B ${config.label}"
     }
+  }
+}
 
+def fast_tests_stage(Platform platform, Configuration config)
+{
+  return {
     stage("Unit Tests ${stage_name_suffix(platform, config)}") {
       sh "./scripts/ci-tool.py -T ${config.label}"
     }
   }
 }
 
-def slow_build_stages(Platform platform, Configuration config)
+def slow_tests_stage(Platform platform, Configuration config)
 {
   return {
     stage("Slow Tests ${stage_name_suffix(platform, config)}") {
@@ -138,21 +145,27 @@ def _create_build(
   }
 }
 
-def create_docker_build(Platform platform, Configuration config)
+fast_run = { platform_, config_ ->
+  return {
+    build_stage(platform_, config_)()
+    fast_tests_stage(platform_, config_)()
+  }
+}
+
+full_run = { platform_, config_ ->
+  return {
+    build_stage(platform_, config_)()
+    fast_tests_stage(platform_, config_)()
+    slow_tests_stage(platform_, config_)()
+  }
+}
+
+
+def create_docker_build(Platform platform, Configuration config, stages)
 {
   def build = { build_stages ->
     docker.image(DOCKER_IMAGE_NAME).inside {
       build_stages()
-    }
-  }
-
-  def stages = { platform_, config_ ->
-    return {
-      fast_build_stages(platform_, config_)()
-      if (is_master_or_merge_branch())
-      {
-        slow_build_stages(platform_, config_)()
-      }
     }
   }
 
@@ -168,15 +181,11 @@ def create_macos_build(Platform platform, Configuration config)
 {
   def build = { build_stages -> build_stages() }
 
-  def stages = { platform_, config_ ->
-    fast_build_stages(platform_, config_)
-  }
-
   return _create_build(
     platform,
     config,
     MACOS_NODE_LABEL,
-    stages,
+    fast_run,
     build)
 }
 
@@ -186,11 +195,20 @@ def run_builds_in_parallel()
 
   for (config in Configuration.values())
   {
-    for (platform in LINUX_PLATFORMS)
+    for (platform in LINUX_PLATFORMS_ALL_TESTS)
     {
       stages["${platform.label} ${config.label}"] = create_docker_build(
         platform,
-        config)
+        config,
+        is_master_or_merge_branch() ? full_run : fast_run)
+    }
+
+    for (platform in LINUX_PLATFORMS_FAST_TESTS)
+    {
+      stages["${platform.label} ${config.label}"] = create_docker_build(
+        platform,
+        config,
+        fast_run)
     }
   }
 
