@@ -103,10 +103,11 @@ public:
     return state_machine_;
   }
 
-  void ResetCabinet(CabinetMembers cabinet)
+  void ResetCabinet(CabinetMembers cabinet, std::size_t threshold)
   {
     FETCH_LOCK(cabinet_lock_);
-    current_cabinet_ = std::move(cabinet);
+    current_cabinet_   = std::move(cabinet);
+    current_threshold_ = threshold;
   }
 
   // Operators
