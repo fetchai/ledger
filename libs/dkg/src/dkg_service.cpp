@@ -117,8 +117,6 @@ DkgService::DkgService(Endpoint &endpoint, ConstByteArray address, ConstByteArra
   , rpc_server_{endpoint_, SERVICE_DKG, CHANNEL_RPC}
   , rpc_client_{"dkg", endpoint_, SERVICE_DKG, CHANNEL_RPC}
   , state_machine_{std::make_shared<StateMachine>("dkg", State::REGISTER, ToString)}
-//  , contribution_subscription_{endpoint_.Subscribe(SERVICE_DKG, CHANNEL_CONTRIBUTIONS)}
-//  , secret_key_subscription_{endpoint_.Subscribe(SERVICE_DKG, CHANNEL_SECRET_KEY)}
 {
   FETCH_UNUSED(key_lifetime);
 
@@ -140,37 +138,6 @@ DkgService::DkgService(Endpoint &endpoint, ConstByteArray address, ConstByteArra
   state_machine_->OnStateChange([](State current, State previous) {
     FETCH_LOG_WARN(LOGGING_NAME, "State changed to: ", ToString(current), " was: ", ToString(previous));
   });
-
-//  // setup all the message handlers
-//  contribution_subscription_->SetMessageHandler(
-//      [this](ConstByteArray const &from, uint16_t service, uint16_t channel, uint16_t counter,
-//             ConstByteArray const &payload, ConstByteArray const &transmitter) {
-//        FETCH_UNUSED(service);
-//        FETCH_UNUSED(channel);
-//        FETCH_UNUSED(counter);
-//        FETCH_UNUSED(transmitter);
-//
-//        ContributionMsg msg{};
-//        if (ParseMessage(payload, msg))
-//        {
-//          OnContribution(msg, from);
-//        }
-//      });
-//
-//  secret_key_subscription_->SetMessageHandler(
-//      [this](ConstByteArray const &from, uint16_t service, uint16_t channel, uint16_t counter,
-//             ConstByteArray const &payload, ConstByteArray const &transmitter) {
-//        FETCH_UNUSED(service);
-//        FETCH_UNUSED(channel);
-//        FETCH_UNUSED(counter);
-//        FETCH_UNUSED(transmitter);
-//
-//        SecretKeyMsg msg{};
-//        if (ParseMessage(payload, msg))
-//        {
-//          OnSecretKey(msg, from);
-//        }
-//      });
 
   // consistency
   if (current_cabinet_.find(address_) != current_cabinet_.end())
