@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/assert.hpp"
+#include "math/meta/math_type_traits.hpp"
 #include <cmath>
 
 namespace fetch {
@@ -25,27 +26,22 @@ namespace math {
 namespace distance {
 
 template <typename ArrayType, typename F>
-inline ArrayType &PairWiseDistance(ArrayType &r, ArrayType const &a, F &&metric)
+inline meta::IfIsMathArray<ArrayType, ArrayType> &PairWiseDistance(ArrayType const &a, F &&metric, ArrayType &r)
 {
   using SizeType = typename ArrayType::SizeType;
 
-  detailed_assert(r.height() == 1);
-  detailed_assert(r.width() == (a.height() * (a.height() - 1) / 2));
+  detailed_assert(r.shape(0) == 1);
+  detailed_assert(r.shape(1) == (a.shape(0) * (a.shape(0) - 1) / 2));
 
-  SizeType offset1 = 0;
-  SizeType k       = 0;
+  SizeType k = 0;
 
-  for (SizeType i = 0; i < a.height(); ++i)
+  for (SizeType i = 0; i < a.shape(0); ++i)
   {
-    ArrayType slice1 = a.data().slice(offset1, a.width());
-    offset1 += a.padded_width();
-    SizeType offset2 = offset1;
-
-    for (SizeType j = i + 1; j < a.height(); ++j)
+    for (SizeType j = i + 1; j < a.shape(0); ++j)
     {
-      ArrayType slice2 = a.data().slice(offset2, a.width());
-      offset2 += a.padded_width();
-      r(SizeType(0), k++) = metric(slice1, slice2);
+      ArrayType slice1 = a.Slice(i).Copy();
+      ArrayType slice2 = a.Slice(j).Copy();
+      r(SizeType{0}, k++) = metric(slice1, slice2);
     }
   }
 

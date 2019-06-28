@@ -18,6 +18,9 @@
 //------------------------------------------------------------------------------
 
 #include "core/assert.hpp"
+#include "math/standard_functions/pow.hpp"
+#include "math/comparison.hpp"
+#include "math/meta/math_type_traits.hpp"
 
 #include <cmath>
 
@@ -26,8 +29,8 @@ namespace math {
 namespace distance {
 
 template <typename ArrayType>
-inline typename ArrayType::Type Minkowski(ArrayType const &a, ArrayType const &b,
-                                          typename ArrayType::type n)
+inline meta::IfIsMathArray<ArrayType, typename ArrayType::Type> Minkowski(ArrayType const &a, ArrayType const &b,
+                                          typename ArrayType::Type n)
 {
   detailed_assert(a.size() == b.size());
   using DataType = typename ArrayType::Type;

@@ -17,7 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/random/lcg.hpp"
-#include "math/distance/manhattan.hpp"
+#include "math/distance/minkowski.hpp"
 #include "math/tensor.hpp"
 
 #include "gtest/gtest.h"
@@ -26,7 +26,7 @@ using namespace fetch::math::distance;
 using namespace fetch::math;
 
 template <typename T>
-class ManhattanTest : public ::testing::Test
+class MinkowskiTest : public ::testing::Test
 {
 };
 
@@ -34,28 +34,28 @@ using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor
                                  fetch::math::Tensor<fetch::fixed_point::FixedPoint<16, 16>>,
                                  fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
 
-TYPED_TEST_CASE(ManhattanTest, MyTypes);
+TYPED_TEST_CASE(MinkowskiTest, MyTypes);
 
-TYPED_TEST(ManhattanTest, simple_test)
+TYPED_TEST(MinkowskiTest, simple_test)
 {
   using SizeType = typename TypeParam::SizeType;
 
   Tensor<double> A = Tensor<double>(3);
   A.Fill(0);
   A.Set(SizeType{0}, 1);
-  EXPECT_EQ(0, Manhattan(A, A));
+  EXPECT_NEAR(Minkowski(A, A, SizeType{2}), 1.41421, 0.00001);
 
   Tensor<double> B = Tensor<double>(3);
   B.Fill(0);
   B.Set(SizeType{1}, 1);
-  EXPECT_EQ(Manhattan(A, B), 2);
+  EXPECT_EQ(Minkowski(A, B, SizeType{2}), 1);
 
   B.Fill(0);
   B.Set(SizeType{1}, 2);
-  EXPECT_EQ(Manhattan(A, B), 3);
+  EXPECT_EQ(Minkowski(A, B, SizeType{2}), 1);
 
   B.Fill(0);
   B.Set(SizeType{0}, 1);
   B.Set(SizeType{1}, 1);
-  EXPECT_EQ(Manhattan(A, B), 1);
+  EXPECT_NEAR(Minkowski(A, B, SizeType{2}), 1.41421, 0.00001);
 }
