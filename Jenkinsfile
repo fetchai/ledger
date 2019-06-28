@@ -220,7 +220,10 @@ def run_builds_in_parallel()
       Configuration.RELEASE)
   }
 
-  stages['Static Analysis'] = static_analysis()
+  if (is_master_or_merge_branch())
+  {
+    stages['Static Analysis'] = static_analysis()
+  }
 
   stage('Build and Test') {
     // Execute stages
