@@ -17,30 +17,39 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chain/digest.hpp"
+#include "dkg/dkg_rpc_serializers.hpp"
+#include "network/service/protocol.hpp"
 
 namespace fetch {
-namespace ledger {
+namespace dkg {
 
-class EntropyGeneratorInterface
+class DkgService;
+
+class DkgRpcProtocol : public service::Protocol
 {
 public:
-  // Construction / Destruction
-  EntropyGeneratorInterface()          = default;
-  virtual ~EntropyGeneratorInterface() = default;
 
-  enum class Status
+  enum
   {
-    OK,
-    NOT_READY,
-    FAILED
+    REGISTER,
+    REQUEST_SECRET,
+    SUBMIT_SIGNATURE,
   };
 
-  /// @name Entropy Generator
-  /// @{
-  virtual Status GenerateEntropy(Digest block_digest, uint64_t block_number, uint64_t &entropy) = 0;
-  /// @}
+  // Construction / Destruction
+  explicit DkgRpcProtocol(DkgService &service);
+  DkgRpcProtocol(DkgRpcProtocol const &) = delete;
+  DkgRpcProtocol(DkgRpcProtocol &&) = delete;
+  ~DkgRpcProtocol() override = default;
+
+  // Operators
+  DkgRpcProtocol &operator=(DkgRpcProtocol const &) = delete;
+  DkgRpcProtocol &operator=(DkgRpcProtocol &&) = delete;
+
+private:
+
+  DkgService &service_;
 };
 
-}  // namespace ledger
-}  // namespace fetch
+} // namespace dkg
+} // namespace fetch

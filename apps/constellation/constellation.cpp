@@ -37,6 +37,7 @@
 #include "network/muddle/rpc/server.hpp"
 #include "network/p2pservice/p2p_http_interface.hpp"
 #include "network/uri.hpp"
+#include "dkg/dkg_service.hpp"
 
 #include <chrono>
 #include <cstddef>
@@ -58,6 +59,7 @@ using fetch::network::Uri;
 using fetch::network::Peer;
 using fetch::ledger::Address;
 using fetch::ledger::GenesisFileCreator;
+using fetch::muddle::MuddleEndpoint;
 
 using ExecutorPtr = std::shared_ptr<Executor>;
 
@@ -67,6 +69,7 @@ namespace {
 using LaneIndex       = fetch::ledger::LaneIdentity::lane_type;
 using StakeManagerPtr = std::shared_ptr<ledger::StakeManager>;
 using EntropyPtr      = std::unique_ptr<ledger::EntropyGeneratorInterface>;
+using DkgServicePtr   = std::unique_ptr<dkg::DkgService>;
 using ConstByteArray  = byte_array::ConstByteArray;
 
 static const std::size_t HTTP_THREADS{4};
@@ -163,6 +166,22 @@ StakeManagerPtr CreateStakeManager(bool enabled, ledger::EntropyGeneratorInterfa
   return mgr;
 }
 
+DkgServicePtr CreateDkgService(Constellation::Config const &cfg, ConstByteArray address, MuddleEndpoint &endpoint)
+{
+  DkgServicePtr dkg{};
+
+  if (cfg.proof_of_stake && !cfg.beacon_address.empty())
+  {
+    // !!! - Genuinely terrifying
+    crypto::bls::Init();
+
+    // TODO(EJF): Move key lifetime into block
+    dkg = std::make_unique<dkg::DkgService>(endpoint, address, cfg.beacon_address, 200);
+  }
+
+  return dkg;
+}
+
 }  // namespace
 
 /**
@@ -199,6 +218,7 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
                                                  cfg_.log2_num_lanes))
   , lane_control_(internal_muddle_.AsEndpoint(), shard_cfgs_, cfg_.log2_num_lanes)
   , dag_{GenerateDAG(cfg_.features.IsEnabled("synergetic"), "dag_db_", true, certificate)}
+  , dkg_{CreateDkgService(cfg_, certificate->identity().identifier(), muddle_.AsEndpoint())}
   , entropy_{CreateEntropy()}
   , stake_{CreateStakeManager(cfg_.proof_of_stake, *entropy_)}
   , execution_manager_{std::make_shared<ExecutionManager>(
@@ -271,6 +291,13 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
   {
     http_.AddModule(*module);
   }
+
+  // TODO(EJF): Work around
+  if (dkg_)
+  {
+    stake_->UpdateEntropy(*dkg_);
+  }
+
 }
 
 /**
@@ -393,10 +420,21 @@ void Constellation::Run(UriList const &initial_peers, core::WeakRunnable bootstr
   // Step 2. Main monitor loop
   //---------------------------------------------------------------
   bool start_up_in_progress{true};
+  bool dkg_attached{false};
 
   // monitor loop
   while (active_)
   {
+    // wait for at least one connected peer
+    if (!muddle_.AsEndpoint().GetDirectlyConnectedPeers().empty())
+    {
+      if (dkg_ && !dkg_attached)
+      {
+        reactor_.Attach(dkg_->GetWeakRunnable());
+        dkg_attached = true;
+      }
+    }
+
     // determine the status of the main chain server
     bool const is_in_sync = main_chain_service_->IsSynced() && block_coordinator_.IsSynced();
 

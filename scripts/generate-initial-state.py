@@ -25,9 +25,16 @@ def calc_resource_id(resource_address):
     hasher.update(resource_address.encode())
     return base64.b64encode(hasher.digest()).decode()
 
+def create_record(address, balance, stake):
+    resource_id = calc_resource_id('fetch.token.state.' + args.address)
+    resource_value = base64.b64encode(
+        struct.pack('<QQBQ', balance, stake, 0, 0)).decode()
+    return resource_id, resource_value
 
 def main():
     args = parse_commandline()
+
+    addresses = ['2bBYqHp5uK8fQgTqeBP3B3rogHQPYiC6wZcnBP2WVocsuiMgg9', 'BgrwqWGtyCmSKc83Ht3XSNyNujrNgiFp8kQjwhPXTsPvxcXbJ']
 
     # calculate what the current balance is
     stake = args.stake
@@ -43,10 +50,16 @@ def main():
         'version': 1,
         'stake': {
             'committeeSize': 1,
-            'stakes': [{
-                'address': args.address,
-                'amount': stake,
-            }]
+            'stakes': [
+                {
+                    'address': '2bBYqHp5uK8fQgTqeBP3B3rogHQPYiC6wZcnBP2WVocsuiMgg9',
+                    'amount': 500,
+                },
+                {
+                    'address': 'BgrwqWGtyCmSKc83Ht3XSNyNujrNgiFp8kQjwhPXTsPvxcXbJ',
+                    'amount': 500,
+                },
+            ]
         },
         'state': {
             resource_id: resource_value,

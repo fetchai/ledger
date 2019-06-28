@@ -24,6 +24,8 @@
 namespace fetch {
 namespace ledger {
 
+using Status = NaiveEntropyGenerator::Status;
+
 /**
  * Generate Entropy for a specified block period
  *
@@ -31,7 +33,8 @@ namespace ledger {
  * @param block_number The block number
  * @return The generated entropy
  */
-uint64_t ledger::NaiveEntropyGenerator::GenerateEntropy(Digest block_digest, uint64_t block_number)
+Status NaiveEntropyGenerator::GenerateEntropy(Digest block_digest, uint64_t block_number,
+                                              uint64_t &entropy)
 {
   FETCH_UNUSED(block_number);
 
@@ -42,8 +45,9 @@ uint64_t ledger::NaiveEntropyGenerator::GenerateEntropy(Digest block_digest, uin
   }
 
   auto const &digest_ref = block_digest;
-  auto const *entropy    = reinterpret_cast<uint64_t const *>(digest_ref.pointer());
-  return *entropy;
+  entropy = *reinterpret_cast<uint64_t const *>(digest_ref.pointer());
+
+  return Status::OK;
 }
 
 }  // namespace ledger

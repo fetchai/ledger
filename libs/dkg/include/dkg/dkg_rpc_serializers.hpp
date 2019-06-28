@@ -17,30 +17,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chain/digest.hpp"
+#include "crypto/bls_base.hpp"
 
 namespace fetch {
-namespace ledger {
 
-class EntropyGeneratorInterface
-{
-public:
-  // Construction / Destruction
-  EntropyGeneratorInterface()          = default;
-  virtual ~EntropyGeneratorInterface() = default;
 
-  enum class Status
-  {
-    OK,
-    NOT_READY,
-    FAILED
-  };
 
-  /// @name Entropy Generator
-  /// @{
-  virtual Status GenerateEntropy(Digest block_digest, uint64_t block_number, uint64_t &entropy) = 0;
-  /// @}
-};
-
-}  // namespace ledger
-}  // namespace fetch
+} // namespace fetch

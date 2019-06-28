@@ -17,30 +17,35 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chain/digest.hpp"
-
 namespace fetch {
-namespace ledger {
+namespace dkg {
 
-class EntropyGeneratorInterface
+class ContributionMsg
 {
 public:
-  // Construction / Destruction
-  EntropyGeneratorInterface()          = default;
-  virtual ~EntropyGeneratorInterface() = default;
 
-  enum class Status
-  {
-    OK,
-    NOT_READY,
-    FAILED
-  };
 
-  /// @name Entropy Generator
-  /// @{
-  virtual Status GenerateEntropy(Digest block_digest, uint64_t block_number, uint64_t &entropy) = 0;
-  /// @}
+private:
+
+  template <typename T>
+  friend void Serialize(T &serializer, ContributionMsg const &msg) {}
+  template <typename T>
+  friend void Deserialize(T &serializer, ContributionMsg &msg) {}
 };
 
-}  // namespace ledger
-}  // namespace fetch
+class SecretKeyMsg
+{
+public:
+private:
+
+  template <typename T>
+  friend void Serialize(T &serializer, SecretKeyMsg const &msg) {}
+
+  template <typename T>
+  friend void Deserialize(T &serializer, SecretKeyMsg &msg) {}
+};
+
+
+
+} // namespace dkg
+} // namespace fetch

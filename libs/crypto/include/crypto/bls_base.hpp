@@ -47,7 +47,7 @@ enum
   E_G2_SIZE              = E_FR_SIZE * 3 * 2
 };
 
-void Init()
+inline void Init()
 {
 
   // TODO: add atomic lock.
@@ -57,7 +57,7 @@ void Init()
   }
 }
 
-PrivateKey PrivateKeyByCSPRNG()
+inline PrivateKey PrivateKeyByCSPRNG()
 {
   PrivateKey ret;
 
@@ -71,26 +71,26 @@ PrivateKey PrivateKeyByCSPRNG()
   return ret;
 }
 
-PublicKey PublicKeyFromPrivate(PrivateKey const &priv)
+inline PublicKey PublicKeyFromPrivate(PrivateKey const &priv)
 {
   PublicKey ret;
   blsGetPublicKey(&ret, &priv);
   return ret;
 }
 
-Signature Sign(PrivateKey const &priv, byte_array::ConstByteArray const &msg)
+inline Signature Sign(PrivateKey const &priv, byte_array::ConstByteArray const &msg)
 {
   Signature ret;
   blsSign(&ret, &priv, msg.pointer(), msg.size());
   return ret;
 }
 
-bool Verify(Signature const &signature, PublicKey const &pub, byte_array::ConstByteArray const &msg)
+inline bool Verify(Signature const &signature, PublicKey const &pub, byte_array::ConstByteArray const &msg)
 {
   return blsVerify(&signature, &pub, msg.pointer(), msg.size());
 }
 
-PrivateKey HashToPrivateKey(byte_array::ConstByteArray const &seed)
+inline PrivateKey HashToPrivateKey(byte_array::ConstByteArray const &seed)
 {
   PrivateKey priv;
   blsHashToSecretKey(&priv, seed.pointer(), seed.size());
@@ -98,7 +98,7 @@ PrivateKey HashToPrivateKey(byte_array::ConstByteArray const &seed)
 }
 
 template <typename KeyType>
-KeyType PrivateKeyShare(std::vector<KeyType> &kl, Id id)
+KeyType PrivateKeyShare(std::vector<KeyType> &kl, Id const &id)
 {
   KeyType ret;
   int32_t error = blsSecretKeyShare(&ret, kl.data(), kl.size(), &id);
@@ -111,36 +111,36 @@ KeyType PrivateKeyShare(std::vector<KeyType> &kl, Id id)
   return ret;
 }
 
-void AddKeys(PrivateKey &lhs, PrivateKey const &rhs)
+inline void AddKeys(PrivateKey &lhs, PrivateKey const &rhs)
 {
   blsSecretKeyAdd(&lhs, &rhs);
 }
 
-void AddKeys(PublicKey &lhs, PublicKey const &rhs)
+inline void AddKeys(PublicKey &lhs, PublicKey const &rhs)
 {
   blsPublicKeyAdd(&lhs, &rhs);
 }
 
-bool PublicKeyIsEqual(PublicKey const &pk1, PublicKey const &pk2)
+inline bool PublicKeyIsEqual(PublicKey const &pk1, PublicKey const &pk2)
 {
   return blsPublicKeyIsEqual(&pk1, &pk2);
 }
 
-PublicKey GetPublicKey(PrivateKey const &sk)
+inline PublicKey GetPublicKey(PrivateKey const &sk)
 {
   PublicKey ret;
   blsGetPublicKey(&ret, &sk);
   return ret;
 }
 
-PublicKey PublicKeyShare(PublicKeyList const &master_keys, Id const &id)
+inline PublicKey PublicKeyShare(PublicKeyList const &master_keys, Id const &id)
 {
   PublicKey ret;
   blsPublicKeyShare(&ret, master_keys.data(), master_keys.size(), &id);
   return ret;
 }
 
-Signature RecoverSignature(SignatureList const &sigs, IdList const &ids)
+inline Signature RecoverSignature(SignatureList const &sigs, IdList const &ids)
 {
   Signature ret;
   if (blsSignatureRecover(&ret, sigs.data(), ids.data(), sigs.size()) != 0)
@@ -149,7 +149,71 @@ Signature RecoverSignature(SignatureList const &sigs, IdList const &ids)
   }
   return ret;
 }
+
+
+
 };  // namespace bls
 
 }  // namespace crypto
 }  // namespace fetch
+
+
+template <typename T>
+void Serialize(T &stream, ::blsId const &id)
+{
+  stream.Allocate(sizeof(id));
+  auto const *raw = reinterpret_cast<uint8_t const *>(&id);
+  stream.WriteBytes(raw, sizeof(id));
+}
+
+template <typename T>
+void Deserialize(T &stream, ::blsId &id)
+{
+  auto *raw = reinterpret_cast<uint8_t *>(&id);
+  stream.ReadBytes(raw, sizeof(id));
+}
+
+template <typename T>
+void Serialize(T &stream, ::blsPublicKey const &public_key)
+{
+  stream.Allocate(sizeof(public_key));
+  auto const *raw = reinterpret_cast<uint8_t const *>(&public_key);
+  stream.WriteBytes(raw, sizeof(public_key));
+}
+
+template <typename T>
+void Deserialize(T &stream, ::blsPublicKey &public_key)
+{
+  auto *raw = reinterpret_cast<uint8_t *>(&public_key);
+  stream.ReadBytes(raw, sizeof(public_key));
+}
+
+template <typename T>
+void Serialize(T &stream, ::blsSecretKey const &secret_key)
+{
+  stream.Allocate(sizeof(secret_key));
+  auto const *raw = reinterpret_cast<uint8_t const *>(&secret_key);
+  stream.WriteBytes(raw, sizeof(secret_key));
+}
+
+template <typename T>
+void Deserialize(T &stream, ::blsSecretKey &secret_key)
+{
+  auto *raw = reinterpret_cast<uint8_t *>(&secret_key);
+  stream.ReadBytes(raw, sizeof(secret_key));
+}
+
+template <typename T>
+void Serialize(T &stream, ::blsSignature const &signature)
+{
+  stream.Allocate(sizeof(signature));
+  auto const *raw = reinterpret_cast<uint8_t const *>(&signature);
+  stream.WriteBytes(raw, sizeof(signature));
+}
+
+template <typename T>
+void Deserialize(T &stream, ::blsSignature &signature)
+{
+  auto *raw = reinterpret_cast<uint8_t *>(&signature);
+  stream.ReadBytes(raw, sizeof(signature));
+}

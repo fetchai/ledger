@@ -44,7 +44,7 @@ std::size_t SafeDecrement(std::size_t value, std::size_t decrement)
 }  // namespace
 
 StakeManager::StakeManager(EntropyGeneratorInterface &entropy)
-  : entropy_{entropy}
+  : entropy_{&entropy}
 {}
 
 void StakeManager::UpdateCurrentBlock(Block const &current)
@@ -86,7 +86,15 @@ StakeManager::CommitteePtr StakeManager::GetCommittee(Block const &previous)
   assert(static_cast<bool>(current_));
 
   // generate the entropy for the previous block
-  auto const entropy = entropy_.GenerateEntropy(previous.body.hash, previous.body.block_number);
+  uint64_t entropy{0};
+  auto const status =
+      entropy_->GenerateEntropy(previous.body.hash, previous.body.block_number, entropy);
+
+  if (EntropyGeneratorInterface::Status::OK != status)
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Unable to lookup committee for ", previous.body.block_number, " (entropy not ready)");
+    return {};
+  }
 
   // lookup the snapshot associated
   auto snapshot = LookupStakeSnapshot(previous.body.block_number);
