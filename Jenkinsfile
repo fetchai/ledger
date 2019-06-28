@@ -22,11 +22,11 @@ enum Platform
   public final String env_cxx
 }
 
-LINUX_PLATFORMS_ALL_TESTS = [
+LINUX_PLATFORMS_CORE = [
   Platform.CLANG6,
   Platform.GCC7]
 
-LINUX_PLATFORMS_FAST_TESTS = [
+LINUX_PLATFORMS_AUX = [
   Platform.CLANG7,
   Platform.GCC8]
 
@@ -43,10 +43,14 @@ enum Configuration
   public final String label
 }
 
-// Only execute long-running tests on master and merge branches
-def is_master_or_merge_branch()
+def is_master_branch()
 {
-  return BRANCH_NAME == 'master' || BRANCH_NAME ==~ /^PR-\d+-merge$/
+  return BRANCH_NAME == 'master'
+}
+
+def is_master_or_pull_request_head_branch()
+{
+  return BRANCH_NAME == 'master' || BRANCH_NAME ==~ /^PR-\d+-head$/
 }
 
 def static_analysis()
@@ -195,32 +199,32 @@ def run_builds_in_parallel()
 
   for (config in Configuration.values())
   {
-    for (platform in LINUX_PLATFORMS_ALL_TESTS)
+    for (platform in LINUX_PLATFORMS_CORE)
     {
       stages["${platform.label} ${config.label}"] = create_docker_build(
         platform,
         config,
-        is_master_or_merge_branch() ? full_run : fast_run)
+        is_master_or_pull_request_head_branch() ? full_run : fast_run)
     }
 
-    for (platform in LINUX_PLATFORMS_FAST_TESTS)
+    for (platform in LINUX_PLATFORMS_AUX)
     {
       stages["${platform.label} ${config.label}"] = create_docker_build(
         platform,
         config,
-        fast_run)
+        is_master_branch() ? full_run : fast_run)
     }
   }
 
-  // Only run macOS builds on master and merge branches
-  if (is_master_or_merge_branch())
+  // Only run macOS builds on master and head branches
+  if (is_master_or_pull_request_head_branch())
   {
     stages["macOS Clang Release"] = create_macos_build(
       Platform.DEFAULT_CLANG,
       Configuration.RELEASE)
   }
 
-  if (is_master_or_merge_branch())
+  if (is_master_or_pull_request_head_branch())
   {
     stages['Static Analysis'] = static_analysis()
   }
