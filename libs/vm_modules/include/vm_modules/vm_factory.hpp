@@ -109,7 +109,7 @@ public:
     if (MOD_SYN & enabled)
     {
       ByteArrayWrapper::Bind(*module);
-      UInt256Wrapper::Bind(*module);
+      math::UInt256Wrapper::Bind(*module);
       SHA256Wrapper::Bind(*module);
 
       math::BindExp(*module);

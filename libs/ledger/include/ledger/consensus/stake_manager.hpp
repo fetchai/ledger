@@ -29,7 +29,7 @@ namespace ledger {
 class StakeSnapshot;
 class EntropyGeneratorInterface;
 
-class StakeManager : public StakeManagerInterface
+class StakeManager final : public StakeManagerInterface
 {
 public:
   using Committee    = std::vector<Address>;
@@ -46,6 +46,7 @@ public:
   void        UpdateCurrentBlock(Block const &current) override;
   std::size_t GetBlockGenerationWeight(Block const &previous, Address const &address) override;
   bool        ShouldGenerateBlock(Block const &previous, Address const &address) override;
+  bool        ValidMinerForBlock(Block const &previous, Address const &address) override;
   /// @}
 
   void UpdateEntropy(EntropyGeneratorInterface &entropy)

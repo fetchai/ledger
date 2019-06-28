@@ -211,5 +211,18 @@ bool StakeManager::LookupEntropy(Block const &previous, uint64_t &entropy)
   return success;
 }
 
+bool StakeManager::ValidMinerForBlock(Block const &previous, Address const &address)
+{
+  auto const committee = GetCommittee(previous);
+
+  if (!committee || committee->empty())
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Unable to determine committee for block validation");
+    return false;
+  }
+
+  return std::find((*committee).begin(), (*committee).end(), address) != (*committee).end();
+}
+
 }  // namespace ledger
 }  // namespace fetch
