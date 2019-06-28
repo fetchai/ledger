@@ -25,6 +25,7 @@
 #include "ledger/genesis_loading/genesis_file_creator.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 #include "storage/resource_mapper.hpp"
+#include "dkg/dkg_service.hpp"
 
 #include "core/byte_array/decoders.hpp"
 #include "core/json/document.hpp"
@@ -187,6 +188,11 @@ void GenesisFileCreator::LoadFile(std::string const &name)
       {
         FETCH_LOG_WARN(LOGGING_NAME, "No stake manager provided when loading from stake file!");
       }
+
+      if (dkg_)
+      {
+        LoadDKG(doc["beacon"]);
+      }
     }
   }
 }
@@ -339,6 +345,46 @@ void GenesisFileCreator::LoadStake(Variant const &object)
   else
   {
     FETCH_LOG_WARN(LOGGING_NAME, "No stake manager!");
+  }
+}
+
+void GenesisFileCreator::LoadDKG(variant::Variant const &object)
+{
+  if (dkg_)
+  {
+    std::size_t threshold{1};
+
+    if (!variant::Extract(object, "threshold", threshold))
+    {
+      return;
+    }
+
+    if (!object.Has("cabinet"))
+    {
+      return;
+    }
+
+    Variant const &stake_array = object["cabinet"];
+    if (!stake_array.IsArray())
+    {
+      return;
+    }
+
+    dkg::DkgService::CabinetMembers members{};
+    for (std::size_t i = 0, end = stake_array.size(); i < end; ++i)
+    {
+      auto const &element = stake_array[i];
+
+      if (!element.IsString())
+      {
+        return;
+      }
+
+      members.insert(byte_array::FromBase64(element.As<ConstByteArray>()));
+    }
+
+    // reset the cabinet
+    dkg_->ResetCabinet(std::move(members), threshold);
   }
 }
 

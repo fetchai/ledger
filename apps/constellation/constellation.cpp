@@ -387,7 +387,7 @@ void Constellation::Run(UriList const &initial_peers, core::WeakRunnable bootstr
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Loading from genesis save file.");
 
-    GenesisFileCreator creator(block_coordinator_, *storage_, stake_.get());
+    GenesisFileCreator creator(block_coordinator_, *storage_, stake_.get(), dkg_.get());
     creator.LoadFile(SNAPSHOT_FILENAME);
 
     FETCH_LOG_INFO(LOGGING_NAME, "Loaded from genesis save file.");
@@ -435,7 +435,7 @@ void Constellation::Run(UriList const &initial_peers, core::WeakRunnable bootstr
       }
     }
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+    std::this_thread::sleep_for(std::chrono::milliseconds(7000));
     static uint64_t block_number = 1;
     uint64_t dummy = 0;
 
@@ -496,7 +496,7 @@ void Constellation::Run(UriList const &initial_peers, core::WeakRunnable bootstr
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Creating genesis save file.");
 
-    GenesisFileCreator creator(block_coordinator_, *storage_, stake_.get());
+    GenesisFileCreator creator(block_coordinator_, *storage_, stake_.get(), dkg_.get());
     creator.CreateFile(SNAPSHOT_FILENAME);
   }
 
