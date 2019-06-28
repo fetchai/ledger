@@ -124,7 +124,7 @@ TYPED_TEST(SqrtFixedTest, forward_all_negative_test)
   // gives NaN because sqrt of a negative number is undefined
   for (auto p_it : pred)
   {
-    EXPECT_TRUE(ArrayType::Type::isNaN(p_it));
+    EXPECT_TRUE(ArrayType::Type::IsNaN(p_it));
   }
 }
 
@@ -158,7 +158,7 @@ TYPED_TEST(SqrtFixedTest, backward_all_negative_test)
   // gives NaN because sqrt of a negative number is undefined
   for (auto p_it : pred.at(0))
   {
-    EXPECT_TRUE(ArrayType::Type::isNaN(p_it));
+    EXPECT_TRUE(ArrayType::Type::IsNaN(p_it));
   }
 }
 
@@ -192,6 +192,6 @@ TYPED_TEST(SqrtFixedTest, backward_zero_test)
   // gives NaN because of division by zero
   for (auto p_it : pred.at(0))
   {
-    EXPECT_TRUE(ArrayType::Type::isNaN(p_it));
+    EXPECT_TRUE(ArrayType::Type::IsNaN(p_it));
   }
 }
