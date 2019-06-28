@@ -232,41 +232,18 @@ typename T::Type Optimiser<T, C>::Run(
   SizeType                                     step{0};
   std::pair<ArrayType, std::vector<ArrayType>> input;
 
+  // variable for stats output
   high_resolution_clock::time_point cur_time;
   high_resolution_clock::time_point prev_time = high_resolution_clock::now();
   SizeType                          prevStep{0};
+  std::string                            stat_string;
 
   while (!loader.IsDone() && step < subset_size)
   {
-    // print the training stats every batch
-    cur_time                   = high_resolution_clock::now();
-    duration<double> time_span = duration_cast<duration<double>>(cur_time - prev_time);
-    if (subset_size == fetch::math::numeric_max<math::SizeType>())
-    {
-      std::cout << "\r" << step << " (??%) -- "
-                << "learning rate: " << learning_rate_ << " -- "
-                << static_cast<double>(step - prevStep) / time_span.count() << " samples / sec"
-                << std::flush;
-    }
-    else
-    {
-      std::cout << "\r" << step << " / " << subset_size << " ("
-                << static_cast<SizeType>(100.0 * static_cast<double>(step) /
-                                         static_cast<double>(subset_size))
-                << "%) -- "
-                << "learning rate: " << learning_rate_ << " -- "
-                << static_cast<double>(step - prevStep) / time_span.count() << " samples / sec"
-                << std::flush;
-    }
-    prev_time = cur_time;
-    prevStep  = step;
-
     loss = DataType{0};
 
     // Do batch back-propagation
     input = loader.PrepareBatch(batch_size);
-
-    auto cur_input = input.second;
 
     auto name_it = input_node_names_.begin();
     for (auto &cur_input : input.second)
@@ -283,10 +260,36 @@ typename T::Type Optimiser<T, C>::Run(
     // Compute and apply gradient
     ApplyGradients(batch_size);
 
-    // FETCH_LOG_INFO("ML_LIB", "Batch loss: ", loss);
+      // print the training stats every batch
+      cur_time                   = high_resolution_clock::now();
+      duration<double> time_span = duration_cast<duration<double>>(cur_time - prev_time);
+      if (subset_size == fetch::math::numeric_max<math::SizeType>())
+      {
 
-    step += batch_size;
-    loss_sum += loss;
+          stat_string = std::to_string(step) + " (??%) -- "
+                    + "learning rate: " + std::to_string(learning_rate_) + " -- "
+                    +  std::to_string(static_cast<double>(step - prevStep) / time_span.count()) + " samples / sec ";
+      }
+      else
+      {
+          stat_string =  std::to_string(step) + " / " +  std::to_string(subset_size) + " ("
+                        +  std::to_string(static_cast<SizeType>(100.0 * static_cast<double>(step) / static_cast<double>(subset_size)))
+                        + "%) -- "
+                        + "learning rate: " +  std::to_string(learning_rate_) + " -- "
+                        +  std::to_string(static_cast<double>(step - prevStep) / time_span.count()) + " samples / sec ";
+      }
+      prev_time = cur_time;
+      prevStep  = step;
+
+      step += batch_size;
+      loss_sum += loss;
+
+      // print it in log
+//      FETCH_LOG_INFO("ML_LIB", "Training speed", stat_string);
+//      FETCH_LOG_INFO("ML_LIB", "Batch loss: ", loss_sum / step);
+
+      // print it in cout
+      std::cout << "\r" <<  stat_string << " batch loss: " << loss_sum / static_cast<DataType>(step/batch_size) << std::flush;
   }
 
   UpdateLearningRate();

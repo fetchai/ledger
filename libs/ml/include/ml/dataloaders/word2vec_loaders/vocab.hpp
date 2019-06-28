@@ -25,10 +25,16 @@ class Vocab
 public:
   using SizeType = fetch::math::SizeType;
   using DataType = std::map<std::string, std::pair<SizeType, SizeType>>;
+  using ReverseDataType = std::map<SizeType, std::pair<std::string, SizeType>>;
 
-  DataType data;
+  DataType data; // word -> (id, count)
 
-  Vocab(){};
+  Vocab();
+
+  void RemoveInfrequentWord(SizeType min);
+  std::map<SizeType, SizeType> Compactify();
+
+  ReverseDataType GetReverseVocab();
 
   void Save(std::string const &filename) const;
   void Load(std::string const &filename);
@@ -36,6 +42,51 @@ public:
   std::string WordFromIndex(SizeType index) const;
   SizeType    IndexFromWord(std::string const &word) const;
 };
+
+/**
+ * reserve numerical max of SizeType for unknown word
+ *
+ */
+Vocab::Vocab(){}
+
+/**
+ * remove word that have less counts then min
+ */
+void Vocab::RemoveInfrequentWord(fetch::ml::Vocab::SizeType min) {
+    auto it = data.begin();
+    while(it != data.end()){
+        if(it->second.second < min){
+            it = data.erase(it);
+        }else{
+            ++it;
+        }
+    }
+}
+
+/**
+ * Compactify the vocabulary such that there is no skip in indexing
+ */
+std::map<Vocab::SizeType, Vocab::SizeType> Vocab::Compactify(){
+    std::map<SizeType, SizeType> old2new; // store the old to new relation for futher use
+    SizeType i = 0;
+    for(auto &word : data){
+        old2new[word.second.first] = i;
+        word.second.first = i;
+        i++;
+    }
+    return old2new;
+}
+
+/**
+ * Return a reversed vocabulary
+ */
+Vocab::ReverseDataType Vocab::GetReverseVocab() {
+    ReverseDataType reverse_data;
+    for(auto const &word : data){
+        reverse_data[word.second.first] = std::make_pair(word.first, word.second.second);
+    }
+    return reverse_data;
+}
 
 /**
  * save vocabulary to a file
@@ -117,7 +168,7 @@ math::SizeType Vocab::IndexFromWord(std::string const &word) const
   {
     return (data.at(word)).first;
   }
-  return 0;
+  return fetch::math::numeric_max<SizeType>();
 }
 
 }  // namespace ml

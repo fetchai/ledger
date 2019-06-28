@@ -86,9 +86,9 @@ void PrintWordAnology(W2VLoader<DataType> const &dl, ArrayType const &embeddings
   SizeType word2_idx = dl.IndexFromWord(word2);
   SizeType word3_idx = dl.IndexFromWord(word3);
 
-  if (word1_idx == 0 || word2_idx == 0 || word3_idx == 0)
+  if (word1_idx == fetch::math::numeric_max<SizeType>() || word2_idx == fetch::math::numeric_max<SizeType>() || word3_idx == fetch::math::numeric_max<SizeType>())
   {
-    std::cout << "WARNING! not all to-be-tested words are in vocabulary" << std::endl;
+    throw "WARNING! not all to-be-tested words are in vocabulary";
   }
   else
   {
@@ -122,9 +122,9 @@ void PrintKNN(W2VLoader<DataType> const &dl, ArrayType const &embeddings, std::s
 {
   ArrayType arr = embeddings;
 
-  if (dl.IndexFromWord(word0) == 0)
+  if (dl.IndexFromWord(word0) == fetch::math::numeric_max<SizeType>())
   {
-    std::cout << "WARNING! could not find [" + word0 + "] in vocabulary" << std::endl;
+      throw "WARNING! could not find [" + word0 + "] in vocabulary";
   }
   else
   {
@@ -199,8 +199,7 @@ struct TrainingParams
 
   SizeType min_count = 5;  // infrequent word removal threshold
 
-  SizeType    output_size     = 1;
-  SizeType    batch_size      = 128;      // training data batch size
+  SizeType    batch_size      = 10000;      // training data batch size
   SizeType    embedding_size  = 32;       // dimension of embedding vec
   SizeType    training_epochs = 5;        // total number of training epochs
   double      learning_rate   = 0.1;      // alpha - the learning rate
@@ -240,7 +239,9 @@ int main(int argc, char **argv)
   /// DATA LOADING ///
   std::cout << "building vocab " << std::endl;
   data_loader.BuildVocab(ReadFile(train_file));
+  std::cout << "Removing infrequent words" << std::endl;
   data_loader.RemoveInfrequent(tp.min_count);
+  std::cout << "Initializing unigram table" << std::endl;
   data_loader.InitUnigramTable();
   std::cout << "Vocab Size : " << data_loader.vocab_size() << std::endl;
 
