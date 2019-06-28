@@ -48,7 +48,7 @@ int main(int ac, char **av)
 {
   DataType learning_rate{0.01f};
   SizeType subset_size{100};
-  SizeType epochs{10};
+  SizeType epochs{20};
   SizeType batch_size{10};
 
   if (ac < 3)
@@ -66,11 +66,14 @@ int main(int ac, char **av)
 
   std::string input   = g->AddNode<PlaceHolder<ArrayType>>("Input", {});
   std::string layer_1 = g->AddNode<FullyConnected<ArrayType>>(
-      "FC1", {input}, 28u * 28u, 10u, fetch::ml::details::ActivationType::RELU);
+      "FC1", {input}, 28u * 28u, 10u, fetch::ml::details::ActivationType::RELU,
+      fetch::ml::details::RegularizationType::L1, DataType{0.01f});
   std::string layer_2 = g->AddNode<FullyConnected<ArrayType>>(
-      "FC2", {layer_1}, 10u, 10u, fetch::ml::details::ActivationType::RELU);
+      "FC2", {layer_1}, 10u, 10u, fetch::ml::details::ActivationType::RELU,
+      fetch::ml::details::RegularizationType::L1, DataType{0.01f});
   std::string output = g->AddNode<FullyConnected<ArrayType>>(
-      "FC3", {layer_2}, 10u, 10u, fetch::ml::details::ActivationType::SOFTMAX);
+      "FC3", {layer_2}, 10u, 10u, fetch::ml::details::ActivationType::SOFTMAX,
+      fetch::ml::details::RegularizationType::L1, DataType{0.01f});
 
   // Initialise MNIST loader
   DataLoaderType data_loader(av[1], av[2]);

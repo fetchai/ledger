@@ -114,7 +114,7 @@ std::vector<std::reference_wrapper<const T>> Node<T, O>::GatherInputs() const
 template <typename T, class O>
 T &Node<T, O>::Evaluate()
 {
-  FETCH_LOG_INFO("ML_LIB", "Evaluating node [", name_, "]");
+  // FETCH_LOG_INFO("ML_LIB", "Evaluating node [", name_, "]");
   if (cached_output_status_ != CachedOutputState::VALID_CACHE)
   {
     std::vector<std::reference_wrapper<const ArrayType>> inputs = GatherInputs();
@@ -144,7 +144,7 @@ template <typename T, class O>
 std::vector<std::pair<NodeInterface<T> *, T>> Node<T, O>::BackPropagate(
     ArrayType const &error_signal)
 {
-  FETCH_LOG_INFO("ML_LIB", "Backpropagating node [", name_, "]");
+  // FETCH_LOG_INFO("ML_LIB", "Backpropagating node [", name_, "]");
   std::vector<std::reference_wrapper<const ArrayType>> inputs = GatherInputs();
   std::vector<ArrayType> back_propagated_error_signals = this->Backward(inputs, error_signal);
   std::vector<std::pair<NodeInterface<T> *, ArrayType>> non_back_propagated_error_signals;

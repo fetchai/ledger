@@ -49,6 +49,7 @@ class Trainable
 public:
   using ArrayType    = T;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
+  using DataType     = typename ArrayType::Type;
 
   virtual void                           Step(typename T::Type learning_rate)        = 0;
   virtual struct fetch::ml::StateDict<T> StateDict() const                           = 0;
@@ -57,6 +58,8 @@ public:
   virtual ArrayType const &get_gradients() const                                     = 0;
   virtual void             ResetGradients()                                          = 0;
   virtual void             ApplyGradient(ArrayType const &grad)                      = 0;
+  virtual void             L1Regularization(DataType regularization_rate)            = 0;
+  virtual void             L2Regularization(DataType regularization_rate)            = 0;
 };
 
 template <class T>
@@ -65,6 +68,7 @@ class Weights : public fetch::ml::ops::PlaceHolder<T>, public Trainable<T>
 public:
   using ArrayType     = T;
   using SizeType      = typename ArrayType::SizeType;
+  using DataType      = typename ArrayType::Type;
   using ArrayPtrType  = std::shared_ptr<ArrayType>;
   using VecTensorType = typename PlaceHolder<T>::VecTensorType;
 
@@ -105,6 +109,27 @@ public:
   {
     this->output_->InlineAdd(grad);
     ResetGradients();
+  }
+
+  virtual void L1Regularization(DataType regularization_rate)
+  {
+    ArrayType weight     = *this->output_;
+    ArrayType reg_output = ArrayType(weight.shape());
+
+    fetch::math::Multiply(weight, static_cast<DataType>(-2) * regularization_rate, reg_output);
+    this->output_->InlineAdd(reg_output);
+  }
+
+  virtual void L2Regularization(DataType regularization_rate)
+  {
+    ArrayType weight     = *this->output_;
+    ArrayType reg_output = ArrayType(weight.shape());
+
+    fetch::math::Abs(weight, reg_output);
+    fetch::math::Divide(weight, reg_output, reg_output);
+    fetch::math::Multiply(reg_output, -regularization_rate, reg_output);
+
+    this->output_->InlineAdd(reg_output);
   }
 
   /**
