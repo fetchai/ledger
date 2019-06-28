@@ -83,6 +83,7 @@ public:
     bool                       success{false};
     crypto::bls::PrivateKey    private_key{};
     crypto::bls::PublicKeyList public_keys{};
+    crypto::bls::PublicKey     global_public_key{};
   };
   SecretKeyReq RequestSecretKey(MuddleAddress const &address);
 
@@ -165,6 +166,8 @@ private:
   /// @{
   Promise                 pending_promise_;
   crypto::bls::PrivateKey sig_private_key_{};
+  crypto::bls::PublicKey  sig_public_key_{}; // global
+
   /// @}
 
    /// @name Cabinet / Aeon Data
@@ -178,6 +181,8 @@ private:
   /// @{
   mutable RMutex dealer_lock_;  // Priority 2.
   CabinetIds     current_cabinet_ids_{};
+  crypto::bls::PublicKey global_pk_;
+  std::vector<crypto::bls::Id> current_cabinet_id_vec_{};
   PublicKeyList  current_cabinet_public_keys_{};
   CabinetKeys    current_cabinet_secrets_{};
   /// @}

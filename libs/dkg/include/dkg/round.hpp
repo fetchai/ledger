@@ -37,6 +37,10 @@ public:
   ~Round() = default;
 
   uint64_t round() const;
+  crypto::bls::Signature const &round_signature() const
+  {
+    return round_signature_;
+  }
 
   void           AddShare(crypto::bls::Id const &id, crypto::bls::Signature const &sig);
   bool           HasSignature() const;

@@ -43,7 +43,7 @@ using State         = DkgService::State;
 using PromiseState  = service::PromiseState;
 
 constexpr char const *LOGGING_NAME = "DkgService";
-constexpr uint64_t    READ_AHEAD   = 5;
+constexpr uint64_t    READ_AHEAD   = 1;
 
 crypto::bls::Id CreateIdFromAddress(ConstByteArray const &address)
 {
@@ -165,9 +165,10 @@ DkgService::SecretKeyReq DkgService::RequestSecretKey(MuddleAddress const &addre
   if (it != current_cabinet_secrets_.end())
   {
     // populate the request
-    req.success     = true;
-    req.private_key = it->second;
-    req.public_keys = current_cabinet_public_keys_;
+    req.success           = true;
+    req.private_key       = it->second;
+    req.public_keys       = current_cabinet_public_keys_;
+    req.global_public_key = global_pk_;
   }
   else
   {
@@ -351,11 +352,12 @@ State DkgService::OnWaitForSecretKeyState()
         next_state       = State::BROADCAST_SIGNATURE;
         waiting          = false;
         sig_private_key_ = response.private_key;
+        sig_public_key_  = response.global_public_key;
         pending_promise_.reset();
       }
       else
       {
-        FETCH_LOG_INFO(LOGGING_NAME, "\n\nResponse unsuccessful, retrying");
+        FETCH_LOG_INFO(LOGGING_NAME, "Response unsuccessful, retrying");
         next_state = State::REQUEST_SECRET_KEY;
       }
 
@@ -363,7 +365,7 @@ State DkgService::OnWaitForSecretKeyState()
     }
     case PromiseState::FAILED:
     case PromiseState::TIMEDOUT:
-        FETCH_LOG_INFO(LOGGING_NAME, "\n\nResponse timed out, retrying");
+        FETCH_LOG_INFO(LOGGING_NAME, "Response timed out, retrying");
       next_state = State::REQUEST_SECRET_KEY;
       break;
     }
@@ -420,10 +422,14 @@ State DkgService::OnCollectSignaturesState()
     FETCH_LOG_ERROR(LOGGING_NAME, "Generated Signature: ", round->GetRoundMessage().ToBase64(), " round: ", round->round(), " check: ", requesting_iteration_.load());
 
     // TODO(EJF): This signature needs to be verified
-//      if (crypto::bls::Verify(*aeon_signature_, groups_pk, current_entropy_source_))
-//      {
-//        FETCH_LOG_ERROR(LOGGING_NAME, "GREATE SUCCESSE !!!!");
-//      }
+    if (crypto::bls::Verify(round->round_signature(), sig_public_key_, GenerateMessage(requesting_iteration_)))
+    {
+      FETCH_LOG_ERROR(LOGGING_NAME, "GREATE SUCCESSE !!!!");
+    }
+    else
+    {
+      FETCH_LOG_CRITICAL(LOGGING_NAME, "#### WHOOOOOOOOOOOPS ####");
+    }
 
     // have completed this iteration now
     ++requesting_iteration_;
@@ -485,6 +491,38 @@ bool DkgService::CanBuildAeonKeys() const
 
 bool DkgService::BuildAeonKeys()
 {
+//  FETCH_LOG_INFO(LOGGING_NAME, "Building keys for the start of the aeon");
+//
+//  FETCH_LOCK(cabinet_lock_);
+//  FETCH_LOCK(dealer_lock_);
+//
+//  current_cabinet_public_keys_.clear();
+//
+//  crypto::bls::PrivateKeyList private_keys;
+//  for (std::size_t i = 0; i < current_threshold_; ++i)
+//  {
+//    auto sk = crypto::bls::PrivateKeyByCSPRNG();
+//    private_keys.push_back(sk);
+//
+//    current_cabinet_public_keys_.emplace_back(crypto::bls::PublicKeyFromPrivate(sk));
+//  }
+//
+//  for (auto const &address : current_cabinet_)
+//  {
+//    auto const it = current_cabinet_ids_.find(address);
+//    if (it == current_cabinet_ids_.end())
+//    {
+//      FETCH_LOG_ERROR(LOGGING_NAME, "Unable to lookup Id for: ", address.ToBase64());
+//      return false;
+//    }
+//
+//    // generate the cur
+//    FETCH_LOG_WARN(LOGGING_NAME, "Built secret for cabinet member ", address.ToBase64());
+//    current_cabinet_secrets_[address] = crypto::bls::PrivateKeyShare(private_keys, it->second);
+//  }
+//
+//  return true;
+
   FETCH_LOG_INFO(LOGGING_NAME, "Building keys for the start of the aeon");
 
   FETCH_LOCK(cabinet_lock_);
@@ -492,14 +530,47 @@ bool DkgService::BuildAeonKeys()
 
   current_cabinet_public_keys_.clear();
 
+  // CabinetIds      = std::unordered_map<MuddleAddress, crypto::bls::Id>;
+  // CabinetIds current_cabinet_ids_;      map from addresses to bls Ids (equiv to participants)
+
+  using VerificationVector = crypto::bls::dkg::VerificationVector;
+
   crypto::bls::PrivateKeyList private_keys;
-  for (std::size_t i = 0; i < current_threshold_; ++i)
+  std::vector<VerificationVector> verification_vectors;
+  std::vector<crypto::bls::PrivateKeyList> all_received_shares;
+
+  for (auto const &id_pair : current_cabinet_ids_)
   {
     auto sk = crypto::bls::PrivateKeyByCSPRNG();
-    private_keys.push_back(sk);
-
-    current_cabinet_public_keys_.emplace_back(crypto::bls::PublicKeyFromPrivate(sk));
+    auto id = id_pair.second;
+    id.v = sk.v;
+//    private_keys.push_back(sk);
+    current_cabinet_id_vec_.push_back(id);
   }
+
+  for (size_t i=0; i < current_cabinet_ids_.size(); ++i)
+  {
+    auto contrib = crypto::bls::dkg::GenerateContribution(current_cabinet_id_vec_, current_threshold_);
+    verification_vectors.push_back(contrib.verification);
+    crypto::bls::PrivateKeyList received_shares;
+
+    for (uint64_t j = 0; j < contrib.contributions.size(); ++j)
+    {
+      auto  spk      = contrib.contributions[j];
+      bool  verified = crypto::bls::dkg::VerifyContributionShare(current_cabinet_id_vec_[j], spk, contrib.verification);
+
+      if (!verified)
+      {
+        throw std::runtime_error("share could not be verified.");
+      }
+
+      received_shares.push_back(spk);
+    }
+    private_keys.push_back(crypto::bls::dkg::AccumulateContributionShares(received_shares));
+  }
+
+  VerificationVector group_vectors = crypto::bls::dkg::AccumulateVerificationVectors(verification_vectors);
+  global_pk_ = group_vectors[0];
 
   for (auto const &address : current_cabinet_)
   {
@@ -532,7 +603,7 @@ ConstByteArray DkgService::GenerateMessage(uint64_t round)
 
     if (!round_info)
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Unable to lookup prev. round to generate message");
+      FETCH_LOG_WARN(LOGGING_NAME, "Unable to lookup prev. round to generate message for round: ", round);
     }
     else
     {
