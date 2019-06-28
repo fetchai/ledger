@@ -43,11 +43,13 @@ TYPED_TEST(PairWiseDistanceTest, simple_test)
   TypeParam R = TypeParam({1, data.shape(0) * (data.shape(0) - 1) / 2});
 
   PairWiseDistance(data,
-      [](TypeParam x, TypeParam y) -> typename TypeParam::Type {TypeParam z = x-y; return z.Sum();},
-      R);
+                   [](TypeParam x, TypeParam y) -> typename TypeParam::Type {
+                     TypeParam z = x - y;
+                     return z.Sum();
+                   },
+                   R);
 
   EXPECT_TRUE(R.AllClose(gt));
-
 
   data = TypeParam::FromString("1, 1, 1, 1; 1, 1, 1, 1");
   gt   = TypeParam::FromString("0");
@@ -55,11 +57,13 @@ TYPED_TEST(PairWiseDistanceTest, simple_test)
   R = TypeParam({1, data.shape(0) * (data.shape(0) - 1) / 2});
 
   PairWiseDistance(data,
-      [](TypeParam x, TypeParam y) -> typename TypeParam::Type {TypeParam z = x-y; return z.Sum();},
-      R);
+                   [](TypeParam x, TypeParam y) -> typename TypeParam::Type {
+                     TypeParam z = x - y;
+                     return z.Sum();
+                   },
+                   R);
 
   EXPECT_TRUE(R.AllClose(gt));
-
 
   data = TypeParam::FromString("1, 2, 3; 4, 5, 6; 1, 2, 3");
   gt   = TypeParam::FromString("-9, 0, 9");
@@ -67,8 +71,11 @@ TYPED_TEST(PairWiseDistanceTest, simple_test)
   R = TypeParam({1, data.shape(0) * (data.shape(0) - 1) / 2});
 
   PairWiseDistance(data,
-      [](TypeParam x, TypeParam y) -> typename TypeParam::Type {TypeParam z = x-y; return z.Sum();},
-      R);
+                   [](TypeParam x, TypeParam y) -> typename TypeParam::Type {
+                     TypeParam z = x - y;
+                     return z.Sum();
+                   },
+                   R);
 
   EXPECT_TRUE(R.AllClose(gt));
 }

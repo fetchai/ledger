@@ -63,7 +63,8 @@ public:
   /**
    * elementwise division is not trainable - just pass the error signal back
    */
-  std::vector<ArrayType> Backward(VecTensorType const &inputs, ArrayType const &  error_signal) override
+  std::vector<ArrayType> Backward(VecTensorType const &inputs,
+                                  ArrayType const &    error_signal) override
   {
     return std::vector<ArrayType>(inputs.size(), error_signal);
   }

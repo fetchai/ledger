@@ -37,12 +37,11 @@ using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor
 
 TYPED_TEST_CASE(DivideTest, MyTypes);
 
-
 TYPED_TEST(DivideTest, forward_test)
 {
   TypeParam data = TypeParam::FromString("1, 1, 2; 3, 4, 5");
 
-  TypeParam gt   = TypeParam::FromString("1, 1, 1; 1, 1, 1");
+  TypeParam gt = TypeParam::FromString("1, 1, 1; 1, 1, 1");
 
   fetch::ml::ops::Divide<TypeParam> op;
 
@@ -59,10 +58,10 @@ TYPED_TEST(DivideTest, backward_test)
 
   fetch::ml::ops::Divide<TypeParam> op;
 
-  TypeParam error(op.ComputeOutputShape({data}));
+  TypeParam              error(op.ComputeOutputShape({data}));
   std::vector<TypeParam> ret = op.Backward({data, data}, error);
 
-  for (auto &pt: ret)
+  for (auto &pt : ret)
   {
     EXPECT_TRUE(error.AllClose(pt, fetch::math::function_tolerance<typename TypeParam::Type>(),
                                fetch::math::function_tolerance<typename TypeParam::Type>()));

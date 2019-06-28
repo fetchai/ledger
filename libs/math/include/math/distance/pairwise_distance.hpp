@@ -26,7 +26,8 @@ namespace math {
 namespace distance {
 
 template <typename ArrayType, typename F>
-inline meta::IfIsMathArray<ArrayType, ArrayType> &PairWiseDistance(ArrayType const &a, F &&metric, ArrayType &r)
+inline meta::IfIsMathArray<ArrayType, ArrayType> &PairWiseDistance(ArrayType const &a, F &&metric,
+                                                                   ArrayType &r)
 {
   using SizeType = typename ArrayType::SizeType;
 
@@ -39,8 +40,8 @@ inline meta::IfIsMathArray<ArrayType, ArrayType> &PairWiseDistance(ArrayType con
   {
     for (SizeType j = i + 1; j < a.shape(0); ++j)
     {
-      ArrayType slice1 = a.Slice(i).Copy();
-      ArrayType slice2 = a.Slice(j).Copy();
+      ArrayType slice1    = a.Slice(i).Copy();
+      ArrayType slice2    = a.Slice(j).Copy();
       r(SizeType{0}, k++) = metric(slice1, slice2);
     }
   }
