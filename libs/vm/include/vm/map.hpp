@@ -45,7 +45,7 @@ struct H;
 template <>
 struct H<fixed_point::fp32_t, void>
 {
-  size_t operator()(TemplateParameter1 const &key) const
+  std::size_t operator()(TemplateParameter1 const &key) const
   {
     return std::hash<int32_t>()(key.primitive.Get<int32_t>());
   }
@@ -54,7 +54,7 @@ struct H<fixed_point::fp32_t, void>
 template <>
 struct H<fixed_point::fp64_t, void>
 {
-  size_t operator()(TemplateParameter1 const &key) const
+  std::size_t operator()(TemplateParameter1 const &key) const
   {
     return std::hash<int64_t>()(key.primitive.Get<int64_t>());
   }

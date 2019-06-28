@@ -20,8 +20,7 @@
 
 #include "gmock/gmock.h"
 
-namespace fetch {
-namespace vm {
+using namespace fetch::vm;
 
 namespace {
 
@@ -80,7 +79,7 @@ TEST_F(StateTests, MapDeserializeTest)
       var data = Map<String, String>();
       var state = State<Map<String, String>>("map");
       state.set(data);
-  endfunction
+    endfunction
   )";
 
   EXPECT_CALL(toolkit.observer(), Write("map", _, _));
@@ -92,7 +91,7 @@ TEST_F(StateTests, MapDeserializeTest)
     function main() : Map<String, String>
       var state = State<Map<String, String>>("map");
       return state.get(Map<String, String>());
-  endfunction
+    endfunction
   )";
 
   EXPECT_CALL(toolkit.observer(), Exists("map"));
@@ -334,5 +333,3 @@ TEST_F(StateTests, test_serialisation_of_complex_type_2)
 }
 
 }  // namespace
-}  // namespace vm
-}  // namespace fetch
