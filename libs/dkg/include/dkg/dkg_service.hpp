@@ -44,9 +44,6 @@ class Subscription;
 
 namespace dkg {
 
-class SecretKeyMsg;
-class ContributionMsg;
-
 class DkgService : public ledger::EntropyGeneratorInterface
 {
 public:
@@ -139,12 +136,6 @@ private:
   State OnCompleteState();
   /// @}
 
-//  /// @name Network Comms?
-//  /// @{
-//  void OnContribution(ContributionMsg const &secret_key, ConstByteArray const &from);
-//  void OnSecretKey(SecretKeyMsg const &contribution, ConstByteArray const &from);
-//  /// @}
-
   bool CanBuildAeonKeys() const;
   bool BuildAeonKeys();
 
@@ -163,38 +154,26 @@ private:
 
   StateMachinePtr state_machine_;
 
-//
-//  SubscriptionPtr       contribution_subscription_;
-//  SubscriptionPtr       secret_key_subscription_;
-
   std::size_t current_threshold_{1};
 
   /// @name State Spectific
   /// @{
   Promise pending_promise_;
   crypto::bls::PrivateKey     sig_private_key_{};
-
-
   /// @}
 
   /// @name Current Signature
   /// @{
   mutable RMutex              sig_lock_{};
   std::unique_ptr<crypto::bls::Signature> aeon_signature_{};
-//  crypto::bls::PublicKeyList  sig_public_keys_{};
   crypto::bls::IdList         sig_ids_{};
   crypto::bls::SignatureList  sig_shares_{};
-
-//  crypto::bls::PrivateKeyList sig_private_shares_{};
   /// @}
 
   /// @name Beacon / Secret Generation
   /// @{
   mutable RMutex cabinet_lock_;
-  CabinetMembers current_cabinet_{
-    byte_array::FromBase64("CL3zb8U2KYP+OWmn9wZuHuUIXciSNtTZPjmgB75OHRk8hxgCt+G+sOj1dXVUqzsMcNYAJwV/tScKu8ej1yAuDw=="),
-    byte_array::FromBase64("YzYsKxl+EmgLpHLnmrNx2PoNjJSQT4ifFzbQS051iKTcXEWJh+ghGE+Ip8FD6UXBMUlKAm9V+NRzCGo3U/aJiA==")
-  };
+  CabinetMembers current_cabinet_{};
   CabinetIds current_cabinet_ids_{};
   crypto::bls::PublicKeyList current_cabinet_public_keys_{}; // aeon
   CabinetKeys current_cabinet_secrets_{};
