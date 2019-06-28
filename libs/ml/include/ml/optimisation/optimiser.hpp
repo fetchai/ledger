@@ -229,7 +229,6 @@ typename T::Type Optimiser<T>::Run(fetch::ml::dataloaders::DataLoader<ArrayType,
   {
     loader.Reset();
   }
-  loader.Reset();
 
   // for some input combinations batch size will be modified
   batch_size = UpdateBatchSize(batch_size, loader.Size(), subset_size);
