@@ -32,7 +32,7 @@ features. Fetch.AI will be delivering regular updates.
 * MacOS Darwin 10.13x and higher (64bit)
 * Ubuntu 18.04 (x86_64)
 
-(We plan to support all major platforms in the future)
+(We plan to support all major platforms in the future).
 
 ## Getting Started
 
