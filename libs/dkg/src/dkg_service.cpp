@@ -218,12 +218,22 @@ DkgService::Status DkgService::GenerateEntropy(Digest block_digest, uint64_t blo
 
   if (!aeon_signature_)
   {
+    FETCH_LOG_CRITICAL(LOGGING_NAME, "No signature present for: ", block_number);
      return Status::NOT_READY;
   }
 
-  auto const *raw_entropy = reinterpret_cast<uint64_t const *>(aeon_signature_.get());
-  entropy = *raw_entropy;
-  aeon_signature_.reset();
+  FETCH_LOG_CRITICAL(LOGGING_NAME, "Request Entropy for ", block_number);
+
+  auto const *raw_signature = reinterpret_cast<uint8_t const *>(aeon_signature_.get());
+
+  // pseudo single signature randomness
+  crypto::SHA256 hash{};
+  hash.Reset();
+  hash.Update(raw_signature, sizeof(crypto::bls::Signature));
+  hash.Update(block_digest);
+  auto const digest = hash.Final();
+
+  entropy = *reinterpret_cast<uint64_t const *>(digest.pointer());
 
   return Status::OK;
 }
