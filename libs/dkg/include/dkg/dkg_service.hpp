@@ -17,19 +17,19 @@
 //
 //------------------------------------------------------------------------------
 
-#include "dkg/round.hpp"
-#include "dkg/dkg_rpc_serializers.hpp"
+#include "core/byte_array/const_byte_array.hpp"
 #include "core/byte_array/decoders.hpp"
-#include "core/state_machine.hpp"
 #include "core/containers/mapping.hpp"
 #include "core/mutex.hpp"
-#include "core/byte_array/const_byte_array.hpp"
+#include "core/state_machine.hpp"
 #include "crypto/bls_base.hpp"
+#include "dkg/dkg_rpc_protocol.hpp"
+#include "dkg/dkg_rpc_serializers.hpp"
+#include "dkg/round.hpp"
 #include "ledger/chain/address.hpp"
 #include "ledger/consensus/entropy_generator_interface.hpp"
-#include "dkg/dkg_rpc_protocol.hpp"
-#include "network/muddle/rpc/server.hpp"
 #include "network/muddle/rpc/client.hpp"
+#include "network/muddle/rpc/server.hpp"
 
 #include <memory>
 #include <unordered_map>
@@ -41,14 +41,13 @@ namespace muddle {
 class MuddleEndpoint;
 class Subscription;
 
-} // namespace network
+}  // namespace muddle
 
 namespace dkg {
 
 class DkgService : public ledger::EntropyGeneratorInterface
 {
 public:
-
   enum class State
   {
     REGISTER,
@@ -65,14 +64,14 @@ public:
   using Digest         = ledger::Digest;
   using ConstByteArray = byte_array::ConstByteArray;
   using MuddleAddress  = ConstByteArray;
-  using CabinetMembers  = std::unordered_set<MuddleAddress>;
+  using CabinetMembers = std::unordered_set<MuddleAddress>;
 
   // Construction / Destruction
   explicit DkgService(Endpoint &endpoint, ConstByteArray address, ConstByteArray beacon_address,
                       std::size_t key_lifetime);
   DkgService(DkgService const &) = delete;
-  DkgService(DkgService &&) = delete;
-  ~DkgService() override = default;
+  DkgService(DkgService &&)      = delete;
+  ~DkgService() override         = default;
 
   /// @name External Events
   /// @{
@@ -87,7 +86,9 @@ public:
   };
   SecretKeyReq RequestSecretKey(MuddleAddress const &address);
 
-  void SubmitSignatureShare(uint64_t round, crypto::bls::Id const &id, crypto::bls::PublicKey  const &public_key, crypto::bls::Signature const &signature);
+  void SubmitSignatureShare(uint64_t round, crypto::bls::Id const &id,
+                            crypto::bls::PublicKey const &public_key,
+                            crypto::bls::Signature const &signature);
   /// @}
 
   /// @name Entropy Generator
@@ -146,10 +147,10 @@ private:
 
   /// @name Utils
   /// @{
-  bool CanBuildAeonKeys() const;
-  bool BuildAeonKeys();
+  bool           CanBuildAeonKeys() const;
+  bool           BuildAeonKeys();
   ConstByteArray GenerateMessage(uint64_t round);
-  RoundPtr LookupRound(uint64_t round, bool create = false);
+  RoundPtr       LookupRound(uint64_t round, bool create = false);
   /// @}
 
   ConstByteArray const  address_;
@@ -166,11 +167,11 @@ private:
   /// @{
   Promise                 pending_promise_;
   crypto::bls::PrivateKey sig_private_key_{};
-  crypto::bls::PublicKey  sig_public_key_{}; // global
+  crypto::bls::PublicKey  sig_public_key_{};  // global
 
   /// @}
 
-   /// @name Cabinet / Aeon Data
+  /// @name Cabinet / Aeon Data
   /// @{
   mutable RMutex cabinet_lock_{};  // Priority 1.
   std::size_t    current_threshold_{1};
@@ -179,12 +180,12 @@ private:
 
   /// @name Dealer Specific Data
   /// @{
-  mutable RMutex dealer_lock_;  // Priority 2.
-  CabinetIds     current_cabinet_ids_{};
-  crypto::bls::PublicKey global_pk_;
+  mutable RMutex               dealer_lock_;  // Priority 2.
+  CabinetIds                   current_cabinet_ids_{};
+  crypto::bls::PublicKey       global_pk_;
   std::vector<crypto::bls::Id> current_cabinet_id_vec_{};
-  PublicKeyList  current_cabinet_public_keys_{};
-  CabinetKeys    current_cabinet_secrets_{};
+  PublicKeyList                current_cabinet_public_keys_{};
+  CabinetKeys                  current_cabinet_secrets_{};
   /// @}
 
   /// @name Round Data
@@ -218,5 +219,5 @@ void Deserialize(T &stream, DkgService::SecretKeyReq &req)
   }
 }
 
-} // namespace dkg
-} // namespace fetch
+}  // namespace dkg
+}  // namespace fetch

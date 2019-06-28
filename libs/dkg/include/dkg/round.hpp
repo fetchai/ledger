@@ -33,10 +33,10 @@ public:
   // Construction / Destruction
   explicit Round(uint64_t round);
   Round(Round const &) = delete;
-  Round(Round &&) = delete;
-  ~Round() = default;
+  Round(Round &&)      = delete;
+  ~Round()             = default;
 
-  uint64_t round() const;
+  uint64_t                      round() const;
   crypto::bls::Signature const &round_signature() const
   {
     return round_signature_;
@@ -85,5 +85,5 @@ inline std::size_t Round::GetNumShares() const
 
 using RoundPtr = std::shared_ptr<Round>;
 
-} // namespace dkg
-} // namespace fetch
+}  // namespace dkg
+}  // namespace fetch

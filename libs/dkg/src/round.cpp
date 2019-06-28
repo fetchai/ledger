@@ -56,5 +56,5 @@ void Round::RecoverSignature()
   has_signature_   = true;
 }
 
-} // namespace dkg
-} // namespace fetch
+}  // namespace dkg
+}  // namespace fetch
