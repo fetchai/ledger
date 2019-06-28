@@ -206,7 +206,10 @@ def run_builds_in_parallel()
         config,
         full_run)
     }
+  }
 
+  for (config in is_master_or_pull_request_head_branch() ? Configuration.values() : [Configuration.RELEASE])
+  {
     for (platform in LINUX_PLATFORMS_AUX)
     {
       stages["${platform.label} ${config.label}"] = create_docker_build(
