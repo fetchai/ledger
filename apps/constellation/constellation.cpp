@@ -292,12 +292,13 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
     http_.AddModule(*module);
   }
 
+#if 0
   // TODO(EJF): Work around
   if (dkg_)
   {
     stake_->UpdateEntropy(*dkg_);
   }
-
+#endif
 }
 
 /**
