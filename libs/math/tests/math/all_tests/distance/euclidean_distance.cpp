@@ -43,14 +43,14 @@ TYPED_TEST(EuclideanTest, simple_test)
   using ArrayType = TypeParam;
 
   ArrayType A = ArrayType(4);
-  A.Set(SizeType{0}, DataType(1));
+  A.Set(SizeType{0}, static_cast<DataType>(1));
   A.Set(SizeType{1}, DataType(2));
   A.Set(SizeType{2}, DataType(3));
   A.Set(SizeType{3}, DataType(4));
   EXPECT_NEAR(double(Euclidean(A, A)), 0, (double)function_tolerance<DataType>());
 
   ArrayType B = ArrayType(4);
-  B.Set(SizeType{0}, DataType(1));
+  B.Set(SizeType{0}, static_cast<DataType>(1));
   B.Set(SizeType{1}, DataType(2));
   B.Set(SizeType{2}, DataType(3));
   B.Set(SizeType{3}, DataType(2));
@@ -65,7 +65,7 @@ TYPED_TEST(EuclideanTest, matrix_euclidean_test)
   using ArrayType = TypeParam;
 
   ArrayType A = ArrayType({3, 4});
-  A.Set(SizeType{0}, SizeType{0}, DataType(1));
+  A.Set(SizeType{0}, SizeType{0}, static_cast<DataType>(1));
   A.Set(SizeType{0}, SizeType{1}, DataType(2));
   A.Set(SizeType{0}, SizeType{2}, DataType(3));
   A.Set(SizeType{0}, SizeType{3}, DataType(4));

@@ -24,12 +24,13 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class Sqrt : public fetch::ml::ElementWiseOps<T>
+class Sqrt : public fetch::ml::Ops<T>
 {
 public:
   using ArrayType     = T;
   using DataType      = typename ArrayType::Type;
-  using VecTensorType = typename ElementWiseOps<T>::VecTensorType;
+  using SizeType      = typename ArrayType::SizeType;
+  using VecTensorType = typename Ops<T>::VecTensorType;
 
   Sqrt()          = default;
   virtual ~Sqrt() = default;
@@ -64,6 +65,11 @@ public:
     fetch::math::Multiply(error_signal, ret_error_signal, ret_error_signal);
 
     return {ret_error_signal};
+  }
+
+  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const
+  {
+    return inputs.front().get().shape();
   }
 
   static constexpr char const *DESCRIPTOR = "Sqrt";

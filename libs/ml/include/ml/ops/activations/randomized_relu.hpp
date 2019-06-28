@@ -28,14 +28,14 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class RandomizedRelu : public fetch::ml::ElementWiseOps<T>
+class RandomizedRelu : public fetch::ml::Ops<T>
 {
 public:
   using ArrayType     = T;
   using DataType      = typename ArrayType::Type;
   using SizeType      = typename ArrayType::SizeType;
   using RNG           = fetch::random::LaggedFibonacciGenerator<>;
-  using VecTensorType = typename ElementWiseOps<T>::VecTensorType;
+  using VecTensorType = typename Ops<T>::VecTensorType;
 
   RandomizedRelu(DataType const lower_bound, DataType const upper_bound,
                  SizeType const &random_seed = 25102015)
@@ -49,7 +49,7 @@ public:
 
   virtual ~RandomizedRelu() = default;
 
-  virtual void Forward(VecTensorType const &inputs, ArrayType &output)
+  void Forward(VecTensorType const &inputs, ArrayType &output)
   {
     assert(inputs.size() == 1);
     assert(output.shape() == this->ComputeOutputShape(inputs));
@@ -63,8 +63,7 @@ public:
     fetch::math::LeakyRelu(inputs.front().get(), alpha, output);
   }
 
-  virtual std::vector<ArrayType> Backward(VecTensorType const &inputs,
-                                          ArrayType const &    error_signal)
+  std::vector<ArrayType> Backward(VecTensorType const &inputs, ArrayType const &error_signal)
   {
     assert(inputs.size() == 1);
     assert(inputs.front().get().shape() == error_signal.shape());
@@ -100,6 +99,11 @@ public:
     fetch::math::Multiply(error_signal, ret, ret);
 
     return {ret};
+  }
+
+  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const
+  {
+    return inputs.front().get().shape();
   }
 
   static constexpr char const *DESCRIPTOR = "RandomizedRelu";

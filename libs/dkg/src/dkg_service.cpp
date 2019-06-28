@@ -24,7 +24,6 @@
 #include "network/muddle/subscription.hpp"
 #include "network/muddle/packet.hpp"
 #include "dkg/dkg_service.hpp"
-#include "dkg/dkg_messages.hpp"
 #include "crypto/bls_dkg.hpp"
 #include "crypto/sha256.hpp"
 
@@ -118,9 +117,12 @@ DkgService::DkgService(Endpoint &endpoint, ConstByteArray address, ConstByteArra
   , rpc_server_{endpoint_, SERVICE_DKG, CHANNEL_RPC}
   , rpc_client_{"dkg", endpoint_, SERVICE_DKG, CHANNEL_RPC}
   , state_machine_{std::make_shared<StateMachine>("dkg", State::REGISTER, ToString)}
+  , current_entropy_source_{}
 //  , contribution_subscription_{endpoint_.Subscribe(SERVICE_DKG, CHANNEL_CONTRIBUTIONS)}
 //  , secret_key_subscription_{endpoint_.Subscribe(SERVICE_DKG, CHANNEL_SECRET_KEY)}
 {
+  FETCH_UNUSED(key_lifetime);
+
   // RPC server registration
   rpc_proto_ = std::make_unique<DkgRpcProtocol>(*this);
   rpc_server_.Add(RPC_DKG_BEACON, rpc_proto_.get());
@@ -139,37 +141,6 @@ DkgService::DkgService(Endpoint &endpoint, ConstByteArray address, ConstByteArra
   state_machine_->OnStateChange([](State current, State previous) {
     FETCH_LOG_WARN(LOGGING_NAME, "State changed to: ", ToString(current), " was: ", ToString(previous));
   });
-
-//  // setup all the message handlers
-//  contribution_subscription_->SetMessageHandler(
-//      [this](ConstByteArray const &from, uint16_t service, uint16_t channel, uint16_t counter,
-//             ConstByteArray const &payload, ConstByteArray const &transmitter) {
-//        FETCH_UNUSED(service);
-//        FETCH_UNUSED(channel);
-//        FETCH_UNUSED(counter);
-//        FETCH_UNUSED(transmitter);
-//
-//        ContributionMsg msg{};
-//        if (ParseMessage(payload, msg))
-//        {
-//          OnContribution(msg, from);
-//        }
-//      });
-//
-//  secret_key_subscription_->SetMessageHandler(
-//      [this](ConstByteArray const &from, uint16_t service, uint16_t channel, uint16_t counter,
-//             ConstByteArray const &payload, ConstByteArray const &transmitter) {
-//        FETCH_UNUSED(service);
-//        FETCH_UNUSED(channel);
-//        FETCH_UNUSED(counter);
-//        FETCH_UNUSED(transmitter);
-//
-//        SecretKeyMsg msg{};
-//        if (ParseMessage(payload, msg))
-//        {
-//          OnSecretKey(msg, from);
-//        }
-//      });
 
   // consistency
   if (current_cabinet_.find(address_) != current_cabinet_.end())
@@ -205,7 +176,7 @@ DkgService::SecretKeyReq DkgService::RequestSecretKey(MuddleAddress const &addre
 {
   SecretKeyReq req{};
 
-  FETCH_LOG_WARN(LOGGING_NAME, "Requesting secret information");
+  FETCH_LOG_WARN(LOGGING_NAME, "Node is requesting secret information");
 
   FETCH_LOCK(cabinet_lock_);
   auto it = current_cabinet_secrets_.find(address);
@@ -215,6 +186,10 @@ DkgService::SecretKeyReq DkgService::RequestSecretKey(MuddleAddress const &addre
     req.success     = true;
     req.private_key = it->second;
     req.public_keys = current_cabinet_public_keys_;
+  }
+  else
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Node not found in current cabinet secrets!");
   }
 
   return req;
@@ -226,7 +201,7 @@ void DkgService::SubmitSignatureShare(crypto::bls::Id const &       id,
 {
   FETCH_LOG_WARN(LOGGING_NAME, "Submit of signature");
 
-  if (crypto::bls::Verify(signature, public_key, "foo bar baz"))
+  if (crypto::bls::Verify(signature, public_key, current_entropy_source_))
   {
     FETCH_LOCK(sig_lock_);
     sig_ids_.push_back(id);
@@ -245,16 +220,44 @@ void DkgService::OnNewBlock(uint64_t block_index)
 
 DkgService::Status DkgService::GenerateEntropy(Digest block_digest, uint64_t block_number, uint64_t &entropy)
 {
+  FETCH_UNUSED(block_digest);
   FETCH_LOCK(sig_lock_);
+  FETCH_LOCK(entropy_lock_);
+
+  // historical requests for entropy
+  if(block_number <= current_iteration_)
+  {
+    entropy = entropy_history_.at(block_number);
+  }
+
+  if(block_number != current_iteration_ + 1)
+  {
+    FETCH_LOG_ERROR(LOGGING_NAME, "Trying to generate entropy ahead in time! block_number: " , block_number, " current_iteration: ", current_iteration_);
+    return Status::NOT_READY;
+  }
 
   if (!aeon_signature_)
   {
+    FETCH_LOG_CRITICAL(LOGGING_NAME, "No signature present for: ", block_number);
      return Status::NOT_READY;
   }
 
   auto const *raw_entropy = reinterpret_cast<uint64_t const *>(aeon_signature_.get());
   entropy = *raw_entropy;
   aeon_signature_.reset();
+
+  FETCH_LOG_INFO(LOGGING_NAME, "Returning entropy for block: ", block_number, " which is : ", entropy);
+
+  // Save this result
+  entropy_history_[current_iteration_] = entropy;
+
+  // Kick off the next entropy generation cycle
+  current_iteration_++;
+  assert(block_number == current_iteration_);
+
+  current_entropy_source_ = block_digest.Copy();
+
+  FETCH_LOG_INFO(LOGGING_NAME, "Setting new entropy source: ", current_entropy_source_);
 
   return Status::OK;
 }
@@ -328,11 +331,18 @@ State DkgService::OnBuildAeonKeysState()
 {
   State next_state{State::REQUEST_SECRET_KEY};
 
+  //if (is_dealer_)
+  //{
+  //  next_state = State::BROADCAST_SIGNATURE;
+  //}
+
   if (is_dealer_)
   {
     if (CanBuildAeonKeys())
     {
       BuildAeonKeys();
+
+      FETCH_LOG_INFO(LOGGING_NAME, "\n\nDealer is building aeon keys!");
     }
     else
     {
@@ -383,6 +393,7 @@ State DkgService::OnWaitForSecretKeyState()
       }
       else
       {
+        FETCH_LOG_INFO(LOGGING_NAME, "\n\nResponse unsuccessful, retrying");
         next_state = State::REQUEST_SECRET_KEY;
       }
 
@@ -390,6 +401,7 @@ State DkgService::OnWaitForSecretKeyState()
     }
     case PromiseState::FAILED:
     case PromiseState::TIMEDOUT:
+        FETCH_LOG_INFO(LOGGING_NAME, "\n\nResponse timed out, retrying");
       next_state = State::REQUEST_SECRET_KEY;
       break;
     }
@@ -407,7 +419,9 @@ State DkgService::OnBroadcastSignatureState()
 {
   State next_state{State::COLLECT_SIGNATURES};
 
-  auto signature   = crypto::bls::Sign(sig_private_key_, "foo bar baz");
+  FETCH_LOCK(entropy_lock_);
+
+  auto signature   = crypto::bls::Sign(sig_private_key_, current_entropy_source_);
   auto public_key  = crypto::bls::PublicKeyFromPrivate(sig_private_key_);
 
   // TODO(EJF): Thread safety when this is dynamic
@@ -449,7 +463,7 @@ State DkgService::OnCollectSignaturesState()
       FETCH_LOG_ERROR(LOGGING_NAME, "Generated Signature: ", sig_value.ToBase64());
 
       // TODO(EJF): This signature needs to be verified
-//      if (crypto::bls::Verify(*aeon_signature_, groups_pk, "foo bar baz"))
+//      if (crypto::bls::Verify(*aeon_signature_, groups_pk, current_entropy_source_))
 //      {
 //        FETCH_LOG_ERROR(LOGGING_NAME, "GREATE SUCCESSE !!!!");
 //      }
@@ -465,10 +479,36 @@ State DkgService::OnCollectSignaturesState()
   return next_state;
 }
 
+// Wait in this state until it is time to 
 State DkgService::OnCompleteState()
 {
   FETCH_LOG_INFO(LOGGING_NAME, "State: Complete");
-  state_machine_->Delay(5000ms);
+  state_machine_->Delay(500ms);
+
+  // The signature is consumed on block generation
+  FETCH_LOCK(sig_lock_);
+
+  if(!aeon_signature_)
+  {
+    {
+      FETCH_LOCK(cabinet_lock_);
+      // Reset transient state
+      current_cabinet_ids_.clear();
+      current_cabinet_ids_[address_] = id_; // register ourselves
+      current_cabinet_secrets_.clear();
+      current_cabinet_public_keys_.clear();
+      current_cabinet_secrets_.clear();
+    }
+
+    // sig lock already
+    {
+    sig_ids_    = crypto::bls::IdList{};
+    sig_shares_ = crypto::bls::SignatureList{};
+    }
+
+    return State::REGISTER;
+  }
+
   return State::COMPLETE;
 }
 
@@ -484,6 +524,8 @@ bool DkgService::CanBuildAeonKeys() const
       return false;
     }
   }
+
+  FETCH_LOG_INFO(LOGGING_NAME, "Current cabinet size: ", current_cabinet_.size());
 
   return true;
 }
@@ -519,6 +561,7 @@ bool DkgService::BuildAeonKeys()
     }
 
     // generate the cur
+    FETCH_LOG_WARN(LOGGING_NAME, "Built secret for cabinet member ", address.ToBase64());
     current_cabinet_secrets_[address] = crypto::bls::PrivateKeyShare(private_keys, it->second);
   }
 

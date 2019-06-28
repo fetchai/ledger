@@ -24,33 +24,52 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class Add : public fetch::ml::ElementWiseOps<T>
+class Add : public fetch::ml::Ops<T>
 {
 public:
   using ArrayType     = T;
   using DataType      = typename ArrayType::Type;
-  using VecTensorType = typename ElementWiseOps<T>::VecTensorType;
+  using SizeType      = typename ArrayType::SizeType;
+  using VecTensorType = typename Ops<T>::VecTensorType;
 
   Add()          = default;
   virtual ~Add() = default;
 
-  virtual void Forward(VecTensorType const &inputs, ArrayType &output)
+  void Forward(VecTensorType const &inputs, ArrayType &output)
   {
     assert(inputs.size() == 2);
-    assert(inputs.at(0).get().size() == inputs.at(1).get().size());
     assert(output.shape() == this->ComputeOutputShape(inputs));
     fetch::math::Add(inputs[0].get(), inputs[1].get(), output);
   }
 
-  virtual std::vector<ArrayType> Backward(VecTensorType const &inputs,
-                                          ArrayType const &    error_signal)
+  std::vector<ArrayType> Backward(VecTensorType const &inputs, ArrayType const &error_signal)
   {
-    (void)inputs;
     assert(inputs.size() == 2);
-    assert(inputs.at(0).get().size() == inputs.at(1).get().size());
-    assert(error_signal.size() == inputs.at(1).get().size());
+    assert(inputs.at(0).get().shape().size() == inputs.at(1).get().shape().size());
+    assert(inputs.at(0).get().shape() == error_signal.shape());
+    assert(error_signal.shape() == ComputeOutputShape(inputs));
 
-    return {error_signal, error_signal};
+    // Test if input is broadcastable by batch dimension
+    assert(inputs.at(1).get().shape().at(inputs.at(1).get().shape().size() - 1) == 1);
+    for (SizeType i{0}; i < inputs.at(0).get().shape().size() - 1; i++)
+    {
+      assert(inputs.at(0).get().shape().at(i) == inputs.at(1).get().shape().at(i));
+    }
+
+    if (inputs.at(0).get().shape() == inputs.at(1).get().shape())
+    {
+      return {error_signal, error_signal};
+    }
+    else
+    {
+      SizeType batch_dimension = inputs.at(0).get().shape().size() - 1;
+      return {error_signal, fetch::math::ReduceSum(error_signal, batch_dimension)};
+    }
+  }
+
+  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const
+  {
+    return inputs.at(0).get().shape();
   }
 
   static constexpr char const *DESCRIPTOR = "Add";

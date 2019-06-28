@@ -44,9 +44,6 @@ class Subscription;
 
 namespace dkg {
 
-class SecretKeyMsg;
-class ContributionMsg;
-
 class DkgService : public ledger::EntropyGeneratorInterface
 {
 public:
@@ -67,6 +64,7 @@ public:
   using Digest         = ledger::Digest;
   using ConstByteArray = byte_array::ConstByteArray;
   using MuddleAddress  = ConstByteArray;
+  using CabinetMembers  = std::unordered_set<MuddleAddress>;
 
   // Construction / Destruction
   explicit DkgService(Endpoint &endpoint, ConstByteArray address, ConstByteArray beacon_address,
@@ -102,6 +100,13 @@ public:
     return state_machine_;
   }
 
+  void ResetCabinet(CabinetMembers cabinet, std::size_t threshold)
+  {
+    FETCH_LOCK(cabinet_lock_);
+    current_cabinet_   = std::move(cabinet);
+    current_threshold_ = threshold;
+  }
+
   // Operators
   DkgService &operator=(DkgService const &) = delete;
   DkgService &operator=(DkgService &&) = delete;
@@ -110,7 +115,8 @@ private:
   using Address         = ledger::Address;
   using SubscriptionPtr = std::shared_ptr<muddle::Subscription>;
   using AddressMapping  = core::Mapping<MuddleAddress, Address>;
-  using CabinetMembers  = std::unordered_set<MuddleAddress>;
+  using EntropyHistory  = std::unordered_map<uint64_t, uint64_t>;
+
   using CabinetIds      = std::unordered_map<MuddleAddress, crypto::bls::Id>;
   using CabinetKeys     = std::unordered_map<MuddleAddress, crypto::bls::PrivateKey>;
   using StateMachine    = core::StateMachine<State>;
@@ -118,6 +124,7 @@ private:
   using RpcProtocolPtr  = std::unique_ptr<DkgRpcProtocol>;
   using Promise = service::Promise;
   using RMutex = std::recursive_mutex;
+  using Mutex  = std::mutex;
 
   /// @name State Handlers
   /// @{
@@ -130,12 +137,6 @@ private:
   State OnCollectSignaturesState();
   State OnCompleteState();
   /// @}
-
-//  /// @name Network Comms?
-//  /// @{
-//  void OnContribution(ContributionMsg const &secret_key, ConstByteArray const &from);
-//  void OnSecretKey(SecretKeyMsg const &contribution, ConstByteArray const &from);
-//  /// @}
 
   bool CanBuildAeonKeys() const;
   bool BuildAeonKeys();
@@ -155,45 +156,40 @@ private:
 
   StateMachinePtr state_machine_;
 
-//
-//  SubscriptionPtr       contribution_subscription_;
-//  SubscriptionPtr       secret_key_subscription_;
-
   std::size_t current_threshold_{1};
 
   /// @name State Spectific
   /// @{
   Promise pending_promise_;
   crypto::bls::PrivateKey     sig_private_key_{};
-
-
   /// @}
 
   /// @name Current Signature
   /// @{
   mutable RMutex              sig_lock_{};
   std::unique_ptr<crypto::bls::Signature> aeon_signature_{};
-//  crypto::bls::PublicKeyList  sig_public_keys_{};
   crypto::bls::IdList         sig_ids_{};
   crypto::bls::SignatureList  sig_shares_{};
   crypto::bls::PublicKey      global_pk_{};
 
-//  crypto::bls::PrivateKeyList sig_private_shares_{};
   /// @}
+
+  // Current entropy statefullness
+  mutable RMutex entropy_lock_{};
+  uint64_t       current_iteration_ = 0;
+  EntropyHistory entropy_history_;
+  Digest         current_entropy_source_;
 
   /// @name Beacon / Secret Generation
   /// @{
   mutable RMutex cabinet_lock_;
-  CabinetMembers current_cabinet_{
-    byte_array::FromBase64("CL3zb8U2KYP+OWmn9wZuHuUIXciSNtTZPjmgB75OHRk8hxgCt+G+sOj1dXVUqzsMcNYAJwV/tScKu8ej1yAuDw=="),
-    byte_array::FromBase64("YzYsKxl+EmgLpHLnmrNx2PoNjJSQT4ifFzbQS051iKTcXEWJh+ghGE+Ip8FD6UXBMUlKAm9V+NRzCGo3U/aJiA==")
-  };
+  CabinetMembers current_cabinet_{};
   CabinetIds current_cabinet_ids_{};
   crypto::bls::PublicKeyList current_cabinet_public_keys_{}; // aeon
   CabinetKeys current_cabinet_secrets_{};
   /// @}
 
-  AddressMapping address_mapper_{}; ///< Muddle <-> Token Address mapping
+  //AddressMapping address_mapper_{}; ///< Muddle <-> Token Address mapping
 };
 
 template <typename T>

@@ -27,12 +27,13 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class LeakyRelu : public fetch::ml::ElementWiseOps<T>
+class LeakyRelu : public fetch::ml::Ops<T>
 {
 public:
   using ArrayType     = T;
   using DataType      = typename ArrayType::Type;
-  using VecTensorType = typename ElementWiseOps<T>::VecTensorType;
+  using SizeType      = typename ArrayType::SizeType;
+  using VecTensorType = typename Ops<T>::VecTensorType;
 
   LeakyRelu(DataType a = DataType(0.01))
     : a_(a)
@@ -40,14 +41,13 @@ public:
 
   virtual ~LeakyRelu() = default;
 
-  virtual void Forward(VecTensorType const &inputs, ArrayType &output)
+  void Forward(VecTensorType const &inputs, ArrayType &output)
   {
     assert(inputs.size() == 1);
     fetch::math::LeakyRelu(inputs.front().get(), a_, output);
   }
 
-  virtual std::vector<ArrayType> Backward(VecTensorType const &inputs,
-                                          ArrayType const &    error_signal)
+  std::vector<ArrayType> Backward(VecTensorType const &inputs, ArrayType const &error_signal)
   {
     assert(inputs.size() == 1);
     assert(inputs.front().get().shape() == error_signal.shape());
@@ -81,6 +81,11 @@ public:
     fetch::math::Multiply(error_signal, ret, ret);
 
     return {ret};
+  }
+
+  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const
+  {
+    return inputs.front().get().shape();
   }
 
   static constexpr char const *DESCRIPTOR = "LeakyRelu";

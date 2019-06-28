@@ -78,7 +78,8 @@ public:
   virtual std::vector<ArrayType> Backward(VecTensorType const &inputs,
                                           ArrayType const &    error_signal)
   {
-    ASSERT(inputs.empty());
+    FETCH_UNUSED(inputs);
+    assert(inputs.empty());
     gradient_accumulation_->InlineAdd(error_signal);
     return {};
   }
