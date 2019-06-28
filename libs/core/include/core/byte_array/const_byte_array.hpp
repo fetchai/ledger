@@ -510,7 +510,7 @@ private:
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wrestrict"
     memcpy(pointer() + acc_size, other.pointer(),
-           static_cast<size_t>(other.size()) & 0x7FFFFFFFFFFFFFFFull);
+           static_cast<std::size_t>(other.size()) & 0x7FFFFFFFFFFFFFFFull);
 #pragma GCC diagnostic pop
   }
 

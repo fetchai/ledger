@@ -19,7 +19,7 @@
 
 #include "vm/module.hpp"
 
-#include <cmath>
+#include <cstdint>
 
 namespace fetch {
 namespace vm_modules {
