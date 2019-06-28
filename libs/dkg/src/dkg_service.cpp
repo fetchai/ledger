@@ -545,14 +545,16 @@ bool DkgService::BuildAeonKeys()
   crypto::bls::PrivateKeyList private_keys;
   std::vector<VerificationVector> verification_vectors;
   std::vector<crypto::bls::PrivateKeyList> all_received_shares;
+  std::vector<MuddleAddress> mAddressVec;
 
   for (auto const &id_pair : current_cabinet_ids_)
   {
     auto sk = crypto::bls::PrivateKeyByCSPRNG();
     auto id = id_pair.second;
     id.v = sk.v;
-    private_keys.push_back(sk);
+    //private_keys.push_back(sk);
     current_cabinet_id_vec_.push_back(id);
+    mAddressVec.push_back(id_pair.first);
   }
 
   for (size_t i=0; i < current_cabinet_ids_.size(); ++i)
@@ -579,18 +581,18 @@ bool DkgService::BuildAeonKeys()
   VerificationVector group_vectors = crypto::bls::dkg::AccumulateVerificationVectors(verification_vectors);
   global_pk_ = group_vectors[0];
 
-  for (auto const &address : current_cabinet_)
+  for (size_t i=0; i<mAddressVec.size(); ++i)
   {
-    auto const it = current_cabinet_ids_.find(address);
-    if (it == current_cabinet_ids_.end())
-    {
-      FETCH_LOG_ERROR(LOGGING_NAME, "Unable to lookup Id for: ", address.ToBase64());
-      return false;
-    }
+//    auto const it = current_cabinet_ids_.find(address);
+//    if (it == current_cabinet_ids_.end())
+//    {
+//      FETCH_LOG_ERROR(LOGGING_NAME, "Unable to lookup Id for: ", address.ToBase64());
+//      return false;
+//    }
 
     // generate the cur
-    FETCH_LOG_WARN(LOGGING_NAME, "Built secret for cabinet member ", address.ToBase64());
-    current_cabinet_secrets_[address] = crypto::bls::PrivateKeyShare(private_keys, it->second);
+    FETCH_LOG_WARN(LOGGING_NAME, "Built secret for cabinet member ", mAddressVec[i].ToBase64());
+    current_cabinet_secrets_[mAddressVec[i]] = private_keys[i];
   }
 
   return true;
