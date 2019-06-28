@@ -620,8 +620,8 @@ template <std::uint16_t I, std::uint16_t F>
 FixedPoint<I, F> const FixedPoint<I, F>::MAX_EXP{FixedPoint<I, F>::FromBase(
     FixedPoint<I, F>::BaseTypeInfo::max_exp)}; /* maximum exponent for Exp() */
 template <std::uint16_t I, std::uint16_t F>
-FixedPoint<I, F> const FixedPoint<I, F>::MIN_EXP{
-    -FixedPoint<I, F>::MAX_EXP}; /* minimum exponent for Exp() */
+FixedPoint<I, F> const FixedPoint<I, F>::MIN_EXP{-FixedPoint<I, F>::FromBase(
+    FixedPoint<I, F>::BaseTypeInfo::max_exp)}; /* minimum exponent for Exp() */
 template <std::uint16_t I, std::uint16_t F>
 FixedPoint<I, F> const FixedPoint<I, F>::FP_MAX{FixedPoint<I, F>::FromBase(FixedPoint<I, F>::MAX)};
 template <std::uint16_t I, std::uint16_t F>
