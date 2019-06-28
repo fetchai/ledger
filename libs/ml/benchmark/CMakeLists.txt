@@ -11,3 +11,4 @@ include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
 setup_compiler()
 
 add_fetch_gbench(benchmark_ml_ops fetch-ml ops)
+add_fetch_gbench(benchmark_ml_training fetch-ml training)

@@ -16,9 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
+#include <ml/ops/activations/dropout.hpp>
+#include <vector>
+
 #include "benchmark/benchmark.h"
 #include "math/tensor.hpp"
-
 #include "ml/ops/sqrt.hpp"
 
 template <class T, int N>
@@ -43,3 +45,6 @@ BENCHMARK_TEMPLATE(BM_SqrtForward, double, 512)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_SqrtForward, double, 1024)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_SqrtForward, double, 2048)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_SqrtForward, double, 4096)->Unit(benchmark::kMicrosecond);
+
+BENCHMARK_MAIN();
+
