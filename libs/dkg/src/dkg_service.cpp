@@ -463,10 +463,10 @@ State DkgService::OnCollectSignaturesState()
       FETCH_LOG_ERROR(LOGGING_NAME, "Generated Signature: ", sig_value.ToBase64());
 
       // TODO(EJF): This signature needs to be verified
-//      if (crypto::bls::Verify(*aeon_signature_, groups_pk, current_entropy_source_))
-//      {
-//        FETCH_LOG_ERROR(LOGGING_NAME, "GREATE SUCCESSE !!!!");
-//      }
+      if (crypto::bls::Verify(*aeon_signature_, global_pk_, current_entropy_source_))
+      {
+        FETCH_LOG_ERROR(LOGGING_NAME, "GREATE SUCCESSE !!!!");
+      }
 
       next_state = State::COMPLETE;
     }
@@ -536,20 +536,48 @@ bool DkgService::BuildAeonKeys()
   FETCH_LOCK(cabinet_lock_);
 
   current_cabinet_public_keys_.clear();
-  auto global_sk = crypto::bls::PrivateKeyByCSPRNG();
-  global_pk_ = crypto::bls::PublicKeyFromPrivate(global_sk);
+
+  // CabinetIds      = std::unordered_map<MuddleAddress, crypto::bls::Id>;
+  // CabinetIds current_cabinet_ids_;      map from addresses to bls Ids (equiv to participants)
+
+  using VerificationVector = crypto::bls::dkg::VerificationVector;
 
   crypto::bls::PrivateKeyList private_keys;
-  crypto::bls::IdList ids; 
+  std::vector<VerificationVector> verification_vectors;
+  std::vector<crypto::bls::PrivateKeyList> all_received_shares;
 
-
-  for (std::size_t i = 0; i < current_threshold_; ++i)
+  for (auto const &id_pair : current_cabinet_ids_)
   {
     auto sk = crypto::bls::PrivateKeyByCSPRNG();
+    auto id = id_pair.second;
+    id.v = sk.v;
     private_keys.push_back(sk);
-
-    current_cabinet_public_keys_.emplace_back(crypto::bls::PublicKeyFromPrivate(sk));
+    current_cabinet_id_vec_.push_back(id);
   }
+
+  for (size_t i=0; i < current_cabinet_ids_.size(); ++i)
+  {
+    auto contrib = crypto::bls::dkg::GenerateContribution(current_cabinet_id_vec_, current_threshold_);
+    verification_vectors.push_back(contrib.verification);
+    crypto::bls::PrivateKeyList received_shares;
+
+    for (uint64_t j = 0; j < contrib.contributions.size(); ++j)
+    {
+      auto  spk      = contrib.contributions[j];
+      bool  verified = crypto::bls::dkg::VerifyContributionShare(current_cabinet_id_vec_[j], spk, contrib.verification);
+
+      if (!verified)
+      {
+        throw std::runtime_error("share could not be verified.");
+      }
+
+      received_shares.push_back(spk);
+    }
+    private_keys.push_back(crypto::bls::dkg::AccumulateContributionShares(received_shares));
+  }
+
+  VerificationVector group_vectors = crypto::bls::dkg::AccumulateVerificationVectors(verification_vectors);
+  global_pk_ = group_vectors[0];
 
   for (auto const &address : current_cabinet_)
   {

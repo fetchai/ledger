@@ -100,7 +100,7 @@ public:
     return state_machine_;
   }
 
-  void ResetCabinet(CabinetMembers cabinet, std::size_t threshold)
+  void ResetCabinet(CabinetMembers cabinet, uint32_t threshold)
   {
     FETCH_LOCK(cabinet_lock_);
     current_cabinet_   = std::move(cabinet);
@@ -119,6 +119,7 @@ private:
 
   using CabinetIds      = std::unordered_map<MuddleAddress, crypto::bls::Id>;
   using CabinetKeys     = std::unordered_map<MuddleAddress, crypto::bls::PrivateKey>;
+  using CabinetIdVec    = std::vector<crypto::bls::Id>;
   using StateMachine    = core::StateMachine<State>;
   using StateMachinePtr = std::shared_ptr<StateMachine>;
   using RpcProtocolPtr  = std::unique_ptr<DkgRpcProtocol>;
@@ -156,7 +157,7 @@ private:
 
   StateMachinePtr state_machine_;
 
-  std::size_t current_threshold_{1};
+  uint32_t current_threshold_{1};
 
   /// @name State Spectific
   /// @{
@@ -170,7 +171,7 @@ private:
   std::unique_ptr<crypto::bls::Signature> aeon_signature_{};
   crypto::bls::IdList         sig_ids_{};
   crypto::bls::SignatureList  sig_shares_{};
-  crypto::bls::PublicKey      global_pk_{};
+  crypto::bls::PublicKey global_pk_{};
 
   /// @}
 
@@ -185,6 +186,8 @@ private:
   mutable RMutex cabinet_lock_;
   CabinetMembers current_cabinet_{};
   CabinetIds current_cabinet_ids_{};
+  CabinetIdVec current_cabinet_id_vec_{};
+
   crypto::bls::PublicKeyList current_cabinet_public_keys_{}; // aeon
   CabinetKeys current_cabinet_secrets_{};
   /// @}

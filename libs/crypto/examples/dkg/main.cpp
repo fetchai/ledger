@@ -62,7 +62,7 @@ int main()
   {
     Member member;
     member.seed = seed;
-    member.sk   = bls::HashToPrivateKey(seed);
+    member.sk   = bls::PrivateKeyByCSPRNG();
     members.push_back(member);
   }
 
@@ -82,10 +82,10 @@ int main()
     // Note that the verfication vector can be posted publicly.
     verification_vectors.push_back(contrib.verification);
 
-    for (uint64_t i = 0; i < contrib.contributions.size(); ++i)
+    for (uint64_t j = 0; j < contrib.contributions.size(); ++j)
     {
-      auto  spk      = contrib.contributions[i];
-      auto &member   = members[i];
+      auto  spk      = contrib.contributions[j];
+      auto &member   = members[j];
       bool  verified = bls::dkg::VerifyContributionShare(member.id, spk, contrib.verification);
 
       if (!verified)
