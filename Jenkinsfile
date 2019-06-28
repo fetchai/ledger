@@ -206,6 +206,14 @@ def run_builds_in_parallel()
         config,
         full_run)
     }
+
+    // Only run macOS builds on master and head branches
+    if (is_master_or_pull_request_head_branch())
+    {
+      stages["macOS ${Platform.DEFAULT_CLANG.label} ${config.label}"] = create_macos_build(
+        Platform.DEFAULT_CLANG,
+        config)
+    }
   }
 
   for (config in (is_master_or_pull_request_head_branch() ? Configuration.values() : [Configuration.RELEASE]))
@@ -217,14 +225,6 @@ def run_builds_in_parallel()
         config,
         is_master_or_pull_request_head_branch() ? full_run : fast_run)
     }
-  }
-
-  // Only run macOS builds on master and head branches
-  if (is_master_or_pull_request_head_branch())
-  {
-    stages["macOS Clang Release"] = create_macos_build(
-      Platform.DEFAULT_CLANG,
-      Configuration.RELEASE)
   }
 
   if (is_master_or_pull_request_head_branch())
