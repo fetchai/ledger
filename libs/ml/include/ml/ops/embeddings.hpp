@@ -131,14 +131,31 @@ public:
       auto grad_slice = this->gradient_accumulation_->Slice(r, 1);
       auto out_slice  = this->output_->Slice(r, 1);
 
-      embedding_slice = out_slice.Copy();
+      auto out_it = out_slice.begin();
+      auto grad_it = grad_slice.begin();
+      auto e_it = embedding_slice.begin();
 
-      // multiply accumulated gradients by learning rate, then subtract from current embeddings
-      embedding_slice.InlineSubtract(grad_slice.Copy().InlineMultiply(learning_rate));
+      while (out_it.is_valid())
+      {
+          *e_it = *out_it - (*grad_it * learning_rate);
+          *out_it = *e_it;
+          *grad_it = 0;
 
-      // zero out gradients and assign new embeddings values
-      grad_slice.Assign(ArrayType::Zeroes(embedding_slice.shape()));
-      out_slice.Assign(embedding_slice);
+          ++e_it;
+          ++out_it;
+          ++grad_it;
+      }
+
+     grad_slice.Fill(0);
+
+//      embedding_slice = out_slice.Copy();
+//
+//      // multiply accumulated gradients by learning rate, then subtract from current embeddings
+//      embedding_slice.InlineSubtract(grad_slice.Copy().InlineMultiply(learning_rate));
+//
+//      // zero out gradients and assign new embeddings values
+//      grad_slice.Assign(ArrayType::Zeroes(embedding_slice.shape()));
+//      out_slice.Assign(embedding_slice);
     }
     updated_rows_.clear();
   }

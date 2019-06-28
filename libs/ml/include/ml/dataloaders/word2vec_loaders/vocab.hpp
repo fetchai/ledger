@@ -27,9 +27,14 @@ public:
   using DataType = std::map<std::string, std::pair<SizeType, SizeType>>;
   using ReverseDataType = std::map<SizeType, std::pair<std::string, SizeType>>;
 
+  SizeType total_count;
+
   DataType data; // word -> (id, count)
+  ReverseDataType reverse_data; // id -> (word, count)
 
   Vocab();
+
+  void Update();
 
   void RemoveInfrequentWord(SizeType min);
   std::map<SizeType, SizeType> Compactify();
@@ -48,6 +53,20 @@ public:
  *
  */
 Vocab::Vocab(){}
+
+/**
+ * Get the total count of the vocabulary
+ */
+void Vocab::Update() {
+    // update total count
+    total_count = 0;
+    for(auto const &w : data){
+        total_count += w.second.second;
+    }
+
+    // update reverse vocab
+    reverse_data = GetReverseVocab();
+}
 
 /**
  * remove word that have less counts then min

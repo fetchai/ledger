@@ -26,17 +26,12 @@
 #include "ml/graph.hpp"
 #include "ml/layers/skip_gram.hpp"
 #include "ml/ops/loss_functions/cross_entropy.hpp"
+#include "math/ml/loss_functions/l2_norm.hpp"
 #include "ml/optimisation/adam_optimiser.hpp"
 #include "ml/optimisation/sgd_optimiser.hpp"
 
 #include <iostream>
-#include <map>
-#include <memory>
-#include <set>
-#include <stdexcept>
 #include <string>
-#include <unordered_map>
-#include <utility>
 #include <vector>
 
 using namespace fetch::ml;
@@ -62,20 +57,6 @@ std::string Model(fetch::ml::Graph<ArrayType> &g, SizeType embeddings_size, Size
   return ret_name;
 }
 
-void NormVector(ArrayType &vector)
-{
-  ArrayType::Type l2 = 0;
-  for (auto &val : vector)
-  {
-    l2 += (val * val);
-  }
-  l2 = sqrt(l2);
-  for (auto &val : vector)
-  {
-    val /= l2;
-  }
-}
-
 void PrintWordAnology(W2VLoader<DataType> const &dl, ArrayType const &embeddings,
                       std::string const &word1, std::string const &word2, std::string const &word3,
                       SizeType k)
@@ -88,7 +69,7 @@ void PrintWordAnology(W2VLoader<DataType> const &dl, ArrayType const &embeddings
 
   if (word1_idx == fetch::math::numeric_max<SizeType>() || word2_idx == fetch::math::numeric_max<SizeType>() || word3_idx == fetch::math::numeric_max<SizeType>())
   {
-    throw "WARNING! not all to-be-tested words are in vocabulary";
+    throw std::runtime_error("WARNING! not all to-be-tested words are in vocabulary");
   }
   else
   {
@@ -96,13 +77,13 @@ void PrintWordAnology(W2VLoader<DataType> const &dl, ArrayType const &embeddings
               << std::endl;
   }
 
-  ArrayType word1_vec = embeddings.Slice(word1_idx).Copy();
-  ArrayType word2_vec = embeddings.Slice(word2_idx).Copy();
-  ArrayType word3_vec = embeddings.Slice(word3_idx).Copy();
+  ArrayType word1_vec = embeddings.Slice(word1_idx, 1).Copy();
+  ArrayType word2_vec = embeddings.Slice(word2_idx, 1).Copy();
+  ArrayType word3_vec = embeddings.Slice(word3_idx, 1).Copy();
 
-  NormVector(word1_vec);
-  NormVector(word2_vec);
-  NormVector(word3_vec);
+  word1_vec /= fetch::math::L2Norm(word1_vec);
+  word2_vec  /= fetch::math::L2Norm(word2_vec);
+  word3_vec  /= fetch::math::L2Norm(word3_vec);
 
   ArrayType word4_vec = word2_vec - word1_vec + word3_vec;
 
@@ -124,43 +105,19 @@ void PrintKNN(W2VLoader<DataType> const &dl, ArrayType const &embeddings, std::s
 
   if (dl.IndexFromWord(word0) == fetch::math::numeric_max<SizeType>())
   {
-      throw "WARNING! could not find [" + word0 + "] in vocabulary";
+      throw std::runtime_error("WARNING! could not find [" + word0 + "] in vocabulary");
   }
-  else
-  {
-    SizeType  idx        = dl.IndexFromWord(word0);
-    ArrayType one_vector = embeddings.Slice(idx).Copy();
-    std::vector<std::pair<typename ArrayType::SizeType, typename ArrayType::Type>> output =
-        fetch::math::clustering::KNNCosine(arr, one_vector, k);
 
-    for (std::size_t l = 0; l < output.size(); ++l)
-    {
+  SizeType  idx        = dl.IndexFromWord(word0);
+  ArrayType one_vector = embeddings.Slice(idx, 1).Copy();
+  std::vector<std::pair<typename ArrayType::SizeType, typename ArrayType::Type>> output =
+          fetch::math::clustering::KNNCosine(arr, one_vector, k);
+
+  for (std::size_t l = 0; l < output.size(); ++l)
+  {
       std::cout << "rank: " << l << ", "
-                << "distance, " << output.at(l).second << ": "
-                << dl.WordFromIndex(output.at(l).first) << std::endl;
-    }
-  }
-}
-
-void PrintEmbedding(Graph<ArrayType> const &g, std::string const &skip_gram_name,
-                    W2VLoader<DataType> const &dl, std::string word0)
-{
-  // first get hold of the skipgram layer by searching the return name in the graph
-  std::shared_ptr<fetch::ml::layers::SkipGram<ArrayType>> sg_layer =
-      std::dynamic_pointer_cast<fetch::ml::layers::SkipGram<ArrayType>>(g.GetNode(skip_gram_name));
-
-  // next get hold of the embeddings
-  ArrayType embeddings = sg_layer->GetEmbeddings(sg_layer)->get_weights();
-
-  if (dl.IndexFromWord(word0) == 0)
-  {
-    std::cout << "WARNING! could not find [" + word0 + "] in vocabulary" << std::endl;
-  }
-  else
-  {
-    SizeType  idx        = dl.IndexFromWord(word0);
-    ArrayType one_vector = embeddings.Slice(idx).Copy();
-    std::cout << "w2v vector: " << one_vector.ToString() << std::endl;
+            << "distance, " << output.at(l).second << ": "
+            << dl.WordFromIndex(output.at(l).first) << std::endl;
   }
 }
 
@@ -193,21 +150,22 @@ std::string ReadFile(std::string const &path)
 
 struct TrainingParams
 {
-  SizeType negative_sample_size = 20;    // number of negative sample per word-context pair
+  SizeType negative_sample_size = 5;    // number of negative sample per word-context pair
   SizeType window_size          = 8;     // window size for context sampling
   bool     train_mode           = true;  // reserve for future compatibility with CBOW
-
+  DataType freq_thresh     = 1e-5;     // frequency threshold for subsampling
   SizeType min_count = 5;  // infrequent word removal threshold
 
-  SizeType    batch_size      = 10000;      // training data batch size
+  SizeType    batch_size      = 100000;      // training data batch size
   SizeType    embedding_size  = 32;       // dimension of embedding vec
   SizeType    training_epochs = 5;        // total number of training epochs
-  double      learning_rate   = 0.1;      // alpha - the learning rate
+  double      learning_rate   = 0.05;      // alpha - the learning rate
+
   SizeType    k               = 10;       // how many nearest neighbours to compare against
   std::string word0           = "three";  // test word to consider
-  std::string word1           = "France";
-  std::string word2           = "Paris";
-  std::string word3           = "Italy";
+  std::string word1           = "france";
+  std::string word2           = "paris";
+  std::string word3           = "italy";
   std::string save_loc        = "./model.fba";  // save file location for exporting graph
 };
 
@@ -234,7 +192,7 @@ int main(int argc, char **argv)
 
   std::cout << "Setting up training data...: " << std::endl;
 
-  W2VLoader<DataType> data_loader(tp.window_size, tp.negative_sample_size, tp.train_mode);
+  W2VLoader<DataType> data_loader(tp.window_size, tp.negative_sample_size, tp.freq_thresh, tp.train_mode);
   // set up dataloader
   /// DATA LOADING ///
   std::cout << "building vocab " << std::endl;
@@ -271,9 +229,10 @@ int main(int argc, char **argv)
   DataType loss;
   for (SizeType i{0}; i < tp.training_epochs; i++)
   {
-    loss = optimiser.Run(data_loader, tp.batch_size, fetch::math::numeric_max<SizeType>());
+    loss = optimiser.Run(data_loader, tp.batch_size);
     std::cout << "Loss: " << loss << std::endl;
-    PrintEmbedding(*g, model_name, data_loader, tp.word0);
+      // Test trained embeddings
+      TestEmbeddings(*g, model_name, data_loader, tp.word0, tp.word1, tp.word2, tp.word3, tp.k);
   }
 
   //////////////////////////////////////

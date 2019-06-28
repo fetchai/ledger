@@ -37,6 +37,8 @@ template <typename T>
 class W2VLoader : public DataLoader<fetch::math::Tensor<T>, fetch::math::Tensor<T>>
 {
 public:
+  static constexpr T WindowContextUnused = -1;
+
   using LabelType = fetch::math::Tensor<T>;
   using DataType  = fetch::math::Tensor<T>;
 
@@ -199,7 +201,7 @@ void W2VLoader<T>::InitUnigramTable()
   {
     frequencies[kvp.second.first] = kvp.second.second;
   }
-  unigram_table_.Reset(1e8, frequencies);
+  unigram_table_.Reset(frequencies, 1e8);
 }
 
 /**
@@ -233,7 +235,7 @@ void W2VLoader<T>::GetNext(ReturnType &ret)
   // denote the unused part of the window
   for (SizeType i = (dynamic_size * 2); i < ret.second.at(0).size(); ++i)
   {
-    ret.second.at(0)(i, 0) = -1;  // set the max of SizeType as a tag for un-updated positions
+    ret.second.at(0)(i, 0) = WindowContextUnused;
   }
 
   // negative sampling
