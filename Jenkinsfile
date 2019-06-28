@@ -204,7 +204,7 @@ def run_builds_in_parallel()
       stages["${platform.label} ${config.label}"] = create_docker_build(
         platform,
         config,
-        is_master_or_pull_request_head_branch() ? full_run : fast_run)
+        full_run)
     }
 
     for (platform in LINUX_PLATFORMS_AUX)
@@ -212,7 +212,7 @@ def run_builds_in_parallel()
       stages["${platform.label} ${config.label}"] = create_docker_build(
         platform,
         config,
-        is_master_branch() ? full_run : fast_run)
+        is_master_or_pull_request_head_branch() ? full_run : fast_run)
     }
   }
 
