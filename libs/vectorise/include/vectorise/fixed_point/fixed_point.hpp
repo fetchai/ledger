@@ -447,7 +447,7 @@ private:
   template <typename T>
   static constexpr bool CheckNoOverflow(T n)
   {
-    auto const Type x{n};
+    constexpr Type x{n};
     return MIN <= x && x <= MAX;
   }
 
