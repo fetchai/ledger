@@ -306,14 +306,11 @@ void MatrixMultiply<T>::UpdateContainersBackward(VecTensorType const &inputs,
         ArrayType({inputs.at(0).get().shape().at(0), inputs.at(0).get().shape().at(1)});
     back_in2_slice_tensor_ =
         ArrayType({inputs.at(1).get().shape().at(0), inputs.at(1).get().shape().at(1)});
-  }
 
-  if (!((error_signal_1_.shape() == input_shape_1_) && (error_signal_2_.shape() == input_shape_2_)))
-  {
     err1_                 = ArrayType(error_signal_1_.shape());
     err2_                 = ArrayType(error_signal_2_.shape());
-    error_signal_1_       = ArrayType(input_shape_1_);
-    error_signal_2_       = ArrayType(input_shape_2_);
+    error_signal_1_       = ArrayType(back_input_shape_1_);
+    error_signal_2_       = ArrayType(back_input_shape_2_);
     err_sig_slice_tensor_ = ArrayType({error_signal.shape().at(0), error_signal.shape().at(1)});
   }
 }
