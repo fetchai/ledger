@@ -234,6 +234,7 @@ struct CommandLineArguments
     std::string config_path;
     std::string raw_peers;
     std::string experimental_features;
+    std::string beacon_address;
     ManifestPtr manifest;
     uint32_t    num_lanes{0};
 
@@ -268,6 +269,7 @@ struct CommandLineArguments
     p.add(private_flag,                   "private-network",       "Run node as part of a private network (disables bootstrap). Incompatible with -standalone",    false);
     p.add(experimental_features,          "experimental",          "Enable selected experimental features",                                                        std::string{});
     p.add(args.cfg.proof_of_stake,        "pos",                   "Enable proof of stake features",                                                               false);
+    p.add(beacon_address,                 "beacon",                "The base64 encoded address of the beacon",                                                     std::string{});
     // clang-format on
 
     // parse the args
@@ -303,10 +305,17 @@ struct CommandLineArguments
     UpdateConfigFromEnvironment(private_flag,                   "CONSTELLATION_PRIVATE_NETWORK");
     UpdateConfigFromEnvironment(experimental_features,          "CONSTELLATION_EXPERIMENTAL");
     UpdateConfigFromEnvironment(args.cfg.proof_of_stake,        "CONSTELLATION_POS");
+    UpdateConfigFromEnvironment(beacon_address,                 "CONSTELLATION_BEACON_ADDRESS");
     // clang-format on
 
     // parse the feature flags (if they exist)
     args.cfg.features.Parse(experimental_features);
+
+    // beacon address
+    if (!beacon_address.empty())
+    {
+      args.cfg.beacon_address = fetch::byte_array::FromBase64(beacon_address);
+    }
 
     // update the peers
     args.SetPeers(raw_peers);

@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -17,30 +16,23 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chain/digest.hpp"
+#include "crypto/bls.hpp"
+#include <iostream>
+using namespace fetch::crypto;
 
-namespace fetch {
-namespace ledger {
-
-class EntropyGeneratorInterface
+int main()
 {
-public:
-  // Construction / Destruction
-  EntropyGeneratorInterface()          = default;
-  virtual ~EntropyGeneratorInterface() = default;
+  bls::init();
+  std::cout << "Running BLS signature" << std::endl;
+  BLSSigner signer;
+  signer.GenerateKeys();
 
-  enum class Status
+  BLSVerifier verifier{signer.identity()};
+  auto        sig = signer.Sign("Hello world");
+
+  if (verifier.Verify("Hello world", sig))
   {
-    OK,
-    NOT_READY,
-    FAILED
-  };
-
-  /// @name Entropy Generator
-  /// @{
-  virtual Status GenerateEntropy(Digest block_digest, uint64_t block_number, uint64_t &entropy) = 0;
-  /// @}
-};
-
-}  // namespace ledger
-}  // namespace fetch
+    std::cout << "Signature verified." << std::endl;
+  }
+  return 0;
+}

@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -17,30 +16,36 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chain/digest.hpp"
+#include "crypto/bls_base.hpp"
+
+#include <atomic>
 
 namespace fetch {
-namespace ledger {
+namespace crypto {
+namespace bls {
+namespace {
 
-class EntropyGeneratorInterface
+std::atomic<bool> g_initialised{false};
+
+}  // namespace
+
+/**
+ * Initialise the BLS library
+ */
+void Init()
 {
-public:
-  // Construction / Destruction
-  EntropyGeneratorInterface()          = default;
-  virtual ~EntropyGeneratorInterface() = default;
+  // determine if the library was previously initialised
+  bool const was_previously_initialised = g_initialised.exchange(true);
 
-  enum class Status
+  if (!was_previously_initialised)
   {
-    OK,
-    NOT_READY,
-    FAILED
-  };
+    if (blsInit(E_MCLBN_CURVE_FP254BNB, MCLBN_COMPILED_TIME_VAR) != 0)
+    {
+      throw std::runtime_error("unable to initalize BLS.");
+    }
+  }
+}
 
-  /// @name Entropy Generator
-  /// @{
-  virtual Status GenerateEntropy(Digest block_digest, uint64_t block_number, uint64_t &entropy) = 0;
-  /// @}
-};
-
-}  // namespace ledger
+}  // namespace bls
+}  // namespace crypto
 }  // namespace fetch

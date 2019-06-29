@@ -17,30 +17,24 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chain/digest.hpp"
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wconversion"
+#pragma GCC diagnostic ignored "-Wpedantic"
+#endif
 
-namespace fetch {
-namespace ledger {
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wconversion"
+#pragma clang diagnostic ignored "-Wpedantic"
+#endif
 
-class EntropyGeneratorInterface
-{
-public:
-  // Construction / Destruction
-  EntropyGeneratorInterface()          = default;
-  virtual ~EntropyGeneratorInterface() = default;
+#include <bls/bls.hpp>
 
-  enum class Status
-  {
-    OK,
-    NOT_READY,
-    FAILED
-  };
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
 
-  /// @name Entropy Generator
-  /// @{
-  virtual Status GenerateEntropy(Digest block_digest, uint64_t block_number, uint64_t &entropy) = 0;
-  /// @}
-};
-
-}  // namespace ledger
-}  // namespace fetch
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif

@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -17,30 +16,18 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chain/digest.hpp"
+#include "dkg/dkg_rpc_protocol.hpp"
+#include "dkg/dkg_service.hpp"
 
 namespace fetch {
-namespace ledger {
+namespace dkg {
 
-class EntropyGeneratorInterface
+DkgRpcProtocol::DkgRpcProtocol(DkgService &service)
+  : service_{service}
 {
-public:
-  // Construction / Destruction
-  EntropyGeneratorInterface()          = default;
-  virtual ~EntropyGeneratorInterface() = default;
+  Expose(REQUEST_SECRET, &service_, &DkgService::RequestSecretKey);
+  Expose(SUBMIT_SIGNATURE, &service_, &DkgService::SubmitSignatureShare);
+}
 
-  enum class Status
-  {
-    OK,
-    NOT_READY,
-    FAILED
-  };
-
-  /// @name Entropy Generator
-  /// @{
-  virtual Status GenerateEntropy(Digest block_digest, uint64_t block_number, uint64_t &entropy) = 0;
-  /// @}
-};
-
-}  // namespace ledger
+}  // namespace dkg
 }  // namespace fetch

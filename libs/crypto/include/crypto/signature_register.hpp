@@ -17,30 +17,46 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chain/digest.hpp"
-
 namespace fetch {
-namespace ledger {
+namespace crypto {
 
-class EntropyGeneratorInterface
+enum SignatureType : uint8_t
 {
-public:
-  // Construction / Destruction
-  EntropyGeneratorInterface()          = default;
-  virtual ~EntropyGeneratorInterface() = default;
-
-  enum class Status
-  {
-    OK,
-    NOT_READY,
-    FAILED
-  };
-
-  /// @name Entropy Generator
-  /// @{
-  virtual Status GenerateEntropy(Digest block_digest, uint64_t block_number, uint64_t &entropy) = 0;
-  /// @}
+  SECP256K1_COMPRESSED   = 0x02,
+  SECP256K1_COMPRESSED2  = 0x03,
+  SECP256K1_UNCOMPRESSED = 0x04,
+  BLS_BN256_UNCOMPRESSED = 0x20
 };
 
-}  // namespace ledger
+constexpr bool IdentityParameterTypeDefined(uint8_t x)
+{
+  switch (x)
+  {
+  case SECP256K1_COMPRESSED:
+  case SECP256K1_COMPRESSED2:
+  case SECP256K1_UNCOMPRESSED:
+  case BLS_BN256_UNCOMPRESSED:
+    return true;
+  }
+
+  return false;
+}
+
+constexpr bool TestIdentityParameterSize(uint8_t x, uint64_t s)
+{
+  switch (x)
+  {
+  case SECP256K1_COMPRESSED:
+  case SECP256K1_COMPRESSED2:
+    return s == 32;
+  case SECP256K1_UNCOMPRESSED:
+    return s == 64;
+  case BLS_BN256_UNCOMPRESSED:
+    return true;
+  }
+
+  return false;
+}
+
+}  // namespace crypto
 }  // namespace fetch
