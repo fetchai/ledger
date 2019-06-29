@@ -30,7 +30,6 @@ class DkgRpcProtocol : public service::Protocol
 public:
   enum
   {
-    REGISTER,
     REQUEST_SECRET,
     SUBMIT_SIGNATURE,
   };

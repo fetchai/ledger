@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/byte_array/const_byte_array.hpp"
+#include "core/byte_array/byte_array.hpp"
 #include <bls/bls.h>
 
 namespace fetch {
@@ -149,6 +149,24 @@ inline Signature RecoverSignature(SignatureList const &sigs, IdList const &ids)
     throw std::runtime_error("Unable to recover signature");
   }
   return ret;
+}
+
+inline byte_array::ConstByteArray ToBinary(Signature const &sig)
+{
+  byte_array::ByteArray buffer{};
+  buffer.Resize(1024);
+#ifdef BLS_SWAP_G
+  size_t n = mclBnG2_getStr(buffer.char_pointer(), buffer.size(), &sig.v, 0);
+#else
+  size_t n = mclBnG1_getStr(buffer.char_pointer(), buffer.size(), &sig.v, 0);
+#endif
+  if (n == 0)
+  {
+    throw std::runtime_error("Signature:tgetStr");
+  }
+  buffer.Resize(n);
+
+  return {buffer};
 }
 
 }  // namespace bls

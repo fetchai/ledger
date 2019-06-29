@@ -956,8 +956,9 @@ BlockCoordinator::State BlockCoordinator::OnTransmitBlock()
     // ensure that the main chain is aware of the block
     if (BlockStatus::ADDED == chain_.AddBlock(*next_block_))
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "Generating new block: 0x", next_block_->body.hash.ToHex(),
-                     " txs: ", next_block_->GetTransactionCount());
+      FETCH_LOG_INFO(LOGGING_NAME, "Broadcasting new block: 0x", next_block_->body.hash.ToHex(),
+                     " txs: ", next_block_->GetTransactionCount(),
+                     " number: ", next_block_->body.block_number);
 
       // mark this blocks transactions as being executed
       UpdateTxStatus(*next_block_);

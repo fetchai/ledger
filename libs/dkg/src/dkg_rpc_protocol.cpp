@@ -25,7 +25,6 @@ namespace dkg {
 DkgRpcProtocol::DkgRpcProtocol(DkgService &service)
   : service_{service}
 {
-  Expose(REGISTER, &service_, &DkgService::RegisterCabinetMember);
   Expose(REQUEST_SECRET, &service_, &DkgService::RequestSecretKey);
   Expose(SUBMIT_SIGNATURE, &service_, &DkgService::SubmitSignatureShare);
 }

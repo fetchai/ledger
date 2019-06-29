@@ -17,6 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/mutex.hpp"
+#include "core/byte_array/const_byte_array.hpp"
 #include "crypto/bls_base.hpp"
 
 #include <memory>
@@ -47,7 +49,7 @@ public:
   std::size_t    GetNumShares() const;
   uint64_t       GetEntropy() const;
   void           SetSignature(crypto::bls::Signature const &sig);
-  ConstByteArray GetRoundMessage() const;
+  ConstByteArray GetRoundEntropy() const;
   void           RecoverSignature();
 
   // Operators
@@ -60,6 +62,8 @@ private:
   crypto::bls::IdList        sig_ids_{};
   crypto::bls::SignatureList sig_shares_{};
   crypto::bls::Signature     round_signature_{};
+  byte_array::ConstByteArray round_entropy_{};
+
   std::atomic<std::size_t>   num_shares_{0};
   std::atomic<bool>          has_signature_{};
 };
@@ -75,6 +79,7 @@ inline uint64_t Round::round() const
 
 inline bool Round::HasSignature() const
 {
+  FETCH_LOCK(lock_);
   return has_signature_;
 }
 

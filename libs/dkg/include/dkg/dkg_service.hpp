@@ -34,6 +34,7 @@
 #include <memory>
 #include <unordered_map>
 #include <unordered_set>
+#include <deque>
 
 namespace fetch {
 namespace muddle {
@@ -51,8 +52,6 @@ public:
 
   enum class State
   {
-    REGISTER,
-    WAIT_FOR_REGISTRATION,
     BUILD_AEON_KEYS,
     REQUEST_SECRET_KEY,
     WAIT_FOR_SECRET_KEY,
@@ -76,14 +75,11 @@ public:
 
   /// @name External Events
   /// @{
-  bool RegisterCabinetMember(MuddleAddress const &address, crypto::bls::Id const &id);
-
   struct SecretKeyReq
   {
     bool                       success{false};
-    crypto::bls::PrivateKey    private_key{};
-    crypto::bls::PublicKeyList public_keys{};
-    crypto::bls::PublicKey     global_public_key{};
+    crypto::bls::PrivateKey    secret_share{};
+    crypto::bls::PublicKey     shared_public_key{};
   };
   SecretKeyReq RequestSecretKey(MuddleAddress const &address);
 
@@ -130,12 +126,22 @@ private:
   using SignaturePtr    = std::unique_ptr<crypto::bls::Signature>;
   using SignatureMap    = std::map<uint64_t, SignaturePtr>;
   using RoundMap        = std::map<uint64_t, RoundPtr>;
+  using PrivateKey      = crypto::bls::PrivateKey;
+  using PublicKey       = crypto::bls::PublicKey;
   using PublicKeyList   = crypto::bls::PublicKeyList;
+
+  struct Submission
+  {
+    uint64_t               round;
+    crypto::bls::Id        id;
+    crypto::bls::PublicKey public_key;
+    crypto::bls::Signature signature;
+  };
+
+  using SubmissionList = std::deque<Submission>;
 
   /// @name State Handlers
   /// @{
-  State OnRegisterState();
-  State OnWaitForRegistrationState();
   State OnBuildAeonKeysState();
   State OnRequestSecretKeyState();
   State OnWaitForSecretKeyState();
@@ -146,9 +152,8 @@ private:
 
   /// @name Utils
   /// @{
-  bool CanBuildAeonKeys() const;
   bool BuildAeonKeys();
-  ConstByteArray GenerateMessage(uint64_t round);
+  bool GetSignaturePayload(uint64_t round, ConstByteArray &payload);
   RoundPtr LookupRound(uint64_t round, bool create = false);
   /// @}
 
@@ -164,10 +169,10 @@ private:
 
   /// @name State Machine Data
   /// @{
-  Promise                 pending_promise_;
-  crypto::bls::PrivateKey sig_private_key_{};
-  crypto::bls::PublicKey  sig_public_key_{}; // global
-
+  Promise    pending_promise_;
+  PrivateKey aeon_secret_share_{};
+  PublicKey  aeon_share_public_key_{};
+  PublicKey  aeon_public_key_{};
   /// @}
 
    /// @name Cabinet / Aeon Data
@@ -180,16 +185,14 @@ private:
   /// @name Dealer Specific Data
   /// @{
   mutable RMutex dealer_lock_;  // Priority 2.
-  CabinetIds     current_cabinet_ids_{};
-  crypto::bls::PublicKey global_pk_;
-  std::vector<crypto::bls::Id> current_cabinet_id_vec_{};
-  PublicKeyList  current_cabinet_public_keys_{};
+  PublicKey      shared_public_key_;
   CabinetKeys    current_cabinet_secrets_{};
   /// @}
 
   /// @name Round Data
   /// @{
   mutable RMutex        round_lock_{};  // Priority 3.
+  SubmissionList        pending_signatures_{};
   std::atomic<uint64_t> current_iteration_{0};
   std::atomic<uint64_t> requesting_iteration_{0};
   RoundMap              rounds_{};
@@ -203,7 +206,7 @@ void Serialize(T &stream, DkgService::SecretKeyReq const &req)
 
   if (req.success)
   {
-    stream << req.private_key << req.public_keys;
+    stream << req.secret_share << req.shared_public_key;
   }
 }
 
@@ -214,7 +217,7 @@ void Deserialize(T &stream, DkgService::SecretKeyReq &req)
 
   if (req.success)
   {
-    stream >> req.private_key >> req.public_keys;
+    stream >> req.secret_share >> req.shared_public_key;
   }
 }
 

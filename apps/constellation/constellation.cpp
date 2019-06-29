@@ -293,7 +293,7 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
     http_.AddModule(*module);
   }
 
-#if 0
+#if 1
   // TODO(EJF): Work around
   if (dkg_)
   {
