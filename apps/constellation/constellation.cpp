@@ -173,11 +173,9 @@ DkgServicePtr CreateDkgService(Constellation::Config const &cfg, ConstByteArray 
 
   if (cfg.proof_of_stake && !cfg.beacon_address.empty())
   {
-    // !!! - Genuinely terrifying
     crypto::bls::Init();
 
-    // TODO(EJF): Move key lifetime into block
-    dkg = std::make_unique<dkg::DkgService>(endpoint, address, cfg.beacon_address, 200);
+    dkg = std::make_unique<dkg::DkgService>(endpoint, address, cfg.beacon_address);
   }
 
   return dkg;

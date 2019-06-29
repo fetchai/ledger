@@ -47,12 +47,24 @@ constexpr uint64_t    READ_AHEAD   = 3;
 
 const ConstByteArray GENESIS_PAYLOAD = "=~=~ Genesis ~=~=";
 
+/**
+ * Creates a BLS ID from a specified Muddle Address
+ *
+ * @param address The input muddle address
+ * @return The generated BLS ID
+ */
 crypto::bls::Id CreateIdFromAddress(ConstByteArray const &address)
 {
   auto const seed = crypto::bls::HashToPrivateKey(address);
   return crypto::bls::Id{seed.v};
 }
 
+/**
+ * Converts the state enum to a string
+ *
+ * @param state The state to convert
+ * @return The string representation for the state
+ */
 char const *ToString(DkgService::State state)
 {
   char const *text = "unknown";
@@ -84,19 +96,23 @@ char const *ToString(DkgService::State state)
 
 }  // namespace
 
-DkgService::DkgService(Endpoint &endpoint, ConstByteArray address, ConstByteArray beacon_address,
-                       std::size_t key_lifetime)
+/**
+ * Creates a instance of the DKG Service
+ *
+ * @param endpoint The muddle endpoint to communicate on
+ * @param address The muddle endpoint address
+ * @param dealer_address The dealer address
+ */
+DkgService::DkgService(Endpoint &endpoint, ConstByteArray address, ConstByteArray dealer_address)
   : address_{std::move(address)}
   , id_{CreateIdFromAddress(address_)}
-  , beacon_address_{std::move(beacon_address)}
-  , is_dealer_{address_ == beacon_address_}
+  , dealer_address_{std::move(dealer_address)}
+  , is_dealer_{address_ == dealer_address_}
   , endpoint_{endpoint}
   , rpc_server_{endpoint_, SERVICE_DKG, CHANNEL_RPC}
   , rpc_client_{"dkg", endpoint_, SERVICE_DKG, CHANNEL_RPC}
   , state_machine_{std::make_shared<StateMachine>("dkg", State::BUILD_AEON_KEYS, ToString)}
 {
-  FETCH_UNUSED(key_lifetime);
-
   // RPC server registration
   rpc_proto_ = std::make_unique<DkgRpcProtocol>(*this);
   rpc_server_.Add(RPC_DKG_BEACON, rpc_proto_.get());
@@ -110,18 +126,14 @@ DkgService::DkgService(Endpoint &endpoint, ConstByteArray address, ConstByteArra
   state_machine_->RegisterHandler(State::COLLECT_SIGNATURES,  this, &DkgService::OnCollectSignaturesState);
   state_machine_->RegisterHandler(State::COMPLETE,            this, &DkgService::OnCompleteState);
   // clang-format on
-
-#if 0
-  // TODO(EJF): Remove
-  state_machine_->OnStateChange([](State current, State previous) {
-    FETCH_LOG_WARN(LOGGING_NAME, "State changed to: ", ToString(current),
-                   " was: ", ToString(previous));
-  });
-#endif
-
-  FETCH_LOG_INFO(LOGGING_NAME, "#LivingTheDream...");
 }
 
+/**
+ * RPC Handler: Handler for client secret request
+ *
+ * @param address The muddle address of the requester
+ * @return The response structure
+ */
 DkgService::SecretKeyReq DkgService::RequestSecretKey(MuddleAddress const &address)
 {
   SecretKeyReq req{};
@@ -148,6 +160,14 @@ DkgService::SecretKeyReq DkgService::RequestSecretKey(MuddleAddress const &addre
   return req;
 }
 
+/**
+ * RPC Handler: Signature submission
+ *
+ * @param round The current round number
+ * @param id The id of the issuer
+ * @param public_key The public key for signature verification
+ * @param signature The signature to be submitted
+ */
 void DkgService::SubmitSignatureShare(uint64_t round, crypto::bls::Id const &id,
                                       crypto::bls::PublicKey const &public_key,
                                       crypto::bls::Signature const &signature)
@@ -158,6 +178,14 @@ void DkgService::SubmitSignatureShare(uint64_t round, crypto::bls::Id const &id,
   pending_signatures_.emplace_back(Submission{round, id, public_key, signature});
 }
 
+/**
+ * Generate entropy for a given block, identified by digest and block number
+ *
+ * @param block_digest The block digest
+ * @param block_number The block number
+ * @param entropy The output entropy value
+ * @return The associated status result for the operation
+ */
 DkgService::Status DkgService::GenerateEntropy(Digest block_digest, uint64_t block_number,
                                                uint64_t &entropy)
 {
@@ -173,18 +201,22 @@ DkgService::Status DkgService::GenerateEntropy(Digest block_digest, uint64_t blo
     status  = Status::OK;
 
     // signal that the round has been consumed
-    ++current_iteration_;
+    ++earliest_completed_round_;
   }
   else
   {
     FETCH_LOG_ERROR(LOGGING_NAME,
-                    "Trying to generate entropy ahead in time! block_number: ", block_number,
-                    " current_iteration: ", current_iteration_);
+                    "Trying to generate entropy ahead in time! block_number: ", block_number);
   }
 
   return status;
 }
 
+/**
+ * State Handler for BUILD_AEON_KEYS
+ *
+ * @return The next state to progress to
+ */
 State DkgService::OnBuildAeonKeysState()
 {
   if (is_dealer_)
@@ -198,15 +230,25 @@ State DkgService::OnBuildAeonKeysState()
   return State::REQUEST_SECRET_KEY;
 }
 
+/**
+ * State Handler for REQUEST_SECRET_KEY
+ *
+ * @return The next state to progress to
+ */
 State DkgService::OnRequestSecretKeyState()
 {
   // request from the beacon for the secret key
-  pending_promise_ = rpc_client_.CallSpecificAddress(beacon_address_, RPC_DKG_BEACON,
+  pending_promise_ = rpc_client_.CallSpecificAddress(dealer_address_, RPC_DKG_BEACON,
                                                      DkgRpcProtocol::REQUEST_SECRET, address_);
 
   return State::WAIT_FOR_SECRET_KEY;
 }
 
+/**
+ * State Handler for WAIT_FOR_SECRET_KEY
+ *
+ * @return The next state to progress to
+ */
 State DkgService::OnWaitForSecretKeyState()
 {
   State next_state{State::WAIT_FOR_SECRET_KEY};
@@ -260,11 +302,16 @@ State DkgService::OnWaitForSecretKeyState()
   return next_state;
 }
 
+/**
+ * State Handler for BROADCAST_SIGNATURE
+ *
+ * @return The next state to progress to
+ */
 State DkgService::OnBroadcastSignatureState()
 {
   State next_state{State::COLLECT_SIGNATURES};
 
-  auto const this_round = requesting_iteration_.load();
+  auto const this_round = current_round_.load();
 
   FETCH_LOG_DEBUG(LOGGING_NAME, "OnBroadcastSignatureState round: ", this_round);
 
@@ -293,13 +340,11 @@ State DkgService::OnBroadcastSignatureState()
   FETCH_LOCK(cabinet_lock_);
   for (auto const &member : current_cabinet_)
   {
-    // we do not need to RPC call to ourselves we can simply provide the signature submission
     if (member == address_)
     {
-#if 1
+      // we do not need to RPC call to ourselves we can simply provide the signature submission
       FETCH_LOCK(round_lock_);
       pending_signatures_.emplace_back(Submission{this_round, id_, aeon_share_public_key_, signature});
-#endif
     }
     else
     {
@@ -307,7 +352,7 @@ State DkgService::OnBroadcastSignatureState()
 
       // submit the signature to the cabinet member
       rpc_client_.CallSpecificAddress(member, RPC_DKG_BEACON, DkgRpcProtocol::SUBMIT_SIGNATURE,
-                                      requesting_iteration_.load(), id_, aeon_share_public_key_,
+                                      current_round_.load(), id_, aeon_share_public_key_,
                                       signature);
     }
   }
@@ -315,13 +360,18 @@ State DkgService::OnBroadcastSignatureState()
   return next_state;
 }
 
+/**
+ * State Handler for COLLECT_SIGNATURES
+ *
+ * @return The next state to progress to
+ */
 State DkgService::OnCollectSignaturesState()
 {
   State next_state{State::COLLECT_SIGNATURES};
 
   FETCH_LOCK(round_lock_);
 
-  auto const this_round = requesting_iteration_.load();
+  auto const this_round = current_round_.load();
 
   FETCH_LOG_DEBUG(LOGGING_NAME, "OnCollectSignaturesState round: ", this_round);
 
@@ -344,7 +394,7 @@ State DkgService::OnCollectSignaturesState()
   }
 
   // lookup the requesting round
-  auto const round = LookupRound(requesting_iteration_, true);
+  auto const round = LookupRound(this_round, true);
   assert(static_cast<bool>(round));
 
   bool updates{false};
@@ -398,7 +448,7 @@ State DkgService::OnCollectSignaturesState()
                    " round: ", round->round());
 
     // have completed this iteration now
-    ++requesting_iteration_;
+    ++current_round_;
 
     next_state = State::COMPLETE;
   }
@@ -412,20 +462,26 @@ State DkgService::OnCollectSignaturesState()
   return next_state;
 }
 
-// Wait in this state until it is time to
+/**
+ * State Handler for COMPLETE
+ *
+ * The complete state is used as an idling state for the FSM
+ *
+ * @return The next state to progress to
+ */
 State DkgService::OnCompleteState()
 {
   FETCH_LOG_DEBUG(LOGGING_NAME, "State: Complete round: ", requesting_iteration_.load(),
                   " read: ", current_iteration_.load());
 
   // calculate the current number of signatures ahead
-  if (requesting_iteration_ <= current_iteration_)
+  if (current_round_ <= earliest_completed_round_)
   {
     return State::BROADCAST_SIGNATURE;
   }
   else
   {
-    uint64_t const delta = requesting_iteration_ - current_iteration_;
+    uint64_t const delta = current_round_ - earliest_completed_round_;
     if (delta < READ_AHEAD)
     {
       return State::BROADCAST_SIGNATURE;
@@ -439,6 +495,11 @@ State DkgService::OnCompleteState()
   return State::COMPLETE;
 }
 
+/**
+ * Builds a new set of keys for the aeon
+ *
+ * @return true if successful, otherwise false
+ */
 bool DkgService::BuildAeonKeys()
 {
   FETCH_LOG_DEBUG(LOGGING_NAME, "Build new aeons key shares");
@@ -480,6 +541,13 @@ bool DkgService::BuildAeonKeys()
   return true;
 }
 
+/**
+ * Gets the payload to be signed for a specified round interval
+ *
+ * @param round The round being queried
+ * @param payload The output payload to be populated
+ * @return true if successful, otherwise false
+ */
 bool DkgService::GetSignaturePayload(uint64_t round, ConstByteArray &payload)
 {
   bool success{false};
@@ -494,6 +562,13 @@ bool DkgService::GetSignaturePayload(uint64_t round, ConstByteArray &payload)
   return success;
 }
 
+/**
+ * Lookup the round information for a specified round index
+ *
+ * @param round The round index being requested
+ * @param create Flag to signal if a round should be created if it doesn't exist
+ * @return If successful the requested round object, otherwise a nullptr
+ */
 RoundPtr DkgService::LookupRound(uint64_t round, bool create)
 {
   RoundPtr round_ptr{};

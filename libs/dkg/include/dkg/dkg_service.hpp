@@ -18,7 +18,6 @@
 //------------------------------------------------------------------------------
 
 #include "dkg/round.hpp"
-#include "dkg/dkg_rpc_serializers.hpp"
 #include "core/byte_array/decoders.hpp"
 #include "core/state_machine.hpp"
 #include "core/containers/mapping.hpp"
@@ -46,6 +45,63 @@ class Subscription;
 
 namespace dkg {
 
+/**
+ * The DKG service is designed to provide the system with a reliable entropy source that can be
+ * integrated into the staking mechanism.
+ *
+ * The DKG will build a set of keys for for a given block period called an aeon. During this aeon
+ * signatures will be sent out from each participant on a round basis. These rounds roughly sync
+ * up with block intervals. However, it should be noted that in general the DKG will run ahead of
+ * the main chain.
+ *
+ * The following diagram outlines that basic state machine that is operating in the DKG service.
+ *
+ *                       ┌───────────────────────┐
+ *                       │                       │
+ *                       │      Build Keys       │◀ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─
+ *                       │                       │                         │
+ *                       └───────────────────────┘
+ *                                   │                                     │
+ *                                   │                               At the start
+ *                                   ▼                                of the next
+ *                       ┌───────────────────────┐                       aeon
+ *                       │                       │                         │
+ *                       │  Request Secret Key   │
+ *                       │                       │                         │
+ *                       └───────────────────────┘
+ *                                   │                                     │
+ *                                   │
+ *                                   ▼                                     │
+ *                       ┌───────────────────────┐
+ *                       │                       │                         │
+ *                       │  Wait for Secret Key  │
+ *                       │                       │                         │
+ *                       └───────────────────────┘
+ *                                   │                                     │
+ *                                   │
+ *                                   ▼                                     │
+ *                       ┌───────────────────────┐
+ *                       │                       │                         │
+ *                       │  Broadcast Signature  │◀ ─ ─ ─ ─ ─ ┐
+ *                       │                       │                         │
+ *                       └───────────────────────┘            │
+ *                                   │                                     │
+ *                                   │                  At the start
+ *                                   ▼                   of the next       │
+ *                       ┌───────────────────────┐          round
+ *                       │                       │                         │
+ *                       │  Collect Signatures   │            │
+ *                       │                       │                         │
+ *                       └───────────────────────┘            │
+ *                                   │                                     │
+ *                                   │                        │
+ *                                   ▼                                     │
+ *                       ┌───────────────────────┐            │
+ *                       │                       │                         │
+ *                       │       Complete        │─ ─ ─ ─ ─ ─ ┴ ─ ─ ─ ─ ─ ─
+ *                       │                       │
+ *                       └───────────────────────┘
+ */
 class DkgService : public ledger::EntropyGeneratorInterface
 {
 public:
@@ -67,8 +123,7 @@ public:
   using CabinetMembers  = std::unordered_set<MuddleAddress>;
 
   // Construction / Destruction
-  explicit DkgService(Endpoint &endpoint, ConstByteArray address, ConstByteArray beacon_address,
-                      std::size_t key_lifetime);
+  explicit DkgService(Endpoint &endpoint, ConstByteArray address, ConstByteArray dealer_address);
   DkgService(DkgService const &) = delete;
   DkgService(DkgService &&) = delete;
   ~DkgService() override = default;
@@ -157,45 +212,45 @@ private:
   RoundPtr LookupRound(uint64_t round, bool create = false);
   /// @}
 
-  ConstByteArray const  address_;
-  crypto::bls::Id const id_;
-  ConstByteArray const  beacon_address_;
-  bool const            is_dealer_;
-  Endpoint &            endpoint_;
-  muddle::rpc::Server   rpc_server_;
-  muddle::rpc::Client   rpc_client_;
-  RpcProtocolPtr        rpc_proto_;
-  StateMachinePtr       state_machine_;
+  ConstByteArray const  address_;       ///< Our muddle address
+  crypto::bls::Id const id_;            ///< Our BLS ID (derived from the muddle address)
+  ConstByteArray const  dealer_address_;  ///< The address of the dealer
+  bool const            is_dealer_;       ///< Flag to signal if we are the dealer
+  Endpoint &            endpoint_;        ///< The muddle endpoint to communicate on
+  muddle::rpc::Server   rpc_server_;      ///< The services' RPC server
+  muddle::rpc::Client   rpc_client_;        ///< The services' RPC client
+  RpcProtocolPtr        rpc_proto_;       ///< The services RPC protocol
+  StateMachinePtr       state_machine_; ///< The service state machine
 
   /// @name State Machine Data
   /// @{
-  Promise    pending_promise_;
-  PrivateKey aeon_secret_share_{};
-  PublicKey  aeon_share_public_key_{};
-  PublicKey  aeon_public_key_{};
+  Promise    pending_promise_;  ///< The cached pending promise
+  PrivateKey aeon_secret_share_{}; ///< The current secret share for the aeon
+  PublicKey  aeon_share_public_key_{}; /// < The shared public key for the aeon
+  PublicKey  aeon_public_key_{};  ///< The public key for our secret share
   /// @}
 
    /// @name Cabinet / Aeon Data
   /// @{
   mutable RMutex cabinet_lock_{};  // Priority 1.
-  std::size_t    current_threshold_{1};
-  CabinetMembers current_cabinet_{};
+  std::size_t    current_threshold_{1}; ///< The current threshold for the aeon
+  CabinetMembers current_cabinet_{};    ///< The set of muddle addresses of the cabinet
   /// @}
 
   /// @name Dealer Specific Data
   /// @{
   mutable RMutex dealer_lock_;  // Priority 2.
-  PublicKey      shared_public_key_;
-  CabinetKeys    current_cabinet_secrets_{};
+  PublicKey      shared_public_key_;          ///< The shared public key for the aeon
+  CabinetKeys    current_cabinet_secrets_{};  ///< The map of address to secrets
   /// @}
 
   /// @name Round Data
   /// @{
   mutable RMutex        round_lock_{};  // Priority 3.
-  SubmissionList        pending_signatures_{};
-  std::atomic<uint64_t> current_iteration_{0};
-  std::atomic<uint64_t> requesting_iteration_{0};
-  RoundMap              rounds_{};
+  SubmissionList        pending_signatures_{};  ///< The queue of pending signatures
+  std::atomic<uint64_t> earliest_completed_round_{0}; ///< The round idx for the next entropy req
+  std::atomic<uint64_t> current_round_{0}; ///< The current round being generated
+  RoundMap              rounds_{};    ///< The map of round data
   /// @}
 };
 

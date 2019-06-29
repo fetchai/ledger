@@ -17,7 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "dkg/dkg_rpc_serializers.hpp"
 #include "network/service/protocol.hpp"
 
 namespace fetch {
@@ -25,6 +24,9 @@ namespace dkg {
 
 class DkgService;
 
+/**
+ * The RPC protocol class for the DKG Service
+ */
 class DkgRpcProtocol : public service::Protocol
 {
 public:

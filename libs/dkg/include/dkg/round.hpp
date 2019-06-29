@@ -27,6 +27,10 @@
 namespace fetch {
 namespace dkg {
 
+/**
+ * The round structure contains all the information that is required for a single round of entropy
+ * generation.
+ */
 class Round
 {
 public:
@@ -68,21 +72,41 @@ private:
   std::atomic<bool>          has_signature_{};
 };
 
+/**
+ * Construct the DKG round with a given id
+ *
+ * @param round The round id
+ */
 inline Round::Round(uint64_t round)
   : round_{round}
 {}
 
+/**
+ * Get the current round id
+ *
+ * @return The round id
+ */
 inline uint64_t Round::round() const
 {
   return round_;
 }
 
+/**
+ * Checks to see if the round has a signature (and therefore is complete)
+ *
+ * @return true if signature is present, otherwise false
+ */
 inline bool Round::HasSignature() const
 {
   FETCH_LOCK(lock_);
   return has_signature_;
 }
 
+/**
+ * Gets the total number of signature shares which has be cached for this DKG round
+ *
+ * @return The number of shares present
+ */
 inline std::size_t Round::GetNumShares() const
 {
   return num_shares_;
