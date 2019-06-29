@@ -45,24 +45,24 @@ public:
 
 private:
   // caching tensors and shapes
-  ArrayType  error_signal_1_;
-  ArrayType  error_signal_2_;
+  ArrayType error_signal_1_;
+  ArrayType error_signal_2_;
 
   // forward pass
   SizeVector fwd_input_shape_1_{};
   SizeVector fwd_input_shape_2_{};
-  ArrayType output_slice_tensor_;
-  ArrayType fwd_in1_slice_tensor_;
-  ArrayType fwd_in2_slice_tensor_;
+  ArrayType  output_slice_tensor_;
+  ArrayType  fwd_in1_slice_tensor_;
+  ArrayType  fwd_in2_slice_tensor_;
 
   // backward pass
   SizeVector back_input_shape_1_{};
   SizeVector back_input_shape_2_{};
-  ArrayType back_in1_slice_tensor_;
-  ArrayType back_in2_slice_tensor_;
-  ArrayType err_sig_slice_tensor_;
-  ArrayType err1_;
-  ArrayType err2_;
+  ArrayType  back_in1_slice_tensor_;
+  ArrayType  back_in2_slice_tensor_;
+  ArrayType  err_sig_slice_tensor_;
+  ArrayType  err1_;
+  ArrayType  err2_;
 
   void UpdateContainersForward(VecTensorType const &inputs, ArrayType &output);
   void UpdateContainersBackward(VecTensorType const &inputs, ArrayType const &error_signal);
