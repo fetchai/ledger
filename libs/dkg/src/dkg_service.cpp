@@ -489,8 +489,7 @@ State DkgService::OnCompleteState()
     }
   }
 
-  // TODO(EJF): Clean up of round cache
-
+  // TODO(issue 1285): Improve resource usage here for round cache
   state_machine_->Delay(500ms);
 
   return State::COMPLETE;

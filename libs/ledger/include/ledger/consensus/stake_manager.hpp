@@ -83,7 +83,7 @@ private:
 
   // Config & Components
   std::size_t                committee_size_{0};       ///< The "static" size of the committee
-  EntropyGeneratorInterface *entropy_;                 ///< The reference to entropy module
+  EntropyGeneratorInterface *entropy_{nullptr};        ///< The reference to entropy module
   StakeUpdateQueue           update_queue_;            ///< The update queue of events
   StakeHistory               history_{};               ///< Cache of historical snapshots
   StakeSnapshotPtr           current_{};               ///< Most recent snapshot

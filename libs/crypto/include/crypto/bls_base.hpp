@@ -47,15 +47,7 @@ enum
   E_G2_SIZE              = E_FR_SIZE * 3 * 2
 };
 
-inline void Init()
-{
-
-  // TODO: add atomic lock.
-  if (blsInit(E_MCLBN_CURVE_FP254BNB, MCLBN_COMPILED_TIME_VAR) != 0)
-  {
-    throw std::runtime_error("unable to initalize BLS.");
-  }
-}
+void Init();
 
 inline PrivateKey PrivateKeyByCSPRNG()
 {

@@ -185,7 +185,7 @@ private:
 
   /// @name Staking
   /// @{
-  DkgServicePtr   dkg_;      ///> The DKG system
+  DkgServicePtr   dkg_;      ///< The DKG system
   EntropyPtr      entropy_;  ///< The entropy system
   StakeManagerPtr stake_;    ///< The stake system
   /// @}

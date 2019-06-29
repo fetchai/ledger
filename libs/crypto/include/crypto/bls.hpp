@@ -34,7 +34,8 @@ namespace fetch {
 namespace crypto {
 
 namespace details {
-// TODO: This entire file should be updated using the `bls_base.hpp` instead.
+
+// TODO(issue 1287): This entire file should be updated using the `bls_base.hpp` instead.
 
 struct BLSInitialiser
 {
