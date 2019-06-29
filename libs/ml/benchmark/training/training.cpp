@@ -30,19 +30,19 @@
 // optimisers
 #include "ml/optimisation/sgd_optimiser.hpp"
 
-
-template <typename T, fetch::math::SizeType B, fetch::math::SizeType  I, fetch::math::SizeType  H, fetch::math::SizeType  O, fetch::math::SizeType  E>
+template <typename T, fetch::math::SizeType B, fetch::math::SizeType I, fetch::math::SizeType H,
+          fetch::math::SizeType O, fetch::math::SizeType E>
 void BM_Setup_And_Train(benchmark::State &state)
 {
-  using SizeType = fetch::math::SizeType;
-  using DataType = T;
+  using SizeType   = fetch::math::SizeType;
+  using DataType   = T;
   using TensorType = fetch::math::Tensor<DataType>;
 
-  SizeType batch_size = B;
-  SizeType input_size = I;
+  SizeType batch_size  = B;
+  SizeType input_size  = I;
   SizeType hidden_size = H;
   SizeType output_size = O;
-  SizeType n_epochs = E;
+  SizeType n_epochs    = E;
 
   DataType learning_rate = DataType{0.1f};
 
@@ -84,7 +84,9 @@ void BM_Setup_And_Train(benchmark::State &state)
 
 BENCHMARK_TEMPLATE(BM_Setup_And_Train, float, 1, 1, 1, 1, 100)->Unit(benchmark::kMillisecond);
 BENCHMARK_TEMPLATE(BM_Setup_And_Train, float, 10, 10, 10, 10, 100)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_Setup_And_Train, float, 100, 100, 100, 100, 100)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_Setup_And_Train, float, 100, 1000, 1000, 1000, 100)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_Setup_And_Train, float, 100, 100, 100, 100, 100)
+    ->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_Setup_And_Train, float, 100, 1000, 1000, 1000, 100)
+    ->Unit(benchmark::kMillisecond);
 
 BENCHMARK_MAIN();
