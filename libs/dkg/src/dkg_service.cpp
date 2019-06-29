@@ -27,7 +27,6 @@
 #include "network/muddle/packet.hpp"
 #include "network/muddle/subscription.hpp"
 
-#include <bls/bls.hpp>
 #include <chrono>
 
 namespace fetch {
