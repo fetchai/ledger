@@ -200,7 +200,7 @@ private:
 #ifdef NDEBUG
 using Mutex = ProductionMutex;
 #else
-using Mutex = ProductionMutex;
+using Mutex = DebugMutex;
 #endif
 
 #define FETCH_JOIN_IMPL(x, y) x##y

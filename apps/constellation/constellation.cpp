@@ -291,13 +291,11 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
     http_.AddModule(*module);
   }
 
-#if 1
-  // TODO(EJF): Work around
+  // If we are using the DKG service we need to update the default entropy engine for PoS
   if (dkg_)
   {
     stake_->UpdateEntropy(*dkg_);
   }
-#endif
 }
 
 /**
