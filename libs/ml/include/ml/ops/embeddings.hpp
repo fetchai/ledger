@@ -121,27 +121,28 @@ public:
     return {ArrayType(error_signal.shape())};
   }
 
-virtual void Step(typename T::Type learning_rate)
- {
-   for (auto const &r : updated_rows_)
-   {
-     // get the relevant slice from gradients and embeddings
-     auto grad_slice = this->gradient_accumulation_->Slice(r, 1);
-     auto out_slice  = this->output_->Slice(r, 1);
+  virtual void Step(typename T::Type learning_rate)
+  {
+    for (auto const &r : updated_rows_)
+    {
+      // get the relevant slice from gradients and embeddings
+      auto grad_slice = this->gradient_accumulation_->Slice(r, 1);
+      auto out_slice  = this->output_->Slice(r, 1);
 
-     auto out_it = out_slice.begin();
-     auto grad_it = grad_slice.begin();
+      auto out_it  = out_slice.begin();
+      auto grad_it = grad_slice.begin();
 
-     while (out_it.is_valid())
-     {
-         *out_it = *out_it - (*grad_it * learning_rate);
-         *grad_it = 0;
-         ++out_it;
-         ++grad_it;
-     }
-   }
-   updated_rows_.clear();
- }
+      while (out_it.is_valid())
+      {
+        *out_it  = *out_it - (*grad_it * learning_rate);
+        *grad_it = 0;
+        ++out_it;
+        ++grad_it;
+      }
+    }
+    updated_rows_.clear();
+  }
+
 private:
   ArrayPtrType                           embeddings_output_;
   std::set<typename ArrayType::SizeType> updated_rows_;

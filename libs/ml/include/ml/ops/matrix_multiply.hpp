@@ -44,12 +44,11 @@ public:
   static constexpr char const *DESCRIPTOR = "MatrixMultiply";
 
 private:
-
   // caching tensors and shapes
   SizeVector input_shape_1_{};
   SizeVector input_shape_2_{};
-  ArrayType error_signal_1_;
-  ArrayType error_signal_2_;
+  ArrayType  error_signal_1_;
+  ArrayType  error_signal_2_;
 
   // forward pass
   ArrayType output_slice_tensor_;
@@ -61,7 +60,7 @@ private:
   ArrayType err1_;
   ArrayType err2_;
 
-  void UpdateContainers(VecTensorType const &inputs, ArrayType const & error_signal);
+  void UpdateContainers(VecTensorType const &inputs, ArrayType const &error_signal);
 };
 
 template <class T>
@@ -71,7 +70,6 @@ void MatrixMultiply<T>::Forward(VecTensorType const &inputs, ArrayType &output)
   assert(output.shape() == ComputeOutputShape(inputs));
 
   UpdateContainers(inputs, output);
-
 
   // Normal MatMul 2D @ 2D
   if (inputs.at(0).get().shape().size() == 2 && inputs.at(1).get().shape().size() == 2)
@@ -262,18 +260,21 @@ std::vector<typename T::SizeType> MatrixMultiply<T>::ComputeOutputShape(
 }
 
 template <typename T>
-void MatrixMultiply<T>::UpdateContainers(VecTensorType const &inputs, ArrayType const & error_signal)
+void MatrixMultiply<T>::UpdateContainers(VecTensorType const &inputs, ArrayType const &error_signal)
 {
-  if (!((inputs.at(0).get().shape() == input_shape_1_) && (inputs.at(1).get().shape() == input_shape_2_)))
+  if (!((inputs.at(0).get().shape() == input_shape_1_) &&
+        (inputs.at(1).get().shape() == input_shape_2_)))
   {
-    input_shape_1_ = inputs.at(0).get().shape();
-    input_shape_2_ = inputs.at(1).get().shape();
+    input_shape_1_  = inputs.at(0).get().shape();
+    input_shape_2_  = inputs.at(1).get().shape();
     error_signal_1_ = ArrayType(input_shape_1_);
     error_signal_2_ = ArrayType(input_shape_2_);
 
     err_sig_slice_tensor_ = ArrayType({error_signal.shape().at(0), error_signal.shape().at(1)});
-    in1_slice_tensor_ = ArrayType({inputs.at(0).get().shape().at(0), inputs.at(0).get().shape().at(1)});
-    in2_slice_tensor_ = ArrayType({inputs.at(1).get().shape().at(0), inputs.at(1).get().shape().at(1)});
+    in1_slice_tensor_ =
+        ArrayType({inputs.at(0).get().shape().at(0), inputs.at(0).get().shape().at(1)});
+    in2_slice_tensor_ =
+        ArrayType({inputs.at(1).get().shape().at(0), inputs.at(1).get().shape().at(1)});
     err1_ = ArrayType(error_signal_1_.shape());
     err2_ = ArrayType(error_signal_2_.shape());
   }
