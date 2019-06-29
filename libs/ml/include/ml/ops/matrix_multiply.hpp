@@ -272,10 +272,10 @@ template <typename T>
 void MatrixMultiply<T>::UpdateContainersForward(VecTensorType const &inputs, ArrayType &output)
 {
   if (!((inputs.at(0).get().shape() == input_shape_1_) &&
-        (inputs.at(1).get().shape() == input_shape_1_)))
+        (inputs.at(1).get().shape() == input_shape_2_)))
   {
     input_shape_1_ = inputs.at(0).get().shape();
-    input_shape_1_ = inputs.at(1).get().shape();
+    input_shape_2_ = inputs.at(1).get().shape();
     fwd_in1_slice_tensor_ =
         ArrayType({inputs.at(0).get().shape().at(0), inputs.at(0).get().shape().at(1)});
     fwd_in2_slice_tensor_ =
@@ -295,10 +295,10 @@ void MatrixMultiply<T>::UpdateContainersBackward(VecTensorType const &inputs,
                                                  ArrayType const &    error_signal)
 {
   if (!((inputs.at(0).get().shape() == input_shape_1_) &&
-        (inputs.at(1).get().shape() == input_shape_1_)))
+        (inputs.at(1).get().shape() == input_shape_2_)))
   {
     input_shape_1_ = inputs.at(0).get().shape();
-    input_shape_1_ = inputs.at(1).get().shape();
+    input_shape_2_ = inputs.at(1).get().shape();
 
     back_in1_slice_tensor_ =
         ArrayType({inputs.at(0).get().shape().at(0), inputs.at(0).get().shape().at(1)});
