@@ -27,7 +27,7 @@ namespace {
 
 std::atomic<bool> g_initialised{false};
 
-} // namespace
+}  // namespace
 
 /**
  * Initialise the BLS library
@@ -46,6 +46,6 @@ void Init()
   }
 }
 
-} // namespace bls
-} // namespace crypto
-} // namespace fetch
+}  // namespace bls
+}  // namespace crypto
+}  // namespace fetch
