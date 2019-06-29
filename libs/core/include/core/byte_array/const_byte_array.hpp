@@ -502,9 +502,6 @@ private:
     constexpr std::size_t operator()(std::size_t counter, std::uint8_t) noexcept
     {
       return counter + 1;
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wrestrict"
-#pragma GCC diagnostic pop
     }
 
     constexpr std::size_t operator()(std::size_t counter, std::int8_t) noexcept
