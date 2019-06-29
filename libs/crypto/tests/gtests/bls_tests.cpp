@@ -31,7 +31,7 @@ using SecretKeyArray = std::vector<bls::PrivateKey>();
 template <typename T>
 void ToBinary(std::ostream &stream, T const &value)
 {
-  auto const *raw = reinterpret_cast<uint8_t const *>(&value);
+  auto const *   raw = reinterpret_cast<uint8_t const *>(&value);
   ConstByteArray data{raw, sizeof(T)};
 
   stream << data.ToBase64();
@@ -64,7 +64,7 @@ std::ostream &operator<<(std::ostream &stream, bls::Signature const &private_key
 bls::Id GenerateId()
 {
   auto const sk = bls::PrivateKeyByCSPRNG();
-  bls::Id id;
+  bls::Id    id;
   id.v = sk.v;
 
   return id;
@@ -74,7 +74,7 @@ TEST(BlsTests, SimpleRandomBeaconFlow)
 {
   bls::Init();
 
-  auto dealer = bls::PrivateKeyByCSPRNG();
+  auto dealer     = bls::PrivateKeyByCSPRNG();
   auto dealer_pub = bls::PublicKeyFromPrivate(dealer);
 
   auto sk1 = bls::PrivateKeyByCSPRNG();
@@ -97,7 +97,7 @@ TEST(BlsTests, SimpleRandomBeaconFlow)
   std::cout << "ID3 " << id3 << std::endl;
   std::cout << "ID4 " << id4 << std::endl;
 
-  std::vector<bls::PrivateKey> master_key(2); // threshold
+  std::vector<bls::PrivateKey> master_key(2);  // threshold
   master_key[0] = dealer;
   master_key[1] = bls::PrivateKeyByCSPRNG();
 
@@ -128,14 +128,14 @@ TEST(BlsTests, SimpleRandomBeaconFlow)
   ConstByteArray reference_sig;
   {
     auto recovered_sig = bls::RecoverSignature({sig1, sig2, sig3}, {id1, id2, id3});
-    reference_sig = bls::ToBinary(recovered_sig);
+    reference_sig      = bls::ToBinary(recovered_sig);
 
     EXPECT_TRUE(bls::Verify(recovered_sig, dealer_pub, message));
   }
 
   {
     auto recovered_sig = bls::RecoverSignature({sig2, sig4, sig3}, {id2, id4, id3});
-    auto bin_sig = bls::ToBinary(recovered_sig);
+    auto bin_sig       = bls::ToBinary(recovered_sig);
 
     EXPECT_TRUE(bls::Verify(recovered_sig, dealer_pub, message));
     EXPECT_EQ(reference_sig, bin_sig);
@@ -143,7 +143,7 @@ TEST(BlsTests, SimpleRandomBeaconFlow)
 
   {
     auto recovered_sig = bls::RecoverSignature({sig1, sig4}, {id1, id4});
-    auto bin_sig = bls::ToBinary(recovered_sig);
+    auto bin_sig       = bls::ToBinary(recovered_sig);
 
     EXPECT_TRUE(bls::Verify(recovered_sig, dealer_pub, message));
     EXPECT_EQ(reference_sig, bin_sig);
@@ -165,14 +165,14 @@ TEST(BlsTests, SimpleRandomBeaconFlow)
 
   {
     auto recovered_sig = bls::RecoverSignature({sig1, sig2, sig3}, {id1, id2, id3});
-    reference_sig = bls::ToBinary(recovered_sig);
+    reference_sig      = bls::ToBinary(recovered_sig);
 
     EXPECT_TRUE(bls::Verify(recovered_sig, dealer_pub, message));
   }
 
   {
     auto recovered_sig = bls::RecoverSignature({sig2, sig4, sig3}, {id2, id4, id3});
-    auto bin_sig = bls::ToBinary(recovered_sig);
+    auto bin_sig       = bls::ToBinary(recovered_sig);
 
     EXPECT_TRUE(bls::Verify(recovered_sig, dealer_pub, message));
     EXPECT_EQ(reference_sig, bin_sig);
@@ -180,7 +180,7 @@ TEST(BlsTests, SimpleRandomBeaconFlow)
 
   {
     auto recovered_sig = bls::RecoverSignature({sig1, sig4}, {id1, id4});
-    auto bin_sig = bls::ToBinary(recovered_sig);
+    auto bin_sig       = bls::ToBinary(recovered_sig);
 
     EXPECT_TRUE(bls::Verify(recovered_sig, dealer_pub, message));
     EXPECT_EQ(reference_sig, bin_sig);
@@ -202,14 +202,14 @@ TEST(BlsTests, SimpleRandomBeaconFlow)
 
   {
     auto recovered_sig = bls::RecoverSignature({sig1, sig2, sig3}, {id1, id2, id3});
-    reference_sig = bls::ToBinary(recovered_sig);
+    reference_sig      = bls::ToBinary(recovered_sig);
 
     EXPECT_TRUE(bls::Verify(recovered_sig, dealer_pub, message));
   }
 
   {
     auto recovered_sig = bls::RecoverSignature({sig2, sig4, sig3}, {id2, id4, id3});
-    auto bin_sig = bls::ToBinary(recovered_sig);
+    auto bin_sig       = bls::ToBinary(recovered_sig);
 
     EXPECT_TRUE(bls::Verify(recovered_sig, dealer_pub, message));
     EXPECT_EQ(reference_sig, bin_sig);
@@ -217,7 +217,7 @@ TEST(BlsTests, SimpleRandomBeaconFlow)
 
   {
     auto recovered_sig = bls::RecoverSignature({sig1, sig4}, {id1, id4});
-    auto bin_sig = bls::ToBinary(recovered_sig);
+    auto bin_sig       = bls::ToBinary(recovered_sig);
 
     EXPECT_TRUE(bls::Verify(recovered_sig, dealer_pub, message));
     EXPECT_EQ(reference_sig, bin_sig);

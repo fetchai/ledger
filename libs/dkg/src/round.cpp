@@ -16,9 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "crypto/sha256.hpp"
-#include "crypto/hash.hpp"
 #include "core/mutex.hpp"
+#include "crypto/hash.hpp"
+#include "crypto/sha256.hpp"
 #include "dkg/round.hpp"
 
 #include <algorithm>
@@ -81,5 +81,5 @@ void Round::RecoverSignature()
   round_entropy_   = crypto::Hash<crypto::SHA256>(crypto::bls::ToBinary(round_signature_));
 }
 
-} // namespace dkg
-} // namespace fetch
+}  // namespace dkg
+}  // namespace fetch

@@ -16,13 +16,13 @@
 //
 //------------------------------------------------------------------------------
 
-#include "dkg/dkg_service.hpp"
 #include "core/logging.hpp"
 #include "core/serializers/byte_array.hpp"
 #include "core/serializers/byte_array_buffer.hpp"
 #include "core/service_ids.hpp"
 #include "crypto/bls_dkg.hpp"
 #include "crypto/sha256.hpp"
+#include "dkg/dkg_service.hpp"
 #include "network/muddle/muddle_endpoint.hpp"
 #include "network/muddle/packet.hpp"
 #include "network/muddle/subscription.hpp"
@@ -344,7 +344,8 @@ State DkgService::OnBroadcastSignatureState()
     {
       // we do not need to RPC call to ourselves we can simply provide the signature submission
       FETCH_LOCK(round_lock_);
-      pending_signatures_.emplace_back(Submission{this_round, id_, aeon_share_public_key_, signature});
+      pending_signatures_.emplace_back(
+          Submission{this_round, id_, aeon_share_public_key_, signature});
     }
     else
     {

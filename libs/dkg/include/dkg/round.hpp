@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/mutex.hpp"
 #include "core/byte_array/const_byte_array.hpp"
+#include "core/mutex.hpp"
 #include "crypto/bls_base.hpp"
 
 #include <memory>
@@ -39,10 +39,10 @@ public:
   // Construction / Destruction
   explicit Round(uint64_t round);
   Round(Round const &) = delete;
-  Round(Round &&) = delete;
-  ~Round() = default;
+  Round(Round &&)      = delete;
+  ~Round()             = default;
 
-  uint64_t round() const;
+  uint64_t                      round() const;
   crypto::bls::Signature const &round_signature() const
   {
     return round_signature_;
@@ -68,8 +68,8 @@ private:
   crypto::bls::Signature     round_signature_{};
   byte_array::ConstByteArray round_entropy_{};
 
-  std::atomic<std::size_t>   num_shares_{0};
-  std::atomic<bool>          has_signature_{};
+  std::atomic<std::size_t> num_shares_{0};
+  std::atomic<bool>        has_signature_{};
 };
 
 /**
@@ -114,5 +114,5 @@ inline std::size_t Round::GetNumShares() const
 
 using RoundPtr = std::shared_ptr<Round>;
 
-} // namespace dkg
-} // namespace fetch
+}  // namespace dkg
+}  // namespace fetch
