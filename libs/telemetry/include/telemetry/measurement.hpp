@@ -41,8 +41,12 @@ public:
 
   /// @name Metric Interface
   /// @{
-  virtual bool ToStream(std::ostream &stream) const = 0;
+  virtual void ToStream(std::ostream &stream) const = 0;
   /// @}
+
+protected:
+
+  std::ostream & WritePrefix(std::ostream &stream, char const *type_name) const;
 
 private:
   std::string const name_;

@@ -16,21 +16,21 @@
 //
 //------------------------------------------------------------------------------
 
-#include "telemetry/counter.hpp"
+#include "telemetry/measurement.hpp"
 
 #include <iostream>
 
 namespace fetch {
 namespace telemetry {
 
-//# HELP go_memstats_lookups_total Total number of pointer lookups.
-//# TYPE go_memstats_lookups_total counter
-// go_memstats_lookups_total 0
-
-void Counter::ToStream(std::ostream &stream) const
+std::ostream & Measurement::WritePrefix(std::ostream &stream, char const *type_name) const
 {
-  WritePrefix(stream, "counter") << counter_ << '\n';
+  stream << "# HELP " << name() << ' ' << description() << '\n'
+         << "# TYPE " << name() << ' ' << type_name << '\n'
+         << name() << ' ';
+
+  return stream;
 }
 
-}  // namespace telemetry
-}  // namespace fetch
+} // namespace telemetry
+} // namespace fetch

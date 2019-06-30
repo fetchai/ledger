@@ -51,7 +51,7 @@ public:
 
   /// @name Metric Interface
   /// @{
-  bool ToStream(std::ostream &stream) const override;
+  void ToStream(std::ostream &stream) const override;
   /// @}
 
   // Operators
@@ -116,41 +116,33 @@ void Gauge<V>::max(V const &value)
 
 inline void GaugeToStream(Gauge<int8_t> const &gauge, std::ostream &stream)
 {
-  stream << "# HELP " << gauge.name() << ' ' << gauge.description() << '\n'
-         << "# TYPE " << gauge.name() << " gauge\n"
-         << gauge.name() << ' ' << static_cast<int32_t>(gauge.get()) << '\n';
+  stream << static_cast<int32_t>(gauge.get()) << '\n';
 }
 
 inline void GaugeToStream(Gauge<uint8_t> const &gauge, std::ostream &stream)
 {
-  stream << "# HELP " << gauge.name() << ' ' << gauge.description() << '\n'
-         << "# TYPE " << gauge.name() << " gauge\n"
-         << gauge.name() << ' ' << static_cast<uint32_t>(gauge.get()) << '\n';
+  stream << static_cast<uint32_t>(gauge.get()) << '\n';
 }
 
 template <typename V>
 typename std::enable_if<std::is_integral<V>::value>::type GaugeToStream(Gauge<V> const &gauge,
                                                                         std::ostream &  stream)
 {
-  stream << "# HELP " << gauge.name() << ' ' << gauge.description() << '\n'
-         << "# TYPE " << gauge.name() << " gauge\n"
-         << gauge.name() << ' ' << gauge.get() << '\n';
+  stream << gauge.get() << '\n';
 }
 
 template <typename V>
 typename std::enable_if<std::is_floating_point<V>::value>::type GaugeToStream(Gauge<V> const &gauge,
                                                                               std::ostream &stream)
 {
-  stream << "# HELP " << gauge.name() << ' ' << gauge.description() << '\n'
-         << "# TYPE " << gauge.name() << " gauge\n"
-         << gauge.name() << ' ' << std::scientific << gauge.get() << '\n';
+  stream << std::scientific << gauge.get() << '\n';
 }
 
 template <typename V>
-bool Gauge<V>::ToStream(std::ostream &stream) const
+void Gauge<V>::ToStream(std::ostream &stream) const
 {
+  WritePrefix(stream, "gauge");
   GaugeToStream(*this, stream);
-  return true;
 }
 
 }  // namespace telemetry
