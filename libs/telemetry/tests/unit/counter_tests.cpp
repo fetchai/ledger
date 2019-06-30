@@ -26,6 +26,7 @@ namespace {
 
 using fetch::telemetry::Counter;
 
+using Labels = Counter::Labels;
 using CounterPtr = std::unique_ptr<Counter>;
 
 class CounterTests : public ::testing::Test
@@ -33,7 +34,7 @@ class CounterTests : public ::testing::Test
 protected:
   void SetUp() override
   {
-    counter_ = std::make_unique<Counter>("test_counter", "Simple test counter");
+    counter_ = std::make_unique<Counter>("test_counter", "Simple test counter", Labels{{"foo", "bar"}});
   }
 
   void TearDown() override
@@ -75,7 +76,7 @@ TEST_F(CounterTests, CheckSerialisation)
 
   static char const *EXPECTED_TEXT = R"(# HELP test_counter Simple test counter
 # TYPE test_counter counter
-test_counter 500
+test_counter{foo="bar"} 500
 )";
 
   EXPECT_EQ(oss.str(), std::string{EXPECTED_TEXT});
