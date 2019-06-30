@@ -77,7 +77,7 @@ CounterPtr Registry::CreateCounter(std::string name, std::string description, La
     // add the counter to the register
     {
       LockGuard guard(lock_);
-      metrics_.push_back(counter);
+      measurements_.push_back(counter);
     }
   }
 
@@ -92,9 +92,9 @@ CounterPtr Registry::CreateCounter(std::string name, std::string description, La
 void Registry::Collect(std::ostream &stream)
 {
   LockGuard guard(lock_);
-  for (auto const &metric : metrics_)
+  for (auto const &measurement : measurements_)
   {
-    metric->ToStream(stream);
+    measurement->ToStream(stream);
   }
 }
 

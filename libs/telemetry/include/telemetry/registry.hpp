@@ -28,7 +28,7 @@
 namespace fetch {
 namespace telemetry {
 
-class Metric;
+class Measurement;
 class Counter;
 
 template <typename T>
@@ -69,15 +69,15 @@ public:
   Registry &operator=(Registry &&) = delete;
 
 private:
-  using MetricPtr   = std::shared_ptr<Metric>;
-  using MetricArray = std::vector<MetricPtr>;
-  using Mutex       = std::mutex;
-  using LockGuard   = std::lock_guard<std::mutex>;
+  using MeasurementPtr = std::shared_ptr<Measurement>;
+  using Measurements   = std::vector<MeasurementPtr>;
+  using Mutex          = std::mutex;
+  using LockGuard      = std::lock_guard<std::mutex>;
 
   static bool ValidateName(std::string const &name);
 
-  Mutex       lock_;
-  MetricArray metrics_;
+  Mutex        lock_;
+  Measurements measurements_;
 };
 
 /**
@@ -102,7 +102,7 @@ Registry::GaugePtr<T> Registry::CreateGauge(std::string name, std::string descri
     // add the gauge to the register
     {
       LockGuard guard(lock_);
-      metrics_.push_back(gauge);
+      measurements_.push_back(gauge);
     }
   }
 

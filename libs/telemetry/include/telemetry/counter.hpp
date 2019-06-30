@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "telemetry/metric.hpp"
+#include "telemetry/measurement.hpp"
 
 #include <atomic>
 #include <string>
@@ -25,7 +25,7 @@
 namespace fetch {
 namespace telemetry {
 
-class Counter : public Metric
+class Counter : public Measurement
 {
 public:
   // Construction / Destruction
@@ -57,7 +57,7 @@ private:
 };
 
 inline Counter::Counter(std::string name, std::string description, Labels labels)
-  : Metric(std::move(name), std::move(description), std::move(labels))
+  : Measurement(std::move(name), std::move(description), std::move(labels))
 {}
 
 inline uint64_t Counter::count() const

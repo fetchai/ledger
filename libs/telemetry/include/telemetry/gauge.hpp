@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "telemetry/metric.hpp"
+#include "telemetry/measurement.hpp"
 
 #include <atomic>
 #include <iomanip>
@@ -28,7 +28,7 @@ namespace fetch {
 namespace telemetry {
 
 template <typename ValueType>
-class Gauge : public Metric
+class Gauge : public Measurement
 {
 public:
   // Construction / Destruction
@@ -66,7 +66,7 @@ private:
 
 template <typename V>
 Gauge<V>::Gauge(std::string const &name, std::string const &description, Labels const &labels)
-  : Metric(name, description, labels)
+  : Measurement(name, description, labels)
 {}
 
 template <typename V>
@@ -112,6 +112,20 @@ void Gauge<V>::max(V const &value)
   {
     value_ = value;
   }
+}
+
+inline void GaugeToStream(Gauge<int8_t> const &gauge, std::ostream &stream)
+{
+  stream << "# HELP " << gauge.name() << ' ' << gauge.description() << '\n'
+         << "# TYPE " << gauge.name() << " gauge\n"
+         << gauge.name() << ' ' << static_cast<int32_t>(gauge.get()) << '\n';
+}
+
+inline void GaugeToStream(Gauge<uint8_t> const &gauge, std::ostream &stream)
+{
+  stream << "# HELP " << gauge.name() << ' ' << gauge.description() << '\n'
+         << "# TYPE " << gauge.name() << " gauge\n"
+         << gauge.name() << ' ' << static_cast<uint32_t>(gauge.get()) << '\n';
 }
 
 template <typename V>

@@ -26,6 +26,7 @@
 namespace {
 
 using IntegerTypes = ::testing::Types<uint8_t, uint16_t, uint32_t, uint64_t>;
+using FloatTypes   = ::testing::Types<float, double>;
 using AllTypes     = ::testing::Types<uint8_t, uint16_t, uint32_t, uint64_t, float, double>;
 
 template <typename T>
@@ -53,7 +54,13 @@ class IntegerGaugeTests : public GeneralGaugeTests<T>
 {
 };
 
+template <typename T>
+class FloatGaugeTests : public GeneralGaugeTests<T>
+{
+};
+
 TYPED_TEST_CASE(IntegerGaugeTests, IntegerTypes);
+TYPED_TEST_CASE(FloatGaugeTests, FloatTypes);
 TYPED_TEST_CASE(GeneralGaugeTests, AllTypes);
 
 TYPED_TEST(IntegerGaugeTests, CheckIncrement)
@@ -84,10 +91,44 @@ TYPED_TEST(IntegerGaugeTests, CheckRemove)
   EXPECT_EQ(this->gauge_->get(), 2);
 }
 
+TYPED_TEST(IntegerGaugeTests, CheckSerialisation)
+{
+  this->gauge_->set(200);
+  EXPECT_EQ(this->gauge_->get(), 200);
+
+  static char const *EXPECTED_TEXT = R"(# HELP sample_gauge Description of gauge
+# TYPE sample_gauge gauge
+sample_gauge 200
+)";
+
+  std::ostringstream oss;
+  this->gauge_->ToStream(oss);
+
+  EXPECT_EQ(oss.str(), std::string{EXPECTED_TEXT});
+}
+
 TYPED_TEST(GeneralGaugeTests, SetValue)
 {
   this->gauge_->set(2);
   EXPECT_EQ(this->gauge_->get(), 2);
 }
+
+TYPED_TEST(FloatGaugeTests, CheckSerialisation)
+{
+  this->gauge_->set(3.1456f);
+  EXPECT_FLOAT_EQ(this->gauge_->get(), 3.1456f);
+
+  static char const *EXPECTED_TEXT = R"(# HELP sample_gauge Description of gauge
+# TYPE sample_gauge gauge
+sample_gauge 3.145600e+00
+)";
+
+  std::ostringstream oss;
+  this->gauge_->ToStream(oss);
+
+  EXPECT_EQ(oss.str(), std::string{EXPECTED_TEXT});
+}
+
+
 
 }  // namespace

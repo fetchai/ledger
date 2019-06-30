@@ -24,14 +24,14 @@
 namespace fetch {
 namespace telemetry {
 
-class Metric
+class Measurement
 {
 public:
   using Labels = std::unordered_map<std::string, std::string>;
 
   // Construction / Destruction
-  Metric(std::string name, std::string description, Labels labels = Labels{});
-  virtual ~Metric() = default;
+  Measurement(std::string name, std::string description, Labels labels = Labels{});
+  virtual ~Measurement() = default;
 
   /// @name Accessors
   /// @{
@@ -50,18 +50,18 @@ private:
   Labels            labels_;
 };
 
-inline Metric::Metric(std::string name, std::string description, Labels labels)
+inline Measurement::Measurement(std::string name, std::string description, Labels labels)
   : name_{std::move(name)}
   , description_{std::move(description)}
   , labels_{std::move(labels)}
 {}
 
-inline std::string const &Metric::name() const
+inline std::string const &Measurement::name() const
 {
   return name_;
 }
 
-inline std::string const &Metric::description() const
+inline std::string const &Measurement::description() const
 {
   return description_;
 }
