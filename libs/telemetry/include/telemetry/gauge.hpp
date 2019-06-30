@@ -19,7 +19,7 @@
 
 #include "telemetry/measurement.hpp"
 
-#include <atomic>
+#include <mutex>
 #include <iomanip>
 #include <iostream>
 #include <type_traits>
@@ -27,6 +27,13 @@
 namespace fetch {
 namespace telemetry {
 
+/**
+ * Gauge Telemetry values
+ *
+ * The gauge value stores a metric value that is expected to go up and down
+ *
+ * @tparam ValueType
+ */
 template <typename ValueType>
 class Gauge : public Measurement
 {
@@ -42,10 +49,8 @@ public:
   /// @{
   ValueType get() const;
   void      set(ValueType const &value);
-  void      increment();
-  void      decrement();
-  void      add(ValueType const &value);
-  void      remove(ValueType const &value);
+  void      increment(ValueType const &value = ValueType{1});
+  void      decrement(ValueType const &value = ValueType{1});
   void      max(ValueType const &value);
   /// @}
 
@@ -59,71 +64,122 @@ public:
   Gauge &operator=(Gauge &&) = delete;
 
 private:
-  std::atomic<ValueType> value_{0};
+  using Mutex     = std::mutex;
+  using LockGuard = std::lock_guard<Mutex>;
+
+  mutable Mutex lock_{};
+  ValueType     value_{0};
 
   static_assert(std::is_arithmetic<ValueType>::value, "");
 };
 
+/**
+ * Create a gauge measurement
+ *
+ * @tparam V The underlying gauge type
+ * @param name The name of the gauge
+ * @param description The description of the gauge
+ * @param labels The labels for the gauge
+ */
 template <typename V>
 Gauge<V>::Gauge(std::string const &name, std::string const &description, Labels const &labels)
   : Measurement(name, description, labels)
 {}
 
+/**
+ * Get the current value of the gauge
+ *
+ * @tparam V The underlying gauge type
+ * @return The current value of the gauge
+ */
 template <typename V>
 V Gauge<V>::get() const
 {
+  LockGuard guard{lock_};
   return value_;
 }
 
+/**
+ * Sets the value of the gauge to the value specified
+ *
+ * @tparam V The underlying gauge type
+ * @param value The new value to be set
+ */
 template <typename V>
 void Gauge<V>::set(V const &value)
 {
+  LockGuard guard{lock_};
   value_ = value;
 }
 
+/**
+ * Increment the value of the gauge by a specified amount
+ *
+ * @tparam V The underlying gauge type
+ */
 template <typename V>
-void Gauge<V>::increment()
+void Gauge<V>::increment(V const &value)
 {
-  ++value_;
-}
-
-template <typename V>
-void Gauge<V>::decrement()
-{
-  --value_;
-}
-
-template <typename V>
-void Gauge<V>::add(V const &value)
-{
+  LockGuard guard{lock_};
   value_ += value;
 }
 
+/**
+ * Decrement the value fo the gauge by a specified amount
+ *
+ * @tparam V The underlying gauge type
+ */
 template <typename V>
-void Gauge<V>::remove(V const &value)
+void Gauge<V>::decrement(V const &value)
 {
+  LockGuard guard{lock_};
   value_ -= value;
 }
 
+/**
+ * Update the value of the gauge if the input value is bigger than the previous entry
+ *
+ * @tparam V The underlying gauge type
+ * @param value The value to be compared
+ */
 template <typename V>
 void Gauge<V>::max(V const &value)
 {
+  LockGuard guard{lock_};
   if (value > value_)
   {
     value_ = value;
   }
 }
 
+/**
+ * Internal: int8_t specific value formatter
+ *
+ * @param gauge The reference to the current gauge
+ * @param stream The stream to be populated
+ */
 inline void GaugeToStream(Gauge<int8_t> const &gauge, std::ostream &stream)
 {
   stream << static_cast<int32_t>(gauge.get()) << '\n';
 }
 
+/**
+ * Internal: uint8_t specific value formatter
+ *
+ * @param gauge The reference to the current gauge
+ * @param stream The stream to be populated
+ */
 inline void GaugeToStream(Gauge<uint8_t> const &gauge, std::ostream &stream)
 {
   stream << static_cast<uint32_t>(gauge.get()) << '\n';
 }
 
+/**
+ * Internal: integer value formatter
+ *
+ * @param gauge The reference to the current gauge
+ * @param stream The stream to be populated
+ */
 template <typename V>
 typename std::enable_if<std::is_integral<V>::value>::type GaugeToStream(Gauge<V> const &gauge,
                                                                         std::ostream &  stream)
@@ -131,6 +187,12 @@ typename std::enable_if<std::is_integral<V>::value>::type GaugeToStream(Gauge<V>
   stream << gauge.get() << '\n';
 }
 
+/**
+ * Internal: float value formatter
+ *
+ * @param gauge The reference to the current gauge
+ * @param stream The stream to be populated
+ */
 template <typename V>
 typename std::enable_if<std::is_floating_point<V>::value>::type GaugeToStream(Gauge<V> const &gauge,
                                                                               std::ostream &stream)
@@ -138,6 +200,12 @@ typename std::enable_if<std::is_floating_point<V>::value>::type GaugeToStream(Ga
   stream << std::scientific << gauge.get() << '\n';
 }
 
+/**
+ * Add the current measurement to the specified stream
+ *
+ * @tparam V The underlying gauge type
+ * @param stream The stream to be populated
+ */
 template <typename V>
 void Gauge<V>::ToStream(std::ostream &stream) const
 {

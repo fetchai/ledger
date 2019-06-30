@@ -80,14 +80,14 @@ TYPED_TEST(IntegerGaugeTests, CheckDecrement)
 TYPED_TEST(IntegerGaugeTests, CheckAdd)
 {
   this->gauge_->set(2);
-  this->gauge_->add(2);
+  this->gauge_->increment(2);
   EXPECT_EQ(this->gauge_->get(), 4);
 }
 
 TYPED_TEST(IntegerGaugeTests, CheckRemove)
 {
   this->gauge_->set(4);
-  this->gauge_->remove(2);
+  this->gauge_->decrement(2);
   EXPECT_EQ(this->gauge_->get(), 2);
 }
 
