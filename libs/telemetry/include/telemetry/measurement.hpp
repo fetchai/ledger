@@ -45,8 +45,7 @@ public:
   /// @}
 
 protected:
-
-  std::ostream & WritePrefix(std::ostream &stream, char const *type_name) const;
+  std::ostream &WritePrefix(std::ostream &stream, char const *type_name) const;
 
 private:
   std::string const name_;

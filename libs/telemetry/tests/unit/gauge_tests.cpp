@@ -129,6 +129,4 @@ sample_gauge 3.145600e+00
   EXPECT_EQ(oss.str(), std::string{EXPECTED_TEXT});
 }
 
-
-
 }  // namespace

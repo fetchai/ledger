@@ -19,9 +19,9 @@
 
 #include "telemetry/measurement.hpp"
 
-#include <mutex>
 #include <iomanip>
 #include <iostream>
+#include <mutex>
 #include <type_traits>
 
 namespace fetch {

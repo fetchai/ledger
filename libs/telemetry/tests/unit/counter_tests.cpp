@@ -26,7 +26,7 @@ namespace {
 
 using fetch::telemetry::Counter;
 
-using Labels = Counter::Labels;
+using Labels     = Counter::Labels;
 using CounterPtr = std::unique_ptr<Counter>;
 
 class CounterTests : public ::testing::Test
@@ -34,7 +34,8 @@ class CounterTests : public ::testing::Test
 protected:
   void SetUp() override
   {
-    counter_ = std::make_unique<Counter>("test_counter", "Simple test counter", Labels{{"foo", "bar"}});
+    counter_ =
+        std::make_unique<Counter>("test_counter", "Simple test counter", Labels{{"foo", "bar"}});
   }
 
   void TearDown() override

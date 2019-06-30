@@ -59,9 +59,9 @@ void WriteLabels(std::ostream &stream, Measurement::Labels const &labels)
   stream << ' ';
 }
 
-} // namespace
+}  // namespace
 
-std::ostream & Measurement::WritePrefix(std::ostream &stream, char const *type_name) const
+std::ostream &Measurement::WritePrefix(std::ostream &stream, char const *type_name) const
 {
   stream << "# HELP " << name() << ' ' << description() << '\n'
          << "# TYPE " << name() << ' ' << type_name << '\n'
@@ -73,5 +73,5 @@ std::ostream & Measurement::WritePrefix(std::ostream &stream, char const *type_n
   return stream;
 }
 
-} // namespace telemetry
-} // namespace fetch
+}  // namespace telemetry
+}  // namespace fetch
