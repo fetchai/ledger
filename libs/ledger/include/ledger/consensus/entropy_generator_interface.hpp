@@ -29,9 +29,16 @@ public:
   EntropyGeneratorInterface()          = default;
   virtual ~EntropyGeneratorInterface() = default;
 
+  enum class Status
+  {
+    OK,
+    NOT_READY,
+    FAILED
+  };
+
   /// @name Entropy Generator
   /// @{
-  virtual uint64_t GenerateEntropy(Digest block_digest, uint64_t block_number) = 0;
+  virtual Status GenerateEntropy(Digest block_digest, uint64_t block_number, uint64_t &entropy) = 0;
   /// @}
 };
 

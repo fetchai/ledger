@@ -70,7 +70,7 @@ void PrepareTestDataAndLabels1D(TypeParam &data, TypeParam &gt)
   using DataType = typename TypeParam::Type;
 
   data.Resize({1, 4});
-  data.Set(0, 0, DataType(1));
+  data.Set(0, 0, static_cast<DataType>(1));
   data.Set(0, 1, DataType(2));
   data.Set(0, 2, DataType(3));
   data.Set(0, 3, DataType(4));
@@ -88,7 +88,7 @@ void PrepareTestDataAndLabels2D(TypeParam &data, TypeParam &gt)
   using DataType = typename TypeParam::Type;
 
   data.Resize({2, 2, 3});
-  data.Set(0, 0, 0, DataType(1));
+  data.Set(0, 0, 0, static_cast<DataType>(1));
   data.Set(0, 1, 0, DataType(2));
   data.Set(1, 0, 0, DataType(3));
   data.Set(1, 1, 0, DataType(4));
@@ -501,12 +501,12 @@ TYPED_TEST(OptimisersTest, adam_optimiser_minibatch_training)
   DataType loss = optimiser.Run({data}, gt, 2);
 
   // Test loss
-  EXPECT_NEAR(static_cast<double>(loss), 0.652267932, 1e-5);
+  EXPECT_NEAR(static_cast<double>(loss), 1.29388, 1e-5);
 
   // Test weights
   std::vector<TypeParam> weights = g->get_weights();
-  EXPECT_NEAR(static_cast<double>(weights[0].At(9, 0)), 0.04839, 1e-5);
+  EXPECT_NEAR(static_cast<double>(weights[0].At(9, 0)), 0.05011, 1e-5);
   EXPECT_NEAR(static_cast<double>(weights[1].At(4, 0)), -0.18362, 1e-5);
-  EXPECT_NEAR(static_cast<double>(weights[2].At(0, 0)), 0.04817, 1e-5);
+  EXPECT_NEAR(static_cast<double>(weights[2].At(0, 0)), 0.04991, 1e-5);
   EXPECT_NEAR(static_cast<double>(weights[3].At(0, 2)), -0.01474, 1e-5);
 }

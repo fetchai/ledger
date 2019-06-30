@@ -89,6 +89,19 @@ public:
                              padded_height_);
   }
 
+  void Assign(TensorView const &other)
+  {
+    auto it1 = begin();
+    auto it2 = other.begin();
+    assert(it1.size() == it2.size());
+    while (it1.is_valid())
+    {
+      *it1 = *it2;
+      ++it1;
+      ++it2;
+    }
+  }
+
   template <typename S>
   typename std::enable_if<std::is_integral<S>::value, Type>::type operator()(S i, S j) const
   {

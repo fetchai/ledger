@@ -35,13 +35,12 @@ public:
   using ArrayType   = T;
   using NodePtrType = std::shared_ptr<NodeInterface<T>>;
 
-  virtual ArrayType &                                           Evaluate()                      = 0;
+  virtual ArrayType &                                           Evaluate(bool is_training)      = 0;
   virtual void                                                  AddInput(NodePtrType const &i)  = 0;
   virtual void                                                  AddOutput(NodePtrType const &i) = 0;
   virtual std::vector<std::pair<NodeInterface<T> *, ArrayType>> BackPropagate(
       ArrayType const &error_signal)                                          = 0;
   virtual void                            ResetCache(bool input_size_changed) = 0;
-  virtual void                            SetBatch(bool b)                    = 0;
   virtual std::vector<NodePtrType> const &GetOutputs() const                  = 0;
 };
 
@@ -65,13 +64,12 @@ public:
     : O(params...)
     , name_(std::move(name))
     , cached_output_status_(CachedOutputState::CHANGED_SIZE)
-    , batch_(false)
   {}
 
   virtual ~Node() = default;
 
   std::vector<std::reference_wrapper<const ArrayType>>          GatherInputs() const;
-  virtual ArrayType &                                           Evaluate();
+  virtual ArrayType &                                           Evaluate(bool is_training);
   virtual std::vector<std::pair<NodeInterface<T> *, ArrayType>> BackPropagate(
       ArrayType const &error_signal);
 
@@ -79,7 +77,6 @@ public:
   void                                    AddOutput(NodePtrType const &o);
   virtual std::vector<NodePtrType> const &GetOutputs() const;
   virtual void                            ResetCache(bool input_size_changed);
-  virtual void                            SetBatch(bool b);
 
 private:
   std::vector<NodePtrType> input_nodes_;
@@ -87,7 +84,6 @@ private:
   std::string              name_;
   ArrayType                cached_output_;
   CachedOutputState        cached_output_status_;
-  bool                     batch_;
 };
 
 /**
@@ -101,7 +97,7 @@ std::vector<std::reference_wrapper<const T>> Node<T, O>::GatherInputs() const
   std::vector<std::reference_wrapper<const ArrayType>> inputs;
   for (auto const &i : input_nodes_)
   {
-    inputs.push_back(i->Evaluate());
+    inputs.push_back(i->Evaluate(this->is_training_));
   }
   return inputs;
 }
@@ -116,8 +112,9 @@ std::vector<std::reference_wrapper<const T>> Node<T, O>::GatherInputs() const
  * @return the tensor with the forward result
  */
 template <typename T, class O>
-T &Node<T, O>::Evaluate()
+T &Node<T, O>::Evaluate(bool is_training)
 {
+  this->SetTraining(is_training);
   FETCH_LOG_INFO("ML_LIB", "Evaluating node [", name_, "]");
   if (cached_output_status_ != CachedOutputState::VALID_CACHE)
   {
@@ -130,14 +127,7 @@ T &Node<T, O>::Evaluate()
         cached_output_.ResizeFromShape(output_shape);
       }
     }
-    if (batch_)
-    {
-      this->ForwardBatch(inputs, cached_output_);
-    }
-    else
-    {
-      this->Forward(inputs, cached_output_);
-    }
+    this->Forward(inputs, cached_output_);
     cached_output_status_ = CachedOutputState::VALID_CACHE;
   }
 
@@ -231,18 +221,6 @@ void Node<T, O>::ResetCache(bool input_size_changed)
 {
   cached_output_status_ =
       input_size_changed ? CachedOutputState::CHANGED_SIZE : CachedOutputState::CHANGED_CONTENT;
-}
-
-/**
- * Sets the flag for batching this node or not
- * @tparam T tensor type
- * @tparam O operation class
- * @param b bool indicating whether batching
- */
-template <typename T, class O>
-void Node<T, O>::SetBatch(bool b)
-{
-  batch_ = b;
 }
 
 }  // namespace ml

@@ -22,3 +22,9 @@
 [submodule "vendor/spdlog"]
 	path = vendor/spdlog
 	url = https://github.com/gabime/spdlog.git
+[submodule "vendor/mcl"]
+	path = vendor/mcl
+	url = https://github.com/herumi/mcl.git
+[submodule "vendor/bls"]
+	path = vendor/bls
+	url = https://github.com/herumi/bls.git
