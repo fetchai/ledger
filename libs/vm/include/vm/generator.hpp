@@ -328,9 +328,11 @@ private:
   void     HandlePrefixPostfixOp(IRExpressionNodePtr const &node);
   void     HandleBinaryOp(IRExpressionNodePtr const &node);
   void     HandleUnaryOp(IRExpressionNodePtr const &node);
-  Chain    HandleConditionExpression(IRBlockNodePtr const &block_node, IRExpressionNodePtr const &node);
+  Chain    HandleConditionExpression(IRBlockNodePtr const &     block_node,
+                                     IRExpressionNodePtr const &node);
   Chain    HandleShortCircuitOp(IRNodePtr const &parent, IRExpressionNodePtr const &node);
-  void     FinaliseShortCircuitChain(Chain const &chain, bool is_condition_chain, uint16_t destination_pc);
+  void     FinaliseShortCircuitChain(Chain const &chain, bool is_condition_chain,
+                                     uint16_t destination_pc);
   void     HandleIndexOp(IRExpressionNodePtr const &node);
   void     HandleDotOp(IRExpressionNodePtr const &node);
   void     HandleInvokeOp(IRExpressionNodePtr const &node);

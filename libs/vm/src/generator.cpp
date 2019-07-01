@@ -430,7 +430,7 @@ void Generator::HandleWhileStatement(IRBlockNodePtr const &block_node)
     FinaliseShortCircuitChain(chain, true, endwhile_pc);
   }
 
-  Loop &loop                           = loops_.back();
+  Loop &loop = loops_.back();
 
   for (auto const &jump_pc : loop.continue_pcs)
   {
@@ -547,9 +547,8 @@ void Generator::HandleIfStatement(IRNodePtr const &node)
         }
       }
 
-      IRExpressionNodePtr condition_node =
-          ConvertToIRExpressionNodePtr(block_node->children[0]);
-      chain = HandleConditionExpression(block_node, condition_node);
+      IRExpressionNodePtr condition_node = ConvertToIRExpressionNodePtr(block_node->children[0]);
+      chain                              = HandleConditionExpression(block_node, condition_node);
 
       Executable::Instruction jf_instruction(Opcodes::JumpIfFalse);
       jf_instruction.index = 0;  // pc placeholder
@@ -588,7 +587,7 @@ void Generator::HandleIfStatement(IRNodePtr const &node)
       function_->instructions[jf_pc].index = else_block_start_pc;
       if (chain.kind == NodeKind::And)
       {
-         FinaliseShortCircuitChain(chain, true, else_block_start_pc);
+        FinaliseShortCircuitChain(chain, true, else_block_start_pc);
       }
 
       jf_pc = uint16_t(-1);
@@ -1390,7 +1389,8 @@ void Generator::HandleUnaryOp(IRExpressionNodePtr const &node)
   AddLineNumber(node->line, pc);
 }
 
-Generator::Chain Generator::HandleConditionExpression(IRBlockNodePtr const &block_node, IRExpressionNodePtr const &node)
+Generator::Chain Generator::HandleConditionExpression(IRBlockNodePtr const &     block_node,
+                                                      IRExpressionNodePtr const &node)
 {
   if ((node->node_kind == NodeKind::And) || (node->node_kind == NodeKind::Or))
   {
@@ -1403,7 +1403,8 @@ Generator::Chain Generator::HandleConditionExpression(IRBlockNodePtr const &bloc
   }
 }
 
-Generator::Chain Generator::HandleShortCircuitOp(IRNodePtr const &parent, IRExpressionNodePtr const &node)
+Generator::Chain Generator::HandleShortCircuitOp(IRNodePtr const &          parent,
+                                                 IRExpressionNodePtr const &node)
 {
   IRExpressionNodePtr lhs = ConvertToIRExpressionNodePtr(node->children[0]);
   IRExpressionNodePtr rhs = ConvertToIRExpressionNodePtr(node->children[1]);
@@ -1415,8 +1416,8 @@ Generator::Chain Generator::HandleShortCircuitOp(IRNodePtr const &parent, IRExpr
   }
 
   bool const is_condition_chain = (parent_node_kind == NodeKind::WhileStatement) ||
-      (parent_node_kind == NodeKind::If) ||
-      (parent_node_kind == NodeKind::ElseIf);
+                                  (parent_node_kind == NodeKind::If) ||
+                                  (parent_node_kind == NodeKind::ElseIf);
   bool const in_chain = node->node_kind == parent_node_kind;
 
   Chain lhs_chain;
@@ -1430,7 +1431,7 @@ Generator::Chain Generator::HandleShortCircuitOp(IRNodePtr const &parent, IRExpr
   }
 
   Executable::Instruction jump_instruction(Opcodes::Unknown);  // opcode placeholder
-  jump_instruction.index = 0;  // pc placeholder
+  jump_instruction.index = 0;                                  // pc placeholder
   uint16_t const jump_pc = function_->AddInstruction(jump_instruction);
   AddLineNumber(node->line, jump_pc);
 
@@ -1459,7 +1460,8 @@ Generator::Chain Generator::HandleShortCircuitOp(IRNodePtr const &parent, IRExpr
   return Chain();
 }
 
-void Generator::FinaliseShortCircuitChain(Chain const &chain, bool is_condition_chain, uint16_t destination_pc)
+void Generator::FinaliseShortCircuitChain(Chain const &chain, bool is_condition_chain,
+                                          uint16_t destination_pc)
 {
   uint16_t opcode;
   if (is_condition_chain)
@@ -1474,8 +1476,8 @@ void Generator::FinaliseShortCircuitChain(Chain const &chain, bool is_condition_
   for (auto pc : chain.pcs)
   {
     Executable::Instruction &instruction = function_->instructions[pc];
-    instruction.opcode = opcode;
-    instruction.index  = destination_pc;
+    instruction.opcode                   = opcode;
+    instruction.index                    = destination_pc;
   }
 }
 
