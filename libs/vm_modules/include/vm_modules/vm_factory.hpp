@@ -17,20 +17,39 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm/module.hpp"
+#include <memory>
+#include <string>
+#include <vector>
 
+#include "vm_modules/core/panic.hpp"
 #include "vm_modules/core/print.hpp"
 #include "vm_modules/core/type_convert.hpp"
-
 #include "vm_modules/math/math.hpp"
-#include "vm_modules/math/random.hpp"
 
-#include "vm_modules/ml/cross_entropy.hpp"
+#include "vm_modules/math/tensor.hpp"
 #include "vm_modules/ml/graph.hpp"
-#include "vm_modules/ml/mean_square_error.hpp"
-#include "vm_modules/ml/tensor.hpp"
+#include "vm_modules/ml/ops/loss_functions/cross_entropy.hpp"
+#include "vm_modules/ml/ops/loss_functions/mean_square_error.hpp"
+
+#include "vm_modules/core/byte_array_wrapper.hpp"
+#include "vm_modules/core/structured_data.hpp"
+#include "vm_modules/core/type_convert.hpp"
+#include "vm_modules/crypto/sha256.hpp"
+#include "vm_modules/math/bignumber.hpp"
+#include "vm_modules/math/exp.hpp"
+#include "vm_modules/math/sqrt.hpp"
+#include "vm_modules/polyfill/bitshifting.hpp"
+#include "vm_modules/polyfill/bitwise_ops.hpp"
 
 namespace fetch {
+namespace vm {
+
+class Module;
+struct Executable;
+class VM;
+
+}  // namespace vm
+
 namespace vm_modules {
 
 /**
@@ -41,29 +60,73 @@ namespace vm_modules {
 class VMFactory
 {
 public:
+  using Errors    = std::vector<std::string>;
+  using ModulePtr = std::shared_ptr<vm::Module>;
+
+  enum Modules : uint64_t
+  {
+    MOD_CORE = (1ull << 0ull),
+    MOD_MATH = (1ull << 1ull),
+    MOD_SYN  = (1ull << 2ull),
+    MOD_ML   = (1ull << 3ull),
+  };
+
+  enum UseCases : uint64_t
+  {
+    USE_SMART_CONTRACTS = (MOD_CORE | MOD_MATH | MOD_ML),
+    USE_SYNERGETIC      = (MOD_CORE | MOD_MATH | MOD_SYN),
+    USE_ALL             = (~uint64_t(0)),
+  };
+
   /**
    * Get a module, the VMFactory will add whatever bindings etc. are considered in the 'standard
    * library'
    *
    * @return: The module
    */
-  static std::shared_ptr<fetch::vm::Module> GetModule()
+  static std::shared_ptr<fetch::vm::Module> GetModule(uint64_t enabled)
   {
     auto module = std::make_shared<fetch::vm::Module>();
 
     // core modules
-    CreatePrint(*module);
-    CreateToString(*module);
+    if (MOD_CORE & enabled)
+    {
+      CreatePrint(*module);
+      CreatePanic(*module);
+      CreateToString(*module);
+      CreateToBool(*module);
+
+      StructuredData::Bind(*module);
+    }
 
     // math modules
-    CreateAbs(*module);
-    CreateRand(module);
+    if (MOD_MATH & enabled)
+    {
+      math::BindMath(*module);
+    }
+
+    // synergetic modules
+    if (MOD_SYN & enabled)
+    {
+      ByteArrayWrapper::Bind(*module);
+      math::UInt256Wrapper::Bind(*module);
+      SHA256Wrapper::Bind(*module);
+
+      math::BindExp(*module);
+      math::BindSqrt(*module);
+      BindBitShift(*module);
+      BindBitwiseOps(*module);
+    }
 
     // ml modules - order is important!!
-    ml::CreateTensor(*module);
-    ml::CreateGraph(*module);
-    ml::CreateCrossEntropy(*module);
-    ml::CreateMeanSquareError(*module);
+    if (MOD_ML & enabled)
+    {
+      math::VMTensor::Bind(*module);
+      ml::VMStateDict::Bind(*module);
+      ml::VMGraph::Bind(*module);
+      fetch::vm_modules::ml::VMCrossEntropyLoss::Bind(*module);
+      ml::CreateMeanSquareError(*module);
+    }
 
     return module;
   }
@@ -79,45 +142,7 @@ public:
    */
   static std::vector<std::string> Compile(std::shared_ptr<fetch::vm::Module> const &module,
                                           std::string const &                       source,
-                                          fetch::vm::Executable &                   executable)
-  {
-    std::vector<std::string> errors;
-
-    // generate the compiler from the module
-    auto   compiler = std::make_shared<fetch::vm::Compiler>(module.get());
-    vm::IR ir;
-
-    // compile the source
-    bool const compiled = compiler->Compile(source, "default", ir, errors);
-
-    if (!compiled)
-    {
-      errors.push_back("Failed to compile.");
-      return errors;
-    }
-
-    fetch::vm::VM vm(module.get());  // TODO(tfr): refactor such that IR is first made exectuable
-    if (!vm.GenerateExecutable(ir, "default_ir", executable, errors))
-    {
-      return errors;
-    }
-
-#ifndef NDEBUG
-    std::ostringstream all_errors;
-    for (auto const &error : errors)
-    {
-      all_errors << error << std::endl;
-    }
-
-    if (errors.size() > 0)
-    {
-      FETCH_LOG_WARN("VM_FACTORY", "Found badly constructed SC. Debug:\n", all_errors.str());
-    }
-#endif
-
-    return errors;
-  }
-
+                                          fetch::vm::Executable &                   executable);
   /**
    * Get an instance of the VM after binding to a module
    *

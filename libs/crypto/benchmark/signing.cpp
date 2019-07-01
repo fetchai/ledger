@@ -21,7 +21,8 @@
 #include "core/random/lcg.hpp"
 #include "crypto/ecdsa.hpp"
 
-#include <benchmark/benchmark.h>
+#include "benchmark/benchmark.h"
+
 #include <stdexcept>
 
 using fetch::crypto::ECDSASigner;

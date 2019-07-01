@@ -25,12 +25,12 @@
 #include <string>
 #include <system_error>
 
-namespace asio {
-template <typename T>
-class basic_streambuf;
-
-using streambuf = basic_streambuf<>;
-}  // namespace asio
+namespace fetch {
+namespace http {
+class HTTPRequest;
+class HTTPResponse;
+}  // namespace http
+}  // namespace fetch
 
 namespace fetch {
 namespace http {

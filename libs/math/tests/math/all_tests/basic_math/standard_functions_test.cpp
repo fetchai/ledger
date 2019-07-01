@@ -16,10 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include <gtest/gtest.h>
-
 #include "math/standard_functions/clamp.hpp"
 #include "math/tensor.hpp"
+
+#include "gtest/gtest.h"
 
 using namespace fetch::math;
 
@@ -80,8 +80,8 @@ TYPED_TEST(StandardFunctionTests, clamp_array_1D_test)
   ArrayType A = ArrayType({6});
 
   A(0) = DataType(-10);
-  A(1) = DataType(0);
-  A(2) = DataType(1);
+  A(1) = static_cast<DataType>(0);
+  A(2) = static_cast<DataType>(1);
   A(3) = DataType(2);
   A(4) = DataType(3);
   A(5) = DataType(10);
@@ -109,8 +109,8 @@ TYPED_TEST(StandardFunctionTests, clamp_array_2D_test)
   ArrayType A = ArrayType({2, 3});
 
   A(0, 0) = DataType(-10);
-  A(0, 1) = DataType(0);
-  A(0, 2) = DataType(1);
+  A(0, 1) = static_cast<DataType>(0);
+  A(0, 2) = static_cast<DataType>(1);
   A(1, 0) = DataType(2);
   A(1, 1) = DataType(3);
   A(1, 2) = DataType(10);

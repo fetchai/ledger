@@ -21,7 +21,8 @@
 #include "core/random/lfg.hpp"
 #include "storage/key.hpp"
 #include "storage/key_value_index.hpp"
-#include <gtest/gtest.h>
+
+#include "gtest/gtest.h"
 
 #include <algorithm>
 

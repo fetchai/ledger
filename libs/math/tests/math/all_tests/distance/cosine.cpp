@@ -16,11 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include <gtest/gtest.h>
-
 #include "math/base_types.hpp"
 #include "math/distance/cosine.hpp"
 #include "math/tensor.hpp"
+
+#include "gtest/gtest.h"
 
 using namespace fetch::math::distance;
 using namespace fetch::math;
@@ -43,7 +43,7 @@ TYPED_TEST(DistanceTest, cosine_distance)
   using ArrayType = TypeParam;
 
   ArrayType A = ArrayType({1, 4});
-  A.Set(SizeType{0}, SizeType{0}, DataType(1));
+  A.Set(SizeType{0}, SizeType{0}, static_cast<DataType>(1));
   A.Set(SizeType{0}, SizeType{1}, DataType(2));
   A.Set(SizeType{0}, SizeType{2}, DataType(3));
   A.Set(SizeType{0}, SizeType{3}, DataType(4));
@@ -58,7 +58,7 @@ TYPED_TEST(DistanceTest, cosine_distance)
   EXPECT_NEAR(double(Cosine(A, B)), 2, (double)function_tolerance<DataType>());
 
   ArrayType C = ArrayType({1, 4});
-  C.Set(SizeType{0}, SizeType{0}, DataType(1));
+  C.Set(SizeType{0}, SizeType{0}, static_cast<DataType>(1));
   C.Set(SizeType{0}, SizeType{1}, DataType(2));
   C.Set(SizeType{0}, SizeType{2}, DataType(3));
   C.Set(SizeType{0}, SizeType{3}, DataType(2));

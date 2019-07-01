@@ -17,37 +17,37 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/meta/math_type_traits.hpp"
-#include "math/standard_functions/abs.hpp"
 #include "vm/module.hpp"
+#include <cstdlib>
+
+#include "vm_modules/math/abs.hpp"
+#include "vm_modules/math/exp.hpp"
+#include "vm_modules/math/log.hpp"
+#include "vm_modules/math/pow.hpp"
+#include "vm_modules/math/random.hpp"
+#include "vm_modules/math/sqrt.hpp"
+#include "vm_modules/math/tensor.hpp"
+#include "vm_modules/math/trigonometry.hpp"
 
 namespace fetch {
 namespace vm_modules {
+namespace math {
 
-/**
- * method for taking the absolute of a value
- */
-template <typename T>
-fetch::math::meta::IfIsMath<T, T> Abs(fetch::vm::VM *, T const &a)
+inline void BindMath(fetch::vm::Module &module)
 {
-  T x;
-  fetch::math::Abs(a, x);
-  return x;
+  // bind math functions
+  BindAbs(module);
+  BindExp(module);
+  BindLog(module);
+  BindPow(module);
+  BindRand(module);
+  BindSqrt(module);
+  BindTrigonometry(module);
+
+  // bind math classes
+  VMTensor::Bind(module);
 }
 
-static void CreateAbs(fetch::vm::Module &module)
-{
-  module.CreateFreeFunction<int32_t>("abs", &Abs<int32_t>);
-  module.CreateFreeFunction<float_t>("abs", &Abs<float_t>);
-  module.CreateFreeFunction<double_t>("abs", &Abs<double_t>);
-  module.CreateFreeFunction<fixed_point::fp32_t>("abs", &Abs<fixed_point::fp32_t>);
-  module.CreateFreeFunction<fixed_point::fp64_t>("abs", &Abs<fixed_point::fp64_t>);
-}
-
-inline void CreateAbs(std::shared_ptr<vm::Module> module)
-{
-  CreateAbs(*module.get());
-}
-
+}  // namespace math
 }  // namespace vm_modules
 }  // namespace fetch

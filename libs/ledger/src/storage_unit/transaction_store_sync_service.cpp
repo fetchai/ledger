@@ -134,7 +134,6 @@ TransactionStoreSyncService::State TransactionStoreSyncService::OnQueryObjectCou
     pending_object_count_.Add(connection, prom);
   }
 
-  FETCH_LOCK(mutex_);
   max_object_count_ = 0;
   promise_wait_timeout_.Set(cfg_.main_timeout);
 
@@ -144,7 +143,6 @@ TransactionStoreSyncService::State TransactionStoreSyncService::OnQueryObjectCou
 TransactionStoreSyncService::State TransactionStoreSyncService::OnResolvingObjectCounts()
 {
   auto counts = pending_object_count_.Resolve();
-  FETCH_LOCK(mutex_);
   for (auto &result : pending_object_count_.Get(MAX_OBJECT_COUNT_RESOLUTION_PER_CYCLE))
   {
     max_object_count_ = std::max(max_object_count_, result.promised);
@@ -188,7 +186,7 @@ TransactionStoreSyncService::State TransactionStoreSyncService::OnResolvingObjec
 
     for (uint64_t i = 0, end = (1u << root_size_); i < end; ++i)
     {
-      roots_to_sync_.push(Reverse(static_cast<uint8_t>(i)));
+      roots_to_sync_.push(static_cast<uint8_t>(i));
     }
   }
 
@@ -206,9 +204,16 @@ TransactionStoreSyncService::State TransactionStoreSyncService::OnQuerySubtree()
 {
   assert(!roots_to_sync_.empty());
 
-  FETCH_LOCK(mutex_);
+  // sanity check that this is not the case
   for (auto const &connection : muddle_->AsEndpoint().GetDirectlyConnectedPeers())
   {
+    // if there are no further roots to sync then we need to exit
+    if (roots_to_sync_.empty())
+    {
+      break;
+    }
+
+    // extract the next root to sync
     auto root = roots_to_sync_.front();
     roots_to_sync_.pop();
 
@@ -259,7 +264,6 @@ TransactionStoreSyncService::State TransactionStoreSyncService::OnResolvingSubtr
     FETCH_LOG_INFO(LOGGING_NAME, "Lane ", cfg_.lane_id, " Incorporated ", synced_tx, " txs");
   }
 
-  FETCH_LOCK(mutex_);
   if (counts.failed > 0)
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Lane ", cfg_.lane_id, ": ", "Failed subtree promises count ",
@@ -334,7 +338,6 @@ TransactionStoreSyncService::State TransactionStoreSyncService::OnQueryObjects()
   promise_wait_timeout_.Set(cfg_.promise_wait_timeout);
   fetch_object_wait_timeout_.Set(cfg_.fetch_object_wait_duration);
 
-  FETCH_LOCK(is_ready_mutex_);
   is_ready_ = true;
 
   return State::RESOLVING_OBJECTS;
@@ -365,7 +368,6 @@ TransactionStoreSyncService::State TransactionStoreSyncService::OnResolvingObjec
     FETCH_LOG_INFO(LOGGING_NAME, "Lane ", cfg_.lane_id, " Pulled ", synced_tx, " txs");
   }
 
-  FETCH_LOCK(mutex_);
   if (counts.pending > 0)
   {
     if (!promise_wait_timeout_.IsDue())

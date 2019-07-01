@@ -24,8 +24,6 @@
 
 #include <cstdint>
 
-namespace {
-
 using fetch::crypto::ECDSASigner;
 using fetch::ledger::Transaction;
 using fetch::ledger::TransactionBuilder;
@@ -54,5 +52,3 @@ inline TransactionList GenerateTransactions(std::size_t count, ECDSASigner &sign
 
   return list;
 }
-
-}  // namespace

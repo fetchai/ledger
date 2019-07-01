@@ -29,6 +29,7 @@
 
 namespace fetch {
 namespace ml {
+namespace dataloaders {
 
 template <typename LabelType, typename T>
 class MNISTLoader : public DataLoader<LabelType, T>
@@ -38,20 +39,23 @@ public:
   using DataType   = typename T::Type;
   using ReturnType = std::pair<LabelType, std::vector<T>>;
 
-  MNISTLoader(std::string const &imagesFile, std::string const &labelsFile,
+  MNISTLoader(std::string const &images_file, std::string const &labelsFile,
               bool random_mode = false)
     : DataLoader<LabelType, T>(random_mode)
     , cursor_(0)
   {
-    std::uint32_t recordLength(0);
-    data_        = read_mnist_images(imagesFile, size_, recordLength);
-    labels_      = read_mnist_labels(labelsFile, size_);
-    figure_size_ = 28 * 28;
-    assert(recordLength == figure_size_);
+    std::uint32_t record_length(0);
+    data_          = read_mnist_images(images_file, size_, record_length);
+    labels_        = read_mnist_labels(labelsFile, size_);
+    figure_size_   = 28 * 28;
+    figure_width_  = 28;
+    figure_height_ = 28;
+    label_size_    = 10;
+    assert(record_length == figure_size_);
 
     // Prepare return buffer
-    buffer_.second.push_back(T({28u, 28u, 1u}));
-    buffer_.first = LabelType({10u, 1u});
+    buffer_.second.push_back(T({figure_width_, figure_height_, 1u}));
+    buffer_.first = LabelType({label_size_, 1u});
   }
 
   virtual SizeType Size() const
@@ -86,9 +90,9 @@ public:
 
   void Display(T const &data) const
   {
-    for (SizeType i{0}; i < 28u; ++i)
+    for (SizeType i{0}; i < figure_width_; ++i)
     {
-      for (SizeType j{0}; j < 28u; ++j)
+      for (SizeType j{0}; j < figure_height_; ++j)
       {
 
         std::cout << (data.At(j, i, 0) > typename T::Type(0.5) ? char(219) : ' ');
@@ -98,27 +102,30 @@ public:
     std::cout << std::endl;
   }
 
-  ReturnType SubsetToArray(SizeType subset_size)
+  ReturnType PrepareBatch(SizeType subset_size)
   {
-    T              ret_labels({1, subset_size});
-    std::vector<T> ret_images;
-    ret_images.push_back(T({figure_size_, subset_size}));
+    T ret_labels({label_size_, subset_size});
 
-    for (fetch::math::SizeType i(0); i < subset_size; ++i)
+    std::vector<T> ret_images;
+    ret_images.push_back(T({figure_width_, figure_height_, subset_size}));
+
+    for (fetch::math::SizeType index{0}; index < subset_size; ++index)
     {
-      ret_labels(0, i) = static_cast<typename T::Type>(labels_[i]);
-      for (fetch::math::SizeType j{0}; j < figure_size_; ++j)
+
+      SizeType i{0};
+      auto     it = ret_images.at(0).Slice(index, 2).begin();
+      while (it.is_valid())
       {
-        ret_images.at(0)(j, i) = static_cast<typename T::Type>(data_[i][j]) / typename T::Type(256);
+        *it = static_cast<DataType>(data_[cursor_][i]) / DataType{256};
+        i++;
+        ++it;
       }
+      ret_labels(labels_[cursor_], index) = static_cast<typename LabelType::Type>(1);
+
+      ++cursor_;
     }
 
     return std::make_pair(ret_labels, ret_images);
-  }
-
-  std::pair<LabelType, std::vector<T>> ToArray()
-  {
-    return SubsetToArray(size_);
   }
 
 private:
@@ -232,11 +239,15 @@ private:
   std::uint32_t cursor_;
   std::uint32_t size_;
   std::uint32_t figure_size_;
+  std::uint32_t figure_width_;
+  std::uint32_t figure_height_;
+  std::uint32_t label_size_;
 
   ReturnType buffer_;
 
   unsigned char **data_;
   unsigned char * labels_;
 };
+}  // namespace dataloaders
 }  // namespace ml
 }  // namespace fetch

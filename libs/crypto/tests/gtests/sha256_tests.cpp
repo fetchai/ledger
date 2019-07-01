@@ -26,6 +26,7 @@ using namespace fetch;
 using namespace fetch::crypto;
 
 using byte_array_type = byte_array::ByteArray;
+
 TEST(crypto_SHA_gtest, The_SHA256_implmentation_differs_from_other_libraries)
 {
   auto hash = [](byte_array_type const &s) { return byte_array::ToHex(Hash<crypto::SHA256>(s)); };

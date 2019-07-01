@@ -23,6 +23,8 @@
 #include <cstdint>
 #include <cstdlib>
 #include <memory>
+#include <string>
+#include <vector>
 
 namespace fetch {
 namespace vm {
@@ -112,13 +114,14 @@ void Generator::ResolveTypes(IR const &ir)
   {
     if (type->type_kind == TypeKind::UserDefinedInstantiation)
     {
+      TypeId      template_type_id = type->template_type->resolved_id;
       TypeIdArray parameter_type_ids;
       for (auto const &parameter_type : type->parameter_types)
       {
         parameter_type_ids.push_back(parameter_type->resolved_id);
       }
-      uint16_t index =
-          executable_.AddType(TypeInfo(type->type_kind, type->name, parameter_type_ids));
+      uint16_t index = executable_.AddType(
+          TypeInfo(type->type_kind, type->name, template_type_id, parameter_type_ids));
       type->resolved_id = uint16_t(num_system_types_ + index);
       continue;
     }
@@ -1191,8 +1194,8 @@ void Generator::HandleNull(IRExpressionNodePtr const &node)
   }
   else
   {
-    // Type-uninferable nulls (e.g. in "null == null") are transformed to boolean true
-    Executable::Instruction instruction(Opcodes::PushTrue);
+    // Type-uninferable nulls (e.g. in "null == null") are transformed to boolean false
+    Executable::Instruction instruction(Opcodes::PushFalse);
     uint16_t                pc = function_->AddInstruction(instruction);
     AddLineNumber(node->line, pc);
   }

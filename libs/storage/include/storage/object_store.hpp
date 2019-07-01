@@ -21,7 +21,6 @@
 #include "core/serializers/byte_array_buffer.hpp"
 #include "core/serializers/stl_types.hpp"
 #include "core/serializers/typed_byte_array_buffer.hpp"
-
 #include "storage/key_byte_array_store.hpp"
 
 namespace fetch {
@@ -50,6 +49,7 @@ public:
   using type            = T;
   using self_type       = ObjectStore<T, S>;
   using serializer_type = serializers::TypedByteArrayBuffer;
+
   class Iterator;
 
   ObjectStore()                       = default;
@@ -225,14 +225,14 @@ public:
   class Iterator
   {
   public:
-    Iterator(typename KeyByteArrayStore<S>::Iterator it)
+    explicit Iterator(typename KeyByteArrayStore<S>::Iterator it)
       : wrapped_iterator_{it}
     {}
-    Iterator()                    = default;
-    Iterator(Iterator const &rhs) = default;
-    Iterator(Iterator &&rhs)      = default;
+    Iterator()                        = default;
+    Iterator(Iterator const &rhs)     = default;
+    Iterator(Iterator &&rhs) noexcept = default;
     Iterator &operator=(Iterator const &rhs) = default;
-    Iterator &operator=(Iterator &&rhs) = default;
+    Iterator &operator=(Iterator &&rhs) noexcept = default;
 
     void operator++()
     {
@@ -247,6 +247,11 @@ public:
     bool operator!=(Iterator const &rhs) const
     {
       return !(wrapped_iterator_ == rhs.wrapped_iterator_);
+    }
+
+    ResourceID GetKey() const
+    {
+      return ResourceID{wrapped_iterator_.GetKey()};
     }
 
     /**

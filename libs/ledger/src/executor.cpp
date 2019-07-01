@@ -26,6 +26,7 @@
 #include "ledger/chain/transaction.hpp"
 #include "ledger/chaincode/contract.hpp"
 #include "ledger/chaincode/token_contract.hpp"
+#include "ledger/consensus/stake_update_interface.hpp"
 #include "ledger/storage_unit/cached_storage_adapter.hpp"
 #include "metrics/metrics.hpp"
 
@@ -66,6 +67,10 @@ bool GenerateContractName(Transaction const &tx, Identifier &identifier)
   case ContractMode::CHAIN_CODE:
     contract_name = tx.chain_code() + "." + tx.action();
     break;
+
+  case ContractMode::SYNERGETIC:
+    // synergetic contracts are not supported through normal pipeline
+    break;
   }
 
   // if there is a contract present simply parse the name
@@ -93,8 +98,9 @@ bool IsCreateWealth(Transaction const &tx)
  *
  * @param storage The storage unit to be used
  */
-Executor::Executor(StorageUnitPtr storage)
-  : storage_{std::move(storage)}
+Executor::Executor(StorageUnitPtr storage, StakeUpdateInterface *stake_updates)
+  : stake_updates_{stake_updates}
+  , storage_{std::move(storage)}
   , token_contract_{std::make_shared<TokenContract>()}
 {}
 
@@ -277,7 +283,11 @@ bool Executor::ExecuteTransactionContract(Result &result)
     StateSentinelAdapter storage_adapter{*storage_cache_, contract_id.GetParent(), allowed_shards_};
 
     // lookup or create the instance of the contract as is needed
-    auto contract = chain_code_cache_.Lookup(contract_id.GetParent(), *storage_);
+    auto const is_token_contract = (contract_id.GetParent().full_name() == "fetch.token");
+
+    auto contract = is_token_contract
+                        ? token_contract_
+                        : chain_code_cache_.Lookup(contract_id.GetParent(), *storage_);
     if (!contract)
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Contract lookup failure: ", contract_id.full_name());
@@ -347,6 +357,19 @@ bool Executor::ExecuteTransactionContract(Result &result)
         result.status = Status::INSUFFICIENT_CHARGE;
         success       = false;
       }
+
+      if (success && stake_updates_)
+      {
+        for (auto const &update : token_contract_->stake_updates())
+        {
+          FETCH_LOG_INFO(LOGGING_NAME, "Applying stake update from: ", update.from,
+                         " for: ", update.address.display(), " amount: ", update.amount);
+
+          stake_updates_->AddStakeUpdate(update.from, update.address, update.amount);
+        }
+      }
+
+      token_contract_->ClearStakeUpdates();
     }
   }
   catch (std::exception const &ex)

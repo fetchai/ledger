@@ -25,6 +25,7 @@
 
 namespace fetch {
 namespace vm_modules {
+namespace math {
 
 template <typename T>
 fetch::math::meta::IfIsMath<T, T> Log(fetch::vm::VM *, T const &a)
@@ -68,10 +69,6 @@ inline void BindLog(fetch::vm::Module &module)
   module.CreateFreeFunction<fixed_point::fp64_t>("log10", &Log10<fixed_point::fp64_t>);
 }
 
-inline void BindLog(std::shared_ptr<vm::Module> module)
-{
-  BindLog(*module.get());
-}
-
+}  // namespace math
 }  // namespace vm_modules
 }  // namespace fetch

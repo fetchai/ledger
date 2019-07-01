@@ -38,7 +38,7 @@ public:
     : Pool(2 * std::thread::hardware_concurrency())
   {}
 
-  Pool(std::size_t const &n, std::string name = std::string{})
+  explicit Pool(std::size_t const &n, std::string name = std::string{})
     : name_{std::move(name)}
   {
     for (std::size_t i = 0; i < n; ++i)
@@ -110,7 +110,7 @@ private:
   {
     while (running_)
     {
-      std::function<void()> task = NextTask();
+      auto task = NextTask();
       if (task)
       {
         task();
@@ -125,10 +125,10 @@ private:
     condition_.wait(lock, [this] { return (!bool(running_)) || (!tasks_.empty()); });
     if (!bool(running_))
     {
-      return std::function<void()>();
+      return {};
     }
 
-    std::function<void()> task = tasks_.front();
+    auto task = tasks_.front();
     ++tasks_in_progress_;
 
     tasks_.pop();

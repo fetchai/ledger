@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ledger/dag/dag_interface.hpp"
 #include "ledger/storage_unit/transaction_sinks.hpp"
 #include "ledger/transaction_verifier.hpp"
 
@@ -36,9 +37,10 @@ class TransactionProcessor : public TransactionSink
 {
 public:
   static constexpr char const *LOGGING_NAME = "TransactionProcessor";
+  using DAGPtr                              = std::shared_ptr<::fetch::ledger::DAGInterface>;
 
   // Construction / Destruction
-  TransactionProcessor(StorageUnitInterface &storage, BlockPackerInterface &packer,
+  TransactionProcessor(DAGPtr dag, StorageUnitInterface &storage, BlockPackerInterface &packer,
                        TransactionStatusCache &tx_status_cache, std::size_t num_threads);
   TransactionProcessor(TransactionProcessor const &) = delete;
   TransactionProcessor(TransactionProcessor &&)      = delete;
@@ -67,6 +69,7 @@ private:
   using Flag      = std::atomic<bool>;
   using ThreadPtr = std::unique_ptr<std::thread>;
 
+  DAGPtr                  dag_;
   StorageUnitInterface &  storage_;
   BlockPackerInterface &  packer_;
   TransactionStatusCache &status_cache_;

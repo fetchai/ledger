@@ -25,7 +25,8 @@
 #include "ledger/storage_unit/lane_service.hpp"
 #include "storage/transient_object_store.hpp"
 
-#include <benchmark/benchmark.h>
+#include "benchmark/benchmark.h"
+
 #include <vector>
 
 namespace {
@@ -189,7 +190,7 @@ void TransientStoreExpectedOperation(benchmark::State &state)
   {
     state.PauseTiming();
     // Number of Tx to send is state arg
-    TransactionList transactions = GenerateTransactions(size_t(state.range(0)), true);
+    TransactionList transactions = GenerateTransactions(std::size_t(state.range(0)), true);
     state.ResumeTiming();
 
     for (auto const &tx : transactions)

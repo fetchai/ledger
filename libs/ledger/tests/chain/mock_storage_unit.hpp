@@ -19,7 +19,7 @@
 
 #include "fake_storage_unit.hpp"
 
-#include <gmock/gmock.h>
+#include "gmock/gmock.h"
 
 class MockStorageUnit : public fetch::ledger::StorageUnitInterface
 {
@@ -73,6 +73,9 @@ public:
   MOCK_METHOD2(RevertToHash, bool(Hash const &, uint64_t));
   MOCK_METHOD1(Commit, Hash(uint64_t));
   MOCK_METHOD2(HashExists, bool(Hash const &, uint64_t));
+
+  MOCK_CONST_METHOD0(KeyDump, Keys());
+  MOCK_METHOD0(Reset, void());
 
   FakeStorageUnit fake;
 };

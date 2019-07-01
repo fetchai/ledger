@@ -489,8 +489,7 @@ TEST_F(PrintTests, print_works_for_null_strings)
   ASSERT_EQ(stdout.str(), "(nullptr)");
 }
 
-// TODO(WK)
-TEST_F(PrintTests, DISABLED_print_works_for_arrays_of_booleans)
+TEST_F(PrintTests, print_works_for_arrays_of_booleans)
 {
   static char const *TEXT = R"(
     function main()

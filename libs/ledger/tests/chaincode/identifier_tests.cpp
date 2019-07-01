@@ -22,7 +22,7 @@
 #include "ledger/chain/address.hpp"
 #include "ledger/identifier.hpp"
 
-#include <gtest/gtest.h>
+#include "gtest/gtest.h"
 
 using fetch::ledger::Identifier;
 using fetch::byte_array::ConstByteArray;

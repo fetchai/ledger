@@ -18,7 +18,8 @@
 
 #include "math/tensor.hpp"
 #include "math/trigonometry.hpp"
-#include <gtest/gtest.h>
+
+#include "gtest/gtest.h"
 
 template <typename T>
 class TrigTest : public ::testing::Test
