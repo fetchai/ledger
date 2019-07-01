@@ -492,7 +492,7 @@ State DkgService::OnCompleteState()
 
   // clean up the resources
   {
-    FETCH_LOCK(rounds_);
+    FETCH_LOCK(round_lock_);
 
     // cache the current round
     uint64_t const current_round = current_round_.load();
