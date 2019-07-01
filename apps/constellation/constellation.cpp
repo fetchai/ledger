@@ -17,28 +17,26 @@
 //------------------------------------------------------------------------------
 
 #include "constellation.hpp"
+#include "dkg/dkg_service.hpp"
 #include "health_check_http_module.hpp"
 #include "http/middleware/allow_origin.hpp"
 #include "ledger/chain/consensus/bad_miner.hpp"
 #include "ledger/chain/consensus/dummy_miner.hpp"
-#include "logging_http_module.hpp"
-#include "telemetry_http_module.hpp"
-
 #include "ledger/chaincode/contract_http_interface.hpp"
-#include "ledger/dag/dag_interface.hpp"
-
-#include "dkg/dkg_service.hpp"
 #include "ledger/consensus/naive_entropy_generator.hpp"
 #include "ledger/consensus/stake_snapshot.hpp"
+#include "ledger/dag/dag_interface.hpp"
 #include "ledger/execution_manager.hpp"
 #include "ledger/storage_unit/lane_remote_control.hpp"
 #include "ledger/tx_query_http_interface.hpp"
 #include "ledger/tx_status_http_interface.hpp"
+#include "logging_http_module.hpp"
 #include "network/generics/atomic_inflight_counter.hpp"
 #include "network/muddle/rpc/client.hpp"
 #include "network/muddle/rpc/server.hpp"
 #include "network/p2pservice/p2p_http_interface.hpp"
 #include "network/uri.hpp"
+#include "telemetry_http_module.hpp"
 
 #include <chrono>
 #include <cstddef>
@@ -321,14 +319,15 @@ void Constellation::Run(UriList const &initial_peers, core::WeakRunnable bootstr
 
   // start all the services
   network_manager_.Start();
-
   http_network_manager_.Start();
   muddle_.Start({p2p_port_});
+
   /// LANE / SHARD SERVERS
 
   // start all the lane services and wait for them to start accepting
   // connections
   lane_services_.Start();
+
   FETCH_LOG_INFO(LOGGING_NAME, "Starting shard services...");
   if (!WaitForLaneServersToStart())
   {
