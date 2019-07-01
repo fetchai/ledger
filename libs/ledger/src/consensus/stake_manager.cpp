@@ -218,7 +218,10 @@ bool StakeManager::LookupEntropy(Block const &previous, uint64_t &entropy)
 
     if (num_to_remove > 0)
     {
-      entropy_cache_.erase(entropy_cache_.begin(), entropy_cache_.begin() + num_to_remove);
+      auto end = entropy_cache_.begin();
+      std::advance(end, static_cast<std::ptrdiff_t>(num_to_remove));
+
+      entropy_cache_.erase(entropy_cache_.begin(), end);
     }
   }
 
