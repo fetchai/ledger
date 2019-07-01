@@ -22,6 +22,9 @@
 #include "vm/module.hpp"
 #include "vm_modules/core/byte_array_wrapper.hpp"
 
+#include <algorithm>
+#include <cstdint>
+
 namespace fetch {
 namespace vm_modules {
 namespace math {

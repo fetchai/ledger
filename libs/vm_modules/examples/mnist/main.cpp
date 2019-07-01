@@ -21,9 +21,7 @@
 #include "ml/layers/fully_connected.hpp"
 #include "ml/ops/activation.hpp"
 #include "ml/ops/loss_functions/mean_square_error.hpp"
-
 #include "vm/module.hpp"
-
 #include "vm_modules/ml/dataloaders/mnist_dataloader.hpp"
 #include "vm_modules/ml/graph.hpp"
 #include "vm_modules/ml/optimisation/adam_optimiser.hpp"
