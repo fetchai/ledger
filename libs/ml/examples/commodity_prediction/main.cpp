@@ -32,11 +32,10 @@
 #include <iostream>
 #include <string>
 
-using DataType         = double;
-using ArrayType        = fetch::math::Tensor<DataType>;
-using GraphType        = fetch::ml::Graph<ArrayType>;
-using CostFunctionType = typename fetch::ml::ops::MeanSquareError<ArrayType>;
-using OptimiserType    = typename fetch::ml::optimisers::AdamOptimiser<ArrayType, CostFunctionType>;
+using DataType      = double;
+using ArrayType     = fetch::math::Tensor<DataType>;
+using GraphType     = fetch::ml::Graph<ArrayType>;
+using OptimiserType = typename fetch::ml::optimisers::AdamOptimiser<ArrayType>;
 
 using namespace fetch::ml::ops;
 using namespace fetch::ml::layers;
@@ -290,7 +289,6 @@ DataType get_loss(std::shared_ptr<GraphType> const &g_ptr, std::string const &te
 {
   DataType                                                          loss         = 0;
   DataType                                                          loss_counter = 0;
-  CostFunctionType                                                  criterion;
   fetch::ml::dataloaders::CommodityDataLoader<ArrayType, ArrayType> loader;
 
   loader.AddData(test_x_file, test_y_file);
@@ -299,9 +297,10 @@ DataType get_loss(std::shared_ptr<GraphType> const &g_ptr, std::string const &te
   {
     auto input = loader.GetNext();
     g_ptr->SetInput(node_names.front(), input.second.at(0).Transpose());
+    g_ptr->SetInput(node_names.at(1), input.first);
 
-    auto slice_output = g_ptr->Evaluate(node_names.back(), false);
-    loss += criterion.Forward({slice_output, input.first});
+    auto loss_tensor = g_ptr->Evaluate(node_names.back(), false);
+    loss += fetch::math::Sum(loss_tensor);
     loss_counter++;
   }
 
@@ -434,7 +433,8 @@ int main(int argc, char **argv)
     DataType loss{0};
 
     // Initialise Optimiser
-    OptimiserType optimiser(g_ptr, {node_names.front()}, node_names.back(), LEARNING_RATE);
+    OptimiserType optimiser(g_ptr, {node_names.front()}, node_names.at(1), node_names.back(),
+                            LEARNING_RATE);
 
     fetch::ml::dataloaders::CommodityDataLoader<ArrayType, ArrayType> loader;
 
