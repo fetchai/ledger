@@ -101,7 +101,7 @@ JsonClient JsonClient::CreateFromUrl(std::string const &url)
   {
     // convert the port to an integer (from a string)
     char const *port_str   = port.first.base();
-    const auto  port_value = std::strtol(port_str, nullptr, 10);
+    auto const  port_value = std::strtol(port_str, nullptr, 10);
     if (errno == ERANGE)
     {
       errno = 0;
@@ -211,6 +211,84 @@ bool JsonClient::Request(Method method, ConstByteArray const &endpoint, Headers 
 HttpClientInterface const &JsonClient::underlying_client() const
 {
   return *client_;
+}
+
+/**
+ * Makes a GET request to the specified endpoint
+ *
+ * @param endpoint The target endpoint
+ * @param response The output response
+ * @return true if successful, otherwise false
+ */
+bool JsonClient::Get(ConstByteArray const &endpoint, Variant &response)
+{
+  return Request(Method::GET, endpoint, nullptr, nullptr, response);
+}
+
+/**
+ * Makes a GET request to the specified endpoint, with specified headers
+ *
+ * @param endpoint The target endpoint
+ * @param headers The headers to be used in the request
+ * @param response The output response
+ * @return true if successful, otherwise false
+ */
+bool JsonClient::Get(ConstByteArray const &endpoint, Headers const &headers, Variant &response)
+{
+  return Request(Method::GET, endpoint, &headers, nullptr, response);
+}
+
+/**
+ * Makes a POST request to the specified endpoint with a specified payload
+ *
+ * @param endpoint The target endpoint
+ * @param request The request payload to be sent
+ * @param response The output response
+ * @return true if successful, otherwise false
+ */
+bool JsonClient::Post(ConstByteArray const &endpoint, Variant const &request, Variant &response)
+{
+  return Request(Method::POST, endpoint, nullptr, &request, response);
+}
+
+/**
+ * Makes a POST request to the specified endpoint
+ *
+ * @param endpoint The target endpoint
+ * @param response The output response
+ * @return true if successful, otherwise false
+ */
+bool JsonClient::Post(ConstByteArray const &endpoint, Variant &response)
+{
+  return Request(Method::POST, endpoint, nullptr, nullptr, response);
+}
+
+/**
+ * Makes a POST request to the specified endpoint with a specified payload and headers
+ *
+ * @param endpoint The target endpoint
+ * @param headers The headers to the used in the request
+ * @param request The request to payload
+ * @param response The output response
+ * @return true if successful, otherwise false
+ */
+bool JsonClient::Post(ConstByteArray const &endpoint, Headers const &headers,
+                      Variant const &request, Variant &response)
+{
+  return Request(Method::POST, endpoint, &headers, &request, response);
+}
+
+/**
+ * Makes a POST request to the specified endpoint with a specified headers
+ *
+ * @param endpoint The target endpoint
+ * @param headers The headers to be used in the request
+ * @param response The output response
+ * @return true if successful, otherwise false
+ */
+bool JsonClient::Post(ConstByteArray const &endpoint, Headers const &headers, Variant &response)
+{
+  return Request(Method::POST, endpoint, &headers, nullptr, response);
 }
 
 }  // namespace http

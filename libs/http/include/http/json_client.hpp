@@ -21,6 +21,7 @@
 #include "http/method.hpp"
 #include "variant/variant.hpp"
 
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -88,87 +89,6 @@ private:
 
   ClientPtr client_;
 };
-
-/**
- * Makes a GET request to the specified endpoint
- *
- * @param endpoint The target endpoint
- * @param response The output response
- * @return true if successful, otherwise false
- */
-inline bool JsonClient::Get(ConstByteArray const &endpoint, Variant &response)
-{
-  return Request(Method::GET, endpoint, nullptr, nullptr, response);
-}
-
-/**
- * Makes a GET request to the specified endpoint, with specified headers
- *
- * @param endpoint The target endpoint
- * @param headers The headers to be used in the request
- * @param response The output response
- * @return true if successful, otherwise false
- */
-inline bool JsonClient::Get(ConstByteArray const &endpoint, Headers const &headers,
-                            Variant &response)
-{
-  return Request(Method::GET, endpoint, &headers, nullptr, response);
-}
-
-/**
- * Makes a POST request to the specified endpoint with a specified payload
- *
- * @param endpoint The target endpoint
- * @param request The request payload to be sent
- * @param response The output response
- * @return true if successful, otherwise false
- */
-inline bool JsonClient::Post(ConstByteArray const &endpoint, Variant const &request,
-                             Variant &response)
-{
-  return Request(Method::POST, endpoint, nullptr, &request, response);
-}
-
-/**
- * Makes a POST request to the specified endpoint
- *
- * @param endpoint The target endpoint
- * @param response The output response
- * @return true if successful, otherwise false
- */
-inline bool JsonClient::Post(ConstByteArray const &endpoint, Variant &response)
-{
-  return Request(Method::POST, endpoint, nullptr, nullptr, response);
-}
-
-/**
- * Makes a POST request to the specified endpoint with a specified payload and headers
- *
- * @param endpoint The target endpoint
- * @param headers The headers to the used in the request
- * @param request The request to payload
- * @param response The output response
- * @return true if successful, otherwise false
- */
-inline bool JsonClient::Post(ConstByteArray const &endpoint, Headers const &headers,
-                             Variant const &request, Variant &response)
-{
-  return Request(Method::POST, endpoint, &headers, &request, response);
-}
-
-/**
- * Makes a POST request to the specified endpoint with a specified headers
- *
- * @param endpoint The target endpoint
- * @param headers The headers to be used in the request
- * @param response The output response
- * @return true if successful, otherwise false
- */
-inline bool JsonClient::Post(ConstByteArray const &endpoint, Headers const &headers,
-                             Variant &response)
-{
-  return Request(Method::POST, endpoint, &headers, nullptr, response);
-}
 
 }  // namespace http
 }  // namespace fetch
