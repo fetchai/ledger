@@ -130,7 +130,7 @@ int main(int argc, char **argv)
       .CreateStaticMemberFunction("Argc", &System::Argc)
       .CreateStaticMemberFunction("Argv", &System::Argv);
 
-  fetch::vm_modules::ml::BindAll(module);
+  fetch::vm_modules::ml::BindML(*module);
 
   fetch::vm_modules::CreatePrint(*module);
 

@@ -118,7 +118,7 @@ public:
     // ml modules
     if (MOD_ML & enabled)
     {
-      ml::BindAll(module);
+      ml::BindML(*module);
     }
 
     return module;

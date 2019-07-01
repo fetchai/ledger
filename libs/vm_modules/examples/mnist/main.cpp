@@ -107,7 +107,7 @@ int main(int argc, char **argv)
       .CreateStaticMemberFunction("Argc", &System::Argc)
       .CreateStaticMemberFunction("Argv", &System::Argv);
 
-  fetch::vm_modules::ml::BindAll(module);
+  fetch::vm_modules::ml::BindML(*module);
 
   // Setting compiler up
   auto                     compiler = std::make_unique<fetch::vm::Compiler>(module.get());

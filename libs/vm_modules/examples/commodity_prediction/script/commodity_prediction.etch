@@ -57,7 +57,6 @@ loader.AddData(System.Argv(1), System.Argv(2));
 
 var graph = Graph();
 build_graph(graph);
-<<<<<<< HEAD
 
 var testing = false;
 

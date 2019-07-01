@@ -17,13 +17,18 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm_modules/math/tensor.hpp"
+#include "vm/module.hpp"
+#include <cstdlib>
+
 #include "vm_modules/ml/dataloaders/commodity_dataloader.hpp"
 #include "vm_modules/ml/dataloaders/mnist_dataloader.hpp"
-#include "vm_modules/ml/graph.hpp"
+
 #include "vm_modules/ml/ops/loss_functions/cross_entropy.hpp"
 #include "vm_modules/ml/ops/loss_functions/mean_square_error.hpp"
+
 #include "vm_modules/ml/optimisation/adam_optimiser.hpp"
+
+#include "vm_modules/ml/graph.hpp"
 #include "vm_modules/ml/state_dict.hpp"
 #include "vm_modules/ml/training_pair.hpp"
 
@@ -31,7 +36,24 @@ namespace fetch {
 namespace vm_modules {
 namespace ml {
 
-void BindAll(std::shared_ptr<fetch::vm::Module> &module);
+inline void BindML(fetch::vm::Module &module)
+{
+  // ml fundamentals
+  VMStateDict::Bind(module);
+  VMGraph::Bind(module);
+  VMTrainingPair::Bind(module);
+
+  // dataloaders
+  VMMnistDataLoader::Bind(module);
+  VMCommodityDataLoader::Bind(module);
+
+  // loss functions
+  VMCrossEntropyLoss::Bind(module);
+  VMMeanSquareError::Bind(module);
+
+  // optimisers
+  VMAdamOptimiser::Bind(module);
+}
 
 }  // namespace ml
 }  // namespace vm_modules
