@@ -20,6 +20,13 @@
 #include "vm/common.hpp"
 #include "vm/opcodes.hpp"
 
+#include <cstdint>
+#include <memory>
+#include <string>
+#include <unordered_map>
+#include <utility>
+#include <vector>
+
 namespace fetch {
 namespace vm {
 

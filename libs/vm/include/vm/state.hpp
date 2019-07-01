@@ -18,7 +18,6 @@
 //------------------------------------------------------------------------------
 
 #include "core/serializers/byte_array_buffer.hpp"
-
 #include "vm/address.hpp"
 #include "vm/vm.hpp"
 
@@ -28,8 +27,8 @@ namespace vm {
 class IState : public Object
 {
 public:
-  IState()          = delete;
-  virtual ~IState() = default;
+  IState()           = delete;
+  ~IState() override = default;
 
   static Ptr<IState> Constructor(VM *vm, TypeId type_id, Ptr<String> const &name);
   static Ptr<IState> Constructor(VM *vm, TypeId type_id, Ptr<Address> const &name);
