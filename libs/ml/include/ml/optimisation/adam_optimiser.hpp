@@ -46,6 +46,8 @@ public:
                 DataType const &beta1 = DataType{0.9f}, DataType const &beta2 = DataType{0.999f},
                 DataType const &epsilon = DataType{1e-4f});
 
+  virtual ~AdamOptimiser() = default;
+
 private:
   std::vector<ArrayType> cache_;
   std::vector<ArrayType> momentum_;

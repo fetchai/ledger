@@ -19,6 +19,7 @@
 
 #include "core/byte_array/decoders.hpp"
 #include "ledger/chaincode/deed.hpp"
+#include <map>
 
 // TODO(HUT): doesn't putting this here pollute the namespace?
 using fetch::variant::Variant;
@@ -28,13 +29,12 @@ using fetch::byte_array::FromBase64;
 namespace fetch {
 namespace ledger {
 
-namespace {
-
 byte_array::ConstByteArray const ADDRESS_NAME{"address"};
 byte_array::ConstByteArray const FROM_NAME{"from"};
 byte_array::ConstByteArray const TO_NAME{"to"};
 byte_array::ConstByteArray const AMOUNT_NAME{"amount"};
 byte_array::ConstByteArray const TRANSFER_NAME{"transfer"};
+byte_array::ConstByteArray const STAKE_NAME{"stake"};
 byte_array::ConstByteArray const AMEND_NAME{"amend"};
 byte_array::ConstByteArray const THRESHOLDS_NAME{"thresholds"};
 byte_array::ConstByteArray const SIGNEES_NAME{"signees"};
@@ -111,7 +111,12 @@ bool DeedFromVariant(Variant const &variant_deed, DeedShrdPtr &deed)
 /* Implements a record to store wallet contents. */
 struct WalletRecord
 {
+  // Map of block number stake will be released on to amount to release
+  using CooldownStake = std::map<uint64_t, uint64_t>;
+
   uint64_t              balance{0};
+  uint64_t              stake{0};
+  CooldownStake         cooldown_stake;
   std::shared_ptr<Deed> deed;
 
   /**
@@ -151,16 +156,30 @@ struct WalletRecord
     return false;
   }
 
+  void CollectStake(uint64_t block_index)
+  {
+    // Point to stake equal to or greater than block index
+    auto stop_point = cooldown_stake.lower_bound(block_index);
+    auto it         = cooldown_stake.begin();
+
+    // Iterate upwards collecting stake
+    while (it != cooldown_stake.end() && it != stop_point)
+    {
+      balance += it->second;
+      it = cooldown_stake.erase(it);
+    }
+  }
+
   template <typename T>
   friend void Serialize(T &serializer, WalletRecord const &b)
   {
     if (b.deed)
     {
-      serializer.Append(b.balance, true, *b.deed);
+      serializer.Append(b.balance, b.stake, true, *b.deed, b.cooldown_stake);
     }
     else
     {
-      serializer.Append(b.balance, false);
+      serializer.Append(b.balance, b.stake, false, b.cooldown_stake);
     }
   }
 
@@ -168,7 +187,7 @@ struct WalletRecord
   friend void Deserialize(T &serializer, WalletRecord &b)
   {
     bool has_deed = false;
-    serializer >> b.balance >> has_deed;
+    serializer >> b.balance >> b.stake >> has_deed;
     if (has_deed)
     {
       if (!b.deed)
@@ -177,10 +196,10 @@ struct WalletRecord
       }
       serializer >> *b.deed;
     }
+
+    serializer >> b.cooldown_stake;
   }
 };
-
-}  // namespace
 
 }  // namespace ledger
 }  // namespace fetch

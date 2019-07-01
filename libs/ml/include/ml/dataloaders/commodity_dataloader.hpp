@@ -27,40 +27,45 @@
 
 namespace fetch {
 namespace ml {
+namespace dataloaders {
 
-namespace {
-std::pair<math::SizeType, math::SizeType> count_rows_cols(std::string const &filename)
+inline std::pair<math::SizeType, math::SizeType> count_rows_cols(std::string const &filename)
 {
   // find number of rows and columns in the file
   std::ifstream  file(filename);
   std::string    buf;
-  std::string    delimiter = ",";
-  ulong          pos;
+  const char     delimiter = ',';
+  std::string    field_value;
   math::SizeType row{0};
   math::SizeType col{0};
+
   while (std::getline(file, buf, '\n'))
   {
-    while ((row == 0) && ((pos = buf.find(delimiter)) != std::string::npos))
+    if (row == 0)
     {
-      buf.erase(0, pos + delimiter.length());
-      ++col;
+      std::stringstream ss(buf);
+      while (std::getline(ss, field_value, delimiter))
+      {
+        ++col;
+      }
     }
     ++row;
   }
-  return std::make_pair(row, col + 1);
+
+  return std::make_pair(row, col);
 }
-}  // namespace
 
 template <typename LabelType, typename InputType>
 class CommodityDataLoader : public DataLoader<LabelType, InputType>
 {
-
 public:
   using DataType   = typename InputType::Type;
   using ReturnType = std::pair<LabelType, std::vector<InputType>>;
   using SizeType   = math::SizeType;
 
-  explicit CommodityDataLoader(bool random_mode = false);
+  explicit CommodityDataLoader(bool random_mode = false)
+    : DataLoader<LabelType, InputType>(random_mode)
+  {}
 
   ~CommodityDataLoader() = default;
 
@@ -113,9 +118,14 @@ void CommodityDataLoader<LabelType, InputType>::AddData(std::string const &xfile
 
   // read csv data into buffer_ array
   std::ifstream file(xfilename);
-  std::string   buf;
-  char          delimiter = ',';
-  std::string   field_value;
+  if (file.fail())
+  {
+    throw std::runtime_error("Dataloader cannot open file " + xfilename);
+  }
+
+  std::string buf;
+  char        delimiter = ',';
+  std::string field_value;
 
   for (SizeType i = 0; i < rows_to_skip_; i++)
   {
@@ -143,6 +153,10 @@ void CommodityDataLoader<LabelType, InputType>::AddData(std::string const &xfile
   file.close();
 
   file.open(yfilename);
+  if (file.fail())
+  {
+    throw std::runtime_error("Dataloader cannot open file " + yfilename);
+  }
   for (SizeType i = 0; i < rows_to_skip_; i++)
   {
     std::getline(file, buf, '\n');
@@ -190,17 +204,6 @@ CommodityDataLoader<LabelType, InputType>::GetNext()
 }
 
 /**
- * Constructor for CommodityDataLoader
- * @tparam LabelType Type for the labels, usually tensor<float>
- * @tparam InputType Type for the data, usually tensor<float>
- * @param random_mode whether to access the data randomly
- */
-template <typename LabelType, typename InputType>
-CommodityDataLoader<LabelType, InputType>::CommodityDataLoader(bool random_mode)
-  : DataLoader<LabelType, InputType>(random_mode)
-{}
-
-/**
  * Returns the number of datapoints
  * @return number of datapoints
  */
@@ -237,5 +240,6 @@ void CommodityDataLoader<LabelType, InputType>::GetAtIndex(CommodityDataLoader::
   buffer_.second = std::vector<InputType>({data_.Slice(index).Copy()});
 }
 
+}  // namespace dataloaders
 }  // namespace ml
 }  // namespace fetch

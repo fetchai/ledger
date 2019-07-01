@@ -31,6 +31,7 @@
 
 namespace fetch {
 namespace ml {
+namespace dataloaders {
 
 template <typename T>
 class W2VLoader : public DataLoader<fetch::math::Tensor<T>, fetch::math::Tensor<T>>
@@ -402,5 +403,6 @@ std::vector<std::string> W2VLoader<T>::PreprocessString(std::string const &s)
   return words;
 }
 
+}  // namespace dataloaders
 }  // namespace ml
 }  // namespace fetch

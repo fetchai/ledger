@@ -51,7 +51,7 @@ public:
 
   static constexpr char const *LOGGING_NAME = "TCPClientImpl";
 
-  TCPClientImplementation(network_manager_type const &network_manager) noexcept
+  explicit TCPClientImplementation(network_manager_type const &network_manager) noexcept
     : networkManager_(network_manager)
   {}
 
@@ -61,7 +61,7 @@ public:
   TCPClientImplementation &operator=(TCPClientImplementation const &rhs) = delete;
   TCPClientImplementation &operator=(TCPClientImplementation &&rhs) = delete;
 
-  ~TCPClientImplementation()
+  ~TCPClientImplementation() override
   {
     LOG_STACK_TRACE_POINT;
     if (!Closed() && !posted_close_)

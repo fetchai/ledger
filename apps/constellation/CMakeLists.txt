@@ -11,6 +11,8 @@ add_executable(constellation
                bootstrap_monitor.hpp
                constellation.cpp
                constellation.hpp
+               health_check_http_module.hpp
+               logging_http_module.hpp
                main.cpp)
-target_link_libraries(constellation PRIVATE fetch-ledger fetch-miner)
+target_link_libraries(constellation PRIVATE fetch-ledger fetch-miner fetch-dkg)
 target_include_directories(constellation PRIVATE ${FETCH_ROOT_DIR}/libs/python/include)

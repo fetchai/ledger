@@ -59,6 +59,7 @@ void Analyser::Initialise()
   type_info_map_       = TypeInfoMap();
   registered_types_    = RegisteredTypes();
   function_info_array_ = FunctionInfoArray();
+  function_set_        = FunctionSet();
   symbols_             = CreateSymbolTable();
   CreatePrimitiveType("Null", TypeIndex(typeid(std::nullptr_t)), false, TypeIds::Null, null_type_);
   CreatePrimitiveType("Void", TypeIndex(typeid(void)), false, TypeIds::Void, void_type_);
@@ -164,6 +165,7 @@ void Analyser::UnInitialise()
   type_info_map_       = TypeInfoMap();
   registered_types_    = RegisteredTypes();
   function_info_array_ = FunctionInfoArray();
+  function_set_        = FunctionSet();
   if (symbols_)
   {
     symbols_->Reset();
@@ -2098,7 +2100,7 @@ void Analyser::CreatePrimitiveType(std::string const &type_name, TypeIndex type_
   }
   type = CreateType(TypeKind::Primitive, type_name);
   type_map_.Add(type_index, type);
-  AddTypeInfo(TypeInfo(TypeKind::Primitive, type_name, {}), type_id, type);
+  AddTypeInfo(TypeInfo(TypeKind::Primitive, type_name, TypeIds::Unknown, {}), type_id, type);
   registered_types_.Add(type_index, type->id);
   if (add_to_symbol_table)
   {
@@ -2116,7 +2118,7 @@ void Analyser::CreateMetaType(std::string const &type_name, TypeIndex type_index
   }
   type = CreateType(TypeKind::Meta, type_name);
   type_map_.Add(type_index, type);
-  AddTypeInfo(TypeInfo(TypeKind::Meta, type_name, {}), type_id, type);
+  AddTypeInfo(TypeInfo(TypeKind::Meta, type_name, TypeIds::Unknown, {}), type_id, type);
   registered_types_.Add(type_index, type->id);
 }
 
@@ -2131,7 +2133,7 @@ void Analyser::CreateClassType(std::string const &type_name, TypeIndex type_inde
   type          = CreateType(TypeKind::Class, type_name);
   type->symbols = CreateSymbolTable();
   type_map_.Add(type_index, type);
-  AddTypeInfo(TypeInfo(TypeKind::Class, type_name, {}), type_id, type);
+  AddTypeInfo(TypeInfo(TypeKind::Class, type_name, TypeIds::Unknown, {}), type_id, type);
   registered_types_.Add(type_index, type->id);
   symbols_->Add(type);
 }
@@ -2148,7 +2150,7 @@ void Analyser::CreateTemplateType(std::string const &type_name, TypeIndex type_i
   type->symbols = CreateSymbolTable();
   type->types   = allowed_types;
   type_map_.Add(type_index, type);
-  AddTypeInfo(TypeInfo(TypeKind::Template, type_name, {}), type_id, type);
+  AddTypeInfo(TypeInfo(TypeKind::Template, type_name, TypeIds::Unknown, {}), type_id, type);
   registered_types_.Add(type_index, type->id);
   symbols_->Add(type);
 }
@@ -2169,7 +2171,8 @@ void Analyser::CreateInstantiationType(TypeIndex type_index, TypePtr const &temp
     parameter_type_ids.push_back(parameter_type->id);
   }
   type_map_.Add(type_index, type);
-  AddTypeInfo(TypeInfo(TypeKind::Instantiation, type->name, parameter_type_ids), type_id, type);
+  AddTypeInfo(TypeInfo(TypeKind::Instantiation, type->name, template_type->id, parameter_type_ids),
+              type_id, type);
   registered_types_.Add(type_index, type->id);
   symbols_->Add(type);
 }
@@ -2185,7 +2188,7 @@ void Analyser::CreateGroupType(std::string const &type_name, TypeIndex type_inde
   type        = CreateType(TypeKind::Group, type_name);
   type->types = allowed_types;
   type_map_.Add(type_index, type);
-  AddTypeInfo(TypeInfo(TypeKind::Group, type_name, {}), type_id, type);
+  AddTypeInfo(TypeInfo(TypeKind::Group, type_name, TypeIds::Unknown, {}), type_id, type);
   registered_types_.Add(type_index, type->id);
 }
 
@@ -2215,6 +2218,12 @@ void Analyser::CreateFreeFunction(std::string const &name, TypePtrArray const &p
                                   TypePtr const &return_type, Handler const &handler)
 {
   std::string unique_id = BuildUniqueId(nullptr, name, parameter_types, return_type);
+  if (function_set_.Find(unique_id))
+  {
+    // Already created
+    return;
+  }
+  function_set_.Add(unique_id);
   FunctionPtr f = CreateFunction(FunctionKind::FreeFunction, name, unique_id, parameter_types,
                                  VariablePtrArray(), return_type);
   AddFunctionToSymbolTable(symbols_, f);
@@ -2225,6 +2234,12 @@ void Analyser::CreateConstructor(TypePtr const &type, TypePtrArray const &parame
                                  Handler const &handler)
 {
   std::string unique_id = BuildUniqueId(type, CONSTRUCTOR, parameter_types, type);
+  if (function_set_.Find(unique_id))
+  {
+    // Already created
+    return;
+  }
+  function_set_.Add(unique_id);
   FunctionPtr f = CreateFunction(FunctionKind::Constructor, CONSTRUCTOR, unique_id, parameter_types,
                                  VariablePtrArray(), type);
   AddFunctionToSymbolTable(type->symbols, f);
@@ -2236,7 +2251,13 @@ void Analyser::CreateStaticMemberFunction(TypePtr const &type, std::string const
                                           TypePtr const &return_type, Handler const &handler)
 {
   std::string unique_id = BuildUniqueId(type, name, parameter_types, return_type);
-  FunctionPtr f         = CreateFunction(FunctionKind::StaticMemberFunction, name, unique_id,
+  if (function_set_.Find(unique_id))
+  {
+    // Already created
+    return;
+  }
+  function_set_.Add(unique_id);
+  FunctionPtr f = CreateFunction(FunctionKind::StaticMemberFunction, name, unique_id,
                                  parameter_types, VariablePtrArray(), return_type);
   AddFunctionToSymbolTable(type->symbols, f);
   AddFunctionInfo(f, handler);
@@ -2247,6 +2268,12 @@ void Analyser::CreateMemberFunction(TypePtr const &type, std::string const &name
                                     Handler const &handler)
 {
   std::string unique_id = BuildUniqueId(type, name, parameter_types, return_type);
+  if (function_set_.Find(unique_id))
+  {
+    // Already created
+    return;
+  }
+  function_set_.Add(unique_id);
   FunctionPtr f = CreateFunction(FunctionKind::MemberFunction, name, unique_id, parameter_types,
                                  VariablePtrArray(), return_type);
   AddFunctionToSymbolTable(type->symbols, f);
@@ -2267,14 +2294,27 @@ void Analyser::EnableIndexOperator(TypePtr const &type, TypePtrArray const &inpu
                                    Handler const &set_handler)
 {
   std::string g_unique_id = BuildUniqueId(type, GET_INDEXED_VALUE, input_types, output_type);
+  if (function_set_.Find(g_unique_id))
+  {
+    return;
+  }
+
+  TypePtrArray s_input_types = input_types;
+  s_input_types.push_back(output_type);
+  std::string s_unique_id = BuildUniqueId(type, SET_INDEXED_VALUE, s_input_types, void_type_);
+  if (function_set_.Find(s_unique_id))
+  {
+    return;
+  }
+
+  function_set_.Add(g_unique_id);
+  function_set_.Add(s_unique_id);
+
   FunctionPtr gf = CreateFunction(FunctionKind::MemberFunction, GET_INDEXED_VALUE, g_unique_id,
                                   input_types, VariablePtrArray(), output_type);
   AddFunctionInfo(gf, get_handler);
   AddFunctionToSymbolTable(type->symbols, gf);
 
-  TypePtrArray s_input_types = input_types;
-  s_input_types.push_back(output_type);
-  std::string s_unique_id = BuildUniqueId(type, SET_INDEXED_VALUE, s_input_types, void_type_);
   FunctionPtr sf = CreateFunction(FunctionKind::MemberFunction, SET_INDEXED_VALUE, s_unique_id,
                                   s_input_types, VariablePtrArray(), void_type_);
   AddFunctionInfo(sf, set_handler);

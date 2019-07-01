@@ -24,7 +24,7 @@ features. Fetch.AI will be delivering regular updates.
 3. [Community Website](https://community.fetch.ai/)
 4. [Community Telegram Group](https://t.me/fetchai)
 5. [Whitepapers](https://fetch.ai/publications.html)
-6. [Roadmap](https://fetch.ai/#/roadmap) 
+6. [Roadmap](https://fetch.ai/#/roadmap)
 
 
 ## Supported platforms
@@ -32,7 +32,7 @@ features. Fetch.AI will be delivering regular updates.
 * MacOS Darwin 10.13x and higher (64bit)
 * Ubuntu 18.04 (x86_64)
 
-(We plan to support all major platforms in the future)
+(We plan to support all major platforms in the future).
 
 ## Getting Started
 
@@ -42,7 +42,7 @@ cd ledger
 ./scripts/quickstart.sh
 ```
 
-Manual build steps are available in our [Getting Started Guide](docs/source/getting_started/index.rst).    
+Manual build steps are available in our [Getting Started Guide](docs/source/getting_started/index.rst).
 
 ## Connecting to a test network
 
@@ -71,4 +71,3 @@ Alternatively, you can run the ledger locally:
 ```
 ./constellation
 ```
-

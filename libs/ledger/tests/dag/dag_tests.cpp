@@ -28,6 +28,7 @@
 #include "crypto/sha256.hpp"
 
 #include <algorithm>
+#include <random>
 
 using namespace fetch;
 
@@ -90,8 +91,8 @@ protected:
   {
     EXPECT_EQ(dag_->CurrentEpoch(), 0);
 
-    const size_t epochs_to_create = 10;
-    const size_t nodes_in_epoch   = 1000;
+    const std::size_t epochs_to_create = 5;
+    const std::size_t nodes_in_epoch   = 100;
 
     epoch_history_.resize(epochs_to_create);
     epochs_.resize(epochs_to_create);
@@ -180,7 +181,7 @@ TEST_F(DagTests, CheckDagMaintainsTipsCorrectly)
   // -Create epoch 1 on DAG 2 and synchronise (contains items A)
   // -Create epoch 2 on DAG 1 and synchronise (contains items B)
 
-  const size_t nodes_to_push = 1000;
+  const std::size_t nodes_to_push = 1000;
 
   std::vector<std::string> items_A;
   std::vector<std::string> items_B;
@@ -228,7 +229,9 @@ TEST_F(DagTests, CheckDagMaintainsTipsCorrectly)
   // Provide dag 2 the missing nodes
   auto recently_added = dag_->GetRecentlyAdded();
 
-  std::random_shuffle(recently_added.begin(), recently_added.end());
+  std::random_device rd;
+  std::mt19937       g(rd());
+  std::shuffle(recently_added.begin(), recently_added.end(), g);
 
   for (auto const &newly_minted_dag_node : recently_added)
   {

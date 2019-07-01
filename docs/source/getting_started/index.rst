@@ -28,14 +28,14 @@ Download
 The Fetch ledger is kept in the repository https://github.com/fetchai/ledger.git. First thing to do, is to checkout the repository:
 
 .. code:: bash
-					
+
 	$ cd [working_directory]
 	$ git clone https://github.com/fetchai/ledger.git
 
 Next initialise submodules:
 
 .. code:: bash
-					
+
 	$ cd fetch-ledger
 	$ git submodule update --init
 
@@ -45,7 +45,7 @@ Building
 Assuming that you are in the Fetch ledger repository, you need to do following to build the library:
 
 .. code:: bash
-					
+
 	$ mkdir build
 	$ cd build
 	$ cmake ..
@@ -54,12 +54,12 @@ Assuming that you are in the Fetch ledger repository, you need to do following t
 If you use Brew as your package manager on OS X, before building the code you will need to define the location for cmake to find the openssl libraries. An example is shown below. It is recommened that you add this to `~/.bash_profiles` or similar configuration file.
 
 .. code:: bash
-					
+
 	$ export OPENSSL_ROOT_DIR=/usr/local/Cellar/openssl/1.0.2o_2
 
 
 Users can interactively configure the build by executing the following command inside the build directory to the project:
 
 .. code:: bash
-					
+
 	$ ccmake .

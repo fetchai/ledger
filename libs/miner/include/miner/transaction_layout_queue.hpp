@@ -23,6 +23,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <list>
+#include <utility>
 
 namespace fetch {
 namespace miner {
@@ -126,7 +127,7 @@ inline TransactionLayoutQueue::DigestSet const &TransactionLayoutQueue::digests(
 template <typename SortPredicate>
 void TransactionLayoutQueue::Sort(SortPredicate &&predicate)
 {
-  list_.sort(predicate);
+  list_.sort(std::forward<SortPredicate>(predicate));
 }
 
 }  // namespace miner

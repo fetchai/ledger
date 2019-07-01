@@ -46,7 +46,7 @@ public:
     : state_machine_{std::make_shared<core::StateMachine<State>>("ExecutorConnectorWorker",
                                                                  State::INITIAL)}
     , peer_(std::move(thepeer))
-    , timeduration_(std::move(thetimeout))
+    , timeduration_(thetimeout)
     , muddle_(themuddle)
     , client_(std::make_shared<Client>("R:ExecCW", muddle_.AsEndpoint(), Muddle::Address(),
                                        SERVICE_EXECUTOR, CHANNEL_RPC))

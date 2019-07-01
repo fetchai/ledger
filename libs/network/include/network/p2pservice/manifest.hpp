@@ -44,7 +44,7 @@ public:
     uint16_t local_port{0};  ///< The local port to bind to
 
     Entry() = default;
-    explicit Entry(Uri const uri);
+    explicit Entry(Uri uri);
     Entry(Uri uri, uint16_t port);
   };
 

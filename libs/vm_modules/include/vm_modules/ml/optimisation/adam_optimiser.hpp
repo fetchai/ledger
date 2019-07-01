@@ -65,7 +65,7 @@ public:
                                output_node_names->str);
   }
 
-  DataType RunMnist(fetch::vm::Ptr<fetch::vm_modules::ml::MnistDataLoader> const &loader,
+  DataType RunMnist(fetch::vm::Ptr<fetch::vm_modules::ml::VMMnistDataLoader> const &loader,
                     uint64_t batch_size, uint64_t subset_size)
   {
     return optimiser_.Run(loader->loader_, batch_size, subset_size);

@@ -240,7 +240,7 @@ void Router::Stop()
   dispatch_thread_pool_->Stop();
 }
 
-inline bool Router::Genuine(PacketPtr const &p) const
+bool Router::Genuine(PacketPtr const &p) const
 {
   if (p->IsBroadcast())
   {

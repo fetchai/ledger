@@ -21,11 +21,10 @@
 #include <string>
 #include <vector>
 
+#include "vm_modules/core/panic.hpp"
 #include "vm_modules/core/print.hpp"
 #include "vm_modules/core/type_convert.hpp"
-#include "vm_modules/math/abs.hpp"
 #include "vm_modules/math/math.hpp"
-#include "vm_modules/math/random.hpp"
 
 #include "vm_modules/ml/ml.hpp"
 
@@ -90,6 +89,7 @@ public:
     if (MOD_CORE & enabled)
     {
       CreatePrint(*module);
+      CreatePanic(*module);
       CreateToString(*module);
       CreateToBool(*module);
 
@@ -99,24 +99,23 @@ public:
     // math modules
     if (MOD_MATH & enabled)
     {
-      CreateAbs(*module);
-      CreateRand(module);
+      math::BindMath(*module);
     }
 
     // synergetic modules
     if (MOD_SYN & enabled)
     {
       ByteArrayWrapper::Bind(*module);
-      BigNumberWrapper::Bind(*module);
+      math::UInt256Wrapper::Bind(*module);
       SHA256Wrapper::Bind(*module);
 
-      BindExp(*module);
-      BindSqrt(*module);
+      math::BindExp(*module);
+      math::BindSqrt(*module);
       BindBitShift(*module);
       BindBitwiseOps(*module);
     }
 
-    // ml modules - order is important!!
+    // ml modules
     if (MOD_ML & enabled)
     {
       ml::BindAll(module);

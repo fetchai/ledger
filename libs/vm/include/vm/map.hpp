@@ -45,7 +45,7 @@ struct H;
 template <>
 struct H<fixed_point::fp32_t, void>
 {
-  size_t operator()(TemplateParameter1 const &key) const
+  std::size_t operator()(TemplateParameter1 const &key) const
   {
     return std::hash<int32_t>()(key.primitive.Get<int32_t>());
   }
@@ -54,7 +54,7 @@ struct H<fixed_point::fp32_t, void>
 template <>
 struct H<fixed_point::fp64_t, void>
 {
-  size_t operator()(TemplateParameter1 const &key) const
+  std::size_t operator()(TemplateParameter1 const &key) const
   {
     return std::hash<int64_t>()(key.primitive.Get<int64_t>());
   }
@@ -179,17 +179,106 @@ struct Map : public IMap
 
   bool SerializeTo(ByteArrayBuffer &buffer) override
   {
-    buffer << map;
+    buffer << GetUniqueId() << static_cast<uint64_t>(map.size());
+    for (auto const &v : map)
+    {
+      if (!SerializeElement<Key>(buffer, v.first))
+      {
+        return false;
+      }
+      if (!SerializeElement<Value>(buffer, v.second))
+      {
+        return false;
+      }
+    }
     return true;
   }
 
   bool DeserializeFrom(ByteArrayBuffer &buffer) override
   {
-    buffer >> map;
+    TypeInfo const &type_info     = vm_->GetTypeInfo(GetTypeId());
+    TypeId const    key_type_id   = type_info.parameter_type_ids[0];
+    TypeId const    value_type_id = type_info.parameter_type_ids[1];
+    uint64_t        size;
+    std::string     uid;
+    buffer >> uid >> size;
+    if (uid != GetUniqueId())
+    {
+      vm_->RuntimeError("Type mismatch during deserialization. Got " + uid + " but expected " +
+                        GetUniqueId());
+      return false;
+    }
+
+    for (uint64_t i = 0; i < size; ++i)
+    {
+      FETCH_UNUSED(i);
+
+      TemplateParameter1 key;
+      if (!DeserializeElement<Key>(key_type_id, buffer, key))
+      {
+        return false;
+      }
+
+      TemplateParameter2 value;
+      if (!DeserializeElement<Value>(value_type_id, buffer, value))
+      {
+        return false;
+      }
+
+      map.insert({key, value});
+    }
     return true;
   }
 
   std::unordered_map<TemplateParameter1, TemplateParameter2, H<Key>, E<Key>> map;
+
+private:
+  template <typename U, typename TemplateParameterType>
+  typename std::enable_if_t<IsPtr<U>::value, bool> SerializeElement(ByteArrayBuffer &buffer,
+                                                                    TemplateParameterType const &v)
+  {
+    if (v.object == nullptr)
+    {
+      RuntimeError("Cannot serialise null reference element in " + GetUniqueId());
+      return false;
+    }
+
+    return v.object->SerializeTo(buffer);
+  }
+
+  template <typename U, typename TemplateParameterType>
+  typename std::enable_if_t<IsPrimitive<U>::value, bool> SerializeElement(
+      ByteArrayBuffer &buffer, TemplateParameterType const &v)
+  {
+    buffer << v.template Get<U>();
+    return true;
+  }
+
+  template <typename U, typename TemplateParameterType>
+  typename std::enable_if_t<IsPtr<U>::value, bool> DeserializeElement(TypeId                 type,
+                                                                      ByteArrayBuffer &      buffer,
+                                                                      TemplateParameterType &v)
+  {
+    if (!vm_->IsDefaultSerializeConstructable(type))
+    {
+      vm_->RuntimeError("Cannot deserialize type " + vm_->GetUniqueId(type) +
+                        " as no serialisation constructor exists.");
+      return false;
+    }
+
+    v.Construct(vm_->DefaultSerializeConstruct(type), type);
+    return v.object->DeserializeFrom(buffer);
+  }
+
+  template <typename U, typename TemplateParameterType>
+  typename std::enable_if_t<IsPrimitive<U>::value, bool> DeserializeElement(
+      TypeId type, ByteArrayBuffer &buffer, TemplateParameterType &v)
+  {
+    U data;
+    buffer >> data;
+    v.Construct(data, type);
+    return true;
+  }
 };
 
 template <typename Key, template <typename, typename> class Container = Map>

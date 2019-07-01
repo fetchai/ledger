@@ -20,10 +20,12 @@
 #include "math/meta/math_type_traits.hpp"
 #include "math/standard_functions/abs.hpp"
 
+#include <cstdint>
 #include <cstdlib>
 
 namespace fetch {
 namespace vm_modules {
+namespace math {
 
 /**
  * method for taking the absolute of a value
@@ -66,7 +68,7 @@ meta::IfIsUnsignedInteger<T, T> IntegerAbs(fetch::vm::VM *, T const &value)
   return value;
 }
 
-static void CreateAbs(fetch::vm::Module &module)
+static void BindAbs(fetch::vm::Module &module)
 {
   module.CreateFreeFunction<int8_t>("abs", &IntegerAbs<int8_t>);
   module.CreateFreeFunction<int16_t>("abs", &IntegerAbs<int16_t>);
@@ -81,12 +83,11 @@ static void CreateAbs(fetch::vm::Module &module)
 
   module.CreateFreeFunction<float_t>("abs", &Abs<float_t>);
   module.CreateFreeFunction<double_t>("abs", &Abs<double_t>);
+
+  module.CreateFreeFunction<fixed_point::fp32_t>("abs", &Abs<fixed_point::fp32_t>);
+  module.CreateFreeFunction<fixed_point::fp64_t>("abs", &Abs<fixed_point::fp64_t>);
 }
 
-inline void CreateAbs(std::shared_ptr<vm::Module> module)
-{
-  CreateAbs(*module.get());
-}
-
+}  // namespace math
 }  // namespace vm_modules
 }  // namespace fetch

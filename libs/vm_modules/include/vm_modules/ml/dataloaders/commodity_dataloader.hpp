@@ -54,15 +54,15 @@ public:
     loader_.AddData(xfilename->str, yfilename->str);
   }
 
-  fetch::vm::Ptr<TrainingPair> GetNext()
+  fetch::vm::Ptr<VMTrainingPair> GetNext()
   {
-    typename fetch::ml::CommodityDataLoader<fetch::math::Tensor<float>,
-                                            fetch::math::Tensor<float>>::ReturnType next =
+    typename fetch::ml::dataloaders::CommodityDataLoader<
+        fetch::math::Tensor<float>, fetch::math::Tensor<float>>::ReturnType next =
         loader_.GetNext();
 
     auto first      = this->vm_->CreateNewObject<math::VMTensor>(next.first);
     auto second     = this->vm_->CreateNewObject<math::VMTensor>(next.second.at(0));
-    auto dataHolder = this->vm_->CreateNewObject<TrainingPair>(first, second);
+    auto dataHolder = this->vm_->CreateNewObject<VMTrainingPair>(first, second);
 
     return dataHolder;
   }
@@ -72,7 +72,10 @@ public:
     return loader_.IsDone();
   }
 
-  fetch::ml::CommodityDataLoader<fetch::math::Tensor<float>, fetch::math::Tensor<float>> loader_;
+private:
+  fetch::ml::dataloaders::CommodityDataLoader<fetch::math::Tensor<float>,
+                                              fetch::math::Tensor<float>>
+      loader_;
 };
 
 }  // namespace ml

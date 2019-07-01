@@ -234,6 +234,7 @@ struct CommandLineArguments
     std::string config_path;
     std::string raw_peers;
     std::string experimental_features;
+    std::string beacon_address;
     ManifestPtr manifest;
     uint32_t    num_lanes{0};
 
@@ -262,10 +263,13 @@ struct CommandLineArguments
     p.add(args.cfg.transient_peers,       "transient-peers",       "The number of the peers which will be random in answer sent to peer requests",                 DEFAULT_TRANSIENT_PEERS);
     p.add(args.cfg.peers_update_cycle_ms, "peers-update-cycle-ms", "How fast to do peering changes",                                                               uint32_t{0});
     p.add(args.cfg.disable_signing,       "disable-signing",       "Do not sign outbound packets or verify those inbound, in trusted network",                     false);
-    p.add(args.cfg.sign_broadcasts,       "sign-broadcasts",       "Sign and verify broadcast packets",                                                            false);
+    p.add(args.cfg.dump_state_file,       "dump-state",            "Dump a state file on shutdown",                                                                false);
+    p.add(args.cfg.load_state_file,       "load-state",            "Load a state file as genesis on startup",                                                      false);
     p.add(standalone_flag,                "standalone",            "Run node on its own (useful for testing and development). Incompatible with -private-network", false);
     p.add(private_flag,                   "private-network",       "Run node as part of a private network (disables bootstrap). Incompatible with -standalone",    false);
     p.add(experimental_features,          "experimental",          "Enable selected experimental features",                                                        std::string{});
+    p.add(args.cfg.proof_of_stake,        "pos",                   "Enable proof of stake features",                                                               false);
+    p.add(beacon_address,                 "beacon",                "The base64 encoded address of the beacon",                                                     std::string{});
     // clang-format on
 
     // parse the args
@@ -295,13 +299,23 @@ struct CommandLineArguments
     UpdateConfigFromEnvironment(args.cfg.peers_update_cycle_ms, "CONSTELLATION_PEERS_UPDATE_CYCLE_MS");
     UpdateConfigFromEnvironment(args.cfg.disable_signing,       "CONSTELLATION_DISABLE_SIGNING");
     UpdateConfigFromEnvironment(args.cfg.sign_broadcasts,       "CONSTELLATION_SIGN_BROADCASTS");
+    UpdateConfigFromEnvironment(args.cfg.dump_state_file,       "CONSTELLATION_DUMP_STATE_FILE");
+    UpdateConfigFromEnvironment(args.cfg.load_state_file,       "CONSTELLATION_LOAD_STATE_FILE");
     UpdateConfigFromEnvironment(standalone_flag,                "CONSTELLATION_STANDALONE");
     UpdateConfigFromEnvironment(private_flag,                   "CONSTELLATION_PRIVATE_NETWORK");
     UpdateConfigFromEnvironment(experimental_features,          "CONSTELLATION_EXPERIMENTAL");
+    UpdateConfigFromEnvironment(args.cfg.proof_of_stake,        "CONSTELLATION_POS");
+    UpdateConfigFromEnvironment(beacon_address,                 "CONSTELLATION_BEACON_ADDRESS");
     // clang-format on
 
     // parse the feature flags (if they exist)
     args.cfg.features.Parse(experimental_features);
+
+    // beacon address
+    if (!beacon_address.empty())
+    {
+      args.cfg.beacon_address = fetch::byte_array::FromBase64(beacon_address);
+    }
 
     // update the peers
     args.SetPeers(raw_peers);
