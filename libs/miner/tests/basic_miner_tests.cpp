@@ -16,23 +16,27 @@
 //
 //------------------------------------------------------------------------------
 
-#include "tx_generator.hpp"
-
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "ledger/chain/transaction_layout.hpp"
 #include "meta/log2.hpp"
 #include "miner/basic_miner.hpp"
 #include "miner/resource_mapper.hpp"
+#include "tx_generator.hpp"
 #include "vectorise/platform.hpp"
 
 #include "gtest/gtest.h"
 
+#include <cassert>
 #include <chrono>
+#include <cstdint>
 #include <fstream>
 #include <memory>
 #include <random>
 #include <unordered_map>
+#include <unordered_set>
+#include <utility>
+#include <vector>
 
 using fetch::meta::IsLog2;
 using fetch::meta::Log2;

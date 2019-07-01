@@ -24,11 +24,13 @@
 #include "ledger/chain/transaction_layout.hpp"
 #include "meta/log2.hpp"
 #include "miner/transaction_layout_queue.hpp"
+#include "telemetry/telemetry.hpp"
 #include "vectorise/threading/pool.hpp"
 
-#include "telemetry/telemetry.hpp"
-
-#include <list>
+#include <cstddef>
+#include <cstdint>
+#include <string>
+#include <unordered_set>
 
 namespace fetch {
 namespace miner {
