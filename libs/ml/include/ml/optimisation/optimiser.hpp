@@ -175,6 +175,7 @@ typename T::Type Optimiser<T>::Run(std::vector<ArrayType> const &data, ArrayType
       it++;
     }
 
+    // Set inputs
     auto name_it = input_node_names_.begin();
     for (auto &input : batch_data_)
     {
@@ -186,14 +187,9 @@ typename T::Type Optimiser<T>::Run(std::vector<ArrayType> const &data, ArrayType
     graph_->SetInput(label_node_name_, batch_labels_);
 
     auto loss_tensor = graph_->Evaluate(output_node_name_);
+      loss += fetch::math::Sum(loss_tensor);
+      loss_tensor.Fill(static_cast<DataType>(1));
     graph_->BackPropagate(output_node_name_, loss_tensor);
-
-    auto loss_tensor_it = loss_tensor.begin();
-    while (loss_tensor_it.is_valid())
-    {
-      loss += *loss_tensor_it;
-      ++loss_tensor_it;
-    }
 
     // Compute and apply gradient
     ApplyGradients(batch_size);
@@ -256,16 +252,10 @@ typename T::Type Optimiser<T>::Run(fetch::ml::dataloaders::DataLoader<ArrayType,
     // Set Label
     graph_->SetInput(label_node_name_, input.first);
 
-    // auto cur_label  = input.first;
     auto loss_tensor = graph_->Evaluate(output_node_name_);
+      loss += fetch::math::Sum(loss_tensor);
+      loss_tensor.Fill(static_cast<DataType>(1));
     graph_->BackPropagate(output_node_name_, loss_tensor);
-
-    auto loss_tensor_it = loss_tensor.begin();
-    while (loss_tensor_it.is_valid())
-    {
-      loss += *loss_tensor_it;
-      ++loss_tensor_it;
-    }
 
     // Compute and apply gradient
     ApplyGradients(batch_size);

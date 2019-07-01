@@ -61,23 +61,22 @@ public:
     assert(inputs.size() == 2);
     assert(inputs[0].get().shape() == inputs[1].get().shape());
 
-    ArrayType return_signal1(inputs.front().get().shape());
-    ArrayType return_signal2(inputs.front().get().shape());
+    ArrayType return_signal_1(inputs.front().get().shape());
+    ArrayType return_signal_2(inputs.front().get().shape());
 
-    // return_signal=in[0]-in[1]
-    fetch::math::Subtract(inputs.at(0).get(), inputs.at(1).get(), return_signal1);
+    // return_signal_1=in[0]-in[1]
+    fetch::math::Subtract(inputs.at(0).get(), inputs.at(1).get(), return_signal_1);
 
-    // return_signal=err*(in[0]-in[1])
-    // I am not sure about that
-    (void)error_signal;
-    // fetch::math::Multiply(return_signal1, error_signal, return_signal1);
+    // return_signal_1=err*(in[0]-in[1])
+    fetch::math::Multiply(return_signal_1, error_signal, return_signal_1);
 
-    // return_signal=(2*err*(in[0]-in[1]))/mean_size
+    // return_signal_1=(2*err*(in[0]-in[1]))/mean_size
     DataType mean_size = static_cast<DataType>(inputs.at(0).get().shape().at(0));
-    fetch::math::Multiply(return_signal1, DataType{2} / mean_size, return_signal1);
+    fetch::math::Multiply(return_signal_1, DataType{2} / mean_size, return_signal_1);
 
-    fetch::math::Multiply(return_signal1, DataType{-1}, return_signal2);
-    return {return_signal1, return_signal2};
+    // return_sinal_2=-return_signal_1
+    fetch::math::Multiply(return_signal_1, DataType{-1}, return_signal_2);
+    return {return_signal_1, return_signal_2};
   }
 
   std::vector<typename T::SizeType> ComputeOutputShape(VecTensorType const &inputs) const
