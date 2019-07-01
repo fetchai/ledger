@@ -201,4 +201,4 @@ TEST(vectorise_native_test, test_registers)
   test_registers();
 }
 
-}
+}  // namespace

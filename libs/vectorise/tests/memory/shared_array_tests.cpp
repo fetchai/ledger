@@ -90,4 +90,4 @@ TEST_P(TestClass, basic_Test)
 
 INSTANTIATE_TEST_CASE_P(Basic_test, TestClass, ::testing::Range(0, 100), );
 
-}
+}  // namespace
