@@ -133,6 +133,7 @@ void MatrixMultiply<T>::Forward(VecTensorType const &inputs, ArrayType &output)
       // Copy data to original array
       output_slice.Assign(output_slice_tensor_);
     }
+    std::cout << "output.ToString(): " << output.ToString() << std::endl;
   }
 }
 

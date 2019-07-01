@@ -47,32 +47,33 @@ private:
  */
 void UnigramTable::Reset(std::vector<SizeType> const &count, SizeType size)
 {
-    if (size && count.size())
+  if (size && count.size())
+  {
+    // sum_counts
+    SizeType sum_count =
+        static_cast<SizeType>(std::accumulate(std::begin(count), std::end(count), 0));
+
+    data_.resize(size);
+
+    double total(0);
+    for (auto const &c : count)
     {
-        // sum_counts
-        SizeType sum_count = static_cast<SizeType>(std::accumulate(std::begin(count), std::end(count), 0));
-
-        data_.resize(size);
-
-        double total(0);
-        for (auto const &c : count)
-        {
-            total += std::pow(static_cast<double>(c) / static_cast<double>(sum_count), 0.75);
-        }
-
-        std::size_t i(0);
-        double      n = pow(static_cast<double>(count[i]) / static_cast<double>(sum_count), 0.75) / total;
-        for (std::size_t j(0); j < size; ++j)
-        {
-            data_[j] = i;
-            if (static_cast<double>(j) / static_cast<double>(size) > static_cast<double>(n))
-            {
-                i++;
-                n += pow(static_cast<double>(count[i]) / static_cast<double>(sum_count), 0.75) / total;
-            }
-        }
-        assert(i == count.size() - 1);
+      total += std::pow(static_cast<double>(c) / static_cast<double>(sum_count), 0.75);
     }
+
+    std::size_t i(0);
+    double n = pow(static_cast<double>(count[i]) / static_cast<double>(sum_count), 0.75) / total;
+    for (std::size_t j(0); j < size; ++j)
+    {
+      data_[j] = i;
+      if (static_cast<double>(j) / static_cast<double>(size) > static_cast<double>(n))
+      {
+        i++;
+        n += pow(static_cast<double>(count[i]) / static_cast<double>(sum_count), 0.75) / total;
+      }
+    }
+    assert(i == count.size() - 1);
+  }
 }
 
 /**

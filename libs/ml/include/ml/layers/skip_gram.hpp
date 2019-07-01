@@ -73,8 +73,11 @@ public:
         name + "_In_Ctx_MatMul", {transpose_ctx, embed_in_});
 
     std::string in_ctx_matmul_flat = this->template AddNode<fetch::ml::ops::Flatten<ArrayType>>(
-              name + "_In_Ctx_MatMul_Flat", {in_ctx_matmul});
+        name + "_In_Ctx_MatMul_Flat", {in_ctx_matmul});
 
+    //    std::string in_ctx_matmul_flat = this->template
+    //    AddNode<fetch::ml::layers::FullyConnected<ArrayType>>(
+    //          name + "_In_Ctx_MatMul_Flat", {in_ctx_matmul}, in_size, out);
 
     std::string output = this->template AddNode<fetch::ml::ops::Sigmoid<ArrayType>>(
         name + "_Sigmoid", {in_ctx_matmul_flat});

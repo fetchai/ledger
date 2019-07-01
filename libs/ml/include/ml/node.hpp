@@ -116,7 +116,7 @@ T &Node<T, O>::Evaluate(bool is_training)
 {
 
   this->SetTraining(is_training);
-  FETCH_LOG_INFO("ML_LIB", "Evaluating node [", name_, "]");
+  // FETCH_LOG_INFO("ML_LIB", "Evaluating node [", name_, "]");
 
   if (cached_output_status_ != CachedOutputState::VALID_CACHE)
   {

@@ -35,8 +35,8 @@ template <typename T>
 class W2VLoader : public DataLoader<fetch::math::Tensor<T>, fetch::math::Tensor<T>>
 {
 public:
-    const T BufferPositionUnused = -1;
-    
+  const T BufferPositionUnused = -1;
+
   using LabelType = fetch::math::Tensor<T>;
   using DataType  = fetch::math::Tensor<T>;
 
@@ -49,7 +49,7 @@ public:
   bool       IsDone() const override;
   void       Reset() override;
   void       RemoveInfrequent(SizeType min);
-  void       InitUnigramTable(SizeType size=1e8);
+  void       InitUnigramTable(SizeType size = 1e8);
   ReturnType GetNext() override;
 
   bool BuildVocab(std::string const &s);
@@ -78,9 +78,9 @@ private:
   SizeType                                   size_ = 0;
 
   // temporary sample and labels for buffering samples
-  DataType                 input_words_, output_words_, labels_;
-  SizeType                 buffer_pos_ = 0;
-  ReturnType               cur_sample_;
+  DataType   input_words_, output_words_, labels_;
+  SizeType   buffer_pos_ = 0;
+  ReturnType cur_sample_;
 
   std::vector<SizeType>    SentenceToIndices(std::vector<std::string> const &strings);
   std::vector<std::string> PreprocessString(std::string const &s);
@@ -107,11 +107,12 @@ W2VLoader<T>::W2VLoader(SizeType window_size, SizeType negative_samples, T freq_
   , mode_(mode)
 {
   // setup temporary buffers for training purpose
-  input_words_ = DataType({negative_samples*window_size_*2 + window_size_*2});
-  output_words_ = DataType({negative_samples*window_size_*2 + window_size_*2});
-  labels_ = DataType({negative_samples*window_size_*2 + window_size_*2 + 1}); // the extra 1 is for testing if label has ran out
+  input_words_  = DataType({negative_samples * window_size_ * 2 + window_size_ * 2});
+  output_words_ = DataType({negative_samples * window_size_ * 2 + window_size_ * 2});
+  labels_       = DataType({negative_samples * window_size_ * 2 + window_size_ * 2 +
+                      1});  // the extra 1 is for testing if label has ran out
   labels_.Fill(BufferPositionUnused);
-  cur_sample_.first = DataType({1, 1});
+  cur_sample_.first  = DataType({1, 1});
   cur_sample_.second = {DataType({1, 1}), DataType({1, 1})};
 }
 
@@ -123,24 +124,25 @@ W2VLoader<T>::W2VLoader(SizeType window_size, SizeType negative_samples, T freq_
 template <typename T>
 math::SizeType W2VLoader<T>::Size() const
 {
-    return size_;
+  return size_;
 }
 
 /**
  * update stats of data in dataloader, including: size_,
  */
 template <typename T>
-void W2VLoader<T>::Update(){
-    // update data set size
-    SizeType size(0);
-    for (auto const &s : data_)
+void W2VLoader<T>::Update()
+{
+  // update data set size
+  SizeType size(0);
+  for (auto const &s : data_)
+  {
+    if ((SizeType)s.size() > (2 * window_size_))
     {
-        if ((SizeType)s.size() > (2 * window_size_))
-        {
-            size += (SizeType)s.size() - (2 * window_size_);
-        }
+      size += (SizeType)s.size() - (2 * window_size_);
     }
-    size_ = size;
+  }
+  size_ = size;
 }
 
 /**
@@ -151,13 +153,16 @@ void W2VLoader<T>::Update(){
 template <typename T>
 bool W2VLoader<T>::IsDone() const
 {
-    if (current_sentence_ < data_.size() - 1) {
-        return false;
-    }
-    if((current_sentence_ == data_.size() - 1) && (current_word_ < data_.at(current_sentence_).size() - window_size_)) {
-        return false;
-    }
-    return true;
+  if (current_sentence_ < data_.size() - 1)
+  {
+    return false;
+  }
+  if ((current_sentence_ == data_.size() - 1) &&
+      (current_word_ < data_.at(current_sentence_).size() - window_size_))
+  {
+    return false;
+  }
+  return true;
 }
 
 /**
@@ -181,45 +186,53 @@ void W2VLoader<T>::Reset()
 template <typename T>
 void W2VLoader<T>::RemoveInfrequent(SizeType min)
 {
-    // remove infrequent words from vocab first
-    vocab_.RemoveInfrequentWord(min);
+  // remove infrequent words from vocab first
+  vocab_.RemoveInfrequentWord(min);
 
-    // compactify the vocabulary
-    auto old2new = vocab_.Compactify();
+  // compactify the vocabulary
+  auto old2new = vocab_.Compactify();
 
-    // create reverse vocab
-    auto reverse_vocab = vocab_.GetReverseVocab();
+  // create reverse vocab
+  auto reverse_vocab = vocab_.GetReverseVocab();
 
-    // create a new data_ for storing text
-    std::vector<std::vector<SizeType>> new_data;
+  // create a new data_ for storing text
+  std::vector<std::vector<SizeType>> new_data;
 
-    for(auto sent_it = data_.begin(); sent_it != data_.end(); sent_it++){
-        std::vector<SizeType> new_sent_buffer; // buffer for this sentence
+  for (auto sent_it = data_.begin(); sent_it != data_.end(); sent_it++)
+  {
+    std::vector<SizeType> new_sent_buffer;  // buffer for this sentence
 
-        // reserve every word that is not infrequent
-        for(auto word_it = sent_it->begin(); word_it != sent_it->end(); ++word_it){
-            if(old2new.count(*word_it) > 0) { // if a word is in old2new, append it to the new sentence
-                new_sent_buffer.push_back(*word_it);
-            }
-        }
-
-        // if after we remove infrequent word, the sentence becomes too short, we need to remove the sentence
-        if (new_sent_buffer.size() <= 2*window_size_){
-            for(auto const &word_id : new_sent_buffer) { // reduce the count for all the word in this sentence
-                vocab_.data[reverse_vocab[word_id].first].second -= 1;
-            }
-            // N.B. for practical concerns, we do not further remove infrequent words
-        }else{ // reserve the sentence if the sentence is still long enough
-            new_data.push_back(new_sent_buffer);
-        }
+    // reserve every word that is not infrequent
+    for (auto word_it = sent_it->begin(); word_it != sent_it->end(); ++word_it)
+    {
+      if (old2new.count(*word_it) > 0)
+      {  // if a word is in old2new, append it to the new sentence
+        new_sent_buffer.push_back(*word_it);
+      }
     }
-    data_ = new_data;
 
-    // update vocab
-    vocab_.Update();
+    // if after we remove infrequent word, the sentence becomes too short, we need to remove the
+    // sentence
+    if (new_sent_buffer.size() <= 2 * window_size_)
+    {
+      for (auto const &word_id : new_sent_buffer)
+      {  // reduce the count for all the word in this sentence
+        vocab_.data[reverse_vocab[word_id].first].second -= 1;
+      }
+      // N.B. for practical concerns, we do not further remove infrequent words
+    }
+    else
+    {  // reserve the sentence if the sentence is still long enough
+      new_data.push_back(new_sent_buffer);
+    }
+  }
+  data_ = new_data;
 
-    // update dl
-    Update();
+  // update vocab
+  vocab_.Update();
+
+  // update dl
+  Update();
 }
 
 /**
@@ -245,8 +258,8 @@ template <typename T>
 void W2VLoader<T>::BufferNextSamples(SizeType seed)
 {
 
-    // reset the index to buffer
-    buffer_pos_ = 0;
+  // reset the index to buffer
+  buffer_pos_ = 0;
 
   // the current word should start from position that allows full context window
   if (current_word_ < window_size_)
@@ -256,29 +269,40 @@ void W2VLoader<T>::BufferNextSamples(SizeType seed)
 
   // subsample too frequent word
   fetch::random::LaggedFibonacciGenerator<> lfg_(seed);
-  while(true){
-      T word_freq = static_cast<T>(vocab_.reverse_data[data_.at(current_sentence_).at(current_word_)].second) / static_cast<T>(vocab_.total_count);
-      T random_var = static_cast<T>(lfg_.AsDouble()); // random variable between 0-1
-      if(random_var < 1 - fetch::math::Sqrt(freq_thresh_ / word_freq)){ // subsample for a cumulative prob of 1 - sqrt(thresh/freq) // N.B. if word_freq < freq_thresh, then subsampling would not happen
-          // store data in case this is the last word
-          auto prev_word = current_word_;
-          auto prev_sentence = current_sentence_;
-          // move to the next word
-          current_word_++;
-          // check if the word is window size away form either end of the sentence
-          if (current_word_ >= data_.at(current_sentence_).size() - window_size_)  // the current word end when a full context window can be allowed
-          {
-              current_word_ = window_size_;  // the current word start from position that allows full context window
-              current_sentence_++;
-          }
-          if(IsDone()){ // revert to the previous word if this is the last word
-              current_word_ = prev_word;
-              current_sentence_ = prev_sentence;
-              break;
-          }
-      }else{
-          break;
+  while (true)
+  {
+    T word_freq =
+        static_cast<T>(vocab_.reverse_data[data_.at(current_sentence_).at(current_word_)].second) /
+        static_cast<T>(vocab_.total_count);
+    T random_var = static_cast<T>(lfg_.AsDouble());  // random variable between 0-1
+    if (random_var < 1 - fetch::math::Sqrt(freq_thresh_ / word_freq))
+    {  // subsample for a cumulative prob of 1 - sqrt(thresh/freq) // N.B. if word_freq <
+       // freq_thresh, then subsampling would not happen
+      // store data in case this is the last word
+      auto prev_word     = current_word_;
+      auto prev_sentence = current_sentence_;
+      // move to the next word
+      current_word_++;
+      // check if the word is window size away form either end of the sentence
+      if (current_word_ >=
+          data_.at(current_sentence_).size() -
+              window_size_)  // the current word end when a full context window can be allowed
+      {
+        current_word_ =
+            window_size_;  // the current word start from position that allows full context window
+        current_sentence_++;
       }
+      if (IsDone())
+      {  // revert to the previous word if this is the last word
+        current_word_     = prev_word;
+        current_sentence_ = prev_sentence;
+        break;
+      }
+    }
+    else
+    {
+      break;
+    }
   }
 
   // select random window size
@@ -286,23 +310,23 @@ void W2VLoader<T>::BufferNextSamples(SizeType seed)
 
   // for the interested one word
   T cur_word_id = T(data_.at(current_sentence_).at(current_word_));
-    
+
   // set up a counter to add samples to buffer
   SizeType counter = 0;
-  
+
   // reset all three buffers
   input_words_.Fill(cur_word_id);
-    labels_.Fill(BufferPositionUnused);
-  
+  labels_.Fill(BufferPositionUnused);
+
   // set the context samples
   for (SizeType i = 0; i < dynamic_size; ++i)
   {
     output_words_.At(counter) = T(data_.at(current_sentence_).at(current_word_ - i - 1));
-    labels_.At(counter) = T(1);
+    labels_.At(counter)       = T(1);
     counter++;
-    
-      output_words_.At(counter) = T(data_.at(current_sentence_).at(current_word_ + i + 1));
-      labels_.At(counter) = T(1);
+
+    output_words_.At(counter) = T(data_.at(current_sentence_).at(current_word_ + i + 1));
+    labels_.At(counter)       = T(1);
     counter++;
   }
 
@@ -310,13 +334,16 @@ void W2VLoader<T>::BufferNextSamples(SizeType seed)
   SizeType neg_sample;
   for (SizeType i = 0; i < negative_samples_ * dynamic_size * 2; ++i)
   {
-    if (!unigram_table_.SampleNegative(static_cast<SizeType>(cur_word_id), neg_sample)){
-        throw std::runtime_error(
-                "unigram table timed out looking for a negative sample. check window size for sentence "
-                "length and that data loaded correctly.");
-    }else{
+    if (!unigram_table_.SampleNegative(static_cast<SizeType>(cur_word_id), neg_sample))
+    {
+      throw std::runtime_error(
+          "unigram table timed out looking for a negative sample. check window size for sentence "
+          "length and that data loaded correctly.");
+    }
+    else
+    {
       output_words_.At(counter) = T(neg_sample);
-      labels_.At(counter) = 0;
+      labels_.At(counter)       = 0;
       counter++;
     }
   }
@@ -342,23 +369,24 @@ void W2VLoader<T>::BufferNextSamples(SizeType seed)
 template <typename T>
 typename W2VLoader<T>::ReturnType W2VLoader<T>::GetNext()
 {
-    T input_word, output_word;
+  T input_word, output_word;
 
-    T label =  labels_.At(buffer_pos_); // check if we have drained the buffer, either no more valid data, or goes out of bound
+  T label = labels_.At(buffer_pos_);  // check if we have drained the buffer, either no more valid
+                                      // data, or goes out of bound
   if (label == BufferPositionUnused)
   {
-      BufferNextSamples();
+    BufferNextSamples();
   }
 
-    // get input, output and label for the cur sample
-    input_word = input_words_.At(buffer_pos_);
-    output_word = output_words_.At(buffer_pos_);
-    label =  labels_.At(buffer_pos_);
+  // get input, output and label for the cur sample
+  input_word  = input_words_.At(buffer_pos_);
+  output_word = output_words_.At(buffer_pos_);
+  label       = labels_.At(buffer_pos_);
 
   // move buffer index to next one
   buffer_pos_++;
 
-  cur_sample_.first.At(0, 0) = label;
+  cur_sample_.first.At(0, 0)        = label;
   cur_sample_.second.at(0).At(0, 0) = input_word;
   cur_sample_.second.at(1).At(0, 0) = output_word;
 
@@ -374,19 +402,23 @@ typename W2VLoader<T>::ReturnType W2VLoader<T>::GetNext()
 template <typename T>
 bool W2VLoader<T>::BuildVocab(std::string const &s)
 {
-    std::vector<std::string> preprocessed_string = PreprocessString(s);
+  std::vector<std::string> preprocessed_string = PreprocessString(s);
 
-    if(preprocessed_string.size() <= 2*window_size_){ // dispose short sentences before we create vocabulary and count frequency: if we are not gonna train on it, the sentence does not exist
-        return false;
-    }else{
-        std::vector<SizeType> indices = SentenceToIndices(preprocessed_string);
-        data_.push_back(indices);
+  if (preprocessed_string.size() <= 2 * window_size_)
+  {  // dispose short sentences before we create vocabulary and count frequency: if we are not gonna
+     // train on it, the sentence does not exist
+    return false;
+  }
+  else
+  {
+    std::vector<SizeType> indices = SentenceToIndices(preprocessed_string);
+    data_.push_back(indices);
 
-        // update stats in vocab_ and dl
-        vocab_.Update();
-        Update();
-        return true;
-    }
+    // update stats in vocab_ and dl
+    vocab_.Update();
+    Update();
+    return true;
+  }
 }
 
 /**
@@ -470,20 +502,23 @@ typename W2VLoader<T>::SizeType W2VLoader<T>::window_size()
  * @return
  */
 template <typename T>
-std::vector<math::SizeType> W2VLoader<T>::SentenceToIndices(
-    std::vector<std::string> const &strings)
+std::vector<math::SizeType> W2VLoader<T>::SentenceToIndices(std::vector<std::string> const &strings)
 {
-    assert(strings.size() >= 2 * window_size_ + 1);  // All input are guaranteed to be long enough for the training
+  assert(strings.size() >=
+         2 * window_size_ + 1);  // All input are guaranteed to be long enough for the training
 
-    std::vector<SizeType> indices;
-    indices.reserve(strings.size());
+  std::vector<SizeType> indices;
+  indices.reserve(strings.size());
 
-    for (std::string const &s : strings){
-        auto value = vocab_.data.insert(std::make_pair(s, std::make_pair(static_cast<SizeType>(vocab_.data.size()), 0))); // insert a word info block into vocab_.data
-        indices.push_back((*value.first).second.first); // update the word in the sentence to index
-        value.first->second.second++; // adding up count for word s
-    }
-    return indices;
+  for (std::string const &s : strings)
+  {
+    auto value = vocab_.data.insert(
+        std::make_pair(s, std::make_pair(static_cast<SizeType>(vocab_.data.size()),
+                                         0)));       // insert a word info block into vocab_.data
+    indices.push_back((*value.first).second.first);  // update the word in the sentence to index
+    value.first->second.second++;                    // adding up count for word s
+  }
+  return indices;
 }
 
 /**

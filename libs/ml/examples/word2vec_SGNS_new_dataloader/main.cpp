@@ -21,12 +21,12 @@
 
 #include "math/clustering/knn.hpp"
 #include "math/matrix_operations.hpp"
+#include "math/ml/loss_functions/l2_norm.hpp"
 #include "math/tensor.hpp"
 #include "ml/dataloaders/word2vec_loaders/sgns_w2v_dataloader.hpp"
 #include "ml/graph.hpp"
 #include "ml/layers/skip_gram.hpp"
 #include "ml/ops/loss_functions/cross_entropy.hpp"
-#include "math/ml/loss_functions/l2_norm.hpp"
 #include "ml/optimisation/adam_optimiser.hpp"
 #include "ml/optimisation/sgd_optimiser.hpp"
 
@@ -67,7 +67,9 @@ void PrintWordAnology(W2VLoader<DataType> const &dl, ArrayType const &embeddings
   SizeType word2_idx = dl.IndexFromWord(word2);
   SizeType word3_idx = dl.IndexFromWord(word3);
 
-  if (word1_idx == fetch::math::numeric_max<SizeType>() || word2_idx == fetch::math::numeric_max<SizeType>() || word3_idx == fetch::math::numeric_max<SizeType>())
+  if (word1_idx == fetch::math::numeric_max<SizeType>() ||
+      word2_idx == fetch::math::numeric_max<SizeType>() ||
+      word3_idx == fetch::math::numeric_max<SizeType>())
   {
     throw std::runtime_error("WARNING! not all to-be-tested words are in vocabulary");
   }
@@ -82,8 +84,8 @@ void PrintWordAnology(W2VLoader<DataType> const &dl, ArrayType const &embeddings
   ArrayType word3_vec = embeddings.Slice(word3_idx, 1).Copy();
 
   word1_vec /= fetch::math::L2Norm(word1_vec);
-  word2_vec  /= fetch::math::L2Norm(word2_vec);
-  word3_vec  /= fetch::math::L2Norm(word3_vec);
+  word2_vec /= fetch::math::L2Norm(word2_vec);
+  word3_vec /= fetch::math::L2Norm(word3_vec);
 
   ArrayType word4_vec = word2_vec - word1_vec + word3_vec;
 
@@ -105,19 +107,19 @@ void PrintKNN(W2VLoader<DataType> const &dl, ArrayType const &embeddings, std::s
 
   if (dl.IndexFromWord(word0) == fetch::math::numeric_max<SizeType>())
   {
-      throw std::runtime_error("WARNING! could not find [" + word0 + "] in vocabulary");
+    throw std::runtime_error("WARNING! could not find [" + word0 + "] in vocabulary");
   }
 
   SizeType  idx        = dl.IndexFromWord(word0);
   ArrayType one_vector = embeddings.Slice(idx, 1).Copy();
   std::vector<std::pair<typename ArrayType::SizeType, typename ArrayType::Type>> output =
-          fetch::math::clustering::KNNCosine(arr, one_vector, k);
+      fetch::math::clustering::KNNCosine(arr, one_vector, k);
 
   for (std::size_t l = 0; l < output.size(); ++l)
   {
-      std::cout << "rank: " << l << ", "
-            << "distance, " << output.at(l).second << ": "
-            << dl.WordFromIndex(output.at(l).first) << std::endl;
+    std::cout << "rank: " << l << ", "
+              << "distance, " << output.at(l).second << ": " << dl.WordFromIndex(output.at(l).first)
+              << std::endl;
   }
 }
 
@@ -150,23 +152,25 @@ std::string ReadFile(std::string const &path)
 
 struct TrainingParams
 {
-  SizeType negative_sample_size = 5;    // number of negative sample per word-context pair
+  SizeType negative_sample_size = 5;     // number of negative sample per word-context pair
   SizeType window_size          = 8;     // window size for context sampling
   bool     train_mode           = true;  // reserve for future compatibility with CBOW
-  DataType freq_thresh     = 1e-5;     // frequency threshold for subsampling
-  SizeType min_count = 5;  // infrequent word removal threshold
+  DataType freq_thresh          = 1e-5;  // frequency threshold for subsampling
+  SizeType min_count            = 5;     // infrequent word removal threshold
 
-  SizeType    batch_size      = 100000;      // training data batch size
-  SizeType    embedding_size  = 32;       // dimension of embedding vec
-  SizeType    training_epochs = 1;                                                                                                                                                                                                                                                                   5;        // total number of training epochs
-  double      learning_rate   = 0.05;      // alpha - the learning rate
+  SizeType batch_size      = 1000;  // training data batch size
+  SizeType embedding_size  = 32;     // dimension of embedding vec
+  SizeType training_epochs = 1;
+  double   learning_rate   = 0.001;  // alpha - the learning rate
 
-  SizeType    k               = 10;       // how many nearest neighbours to compare against
-  std::string word0           = "three";  // test word to consider
-  std::string word1           = "france";
-  std::string word2           = "paris";
-  std::string word3           = "italy";
-  std::string save_loc        = "./model.fba";  // save file location for exporting graph
+  fetch::ml::optimisers::LearningRateParam<DataType> learning_rate_param{fetch::ml::optimisers::LearningRateParam<DataType>::LearningRateDecay::LINEAR};
+
+  SizeType    k        = 10;       // how many nearest neighbours to compare against
+  std::string word0    = "three";  // test word to consider
+  std::string word1    = "france";
+  std::string word2    = "paris";
+  std::string word3    = "italy";
+  std::string save_loc = "./model.fba";  // save file location for exporting graph
 };
 
 int main(int argc, char **argv)
@@ -192,7 +196,8 @@ int main(int argc, char **argv)
 
   std::cout << "Setting up training data...: " << std::endl;
 
-  W2VLoader<DataType> data_loader(tp.window_size, tp.negative_sample_size, tp.freq_thresh, tp.train_mode);
+  W2VLoader<DataType> data_loader(tp.window_size, tp.negative_sample_size, tp.freq_thresh,
+                                  tp.train_mode);
   // set up dataloader
   /// DATA LOADING ///
   std::cout << "building vocab " << std::endl;
@@ -229,10 +234,10 @@ int main(int argc, char **argv)
   DataType loss;
   for (SizeType i{0}; i < tp.training_epochs; i++)
   {
-    loss = optimiser.Run(data_loader, tp.batch_size);
+    loss = optimiser.Run(data_loader, tp.learning_rate_param, tp.batch_size);
     std::cout << "Loss: " << loss << std::endl;
-      // Test trained embeddings
-      TestEmbeddings(*g, model_name, data_loader, tp.word0, tp.word1, tp.word2, tp.word3, tp.k);
+    // Test trained embeddings
+    TestEmbeddings(*g, model_name, data_loader, tp.word0, tp.word1, tp.word2, tp.word3, tp.k);
   }
 
   //////////////////////////////////////
