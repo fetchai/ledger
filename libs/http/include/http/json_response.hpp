@@ -28,14 +28,14 @@ namespace http {
 inline http::HTTPResponse CreateJsonResponse(byte_array::ConstByteArray const &body,
                                              Status status = Status::SUCCESS_OK)
 {
-  static const auto jsonMimeType = mime_types::GetMimeTypeFromExtension(".json");
+  static auto const jsonMimeType = mime_types::GetMimeTypeFromExtension(".json");
   return http::HTTPResponse(body, jsonMimeType, status);
 }
 
 inline http::HTTPResponse CreateJsonResponse(variant::Variant const &doc,
                                              Status                  status = Status::SUCCESS_OK)
 {
-  static const auto jsonMimeType = mime_types::GetMimeTypeFromExtension(".json");
+  static auto const jsonMimeType = mime_types::GetMimeTypeFromExtension(".json");
   std::stringstream body;
   body << doc;
   return http::HTTPResponse(body.str(), jsonMimeType, status);
