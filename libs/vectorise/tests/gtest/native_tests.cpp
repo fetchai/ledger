@@ -21,6 +21,11 @@
 
 #include "gtest/gtest.h"
 
+#include <cstddef>
+#include <cstdint>
+
+namespace {
+
 using namespace fetch::vectorize;
 
 template <typename T>
@@ -194,4 +199,6 @@ ADD_TEST (^, xor) // NOLINT
 TEST(vectorise_native_test, test_registers)
 {
   test_registers();
+}
+
 }
