@@ -64,7 +64,7 @@ private:
   ArrayType  err1_;
   ArrayType  err2_;
 
-  void UpdateContainersForward(VecTensorType const &inputs, ArrayType &output);
+  void UpdateContainersForward(VecTensorType const &inputs);
   void UpdateContainersBackward(VecTensorType const &inputs, ArrayType const &error_signal);
 };
 
@@ -74,7 +74,7 @@ void MatrixMultiply<T>::Forward(VecTensorType const &inputs, ArrayType &output)
   assert(inputs.size() == 2);
   assert(output.shape() == ComputeOutputShape(inputs));
 
-  UpdateContainersForward(inputs, output);
+  UpdateContainersForward(inputs);
 
   // Normal MatMul 2D @ 2D
   if (inputs.at(0).get().shape().size() == 2 && inputs.at(1).get().shape().size() == 2)
@@ -271,7 +271,7 @@ std::vector<typename T::SizeType> MatrixMultiply<T>::ComputeOutputShape(
  * @param output output tensor
  */
 template <typename T>
-void MatrixMultiply<T>::UpdateContainersForward(VecTensorType const &inputs, ArrayType &output)
+void MatrixMultiply<T>::UpdateContainersForward(VecTensorType const &inputs)
 {
   if (!((inputs.at(0).get().shape() == fwd_input_shape_1_) &&
         (inputs.at(1).get().shape() == fwd_input_shape_2_)))
@@ -282,7 +282,7 @@ void MatrixMultiply<T>::UpdateContainersForward(VecTensorType const &inputs, Arr
         ArrayType({inputs.at(0).get().shape().at(0), inputs.at(0).get().shape().at(1)});
     fwd_in2_slice_tensor_ =
         ArrayType({inputs.at(1).get().shape().at(0), inputs.at(1).get().shape().at(1)});
-    output_slice_tensor_ = ArrayType(output.Slice(0, 2).shape());
+    output_slice_tensor_ = ArrayType({inputs.at(0).get().shape().at(0), inputs.at(1).get().shape().at(1)});
   }
 }
 
