@@ -32,7 +32,7 @@ using AllTypes     = ::testing::Types<uint32_t, uint64_t, float, double>;
 template <typename T>
 class GeneralGaugeTests : public ::testing::Test
 {
-public:
+protected:
   using GaugeType = fetch::telemetry::Gauge<T>;
   using GaugePtr  = std::unique_ptr<GaugeType>;
 
@@ -116,7 +116,7 @@ TYPED_TEST(GeneralGaugeTests, SetValue)
 TYPED_TEST(FloatGaugeTests, CheckSerialisation)
 {
   this->gauge_->set(3.1456f);
-  EXPECT_FLOAT_EQ(this->gauge_->get(), 3.1456f);
+  EXPECT_FLOAT_EQ(this->gauge_->get(), static_cast<TypeParam>(3.1456f));
 
   static char const *EXPECTED_TEXT = R"(# HELP sample_gauge Description of gauge
 # TYPE sample_gauge gauge
