@@ -67,6 +67,9 @@ public:
   void        ResetGraphCache(std::shared_ptr<NodeInterface<T>> const &n, bool input_size_changed);
   void        SetRegularisation(fetch::ml::details::RegularisationType regularisation,
                                 DataType regularisation_rate = DataType{0.0});
+  void        SetRegularisation(std::string                            node_name,
+                                fetch::ml::details::RegularisationType regularisation,
+                                DataType regularisation_rate = DataType{0.0});
 
   virtual struct fetch::ml::StateDict<ArrayType> StateDict() const;
   virtual void LoadStateDict(struct fetch::ml::StateDict<T> const &dict);
@@ -98,9 +101,8 @@ private:
 
 protected:
   std::unordered_map<std::string, NodePtrType> nodes_;
-
-  std::unordered_map<std::string, SizeType> trainable_lookup_;
-  std::vector<TrainablePtrType>             trainable_;
+  std::unordered_map<std::string, SizeType>    trainable_lookup_;
+  std::vector<TrainablePtrType>                trainable_;
 };
 
 template <typename ArrayType>
@@ -110,6 +112,22 @@ void Graph<ArrayType>::SetRegularisation(fetch::ml::details::RegularisationType 
   for (auto &t : trainable_)
   {
     t->SetRegularisation(regularisation, regularisation_rate);
+  }
+}
+
+template <typename ArrayType>
+void Graph<ArrayType>::SetRegularisation(std::string                            node_name,
+                                         fetch::ml::details::RegularisationType regularisation,
+                                         DataType                               regularisation_rate)
+{
+  if (nodes_[node_name])
+  {
+    trainable_[node_name]->SetRegularisation(regularisation, regularisation_rate);
+  }
+  else
+  {
+    throw std::runtime_error("Cannot change regularisation parameters for node [" + node_name +
+                             "] not in graph");
   }
 }
 
