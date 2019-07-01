@@ -73,11 +73,9 @@ void BM_Setup_And_Train(benchmark::State &state)
         optimiser(g, {input_name}, output_name, learning_rate);
 
     // Do optimisation
-    DataType loss;
     for (SizeType i = 0; i < n_epochs; ++i)
     {
       optimiser.Run({data}, gt);
-      loss = optimiser.Run({data}, gt);
     }
   }
 }
