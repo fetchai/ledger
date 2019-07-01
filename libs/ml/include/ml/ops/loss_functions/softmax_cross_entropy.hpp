@@ -56,16 +56,17 @@ public:
 
     // softmax forward & then CrossEntropy
     output(0, 0) =
-        fetch::math::CrossEntropyLoss(fetch::math::Softmax(inputs[0].get()), inputs[1].get());
+        fetch::math::CrossEntropyLoss(fetch::math::Softmax(inputs.at(0).get()), inputs.at(1).get());
   }
 
   virtual std::vector<ArrayType> Backward(VecTensorType const &inputs,
                                           ArrayType const &    error_signal)
   {
     assert(inputs.size() == 2);
-    assert(inputs[0].get().size() == inputs[1].get().size());
+    assert(inputs.at(0).get().size() == inputs.at(1).get().size());
 
-    ArrayType ret = fetch::math::Subtract(fetch::math::Softmax(inputs[0].get()), inputs[1].get());
+    ArrayType ret =
+        fetch::math::Subtract(fetch::math::Softmax(inputs.at(0).get()), inputs.at(1).get());
 
     // chain rule
     fetch::math::Multiply(ret, error_signal, ret);

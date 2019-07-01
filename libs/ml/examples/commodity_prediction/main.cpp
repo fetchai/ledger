@@ -300,7 +300,7 @@ DataType get_loss(std::shared_ptr<GraphType> const &g_ptr, std::string const &te
     g_ptr->SetInput(node_names.at(1), input.first);
 
     auto loss_tensor = g_ptr->Evaluate(node_names.back(), false);
-    loss += fetch::math::Sum(loss_tensor);
+    loss += fetch::math::Mean(loss_tensor);
     loss_counter++;
   }
 

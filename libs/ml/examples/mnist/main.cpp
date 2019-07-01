@@ -63,14 +63,15 @@ int main(int ac, char **av)
   //  Input -> FC -> Relu -> FC -> Relu -> FC -> Softmax
   auto g = std::make_shared<GraphType>();
 
-  std::string input   = g->AddNode<PlaceHolder<ArrayType>>("Input", {});
+  std::string input = g->AddNode<PlaceHolder<ArrayType>>("Input", {});
+  std::string label = g->AddNode<PlaceHolder<ArrayType>>("Label", {});
+
   std::string layer_1 = g->AddNode<FullyConnected<ArrayType>>(
       "FC1", {input}, 28u * 28u, 10u, fetch::ml::details::ActivationType::RELU);
   std::string layer_2 = g->AddNode<FullyConnected<ArrayType>>(
       "FC2", {layer_1}, 10u, 10u, fetch::ml::details::ActivationType::RELU);
   std::string output = g->AddNode<FullyConnected<ArrayType>>(
       "FC3", {layer_2}, 10u, 10u, fetch::ml::details::ActivationType::SOFTMAX);
-  std::string label = g->AddNode<PlaceHolder<ArrayType>>("Label", {});
   std::string error = g->AddNode<CrossEntropy<ArrayType>>("Error", {output, label});
 
   // Initialise MNIST loader

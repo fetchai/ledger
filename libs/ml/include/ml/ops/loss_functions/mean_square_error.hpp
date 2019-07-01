@@ -43,13 +43,13 @@ public:
   virtual void Forward(VecTensorType const &inputs, ArrayType &output)
   {
     assert(inputs.size() == 2);
-    assert(inputs[0].get().shape() == inputs[1].get().shape());
+    assert(inputs.at(0).get().shape() == inputs.at(1).get().shape());
 
     SizeType batch_dim = inputs.at(0).get().shape().size() - 1;
     for (SizeType i{0}; i < inputs.at(0).get().shape().at(batch_dim); i++)
     {
       typename ArrayType::Type ret = fetch::math::MeanSquareError(
-          inputs[0].get().Slice(i, batch_dim), inputs[1].get().Slice(i, batch_dim));
+          inputs.at(0).get().Slice(i, batch_dim), inputs.at(1).get().Slice(i, batch_dim));
       output(0, i) = ret;
     }
   }
@@ -59,7 +59,7 @@ public:
                                           ArrayType const &    error_signal)
   {
     assert(inputs.size() == 2);
-    assert(inputs[0].get().shape() == inputs[1].get().shape());
+    assert(inputs.at(0).get().shape() == inputs.at(1).get().shape());
 
     ArrayType return_signal_1(inputs.front().get().shape());
     ArrayType return_signal_2(inputs.front().get().shape());

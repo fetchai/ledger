@@ -118,7 +118,7 @@ void PlusOneTest()
     g.SetInput(label_name, cur_gt);
 
     auto error_tensor = g.Evaluate(error_name);
-    loss += fetch::math::Sum(error_tensor);
+    loss += fetch::math::Mean(error_tensor);
     error_tensor.Fill(static_cast<DataType>(1));
     g.BackPropagate(error_name, error_tensor);
   }
@@ -148,7 +148,7 @@ void PlusOneTest()
       g.SetInput(label_name, cur_gt);
 
       auto error_tensor = g.Evaluate(error_name);
-      loss += fetch::math::Sum(error_tensor);
+      loss += fetch::math::Mean(error_tensor);
       error_tensor.Fill(static_cast<DataType>(1));
       g.BackPropagate(error_name, error_tensor);
     }
@@ -231,7 +231,7 @@ void CategoricalPlusOneTest(bool add_softmax = false)
     g.SetInput(label_name, cur_gt);
 
     auto error_tensor = g.Evaluate(error_name);
-    loss += fetch::math::Sum(error_tensor);
+    loss += fetch::math::Mean(error_tensor);
     error_tensor.Fill(static_cast<DataType>(1));
     g.BackPropagate(error_name, error_tensor);
   }
@@ -261,7 +261,7 @@ void CategoricalPlusOneTest(bool add_softmax = false)
       g.SetInput(label_name, cur_gt);
 
       auto error_tensor = g.Evaluate(error_name);
-      loss += fetch::math::Sum(error_tensor);
+      loss += fetch::math::Mean(error_tensor);
       error_tensor.Fill(static_cast<DataType>(1));
       g.BackPropagate(error_name, error_tensor);
     }
@@ -335,7 +335,7 @@ void CategoricalXorTest(bool add_softmax = false)
     g.SetInput(label_name, cur_gt);
 
     auto error_tensor = g.Evaluate(error_name);
-    loss += fetch::math::Sum(error_tensor);
+    loss += fetch::math::Mean(error_tensor);
     error_tensor.Fill(static_cast<DataType>(1));
     g.BackPropagate(error_name, error_tensor);
   }
@@ -363,7 +363,7 @@ void CategoricalXorTest(bool add_softmax = false)
       g.SetInput(input_name, cur_input);
       cur_gt            = gt.Slice(step, 1).Copy();
       auto error_tensor = g.Evaluate(error_name);
-      loss += fetch::math::Sum(error_tensor);
+      loss += fetch::math::Mean(error_tensor);
       error_tensor.Fill(static_cast<DataType>(1));
       g.BackPropagate(error_name, error_tensor);
     }

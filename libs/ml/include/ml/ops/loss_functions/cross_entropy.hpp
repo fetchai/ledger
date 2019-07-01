@@ -48,27 +48,27 @@ public:
     assert(inputs.size() == 2);
     assert(inputs.at(0).get().size() == inputs.at(1).get().size());
 
-    output(0, 0) = fetch::math::CrossEntropyLoss(inputs[0].get(), inputs[1].get());
+    output(0, 0) = fetch::math::CrossEntropyLoss(inputs.at(0).get(), inputs.at(1).get());
   }
 
   virtual std::vector<ArrayType> Backward(VecTensorType const &inputs,
                                           ArrayType const &    error_signal)
   {
     assert(inputs.size() == 2);
-    assert(inputs[0].get().size() == inputs[1].get().size());
-    assert(inputs[0].get().shape().size() == 2);
+    assert(inputs.at(0).get().size() == inputs.at(1).get().size());
+    assert(inputs.at(0).get().shape().size() == 2);
 
     ArrayType ret;
-    if (inputs[0].get().shape().at(0) == 1)  // not one-hot
+    if (inputs.at(0).get().shape().at(0) == 1)  // not one-hot
     {
-      ret = fetch::math::Sigmoid(inputs[0].get());
-      fetch::math::Subtract(ret, inputs[1].get(), ret);
-      fetch::math::Multiply(ret, inputs[0].get(), ret);
+      ret = fetch::math::Sigmoid(inputs.at(0).get());
+      fetch::math::Subtract(ret, inputs.at(1).get(), ret);
+      fetch::math::Multiply(ret, inputs.at(0).get(), ret);
     }
-    else if (inputs[0].get().shape().size())  // one-hot
+    else if (inputs.at(0).get().shape().size())  // one-hot
     {
-      ret = fetch::math::Softmax(inputs[0].get(), 1);
-      fetch::math::Divide(inputs[1].get(), ret, ret);
+      ret = fetch::math::Softmax(inputs.at(0).get(), 1);
+      fetch::math::Divide(inputs.at(1).get(), ret, ret);
       fetch::math::Multiply(DataType(-1), ret, ret);
     }
 

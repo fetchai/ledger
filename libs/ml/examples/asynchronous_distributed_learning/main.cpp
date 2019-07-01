@@ -93,7 +93,8 @@ public:
         {
           std::lock_guard<std::mutex> l(m_);
           ArrayType                   loss_tensor = g_.Evaluate("Error").Copy();
-          loss += loss_tensor(0, 0);
+          loss += fetch::math::Mean(loss_tensor);
+          loss_tensor.Fill(static_cast<DataType>(1));
           g_.BackPropagate("Error", loss_tensor);
         }
       }
