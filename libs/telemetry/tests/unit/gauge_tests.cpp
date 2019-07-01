@@ -25,9 +25,9 @@
 
 namespace {
 
-using IntegerTypes = ::testing::Types<uint8_t, uint16_t, uint32_t, uint64_t>;
+using IntegerTypes = ::testing::Types<uint32_t, uint64_t>;
 using FloatTypes   = ::testing::Types<float, double>;
-using AllTypes     = ::testing::Types<uint8_t, uint16_t, uint32_t, uint64_t, float, double>;
+using AllTypes     = ::testing::Types<uint32_t, uint64_t, float, double>;
 
 template <typename T>
 class GeneralGaugeTests : public ::testing::Test
