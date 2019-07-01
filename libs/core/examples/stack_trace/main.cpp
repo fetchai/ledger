@@ -23,6 +23,7 @@
 #include <iostream>
 #include <memory>
 #include <thread>
+#include <utility>
 
 static constexpr char const *LOGGING_NAME = "main";
 
@@ -44,13 +45,11 @@ void Baz()
   }
 
   std::lock_guard<fetch::mutex::Mutex> lock(mt);
-  std::unique_ptr<std::thread>         thread;
-
-  thread.reset(new std::thread([=]() {
+  auto                                 thread = std::make_unique<std::thread>([=]() {
     LOG_LAMBDA_STACK_TRACE_POINT;
-
     Foo();
-  }));
+  });
+
   thread->join();
 }
 

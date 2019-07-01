@@ -270,10 +270,13 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
     dag_service_ = std::make_shared<ledger::DAGService>(muddle_.AsEndpoint(), dag_);
     reactor_.Attach(dag_service_->GetWeakRunnable());
 
-    NaiveSynergeticMiner *syn_miner = new NaiveSynergeticMiner{dag_, *storage_, certificate};
-    reactor_.Attach(syn_miner->GetWeakRunnable());
-
-    synergetic_miner_.reset(syn_miner);
+    auto syn_miner = std::make_unique<NaiveSynergeticMiner>(dag_, *storage_, certificate);
+    if (!reactor_.Attach(syn_miner->GetWeakRunnable()))
+    {
+      FETCH_LOG_ERROR(LOGGING_NAME, "Failed to attach synergetic miner to reactor.");
+      throw std::runtime_error("Failed to attach synergetic miner to reactor.");
+    }
+    synergetic_miner_ = std::move(syn_miner);
   }
 
   // attach the services to the reactor
