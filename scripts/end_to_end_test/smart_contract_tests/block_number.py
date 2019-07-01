@@ -23,14 +23,12 @@ from fetchai.ledger.crypto import Entity
 CONTRACT_TEXT = """
 @action
 function set_block_number_state()
-  var block_num_state = State<UInt64>('block_number_state', 0u64);
-  block_num_state.set(getBlockNumber());
+  State<UInt64>('block_number_state').set(getBlockNumber());
 endfunction
 
 @query
 function query_block_number_state() : UInt64
-    var block_num_state = State<UInt64>('block_number_state', 0u64);
-    return block_num_state.get();
+    return State<UInt64>('block_number_state').get(0u64);
 endfunction
 """
 

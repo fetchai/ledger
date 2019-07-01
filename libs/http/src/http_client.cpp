@@ -16,16 +16,14 @@
 //
 //------------------------------------------------------------------------------
 
-#include "http/http_client.hpp"
-
 #include "core/logger.hpp"
+#include "http/http_client.hpp"
 #include "http/request.hpp"
 #include "http/response.hpp"
+#include "network/fetch_asio.hpp"
 
-#include <stdexcept>
 #include <system_error>
-
-#include <sstream>
+#include <utility>
 
 namespace fetch {
 namespace http {

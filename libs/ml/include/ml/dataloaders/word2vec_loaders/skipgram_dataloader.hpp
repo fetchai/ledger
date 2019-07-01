@@ -69,12 +69,12 @@ private:
   SizeType cur_label_ = 0;
 
 public:
-  SkipGramLoader(SkipGramTextParams<T> p, SizeType seed = 123456789);
+  SkipGramLoader(SkipGramTextParams<T> p, bool random_mode = false, SizeType seed = 123456789);
 
   virtual bool AddData(std::string const &training_data) override;
 
 private:
-  virtual void     GetData(SizeType idx, ArrayType &ret) override;
+  virtual void     GetData(SizeType idx, std::vector<T> &ret) override;
   virtual SizeType GetLabel(SizeType idx) override;
 
   void                  BuildUnigramTable();
@@ -86,8 +86,8 @@ private:
   bool WindowPositionCheck(SizeType target_pos, SizeType context_pos, SizeType sentence_len) const;
 };
 template <typename T>
-SkipGramLoader<T>::SkipGramLoader(SkipGramTextParams<T> p, SizeType seed)
-  : BasicTextLoader<T>(p, seed)
+SkipGramLoader<T>::SkipGramLoader(SkipGramTextParams<T> p, bool random_mode, SizeType seed)
+  : BasicTextLoader<T>(p, random_mode, seed)
   , p_(p)
 {
   assert(p_.window_size > 0);
@@ -112,21 +112,18 @@ SkipGramLoader<T>::SkipGramLoader(SkipGramTextParams<T> p, SizeType seed)
  * @return
  */
 template <typename T>
-void SkipGramLoader<T>::GetData(SizeType idx, T &data_buffer)
+void SkipGramLoader<T>::GetData(SizeType idx, std::vector<T> &data_buffer)
 {
   std::vector<typename SkipGramLoader<T>::SizeType> lookup_idxs;
-
   lookup_idxs = SelectValence() ? GeneratePositive(idx) : GenerateNegative(idx);
 
-  SizeType buffer_count = 0;
   for (SizeType j = 0; j < p_.n_data_buffers; ++j)
   {
-    SizeType sentence_idx = this->word_idx_sentence_idx.at(lookup_idxs.at(buffer_count));
-    SizeType word_idx     = this->GetWordOffsetFromWordIdx(lookup_idxs.at(buffer_count));
-    data_buffer.At(j)     = DataType(this->data_.at(sentence_idx).at(word_idx));
-    ++buffer_count;
-  }
+    SizeType sentence_idx = this->word_idx_sentence_idx.at(lookup_idxs.at(j));
+    SizeType word_idx     = this->GetWordOffsetFromWordIdx(lookup_idxs.at(j));
 
+    data_buffer.at(j).At(0, 0) = DataType(this->data_.at(sentence_idx).at(word_idx));
+  }
   cur_label_ = lookup_idxs.at(p_.n_data_buffers);
 }
 

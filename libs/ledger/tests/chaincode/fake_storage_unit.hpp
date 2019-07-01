@@ -40,14 +40,11 @@ public:
   using mutex_type      = std::mutex;
   using lock_guard_type = std::lock_guard<mutex_type>;
   using hash_type       = fetch::byte_array::ConstByteArray;
-
-  static constexpr char const *LOGGING_NAME = "FakeStorageUnit";
+  using ResourceID      = fetch::storage::ResourceID;
 
   Document GetOrCreate(ResourceAddress const &key) override
   {
     lock_guard_type lock(mutex_);
-    FETCH_LOG_DEBUG(LOGGING_NAME, "GetOrCreate (key.address = ", key.address(),
-                    ", key.id[b64] = ", key.ToString(), ")");
 
     Document doc;
 
@@ -68,8 +65,6 @@ public:
   {
     lock_guard_type lock(mutex_);
     Document        doc;
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Get (key.address = ", key.address(),
-                    ", key.id[b64] = ", key.ToString(), ")");
 
     auto it = state_.find(key.id());
     if (it != state_.end())
@@ -87,8 +82,6 @@ public:
   void Set(ResourceAddress const &key, StateValue const &value) override
   {
     lock_guard_type lock(mutex_);
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Set (key.address = ", key.address(),
-                    ", key.id[b64] = ", key.ToString(), ", value = ", value.ToBase64(), ")");
 
     state_[key.id()] = value;
   }
@@ -96,8 +89,6 @@ public:
   bool Lock(ShardIndex shard) override
   {
     lock_guard_type lock(mutex_);
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Lock (key.address = ", key.address(),
-                    ", key.id[b64] = ", key.ToString(), ")");
 
     bool success = false;
 
@@ -114,8 +105,6 @@ public:
   bool Unlock(ShardIndex shard) override
   {
     lock_guard_type lock(mutex_);
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Unlock (key.address = ", key.address(),
-                    ", key.id[b64] = ", key.ToString(), ")");
 
     bool success = false;
 
@@ -185,6 +174,24 @@ public:
   TxLayouts PollRecentTx(uint32_t) override
   {
     return {};
+  }
+
+  Keys KeyDump() const override
+  {
+    Keys keys;
+
+    for (auto it = state_.begin(); it != state_.end(); ++it)
+    {
+      keys.push_back(ResourceID(it->first));
+    }
+
+    return keys;
+  }
+
+  void Reset() override
+  {
+    state_.clear();
+    transactions_.clear();
   }
 
 private:

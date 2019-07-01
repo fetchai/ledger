@@ -17,6 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include "vectorise/fixed_point/fixed_point.hpp"
+#include "vectorise/fixed_point/serializers.hpp"
 #include "vm/vm.hpp"
 
 #include <algorithm>
@@ -26,6 +28,18 @@
 
 namespace fetch {
 namespace vm {
+
+template <typename T, typename = void>
+struct GetElementType
+{
+  using type = typename GetStorageType<T>::type;
+};
+template <typename T>
+struct GetElementType<T, typename std::enable_if_t<std::is_same<T, bool>::value>>
+{
+  // ElementType must NOT be bool because std::vector<bool> is a partial specialisation
+  using type = uint8_t;
+};
 
 class IArray : public Object
 {
@@ -42,6 +56,7 @@ public:
   virtual Ptr<IArray>        PopFrontMany(int32_t)              = 0;
   virtual void               Reverse()                          = 0;
   virtual void               Extend(Ptr<IArray> const &)        = 0;
+  virtual void               Erase(int32_t)                     = 0;
 
   virtual TemplateParameter1 GetIndexedValue(AnyInteger const &index)                    = 0;
   virtual void SetIndexedValue(AnyInteger const &index, TemplateParameter1 const &value) = 0;
@@ -58,7 +73,7 @@ protected:
 template <typename T>
 struct Array : public IArray
 {
-  using ElementType = typename GetStorageType<T>::type;
+  using ElementType = typename GetElementType<T>::type;
 
   Array()           = delete;
   ~Array() override = default;
@@ -66,7 +81,7 @@ struct Array : public IArray
   Array(VM *vm, TypeId type_id, TypeId element_type_id__, int32_t size)
     : IArray(vm, type_id)
     , element_type_id(element_type_id__)
-    , elements(static_cast<std::size_t>(size), ElementType(0))
+    , elements(static_cast<std::size_t>(size), ElementType{})
   {}
 
   int32_t Count() const override
@@ -189,6 +204,23 @@ struct Array : public IArray
     elements.insert(elements.cend(), other_elements.cbegin(), other_elements.cend());
   }
 
+  void Erase(const int32_t index) override
+  {
+    if (index < 0)
+    {
+      RuntimeError("negative index");
+      return;
+    }
+
+    if (static_cast<std::size_t>(index) >= elements.size())
+    {
+      RuntimeError("index out of bounds");
+      return;
+    }
+
+    elements.erase(elements.cbegin() + index);
+  }
+
   TemplateParameter1 GetIndexedValue(AnyInteger const &index) override
   {
     ElementType *ptr = Find(index);
@@ -211,7 +243,7 @@ struct Array : public IArray
 
   ElementType *Find(Variant const &index)
   {
-    size_t i;
+    std::size_t i;
     if (!GetNonNegativeInteger(index, i))
     {
       RuntimeError("negative index");
@@ -228,18 +260,112 @@ struct Array : public IArray
 
   bool SerializeTo(ByteArrayBuffer &buffer) override
   {
-    buffer << element_type_id << elements;
-    return true;
+    return ApplySerialize(buffer, elements);
   }
 
   bool DeserializeFrom(ByteArrayBuffer &buffer) override
   {
-    buffer >> element_type_id >> elements;
+    return ApplyDeserialize(buffer, elements);
+  }
+
+  TypeId element_type_id;
+  // ElementType must NOT be bool because std::vector<bool> is a partial specialisation
+  std::vector<ElementType> elements;
+
+private:
+  bool ApplySerialize(ByteArrayBuffer &buffer, std::vector<Ptr<Object>> const &data)
+  {
+    if (!vm_->IsDefaultSerializeConstructable(element_type_id))
+    {
+      vm_->RuntimeError("Cannot deserialize type " + vm_->GetUniqueId(element_type_id) +
+                        " as no serialisation constructor exists.");
+      return false;
+    }
+
+    buffer << GetUniqueId() << static_cast<uint64_t>(elements.size());
+    for (Ptr<Object> v : data)
+    {
+      if (!v)
+      {
+        RuntimeError("Cannot serialise null reference element in " + GetUniqueId());
+        return false;
+      }
+
+      if (!v->SerializeTo(buffer))
+      {
+        return false;
+      }
+    }
     return true;
   }
 
-  TypeId                   element_type_id;
-  std::vector<ElementType> elements;
+  template <typename G>
+  typename std::enable_if<IsPrimitive<G>::value, bool>::type ApplySerialize(
+      ByteArrayBuffer &buffer, std::vector<G> const &data)
+  {
+    buffer << GetUniqueId() << static_cast<uint64_t>(elements.size());
+    for (G const &v : data)
+    {
+      buffer << v;
+    }
+    return true;
+  }
+
+  bool ApplyDeserialize(ByteArrayBuffer &buffer, std::vector<Ptr<Object>> &data)
+  {
+    uint64_t    size;
+    std::string uid;
+    buffer >> uid >> size;
+
+    if (uid != GetUniqueId())
+    {
+      vm_->RuntimeError("Type mismatch during deserialization. Got " + uid + " but expected " +
+                        GetUniqueId());
+      return false;
+    }
+
+    data.resize(size);
+
+    if (!vm_->IsDefaultSerializeConstructable(element_type_id))
+    {
+      vm_->RuntimeError("Cannot deserialize type " + vm_->GetUniqueId(element_type_id) +
+                        " as no serialisation constructor exists.");
+      return false;
+    }
+
+    data.resize(size);
+    for (Ptr<Object> &v : data)
+    {
+      v = vm_->DefaultSerializeConstruct(element_type_id);
+      if (!v || !v->DeserializeFrom(buffer))
+      {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  template <typename G>
+  typename std::enable_if<IsPrimitive<G>::value, bool>::type ApplyDeserialize(
+      ByteArrayBuffer &buffer, std::vector<G> &data)
+  {
+    uint64_t    size;
+    std::string uid;
+    buffer >> uid >> size;
+    if (uid != GetUniqueId())
+    {
+      vm_->RuntimeError("Type mismatch during deserialization. Got " + uid + " but expected " +
+                        GetUniqueId());
+      return false;
+    }
+
+    data.resize(size);
+    for (G &v : data)
+    {
+      buffer >> v;
+    }
+    return true;
+  }
 };
 
 template <typename... Args>
@@ -293,6 +419,16 @@ inline Ptr<IArray> IArray::Construct(VM *vm, TypeId type_id, Args &&... args)
   {
     return new Array<double>(vm, type_id, element_type_id, std::forward<Args>(args)...);
   }
+  case TypeIds::Fixed32:
+  {
+    return new Array<fixed_point::fp32_t>(vm, type_id, element_type_id,
+                                          std::forward<Args>(args)...);
+  }
+  case TypeIds::Fixed64:
+  {
+    return new Array<fixed_point::fp64_t>(vm, type_id, element_type_id,
+                                          std::forward<Args>(args)...);
+  }
   default:
   {
     return new Array<Ptr<Object>>(vm, type_id, element_type_id, std::forward<Args>(args)...);
@@ -306,7 +442,7 @@ inline Ptr<IArray> IArray::Constructor(VM *vm, TypeId type_id, int32_t size)
   {
     vm->RuntimeError("negative size");
 
-    return nullptr;
+    return {};
   }
   return Construct(vm, type_id, size);
 }

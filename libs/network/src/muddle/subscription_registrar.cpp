@@ -16,7 +16,15 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/byte_array/const_byte_array.hpp"
+#include "core/logger.hpp"
+#include "core/mutex.hpp"
+#include "core/serializers/byte_array.hpp"
 #include "network/muddle/subscription_registrar.hpp"
+
+#include <cstdint>
+#include <string>
+#include <utility>
 
 namespace fetch {
 namespace muddle {
@@ -32,7 +40,7 @@ namespace {
 uint32_t Combine(uint16_t service, uint16_t channel)
 {
   uint32_t index = 0;
-  index |= static_cast<uint32_t>(service) << 16;
+  index |= static_cast<uint32_t>(service) << 16u;
   index |= static_cast<uint32_t>(channel);
   return index;
 }
@@ -161,12 +169,12 @@ void SubscriptionRegistrar::Debug(std::string const &prefix) const
     auto addr = std::get<1>(mapping.first);
     FETCH_LOG_WARN(LOGGING_NAME, prefix,
                    "SubscriptionRegistrar:address_dispatch_map_ Addr=", addr.ToBase64(),
-                   "  Service=", ((numb >> 16) & 0xFFFF));
+                   "  Service=", ((numb >> 16u) & 0xFFFF));
   }
   for (const auto &mapping : dispatch_map_)
   {
     auto numb = mapping.first;
-    auto serv = (numb >> 16) & 0xFFFF;
+    auto serv = (numb >> 16u) & 0xFFFF;
     auto chan = numb & 0xFFFF;
     FETCH_LOG_WARN(LOGGING_NAME, prefix, "SubscriptionRegistrar:dispatch_map_ Serv=", serv,
                    "  Chan=", chan);

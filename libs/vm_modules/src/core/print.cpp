@@ -16,11 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm_modules/core/print.hpp"
-
 #include "meta/type_traits.hpp"
+#include "vectorise/fixed_point/fixed_point.hpp"
 #include "vm/module.hpp"
 #include "vm/vm.hpp"
+#include "vm_modules/core/print.hpp"
 
 #include <ostream>
 
@@ -34,7 +34,7 @@ using meta::EnableIf;
 using meta::IsAny8BitInteger;
 
 template <bool APPEND_LINEBREAK>
-inline void FlushOutput(std::ostream &out)
+void FlushOutput(std::ostream &out)
 {
   if (APPEND_LINEBREAK)
   {
@@ -46,22 +46,40 @@ inline void FlushOutput(std::ostream &out)
   }
 }
 
-inline void PrintNullPtr(std::ostream &out)
+void StringifyNullPtr(std::ostream &out)
 {
   out << "(nullptr)";
 }
 
+void StringifyBool(std::ostream &out, bool b)
+{
+  out << (b ? "true" : "false");
+}
+
 template <typename T>
-inline EnableIf<!IsAny8BitInteger<T>, void> PrintWithCastIf8Bit(std::ostream &out, T const &el)
+EnableIf<!IsAny8BitInteger<T>> StringifyNumber(std::ostream &out, T const &el)
 {
   out << el;
 }
 
 // int8_t and uint8_t need casting to int32_t, or they get mangled to ASCII characters
 template <typename T>
-inline EnableIf<IsAny8BitInteger<T>, void> PrintWithCastIf8Bit(std::ostream &out, T const &el)
+EnableIf<IsAny8BitInteger<T>> StringifyNumber(std::ostream &out, T const &el)
 {
   out << static_cast<int32_t>(el);
+}
+
+template <typename T>
+void StringifyArrayElement(vm::TypeId id, std::ostream &out, T const &el)
+{
+  if (id == vm::TypeIds::Bool)
+  {
+    StringifyBool(out, static_cast<bool>(el));
+  }
+  else
+  {
+    StringifyNumber(out, el);
+  }
 }
 
 }  // namespace internal
@@ -73,7 +91,7 @@ void PrintString(fetch::vm::VM *vm, fetch::vm::Ptr<fetch::vm::String> const &s)
 
   if (s == nullptr)
   {
-    internal::PrintNullPtr(out);
+    internal::StringifyNullPtr(out);
   }
   else
   {
@@ -88,7 +106,7 @@ void PrintNumber(fetch::vm::VM *vm, T const &s)
 {
   auto &out = vm->GetOutputDevice(vm::VM::STDOUT);
 
-  internal::PrintWithCastIf8Bit(out, s);
+  internal::StringifyNumber(out, s);
 
   internal::FlushOutput<APPEND_LINEBREAK>(out);
 }
@@ -98,30 +116,30 @@ void PrintBool(fetch::vm::VM *vm, bool const &s)
 {
   auto &out = vm->GetOutputDevice(vm::VM::STDOUT);
 
-  out << (s ? "true" : "false");
+  internal::StringifyBool(out, s);
 
   internal::FlushOutput<APPEND_LINEBREAK>(out);
 }
 
 template <typename T, bool APPEND_LINEBREAK = false>
-void PrintArray(fetch::vm::VM *vm, vm::Ptr<vm::Array<T>> const &g)
+void PrintArray(fetch::vm::VM *vm, vm::Ptr<vm::Array<T>> const &arr)
 {
   auto &out = vm->GetOutputDevice(vm::VM::STDOUT);
 
-  if (g == nullptr)
+  if (arr == nullptr)
   {
-    internal::PrintNullPtr(out);
+    internal::StringifyNullPtr(out);
   }
   else
   {
     out << "[";
-    if (!g->elements.empty())
+    if (!arr->elements.empty())
     {
-      internal::PrintWithCastIf8Bit(out, g->elements[0]);
-      for (std::size_t i = 1; i < g->elements.size(); ++i)
+      internal::StringifyArrayElement(arr->element_type_id, out, arr->elements[0]);
+      for (std::size_t i = 1; i < arr->elements.size(); ++i)
       {
         out << ", ";
-        internal::PrintWithCastIf8Bit(out, g->elements[i]);
+        internal::StringifyArrayElement(arr->element_type_id, out, arr->elements[i]);
       }
     }
     out << "]";
@@ -165,6 +183,14 @@ void CreatePrint(vm::Module &module)
   module.CreateFreeFunction("print", &PrintNumber<double>);
   module.CreateFreeFunction("printLn", &PrintNumber<double, true>);
 
+  module.CreateFreeFunction("print", &PrintNumber<fixed_point::fp32_t>);
+  module.CreateFreeFunction("print", &PrintNumber<fixed_point::fp64_t>);
+  module.CreateFreeFunction("printLn", &PrintNumber<fixed_point::fp32_t, true>);
+  module.CreateFreeFunction("printLn", &PrintNumber<fixed_point::fp64_t, true>);
+
+  module.CreateFreeFunction("print", &PrintArray<bool>);
+  module.CreateFreeFunction("printLn", &PrintArray<bool, true>);
+
   module.CreateFreeFunction("print", &PrintArray<uint8_t>);
   module.CreateFreeFunction("printLn", &PrintArray<uint8_t, true>);
   module.CreateFreeFunction("print", &PrintArray<int8_t>);
@@ -189,6 +215,11 @@ void CreatePrint(vm::Module &module)
   module.CreateFreeFunction("printLn", &PrintArray<float, true>);
   module.CreateFreeFunction("print", &PrintArray<double>);
   module.CreateFreeFunction("printLn", &PrintArray<double, true>);
+
+  module.CreateFreeFunction("print", &PrintArray<fixed_point::FixedPoint<16, 16>>);
+  module.CreateFreeFunction("print", &PrintArray<fixed_point::FixedPoint<32, 32>>);
+  module.CreateFreeFunction("printLn", &PrintArray<fixed_point::FixedPoint<16, 16>, true>);
+  module.CreateFreeFunction("printLn", &PrintArray<fixed_point::FixedPoint<32, 32>, true>);
 }
 
 }  // namespace vm_modules

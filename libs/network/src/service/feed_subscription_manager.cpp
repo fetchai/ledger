@@ -16,9 +16,15 @@
 //
 //------------------------------------------------------------------------------
 
+#include "network/service/abstract_publication_feed.hpp"
 #include "network/service/feed_subscription_manager.hpp"
-
 #include "network/service/server_interface.hpp"
+
+#include <cstddef>
+#include <cstdint>
+#include <list>
+#include <tuple>
+#include <vector>
 
 namespace fetch {
 namespace service {

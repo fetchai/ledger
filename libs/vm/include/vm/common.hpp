@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "meta/type_util.hpp"
+
 #include <cmath>
 #include <cstdint>
 #include <functional>
@@ -56,10 +57,12 @@ static TypeId const Int64          = 10;
 static TypeId const UInt64         = 11;
 static TypeId const Float32        = 12;
 static TypeId const Float64        = 13;
-static TypeId const PrimitiveMaxId = 13;
-static TypeId const String         = 14;
-static TypeId const Address        = 15;
-static TypeId const NumReserved    = 16;
+static TypeId const Fixed32        = 14;
+static TypeId const Fixed64        = 15;
+static TypeId const PrimitiveMaxId = 15;
+static TypeId const String         = 16;
+static TypeId const Address        = 17;
+static TypeId const NumReserved    = 18;
 }  // namespace TypeIds
 
 enum class NodeCategory : uint8_t
@@ -104,39 +107,41 @@ enum class NodeKind : uint16_t
   UnsignedInteger64                         = 29,
   Float32                                   = 30,
   Float64                                   = 31,
-  String                                    = 32,
-  True                                      = 33,
-  False                                     = 34,
-  Null                                      = 35,
-  Equal                                     = 36,
-  NotEqual                                  = 37,
-  LessThan                                  = 38,
-  LessThanOrEqual                           = 39,
-  GreaterThan                               = 40,
-  GreaterThanOrEqual                        = 41,
-  And                                       = 42,
-  Or                                        = 43,
-  Not                                       = 44,
-  PrefixInc                                 = 45,
-  PrefixDec                                 = 46,
-  PostfixInc                                = 47,
-  PostfixDec                                = 48,
-  UnaryPlus                                 = 49,
-  Negate                                    = 50,
-  Index                                     = 51,
-  Dot                                       = 52,
-  Invoke                                    = 53,
-  ParenthesisGroup                          = 54,
-  Add                                       = 55,
-  InplaceAdd                                = 56,
-  Subtract                                  = 57,
-  InplaceSubtract                           = 58,
-  Multiply                                  = 59,
-  InplaceMultiply                           = 60,
-  Divide                                    = 61,
-  InplaceDivide                             = 62,
-  Modulo                                    = 63,
-  InplaceModulo                             = 64
+  Fixed32                                   = 32,
+  Fixed64                                   = 33,
+  String                                    = 34,
+  True                                      = 35,
+  False                                     = 36,
+  Null                                      = 37,
+  Equal                                     = 38,
+  NotEqual                                  = 39,
+  LessThan                                  = 40,
+  LessThanOrEqual                           = 41,
+  GreaterThan                               = 42,
+  GreaterThanOrEqual                        = 43,
+  And                                       = 44,
+  Or                                        = 45,
+  Not                                       = 46,
+  PrefixInc                                 = 47,
+  PrefixDec                                 = 48,
+  PostfixInc                                = 49,
+  PostfixDec                                = 50,
+  UnaryPlus                                 = 51,
+  Negate                                    = 52,
+  Index                                     = 53,
+  Dot                                       = 54,
+  Invoke                                    = 55,
+  ParenthesisGroup                          = 56,
+  Add                                       = 57,
+  InplaceAdd                                = 58,
+  Subtract                                  = 59,
+  InplaceSubtract                           = 60,
+  Multiply                                  = 61,
+  InplaceMultiply                           = 62,
+  Divide                                    = 63,
+  InplaceDivide                             = 64,
+  Modulo                                    = 65,
+  InplaceModulo                             = 66
 };
 
 enum class ExpressionKind : uint8_t
@@ -183,23 +188,32 @@ struct TypeInfo
 {
   TypeInfo()
   {
-    type_kind = TypeKind::Unknown;
+    type_kind        = TypeKind::Unknown;
+    template_type_id = TypeIds::Unknown;
   }
-  TypeInfo(TypeKind type_kind__, std::string const &name__, TypeIdArray const &parameter_type_ids__)
+  TypeInfo(TypeKind type_kind__, std::string const &name__, TypeId template_type_id__,
+           TypeIdArray const &parameter_type_ids__)
   {
     type_kind          = type_kind__;
     name               = name__;
+    template_type_id   = template_type_id__;
     parameter_type_ids = parameter_type_ids__;
   }
   TypeKind    type_kind;
   std::string name;
+  TypeId      template_type_id;
   TypeIdArray parameter_type_ids;
 };
 using TypeInfoArray = std::vector<TypeInfo>;
 using TypeInfoMap   = std::unordered_map<std::string, TypeId>;
 
 class VM;
-using Handler = std::function<void(VM *)>;
+template <typename T>
+class Ptr;
+class Object;
+
+using Handler                   = std::function<void(VM *)>;
+using DefaultConstructorHandler = std::function<Ptr<Object>(VM *, TypeId)>;
 
 struct FunctionInfo
 {
@@ -220,25 +234,40 @@ struct FunctionInfo
 };
 using FunctionInfoArray = std::vector<FunctionInfo>;
 
+using DeserializeConstructorMap = std::unordered_map<TypeIndex, DefaultConstructorHandler>;
+
 class RegisteredTypes
 {
 public:
   TypeId GetTypeId(TypeIndex type_index) const
   {
-    auto it = map.find(type_index);
-    if (it != map.end())
+    auto it = map_.find(type_index);
+    if (it != map_.end())
     {
       return it->second;
     }
     return TypeIds::Unknown;
   }
 
+  TypeIndex GetTypeIndex(TypeId type_id) const
+  {
+    auto it = reverse_.find(type_id);
+    if (it != reverse_.end())
+    {
+      return it->second;
+    }
+
+    return TypeIndex(typeid(void ***));
+  }
+
 private:
   void Add(TypeIndex type_index, TypeId type_id)
   {
-    map[type_index] = type_id;
+    map_[type_index] = type_id;
+    reverse_.insert({type_id, type_index});
   }
-  std::unordered_map<TypeIndex, TypeId> map;
+  std::unordered_map<TypeIndex, TypeId> map_;
+  std::unordered_map<TypeId, TypeIndex> reverse_;
   friend class Analyser;
 };
 

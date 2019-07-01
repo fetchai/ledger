@@ -36,27 +36,73 @@ TYPED_TEST_CASE(FlattenTest, MyTypes);
 
 TYPED_TEST(FlattenTest, forward_test)
 {
-  TypeParam                          data(std::vector<std::uint64_t>({8, 8}));
+  using SizeType = typename TypeParam::SizeType;
+  using DataType = typename TypeParam::Type;
+
+  SizeType height  = 7;
+  SizeType width   = 6;
+  SizeType batches = 5;
+
+  TypeParam data(std::vector<std::uint64_t>({height, width, batches}));
+  TypeParam gt(std::vector<std::uint64_t>({height * width, batches}));
+
+  for (SizeType i{0}; i < height; i++)
+  {
+    for (SizeType j{0}; j < width; j++)
+    {
+      for (SizeType n{0}; n < batches; n++)
+      {
+        data(i, j, n)         = static_cast<DataType>(i * 100 + j * 10 + n);
+        gt(j * height + i, n) = static_cast<DataType>(i * 100 + j * 10 + n);
+      }
+    }
+  }
+
   fetch::ml::ops::Flatten<TypeParam> op;
 
   TypeParam prediction(op.ComputeOutputShape({data}));
   op.Forward({data}, prediction);
 
-  // test correct shape
-  ASSERT_EQ(prediction.shape(), std::vector<typename TypeParam::SizeType>({1, 64}));
+  // test correct values
+  ASSERT_EQ(prediction.shape(), gt.shape());
+  ASSERT_TRUE(prediction.AllClose(gt));
 }
 
 TYPED_TEST(FlattenTest, backward_test)
 {
-  TypeParam                          data(std::vector<std::uint64_t>({8, 8}));
+  using SizeType = typename TypeParam::SizeType;
+  using DataType = typename TypeParam::Type;
+
+  SizeType height  = 5;
+  SizeType width   = 6;
+  SizeType batches = 7;
+
+  TypeParam data({height, width, batches});
+  TypeParam error_signal({height * width, batches});
+  TypeParam gt(data.shape());
+
+  for (SizeType i{0}; i < height; i++)
+  {
+    for (SizeType j{0}; j < width; j++)
+    {
+      for (SizeType n{0}; n < batches; n++)
+      {
+        data(i, j, n)                   = static_cast<DataType>(-1);
+        gt(i, j, n)                     = static_cast<DataType>(i * 100 + j * 10 + n);
+        error_signal(j * height + i, n) = static_cast<DataType>(i * 100 + j * 10 + n);
+      }
+    }
+  }
+
   fetch::ml::ops::Flatten<TypeParam> op;
 
   TypeParam prediction(op.ComputeOutputShape({data}));
   op.Forward({data}, prediction);
 
-  TypeParam              error_signal(prediction.shape());
   std::vector<TypeParam> gradients = op.Backward({data}, error_signal);
 
+  // test correct values
   ASSERT_EQ(gradients.size(), 1);
-  ASSERT_EQ(gradients[0].shape(), std::vector<typename TypeParam::SizeType>({8, 8}));
+  ASSERT_EQ(gradients[0].shape(), gt.shape());
+  ASSERT_TRUE(gradients[0].AllClose(gt));
 }

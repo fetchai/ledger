@@ -102,7 +102,7 @@ int main(int argc, char **argv)
       .CreateMemberFunction("second", &IntPair::second);
 
   // Setting compiler up
-  auto                     compiler = new fetch::vm::Compiler(&module);
+  auto                     compiler = std::make_unique<fetch::vm::Compiler>(&module);
   fetch::vm::Executable    executable;
   fetch::vm::IR            ir;
   std::vector<std::string> errors;
@@ -147,6 +147,6 @@ int main(int argc, char **argv)
   {
     std::cout << "Runtime error on line " << error << std::endl;
   }
-  delete compiler;
+
   return 0;
 }

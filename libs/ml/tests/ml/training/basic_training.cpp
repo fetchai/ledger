@@ -21,17 +21,19 @@
 #include "ml/layers/layers.hpp"
 #include "ml/ops/activation.hpp"
 #include "ml/ops/loss_functions.hpp"
-#include <gtest/gtest.h>
+#include "ml/ops/weights.hpp"
+
+#include "gtest/gtest.h"
 
 template <typename ArrayType>
 ArrayType GenerateXorData()
 {
-  ArrayType data{{4, 2}};
+  ArrayType data{{2, 4}};
   data.Fill(typename ArrayType::Type(0));
   data.Set(1, 1, typename ArrayType::Type(1));
-  data.Set(2, 0, typename ArrayType::Type(1));
-  data.Set(3, 0, typename ArrayType::Type(1));
-  data.Set(3, 1, typename ArrayType::Type(1));
+  data.Set(0, 2, typename ArrayType::Type(1));
+  data.Set(0, 3, typename ArrayType::Type(1));
+  data.Set(1, 3, typename ArrayType::Type(1));
 
   return data;
 }
@@ -41,7 +43,7 @@ ArrayType GenerateXorGt(typename ArrayType::SizeType dims)
 {
   assert((dims == 1) || (dims == 2));
 
-  ArrayType gt{{4, dims}};
+  ArrayType gt{{dims, 4}};
   gt.Fill(typename ArrayType::Type(0));
   if (dims == 1)
   {
@@ -52,8 +54,8 @@ ArrayType GenerateXorGt(typename ArrayType::SizeType dims)
   {
     gt.Set(0, 0, typename ArrayType::Type(1));
     gt.Set(1, 1, typename ArrayType::Type(1));
-    gt.Set(2, 1, typename ArrayType::Type(1));
-    gt.Set(3, 0, typename ArrayType::Type(1));
+    gt.Set(1, 2, typename ArrayType::Type(1));
+    gt.Set(0, 3, typename ArrayType::Type(1));
   }
 
   return gt;
@@ -87,7 +89,7 @@ void PlusOneTest()
   ////////////////////////////////////////
 
   TypeParam data{{4, 1}};
-  data.Set(0, 0, DataType(1));
+  data.Set(0, 0, static_cast<DataType>(1));
   data.Set(1, 0, DataType(2));
   data.Set(2, 0, DataType(3));
   data.Set(3, 0, DataType(4));
@@ -104,7 +106,7 @@ void PlusOneTest()
 
   TypeParam cur_gt{{1, 1}};
   TypeParam cur_input{{1, 1}};
-  DataType  loss = DataType(0);
+  DataType  loss = static_cast<DataType>(0);
 
   for (SizeType step{0}; step < 4; ++step)
   {
@@ -117,7 +119,13 @@ void PlusOneTest()
 
     g.BackPropagate(output_name, criterion.Backward({results, cur_gt}));
   }
-  g.Step(alpha);
+
+  for (auto &w : g.get_trainables())
+  {
+    TypeParam grad = w->get_gradients();
+    fetch::math::Multiply(grad, DataType{-alpha}, grad);
+    w->ApplyGradient(grad);
+  }
 
   DataType current_loss = loss;
 
@@ -127,7 +135,7 @@ void PlusOneTest()
 
   for (std::size_t i = 0; i < n_batches; ++i)
   {
-    loss = DataType(0);
+    loss = static_cast<DataType>(0);
 
     for (SizeType step{0}; step < 4; ++step)
     {
@@ -143,7 +151,13 @@ void PlusOneTest()
     // This task is so easy the loss should fall on every training step
     EXPECT_GE(current_loss, loss);
     current_loss = loss;
-    g.Step(alpha);
+
+    for (auto &w : g.get_trainables())
+    {
+      TypeParam grad = w->get_gradients();
+      fetch::math::Multiply(grad, DataType{-alpha}, grad);
+      w->ApplyGradient(grad);
+    }
   }
 }
 
@@ -183,35 +197,41 @@ void CategoricalPlusOneTest(bool add_softmax = false)
   ////////////////////////////////////////
 
   TypeParam data{{n_data, SizeType(n_classes.At(0))}};
-  data.Fill(DataType(0));
-  data.Set(0, 0, DataType(1));
-  data.Set(1, 1, DataType(1));
-  data.Set(2, 2, DataType(1));
-  data.Set(3, 3, DataType(1));
+  data.Fill(static_cast<DataType>(0));
+  data.Set(0, 0, static_cast<DataType>(1));
+  data.Set(1, 1, static_cast<DataType>(1));
+  data.Set(2, 2, static_cast<DataType>(1));
+  data.Set(3, 3, static_cast<DataType>(1));
 
   TypeParam gt{{n_data, SizeType(n_classes.At(0))}};
-  gt.Fill(DataType(0));
-  gt.Set(0, 1, DataType(1));
-  gt.Set(1, 2, DataType(1));
-  gt.Set(2, 3, DataType(1));
-  gt.Set(3, 0, DataType(1));
+  gt.Fill(static_cast<DataType>(0));
+  gt.Set(0, 1, static_cast<DataType>(1));
+  gt.Set(1, 2, static_cast<DataType>(1));
+  gt.Set(2, 3, static_cast<DataType>(1));
+  gt.Set(3, 0, static_cast<DataType>(1));
 
   /////////////////////////
   /// ONE TRAINING STEP ///
   /////////////////////////
 
-  DataType loss = DataType(0);
+  DataType loss = static_cast<DataType>(0);
 
   for (SizeType step{0}; step < n_data; ++step)
   {
-    auto cur_input = data.Slice(step).Copy();
+    auto cur_input = data.Slice(step, 1).Copy();
     g.SetInput(input_name, cur_input);
-    auto cur_gt  = gt.Slice(step).Copy();
+    auto cur_gt  = gt.Slice(step, 1).Copy();
     auto results = g.Evaluate(output_name);
     loss += criterion.Forward({results, cur_gt});
     g.BackPropagate(output_name, criterion.Backward({results, cur_gt}));
   }
-  g.Step(alpha);
+
+  for (auto &w : g.get_trainables())
+  {
+    TypeParam grad = w->get_gradients();
+    fetch::math::Multiply(grad, DataType{-alpha}, grad);
+    w->ApplyGradient(grad);
+  }
 
   DataType current_loss = loss;
 
@@ -221,13 +241,13 @@ void CategoricalPlusOneTest(bool add_softmax = false)
 
   for (std::size_t i = 0; i < n_batches; ++i)
   {
-    loss = DataType(0);
+    loss = static_cast<DataType>(0);
 
     for (SizeType step{0}; step < n_data; ++step)
     {
-      auto cur_input = data.Slice(step).Copy();
+      auto cur_input = data.Slice(step, 1).Copy();
       g.SetInput(input_name, cur_input);
-      auto cur_gt  = gt.Slice(step).Copy();
+      auto cur_gt  = gt.Slice(step, 1).Copy();
       auto results = g.Evaluate(output_name);
       loss += criterion.Forward({results, cur_gt});
       g.BackPropagate(output_name, criterion.Backward({results, cur_gt}));
@@ -236,7 +256,13 @@ void CategoricalPlusOneTest(bool add_softmax = false)
     // This task is so easy the loss should fall on every training step
     EXPECT_GE(current_loss, loss);
     current_loss = loss;
-    g.Step(alpha);
+
+    for (auto &w : g.get_trainables())
+    {
+      TypeParam grad = w->get_gradients();
+      fetch::math::Multiply(grad, DataType{-alpha}, grad);
+      w->ApplyGradient(grad);
+    }
   }
 }
 
@@ -284,18 +310,24 @@ void CategoricalXorTest(bool add_softmax = false)
 
   TypeParam cur_gt{{SizeType(1), SizeType(n_classes.At(0))}};
   TypeParam cur_input{{SizeType(1), SizeType(n_classes.At(0))}};
-  DataType  loss = DataType(0);
+  DataType  loss = static_cast<DataType>(0);
 
   for (SizeType step{0}; step < n_data; ++step)
   {
-    cur_input = data.Slice(step).Copy();
+    cur_input = data.Slice(step, 1).Copy();
     g.SetInput(input_name, cur_input);
     auto results = g.Evaluate(output_name);
-    cur_gt       = gt.Slice(step).Copy();
+    cur_gt       = gt.Slice(step, 1).Copy();
     loss += criterion.Forward({results, cur_gt});
     g.BackPropagate(output_name, criterion.Backward({results, cur_gt}));
   }
-  g.Step(alpha);
+
+  for (auto &w : g.get_trainables())
+  {
+    TypeParam grad = w->get_gradients();
+    fetch::math::Multiply(grad, DataType{-alpha}, grad);
+    w->ApplyGradient(grad);
+  }
 
   DataType current_loss = loss;
 
@@ -305,13 +337,13 @@ void CategoricalXorTest(bool add_softmax = false)
 
   for (std::size_t i = 0; i < n_batches; ++i)
   {
-    loss = DataType(0);
+    loss = static_cast<DataType>(0);
 
     for (SizeType step{0}; step < n_data; ++step)
     {
-      cur_input = data.Slice(step).Copy();
+      cur_input = data.Slice(step, 1).Copy();
       g.SetInput(input_name, cur_input);
-      cur_gt       = gt.Slice(step).Copy();
+      cur_gt       = gt.Slice(step, 1).Copy();
       auto results = g.Evaluate(output_name);
       loss += criterion.Forward({results, cur_gt});
       g.BackPropagate(output_name, criterion.Backward({results, cur_gt}));
@@ -319,7 +351,13 @@ void CategoricalXorTest(bool add_softmax = false)
 
     EXPECT_GE(current_loss, loss);
     current_loss = loss;
-    g.Step(alpha);
+
+    for (auto &w : g.get_trainables())
+    {
+      TypeParam grad = w->get_gradients();
+      fetch::math::Multiply(grad, DataType{-alpha}, grad);
+      w->ApplyGradient(grad);
+    }
   }
 }
 

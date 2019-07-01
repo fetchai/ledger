@@ -288,19 +288,19 @@ public:
     {
       ResizeFile(i, elements);  // Resize file if needed
     }
-    size_t curr_in = i, elm_mapped = 0, src_index = 0, elm_left = elements;
+    std::size_t curr_in = i, elm_mapped = 0, src_index = 0, elm_left = elements;
     for (; elm_left > 0; curr_in += elm_mapped, src_index += elm_mapped, elm_left -= elm_mapped)
     {
       if (!IsMapped(curr_in))
       {
         MapIndex(curr_in);
       }
-      elm_mapped         = std::min((mapped_index_ + MAX) - curr_in, elm_left);
-      size_t block_index = curr_in - mapped_index_;
-      type * file_offset = (reinterpret_cast<type *>(mapped_data_.data()));
+      elm_mapped              = std::min((mapped_index_ + MAX) - curr_in, elm_left);
+      std::size_t block_index = curr_in - mapped_index_;
+      type *      file_offset = (reinterpret_cast<type *>(mapped_data_.data()));
       memcpy(&(file_offset[block_index]), &objects[src_index], sizeof(type) * elm_mapped);
     }
-    size_t written_elements = (i + elements) - header_->objects;
+    std::size_t written_elements = (i + elements) - header_->objects;
     if (written_elements > 0)
     {
       header_->objects += written_elements;
@@ -323,16 +323,16 @@ public:
     // Figure out how many elements are valid to get, only get those
     elements = std::min(elements, std::size_t(header_->objects - i));
 
-    size_t curr_in = i, elm_mapped = 0, src_index = 0, elm_left = elements;
+    std::size_t curr_in = i, elm_mapped = 0, src_index = 0, elm_left = elements;
     for (; elm_left > 0; curr_in += elm_mapped, src_index += elm_mapped, elm_left -= elm_mapped)
     {
       if (!IsMapped(curr_in))
       {
         MapIndex(curr_in);
       }
-      elm_mapped         = std::min((mapped_index_ + MAX) - curr_in, elm_left);
-      size_t block_index = curr_in - mapped_index_;
-      type * file_offset = (reinterpret_cast<type *>(mapped_data_.data()));
+      elm_mapped              = std::min((mapped_index_ + MAX) - curr_in, elm_left);
+      std::size_t block_index = curr_in - mapped_index_;
+      type *      file_offset = (reinterpret_cast<type *>(mapped_data_.data()));
       memcpy(&(objects[src_index]), &(file_offset[block_index]), sizeof(type) * elm_mapped);
     }
   }
@@ -402,7 +402,7 @@ public:
       {
         MapIndex(i);
       }
-      size_t          j_offset = (j * sizeof(type)) + header_->size();
+      std::size_t     j_offset = (j * sizeof(type)) + header_->size();
       std::error_code error;
       mio::mmap_sink  j_object_map = mio::make_mmap_sink(filename_, j_offset, sizeof(type), error);
       if (error)
@@ -505,9 +505,9 @@ private:
   void MapIndex(std::size_t const &i)
   {
     mapped_data_.unmap();
-    mapped_index_         = i - (i % MAX);
-    size_t mapping_start  = (mapped_index_ * sizeof(type)) + header_->size();
-    size_t mapping_length = mapping_start + (sizeof(type) * MAX);
+    mapped_index_              = i - (i % MAX);
+    std::size_t mapping_start  = (mapped_index_ * sizeof(type)) + header_->size();
+    std::size_t mapping_length = mapping_start + (sizeof(type) * MAX);
     if (mapping_length > GetFileLength())
     {
       ResizeFile();
@@ -520,11 +520,11 @@ private:
     }
   }
 
-  size_t GetFileLength()
+  std::size_t GetFileLength()
   {
     file_handle_.clear();
     file_handle_.seekg(0, file_handle_.end);
-    size_t pos = size_t(file_handle_.tellg());
+    std::size_t pos = std::size_t(file_handle_.tellg());
     return pos;
   }
   /*
@@ -549,9 +549,9 @@ private:
    * @elements: elements to be written. File size will be extend if elements exceeds the existing
    * file size.
    */
-  void ResizeFile(size_t index, size_t elements)
+  void ResizeFile(std::size_t index, std::size_t elements)
   {
-    size_t obj_capacity, expected_obj_count, adjusted_obj_count, block_count, total_length;
+    std::size_t obj_capacity, expected_obj_count, adjusted_obj_count, block_count, total_length;
 
     obj_capacity       = (GetFileLength() - header_->size()) / sizeof(type);
     expected_obj_count = index + elements;

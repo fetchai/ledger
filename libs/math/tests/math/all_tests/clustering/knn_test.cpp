@@ -16,13 +16,14 @@
 //
 //------------------------------------------------------------------------------
 
-#include <gtest/gtest.h>
-
 #include "math/clustering/knn.hpp"
 #include "math/distance/euclidean.hpp"
 #include "math/tensor.hpp"
 
+#include "gtest/gtest.h"
+
 using namespace fetch::math;
+using namespace fetch::math::clustering;
 
 template <typename T>
 class ClusteringTest : public ::testing::Test
@@ -36,41 +37,13 @@ TYPED_TEST_CASE(ClusteringTest, MyTypes);
 
 TYPED_TEST(ClusteringTest, knn_euclidean_test)
 {
-  using DataType  = typename TypeParam::Type;
   using ArrayType = TypeParam;
   using SizeType  = typename TypeParam::SizeType;
 
-  ArrayType A = ArrayType({4, 4});
+  ArrayType A = ArrayType::FromString("1, 2, 3, 4; 2, 3, 4, 5; -1, -2, -3, -4; -2, -3, -4, -5");
+  ArrayType v = ArrayType::FromString("3, 4, 5, 6");
 
-  A.Set(SizeType{0}, SizeType{0}, DataType(1));
-  A.Set(SizeType{0}, SizeType{1}, DataType(2));
-  A.Set(SizeType{0}, SizeType{2}, DataType(3));
-  A.Set(SizeType{0}, SizeType{3}, DataType(4));
-
-  A.Set(SizeType{1}, SizeType{0}, DataType(2));
-  A.Set(SizeType{1}, SizeType{1}, DataType(3));
-  A.Set(SizeType{1}, SizeType{2}, DataType(4));
-  A.Set(SizeType{1}, SizeType{3}, DataType(5));
-
-  A.Set(SizeType{2}, SizeType{0}, DataType(-1));
-  A.Set(SizeType{2}, SizeType{1}, DataType(-2));
-  A.Set(SizeType{2}, SizeType{2}, DataType(-3));
-  A.Set(SizeType{2}, SizeType{3}, DataType(-4));
-
-  A.Set(SizeType{3}, SizeType{0}, DataType(-2));
-  A.Set(SizeType{3}, SizeType{1}, DataType(-3));
-  A.Set(SizeType{3}, SizeType{2}, DataType(-4));
-  A.Set(SizeType{3}, SizeType{3}, DataType(-5));
-
-  ArrayType v = ArrayType({1, 4});
-
-  v.Set(SizeType{0}, SizeType{0}, DataType(3));
-  v.Set(SizeType{0}, SizeType{1}, DataType(4));
-  v.Set(SizeType{0}, SizeType{2}, DataType(5));
-  v.Set(SizeType{0}, SizeType{3}, DataType(6));
-
-  std::vector<std::pair<typename ArrayType::SizeType, typename ArrayType::Type>> output =
-      fetch::math::clustering::KNN<ArrayType, fetch::math::distance::Euclidean>(A, v, 4);
+  auto output = KNN<ArrayType, fetch::math::distance::Euclidean>(A, v, 4);
 
   EXPECT_EQ(output.at(0).first, SizeType(1));
   EXPECT_NEAR(double(output.at(0).second), double(2), 1e-4);
@@ -84,41 +57,13 @@ TYPED_TEST(ClusteringTest, knn_euclidean_test)
 
 TYPED_TEST(ClusteringTest, knn_cosine_test)
 {
-  using DataType  = typename TypeParam::Type;
   using ArrayType = TypeParam;
   using SizeType  = typename TypeParam::SizeType;
 
-  ArrayType A = ArrayType({4, 4});
+  ArrayType A = ArrayType::FromString("1, 2, 3, 4; 2, 3, 4, 5; -1, -2, -3, -4; -2, -3, -4, -5");
+  ArrayType v = ArrayType::FromString("3, 4, 5, 6");
 
-  A.Set(SizeType{0}, SizeType{0}, DataType(1));
-  A.Set(SizeType{0}, SizeType{1}, DataType(2));
-  A.Set(SizeType{0}, SizeType{2}, DataType(3));
-  A.Set(SizeType{0}, SizeType{3}, DataType(4));
-
-  A.Set(SizeType{1}, SizeType{0}, DataType(2));
-  A.Set(SizeType{1}, SizeType{1}, DataType(3));
-  A.Set(SizeType{1}, SizeType{2}, DataType(4));
-  A.Set(SizeType{1}, SizeType{3}, DataType(5));
-
-  A.Set(SizeType{2}, SizeType{0}, DataType(-1));
-  A.Set(SizeType{2}, SizeType{1}, DataType(-2));
-  A.Set(SizeType{2}, SizeType{2}, DataType(-3));
-  A.Set(SizeType{2}, SizeType{3}, DataType(-4));
-
-  A.Set(SizeType{3}, SizeType{0}, DataType(-2));
-  A.Set(SizeType{3}, SizeType{1}, DataType(-3));
-  A.Set(SizeType{3}, SizeType{2}, DataType(-4));
-  A.Set(SizeType{3}, SizeType{3}, DataType(-5));
-
-  ArrayType v = ArrayType({1, 4});
-
-  v.Set(SizeType{0}, SizeType{0}, DataType(3));
-  v.Set(SizeType{0}, SizeType{1}, DataType(4));
-  v.Set(SizeType{0}, SizeType{2}, DataType(5));
-  v.Set(SizeType{0}, SizeType{3}, DataType(6));
-
-  std::vector<std::pair<typename ArrayType::SizeType, typename ArrayType::Type>> output =
-      fetch::math::clustering::KNNCosine(A, v, 4);
+  auto output = KNNCosine(A, v, 4);
 
   EXPECT_EQ(output.at(0).first, SizeType(1));
   EXPECT_NEAR(double(output.at(0).second), double(0.00215564), 1e-4);

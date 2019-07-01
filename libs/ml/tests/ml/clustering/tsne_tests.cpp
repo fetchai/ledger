@@ -16,10 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include <gtest/gtest.h>
-
 #include "math/tensor.hpp"
 #include "ml/clustering/tsne.hpp"
+
+#include "gtest/gtest.h"
 
 using namespace fetch::math;
 using namespace fetch::math::distance;
@@ -35,8 +35,8 @@ using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor
 TYPED_TEST_CASE(TsneTests, MyTypes);
 
 template <typename TypeParam>
-TypeParam RunTest(typename TypeParam::SizeType n_data_size,
-                  typename TypeParam::SizeType n_output_feature_size)
+TypeParam RunTest(typename TypeParam::SizeType n_output_feature_size,
+                  typename TypeParam::SizeType n_data_size)
 {
 
   using DataType  = typename TypeParam::Type;
@@ -55,32 +55,32 @@ TypeParam RunTest(typename TypeParam::SizeType n_data_size,
   SizeType FINAL_MOMENTUM_STEPS{20};
   SizeType P_LATER_CORRECTION_ITERATION{10};
 
-  ArrayType A({N_DATA_SIZE, N_INPUT_FEATURE_SIZE});
+  ArrayType A({N_INPUT_FEATURE_SIZE, N_DATA_SIZE});
 
   // Generate easily separable clusters of data
   for (SizeType i = 0; i < 25; ++i)
   {
-    A.Set(i, SizeType{0}, -static_cast<DataType>(i) - static_cast<DataType>(50));
-    A.Set(i, SizeType{1}, -static_cast<DataType>(i) - static_cast<DataType>(50));
-    A.Set(i, SizeType{2}, -static_cast<DataType>(i) - static_cast<DataType>(50));
+    A(0, i) = -static_cast<DataType>(i) - static_cast<DataType>(50);
+    A(1, i) = -static_cast<DataType>(i) - static_cast<DataType>(50);
+    A(2, i) = -static_cast<DataType>(i) - static_cast<DataType>(50);
   }
   for (SizeType i = 25; i < 50; ++i)
   {
-    A.Set(i, SizeType{0}, -static_cast<DataType>(i) - static_cast<DataType>(50));
-    A.Set(i, SizeType{1}, static_cast<DataType>(i) + static_cast<DataType>(50));
-    A.Set(i, SizeType{2}, static_cast<DataType>(i) + static_cast<DataType>(50));
+    A(0, i) = -static_cast<DataType>(i) - static_cast<DataType>(50);
+    A(1, i) = static_cast<DataType>(i) + static_cast<DataType>(50);
+    A(2, i) = static_cast<DataType>(i) + static_cast<DataType>(50);
   }
   for (SizeType i = 50; i < 75; ++i)
   {
-    A.Set(i, SizeType{0}, static_cast<DataType>(i) + static_cast<DataType>(50));
-    A.Set(i, SizeType{1}, -static_cast<DataType>(i) - static_cast<DataType>(50));
-    A.Set(i, SizeType{2}, -static_cast<DataType>(i) - static_cast<DataType>(50));
+    A(0, i) = static_cast<DataType>(i) + static_cast<DataType>(50);
+    A(1, i) = -static_cast<DataType>(i) - static_cast<DataType>(50);
+    A(2, i) = -static_cast<DataType>(i) - static_cast<DataType>(50);
   }
   for (SizeType i = 75; i < 100; ++i)
   {
-    A.Set(i, SizeType{0}, static_cast<DataType>(i) + static_cast<DataType>(50));
-    A.Set(i, SizeType{1}, static_cast<DataType>(i) + static_cast<DataType>(50));
-    A.Set(i, SizeType{2}, static_cast<DataType>(i) + static_cast<DataType>(50));
+    A(0, i) = static_cast<DataType>(i) + static_cast<DataType>(50);
+    A(1, i) = static_cast<DataType>(i) + static_cast<DataType>(50);
+    A(2, i) = static_cast<DataType>(i) + static_cast<DataType>(50);
   }
 
   fetch::ml::TSNE<ArrayType> tsn(A, N_OUTPUT_FEATURE_SIZE, PERPLEXITY, RANDOM_SEED);
@@ -95,19 +95,19 @@ TEST(TsneTests, tsne_test_2d_float)
   SizeType N_DATA_SIZE{100};
   SizeType N_OUTPUT_FEATURE_SIZE{2};
 
-  Tensor<float> output_matrix = RunTest<Tensor<float>>(N_DATA_SIZE, N_OUTPUT_FEATURE_SIZE);
+  Tensor<float> output_matrix = RunTest<Tensor<float>>(N_OUTPUT_FEATURE_SIZE, N_DATA_SIZE);
 
-  ASSERT_EQ(output_matrix.shape().at(0), N_DATA_SIZE);
-  ASSERT_EQ(output_matrix.shape().at(1), N_OUTPUT_FEATURE_SIZE);
+  ASSERT_EQ(output_matrix.shape().at(0), N_OUTPUT_FEATURE_SIZE);
+  ASSERT_EQ(output_matrix.shape().at(1), N_DATA_SIZE);
 
   EXPECT_FLOAT_EQ(output_matrix.At(0, 0), 0.25323879718780517578);
-  EXPECT_FLOAT_EQ(output_matrix.At(0, 1), -3.1758825778961181641);
-  EXPECT_FLOAT_EQ(output_matrix.At(25, 0), -1.7577359676361083984);
-  EXPECT_FLOAT_EQ(output_matrix.At(25, 1), 2.6265761852264404297);
-  EXPECT_FLOAT_EQ(output_matrix.At(50, 0), 0.2358369976282119751);
-  EXPECT_FLOAT_EQ(output_matrix.At(50, 1), 1.679751276969909668);
-  EXPECT_FLOAT_EQ(output_matrix.At(99, 0), -0.87262111902236938477);
-  EXPECT_FLOAT_EQ(output_matrix.At(99, 1), 3.0463356971740722656);
+  EXPECT_FLOAT_EQ(output_matrix.At(1, 0), -3.1758825778961181641);
+  EXPECT_FLOAT_EQ(output_matrix.At(0, 25), -1.7577359676361083984);
+  EXPECT_FLOAT_EQ(output_matrix.At(1, 25), 2.6265761852264404297);
+  EXPECT_FLOAT_EQ(output_matrix.At(0, 50), 0.2358369976282119751);
+  EXPECT_FLOAT_EQ(output_matrix.At(1, 50), 1.679751276969909668);
+  EXPECT_FLOAT_EQ(output_matrix.At(0, 99), -0.87262111902236938477);
+  EXPECT_FLOAT_EQ(output_matrix.At(1, 99), 3.0463356971740722656);
 }
 
 TEST(TsneTests, tsne_test_2d_double)
@@ -115,19 +115,19 @@ TEST(TsneTests, tsne_test_2d_double)
   SizeType N_DATA_SIZE{100};
   SizeType N_OUTPUT_FEATURE_SIZE{2};
 
-  Tensor<double> output_matrix = RunTest<Tensor<double>>(N_DATA_SIZE, N_OUTPUT_FEATURE_SIZE);
+  Tensor<double> output_matrix = RunTest<Tensor<double>>(N_OUTPUT_FEATURE_SIZE, N_DATA_SIZE);
 
-  ASSERT_EQ(output_matrix.shape().at(0), N_DATA_SIZE);
-  ASSERT_EQ(output_matrix.shape().at(1), N_OUTPUT_FEATURE_SIZE);
+  ASSERT_EQ(output_matrix.shape().at(0), N_OUTPUT_FEATURE_SIZE);
+  ASSERT_EQ(output_matrix.shape().at(1), N_DATA_SIZE);
 
   EXPECT_DOUBLE_EQ(output_matrix.At(0, 0), 0.25323926146043396201);
-  EXPECT_DOUBLE_EQ(output_matrix.At(0, 1), -3.1758751208173934266);
-  EXPECT_DOUBLE_EQ(output_matrix.At(25, 0), -1.7577317050493974637);
-  EXPECT_DOUBLE_EQ(output_matrix.At(25, 1), 2.6265693658422666346);
-  EXPECT_DOUBLE_EQ(output_matrix.At(50, 0), 0.23583728299026301967);
-  EXPECT_DOUBLE_EQ(output_matrix.At(50, 1), 1.6797469776066187297);
-  EXPECT_DOUBLE_EQ(output_matrix.At(99, 0), -0.87261847085526600409);
-  EXPECT_DOUBLE_EQ(output_matrix.At(99, 1), 3.0463283985051647917);
+  EXPECT_DOUBLE_EQ(output_matrix.At(1, 0), -3.1758751208173934266);
+  EXPECT_DOUBLE_EQ(output_matrix.At(0, 25), -1.7577317050493974637);
+  EXPECT_DOUBLE_EQ(output_matrix.At(1, 25), 2.6265693658422666346);
+  EXPECT_DOUBLE_EQ(output_matrix.At(0, 50), 0.23583728299026301967);
+  EXPECT_DOUBLE_EQ(output_matrix.At(1, 50), 1.6797469776066187297);
+  EXPECT_DOUBLE_EQ(output_matrix.At(0, 99), -0.87261847085526600409);
+  EXPECT_DOUBLE_EQ(output_matrix.At(1, 99), 3.0463283985051647917);
 }
 
 TEST(TsneTests, tsne_test_2d_fixed_point)
@@ -136,19 +136,19 @@ TEST(TsneTests, tsne_test_2d_fixed_point)
   SizeType N_DATA_SIZE{100};
   SizeType N_OUTPUT_FEATURE_SIZE{2};
 
-  Tensor<DataType> output_matrix = RunTest<Tensor<DataType>>(N_DATA_SIZE, N_OUTPUT_FEATURE_SIZE);
+  Tensor<DataType> output_matrix = RunTest<Tensor<DataType>>(N_OUTPUT_FEATURE_SIZE, N_DATA_SIZE);
 
-  ASSERT_EQ(output_matrix.shape().at(0), N_DATA_SIZE);
-  ASSERT_EQ(output_matrix.shape().at(1), N_OUTPUT_FEATURE_SIZE);
+  ASSERT_EQ(output_matrix.shape().at(0), N_OUTPUT_FEATURE_SIZE);
+  ASSERT_EQ(output_matrix.shape().at(1), N_DATA_SIZE);
 
   EXPECT_NEAR(double(output_matrix.At(0, 0)), 0.25323880254290997982025146484375, 2e-6);
-  EXPECT_NEAR(double(output_matrix.At(0, 1)), -3.17587922653183341026306152343750, 3e-6);
-  EXPECT_NEAR(double(output_matrix.At(25, 0)), -1.75773554784245789051055908203125, 2e-6);
-  EXPECT_NEAR(double(output_matrix.At(25, 1)), 2.62657403736375272274017333984375, 4e-6);
-  EXPECT_NEAR(double(output_matrix.At(50, 0)), 0.23583724093623459339141845703125, 2e-6);
-  EXPECT_NEAR(double(output_matrix.At(50, 1)), 1.67974892887286841869354248046875, 1e-6);
-  EXPECT_NEAR(double(output_matrix.At(99, 0)), -0.87261968106031417846679687500000, 1e-6);
-  EXPECT_NEAR(double(output_matrix.At(99, 1)), 3.04633120773360133171081542968750, 2e-6);
+  EXPECT_NEAR(double(output_matrix.At(1, 0)), -3.17587922653183341026306152343750, 3e-6);
+  EXPECT_NEAR(double(output_matrix.At(0, 25)), -1.75773554784245789051055908203125, 2e-6);
+  EXPECT_NEAR(double(output_matrix.At(1, 25)), 2.62657403736375272274017333984375, 4e-6);
+  EXPECT_NEAR(double(output_matrix.At(0, 50)), 0.23583724093623459339141845703125, 2e-6);
+  EXPECT_NEAR(double(output_matrix.At(1, 50)), 1.67974892887286841869354248046875, 1e-6);
+  EXPECT_NEAR(double(output_matrix.At(0, 99)), -0.87261968106031417846679687500000, 1e-6);
+  EXPECT_NEAR(double(output_matrix.At(1, 99)), 3.04633120773360133171081542968750, 2e-6);
 }
 
 TYPED_TEST(TsneTests, tsne_test_2d_cross_type_consistency_test)
@@ -156,17 +156,17 @@ TYPED_TEST(TsneTests, tsne_test_2d_cross_type_consistency_test)
   SizeType N_DATA_SIZE{100};
   SizeType N_OUTPUT_FEATURE_SIZE{2};
 
-  TypeParam output_matrix = RunTest<TypeParam>(N_DATA_SIZE, N_OUTPUT_FEATURE_SIZE);
+  TypeParam output_matrix = RunTest<TypeParam>(N_OUTPUT_FEATURE_SIZE, N_DATA_SIZE);
 
-  ASSERT_EQ(output_matrix.shape().at(0), N_DATA_SIZE);
-  ASSERT_EQ(output_matrix.shape().at(1), N_OUTPUT_FEATURE_SIZE);
+  ASSERT_EQ(output_matrix.shape().at(0), N_OUTPUT_FEATURE_SIZE);
+  ASSERT_EQ(output_matrix.shape().at(1), N_DATA_SIZE);
 
   EXPECT_NEAR(double(output_matrix.At(0, 0)), 0.25323879718780517578, 1e-4);
-  EXPECT_NEAR(double(output_matrix.At(0, 1)), -3.1758825778961181641, 1e-4);
-  EXPECT_NEAR(double(output_matrix.At(25, 0)), -1.7577359676361083984, 1e-4);
-  EXPECT_NEAR(double(output_matrix.At(25, 1)), 2.6265761852264404297, 1e-4);
-  EXPECT_NEAR(double(output_matrix.At(50, 0)), 0.2358369976282119751, 1e-4);
-  EXPECT_NEAR(double(output_matrix.At(50, 1)), 1.679751276969909668, 1e-4);
-  EXPECT_NEAR(double(output_matrix.At(99, 0)), -0.87262111902236938477, 1e-4);
-  EXPECT_NEAR(double(output_matrix.At(99, 1)), 3.0463356971740722656, 1e-4);
+  EXPECT_NEAR(double(output_matrix.At(1, 0)), -3.1758825778961181641, 1e-4);
+  EXPECT_NEAR(double(output_matrix.At(0, 25)), -1.7577359676361083984, 1e-4);
+  EXPECT_NEAR(double(output_matrix.At(1, 25)), 2.6265761852264404297, 1e-4);
+  EXPECT_NEAR(double(output_matrix.At(0, 50)), 0.2358369976282119751, 1e-4);
+  EXPECT_NEAR(double(output_matrix.At(1, 50)), 1.679751276969909668, 1e-4);
+  EXPECT_NEAR(double(output_matrix.At(0, 99)), -0.87262111902236938477, 1e-4);
+  EXPECT_NEAR(double(output_matrix.At(1, 99)), 3.0463356971740722656, 1e-4);
 }

@@ -1109,6 +1109,22 @@ ExpressionNodePtr Parser::ParseExpression(bool is_conditional_expression)
       }
       break;
     }
+    case Token::Kind::Fixed32:
+    {
+      if (HandleLiteral(NodeKind::Fixed32) == false)
+      {
+        return nullptr;
+      }
+      break;
+    }
+    case Token::Kind::Fixed64:
+    {
+      if (HandleLiteral(NodeKind::Fixed64) == false)
+      {
+        return nullptr;
+      }
+      break;
+    }
     case Token::Kind::String:
     {
       if (HandleLiteral(NodeKind::String) == false)
@@ -1737,7 +1753,7 @@ void Parser::AddOperand(NodeKind kind)
 
 void Parser::AddError(std::string const &message)
 {
-  std::stringstream stream;
+  std::ostringstream stream;
   stream << "line " << token_->line << ": ";
   if (token_->kind != Token::Kind::EndOfInput)
   {

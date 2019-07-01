@@ -16,9 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "network/muddle/router.hpp"
-
 #include "core/byte_array/encoders.hpp"
+#include "core/logger.hpp"
 #include "core/serializers/byte_array.hpp"
 #include "core/serializers/byte_array_buffer.hpp"
 #include "core/serializers/stl_types.hpp"
@@ -27,11 +26,19 @@
 #include "network/muddle/dispatcher.hpp"
 #include "network/muddle/muddle_register.hpp"
 #include "network/muddle/packet.hpp"
+#include "network/muddle/router.hpp"
 
+#include <algorithm>
+#include <array>
+#include <cassert>
+#include <cstddef>
+#include <cstdint>
 #include <cstring>
+#include <iterator>
 #include <memory>
 #include <random>
 #include <sstream>
+#include <stdexcept>
 #include <utility>
 
 static constexpr uint8_t DEFAULT_TTL = 40;
@@ -233,7 +240,7 @@ void Router::Stop()
   dispatch_thread_pool_->Stop();
 }
 
-inline bool Router::Genuine(PacketPtr const &p) const
+bool Router::Genuine(PacketPtr const &p) const
 {
   if (p->IsBroadcast())
   {
@@ -290,19 +297,8 @@ void Router::Route(Handle handle, PacketPtr packet)
   }
   else if (packet->GetTargetRaw() == address_)
   {
-    // when the message is targetted at us we must handle it
-    Address transmitter;
-
-    if (HandleToDirectAddress(handle, transmitter))
-    {
-      DispatchPacket(packet, transmitter);
-    }
-    else
-    {
-      // The connection has gone away while we were processing things so far.
-      FETCH_LOG_WARN(LOGGING_NAME,
-                     "Cannot get transmitter address for packet: ", DescribePacket(*packet));
-    }
+    // we do not care about the transmitter, since this was an addition for the trust system.
+    DispatchPacket(packet, packet->GetSender());
   }
   else
   {
@@ -726,7 +722,7 @@ Router::Handle Router::LookupRandomHandle(Packet::RawAddress const & /*address*/
     {
       // decide the random index to access
       std::uniform_int_distribution<decltype(routing_table_)::size_type> distro(
-          0, routing_table_.size());
+          0, routing_table_.size() - 1);
       std::size_t const element = distro(rng);
 
       // advance the iterator to the correct offset

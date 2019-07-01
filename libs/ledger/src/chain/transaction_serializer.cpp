@@ -48,6 +48,7 @@ const int8_t  UNIT_MICRO         = 2;
 const int8_t  UNIT_NANO          = 3;
 const int8_t  CONTRACT_PRESENT   = 1;
 const int8_t  CHAIN_CODE_PRESENT = 2;
+const int8_t  SYNERGETIC_PRESENT = 3;
 
 uint8_t Map(ContractMode mode)
 {
@@ -63,6 +64,9 @@ uint8_t Map(ContractMode mode)
     break;
   case ContractMode::CHAIN_CODE:
     value = 2u;
+    break;
+  case ContractMode::SYNERGETIC:
+    value = 3u;
     break;
   }
 
@@ -217,7 +221,7 @@ ByteArray TransactionSerializer::SerializePayload(Transaction const &tx)
 
   uint8_t header1{0};
 
-  uint8_t const contract_mode_field = static_cast<uint8_t>(Map(contract_mode) << 6u);
+  const auto contract_mode_field = static_cast<uint8_t>(Map(contract_mode) << 6u);
 
   header1 |= contract_mode_field;
   header1 |= static_cast<uint8_t>(signalled_signatures) & 0x3Fu;
@@ -299,6 +303,8 @@ ByteArray TransactionSerializer::SerializePayload(Transaction const &tx)
     case ContractMode::CHAIN_CODE:
       buffer.Append(Encode(tx.chain_code()));
       break;
+    case ContractMode::SYNERGETIC:
+      buffer.Append(Encode(tx.contract_digest()));
     default:
       break;
     }
@@ -493,6 +499,14 @@ bool TransactionSerializer::Deserialize(Transaction &tx) const
       tx.contract_digest_  = Address{};
 
       Decode(buffer, tx.chain_code_);
+    }
+    else if (SYNERGETIC_PRESENT == contract_type)
+    {
+      tx.contract_mode_    = Transaction::ContractMode::SYNERGETIC;
+      tx.chain_code_       = ConstByteArray{};
+      tx.contract_address_ = Address{};
+
+      Decode(buffer, tx.contract_digest_);
     }
 
     // extract the data and actions

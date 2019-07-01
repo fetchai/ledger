@@ -16,7 +16,16 @@
 //
 //------------------------------------------------------------------------------
 
+#include "network/tcp/client_connection.hpp"
 #include "network/tcp/tcp_server.hpp"
+
+#include <chrono>
+#include <exception>
+#include <memory>
+#include <new>
+#include <system_error>
+#include <thread>
+#include <utility>
 
 namespace fetch {
 namespace network {
@@ -57,11 +66,8 @@ TCPServer::~TCPServer()
   // Need to block until the acceptor has expired as it refers back to this class.
   while (!acceptor_.expired())
   {
-    // FETCH_LOG_INFO(LOGGING_NAME, "Waiting for TCP server ", this, " to destruct");
     std::this_thread::sleep_for(std::chrono::milliseconds(5));
   }
-
-  // FETCH_LOG_DEBUG(LOGGING_NAME, "Destructing TCP server ", this);
 }
 
 void TCPServer::Start()

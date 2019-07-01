@@ -18,18 +18,19 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/const_byte_array.hpp"
-#include "core/logger.hpp"
-#include "core/serializers/stl_types.hpp"
 #include "network/p2pservice/p2p_service_defs.hpp"
+#include "network/uri.hpp"
 #include "variant/variant.hpp"
 
-#include <map>
-#include <memory>
+#include <cstddef>
+#include <cstdint>
+#include <functional>
 #include <stdexcept>
-#include <vector>
+#include <string>
+#include <unordered_map>
+#include <utility>
 
 namespace fetch {
-
 namespace network {
 
 class Manifest
@@ -43,8 +44,8 @@ public:
     uint16_t local_port{0};  ///< The local port to bind to
 
     Entry() = default;
-    Entry(Uri const uri);
-    Entry(Uri const uri, uint16_t port);
+    explicit Entry(Uri uri);
+    Entry(Uri uri, uint16_t port);
   };
 
   using Variant           = variant::Variant;
@@ -64,7 +65,7 @@ public:
   ~Manifest()                     = default;
 
   // Map iteration
-  size_t         size() const;
+  std::size_t    size() const;
   const_iterator begin() const;
   const_iterator end() const;
   const_iterator cbegin() const;
@@ -144,7 +145,7 @@ private:
   ServiceMap service_map_;  ///< The underlying service map
 };
 
-inline size_t Manifest::size() const
+inline std::size_t Manifest::size() const
 {
   return service_map_.size();
 }

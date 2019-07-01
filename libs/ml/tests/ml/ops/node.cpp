@@ -22,7 +22,7 @@
 #include "ml/ops/activations/relu.hpp"
 #include "ml/ops/placeholder.hpp"
 
-#include <gtest/gtest.h>
+#include "gtest/gtest.h"
 
 TEST(node_test, node_placeholder)
 {
@@ -35,7 +35,7 @@ TEST(node_test, node_placeholder)
   placeholder.Forward({}, output);
 
   EXPECT_EQ(output, data);
-  EXPECT_EQ(placeholder.Evaluate(), data);
+  EXPECT_EQ(placeholder.Evaluate(true), data);
 }
 
 TEST(node_test, node_relu)
@@ -77,6 +77,6 @@ TEST(node_test, node_relu)
   placeholder->Forward({}, output);
 
   EXPECT_EQ(output, data);
-  EXPECT_EQ(placeholder->Evaluate(), data);
-  EXPECT_TRUE(relu->Evaluate().Copy().AllClose(gt));
+  EXPECT_EQ(placeholder->Evaluate(true), data);
+  EXPECT_TRUE(relu->Evaluate(true).Copy().AllClose(gt));
 }

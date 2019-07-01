@@ -22,8 +22,13 @@
 #include "ml/dataloaders/dataloader.hpp"
 #include "ml/dataloaders/text_loader.hpp"
 
-#include <algorithm>  // random_shuffle
-#include <numeric>    // std::iota
+#include <algorithm>
+#include <cassert>
+#include <numeric>
+#include <random>
+#include <stdexcept>
+#include <utility>
+#include <vector>
 
 namespace fetch {
 namespace ml {
@@ -36,8 +41,9 @@ struct TextParams
 public:
   using SizeType = typename T::SizeType;
 
-  TextParams(bool fw = false)
-    : full_window(fw){};
+  explicit TextParams(bool fw = false)
+    : full_window(fw)
+  {}
 
   SizeType min_sentence_length = 2;  // minimum number of words in a sentence
   SizeType max_sentences       = 0;  // maximum number of sentences in training set
@@ -59,25 +65,25 @@ public:
  * @tparam T  tensor type
  */
 template <typename T>
-class BasicTextLoader : public TextLoader<T>, public DataLoader<T, typename T::SizeType>
+class BasicTextLoader : public TextLoader<T>, public DataLoader<T, T>
 {
 public:
   using ArrayType = T;
   using DataType  = typename T::Type;
   using SizeType  = typename T::SizeType;
 
-  explicit BasicTextLoader(TextParams<ArrayType> const &p, SizeType seed = 123456789);
+  explicit BasicTextLoader(TextParams<ArrayType> const &p, bool random_mode = false,
+                           SizeType seed = 123456789);
 
   // overloaded member from dataloader
-  std::pair<T, SizeType>         GetNext() override;
-  virtual std::pair<T, SizeType> GetRandom();
-  SizeType                       Size() const override;
-  virtual bool                   IsDone() const override;
-  void                           Reset() override;
+  std::pair<T, std::vector<T>> GetNext() override;
+  SizeType                     Size() const override;
+  bool                         IsDone() const override;
+  void                         Reset() override;
 
-  virtual std::pair<T, SizeType> GetAtIndex(SizeType idx);
-  SizeType                       GetDiscardCount();
-  bool                           AddData(std::string const &text) override;
+  virtual std::pair<T, std::vector<T>> GetAtIndex(SizeType idx);
+  SizeType                             GetDiscardCount();
+  bool                                 AddData(std::string const &text) override;
 
 protected:
   // params
@@ -102,7 +108,7 @@ protected:
   SizeType              ran_cursor_;  // indexes through data randomly
   std::vector<SizeType> ran_idx_;     // random indices container
 
-  void     GetData(SizeType idx, ArrayType &ret) override;
+  void     GetData(SizeType idx, std::vector<T> &ret) override;
   SizeType GetLabel(SizeType idx) override;
 
   SizeType GetWordOffsetFromWordIdx(SizeType word_idx) const;
@@ -122,8 +128,9 @@ private:
  * @tparam T
  */
 template <typename T>
-BasicTextLoader<T>::BasicTextLoader(TextParams<T> const &p, SizeType seed)
-  : p_(p)
+BasicTextLoader<T>::BasicTextLoader(TextParams<T> const &p, bool random_mode, SizeType seed)
+  : DataLoader<T, T>(random_mode)
+  , p_(p)
   , lfg_(seed)
   , lcg_(seed)
   , cursor_(0)
@@ -152,35 +159,31 @@ BasicTextLoader<T>::BasicTextLoader(TextParams<T> const &p, SizeType seed)
 /////////////////////////////////////
 
 /**
- * gets the next data point
+ * gets the next data point or a random data point depending on mode
  * @tparam T  Array type
  * @return  returns a pair of Array and Label
  */
 template <typename T>
-std::pair<T, typename BasicTextLoader<T>::SizeType> BasicTextLoader<T>::GetNext()
+std::pair<T, std::vector<T>> BasicTextLoader<T>::GetNext()
 {
-  GetNextValidIndices();
-  if (cursor_set_)
+  if (this->random_mode_)
   {
-    return GetAtIndex(cursor_);
+    GetNextValidIndices();
+    if (ran_cursor_set_)
+    {
+      return GetAtIndex(ran_cursor_);
+    }
+    throw std::runtime_error("no valid cursor position set");
   }
-  throw std::runtime_error("no valid cursor position set");
-}
-
-/**
- * gets the next data point from the randomised list
- * @tparam T  Array type
- * @return  returns a pair of Array and Label
- */
-template <typename T>
-std::pair<T, typename BasicTextLoader<T>::SizeType> BasicTextLoader<T>::GetRandom()
-{
-  GetNextValidIndices();
-  if (ran_cursor_set_)
+  else
   {
-    return GetAtIndex(ran_cursor_);
+    GetNextValidIndices();
+    if (cursor_set_)
+    {
+      return GetAtIndex(cursor_);
+    }
+    throw std::runtime_error("no valid cursor position set");
   }
-  throw std::runtime_error("no valid cursor position set");
 }
 
 /**
@@ -263,13 +266,20 @@ void BasicTextLoader<T>::Reset()
  * @return  returns a pair of output buffer and label (i.e. X & Y)
  */
 template <typename T>
-std::pair<T, typename BasicTextLoader<T>::SizeType> BasicTextLoader<T>::GetAtIndex(SizeType idx)
+std::pair<T, std::vector<T>> BasicTextLoader<T>::GetAtIndex(SizeType idx)
 {
   // pull data from multiple data buffers into single output buffer
-  T data_buffer(std::vector<SizeType>({p_.n_data_buffers}));
+  std::vector<T> data_buffer;
+
+  for (SizeType i{0}; i < p_.n_data_buffers; i++)
+  {
+    data_buffer.push_back(T({1, 1}));
+  }
+
   GetData(idx, data_buffer);
 
-  SizeType label = GetLabel(idx);
+  T label({1, 1});
+  label(0, 0) = static_cast<DataType>(GetLabel(idx));
 
   // increment the cursor find the next valid position
   ++cursor_;
@@ -278,7 +288,7 @@ std::pair<T, typename BasicTextLoader<T>::SizeType> BasicTextLoader<T>::GetAtInd
     ran_cursor_ = ran_idx_.at(cursor_);
   }
 
-  return std::make_pair(data_buffer, label);
+  return std::make_pair(label, data_buffer);
 }
 
 /**
@@ -323,12 +333,13 @@ bool BasicTextLoader<T>::AddData(std::string const &text)
  * @param ret
  */
 template <typename T>
-void BasicTextLoader<T>::GetData(typename BasicTextLoader<T>::SizeType idx, T &ret)
+void BasicTextLoader<T>::GetData(typename BasicTextLoader<T>::SizeType idx, std::vector<T> &ret)
 {
   assert(p_.n_data_buffers == 1);
+  assert(ret.size() > 0);
   SizeType sentence_idx = this->word_idx_sentence_idx.at(idx);
   SizeType word_idx     = this->GetWordOffsetFromWordIdx(idx);
-  ret.At(0)             = DataType(this->data_.at(sentence_idx).at(word_idx));
+  ret[0].At(0, 0)       = DataType(this->data_.at(sentence_idx).at(word_idx));
 }
 
 /**
@@ -524,11 +535,7 @@ bool BasicTextLoader<T>::DiscardExample(SizeType word_frequency)
   prob_thresh *= (p_.discard_threshold / word_probability);
   double f = lfg_.AsDouble();
 
-  if (f < prob_thresh)
-  {
-    return false;
-  }
-  return true;
+  return !(f < prob_thresh);
 }
 
 }  // namespace dataloaders

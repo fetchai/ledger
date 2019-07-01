@@ -16,10 +16,13 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/assert.hpp"
 #include "ledger/chain/main_chain.hpp"
 
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/encoders.hpp"
+#include "crypto/hash.hpp"
+#include "crypto/sha256.hpp"
 #include "ledger/chain/transaction_layout_rpc_serializers.hpp"
 #include "network/generics/milli_timer.hpp"
 
@@ -31,35 +34,6 @@ using fetch::generics::MilliTimer;
 
 namespace fetch {
 namespace ledger {
-
-/**
- * Converts a block status into a human readable string
- *
- * @param status The status enumeration
- * @return The output text
- */
-char const *ToString(BlockStatus status)
-{
-  char const *text = "Unknown";
-
-  switch (status)
-  {
-  case BlockStatus::ADDED:
-    text = "Added";
-    break;
-  case BlockStatus ::LOOSE:
-    text = "Loose";
-    break;
-  case BlockStatus::DUPLICATE:
-    text = "Duplicate";
-    break;
-  case BlockStatus ::INVALID:
-    text = "Invalid";
-    break;
-  }
-
-  return text;
-}
 
 /**
  * Constructs the main chain
@@ -94,6 +68,33 @@ MainChain::~MainChain()
   }
 }
 
+void MainChain::Reset()
+{
+  FETCH_LOCK(lock_);
+
+  tips_.clear();
+  heaviest_ = HeaviestTip{};
+  loose_blocks_.clear();
+  block_chain_.clear();
+  references_.clear();
+
+  if (block_store_)
+  {
+    block_store_->New("chain.db", "chain.index.db");
+    head_store_.close();
+    head_store_.open("chain.head.db",
+                     std::ios::binary | std::ios::in | std::ios::out | std::ios::trunc);
+  }
+
+  auto genesis = CreateGenesisBlock();
+
+  // add the block to the cache
+  AddBlockToCache(genesis);
+
+  // add the tip for this block
+  AddTip(genesis);
+}
+
 /**
  * Adds a block to the chain
  *
@@ -105,13 +106,8 @@ BlockStatus MainChain::AddBlock(Block const &blk)
   // create a copy of the block
   auto block = std::make_shared<Block>(blk);
 
-  // update the weight based on the proof and the number of transactions
-  block->weight       = 1;
+  // At this point we assume that the weight has been correctly set by the miner
   block->total_weight = 1;
-  for (auto const &slice : block->body.slices)
-  {
-    block->weight += slice.size();
-  }
 
   // pass the block to the
   auto const status = InsertBlock(block);
@@ -122,6 +118,99 @@ BlockStatus MainChain::AddBlock(Block const &blk)
 }
 
 /**
+ * Internal: insert a block into the cache maintaining references
+ *
+ * @param block The block to be cached
+ */
+void MainChain::CacheBlock(IntBlockPtr const &block) const
+{
+  ASSERT(static_cast<bool>(block));
+
+  auto hash{block->body.hash};
+  auto retVal{block_chain_.emplace(hash, block)};
+  // under all circumstances, it _should_ be a fresh block
+  ASSERT(retVal.second);
+  // keep parent-child reference
+  references_.emplace(block->body.previous_hash, std::move(hash));
+}
+
+/**
+ * Internal: erase a block from the cache
+ *
+ * @param hash The hash of the block to be erased
+ * @return amount of blocks erased (1 or 0, if not found)
+ */
+MainChain::BlockMap::size_type MainChain::UncacheBlock(BlockHash const &hash) const
+{
+  return block_chain_.erase(hash);
+  // references are kept intact while this cache is alive
+}
+
+/**
+ * Internal: insert a block into the permanent store maintaining references
+ *
+ * @param block The block to be kept
+ */
+void MainChain::KeepBlock(IntBlockPtr const &block) const
+{
+  ASSERT(static_cast<bool>(block));
+  ASSERT(static_cast<bool>(block_store_));
+
+  auto const &hash{block->body.hash};
+
+  DbRecord record;
+
+  if (block->body.previous_hash != GENESIS_DIGEST)
+  {
+    // notify stored parent
+    if (block_store_->Get(storage::ResourceID(block->body.previous_hash), record) &&
+        record.next_hash != hash)
+    {
+      record.next_hash = hash;
+      block_store_->Set(storage::ResourceID(record.hash()), record);
+      record.next_hash = GENESIS_DIGEST;
+    }
+  }
+  record.block = *block;
+
+  // detect if any of this block's children has somehow made it to the store already
+  // TODO(bipll): is this needed?
+  auto forward_refs{references_.equal_range(hash)};
+  for (auto ref_it{forward_refs.first}; ref_it != forward_refs.second; ++ref_it)
+  {
+    auto const &child{ref_it->second};
+    if (block_store_->Has(storage::ResourceID(child)))
+    {
+      record.next_hash = child;
+      break;
+    }
+  }
+
+  // now write the block itself; if next_hash is genesis, it will be rewritten later by a child
+  block_store_->Set(storage::ResourceID(hash), record);
+}
+
+/**
+ * Internal: load a block from the permanent store
+ *
+ * @param[in]  hash The hash of the block to be loaded
+ * @param[out] block The location of block
+ * @return True iff the block is found in the storage
+ */
+bool MainChain::LoadBlock(BlockHash const &hash, Block &block) const
+{
+  assert(static_cast<bool>(block_store_));
+
+  DbRecord record;
+  if (block_store_->Get(storage::ResourceID(hash), record))
+  {
+    block = record.block;
+    return true;
+  }
+  return false;
+}
+
+/**
  * Get the current heaviest block on the chain
  *
  * @return The reference to the heaviest block
@@ -129,98 +218,115 @@ BlockStatus MainChain::AddBlock(Block const &blk)
 MainChain::BlockPtr MainChain::GetHeaviestBlock() const
 {
   FETCH_LOCK(lock_);
-  return GetBlock(heaviest_.hash);
+  auto block_ptr = GetBlock(heaviest_.hash);
+  assert(block_ptr);
+  return block_ptr;
 }
 
 /**
- * Removes the block (and all blocks ahead of it) from the chain
+ * Internal: remove the block, and all blocks ahead of it, and references between them, from the
+ * cache.
  *
- * @param hash The has to be removed
- * @return True if successful, otherwise false
+ * @param[in]  hash The hash to be removed
+ * @param[out] invalidated_blocks The set of hashes of all the blocks removed by this operation
+ * @return The block object itself, already not in the cache
  */
-bool MainChain::RemoveBlock(BlockHash hash)
+bool MainChain::RemoveTree(BlockHash const &removed_hash, BlockHashSet &invalidated_blocks)
 {
-  // TODO(private issue 666): Improve performance of block removal
-
-  bool success{false};
-
-  FETCH_LOCK(lock_);
-
-  // Check that the input block hash is actually in the cache
-  auto invalid_block_it = block_chain_.find(hash);
-  if (block_chain_.end() != invalid_block_it)
+  // check if the block is actually found in this chain
+  IntBlockPtr root;
+  bool        retVal{LookupBlock(removed_hash, root)};
+  if (retVal)
   {
-    BlockHashSet invalidated_blocks{};
-
-    // add the original element into the invalidated block set
-    invalidated_blocks.insert(hash);
-    block_chain_.erase(hash);
-
-    // Step 1. Evaluate all the blocks which have been now been made invalid from this change
-    for (;;)
+    // forget the forward ref to this block from its parent
+    auto siblings{references_.equal_range(root->body.previous_hash)};
+    for (auto sibling{siblings.first}; sibling != siblings.second; ++sibling)
     {
-      // find the next element to remove
-      auto it = std::find_if(block_chain_.begin(), block_chain_.end(),
-                             [&invalidated_blocks, hash](BlockMap::value_type const &e) {
-                               return (invalidated_blocks.find(e.second->body.previous_hash) !=
-                                       invalidated_blocks.end());
-                             });
-
-      // once we have done a complete sweep where we haven't found anything, the fallout has been
-      // calculated and collected
-      if (it == block_chain_.end())
+      if (sibling->second == removed_hash)
       {
+        references_.erase(sibling);
         break;
       }
-
-      // update our removed blocks and hashes
-      invalidated_blocks.insert(it->first);
-
-      // remove the element from the map
-      block_chain_.erase(it);
     }
-
-    // Step 2. Loop through all the loose blocks and remove any references to invalidated blocks
-    auto waiting_blocks_it = loose_blocks_.begin();
-    while (waiting_blocks_it != loose_blocks_.end())
-    {
-      auto &hash_array = waiting_blocks_it->second;
-
-      // iterate over the hash arrays removing entries that match
-      auto hash_it = hash_array.begin();
-      while (hash_it != hash_array.end())
-      {
-        if (invalidated_blocks.find(*hash_it) != invalidated_blocks.end())
-        {
-          // remove the entry from the hash array
-          hash_it = hash_array.erase(hash_it);
-        }
-        else
-        {
-          // advance to next hash
-          ++hash_it;
-        }
-      }
-
-      // finally, if our actions have emptied the hash array we must remove the entry from the map
-      if (hash_array.empty())
-      {
-        // remove the empty array
-        waiting_blocks_it = loose_blocks_.erase(waiting_blocks_it);
-      }
-      else
-      {
-        // advance to the next one
-        ++waiting_blocks_it;
-      }
-    }
-
-    // Step 3. Since we might have removed a whole series of blocks the tips datastructure has been
-    // invalidated. We need to evaluate the changes here
-    success = ReindexTips();
   }
 
-  return success;
+  for (BlockHashes next_gen{removed_hash}; !next_gen.empty();)
+  {
+    // when next_gen becomes current generation, next generation is clear
+    for (auto const &hash : std::exchange(next_gen, BlockHashes{}))
+    {
+      // mark hash as being invalidated
+      invalidated_blocks.insert(hash);
+
+      // first remember to remove all the progeny breadth-first
+      // this way any hash that could potentially stem from this one,
+      // reference tree-wise, is completely wiped out
+      auto children{references_.equal_range(hash)};
+      for (auto child{children.first}; child != children.second; ++child)
+      {
+        next_gen.push_back(child->second);
+      }
+      references_.erase(children.first, children.second);
+
+      // next, remove the block record from the cache, if found
+      if (block_chain_.erase(hash))
+      {
+        retVal = true;
+      }
+    }
+  }
+
+  return retVal;
+}
+
+/**
+ * Removes the block (and all blocks ahead of it) from the chain.
+ *
+ * @param hash The hash to be removed
+ * @return True if successful, otherwise false
+ */
+bool MainChain::RemoveBlock(BlockHash const &hash)
+{
+  FETCH_LOCK(lock_);
+
+  // Step 0. Manually set heaviest to a block we still know is valid
+  auto block_before_one_to_del = GetBlock(hash);
+  heaviest_                    = HeaviestTip{};
+  heaviest_.Update(*block_before_one_to_del);
+
+  // Step 1. Remove this block and the whole its progeny from the cache
+  BlockHashSet invalidated_blocks;
+  if (!RemoveTree(hash, invalidated_blocks))
+  {
+    // no blocks were removed during this attempt
+    return false;
+  }
+
+  // Step 2. Cleanup loose blocks
+  for (auto waiting_blocks_it{loose_blocks_.begin()}; waiting_blocks_it != loose_blocks_.end();)
+  {
+    auto &hash_array{waiting_blocks_it->second};
+    // remove entries from the hash array that have been invalidated
+    auto cemetery{std::remove_if(hash_array.begin(), hash_array.end(),
+                                 [&invalidated_blocks](auto const &hash) {
+                                   return invalidated_blocks.find(hash) != invalidated_blocks.end();
+                                 })};
+    if (cemetery == hash_array.begin())
+    {
+      // all hashes in this array are invalidated
+      waiting_blocks_it = loose_blocks_.erase(waiting_blocks_it);
+    }
+    else
+    {
+      // some hashes of this array are still alive
+      hash_array.erase(cemetery, hash_array.end());
+      ++waiting_blocks_it;
+    }
+  }
+
+  // Step 3. Since we might have removed a whole series of blocks the tips datastructure
+  // is likely to have been invalidated. We need to evaluate the changes here
+  return ReindexTips();
 }
 
 /**
@@ -252,7 +358,7 @@ MainChain::Blocks MainChain::GetHeaviestChain(uint64_t limit) const
  */
 MainChain::Blocks MainChain::GetChainPreceding(BlockHash start, uint64_t limit) const
 {
-  limit = std::min(limit, uint64_t{MainChain::UPPER_BOUND});
+  limit = std::min(limit, static_cast<uint64_t>(MainChain::UPPER_BOUND));
   MilliTimer myTimer("MainChain::ChainPreceding");
 
   FETCH_LOCK(lock_);
@@ -413,7 +519,7 @@ bool MainChain::GetPathToCommonAncestor(Blocks &blocks, BlockHash tip, BlockHash
  * @param hash The hash being queried
  * @return The a valid shared pointer to the block if found, otherwise an empty pointer
  */
-MainChain::BlockPtr MainChain::GetBlock(BlockHash hash) const
+MainChain::BlockPtr MainChain::GetBlock(BlockHash const &hash) const
 {
   FETCH_LOCK(lock_);
 
@@ -421,10 +527,14 @@ MainChain::BlockPtr MainChain::GetBlock(BlockHash hash) const
 
   // attempt to lookup the block
   auto internal_block = std::make_shared<Block>();
-  if (LookupBlock(std::move(hash), internal_block))
+  if (LookupBlock(hash, internal_block))
   {
     // convert the pointer type to per const
     output_block = std::static_pointer_cast<Block const>(internal_block);
+  }
+  else
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "main chain failed to lookup block!");
   }
 
   return output_block;
@@ -460,12 +570,12 @@ MainChain::BlockHashSet MainChain::GetMissingTips() const
  * @param maximum The specified maximum number of blocks to be returned
  * @return The generated array of missing hashes
  */
-MainChain::BlockHashs MainChain::GetMissingBlockHashes(uint64_t limit) const
+MainChain::BlockHashes MainChain::GetMissingBlockHashes(uint64_t limit) const
 {
   limit = std::min(limit, uint64_t{MainChain::UPPER_BOUND});
   FETCH_LOCK(lock_);
 
-  BlockHashs results;
+  BlockHashes results;
 
   for (auto const &loose_block : loose_blocks_)
   {
@@ -547,7 +657,7 @@ void MainChain::RecoverFromFile(Mode mode)
   BlockHash head_block_hash = GetHeadHash();
 
   bool recovery_complete{false};
-  if (!head_block_hash.empty() && block_store_->Get(storage::ResourceID{head_block_hash}, *block))
+  if (!head_block_hash.empty() && LoadBlock(head_block_hash, *block))
   {
     auto block_index = block->body.block_number;
 
@@ -557,7 +667,7 @@ void MainChain::RecoverFromFile(Mode mode)
     // Copy head block so as to walk down the chain
     IntBlockPtr next = std::make_shared<Block>(*block);
 
-    while (block_store_->Get(storage::ResourceID(next->body.previous_hash), *next))
+    while (LoadBlock(next->body.previous_hash, *next))
     {
       if (next->body.block_number != block_index - 1)
       {
@@ -582,7 +692,7 @@ void MainChain::RecoverFromFile(Mode mode)
                      "Recovering main chain with heaviest block: ", head->body.block_number);
 
       // Add heaviest to cache
-      block_chain_[head->body.hash] = head;
+      CacheBlock(head);
 
       // Update this as our heaviest
       bool const result      = heaviest_.Update(*head);
@@ -664,7 +774,7 @@ void MainChain::WriteToFile()
     {
       FETCH_LOG_DEBUG(LOGGING_NAME, "Writing genesis. ");
 
-      block_store_->Set(storage::ResourceID(block->body.hash), *block);
+      KeepBlock(block);
       SetHeadHash(block->body.hash);
     }
     else
@@ -675,20 +785,19 @@ void MainChain::WriteToFile()
       IntBlockPtr current_file_head = std::make_shared<Block>();
       IntBlockPtr block_head        = block;
 
-      block_store_->Get(storage::ResourceID(GetHeadHash()), *current_file_head);
+      LoadBlock(GetHeadHash(), *current_file_head);
 
       // Now keep adding the block and its prev to the file until we are certain the file contains
       // an unbroken chain. Assuming that the current_file_head is unbroken we can write until we
       // touch it or it's root.
       for (;;)
       {
-        block_store_->Set(storage::ResourceID(block->body.hash), *block);
+        KeepBlock(block);
 
         // Keep the current_file_head one block behind
-        while (current_file_head->body.block_number != block->body.block_number - 1)
+        while (current_file_head->body.block_number > block->body.block_number - 1)
         {
-          block_store_->Get(storage::ResourceID(current_file_head->body.previous_hash),
-                            *current_file_head);
+          LoadBlock(current_file_head->body.previous_hash, *current_file_head);
         }
 
         // Successful case
@@ -800,7 +909,7 @@ void MainChain::TrimCache()
 void MainChain::FlushBlock(IntBlockPtr const &block)
 {
   // remove the block from the block map
-  block_chain_.erase(block->body.hash);
+  UncacheBlock(block->body.hash);
 
   // remove the block hash from the tips
   tips_.erase(block->body.hash);
@@ -832,7 +941,7 @@ void MainChain::CompleteLooseBlocks(IntBlockPtr const &block)
   {
     BlockHashList next_blocks_to_add{};
 
-    // This is the breadth search, for each block to add, add it, next_blocks_to_add will
+    // This is the breadth-first search, for each block to add, add it, next_blocks_to_add will
     // get pushed with the next layer of blocks
     for (auto const &hash : blocks_to_add)
     {
@@ -871,8 +980,8 @@ void MainChain::RecordLooseBlock(IntBlockPtr const &block)
   auto &waiting_blocks = loose_blocks_[block->body.previous_hash];
   waiting_blocks.push_back(block->body.hash);
 
-  block->is_loose                = true;
-  block_chain_[block->body.hash] = block;
+  assert(block->is_loose);
+  CacheBlock(block);
 }
 
 /**
@@ -899,7 +1008,7 @@ bool MainChain::UpdateTips(IntBlockPtr const &block)
 /**
  * Internal: Insert the block into the cache
  *
- * @param block The block be
+ * @param block The block to be inserted
  * @param evaluate_loose_blocks Flag to signal if the loose blocks should be evaluated
  * @return
  */
@@ -1032,7 +1141,7 @@ BlockStatus MainChain::InsertBlock(IntBlockPtr const &block, bool evaluate_loose
  *
  * @return true if successful, otherwise false
  */
-bool MainChain::LookupBlock(BlockHash hash, IntBlockPtr &block, bool add_to_cache) const
+bool MainChain::LookupBlock(BlockHash const &hash, IntBlockPtr &block, bool add_to_cache) const
 {
   return LookupBlockFromCache(hash, block) || LookupBlockFromStorage(hash, block, add_to_cache);
 }
@@ -1044,7 +1153,7 @@ bool MainChain::LookupBlock(BlockHash hash, IntBlockPtr &block, bool add_to_cach
  * @param block The output block to be populated
  * @return true if successful, otherwise false
  */
-bool MainChain::LookupBlockFromCache(BlockHash hash, IntBlockPtr &block) const
+bool MainChain::LookupBlockFromCache(BlockHash const &hash, IntBlockPtr &block) const
 {
   bool success{false};
 
@@ -1068,7 +1177,8 @@ bool MainChain::LookupBlockFromCache(BlockHash hash, IntBlockPtr &block) const
  * @param block The output block to be populated
  * @return true if successful, otherwise false
  */
-bool MainChain::LookupBlockFromStorage(BlockHash hash, IntBlockPtr &block, bool add_to_cache) const
+bool MainChain::LookupBlockFromStorage(BlockHash const &hash, IntBlockPtr &block,
+                                       bool add_to_cache) const
 {
   bool success{false};
 
@@ -1078,7 +1188,7 @@ bool MainChain::LookupBlockFromStorage(BlockHash hash, IntBlockPtr &block, bool 
     auto output_block = std::make_shared<Block>();
 
     // attempt to read the block from the storage engine
-    success = block_store_->Get(storage::ResourceID(std::move(hash)), *output_block);
+    success = LoadBlock(hash, *output_block);
 
     if (success)
     {
@@ -1105,7 +1215,7 @@ bool MainChain::LookupBlockFromStorage(BlockHash hash, IntBlockPtr &block, bool 
  * @param hash The hash to query
  * @return true if the block is present, otherwise false
  */
-bool MainChain::IsBlockInCache(BlockHash hash) const
+bool MainChain::IsBlockInCache(BlockHash const &hash) const
 {
   return block_chain_.find(hash) != block_chain_.end();
 }
@@ -1122,7 +1232,7 @@ void MainChain::AddBlockToCache(IntBlockPtr const &block) const
   if (!IsBlockInCache(block->body.hash))
   {
     // add the item to the block chain storage
-    block_chain_.emplace(block->body.hash, block);
+    CacheBlock(block);
   }
 }
 
@@ -1148,8 +1258,6 @@ bool MainChain::AddTip(IntBlockPtr const &block)
  */
 bool MainChain::DetermineHeaviestTip()
 {
-  bool success{false};
-
   FETCH_LOCK(lock_);
 
   if (!tips_.empty())
@@ -1157,20 +1265,19 @@ bool MainChain::DetermineHeaviestTip()
     // find the heaviest item in our tip selection
     auto it = std::max_element(
         tips_.begin(), tips_.end(), [](TipsMap::value_type const &a, TipsMap::value_type const &b) {
-          bool const is_heavier      = a.second.total_weight < b.second.total_weight;
-          bool const is_equal_weight = a.second.total_weight == b.second.total_weight;
-          bool const is_hash_larger  = a.first < b.first;
+          auto        a_weight{a.second.total_weight}, b_weight{b.second.total_weight};
+          auto const &a_hash{a.first}, &b_hash{b.first};
 
-          return (is_heavier || (is_equal_weight && is_hash_larger));
+          return a_weight < b_weight || (a_weight == b_weight && a_hash < b_hash);
         });
 
     // update the heaviest
     heaviest_.hash   = it->first;
     heaviest_.weight = it->second.total_weight;
-    success          = true;
+    return true;
   }
 
-  return success;
+  return false;
 }
 
 /**
@@ -1183,63 +1290,52 @@ bool MainChain::DetermineHeaviestTip()
  */
 bool MainChain::ReindexTips()
 {
-  // TODO(private issue 666): Improve performance of block removal
   FETCH_LOCK(lock_);
 
-  // Step 1. Generate a new set of blocks (so that we can order them)
-  std::vector<IntBlockPtr> block_list{};
-  block_list.reserve(block_chain_.size());
+  // Tips are hashes of cached non-loose blocks that don't have any forward references
+  TipsMap   new_tips;
+  uint64_t  max_weight{};
+  BlockHash max_hash;
 
-  for (auto const &block : block_chain_)
+  for (auto const &block_entry : block_chain_)
   {
-    block_list.push_back(block.second);
+    if (block_entry.second->is_loose)
+    {
+      continue;
+    }
+    auto const &hash{block_entry.first};
+    // check if this has has any live forward reference
+    auto children{references_.equal_range(hash)};
+    auto child{std::find_if(children.first, children.second, [this](auto const &ref) {
+      return block_chain_.find(ref.second) != block_chain_.end();
+    })};
+    if (child != children.second)
+    {
+      // then it's not a tip
+      continue;
+    }
+    // this hash has no next blocks
+    auto const &   block{*block_entry.second};
+    const uint64_t weight{block.total_weight};
+    new_tips[hash] = Tip{weight};
+    // check if this tip is the current heaviest
+    if (weight > max_weight || (weight == max_weight && hash > max_hash))
+    {
+      max_weight = weight;
+      max_hash   = hash;
+    }
   }
-
-  // Step 2. Order the blocks so that we have a good order for them to be evaluated
-  std::sort(block_list.begin(), block_list.end(), [](IntBlockPtr const &a, IntBlockPtr const &b) {
-    if (a->body.block_number == b->body.block_number)
-    {
-      return (a->body.hash < b->body.hash);
-    }
-    else
-    {
-      return (a->body.block_number < b->body.block_number);
-    }
-  });
-
-  // Step 3. Loop through ordered blocks and generate the new list of tips
-  BlockHashSet tips{};
-  for (auto const &block : block_list)
-  {
-    tips.erase(block->body.previous_hash);
-
-    // only non-loose blocks are considered tips
-    if (!block->is_loose)
-    {
-      tips.insert(block->body.hash);
-    }
-  }
-  block_list.clear();  // free some memory
-
-  // Step 4. Recreate the tips map index
-  TipsMap     new_tips{};
-  IntBlockPtr block;
-  for (auto const &tip : tips)
-  {
-    if (!LookupBlockFromCache(tip, block))
-    {
-      return false;
-    }
-
-    // add update the new tip
-    new_tips[tip] = Tip{block->total_weight};
-  }
-
-  // clear the existing tips
   tips_ = std::move(new_tips);
 
-  // finally update the heaviest tip
-  return DetermineHeaviestTip();
+  if (!tips_.empty())
+  {
+    // finally update the heaviest tip
+    heaviest_.weight = max_weight;
+    heaviest_.hash   = max_hash;
+    return true;
+  }
+
+  return false;
 }
 
 /**
@@ -1251,7 +1347,7 @@ MainChain::IntBlockPtr MainChain::CreateGenesisBlock()
   auto genesis                = std::make_shared<Block>();
   genesis->body.previous_hash = GENESIS_DIGEST;
   genesis->body.merkle_hash   = GENESIS_MERKLE_ROOT;
-  genesis->body.miner         = Address{GENESIS_DIGEST};
+  genesis->body.miner         = Address{crypto::Hash<crypto::SHA256>("")};
   genesis->is_loose           = false;
   genesis->UpdateDigest();
 
@@ -1330,7 +1426,7 @@ void MainChain::SetHeadHash(BlockHash const &hash)
  *
  * @return: bool whether the starting hash referred to a valid block on a valid chain
  */
-DigestSet MainChain::DetectDuplicateTransactions(BlockHash        starting_hash,
+DigestSet MainChain::DetectDuplicateTransactions(BlockHash const &starting_hash,
                                                  DigestSet const &transactions) const
 {
   MilliTimer const timer{"DuplicateTransactionsCheck", 100};
@@ -1338,7 +1434,7 @@ DigestSet MainChain::DetectDuplicateTransactions(BlockHash        starting_hash,
   FETCH_LOG_DEBUG(LOGGING_NAME, "Starting TX uniqueness verify");
 
   IntBlockPtr block;
-  if (!LookupBlock(std::move(starting_hash), block, false) || block->is_loose)
+  if (!LookupBlock(starting_hash, block, false) || block->is_loose)
   {
     FETCH_LOG_WARN(LOGGING_NAME, "TX uniqueness verify on bad block hash");
     return {};
@@ -1346,8 +1442,7 @@ DigestSet MainChain::DetectDuplicateTransactions(BlockHash        starting_hash,
 
   // Need a set for quickly checking whether transactions are in our container
   DigestSet duplicates{};
-  bool      searching{true};
-  while (searching)
+  for (;;)
   {
     // Traversing the chain fully is costly: break out early if we know the transactions are all
     // duplicated (or empty)

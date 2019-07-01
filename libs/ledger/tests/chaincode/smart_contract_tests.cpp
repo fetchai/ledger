@@ -16,16 +16,15 @@
 //
 //------------------------------------------------------------------------------
 
+#include "contract_test.hpp"
 #include "crypto/ecdsa.hpp"
 #include "crypto/sha256.hpp"
 #include "ledger/chain/transaction_builder.hpp"
 #include "ledger/chaincode/smart_contract.hpp"
 #include "ledger/state_adapter.hpp"
-
-#include "contract_test.hpp"
 #include "mock_storage_unit.hpp"
 
-#include <gmock/gmock.h>
+#include "gmock/gmock.h"
 
 #include <memory>
 
@@ -97,14 +96,14 @@ TEST_F(SmartContractTests, CheckSimpleContract)
   std::string const contract_source = R"(
     @action
     function increment()
-      var state = State<Int32>("value", 10);
-      state.set(state.get() + 1);
+      var state = State<Int32>("value");
+      state.set(11);
     endfunction
 
     @query
     function value() : Int32
-      var state = State<Int32>("value", 10);
-      return state.get();
+      var state = State<Int32>("value");
+      return state.get(0i32);
     endfunction
   )";
 
@@ -124,7 +123,6 @@ TEST_F(SmartContractTests, CheckSimpleContract)
   // define our what we expect the values to be in our storage requests
   auto const expected_key      = contract_name_->full_name() + ".state.value";
   auto const expected_resource = ResourceAddress{expected_key};
-  auto const exp_default_val   = RawBytes<int32_t>(10);
   auto const expected_value    = RawBytes<int32_t>(11);
 
   {
@@ -132,12 +130,11 @@ TEST_F(SmartContractTests, CheckSimpleContract)
 
     // from the action
     EXPECT_CALL(*storage_, Lock(_));
-    EXPECT_CALL(*storage_, Get(expected_resource));
     EXPECT_CALL(*storage_, Set(expected_resource, expected_value));
     EXPECT_CALL(*storage_, Unlock(_));
 
     // from the query
-    EXPECT_CALL(*storage_, Get(expected_resource));
+    EXPECT_CALL(*storage_, Get(expected_resource)).Times(2);
   }
 
   // send the smart contract an "increment" action
@@ -209,19 +206,20 @@ TEST_F(SmartContractTests, CheckParameterizedActionAndQuery)
   std::string const contract_source = R"(
     @action
     function increment(increment: Int32)
-      var state = State<Int32>("value", 10 + increment);
+      var state = State<Int32>("value");
+      state.set(10 + increment);
     endfunction
 
     @query
     function value() : Int32
-      var state = State<Int32>("value", 10);
-      return state.get();
+      var state = State<Int32>("value");
+      return state.get(0);
     endfunction
 
     @query
     function offset(amount: Int32) : Int32
-      var state = State<Int32>("value", 10);
-      return state.get() + amount;
+      var state = State<Int32>("value");
+      return state.get(0) + amount;
     endfunction
   )";
 
@@ -249,13 +247,14 @@ TEST_F(SmartContractTests, CheckParameterizedActionAndQuery)
 
     // from the action
     EXPECT_CALL(*storage_, Lock(_));
-    EXPECT_CALL(*storage_, Get(expected_resource));
     EXPECT_CALL(*storage_, Set(expected_resource, expected_value));
     EXPECT_CALL(*storage_, Unlock(_));
 
-    // from the query
-    EXPECT_CALL(*storage_, Get(expected_resource));
-    EXPECT_CALL(*storage_, Get(expected_resource));
+    // from the `value` query
+    EXPECT_CALL(*storage_, Get(expected_resource)).Times(2);
+
+    // from the `offset` query
+    EXPECT_CALL(*storage_, Get(expected_resource)).Times(2);
   }
 
   // send the smart contract an "increment" action
@@ -274,28 +273,27 @@ TEST_F(SmartContractTests, CheckBasicTokenContract)
     @init
     function initialize(owner: Address)
         var INITIAL_SUPPLY = 100000000000u64;
-        State<UInt64>(owner, INITIAL_SUPPLY);
+        State<UInt64>(owner).set(INITIAL_SUPPLY);
     endfunction
 
     @action
     function transfer(from: Address, to: Address, amount: UInt64)
 
       // define the accounts
-      var from_account = State<UInt64>(from, 0u64);
-      var to_account = State<UInt64>(to, 0u64); // if new sets to 0u
+      var from_account = State<UInt64>(from);
+      var to_account = State<UInt64>(to); // if new sets to 0u
 
       // Check if the sender has enough balance to proceed
-      if (from_account.get() >= amount)
-        from_account.set(from_account.get() - amount);
-        to_account.set(to_account.get() + amount);
+      if (from_account.get(0u64) >= amount)
+        from_account.set(from_account.get(0u64) - amount);
+        to_account.set(to_account.get(0u64) + amount);
       endif
 
     endfunction
 
     @query
     function balance(address: Address) : UInt64
-        var account = State<UInt64>(address, 0u64);
-        return account.get();
+        return State<UInt64>(address).get(0u64);
     endfunction
   )";
 
@@ -330,25 +328,26 @@ TEST_F(SmartContractTests, CheckBasicTokenContract)
 
     // from the init
     EXPECT_CALL(*storage_, Lock(_));
-    EXPECT_CALL(*storage_, Get(owner_resource));
     EXPECT_CALL(*storage_, Set(owner_resource, initial_supply));
     EXPECT_CALL(*storage_, Unlock(_));
 
     // from query
-    EXPECT_CALL(*storage_, Get(owner_resource));
+    EXPECT_CALL(*storage_, Get(owner_resource)).Times(2);  // from io.Exists() & io.Read()
 
     // from the action
     EXPECT_CALL(*storage_, Lock(_));
-    EXPECT_CALL(*storage_, Get(owner_resource));
-    EXPECT_CALL(*storage_, Get(target_resource));
-    EXPECT_CALL(*storage_, Set(target_resource, transfer_amount));
-    EXPECT_CALL(*storage_, Set(owner_resource, remaining_amount));
+    EXPECT_CALL(*storage_, Get(owner_resource));                    // from io.Exists()
+    EXPECT_CALL(*storage_, Get(owner_resource));                    // from io.Read()
+    EXPECT_CALL(*storage_, Get(target_resource));                   // from io.Exists()
+    EXPECT_CALL(*storage_, Set(target_resource, transfer_amount));  // from io.Write()
+    EXPECT_CALL(*storage_, Set(owner_resource, remaining_amount));  // from io.Write()
     EXPECT_CALL(*storage_, Unlock(_));
 
     // from query
-    EXPECT_CALL(*storage_, Get(owner_resource));
+    EXPECT_CALL(*storage_, Get(owner_resource)).Times(2);
+
     // from query
-    EXPECT_CALL(*storage_, Get(target_resource));
+    EXPECT_CALL(*storage_, Get(target_resource)).Times(2);
   }
 
   EXPECT_EQ(SmartContract::Status::OK, InvokeInit(certificate_->identity()));
@@ -385,20 +384,20 @@ TEST_F(SmartContractTests, CheckShardedStateSetAndQuery)
     @action
     function test_sharded_state()
       var state = ShardedState<Int32>("value");
-      state["foo"] = 20;
-      state["bar"] = 30;
+      state.set("foo", 20);
+      state.set("bar", 30);
     endfunction
 
     @query
     function query_foo() : Int32
       var state = ShardedState<Int32>("value");
-      return state["foo"];
+      return state.get("foo", 0i32);
     endfunction
 
     @query
     function query_bar() : Int32
       var state = ShardedState<Int32>("value");
-      return state["bar"];
+      return state.get("bar", 0i32);
     endfunction
   )";
 
@@ -424,17 +423,21 @@ TEST_F(SmartContractTests, CheckShardedStateSetAndQuery)
   fetch::BitVector mask{1ull << 4};
   auto const       lane1 = expected_resource1.lane(mask.log2_size());
   auto const       lane2 = expected_resource2.lane(mask.log2_size());
-  mask.flip(lane1);
-  mask.flip(lane2);
+  mask.set(lane1, 1);
+  mask.set(lane2, 1);
   shards(mask);
 
   // expected calls
   EXPECT_CALL(*storage_, Lock(lane1)).WillOnce(Return(true));
-  EXPECT_CALL(*storage_, Lock(lane2)).WillOnce(Return(true));
+  EXPECT_CALL(*storage_, Unlock(lane1)).WillOnce(Return(true));
+  if (lane1 != lane2)
+  {
+    EXPECT_CALL(*storage_, Lock(lane2)).WillOnce(Return(true));
+    EXPECT_CALL(*storage_, Unlock(lane2)).WillOnce(Return(true));
+  }
+
   EXPECT_CALL(*storage_, Set(expected_resource1, expected_value1)).WillOnce(Return());
   EXPECT_CALL(*storage_, Set(expected_resource2, expected_value2)).WillOnce(Return());
-  EXPECT_CALL(*storage_, Unlock(lane1)).WillOnce(Return(true));
-  EXPECT_CALL(*storage_, Unlock(lane2)).WillOnce(Return(true));
 
   // from the action & query
   EXPECT_CALL(*storage_, Get(expected_resource1))
@@ -457,13 +460,13 @@ TEST_F(SmartContractTests, CheckShardedStateSetWithAddressAsName)
     @action
     function test_sharded_state(address : Address)
       var state = ShardedState<Int32>(address);
-      state["foo"] = 20;
+      state.set("foo", 20);
     endfunction
 
     @query
     function query_foo(address : Address) : Int32
       var state = ShardedState<Int32>(address);
-      return state["foo"];
+      return state.get("foo", 0i32);
     endfunction
   )";
 
@@ -495,7 +498,7 @@ TEST_F(SmartContractTests, CheckShardedStateSetWithAddressAsName)
   auto const       expected_value1    = RawBytes<int32_t>(20);
   fetch::BitVector mask{1ull << 4};
   auto const       lane1 = expected_resource1.lane(mask.log2_size());
-  mask.flip(lane1);
+  mask.set(lane1, 1);
   shards(mask);
 
   // expected calls

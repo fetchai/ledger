@@ -19,7 +19,7 @@
 #include "vm/module.hpp"
 #include "vm_modules/core/print.hpp"
 #include "vm_modules/core/type_convert.hpp"
-#include "vm_modules/math/abs.hpp"
+#include "vm_modules/math/math.hpp"
 
 #include <cstdlib>
 #include <fstream>
@@ -48,10 +48,10 @@ int main(int argc, char **argv)
 
   fetch::vm_modules::CreatePrint(*module);
   fetch::vm_modules::CreateToString(*module);
-  fetch::vm_modules::CreateAbs(*module);
+  fetch::vm_modules::math::BindMath(*module);
 
   // Setting compiler up
-  fetch::vm::Compiler *    compiler = new fetch::vm::Compiler(module.get());
+  auto                     compiler = std::make_unique<fetch::vm::Compiler>(module.get());
   fetch::vm::IR            ir;
   fetch::vm::Executable    exec;
   std::vector<std::string> errors;
@@ -76,7 +76,7 @@ int main(int argc, char **argv)
   fetch::vm::VM vm(module.get());
 
   // attach std::cout for printing
-  vm.AttachOutputDevice("stdout", std::cout);
+  vm.AttachOutputDevice(fetch::vm::VM::STDOUT, std::cout);
 
   if (!vm.GenerateExecutable(ir, "main_ir", exec, errors))
   {
@@ -98,6 +98,6 @@ int main(int argc, char **argv)
   {
     std::cout << "Runtime error on line " << error << std::endl;
   }
-  delete compiler;
+
   return 0;
 }
