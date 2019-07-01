@@ -235,6 +235,28 @@ private:
     std::vector<uint16_t> break_pcs;
   };
 
+  struct Chain
+  {
+    Chain()
+    {
+      kind = NodeKind::Unknown;
+    }
+    Chain(NodeKind kind__)
+    {
+      kind = kind__;
+    }
+    void Append(uint16_t pc)
+    {
+      pcs.push_back(pc);
+    }
+    void Append(std::vector<uint16_t> const &other_pcs)
+    {
+      pcs.insert(pcs.end(), other_pcs.begin(), other_pcs.end());
+    }
+    NodeKind              kind;
+    std::vector<uint16_t> pcs;
+  };
+
   struct ConstantComparator
   {
     bool operator()(Variant const &lhs, Variant const &rhs) const;
@@ -304,6 +326,9 @@ private:
   void     HandlePrefixPostfixOp(IRExpressionNodePtr const &node);
   void     HandleBinaryOp(IRExpressionNodePtr const &node);
   void     HandleUnaryOp(IRExpressionNodePtr const &node);
+  Chain    HandleConditionExpression(IRBlockNodePtr const &block_node, IRExpressionNodePtr const &node);
+  Chain    HandleShortCircuitOp(IRNodePtr const &parent, IRExpressionNodePtr const &node);
+  void     FinaliseShortCircuitChain(Chain const &chain, bool is_condition_chain, uint16_t destination_pc);
   void     HandleIndexOp(IRExpressionNodePtr const &node);
   void     HandleDotOp(IRExpressionNodePtr const &node);
   void     HandleInvokeOp(IRExpressionNodePtr const &node);

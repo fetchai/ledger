@@ -75,8 +75,8 @@ VM::VM(Module *module)
                 [](VM *vm) { vm->Handler__VariablePostfixInc(); });
   AddOpcodeInfo(Opcodes::VariablePostfixDec, "VariablePostfixDec",
                 [](VM *vm) { vm->Handler__VariablePostfixDec(); });
-  AddOpcodeInfo(Opcodes::And, "And", [](VM *vm) { vm->Handler__And(); });
-  AddOpcodeInfo(Opcodes::Or, "Or", [](VM *vm) { vm->Handler__Or(); });
+  AddOpcodeInfo(Opcodes::JumpIfFalseOrPop, "JumpIfFalseOrPop", [](VM *vm) { vm->Handler__JumpIfFalseOrPop(); });
+  AddOpcodeInfo(Opcodes::JumpIfTrueOrPop, "JumpIfTrueOrPop", [](VM *vm) { vm->Handler__JumpIfTrueOrPop(); });
   AddOpcodeInfo(Opcodes::Not, "Not", [](VM *vm) { vm->Handler__Not(); });
   AddOpcodeInfo(Opcodes::PrimitiveEqual, "PrimitiveEqual",
                 [](VM *vm) { vm->Handler__PrimitiveEqual(); });

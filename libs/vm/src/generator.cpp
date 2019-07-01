@@ -388,17 +388,21 @@ void Generator::HandleFunctionDefinitionStatement(IRBlockNodePtr const &block_no
 
 void Generator::HandleWhileStatement(IRBlockNodePtr const &block_node)
 {
-  uint16_t const      continue_pc = uint16_t(function_->instructions.size());
-  IRExpressionNodePtr condition   = ConvertToIRExpressionNodePtr(block_node->children[0]);
-
-  HandleExpression(condition);
+  uint16_t const      condition_pc   = uint16_t(function_->instructions.size());
+  IRExpressionNodePtr condition_node = ConvertToIRExpressionNodePtr(block_node->children[0]);
+  Chain               chain          = HandleConditionExpression(block_node, condition_node);
 
   uint16_t const          jf_pc = uint16_t(function_->instructions.size());
   Executable::Instruction jf_instruction(Opcodes::JumpIfFalse);
   jf_instruction.index = 0;  // pc placeholder
-
   function_->AddInstruction(jf_instruction);
-  AddLineNumber(block_node->line, jf_pc);
+  AddLineNumber(condition_node->line, jf_pc);
+
+  uint16_t const while_block_start_pc = uint16_t(function_->instructions.size());
+  if (chain.kind == NodeKind::Or)
+  {
+    FinaliseShortCircuitChain(chain, true, while_block_start_pc);
+  }
 
   ScopeEnter();
 
@@ -412,17 +416,22 @@ void Generator::HandleWhileStatement(IRBlockNodePtr const &block_node)
 
   Executable::Instruction jump_instruction(Opcodes::Jump);
 
-  jump_instruction.index = continue_pc;
+  jump_instruction.index = condition_pc;
   uint16_t jump_pc       = function_->AddInstruction(jump_instruction);
   AddLineNumber(block_node->block_terminator_line, jump_pc);
 
   uint16_t const endwhile_pc           = uint16_t(function_->instructions.size());
   function_->instructions[jf_pc].index = endwhile_pc;
+  if (chain.kind == NodeKind::And)
+  {
+    FinaliseShortCircuitChain(chain, true, endwhile_pc);
+  }
+
   Loop &loop                           = loops_.back();
 
   for (auto const &jump_pc : loop.continue_pcs)
   {
-    function_->instructions[jump_pc].index = continue_pc;
+    function_->instructions[jump_pc].index = condition_pc;
   }
 
   for (auto const &jump_pc : loop.break_pcs)
@@ -509,6 +518,7 @@ void Generator::HandleForStatement(IRBlockNodePtr const &block_node)
 
 void Generator::HandleIfStatement(IRNodePtr const &node)
 {
+  Chain                 chain;
   uint16_t              jf_pc = uint16_t(-1);
   std::vector<uint16_t> jump_pcs;
   int const             last_index = static_cast<int>(node->children.size()) - 1;
@@ -518,23 +528,36 @@ void Generator::HandleIfStatement(IRNodePtr const &node)
     IRBlockNodePtr block_node = ConvertToIRBlockNodePtr(node->children[std::size_t(i)]);
     if (block_node->node_kind != NodeKind::Else)
     {
-      // block is the if block or one of the elseif blocks
+      //
+      // The "if" block or one of the "elseif" blocks
+      //
+
       uint16_t const condition_pc = uint16_t(function_->instructions.size());
 
       if (jf_pc != uint16_t(-1))
       {
-        // Previous block, if there is one, jumps to here
+        // The previous condition, if there was one, jumps here
         function_->instructions[jf_pc].index = condition_pc;
+        if (chain.kind == NodeKind::And)
+        {
+          FinaliseShortCircuitChain(chain, true, condition_pc);
+        }
       }
 
-      IRExpressionNodePtr condition_expression =
+      IRExpressionNodePtr condition_node =
           ConvertToIRExpressionNodePtr(block_node->children[0]);
-      HandleExpression(condition_expression);
+      chain = HandleConditionExpression(block_node, condition_node);
 
       Executable::Instruction jf_instruction(Opcodes::JumpIfFalse);
       jf_instruction.index = 0;  // pc placeholder
       jf_pc                = function_->AddInstruction(jf_instruction);
-      AddLineNumber(condition_expression->line, jf_pc);
+      AddLineNumber(condition_node->line, jf_pc);
+
+      uint16_t const block_start_pc = uint16_t(function_->instructions.size());
+      if (chain.kind == NodeKind::Or)
+      {
+        FinaliseShortCircuitChain(chain, true, block_start_pc);
+      }
 
       ScopeEnter();
       HandleBlock(block_node);
@@ -552,11 +575,21 @@ void Generator::HandleIfStatement(IRNodePtr const &node)
     }
     else
     {
-      // block is the else block
+      //
+      // The "else" block
+      //
+
       uint16_t const else_block_start_pc = uint16_t(function_->instructions.size());
 
+      // The previous condition jumps here
       function_->instructions[jf_pc].index = else_block_start_pc;
-      jf_pc                                = uint16_t(-1);
+      if (chain.kind == NodeKind::And)
+      {
+         FinaliseShortCircuitChain(chain, true, else_block_start_pc);
+      }
+
+      jf_pc = uint16_t(-1);
+      chain = Chain();
 
       ScopeEnter();
       HandleBlock(block_node);
@@ -568,7 +601,12 @@ void Generator::HandleIfStatement(IRNodePtr const &node)
 
   if (jf_pc != uint16_t(-1))
   {
+    // The last condition (in an if statement that has no "else" part) jumps here
     function_->instructions[jf_pc].index = endif_pc;
+    if (chain.kind == NodeKind::And)
+    {
+      FinaliseShortCircuitChain(chain, true, endif_pc);
+    }
   }
 
   for (auto jump_pc : jump_pcs)
@@ -982,12 +1020,18 @@ void Generator::HandleExpression(IRExpressionNodePtr const &node)
   case NodeKind::LessThanOrEqual:
   case NodeKind::GreaterThan:
   case NodeKind::GreaterThanOrEqual:
-  case NodeKind::And:
-  case NodeKind::Or:
   {
     HandleBinaryOp(node);
     break;
   }
+
+  case NodeKind::And:
+  case NodeKind::Or:
+  {
+    HandleShortCircuitOp(nullptr, node);
+    break;
+  }
+
   case NodeKind::Negate:
   case NodeKind::Not:
   {
@@ -1189,10 +1233,8 @@ void Generator::HandleBinaryOp(IRExpressionNodePtr const &node)
 {
   IRExpressionNodePtr lhs = ConvertToIRExpressionNodePtr(node->children[0]);
   IRExpressionNodePtr rhs = ConvertToIRExpressionNodePtr(node->children[1]);
-  for (std::size_t i = 0; i < node->children.size(); ++i)
-  {
-    HandleExpression(ConvertToIRExpressionNodePtr(node->children[i]));
-  }
+  HandleExpression(lhs);
+  HandleExpression(rhs);
 
   bool     lhs_is_primitive = lhs->type->IsPrimitive();
   TypeId   node_type_id     = node->type->resolved_id;
@@ -1272,16 +1314,6 @@ void Generator::HandleBinaryOp(IRExpressionNodePtr const &node)
         lhs_is_primitive ? Opcodes::PrimitiveGreaterThanOrEqual : Opcodes::ObjectGreaterThanOrEqual;
     break;
   }
-  case NodeKind::And:
-  {
-    opcode = Opcodes::And;
-    break;
-  }
-  case NodeKind::Or:
-  {
-    opcode = Opcodes::Or;
-    break;
-  }
   default:
   {
     break;
@@ -1325,6 +1357,95 @@ void Generator::HandleUnaryOp(IRExpressionNodePtr const &node)
   instruction.type_id = type_id;
   uint16_t pc         = function_->AddInstruction(instruction);
   AddLineNumber(node->line, pc);
+}
+
+Generator::Chain Generator::HandleConditionExpression(IRBlockNodePtr const &block_node, IRExpressionNodePtr const &node)
+{
+  if ((node->node_kind == NodeKind::And) || (node->node_kind == NodeKind::Or))
+  {
+    return HandleShortCircuitOp(block_node, node);
+  }
+  else
+  {
+    HandleExpression(node);
+    return Chain();
+  }
+}
+
+Generator::Chain Generator::HandleShortCircuitOp(IRNodePtr const &parent, IRExpressionNodePtr const &node)
+{
+  IRExpressionNodePtr lhs = ConvertToIRExpressionNodePtr(node->children[0]);
+  IRExpressionNodePtr rhs = ConvertToIRExpressionNodePtr(node->children[1]);
+
+  NodeKind parent_node_kind = NodeKind::Unknown;
+  if (parent)
+  {
+    parent_node_kind = parent->node_kind;
+  }
+
+  bool const is_condition_chain = (parent_node_kind == NodeKind::WhileStatement) ||
+      (parent_node_kind == NodeKind::If) ||
+      (parent_node_kind == NodeKind::ElseIf);
+  bool const in_chain = node->node_kind == parent_node_kind;
+
+  Chain lhs_chain;
+  if ((lhs->node_kind == NodeKind::And) || (lhs->node_kind == NodeKind::Or))
+  {
+    lhs_chain = HandleShortCircuitOp(node, lhs);
+  }
+  else
+  {
+    HandleExpression(lhs);
+  }
+
+  Executable::Instruction jump_instruction(Opcodes::Unknown);  // opcode placeholder
+  jump_instruction.index = 0;  // pc placeholder
+  uint16_t const jump_pc = function_->AddInstruction(jump_instruction);
+  AddLineNumber(node->line, jump_pc);
+
+  Chain rhs_chain;
+  if ((rhs->node_kind == NodeKind::And) || (rhs->node_kind == NodeKind::Or))
+  {
+    rhs_chain = HandleShortCircuitOp(node, rhs);
+  }
+  else
+  {
+    HandleExpression(rhs);
+  }
+
+  Chain chain(node->node_kind);
+  chain.Append(jump_pc);
+  chain.Append(lhs_chain.pcs);
+  chain.Append(rhs_chain.pcs);
+
+  if (is_condition_chain || in_chain)
+  {
+    return chain;
+  }
+
+  uint16_t const destination_pc = uint16_t(function_->instructions.size());
+  FinaliseShortCircuitChain(chain, false, destination_pc);
+  return Chain();
+}
+
+void Generator::FinaliseShortCircuitChain(Chain const &chain, bool is_condition_chain, uint16_t destination_pc)
+{
+  uint16_t opcode;
+  if (is_condition_chain)
+  {
+    opcode = chain.kind == NodeKind::And ? Opcodes::JumpIfFalse : Opcodes::JumpIfTrue;
+  }
+  else
+  {
+    opcode = chain.kind == NodeKind::And ? Opcodes::JumpIfFalseOrPop : Opcodes::JumpIfTrueOrPop;
+  }
+
+  for (auto pc : chain.pcs)
+  {
+    Executable::Instruction &instruction = function_->instructions[pc];
+    instruction.opcode = opcode;
+    instruction.index  = destination_pc;
+  }
 }
 
 void Generator::HandleIndexOp(IRExpressionNodePtr const &node)
