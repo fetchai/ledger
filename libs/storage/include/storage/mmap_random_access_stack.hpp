@@ -549,7 +549,7 @@ private:
    * @elements: elements to be written. File size will be extend if elements exceeds the existing
    * file size.
    */
-  void ResizeFile(size_t index, std::size_t elements)
+  void ResizeFile(std::size_t index, std::size_t elements)
   {
     std::size_t obj_capacity, expected_obj_count, adjusted_obj_count, block_count, total_length;
 

@@ -29,7 +29,7 @@ namespace ledger {
 class StakeSnapshot;
 class EntropyGeneratorInterface;
 
-class StakeManager : public StakeManagerInterface
+class StakeManager final : public StakeManagerInterface
 {
 public:
   using Committee    = std::vector<Address>;
@@ -46,7 +46,13 @@ public:
   void        UpdateCurrentBlock(Block const &current) override;
   std::size_t GetBlockGenerationWeight(Block const &previous, Address const &address) override;
   bool        ShouldGenerateBlock(Block const &previous, Address const &address) override;
+  bool        ValidMinerForBlock(Block const &previous, Address const &address) override;
   /// @}
+
+  void UpdateEntropy(EntropyGeneratorInterface &entropy)
+  {
+    entropy_ = &entropy;
+  }
 
   // Accessors
   StakeUpdateQueue &      update_queue();
@@ -69,17 +75,20 @@ private:
   using BlockIndex       = uint64_t;
   using StakeSnapshotPtr = std::shared_ptr<StakeSnapshot>;
   using StakeHistory     = std::map<BlockIndex, StakeSnapshotPtr>;
+  using EntropyCache     = std::map<BlockIndex, uint64_t>;
 
   StakeSnapshotPtr LookupStakeSnapshot(BlockIndex block);
   void             ResetInternal(StakeSnapshotPtr &&snapshot, std::size_t committee_size);
+  bool             LookupEntropy(Block const &block, uint64_t &entropy);
 
   // Config & Components
   std::size_t                committee_size_{0};       ///< The "static" size of the committee
-  EntropyGeneratorInterface &entropy_;                 ///< The reference to entropy module
+  EntropyGeneratorInterface *entropy_{nullptr};        ///< The reference to entropy module
   StakeUpdateQueue           update_queue_;            ///< The update queue of events
   StakeHistory               history_{};               ///< Cache of historical snapshots
   StakeSnapshotPtr           current_{};               ///< Most recent snapshot
   BlockIndex                 current_block_index_{0};  ///< Block index of most recent snapshot
+  EntropyCache               entropy_cache_{};
 };
 
 inline std::size_t StakeManager::committee_size() const

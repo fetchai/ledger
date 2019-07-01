@@ -119,9 +119,13 @@ TYPED_TEST(SqrtFixedTest, forward_all_negative_test)
   fetch::ml::ops::Sqrt<TypeParam> op;
 
   TypeParam pred(op.ComputeOutputShape({data}));
+  op.Forward({data}, pred);
 
-  // Throws runtime error with "Cannot assign NaN value!" because sqrt of neg number is undefined
-  EXPECT_THROW(op.Forward({data}, pred), std::runtime_error);
+  // gives NaN because sqrt of a negative number is undefined
+  for (auto p_it : pred)
+  {
+    EXPECT_TRUE(ArrayType::Type::IsNaN(p_it));
+  }
 }
 
 TYPED_TEST(SqrtFloatTest, backward_all_negative_test)
@@ -150,8 +154,12 @@ TYPED_TEST(SqrtFixedTest, backward_all_negative_test)
 
   fetch::ml::ops::Sqrt<TypeParam> op;
 
-  // Throws runtime error with "Cannot assign NaN value!" because sqrt of neg number is undefined
-  EXPECT_THROW(std::vector<ArrayType> prediction = op.Backward({data}, error), std::runtime_error);
+  std::vector<ArrayType> pred = op.Backward({data}, error);
+  // gives NaN because sqrt of a negative number is undefined
+  for (auto p_it : pred.at(0))
+  {
+    EXPECT_TRUE(ArrayType::Type::IsNaN(p_it));
+  }
 }
 
 TYPED_TEST(SqrtFloatTest, backward_zero_test)
@@ -180,6 +188,10 @@ TYPED_TEST(SqrtFixedTest, backward_zero_test)
 
   fetch::ml::ops::Sqrt<TypeParam> op;
 
-  // fails because of division by zero
-  EXPECT_THROW(std::vector<ArrayType> prediction = op.Backward({data}, error), std::runtime_error);
+  std::vector<ArrayType> pred = op.Backward({data}, error);
+  // gives NaN because of division by zero
+  for (auto p_it : pred.at(0))
+  {
+    EXPECT_TRUE(ArrayType::Type::IsNaN(p_it));
+  }
 }

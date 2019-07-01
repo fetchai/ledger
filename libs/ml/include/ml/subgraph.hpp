@@ -66,7 +66,7 @@ void SubGraph<T>::Forward(VecTensorType const &inputs, ArrayType &output)
   {
     this->SetInput(input_nodes_[i], inputs.at(i));
   }
-  output = output_node_->Evaluate();
+  output = output_node_->Evaluate(this->is_training_);
 }
 
 template <typename T>

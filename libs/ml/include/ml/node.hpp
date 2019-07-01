@@ -35,7 +35,7 @@ public:
   using ArrayType   = T;
   using NodePtrType = std::shared_ptr<NodeInterface<T>>;
 
-  virtual ArrayType &                                           Evaluate()                      = 0;
+  virtual ArrayType &                                           Evaluate(bool is_training)      = 0;
   virtual void                                                  AddInput(NodePtrType const &i)  = 0;
   virtual void                                                  AddOutput(NodePtrType const &i) = 0;
   virtual std::vector<std::pair<NodeInterface<T> *, ArrayType>> BackPropagate(
@@ -69,7 +69,7 @@ public:
   virtual ~Node() = default;
 
   std::vector<std::reference_wrapper<const ArrayType>>          GatherInputs() const;
-  virtual ArrayType &                                           Evaluate();
+  virtual ArrayType &                                           Evaluate(bool is_training);
   virtual std::vector<std::pair<NodeInterface<T> *, ArrayType>> BackPropagate(
       ArrayType const &error_signal);
 
@@ -97,7 +97,7 @@ std::vector<std::reference_wrapper<const T>> Node<T, O>::GatherInputs() const
   std::vector<std::reference_wrapper<const ArrayType>> inputs;
   for (auto const &i : input_nodes_)
   {
-    inputs.push_back(i->Evaluate());
+    inputs.push_back(i->Evaluate(this->is_training_));
   }
   return inputs;
 }
@@ -112,9 +112,12 @@ std::vector<std::reference_wrapper<const T>> Node<T, O>::GatherInputs() const
  * @return the tensor with the forward result
  */
 template <typename T, class O>
-T &Node<T, O>::Evaluate()
+T &Node<T, O>::Evaluate(bool is_training)
 {
-  //  FETCH_LOG_INFO("ML_LIB", "Evaluating node [", name_, "]");
+
+  this->SetTraining(is_training);
+  FETCH_LOG_INFO("ML_LIB", "Evaluating node [", name_, "]");
+
   if (cached_output_status_ != CachedOutputState::VALID_CACHE)
   {
     std::vector<std::reference_wrapper<const ArrayType>> inputs = GatherInputs();

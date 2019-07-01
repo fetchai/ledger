@@ -103,12 +103,27 @@ private:
     std::unordered_map<TypeIndex, TypePtr> map;
   };
 
+  struct FunctionSet
+  {
+    void Add(std::string const &unique_id)
+    {
+      set.insert(unique_id);
+    }
+    bool Find(std::string const &unique_id)
+    {
+      auto it = set.find(unique_id);
+      return it != set.end();
+    }
+    std::unordered_set<std::string> set;
+  };
+
   OperatorMap       operator_map_;
   TypeMap           type_map_;
   TypeInfoArray     type_info_array_;
   TypeInfoMap       type_info_map_;
   RegisteredTypes   registered_types_;
   FunctionInfoArray function_info_array_;
+  FunctionSet       function_set_;
 
   SymbolTablePtr symbols_;
   TypePtr        null_type_;

@@ -54,7 +54,7 @@ public:
 
   // Operators
   ResolvableTo &operator=(ResolvableTo const &rhs) = default;
-  ResolvableTo &operator=(ResolvableTo &&rhs) noexcept = default;
+  ResolvableTo &operator=(ResolvableTo &&rhs) = default;
 
   virtual State GetState(Timepoint const & /*tp*/)
   {
