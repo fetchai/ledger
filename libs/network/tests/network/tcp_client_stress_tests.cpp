@@ -214,8 +214,8 @@ TEST(tcp_client_stress_gtest, open_echo_server_multiple_times)
 
 TEST(tcp_client_stress_gtest, NM_dead)
 {
-  std::cerr << "Info: Attempting to open a connection to a port\
-    that doesn't exist (NM dead)"
+  std::cerr << "Info: Attempting to open a connection to a port "
+               "that doesn't exist (NM dead)"
             << std::endl;
 
   uint16_t emptyPort = GetOpenPort();
@@ -230,8 +230,8 @@ TEST(tcp_client_stress_gtest, NM_dead)
 
 TEST(tcp_client_stress_gtest, NM_alive)
 {
-  std::cerr << "Info: Attempting to open a connection to a port\
-    that doesn't exist (NM alive)"
+  std::cerr << "Info: Attempting to open a connection to a port "
+               "that doesn't exist (NM alive)"
             << std::endl;
 
   uint16_t emptyPort = GetOpenPort();
@@ -248,8 +248,8 @@ TEST(tcp_client_stress_gtest, NM_alive)
 
 TEST(tcp_client_stress_gtest, NM_jittering)
 {
-  std::cerr << "Info: Attempting to open a connection to a port that\
-    doesn't exist (NM jittering)"
+  std::cerr << "Info: Attempting to open a connection to a port that "
+               "doesn't exist (NM jittering)"
             << std::endl;
 
   uint16_t emptyPort = GetOpenPort();
@@ -273,8 +273,8 @@ TEST(tcp_client_stress_gtest, NM_jittering)
 
 TEST(tcp_client_stress_gtest, NM_dead_existing_port)
 {
-  std::cerr << "Info: Attempting to open a connection to a port that\
-    does exist (NM dead)"
+  std::cerr << "Info: Attempting to open a connection to a port that "
+               "does exist (NM dead)"
             << std::endl;
 
   // Start echo server
@@ -290,8 +290,8 @@ TEST(tcp_client_stress_gtest, NM_dead_existing_port)
 
 TEST(tcp_client_stress_gtest, NM_alive_existing_port)
 {
-  std::cerr << "Info: Attempting to open a connection to a\
-    port that does exist (NM alive)"
+  std::cerr << "Info: Attempting to open a connection to a "
+               "port that does exist (NM alive)"
             << std::endl;
 
   // Start echo server
@@ -309,8 +309,8 @@ TEST(tcp_client_stress_gtest, NM_alive_existing_port)
 
 TEST(tcp_client_stress_gtest, NM_jittering_existing_port)
 {
-  std::cerr << "Info: Attempting to open a connection to a\
-    port that does exist (NM jittering)"
+  std::cerr << "Info: Attempting to open a connection to a "
+               "port that does exist (NM jittering)"
             << std::endl;
 
   // Start echo server
@@ -334,8 +334,8 @@ TEST(tcp_client_stress_gtest, NM_jittering_existing_port)
 
 TEST(tcp_client_stress_gtest, move_constr)
 {
-  std::cerr << "Info: Attempting to open multiple\
-    connections to a port that does exist (move constr)"
+  std::cerr << "Info: Attempting to open multiple "
+               "connections to a port that does exist (move constr)"
             << std::endl;
 
   // Start echo server
@@ -355,8 +355,8 @@ TEST(tcp_client_stress_gtest, move_constr)
 
 TEST(tcp_client_stress_gtest, open_connection_to_existing_port_async)
 {
-  std::cerr << "Info: Attempting to open multiple\
-    connections to a port that does exist, async"
+  std::cerr << "Info: Attempting to open multiple "
+               "connections to a port that does exist, async"
             << std::endl;
   std::string hostID     = "localhost";
   uint16_t    portNo     = 8080;
@@ -461,7 +461,6 @@ TEST(tcp_client_stress_gtest, bouncing_messages_off_server_and_counting)
     }
 
     std::size_t currentCount   = clientReceivedCount;
-    auto        t1             = TimePoint();
     std::size_t messagesToSend = MANY_CYCLES;
 
     for (std::size_t j = 0; j < messagesToSend; ++j)
@@ -482,14 +481,6 @@ TEST(tcp_client_stress_gtest, bouncing_messages_off_server_and_counting)
       }
     }
 
-    auto t2 = TimePoint();
-
-    if (printingClientResponses)
-    {
-      std::cerr << "Time for " << messagesToSend << " calls: " << TimeDifference(t1, t2)
-                << std::endl;
-    }
-
     nmanager.Stop();
   }
   SUCCEED() << "Success." << std::endl;
@@ -497,8 +488,8 @@ TEST(tcp_client_stress_gtest, bouncing_messages_off_server_and_counting)
 
 TEST(tcp_client_stress_gtest, bouncing_messages_off_server_and_counting_slow_clients)
 {
-  std::cerr << "Info: Bouncing messages off echo/loopback\
-    server and counting them, slow client "
+  std::cerr << "Info: Bouncing messages off echo/loopback "
+               "server and counting them, slow client "
             << std::endl;
 
   uint16_t emptyPort = GetOpenPort();
@@ -517,7 +508,6 @@ TEST(tcp_client_stress_gtest, bouncing_messages_off_server_and_counting_slow_cli
     }
 
     std::size_t currentCount   = clientReceivedCount;
-    auto        t1             = TimePoint();
     std::size_t messagesToSend = MID_CYCLES;
 
     for (std::size_t j = 0; j < messagesToSend; ++j)
@@ -538,14 +528,6 @@ TEST(tcp_client_stress_gtest, bouncing_messages_off_server_and_counting_slow_cli
       }
     }
 
-    auto t2 = TimePoint();
-
-    if (printingClientResponses)
-    {
-      std::cerr << "Time for " << messagesToSend << " calls: " << TimeDifference(t1, t2)
-                << std::endl;
-    }
-
     nmanager.Stop();
   }
   SUCCEED() << "Success." << std::endl;
@@ -553,8 +535,8 @@ TEST(tcp_client_stress_gtest, bouncing_messages_off_server_and_counting_slow_cli
 
 TEST(tcp_client_stress_gtest, bouncing_messages_off_server_and_check_order)
 {
-  std::cerr << "Info: Bouncing messages off echo/loopback\
-    server and checking ordering"
+  std::cerr << "Info: Bouncing messages off echo/loopback "
+               "server and checking ordering"
             << std::endl;
 
   uint16_t emptyPort = GetOpenPort();
@@ -576,7 +558,6 @@ TEST(tcp_client_stress_gtest, bouncing_messages_off_server_and_check_order)
     std::vector<message_type> sendData = CreateTestData(i);
 
     std::size_t expectCount = clientReceivedCount;
-    auto        t1          = TimePoint();
 
     for (auto &dat : sendData)
     {
@@ -593,14 +574,6 @@ TEST(tcp_client_stress_gtest, bouncing_messages_off_server_and_check_order)
         std::cerr << "Waiting for messages to be rec. " << clientReceivedCount << " of "
                   << expectCount << std::endl;
       }
-    }
-
-    auto t2 = TimePoint();
-
-    if (printingClientResponses)
-    {
-      std::cerr << "Time for " << sendData.size() << " calls: " << TimeDifference(t1, t2)
-                << std::endl;
     }
 
     // Verify we transmitted correctly
@@ -620,9 +593,8 @@ TEST(tcp_client_stress_gtest, bouncing_messages_off_server_and_check_order)
 
 TEST(tcp_client_stress_gtest, bouncing_messages_off_server_and_check_order_multiple_clients)
 {
-
-  std::cerr << "Info: Bouncing messages off echo/loopback\
-    server and checking ordering, multiple clients"
+  std::cerr << "Info: Bouncing messages off echo/loopback "
+               "server and checking ordering, multiple clients"
             << std::endl;
 
   uint16_t emptyPort = GetOpenPort();
@@ -652,7 +624,6 @@ TEST(tcp_client_stress_gtest, bouncing_messages_off_server_and_check_order_multi
     }
 
     std::size_t expectCount = clientReceivedCount;
-    auto        t1          = TimePoint();
 
     for (std::size_t k = 0; k < sendData.size(); ++k)
     {
@@ -671,14 +642,6 @@ TEST(tcp_client_stress_gtest, bouncing_messages_off_server_and_check_order_multi
         std::cerr << "Waiting for messages to be rec. " << clientReceivedCount << " of "
                   << expectCount << std::endl;
       }
-    }
-
-    auto t2 = TimePoint();
-
-    if (printingClientResponses)
-    {
-      std::cerr << "Time for " << sendData.size() << " calls: " << TimeDifference(t1, t2)
-                << std::endl;
     }
 
     // Verify we transmitted correctly
