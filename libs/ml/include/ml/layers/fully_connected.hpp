@@ -43,10 +43,10 @@ public:
 
   FullyConnected(SizeType in, SizeType out,
                  details::ActivationType activation_type = details::ActivationType::NOTHING,
-                 fetch::ml::details::RegularizationType regularization =
-                     fetch::ml::details::RegularizationType::NONE,
-                 DataType regularization_rate = static_cast<DataType>(0), std::string const &name = "FC",
-                 WeightsInit init_mode = WeightsInit::XAVIER_GLOROT)
+                 fetch::ml::details::RegularisationType regularisation =
+                     fetch::ml::details::RegularisationType::NONE,
+                 DataType           regularisation_rate = static_cast<DataType>(0),
+                 std::string const &name = "FC", WeightsInit init_mode = WeightsInit::XAVIER_GLOROT)
     : in_size_(in)
     , out_size_(out)
   {
@@ -68,7 +68,7 @@ public:
 
     this->AddInputNode(input);
     this->SetOutputNode(output);
-    this->SetRegularization(regularization, regularization_rate);
+    this->SetRegularisation(regularisation, regularisation_rate);
 
     ArrayType weights_data(std::vector<SizeType>({out, in}));
     this->Initialise(weights_data, init_mode);

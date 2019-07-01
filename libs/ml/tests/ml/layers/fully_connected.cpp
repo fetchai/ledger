@@ -140,7 +140,8 @@ TYPED_TEST(FullyConnectedTest, getStateDict)
 {
   using DataType = typename TypeParam::Type;
   fetch::ml::layers::FullyConnected<TypeParam> fc(
-      50, 10, fetch::ml::details::ActivationType::NOTHING,fetch::ml::details::RegularizationType::NONE, DataType{0}, "FCTest");
+      50, 10, fetch::ml::details::ActivationType::NOTHING,
+      fetch::ml::details::RegularisationType::NONE, DataType{0}, "FCTest");
   fetch::ml::StateDict<TypeParam> sd = fc.StateDict();
 
   EXPECT_EQ(sd.weights_, nullptr);

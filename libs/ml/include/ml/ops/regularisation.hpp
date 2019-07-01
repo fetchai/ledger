@@ -20,7 +20,7 @@
 namespace fetch {
 namespace ml {
 namespace details {
-enum class RegularizationType
+enum class RegularisationType
 {
   NONE,
   L1,

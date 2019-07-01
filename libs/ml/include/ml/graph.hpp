@@ -19,7 +19,7 @@
 
 #include "ml/meta/ml_type_traits.hpp"
 #include "ml/node.hpp"
-#include "ml/ops/regularization.hpp"
+#include "ml/ops/regularisation.hpp"
 #include "ml/ops/weights.hpp"
 
 #include <algorithm>
@@ -65,8 +65,8 @@ public:
   NodePtrType GetNode(std::string const &node_name) const;
   void        SetInput(std::string const &node_name, ArrayType data);
   void        ResetGraphCache(std::shared_ptr<NodeInterface<T>> const &n, bool input_size_changed);
-  void        SetRegularization(fetch::ml::details::RegularizationType regularization,
-                                DataType regularization_rate = DataType{0.0});
+  void        SetRegularisation(fetch::ml::details::RegularisationType regularisation,
+                                DataType regularisation_rate = DataType{0.0});
 
   virtual struct fetch::ml::StateDict<ArrayType> StateDict() const;
   virtual void LoadStateDict(struct fetch::ml::StateDict<T> const &dict);
@@ -79,7 +79,7 @@ public:
   void ResetGradients();
 
 private:
-  void ApplyRegularization();
+  void ApplyRegularisation();
 
   template <class OperationType>
   meta::IfIsTrainable<ArrayType, OperationType, void> AddTrainable(
@@ -99,23 +99,18 @@ private:
 protected:
   std::unordered_map<std::string, NodePtrType> nodes_;
 
-  std::unordered_map<std::string, SizeType> layers_lookup_;
-  std::vector<GraphPtrType>                 layers_;
-
   std::unordered_map<std::string, SizeType> trainable_lookup_;
   std::vector<TrainablePtrType>             trainable_;
-
-  fetch::ml::details::RegularizationType regularization_ =
-      fetch::ml::details::RegularizationType::NONE;
-  DataType regularization_rate_ = static_cast<DataType>(0);
 };
 
 template <typename ArrayType>
-void Graph<ArrayType>::SetRegularization(fetch::ml::details::RegularizationType regularization,
-                                         DataType                               regularization_rate)
+void Graph<ArrayType>::SetRegularisation(fetch::ml::details::RegularisationType regularisation,
+                                         DataType                               regularisation_rate)
 {
-  regularization_      = regularization;
-  regularization_rate_ = regularization_rate;
+  for (auto &t : trainable_)
+  {
+    t->SetRegularisation(regularisation, regularisation_rate);
+  }
 }
 
 /**
@@ -146,13 +141,8 @@ void Graph<ArrayType>::BackPropagate(std::string const &node_name, ArrayType con
 {
   nodes_[node_name]->BackPropagate(error_signal);
 
-  // Applies regularization to itself
-  ApplyRegularization();
-
-  for (auto &layer : layers_)
-  {
-    layer->ApplyRegularization();
-  }
+  // Applies regularisation to all trainables based on their configuration
+  ApplyRegularisation();
 }
 
 /**
@@ -169,25 +159,11 @@ void Graph<ArrayType>::Step(DataType learning_rate)
 }
 
 template <typename ArrayType>
-void Graph<ArrayType>::ApplyRegularization()
+void Graph<ArrayType>::ApplyRegularisation()
 {
-  if (regularization_ == fetch::ml::details::RegularizationType::NONE)
-  {
-    return;
-  }
   for (auto &t : trainable_)
   {
-    switch (regularization_)
-    {
-    case fetch::ml::details::RegularizationType::L1:
-      t->L1Regularization(regularization_rate_);
-      break;
-    case fetch::ml::details::RegularizationType::L2:
-      t->L2Regularization(regularization_rate_);
-      break;
-    default:
-      break;
-    }
+    t->ApplyRegularisation();
   }
 }
 
@@ -400,9 +376,6 @@ meta::IfIsGraph<ArrayType, OperationType, void> Graph<ArrayType>::AddTrainable(
     trainable_.emplace_back(op->trainable_.at(trainable.second));
     trainable_lookup_[resolved_name] = trainable_.size() - 1;
   }
-
-  layers_.emplace_back(op);
-  layers_lookup_[name] = trainable_.size() - 1;
 }
 
 /**
