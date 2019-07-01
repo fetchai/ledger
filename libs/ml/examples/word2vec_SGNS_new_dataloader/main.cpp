@@ -158,7 +158,7 @@ struct TrainingParams
 
   SizeType    batch_size      = 100000;      // training data batch size
   SizeType    embedding_size  = 32;       // dimension of embedding vec
-  SizeType    training_epochs = 5;        // total number of training epochs
+  SizeType    training_epochs = 1;                                                                                                                                                                                                                                                                   5;        // total number of training epochs
   double      learning_rate   = 0.05;      // alpha - the learning rate
 
   SizeType    k               = 10;       // how many nearest neighbours to compare against
