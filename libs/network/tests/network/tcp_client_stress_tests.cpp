@@ -18,7 +18,6 @@
 
 #include "core/byte_array/encoders.hpp"
 #include "core/commandline/params.hpp"
-#include "helper_functions.hpp"
 #include "network/tcp/loopback_server.hpp"
 #include "network/tcp/tcp_client.hpp"
 #include "network/tcp/tcp_server.hpp"
@@ -35,7 +34,6 @@
 // transmit and receive functionality by looping back
 
 using namespace fetch::network;
-using namespace fetch::common;
 using namespace fetch::byte_array;
 
 static constexpr std::size_t MANY_CYCLES = 200;
