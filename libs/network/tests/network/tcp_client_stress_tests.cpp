@@ -246,7 +246,7 @@ TEST(tcp_client_stress_gtest, NM_alive)
   SUCCEED() << "Success." << std::endl;
 }
 
-TEST(tcp_client_stress_gtest, NM_jittering)
+TEST(tcp_client_stress_gtest, DISABLED_NM_jittering)
 {
   std::cerr << "Info: Attempting to open a connection to a port that "
                "doesn't exist (NM jittering)"
