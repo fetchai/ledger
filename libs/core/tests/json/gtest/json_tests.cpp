@@ -16,14 +16,15 @@
 //
 //------------------------------------------------------------------------------
 
-#include "./json_long_strings.hpp"
 #include "core/json/document.hpp"
 #include "core/json/exceptions.hpp"
+#include "json_long_strings.hpp"
 
 #include "gtest/gtest.h"
 
 #include <memory>
 #include <ostream>
+#include <sstream>
 
 using namespace fetch::json;
 using namespace fetch::byte_array;

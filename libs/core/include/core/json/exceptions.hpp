@@ -22,7 +22,9 @@
 
 #include <exception>
 #include <sstream>
+#include <string>
 #include <utility>
+
 namespace fetch {
 namespace json {
 

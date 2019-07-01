@@ -17,9 +17,11 @@
 //
 //------------------------------------------------------------------------------
 
+#include <ostream>
 #include <sstream>
 #include <string>
 #include <unordered_map>
+#include <utility>
 
 namespace fetch {
 namespace detail {
