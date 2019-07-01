@@ -282,7 +282,8 @@ void MatrixMultiply<T>::UpdateContainersForward(VecTensorType const &inputs)
         ArrayType({inputs.at(0).get().shape().at(0), inputs.at(0).get().shape().at(1)});
     fwd_in2_slice_tensor_ =
         ArrayType({inputs.at(1).get().shape().at(0), inputs.at(1).get().shape().at(1)});
-    output_slice_tensor_ = ArrayType({inputs.at(0).get().shape().at(0), inputs.at(1).get().shape().at(1)});
+    output_slice_tensor_ =
+        ArrayType({inputs.at(0).get().shape().at(0), inputs.at(1).get().shape().at(1)});
   }
 }
 
