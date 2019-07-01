@@ -72,7 +72,6 @@ public:
     return loader_.IsDone();
   }
 
-private:
   fetch::ml::dataloaders::CommodityDataLoader<fetch::math::Tensor<float>,
                                               fetch::math::Tensor<float>>
       loader_;

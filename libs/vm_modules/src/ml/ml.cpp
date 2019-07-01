@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "vm_modules/ml/ml.hpp"
+#include "vm_modules/math/tensor.hpp"
 
 namespace fetch {
 namespace vm_modules {
@@ -25,12 +26,12 @@ namespace ml {
 void BindAll(std::shared_ptr<fetch::vm::Module> &module)
 {
 
-  math::CreateTensor(*module);
+  math::VMTensor::Bind(*module);
   VMStateDict::Bind(*module);
   VMGraph::Bind(*module);
 
-  TrainingPair::Bind(*module);
-  MnistDataLoader::Bind(*module);
+  VMTrainingPair::Bind(*module);
+  VMMnistDataLoader::Bind(*module);
   VMCommodityDataLoader::Bind(*module);
 
   VMAdamOptimiser::Bind(*module);
