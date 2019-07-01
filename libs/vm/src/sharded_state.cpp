@@ -71,7 +71,7 @@ protected:
   }
 
 private:
-  inline Ptr<String> ComposeFullKey(Ptr<String> const &key)
+  Ptr<String> ComposeFullKey(Ptr<String> const &key)
   {
     if (!key)
     {
@@ -82,22 +82,22 @@ private:
     return new String{vm_, name_ + "." + key->str};
   }
 
-  inline TemplateParameter1 GetIndexedValueInternal(Ptr<String> const &index)
+  TemplateParameter1 GetIndexedValueInternal(Ptr<String> const &index)
   {
     auto state{
         IState::ConstructIntrinsic(vm_, TypeIds::Unknown, value_type_id_, ComposeFullKey(index))};
     return state->Get();
   }
 
-  inline TemplateParameter1 GetIndexedValueInternal(Ptr<String> const &      index,
-                                                    TemplateParameter1 const default_value)
+  TemplateParameter1 GetIndexedValueInternal(Ptr<String> const &      index,
+                                             TemplateParameter1 const default_value)
   {
     auto state{
         IState::ConstructIntrinsic(vm_, TypeIds::Unknown, value_type_id_, ComposeFullKey(index))};
     return state->Get(default_value);
   }
 
-  inline void SetIndexedValueInternal(Ptr<String> const &index, TemplateParameter1 const &value_v)
+  void SetIndexedValueInternal(Ptr<String> const &index, TemplateParameter1 const &value_v)
   {
     auto state{
         IState::ConstructIntrinsic(vm_, TypeIds::Unknown, value_type_id_, ComposeFullKey(index))};

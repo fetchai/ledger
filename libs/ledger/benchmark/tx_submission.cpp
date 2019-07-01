@@ -190,7 +190,7 @@ void TransientStoreExpectedOperation(benchmark::State &state)
   {
     state.PauseTiming();
     // Number of Tx to send is state arg
-    TransactionList transactions = GenerateTransactions(size_t(state.range(0)), true);
+    TransactionList transactions = GenerateTransactions(std::size_t(state.range(0)), true);
     state.ResumeTiming();
 
     for (auto const &tx : transactions)

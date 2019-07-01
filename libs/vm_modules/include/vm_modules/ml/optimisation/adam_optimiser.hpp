@@ -19,6 +19,7 @@
 
 #include "ml/optimisation/adam_optimiser.hpp"
 #include "vm_modules/math/tensor.hpp"
+#include "vm_modules/ml/graph.hpp"
 #include "vm_modules/ml/training_pair.hpp"
 
 #include "ml/graph.hpp"
@@ -63,7 +64,7 @@ public:
                                label_node_name->str, output_node_names->str);
   }
 
-  DataType Run(fetch::vm::Ptr<fetch::vm_modules::ml::MnistDataLoader> const &loader,
+  DataType Run(fetch::vm::Ptr<fetch::vm_modules::ml::VMMnistDataLoader> const &loader,
                uint64_t batch_size, uint64_t subset_size)
   {
     return optimiser_.Run(loader->loader_, batch_size, subset_size);

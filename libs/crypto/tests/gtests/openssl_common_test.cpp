@@ -29,13 +29,13 @@ class ECDSACurveTest : public testing::Test
 {
 protected:
   template <int P_ECDSA_Curve_NID>
-  void test_ECDSACurve(const char *const expected_sn, const std::size_t expected_privateKeySize,
+  void test_ECDSACurve(const uint8_t expected_sn, const std::size_t expected_privateKeySize,
                        const std::size_t expected_publicKeySize,
                        const std::size_t expected_signatureSize)
   {
     using ecdsa_curve_type = ECDSACurve<P_ECDSA_Curve_NID>;
     EXPECT_EQ(ecdsa_curve_type::nid, P_ECDSA_Curve_NID);
-    ASSERT_STREQ(expected_sn, ecdsa_curve_type::sn);
+    ASSERT_EQ(expected_sn, ecdsa_curve_type::sn);
     EXPECT_EQ(expected_privateKeySize, ecdsa_curve_type::privateKeySize);
     EXPECT_EQ(expected_publicKeySize, ecdsa_curve_type::publicKeySize);
     EXPECT_EQ(expected_signatureSize, ecdsa_curve_type::signatureSize);
@@ -44,7 +44,7 @@ protected:
 
 TEST_F(ECDSACurveTest, test_ECDSACurve_for_NID_secp256k1)
 {
-  test_ECDSACurve<NID_secp256k1>(SN_secp256k1, 32, 64, 64);
+  test_ECDSACurve<NID_secp256k1>(fetch::crypto::SignatureType::SECP256K1_UNCOMPRESSED, 32, 64, 64);
 }
 
 class ECDSAAffineCoordinatesConversionTest : public testing::Test

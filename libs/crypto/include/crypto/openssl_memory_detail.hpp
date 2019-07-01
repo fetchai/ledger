@@ -79,7 +79,7 @@ struct OpenSSLDeleter
   using DeleterPrimitive                          = T_DeleterPrimitive;
   static constexpr eDeleteStrategy deleteStrategy = P_DeleteStrategy;
 
-  constexpr OpenSSLDeleter() noexcept = default;
+  constexpr OpenSSLDeleter() = default;
 
   void operator()(T *ptr) const
   {

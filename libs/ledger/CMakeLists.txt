@@ -27,6 +27,7 @@ target_link_libraries(fetch-ledger
                              fetch-vm-modules
                              fetch-metrics
                              fetch-moment
+                             fetch-dkg
                              vendor-msgpack)
 
 add_test_target()
