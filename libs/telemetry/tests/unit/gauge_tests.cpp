@@ -116,7 +116,7 @@ TYPED_TEST(GeneralGaugeTests, SetValue)
 TYPED_TEST(FloatGaugeTests, CheckSerialisation)
 {
   this->gauge_->set(3.1456f);
-  EXPECT_FLOAT_EQ(this->gauge_->get(), static_cast<TypeParam>(3.1456f));
+  EXPECT_FLOAT_EQ(static_cast<float>(this->gauge_->get()), 3.1456f);
 
   static char const *EXPECTED_TEXT = R"(# HELP sample_gauge Description of gauge
 # TYPE sample_gauge gauge
