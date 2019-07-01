@@ -39,7 +39,7 @@ public:
 
   /// @name Entropy Generator Interface
   /// @{
-  uint64_t GenerateEntropy(Digest block_digest, uint64_t block_number) override;
+  Status GenerateEntropy(Digest block_digest, uint64_t block_number, uint64_t &entropy) override;
   /// @}
 };
 
