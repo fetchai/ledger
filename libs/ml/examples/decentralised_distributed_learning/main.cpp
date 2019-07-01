@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "math/statistics/mean.hpp"
 #include "math/tensor.hpp"
 #include "ml/dataloaders/mnist_loaders/mnist_loader.hpp"
 #include "ml/graph.hpp"
@@ -89,7 +90,7 @@ public:
         ArrayType results     = g_.Evaluate("Softmax").Copy();
         ArrayType loss_tensor = g_.Evaluate("Error").Copy();
 
-        loss += fetch::math::Mean(loss_tensor);
+        loss += fetch::math::statistics::Mean(loss_tensor);
         loss_tensor.Fill(static_cast<DataType>(1));
         g_.BackPropagate("Error", loss_tensor);
       }

@@ -211,6 +211,11 @@ std::pair<std::string, std::vector<std::string>> ReadArchitecture(
 
   g->AddNode<PlaceHolder<ArrayType>>(layer_name, {});  // add node for input
 
+  // Add label node
+  std::string label_name = "num_label";
+  g->AddNode<PlaceHolder<ArrayType>>(label_name, {});  // add node for input
+  node_names.push_back(label_name);
+
   // Iterate through fields adding nodes to graph
   while (previous_layer_name.find("output") == std::string::npos)
   {
@@ -263,6 +268,11 @@ std::pair<std::string, std::vector<std::string>> ReadArchitecture(
     throw std::runtime_error("Unexpected node type");
   }
 
+  // Add loss function
+  std::string error_output =
+      g->AddNode<fetch::ml::ops::MeanSquareError<ArrayType>>("num_error", {layer_name, label_name});
+  node_names.emplace_back(error_output);
+
   return std::make_pair(dataname, node_names);
 }
 
@@ -300,7 +310,7 @@ DataType get_loss(std::shared_ptr<GraphType> const &g_ptr, std::string const &te
     g_ptr->SetInput(node_names.at(1), input.first);
 
     auto loss_tensor = g_ptr->Evaluate(node_names.back(), false);
-    loss += fetch::math::Mean(loss_tensor);
+    loss += fetch::math::statistics::Mean(loss_tensor);
     loss_counter++;
   }
 
@@ -411,7 +421,7 @@ int main(int argc, char **argv)
       auto input = loader.GetNext();
       g_ptr->SetInput("num_input", input.second.at(0).Transpose());
 
-      auto slice_output = g_ptr->Evaluate(node_names.back(), false);
+      auto slice_output = g_ptr->Evaluate(node_names.at(node_names.size() - 2), false);
       output.Slice(j).Assign(slice_output);
       test_y.Slice(j).Assign(input.first);
       j++;
@@ -518,7 +528,7 @@ int main(int argc, char **argv)
       auto input = loader.GetNext();
       g_ptr->SetInput("num_input", input.second.at(0).Transpose());
 
-      auto slice_output = g_ptr->Evaluate(node_names.back(), false);
+      auto slice_output = g_ptr->Evaluate(node_names.at(node_names.size() - 2), false);
       // write slice_output to csv
       if (first)
       {

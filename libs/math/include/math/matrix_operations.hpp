@@ -519,28 +519,6 @@ ArrayType ReduceSum(ArrayType const &obj1, SizeType axis)
   }
 }
 
-/**
- * return the mean of all elements in the array
- * @tparam T
- * @tparam C
- * @param obj1
- * @param ret
- */
-template <typename ArrayType, typename T, typename = std::enable_if_t<meta::IsArithmetic<T>>>
-meta::IfIsMathArray<ArrayType, void> Mean(ArrayType const &array1, T &ret)
-{
-  Sum(array1, ret);
-  ret /= static_cast<typename ArrayType::Type>(array1.size());
-}
-
-template <typename ArrayType>
-meta::IfIsMathArray<ArrayType, typename ArrayType::Type> Mean(ArrayType const &array1)
-{
-  typename ArrayType::Type ret;
-  Mean(array1, ret);
-  return ret;
-}
-
 template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, void> ReduceMean(ArrayType const &                   obj1,
                                                 typename ArrayType::SizeType const &axis,
