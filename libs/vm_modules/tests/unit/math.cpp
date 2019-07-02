@@ -121,5 +121,24 @@ TEST_F(MathTests, pow_test)
   ASSERT_EQ(result, gt);
 }
 
+TEST_F(MathTests, sqrt_test)
+{
+  static char const *TEXT = R"(
+    function main() : Float32
+      return sqrt(3.5f);
+    endfunction
+  )";
 
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_TRUE(toolkit.Run());
+
+  Variant res;
+  ASSERT_TRUE(toolkit.Run(&res));
+  auto const result = res.Get<float_t>();
+
+  float gt = 3.5;
+  gt       = fetch::math::Sqrt(gt);
+
+  ASSERT_EQ(result, gt);
+}
 }  // namespace
