@@ -18,6 +18,7 @@
 
 #include "math/standard_functions/abs.hpp"
 #include "math/standard_functions/exp.hpp"
+#include "math/standard_functions/pow.hpp"
 
 #include "vm_modules/math/math.hpp"
 #include "vm_test_toolkit.hpp"
@@ -97,4 +98,28 @@ TEST_F(MathTests, log_test)
 
   ASSERT_EQ(result, gt);
 }
+
+TEST_F(MathTests, pow_test)
+{
+  static char const *TEXT = R"(
+    function main() : Float32
+      return pow(3.5f, 2.0f);
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_TRUE(toolkit.Run());
+
+  Variant res;
+  ASSERT_TRUE(toolkit.Run(&res));
+  auto const result = res.Get<float_t>();
+
+  float gt  = 3.5;
+  float exp = 2.0;
+  gt        = fetch::math::Pow(gt, exp);
+
+  ASSERT_EQ(result, gt);
+}
+
+
 }  // namespace
