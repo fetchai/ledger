@@ -23,8 +23,6 @@
 
 #include <memory>
 
-#include <iostream>
-
 namespace {
 
 using fetch::byte_array::ConstByteArray;
@@ -50,7 +48,7 @@ protected:
     work_queue_.reset();
   }
 
-  WorkPtr CreateWork(WorkScore score, uint64_t nonce)
+  WorkPtr CreateWork(WorkScore score, uint64_t nonce = 0)
   {
     auto work = std::make_shared<Work>();
     work->UpdateScore(score);
@@ -61,8 +59,53 @@ protected:
   WorkQueuePtr work_queue_;
 };
 
+TEST_F(WorkQueueTests, CheckBasicOrdering)
+{
+  // add items into the work queue
+  work_queue_->push(CreateWork(500));
+  work_queue_->push(CreateWork(200));
+  work_queue_->push(CreateWork(100));
+  work_queue_->push(CreateWork(400));
+  work_queue_->push(CreateWork(300));
 
-TEST_F(WorkQueueTests, CheckOrdering)
+  // ensure items come out of queue in the correct order
+  {
+    auto item = work_queue_->top();
+    work_queue_->pop();
+
+    EXPECT_EQ(item->score(), 100);
+  }
+
+  {
+    auto item = work_queue_->top();
+    work_queue_->pop();
+
+    EXPECT_EQ(item->score(), 200);
+  }
+
+  {
+    auto item = work_queue_->top();
+    work_queue_->pop();
+
+    EXPECT_EQ(item->score(), 300);
+  }
+
+  {
+    auto item = work_queue_->top();
+    work_queue_->pop();
+
+    EXPECT_EQ(item->score(), 400);
+  }
+
+  {
+    auto item = work_queue_->top();
+    work_queue_->pop();
+
+    EXPECT_EQ(item->score(), 500);
+  }
+}
+
+TEST_F(WorkQueueTests, CheckOrderingWhenSameScore)
 {
   auto item1 = CreateWork(2000, 12);
   auto item2 = CreateWork(2000, 12321321);
