@@ -1,8 +1,8 @@
 #
-# F E T C H   V M   L A N G
+# E T C H
 #
 cmake_minimum_required(VERSION 3.5 FATAL_ERROR)
-project(fetch-etch)
+project(etch)
 
 setup_compiler()
 
