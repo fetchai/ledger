@@ -16,4 +16,3 @@ setup_compiler()
 
 setup_library(fetch-vm)
 target_link_libraries(fetch-vm PUBLIC fetch-math fetch-core fetch-ledger)
-
