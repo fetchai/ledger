@@ -22,6 +22,7 @@
 #include "ledger/chain/consensus/bad_miner.hpp"
 #include "ledger/chain/consensus/dummy_miner.hpp"
 #include "logging_http_module.hpp"
+#include "telemetry_http_module.hpp"
 
 #include "ledger/chaincode/contract_http_interface.hpp"
 #include "ledger/dag/dag_interface.hpp"
@@ -253,6 +254,7 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
         std::make_shared<ledger::TxQueryHttpInterface>(*storage_),
         std::make_shared<ledger::ContractHttpInterface>(*storage_, tx_processor_),
         std::make_shared<LoggingHttpModule>(),
+        std::make_shared<TelemetryHttpModule>(),
         std::make_shared<HealthCheckHttpModule>(chain_, *main_chain_service_, block_coordinator_)}
 {
 

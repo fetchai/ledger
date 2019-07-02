@@ -26,6 +26,8 @@
 #include "miner/transaction_layout_queue.hpp"
 #include "vectorise/threading/pool.hpp"
 
+#include "telemetry/telemetry.hpp"
+
 #include <list>
 
 namespace fetch {
@@ -99,6 +101,15 @@ private:
   /// @{
   mutable Mutex mining_pool_lock_{__LINE__, __FILE__};  ///< Mining pool lock (priority 0)
   Queue         mining_pool_;                           ///< The main mining queue for the node
+  /// @}
+
+  /// @name Telemetry
+  /// @{
+  telemetry::GaugePtr<uint64_t> mining_pool_size_;
+  telemetry::GaugePtr<uint64_t> max_mining_pool_size_;
+  telemetry::GaugePtr<uint64_t> max_pending_pool_size_;
+  telemetry::CounterPtr         duplicate_count_;
+  telemetry::CounterPtr         duplicate_filtered_count_;
   /// @}
 };
 
