@@ -40,7 +40,7 @@ public:
 
   /**
    * Applies regularisation gradient on specified tensor
-   * L2 regularisation gradient, where w=weight, a=regularization_rate
+   * L2 regularisation gradient, where w=weight, a=regularisation_rate
    * f'(w)=a*(2*w)
    * @param weight tensor reference
    * @param regularisation_rate
