@@ -17,8 +17,14 @@
 //------------------------------------------------------------------------------
 
 #include "math/standard_functions/abs.hpp"
+#include "math/standard_functions/exp.hpp"
+
 #include "vm_modules/math/math.hpp"
 #include "vm_test_toolkit.hpp"
+
+#include "gmock/gmock.h"
+
+using namespace fetch::vm;
 
 namespace {
 
@@ -32,15 +38,63 @@ public:
 TEST_F(MathTests, abs_test)
 {
   static char const *TEXT = R"(
-    function main()
-      print(abs(-1));
+    function main() : Int32
+      return abs(-1);
     endfunction
   )";
 
   ASSERT_TRUE(toolkit.Compile(TEXT));
   ASSERT_TRUE(toolkit.Run());
 
-  ASSERT_EQ(stdout.str(), std::to_string(fetch::math::Abs(-1)));
+  Variant res;
+  ASSERT_TRUE(toolkit.Run(&res));
+  auto const result = res.Get<int>();
+
+  int gt = -1;
+  fetch::math::Abs(gt, gt);
+
+  ASSERT_EQ(result, gt);
 }
 
+TEST_F(MathTests, exp_test)
+{
+  static char const *TEXT = R"(
+    function main() : Float32
+      return exp(3.5f);
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_TRUE(toolkit.Run());
+
+  Variant res;
+  ASSERT_TRUE(toolkit.Run(&res));
+  auto const result = res.Get<float_t>();
+
+  float gt = 3.5;
+  fetch::math::Exp(gt, gt);
+
+  ASSERT_EQ(result, gt);
+}
+
+TEST_F(MathTests, log_test)
+{
+  static char const *TEXT = R"(
+    function main() : Float32
+      return log(3.5f);
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_TRUE(toolkit.Run());
+
+  Variant res;
+  ASSERT_TRUE(toolkit.Run(&res));
+  auto const result = res.Get<float_t>();
+
+  float gt = 3.5;
+  fetch::math::Log(gt, gt);
+
+  ASSERT_EQ(result, gt);
+}
 }  // namespace
