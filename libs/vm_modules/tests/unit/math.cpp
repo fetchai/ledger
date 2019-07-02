@@ -173,7 +173,6 @@ TEST_F(MathTests, tensor_state_test)
   EXPECT_CALL(toolkit.observer(), Read(state_name, _, _));
 
   ASSERT_TRUE(toolkit.Compile(tensor_deserialiase_src));
-  ASSERT_TRUE(toolkit.Run());
 
   Variant res;
   ASSERT_TRUE(toolkit.Run(&res));
