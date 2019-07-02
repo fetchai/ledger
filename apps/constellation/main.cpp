@@ -18,27 +18,34 @@
 
 #include "bootstrap_monitor.hpp"
 #include "constellation.hpp"
-#include "fetch_version.hpp"
-
+#include "core/byte_array/byte_array.hpp"
+#include "core/byte_array/const_byte_array.hpp"
+#include "core/byte_array/decoders.hpp"
 #include "core/commandline/cli_header.hpp"
-#include "core/commandline/parameter_parser.hpp"
 #include "core/commandline/params.hpp"
-#include "core/json/document.hpp"
+#include "core/logger.hpp"
 #include "core/macros.hpp"
+#include "core/runnable.hpp"
 #include "core/string/to_lower.hpp"
 #include "crypto/ecdsa.hpp"
 #include "crypto/fetch_identity.hpp"
+#include "crypto/identity.hpp"
 #include "crypto/prover.hpp"
-#include "metrics/metrics.hpp"
+#include "fetch_version.hpp"
+#include "ledger/chain/address.hpp"
 #include "network/adapters.hpp"
-#include "network/fetch_asio.hpp"
-#include "network/management/network_manager.hpp"
-#include "variant/variant.hpp"
+#include "network/p2pservice/manifest.hpp"
+#include "network/p2pservice/p2p_service_defs.hpp"
+#include "network/peer.hpp"
+#include "network/uri.hpp"
 
 #include <atomic>
 #include <csignal>
+#include <cstddef>
 #include <cstdint>
 #include <cstdlib>
+#include <exception>
+#include <fstream>
 #include <iostream>
 #include <memory>
 #include <stdexcept>
@@ -226,6 +233,8 @@ struct CommandLineArguments
     std::string bootstrap_address;
     std::string config_path;
     std::string raw_peers;
+    std::string experimental_features;
+    std::string beacon_address;
     ManifestPtr manifest;
     uint32_t    num_lanes{0};
 
@@ -254,9 +263,13 @@ struct CommandLineArguments
     p.add(args.cfg.transient_peers,       "transient-peers",       "The number of the peers which will be random in answer sent to peer requests",                 DEFAULT_TRANSIENT_PEERS);
     p.add(args.cfg.peers_update_cycle_ms, "peers-update-cycle-ms", "How fast to do peering changes",                                                               uint32_t{0});
     p.add(args.cfg.disable_signing,       "disable-signing",       "Do not sign outbound packets or verify those inbound, in trusted network",                     false);
-    p.add(args.cfg.sign_broadcasts,       "sign-broadcasts",       "Sign and verify broadcast packets",                                                            false);
+    p.add(args.cfg.dump_state_file,       "dump-state",            "Dump a state file on shutdown",                                                                false);
+    p.add(args.cfg.load_state_file,       "load-state",            "Load a state file as genesis on startup",                                                      false);
     p.add(standalone_flag,                "standalone",            "Run node on its own (useful for testing and development). Incompatible with -private-network", false);
     p.add(private_flag,                   "private-network",       "Run node as part of a private network (disables bootstrap). Incompatible with -standalone",    false);
+    p.add(experimental_features,          "experimental",          "Enable selected experimental features",                                                        std::string{});
+    p.add(args.cfg.proof_of_stake,        "pos",                   "Enable proof of stake features",                                                               false);
+    p.add(beacon_address,                 "beacon",                "The base64 encoded address of the beacon",                                                     std::string{});
     // clang-format on
 
     // parse the args
@@ -286,9 +299,23 @@ struct CommandLineArguments
     UpdateConfigFromEnvironment(args.cfg.peers_update_cycle_ms, "CONSTELLATION_PEERS_UPDATE_CYCLE_MS");
     UpdateConfigFromEnvironment(args.cfg.disable_signing,       "CONSTELLATION_DISABLE_SIGNING");
     UpdateConfigFromEnvironment(args.cfg.sign_broadcasts,       "CONSTELLATION_SIGN_BROADCASTS");
+    UpdateConfigFromEnvironment(args.cfg.dump_state_file,       "CONSTELLATION_DUMP_STATE_FILE");
+    UpdateConfigFromEnvironment(args.cfg.load_state_file,       "CONSTELLATION_LOAD_STATE_FILE");
     UpdateConfigFromEnvironment(standalone_flag,                "CONSTELLATION_STANDALONE");
     UpdateConfigFromEnvironment(private_flag,                   "CONSTELLATION_PRIVATE_NETWORK");
+    UpdateConfigFromEnvironment(experimental_features,          "CONSTELLATION_EXPERIMENTAL");
+    UpdateConfigFromEnvironment(args.cfg.proof_of_stake,        "CONSTELLATION_POS");
+    UpdateConfigFromEnvironment(beacon_address,                 "CONSTELLATION_BEACON_ADDRESS");
     // clang-format on
+
+    // parse the feature flags (if they exist)
+    args.cfg.features.Parse(experimental_features);
+
+    // beacon address
+    if (!beacon_address.empty())
+    {
+      args.cfg.beacon_address = fetch::byte_array::FromBase64(beacon_address);
+    }
 
     // update the peers
     args.SetPeers(raw_peers);
@@ -547,6 +574,16 @@ struct CommandLineArguments
       s << peer.uri() << ' ';
     }
 
+    // experimental features
+    if (!args.cfg.features.empty())
+    {
+      s << "\nexperimental features.....: ";
+      for (auto const &feature : args.cfg.features)
+      {
+        s << feature << ' ';
+      }
+    }
+
     s << '\n' << "manifest.......: " << args.cfg.manifest.ToString() << '\n';
 
     // terminate and flush
@@ -691,7 +728,8 @@ int main(int argc, char **argv)
     FETCH_LOG_INFO(LOGGING_NAME, "Configuration:\n", args);
 
     // create and run the constellation
-    auto constellation = std::make_unique<fetch::Constellation>(std::move(p2p_key), args.cfg);
+    auto constellation =
+        std::make_unique<fetch::Constellation>(std::move(p2p_key), std::move(args.cfg));
 
     // update the instance pointer
     gConstellationInstance = constellation.get();

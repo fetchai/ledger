@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/const_byte_array.hpp"
+#include "core/serializers/byte_array.hpp"
 
 #include <array>
 #include <cstddef>
@@ -88,11 +89,16 @@ public:
   /// @{
   ConstByteArray const &address() const;
   ConstByteArray const &display() const;
+  bool                  empty() const;
   /// @}
 
   // Operators
   bool operator==(Address const &other) const;
   bool operator!=(Address const &other) const;
+  bool operator<(Address const &other) const;
+  bool operator<=(Address const &other) const;
+  bool operator>(Address const &other) const;
+  bool operator>=(Address const &other) const;
 
   Address &operator=(Address const &) = default;
   Address &operator=(Address &&) = default;
@@ -123,6 +129,16 @@ inline Address::ConstByteArray const &Address::display() const
 }
 
 /**
+ * Determine if the address is empty or not
+ *
+ * @return true if empty otherwise false
+ */
+inline bool Address::empty() const
+{
+  return address_.empty();
+}
+
+/**
  * Equality operator for the address
  *
  * @param other The other address to compare against
@@ -144,7 +160,58 @@ inline bool Address::operator!=(Address const &other) const
   return !(*this == other);
 }
 
+inline bool Address::operator<(Address const &other) const
+{
+  return address_ < other.address_;
+}
+
+inline bool Address::operator<=(Address const &other) const
+{
+  return address_ <= other.address_;
+}
+
+inline bool Address::operator>(Address const &other) const
+{
+  return address_ > other.address_;
+}
+
+inline bool Address::operator>=(Address const &other) const
+{
+  return address_ >= other.address_;
+}
+
 }  // namespace ledger
+
+namespace serializers {
+
+
+template< typename D >
+struct MapSerializer< ledger::Address, D > // TODO: Consider using forward to bytearray
+{
+public:
+  using Type = ledger::Address;
+  using DriverType = D;
+
+  static uint8_t const ADDRESS = 1;
+
+  template< typename Constructor >
+  static void Serialize(Constructor & map_constructor, Type const & address)
+  {
+    auto map = map_constructor(1);
+    map.Append(ADDRESS, address);
+  }
+
+  template< typename MapDeserializer >
+  static void Deserialize(MapDeserializer & map, Type & address)
+  {
+    uint8_t key;
+    byte_array::ConstByteArray data;  
+    map.GetNextKeyPair(key, data);
+    address = Type{data};
+  }  
+};
+}
+
 }  // namespace fetch
 
 namespace std {

@@ -17,15 +17,15 @@
 //------------------------------------------------------------------------------
 
 #include "ml/graph.hpp"
+
 #include "math/tensor.hpp"
+#include "ml/layers/self_attention.hpp"
 #include "ml/ops/activations/relu.hpp"
 #include "ml/ops/multiply.hpp"
 #include "ml/ops/placeholder.hpp"
 #include "ml/ops/subtract.hpp"
 
-#include "ml/layers/self_attention.hpp"
-
-#include <gtest/gtest.h>
+#include "gtest/gtest.h"
 
 template <typename T>
 class GraphTest : public ::testing::Test

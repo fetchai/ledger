@@ -17,9 +17,11 @@
 //------------------------------------------------------------------------------
 
 #include "ml/ops/activations/logsigmoid.hpp"
+
 #include "math/tensor.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
-#include <gtest/gtest.h>
+
+#include "gtest/gtest.h"
 
 template <typename T>
 class LogSigmoidTest : public ::testing::Test

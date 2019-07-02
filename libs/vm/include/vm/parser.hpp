@@ -72,7 +72,7 @@ private:
 
   using StringSet = std::unordered_set<std::string>;
 
-  StringSet                template_names_;
+  StringSet const          template_names_;
   std::vector<Token>       tokens_;
   int                      index_;
   Token *                  token_;
@@ -80,7 +80,7 @@ private:
   std::vector<NodeKind>    blocks_;
   State                    state_;
   bool                     found_expression_terminator_;
-  std::vector<size_t>      groups_;
+  std::vector<std::size_t> groups_;
   std::vector<Expr>        operators_;
   std::vector<Expr>        rpn_;
   std::vector<Expr>        infix_stack_;

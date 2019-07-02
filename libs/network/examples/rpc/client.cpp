@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "network/muddle/rpc/client.hpp"
+
 #include "core/logger.hpp"
 #include "core/serializers/byte_array.hpp"
 #include "network/muddle/muddle.hpp"
@@ -83,7 +84,6 @@ int main()
     std::cout << "p1 is not yet fulfilled" << std::endl;
   }
 
-  FETCH_LOG_PROMISE();
   p1->Wait();
 
   // Converting to a type implicitly invokes Wait (as is the case for p2)
@@ -117,11 +117,9 @@ int main()
   {
     promises.push_back(client->CallSpecificAddress(target_address, MYPROTO, ADD, 4, 3));
   }
-  fetch::logger.Highlight("DONE!");
 
   std::cout << "Waiting for last promise: " << promises.back()->id() << std::endl;
 
-  FETCH_LOG_PROMISE();
   promises.back()->Wait(false);
 
   std::size_t failed = 0, not_fulfilled = 0;

@@ -20,10 +20,11 @@
 #include "core/byte_array/byte_array.hpp"
 #include "core/serializers/stl_types.hpp"
 #include "ledger/chain/address.hpp"
-#include "ledger/chain/address_rpc_serializer.hpp"
 #include "ledger/chain/consensus/proof_of_work.hpp"
 #include "ledger/chain/digest.hpp"
 #include "ledger/chain/transaction_layout.hpp"
+
+#include "ledger/dag/dag_epoch.hpp"
 
 #include <memory>
 
@@ -38,13 +39,13 @@ namespace ledger {
 class Block
 {
 public:
-  using Proof  = consensus::ProofOfWork;
-  using Slice  = std::vector<TransactionLayout>;
-  using Slices = std::vector<Slice>;
+  using Proof    = consensus::ProofOfWork;
+  using Slice    = std::vector<TransactionLayout>;
+  using Slices   = std::vector<Slice>;
+  using DAGEpoch = fetch::ledger::DAGEpoch;
 
   struct Body
   {
-    // TODO(private issue 496): Populate the state hash
     Digest   hash;               ///< The hash of the block
     Digest   previous_hash;      ///< The hash of the previous block
     Digest   merkle_hash;        ///< The merkle state hash across all shards
@@ -52,6 +53,8 @@ public:
     Address  miner;              ///< The identity of the generated miner
     uint32_t log2_num_lanes{0};  ///< The log2(number of lanes)
     Slices   slices;             ///< The slice lists
+    DAGEpoch dag_epoch;          ///< DAG epoch containing information on new dag_nodes
+    uint64_t timestamp{0u};      ///< The number of seconds elapsed since the Unix epoch
   };
 
   /// @name Block Contents
@@ -65,9 +68,11 @@ public:
   Proof    proof;     ///< The consensus proof
   /// @}
 
+  // TODO(HUT): This should be part of body since it's no longer going to be metadata
+  uint64_t weight = 1;
+
   /// @name Metadata for block management
   /// @{
-  uint64_t weight       = 1;
   uint64_t total_weight = 1;
   bool     is_loose     = false;
   /// @}
@@ -75,6 +80,7 @@ public:
   // Helper functions
   std::size_t GetTransactionCount() const;
   void        UpdateDigest();
+  void        UpdateTimestamp();
 };
 } // namespace ledger
 
@@ -95,25 +101,29 @@ public:
   static uint8_t const MINER = 5;
   static uint8_t const LOG2_NUM_LANES = 6;
   static uint8_t const SLICES = 7;
+  static uint8_t const DAG_EPOCH = 8;  
+  static uint8_t const TIMESTAMP = 9;  
 
   template< typename Constructor >
   static void Serialize(Constructor & map_constructor, Type const & body)
   {
 
-    auto map = map_constructor(7);
+    auto map = map_constructor(9);
     map.Append(HASH, body.hash);
     map.Append(PREVIOUS_HASH, body.previous_hash);
     map.Append(MERKLE_HASH, body.merkle_hash);
     map.Append(BLOCK_NUMBER, body.block_number);
     map.Append(MINER, body.miner);
     map.Append(LOG2_NUM_LANES, body.log2_num_lanes);
-    map.Append(SLICES, body.slices);
+    map.Append(DAG_EPOCH, body.dag_epoch);
+    map.Append(TIMESTAMP, body.timestamp);
   }
 
   template< typename MapDeserializer >
   static void Deserialize(MapDeserializer & map, Type & body)
   {
     uint8_t key; 
+    // TODO: Change to expect
     map.GetNextKeyPair(key, body.hash);
     map.GetNextKeyPair(key, body.previous_hash);
     map.GetNextKeyPair(key, body.merkle_hash);
@@ -121,7 +131,9 @@ public:
     map.GetNextKeyPair(key, body.miner);
     map.GetNextKeyPair(key, body.log2_num_lanes);
     map.GetNextKeyPair(key, body.slices);
-  }  
+    map.GetNextKeyPair(key, body.dag_epoch);
+    map.GetNextKeyPair(key, body.timestamp);
+  }
 };
 
 template< typename D >
@@ -152,6 +164,7 @@ public:
   static void Deserialize(MapDeserializer & map, Type & block)
   {
     uint8_t key;
+    // TODO: Change to expect    
     map.GetNextKeyPair(key, block.body);
     map.GetNextKeyPair(key, block.nonce);
     map.GetNextKeyPair(key, block.proof); 

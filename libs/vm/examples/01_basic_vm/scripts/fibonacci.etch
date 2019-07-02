@@ -1,7 +1,0 @@
-function main()
-  var a = 2;
-  var b : Int32 = 1;
-
-  b = a + b;
-  Print("The result is: " + toString(b));
-endfunction

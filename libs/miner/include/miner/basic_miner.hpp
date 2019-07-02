@@ -23,9 +23,10 @@
 #include "ledger/chain/digest.hpp"
 #include "ledger/chain/transaction_layout.hpp"
 #include "meta/log2.hpp"
+#include "miner/transaction_layout_queue.hpp"
 #include "vectorise/threading/pool.hpp"
 
-#include "miner/transaction_layout_queue.hpp"
+#include "telemetry/telemetry.hpp"
 
 #include <list>
 
@@ -70,12 +71,9 @@ public:
   BasicMiner &operator=(BasicMiner &&) = delete;
 
 private:
-  using Mutex           = mutex::Mutex;
-  using TransactionList = TransactionLayoutQueue::UnderlyingList;
-  using TransactionSet  = std::unordered_set<ledger::TransactionLayout>;
-  using ThreadPool      = threading::Pool;
-  using DigestSet       = ledger::DigestSet;
-  using Queue           = TransactionLayoutQueue;
+  using Mutex      = mutex::Mutex;
+  using ThreadPool = threading::Pool;
+  using Queue      = TransactionLayoutQueue;
 
   /// @name Packing Operations
   /// @{
@@ -103,6 +101,15 @@ private:
   /// @{
   mutable Mutex mining_pool_lock_{__LINE__, __FILE__};  ///< Mining pool lock (priority 0)
   Queue         mining_pool_;                           ///< The main mining queue for the node
+  /// @}
+
+  /// @name Telemetry
+  /// @{
+  telemetry::GaugePtr<uint64_t> mining_pool_size_;
+  telemetry::GaugePtr<uint64_t> max_mining_pool_size_;
+  telemetry::GaugePtr<uint64_t> max_pending_pool_size_;
+  telemetry::CounterPtr         duplicate_count_;
+  telemetry::CounterPtr         duplicate_filtered_count_;
   /// @}
 };
 

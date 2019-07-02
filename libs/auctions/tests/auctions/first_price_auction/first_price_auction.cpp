@@ -18,7 +18,7 @@
 
 #include "auctions/first_price_auction.hpp"
 
-#include <gtest/gtest.h>
+#include "gtest/gtest.h"
 
 #include <cstddef>
 #include <vector>

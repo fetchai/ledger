@@ -22,6 +22,7 @@
 #include "core/byte_array/byte_array.hpp"
 #include "crypto/fnv.hpp"
 #include "crypto/openssl_common.hpp"
+#include "crypto/signature_register.hpp"
 #include "core/serializers/group_definitions.hpp"
 
 namespace fetch {
@@ -42,7 +43,7 @@ public:
 
   // Fully relying on caller that it will behave = will NOT modify value passed
   // (Const)ByteArray(s)
-  Identity(byte_array::ConstByteArray identity_parameters, byte_array::ConstByteArray identifier)
+  Identity(uint8_t identity_parameters, byte_array::ConstByteArray identifier)
     : identity_parameters_{std::move(identity_parameters)}
     , identifier_{std::move(identifier)}
   {}
@@ -51,7 +52,7 @@ public:
     : identifier_{std::move(identifier)}
   {}
 
-  byte_array::ConstByteArray const &parameters() const
+  uint8_t const &parameters() const
   {
     return identity_parameters_;
   }
@@ -66,15 +67,14 @@ public:
     identifier_ = ident;
   }
 
-  void SetParameters(byte_array::ConstByteArray const &params)
+  void SetParameters(uint8_t p)
   {
-    identity_parameters_ = params;
+    identity_parameters_ = std::move(p);
   }
 
   operator bool() const
   {
-    return identity_parameters_ == edcsa_curve_type::sn &&
-           identifier_.size() == edcsa_curve_type::publicKeySize;
+    return TestIdentityParameterSize(identity_parameters_, identifier_.size());
   }
 
   static Identity CreateInvalid()
@@ -104,12 +104,11 @@ public:
 
   void Clone()
   {
-    identifier_          = identifier_.Copy();
-    identity_parameters_ = identity_parameters_.Copy();
+    identifier_ = identifier_.Copy();
   }
 
 private:
-  byte_array::ConstByteArray identity_parameters_{edcsa_curve_type::sn};
+  uint8_t                    identity_parameters_{edcsa_curve_type::sn};
   byte_array::ConstByteArray identifier_;
 };
 
@@ -144,7 +143,7 @@ public:
   static void Deserialize(MapDeserializer & map, Type & data)
   {
     byte_array::ByteArray id;
-    byte_array::ByteArray params;
+    uint8_t params;
 
     map.ExpectKeyGetValue(ID, id);
     map.ExpectKeyGetValue(PARAMS, params);

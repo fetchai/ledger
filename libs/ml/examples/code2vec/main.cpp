@@ -26,9 +26,11 @@
 #include "ml/ops/loss_functions/cross_entropy.hpp"
 #include "ml/ops/matrix_multiply.hpp"
 #include "ml/ops/placeholder.hpp"
+#include "ml/ops/reshape.hpp"
 #include "ml/ops/tanh.hpp"
 #include "ml/ops/transpose.hpp"
 #include "ml/ops/weights.hpp"
+#include "ml/optimisation/adam_optimiser.hpp"
 
 #include <chrono>
 #include <cstdint>
@@ -50,14 +52,16 @@ using Weights        = fetch::ml::ops::Weights<ArrayType>;
 using Embeddings     = fetch::ml::ops::Embeddings<ArrayType>;
 using Transpose      = fetch::ml::ops::Transpose<ArrayType>;
 using MatrixMultiply = fetch::ml::ops::MatrixMultiply<ArrayType>;
+using Reshape        = fetch::ml::ops::Reshape<ArrayType>;
 
-using ContextTensorTuple      = typename std::tuple<ArrayType, ArrayType, ArrayType>;
-using ContextTensorsLabelPair = typename std::pair<ContextTensorTuple, SizeType>;
+using ContextVector           = typename std::vector<ArrayType>;
+using ContextTensorsLabelPair = typename std::pair<ArrayType, ContextVector>;
 
 #define EMBEDDING_SIZE 64u
 #define BATCHSIZE 12u
 #define N_EPOCHS 100
-#define LEARNING_RATE 0.01f
+#define BATCH_SIZE 5
+#define LEARNING_RATE 0.001f
 
 std::string ReadFile(std::string const &path)
 {
@@ -73,8 +77,7 @@ int main(int ac, char **av)
     return 1;
   }
 
-  fetch::ml::dataloaders::C2VLoader<std::tuple<ArrayType, ArrayType, ArrayType>, SizeType> cloader(
-      20);
+  fetch::ml::dataloaders::C2VLoader<ArrayType, ArrayType> cloader(20);
 
   for (int i(1); i < ac; ++i)
   {
@@ -91,195 +94,141 @@ int main(int ac, char **av)
   uint64_t vocab_size_words{cloader.word_counter().size() + 1};
 
   // Defining the graph
-  fetch::ml::Graph<ArrayType> g;
+  std::shared_ptr<fetch::ml::Graph<ArrayType>> g(std::make_shared<fetch::ml::Graph<ArrayType>>());
 
   // Setting up the attention vector
-  // Dimension: (EMBEDDING_SIZE, 1)
-  std::string attention_vector = g.AddNode<Weights>("AttentionVector", {});
+  // Dimension: (EMBEDDING_SIZE, BATCH_SIZE)
+  std::string attention_vector = g->AddNode<Weights>("AttentionVector", {});
   ArrayType   attention_vector_data(SizeVector({EMBEDDING_SIZE, SizeType{1}}));
   Weights::Initialise(attention_vector_data, EMBEDDING_SIZE, SizeType{1});
-  g.SetInput(attention_vector, attention_vector_data, false);
+  g->SetInput(attention_vector, attention_vector_data);
 
   // Setting up the weights of FC1
   // Dimension: (EMBEDDING_SIZE, 3*EMBEDDING_SIZE)
-  std::string fc1_weights = g.AddNode<Weights>("FullyConnectedWeights", {});
+  std::string fc1_weights = g->AddNode<Weights>("FullyConnectedWeights", {});
   ArrayType   fc1_weights_data(SizeVector({EMBEDDING_SIZE, 3 * EMBEDDING_SIZE}));
   Weights::Initialise(fc1_weights_data, EMBEDDING_SIZE, 3 * EMBEDDING_SIZE);
-  g.SetInput(fc1_weights, fc1_weights_data, false);
+  g->SetInput(fc1_weights, fc1_weights_data);
 
   // Setting up the embedding matrix for the function names
   // Dimension: (VOCAB_SIZE_FUNCTION_NAMES, EMBEDDING_SIZE)
-  std::string function_name_embedding = g.AddNode<Weights>("EmbeddingFunctionNames", {});
+  std::string function_name_embedding = g->AddNode<Weights>("EmbeddingFunctionNames", {});
   ArrayType function_name_embedding_matrix(SizeVector({vocab_size_function_names, EMBEDDING_SIZE}));
   Weights::Initialise(function_name_embedding_matrix, vocab_size_function_names, EMBEDDING_SIZE);
-  g.SetInput(function_name_embedding, function_name_embedding_matrix, false);
+  g->SetInput(function_name_embedding, function_name_embedding_matrix);
 
   // Setting up shared embedding matrix for words
   // Dimension: (VOCAB_SIZE_WORDS, EMBEDDING_SIZE)
-  std::string shared_embedding = g.AddNode<Weights>("SharedEmbedding", {});
-  ArrayType   shared_embedding_tensor(SizeVector({vocab_size_words, EMBEDDING_SIZE}));
-  Weights::Initialise(shared_embedding_tensor, vocab_size_words, EMBEDDING_SIZE);
-  g.SetInput(shared_embedding, shared_embedding_tensor, false);
+  std::string shared_embedding = g->AddNode<Weights>("SharedEmbedding", {});
+  ArrayType   shared_embedding_tensor(SizeVector({EMBEDDING_SIZE, vocab_size_words}));
+  Weights::Initialise(shared_embedding_tensor, EMBEDDING_SIZE, vocab_size_words);
+  g->SetInput(shared_embedding, shared_embedding_tensor);
 
   // Defining the input nodes
 
-  // Inputs have dimensions (N_CONTEXTS, )
-  std::string input_paths = g.AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>("InputPaths", {});
+  // Inputs have dimensions (N_CONTEXTS, BATCH_SIZE)
+  std::string input_paths = g->AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>("InputPaths", {});
   std::string input_source_words =
-      g.AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>("InputSourceWords", {});
+      g->AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>("InputSourceWords", {});
   std::string input_target_words =
-      g.AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>("InputTargetWords", {});
+      g->AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>("InputTargetWords", {});
 
   // Retrieving the rows of the embedding tensors according to the input
 
   // Path embedding
-  // Dimension: (N_CONTEXTS, EMBEDDING_SIZE)
+  // Dimension: (N_CONTEXTS, EMBEDDING_SIZE, BATCH_SIZE)
   std::string embeddings_paths =
-      g.AddNode<Embeddings>("EmbeddingPaths", {input_paths}, vocab_size_paths, EMBEDDING_SIZE);
+      g->AddNode<Embeddings>("EmbeddingPaths", {input_paths}, EMBEDDING_SIZE, vocab_size_paths);
 
   // Target word embedding
-  // Dimension: (N_CONTEXTS, EMBEDDING_SIZE)
+  // Dimension: (N_CONTEXTS, EMBEDDING_SIZE, BATCH_SIZE)
   std::string embedding_target_words =
-      g.AddNode<Embeddings>("EmbeddingTargetwords", {input_target_words}, shared_embedding_tensor);
+      g->AddNode<Embeddings>("EmbeddingTargetwords", {input_target_words}, shared_embedding_tensor);
 
   // Source word embedding
-  // Dimension: (N_CONTEXTS, EMBEDDING_SIZE)
+  // Dimension: (N_CONTEXTS, EMBEDDING_SIZE, BATCH_SIZE)
   std::string embedding_source_words =
-      g.AddNode<Embeddings>("EmbeddingSourcewords", {input_source_words}, shared_embedding_tensor);
+      g->AddNode<Embeddings>("EmbeddingSourcewords", {input_source_words}, shared_embedding_tensor);
 
   // Concatenate along axis = 1
-  // Dimension: (N_CONTEXTS, 3*EMBEDDING_SIZE) = Concatenate ((N_CONTEXTS, EMBEDDING_SIZE),
-  // (N_CONTEXTS, EMBEDDING_SIZE), (N_CONTEXTS, EMBEDDING_SIZE))
-  std::string context_vectors = g.AddNode<fetch::ml::ops::Concatenate<ArrayType>>(
+  // Dimension: (N_CONTEXTS, 3*EMBEDDING_SIZE, BATCH_SIZE) = Concatenate ((N_CONTEXTS,
+  // EMBEDDING_SIZE, BATCH_SIZE), (N_CONTEXTS, EMBEDDING_SIZE, BATCH_SIZE), (N_CONTEXTS,
+  // EMBEDDING_SIZE, BATCH_SIZE))
+  std::string context_vectors = g->AddNode<fetch::ml::ops::Concatenate<ArrayType>>(
       "ContextVectors", {embedding_source_words, embeddings_paths, embedding_target_words},
-      SizeType(1));
-
-  // Transposition
-  // Dimensions: (3*EMBEDDING_SIZE, N_CONTEXTS) = Transpose((N_CONTEXTS, 3*EMBEDDING_SIZE))
-  std::string context_vector_transpose =
-      g.AddNode<Transpose>("ContextVectorTransposed", {context_vectors});
+      SizeType(0));
 
   // Fully connected layer
-  // Dimensions: (EMBEDDING_SIZE, N_CONTEXTS) = (EMBEDDING_SIZE, 3*EMBEDDING_SIZE) @
-  // (3*EMBEDDING_SIZE, N_CONTEXTS)
-  std::string fc1 = g.AddNode<MatrixMultiply>("FC1", {fc1_weights, context_vector_transpose});
+  // Dimensions: (EMBEDDING_SIZE, N_CONTEXTS, BATCH_SIZE) = (EMBEDDING_SIZE, 3*EMBEDDING_SIZE) @
+  // (3*EMBEDDING_SIZE, N_CONTEXTS, BATCH_SIZE)
+  std::string fc1 = g->AddNode<MatrixMultiply>("FC1", {fc1_weights, context_vectors});
 
   // (Elementwise) TanH Layer
-  // Dimensions: (EMBEDDING_SIZE, N_CONTEXTS)
+  // Dimensions: (EMBEDDING_SIZE, N_CONTEXTS, BATCH_SIZE)
   std::string combined_context_vector =
-      g.AddNode<fetch::ml::ops::TanH<ArrayType>>("CombinedContextVector", {fc1});
+      g->AddNode<fetch::ml::ops::TanH<ArrayType>>("CombinedContextVector", {fc1});
 
   // Transposition
-  // Dimensions: (N_CONTEXTS, EMBEDDING_SIZE) = Transpose((EMBEDDING_SIZE, N_CONTEXTS))
+  // Dimensions: (N_CONTEXTS, EMBEDDING_SIZE, BATCH_SIZE) = Transpose((EMBEDDING_SIZE, N_CONTEXTS,
+  // BATCH_SIZE))
   std::string combined_context_vector_transpose =
-      g.AddNode<Transpose>("CombinedContextVectorTransposed", {combined_context_vector});
+      g->AddNode<Transpose>("CombinedContextVectorTransposed", {combined_context_vector});
 
   // (Dot) Multiplication with the Attention vector
-  // Dimensions: (N_CONTEXTS, 1) = (N_CONTEXTS, EMBEDDING_SIZE) @ (EMBEDDING_SIZE, 1)
-  std::string scalar_product_contexts_with_attention = g.AddNode<MatrixMultiply>(
+  // Dimensions: (N_CONTEXTS, 1, BATCH_SIZE) = (N_CONTEXTS, EMBEDDING_SIZE, BATCH_SIZE) @
+  // (EMBEDDING_SIZE, 1)
+  std::string scalar_product_contexts_with_attention = g->AddNode<MatrixMultiply>(
       "ScalarProductContextsWithAttention", {combined_context_vector_transpose, attention_vector});
 
-  // Transposition
-  // DImension: (1, N_CONTEXTS) = Transpose((N_CONTEXTS, 1))
-  std::string scalar_product_contexts_with_attention_transposed = g.AddNode<Transpose>(
-      "ScalarProductContextsWithAttentionTransposed", {scalar_product_contexts_with_attention});
+  // Reshaping
+  // DImension: (N_CONTEXTS,BATCH_SIZE) = Reshape((N_CONTEXTS, 1, BATCH_SIZE))
+  std::string scalar_product_contexts_with_attention_reshaped =
+      g->AddNode<Reshape>("ScalarProductContextsWithAttentionTransposed",
+                          {scalar_product_contexts_with_attention}, std::vector<SizeType>{0u, 2u});
 
   // (Softmax) normalisation
-  // Dimensions: (1, N_CONTEXTS)
-  std::string attention_weight = g.AddNode<fetch::ml::ops::Softmax<ArrayType>>(
-      "AttentionWeight", {scalar_product_contexts_with_attention_transposed});
+  // Dimensions: (N_CONTEXTS, BATCH_SIZE)
+  std::string attention_weight = g->AddNode<fetch::ml::ops::Softmax<ArrayType>>(
+      "AttentionWeight", {scalar_product_contexts_with_attention_reshaped}, SizeType{1u});
 
-  // Transposition
-  //   Dimensions: (N_CONTEXTS, 1)
-  std::string attention_weight_transposed =
-      g.AddNode<Transpose>("AttentionWeightTransposed", {attention_weight});
+  // Reshaping
+  // Dimensions: (N_CONTEXTS, 1, BATCH_SIZE)
+  std::string attention_weight_reshaped = g->AddNode<Reshape>(
+      "AttentionWeightTransposed", {attention_weight}, std::vector<SizeType>{0u, 2u, 1u});
 
   // (Dot) Multiplication with attention weights; i.e. calculating the code vectors
-  // Dimensions: (EMBEDDING_SIZE, 1) = (EMBEDDING_SIZE, N_CONTEXTS) @ (N_CONTEXTS, 1)
-  std::string code_vector = g.AddNode<MatrixMultiply>(
-      "CodeVector", {combined_context_vector, attention_weight_transposed});
+  // Dimensions: (EMBEDDING_SIZE, 1, BATCH_SIZE) = (EMBEDDING_SIZE, N_CONTEXTS) @ (N_CONTEXTS, 1,
+  // BATCH_SIZE)
+  std::string code_vector = g->AddNode<MatrixMultiply>(
+      "CodeVector", {combined_context_vector, attention_weight_reshaped});
+
+  // Reshaping
+  //   Dimensions: (N_CONTEXTS, BATCH_SIZE)
+  std::string code_vector_reshaped =
+      g->AddNode<Reshape>("CodeVectorReshaped", {code_vector}, std::vector<SizeType>{0u, 2u});
 
   // (Unnormalised) predictions for each function name in the vocab, by
   // matrix multiplication with the embedding tensor
-  // Dimensions: (vocab_size_functions, 1) = (vocab_size_functions, EMBEDDING_SIZE) @
-  // (EMBEDDING_SIZE, 1)
-  std::string prediction_softmax_kernel =
-      g.AddNode<MatrixMultiply>("PredictionSoftMaxKernel", {function_name_embedding, code_vector});
-
-  // Dimensions: (1, vocab_size_functions) = Transpose((vocab_size_functions, 1))
-  std::string prediction_softmax_kernel_T =
-      g.AddNode<Transpose>("PredictionSoftMaxKernelTransposed", {prediction_softmax_kernel});
+  // Dimensions: (vocab_size_functions, BATCH_SIZE) = (vocab_size_functions, EMBEDDING_SIZE) @
+  // (EMBEDDING_SIZE, BATCH_SIZE)
+  std::string prediction_softmax_kernel = g->AddNode<MatrixMultiply>(
+      "PredictionSoftMaxKernel", {function_name_embedding, code_vector_reshaped});
 
   // (Softmax) Normalisation of the prediction
-  // Dimensions:  (1, vocab_size_functions)
-  std::string result = g.AddNode<fetch::ml::ops::Softmax<ArrayType>>(
-      "PredictionSoftMax", {prediction_softmax_kernel_T}, SizeType{0});
+  // Dimensions:  (vocab_size_functions, BATCH_SIZE)
+  std::string result = g->AddNode<fetch::ml::ops::Softmax<ArrayType>>(
+      "PredictionSoftMax", {prediction_softmax_kernel}, SizeType{1});
 
-  // Criterion: Cross Entropy Loss
-  // Here, the CrossEntropy eats two tensors of size (1, function_name_vocab_size); i.e. it has 1
-  // example, and as many categories as vocab_size
-  fetch::ml::ops::CrossEntropy<ArrayType> criterion;
-  DataType                                loss = 0;
+  // Initialise Optimiser
+  fetch::ml::optimisers::AdamOptimiser<ArrayType, fetch::ml::ops::CrossEntropy<ArrayType>>
+      optimiser(g, {input_source_words, input_paths, input_target_words}, result, LEARNING_RATE);
 
-  // (One hot encoded) \y_{true} vector
-  ArrayType y_true_vec({1, cloader.function_name_counter().size() + 1});
-
-  y_true_vec.Fill(0);
-
-  int n_epochs{0};
-  int n_iter{0};
-
-  while (n_epochs < N_EPOCHS)
+  // Training loop
+  DataType loss;
+  for (SizeType i{0}; i < N_EPOCHS; i++)
   {
-    if (cloader.IsDone())
-    {
-      cloader.Reset();
-      n_epochs++;
-    }
-
-    auto t1 = std::chrono::high_resolution_clock::now();
-
-    // Loading the tuple of ((InputSourceWords, InputPaths, InputTargetWords), function_name_idx)
-    // first: 3 tensors with shape (n_contexts) holding
-    //        the indices of the source words/paths/target words in the vocabulary
-    // second: function_name_idx is the index of the function name in the vocabulary
-    ContextTensorsLabelPair input = cloader.GetNext();
-
-    // Feeding the tensors to the graph
-    g.SetInput(input_source_words, std::get<0>(input.first));
-    g.SetInput(input_paths, std::get<1>(input.first));
-    g.SetInput(input_target_words, std::get<2>(input.first));
-
-    // Preparing the y_true vector (one-hot-encoded)
-    y_true_vec.Set(0, input.second, 1);
-
-    // Making the forward pass
-    // dimension:  (1, vocab_size_functions)
-    ArrayType results = g.Evaluate(result);
-    // dimension:  (1, vocab_size_functions), (1, vocab_size_functions)
-    loss += criterion.Forward({results, y_true_vec});
-
-    // Making the backward pass
-    g.BackPropagate(result, criterion.Backward({results, y_true_vec}));
-
-    // apply the gradients
-    g.Step(LEARNING_RATE);
-
-    // Resetting the y_true vector for reusing it
-    y_true_vec.Set(0, input.second, 0);
-
-    n_iter++;
-    if (n_iter % 5 == 0)
-    {
-      auto t2 = std::chrono::high_resolution_clock::now();
-
-      std::chrono::duration<double> time_diff =
-          std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1);
-
-      std::cout << "MiniBatch: " << n_iter / 5 << " -- Loss : " << loss << std::endl;
-      std::cout << "Steps / Sec: " << 5.0 / time_diff.count() << std::endl;
-      loss = 0;
-    }
+    loss = optimiser.Run(cloader, BATCH_SIZE);
+    std::cout << "Loss: " << loss << std::endl;
   }
 
   return 0;

@@ -40,8 +40,9 @@ class Array : public VectorSlice<T, type_size>
 {
 public:
   static_assert(sizeof(T) >= type_size, "Invalid object size");
-  static_assert(std::is_pod<T>::value, "Can only be used with POD types");
-
+  // TODO(check IfIsPodOrFixedPoint memory safe)
+  //  static_assert(std::is_pod<T>::value, "Can only be used with POD types");
+  //  static_assert(meta::IfIsPodOrFixedPoint<T>::value, "can only be used with POD or FixedPoint");
   using SizeType   = std::size_t;
   using data_type  = std::shared_ptr<T>;
   using super_type = VectorSlice<T, type_size>;

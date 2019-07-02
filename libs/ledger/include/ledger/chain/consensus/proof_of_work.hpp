@@ -17,8 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/const_byte_array.hpp"
-#include "math/bignumber.hpp"
+#include "vectorise/uint/uint.hpp"
 #include "core/serializers/group_definitions.hpp"
 
 #include <cstddef>
@@ -28,10 +29,10 @@ namespace fetch {
 namespace ledger {
 namespace consensus {
 
-class ProofOfWork : public math::BigUnsigned
+class ProofOfWork : public vectorise::UInt<256>
 {
 public:
-  using super_type  = math::BigUnsigned;
+  using UInt256     = vectorise::UInt<256>;
   using header_type = byte_array::ConstByteArray;
 
   // Construction / Destruction
@@ -42,16 +43,16 @@ public:
   bool operator()();
 
   void SetTarget(std::size_t zeros);
-  void SetTarget(math::BigUnsigned &&target);
+  void SetTarget(UInt256 &&target);
   void SetHeader(byte_array::ByteArray header);
 
-  header_type const &      header() const;
-  math::BigUnsigned const &digest() const;
-  math::BigUnsigned const &target() const;
+  header_type const &header() const;
+  UInt256 const &    digest() const;
+  UInt256 const &    target() const;
 
 private:
-  math::BigUnsigned          digest_;
-  math::BigUnsigned          target_;
+  UInt256                    digest_;
+  UInt256                    target_;
   byte_array::ConstByteArray header_;
 };
 
@@ -60,12 +61,12 @@ inline byte_array::ConstByteArray const &ProofOfWork::header() const
   return header_;
 }
 
-inline math::BigUnsigned const &ProofOfWork::digest() const
+inline vectorise::UInt<256> const &ProofOfWork::digest() const
 {
   return digest_;
 }
 
-inline math::BigUnsigned const &ProofOfWork::target() const
+inline vectorise::UInt<256> const &ProofOfWork::target() const
 {
   return target_;
 }
@@ -75,28 +76,6 @@ inline math::BigUnsigned const &ProofOfWork::target() const
 
 namespace serializers
 {
-
-template< typename D >
-struct ForwardSerializer< math::BigUnsigned, D >
-{
-public:
-  using Type = math::BigUnsigned; 
-  using DriverType = D;
-
-  template< typename Serializer >
-  static inline void Serialize(Serializer &buffer, Type const &object)
-  {
-    byte_array::ConstByteArray const & ba = static_cast< byte_array::ConstByteArray const & >(object);
-    buffer << ba;
-  }
-
-  template< typename Serializer >
-  static inline void Deserialize(Serializer &buffer, Type &object)
-  {
-    byte_array::ConstByteArray & ba = static_cast< byte_array::ConstByteArray & >(object);
-    buffer >> ba;
-  }
-};
 
 template< typename D >
 struct MapSerializer< ledger::consensus::ProofOfWork, D > // TODO: Consider using forward to bytearray
@@ -120,7 +99,7 @@ public:
   static void Deserialize(MapDeserializer & map, Type & p)
   {
     byte_array::ConstByteArray header;
-    math::BigUnsigned          target;
+    vectorise::UInt<256>       target;
   
     map.ExpectKeyGetValue(HEADER, header);
     map.ExpectKeyGetValue(TARGET, target);

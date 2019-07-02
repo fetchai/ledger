@@ -18,7 +18,8 @@
 
 #include "core/serializers/byte_array_buffer.hpp"
 #include "math/tensor.hpp"
-#include <gtest/gtest.h>
+
+#include "gtest/gtest.h"
 
 template <typename T>
 class SerializersTest : public ::testing::Test

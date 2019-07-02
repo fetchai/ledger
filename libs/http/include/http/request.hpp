@@ -17,15 +17,13 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/assert.hpp"
 #include "core/byte_array/byte_array.hpp"
-#include "core/byte_array/consumers.hpp"
-#include "core/byte_array/tokenizer/tokenizer.hpp"
+#include "core/byte_array/const_byte_array.hpp"
 #include "core/json/document.hpp"
+#include "core/logger.hpp"
 #include "http/header.hpp"
 #include "http/method.hpp"
 #include "http/query.hpp"
-#include "http/status.hpp"
 #include "network/fetch_asio.hpp"
 
 #include <cstddef>
@@ -46,7 +44,7 @@ public:
   HTTPRequest() = default;
 
   bool ParseBody(asio::streambuf &buffer);
-  bool ParseHeader(asio::streambuf &buffer, std::size_t const &end);
+  bool ParseHeader(asio::streambuf &buffer, std::size_t end);
 
   Method const &method() const
   {

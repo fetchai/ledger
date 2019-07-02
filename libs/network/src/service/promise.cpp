@@ -114,6 +114,8 @@ void PromiseImplementation::UpdateState(State state)
 
 void PromiseImplementation::DispatchCallbacks()
 {
+  FETCH_LOCK(callback_lock_);
+
   Callback *handler = nullptr;
 
   switch (state_.load())

@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "ledger/tx_query_http_interface.hpp"
+
 #include "core/byte_array/decoders.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "core/logger.hpp"
@@ -94,6 +95,11 @@ TxQueryHttpInterface::TxQueryHttpInterface(StorageUnitInterface &storage_unit)
           tx_obj["chainCode"] = tx.chain_code();
           tx_obj["action"]    = tx.action();
           tx_obj["data"]      = tx.data().ToBase64();
+          break;
+        case Transaction::ContractMode::SYNERGETIC:
+          tx_obj["contractDigest"] = tx.contract_digest().address().ToHex();
+          tx_obj["action"]         = tx.action();
+          tx_obj["data"]           = tx.data().ToBase64();
           break;
         }
 

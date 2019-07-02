@@ -74,7 +74,7 @@ public:
     return count_.load() == 0;
   }
 
-  size_t size(void) const
+  std::size_t size(void) const
   {
     return count_.load();
   }
@@ -102,7 +102,7 @@ public:
     return !quit_.load();
   }
 
-  size_t Get(std::vector<TYPE> &output, size_t limit)
+  std::size_t Get(std::vector<TYPE> &output, std::size_t limit)
   {
     lock_type lock(mutex_);
     output.reserve(limit);
@@ -118,11 +118,11 @@ public:
 private:
   // members here.
 
-  mutex_type          mutex_;
-  store_type          q_;
-  cv_type             cv_;
-  std::atomic<bool>   quit_{false};
-  std::atomic<size_t> count_{0};
+  mutex_type               mutex_;
+  store_type               q_;
+  cv_type                  cv_;
+  std::atomic<bool>        quit_{false};
+  std::atomic<std::size_t> count_{0};
 };
 
 }  // namespace generics

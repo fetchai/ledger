@@ -16,29 +16,30 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chaincode/smart_contract.hpp"
 #include "core/byte_array/decoders.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "crypto/fnv.hpp"
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
 #include "ledger/chain/transaction.hpp"
+#include "ledger/chaincode/smart_contract.hpp"
 #include "ledger/chaincode/smart_contract_exception.hpp"
 #include "ledger/chaincode/vm_definition.hpp"
+#include "ledger/fetch_msgpack.hpp"
 #include "ledger/state_adapter.hpp"
 #include "ledger/storage_unit/cached_storage_adapter.hpp"
 #include "variant/variant.hpp"
 #include "variant/variant_utils.hpp"
+#include "vm/address.hpp"
 #include "vm/function_decorators.hpp"
 #include "vm_modules/vm_factory.hpp"
-
-#include "ledger/fetch_msgpack.hpp"
 
 #include <algorithm>
 #include <stdexcept>
 #include <string>
 
 using fetch::byte_array::ConstByteArray;
+using fetch::vm_modules::VMFactory;
 
 namespace fetch {
 namespace ledger {
@@ -98,7 +99,7 @@ SmartContract::SmartContract(std::string const &source)
   : source_{source}
   , digest_{GenerateDigest(source)}
   , executable_{std::make_shared<Executable>()}
-  , module_{vm_modules::VMFactory::GetModule()}
+  , module_{VMFactory::GetModule(VMFactory::USE_SMART_CONTRACTS)}
 {
   if (source_.empty())
   {
@@ -220,9 +221,10 @@ std::vector<uint8_t> Convert(ConstByteArray const &buffer)
  * @param pack The reference to the parameter pack to be populated
  * @param obj The object to extract the address from
  */
+// TODO(issue 1256): Whole this function can be dropped once issue the is resolved
 void AddAddressToParameterPack(vm::VM *vm, vm::ParameterPack &pack, msgpack::object const &obj)
 {
-  static uint8_t const  ADDRESS_ID   = static_cast<uint8_t>(0x4d);  // 77
+  static auto const     ADDRESS_ID   = static_cast<uint8_t>(0x4d);  // 77
   static uint32_t const ADDRESS_SIZE = 32u;
 
   bool valid{false};
@@ -233,8 +235,8 @@ void AddAddressToParameterPack(vm::VM *vm, vm::ParameterPack &pack, msgpack::obj
 
     if ((ADDRESS_ID == ext.type()) && (ADDRESS_SIZE == ext.size))
     {
-      uint8_t const *start = reinterpret_cast<uint8_t const *>(ext.data());
-      uint8_t const *end   = start + ext.size;
+      auto start = reinterpret_cast<uint8_t const *>(ext.data());
+      auto end   = start + ext.size;
 
       // create the instance of the address
       vm::Ptr<vm::Address> address = vm::Address::Constructor(vm, vm::TypeIds::Address);
@@ -259,6 +261,7 @@ void AddAddressToParameterPack(vm::VM *vm, vm::ParameterPack &pack, msgpack::obj
  * @param pack The parameter pack to be populated
  * @param obj The variant to extract the address from
  */
+// TODO(issue 1256): Whole this function can be dropped once the issue is resolved
 void AddAddressToParameterPack(vm::VM *vm, vm::ParameterPack &pack, variant::Variant const &obj)
 {
   Address address{};
@@ -278,7 +281,52 @@ void AddAddressToParameterPack(vm::VM *vm, vm::ParameterPack &pack, variant::Var
 }
 
 /**
- * Extract a value from the variant type specified based on the expected type id and add it to the
+ * Adds structured data object represented by generic JSON type in to parameter pack
+ *
+ * @param vm The instance to the VM
+ * @param pack The reference to the parameter pack to be populated
+ * @param obj structured data object represented by generic fetch::variant::Variant type
+ */
+void AddStructuredDataObjectToParameterPack(vm::VM *vm, vm::TypeId expected_type,
+                                            vm::ParameterPack &pack, variant::Variant const &obj)
+{
+  if (!vm->IsDefaultSerializeConstructable(expected_type))
+  {
+    throw std::runtime_error("Type is not constructable: " + vm->GetUniqueId(expected_type));
+  }
+
+  // Creating a new object and deserialise
+  vm::Ptr<vm::Object> object = vm->DefaultSerializeConstruct(expected_type);
+  object->FromJSON(obj);
+
+  if (!pack.Add(object))
+  {
+    throw std::runtime_error("Could not add parameter " + vm->GetUniqueId(expected_type));
+  }
+}
+
+/**
+ * Adds structured data object represented by MsgPack type in to parameter pack
+ *
+ * @param vm The instance to the VM
+ * @param pack The reference to the parameter pack to be populated
+ * @param obj structured data object represented by generic MsgPack type
+ */
+void AddStructuredDataObjectToParameterPack(vm::VM *vm, vm::TypeId expected_type,
+                                            vm::ParameterPack & /*pack*/,
+                                            msgpack::object const & /*obj*/)
+{
+  if (!vm->IsDefaultSerializeConstructable(expected_type))
+  {
+    throw std::runtime_error("Type is not constructable: " + vm->GetUniqueId(expected_type));
+  }
+
+  // TODO(issue 1256): Review design and implement equivalent for msgpack
+  throw std::runtime_error("No msgpack support for type " + vm->GetUniqueId(expected_type));
+}
+
+/**
+ * Extract a value from the variant type specified based on the expected type id and adds it to the
  * given parameter pack
  *
  * @tparam T The variant type
@@ -300,7 +348,7 @@ void AddToParameterPack(vm::VM *vm, vm::ParameterPack &params, vm::TypeId expect
     AddToParameterPack<int8_t>(params, variant);
     break;
 
-  case vm::TypeIds::Byte:
+  case vm::TypeIds::UInt8:
     AddToParameterPack<uint8_t>(params, variant);
     break;
 
@@ -328,12 +376,13 @@ void AddToParameterPack(vm::VM *vm, vm::ParameterPack &params, vm::TypeId expect
     AddToParameterPack<uint64_t>(params, variant);
     break;
 
+  // TODO(issue 1256): Whole this case section can be dropped once the issue is resolved
   case vm::TypeIds::Address:
     AddAddressToParameterPack(vm, params, variant);
     break;
 
   default:
-    throw std::runtime_error("Unable to map data type to VM entity");
+    AddStructuredDataObjectToParameterPack(vm, expected_type, params, variant);
   }
 }
 
@@ -383,7 +432,7 @@ Contract::Status SmartContract::InvokeAction(std::string const &name, Transactio
   }
 
   // Get clean VM instance
-  auto vm = vm_modules::VMFactory::GetVM(module_);
+  auto vm = std::make_unique<vm::VM>(module_.get());
   vm->SetIOObserver(state());
 
   // lookup the function / entry point which will be executed
@@ -445,7 +494,7 @@ Contract::Status SmartContract::InvokeAction(std::string const &name, Transactio
 Contract::Status SmartContract::InvokeInit(Address const &owner)
 {
   // Get clean VM instance
-  auto vm = vm_modules::VMFactory::GetVM(module_);
+  auto vm = std::make_unique<vm::VM>(module_.get());
   vm->SetIOObserver(state());
 
   FETCH_LOG_DEBUG(LOGGING_NAME, "Running SC init function: ", init_fn_name_);
@@ -496,7 +545,7 @@ SmartContract::Status SmartContract::InvokeQuery(std::string const &name, Query 
                                                  Query &response)
 {
   // get clean VM instance
-  auto vm = vm_modules::VMFactory::GetVM(module_);
+  auto vm = std::make_unique<vm::VM>(module_.get());
   vm->SetIOObserver(state());
 
   // lookup the executable
@@ -521,6 +570,10 @@ SmartContract::Status SmartContract::InvokeQuery(std::string const &name, Query 
       if (!request.Has(parameter.name))
       {
         FETCH_LOG_WARN(LOGGING_NAME, "Unable to lookup variable: ", parameter.name);
+        response["status"] = "failed";
+        response["msg"] = "Unable to lookup variable: " + static_cast<std::string>(parameter.name);
+        response["console"] = "";
+        response["result"]  = variant::Variant::Null();
         return Status::FAILED;
       }
 
@@ -530,6 +583,11 @@ SmartContract::Status SmartContract::InvokeQuery(std::string const &name, Query 
   }
   catch (std::exception const &ex)
   {
+    FETCH_LOG_WARN(LOGGING_NAME, "Query failed during parameter packing: ", ex.what());
+    response["status"]  = "failed";
+    response["msg"]     = ex.what();
+    response["console"] = "";
+    response["result"]  = variant::Variant::Null();
     return Status::FAILED;
   }
 
@@ -544,22 +602,27 @@ SmartContract::Status SmartContract::InvokeQuery(std::string const &name, Query 
 
   if (!vm->Execute(*executable_, name, error, output, params))
   {
+    FETCH_LOG_WARN(LOGGING_NAME, "Query failed during execution: ", error);
     response["status"]  = "failed";
     response["msg"]     = error;
     response["console"] = console.str();
+    response["result"]  = variant::Variant::Null();
     return Status::FAILED;
   }
 
   // extract the result from the contract output
   switch (output.type_id)
   {
+  case vm::TypeIds::Null:
+    response["result"] = variant::Variant::Null();
+    break;
   case vm::TypeIds::Bool:
     response["result"] = output.Get<bool>();
     break;
   case vm::TypeIds::Int8:
     response["result"] = output.Get<int8_t>();
     break;
-  case vm::TypeIds::Byte:
+  case vm::TypeIds::UInt8:
     response["result"] = output.Get<uint8_t>();
     break;
   case vm::TypeIds::Int16:
@@ -586,11 +649,44 @@ SmartContract::Status SmartContract::InvokeQuery(std::string const &name, Query 
   case vm::TypeIds::Float64:
     response["result"] = output.Get<double>();
     break;
+  case vm::TypeIds::Fixed32:
+    response["result"] = output.Get<fixed_point::fp32_t>();
+    break;
+  case vm::TypeIds::Fixed64:
+    response["result"] = output.Get<fixed_point::fp64_t>();
+    break;
   case vm::TypeIds::String:
     response["result"] = output.Get<vm::Ptr<vm::String>>()->str;
     break;
   default:
-    // TODO(private 900): Deal with general data structures
+    if (output.IsPrimitive())
+    {
+      // TODO(tfr): add error - all types not covered
+      response["result"] = variant::Variant::Null();
+      FETCH_LOG_WARN(LOGGING_NAME, "Could not serialise result - possibly Void return-type");
+      return Status::OK;
+    }
+    else
+    {
+      variant::Variant var;
+      if (output.object == nullptr)
+      {
+        var = variant::Variant::Null();
+      }
+      else
+      {
+        if (!output.object->ToJSON(var))
+        {
+          response["status"] = "failed";
+          response["result"] = "Failed to serialise object to JSON variant";
+          FETCH_LOG_WARN(LOGGING_NAME, "Failed to serialise object to JSON variant for " +
+                                           output.object->GetUniqueId());
+          return Status::FAILED;
+        }
+      }
+      response["result"] = var;
+    }
+
     break;
   }
 

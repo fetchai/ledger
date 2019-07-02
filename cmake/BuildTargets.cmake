@@ -13,6 +13,12 @@ macro (setup_compiler)
   set(CMAKE_CXX_STANDARD 14)
   set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
 
+  set(_is_clang_compiler FALSE)
+  if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang"
+      OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "AppleClang")
+    set(_is_clang_compiler TRUE)
+  endif ()
+
   # ensure that only one architecture is enable
   set(_num_architectures_compiler 0)
   set(_list_architectures_compiler)
@@ -74,22 +80,17 @@ macro (setup_compiler)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility=hidden")
 
   if (${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-pragmas")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-pragmas -Wno-unknown-pragmas")
+  elseif (_is_clang_compiler)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unknown-warning-option")
   endif ()
 
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
   if (FETCH_WARNINGS_AS_ERRORS)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
   endif (FETCH_WARNINGS_AS_ERRORS)
 
   # prefer PIC
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
-
-  set(_is_clang_compiler FALSE)
-  if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang"
-      OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "AppleClang")
-    set(_is_clang_compiler TRUE)
-  endif ()
 
   if (FETCH_ENABLE_COVERAGE)
     if (_is_clang_compiler)
@@ -146,13 +147,17 @@ macro (setup_compiler)
   endif ()
 
   # based on the configued logging level
-  if ("${FETCH_COMPILE_LOGGING_LEVEL}" STREQUAL "debug")
-    add_definitions(-DFETCH_COMPILE_LOGGING_LEVEL=4)
+  if ("${FETCH_COMPILE_LOGGING_LEVEL}" STREQUAL "trace")
+    add_definitions(-DFETCH_COMPILE_LOGGING_LEVEL=6)
+  elseif ("${FETCH_COMPILE_LOGGING_LEVEL}" STREQUAL "debug")
+    add_definitions(-DFETCH_COMPILE_LOGGING_LEVEL=5)
   elseif ("${FETCH_COMPILE_LOGGING_LEVEL}" STREQUAL "info")
-    add_definitions(-DFETCH_COMPILE_LOGGING_LEVEL=3)
+    add_definitions(-DFETCH_COMPILE_LOGGING_LEVEL=4)
   elseif ("${FETCH_COMPILE_LOGGING_LEVEL}" STREQUAL "warn")
-    add_definitions(-DFETCH_COMPILE_LOGGING_LEVEL=2)
+    add_definitions(-DFETCH_COMPILE_LOGGING_LEVEL=3)
   elseif ("${FETCH_COMPILE_LOGGING_LEVEL}" STREQUAL "error")
+    add_definitions(-DFETCH_COMPILE_LOGGING_LEVEL=2)
+  elseif ("${FETCH_COMPILE_LOGGING_LEVEL}" STREQUAL "critical")
     add_definitions(-DFETCH_COMPILE_LOGGING_LEVEL=1)
   elseif ("${FETCH_COMPILE_LOGGING_LEVEL}" STREQUAL "none")
     add_definitions(-DFETCH_DISABLE_COUT_LOGGING)
@@ -219,6 +224,37 @@ function (configure_vendor_targets)
   # Google Test
   add_subdirectory(${FETCH_ROOT_VENDOR_DIR}/googletest)
 
+  # MCL
+  set(USE_GMP OFF CACHE BOOL "use gmp" FORCE)
+  set(USE_OPENSSL OFF CACHE BOOL "use openssl" FORCE)
+  # TODO: Work out how to get this to work with the already found version of OpenSSL
+
+  add_subdirectory(${FETCH_ROOT_VENDOR_DIR}/mcl)
+  target_include_directories(mcl INTERFACE ${FETCH_ROOT_VENDOR_DIR}/mcl/include)
+  target_compile_definitions(mcl
+                             INTERFACE
+                             -DMCL_USE_VINT
+                             -DMCL_VINT_FIXED_BUFFER)
+
+  add_library(vendor-mcl INTERFACE)
+  target_link_libraries(vendor-mcl INTERFACE mcl)
+  target_compile_definitions(vendor-mcl INTERFACE -DMCLBN_FP_UNIT_SIZE=4)
+
+  # BLS
+  add_library(libbls-internal STATIC ${FETCH_ROOT_VENDOR_DIR}/bls/src/bls_c256.cpp
+                                     ${FETCH_ROOT_VENDOR_DIR}/bls/src/bls_c384.cpp
+                                     ${FETCH_ROOT_VENDOR_DIR}/bls/src/bls_c384_256.cpp)
+  target_link_libraries(libbls-internal PUBLIC mcl)
+  target_include_directories(libbls-internal PUBLIC ${FETCH_ROOT_VENDOR_DIR}/bls/include)
+  target_compile_definitions(libbls-internal
+                             PUBLIC
+                             -DMCL_USE_VINT
+                             -DMCL_VINT_FIXED_BUFFER)
+
+  add_library(vendor-bls INTERFACE)
+  target_link_libraries(vendor-bls INTERFACE libbls-internal)
+  target_compile_definitions(vendor-bls INTERFACE -DMCLBN_FP_UNIT_SIZE=4)
+
   # Google Benchmark Do not build the google benchmark library tests
   if (FETCH_ENABLE_BENCHMARKS)
     set(BENCHMARK_ENABLE_TESTING OFF CACHE BOOL "Suppress google benchmark default tests" FORCE)
@@ -229,10 +265,18 @@ function (configure_vendor_targets)
   add_library(vendor-mio INTERFACE)
   target_include_directories(vendor-mio INTERFACE ${FETCH_ROOT_VENDOR_DIR}/mio/include)
 
+  # backtrace stack vendor library
+  add_library(vendor-backward-cpp INTERFACE)
+  target_include_directories(vendor-backward-cpp INTERFACE ${FETCH_ROOT_VENDOR_DIR}/backward-cpp/)
+
   # MsgPack
   add_library(vendor-msgpack INTERFACE)
   target_include_directories(vendor-msgpack INTERFACE ${FETCH_ROOT_VENDOR_DIR}/msgpack/include)
   target_compile_definitions(vendor-msgpack INTERFACE -DMSGPACK_CXX11=ON)
+
+  # Spdlog
+  add_library(vendor-spdlog INTERFACE)
+  target_include_directories(vendor-spdlog INTERFACE ${FETCH_ROOT_VENDOR_DIR}/spdlog/include)
 
 endfunction (configure_vendor_targets)
 

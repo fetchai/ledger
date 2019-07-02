@@ -16,8 +16,14 @@
 //
 //------------------------------------------------------------------------------
 
-#include "network/muddle/subscription_feed.hpp"
 #include "core/mutex.hpp"
+#include "core/serializers/byte_array.hpp"
+#include "network/muddle/subscription.hpp"
+#include "network/muddle/subscription_feed.hpp"
+
+#include <cstdint>
+#include <memory>
+#include <utility>
 
 namespace fetch {
 namespace muddle {

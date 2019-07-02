@@ -16,15 +16,16 @@
 //
 //------------------------------------------------------------------------------
 
-#include <algorithm>
-#include <cstdlib>
-#include <gtest/gtest.h>
-#include <iostream>
-#include <memory>
-
 #include "core/byte_array/encoders.hpp"
 #include "network/tcp/tcp_client.hpp"
 #include "network/tcp/tcp_server.hpp"
+
+#include "gtest/gtest.h"
+
+#include <algorithm>
+#include <cstdlib>
+#include <iostream>
+#include <memory>
 
 // Test of the client and server.
 
@@ -48,7 +49,6 @@ public:
 
   void PushRequest(connection_handle_type /*client*/, message_type const &msg) override
   {
-    /*std::cerr << "Message: " << msg << std::endl;*/
     std::lock_guard<std::mutex> lock(messages_);
     globalMessagesFromServer_.push_back(msg);
   }

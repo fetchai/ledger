@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "vm/vm.hpp"
 #include "vm_modules/vm_factory.hpp"
 
 #include <cstdlib>
@@ -48,7 +49,7 @@ int main(int argc, char **argv)
   const std::string source = ss.str();
   file.close();
 
-  auto module = VMFactory::GetModule();
+  auto module = VMFactory::GetModule(VMFactory::USE_SMART_CONTRACTS);
 
   // ********** Attach way to interface with state here **********
   // module->state
@@ -72,7 +73,7 @@ int main(int argc, char **argv)
   fetch::vm::Variant output;
 
   // Get clean VM instance
-  auto vm = VMFactory::GetVM(module);
+  auto vm = std::make_unique<vm::VM>(module.get());
 
   // Execute our fn
   if (!vm->Execute(executable, "main", error, output))

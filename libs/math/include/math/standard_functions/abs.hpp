@@ -19,6 +19,8 @@
 
 #include "math/meta/math_type_traits.hpp"
 
+#include <cassert>
+
 /**
  * assigns the absolute of x to this array
  * @param x
@@ -31,11 +33,16 @@ namespace math {
 /// IMPLEMENTATIONS ///
 ///////////////////////
 
-// this also handles case of passing uint to abs
 template <typename T>
-meta::IfIsNonFixedPointArithmetic<T, void> Abs(T const &n, T &ret)
+meta::IfIsNonFixedPointUnsignedArithmetic<T, void> Abs(T const &n, T &ret)
 {
-  ret = T(std::abs(double(n)));
+  ret = n;
+}
+
+template <typename T>
+meta::IfIsNonFixedPointSignedArithmetic<T, void> Abs(T const &n, T &ret)
+{
+  ret = std::abs(n);
 }
 
 template <typename T>

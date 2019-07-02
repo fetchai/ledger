@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "ledger/chaincode/deed.hpp"
+
 #include "ledger/chain/transaction.hpp"
 
 namespace fetch {
@@ -81,7 +82,7 @@ namespace {
  *
  * @return calculated full weight.
  */
-inline Deed::Weight SigneesFullWeight(Deed::Signees const &signees)
+Deed::Weight SigneesFullWeight(Deed::Signees const &signees)
 {
   Deed::Weight full_weight = 0;
   for (auto const &signee : signees)

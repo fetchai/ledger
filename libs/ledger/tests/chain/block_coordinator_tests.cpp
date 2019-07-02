@@ -17,12 +17,14 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/encoders.hpp"
+#include "core/feature_flags.hpp"
 #include "crypto/ecdsa.hpp"
 #include "ledger/chain/block.hpp"
 #include "ledger/chain/block_coordinator.hpp"
 #include "ledger/chain/constants.hpp"
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/chain/transaction_layout.hpp"
+#include "ledger/consensus/stake_manager_interface.hpp"
 #include "ledger/testing/block_generator.hpp"
 #include "ledger/transaction_status_cache.hpp"
 #include "testing/common_testing_functionality.hpp"
@@ -36,17 +38,35 @@
 #include "gmock/gmock.h"
 #include <memory>
 
+namespace fetch {
+namespace ledger {
+
+std::ostream &operator<<(std::ostream &s, BlockCoordinator::State state)
+{
+  s << BlockCoordinator::ToString(state);
+  return s;
+}
+
+Digest GENESIS_DIGEST =
+    fetch::byte_array::FromBase64("0+++++++++++++++++Genesis+++++++++++++++++0=");
+Digest GENESIS_MERKLE_ROOT =
+    fetch::byte_array::FromBase64("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=");
+
+}  // namespace ledger
+}  // namespace fetch
+
 using fetch::ledger::BlockCoordinator;
 using fetch::ledger::MainChain;
 using fetch::ledger::BlockStatus;
 using fetch::ledger::Block;
 using fetch::byte_array::ToBase64;
-using fetch::ledger::GENESIS_DIGEST;
+
 using fetch::crypto::ECDSASigner;
 using fetch::ledger::testing::BlockGenerator;
 using fetch::ledger::TransactionStatusCache;
 using fetch::ledger::TransactionLayout;
 using fetch::ledger::Address;
+using fetch::core::FeatureFlags;
 
 using ::testing::_;
 using ::testing::AnyNumber;
@@ -65,6 +85,8 @@ using BlockSinkPtr        = std::unique_ptr<FakeBlockSink>;
 using TxCachePtr          = std::unique_ptr<TransactionStatusCache>;
 using State               = fetch::ledger::BlockCoordinator::State;
 using AddressPtr          = std::unique_ptr<Address>;
+using DAGPtr              = BlockCoordinator::DAGPtr;
+using StakeManagerPtr     = std::shared_ptr<fetch::ledger::StakeManagerInterface>;
 
 static constexpr char const *LOGGING_NAME = "BlockCoordinatorTests";
 static constexpr std::size_t NUM_LANES    = 1;
@@ -80,9 +102,9 @@ protected:
     block_generator_.Reset();
 
     // generate a public/private key pair
-    ECDSASigner const signer{};
+    auto signer = std::make_shared<ECDSASigner>();
 
-    address_           = std::make_unique<Address>(signer.identity());
+    address_           = std::make_unique<Address>(signer->identity());
     main_chain_        = std::make_unique<MainChain>(MainChain::Mode::IN_MEMORY_DB);
     storage_unit_      = std::make_unique<StrictMock<MockStorageUnit>>();
     execution_manager_ = std::make_unique<StrictMock<MockExecutionManager>>(storage_unit_->fake);
@@ -90,8 +112,8 @@ protected:
     block_sink_        = std::make_unique<FakeBlockSink>();
     tx_status_         = std::make_unique<TransactionStatusCache>();
     block_coordinator_ = std::make_unique<BlockCoordinator>(
-        *main_chain_, *execution_manager_, *storage_unit_, *packer_, *block_sink_, *tx_status_,
-        signer.identity().identifier(), NUM_LANES, NUM_SLICES, 1u);
+        *main_chain_, DAGPtr{}, StakeManagerPtr{}, *execution_manager_, *storage_unit_, *packer_,
+        *block_sink_, *tx_status_, FeatureFlags{}, signer, NUM_LANES, NUM_SLICES, 1u);
 
     block_coordinator_->SetBlockPeriod(std::chrono::seconds{10});
     block_coordinator_->EnableMining(true);
@@ -187,6 +209,7 @@ protected:
     ASSERT_EQ(final_state, state_machine.state());
   }
 
+  StakeManagerPtr     stake_mgr_;
   AddressPtr          address_;
   MainChainPtr        main_chain_;
   ExecutionMgrPtr     execution_manager_;
@@ -295,13 +318,14 @@ TEST_F(BlockCoordinatorTests, CheckBasicInteraction)
     EXPECT_CALL(*execution_manager_, LastProcessedBlock());
   }
 
-  ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), GENESIS_DIGEST);
+  ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), fetch::ledger::GENESIS_DIGEST);
 
   Tick(State::RELOAD_STATE, State::RESET);
   Tick(State::RESET, State::SYNCHRONISING);
   Tick(State::SYNCHRONISING, State::PRE_EXEC_BLOCK_VALIDATION);
   Tick(State::PRE_EXEC_BLOCK_VALIDATION, State::WAIT_FOR_TRANSACTIONS);
-  Tick(State::WAIT_FOR_TRANSACTIONS, State::SCHEDULE_BLOCK_EXECUTION);
+  Tick(State::WAIT_FOR_TRANSACTIONS, State::SYNERGETIC_EXECUTION);
+  Tick(State::SYNERGETIC_EXECUTION, State::SCHEDULE_BLOCK_EXECUTION);
   Tick(State::SCHEDULE_BLOCK_EXECUTION, State::WAIT_FOR_EXECUTION);
   Tick(State::WAIT_FOR_EXECUTION, State::WAIT_FOR_EXECUTION);
   Tick(State::WAIT_FOR_EXECUTION, State::POST_EXEC_BLOCK_VALIDATION);
@@ -326,7 +350,8 @@ TEST_F(BlockCoordinatorTests, CheckBasicInteraction)
                                  // will not provoke a new block being generated
   block_coordinator_->TriggerBlockGeneration();
 
-  Tick(State::SYNCHRONISED, State::PACK_NEW_BLOCK);
+  Tick(State::SYNCHRONISED, State::NEW_SYNERGETIC_EXECUTION);
+  Tick(State::NEW_SYNERGETIC_EXECUTION, State::PACK_NEW_BLOCK);
   Tick(State::PACK_NEW_BLOCK, State::EXECUTE_NEW_BLOCK);
   Tick(State::EXECUTE_NEW_BLOCK, State::WAIT_FOR_NEW_BLOCK_EXECUTION);
   Tick(State::WAIT_FOR_NEW_BLOCK_EXECUTION, State::WAIT_FOR_NEW_BLOCK_EXECUTION);
@@ -372,7 +397,7 @@ TEST_F(BlockCoordinatorTests, CheckLongBlockStartUp)
                  ToBase64(b5->body.previous_hash));
 
   // processing of genesis block
-  ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), GENESIS_DIGEST);
+  ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), fetch::ledger::GENESIS_DIGEST);
 
   {
     InSequence s;
@@ -525,7 +550,8 @@ TEST_F(BlockCoordinatorTests, CheckLongBlockStartUp)
   Tick(State::RESET, State::SYNCHRONISING);
   Tock(State::SYNCHRONISING, State::PRE_EXEC_BLOCK_VALIDATION);
   Tick(State::PRE_EXEC_BLOCK_VALIDATION, State::WAIT_FOR_TRANSACTIONS);
-  Tick(State::WAIT_FOR_TRANSACTIONS, State::SCHEDULE_BLOCK_EXECUTION);
+  Tick(State::WAIT_FOR_TRANSACTIONS, State::SYNERGETIC_EXECUTION);
+  Tick(State::SYNERGETIC_EXECUTION, State::SCHEDULE_BLOCK_EXECUTION);
   Tick(State::SCHEDULE_BLOCK_EXECUTION, State::WAIT_FOR_EXECUTION);
   Tock(State::WAIT_FOR_EXECUTION, State::POST_EXEC_BLOCK_VALIDATION);
 
@@ -537,7 +563,8 @@ TEST_F(BlockCoordinatorTests, CheckLongBlockStartUp)
   // processing of B1 block
   Tick(State::SYNCHRONISING, State::PRE_EXEC_BLOCK_VALIDATION);
   Tick(State::PRE_EXEC_BLOCK_VALIDATION, State::WAIT_FOR_TRANSACTIONS);
-  Tick(State::WAIT_FOR_TRANSACTIONS, State::SCHEDULE_BLOCK_EXECUTION);
+  Tick(State::WAIT_FOR_TRANSACTIONS, State::SYNERGETIC_EXECUTION);
+  Tick(State::SYNERGETIC_EXECUTION, State::SCHEDULE_BLOCK_EXECUTION);
   Tick(State::SCHEDULE_BLOCK_EXECUTION, State::WAIT_FOR_EXECUTION);
   Tock(State::WAIT_FOR_EXECUTION, State::POST_EXEC_BLOCK_VALIDATION);
 
@@ -549,7 +576,8 @@ TEST_F(BlockCoordinatorTests, CheckLongBlockStartUp)
   // processing of B2 block
   Tick(State::SYNCHRONISING, State::PRE_EXEC_BLOCK_VALIDATION);
   Tick(State::PRE_EXEC_BLOCK_VALIDATION, State::WAIT_FOR_TRANSACTIONS);
-  Tick(State::WAIT_FOR_TRANSACTIONS, State::SCHEDULE_BLOCK_EXECUTION);
+  Tick(State::WAIT_FOR_TRANSACTIONS, State::SYNERGETIC_EXECUTION);
+  Tick(State::SYNERGETIC_EXECUTION, State::SCHEDULE_BLOCK_EXECUTION);
   Tick(State::SCHEDULE_BLOCK_EXECUTION, State::WAIT_FOR_EXECUTION);
   Tock(State::WAIT_FOR_EXECUTION, State::POST_EXEC_BLOCK_VALIDATION);
 
@@ -561,7 +589,8 @@ TEST_F(BlockCoordinatorTests, CheckLongBlockStartUp)
   // processing of B3 block
   Tick(State::SYNCHRONISING, State::PRE_EXEC_BLOCK_VALIDATION);
   Tick(State::PRE_EXEC_BLOCK_VALIDATION, State::WAIT_FOR_TRANSACTIONS);
-  Tick(State::WAIT_FOR_TRANSACTIONS, State::SCHEDULE_BLOCK_EXECUTION);
+  Tick(State::WAIT_FOR_TRANSACTIONS, State::SYNERGETIC_EXECUTION);
+  Tick(State::SYNERGETIC_EXECUTION, State::SCHEDULE_BLOCK_EXECUTION);
   Tick(State::SCHEDULE_BLOCK_EXECUTION, State::WAIT_FOR_EXECUTION);
   Tock(State::WAIT_FOR_EXECUTION, State::POST_EXEC_BLOCK_VALIDATION);
 
@@ -586,7 +615,8 @@ TEST_F(BlockCoordinatorTests, CheckLongBlockStartUp)
   Tick(State::RESET, State::SYNCHRONISING);
   Tick(State::SYNCHRONISING, State::PRE_EXEC_BLOCK_VALIDATION);
   Tick(State::PRE_EXEC_BLOCK_VALIDATION, State::WAIT_FOR_TRANSACTIONS);
-  Tick(State::WAIT_FOR_TRANSACTIONS, State::SCHEDULE_BLOCK_EXECUTION);
+  Tick(State::WAIT_FOR_TRANSACTIONS, State::SYNERGETIC_EXECUTION);
+  Tick(State::SYNERGETIC_EXECUTION, State::SCHEDULE_BLOCK_EXECUTION);
   Tick(State::SCHEDULE_BLOCK_EXECUTION, State::WAIT_FOR_EXECUTION);
   Tock(State::WAIT_FOR_EXECUTION, State::POST_EXEC_BLOCK_VALIDATION);
 
@@ -611,7 +641,8 @@ TEST_F(BlockCoordinatorTests, CheckLongBlockStartUp)
   Tick(State::RESET, State::SYNCHRONISING);
   Tick(State::SYNCHRONISING, State::PRE_EXEC_BLOCK_VALIDATION);
   Tick(State::PRE_EXEC_BLOCK_VALIDATION, State::WAIT_FOR_TRANSACTIONS);
-  Tick(State::WAIT_FOR_TRANSACTIONS, State::SCHEDULE_BLOCK_EXECUTION);
+  Tick(State::WAIT_FOR_TRANSACTIONS, State::SYNERGETIC_EXECUTION);
+  Tick(State::SYNERGETIC_EXECUTION, State::SCHEDULE_BLOCK_EXECUTION);
   Tick(State::SCHEDULE_BLOCK_EXECUTION, State::WAIT_FOR_EXECUTION);
   Tock(State::WAIT_FOR_EXECUTION, State::POST_EXEC_BLOCK_VALIDATION);
 
@@ -667,13 +698,14 @@ TEST_F(BlockCoordinatorTests, CheckInvalidBlockNumber)
   }
 
   // processing of genesis block
-  ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), GENESIS_DIGEST);
+  ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), fetch::ledger::GENESIS_DIGEST);
 
   Tick(State::RELOAD_STATE, State::RESET);
   Tick(State::RESET, State::SYNCHRONISING);
   Tick(State::SYNCHRONISING, State::PRE_EXEC_BLOCK_VALIDATION);
   Tick(State::PRE_EXEC_BLOCK_VALIDATION, State::WAIT_FOR_TRANSACTIONS);
-  Tick(State::WAIT_FOR_TRANSACTIONS, State::SCHEDULE_BLOCK_EXECUTION);
+  Tick(State::WAIT_FOR_TRANSACTIONS, State::SYNERGETIC_EXECUTION);
+  Tick(State::SYNERGETIC_EXECUTION, State::SCHEDULE_BLOCK_EXECUTION);
   Tick(State::SCHEDULE_BLOCK_EXECUTION, State::WAIT_FOR_EXECUTION);
   Tick(State::WAIT_FOR_EXECUTION, State::WAIT_FOR_EXECUTION);
   Tick(State::WAIT_FOR_EXECUTION, State::POST_EXEC_BLOCK_VALIDATION);
@@ -754,13 +786,14 @@ TEST_F(BlockCoordinatorTests, CheckInvalidNumLanes)
   }
 
   // processing of genesis block
-  ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), GENESIS_DIGEST);
+  ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), fetch::ledger::GENESIS_DIGEST);
 
   Tick(State::RELOAD_STATE, State::RESET);
   Tick(State::RESET, State::SYNCHRONISING);
   Tick(State::SYNCHRONISING, State::PRE_EXEC_BLOCK_VALIDATION);
   Tick(State::PRE_EXEC_BLOCK_VALIDATION, State::WAIT_FOR_TRANSACTIONS);
-  Tick(State::WAIT_FOR_TRANSACTIONS, State::SCHEDULE_BLOCK_EXECUTION);
+  Tick(State::WAIT_FOR_TRANSACTIONS, State::SYNERGETIC_EXECUTION);
+  Tick(State::SYNERGETIC_EXECUTION, State::SCHEDULE_BLOCK_EXECUTION);
   Tick(State::SCHEDULE_BLOCK_EXECUTION, State::WAIT_FOR_EXECUTION);
   Tick(State::WAIT_FOR_EXECUTION, State::WAIT_FOR_EXECUTION);
   Tick(State::WAIT_FOR_EXECUTION, State::POST_EXEC_BLOCK_VALIDATION);
@@ -844,13 +877,14 @@ TEST_F(BlockCoordinatorTests, CheckInvalidNumSlices)
   }
 
   // processing of genesis block
-  ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), GENESIS_DIGEST);
+  ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), fetch::ledger::GENESIS_DIGEST);
 
   Tick(State::RELOAD_STATE, State::RESET);
   Tick(State::RESET, State::SYNCHRONISING);
   Tick(State::SYNCHRONISING, State::PRE_EXEC_BLOCK_VALIDATION);
   Tick(State::PRE_EXEC_BLOCK_VALIDATION, State::WAIT_FOR_TRANSACTIONS);
-  Tick(State::WAIT_FOR_TRANSACTIONS, State::SCHEDULE_BLOCK_EXECUTION);
+  Tick(State::WAIT_FOR_TRANSACTIONS, State::SYNERGETIC_EXECUTION);
+  Tick(State::SYNERGETIC_EXECUTION, State::SCHEDULE_BLOCK_EXECUTION);
   Tick(State::SCHEDULE_BLOCK_EXECUTION, State::WAIT_FOR_EXECUTION);
   Tick(State::WAIT_FOR_EXECUTION, State::WAIT_FOR_EXECUTION);
   Tick(State::WAIT_FOR_EXECUTION, State::POST_EXEC_BLOCK_VALIDATION);
@@ -940,13 +974,14 @@ TEST_F(BlockCoordinatorTests, CheckBlockMining)
   }
 
   // processing of genesis block
-  ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), GENESIS_DIGEST);
+  ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), fetch::ledger::GENESIS_DIGEST);
 
   Tick(State::RELOAD_STATE, State::RESET);
   Tick(State::RESET, State::SYNCHRONISING);
   Tick(State::SYNCHRONISING, State::PRE_EXEC_BLOCK_VALIDATION);
   Tick(State::PRE_EXEC_BLOCK_VALIDATION, State::WAIT_FOR_TRANSACTIONS);
-  Tick(State::WAIT_FOR_TRANSACTIONS, State::SCHEDULE_BLOCK_EXECUTION);
+  Tick(State::WAIT_FOR_TRANSACTIONS, State::SYNERGETIC_EXECUTION);
+  Tick(State::SYNERGETIC_EXECUTION, State::SCHEDULE_BLOCK_EXECUTION);
   Tick(State::SCHEDULE_BLOCK_EXECUTION, State::WAIT_FOR_EXECUTION);
   Tick(State::WAIT_FOR_EXECUTION, State::WAIT_FOR_EXECUTION);
   Tick(State::WAIT_FOR_EXECUTION, State::POST_EXEC_BLOCK_VALIDATION);
@@ -963,7 +998,8 @@ TEST_F(BlockCoordinatorTests, CheckBlockMining)
   // trigger the coordinator to try and make a block
   block_coordinator_->TriggerBlockGeneration();
 
-  Tick(State::SYNCHRONISED, State::PACK_NEW_BLOCK);
+  Tick(State::SYNCHRONISED, State::NEW_SYNERGETIC_EXECUTION);
+  Tick(State::NEW_SYNERGETIC_EXECUTION, State::PACK_NEW_BLOCK);
   Tick(State::PACK_NEW_BLOCK, State::EXECUTE_NEW_BLOCK);
   Tick(State::EXECUTE_NEW_BLOCK, State::WAIT_FOR_NEW_BLOCK_EXECUTION);
   Tick(State::WAIT_FOR_NEW_BLOCK_EXECUTION, State::WAIT_FOR_NEW_BLOCK_EXECUTION);
@@ -994,7 +1030,7 @@ protected:
     block_generator_.Reset();
 
     // generate a public/private key pair
-    ECDSASigner const signer{};
+    auto signer = std::make_shared<ECDSASigner>();
 
     clock_             = fetch::moment::CreateAdjustableClock("bc:deadline");
     main_chain_        = std::make_unique<MainChain>(MainChain::Mode::IN_MEMORY_DB);
@@ -1004,8 +1040,8 @@ protected:
     block_sink_        = std::make_unique<FakeBlockSink>();
     tx_status_         = std::make_unique<TransactionStatusCache>();
     block_coordinator_ = std::make_unique<BlockCoordinator>(
-        *main_chain_, *execution_manager_, *storage_unit_, *packer_, *block_sink_, *tx_status_,
-        signer.identity().identifier(), NUM_LANES, NUM_SLICES, 1u);
+        *main_chain_, DAGPtr{}, StakeManagerPtr{}, *execution_manager_, *storage_unit_, *packer_,
+        *block_sink_, *tx_status_, FeatureFlags{}, signer, NUM_LANES, NUM_SLICES, 1u);
 
     block_coordinator_->SetBlockPeriod(std::chrono::seconds{10});
     block_coordinator_->EnableMining(true);

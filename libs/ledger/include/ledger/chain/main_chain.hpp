@@ -54,11 +54,6 @@ namespace ledger {
  */
 struct Tip
 {
-  Tip() = default;
-  Tip(uint64_t weight)
-    : total_weight{weight}
-  {}
-
   uint64_t total_weight{0};
 };
 
@@ -70,7 +65,28 @@ enum class BlockStatus
   INVALID     ///< The block is invalid and has not been added to the chain
 };
 
-char const *ToString(BlockStatus status);
+/**
+ * Converts a block status into a human readable string
+ *
+ * @param status The status enumeration
+ * @return The output text
+ */
+inline constexpr char const *ToString(BlockStatus status)
+{
+  switch (status)
+  {
+  case BlockStatus::ADDED:
+    return "Added";
+  case BlockStatus::LOOSE:
+    return "Loose";
+  case BlockStatus::DUPLICATE:
+    return "Duplicate";
+  case BlockStatus::INVALID:
+    return "Invalid";
+  }
+
+  return "Unknown";
+}
 
 class MainChain
 {
@@ -78,7 +94,7 @@ public:
   using BlockPtr             = std::shared_ptr<Block const>;
   using Blocks               = std::vector<BlockPtr>;
   using BlockHash            = Digest;
-  using BlockHashs           = std::vector<BlockHash>;
+  using BlockHashes          = std::vector<BlockHash>;
   using BlockHashSet         = std::unordered_set<BlockHash>;
   using TransactionLayoutSet = std::unordered_set<TransactionLayout>;
 
@@ -107,11 +123,13 @@ public:
   MainChain(MainChain &&rhs)      = delete;
   ~MainChain();
 
+  void Reset();
+
   /// @name Block Management
   /// @{
   BlockStatus AddBlock(Block const &block);
-  BlockPtr    GetBlock(BlockHash hash) const;
-  bool        RemoveBlock(BlockHash hash);
+  BlockPtr    GetBlock(BlockHash const &hash) const;
+  bool        RemoveBlock(BlockHash const &hash);
   /// @}
 
   /// @name Chain Queries
@@ -134,13 +152,13 @@ public:
   /// @name Missing / Loose Management
   /// @{
   BlockHashSet GetMissingTips() const;
-  BlockHashs   GetMissingBlockHashes(uint64_t limit = UPPER_BOUND) const;
+  BlockHashes  GetMissingBlockHashes(uint64_t limit = UPPER_BOUND) const;
   bool         HasMissingBlocks() const;
   /// @}
 
   /// @name Transaction Duplication Filtering
   /// @{
-  DigestSet DetectDuplicateTransactions(BlockHash        starting_hash,
+  DigestSet DetectDuplicateTransactions(BlockHash const &starting_hash,
                                         DigestSet const &transactions) const;
   /// @}
 
@@ -148,14 +166,28 @@ public:
   MainChain &operator=(MainChain const &rhs) = delete;
   MainChain &operator=(MainChain &&rhs) = delete;
 
+  struct DbRecord
+  {
+    Block block;
+    // genesis (hopefully) cannot be next hash so is used as undefined value
+    BlockHash next_hash = GENESIS_DIGEST;
+
+    BlockHash hash() const
+    {
+      return block.body.hash;
+    }
+  };
+
 private:
+
   using IntBlockPtr   = std::shared_ptr<Block>;
   using BlockMap      = std::unordered_map<BlockHash, IntBlockPtr>;
+  using References    = std::unordered_multimap<BlockHash, BlockHash>;
   using Proof         = Block::Proof;
   using TipsMap       = std::unordered_map<BlockHash, Tip>;
   using BlockHashList = std::list<BlockHash>;
   using LooseBlockMap = std::unordered_map<BlockHash, BlockHashList>;
-  using BlockStore    = fetch::storage::ObjectStore<Block>;
+  using BlockStore    = fetch::storage::ObjectStore<DbRecord>;
   using BlockStorePtr = std::unique_ptr<BlockStore>;
   using RMutex        = std::recursive_mutex;
   using RLock         = std::unique_lock<RMutex>;
@@ -185,11 +217,19 @@ private:
   /// @name Block Lookup
   /// @{
   BlockStatus InsertBlock(IntBlockPtr const &block, bool evaluate_loose_blocks = true);
-  bool        LookupBlock(BlockHash hash, IntBlockPtr &block, bool add_to_cache = false) const;
-  bool        LookupBlockFromCache(BlockHash hash, IntBlockPtr &block) const;
-  bool        LookupBlockFromStorage(BlockHash hash, IntBlockPtr &block, bool add_to_cache) const;
-  bool        IsBlockInCache(BlockHash hash) const;
-  void        AddBlockToCache(IntBlockPtr const &) const;
+  bool LookupBlock(BlockHash const &hash, IntBlockPtr &block, bool add_to_cache = false) const;
+  bool LookupBlockFromCache(BlockHash const &hash, IntBlockPtr &block) const;
+  bool LookupBlockFromStorage(BlockHash const &hash, IntBlockPtr &block, bool add_to_cache) const;
+  bool IsBlockInCache(BlockHash const &hash) const;
+  void AddBlockToCache(IntBlockPtr const &) const;
+  /// @}
+
+  /// @name Low-level storage interface
+  /// @{
+  void                CacheBlock(IntBlockPtr const &block) const;
+  BlockMap::size_type UncacheBlock(BlockHash const &hash) const;
+  void                KeepBlock(IntBlockPtr const &block) const;
+  bool                LoadBlock(BlockHash const &hash, Block &block) const;
   /// @}
 
   /// @name Tip Management
@@ -204,15 +244,52 @@ private:
   BlockHash GetHeadHash();
   void      SetHeadHash(BlockHash const &hash);
 
+  bool RemoveTree(BlockHash const &hash, BlockHashSet &invalidated_blocks);
+
   BlockStorePtr block_store_;  /// < Long term storage and backup
   std::fstream  head_store_;
 
-  mutable RMutex   lock_;          ///< Mutex protecting block_chain_, tips_ & heaviest_
-  mutable BlockMap block_chain_;   ///< All recent blocks are kept in memory
-  TipsMap          tips_;          ///< Keep track of the tips
-  HeaviestTip      heaviest_;      ///< Heaviest block/tip
-  LooseBlockMap    loose_blocks_;  ///< Waiting (loose) blocks
+  mutable RMutex   lock_;         ///< Mutex protecting block_chain_, tips_ & heaviest_
+  mutable BlockMap block_chain_;  ///< All recent blocks are kept in memory
+  // The whole tree of previous-next relations among cached blocks
+  mutable References references_;
+  TipsMap            tips_;          ///< Keep track of the tips
+  HeaviestTip        heaviest_;      ///< Heaviest block/tip
+  LooseBlockMap      loose_blocks_;  ///< Waiting (loose) blocks
+
 };
 
 }  // namespace ledger
+
+namespace serializers {
+
+
+template< typename D >
+struct MapSerializer< ledger::MainChain::DbRecord, D > 
+{
+public:
+  using Type = ledger::MainChain::DbRecord;
+  using DriverType = D;
+
+  static uint8_t const BLOCK     = 1;
+  static uint8_t const NEXT_HASH = 2;  
+
+  template< typename Constructor >
+  static void Serialize(Constructor & map_constructor, Type const & dbRecord)
+  {
+    auto map = map_constructor(2);
+    map.Append(BLOCK, dbRecord.block);
+    map.Append(NEXT_HASH, dbRecord.next_hash);
+  }
+
+  template< typename MapDeserializer >
+  static void Deserialize(MapDeserializer & map, Type & dbRecord)
+  {
+    map.ExpectKeyGetValue(BLOCK, dbRecord.block);
+    map.ExpectKeyGetValue(NEXT_HASH, dbRecord.next_hash);
+  }  
+};
+}
+
+
 }  // namespace fetch

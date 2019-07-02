@@ -17,23 +17,20 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/logger.hpp"
 #include "ledger/chain/digest.hpp"
 #include "ledger/executor_interface.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 #include "storage/resource_mapper.hpp"
 
-#include <atomic>
 #include <chrono>
 #include <sstream>
 #include <thread>
 #include <utility>
+#include <vector>
 
 class FakeExecutor : public fetch::ledger::ExecutorInterface
 {
 public:
-  static constexpr char const *LOGGING_NAME = "FakeExecutor";
-
   using Digest    = fetch::ledger::Digest;
   using Address   = fetch::ledger::Address;
   using BitVector = fetch::BitVector;
@@ -62,8 +59,6 @@ public:
     {
       state_->Set(fetch::storage::ResourceAddress{digest}, "executed");
     }
-
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Executing transaction sort of...");
 
     return {Status::SUCCESS, 0, 0, 0};
   }

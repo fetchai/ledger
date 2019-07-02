@@ -40,13 +40,13 @@ public:
   using mutex_type      = std::mutex;
   using lock_guard_type = std::lock_guard<mutex_type>;
   using hash_type       = fetch::byte_array::ConstByteArray;
-
-  static constexpr char const *LOGGING_NAME = "FakeStorageUnit";
+  using ResourceID      = fetch::storage::ResourceID;
 
   Document GetOrCreate(ResourceAddress const &key) override
   {
     lock_guard_type lock(mutex_);
-    Document        doc;
+
+    Document doc;
 
     auto it = state_.find(key.id());
     if (it != state_.end())
@@ -82,13 +82,15 @@ public:
   void Set(ResourceAddress const &key, StateValue const &value) override
   {
     lock_guard_type lock(mutex_);
+
     state_[key.id()] = value;
   }
 
   bool Lock(ShardIndex shard) override
   {
     lock_guard_type lock(mutex_);
-    bool            success = false;
+
+    bool success = false;
 
     bool const already_locked = locks_.find(shard) != locks_.end();
     if (!already_locked)
@@ -103,7 +105,8 @@ public:
   bool Unlock(ShardIndex shard) override
   {
     lock_guard_type lock(mutex_);
-    bool            success = false;
+
+    bool success = false;
 
     bool const already_locked = locks_.find(shard) != locks_.end();
     if (already_locked)
@@ -171,6 +174,24 @@ public:
   TxLayouts PollRecentTx(uint32_t) override
   {
     return {};
+  }
+
+  Keys KeyDump() const override
+  {
+    Keys keys;
+
+    for (auto it = state_.begin(); it != state_.end(); ++it)
+    {
+      keys.push_back(ResourceID(it->first));
+    }
+
+    return keys;
+  }
+
+  void Reset() override
+  {
+    state_.clear();
+    transactions_.clear();
   }
 
 private:

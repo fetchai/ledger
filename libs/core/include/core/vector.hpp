@@ -33,7 +33,6 @@ struct Vector : public std::vector<T>
 
   T &operator[](std::size_t index)
   {
-
 #ifndef NDEBUG
     return this->at(index);
 #else

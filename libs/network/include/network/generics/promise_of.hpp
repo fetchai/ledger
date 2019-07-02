@@ -88,7 +88,7 @@ public:
   explicit operator bool() const;
 
   PromiseOf &operator=(PromiseOf const &rhs) = default;
-  PromiseOf &operator=(PromiseOf &&rhs) noexcept = default;
+  PromiseOf &operator=(PromiseOf &&rhs) = default;
 
 private:
   Promise promise_;
@@ -140,7 +140,6 @@ inline PromiseOf<TYPE>::operator bool() const
 template <typename TYPE>
 inline bool PromiseOf<TYPE>::Wait(uint32_t timeout_ms, bool throw_exception) const
 {
-  FETCH_LOG_PROMISE();
   promise_->Wait(timeout_ms, throw_exception);
   return promise_->IsSuccessful();
 }

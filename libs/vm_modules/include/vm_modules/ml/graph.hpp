@@ -17,7 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm_modules/ml/tensor.hpp"
+#include "vm_modules/math/tensor.hpp"
+#include "vm_modules/ml/state_dict.hpp"
 
 #include "ml/graph.hpp"
 #include "ml/layers/fully_connected.hpp"
@@ -28,87 +29,105 @@
 namespace fetch {
 namespace vm_modules {
 namespace ml {
-class GraphWrapper : public fetch::vm::Object, public fetch::ml::Graph<fetch::math::Tensor<float>>
+
+class VMGraph : public fetch::vm::Object
 {
+  using MathTensorType = fetch::math::Tensor<float>;
+  using VMTensorType   = fetch::vm_modules::math::VMTensor;
+  using GraphType      = fetch::ml::Graph<MathTensorType>;
+  using VMPtrString    = fetch::vm::Ptr<fetch::vm::String>;
+
 public:
-  GraphWrapper(fetch::vm::VM *vm, fetch::vm::TypeId type_id)
+  VMGraph(fetch::vm::VM *vm, fetch::vm::TypeId type_id)
     : fetch::vm::Object(vm, type_id)
-    , fetch::ml::Graph<fetch::math::Tensor<float>>()
+    , graph_()
   {}
 
-  static fetch::vm::Ptr<GraphWrapper> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id)
+  static fetch::vm::Ptr<VMGraph> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id)
   {
-    return new GraphWrapper(vm, type_id);
+    return new VMGraph(vm, type_id);
   }
 
-  void SetInput(fetch::vm::Ptr<fetch::vm::String> const &name,
-                fetch::vm::Ptr<TensorWrapper> const &    input)
+  void SetInput(VMPtrString const &name, fetch::vm::Ptr<VMTensorType> const &input)
   {
-    fetch::ml::Graph<fetch::math::Tensor<float>>::SetInput(name->str, *input);
+    graph_.SetInput(name->str, (*input).GetTensor());
   }
 
-  fetch::vm::Ptr<TensorWrapper> Evaluate(fetch::vm::Ptr<fetch::vm::String> const &name)
+  fetch::vm::Ptr<VMTensorType> Evaluate(VMPtrString const &name)
   {
-    fetch::math::Tensor<float> t =
-        fetch::ml::Graph<fetch::math::Tensor<float>>::Evaluate(name->str);
-    fetch::vm::Ptr<TensorWrapper> ret = this->vm_->CreateNewObject<TensorWrapper>(t.shape());
+    MathTensorType               t   = graph_.Evaluate(name->str);
+    fetch::vm::Ptr<VMTensorType> ret = this->vm_->CreateNewObject<math::VMTensor>(t.shape());
     (*ret).Copy(t);
     return ret;
   }
 
-  void Backpropagate(fetch::vm::Ptr<fetch::vm::String> const &name,
-                     fetch::vm::Ptr<TensorWrapper> const &    dt)
+  void Backpropagate(VMPtrString const &name, fetch::vm::Ptr<math::VMTensor> const &dt)
   {
-    fetch::ml::Graph<fetch::math::Tensor<float>>::BackPropagate(name->str, *dt);
+    graph_.BackPropagate(name->str, (*dt).GetTensor());
   }
 
-  void Step(float lr) override
+  void Step(float lr)
   {
-    fetch::ml::Graph<fetch::math::Tensor<float>>::Step(lr);
+    graph_.Step(lr);
   }
 
-  void AddPlaceholder(fetch::vm::Ptr<fetch::vm::String> const &name)
+  void AddPlaceholder(VMPtrString const &name)
   {
-    fetch::ml::Graph<fetch::math::Tensor<float>>::AddNode<
-        fetch::ml::ops::PlaceHolder<fetch::math::Tensor<float>>>(name->str, {});
+    graph_.AddNode<fetch::ml::ops::PlaceHolder<MathTensorType>>(name->str, {});
   }
 
-  void AddFullyConnected(fetch::vm::Ptr<fetch::vm::String> const &name,
-                         fetch::vm::Ptr<fetch::vm::String> const &inputName, int in, int out)
+  void AddFullyConnected(VMPtrString const &name, VMPtrString const &input_name, int in, int out)
   {
-    fetch::ml::Graph<fetch::math::Tensor<float>>::AddNode<
-        fetch::ml::layers::FullyConnected<fetch::math::Tensor<float>>>(
-        name->str, {inputName->str}, std::size_t(in), std::size_t(out));
+    graph_.AddNode<fetch::ml::layers::FullyConnected<MathTensorType>>(
+        name->str, {input_name->str}, std::size_t(in), std::size_t(out));
   }
 
-  void AddRelu(fetch::vm::Ptr<fetch::vm::String> const &name,
-               fetch::vm::Ptr<fetch::vm::String> const &inputName)
+  void AddRelu(VMPtrString const &name, VMPtrString const &input_name)
   {
-    fetch::ml::Graph<fetch::math::Tensor<float>>::AddNode<
-        fetch::ml::ops::Relu<fetch::math::Tensor<float>>>(name->str, {inputName->str});
+    graph_.AddNode<fetch::ml::ops::Relu<MathTensorType>>(name->str, {input_name->str});
   }
 
-  void AddSoftmax(fetch::vm::Ptr<fetch::vm::String> const &name,
-                  fetch::vm::Ptr<fetch::vm::String> const &inputName)
+  void AddSoftmax(VMPtrString const &name, VMPtrString const &input_name)
   {
-    fetch::ml::Graph<fetch::math::Tensor<float>>::AddNode<
-        fetch::ml::ops::Softmax<fetch::math::Tensor<float>>>(name->str, {inputName->str});
+    graph_.AddNode<fetch::ml::ops::Softmax<fetch::math::Tensor<float>>>(name->str,
+                                                                        {input_name->str});
   }
+
+  void AddDropout(VMPtrString const &name, VMPtrString const &input_name, float const &prob)
+  {
+    graph_.AddNode<fetch::ml::ops::Dropout<MathTensorType>>(name->str, {input_name->str}, prob);
+  }
+
+  void LoadStateDict(fetch::vm::Ptr<VMStateDict> const &sd)
+  {
+    graph_.LoadStateDict(sd->state_dict_);
+  }
+
+  fetch::vm::Ptr<VMStateDict> StateDict()
+  {
+    fetch::vm::Ptr<VMStateDict> ret = this->vm_->CreateNewObject<VMStateDict>(graph_.StateDict());
+    return ret;
+  }
+
+  static void Bind(fetch::vm::Module &module)
+  {
+    module.CreateClassType<VMGraph>("Graph")
+        .CreateConstuctor<>()
+        .CreateMemberFunction("SetInput", &VMGraph::SetInput)
+        .CreateMemberFunction("Evaluate", &VMGraph::Evaluate)
+        .CreateMemberFunction("Backpropagate", &VMGraph::Backpropagate)
+        .CreateMemberFunction("Step", &VMGraph::Step)
+        .CreateMemberFunction("AddPlaceholder", &VMGraph::AddPlaceholder)
+        .CreateMemberFunction("AddFullyConnected", &VMGraph::AddFullyConnected)
+        .CreateMemberFunction("AddRelu", &VMGraph::AddRelu)
+        .CreateMemberFunction("AddSoftmax", &VMGraph::AddSoftmax)
+        .CreateMemberFunction("AddDropout", &VMGraph::AddDropout)
+        .CreateMemberFunction("LoadStateDict", &VMGraph::LoadStateDict)
+        .CreateMemberFunction("StateDict", &VMGraph::StateDict);
+  }
+
+  GraphType graph_;
 };
-
-inline void CreateGraph(fetch::vm::Module &module)
-{
-  module.CreateClassType<GraphWrapper>("Graph")
-      .CreateConstuctor<>()
-      .CreateMemberFunction("SetInput", &GraphWrapper::SetInput)
-      .CreateMemberFunction("Evaluate", &GraphWrapper::Evaluate)
-      .CreateMemberFunction("Backpropagate", &GraphWrapper::Backpropagate)
-      .CreateMemberFunction("Step", &GraphWrapper::Step)
-      .CreateMemberFunction("AddPlaceholder", &GraphWrapper::AddPlaceholder)
-      .CreateMemberFunction("AddFullyConnected", &GraphWrapper::AddFullyConnected)
-      .CreateMemberFunction("AddRelu", &GraphWrapper::AddRelu)
-      .CreateMemberFunction("AddSoftmax", &GraphWrapper::AddSoftmax);
-}
 
 }  // namespace ml
 }  // namespace vm_modules

@@ -98,7 +98,7 @@ inline byte_array::ConstByteArray ResourceID::id() const
 inline ResourceID::Group ResourceID::resource_group() const
 {
   static_assert(std::is_integral<Group>::value, "Group type must be integer");
-  assert(id_.size() > sizeof(Group));
+  assert(id_.size() >= sizeof(Group));
 
   return *reinterpret_cast<Group const *>(id_.pointer());
 }
@@ -138,9 +138,13 @@ class ResourceAddress : public ResourceID
 public:
   explicit ResourceAddress(byte_array::ConstByteArray const &address)
     : ResourceID(crypto::Hash<crypto::SHA256>(address))
-  {
-    address_ = address;
-  }
+    , address_{address}
+  {}
+
+  explicit ResourceAddress(ResourceID const &rid)
+    : ResourceID(rid)
+    , address_{}
+  {}
 
   ResourceAddress() = default;
 
@@ -175,7 +179,7 @@ public:
   }
 
 private:
-  byte_array::ByteArray address_;  ///< The canonical resource address
+  byte_array::ConstByteArray address_;  ///< The canonical resource address
 };
 
 }  // namespace storage

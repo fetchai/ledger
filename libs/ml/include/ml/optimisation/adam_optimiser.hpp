@@ -40,13 +40,13 @@ public:
   using DataType  = typename ArrayType::Type;
   using SizeType  = typename ArrayType::SizeType;
 
-  AdamOptimiser(std::shared_ptr<Graph<T>>
-
-                                   graph,
-                std::string const &input_node_name, std::string const &output_node_name,
-                DataType const &learning_rate = DataType{0.001f},
+  AdamOptimiser(std::shared_ptr<Graph<T>> graph, std::vector<std::string> const &input_node_names,
+                std::string const &output_node_name,
+                DataType const &   learning_rate = DataType{0.001f},
                 DataType const &beta1 = DataType{0.9f}, DataType const &beta2 = DataType{0.999f},
                 DataType const &epsilon = DataType{1e-4f});
+
+  virtual ~AdamOptimiser() = default;
 
 private:
   std::vector<ArrayType> cache_;
@@ -68,12 +68,12 @@ private:
 template <class T, class C>
 AdamOptimiser<T, C>::AdamOptimiser(std::shared_ptr<Graph<T>>
 
-                                                      graph,
-                                   std::string const &input_node_name,
-                                   std::string const &output_node_name,
+                                                                   graph,
+                                   std::vector<std::string> const &input_node_names,
+                                   std::string const &             output_node_name,
                                    DataType const &learning_rate, DataType const &beta1,
                                    DataType const &beta2, DataType const &epsilon)
-  : Optimiser<T, C>(graph, input_node_name, output_node_name, learning_rate)
+  : Optimiser<T, C>(graph, input_node_names, output_node_name, learning_rate)
   , beta1_(beta1)
   , beta2_(beta2)
   , beta1_t_(beta1)

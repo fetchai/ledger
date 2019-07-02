@@ -155,13 +155,13 @@ struct Executable
     }
     uint16_t AddVariable(std::string const &name, TypeId type_id, uint16_t scope_number)
     {
-      uint16_t const index = uint16_t(num_variables++);
+      auto const index = static_cast<uint16_t>(num_variables++);
       variables.push_back(Variable(name, type_id, scope_number));
       return index;
     }
     uint16_t AddInstruction(Instruction const &instruction)
     {
-      uint16_t const pc = uint16_t(instructions.size());
+      auto const pc = static_cast<uint16_t>(instructions.size());
       instructions.push_back(instruction);
       return pc;
     }
@@ -190,7 +190,7 @@ struct Executable
 
   uint16_t AddFunction(Function &function)
   {
-    uint16_t const index        = uint16_t(functions.size());
+    auto const index            = static_cast<uint16_t>(functions.size());
     function_map[function.name] = index;
     functions.push_back(std::move(function));
     return index;
@@ -198,7 +198,7 @@ struct Executable
 
   uint16_t AddType(TypeInfo const &type_info)
   {
-    uint16_t const index = uint16_t(types.size());
+    auto const index = static_cast<uint16_t>(types.size());
     types.push_back(type_info);
     return index;
   }
@@ -233,6 +233,28 @@ private:
     uint16_t              scope_number;
     std::vector<uint16_t> continue_pcs;
     std::vector<uint16_t> break_pcs;
+  };
+
+  struct Chain
+  {
+    Chain()
+    {
+      kind = NodeKind::Unknown;
+    }
+    Chain(NodeKind kind__)
+    {
+      kind = kind__;
+    }
+    void Append(uint16_t pc)
+    {
+      pcs.push_back(pc);
+    }
+    void Append(std::vector<uint16_t> const &other_pcs)
+    {
+      pcs.insert(pcs.end(), other_pcs.begin(), other_pcs.end());
+    }
+    NodeKind              kind;
+    std::vector<uint16_t> pcs;
   };
 
   struct ConstantComparator
@@ -297,6 +319,8 @@ private:
   void     HandleUnsignedInteger64(IRExpressionNodePtr const &node);
   void     HandleFloat32(IRExpressionNodePtr const &node);
   void     HandleFloat64(IRExpressionNodePtr const &node);
+  void     HandleFixed32(IRExpressionNodePtr const &node);
+  void     HandleFixed64(IRExpressionNodePtr const &node);
   void     HandleString(IRExpressionNodePtr const &node);
   void     HandleTrue(IRExpressionNodePtr const &node);
   void     HandleFalse(IRExpressionNodePtr const &node);
@@ -304,6 +328,11 @@ private:
   void     HandlePrefixPostfixOp(IRExpressionNodePtr const &node);
   void     HandleBinaryOp(IRExpressionNodePtr const &node);
   void     HandleUnaryOp(IRExpressionNodePtr const &node);
+  Chain    HandleConditionExpression(IRBlockNodePtr const &     block_node,
+                                     IRExpressionNodePtr const &node);
+  Chain    HandleShortCircuitOp(IRNodePtr const &parent, IRExpressionNodePtr const &node);
+  void     FinaliseShortCircuitChain(Chain const &chain, bool is_condition_chain,
+                                     uint16_t destination_pc);
   void     HandleIndexOp(IRExpressionNodePtr const &node);
   void     HandleDotOp(IRExpressionNodePtr const &node);
   void     HandleInvokeOp(IRExpressionNodePtr const &node);

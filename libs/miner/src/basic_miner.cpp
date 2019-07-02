@@ -17,19 +17,21 @@
 //------------------------------------------------------------------------------
 
 #include "miner/basic_miner.hpp"
+
 #include "core/logger.hpp"
 #include "ledger/chain/address.hpp"
 #include "ledger/chain/block.hpp"
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/chain/transaction.hpp"
+#include "telemetry/counter.hpp"
+#include "telemetry/gauge.hpp"
+#include "telemetry/registry.hpp"
 
 #include <algorithm>
 
 namespace fetch {
 namespace miner {
 namespace {
-
-using ledger::Transaction;
 
 /**
  * Clip the specified to the bounds: [min_value, max_value]
@@ -58,8 +60,17 @@ BasicMiner::BasicMiner(uint32_t log2_num_lanes)
   : log2_num_lanes_{log2_num_lanes}
   , max_num_threads_{std::thread::hardware_concurrency()}
   , thread_pool_{max_num_threads_, "Miner"}
-  , pending_{log2_num_lanes}
-  , mining_pool_{log2_num_lanes}
+  , pending_{}
+  , mining_pool_{}
+  , mining_pool_size_{telemetry::Registry::Instance().CreateGauge<uint64_t>(
+        "ledger_miner_mining_pool_size")}
+  , max_mining_pool_size_{telemetry::Registry::Instance().CreateGauge<uint64_t>(
+        "ledger_miner_max_mining_pool_size")}
+  , max_pending_pool_size_{telemetry::Registry::Instance().CreateGauge<uint64_t>(
+        "ledger_miner_max_pending_pool_size")}
+  , duplicate_count_{telemetry::Registry::Instance().CreateCounter("ledger_miner_duplicate_count")}
+  , duplicate_filtered_count_{
+        telemetry::Registry::Instance().CreateCounter("ledger_miner_duplicate_filtered_count")}
 {}
 
 /**
@@ -92,10 +103,12 @@ void BasicMiner::EnqueueTransaction(ledger::TransactionLayout const &layout)
 
   if (pending_.Add(layout))
   {
+    max_pending_pool_size_->max(pending_.size());
     FETCH_LOG_DEBUG(LOGGING_NAME, "Enqueued Transaction (added) 0x", layout.digest().ToHex());
   }
   else
   {
+    duplicate_count_->increment();
     FETCH_LOG_DEBUG(LOGGING_NAME, "Enqueued Transaction (duplicate) ", layout.digest().ToHex());
   }
 }
@@ -123,8 +136,13 @@ void BasicMiner::GenerateBlock(Block &block, std::size_t num_lanes, std::size_t 
   auto const duplicates =
       chain.DetectDuplicateTransactions(block.body.previous_hash, mining_pool_.digests());
 
+  duplicate_filtered_count_->add(duplicates.size());
+
   // remove the duplicates
   mining_pool_.Remove(duplicates);
+
+  mining_pool_size_->set(mining_pool_.size());
+  max_mining_pool_size_->max(mining_pool_.size());
 
   // cache the size of the mining pool
   std::size_t const pool_size_before = mining_pool_.size();
@@ -132,8 +150,7 @@ void BasicMiner::GenerateBlock(Block &block, std::size_t num_lanes, std::size_t 
   FETCH_LOG_INFO(LOGGING_NAME, "Starting block packing. Pool Size: ", pool_size_before);
 
   // determine how many of the threads should be used in this block generation
-  std::size_t const num_threads =
-      Clip3<std::size_t>(mining_pool_.size() / 1000u, 1u, max_num_threads_);
+  auto const num_threads = Clip3<std::size_t>(mining_pool_.size() / 1000u, 1u, max_num_threads_);
 
   // prepare the basic formatting for the block
   block.body.slices.resize(num_slices);
@@ -145,20 +162,14 @@ void BasicMiner::GenerateBlock(Block &block, std::size_t num_lanes, std::size_t 
   }
   else
   {
-    using QueuePtr = std::unique_ptr<Queue>;
-
     // split the main queue into a series of smaller queues that can be executed in parallel
-    std::vector<QueuePtr> transaction_lists(num_threads);
-    for (auto &queue : transaction_lists)
-    {
-      queue = std::make_unique<Queue>(log2_num_lanes_);
-    }
+    std::vector<Queue> transaction_lists(num_threads);
 
     std::size_t const num_tx_per_thread = mining_pool_.size() / num_threads;
 
     for (std::size_t i = 0; i < num_threads; ++i)
     {
-      QueuePtr const &txs = transaction_lists[i];
+      Queue &txs = transaction_lists[i];
 
       auto start = mining_pool_.begin();
       auto end   = start;
@@ -169,10 +180,10 @@ void BasicMiner::GenerateBlock(Block &block, std::size_t num_lanes, std::size_t 
       //  should be updated to maximise collected fees for the miner.
 
       // splice in the contents of the array
-      txs->Splice(mining_pool_, start, end);
+      txs.Splice(mining_pool_, start, end);
 
       thread_pool_.Dispatch([&txs, &block, i, num_threads, num_lanes]() {
-        GenerateSlices(*txs, block.body, i, num_threads, num_lanes);
+        GenerateSlices(txs, block.body, i, num_threads, num_lanes);
       });
     }
 
@@ -182,9 +193,11 @@ void BasicMiner::GenerateBlock(Block &block, std::size_t num_lanes, std::size_t 
     // return all the transactions to the main queue
     for (std::size_t i = 0; i < num_threads; ++i)
     {
-      mining_pool_.Splice(*transaction_lists[i]);
+      mining_pool_.Splice(transaction_lists[i]);
     }
   }
+
+  block.UpdateTimestamp();
 
   std::size_t const remaining_transactions = mining_pool_.size();
   std::size_t const packed_transactions    = pool_size_before - remaining_transactions;

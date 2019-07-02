@@ -19,7 +19,8 @@
 #include "math/tensor.hpp"
 #include "ml/ops/activation.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
-#include <gtest/gtest.h>
+
+#include "gtest/gtest.h"
 
 template <typename T>
 class SoftmaxTest : public ::testing::Test
@@ -40,7 +41,7 @@ TYPED_TEST(SoftmaxTest, forward_test)
   ArrayType gt   = ArrayType::FromString(
       R"(2.1437e-03, 1.0673e-04, 1.5840e-02, 1.4444e-05, 1.1704e-01, 1.9548e-06, 8.6485e-01, 2.6456e-07)");
 
-  fetch::ml::ops::Softmax<ArrayType> op;
+  fetch::ml::ops::Softmax<ArrayType> op(0);
   ArrayType                          prediction(op.ComputeOutputShape({data}));
   op.Forward({data}, prediction);
 
@@ -86,7 +87,7 @@ TYPED_TEST(SoftmaxTest, backward_test)
   ArrayType gt    = ArrayType::FromString(
       R"(-2.5091e-04, -1.2492e-05, -1.8540e-03, -1.6906e-06, 1.0335e-01, -2.2880e-07, -1.0123e-01, -3.0965e-08)");
 
-  fetch::ml::ops::Softmax<ArrayType> op;
+  fetch::ml::ops::Softmax<ArrayType> op(0);
   std::vector<ArrayType>             prediction = op.Backward({data}, error);
 
   // test correct values

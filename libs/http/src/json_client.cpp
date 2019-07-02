@@ -16,20 +16,22 @@
 //
 //------------------------------------------------------------------------------
 
-#include "http/json_client.hpp"
 #include "core/json/document.hpp"
 #include "http/http_client.hpp"
 #include "http/https_client.hpp"
+#include "http/json_client.hpp"
 #include "http/request.hpp"
 #include "http/response.hpp"
 
 #include <cerrno>
 #include <cstdlib>
+#include <ostream>
 #include <regex>
 #include <sstream>
 #include <stdexcept>
 #include <string>
 #include <utility>
+#include <vector>
 
 namespace fetch {
 namespace http {
@@ -59,6 +61,9 @@ uint16_t MapPort(JsonClient::ConnectionMode mode)
 }
 
 }  // namespace
+
+JsonClient::~JsonClient()                      = default;
+JsonClient::JsonClient(JsonClient &&) noexcept = default;
 
 /**
  * Create the JSON client from a specified URL
@@ -196,6 +201,16 @@ bool JsonClient::Request(Method method, ConstByteArray const &endpoint, Headers 
   response = doc.root();
 
   return success;
+}
+
+/**
+ * Access to the underlying client
+ *
+ * @return The reference to the underlying client
+ */
+HttpClientInterface const &JsonClient::underlying_client() const
+{
+  return *client_;
 }
 
 }  // namespace http

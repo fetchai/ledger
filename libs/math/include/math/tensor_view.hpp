@@ -20,6 +20,9 @@
 #include "math/base_types.hpp"
 #include "math/tensor_iterator.hpp"
 
+#include <type_traits>
+#include <utility>
+
 namespace fetch {
 namespace math {
 template <typename T, typename C = memory::SharedArray<T>>
@@ -84,6 +87,19 @@ public:
     SizeType padded_size = padded_height_ * width_;
     return ConstIteratorType(data_.pointer() + padded_size, height_ * width_, padded_size, height_,
                              padded_height_);
+  }
+
+  void Assign(TensorView const &other)
+  {
+    auto it1 = begin();
+    auto it2 = other.begin();
+    assert(it1.size() == it2.size());
+    while (it1.is_valid())
+    {
+      *it1 = *it2;
+      ++it1;
+      ++it2;
+    }
   }
 
   template <typename S>

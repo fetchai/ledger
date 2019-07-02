@@ -16,10 +16,13 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/ops/weights.hpp"
 #include "math/tensor.hpp"
+#include "ml/ops/weights.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
-#include <gtest/gtest.h>
+
+#include "gtest/gtest.h"
+
+#include <memory>
 
 template <typename T>
 class WeightsTest : public ::testing::Test
@@ -40,30 +43,37 @@ TYPED_TEST(WeightsTest, allocation_test)
 
 TYPED_TEST(WeightsTest, gradient_step_test)
 {
-  TypeParam        data(8);
-  TypeParam        error(8);
-  TypeParam        gt(8);
+  using ArrayType = TypeParam;
+  using DataType  = typename TypeParam::Type;
+  using SizeType  = typename TypeParam::SizeType;
+
+  ArrayType        data(8);
+  ArrayType        error(8);
+  ArrayType        gt(8);
   std::vector<int> dataInput({1, -2, 3, -4, 5, -6, 7, -8});
   std::vector<int> errorInput({-1, 2, 3, -5, -8, 13, -21, -34});
   std::vector<int> gtInput({2, -4, 0, 1, 13, -19, 28, 26});
-  for (std::uint64_t i(0); i < 8; ++i)
+  for (SizeType i{0}; i < 8; ++i)
   {
-    data.Set(i, typename TypeParam::Type(dataInput[i]));
-    error.Set(i, typename TypeParam::Type(errorInput[i]));
-    gt.Set(i, typename TypeParam::Type(gtInput[i]));
+    data.Set(i, static_cast<DataType>(dataInput[i]));
+    error.Set(i, static_cast<DataType>(errorInput[i]));
+    gt.Set(i, static_cast<DataType>(gtInput[i]));
   }
 
-  fetch::ml::ops::Weights<TypeParam> w;
+  fetch::ml::ops::Weights<ArrayType> w;
   w.SetData(data);
 
-  TypeParam prediction(w.ComputeOutputShape({}));
+  ArrayType prediction(w.ComputeOutputShape({}));
   w.Forward({}, prediction);
 
   EXPECT_EQ(prediction, data);
-  std::vector<TypeParam> error_signal = w.Backward({}, error);
-  w.Step(typename TypeParam::Type(1));
+  std::vector<ArrayType> error_signal = w.Backward({}, error);
 
-  prediction = TypeParam(w.ComputeOutputShape({}));
+  ArrayType grad = w.get_gradients();
+  fetch::math::Multiply(grad, DataType{-1}, grad);
+  w.ApplyGradient(grad);
+
+  prediction = ArrayType(w.ComputeOutputShape({}));
   w.Forward({}, prediction);
 
   ASSERT_TRUE(prediction.AllClose(gt));  // with new values

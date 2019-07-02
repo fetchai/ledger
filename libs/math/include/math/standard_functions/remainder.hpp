@@ -19,6 +19,8 @@
 
 #include "math/meta/math_type_traits.hpp"
 
+#include <cassert>
+
 /**
  * Computes the IEEE remainder of the floating point division operation x/y
  * @tparam type

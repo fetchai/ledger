@@ -17,12 +17,13 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/bitvector.hpp"
-#include "crypto/fnv.hpp"
 #include "ledger/chain/digest.hpp"
 #include "ledger/chain/transaction_layout.hpp"
 
+#include <cstddef>
+#include <cstdint>
 #include <list>
+#include <utility>
 
 namespace fetch {
 namespace miner {
@@ -38,7 +39,7 @@ public:
   using ConstIterator     = UnderlyingList::const_iterator;
 
   // Construction / Destruction
-  explicit TransactionLayoutQueue(uint32_t log2_num_lanes);
+  TransactionLayoutQueue()                               = default;
   TransactionLayoutQueue(TransactionLayoutQueue const &) = delete;
   TransactionLayoutQueue(TransactionLayoutQueue &&)      = delete;
   ~TransactionLayoutQueue()                              = default;
@@ -74,16 +75,9 @@ public:
   TransactionLayoutQueue &operator=(TransactionLayoutQueue &&) = delete;
 
 private:
-  static bool RemapAndAdd(UnderlyingList &list, TransactionLayout const &tx, uint32_t num_lanes);
-
-  uint32_t       log2_num_lanes_;
   DigestSet      digests_;  ///< Set of digests stored within the list
   UnderlyingList list_;     ///< The list of transaction layouts
 };
-
-inline TransactionLayoutQueue::TransactionLayoutQueue(uint32_t log2_num_lanes)
-  : log2_num_lanes_{log2_num_lanes}
-{}
 
 inline TransactionLayoutQueue::ConstIterator TransactionLayoutQueue::cbegin() const
 {
@@ -133,7 +127,7 @@ inline TransactionLayoutQueue::DigestSet const &TransactionLayoutQueue::digests(
 template <typename SortPredicate>
 void TransactionLayoutQueue::Sort(SortPredicate &&predicate)
 {
-  list_.sort(predicate);
+  list_.sort(std::forward<SortPredicate>(predicate));
 }
 
 }  // namespace miner

@@ -24,7 +24,7 @@
 #include "crypto/merkle_tree.hpp"
 #include "crypto/sha256.hpp"
 
-#include <gtest/gtest.h>
+#include "gtest/gtest.h"
 
 //struct fetch::serializers::MapSerializer<fetch::crypto::MerkleTree, fetch::serializers::MsgPackByteArrayBuffer >;
 

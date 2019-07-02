@@ -17,9 +17,13 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/byte_array.hpp"
-using namespace fetch::byte_array;
 
-#include <gtest/gtest.h>
+#include "gtest/gtest.h"
+
+#include <string>
+#include <utility>
+
+using namespace fetch::byte_array;
 
 TEST(reference_byte_array_gtest, ensuring_subbyte_arrays_come_out_correctly)
 {
@@ -205,7 +209,7 @@ TEST(reference_byte_array_gtest, basic_append_operations)
   ByteArray      v2("kitty");
 
   ByteArray array;
-  array.Append(v0, " ", v1, " ", v2, " :)");
+  array.Append(v0, " ", v1, " ", v2, ' ', std::uint8_t(':'), ")");
 
   EXPECT_EQ(array, "hello pretty kitty :)");
   EXPECT_EQ(v0, "hello");
