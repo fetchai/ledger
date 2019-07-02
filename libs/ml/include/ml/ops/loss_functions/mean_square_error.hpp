@@ -40,48 +40,35 @@ public:
   MeanSquareError()          = default;
   virtual ~MeanSquareError() = default;
 
-  virtual void Forward(VecTensorType const &inputs, ArrayType &output)
+  void Forward(VecTensorType const &inputs, ArrayType &output) override
   {
     assert(inputs.size() == 2);
     assert(inputs.at(0).get().shape() == inputs.at(1).get().shape());
 
-    SizeType batch_dim = inputs.at(0).get().shape().size() - 1;
-    for (SizeType i{0}; i < inputs.at(0).get().shape().at(batch_dim); i++)
-    {
-      typename ArrayType::Type ret = fetch::math::MeanSquareError(
-          inputs.at(0).get().Slice(i, batch_dim), inputs.at(1).get().Slice(i, batch_dim));
-      output(0, i) = ret;
-    }
+    output(0, 0) = fetch::math::MeanSquareError(inputs.at(0).get(), inputs.at(1).get());
   }
 
   // grad[0]=2*err*(in[0]-in[1])/mean_size, grad[1]=-2*err*(in[0]-in[1])/mean_size,
-  virtual std::vector<ArrayType> Backward(VecTensorType const &inputs,
-                                          ArrayType const &    error_signal)
+  std::vector<ArrayType> Backward(VecTensorType const &inputs,
+                                  ArrayType const &    error_signal) override
   {
     assert(inputs.size() == 2);
     assert(inputs.at(0).get().shape() == inputs.at(1).get().shape());
 
-    ArrayType return_signal_1(inputs.front().get().shape());
-    ArrayType return_signal_2(inputs.front().get().shape());
+    FETCH_UNUSED(error_signal);
+
+    ArrayType return_signal(inputs.front().get().shape());
 
     // return_signal_1=in[0]-in[1]
-    fetch::math::Subtract(inputs.at(0).get(), inputs.at(1).get(), return_signal_1);
+    fetch::math::Subtract(inputs.at(0).get(), inputs.at(1).get(), return_signal);
 
-    // return_signal_1=err*(in[0]-in[1])
-    fetch::math::Multiply(return_signal_1, error_signal, return_signal_1);
-
-    // return_signal_1=(2*err*(in[0]-in[1]))/mean_size
-    DataType mean_size = static_cast<DataType>(inputs.at(0).get().shape().at(0));
-    fetch::math::Multiply(return_signal_1, DataType{2} / mean_size, return_signal_1);
-
-    // return_sinal_2=-return_signal_1
-    fetch::math::Multiply(return_signal_1, DataType{-1}, return_signal_2);
-    return {return_signal_1, return_signal_2};
+    return {return_signal, return_signal};
   }
 
-  std::vector<typename T::SizeType> ComputeOutputShape(VecTensorType const &inputs) const
+  std::vector<typename T::SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
   {
-    return {1, inputs.at(0).get().shape().at(inputs.at(0).get().shape().size() - 1)};
+    FETCH_UNUSED(inputs);
+    return {1, 1};
   }
 
   static constexpr char const *DESCRIPTOR = "MeanSquareError";

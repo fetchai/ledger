@@ -83,7 +83,7 @@ public:
         g_.SetInput("Input", input.second.at(0));
         g_.SetInput("Label", input.first);
 
-        ArrayType loss_tensor = g_.Evaluate("Error").Copy();
+        ArrayType loss_tensor = g_.Evaluate("Error");
         loss += fetch::math::statistics::Mean(loss_tensor);
         loss_tensor.Fill(static_cast<DataType>(1));
         g_.BackPropagate("Error", loss_tensor);

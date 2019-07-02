@@ -72,7 +72,7 @@ TYPED_TEST(MeanSquareErrorTest, one_dimensional_forward_test)
   TypeParam                                  result({1, 1});
   op.Forward({data1, data2}, result);
 
-  ASSERT_FLOAT_EQ(static_cast<float>(result(0, 0)), 191.18f / 8.0f);
+  ASSERT_FLOAT_EQ(static_cast<float>(result(0, 0)), 191.18f / 8.0f / 2.0f);
   // fetch::math::MeanSquareError divided sum by number of element (ie 8 in this case)
   // and then further didivde by do (cf issue 343)
 }
@@ -97,7 +97,7 @@ TYPED_TEST(MeanSquareErrorTest, one_dimensional_backward_test)
     i++;
   }
   i = 0;
-  for (float e : {0.0f, -1.1f, -1.1f, -2.75f, 1.375f, 0.0f, 0.0f, 0.275f})
+  for (float e : {0.0f, -4.4f, -4.4f, -11.0f, 5.5f, 0.0f, 0.0f, 1.1f})
   {
     gt.Set(i, 0, typename TypeParam::Type(e));
     i++;

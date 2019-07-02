@@ -209,11 +209,12 @@ std::pair<std::string, std::vector<std::string>> ReadArchitecture(
   previous_layer_name = layer_name;
   node_names.emplace_back(previous_layer_name);
 
-  g->AddNode<PlaceHolder<ArrayType>>(layer_name, {});  // add node for input
+  // add input node
+  g->AddNode<PlaceHolder<ArrayType>>(layer_name, {});
 
   // Add label node
   std::string label_name = "num_label";
-  g->AddNode<PlaceHolder<ArrayType>>(label_name, {});  // add node for input
+  g->AddNode<PlaceHolder<ArrayType>>(label_name, {});
   node_names.push_back(label_name);
 
   // Iterate through fields adding nodes to graph

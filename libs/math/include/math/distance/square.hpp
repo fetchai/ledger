@@ -17,26 +17,33 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/distance/square.hpp"
-#include "math/matrix_operations.hpp"
-#include <cassert>
+#include "core/assert.hpp"
+#include <cmath>
 
 namespace fetch {
 namespace math {
+namespace distance {
 
 template <typename ArrayType>
-typename ArrayType::Type MeanSquareError(ArrayType const &A, ArrayType const &B)
+inline typename ArrayType::Type SquareDistance(ArrayType const &A, ArrayType const &B)
 {
-  typename ArrayType::Type ret = distance::SquareDistance(A, B);
+  using Type = typename ArrayType::Type;
+  auto it1   = A.begin();
+  auto it2   = B.begin();
+  assert(it1.size() == it2.size());
+  Type ret = Type(0);
 
-  ret = Divide(ret, typename ArrayType::Type(A.size()));
+  while (it1.is_valid())
+  {
+    Type d = (*it1) - (*it2);
 
-  // TODO(private 343)
-  // division by 2 allows us to cancel out with a 2 in the derivative
-  ret = Divide(ret, typename ArrayType::Type(2));
-
+    ret += d * d;
+    ++it1;
+    ++it2;
+  }
   return ret;
 }
 
+}  // namespace distance
 }  // namespace math
 }  // namespace fetch

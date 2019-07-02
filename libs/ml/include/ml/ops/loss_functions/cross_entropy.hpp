@@ -43,7 +43,7 @@ public:
   CrossEntropy()          = default;
   virtual ~CrossEntropy() = default;
 
-  virtual void Forward(VecTensorType const &inputs, ArrayType &output)
+  void Forward(VecTensorType const &inputs, ArrayType &output) override
   {
     assert(inputs.size() == 2);
     assert(inputs.at(0).get().size() == inputs.at(1).get().size());
@@ -51,8 +51,8 @@ public:
     output(0, 0) = fetch::math::CrossEntropyLoss(inputs.at(0).get(), inputs.at(1).get());
   }
 
-  virtual std::vector<ArrayType> Backward(VecTensorType const &inputs,
-                                          ArrayType const &    error_signal)
+  std::vector<ArrayType> Backward(VecTensorType const &inputs,
+                                  ArrayType const &    error_signal) override
   {
     assert(inputs.size() == 2);
     assert(inputs.at(0).get().size() == inputs.at(1).get().size());
@@ -78,7 +78,7 @@ public:
     return {ret, ret};
   }
 
-  std::vector<typename T::SizeType> ComputeOutputShape(VecTensorType const &inputs) const
+  std::vector<typename T::SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
   {
     (void)inputs;
     return {1, 1};

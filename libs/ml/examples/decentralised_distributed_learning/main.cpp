@@ -87,8 +87,8 @@ public:
         g_.SetInput("Input", input.second.at(0));
         g_.SetInput("Label", input.first);
 
-        ArrayType results     = g_.Evaluate("Softmax").Copy();
-        ArrayType loss_tensor = g_.Evaluate("Error").Copy();
+        ArrayType results     = g_.Evaluate("Softmax");
+        ArrayType loss_tensor = g_.Evaluate("Error");
 
         loss += fetch::math::statistics::Mean(loss_tensor);
         loss_tensor.Fill(static_cast<DataType>(1));
