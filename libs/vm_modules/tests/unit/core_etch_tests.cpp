@@ -365,7 +365,7 @@ TEST_F(CoreEtchTests,
 
     function main()
       if (returns_false() && returns_true())
-        print('_two');
+        print('not printed');
       endif
     endfunction
   )";
@@ -419,7 +419,7 @@ TEST_F(CoreEtchTests,
 
     function main()
       if (returns_true() && returns_false())
-        print('_three');
+        print('not printed');
       endif
     endfunction
   )";
