@@ -150,6 +150,7 @@ TEST_F(MathTests, tensor_state_test)
       tensor_shape[0] = 2u64;
       tensor_shape[1] = 10u64;
       var x = Tensor(tensor_shape);
+      x.Fill(7.0f);
       var state = State<Tensor>("tensor");
       state.set(x);
     endfunction
@@ -174,33 +175,14 @@ TEST_F(MathTests, tensor_state_test)
   ASSERT_TRUE(toolkit.Compile(tensor_deserialiase_src));
   ASSERT_TRUE(toolkit.Run());
 
-  //  Variant res;
-  //  ASSERT_TRUE(toolkit.Run(&res));
-  //
-  //  auto const addr = res.Get<Ptr<Address>>();
-  //  EXPECT_EQ("MnrRHdvCkdZodEwM855vemS5V3p2hiWmcSQ8JEzD4ZjPdsYtB", addr->AsString()->str);
-  //
-  //
-  //
-  //
-  //
-  //
-  //  static char const *TEXT = R"(
-  //    function main() : Float32
-  //      return sqrt(3.5f);
-  //    endfunction
-  //  )";
-  //
-  //  ASSERT_TRUE(toolkit.Compile(TEXT));
-  //  ASSERT_TRUE(toolkit.Run());
-  //
-  //  Variant res;
-  //  ASSERT_TRUE(toolkit.Run(&res));
-  //  auto const result = res.Get<float_t>();
-  //
-  //  float gt = 3.5;
-  //  gt       = fetch::math::Sqrt(gt);
-  //
-  //  ASSERT_EQ(result, gt);
+  Variant res;
+  ASSERT_TRUE(toolkit.Run(&res));
+
+  auto const tensor = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
+  fetch::math::Tensor<float>gt({2, 10});
+  gt.Fill(7.0);
+
+
+  EXPECT_TRUE(gt.AllClose(tensor->GetTensor()));
 }
 }  // namespace

@@ -67,8 +67,18 @@ public:
         .CreateMemberFunction("At", &VMTensor::AtTwo)
         .CreateMemberFunction("At", &VMTensor::AtThree)
         .CreateMemberFunction("SetAt", &VMTensor::SetAt)
+        .CreateMemberFunction("Fill", &VMTensor::Fill)
         .CreateMemberFunction("ToString", &VMTensor::ToString);
   }
+
+  fetch::math::SizeVector shape()
+  {
+    return tensor_.shape();
+  }
+
+  ////////////////////////////////////
+  /// ACCESSING AND SETTING VALUES ///
+  ////////////////////////////////////
 
   DataType AtOne(uint64_t const &idx1)
   {
@@ -95,14 +105,18 @@ public:
     tensor_.Copy(other);
   }
 
+  void Fill(DataType const &value)
+  {
+    tensor_.Fill(value);
+  }
+
+  //////////////////////////////
+  /// PRINTING AND EXPORTING ///
+  //////////////////////////////
+
   fetch::vm::Ptr<fetch::vm::String> ToString()
   {
     return new fetch::vm::String(vm_, tensor_.ToString());
-  }
-
-  fetch::math::SizeVector shape()
-  {
-    return tensor_.shape();
   }
 
   ArrayType &GetTensor()
