@@ -57,50 +57,7 @@ std::vector<std::string> System::args;
 fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> read_csv(
     fetch::vm::VM *vm, fetch::vm::Ptr<fetch::vm::String> const &filename, bool transpose = false)
 {
-  std::ifstream file(filename->str);
-  std::string   buf;
-
-  // find number of rows and columns in the file
-  char                  delimiter = ',';
-  std::string           field_value;
-  fetch::math::SizeType row{0};
-  fetch::math::SizeType col{0};
-
-  while (std::getline(file, buf, '\n'))
-  {
-    std::stringstream ss(buf);
-
-    while (row == 0 && std::getline(ss, field_value, delimiter))
-    {
-      ++col;
-    }
-    ++row;
-  }
-
-  ArrayType weights({row, col});
-
-  // read data into weights array
-  file.clear();
-  file.seekg(0, std::ios::beg);
-
-  row = 0;
-  while (std::getline(file, buf, '\n'))
-  {
-    col = 0;
-    std::stringstream ss(buf);
-    while (std::getline(ss, field_value, delimiter))
-    {
-      weights(row, col) = static_cast<DataType>(std::stod(field_value));
-      ++col;
-    }
-    ++row;
-  }
-
-  if (transpose)
-  {
-    weights = weights.Transpose();
-  }
-
+  ArrayType weights = fetch::ml::dataloaders::ReadCSV<ArrayType>(filename->str, 0, 0, transpose);
   return vm->CreateNewObject<fetch::vm_modules::math::VMTensor>(weights);
 }
 

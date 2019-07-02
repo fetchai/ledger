@@ -20,12 +20,12 @@ endfunction
 
 function read_weights(graph: Graph)
 // read in weights
-var file_weights0 = System.Argv(0) +  "/output/keras_h7_aluminium_px_last_us/model_weights/hidden_dense_1/hidden_dense_1_12/kernel:0.csv";
-var file_bias0    = System.Argv(0) +  "/output/keras_h7_aluminium_px_last_us/model_weights/hidden_dense_1/hidden_dense_1_12/bias:0.csv";
-var file_weights1 = System.Argv(0) +  "/output/keras_h7_aluminium_px_last_us/model_weights/hidden_dense_2/hidden_dense_2_4/kernel:0.csv";
-var file_bias1    = System.Argv(0) +  "/output/keras_h7_aluminium_px_last_us/model_weights/hidden_dense_2/hidden_dense_2_4/bias:0.csv";
-var file_weights2 = System.Argv(0) +  "/output/keras_h7_aluminium_px_last_us/model_weights/output_dense/output_dense_12/kernel:0.csv";
-var file_bias2    = System.Argv(0) +  "/output/keras_h7_aluminium_px_last_us/model_weights/output_dense/output_dense_12/bias:0.csv";
+var file_weights0 = System.Argv(0) +  "/output/keras_aluminium_px_last_us/model_weights/hidden_dense_1/hidden_dense_1_12/kernel:0.csv";
+var file_bias0    = System.Argv(0) +  "/output/keras_aluminium_px_last_us/model_weights/hidden_dense_1/hidden_dense_1_12/bias:0.csv";
+var file_weights1 = System.Argv(0) +  "/output/keras_aluminium_px_last_us/model_weights/hidden_dense_2/hidden_dense_2_4/kernel:0.csv";
+var file_bias1    = System.Argv(0) +  "/output/keras_aluminium_px_last_us/model_weights/hidden_dense_2/hidden_dense_2_4/bias:0.csv";
+var file_weights2 = System.Argv(0) +  "/output/keras_aluminium_px_last_us/model_weights/output_dense/output_dense_12/kernel:0.csv";
+var file_bias2    = System.Argv(0) +  "/output/keras_aluminium_px_last_us/model_weights/output_dense/output_dense_12/bias:0.csv";
 
 var weights0 = read_csv(file_weights0, true);
 var bias0    = read_csv(file_bias0, false);
@@ -80,7 +80,7 @@ else
     for(i in 0:training_iterations)
         var loss = optimiser.Run(loader, batch_size, subset_size);
         print("Current Loss: ");
-        print(loss);
+        printLn(loss);
     endfor
 endif
 
