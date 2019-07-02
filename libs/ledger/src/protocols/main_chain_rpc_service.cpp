@@ -29,6 +29,9 @@
 #include "metrics/metrics.hpp"
 #include "network/muddle/packet.hpp"
 
+#include "telemetry/counter.hpp"
+#include "telemetry/registry.hpp"
+
 // TODO(private 976) : This can crash the network as it's not enforced server side
 static const uint32_t MAX_CHAIN_REQUEST_SIZE = 10000;
 static const uint64_t MAX_SUB_CHAIN_SIZE     = 1000;
@@ -83,6 +86,26 @@ MainChainRpcService::MainChainRpcService(MuddleEndpoint &endpoint, MainChain &ch
   , rpc_client_("R:MChain", endpoint, Address{}, SERVICE_MAIN_CHAIN, CHANNEL_RPC)
   , state_machine_{std::make_shared<StateMachine>("MainChain", GetInitialState(mode_),
                                                   [](State state) { return ToString(state); })}
+  , recv_block_count_{telemetry::Registry::Instance().CreateCounter(
+        "ledger_mainchain_service_recv_block_count")}
+  , recv_block_valid_count_{telemetry::Registry::Instance().CreateCounter(
+        "ledger_mainchain_service_recv_block_valid_count")}
+  , recv_block_loose_count_{telemetry::Registry::Instance().CreateCounter(
+        "ledger_mainchain_service_recv_block_loose_count")}
+  , recv_block_duplicate_count_{telemetry::Registry::Instance().CreateCounter(
+        "ledger_mainchain_service_recv_block_duplicate_count")}
+  , recv_block_invalid_count_{telemetry::Registry::Instance().CreateCounter(
+        "ledger_mainchain_service_recv_block_invalid_count")}
+  , state_request_heaviest_{telemetry::Registry::Instance().CreateCounter(
+        "ledger_mainchain_service_state_request_heaviest")}
+  , state_wait_heaviest_{telemetry::Registry::Instance().CreateCounter(
+        "ledger_mainchain_service_state_wait_heaviest")}
+  , state_synchronising_{telemetry::Registry::Instance().CreateCounter(
+        "ledger_mainchain_service_state_synchronising")}
+  , state_wait_response_{telemetry::Registry::Instance().CreateCounter(
+        "ledger_mainchain_service_state_wait_response")}
+  , state_synchronised_{telemetry::Registry::Instance().CreateCounter(
+        "ledger_mainchain_service_state_synchronised")}
 {
   // register the main chain protocol
   Add(RPC_MAIN_CHAIN, &main_chain_protocol_);
@@ -137,6 +160,8 @@ void MainChainRpcService::BroadcastBlock(MainChainRpcService::Block const &block
 
 void MainChainRpcService::OnNewBlock(Address const &from, Block &block, Address const &transmitter)
 {
+  recv_block_count_->increment();
+
 #ifdef FETCH_LOG_DEBUG_ENABLED
   // count how many transactions are present in the block
   for (auto const &slice : block.body.slices)
@@ -165,21 +190,27 @@ void MainChainRpcService::OnNewBlock(Address const &from, Block &block, Address 
     switch (status)
     {
     case BlockStatus::ADDED:
+      recv_block_valid_count_->increment();
       FETCH_LOG_INFO(LOGGING_NAME, "Added new block: 0x", block.body.hash.ToHex());
       break;
     case BlockStatus::LOOSE:
+      recv_block_loose_count_->increment();
       FETCH_LOG_INFO(LOGGING_NAME, "Added loose block: 0x", block.body.hash.ToHex());
       break;
     case BlockStatus::DUPLICATE:
+      recv_block_duplicate_count_->increment();
       FETCH_LOG_INFO(LOGGING_NAME, "Duplicate block: 0x", block.body.hash.ToHex());
       break;
     case BlockStatus::INVALID:
+      recv_block_invalid_count_->increment();
       FETCH_LOG_INFO(LOGGING_NAME, "Attempted to add invalid block: 0x", block.body.hash.ToHex());
       break;
     }
   }
   else
   {
+    recv_block_invalid_count_->increment();
+
     FETCH_LOG_WARN(LOGGING_NAME, "Invalid Block Recv: 0x", block.body.hash.ToHex(),
                    " (from: ", ToBase64(from), ")");
   }
@@ -301,6 +332,8 @@ void MainChainRpcService::HandleChainResponse(Address const &address, BlockList 
 
 MainChainRpcService::State MainChainRpcService::OnRequestHeaviestChain()
 {
+  state_request_heaviest_->increment();
+
   State next_state{State::REQUEST_HEAVIEST_CHAIN};
 
   auto const peer = GetRandomTrustedPeer();
@@ -320,6 +353,8 @@ MainChainRpcService::State MainChainRpcService::OnRequestHeaviestChain()
 
 MainChainRpcService::State MainChainRpcService::OnWaitForHeaviestChain()
 {
+  state_wait_heaviest_->increment();
+
   State next_state{State::WAIT_FOR_HEAVIEST_CHAIN};
 
   if (!current_request_)
@@ -363,6 +398,8 @@ MainChainRpcService::State MainChainRpcService::OnWaitForHeaviestChain()
 
 MainChainRpcService::State MainChainRpcService::OnSynchronising()
 {
+  state_synchronising_->increment();
+
   State next_state{State::SYNCHRONISED};
 
   // get the next missing block
@@ -395,6 +432,8 @@ MainChainRpcService::State MainChainRpcService::OnSynchronising()
 
 MainChainRpcService::State MainChainRpcService::OnWaitingForResponse()
 {
+  state_wait_response_->increment();
+
   State next_state{State::WAITING_FOR_RESPONSE};
 
   if (!current_request_)
@@ -431,6 +470,8 @@ MainChainRpcService::State MainChainRpcService::OnWaitingForResponse()
 
 MainChainRpcService::State MainChainRpcService::OnSynchronised(State current, State previous)
 {
+  state_synchronised_->increment();
+
   State next_state{State::SYNCHRONISED};
 
   FETCH_UNUSED(current);
