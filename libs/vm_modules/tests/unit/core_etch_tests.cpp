@@ -430,4 +430,33 @@ TEST_F(CoreEtchTests,
   ASSERT_EQ(stdout.str(), "???one_two_three");
 }
 
+TEST_F(CoreEtchTests,
+       range_for_loop_excludes_end_of_range)
+{
+  static char const *TEXT = R"(
+    function main()
+      for (var i in 0:3)
+        print(i);
+      endfor
+
+      print(' ');
+
+      for (var i in 0:5:2)
+        print(i);
+      endfor
+
+      print(' ');
+
+      for (var i in 7:0:-3)
+        print(i);
+      endfor
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_TRUE(toolkit.Run());
+
+  ASSERT_EQ(stdout.str(), "???012 024 741");
+}
+
 }  // namespace
