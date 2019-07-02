@@ -429,20 +429,32 @@ void VM::Handler__VariablePostfixDec()
   DoVariablePrefixPostfixOp<PostfixDec>();
 }
 
-void VM::Handler__And()
+void VM::Handler__JumpIfFalseOrPop()
 {
-  Variant &rhsv = Pop();
-  Variant &lhsv = Top();
-  lhsv.primitive.ui8 &= rhsv.primitive.ui8;
-  rhsv.Reset();
+  Variant &v = Top();
+  if (v.primitive.ui8 == 0)
+  {
+    pc_ = instruction_->index;
+  }
+  else
+  {
+    v.Reset();
+    --sp_;
+  }
 }
 
-void VM::Handler__Or()
+void VM::Handler__JumpIfTrueOrPop()
 {
-  Variant &rhsv = Pop();
-  Variant &lhsv = Top();
-  lhsv.primitive.ui8 |= rhsv.primitive.ui8;
-  rhsv.Reset();
+  Variant &v = Top();
+  if (v.primitive.ui8 != 0)
+  {
+    pc_ = instruction_->index;
+  }
+  else
+  {
+    v.Reset();
+    --sp_;
+  }
 }
 
 void VM::Handler__Not()
