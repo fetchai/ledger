@@ -20,7 +20,7 @@
 #include "core/random/lfg.hpp"
 
 #include "ml/ops/placeholder.hpp"
-#include "ml/ops/regularisation.hpp"
+#include "ml/regularisers/regulariser.hpp"
 #include "ml/state_dict.hpp"
 
 #include <random>
@@ -51,6 +51,7 @@ public:
   using ArrayType    = T;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
   using DataType     = typename ArrayType::Type;
+  using RegPtrType   = std::shared_ptr<fetch::ml::regularisers::Regulariser<T>>;
 
   virtual void                           Step(typename T::Type learning_rate)        = 0;
   virtual struct fetch::ml::StateDict<T> StateDict() const                           = 0;
@@ -59,36 +60,17 @@ public:
   virtual ArrayType const &get_gradients() const                                     = 0;
   virtual void             ResetGradients()                                          = 0;
   virtual void             ApplyGradient(ArrayType const &grad)                      = 0;
+  virtual void             ApplyRegularisation()                                     = 0;
 
-  void SetRegularisation(fetch::ml::details::RegularisationType regularisation,
-                         DataType                               regularisation_rate = DataType{0.0})
+  void SetRegularisation(RegPtrType regulariser, DataType regularisation_rate = DataType{0.0})
   {
-    this->regularisation_      = regularisation;
+    this->regulariser_         = regulariser;
     this->regularisation_rate_ = regularisation_rate;
   }
 
-  void ApplyRegularisation()
-  {
-    switch (this->regularisation_)
-    {
-    case fetch::ml::details::RegularisationType::L1:
-      L1Regularisation(this->regularisation_rate_);
-      break;
-    case fetch::ml::details::RegularisationType::L2:
-      L2Regularisation(this->regularisation_rate_);
-      break;
-    default:
-      break;
-    }
-  }
-
 protected:
-  fetch::ml::details::RegularisationType regularisation_ =
-      fetch::ml::details::RegularisationType::NONE;
-  DataType regularisation_rate_ = static_cast<DataType>(0);
-
-  virtual void L1Regularisation(DataType regularisation_rate) = 0;
-  virtual void L2Regularisation(DataType regularisation_rate) = 0;
+  RegPtrType regulariser_;
+  DataType   regularisation_rate_ = static_cast<DataType>(0);
 };
 
 template <class T>
@@ -140,33 +122,20 @@ public:
     ResetGradients();
   }
 
-  virtual void L1Regularisation(DataType regularisation_rate)
-  {
-    DataType coef = static_cast<DataType>(-2) * regularisation_rate;
-
-    auto it = *this->output_.it();
-    while (it.is_valid())
-    {
-      *it *= coef;
-    }
-  }
-
-  virtual void L2Regularisation(DataType regularisation_rate)
-  {
-    auto     it   = *this->output_.it();
-    DataType coef = -regularisation_rate;
-    while (it.is_valid())
-    {
-      *it = (*it * coef) / fetch::math::Abs(*it);
-    }
-  }
-
   /**
    * Set all gradient values to 0
    */
   virtual void ResetGradients()
   {
     gradient_accumulation_->Fill(typename T::Type(0));
+  }
+
+  void ApplyRegularisation()
+  {
+    if (this->regulariser_)
+    {
+      this->regulariser_->ApplyRegularisation(*this->output_, this->regularisation_rate_);
+    }
   }
 
   /**

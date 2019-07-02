@@ -23,6 +23,7 @@
 #include "ml/ops/activation.hpp"
 #include "ml/ops/loss_functions/cross_entropy.hpp"
 #include "ml/optimisation/adam_optimiser.hpp"
+#include "ml/regularisers/l1_regulariser.hpp"
 
 #include <cstddef>
 #include <cstdint>
@@ -35,9 +36,10 @@
 using namespace fetch::ml::ops;
 using namespace fetch::ml::layers;
 
-using DataType  = float;
-using ArrayType = fetch::math::Tensor<DataType>;
-using SizeType  = typename ArrayType::SizeType;
+using DataType   = float;
+using ArrayType  = fetch::math::Tensor<DataType>;
+using SizeType   = typename ArrayType::SizeType;
+using RegPtrType = std::shared_ptr<fetch::ml::regularisers::Regulariser<ArrayType>>;
 
 using GraphType        = typename fetch::ml::Graph<ArrayType>;
 using CostFunctionType = typename fetch::ml::ops::CrossEntropy<ArrayType>;
@@ -46,12 +48,12 @@ using DataLoaderType   = typename fetch::ml::dataloaders::MNISTLoader<ArrayType,
 
 int main(int ac, char **av)
 {
-  DataType                               learning_rate{0.01f};
-  SizeType                               subset_size{100};
-  SizeType                               epochs{10};
-  SizeType                               batch_size{10};
-  fetch::ml::details::RegularisationType reg_type{fetch::ml::details::RegularisationType::L1};
-  DataType                               reg_rate{0.01f};
+  DataType   learning_rate{0.01f};
+  SizeType   subset_size{100};
+  SizeType   epochs{10};
+  SizeType   batch_size{10};
+  RegPtrType regulariser(new fetch::ml::regularisers::L1Regulariser<ArrayType>);
+  DataType   reg_rate{0.01f};
 
   if (ac < 3)
   {
@@ -68,11 +70,13 @@ int main(int ac, char **av)
 
   std::string input   = g->AddNode<PlaceHolder<ArrayType>>("Input", {});
   std::string layer_1 = g->AddNode<FullyConnected<ArrayType>>(
-      "FC1", {input}, 28u * 28u, 10u, fetch::ml::details::ActivationType::RELU, reg_type, reg_rate);
+      "FC1", {input}, 28u * 28u, 10u, fetch::ml::details::ActivationType::RELU, regulariser,
+      reg_rate);
   std::string layer_2 = g->AddNode<FullyConnected<ArrayType>>(
-      "FC2", {layer_1}, 10u, 10u, fetch::ml::details::ActivationType::RELU, reg_type, reg_rate);
+      "FC2", {layer_1}, 10u, 10u, fetch::ml::details::ActivationType::RELU, regulariser, reg_rate);
   std::string output = g->AddNode<FullyConnected<ArrayType>>(
-      "FC3", {layer_2}, 10u, 10u, fetch::ml::details::ActivationType::SOFTMAX, reg_type, reg_rate);
+      "FC3", {layer_2}, 10u, 10u, fetch::ml::details::ActivationType::SOFTMAX, regulariser,
+      reg_rate);
 
   // Initialise MNIST loader
   DataLoaderType data_loader(av[1], av[2]);

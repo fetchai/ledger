@@ -19,7 +19,6 @@
 
 #include "ml/meta/ml_type_traits.hpp"
 #include "ml/node.hpp"
-#include "ml/ops/regularisation.hpp"
 #include "ml/ops/weights.hpp"
 
 #include <algorithm>
@@ -52,6 +51,7 @@ public:
   using GraphPtrType       = typename std::shared_ptr<fetch::ml::Graph<ArrayType>>;
   using PlaceholderType    = typename fetch::ml::ops::PlaceHolder<ArrayType>;
   using PlaceholderPtrType = typename std::shared_ptr<fetch::ml::ops::PlaceHolder<ArrayType>>;
+  using RegPtrType         = std::shared_ptr<fetch::ml::regularisers::Regulariser<T>>;
 
   virtual ~Graph() = default;
 
@@ -65,11 +65,9 @@ public:
   NodePtrType GetNode(std::string const &node_name) const;
   void        SetInput(std::string const &node_name, ArrayType data);
   void        ResetGraphCache(std::shared_ptr<NodeInterface<T>> const &n, bool input_size_changed);
-  void        SetRegularisation(fetch::ml::details::RegularisationType regularisation,
-                                DataType regularisation_rate = DataType{0.0});
-  bool        SetRegularisation(std::string                            node_name,
-                                fetch::ml::details::RegularisationType regularisation,
-                                DataType regularisation_rate = DataType{0.0});
+  void SetRegularisation(RegPtrType regulariser, DataType regularisation_rate = DataType{0.0});
+  bool SetRegularisation(std::string node_name, RegPtrType regulariser,
+                         DataType regularisation_rate = DataType{0.0});
 
   virtual struct fetch::ml::StateDict<ArrayType> StateDict() const;
   virtual void LoadStateDict(struct fetch::ml::StateDict<T> const &dict);
@@ -112,12 +110,11 @@ protected:
  * @param regularisation_rate
  */
 template <typename ArrayType>
-void Graph<ArrayType>::SetRegularisation(fetch::ml::details::RegularisationType regularisation_type,
-                                         DataType                               regularisation_rate)
+void Graph<ArrayType>::SetRegularisation(RegPtrType regulariser, DataType regularisation_rate)
 {
   for (auto &t : trainable_)
   {
-    t->SetRegularisation(regularisation_type, regularisation_rate);
+    t->SetRegularisation(regulariser, regularisation_rate);
   }
 }
 
@@ -129,13 +126,12 @@ void Graph<ArrayType>::SetRegularisation(fetch::ml::details::RegularisationType 
  * @param regularisation_rate
  */
 template <typename ArrayType>
-bool Graph<ArrayType>::SetRegularisation(std::string                            node_name,
-                                         fetch::ml::details::RegularisationType regularisation_type,
-                                         DataType                               regularisation_rate)
+bool Graph<ArrayType>::SetRegularisation(std::string node_name, RegPtrType regulariser,
+                                         DataType regularisation_rate)
 {
   if (nodes_[node_name])
   {
-    trainable_[node_name]->SetRegularisation(regularisation_type, regularisation_rate);
+    trainable_[node_name]->SetRegularisation(regulariser, regularisation_rate);
     return true;
   }
   else

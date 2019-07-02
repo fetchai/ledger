@@ -17,15 +17,38 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/assert.hpp"
+#include "math/tensor.hpp"
+#include "ml/regularisers/regulariser.hpp"
+#include <memory>
+#include <vector>
+
 namespace fetch {
 namespace ml {
-namespace details {
-enum class RegularisationType
+namespace regularisers {
+/*
+ * L1 regularisation
+ */
+template <class T>
+class L2Regulariser : public Regulariser<T>
 {
-  NONE,
-  L1,
-  L2
+public:
+  using ArrayType = T;
+  using DataType  = typename ArrayType::Type;
+
+  ~L2Regulariser() = default;
+  void ApplyRegularisation(ArrayType &weight, DataType regularisation_rate) override
+  {
+    auto     it   = weight.begin();
+    DataType coef = -regularisation_rate;
+    while (it.is_valid())
+    {
+      *it = (*it * coef) / fetch::math::Abs(*it);
+      ++it;
+    }
+  }
 };
-}  // namespace details
+
+}  // namespace regularisers
 }  // namespace ml
 }  // namespace fetch
