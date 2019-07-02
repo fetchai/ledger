@@ -322,7 +322,8 @@ TEST_F(CoreEtchTests,
   ASSERT_EQ(stdout.str(), "0.1.234_0.1.234_0.1.234_0.1.234_ end");
 }
 
-TEST_F(CoreEtchTests, boolean_or_operator_does_not_execute_second_operand_if_first_operand_evaluates_to_true)
+TEST_F(CoreEtchTests,
+       boolean_or_operator_does_not_execute_second_operand_if_first_operand_evaluates_to_true)
 {
   static char const *TEXT = R"(
     function returns_true() : Bool
@@ -348,7 +349,8 @@ TEST_F(CoreEtchTests, boolean_or_operator_does_not_execute_second_operand_if_fir
   ASSERT_EQ(stdout.str(), "???one_two");
 }
 
-TEST_F(CoreEtchTests, boolean_and_operator_does_not_execute_second_operand_if_first_operand_evaluates_to_false)
+TEST_F(CoreEtchTests,
+       boolean_and_operator_does_not_execute_second_operand_if_first_operand_evaluates_to_false)
 {
   static char const *TEXT = R"(
     function returns_true() : Bool
@@ -374,7 +376,8 @@ TEST_F(CoreEtchTests, boolean_and_operator_does_not_execute_second_operand_if_fi
   ASSERT_EQ(stdout.str(), "???one_two");
 }
 
-TEST_F(CoreEtchTests, boolean_or_operator_executes_both_operands_if_first_operand_evaluates_to_false)
+TEST_F(CoreEtchTests,
+       boolean_or_operator_executes_both_operands_if_first_operand_evaluates_to_false)
 {
   static char const *TEXT = R"(
     function returns_true() : Bool
@@ -400,7 +403,8 @@ TEST_F(CoreEtchTests, boolean_or_operator_executes_both_operands_if_first_operan
   ASSERT_EQ(stdout.str(), "???one_two_three");
 }
 
-TEST_F(CoreEtchTests, boolean_and_operator_executes_both_operands_if_first_operand_evaluates_to_true)
+TEST_F(CoreEtchTests,
+       boolean_and_operator_executes_both_operands_if_first_operand_evaluates_to_true)
 {
   static char const *TEXT = R"(
     function returns_true() : Bool
