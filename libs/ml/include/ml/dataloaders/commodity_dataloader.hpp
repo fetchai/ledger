@@ -108,7 +108,6 @@ ArrayType ReadCSV(std::string const &filename, math::SizeType const cols_to_skip
   return weights;
 }
 
-
 template <typename LabelType, typename InputType>
 class CommodityDataLoader : public DataLoader<LabelType, InputType>
 {
@@ -159,8 +158,8 @@ template <typename LabelType, typename InputType>
 void CommodityDataLoader<LabelType, InputType>::AddData(std::string const &xfilename,
                                                         std::string const &yfilename)
 {
-  data_ = ReadCSV <InputType> (xfilename, cols_to_skip_, rows_to_skip_, true);
-  labels_ = ReadCSV <InputType> (yfilename, cols_to_skip_, rows_to_skip_, true);
+  data_   = ReadCSV<InputType>(xfilename, cols_to_skip_, rows_to_skip_, true);
+  labels_ = ReadCSV<InputType>(yfilename, cols_to_skip_, rows_to_skip_, true);
 
   assert(data_.shape()[1] == labels_.shape()[1]);
   // save the number of datapoints

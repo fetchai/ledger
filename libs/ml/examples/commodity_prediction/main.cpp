@@ -83,7 +83,6 @@ LayerType GetLayerType(std::string const &layer_name)
   return layer_type;
 }
 
-
 /**
  * Loads a single model architecture from a csv file and adds the specified nodes to the graph
  * Example csv line: {model_name},num_input,118,dropout_0,output_dense,54,softmax
@@ -301,8 +300,10 @@ int main(int argc, char **argv)
 
         std::string node_weights_dir = weights_dir + "/" + name + "/" + actual_dirs[0];
         // the weights array for the node has number of columns = number of features
-        ArrayType weights = fetch::ml::dataloaders::ReadCSV<ArrayType >(node_weights_dir + "/kernel:0.csv", 0, 0, true);
-        ArrayType bias    = fetch::ml::dataloaders::ReadCSV<ArrayType >(node_weights_dir + "/bias:0.csv", 0, 0, false);
+        ArrayType weights = fetch::ml::dataloaders::ReadCSV<ArrayType>(
+            node_weights_dir + "/kernel:0.csv", 0, 0, true);
+        ArrayType bias = fetch::ml::dataloaders::ReadCSV<ArrayType>(
+            node_weights_dir + "/bias:0.csv", 0, 0, false);
 
         assert(bias.shape()[0] == weights.shape()[0]);
 
