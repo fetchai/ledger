@@ -178,10 +178,9 @@ TEST_F(MathTests, tensor_state_test)
   Variant res;
   ASSERT_TRUE(toolkit.Run(&res));
 
-  auto const tensor = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
-  fetch::math::Tensor<float>gt({2, 10});
+  auto const                 tensor = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
+  fetch::math::Tensor<float> gt({2, 10});
   gt.Fill(7.0);
-
 
   EXPECT_TRUE(gt.AllClose(tensor->GetTensor()));
 }
