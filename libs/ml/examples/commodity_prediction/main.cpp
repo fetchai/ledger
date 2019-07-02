@@ -30,7 +30,10 @@
 
 #include <fstream>
 #include <iostream>
+#include <sstream>
+#include <stdexcept>
 #include <string>
+#include <vector>
 
 using DataType         = double;
 using ArrayType        = fetch::math::Tensor<DataType>;

@@ -17,17 +17,23 @@
 //------------------------------------------------------------------------------
 
 #include "core/assert.hpp"
-#include "ledger/chain/main_chain.hpp"
-
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
+#include "ledger/chain/main_chain.hpp"
 #include "ledger/chain/transaction_layout_rpc_serializers.hpp"
 #include "network/generics/milli_timer.hpp"
 
 #include <algorithm>
+#include <cassert>
+#include <cstddef>
+#include <cstdint>
+#include <deque>
+#include <stdexcept>
+#include <string>
 #include <utility>
+#include <vector>
 
 using fetch::byte_array::ToBase64;
 using fetch::generics::MilliTimer;
@@ -109,7 +115,6 @@ BlockStatus MainChain::AddBlock(Block const &blk)
   // At this point we assume that the weight has been correctly set by the miner
   block->total_weight = 1;
 
-  // pass the block to the
   auto const status = InsertBlock(block);
   FETCH_LOG_DEBUG(LOGGING_NAME, "New Block: 0x", block->body.hash.ToHex(), " -> ", ToString(status),
                   " (weight: ", block->weight, " total: ", block->total_weight, ")");
@@ -324,7 +329,7 @@ bool MainChain::RemoveBlock(BlockHash const &hash)
     }
   }
 
-  // Step 3. Since we might have removed a whole series of blocks the tips datastructure
+  // Step 3. Since we might have removed a whole series of blocks the tips data structure
   // is likely to have been invalidated. We need to evaluate the changes here
   return ReindexTips();
 }
@@ -504,7 +509,7 @@ bool MainChain::GetPathToCommonAncestor(Blocks &blocks, BlockHash tip, BlockHash
   blocks.resize(res.size());
   std::move(res.begin(), res.end(), blocks.begin());
 
-  // If an lookup error has occured then we do not return anything
+  // If an lookup error has occurred then we do not return anything
   if (!success)
   {
     blocks.clear();
@@ -553,7 +558,7 @@ MainChain::BlockHashSet MainChain::GetMissingTips() const
   for (auto const &element : loose_blocks_)
   {
     // tips are blocks that are referenced but we have not seen them yet. Since all loose blocks are
-    // stored in the cache, we simply evalute which of the loose references we do not currently
+    // stored in the cache, we simply evaluate which of the loose references we do not currently
     // have in the cache
     if (!IsBlockInCache(element.first))
     {
@@ -806,7 +811,7 @@ void MainChain::WriteToFile()
           break;
         }
 
-        // Continue to push prevs into file
+        // Continue to push previous into file
         LookupBlock(block->body.previous_hash, block);
       }
 
@@ -1095,7 +1100,7 @@ BlockStatus MainChain::InsertBlock(IntBlockPtr const &block, bool evaluate_loose
     return BlockStatus::LOOSE;
   }
 
-  // we exepect only non-loose blocks here
+  // we expect only non-loose blocks here
   assert(!block->is_loose);
 
   // by definition this also means we expect blocks to have a valid parent block too
@@ -1399,7 +1404,7 @@ MainChain::BlockHash MainChain::GetHeadHash()
   {
     buffer.Resize(32);
 
-    // return to the begining and overwrite the hash
+    // return to the beginning and overwrite the hash
     head_store_.seekg(0);
     head_store_.read(reinterpret_cast<char *>(buffer.pointer()),
                      static_cast<std::streamsize>(buffer.size()));

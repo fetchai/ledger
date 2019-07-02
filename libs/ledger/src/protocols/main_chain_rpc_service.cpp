@@ -16,8 +16,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/protocols/main_chain_rpc_service.hpp"
-
 #include "core/byte_array/encoders.hpp"
 #include "core/logger.hpp"
 #include "core/serializers/byte_array_buffer.hpp"
@@ -26,11 +24,18 @@
 #include "crypto/fetch_identity.hpp"
 #include "ledger/chain/block_coordinator.hpp"
 #include "ledger/chain/transaction_layout_rpc_serializers.hpp"
+#include "ledger/protocols/main_chain_rpc_service.hpp"
 #include "metrics/metrics.hpp"
 #include "network/muddle/packet.hpp"
-
 #include "telemetry/counter.hpp"
 #include "telemetry/registry.hpp"
+
+#include <cstddef>
+#include <cstdint>
+#include <string>
+#include <unordered_set>
+#include <utility>
+#include <vector>
 
 // TODO(private 976) : This can crash the network as it's not enforced server side
 static const uint32_t MAX_CHAIN_REQUEST_SIZE = 10000;
