@@ -346,7 +346,7 @@ TEST_F(CoreEtchTests,
   ASSERT_TRUE(toolkit.Compile(TEXT));
   ASSERT_TRUE(toolkit.Run());
 
-  ASSERT_EQ(stdout.str(), "???one_two");
+  ASSERT_EQ(stdout.str(), "one_two");
 }
 
 TEST_F(CoreEtchTests,
@@ -373,7 +373,7 @@ TEST_F(CoreEtchTests,
   ASSERT_TRUE(toolkit.Compile(TEXT));
   ASSERT_TRUE(toolkit.Run());
 
-  ASSERT_EQ(stdout.str(), "???one_two");
+  ASSERT_EQ(stdout.str(), "one");
 }
 
 TEST_F(CoreEtchTests,
@@ -400,7 +400,7 @@ TEST_F(CoreEtchTests,
   ASSERT_TRUE(toolkit.Compile(TEXT));
   ASSERT_TRUE(toolkit.Run());
 
-  ASSERT_EQ(stdout.str(), "???one_two_three");
+  ASSERT_EQ(stdout.str(), "one_two_three");
 }
 
 TEST_F(CoreEtchTests,
@@ -427,26 +427,26 @@ TEST_F(CoreEtchTests,
   ASSERT_TRUE(toolkit.Compile(TEXT));
   ASSERT_TRUE(toolkit.Run());
 
-  ASSERT_EQ(stdout.str(), "???one_two_three");
+  ASSERT_EQ(stdout.str(), "one_two");
 }
 
 TEST_F(CoreEtchTests, range_for_loop_excludes_end_of_range)
 {
   static char const *TEXT = R"(
     function main()
-      for (var i in 0:3)
+      for (i in 0:3)
         print(i);
       endfor
 
-      print(' ');
+      print('_');
 
-      for (var i in 0:5:2)
+      for (i in 1:6:2)
         print(i);
       endfor
 
-      print(' ');
+      print('_');
 
-      for (var i in 7:0:-3)
+      for (i in 7:0:-3)
         print(i);
       endfor
     endfunction
@@ -455,7 +455,7 @@ TEST_F(CoreEtchTests, range_for_loop_excludes_end_of_range)
   ASSERT_TRUE(toolkit.Compile(TEXT));
   ASSERT_TRUE(toolkit.Run());
 
-  ASSERT_EQ(stdout.str(), "???012 024 741");
+  ASSERT_EQ(stdout.str(), "012_135_741");
 }
 
 }  // namespace
