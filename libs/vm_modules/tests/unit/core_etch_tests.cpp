@@ -458,4 +458,22 @@ TEST_F(CoreEtchTests, range_for_loop_excludes_end_of_range)
   ASSERT_EQ(stdout.str(), "012_135_741");
 }
 
+TEST_F(CoreEtchTests, range_with_equal_bounds_is_empty)
+{
+  static char const *TEXT = R"(
+    function main()
+      for (i in 1:1)
+        print("Not printed " + toString(i));
+      endfor
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_TRUE(toolkit.Run());
+
+  ASSERT_EQ(stdout.str(), "");
+}
+
+
+
 }  // namespace
