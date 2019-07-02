@@ -42,7 +42,7 @@ namespace byte_array {
 namespace {
 
 /** All alphanumeric characters except for "0", "I", "O", and "l" */
-static const char *pszBase58 = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+static char const *pszBase58 = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
 
 // clang-format off
 static const int8_t mapBase58[256] = {

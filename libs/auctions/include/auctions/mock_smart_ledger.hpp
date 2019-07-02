@@ -288,7 +288,7 @@ private:
    * @param error_code
    * @return
    */
-  static const char *ToString(ErrorCode error_code)
+  static char const *ToString(ErrorCode error_code)
   {
     char const *msg = "unknown error";
 

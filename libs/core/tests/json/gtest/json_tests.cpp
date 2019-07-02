@@ -31,9 +31,9 @@ using namespace fetch::byte_array;
 
 struct TestCase
 {
-  const char *input_text;
+  char const *input_text;
   bool        expect_output;
-  const char *output_text;
+  char const *output_text;
   bool        expect_throw;
 };
 

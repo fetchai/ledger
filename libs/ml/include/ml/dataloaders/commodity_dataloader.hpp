@@ -34,7 +34,7 @@ inline std::pair<math::SizeType, math::SizeType> count_rows_cols(std::string con
   // find number of rows and columns in the file
   std::ifstream  file(filename);
   std::string    buf;
-  const char     delimiter = ',';
+  char const     delimiter = ',';
   std::string    field_value;
   math::SizeType row{0};
   math::SizeType col{0};

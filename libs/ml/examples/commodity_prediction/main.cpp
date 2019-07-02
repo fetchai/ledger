@@ -104,7 +104,7 @@ ArrayType ReadCSV(std::string const &filename, SizeType const cols_to_skip = 0,
   }
 
   std::string           buf;
-  const char            delimiter = ',';
+  char const            delimiter = ',';
   std::string           field_value;
   fetch::math::SizeType row{0};
   fetch::math::SizeType col{0};

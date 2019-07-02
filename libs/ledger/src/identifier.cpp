@@ -94,7 +94,7 @@ bool IsIdentity(ConstByteArray const &value)
 
 }  // namespace
 
-const char Identifier::SEPARATOR{'.'};
+char const Identifier::SEPARATOR{'.'};
 
 /**
  * Construct an identifier from a fully qualified name
