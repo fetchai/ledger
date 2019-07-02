@@ -155,22 +155,25 @@ TEST_F(MathTests, tensor_state_test)
     endfunction
   )";
 
-  EXPECT_CALL(toolkit.observer(), Write("tensor", _, _));
+  std::string const state_name{"tensor"};
+  EXPECT_CALL(toolkit.observer(), Write(state_name, _, _));
 
   ASSERT_TRUE(toolkit.Compile(tensor_serialiase_src));
   ASSERT_TRUE(toolkit.Run());
-  //
-  //  static char const *deser_src = R"(
-  //    function main() : Address
-  //      return State<Address>("addr").get();
-  //    endfunction
-  //  )";
-  //
-  //  EXPECT_CALL(toolkit.observer(), Exists("addr"));
-  //  EXPECT_CALL(toolkit.observer(), Read("addr", _, _));
-  //
-  //  ASSERT_TRUE(toolkit.Compile(deser_src));
-  //
+
+  static char const *tensor_deserialiase_src = R"(
+    function main() : Tensor
+      var state = State<Tensor>("tensor");
+      return state.get();
+    endfunction
+  )";
+
+  EXPECT_CALL(toolkit.observer(), Exists(state_name));
+  EXPECT_CALL(toolkit.observer(), Read(state_name, _, _));
+
+  ASSERT_TRUE(toolkit.Compile(tensor_deserialiase_src));
+  ASSERT_TRUE(toolkit.Run());
+
   //  Variant res;
   //  ASSERT_TRUE(toolkit.Run(&res));
   //
