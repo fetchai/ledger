@@ -474,6 +474,4 @@ TEST_F(CoreEtchTests, range_with_equal_bounds_is_empty)
   ASSERT_EQ(stdout.str(), "");
 }
 
-
-
 }  // namespace
