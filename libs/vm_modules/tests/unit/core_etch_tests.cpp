@@ -430,8 +430,7 @@ TEST_F(CoreEtchTests,
   ASSERT_EQ(stdout.str(), "???one_two_three");
 }
 
-TEST_F(CoreEtchTests,
-       range_for_loop_excludes_end_of_range)
+TEST_F(CoreEtchTests, range_for_loop_excludes_end_of_range)
 {
   static char const *TEXT = R"(
     function main()
