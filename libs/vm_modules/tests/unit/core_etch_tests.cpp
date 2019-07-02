@@ -34,7 +34,7 @@ TEST_F(CoreEtchTests, in_for_loop_break_exits_the_loop)
 {
   static char const *TEXT = R"(
     function main()
-      for (i in 0u8:5u8)
+      for (i in 0u8:6u8)
         if (i == 2u8)
           break;
         endif
@@ -76,8 +76,8 @@ TEST_F(CoreEtchTests, in_nested_for_loop_break_exits_the_inner_loop)
 {
   static char const *TEXT = R"(
     function main()
-      for (j in 0u8:3u8)
-        for (i in 0u8:5u8)
+      for (j in 0u8:4u8)
+        for (i in 0u8:6u8)
           if (i == 2u8)
             break;
           endif
@@ -151,7 +151,7 @@ TEST_F(CoreEtchTests, in_while_loop_inside_a_for_loop_break_exits_the_inner_loop
 {
   static char const *TEXT = R"(
     function main()
-      for (j in 0u8:3u8)
+      for (j in 0u8:4u8)
         var i = 0u8;
         while (i < 5u8)
           if (i == 2u8)
@@ -176,7 +176,7 @@ TEST_F(CoreEtchTests, in_for_loop_continue_skips_to_the_next_iteration)
 {
   static char const *TEXT = R"(
     function main()
-      for (i in 0u8:5u8)
+      for (i in 0u8:6u8)
         print(i);
         if (i > 2u8)
           continue;
@@ -220,8 +220,8 @@ TEST_F(CoreEtchTests, in_nested_for_loop_continue_skips_to_the_next_iteration_of
 {
   static char const *TEXT = R"(
     function main()
-      for (j in 0u8:2u8)
-        for (i in 0u8:5u8)
+      for (j in 0u8:3u8)
+        for (i in 0u8:6u8)
           print(i);
           if (i > 2u8)
             continue;
@@ -275,7 +275,7 @@ TEST_F(CoreEtchTests,
     function main()
       var j = 0u8;
       while (j < 3u8)
-        for (i in 0u8:5u8)
+        for (i in 0u8:6u8)
           print(i);
           if (i > 2u8)
             continue;
@@ -300,7 +300,7 @@ TEST_F(CoreEtchTests,
 {
   static char const *TEXT = R"(
     function main()
-      for (j in 0u8:3u8)
+      for (j in 0u8:4u8)
         var i = 0u8;
         while (i < 5u8)
           print(i);
