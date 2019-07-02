@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/assert.hpp"
+#include "math/meta/math_type_traits.hpp"
 #include "vectorise/memory/range.hpp"
 
 #include <cmath>
