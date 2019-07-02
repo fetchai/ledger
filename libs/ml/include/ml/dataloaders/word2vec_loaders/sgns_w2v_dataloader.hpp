@@ -55,6 +55,7 @@ public:
   void BuildVocab(std::vector<std::string> const &sents);
   void SaveVocab(std::string const &filename);
   void LoadVocab(std::string const &filename);
+  T    EstimatedSampleNumber();
 
   bool WordKnown(std::string const &word) const;
 
@@ -121,6 +122,35 @@ GraphW2VLoader<T>::GraphW2VLoader(SizeType window_size, SizeType negative_sample
   labels_.Fill(BufferPositionUnused);
   cur_sample_.first  = DataType({1, 1});
   cur_sample_.second = {DataType({1, 1}), DataType({1, 1})};
+}
+
+/**
+ * calculate the compatible linear decay rate for learning rate with our optimiser.
+ * @tparam T
+ * @return
+ */
+template <typename T>
+T GraphW2VLoader<T>::EstimatedSampleNumber()
+{
+  T estimated_sample_number = 0;
+  T word_freq;
+  T estimated_sample_number_per_word = static_cast<T>(window_size_ * (1 + negative_samples_));
+  for (auto word_info : vocab_.data)
+  {
+    word_freq = static_cast<T>(word_info.second.second) / static_cast<T>(vocab_.total_count);
+    if (word_freq > freq_thresh_)
+    {
+      estimated_sample_number += static_cast<T>(word_info.second.second) *
+                                 estimated_sample_number_per_word *
+                                 fetch::math::Sqrt(freq_thresh_ / word_freq);
+    }
+    else
+    {
+      estimated_sample_number +=
+          static_cast<T>(word_info.second.second) * estimated_sample_number_per_word;
+    }
+  }
+  return estimated_sample_number;
 }
 
 /**

@@ -154,18 +154,22 @@ std::string ReadFile(std::string const &path)
 
 struct TrainingParams
 {
-  SizeType max_word_count       = 100000;  // maximum number to be trained
+  SizeType max_word_count       = 100000000000000;  // maximum number to be trained
   SizeType negative_sample_size = 5;       // number of negative sample per word-context pair
   SizeType window_size          = 8;       // window size for context sampling
   bool     train_mode           = true;    // reserve for future compatibility with CBOW
-  DataType freq_thresh          = 1e-5;    // frequency threshold for subsampling
+  DataType freq_thresh          = 1e-5;       // frequency threshold for subsampling
   SizeType min_count            = 5;       // infrequent word removal threshold
 
-  SizeType batch_size      = 100000;  // training data batch size
-  SizeType embedding_size  = 32;      // dimension of embedding vec
-  SizeType training_epochs = 100;
-  SizeType test_frequency  = 10;
-  double   learning_rate   = 0.025 * 100000;  // alpha - the learning rate
+  SizeType batch_size      = 10000;  // training data batch size
+  SizeType embedding_size  = 32;     // dimension of embedding vec
+  SizeType training_epochs = 2;
+  SizeType test_frequency  = 1;
+  DataType starting_learning_rate_per_sample =
+      0.025;  // these are the learning rates we have for each sample
+  DataType ending_learning_rate_per_sample = 0.0001;
+  DataType starting_learning_rate;  // this is the true learning rate wes set for the graph training
+  DataType ending_learning_rate;
 
   fetch::ml::optimisers::LearningRateParam<DataType> learning_rate_param{
       fetch::ml::optimisers::LearningRateParam<DataType>::LearningRateDecay::LINEAR};
@@ -213,6 +217,27 @@ int main(int argc, char **argv)
   data_loader.InitUnigramTable();
   std::cout << "Vocab Size : " << data_loader.vocab_size() << std::endl;
 
+  /////////////////////////////////////////
+  /// SET UP PROPER TRAINING PARAMETERS ///
+  /////////////////////////////////////////
+
+  // calc the true starting learning rate
+  tp.starting_learning_rate =
+      static_cast<DataType>(tp.batch_size) * tp.starting_learning_rate_per_sample;
+  tp.ending_learning_rate =
+      static_cast<DataType>(tp.batch_size) * tp.ending_learning_rate_per_sample;
+  tp.learning_rate_param.starting_learning_rate = tp.starting_learning_rate;
+  tp.learning_rate_param.ending_learning_rate   = tp.ending_learning_rate;
+
+  // calc the compatiable linear lr decay
+  tp.learning_rate_param.linear_decay_rate =
+      static_cast<DataType>(1) /
+      data_loader
+          .EstimatedSampleNumber();  // this decay rate gurantee the lr is reduced to zero by the
+                                     // end of an epoch (despit capping by ending learning rate)
+  std::cout << "data_loader.EstimatedSampleNumber(): " << data_loader.EstimatedSampleNumber()
+            << std::endl;
+
   ////////////////////////////////
   /// SETUP MODEL ARCHITECTURE ///
   ////////////////////////////////
@@ -233,7 +258,7 @@ int main(int argc, char **argv)
 
   // Initialise Optimiser
   fetch::ml::optimisers::SGDOptimiser<ArrayType, fetch::ml::ops::CrossEntropy<ArrayType>> optimiser(
-      g, {"Input", "Context"}, model_name, tp.learning_rate);
+      g, {"Input", "Context"}, model_name, tp.starting_learning_rate);
 
   // Training loop
   for (SizeType i{0}; i < tp.training_epochs; i++)
