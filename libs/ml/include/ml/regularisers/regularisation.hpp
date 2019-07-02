@@ -17,52 +17,47 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/assert.hpp"
-#include "math/tensor.hpp"
+#include "ml/regularisers/l1_regulariser.hpp"
+#include "ml/regularisers/l2_regulariser.hpp"
 #include "ml/regularisers/regulariser.hpp"
-#include <memory>
-#include <vector>
+#include "regularisation.hpp"
 
 namespace fetch {
 namespace ml {
-namespace regularisers {
-/*
- * L1 regularisation
- */
-template <class T>
-class L1Regulariser : public Regulariser<T>
+namespace details {
+enum class RegularisationType
 {
-public:
-  using ArrayType = T;
-  using DataType  = typename ArrayType::Type;
-
-  ~L1Regulariser() = default;
-
-  /**
-   * Applies regularisation gradient on specified tensor
-   * L1 regularization gradient, where w=weight, a=regularization_rate
-   * f'(w)=a*(w/|w|)
-   * @param weight tensor reference
-   * @param regularisation_rate
-   */
-  void ApplyRegularisation(ArrayType &weight, DataType regularisation_rate) override
-  {
-    auto it = weight.begin();
-    while (it.is_valid())
-    {
-      if (*it > 0)
-      {
-        *it -= regularisation_rate;
-      }
-      else
-      {
-        *it += regularisation_rate;
-      }
-      ++it;
-    }
-  }
+  NONE,
+  L1,
+  L2,
 };
 
-}  // namespace regularisers
+template <class T>
+std::shared_ptr<fetch::ml::regularisers::Regulariser<T>> CreateRegulariser(RegularisationType type)
+{
+  using RegType    = fetch::ml::regularisers::Regulariser<T>;
+  using RegPtrType = std::shared_ptr<RegType>;
+
+  RegPtrType ret;
+  switch (type)
+  {
+  case RegularisationType::NONE:
+    // No regulariser
+    break;
+
+  case RegularisationType::L1:
+    ret.reset(new fetch::ml::regularisers::L1Regulariser<T>());
+    break;
+
+  case RegularisationType::L2:
+    ret.reset(new fetch::ml::regularisers::L2Regulariser<T>());
+    break;
+
+  default:
+    throw std::runtime_error("Unknown regulariser type");
+  }
+  return ret;
+}
+}  // namespace details
 }  // namespace ml
 }  // namespace fetch

@@ -27,7 +27,7 @@ namespace fetch {
 namespace ml {
 namespace regularisers {
 /*
- * L1 regularisation
+ * L2 regularisation
  */
 template <class T>
 class L2Regulariser : public Regulariser<T>
@@ -37,13 +37,22 @@ public:
   using DataType  = typename ArrayType::Type;
 
   ~L2Regulariser() = default;
+
+  /**
+   * Applies regularisation gradient on specified tensor
+   * L2 regularisation gradient, where w=weight, a=regularization_rate
+   * f'(w)=a*(2*w)
+   * @param weight tensor reference
+   * @param regularisation_rate
+   */
   void ApplyRegularisation(ArrayType &weight, DataType regularisation_rate) override
   {
-    auto     it   = weight.begin();
-    DataType coef = -regularisation_rate;
+    DataType coef = static_cast<DataType>(2) * regularisation_rate;
+
+    auto it = weight.begin();
     while (it.is_valid())
     {
-      *it = (*it * coef) / fetch::math::Abs(*it);
+      *it -= (*it) * coef;
       ++it;
     }
   }

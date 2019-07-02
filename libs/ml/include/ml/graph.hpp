@@ -104,7 +104,7 @@ protected:
 };
 
 /**
- * Set regularization type and rate for all trainables in graph
+ * Set regularisation type and rate for all trainables in graph
  * @tparam ArrayType
  * @param regularisation_type L1, L2 or NONE
  * @param regularisation_rate
@@ -119,7 +119,7 @@ void Graph<ArrayType>::SetRegularisation(RegPtrType regulariser, DataType regula
 }
 
 /**
- * Set regularization type and rate for specified trainable by it's name
+ * Set regularisation type and rate for specified trainable by it's name
  * @tparam ArrayType
  * @param node_name name of specific trainable
  * @param regularisation_type L1, L2 or NONE
