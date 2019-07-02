@@ -443,19 +443,13 @@ TEST_F(CoreEtchTests, range_for_loop_excludes_end_of_range)
       for (i in 1:6:2)
         print(i);
       endfor
-
-      print('_');
-
-      for (i in 7:0:-3)
-        print(i);
-      endfor
     endfunction
   )";
 
   ASSERT_TRUE(toolkit.Compile(TEXT));
   ASSERT_TRUE(toolkit.Run());
 
-  ASSERT_EQ(stdout.str(), "012_135_741");
+  ASSERT_EQ(stdout.str(), "012_135");
 }
 
 TEST_F(CoreEtchTests, range_with_equal_bounds_is_empty)
