@@ -55,9 +55,9 @@ struct LearningRateParam{
         EXPONENTIAL,
         LINEAR
     } mode = LearningRateDecay::EXPONENTIAL;
-    DataType starting_learning_rate = 0.025;
+    DataType starting_learning_rate = 0.1;
     DataType ending_learning_rate = 0.0001;
-    DataType linear_decay_rate = 0.00001;
+    DataType linear_decay_rate = 0.00000000000001;
     DataType exponential_decay_rate = 0.999;
 };
 
@@ -236,14 +236,14 @@ typename T::Type Optimiser<T, C>::Run(
     fetch::ml::dataloaders::DataLoader<ArrayType, ArrayType> &loader, LearningRateParam<DataType> learning_rate_param, SizeType batch_size,
     SizeType subset_size)
 {
-    // setting up learning_rate_param_
-    learning_rate_param_ = learning_rate_param;
-    learning_rate_ = learning_rate_param_.starting_learning_rate;
+  // setting up learning_rate_param_
+  learning_rate_param_ = learning_rate_param;
 
   if (loader.IsDone())
   {
     loader.Reset();
   }
+
   // for some input combinations batch size will be modified
   batch_size = UpdateBatchSize(batch_size, loader.Size(), subset_size);
   loss_sum_  = 0;
@@ -253,9 +253,9 @@ typename T::Type Optimiser<T, C>::Run(
   start_time_ = high_resolution_clock::now();
   // Do batch back-propagation
   input_       = loader.PrepareBatch(batch_size);
-  auto name_it = input_node_names_.begin();
   while (!loader.IsDone() && step_ < subset_size)
   {
+    auto name_it = input_node_names_.begin();
     for (auto &cur_input : input_.second)
     {
       graph_->SetInput(*name_it, cur_input);

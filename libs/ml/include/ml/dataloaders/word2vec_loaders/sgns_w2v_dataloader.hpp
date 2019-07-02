@@ -44,7 +44,7 @@ public:
   using VocabType  = Vocab;
   using ReturnType = std::pair<LabelType, std::vector<DataType>>;
 
-  W2VLoader(SizeType window_size, SizeType negative_samples, T freq_thresh, bool mode);
+  W2VLoader(SizeType window_size, SizeType negative_samples, T freq_thresh, SizeType max_word_count, bool mode);
 
   bool       IsDone() const override;
   void       Reset() override;
@@ -62,7 +62,8 @@ public:
   VocabType const &vocab() const;
   std::string      WordFromIndex(SizeType index) const;
   SizeType         IndexFromWord(std::string const &word) const;
-  SizeType         window_size();
+  SizeType         WindowSize();
+  SizeType         ResetCount();
 
 private:
   SizeType                                   current_sentence_;
@@ -74,8 +75,10 @@ private:
   std::vector<std::vector<SizeType>>         data_;
   fetch::random::LinearCongruentialGenerator rng_;
   UnigramTable                               unigram_table_;
+  SizeType                                   max_word_count_;
   bool                                       mode_;
   SizeType                                   size_ = 0;
+  SizeType                                   reset_count_ = 0;
 
   // temporary sample and labels for buffering samples
   DataType   input_words_, output_words_, labels_;
@@ -83,7 +86,7 @@ private:
   ReturnType cur_sample_;
 
   std::vector<SizeType>    SentenceToIndices(std::vector<std::string> const &strings);
-  std::vector<std::string> PreprocessString(std::string const &s);
+  std::vector<std::string> PreprocessString(std::string const &s, SizeType length_limit);
   void                     BufferNextSamples(SizeType seed = 123456789);
   void                     Update();
 };
@@ -97,13 +100,14 @@ private:
  * @param mode
  */
 template <typename T>
-W2VLoader<T>::W2VLoader(SizeType window_size, SizeType negative_samples, T freq_thresh, bool mode)
+W2VLoader<T>::W2VLoader(SizeType window_size, SizeType negative_samples, T freq_thresh, SizeType max_word_count, bool mode)
   : DataLoader<LabelType, DataType>(false)  // no random mode specified
   , current_sentence_(0)
   , current_word_(0)
   , window_size_(window_size)
   , negative_samples_(negative_samples)
   , freq_thresh_(freq_thresh)
+  , max_word_count_(max_word_count)
   , mode_(mode)
 {
   // setup temporary buffers for training purpose
@@ -176,6 +180,7 @@ void W2VLoader<T>::Reset()
   current_word_     = 0;
   rng_.Seed(1337);
   unigram_table_.Reset();
+  reset_count_++;
 }
 
 /**
@@ -206,8 +211,8 @@ void W2VLoader<T>::RemoveInfrequent(SizeType min)
     for (auto word_it = sent_it->begin(); word_it != sent_it->end(); ++word_it)
     {
       if (old2new.count(*word_it) > 0)
-      {  // if a word is in old2new, append it to the new sentence
-        new_sent_buffer.push_back(*word_it);
+      {  // if a word is in old2new, append the new id of it to the new sentence
+        new_sent_buffer.push_back(old2new[*word_it]);
       }
     }
 
@@ -402,7 +407,13 @@ typename W2VLoader<T>::ReturnType W2VLoader<T>::GetNext()
 template <typename T>
 bool W2VLoader<T>::BuildVocab(std::string const &s)
 {
-  std::vector<std::string> preprocessed_string = PreprocessString(s);
+  // make sure the max_word_count is not exceeded, and also the remain words space allows a meaningful sentence
+  if(size_ >= max_word_count_ - 2 * window_size_){
+    return false;
+  }
+
+  // if we can take in more words, then start processing words
+  std::vector<std::string> preprocessed_string = PreprocessString(s, max_word_count_ - size_);
 
   if (preprocessed_string.size() <= 2 * window_size_)
   {  // dispose short sentences before we create vocabulary and count frequency: if we are not gonna
@@ -490,7 +501,7 @@ typename W2VLoader<T>::SizeType W2VLoader<T>::IndexFromWord(std::string const &w
 }
 
 template <typename T>
-typename W2VLoader<T>::SizeType W2VLoader<T>::window_size()
+typename W2VLoader<T>::SizeType W2VLoader<T>::WindowSize()
 {
   return window_size_;
 }
@@ -528,7 +539,7 @@ std::vector<math::SizeType> W2VLoader<T>::SentenceToIndices(std::vector<std::str
  * @return
  */
 template <typename T>
-std::vector<std::string> W2VLoader<T>::PreprocessString(std::string const &s)
+std::vector<std::string> W2VLoader<T>::PreprocessString(std::string const &s, SizeType length_limit)
 {
   std::string result;
   result.reserve(s.size());
@@ -539,9 +550,14 @@ std::vector<std::string> W2VLoader<T>::PreprocessString(std::string const &s)
 
   std::string              word;
   std::vector<std::string> words;
+  SizeType                 word_count = 0;
   for (std::stringstream ss(result); ss >> word;)
   {
+    if(word_count >= length_limit){
+      break;
+    }
     words.push_back(word);
+    word_count++;
   }
   return words;
 }

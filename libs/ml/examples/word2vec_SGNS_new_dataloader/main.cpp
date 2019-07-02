@@ -136,7 +136,9 @@ void TestEmbeddings(Graph<ArrayType> const &g, std::string const &skip_gram_name
   std::shared_ptr<fetch::ml::ops::Embeddings<ArrayType>> embeddings =
       sg_layer->GetEmbeddings(sg_layer);
 
+  std::cout << std::endl;
   PrintKNN(dl, embeddings->get_weights(), word0, K);
+  std::cout << std::endl;
   PrintWordAnology(dl, embeddings->get_weights(), word1, word2, word3, K);
 }
 
@@ -152,16 +154,18 @@ std::string ReadFile(std::string const &path)
 
 struct TrainingParams
 {
+  SizeType max_word_count       = 100000;  // maximum number to be trained
   SizeType negative_sample_size = 5;     // number of negative sample per word-context pair
   SizeType window_size          = 8;     // window size for context sampling
   bool     train_mode           = true;  // reserve for future compatibility with CBOW
   DataType freq_thresh          = 1e-5;  // frequency threshold for subsampling
   SizeType min_count            = 5;     // infrequent word removal threshold
 
-  SizeType batch_size      = 1000;  // training data batch size
+  SizeType batch_size      = 100;  // training data batch size
   SizeType embedding_size  = 32;     // dimension of embedding vec
-  SizeType training_epochs = 1;
-  double   learning_rate   = 0.001;  // alpha - the learning rate
+  SizeType training_epochs = 100;
+  SizeType test_frequency  = 10;
+  double   learning_rate   = 0.1;  // alpha - the learning rate
 
   fetch::ml::optimisers::LearningRateParam<DataType> learning_rate_param{fetch::ml::optimisers::LearningRateParam<DataType>::LearningRateDecay::LINEAR};
 
@@ -196,7 +200,7 @@ int main(int argc, char **argv)
 
   std::cout << "Setting up training data...: " << std::endl;
 
-  W2VLoader<DataType> data_loader(tp.window_size, tp.negative_sample_size, tp.freq_thresh,
+  W2VLoader<DataType> data_loader(tp.window_size, tp.negative_sample_size, tp.freq_thresh, tp.max_word_count,
                                   tp.train_mode);
   // set up dataloader
   /// DATA LOADING ///
@@ -231,13 +235,14 @@ int main(int argc, char **argv)
       g, {"Input", "Context"}, model_name, tp.learning_rate);
 
   // Training loop
-  DataType loss;
   for (SizeType i{0}; i < tp.training_epochs; i++)
   {
-    loss = optimiser.Run(data_loader, tp.learning_rate_param, tp.batch_size);
-    std::cout << "Loss: " << loss << std::endl;
+    std::cout << "start training for epoch no.: " << i << std::endl;
+    optimiser.Run(data_loader, tp.learning_rate_param, tp.batch_size);
     // Test trained embeddings
-    TestEmbeddings(*g, model_name, data_loader, tp.word0, tp.word1, tp.word2, tp.word3, tp.k);
+    if(i%tp.test_frequency == 0) {
+      TestEmbeddings(*g, model_name, data_loader, tp.word0, tp.word1, tp.word2, tp.word3, tp.k);
+    }
   }
 
   //////////////////////////////////////

@@ -56,8 +56,6 @@ public:
     assert(inputs.front().get().shape().size() == 2);
 
     SizeType batch_size = inputs.front().get().shape(1);
-    
-    std::cout << "inputs.front().get(): " << inputs.front().get().At(0, 0) << std::endl;
 
     if (!this->embeddings_output_ ||
         this->embeddings_output_->shape().at(1) != inputs.front().get().shape().at(0) ||

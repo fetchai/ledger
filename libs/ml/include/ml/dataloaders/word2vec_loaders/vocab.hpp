@@ -76,9 +76,7 @@ void Vocab::Update()
  */
 void Vocab::RemoveInfrequentWord(fetch::ml::Vocab::SizeType min)
 {
-  auto it = data.begin();
-  while (it != data.end())
-  {
+  for(auto it = data.begin(); it != data.end();){
     if (it->second.second < min)
     {
       it = data.erase(it);

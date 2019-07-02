@@ -51,6 +51,7 @@ private:
   std::vector<SizeType> labels_size_vec_;
   std::vector<DataType> data_vec_;
   LabelType             labels_;
+  SizeType              reset_count_;
 };
 
 /**
@@ -122,7 +123,7 @@ std::pair<LabelType, std::vector<DataType>> DataLoader<LabelType, DataType>::Pre
     {
       if (IsDone())
       {
-        Reset();
+        break; // we stop the prepare batch when the dataloader is drained, this might modify the size of the batch
       }
       training_pair = GetNext();
     }
