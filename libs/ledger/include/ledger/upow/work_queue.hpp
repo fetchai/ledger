@@ -33,7 +33,7 @@ struct WorkQueueSort
     {
       return a->score() > b->score();
     }
-    else // (a->score() == b->score())
+    else  // (a->score() == b->score())
     {
       return a->nonce() > b->nonce();
     }

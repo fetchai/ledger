@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/upow/work_queue.hpp"
 #include "ledger/upow/work.hpp"
+#include "ledger/upow/work_queue.hpp"
 
 #include "gtest/gtest.h"
 
@@ -31,13 +31,12 @@ using fetch::ledger::Work;
 using fetch::ledger::WorkScore;
 using fetch::ledger::WorkPtr;
 
-using UInt256 = Work::UInt256;
+using UInt256      = Work::UInt256;
 using WorkQueuePtr = std::unique_ptr<WorkQueue>;
 
 class WorkQueueTests : public ::testing::Test
 {
 protected:
-
   void SetUp() override
   {
     work_queue_ = std::make_unique<WorkQueue>();
@@ -123,4 +122,4 @@ TEST_F(WorkQueueTests, CheckOrderingWhenSameScore)
   EXPECT_EQ(second.get(), item2.get());
 }
 
-} // namespace
+}  // namespace
