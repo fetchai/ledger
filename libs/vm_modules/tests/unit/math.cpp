@@ -150,7 +150,8 @@ TEST_F(MathTests, tensor_state_test)
       tensor_shape[0] = 2u64;
       tensor_shape[1] = 10u64;
       var x = Tensor(tensor_shape);
-      State<Tensor>("tensor").set(x);
+      var state = State<Tensor>("tensor");
+      state.set(x);
     endfunction
   )";
 

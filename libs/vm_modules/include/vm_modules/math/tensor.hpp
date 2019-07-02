@@ -99,6 +99,18 @@ public:
     return tensor_;
   }
 
+  bool SerializeTo(serializers::ByteArrayBuffer &buffer) override
+  {
+    buffer << tensor_;
+    return true;
+  }
+
+  bool DeserializeFrom(serializers::ByteArrayBuffer &buffer) override
+  {
+    buffer >> tensor_;
+    return true;
+  }
+
 private:
   ArrayType tensor_;
 };
