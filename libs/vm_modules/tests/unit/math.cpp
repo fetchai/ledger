@@ -141,4 +141,62 @@ TEST_F(MathTests, sqrt_test)
 
   ASSERT_EQ(result, gt);
 }
+
+TEST_F(MathTests, tensor_state_test)
+{
+  static char const *tensor_serialiase_src = R"(
+    function main()
+      var tensor_shape = Array<UInt64>(2);
+      tensor_shape[0] = 2u64;
+      tensor_shape[1] = 10u64;
+      var x = Tensor(tensor_shape);
+      State<Tensor>("tensor").set(x);
+    endfunction
+  )";
+
+  EXPECT_CALL(toolkit.observer(), Write("tensor", _, _));
+
+  ASSERT_TRUE(toolkit.Compile(tensor_serialiase_src));
+  ASSERT_TRUE(toolkit.Run());
+  //
+  //  static char const *deser_src = R"(
+  //    function main() : Address
+  //      return State<Address>("addr").get();
+  //    endfunction
+  //  )";
+  //
+  //  EXPECT_CALL(toolkit.observer(), Exists("addr"));
+  //  EXPECT_CALL(toolkit.observer(), Read("addr", _, _));
+  //
+  //  ASSERT_TRUE(toolkit.Compile(deser_src));
+  //
+  //  Variant res;
+  //  ASSERT_TRUE(toolkit.Run(&res));
+  //
+  //  auto const addr = res.Get<Ptr<Address>>();
+  //  EXPECT_EQ("MnrRHdvCkdZodEwM855vemS5V3p2hiWmcSQ8JEzD4ZjPdsYtB", addr->AsString()->str);
+  //
+  //
+  //
+  //
+  //
+  //
+  //  static char const *TEXT = R"(
+  //    function main() : Float32
+  //      return sqrt(3.5f);
+  //    endfunction
+  //  )";
+  //
+  //  ASSERT_TRUE(toolkit.Compile(TEXT));
+  //  ASSERT_TRUE(toolkit.Run());
+  //
+  //  Variant res;
+  //  ASSERT_TRUE(toolkit.Run(&res));
+  //  auto const result = res.Get<float_t>();
+  //
+  //  float gt = 3.5;
+  //  gt       = fetch::math::Sqrt(gt);
+  //
+  //  ASSERT_EQ(result, gt);
+}
 }  // namespace
