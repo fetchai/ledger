@@ -123,7 +123,8 @@ std::pair<LabelType, std::vector<DataType>> DataLoader<LabelType, DataType>::Pre
     {
       if (IsDone())
       {
-        break; // we stop the prepare batch when the dataloader is drained, this might modify the size of the batch
+        break;  // we stop the prepare batch when the dataloader is drained, this might modify the
+                // size of the batch
       }
       training_pair = GetNext();
     }

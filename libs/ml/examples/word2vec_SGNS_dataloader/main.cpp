@@ -57,19 +57,13 @@ std::string Model(fetch::ml::Graph<ArrayType> &g, SizeType embeddings_size, Size
   return ret_name;
 }
 
-void PrintWordAnology(W2VLoader<DataType> const &dl, ArrayType const &embeddings,
+void PrintWordAnology(GraphW2VLoader<DataType> const &dl, ArrayType const &embeddings,
                       std::string const &word1, std::string const &word2, std::string const &word3,
                       SizeType k)
 {
   ArrayType arr = embeddings;
 
-  SizeType word1_idx = dl.IndexFromWord(word1);
-  SizeType word2_idx = dl.IndexFromWord(word2);
-  SizeType word3_idx = dl.IndexFromWord(word3);
-
-  if (word1_idx == fetch::math::numeric_max<SizeType>() ||
-      word2_idx == fetch::math::numeric_max<SizeType>() ||
-      word3_idx == fetch::math::numeric_max<SizeType>())
+  if (!dl.WordKnown(word1) || !dl.WordKnown(word1) || !dl.WordKnown(word1))
   {
     throw std::runtime_error("WARNING! not all to-be-tested words are in vocabulary");
   }
@@ -79,6 +73,12 @@ void PrintWordAnology(W2VLoader<DataType> const &dl, ArrayType const &embeddings
               << std::endl;
   }
 
+  // get id for words
+  SizeType word1_idx = dl.IndexFromWord(word1);
+  SizeType word2_idx = dl.IndexFromWord(word2);
+  SizeType word3_idx = dl.IndexFromWord(word3);
+
+  // get word vectors for words
   ArrayType word1_vec = embeddings.Slice(word1_idx, 1).Copy();
   ArrayType word2_vec = embeddings.Slice(word2_idx, 1).Copy();
   ArrayType word3_vec = embeddings.Slice(word3_idx, 1).Copy();
@@ -100,7 +100,7 @@ void PrintWordAnology(W2VLoader<DataType> const &dl, ArrayType const &embeddings
   }
 }
 
-void PrintKNN(W2VLoader<DataType> const &dl, ArrayType const &embeddings, std::string const &word0,
+void PrintKNN(GraphW2VLoader<DataType> const &dl, ArrayType const &embeddings, std::string const &word0,
               SizeType k)
 {
   ArrayType arr = embeddings;
@@ -124,7 +124,7 @@ void PrintKNN(W2VLoader<DataType> const &dl, ArrayType const &embeddings, std::s
 }
 
 void TestEmbeddings(Graph<ArrayType> const &g, std::string const &skip_gram_name,
-                    W2VLoader<DataType> const &dl, std::string word0, std::string word1,
+                    GraphW2VLoader<DataType> const &dl, std::string word0, std::string word1,
                     std::string word2, std::string word3, SizeType K)
 {
 
@@ -155,19 +155,20 @@ std::string ReadFile(std::string const &path)
 struct TrainingParams
 {
   SizeType max_word_count       = 100000;  // maximum number to be trained
-  SizeType negative_sample_size = 5;     // number of negative sample per word-context pair
-  SizeType window_size          = 8;     // window size for context sampling
-  bool     train_mode           = true;  // reserve for future compatibility with CBOW
-  DataType freq_thresh          = 1e-5;  // frequency threshold for subsampling
-  SizeType min_count            = 5;     // infrequent word removal threshold
+  SizeType negative_sample_size = 5;       // number of negative sample per word-context pair
+  SizeType window_size          = 8;       // window size for context sampling
+  bool     train_mode           = true;    // reserve for future compatibility with CBOW
+  DataType freq_thresh          = 1e-5;    // frequency threshold for subsampling
+  SizeType min_count            = 5;       // infrequent word removal threshold
 
-  SizeType batch_size      = 100;  // training data batch size
-  SizeType embedding_size  = 32;     // dimension of embedding vec
+  SizeType batch_size      = 100000;  // training data batch size
+  SizeType embedding_size  = 32;   // dimension of embedding vec
   SizeType training_epochs = 100;
   SizeType test_frequency  = 10;
-  double   learning_rate   = 0.1;  // alpha - the learning rate
+  double   learning_rate   = 0.025 * 100000;  // alpha - the learning rate
 
-  fetch::ml::optimisers::LearningRateParam<DataType> learning_rate_param{fetch::ml::optimisers::LearningRateParam<DataType>::LearningRateDecay::LINEAR};
+  fetch::ml::optimisers::LearningRateParam<DataType> learning_rate_param{
+      fetch::ml::optimisers::LearningRateParam<DataType>::LearningRateDecay::LINEAR};
 
   SizeType    k        = 10;       // how many nearest neighbours to compare against
   std::string word0    = "three";  // test word to consider
@@ -200,12 +201,12 @@ int main(int argc, char **argv)
 
   std::cout << "Setting up training data...: " << std::endl;
 
-  W2VLoader<DataType> data_loader(tp.window_size, tp.negative_sample_size, tp.freq_thresh, tp.max_word_count,
-                                  tp.train_mode);
+  GraphW2VLoader<DataType> data_loader(tp.window_size, tp.negative_sample_size, tp.freq_thresh,
+                                  tp.max_word_count, tp.train_mode);
   // set up dataloader
   /// DATA LOADING ///
   std::cout << "building vocab " << std::endl;
-  data_loader.BuildVocab(ReadFile(train_file));
+  data_loader.BuildVocab({ReadFile(train_file)});
   std::cout << "Removing infrequent words" << std::endl;
   data_loader.RemoveInfrequent(tp.min_count);
   std::cout << "Initializing unigram table" << std::endl;
@@ -239,8 +240,10 @@ int main(int argc, char **argv)
   {
     std::cout << "start training for epoch no.: " << i << std::endl;
     optimiser.Run(data_loader, tp.learning_rate_param, tp.batch_size);
+    std::cout << std::endl;
     // Test trained embeddings
-    if(i%tp.test_frequency == 0) {
+    if (i % tp.test_frequency == 0)
+    {
       TestEmbeddings(*g, model_name, data_loader, tp.word0, tp.word1, tp.word2, tp.word3, tp.k);
     }
   }

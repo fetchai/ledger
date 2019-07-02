@@ -17,7 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/random/lcg.hpp"
 #include "core/random/lfg.hpp"
 #include "math/tensor.hpp"
 #include "ml/dataloaders/dataloader.hpp"
@@ -32,7 +31,7 @@ namespace ml {
 namespace dataloaders {
 
 template <typename T>
-class W2VLoader : public DataLoader<fetch::math::Tensor<T>, fetch::math::Tensor<T>>
+class GraphW2VLoader : public DataLoader<fetch::math::Tensor<T>, fetch::math::Tensor<T>>
 {
 public:
   const T BufferPositionUnused = -1;
@@ -44,7 +43,8 @@ public:
   using VocabType  = Vocab;
   using ReturnType = std::pair<LabelType, std::vector<DataType>>;
 
-  W2VLoader(SizeType window_size, SizeType negative_samples, T freq_thresh, SizeType max_word_count, bool mode);
+  GraphW2VLoader(SizeType window_size, SizeType negative_samples, T freq_thresh, SizeType max_word_count,
+            bool mode, SizeType seed=1337);
 
   bool       IsDone() const override;
   void       Reset() override;
@@ -52,9 +52,11 @@ public:
   void       InitUnigramTable(SizeType size = 1e8);
   ReturnType GetNext() override;
 
-  bool BuildVocab(std::string const &s);
+  void BuildVocab(std::vector<std::string> const &sents);
   void SaveVocab(std::string const &filename);
   void LoadVocab(std::string const &filename);
+  
+  bool WordKnown(std::string const &word) const;
 
   /// accessors and helper functions ///
   SizeType         Size() const override;
@@ -63,7 +65,6 @@ public:
   std::string      WordFromIndex(SizeType index) const;
   SizeType         IndexFromWord(std::string const &word) const;
   SizeType         WindowSize();
-  SizeType         ResetCount();
 
 private:
   SizeType                                   current_sentence_;
@@ -73,11 +74,11 @@ private:
   T                                          freq_thresh_;
   VocabType                                  vocab_;
   std::vector<std::vector<SizeType>>         data_;
-  fetch::random::LinearCongruentialGenerator rng_;
   UnigramTable                               unigram_table_;
   SizeType                                   max_word_count_;
   bool                                       mode_;
-  SizeType                                   size_ = 0;
+  fetch::random::LaggedFibonacciGenerator<>  lfg_;
+  SizeType                                   size_        = 0;
   SizeType                                   reset_count_ = 0;
 
   // temporary sample and labels for buffering samples
@@ -87,7 +88,7 @@ private:
 
   std::vector<SizeType>    SentenceToIndices(std::vector<std::string> const &strings);
   std::vector<std::string> PreprocessString(std::string const &s, SizeType length_limit);
-  void                     BufferNextSamples(SizeType seed = 123456789);
+  void                     BufferNextSamples();
   void                     Update();
 };
 
@@ -100,7 +101,8 @@ private:
  * @param mode
  */
 template <typename T>
-W2VLoader<T>::W2VLoader(SizeType window_size, SizeType negative_samples, T freq_thresh, SizeType max_word_count, bool mode)
+GraphW2VLoader<T>::GraphW2VLoader(SizeType window_size, SizeType negative_samples, T freq_thresh,
+                        SizeType max_word_count, bool mode, SizeType seed)
   : DataLoader<LabelType, DataType>(false)  // no random mode specified
   , current_sentence_(0)
   , current_word_(0)
@@ -109,6 +111,7 @@ W2VLoader<T>::W2VLoader(SizeType window_size, SizeType negative_samples, T freq_
   , freq_thresh_(freq_thresh)
   , max_word_count_(max_word_count)
   , mode_(mode)
+  , lfg_(seed)
 {
   // setup temporary buffers for training purpose
   input_words_  = DataType({negative_samples * window_size_ * 2 + window_size_ * 2});
@@ -126,7 +129,7 @@ W2VLoader<T>::W2VLoader(SizeType window_size, SizeType negative_samples, T freq_
  * @return
  */
 template <typename T>
-math::SizeType W2VLoader<T>::Size() const
+math::SizeType GraphW2VLoader<T>::Size() const
 {
   return size_;
 }
@@ -135,7 +138,7 @@ math::SizeType W2VLoader<T>::Size() const
  * update stats of data in dataloader, including: size_,
  */
 template <typename T>
-void W2VLoader<T>::Update()
+void GraphW2VLoader<T>::Update()
 {
   // update data set size
   SizeType size(0);
@@ -155,7 +158,7 @@ void W2VLoader<T>::Update()
  * @return
  */
 template <typename T>
-bool W2VLoader<T>::IsDone() const
+bool GraphW2VLoader<T>::IsDone() const
 {
   if (current_sentence_ < data_.size() - 1)
   {
@@ -174,13 +177,23 @@ bool W2VLoader<T>::IsDone() const
  * @tparam T
  */
 template <typename T>
-void W2VLoader<T>::Reset()
+void GraphW2VLoader<T>::Reset()
 {
   current_sentence_ = 0;
   current_word_     = 0;
-  rng_.Seed(1337);
   unigram_table_.Reset();
   reset_count_++;
+}
+
+/**
+ * check if the word is in vocabulary
+ * @tparam T
+ * @param word
+ * @return
+ */
+template<typename T>
+bool GraphW2VLoader<T>::WordKnown(std::string const &word) const{
+  return vocab_.WordKnown(word);
 }
 
 /**
@@ -189,7 +202,7 @@ void W2VLoader<T>::Reset()
  * @param min
  */
 template <typename T>
-void W2VLoader<T>::RemoveInfrequent(SizeType min)
+void GraphW2VLoader<T>::RemoveInfrequent(SizeType min)
 {
   // remove infrequent words from vocab first
   vocab_.RemoveInfrequentWord(min);
@@ -203,9 +216,11 @@ void W2VLoader<T>::RemoveInfrequent(SizeType min)
   // create a new data_ for storing text
   std::vector<std::vector<SizeType>> new_data;
 
+  std::vector<SizeType> new_sent_buffer;  // buffer for each sentence
   for (auto sent_it = data_.begin(); sent_it != data_.end(); sent_it++)
   {
-    std::vector<SizeType> new_sent_buffer;  // buffer for this sentence
+    // clear the buffer for this new sentence
+    new_sent_buffer.clear();
 
     // reserve every word that is not infrequent
     for (auto word_it = sent_it->begin(); word_it != sent_it->end(); ++word_it)
@@ -245,7 +260,7 @@ void W2VLoader<T>::RemoveInfrequent(SizeType min)
  * @tparam T
  */
 template <typename T>
-void W2VLoader<T>::InitUnigramTable(SizeType size)
+void GraphW2VLoader<T>::InitUnigramTable(SizeType size)
 {
   std::vector<SizeType> frequencies(vocab_size());
   for (auto const &kvp : vocab_.data)
@@ -257,10 +272,9 @@ void W2VLoader<T>::InitUnigramTable(SizeType size)
 /**
  * Buffer for the next word and relevent samples
  * @tparam T
- * @param seed
  */
 template <typename T>
-void W2VLoader<T>::BufferNextSamples(SizeType seed)
+void GraphW2VLoader<T>::BufferNextSamples()
 {
 
   // reset the index to buffer
@@ -273,7 +287,6 @@ void W2VLoader<T>::BufferNextSamples(SizeType seed)
   }
 
   // subsample too frequent word
-  fetch::random::LaggedFibonacciGenerator<> lfg_(seed);
   while (true)
   {
     T word_freq =
@@ -311,7 +324,7 @@ void W2VLoader<T>::BufferNextSamples(SizeType seed)
   }
 
   // select random window size
-  SizeType dynamic_size = rng_() % window_size_ + 1;
+  SizeType dynamic_size = lfg_() % window_size_ + 1;
 
   // for the interested one word
   T cur_word_id = T(data_.at(current_sentence_).at(current_word_));
@@ -372,7 +385,7 @@ void W2VLoader<T>::BufferNextSamples(SizeType seed)
  * @return
  */
 template <typename T>
-typename W2VLoader<T>::ReturnType W2VLoader<T>::GetNext()
+typename GraphW2VLoader<T>::ReturnType GraphW2VLoader<T>::GetNext()
 {
   T input_word, output_word;
 
@@ -405,30 +418,31 @@ typename W2VLoader<T>::ReturnType W2VLoader<T>::GetNext()
  * @return bool indicates success
  */
 template <typename T>
-bool W2VLoader<T>::BuildVocab(std::string const &s)
+void GraphW2VLoader<T>::BuildVocab(std::vector<std::string> const &sents)
 {
-  // make sure the max_word_count is not exceeded, and also the remain words space allows a meaningful sentence
-  if(size_ >= max_word_count_ - 2 * window_size_){
-    return false;
-  }
+  for(auto s : sents){
+    // make sure the max_word_count is not exceeded, and also the remain words space allows a
+    // meaningful sentence
+    if (size_ >= max_word_count_ - 2 * window_size_)
+    {
+      return;
+    }
 
-  // if we can take in more words, then start processing words
-  std::vector<std::string> preprocessed_string = PreprocessString(s, max_word_count_ - size_);
+    // if we can take in more words, then start processing words
+    std::vector<std::string> preprocessed_string = PreprocessString(s, max_word_count_ - size_);
 
-  if (preprocessed_string.size() <= 2 * window_size_)
-  {  // dispose short sentences before we create vocabulary and count frequency: if we are not gonna
-     // train on it, the sentence does not exist
-    return false;
-  }
-  else
-  {
+    if (preprocessed_string.size() <= 2 * window_size_)
+    {  // dispose short sentences before we create vocabulary and count frequency: if we are not gonna
+      // train on it, the sentence does not exist
+      continue;
+    }
+
     std::vector<SizeType> indices = SentenceToIndices(preprocessed_string);
     data_.push_back(indices);
 
     // update stats in vocab_ and dl
     vocab_.Update();
     Update();
-    return true;
   }
 }
 
@@ -438,7 +452,7 @@ bool W2VLoader<T>::BuildVocab(std::string const &s)
  * @param filename
  */
 template <typename T>
-void W2VLoader<T>::SaveVocab(std::string const &filename)
+void GraphW2VLoader<T>::SaveVocab(std::string const &filename)
 {
   vocab_.Save(filename);
 }
@@ -449,7 +463,7 @@ void W2VLoader<T>::SaveVocab(std::string const &filename)
  * @param filename
  */
 template <typename T>
-void W2VLoader<T>::LoadVocab(std::string const &filename)
+void GraphW2VLoader<T>::LoadVocab(std::string const &filename)
 {
   vocab_.Load(filename);
 }
@@ -460,7 +474,7 @@ void W2VLoader<T>::LoadVocab(std::string const &filename)
  * @return
  */
 template <typename T>
-math::SizeType W2VLoader<T>::vocab_size() const
+math::SizeType GraphW2VLoader<T>::vocab_size() const
 {
   return vocab_.data.size();
 }
@@ -471,7 +485,7 @@ math::SizeType W2VLoader<T>::vocab_size() const
  * @return
  */
 template <typename T>
-typename W2VLoader<T>::VocabType const &W2VLoader<T>::vocab() const
+typename GraphW2VLoader<T>::VocabType const &GraphW2VLoader<T>::vocab() const
 {
   return vocab_;
 }
@@ -483,7 +497,7 @@ typename W2VLoader<T>::VocabType const &W2VLoader<T>::vocab() const
  * @return
  */
 template <typename T>
-std::string W2VLoader<T>::WordFromIndex(SizeType index) const
+std::string GraphW2VLoader<T>::WordFromIndex(SizeType index) const
 {
   return vocab_.WordFromIndex(index);
 }
@@ -495,13 +509,13 @@ std::string W2VLoader<T>::WordFromIndex(SizeType index) const
  * @return
  */
 template <typename T>
-typename W2VLoader<T>::SizeType W2VLoader<T>::IndexFromWord(std::string const &word) const
+typename GraphW2VLoader<T>::SizeType GraphW2VLoader<T>::IndexFromWord(std::string const &word) const
 {
   return vocab_.IndexFromWord(word);
 }
 
 template <typename T>
-typename W2VLoader<T>::SizeType W2VLoader<T>::WindowSize()
+typename GraphW2VLoader<T>::SizeType GraphW2VLoader<T>::WindowSize()
 {
   return window_size_;
 }
@@ -513,7 +527,7 @@ typename W2VLoader<T>::SizeType W2VLoader<T>::WindowSize()
  * @return
  */
 template <typename T>
-std::vector<math::SizeType> W2VLoader<T>::SentenceToIndices(std::vector<std::string> const &strings)
+std::vector<math::SizeType> GraphW2VLoader<T>::SentenceToIndices(std::vector<std::string> const &strings)
 {
   assert(strings.size() >=
          2 * window_size_ + 1);  // All input are guaranteed to be long enough for the training
@@ -539,7 +553,7 @@ std::vector<math::SizeType> W2VLoader<T>::SentenceToIndices(std::vector<std::str
  * @return
  */
 template <typename T>
-std::vector<std::string> W2VLoader<T>::PreprocessString(std::string const &s, SizeType length_limit)
+std::vector<std::string> GraphW2VLoader<T>::PreprocessString(std::string const &s, SizeType length_limit)
 {
   std::string result;
   result.reserve(s.size());
@@ -553,7 +567,8 @@ std::vector<std::string> W2VLoader<T>::PreprocessString(std::string const &s, Si
   SizeType                 word_count = 0;
   for (std::stringstream ss(result); ss >> word;)
   {
-    if(word_count >= length_limit){
+    if (word_count >= length_limit)
+    {
       break;
     }
     words.push_back(word);

@@ -49,16 +49,18 @@ static constexpr fetch::math::SizeType SIZE_NOT_SET = fetch::math::numeric_max<m
  * @tparam T
  */
 template <typename T>
-struct LearningRateParam{
-    using DataType = T;
-    enum class LearningRateDecay{
-        EXPONENTIAL,
-        LINEAR
-    } mode = LearningRateDecay::EXPONENTIAL;
-    DataType starting_learning_rate = 0.1;
-    DataType ending_learning_rate = 0.0001;
-    DataType linear_decay_rate = 0.00000000000001;
-    DataType exponential_decay_rate = 0.999;
+struct LearningRateParam
+{
+  using DataType = T;
+  enum class LearningRateDecay
+  {
+    EXPONENTIAL,
+    LINEAR
+  } mode                          = LearningRateDecay::EXPONENTIAL;
+  DataType starting_learning_rate = 0.1;
+  DataType ending_learning_rate   = 0.0001;
+  DataType linear_decay_rate      = 0.0000000000001;
+  DataType exponential_decay_rate = 0.999;
 };
 
 /**
@@ -82,8 +84,9 @@ public:
   // TODO (private 1090): Optimise TensorSlice for graph-feeding without using .Copy
   DataType Run(std::vector<ArrayType> const &data, ArrayType const &labels,
                SizeType batch_size = SIZE_NOT_SET);
-  DataType Run(fetch::ml::dataloaders::DataLoader<ArrayType, ArrayType> &loader, LearningRateParam<DataType> learning_rate_param,
-               SizeType batch_size = SIZE_NOT_SET, SizeType subset_size = SIZE_NOT_SET);
+  DataType Run(fetch::ml::dataloaders::DataLoader<ArrayType, ArrayType> &loader,
+               LearningRateParam<DataType> learning_rate_param, SizeType batch_size = SIZE_NOT_SET,
+               SizeType subset_size = SIZE_NOT_SET);
   void     UpdateLearningRate();
   SizeType UpdateBatchSize(SizeType const &batch_size, SizeType const &data_size,
                            SizeType const &subset_size = SIZE_NOT_SET);
@@ -117,9 +120,9 @@ private:
   void PrintStats(SizeType batch_size, SizeType subset_size);
 };
 template <class T, class C>
-Optimiser<T, C>::Optimiser(std::shared_ptr<Graph<T>> graph, std::vector<std::string> input_node_names,
-            std::string output_node_name, DataType const &learning_rate,
-            DataType const &delta_learning_rate)
+Optimiser<T, C>::Optimiser(std::shared_ptr<Graph<T>> graph,
+                           std::vector<std::string> input_node_names, std::string output_node_name,
+                           DataType const &learning_rate, DataType const &delta_learning_rate)
   : graph_(graph)
   , input_node_names_(std::move(input_node_names))
   , output_node_name_(std::move(output_node_name))
@@ -233,8 +236,8 @@ typename T::Type Optimiser<T, C>::Run(std::vector<ArrayType> const &data, ArrayT
  */
 template <class T, class C>
 typename T::Type Optimiser<T, C>::Run(
-    fetch::ml::dataloaders::DataLoader<ArrayType, ArrayType> &loader, LearningRateParam<DataType> learning_rate_param, SizeType batch_size,
-    SizeType subset_size)
+    fetch::ml::dataloaders::DataLoader<ArrayType, ArrayType> &loader,
+    LearningRateParam<DataType> learning_rate_param, SizeType batch_size, SizeType subset_size)
 {
   // setting up learning_rate_param_
   learning_rate_param_ = learning_rate_param;
@@ -252,7 +255,7 @@ typename T::Type Optimiser<T, C>::Run(
   // variable for stats output
   start_time_ = high_resolution_clock::now();
   // Do batch back-propagation
-  input_       = loader.PrepareBatch(batch_size);
+  input_ = loader.PrepareBatch(batch_size);
   while (!loader.IsDone() && step_ < subset_size)
   {
     auto name_it = input_node_names_.begin();
@@ -265,7 +268,7 @@ typename T::Type Optimiser<T, C>::Run(
     cur_label_  = input_.first;
     pred_label_ = graph_->Evaluate(output_node_name_);
 
-    loss_       = criterion_.Forward({pred_label_, cur_label_});
+    loss_ = criterion_.Forward({pred_label_, cur_label_});
     graph_->BackPropagate(output_node_name_, criterion_.Backward({pred_label_, cur_label_}));
     // Compute and apply gradient
     ApplyGradients(batch_size);
@@ -279,7 +282,7 @@ typename T::Type Optimiser<T, C>::Run(
     loss_ = DataType{0};
     // Do batch back-propagation
     input_ = loader.PrepareBatch(batch_size);
-      UpdateLearningRate();
+    UpdateLearningRate();
   }
 
   epoch_++;
@@ -329,25 +332,25 @@ void Optimiser<T, C>::UpdateLearningRate()
 {
   switch (learning_rate_param_.mode)
   {
-      case LearningRateParam<DataType>::LearningRateDecay::EXPONENTIAL:
-      {
-          learning_rate_ = learning_rate_ * learning_rate_param_.exponential_decay_rate;
-          break;
-      }
-      case LearningRateParam<DataType>::LearningRateDecay::LINEAR:
-      {
-          learning_rate_ = learning_rate_ - learning_rate_param_.linear_decay_rate*static_cast<DataType>(step_);
-          if (learning_rate_ < learning_rate_param_.ending_learning_rate)
-          {
-              learning_rate_ = learning_rate_param_.ending_learning_rate;
-          }
-          break;
-      }
-      default:
-      {
-          break;
-      }
-
+  case LearningRateParam<DataType>::LearningRateDecay::EXPONENTIAL:
+  {
+    learning_rate_ = learning_rate_ * learning_rate_param_.exponential_decay_rate;
+    break;
+  }
+  case LearningRateParam<DataType>::LearningRateDecay::LINEAR:
+  {
+    learning_rate_ =
+        learning_rate_ * (1 - learning_rate_param_.linear_decay_rate * static_cast<DataType>(step_));
+    if (learning_rate_ < learning_rate_param_.ending_learning_rate)
+    {
+      learning_rate_ = learning_rate_param_.ending_learning_rate;
+    }
+    break;
+  }
+  default:
+  {
+    break;
+  }
   }
 }
 /**

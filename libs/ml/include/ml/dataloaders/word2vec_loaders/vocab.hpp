@@ -23,9 +23,10 @@ namespace ml {
 class Vocab
 {
 public:
-  using SizeType        = fetch::math::SizeType;
-  using DataType        = std::map<std::string, std::pair<SizeType, SizeType>>;
-  using ReverseDataType = std::map<SizeType, std::pair<std::string, SizeType>>;
+  using SizeType                         = fetch::math::SizeType;
+  using DataType                         = std::map<std::string, std::pair<SizeType, SizeType>>;
+  using ReverseDataType                  = std::map<SizeType, std::pair<std::string, SizeType>>;
+  static constexpr SizeType UNKNOWN_WORD = fetch::math::numeric_max<SizeType>();
 
   SizeType total_count;
 
@@ -39,6 +40,9 @@ public:
   void                         RemoveInfrequentWord(SizeType min);
   std::map<SizeType, SizeType> Compactify();
 
+  bool                         WordKnown(std::string const &word) const;
+  bool                         WordKnown(SizeType id) const;
+
   ReverseDataType GetReverseVocab();
 
   void Save(std::string const &filename) const;
@@ -48,15 +52,13 @@ public:
   SizeType    IndexFromWord(std::string const &word) const;
 };
 
-/**
- * reserve numerical max of SizeType for unknown word
- *
- */
+
 Vocab::Vocab()
 {}
 
 /**
- * Get the total count of the vocabulary
+ * Update the data in vocabulary every time vocabulary is changed
+ * updating including: word count and reverse data
  */
 void Vocab::Update()
 {
@@ -72,11 +74,36 @@ void Vocab::Update()
 }
 
 /**
+ * check if a word is known
+ * @param word
+ * @return
+ */
+bool Vocab::WordKnown(std::string const &word) const{
+  if(IndexFromWord(word) == UNKNOWN_WORD){
+    return false;
+  }
+  return true;
+}
+
+/**
+ * check if a word is known
+ * @param id
+ * @return
+ */
+bool Vocab::WordKnown(Vocab::SizeType id) const{
+  if(id == UNKNOWN_WORD){
+    return false;
+  }
+  return true;
+}
+
+/**
  * remove word that have less counts then min
  */
 void Vocab::RemoveInfrequentWord(fetch::ml::Vocab::SizeType min)
 {
-  for(auto it = data.begin(); it != data.end();){
+  for (auto it = data.begin(); it != data.end();)
+  {
     if (it->second.second < min)
     {
       it = data.erase(it);
@@ -197,7 +224,7 @@ math::SizeType Vocab::IndexFromWord(std::string const &word) const
   {
     return (data.at(word)).first;
   }
-  return fetch::math::numeric_max<SizeType>();
+  return UNKNOWN_WORD;
 }
 
 }  // namespace ml
