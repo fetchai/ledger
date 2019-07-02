@@ -319,7 +319,6 @@ template <class OperationType>
 meta::IfIsTrainable<ArrayType, OperationType, void> Graph<ArrayType>::AddTrainable(
     std::string const &name, std::shared_ptr<Node<ArrayType, OperationType>> op)
 {
-  FETCH_LOG_INFO("ML_LIB", "Created trainable node [", name, "]");
   trainable_.emplace_back(op);
   trainable_lookup_[name] = trainable_.size() - 1;
 }
@@ -341,8 +340,6 @@ meta::IfIsGraph<ArrayType, OperationType, void> Graph<ArrayType>::AddTrainable(
     // guarantee unique op name
     std::string node_name(name + "_" + trainable.first);
     std::string resolved_name = UpdateVariableName<OperationType>(node_name);
-
-    FETCH_LOG_INFO("ML_LIB", "Created trainable node [", resolved_name, "]");
 
     trainable_.emplace_back(op->trainable_.at(trainable.second));
     trainable_lookup_[resolved_name] = trainable_.size() - 1;
