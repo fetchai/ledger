@@ -40,8 +40,8 @@ public:
   void                         RemoveInfrequentWord(SizeType min);
   std::map<SizeType, SizeType> Compactify();
 
-  bool                         WordKnown(std::string const &word) const;
-  bool                         WordKnown(SizeType id) const;
+  bool WordKnown(std::string const &word) const;
+  bool WordKnown(SizeType id) const;
 
   ReverseDataType GetReverseVocab();
 
@@ -51,7 +51,6 @@ public:
   std::string WordFromIndex(SizeType index) const;
   SizeType    IndexFromWord(std::string const &word) const;
 };
-
 
 Vocab::Vocab()
 {}
@@ -78,8 +77,10 @@ void Vocab::Update()
  * @param word
  * @return
  */
-bool Vocab::WordKnown(std::string const &word) const{
-  if(IndexFromWord(word) == UNKNOWN_WORD){
+bool Vocab::WordKnown(std::string const &word) const
+{
+  if (IndexFromWord(word) == UNKNOWN_WORD)
+  {
     return false;
   }
   return true;
@@ -90,8 +91,10 @@ bool Vocab::WordKnown(std::string const &word) const{
  * @param id
  * @return
  */
-bool Vocab::WordKnown(Vocab::SizeType id) const{
-  if(id == UNKNOWN_WORD){
+bool Vocab::WordKnown(Vocab::SizeType id) const
+{
+  if (id == UNKNOWN_WORD)
+  {
     return false;
   }
   return true;

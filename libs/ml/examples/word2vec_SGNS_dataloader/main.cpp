@@ -100,8 +100,8 @@ void PrintWordAnology(GraphW2VLoader<DataType> const &dl, ArrayType const &embed
   }
 }
 
-void PrintKNN(GraphW2VLoader<DataType> const &dl, ArrayType const &embeddings, std::string const &word0,
-              SizeType k)
+void PrintKNN(GraphW2VLoader<DataType> const &dl, ArrayType const &embeddings,
+              std::string const &word0, SizeType k)
 {
   ArrayType arr = embeddings;
 
@@ -162,7 +162,7 @@ struct TrainingParams
   SizeType min_count            = 5;       // infrequent word removal threshold
 
   SizeType batch_size      = 100000;  // training data batch size
-  SizeType embedding_size  = 32;   // dimension of embedding vec
+  SizeType embedding_size  = 32;      // dimension of embedding vec
   SizeType training_epochs = 100;
   SizeType test_frequency  = 10;
   double   learning_rate   = 0.025 * 100000;  // alpha - the learning rate
@@ -202,7 +202,7 @@ int main(int argc, char **argv)
   std::cout << "Setting up training data...: " << std::endl;
 
   GraphW2VLoader<DataType> data_loader(tp.window_size, tp.negative_sample_size, tp.freq_thresh,
-                                  tp.max_word_count, tp.train_mode);
+                                       tp.max_word_count, tp.train_mode);
   // set up dataloader
   /// DATA LOADING ///
   std::cout << "building vocab " << std::endl;
