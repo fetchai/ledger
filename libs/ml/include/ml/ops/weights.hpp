@@ -142,23 +142,23 @@ public:
 
   virtual void L1Regularisation(DataType regularisation_rate)
   {
-    ArrayType weight     = *this->output_;
-    ArrayType reg_output = ArrayType(weight.shape());
+    DataType coef = static_cast<DataType>(-2) * regularisation_rate;
 
-    fetch::math::Multiply(weight, static_cast<DataType>(-2) * regularisation_rate, reg_output);
-    this->output_->InlineAdd(reg_output);
+    auto it = *this->output_.it();
+    while (it.is_valid())
+    {
+      *it *= coef;
+    }
   }
 
   virtual void L2Regularisation(DataType regularisation_rate)
   {
-    ArrayType weight     = *this->output_;
-    ArrayType reg_output = ArrayType(weight.shape());
-
-    fetch::math::Abs(weight, reg_output);
-    fetch::math::Divide(weight, reg_output, reg_output);
-    fetch::math::Multiply(reg_output, -regularisation_rate, reg_output);
-
-    this->output_->InlineAdd(reg_output);
+    auto     it   = *this->output_.it();
+    DataType coef = -regularisation_rate;
+    while (it.is_valid())
+    {
+      *it = (*it * coef) / fetch::math::Abs(*it);
+    }
   }
 
   /**

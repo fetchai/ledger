@@ -67,7 +67,7 @@ public:
   void        ResetGraphCache(std::shared_ptr<NodeInterface<T>> const &n, bool input_size_changed);
   void        SetRegularisation(fetch::ml::details::RegularisationType regularisation,
                                 DataType regularisation_rate = DataType{0.0});
-  void        SetRegularisation(std::string                            node_name,
+  bool        SetRegularisation(std::string                            node_name,
                                 fetch::ml::details::RegularisationType regularisation,
                                 DataType regularisation_rate = DataType{0.0});
 
@@ -105,29 +105,43 @@ protected:
   std::vector<TrainablePtrType>                trainable_;
 };
 
+/**
+ * Set regularization type and rate for all trainables in graph
+ * @tparam ArrayType
+ * @param regularisation_type L1, L2 or NONE
+ * @param regularisation_rate
+ */
 template <typename ArrayType>
-void Graph<ArrayType>::SetRegularisation(fetch::ml::details::RegularisationType regularisation,
+void Graph<ArrayType>::SetRegularisation(fetch::ml::details::RegularisationType regularisation_type,
                                          DataType                               regularisation_rate)
 {
   for (auto &t : trainable_)
   {
-    t->SetRegularisation(regularisation, regularisation_rate);
+    t->SetRegularisation(regularisation_type, regularisation_rate);
   }
 }
 
+/**
+ * Set regularization type and rate for specified trainable by it's name
+ * @tparam ArrayType
+ * @param node_name name of specific trainable
+ * @param regularisation_type L1, L2 or NONE
+ * @param regularisation_rate
+ */
 template <typename ArrayType>
-void Graph<ArrayType>::SetRegularisation(std::string                            node_name,
-                                         fetch::ml::details::RegularisationType regularisation,
+bool Graph<ArrayType>::SetRegularisation(std::string                            node_name,
+                                         fetch::ml::details::RegularisationType regularisation_type,
                                          DataType                               regularisation_rate)
 {
   if (nodes_[node_name])
   {
-    trainable_[node_name]->SetRegularisation(regularisation, regularisation_rate);
+    trainable_[node_name]->SetRegularisation(regularisation_type, regularisation_rate);
+    return true;
   }
   else
   {
-    throw std::runtime_error("Cannot change regularisation parameters for node [" + node_name +
-                             "] not in graph");
+    // Trainable doesn't exist
+    return false;
   }
 }
 

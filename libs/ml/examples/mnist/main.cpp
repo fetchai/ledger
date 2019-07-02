@@ -46,10 +46,12 @@ using DataLoaderType   = typename fetch::ml::dataloaders::MNISTLoader<ArrayType,
 
 int main(int ac, char **av)
 {
-  DataType learning_rate{0.01f};
-  SizeType subset_size{100};
-  SizeType epochs{10};
-  SizeType batch_size{10};
+  DataType                               learning_rate{0.01f};
+  SizeType                               subset_size{100};
+  SizeType                               epochs{10};
+  SizeType                               batch_size{10};
+  fetch::ml::details::RegularisationType reg_type{fetch::ml::details::RegularisationType::L1};
+  DataType                               reg_rate{0.01f};
 
   if (ac < 3)
   {
@@ -66,14 +68,11 @@ int main(int ac, char **av)
 
   std::string input   = g->AddNode<PlaceHolder<ArrayType>>("Input", {});
   std::string layer_1 = g->AddNode<FullyConnected<ArrayType>>(
-      "FC1", {input}, 28u * 28u, 10u, fetch::ml::details::ActivationType::RELU,
-      fetch::ml::details::RegularisationType::L1, DataType{0.01f});
+      "FC1", {input}, 28u * 28u, 10u, fetch::ml::details::ActivationType::RELU, reg_type, reg_rate);
   std::string layer_2 = g->AddNode<FullyConnected<ArrayType>>(
-      "FC2", {layer_1}, 10u, 10u, fetch::ml::details::ActivationType::RELU,
-      fetch::ml::details::RegularisationType::L1, DataType{0.01f});
+      "FC2", {layer_1}, 10u, 10u, fetch::ml::details::ActivationType::RELU, reg_type, reg_rate);
   std::string output = g->AddNode<FullyConnected<ArrayType>>(
-      "FC3", {layer_2}, 10u, 10u, fetch::ml::details::ActivationType::SOFTMAX,
-      fetch::ml::details::RegularisationType::L1, DataType{0.01f});
+      "FC3", {layer_2}, 10u, 10u, fetch::ml::details::ActivationType::SOFTMAX, reg_type, reg_rate);
 
   // Initialise MNIST loader
   DataLoaderType data_loader(av[1], av[2]);
