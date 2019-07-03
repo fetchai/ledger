@@ -12,7 +12,8 @@ TESTS_ROOT = os.path.join(SCRIPT_ROOT, 'etch-language-tests')
 
 def parse_commandline():
     parser = argparse.ArgumentParser()
-    parser.add_argument('build_folder', type=os.path.abspath, help='The path to the build folder')
+    parser.add_argument('build_folder', type=os.path.abspath,
+                        help='The path to the build folder')
     return parser.parse_args()
 
 
@@ -42,8 +43,10 @@ def main():
     for name, path in sorted(tests, key=lambda x: x[0]):
 
         # create a temp file and call the executable inside it
-        output_file, output_filename = tempfile.mkstemp(prefix='etch-lang-tests-', suffix='.tmp')
-        exit_code = subprocess.call([etch_cli, path], stdout=output_file, stderr=subprocess.STDOUT)
+        output_file, output_filename = tempfile.mkstemp(
+            prefix='etch-lang-tests-', suffix='.tmp')
+        exit_code = subprocess.call(
+            [etch_cli, path], stdout=output_file, stderr=subprocess.STDOUT)
         os.close(output_file)
 
         result = '✅' if exit_code == 0 else '❌'
@@ -61,7 +64,6 @@ def main():
 
         # remove the temporary file
         os.remove(output_filename)
-
 
     # print the summary
     if len(failures) > 0:

@@ -14,5 +14,3 @@ function main()
     assert(211 == value);
 
 endfunction
-
-
