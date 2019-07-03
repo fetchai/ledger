@@ -23,7 +23,7 @@ g.AddRelu("Relu2", "FC2")
 g.AddFullyConnected("FC3", "Relu2", 100, 10)
 g.AddSoftmax("Softmax", "FC3")
 
-criterion = ml.MeanSquareError()
+criterion = ml.MeanSquareErrorLoss()
 dataloader = ml.MNISTLoader(
     "/PATH/TO/train-images-idx3-ubyte", "/PATH/TO/train-labels-idx1-ubyte")
 

@@ -17,7 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "math/tensor.hpp"
-#include "ml/ops/loss_functions/cross_entropy.hpp"
+#include "ml/ops/loss_functions/cross_entropy_loss.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 
 #include "gtest/gtest.h"
@@ -59,8 +59,8 @@ TYPED_TEST(CrossEntropyTest, perfect_match_forward_test)
     }
   }
 
-  fetch::ml::ops::CrossEntropy<TypeParam> op;
-  TypeParam                               result({1, 1});
+  fetch::ml::ops::CrossEntropyLoss<TypeParam> op;
+  TypeParam                                   result({1, 1});
   op.Forward({data1, data2}, result);
 
   EXPECT_EQ(result(0, 0), typename TypeParam::Type(0));
@@ -106,8 +106,8 @@ TYPED_TEST(CrossEntropyTest, one_dimensional_forward_test)
     }
   }
 
-  fetch::ml::ops::CrossEntropy<TypeParam> op;
-  TypeParam                               result({1, 1});
+  fetch::ml::ops::CrossEntropyLoss<TypeParam> op;
+  TypeParam                                   result({1, 1});
   op.Forward({data1, data2}, result);
 
   EXPECT_NEAR(static_cast<double>(result(0, 0)), static_cast<double>(0.893887639), 3e-7);
@@ -146,8 +146,8 @@ TYPED_TEST(CrossEntropyTest, non_one_hot_forward_test)
     data1.Set(0, i, typename TypeParam::Type(logits[i]));
   }
 
-  fetch::ml::ops::CrossEntropy<TypeParam> op;
-  TypeParam                               result({1, 1});
+  fetch::ml::ops::CrossEntropyLoss<TypeParam> op;
+  TypeParam                                   result({1, 1});
   op.Forward({data1, data2}, result);
 
   ASSERT_FLOAT_EQ(static_cast<float>(result(0, 0)), float(2.6491587));
@@ -184,7 +184,7 @@ TYPED_TEST(CrossEntropyTest, trivial_one_dimensional_backward_test)
   TypeParam error_signal({1, 1});
   error_signal(0, 0) = DataType{1};
 
-  fetch::ml::ops::CrossEntropy<TypeParam> op;
+  fetch::ml::ops::CrossEntropyLoss<TypeParam> op;
   EXPECT_TRUE(op.Backward({data1, data2}, error_signal)
                   .at(0)
                   .AllClose(gt, typename TypeParam::Type(1e-5), typename TypeParam::Type(1e-5)));
@@ -238,7 +238,7 @@ TYPED_TEST(CrossEntropyTest, one_dimensional_backward_test)
   TypeParam error_signal({1, 1});
   error_signal(0, 0) = DataType{1};
 
-  fetch::ml::ops::CrossEntropy<TypeParam> op;
+  fetch::ml::ops::CrossEntropyLoss<TypeParam> op;
   EXPECT_TRUE(op.Backward({data1, data2}, error_signal)
                   .at(0)
                   .AllClose(gt, typename TypeParam::Type(1e-5), typename TypeParam::Type(1e-5)));
@@ -272,7 +272,7 @@ TYPED_TEST(CrossEntropyTest, non_one_hot_dimensional_backward_test)
   TypeParam error_signal({1, 1});
   error_signal(0, 0) = typename TypeParam::Type{1};
 
-  fetch::ml::ops::CrossEntropy<TypeParam> op;
+  fetch::ml::ops::CrossEntropyLoss<TypeParam> op;
   EXPECT_TRUE(op.Backward({data1, data2}, error_signal)
                   .at(0)
                   .AllClose(gt, typename TypeParam::Type(1e-5), typename TypeParam::Type(1e-5)));

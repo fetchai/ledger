@@ -17,7 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "math/tensor.hpp"
-#include "ml/ops/loss_functions/softmax_cross_entropy.hpp"
+#include "ml/ops/loss_functions/softmax_cross_entropy_loss.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 
 #include "gtest/gtest.h"
@@ -52,8 +52,8 @@ TYPED_TEST(SoftmaxCrossEntropyTest, perfect_match_forward_test)
   data2.At(0, 1) = DataType(0);
   data2.At(0, 2) = DataType(1);
 
-  fetch::ml::ops::SoftmaxCrossEntropy<TypeParam> op;
-  TypeParam                                      result({1, 1});
+  fetch::ml::ops::SoftmaxCrossEntropyLoss<TypeParam> op;
+  TypeParam                                          result({1, 1});
   op.Forward({data1, data2}, result);
 
   EXPECT_EQ(result(0, 0), DataType(0));
@@ -88,8 +88,8 @@ TYPED_TEST(SoftmaxCrossEntropyTest, simple_forward_test)
     }
   }
 
-  fetch::ml::ops::SoftmaxCrossEntropy<TypeParam> op;
-  TypeParam                                      result({1, 1});
+  fetch::ml::ops::SoftmaxCrossEntropyLoss<TypeParam> op;
+  TypeParam                                          result({1, 1});
   op.Forward({data1, data2}, result);
 
   ASSERT_FLOAT_EQ(static_cast<float>(result(0, 0)),
@@ -130,7 +130,7 @@ TYPED_TEST(SoftmaxCrossEntropyTest, trivial_one_dimensional_backward_test)
   TypeParam error_signal({1, 1});
   error_signal(0, 0) = DataType{1};
 
-  fetch::ml::ops::SoftmaxCrossEntropy<TypeParam> op;
+  fetch::ml::ops::SoftmaxCrossEntropyLoss<TypeParam> op;
   EXPECT_TRUE(
       op.Backward({data1, data2}, error_signal).at(0).AllClose(gt, DataType(1e-5), DataType(1e-5)));
 }
@@ -183,7 +183,7 @@ TYPED_TEST(SoftmaxCrossEntropyTest, backward_test)
     }
   }
 
-  fetch::ml::ops::SoftmaxCrossEntropy<TypeParam> op;
+  fetch::ml::ops::SoftmaxCrossEntropyLoss<TypeParam> op;
 
   TypeParam error_signal({1, 1});
   error_signal(0, 0) = DataType{1};

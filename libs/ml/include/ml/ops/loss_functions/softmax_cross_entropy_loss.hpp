@@ -32,7 +32,7 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class CrossEntropy : public Ops<T>
+class SoftmaxCrossEntropyLoss : public Ops<T>
 {
 public:
   using ArrayType     = T;
@@ -40,15 +40,23 @@ public:
   using SizeType      = typename ArrayType::SizeType;
   using VecTensorType = typename Ops<T>::VecTensorType;
 
-  CrossEntropy()          = default;
-  virtual ~CrossEntropy() = default;
+  SoftmaxCrossEntropyLoss()          = default;
+  virtual ~SoftmaxCrossEntropyLoss() = default;
 
   void Forward(VecTensorType const &inputs, ArrayType &output) override
   {
+    // third term may be present for specifying n_classes
     assert(inputs.size() == 2);
     assert(inputs.at(0).get().size() == inputs.at(1).get().size());
 
-    output(0, 0) = fetch::math::CrossEntropyLoss(inputs.at(0).get(), inputs.at(1).get());
+    // sanity check the softmax adds up to 1
+    assert(Sum(fetch::math::Softmax(inputs.at(0).get())) -
+               (DataType(inputs.at(0).get().shape().at(0))) <
+           0.0001);
+
+    // softmax forward & then CrossEntropy
+    output(0, 0) =
+        fetch::math::CrossEntropyLoss(fetch::math::Softmax(inputs.at(0).get()), inputs.at(1).get());
   }
 
   std::vector<ArrayType> Backward(VecTensorType const &inputs,
@@ -58,53 +66,10 @@ public:
 
     assert(inputs.size() == 2);
     assert(inputs.at(0).get().size() == inputs.at(1).get().size());
-    assert(inputs.at(0).get().shape().size() == 2);
 
     ArrayType ret({inputs.at(0).get().shape()});
-    if (inputs.at(0).get().shape().at(0) == 1)  // not one-hot
-    {
-      // (Sigmoid(x)-y)*x
-      auto     a_it = inputs.at(0).get().cbegin();
-      auto     b_it = inputs.at(1).get().cbegin();
-      auto     r_it = ret.begin();
-      DataType zero{0};
-      DataType one{1};
-
-      while (a_it.is_valid())
-      {
-        // Sigmoid(x)
-        if (*a_it >= zero)
-        {
-          fetch::math::Exp(-(*a_it), *r_it);
-          *r_it = one / (one + (*r_it));
-        }
-        else
-        {
-          fetch::math::Exp(*a_it, *r_it);
-          *r_it = *r_it / (*r_it + one);
-        }
-
-        // (Sigmoid(x)-y)*x
-        *r_it = (*r_it - (*b_it)) * (*a_it);
-
-        ++a_it;
-        ++b_it;
-        ++r_it;
-      }
-    }
-    else if (inputs.at(0).get().shape().size())  // one-hot
-    {
-      fetch::math::Softmax(inputs.at(0).get(), ret, 1);
-
-      auto b_it = inputs.at(1).get().cbegin();
-      auto r_it = ret.begin();
-      while (b_it.is_valid())
-      {
-        *r_it = -(*b_it) / (*r_it);
-        ++b_it;
-        ++r_it;
-      }
-    }
+    fetch::math::Softmax(inputs.at(0).get(), ret);
+    fetch::math::Subtract(ret, inputs.at(1).get(), ret);
 
     return {ret, ret};
   }
@@ -115,7 +80,7 @@ public:
     return {1, 1};
   }
 
-  static constexpr char const *DESCRIPTOR = "CrossEntropy";
+  static constexpr char const *DESCRIPTOR = "SoftmaxCrossEntropyLoss";
 };
 
 }  // namespace ops

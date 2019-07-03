@@ -28,8 +28,8 @@
 
 #include "vm_modules/math/tensor.hpp"
 #include "vm_modules/ml/graph.hpp"
-#include "vm_modules/ml/ops/loss_functions/cross_entropy.hpp"
-#include "vm_modules/ml/ops/loss_functions/mean_square_error.hpp"
+#include "vm_modules/ml/ops/loss_functions/cross_entropy_loss.hpp"
+#include "vm_modules/ml/ops/loss_functions/mean_square_error_loss.hpp"
 
 #include "vm_modules/core/byte_array_wrapper.hpp"
 #include "vm_modules/core/structured_data.hpp"
@@ -125,7 +125,7 @@ public:
       ml::VMStateDict::Bind(*module);
       ml::VMGraph::Bind(*module);
       fetch::vm_modules::ml::VMCrossEntropyLoss::Bind(*module);
-      ml::CreateMeanSquareError(*module);
+      ml::CreateMeanSquareErrorLoss(*module);
     }
 
     return module;

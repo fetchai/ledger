@@ -17,40 +17,40 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/ops/loss_functions/mean_square_error.hpp"
+#include "ml/ops/loss_functions/cross_entropy_loss.hpp"
 #include "vm/module.hpp"
 #include "vm_modules/math/tensor.hpp"
 
 namespace fetch {
 namespace vm_modules {
 namespace ml {
-
-class VMMeanSquareError : public fetch::vm::Object,
-                          public fetch::ml::ops::MeanSquareError<fetch::math::Tensor<float>>
+class VMCrossEntropyLoss : public fetch::vm::Object,
+                           public fetch::ml::ops::CrossEntropyLoss<fetch::math::Tensor<float>>
 {
 public:
-  VMMeanSquareError(fetch::vm::VM *vm, fetch::vm::TypeId type_id)
+  VMCrossEntropyLoss(fetch::vm::VM *vm, fetch::vm::TypeId type_id)
     : fetch::vm::Object(vm, type_id)
   {}
 
   static void Bind(vm::Module &module)
   {
-    module.CreateClassType<VMMeanSquareError>("MeanSquareError")
+    module.CreateClassType<VMCrossEntropyLoss>("CrossEntropy")
         .CreateConstuctor<>()
-        .CreateMemberFunction("Forward", &VMMeanSquareError::ForwardWrapper)
-        .CreateMemberFunction("Backward", &VMMeanSquareError::BackwardWrapper);
+        .CreateMemberFunction("Forward", &VMCrossEntropyLoss::ForwardWrapper)
+        .CreateMemberFunction("Backward", &VMCrossEntropyLoss::BackwardWrapper);
   }
 
-  static fetch::vm::Ptr<VMMeanSquareError> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id)
+  static fetch::vm::Ptr<VMCrossEntropyLoss> Constructor(fetch::vm::VM *   vm,
+                                                        fetch::vm::TypeId type_id)
   {
-    return new VMMeanSquareError(vm, type_id);
+    return new VMCrossEntropyLoss(vm, type_id);
   }
 
   float ForwardWrapper(fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> const &pred,
                        fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> const &groundTruth)
   {
     fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> output;
-    fetch::ml::ops::MeanSquareError<fetch::math::Tensor<float>>::Forward(
+    fetch::ml::ops::CrossEntropyLoss<fetch::math::Tensor<float>>::Forward(
         {(*pred).GetTensor(), (*groundTruth).GetTensor()}, (*output).GetTensor());
     return (*output).GetTensor()(0, 0);
   }
@@ -60,7 +60,7 @@ public:
       fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> const &groundTruth)
   {
     fetch::math::Tensor<float> dt =
-        fetch::ml::ops::MeanSquareError<fetch::math::Tensor<float>>::Backward(
+        fetch::ml::ops::CrossEntropyLoss<fetch::math::Tensor<float>>::Backward(
             {(*pred).GetTensor(), (*groundTruth).GetTensor()}, (*pred).GetTensor())
             .at(0);
     fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> ret =
@@ -69,14 +69,6 @@ public:
     return ret;
   }
 };
-
-inline void CreateMeanSquareError(fetch::vm::Module &module)
-{
-  module.CreateClassType<VMMeanSquareError>("MeanSquareError")
-      .CreateConstuctor<>()
-      .CreateMemberFunction("Forward", &VMMeanSquareError::ForwardWrapper)
-      .CreateMemberFunction("Backward", &VMMeanSquareError::BackwardWrapper);
-}
 
 }  // namespace ml
 }  // namespace vm_modules

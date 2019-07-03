@@ -21,7 +21,7 @@
 #include "ml/graph.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/ops/activation.hpp"
-#include "ml/ops/loss_functions/cross_entropy.hpp"
+#include "ml/ops/loss_functions/cross_entropy_loss.hpp"
 #include "ml/optimisation/adam_optimiser.hpp"
 #include "ml/regularisers/l1_regulariser.hpp"
 #include "ml/regularisers/regularisation.hpp"
@@ -78,7 +78,7 @@ int main(int ac, char **av)
   std::string output = g->AddNode<FullyConnected<ArrayType>>(
       "FC3", {layer_2}, 10u, 10u, fetch::ml::details::ActivationType::SOFTMAX, regulariser,
       reg_rate);
-  std::string error = g->AddNode<CrossEntropy<ArrayType>>("Error", {output, label});
+  std::string error = g->AddNode<CrossEntropyLoss<ArrayType>>("Error", {output, label});
 
   // Initialise MNIST loader
   DataLoaderType data_loader(av[1], av[2]);

@@ -23,7 +23,7 @@
 #include "ml/graph.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/ops/activation.hpp"
-#include "ml/ops/loss_functions/mean_square_error.hpp"
+#include "ml/ops/loss_functions/mean_square_error_loss.hpp"
 #include "ml/ops/transpose.hpp"
 #include "ml/optimisation/adam_optimiser.hpp"
 #include "ml/state_dict.hpp"
@@ -270,8 +270,8 @@ std::pair<std::string, std::vector<std::string>> ReadArchitecture(
   }
 
   // Add loss function
-  std::string error_output =
-      g->AddNode<fetch::ml::ops::MeanSquareError<ArrayType>>("num_error", {layer_name, label_name});
+  std::string error_output = g->AddNode<fetch::ml::ops::MeanSquareErrorLoss<ArrayType>>(
+      "num_error", {layer_name, label_name});
   node_names.emplace_back(error_output);
 
   return std::make_pair(dataname, node_names);

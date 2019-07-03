@@ -25,7 +25,7 @@
 #include "ml/dataloaders/word2vec_loaders/skipgram_dataloader.hpp"
 #include "ml/graph.hpp"
 #include "ml/layers/skip_gram.hpp"
-#include "ml/ops/loss_functions/cross_entropy.hpp"
+#include "ml/ops/loss_functions/cross_entropy_loss.hpp"
 #include "ml/optimisation/adam_optimiser.hpp"
 
 #include <iostream>
@@ -179,7 +179,8 @@ int main(int argc, char **argv)
   std::shared_ptr<fetch::ml::Graph<ArrayType>> g(std::make_shared<fetch::ml::Graph<ArrayType>>());
   std::string output_name = Model(*g, tp.embedding_size, data_loader.VocabSize());
   std::string label_name  = g->AddNode<PlaceHolder<ArrayType>>("Label", {});
-  std::string error_name  = g->AddNode<CrossEntropy<ArrayType>>("Error", {output_name, label_name});
+  std::string error_name =
+      g->AddNode<CrossEntropyLoss<ArrayType>>("Error", {output_name, label_name});
 
   /////////////////////////////////
   /// TRAIN THE WORD EMBEDDINGS ///

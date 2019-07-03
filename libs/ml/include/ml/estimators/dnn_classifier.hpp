@@ -22,7 +22,7 @@
 #include "ml/layers/fully_connected.hpp"
 #include "ml/ops/placeholder.hpp"
 
-#include "ml/ops/loss_functions/cross_entropy.hpp"
+#include "ml/ops/loss_functions/cross_entropy_loss.hpp"
 
 #include "ml/dataloaders/dataloader.hpp"
 #include "ml/estimators/estimator.hpp"
@@ -38,7 +38,7 @@ class DNNClassifier : public Estimator<TensorType>
 public:
   using SizeType         = fetch::math::SizeType;
   using DataType         = typename TensorType::Type;
-  using CostFunctionType = fetch::ml::ops::CrossEntropy<TensorType>;
+  using CostFunctionType = fetch::ml::ops::CrossEntropyLoss<TensorType>;
   using OptimiserType    = fetch::ml::optimisers::OptimiserType;
 
   DNNClassifier(EstimatorConfig<DataType>                                        estimator_config,

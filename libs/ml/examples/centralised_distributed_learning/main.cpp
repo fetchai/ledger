@@ -22,7 +22,7 @@
 #include "ml/graph.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/ops/activation.hpp"
-#include "ml/ops/loss_functions/cross_entropy.hpp"
+#include "ml/ops/loss_functions/cross_entropy_loss.hpp"
 
 #include <cstddef>
 #include <cstdint>
@@ -64,13 +64,13 @@ public:
     g_.AddNode<FullyConnected<ArrayType>>("FC3", {"Relu2"}, 10u, 10u);
     g_.AddNode<Softmax<ArrayType>>("Softmax", {"FC3"});
     g_.AddNode<PlaceHolder<ArrayType>>("Label", {});
-    g_.AddNode<CrossEntropy<ArrayType>>("Error", {"Softmax", "Label"});
+    g_.AddNode<CrossEntropyLoss<ArrayType>>("Error", {"Softmax", "Label"});
   }
 
   void Train(unsigned int number_of_batches)
   {
     float                                        loss = 0;
-    CrossEntropy<ArrayType>                      criterion;
+    CrossEntropyLoss<ArrayType>                  criterion;
     std::pair<ArrayType, std::vector<ArrayType>> input;
     for (unsigned int i(0); i < number_of_batches; ++i)
     {

@@ -23,7 +23,7 @@
 #include "ml/ops/activations/softmax.hpp"
 #include "ml/ops/concatenate.hpp"
 #include "ml/ops/embeddings.hpp"
-#include "ml/ops/loss_functions/cross_entropy.hpp"
+#include "ml/ops/loss_functions/cross_entropy_loss.hpp"
 #include "ml/ops/matrix_multiply.hpp"
 #include "ml/ops/placeholder.hpp"
 #include "ml/ops/reshape.hpp"
@@ -221,7 +221,8 @@ int main(int ac, char **av)
 
   std::string label = g->AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>("Label", {});
 
-  std::string error = g->AddNode<fetch::ml::ops::CrossEntropy<ArrayType>>("Error", {result, label});
+  std::string error =
+      g->AddNode<fetch::ml::ops::CrossEntropyLoss<ArrayType>>("Error", {result, label});
 
   // Initialise Optimiser
   fetch::ml::optimisers::AdamOptimiser<ArrayType> optimiser(

@@ -63,7 +63,7 @@ std::shared_ptr<fetch::ml::Graph<TypeParam>> PrepareTestGraph(
 
   label_name = g->template AddNode<fetch::ml::ops::PlaceHolder<TypeParam>>("", {});
 
-  error_name = g->template AddNode<fetch::ml::ops::MeanSquareError<TypeParam>>(
+  error_name = g->template AddNode<fetch::ml::ops::MeanSquareErrorLoss<TypeParam>>(
       "Error", {output_name, label_name});
 
   return g;

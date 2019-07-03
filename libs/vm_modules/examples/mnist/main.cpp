@@ -20,7 +20,7 @@
 #include "ml/graph.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/ops/activation.hpp"
-#include "ml/ops/loss_functions/mean_square_error.hpp"
+#include "ml/ops/loss_functions/mean_square_error_loss.hpp"
 
 #include "vm/module.hpp"
 

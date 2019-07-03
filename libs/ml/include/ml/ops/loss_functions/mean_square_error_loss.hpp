@@ -21,7 +21,7 @@
 #include <memory>
 #include <vector>
 
-#include "math/ml/loss_functions/mean_square_error.hpp"
+#include "math/ml/loss_functions/mean_square_error_loss.hpp"
 #include "ml/ops/ops.hpp"
 
 namespace fetch {
@@ -29,7 +29,7 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class MeanSquareError : public Ops<T>
+class MeanSquareErrorLoss : public Ops<T>
 {
 public:
   using ArrayType     = T;
@@ -37,15 +37,15 @@ public:
   using SizeType      = typename ArrayType::SizeType;
   using VecTensorType = typename Ops<T>::VecTensorType;
 
-  MeanSquareError()          = default;
-  virtual ~MeanSquareError() = default;
+  MeanSquareErrorLoss()          = default;
+  virtual ~MeanSquareErrorLoss() = default;
 
   void Forward(VecTensorType const &inputs, ArrayType &output) override
   {
     assert(inputs.size() == 2);
     assert(inputs.at(0).get().shape() == inputs.at(1).get().shape());
 
-    output(0, 0) = fetch::math::MeanSquareError(inputs.at(0).get(), inputs.at(1).get());
+    output(0, 0) = fetch::math::MeanSquareErrorLoss(inputs.at(0).get(), inputs.at(1).get());
   }
 
   // grad[0]=2*err*(in[0]-in[1])/mean_size, grad[1]=-2*err*(in[0]-in[1])/mean_size,
@@ -81,7 +81,7 @@ public:
     return {1, 1};
   }
 
-  static constexpr char const *DESCRIPTOR = "MeanSquareError";
+  static constexpr char const *DESCRIPTOR = "MeanSquareErrorLoss";
 };
 
 }  // namespace ops
