@@ -194,7 +194,7 @@ typename T::Type Optimiser<T>::Run(std::vector<ArrayType> const &data, ArrayType
     // Compute and apply gradient
     ApplyGradients(batch_size);
 
-    FETCH_LOG_INFO("ML_LIB", "Batch loss: ", loss);
+    //    FETCH_LOG_INFO("ML_LIB", "Batch loss: ", loss);
 
     step += batch_size;
     loss_sum += loss;
@@ -259,7 +259,7 @@ typename T::Type Optimiser<T>::Run(fetch::ml::dataloaders::DataLoader<ArrayType,
     // Compute and apply gradient
     ApplyGradients(batch_size);
 
-    FETCH_LOG_INFO("ML_LIB", "Batch loss: ", loss);
+    //    FETCH_LOG_INFO("ML_LIB", "Batch loss: ", loss);
 
     step += batch_size;
     loss_sum += loss;

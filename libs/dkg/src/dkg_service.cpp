@@ -42,8 +42,9 @@ using MuddleAddress = muddle::Packet::Address;
 using State         = DkgService::State;
 using PromiseState  = service::PromiseState;
 
-constexpr char const *LOGGING_NAME = "DkgService";
-constexpr uint64_t    READ_AHEAD   = 3;
+constexpr char const *LOGGING_NAME   = "DkgService";
+constexpr uint64_t    READ_AHEAD     = 3;
+constexpr uint64_t    HISTORY_LENGTH = 10;
 
 const ConstByteArray GENESIS_PAYLOAD = "=~=~ Genesis ~=~=";
 
@@ -489,7 +490,20 @@ State DkgService::OnCompleteState()
     }
   }
 
-  // TODO(issue 1285): Improve resource usage here for round cache
+  // clean up the resources
+  {
+    FETCH_LOCK(round_lock_);
+
+    // cache the current round
+    uint64_t const current_round = current_round_.load();
+
+    // remove the elements fromt the history buffer
+    if (current_round >= HISTORY_LENGTH)
+    {
+      rounds_.erase(rounds_.begin(), rounds_.lower_bound(current_round - HISTORY_LENGTH));
+    }
+  }
+
   state_machine_->Delay(500ms);
 
   return State::COMPLETE;

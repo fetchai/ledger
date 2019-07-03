@@ -23,6 +23,8 @@
 #include "ml/ops/activation.hpp"
 #include "ml/ops/loss_functions/cross_entropy.hpp"
 #include "ml/optimisation/adam_optimiser.hpp"
+#include "ml/regularisers/l1_regulariser.hpp"
+#include "ml/regularisers/regularisation.hpp"
 
 #include <cstddef>
 #include <cstdint>
@@ -45,10 +47,12 @@ using DataLoaderType = typename fetch::ml::dataloaders::MNISTLoader<ArrayType, A
 
 int main(int ac, char **av)
 {
-  DataType learning_rate{0.01f};
-  SizeType subset_size{100};
-  SizeType epochs{10};
-  SizeType batch_size{10};
+  DataType                               learning_rate{0.01f};
+  SizeType                               subset_size{100};
+  SizeType                               epochs{10};
+  SizeType                               batch_size{10};
+  fetch::ml::details::RegularisationType regulariser = fetch::ml::details::RegularisationType::L1;
+  DataType                               reg_rate{0.01f};
 
   if (ac < 3)
   {
@@ -67,11 +71,13 @@ int main(int ac, char **av)
   std::string label = g->AddNode<PlaceHolder<ArrayType>>("Label", {});
 
   std::string layer_1 = g->AddNode<FullyConnected<ArrayType>>(
-      "FC1", {input}, 28u * 28u, 10u, fetch::ml::details::ActivationType::RELU);
+      "FC1", {input}, 28u * 28u, 10u, fetch::ml::details::ActivationType::RELU, regulariser,
+      reg_rate);
   std::string layer_2 = g->AddNode<FullyConnected<ArrayType>>(
-      "FC2", {layer_1}, 10u, 10u, fetch::ml::details::ActivationType::RELU);
+      "FC2", {layer_1}, 10u, 10u, fetch::ml::details::ActivationType::RELU, regulariser, reg_rate);
   std::string output = g->AddNode<FullyConnected<ArrayType>>(
-      "FC3", {layer_2}, 10u, 10u, fetch::ml::details::ActivationType::SOFTMAX);
+      "FC3", {layer_2}, 10u, 10u, fetch::ml::details::ActivationType::SOFTMAX, regulariser,
+      reg_rate);
   std::string error = g->AddNode<CrossEntropy<ArrayType>>("Error", {output, label});
 
   // Initialise MNIST loader
