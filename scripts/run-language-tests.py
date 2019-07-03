@@ -49,7 +49,7 @@ def main():
             [etch_cli, path], stdout=output_file, stderr=subprocess.STDOUT)
         os.close(output_file)
 
-        result = '✅' if exit_code == 0 else '❌'
+        result = 'success' if exit_code == 0 else 'failed'
         padding = ' ' * (max_test_size - len(name))
         print('{}{}: {}'.format(name, padding, result))
 
@@ -73,7 +73,7 @@ def main():
         sys.exit(1)
     else:
         print()
-        print('All tests passed! 👍')
+        print('All tests passed!')
 
     print()
 
