@@ -168,32 +168,13 @@ TEST_F(BloomFilterTests, false_positives_are_reported_if_all_hash_values_coincid
   auto const entry1 = "abc";
   auto const entry2 = "xyz";
 
-  filter_weak_hashing.Add(entry1);
-
   for (auto const &fn : weak_hash_functions)
   {
     EXPECT_EQ(fn(entry1), fn(entry2));
   }
 
+  filter_weak_hashing.Add(entry1);
   EXPECT_TRUE(filter_weak_hashing.Match(entry2));
 }
 
 }  // namespace
-
-//???lazy hash evaluation
-//???experimental feature flag
-//???limit friend classes
-//???add linear combinations of hashes
-//???limit size of hash source
-//???spurious copies, moves i could make?
-//???add special functions, default/delete where appropriate
-//???noexcept functions? hashes? constexpr?
-//???move false positives tracking to bloom filter
-//???adaptable filter - size, number of hashes
-//???hash linear combinations
-//???reuse openssl contexts
-//???factory ask for specific number of bits, cutoff hasher execution
-//???documentation comments
-//???OpenSslHasher move to crypto, make reusable
-//???nasty ternary in constellation ctor - make static factory method eg
-// createExperimentalBloomFilter(festureflag)
