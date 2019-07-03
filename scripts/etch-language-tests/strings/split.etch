@@ -1,0 +1,10 @@
+function main()
+
+    var text = 'xxx --yyy --zzz';
+    var output = text.split(' --');
+
+    assert(output[0] == "xxx");
+    assert(output[1] == "yyy");
+    assert(output[2] == "zzz");
+
+endfunction

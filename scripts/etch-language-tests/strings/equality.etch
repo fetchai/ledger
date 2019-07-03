@@ -1,0 +1,11 @@
+function main()
+
+    var null_string : String;
+    var inferred_string = "foo bar baz";
+
+    var myString1 : String = "hello";
+    var myString2 : String = "hello";
+
+    assert(myString1 == myString2);
+
+endfunction

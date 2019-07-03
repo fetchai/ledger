@@ -1,0 +1,8 @@
+function main()
+
+    var myString : String = "xyz";
+    myString.reverse();
+
+    assert(myString == "zyx");
+
+endfunction

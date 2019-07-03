@@ -1,0 +1,9 @@
+function main()
+
+    // with regards to character
+    var myString1 : String = "a";
+    var myString2 : String = "b";
+
+    assert(myString2 > myString1);
+
+endfunction
