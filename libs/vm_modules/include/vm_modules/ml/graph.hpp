@@ -61,9 +61,9 @@ public:
     return ret;
   }
 
-  void Backpropagate(VMPtrString const &name, fetch::vm::Ptr<math::VMTensor> const &dt)
+  void Backpropagate(VMPtrString const &name)
   {
-    graph_.BackPropagate(name->str, (*dt).GetTensor());
+    graph_.BackPropagate(name->str);
   }
 
   void Step(float lr)

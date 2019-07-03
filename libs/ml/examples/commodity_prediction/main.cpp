@@ -311,7 +311,7 @@ DataType get_loss(std::shared_ptr<GraphType> const &g_ptr, std::string const &te
     g_ptr->SetInput(node_names.at(1), input.first);
 
     auto loss_tensor = g_ptr->Evaluate(node_names.back(), false);
-    loss += fetch::math::statistics::Mean(loss_tensor);
+    loss += *(loss_tensor.begin());
     loss_counter++;
   }
 

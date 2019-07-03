@@ -38,7 +38,7 @@ for i in range(0, training_iteration):
     loss = criterion.Forward([res, gt])
     grad = criterion.Backward([res, gt])
 
-    g.Backpropagate(output_layer, grad)
+    g.Backpropagate(output_layer)
     g.Step(learning_rate)
 
     print(str(loss))

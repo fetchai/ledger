@@ -90,8 +90,8 @@ public:
         ArrayType results     = g_.Evaluate("Softmax");
         ArrayType loss_tensor = g_.Evaluate("Error");
 
-        loss += fetch::math::statistics::Mean(loss_tensor);
-        g_.BackPropagate("Error", loss_tensor);
+        loss += *(loss_tensor.begin());
+        g_.BackPropagate("Error");
       }
       losses_values_.push_back(loss);
       // Updating the weights

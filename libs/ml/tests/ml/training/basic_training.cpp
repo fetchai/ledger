@@ -120,8 +120,7 @@ void PlusOneTest()
 
     auto error_tensor = g.Evaluate(error_name);
     loss += error_tensor(0, 0);
-    error_tensor.Fill(static_cast<DataType>(1));
-    g.BackPropagate(error_name, error_tensor);
+    g.BackPropagate(error_name);
   }
 
   for (auto &w : g.get_trainables())
@@ -150,8 +149,7 @@ void PlusOneTest()
 
       auto error_tensor = g.Evaluate(error_name);
       loss += error_tensor(0, 0);
-      error_tensor.Fill(static_cast<DataType>(1));
-      g.BackPropagate(error_name, error_tensor);
+      g.BackPropagate(error_name);
     }
 
     // This task is so easy the loss should fall on every training step
@@ -233,8 +231,7 @@ void CategoricalPlusOneTest(bool add_softmax = false)
 
     auto error_tensor = g.Evaluate(error_name);
     loss += error_tensor(0, 0);
-    error_tensor.Fill(static_cast<DataType>(1));
-    g.BackPropagate(error_name, error_tensor);
+    g.BackPropagate(error_name);
   }
 
   for (auto &w : g.get_trainables())
@@ -263,8 +260,7 @@ void CategoricalPlusOneTest(bool add_softmax = false)
 
       auto error_tensor = g.Evaluate(error_name);
       loss += error_tensor(0, 0);
-      error_tensor.Fill(static_cast<DataType>(1));
-      g.BackPropagate(error_name, error_tensor);
+      g.BackPropagate(error_name);
     }
 
     // This task is so easy the loss should fall on every training step
@@ -337,8 +333,7 @@ void CategoricalXorTest(bool add_softmax = false)
 
     auto error_tensor = g.Evaluate(error_name);
     loss += error_tensor(0, 0);
-    error_tensor.Fill(static_cast<DataType>(1));
-    g.BackPropagate(error_name, error_tensor);
+    g.BackPropagate(error_name);
   }
 
   for (auto &w : g.get_trainables())
@@ -365,8 +360,7 @@ void CategoricalXorTest(bool add_softmax = false)
       cur_gt            = gt.Slice(step, 1).Copy();
       auto error_tensor = g.Evaluate(error_name);
       loss += error_tensor(0, 0);
-      error_tensor.Fill(static_cast<DataType>(1));
-      g.BackPropagate(error_name, error_tensor);
+      g.BackPropagate(error_name);
     }
 
     EXPECT_GE(current_loss, loss);
