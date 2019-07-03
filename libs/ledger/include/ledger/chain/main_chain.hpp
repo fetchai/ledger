@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/bloom_filter.hpp"
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/decoders.hpp"
 #include "core/mutex.hpp"
@@ -251,10 +252,12 @@ private:
   mutable RMutex   lock_;         ///< Mutex protecting block_chain_, tips_ & heaviest_
   mutable BlockMap block_chain_;  ///< All recent blocks are kept in memory
   // The whole tree of previous-next relations among cached blocks
-  mutable References references_;
-  TipsMap            tips_;          ///< Keep track of the tips
-  HeaviestTip        heaviest_;      ///< Heaviest block/tip
-  LooseBlockMap      loose_blocks_;  ///< Waiting (loose) blocks
+  mutable References  references_;
+  TipsMap             tips_;          ///< Keep track of the tips
+  HeaviestTip         heaviest_;      ///< Heaviest block/tip
+  LooseBlockMap       loose_blocks_;  ///< Waiting (loose) blocks
+  mutable BloomFilter bloom_filter_;
+  mutable std::size_t bloom_filter_false_positive_count_;
 
   /**
    * Serializer for the DbRecord
