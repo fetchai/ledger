@@ -33,6 +33,10 @@ def main():
 
     max_test_size = max([len(n) for n, _ in tests]) + 1
 
+    print()
+    print('=== ETCH Language Tests ===')
+    print()
+
     # loop through and execute each one of them
     failures = []
     for name, path in sorted(tests, key=lambda x: x[0]):
@@ -42,7 +46,7 @@ def main():
         exit_code = subprocess.call([etch_cli, path], stdout=output_file, stderr=subprocess.STDOUT)
         os.close(output_file)
 
-        result = 'success' if exit_code == 0 else 'failure'
+        result = '✅' if exit_code == 0 else '❌'
         padding = ' ' * (max_test_size - len(name))
         print('{}{}: {}'.format(name, padding, result))
 
@@ -65,6 +69,11 @@ def main():
         for name in failures:
             print('-', name)
         sys.exit(1)
+    else:
+        print()
+        print('All tests passed! 👍')
+
+    print()
 
 
 if __name__ == '__main__':
