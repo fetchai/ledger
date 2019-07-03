@@ -97,23 +97,22 @@ public:
       CreateToBool(*module);
 
       StructuredData::Bind(*module);
+      ByteArrayWrapper::Bind(*module);
+      math::UInt256Wrapper::Bind(*module);
+      SHA256Wrapper::Bind(*module);
     }
 
     // math modules
     if (MOD_MATH & enabled)
     {
+      math::BindExp(*module);
+      math::BindSqrt(*module);
       math::BindMath(*module);
     }
 
     // synergetic modules
     if (MOD_SYN & enabled)
     {
-      ByteArrayWrapper::Bind(*module);
-      math::UInt256Wrapper::Bind(*module);
-      SHA256Wrapper::Bind(*module);
-
-      math::BindExp(*module);
-      math::BindSqrt(*module);
       BindBitShift(*module);
       BindBitwiseOps(*module);
     }
