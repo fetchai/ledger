@@ -20,6 +20,7 @@
 #include "core/random/lfg.hpp"
 
 #include "ml/ops/placeholder.hpp"
+#include "ml/regularisers/regulariser.hpp"
 #include "ml/state_dict.hpp"
 
 #include <random>
@@ -49,6 +50,8 @@ class Trainable
 public:
   using ArrayType    = T;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
+  using DataType     = typename ArrayType::Type;
+  using RegPtrType   = std::shared_ptr<fetch::ml::regularisers::Regulariser<T>>;
 
   virtual void                           Step(typename T::Type learning_rate)        = 0;
   virtual struct fetch::ml::StateDict<T> StateDict() const                           = 0;
@@ -57,6 +60,17 @@ public:
   virtual ArrayType const &get_gradients() const                                     = 0;
   virtual void             ResetGradients()                                          = 0;
   virtual void             ApplyGradient(ArrayType const &grad)                      = 0;
+  virtual void             ApplyRegularisation()                                     = 0;
+
+  void SetRegularisation(RegPtrType regulariser, DataType regularisation_rate = DataType{0.0})
+  {
+    this->regulariser_         = regulariser;
+    this->regularisation_rate_ = regularisation_rate;
+  }
+
+protected:
+  RegPtrType regulariser_;
+  DataType   regularisation_rate_ = static_cast<DataType>(0);
 };
 
 template <class T>
@@ -65,6 +79,7 @@ class Weights : public fetch::ml::ops::PlaceHolder<T>, public Trainable<T>
 public:
   using ArrayType     = T;
   using SizeType      = typename ArrayType::SizeType;
+  using DataType      = typename ArrayType::Type;
   using ArrayPtrType  = std::shared_ptr<ArrayType>;
   using VecTensorType = typename PlaceHolder<T>::VecTensorType;
 
@@ -113,6 +128,14 @@ public:
   virtual void ResetGradients()
   {
     gradient_accumulation_->Fill(typename T::Type(0));
+  }
+
+  void ApplyRegularisation()
+  {
+    if (this->regulariser_)
+    {
+      this->regulariser_->ApplyRegularisation(*this->output_, this->regularisation_rate_);
+    }
   }
 
   /**
