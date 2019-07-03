@@ -32,9 +32,27 @@ void Panic(fetch::vm::VM *vm, fetch::vm::Ptr<fetch::vm::String> const &s)
   vm->RuntimeError(s->str);
 }
 
+void Assert(fetch::vm::VM *vm, bool condition)
+{
+  if (!condition)
+  {
+    vm->RuntimeError("Assertion error");
+  }
+}
+
+void AssertWithMsg(fetch::vm::VM *vm, bool condition, fetch::vm::Ptr<fetch::vm::String> const &s)
+{
+  if (!condition)
+  {
+    vm->RuntimeError("Assertion error: " + s->str);
+  }
+}
+
 void CreatePanic(vm::Module &module)
 {
   module.CreateFreeFunction("panic", &Panic);
+  module.CreateFreeFunction("assert", &Assert);
+  module.CreateFreeFunction("assert", &AssertWithMsg);
 }
 
 }  // namespace vm_modules
