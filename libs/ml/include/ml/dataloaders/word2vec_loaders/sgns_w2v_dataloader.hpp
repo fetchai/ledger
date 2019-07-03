@@ -134,7 +134,7 @@ T GraphW2VLoader<T>::EstimatedSampleNumber()
 {
   T estimated_sample_number = 0;
   T word_freq;
-  T estimated_sample_number_per_word = static_cast<T>(window_size_ * (1 + negative_samples_));
+  T estimated_sample_number_per_word = static_cast<T>((window_size_ + 1) * (1 + negative_samples_));
   for (auto word_info : vocab_.data)
   {
     word_freq = static_cast<T>(word_info.second.second) / static_cast<T>(vocab_.total_count);

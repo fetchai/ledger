@@ -154,7 +154,7 @@ std::string ReadFile(std::string const &path)
 
 struct TrainingParams
 {
-  SizeType max_word_count       = 100000000000000;  // maximum number to be trained
+  SizeType max_word_count       = 100000;  // maximum number to be trained
   SizeType negative_sample_size = 5;       // number of negative sample per word-context pair
   SizeType window_size          = 8;       // window size for context sampling
   bool     train_mode           = true;    // reserve for future compatibility with CBOW
@@ -162,13 +162,13 @@ struct TrainingParams
   SizeType min_count            = 5;       // infrequent word removal threshold
 
   SizeType batch_size      = 10000;  // training data batch size
-  SizeType embedding_size  = 32;     // dimension of embedding vec
-  SizeType training_epochs = 2;
+  SizeType embedding_size  = 64;     // dimension of embedding vec
+  SizeType training_epochs = 10;
   SizeType test_frequency  = 1;
   DataType starting_learning_rate_per_sample =
       0.025;  // these are the learning rates we have for each sample
   DataType ending_learning_rate_per_sample = 0.0001;
-  DataType starting_learning_rate;  // this is the true learning rate wes set for the graph training
+  DataType starting_learning_rate;  // this is the true learning rate set for the graph training
   DataType ending_learning_rate;
 
   fetch::ml::optimisers::LearningRateParam<DataType> learning_rate_param{
@@ -277,8 +277,6 @@ int main(int argc, char **argv)
   /// EXTRACT THE TRAINED EMBEDDINGS ///
   //////////////////////////////////////
 
-  // Test trained embeddings
-  TestEmbeddings(*g, model_name, data_loader, tp.word0, tp.word1, tp.word2, tp.word3, tp.k);
 
   return 0;
 }

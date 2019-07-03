@@ -343,7 +343,7 @@ void Optimiser<T, C>::UpdateLearningRate()
   }
   case LearningRateParam<DataType>::LearningRateDecay::LINEAR:
   {
-    learning_rate_ = learning_rate_ *
+    learning_rate_ = learning_rate_param_.starting_learning_rate *
                      (1 - learning_rate_param_.linear_decay_rate * static_cast<DataType>(step_));
     if (learning_rate_ < learning_rate_param_.ending_learning_rate)
     {
