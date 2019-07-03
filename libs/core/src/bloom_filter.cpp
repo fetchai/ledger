@@ -140,7 +140,7 @@ public:
 
   std::vector<std::size_t> operator()(HashSourceFactory::Bytes const &input) const
   {
-    init_digest_operation_();
+    init_digest_operation();
 
     const auto size_in_bytes = static_cast<std::size_t>(EVP_MD_CTX_size(ctx_));
 
@@ -153,7 +153,7 @@ public:
   }
 
 private:
-  void init_digest_operation_() const
+  void init_digest_operation() const
   {
     EVP_MD const *openssl_type = nullptr;
     switch (type_)
