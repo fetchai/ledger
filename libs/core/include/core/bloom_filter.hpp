@@ -107,6 +107,14 @@ public:
   using Function  = internal::HashSourceFactory::Function;
   using Functions = internal::HashSourceFactory::Functions;
 
+  enum class Type
+  {
+    DUMMY,
+    BASIC
+  };
+
+  static std::unique_ptr<BloomFilter> create(Type);
+
   virtual ~BloomFilter() = default;
 
   virtual bool Match(Bytes const &)              = 0;

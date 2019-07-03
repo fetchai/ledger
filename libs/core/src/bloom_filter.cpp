@@ -309,4 +309,17 @@ bool DummyBloomFilter::ReportFalsePositives(std::size_t)
   return true;
 }
 
+std::unique_ptr<BloomFilter> BloomFilter::create(Type type)
+{
+  switch (type)
+  {
+  case Type::BASIC:
+    return std::make_unique<fetch::BasicBloomFilter>();
+  case Type::DUMMY:
+    return std::make_unique<fetch::DummyBloomFilter>();
+  }
+
+  return nullptr;
+}
+
 }  // namespace fetch

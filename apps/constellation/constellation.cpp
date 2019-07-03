@@ -225,11 +225,9 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
         [this] {
           return std::make_shared<Executor>(storage_, stake_ ? &stake_->update_queue() : nullptr);
         })}
-  , chain_{cfg_.features.IsEnabled(fetch::core::FeatureFlags::MAIN_CHAIN_BLOOM_FILTER)
-               ? static_cast<std::unique_ptr<fetch::BloomFilter>>(
-                     std::make_unique<fetch::BasicBloomFilter>())
-               : static_cast<std::unique_ptr<fetch::BloomFilter>>(
-                     std::make_unique<fetch::DummyBloomFilter>()),
+  , chain_{BloomFilter::create(cfg_.features.IsEnabled(FeatureFlags::MAIN_CHAIN_BLOOM_FILTER)
+                                   ? BloomFilter::Type::BASIC
+                                   : BloomFilter::Type::DUMMY),
            ledger::MainChain::Mode::LOAD_PERSISTENT_DB}
   , block_packer_{cfg_.log2_num_lanes}
   , block_coordinator_{chain_,
