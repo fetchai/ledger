@@ -28,9 +28,9 @@
 #include <functional>
 #include <vector>
 
-// Aim for 1 false positive per this many queries
+// Aim for 1 false positive per this many positive queries
 constexpr std::size_t const INVERSE_FALSE_POSITIVE_RATE = 100000u;
-constexpr std::size_t const MEANINGFUL_STATS_THRESHOLD  = 10u * INVERSE_FALSE_POSITIVE_RATE;
+constexpr std::size_t const MEANINGFUL_STATS_THRESHOLD  = 5u * INVERSE_FALSE_POSITIVE_RATE;
 
 constexpr std::size_t const INITIAL_SIZE_IN_BITS = 8 * 10 * 1024 * 1024;
 
