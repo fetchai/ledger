@@ -54,6 +54,8 @@ public:
   std::vector<ArrayType> Backward(VecTensorType const &inputs,
                                   ArrayType const &    error_signal) override
   {
+    FETCH_UNUSED(error_signal);
+
     assert(inputs.size() == 2);
     assert(inputs.at(0).get().size() == inputs.at(1).get().size());
     assert(inputs.at(0).get().shape().size() == 2);
@@ -71,9 +73,6 @@ public:
       fetch::math::Divide(inputs.at(1).get(), ret, ret);
       fetch::math::Multiply(DataType(-1), ret, ret);
     }
-
-    // chain rule
-    fetch::math::Multiply(ret, error_signal, ret);
 
     return {ret, ret};
   }

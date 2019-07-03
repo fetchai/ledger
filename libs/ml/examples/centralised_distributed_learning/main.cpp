@@ -85,7 +85,6 @@ public:
 
         ArrayType loss_tensor = g_.Evaluate("Error");
         loss += fetch::math::statistics::Mean(loss_tensor);
-        loss_tensor.Fill(static_cast<DataType>(1));
         g_.BackPropagate("Error", loss_tensor);
       }
       losses_values_.push_back(loss);

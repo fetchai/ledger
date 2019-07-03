@@ -52,10 +52,10 @@ public:
   std::vector<ArrayType> Backward(VecTensorType const &inputs,
                                   ArrayType const &    error_signal) override
   {
+    FETCH_UNUSED(error_signal);
+
     assert(inputs.size() == 2);
     assert(inputs.at(0).get().shape() == inputs.at(1).get().shape());
-
-    FETCH_UNUSED(error_signal);
 
     ArrayType return_signal(inputs.front().get().shape());
 
