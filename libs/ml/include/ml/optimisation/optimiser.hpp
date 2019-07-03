@@ -215,6 +215,7 @@ typename T::Type Optimiser<T, C>::Run(std::vector<ArrayType> const &data, ArrayT
     graph_->BackPropagate(output_node_name_, criterion_.Backward({label_pred, batch_labels_}));
     // Compute and apply gradient
     ApplyGradients(batch_size);
+
     // FETCH_LOG_INFO("ML_LIB", "Batch loss: ", loss);
     step += batch_size;
     loss_sum += loss;
@@ -272,6 +273,7 @@ typename T::Type Optimiser<T, C>::Run(
     graph_->BackPropagate(output_node_name_, criterion_.Backward({pred_label_, cur_label_}));
     // Compute and apply gradient
     ApplyGradients(batch_size);
+    
     // print the training stats every batch
     PrintStats(batch_size, subset_size);
 
@@ -283,6 +285,8 @@ typename T::Type Optimiser<T, C>::Run(
     // Do batch back-propagation
     input_ = loader.PrepareBatch(batch_size);
     UpdateLearningRate();
+
+    //    FETCH_LOG_INFO("ML_LIB", "Batch loss: ", loss);
   }
 
   epoch_++;

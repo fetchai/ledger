@@ -1,8 +1,8 @@
 #
-# F E T C H   V M   E X A M P L E S
+# F E T C H   T E L E M E T R Y   T E S T S
 #
 cmake_minimum_required(VERSION 3.5 FATAL_ERROR)
-project(fetch-vm)
+project(fetch-telemetry)
 
 # CMake configuration
 include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
@@ -10,4 +10,4 @@ include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
 # Compiler Configuration
 setup_compiler()
 
-setup_library_examples(fetch-vm)
+fetch_add_test(telemetry-unit-tests fetch-telemetry unit/)
