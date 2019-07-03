@@ -60,16 +60,16 @@ public:
     assert(inputs.at(0).get().size() == inputs.at(1).get().size());
     assert(inputs.at(0).get().shape().size() == 2);
 
-    ArrayType ret;
+    ArrayType ret({inputs.at(0).get().shape()});
     if (inputs.at(0).get().shape().at(0) == 1)  // not one-hot
     {
-      ret = fetch::math::Sigmoid(inputs.at(0).get());
+      fetch::math::Sigmoid(inputs.at(0).get(), ret);
       fetch::math::Subtract(ret, inputs.at(1).get(), ret);
       fetch::math::Multiply(ret, inputs.at(0).get(), ret);
     }
     else if (inputs.at(0).get().shape().size())  // one-hot
     {
-      ret = fetch::math::Softmax(inputs.at(0).get(), 1);
+      fetch::math::Softmax(inputs.at(0).get(), ret, 1);
       fetch::math::Divide(inputs.at(1).get(), ret, ret);
       fetch::math::Multiply(DataType(-1), ret, ret);
     }

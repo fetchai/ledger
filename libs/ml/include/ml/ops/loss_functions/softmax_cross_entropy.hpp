@@ -67,8 +67,9 @@ public:
     assert(inputs.size() == 2);
     assert(inputs.at(0).get().size() == inputs.at(1).get().size());
 
-    ArrayType ret =
-        fetch::math::Subtract(fetch::math::Softmax(inputs.at(0).get()), inputs.at(1).get());
+    ArrayType ret({inputs.at(0).get().shape()});
+    fetch::math::Softmax(inputs.at(0).get(), ret);
+    fetch::math::Subtract(ret, inputs.at(1).get(), ret);
 
     return {ret, ret};
   }
