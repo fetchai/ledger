@@ -21,6 +21,8 @@
 
 #include <cstddef>
 #include <functional>
+#include <iterator>
+#include <utility>
 #include <vector>
 
 namespace fetch {
@@ -29,12 +31,80 @@ namespace byte_array {
 class ConstByteArray;
 }
 
+class HashSource;
+
+class HashSourceFactory
+{
+public:
+  using Bytes     = fetch::byte_array::ConstByteArray;
+  using Function  = std::function<std::vector<std::size_t>(Bytes const &)>;
+  using Functions = std::vector<Function>;
+
+  explicit HashSourceFactory(Functions);
+  ~HashSourceFactory();
+
+  HashSource operator()(Bytes const &) const;
+
+private:
+  Functions const hash_functions_;
+};
+
+class HashSourceIterator
+{
+public:
+  using iterator_category = std::input_iterator_tag;
+  using value_type        = std::size_t const;
+  using difference_type   = std::ptrdiff_t;
+  using pointer           = std::size_t const *;
+  using reference         = std::size_t const &;
+
+  ~HashSourceIterator();
+
+  bool operator!=(HashSourceIterator const &other) const;
+  bool operator==(HashSourceIterator const &other) const;
+
+  HashSourceIterator const operator++(int);
+  HashSourceIterator &     operator++();
+
+  std::size_t operator*() const;
+
+private:
+  explicit HashSourceIterator(HashSource const *source, std::size_t index);
+
+  std::size_t       hash_index_;
+  HashSource const *source_;
+
+  friend class HashSource;
+};
+
+class HashSource
+{
+public:
+  ~HashSource();
+
+  HashSourceIterator begin() const;
+  HashSourceIterator end() const;
+  HashSourceIterator cbegin() const;
+  HashSourceIterator cend() const;
+
+private:
+  HashSource(HashSourceFactory::Functions const &, HashSourceFactory::Bytes const &);
+
+  mutable std::vector<std::size_t> data_;
+
+  friend class HashSourceFactory;
+  friend class HashSourceIterator;
+};
+
 class BloomFilter
 {
 public:
-  using InputBytes = fetch::byte_array::ConstByteArray;
+  using Bytes     = HashSourceFactory::Bytes;
+  using Function  = HashSourceFactory::Function;
+  using Functions = HashSourceFactory::Functions;
 
   BloomFilter();
+  explicit BloomFilter(Functions const &fns);
   ~BloomFilter();
 
   BloomFilter(BloomFilter const &) = delete;
@@ -42,15 +112,12 @@ public:
   BloomFilter &operator=(BloomFilter const &) = delete;
   BloomFilter &operator=(BloomFilter &&) = delete;
 
-  bool Match(InputBytes const &element) const;
-  void Add(InputBytes const &element);
+  bool Match(Bytes const &element) const;
+  void Add(Bytes const &element);
 
-private:
-  using Function  = std::function<std::vector<std::size_t>(InputBytes const &)>;
-  using Functions = std::vector<Function>;
-
-  BitVector       bits_;
-  Functions const hash_functions_;
+public:
+  BitVector               bits_;
+  HashSourceFactory const hash_source_factory_;
 };
 
 }  // namespace fetch
