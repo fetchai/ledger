@@ -20,19 +20,22 @@
 #include "ml/dataloaders/mnist_loaders/mnist_loader.hpp"
 #include "vm_modules/math/tensor.hpp"
 #include "vm_modules/ml/training_pair.hpp"
+#include "vm_modules/ml/dataloaders/dataloader.hpp"
 
 namespace fetch {
 namespace vm_modules {
 namespace ml {
 
-class VMMnistDataLoader : public fetch::vm::Object
+class VMMnistDataLoader : public VMDataLoader
 {
 public:
   VMMnistDataLoader(fetch::vm::VM *vm, fetch::vm::TypeId type_id, std::string const &images_file,
                     std::string const &labels_file)
-    : fetch::vm::Object(vm, type_id)
-    , loader_(images_file, labels_file)
-  {}
+    : VMDataLoader(vm, type_id)
+  {
+    auto b = fetch::ml::dataloaders::MNISTLoader<fetch::math::Tensor<float>, fetch::math::Tensor<float>>(images_file, labels_file);
+    loader_ = std::make_shared<fetch::ml::dataloaders::MNISTLoader<fetch::math::Tensor<float>, fetch::math::Tensor<float>>>(b);
+  }
 
   static void Bind(vm::Module &module)
   {
@@ -55,7 +58,7 @@ public:
   fetch::vm::Ptr<VMTrainingPair> GetData(fetch::vm::Ptr<VMTrainingPair> const &data_holder)
   {
     std::pair<fetch::math::Tensor<float>, std::vector<fetch::math::Tensor<float>>> d =
-        loader_.GetNext();
+        loader_->GetNext();
     (*(data_holder->first)).Copy(d.first);
     (*(data_holder->second)).Copy(d.second.at(0));
     return data_holder;
@@ -63,10 +66,10 @@ public:
 
   void Display(fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> const &d)
   {
-    loader_.Display((*d).GetTensor());
+    loader_->Display((*d).GetTensor());
   }
 
-  fetch::ml::dataloaders::MNISTLoader<fetch::math::Tensor<float>, fetch::math::Tensor<float>>
+  std::shared_ptr<fetch::ml::dataloaders::MNISTLoader<fetch::math::Tensor<float>, fetch::math::Tensor<float>>>
       loader_;
 };
 

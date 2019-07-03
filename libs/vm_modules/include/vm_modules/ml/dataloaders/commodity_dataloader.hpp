@@ -20,18 +20,21 @@
 #include "ml/dataloaders/commodity_dataloader.hpp"
 #include "vm_modules/math/tensor.hpp"
 #include "vm_modules/ml/training_pair.hpp"
+#include "vm_modules/ml/dataloaders/dataloader.hpp"
 
 namespace fetch {
 namespace vm_modules {
 namespace ml {
 
-class VMCommodityDataLoader : public fetch::vm::Object
+class VMCommodityDataLoader : public VMDataLoader
 {
 public:
   VMCommodityDataLoader(fetch::vm::VM *vm, fetch::vm::TypeId type_id)
-    : fetch::vm::Object(vm, type_id)
-    , loader_()
-  {}
+    : VMDataLoader(vm, type_id)
+  {
+    auto b = fetch::ml::dataloaders::CommodityDataLoader<fetch::math::Tensor<float>, fetch::math::Tensor<float>>();
+    loader_ = std::make_shared<fetch::ml::dataloaders::CommodityDataLoader<fetch::math::Tensor<float>, fetch::math::Tensor<float>>>(b);
+  }
 
   static void Bind(fetch::vm::Module &module)
   {
@@ -51,14 +54,14 @@ public:
   void AddData(fetch::vm::Ptr<fetch::vm::String> const &xfilename,
                fetch::vm::Ptr<fetch::vm::String> const &yfilename)
   {
-    loader_.AddData(xfilename->str, yfilename->str);
+    loader_->AddData(xfilename->str, yfilename->str);
   }
 
   fetch::vm::Ptr<VMTrainingPair> GetNext()
   {
     typename fetch::ml::dataloaders::CommodityDataLoader<
         fetch::math::Tensor<float>, fetch::math::Tensor<float>>::ReturnType next =
-        loader_.GetNext();
+        loader_->GetNext();
 
     auto first      = this->vm_->CreateNewObject<math::VMTensor>(next.first);
     auto second     = this->vm_->CreateNewObject<math::VMTensor>(next.second.at(0));
@@ -69,11 +72,13 @@ public:
 
   bool IsDone()
   {
-    return loader_.IsDone();
+    return loader_->IsDone();
   }
 
-  fetch::ml::dataloaders::CommodityDataLoader<fetch::math::Tensor<float>,
-                                              fetch::math::Tensor<float>>
+//  fetch::ml::dataloaders::CommodityDataLoader<fetch::math::Tensor<float>,
+//                                              fetch::math::Tensor<float>>
+//      loader_;
+  std::shared_ptr<fetch::ml::dataloaders::CommodityDataLoader<fetch::math::Tensor<float>, fetch::math::Tensor<float>>>
       loader_;
 };
 

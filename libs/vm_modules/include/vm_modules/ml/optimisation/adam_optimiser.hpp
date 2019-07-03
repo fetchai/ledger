@@ -51,8 +51,9 @@ public:
     module.CreateClassType<fetch::vm_modules::ml::VMAdamOptimiser>("AdamOptimiser")
         .CreateConstuctor<fetch::vm::Ptr<fetch::vm_modules::ml::VMGraph>,
                           fetch::vm::Ptr<fetch::vm::String>, fetch::vm::Ptr<fetch::vm::String>>()
-        .CreateMemberFunction("Run", &fetch::vm_modules::ml::VMAdamOptimiser::RunMnist)
-        .CreateMemberFunction("Run", &fetch::vm_modules::ml::VMAdamOptimiser::RunCommod);
+//        .CreateMemberFunction("Run", &fetch::vm_modules::ml::VMAdamOptimiser::RunMnist)
+//        .CreateMemberFunction("Run", &fetch::vm_modules::ml::VMAdamOptimiser::RunCommod)
+        .CreateMemberFunction("Run", &fetch::vm_modules::ml::VMAdamOptimiser::Run);
   }
 
   static fetch::vm::Ptr<VMAdamOptimiser> Constructor(
@@ -65,16 +66,22 @@ public:
                                output_node_names->str);
   }
 
-  DataType RunMnist(fetch::vm::Ptr<fetch::vm_modules::ml::VMMnistDataLoader> const &loader,
-                    uint64_t batch_size, uint64_t subset_size)
-  {
-    return optimiser_.Run(loader->loader_, batch_size, subset_size);
-  }
+//  DataType RunMnist(fetch::vm::Ptr<fetch::vm_modules::ml::VMMnistDataLoader> const &loader,
+//                    uint64_t batch_size, uint64_t subset_size)
+//  {
+//    return optimiser_.Run(loader->loader_, batch_size, subset_size);
+//  }
+//
+//  DataType RunCommod(fetch::vm::Ptr<fetch::vm_modules::ml::VMCommodityDataLoader> const &loader,
+//                     uint64_t batch_size, uint64_t subset_size)
+//  {
+//    return optimiser_.Run(loader->loader_, batch_size, subset_size);
+//  }
 
-  DataType RunCommod(fetch::vm::Ptr<fetch::vm_modules::ml::VMCommodityDataLoader> const &loader,
+  DataType Run(fetch::vm::Ptr<fetch::vm_modules::ml::VMDataLoader> const &loader,
                      uint64_t batch_size, uint64_t subset_size)
   {
-    return optimiser_.Run(loader->loader_, batch_size, subset_size);
+    return optimiser_.Run(*(loader->loader_), batch_size, subset_size);
   }
 
 private:

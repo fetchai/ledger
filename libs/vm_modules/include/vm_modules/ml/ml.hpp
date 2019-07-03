@@ -48,6 +48,7 @@ inline void BindML(fetch::vm::Module &module)
   VMTrainingPair::Bind(module);
 
   // dataloaders
+  VMDataLoader::Bind(module);
   VMMnistDataLoader::Bind(module);
   VMCommodityDataLoader::Bind(module);
 
