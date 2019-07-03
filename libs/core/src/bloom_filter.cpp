@@ -28,6 +28,12 @@
 #include <functional>
 #include <vector>
 
+// Aim for 1 false positive per this many queries
+constexpr std::size_t const INVERSE_FALSE_POSITIVE_RATE = 100000u;
+constexpr std::size_t const MEANINGFUL_STATS_THRESHOLD  = 10u * INVERSE_FALSE_POSITIVE_RATE;
+
+constexpr std::size_t const INITIAL_SIZE_IN_BITS = 8 * 10 * 1024 * 1024;
+
 namespace fetch {
 namespace internal {
 
@@ -232,8 +238,6 @@ std::vector<std::size_t> fnv(HashSourceFactory::Bytes const &input)
 
 }  // namespace internal
 
-constexpr std::size_t const INITIAL_SIZE_IN_BITS = 8 * 1024 * 1024;
-
 BasicBloomFilter::Functions const default_hash_functions{
     internal::raw_data, internal::md5, internal::sha_2_512, internal::sha_3_512, internal::fnv};
 
@@ -242,6 +246,7 @@ BasicBloomFilter::~BasicBloomFilter() = default;
 BasicBloomFilter::BasicBloomFilter()
   : bits_(INITIAL_SIZE_IN_BITS)
   , hash_source_factory_(default_hash_functions)
+  , entry_count_{}
   , positive_count_{}
   , false_positive_count_{}
 {}
@@ -249,6 +254,7 @@ BasicBloomFilter::BasicBloomFilter()
 BasicBloomFilter::BasicBloomFilter(Functions const &functions)
   : bits_(INITIAL_SIZE_IN_BITS)
   , hash_source_factory_(functions)
+  , entry_count_{}
   , positive_count_{}
   , false_positive_count_{}
 {}
@@ -270,16 +276,23 @@ bool BasicBloomFilter::Match(Bytes const &element)
 
 void BasicBloomFilter::Add(Bytes const &element)
 {
-  auto const source = hash_source_factory_(element);
+  bool       is_new_entry = false;
+  auto const source       = hash_source_factory_(element);
   for (std::size_t const hash : source)
   {
-    bits_.set(hash % bits_.size(), 1u);
+    auto const bit_index = hash % bits_.size();
+    if (!bits_.bit(bit_index))
+    {
+      is_new_entry = true;
+    }
+    bits_.set(bit_index, 1u);
+  }
+
+  if (is_new_entry)
+  {
+    ++entry_count_;
   }
 }
-
-// Aim for 1 false positive per this many queries
-constexpr std::size_t const INVERSE_FALSE_POSITIVE_RATE = 100000u;
-constexpr std::size_t const MEANINGFUL_STATS_THRESHOLD  = 10u * INVERSE_FALSE_POSITIVE_RATE;
 
 bool BasicBloomFilter::ReportFalsePositives(std::size_t count)
 {

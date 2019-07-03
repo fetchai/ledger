@@ -141,6 +141,7 @@ public:
 public:
   BitVector                         bits_;
   internal::HashSourceFactory const hash_source_factory_;
+  std::size_t                       entry_count_;
   std::size_t                       positive_count_;
   std::size_t                       false_positive_count_;
 };
