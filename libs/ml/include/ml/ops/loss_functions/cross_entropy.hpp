@@ -63,15 +63,47 @@ public:
     ArrayType ret({inputs.at(0).get().shape()});
     if (inputs.at(0).get().shape().at(0) == 1)  // not one-hot
     {
-      fetch::math::Sigmoid(inputs.at(0).get(), ret);
-      fetch::math::Subtract(ret, inputs.at(1).get(), ret);
-      fetch::math::Multiply(ret, inputs.at(0).get(), ret);
+      // (Sigmoid(x)-y)*x
+      auto     a_it = inputs.at(0).get().cbegin();
+      auto     b_it = inputs.at(1).get().cbegin();
+      auto     r_it = ret.begin();
+      DataType zero{0};
+      DataType one{1};
+
+      while (a_it.is_valid())
+      {
+        // Sigmoid(x)
+        if (*a_it >= zero)
+        {
+          fetch::math::Exp(-(*a_it), *r_it);
+          *r_it = one / (one + (*r_it));
+        }
+        else
+        {
+          fetch::math::Exp(*a_it, *r_it);
+          *r_it = *r_it / (*r_it + one);
+        }
+
+        // (Sigmoid(x)-y)*x
+        *r_it = (*r_it - (*b_it)) * (*a_it);
+
+        ++a_it;
+        ++b_it;
+        ++r_it;
+      }
     }
     else if (inputs.at(0).get().shape().size())  // one-hot
     {
       fetch::math::Softmax(inputs.at(0).get(), ret, 1);
-      fetch::math::Divide(inputs.at(1).get(), ret, ret);
-      fetch::math::Multiply(DataType(-1), ret, ret);
+
+      auto b_it = inputs.at(1).get().cbegin();
+      auto r_it = ret.begin();
+      while (b_it.is_valid())
+      {
+        *r_it = -(*b_it) / (*r_it);
+        ++b_it;
+        ++r_it;
+      }
     }
 
     return {ret, ret};

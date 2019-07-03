@@ -97,7 +97,7 @@ TYPED_TEST(MeanSquareErrorTest, one_dimensional_backward_test)
     i++;
   }
   i = 0;
-  for (float e : {0.0f, -4.4f, -4.4f, -11.0f, 5.5f, 0.0f, 0.0f, 1.1f})
+  for (float e : {0.0f, -0.55f, -0.55f, -1.375f, 0.6875f, 0.0f, 0.0f, 0.1375f})
   {
     gt.Set(i, 0, typename TypeParam::Type(e));
     i++;

@@ -58,9 +58,19 @@ public:
     assert(inputs.at(0).get().shape() == inputs.at(1).get().shape());
 
     ArrayType return_signal(inputs.front().get().shape());
+    DataType  count = static_cast<DataType>(inputs.at(0).get().size());
 
-    // return_signal_1=in[0]-in[1]
-    fetch::math::Subtract(inputs.at(0).get(), inputs.at(1).get(), return_signal);
+    auto a_it = inputs.at(0).get().cbegin();
+    auto b_it = inputs.at(1).get().cbegin();
+    auto r_it = return_signal.begin();
+
+    while (r_it.is_valid())
+    {
+      *r_it = ((*a_it) - (*b_it)) / count;
+      ++a_it;
+      ++b_it;
+      ++r_it;
+    }
 
     return {return_signal, return_signal};
   }
