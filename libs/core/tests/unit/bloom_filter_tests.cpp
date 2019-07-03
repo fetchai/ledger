@@ -123,45 +123,59 @@ class BloomFilterTests : public ::testing::Test
 {
 public:
   BloomFilterTests()
-    : filter({double_length_as_hash, length_powers_as_hash, raw_data_as_hash})
-    , filter_weak_hashing({double_length_as_hash, length_powers_as_hash})
+    : strong_hash_functions{double_length_as_hash, length_powers_as_hash, raw_data_as_hash}
+    , weak_hash_functions{double_length_as_hash, length_powers_as_hash}
+    , filter(strong_hash_functions)
+    , filter_weak_hashing(weak_hash_functions)
   {}
 
-  BasicBloomFilter filter;
-  BasicBloomFilter filter_weak_hashing;
+  BasicBloomFilter::Functions strong_hash_functions;
+  BasicBloomFilter::Functions weak_hash_functions;
+  BasicBloomFilter            filter;
+  BasicBloomFilter            filter_weak_hashing;
 };
 
-TEST_F(BloomFilterTests, foo0)  //???
+TEST_F(BloomFilterTests, empty_bloom_filter_reports_matches_no_items)
 {
   EXPECT_FALSE(filter.Match("abc"));
 }
 
-TEST_F(BloomFilterTests, foo)  //???
+TEST_F(BloomFilterTests, items_which_had_been_added_are_matched)
 {
   filter.Add("abc");
   EXPECT_TRUE(filter.Match("abc"));
 }
 
-TEST_F(BloomFilterTests, foo2)  //???
+TEST_F(BloomFilterTests, items_which_had_not_been_added_are_not_matched)
 {
   filter.Add("abc");
   EXPECT_FALSE(filter.Match("xyz"));
 }
 
-TEST_F(BloomFilterTests, foo99)  //???
+TEST_F(BloomFilterTests, multiple_items_may_be_added_and_queried)
 {
   filter.Add("abc");
-  filter.Add("xyz");
   EXPECT_TRUE(filter.Match("abc"));
+
+  filter.Add("xyz");
   EXPECT_TRUE(filter.Match("xyz"));
-  EXPECT_FALSE(filter.Match("klm"));
+
+  EXPECT_FALSE(filter.Match("klmnop"));
 }
 
-TEST_F(BloomFilterTests, foo3)  //???
+TEST_F(BloomFilterTests, false_positives_are_reported_if_all_hash_values_coincide)
 {
-  filter_weak_hashing.Add("abc");
+  auto const entry1 = "abc";
+  auto const entry2 = "xyz";
 
-  EXPECT_TRUE(filter_weak_hashing.Match("xyz"));
+  filter_weak_hashing.Add(entry1);
+
+  for (auto const &fn : weak_hash_functions)
+  {
+    EXPECT_EQ(fn(entry1), fn(entry2));
+  }
+
+  EXPECT_TRUE(filter_weak_hashing.Match(entry2));
 }
 
 }  // namespace
