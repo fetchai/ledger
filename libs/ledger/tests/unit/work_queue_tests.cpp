@@ -25,7 +25,6 @@
 
 namespace {
 
-using fetch::byte_array::ConstByteArray;
 using fetch::ledger::WorkQueue;
 using fetch::ledger::Work;
 using fetch::ledger::WorkScore;
@@ -106,20 +105,52 @@ TEST_F(WorkQueueTests, CheckBasicOrdering)
 
 TEST_F(WorkQueueTests, CheckOrderingWhenSameScore)
 {
-  auto item1 = CreateWork(2000, 12);
-  auto item2 = CreateWork(2000, 12321321);
+  auto item1 = CreateWork(2000, 0x04);
+  auto item2 = CreateWork(2000, 0x05);
+  auto item3 = CreateWork(2000, 0x02);
+  auto item4 = CreateWork(2000, 0x03);
+  auto item5 = CreateWork(2000, 0x01);
 
-  work_queue_->push(item2);
   work_queue_->push(item1);
+  work_queue_->push(item2);
+  work_queue_->push(item3);
+  work_queue_->push(item4);
+  work_queue_->push(item5);
 
-  auto first = work_queue_->top();
-  work_queue_->pop();
+  {
+    auto item = work_queue_->top();
+    work_queue_->pop();
 
-  auto second = work_queue_->top();
-  work_queue_->pop();
+    EXPECT_EQ(item.get(), item5.get());
+  }
 
-  EXPECT_EQ(first.get(), item1.get());
-  EXPECT_EQ(second.get(), item2.get());
+  {
+    auto item = work_queue_->top();
+    work_queue_->pop();
+
+    EXPECT_EQ(item.get(), item3.get());
+  }
+
+  {
+    auto item = work_queue_->top();
+    work_queue_->pop();
+
+    EXPECT_EQ(item.get(), item4.get());
+  }
+
+  {
+    auto item = work_queue_->top();
+    work_queue_->pop();
+
+    EXPECT_EQ(item.get(), item1.get());
+  }
+
+  {
+    auto item = work_queue_->top();
+    work_queue_->pop();
+
+    EXPECT_EQ(item.get(), item2.get());
+  }
 }
 
 }  // namespace
