@@ -100,21 +100,7 @@ public:
     map.ExpectKeyGetValue(ALL_NODES, node.all_nodes);
 
   }
-/*
-template <typename T>
-void Serialize(T &serializer, DAGEpoch const &node)
-{
-  serializer << node.block_number << node.tips << node.data_nodes << node.solution_nodes
-             << node.hash << node.all_nodes;
-}
 
-template <typename T>
-void Deserialize(T &serializer, DAGEpoch &node)
-{
-  serializer >> node.block_number >> node.tips >> node.data_nodes >> node.solution_nodes >>
-      node.hash >> node.all_nodes;
-}
-*/
 };
 
 
@@ -124,7 +110,7 @@ void Deserialize(T &serializer, DAGEpoch &node)
 namespace ledger
 {
 
-void DAGEpoch::Finalise()
+inline void DAGEpoch::Finalise()
 {
   // strictly speaking this is a bit of a weird hash because it will also contain all the weird
   // serialisation metadata

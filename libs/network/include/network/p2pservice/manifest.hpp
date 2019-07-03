@@ -132,14 +132,7 @@ public:
 
   template< typename T, typename D >
   friend struct serializers::MapSerializer;
-/*
-TODO: Remove
-  template <typename T>
-  friend void Serialize(T &serializer, Manifest const &x);
 
-  template <typename T>
-  friend void Deserialize(T &serializer, Manifest &x);
-*/
   Manifest &operator=(Manifest &&other) = default;
   Manifest &operator=(Manifest const &other) = default;
 

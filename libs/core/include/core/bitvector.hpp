@@ -572,39 +572,5 @@ public:
 
 };
 
-/*
-template <typename T>
-void Serialize(T &s, BitVector const &mask)
-{
-  uint64_t const bit_size   = mask.size();
-  uint64_t const block_size = mask.blocks();
-
-  s << bit_size << block_size;
-
-  auto const &underlying_blocks = mask.data();
-  for (uint64_t i = 0; i < block_size; ++i)
-  {
-    s << underlying_blocks[i];
-  }
-}
-
-template <typename T>
-void Deserialize(T &s, BitVector &mask)
-{
-  uint64_t bit_size   = 0;
-  uint64_t block_size = 0;
-
-  s >> bit_size >> block_size;
-
-  mask.Resize(bit_size);
-  assert(mask.blocks() == block_size);
-
-  auto &underlying_blocks = mask.data();
-  for (uint64_t i = 0; i < block_size; ++i)
-  {
-    s >> underlying_blocks[i];
-  }
-}
-*/
 
 }  // namespace fetch

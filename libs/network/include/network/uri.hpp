@@ -80,13 +80,7 @@ public:
 
   template< typename T, typename D >
   friend struct serializers::MapSerializer;
-/*
-  template <typename T>
-  friend void Serialize(T &serializer, Uri const &x);
 
-  template <typename T>
-  friend void Deserialize(T &serializer, Uri &x);
-*/
   static Uri  FromIdentity(ConstByteArray const &identity);
   static bool IsUri(const std::string &possible_uri);
 

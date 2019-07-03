@@ -46,51 +46,5 @@ public:
   }  
 };
 
-/*
-template <typename T, typename U>
-inline void Serialize(T &serializer, struct ml::StateDict<U> const &sd)
-{
-  if (sd.weights_)
-  {
-    Serialize(serializer, true);
-    Serialize(serializer, *sd.weights_);
-  }
-  else
-  {
-    Serialize(serializer, false);
-  }
-
-  if (!sd.dict_.empty())
-  {
-    Serialize(serializer, true);
-    Serialize(serializer, sd.dict_);
-  }
-  else
-  {
-    Serialize(serializer, false);
-  }
-}
-
-template <typename T, typename U>
-inline void Deserialize(T &serializer, struct ml::StateDict<U> &sd)
-{
-  bool hasWeight;
-  bool hasDict;
-
-  Deserialize(serializer, hasWeight);
-  if (hasWeight)
-  {
-    std::shared_ptr<U> w = std::make_shared<U>();
-    Deserialize(serializer, *w);
-    sd.weights_ = w;
-  }
-
-  Deserialize(serializer, hasDict);
-  if (hasDict)
-  {
-    Deserialize(serializer, sd.dict_);
-  }
-}
-*/
 }  // namespace serializers
 }  // namespace fetch

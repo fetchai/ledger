@@ -136,19 +136,7 @@ inline Work::UInt256 Work::CreateHashedNonce() const
 
   return UInt256{hasher.Final()};
 }
-/*
-template <typename T>
-void Serialize(T &serializer, Work const &work)
-{
-  serializer << work.nonce_ << work.score_;
-}
 
-template <typename T>
-void Deserialize(T &serializer, Work &work)
-{
-  serializer >> work.nonce_ >> work.score_;
-}
-*/
 using WorkPtr = std::shared_ptr<Work>;
 
 }  // namespace ledger

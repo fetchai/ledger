@@ -254,29 +254,7 @@ private:
   RoundMap              rounds_{};                     ///< The map of round data
   /// @}
 };
-/*
-template <typename T>
-void Serialize(T &stream, DkgService::SecretKeyReq const &req)
-{
-  stream << req.success;
 
-  if (req.success)
-  {
-    stream << req.secret_share << req.shared_public_key;
-  }
-}
-
-template <typename T>
-void Deserialize(T &stream, DkgService::SecretKeyReq &req)
-{
-  stream >> req.success;
-
-  if (req.success)
-  {
-    stream >> req.secret_share >> req.shared_public_key;
-  }
-}
-*/
 }  // namespace dkg
 
 namespace serializers
@@ -306,7 +284,7 @@ public:
   template< typename ArrayDeserializer >
   static void Deserialize(ArrayDeserializer & array, Type & req)
   {
-    if(array.size() == )
+    if(array.size() == 2)
     {
       req.success = true;
       array.GetNextValue(req.secret_share);  

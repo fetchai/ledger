@@ -43,6 +43,428 @@ public:
   MsgPackByteArrayBuffer(MsgPackByteArrayBuffer &&from) = default;
   MsgPackByteArrayBuffer &operator=(MsgPackByteArrayBuffer &&from) = default;
 
+
+
+
+  class BinaryInterface
+  {
+  public:
+    BinaryInterface(MsgPackByteArrayBuffer &serializer, uint64_t size)
+    : serializer_{serializer}
+    , size_{std::move(size)}
+    { }
+
+    void Write(uint8_t const *arr, uint64_t partial_size)
+    {
+      pos_ += partial_size;
+      if(pos_ > size_)
+      {
+        throw SerializableException(std::string("exceeded number of allocated elements in array serialization"));
+      }
+
+      serializer_.WriteBytes(arr, partial_size);
+    }
+  private:
+    MsgPackByteArrayBuffer &serializer_;
+    uint64_t size_;
+    uint64_t pos_{0};
+  };
+
+  template< uint8_t C8 , uint8_t C16 , uint8_t C32>
+  class BinaryConstructorInterface
+  {
+  public:
+
+    enum 
+    {
+      CODE8    = C8,
+      CODE16   = C16,
+      CODE32   = C32
+    };
+
+    BinaryConstructorInterface(MsgPackByteArrayBuffer &serializer)
+    : serializer_{serializer}
+    { }
+
+    BinaryInterface operator()(uint64_t count)
+    {
+      if(created_)
+      {
+        throw SerializableException(std::string("Constructor is one time use only."));
+      }
+
+      if(count < (1 << 8) )
+      {
+        uint8_t opcode = static_cast<uint8_t>( CODE8 );
+        serializer_.Allocate(sizeof(opcode));
+        serializer_.WriteBytes(&opcode, sizeof(opcode));
+
+        uint8_t size = static_cast<uint8_t>(count);
+        serializer_.Allocate(sizeof(size));
+        serializer_.WriteBytes(&size, sizeof(size));
+      }
+      else if(count < (1<<16))
+      {
+        uint8_t opcode = static_cast<uint8_t>( CODE16  );
+        serializer_.Allocate(sizeof(opcode));
+        serializer_.WriteBytes(&opcode, sizeof(opcode));
+
+        uint16_t size = static_cast<uint16_t>(count);
+        serializer_.Allocate(sizeof(size));      
+        serializer_.WriteBytes(reinterpret_cast<uint8_t *>( &size ), sizeof(size));      
+      }
+      else if(count < (1ull<<32))    
+      {
+        uint8_t opcode = static_cast<uint8_t>( CODE32 );
+        serializer_.Allocate(sizeof(opcode));
+        serializer_.WriteBytes(&opcode, sizeof(opcode));
+
+        serializer_.Allocate(sizeof(count));
+        serializer_.WriteBytes(reinterpret_cast<uint8_t *>( &count ), sizeof(count));
+      }
+      else
+      {
+        throw SerializableException(error::TYPE_ERROR,
+                std::string("Cannot create container type with more than 1 << 32 elements"));   
+      }
+
+
+      created_ = true;
+      return BinaryInterface(serializer_, count);
+    }
+  private:
+    bool created_{false};
+    MsgPackByteArrayBuffer &serializer_;
+  };
+
+  class ArrayInterface
+  {
+  public:
+    ArrayInterface(MsgPackByteArrayBuffer &serializer, uint64_t size)
+    : serializer_{serializer}
+    , size_{std::move(size)}
+    { }
+
+    template< typename T >
+    void Append(T const &val)
+    {
+      ++pos_;
+      if(pos_ > size_)
+      {
+        throw SerializableException(std::string("exceeded number of allocated elements in array serialization"));
+      }
+
+      serializer_ << val;
+    }
+  private:
+    MsgPackByteArrayBuffer &serializer_;
+    uint64_t size_;
+    uint64_t pos_{0};
+  };
+
+  class MapInterface
+  {
+  public:
+    MapInterface(MsgPackByteArrayBuffer &serializer, uint64_t size)
+    : serializer_{serializer}
+    , size_{std::move(size)}
+    { }
+
+    template< typename V >
+    void Append(uint8_t key, V const &val)
+    {
+      ++pos_;
+      if(pos_ > size_)
+      {
+        throw SerializableException(std::string("exceeded number of allocated elements in array serialization"));
+      }
+
+      serializer_ << key;
+      serializer_ << val;
+    }
+
+    template< typename K, typename V >
+    void Append(K const &key, V const &val)
+    {
+      ++pos_;
+      if(pos_ > size_)
+      {
+        throw SerializableException(std::string("exceeded number of allocated elements in array serialization"));
+      }
+
+      serializer_ << key;
+      serializer_ << val;
+    }
+  private:
+    MsgPackByteArrayBuffer &serializer_;
+    uint64_t size_;
+    uint64_t pos_{0};
+  };
+
+  template< typename I, uint8_t CF , uint8_t C16 , uint8_t C32>
+  class ContainerConstructorInterface
+  {
+  public:
+    using Type = I;
+
+    enum 
+    {
+      CODE_FIXED = CF,
+      CODE16     = C16,
+      CODE32     = C32
+    };
+
+    ContainerConstructorInterface(MsgPackByteArrayBuffer &serializer)
+    : serializer_{serializer}
+    { }
+
+    Type operator()(uint64_t count)
+    {
+      if(created_)
+      {
+        throw SerializableException(std::string("Constructor is one time use only."));
+      }
+
+      if(count < 15)
+      {
+        uint8_t size = static_cast<uint8_t>( CODE_FIXED | (count & 15) );
+        serializer_.Allocate(sizeof(size));
+        serializer_.WriteBytes(&size, sizeof(size));
+      }
+      else if(count < (1<<16))
+      {
+        uint8_t opcode = static_cast<uint8_t>( CODE16  );
+        serializer_.Allocate(sizeof(opcode));
+        serializer_.WriteBytes(&opcode, sizeof(opcode));
+
+        uint16_t size = static_cast<uint16_t>(count);
+        serializer_.Allocate(sizeof(size));      
+        serializer_.WriteBytes(reinterpret_cast<uint8_t *>( &size ), sizeof(size));      
+      }
+      else if(count < (1ull<<32))    
+      {
+        uint8_t opcode = static_cast<uint8_t>( CODE32 );
+        serializer_.Allocate(sizeof(opcode));
+        serializer_.WriteBytes(&opcode, sizeof(opcode));
+
+        serializer_.Allocate(sizeof(count));
+        serializer_.WriteBytes(reinterpret_cast<uint8_t *>( &count ), sizeof(count));
+      }
+      else
+      {
+        throw SerializableException(error::TYPE_ERROR,
+                std::string("Cannot create container type with more than 1 << 32 elements"));   
+      }
+
+
+      created_ = true;
+      return Type(serializer_, count);
+    }
+  private:
+    bool created_{false};
+    MsgPackByteArrayBuffer &serializer_;
+  };
+
+  class BinaryDeserializer
+  {
+  public:
+    enum 
+    {
+      CODE8    =  0xc4,
+      CODE16   =  0xc5,
+      CODE32   =  0xc6
+    };
+    BinaryDeserializer(MsgPackByteArrayBuffer &serializer)
+    : serializer_{serializer}
+    { 
+      uint8_t opcode;
+      uint32_t size;
+      serializer_.ReadByte(opcode);
+      switch(opcode)      
+      {
+      case CODE8:
+        serializer_.ReadBytes(reinterpret_cast<uint8_t *>( &size ), sizeof(uint8_t));
+        break;
+      case CODE16:
+        serializer_.ReadBytes(reinterpret_cast<uint8_t *>( &size ), sizeof(uint16_t));
+        break;
+      case CODE32:
+        serializer_.ReadBytes(reinterpret_cast<uint8_t *>( &size ), sizeof(uint32_t));            
+        break;
+      default:
+        throw SerializableException(std::string("incorrect size opcode for binary stream size."));
+      }
+
+      size_ = static_cast< uint64_t >(size);
+    }
+
+    void Read(uint8_t *arr, uint64_t size)
+    {
+      pos_ += size;
+      if(pos_ > size_)
+      {
+        throw SerializableException(std::string("tried to deserialise more fields in map than there exists."));
+      }
+      serializer_.ReadBytes(arr, size);
+    }
+
+    uint64_t size() const 
+    {
+      return size_;
+    }
+  private:
+    MsgPackByteArrayBuffer &serializer_;
+    uint64_t size_{0};
+    uint64_t pos_{0};
+  };
+
+  class ArrayDeserializer
+  {
+  public:
+    enum 
+    {
+      CODE_FIXED =  0x90, 
+      CODE16 = 0xdc, 
+      CODE32 = 0xdd
+    };
+    ArrayDeserializer(MsgPackByteArrayBuffer &serializer)
+    : serializer_{serializer}
+    { 
+      uint8_t opcode;
+      uint32_t size;
+      serializer_.ReadByte(opcode);
+      switch(opcode)      
+      {
+      case CODE16:
+        serializer_.ReadBytes(reinterpret_cast<uint8_t *>( &size ), sizeof(uint16_t));
+        break;
+      case CODE32:
+        serializer_.ReadBytes(reinterpret_cast<uint8_t *>( &size ), sizeof(uint32_t));            
+        break;
+      default:
+        if((opcode & CODE_FIXED) != CODE_FIXED)
+        {
+          throw SerializableException(std::string("incorrect size opcode for array size."));
+        }
+        size = static_cast< uint32_t >( opcode & 15 );
+      }
+
+      size_ = static_cast< uint64_t >(size);
+    }
+
+    template< typename V >
+    void GetNextValue(V &value)
+    {
+      ++pos_;
+      if(pos_ > size_)
+      {
+        throw SerializableException(std::string("tried to deserialise more fields in map than there exists."));
+      }
+      serializer_ >> value;
+    }
+
+    uint64_t size() const 
+    {
+      return size_;
+    }
+  private:
+    MsgPackByteArrayBuffer &serializer_;
+    uint64_t size_{0};
+    uint64_t pos_{0};
+  };
+
+  class MapDeserializer
+  {
+  public:
+    enum 
+    {
+      CODE_FIXED = 0x80, 
+      CODE16     = 0xde, 
+      CODE32     = 0xdf
+    };
+    MapDeserializer(MsgPackByteArrayBuffer &serializer)
+    : serializer_{serializer}
+    { 
+      uint8_t opcode;
+      uint32_t size;
+      serializer_.ReadByte(opcode);
+      switch(opcode)      
+      {
+      case CODE16:
+        serializer_.ReadBytes(reinterpret_cast<uint8_t *>( &size ), sizeof(uint16_t));
+        break;
+      case CODE32:
+        serializer_.ReadBytes(reinterpret_cast<uint8_t *>( &size ), sizeof(uint32_t));            
+        break;
+      default:
+        if((opcode & CODE_FIXED) != CODE_FIXED)
+        {
+          throw SerializableException(std::string("incorrect size opcode for map size."));
+        }
+        size = static_cast< uint32_t >( opcode & 15 );
+      }
+
+      size_ = static_cast< uint64_t >(size);
+    }
+
+    template< typename K, typename V>
+    void GetNextKeyPair(K &key, V &value)
+    {
+      ++pos_;
+      if(pos_ > size_)
+      {
+        throw SerializableException(std::string("tried to deserialise more fields in map than there exists."));
+      }
+      serializer_ >> key >> value;
+    }
+
+    template<  typename V>
+    bool ExpectKeyGetValue(uint8_t key, V &value) // TODO
+    {
+      ++pos_;
+      if(pos_ > size_)
+      {
+        throw SerializableException(std::string("tried to deserialise more fields in map than there exists."));
+      }
+      uint8_t k;
+      serializer_ >> k;
+      if(k != key)
+      {
+        return false;
+      }
+      serializer_ >> value;
+      return true;
+    }
+
+    template< typename K, typename V>
+    bool ExpectKeyGetValue(K const &key, V &value)
+    {
+      ++pos_;
+      if(pos_ > size_)
+      {
+        throw SerializableException(std::string("tried to deserialise more fields in map than there exists."));
+      }
+      K k;
+      serializer_ >> k;
+      if(k != key)
+      {
+        return false;
+      }
+      serializer_ >> value;
+      return true;
+    }
+
+    uint64_t size() const 
+    {
+      return size_;
+    }
+  private:
+    MsgPackByteArrayBuffer &serializer_;
+    uint64_t size_{0};
+    uint64_t pos_{0};
+  };
+
+
   /**
    * @brief Contructting from MUTABLE ByteArray.
    *
@@ -227,147 +649,24 @@ public:
   template <typename T>
   typename BinarySerializer<T, self_type>::DriverType &operator<<(T const &val)
   {
-    BinarySerializer<T, MsgPackByteArrayBuffer >::Serialize(*this, val);
+    using Serializer  = BinarySerializer<T, MsgPackByteArrayBuffer >;
+    using Constructor = BinaryConstructorInterface<0xc4, 0xc5, 0xc6 >;
+
+    Constructor constructor(*this);
+    Serializer::Serialize(constructor, val);
     return *this;
   }
 
   template <typename T>
   typename BinarySerializer<T, self_type>::DriverType &operator>>(T &val)
   {
-    BinarySerializer<T, MsgPackByteArrayBuffer >::Deserialize(*this, val);
+    using Serializer = BinarySerializer<T, MsgPackByteArrayBuffer >;
+    BinaryDeserializer stream(*this);
+    Serializer::Deserialize(stream, val);
     return *this;
   }
 
 
-  class ArrayInterface
-  {
-  public:
-    ArrayInterface(MsgPackByteArrayBuffer &serializer, uint64_t size)
-    : serializer_{serializer}
-    , size_{std::move(size)}
-    { }
-
-
-
-    template< typename T >
-    void Append(T const &val)
-    {
-      ++pos_;
-      if(pos_ > size_)
-      {
-        throw SerializableException(std::string("exceeded number of allocated elements in array serialization"));
-      }
-
-      serializer_ << val;
-    }
-  private:
-    MsgPackByteArrayBuffer &serializer_;
-    uint64_t size_;
-    uint64_t pos_{0};
-  };
-
-  class MapInterface
-  {
-  public:
-    MapInterface(MsgPackByteArrayBuffer &serializer, uint64_t size)
-    : serializer_{serializer}
-    , size_{std::move(size)}
-    { }
-
-    template< typename V >
-    void Append(uint8_t key, V const &val)
-    {
-      ++pos_;
-      if(pos_ > size_)
-      {
-        throw SerializableException(std::string("exceeded number of allocated elements in array serialization"));
-      }
-
-      serializer_ << key;
-      serializer_ << val;
-    }
-
-    template< typename K, typename V >
-    void Append(K const &key, V const &val)
-    {
-      ++pos_;
-      if(pos_ > size_)
-      {
-        throw SerializableException(std::string("exceeded number of allocated elements in array serialization"));
-      }
-
-      serializer_ << key;
-      serializer_ << val;
-    }
-  private:
-    MsgPackByteArrayBuffer &serializer_;
-    uint64_t size_;
-    uint64_t pos_{0};
-  };
-
-  template< typename I, uint8_t CF , uint8_t C16 , uint8_t C32>
-  class ContainerConstructorInterface
-  {
-  public:
-    using Type = I;
-
-    enum 
-    {
-      CODE_FIXED = CF,
-      CODE16     = C16,
-      CODE32     = C32
-    };
-
-    ContainerConstructorInterface(MsgPackByteArrayBuffer &serializer)
-    : serializer_{serializer}
-    { }
-
-    Type operator()(uint64_t count)
-    {
-      if(created_)
-      {
-        throw SerializableException(std::string("Constructor is one time use only."));
-      }
-
-      if(count < 15)
-      {
-        uint8_t size = static_cast<uint8_t>( CODE_FIXED | (count & 15) );
-        serializer_.Allocate(sizeof(size));
-        serializer_.WriteBytes(&size, sizeof(size));
-      }
-      else if(count < ((1<<16)-1))
-      {
-        uint8_t opcode = static_cast<uint8_t>( CODE16  );
-        serializer_.Allocate(sizeof(opcode));
-        serializer_.WriteBytes(&opcode, sizeof(opcode));
-
-        uint16_t size = static_cast<uint16_t>(count);
-        serializer_.Allocate(sizeof(size));      
-        serializer_.WriteBytes(reinterpret_cast<uint8_t *>( &size ), sizeof(size));      
-      }
-      else if(count < ((1ull<<32)-1))    
-      {
-        uint8_t opcode = static_cast<uint8_t>( CODE32 );
-        serializer_.Allocate(sizeof(opcode));
-        serializer_.WriteBytes(&opcode, sizeof(opcode));
-
-        serializer_.Allocate(sizeof(count));
-        serializer_.WriteBytes(reinterpret_cast<uint8_t *>( &count ), sizeof(count));
-      }
-      else
-      {
-        throw SerializableException(error::TYPE_ERROR,
-                std::string("Cannot create maps with more than 1 << 32 elements"));   
-      }
-
-
-      created_ = true;
-      return Type(serializer_, count);
-    }
-  private:
-    bool created_{false};
-    MsgPackByteArrayBuffer &serializer_;
-  };
 
   template <typename T>
   typename ArraySerializer<T, self_type>::DriverType &operator<<(T const &val)
@@ -380,60 +679,7 @@ public:
     return *this;
   }
 
-  class ArrayDeserializer
-  {
-  public:
-    enum 
-    {
-      CODE_FIXED =  0x90, 
-      CODE16 = 0xdc, 
-      CODE32 = 0xdd
-    };
-    ArrayDeserializer(MsgPackByteArrayBuffer &serializer)
-    : serializer_{serializer}
-    { 
-      uint8_t opcode;
-      uint32_t size;
-      serializer_.ReadByte(opcode);
-      switch(opcode)      
-      {
-      case CODE16:
-        serializer_.ReadBytes(reinterpret_cast<uint8_t *>( &size ), sizeof(uint16_t));
-        break;
-      case CODE32:
-        serializer_.ReadBytes(reinterpret_cast<uint8_t *>( &size ), sizeof(uint32_t));            
-        break;
-      default:
-        if((opcode & CODE_FIXED) != CODE_FIXED)
-        {
-          throw SerializableException(std::string("incorrect size opcode for array size."));
-        }
-        size = static_cast< uint32_t >( opcode & 15 );
-      }
 
-      size_ = static_cast< uint64_t >(size);
-    }
-
-    template< typename V >
-    void GetNextValue(V &value)
-    {
-      ++pos_;
-      if(pos_ > size_)
-      {
-        throw SerializableException(std::string("tried to deserialise more fields in map than there exists."));
-      }
-      serializer_ >> value;
-    }
-
-    uint64_t size() const 
-    {
-      return size_;
-    }
-  private:
-    MsgPackByteArrayBuffer &serializer_;
-    uint64_t size_{0};
-    uint64_t pos_{0};
-  };
 
   template <typename T>
   typename ArraySerializer<T, self_type>::DriverType &operator>>(T &val)
@@ -443,9 +689,6 @@ public:
     Serializer::Deserialize(array, val);
     return *this;
   }  
-
-
-
 
 
   template <typename T>
@@ -459,97 +702,6 @@ public:
     return *this;
   }
 
-
-  class MapDeserializer
-  {
-  public:
-    enum 
-    {
-      CODE_FIXED =  0x80, 
-      CODE16 = 0xde, 
-      CODE32 = 0xdf
-    };
-    MapDeserializer(MsgPackByteArrayBuffer &serializer)
-    : serializer_{serializer}
-    { 
-      uint8_t opcode;
-      uint32_t size;
-      serializer_.ReadByte(opcode);
-      switch(opcode)      
-      {
-      case CODE16:
-        serializer_.ReadBytes(reinterpret_cast<uint8_t *>( &size ), sizeof(uint16_t));
-        break;
-      case CODE32:
-        serializer_.ReadBytes(reinterpret_cast<uint8_t *>( &size ), sizeof(uint32_t));            
-        break;
-      default:
-        if((opcode & CODE_FIXED) != CODE_FIXED)
-        {
-          throw SerializableException(std::string("incorrect size opcode for map size."));
-        }
-        size = static_cast< uint32_t >( opcode & 15 );
-      }
-
-      size_ = static_cast< uint64_t >(size);
-    }
-
-    template< typename K, typename V>
-    void GetNextKeyPair(K &key, V &value)
-    {
-      ++pos_;
-      if(pos_ > size_)
-      {
-        throw SerializableException(std::string("tried to deserialise more fields in map than there exists."));
-      }
-      serializer_ >> key >> value;
-    }
-
-    template<  typename V>
-    bool ExpectKeyGetValue(uint8_t key, V &value) // TODO
-    {
-      ++pos_;
-      if(pos_ > size_)
-      {
-        throw SerializableException(std::string("tried to deserialise more fields in map than there exists."));
-      }
-      uint8_t k;
-      serializer_ >> k;
-      if(k != key)
-      {
-        return false;
-      }
-      serializer_ >> value;
-      return true;
-    }
-
-    template< typename K, typename V>
-    bool ExpectKeyGetValue(K const &key, V &value)
-    {
-      ++pos_;
-      if(pos_ > size_)
-      {
-        throw SerializableException(std::string("tried to deserialise more fields in map than there exists."));
-      }
-      K k;
-      serializer_ >> k;
-      if(k != key)
-      {
-        return false;
-      }
-      serializer_ >> value;
-      return true;
-    }
-
-    uint64_t size() const 
-    {
-      return size_;
-    }
-  private:
-    MsgPackByteArrayBuffer &serializer_;
-    uint64_t size_{0};
-    uint64_t pos_{0};
-  };
 
   template <typename T>
   typename MapSerializer<T, self_type>::DriverType &operator>>(T &val)

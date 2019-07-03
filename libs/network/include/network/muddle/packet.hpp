@@ -166,13 +166,7 @@ private:
   template< typename V, typename D >
   friend struct serializers::MapSerializer;
 
-/*  
-  template <typename T>
-  friend void Serialize(T &serializer, Packet const &b);
 
-  template <typename T>
-  friend void Deserialize(T &serializer, Packet &b);
-  */
 };
 
 inline Packet::Packet(Address const &source_address, uint32_t network_id)
