@@ -58,8 +58,8 @@ void addBlockToBloomFilter(BloomFilter &bf, Block const &block)
  *
  * @param mode Flag to signal which storage mode has been requested
  */
-MainChain::MainChain(Mode mode)
-  : bloom_filter_(std::make_unique<BasicBloomFilter>())  //???or dummy if option not enabled
+MainChain::MainChain(std::unique_ptr<BloomFilter> bloom_filter, Mode mode)
+  : bloom_filter_(std::move(bloom_filter))
 {
   if (Mode::IN_MEMORY_DB != mode)
   {

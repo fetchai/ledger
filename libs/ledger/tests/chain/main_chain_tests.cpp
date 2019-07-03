@@ -16,16 +16,17 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/bloom_filter.hpp"
 #include "core/byte_array/byte_array.hpp"
 #include "core/containers/set_difference.hpp"
 #include "ledger/chain/block.hpp"
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/chain/transaction_layout_rpc_serializers.hpp"
 #include "ledger/chain/transaction_rpc_serializers.hpp"
-
 #include "ledger/testing/block_generator.hpp"
 
 #include "gtest/gtest.h"
+
 #include <algorithm>
 #include <memory>
 #include <random>
@@ -113,7 +114,7 @@ protected:
 
     auto const main_chain_mode = GetParam();
 
-    chain_     = std::make_unique<MainChain>(main_chain_mode);
+    chain_     = std::make_unique<MainChain>(std::make_unique<DummyBloomFilter>(), main_chain_mode);
     generator_ = std::make_unique<BlockGenerator>(NUM_LANES, NUM_SLICES);
   }
 

@@ -119,7 +119,7 @@ public:
   };
 
   // Construction / Destruction
-  explicit MainChain(Mode mode = Mode::IN_MEMORY_DB);
+  explicit MainChain(std::unique_ptr<BloomFilter> bloom_filter, Mode mode = Mode::IN_MEMORY_DB);
   MainChain(MainChain const &rhs) = delete;
   MainChain(MainChain &&rhs)      = delete;
   ~MainChain();

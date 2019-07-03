@@ -17,28 +17,27 @@
 //------------------------------------------------------------------------------
 
 #include "constellation.hpp"
+#include "core/bloom_filter.hpp"
+#include "dkg/dkg_service.hpp"
 #include "health_check_http_module.hpp"
 #include "http/middleware/allow_origin.hpp"
 #include "ledger/chain/consensus/bad_miner.hpp"
 #include "ledger/chain/consensus/dummy_miner.hpp"
-#include "logging_http_module.hpp"
-#include "telemetry_http_module.hpp"
-
 #include "ledger/chaincode/contract_http_interface.hpp"
-#include "ledger/dag/dag_interface.hpp"
-
-#include "dkg/dkg_service.hpp"
 #include "ledger/consensus/naive_entropy_generator.hpp"
 #include "ledger/consensus/stake_snapshot.hpp"
+#include "ledger/dag/dag_interface.hpp"
 #include "ledger/execution_manager.hpp"
 #include "ledger/storage_unit/lane_remote_control.hpp"
 #include "ledger/tx_query_http_interface.hpp"
 #include "ledger/tx_status_http_interface.hpp"
+#include "logging_http_module.hpp"
 #include "network/generics/atomic_inflight_counter.hpp"
 #include "network/muddle/rpc/client.hpp"
 #include "network/muddle/rpc/server.hpp"
 #include "network/p2pservice/p2p_http_interface.hpp"
 #include "network/uri.hpp"
+#include "telemetry_http_module.hpp"
 
 #include <chrono>
 #include <cstddef>
@@ -226,7 +225,12 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
         [this] {
           return std::make_shared<Executor>(storage_, stake_ ? &stake_->update_queue() : nullptr);
         })}
-  , chain_{ledger::MainChain::Mode::LOAD_PERSISTENT_DB}
+  , chain_{cfg_.features.IsEnabled(fetch::core::FeatureFlags::MAIN_CHAIN_BLOOM_FILTER)
+               ? static_cast<std::unique_ptr<fetch::BloomFilter>>(
+                     std::make_unique<fetch::BasicBloomFilter>())
+               : static_cast<std::unique_ptr<fetch::BloomFilter>>(
+                     std::make_unique<fetch::DummyBloomFilter>()),
+           ledger::MainChain::Mode::LOAD_PERSISTENT_DB}
   , block_packer_{cfg_.log2_num_lanes}
   , block_coordinator_{chain_,
                        dag_,

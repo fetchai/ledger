@@ -177,8 +177,9 @@ TEST_F(BloomFilterTests, foo3)  //???
 //???move false positives tracking to bloom filter
 //???adaptable filter - size, number of hashes
 //???hash linear combinations
-//???target false positive rate
 //???reuse openssl contexts
-//???dummy bloom filter that always says true
 //???factory ask for specific number of bits, cutoff hasher execution
 //???documentation comments
+//???OpenSslHasher move to crypto, make reusable
+//???nasty ternary in constellation ctor - make static factory method eg
+// createExperimentalBloomFilter(festureflag)

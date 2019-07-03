@@ -16,9 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/bloom_filter.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "core/feature_flags.hpp"
 #include "crypto/ecdsa.hpp"
+#include "crypto/sha256.hpp"
+#include "fake_block_sink.hpp"
 #include "ledger/chain/block.hpp"
 #include "ledger/chain/block_coordinator.hpp"
 #include "ledger/chain/constants.hpp"
@@ -27,16 +30,18 @@
 #include "ledger/consensus/stake_manager_interface.hpp"
 #include "ledger/testing/block_generator.hpp"
 #include "ledger/transaction_status_cache.hpp"
-#include "testing/common_testing_functionality.hpp"
-
-#include "crypto/sha256.hpp"
-#include "fake_block_sink.hpp"
 #include "mock_block_packer.hpp"
 #include "mock_execution_manager.hpp"
 #include "mock_storage_unit.hpp"
+#include "testing/common_testing_functionality.hpp"
 
 #include "gmock/gmock.h"
+
+#include <chrono>
+#include <cstddef>
+#include <cstdint>
 #include <memory>
+#include <ostream>
 
 namespace fetch {
 namespace ledger {
@@ -105,7 +110,8 @@ protected:
     auto signer = std::make_shared<ECDSASigner>();
 
     address_           = std::make_unique<Address>(signer->identity());
-    main_chain_        = std::make_unique<MainChain>(MainChain::Mode::IN_MEMORY_DB);
+    main_chain_        = std::make_unique<MainChain>(std::make_unique<fetch::DummyBloomFilter>(),
+                                              MainChain::Mode::IN_MEMORY_DB);
     storage_unit_      = std::make_unique<StrictMock<MockStorageUnit>>();
     execution_manager_ = std::make_unique<StrictMock<MockExecutionManager>>(storage_unit_->fake);
     packer_            = std::make_unique<StrictMock<MockBlockPacker>>();
@@ -1033,7 +1039,8 @@ protected:
     auto signer = std::make_shared<ECDSASigner>();
 
     clock_             = fetch::moment::CreateAdjustableClock("bc:deadline");
-    main_chain_        = std::make_unique<MainChain>(MainChain::Mode::IN_MEMORY_DB);
+    main_chain_        = std::make_unique<MainChain>(std::make_unique<fetch::DummyBloomFilter>(),
+                                              MainChain::Mode::IN_MEMORY_DB);
     storage_unit_      = std::make_unique<NiceMock<MockStorageUnit>>();
     execution_manager_ = std::make_unique<NiceMock<MockExecutionManager>>(storage_unit_->fake);
     packer_            = std::make_unique<NiceMock<MockBlockPacker>>();

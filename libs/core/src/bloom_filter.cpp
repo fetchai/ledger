@@ -116,7 +116,7 @@ HashSourceIterator::HashSourceIterator(HashSource const *source, std::size_t ind
 
 namespace {
 
-class OpenSslHasher  //???move to crypto, make reusable
+class OpenSslHasher
 {
 public:
   enum class Type
@@ -300,8 +300,10 @@ bool DummyBloomFilter::Match(Bytes const &)
 {
   return true;
 }
+
 void DummyBloomFilter::Add(Bytes const &)
 {}
+
 bool DummyBloomFilter::ReportFalsePositives(std::size_t)
 {
   return true;
