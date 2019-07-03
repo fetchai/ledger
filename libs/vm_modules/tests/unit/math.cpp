@@ -45,7 +45,6 @@ TEST_F(MathTests, abs_test)
   )";
 
   ASSERT_TRUE(toolkit.Compile(TEXT));
-  ASSERT_TRUE(toolkit.Run());
 
   Variant res;
   ASSERT_TRUE(toolkit.Run(&res));
@@ -66,7 +65,6 @@ TEST_F(MathTests, exp_test)
   )";
 
   ASSERT_TRUE(toolkit.Compile(TEXT));
-  ASSERT_TRUE(toolkit.Run());
 
   Variant res;
   ASSERT_TRUE(toolkit.Run(&res));
@@ -87,7 +85,6 @@ TEST_F(MathTests, log_test)
   )";
 
   ASSERT_TRUE(toolkit.Compile(TEXT));
-  ASSERT_TRUE(toolkit.Run());
 
   Variant res;
   ASSERT_TRUE(toolkit.Run(&res));
@@ -108,15 +105,12 @@ TEST_F(MathTests, pow_test)
   )";
 
   ASSERT_TRUE(toolkit.Compile(TEXT));
-  ASSERT_TRUE(toolkit.Run());
 
   Variant res;
   ASSERT_TRUE(toolkit.Run(&res));
   auto const result = res.Get<float_t>();
 
-  float gt  = 3.5;
-  float exp = 2.0;
-  gt        = fetch::math::Pow(gt, exp);
+  float const gt = fetch::math::Pow(3.5f, 2.0f);
 
   ASSERT_EQ(result, gt);
 }
@@ -130,14 +124,12 @@ TEST_F(MathTests, sqrt_test)
   )";
 
   ASSERT_TRUE(toolkit.Compile(TEXT));
-  ASSERT_TRUE(toolkit.Run());
 
   Variant res;
   ASSERT_TRUE(toolkit.Run(&res));
   auto const result = res.Get<float_t>();
 
-  float gt = 3.5;
-  gt       = fetch::math::Sqrt(gt);
+  float const gt = fetch::math::Sqrt(3.5f);
 
   ASSERT_EQ(result, gt);
 }
