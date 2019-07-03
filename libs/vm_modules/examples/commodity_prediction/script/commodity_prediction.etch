@@ -52,8 +52,8 @@ if (System.Argc() != 3)
   return;
 endif
 
-var loader = CommodityDataLoader();
-loader.AddData(System.Argv(1), System.Argv(2));
+var loader = DataLoader();
+loader.AddData("commodity", System.Argv(1), System.Argv(2));
 
 var graph = Graph();
 build_graph(graph);

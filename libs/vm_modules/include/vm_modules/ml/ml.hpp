@@ -21,12 +21,10 @@
 #include <cstdlib>
 
 #include "vm_modules/math/tensor.hpp"
-#include "vm_modules/ml/dataloaders/commodity_dataloader.hpp"
-#include "vm_modules/ml/dataloaders/mnist_dataloader.hpp"
 
+#include "vm_modules/ml/dataloaders/dataloader.hpp"
 #include "vm_modules/ml/ops/loss_functions/cross_entropy.hpp"
 #include "vm_modules/ml/ops/loss_functions/mean_square_error.hpp"
-
 #include "vm_modules/ml/optimisation/adam_optimiser.hpp"
 
 #include "vm_modules/ml/graph.hpp"
@@ -47,10 +45,8 @@ inline void BindML(fetch::vm::Module &module)
   VMGraph::Bind(module);
   VMTrainingPair::Bind(module);
 
-  // dataloaders
+  // dataloader
   VMDataLoader::Bind(module);
-  VMMnistDataLoader::Bind(module);
-  VMCommodityDataLoader::Bind(module);
 
   // loss functions
   VMCrossEntropyLoss::Bind(module);
