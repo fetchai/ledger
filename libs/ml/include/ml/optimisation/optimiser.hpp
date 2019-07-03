@@ -273,7 +273,7 @@ typename T::Type Optimiser<T, C>::Run(
     graph_->BackPropagate(output_node_name_, criterion_.Backward({pred_label_, cur_label_}));
     // Compute and apply gradient
     ApplyGradients(batch_size);
-    
+
     // print the training stats every batch
     PrintStats(batch_size, subset_size);
 

@@ -215,9 +215,12 @@ void W2VModel<ArrayType>::Train(SizeType iter, SizeType print_frequency, bool cb
   std::cout << "Done Training" << std::endl;
 }
 
-
 template <typename ArrayType>
-void W2VModel<ArrayType>::SGNSTrain(ArrayType const &target, ArrayType const &context) // this function is simply a slower implementation of CBOW!!!!! it learns the target_weights_ as embeddings, and negative sampling is placed on the wrong side
+void W2VModel<ArrayType>::SGNSTrain(
+    ArrayType const &target,
+    ArrayType const &context)  // this function is simply a slower implementation of CBOW!!!!! it
+                               // learns the target_weights_ as embeddings, and negative sampling is
+                               // placed on the wrong side
 {
   for (DataType const &cur_context_word : context)
   {
@@ -230,7 +233,10 @@ void W2VModel<ArrayType>::SGNSTrain(ArrayType const &target, ArrayType const &co
 
       // assign current context word
       auto output_view = word_vector_.View(0);
-      Assign(output_view, embeddings_.View(fetch::math::SizeType(cur_context_word))); // the context_word use representation from embeddings_????, shouldnt it draw representation from target_weights_??????
+      Assign(output_view,
+             embeddings_.View(fetch::math::SizeType(
+                 cur_context_word)));  // the context_word use representation from embeddings_????,
+                                       // shouldnt it draw representation from target_weights_??????
 
       // assign target weights (Embeddings: target -> weights)
       SizeType j = 0;
@@ -245,14 +251,19 @@ void W2VModel<ArrayType>::SGNSTrain(ArrayType const &target, ArrayType const &co
       }
 
       // MatrixMultiply: Forward
-      fetch::math::TransposeDot(target_weights_, word_vector_, error_signal_); // so we are training context_word against negative samples in SGNS???? Shouldnt we training target_word against negative samples????
+      fetch::math::TransposeDot(
+          target_weights_, word_vector_,
+          error_signal_);  // so we are training context_word against negative samples in SGNS????
+                           // Shouldnt we training target_word against negative samples????
 
       ///////////////////////
       // ERROR
       ///////////////////////
       for (SizeType cur_neg_sample = 0; cur_neg_sample < negative_; cur_neg_sample++)
       {
-        for (SizeType cur_example = 0; cur_example < error_signal_.shape()[1]; cur_example++) // error_signal_.shape()[1] is simply one, not sure why we have a for loop here.
+        for (SizeType cur_example = 0; cur_example < error_signal_.shape()[1];
+             cur_example++)  // error_signal_.shape()[1] is simply one, not sure why we have a for
+                             // loop here.
         {
           DataType f     = error_signal_(cur_neg_sample, cur_example);
           DataType label = (cur_neg_sample == 0) ? 1 : 0;
@@ -309,10 +320,10 @@ void W2VModel<ArrayType>::SGNSTrain(ArrayType const &target, ArrayType const &co
         auto ret   = weights_.View(r);  // embeddings.View(r);
 
         ret.data().in_parallel().Apply(
-         range,
-         [rate](VectorRegisterType const &a, VectorRegisterType const &b,
-                VectorRegisterType &c) { c = b + a * rate; },
-         input.data(), ret.data());
+            range,
+            [rate](VectorRegisterType const &a, VectorRegisterType const &b,
+                   VectorRegisterType &c) { c = b + a * rate; },
+            input.data(), ret.data());
         input.data().in_parallel().Apply([zero](VectorRegisterType &a) { a = zero; });
       }
 
@@ -331,7 +342,6 @@ void W2VModel<ArrayType>::SGNSTrain(ArrayType const &target, ArrayType const &co
     }
   }
 }
-
 
 /**
  * CBOW specific implementation of training loop

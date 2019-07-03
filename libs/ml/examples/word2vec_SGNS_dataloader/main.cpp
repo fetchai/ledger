@@ -158,7 +158,7 @@ struct TrainingParams
   SizeType negative_sample_size = 5;       // number of negative sample per word-context pair
   SizeType window_size          = 8;       // window size for context sampling
   bool     train_mode           = true;    // reserve for future compatibility with CBOW
-  DataType freq_thresh          = 1e-5;       // frequency threshold for subsampling
+  DataType freq_thresh          = 1e-5;    // frequency threshold for subsampling
   SizeType min_count            = 5;       // infrequent word removal threshold
 
   SizeType batch_size      = 10000;  // training data batch size
@@ -276,7 +276,6 @@ int main(int argc, char **argv)
   //////////////////////////////////////
   /// EXTRACT THE TRAINED EMBEDDINGS ///
   //////////////////////////////////////
-
 
   return 0;
 }
