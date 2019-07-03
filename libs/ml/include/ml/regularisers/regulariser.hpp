@@ -17,33 +17,28 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/upow/work.hpp"
-
-#include <queue>
+#include "core/assert.hpp"
+#include "math/tensor.hpp"
+#include <memory>
+#include <vector>
 
 namespace fetch {
-namespace ledger {
-namespace detail {
-
-struct WorkQueueSort
+namespace ml {
+namespace regularisers {
+/*
+ * Abstract Regulariser interface
+ */
+template <class T>
+class Regulariser
 {
-  bool operator()(WorkPtr const &a, WorkPtr const &b) const
-  {
-    if (a->score() != b->score())
-    {
-      return a->score() > b->score();
-    }
-    else  // (a->score() == b->score())
-    {
-      return a->nonce() > b->nonce();
-    }
-  }
+public:
+  using ArrayType = T;
+  using DataType  = typename ArrayType::Type;
+
+  virtual ~Regulariser()                                                            = default;
+  virtual void ApplyRegularisation(ArrayType &weight, DataType regularisation_rate) = 0;
 };
 
-}  // namespace detail
-
-using WorkQueue    = std::priority_queue<WorkPtr, std::vector<WorkPtr>, detail::WorkQueueSort>;
-using WorkQueuePtr = std::shared_ptr<WorkQueue>;
-
-}  // namespace ledger
+}  // namespace regularisers
+}  // namespace ml
 }  // namespace fetch

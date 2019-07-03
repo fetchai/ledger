@@ -23,6 +23,8 @@
 #include "ml/ops/flatten.hpp"
 #include "ml/ops/matrix_multiply.hpp"
 #include "ml/ops/weights.hpp"
+#include "ml/regularisers/regularisation.hpp"
+#include "ml/regularisers/regulariser.hpp"
 #include "ml/subgraph.hpp"
 #include <cmath>
 #include <random>
@@ -38,10 +40,14 @@ public:
   using ArrayType    = T;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
   using SizeType     = typename ArrayType::SizeType;
+  using DataType     = typename ArrayType::Type;
   using WeightsInit  = fetch::ml::ops::WeightsInitialisation;
 
   FullyConnected(SizeType in, SizeType out,
                  details::ActivationType activation_type = details::ActivationType::NOTHING,
+                 fetch::ml::details::RegularisationType regulariser =
+                     fetch::ml::details::RegularisationType::NONE,
+                 DataType           regularisation_rate = static_cast<DataType>(0),
                  std::string const &name = "FC", WeightsInit init_mode = WeightsInit::XAVIER_GLOROT)
     : in_size_(in)
     , out_size_(out)
@@ -64,6 +70,8 @@ public:
 
     this->AddInputNode(input);
     this->SetOutputNode(output);
+    this->SetRegularisation(fetch::ml::details::CreateRegulariser<T>(regulariser),
+                            regularisation_rate);
 
     ArrayType weights_data(std::vector<SizeType>({out, in}));
     this->Initialise(weights_data, init_mode);
