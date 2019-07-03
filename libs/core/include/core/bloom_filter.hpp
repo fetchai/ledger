@@ -31,6 +31,8 @@ namespace byte_array {
 class ConstByteArray;
 }
 
+namespace internal {
+
 class HashSource;
 
 class HashSourceFactory
@@ -96,28 +98,54 @@ private:
   friend class HashSourceIterator;
 };
 
+}  // namespace internal
+
 class BloomFilter
 {
 public:
-  using Bytes     = HashSourceFactory::Bytes;
-  using Function  = HashSourceFactory::Function;
-  using Functions = HashSourceFactory::Functions;
+  using Bytes     = internal::HashSourceFactory::Bytes;
+  using Function  = internal::HashSourceFactory::Function;
+  using Functions = internal::HashSourceFactory::Functions;
 
-  BloomFilter();
-  explicit BloomFilter(Functions const &fns);
-  ~BloomFilter();
+  virtual ~BloomFilter() = default;
 
-  BloomFilter(BloomFilter const &) = delete;
-  BloomFilter(BloomFilter &&)      = delete;
-  BloomFilter &operator=(BloomFilter const &) = delete;
-  BloomFilter &operator=(BloomFilter &&) = delete;
+  virtual bool Match(Bytes const &)              = 0;
+  virtual void Add(Bytes const &)                = 0;
+  virtual bool ReportFalsePositives(std::size_t) = 0;
+};
 
-  bool Match(Bytes const &element) const;
-  void Add(Bytes const &element);
+class BasicBloomFilter : public BloomFilter
+{
+public:
+  BasicBloomFilter();
+  explicit BasicBloomFilter(Functions const &);
+  ~BasicBloomFilter() override;
+
+  BasicBloomFilter(BasicBloomFilter const &) = delete;
+  BasicBloomFilter(BasicBloomFilter &&)      = delete;
+  BasicBloomFilter &operator=(BasicBloomFilter const &) = delete;
+  BasicBloomFilter &operator=(BasicBloomFilter &&) = delete;
+
+  bool Match(Bytes const &) override;
+  void Add(Bytes const &) override;
+  bool ReportFalsePositives(std::size_t) override;
 
 public:
-  BitVector               bits_;
-  HashSourceFactory const hash_source_factory_;
+  BitVector                         bits_;
+  internal::HashSourceFactory const hash_source_factory_;
+  std::size_t                       positive_count_;
+  std::size_t                       false_positive_count_;
+};
+
+class DummyBloomFilter : public BloomFilter
+{
+public:
+  DummyBloomFilter();
+  ~DummyBloomFilter() override;
+
+  bool Match(Bytes const &) override;
+  void Add(Bytes const &) override;
+  bool ReportFalsePositives(std::size_t) override;
 };
 
 }  // namespace fetch

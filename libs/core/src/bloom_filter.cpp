@@ -29,8 +29,9 @@
 #include <vector>
 
 namespace fetch {
+namespace internal {
 
-HashSourceFactory::HashSourceFactory(fetch::HashSourceFactory::Functions hash_functions)
+HashSourceFactory::HashSourceFactory(HashSourceFactory::Functions hash_functions)
   : hash_functions_(std::move(hash_functions))
 {}
 
@@ -229,23 +230,30 @@ std::vector<std::size_t> fnv(HashSourceFactory::Bytes const &input)
 
 }  // namespace
 
-BloomFilter::Functions const default_hash_functions = {raw_data, md5, sha_2_512, sha_3_512, fnv};
+}  // namespace internal
 
 constexpr std::size_t const INITIAL_SIZE_IN_BITS = 8 * 1024 * 1024;
 
-BloomFilter::~BloomFilter() = default;
+BasicBloomFilter::Functions const default_hash_functions{
+    internal::raw_data, internal::md5, internal::sha_2_512, internal::sha_3_512, internal::fnv};
 
-BloomFilter::BloomFilter()
+BasicBloomFilter::~BasicBloomFilter() = default;
+
+BasicBloomFilter::BasicBloomFilter()
   : bits_(INITIAL_SIZE_IN_BITS)
   , hash_source_factory_(default_hash_functions)
+  , positive_count_{}
+  , false_positive_count_{}
 {}
 
-BloomFilter::BloomFilter(Functions const &functions)
+BasicBloomFilter::BasicBloomFilter(Functions const &functions)
   : bits_(INITIAL_SIZE_IN_BITS)
   , hash_source_factory_(functions)
+  , positive_count_{}
+  , false_positive_count_{}
 {}
 
-bool BloomFilter::Match(Bytes const &element) const
+bool BasicBloomFilter::Match(Bytes const &element)
 {
   auto const source = hash_source_factory_(element);
   for (std::size_t const hash : source)
@@ -256,16 +264,47 @@ bool BloomFilter::Match(Bytes const &element) const
     }
   }
 
+  ++positive_count_;
   return true;
 }
 
-void BloomFilter::Add(Bytes const &element)
+void BasicBloomFilter::Add(Bytes const &element)
 {
   auto const source = hash_source_factory_(element);
   for (std::size_t const hash : source)
   {
     bits_.set(hash % bits_.size(), 1u);
   }
+}
+
+// Aim for 1 false positive per this many queries
+constexpr std::size_t const INVERSE_FALSE_POSITIVE_RATE = 100000u;
+constexpr std::size_t const MEANINGFUL_STATS_THRESHOLD  = 10u * INVERSE_FALSE_POSITIVE_RATE;
+
+bool BasicBloomFilter::ReportFalsePositives(std::size_t count)
+{
+  false_positive_count_ += count;
+  if (positive_count_ > MEANINGFUL_STATS_THRESHOLD)
+  {
+    return static_cast<std::size_t>(positive_count_ / false_positive_count_) >
+           INVERSE_FALSE_POSITIVE_RATE;
+  }
+
+  return false;
+}
+
+DummyBloomFilter::DummyBloomFilter()  = default;
+DummyBloomFilter::~DummyBloomFilter() = default;
+
+bool DummyBloomFilter::Match(Bytes const &)
+{
+  return true;
+}
+void DummyBloomFilter::Add(Bytes const &)
+{}
+bool DummyBloomFilter::ReportFalsePositives(std::size_t)
+{
+  return true;
 }
 
 }  // namespace fetch

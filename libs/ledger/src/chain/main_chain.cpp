@@ -40,7 +40,7 @@ namespace ledger {
 
 namespace {
 
-void addToBloomFilter(BloomFilter &bf, Block const &block)
+void addBlockToBloomFilter(BloomFilter &bf, Block const &block)
 {
   for (auto const &slice : block.body.slices)
   {
@@ -59,8 +59,7 @@ void addToBloomFilter(BloomFilter &bf, Block const &block)
  * @param mode Flag to signal which storage mode has been requested
  */
 MainChain::MainChain(Mode mode)
-  : bloom_filter_()
-  , bloom_filter_false_positive_count_{0}
+  : bloom_filter_(std::make_unique<BasicBloomFilter>())  //???or dummy if option not enabled
 {
   if (Mode::IN_MEMORY_DB != mode)
   {
@@ -135,7 +134,7 @@ BlockStatus MainChain::AddBlock(Block const &blk)
 
   if (status == BlockStatus::ADDED)
   {
-    addToBloomFilter(bloom_filter_, *block);
+    addBlockToBloomFilter(*bloom_filter_, *block);
   }
 
   return status;
@@ -229,9 +228,11 @@ bool MainChain::LoadBlock(BlockHash const &hash, Block &block) const
   if (block_store_->Get(storage::ResourceID(hash), record))
   {
     block = record.block;
-    addToBloomFilter(bloom_filter_, block);
+    addBlockToBloomFilter(*bloom_filter_, block);
+
     return true;
   }
+
   return false;
 }
 
@@ -1468,7 +1469,7 @@ DigestSet MainChain::DetectDuplicateTransactions(BlockHash const &starting_hash,
   DigestSet potential_duplicates{};
   for (auto const &digest : transactions)
   {
-    if (bloom_filter_.Match(digest))
+    if (bloom_filter_->Match(digest))
     {
       potential_duplicates.insert(digest);
     }
@@ -1502,7 +1503,12 @@ DigestSet MainChain::DetectDuplicateTransactions(BlockHash const &starting_hash,
     }
   }
 
-  bloom_filter_false_positive_count_ += potential_duplicates.size() - duplicates.size();
+  auto const false_positives =
+      static_cast<std::size_t>(potential_duplicates.size() - duplicates.size());
+  if (!bloom_filter_->ReportFalsePositives(false_positives))
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Bloom filter false positive rate exceeded threshold");
+  }
 
   return duplicates;
 }

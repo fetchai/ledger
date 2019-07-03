@@ -30,19 +30,19 @@ namespace {
 
 using namespace fetch;
 
-std::vector<std::size_t> double_length_as_hash(HashSourceFactory::Bytes const &input)
+std::vector<std::size_t> double_length_as_hash(internal::HashSourceFactory::Bytes const &input)
 {
   return {2 * input.size()};
 }
 
-std::vector<std::size_t> length_powers_as_hash(HashSourceFactory::Bytes const &input)
+std::vector<std::size_t> length_powers_as_hash(internal::HashSourceFactory::Bytes const &input)
 {
   auto const size = input.size();
 
   return {size, size * size, size * size * size};
 }
 
-std::vector<std::size_t> raw_data_as_hash(HashSourceFactory::Bytes const &input)
+std::vector<std::size_t> raw_data_as_hash(internal::HashSourceFactory::Bytes const &input)
 {
   auto start = reinterpret_cast<std::size_t const *>(input.pointer());
 
@@ -73,10 +73,10 @@ public:
     , hash_source(hash_source_factory(input))
   {}
 
-  HashSourceFactory const        hash_source_factory;
-  HashSourceFactory::Bytes const input;
-  std::vector<std::size_t> const expected_output;
-  HashSource const               hash_source;
+  internal::HashSourceFactory const        hash_source_factory;
+  internal::HashSourceFactory::Bytes const input;
+  std::vector<std::size_t> const           expected_output;
+  internal::HashSource const               hash_source;
 };
 
 TEST_F(HashSourceTests, hash_source_supports_iterator_ranges_and_evaluates_hashes_in_order)
@@ -127,8 +127,8 @@ public:
     , filter_weak_hashing({double_length_as_hash, length_powers_as_hash})
   {}
 
-  BloomFilter filter;
-  BloomFilter filter_weak_hashing;
+  BasicBloomFilter filter;
+  BasicBloomFilter filter_weak_hashing;
 };
 
 TEST_F(BloomFilterTests, foo0)  //???
@@ -166,7 +166,6 @@ TEST_F(BloomFilterTests, foo3)  //???
 
 }  // namespace
 
-//???move hash source, factory and iterator to internal ns
 //???lazy hash evaluation
 //???experimental feature flag
 //???limit friend classes
@@ -180,3 +179,6 @@ TEST_F(BloomFilterTests, foo3)  //???
 //???hash linear combinations
 //???target false positive rate
 //???reuse openssl contexts
+//???dummy bloom filter that always says true
+//???factory ask for specific number of bits, cutoff hasher execution
+//???documentation comments
