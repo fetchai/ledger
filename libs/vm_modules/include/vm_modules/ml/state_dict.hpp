@@ -59,7 +59,20 @@ public:
   {
     module.CreateClassType<VMStateDict>("StateDict")
         .CreateConstuctor<>()
+        .CreateSerializeDefaultConstuctor<>()
         .CreateMemberFunction("SetWeights", &VMStateDict::SetWeights);
+  }
+
+  bool SerializeTo(serializers::ByteArrayBuffer &buffer) override
+  {
+    buffer << state_dict_;
+    return true;
+  }
+
+  bool DeserializeFrom(serializers::ByteArrayBuffer &buffer) override
+  {
+    buffer >> state_dict_;
+    return true;
   }
 
   fetch::ml::StateDict<MathTensorType> state_dict_;

@@ -20,7 +20,15 @@
 #include "vm/module.hpp"
 #include "vm_modules/core/print.hpp"
 #include "vm_modules/ml/ml.hpp"
+#include "ledger/state_adapter.hpp"
+#include "vm/io_observer_interface.hpp"
+#include "core/json/document.hpp"
+#include "core/serializers/byte_array.hpp"
+#include "variant/variant.hpp"
+#include "core/byte_array/const_byte_array.hpp"
+#include "vm/variant.hpp"
 
+#include "variant/variant.hpp"
 #include <fstream>
 #include <iostream>
 #include <memory>
@@ -60,6 +68,127 @@ fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> read_csv(
   ArrayType weights = fetch::ml::dataloaders::ReadCSV<ArrayType>(filename->str, 0, 0, transpose);
   return vm->CreateNewObject<fetch::vm_modules::math::VMTensor>(weights);
 }
+
+
+std::string ReadFileContents(std::string const &path)
+{
+  std::ifstream f(path.c_str());
+  std::string   str{};
+
+  if (!f.is_open())
+  {
+    return str;
+  }
+
+  // pre-allocate the string buffer
+  f.seekg(0, std::ios::end);
+  auto const size = static_cast<std::size_t>(f.tellg());
+  if (size == 0)
+  {
+    return str;
+  }
+
+  str.reserve(size);
+  f.seekg(0, std::ios::beg);
+
+  // assign the contents
+  str.assign(std::istreambuf_iterator<char>(f), std::istreambuf_iterator<char>());
+
+  return str;
+}
+
+struct JsonStateMap : public fetch::vm::IoObserverInterface
+{
+public:
+  // Construction / Destruction
+  JsonStateMap()                     = default;
+  JsonStateMap(JsonStateMap const &) = delete;
+  JsonStateMap(JsonStateMap &&)      = delete;
+  ~JsonStateMap() override           = default;
+
+  /// @name Save and Restore Operations
+  /// @{
+  void LoadFromFile(char const *filename)
+  {
+    // read the contents of the file
+    fetch::byte_array::ConstByteArray file_contents{ReadFileContents(filename)};
+
+    if (!file_contents.empty())
+    {
+      // parse the contents of the file
+      fetch::json::JSONDocument document{file_contents};
+
+      if (!document.root().IsObject())
+      {
+        throw std::runtime_error("JSON state file is not correct");
+      }
+
+      // load the file
+      data_ = document.root();
+    }
+  }
+
+  void SaveToFile(char const *filename)
+  {
+    std::ofstream file{filename};
+    file << data_;
+  }
+  /// @}
+
+  /// @name Io Observable Interface
+  /// @{
+  Status Read(std::string const &key, void *data, uint64_t &size) override
+  {
+    Status status{Status::ERROR};
+
+    if (data_.Has(key))
+    {
+      auto const value = FromHex(data_[key].As<fetch::byte_array::ConstByteArray>());
+
+      status = Status::BUFFER_TOO_SMALL;
+      if (size >= value.size())
+      {
+        auto *raw_data = reinterpret_cast<uint8_t *>(data);
+        std::memcpy(raw_data, value.pointer(), value.size());
+
+        status = Status::OK;
+      }
+
+      // update the output size
+      size = value.size();
+    }
+
+    return status;
+  }
+
+  Status Write(std::string const &key, void const *data, uint64_t size) override
+  {
+    auto const *raw_data = reinterpret_cast<uint8_t const *>(data);
+
+    // store the data key
+    data_[key] = ToHex(fetch::byte_array::ConstByteArray(raw_data, size));
+
+    return Status::OK;
+  }
+
+  Status Exists(std::string const &key) override
+  {
+    return (data_.Has(key) ? Status::OK : Status::ERROR);
+  }
+  /// @}
+
+  fetch::variant::Variant const &data()
+  {
+    return data_;
+  }
+
+  // Operators
+  JsonStateMap &operator=(JsonStateMap const &) = delete;
+  JsonStateMap &operator=(JsonStateMap &&) = delete;
+
+private:
+  fetch::variant::Variant data_{fetch::variant::Variant::Object()};
+};
 
 int main(int argc, char **argv)
 {
@@ -117,6 +246,9 @@ int main(int argc, char **argv)
   }
 
   fetch::vm::VM vm(module.get());
+
+  JsonStateMap observer{};
+  vm.SetIOObserver(observer);
 
   // attach std::cout for printing
   vm.AttachOutputDevice("stdout", std::cout);

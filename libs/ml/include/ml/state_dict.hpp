@@ -109,6 +109,42 @@ struct StateDict
     }
     return *this;
   }
+
+  ////////////////////////////////
+  /// Serialization operations ///
+  ////////////////////////////////
+
+  template <typename S>
+  friend void Serialize(S &serializer, StateDict const &t)
+  {
+    serializer << *t.weights_;
+
+    serializer << t.dict_.size();
+
+    for (auto const & d : t.dict_)
+    {
+      serializer << d.first;
+      Serialize(serializer, d.second);
+    }
+  }
+
+  template <typename S>
+  friend void Deserialize(S &serializer, StateDict &t)
+  {
+    uint dictsize{0};
+    std::string nodename;
+    StateDict node_sd;
+
+    serializer >> *t.weights_;
+    serializer >> dictsize;
+
+    for (uint i=0; i < dictsize; i++)
+    {
+      serializer >> nodename;
+      Deserialize(serializer, node_sd);
+      t.dict_.emplace(std::make_pair (nodename, node_sd));
+    }
+  }
 };
 
 }  // namespace ml

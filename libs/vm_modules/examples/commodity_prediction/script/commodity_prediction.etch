@@ -34,6 +34,7 @@ var bias1    = read_csv(file_bias1, false);
 var weights2 = read_csv(file_weights2, true);
 var bias2    = read_csv(file_bias2, false);
 
+
 // load weights into graph
 var sd = graph.StateDict();
 sd.SetWeights("hidden_dense_1" + "_FC_Weights", weights0);
@@ -42,7 +43,14 @@ sd.SetWeights("hidden_dense_2" + "_FC_Weights", weights1);
 sd.SetWeights("hidden_dense_2" + "_FC_Bias", bias1);
 sd.SetWeights("output_dense" + "_FC_Weights", weights2);
 sd.SetWeights("output_dense" + "_FC_Bias", bias2);
-graph.LoadStateDict(sd);
+
+
+var state = State<StateDict>("foo");
+state.set(sd);
+var new_sd = state.get();
+printLn("Loaded sd from state");
+graph.LoadStateDict(new_sd);
+//graph.LoadStateDict(sd);
 endfunction
 
 function main()
@@ -58,7 +66,14 @@ loader.AddData("commodity", System.Argv(1), System.Argv(2));
 var graph = Graph();
 build_graph(graph);
 
-var testing = false;
+
+//var state = State<StateDict>("foo");
+//var new_sd = state.get();
+//printLn("Loaded sd from state");
+//graph.LoadStateDict(new_sd);
+
+
+var testing = true;
 
 if (testing)
     read_weights(graph);
@@ -67,7 +82,7 @@ if (testing)
         var input_data = loader.GetNext();
         graph.SetInput("num_input", input_data.Data());
         var pred = graph.Evaluate("softmax_3");
-        print(pred.ToString());
+//        print(pred.ToString());
     endwhile
 else
     // Set up the optimiser
