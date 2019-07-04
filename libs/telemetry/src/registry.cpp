@@ -23,9 +23,6 @@
 namespace fetch {
 namespace telemetry {
 
-Registry::Registry()  = default;
-Registry::~Registry() = default;
-
 /**
  * Get reference to singleton instance
  * @return The reference to the registry

@@ -73,8 +73,8 @@ private:
   using LockGuard      = std::lock_guard<std::mutex>;
 
   // Construction / Destruction
-  Registry();
-  ~Registry();
+  Registry()  = default;
+  ~Registry() = default;
 
   static bool ValidateName(std::string const &name);
 
