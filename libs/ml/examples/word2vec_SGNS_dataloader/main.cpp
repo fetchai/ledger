@@ -57,7 +57,7 @@ std::string Model(fetch::ml::Graph<ArrayType> &g, SizeType embeddings_size, Size
   return ret_name;
 }
 
-void PrintWordAnology(GraphW2VLoader<DataType> const &dl, ArrayType const &embeddings,
+void PrintWordAnalogy(GraphW2VLoader<DataType> const &dl, ArrayType const &embeddings,
                       std::string const &word1, std::string const &word2, std::string const &word3,
                       SizeType k)
 {
@@ -139,7 +139,7 @@ void TestEmbeddings(Graph<ArrayType> const &g, std::string const &skip_gram_name
   std::cout << std::endl;
   PrintKNN(dl, embeddings->get_weights(), word0, K);
   std::cout << std::endl;
-  PrintWordAnology(dl, embeddings->get_weights(), word1, word2, word3, K);
+  PrintWordAnalogy(dl, embeddings->get_weights(), word1, word2, word3, K);
 }
 
 std::string ReadFile(std::string const &path)
@@ -154,16 +154,16 @@ std::string ReadFile(std::string const &path)
 
 struct TrainingParams
 {
-  SizeType max_word_count       = 100000;  // maximum number to be trained
+  SizeType max_word_count       = 1000000;  // maximum number to be trained
   SizeType negative_sample_size = 5;       // number of negative sample per word-context pair
-  SizeType window_size          = 8;       // window size for context sampling
+  SizeType window_size          = 5;       // window size for context sampling
   bool     train_mode           = true;    // reserve for future compatibility with CBOW
-  DataType freq_thresh          = 1e-5;    // frequency threshold for subsampling
+  DataType freq_thresh          = 1e-3;    // frequency threshold for subsampling
   SizeType min_count            = 5;       // infrequent word removal threshold
 
-  SizeType batch_size      = 10000;  // training data batch size
-  SizeType embedding_size  = 64;     // dimension of embedding vec
-  SizeType training_epochs = 10;
+  SizeType batch_size      = 100000;  // training data batch size
+  SizeType embedding_size  = 100;     // dimension of embedding vec
+  SizeType training_epochs = 2;
   SizeType test_frequency  = 1;
   DataType starting_learning_rate_per_sample =
       0.025;  // these are the learning rates we have for each sample
@@ -174,11 +174,11 @@ struct TrainingParams
   fetch::ml::optimisers::LearningRateParam<DataType> learning_rate_param{
       fetch::ml::optimisers::LearningRateParam<DataType>::LearningRateDecay::LINEAR};
 
-  SizeType    k        = 10;       // how many nearest neighbours to compare against
+  SizeType    k        = 20;       // how many nearest neighbours to compare against
   std::string word0    = "three";  // test word to consider
-  std::string word1    = "france";
-  std::string word2    = "paris";
-  std::string word3    = "italy";
+  std::string word1    = "king";
+  std::string word2    = "queen";
+  std::string word3    = "father";
   std::string save_loc = "./model.fba";  // save file location for exporting graph
 };
 
@@ -231,7 +231,7 @@ int main(int argc, char **argv)
 
   // calc the compatiable linear lr decay
   tp.learning_rate_param.linear_decay_rate =
-      static_cast<DataType>(1) /
+      static_cast<DataType>(0.1) /
       data_loader
           .EstimatedSampleNumber();  // this decay rate gurantee the lr is reduced to zero by the
                                      // end of an epoch (despit capping by ending learning rate)
@@ -258,18 +258,19 @@ int main(int argc, char **argv)
 
   // Initialise Optimiser
   fetch::ml::optimisers::SGDOptimiser<ArrayType, fetch::ml::ops::CrossEntropy<ArrayType>> optimiser(
-      g, {"Input", "Context"}, model_name, tp.starting_learning_rate);
+      g, {"Input", "Context"}, model_name, tp.learning_rate_param);
 
   // Training loop
   for (SizeType i{0}; i < tp.training_epochs; i++)
   {
     std::cout << "start training for epoch no.: " << i << std::endl;
-    optimiser.Run(data_loader, tp.learning_rate_param, tp.batch_size);
+    optimiser.Run(data_loader, tp.batch_size);
     std::cout << std::endl;
     // Test trained embeddings
     if (i % tp.test_frequency == 0)
     {
       TestEmbeddings(*g, model_name, data_loader, tp.word0, tp.word1, tp.word2, tp.word3, tp.k);
+      TestEmbeddings(*g, model_name, data_loader, "france", "france", "paris", "italy", tp.k);
     }
   }
 

@@ -46,6 +46,12 @@ public:
                    DataType const &                learning_rate = DataType{0.001f},
                    DataType const &                epsilon       = DataType{1e-8f});
 
+  AdaGradOptimiser(std::shared_ptr<Graph<T>>       graph,
+                   std::vector<std::string> const &input_node_names,
+                   std::string const &             output_node_name,
+                   fetch::ml::optimisers::LearningRateParam<DataType> const &learning_rate_param,
+                   DataType const &                epsilon       = DataType{1e-8f});
+
   virtual ~AdaGradOptimiser() = default;
 
 private:
@@ -63,6 +69,22 @@ AdaGradOptimiser<T, C>::AdaGradOptimiser(std::shared_ptr<Graph<T>>       graph,
                                          DataType const &learning_rate, DataType const &epsilon)
   : Optimiser<T, C>(graph, input_node_names, output_node_name, learning_rate)
   , epsilon_(epsilon)
+{
+  for (auto &train : this->graph_trainables_)
+  {
+    this->cache_.emplace_back(ArrayType(train->get_weights().shape()));
+  }
+  ResetCache();
+}
+
+template <class T, class C>
+AdaGradOptimiser<T, C>::AdaGradOptimiser(std::shared_ptr<Graph<T>>       graph,
+                                         std::vector<std::string> const &input_node_names,
+                                         std::string const &             output_node_name,
+                                         fetch::ml::optimisers::LearningRateParam<DataType> const &learning_rate_param,
+                                         DataType const &epsilon)
+: Optimiser<T, C>(graph, input_node_names, output_node_name, learning_rate_param)
+, epsilon_(epsilon)
 {
   for (auto &train : this->graph_trainables_)
   {

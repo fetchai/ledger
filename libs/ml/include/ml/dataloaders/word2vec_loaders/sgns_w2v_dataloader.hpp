@@ -34,7 +34,7 @@ template <typename T>
 class GraphW2VLoader : public DataLoader<fetch::math::Tensor<T>, fetch::math::Tensor<T>>
 {
 public:
-  const T BufferPositionUnused = -1;
+  const T BufferPositionUnused = static_cast<T>(fetch::math::numeric_max<SizeType>()) ;
 
   using LabelType = fetch::math::Tensor<T>;
   using DataType  = fetch::math::Tensor<T>;
@@ -84,6 +84,7 @@ private:
 
   // temporary sample and labels for buffering samples
   DataType   input_words_, output_words_, labels_;
+  fetch::math::Tensor<SizeType> output_words_buffer_;
   SizeType   buffer_pos_ = 0;
   ReturnType cur_sample_;
 
@@ -117,6 +118,7 @@ GraphW2VLoader<T>::GraphW2VLoader(SizeType window_size, SizeType negative_sample
   // setup temporary buffers for training purpose
   input_words_  = DataType({negative_samples * window_size_ * 2 + window_size_ * 2});
   output_words_ = DataType({negative_samples * window_size_ * 2 + window_size_ * 2});
+  output_words_buffer_ = fetch::math::Tensor<SizeType>({negative_samples * window_size_ * 2 + window_size_ * 2});
   labels_       = DataType({negative_samples * window_size_ * 2 + window_size_ * 2 +
                       1});  // the extra 1 is for testing if label has ran out
   labels_.Fill(BufferPositionUnused);
@@ -320,10 +322,10 @@ void GraphW2VLoader<T>::BufferNextSamples()
   // subsample too frequent word
   while (true)
   {
-    T word_freq =
+    auto word_freq =
         static_cast<T>(vocab_.reverse_data[data_.at(current_sentence_).at(current_word_)].second) /
         static_cast<T>(vocab_.total_count);
-    T random_var = static_cast<T>(lfg_.AsDouble());  // random variable between 0-1
+    auto random_var = static_cast<T>(lfg_.AsDouble());  // random variable between 0-1
     if (random_var < 1 - fetch::math::Sqrt(freq_thresh_ / word_freq))
     {  // subsample for a cumulative prob of 1 - sqrt(thresh/freq) // N.B. if word_freq <
        // freq_thresh, then subsampling would not happen
@@ -366,16 +368,20 @@ void GraphW2VLoader<T>::BufferNextSamples()
   // reset all three buffers
   input_words_.Fill(cur_word_id);
   labels_.Fill(BufferPositionUnused);
+  output_words_.Fill(BufferPositionUnused);
+  output_words_buffer_.Fill(static_cast<SizeType>(BufferPositionUnused));
 
   // set the context samples
   for (SizeType i = 0; i < dynamic_size; ++i)
   {
-    output_words_.At(counter) = T(data_.at(current_sentence_).at(current_word_ - i - 1));
-    labels_.At(counter)       = T(1);
+    output_words_buffer_.At(counter) = data_.at(current_sentence_).at(current_word_ - i - 1);
+    output_words_.At(counter) = static_cast<T>(data_.at(current_sentence_).at(current_word_ - i - 1));
+    labels_.At(counter)       = static_cast<T>(1);
     counter++;
 
-    output_words_.At(counter) = T(data_.at(current_sentence_).at(current_word_ + i + 1));
-    labels_.At(counter)       = T(1);
+    output_words_buffer_.At(counter) = data_.at(current_sentence_).at(current_word_ + i + 1);
+    output_words_.At(counter) = static_cast<T>(data_.at(current_sentence_).at(current_word_ + i + 1));
+    labels_.At(counter)       = static_cast<T>(1);
     counter++;
   }
 
@@ -383,7 +389,7 @@ void GraphW2VLoader<T>::BufferNextSamples()
   SizeType neg_sample;
   for (SizeType i = 0; i < negative_samples_ * dynamic_size * 2; ++i)
   {
-    if (!unigram_table_.SampleNegative(static_cast<SizeType>(cur_word_id), neg_sample))
+    if (!unigram_table_.SampleNegative(output_words_buffer_, neg_sample))
     {
       throw std::runtime_error(
           "unigram table timed out looking for a negative sample. check window size for sentence "

@@ -43,8 +43,9 @@ int main(int ac, char **av)
 
   /// setup config ///
   EstimatorConfig<DataType> estimator_config;
-  estimator_config.learning_rate  = 0.001f;  // initial learning rate
-  estimator_config.lr_decay       = 0.99f;   // learning rate decay multiplier per epoch
+	estimator_config.learning_rate_param.mode                   = fetch::ml::optimisers::LearningRateParam<DataType>::LearningRateDecay::EXPONENTIAL;
+	estimator_config.learning_rate_param.starting_learning_rate = static_cast<DataType>(0.001);
+	estimator_config.learning_rate_param.exponential_decay_rate = static_cast<DataType>(0.99);
   estimator_config.batch_size     = 64;      // minibatch training size
   estimator_config.subset_size    = 1000;    // only train on the first 1000 samples
   estimator_config.early_stopping = true;    // stop early if no improvement

@@ -45,6 +45,12 @@ public:
                std::string const &             output_node_name,
                DataType const &                learning_rate = DataType{0.001f});
 
+  SGDOptimiser(std::shared_ptr<Graph<T>>
+                                                                  graph,
+               std::vector<std::string> const &                   input_node_names,
+               std::string const &                                output_node_name,
+               fetch::ml::optimisers::LearningRateParam<DataType> const &learning_rate_param);
+
   virtual ~SGDOptimiser() = default;
 
 private:
@@ -58,6 +64,14 @@ SGDOptimiser<T, C>::SGDOptimiser(std::shared_ptr<Graph<T>>
                                  std::vector<std::string> const &input_node_names,
                                  std::string const &output_node_name, DataType const &learning_rate)
   : Optimiser<T, C>(graph, input_node_names, output_node_name, learning_rate)
+{}
+
+template <class T, class C>
+SGDOptimiser<T, C>::SGDOptimiser(std::shared_ptr<Graph<T>>       graph,
+                                 std::vector<std::string> const &input_node_names,
+                                 std::string const &             output_node_name,
+                                 fetch::ml::optimisers::LearningRateParam<SGDOptimiser<T, C>::DataType> const &learning_rate_param)
+  : Optimiser<T, C>(graph, input_node_names, output_node_name, learning_rate_param)
 {}
 
 // private
