@@ -48,10 +48,8 @@ public:
   static Registry &Instance();
 
   // Construction / Destruction
-  Registry()                 = default;
   Registry(Registry const &) = delete;
   Registry(Registry &&)      = delete;
-  ~Registry()                = default;
 
   /// @name Metric Helpers
   /// @{
@@ -73,6 +71,10 @@ private:
   using Measurements   = std::vector<MeasurementPtr>;
   using Mutex          = std::mutex;
   using LockGuard      = std::lock_guard<std::mutex>;
+
+  // Construction / Destruction
+  Registry();
+  ~Registry();
 
   static bool ValidateName(std::string const &name);
 
