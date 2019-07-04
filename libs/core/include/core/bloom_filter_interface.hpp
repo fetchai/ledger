@@ -33,7 +33,7 @@ public:
 
   enum class Type
   {
-    DUMMY,
+    NULL_IMPL,
     BASIC
   };
 

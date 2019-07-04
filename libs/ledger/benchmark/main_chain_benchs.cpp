@@ -64,7 +64,7 @@ void MainChain_InMemory_AddBlocksSequentially(benchmark::State &state)
   for (auto _ : state)
   {
     state.PauseTiming();
-    auto chain = std::make_unique<MainChain>(std::make_unique<fetch::DummyBloomFilter>(),
+    auto chain = std::make_unique<MainChain>(std::make_unique<fetch::NullBloomFilter>(),
                                              MainChain::Mode::IN_MEMORY_DB);
     state.ResumeTiming();
 
@@ -82,7 +82,7 @@ void MainChain_Persistent_AddBlocksSequentially(benchmark::State &state)
   for (auto _ : state)
   {
     state.PauseTiming();
-    auto chain = std::make_unique<MainChain>(std::make_unique<fetch::DummyBloomFilter>(),
+    auto chain = std::make_unique<MainChain>(std::make_unique<fetch::NullBloomFilter>(),
                                              MainChain::Mode::CREATE_PERSISTENT_DB);
     state.ResumeTiming();
 
@@ -100,7 +100,7 @@ void MainChain_InMemory_AddBlocksOutOfOrder(benchmark::State &state)
   for (auto _ : state)
   {
     state.PauseTiming();
-    auto chain = std::make_unique<MainChain>(std::make_unique<fetch::DummyBloomFilter>(),
+    auto chain = std::make_unique<MainChain>(std::make_unique<fetch::NullBloomFilter>(),
                                              MainChain::Mode::IN_MEMORY_DB);
     state.ResumeTiming();
 
@@ -118,7 +118,7 @@ void MainChain_Persistent_AddBlocksOutOfOrder(benchmark::State &state)
   for (auto _ : state)
   {
     state.PauseTiming();
-    auto chain = std::make_unique<MainChain>(std::make_unique<fetch::DummyBloomFilter>(),
+    auto chain = std::make_unique<MainChain>(std::make_unique<fetch::NullBloomFilter>(),
                                              MainChain::Mode::CREATE_PERSISTENT_DB);
     state.ResumeTiming();
 

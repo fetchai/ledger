@@ -29,8 +29,8 @@ std::unique_ptr<BloomFilterInterface> BloomFilterInterface::Create(Type type)
   {
   case Type::BASIC:
     return std::make_unique<fetch::BasicBloomFilter>();
-  case Type::DUMMY:
-    return std::make_unique<fetch::DummyBloomFilter>();
+  case Type::NULL_IMPL:
+    return std::make_unique<fetch::NullBloomFilter>();
   }
 
   return nullptr;

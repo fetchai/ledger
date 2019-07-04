@@ -165,16 +165,16 @@ public:
 /*
  * A fake Bloom filter which holds no data and treats any query as positive.
  */
-class DummyBloomFilter : public BloomFilterInterface
+class NullBloomFilter : public BloomFilterInterface
 {
 public:
-  DummyBloomFilter()                         = default;
-  DummyBloomFilter(DummyBloomFilter const &) = delete;
-  DummyBloomFilter(DummyBloomFilter &&)      = delete;
-  ~DummyBloomFilter() override               = default;
+  NullBloomFilter()                        = default;
+  NullBloomFilter(NullBloomFilter const &) = delete;
+  NullBloomFilter(NullBloomFilter &&)      = delete;
+  ~NullBloomFilter() override              = default;
 
-  DummyBloomFilter &operator=(DummyBloomFilter const &) = delete;
-  DummyBloomFilter &operator=(DummyBloomFilter &&) = delete;
+  NullBloomFilter &operator=(NullBloomFilter const &) = delete;
+  NullBloomFilter &operator=(NullBloomFilter &&) = delete;
 
   bool Match(Bytes const &) override;
   void Add(Bytes const &) override;

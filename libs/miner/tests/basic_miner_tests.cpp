@@ -111,7 +111,7 @@ TEST_P(BasicMinerTests, SimpleExample)
   PopulateWithTransactions(num_tx);
 
   Block     block;
-  MainChain dummy{std::make_unique<fetch::DummyBloomFilter>(), MainChain::Mode::IN_MEMORY_DB};
+  MainChain dummy{std::make_unique<fetch::NullBloomFilter>(), MainChain::Mode::IN_MEMORY_DB};
 
   block.body.previous_hash = dummy.GetHeaviestBlockHash();
 
@@ -142,7 +142,7 @@ TEST_P(BasicMinerTests, RejectReplayedTransactions)
 
   auto const layout = PopulateWithTransactions(num_tx, 1);
 
-  MainChain chain{std::make_unique<fetch::DummyBloomFilter>(), MainChain::Mode::IN_MEMORY_DB};
+  MainChain chain{std::make_unique<fetch::NullBloomFilter>(), MainChain::Mode::IN_MEMORY_DB};
 
   DigestSet transactions_already_seen{};
   DigestSet transactions_within_block{};

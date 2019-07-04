@@ -316,15 +316,15 @@ bool BasicBloomFilter::ReportFalsePositives(std::size_t count)
   return false;
 }
 
-bool DummyBloomFilter::Match(Bytes const &)
+bool NullBloomFilter::Match(Bytes const &)
 {
   return true;
 }
 
-void DummyBloomFilter::Add(Bytes const &)
+void NullBloomFilter::Add(Bytes const &)
 {}
 
-bool DummyBloomFilter::ReportFalsePositives(std::size_t)
+bool NullBloomFilter::ReportFalsePositives(std::size_t)
 {
   return true;
 }

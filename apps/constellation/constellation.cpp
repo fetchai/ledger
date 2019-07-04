@@ -228,7 +228,7 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
   , chain_{BloomFilterInterface::Create(
                cfg_.features.IsEnabled(FeatureFlags::MAIN_CHAIN_BLOOM_FILTER)
                    ? BloomFilterInterface::Type::BASIC
-                   : BloomFilterInterface::Type::DUMMY),
+                   : BloomFilterInterface::Type::NULL_IMPL),
            ledger::MainChain::Mode::LOAD_PERSISTENT_DB}
   , block_packer_{cfg_.log2_num_lanes}
   , block_coordinator_{chain_,
