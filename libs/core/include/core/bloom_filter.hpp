@@ -47,9 +47,11 @@ class HashSource;
  */
 class HashSourceFactory
 {
-public:
+private:
   using Function =
       std::function<std::vector<std::size_t>(fetch::byte_array::ConstByteArray const &)>;
+
+public:
   using Functions = std::vector<Function>;
 
   explicit HashSourceFactory(Functions);
@@ -78,6 +80,8 @@ private:
 class HashSource
 {
 public:
+  using Hashes = std::vector<size_t>;
+
   HashSource()                       = delete;
   HashSource(HashSource const &)     = delete;
   HashSource(HashSource &&) noexcept = default;
@@ -129,7 +133,7 @@ private:
 
   std::size_t getHash(std::size_t index) const;
 
-  std::vector<std::size_t> data_;
+  Hashes data_;
 
   friend class HashSourceFactory;
 };

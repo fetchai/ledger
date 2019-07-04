@@ -201,7 +201,7 @@ std::vector<std::size_t> raw_data(fetch::byte_array::ConstByteArray const &input
   return output;
 }
 
-std::vector<std::size_t> md5(fetch::byte_array::ConstByteArray const &input)
+HashSource::Hashes md5(fetch::byte_array::ConstByteArray const &input)
 {
   static OpenSslHasher hasher(OpenSslHasher::Type::MD5);
   hasher.reset();
@@ -209,7 +209,7 @@ std::vector<std::size_t> md5(fetch::byte_array::ConstByteArray const &input)
   return hasher(input);
 }
 
-std::vector<std::size_t> sha_1(fetch::byte_array::ConstByteArray const &input)
+HashSource::Hashes sha_1(fetch::byte_array::ConstByteArray const &input)
 {
   static OpenSslHasher hasher(OpenSslHasher::Type::SHA_1);
   hasher.reset();
@@ -217,7 +217,7 @@ std::vector<std::size_t> sha_1(fetch::byte_array::ConstByteArray const &input)
   return hasher(input);
 }
 
-std::vector<std::size_t> sha_2_512(fetch::byte_array::ConstByteArray const &input)
+HashSource::Hashes sha_2_512(fetch::byte_array::ConstByteArray const &input)
 {
   static OpenSslHasher hasher(OpenSslHasher::Type::SHA_2_512);
   hasher.reset();
@@ -225,7 +225,7 @@ std::vector<std::size_t> sha_2_512(fetch::byte_array::ConstByteArray const &inpu
   return hasher(input);
 }
 
-std::vector<std::size_t> sha_3_512(fetch::byte_array::ConstByteArray const &input)
+HashSource::Hashes sha_3_512(fetch::byte_array::ConstByteArray const &input)
 {
   static OpenSslHasher hasher(OpenSslHasher::Type::SHA_3_512);
   hasher.reset();
@@ -233,15 +233,15 @@ std::vector<std::size_t> sha_3_512(fetch::byte_array::ConstByteArray const &inpu
   return hasher(input);
 }
 
-std::vector<std::size_t> fnv(fetch::byte_array::ConstByteArray const &input)
+HashSource::Hashes fnv(fetch::byte_array::ConstByteArray const &input)
 {
   static crypto::FNV hasher;
   hasher.Reset();
 
   hasher.Update(reinterpret_cast<std::uint8_t const *>(input.pointer()), input.size());
 
-  const auto               size_in_bytes = hasher.GetSizeInBytes();
-  std::vector<std::size_t> output(size_in_bytes / sizeof(std::size_t));
+  const auto         size_in_bytes = hasher.GetSizeInBytes();
+  HashSource::Hashes output(size_in_bytes / sizeof(std::size_t));
 
   hasher.Final(reinterpret_cast<uint8_t *>(output.data()), output.size() * sizeof(std::size_t));
 
