@@ -29,8 +29,11 @@
 #include <vector>
 
 // Aim for 1 false positive per this many positive queries
-constexpr std::size_t const INVERSE_FALSE_POSITIVE_RATE = 100000u;
-constexpr std::size_t const MEANINGFUL_STATS_THRESHOLD  = 5u * INVERSE_FALSE_POSITIVE_RATE;
+constexpr std::size_t const INVERSE_TARGET_FALSE_POSITIVE_RATE = 100000u;
+
+// No point in evaluating the filter's quality until this many positive queries
+// have been executed
+constexpr std::size_t const MEANINGFUL_STATS_THRESHOLD = 5u * INVERSE_TARGET_FALSE_POSITIVE_RATE;
 
 constexpr std::size_t const INITIAL_SIZE_IN_BITS = 8 * 10 * 1024 * 1024;
 
@@ -62,60 +65,60 @@ HashSource::HashSource(HashSourceFactory::Functions const &hash_functions,
 
 HashSource::~HashSource() = default;
 
-HashSourceIterator HashSource::begin() const
+HashSource::HashSourceIterator HashSource::begin() const
 {
-  return HashSourceIterator{this, 0u};
+  return HashSource::HashSourceIterator{this, 0u};
 }
 
-HashSourceIterator HashSource::end() const
+HashSource::HashSourceIterator HashSource::end() const
 {
-  return HashSourceIterator{this, data_.size()};
+  return HashSource::HashSourceIterator{this, data_.size()};
 }
 
-HashSourceIterator HashSource::cbegin() const
+HashSource::HashSourceIterator HashSource::cbegin() const
 {
-  return HashSourceIterator{this, 0u};
+  return HashSource::HashSourceIterator{this, 0u};
 }
 
-HashSourceIterator HashSource::cend() const
+HashSource::HashSourceIterator HashSource::cend() const
 {
-  return HashSourceIterator{this, data_.size()};
+  return HashSource::HashSourceIterator{this, data_.size()};
 }
 
-HashSourceIterator::~HashSourceIterator() = default;
+HashSource::HashSourceIterator::~HashSourceIterator() = default;
 
-bool HashSourceIterator::operator!=(HashSourceIterator const &other) const
+bool HashSource::HashSourceIterator::operator!=(HashSource::HashSourceIterator const &other) const
 {
   return !(operator==(other));
 }
 
-bool HashSourceIterator::operator==(HashSourceIterator const &other) const
+bool HashSource::HashSourceIterator::operator==(HashSource::HashSourceIterator const &other) const
 {
   return source_ == other.source_ && hash_index_ == other.hash_index_;
 }
 
-HashSourceIterator const HashSourceIterator::operator++(int)
+HashSource::HashSourceIterator const HashSource::HashSourceIterator::operator++(int)
 {
-  HashSourceIterator temp{source_, hash_index_};
+  HashSource::HashSourceIterator temp{source_, hash_index_};
 
   operator++();
 
   return temp;
 }
 
-HashSourceIterator &HashSourceIterator::operator++()
+HashSource::HashSourceIterator &HashSource::HashSourceIterator::operator++()
 {
   ++hash_index_;
 
   return *this;
 }
 
-std::size_t HashSourceIterator::operator*() const
+std::size_t HashSource::HashSourceIterator::operator*() const
 {
   return source_->data_[hash_index_];
 }
 
-HashSourceIterator::HashSourceIterator(HashSource const *source, std::size_t index)
+HashSource::HashSourceIterator::HashSourceIterator(HashSource const *source, std::size_t index)
   : hash_index_{index}
   , source_{source}
 {}
@@ -300,7 +303,7 @@ bool BasicBloomFilter::ReportFalsePositives(std::size_t count)
   if (positive_count_ > MEANINGFUL_STATS_THRESHOLD)
   {
     return static_cast<std::size_t>(positive_count_ / false_positive_count_) >
-           INVERSE_FALSE_POSITIVE_RATE;
+           INVERSE_TARGET_FALSE_POSITIVE_RATE;
   }
 
   return false;

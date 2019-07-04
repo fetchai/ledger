@@ -35,6 +35,12 @@ namespace internal {
 
 class HashSource;
 
+/*
+ * An ordered collection of hash functions for generating pseudorandom
+ * std::size_t indices for the Bloom filter. To apply the functions,
+ * to an input, invoke the factory's operator() and use the resulting
+ * HashSource.
+ */
 class HashSourceFactory
 {
 public:
@@ -51,38 +57,45 @@ private:
   Functions const hash_functions_;
 };
 
-class HashSourceIterator
-{
-public:
-  using iterator_category = std::input_iterator_tag;
-  using value_type        = std::size_t const;
-  using difference_type   = std::ptrdiff_t;
-  using pointer           = std::size_t const *;
-  using reference         = std::size_t const &;
-
-  ~HashSourceIterator();
-
-  bool operator!=(HashSourceIterator const &other) const;
-  bool operator==(HashSourceIterator const &other) const;
-
-  HashSourceIterator const operator++(int);
-  HashSourceIterator &     operator++();
-
-  std::size_t operator*() const;
-
-private:
-  explicit HashSourceIterator(HashSource const *source, std::size_t index);
-
-  std::size_t       hash_index_;
-  HashSource const *source_;
-
-  friend class HashSource;
-};
-
+/*
+ * Represents a sequential application of a HashSourceFactory's hash
+ * functions to a byte array. Outwardly it may be treated as an immutable,
+ * iterable collection of std::size_t.
+ *
+ * Not thread-safe.
+ */
 class HashSource
 {
 public:
   ~HashSource();
+
+  class HashSourceIterator
+  {
+  public:
+    using iterator_category = std::input_iterator_tag;
+    using value_type        = std::size_t const;
+    using difference_type   = std::ptrdiff_t;
+    using pointer           = std::size_t const *;
+    using reference         = std::size_t const &;
+
+    ~HashSourceIterator();
+
+    bool operator!=(HashSourceIterator const &other) const;
+    bool operator==(HashSourceIterator const &other) const;
+
+    HashSourceIterator const operator++(int);
+    HashSourceIterator &     operator++();
+
+    std::size_t operator*() const;
+
+  private:
+    explicit HashSourceIterator(HashSource const *source, std::size_t index);
+
+    std::size_t       hash_index_;
+    HashSource const *source_;
+
+    friend class HashSource;
+  };
 
   HashSourceIterator begin() const;
   HashSourceIterator end() const;
@@ -92,10 +105,9 @@ public:
 private:
   HashSource(HashSourceFactory::Functions const &, HashSourceFactory::Bytes const &);
 
-  mutable std::vector<std::size_t> data_;
+  std::vector<std::size_t> data_;
 
   friend class HashSourceFactory;
-  friend class HashSourceIterator;
 };
 
 }  // namespace internal
@@ -117,8 +129,26 @@ public:
 
   virtual ~BloomFilter() = default;
 
-  virtual bool Match(Bytes const &)              = 0;
-  virtual void Add(Bytes const &)                = 0;
+  /*
+   * Query the Bloom filter for a given entry.
+   *
+   * Returns false if the entry is definitely absent; true otherwise.
+   */
+  virtual bool Match(Bytes const &) = 0;
+
+  /*
+   * Add a new entry to the filter.
+   */
+  virtual void Add(Bytes const &) = 0;
+
+  /*
+   * Clients may use this to report how many false positives they identified.
+   * This information is used internally by the filter to keep track of the
+   * false positive rate.
+   *
+   * Return false if the filter's measured false positive rate exceeds its
+   * target value and rebuilding the filter may be advisable; true otherwise.
+   */
   virtual bool ReportFalsePositives(std::size_t) = 0;
 };
 
@@ -146,6 +176,9 @@ public:
   std::size_t                       false_positive_count_;
 };
 
+/*
+ * A fake Bloom filter which holds no data and treats any query as positive.
+ */
 class DummyBloomFilter : public BloomFilter
 {
 public:
