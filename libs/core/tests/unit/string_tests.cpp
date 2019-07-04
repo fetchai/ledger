@@ -24,6 +24,7 @@ namespace {
 
 TEST(StringTests, CheckEndsWith)
 {
+  EXPECT_TRUE(fetch::core::EndsWith("Hello World", "Hello World"));
   EXPECT_TRUE(fetch::core::EndsWith("Hello World", "World"));
   EXPECT_FALSE(fetch::core::EndsWith("Hello World", "World2"));
 }
