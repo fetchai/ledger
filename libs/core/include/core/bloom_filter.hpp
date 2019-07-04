@@ -111,8 +111,8 @@ public:
   private:
     explicit HashSourceIterator(HashSource const *source, std::size_t index);
 
-    std::size_t       hash_index_;
-    HashSource const *source_;
+    std::size_t       hash_index_{};
+    HashSource const *source_{};
 
     friend class HashSource;
   };
