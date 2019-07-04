@@ -17,6 +17,11 @@
 //
 //------------------------------------------------------------------------------
 
+#include <fstream>
+#include <map>
+#include <string>
+#include <utility>
+
 namespace fetch {
 namespace ml {
 
@@ -28,7 +33,7 @@ public:
 
   DataType data;
 
-  Vocab(){};
+  Vocab()= default;
 
   void Save(std::string const &filename) const;
   void Load(std::string const &filename);
