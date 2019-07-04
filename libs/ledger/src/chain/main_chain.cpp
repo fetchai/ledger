@@ -17,17 +17,22 @@
 //------------------------------------------------------------------------------
 
 #include "core/assert.hpp"
-#include "ledger/chain/main_chain.hpp"
-
+#include "core/bloom_filter.hpp"
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
+#include "ledger/chain/main_chain.hpp"
 #include "ledger/chain/transaction_layout_rpc_serializers.hpp"
 #include "network/generics/milli_timer.hpp"
+#include "telemetry/counter.hpp"
+#include "telemetry/registry.hpp"
 
 #include <algorithm>
+#include <cstddef>
+#include <cstdint>
 #include <utility>
+#include <vector>
 
 using fetch::byte_array::ToBase64;
 using fetch::generics::MilliTimer;
@@ -35,12 +40,31 @@ using fetch::generics::MilliTimer;
 namespace fetch {
 namespace ledger {
 
+namespace {
+
+void AddBlockToBloomFilter(BloomFilterInterface &bf, Block const &block)
+{
+  for (auto const &slice : block.body.slices)
+  {
+    for (auto const &tx : slice)
+    {
+      bf.Add(tx.digest());
+    }
+  }
+}
+
+}  // namespace
+
 /**
  * Constructs the main chain
  *
  * @param mode Flag to signal which storage mode has been requested
  */
-MainChain::MainChain(Mode mode)
+MainChain::MainChain(std::unique_ptr<BloomFilterInterface> bloom_filter, Mode mode)
+  : bloom_filter_(std::move(bloom_filter))
+  , bloom_filter_false_positive_count_(telemetry::Registry::Instance().CreateCounter(
+        "ledger_main_chain_bloom_filter_false_positive_total",
+        "Total number of false positive queries to the Ledger Main Chain Bloom filter"))
 {
   if (Mode::IN_MEMORY_DB != mode)
   {
@@ -109,10 +133,14 @@ BlockStatus MainChain::AddBlock(Block const &blk)
   // At this point we assume that the weight has been correctly set by the miner
   block->total_weight = 1;
 
-  // pass the block to the
   auto const status = InsertBlock(block);
   FETCH_LOG_DEBUG(LOGGING_NAME, "New Block: 0x", block->body.hash.ToHex(), " -> ", ToString(status),
                   " (weight: ", block->weight, " total: ", block->total_weight, ")");
+
+  if (status == BlockStatus::ADDED)
+  {
+    AddBlockToBloomFilter(*bloom_filter_, *block);
+  }
 
   return status;
 }
@@ -205,8 +233,11 @@ bool MainChain::LoadBlock(BlockHash const &hash, Block &block) const
   if (block_store_->Get(storage::ResourceID(hash), record))
   {
     block = record.block;
+    AddBlockToBloomFilter(*bloom_filter_, block);
+
     return true;
   }
+
   return false;
 }
 
@@ -324,7 +355,7 @@ bool MainChain::RemoveBlock(BlockHash const &hash)
     }
   }
 
-  // Step 3. Since we might have removed a whole series of blocks the tips datastructure
+  // Step 3. Since we might have removed a whole series of blocks the tips data structure
   // is likely to have been invalidated. We need to evaluate the changes here
   return ReindexTips();
 }
@@ -504,7 +535,7 @@ bool MainChain::GetPathToCommonAncestor(Blocks &blocks, BlockHash tip, BlockHash
   blocks.resize(res.size());
   std::move(res.begin(), res.end(), blocks.begin());
 
-  // If an lookup error has occured then we do not return anything
+  // If an lookup error has occurred then we do not return anything
   if (!success)
   {
     blocks.clear();
@@ -553,7 +584,7 @@ MainChain::BlockHashSet MainChain::GetMissingTips() const
   for (auto const &element : loose_blocks_)
   {
     // tips are blocks that are referenced but we have not seen them yet. Since all loose blocks are
-    // stored in the cache, we simply evalute which of the loose references we do not currently
+    // stored in the cache, we simply evaluate which of the loose references we do not currently
     // have in the cache
     if (!IsBlockInCache(element.first))
     {
@@ -806,7 +837,7 @@ void MainChain::WriteToFile()
           break;
         }
 
-        // Continue to push prevs into file
+        // Continue to push previous into file
         LookupBlock(block->body.previous_hash, block);
       }
 
@@ -1095,7 +1126,7 @@ BlockStatus MainChain::InsertBlock(IntBlockPtr const &block, bool evaluate_loose
     return BlockStatus::LOOSE;
   }
 
-  // we exepect only non-loose blocks here
+  // we expect only non-loose blocks here
   assert(!block->is_loose);
 
   // by definition this also means we expect blocks to have a valid parent block too
@@ -1399,7 +1430,7 @@ MainChain::BlockHash MainChain::GetHeadHash()
   {
     buffer.Resize(32);
 
-    // return to the begining and overwrite the hash
+    // return to the beginning and overwrite the hash
     head_store_.seekg(0);
     head_store_.read(reinterpret_cast<char *>(buffer.pointer()),
                      static_cast<std::streamsize>(buffer.size()));
@@ -1440,13 +1471,21 @@ DigestSet MainChain::DetectDuplicateTransactions(BlockHash const &starting_hash,
     return {};
   }
 
-  // Need a set for quickly checking whether transactions are in our container
+  DigestSet potential_duplicates{};
+  for (auto const &digest : transactions)
+  {
+    if (bloom_filter_->Match(digest))
+    {
+      potential_duplicates.insert(digest);
+    }
+  }
+
   DigestSet duplicates{};
   for (;;)
   {
     // Traversing the chain fully is costly: break out early if we know the transactions are all
     // duplicated (or empty)
-    if (transactions.size() == duplicates.size())
+    if (potential_duplicates.size() == duplicates.size())
     {
       break;
     }
@@ -1455,7 +1494,7 @@ DigestSet MainChain::DetectDuplicateTransactions(BlockHash const &starting_hash,
     {
       for (auto const &tx : slice)
       {
-        if (transactions.find(tx.digest()) != transactions.end())
+        if (potential_duplicates.find(tx.digest()) != potential_duplicates.end())
         {
           duplicates.insert(tx.digest());
         }
@@ -1467,6 +1506,16 @@ DigestSet MainChain::DetectDuplicateTransactions(BlockHash const &starting_hash,
     {
       break;
     }
+  }
+
+  auto const false_positives =
+      static_cast<std::size_t>(potential_duplicates.size() - duplicates.size());
+
+  bloom_filter_false_positive_count_->add(false_positives);
+
+  if (!bloom_filter_->ReportFalsePositives(false_positives))
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Bloom filter false positive rate exceeded threshold");
   }
 
   return duplicates;

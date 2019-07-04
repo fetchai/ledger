@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -17,24 +16,24 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/block_sink_interface.hpp"
-#include "ledger/chain/block.hpp"
+#include "core/bloom_filter.hpp"
+#include "core/bloom_filter_interface.hpp"
 
-#include <deque>
+#include <memory>
 
-class FakeBlockSink : public fetch::ledger::BlockSinkInterface
+namespace fetch {
+
+std::unique_ptr<BloomFilterInterface> BloomFilterInterface::Create(Type type)
 {
-public:
-  using BlockQueue = std::deque<fetch::ledger::Block>;
+  switch (type)
+  {
+  case Type::BASIC:
+    return std::make_unique<fetch::BasicBloomFilter>();
+  case Type::NULL_IMPL:
+    return std::make_unique<fetch::NullBloomFilter>();
+  }
 
-  /// @name Block Sink Interface
-  /// @{
-  void OnBlock(fetch::ledger::Block const &block) override;
-  /// @}
+  return nullptr;
+}
 
-  BlockQueue const &queue();
-  void              clear();
-
-private:
-  BlockQueue block_queue_{};
-};
+}  // namespace fetch

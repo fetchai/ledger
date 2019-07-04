@@ -74,7 +74,6 @@ public:
   void flip(std::size_t bit);
 
   Block bit(std::size_t block, std::size_t b) const;
-
   Block bit(std::size_t b) const;
 
   void set(std::size_t block, std::size_t bit, uint64_t val);
