@@ -53,7 +53,7 @@ HashSource::HashSource(HashSourceFactory::Functions const &hash_functions,
                        HashSourceFactory::Bytes const &    input)
   : data_{}
 {
-  // TODO(WK): lazily evaluate hashes
+  // TODO(LDGR-319): lazily evaluate hashes
   for (auto const &fn : hash_functions)
   {
     auto const hashes = fn(input);
@@ -336,19 +336,6 @@ void DummyBloomFilter::Add(Bytes const &)
 bool DummyBloomFilter::ReportFalsePositives(std::size_t)
 {
   return true;
-}
-
-std::unique_ptr<BloomFilterInterface> BloomFilterInterface::create(Type type)
-{
-  switch (type)
-  {
-  case Type::BASIC:
-    return std::make_unique<fetch::BasicBloomFilter>();
-  case Type::DUMMY:
-    return std::make_unique<fetch::DummyBloomFilter>();
-  }
-
-  return nullptr;
 }
 
 }  // namespace fetch
