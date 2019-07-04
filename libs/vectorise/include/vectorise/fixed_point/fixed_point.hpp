@@ -40,6 +40,8 @@ using fp32_t  = FixedPoint<16, 16>;
 using fp64_t  = FixedPoint<32, 32>;
 using fp128_t = FixedPoint<64, 64>;
 
+namespace {
+
 // struct for inferring what underlying types to use
 template <int T>
 struct TypeFromSize
@@ -169,6 +171,8 @@ constexpr inline int32_t HighestSetBit(T n_input)
   return static_cast<int32_t>((sizeof(uint64_t) * 8)) -
          static_cast<int32_t>(platform::CountLeadingZeroes64(n));
 }
+
+}  // namespace
 
 struct BaseFixedpointType
 {
