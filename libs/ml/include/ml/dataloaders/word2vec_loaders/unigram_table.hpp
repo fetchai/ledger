@@ -42,7 +42,7 @@ private:
 
 void UnigramTable::Reset(unsigned int size, std::vector<uint64_t> const &frequencies)
 {
-  if (size && frequencies.size())
+  if (size > 0u && !frequencies.empty())
   {
     data_.resize(size);
     double total(0);
