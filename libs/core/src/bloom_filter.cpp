@@ -286,17 +286,11 @@ BasicBloomFilter::~BasicBloomFilter() = default;
 BasicBloomFilter::BasicBloomFilter()
   : bits_(INITIAL_SIZE_IN_BITS)
   , hash_source_factory_(default_hash_functions)
-  , entry_count_{}
-  , positive_count_{}
-  , false_positive_count_{}
 {}
 
 BasicBloomFilter::BasicBloomFilter(Functions const &functions)
   : bits_(INITIAL_SIZE_IN_BITS)
   , hash_source_factory_(functions)
-  , entry_count_{}
-  , positive_count_{}
-  , false_positive_count_{}
 {}
 
 bool BasicBloomFilter::Match(Bytes const &element)
@@ -316,15 +310,18 @@ bool BasicBloomFilter::Match(Bytes const &element)
 
 void BasicBloomFilter::Add(Bytes const &element)
 {
-  bool       is_new_entry = false;
-  auto const source       = hash_source_factory_(element);
+  bool is_new_entry = false;
+
+  auto const source = hash_source_factory_(element);
   for (std::size_t const hash : source)
   {
     auto const bit_index = hash % bits_.size();
+
     if (!bits_.bit(bit_index))
     {
       is_new_entry = true;
     }
+
     bits_.set(bit_index, 1u);
   }
 

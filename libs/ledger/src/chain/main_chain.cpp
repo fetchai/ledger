@@ -63,7 +63,7 @@ void addBlockToBloomFilter(BloomFilter &bf, Block const &block)
 MainChain::MainChain(std::unique_ptr<BloomFilter> bloom_filter, Mode mode)
   : bloom_filter_(std::move(bloom_filter))
   , bloom_filter_false_positive_count_(telemetry::Registry::Instance().CreateCounter(
-        "ledger_main_chain_bloom_filter_false_positive_count"))
+        "ledger_main_chain_bloom_filter_false_positive_total"))
 {
   if (Mode::IN_MEMORY_DB != mode)
   {
@@ -1509,7 +1509,9 @@ DigestSet MainChain::DetectDuplicateTransactions(BlockHash const &starting_hash,
 
   auto const false_positives =
       static_cast<std::size_t>(potential_duplicates.size() - duplicates.size());
+
   bloom_filter_false_positive_count_->add(false_positives);
+
   if (!bloom_filter_->ReportFalsePositives(false_positives))
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Bloom filter false positive rate exceeded threshold");
