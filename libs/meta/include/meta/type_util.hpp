@@ -17,34 +17,49 @@
 //
 //------------------------------------------------------------------------------
 
+#include "meta/type_traits.hpp"
+
 #include <type_traits>
+#include <utility>
 
 namespace fetch {
 namespace type_util {
 
+template <class T>
+struct TypeConstant
+{
+  using type = T;
+};
+template <class T>
+using TypeConstantT = typename TypeConstant<T>::type;  // technically, an identity mapping
+
+template <template <class...> class F, class... List>
+struct Accumulate;
+template <template <class...> class F, class... List>
+using AccumulateT = typename Accumulate<F, List...>::type;
+
+template <template <class...> class F, class Last>
+struct Accumulate<F, Last> : TypeConstant<Last>
+{
+};
+
+template <template <class...> class F, class Car, class Cadr, class... Cddr>
+struct Accumulate<F, Car, Cadr, Cddr...> : TypeConstant<AccumulateT<F, F<Car, Cadr>, Cddr...>>
+{
+};
+
+template <class L, class R>
+struct And : std::conditional_t<bool(L::value), R, L>
+{
+};
+template <class L, class R>
+static constexpr auto AndV = And<L, R>::value;
+
 template <class... Ts>
-struct Conjunction;
+using Conjunction = AccumulateT<And, std::true_type, Ts...>;
 
 template <class... Ts>
 static constexpr auto ConjunctionV = Conjunction<Ts...>::value;
-
-template <class T, class... Ts>
-struct Conjunction<T, Ts...>
-{
-  enum : bool
-  {
-    value = T::value && ConjunctionV<Ts...>
-  };
-};
-
-template <>
-struct Conjunction<>
-{
-  enum : bool
-  {
-    value = true
-  };
-};
 
 template <template <class...> class F, class... Ts>
 using All = Conjunction<F<Ts>...>;
@@ -52,29 +67,18 @@ using All = Conjunction<F<Ts>...>;
 template <template <class...> class F, class... Ts>
 static constexpr auto AllV = All<F, Ts...>::value;
 
+template <class L, class R>
+struct Or : std::conditional_t<bool(L::value), L, R>
+{
+};
+template <class L, class R>
+static constexpr auto OrV = Or<L, R>::value;
+
 template <class... Ts>
-struct Disjunction;
+using Disjunction = AccumulateT<Or, std::false_type, Ts...>;
 
 template <class... Ts>
 static constexpr auto DisjunctionV = Disjunction<Ts...>::value;
-
-template <class T, class... Ts>
-struct Disjunction<T, Ts...>
-{
-  enum : bool
-  {
-    value = T::value || DisjunctionV<Ts...>
-  };
-};
-
-template <>
-struct Disjunction<>
-{
-  enum : bool
-  {
-    value = false
-  };
-};
 
 template <template <class...> class F, class... Ts>
 using Any = Disjunction<F<Ts>...>;
@@ -90,16 +94,128 @@ struct Bind
 };
 
 template <class T, class... Ts>
-struct IsAnyOf
-{
-  enum : bool
-  {
-    value = AnyV<Bind<std::is_same, T>::template type, Ts...>
-  };
-};
+using IsAnyOf = Any<Bind<std::is_same, T>::template type, Ts...>;
 
 template <class T, class... Ts>
 static constexpr auto IsAnyOfV = IsAnyOf<T, Ts...>::value;
+
+template <class T, template <class...> class Predicate>
+using Satisfies = Predicate<T>;
+
+template <class T, template <class...> class Predicate>
+static constexpr bool SatisfiesV = Satisfies<T, Predicate>::value;
+
+template <class T, template <class...> class... Predicates>
+using SatisfiesAll = Conjunction<Predicates<T>...>;
+
+template <class T, template <class...> class... Predicates>
+static constexpr bool SatisfiesAllV = SatisfiesAll<T, Predicates...>::value;
+
+template <class...>
+struct Switch;
+
+template <class... Clauses>
+using SwitchT = typename Switch<Clauses...>::type;
+
+template <class If, class Then, class... Else>
+struct Switch<If, Then, Else...> : std::conditional<If::value, Then, SwitchT<Else...>>
+{
+};
+
+template <class Default>
+struct Switch<Default> : TypeConstant<Default>
+{
+};
+
+template <>
+struct Switch<> : TypeConstant<void>
+{
+};
+
+template <class Source, class Dest>
+using CopyReferenceKind =
+    Switch<std::is_lvalue_reference<Source>, std::add_lvalue_reference_t<Dest>,
+           std::is_rvalue_reference<Source>, std::add_rvalue_reference_t<std::decay_t<Dest>>,
+           std::decay_t<Dest>>;
+
+template <class Source, class Dest>
+using CopyReferenceKindT = typename CopyReferenceKind<Source, Dest>::type;
+
+// Select<Type1, Type2...> provides member typedef type which is the leftmost Typen::type available.
+// It is an error if none of template parameters has member type named type.
+template <class... Clauses>
+struct Select;
+template <class... Clauses>
+using SelectT = typename Select<Clauses...>::type;
+
+template <class Car, class... Cdr>
+struct Select<Car, Cdr...>
+  : std::conditional_t<meta::HasMemberTypeV<Car>, meta::MemberType<Car>, Select<Cdr...>>
+{
+};
+
+template <class...>
+struct Head;
+
+template <class... Ts>
+using HeadT = typename Head<Ts...>::type;
+
+template <class Car, class... Cdr>
+struct Head<Car, Cdr...> : TypeConstant<Car>
+{
+};
+
+template <class L, class R>
+using Second = TypeConstant<R>;
+template <class L, class R>
+using SecondT = typename Second<L, R>::type;
+
+template <class... Ts>
+using Last = AccumulateT<Second, Ts...>;
+
+template <class... Ts>
+using LastT = typename Last<Ts...>::type;
+
+template <class T>
+struct HeadArgument;
+template <class T>
+using HeadArgumentT = typename HeadArgument<T>::type;
+
+template <template <class...> class Ctor, class... Args>
+struct HeadArgument<Ctor<Args...>> : Head<Args...>
+{
+};
+
+template <class RV, class... Args>
+struct HeadArgument<RV(Args...)> : Head<Args...>
+{
+};
+
+template <class RV, class... Args>
+struct HeadArgument<RV (&)(Args...)> : Head<Args...>
+{
+};
+
+template <class RV, class... Args>
+struct HeadArgument<RV (*)(Args...)> : Head<Args...>
+{
+};
+
+template <class T>
+struct ReturnZero
+{
+  static constexpr T Call() noexcept(std::is_nothrow_constructible<T>::value)
+  {
+    return T{};
+  }
+};
+
+template <>
+struct ReturnZero<void>
+{
+  static constexpr void Call() noexcept
+  {}
+};
 
 }  // namespace type_util
 }  // namespace fetch

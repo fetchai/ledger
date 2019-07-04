@@ -17,7 +17,11 @@
 //
 //------------------------------------------------------------------------------
 
+#include "meta/type_util.hpp"
 #include "vm/node.hpp"
+
+#include <string>
+#include <type_traits>
 
 namespace fetch {
 namespace vm {
@@ -146,46 +150,48 @@ private:
   FunctionPtr              function_;
   std::vector<std::string> errors_;
 
-  void        AddError(uint16_t line, std::string const &message);
-  void        BuildBlock(BlockNodePtr const &block_node);
-  void        BuildFile(BlockNodePtr const &file_node);
-  void        BuildFunctionDefinition(BlockNodePtr const &parent_block_node,
-                                      BlockNodePtr const &function_definition_node);
-  void        BuildWhileStatement(BlockNodePtr const &while_statement_node);
-  void        BuildForStatement(BlockNodePtr const &for_statement_node);
-  void        BuildIfStatement(NodePtr const &if_statement_node);
-  void        AnnotateBlock(BlockNodePtr const &block_node);
-  void        AnnotateFile(BlockNodePtr const &file_node);
-  void        AnnotateFunctionDefinitionStatement(BlockNodePtr const &function_definition_node);
-  void        AnnotateWhileStatement(BlockNodePtr const &while_statement_node);
-  void        AnnotateForStatement(BlockNodePtr const &for_statement_node);
-  void        AnnotateIfStatement(NodePtr const &if_statement_node);
-  void        AnnotateVarStatement(BlockNodePtr const &parent_block_node,
-                                   NodePtr const &     var_statement_node);
-  void        AnnotateReturnStatement(NodePtr const &return_statement_node);
-  void        AnnotateConditionalBlock(BlockNodePtr const &conditional_node);
-  bool        AnnotateTypeExpression(ExpressionNodePtr const &node);
-  bool        AnnotateAssignOp(ExpressionNodePtr const &node);
-  bool        AnnotateInplaceArithmeticOp(ExpressionNodePtr const &node);
-  bool        AnnotateInplaceModuloOp(ExpressionNodePtr const &node);
-  bool        AnnotateLHSExpression(ExpressionNodePtr const &parent, ExpressionNodePtr const &lhs);
-  bool        AnnotateExpression(ExpressionNodePtr const &node);
-  bool        AnnotateEqualityOp(ExpressionNodePtr const &node);
-  bool        AnnotateRelationalOp(ExpressionNodePtr const &node);
-  bool        AnnotateBinaryLogicalOp(ExpressionNodePtr const &node);
-  bool        AnnotateUnaryLogicalOp(ExpressionNodePtr const &node);
-  bool        AnnotatePrefixPostfixOp(ExpressionNodePtr const &node);
-  bool        AnnotateNegateOp(ExpressionNodePtr const &node);
-  bool        AnnotateArithmeticOp(ExpressionNodePtr const &node);
-  bool        AnnotateModuloOp(ExpressionNodePtr const &node);
-  bool        AnnotateIndexOp(ExpressionNodePtr const &node);
-  bool        AnnotateDotOp(ExpressionNodePtr const &node);
-  bool        AnnotateInvokeOp(ExpressionNodePtr const &node);
-  bool        TestBlock(BlockNodePtr const &block_node);
-  bool        IsWriteable(ExpressionNodePtr const &lhs);
-  bool        AnnotateArithmetic(ExpressionNodePtr const &node, ExpressionNodePtr const &lhs,
-                                 ExpressionNodePtr const &rhs);
-  TypePtr     ConvertType(TypePtr const &type, TypePtr const &instantiated_template_type);
+  void    AddError(uint16_t line, std::string const &message);
+  void    BuildBlock(BlockNodePtr const &block_node);
+  void    BuildFile(BlockNodePtr const &file_node);
+  void    BuildFunctionDefinition(BlockNodePtr const &parent_block_node,
+                                  BlockNodePtr const &function_definition_node);
+  void    BuildWhileStatement(BlockNodePtr const &while_statement_node);
+  void    BuildForStatement(BlockNodePtr const &for_statement_node);
+  void    BuildIfStatement(NodePtr const &if_statement_node);
+  void    AnnotateBlock(BlockNodePtr const &block_node);
+  void    AnnotateFile(BlockNodePtr const &file_node);
+  void    AnnotateFunctionDefinitionStatement(BlockNodePtr const &function_definition_node);
+  void    AnnotateWhileStatement(BlockNodePtr const &while_statement_node);
+  void    AnnotateForStatement(BlockNodePtr const &for_statement_node);
+  void    AnnotateIfStatement(NodePtr const &if_statement_node);
+  void    AnnotateVarStatement(BlockNodePtr const &parent_block_node,
+                               NodePtr const &     var_statement_node);
+  void    AnnotateReturnStatement(NodePtr const &return_statement_node);
+  void    AnnotateConditionalBlock(BlockNodePtr const &conditional_node);
+  bool    AnnotateTypeExpression(ExpressionNodePtr const &node);
+  bool    AnnotateAssignOp(ExpressionNodePtr const &node);
+  bool    AnnotateInplaceArithmeticOp(ExpressionNodePtr const &node);
+  bool    AnnotateInplaceModuloOp(ExpressionNodePtr const &node);
+  bool    AnnotateLHSExpression(ExpressionNodePtr const &parent, ExpressionNodePtr const &lhs);
+  bool    AnnotateExpression(ExpressionNodePtr const &node);
+  bool    AnnotateEqualityOp(ExpressionNodePtr const &node);
+  bool    AnnotateRelationalOp(ExpressionNodePtr const &node);
+  bool    AnnotateBinaryLogicalOp(ExpressionNodePtr const &node);
+  bool    AnnotateUnaryLogicalOp(ExpressionNodePtr const &node);
+  bool    AnnotatePrefixPostfixOp(ExpressionNodePtr const &node);
+  bool    AnnotateNegateOp(ExpressionNodePtr const &node);
+  bool    AnnotateArithmeticOp(ExpressionNodePtr const &node);
+  bool    AnnotateModuloOp(ExpressionNodePtr const &node);
+  bool    AnnotateIndexOp(ExpressionNodePtr const &node);
+  bool    AnnotateDotOp(ExpressionNodePtr const &node);
+  bool    AnnotateInvokeOp(ExpressionNodePtr const &node);
+  bool    AnnotateArrayExpr(ExpressionNodePtr const &node);
+  bool    TestBlock(BlockNodePtr const &block_node);
+  bool    IsWriteable(ExpressionNodePtr const &lhs);
+  bool    AnnotateArithmetic(ExpressionNodePtr const &node, ExpressionNodePtr const &lhs,
+                             ExpressionNodePtr const &rhs);
+  TypePtr ConvertType(TypePtr const &type, TypePtr const &instantiated_template_type);
+
   bool        MatchType(TypePtr const &supplied_type, TypePtr const &expected_type) const;
   bool        MatchTypes(TypePtr const &type, TypePtrArray const &supplied_types,
                          TypePtrArray const &expected_types, TypePtrArray &actual_types);
@@ -314,6 +320,53 @@ private:
     bool const is_instantiation = type->IsInstantiation();
     TypePtr    t                = is_instantiation ? type->template_type : type;
     return IsOperatorEnabled(t->right_ops, op);
+  }
+
+  bool IsArray(TypePtr const &type) const noexcept
+  {
+    return type && type->IsInstantiation() && type->template_type == array_type_;
+  }
+
+  bool CloseEmptyArray(uint16_t line, TypePtr const &lhs_type, ExpressionNodePtr &rhs,
+                       std::string const &message = "incompatible types")
+  {
+    if (IsEmptyArray(rhs))
+    {
+      if (!IsArray(lhs_type))
+      {
+        AddError(line, message);
+        return false;
+      }
+      rhs->type = lhs_type;
+    }
+    return true;
+  }
+
+  template <class... TailParams>
+  std::enable_if_t<type_util::ConjunctionV<std::is_same<TailParams, std::string>...>, TypePtr>
+  InstantiateTemplate(std::uint16_t line, std::string template_name, std::string head_param,
+                      TailParams... tail_params)
+  {
+    std::string type_name = value_util::Accumulate(
+                                [](std::string type_name, auto const &param) {
+                                  return std::move(type_name) + ", " + param;
+                                },
+                                template_name + '<' + head_param, tail_params...) +
+                            '>';
+
+    auto ret_val = CreateExpressionNode(NodeKind::Template, std::move(type_name), line);
+    ret_val->children.push_back(
+        CreateExpressionNode(NodeKind::Identifier, std::move(template_name), line));
+    ret_val->children.push_back(
+        CreateExpressionNode(NodeKind::Identifier, std::move(head_param), line));
+    value_util::ForEach(
+        [&](std::string param) {
+          ret_val->children.push_back(
+              CreateExpressionNode(NodeKind::Identifier, std::move(param), line));
+        },
+        std::move(tail_params)...);
+
+    return FindType(ret_val);
   }
 };
 

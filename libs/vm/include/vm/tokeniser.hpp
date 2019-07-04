@@ -23,9 +23,9 @@
 #define yyHEADER_H 1
 #define yyIN_HEADER 1
 
-#line 6 "../include/vm/tokeniser.hpp"
+#line 5 "../include/vm/tokeniser.hpp"
 
-#line 8 "../include/vm/tokeniser.hpp"
+#line 7 "../include/vm/tokeniser.hpp"
 
 #define  YY_INT_ALIGNED short int
 
@@ -527,7 +527,7 @@ extern int yylex \
 #line 227 "tokeniser.l"
 
 
-#line 510 "../include/vm/tokeniser.hpp"
+#line 509 "../include/vm/tokeniser.hpp"
 #undef yyIN_HEADER
 #endif /* yyHEADER_H */
 // clang-format on

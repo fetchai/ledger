@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "meta/value_util.hpp"
 #include "vm/common.hpp"
 #include "vm/token.hpp"
 
@@ -55,26 +56,29 @@ enum class SymbolKind : uint8_t
 
 struct Symbol
 {
-  Symbol(SymbolKind symbol_kind__, std::string const &name__)
-  {
-    symbol_kind = symbol_kind__;
-    name        = name__;
-  }
+  Symbol(SymbolKind symbol_kind__, std::string name)
+    : symbol_kind{symbol_kind__}
+    , name{std::move(name)}
+  {}
+
   virtual ~Symbol() = default;
+
   virtual void Reset()
   {}
-  bool IsType() const
+
+  constexpr bool IsType() const noexcept
   {
-    return (symbol_kind == SymbolKind::Type);
+    return symbol_kind == SymbolKind::Type;
   }
-  bool IsVariable() const
+  constexpr bool IsVariable() const noexcept
   {
-    return (symbol_kind == SymbolKind::Variable);
+    return symbol_kind == SymbolKind::Variable;
   }
-  bool IsFunctionGroup() const
+  constexpr bool IsFunctionGroup() const noexcept
   {
-    return (symbol_kind == SymbolKind::FunctionGroup);
+    return symbol_kind == SymbolKind::FunctionGroup;
   }
+
   SymbolKind  symbol_kind;
   std::string name;
 };
@@ -86,6 +90,7 @@ struct SymbolTable
   {
     map[symbol->name] = symbol;
   }
+
   SymbolPtr Find(std::string const &name) const
   {
     auto it = map.find(name);
@@ -95,6 +100,7 @@ struct SymbolTable
     }
     return nullptr;
   }
+
   void Reset()
   {
     for (auto &it : map)
@@ -102,6 +108,7 @@ struct SymbolTable
       it.second->Reset();
     }
   }
+
   std::unordered_map<std::string, SymbolPtr> map;
 };
 using SymbolTablePtr = std::shared_ptr<SymbolTable>;
@@ -117,51 +124,53 @@ using TypePtrArray = std::vector<TypePtr>;
 using Operators    = std::unordered_set<Operator>;
 struct Type : public Symbol
 {
-  Type(TypeKind type_kind__, std::string const &name)
-    : Symbol(SymbolKind::Type, name)
-  {
-    type_kind = type_kind__;
-    id        = TypeIds::Unknown;
-  }
+  Type(TypeKind type_kind, std::string name)
+    : Symbol(SymbolKind::Type, std::move(name))
+    , type_kind{type_kind}
+  {}
+
   virtual ~Type() = default;
+
   virtual void Reset() override
   {
     if (symbols)
     {
       symbols->Reset();
     }
-    template_type = nullptr;
+    template_type.reset();
     types.clear();
   }
-  bool IsNull() const
+
+  bool IsNull() const noexcept
   {
-    return (name == "Null");
+    return name == "Null";
   }
-  bool IsVoid() const
+  bool IsVoid() const noexcept
   {
-    return (name == "Void");
+    return name == "Void";
   }
-  bool IsPrimitive() const
+  constexpr bool IsPrimitive() const noexcept
   {
-    return (type_kind == TypeKind::Primitive);
+    return type_kind == TypeKind::Primitive;
   }
-  bool IsMeta() const
+  constexpr bool IsMeta() const noexcept
   {
-    return (type_kind == TypeKind::Meta);
+    return type_kind == TypeKind::Meta;
   }
-  bool IsGroup() const
+  constexpr bool IsGroup() const noexcept
   {
-    return (type_kind == TypeKind::Group);
+    return type_kind == TypeKind::Group;
   }
-  bool IsClass() const
+  constexpr bool IsClass() const noexcept
   {
-    return (type_kind == TypeKind::Class);
+    return type_kind == TypeKind::Class;
   }
-  bool IsInstantiation() const
+  constexpr bool IsInstantiation() const noexcept
   {
-    return ((type_kind == TypeKind::Instantiation) ||
-            (type_kind == TypeKind::UserDefinedInstantiation));
+    return value_util::IsAnyOf(type_kind, TypeKind::Instantiation,
+                               TypeKind::UserDefinedInstantiation);
   }
+
   TypeKind       type_kind;
   SymbolTablePtr symbols;
   TypePtr        template_type;
@@ -169,7 +178,7 @@ struct Type : public Symbol
   Operators      ops;
   Operators      left_ops;
   Operators      right_ops;
-  TypeId         id;
+  TypeId         id = TypeIds::Unknown;
 };
 
 inline TypePtr CreateType(TypeKind type_kind, std::string const &name)
@@ -278,15 +287,24 @@ using NodePtr      = std::shared_ptr<Node>;
 using NodePtrArray = std::vector<NodePtr>;
 struct Node
 {
-  Node(NodeCategory node_category__, NodeKind node_kind__, std::string const &text__,
-       uint16_t line__)
-  {
-    node_category = node_category__;
-    node_kind     = node_kind__;
-    text          = text__;
-    line          = line__;
-  }
+  Node(NodeCategory node_category, NodeKind node_kind, std::string text, uint16_t line)
+    : node_category{node_category}
+    , node_kind{node_kind}
+    , text{std::move(text)}
+    , line{line}
+  {}
+
+  Node(NodeCategory node_category, NodeKind node_kind, std::string text, uint16_t line,
+       NodePtrArray children)
+    : node_category{node_category}
+    , node_kind{node_kind}
+    , text{std::move(text)}
+    , line{line}
+    , children{std::move(children)}
+  {}
+
   virtual ~Node() = default;
+
   virtual void Reset()
   {
     for (auto &child : children)
@@ -297,6 +315,7 @@ struct Node
       }
     }
   }
+
   bool IsBasicNode() const
   {
     return (node_category == NodeCategory::Basic);
@@ -309,6 +328,7 @@ struct Node
   {
     return (node_category == NodeCategory::Expression);
   }
+
   NodeCategory node_category;
   NodeKind     node_kind;
   std::string  text;
@@ -323,12 +343,12 @@ inline NodePtr CreateBasicNode(NodeKind node_kind, std::string const &text, uint
 
 struct BlockNode : public Node
 {
-  BlockNode(NodeKind node_kind, std::string const &text, uint16_t line)
-    : Node(NodeCategory::Block, node_kind, text, line)
-  {
-    block_terminator_line = 0;
-  }
+  BlockNode(NodeKind node_kind, std::string text, uint16_t line)
+    : Node(NodeCategory::Block, node_kind, std::move(text), line)
+  {}
+
   virtual ~BlockNode() = default;
+
   virtual void Reset() override
   {
     Node::Reset();
@@ -341,36 +361,36 @@ struct BlockNode : public Node
       symbols->Reset();
     }
   }
+
   NodePtrArray   block_children;
   std::string    block_terminator_text;
-  uint16_t       block_terminator_line;
+  uint16_t       block_terminator_line = 0;
   SymbolTablePtr symbols;
 };
 using BlockNodePtr      = std::shared_ptr<BlockNode>;
 using BlockNodePtrArray = std::vector<BlockNodePtr>;
 
-inline BlockNodePtr CreateBlockNode(NodeKind node_kind, std::string const &text, uint16_t line)
+inline BlockNodePtr CreateBlockNode(NodeKind node_kind, std::string text, uint16_t line)
 {
-  return std::make_shared<BlockNode>(BlockNode(node_kind, text, line));
+  return std::make_shared<BlockNode>(BlockNode(node_kind, std::move(text), line));
 }
 
 struct ExpressionNode : public Node
 {
-  ExpressionNode(NodeKind node_kind, std::string const &text, uint16_t line)
-    : Node(NodeCategory::Expression, node_kind, text, line)
-  {
-    expression_kind              = ExpressionKind::Unknown;
-    function_invoked_on_instance = false;
-  }
+  ExpressionNode(NodeKind node_kind, std::string text, uint16_t line)
+    : Node(NodeCategory::Expression, node_kind, std::move(text), line)
+  {}
+  ExpressionNode(NodeKind node_kind, std::string text, uint16_t line, NodePtrArray children)
+    : Node(NodeCategory::Expression, node_kind, std::move(text), line, std::move(children))
+  {}
   virtual ~ExpressionNode() = default;
+
   virtual void Reset() override
   {
     Node::Reset();
-    type     = nullptr;
-    variable = nullptr;
-    fg       = nullptr;
-    function = nullptr;
+    value_util::ZeroAll(type, variable, fg, function);
   }
+
   bool IsVariableExpression() const
   {
     return (expression_kind == ExpressionKind::Variable);
@@ -391,19 +411,26 @@ struct ExpressionNode : public Node
   {
     return (expression_kind == ExpressionKind::FunctionGroup);
   }
-  ExpressionKind   expression_kind;
+
+  ExpressionKind   expression_kind = ExpressionKind::Unknown;
   TypePtr          type;
   VariablePtr      variable;
   FunctionGroupPtr fg;
-  bool             function_invoked_on_instance;
+  bool             function_invoked_on_instance = false;
   FunctionPtr      function;
 };
 using ExpressionNodePtr = std::shared_ptr<ExpressionNode>;
 
-inline ExpressionNodePtr CreateExpressionNode(NodeKind node_kind, std::string const &text,
-                                              uint16_t line)
+inline ExpressionNodePtr CreateExpressionNode(NodeKind node_kind, std::string text, uint16_t line)
 {
-  return std::make_shared<ExpressionNode>(ExpressionNode(node_kind, text, line));
+  return std::make_shared<ExpressionNode>(ExpressionNode(node_kind, std::move(text), line));
+}
+
+inline ExpressionNodePtr CreateExpressionNode(NodeKind node_kind, std::string text, uint16_t line,
+                                              NodePtrArray children)
+{
+  return std::make_shared<ExpressionNode>(
+      ExpressionNode(node_kind, std::move(text), line, std::move(children)));
 }
 
 inline BlockNodePtr ConvertToBlockNodePtr(NodePtr const &node)
@@ -414,6 +441,11 @@ inline BlockNodePtr ConvertToBlockNodePtr(NodePtr const &node)
 inline ExpressionNodePtr ConvertToExpressionNodePtr(NodePtr const &node)
 {
   return std::static_pointer_cast<ExpressionNode>(node);
+}
+
+inline bool IsEmptyArray(ExpressionNodePtr const &node) noexcept
+{
+  return node->node_kind == NodeKind::ArraySeq && node->children.empty();
 }
 
 }  // namespace vm

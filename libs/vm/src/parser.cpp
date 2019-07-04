@@ -58,15 +58,7 @@ BlockNodePtr Parser::Parse(std::string const &filename, std::string const &sourc
   rpn_.clear();
   infix_stack_.clear();
 
-  if (ok == false)
-  {
-    root = nullptr;
-    return nullptr;
-  }
-  else
-  {
-    return root;
-  }
+  return value_util::And(ok, root);
 }
 
 void Parser::Tokenise(std::string const &source)
@@ -364,12 +356,12 @@ BlockNodePtr Parser::ParseFunctionDefinition()
     function_definition_node->children.push_back(return_type_node);
     ok = true;
   } while (false);
-  if (ok == false)
+  if (!ok)
   {
     SkipFunctionDefinition();
     return nullptr;
   }
-  if (ParseBlock(*function_definition_node) == false)
+  if (!ParseBlock(*function_definition_node))
   {
     return nullptr;
   }
@@ -539,7 +531,7 @@ BlockNodePtr Parser::ParseWhileStatement()
     return nullptr;
   }
   while_statement_node->children.push_back(std::move(expression));
-  if (ParseBlock(*while_statement_node) == false)
+  if (!ParseBlock(*while_statement_node))
   {
     return nullptr;
   }
@@ -613,7 +605,7 @@ BlockNodePtr Parser::ParseForStatement()
     AddError("expected ')'");
     return nullptr;
   }
-  if (ParseBlock(*for_statement_node) == false)
+  if (!ParseBlock(*for_statement_node))
   {
     return nullptr;
   }
@@ -642,7 +634,7 @@ NodePtr Parser::ParseIfStatement()
         return nullptr;
       }
       if_node->children.push_back(std::move(expression_node));
-      if (ParseBlock(*if_node) == false)
+      if (!ParseBlock(*if_node))
       {
         return nullptr;
       }
@@ -658,7 +650,7 @@ NodePtr Parser::ParseIfStatement()
         return nullptr;
       }
       elseif_node->children.push_back(std::move(expression_node));
-      if (ParseBlock(*elseif_node) == false)
+      if (!ParseBlock(*elseif_node))
       {
         return nullptr;
       }
@@ -668,7 +660,7 @@ NodePtr Parser::ParseIfStatement()
     else if (token_->kind == Token::Kind::Else)
     {
       BlockNodePtr else_node = CreateBlockNode(NodeKind::Else, token_->text, token_->line);
-      if (ParseBlock(*else_node) == false)
+      if (!ParseBlock(*else_node))
       {
         return nullptr;
       }
@@ -725,7 +717,7 @@ NodePtr Parser::ParseVarStatement()
     assign = true;
     Next();
   }
-  if (token_->kind != Token::Kind::SemiColon)
+  if (token_->kind != Token::Kind::Semicolon)
   {
     if (assign)
     {
@@ -741,12 +733,12 @@ NodePtr Parser::ParseVarStatement()
     }
     return nullptr;
   }
-  if ((type == false) && (assign == false))
+  if (!type && !assign)
   {
     AddError("expected ':' or '='");
     return nullptr;
   }
-  if (type == false)
+  if (!type)
   {
     var_statement_node->node_kind = NodeKind::VarDeclarationTypelessAssignmentStatement;
   }
@@ -770,7 +762,7 @@ NodePtr Parser::ParseReturnStatement()
   NodePtr return_statement_node =
       CreateBasicNode(NodeKind::ReturnStatement, token_->text, token_->line);
   Next();
-  if (token_->kind == Token::Kind::SemiColon)
+  if (token_->kind == Token::Kind::Semicolon)
   {
     return return_statement_node;
   }
@@ -786,7 +778,7 @@ NodePtr Parser::ParseReturnStatement()
     return nullptr;
   }
   Next();
-  if (token_->kind != Token::Kind::SemiColon)
+  if (token_->kind != Token::Kind::Semicolon)
   {
     AddError("expected ';'");
     return nullptr;
@@ -808,7 +800,7 @@ NodePtr Parser::ParseBreakStatement()
   NodePtr break_statement_node =
       CreateBasicNode(NodeKind::BreakStatement, token_->text, token_->line);
   Next();
-  if (token_->kind != Token::Kind::SemiColon)
+  if (token_->kind != Token::Kind::Semicolon)
   {
     AddError("expected ';'");
     return nullptr;
@@ -829,7 +821,7 @@ NodePtr Parser::ParseContinueStatement()
   NodePtr continue_statement_node =
       CreateBasicNode(NodeKind::ContinueStatement, token_->text, token_->line);
   Next();
-  if (token_->kind != Token::Kind::SemiColon)
+  if (token_->kind != Token::Kind::Semicolon)
   {
     AddError("expected ';'");
     return nullptr;
@@ -860,7 +852,7 @@ ExpressionNodePtr Parser::ParseExpressionStatement()
     return nullptr;
   }
   Next();
-  if (token_->kind == Token::Kind::SemiColon)
+  if (token_->kind == Token::Kind::Semicolon)
   {
     // Non-assignment expression statement
     return lhs;
@@ -905,7 +897,7 @@ ExpressionNodePtr Parser::ParseExpressionStatement()
   assignment_node->children.push_back(std::move(lhs));
   assignment_node->children.push_back(std::move(rhs));
   Next();
-  if (token_->kind == Token::Kind::SemiColon)
+  if (token_->kind == Token::Kind::Semicolon)
   {
     return assignment_node;
   }
@@ -915,7 +907,7 @@ ExpressionNodePtr Parser::ParseExpressionStatement()
 
 void Parser::GoToNextStatement()
 {
-  while ((token_->kind != Token::Kind::EndOfInput) && (token_->kind != Token::Kind::SemiColon))
+  while ((token_->kind != Token::Kind::EndOfInput) && (token_->kind != Token::Kind::Semicolon))
   {
     if ((token_->kind == Token::Kind::AnnotationIdentifier) ||
         (token_->kind == Token::Kind::Function) || (token_->kind == Token::Kind::While) ||
@@ -955,7 +947,7 @@ ExpressionNodePtr Parser::ParseType()
   std::string       name = token_->text;
   ExpressionNodePtr identifier_node =
       CreateExpressionNode(NodeKind::Identifier, token_->text, token_->line);
-  if (IsTemplateName(name) == false)
+  if (!IsTemplateName(name))
   {
     return identifier_node;
   }
@@ -997,8 +989,7 @@ ExpressionNodePtr Parser::ParseType()
 
 ExpressionNodePtr Parser::ParseConditionalExpression()
 {
-  Next();
-  if (token_->kind != Token::Kind::LeftParenthesis)
+  if (!MatchLiteral(Token::Kind::LeftParenthesis))
   {
     AddError("expected '('");
     return nullptr;
@@ -1011,10 +1002,7 @@ ExpressionNodePtr Parser::ParseExpression(bool is_conditional_expression)
 {
   state_                       = State::PreOperand;
   found_expression_terminator_ = false;
-  groups_.clear();
-  operators_.clear();
-  rpn_.clear();
-  infix_stack_.clear();
+  value_util::ClearAll(groups_, operators_, rpn_, infix_stack_);
 
   do
   {
@@ -1292,7 +1280,7 @@ ExpressionNodePtr Parser::ParseExpression(bool is_conditional_expression)
     case Token::Kind::RightParenthesis:
     case Token::Kind::RightSquareBracket:
     {
-      if (HandleCloser(is_conditional_expression) == false)
+      if (!HandleCloser(is_conditional_expression))
       {
         return nullptr;
       }
@@ -1308,11 +1296,19 @@ ExpressionNodePtr Parser::ParseExpression(bool is_conditional_expression)
     }
     case Token::Kind::Comma:
     {
-      if (HandleComma() == false)
+      if (!HandleComma())
       {
         return nullptr;
       }
       break;
+    }
+    case Token::Kind::Semicolon:
+    {
+      if (HandleSemicolon())
+      {
+        break;
+      }
+      // fallback to default:
     }
     default:
     {
@@ -1332,7 +1328,7 @@ ExpressionNodePtr Parser::ParseExpression(bool is_conditional_expression)
       break;
     }
     }  // switch
-  } while (found_expression_terminator_ == false);
+  } while (!found_expression_terminator_);
   if (groups_.size())
   {
     Expr const &groupop = operators_[groups_.back()];
@@ -1390,7 +1386,7 @@ bool Parser::HandleIdentifier()
     return true;
   }
   std::string name;
-  if (ParseExpressionIdentifier(name) == false)
+  if (!ParseExpressionIdentifier(name))
   {
     return false;
   }
@@ -1402,7 +1398,7 @@ bool Parser::ParseExpressionIdentifier(std::string &name)
 {
   AddOperand(NodeKind::Identifier);
   name = token_->text;
-  if (IsTemplateName(name) == false)
+  if (!IsTemplateName(name))
   {
     return true;
   }
@@ -1423,7 +1419,7 @@ bool Parser::ParseExpressionIdentifier(std::string &name)
       return false;
     }
     std::string subtypename;
-    if (ParseExpressionIdentifier(subtypename) == false)
+    if (!ParseExpressionIdentifier(subtypename))
     {
       return false;
     }
@@ -1556,11 +1552,8 @@ bool Parser::HandleDot()
 
 bool Parser::HandleLeftSquareBracket()
 {
-  if (state_ == State::PreOperand)
-  {
-    return HandleArrayExpression();
-  }
-  return HandleOpener(NodeKind::Unknown, NodeKind::Index, Token::Kind::RightSquareBracket, "]");
+  NodeKind node_kind = state_ == State::PreOperand ? NodeKind::ArraySeq : NodeKind::Unknown;
+  return HandleOpener(node_kind, NodeKind::Index, Token::Kind::RightSquareBracket, "]");
 }
 
 bool Parser::MatchLiteral(Token::Kind literal_kind)
@@ -1575,8 +1568,23 @@ bool Parser::HandleArrayExpression()
   // Left square bracket has been already consumed.
   //
   // Array ::= ArraySequence | ArrayRepetition | ArrayEmpty
-  return Either(&Parser::HandleArraySequence, &Parser::HandleArrayRepetition,
-                &Parser::HandleArrayEmpty);
+
+  // capture current continuation
+  auto rpn                 = rpn_;
+  auto other_lists_storage = value_util::KeepValues(groups_, operators_, infix_stack_);
+
+  // the production rule from the comment above
+  auto ret_val = Either(&Parser::HandleArraySequence, &Parser::HandleArrayRepetition,
+                        &Parser::HandleArrayEmpty);
+
+  if (ret_val)
+  {
+    // rpn_'s top now contains the parsed array expression
+    rpn.push_back(std::move(rpn_.back()));
+  }
+
+  rpn_ = std::move(rpn);
+  return ret_val;
 }
 
 bool Parser::HandleArraySequence()
@@ -1597,6 +1605,7 @@ bool Parser::HandleArraySequence()
     }
     else
     {
+      Undo();
       element.reset();
     }
   }
@@ -1631,9 +1640,8 @@ bool Parser::HandleArrayRepetition()
     return false;
   }
 
-  auto amount{ParseExpression()};  // Number
-  if (!amount
-      || !MatchLiteral(Token::Kind::RightSquareBracket))  // "]"
+  auto amount{ParseExpression()};                                 // Number
+  if (!amount || !MatchLiteral(Token::Kind::RightSquareBracket))  // "]"
   {
     return false;
   }
@@ -1646,6 +1654,25 @@ bool Parser::HandleArrayRepetition()
   expr.node                  = CreateExpressionNode(NodeKind::ArrayMul,
                                    '[' + repeated_element->text + "; " + amount->text + ']', line,
                                    {repeated_element, amount});
+  expr.node->expression_kind = ExpressionKind::RV;
+  rpn_.push_back(std::move(expr));
+
+  return true;
+}
+
+bool Parser::HandleArrayEmpty()
+{
+  if (!MatchLiteral(Token::Kind::RightSquareBracket))
+  {
+    return false;
+  }
+
+  static const OpInfo array_empty_info{0, Association::Left, 0};
+
+  Expr expr{};
+  expr.is_operator           = true;
+  expr.op_info               = array_empty_info;
+  expr.node                  = CreateExpressionNode(NodeKind::ArraySeq, "[]", token_->line);
   expr.node->expression_kind = ExpressionKind::RV;
   rpn_.push_back(std::move(expr));
 
@@ -1710,23 +1737,24 @@ bool Parser::HandleCloser(bool is_conditional_expression)
       // Non-empty group
       if (state_ == State::PreOperand)
       {
-        AddError("expected expression");
-        return false;
+        return AddError("expected expression");
       }
-      (topop.op_info.arity)++;
+      if (topop.node->node_kind != NodeKind::ArrayMul)
+      {
+        ++topop.op_info.arity;
+      }
     }
     else
     {
       // Empty group
-      if ((groupop.node->node_kind == NodeKind::ParenthesisGroup) ||
-          (groupop.node->node_kind == NodeKind::Index))
+      if (groupop.node->node_kind == NodeKind::ParenthesisGroup ||
+          groupop.node->node_kind == NodeKind::Index)
       {
-        AddError("expected expression");
-        return false;
+        return AddError("expected expression");
       }
     }
-    if ((groupop.node->node_kind == NodeKind::ParenthesisGroup) && (groups_.size() == 1) &&
-        (is_conditional_expression))
+    if (is_conditional_expression && groupop.node->node_kind == NodeKind::ParenthesisGroup &&
+        groups_.size() == 1)
     {
       // We've found the final closing bracket of a conditional expression
       Next();
@@ -1739,6 +1767,35 @@ bool Parser::HandleCloser(bool is_conditional_expression)
   }
   state_ = State::PostOperand;
   return true;
+}
+
+bool Parser::HandleSemicolon()
+{
+  if (state_ == State::PostOperand && !groups_.empty())
+  {
+    const auto operator_index{groups_.back()};
+    Expr &     groupop = operators_[operator_index];
+    if (groupop.node->node_kind == NodeKind::ArraySeq)
+    {
+      // this all happens inside an array expression, but semicolon is the delimiter
+      // so changing the expression kind
+      groupop.node->node_kind = NodeKind::ArrayMul;
+      groupop.op_info.arity   = 2;
+      while (operators_.size() > operator_index + 1)
+      {
+        rpn_.push_back(std::move(operators_.back()));
+        operators_.pop_back();
+      }
+      Expr &topop           = operators_.back();
+      topop.node->node_kind = NodeKind::ArrayMul;
+      topop.op_info.arity   = 2;
+      state_                = State::PreOperand;
+      return true;
+    }
+  }
+  // this is not a known case of a semicolon inside the expression,
+  // return to ParseExpression() and fallback to default:
+  return false;
 }
 
 bool Parser::HandleComma()
@@ -1755,11 +1812,18 @@ bool Parser::HandleComma()
     return true;
   }
   Expr const groupop = operators_[groups_.back()];
-  if (groupop.node->node_kind == NodeKind::ParenthesisGroup)
+  switch (groupop.node->node_kind)
   {
-    // Commas are not allowed inside a parenthesis group
-    AddError("");
-    return false;
+  case NodeKind::ParenthesisGroup:
+    // commas are not allowed inside a parenthesis group
+    return AddError("");
+
+  case NodeKind::ArrayMul:
+    // neither they are in semicolon-array expressions
+    return AddError("comma and semicolon inside the same array expression");
+
+  default:
+    break;
   }
   while (operators_.size())
   {
@@ -1848,7 +1912,7 @@ void Parser::AddOperand(NodeKind kind)
   rpn_.push_back(std::move(expr));
 }
 
-void Parser::AddError(std::string const &message)
+bool Parser::AddError(std::string const &message)
 {
   std::ostringstream stream;
   stream << "line " << token_->line << ": ";
@@ -1865,6 +1929,7 @@ void Parser::AddError(std::string const &message)
     stream << ", " << message;
   }
   errors_.push_back(stream.str());
+  return false;
 }
 
 }  // namespace vm

@@ -17,6 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include "meta/type_traits.hpp"
+#include "meta/type_util.hpp"
+#include "meta/value_util.hpp"
 #include "vm/node.hpp"
 
 namespace fetch {
@@ -118,8 +121,10 @@ private:
   bool HandleOpener(NodeKind prefix_kind, NodeKind postfix_kind, Token::Kind closer_token_kind,
                     std::string const &closer_token_text);
   bool HandleCloser(bool is_conditional_expression);
+  bool HandleSemicolon();
   bool HandleComma();
   void HandleOp(NodeKind kind, OpInfo const &op_info);
+  bool HandleLeftSquareBracket();
   bool HandleArrayExpression();
   bool HandleArraySequence();
   bool HandleArrayRepetition();
@@ -128,7 +133,7 @@ private:
                 std::string const &closer_token_text);
   void AddOp(NodeKind kind, OpInfo const &op_info);
   void AddOperand(NodeKind kind);
-  void AddError(std::string const &message);
+  bool AddError(std::string const &message);
 
   bool MatchLiteral(Token::Kind token);
 
@@ -191,6 +196,21 @@ private:
     else
     {
       token_ = nullptr;
+    }
+  }
+
+  constexpr int Index() const noexcept
+  {
+    return index_;
+  }
+
+  constexpr void Rewind(int index) noexcept
+  {
+    if (index != index_)
+    {
+      index_ = index;
+      std::size_t i{static_cast<std::size_t>(index)};
+      token_ = i < tokens_.size() ? &tokens_[i] : &tokens_.back();
     }
   }
 };

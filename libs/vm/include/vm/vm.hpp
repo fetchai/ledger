@@ -571,9 +571,9 @@ private:
   InputDeviceMap                 input_devices_;
   DeserializeConstructorMap      deserialization_constructors_;
 
-  void AddOpcodeInfo(uint16_t opcode, std::string const &name, Handler const &handler)
+  void AddOpcodeInfo(uint16_t opcode, std::string name, Handler handler)
   {
-    opcode_info_array_[opcode] = OpcodeInfo(name, handler);
+    opcode_info_array_[opcode] = OpcodeInfo(std::move(name), std::move(handler));
   }
 
   bool Execute(std::string &error, Variant &output);

@@ -19,6 +19,7 @@
 
 #include "meta/tags.hpp"
 
+#include <functional>
 #include <string>
 #include <type_traits>
 
@@ -142,6 +143,79 @@ struct IsNotImplementedImpl
 };
 template <typename A, typename R>
 using IfIsNotImplemented = typename IsNotImplementedImpl<A, R>::Type;
+
+template <class F, class... Args>
+using IsNothrowInvocable =
+    std::integral_constant<bool, noexcept(std::declval<F>()(std::declval<Args>()...))>;
+
+template <class F, class... Args>
+static constexpr auto IsNothrowInvocableV = IsNothrowInvocable<F, Args...>::value;
+
+template <class F, class... Args>
+struct InvokeResult
+{
+  using type = decltype(std::declval<F>()(std::declval<Args>()...));
+};
+
+template <class F, class... Args>
+using InvokeResultT = typename InvokeResult<F, Args...>::type;
+
+template <class C, class RV, class... Args, class... Args1>
+struct InvokeResult<RV (C::*)(Args...), Args1...>
+{
+  using type = RV;
+};
+
+template <class C, class RV, class... Args, class... Args1>
+struct InvokeResult<RV (C::*)(Args...) const, Args1...>
+{
+  using type = RV;
+};
+
+namespace detail_ {
+
+template <class Arg>
+constexpr decltype((std::declval<std::add_pointer_t<typename std::decay_t<Arg>::type>>(), true))
+HasType(Arg &&) noexcept
+{
+  return true;
+}
+constexpr bool HasType(...) noexcept
+{
+  return false;
+}
+
+}  // namespace detail_
+
+template <class Arg>
+static constexpr bool HasMemberTypeV = detail_::HasType(std::declval<Arg>());
+
+template <class Arg, bool = HasMemberTypeV<Arg>>
+struct MemberType
+{
+  using type = typename Arg::type;
+};
+template <class Arg, bool b>
+using MemberTypeT = typename MemberType<Arg, b>::type;
+
+template <class Arg>
+struct MemberType<Arg, false>
+{
+  // dummy definition for typeless args
+  using type = void;
+};
+
+template <class L, class R>
+struct IsSimilar : std::is_same<L, R>
+{
+};
+template <class L, class R>
+static constexpr auto IsSimilarV = IsSimilar<L, R>::value;
+
+template <template <class...> class Ctor, class... LArgs, class... RArgs>
+struct IsSimilar<Ctor<LArgs...>, Ctor<RArgs...>> : std::true_type
+{
+};
 
 }  // namespace meta
 }  // namespace fetch

@@ -29,9 +29,7 @@ void IRBuilder::Build(std::string const &name, BlockNodePtr const &root, IR &ir)
   IRNodePtr ir_root = BuildNode(root);
   ir_->root_        = ConvertToIRBlockNodePtr(ir_root);
   ir_               = nullptr;
-  type_map_.Clear();
-  variable_map_.Clear();
-  function_map_.Clear();
+  value_util::ClearAll(type_map_, variable_map_, function_map_);
 }
 
 IRNodePtr IRBuilder::BuildNode(NodePtr const &node)

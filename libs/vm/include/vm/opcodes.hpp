@@ -103,7 +103,7 @@ static const uint16_t PrimitiveModulo                    = 76;
 static const uint16_t VariablePrimitiveInplaceModulo     = 77;
 static const uint16_t ArraySeq                           = 78;
 static const uint16_t ArrayMul                           = 79;
-static const uint16_t NumReserved                        = 78;
+static const uint16_t NumReserved                        = 80;
 }  // namespace Opcodes
 
 }  // namespace vm

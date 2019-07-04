@@ -46,14 +46,9 @@ bool Generator::GenerateExecutable(IR const &ir, std::string const &name, Execut
                                    std::vector<std::string> &errors)
 {
   executable_ = Executable(name);
-  scopes_.clear();
-  loops_.clear();
-  strings_map_.clear();
-  constants_map_.clear();
+  value_util::ClearAll(scopes_, loops_, strings_map_, constants_map_, line_to_pc_map_, errors_,
+                       errors);
   function_ = nullptr;
-  line_to_pc_map_.clear();
-  errors_.clear();
-  errors.clear();
 
   if (vm_ == nullptr)
   {
@@ -70,7 +65,7 @@ bool Generator::GenerateExecutable(IR const &ir, std::string const &name, Execut
   ResolveTypes(ir);
   ResolveFunctions(ir);
 
-  if (errors_.size() != 0)
+  if (!errors_.empty())
   {
     errors = std::move(errors_);
     return false;
@@ -80,12 +75,8 @@ bool Generator::GenerateExecutable(IR const &ir, std::string const &name, Execut
   HandleBlock(ir.root_);
 
   executable = std::move(executable_);
-  scopes_.clear();
-  loops_.clear();
-  strings_map_.clear();
-  constants_map_.clear();
+  value_util::ClearAll(scopes_, loops_, strings_map_, constants_map_, line_to_pc_map_);
   function_ = nullptr;
-  line_to_pc_map_.clear();
   return true;
 }
 
@@ -340,7 +331,7 @@ void Generator::HandleBlock(IRBlockNodePtr const &block_node)
     {
       IRExpressionNodePtr expression = ConvertToIRExpressionNodePtr(child);
       HandleExpression(expression);
-      if (expression->type->IsVoid() == false)
+      if (!expression->type->IsVoid())
       {
         // The result of the expression is not consumed, so issue an
         // instruction that will pop it and throw it away
@@ -590,7 +581,7 @@ void Generator::HandleVarStatement(IRNodePtr const &node)
   uint16_t       variable_index = function_->AddVariable(v->name, type_id, scope_number);
   v->index                      = variable_index;
 
-  if (v->type->IsPrimitive() == false)
+  if (!v->type->IsPrimitive())
   {
     Scope &scope = scopes_[scope_number];
     scope.objects.push_back(variable_index);
@@ -1195,7 +1186,7 @@ void Generator::HandleFalse(IRExpressionNodePtr const &node)
 
 void Generator::HandleNull(IRExpressionNodePtr const &node)
 {
-  if (node->type->IsPrimitive() == false)
+  if (!node->type->IsPrimitive())
   {
     Executable::Instruction instruction(Opcodes::PushNull);
     instruction.type_id = node->type->resolved_id;
@@ -1438,6 +1429,33 @@ void Generator::HandleInvokeOp(IRExpressionNodePtr const &node)
     uint16_t pc = function_->AddInstruction(instruction);
     AddLineNumber(node->line, pc);
   }
+}
+
+void Generator::HandleArraySeq(IRExpressionNodePtr const &node)
+{
+  for (auto child : node->children)
+  {
+    HandleExpression(ConvertToIRExpressionNodePtr(child));
+  }
+
+  Executable::Instruction constructor(Opcodes::ArraySeq);
+  constructor.type_id = node->type->resolved_id;
+  constructor.data    = static_cast<uint16_t>(node->children.size());
+
+  std::uint16_t pc = function_->AddInstruction(constructor);
+  AddLineNumber(node->line, pc);
+}
+
+void Generator::HandleArrayMul(IRExpressionNodePtr const &node)
+{
+  HandleExpression(ConvertToIRExpressionNodePtr(node->children.front()));
+  HandleExpression(ConvertToIRExpressionNodePtr(node->children.back()));
+
+  Executable::Instruction constructor(Opcodes::ArrayMul);
+  constructor.type_id = node->type->resolved_id;
+
+  std::uint16_t pc = function_->AddInstruction(constructor);
+  AddLineNumber(node->line, pc);
 }
 
 void Generator::HandleVariablePrefixPostfixOp(IRExpressionNodePtr const &node,

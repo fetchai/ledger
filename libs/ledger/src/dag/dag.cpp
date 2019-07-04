@@ -355,7 +355,7 @@ bool DAG::IsLooseInternal(DAGNodePtr node)
   for (auto const &dag_node_prev : node->previous)
   {
     if (node_pool_.find(dag_node_prev) == node_pool_.end() &&
-        HashInPrevEpochsInternal(dag_node_prev) == false)
+        !HashInPrevEpochsInternal(dag_node_prev))
     {
       return true;
     }
@@ -370,7 +370,7 @@ void DAG::AddLooseNodeInternal(DAGNodePtr node)
   for (auto const &dag_node_prev : node->previous)
   {
     if (node_pool_.find(dag_node_prev) == node_pool_.end() &&
-        HashInPrevEpochsInternal(dag_node_prev) == false)
+        !HashInPrevEpochsInternal(dag_node_prev))
     {
       loose_nodes_lookup_[dag_node_prev].push_back(node);
       loose_nodes_[node->hash] = node;

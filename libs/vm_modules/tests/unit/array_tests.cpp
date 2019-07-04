@@ -665,4 +665,52 @@ TEST_F(ArrayTests, erase_fails_if_index_is_negative)
   ASSERT_FALSE(toolkit.Run());
 }
 
+TEST_F(ArrayTests, array_expressions)
+{
+  static char const *TEXT = R"(
+function main()
+   var w = [[], [42; 3], [], [2]];
+   for(i in 0:w.count() - 1)
+     print(i);
+     print('->');
+     print(w[i]);
+     print(';');
+   endfor
+   var x: Array<Float64> = [];
+   print(x);
+   x = [3.14; w[3][0]];
+   print(x);
+endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_TRUE(toolkit.Run());
+
+  ASSERT_EQ(stdout.str(), "0->[];1->[42, 42, 42];2->[];3->[2];[][3.14, 3.14]");
+}
+
+TEST_F(ArrayTests, failed_array_expressions)
+{
+  static char const *untyped_empty_array = R"(
+function main()
+  var w = [];
+endfunction
+)";
+  ASSERT_FALSE(toolkit.Compile(untyped_empty_array));
+
+  static char const *mismatched_type = R"(
+function main()
+  var x: Int32 = [];
+endfunction
+)";
+  ASSERT_FALSE(toolkit.Compile(mismatched_type));
+
+  static char const *heterogeneous_elements = R"(
+function main()
+  var w = [1, 3.14, [0]];
+endfunction
+)";
+  ASSERT_FALSE(toolkit.Compile(heterogeneous_elements));
+}
+
 }  // namespace

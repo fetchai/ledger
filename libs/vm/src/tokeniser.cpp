@@ -18,9 +18,9 @@
 
 // clang-format off
 
-#line 2 "../src/tokeniser.cpp"
+#line 1 "../src/tokeniser.cpp"
 
-#line 4 "../src/tokeniser.cpp"
+#line 3 "../src/tokeniser.cpp"
 
 #define  YY_INT_ALIGNED short int
 
@@ -627,8 +627,8 @@ int Set(fetch::vm::Token* token, const fetch::vm::Token::Kind kind, const char* 
 	return 1;
 }
 
+#line 610 "../src/tokeniser.cpp"
 #line 611 "../src/tokeniser.cpp"
-#line 612 "../src/tokeniser.cpp"
 
 #define INITIAL 0
 #define COMMENT 1
@@ -908,7 +908,7 @@ YY_DECL
 
 #line 56 "tokeniser.l"
 	/* whitespace */
-#line 892 "../src/tokeniser.cpp"
+#line 891 "../src/tokeniser.cpp"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -1279,7 +1279,7 @@ YY_RULE_SETUP
 case 53:
 YY_RULE_SETUP
 #line 194 "tokeniser.l"
-{return Set(yylval, fetch::vm::Token::Kind::SemiColon, yytext, yyleng, yyextra);}
+{return Set(yylval, fetch::vm::Token::Kind::Semicolon, yytext, yyleng, yyextra);}
 	YY_BREAK
 case 54:
 YY_RULE_SETUP
@@ -1427,7 +1427,7 @@ YY_RULE_SETUP
 #line 227 "tokeniser.l"
 YY_FATAL_ERROR( "flex scanner jammed" );
 	YY_BREAK
-#line 1411 "../src/tokeniser.cpp"
+#line 1410 "../src/tokeniser.cpp"
 
 	case YY_END_OF_BUFFER:
 		{
