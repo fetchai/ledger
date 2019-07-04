@@ -38,7 +38,7 @@ struct EstimatorConfig
   bool     early_stopping = false;
   SizeType patience       = 10;
   DataType min_delta      = DataType(0.0);
-	
+
   fetch::ml::optimisers::LearningRateParam<DataType> learning_rate_param;
 
   SizeType batch_size  = SizeType(32);
@@ -48,12 +48,14 @@ struct EstimatorConfig
   CostFunctionType cost = CostFunctionType::SOFTMAX_CROSS_ENTROPY;
 
   bool print_stats = false;
-	
-	EstimatorConfig(){
-		learning_rate_param.mode = fetch::ml::optimisers::LearningRateParam<DataType>::LearningRateDecay::EXPONENTIAL;
-		learning_rate_param.starting_learning_rate = DataType(0.001);
-		learning_rate_param.exponential_decay_rate = DataType(0.99);
-	};
+
+  EstimatorConfig()
+  {
+    learning_rate_param.mode =
+        fetch::ml::optimisers::LearningRateParam<DataType>::LearningRateDecay::EXPONENTIAL;
+    learning_rate_param.starting_learning_rate = DataType(0.001);
+    learning_rate_param.exponential_decay_rate = DataType(0.99);
+  };
 };
 
 template <typename TensorType>

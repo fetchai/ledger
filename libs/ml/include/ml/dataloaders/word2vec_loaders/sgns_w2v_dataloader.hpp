@@ -34,7 +34,7 @@ template <typename T>
 class GraphW2VLoader : public DataLoader<fetch::math::Tensor<T>, fetch::math::Tensor<T>>
 {
 public:
-  const T BufferPositionUnused = static_cast<T>(fetch::math::numeric_max<SizeType>()) ;
+  const T BufferPositionUnused = static_cast<T>(fetch::math::numeric_max<SizeType>());
 
   using LabelType = fetch::math::Tensor<T>;
   using DataType  = fetch::math::Tensor<T>;
@@ -83,10 +83,10 @@ private:
   SizeType                                  reset_count_ = 0;
 
   // temporary sample and labels for buffering samples
-  DataType   input_words_, output_words_, labels_;
+  DataType                      input_words_, output_words_, labels_;
   fetch::math::Tensor<SizeType> output_words_buffer_;
-  SizeType   buffer_pos_ = 0;
-  ReturnType cur_sample_;
+  SizeType                      buffer_pos_ = 0;
+  ReturnType                    cur_sample_;
 
   std::vector<SizeType>    SentenceToIndices(std::vector<std::string> const &strings);
   std::vector<std::string> PreprocessString(std::string const &s, SizeType length_limit);
@@ -118,8 +118,9 @@ GraphW2VLoader<T>::GraphW2VLoader(SizeType window_size, SizeType negative_sample
   // setup temporary buffers for training purpose
   input_words_  = DataType({negative_samples * window_size_ * 2 + window_size_ * 2});
   output_words_ = DataType({negative_samples * window_size_ * 2 + window_size_ * 2});
-  output_words_buffer_ = fetch::math::Tensor<SizeType>({negative_samples * window_size_ * 2 + window_size_ * 2});
-  labels_       = DataType({negative_samples * window_size_ * 2 + window_size_ * 2 +
+  output_words_buffer_ =
+      fetch::math::Tensor<SizeType>({negative_samples * window_size_ * 2 + window_size_ * 2});
+  labels_ = DataType({negative_samples * window_size_ * 2 + window_size_ * 2 +
                       1});  // the extra 1 is for testing if label has ran out
   labels_.Fill(BufferPositionUnused);
   cur_sample_.first  = DataType({1, 1});
@@ -375,13 +376,15 @@ void GraphW2VLoader<T>::BufferNextSamples()
   for (SizeType i = 0; i < dynamic_size; ++i)
   {
     output_words_buffer_.At(counter) = data_.at(current_sentence_).at(current_word_ - i - 1);
-    output_words_.At(counter) = static_cast<T>(data_.at(current_sentence_).at(current_word_ - i - 1));
-    labels_.At(counter)       = static_cast<T>(1);
+    output_words_.At(counter) =
+        static_cast<T>(data_.at(current_sentence_).at(current_word_ - i - 1));
+    labels_.At(counter) = static_cast<T>(1);
     counter++;
 
     output_words_buffer_.At(counter) = data_.at(current_sentence_).at(current_word_ + i + 1);
-    output_words_.At(counter) = static_cast<T>(data_.at(current_sentence_).at(current_word_ + i + 1));
-    labels_.At(counter)       = static_cast<T>(1);
+    output_words_.At(counter) =
+        static_cast<T>(data_.at(current_sentence_).at(current_word_ + i + 1));
+    labels_.At(counter) = static_cast<T>(1);
     counter++;
   }
 

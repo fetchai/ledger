@@ -42,7 +42,7 @@ void BuildMLLibrary(pybind11::module &module)
   fetch::ml::ops::BuildFullyConnected<T>("FullyConnected", module);
   fetch::ml::ops::BuildMeanSquareError<T>("MeanSquareError", module);
   fetch::ml::dataloaders::BuildMNISTLoader<T>("MNISTLoader", module);
-//  fetch::ml::dataloaders::BuildCBOWLoader<T>("CBOWLoader", module);
+  //  fetch::ml::dataloaders::BuildCBOWLoader<T>("CBOWLoader", module);
 }
 
 }  // namespace ml

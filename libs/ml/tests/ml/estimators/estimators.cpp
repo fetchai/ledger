@@ -62,10 +62,11 @@ bool RunTest(fetch::ml::optimisers::OptimiserType optimiser_type)
   fetch::math::SizeType n_training_steps = 10;
 
   fetch::ml::estimator::EstimatorConfig<DataType> estimator_config;
-  estimator_config.learning_rate_param.mode                   = fetch::ml::optimisers::LearningRateParam<DataType>::LearningRateDecay::EXPONENTIAL;
+  estimator_config.learning_rate_param.mode =
+      fetch::ml::optimisers::LearningRateParam<DataType>::LearningRateDecay::EXPONENTIAL;
   estimator_config.learning_rate_param.starting_learning_rate = static_cast<DataType>(0.1);
   estimator_config.learning_rate_param.exponential_decay_rate = static_cast<DataType>(0.99);
-  estimator_config.opt           = optimiser_type;
+  estimator_config.opt                                        = optimiser_type;
 
   // set up data
   TypeParam data, gt, test_datum;

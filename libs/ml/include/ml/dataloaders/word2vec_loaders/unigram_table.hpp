@@ -126,30 +126,33 @@ bool UnigramTable::SampleNegative(SizeType positive_index, SizeType &ret)
  * @return
  */
 bool UnigramTable::SampleNegative(fetch::math::Tensor<SizeType> positiveIndices, SizeType &ret)
-  {
-    ret = data_[rng_() % data_.size()];
+{
+  ret = data_[rng_() % data_.size()];
 
-    SizeType attempt_count = 0;
-    while (true)
+  SizeType attempt_count = 0;
+  while (true)
+  {
+    bool inPositiveIndices = false;
+    for (auto i : positiveIndices)
     {
-      bool inPositiveIndices = false;
-      for(auto i : positiveIndices){
-        if(ret == i){
-          inPositiveIndices = true;
-          break;
-        }
-      }
-      if(!inPositiveIndices){ // if ret is valid, stop searching
-        return true;
-      }
-      ret = data_[rng_() % data_.size()];
-      attempt_count++;
-      if (attempt_count > timeout_)
+      if (ret == i)
       {
-        return false;
+        inPositiveIndices = true;
+        break;
       }
     }
+    if (!inPositiveIndices)
+    {  // if ret is valid, stop searching
+      return true;
+    }
+    ret = data_[rng_() % data_.size()];
+    attempt_count++;
+    if (attempt_count > timeout_)
+    {
+      return false;
+    }
   }
+}
 
 /**
  * resets random number generation for sampling
