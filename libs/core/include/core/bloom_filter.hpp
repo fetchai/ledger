@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/bitvector.hpp"
+#include "core/bloom_filter_interface.hpp"
 
 #include <cstddef>
 #include <functional>
@@ -138,49 +139,11 @@ private:
 
 }  // namespace internal
 
-class BloomFilterInterface
-{
-public:
-  using Bytes     = internal::HashSourceFactory::Bytes;
-  using Function  = internal::HashSourceFactory::Function;
-  using Functions = internal::HashSourceFactory::Functions;
-
-  enum class Type
-  {
-    DUMMY,
-    BASIC
-  };
-
-  static std::unique_ptr<BloomFilterInterface> create(Type);
-
-  virtual ~BloomFilterInterface() = default;
-
-  /*
-   * Query the Bloom filter for a given entry.
-   *
-   * Returns false if the entry is definitely absent; true otherwise.
-   */
-  virtual bool Match(Bytes const &) = 0;
-
-  /*
-   * Add a new entry to the filter.
-   */
-  virtual void Add(Bytes const &) = 0;
-
-  /*
-   * Clients may use this to report how many false positives they identified.
-   * This information is used internally by the filter to keep track of the
-   * false positive rate.
-   *
-   * Return false if the filter's measured false positive rate exceeds its
-   * target value and rebuilding the filter may be advisable; true otherwise.
-   */
-  virtual bool ReportFalsePositives(std::size_t) = 0;
-};
-
 class BasicBloomFilter : public BloomFilterInterface
 {
 public:
+  using Functions = internal::HashSourceFactory::Functions;
+
   BasicBloomFilter();
   explicit BasicBloomFilter(Functions const &);
   ~BasicBloomFilter() override = default;
