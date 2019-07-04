@@ -121,9 +121,8 @@ public:
   enum class Type
   {
     MD5,
-    SHA_1,
-    SHA_2_512,
-    SHA_3_512
+    SHA1,
+    SHA2_512
   };
 
   explicit OpenSslHasher(Type type)
@@ -165,14 +164,11 @@ private:
     case Type::MD5:
       openssl_type = EVP_sha512();
       break;
-    case Type::SHA_1:
+    case Type::SHA1:
       openssl_type = EVP_sha1();
       break;
-    case Type::SHA_2_512:
+    case Type::SHA2_512:
       openssl_type = EVP_sha512();
-      break;
-    case Type::SHA_3_512:
-      openssl_type = EVP_sha3_512();
       break;
     }
 
@@ -209,25 +205,17 @@ HashSource::Hashes md5(fetch::byte_array::ConstByteArray const &input)
   return hasher(input);
 }
 
-HashSource::Hashes sha_1(fetch::byte_array::ConstByteArray const &input)
+HashSource::Hashes sha1(fetch::byte_array::ConstByteArray const &input)
 {
-  static OpenSslHasher hasher(OpenSslHasher::Type::SHA_1);
+  static OpenSslHasher hasher(OpenSslHasher::Type::SHA1);
   hasher.reset();
 
   return hasher(input);
 }
 
-HashSource::Hashes sha_2_512(fetch::byte_array::ConstByteArray const &input)
+HashSource::Hashes sha2_512(fetch::byte_array::ConstByteArray const &input)
 {
-  static OpenSslHasher hasher(OpenSslHasher::Type::SHA_2_512);
-  hasher.reset();
-
-  return hasher(input);
-}
-
-HashSource::Hashes sha_3_512(fetch::byte_array::ConstByteArray const &input)
-{
-  static OpenSslHasher hasher(OpenSslHasher::Type::SHA_3_512);
+  static OpenSslHasher hasher(OpenSslHasher::Type::SHA2_512);
   hasher.reset();
 
   return hasher(input);
@@ -252,9 +240,8 @@ HashSource::Hashes fnv(fetch::byte_array::ConstByteArray const &input)
 
 }  // namespace internal
 
-BasicBloomFilter::Functions const default_hash_functions{internal::raw_data,  internal::md5,
-                                                         internal::sha_1,     internal::sha_2_512,
-                                                         internal::sha_3_512, internal::fnv};
+BasicBloomFilter::Functions const default_hash_functions{
+    internal::raw_data, internal::md5, internal::sha1, internal::sha2_512, internal::fnv};
 
 BasicBloomFilter::BasicBloomFilter()
   : bits_(INITIAL_SIZE_IN_BITS)
