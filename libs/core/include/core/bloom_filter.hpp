@@ -53,11 +53,11 @@ public:
   using Functions = std::vector<Function>;
 
   explicit HashSourceFactory(Functions);
-  ~HashSourceFactory() = default;
-
   HashSourceFactory()                          = delete;
   HashSourceFactory(HashSourceFactory const &) = delete;
   HashSourceFactory(HashSourceFactory &&)      = delete;
+  ~HashSourceFactory()                         = default;
+
   HashSourceFactory &operator=(HashSourceFactory const &) = delete;
   HashSourceFactory &operator=(HashSourceFactory &&) = delete;
 
@@ -78,13 +78,13 @@ private:
 class HashSource
 {
 public:
+  HashSource()                       = delete;
+  HashSource(HashSource const &)     = delete;
   HashSource(HashSource &&) noexcept = default;
-  HashSource &operator=(HashSource &&) noexcept = default;
-  ~HashSource()                                 = default;
+  ~HashSource()                      = default;
 
-  HashSource()                   = delete;
-  HashSource(HashSource const &) = delete;
   HashSource &operator=(HashSource const &) = delete;
+  HashSource &operator=(HashSource &&) noexcept = default;
 
   class HashSourceIterator
   {
@@ -95,21 +95,18 @@ public:
     using pointer           = std::size_t const *;
     using reference         = std::size_t const &;
 
-    ~HashSourceIterator() = default;
-
+    ~HashSourceIterator()                              = default;
     HashSourceIterator(HashSourceIterator const &)     = default;
     HashSourceIterator(HashSourceIterator &&) noexcept = default;
+    HashSourceIterator()                               = delete;
 
     HashSourceIterator &operator=(HashSourceIterator const &) = default;
     HashSourceIterator &operator=(HashSourceIterator &&) noexcept = default;
 
-    HashSourceIterator() = delete;
-
     bool operator!=(HashSourceIterator const &other) const;
     bool operator==(HashSourceIterator const &other) const;
 
-    HashSourceIterator const operator++(int);
-    HashSourceIterator &     operator++();
+    HashSourceIterator &operator++();
 
     std::size_t operator*() const;
 
@@ -146,10 +143,10 @@ public:
 
   BasicBloomFilter();
   explicit BasicBloomFilter(Functions const &);
-  ~BasicBloomFilter() override = default;
-
   BasicBloomFilter(BasicBloomFilter const &) = delete;
   BasicBloomFilter(BasicBloomFilter &&)      = delete;
+  ~BasicBloomFilter() override               = default;
+
   BasicBloomFilter &operator=(BasicBloomFilter const &) = delete;
   BasicBloomFilter &operator=(BasicBloomFilter &&) = delete;
 
@@ -171,11 +168,11 @@ public:
 class DummyBloomFilter : public BloomFilterInterface
 {
 public:
-  DummyBloomFilter()           = default;
-  ~DummyBloomFilter() override = default;
-
+  DummyBloomFilter()                         = default;
   DummyBloomFilter(DummyBloomFilter const &) = delete;
   DummyBloomFilter(DummyBloomFilter &&)      = delete;
+  ~DummyBloomFilter() override               = default;
+
   DummyBloomFilter &operator=(DummyBloomFilter const &) = delete;
   DummyBloomFilter &operator=(DummyBloomFilter &&) = delete;
 

@@ -37,7 +37,7 @@ public:
     BASIC
   };
 
-  static std::unique_ptr<BloomFilterInterface> create(Type);
+  static std::unique_ptr<BloomFilterInterface> Create(Type);
 
   virtual ~BloomFilterInterface() = default;
 

@@ -120,8 +120,9 @@ public:
   };
 
   // Construction / Destruction
-  explicit MainChain(std::unique_ptr<BloomFilterInterface> bloom_filter,
-                     Mode                                  mode = Mode::IN_MEMORY_DB);
+  explicit MainChain(std::unique_ptr<BloomFilterInterface> bloom_filter =
+                         BloomFilterInterface::Create(BloomFilterInterface::Type::DUMMY),
+                     Mode mode = Mode::IN_MEMORY_DB);
   MainChain(MainChain const &rhs) = delete;
   MainChain(MainChain &&rhs)      = delete;
   ~MainChain();

@@ -225,7 +225,7 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
         [this] {
           return std::make_shared<Executor>(storage_, stake_ ? &stake_->update_queue() : nullptr);
         })}
-  , chain_{BloomFilterInterface::create(
+  , chain_{BloomFilterInterface::Create(
                cfg_.features.IsEnabled(FeatureFlags::MAIN_CHAIN_BLOOM_FILTER)
                    ? BloomFilterInterface::Type::BASIC
                    : BloomFilterInterface::Type::DUMMY),

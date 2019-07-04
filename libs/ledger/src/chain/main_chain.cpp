@@ -63,7 +63,8 @@ void AddBlockToBloomFilter(BloomFilterInterface &bf, Block const &block)
 MainChain::MainChain(std::unique_ptr<BloomFilterInterface> bloom_filter, Mode mode)
   : bloom_filter_(std::move(bloom_filter))
   , bloom_filter_false_positive_count_(telemetry::Registry::Instance().CreateCounter(
-        "ledger_main_chain_bloom_filter_false_positive_total"))
+        "ledger_main_chain_bloom_filter_false_positive_total",
+        "Total number of false positive queries to the Ledger Main Chain Bloom filter"))
 {
   if (Mode::IN_MEMORY_DB != mode)
   {

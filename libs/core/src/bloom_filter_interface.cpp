@@ -23,7 +23,7 @@
 
 namespace fetch {
 
-std::unique_ptr<BloomFilterInterface> BloomFilterInterface::create(Type type)
+std::unique_ptr<BloomFilterInterface> BloomFilterInterface::Create(Type type)
 {
   switch (type)
   {

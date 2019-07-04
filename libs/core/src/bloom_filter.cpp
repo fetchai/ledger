@@ -96,15 +96,6 @@ bool HashSource::HashSourceIterator::operator==(HashSource::HashSourceIterator c
   return source_ == other.source_ && hash_index_ == other.hash_index_;
 }
 
-HashSource::HashSourceIterator const HashSource::HashSourceIterator::operator++(int)
-{
-  HashSource::HashSourceIterator temp{source_, hash_index_};
-
-  operator++();
-
-  return temp;
-}
-
 HashSource::HashSourceIterator &HashSource::HashSourceIterator::operator++()
 {
   ++hash_index_;
