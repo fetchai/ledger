@@ -63,14 +63,14 @@ BasicMiner::BasicMiner(uint32_t log2_num_lanes)
   , pending_{}
   , mining_pool_{}
   , mining_pool_size_{telemetry::Registry::Instance().CreateGauge<uint64_t>(
-        "ledger_miner_mining_pool_size")}
+        "ledger_miner_mining_pool_size", "The current size of the mining pool")}
   , max_mining_pool_size_{telemetry::Registry::Instance().CreateGauge<uint64_t>(
-        "ledger_miner_max_mining_pool_size")}
+        "ledger_miner_max_mining_pool_size", "The max size of the mining pool")}
   , max_pending_pool_size_{telemetry::Registry::Instance().CreateGauge<uint64_t>(
-        "ledger_miner_max_pending_pool_size")}
-  , duplicate_count_{telemetry::Registry::Instance().CreateCounter("ledger_miner_duplicate_count")}
+        "ledger_miner_max_pending_pool_size", "The max size of the pending pool")}
+  , duplicate_count_{telemetry::Registry::Instance().CreateCounter("ledger_miner_duplicate_total", "The number of duplicate txs on the frontend of the queue")}
   , duplicate_filtered_count_{
-        telemetry::Registry::Instance().CreateCounter("ledger_miner_duplicate_filtered_count")}
+        telemetry::Registry::Instance().CreateCounter("ledger_miner_duplicate_filtered_total", "The number of duplicate txs on the backend of the queue")}
 {}
 
 /**

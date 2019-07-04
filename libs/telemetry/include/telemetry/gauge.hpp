@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "telemetry/measurement.hpp"
+#include "core/string/ends_with.hpp"
 
 #include <iomanip>
 #include <iostream>
@@ -84,7 +85,13 @@ private:
 template <typename V>
 Gauge<V>::Gauge(std::string const &name, std::string const &description, Labels const &labels)
   : Measurement(name, description, labels)
-{}
+{
+  // validate the name
+  if (core::EndsWith(this->name(), "_count"))
+  {
+    throw std::runtime_error("Incorrect name for the gauge, can't end with '_count'");
+  }
+}
 
 /**
  * Get the current value of the gauge
