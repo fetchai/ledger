@@ -30,6 +30,7 @@
 #include "network/generics/milli_timer.hpp"
 #include "storage/object_store.hpp"
 #include "storage/resource_mapper.hpp"
+#include "telemetry/telemetry.hpp"
 
 #include <fstream>
 #include <map>
@@ -257,6 +258,7 @@ private:
   HeaviestTip                  heaviest_;      ///< Heaviest block/tip
   LooseBlockMap                loose_blocks_;  ///< Waiting (loose) blocks
   std::unique_ptr<BloomFilter> bloom_filter_;
+  telemetry::CounterPtr        bloom_filter_false_positive_count_;
 
   /**
    * Serializer for the DbRecord
