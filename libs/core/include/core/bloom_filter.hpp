@@ -40,6 +40,9 @@ class HashSource;
  * std::size_t indices for the Bloom filter. To apply the functions,
  * to an input, invoke the factory's operator() and use the resulting
  * HashSource.
+ *
+ * The factory must be kept alive while its HashSource instances remain
+ * in use.
  */
 class HashSourceFactory
 {
@@ -68,7 +71,8 @@ private:
  * functions to a byte array. Outwardly it may be treated as an immutable,
  * iterable collection of std::size_t.
  *
- * Not thread-safe.
+ * Not thread-safe. Not safe to use after the parent HashSourceFactory
+ * had been destroyed.
  */
 class HashSource
 {
