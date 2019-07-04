@@ -63,7 +63,9 @@ HashSource::HashSource(HashSourceFactory::Functions const &hash_functions,
   }
 }
 
-HashSource::~HashSource() = default;
+HashSource::~HashSource()                      = default;
+HashSource::HashSource(HashSource &&) noexcept = default;
+HashSource &HashSource::operator=(HashSource &&) noexcept = default;
 
 HashSource::HashSourceIterator HashSource::begin() const
 {
@@ -91,6 +93,14 @@ std::size_t HashSource::getHash(std::size_t index) const
 }
 
 HashSource::HashSourceIterator::~HashSourceIterator() = default;
+
+HashSource::HashSourceIterator::HashSourceIterator(HashSourceIterator const &)     = default;
+HashSource::HashSourceIterator::HashSourceIterator(HashSourceIterator &&) noexcept = default;
+
+HashSource::HashSourceIterator &HashSource::HashSourceIterator::operator=(
+    HashSource::HashSourceIterator const &) = default;
+HashSource::HashSourceIterator &HashSource::HashSourceIterator::operator=(
+    HashSource::HashSourceIterator &&) noexcept = default;
 
 bool HashSource::HashSourceIterator::operator!=(HashSource::HashSourceIterator const &other) const
 {

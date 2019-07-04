@@ -51,6 +51,12 @@ public:
   explicit HashSourceFactory(Functions);
   ~HashSourceFactory();
 
+  HashSourceFactory()                          = delete;
+  HashSourceFactory(HashSourceFactory const &) = delete;
+  HashSourceFactory(HashSourceFactory &&)      = delete;
+  HashSourceFactory &operator=(HashSourceFactory const &) = delete;
+  HashSourceFactory &operator=(HashSourceFactory &&) = delete;
+
   HashSource operator()(Bytes const &) const;
 
 private:
@@ -67,7 +73,13 @@ private:
 class HashSource
 {
 public:
+  HashSource(HashSource &&) noexcept;
+  HashSource &operator=(HashSource &&) noexcept;
   ~HashSource();
+
+  HashSource()                   = delete;
+  HashSource(HashSource const &) = delete;
+  HashSource &operator=(HashSource const &) = delete;
 
   class HashSourceIterator
   {
@@ -79,6 +91,14 @@ public:
     using reference         = std::size_t const &;
 
     ~HashSourceIterator();
+
+    HashSourceIterator(HashSourceIterator const &);
+    HashSourceIterator(HashSourceIterator &&) noexcept;
+
+    HashSourceIterator &operator=(HashSourceIterator const &);
+    HashSourceIterator &operator=(HashSourceIterator &&) noexcept;
+
+    HashSourceIterator() = delete;
 
     bool operator!=(HashSourceIterator const &other) const;
     bool operator==(HashSourceIterator const &other) const;
@@ -186,6 +206,11 @@ class DummyBloomFilter : public BloomFilter
 public:
   DummyBloomFilter();
   ~DummyBloomFilter() override;
+
+  DummyBloomFilter(DummyBloomFilter const &) = delete;
+  DummyBloomFilter(DummyBloomFilter &&)      = delete;
+  DummyBloomFilter &operator=(DummyBloomFilter const &) = delete;
+  DummyBloomFilter &operator=(DummyBloomFilter &&) = delete;
 
   bool Match(Bytes const &) override;
   void Add(Bytes const &) override;
