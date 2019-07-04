@@ -21,7 +21,7 @@ def main():
     args = parse_commandline()
 
     etch_cli = os.path.join(args.build_folder, 'apps', 'etch', 'etch')
-    assert os.path.isfile(etch_cli)
+    assert os.path.isfile(etch_cli), 'etch executable not found at {}'.format(etch_cli)
 
     tests = []
 
