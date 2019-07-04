@@ -71,7 +71,7 @@ BlockGenerator::BlockPtr BlockGenerator::Generate(BlockPtr const &from, uint64_t
     {
       std::size_t index = 32 - (i + 1);
 
-      uint64_t const shift = i << 3;
+      uint64_t const shift = i << 3u;
       uint64_t const mask  = 0xFFllu << shift;
 
       // extract out the byte

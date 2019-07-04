@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/bloom_filter.hpp"
 #include "core/byte_array/byte_array.hpp"
 #include "core/containers/set_difference.hpp"
 #include "ledger/chain/block.hpp"
@@ -113,7 +114,7 @@ protected:
 
     auto const main_chain_mode = GetParam();
 
-    chain_     = std::make_unique<MainChain>(main_chain_mode);
+    chain_     = std::make_unique<MainChain>(std::make_unique<NullBloomFilter>(), main_chain_mode);
     generator_ = std::make_unique<BlockGenerator>(NUM_LANES, NUM_SLICES);
   }
 

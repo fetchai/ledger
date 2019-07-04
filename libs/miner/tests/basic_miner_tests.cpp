@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/bloom_filter.hpp"
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "ledger/chain/transaction_layout.hpp"
@@ -29,14 +30,12 @@
 
 #include <cassert>
 #include <chrono>
+#include <cstddef>
 #include <cstdint>
 #include <fstream>
 #include <memory>
 #include <random>
 #include <unordered_map>
-#include <unordered_set>
-#include <utility>
-#include <vector>
 
 using fetch::meta::IsLog2;
 using fetch::meta::Log2;
@@ -115,7 +114,7 @@ TEST_P(BasicMinerTests, SimpleExample)
   PopulateWithTransactions(num_tx);
 
   Block     block;
-  MainChain dummy{MainChain::Mode::IN_MEMORY_DB};
+  MainChain dummy{std::make_unique<fetch::NullBloomFilter>(), MainChain::Mode::IN_MEMORY_DB};
 
   block.body.previous_hash = dummy.GetHeaviestBlockHash();
 
@@ -146,7 +145,7 @@ TEST_P(BasicMinerTests, RejectReplayedTransactions)
 
   auto const layout = PopulateWithTransactions(num_tx, 1);
 
-  MainChain chain{MainChain::Mode::IN_MEMORY_DB};
+  MainChain chain{std::make_unique<fetch::NullBloomFilter>(), MainChain::Mode::IN_MEMORY_DB};
 
   DigestSet transactions_already_seen{};
   DigestSet transactions_within_block{};

@@ -16,39 +16,24 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm/module.hpp"
-#include "vm/vm.hpp"
+#include "core/bloom_filter.hpp"
+#include "core/bloom_filter_interface.hpp"
+
+#include <memory>
 
 namespace fetch {
-namespace vm_modules {
 
-void Panic(fetch::vm::VM *vm, fetch::vm::Ptr<fetch::vm::String> const &s)
+std::unique_ptr<BloomFilterInterface> BloomFilterInterface::Create(Type type)
 {
-  vm->RuntimeError(s->str);
-}
-
-void Assert(fetch::vm::VM *vm, bool condition)
-{
-  if (!condition)
+  switch (type)
   {
-    vm->RuntimeError("Assertion error");
+  case Type::BASIC:
+    return std::make_unique<fetch::BasicBloomFilter>();
+  case Type::NULL_IMPL:
+    return std::make_unique<fetch::NullBloomFilter>();
   }
+
+  return nullptr;
 }
 
-void AssertWithMsg(fetch::vm::VM *vm, bool condition, fetch::vm::Ptr<fetch::vm::String> const &s)
-{
-  if (!condition)
-  {
-    vm->RuntimeError("Assertion error: " + s->str);
-  }
-}
-
-void CreatePanic(vm::Module &module)
-{
-  module.CreateFreeFunction("panic", &Panic);
-  module.CreateFreeFunction("assert", &Assert);
-  module.CreateFreeFunction("assert", &AssertWithMsg);
-}
-
-}  // namespace vm_modules
 }  // namespace fetch
