@@ -146,6 +146,7 @@ public:
   enum class Type
   {
     MD5,
+    SHA_1,
     SHA_2_512,
     SHA_3_512
   };
@@ -171,7 +172,8 @@ public:
   {
     const auto size_in_bytes = static_cast<std::size_t>(EVP_MD_CTX_size(ctx_));
 
-    std::vector<std::size_t> output(size_in_bytes / sizeof(std::size_t));
+    std::vector<std::size_t> output((size_in_bytes + sizeof(std::size_t) - 1) /
+                                    sizeof(std::size_t));
     EVP_DigestUpdate(ctx_, input.pointer(), input.size());
 
     EVP_DigestFinal_ex(ctx_, reinterpret_cast<uint8_t *>(output.data()), nullptr);
@@ -187,6 +189,9 @@ private:
     {
     case Type::MD5:
       openssl_type = EVP_sha512();
+      break;
+    case Type::SHA_1:
+      openssl_type = EVP_sha1();
       break;
     case Type::SHA_2_512:
       openssl_type = EVP_sha512();
@@ -229,6 +234,14 @@ std::vector<std::size_t> md5(HashSourceFactory::Bytes const &input)
   return hasher(input);
 }
 
+std::vector<std::size_t> sha_1(HashSourceFactory::Bytes const &input)
+{
+  static OpenSslHasher hasher(OpenSslHasher::Type::SHA_1);
+  hasher.reset();
+
+  return hasher(input);
+}
+
 std::vector<std::size_t> sha_2_512(HashSourceFactory::Bytes const &input)
 {
   static OpenSslHasher hasher(OpenSslHasher::Type::SHA_2_512);
@@ -264,8 +277,9 @@ std::vector<std::size_t> fnv(HashSourceFactory::Bytes const &input)
 
 }  // namespace internal
 
-BasicBloomFilter::Functions const default_hash_functions{
-    internal::raw_data, internal::md5, internal::sha_2_512, internal::sha_3_512, internal::fnv};
+BasicBloomFilter::Functions const default_hash_functions{internal::raw_data,  internal::md5,
+                                                         internal::sha_1,     internal::sha_2_512,
+                                                         internal::sha_3_512, internal::fnv};
 
 BasicBloomFilter::~BasicBloomFilter() = default;
 
