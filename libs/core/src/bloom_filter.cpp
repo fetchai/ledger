@@ -151,7 +151,7 @@ public:
   };
 
   explicit OpenSslHasher(Type type)
-    : type_{type}
+    : openssl_type_{to_openssl_type(type)}
     , ctx_{EVP_MD_CTX_create()}
   {
     EVP_MD_CTX_init(ctx_);
@@ -162,10 +162,13 @@ public:
     EVP_MD_CTX_destroy(ctx_);
   }
 
+  void reset() const
+  {
+    EVP_DigestInit_ex(ctx_, openssl_type_, nullptr);
+  }
+
   std::vector<std::size_t> operator()(HashSourceFactory::Bytes const &input) const
   {
-    init_digest_operation();
-
     const auto size_in_bytes = static_cast<std::size_t>(EVP_MD_CTX_size(ctx_));
 
     std::vector<std::size_t> output(size_in_bytes / sizeof(std::size_t));
@@ -177,10 +180,10 @@ public:
   }
 
 private:
-  void init_digest_operation() const
+  EVP_MD const *to_openssl_type(Type const type) const
   {
     EVP_MD const *openssl_type = nullptr;
-    switch (type_)
+    switch (type)
     {
     case Type::MD5:
       openssl_type = EVP_sha512();
@@ -194,11 +197,12 @@ private:
     }
 
     assert(openssl_type);
-    EVP_DigestInit_ex(ctx_, openssl_type, nullptr);
+
+    return openssl_type;
   }
 
-  Type const        type_;
-  EVP_MD_CTX *const ctx_;
+  EVP_MD const *const openssl_type_;
+  EVP_MD_CTX *const   ctx_;
 };
 
 std::vector<std::size_t> raw_data(HashSourceFactory::Bytes const &input)
@@ -219,29 +223,33 @@ std::vector<std::size_t> raw_data(HashSourceFactory::Bytes const &input)
 
 std::vector<std::size_t> md5(HashSourceFactory::Bytes const &input)
 {
-  OpenSslHasher hasher(OpenSslHasher::Type::MD5);
+  static OpenSslHasher hasher(OpenSslHasher::Type::MD5);
+  hasher.reset();
 
   return hasher(input);
 }
 
 std::vector<std::size_t> sha_2_512(HashSourceFactory::Bytes const &input)
 {
-  OpenSslHasher hasher(OpenSslHasher::Type::SHA_2_512);
+  static OpenSslHasher hasher(OpenSslHasher::Type::SHA_2_512);
+  hasher.reset();
 
   return hasher(input);
 }
 
 std::vector<std::size_t> sha_3_512(HashSourceFactory::Bytes const &input)
 {
-  OpenSslHasher hasher(OpenSslHasher::Type::SHA_3_512);
+  static OpenSslHasher hasher(OpenSslHasher::Type::SHA_3_512);
+  hasher.reset();
 
   return hasher(input);
 }
 
 std::vector<std::size_t> fnv(HashSourceFactory::Bytes const &input)
 {
-  crypto::FNV hasher;
+  static crypto::FNV hasher;
   hasher.Reset();
+
   hasher.Update(reinterpret_cast<std::uint8_t const *>(input.pointer()), input.size());
 
   const auto               size_in_bytes = hasher.GetSizeInBytes();
