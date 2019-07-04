@@ -58,7 +58,7 @@ void UnigramTable::Reset(unsigned int size, std::vector<uint64_t> const &frequen
       if (static_cast<double>(j) / static_cast<double>(size) > static_cast<double>(n))
       {
         i++;
-        n += pow(frequencies[i], 0.75) / total;
+        n += pow(static_cast<double>(frequencies[i]), 0.75) / total;
       }
     }
     assert(i == frequencies.size() - 1);
