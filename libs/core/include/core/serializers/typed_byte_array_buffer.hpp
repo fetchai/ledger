@@ -25,6 +25,7 @@
 #include "core/serializers/pointer_types.hpp"
 #include "core/serializers/stl_types.hpp"
 #include "core/serializers/type_register.hpp"
+
 #include <type_traits>
 
 namespace fetch {

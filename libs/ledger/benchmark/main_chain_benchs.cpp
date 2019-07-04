@@ -22,7 +22,9 @@
 
 #include "benchmark/benchmark.h"
 
+#include <cstddef>
 #include <memory>
+#include <vector>
 
 namespace {
 

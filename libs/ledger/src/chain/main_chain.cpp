@@ -29,8 +29,12 @@
 #include "telemetry/registry.hpp"
 
 #include <algorithm>
+#include <cassert>
 #include <cstddef>
 #include <cstdint>
+#include <deque>
+#include <stdexcept>
+#include <string>
 #include <utility>
 #include <vector>
 

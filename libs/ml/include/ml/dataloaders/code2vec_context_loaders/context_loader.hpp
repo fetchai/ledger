@@ -113,7 +113,7 @@ private:
 
   static void addValueToCounter(umap_str_int &umap, std::string word);
 
-  static std::vector<std::string> splitStringByChar(std::stringstream input, const char *sep);
+  static std::vector<std::string> splitStringByChar(std::stringstream input, char const *sep);
 
   SizeType addToIdxUMaps(std::string const &input, umap_str_int &name_to_idx,
                          umap_int_str &idx_to_name);
@@ -140,7 +140,7 @@ void C2VLoader<LabelType, DataType>::AddData(std::string const &c2v_input)
   while (std::getline(c2v_input_ss, c2v_input_line, '\n'))
   {
     std::stringstream c2v_input_line_ss(c2v_input_line);
-    const char *      sep = ",";
+    char const *      sep = ",";
 
     c2v_input_line_ss >> function_name;
 
@@ -338,7 +338,7 @@ void C2VLoader<LabelType, DataType>::addValueToCounter(
  */
 template <typename LabelType, typename DataType>
 std::vector<std::string> C2VLoader<LabelType, DataType>::splitStringByChar(std::stringstream input,
-                                                                           const char *      sep)
+                                                                           char const *      sep)
 {
   std::vector<std::string> splitted_string;
   std::string              segment;

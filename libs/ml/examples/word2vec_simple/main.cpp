@@ -16,27 +16,19 @@
 //
 //------------------------------------------------------------------------------
 
-#include <math.h>
-#include <pthread.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include "math/approx_exp.hpp"
+#include "math/clustering/knn.hpp"
+#include "math/tensor.hpp"
+#include "ml/dataloaders/word2vec_loaders/w2v_dataloader.hpp"
+#include "polyfill.hpp"
+#include "w2v_model.hpp"
+#include "word_analogy.hpp"
 
 #include <fstream>
 #include <iostream>
 #include <map>
 #include <string>
 #include <vector>
-
-#include "math/approx_exp.hpp"
-#include "math/clustering/knn.hpp"
-#include "math/tensor.hpp"
-#include "polyfill.hpp"
-//#include "unigram_table.hpp"
-
-#include "ml/dataloaders/word2vec_loaders/w2v_dataloader.hpp"
-#include "w2v_model.hpp"
-#include "word_analogy.hpp"
 
 using namespace fetch::ml;
 using namespace fetch::ml::dataloaders;

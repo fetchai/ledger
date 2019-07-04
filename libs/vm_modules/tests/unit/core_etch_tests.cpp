@@ -20,6 +20,8 @@
 
 #include "gmock/gmock.h"
 
+#include <sstream>
+
 namespace {
 
 // TODO(WK): extract test helpers library and move this test suite to the libs/vm

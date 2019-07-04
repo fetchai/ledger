@@ -28,7 +28,10 @@
 
 #include "gtest/gtest.h"
 
+#include <cassert>
 #include <chrono>
+#include <cstddef>
+#include <cstdint>
 #include <fstream>
 #include <memory>
 #include <random>

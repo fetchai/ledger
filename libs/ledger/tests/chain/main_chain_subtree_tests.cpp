@@ -25,8 +25,11 @@
 #include "gtest/gtest.h"
 
 #include <algorithm>
+#include <cstddef>
+#include <cstdint>
 #include <initializer_list>
 #include <memory>
+#include <vector>
 
 namespace {
 
