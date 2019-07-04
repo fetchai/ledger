@@ -42,7 +42,7 @@ namespace ledger {
 
 namespace {
 
-void addBlockToBloomFilter(BloomFilter &bf, Block const &block)
+void AddBlockToBloomFilter(BloomFilterInterface &bf, Block const &block)
 {
   for (auto const &slice : block.body.slices)
   {
@@ -60,7 +60,7 @@ void addBlockToBloomFilter(BloomFilter &bf, Block const &block)
  *
  * @param mode Flag to signal which storage mode has been requested
  */
-MainChain::MainChain(std::unique_ptr<BloomFilter> bloom_filter, Mode mode)
+MainChain::MainChain(std::unique_ptr<BloomFilterInterface> bloom_filter, Mode mode)
   : bloom_filter_(std::move(bloom_filter))
   , bloom_filter_false_positive_count_(telemetry::Registry::Instance().CreateCounter(
         "ledger_main_chain_bloom_filter_false_positive_total"))
@@ -138,7 +138,7 @@ BlockStatus MainChain::AddBlock(Block const &blk)
 
   if (status == BlockStatus::ADDED)
   {
-    addBlockToBloomFilter(*bloom_filter_, *block);
+    AddBlockToBloomFilter(*bloom_filter_, *block);
   }
 
   return status;
@@ -232,7 +232,7 @@ bool MainChain::LoadBlock(BlockHash const &hash, Block &block) const
   if (block_store_->Get(storage::ResourceID(hash), record))
   {
     block = record.block;
-    addBlockToBloomFilter(*bloom_filter_, block);
+    AddBlockToBloomFilter(*bloom_filter_, block);
 
     return true;
   }

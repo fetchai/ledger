@@ -52,7 +52,7 @@ public:
   using Functions = std::vector<Function>;
 
   explicit HashSourceFactory(Functions);
-  ~HashSourceFactory();
+  ~HashSourceFactory() = default;
 
   HashSourceFactory()                          = delete;
   HashSourceFactory(HashSourceFactory const &) = delete;
@@ -77,9 +77,9 @@ private:
 class HashSource
 {
 public:
-  HashSource(HashSource &&) noexcept;
-  HashSource &operator=(HashSource &&) noexcept;
-  ~HashSource();
+  HashSource(HashSource &&) noexcept = default;
+  HashSource &operator=(HashSource &&) noexcept = default;
+  ~HashSource()                                 = default;
 
   HashSource()                   = delete;
   HashSource(HashSource const &) = delete;
@@ -94,13 +94,13 @@ public:
     using pointer           = std::size_t const *;
     using reference         = std::size_t const &;
 
-    ~HashSourceIterator();
+    ~HashSourceIterator() = default;
 
-    HashSourceIterator(HashSourceIterator const &);
-    HashSourceIterator(HashSourceIterator &&) noexcept;
+    HashSourceIterator(HashSourceIterator const &)     = default;
+    HashSourceIterator(HashSourceIterator &&) noexcept = default;
 
-    HashSourceIterator &operator=(HashSourceIterator const &);
-    HashSourceIterator &operator=(HashSourceIterator &&) noexcept;
+    HashSourceIterator &operator=(HashSourceIterator const &) = default;
+    HashSourceIterator &operator=(HashSourceIterator &&) noexcept = default;
 
     HashSourceIterator() = delete;
 
@@ -138,7 +138,7 @@ private:
 
 }  // namespace internal
 
-class BloomFilter
+class BloomFilterInterface
 {
 public:
   using Bytes     = internal::HashSourceFactory::Bytes;
@@ -151,9 +151,9 @@ public:
     BASIC
   };
 
-  static std::unique_ptr<BloomFilter> create(Type);
+  static std::unique_ptr<BloomFilterInterface> create(Type);
 
-  virtual ~BloomFilter() = default;
+  virtual ~BloomFilterInterface() = default;
 
   /*
    * Query the Bloom filter for a given entry.
@@ -178,12 +178,12 @@ public:
   virtual bool ReportFalsePositives(std::size_t) = 0;
 };
 
-class BasicBloomFilter : public BloomFilter
+class BasicBloomFilter : public BloomFilterInterface
 {
 public:
   BasicBloomFilter();
   explicit BasicBloomFilter(Functions const &);
-  ~BasicBloomFilter() override;
+  ~BasicBloomFilter() override = default;
 
   BasicBloomFilter(BasicBloomFilter const &) = delete;
   BasicBloomFilter(BasicBloomFilter &&)      = delete;
@@ -205,11 +205,11 @@ public:
 /*
  * A fake Bloom filter which holds no data and treats any query as positive.
  */
-class DummyBloomFilter : public BloomFilter
+class DummyBloomFilter : public BloomFilterInterface
 {
 public:
-  DummyBloomFilter();
-  ~DummyBloomFilter() override;
+  DummyBloomFilter()           = default;
+  ~DummyBloomFilter() override = default;
 
   DummyBloomFilter(DummyBloomFilter const &) = delete;
   DummyBloomFilter(DummyBloomFilter &&)      = delete;

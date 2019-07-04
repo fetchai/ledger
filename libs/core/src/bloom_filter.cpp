@@ -44,8 +44,6 @@ HashSourceFactory::HashSourceFactory(HashSourceFactory::Functions hash_functions
   : hash_functions_(std::move(hash_functions))
 {}
 
-HashSourceFactory::~HashSourceFactory() = default;
-
 HashSource HashSourceFactory::operator()(Bytes const &element) const
 {
   return HashSource(this->hash_functions_, element);
@@ -62,10 +60,6 @@ HashSource::HashSource(HashSourceFactory::Functions const &hash_functions,
     data_.insert(data_.cend(), hashes.cbegin(), hashes.cend());
   }
 }
-
-HashSource::~HashSource()                      = default;
-HashSource::HashSource(HashSource &&) noexcept = default;
-HashSource &HashSource::operator=(HashSource &&) noexcept = default;
 
 HashSource::HashSourceIterator HashSource::begin() const
 {
@@ -91,16 +85,6 @@ std::size_t HashSource::getHash(std::size_t index) const
 {
   return data_[index];
 }
-
-HashSource::HashSourceIterator::~HashSourceIterator() = default;
-
-HashSource::HashSourceIterator::HashSourceIterator(HashSourceIterator const &)     = default;
-HashSource::HashSourceIterator::HashSourceIterator(HashSourceIterator &&) noexcept = default;
-
-HashSource::HashSourceIterator &HashSource::HashSourceIterator::operator=(
-    HashSource::HashSourceIterator const &) = default;
-HashSource::HashSourceIterator &HashSource::HashSourceIterator::operator=(
-    HashSource::HashSourceIterator &&) noexcept = default;
 
 bool HashSource::HashSourceIterator::operator!=(HashSource::HashSourceIterator const &other) const
 {
@@ -281,8 +265,6 @@ BasicBloomFilter::Functions const default_hash_functions{internal::raw_data,  in
                                                          internal::sha_1,     internal::sha_2_512,
                                                          internal::sha_3_512, internal::fnv};
 
-BasicBloomFilter::~BasicBloomFilter() = default;
-
 BasicBloomFilter::BasicBloomFilter()
   : bits_(INITIAL_SIZE_IN_BITS)
   , hash_source_factory_(default_hash_functions)
@@ -343,9 +325,6 @@ bool BasicBloomFilter::ReportFalsePositives(std::size_t count)
   return false;
 }
 
-DummyBloomFilter::DummyBloomFilter()  = default;
-DummyBloomFilter::~DummyBloomFilter() = default;
-
 bool DummyBloomFilter::Match(Bytes const &)
 {
   return true;
@@ -359,7 +338,7 @@ bool DummyBloomFilter::ReportFalsePositives(std::size_t)
   return true;
 }
 
-std::unique_ptr<BloomFilter> BloomFilter::create(Type type)
+std::unique_ptr<BloomFilterInterface> BloomFilterInterface::create(Type type)
 {
   switch (type)
   {

@@ -120,7 +120,8 @@ public:
   };
 
   // Construction / Destruction
-  explicit MainChain(std::unique_ptr<BloomFilter> bloom_filter, Mode mode = Mode::IN_MEMORY_DB);
+  explicit MainChain(std::unique_ptr<BloomFilterInterface> bloom_filter,
+                     Mode                                  mode = Mode::IN_MEMORY_DB);
   MainChain(MainChain const &rhs) = delete;
   MainChain(MainChain &&rhs)      = delete;
   ~MainChain();
@@ -253,12 +254,12 @@ private:
   mutable RMutex   lock_;         ///< Mutex protecting block_chain_, tips_ & heaviest_
   mutable BlockMap block_chain_;  ///< All recent blocks are kept in memory
   // The whole tree of previous-next relations among cached blocks
-  mutable References           references_;
-  TipsMap                      tips_;          ///< Keep track of the tips
-  HeaviestTip                  heaviest_;      ///< Heaviest block/tip
-  LooseBlockMap                loose_blocks_;  ///< Waiting (loose) blocks
-  std::unique_ptr<BloomFilter> bloom_filter_;
-  telemetry::CounterPtr        bloom_filter_false_positive_count_;
+  mutable References                    references_;
+  TipsMap                               tips_;          ///< Keep track of the tips
+  HeaviestTip                           heaviest_;      ///< Heaviest block/tip
+  LooseBlockMap                         loose_blocks_;  ///< Waiting (loose) blocks
+  std::unique_ptr<BloomFilterInterface> bloom_filter_;
+  telemetry::CounterPtr                 bloom_filter_false_positive_count_;
 
   /**
    * Serializer for the DbRecord
