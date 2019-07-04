@@ -105,6 +105,8 @@ public:
 private:
   HashSource(HashSourceFactory::Functions const &, HashSourceFactory::Bytes const &);
 
+  std::size_t getHash(std::size_t index) const;
+
   std::vector<std::size_t> data_;
 
   friend class HashSourceFactory;

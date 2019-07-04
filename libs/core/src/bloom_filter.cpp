@@ -85,6 +85,11 @@ HashSource::HashSourceIterator HashSource::cend() const
   return HashSource::HashSourceIterator{this, data_.size()};
 }
 
+std::size_t HashSource::getHash(std::size_t index) const
+{
+  return data_[index];
+}
+
 HashSource::HashSourceIterator::~HashSourceIterator() = default;
 
 bool HashSource::HashSourceIterator::operator!=(HashSource::HashSourceIterator const &other) const
@@ -115,7 +120,7 @@ HashSource::HashSourceIterator &HashSource::HashSourceIterator::operator++()
 
 std::size_t HashSource::HashSourceIterator::operator*() const
 {
-  return source_->data_[hash_index_];
+  return source_->getHash(hash_index_);
 }
 
 HashSource::HashSourceIterator::HashSourceIterator(HashSource const *source, std::size_t index)
