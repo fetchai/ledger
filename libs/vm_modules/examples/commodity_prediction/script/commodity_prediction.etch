@@ -58,7 +58,7 @@ loader.AddData("commodity", System.Argv(1), System.Argv(2));
 var graph = Graph();
 build_graph(graph);
 
-var testing = false;
+var testing = true;
 
 if (testing)
     read_weights(graph);

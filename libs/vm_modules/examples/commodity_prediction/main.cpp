@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "math/tensor.hpp"
+#include "ml/dataloaders/ReadCSV.hpp"
 #include "vm/module.hpp"
 #include "vm_modules/core/print.hpp"
 #include "vm_modules/ml/ml.hpp"
@@ -119,7 +120,7 @@ int main(int argc, char **argv)
   fetch::vm::VM vm(module.get());
 
   // attach std::cout for printing
-  vm.AttachOutputDevice("stdout", std::cout);
+  vm.AttachOutputDevice(fetch::vm::VM::STDOUT, std::cout);
 
   if (!vm.GenerateExecutable(ir, "main_ir", executable, errors))
   {

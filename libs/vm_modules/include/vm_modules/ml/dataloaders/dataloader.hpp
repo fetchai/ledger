@@ -28,18 +28,11 @@ namespace fetch {
 namespace vm_modules {
 namespace ml {
 
-enum class LoaderType
-{
-  COMMODITY,
-  MNIST
-};
-
 class VMDataLoader : public fetch::vm::Object
 {
 public:
   VMDataLoader(fetch::vm::VM *vm, fetch::vm::TypeId type_id)
     : fetch::vm::Object(vm, type_id)
-    , mode_{}
   {}
 
   static fetch::vm::Ptr<VMDataLoader> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id)
@@ -62,27 +55,6 @@ public:
   {
     if (mode->str == "commodity")
     {
-      mode_ = LoaderType ::COMMODITY;
-    }
-    else if (mode->str == "mnist")
-    {
-      mode_ = LoaderType ::MNIST;
-    }
-    else
-    {
-      throw std::runtime_error("Unrecognised loader type");
-    }
-    switch (mode_)
-    {
-    case LoaderType ::MNIST:
-    {
-      loader_ = std::make_shared<fetch::ml::dataloaders::MNISTLoader<fetch::math::Tensor<float>,
-                                                                     fetch::math::Tensor<float>>>(
-          xfilename->str, yfilename->str);
-      break;
-    }
-    case LoaderType ::COMMODITY:
-    {
       fetch::ml::dataloaders::CommodityDataLoader<fetch::math::Tensor<float>,
                                                   fetch::math::Tensor<float>>
           ld;
@@ -90,8 +62,17 @@ public:
 
       loader_ = std::make_shared<fetch::ml::dataloaders::CommodityDataLoader<
           fetch::math::Tensor<float>, fetch::math::Tensor<float>>>(ld);
-      break;
     }
+    else if (mode->str == "mnist")
+    {
+
+      loader_ = std::make_shared<fetch::ml::dataloaders::MNISTLoader<fetch::math::Tensor<float>,
+                                                                     fetch::math::Tensor<float>>>(
+          xfilename->str, yfilename->str);
+    }
+    else
+    {
+      throw std::runtime_error("Unrecognised loader type");
     }
   }
 
@@ -115,9 +96,6 @@ public:
   std::shared_ptr<
       fetch::ml::dataloaders::DataLoader<fetch::math::Tensor<float>, fetch::math::Tensor<float>>>
       loader_;
-
-private:
-  LoaderType mode_;
 };
 
 }  // namespace ml

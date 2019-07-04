@@ -19,6 +19,7 @@
 #include "file_loader.hpp"
 #include "math/distance/cosine.hpp"
 #include "math/tensor.hpp"
+#include "ml/dataloaders/ReadCSV.hpp"
 #include "ml/dataloaders/commodity_dataloader.hpp"
 #include "ml/graph.hpp"
 #include "ml/layers/fully_connected.hpp"
