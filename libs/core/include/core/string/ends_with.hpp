@@ -34,5 +34,5 @@ inline bool EndsWith(std::string const &value, std::string const &ending)
   return success;
 }
 
-} // namespace core
-} // namespace fetch
+}  // namespace core
+}  // namespace fetch

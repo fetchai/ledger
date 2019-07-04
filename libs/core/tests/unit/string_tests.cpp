@@ -28,4 +28,4 @@ TEST(StringTests, CheckEndsWith)
   EXPECT_FALSE(fetch::core::EndsWith("Hello World", "World2"));
 }
 
-} // namespace
+}  // namespace

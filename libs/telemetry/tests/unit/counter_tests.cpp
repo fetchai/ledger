@@ -34,11 +34,8 @@ class CounterTests : public ::testing::Test
 protected:
   void SetUp() override
   {
-    counter_ = std::make_unique<Counter>(
-      "test_counter_total",
-      "Simple test counter",
-      Labels{{"foo", "bar"}}
-    );
+    counter_ = std::make_unique<Counter>("test_counter_total", "Simple test counter",
+                                         Labels{{"foo", "bar"}});
   }
 
   void TearDown() override

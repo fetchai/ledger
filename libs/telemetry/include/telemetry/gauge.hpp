@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "telemetry/measurement.hpp"
 #include "core/string/ends_with.hpp"
+#include "telemetry/measurement.hpp"
 
 #include <iomanip>
 #include <iostream>

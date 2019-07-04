@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "telemetry/counter.hpp"
 #include "core/string/ends_with.hpp"
+#include "telemetry/counter.hpp"
 
 #include <iostream>
 
@@ -30,7 +30,7 @@ bool ValidateName(std::string const &name)
   return core::EndsWith(name, "_total");
 }
 
-} // namespace
+}  // namespace
 
 Counter::Counter(std::string name, std::string description, Labels labels)
   : Measurement(std::move(name), std::move(description), std::move(labels))
