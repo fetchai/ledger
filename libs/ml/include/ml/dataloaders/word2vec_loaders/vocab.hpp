@@ -33,7 +33,7 @@ public:
 
   DataType data;
 
-  Vocab()= default;
+  Vocab() = default;
 
   void Save(std::string const &filename) const;
   void Load(std::string const &filename);
