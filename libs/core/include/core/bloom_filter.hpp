@@ -67,9 +67,9 @@ private:
 };
 
 /*
- * Represents a sequential application of a HashSourceFactory's hash
- * functions to a byte array. Outwardly it may be treated as an immutable,
- * iterable collection of std::size_t.
+ * Represents a sequential application of a HashSourceFactory's hash functions
+ * to a byte array. Outwardly it may be treated as an immutable, iterable
+ * collection of std::size_t.
  *
  * Not thread-safe. Not safe to use after the parent HashSourceFactory
  * had been destroyed.
