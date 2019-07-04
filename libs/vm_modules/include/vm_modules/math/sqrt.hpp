@@ -34,17 +34,12 @@ fetch::math::meta::IfIsMath<T, T> Sqrt(fetch::vm::VM *, T const &a)
   return x;
 }
 
-static void BindSqrt(fetch::vm::Module &module)
+inline void BindSqrt(fetch::vm::Module &module)
 {
   module.CreateFreeFunction<float_t>("sqrt", &Sqrt<float_t>);
   module.CreateFreeFunction<double_t>("sqrt", &Sqrt<double_t>);
   module.CreateFreeFunction<fixed_point::fp32_t>("sqrt", &Sqrt<fixed_point::fp32_t>);
   module.CreateFreeFunction<fixed_point::fp64_t>("sqrt", &Sqrt<fixed_point::fp64_t>);
-}
-
-inline void BindSqrt(std::shared_ptr<fetch::vm::Module> module)
-{
-  BindSqrt(*module.get());
 }
 
 }  // namespace math

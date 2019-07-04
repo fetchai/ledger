@@ -17,11 +17,10 @@
 //------------------------------------------------------------------------------
 
 #include "math/tensor.hpp"
-
 #include "ml/dataloaders/tensor_dataloader.hpp"
 #include "ml/estimators/dnn_classifier.hpp"
 
-#include <gtest/gtest.h>
+#include "gtest/gtest.h"
 
 template <typename T>
 class EstimatorsTest : public ::testing::Test

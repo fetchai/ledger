@@ -44,7 +44,7 @@ public:
   HTTPRequest() = default;
 
   bool ParseBody(asio::streambuf &buffer);
-  bool ParseHeader(asio::streambuf &buffer, std::size_t const &end);
+  bool ParseHeader(asio::streambuf &buffer, std::size_t end);
 
   Method const &method() const
   {

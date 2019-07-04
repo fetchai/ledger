@@ -27,12 +27,12 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class Concatenate : public fetch::ml::ElementWiseOps<T>
+class Concatenate : public fetch::ml::Ops<T>
 {
 public:
   using ArrayType     = T;
   using SizeType      = fetch::math::SizeType;
-  using VecTensorType = typename ElementWiseOps<T>::VecTensorType;
+  using VecTensorType = typename Ops<T>::VecTensorType;
 
   explicit Concatenate(SizeType axis)
     : axis_(axis)
@@ -71,6 +71,11 @@ public:
       ++c_it;
     }
     return ArrayType::Split(error_signal, concat_points_, axis_);
+  }
+
+  virtual std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const
+  {
+    return inputs.front().get().shape();
   }
 
   static constexpr char const *DESCRIPTOR = "Concatenate";

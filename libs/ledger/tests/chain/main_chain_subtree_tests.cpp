@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/bloom_filter.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "ledger/chain/block.hpp"
 #include "ledger/chain/main_chain.hpp"
@@ -49,7 +50,8 @@ protected:
   {
     block_generator_.Reset();
 
-    chain_ = std::make_unique<MainChain>(MainChain::Mode::IN_MEMORY_DB);
+    chain_ = std::make_unique<MainChain>(std::make_unique<fetch::NullBloomFilter>(),
+                                         MainChain::Mode::IN_MEMORY_DB);
   }
 
   void TearDown() override

@@ -19,7 +19,6 @@
 #include "vm/module.hpp"
 #include "vm_modules/core/print.hpp"
 #include "vm_modules/core/type_convert.hpp"
-
 #include "vm_modules/math/math.hpp"
 
 #include <cstdlib>

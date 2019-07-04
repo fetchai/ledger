@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/bloom_filter.hpp"
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/testing/block_generator.hpp"
 
@@ -63,7 +64,8 @@ void MainChain_InMemory_AddBlocksSequentially(benchmark::State &state)
   for (auto _ : state)
   {
     state.PauseTiming();
-    auto chain = std::make_unique<MainChain>(MainChain::Mode::IN_MEMORY_DB);
+    auto chain = std::make_unique<MainChain>(std::make_unique<fetch::NullBloomFilter>(),
+                                             MainChain::Mode::IN_MEMORY_DB);
     state.ResumeTiming();
 
     for (std::size_t i = 1; i < array.size(); ++i)
@@ -80,7 +82,8 @@ void MainChain_Persistent_AddBlocksSequentially(benchmark::State &state)
   for (auto _ : state)
   {
     state.PauseTiming();
-    auto chain = std::make_unique<MainChain>(MainChain::Mode::CREATE_PERSISTENT_DB);
+    auto chain = std::make_unique<MainChain>(std::make_unique<fetch::NullBloomFilter>(),
+                                             MainChain::Mode::CREATE_PERSISTENT_DB);
     state.ResumeTiming();
 
     for (std::size_t i = 1; i < array.size(); ++i)
@@ -97,7 +100,8 @@ void MainChain_InMemory_AddBlocksOutOfOrder(benchmark::State &state)
   for (auto _ : state)
   {
     state.PauseTiming();
-    auto chain = std::make_unique<MainChain>(MainChain::Mode::IN_MEMORY_DB);
+    auto chain = std::make_unique<MainChain>(std::make_unique<fetch::NullBloomFilter>(),
+                                             MainChain::Mode::IN_MEMORY_DB);
     state.ResumeTiming();
 
     for (std::size_t i = array.size() - 1; i > 0; --i)
@@ -114,7 +118,8 @@ void MainChain_Persistent_AddBlocksOutOfOrder(benchmark::State &state)
   for (auto _ : state)
   {
     state.PauseTiming();
-    auto chain = std::make_unique<MainChain>(MainChain::Mode::CREATE_PERSISTENT_DB);
+    auto chain = std::make_unique<MainChain>(std::make_unique<fetch::NullBloomFilter>(),
+                                             MainChain::Mode::CREATE_PERSISTENT_DB);
     state.ResumeTiming();
 
     for (std::size_t i = array.size() - 1; i > 0; --i)

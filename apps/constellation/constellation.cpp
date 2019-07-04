@@ -17,25 +17,27 @@
 //------------------------------------------------------------------------------
 
 #include "constellation.hpp"
+#include "core/bloom_filter_interface.hpp"
+#include "dkg/dkg_service.hpp"
 #include "health_check_http_module.hpp"
 #include "http/middleware/allow_origin.hpp"
 #include "ledger/chain/consensus/bad_miner.hpp"
 #include "ledger/chain/consensus/dummy_miner.hpp"
-
 #include "ledger/chaincode/contract_http_interface.hpp"
-#include "ledger/dag/dag_interface.hpp"
-
 #include "ledger/consensus/naive_entropy_generator.hpp"
 #include "ledger/consensus/stake_snapshot.hpp"
+#include "ledger/dag/dag_interface.hpp"
 #include "ledger/execution_manager.hpp"
 #include "ledger/storage_unit/lane_remote_control.hpp"
 #include "ledger/tx_query_http_interface.hpp"
 #include "ledger/tx_status_http_interface.hpp"
+#include "logging_http_module.hpp"
 #include "network/generics/atomic_inflight_counter.hpp"
 #include "network/muddle/rpc/client.hpp"
 #include "network/muddle/rpc/server.hpp"
 #include "network/p2pservice/p2p_http_interface.hpp"
 #include "network/uri.hpp"
+#include "telemetry_http_module.hpp"
 
 #include <chrono>
 #include <cstddef>
@@ -57,6 +59,7 @@ using fetch::network::Uri;
 using fetch::network::Peer;
 using fetch::ledger::Address;
 using fetch::ledger::GenesisFileCreator;
+using fetch::muddle::MuddleEndpoint;
 
 using ExecutorPtr = std::shared_ptr<Executor>;
 
@@ -66,6 +69,7 @@ namespace {
 using LaneIndex       = fetch::ledger::LaneIdentity::lane_type;
 using StakeManagerPtr = std::shared_ptr<ledger::StakeManager>;
 using EntropyPtr      = std::unique_ptr<ledger::EntropyGeneratorInterface>;
+using DkgServicePtr   = std::unique_ptr<dkg::DkgService>;
 using ConstByteArray  = byte_array::ConstByteArray;
 
 static const std::size_t HTTP_THREADS{4};
@@ -104,15 +108,12 @@ std::shared_ptr<ledger::DAGInterface> GenerateDAG(bool generate, std::string con
                                                   bool                          load_on_start,
                                                   Constellation::CertificatePtr certificate)
 {
-  std::shared_ptr<ledger::DAGInterface> ret;
-
   if (generate)
   {
-    ledger::DAG *new_dag = new ledger::DAG{db_name, load_on_start, certificate};
-    ret.reset(new_dag);
+    return std::make_shared<ledger::DAG>(db_name, load_on_start, certificate);
   }
 
-  return ret;
+  return nullptr;
 }
 
 ledger::ShardConfigs GenerateShardsConfig(uint32_t num_lanes, uint16_t start_port,
@@ -165,6 +166,21 @@ StakeManagerPtr CreateStakeManager(bool enabled, ledger::EntropyGeneratorInterfa
   return mgr;
 }
 
+DkgServicePtr CreateDkgService(Constellation::Config const &cfg, ConstByteArray address,
+                               MuddleEndpoint &endpoint)
+{
+  DkgServicePtr dkg{};
+
+  if (cfg.proof_of_stake && !cfg.beacon_address.empty())
+  {
+    crypto::bls::Init();
+
+    dkg = std::make_unique<dkg::DkgService>(endpoint, address, cfg.beacon_address);
+  }
+
+  return dkg;
+}
+
 }  // namespace
 
 /**
@@ -201,6 +217,7 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
                                                  cfg_.log2_num_lanes))
   , lane_control_(internal_muddle_.AsEndpoint(), shard_cfgs_, cfg_.log2_num_lanes)
   , dag_{GenerateDAG(cfg_.features.IsEnabled("synergetic"), "dag_db_", true, certificate)}
+  , dkg_{CreateDkgService(cfg_, certificate->identity().identifier(), muddle_.AsEndpoint())}
   , entropy_{CreateEntropy()}
   , stake_{CreateStakeManager(cfg_.proof_of_stake, *entropy_)}
   , execution_manager_{std::make_shared<ExecutionManager>(
@@ -208,7 +225,11 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
         [this] {
           return std::make_shared<Executor>(storage_, stake_ ? &stake_->update_queue() : nullptr);
         })}
-  , chain_{ledger::MainChain::Mode::LOAD_PERSISTENT_DB}
+  , chain_{BloomFilterInterface::Create(
+               cfg_.features.IsEnabled(FeatureFlags::MAIN_CHAIN_BLOOM_FILTER)
+                   ? BloomFilterInterface::Type::BASIC
+                   : BloomFilterInterface::Type::NULL_IMPL),
+           ledger::MainChain::Mode::LOAD_PERSISTENT_DB}
   , block_packer_{cfg_.log2_num_lanes}
   , block_coordinator_{chain_,
                        dag_,
@@ -235,6 +256,8 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
         std::make_shared<ledger::TxStatusHttpInterface>(tx_status_cache_),
         std::make_shared<ledger::TxQueryHttpInterface>(*storage_),
         std::make_shared<ledger::ContractHttpInterface>(*storage_, tx_processor_),
+        std::make_shared<LoggingHttpModule>(),
+        std::make_shared<TelemetryHttpModule>(),
         std::make_shared<HealthCheckHttpModule>(chain_, *main_chain_service_, block_coordinator_)}
 {
 
@@ -271,6 +294,12 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
   for (auto const &module : http_modules_)
   {
     http_.AddModule(*module);
+  }
+
+  // If we are using the DKG service we need to update the default entropy engine for PoS
+  if (dkg_)
+  {
+    stake_->UpdateEntropy(*dkg_);
   }
 }
 
@@ -361,7 +390,7 @@ void Constellation::Run(UriList const &initial_peers, core::WeakRunnable bootstr
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Loading from genesis save file.");
 
-    GenesisFileCreator creator(block_coordinator_, *storage_, stake_.get());
+    GenesisFileCreator creator(block_coordinator_, *storage_, stake_.get(), dkg_.get());
     creator.LoadFile(SNAPSHOT_FILENAME);
 
     FETCH_LOG_INFO(LOGGING_NAME, "Loaded from genesis save file.");
@@ -394,10 +423,21 @@ void Constellation::Run(UriList const &initial_peers, core::WeakRunnable bootstr
   // Step 2. Main monitor loop
   //---------------------------------------------------------------
   bool start_up_in_progress{true};
+  bool dkg_attached{false};
 
   // monitor loop
   while (active_)
   {
+    // wait for at least one connected peer
+    if (!muddle_.AsEndpoint().GetDirectlyConnectedPeers().empty())
+    {
+      if (dkg_ && !dkg_attached)
+      {
+        reactor_.Attach(dkg_->GetWeakRunnable());
+        dkg_attached = true;
+      }
+    }
+
     // determine the status of the main chain server
     bool const is_in_sync = main_chain_service_->IsSynced() && block_coordinator_.IsSynced();
 
@@ -441,7 +481,7 @@ void Constellation::Run(UriList const &initial_peers, core::WeakRunnable bootstr
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Creating genesis save file.");
 
-    GenesisFileCreator creator(block_coordinator_, *storage_, stake_.get());
+    GenesisFileCreator creator(block_coordinator_, *storage_, stake_.get(), dkg_.get());
     creator.CreateFile(SNAPSHOT_FILENAME);
   }
 

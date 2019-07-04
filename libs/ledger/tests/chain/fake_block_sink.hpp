@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "ledger/block_sink_interface.hpp"
+#include "ledger/chain/block.hpp"
 
 #include <deque>
 

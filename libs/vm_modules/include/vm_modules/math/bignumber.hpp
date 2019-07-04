@@ -24,6 +24,7 @@
 
 namespace fetch {
 namespace vm_modules {
+namespace math {
 
 class UInt256Wrapper : public fetch::vm::Object
 {
@@ -316,5 +317,6 @@ private:
   vectorise::UInt<256> number_;
 };
 
+}  // namespace math
 }  // namespace vm_modules
 }  // namespace fetch

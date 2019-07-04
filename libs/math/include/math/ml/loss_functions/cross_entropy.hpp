@@ -49,7 +49,7 @@ typename ArrayType::Type CrossEntropyLoss(ArrayType const &x, ArrayType const &y
   auto n_examples = x.shape().at(1);
   auto n_dims     = x.shape().at(0);
 
-  DataType ret = DataType(0);
+  DataType ret = static_cast<DataType>(0);
 
   // if not a one-hot, must be binary logistic regression cost
   if (n_dims == 1)

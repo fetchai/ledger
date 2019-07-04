@@ -29,8 +29,6 @@ using fetch::byte_array::FromBase64;
 namespace fetch {
 namespace ledger {
 
-namespace {
-
 byte_array::ConstByteArray const ADDRESS_NAME{"address"};
 byte_array::ConstByteArray const FROM_NAME{"from"};
 byte_array::ConstByteArray const TO_NAME{"to"};
@@ -202,8 +200,6 @@ struct WalletRecord
     serializer >> b.cooldown_stake;
   }
 };
-
-}  // namespace
 
 }  // namespace ledger
 }  // namespace fetch

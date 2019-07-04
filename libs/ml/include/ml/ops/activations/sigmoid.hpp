@@ -28,13 +28,13 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class Sigmoid : public fetch::ml::ElementWiseOps<T>
+class Sigmoid : public fetch::ml::Ops<T>
 {
 public:
   using ArrayType     = T;
   using DataType      = typename ArrayType::Type;
   using SizeType      = typename ArrayType::SizeType;
-  using VecTensorType = typename ElementWiseOps<T>::VecTensorType;
+  using VecTensorType = typename Ops<T>::VecTensorType;
 
   Sigmoid()          = default;
   virtual ~Sigmoid() = default;
@@ -59,13 +59,18 @@ public:
 
     // gradient of sigmoid function is s(x)(1 - s(x))
     Forward(inputs, t);
-    fetch::math::Subtract(DataType(1), t, return_signal);
+    fetch::math::Subtract(static_cast<DataType>(1), t, return_signal);
     fetch::math::Multiply(t, return_signal, return_signal);
 
     // multiply by error_signal (chain rule)
     fetch::math::Multiply(error_signal, return_signal, return_signal);
 
     return {return_signal};
+  }
+
+  virtual std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const
+  {
+    return inputs.front().get().shape();
   }
 
   static constexpr char const *DESCRIPTOR = "Sigmoid";

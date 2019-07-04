@@ -24,12 +24,13 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class Subtract : public fetch::ml::ElementWiseOps<T>
+class Subtract : public fetch::ml::Ops<T>
 {
 public:
   using ArrayType     = T;
   using DataType      = typename ArrayType::Type;
-  using VecTensorType = typename ElementWiseOps<T>::VecTensorType;
+  using SizeType      = typename ArrayType::SizeType;
+  using VecTensorType = typename Ops<T>::VecTensorType;
 
   Subtract()          = default;
   virtual ~Subtract() = default;
@@ -52,6 +53,11 @@ public:
     assert(error_signal.size() == inputs.at(1).get().size());
 
     return {error_signal, fetch::math::Multiply(error_signal, DataType{-1})};
+  }
+
+  virtual std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const
+  {
+    return inputs.front().get().shape();
   }
 
   static constexpr char const *DESCRIPTOR = "Subtract";

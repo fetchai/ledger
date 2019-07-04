@@ -1547,8 +1547,8 @@ private:
   void Handler__VariablePrefixDec();
   void Handler__VariablePostfixInc();
   void Handler__VariablePostfixDec();
-  void Handler__And();
-  void Handler__Or();
+  void Handler__JumpIfFalseOrPop();
+  void Handler__JumpIfTrueOrPop();
   void Handler__Not();
   void Handler__PrimitiveEqual();
   void Handler__ObjectEqual();

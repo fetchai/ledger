@@ -44,25 +44,30 @@ public:
   using ArrayType          = T;
   using ArrayPtrType       = std::shared_ptr<ArrayType>;
   using SizeType           = typename ArrayType::SizeType;
-  using Datatype           = typename ArrayType::Type;
+  using DataType           = typename ArrayType::Type;
   using ConstSliceType     = typename ArrayType::ConstSliceType;
   using NodePtrType        = typename std::shared_ptr<fetch::ml::NodeInterface<ArrayType>>;
   using TrainablePtrType   = typename std::shared_ptr<fetch::ml::ops::Trainable<ArrayType>>;
+  using GraphPtrType       = typename std::shared_ptr<fetch::ml::Graph<ArrayType>>;
   using PlaceholderType    = typename fetch::ml::ops::PlaceHolder<ArrayType>;
   using PlaceholderPtrType = typename std::shared_ptr<fetch::ml::ops::PlaceHolder<ArrayType>>;
+  using RegPtrType         = std::shared_ptr<fetch::ml::regularisers::Regulariser<T>>;
 
   virtual ~Graph() = default;
 
-  ArrayType    Evaluate(std::string const &node_name);
+  ArrayType    Evaluate(std::string const &node_name, bool is_training = true);
   void         BackPropagate(std::string const &node_name, ArrayType const &error_signal);
-  virtual void Step(Datatype learning_rate);
+  virtual void Step(DataType learning_rate);
 
   template <class OperationType, typename... Params>
   std::string AddNode(std::string const &node_name, std::vector<std::string> const &inputs,
                       Params... params);
   NodePtrType GetNode(std::string const &node_name) const;
-  void        SetInput(std::string const &node_name, ArrayType data, bool batch = false);
+  void        SetInput(std::string const &node_name, ArrayType data);
   void        ResetGraphCache(std::shared_ptr<NodeInterface<T>> const &n, bool input_size_changed);
+  void SetRegularisation(RegPtrType regulariser, DataType regularisation_rate = DataType{0.0});
+  bool SetRegularisation(std::string node_name, RegPtrType regulariser,
+                         DataType regularisation_rate = DataType{0.0});
 
   virtual struct fetch::ml::StateDict<ArrayType> StateDict() const;
   virtual void LoadStateDict(struct fetch::ml::StateDict<T> const &dict);
@@ -75,6 +80,8 @@ public:
   void ResetGradients();
 
 private:
+  void ApplyRegularisation();
+
   template <class OperationType>
   meta::IfIsTrainable<ArrayType, OperationType, void> AddTrainable(
       std::string const &name, std::shared_ptr<Node<ArrayType, OperationType>> op);
@@ -97,16 +104,54 @@ protected:
 };
 
 /**
+ * Set regularisation type and rate for all trainables in graph
+ * @tparam ArrayType
+ * @param regularisation_type L1, L2 or NONE
+ * @param regularisation_rate
+ */
+template <typename ArrayType>
+void Graph<ArrayType>::SetRegularisation(RegPtrType regulariser, DataType regularisation_rate)
+{
+  for (auto &t : trainable_)
+  {
+    t->SetRegularisation(regulariser, regularisation_rate);
+  }
+}
+
+/**
+ * Set regularisation type and rate for specified trainable by it's name
+ * @tparam ArrayType
+ * @param node_name name of specific trainable
+ * @param regularisation_type L1, L2 or NONE
+ * @param regularisation_rate
+ */
+template <typename ArrayType>
+bool Graph<ArrayType>::SetRegularisation(std::string node_name, RegPtrType regulariser,
+                                         DataType regularisation_rate)
+{
+  if (nodes_[node_name])
+  {
+    trainable_[node_name]->SetRegularisation(regulariser, regularisation_rate);
+    return true;
+  }
+  else
+  {
+    // Trainable doesn't exist
+    return false;
+  }
+}
+
+/**
  * Evaluates the output of a node (calling all necessary forward prop)
  * @param node_name name of node to evaluate for output
  * @return pointer to array containing node output
  */
 template <typename ArrayType>
-ArrayType Graph<ArrayType>::Evaluate(std::string const &node_name)
+ArrayType Graph<ArrayType>::Evaluate(std::string const &node_name, bool is_training)
 {
   if (nodes_[node_name])
   {
-    return nodes_[node_name]->Evaluate();
+    return nodes_[node_name]->Evaluate(is_training);
   }
   else
   {
@@ -123,6 +168,9 @@ template <typename ArrayType>
 void Graph<ArrayType>::BackPropagate(std::string const &node_name, ArrayType const &error_signal)
 {
   nodes_[node_name]->BackPropagate(error_signal);
+
+  // Applies regularisation to all trainables based on their configuration
+  ApplyRegularisation();
 }
 
 /**
@@ -130,11 +178,20 @@ void Graph<ArrayType>::BackPropagate(std::string const &node_name, ArrayType con
  * @param learning_rate the learning rate (alpha) hyperparameter
  */
 template <typename ArrayType>
-void Graph<ArrayType>::Step(Datatype learning_rate)
+void Graph<ArrayType>::Step(DataType learning_rate)
 {
   for (auto &t : trainable_)
   {
     t->Step(learning_rate);
+  }
+}
+
+template <typename ArrayType>
+void Graph<ArrayType>::ApplyRegularisation()
+{
+  for (auto &t : trainable_)
+  {
+    t->ApplyRegularisation();
   }
 }
 
@@ -188,10 +245,9 @@ typename Graph<ArrayType>::NodePtrType Graph<ArrayType>::GetNode(std::string con
  * Also resets the graph cache to avoid erroneous leftover outputs
  * @param node_name name of the placeholder node in the graph (must be unique)
  * @param data the pointer to a tensor to assign to the placeholder
- * @param batch flag to indicate if input should be treated as batch
  */
 template <typename ArrayType>
-void Graph<ArrayType>::SetInput(std::string const &node_name, ArrayType data, bool batch)
+void Graph<ArrayType>::SetInput(std::string const &node_name, ArrayType data)
 {
   PlaceholderPtrType placeholder = std::dynamic_pointer_cast<PlaceholderType>(nodes_[node_name]);
 
@@ -203,10 +259,6 @@ void Graph<ArrayType>::SetInput(std::string const &node_name, ArrayType data, bo
   else
   {
     throw std::runtime_error("No placeholder node with name [" + node_name + "] found in graph!");
-  }
-  for (auto &n : nodes_)
-  {
-    n.second->SetBatch(batch);
   }
 }
 
@@ -324,7 +376,6 @@ template <class OperationType>
 meta::IfIsTrainable<ArrayType, OperationType, void> Graph<ArrayType>::AddTrainable(
     std::string const &name, std::shared_ptr<Node<ArrayType, OperationType>> op)
 {
-  FETCH_LOG_INFO("ML_LIB", "Created trainable node [", name, "]");
   trainable_.emplace_back(op);
   trainable_lookup_[name] = trainable_.size() - 1;
 }
@@ -346,8 +397,6 @@ meta::IfIsGraph<ArrayType, OperationType, void> Graph<ArrayType>::AddTrainable(
     // guarantee unique op name
     std::string node_name(name + "_" + trainable.first);
     std::string resolved_name = UpdateVariableName<OperationType>(node_name);
-
-    FETCH_LOG_INFO("ML_LIB", "Created trainable node [", resolved_name, "]");
 
     trainable_.emplace_back(op->trainable_.at(trainable.second));
     trainable_lookup_[resolved_name] = trainable_.size() - 1;
