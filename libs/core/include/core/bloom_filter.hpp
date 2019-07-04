@@ -48,8 +48,8 @@ class HashSource;
 class HashSourceFactory
 {
 public:
-  using Bytes     = fetch::byte_array::ConstByteArray;
-  using Function  = std::function<std::vector<std::size_t>(Bytes const &)>;
+  using Function =
+      std::function<std::vector<std::size_t>(fetch::byte_array::ConstByteArray const &)>;
   using Functions = std::vector<Function>;
 
   explicit HashSourceFactory(Functions);
@@ -61,7 +61,7 @@ public:
   HashSourceFactory &operator=(HashSourceFactory const &) = delete;
   HashSourceFactory &operator=(HashSourceFactory &&) = delete;
 
-  HashSource operator()(Bytes const &) const;
+  HashSource operator()(fetch::byte_array::ConstByteArray const &) const;
 
 private:
   Functions const hash_functions_;
@@ -125,7 +125,7 @@ public:
   HashSourceIterator cend() const;
 
 private:
-  HashSource(HashSourceFactory::Functions const &, HashSourceFactory::Bytes const &);
+  HashSource(HashSourceFactory::Functions const &, fetch::byte_array::ConstByteArray const &);
 
   std::size_t getHash(std::size_t index) const;
 
@@ -150,8 +150,8 @@ public:
   BasicBloomFilter &operator=(BasicBloomFilter const &) = delete;
   BasicBloomFilter &operator=(BasicBloomFilter &&) = delete;
 
-  bool Match(Bytes const &) override;
-  void Add(Bytes const &) override;
+  bool Match(fetch::byte_array::ConstByteArray const &) override;
+  void Add(fetch::byte_array::ConstByteArray const &) override;
   bool ReportFalsePositives(std::size_t) override;
 
 public:
@@ -176,8 +176,8 @@ public:
   NullBloomFilter &operator=(NullBloomFilter const &) = delete;
   NullBloomFilter &operator=(NullBloomFilter &&) = delete;
 
-  bool Match(Bytes const &) override;
-  void Add(Bytes const &) override;
+  bool Match(fetch::byte_array::ConstByteArray const &) override;
+  void Add(fetch::byte_array::ConstByteArray const &) override;
   bool ReportFalsePositives(std::size_t) override;
 };
 

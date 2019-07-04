@@ -44,13 +44,13 @@ HashSourceFactory::HashSourceFactory(HashSourceFactory::Functions hash_functions
   : hash_functions_(std::move(hash_functions))
 {}
 
-HashSource HashSourceFactory::operator()(Bytes const &element) const
+HashSource HashSourceFactory::operator()(fetch::byte_array::ConstByteArray const &element) const
 {
   return HashSource(this->hash_functions_, element);
 }
 
-HashSource::HashSource(HashSourceFactory::Functions const &hash_functions,
-                       HashSourceFactory::Bytes const &    input)
+HashSource::HashSource(HashSourceFactory::Functions const &     hash_functions,
+                       fetch::byte_array::ConstByteArray const &input)
   : data_{}
 {
   // TODO(LDGR-319): lazily evaluate hashes
@@ -143,7 +143,7 @@ public:
     EVP_DigestInit_ex(ctx_, openssl_type_, nullptr);
   }
 
-  std::vector<std::size_t> operator()(HashSourceFactory::Bytes const &input) const
+  std::vector<std::size_t> operator()(fetch::byte_array::ConstByteArray const &input) const
   {
     const auto size_in_bytes = static_cast<std::size_t>(EVP_MD_CTX_size(ctx_));
 
@@ -185,7 +185,7 @@ private:
   EVP_MD_CTX *const   ctx_;
 };
 
-std::vector<std::size_t> raw_data(HashSourceFactory::Bytes const &input)
+std::vector<std::size_t> raw_data(fetch::byte_array::ConstByteArray const &input)
 {
   auto start = reinterpret_cast<std::size_t const *>(input.pointer());
 
@@ -201,7 +201,7 @@ std::vector<std::size_t> raw_data(HashSourceFactory::Bytes const &input)
   return output;
 }
 
-std::vector<std::size_t> md5(HashSourceFactory::Bytes const &input)
+std::vector<std::size_t> md5(fetch::byte_array::ConstByteArray const &input)
 {
   static OpenSslHasher hasher(OpenSslHasher::Type::MD5);
   hasher.reset();
@@ -209,7 +209,7 @@ std::vector<std::size_t> md5(HashSourceFactory::Bytes const &input)
   return hasher(input);
 }
 
-std::vector<std::size_t> sha_1(HashSourceFactory::Bytes const &input)
+std::vector<std::size_t> sha_1(fetch::byte_array::ConstByteArray const &input)
 {
   static OpenSslHasher hasher(OpenSslHasher::Type::SHA_1);
   hasher.reset();
@@ -217,7 +217,7 @@ std::vector<std::size_t> sha_1(HashSourceFactory::Bytes const &input)
   return hasher(input);
 }
 
-std::vector<std::size_t> sha_2_512(HashSourceFactory::Bytes const &input)
+std::vector<std::size_t> sha_2_512(fetch::byte_array::ConstByteArray const &input)
 {
   static OpenSslHasher hasher(OpenSslHasher::Type::SHA_2_512);
   hasher.reset();
@@ -225,7 +225,7 @@ std::vector<std::size_t> sha_2_512(HashSourceFactory::Bytes const &input)
   return hasher(input);
 }
 
-std::vector<std::size_t> sha_3_512(HashSourceFactory::Bytes const &input)
+std::vector<std::size_t> sha_3_512(fetch::byte_array::ConstByteArray const &input)
 {
   static OpenSslHasher hasher(OpenSslHasher::Type::SHA_3_512);
   hasher.reset();
@@ -233,7 +233,7 @@ std::vector<std::size_t> sha_3_512(HashSourceFactory::Bytes const &input)
   return hasher(input);
 }
 
-std::vector<std::size_t> fnv(HashSourceFactory::Bytes const &input)
+std::vector<std::size_t> fnv(fetch::byte_array::ConstByteArray const &input)
 {
   static crypto::FNV hasher;
   hasher.Reset();
@@ -266,7 +266,7 @@ BasicBloomFilter::BasicBloomFilter(Functions const &functions)
   , hash_source_factory_(functions)
 {}
 
-bool BasicBloomFilter::Match(Bytes const &element)
+bool BasicBloomFilter::Match(fetch::byte_array::ConstByteArray const &element)
 {
   auto const source = hash_source_factory_(element);
   for (std::size_t const hash : source)
@@ -281,7 +281,7 @@ bool BasicBloomFilter::Match(Bytes const &element)
   return true;
 }
 
-void BasicBloomFilter::Add(Bytes const &element)
+void BasicBloomFilter::Add(fetch::byte_array::ConstByteArray const &element)
 {
   bool is_new_entry = false;
 
@@ -316,12 +316,12 @@ bool BasicBloomFilter::ReportFalsePositives(std::size_t count)
   return false;
 }
 
-bool NullBloomFilter::Match(Bytes const &)
+bool NullBloomFilter::Match(fetch::byte_array::ConstByteArray const &)
 {
   return true;
 }
 
-void NullBloomFilter::Add(Bytes const &)
+void NullBloomFilter::Add(fetch::byte_array::ConstByteArray const &)
 {}
 
 bool NullBloomFilter::ReportFalsePositives(std::size_t)

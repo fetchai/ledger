@@ -29,8 +29,6 @@ class ConstByteArray;
 class BloomFilterInterface
 {
 public:
-  using Bytes = fetch::byte_array::ConstByteArray;
-
   enum class Type
   {
     NULL_IMPL,
@@ -46,12 +44,12 @@ public:
    *
    * Returns false if the entry is definitely absent; true otherwise.
    */
-  virtual bool Match(Bytes const &) = 0;
+  virtual bool Match(fetch::byte_array::ConstByteArray const &) = 0;
 
   /*
    * Add a new entry to the filter.
    */
-  virtual void Add(Bytes const &) = 0;
+  virtual void Add(fetch::byte_array::ConstByteArray const &) = 0;
 
   /*
    * Clients may use this to report how many false positives they identified.
