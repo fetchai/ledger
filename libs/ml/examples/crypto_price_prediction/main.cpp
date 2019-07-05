@@ -17,12 +17,12 @@
 //------------------------------------------------------------------------------
 
 #include "math/tensor.hpp"
+#include "ml/dataloaders/ReadCSV.hpp"
 #include "ml/graph.hpp"
 #include "ml/layers/convolution_1d.hpp"
 #include "ml/ops/activation.hpp"
 #include "ml/ops/loss_functions/mean_square_error.hpp"
 #include "ml/optimisation/adam_optimiser.hpp"
-#include "ml/dataloaders/ReadCSV.hpp"
 
 #include <iostream>
 #include <string>
@@ -31,13 +31,13 @@
 using namespace fetch::ml::ops;
 using namespace fetch::ml::layers;
 
-using DataType  = float;
+using DataType   = float;
 using TensorType = fetch::math::Tensor<DataType>;
-using SizeType  = typename TensorType::SizeType;
+using SizeType   = typename TensorType::SizeType;
 
 using GraphType        = typename fetch::ml::Graph<TensorType>;
 using CostFunctionType = typename fetch::ml::ops::MeanSquareError<TensorType>;
-using OptimiserType    = typename fetch::ml::optimisers::AdamOptimiser<TensorType, CostFunctionType>;
+using OptimiserType = typename fetch::ml::optimisers::AdamOptimiser<TensorType, CostFunctionType>;
 
 std::shared_ptr<GraphType> BuildModel(std::string &input_name, std::string &output_name)
 {
@@ -51,7 +51,7 @@ std::shared_ptr<GraphType> BuildModel(std::string &input_name, std::string &outp
   typename TensorType::Type keep_prob = 0.5;
 
   SizeType conv1D_2_filters        = 1;
-  SizeType conv1D_2_input_channels = 1;
+  SizeType conv1D_2_input_channels = conv1D_1_filters;
   SizeType conv1D_2_kernel_size    = 16;
   SizeType conv1D_2_stride         = 4;
 
@@ -67,10 +67,15 @@ std::shared_ptr<GraphType> BuildModel(std::string &input_name, std::string &outp
   return g;
 }
 
-std::vector<TensorType> LoadData(std::string const &data_filename, std::string const &labels_filename)
+std::vector<TensorType> LoadData(std::string const &data_filename,
+                                 std::string const &labels_filename)
 {
-  auto data_tensor = fetch::ml::dataloaders::ReadCSV<TensorType>(data_filename);
-  auto labels_tensor = fetch::ml::dataloaders::ReadCSV<TensorType>(labels_filename);
+  auto data_tensor   = fetch::ml::dataloaders::ReadCSV<TensorType>(data_filename, 0, 0, true);
+  auto labels_tensor = fetch::ml::dataloaders::ReadCSV<TensorType>(labels_filename, 0, 0, true);
+
+  data_tensor.Reshape({1, data_tensor.shape().at(0), data_tensor.shape().at(1)});
+  labels_tensor.Reshape({1, labels_tensor.shape().at(0), labels_tensor.shape().at(1)});
+
   return {data_tensor, labels_tensor};
 }
 
@@ -90,13 +95,13 @@ int main(int ac, char **av)
   std::cout << "Loading crypto price data... " << std::endl;
   std::vector<TensorType> data_and_labels = LoadData(av[1], av[2]);
 
-  std::cout << "Build model & optimiser... "<< std::endl;
-  std::string input_name;
-  std::string output_name;
+  std::cout << "Build model & optimiser... " << std::endl;
+  std::string                input_name;
+  std::string                output_name;
   std::shared_ptr<GraphType> g = BuildModel(input_name, output_name);
   OptimiserType              optimiser(g, {input_name}, output_name);
 
-  std::cout << "Begin training loop... "<< std::endl;
+  std::cout << "Begin training loop... " << std::endl;
   DataType loss;
   for (SizeType i{0}; i < epochs; i++)
   {
