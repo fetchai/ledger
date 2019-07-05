@@ -64,7 +64,7 @@ bool ValueConsistency(KeyValueIndexTests &fixture)
     key.Resize(256 / 8);
     for (std::size_t j = 0; j < key.size(); ++j)
     {
-      key[j] = uint8_t(fixture.lfg() >> 9);
+      key[j] = uint8_t(fixture.lfg() >> 9u);
     }
 
     if (fixture.reference.find(key) != fixture.reference.end())
@@ -110,7 +110,7 @@ bool LoadSaveValueConsistency(KeyValueIndexTests &fixture)
     key.Resize(256 / 8);
     for (std::size_t j = 0; j < key.size(); ++j)
     {
-      key[j] = uint8_t(fixture.lfg() >> 9);
+      key[j] = uint8_t(fixture.lfg() >> 9u);
     }
 
     if (fixture.reference.find(key) != fixture.reference.end())
@@ -185,7 +185,7 @@ TEST_F(KeyValueIndexTests, random_insert_hash_consistency)
     key.Resize(256 / 8);
     for (std::size_t j = 0; j < key.size(); ++j)
     {
-      key[j] = uint8_t(lfg() >> 9);
+      key[j] = uint8_t(lfg() >> 9u);
     }
 
     if (reference.find(key) != reference.end())
@@ -229,7 +229,7 @@ TEST_F(KeyValueIndexTests, random_insert_hash_consistency)
 
   auto hash3 = key_index.Hash();
 
-  ASSERT_TRUE((hash1 == hash2) && (hash2 == hash3));
+  ASSERT_TRUE(hash1 == hash2 && hash2 == hash3);
 }
 
 TEST_F(KeyValueIndexTests, intermediate_flush_hash_consistency)
@@ -241,7 +241,7 @@ TEST_F(KeyValueIndexTests, intermediate_flush_hash_consistency)
     key.Resize(256 / 8);
     for (std::size_t j = 0; j < key.size(); ++j)
     {
-      key[j] = uint8_t(lfg() >> 9);
+      key[j] = uint8_t(lfg() >> 9u);
     }
 
     if (reference.find(key) != reference.end())
@@ -293,7 +293,7 @@ TEST_F(KeyValueIndexTests, intermediate_flush_hash_consistency)
 
   auto hash3 = key_index.Hash();
 
-  ASSERT_TRUE((hash1 == hash2) && (hash2 == hash3));
+  ASSERT_TRUE(hash1 == hash2 && hash2 == hash3);
 }
 
 TEST_F(KeyValueIndexTests, double_insertion_hash_consistency)
@@ -305,7 +305,7 @@ TEST_F(KeyValueIndexTests, double_insertion_hash_consistency)
     key.Resize(256 / 8);
     for (std::size_t j = 0; j < key.size(); ++j)
     {
-      key[j] = uint8_t(lfg() >> 9);
+      key[j] = uint8_t(lfg() >> 9u);
     }
 
     if (reference.find(key) != reference.end())
@@ -338,7 +338,7 @@ TEST_F(KeyValueIndexTests, double_insertion_hash_consistency)
   std::size_t size2 = key_index.size();
   auto        hash2 = key_index.Hash();
 
-  ASSERT_TRUE((hash1 == hash2) && (size1 == size2));
+  ASSERT_TRUE(hash1 == hash2 && size1 == size2);
 }
 
 TEST_F(KeyValueIndexTests, batched_vs_bulk_load_save_consistency)
@@ -354,7 +354,7 @@ TEST_F(KeyValueIndexTests, batched_vs_bulk_load_save_consistency)
     key.Resize(256 / 8);
     for (std::size_t j = 0; j < key.size(); ++j)
     {
-      key[j] = uint8_t(lfg() >> 9);
+      key[j] = uint8_t(lfg() >> 9u);
     }
 
     if (reference.find(key) != reference.end())
@@ -406,11 +406,7 @@ TEST_F(KeyValueIndexTests, batched_vs_bulk_load_save_consistency)
       uint64_t a, b;
       test.GetElement(z, a);
       key_index.GetElement(z, b);
-      if (a != b)
-      {
-        std::cout << "ERROR! " << z << ": " << a << " " << b << std::endl;
-        std::exit(-1);
-      }
+      ASSERT_FALSE(a != b);
     }
   }
 
@@ -442,8 +438,8 @@ TEST_F(KeyValueIndexTests, batched_vs_bulk_load_save_consistency)
     random_batched_size = test.size();
   }
 
-  ASSERT_TRUE((batched_hash == bulk_hash) && (random_batched_hash == batched_hash) &&
-              (bulk_size == batched_size) && (random_batched_size == bulk_size));
+  ASSERT_TRUE(batched_hash == bulk_hash && random_batched_hash == batched_hash &&
+              bulk_size == batched_size && random_batched_size == bulk_size);
 }
 
 }  // namespace
