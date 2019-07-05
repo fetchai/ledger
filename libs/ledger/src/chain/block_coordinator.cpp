@@ -111,37 +111,53 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag, StakeManagerPtr
   , syncing_periodic_{NOTIFY_INTERVAL}
   , synergetic_exec_mgr_{CreateSynergeticExecutor(features, dag, storage_unit_)}
   , reload_state_count_{telemetry::Registry::Instance().CreateCounter(
-        "ledger_block_coordinator_reload_state_count")}
+        "ledger_block_coordinator_reload_state_total",
+        "The total number of times in the reload state")}
   , synchronising_state_count_{telemetry::Registry::Instance().CreateCounter(
-        "ledger_block_coordinator_synchronising_state_count")}
+        "ledger_block_coordinator_synchronising_state_total",
+        "The total number of times in the synchronising state")}
   , synchronised_state_count_{telemetry::Registry::Instance().CreateCounter(
-        "ledger_block_coordinator_synchronised_state_count")}
+        "ledger_block_coordinator_synchronised_state_total",
+        "The total number of times in the synchronised state")}
   , pre_valid_state_count_{telemetry::Registry::Instance().CreateCounter(
-        "ledger_block_coordinator_pre_valid_state_count")}
+        "ledger_block_coordinator_pre_valid_state_total",
+        "The total number of times in the pre validation state")}
   , wait_tx_state_count_{telemetry::Registry::Instance().CreateCounter(
-        "ledger_block_coordinator_wait_tx_state_count")}
+        "ledger_block_coordinator_wait_tx_state_total",
+        "The total number of times in the wait for tx state")}
   , syn_exec_state_count_{telemetry::Registry::Instance().CreateCounter(
-        "ledger_block_coordinator_syn_exec_state_count")}
+        "ledger_block_coordinator_syn_exec_state_total",
+        "The total number of times in the synergetic execution state")}
   , sch_block_state_count_{telemetry::Registry::Instance().CreateCounter(
-        "ledger_block_coordinator_sch_block_state_count")}
+        "ledger_block_coordinator_sch_block_state_total",
+        "The total number of times in the schedule block exec state")}
   , wait_exec_state_count_{telemetry::Registry::Instance().CreateCounter(
-        "ledger_block_coordinator_wait_exec_state_count")}
+        "ledger_block_coordinator_wait_exec_state_total",
+        "The total number of times in the waiting for exec state")}
   , post_valid_state_count_{telemetry::Registry::Instance().CreateCounter(
-        "ledger_block_coordinator_post_valid_state_count")}
+        "ledger_block_coordinator_post_valid_state_total",
+        "The total number of times in the post validation state")}
   , pack_block_state_count_{telemetry::Registry::Instance().CreateCounter(
-        "ledger_block_coordinator_pack_block_state_count")}
+        "ledger_block_coordinator_pack_block_state_total",
+        "The total number of times in the pack new block state")}
   , new_syn_state_count_{telemetry::Registry::Instance().CreateCounter(
-        "ledger_block_coordinator_new_syn_state_count")}
+        "ledger_block_coordinator_new_syn_state_total",
+        "The total number of times in the new synergetic state")}
   , new_exec_state_count_{telemetry::Registry::Instance().CreateCounter(
-        "ledger_block_coordinator_new_exec_state_count")}
+        "ledger_block_coordinator_new_exec_state_total",
+        "The total number of times in the new synergetic exec state")}
   , new_wait_exec_state_count_{telemetry::Registry::Instance().CreateCounter(
-        "ledger_block_coordinator_new_wait_exec_state_count")}
+        "ledger_block_coordinator_new_wait_exec_state_total",
+        "The total number of times in the new wait exec state")}
   , proof_search_state_count_{telemetry::Registry::Instance().CreateCounter(
-        "ledger_block_coordinator_proof_search_state_count")}
+        "ledger_block_coordinator_proof_search_state_total",
+        "The total number of times in the proof search state")}
   , transmit_state_count_{telemetry::Registry::Instance().CreateCounter(
-        "ledger_block_coordinator_transmit_state_count")}
-  , reset_state_count_{
-        telemetry::Registry::Instance().CreateCounter("ledger_block_coordinator_reset_state_count")}
+        "ledger_block_coordinator_transmit_state_total",
+        "The total number of times in the transmit state")}
+  , reset_state_count_{telemetry::Registry::Instance().CreateCounter(
+        "ledger_block_coordinator_reset_state_total",
+        "The total number of times in the reset state")}
 {
   // configure the state machine
   // clang-format off

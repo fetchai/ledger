@@ -17,13 +17,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include <type_traits>
-
 #include "vectorise/fixed_point/fixed_point.hpp"
+
+#include <type_traits>
 
 namespace fetch {
 namespace math {
-
 namespace meta {
 
 ////////////////////////////

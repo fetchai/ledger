@@ -20,6 +20,9 @@
 #include "vectorise/fixed_point/fixed_point.hpp"
 #include "vm/vm.hpp"
 
+#include <cstddef>
+#include <cstdint>
+
 namespace fetch {
 namespace vm {
 

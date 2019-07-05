@@ -21,6 +21,7 @@
 #include "http/method.hpp"
 #include "variant/variant.hpp"
 
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <unordered_map>

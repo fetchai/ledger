@@ -20,6 +20,8 @@
 #include "ml/estimators/dnn_classifier.hpp"
 #include "ml/optimisation/types.hpp"
 
+#include <iostream>
+
 using namespace fetch::ml::estimator;
 using namespace fetch::ml::optimisers;
 

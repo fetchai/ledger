@@ -18,6 +18,9 @@
 //------------------------------------------------------------------------------
 
 #include <fstream>
+#include <map>
+#include <string>
+#include <utility>
 
 namespace fetch {
 namespace ml {

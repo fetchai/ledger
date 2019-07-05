@@ -22,7 +22,9 @@
 
 #include <exception>
 #include <sstream>
+#include <string>
 #include <utility>
+
 namespace fetch {
 namespace json {
 
@@ -40,7 +42,7 @@ public:
     str_ = msg.str();
   }
 
-  virtual const char *what() const throw()
+  virtual char const *what() const throw()
   {
     return str_.c_str();
   }

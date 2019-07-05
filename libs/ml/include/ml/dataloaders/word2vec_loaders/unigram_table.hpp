@@ -27,6 +27,7 @@ class UnigramTable
   using SizeType = fetch::math::SizeType;
 
 public:
+
   UnigramTable(std::vector<SizeType> const &frequencies = {}, SizeType size = 1e8);
 
   void Reset(std::vector<SizeType> const &frequencies, SizeType size);
@@ -48,6 +49,7 @@ private:
  */
 void UnigramTable::Reset(std::vector<SizeType> const &count, SizeType size)
 {
+
   if (size && count.size())
   {
     // sum_counts

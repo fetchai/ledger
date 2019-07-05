@@ -18,6 +18,7 @@
 
 #include "math/tensor.hpp"
 #include "ml/layers/fully_connected.hpp"
+#include "ml/regularisers/regulariser.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 
 #include "gtest/gtest.h"
@@ -138,8 +139,11 @@ TYPED_TEST(FullyConnectedTest, graph_forward_test)  // Use the class as a Node
 
 TYPED_TEST(FullyConnectedTest, getStateDict)
 {
+  using DataType = typename TypeParam::Type;
+  using RegType  = fetch::ml::details::RegularisationType;
+
   fetch::ml::layers::FullyConnected<TypeParam> fc(
-      50, 10, fetch::ml::details::ActivationType::NOTHING, "FCTest");
+      50, 10, fetch::ml::details::ActivationType::NOTHING, RegType::NONE, DataType{0}, "FCTest");
   fetch::ml::StateDict<TypeParam> sd = fc.StateDict();
 
   EXPECT_EQ(sd.weights_, nullptr);
