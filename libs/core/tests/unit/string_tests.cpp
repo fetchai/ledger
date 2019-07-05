@@ -17,34 +17,19 @@
 //------------------------------------------------------------------------------
 
 #include "core/string/ends_with.hpp"
-#include "telemetry/counter.hpp"
 
-#include <iostream>
+#include "gtest/gtest.h"
 
-namespace fetch {
-namespace telemetry {
 namespace {
 
-bool ValidateName(std::string const &name)
+TEST(StringTests, CheckEndsWith)
 {
-  return core::EndsWith(name, "_total");
+  EXPECT_TRUE(fetch::core::EndsWith("Hello World", "Hello World"));
+  EXPECT_TRUE(fetch::core::EndsWith("Hello World", "World"));
+  EXPECT_FALSE(fetch::core::EndsWith("Hello World", "World2"));
+  EXPECT_TRUE(fetch::core::EndsWith("Hello World", ""));
+  EXPECT_FALSE(fetch::core::EndsWith("Hello World", "o"));
+  EXPECT_FALSE(fetch::core::EndsWith("Hello World", "Hello"));
 }
 
 }  // namespace
-
-Counter::Counter(std::string name, std::string description, Labels labels)
-  : Measurement(std::move(name), std::move(description), std::move(labels))
-{
-  if (!ValidateName(this->name()))
-  {
-    throw std::runtime_error("Incorrect counter name, must end with _total");
-  }
-}
-
-void Counter::ToStream(std::ostream &stream) const
-{
-  WritePrefix(stream, "counter") << counter_ << '\n';
-}
-
-}  // namespace telemetry
-}  // namespace fetch
