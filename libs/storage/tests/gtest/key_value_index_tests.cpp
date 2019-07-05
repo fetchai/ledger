@@ -36,8 +36,8 @@ namespace {
 
 using namespace fetch;
 using namespace fetch::storage;
-using cached_kvi_type = KeyValueIndex<KeyValuePair<>, CachedRandomAccessStack<KeyValuePair<>>>;
-using kvi_type        = KeyValueIndex<KeyValuePair<>, RandomAccessStack<KeyValuePair<>>>;
+using CachedKVIndex = KeyValueIndex<KeyValuePair<>, CachedRandomAccessStack<KeyValuePair<>>>;
+using KVIndex       = KeyValueIndex<KeyValuePair<>, RandomAccessStack<KeyValuePair<>>>;
 
 struct TestData
 {
@@ -48,11 +48,11 @@ struct TestData
 class KeyValueIndexTests : public ::testing::Test
 {
 public:
-  cached_kvi_type key_index;
-  kvi_type        ref_index;
+  CachedKVIndex cachedKvIndex;
+  KVIndex       kvIndex;
 
   std::map<byte_array::ConstByteArray, uint64_t> reference;
-  fetch::random::LaggedFibonacciGenerator<>      lfg;
+  fetch::random::LaggedFibonacciGenerator<>      rng;
 };
 
 bool ValueConsistency(KeyValueIndexTests &fixture)
@@ -64,7 +64,7 @@ bool ValueConsistency(KeyValueIndexTests &fixture)
     key.Resize(256 / 8);
     for (std::size_t j = 0; j < key.size(); ++j)
     {
-      key[j] = uint8_t(fixture.lfg() >> 9u);
+      key[j] = uint8_t(fixture.rng() >> 9u);
     }
 
     if (fixture.reference.find(key) != fixture.reference.end())
@@ -72,22 +72,22 @@ bool ValueConsistency(KeyValueIndexTests &fixture)
       continue;
     }
 
-    fixture.reference[key] = fixture.lfg();
+    fixture.reference[key] = fixture.rng();
     values.push_back({key, fixture.reference[key]});
   }
 
-  fixture.key_index.New("test1.db");
+  fixture.cachedKvIndex.New("test1.db");
   for (std::size_t i = 0; i < values.size(); ++i)
   {
     auto const &val = values[i];
-    fixture.key_index.Set(val.key, val.value, val.key);
+    fixture.cachedKvIndex.Set(val.key, val.value, val.key);
   }
 
   bool ok = true;
   for (std::size_t i = 0; i < values.size(); ++i)
   {
     auto const &val  = values[i];
-    uint64_t    data = fixture.key_index.Get(val.key);
+    uint64_t    data = fixture.cachedKvIndex.Get(val.key);
     if (data != val.value)
     {
       std::cout << "Error for " << i << std::endl;
@@ -110,7 +110,7 @@ bool LoadSaveValueConsistency(KeyValueIndexTests &fixture)
     key.Resize(256 / 8);
     for (std::size_t j = 0; j < key.size(); ++j)
     {
-      key[j] = uint8_t(fixture.lfg() >> 9u);
+      key[j] = uint8_t(fixture.rng() >> 9u);
     }
 
     if (fixture.reference.find(key) != fixture.reference.end())
@@ -118,7 +118,7 @@ bool LoadSaveValueConsistency(KeyValueIndexTests &fixture)
       continue;
     }
 
-    fixture.reference[key] = fixture.lfg();
+    fixture.reference[key] = fixture.rng();
     values.push_back({key, fixture.reference[key]});
   }
 
@@ -170,10 +170,10 @@ bool LoadSaveValueConsistency(KeyValueIndexTests &fixture)
 TEST_F(KeyValueIndexTests, value_consistency)
 {
   EXPECT_TRUE(ValueConsistency(*this));
-  EXPECT_TRUE((LoadSaveValueConsistency<kvi_type, kvi_type>(*this)));
-  EXPECT_TRUE((LoadSaveValueConsistency<kvi_type, cached_kvi_type>(*this)));
-  EXPECT_TRUE((LoadSaveValueConsistency<cached_kvi_type, kvi_type>(*this)));
-  EXPECT_TRUE((LoadSaveValueConsistency<cached_kvi_type, cached_kvi_type>(*this)));
+  EXPECT_TRUE((LoadSaveValueConsistency<KVIndex, KVIndex>(*this)));
+  EXPECT_TRUE((LoadSaveValueConsistency<KVIndex, CachedKVIndex>(*this)));
+  EXPECT_TRUE((LoadSaveValueConsistency<CachedKVIndex, KVIndex>(*this)));
+  EXPECT_TRUE((LoadSaveValueConsistency<CachedKVIndex, CachedKVIndex>(*this)));
 }
 
 TEST_F(KeyValueIndexTests, random_insert_hash_consistency)
@@ -185,7 +185,7 @@ TEST_F(KeyValueIndexTests, random_insert_hash_consistency)
     key.Resize(256 / 8);
     for (std::size_t j = 0; j < key.size(); ++j)
     {
-      key[j] = uint8_t(lfg() >> 9u);
+      key[j] = uint8_t(rng() >> 9u);
     }
 
     if (reference.find(key) != reference.end())
@@ -193,21 +193,21 @@ TEST_F(KeyValueIndexTests, random_insert_hash_consistency)
       continue;
     }
 
-    reference[key] = lfg();
+    reference[key] = rng();
     values.push_back({key, reference[key]});
   }
 
-  key_index.New("test1.db");
+  cachedKvIndex.New("test1.db");
   for (std::size_t i = 0; i < values.size(); ++i)
   {
     auto const &val = values[i];
-    key_index.Set(val.key, val.value, val.key);
+    cachedKvIndex.Set(val.key, val.value, val.key);
   }
 
-  auto hash1 = key_index.Hash();
+  auto hash1 = cachedKvIndex.Hash();
 
   // REDO
-  key_index.New("test1.db");
+  cachedKvIndex.New("test1.db");
 
   std::random_device rd;
   std::mt19937       g(rd());
@@ -215,21 +215,22 @@ TEST_F(KeyValueIndexTests, random_insert_hash_consistency)
   for (std::size_t i = 0; i < values.size(); ++i)
   {
     auto const &val = values[i];
-    key_index.Set(val.key, val.value, val.key);
+    cachedKvIndex.Set(val.key, val.value, val.key);
   }
-  auto hash2 = key_index.Hash();
+  auto hash2 = cachedKvIndex.Hash();
 
   // REF
-  ref_index.New("test1.db");
+  kvIndex.New("test1.db");
   for (std::size_t i = 0; i < values.size(); ++i)
   {
     auto const &val = values[i];
-    ref_index.Set(val.key, val.value, val.key);
+    kvIndex.Set(val.key, val.value, val.key);
   }
 
-  auto hash3 = key_index.Hash();
+  auto hash3 = cachedKvIndex.Hash();
 
-  ASSERT_TRUE(hash1 == hash2 && hash2 == hash3);
+  ASSERT_TRUE(hash1 == hash2);
+  ASSERT_TRUE(hash1 == hash3);
 }
 
 TEST_F(KeyValueIndexTests, intermediate_flush_hash_consistency)
@@ -241,7 +242,7 @@ TEST_F(KeyValueIndexTests, intermediate_flush_hash_consistency)
     key.Resize(256 / 8);
     for (std::size_t j = 0; j < key.size(); ++j)
     {
-      key[j] = uint8_t(lfg() >> 9u);
+      key[j] = uint8_t(rng() >> 9u);
     }
 
     if (reference.find(key) != reference.end())
@@ -249,23 +250,23 @@ TEST_F(KeyValueIndexTests, intermediate_flush_hash_consistency)
       continue;
     }
 
-    reference[key] = lfg();
+    reference[key] = rng();
     values.push_back({key, reference[key]});
   }
 
-  key_index.New("test1.db");
+  cachedKvIndex.New("test1.db");
 
   for (std::size_t i = 0; i < values.size(); ++i)
   {
     auto const &val = values[i];
-    key_index.Set(val.key, val.value, val.key);
+    cachedKvIndex.Set(val.key, val.value, val.key);
   }
 
-  auto hash1 = key_index.Hash();
+  auto hash1 = cachedKvIndex.Hash();
 
   // REDO
 
-  key_index.New("test1.db");
+  cachedKvIndex.New("test1.db");
 
   std::random_device rd;
   std::mt19937       g(rd());
@@ -275,25 +276,26 @@ TEST_F(KeyValueIndexTests, intermediate_flush_hash_consistency)
 
     if ((i % 3) == 0)
     {
-      key_index.Flush();
+      cachedKvIndex.Flush();
     }
 
     auto const &val = values[i];
-    key_index.Set(val.key, val.value, val.key);
+    cachedKvIndex.Set(val.key, val.value, val.key);
   }
-  auto hash2 = key_index.Hash();
+  auto hash2 = cachedKvIndex.Hash();
 
   // REF
-  ref_index.New("test1.db");
+  kvIndex.New("test1.db");
   for (std::size_t i = 0; i < values.size(); ++i)
   {
     auto const &val = values[i];
-    ref_index.Set(val.key, val.value, val.key);
+    kvIndex.Set(val.key, val.value, val.key);
   }
 
-  auto hash3 = key_index.Hash();
+  auto hash3 = cachedKvIndex.Hash();
 
-  ASSERT_TRUE(hash1 == hash2 && hash2 == hash3);
+  ASSERT_TRUE(hash1 == hash2);
+  ASSERT_TRUE(hash1 == hash3);
 }
 
 TEST_F(KeyValueIndexTests, double_insertion_hash_consistency)
@@ -305,7 +307,7 @@ TEST_F(KeyValueIndexTests, double_insertion_hash_consistency)
     key.Resize(256 / 8);
     for (std::size_t j = 0; j < key.size(); ++j)
     {
-      key[j] = uint8_t(lfg() >> 9u);
+      key[j] = uint8_t(rng() >> 9u);
     }
 
     if (reference.find(key) != reference.end())
@@ -313,19 +315,19 @@ TEST_F(KeyValueIndexTests, double_insertion_hash_consistency)
       continue;
     }
 
-    reference[key] = lfg();
+    reference[key] = rng();
     values.push_back({key, reference[key]});
   }
 
-  key_index.New("test1.db");
+  cachedKvIndex.New("test1.db");
   for (std::size_t i = 0; i < values.size(); ++i)
   {
     auto const &val = values[i];
-    key_index.Set(val.key, val.value, val.key);
+    cachedKvIndex.Set(val.key, val.value, val.key);
   }
 
-  std::size_t size1 = key_index.size();
-  auto        hash1 = key_index.Hash();
+  std::size_t size1 = cachedKvIndex.size();
+  auto        hash1 = cachedKvIndex.Hash();
 
   std::random_device rd;
   std::mt19937       g(rd());
@@ -333,12 +335,13 @@ TEST_F(KeyValueIndexTests, double_insertion_hash_consistency)
   for (std::size_t i = 0; i < values.size() / 10; ++i)
   {
     auto const &val = values[i];
-    key_index.Set(val.key, val.value, val.key);
+    cachedKvIndex.Set(val.key, val.value, val.key);
   }
-  std::size_t size2 = key_index.size();
-  auto        hash2 = key_index.Hash();
+  std::size_t size2 = cachedKvIndex.size();
+  auto        hash2 = cachedKvIndex.Hash();
 
-  ASSERT_TRUE(hash1 == hash2 && size1 == size2);
+  ASSERT_TRUE(hash1 == hash2);
+  ASSERT_TRUE(size1 == size2);
 }
 
 TEST_F(KeyValueIndexTests, batched_vs_bulk_load_save_consistency)
@@ -354,7 +357,7 @@ TEST_F(KeyValueIndexTests, batched_vs_bulk_load_save_consistency)
     key.Resize(256 / 8);
     for (std::size_t j = 0; j < key.size(); ++j)
     {
-      key[j] = uint8_t(lfg() >> 9u);
+      key[j] = uint8_t(rng() >> 9u);
     }
 
     if (reference.find(key) != reference.end())
@@ -362,28 +365,28 @@ TEST_F(KeyValueIndexTests, batched_vs_bulk_load_save_consistency)
       continue;
     }
 
-    reference[key] = lfg();
+    reference[key] = rng();
     values.push_back({key, reference[key]});
     ++i;
   }
 
-  key_index.New("test1.db");
+  cachedKvIndex.New("test1.db");
   for (std::size_t z = 0; z < values.size(); ++z)
   {
     auto const &val = values[z];
-    key_index.Set(val.key, val.value, val.key);
+    cachedKvIndex.Set(val.key, val.value, val.key);
   }
-  std::size_t bulk_size = key_index.size();
-  auto        bulk_hash = key_index.Hash();
+  std::size_t bulk_size = cachedKvIndex.size();
+  auto        bulk_hash = cachedKvIndex.Hash();
 
   {
-    kvi_type test;
+    KVIndex test;
     test.New("test1.db");
   }
 
   for (std::size_t z = 0; z < batches; ++z)
   {
-    kvi_type test;
+    KVIndex test;
     test.Load("test1.db");
     for (std::size_t j = 0; j < batch_size; ++j)
     {
@@ -396,7 +399,7 @@ TEST_F(KeyValueIndexTests, batched_vs_bulk_load_save_consistency)
   std::size_t           batched_size;
   byte_array::ByteArray batched_hash;
   {
-    kvi_type test;
+    KVIndex test;
     test.Load("test1.db");
     batched_hash = test.Hash();
     batched_size = test.size();
@@ -405,7 +408,7 @@ TEST_F(KeyValueIndexTests, batched_vs_bulk_load_save_consistency)
     {
       uint64_t a, b;
       test.GetElement(z, a);
-      key_index.GetElement(z, b);
+      cachedKvIndex.GetElement(z, b);
       ASSERT_FALSE(a != b);
     }
   }
@@ -414,13 +417,13 @@ TEST_F(KeyValueIndexTests, batched_vs_bulk_load_save_consistency)
   std::mt19937       g(rd());
   std::shuffle(values.begin(), values.end(), g);
   {
-    kvi_type test;
+    KVIndex test;
     test.New("test1.db");
   }
   k = 0;
   for (std::size_t z = 0; z < batches; ++z)
   {
-    kvi_type test;
+    KVIndex test;
     test.Load("test1.db");
     for (std::size_t j = 0; j < batch_size; ++j)
     {
@@ -432,14 +435,16 @@ TEST_F(KeyValueIndexTests, batched_vs_bulk_load_save_consistency)
   std::size_t           random_batched_size;
   byte_array::ByteArray random_batched_hash;
   {
-    kvi_type test;
+    KVIndex test;
     test.Load("test1.db");
     random_batched_hash = test.Hash();
     random_batched_size = test.size();
   }
 
-  ASSERT_TRUE(batched_hash == bulk_hash && random_batched_hash == batched_hash &&
-              bulk_size == batched_size && random_batched_size == bulk_size);
+  ASSERT_TRUE(batched_hash == bulk_hash);
+  ASSERT_TRUE(batched_hash == random_batched_hash);
+  ASSERT_TRUE(bulk_size == batched_size);
+  ASSERT_TRUE(bulk_size == random_batched_size);
 }
 
 }  // namespace
