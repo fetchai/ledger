@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -22,7 +21,17 @@
 namespace fetch {
 namespace core {
 
-bool EndsWith(std::string const &value, std::string const &ending);
+bool EndsWith(std::string const &value, std::string const &ending)
+{
+  bool success{false};
+
+  if (value.size() >= ending.size())
+  {
+    success = (value.substr(value.size() - ending.size()) == ending);
+  }
+
+  return success;
+}
 
 }  // namespace core
 }  // namespace fetch
