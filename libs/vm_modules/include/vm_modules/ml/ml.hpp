@@ -21,8 +21,8 @@
 #include "vm_modules/math/tensor.hpp"
 #include "vm_modules/ml/dataloaders/dataloader.hpp"
 #include "vm_modules/ml/graph.hpp"
-#include "vm_modules/ml/ops/loss_functions/cross_entropy.hpp"
-#include "vm_modules/ml/ops/loss_functions/mean_square_error.hpp"
+#include "vm_modules/ml/ops/loss_functions/cross_entropy_loss.hpp"
+#include "vm_modules/ml/ops/loss_functions/mean_square_error_loss.hpp"
 #include "vm_modules/ml/optimisation/adam_optimiser.hpp"
 #include "vm_modules/ml/state_dict.hpp"
 #include "vm_modules/ml/training_pair.hpp"
@@ -48,7 +48,7 @@ inline void BindML(fetch::vm::Module &module)
 
   // loss functions
   VMCrossEntropyLoss::Bind(module);
-  VMMeanSquareError::Bind(module);
+  VMMeanSquareErrorLoss::Bind(module);
 
   // optimisers
   VMAdamOptimiser::Bind(module);

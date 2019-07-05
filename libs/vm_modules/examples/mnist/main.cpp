@@ -16,15 +16,6 @@
 //
 //------------------------------------------------------------------------------
 
-<<<<<<< HEAD
-#include "math/tensor.hpp"
-#include "ml/graph.hpp"
-#include "ml/layers/fully_connected.hpp"
-#include "ml/ops/activation.hpp"
-#include "ml/ops/loss_functions/mean_square_error_loss.hpp"
-
-=======
->>>>>>> 1a2453feef62bff5ff0bdef757f0521d5fda1383
 #include "vm/module.hpp"
 #include "vm_modules/core/print.hpp"
 #include "vm_modules/ml/ml.hpp"
