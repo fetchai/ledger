@@ -18,8 +18,8 @@
 //------------------------------------------------------------------------------
 
 #include "vm/module.hpp"
-#include "vm_modules/ml/dataloaders/commodity_dataloader.hpp"
-#include "vm_modules/ml/dataloaders/mnist_dataloader.hpp"
+#include "vm_modules/math/tensor.hpp"
+#include "vm_modules/ml/dataloaders/dataloader.hpp"
 #include "vm_modules/ml/graph.hpp"
 #include "vm_modules/ml/ops/loss_functions/cross_entropy.hpp"
 #include "vm_modules/ml/ops/loss_functions/mean_square_error.hpp"
@@ -27,20 +27,24 @@
 #include "vm_modules/ml/state_dict.hpp"
 #include "vm_modules/ml/training_pair.hpp"
 
+#include <cstdlib>
+
 namespace fetch {
 namespace vm_modules {
 namespace ml {
 
 inline void BindML(fetch::vm::Module &module)
 {
+  // Tensor - required by later functions
+  math::VMTensor::Bind(module);
+
   // ml fundamentals
   VMStateDict::Bind(module);
   VMGraph::Bind(module);
   VMTrainingPair::Bind(module);
 
-  // dataloaders
-  VMMnistDataLoader::Bind(module);
-  VMCommodityDataLoader::Bind(module);
+  // dataloader
+  VMDataLoader::Bind(module);
 
   // loss functions
   VMCrossEntropyLoss::Bind(module);

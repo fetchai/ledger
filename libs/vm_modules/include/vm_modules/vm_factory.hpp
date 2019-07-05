@@ -26,11 +26,7 @@
 #include "vm_modules/math/bignumber.hpp"
 #include "vm_modules/math/exp.hpp"
 #include "vm_modules/math/math.hpp"
-#include "vm_modules/math/sqrt.hpp"
-#include "vm_modules/math/tensor.hpp"
-#include "vm_modules/ml/graph.hpp"
-#include "vm_modules/ml/ops/loss_functions/cross_entropy.hpp"
-#include "vm_modules/ml/ops/loss_functions/mean_square_error.hpp"
+#include "vm_modules/ml/ml.hpp"
 #include "vm_modules/polyfill/bitshifting.hpp"
 #include "vm_modules/polyfill/bitwise_ops.hpp"
 
@@ -115,14 +111,10 @@ public:
       BindBitwiseOps(*module);
     }
 
-    // ml modules - order is important!!
+    // ml modules
     if (MOD_ML & enabled)
     {
-      math::VMTensor::Bind(*module);
-      ml::VMStateDict::Bind(*module);
-      ml::VMGraph::Bind(*module);
-      fetch::vm_modules::ml::VMCrossEntropyLoss::Bind(*module);
-      ml::CreateMeanSquareError(*module);
+      ml::BindML(*module);
     }
 
     return module;

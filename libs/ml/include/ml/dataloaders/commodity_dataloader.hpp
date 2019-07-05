@@ -23,37 +23,12 @@
 #include "core/random.hpp"
 #include "math/base_types.hpp"
 #include "math/tensor.hpp"
+#include "ml/dataloaders/ReadCSV.hpp"
 #include "ml/dataloaders/dataloader.hpp"
 
 namespace fetch {
 namespace ml {
 namespace dataloaders {
-
-inline std::pair<math::SizeType, math::SizeType> count_rows_cols(std::string const &filename)
-{
-  // find number of rows and columns in the file
-  std::ifstream  file(filename);
-  std::string    buf;
-  char const     delimiter = ',';
-  std::string    field_value;
-  math::SizeType row{0};
-  math::SizeType col{0};
-
-  while (std::getline(file, buf, '\n'))
-  {
-    if (row == 0)
-    {
-      std::stringstream ss(buf);
-      while (std::getline(ss, field_value, delimiter))
-      {
-        ++col;
-      }
-    }
-    ++row;
-  }
-
-  return std::make_pair(row, col);
-}
 
 template <typename LabelType, typename InputType>
 class CommodityDataLoader : public DataLoader<LabelType, InputType>
@@ -105,80 +80,12 @@ template <typename LabelType, typename InputType>
 void CommodityDataLoader<LabelType, InputType>::AddData(std::string const &xfilename,
                                                         std::string const &yfilename)
 {
-  std::pair<SizeType, SizeType> xshape = count_rows_cols(xfilename);
-  std::pair<SizeType, SizeType> yshape = count_rows_cols(yfilename);
-  SizeType                      row    = xshape.first;
-  SizeType                      col    = xshape.second;
+  data_   = ReadCSV<InputType>(xfilename, cols_to_skip_, rows_to_skip_, true);
+  labels_ = ReadCSV<InputType>(yfilename, cols_to_skip_, rows_to_skip_, true);
 
-  data_.Reshape({row - rows_to_skip_, col - cols_to_skip_});
-  labels_.Reshape({yshape.first - rows_to_skip_, yshape.second - cols_to_skip_});
-  assert(xshape.first == yshape.first);
-  // save the number of rows in the data
-  size_ = row - rows_to_skip_;
-
-  // read csv data into buffer_ array
-  std::ifstream file(xfilename);
-  if (file.fail())
-  {
-    throw std::runtime_error("Dataloader cannot open file " + xfilename);
-  }
-
-  std::string buf;
-  char        delimiter = ',';
-  std::string field_value;
-
-  for (SizeType i = 0; i < rows_to_skip_; i++)
-  {
-    std::getline(file, buf, '\n');
-  }
-
-  row = 0;
-  while (std::getline(file, buf, '\n'))
-  {
-    col = 0;
-    std::stringstream ss(buf);
-    for (SizeType i = 0; i < cols_to_skip_; i++)
-    {
-      std::getline(ss, field_value, delimiter);
-    }
-
-    while (std::getline(ss, field_value, delimiter))
-    {
-      data_(row, col) = static_cast<DataType>(stod(field_value));
-      ++col;
-    }
-    ++row;
-  }
-
-  file.close();
-
-  file.open(yfilename);
-  if (file.fail())
-  {
-    throw std::runtime_error("Dataloader cannot open file " + yfilename);
-  }
-  for (SizeType i = 0; i < rows_to_skip_; i++)
-  {
-    std::getline(file, buf, '\n');
-  }
-
-  row = 0;
-  while (std::getline(file, buf, '\n'))
-  {
-    col = 0;
-    std::stringstream ss(buf);
-    for (SizeType i = 0; i < cols_to_skip_; i++)
-    {
-      std::getline(ss, field_value, delimiter);
-    }
-
-    while (std::getline(ss, field_value, delimiter))
-    {
-      labels_(row, col) = static_cast<DataType>(stod(field_value));
-      ++col;
-    }
-    ++row;
-  }
+  assert(data_.shape()[1] == labels_.shape()[1]);
+  // save the number of datapoints
+  size_ = data_.shape()[1];
 }
 
 /**
@@ -236,8 +143,8 @@ void CommodityDataLoader<LabelType, InputType>::Reset()
 template <typename LabelType, typename InputType>
 void CommodityDataLoader<LabelType, InputType>::GetAtIndex(CommodityDataLoader::SizeType index)
 {
-  buffer_.first  = labels_.Slice(index).Copy().Transpose();
-  buffer_.second = std::vector<InputType>({data_.Slice(index).Copy()});
+  buffer_.first  = labels_.Slice(index, 1).Copy();
+  buffer_.second = std::vector<InputType>({data_.Slice(index, 1).Copy()});
 }
 
 }  // namespace dataloaders

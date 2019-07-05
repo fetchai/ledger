@@ -19,6 +19,7 @@
 #include "file_loader.hpp"
 #include "math/distance/cosine.hpp"
 #include "math/tensor.hpp"
+#include "ml/dataloaders/ReadCSV.hpp"
 #include "ml/dataloaders/commodity_dataloader.hpp"
 #include "ml/graph.hpp"
 #include "ml/layers/fully_connected.hpp"
@@ -84,83 +85,6 @@ LayerType GetLayerType(std::string const &layer_name)
     throw std::runtime_error("Node name does not uniquely specify the node type.");
   }
   return layer_type;
-}
-
-/**
- * Loads a csv file into a Tensor
- * The Tensor will have the same number of rows as this file has (minus rows_to_skip) and the same
- * number of columns (minus cols_to_skip) as the file, unless transpose=true is specified in which
- * case it will be transposed.
- * @param filename  name of the file
- * @param cols_to_skip  number of columns to skip
- * @param rows_to_skip  number of rows to skip
- * @param transpose  whether to transpose the resulting Tensor
- * @return  Tensor with data
- */
-ArrayType ReadCSV(std::string const &filename, SizeType const cols_to_skip = 0,
-                  SizeType rows_to_skip = 0, bool transpose = false)
-{
-  std::ifstream file(filename);
-  if (file.fail())
-  {
-    throw std::runtime_error("ReadCSV cannot open file " + filename);
-  }
-
-  std::string           buf;
-  char const            delimiter = ',';
-  std::string           field_value;
-  fetch::math::SizeType row{0};
-  fetch::math::SizeType col{0};
-
-  // find number of rows and columns in the file
-  while (std::getline(file, buf, '\n'))
-  {
-    if (row == 0)
-    {
-      std::stringstream ss(buf);
-      while (std::getline(ss, field_value, delimiter))
-      {
-        ++col;
-      }
-    }
-    ++row;
-  }
-
-  ArrayType weights({row - rows_to_skip, col - cols_to_skip});
-
-  // read data into weights array
-  std::string token;
-  file.clear();
-  file.seekg(0, std::ios::beg);
-
-  while (rows_to_skip)
-  {
-    std::getline(file, buf, '\n');
-    rows_to_skip--;
-  }
-
-  row = 0;
-  while (std::getline(file, buf, '\n'))
-  {
-    col = 0;
-    std::stringstream ss(buf);
-    for (SizeType i = 0; i < cols_to_skip; i++)
-    {
-      std::getline(ss, field_value, delimiter);
-    }
-    while (std::getline(ss, field_value, delimiter))
-    {
-      weights(row, col) = static_cast<DataType>(stod(field_value));
-      ++col;
-    }
-    ++row;
-  }
-
-  if (transpose)
-  {
-    weights = weights.Transpose();
-  }
-  return weights;
 }
 
 /**
@@ -301,7 +225,7 @@ DataType get_loss(std::shared_ptr<GraphType> const &g_ptr, std::string const &te
   while (!loader.IsDone())
   {
     auto input = loader.GetNext();
-    g_ptr->SetInput(node_names.front(), input.second.at(0).Transpose());
+    g_ptr->SetInput(node_names.front(), input.second.at(0));
 
     auto slice_output = g_ptr->Evaluate(node_names.back(), false);
     loss += criterion.Forward({slice_output, input.first});
@@ -380,8 +304,10 @@ int main(int argc, char **argv)
 
         std::string node_weights_dir = weights_dir + "/" + name + "/" + actual_dirs[0];
         // the weights array for the node has number of columns = number of features
-        ArrayType weights = ReadCSV(node_weights_dir + "/kernel:0.csv", 0, 0, true);
-        ArrayType bias    = ReadCSV(node_weights_dir + "/bias:0.csv", 0, 0, false);
+        ArrayType weights = fetch::ml::dataloaders::ReadCSV<ArrayType>(
+            node_weights_dir + "/kernel:0.csv", 0, 0, true);
+        ArrayType bias = fetch::ml::dataloaders::ReadCSV<ArrayType>(
+            node_weights_dir + "/bias:0.csv", 0, 0, false);
 
         assert(bias.shape()[0] == weights.shape()[0]);
 
@@ -413,7 +339,7 @@ int main(int argc, char **argv)
     while (!loader.IsDone())
     {
       auto input = loader.GetNext();
-      g_ptr->SetInput("num_input", input.second.at(0).Transpose());
+      g_ptr->SetInput("num_input", input.second.at(0));
 
       auto slice_output = g_ptr->Evaluate(node_names.back(), false);
       output.Slice(j).Assign(slice_output);
@@ -519,7 +445,7 @@ int main(int argc, char **argv)
     while (!loader.IsDone())
     {
       auto input = loader.GetNext();
-      g_ptr->SetInput("num_input", input.second.at(0).Transpose());
+      g_ptr->SetInput("num_input", input.second.at(0));
 
       auto slice_output = g_ptr->Evaluate(node_names.back(), false);
       // write slice_output to csv

@@ -123,6 +123,10 @@ public:
       ret_labels(labels_[cursor_], index) = static_cast<typename LabelType::Type>(1);
 
       ++cursor_;
+      if (IsDone())
+      {
+        Reset();
+      }
     }
 
     return std::make_pair(ret_labels, ret_images);
