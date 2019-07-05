@@ -32,13 +32,12 @@
 #include <unordered_map>
 #include <vector>
 
+namespace {
+
 using namespace fetch;
 using namespace fetch::storage;
 using cached_kvi_type = KeyValueIndex<KeyValuePair<>, CachedRandomAccessStack<KeyValuePair<>>>;
 using kvi_type        = KeyValueIndex<KeyValuePair<>, RandomAccessStack<KeyValuePair<>>>;
-
-cached_kvi_type key_index;
-kvi_type        ref_index;
 
 struct TestData
 {
@@ -46,10 +45,17 @@ struct TestData
   uint64_t              value;
 };
 
-std::map<byte_array::ConstByteArray, uint64_t> reference;
-fetch::random::LaggedFibonacciGenerator<>      lfg;
+class KeyValueIndexTests : public ::testing::Test
+{
+public:
+  cached_kvi_type key_index;
+  kvi_type        ref_index;
 
-bool ValueConsistency()
+  std::map<byte_array::ConstByteArray, uint64_t> reference;
+  fetch::random::LaggedFibonacciGenerator<>      lfg;
+};
+
+bool ValueConsistency(KeyValueIndexTests &fixture)
 {
   std::vector<TestData> values;
   for (std::size_t i = 0; i < 10000; ++i)
@@ -58,30 +64,30 @@ bool ValueConsistency()
     key.Resize(256 / 8);
     for (std::size_t j = 0; j < key.size(); ++j)
     {
-      key[j] = uint8_t(lfg() >> 9);
+      key[j] = uint8_t(fixture.lfg() >> 9);
     }
 
-    if (reference.find(key) != reference.end())
+    if (fixture.reference.find(key) != fixture.reference.end())
     {
       continue;
     }
 
-    reference[key] = lfg();
-    values.push_back({key, reference[key]});
+    fixture.reference[key] = fixture.lfg();
+    values.push_back({key, fixture.reference[key]});
   }
 
-  key_index.New("test1.db");
+  fixture.key_index.New("test1.db");
   for (std::size_t i = 0; i < values.size(); ++i)
   {
     auto const &val = values[i];
-    key_index.Set(val.key, val.value, val.key);
+    fixture.key_index.Set(val.key, val.value, val.key);
   }
 
   bool ok = true;
   for (std::size_t i = 0; i < values.size(); ++i)
   {
     auto const &val  = values[i];
-    uint64_t    data = key_index.Get(val.key);
+    uint64_t    data = fixture.key_index.Get(val.key);
     if (data != val.value)
     {
       std::cout << "Error for " << i << std::endl;
@@ -95,9 +101,8 @@ bool ValueConsistency()
 }
 
 template <typename T1, typename T2>
-bool LoadSaveValueConsistency()
+bool LoadSaveValueConsistency(KeyValueIndexTests &fixture)
 {
-
   std::vector<TestData> values;
   for (std::size_t i = 0; i < 10000; ++i)
   {
@@ -105,16 +110,16 @@ bool LoadSaveValueConsistency()
     key.Resize(256 / 8);
     for (std::size_t j = 0; j < key.size(); ++j)
     {
-      key[j] = uint8_t(lfg() >> 9);
+      key[j] = uint8_t(fixture.lfg() >> 9);
     }
 
-    if (reference.find(key) != reference.end())
+    if (fixture.reference.find(key) != fixture.reference.end())
     {
       continue;
     }
 
-    reference[key] = lfg();
-    values.push_back({key, reference[key]});
+    fixture.reference[key] = fixture.lfg();
+    values.push_back({key, fixture.reference[key]});
   }
 
   T1 index1;
@@ -162,7 +167,16 @@ bool LoadSaveValueConsistency()
   return true;
 }
 
-bool RandomInsertHashConsistency()
+TEST_F(KeyValueIndexTests, value_consistency)
+{
+  EXPECT_TRUE(ValueConsistency(*this));
+  EXPECT_TRUE((LoadSaveValueConsistency<kvi_type, kvi_type>(*this)));
+  EXPECT_TRUE((LoadSaveValueConsistency<kvi_type, cached_kvi_type>(*this)));
+  EXPECT_TRUE((LoadSaveValueConsistency<cached_kvi_type, kvi_type>(*this)));
+  EXPECT_TRUE((LoadSaveValueConsistency<cached_kvi_type, cached_kvi_type>(*this)));
+}
+
+TEST_F(KeyValueIndexTests, random_insert_hash_consistency)
 {
   std::vector<TestData> values;
   for (std::size_t i = 0; i < 10000; ++i)
@@ -215,10 +229,10 @@ bool RandomInsertHashConsistency()
 
   auto hash3 = key_index.Hash();
 
-  return (hash1 == hash2) && (hash2 == hash3);
+  ASSERT_TRUE((hash1 == hash2) && (hash2 == hash3));
 }
 
-bool IntermediateFlushHashConsistency()
+TEST_F(KeyValueIndexTests, intermediate_flush_hash_consistency)
 {
   std::vector<TestData> values;
   for (std::size_t i = 0; i < 1000; ++i)
@@ -278,16 +292,11 @@ bool IntermediateFlushHashConsistency()
   }
 
   auto hash3 = key_index.Hash();
-  //  std::cout << std::endl;
-  //  std::cout << byte_array::ToBase64(hash1) << std::endl;
-  //  std::cout << byte_array::ToBase64(hash2) << std::endl;
-  //  std::cout << byte_array::ToBase64(hash3) << std::endl;
-  return (hash1 == hash2) && (hash2 == hash3);
 
-  return true;
+  ASSERT_TRUE((hash1 == hash2) && (hash2 == hash3));
 }
 
-bool DoubleInsertionhConsistency()
+TEST_F(KeyValueIndexTests, double_insertion_hash_consistency)
 {
   std::vector<TestData> values;
   for (std::size_t i = 0; i < 10000; ++i)
@@ -329,15 +338,10 @@ bool DoubleInsertionhConsistency()
   std::size_t size2 = key_index.size();
   auto        hash2 = key_index.Hash();
 
-  //  std::cout << std::endl;
-  //  std::cout << size1 <<  " " << size2 << std::endl;
-  //  std::cout << byte_array::ToBase64( hash1 ) << std::endl;
-  //  std::cout << byte_array::ToBase64( hash2 ) << std::endl;
-
-  return (hash1 == hash2) && (size1 == size2);
+  ASSERT_TRUE((hash1 == hash2) && (size1 == size2));
 }
 
-bool LoadSaveVsBulk()
+TEST_F(KeyValueIndexTests, batched_vs_bulk_load_save_consistency)
 {
   std::vector<TestData> values;
   std::size_t           batches    = 10;
@@ -438,27 +442,8 @@ bool LoadSaveVsBulk()
     random_batched_size = test.size();
   }
 
-  return (batched_hash == bulk_hash) && (random_batched_hash == batched_hash) &&
-         (bulk_size == batched_size) && (random_batched_size == bulk_size);
+  ASSERT_TRUE((batched_hash == bulk_hash) && (random_batched_hash == batched_hash) &&
+              (bulk_size == batched_size) && (random_batched_size == bulk_size));
 }
 
-TEST(storage_key_value_index_gtest, Value_consistency)
-{
-
-  EXPECT_TRUE(ValueConsistency());
-  EXPECT_TRUE((LoadSaveValueConsistency<kvi_type, kvi_type>()));
-  EXPECT_TRUE((LoadSaveValueConsistency<kvi_type, cached_kvi_type>()));
-  EXPECT_TRUE((LoadSaveValueConsistency<cached_kvi_type, kvi_type>()));
-  EXPECT_TRUE((LoadSaveValueConsistency<cached_kvi_type, cached_kvi_type>()));
-}
-
-TEST(storage_key_value_index_gtest, Hash_consistency)
-{
-  EXPECT_TRUE(RandomInsertHashConsistency());
-  EXPECT_TRUE(IntermediateFlushHashConsistency());
-  EXPECT_TRUE(DoubleInsertionhConsistency());
-}
-TEST(storage_key_value_index_gtest, Load_save_consistency)
-{
-  EXPECT_TRUE(LoadSaveVsBulk());
-}
+}  // namespace
