@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "math/standard_functions/log.hpp"
 #include "ml/ops/ops.hpp"
 
 namespace fetch {
@@ -24,7 +25,7 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class Exp : public fetch::ml::Ops<T>
+class Log : public fetch::ml::Ops<T>
 {
 public:
   using ArrayType     = T;
@@ -32,12 +33,12 @@ public:
   using SizeType      = typename ArrayType::SizeType;
   using VecTensorType = typename Ops<T>::VecTensorType;
 
-  Exp()          = default;
-  virtual ~Exp() = default;
+  Log()          = default;
+  virtual ~Log() = default;
 
   /**
    * elementwise square root
-   * @param inputs vector containing one tensor which is the input tensor to Exp
+   * @param inputs vector containing one tensor which is the input tensor to Log
    * @return
    */
   virtual void Forward(VecTensorType const &inputs, ArrayType &output)
@@ -45,12 +46,12 @@ public:
     assert(inputs.size() == 1);
     assert(output.shape() == this->ComputeOutputShape(inputs));
 
-    fetch::math::Exp(inputs.at(0).get(), output);
+    fetch::math::Log(inputs.at(0).get(), output);
   }
 
   /**
-   * elementwise square root gradient is:
-   * f'(input0)= e^x * error_signal
+   * elementwise square root gradient is 1/x * error:
+   * f'(input0)= error_signal/input0
    */
   virtual std::vector<ArrayType> Backward(VecTensorType const &inputs,
                                           ArrayType const &    error_signal)
@@ -59,8 +60,7 @@ public:
     assert(error_signal.shape() == this->ComputeOutputShape(inputs));
 
     ArrayType ret_error_signal(inputs.at(0).get().shape());
-    fetch::math::Exp(inputs.at(0).get(), ret_error_signal);
-    fetch::math::Multiply(error_signal, ret_error_signal, ret_error_signal);
+    fetch::math::Divide(error_signal, inputs.at(0).get(), ret_error_signal);
 
     return {ret_error_signal};
   }
@@ -70,7 +70,7 @@ public:
     return inputs.front().get().shape();
   }
 
-  static constexpr char const *DESCRIPTOR = "Exp";
+  static constexpr char const *DESCRIPTOR = "Log";
 };
 
 }  // namespace ops
