@@ -18,8 +18,6 @@
 //------------------------------------------------------------------------------
 
 #include "vm/module.hpp"
-#include <cstdlib>
-
 #include "vm_modules/math/abs.hpp"
 #include "vm_modules/math/exp.hpp"
 #include "vm_modules/math/log.hpp"

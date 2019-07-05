@@ -97,6 +97,10 @@ def fast_tests_stage(Platform platform, Configuration config)
     stage("Unit Tests ${stage_name_suffix(platform, config)}") {
       sh "./scripts/ci-tool.py -T ${config.label}"
     }
+
+    stage("Etch Lang Tests ${stage_name_suffix(platform, config)}") {
+      sh "./scripts/ci-tool.py -L ${config.label}"
+    }
   }
 }
 

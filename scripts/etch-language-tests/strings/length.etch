@@ -1,0 +1,7 @@
+function main()
+
+    var myString : String = "Hello World";
+
+    assert(11 == myString.length());
+
+endfunction

@@ -22,6 +22,8 @@
 #include "dkg/round.hpp"
 
 #include <algorithm>
+#include <cstdint>
+#include <cstring>
 
 static bool operator==(::blsId const &a, ::blsId const &b)
 {

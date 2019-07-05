@@ -24,6 +24,7 @@
 namespace fetch {
 namespace vm_modules {
 namespace ml {
+
 class VMCrossEntropyLoss : public fetch::vm::Object,
                            public fetch::ml::ops::CrossEntropyLoss<fetch::math::Tensor<float>>
 {

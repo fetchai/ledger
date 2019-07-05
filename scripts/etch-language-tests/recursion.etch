@@ -1,0 +1,16 @@
+function calc(value: Int32) : Int32
+    if (value == 0)
+        return 1;
+    else
+        return value + calc(value - 1);
+    endif
+endfunction
+
+
+function main()
+
+    var value = calc(20);
+
+    assert(211 == value);
+
+endfunction

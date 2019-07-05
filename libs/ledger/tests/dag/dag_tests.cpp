@@ -157,7 +157,7 @@ TEST_F(DagTests, CheckDagRevertsCorrectly)
 
   while (epoch_history_.size() > 0)
   {
-    const auto epochs_head = epoch_history_.size() - 1;
+    auto const epochs_head = epoch_history_.size() - 1;
     VerifyEpochNodes(epochs_head);
 
     if (epochs_head != 0)

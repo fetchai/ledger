@@ -17,15 +17,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm_modules/math/tensor.hpp"
-#include "vm_modules/ml/state_dict.hpp"
-#include <ml/ops/loss_functions.hpp>
-
 #include "ml/graph.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/ops/activation.hpp"
-
 #include "vm/module.hpp"
+#include "vm_modules/math/tensor.hpp"
+#include "vm_modules/ml/state_dict.hpp"
 
 namespace fetch {
 namespace vm_modules {

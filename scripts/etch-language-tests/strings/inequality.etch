@@ -1,0 +1,8 @@
+function main()
+
+    var myString1 : String = "hello";
+    var myString2 : String = "again";
+
+    assert(myString1 != myString2);
+
+endfunction

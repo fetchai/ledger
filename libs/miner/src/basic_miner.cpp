@@ -16,18 +16,24 @@
 //
 //------------------------------------------------------------------------------
 
-#include "miner/basic_miner.hpp"
-
 #include "core/logger.hpp"
 #include "ledger/chain/address.hpp"
 #include "ledger/chain/block.hpp"
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/chain/transaction.hpp"
+#include "miner/basic_miner.hpp"
 #include "telemetry/counter.hpp"
 #include "telemetry/gauge.hpp"
 #include "telemetry/registry.hpp"
 
 #include <algorithm>
+#include <cassert>
+#include <cstddef>
+#include <cstdint>
+#include <iterator>
+#include <memory>
+#include <thread>
+#include <vector>
 
 namespace fetch {
 namespace miner {
