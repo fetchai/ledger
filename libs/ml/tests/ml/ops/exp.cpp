@@ -52,9 +52,6 @@ TYPED_TEST(ExpTest, forward_test)
   TypeParam prediction(op.ComputeOutputShape({data}));
   op.Forward({data}, prediction);
 
-  std::cout << "prediction.ToString(): " << prediction.ToString() << std::endl;
-  std::cout << "gt.ToString(): " << gt.ToString() << std::endl;
-
   // test correct values
   ASSERT_TRUE(
       prediction.AllClose(gt, typename TypeParam::Type(1e-5), typename TypeParam::Type(1e-5)));
