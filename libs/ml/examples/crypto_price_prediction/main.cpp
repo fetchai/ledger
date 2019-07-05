@@ -67,16 +67,38 @@ std::shared_ptr<GraphType> BuildModel(std::string &input_name, std::string &outp
   return g;
 }
 
-std::vector<TensorType> LoadData(std::string const &data_filename,
-                                 std::string const &labels_filename)
+std::vector<TensorType> LoadData(std::string const &train_data_filename,
+                                 std::string const &train_labels_filename,
+                                 std::string const &test_data_filename,
+                                 std::string const &test_labels_filename)
 {
-  auto data_tensor   = fetch::ml::dataloaders::ReadCSV<TensorType>(data_filename, 0, 0, true);
-  auto labels_tensor = fetch::ml::dataloaders::ReadCSV<TensorType>(labels_filename, 0, 0, true);
+  auto train_data_tensor   = fetch::ml::dataloaders::ReadCSV<TensorType>(train_data_filename, 0, 0, true);
+  auto train_labels_tensor = fetch::ml::dataloaders::ReadCSV<TensorType>(train_labels_filename, 0, 0, true);
+  auto test_data_tensor   = fetch::ml::dataloaders::ReadCSV<TensorType>(test_data_filename, 0, 0, true);
+  auto test_labels_tensor = fetch::ml::dataloaders::ReadCSV<TensorType>(test_labels_filename, 0, 0, true);
 
-  data_tensor.Reshape({1, data_tensor.shape().at(0), data_tensor.shape().at(1)});
-  labels_tensor.Reshape({1, labels_tensor.shape().at(0), labels_tensor.shape().at(1)});
+  train_data_tensor.Reshape({1, train_data_tensor.shape().at(0), train_data_tensor.shape().at(1)});
+  train_labels_tensor.Reshape({1, train_labels_tensor.shape().at(0), train_labels_tensor.shape().at(1)});
+  test_data_tensor.Reshape({1, test_data_tensor.shape().at(0), test_data_tensor.shape().at(1)});
+  test_labels_tensor.Reshape({1, test_labels_tensor.shape().at(0), test_labels_tensor.shape().at(1)});
 
-  return {data_tensor, labels_tensor};
+//  return {train_data_tensor, train_labels_tensor, test_data_tensor, test_labels_tensor};
+
+
+  // TODO: temp code - copy out one test data point to predict
+  TensorType test_data({1, test_data_tensor.shape().at(1), 1});
+  TensorType test_label({1, test_labels_tensor.shape().at(1), 1});
+
+  for (SizeType i = 0; i < test_data_tensor.shape()[1]; ++i)
+  {
+    test_data(0,i,0) = test_data_tensor(0,i,0);
+  }
+  for (SizeType i = 0; i < test_labels_tensor.shape()[1]; ++i)
+  {
+    test_label(0,i,0) = test_labels_tensor(0,i,0);
+  }
+  return {train_data_tensor, train_labels_tensor, test_data, test_label};
+
 }
 
 int main(int ac, char **av)
@@ -84,16 +106,16 @@ int main(int ac, char **av)
   SizeType epochs{10};
   SizeType batch_size{8};
 
-  if (ac < 3)
+  if (ac < 5)
   {
-    std::cout << "Usage : " << av[0] << " PATH/TO/train-prices PATH/TO/test-prices" << std::endl;
+    std::cout << "Usage : " << av[0] << " PATH/TO/train-data PATH/TO/train-labels PATH/TO/test-data PATH/TO/test-labels" << std::endl;
     return 1;
   }
 
   std::cout << "FETCH Crypto price prediction demo" << std::endl;
 
   std::cout << "Loading crypto price data... " << std::endl;
-  std::vector<TensorType> data_and_labels = LoadData(av[1], av[2]);
+  std::vector<TensorType> data_and_labels = LoadData(av[1], av[2], av[3], av[4]);
 
   std::cout << "Build model & optimiser... " << std::endl;
   std::string                input_name;
@@ -108,6 +130,15 @@ int main(int ac, char **av)
     loss = optimiser.Run({data_and_labels.at(0)}, data_and_labels.at(1), batch_size);
     std::cout << "Loss: " << loss << std::endl;
   }
+
+  std::cout << "Begin testing: " << std::endl;
+  g->SetInput(input_name, data_and_labels.at(2));
+  auto prediction = g->Evaluate(output_name, false);
+
+  std::cout << "prediction.ToString(): " << prediction.ToString() << std::endl;
+  std::cout << "data_and_labels.at(3).ToString(): " << data_and_labels.at(3).ToString() << std::endl;
+
+  // now compare prediction with data_and_labels.at(3)
 
   return 0;
 }
