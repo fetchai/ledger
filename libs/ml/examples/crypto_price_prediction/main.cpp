@@ -134,6 +134,8 @@ int main(int ac, char **av)
   std::cout << "Begin testing: " << std::endl;
   g->SetInput(input_name, data_and_labels.at(2));
   auto prediction = g->Evaluate(output_name, false);
+  prediction.Reshape({prediction.shape().at(1), prediction.shape().at(2)});
+  data_and_labels.at(3).Reshape({data_and_labels.at(3).shape().at(1), data_and_labels.at(3).shape().at(2)});
 
   std::cout << "prediction.ToString(): " << prediction.ToString() << std::endl;
   std::cout << "data_and_labels.at(3).ToString(): " << data_and_labels.at(3).ToString() << std::endl;
