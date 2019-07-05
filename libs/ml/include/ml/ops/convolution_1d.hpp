@@ -96,6 +96,9 @@ void Convolution1D<ArrayType>::Forward(VecTensorType const &inputs, ArrayType &o
   assert(inputs.at(1).get().shape().size() == 4);
   assert(output.shape() == ComputeOutputShape(inputs));
 
+  // input data channels = kernel input channels
+  assert(inputs.at(0).get().shape().at(0) == inputs.at(1).get().shape().at(1));
+
   ArrayType input   = inputs.at(0).get();
   ArrayType kernels = inputs.at(1).get();
 
