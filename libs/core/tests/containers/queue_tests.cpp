@@ -19,9 +19,14 @@
 #include "core/containers/queue.hpp"
 
 #include "gtest/gtest.h"
+
 #include <atomic>
+#include <cstddef>
+#include <cstdint>
 #include <memory>
+#include <mutex>
 #include <thread>
+#include <type_traits>
 #include <vector>
 
 namespace {

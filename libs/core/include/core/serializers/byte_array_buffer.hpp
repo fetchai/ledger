@@ -23,7 +23,8 @@
 #include "core/logger.hpp"
 #include "core/serializers/counter.hpp"
 
-#include <type_traits>
+#include <cstddef>
+#include <cstdint>
 
 namespace fetch {
 namespace serializers {

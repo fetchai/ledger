@@ -56,7 +56,7 @@ static std::string GenerateThreadPoolName(NetworkId const &identity)
   return oss.str();
 }
 
-static const auto        CLEANUP_INTERVAL        = std::chrono::seconds{10};
+static auto const        CLEANUP_INTERVAL        = std::chrono::seconds{10};
 static std::size_t const MAINTENANCE_INTERVAL_MS = 2500;
 static std::size_t const NUM_THREADS             = 1;
 

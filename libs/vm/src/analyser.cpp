@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "vectorise/fixed_point/fixed_point.hpp"
 #include "vm/analyser.hpp"
 #include "vm/array.hpp"
 #include "vm/map.hpp"
@@ -24,11 +25,10 @@
 #include "vm/state.hpp"
 #include "vm/string.hpp"
 
-#include "vectorise/fixed_point/fixed_point.hpp"
-
 #include <cstddef>
 #include <cstdint>
 #include <ostream>
+#include <string>
 
 namespace fetch {
 namespace vm {

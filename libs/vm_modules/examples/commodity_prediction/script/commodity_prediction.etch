@@ -20,12 +20,12 @@ endfunction
 
 function read_weights(graph: Graph)
 // read in weights
-var file_weights0 = System.Argv(0) +  "/output/keras_h7_aluminium_px_last_us/model_weights/hidden_dense_1/hidden_dense_1_12/kernel:0.csv";
-var file_bias0    = System.Argv(0) +  "/output/keras_h7_aluminium_px_last_us/model_weights/hidden_dense_1/hidden_dense_1_12/bias:0.csv";
-var file_weights1 = System.Argv(0) +  "/output/keras_h7_aluminium_px_last_us/model_weights/hidden_dense_2/hidden_dense_2_4/kernel:0.csv";
-var file_bias1    = System.Argv(0) +  "/output/keras_h7_aluminium_px_last_us/model_weights/hidden_dense_2/hidden_dense_2_4/bias:0.csv";
-var file_weights2 = System.Argv(0) +  "/output/keras_h7_aluminium_px_last_us/model_weights/output_dense/output_dense_12/kernel:0.csv";
-var file_bias2    = System.Argv(0) +  "/output/keras_h7_aluminium_px_last_us/model_weights/output_dense/output_dense_12/bias:0.csv";
+var file_weights0 = System.Argv(0) +  "/output/keras_aluminium_px_last_us/model_weights/hidden_dense_1/hidden_dense_1_12/kernel:0.csv";
+var file_bias0    = System.Argv(0) +  "/output/keras_aluminium_px_last_us/model_weights/hidden_dense_1/hidden_dense_1_12/bias:0.csv";
+var file_weights1 = System.Argv(0) +  "/output/keras_aluminium_px_last_us/model_weights/hidden_dense_2/hidden_dense_2_4/kernel:0.csv";
+var file_bias1    = System.Argv(0) +  "/output/keras_aluminium_px_last_us/model_weights/hidden_dense_2/hidden_dense_2_4/bias:0.csv";
+var file_weights2 = System.Argv(0) +  "/output/keras_aluminium_px_last_us/model_weights/output_dense/output_dense_12/kernel:0.csv";
+var file_bias2    = System.Argv(0) +  "/output/keras_aluminium_px_last_us/model_weights/output_dense/output_dense_12/bias:0.csv";
 
 var weights0 = read_csv(file_weights0, true);
 var bias0    = read_csv(file_bias0, false);
@@ -52,18 +52,37 @@ if (System.Argc() != 3)
   return;
 endif
 
-var loader = CommodityDataLoader();
-loader.AddData(System.Argv(1), System.Argv(2));
+var loader = DataLoader();
+loader.AddData("commodity", System.Argv(1), System.Argv(2));
 
 var graph = Graph();
 build_graph(graph);
-read_weights(graph);
 
-while(!loader.IsDone())
-    var input_data = loader.GetNext();
-    graph.SetInput("num_input", input_data.Data());
-    var pred = graph.Evaluate("softmax_3");
-    print(pred.ToString());
-endwhile
+var testing = true;
+
+if (testing)
+    read_weights(graph);
+
+    while(!loader.IsDone())
+        var input_data = loader.GetNext();
+        graph.SetInput("num_input", input_data.Data());
+        var pred = graph.Evaluate("softmax_3");
+        print(pred.ToString());
+    endwhile
+else
+    // Set up the optimiser
+    var optimiser = AdamOptimiser(graph, "num_input", "softmax_3");
+
+    // Begin the training loop
+    var training_iterations = 10;
+    var batch_size = 64u64;
+    var subset_size = (100u64 * 64u64);
+    for(i in 0:training_iterations)
+        var loss = optimiser.Run(loader, batch_size, subset_size);
+        print("Current Loss: ");
+        printLn(loss);
+    endfor
+endif
+
 
 endfunction

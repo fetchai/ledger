@@ -28,7 +28,7 @@ void BuildToken(pybind11::module &module)
   namespace py = pybind11;
   py::class_<Token, fetch::byte_array::ConstByteArray>(module, "Token")
       .def(py::init<>())
-      .def(py::init<const char *>())
+      .def(py::init<char const *>())
       .def(py::init<const std::string &>())
       .def(py::init<const fetch::byte_array::ConstByteArray &>())
       .def(py::init<const fetch::byte_array::ConstByteArray &, const std::size_t &,

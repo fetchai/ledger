@@ -22,9 +22,9 @@ namespace fetch {
 namespace byte_array {
 namespace details {
 
-const char base64chars[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
-const char base64pad     = '=';
-const char hexChars[]    = "0123456789abcdef";
+char const base64chars[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
+char const base64pad     = '=';
+char const hexChars[]    = "0123456789abcdef";
 
 const unsigned char base64decode[] = {
     66, 66, 66, 66, 66, 66, 66, 66, 66, 66, 64, 66, 66, 66, 66, 66, 66, 66, 66, 66, 66, 66, 66, 66,
