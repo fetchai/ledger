@@ -18,7 +18,11 @@
 
 #include "crypto/bls_base.hpp"
 #include "crypto/bls_dkg.hpp"
+
+#include <cstdint>
 #include <iostream>
+#include <stdexcept>
+#include <vector>
 
 using namespace fetch::crypto;
 using namespace fetch::byte_array;

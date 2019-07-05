@@ -51,7 +51,7 @@ byte_array::ByteArray CopyBuffer(asio::streambuf &buffer, std::size_t length)
 
 bool HTTPResponse::ToStream(asio::streambuf &buffer) const
 {
-  static const char *NEW_LINE = "\r\n";
+  static char const *NEW_LINE = "\r\n";
 
   LOG_STACK_TRACE_POINT;
 

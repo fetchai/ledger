@@ -22,6 +22,8 @@
 #include "vm_modules/core/print.hpp"
 #include "vm_modules/ml/ml.hpp"
 
+#include <cstddef>
+#include <cstdint>
 #include <fstream>
 #include <iostream>
 #include <memory>
@@ -33,8 +35,8 @@ using ArrayType = fetch::math::Tensor<DataType>;
 
 struct System : public fetch::vm::Object
 {
-  System()          = delete;
-  virtual ~System() = default;
+  System()           = delete;
+  ~System() override = default;
 
   static int32_t Argc(fetch::vm::VM * /*vm*/, fetch::vm::TypeId /*type_id*/)
   {
@@ -146,5 +148,6 @@ int main(int argc, char **argv)
   {
     std::cout << "Runtime error on line " << error << std::endl;
   }
+
   return 0;
 }

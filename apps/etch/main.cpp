@@ -34,6 +34,8 @@
 #include "vm/vm.hpp"
 #include "vm_modules/vm_factory.hpp"
 
+#include "fetch_version.hpp"
+
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
@@ -42,6 +44,7 @@
 #include <memory>
 #include <stdexcept>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 namespace {
@@ -255,10 +258,40 @@ private:
   Variant data_{Variant::Object()};
 };
 
+std::unordered_set<std::string> const VERSION_FLAGS = {"-v", "--version"};
+
+bool IsVersionFlag(char const *text)
+{
+  return VERSION_FLAGS.find(text) != VERSION_FLAGS.end();
+}
+
+bool HasVersionFlag(int argc, char **argv)
+{
+  bool present{false};
+
+  for (int i = 1; i < argc; ++i)
+  {
+    if (IsVersionFlag(argv[i]))
+    {
+      present = true;
+      break;
+    }
+  }
+
+  return present;
+}
+
 }  // namespace
 
 int main(int argc, char **argv)
 {
+  // version checking
+  if (HasVersionFlag(argc, argv))
+  {
+    std::cout << fetch::version::FULL << std::endl;
+    return EXIT_SUCCESS;
+  }
+
   // parse the command line parameters
   params.Parse(argc, argv);
 

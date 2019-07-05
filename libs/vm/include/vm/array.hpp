@@ -25,6 +25,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <iterator>
+#include <utility>
 
 namespace fetch {
 namespace vm {
@@ -176,7 +177,7 @@ struct Array : public IArray
 
     std::move(elements.begin(), elements.begin() + num_to_pop, array->elements.begin());
 
-    const auto popped_size = static_cast<std::size_t>(num_to_pop);
+    auto const popped_size = static_cast<std::size_t>(num_to_pop);
 
     // Shift remaining elements to the right
     for (auto i = popped_size; i < elements.size(); ++i)

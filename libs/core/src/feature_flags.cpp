@@ -18,6 +18,8 @@
 
 #include "core/feature_flags.hpp"
 
+#include <cstddef>
+
 namespace fetch {
 namespace core {
 namespace {

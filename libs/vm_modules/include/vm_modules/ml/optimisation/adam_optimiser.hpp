@@ -17,14 +17,18 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ml/graph.hpp"
+#include "ml/ops/loss_functions/cross_entropy.hpp"
+#include "ml/optimisation/adam_optimiser.hpp"
 #include "vm_modules/math/tensor.hpp"
 #include "vm_modules/ml/dataloaders/dataloader.hpp"
 #include "vm_modules/ml/graph.hpp"
 #include "vm_modules/ml/training_pair.hpp"
 
-#include "ml/graph.hpp"
-#include "ml/ops/loss_functions/cross_entropy.hpp"
-#include "ml/optimisation/adam_optimiser.hpp"
+#include <cstdint>
+#include <memory>
+#include <string>
+#include <vector>
 
 namespace fetch {
 namespace vm_modules {

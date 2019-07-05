@@ -20,6 +20,8 @@
 #include "vm/ir.hpp"
 #include "vm/node.hpp"
 
+#include <string>
+
 namespace fetch {
 namespace vm {
 
