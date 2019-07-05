@@ -228,13 +228,18 @@ typename T::Type Optimiser<T, C>::Run(
   DataType                                     loss{0};
   DataType                                     loss_sum{0};
   SizeType                                     step{0};
+
+  // tracks whether loader is done, but dataloader will reset inside Prepare batch
+  bool is_done_set = !loader.IsDone();
+
   std::pair<ArrayType, std::vector<ArrayType>> input;
-  while (!loader.IsDone() && step < subset_size)
+  while ((step < subset_size) && (!is_done_set))
   {
+    is_done_set = false;
     loss = DataType{0};
 
     // Do batch back-propagation
-    input = loader.PrepareBatch(batch_size);
+    input = loader.PrepareBatch(batch_size, is_done_set);
 
     auto cur_input = input.second;
 
