@@ -68,11 +68,31 @@ public:
   }
 
   /**
-   * elementwise multiplication is not trainable - just pass the error signal back
+   * f'(x)=(1/y)*err
+   * f'(y)=-(x/(y^2))*err
    */
   virtual std::vector<ArrayPtrType> Backward(VecTensorType const &inputs, ArrayPtrType error_signal)
   {
-    return std::vector<ArrayPtrType>(inputs.size(), error_signal);
+    ArrayType return_signal_1(inputs.at(0).get().shape());
+    ArrayType return_signal_2(return_signal_1.shape());
+
+    auto a_it   = inputs.get().at(0).cbegin();
+    auto b_it   = inputs.get().at(1).cbegin();
+    auto err_it = error_signal.cbegin();
+    auto r_1_it = return_signal_1.begin();
+    auto r_2_it = return_signal_2.begin();
+    while (a_it.is_valid())
+    {
+      *r_1_it = (*err_it) / (*b_it);
+      *r_2_it = ((*err_it) * (*a_it)) / ((*b_it) * (*b_it));
+
+      ++a_it;
+      ++b_it;
+      ++r_1_it;
+      ++r_2_it;
+    }
+
+    return {return_signal_1, return_signal_2};
   }
 
   static constexpr char const *DESCRIPTOR = "Divide";
