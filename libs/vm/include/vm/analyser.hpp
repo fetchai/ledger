@@ -20,12 +20,11 @@
 #include "meta/type_util.hpp"
 #include "vm/node.hpp"
 
-#include <string>
-#include <type_traits>
 #include <cstdint>
 #include <memory>
 #include <stdexcept>
 #include <string>
+#include <type_traits>
 #include <typeindex>
 #include <unordered_map>
 #include <unordered_set>
@@ -351,6 +350,18 @@ private:
     return type && type->IsInstantiation() && type->template_type == array_type_;
   }
 
+  /**
+   * Annotates empty array (if any) based on provided array type (if any).
+   * If rhs is an empty array of yet-unknown type,
+   * lhs_type should be an Array instantiation.
+   * In that case, rhs's type is set to lhs_type.
+   *
+   * @param line
+   * @param lhs_type
+   * @param rhs
+   * @param message Error text to be added when returning false.
+   * @return false iff rhs is an empty array but lhs_type is not an array instantiation.
+   */
   bool CloseEmptyArray(uint16_t line, TypePtr const &lhs_type, ExpressionNodePtr &rhs,
                        std::string const &message = "incompatible types")
   {

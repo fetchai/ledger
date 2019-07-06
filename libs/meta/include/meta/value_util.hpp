@@ -203,11 +203,10 @@ constexpr void ForEach(F &&f, T &&t, Ts &&... ts) noexcept(
 struct ZeroOne
 {
   template <class T>
-  constexpr void operator()(T &&t) noexcept(
-      std::is_nothrow_constructible<std::decay_t<T>>::value
-          &&std::is_nothrow_move_assignable<std::decay_t<T>>::value)
+  constexpr void operator()(T &&t) noexcept(std::is_nothrow_constructible<std::decay_t<T>>::value
+                                                &&noexcept(std::forward<T>(t) = std::decay_t<T>{}))
   {
-    t = std::decay_t<T>{};
+    std::forward<T>(t) = std::decay_t<T>{};
   }
 };
 
@@ -256,42 +255,42 @@ template <class RV, class C, class... Args1, class... Args>
 constexpr decltype(auto) Invoke(RV (std::decay_t<C>::*f)(Args1...), C &&c,
                                 Args &&... args) /* noexcept(...) */
 {
-  return (std::forward<C>(c).*f)(f)(std::forward<Args>(args)...);
+  return (std::forward<C>(c).*f)(std::forward<Args>(args)...);
 }
 
 template <class RV, class C, class... Args1, class... Args>
 constexpr decltype(auto) Invoke(RV (std::decay_t<C>::*f)(Args1...) const, C &&c,
                                 Args &&... args) /* noexcept(...) */
 {
-  return (std::forward<C>(c).*f)(f)(std::forward<Args>(args)...);
+  return (std::forward<C>(c).*f)(std::forward<Args>(args)...);
 }
 
 template <class RV, class C, class... Args1, class... Args>
 constexpr decltype(auto) Invoke(RV (std::decay_t<C>::*f)(Args1...) &, C &&c,
                                 Args &&... args) /* noexcept(...) */
 {
-  return (std::forward<C>(c).*f)(f)(std::forward<Args>(args)...);
+  return (std::forward<C>(c).*f)(std::forward<Args>(args)...);
 }
 
 template <class RV, class C, class... Args1, class... Args>
 constexpr decltype(auto) Invoke(RV (std::decay_t<C>::*f)(Args1...) const &, C &&c,
                                 Args &&... args) /* noexcept(...) */
 {
-  return (std::forward<C>(c).*f)(f)(std::forward<Args>(args)...);
+  return (std::forward<C>(c).*f)(std::forward<Args>(args)...);
 }
 
 template <class RV, class C, class... Args1, class... Args>
 constexpr decltype(auto) Invoke(RV (std::decay_t<C>::*f)(Args1...) &&, C &&c,
                                 Args &&... args) /* noexcept(...) */
 {
-  return (std::forward<C>(c).*f)(f)(std::forward<Args>(args)...);
+  return (std::forward<C>(c).*f)(std::forward<Args>(args)...);
 }
 
 template <class RV, class C, class... Args1, class... Args>
 constexpr decltype(auto) Invoke(RV (std::decay_t<C>::*f)(Args1...) const &&, C &&c,
                                 Args &&... args) /* noexcept(...) */
 {
-  return (std::forward<C>(c).*f)(f)(std::forward<Args>(args)...);
+  return (std::forward<C>(c).*f)(std::forward<Args>(args)...);
 }
 
 template <class... StoredTypes>
