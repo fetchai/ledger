@@ -66,7 +66,11 @@ public:
     , iterator_position_get_next_context_(0)
     , iterator_position_get_next_(0)
     , current_function_index_(0)
-    , max_contexts_(max_contexts_){};
+    , max_contexts_(max_contexts_){
+          // TODO (1314) - make prepare batch compliant
+          // prepares underlying containers for buffering data and labels
+          // this->SetDataSize({Label_shape}, {{t1_shape}, {t2_shape}, {t3_shape}});
+      };
 
   ContextLabelPair        GetNextContext();
   ContextTensorsLabelPair GetNext() override;

@@ -40,23 +40,25 @@ public:
   using ReturnType = std::pair<LabelType, std::vector<T>>;
 
 private:
-
-  std::uint32_t cursor_;
-  std::uint32_t size_;
-  static constexpr std::uint32_t FIGURE_WIDTH = 28;
+  std::uint32_t                  cursor_;
+  std::uint32_t                  size_;
+  static constexpr std::uint32_t FIGURE_WIDTH  = 28;
   static constexpr std::uint32_t FIGURE_HEIGHT = 28;
-  static constexpr std::uint32_t FIGURE_SIZE = 28 * 28;
-  static constexpr std::uint32_t LABEL_SIZE = 10;
+  static constexpr std::uint32_t FIGURE_SIZE   = 28 * 28;
+  static constexpr std::uint32_t LABEL_SIZE    = 10;
 
 public:
   MNISTLoader(std::string const &images_file, std::string const &labelsFile,
               bool random_mode = false)
-    : DataLoader<LabelType, T>(random_mode, {LABEL_SIZE}, {{FIGURE_SIZE}})
+    : DataLoader<LabelType, T>(random_mode)
     , cursor_(0)
   {
+    // prepares underlying containers for buffering data and labels
+    this->SetDataSize({LABEL_SIZE, 1}, {{FIGURE_SIZE}});
+
     std::uint32_t record_length(0);
-    data_          = read_mnist_images(images_file, size_, record_length);
-    labels_        = read_mnist_labels(labelsFile, size_);
+    data_   = read_mnist_images(images_file, size_, record_length);
+    labels_ = read_mnist_labels(labelsFile, size_);
     assert(record_length == FIGURE_SIZE);
 
     // Prepare return buffer
@@ -108,7 +110,7 @@ public:
     std::cout << std::endl;
   }
 
-  ReturnType PrepareBatch(SizeType subset_size, bool & is_done_set) override
+  ReturnType PrepareBatch(SizeType subset_size, bool &is_done_set) override
   {
     T ret_labels({LABEL_SIZE, subset_size});
 

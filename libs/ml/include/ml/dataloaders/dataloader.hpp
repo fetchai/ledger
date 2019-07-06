@@ -40,22 +40,11 @@ public:
    * @param label_shape
    * @param data_shapes
    */
-  explicit DataLoader(bool random_mode, SizeVector const &label_shape,
-                      std::vector<SizeVector> const &data_shapes)
+  explicit DataLoader(bool random_mode)
     : random_mode_(random_mode)
-  {
-    LabelType             labels(label_shape);
-    std::vector<DataType> data_vec(data_shapes);
+  {}
 
-    // set each tensor in the data vector to the correct shape
-    for (auto &tensor : data_vec)
-    {
-      data_batch_dimensions_.emplace_back(tensor.shape().size() - 1);
-    }
-    label_batch_dimension_ = labels.shape().size() - 1;
-
-    ret_pair_ = std::make_pair(labels, data_vec);
-  }
+  void SetDataSize(SizeVector const &label_shape, std::vector<SizeVector> const &data_shapes);
 
   virtual ~DataLoader()           = default;
   virtual ReturnType    GetNext() = 0;
@@ -74,6 +63,37 @@ private:
 
   std::pair<LabelType, std::vector<DataType>> ret_pair_;
 };
+
+/**
+ * This method must be called directly after constructing a method that inherits from dataloader.
+ * This method sets the shapes of the data and labels, as well as the return pair.
+ * @tparam LabelType
+ * @tparam DataType
+ * @param label_shape vector of SizeTypes indicating the shape of the label tensor
+ * @param data_shapes vector of vector of sizetpyes indicating the shape of all input data tensors
+ */
+template <typename LabelType, typename DataType>
+void DataLoader<LabelType, DataType>::SetDataSize(SizeVector const &             label_shape,
+                                                  std::vector<SizeVector> const &data_shapes)
+{
+  LabelType             labels(label_shape);
+  std::vector<DataType> data_vec({data_shapes.size()});
+  SizeType              count = 0;
+  for (auto &tensor : data_vec)
+  {
+    tensor.Reshape(data_shapes.at(count));
+    ++count;
+  }
+
+  // set each tensor in the data vector to the correct shape
+  for (auto &tensor : data_vec)
+  {
+    data_batch_dimensions_.emplace_back(tensor.shape().size() - 1);
+  }
+  label_batch_dimension_ = labels.shape().size() - 1;
+
+  ret_pair_ = std::make_pair(labels, data_vec);
+}
 
 /**
  * Creates pair of label tensor and vector of data tensors

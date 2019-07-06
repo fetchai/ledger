@@ -19,10 +19,6 @@
 
 #include "ml/dataloaders/dataloader.hpp"
 
-//#include <memory>
-//#include <utility>
-//#include <vector>
-
 namespace fetch {
 namespace ml {
 namespace dataloaders {
@@ -39,7 +35,12 @@ class TensorDataLoader : public DataLoader<LabelType, InputType>
 
 public:
   TensorDataLoader(bool random_mode = false)
-    : DataLoader<LabelType, TensorType>(random_mode){};
+    : DataLoader<LabelType, TensorType>(random_mode){
+          // TODO (1314) - make prepare batch compliant
+          // prepares underlying containers for buffering data and labels
+          // this->SetDataSize({label_size}, {{tensor_1_size}, {tensor_2_size}....);
+      };
+
   virtual ~TensorDataLoader() = default;
 
   virtual ReturnType GetNext();

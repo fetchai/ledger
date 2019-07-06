@@ -92,7 +92,7 @@ private:
  */
 template <typename T>
 W2VLoader<T>::W2VLoader(SizeType window_size, SizeType negative_samples, bool mode)
-  : DataLoader<LabelType, DataType>(false, {negative_samples, 1}, {{window_size * 2, 1}})  // no random mode specified
+  : DataLoader<LabelType, DataType>(false)  // no random mode specified
   , current_sentence_(0)
   , current_word_(0)
   , window_size_(window_size)
@@ -100,7 +100,11 @@ W2VLoader<T>::W2VLoader(SizeType window_size, SizeType negative_samples, bool mo
   , mode_(mode)
   , target_({window_size_ * 2, 1})
   , label_({negative_samples_, 1})
-{}
+{
+  // TODO (1314) - make prepare batch compliant
+  // prepares underlying containers for buffering data and labels
+  // this->SetDataSize({negative_samples_, 1}, {{window_size_ * 2, 1}});
+}
 
 /**
  * reports the total size of the outputs iterating through the dataloader

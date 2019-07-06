@@ -225,9 +225,9 @@ typename T::Type Optimiser<T, C>::Run(
   // for some input combinations batch size will be modified
   batch_size = UpdateBatchSize(batch_size, loader.Size(), subset_size);
 
-  DataType                                     loss{0};
-  DataType                                     loss_sum{0};
-  SizeType                                     step{0};
+  DataType loss{0};
+  DataType loss_sum{0};
+  SizeType step{0};
 
   // tracks whether loader is done, but dataloader will reset inside Prepare batch
   bool is_done_set = !loader.IsDone();
@@ -236,7 +236,7 @@ typename T::Type Optimiser<T, C>::Run(
   while ((step < subset_size) && (!is_done_set))
   {
     is_done_set = false;
-    loss = DataType{0};
+    loss        = DataType{0};
 
     // Do batch back-propagation
     input = loader.PrepareBatch(batch_size, is_done_set);
