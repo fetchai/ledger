@@ -130,10 +130,6 @@ private:
   bool HandleComma();
   void HandleOp(NodeKind kind, OpInfo const &op_info);
   bool HandleLeftSquareBracket();
-  bool HandleArrayExpression();
-  bool HandleArraySequence();
-  bool HandleArrayRepetition();
-  bool HandleArrayEmpty();
   void AddGroup(NodeKind kind, int arity, Token::Kind closer_token_kind,
                 std::string const &closer_token_text);
   void AddOp(NodeKind kind, OpInfo const &op_info);
