@@ -16,13 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm_modules/core/print.hpp"
-
-#include "meta/type_traits.hpp"
 #include "vm/module.hpp"
 #include "vm/vm.hpp"
-
-#include <ostream>
 
 namespace fetch {
 namespace vm_modules {

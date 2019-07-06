@@ -32,11 +32,14 @@
 #include "storage/resource_mapper.hpp"
 #include "telemetry/telemetry.hpp"
 
+#include <cstdint>
 #include <fstream>
-#include <map>
+#include <list>
 #include <memory>
-#include <set>
+#include <mutex>
+#include <unordered_map>
 #include <unordered_set>
+#include <vector>
 
 namespace fetch {
 namespace ledger {

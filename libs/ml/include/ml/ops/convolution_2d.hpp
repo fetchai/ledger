@@ -152,11 +152,14 @@ std::vector<ArrayType> Convolution2D<ArrayType>::Backward(VecTensorType const &i
                                                           ArrayType const &    error_signal)
 {
   assert(inputs.size() == 2);
-  // Input should be a 3D tensor [C x H x W x N]
+  // Input should be a 4D tensor [C x H x W x N]
   assert(inputs.at(0).get().shape().size() == 4);
-  // Kernels should be a 4D tensor [oC x iC x H x W x N]
+  // Kernels should be a 5D tensor [oC x iC x H x W x N]
   assert(inputs.at(1).get().shape().size() == 5);
   assert(error_signal.shape() == ComputeOutputShape(inputs));
+
+  // input data channels = kernel input channels
+  assert(inputs.at(0).get().shape().at(0) == inputs.at(1).get().shape().at(1));
 
   SizeType output_height = error_signal.shape().at(1);
   SizeType output_width  = error_signal.shape().at(2);

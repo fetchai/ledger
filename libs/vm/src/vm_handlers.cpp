@@ -20,6 +20,10 @@
 #include "vm/array.hpp"
 #include "vm/vm.hpp"
 
+#include <cstdint>
+#include <utility>
+#include <vector>
+
 namespace fetch {
 namespace vm {
 

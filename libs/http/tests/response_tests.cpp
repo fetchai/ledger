@@ -52,7 +52,7 @@ protected:
 
 TEST_F(ResponseTests, HeaderCase1)
 {
-  static const char *raw_header =
+  static char const *raw_header =
       "HTTP/1.0 404 NOT FOUND\r\n"
       "Content-Type : text/html\r\n"
       "Content-Length: 233\r\n"
@@ -75,7 +75,7 @@ TEST_F(ResponseTests, HeaderCase1)
 
 TEST_F(ResponseTests, HeaderCase2)
 {
-  static const char *raw_header =
+  static char const *raw_header =
       "HTTP/1.0 200 NOT FOUND\r\n"
       "Content-Type : application/json\r\n"
       "Content-Length: 10\r\n"

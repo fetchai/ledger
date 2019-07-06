@@ -22,6 +22,11 @@
 #include "meta/value_util.hpp"
 #include "vm/node.hpp"
 
+#include <cstddef>
+#include <string>
+#include <unordered_set>
+#include <vector>
+
 namespace fetch {
 namespace vm {
 

@@ -20,6 +20,13 @@
 #include "vm/ir.hpp"
 #include "vm/variant.hpp"
 
+#include <cstdint>
+#include <map>
+#include <string>
+#include <unordered_map>
+#include <utility>
+#include <vector>
+
 namespace fetch {
 namespace vm {
 

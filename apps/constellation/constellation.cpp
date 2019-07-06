@@ -275,10 +275,13 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
     dag_service_ = std::make_shared<ledger::DAGService>(muddle_.AsEndpoint(), dag_);
     reactor_.Attach(dag_service_->GetWeakRunnable());
 
-    NaiveSynergeticMiner *syn_miner = new NaiveSynergeticMiner{dag_, *storage_, certificate};
-    reactor_.Attach(syn_miner->GetWeakRunnable());
-
-    synergetic_miner_.reset(syn_miner);
+    auto syn_miner = std::make_unique<NaiveSynergeticMiner>(dag_, *storage_, certificate);
+    if (!reactor_.Attach(syn_miner->GetWeakRunnable()))
+    {
+      FETCH_LOG_ERROR(LOGGING_NAME, "Failed to attach synergetic miner to reactor.");
+      throw std::runtime_error("Failed to attach synergetic miner to reactor.");
+    }
+    synergetic_miner_ = std::move(syn_miner);
   }
 
   // attach the services to the reactor
@@ -324,14 +327,15 @@ void Constellation::Run(UriList const &initial_peers, core::WeakRunnable bootstr
 
   // start all the services
   network_manager_.Start();
-
   http_network_manager_.Start();
   muddle_.Start({p2p_port_});
+
   /// LANE / SHARD SERVERS
 
   // start all the lane services and wait for them to start accepting
   // connections
   lane_services_.Start();
+
   FETCH_LOG_INFO(LOGGING_NAME, "Starting shard services...");
   if (!WaitForLaneServersToStart())
   {

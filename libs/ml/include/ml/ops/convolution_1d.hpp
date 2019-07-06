@@ -90,11 +90,14 @@ template <class ArrayType>
 void Convolution1D<ArrayType>::Forward(VecTensorType const &inputs, ArrayType &output)
 {
   assert(inputs.size() == 2);
-  // Input should be a 2D tensor [C x H x N]
+  // Input should be a 3D tensor [C x H x N]
   assert(inputs.at(0).get().shape().size() == 3);
-  // Kernels should be a 3D tensor [oC x iC x H x N]
+  // Kernels should be a 4D tensor [oC x iC x H x N]
   assert(inputs.at(1).get().shape().size() == 4);
   assert(output.shape() == ComputeOutputShape(inputs));
+
+  // input data channels = kernel input channels
+  assert(inputs.at(0).get().shape().at(0) == inputs.at(1).get().shape().at(1));
 
   ArrayType input   = inputs.at(0).get();
   ArrayType kernels = inputs.at(1).get();

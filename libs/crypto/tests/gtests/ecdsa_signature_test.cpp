@@ -50,7 +50,7 @@ protected:
     auto const &         test_hash_data = test_data_;
     ecdsa_signature_type signature{ecdsa_signature_type::SignHash(priv_key, test_hash_data)};
 
-    const auto verification_result = signature.VerifyHash(priv_key.publicKey(), test_hash_data);
+    auto const verification_result = signature.VerifyHash(priv_key.publicKey(), test_hash_data);
 
     //* Expectations:
     EXPECT_TRUE(verification_result);
@@ -66,7 +66,7 @@ protected:
     using ecdsa_signature_type = ECDSASignature<SIG_ENCODING>;
     ecdsa_signature_type signature{ecdsa_signature_type::Sign(priv_key, test_data_)};
 
-    const auto verification_result = signature.Verify(priv_key.publicKey(), test_data_);
+    auto const verification_result = signature.Verify(priv_key.publicKey(), test_data_);
 
     //* Expectations:
     EXPECT_TRUE(verification_result);
@@ -89,7 +89,7 @@ protected:
     ++inv_sig_enc[inv_sig_enc.size() - 1u];
     ecdsa_signature_type wrong_signature{inv_sig_enc};
 
-    const auto verification_result = wrong_signature.Verify(priv_key.publicKey(), test_data_);
+    auto const verification_result = wrong_signature.Verify(priv_key.publicKey(), test_data_);
 
     //* Expectations:
     EXPECT_FALSE(verification_result);
@@ -170,7 +170,7 @@ protected:
     //* Modify original data to make verification fail
     ++modified_data[0];
 
-    const auto verification_result = signature.Verify(priv_key.publicKey(), modified_data);
+    auto const verification_result = signature.Verify(priv_key.publicKey(), modified_data);
 
     //* Expectations:
     EXPECT_FALSE(verification_result);

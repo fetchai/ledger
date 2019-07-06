@@ -21,6 +21,9 @@
 
 #include "gtest/gtest.h"
 
+#include <cstddef>
+#include <cstdint>
+
 namespace fetch {
 namespace serializers {
 

@@ -23,6 +23,11 @@
 #define YY_EXTRA_TYPE fetch::vm::Location *
 #include "vm/tokeniser.hpp"
 
+#include <cstddef>
+#include <memory>
+#include <ostream>
+#include <utility>
+
 namespace fetch {
 namespace vm {
 

@@ -18,6 +18,9 @@
 
 #include "vm/ir_builder.hpp"
 
+#include <memory>
+#include <utility>
+
 namespace fetch {
 namespace vm {
 

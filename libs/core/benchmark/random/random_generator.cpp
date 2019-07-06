@@ -23,12 +23,15 @@
    that the random code's expense does not creep upward over time...
 */
 
+#include "core/byte_array/byte_array.hpp"
+
 #include "benchmark/benchmark.h"
 
-#include <memory>
+#include <cstddef>
+#include <cstdint>
+#include <limits>
 #include <random>
-
-#include "core/byte_array/byte_array.hpp"
+#include <vector>
 
 namespace {
 

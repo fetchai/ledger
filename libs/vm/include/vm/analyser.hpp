@@ -22,6 +22,15 @@
 
 #include <string>
 #include <type_traits>
+#include <cstdint>
+#include <memory>
+#include <stdexcept>
+#include <string>
+#include <typeindex>
+#include <unordered_map>
+#include <unordered_set>
+#include <utility>
+#include <vector>
 
 namespace fetch {
 namespace vm {

@@ -16,9 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "metrics/metrics.hpp"
-
 #include "metrics/metric_file_handler.hpp"
+#include "metrics/metrics.hpp"
 
 #include <memory>
 #include <utility>

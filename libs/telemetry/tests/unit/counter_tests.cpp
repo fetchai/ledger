@@ -34,8 +34,8 @@ class CounterTests : public ::testing::Test
 protected:
   void SetUp() override
   {
-    counter_ =
-        std::make_unique<Counter>("test_counter", "Simple test counter", Labels{{"foo", "bar"}});
+    counter_ = std::make_unique<Counter>("test_counter_total", "Simple test counter",
+                                         Labels{{"foo", "bar"}});
   }
 
   void TearDown() override
@@ -75,9 +75,9 @@ TEST_F(CounterTests, CheckSerialisation)
   std::ostringstream oss;
   counter_->ToStream(oss);
 
-  static char const *EXPECTED_TEXT = R"(# HELP test_counter Simple test counter
-# TYPE test_counter counter
-test_counter{foo="bar"} 500
+  static char const *EXPECTED_TEXT = R"(# HELP test_counter_total Simple test counter
+# TYPE test_counter_total counter
+test_counter_total{foo="bar"} 500
 )";
 
   EXPECT_EQ(oss.str(), std::string{EXPECTED_TEXT});

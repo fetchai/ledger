@@ -21,6 +21,8 @@
 #include "http/json_response.hpp"
 #include "http/module.hpp"
 
+#include <string>
+
 namespace fetch {
 
 class LoggingHttpModule : public http::HTTPModule

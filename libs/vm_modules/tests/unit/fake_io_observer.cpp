@@ -16,19 +16,14 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/logger.hpp"
 #include "fake_io_observer.hpp"
 
 #include <cstdint>
 #include <string>
 #include <utility>
 
-static constexpr char const *LOGGING_NAME = "FakeIO";
-
 FakeIoObserver::Status FakeIoObserver::Read(std::string const &key, void *data, uint64_t &size)
 {
-  FETCH_LOG_INFO(LOGGING_NAME, "Reading: ", key);
-
   // check to see if the key is permitted
   if (!IsPermittedKey(key))
   {
@@ -61,8 +56,6 @@ FakeIoObserver::Status FakeIoObserver::Write(std::string const &key, void const 
                                              uint64_t size)
 {
   ConstByteArray const value{reinterpret_cast<uint8_t const *>(data), size};
-
-  FETCH_LOG_INFO(LOGGING_NAME, "Writing: ", key, " (size: ", size, " value: ", value.ToHex(), ")");
 
   // check to see if the key is permitted
   if (!IsPermittedKey(key))
