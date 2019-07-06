@@ -57,8 +57,9 @@ void Analyser::Initialise()
                    {NodeKind::ArraySeq, Operator::ArraySeq},
                    {NodeKind::ArrayMul, Operator::ArrayMul}};
 
-  type_info_array_     = TypeInfoArray(TypeIds::NumReserved);
-  value_util::ZeroAll(type_map_, type_info_map_, registered_types_, function_info_array_, function_set_, symbols_);
+  type_info_array_ = TypeInfoArray(TypeIds::NumReserved);
+  value_util::ZeroAll(type_map_, type_info_map_, registered_types_, function_info_array_,
+                      function_set_, symbols_);
 
   CreatePrimitiveType("Null", TypeIndex(typeid(std::nullptr_t)), false, TypeIds::Null, null_type_);
   CreatePrimitiveType("Void", TypeIndex(typeid(void)), false, TypeIds::Void, void_type_);
@@ -78,10 +79,12 @@ void Analyser::Initialise()
   CreatePrimitiveType("Fixed64", TypeIndex(typeid(fixed_point::fp64_t)), true, TypeIds::Fixed64,
                       fixed64_type_);
   CreateClassType("String", TypeIndex(typeid(String)), TypeIds::String, string_type_);
-  EnableOperators(string_type_, Operator::Equal, Operator::NotEqual, Operator::LessThan, Operator::LessThanOrEqual, Operator::GreaterThan, Operator::GreaterThanOrEqual, Operator::Add);
+  EnableOperator(string_type_, Operator::Equal, Operator::NotEqual, Operator::LessThan,
+                 Operator::LessThanOrEqual, Operator::GreaterThan, Operator::GreaterThanOrEqual,
+                 Operator::Add);
 
   CreateClassType("Address", TypeIndex(typeid(Address)), TypeIds::Address, address_type_);
-  EnableOperators(address_type_, Operator::Equal, Operator::NotEqual);
+  EnableOperator(address_type_, Operator::Equal, Operator::NotEqual);
 
   CreateMetaType("[TemplateParameter1]", TypeIndex(typeid(TemplateParameter1)), TypeIds::Unknown,
                  template_parameter1_type_);
@@ -100,7 +103,11 @@ void Analyser::Initialise()
                                      float32_type_, float64_type_, fixed32_type_, fixed64_type_};
   for (auto const &type : number_types)
   {
-    EnableOperators(type, Operator::Equal, Operator::NotEqual, Operator::LessThan, Operator::LessThanOrEqual, Operator::GreaterThan, Operator::GreaterThanOrEqual, Operator::Negate, Operator::Add, Operator::Subtract, Operator::Multiply, Operator::Divide, Operator::InplaceAdd, Operator::InplaceSubtract, Operator::InplaceMultiply, Operator::InplaceDivide);
+    EnableOperator(type, Operator::Equal, Operator::NotEqual, Operator::LessThan,
+                   Operator::LessThanOrEqual, Operator::GreaterThan, Operator::GreaterThanOrEqual,
+                   Operator::Negate, Operator::Add, Operator::Subtract, Operator::Multiply,
+                   Operator::Divide, Operator::InplaceAdd, Operator::InplaceSubtract,
+                   Operator::InplaceMultiply, Operator::InplaceDivide);
   }
 
   CreateGroupType("[AnyInteger]", TypeIndex(typeid(AnyInteger)), integer_types, TypeIds::Unknown,
@@ -110,9 +117,12 @@ void Analyser::Initialise()
 
   CreateTemplateType("Matrix", TypeIndex(typeid(IMatrix)), {any_floating_point_type_},
                      TypeIds::Unknown, matrix_type_);
-  EnableOperator(matrix_type_, Operator::Negate, Operator::Add, Operator::Subtract, Operator::Multiply, Operator::InplaceAdd, Operator::InplaceSubtract);
+  EnableOperator(matrix_type_, Operator::Negate, Operator::Add, Operator::Subtract,
+                 Operator::Multiply, Operator::InplaceAdd, Operator::InplaceSubtract);
   EnableLeftOperator(matrix_type_, Operator::Multiply);
-  EnableRightOperator(matrix_type_, Operator::Add, Operator::Subtract, Operator::Multiply, Operator::Divide, Operator::InplaceAdd, Operator::InplaceSubtract, Operator::InplaceMultiply, Operator::InplaceDivide);
+  EnableRightOperator(matrix_type_, Operator::Add, Operator::Subtract, Operator::Multiply,
+                      Operator::Divide, Operator::InplaceAdd, Operator::InplaceSubtract,
+                      Operator::InplaceMultiply, Operator::InplaceDivide);
 
   CreateTemplateType("Array", TypeIndex(typeid(IArray)), {any_type_}, TypeIds::Unknown,
                      array_type_);
@@ -128,7 +138,8 @@ void Analyser::UnInitialise()
 {
   operator_map_ = OperatorMap();
   type_map_.Reset();
-  value_util::ZeroAll(type_map_, type_info_array_, type_info_map_, registered_types_, function_info_array_, function_set_);
+  value_util::ZeroAll(type_map_, type_info_array_, type_info_map_, registered_types_,
+                      function_info_array_, function_set_);
 
   if (symbols_)
   {
@@ -136,7 +147,13 @@ void Analyser::UnInitialise()
     symbols_ = nullptr;
   }
 
-  value_util::ZeroAll(null_type_, void_type_, bool_type_, int8_type_, uint8_type_, int16_type_, uint16_type_, int32_type_, uint32_type_, int64_type_, uint64_type_, float32_type_, float64_type_, fixed32_type_, fixed64_type_, string_type_, address_type_, template_parameter1_type_, template_parameter2_type_, any_type_, any_primitive_type_, any_integer_type_, any_floating_point_type_, matrix_type_, array_type_, map_type_, state_type_, address_type_, sharded_state_type_);
+  value_util::ZeroAll(null_type_, void_type_, bool_type_, int8_type_, uint8_type_, int16_type_,
+                      uint16_type_, int32_type_, uint32_type_, int64_type_, uint64_type_,
+                      float32_type_, float64_type_, fixed32_type_, fixed64_type_, string_type_,
+                      address_type_, template_parameter1_type_, template_parameter2_type_,
+                      any_type_, any_primitive_type_, any_integer_type_, any_floating_point_type_,
+                      matrix_type_, array_type_, map_type_, state_type_, address_type_,
+                      sharded_state_type_);
 }
 
 void Analyser::CreateClassType(std::string const &name, TypeIndex type_index)
