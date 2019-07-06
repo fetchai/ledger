@@ -108,6 +108,28 @@ template <typename LabelType, typename DataType>
 typename DataLoader<LabelType, DataType>::ReturnType DataLoader<LabelType, DataType>::PrepareBatch(
     fetch::math::SizeType subset_size, bool &is_done_set)
 {
+  // if the label is set to be the wrong batch_size reshape
+  if (ret_pair_.first.shape().at(ret_pair_.first.shape().size() - 1) != subset_size)
+  {
+    SizeVector new_shape               = ret_pair_.first.shape();
+    new_shape.at(new_shape.size() - 1) = subset_size;
+    ret_pair_.first.Reshape(new_shape);
+  }
+
+  // if the data tensor are set to be the wrong batch_size reshape
+  for (SizeType tensor_count = 0; tensor_count < ret_pair_.second.size(); ++tensor_count)
+  {
+    // reshape the tensor to the correct batch size
+    if (ret_pair_.second.at(tensor_count)
+            .shape()
+            .at(ret_pair_.second.at(tensor_count).shape().size() - 1) != subset_size)
+    {
+      SizeVector new_shape               = ret_pair_.second.at(tensor_count).shape();
+      new_shape.at(new_shape.size() - 1) = subset_size;
+      ret_pair_.second.at(tensor_count).Reshape(new_shape);
+    }
+  }
+
   SizeType data_idx{0};
   while (data_idx < subset_size)
   {

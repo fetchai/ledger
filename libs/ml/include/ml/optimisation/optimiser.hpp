@@ -230,7 +230,7 @@ typename T::Type Optimiser<T, C>::Run(
   SizeType step{0};
 
   // tracks whether loader is done, but dataloader will reset inside Prepare batch
-  bool is_done_set = !loader.IsDone();
+  bool is_done_set = loader.IsDone();
 
   std::pair<ArrayType, std::vector<ArrayType>> input;
   while ((step < subset_size) && (!is_done_set))
