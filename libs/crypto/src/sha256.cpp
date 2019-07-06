@@ -17,6 +17,9 @@
 //------------------------------------------------------------------------------
 
 #include "crypto/sha256.hpp"
+
+#include <cstddef>
+#include <cstdint>
 #include <stdexcept>
 
 namespace fetch {
@@ -45,11 +48,7 @@ void SHA256::Reset()
 
 bool SHA256::Update(uint8_t const *data_to_hash, std::size_t const &size)
 {
-  if (!SHA256_Update(&context_, data_to_hash, size))
-  {
-    return false;
-  }
-  return true;
+  return SHA256_Update(&context_, data_to_hash, size) != 0;
 }
 
 void SHA256::Final(uint8_t *hash, std::size_t const &size)
