@@ -17,30 +17,58 @@
 //------------------------------------------------------------------------------
 
 #include "crypto/fnv.hpp"
+#include "crypto/fnv_detail.hpp"
+
+#include <algorithm>
+#include <cstddef>
+#include <cstdint>
 
 namespace fetch {
 namespace crypto {
 
+namespace internal {
+
+class FnvHasherInternals
+{
+public:
+  using ImplType = detail::FNV1a;
+  ImplType ctx_;
+
+  static_assert(FNV::size_in_bytes == ImplType::size_in_bytes,
+                "Incorrect value of FNV::size_in_bytes");
+};
+
+}  // namespace internal
+
+FNV::FNV()
+  : impl_(new internal::FnvHasherInternals)
+{}
+
+FNV::~FNV()
+{
+  delete impl_;
+}
+
 void FNV::ResetHasher()
 {
-  ctx_.reset();
+  impl_->ctx_.reset();
 }
 
 bool FNV::UpdateHasher(uint8_t const *data_to_hash, std::size_t const &size)
 {
-  ctx_.update(data_to_hash, size);
+  impl_->ctx_.update(data_to_hash, size);
   return true;
 }
 
 void FNV::FinalHasher(uint8_t *hash, std::size_t const &size)
 {
-  if (size < base_impl_type::size_in_bytes)
+  if (size < size_in_bytes)
   {
     throw std::runtime_error("size of input buffer is smaller than hash size.");
   }
 
-  auto hash_ptr = reinterpret_cast<context_type *>(hash);
-  *hash_ptr     = ctx_.context();
+  auto hash_ptr = reinterpret_cast<internal::FnvHasherInternals::ImplType::number_type *>(hash);
+  *hash_ptr     = impl_->ctx_.context();
 }
 
 }  // namespace crypto

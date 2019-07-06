@@ -18,29 +18,40 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/byte_array.hpp"
-#include "crypto/fnv_detail.hpp"
 #include "crypto/stream_hasher.hpp"
+
+#include <cstddef>
+#include <cstdint>
 
 namespace fetch {
 namespace crypto {
 
-class FNV : public StreamHasher<FNV>
+namespace internal {
+class FnvHasherInternals;
+}
+
+class FNV : private StreamHasher<FNV>
 {
 public:
-  using base_type      = StreamHasher<FNV>;
-  using base_impl_type = detail::FNV1a;
-  using context_type   = typename base_impl_type::number_type;
+  using BaseType = StreamHasher<FNV>;
 
-  constexpr static std::size_t size_in_bytes = base_impl_type::size_in_bytes;
+  using BaseType::Final;
+  using BaseType::Reset;
+  using BaseType::Update;
+
+  static constexpr std::size_t size_in_bytes = 8u;
+
+  FNV();
+  ~FNV();
 
 private:
   void ResetHasher();
   bool UpdateHasher(uint8_t const *data_to_hash, std::size_t const &size);
   void FinalHasher(uint8_t *hash, std::size_t const &size);
 
-  detail::FNV1a ctx_;
+  internal::FnvHasherInternals *impl_;
 
-  friend base_type;
+  friend BaseType;
 };
 
 }  // namespace crypto
@@ -53,9 +64,12 @@ struct hash<fetch::byte_array::ConstByteArray>
 {
   std::size_t operator()(fetch::byte_array::ConstByteArray const &value) const
   {
-    fetch::crypto::detail::FNV1a hash;
-    hash.update(value.pointer(), value.size());
-    return hash.context();
+    fetch::crypto::FNV hash;
+    hash.Reset();
+    hash.Update(value.pointer(), value.size());
+    auto const ret = hash.Final();
+
+    return *reinterpret_cast<std::size_t const *>(ret.pointer());
   }
 };
 

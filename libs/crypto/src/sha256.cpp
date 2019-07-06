@@ -22,12 +22,12 @@
 
 #include <cstddef>
 #include <cstdint>
-#include <cassert>
 
 namespace fetch {
 namespace crypto {
 
-static_assert(SHA256_DIGEST_LENGTH == SHA256::size_in_bytes, "SHA256 digests must have size equal to 32 bytes");
+static_assert(SHA256_DIGEST_LENGTH == SHA256::size_in_bytes,
+              "SHA256 digests must have size equal to 32 bytes");
 
 namespace {
 

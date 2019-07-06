@@ -32,11 +32,16 @@ class Sha256Internals;
 class SHA256 : public StreamHasher<SHA256>
 {
 public:
-  // Construction / Destruction
-  SHA256();
-  ~SHA256();
+  using BaseType = StreamHasher<SHA256>;
+
+  using BaseType::Final;
+  using BaseType::Reset;
+  using BaseType::Update;
 
   static constexpr std::size_t size_in_bytes = 32u;
+
+  SHA256();
+  ~SHA256();
 
 private:
   void ResetHasher();
@@ -45,7 +50,7 @@ private:
 
   internal::Sha256Internals *impl_;
 
-  friend StreamHasher<SHA256>;
+  friend BaseType;
 };
 
 }  // namespace crypto

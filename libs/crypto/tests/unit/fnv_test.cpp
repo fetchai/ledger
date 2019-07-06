@@ -18,6 +18,7 @@
 
 #include "core/byte_array/encoders.hpp"
 #include "crypto/fnv.hpp"
+#include "crypto/fnv_detail.hpp"
 
 #include "gtest/gtest.h"
 
@@ -46,14 +47,14 @@ protected:
   }
 
   void test_basic_hash_value(byte_array::ConstByteArray const &data_to_hash,
-                             FNV::context_type const &         expected_hash)
+                             std::size_t const &               expected_hash)
   {
     FNV x;
     x.Reset();
     bool const retval = x.Update(data_to_hash);
     ASSERT_TRUE(retval);
     byte_array::ConstByteArray const bytes = x.Final();
-    auto const hash =*reinterpret_cast<std::size_t const*const>(bytes.pointer());
+    auto const hash = *reinterpret_cast<std::size_t const *const>(bytes.pointer());
 
     EXPECT_EQ(expected_hash, hash);
   }
@@ -74,7 +75,7 @@ protected:
 
 TEST_F(FNVTest, test_basic)
 {
-  FNV::context_type const          expected_hash = 0x406e475017aa7737;
+  std::size_t const                expected_hash = 0x406e475017aa7737;
   byte_array::ConstByteArray const expected_hash_array(
       reinterpret_cast<byte_array::ConstByteArray::value_type const *>(&expected_hash),
       sizeof(expected_hash));
