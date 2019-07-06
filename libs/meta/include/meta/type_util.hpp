@@ -17,8 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "meta/type_traits.hpp"
-
 #include <type_traits>
 #include <utility>
 
@@ -141,6 +139,37 @@ using CopyReferenceKind =
 template <class Source, class Dest>
 using CopyReferenceKindT = typename CopyReferenceKind<Source, Dest>::type;
 
+namespace detail_ {
+
+template <class Arg>
+constexpr decltype((std::declval<std::add_pointer_t<typename std::decay_t<Arg>::type>>(), true))
+HasType(Arg &&) noexcept
+{
+  return true;
+}
+constexpr bool HasType(...) noexcept
+{
+  return false;
+}
+
+}  // namespace detail_
+
+template <class Arg>
+static constexpr bool HasMemberTypeV = detail_::HasType(std::declval<Arg>());
+
+template <class Arg, bool = HasMemberTypeV<Arg>>
+struct MemberType
+{
+  using type = typename Arg::type;
+};
+template <class Arg, bool b>
+using MemberTypeT = typename MemberType<Arg, b>::type;
+
+template <class Arg>
+struct MemberType<Arg, false>
+{
+};
+
 // Select<Type1, Type2...> provides member typedef type which is the leftmost Typen::type available.
 // It is an error if none of template parameters has member type named type.
 template <class... Clauses>
@@ -150,7 +179,7 @@ using SelectT = typename Select<Clauses...>::type;
 
 template <class Car, class... Cdr>
 struct Select<Car, Cdr...>
-  : std::conditional_t<meta::HasMemberTypeV<Car>, meta::MemberType<Car>, Select<Cdr...>>
+  : std::conditional_t<HasMemberTypeV<Car>, MemberType<Car>, Select<Cdr...>>
 {
 };
 
@@ -165,7 +194,7 @@ struct Head<Car, Cdr...> : TypeConstant<Car>
 {
 };
 
-template <class L, class R>
+template <class, class R>
 using Second = TypeConstant<R>;
 template <class L, class R>
 using SecondT = typename Second<L, R>::type;

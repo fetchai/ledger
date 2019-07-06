@@ -176,39 +176,6 @@ struct InvokeResult<RV (C::*)(Args...) const, Args1...>
   using type = RV;
 };
 
-namespace detail_ {
-
-template <class Arg>
-constexpr decltype((std::declval<std::add_pointer_t<typename std::decay_t<Arg>::type>>(), true))
-HasType(Arg &&) noexcept
-{
-  return true;
-}
-constexpr bool HasType(...) noexcept
-{
-  return false;
-}
-
-}  // namespace detail_
-
-template <class Arg>
-static constexpr bool HasMemberTypeV = detail_::HasType(std::declval<Arg>());
-
-template <class Arg, bool = HasMemberTypeV<Arg>>
-struct MemberType
-{
-  using type = typename Arg::type;
-};
-template <class Arg, bool b>
-using MemberTypeT = typename MemberType<Arg, b>::type;
-
-template <class Arg>
-struct MemberType<Arg, false>
-{
-  // dummy definition for typeless args
-  using type = void;
-};
-
 template <class L, class R>
 struct IsSimilar : std::is_same<L, R>
 {
