@@ -37,8 +37,8 @@ public:
   {
     module.CreateClassType<VMCrossEntropyLoss>("CrossEntropy")
         .CreateConstuctor<>()
-        .CreateMemberFunction("Forward", &VMCrossEntropyLoss::ForwardWrapper)
-        .CreateMemberFunction("Backward", &VMCrossEntropyLoss::BackwardWrapper);
+        .CreateMemberFunction("forward", &VMCrossEntropyLoss::ForwardWrapper)
+        .CreateMemberFunction("backward", &VMCrossEntropyLoss::BackwardWrapper);
   }
 
   static fetch::vm::Ptr<VMCrossEntropyLoss> Constructor(fetch::vm::VM *   vm,

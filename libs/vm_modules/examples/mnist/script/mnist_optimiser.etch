@@ -9,19 +9,19 @@ var training_iterations = 10;
 
 // Define the neural network
 var g = Graph();
-g.AddPlaceholder("Input");
-g.AddFullyConnected("FC_1", "Input", 28*28, 128);
-g.AddRelu("Relu_1", "FC_1");
-g.AddFullyConnected("FC_2", "Relu_1", 128, 64);
-g.AddRelu("Relu_2", "FC_2");
-g.AddFullyConnected("FC_3", "Relu_2", 64, 10);
-g.AddSoftmax("Softmax", "FC_3");
+g.addPlaceholder("Input");
+g.addFullyConnected("FC_1", "Input", 28*28, 128);
+g.addRelu("Relu_1", "FC_1");
+g.addFullyConnected("FC_2", "Relu_1", 128, 64);
+g.addRelu("Relu_2", "FC_2");
+g.addFullyConnected("FC_3", "Relu_2", 64, 10);
+g.addSoftmax("Softmax", "FC_3");
 
 // Set up the dataloader
 printLn(System.Argv(0));
 printLn(System.Argv(1));
 var data_loader = DataLoader();
-data_loader.AddData("mnist", System.Argv(0), System.Argv(1));
+data_loader.addData("mnist", System.Argv(0), System.Argv(1));
 
 // Set up the optimiser
 var optimiser = AdamOptimiser(g, "Input", "Softmax");
@@ -30,7 +30,7 @@ var optimiser = AdamOptimiser(g, "Input", "Softmax");
 var batch_size = 64u64;
 var subset_size = (100u64 * 64u64);
 for(i in 0:training_iterations)
-    var loss = optimiser.Run(data_loader, batch_size, subset_size);
+    var loss = optimiser.run(data_loader, batch_size, subset_size);
     print("Current Loss: ");
     printLn(loss);
 endfor

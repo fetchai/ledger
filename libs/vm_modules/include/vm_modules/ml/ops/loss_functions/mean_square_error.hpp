@@ -37,8 +37,8 @@ public:
   {
     module.CreateClassType<VMMeanSquareError>("MeanSquareError")
         .CreateConstuctor<>()
-        .CreateMemberFunction("Forward", &VMMeanSquareError::ForwardWrapper)
-        .CreateMemberFunction("Backward", &VMMeanSquareError::BackwardWrapper);
+        .CreateMemberFunction("forward", &VMMeanSquareError::ForwardWrapper)
+        .CreateMemberFunction("backward", &VMMeanSquareError::BackwardWrapper);
   }
 
   static fetch::vm::Ptr<VMMeanSquareError> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id)

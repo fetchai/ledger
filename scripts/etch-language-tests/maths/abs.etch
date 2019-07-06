@@ -1,0 +1,23 @@
+function main()
+
+    // signed integer types
+    assert(abs(-20i8) == 20i8);
+    assert(abs(-20000i16) == 20000i16);
+    assert(abs(-8000000i32) == 8000000i32);
+    assert(abs(-9000000000i64) == 9000000000i64);
+
+    // unsigned integer types
+    assert(abs(20u8) == 20u8);
+    assert(abs(20000u16) == 20000u16);
+    assert(abs(8000000u32) == 8000000u32);
+    assert(abs(9000000000u64) == 9000000000u64);
+
+    // floating point
+    assert(abs(-3.0f) == 3.0f);
+    assert(abs(-3.0) == 3.0);
+
+    // fixed point
+    assert(abs(-3.0fp32) == 3.0fp32);
+    assert(abs(-3.0fp64) == 3.0fp64);
+
+endfunction

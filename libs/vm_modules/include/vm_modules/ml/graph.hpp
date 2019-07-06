@@ -111,17 +111,17 @@ public:
   {
     module.CreateClassType<VMGraph>("Graph")
         .CreateConstuctor<>()
-        .CreateMemberFunction("SetInput", &VMGraph::SetInput)
-        .CreateMemberFunction("Evaluate", &VMGraph::Evaluate)
-        .CreateMemberFunction("Backpropagate", &VMGraph::Backpropagate)
-        .CreateMemberFunction("Step", &VMGraph::Step)
-        .CreateMemberFunction("AddPlaceholder", &VMGraph::AddPlaceholder)
-        .CreateMemberFunction("AddFullyConnected", &VMGraph::AddFullyConnected)
-        .CreateMemberFunction("AddRelu", &VMGraph::AddRelu)
-        .CreateMemberFunction("AddSoftmax", &VMGraph::AddSoftmax)
-        .CreateMemberFunction("AddDropout", &VMGraph::AddDropout)
-        .CreateMemberFunction("LoadStateDict", &VMGraph::LoadStateDict)
-        .CreateMemberFunction("StateDict", &VMGraph::StateDict);
+        .CreateMemberFunction("setInput", &VMGraph::SetInput)
+        .CreateMemberFunction("evaluate", &VMGraph::Evaluate)
+        .CreateMemberFunction("backPropagate", &VMGraph::Backpropagate)
+        .CreateMemberFunction("step", &VMGraph::Step)
+        .CreateMemberFunction("addPlaceholder", &VMGraph::AddPlaceholder)
+        .CreateMemberFunction("addFullyConnected", &VMGraph::AddFullyConnected)
+        .CreateMemberFunction("addRelu", &VMGraph::AddRelu)
+        .CreateMemberFunction("addSoftmax", &VMGraph::AddSoftmax)
+        .CreateMemberFunction("addDropout", &VMGraph::AddDropout)
+        .CreateMemberFunction("loadStateDict", &VMGraph::LoadStateDict)
+        .CreateMemberFunction("stateDict", &VMGraph::StateDict);
   }
 
   GraphType graph_;
