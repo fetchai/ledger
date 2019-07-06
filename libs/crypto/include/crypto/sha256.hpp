@@ -19,45 +19,35 @@
 
 #include "crypto/stream_hasher.hpp"
 
-#include <openssl/sha.h>
-
 #include <cstddef>
 #include <cstdint>
 
 namespace fetch {
 namespace crypto {
 
-class SHA256 : public StreamHasher
+namespace internal {
+class Sha256Internals;
+}
+
+class SHA256 : public StreamHasher<SHA256>
 {
 public:
-  using StreamHasher::Update;
-  using StreamHasher::Final;
-
   // Construction / Destruction
   SHA256();
-  ~SHA256() override = default;
+  ~SHA256();
 
-  static constexpr std::size_t size_in_bytes()
-  {
-    return SHA256_DIGEST_LENGTH;
-  }
+  static constexpr std::size_t size_in_bytes = 32u;
 
   /// @name Stream Hasher Interface
   /// @{
-  void        Reset() override;
-  bool        Update(uint8_t const *data_to_hash, std::size_t const &size) override;
-  void        Final(uint8_t *hash, std::size_t const &size) override;
-  std::size_t GetSizeInBytes() const override;
+  void ResetHasher();
+  bool UpdateHasher(uint8_t const *data_to_hash, std::size_t const &size);
+  void FinalHasher(uint8_t *hash, std::size_t const &size);
   /// @}
 
 private:
-  SHA256_CTX context_;
+  internal::Sha256Internals *impl_;
 };
-
-inline std::size_t SHA256::GetSizeInBytes() const
-{
-  return size_in_bytes();
-}
 
 }  // namespace crypto
 }  // namespace fetch

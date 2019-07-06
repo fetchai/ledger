@@ -21,23 +21,18 @@
 namespace fetch {
 namespace crypto {
 
-std::size_t FNV::GetSizeInBytes() const
+void FNV::ResetHasher()
 {
-  return base_impl_type::size_in_bytes;
+  ctx_.reset();
 }
 
-void FNV::Reset()
+bool FNV::UpdateHasher(uint8_t const *data_to_hash, std::size_t const &size)
 {
-  reset();
-}
-
-bool FNV::Update(uint8_t const *data_to_hash, std::size_t const &size)
-{
-  update(data_to_hash, size);
+  ctx_.update(data_to_hash, size);
   return true;
 }
 
-void FNV::Final(uint8_t *hash, std::size_t const &size)
+void FNV::FinalHasher(uint8_t *hash, std::size_t const &size)
 {
   if (size < base_impl_type::size_in_bytes)
   {
@@ -45,7 +40,7 @@ void FNV::Final(uint8_t *hash, std::size_t const &size)
   }
 
   auto hash_ptr = reinterpret_cast<context_type *>(hash);
-  *hash_ptr     = context();
+  *hash_ptr     = ctx_.context();
 }
 
 }  // namespace crypto

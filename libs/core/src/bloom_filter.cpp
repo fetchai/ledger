@@ -199,7 +199,7 @@ std::vector<std::size_t> raw_data(fetch::byte_array::ConstByteArray const &input
 
 HashSource::Hashes md5(fetch::byte_array::ConstByteArray const &input)
 {
-  static OpenSslHasher hasher(OpenSslHasher::Type::MD5);
+  OpenSslHasher hasher(OpenSslHasher::Type::MD5);
   hasher.reset();
 
   return hasher(input);
@@ -207,7 +207,7 @@ HashSource::Hashes md5(fetch::byte_array::ConstByteArray const &input)
 
 HashSource::Hashes sha1(fetch::byte_array::ConstByteArray const &input)
 {
-  static OpenSslHasher hasher(OpenSslHasher::Type::SHA1);
+  OpenSslHasher hasher(OpenSslHasher::Type::SHA1);
   hasher.reset();
 
   return hasher(input);
@@ -215,7 +215,7 @@ HashSource::Hashes sha1(fetch::byte_array::ConstByteArray const &input)
 
 HashSource::Hashes sha2_512(fetch::byte_array::ConstByteArray const &input)
 {
-  static OpenSslHasher hasher(OpenSslHasher::Type::SHA2_512);
+  OpenSslHasher hasher(OpenSslHasher::Type::SHA2_512);
   hasher.reset();
 
   return hasher(input);
@@ -223,13 +223,12 @@ HashSource::Hashes sha2_512(fetch::byte_array::ConstByteArray const &input)
 
 HashSource::Hashes fnv(fetch::byte_array::ConstByteArray const &input)
 {
-  static crypto::FNV hasher;
+  crypto::FNV hasher;
   hasher.Reset();
 
   hasher.Update(reinterpret_cast<std::uint8_t const *>(input.pointer()), input.size());
 
-  const auto         size_in_bytes = hasher.GetSizeInBytes();
-  HashSource::Hashes output(size_in_bytes / sizeof(std::size_t));
+  HashSource::Hashes output(crypto::FNV::size_in_bytes / sizeof(std::size_t));
 
   hasher.Final(reinterpret_cast<uint8_t *>(output.data()), output.size() * sizeof(std::size_t));
 

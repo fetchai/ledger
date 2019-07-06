@@ -73,7 +73,11 @@ std::size_t GenerateEchoId(Packet const &packet)
   hash.Update(reinterpret_cast<uint8_t const *>(&channel), sizeof(channel));
   hash.Update(reinterpret_cast<uint8_t const *>(&counter), sizeof(counter));
 
-  return hash.Final<std::size_t>();
+  auto const res = hash.Final();
+
+  std::size_t const out = *reinterpret_cast<std::size_t const *const>(res.pointer());
+
+  return out;
 }
 
 /**

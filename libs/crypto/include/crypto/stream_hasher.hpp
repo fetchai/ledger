@@ -24,45 +24,73 @@
 namespace fetch {
 namespace crypto {
 
+template <typename Derived>
 class StreamHasher
 {
 public:
-  template <uint16_t S>
-  using UInt                  = vectorise::UInt<S>;
-  virtual void        Reset() = 0;
-  virtual bool        Update(uint8_t const *data_to_hash, std::size_t const &size) = 0;
-  virtual void        Final(uint8_t *hash, std::size_t const &size)                = 0;
-  virtual std::size_t GetSizeInBytes() const                                       = 0;
+  //  template <uint16_t S>
+  //  using UInt = vectorise::UInt<S>;
 
-  bool                  Update(byte_array::ConstByteArray const &data);
-  byte_array::ByteArray Final();
-
-  template <typename T>
-  meta::IfIsPod<T, T> Final()
+  bool Update(byte_array::ConstByteArray const &data)
   {
-    typename std::remove_const<T>::type pod;
-    Final(reinterpret_cast<uint8_t *>(&pod), sizeof(pod));
-    return pod;
+    return derived().UpdateHasher(data.pointer(), data.size());
   }
+
+  byte_array::ByteArray Final()
+  {
+    byte_array::ByteArray digest;
+    digest.Resize(Derived::size_in_bytes);
+    derived().FinalHasher(digest.pointer(), digest.size());
+
+    return digest;
+  }
+
+  bool Update(uint8_t const *data_to_hash, std::size_t size)
+  {
+    return derived().UpdateHasher(data_to_hash, size);
+  }
+
+  void Final(uint8_t *hash, std::size_t size)
+  {
+    derived().FinalHasher(hash, size);
+  }
+
+  void Reset()
+  {
+    derived().ResetHasher();
+  }
+
+  //  template <typename T>
+  //  meta::IfIsPod<T, T> Final()
+  //  {
+  //    typename std::remove_const<T>::type pod;
+  //    derived().FinalHasher(reinterpret_cast<uint8_t *>(&pod), sizeof(pod));
+  //    return pod;
+  //  }
 
   bool Update(std::string const &str)
   {
-    return Update(reinterpret_cast<uint8_t const *>(str.data()), str.size());
+    return derived().UpdateHasher(reinterpret_cast<uint8_t const *>(str.data()), str.size());
   }
 
-  template <typename T>
-  meta::IfIsPod<T, bool> Update(T const &pod)
+  //  template <typename T>
+  //  meta::IfIsPod<T, bool> Update(T const &pod)
+  //  {
+  //    return derived().UpdateHasher(reinterpret_cast<uint8_t const *>(&pod), sizeof(pod));
+  //  }
+
+  //  template <typename T>
+  //  meta::IfIsPod<T, bool> Update(std::vector<T> const &vect)
+  //  {
+  //    return derived().UpdateHasher(reinterpret_cast<uint8_t const *>(vect.data()), vect.size() *
+  //    sizeof(T));
+  //  }
+
+private:
+  constexpr Derived &derived()
   {
-    return Update(reinterpret_cast<uint8_t const *>(&pod), sizeof(pod));
+    return *static_cast<Derived *>(this);
   }
-
-  template <typename T>
-  meta::IfIsPod<T, bool> Update(std::vector<T> const &vect)
-  {
-    return Update(reinterpret_cast<uint8_t const *>(vect.data()), vect.size() * sizeof(T));
-  }
-
-  virtual ~StreamHasher() = default;
 };
 
 }  // namespace crypto

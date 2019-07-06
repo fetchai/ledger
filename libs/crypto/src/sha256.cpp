@@ -18,12 +18,16 @@
 
 #include "crypto/sha256.hpp"
 
+#include <openssl/sha.h>
+
 #include <cstddef>
 #include <cstdint>
 #include <stdexcept>
 
 namespace fetch {
 namespace crypto {
+
+static_assert(SHA256_DIGEST_LENGTH == SHA256::size_in_bytes, "???");
 
 namespace {
 
@@ -34,31 +38,48 @@ void ResetContext(SHA256_CTX &context)
     throw std::runtime_error("could not intialialise SHA256.");
   }
 }
+
 }  // namespace
 
+namespace internal {
+
+class Sha256Internals
+{
+public:
+  SHA256_CTX ctx;
+};
+
+}  // namespace internal
+
 SHA256::SHA256()
+  : impl_(new internal::Sha256Internals)
 {
-  ResetContext(context_);
+  ResetContext(impl_->ctx);
 }
 
-void SHA256::Reset()
+SHA256::~SHA256()
 {
-  ResetContext(context_);
+  delete impl_;
 }
 
-bool SHA256::Update(uint8_t const *data_to_hash, std::size_t const &size)
+void SHA256::ResetHasher()
 {
-  return SHA256_Update(&context_, data_to_hash, size) != 0;
+  ResetContext(impl_->ctx);
 }
 
-void SHA256::Final(uint8_t *hash, std::size_t const &size)
+bool SHA256::UpdateHasher(uint8_t const *data_to_hash, std::size_t const &size)
 {
-  if (size < size_in_bytes())
+  return SHA256_Update(&(impl_->ctx), data_to_hash, size) != 0;
+}
+
+void SHA256::FinalHasher(uint8_t *hash, std::size_t const &size)
+{
+  if (size < size_in_bytes)
   {
     throw std::runtime_error("size of input buffer is smaller than hash size.");
   }
 
-  if (!SHA256_Final(hash, &context_))
+  if (!SHA256_Final(hash, &(impl_->ctx)))
   {
     throw std::runtime_error("could not finalize SHA256.");
   }

@@ -24,26 +24,30 @@
 namespace fetch {
 namespace crypto {
 
-class FNV : public StreamHasher, protected detail::FNV1a
+class FNV : public StreamHasher<FNV>
 {
 public:
-  using base_type      = StreamHasher;
+  using base_type      = StreamHasher<FNV>;
   using base_impl_type = detail::FNV1a;
   using context_type   = typename base_impl_type::number_type;
+  //
+  //  using StreamHasher::Update;
+  //  using StreamHasher::Final;
 
-  using StreamHasher::Update;
-  using StreamHasher::Final;
+  constexpr static std::size_t size_in_bytes = 8u;  //???static asert
 
-  void        Reset() override;
-  bool        Update(uint8_t const *data_to_hash, std::size_t const &size) override;
-  void        Final(uint8_t *hash, std::size_t const &size) override;
-  std::size_t GetSizeInBytes() const override;
+  void ResetHasher();
+  bool UpdateHasher(uint8_t const *data_to_hash, std::size_t const &size);
+  void FinalHasher(uint8_t *hash, std::size_t const &size);
 
-  template <typename T = context_type>
-  auto Final() -> decltype(base_type::Final<T>())
-  {
-    return base_type::Final<T>();
-  }
+  //  template <typename T = context_type>
+  //  auto Final() -> decltype(base_type::Final<T>())
+  //  {
+  //    return base_type::Final<T>();
+  //  }
+
+private:
+  detail::FNV1a ctx_;
 };
 
 }  // namespace crypto

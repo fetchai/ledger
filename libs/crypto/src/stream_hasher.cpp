@@ -20,19 +20,6 @@
 
 namespace fetch {
 namespace crypto {
-
-bool StreamHasher::Update(byte_array::ConstByteArray const &s)
-{
-  return Update(s.pointer(), s.size());
-}
-
-byte_array::ByteArray StreamHasher::Final()
-{
-  byte_array::ByteArray digest;
-  digest.Resize(GetSizeInBytes());
-  Final(digest.pointer(), digest.size());
-  return digest;
-}
-
+//???
 }  // namespace crypto
 }  // namespace fetch
