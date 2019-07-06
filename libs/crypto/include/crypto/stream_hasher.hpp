@@ -62,12 +62,6 @@ public:
     return Update(reinterpret_cast<uint8_t const *>(vect.data()), vect.size() * sizeof(T));
   }
 
-  template <uint16_t S>
-  bool Update(UInt<S> const &val)
-  {
-    return Update(val.pointer(), val.size());
-  }
-
   virtual ~StreamHasher() = default;
 };
 
