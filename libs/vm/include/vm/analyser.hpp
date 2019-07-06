@@ -299,53 +299,74 @@ private:
     return Operator::Unknown;
   }
 
-  void EnableOperator(Operators &ops, Operator op)
+  static void EnableOperator(Operators &ops, Operator op)
   {
     ops.insert(op);
   }
 
-  bool IsOperatorEnabled(Operators const &ops, Operator op) const
+  static bool IsOperatorEnabled(Operators const &ops, Operator op)
   {
     return ops.find(op) != ops.end();
   }
 
-  void EnableOperator(TypePtr const &type, Operator op)
+  static void EnableOperator(TypePtr const &type, Operator op)
   {
     EnableOperator(type->ops, op);
   }
 
-  void EnableLeftOperator(TypePtr const &type, Operator op)
+  template <typename... Operators>
+  std::enable_if_t<type_util::ConjunctionV<std::is_same<Operator, Operators>...>>
+  static void EnableOperators(TypePtr const &type, Operators... ops)
+  {
+    value_util::ForEach([](auto op){ EnableOperator(type, op); }, ops...);
+  }
+
+  static void EnableLeftOperator(TypePtr const &type, Operator op)
   {
     EnableOperator(type->left_ops, op);
   }
 
-  void EnableRightOperator(TypePtr const &type, Operator op)
+  template <typename... Operators>
+  std::enable_if_t<type_util::ConjunctionV<std::is_same<Operator, Operators>...>>
+  static void EnableLeftOperators(TypePtr const &type, Operators... ops) const
+  {
+    value_util::ForEach([](auto op){ EnableLeftOperator(type, op); }, ops...);
+  }
+
+  static void EnableRightOperator(TypePtr const &type, Operator op)
   {
     EnableOperator(type->right_ops, op);
   }
 
-  bool IsOperatorEnabled(TypePtr const &type, Operator op) const
+  template <typename... Operators>
+  std::enable_if_t<type_util::ConjunctionV<std::is_same<Operator, Operators>...>>
+  static void EnableRightOperators(TypePtr const &type, Operators... ops) const
+  {
+    value_util::ForEach([](auto op){ EnableRightOperator(type, op); }, ops...);
+  }
+
+  static bool IsOperatorEnabled(TypePtr const &type, Operator op)
   {
     bool const is_instantiation = type->IsInstantiation();
     TypePtr    t                = is_instantiation ? type->template_type : type;
     return IsOperatorEnabled(t->ops, op);
   }
 
-  bool IsLeftOperatorEnabled(TypePtr const &type, Operator op) const
+  static bool IsLeftOperatorEnabled(TypePtr const &type, Operator op)
   {
     bool const is_instantiation = type->IsInstantiation();
     TypePtr    t                = is_instantiation ? type->template_type : type;
     return IsOperatorEnabled(t->left_ops, op);
   }
 
-  bool IsRightOperatorEnabled(TypePtr const &type, Operator op) const
+  static bool IsRightOperatorEnabled(TypePtr const &type, Operator op)
   {
     bool const is_instantiation = type->IsInstantiation();
     TypePtr    t                = is_instantiation ? type->template_type : type;
     return IsOperatorEnabled(t->right_ops, op);
   }
 
-  bool IsArray(TypePtr const &type) const noexcept
+  static bool IsArray(TypePtr const &type)
   {
     return type && type->IsInstantiation() && type->template_type == array_type_;
   }

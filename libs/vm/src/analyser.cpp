@@ -57,13 +57,9 @@ void Analyser::Initialise()
                    {NodeKind::ArraySeq, Operator::ArraySeq},
                    {NodeKind::ArrayMul, Operator::ArrayMul}};
 
-  type_map_            = TypeMap();
   type_info_array_     = TypeInfoArray(TypeIds::NumReserved);
-  type_info_map_       = TypeInfoMap();
-  registered_types_    = RegisteredTypes();
-  function_info_array_ = FunctionInfoArray();
-  function_set_        = FunctionSet();
-  symbols_             = CreateSymbolTable();
+  value_util::ZeroAll(type_map_, type_info_map_, registered_types_, function_info_array_, function_set_, symbols_);
+
   CreatePrimitiveType("Null", TypeIndex(typeid(std::nullptr_t)), false, TypeIds::Null, null_type_);
   CreatePrimitiveType("Void", TypeIndex(typeid(void)), false, TypeIds::Void, void_type_);
   CreatePrimitiveType("Bool", TypeIndex(typeid(bool)), true, TypeIds::Bool, bool_type_);
@@ -82,17 +78,10 @@ void Analyser::Initialise()
   CreatePrimitiveType("Fixed64", TypeIndex(typeid(fixed_point::fp64_t)), true, TypeIds::Fixed64,
                       fixed64_type_);
   CreateClassType("String", TypeIndex(typeid(String)), TypeIds::String, string_type_);
-  EnableOperator(string_type_, Operator::Equal);
-  EnableOperator(string_type_, Operator::NotEqual);
-  EnableOperator(string_type_, Operator::LessThan);
-  EnableOperator(string_type_, Operator::LessThanOrEqual);
-  EnableOperator(string_type_, Operator::GreaterThan);
-  EnableOperator(string_type_, Operator::GreaterThanOrEqual);
-  EnableOperator(string_type_, Operator::Add);
+  EnableOperators(string_type_, Operator::Equal, Operator::NotEqual, Operator::LessThan, Operator::LessThanOrEqual, Operator::GreaterThan, Operator::GreaterThanOrEqual, Operator::Add);
 
   CreateClassType("Address", TypeIndex(typeid(Address)), TypeIds::Address, address_type_);
-  EnableOperator(address_type_, Operator::Equal);
-  EnableOperator(address_type_, Operator::NotEqual);
+  EnableOperators(address_type_, Operator::Equal, Operator::NotEqual);
 
   CreateMetaType("[TemplateParameter1]", TypeIndex(typeid(TemplateParameter1)), TypeIds::Unknown,
                  template_parameter1_type_);
@@ -102,8 +91,7 @@ void Analyser::Initialise()
   CreateMetaType("[AnyPrimitive]", TypeIndex(typeid(AnyPrimitive)), TypeIds::Unknown,
                  any_primitive_type_);
 
-  EnableOperator(bool_type_, Operator::Equal);
-  EnableOperator(bool_type_, Operator::NotEqual);
+  EnableOperator(bool_type_, Operator::Equal, Operator::NotEqual);
 
   TypePtrArray const integer_types = {int8_type_,  uint8_type_,  int16_type_, uint16_type_,
                                       int32_type_, uint32_type_, int64_type_, uint64_type_};
@@ -112,43 +100,20 @@ void Analyser::Initialise()
                                      float32_type_, float64_type_, fixed32_type_, fixed64_type_};
   for (auto const &type : number_types)
   {
-    EnableOperator(type, Operator::Equal);
-    EnableOperator(type, Operator::NotEqual);
-    EnableOperator(type, Operator::LessThan);
-    EnableOperator(type, Operator::LessThanOrEqual);
-    EnableOperator(type, Operator::GreaterThan);
-    EnableOperator(type, Operator::GreaterThanOrEqual);
-    EnableOperator(type, Operator::Negate);
-    EnableOperator(type, Operator::Add);
-    EnableOperator(type, Operator::Subtract);
-    EnableOperator(type, Operator::Multiply);
-    EnableOperator(type, Operator::Divide);
-    EnableOperator(type, Operator::InplaceAdd);
-    EnableOperator(type, Operator::InplaceSubtract);
-    EnableOperator(type, Operator::InplaceMultiply);
-    EnableOperator(type, Operator::InplaceDivide);
+    EnableOperators(type, Operator::Equal, Operator::NotEqual, Operator::LessThan, Operator::LessThanOrEqual, Operator::GreaterThan, Operator::GreaterThanOrEqual, Operator::Negate, Operator::Add, Operator::Subtract, Operator::Multiply, Operator::Divide, Operator::InplaceAdd, Operator::InplaceSubtract, Operator::InplaceMultiply, Operator::InplaceDivide);
   }
+
   CreateGroupType("[AnyInteger]", TypeIndex(typeid(AnyInteger)), integer_types, TypeIds::Unknown,
                   any_integer_type_);
   CreateGroupType("[AnyFloatingPoint]", TypeIndex(typeid(AnyFloatingPoint)),
                   {float32_type_, float64_type_}, TypeIds::Unknown, any_floating_point_type_);
+
   CreateTemplateType("Matrix", TypeIndex(typeid(IMatrix)), {any_floating_point_type_},
                      TypeIds::Unknown, matrix_type_);
-  EnableOperator(matrix_type_, Operator::Negate);
-  EnableOperator(matrix_type_, Operator::Add);
-  EnableOperator(matrix_type_, Operator::Subtract);
-  EnableOperator(matrix_type_, Operator::Multiply);
-  EnableOperator(matrix_type_, Operator::InplaceAdd);
-  EnableOperator(matrix_type_, Operator::InplaceSubtract);
+  EnableOperator(matrix_type_, Operator::Negate, Operator::Add, Operator::Subtract, Operator::Multiply, Operator::InplaceAdd, Operator::InplaceSubtract);
   EnableLeftOperator(matrix_type_, Operator::Multiply);
-  EnableRightOperator(matrix_type_, Operator::Add);
-  EnableRightOperator(matrix_type_, Operator::Subtract);
-  EnableRightOperator(matrix_type_, Operator::Multiply);
-  EnableRightOperator(matrix_type_, Operator::Divide);
-  EnableRightOperator(matrix_type_, Operator::InplaceAdd);
-  EnableRightOperator(matrix_type_, Operator::InplaceSubtract);
-  EnableRightOperator(matrix_type_, Operator::InplaceMultiply);
-  EnableRightOperator(matrix_type_, Operator::InplaceDivide);
+  EnableRightOperator(matrix_type_, Operator::Add, Operator::Subtract, Operator::Multiply, Operator::Divide, Operator::InplaceAdd, Operator::InplaceSubtract, Operator::InplaceMultiply, Operator::InplaceDivide);
+
   CreateTemplateType("Array", TypeIndex(typeid(IArray)), {any_type_}, TypeIds::Unknown,
                      array_type_);
   CreateTemplateType("Map", TypeIndex(typeid(IMap)), {any_type_, any_type_}, TypeIds::Unknown,
@@ -163,46 +128,15 @@ void Analyser::UnInitialise()
 {
   operator_map_ = OperatorMap();
   type_map_.Reset();
-  type_map_            = TypeMap();
-  type_info_array_     = TypeInfoArray();
-  type_info_map_       = TypeInfoMap();
-  registered_types_    = RegisteredTypes();
-  function_info_array_ = FunctionInfoArray();
-  function_set_        = FunctionSet();
+  value_util::ZeroAll(type_map_, type_info_array_, type_info_map_, registered_types_, function_info_array_, function_set_);
+
   if (symbols_)
   {
     symbols_->Reset();
     symbols_ = nullptr;
   }
-  null_type_                = nullptr;
-  void_type_                = nullptr;
-  bool_type_                = nullptr;
-  int8_type_                = nullptr;
-  uint8_type_               = nullptr;
-  int16_type_               = nullptr;
-  uint16_type_              = nullptr;
-  int32_type_               = nullptr;
-  uint32_type_              = nullptr;
-  int64_type_               = nullptr;
-  uint64_type_              = nullptr;
-  float32_type_             = nullptr;
-  float64_type_             = nullptr;
-  fixed32_type_             = nullptr;
-  fixed64_type_             = nullptr;
-  string_type_              = nullptr;
-  address_type_             = nullptr;
-  template_parameter1_type_ = nullptr;
-  template_parameter2_type_ = nullptr;
-  any_type_                 = nullptr;
-  any_primitive_type_       = nullptr;
-  any_integer_type_         = nullptr;
-  any_floating_point_type_  = nullptr;
-  matrix_type_              = nullptr;
-  array_type_               = nullptr;
-  map_type_                 = nullptr;
-  state_type_               = nullptr;
-  address_type_             = nullptr;
-  sharded_state_type_       = nullptr;
+
+  value_util::ZeroAll(null_type_, void_type_, bool_type_, int8_type_, uint8_type_, int16_type_, uint16_type_, int32_type_, uint32_type_, int64_type_, uint64_type_, float32_type_, float64_type_, fixed32_type_, fixed64_type_, string_type_, address_type_, template_parameter1_type_, template_parameter2_type_, any_type_, any_primitive_type_, any_integer_type_, any_floating_point_type_, matrix_type_, array_type_, map_type_, state_type_, address_type_, sharded_state_type_);
 }
 
 void Analyser::CreateClassType(std::string const &name, TypeIndex type_index)
@@ -268,10 +202,7 @@ void Analyser::EnableIndexOperator(TypeIndex             type_index,
 bool Analyser::Analyse(BlockNodePtr const &root, std::vector<std::string> &errors)
 {
   root_ = root;
-  blocks_.clear();
-  loops_.clear();
-  function_ = nullptr;
-  errors_.clear();
+  value_util::ZeroAll(blocks_, loops_, function_, errors_);
 
   root_->symbols = CreateSymbolTable();
 
@@ -282,20 +213,14 @@ bool Analyser::Analyse(BlockNodePtr const &root, std::vector<std::string> &error
   if (!errors_.empty())
   {
     errors = std::move(errors_);
-    root_  = nullptr;
-    blocks_.clear();
-    loops_.clear();
-    function_ = nullptr;
-    errors_.clear();
+    value_util::ZeroAll(root_, blocks_, loops_, function_, errors_);
     return false;
   }
 
   AnnotateBlock(root_);
 
-  root_ = nullptr;
-  blocks_.clear();
-  loops_.clear();
-  function_ = nullptr;
+  value_util::ZeroAll(root_, function_);
+  value_util::ClearAll(blocks_, loops_);
 
   if (!errors_.empty())
   {
