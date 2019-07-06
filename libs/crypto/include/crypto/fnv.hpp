@@ -30,24 +30,17 @@ public:
   using base_type      = StreamHasher<FNV>;
   using base_impl_type = detail::FNV1a;
   using context_type   = typename base_impl_type::number_type;
-  //
-  //  using StreamHasher::Update;
-  //  using StreamHasher::Final;
 
-  constexpr static std::size_t size_in_bytes = 8u;  //???static asert
+  constexpr static std::size_t size_in_bytes = base_impl_type::size_in_bytes;
 
+private:
   void ResetHasher();
   bool UpdateHasher(uint8_t const *data_to_hash, std::size_t const &size);
   void FinalHasher(uint8_t *hash, std::size_t const &size);
 
-  //  template <typename T = context_type>
-  //  auto Final() -> decltype(base_type::Final<T>())
-  //  {
-  //    return base_type::Final<T>();
-  //  }
-
-private:
   detail::FNV1a ctx_;
+
+  friend base_type;
 };
 
 }  // namespace crypto

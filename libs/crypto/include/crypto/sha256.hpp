@@ -38,15 +38,14 @@ public:
 
   static constexpr std::size_t size_in_bytes = 32u;
 
-  /// @name Stream Hasher Interface
-  /// @{
+private:
   void ResetHasher();
   bool UpdateHasher(uint8_t const *data_to_hash, std::size_t const &size);
   void FinalHasher(uint8_t *hash, std::size_t const &size);
-  /// @}
 
-private:
   internal::Sha256Internals *impl_;
+
+  friend StreamHasher<SHA256>;
 };
 
 }  // namespace crypto

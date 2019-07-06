@@ -22,21 +22,19 @@
 
 #include <cstddef>
 #include <cstdint>
-#include <stdexcept>
+#include <cassert>
 
 namespace fetch {
 namespace crypto {
 
-static_assert(SHA256_DIGEST_LENGTH == SHA256::size_in_bytes, "???");
+static_assert(SHA256_DIGEST_LENGTH == SHA256::size_in_bytes, "SHA256 digests must have size equal to 32 bytes");
 
 namespace {
 
 void ResetContext(SHA256_CTX &context)
 {
-  if (!SHA256_Init(&context))
-  {
-    throw std::runtime_error("could not intialialise SHA256.");
-  }
+  auto const success = SHA256_Init(&context);
+  assert(success);
 }
 
 }  // namespace
@@ -74,15 +72,10 @@ bool SHA256::UpdateHasher(uint8_t const *data_to_hash, std::size_t const &size)
 
 void SHA256::FinalHasher(uint8_t *hash, std::size_t const &size)
 {
-  if (size < size_in_bytes)
-  {
-    throw std::runtime_error("size of input buffer is smaller than hash size.");
-  }
+  assert(size >= size_in_bytes);
 
-  if (!SHA256_Final(hash, &(impl_->ctx)))
-  {
-    throw std::runtime_error("could not finalize SHA256.");
-  }
+  auto const success = SHA256_Final(hash, &(impl_->ctx));
+  assert(success);
 }
 
 }  // namespace crypto

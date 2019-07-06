@@ -28,9 +28,6 @@ template <typename Derived>
 class StreamHasher
 {
 public:
-  //  template <uint16_t S>
-  //  using UInt = vectorise::UInt<S>;
-
   bool Update(byte_array::ConstByteArray const &data)
   {
     return derived().UpdateHasher(data.pointer(), data.size());
@@ -60,6 +57,11 @@ public:
     derived().ResetHasher();
   }
 
+  bool Update(std::string const &str)
+  {
+    return derived().UpdateHasher(reinterpret_cast<uint8_t const *>(str.data()), str.size());
+  }
+
   //  template <typename T>
   //  meta::IfIsPod<T, T> Final()
   //  {
@@ -67,11 +69,6 @@ public:
   //    derived().FinalHasher(reinterpret_cast<uint8_t *>(&pod), sizeof(pod));
   //    return pod;
   //  }
-
-  bool Update(std::string const &str)
-  {
-    return derived().UpdateHasher(reinterpret_cast<uint8_t const *>(str.data()), str.size());
-  }
 
   //  template <typename T>
   //  meta::IfIsPod<T, bool> Update(T const &pod)
