@@ -150,7 +150,7 @@ public:
 
   byte_array::ConstByteArray Hash();
 
-  void UpdateHash(crypto::StreamHasher &hasher);
+  void UpdateHash(hasher_type &hasher);
 
   bool SeekFile(std::size_t const &position);
 
@@ -435,7 +435,7 @@ byte_array::ConstByteArray FileObject<S>::Hash()
 }
 
 template <typename S>
-void FileObject<S>::UpdateHash(crypto::StreamHasher &hasher)
+void FileObject<S>::UpdateHash(hasher_type &hasher)
 {
   Seek(0);
   byte_array::ByteArray arr;
