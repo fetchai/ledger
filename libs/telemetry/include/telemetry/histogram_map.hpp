@@ -17,11 +17,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "telemetry/telemetry.hpp"
 #include "telemetry/measurement.hpp"
+#include "telemetry/telemetry.hpp"
 
-#include <unordered_map>
 #include <mutex>
+#include <unordered_map>
 #include <vector>
 
 namespace fetch {
@@ -30,13 +30,12 @@ namespace telemetry {
 class HistogramMap : public Measurement
 {
 public:
-
   // Construction / Destruction
   HistogramMap(std::string const &name, std::string field, std::vector<double> buckets,
                std::string const &description, Labels const &labels = Labels{});
   HistogramMap(HistogramMap const &) = delete;
-  HistogramMap(HistogramMap &&) = delete;
-  ~HistogramMap() override = default;
+  HistogramMap(HistogramMap &&)      = delete;
+  ~HistogramMap() override           = default;
 
   /// @name Accessors
   /// @{
@@ -62,10 +61,9 @@ private:
   std::string const         field_;
   std::vector<double> const buckets_;
 
-  mutable Mutex lock_;
+  mutable Mutex       lock_;
   HistogramCollection histograms_;
-
 };
 
-} // namespace telemetry
-} // namespace fetch
+}  // namespace telemetry
+}  // namespace fetch

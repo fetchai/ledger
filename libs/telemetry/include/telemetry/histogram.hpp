@@ -19,12 +19,12 @@
 
 #include "telemetry/measurement.hpp"
 
+#include <functional>
 #include <initializer_list>
 #include <map>
 #include <mutex>
-#include <functional>
-#include <vector>
 #include <string>
+#include <vector>
 
 namespace fetch {
 namespace telemetry {
@@ -32,15 +32,14 @@ namespace telemetry {
 class Histogram : public Measurement
 {
 public:
-
   // Construction / Destruction
   Histogram(std::initializer_list<double> const &buckets, std::string const &name,
             std::string const &description, Labels const &labels = Labels{});
   Histogram(std::vector<double> const &buckets, std::string const &name,
             std::string const &description, Labels const &labels = Labels{});
   Histogram(Histogram const &) = delete;
-  Histogram(Histogram &&) = delete;
-  ~Histogram() override = default;
+  Histogram(Histogram &&)      = delete;
+  ~Histogram() override        = default;
 
   /// @name Accessors
   /// @{
@@ -71,7 +70,5 @@ private:
   double        sum_{0.0};
 };
 
-
-
-} // namespace telemetry
-} // namespace fetch
+}  // namespace telemetry
+}  // namespace fetch

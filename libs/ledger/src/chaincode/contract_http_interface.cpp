@@ -20,9 +20,9 @@
 
 #include "core/byte_array/decoders.hpp"
 #include "core/json/document.hpp"
-#include "core/serializers/byte_array_buffer.hpp"
-#include "core/serializers/byte_array.hpp"
 #include "core/logger.hpp"
+#include "core/serializers/byte_array.hpp"
+#include "core/serializers/byte_array_buffer.hpp"
 #include "core/serializers/stl_types.hpp"
 #include "core/string/replace.hpp"
 #include "http/json_response.hpp"
@@ -364,9 +364,10 @@ ContractHttpInterface::SubmitTxStatus ContractHttpInterface::SubmitJsonTx(
   return SubmitTxStatus{submitted, expected_count};
 }
 
-ContractHttpInterface::SubmitTxStatus ContractHttpInterface::SubmitBulkTx(http::HTTPRequest const &request)
+ContractHttpInterface::SubmitTxStatus ContractHttpInterface::SubmitBulkTx(
+    http::HTTPRequest const &request)
 {
-  std::size_t submitted{0};
+  std::size_t                 submitted{0};
   std::vector<ConstByteArray> encoded_txs{};
 
   try

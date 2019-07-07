@@ -16,11 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "telemetry/registry.hpp"
-#include "telemetry/histogram_map.hpp"
-#include "telemetry/counter_map.hpp"
-#include "http/middleware/telemetry.hpp"
 #include "core/logging.hpp"
+#include "http/middleware/telemetry.hpp"
+#include "telemetry/counter_map.hpp"
+#include "telemetry/histogram_map.hpp"
+#include "telemetry/registry.hpp"
 
 #include <memory>
 
@@ -36,12 +36,11 @@ using telemetry::Registry;
 class TelemetryData
 {
 public:
-
   // Construction / Destruction
-  TelemetryData() = default;
+  TelemetryData()                      = default;
   TelemetryData(TelemetryData const &) = delete;
-  TelemetryData(TelemetryData &&) = delete;
-  ~TelemetryData() = default;
+  TelemetryData(TelemetryData &&)      = delete;
+  ~TelemetryData()                     = default;
 
   void Update(HTTPRequest const &request, HTTPResponse const &response);
 
@@ -62,7 +61,7 @@ void TelemetryData::Update(HTTPRequest const &request, HTTPResponse const &respo
 {
   FETCH_UNUSED(response);
 
-  auto const path = static_cast<std::string>(request.uri());
+  auto const path        = static_cast<std::string>(request.uri());
   auto const status_code = std::to_string(static_cast<int>(response.status()));
 
   // update the duration stats
@@ -74,7 +73,7 @@ void TelemetryData::Update(HTTPRequest const &request, HTTPResponse const &respo
 
 using TelemetryDataPtr = std::shared_ptr<TelemetryData>();
 
-} // namespace
+}  // namespace
 
 HTTPServer::response_middleware_type Telemetry()
 {
@@ -82,14 +81,9 @@ HTTPServer::response_middleware_type Telemetry()
   auto data = std::make_shared<TelemetryData>();
 
   // return the handler
-  return [data](HTTPResponse &resp, HTTPRequest const &req) {
-    data->Update(req, resp);
-  };
+  return [data](HTTPResponse &resp, HTTPRequest const &req) { data->Update(req, resp); };
 }
 
-} // namespace middleware
-} // namespace http
-} // namespace fetch
-
-
-
+}  // namespace middleware
+}  // namespace http
+}  // namespace fetch

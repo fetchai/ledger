@@ -38,10 +38,10 @@
 #include "storage/document_store_protocol.hpp"
 #include "storage/object_store_protocol.hpp"
 
+#include <array>
 #include <chrono>
 #include <thread>
 #include <utility>
-#include <array>
 
 namespace fetch {
 namespace ledger {
@@ -142,7 +142,7 @@ private:
 
     uint64_t   size_{0};
     DataBuffer data_;
- };
+  };
 
   using Client               = muddle::rpc::Client;
   using ClientPtr            = std::shared_ptr<Client>;

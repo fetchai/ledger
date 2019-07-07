@@ -25,6 +25,6 @@ namespace middleware {
 
 HTTPServer::response_middleware_type Telemetry();
 
-} // namespace middleware
-} // namespace http
-} // namespace fetch
+}  // namespace middleware
+}  // namespace http
+}  // namespace fetch

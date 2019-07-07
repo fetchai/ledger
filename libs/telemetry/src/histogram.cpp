@@ -61,8 +61,8 @@ Histogram::Histogram(std::vector<double> const &buckets, std::string const &name
  */
 template <typename Iterator>
 Histogram::Histogram(Iterator const &begin, Iterator const &end, std::string const &name,
-    std::string const &description, Labels const &labels)
-    : Measurement{name, description, labels}
+                     std::string const &description, Labels const &labels)
+  : Measurement{name, description, labels}
 {
   LockGuard guard{lock_};
 
@@ -106,7 +106,8 @@ void Histogram::ToStream(std::ostream &stream, StreamMode mode) const
   WriteHeader(stream, "histogram", mode);
   for (auto const &element : buckets_)
   {
-    WriteValuePrefix(stream, "bucket", {{"le", std::to_string(element.first) }}) << element.second << '\n';
+    WriteValuePrefix(stream, "bucket", {{"le", std::to_string(element.first)}})
+        << element.second << '\n';
   }
   WriteValuePrefix(stream, "bucket", {{"le", "+Inf"}}) << count_ << '\n';
 
@@ -114,5 +115,5 @@ void Histogram::ToStream(std::ostream &stream, StreamMode mode) const
   WriteValuePrefix(stream, "count") << count_ << '\n';
 }
 
-} // namespace telemetry
-} // namespace fetch
+}  // namespace telemetry
+}  // namespace fetch

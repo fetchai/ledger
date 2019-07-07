@@ -90,10 +90,10 @@ private:
 
   SharedHandler handler_;
 
-  std::mutex call_mutex_; // priority 1
+  std::mutex call_mutex_;  // priority 1
 
   PromiseQueue            promise_queue_;
-  std::mutex              promise_queue_lock_; // priority 2
+  std::mutex              promise_queue_lock_;  // priority 2
   std::condition_variable promise_queue_cv_;
 
   std::thread background_thread_;

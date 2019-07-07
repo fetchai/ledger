@@ -16,23 +16,23 @@
 //
 //------------------------------------------------------------------------------
 
-#include "crypto/ecdsa.hpp"
+#include "core/byte_array/byte_array.hpp"
+#include "core/commandline/params.hpp"
 #include "core/serializers/byte_array.hpp"
 #include "core/serializers/byte_array_buffer.hpp"
 #include "core/serializers/counter.hpp"
-#include "core/byte_array/byte_array.hpp"
-#include "core/commandline/params.hpp"
-#include "vectorise/threading/pool.hpp"
+#include "crypto/ecdsa.hpp"
 #include "ledger/chain/transaction.hpp"
-#include "ledger/chain/transaction_serializer.hpp"
 #include "ledger/chain/transaction_builder.hpp"
+#include "ledger/chain/transaction_serializer.hpp"
 #include "storage/resource_mapper.hpp"
+#include "vectorise/threading/pool.hpp"
 
-#include <vector>
+#include <chrono>
+#include <fstream>
 #include <memory>
 #include <random>
-#include <fstream>
-#include <chrono>
+#include <vector>
 
 using fetch::commandline::Params;
 using fetch::crypto::ECDSASigner;
@@ -54,7 +54,7 @@ using Clock        = std::chrono::high_resolution_clock;
 
 constexpr std::size_t NUM_TRANSFERS = 1;
 
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
   std::size_t count{0};
   std::size_t key_count{0};
@@ -69,7 +69,7 @@ int main(int argc, char** argv)
   // parse the command line
   parser.Parse(argc, argv);
 
-  KeyArray keys(key_count);
+  KeyArray     keys(key_count);
   AddressArray addresses(key_count);
 
   // create all the keys
@@ -94,7 +94,7 @@ int main(int argc, char** argv)
 
       // initialise the RNG
       std::random_device rd{};
-      std::minstd_rand rng(rd());
+      std::minstd_rand   rng(rd());
 
       BitVector vector{VECTOR_SIZE};
 
@@ -103,14 +103,14 @@ int main(int argc, char** argv)
       {
         // generate a new key for this transaction
         ECDSASigner from;
-        Address from_address{from.identity()};
+        Address     from_address{from.identity()};
 
         // determine the resource
         ResourceAddress const resource{"fetch.token.state." + from_address.display()};
 
         // generate the correct shard mask
         vector.SetAllZero();
-        vector.set(resource.lane(LOG2_VECTOR_SIZE), 1); // set the lane for the tx
+        vector.set(resource.lane(LOG2_VECTOR_SIZE), 1);  // set the lane for the tx
 
         // form the transaction
         TransactionBuilder builder{};
@@ -138,7 +138,8 @@ int main(int argc, char** argv)
 
   auto const delta_ns = (stopped - started).count();
 
-  auto const tx_rate = (static_cast<double>(encoded_txs.size()) * 1e9) / static_cast<double>(delta_ns);
+  auto const tx_rate =
+      (static_cast<double>(encoded_txs.size()) * 1e9) / static_cast<double>(delta_ns);
   std::cout << "Generating tx...complete (tx rate: " << tx_rate << ")" << std::endl;
 
   std::cout << "Generating contents..." << std::endl;
@@ -150,7 +151,7 @@ int main(int argc, char** argv)
   std::cout << "Serial size: " << counter.size() << std::endl;
 
   ByteArrayBuffer buffer{};
-  buffer.Reserve(counter.size()); // pre-allocate
+  buffer.Reserve(counter.size());  // pre-allocate
   buffer << encoded_txs;
 
   // flush the stream

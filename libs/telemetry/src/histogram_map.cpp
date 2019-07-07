@@ -36,8 +36,7 @@ HistogramMap::HistogramMap(std::string const &name, std::string field, std::vect
   : Measurement(name, description, labels)
   , field_{std::move(field)}
   , buckets_{std::move(buckets)}
-{
-}
+{}
 
 /**
  * Add a value with the specified key to the histogram map
@@ -76,11 +75,11 @@ void HistogramMap::ToStream(std::ostream &stream, StreamMode mode) const
 HistogramPtr HistogramMap::LookupHistogram(std::string const &key)
 {
   LockGuard guard{lock_};
-  auto it = histograms_.find(key);
+  auto      it = histograms_.find(key);
   if (it == histograms_.end())
   {
     // create and update the set of labels
-    Labels new_labels = labels();
+    Labels new_labels  = labels();
     new_labels[field_] = key;
 
     // create a new histogram
@@ -98,5 +97,5 @@ HistogramPtr HistogramMap::LookupHistogram(std::string const &key)
   }
 }
 
-} // namespace telemetry
-} // namespace fetch
+}  // namespace telemetry
+}  // namespace fetch

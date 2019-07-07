@@ -43,7 +43,7 @@ public:
   /// @{
   std::string const &name() const;
   std::string const &description() const;
-  Labels const &labels() const;
+  Labels const &     labels() const;
   /// @}
 
   /// @name Metric Interface
@@ -60,11 +60,11 @@ public:
   /// @}
 
 protected:
-
   std::ostream &WriteHeader(std::ostream &stream, char const *type_name, StreamMode mode) const;
   std::ostream &WriteValuePrefix(std::ostream &stream) const;
   std::ostream &WriteValuePrefix(std::ostream &stream, std::string const &suffix) const;
-  std::ostream &WriteValuePrefix(std::ostream &stream, std::string const &suffix, Labels const &extra) const;
+  std::ostream &WriteValuePrefix(std::ostream &stream, std::string const &suffix,
+                                 Labels const &extra) const;
 
 private:
   std::string const name_;
@@ -96,8 +96,7 @@ inline Measurement::Labels const &Measurement::labels() const
 }  // namespace telemetry
 }  // namespace fetch
 
-namespace std
-{
+namespace std {
 
 template <>
 struct hash<fetch::telemetry::Measurement::Labels>
@@ -126,4 +125,4 @@ struct hash<fetch::telemetry::Measurement::Labels>
   }
 };
 
-}
+}  // namespace std

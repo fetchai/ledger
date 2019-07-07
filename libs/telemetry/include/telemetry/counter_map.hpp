@@ -17,11 +17,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "telemetry/telemetry.hpp"
 #include "telemetry/measurement.hpp"
+#include "telemetry/telemetry.hpp"
 
-#include <unordered_map>
 #include <mutex>
+#include <unordered_map>
 
 namespace fetch {
 namespace telemetry {
@@ -29,12 +29,11 @@ namespace telemetry {
 class CounterMap : public Measurement
 {
 public:
-
   // Construction / Destruction
   CounterMap(std::string name, std::string description, Labels const &labels = Labels{});
   CounterMap(CounterMap const &) = delete;
-  CounterMap(CounterMap &&) = delete;
-  ~CounterMap() override = default;
+  CounterMap(CounterMap &&)      = delete;
+  ~CounterMap() override         = default;
 
   /// @name Accessors
   /// @{
@@ -55,8 +54,8 @@ private:
   CounterPtr LookupCounter(Labels const &keys);
 
   mutable Mutex lock_;
-  Counters counters_;
+  Counters      counters_;
 };
 
-} // namespace telemetry
-} // namespace fetch
+}  // namespace telemetry
+}  // namespace fetch

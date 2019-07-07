@@ -16,12 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include "telemetry/registry.hpp"
 #include "telemetry/counter.hpp"
 #include "telemetry/counter_map.hpp"
 #include "telemetry/gauge.hpp"
 #include "telemetry/histogram.hpp"
 #include "telemetry/histogram_map.hpp"
+#include "telemetry/registry.hpp"
 
 namespace fetch {
 namespace telemetry {
@@ -144,8 +144,8 @@ HistogramPtr Registry::CreateHistogram(std::initializer_list<double> const &buck
 }
 
 HistogramMapPtr Registry::CreateHistogramMap(std::vector<double> buckets, std::string name,
-                                   std::string field, std::string description,
-                                   Labels labels)
+                                             std::string field, std::string description,
+                                             Labels labels)
 {
   HistogramMapPtr histogram_map{};
 

@@ -32,7 +32,6 @@ using CounterMapPtr = std::unique_ptr<CounterMap>;
 class CounterMapTests : public ::testing::Test
 {
 protected:
-
   void SetUp() override
   {
     counter_map_ = std::make_unique<CounterMap>("muddle_stats", "Some test muddle stats");
@@ -45,7 +44,6 @@ protected:
 
   CounterMapPtr counter_map_;
 };
-
 
 TEST_F(CounterMapTests, SimpleCheck)
 {
@@ -74,4 +72,4 @@ muddle_stats{service="1",channel="1"} 4
   EXPECT_EQ(oss.str(), std::string{EXPECTED_TEXT});
 }
 
-} // namespace
+}  // namespace

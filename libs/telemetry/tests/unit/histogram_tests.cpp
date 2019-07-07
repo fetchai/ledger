@@ -32,7 +32,6 @@ using HistogramPtr = std::unique_ptr<Histogram>;
 class HistogramTests : public ::testing::Test
 {
 protected:
-
   void SetUp() override
   {
     histogram_ = std::make_unique<Histogram>(std::initializer_list<double>{0.2, 0.4, 0.6, 0.8},
@@ -46,7 +45,6 @@ protected:
 
   HistogramPtr histogram_;
 };
-
 
 TEST_F(HistogramTests, SimpleCheck)
 {
@@ -75,4 +73,4 @@ request_time_count 7
   EXPECT_EQ(oss.str(), std::string{EXPECTED_TEXT});
 }
 
-} // namespace
+}  // namespace

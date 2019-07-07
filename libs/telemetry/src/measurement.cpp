@@ -31,14 +31,12 @@ struct LabelRefs
 
   explicit LabelRefs(Measurement::Labels const &main)
     : main{&main}
-  {
-  }
+  {}
 
   LabelRefs(Measurement::Labels const &main, Measurement::Labels const &other)
     : main{&main}
     , extra{&other}
-  {
-  }
+  {}
 };
 
 std::ostream &operator<<(std::ostream &stream, LabelRefs const &refs)
@@ -84,8 +82,8 @@ std::ostream &operator<<(std::ostream &stream, LabelRefs const &refs)
 
 }  // namespace
 
-
-std::ostream &Measurement::WriteHeader(std::ostream &stream, char const *type_name, StreamMode mode) const
+std::ostream &Measurement::WriteHeader(std::ostream &stream, char const *type_name,
+                                       StreamMode mode) const
 {
   if (StreamMode::FULL == mode)
   {
@@ -108,12 +106,12 @@ std::ostream &Measurement::WriteValuePrefix(std::ostream &stream, std::string co
   return stream;
 }
 
-std::ostream &Measurement::WriteValuePrefix(std::ostream &stream, std::string const &suffix, Labels const &extra) const
+std::ostream &Measurement::WriteValuePrefix(std::ostream &stream, std::string const &suffix,
+                                            Labels const &extra) const
 {
   stream << name() << '_' << suffix << LabelRefs{labels_, extra};
   return stream;
 }
-
 
 }  // namespace telemetry
 }  // namespace fetch

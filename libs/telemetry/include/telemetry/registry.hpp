@@ -50,7 +50,8 @@ public:
   /// @{
   CounterPtr CreateCounter(std::string name, std::string description, Labels labels = Labels{});
 
-  CounterMapPtr CreateCounterMap(std::string name, std::string description, Labels labels = Labels{});
+  CounterMapPtr CreateCounterMap(std::string name, std::string description,
+                                 Labels labels = Labels{});
 
   template <typename T>
   GaugePtr<T> CreateGauge(std::string name, std::string description, Labels labels = Labels{});

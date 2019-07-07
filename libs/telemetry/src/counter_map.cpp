@@ -24,8 +24,7 @@ namespace telemetry {
 
 CounterMap::CounterMap(std::string name, std::string description, Labels const &labels)
   : Measurement(std::move(name), std::move(description), std::move(labels))
-{
-}
+{}
 
 void CounterMap::Increment(Labels const &keys)
 {
@@ -46,7 +45,7 @@ void CounterMap::ToStream(std::ostream &stream, StreamMode mode) const
 CounterPtr CounterMap::LookupCounter(Labels const &keys)
 {
   LockGuard guard{lock_};
-  auto it = counters_.find(keys);
+  auto      it = counters_.find(keys);
   if (it == counters_.end())
   {
     // create the new keys from the base labels merged with the input keys
@@ -70,5 +69,5 @@ CounterPtr CounterMap::LookupCounter(Labels const &keys)
   }
 }
 
-} // namespace telemetry
-} // namespace fetch
+}  // namespace telemetry
+}  // namespace fetch

@@ -38,7 +38,8 @@ public:
   using TransactionPtr = std::shared_ptr<Transaction>;
 
   // Construction / Destruction
-  TransactionVerifier(TransactionSink &sink, std::size_t verifying_threads, std::string const &name);
+  TransactionVerifier(TransactionSink &sink, std::size_t verifying_threads,
+                      std::string const &name);
   TransactionVerifier(TransactionVerifier const &) = delete;
   TransactionVerifier(TransactionVerifier &&)      = delete;
   ~TransactionVerifier();
@@ -83,16 +84,15 @@ private:
   UnverifiedQueue   unverified_queue_;
 
   // telemetry
-  GaugePtr unverified_queue_length_;
-  GaugePtr unverified_queue_max_length_;
-  GaugePtr verified_queue_length_;
-  GaugePtr verified_queue_max_length_;
+  GaugePtr   unverified_queue_length_;
+  GaugePtr   unverified_queue_max_length_;
+  GaugePtr   verified_queue_length_;
+  GaugePtr   verified_queue_max_length_;
   CounterPtr unverified_tx_total_;
   CounterPtr verified_tx_total_;
   CounterPtr discarded_tx_total_;
-  GaugePtr num_threads_;
+  GaugePtr   num_threads_;
 };
-
 
 }  // namespace ledger
 }  // namespace fetch

@@ -31,13 +31,12 @@ using HistogramMapPtr = std::unique_ptr<HistogramMap>;
 class HistogramMapTests : public ::testing::Test
 {
 protected:
-
   void SetUp() override
   {
     using B = std::vector<double>;
 
-    histogram_map_ = std::make_unique<HistogramMap>(
-        "http_requests", "path", B{0.2, 0.4, 0.6, 0.8}, "Request time for HTTP paths");
+    histogram_map_ = std::make_unique<HistogramMap>("http_requests", "path", B{0.2, 0.4, 0.6, 0.8},
+                                                    "Request time for HTTP paths");
   }
 
   void TearDown() override
@@ -47,7 +46,6 @@ protected:
 
   HistogramMapPtr histogram_map_;
 };
-
 
 TEST_F(HistogramMapTests, SimpleCheck)
 {
@@ -90,4 +88,4 @@ http_requests_count{path="/"} 7
   EXPECT_EQ(oss.str(), std::string{EXPECTED_TEXT});
 }
 
-} // namespace
+}  // namespace

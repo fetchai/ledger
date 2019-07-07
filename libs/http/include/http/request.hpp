@@ -26,11 +26,11 @@
 #include "http/query.hpp"
 #include "network/fetch_asio.hpp"
 
+#include <chrono>
 #include <cstddef>
 #include <cstdint>
 #include <string>
 #include <utility>
-#include <chrono>
 
 namespace fetch {
 namespace http {
