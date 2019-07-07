@@ -21,45 +21,68 @@
 #include "meta/type_traits.hpp"
 #include "vectorise/uint/uint.hpp"
 
+#include <cassert>
+#include <cstddef>
+#include <cstdint>
+//#include <type_traits>//???
+
 namespace fetch {
 namespace crypto {
 
 template <typename Derived>
 class StreamHasher
 {
-public:
+public:  //???static assert against Deriived interdface methods
+  //???  static_assert(std::is_same<decltype(Derived::size_in_bytes), std::size_t const>::value,
+  //"Expected static member variable: std::size const size_in_bytes");
+  //  static_assert(Derived::size_in_bytes > 0u , "Value of size_in_bytes must be non-zero");
+
   bool Update(byte_array::ConstByteArray const &data)
   {
-    return derived().UpdateHasher(data.pointer(), data.size());
+    auto const success = derived().UpdateHasher(data.pointer(), data.size());
+    assert(success);
+
+    return success;
   }
 
   byte_array::ByteArray Final()
   {
     byte_array::ByteArray digest;
     digest.Resize(Derived::size_in_bytes);
-    derived().FinalHasher(digest.pointer(), digest.size());
+
+    auto const success = derived().FinalHasher(digest.pointer(), digest.size());
+    assert(success);
 
     return digest;
   }
 
   bool Update(uint8_t const *data_to_hash, std::size_t size)
   {
-    return derived().UpdateHasher(data_to_hash, size);
+    auto const success = derived().UpdateHasher(data_to_hash, size);
+    assert(success);
+
+    return success;
   }
 
   void Final(uint8_t *hash, std::size_t size)
   {
-    derived().FinalHasher(hash, size);
+    auto const success = derived().FinalHasher(hash, size);
+    assert(success);
   }
 
   void Reset()
   {
-    derived().ResetHasher();
+    auto const success = derived().ResetHasher();
+    assert(success);
   }
 
   bool Update(std::string const &str)
   {
-    return derived().UpdateHasher(reinterpret_cast<uint8_t const *>(str.data()), str.size());
+    auto const success =
+        derived().UpdateHasher(reinterpret_cast<uint8_t const *>(str.data()), str.size());
+    assert(success);
+
+    return success;
   }
 
   //  template <typename T>

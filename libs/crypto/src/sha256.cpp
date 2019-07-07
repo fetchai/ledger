@@ -26,15 +26,14 @@
 namespace fetch {
 namespace crypto {
 
-static_assert(SHA256_DIGEST_LENGTH == SHA256::size_in_bytes,
-              "SHA256 digests must have size equal to 32 bytes");
+static_assert(SHA256::size_in_bytes == SHA256_DIGEST_LENGTH,
+              "Incorrect value of SHA256::size_in_bytes");
 
 namespace {
 
-void ResetContext(SHA256_CTX &context)
+bool ResetContext(SHA256_CTX &context)
 {
-  auto const success = SHA256_Init(&context);
-  assert(success);
+  return static_cast<bool>(SHA256_Init(&context));
 }
 
 }  // namespace
@@ -60,9 +59,9 @@ SHA256::~SHA256()
   delete impl_;
 }
 
-void SHA256::ResetHasher()
+bool SHA256::ResetHasher()
 {
-  ResetContext(impl_->ctx);
+  return ResetContext(impl_->ctx);
 }
 
 bool SHA256::UpdateHasher(uint8_t const *data_to_hash, std::size_t const &size)
@@ -70,12 +69,11 @@ bool SHA256::UpdateHasher(uint8_t const *data_to_hash, std::size_t const &size)
   return SHA256_Update(&(impl_->ctx), data_to_hash, size) != 0;
 }
 
-void SHA256::FinalHasher(uint8_t *hash, std::size_t const &size)
+bool SHA256::FinalHasher(uint8_t *hash, std::size_t const &)
 {
-  assert(size >= size_in_bytes);
-
   auto const success = SHA256_Final(hash, &(impl_->ctx));
-  assert(success);
+
+  return static_cast<bool>(success);
 }
 
 }  // namespace crypto

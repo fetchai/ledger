@@ -49,26 +49,26 @@ FNV::~FNV()
   delete impl_;
 }
 
-void FNV::ResetHasher()
+bool FNV::ResetHasher()
 {
   impl_->ctx_.reset();
+
+  return true;
 }
 
 bool FNV::UpdateHasher(uint8_t const *data_to_hash, std::size_t const &size)
 {
   impl_->ctx_.update(data_to_hash, size);
+
   return true;
 }
 
-void FNV::FinalHasher(uint8_t *hash, std::size_t const &size)
+bool FNV::FinalHasher(uint8_t *hash, std::size_t const &)
 {
-  if (size < size_in_bytes)
-  {
-    throw std::runtime_error("size of input buffer is smaller than hash size.");
-  }
-
   auto hash_ptr = reinterpret_cast<internal::FnvHasherInternals::ImplType::number_type *>(hash);
   *hash_ptr     = impl_->ctx_.context();
+
+  return true;
 }
 
 }  // namespace crypto
