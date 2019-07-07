@@ -31,7 +31,7 @@
 namespace fetch {
 namespace crypto {
 
-// namespace internal {//???
+namespace internal {
 
 namespace {
 
@@ -45,6 +45,9 @@ EVP_MD const *to_openssl_type(OpenSslDigestType const type)
     break;
   case OpenSslDigestType::SHA1:
     openssl_type = EVP_sha1();
+    break;
+  case OpenSslDigestType::SHA2_256:
+    openssl_type = EVP_sha256();
     break;
   case OpenSslDigestType::SHA2_512:
     openssl_type = EVP_sha512();
@@ -66,6 +69,9 @@ std::size_t to_digest_size(OpenSslDigestType const type)
     break;
   case OpenSslDigestType::SHA1:
     digest_size = SHA_DIGEST_LENGTH;
+    break;
+  case OpenSslDigestType::SHA2_256:
+    digest_size = SHA256_DIGEST_LENGTH;
     break;
   case OpenSslDigestType::SHA2_512:
     digest_size = SHA512_DIGEST_LENGTH;
@@ -95,30 +101,31 @@ public:
 
 OpenSslDigestContext::OpenSslDigestContext(OpenSslDigestType type)
   : impl_{new OpenSslDigestImpl(type)}
-{}
+{
+  reset();
+}
 
 OpenSslDigestContext::~OpenSslDigestContext()
 {
   delete impl_;
 }
 
-void OpenSslDigestContext::reset() const
+bool OpenSslDigestContext::reset()
 {
-  EVP_DigestInit_ex(impl_->ctx_, impl_->openssl_type_, nullptr);
+  return EVP_DigestInit_ex(impl_->ctx_, impl_->openssl_type_, nullptr) != 0;
 }
 
-fetch::byte_array::ConstByteArray OpenSslDigestContext::operator()(
-    fetch::byte_array::ConstByteArray const &input) const
+bool OpenSslDigestContext::update(uint8_t const *data_to_hash, std::size_t const size)
 {
-  fetch::byte_array::ByteArray output(impl_->digest_size_bytes_);
-
-  EVP_DigestUpdate(impl_->ctx_, input.pointer(), input.size());
-  EVP_DigestFinal_ex(impl_->ctx_, output.pointer(), nullptr);
-
-  return std::move(output);
+  return EVP_DigestUpdate(impl_->ctx_, data_to_hash, size) != 0;
 }
 
-//}  // namespace internal
+bool OpenSslDigestContext::final(uint8_t *const data_to_hash, std::size_t const)
+{
+  return EVP_DigestFinal_ex(impl_->ctx_, data_to_hash, nullptr) != 0;
+}
+
+}  // namespace internal
 
 }  // namespace crypto
 }  // namespace fetch

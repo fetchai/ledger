@@ -46,8 +46,8 @@ public:
 
 private:
   bool ResetHasher();
-  bool UpdateHasher(uint8_t const *data_to_hash, std::size_t const &size);
-  bool FinalHasher(uint8_t *hash, std::size_t const &size);
+  bool UpdateHasher(uint8_t const *data_to_hash, std::size_t size);
+  bool FinalHasher(uint8_t *hash, std::size_t size);
 
   internal::FnvHasherInternals *impl_;
 

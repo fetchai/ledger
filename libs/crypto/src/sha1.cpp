@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -17,8 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "crypto/openssl_digests.hpp"
-#include "crypto/stream_hasher.hpp"
+#include "crypto/sha1.hpp"
+
+#include <openssl/sha.h>
 
 #include <cstddef>
 #include <cstdint>
@@ -26,29 +26,22 @@
 namespace fetch {
 namespace crypto {
 
-class SHA256 : public internal::StreamHasher<SHA256>
+static_assert(SHA1::size_in_bytes == SHA_DIGEST_LENGTH, "Incorrect value of SHA1::size_in_bytes");
+
+bool SHA1::ResetHasher()
 {
-public:
-  using BaseType = internal::StreamHasher<SHA256>;
+  return impl_.reset();
+}
 
-  using BaseType::Final;
-  using BaseType::Reset;
-  using BaseType::Update;
+bool SHA1::UpdateHasher(uint8_t const *data_to_hash, std::size_t const size)
+{
+  return impl_.update(data_to_hash, size);
+}
 
-  static constexpr std::size_t size_in_bytes = 32u;
-
-  SHA256()  = default;
-  ~SHA256() = default;
-
-private:
-  bool ResetHasher();
-  bool UpdateHasher(uint8_t const *data_to_hash, std::size_t size);
-  bool FinalHasher(uint8_t *hash, std::size_t size);
-
-  internal::OpenSslDigestContext impl_{internal::OpenSslDigestType::SHA2_256};
-
-  friend BaseType;
-};
+bool SHA1::FinalHasher(uint8_t *hash, std::size_t const size)
+{
+  return impl_.final(hash, size);
+}
 
 }  // namespace crypto
 }  // namespace fetch

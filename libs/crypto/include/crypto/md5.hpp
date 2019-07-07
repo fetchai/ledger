@@ -26,26 +26,26 @@
 namespace fetch {
 namespace crypto {
 
-class SHA256 : public internal::StreamHasher<SHA256>
+class MD5 : public internal::StreamHasher<MD5>
 {
 public:
-  using BaseType = internal::StreamHasher<SHA256>;
+  using BaseType = internal::StreamHasher<MD5>;
 
   using BaseType::Final;
   using BaseType::Reset;
   using BaseType::Update;
 
-  static constexpr std::size_t size_in_bytes = 32u;
+  static constexpr std::size_t size_in_bytes = 16u;
 
-  SHA256()  = default;
-  ~SHA256() = default;
+  MD5()  = default;
+  ~MD5() = default;
 
 private:
   bool ResetHasher();
   bool UpdateHasher(uint8_t const *data_to_hash, std::size_t size);
   bool FinalHasher(uint8_t *hash, std::size_t size);
 
-  internal::OpenSslDigestContext impl_{internal::OpenSslDigestType::SHA2_256};
+  internal::OpenSslDigestContext impl_{internal::OpenSslDigestType::MD5};
 
   friend BaseType;
 };

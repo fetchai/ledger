@@ -20,7 +20,9 @@
 #include "core/bloom_filter.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "crypto/fnv.hpp"
-#include "crypto/openssl_digests.hpp"
+#include "crypto/md5.hpp"
+#include "crypto/sha1.hpp"
+#include "crypto/sha512.hpp"
 
 #include <algorithm>
 #include <cstddef>
@@ -144,37 +146,34 @@ HashSource::Hashes fnv(fetch::byte_array::ConstByteArray const &input)
   return output;
 }
 
-template <typename EnumClass, EnumClass type>
+template <typename Hasher>
 HashSource::Hashes HashSourceFunction(fetch::byte_array::ConstByteArray const &input)
 {
-  crypto::OpenSslDigestContext hasher(type);
-  hasher.reset();
+  Hasher hasher;
+  hasher.Reset();
 
   std::size_t const  size_in_bytes = input.size();
   HashSource::Hashes output((size_in_bytes + sizeof(std::size_t) - 1) / sizeof(std::size_t));
 
-  auto const cba = hasher(input);
-  std::copy(cba.pointer(), cba.pointer() + size_in_bytes,
-            reinterpret_cast<uint8_t *>(output.data()));
+  hasher.Update(input.pointer(), input.size());
+  hasher.Final(reinterpret_cast<uint8_t *const>(output.data()), output.size());
 
   return output;
 }
 
 HashSource::Hashes md5(fetch::byte_array::ConstByteArray const &input)
 {
-  return internal::HashSourceFunction<crypto::OpenSslDigestType, crypto::OpenSslDigestType::MD5>(
-      input);
+  return internal::HashSourceFunction<crypto::MD5>(input);
 }
 
 HashSource::Hashes sha1(fetch::byte_array::ConstByteArray const &input)
 {
-  return internal::HashSourceFunction<crypto::OpenSslDigestType, crypto::OpenSslDigestType::SHA1>(
-      input);
+  return internal::HashSourceFunction<crypto::SHA1>(input);
 }
 
 HashSource::Hashes sha2_512(fetch::byte_array::ConstByteArray const &input)
 {
-  return HashSourceFunction<crypto::OpenSslDigestType, crypto::OpenSslDigestType::SHA2_512>(input);
+  return HashSourceFunction<crypto::SHA512>(input);
 }
 
 }  // namespace

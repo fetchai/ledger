@@ -17,6 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include <cstddef>
+#include <cstdint>
+
 namespace fetch {
 
 namespace byte_array {
@@ -24,18 +27,18 @@ class ConstByteArray;
 }
 
 namespace crypto {
-
-// namespace internal {//???
+namespace internal {
 
 enum class OpenSslDigestType
 {
   MD5,
   SHA1,
+  SHA2_256,
   SHA2_512
 };
 
 class OpenSslDigestImpl;
-
+//????remove size from final?
 class OpenSslDigestContext  //???templatise on mdtype, inherit stream hasher, move to internal,
                             // expose aliases per enum value
 {
@@ -48,15 +51,15 @@ public:
   OpenSslDigestContext &operator=(OpenSslDigestContext const &) = delete;
   OpenSslDigestContext &operator=(OpenSslDigestContext &&) = delete;
 
-  void                              reset() const;
-  fetch::byte_array::ConstByteArray operator()(
-      fetch::byte_array::ConstByteArray const &input) const;
+  bool reset();
+  bool update(uint8_t const *data_to_hash, std::size_t size);
+  bool final(uint8_t *data_to_hash, std::size_t size);
 
 private:
   OpenSslDigestImpl *const impl_;
 };
 
-//}  // namespace internal
+}  // namespace internal
 
 }  // namespace crypto
 }  // namespace fetch

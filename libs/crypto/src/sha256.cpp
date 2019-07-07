@@ -29,51 +29,19 @@ namespace crypto {
 static_assert(SHA256::size_in_bytes == SHA256_DIGEST_LENGTH,
               "Incorrect value of SHA256::size_in_bytes");
 
-namespace {
-
-bool ResetContext(SHA256_CTX &context)
-{
-  return static_cast<bool>(SHA256_Init(&context));
-}
-
-}  // namespace
-
-namespace internal {
-
-class Sha256Internals
-{
-public:
-  SHA256_CTX ctx;
-};
-
-}  // namespace internal
-
-SHA256::SHA256()
-  : impl_(new internal::Sha256Internals)
-{
-  ResetContext(impl_->ctx);
-}
-
-SHA256::~SHA256()
-{
-  delete impl_;
-}
-
 bool SHA256::ResetHasher()
 {
-  return ResetContext(impl_->ctx);
+  return impl_.reset();
 }
 
-bool SHA256::UpdateHasher(uint8_t const *data_to_hash, std::size_t const &size)
+bool SHA256::UpdateHasher(uint8_t const *data_to_hash, std::size_t const size)
 {
-  return SHA256_Update(&(impl_->ctx), data_to_hash, size) != 0;
+  return impl_.update(data_to_hash, size);
 }
 
-bool SHA256::FinalHasher(uint8_t *hash, std::size_t const &)
+bool SHA256::FinalHasher(uint8_t *hash, std::size_t const size)
 {
-  auto const success = SHA256_Final(hash, &(impl_->ctx));
-
-  return static_cast<bool>(success);
+  return impl_.final(hash, size);
 }
 
 }  // namespace crypto
