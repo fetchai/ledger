@@ -75,7 +75,7 @@ std::size_t GenerateEchoId(Packet const &packet)
 
   auto const res = hash.Final();
 
-  std::size_t const out = *reinterpret_cast<std::size_t const *const>(res.pointer());
+  std::size_t const out = *reinterpret_cast<std::size_t const *>(res.pointer());
 
   return out;
 }

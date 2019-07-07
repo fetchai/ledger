@@ -90,14 +90,14 @@ class OpenSslDigestContext
 {
 public:
   explicit OpenSslDigestContext(OpenSslDigestType type)
-    : digest_size_bytes_{to_digest_size(type)}
-    , evp_type_{to_evp_type(type)}
-    , evp_ctx_{EVP_MD_CTX_create()}
+    : digest_size_bytes{to_digest_size(type)}
+    , evp_type{to_evp_type(type)}
+    , evp_ctx{EVP_MD_CTX_create()}
   {}
 
-  std::size_t const   digest_size_bytes_;
-  EVP_MD const *const evp_type_;
-  EVP_MD_CTX *const   evp_ctx_;
+  std::size_t const   digest_size_bytes;
+  EVP_MD const *const evp_type;
+  EVP_MD_CTX *const   evp_ctx;
 };
 
 OpenSslHasherImpl::OpenSslHasherImpl(OpenSslDigestType type)
@@ -113,17 +113,17 @@ OpenSslHasherImpl::~OpenSslHasherImpl()
 
 bool OpenSslHasherImpl::reset()
 {
-  return EVP_DigestInit_ex(ctx_->evp_ctx_, ctx_->evp_type_, nullptr) != 0;
+  return EVP_DigestInit_ex(ctx_->evp_ctx, ctx_->evp_type, nullptr) != 0;
 }
 
 bool OpenSslHasherImpl::update(uint8_t const *data_to_hash, std::size_t const size)
 {
-  return EVP_DigestUpdate(ctx_->evp_ctx_, data_to_hash, size) != 0;
+  return EVP_DigestUpdate(ctx_->evp_ctx, data_to_hash, size) != 0;
 }
 
 bool OpenSslHasherImpl::final(uint8_t *const data_to_hash)
 {
-  return EVP_DigestFinal_ex(ctx_->evp_ctx_, data_to_hash, nullptr) != 0;
+  return EVP_DigestFinal_ex(ctx_->evp_ctx, data_to_hash, nullptr) != 0;
 }
 
 }  // namespace internal

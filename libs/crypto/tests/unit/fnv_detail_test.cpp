@@ -35,16 +35,16 @@ class FNVTest : public testing::Test
 public:
   template <typename FNV_CONFIG, detail::eFnvAlgorithm ALGORITHM>
   void testFnvHash(detail::FNV<FNV_CONFIG, ALGORITHM> &    fnv,
-                   byte_array::ConstByteArray const &      data_to_hash,
+                   byte_array::ConstByteArray const &      data_to_hash_param,
                    typename FNV_CONFIG::number_type const &expected_hash)
   {
     fnv.reset();
-    fnv.update(data_to_hash.pointer(), data_to_hash.size());
+    fnv.update(data_to_hash_param.pointer(), data_to_hash_param.size());
     typename FNV_CONFIG::number_type const resulting_hash = fnv.context();
     EXPECT_EQ(expected_hash, resulting_hash);
   }
 
-  byte_array::ConstByteArray const data_to_hash_{"asdfghjkl"};
+  byte_array::ConstByteArray const data_to_hash{"asdfghjkl"};
 };
 
 TEST_F(FNVTest, test_default_FNV_uses_std_size_t_and_fnv1a)
@@ -57,37 +57,37 @@ TEST_F(FNVTest, test_default_FNV_uses_std_size_t_and_fnv1a)
 TEST_F(FNVTest, test_FNV0_32bit)
 {
   detail::FNV<detail::FNVConfig<uint32_t>, detail::eFnvAlgorithm::fnv0_deprecated> fnv;
-  testFnvHash(fnv, data_to_hash_, uint32_t(0xf78f889au));
+  testFnvHash(fnv, data_to_hash, uint32_t(0xf78f889au));
 }
 
 TEST_F(FNVTest, test_FNV1_32bit)
 {
   detail::FNV<detail::FNVConfig<uint32_t>, detail::eFnvAlgorithm::fnv1> fnv;
-  testFnvHash(fnv, data_to_hash_, uint32_t(0xc92ce8a9u));
+  testFnvHash(fnv, data_to_hash, uint32_t(0xc92ce8a9u));
 }
 
 TEST_F(FNVTest, test_FNV1a_32bit)
 {
   detail::FNV<detail::FNVConfig<uint32_t>, detail::eFnvAlgorithm::fnv1a> fnv;
-  testFnvHash(fnv, data_to_hash_, uint32_t(0x2781041u));
+  testFnvHash(fnv, data_to_hash, uint32_t(0x2781041u));
 }
 
 TEST_F(FNVTest, test_FNV0_64bit)
 {
   detail::FNV<detail::FNVConfig<uint64_t>, detail::eFnvAlgorithm::fnv0_deprecated> fnv;
-  testFnvHash(fnv, data_to_hash_, uint64_t(0xfef2bfb7764f7b1au));
+  testFnvHash(fnv, data_to_hash, uint64_t(0xfef2bfb7764f7b1au));
 }
 
 TEST_F(FNVTest, test_FNV1_64bit)
 {
   detail::FNV<detail::FNVConfig<uint64_t>, detail::eFnvAlgorithm::fnv1> fnv;
-  testFnvHash(fnv, data_to_hash_, uint64_t(0xc9cf9eecfdbf6de9u));
+  testFnvHash(fnv, data_to_hash, uint64_t(0xc9cf9eecfdbf6de9u));
 }
 
 TEST_F(FNVTest, test_FNV1a_64bit)
 {
   detail::FNV<detail::FNVConfig<uint64_t>, detail::eFnvAlgorithm::fnv1a> fnv;
-  testFnvHash(fnv, data_to_hash_, uint64_t(0xd16864d71e708e01u));
+  testFnvHash(fnv, data_to_hash, uint64_t(0xd16864d71e708e01u));
 }
 
 }  // namespace

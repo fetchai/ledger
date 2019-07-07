@@ -117,7 +117,7 @@ namespace {
 
 HashSource::Hashes raw_data(fetch::byte_array::ConstByteArray const &input)
 {
-  auto start = reinterpret_cast<std::size_t const *const>(input.pointer());
+  auto start = reinterpret_cast<std::size_t const *>(input.pointer());
 
   auto const size_in_bytes = input.size();
 

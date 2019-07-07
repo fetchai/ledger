@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/byte_array.hpp"
+#include "core/macros.hpp"
 #include "meta/type_traits.hpp"
 #include "vectorise/uint/uint.hpp"
 
@@ -54,6 +55,7 @@ public:
   void Reset()
   {
     auto const success = derived().ResetHasherInternal();
+    FETCH_UNUSED(success);
     assert(success);
   }
 
@@ -68,6 +70,7 @@ public:
   void Final(uint8_t *hash)
   {
     auto const success = derived().FinalHasherInternal(hash);
+    FETCH_UNUSED(success);
     assert(success);
   }
 
@@ -96,6 +99,7 @@ public:
     digest.Resize(Derived::size_in_bytes);
 
     auto const success = derived().FinalHasherInternal(digest.pointer());
+    FETCH_UNUSED(success);
     assert(success);
 
     return digest;

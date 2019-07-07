@@ -32,7 +32,7 @@ class FnvHasherInternals
 {
 public:
   using ImplType = detail::FNV1a;
-  ImplType ctx_;
+  ImplType ctx;
 
   static_assert(FNV::size_in_bytes == ImplType::size_in_bytes,
                 "Incorrect value of FNV::size_in_bytes");
@@ -51,14 +51,14 @@ FNV::~FNV()
 
 bool FNV::ResetHasherInternal()
 {
-  impl_->ctx_.reset();
+  impl_->ctx.reset();
 
   return true;
 }
 
 bool FNV::UpdateHasherInternal(uint8_t const *data_to_hash, std::size_t const size)
 {
-  impl_->ctx_.update(data_to_hash, size);
+  impl_->ctx.update(data_to_hash, size);
 
   return true;
 }
@@ -66,7 +66,7 @@ bool FNV::UpdateHasherInternal(uint8_t const *data_to_hash, std::size_t const si
 bool FNV::FinalHasherInternal(uint8_t *const hash)
 {
   auto hash_ptr = reinterpret_cast<internal::FnvHasherInternals::ImplType::number_type *>(hash);
-  *hash_ptr     = impl_->ctx_.context();
+  *hash_ptr     = impl_->ctx.context();
 
   return true;
 }

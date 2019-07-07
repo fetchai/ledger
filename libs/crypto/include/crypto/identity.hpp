@@ -159,8 +159,8 @@ struct hash<fetch::crypto::Identity>
     auto const params = value.parameters();
     hashStream.Update(&params, sizeof(decltype(params)));
 
-    auto const        res = hashStream.Final();
-    std::size_t const out = *reinterpret_cast<std::size_t const *const>(res.pointer());
+    auto const        arr = hashStream.Final();
+    std::size_t const out = *reinterpret_cast<std::size_t const *>(arr.pointer());
 
     return out;
   }

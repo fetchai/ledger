@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/byte_array.hpp"
+#include "core/byte_array/const_byte_array.hpp"
 #include "crypto/hasher_interface.hpp"
 
 #include <cstddef>
@@ -68,8 +69,8 @@ struct hash<fetch::byte_array::ConstByteArray>
     hash.Reset();
     hash.Update(value.pointer(), value.size());
 
-    auto const        res = hash.Final();
-    std::size_t const out = *reinterpret_cast<std::size_t const *const>(res.pointer());
+    auto const        arr = hash.Final();
+    std::size_t const out = *reinterpret_cast<std::size_t const *>(arr.pointer());
 
     return out;
   }
