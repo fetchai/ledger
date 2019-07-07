@@ -29,7 +29,15 @@ namespace fetch {
 namespace crypto {
 namespace internal {
 
-//???document usage and expected interface
+/*
+ * CRTP-based interface for digest contexts. Implementing classes should define the following:
+ *
+ *   static constexpr std::size_t size_in_bytes = 16u;
+ *   bool ResetHasher();
+ *   bool UpdateHasher(uint8_t const *data_to_hash, std::size_t size);
+ *   bool FinalHasher(uint8_t *hash, std::size_t size);
+ *
+ */
 template <typename Derived>
 class StreamHasher
 {
@@ -42,6 +50,7 @@ public:
   StreamHasher &operator=(StreamHasher const &) = delete;
   StreamHasher &operator=(StreamHasher &&) = delete;
 
+  // Direct call-through methods to Derived
   void Reset()
   {
     auto const success = derived().ResetHasher();
@@ -55,6 +64,14 @@ public:
 
     return success;
   }
+
+  void Final(uint8_t *hash, std::size_t size)
+  {
+    auto const success = derived().FinalHasher(hash, size);
+    assert(success);
+  }
+
+  // Convenience methods
 
   bool Update(byte_array::ConstByteArray const &data)
   {
@@ -82,12 +99,6 @@ public:
     assert(success);
 
     return digest;
-  }
-
-  void Final(uint8_t *hash, std::size_t size)
-  {
-    auto const success = derived().FinalHasher(hash, size);
-    assert(success);
   }
 
 private:
