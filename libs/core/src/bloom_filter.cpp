@@ -24,9 +24,8 @@
 #include "crypto/sha1.hpp"
 #include "crypto/sha512.hpp"
 
-#include <algorithm>
 #include <cstddef>
-#include <functional>
+#include <cstdint>
 #include <vector>
 
 // Aim for 1 false positive per this many positive queries
@@ -118,7 +117,7 @@ namespace {
 
 HashSource::Hashes raw_data(fetch::byte_array::ConstByteArray const &input)
 {
-  auto start = reinterpret_cast<std::size_t const *>(input.pointer());
+  auto start = reinterpret_cast<std::size_t const *const>(input.pointer());
 
   const auto size_in_bytes = input.size();
 
@@ -128,20 +127,6 @@ HashSource::Hashes raw_data(fetch::byte_array::ConstByteArray const &input)
   {
     output[i] = *(start + i);
   }
-
-  return output;
-}
-
-HashSource::Hashes fnv(fetch::byte_array::ConstByteArray const &input)
-{
-  crypto::FNV hasher;
-  hasher.Reset();
-
-  hasher.Update(reinterpret_cast<std::uint8_t const *>(input.pointer()), input.size());
-
-  HashSource::Hashes output(crypto::FNV::size_in_bytes / sizeof(std::size_t));
-
-  hasher.Final(reinterpret_cast<uint8_t *>(output.data()));
 
   return output;
 }
@@ -159,6 +144,11 @@ HashSource::Hashes HashSourceFunction(fetch::byte_array::ConstByteArray const &i
   hasher.Final(reinterpret_cast<uint8_t *const>(output.data()));
 
   return output;
+}
+
+HashSource::Hashes fnv(fetch::byte_array::ConstByteArray const &input)
+{
+  return internal::HashSourceFunction<crypto::FNV>(input);
 }
 
 HashSource::Hashes md5(fetch::byte_array::ConstByteArray const &input)
@@ -205,6 +195,7 @@ bool BasicBloomFilter::Match(fetch::byte_array::ConstByteArray const &element)
   }
 
   ++positive_count_;
+
   return true;
 }
 

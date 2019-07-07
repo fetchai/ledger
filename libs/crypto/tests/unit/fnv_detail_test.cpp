@@ -17,14 +17,13 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/encoders.hpp"
-#include "crypto/fnv.hpp"
 #include "crypto/fnv_detail.hpp"
 
-#include "gtest/gtest.h"
+#include "gmock/gmock.h"
 
 #include <cstddef>
 #include <cstdint>
-#include <typeinfo>
+#include <type_traits>
 
 namespace fetch {
 namespace crypto {
@@ -33,32 +32,7 @@ namespace {
 
 class FNVTest : public testing::Test
 {
-protected:
-  void test_basic_hash(byte_array::ConstByteArray const &data_to_hash,
-                       byte_array::ConstByteArray const &expected_hash)
-  {
-    FNV x;
-    x.Reset();
-    bool const retval = x.Update(data_to_hash);
-    ASSERT_TRUE(retval);
-    byte_array::ConstByteArray const hash = x.Final();
-
-    EXPECT_EQ(expected_hash, hash);
-  }
-
-  void test_basic_hash_value(byte_array::ConstByteArray const &               data_to_hash,
-                             fetch::crypto::detail::FNV1a::number_type const &expected_hash)
-  {
-    FNV x;
-    x.Reset();
-    bool const retval = x.Update(data_to_hash);
-    ASSERT_TRUE(retval);
-    byte_array::ConstByteArray const bytes = x.Final();
-    auto const hash = *reinterpret_cast<std::size_t const *const>(bytes.pointer());
-
-    EXPECT_EQ(expected_hash, hash);
-  }
-
+public:
   template <typename FNV_CONFIG, detail::eFnvAlgorithm ALGORITHM>
   void testFnvHash(detail::FNV<FNV_CONFIG, ALGORITHM> &    fnv,
                    byte_array::ConstByteArray const &      data_to_hash,
@@ -73,21 +47,11 @@ protected:
   byte_array::ConstByteArray const data_to_hash_{"asdfghjkl"};
 };
 
-TEST_F(FNVTest, test_basic)
-{
-  fetch::crypto::detail::FNV1a::number_type const expected_hash = 0x406e475017aa7737;
-  byte_array::ConstByteArray const                expected_hash_array(
-                     reinterpret_cast<byte_array::ConstByteArray::value_type const *>(&expected_hash),
-                     sizeof(expected_hash));
-  test_basic_hash("abcdefg", expected_hash_array);
-  test_basic_hash_value("abcdefg", expected_hash);
-}
-
 TEST_F(FNVTest, test_default_FNV_uses_std_size_t_and_fnv1a)
 {
   using default_fnv = detail::FNV<>;
   EXPECT_EQ(detail::eFnvAlgorithm::fnv1a, default_fnv::algorithm);
-  EXPECT_EQ(typeid(std::size_t), typeid(default_fnv::number_type));
+  EXPECT_TRUE((std::is_same<std::size_t, default_fnv::number_type>::value));
 }
 
 TEST_F(FNVTest, test_FNV0_32bit)

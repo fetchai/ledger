@@ -39,26 +39,30 @@ enum class OpenSslDigestType
   SHA2_512
 };
 
-class OpenSslDigestImpl;
+class OpenSslDigestContext;
 
-class OpenSslDigestContext
+class OpenSslHasherImpl
 {
 public:
-  explicit OpenSslDigestContext(OpenSslDigestType);
-  ~OpenSslDigestContext();
-  OpenSslDigestContext()                             = delete;
-  OpenSslDigestContext(OpenSslDigestContext const &) = delete;
-  OpenSslDigestContext(OpenSslDigestContext &&)      = delete;
+  OpenSslHasherImpl()                          = delete;
+  OpenSslHasherImpl(OpenSslHasherImpl const &) = delete;
+  OpenSslHasherImpl(OpenSslHasherImpl &&)      = delete;
 
-  OpenSslDigestContext &operator=(OpenSslDigestContext const &) = delete;
-  OpenSslDigestContext &operator=(OpenSslDigestContext &&) = delete;
+  OpenSslHasherImpl &operator=(OpenSslHasherImpl const &) = delete;
+  OpenSslHasherImpl &operator=(OpenSslHasherImpl &&) = delete;
+
+private:
+  explicit OpenSslHasherImpl(OpenSslDigestType);
+  ~OpenSslHasherImpl();
 
   bool reset();
   bool update(uint8_t const *data_to_hash, std::size_t size);
   bool final(uint8_t *data_to_hash);
 
-private:
-  OpenSslDigestImpl *const impl_;
+  OpenSslDigestContext *const ctx_;
+
+  template <std::size_t hash_size, typename EnumClass, EnumClass hasher_type>
+  friend class OpenSslHasher;
 };
 
 template <std::size_t hash_size, typename EnumClass, EnumClass hasher_type>
@@ -75,18 +79,29 @@ public:
 
   static constexpr std::size_t size_in_bytes = hash_size;
 
-  OpenSslHasher()  = default;
-  ~OpenSslHasher() = default;
-  //???other specials here and for fnv
+  OpenSslHasher();
+  ~OpenSslHasher();
+  OpenSslHasher(OpenSslHasher const &) = delete;
+  OpenSslHasher(OpenSslHasher &&)      = delete;
+
+  OpenSslHasher &operator=(OpenSslHasher const &) = delete;
+  OpenSslHasher &operator=(OpenSslHasher &&) = delete;
+
 private:
   bool ResetHasher();  //???rename crtp methods, remove hasher suffix, put in sth else
   bool UpdateHasher(uint8_t const *data_to_hash, std::size_t size);
   bool FinalHasher(uint8_t *hash);
 
-  internal::OpenSslDigestContext impl_{hasher_type};
+  internal::OpenSslHasherImpl impl_{hasher_type};
 
   friend BaseType;
 };
+
+template <std::size_t hash_size, typename EnumClass, EnumClass hasher_type>
+OpenSslHasher<hash_size, EnumClass, hasher_type>::OpenSslHasher() = default;
+
+template <std::size_t hash_size, typename EnumClass, EnumClass hasher_type>
+OpenSslHasher<hash_size, EnumClass, hasher_type>::~OpenSslHasher() = default;
 
 template <std::size_t hash_size, typename EnumClass, EnumClass hasher_type>
 bool OpenSslHasher<hash_size, EnumClass, hasher_type>::ResetHasher()
