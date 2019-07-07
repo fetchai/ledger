@@ -55,7 +55,7 @@ public:
       fetch::byte_array::ConstByteArray const &input) const;
 
 private:
-  internal::OpenSslDigestImpl *impl_;
+  internal::OpenSslDigestImpl *const impl_;
 };
 
 }  // namespace crypto
