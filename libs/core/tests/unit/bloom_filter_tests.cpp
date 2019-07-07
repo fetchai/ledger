@@ -46,7 +46,7 @@ std::vector<std::size_t> raw_data_as_hash(fetch::byte_array::ConstByteArray cons
 {
   auto start = reinterpret_cast<std::size_t const *>(input.pointer());
 
-  const auto               size_in_bytes = input.size();
+  auto const               size_in_bytes = input.size();
   std::vector<std::size_t> output((size_in_bytes + sizeof(std::size_t) - 1) / sizeof(std::size_t));
 
   for (std::size_t i = 0; i < output.size(); ++i)

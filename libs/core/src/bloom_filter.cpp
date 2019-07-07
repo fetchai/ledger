@@ -119,7 +119,7 @@ HashSource::Hashes raw_data(fetch::byte_array::ConstByteArray const &input)
 {
   auto start = reinterpret_cast<std::size_t const *const>(input.pointer());
 
-  const auto size_in_bytes = input.size();
+  auto const size_in_bytes = input.size();
 
   HashSource::Hashes output((size_in_bytes + sizeof(std::size_t) - 1) / sizeof(std::size_t));
 

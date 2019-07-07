@@ -29,13 +29,13 @@
 #include <cstddef>
 #include <ostream>
 #include <utility>
+#include <vector>
 
 namespace {
 
 using namespace fetch;
+using namespace fetch::byte_array;
 using namespace fetch::crypto;
-
-using byte_array_type = byte_array::ByteArray;
 
 enum class Hasher
 {
@@ -46,25 +46,61 @@ enum class Hasher
   FNV
 };
 
+std::size_t hash_size(Hasher hasher_type)
+{
+  std::size_t hash_size = 0u;
+
+  switch (hasher_type)
+  {
+  case Hasher::MD5:
+    hash_size = crypto::MD5::size_in_bytes;
+    break;
+  case Hasher::SHA2_256:
+    hash_size = crypto::SHA256::size_in_bytes;
+    break;
+  case Hasher::SHA2_512:
+    hash_size = crypto::SHA512::size_in_bytes;
+    break;
+  case Hasher::SHA1:
+    hash_size = crypto::SHA1::size_in_bytes;
+    break;
+  case Hasher::FNV:
+    hash_size = crypto::FNV::size_in_bytes;
+    break;
+  }
+
+  return hash_size;
+}
+
 class HasherTestParam
 {
 public:
-  HasherTestParam(Hasher type_, byte_array::ByteArray output_empty_, byte_array::ByteArray output1_,
-                  byte_array::ByteArray output2_)
+  HasherTestParam(Hasher type_, ByteArray output_empty_, ByteArray output1_, ByteArray output2_,
+                  ByteArray output3_)
     : type{type_}
-    , output_empty{std::move(output_empty_)}
-    , input1{"Hello world"}
-    , output1{std::move(output1_)}
-    , input2{"some ArbitrSary byte_array!! With !@#$%^&*() Symbols!"}
-    , output2{std::move(output2_)}
+    , expected_size{hash_size(type)}
+    , input_empty("")
+    , expected_output_empty(std::move(output_empty_))
+    , input1("Hello world")
+    , expected_output1(std::move(output1_))
+    , input2("abcdefg")
+    , expected_output2(std::move(output2_))
+    , input3("some ArbitrSary byte_array!! With !@#$%^&*() Symbols!")
+    , expected_output3(std::move(output3_))
+    , all_inputs{input_empty, input1, input2, input3}
   {}
 
-  Hasher                type;
-  byte_array::ByteArray output_empty;
-  const std::string     input1;
-  const std::string     output1;
-  const std::string     input2;
-  const std::string     output2;
+  const Hasher                 type;
+  const std::size_t            expected_size;
+  const ByteArray              input_empty;
+  const ByteArray              expected_output_empty;
+  const ByteArray              input1;
+  const ByteArray              expected_output1;
+  const ByteArray              input2;
+  const ByteArray              expected_output2;
+  const ByteArray              input3;
+  const ByteArray              expected_output3;
+  const std::vector<ByteArray> all_inputs;
 };
 
 std::ostream &operator<<(std::ostream &os, HasherTestParam const &p)
@@ -88,7 +124,7 @@ std::ostream &operator<<(std::ostream &os, HasherTestParam const &p)
     break;
   }
 
-  os << "??? ???" << std::endl;
+  os << std::endl;
 
   return os;
 }
@@ -100,13 +136,9 @@ public:
     : p{GetParam()}
   {}
 
-  HasherTestParam p;
-};
-
-TEST_P(HasherTests, compatibility_with_Hash)
-{
-  auto hash = [this](byte_array_type const &s) {
-    byte_array::ByteArray hash;
+  ByteArray hash(ByteArray const &s)
+  {
+    ByteArray hash;
 
     switch (p.type)
     {
@@ -127,74 +159,75 @@ TEST_P(HasherTests, compatibility_with_Hash)
       break;
     }
 
-    return byte_array::ToHex(hash);
-  };  //???test hash sizes, consistency across calls
+    return hash;
+  };
 
-  EXPECT_EQ(hash(""), p.output_empty);
-  EXPECT_EQ(hash(p.input1), p.output1);
-  EXPECT_EQ(hash(p.input2), p.output2);
+  HasherTestParam p;
+};
 
-  //  byte_array_type input = "Hello world";
-  //  EXPECT_EQ(hash(input), "64ec88ca00b268e5ba1a35678a1b5316d212f4f366b2477232534a8aeca37f3c");
-  //  input = "some RandSom byte_array!! With !@#$%^&*() Symbols!";
-  //  EXPECT_EQ(hash(input), "3d4e08bae43f19e146065b7de2027f9a611035ae138a4ac1978f03cf43b61029");
+TEST_P(HasherTests, hash_is_consistent_across_calls)
+{
+  for (auto const &input : p.all_inputs)
+  {
+    auto const hash1 = hash(input);
+    auto const hash2 = hash(input);
+    auto const hash3 = hash(input);
+
+    EXPECT_EQ(hash1, hash2);
+    EXPECT_EQ(hash1, hash3);
+    EXPECT_EQ(hash2, hash3);
+  }
 }
 
+TEST_P(HasherTests, hash_size)
+{
+  for (auto const &input : p.all_inputs)
+  {
+    EXPECT_EQ(hash(input).size(), p.expected_size);
+  }
+}
+
+TEST_P(HasherTests, empty_input)
+{
+  EXPECT_EQ(ToHex(hash(p.input_empty)), p.expected_output_empty);
+}
+
+TEST_P(HasherTests, non_empty_inputs)
+{
+  EXPECT_EQ(ToHex(hash(p.input1)), p.expected_output1);
+  EXPECT_EQ(ToHex(hash(p.input2)), p.expected_output2);
+  EXPECT_EQ(ToHex(hash(p.input3)), p.expected_output3);
+}
+
+// clang-format off
 std::vector<HasherTestParam> params{
-    HasherTestParam(Hasher::FNV, "25232284e49cf2cb", "c76437a385f71327", "5e09a4e759bf7dc0"),
-    HasherTestParam(Hasher::MD5, "d41d8cd98f00b204e9800998ecf8427e",
-                    "3e25960a79dbc69b674cd4ec67a72c62", "47c25e9489ad6cab8ca1dc29cd90ac74"),
+    HasherTestParam(Hasher::FNV,
+                    "25232284e49cf2cb",
+                    "c76437a385f71327",
+                    "3777aa1750476e40",
+                    "5e09a4e759bf7dc0"),
+    HasherTestParam(Hasher::MD5,
+                    "d41d8cd98f00b204e9800998ecf8427e",
+                    "3e25960a79dbc69b674cd4ec67a72c62",
+                    "7ac66c0f148de9519b8bd264312c4d64",
+                    "47c25e9489ad6cab8ca1dc29cd90ac74"),
     HasherTestParam(Hasher::SHA2_256,
                     "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
                     "64ec88ca00b268e5ba1a35678a1b5316d212f4f366b2477232534a8aeca37f3c",
+                    "7d1a54127b222502f5b79b5fb0803061152a44f92b37e23c6527baf665d4da9a",
                     "c538cb52521023c3e430d58eedd3630ae2e12b5f9a027129f1da023a2c093360"),
     HasherTestParam(Hasher::SHA2_512,
-                    "cf83e1357eefb8bdf1542850d66d8007d620e4050b5715dc83f4a921d36ce9ce47d0d13c5d85f2"
-                    "b0ff8318d2877eec2f63b931bd47417a81a538327af927da3e",
-                    "b7f783baed8297f0db917462184ff4f08e69c2d5e5f79a942600f9725f58ce1f29c18139bf80b0"
-                    "6c0fff2bdd34738452ecf40c488c22a7e3d80cdf6f9c1c0d47",
-                    "8510b88fcd1bb053aa7dac591ec42e7c61557649750139d84fea805b8a8d69f8790235c49a8168"
-                    "f8e2b3bfcfb03be4e1007d612d4fbfebbaa8d51e44cd5431ad"),
-    HasherTestParam(Hasher::SHA1, "da39a3ee5e6b4b0d3255bfef95601890afd80709",
+                    "cf83e1357eefb8bdf1542850d66d8007d620e4050b5715dc83f4a921d36ce9ce47d0d13c5d85f2b0ff8318d2877eec2f63b931bd47417a81a538327af927da3e",
+                    "b7f783baed8297f0db917462184ff4f08e69c2d5e5f79a942600f9725f58ce1f29c18139bf80b06c0fff2bdd34738452ecf40c488c22a7e3d80cdf6f9c1c0d47",
+                    "d716a4188569b68ab1b6dfac178e570114cdf0ea3a1cc0e31486c3e41241bc6a76424e8c37ab26f096fc85ef9886c8cb634187f4fddff645fb099f1ff54c6b8c",
+                    "8510b88fcd1bb053aa7dac591ec42e7c61557649750139d84fea805b8a8d69f8790235c49a8168f8e2b3bfcfb03be4e1007d612d4fbfebbaa8d51e44cd5431ad"),
+    HasherTestParam(Hasher::SHA1,
+                    "da39a3ee5e6b4b0d3255bfef95601890afd80709",
                     "7b502c3a1f48c8609ae212cdfb639dee39673f5e",
+                    "2fb5e13419fc89246865e7a324f476ec624e8740",
                     "9654b13e864968ab29cf2cf10654e826ed2a57d9")};
+// clang-format on
 
 INSTANTIATE_TEST_CASE_P(aaa, HasherTests, ::testing::ValuesIn(params), );
-
-//???
-// void test_basic_hash(byte_array::ConstByteArray const &data_to_hash,
-//                     byte_array::ConstByteArray const &expected_hash)
-//{
-//  FNV x;
-//  x.Reset();
-//  bool const retval = x.Update(data_to_hash);
-//  ASSERT_TRUE(retval);
-//  byte_array::ConstByteArray const hash = x.Final();
-//
-//  EXPECT_EQ(expected_hash, hash);
-//}
-//
-// void test_basic_hash_value(byte_array::ConstByteArray const &               data_to_hash,
-//                           fetch::crypto::detail::FNV1a::number_type const &expected_hash)
-//{
-//  FNV x;
-//  x.Reset();
-//  bool const retval = x.Update(data_to_hash);
-//  ASSERT_TRUE(retval);
-//  byte_array::ConstByteArray const bytes = x.Final();
-//  auto const hash = *reinterpret_cast<std::size_t const *const>(bytes.pointer());
-//
-//  EXPECT_EQ(expected_hash, hash);
-//}
-//
-// TEST_F(FNVTest, test_basic)
-//{
-//  fetch::crypto::detail::FNV1a::number_type const expected_hash = 0x406e475017aa7737;
-//  byte_array::ConstByteArray const                expected_hash_array(
-//                     reinterpret_cast<byte_array::ConstByteArray::value_type const
-//                     *>(&expected_hash), sizeof(expected_hash));
-//  test_basic_hash("abcdefg", expected_hash_array);
-//  test_basic_hash_value("abcdefg", expected_hash);
-//}
 
 }  // namespace
