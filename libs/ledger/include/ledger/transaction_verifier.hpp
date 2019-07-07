@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/containers/queue.hpp"
+#include "telemetry/telemetry.hpp"
 
 #include <cstddef>
 #include <memory>
@@ -37,12 +38,7 @@ public:
   using TransactionPtr = std::shared_ptr<Transaction>;
 
   // Construction / Destruction
-  explicit TransactionVerifier(TransactionSink &sink, std::size_t verifying_threads,
-                               std::string name)
-    : verifying_threads_(verifying_threads)
-    , name_(std::move(name))
-    , sink_(sink)
-  {}
+  TransactionVerifier(TransactionSink &sink, std::size_t verifying_threads, std::string const &name);
   TransactionVerifier(TransactionVerifier const &) = delete;
   TransactionVerifier(TransactionVerifier &&)      = delete;
   ~TransactionVerifier();
@@ -72,6 +68,8 @@ private:
   using ThreadPtr       = std::unique_ptr<std::thread>;
   using Threads         = std::vector<ThreadPtr>;
   using Sink            = TransactionSink;
+  using GaugePtr        = telemetry::GaugePtr<uint64_t>;
+  using CounterPtr      = telemetry::CounterPtr;
 
   void Verifier();
   void Dispatcher();
@@ -83,17 +81,18 @@ private:
   Threads           threads_;
   VerifiedQueue     verified_queue_;
   UnverifiedQueue   unverified_queue_;
+
+  // telemetry
+  GaugePtr unverified_queue_length_;
+  GaugePtr unverified_queue_max_length_;
+  GaugePtr verified_queue_length_;
+  GaugePtr verified_queue_max_length_;
+  CounterPtr unverified_tx_total_;
+  CounterPtr verified_tx_total_;
+  CounterPtr discarded_tx_total_;
+  GaugePtr num_threads_;
 };
 
-inline void TransactionVerifier::AddTransaction(TransactionPtr const &tx)
-{
-  unverified_queue_.Push(tx);
-}
-
-inline void TransactionVerifier::AddTransaction(TransactionPtr &&tx)
-{
-  unverified_queue_.Push(std::move(tx));
-}
 
 }  // namespace ledger
 }  // namespace fetch
