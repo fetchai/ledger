@@ -26,10 +26,12 @@
 
 #include <cassert>
 #include <cstddef>
-#include <vector>
+#include <utility>
 
 namespace fetch {
 namespace crypto {
+
+// namespace internal {//???
 
 namespace {
 
@@ -77,8 +79,6 @@ std::size_t to_digest_size(OpenSslDigestType const type)
 
 }  // namespace
 
-namespace internal {
-
 class OpenSslDigestImpl
 {
 public:
@@ -93,10 +93,8 @@ public:
   EVP_MD_CTX *const   ctx_;
 };
 
-}  // namespace internal
-
 OpenSslDigestContext::OpenSslDigestContext(OpenSslDigestType type)
-  : impl_{new internal::OpenSslDigestImpl(type)}
+  : impl_{new OpenSslDigestImpl(type)}
 {}
 
 OpenSslDigestContext::~OpenSslDigestContext()
@@ -117,8 +115,10 @@ fetch::byte_array::ConstByteArray OpenSslDigestContext::operator()(
   EVP_DigestUpdate(impl_->ctx_, input.pointer(), input.size());
   EVP_DigestFinal_ex(impl_->ctx_, output.pointer(), nullptr);
 
-  return output;
+  return std::move(output);
 }
+
+//}  // namespace internal
 
 }  // namespace crypto
 }  // namespace fetch

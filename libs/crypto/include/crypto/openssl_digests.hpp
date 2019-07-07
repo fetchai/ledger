@@ -17,8 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include <cstddef>
-
 namespace fetch {
 
 namespace byte_array {
@@ -27,6 +25,8 @@ class ConstByteArray;
 
 namespace crypto {
 
+// namespace internal {//???
+
 enum class OpenSslDigestType
 {
   MD5,
@@ -34,9 +34,7 @@ enum class OpenSslDigestType
   SHA2_512
 };
 
-namespace internal {
 class OpenSslDigestImpl;
-}
 
 class OpenSslDigestContext  //???templatise on mdtype, inherit stream hasher, move to internal,
                             // expose aliases per enum value
@@ -55,8 +53,10 @@ public:
       fetch::byte_array::ConstByteArray const &input) const;
 
 private:
-  internal::OpenSslDigestImpl *const impl_;
+  OpenSslDigestImpl *const impl_;
 };
+
+//}  // namespace internal
 
 }  // namespace crypto
 }  // namespace fetch
