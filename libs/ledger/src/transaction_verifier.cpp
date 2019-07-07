@@ -103,8 +103,8 @@ TransactionVerifier::TransactionVerifier(TransactionSink &sink, std::size_t veri
   , num_threads_(CreateGauge(name, "threads", "The current number of processing threads in use"))
 {
   // since these lengths are fixed
-  unverified_queue_max_length_->increment(QUEUE_SIZE);
-  verified_queue_max_length_->increment(QUEUE_SIZE);
+  unverified_queue_max_length_->increment(std::size_t{QUEUE_SIZE});
+  verified_queue_max_length_->increment(std::size_t{QUEUE_SIZE});
 }
 
 TransactionVerifier::~TransactionVerifier()
