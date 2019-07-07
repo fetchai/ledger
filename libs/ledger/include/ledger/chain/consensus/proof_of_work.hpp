@@ -50,9 +50,9 @@ public:
   UInt256 const &    target() const;
 
 private:
-  UInt256               digest_;
-  UInt256               target_;
-  byte_array::ByteArray header_;
+  UInt256                    digest_;
+  UInt256                    target_;
+  byte_array::ConstByteArray header_;
 };
 
 inline byte_array::ConstByteArray const &ProofOfWork::header() const

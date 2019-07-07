@@ -24,10 +24,10 @@
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
-#include <type_traits>
 
 namespace fetch {
 namespace crypto {
+namespace internal {
 
 template <typename Derived>
 class StreamHasher
@@ -41,9 +41,32 @@ public:
   StreamHasher &operator=(StreamHasher const &) = delete;
   StreamHasher &operator=(StreamHasher &&) = delete;
 
+  void Reset()
+  {
+    auto const success = derived().ResetHasher();
+    assert(success);
+  }
+
+  bool Update(uint8_t const *data_to_hash, std::size_t size)
+  {
+    auto const success = derived().UpdateHasher(data_to_hash, size);
+    assert(success);
+
+    return success;
+  }
+
   bool Update(byte_array::ConstByteArray const &data)
   {
     auto const success = derived().UpdateHasher(data.pointer(), data.size());
+    assert(success);
+
+    return success;
+  }
+
+  bool Update(std::string const &str)
+  {
+    auto const success =
+        derived().UpdateHasher(reinterpret_cast<uint8_t const *>(str.data()), str.size());
     assert(success);
 
     return success;
@@ -60,55 +83,11 @@ public:
     return digest;
   }
 
-  bool Update(uint8_t const *data_to_hash, std::size_t size)
-  {
-    auto const success = derived().UpdateHasher(data_to_hash, size);
-    assert(success);
-
-    return success;
-  }
-
   void Final(uint8_t *hash, std::size_t size)
   {
     auto const success = derived().FinalHasher(hash, size);
     assert(success);
   }
-
-  void Reset()
-  {
-    auto const success = derived().ResetHasher();
-    assert(success);
-  }
-
-  bool Update(std::string const &str)
-  {
-    auto const success =
-        derived().UpdateHasher(reinterpret_cast<uint8_t const *>(str.data()), str.size());
-    assert(success);
-
-    return success;
-  }
-
-  //  template <typename T>
-  //  meta::IfIsPod<T, T> Final()
-  //  {
-  //    typename std::remove_const<T>::type pod;
-  //    derived().FinalHasher(reinterpret_cast<uint8_t *>(&pod), sizeof(pod));
-  //    return pod;
-  //  }
-
-  //  template <typename T>
-  //  meta::IfIsPod<T, bool> Update(T const &pod)
-  //  {
-  //    return derived().UpdateHasher(reinterpret_cast<uint8_t const *>(&pod), sizeof(pod));
-  //  }
-
-  //  template <typename T>
-  //  meta::IfIsPod<T, bool> Update(std::vector<T> const &vect)
-  //  {
-  //    return derived().UpdateHasher(reinterpret_cast<uint8_t const *>(vect.data()), vect.size() *
-  //    sizeof(T));
-  //  }
 
 private:
   constexpr Derived &derived()
@@ -117,5 +96,6 @@ private:
   }
 };
 
+}  // namespace internal
 }  // namespace crypto
 }  // namespace fetch

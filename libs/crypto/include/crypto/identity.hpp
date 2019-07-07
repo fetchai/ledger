@@ -151,7 +151,7 @@ namespace std {
 template <>
 struct hash<fetch::crypto::Identity>
 {
-  std::size_t operator()(fetch::crypto::Identity const &value) const
+  std::size_t operator()(fetch::crypto::Identity const &value) const noexcept
   {
     fetch::crypto::FNV hashStream;
     hashStream.Update(value.identifier());

@@ -46,8 +46,8 @@ protected:
     EXPECT_EQ(expected_hash, hash);
   }
 
-  void test_basic_hash_value(byte_array::ConstByteArray const &data_to_hash,
-                             std::size_t const &               expected_hash)
+  void test_basic_hash_value(byte_array::ConstByteArray const &               data_to_hash,
+                             fetch::crypto::detail::FNV1a::number_type const &expected_hash)
   {
     FNV x;
     x.Reset();
@@ -75,10 +75,10 @@ protected:
 
 TEST_F(FNVTest, test_basic)
 {
-  std::size_t const                expected_hash = 0x406e475017aa7737;
-  byte_array::ConstByteArray const expected_hash_array(
-      reinterpret_cast<byte_array::ConstByteArray::value_type const *>(&expected_hash),
-      sizeof(expected_hash));
+  fetch::crypto::detail::FNV1a::number_type const expected_hash = 0x406e475017aa7737;
+  byte_array::ConstByteArray const                expected_hash_array(
+                     reinterpret_cast<byte_array::ConstByteArray::value_type const *>(&expected_hash),
+                     sizeof(expected_hash));
   test_basic_hash("abcdefg", expected_hash_array);
   test_basic_hash_value("abcdefg", expected_hash);
 }
@@ -127,5 +127,6 @@ TEST_F(FNVTest, test_FNV1a_64bit)
 }
 
 }  // namespace
+
 }  // namespace crypto
 }  // namespace fetch

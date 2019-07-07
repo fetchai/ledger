@@ -29,7 +29,7 @@ namespace internal {
 class Sha256Internals;
 }
 
-class SHA256 : public StreamHasher<SHA256>
+class SHA256 : public internal::StreamHasher<SHA256>
 {
 public:
   using BaseType = StreamHasher<SHA256>;

@@ -30,7 +30,7 @@ namespace internal {
 class FnvHasherInternals;
 }
 
-class FNV : private StreamHasher<FNV>
+class FNV : private internal::StreamHasher<FNV>
 {
 public:
   using BaseType = StreamHasher<FNV>;
@@ -62,14 +62,16 @@ namespace std {
 template <>
 struct hash<fetch::byte_array::ConstByteArray>
 {
-  std::size_t operator()(fetch::byte_array::ConstByteArray const &value) const
+  std::size_t operator()(fetch::byte_array::ConstByteArray const &value) const noexcept
   {
     fetch::crypto::FNV hash;
     hash.Reset();
     hash.Update(value.pointer(), value.size());
-    auto const ret = hash.Final();
 
-    return *reinterpret_cast<std::size_t const *>(ret.pointer());
+    auto const        res = hash.Final();
+    std::size_t const out = *reinterpret_cast<std::size_t const *const>(res.pointer());
+
+    return out;
   }
 };
 

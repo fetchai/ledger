@@ -32,7 +32,7 @@ bool ProofOfWork::operator()()
 {
   crypto::SHA256 hasher;
   hasher.Reset();
-  hasher.Update(header_.pointer(), header_.size());
+  hasher.Update(header_);
   hasher.Update(this->pointer(), this->size());
 
   digest_ = hasher.Final();
