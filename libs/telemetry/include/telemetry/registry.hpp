@@ -43,20 +43,17 @@ public:
   static Registry &Instance();
 
   // Construction / Destruction
-  Registry()                 = default;
   Registry(Registry const &) = delete;
   Registry(Registry &&)      = delete;
-  ~Registry()                = default;
 
   /// @name Metric Helpers
   /// @{
-  CounterPtr CreateCounter(std::string name, std::string description = "",
-                           Labels labels = Labels{});
+  CounterPtr CreateCounter(std::string name, std::string description, Labels labels = Labels{});
 
   CounterMapPtr CreateCounterMap(std::string name, std::string description, Labels labels = Labels{});
 
   template <typename T>
-  GaugePtr<T> CreateGauge(std::string name, std::string description = "", Labels labels = Labels{});
+  GaugePtr<T> CreateGauge(std::string name, std::string description, Labels labels = Labels{});
 
   HistogramPtr CreateHistogram(std::initializer_list<double> const &buckets, std::string name,
                                std::string description = "", Labels labels = Labels{});
@@ -78,6 +75,10 @@ private:
   using Measurements   = std::vector<MeasurementPtr>;
   using Mutex          = std::mutex;
   using LockGuard      = std::lock_guard<std::mutex>;
+
+  // Construction / Destruction
+  Registry()  = default;
+  ~Registry() = default;
 
   static bool ValidateName(std::string const &name);
 

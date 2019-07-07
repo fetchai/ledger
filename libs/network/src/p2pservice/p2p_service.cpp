@@ -38,7 +38,7 @@ P2PService::P2PService(Muddle &muddle, LaneManagement &lane_management, TrustInt
   , identity_cache_{}
   , resolver_{identity_cache_}
   , resolver_proto_{resolver_, *this}
-  , client_("R:P2P", muddle_ep_, Muddle::Address(), SERVICE_P2P, CHANNEL_RPC)
+  , client_("R:P2P", muddle_ep_, SERVICE_P2P, CHANNEL_RPC)
   , local_services_(lane_management_)
   , max_peers_(max_peers)
   , transient_peers_(transient_peers)
@@ -143,7 +143,7 @@ void P2PService::GetConnectionStatus(ConnectionMap &active_connections,
   // generate the set of addresses to whom we are currently connected
   active_addresses.reserve(active_connections.size());
 
-  for (const auto &c : active_connections)
+  for (auto const &c : active_connections)
   {
     if (muddle_.IsConnected(c.first))
     {
@@ -324,7 +324,7 @@ void P2PService::UpdateMuddlePeers(AddressSet const &active_addresses)
     if (resolve)
     {
       FETCH_LOG_INFO(LOGGING_NAME, "Resolve Peer: ", ToBase64(address));
-      for (const auto &addr : active_addresses)
+      for (auto const &addr : active_addresses)
       {
         auto key = std::make_pair(addr, address);
         if (pending_resolutions_.IsInFlight(key))

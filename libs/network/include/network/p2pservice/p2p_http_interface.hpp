@@ -169,7 +169,7 @@ private:
 
     std::vector<variant::Variant> peer_data_list;
 
-    for (const auto &pt : peers_trusts)
+    for (auto const &pt : peers_trusts)
     {
       variant::Variant peer_data = variant::Variant::Object();
       peer_data["target"]        = pt.name;

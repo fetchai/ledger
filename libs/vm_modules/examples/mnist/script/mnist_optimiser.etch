@@ -5,7 +5,7 @@ if (System.Argc() != 2)
   return;
 endif
 
-var training_iterations = 100;
+var training_iterations = 10;
 
 // Define the neural network
 var g = Graph();
@@ -18,7 +18,10 @@ g.AddFullyConnected("FC_3", "Relu_2", 64, 10);
 g.AddSoftmax("Softmax", "FC_3");
 
 // Set up the dataloader
-var data_loader = MNISTLoader(System.Argv(0), System.Argv(1));
+printLn(System.Argv(0));
+printLn(System.Argv(1));
+var data_loader = DataLoader();
+data_loader.AddData("mnist", System.Argv(0), System.Argv(1));
 
 // Set up the optimiser
 var optimiser = AdamOptimiser(g, "Input", "Softmax");
@@ -27,7 +30,9 @@ var optimiser = AdamOptimiser(g, "Input", "Softmax");
 var batch_size = 64u64;
 var subset_size = (100u64 * 64u64);
 for(i in 0:training_iterations)
-    print("Current Loss: " + toString(optimiser.Run(data_loader, batch_size, subset_size)));
+    var loss = optimiser.Run(data_loader, batch_size, subset_size);
+    print("Current Loss: ");
+    printLn(loss);
 endfor
 
 endfunction

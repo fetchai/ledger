@@ -22,7 +22,7 @@
 
 #include "gtest/gtest.h"
 
-#include <memory>
+#include <cstdint>
 
 using fetch::BitVector;
 

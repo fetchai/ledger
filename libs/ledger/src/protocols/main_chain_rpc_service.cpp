@@ -16,8 +16,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/protocols/main_chain_rpc_service.hpp"
-
 #include "core/byte_array/encoders.hpp"
 #include "core/logger.hpp"
 #include "core/serializers/byte_array_buffer.hpp"
@@ -26,11 +24,18 @@
 #include "crypto/fetch_identity.hpp"
 #include "ledger/chain/block_coordinator.hpp"
 #include "ledger/chain/transaction_layout_rpc_serializers.hpp"
+#include "ledger/protocols/main_chain_rpc_service.hpp"
 #include "metrics/metrics.hpp"
 #include "network/muddle/packet.hpp"
-
 #include "telemetry/counter.hpp"
 #include "telemetry/registry.hpp"
+
+#include <cstddef>
+#include <cstdint>
+#include <string>
+#include <unordered_set>
+#include <utility>
+#include <vector>
 
 // TODO(private 976) : This can crash the network as it's not enforced server side
 static const uint32_t MAX_CHAIN_REQUEST_SIZE = 10000;
@@ -83,29 +88,39 @@ MainChainRpcService::MainChainRpcService(MuddleEndpoint &endpoint, MainChain &ch
   , trust_(trust)
   , block_subscription_(endpoint.Subscribe(SERVICE_MAIN_CHAIN, CHANNEL_BLOCKS))
   , main_chain_protocol_(chain_)
-  , rpc_client_("R:MChain", endpoint, Address{}, SERVICE_MAIN_CHAIN, CHANNEL_RPC)
+  , rpc_client_("R:MChain", endpoint, SERVICE_MAIN_CHAIN, CHANNEL_RPC)
   , state_machine_{std::make_shared<StateMachine>("MainChain", GetInitialState(mode_),
                                                   [](State state) { return ToString(state); })}
   , recv_block_count_{telemetry::Registry::Instance().CreateCounter(
-        "ledger_mainchain_service_recv_block_count")}
+        "ledger_mainchain_service_recv_block_total",
+        "The number of received blocks from the network")}
   , recv_block_valid_count_{telemetry::Registry::Instance().CreateCounter(
-        "ledger_mainchain_service_recv_block_valid_count")}
+        "ledger_mainchain_service_recv_block_valid_total",
+        "The total number of valid blocks received")}
   , recv_block_loose_count_{telemetry::Registry::Instance().CreateCounter(
-        "ledger_mainchain_service_recv_block_loose_count")}
+        "ledger_mainchain_service_recv_block_loose_total",
+        "The total number of loose blocks received")}
   , recv_block_duplicate_count_{telemetry::Registry::Instance().CreateCounter(
-        "ledger_mainchain_service_recv_block_duplicate_count")}
+        "ledger_mainchain_service_recv_block_duplicate_total",
+        "The total number of duplicate blocks received from the network")}
   , recv_block_invalid_count_{telemetry::Registry::Instance().CreateCounter(
-        "ledger_mainchain_service_recv_block_invalid_count")}
+        "ledger_mainchain_service_recv_block_invalid_total",
+        " The total number of invalid blocks received from the network")}
   , state_request_heaviest_{telemetry::Registry::Instance().CreateCounter(
-        "ledger_mainchain_service_state_request_heaviest")}
+        "ledger_mainchain_service_state_request_heaviest_total",
+        "The number of times in the requested heaviest state")}
   , state_wait_heaviest_{telemetry::Registry::Instance().CreateCounter(
-        "ledger_mainchain_service_state_wait_heaviest")}
+        "ledger_mainchain_service_state_wait_heaviest_total",
+        "The number of times in the wait heaviest state")}
   , state_synchronising_{telemetry::Registry::Instance().CreateCounter(
-        "ledger_mainchain_service_state_synchronising")}
+        "ledger_mainchain_service_state_synchronising_total",
+        "The number of times in the synchronisiing state")}
   , state_wait_response_{telemetry::Registry::Instance().CreateCounter(
-        "ledger_mainchain_service_state_wait_response")}
+        "ledger_mainchain_service_state_wait_response_total",
+        "The number of times in the wait response state")}
   , state_synchronised_{telemetry::Registry::Instance().CreateCounter(
-        "ledger_mainchain_service_state_synchronised")}
+        "ledger_mainchain_service_state_synchronised_total",
+        "The number of times in the sychronised state")}
 {
   // register the main chain protocol
   Add(RPC_MAIN_CHAIN, &main_chain_protocol_);

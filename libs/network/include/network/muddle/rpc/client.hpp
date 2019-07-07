@@ -49,8 +49,6 @@ public:
   static constexpr char const *LOGGING_NAME = "MuddleRpcClient";
 
   // Construction / Destruction
-  Client(std::string name, MuddleEndpoint &endpoint, Address address, uint16_t service,
-         uint16_t channel);
   Client(std::string name, MuddleEndpoint &endpoint, uint16_t service, uint16_t channel);
   Client(Client const &) = delete;
   Client(Client &&)      = delete;

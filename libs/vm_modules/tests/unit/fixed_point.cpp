@@ -16,11 +16,17 @@
 //
 //------------------------------------------------------------------------------
 
+#include "math/base_types.hpp"
+#include "math/trigonometry.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 #include "vm_test_toolkit.hpp"
 
-#include "math/base_types.hpp"
-#include "math/trigonometry.hpp"
+#include "gmock/gmock.h"
+
+#include <sstream>
+#include <string>
+
+using namespace fetch::fixed_point;
 
 namespace {
 
@@ -35,8 +41,7 @@ bool RunTest(VmTestToolkit &toolkit, std::stringstream &stdout, char const *TEXT
 {
   EXPECT_TRUE(toolkit.Compile(TEXT));
   EXPECT_TRUE(toolkit.Run());
-  EXPECT_NEAR(std::stod(stdout.str()), gt,
-              double(fetch::math::function_tolerance<fetch::fixed_point::fp32_t>()));
+  EXPECT_NEAR(std::stod(stdout.str()), gt, double(fetch::math::function_tolerance<fp32_t>()));
   return true;
 }
 
@@ -47,7 +52,7 @@ TEST_F(FixedPointTest, create_fixed_point)
       print(1.0fp32);
     endfunction
   )";
-  double      gt   = static_cast<double>(fetch::fixed_point::fp32_t(1));
+  double      gt   = static_cast<double>(fp32_t(1));
   EXPECT_TRUE(RunTest(toolkit, stdout, TEXT, gt));
 }
 
@@ -61,7 +66,7 @@ TEST_F(FixedPointTest, addition_fixed_point)
       print(a);
     endfunction
   )";
-  double      gt   = static_cast<double>(fetch::fixed_point::fp32_t(5));
+  double      gt   = static_cast<double>(fp32_t(5));
   EXPECT_TRUE(RunTest(toolkit, stdout, TEXT, gt));
 }
 
@@ -75,7 +80,7 @@ TEST_F(FixedPointTest, subtraction_fixed_point)
       print(a);
     endfunction
   )";
-  double      gt   = static_cast<double>(fetch::fixed_point::fp32_t(1));
+  double      gt   = static_cast<double>(fp32_t(1));
   EXPECT_TRUE(RunTest(toolkit, stdout, TEXT, gt));
 }
 
@@ -89,7 +94,7 @@ TEST_F(FixedPointTest, multiplication_fixed_point)
       print(a);
     endfunction
   )";
-  double      gt   = static_cast<double>(fetch::fixed_point::fp32_t(6));
+  double      gt   = static_cast<double>(fp32_t(6));
   EXPECT_TRUE(RunTest(toolkit, stdout, TEXT, gt));
 }
 
@@ -103,7 +108,7 @@ TEST_F(FixedPointTest, divide_fixed_point)
       print(a);
     endfunction
   )";
-  double      gt   = static_cast<double>(fetch::fixed_point::fp32_t(1.5));
+  double      gt   = static_cast<double>(fp32_t(1.5));
   EXPECT_TRUE(RunTest(toolkit, stdout, TEXT, gt));
 }
 
@@ -119,7 +124,7 @@ TEST_F(FixedPointTest, array_32_fixed_point)
       print(myArray[3]);
     endfunction
   )";
-  double      gt   = static_cast<double>(fetch::fixed_point::fp32_t(3));
+  double      gt   = static_cast<double>(fp32_t(3));
   EXPECT_TRUE(RunTest(toolkit, stdout, TEXT, gt));
 }
 
@@ -132,7 +137,7 @@ TEST_F(FixedPointTest, map_32_fixed_point)
       print(mymap[0fp32]);
     endfunction
   )";
-  double      gt   = static_cast<double>(fetch::fixed_point::fp32_t(1));
+  double      gt   = static_cast<double>(fp32_t(1));
   EXPECT_TRUE(RunTest(toolkit, stdout, TEXT, gt));
 }
 
@@ -144,7 +149,7 @@ TEST_F(FixedPointTest, sin_pi_32_fixed_point)
       print(sin(pi));
     endfunction
   )";
-  double      gt   = static_cast<double>(fetch::math::Sin(fetch::fixed_point::fp32_t::CONST_PI));
+  double      gt   = static_cast<double>(fetch::math::Sin(fp32_t::CONST_PI));
   EXPECT_TRUE(RunTest(toolkit, stdout, TEXT, gt));
 }
 
@@ -156,8 +161,7 @@ TEST_F(FixedPointTest, cos_pi_32_fixed_point)
       print(cos(pi));
     endfunction
   )";
-  double      gt   = static_cast<double>(
-      fetch::math::Cos(fetch::fixed_point::fp32_t(fetch::fixed_point::fp32_t::CONST_PI)));
+  double      gt   = static_cast<double>(fetch::math::Cos(fp32_t(fp32_t::CONST_PI)));
   EXPECT_TRUE(RunTest(toolkit, stdout, TEXT, gt));
 }
 
@@ -169,7 +173,7 @@ TEST_F(FixedPointTest, exp_32_fixed_point)
       print(exp(val));
     endfunction
   )";
-  double gt = static_cast<double>(fetch::fixed_point::fp32_t(fetch::fixed_point::fp32_t::CONST_E));
+  double      gt   = static_cast<double>(fp32_t(fp32_t::CONST_E));
   EXPECT_TRUE(RunTest(toolkit, stdout, TEXT, gt));
 }
 
@@ -181,7 +185,7 @@ TEST_F(FixedPointTest, pow_32_fixed_point)
       print(pow(val, val));
     endfunction
   )";
-  double      gt   = static_cast<double>(fetch::fixed_point::fp32_t(4));
+  double      gt   = static_cast<double>(fp32_t(4));
   EXPECT_TRUE(RunTest(toolkit, stdout, TEXT, gt));
 }
 

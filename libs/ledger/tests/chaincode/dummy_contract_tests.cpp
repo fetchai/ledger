@@ -98,7 +98,7 @@ TEST_F(DummyContractTests, CheckDispatch)
 
   // attach, dispatch and detach (run the life cycle)
   contract_->Attach(adapter);
-  const auto arbitrary_block_number = 1234u;
+  auto const arbitrary_block_number = 1234u;
   contract_->DispatchTransaction(tx->action(), *tx, arbitrary_block_number);
   contract_->Detach();
 }

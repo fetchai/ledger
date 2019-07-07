@@ -28,7 +28,7 @@ void BuildByteArray(pybind11::module &module)
   namespace py = pybind11;
   py::class_<ByteArray, ConstByteArray>(module, "ByteArray")
       .def(py::init<>())
-      .def(py::init<const char *>())
+      .def(py::init<char const *>())
       .def(py::init<const std::string &>())
       .def(py::init<const fetch::byte_array::ByteArray &>())
       .def(py::init<std::initializer_list<ByteArray::value_type>>())
@@ -51,7 +51,7 @@ void BuildByteArray(pybind11::module &module)
                ByteArray::pointer)
       .def("pointer",
            (fetch::byte_array::ConstByteArray::value_type * (ByteArray::*)()) & ByteArray::pointer)
-      .def("char_pointer", (const char *(ByteArray::*)() const) & ByteArray::char_pointer)
+      .def("char_pointer", (char const *(ByteArray::*)() const) & ByteArray::char_pointer)
       .def("char_pointer", (char *(ByteArray::*)()) & ByteArray::char_pointer)
       .def("Reserve", &ByteArray::Reserve);
 }

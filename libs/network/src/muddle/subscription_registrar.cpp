@@ -163,7 +163,7 @@ void SubscriptionRegistrar::Debug(std::string const &prefix) const
                  "SubscriptionRegistrar:address_dispatch_map_ = ", address_dispatch_map_.size(),
                  " entries.");
 
-  for (const auto &mapping : address_dispatch_map_)
+  for (auto const &mapping : address_dispatch_map_)
   {
     auto numb = std::get<0>(mapping.first);
     auto addr = std::get<1>(mapping.first);
@@ -171,7 +171,7 @@ void SubscriptionRegistrar::Debug(std::string const &prefix) const
                    "SubscriptionRegistrar:address_dispatch_map_ Addr=", addr.ToBase64(),
                    "  Service=", ((numb >> 16u) & 0xFFFF));
   }
-  for (const auto &mapping : dispatch_map_)
+  for (auto const &mapping : dispatch_map_)
   {
     auto numb = mapping.first;
     auto serv = (numb >> 16u) & 0xFFFF;

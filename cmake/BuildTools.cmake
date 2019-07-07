@@ -149,7 +149,11 @@ function (_internal_add_fetch_test
     endif ()
 
     # define the test
-    add_test(${name} ${name} ${ARGV})
+    add_test(${name}
+             ${name}
+             ${ARGV}
+             --gtest_shuffle
+             --gtest_random_seed=123)
     set_tests_properties(${name} PROPERTIES TIMEOUT 300)
     if (test_label)
       set_tests_properties(${name} PROPERTIES LABELS "${test_label}")

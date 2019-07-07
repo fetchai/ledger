@@ -94,8 +94,8 @@ private:
   using SyncAddressSet = fetch::SynchronisedState<AddressSet>;
 
   MuddlePtr      muddle_;
-  RpcClientPtr   client_{std::make_shared<Client>("RRPClient", muddle_->AsEndpoint(),
-                                                Muddle::Address(), SERVICE_TEST, CHANNEL_RPC)};
+  RpcClientPtr client_{
+      std::make_shared<Client>("RRPClient", muddle_->AsEndpoint(), SERVICE_TEST, CHANNEL_RPC)};
   SyncAddressSet node_set_{};
 };
 

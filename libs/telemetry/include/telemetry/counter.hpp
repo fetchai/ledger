@@ -56,10 +56,6 @@ private:
   std::atomic<uint64_t> counter_{0};
 };
 
-inline Counter::Counter(std::string name, std::string description, Labels labels)
-  : Measurement(std::move(name), std::move(description), std::move(labels))
-{}
-
 inline uint64_t Counter::count() const
 {
   return counter_;

@@ -21,6 +21,11 @@
 
 #include "gtest/gtest.h"
 
+#include <cstddef>
+#include <cstdint>
+
+namespace {
+
 using namespace fetch::vectorize;
 
 template <typename T>
@@ -195,3 +200,5 @@ TEST(vectorise_native_test, test_registers)
 {
   test_registers();
 }
+
+}  // namespace
