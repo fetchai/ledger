@@ -19,13 +19,11 @@
 #include "crypto/fnv.hpp"
 #include "crypto/fnv_detail.hpp"
 
-#include <algorithm>
 #include <cstddef>
 #include <cstdint>
 
 namespace fetch {
 namespace crypto {
-
 namespace internal {
 
 class FnvHasherInternals

@@ -33,10 +33,16 @@ namespace internal {
 /*
  * CRTP-based interface for digest contexts. Implementing classes should define the following:
  *
- *   static constexpr std::size_t size_in_bytes = 16u;
+ * ```
+ *   static constexpr std::size_t size_in_bytes;
  *   bool ResetHasherInternal();
  *   bool UpdateHasherInternal(uint8_t const *data_to_hash, std::size_t size);
  *   bool FinalHasherInternal(uint8_t *hash, std::size_t size);
+ * ```
+ *
+ * The `size_in_bytes` constant should be equal to the size of the hash (e.g. 32u for SHA256).
+ * The `*Internal` methods should return `true` if their respective operation was successful,
+ * `false` otherwise.
  *
  */
 template <typename Derived>
@@ -67,7 +73,7 @@ public:
     return success;
   }
 
-  void Final(uint8_t *hash)
+  void Final(uint8_t *const hash)
   {
     auto const success = derived().FinalHasherInternal(hash);
     FETCH_UNUSED(success);

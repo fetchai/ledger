@@ -18,13 +18,12 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/byte_array.hpp"
+#include "core/byte_array/const_byte_array.hpp"
+#include "crypto/fnv_detail.hpp"
 #include "crypto/hasher_interface.hpp"
 
 #include <cstddef>
 #include <cstdint>
-
-//???
-#include "crypto/fnv_detail.hpp"
 
 namespace fetch {
 namespace crypto {
@@ -70,25 +69,6 @@ struct hash<fetch::byte_array::ConstByteArray>
     fetch::crypto::detail::FNV1a hash;
     hash.update(value.pointer(), value.size());
     return hash.context();
-
-    //???
-    //    fetch::crypto::FNV hash;
-    //    hash.Reset();
-    //    hash.Update(value.pointer(), value.size());
-    //
-    //    auto const        arr = hash.Final();
-    //    std::size_t const out = *reinterpret_cast<std::size_t const *>(arr.pointer());
-    //
-    //    return out;
-    //
-    //
-    //
-    //    //    fetch::crypto::FNV hash;
-    //    //    hash.Reset();
-    //    //    hash.Update(value.pointer(), value.size());
-    //    //    auto const ret = hash.Final();
-    //    //
-    //    //    return *reinterpret_cast<std::size_t const *>(ret.pointer());
   }
 };
 
