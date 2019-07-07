@@ -100,12 +100,6 @@ function main()
     x = 1.0;
     assert(toString(acosh(x)) == "0.000000");
 
-    x = 0.5;
-    assert(toString(acosh(x)) == "nan");
-
-    x = 0.0;
-    assert(toString(acosh(x)) == "nan");
-
     x = 1.0;
     assert(toString(atanh(x)) == "inf");
 
