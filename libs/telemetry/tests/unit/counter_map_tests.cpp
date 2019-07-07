@@ -34,7 +34,7 @@ class CounterMapTests : public ::testing::Test
 protected:
   void SetUp() override
   {
-    counter_map_ = std::make_unique<CounterMap>("muddle_stats", "Some test muddle stats");
+    counter_map_ = std::make_unique<CounterMap>("muddle_stats_total", "Some test muddle stats");
   }
 
   void TearDown() override
@@ -63,10 +63,10 @@ TEST_F(CounterMapTests, SimpleCheck)
   std::ostringstream oss;
   counter_map_->ToStream(oss, Measurement::StreamMode::FULL);
 
-  static char const *EXPECTED_TEXT = R"(# HELP muddle_stats Some test muddle stats
-# TYPE muddle_stats counter
-muddle_stats{service="1",channel="2"} 6
-muddle_stats{service="1",channel="1"} 4
+  static char const *EXPECTED_TEXT = R"(# HELP muddle_stats_total Some test muddle stats
+# TYPE muddle_stats_total counter
+muddle_stats_total{service="1",channel="2"} 6
+muddle_stats_total{service="1",channel="1"} 4
 )";
 
   EXPECT_EQ(oss.str(), std::string{EXPECTED_TEXT});
