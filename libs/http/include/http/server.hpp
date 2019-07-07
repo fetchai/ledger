@@ -173,6 +173,9 @@ public:
       }
     }
 
+    // signal that the request has been processed
+    req.SetProcessed();
+
     for (auto &m : post_view_middleware_)
     {
       m(res, req);
