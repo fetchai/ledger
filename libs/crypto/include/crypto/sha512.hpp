@@ -17,38 +17,13 @@
 //
 //------------------------------------------------------------------------------
 
-#include "crypto/openssl_digests.hpp"
-#include "crypto/stream_hasher.hpp"
-
-#include <cstddef>
-#include <cstdint>
+#include "crypto/openssl_hasher.hpp"
 
 namespace fetch {
 namespace crypto {
 
-class SHA512 : public internal::StreamHasher<SHA512>
-{
-public:
-  using BaseType = internal::StreamHasher<SHA512>;
-
-  using BaseType::Final;
-  using BaseType::Reset;
-  using BaseType::Update;
-
-  static constexpr std::size_t size_in_bytes = 64u;
-
-  SHA512()  = default;
-  ~SHA512() = default;
-
-private:
-  bool ResetHasher();
-  bool UpdateHasher(uint8_t const *data_to_hash, std::size_t size);
-  bool FinalHasher(uint8_t *hash, std::size_t size);
-
-  internal::OpenSslDigestContext impl_{internal::OpenSslDigestType::SHA2_512};
-
-  friend BaseType;
-};
+using SHA512 = internal::OpenSslHasher<64u, internal::OpenSslDigestType,
+                                       internal::OpenSslDigestType::SHA2_512>;
 
 }  // namespace crypto
 }  // namespace fetch

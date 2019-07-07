@@ -141,7 +141,7 @@ HashSource::Hashes fnv(fetch::byte_array::ConstByteArray const &input)
 
   HashSource::Hashes output(crypto::FNV::size_in_bytes / sizeof(std::size_t));
 
-  hasher.Final(reinterpret_cast<uint8_t *>(output.data()), output.size() * sizeof(std::size_t));
+  hasher.Final(reinterpret_cast<uint8_t *>(output.data()));
 
   return output;
 }
@@ -156,7 +156,7 @@ HashSource::Hashes HashSourceFunction(fetch::byte_array::ConstByteArray const &i
   HashSource::Hashes output((size_in_bytes + sizeof(std::size_t) - 1) / sizeof(std::size_t));
 
   hasher.Update(input.pointer(), input.size());
-  hasher.Final(reinterpret_cast<uint8_t *const>(output.data()), output.size());
+  hasher.Final(reinterpret_cast<uint8_t *const>(output.data()));
 
   return output;
 }

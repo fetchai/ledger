@@ -65,9 +65,9 @@ public:
     return success;
   }
 
-  void Final(uint8_t *hash, std::size_t size)
+  void Final(uint8_t *hash)
   {
-    auto const success = derived().FinalHasher(hash, size);
+    auto const success = derived().FinalHasher(hash);
     assert(success);
   }
 
@@ -95,7 +95,7 @@ public:
     byte_array::ByteArray digest;
     digest.Resize(Derived::size_in_bytes);
 
-    auto const success = derived().FinalHasher(digest.pointer(), digest.size());
+    auto const success = derived().FinalHasher(digest.pointer());
     assert(success);
 
     return digest;

@@ -17,38 +17,13 @@
 //
 //------------------------------------------------------------------------------
 
-#include "crypto/openssl_digests.hpp"
-#include "crypto/stream_hasher.hpp"
-
-#include <cstddef>
-#include <cstdint>
+#include "crypto/openssl_hasher.hpp"
 
 namespace fetch {
 namespace crypto {
 
-class MD5 : public internal::StreamHasher<MD5>
-{
-public:
-  using BaseType = internal::StreamHasher<MD5>;
-
-  using BaseType::Final;
-  using BaseType::Reset;
-  using BaseType::Update;
-
-  static constexpr std::size_t size_in_bytes = 16u;
-
-  MD5()  = default;
-  ~MD5() = default;
-
-private:
-  bool ResetHasher();
-  bool UpdateHasher(uint8_t const *data_to_hash, std::size_t size);
-  bool FinalHasher(uint8_t *hash, std::size_t size);
-
-  internal::OpenSslDigestContext impl_{internal::OpenSslDigestType::MD5};
-
-  friend BaseType;
-};
+using MD5 =
+    internal::OpenSslHasher<16u, internal::OpenSslDigestType, internal::OpenSslDigestType::MD5>;
 
 }  // namespace crypto
 }  // namespace fetch

@@ -20,29 +20,5 @@
 
 #include <openssl/sha.h>
 
-#include <cstddef>
-#include <cstdint>
-
-namespace fetch {
-namespace crypto {
-
-static_assert(SHA256::size_in_bytes == SHA256_DIGEST_LENGTH,
+static_assert(fetch::crypto::SHA256::size_in_bytes == SHA256_DIGEST_LENGTH,
               "Incorrect value of SHA256::size_in_bytes");
-
-bool SHA256::ResetHasher()
-{
-  return impl_.reset();
-}
-
-bool SHA256::UpdateHasher(uint8_t const *data_to_hash, std::size_t const size)
-{
-  return impl_.update(data_to_hash, size);
-}
-
-bool SHA256::FinalHasher(uint8_t *hash, std::size_t const size)
-{
-  return impl_.final(hash, size);
-}
-
-}  // namespace crypto
-}  // namespace fetch

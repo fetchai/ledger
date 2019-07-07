@@ -20,28 +20,5 @@
 
 #include <openssl/md5.h>
 
-#include <cstddef>
-#include <cstdint>
-
-namespace fetch {
-namespace crypto {
-
-static_assert(MD5::size_in_bytes == MD5_DIGEST_LENGTH, "Incorrect value of MD5::size_in_bytes");
-
-bool MD5::ResetHasher()
-{
-  return impl_.reset();
-}
-
-bool MD5::UpdateHasher(uint8_t const *data_to_hash, std::size_t const size)
-{
-  return impl_.update(data_to_hash, size);
-}
-
-bool MD5::FinalHasher(uint8_t *hash, std::size_t const size)
-{
-  return impl_.final(hash, size);
-}
-
-}  // namespace crypto
-}  // namespace fetch
+static_assert(fetch::crypto::MD5::size_in_bytes == MD5_DIGEST_LENGTH,
+              "Incorrect value of MD5::size_in_bytes");

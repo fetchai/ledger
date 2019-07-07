@@ -140,7 +140,7 @@ struct KeyValuePair
 
     hasher.Update(right.hash, N);
     hasher.Update(left.hash, N);
-    hasher.Final(hash, N);
+    hasher.Final(hash);
 
     return true;
   }

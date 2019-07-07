@@ -18,7 +18,7 @@
 
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/const_byte_array.hpp"
-#include "crypto/openssl_digests.hpp"
+#include "crypto/openssl_hasher.hpp"
 
 #include <openssl/evp.h>
 #include <openssl/md5.h>
@@ -30,7 +30,6 @@
 
 namespace fetch {
 namespace crypto {
-
 namespace internal {
 
 namespace {
@@ -120,12 +119,11 @@ bool OpenSslDigestContext::update(uint8_t const *data_to_hash, std::size_t const
   return EVP_DigestUpdate(impl_->ctx_, data_to_hash, size) != 0;
 }
 
-bool OpenSslDigestContext::final(uint8_t *const data_to_hash, std::size_t const)
+bool OpenSslDigestContext::final(uint8_t *const data_to_hash)
 {
   return EVP_DigestFinal_ex(impl_->ctx_, data_to_hash, nullptr) != 0;
 }
 
 }  // namespace internal
-
 }  // namespace crypto
 }  // namespace fetch

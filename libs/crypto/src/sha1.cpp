@@ -20,28 +20,5 @@
 
 #include <openssl/sha.h>
 
-#include <cstddef>
-#include <cstdint>
-
-namespace fetch {
-namespace crypto {
-
-static_assert(SHA1::size_in_bytes == SHA_DIGEST_LENGTH, "Incorrect value of SHA1::size_in_bytes");
-
-bool SHA1::ResetHasher()
-{
-  return impl_.reset();
-}
-
-bool SHA1::UpdateHasher(uint8_t const *data_to_hash, std::size_t const size)
-{
-  return impl_.update(data_to_hash, size);
-}
-
-bool SHA1::FinalHasher(uint8_t *hash, std::size_t const size)
-{
-  return impl_.final(hash, size);
-}
-
-}  // namespace crypto
-}  // namespace fetch
+static_assert(fetch::crypto::SHA1::size_in_bytes == SHA_DIGEST_LENGTH,
+              "Incorrect value of SHA1::size_in_bytes");
