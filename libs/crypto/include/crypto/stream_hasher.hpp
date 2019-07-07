@@ -24,7 +24,7 @@
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
-//#include <type_traits>//???
+#include <type_traits>
 
 namespace fetch {
 namespace crypto {
@@ -32,10 +32,14 @@ namespace crypto {
 template <typename Derived>
 class StreamHasher
 {
-public:  //???static assert against Deriived interdface methods
-  //???  static_assert(std::is_same<decltype(Derived::size_in_bytes), std::size_t const>::value,
-  //"Expected static member variable: std::size const size_in_bytes");
-  //  static_assert(Derived::size_in_bytes > 0u , "Value of size_in_bytes must be non-zero");
+public:
+  StreamHasher()                     = default;
+  ~StreamHasher()                    = default;
+  StreamHasher(StreamHasher const &) = delete;
+  StreamHasher(StreamHasher &&)      = delete;
+
+  StreamHasher &operator=(StreamHasher const &) = delete;
+  StreamHasher &operator=(StreamHasher &&) = delete;
 
   bool Update(byte_array::ConstByteArray const &data)
   {
