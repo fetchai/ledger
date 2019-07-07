@@ -40,7 +40,9 @@ public:
 
 FNV::FNV()
   : impl_(new internal::FnvHasherInternals)
-{}
+{
+  impl_->ctx.reset();
+}
 
 FNV::~FNV()
 {
