@@ -29,6 +29,7 @@ namespace fetch {
 namespace crypto {
 namespace internal {
 
+//???document usage and expected interface
 template <typename Derived>
 class StreamHasher
 {

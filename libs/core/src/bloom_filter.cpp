@@ -20,10 +20,9 @@
 #include "core/bloom_filter.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "crypto/fnv.hpp"
+#include "crypto/openssl_digests.hpp"
 
-#include <openssl/evp.h>
-
-#include <cassert>
+#include <algorithm>
 #include <cstddef>
 #include <functional>
 #include <vector>
@@ -115,79 +114,13 @@ HashSource::HashSourceIterator::HashSourceIterator(HashSource const *source, std
 
 namespace {
 
-class OpenSslHasher
-{
-public:
-  enum class Type
-  {
-    MD5,
-    SHA1,
-    SHA2_512
-  };
-
-  explicit OpenSslHasher(Type type)
-    : openssl_type_{to_openssl_type(type)}
-    , ctx_{EVP_MD_CTX_create()}
-  {
-    EVP_MD_CTX_init(ctx_);
-  }
-
-  ~OpenSslHasher()
-  {
-    EVP_MD_CTX_destroy(ctx_);
-  }
-
-  void reset() const
-  {
-    EVP_DigestInit_ex(ctx_, openssl_type_, nullptr);
-  }
-
-  std::vector<std::size_t> operator()(fetch::byte_array::ConstByteArray const &input) const
-  {
-    const auto size_in_bytes = static_cast<std::size_t>(EVP_MD_CTX_size(ctx_));
-
-    std::vector<std::size_t> output((size_in_bytes + sizeof(std::size_t) - 1) /
-                                    sizeof(std::size_t));
-    EVP_DigestUpdate(ctx_, input.pointer(), input.size());
-
-    EVP_DigestFinal_ex(ctx_, reinterpret_cast<uint8_t *>(output.data()), nullptr);
-
-    return output;
-  }
-
-private:
-  EVP_MD const *to_openssl_type(Type const type) const
-  {
-    EVP_MD const *openssl_type = nullptr;
-    switch (type)
-    {
-    case Type::MD5:
-      openssl_type = EVP_sha512();
-      break;
-    case Type::SHA1:
-      openssl_type = EVP_sha1();
-      break;
-    case Type::SHA2_512:
-      openssl_type = EVP_sha512();
-      break;
-    }
-
-    assert(openssl_type);
-
-    return openssl_type;
-  }
-
-  EVP_MD const *const openssl_type_;
-  EVP_MD_CTX *const   ctx_;
-};
-
-std::vector<std::size_t> raw_data(fetch::byte_array::ConstByteArray const &input)
+HashSource::Hashes raw_data(fetch::byte_array::ConstByteArray const &input)
 {
   auto start = reinterpret_cast<std::size_t const *>(input.pointer());
 
   const auto size_in_bytes = input.size();
 
-  std::vector<std::size_t> output((size_in_bytes + sizeof(std::size_t) - 1) / sizeof(std::size_t));
+  HashSource::Hashes output((size_in_bytes + sizeof(std::size_t) - 1) / sizeof(std::size_t));
 
   for (std::size_t i = 0; i < output.size(); ++i)
   {
@@ -195,30 +128,6 @@ std::vector<std::size_t> raw_data(fetch::byte_array::ConstByteArray const &input
   }
 
   return output;
-}
-
-HashSource::Hashes md5(fetch::byte_array::ConstByteArray const &input)
-{
-  OpenSslHasher hasher(OpenSslHasher::Type::MD5);
-  hasher.reset();
-
-  return hasher(input);
-}
-
-HashSource::Hashes sha1(fetch::byte_array::ConstByteArray const &input)
-{
-  OpenSslHasher hasher(OpenSslHasher::Type::SHA1);
-  hasher.reset();
-
-  return hasher(input);
-}
-
-HashSource::Hashes sha2_512(fetch::byte_array::ConstByteArray const &input)
-{
-  OpenSslHasher hasher(OpenSslHasher::Type::SHA2_512);
-  hasher.reset();
-
-  return hasher(input);
 }
 
 HashSource::Hashes fnv(fetch::byte_array::ConstByteArray const &input)
@@ -235,12 +144,45 @@ HashSource::Hashes fnv(fetch::byte_array::ConstByteArray const &input)
   return output;
 }
 
+template <typename EnumClass, EnumClass type>
+HashSource::Hashes HashSourceFunction(fetch::byte_array::ConstByteArray const &input)
+{
+  crypto::OpenSslDigestContext hasher(type);
+  hasher.reset();
+
+  std::size_t const  size_in_bytes = input.size();
+  HashSource::Hashes output((size_in_bytes + sizeof(std::size_t) - 1) / sizeof(std::size_t));
+
+  auto const cba = hasher(input);
+  std::copy(cba.pointer(), cba.pointer() + size_in_bytes,
+            reinterpret_cast<uint8_t *>(output.data()));
+
+  return output;
+}
+
+HashSource::Hashes md5(fetch::byte_array::ConstByteArray const &input)
+{
+  return internal::HashSourceFunction<crypto::OpenSslDigestType, crypto::OpenSslDigestType::MD5>(
+      input);
+}
+
+HashSource::Hashes sha1(fetch::byte_array::ConstByteArray const &input)
+{
+  return internal::HashSourceFunction<crypto::OpenSslDigestType, crypto::OpenSslDigestType::SHA1>(
+      input);
+}
+
+HashSource::Hashes sha2_512(fetch::byte_array::ConstByteArray const &input)
+{
+  return HashSourceFunction<crypto::OpenSslDigestType, crypto::OpenSslDigestType::SHA2_512>(input);
+}
+
 }  // namespace
 
 }  // namespace internal
 
 BasicBloomFilter::Functions const default_hash_functions{
-    internal::raw_data, internal::md5, internal::sha1, internal::sha2_512, internal::fnv};
+    internal::raw_data, internal::fnv, internal::md5, internal::sha1, internal::sha2_512};
 
 BasicBloomFilter::BasicBloomFilter()
   : bits_(INITIAL_SIZE_IN_BITS)
