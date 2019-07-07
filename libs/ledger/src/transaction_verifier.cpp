@@ -37,7 +37,6 @@ namespace fetch {
 namespace ledger {
 namespace {
 using telemetry::Registry;
-using telemetry::Gauge;
 
 std::string CreateMetricName(std::string const &prefix, std::string const &name)
 {

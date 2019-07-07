@@ -38,7 +38,6 @@ using fetch::commandline::Params;
 using fetch::crypto::ECDSASigner;
 using fetch::threading::Pool;
 using fetch::byte_array::ConstByteArray;
-using fetch::ledger::Transaction;
 using fetch::ledger::TransactionBuilder;
 using fetch::ledger::TransactionSerializer;
 using fetch::ledger::Address;

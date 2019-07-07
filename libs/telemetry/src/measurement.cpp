@@ -18,6 +18,7 @@
 
 #include "telemetry/measurement.hpp"
 
+#include <cassert>
 #include <iostream>
 
 namespace fetch {

@@ -53,7 +53,7 @@ private:
       {0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1., 5., 10.}, "ledger_http_request_duration_seconds",
       "path", "Histogram of HTTP request latencies")};
 
-  CounterMapPtr status_counts{Registry::Instance().CreateCounterMap(
+  CounterMapPtr status_counts_{Registry::Instance().CreateCounterMap(
       "ledger_http_response_total", "Histogram of HTTP request latencies")};
 };
 
@@ -68,7 +68,7 @@ void TelemetryData::Update(HTTPRequest const &request, HTTPResponse const &respo
   durations_->Add(path, request.GetDuration());
 
   // update the counters
-  status_counts->Increment({{"path", path}, {"code", status_code}});
+  status_counts_->Increment({{"path", path}, {"code", status_code}});
 }
 
 using TelemetryDataPtr = std::shared_ptr<TelemetryData>();
