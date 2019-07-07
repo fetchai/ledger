@@ -18,11 +18,13 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/byte_array.hpp"
-#include "core/byte_array/const_byte_array.hpp"
 #include "crypto/hasher_interface.hpp"
 
 #include <cstddef>
 #include <cstdint>
+
+//???
+#include "crypto/fnv_detail.hpp"
 
 namespace fetch {
 namespace crypto {
@@ -34,7 +36,7 @@ class FnvHasherInternals;
 class FNV : private internal::HasherInterface<FNV>
 {
 public:
-  using BaseType = HasherInterface<FNV>;
+  using BaseType = internal::HasherInterface<FNV>;
 
   using BaseType::Final;
   using BaseType::Reset;
@@ -65,14 +67,28 @@ struct hash<fetch::byte_array::ConstByteArray>
 {
   std::size_t operator()(fetch::byte_array::ConstByteArray const &value) const noexcept
   {
-    fetch::crypto::FNV hash;
-    hash.Reset();
-    hash.Update(value.pointer(), value.size());
+    fetch::crypto::detail::FNV1a hash;
+    hash.update(value.pointer(), value.size());
+    return hash.context();
 
-    auto const        arr = hash.Final();
-    std::size_t const out = *reinterpret_cast<std::size_t const *>(arr.pointer());
-
-    return out;
+    //???
+    //    fetch::crypto::FNV hash;
+    //    hash.Reset();
+    //    hash.Update(value.pointer(), value.size());
+    //
+    //    auto const        arr = hash.Final();
+    //    std::size_t const out = *reinterpret_cast<std::size_t const *>(arr.pointer());
+    //
+    //    return out;
+    //
+    //
+    //
+    //    //    fetch::crypto::FNV hash;
+    //    //    hash.Reset();
+    //    //    hash.Update(value.pointer(), value.size());
+    //    //    auto const ret = hash.Final();
+    //    //
+    //    //    return *reinterpret_cast<std::size_t const *>(ret.pointer());
   }
 };
 
