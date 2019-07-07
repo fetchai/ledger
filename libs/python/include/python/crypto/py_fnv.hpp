@@ -27,7 +27,7 @@ namespace crypto {
 void BuildFNV(pybind11::module &module)
 {
   namespace py = pybind11;
-  py::class_<FNV, fetch::crypto::StreamHasher>(module, "FNV")
+  py::class_<FNV, fetch::crypto::HasherInterface>(module, "FNV")
       .def(py::init<>())
       .def("Reset", &FNV::Reset)
       .def("uint_digest", &FNV::uint_digest)

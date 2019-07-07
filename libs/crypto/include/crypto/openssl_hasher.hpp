@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "crypto/stream_hasher.hpp"
+#include "crypto/hasher_interface.hpp"
 
 #include <cstddef>
 #include <cstdint>
@@ -67,11 +67,11 @@ private:
 
 template <std::size_t hash_size, typename EnumClass, EnumClass hasher_type>
 class OpenSslHasher
-  : public StreamHasher<typename internal::OpenSslHasher<hash_size, EnumClass, hasher_type>>
+  : public HasherInterface<typename internal::OpenSslHasher<hash_size, EnumClass, hasher_type>>
 {
 public:
   using BaseType =
-      StreamHasher<typename internal::OpenSslHasher<hash_size, EnumClass, hasher_type>>;
+      HasherInterface<typename internal::OpenSslHasher<hash_size, EnumClass, hasher_type>>;
 
   using BaseType::Final;
   using BaseType::Reset;
@@ -88,9 +88,9 @@ public:
   OpenSslHasher &operator=(OpenSslHasher &&) = delete;
 
 private:
-  bool ResetHasher();  //???rename crtp methods, remove hasher suffix, put in sth else
-  bool UpdateHasher(uint8_t const *data_to_hash, std::size_t size);
-  bool FinalHasher(uint8_t *hash);
+  bool ResetHasherInternal();
+  bool UpdateHasherInternal(uint8_t const *data_to_hash, std::size_t size);
+  bool FinalHasherInternal(uint8_t *hash);
 
   internal::OpenSslHasherImpl impl_{hasher_type};
 
@@ -104,20 +104,20 @@ template <std::size_t hash_size, typename EnumClass, EnumClass hasher_type>
 OpenSslHasher<hash_size, EnumClass, hasher_type>::~OpenSslHasher() = default;
 
 template <std::size_t hash_size, typename EnumClass, EnumClass hasher_type>
-bool OpenSslHasher<hash_size, EnumClass, hasher_type>::ResetHasher()
+bool OpenSslHasher<hash_size, EnumClass, hasher_type>::ResetHasherInternal()
 {
   return impl_.reset();
 }
 
 template <std::size_t hash_size, typename EnumClass, EnumClass hasher_type>
-bool OpenSslHasher<hash_size, EnumClass, hasher_type>::UpdateHasher(uint8_t const *   data_to_hash,
-                                                                    std::size_t const size)
+bool OpenSslHasher<hash_size, EnumClass, hasher_type>::UpdateHasherInternal(
+    uint8_t const *data_to_hash, std::size_t const size)
 {
   return impl_.update(data_to_hash, size);
 }
 
 template <std::size_t hash_size, typename EnumClass, EnumClass hasher_type>
-bool OpenSslHasher<hash_size, EnumClass, hasher_type>::FinalHasher(uint8_t *hash)
+bool OpenSslHasher<hash_size, EnumClass, hasher_type>::FinalHasherInternal(uint8_t *hash)
 {
   return impl_.final(hash);
 }

@@ -33,33 +33,33 @@ namespace internal {
  * CRTP-based interface for digest contexts. Implementing classes should define the following:
  *
  *   static constexpr std::size_t size_in_bytes = 16u;
- *   bool ResetHasher();
- *   bool UpdateHasher(uint8_t const *data_to_hash, std::size_t size);
- *   bool FinalHasher(uint8_t *hash, std::size_t size);
+ *   bool ResetHasherInternal();
+ *   bool UpdateHasherInternal(uint8_t const *data_to_hash, std::size_t size);
+ *   bool FinalHasherInternal(uint8_t *hash, std::size_t size);
  *
  */
 template <typename Derived>
-class StreamHasher
+class HasherInterface
 {
 public:
-  StreamHasher()                     = default;
-  ~StreamHasher()                    = default;
-  StreamHasher(StreamHasher const &) = delete;
-  StreamHasher(StreamHasher &&)      = delete;
+  HasherInterface()                        = default;
+  ~HasherInterface()                       = default;
+  HasherInterface(HasherInterface const &) = delete;
+  HasherInterface(HasherInterface &&)      = delete;
 
-  StreamHasher &operator=(StreamHasher const &) = delete;
-  StreamHasher &operator=(StreamHasher &&) = delete;
+  HasherInterface &operator=(HasherInterface const &) = delete;
+  HasherInterface &operator=(HasherInterface &&) = delete;
 
   // Direct call-through methods to Derived
   void Reset()
   {
-    auto const success = derived().ResetHasher();
+    auto const success = derived().ResetHasherInternal();
     assert(success);
   }
 
   bool Update(uint8_t const *data_to_hash, std::size_t size)
   {
-    auto const success = derived().UpdateHasher(data_to_hash, size);
+    auto const success = derived().UpdateHasherInternal(data_to_hash, size);
     assert(success);
 
     return success;
@@ -67,7 +67,7 @@ public:
 
   void Final(uint8_t *hash)
   {
-    auto const success = derived().FinalHasher(hash);
+    auto const success = derived().FinalHasherInternal(hash);
     assert(success);
   }
 
@@ -75,7 +75,7 @@ public:
 
   bool Update(byte_array::ConstByteArray const &data)
   {
-    auto const success = derived().UpdateHasher(data.pointer(), data.size());
+    auto const success = derived().UpdateHasherInternal(data.pointer(), data.size());
     assert(success);
 
     return success;
@@ -84,7 +84,7 @@ public:
   bool Update(std::string const &str)
   {
     auto const success =
-        derived().UpdateHasher(reinterpret_cast<uint8_t const *>(str.data()), str.size());
+        derived().UpdateHasherInternal(reinterpret_cast<uint8_t const *>(str.data()), str.size());
     assert(success);
 
     return success;
@@ -95,7 +95,7 @@ public:
     byte_array::ByteArray digest;
     digest.Resize(Derived::size_in_bytes);
 
-    auto const success = derived().FinalHasher(digest.pointer());
+    auto const success = derived().FinalHasherInternal(digest.pointer());
     assert(success);
 
     return digest;

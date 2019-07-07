@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/byte_array.hpp"
-#include "crypto/stream_hasher.hpp"
+#include "crypto/hasher_interface.hpp"
 
 #include <cstddef>
 #include <cstdint>
@@ -30,10 +30,10 @@ namespace internal {
 class FnvHasherInternals;
 }
 
-class FNV : private internal::StreamHasher<FNV>
+class FNV : private internal::HasherInterface<FNV>
 {
 public:
-  using BaseType = StreamHasher<FNV>;
+  using BaseType = HasherInterface<FNV>;
 
   using BaseType::Final;
   using BaseType::Reset;
@@ -45,9 +45,9 @@ public:
   ~FNV();
 
 private:
-  bool ResetHasher();
-  bool UpdateHasher(uint8_t const *data_to_hash, std::size_t size);
-  bool FinalHasher(uint8_t *hash);
+  bool ResetHasherInternal();
+  bool UpdateHasherInternal(uint8_t const *data_to_hash, std::size_t size);
+  bool FinalHasherInternal(uint8_t *hash);
 
   internal::FnvHasherInternals *impl_;
 

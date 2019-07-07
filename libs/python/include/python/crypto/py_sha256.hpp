@@ -27,7 +27,7 @@ namespace crypto {
 void BuildSHA256(pybind11::module &module)
 {
   namespace py = pybind11;
-  py::class_<SHA256, fetch::crypto::StreamHasher>(module, "SHA256")
+  py::class_<SHA256, fetch::crypto::HasherInterface>(module, "SHA256")
       .def(py::init<>()) /* No constructors found */
       .def("Reset", &SHA256::Reset)
       .def("Update", &SHA256::Update)
