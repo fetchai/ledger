@@ -29,6 +29,12 @@ class Measurement
 public:
   using Labels = std::unordered_map<std::string, std::string>;
 
+  enum class StreamMode
+  {
+    FULL,
+    WITHOUT_HEADER,
+  };
+
   // Construction / Destruction
   Measurement(std::string name, std::string description, Labels labels = Labels{});
   virtual ~Measurement() = default;
@@ -37,15 +43,28 @@ public:
   /// @{
   std::string const &name() const;
   std::string const &description() const;
+  Labels const &labels() const;
   /// @}
 
   /// @name Metric Interface
   /// @{
-  virtual void ToStream(std::ostream &stream) const = 0;
+
+  /**
+   * Write the value of the metric to the stream so as to be consumed by external components
+   *
+   * @param stream The stream to be updated
+   * @param mode The mode to be used when generating the stream
+   */
+  virtual void ToStream(std::ostream &stream, StreamMode mode) const = 0;
+
   /// @}
 
 protected:
-  std::ostream &WritePrefix(std::ostream &stream, char const *type_name) const;
+
+  std::ostream &WriteHeader(std::ostream &stream, char const *type_name, StreamMode mode) const;
+  std::ostream &WriteValuePrefix(std::ostream &stream) const;
+  std::ostream &WriteValuePrefix(std::ostream &stream, std::string const &suffix) const;
+  std::ostream &WriteValuePrefix(std::ostream &stream, std::string const &suffix, Labels const &extra) const;
 
 private:
   std::string const name_;
@@ -69,5 +88,42 @@ inline std::string const &Measurement::description() const
   return description_;
 }
 
+inline Measurement::Labels const &Measurement::labels() const
+{
+  return labels_;
+}
+
 }  // namespace telemetry
 }  // namespace fetch
+
+namespace std
+{
+
+template <>
+struct hash<fetch::telemetry::Measurement::Labels>
+{
+  std::size_t operator()(fetch::telemetry::Measurement::Labels const &labels) const
+  {
+    std::size_t value{0};
+
+    if (!labels.empty())
+    {
+      std::hash<std::string> const hasher{};
+
+      auto it = labels.begin();
+
+      // first element populate the hash
+      value = (hasher(it->first) ^ hasher(it->second));
+      ++it;
+
+      for (auto end = labels.end(); it != end; ++it)
+      {
+        value ^= (hasher(it->first) ^ hasher(it->second));
+      }
+    }
+
+    return value;
+  }
+};
+
+}

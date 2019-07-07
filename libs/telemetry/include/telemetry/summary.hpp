@@ -1,3 +1,4 @@
+#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -16,24 +17,3 @@
 //
 //------------------------------------------------------------------------------
 
-#include "telemetry/counter.hpp"
-
-#include <iostream>
-
-namespace fetch {
-namespace telemetry {
-
-/**
- * Write the value of the metric to the stream so as to be consumed by external components
- *
- * @param stream The stream to be updated
- * @param mode The mode to be used when generating the stream
- */
-void Counter::ToStream(std::ostream &stream, StreamMode mode) const
-{
-  WriteHeader(stream, "counter", mode);
-  WriteValuePrefix(stream) << counter_ << '\n';
-}
-
-}  // namespace telemetry
-}  // namespace fetch
