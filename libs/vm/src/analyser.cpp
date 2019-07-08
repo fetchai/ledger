@@ -1980,6 +1980,7 @@ bool Analyser::MatchTypes(TypePtr const &type, TypePtrArray const &supplied_type
   std::size_t const num_types = expected_types.size();
   if (supplied_types.size() != num_types)
   {
+	  STD_CERR << "False 1\n";
     return false;
   }
   for (std::size_t i = 0; i < num_types; ++i)
@@ -1987,6 +1988,7 @@ bool Analyser::MatchTypes(TypePtr const &type, TypePtrArray const &supplied_type
     TypePtr const &supplied_type = supplied_types[i];
     if (supplied_type->IsVoid())
     {
+	  STD_CERR << "False 2, i = " << i << '\n';
       return false;
     }
     TypePtr expected_type = ConvertType(expected_types[i], type);
@@ -1994,6 +1996,7 @@ bool Analyser::MatchTypes(TypePtr const &type, TypePtrArray const &supplied_type
     {
       if (!expected_type->IsClass() && !expected_type->IsInstantiation())
       {
+	  STD_CERR << "False 3, i = " << i << '\n';
         // Not a match, can only convert null to a known reference type
         return false;
       }
@@ -2003,11 +2006,13 @@ bool Analyser::MatchTypes(TypePtr const &type, TypePtrArray const &supplied_type
     {
       if (!MatchType(supplied_type, expected_type))
       {
+	  STD_CERR << "False 4, i = " << i << '\n';
         return false;
       }
       actual_types.push_back(supplied_type);
     }
   }
+STD_CERR << "True\n";
   // Got a match
   return true;
 }
@@ -2027,6 +2032,7 @@ FunctionPtr Analyser::FindFunction(TypePtr const &type, FunctionGroupPtr const &
     TypePtrArray temp_actual_types;
     if (MatchTypes(type, supplied_types, function->parameter_types, temp_actual_types))
     {
+	    if(function->name == "set") STD_CERR << "Match\n";
       array.push_back(temp_actual_types);
       functions.push_back(function);
     }
