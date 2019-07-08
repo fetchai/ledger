@@ -69,10 +69,11 @@ public:
                                output_node_names->str);
   }
 
-  DataType RunData(fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> const &data, fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> const &labels,
-                   uint64_t batch_size)
+  DataType RunData(fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> const &data,
+                   fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> const &labels,
+                   uint64_t                                                 batch_size)
   {
-    return optimiser_.Run({(*data).GetTensor()}, (*labels).GetTensor(), batch_size);
+    return optimiser_.Run({(data->GetTensor())}, labels->GetTensor(), batch_size);
   }
 
   DataType RunLoader(fetch::vm::Ptr<fetch::vm_modules::ml::VMDataLoader> const &loader,
