@@ -23,6 +23,7 @@
 #include "ml/ops/activation.hpp"
 #include "ml/ops/loss_functions/mean_square_error.hpp"
 #include "ml/optimisation/adam_optimiser.hpp"
+#include "ml/dataloaders/tensor_dataloader.hpp"
 
 #include <iostream>
 #include <string>
@@ -38,6 +39,7 @@ using SizeType   = typename TensorType::SizeType;
 using GraphType        = typename fetch::ml::Graph<TensorType>;
 using CostFunctionType = typename fetch::ml::ops::MeanSquareError<TensorType>;
 using OptimiserType = typename fetch::ml::optimisers::AdamOptimiser<TensorType, CostFunctionType>;
+using DataLoaderType   = typename fetch::ml::dataloaders::TensorDataLoader<TensorType, TensorType>;
 
 std::shared_ptr<GraphType> BuildModel(std::string &input_name, std::string &output_name)
 {
@@ -81,29 +83,22 @@ std::vector<TensorType> LoadData(std::string const &train_data_filename,
   train_labels_tensor.Reshape({1, train_labels_tensor.shape().at(0), train_labels_tensor.shape().at(1)});
   test_data_tensor.Reshape({1, test_data_tensor.shape().at(0), test_data_tensor.shape().at(1)});
   test_labels_tensor.Reshape({1, test_labels_tensor.shape().at(0), test_labels_tensor.shape().at(1)});
+  return {train_data_tensor, train_labels_tensor, test_data_tensor, test_labels_tensor};
+}
 
-//  return {train_data_tensor, train_labels_tensor, test_data_tensor, test_labels_tensor};
+void NormaliseFeatures()
+{
 
+}
 
-  // TODO: temp code - copy out one test data point to predict
-  TensorType test_data({1, test_data_tensor.shape().at(1), 1});
-  TensorType test_label({1, test_labels_tensor.shape().at(1), 1});
-
-  for (SizeType i = 0; i < test_data_tensor.shape()[1]; ++i)
-  {
-    test_data(0,i,0) = test_data_tensor(0,i,0);
-  }
-  for (SizeType i = 0; i < test_labels_tensor.shape()[1]; ++i)
-  {
-    test_label(0,i,0) = test_labels_tensor(0,i,0);
-  }
-  return {train_data_tensor, train_labels_tensor, test_data, test_label};
+void DeNormalisePrediction()
+{
 
 }
 
 int main(int ac, char **av)
 {
-  SizeType epochs{10};
+  SizeType epochs{3};
   SizeType batch_size{8};
 
   if (ac < 5)
@@ -116,6 +111,13 @@ int main(int ac, char **av)
 
   std::cout << "Loading crypto price data... " << std::endl;
   std::vector<TensorType> data_and_labels = LoadData(av[1], av[2], av[3], av[4]);
+  TensorType train_data = data_and_labels.at(0);
+  TensorType train_label = data_and_labels.at(1);
+  TensorType test_data = data_and_labels.at(2);
+  TensorType test_label = data_and_labels.at(3);
+
+//  DataLoaderType loader;
+//  loader.AddData(train_data, train_label);
 
   std::cout << "Build model & optimiser... " << std::endl;
   std::string                input_name;
@@ -127,20 +129,17 @@ int main(int ac, char **av)
   DataType loss;
   for (SizeType i{0}; i < epochs; i++)
   {
-    loss = optimiser.Run({data_and_labels.at(0)}, data_and_labels.at(1), batch_size);
+    loss = optimiser.Run({train_data}, train_label, batch_size);
     std::cout << "Loss: " << loss << std::endl;
   }
 
-  std::cout << "Begin testing: " << std::endl;
-  g->SetInput(input_name, data_and_labels.at(2));
+  g->SetInput(input_name, test_data);
   auto prediction = g->Evaluate(output_name, false);
   prediction.Reshape({prediction.shape().at(1), prediction.shape().at(2)});
-  data_and_labels.at(3).Reshape({data_and_labels.at(3).shape().at(1), data_and_labels.at(3).shape().at(2)});
-
-  std::cout << "prediction.ToString(): " << prediction.ToString() << std::endl;
-  std::cout << "data_and_labels.at(3).ToString(): " << data_and_labels.at(3).ToString() << std::endl;
-
-  // now compare prediction with data_and_labels.at(3)
+  test_label.Reshape({test_label.shape().at(1), test_label.shape().at(2)});
+  auto result = fetch::math::MeanSquareError(prediction, test_label);
+  std::cout << "result: " << result << std::endl;
+//  std::cout << "Begin testing: " << std::endl;
 
   return 0;
 }
