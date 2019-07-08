@@ -16,35 +16,22 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/string/ends_with.hpp"
-#include "telemetry/counter.hpp"
-
-#include <iostream>
+#include <string>
 
 namespace fetch {
-namespace telemetry {
-namespace {
+namespace core {
 
-bool ValidateName(std::string const &name)
+bool EndsWith(std::string const &value, std::string const &ending)
 {
-  return core::EndsWith(name, "_total");
-}
+  bool success{false};
 
-}  // namespace
-
-Counter::Counter(std::string name, std::string description, Labels labels)
-  : Measurement(std::move(name), std::move(description), std::move(labels))
-{
-  if (!ValidateName(this->name()))
+  if (value.size() >= ending.size())
   {
-    throw std::runtime_error("Incorrect counter name, must end with _total");
+    success = (value.substr(value.size() - ending.size()) == ending);
   }
+
+  return success;
 }
 
-void Counter::ToStream(std::ostream &stream) const
-{
-  WritePrefix(stream, "counter") << counter_ << '\n';
-}
-
-}  // namespace telemetry
+}  // namespace core
 }  // namespace fetch
