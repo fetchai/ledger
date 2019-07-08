@@ -16,17 +16,17 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/tensor.hpp"
-#include "vm/module.hpp"
-#include "vm_modules/core/print.hpp"
-#include "vm_modules/ml/ml.hpp"
-#include "ledger/state_adapter.hpp"
-#include "vm/io_observer_interface.hpp"
+#include "core/byte_array/const_byte_array.hpp"
 #include "core/json/document.hpp"
 #include "core/serializers/byte_array.hpp"
+#include "ledger/state_adapter.hpp"
+#include "math/tensor.hpp"
 #include "variant/variant.hpp"
-#include "core/byte_array/const_byte_array.hpp"
+#include "vm/io_observer_interface.hpp"
+#include "vm/module.hpp"
 #include "vm/variant.hpp"
+#include "vm_modules/core/print.hpp"
+#include "vm_modules/ml/ml.hpp"
 
 #include "variant/variant.hpp"
 #include <fstream>
@@ -68,7 +68,6 @@ fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> read_csv(
   ArrayType weights = fetch::ml::dataloaders::ReadCSV<ArrayType>(filename->str, 0, 0, transpose);
   return vm->CreateNewObject<fetch::vm_modules::math::VMTensor>(weights);
 }
-
 
 std::string ReadFileContents(std::string const &path)
 {
@@ -190,49 +189,28 @@ private:
   fetch::variant::Variant data_{fetch::variant::Variant::Object()};
 };
 
-int main(int argc, char **argv)
+int RunEtchScript(std::string const &filename, std::shared_ptr<fetch::vm::Module> const &module)
 {
-  if (argc < 2)
-  {
-    std::cerr << "usage ./" << argv[0] << " [filename]" << std::endl;
-    std::exit(-9);
-  }
+  std::cout << "Running etch script " << filename << std::endl;
 
-  for (int i = 2; i < argc; ++i)
-  {
-    System::args.emplace_back(std::string(argv[i]));
-  }
+  /// Setting compiler up
+  auto                     compiler = std::make_unique<fetch::vm::Compiler>(module.get());
+  fetch::vm::Executable    executable;
+  fetch::vm::IR            ir;
+  std::vector<std::string> errors;
 
-  // Reading file
-  std::ifstream file(argv[1], std::ios::binary);
+  /// Reading etch file
+  std::ifstream file(filename, std::ios::binary);
   if (file.fail())
   {
-    throw std::runtime_error("Cannot open file " + std::string(argv[1]));
+    throw std::runtime_error("Cannot open file " + std::string(filename));
   }
   std::ostringstream ss;
   ss << file.rdbuf();
   const std::string source = ss.str();
   file.close();
 
-  auto module = std::make_shared<fetch::vm::Module>();
-
-  module->CreateClassType<System>("System")
-      .CreateStaticMemberFunction("Argc", &System::Argc)
-      .CreateStaticMemberFunction("Argv", &System::Argv);
-
-  fetch::vm_modules::ml::BindML(*module);
-
-  fetch::vm_modules::CreatePrint(*module);
-
-  module->CreateFreeFunction("read_csv", &read_csv);
-
-  // Setting compiler up
-  auto                     compiler = std::make_unique<fetch::vm::Compiler>(module.get());
-  fetch::vm::Executable    executable;
-  fetch::vm::IR            ir;
-  std::vector<std::string> errors;
-
-  // Compiling
+  /// Compiling
   bool compiled = compiler->Compile(source, "myexecutable", ir, errors);
 
   if (!compiled)
@@ -245,15 +223,19 @@ int main(int argc, char **argv)
     return -1;
   }
 
-  fetch::vm::VM vm(module.get());
+  /// set up VM
+  auto vm = std::make_shared<fetch::vm::VM>(module.get());
 
+  // attach observer so that writing to state works
   JsonStateMap observer{};
-  vm.SetIOObserver(observer);
+  observer.LoadFromFile("myfile.json");
+  vm->SetIOObserver(observer);
 
   // attach std::cout for printing
-  vm.AttachOutputDevice("stdout", std::cout);
+  vm->AttachOutputDevice("stdout", std::cout);
 
-  if (!vm.GenerateExecutable(ir, "main_ir", executable, errors))
+  /// executing
+  if (!vm->GenerateExecutable(ir, "main_ir", executable, errors))
   {
     std::cout << "Failed to generate executable" << std::endl;
     for (auto &s : errors)
@@ -273,9 +255,48 @@ int main(int argc, char **argv)
   std::string        error;
   fetch::vm::Variant output;
 
-  if (!vm.Execute(executable, "main", error, output))
+  if (!vm->Execute(executable, "main", error, output))
   {
     std::cout << "Runtime error on line " << error << std::endl;
+    return -3;
   }
+
+  observer.SaveToFile("myfile.json");
+
+  return 0;
+}
+
+int main(int argc, char **argv)
+{
+  if (argc < 3)
+  {
+    std::cerr << "usage ./" << argv[0] << " [filename]" << std::endl;
+    std::exit(-9);
+  }
+
+  for (int i = 3; i < argc; ++i)
+  {
+    System::args.emplace_back(std::string(argv[i]));
+  }
+
+  std::string etch_saver  = argv[1];
+  std::string etch_loader = argv[2];
+
+  /// Set up module
+  auto module = std::make_shared<fetch::vm::Module>();
+
+  module->CreateClassType<System>("System")
+      .CreateStaticMemberFunction("Argc", &System::Argc)
+      .CreateStaticMemberFunction("Argv", &System::Argv);
+
+  fetch::vm_modules::ml::BindML(*module);
+
+  fetch::vm_modules::CreatePrint(*module);
+
+  module->CreateFreeFunction("read_csv", &read_csv);
+
+  RunEtchScript(etch_saver, module);
+  RunEtchScript(etch_loader, module);
+
   return 0;
 }

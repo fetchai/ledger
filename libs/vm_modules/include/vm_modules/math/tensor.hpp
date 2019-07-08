@@ -114,9 +114,16 @@ public:
   /// PRINTING AND EXPORTING ///
   //////////////////////////////
 
-  fetch::vm::Ptr<fetch::vm::String> ToString()
+  fetch::vm::Ptr<fetch::vm::String> ToString(bool transpose = false)
   {
-    return new fetch::vm::String(vm_, tensor_.ToString());
+    if (transpose)
+    {
+      return new fetch::vm::String(vm_, tensor_.Transpose().ToString());
+    }
+    else
+    {
+      return new fetch::vm::String(vm_, tensor_.ToString());
+    }
   }
 
   ArrayType &GetTensor()

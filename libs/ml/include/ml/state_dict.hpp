@@ -117,11 +117,20 @@ struct StateDict
   template <typename S>
   friend void Serialize(S &serializer, StateDict const &t)
   {
-    serializer << *t.weights_;
+    if (t.weights_)  // todo: can't serialize null pointer?
+    {
+      serializer << true;
+      serializer << *(t.weights_.get());
+    }
+    else
+    {
+      serializer << false;
+    }
 
-    serializer << t.dict_.size();
+    ulong dictsize = t.dict_.size();
+    serializer << dictsize;
 
-    for (auto const & d : t.dict_)
+    for (auto const &d : t.dict_)
     {
       serializer << d.first;
       Serialize(serializer, d.second);
@@ -131,18 +140,25 @@ struct StateDict
   template <typename S>
   friend void Deserialize(S &serializer, StateDict &t)
   {
-    uint dictsize{0};
-    std::string nodename;
-    StateDict node_sd;
+    ulong       dictsize{0};
+    std::string nodename{};  // todo: do I need to initialise variables?
+    StateDict   node_sd;
+    bool        hasweights{};
 
-    serializer >> *t.weights_;
+    serializer >> hasweights;
+    if (hasweights)
+    {
+      ArrayType weights;  // todo:: check this
+      serializer >> weights;
+      t.weights_ = std::make_shared<ArrayType>(weights);
+    }
     serializer >> dictsize;
 
-    for (uint i=0; i < dictsize; i++)
+    for (ulong i = 0; i < dictsize; i++)
     {
       serializer >> nodename;
       Deserialize(serializer, node_sd);
-      t.dict_.emplace(std::make_pair (nodename, node_sd));
+      t.dict_.emplace(std::make_pair(nodename, node_sd));
     }
   }
 };
