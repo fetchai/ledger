@@ -460,8 +460,8 @@ typename GraphW2VLoader<T>::ReturnType GraphW2VLoader<T>::GetNext()
 template <typename T>
 void GraphW2VLoader<T>::BuildVocab(std::vector<std::string> const &sents, SizeType min_count)
 {
-	// build vocab from sentences
-	std::cout << "building vocab " << std::endl;
+  // build vocab from sentences
+  std::cout << "building vocab " << std::endl;
   for (auto s : sents)
   {
     // make sure the max_word_count is not exceeded, and also the remain words space allows a
@@ -488,13 +488,13 @@ void GraphW2VLoader<T>::BuildVocab(std::vector<std::string> const &sents, SizeTy
     vocab_.Update();
     Update();
   }
-  
+
   // remove in frequent words from data
-	std::cout << "Removing infrequent words" << std::endl;
+  std::cout << "Removing infrequent words" << std::endl;
   RemoveInfrequent(min_count);
-  
+
   // initialize unigram
-	std::cout << "Initializing unigram" << std::endl;
+  std::cout << "Initializing unigram" << std::endl;
   InitUnigramTable();
 }
 

@@ -210,7 +210,6 @@ int main(int argc, char **argv)
   /// DATA LOADING ///
   data_loader.BuildVocab({ReadFile(train_file)}, tp.min_count);
 
-
   /////////////////////////////////////////
   /// SET UP PROPER TRAINING PARAMETERS ///
   /////////////////////////////////////////

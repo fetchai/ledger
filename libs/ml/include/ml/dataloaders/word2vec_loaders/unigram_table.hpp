@@ -27,7 +27,6 @@ class UnigramTable
   using SizeType = fetch::math::SizeType;
 
 public:
-
   UnigramTable(std::vector<SizeType> const &frequencies = {}, SizeType size = 1e8);
 
   void Reset(std::vector<SizeType> const &frequencies, SizeType size);
