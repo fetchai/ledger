@@ -114,7 +114,7 @@ TYPED_TEST(PReluTest, node_backward_test)  // Use the class as a Node
   TypeParam prediction = fc.Evaluate(true);
 
   TypeParam error_signal(std::vector<typename TypeParam::SizeType>({5, 10, 2}));
-  auto      bp_err = fc.BackPropagate(error_signal);
+  auto      bp_err = fc.BackPropagateSignal(error_signal);
 
   ASSERT_EQ(bp_err.size(), 1);
   ASSERT_EQ(bp_err[0].second.shape().size(), 3);

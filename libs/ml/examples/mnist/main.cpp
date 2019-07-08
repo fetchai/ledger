@@ -21,7 +21,7 @@
 #include "ml/graph.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/ops/activation.hpp"
-#include "ml/ops/loss_functions/cross_entropy.hpp"
+#include "ml/ops/loss_functions/cross_entropy_loss.hpp"
 #include "ml/optimisation/adam_optimiser.hpp"
 #include "ml/regularisers/l1_regulariser.hpp"
 #include "ml/regularisers/regularisation.hpp"
@@ -41,10 +41,9 @@ using DataType  = float;
 using ArrayType = fetch::math::Tensor<DataType>;
 using SizeType  = typename ArrayType::SizeType;
 
-using GraphType        = typename fetch::ml::Graph<ArrayType>;
-using CostFunctionType = typename fetch::ml::ops::CrossEntropy<ArrayType>;
-using OptimiserType    = typename fetch::ml::optimisers::AdamOptimiser<ArrayType, CostFunctionType>;
-using DataLoaderType   = typename fetch::ml::dataloaders::MNISTLoader<ArrayType, ArrayType>;
+using GraphType      = typename fetch::ml::Graph<ArrayType>;
+using OptimiserType  = typename fetch::ml::optimisers::AdamOptimiser<ArrayType>;
+using DataLoaderType = typename fetch::ml::dataloaders::MNISTLoader<ArrayType, ArrayType>;
 
 int main(int ac, char **av)
 {
@@ -68,7 +67,9 @@ int main(int ac, char **av)
   //  Input -> FC -> Relu -> FC -> Relu -> FC -> Softmax
   auto g = std::make_shared<GraphType>();
 
-  std::string input   = g->AddNode<PlaceHolder<ArrayType>>("Input", {});
+  std::string input = g->AddNode<PlaceHolder<ArrayType>>("Input", {});
+  std::string label = g->AddNode<PlaceHolder<ArrayType>>("Label", {});
+
   std::string layer_1 = g->AddNode<FullyConnected<ArrayType>>(
       "FC1", {input}, 28u * 28u, 10u, fetch::ml::details::ActivationType::RELU, regulariser,
       reg_rate);
@@ -77,12 +78,13 @@ int main(int ac, char **av)
   std::string output = g->AddNode<FullyConnected<ArrayType>>(
       "FC3", {layer_2}, 10u, 10u, fetch::ml::details::ActivationType::SOFTMAX, regulariser,
       reg_rate);
+  std::string error = g->AddNode<CrossEntropyLoss<ArrayType>>("Error", {output, label});
 
   // Initialise MNIST loader
   DataLoaderType data_loader(av[1], av[2]);
 
   // Initialise Optimiser
-  OptimiserType optimiser(g, {input}, output, learning_rate);
+  OptimiserType optimiser(g, {input}, label, error, learning_rate);
 
   // Training loop
   DataType loss;

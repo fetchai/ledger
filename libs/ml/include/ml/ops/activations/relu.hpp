@@ -56,7 +56,7 @@ public:
   std::vector<ArrayType> Backward(VecTensorType const &inputs, ArrayType const &error_signal)
   {
     assert(inputs.size() == 1);
-    assert(inputs[0].get().shape() == error_signal.shape());
+    assert(inputs.at(0).get().shape() == error_signal.shape());
 
     ArrayType const &input = inputs.front().get();
     ArrayType        return_signal{error_signal.shape()};
