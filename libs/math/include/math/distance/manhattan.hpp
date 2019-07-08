@@ -30,15 +30,14 @@ template <typename ArrayType>
 inline typename ArrayType::Type Manhattan(ArrayType const &a, ArrayType const &b)
 {
   assert(a.size() == b.size());
-  using Type     = typename ArrayType::Type;
-  using SizeType = typename ArrayType::SizeType;
+  using Type = typename ArrayType::Type;
 
-  Type     result = 0;
-  SizeType count  = 0;
+  Type result{0};
+  auto b_ptr = b.begin();
   for (auto &val : a)
   {
-    result += Abs(Subtract(val, b.At(count)));
-    ++count;
+    result += Abs(Subtract(val, *b_ptr));
+    ++b_ptr;
   }
 
   return result;

@@ -26,6 +26,7 @@
 #include <cstdint>
 #include <vector>
 
+namespace {
 template <typename T>
 class DivideTest : public ::testing::Test
 {
@@ -39,22 +40,32 @@ TYPED_TEST_CASE(DivideTest, MyTypes);
 
 TYPED_TEST(DivideTest, forward_test)
 {
-  TypeParam data = TypeParam::FromString("1, 1, 2; 3, 4, 5");
-
-  TypeParam gt = TypeParam::FromString("1, 1, 1; 1, 1, 1");
+  TypeParam data  = TypeParam::FromString("1, 1, 2; 3, 4, 5");
+  TypeParam data2 = TypeParam::FromString("1, 1, 2; 3, 4, 5");
+  TypeParam gt    = TypeParam::FromString("1, 1, 1; 1, 1, 1");
 
   fetch::ml::ops::Divide<TypeParam> op;
 
   TypeParam prediction(op.ComputeOutputShape({data}));
-  op.Forward({data, data}, prediction);
+  op.Forward({data, data2}, prediction);
 
-  ASSERT_TRUE(prediction.AllClose(gt, fetch::math::function_tolerance<typename TypeParam::Type>(),
+  EXPECT_TRUE(prediction.AllClose(gt, fetch::math::function_tolerance<typename TypeParam::Type>(),
+                                  fetch::math::function_tolerance<typename TypeParam::Type>()));
+
+  data  = TypeParam::FromString("0, 1, 2; 3, 4, 5");
+  data2 = TypeParam::FromString("1, -2, 3; -4, 5, -6");
+  gt    = TypeParam::FromString("0, -0.5, 0.666666666; 0.75, 0.8, 0.8333333");
+
+  op.Forward({data, data2}, prediction);
+  std::cout << "prediction.ToString(): " << prediction.ToString() << std::endl;
+
+  EXPECT_TRUE(prediction.AllClose(gt, fetch::math::function_tolerance<typename TypeParam::Type>(),
                                   fetch::math::function_tolerance<typename TypeParam::Type>()));
 }
 
 TYPED_TEST(DivideTest, backward_test)
 {
-  TypeParam data = TypeParam::FromString("1, 1, 2; 3, 4, 5");
+  TypeParam data = TypeParam::FromString("0, 1, 2; 3, 4, 5");
 
   fetch::ml::ops::Divide<TypeParam> op;
 
@@ -67,3 +78,4 @@ TYPED_TEST(DivideTest, backward_test)
                                fetch::math::function_tolerance<typename TypeParam::Type>()));
   }
 }
+}  // namespace

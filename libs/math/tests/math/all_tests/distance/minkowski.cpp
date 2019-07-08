@@ -17,10 +17,14 @@
 //------------------------------------------------------------------------------
 
 #include "core/random/lcg.hpp"
+#include "math/distance/euclidean.hpp"
+#include "math/distance/manhattan.hpp"
 #include "math/distance/minkowski.hpp"
 #include "math/tensor.hpp"
 
 #include "gtest/gtest.h"
+
+namespace {
 
 using namespace fetch::math::distance;
 using namespace fetch::math;
@@ -38,24 +42,38 @@ TYPED_TEST_CASE(MinkowskiTest, MyTypes);
 
 TYPED_TEST(MinkowskiTest, simple_test)
 {
-  using SizeType = typename TypeParam::SizeType;
+  using Type = typename TypeParam::Type;
 
-  Tensor<double> A = Tensor<double>(3);
-  A.Fill(0);
-  A.Set(SizeType{0}, 1);
-  EXPECT_NEAR(Minkowski(A, A, SizeType{2}), 1.41421, 0.00001);
+  TypeParam a   = TypeParam::FromString("1, 0, 0");
+  TypeParam b   = TypeParam::FromString("0, 1, 0");
+  Type      ret = Minkowski(a, b, Type{2});
+  EXPECT_NEAR(static_cast<double>(ret), 1.41421356237,
+              static_cast<double>(function_tolerance<Type>()));
 
-  Tensor<double> B = Tensor<double>(3);
-  B.Fill(0);
-  B.Set(SizeType{1}, 1);
-  EXPECT_EQ(Minkowski(A, B, SizeType{2}), 1);
+  a   = TypeParam::FromString("1, 0, 0");
+  b   = TypeParam::FromString("0, 1, 0");
+  ret = Minkowski(a, b, Type{3});
+  EXPECT_NEAR(static_cast<double>(ret), 1.25992104989,
+              static_cast<double>(function_tolerance<Type>()));
 
-  B.Fill(0);
-  B.Set(SizeType{1}, 2);
-  EXPECT_EQ(Minkowski(A, B, SizeType{2}), 1);
+  a   = TypeParam::FromString("1, 5, 7");
+  ret = Minkowski(a, a, Type{3});
+  EXPECT_NEAR(static_cast<double>(ret), 0, static_cast<double>(function_tolerance<Type>()));
 
-  B.Fill(0);
-  B.Set(SizeType{0}, 1);
-  B.Set(SizeType{1}, 1);
-  EXPECT_NEAR(Minkowski(A, B, SizeType{2}), 1.41421, 0.00001);
+  // minkowski with lambda=1 == manhattan
+  a         = TypeParam::FromString("1, 2, 3");
+  b         = TypeParam::FromString("10, 11, 12");
+  ret       = Minkowski(a, b, Type{1});
+  Type ret2 = Manhattan(a, b);
+  EXPECT_NEAR(static_cast<double>(ret), static_cast<double>(ret2),
+              static_cast<double>(function_tolerance<Type>()));
+
+  // minkowski with lambda=2 == euclidean
+  a    = TypeParam::FromString("1, 0, 0");
+  b    = TypeParam::FromString("0, 1, 0");
+  ret  = Minkowski(a, b, Type{2});
+  ret2 = Euclidean(a, b);
+  EXPECT_NEAR(static_cast<double>(ret), static_cast<double>(ret2),
+              static_cast<double>(function_tolerance<Type>()));
 }
+}  // namespace

@@ -27,26 +27,27 @@ namespace distance {
 
 template <typename ArrayType, typename F>
 inline meta::IfIsMathArray<ArrayType, ArrayType> &PairWiseDistance(ArrayType const &a, F &&metric,
-                                                                   ArrayType &r)
+                                                                   ArrayType &ret)
 {
   using SizeType = typename ArrayType::SizeType;
 
-  detailed_assert(r.shape(0) == 1);
-  detailed_assert(r.shape(1) == (a.shape(0) * (a.shape(0) - 1) / 2));
+  detailed_assert(ret.shape(0) == 1);
+  detailed_assert(ret.shape(1) == (a.shape(0) * (a.shape(0) - 1) / 2));
+  detailed_assert(ret.shape().size() == 2)
 
-  SizeType k = 0;
+      SizeType k = 0;
 
   for (SizeType i = 0; i < a.shape(0); ++i)
   {
     for (SizeType j = i + 1; j < a.shape(0); ++j)
     {
-      ArrayType slice1    = a.Slice(i).Copy();
-      ArrayType slice2    = a.Slice(j).Copy();
-      r(SizeType{0}, k++) = metric(slice1, slice2);
+      ArrayType slice1      = a.Slice(i).Copy();
+      ArrayType slice2      = a.Slice(j).Copy();
+      ret(SizeType{0}, k++) = metric(slice1, slice2);
     }
   }
 
-  return r;
+  return ret;
 }
 
 }  // namespace distance

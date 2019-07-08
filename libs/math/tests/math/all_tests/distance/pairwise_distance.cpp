@@ -21,6 +21,7 @@
 
 #include "gtest/gtest.h"
 
+namespace {
 using namespace fetch::math::distance;
 using namespace fetch::math;
 
@@ -79,3 +80,4 @@ TYPED_TEST(PairWiseDistanceTest, simple_test)
 
   EXPECT_TRUE(R.AllClose(gt));
 }
+}  // namespace

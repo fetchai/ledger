@@ -34,15 +34,15 @@ inline meta::IfIsMathArray<ArrayType, typename ArrayType::Type> Minkowski(
 {
   detailed_assert(a.size() == b.size());
   using DataType = typename ArrayType::Type;
-  using SizeType = typename ArrayType::SizeType;
 
-  SizeType count = 0;
-  DataType sum   = 0;
+  DataType sum{0};
+  auto     b_ptr = b.begin();
   for (auto &val : a)
   {
-    sum += Pow(Max(val, b.At(count)) - Min(val, b.At(count)), n);
+    sum += Pow(Max(val, *b_ptr) - Min(val, *b_ptr), n);
+    ++b_ptr;
   }
-  return Pow(sum, 1. / double(n));
+  return Pow(sum, DataType{1} / DataType{n});
 }
 
 }  // namespace distance
