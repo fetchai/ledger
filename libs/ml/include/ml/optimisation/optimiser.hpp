@@ -229,16 +229,25 @@ typename T::Type Optimiser<T>::Run(fetch::ml::dataloaders::DataLoader<ArrayType,
   // for some input combinations batch size will be modified
   batch_size = UpdateBatchSize(batch_size, loader.Size(), subset_size);
 
-  DataType                                     loss{0};
-  DataType                                     loss_sum{0};
-  SizeType                                     step{0};
+  DataType loss{0};
+  DataType loss_sum{0};
+  SizeType step{0};
+
+  // tracks whether loader is done, but dataloader will reset inside Prepare batch
+  bool is_done_set = loader.IsDone();
+
   std::pair<ArrayType, std::vector<ArrayType>> input;
-  while (!loader.IsDone() && step < subset_size)
+
+  // - check not completed more steps than user specified subset_size
+  // - is_done_set checks if loader.IsDone inside PrepareBatch
+  // - loader.IsDone handles edge case where batch divides perfectly into data set size
+  while ((step < subset_size) && (!is_done_set) && (!loader.IsDone()))
   {
-    loss = DataType{0};
+    is_done_set = false;
+    loss        = DataType{0};
 
     // Do batch back-propagation
-    input = loader.PrepareBatch(batch_size);
+    input = loader.PrepareBatch(batch_size, is_done_set);
 
     auto cur_input = input.second;
 
