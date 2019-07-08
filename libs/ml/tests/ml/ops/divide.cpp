@@ -54,10 +54,9 @@ TYPED_TEST(DivideTest, forward_test)
 
   data  = TypeParam::FromString("0, 1, 2; 3, 4, 5");
   data2 = TypeParam::FromString("1, -2, 3; -4, 5, -6");
-  gt    = TypeParam::FromString("0, -0.5, 0.666666666; 0.75, 0.8, 0.8333333");
+  gt    = TypeParam::FromString("0, -0.5, 0.666666666; -0.75, 0.8, -0.8333333");
 
   op.Forward({data, data2}, prediction);
-  std::cout << "prediction.ToString(): " << prediction.ToString() << std::endl;
 
   EXPECT_TRUE(prediction.AllClose(gt, fetch::math::function_tolerance<typename TypeParam::Type>(),
                                   fetch::math::function_tolerance<typename TypeParam::Type>()));
