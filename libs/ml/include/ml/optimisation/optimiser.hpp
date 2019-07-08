@@ -189,7 +189,7 @@ typename T::Type Optimiser<T>::Run(std::vector<ArrayType> const &data, ArrayType
 
     auto loss_tensor = graph_->Evaluate(output_node_name_);
     loss += *(loss_tensor.begin());
-    graph_->BackPropagate(output_node_name_);
+    graph_->BackPropagateError(output_node_name_);
 
     // Compute and apply gradient
     ApplyGradients(batch_size);
@@ -254,7 +254,7 @@ typename T::Type Optimiser<T>::Run(fetch::ml::dataloaders::DataLoader<ArrayType,
 
     auto loss_tensor = graph_->Evaluate(output_node_name_);
     loss += *(loss_tensor.begin());
-    graph_->BackPropagate(output_node_name_);
+    graph_->BackPropagateError(output_node_name_);
 
     // Compute and apply gradient
     ApplyGradients(batch_size);

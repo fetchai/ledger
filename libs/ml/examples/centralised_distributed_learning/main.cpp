@@ -85,7 +85,7 @@ public:
 
         ArrayType loss_tensor = g_.Evaluate("Error");
         loss += *(loss_tensor.begin());
-        g_.BackPropagate("Error");
+        g_.BackPropagateError("Error");
       }
       losses_values_.push_back(loss);
 

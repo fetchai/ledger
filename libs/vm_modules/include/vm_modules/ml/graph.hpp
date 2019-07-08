@@ -60,9 +60,9 @@ public:
     return ret;
   }
 
-  void Backpropagate(VMPtrString const &name)
+  void BackPropagateError(VMPtrString const &name)
   {
-    graph_.BackPropagate(name->str);
+    graph_.BackPropagateError(name->str);
   }
 
   void Step(float lr)
@@ -121,7 +121,7 @@ public:
         .CreateConstuctor<>()
         .CreateMemberFunction("SetInput", &VMGraph::SetInput)
         .CreateMemberFunction("Evaluate", &VMGraph::Evaluate)
-        .CreateMemberFunction("Backpropagate", &VMGraph::Backpropagate)
+        .CreateMemberFunction("Backpropagate", &VMGraph::BackPropagateError)
         .CreateMemberFunction("Step", &VMGraph::Step)
         .CreateMemberFunction("AddPlaceholder", &VMGraph::AddPlaceholder)
         .CreateMemberFunction("AddFullyConnected", &VMGraph::AddFullyConnected)

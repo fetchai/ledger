@@ -57,7 +57,7 @@ public:
 
   ArrayType    Evaluate(std::string const &node_name, bool is_training = true);
   void         BackPropagateSignal(std::string const &node_name, ArrayType const &error_signal);
-  void         BackPropagate(std::string const &node_name);
+  void         BackPropagateError(std::string const &node_name);
   virtual void Step(DataType learning_rate);
 
   template <class OperationType, typename... Params>
@@ -166,7 +166,7 @@ ArrayType Graph<ArrayType>::Evaluate(std::string const &node_name, bool is_train
  * @param node_name name of node from which to begin backprop
  */
 template <typename ArrayType>
-void Graph<ArrayType>::BackPropagate(std::string const &node_name)
+void Graph<ArrayType>::BackPropagateError(std::string const &node_name)
 {
   ArrayType error_signal;
   nodes_[node_name]->BackPropagateSignal(error_signal);
