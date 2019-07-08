@@ -83,7 +83,7 @@ public:
 private:
   Identifier(Tokens const &tokens, std::size_t count);
 
-  static const char SEPARATOR;
+  static char const SEPARATOR;
 
   bool Tokenise();
   void UpdateType();

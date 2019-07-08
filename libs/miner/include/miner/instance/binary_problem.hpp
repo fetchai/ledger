@@ -25,6 +25,7 @@
 
 namespace fetch {
 namespace optimisers {
+
 class BinaryProblem
 {
 public:

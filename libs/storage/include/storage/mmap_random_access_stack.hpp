@@ -104,7 +104,7 @@ public:
   }
 
   // Enable constructor for unit tests
-  MMapRandomAccessStack(const char *is_testing)
+  MMapRandomAccessStack(char const *is_testing)
   {
     if (!(std::string(is_testing).compare(std::string("test")) == 0))
     {

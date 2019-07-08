@@ -42,22 +42,43 @@ public:
     , tensor_(std::move(tensor))
   {}
 
+  VMTensor(fetch::vm::VM *vm, fetch::vm::TypeId type_id)
+    : fetch::vm::Object(vm, type_id)
+    , tensor_{}
+  {}
+
   static fetch::vm::Ptr<VMTensor> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
                                               fetch::vm::Ptr<fetch::vm::Array<SizeType>> shape)
   {
     return {new VMTensor(vm, type_id, shape->elements)};
   }
 
+  static fetch::vm::Ptr<VMTensor> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id)
+  {
+    return {new VMTensor(vm, type_id)};
+  }
+
   static void Bind(fetch::vm::Module &module)
   {
     module.CreateClassType<VMTensor>("Tensor")
         .CreateConstuctor<fetch::vm::Ptr<fetch::vm::Array<VMTensor::SizeType>>>()
+        .CreateSerializeDefaultConstuctor<>()
         .CreateMemberFunction("At", &VMTensor::AtOne)
         .CreateMemberFunction("At", &VMTensor::AtTwo)
         .CreateMemberFunction("At", &VMTensor::AtThree)
         .CreateMemberFunction("SetAt", &VMTensor::SetAt)
+        .CreateMemberFunction("Fill", &VMTensor::Fill)
         .CreateMemberFunction("ToString", &VMTensor::ToString);
   }
+
+  fetch::math::SizeVector shape()
+  {
+    return tensor_.shape();
+  }
+
+  ////////////////////////////////////
+  /// ACCESSING AND SETTING VALUES ///
+  ////////////////////////////////////
 
   DataType AtOne(uint64_t const &idx1)
   {
@@ -84,19 +105,35 @@ public:
     tensor_.Copy(other);
   }
 
+  void Fill(DataType const &value)
+  {
+    tensor_.Fill(value);
+  }
+
+  //////////////////////////////
+  /// PRINTING AND EXPORTING ///
+  //////////////////////////////
+
   fetch::vm::Ptr<fetch::vm::String> ToString()
   {
     return new fetch::vm::String(vm_, tensor_.ToString());
   }
 
-  fetch::math::SizeVector shape()
-  {
-    return tensor_.shape();
-  }
-
   ArrayType &GetTensor()
   {
     return tensor_;
+  }
+
+  bool SerializeTo(serializers::ByteArrayBuffer &buffer) override
+  {
+    buffer << tensor_;
+    return true;
+  }
+
+  bool DeserializeFrom(serializers::ByteArrayBuffer &buffer) override
+  {
+    buffer >> tensor_;
+    return true;
   }
 
 private:

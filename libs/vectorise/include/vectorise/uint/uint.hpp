@@ -18,13 +18,18 @@
 //------------------------------------------------------------------------------
 
 #include "meta/has_index.hpp"
+
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <cstddef>
+#include <cstdint>
+#include <string>
 #include <vector>
 
 namespace fetch {
 namespace vectorise {
+
 /* Implements a subset of big number functionality.
  *
  * The purpose of this library is to implement a subset of number

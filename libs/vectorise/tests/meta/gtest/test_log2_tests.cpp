@@ -20,11 +20,12 @@
 
 #include "gtest/gtest.h"
 
-namespace fetch {
-namespace meta {
+#include <cstdint>
+
 namespace {
 
 using namespace testing;
+using namespace fetch::meta;
 
 /**
  * This Test classes is dedicated to test both - COMPILE & RUN time behaviour of
@@ -318,5 +319,3 @@ TEST_F(LogTest, test_0_to_63_expected_failure)
 }
 
 }  // namespace
-}  // namespace meta
-}  // namespace fetch

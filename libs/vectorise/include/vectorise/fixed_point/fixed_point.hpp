@@ -23,10 +23,12 @@
 
 #include <cassert>
 #include <cmath>
+#include <cstddef>
+#include <cstdint>
 #include <functional>
 #include <iomanip>
-#include <iostream>
 #include <limits>
+#include <ostream>
 
 namespace fetch {
 namespace fixed_point {
@@ -159,7 +161,7 @@ inline void Multiply(FixedPoint<I, F> const &lhs, FixedPoint<I, F> const &rhs,
 template <typename T>
 constexpr inline int32_t HighestSetBit(T n_input)
 {
-  const auto n = static_cast<uint64_t>(n_input);
+  auto const n = static_cast<uint64_t>(n_input);
 
   if (n == 0)
   {

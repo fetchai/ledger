@@ -52,7 +52,7 @@ public:
     return category_;
   }
 
-  const char *what() const noexcept override
+  char const *what() const noexcept override
   {
     if (errors_.empty())
     {

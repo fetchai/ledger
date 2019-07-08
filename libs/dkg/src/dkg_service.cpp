@@ -28,6 +28,7 @@
 #include "network/muddle/subscription.hpp"
 
 #include <chrono>
+#include <cstdint>
 
 namespace fetch {
 namespace dkg {
