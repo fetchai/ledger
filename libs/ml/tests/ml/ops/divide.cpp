@@ -16,7 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/ops/multiply.hpp"
+#include "ml/ops/divide.hpp"
 
 #include "math/tensor.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
@@ -24,16 +24,16 @@
 #include "gtest/gtest.h"
 
 template <typename T>
-class MultiplyTest : public ::testing::Test
+class DivideTest : public ::testing::Test
 {
 };
 
 using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
                                  fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
 
-TYPED_TEST_CASE(MultiplyTest, MyTypes);
+TYPED_TEST_CASE(DivideTest, MyTypes);
 
-TYPED_TEST(MultiplyTest, forward_test)
+TYPED_TEST(DivideTest, forward_test)
 {
   using ArrayType = TypeParam;
 
@@ -46,10 +46,10 @@ TYPED_TEST(MultiplyTest, forward_test)
     -8,  7,-6, 5,-4, 3,-2, 1)");
 
   ArrayType gt = ArrayType::FromString(R"(
-  	 8, 14, 18,20, 20,18, 14,8;
-    -8,  14,-18, 20,-20, 18,-14, 8)");
+  	0.125,	0.28571,	0.5,	0.8,	1.25,	2,	3.5,	8;
+    -0.125, 0.28571,	-0.5,	0.8,	-1.25,	2,	-3.5,	8)");
 
-  fetch::ml::ops::Multiply<ArrayType> op;
+  fetch::ml::ops::Divide<ArrayType> op;
 
   TypeParam prediction(op.ComputeOutputShape({data_1, data_2}));
   op.Forward({data_1, data_2}, prediction);
@@ -59,7 +59,7 @@ TYPED_TEST(MultiplyTest, forward_test)
       prediction.AllClose(gt, typename TypeParam::Type(1e-5), typename TypeParam::Type(1e-5)));
 }
 
-TYPED_TEST(MultiplyTest, backward_test)
+TYPED_TEST(DivideTest, backward_test)
 {
   using DataType  = typename TypeParam::Type;
   using ArrayType = TypeParam;
@@ -73,19 +73,19 @@ TYPED_TEST(MultiplyTest, backward_test)
     -8,  7,-6, 5,-4, 3,-2, 1)");
 
   ArrayType gt_1 = ArrayType::FromString(R"(
-    8,	   7,  12,  10,  12,   9,   8,  4;
-    -40, -35, -36, -30,	-28, -21, -16, -8)");
+    0.125,	0.1428571,	0.33333,	0.4,	0.75,	1,	2,	4;
+    -0.625,	-0.714286,	-1,	-1.2,	-1.75,	-2.33333,	-4,	-8)");
 
   ArrayType gt_2 = ArrayType::FromString(R"(
-    1,   2,	 6,	  8, 15,  18, 28,  32;
-    5, -10, 18,	-24, 35, -42, 56, -64)");
+    0.015625,	0.04082,	0.1666667,	0.32,	0.9375,	2,	7,	32;
+    0.078125,  -0.20408,	0.5,	-0.96,	2.1875,	-4.6666667,	14,	-64)");
 
   ArrayType error = ArrayType::FromString(R"(
   	1, -1, 2, -2, 3, -3, 4, -4;
     5, -5, 6, -6, 7, -7, 8, -8)");
 
-  fetch::ml::ops::Multiply<ArrayType> op;
-  std::vector<ArrayType>              prediction = op.Backward({data_1, data_2}, error);
+  fetch::ml::ops::Divide<ArrayType> op;
+  std::vector<ArrayType>            prediction = op.Backward({data_1, data_2}, error);
 
   // test correct values
   ASSERT_TRUE(prediction[0].AllClose(gt_1, DataType(1e-5), DataType(1e-5)));

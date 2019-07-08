@@ -29,6 +29,7 @@ class Divide : public fetch::ml::Ops<T>
 {
 public:
   using ArrayType     = T;
+  using SizeType      = typename ArrayType::SizeType;
   using ArrayPtrType  = std::shared_ptr<ArrayType>;
   using VecTensorType = typename Ops<T>::VecTensorType;
 
@@ -36,48 +37,31 @@ public:
   virtual ~Divide() = default;
 
   /**
-   * elementwise multiplication
+   * elementwise division
    * @param inputs  left & right inputs to Divide
    * @return
    */
-  virtual void Forward(std::vector<ArrayPtrType> const &inputs, ArrayType &output)
+  virtual void Forward(VecTensorType const &inputs, ArrayType &output)
   {
-    (void)output;
-    assert(inputs.size() > 1);
-    for (std::size_t i = 1; i < inputs.size(); ++i)
-    {
-      assert(inputs[i]->shape() == inputs[i - 1]->shape());
-    }
+    assert(inputs.size() == 2);
+    assert(inputs.at(0).get().shape() == inputs.at(1).get().shape());
+    assert(inputs.at(0).get().shape() == output.shape());
 
-    std::vector<std::uint64_t> outputShape(inputs[0]->shape());
-    if (!this->output_ || this->output_->shape() != outputShape)
-    {
-      this->output_ = std::make_shared<ArrayType>(outputShape);
-    }
-
-    fetch::math::Divide(inputs[0], inputs[1], this->output_);
-    if (inputs.size() > 2)
-    {
-      for (std::size_t i = 2; i < inputs.size(); ++i)
-      {
-        fetch::math::Divide(this->output_, inputs[i], this->output_);
-      }
-    }
-
-    output = this->output_;
+    fetch::math::Divide(inputs.at(0).get(), inputs.at(1).get(), output);
   }
 
   /**
    * f'(x)=(1/y)*err
    * f'(y)=-(x/(y^2))*err
    */
-  virtual std::vector<ArrayPtrType> Backward(VecTensorType const &inputs, ArrayPtrType error_signal)
+  virtual std::vector<ArrayType> Backward(VecTensorType const &inputs,
+                                          ArrayType const &    error_signal)
   {
     ArrayType return_signal_1(inputs.at(0).get().shape());
     ArrayType return_signal_2(return_signal_1.shape());
 
-    auto a_it   = inputs.get().at(0).cbegin();
-    auto b_it   = inputs.get().at(1).cbegin();
+    auto a_it   = inputs.at(0).get().cbegin();
+    auto b_it   = inputs.at(1).get().cbegin();
     auto err_it = error_signal.cbegin();
     auto r_1_it = return_signal_1.begin();
     auto r_2_it = return_signal_2.begin();
@@ -88,11 +72,17 @@ public:
 
       ++a_it;
       ++b_it;
+      ++err_it;
       ++r_1_it;
       ++r_2_it;
     }
 
     return {return_signal_1, return_signal_2};
+  }
+
+  virtual std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const
+  {
+    return inputs.front().get().shape();
   }
 
   static constexpr char const *DESCRIPTOR = "Divide";
