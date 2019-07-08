@@ -52,7 +52,7 @@ public:
   void       InitUnigramTable(SizeType size = 1e8);
   ReturnType GetNext() override;
 
-  void BuildVocab(std::vector<std::string> const &sents);
+  void BuildVocab(std::vector<std::string> const &sents, SizeType min_count);
   void SaveVocab(std::string const &filename);
   void LoadVocab(std::string const &filename);
   T    EstimatedSampleNumber();
@@ -458,8 +458,10 @@ typename GraphW2VLoader<T>::ReturnType GraphW2VLoader<T>::GetNext()
  * @return bool indicates success
  */
 template <typename T>
-void GraphW2VLoader<T>::BuildVocab(std::vector<std::string> const &sents)
+void GraphW2VLoader<T>::BuildVocab(std::vector<std::string> const &sents, SizeType min_count)
 {
+	// build vocab from sentences
+	std::cout << "building vocab " << std::endl;
   for (auto s : sents)
   {
     // make sure the max_word_count is not exceeded, and also the remain words space allows a
@@ -486,6 +488,14 @@ void GraphW2VLoader<T>::BuildVocab(std::vector<std::string> const &sents)
     vocab_.Update();
     Update();
   }
+  
+  // remove in frequent words from data
+	std::cout << "Removing infrequent words" << std::endl;
+  RemoveInfrequent(min_count);
+  
+  // initialize unigram
+	std::cout << "Initializing unigram" << std::endl;
+  InitUnigramTable();
 }
 
 /**

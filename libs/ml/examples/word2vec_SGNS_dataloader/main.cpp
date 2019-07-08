@@ -208,13 +208,8 @@ int main(int argc, char **argv)
                                        tp.max_word_count, tp.train_mode);
   // set up dataloader
   /// DATA LOADING ///
-  std::cout << "building vocab " << std::endl;
-  data_loader.BuildVocab({ReadFile(train_file)});
-  std::cout << "Removing infrequent words" << std::endl;
-  data_loader.RemoveInfrequent(tp.min_count);
-  std::cout << "Initializing unigram table" << std::endl;
-  data_loader.InitUnigramTable();
-  std::cout << "Vocab Size : " << data_loader.vocab_size() << std::endl;
+  data_loader.BuildVocab({ReadFile(train_file)}, tp.min_count);
+
 
   /////////////////////////////////////////
   /// SET UP PROPER TRAINING PARAMETERS ///
