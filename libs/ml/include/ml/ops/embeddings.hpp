@@ -67,7 +67,7 @@ public:
     else if (this->embeddings_output_->shape().at(2) != batch_size)
     {
       this->embeddings_output_->Reshape({this->embeddings_output_->shape().at(0),
-                                        this->embeddings_output_->shape().at(1), batch_size});
+                                         this->embeddings_output_->shape().at(1), batch_size});
     }
 
     assert(this->embeddings_output_->shape().at(0) == this->output_->shape().at(0));
