@@ -32,7 +32,7 @@ public:
   void Reset(std::vector<SizeType> const &frequencies, SizeType size);
   bool Sample(SizeType &ret);
   bool SampleNegative(SizeType positive_index, SizeType &ret);
-  bool SampleNegative(fetch::math::Tensor<SizeType> positive_indices, SizeType &ret);
+  bool SampleNegative(fetch::math::Tensor<SizeType> const &positive_indices, SizeType &ret);
   void Reset();
 
 private:
@@ -125,23 +125,24 @@ bool UnigramTable::SampleNegative(SizeType positive_index, SizeType &ret)
  * @param ret
  * @return
  */
-bool UnigramTable::SampleNegative(fetch::math::Tensor<SizeType> positiveIndices, SizeType &ret)
+bool UnigramTable::SampleNegative(fetch::math::Tensor<SizeType> const &positive_indices,
+                                  SizeType &                           ret)
 {
   ret = data_[rng_() % data_.size()];
 
   SizeType attempt_count = 0;
   while (true)
   {
-    bool inPositiveIndices = false;
-    for (auto i : positiveIndices)
+    bool in_positive_indices = false;
+    for (auto i : positive_indices)
     {
       if (ret == i)
       {
-        inPositiveIndices = true;
+        in_positive_indices = true;
         break;
       }
     }
-    if (!inPositiveIndices)
+    if (!in_positive_indices)
     {  // if ret is valid, stop searching
       return true;
     }

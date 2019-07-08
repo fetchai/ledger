@@ -120,10 +120,13 @@ T &Node<T, O>::Evaluate(bool is_training)
   if (cached_output_status_ != CachedOutputState::VALID_CACHE)
   {
     std::vector<std::reference_wrapper<const ArrayType>> inputs = GatherInputs();
+
     if (cached_output_status_ == CachedOutputState::CHANGED_SIZE)
     {
       auto output_shape = this->ComputeOutputShape(inputs);
-      if (cached_output_.shape() != output_shape)
+
+      if (cached_output_.shape() !=
+          output_shape)  // make shape compatible right before we do the forwarding
       {
         cached_output_.ResizeFromShape(output_shape);
       }

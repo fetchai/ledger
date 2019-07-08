@@ -69,7 +69,21 @@ private:
 
   void ApplyGradients(SizeType batch_size) override;
   void ResetCache();
+  void Init();
 };
+
+template <class T, class C>
+void AdamOptimiser<T, C>::Init()
+{
+  for (auto &train : this->graph_trainables_)
+  {
+    this->cache_.emplace_back(ArrayType(train->get_weights().shape()));
+    this->momentum_.emplace_back(ArrayType(train->get_weights().shape()));
+    this->mt_.emplace_back(ArrayType(train->get_weights().shape()));
+    this->vt_.emplace_back(ArrayType(train->get_weights().shape()));
+  }
+  ResetCache();
+}
 
 template <class T, class C>
 AdamOptimiser<T, C>::AdamOptimiser(std::shared_ptr<Graph<T>>
@@ -86,14 +100,7 @@ AdamOptimiser<T, C>::AdamOptimiser(std::shared_ptr<Graph<T>>
   , beta2_t_(beta2)
   , epsilon_(epsilon)
 {
-  for (auto &train : this->graph_trainables_)
-  {
-    this->cache_.emplace_back(ArrayType(train->get_weights().shape()));
-    this->momentum_.emplace_back(ArrayType(train->get_weights().shape()));
-    this->mt_.emplace_back(ArrayType(train->get_weights().shape()));
-    this->vt_.emplace_back(ArrayType(train->get_weights().shape()));
-  }
-  ResetCache();
+  Init();
 }
 
 template <class T, class C>
@@ -109,14 +116,7 @@ AdamOptimiser<T, C>::AdamOptimiser(
   , beta2_t_(beta2)
   , epsilon_(epsilon)
 {
-  for (auto &train : this->graph_trainables_)
-  {
-    this->cache_.emplace_back(ArrayType(train->get_weights().shape()));
-    this->momentum_.emplace_back(ArrayType(train->get_weights().shape()));
-    this->mt_.emplace_back(ArrayType(train->get_weights().shape()));
-    this->vt_.emplace_back(ArrayType(train->get_weights().shape()));
-  }
-  ResetCache();
+  Init();
 }
 
 // private

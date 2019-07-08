@@ -39,7 +39,7 @@ public:
 
   virtual ~DataLoader()           = default;
   virtual ReturnType    GetNext() = 0;
-  virtual ReturnType    PrepareBatch(fetch::math::SizeType subset_size);
+  virtual ReturnType    PrepareBatch(fetch::math::SizeType batch_size);
   virtual std::uint64_t Size() const   = 0;
   virtual bool          IsDone() const = 0;
   virtual void          Reset()        = 0;
@@ -60,12 +60,12 @@ private:
  * dimension is subset_size
  * @tparam LabelType
  * @tparam DataType
- * @param subset_size i.e. batch size of returned Tensors
+ * @param batch_size i.e. batch size of returned Tensors
  * @return pair of label tensor and vector of data tensors with specified batch size
  */
 template <typename LabelType, typename DataType>
 std::pair<LabelType, std::vector<DataType>> DataLoader<LabelType, DataType>::PrepareBatch(
-    fetch::math::SizeType subset_size)
+    fetch::math::SizeType batch_size)
 {
   if (IsDone())
   {
@@ -82,7 +82,7 @@ std::pair<LabelType, std::vector<DataType>> DataLoader<LabelType, DataType>::Pre
   for (SizeType i{0}; i < training_pair.second.size(); i++)
   {
     std::vector<SizeType> current_data_shape             = training_pair.second.at(i).shape();
-    current_data_shape.at(current_data_shape.size() - 1) = subset_size;
+    current_data_shape.at(current_data_shape.size() - 1) = batch_size;
 
     if (data_vec_.at(i).shape() != current_data_shape)
     {
@@ -97,7 +97,7 @@ std::pair<LabelType, std::vector<DataType>> DataLoader<LabelType, DataType>::Pre
   }
 
   SizeType label_batch_dimension             = labels_size_vec_.size() - 1;
-  labels_size_vec_.at(label_batch_dimension) = subset_size;
+  labels_size_vec_.at(label_batch_dimension) = batch_size;
   if (labels_.shape() != labels_size_vec_)
   {
     labels_ = LabelType{labels_size_vec_};
@@ -119,16 +119,42 @@ std::pair<LabelType, std::vector<DataType>> DataLoader<LabelType, DataType>::Pre
     }
 
     i++;
-    if (i < subset_size)
+    if (i < batch_size)
     {
       if (IsDone())
       {
-        break;  // we stop the prepare batch when the dataloader is drained, this might modify the
-                // size of the batch
+        // we create smaller batchsize samples to deal with boundary issues
+        std::vector<DataType> tmp_data_vec;
+        DataType              tmp_labels({1, i});
+
+        auto iter_from = labels_.begin();
+        auto iter_to   = tmp_labels.begin();
+        while (iter_to.is_valid())
+        {
+          *iter_to = *iter_from;
+          ++iter_to;
+          ++iter_from;
+        }
+
+        for (std::size_t j = 0; j <= 1; j++)
+        {
+          DataType tmp({1, i});
+          iter_from = data_vec_.at(j).begin();
+          iter_to   = tmp.begin();
+          while (iter_to.is_valid())
+          {
+            *iter_to = *iter_from;
+            ++iter_to;
+            ++iter_from;
+          }
+          tmp_data_vec.emplace_back(tmp.Copy());
+        }
+
+        return std::make_pair(tmp_labels, tmp_data_vec);
       }
       training_pair = GetNext();
     }
-  } while (i < subset_size);
+  } while (i < batch_size);
 
   return std::make_pair(labels_, data_vec_);
 }

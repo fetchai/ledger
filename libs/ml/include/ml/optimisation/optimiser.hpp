@@ -132,11 +132,22 @@ private:
   virtual void                                 ApplyGradients(SizeType batch_size) = 0;
 
   void PrintStats(SizeType batch_size, SizeType subset_size);
+  void Init();
 
   DataType RunImplementation(fetch::ml::dataloaders::DataLoader<ArrayType, ArrayType> &loader,
                              SizeType batch_size  = SIZE_NOT_SET,
                              SizeType subset_size = SIZE_NOT_SET);
 };
+
+template <class T, class C>
+void Optimiser<T, C>::Init()
+{
+  graph_trainables_ = graph_->get_trainables();
+  for (auto &train : graph_trainables_)
+  {
+    this->gradients_.emplace_back(ArrayType(train->get_weights().shape()));
+  }
+}
 
 template <class T, class C>
 Optimiser<T, C>::Optimiser(std::shared_ptr<Graph<T>>      graph,
@@ -148,11 +159,7 @@ Optimiser<T, C>::Optimiser(std::shared_ptr<Graph<T>>      graph,
   , learning_rate_(learning_rate)
   , epoch_(0)
 {
-  graph_trainables_ = graph_->get_trainables();
-  for (auto &train : graph_trainables_)
-  {
-    this->gradients_.emplace_back(ArrayType(train->get_weights().shape()));
-  }
+  Init();
 }
 
 template <class T, class C>
@@ -169,11 +176,7 @@ Optimiser<T, C>::Optimiser(std::shared_ptr<Graph<T>>          graph,
   // initialize learning rate
   learning_rate_ = learning_rate_param_.starting_learning_rate;
 
-  graph_trainables_ = graph_->get_trainables();
-  for (auto &train : graph_trainables_)
-  {
-    this->gradients_.emplace_back(ArrayType(train->get_weights().shape()));
-  }
+  Init();
 }
 
 /**
@@ -335,7 +338,14 @@ typename T::Type Optimiser<T, C>::RunImplementation(
     // Do batch back-propagation
     graph_->BackPropagate(output_node_name_, criterion_.Backward({pred_label_, cur_label_}));
     // Compute and apply gradient
-    ApplyGradients(batch_size);
+    if (input_.second.at(0).size() != batch_size)
+    {
+      ApplyGradients(input_.second.at(0).size());
+    }
+    else
+    {
+      ApplyGradients(batch_size);
+    }
 
     // increment step
     step_ += batch_size;

@@ -20,7 +20,6 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
-//#include "python/ml/dataloaders/py_cbow_loader.hpp"
 #include "python/ml/dataloaders/py_mnist_loader.hpp"
 #include "python/ml/layers/py_fully_connected.hpp"
 #include "python/ml/ops/activation_functions/py_relu.hpp"
@@ -42,7 +41,6 @@ void BuildMLLibrary(pybind11::module &module)
   fetch::ml::ops::BuildFullyConnected<T>("FullyConnected", module);
   fetch::ml::ops::BuildMeanSquareError<T>("MeanSquareError", module);
   fetch::ml::dataloaders::BuildMNISTLoader<T>("MNISTLoader", module);
-  //  fetch::ml::dataloaders::BuildCBOWLoader<T>("CBOWLoader", module);
 }
 
 }  // namespace ml

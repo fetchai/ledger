@@ -100,8 +100,7 @@ public:
   virtual std::vector<SizeType> ComputeOutputShape(
       std::vector<std::reference_wrapper<ArrayType const>> const &inputs) const
   {
-    (void)inputs;
-    return {this->out_size_, 1};
+    return {inputs.front().get().shape().at(1), 1};
   }
 
   static constexpr char const *DESCRIPTOR = "SkipGram";

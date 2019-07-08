@@ -65,7 +65,18 @@ private:
 
   void ApplyGradients(SizeType batch_size) override;
   void ResetMomentum();
+  void Init();
 };
+
+template <class T, class C>
+void MomentumOptimiser<T, C>::Init()
+{
+  for (auto &train : this->graph_trainables_)
+  {
+    this->momentum_.emplace_back(ArrayType(train->get_weights().shape()));
+  }
+  ResetMomentum();
+}
 
 template <class T, class C>
 MomentumOptimiser<T, C>::MomentumOptimiser(std::shared_ptr<Graph<T>>
@@ -78,11 +89,7 @@ MomentumOptimiser<T, C>::MomentumOptimiser(std::shared_ptr<Graph<T>>
   : Optimiser<T, C>(graph, input_node_names, output_node_name, learning_rate)
   , momentum_update_(momentum_update)
 {
-  for (auto &train : this->graph_trainables_)
-  {
-    this->momentum_.emplace_back(ArrayType(train->get_weights().shape()));
-  }
-  ResetMomentum();
+  Init();
 }
 
 template <class T, class C>
@@ -96,11 +103,7 @@ MomentumOptimiser<T, C>::MomentumOptimiser(
   : Optimiser<T, C>(graph, input_node_names, output_node_name, learning_rate_param)
   , momentum_update_(momentum_update)
 {
-  for (auto &train : this->graph_trainables_)
-  {
-    this->momentum_.emplace_back(ArrayType(train->get_weights().shape()));
-  }
-  ResetMomentum();
+  Init();
 }
 
 // private

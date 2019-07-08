@@ -38,10 +38,9 @@ using namespace fetch::ml;
 using namespace fetch::ml::dataloaders;
 using namespace fetch::ml::ops;
 using namespace fetch::ml::layers;
-using DataType     = double;
-using ArrayType    = fetch::math::Tensor<DataType>;
-using ArrayPtrType = std::shared_ptr<ArrayType>;
-using SizeType     = typename ArrayType::SizeType;
+using DataType  = double;
+using ArrayType = fetch::math::Tensor<DataType>;
+using SizeType  = typename ArrayType::SizeType;
 
 ////////////////////////
 /// MODEL DEFINITION ///
@@ -63,7 +62,7 @@ void PrintWordAnalogy(GraphW2VLoader<DataType> const &dl, ArrayType const &embed
 {
   ArrayType arr = embeddings;
 
-  if (!dl.WordKnown(word1) || !dl.WordKnown(word1) || !dl.WordKnown(word1))
+  if (!dl.WordKnown(word1) || !dl.WordKnown(word2) || !dl.WordKnown(word3))
   {
     throw std::runtime_error("WARNING! not all to-be-tested words are in vocabulary");
   }
@@ -154,16 +153,16 @@ std::string ReadFile(std::string const &path)
 
 struct TrainingParams
 {
-  SizeType max_word_count       = 1000000;  // maximum number to be trained
-  SizeType negative_sample_size = 5;        // number of negative sample per word-context pair
-  SizeType window_size          = 5;        // window size for context sampling
-  bool     train_mode           = true;     // reserve for future compatibility with CBOW
-  DataType freq_thresh          = 1e-3;     // frequency threshold for subsampling
-  SizeType min_count            = 5;        // infrequent word removal threshold
+  SizeType max_word_count       = 100000000;  // maximum number to be trained
+  SizeType negative_sample_size = 5;          // number of negative sample per word-context pair
+  SizeType window_size          = 5;          // window size for context sampling
+  bool     train_mode           = true;       // reserve for future compatibility with CBOW
+  DataType freq_thresh          = 1e-3;       // frequency threshold for subsampling
+  SizeType min_count            = 5;          // infrequent word removal threshold
 
   SizeType batch_size      = 100000;  // training data batch size
   SizeType embedding_size  = 100;     // dimension of embedding vec
-  SizeType training_epochs = 2;
+  SizeType training_epochs = 1;
   SizeType test_frequency  = 1;
   DataType starting_learning_rate_per_sample =
       0.025;  // these are the learning rates we have for each sample
@@ -231,7 +230,7 @@ int main(int argc, char **argv)
 
   // calc the compatiable linear lr decay
   tp.learning_rate_param.linear_decay_rate =
-      static_cast<DataType>(0.1) /
+      static_cast<DataType>(1) /
       data_loader
           .EstimatedSampleNumber();  // this decay rate gurantee the lr is reduced to zero by the
                                      // end of an epoch (despit capping by ending learning rate)
@@ -244,7 +243,7 @@ int main(int argc, char **argv)
 
   // set up model architecture
   std::cout << "building model architecture...: " << std::endl;
-  std::shared_ptr<fetch::ml::Graph<ArrayType>> g(std::make_shared<fetch::ml::Graph<ArrayType>>());
+  auto        g          = std::make_shared<fetch::ml::Graph<ArrayType>>();
   std::string model_name = Model(*g, tp.embedding_size, data_loader.vocab_size());
 
   // set up loss

@@ -68,7 +68,20 @@ private:
 
   void ApplyGradients(SizeType batch_size) override;
   void ResetCache();
+  void Init();
 };
+
+template <class T, class C>
+void RMSPropOptimiser<T, C>::Init()
+{
+  auto weights = this->graph_->get_weights();
+  for (auto &train : this->graph_trainables_)
+  {
+    this->cache_.emplace_back(ArrayType(train->get_weights().shape()));
+  }
+
+  ResetCache();
+}
 
 template <class T, class C>
 RMSPropOptimiser<T, C>::RMSPropOptimiser(std::shared_ptr<Graph<T>>
@@ -84,13 +97,7 @@ RMSPropOptimiser<T, C>::RMSPropOptimiser(std::shared_ptr<Graph<T>>
   decay_rate_(decay_rate)
   , epsilon_(epsilon)
 {
-  auto weights = this->graph_->get_weights();
-  for (auto &train : this->graph_trainables_)
-  {
-    this->cache_.emplace_back(ArrayType(train->get_weights().shape()));
-  }
-
-  ResetCache();
+  Init();
 }
 
 template <class T, class C>
@@ -107,13 +114,7 @@ RMSPropOptimiser<T, C>::RMSPropOptimiser(
   decay_rate_(decay_rate)
   , epsilon_(epsilon)
 {
-  auto weights = this->graph_->get_weights();
-  for (auto &train : this->graph_trainables_)
-  {
-    this->cache_.emplace_back(ArrayType(train->get_weights().shape()));
-  }
-
-  ResetCache();
+  Init();
 }
 
 // private
