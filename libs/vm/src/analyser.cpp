@@ -30,6 +30,8 @@
 #include <ostream>
 #include <string>
 
+#include "/build/fetch_point.hpp"
+
 namespace fetch {
 namespace vm {
 
@@ -59,7 +61,8 @@ void Analyser::Initialise()
 
   type_info_array_ = TypeInfoArray(TypeIds::NumReserved);
   value_util::ZeroAll(type_map_, type_info_map_, registered_types_, function_info_array_,
-                      function_set_, symbols_);
+                      function_set_);
+  symbols_ = CreateSymbolTable();
 
   CreatePrimitiveType("Null", TypeIndex(typeid(std::nullptr_t)), false, TypeIds::Null, null_type_);
   CreatePrimitiveType("Void", TypeIndex(typeid(void)), false, TypeIds::Void, void_type_);
@@ -2017,6 +2020,10 @@ FunctionPtr Analyser::FindFunction(TypePtr const &type, FunctionGroupPtr const &
   std::vector<TypePtrArray> array;
   for (FunctionPtr const &function : fg->functions)
   {
+	  if(function->name == "set") {
+		  STD_CERR << "Function: " << function << '\n';
+		  STD_CERR << "types: " << supplied_types << '\n';
+	  }
     TypePtrArray temp_actual_types;
     if (MatchTypes(type, supplied_types, function->parameter_types, temp_actual_types))
     {

@@ -27,7 +27,9 @@ namespace vm {
 
 Compiler::Compiler(Module *module)
 {
+	std::cerr << "Point 0.0.0\n";
   analyser_.Initialise();
+	std::cerr << "Point 0.0.1\n";
   module->CompilerSetup(this);
 }
 
