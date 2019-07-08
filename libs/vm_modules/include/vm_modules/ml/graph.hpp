@@ -129,7 +129,7 @@ public:
         .CreateMemberFunction("Step", &VMGraph::Step)
         .CreateMemberFunction("AddPlaceholder", &VMGraph::AddPlaceholder)
         .CreateMemberFunction("AddFullyConnected", &VMGraph::AddFullyConnected)
-        .CreateMemberFunction("addConv1D", &VMGraph::AddFullyConnected)
+        .CreateMemberFunction("addConv1D", &VMGraph::AddConv1D)
         .CreateMemberFunction("AddRelu", &VMGraph::AddRelu)
         .CreateMemberFunction("AddSoftmax", &VMGraph::AddSoftmax)
         .CreateMemberFunction("AddDropout", &VMGraph::AddDropout)

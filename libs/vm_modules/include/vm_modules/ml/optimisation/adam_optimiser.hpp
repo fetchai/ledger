@@ -20,6 +20,7 @@
 #include "ml/graph.hpp"
 #include "ml/ops/loss_functions/cross_entropy.hpp"
 #include "ml/optimisation/adam_optimiser.hpp"
+
 #include "vm_modules/math/tensor.hpp"
 #include "vm_modules/ml/dataloaders/dataloader.hpp"
 #include "vm_modules/ml/graph.hpp"
@@ -54,7 +55,8 @@ public:
     module.CreateClassType<fetch::vm_modules::ml::VMAdamOptimiser>("AdamOptimiser")
         .CreateConstuctor<fetch::vm::Ptr<fetch::vm_modules::ml::VMGraph>,
                           fetch::vm::Ptr<fetch::vm::String>, fetch::vm::Ptr<fetch::vm::String>>()
-        .CreateMemberFunction("Run", &fetch::vm_modules::ml::VMAdamOptimiser::Run);
+        .CreateMemberFunction("Run", &fetch::vm_modules::ml::VMAdamOptimiser::RunData)
+        .CreateMemberFunction("Run", &fetch::vm_modules::ml::VMAdamOptimiser::RunLoader);
   }
 
   static fetch::vm::Ptr<VMAdamOptimiser> Constructor(
@@ -67,8 +69,14 @@ public:
                                output_node_names->str);
   }
 
-  DataType Run(fetch::vm::Ptr<fetch::vm_modules::ml::VMDataLoader> const &loader,
-               uint64_t batch_size, uint64_t subset_size)
+  DataType RunData(fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> const &data, fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> const &labels,
+                   uint64_t batch_size)
+  {
+    return optimiser_.Run({(*data).GetTensor()}, (*labels).GetTensor(), batch_size);
+  }
+
+  DataType RunLoader(fetch::vm::Ptr<fetch::vm_modules::ml::VMDataLoader> const &loader,
+                     uint64_t batch_size, uint64_t subset_size)
   {
     return optimiser_.Run(*(loader->loader_), batch_size, subset_size);
   }
