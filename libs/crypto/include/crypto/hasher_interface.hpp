@@ -31,13 +31,27 @@ namespace crypto {
 namespace internal {
 
 /*
- * CRTP-based interface for digest contexts. Implementing classes should define the following:
+ * CRTP base class for digest contexts. Usage:
  *
  * ```
- *   static constexpr std::size_t size_in_bytes;
- *   bool ResetHasherInternal();
- *   bool UpdateHasherInternal(uint8_t const *data_to_hash, std::size_t size);
- *   bool FinalHasherInternal(uint8_t *hash, std::size_t size);
+ *   class ExampleHasher : private HasherInterface<ExampleHasher>
+ *   {
+ *   public:
+ *     using BaseType = HasherInterface<ExampleHasher>;
+ *
+ *     using BaseType::Final;
+ *     using BaseType::Reset;
+ *     using BaseType::Update;
+ *
+ *     static constexpr std::size_t size_in_bytes = [size of ExampleHasher's outputs];
+ *
+ *   private:
+ *     bool ResetHasherInternal();
+ *     bool UpdateHasherInternal(uint8_t const *data_to_hash, std::size_t size);
+ *     bool FinalHasherInternal(uint8_t *hash);
+ *
+ *     friend BaseType;
+ *   };
  * ```
  *
  * The `size_in_bytes` constant should be equal to the size of the hash (e.g. 32u for SHA256).
