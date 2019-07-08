@@ -2031,6 +2031,7 @@ FunctionPtr Analyser::FindFunction(TypePtr const &type, FunctionGroupPtr const &
       functions.push_back(function);
     }
   }
+STD_CERR << "Found " << functions.size() << " functions\n";
   if (functions.size() == 1)
   {
     actual_types = array[0];
