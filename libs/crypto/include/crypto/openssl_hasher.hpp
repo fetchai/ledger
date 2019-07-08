@@ -90,7 +90,7 @@ public:
 private:
   bool ResetHasherInternal();
   bool UpdateHasherInternal(uint8_t const *data_to_hash, std::size_t size);
-  bool FinalHasherInternal(uint8_t *hash);
+  bool FinaliseHasherInternal(uint8_t *hash);
 
   internal::OpenSslHasherImpl impl_{hasher_type};
 
@@ -117,7 +117,7 @@ bool OpenSslHasher<hash_size, EnumClass, hasher_type>::UpdateHasherInternal(
 }
 
 template <std::size_t hash_size, typename EnumClass, EnumClass hasher_type>
-bool OpenSslHasher<hash_size, EnumClass, hasher_type>::FinalHasherInternal(uint8_t *hash)
+bool OpenSslHasher<hash_size, EnumClass, hasher_type>::FinaliseHasherInternal(uint8_t *hash)
 {
   return impl_.final(hash);
 }

@@ -48,7 +48,7 @@ namespace internal {
  *   private:
  *     bool ResetHasherInternal();
  *     bool UpdateHasherInternal(uint8_t const *data_to_hash, std::size_t size);
- *     bool FinalHasherInternal(uint8_t *hash);
+ *     bool FinaliseHasherInternal(uint8_t *hash);
  *
  *     friend BaseType;
  *   };
@@ -89,7 +89,7 @@ public:
 
   void Final(uint8_t *const hash)
   {
-    auto const success = derived().FinalHasherInternal(hash);
+    auto const success = derived().FinaliseHasherInternal(hash);
     FETCH_UNUSED(success);
     assert(success);
   }
@@ -118,7 +118,7 @@ public:
     byte_array::ByteArray digest;
     digest.Resize(Derived::size_in_bytes);
 
-    auto const success = derived().FinalHasherInternal(digest.pointer());
+    auto const success = derived().FinaliseHasherInternal(digest.pointer());
     FETCH_UNUSED(success);
     assert(success);
 

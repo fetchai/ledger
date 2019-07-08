@@ -49,7 +49,7 @@ public:
 private:
   bool ResetHasherInternal();
   bool UpdateHasherInternal(uint8_t const *data_to_hash, std::size_t size);
-  bool FinalHasherInternal(uint8_t *hash);
+  bool FinaliseHasherInternal(uint8_t *hash);
 
   internal::FnvHasherInternals *impl_;
 
