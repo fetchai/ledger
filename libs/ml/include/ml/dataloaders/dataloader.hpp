@@ -44,8 +44,6 @@ public:
     : random_mode_(random_mode)
   {}
 
-  void SetDataSize(SizeVector const &label_shape, std::vector<SizeVector> const &data_shapes);
-
   virtual ~DataLoader()           = default;
   virtual ReturnType    GetNext() = 0;
   virtual ReturnType    PrepareBatch(fetch::math::SizeType subset_size, bool &is_done_set);
@@ -57,42 +55,34 @@ protected:
   bool random_mode_ = false;
 
 private:
+  bool       size_not_set_ = true;
   SizeType   label_batch_dimension_;
   SizeVector data_batch_dimensions_;
   ReturnType cur_training_pair_;
 
+  void SetDataSize(std::pair<LabelType, std::vector<DataType>> &ret_pair);
   std::pair<LabelType, std::vector<DataType>> ret_pair_;
 };
 
 /**
- * This method must be called directly after constructing a method that inherits from dataloader.
  * This method sets the shapes of the data and labels, as well as the return pair.
  * @tparam LabelType
  * @tparam DataType
- * @param label_shape vector of SizeTypes indicating the shape of the label tensor
- * @param data_shapes vector of vector of sizetpyes indicating the shape of all input data tensors
+ * @param ret_pair
  */
 template <typename LabelType, typename DataType>
-void DataLoader<LabelType, DataType>::SetDataSize(SizeVector const &             label_shape,
-                                                  std::vector<SizeVector> const &data_shapes)
+void DataLoader<LabelType, DataType>::SetDataSize(
+    std::pair<LabelType, std::vector<DataType>> &ret_pair)
 {
-  LabelType             labels(label_shape);
-  std::vector<DataType> data_vec({data_shapes.size()});
-  SizeType              count = 0;
-  for (auto &tensor : data_vec)
-  {
-    tensor.Reshape(data_shapes.at(count));
-    ++count;
-  }
+  label_batch_dimension_ = ret_pair.first.shape().size() - 1;
+  ret_pair_.first        = ret_pair.first.Copy();
 
   // set each tensor in the data vector to the correct shape
-  for (auto &tensor : data_vec)
+  for (auto &tensor : ret_pair.second)
   {
     data_batch_dimensions_.emplace_back(tensor.shape().size() - 1);
+    ret_pair_.second.emplace_back(tensor.Copy());
   }
-  label_batch_dimension_ = labels.shape().size() - 1;
-
-  ret_pair_ = std::make_pair(labels, data_vec);
 }
 
 /**
@@ -108,6 +98,17 @@ template <typename LabelType, typename DataType>
 typename DataLoader<LabelType, DataType>::ReturnType DataLoader<LabelType, DataType>::PrepareBatch(
     fetch::math::SizeType subset_size, bool &is_done_set)
 {
+  //
+  if (size_not_set_)
+  {
+    // first ever call to PrepareBatch requires a dummy GetNext to identify tensor shapes
+    cur_training_pair_ = GetNext();
+    Reset();
+
+    this->SetDataSize(cur_training_pair_);
+    size_not_set_ = false;
+  }
+
   // if the label is set to be the wrong batch_size reshape
   if (ret_pair_.first.shape().at(ret_pair_.first.shape().size() - 1) != subset_size)
   {

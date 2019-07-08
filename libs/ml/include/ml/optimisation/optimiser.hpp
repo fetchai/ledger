@@ -233,7 +233,11 @@ typename T::Type Optimiser<T, C>::Run(
   bool is_done_set = loader.IsDone();
 
   std::pair<ArrayType, std::vector<ArrayType>> input;
-  while ((step < subset_size) && (!is_done_set))
+
+  // - check not completed more steps than user specified subset_size
+  // - is_done_set checks if loader.IsDone inside PrepareBatch
+  // - loader.IsDone handles edge case where batch divides perfectly into data set size
+  while ((step < subset_size) && (!is_done_set) && (!loader.IsDone()))
   {
     is_done_set = false;
     loss        = DataType{0};

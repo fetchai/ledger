@@ -135,10 +135,6 @@ BasicTextLoader<T>::BasicTextLoader(TextParams<T> const &p, bool random_mode, Si
   , lcg_(seed)
   , cursor_(0)
 {
-  // TODO (1314) - either utilise PerpareBatch or remove this dataloader and update set data size
-  // prepares underlying containers for buffering data and labels
-  // this->SetDataSize({label_shape}, {{t1_shape}, {t2_shape}, ....});
-
   assert(p_.min_sentence_length > 1);
 
   // If user specifies to use full windows, they dont need to specify minimum sentence length

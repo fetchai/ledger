@@ -40,11 +40,7 @@ public:
 
   explicit CommodityDataLoader(bool random_mode = false)
     : DataLoader<LabelType, InputType>(random_mode)
-  {
-    // TODO (1314) - make prepare batch compliant
-    // prepares underlying containers for buffering data and labels
-    // this->SetDataSize({label_shape}, {{t1_shape}, {t2_shape}, ...});
-  }
+  {}
 
   ~CommodityDataLoader() = default;
 

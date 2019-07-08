@@ -53,9 +53,6 @@ public:
     : DataLoader<LabelType, T>(random_mode)
     , cursor_(0)
   {
-    // prepares underlying containers for buffering data and labels
-    this->SetDataSize({LABEL_SIZE, 1}, {{FIGURE_SIZE}});
-
     std::uint32_t record_length(0);
     data_   = read_mnist_images(images_file, size_, record_length);
     labels_ = read_mnist_labels(labelsFile, size_);

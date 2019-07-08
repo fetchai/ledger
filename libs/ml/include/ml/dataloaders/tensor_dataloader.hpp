@@ -39,11 +39,7 @@ public:
                    bool random_mode = false)
     : DataLoader<LabelType, TensorType>(random_mode)
     , label_shape_(label_shape)
-    , data_shapes_(data_shapes)
-  {
-    // prepares underlying containers for buffering data and labels
-    this->SetDataSize(label_shape, data_shapes);
-  };
+    , data_shapes_(data_shapes){};
 
   virtual ~TensorDataLoader() = default;
 
