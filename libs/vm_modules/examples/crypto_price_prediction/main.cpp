@@ -66,7 +66,7 @@ fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> read_csv(
 
 int main(int argc, char **argv)
 {
-  if (argc < 2)
+  if (argc < 5)
   {
     std::cerr << "usage ./" << argv[0] << " [filename]" << std::endl;
     std::exit(-9);

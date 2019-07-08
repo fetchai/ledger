@@ -18,7 +18,9 @@
 //------------------------------------------------------------------------------
 
 #include "ml/graph.hpp"
+#include "ml/layers/convolution_1d.hpp"
 #include "ml/layers/fully_connected.hpp"
+
 #include "ml/ops/activation.hpp"
 #include "vm/module.hpp"
 #include "vm_modules/math/tensor.hpp"
@@ -30,6 +32,7 @@ namespace ml {
 
 class VMGraph : public fetch::vm::Object
 {
+  using SizeType       = fetch::math::SizeType;
   using MathTensorType = fetch::math::Tensor<float>;
   using VMTensorType   = fetch::vm_modules::math::VMTensor;
   using GraphType      = fetch::ml::Graph<MathTensorType>;
@@ -80,6 +83,15 @@ public:
         name->str, {input_name->str}, std::size_t(in), std::size_t(out));
   }
 
+  void AddConv1D(VMPtrString const &name, VMPtrString const &input_name, int out_channels,
+                 int in_channels, int kernel_size, int stride_size)
+  {
+    graph_.AddNode<fetch::ml::layers::Convolution1D<MathTensorType>>(
+        name->str, {input_name->str}, static_cast<SizeType>(out_channels),
+        static_cast<SizeType>(in_channels), static_cast<SizeType>(kernel_size),
+        static_cast<SizeType>(stride_size));
+  }
+
   void AddRelu(VMPtrString const &name, VMPtrString const &input_name)
   {
     graph_.AddNode<fetch::ml::ops::Relu<MathTensorType>>(name->str, {input_name->str});
@@ -117,6 +129,7 @@ public:
         .CreateMemberFunction("Step", &VMGraph::Step)
         .CreateMemberFunction("AddPlaceholder", &VMGraph::AddPlaceholder)
         .CreateMemberFunction("AddFullyConnected", &VMGraph::AddFullyConnected)
+        .CreateMemberFunction("addConv1D", &VMGraph::AddFullyConnected)
         .CreateMemberFunction("AddRelu", &VMGraph::AddRelu)
         .CreateMemberFunction("AddSoftmax", &VMGraph::AddSoftmax)
         .CreateMemberFunction("AddDropout", &VMGraph::AddDropout)

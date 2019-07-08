@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/tensor.hpp"
 #include "math/normalize_array.hpp"
+#include "math/tensor.hpp"
 
 #include "ml/dataloaders/ReadCSV.hpp"
 #include "ml/dataloaders/tensor_dataloader.hpp"
@@ -100,7 +100,7 @@ std::vector<TensorType> LoadData(std::string const &train_data_filename,
  * @param reference_data
  * @return
  */
-TensorType NormaliseFeatures(TensorType &input_data, TensorType const & reference_data)
+TensorType NormaliseFeatures(TensorType &input_data, TensorType const &reference_data)
 {
   // set up return tensor
   TensorType ret(input_data.shape());
@@ -113,10 +113,10 @@ TensorType NormaliseFeatures(TensorType &input_data, TensorType const & referenc
   // calculate min, max, and range of each feature
   for (std::size_t i = 0; i < reference_data.shape(2); ++i)
   {
-    auto x_min_it = x_min.begin();
-    auto x_max_it = x_max.begin();
+    auto x_min_it   = x_min.begin();
+    auto x_max_it   = x_max.begin();
     auto x_range_it = x_range.begin();
-    auto train_it = input_data.Slice(i, 2).begin();
+    auto train_it   = input_data.Slice(i, 2).begin();
     while (x_min_it.is_valid())
     {
       if (*x_min_it > *train_it)
@@ -144,9 +144,9 @@ TensorType NormaliseFeatures(TensorType &input_data, TensorType const & referenc
   // apply normalisation to each feature according to scale -1, 1
   for (std::size_t i = 0; i < reference_data.shape(2); ++i)
   {
-    auto x_min_it = x_min.begin();
+    auto x_min_it   = x_min.begin();
     auto x_range_it = x_range.begin();
-    auto ret_it = ret.Slice(i, 2).begin();
+    auto ret_it     = ret.Slice(i, 2).begin();
     while (ret_it.is_valid())
     {
       *ret_it = (*ret_it - *x_min_it) / (*x_range_it);
@@ -159,14 +159,14 @@ TensorType NormaliseFeatures(TensorType &input_data, TensorType const & referenc
   return ret;
 }
 //
-//void DeNormalisePrediction()
+// void DeNormalisePrediction()
 //{}
 
 int main(int ac, char **av)
 {
   SizeType epochs{10};
   SizeType batch_size{8};
-  bool normalise = false;
+  bool     normalise = false;
 
   if (ac < 5)
   {
@@ -187,16 +187,16 @@ int main(int ac, char **av)
 
   if (normalise)
   {
-    TensorType orig_train_data = train_data.Copy();
+    TensorType orig_train_data  = train_data.Copy();
     TensorType orig_train_label = train_label.Copy();
-    TensorType orig_test_data = test_data.Copy();
-    TensorType orig_test_label = test_label.Copy();
+    TensorType orig_test_data   = test_data.Copy();
+    TensorType orig_test_label  = test_label.Copy();
 
     // normalise training and test data with respect to training data range
-    train_data = NormaliseFeatures(train_data, train_data);
+    train_data  = NormaliseFeatures(train_data, train_data);
     train_label = NormaliseFeatures(train_label, train_data);
-    test_data = NormaliseFeatures(test_data, train_data);
-    test_label = NormaliseFeatures(test_label, train_data);
+    test_data   = NormaliseFeatures(test_data, train_data);
+    test_label  = NormaliseFeatures(test_label, train_data);
   }
 
   //  DataLoaderType loader;
