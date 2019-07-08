@@ -18,14 +18,12 @@
 //------------------------------------------------------------------------------
 
 #include "ml/graph.hpp"
-#include "ml/ops/loss_functions/cross_entropy.hpp"
 #include "ml/optimisation/adam_optimiser.hpp"
 
 #include "vm_modules/math/tensor.hpp"
 #include "vm_modules/ml/dataloaders/dataloader.hpp"
 #include "vm_modules/ml/graph.hpp"
 #include "vm_modules/ml/training_pair.hpp"
-
 #include <cstdint>
 #include <memory>
 #include <string>
@@ -38,23 +36,24 @@ namespace ml {
 class VMAdamOptimiser : public fetch::vm::Object
 {
 public:
-  using DataType      = float;
-  using ArrayType     = fetch::math::Tensor<DataType>;
-  using CriterionType = fetch::ml::ops::CrossEntropy<ArrayType>;
-  using GraphType     = fetch::ml::Graph<ArrayType>;
+  using DataType  = float;
+  using ArrayType = fetch::math::Tensor<DataType>;
+  using GraphType = fetch::ml::Graph<ArrayType>;
 
   VMAdamOptimiser(fetch::vm::VM *vm, fetch::vm::TypeId type_id, GraphType const &graph,
                   std::vector<std::string> const &input_node_names,
-                  std::string const &             output_node_name)
+                  std::string const &label_node_name, std::string const &output_node_name)
     : fetch::vm::Object(vm, type_id)
-    , optimiser_(std::make_shared<GraphType>(graph), input_node_names, output_node_name)
+    , optimiser_(std::make_shared<GraphType>(graph), input_node_names, label_node_name,
+                 output_node_name)
   {}
 
   static void Bind(vm::Module &module)
   {
     module.CreateClassType<fetch::vm_modules::ml::VMAdamOptimiser>("AdamOptimiser")
         .CreateConstuctor<fetch::vm::Ptr<fetch::vm_modules::ml::VMGraph>,
-                          fetch::vm::Ptr<fetch::vm::String>, fetch::vm::Ptr<fetch::vm::String>>()
+                          fetch::vm::Ptr<fetch::vm::String>, fetch::vm::Ptr<fetch::vm::String>(),
+                          fetch::vm::Ptr<fetch::vm::String>>()
         .CreateMemberFunction("Run", &fetch::vm_modules::ml::VMAdamOptimiser::RunData)
         .CreateMemberFunction("Run", &fetch::vm_modules::ml::VMAdamOptimiser::RunLoader);
   }
@@ -63,10 +62,11 @@ public:
       fetch::vm::VM *vm, fetch::vm::TypeId type_id,
       fetch::vm::Ptr<fetch::vm_modules::ml::VMGraph> const &graph,
       fetch::vm::Ptr<fetch::vm::String> const &             input_node_names,
+      fetch::vm::Ptr<fetch::vm::String> const &             label_node_name,
       fetch::vm::Ptr<fetch::vm::String> const &             output_node_names)
   {
     return new VMAdamOptimiser(vm, type_id, graph->graph_, {input_node_names->str},
-                               output_node_names->str);
+                               label_node_name->str, output_node_names->str);
   }
 
   DataType RunData(fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> const &data,
@@ -83,7 +83,7 @@ public:
   }
 
 private:
-  fetch::ml::optimisers::AdamOptimiser<ArrayType, CriterionType> optimiser_;
+  fetch::ml::optimisers::AdamOptimiser<ArrayType> optimiser_;
 };
 
 }  // namespace ml
