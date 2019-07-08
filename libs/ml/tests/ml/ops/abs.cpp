@@ -16,7 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/ops/add.hpp"
+#include "ml/ops/abs.hpp"
 
 #include "math/tensor.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
@@ -24,70 +24,57 @@
 #include "gtest/gtest.h"
 
 template <typename T>
-class AddTest : public ::testing::Test
+class AbsTest : public ::testing::Test
 {
 };
 
 using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
                                  fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
 
-TYPED_TEST_CASE(AddTest, MyTypes);
+TYPED_TEST_CASE(AbsTest, MyTypes);
 
-TYPED_TEST(AddTest, forward_test)
+TYPED_TEST(AbsTest, forward_test)
 {
   using ArrayType = TypeParam;
 
-  ArrayType data_1 = ArrayType::FromString(R"(
+  ArrayType data = ArrayType::FromString(R"(
   	 1, -2, 3,-4, 5,-6, 7,-8;
      1,  2, 3, 4, 5, 6, 7, 8)");
 
-  ArrayType data_2 = ArrayType::FromString(R"(
-  	 8;
-    -8)");
-
   ArrayType gt = ArrayType::FromString(R"(
-  	 9,  6, 11,  4, 13,  2, 15, 0;
-    -7, -6, -5, -4, -3,	-2,	-1,	0)");
+    1, 2, 3, 4, 5, 6, 7, 8;
+    1, 2, 3, 4, 5, 6, 7, 8)");
 
-  fetch::ml::ops::Add<ArrayType> op;
+  fetch::ml::ops::Abs<ArrayType> op;
 
-  TypeParam prediction(op.ComputeOutputShape({data_1, data_2}));
-  op.Forward({data_1, data_2}, prediction);
+  TypeParam prediction(op.ComputeOutputShape({data}));
+  op.Forward({data}, prediction);
 
   // test correct values
   ASSERT_TRUE(
       prediction.AllClose(gt, typename TypeParam::Type(1e-5), typename TypeParam::Type(1e-5)));
 }
 
-TYPED_TEST(AddTest, backward_test)
+TYPED_TEST(AbsTest, backward_test)
 {
   using DataType  = typename TypeParam::Type;
   using ArrayType = TypeParam;
 
-  ArrayType data_1 = ArrayType::FromString(R"(
+  ArrayType data = ArrayType::FromString(R"(
   	 1, -2, 3,-4, 5,-6, 7,-8;
      1,  2, 3, 4, 5, 6, 7, 8)");
 
-  ArrayType data_2 = ArrayType::FromString(R"(
-  	 8;
-    -8)");
-
-  ArrayType gt_1 = ArrayType::FromString(R"(
-      	1, -1, 2, -2, 3, -3, 4, 4;
-    5, -5, 6, -6, 7, -7, 8, 8)");
-
-  ArrayType gt_2 = ArrayType::FromString(R"(
-  	8;
-    16)");
+  ArrayType gt = ArrayType::FromString(R"(
+  	1, 1, 2, 2, 3, 3, 4, 4;
+    5, -5, 6, -6, 7, -7, 8, -8)");
 
   ArrayType error = ArrayType::FromString(R"(
-  	1, -1, 2, -2, 3, -3, 4, 4;
-    5, -5, 6, -6, 7, -7, 8, 8)");
+  	1, -1, 2, -2, 3, -3, 4, -4;
+    5, -5, 6, -6, 7, -7, 8, -8)");
 
-  fetch::ml::ops::Add<ArrayType> op;
-  std::vector<ArrayType>         prediction = op.Backward({data_1, data_2}, error);
+  fetch::ml::ops::Abs<ArrayType> op;
+  std::vector<ArrayType>         prediction = op.Backward({data}, error);
 
   // test correct values
-  ASSERT_TRUE(prediction[0].AllClose(gt_1, DataType(1e-5), DataType(1e-5)));
-  ASSERT_TRUE(prediction[1].AllClose(gt_2, DataType(1e-5), DataType(1e-5)));
+  ASSERT_TRUE(prediction[0].AllClose(gt, DataType(1e-5), DataType(1e-5)));
 }
