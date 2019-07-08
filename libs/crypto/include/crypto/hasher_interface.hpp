@@ -63,8 +63,8 @@ template <typename Derived>
 class HasherInterface
 {
 public:
-  HasherInterface()                        = default;
-  ~HasherInterface()                       = default;
+  HasherInterface();
+  ~HasherInterface();
   HasherInterface(HasherInterface const &) = delete;
   HasherInterface(HasherInterface &&)      = delete;
 
@@ -72,65 +72,87 @@ public:
   HasherInterface &operator=(HasherInterface &&) = delete;
 
   // Direct call-through methods to Derived
-  void Reset()
-  {
-    auto const success = derived().ResetHasherInternal();
-    FETCH_UNUSED(success);
-    assert(success);
-  }
-
-  bool Update(uint8_t const *data_to_hash, std::size_t size)
-  {
-    auto const success = derived().UpdateHasherInternal(data_to_hash, size);
-    assert(success);
-
-    return success;
-  }
-
-  void Final(uint8_t *const hash)
-  {
-    auto const success = derived().FinaliseHasherInternal(hash);
-    FETCH_UNUSED(success);
-    assert(success);
-  }
+  void Reset();
+  bool Update(uint8_t const *data_to_hash, std::size_t size);
+  void Final(uint8_t *hash);
 
   // Convenience methods
-
-  bool Update(byte_array::ConstByteArray const &data)
-  {
-    auto const success = derived().UpdateHasherInternal(data.pointer(), data.size());
-    assert(success);
-
-    return success;
-  }
-
-  bool Update(std::string const &str)
-  {
-    auto const success =
-        derived().UpdateHasherInternal(reinterpret_cast<uint8_t const *>(str.data()), str.size());
-    assert(success);
-
-    return success;
-  }
-
-  byte_array::ByteArray Final()
-  {
-    byte_array::ByteArray digest;
-    digest.Resize(Derived::size_in_bytes);
-
-    auto const success = derived().FinaliseHasherInternal(digest.pointer());
-    FETCH_UNUSED(success);
-    assert(success);
-
-    return digest;
-  }
+  bool                  Update(byte_array::ConstByteArray const &data);
+  bool                  Update(std::string const &str);
+  byte_array::ByteArray Final();
 
 private:
-  constexpr Derived &derived()
-  {
-    return *static_cast<Derived *>(this);
-  }
+  constexpr Derived &derived();
 };
+
+template <typename Derived>
+HasherInterface<Derived>::HasherInterface() = default;
+
+template <typename Derived>
+HasherInterface<Derived>::~HasherInterface() = default;
+
+template <typename Derived>
+void HasherInterface<Derived>::Reset()
+{
+  auto const success = derived().ResetHasherInternal();
+  FETCH_UNUSED(success);
+  assert(success);
+}
+
+template <typename Derived>
+bool HasherInterface<Derived>::Update(uint8_t const *data_to_hash, std::size_t size)
+{
+  auto const success = derived().UpdateHasherInternal(data_to_hash, size);
+  assert(success);
+
+  return success;
+}
+
+template <typename Derived>
+void HasherInterface<Derived>::Final(uint8_t *const hash)
+{
+  auto const success = derived().FinaliseHasherInternal(hash);
+  FETCH_UNUSED(success);
+  assert(success);
+}
+
+template <typename Derived>
+bool HasherInterface<Derived>::Update(byte_array::ConstByteArray const &data)
+{
+  auto const success = derived().UpdateHasherInternal(data.pointer(), data.size());
+  assert(success);
+
+  return success;
+}
+
+template <typename Derived>
+bool HasherInterface<Derived>::Update(std::string const &str)
+{
+  auto const success =
+      derived().UpdateHasherInternal(reinterpret_cast<uint8_t const *>(str.data()), str.size());
+  assert(success);
+
+  return success;
+}
+
+template <typename Derived>
+byte_array::ByteArray HasherInterface<Derived>::Final()
+{
+  byte_array::ByteArray digest;
+  digest.Resize(Derived::size_in_bytes);
+
+  auto const success = derived().FinaliseHasherInternal(digest.pointer());
+  FETCH_UNUSED(success);
+  assert(success);
+
+  return digest;
+}
+
+template <typename Derived>
+constexpr Derived &HasherInterface<Derived>::derived()
+{
+  return *static_cast<Derived *>(this);
+}
 
 }  // namespace internal
 }  // namespace crypto
