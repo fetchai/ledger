@@ -538,8 +538,7 @@ struct CommandLineArguments
     return present;
   }
 
-  friend std::ostream &operator<<(std::ostream &              s,
-                                  CommandLineArguments const &args)
+  friend std::ostream &operator<<(std::ostream &s, CommandLineArguments const &args)
   {
     s << '\n';
     s << "port......................: " << args.port << '\n';
