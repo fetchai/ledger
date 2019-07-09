@@ -24,11 +24,11 @@
 
 #include "vectorise/memory/array.hpp"
 
+#include "math/activation_functions/softmax.hpp"
 #include "math/base_types.hpp"
 #include "math/matrix_operations.hpp"
-#include "math/ml/activation_functions/softmax.hpp"
-#include "math/ml/loss_functions/l2_loss.hpp"
-#include "math/ml/loss_functions/l2_norm.hpp"
+#include "math/metrics/l2_loss.hpp"
+#include "math/metrics/l2_norm.hpp"
 #include "math/standard_functions/abs.hpp"
 #include "math/standard_functions/exp.hpp"
 #include "math/standard_functions/fmod.hpp"

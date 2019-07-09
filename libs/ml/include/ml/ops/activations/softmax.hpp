@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/ml/activation_functions/softmax.hpp"
+#include "math/activation_functions/softmax.hpp"
 #include "ml/ops/ops.hpp"
 
 #include <cassert>
