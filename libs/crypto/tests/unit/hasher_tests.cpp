@@ -241,7 +241,7 @@ TEST_P(HasherTests, non_empty_inputs)
 }
 
 // clang-format off
- std::vector<HasherTestParam> params{
+std::vector<HasherTestParam> params{
     HasherTestParam(Hasher::FNV,
                     "25232284e49cf2cb",
                     "c76437a385f71327",
