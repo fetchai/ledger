@@ -39,6 +39,10 @@ inline typename ArrayType::Type AbsoluteDistance(ArrayType const &A, ArrayType c
     if ((*it1 > 0) && (*it2 > 0))
     {
       d = (*it1) - (*it2);
+      if (ret < 0)
+      {
+        d = -ret;
+      }
     }
     else if ((*it1) > 0)
     {

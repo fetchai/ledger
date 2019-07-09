@@ -27,7 +27,8 @@ class MeanAbsoluteErrorTest : public ::testing::Test
 };
 
 using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
-                                 fetch::math::Tensor<fetch::fixed_point::fp32_t>, fetch::math::Tensor<fetch::fixed_point::fp64_t>>;
+                                 fetch::math::Tensor<fetch::fixed_point::fp32_t>,
+                                 fetch::math::Tensor<fetch::fixed_point::fp64_t>>;
 TYPED_TEST_CASE(MeanAbsoluteErrorTest, MyTypes);
 
 TYPED_TEST(MeanAbsoluteErrorTest, perfect_match_test)
@@ -40,7 +41,8 @@ TYPED_TEST(MeanAbsoluteErrorTest, perfect_match_test)
   score = fetch::math::MeanAbsoluteError(test_array, gt_array);
 
   // test correct values
-  ASSERT_NEAR(static_cast<double>(score), double(0.0), static_cast<double>(fetch::math::function_tolerance<typename TypeParam::Type>()));
+  ASSERT_NEAR(static_cast<double>(score), double(0.0),
+              static_cast<double>(fetch::math::function_tolerance<typename TypeParam::Type>()));
 }
 
 TYPED_TEST(MeanAbsoluteErrorTest, value_test)
@@ -53,5 +55,6 @@ TYPED_TEST(MeanAbsoluteErrorTest, value_test)
   score = fetch::math::MeanAbsoluteError(test_array, gt_array);
 
   // test correct values
-  ASSERT_NEAR(static_cast<double>(score), double(26.4f / 8.0f), static_cast<double>(fetch::math::function_tolerance<typename TypeParam::Type>()));
+  ASSERT_NEAR(static_cast<double>(score), double(26.4f / 8.0f),
+              static_cast<double>(fetch::math::function_tolerance<typename TypeParam::Type>()));
 }
