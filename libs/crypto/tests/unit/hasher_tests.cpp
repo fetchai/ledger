@@ -202,20 +202,15 @@ TEST_P(HasherTests, hash_is_consistent_across_calls)
     EXPECT_EQ(hash1, hash2);
     EXPECT_EQ(hash1, hash3);
     EXPECT_EQ(hash2, hash3);
-  }
-}
 
-TEST_P(HasherTests, hash_is_consistent_across_calls2)
-{
-  for (auto const &input : p.all_inputs)
-  {
-    auto const hash1 = hash(input.pointer(), input.size());
-    auto const hash2 = hash(input.pointer(), input.size());
-    auto const hash3 = hash(input.pointer(), input.size());
+    auto const hash4 = hash(input.pointer(), input.size());
+    auto const hash5 = hash(input.pointer(), input.size());
+    auto const hash6 = hash(input.pointer(), input.size());
 
-    EXPECT_EQ(hash1, hash2);
-    EXPECT_EQ(hash1, hash3);
-    EXPECT_EQ(hash2, hash3);
+    EXPECT_EQ(hash1, hash4);
+    EXPECT_EQ(hash4, hash5);
+    EXPECT_EQ(hash4, hash6);
+    EXPECT_EQ(hash5, hash6);
   }
 }
 
@@ -224,13 +219,6 @@ TEST_P(HasherTests, hash_size)
   for (auto const &input : p.all_inputs)
   {
     EXPECT_EQ(hash(input).size(), p.expected_size);
-  }
-}
-
-TEST_P(HasherTests, hash_size2)
-{
-  for (auto const &input : p.all_inputs)
-  {
     EXPECT_EQ(hash(input.pointer(), input.size()).size(), p.expected_size);
   }
 }
@@ -238,10 +226,6 @@ TEST_P(HasherTests, hash_size2)
 TEST_P(HasherTests, empty_input)
 {
   EXPECT_EQ(ToHex(hash(p.input_empty)), p.expected_output_empty);
-}
-
-TEST_P(HasherTests, empty_input2)
-{
   EXPECT_EQ(ToHex(hash(p.input_empty.pointer(), p.input_empty.size())), p.expected_output_empty);
 }
 
@@ -250,10 +234,7 @@ TEST_P(HasherTests, non_empty_inputs)
   EXPECT_EQ(ToHex(hash(p.input1)), p.expected_output1);
   EXPECT_EQ(ToHex(hash(p.input2)), p.expected_output2);
   EXPECT_EQ(ToHex(hash(p.input3)), p.expected_output3);
-}
 
-TEST_P(HasherTests, non_empty_inputs2)
-{
   EXPECT_EQ(ToHex(hash(p.input1.pointer(), p.input1.size())), p.expected_output1);
   EXPECT_EQ(ToHex(hash(p.input2.pointer(), p.input2.size())), p.expected_output2);
   EXPECT_EQ(ToHex(hash(p.input3.pointer(), p.input3.size())), p.expected_output3);
