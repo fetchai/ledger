@@ -46,10 +46,6 @@ inline void BindML(fetch::vm::Module &module)
   // dataloader
   VMDataLoader::Bind(module);
 
-  // loss functions
-  VMCrossEntropyLoss::Bind(module);
-  VMMeanSquareErrorLoss::Bind(module);
-
   // optimisers
   VMAdamOptimiser::Bind(module);
 }

@@ -37,6 +37,7 @@ graph.AddRelu("relu", "hidden_conv1D_1");
 graph.AddDropout("dropout_1", "hidden_conv1D_1", keep_prob);
 graph.addConv1D("Output", "dropout_1", conv1D_2_filters, conv1D_2_input_channels,
                         conv1D_2_kernel_size, conv1D_2_stride);
+
 endfunction
 
 function main()
@@ -54,11 +55,16 @@ var test_labels = read_csv(System.Argv(3), true);
 var graph = Graph();
 build_graph(graph);
 
+// add loss to graph
+graph.addConv1D("Error", "Output", conv1D_2_filters, conv1D_2_input_channels,
+                        conv1D_2_kernel_size, conv1D_2_stride);
+
+
 // Set up the optimiser
 var optimiser = AdamOptimiser(graph, "Input", "Output");
 
 // Begin training
-printLn("begin training...")
+printLn("begin training...");
 var training_iterations = 10;
 var batch_size = 8u64;
 for(i in 0:training_iterations)
@@ -68,7 +74,7 @@ for(i in 0:training_iterations)
 endfor
 
 // Begin testing
-printLn("test prediction...")
+printLn("test prediction...");
 graph.SetInput("Input", test_data);
 var pred = graph.Evaluate("Output");
 print(pred.ToString());

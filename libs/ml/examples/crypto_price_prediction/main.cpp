@@ -39,11 +39,12 @@ using TensorType = fetch::math::Tensor<DataType>;
 using SizeType   = typename TensorType::SizeType;
 
 using GraphType        = typename fetch::ml::Graph<TensorType>;
-using CostFunctionType = typename fetch::ml::ops::MeanSquareError<TensorType>;
-using OptimiserType  = typename fetch::ml::optimisers::AdamOptimiser<TensorType, CostFunctionType>;
-using DataLoaderType = typename fetch::ml::dataloaders::TensorDataLoader<TensorType, TensorType>;
+using CostFunctionType = typename fetch::ml::ops::MeanSquareErrorLoss<TensorType>;
+using OptimiserType    = typename fetch::ml::optimisers::AdamOptimiser<TensorType>;
+using DataLoaderType   = typename fetch::ml::dataloaders::TensorDataLoader<TensorType, TensorType>;
 
-std::shared_ptr<GraphType> BuildModel(std::string &input_name, std::string &output_name)
+std::shared_ptr<GraphType> BuildModel(std::string &input_name, std::string &output_name,
+                                      std::string &error_name)
 {
   auto g = std::make_shared<GraphType>();
 
@@ -68,6 +69,8 @@ std::shared_ptr<GraphType> BuildModel(std::string &input_name, std::string &outp
       "Conv1D_2", {layer_2}, conv1D_2_filters, conv1D_2_input_channels, conv1D_2_kernel_size,
       conv1D_2_stride);
 
+  error_name =
+      g->AddNode<fetch::ml::ops::MeanSquareErrorLoss<TensorType>>("error_name", {output_name});
   return g;
 }
 
@@ -203,10 +206,9 @@ int main(int ac, char **av)
   //  loader.AddData(train_data, train_label);
 
   std::cout << "Build model & optimiser... " << std::endl;
-  std::string                input_name;
-  std::string                output_name;
-  std::shared_ptr<GraphType> g = BuildModel(input_name, output_name);
-  OptimiserType              optimiser(g, {input_name}, output_name);
+  std::string                input_name, output_name, error_name;
+  std::shared_ptr<GraphType> g = BuildModel(input_name, output_name, error_name);
+  OptimiserType              optimiser(g, {input_name}, output_name, error_name);
 
   std::cout << "Begin training loop... " << std::endl;
   DataType loss;
@@ -220,7 +222,7 @@ int main(int ac, char **av)
   auto prediction = g->Evaluate(output_name, false);
   prediction.Reshape({prediction.shape().at(1), prediction.shape().at(2)});
   test_label.Reshape({test_label.shape().at(1), test_label.shape().at(2)});
-  auto result = fetch::math::MeanSquareError(prediction, test_label);
+  auto result = fetch::math::MeanSquareErrorLoss(prediction, test_label);
   std::cout << "result: " << result << std::endl;
 
   return 0;

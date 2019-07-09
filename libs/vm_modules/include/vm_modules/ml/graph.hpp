@@ -23,6 +23,7 @@
 
 #include "ml/ops/activation.hpp"
 #include "ml/ops/loss_functions/cross_entropy_loss.hpp"
+#include "ml/ops/loss_functions/mean_square_error_loss.hpp"
 #include "vm/module.hpp"
 #include "vm_modules/math/tensor.hpp"
 #include "vm_modules/ml/state_dict.hpp"
@@ -111,6 +112,13 @@ public:
         name->str, {input_name->str, label_name->str});
   }
 
+  void AddMeanSquareErrorLoss(VMPtrString const &name, VMPtrString const &input_name,
+                              VMPtrString const &label_name)
+  {
+    graph_.AddNode<fetch::ml::ops::MeanSquareErrorLoss<fetch::math::Tensor<float>>>(
+        name->str, {input_name->str, label_name->str});
+  }
+
   void AddDropout(VMPtrString const &name, VMPtrString const &input_name, float const &prob)
   {
     graph_.AddNode<fetch::ml::ops::Dropout<MathTensorType>>(name->str, {input_name->str}, prob);
@@ -142,6 +150,7 @@ public:
         .CreateMemberFunction("AddSoftmax", &VMGraph::AddSoftmax)
         .CreateMemberFunction("AddDropout", &VMGraph::AddDropout)
         .CreateMemberFunction("AddCrossEntropyLoss", &VMGraph::AddCrossEntropyLoss)
+        .CreateMemberFunction("AddMeanSquareErrorLoss", &VMGraph::AddMeanSquareErrorLoss)
         .CreateMemberFunction("LoadStateDict", &VMGraph::LoadStateDict)
         .CreateMemberFunction("StateDict", &VMGraph::StateDict);
   }
