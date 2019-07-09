@@ -22,7 +22,11 @@
 #define FETCH_MAYBE_UNUSED __attribute__((used))
 
 #if defined(__clang__)
-#define FETCH_GUARDED_BY(x) FETCH_THREAD_ANNOTATION_ATTRIBUTE__(guarded_by(x))
+#define FETCH_THREAD_ANNOTATION_ATTRIBUTE__(x) __attribute__((x))
 #else
-#define FETCH_GUARDED_BY(x)
+#define FETCH_THREAD_ANNOTATION_ATTRIBUTE__(x)  // no-op
 #endif
+
+#define FETCH_GUARDED_BY(x) FETCH_THREAD_ANNOTATION_ATTRIBUTE__(guarded_by(x))
+
+#define FETCH_PTR_GUARDED_BY(x) FETCH_THREAD_ANNOTATION_ATTRIBUTE__(pt_guarded_by(x))
