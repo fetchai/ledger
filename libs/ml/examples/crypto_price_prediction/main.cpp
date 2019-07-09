@@ -44,7 +44,7 @@ using OptimiserType    = typename fetch::ml::optimisers::AdamOptimiser<TensorTyp
 using DataLoaderType   = typename fetch::ml::dataloaders::TensorDataLoader<TensorType, TensorType>;
 
 std::shared_ptr<GraphType> BuildModel(std::string &input_name, std::string &output_name,
-                                      std::string &error_name)
+                                      std::string &label_name, std::string &error_name)
 {
   auto g = std::make_shared<GraphType>();
 
@@ -61,6 +61,7 @@ std::shared_ptr<GraphType> BuildModel(std::string &input_name, std::string &outp
   SizeType conv1D_2_stride         = 4;
 
   input_name          = g->AddNode<PlaceHolder<TensorType>>("Input", {});
+  label_name          = g->AddNode<PlaceHolder<TensorType>>("Label", {});
   std::string layer_1 = g->AddNode<fetch::ml::layers::Convolution1D<TensorType>>(
       "Conv1D_1", {input_name}, conv1D_1_filters, conv1D_1_input_channels, conv1D_1_kernel_size,
       conv1D_1_stride, fetch::ml::details::ActivationType::RELU);
@@ -69,8 +70,8 @@ std::shared_ptr<GraphType> BuildModel(std::string &input_name, std::string &outp
       "Conv1D_2", {layer_2}, conv1D_2_filters, conv1D_2_input_channels, conv1D_2_kernel_size,
       conv1D_2_stride);
 
-  error_name =
-      g->AddNode<fetch::ml::ops::MeanSquareErrorLoss<TensorType>>("error_name", {output_name});
+  error_name = g->AddNode<fetch::ml::ops::MeanSquareErrorLoss<TensorType>>(
+      "error_name", {output_name, label_name});
   return g;
 }
 
@@ -79,12 +80,20 @@ std::vector<TensorType> LoadData(std::string const &train_data_filename,
                                  std::string const &test_data_filename,
                                  std::string const &test_labels_filename)
 {
+
+  std::cout << "loading train data...: " << std::endl;
   auto train_data_tensor =
       fetch::ml::dataloaders::ReadCSV<TensorType>(train_data_filename, 0, 0, true);
+
+  std::cout << "loading train labels...: " << std::endl;
   auto train_labels_tensor =
       fetch::ml::dataloaders::ReadCSV<TensorType>(train_labels_filename, 0, 0, true);
+
+  std::cout << "loading test data...: " << std::endl;
   auto test_data_tensor =
       fetch::ml::dataloaders::ReadCSV<TensorType>(test_data_filename, 0, 0, true);
+
+  std::cout << "loading test labels...: " << std::endl;
   auto test_labels_tensor =
       fetch::ml::dataloaders::ReadCSV<TensorType>(test_labels_filename, 0, 0, true);
 
@@ -206,9 +215,9 @@ int main(int ac, char **av)
   //  loader.AddData(train_data, train_label);
 
   std::cout << "Build model & optimiser... " << std::endl;
-  std::string                input_name, output_name, error_name;
-  std::shared_ptr<GraphType> g = BuildModel(input_name, output_name, error_name);
-  OptimiserType              optimiser(g, {input_name}, output_name, error_name);
+  std::string                input_name, output_name, label_name, error_name;
+  std::shared_ptr<GraphType> g = BuildModel(input_name, output_name, label_name, error_name);
+  OptimiserType              optimiser(g, {input_name}, label_name, error_name);
 
   std::cout << "Begin training loop... " << std::endl;
   DataType loss;
