@@ -1944,26 +1944,29 @@ TypePtr Analyser::ConvertType(TypePtr const &type, TypePtr const &instantiated_t
 
 bool Analyser::MatchType(TypePtr const &supplied_type, TypePtr const &expected_type) const
 {
-  if (!supplied_type)
-  {
-    return false;
-  }
+    STD_CERR << "SUPPLIED: " << supplied_type << "\n\nEXPECTED: " << expected_type << '\n';
   if (expected_type == any_type_)
   {
+	  STD_CERR << "Any\n";
     return true;
   }
   if (expected_type == any_primitive_type_)
   {
+	  STD_CERR << "Primitive\n";
     return supplied_type->IsPrimitive();
   }
+  STD_CERR << "Pointers: " << supplied_type.get() << ", " << expected_type.get() << '\n';
   if (supplied_type == expected_type)
   {
+	  STD_CERR << "Equal\n";
     return true;
   }
   if (expected_type->IsGroup())
   {
+	  STD_CERR << "Group\n";
     for (auto const &possible_type : expected_type->types)
     {
+	    STD_CERR << "Possible: " << possible_type << '\n';
       if (supplied_type == possible_type)
       {
         return true;
@@ -2026,8 +2029,11 @@ FunctionPtr Analyser::FindFunction(TypePtr const &type, FunctionGroupPtr const &
   for (FunctionPtr const &function : fg->functions)
   {
 	  if(function->name == "set") {
-		  STD_CERR << "Function: " << function << '\n';
-		  STD_CERR << "types: " << supplied_types << '\n';
+		  STD_CERR << "FUNCTION SET\n";
+		  STD_CERR << "FUNCTION SET\n";
+		  STD_CERR << "FUNCTION SET\n";
+		  STD_CERR << "FUNCTION SET\n";
+		  STD_CERR << "FUNCTION SET\n";
 	  }
     TypePtrArray temp_actual_types;
     if (MatchTypes(type, supplied_types, function->parameter_types, temp_actual_types))
