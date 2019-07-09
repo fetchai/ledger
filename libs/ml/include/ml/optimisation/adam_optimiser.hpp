@@ -46,7 +46,7 @@ public:
                 DataType const &epsilon = DataType{1e-4f});
 
   AdamOptimiser(std::shared_ptr<Graph<T>> graph, std::vector<std::string> const &input_node_names,
-                std::string const &output_node_name, std::string const &label_node_name,
+                std::string const &label_node_name, std::string const &output_node_name,
                 fetch::ml::optimisers::LearningRateParam<DataType> const &learning_rate_param,
                 DataType const &beta1 = DataType{0.9f}, DataType const &beta2 = DataType{0.999f},
                 DataType const &epsilon = DataType{1e-4f});
@@ -106,7 +106,7 @@ AdamOptimiser<T>::AdamOptimiser(std::shared_ptr<Graph<T>>
 template <class T>
 AdamOptimiser<T>::AdamOptimiser(
     std::shared_ptr<Graph<T>> graph, std::vector<std::string> const &input_node_names,
-    std::string const &output_node_name, std::string const &label_node_name,
+    std::string const &label_node_name, std::string const &output_node_name,
     fetch::ml::optimisers::LearningRateParam<DataType> const &learning_rate_param,
     DataType const &beta1, DataType const &beta2, DataType const &epsilon)
   : Optimiser<T>(graph, input_node_names, label_node_name, output_node_name, learning_rate_param)

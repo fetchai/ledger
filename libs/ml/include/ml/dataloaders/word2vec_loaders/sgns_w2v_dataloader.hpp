@@ -52,7 +52,7 @@ public:
   void       InitUnigramTable(SizeType size = 1e8);
   ReturnType GetNext() override;
 
-  void BuildVocab(std::vector<std::string> const &sents, SizeType min_count);
+  void BuildVocab(std::vector<std::string> const &sents, SizeType min_count = 0);
   void SaveVocab(std::string const &filename);
   void LoadVocab(std::string const &filename);
   T    EstimatedSampleNumber();
@@ -194,6 +194,11 @@ template <typename T>
 bool GraphW2VLoader<T>::IsDone() const
 {
   if (current_sentence_ < data_.size() - 1)
+  {
+    return false;
+  }
+  // check if the buffer is drained
+  if (labels_.At(buffer_pos_) != BufferPositionUnused)
   {
     return false;
   }

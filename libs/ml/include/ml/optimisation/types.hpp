@@ -38,7 +38,7 @@ enum class OptimiserType
   SGD
 };
 
-template <class T, class C, typename... Params>
+template <class T, typename... Params>
 bool AddOptimiser(OptimiserType type, std::shared_ptr<Optimiser<T>> &optimiser_ptr,
                   Params... params)
 {

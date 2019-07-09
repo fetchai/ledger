@@ -75,6 +75,7 @@ TYPED_TEST(SkipGramDataloaderTest, loader_test)
        std::pair<std::string, std::string>("length", "total"),
        std::pair<std::string, std::string>("length", "ten")});
 
+  // test that get next works when called individually
   for (std::size_t j = 0; j < 100; ++j)
   {
     if (loader.IsDone())
@@ -89,4 +90,17 @@ TYPED_TEST(SkipGramDataloaderTest, loader_test)
 
     ASSERT_EQ(input_context, gt_input_context_pairs.at(j % gt_input_context_pairs.size()));
   }
+
+  // test when preparebatch is called
+  bool is_done_set = false;
+  auto batch       = loader.PrepareBatch(50, is_done_set).second;
+  for (std::size_t j = 0; j < 50; j++)
+  {
+    std::string input         = loader.WordFromIndex(static_cast<SizeType>(batch.at(0).At(0, j)));
+    std::string context       = loader.WordFromIndex(static_cast<SizeType>(batch.at(1).At(0, j)));
+    auto        input_context = std::make_pair(input, context);
+
+    ASSERT_EQ(input_context, gt_input_context_pairs.at(j % gt_input_context_pairs.size()));
+  }
+  ASSERT_EQ(is_done_set, true);
 }

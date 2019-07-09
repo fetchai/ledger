@@ -88,10 +88,9 @@ DNNClassifier<TensorType>::DNNClassifier(
   SetupModel(hidden_layers);
 
   // instantiate optimiser
-  auto input = {input_};
-  if (!(fetch::ml::optimisers::AddOptimiser<TensorType, CostFunctionType>(
-          optimiser_type, optimiser_ptr_, this->graph_ptr_, input, output_,
-          this->estimator_config_.learning_rate_param)))
+  if (!(fetch::ml::optimisers::AddOptimiser<TensorType>(
+          optimiser_type, optimiser_ptr_, this->graph_ptr_, std::vector<std::string>{input_},
+          label_, error_, this->estimator_config_.learning_rate_param)))
   {
     throw std::runtime_error("DNNClassifier initialised with unrecognised optimiser");
   }

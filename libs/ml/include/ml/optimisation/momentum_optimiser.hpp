@@ -46,11 +46,9 @@ public:
                     DataType const &learning_rate   = DataType{0.001f},
                     DataType const &momentum_update = DataType{0.9f});
 
-  MomentumOptimiser(std::shared_ptr<Graph<T>>
-
-                                                                              graph,
-                    std::vector<std::string> const &                          input_node_names,
-                    std::string const &                                       output_node_name,
+  MomentumOptimiser(std::shared_ptr<Graph<T>>       graph,
+                    std::vector<std::string> const &input_node_names,
+                    std::string const &label_node_name, std::string const &output_node_name,
                     fetch::ml::optimisers::LearningRateParam<DataType> const &learning_rate_param,
                     DataType const &momentum_update = DataType{0.9f});
 
@@ -94,13 +92,11 @@ MomentumOptimiser<T>::MomentumOptimiser(std::shared_ptr<Graph<T>>
 
 template <class T>
 MomentumOptimiser<T>::MomentumOptimiser(
-    std::shared_ptr<Graph<T>>
-
-                                    graph,
-    std::vector<std::string> const &input_node_names, std::string const &output_node_name,
+    std::shared_ptr<Graph<T>> graph, std::vector<std::string> const &input_node_names,
+    std::string const &label_node_name, std::string const &output_node_name,
     fetch::ml::optimisers::LearningRateParam<DataType> const &learning_rate_param,
     DataType const &                                          momentum_update)
-  : Optimiser<T>(graph, input_node_names, output_node_name, learning_rate_param)
+  : Optimiser<T>(graph, input_node_names, label_node_name, output_node_name, learning_rate_param)
   , momentum_update_(momentum_update)
 {
   Init();

@@ -157,15 +157,15 @@ std::string ReadFile(std::string const &path)
 
 struct TrainingParams
 {
-  SizeType max_word_count       = 200;   // maximum number to be trained
-  SizeType negative_sample_size = 5;     // number of negative sample per word-context pair
-  SizeType window_size          = 5;     // window size for context sampling
-  bool     train_mode           = true;  // reserve for future compatibility with CBOW
-  DataType freq_thresh          = 1e-3;  // frequency threshold for subsampling
-  SizeType min_count            = 5;     // infrequent word removal threshold
+  SizeType max_word_count       = 1000000;  // maximum number to be trained
+  SizeType negative_sample_size = 5;        // number of negative sample per word-context pair
+  SizeType window_size          = 5;        // window size for context sampling
+  bool     train_mode           = true;     // reserve for future compatibility with CBOW
+  DataType freq_thresh          = 1e-3;     // frequency threshold for subsampling
+  SizeType min_count            = 5;        // infrequent word removal threshold
 
-  SizeType batch_size      = 23;   // training data batch size
-  SizeType embedding_size  = 100;  // dimension of embedding vec
+  SizeType batch_size      = 100000;  // training data batch size
+  SizeType embedding_size  = 100;     // dimension of embedding vec
   SizeType training_epochs = 1;
   SizeType test_frequency  = 1;
   DataType starting_learning_rate_per_sample =

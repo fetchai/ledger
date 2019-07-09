@@ -56,15 +56,23 @@ public:
     assert(inputs.front().get().shape().size() == 2);
 
     SizeType batch_size = inputs.front().get().shape().at(1);
-
-    if (!this->embeddings_output_ ||
-        this->embeddings_output_->shape().at(1) != inputs.front().get().shape().at(0) ||
-        this->embeddings_output_->shape().at(0) != this->output_->shape().at(0) ||
-        this->embeddings_output_->shape().at(2) != batch_size)
+    
+    // test embeddings_output_ not null ptr
+    if (!this->embeddings_output_)
     {
       this->embeddings_output_ = std::make_shared<ArrayType>(std::vector<SizeType>(
           {this->output_->shape().at(0), inputs.front().get().shape(0), batch_size}));
     }
+    // test embeddings_output_ batch size has changed
+    else if (this->embeddings_output_->shape().at(2) != batch_size)
+    {
+      this->embeddings_output_->Reshape({this->embeddings_output_->shape().at(0),
+                                         this->embeddings_output_->shape().at(1), batch_size});
+    }
+
+    assert(this->embeddings_output_->shape().at(0) == this->output_->shape().at(0));
+    assert(this->embeddings_output_->shape().at(1) == inputs.front().get().shape().at(0));
+    assert(this->embeddings_output_->shape().at(2) == batch_size);
 
     ArrayType transposed_input = inputs.front().get().Transpose();
     auto      e_it             = transposed_input.begin();
