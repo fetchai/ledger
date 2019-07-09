@@ -27,10 +27,10 @@
 
 #include "gtest/gtest.h"
 
-#include <algorithm>
-#include <iostream>
+#include <cassert>
+#include <cstddef>
+#include <cstdint>
 #include <map>
-#include <stack>
 #include <string>
 #include <unordered_map>
 #include <vector>
