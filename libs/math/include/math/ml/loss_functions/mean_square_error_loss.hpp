@@ -25,15 +25,11 @@ namespace fetch {
 namespace math {
 
 template <typename ArrayType>
-typename ArrayType::Type MeanSquareErrorLoss(ArrayType const &A, ArrayType const &B)
+typename ArrayType::Type MeanSquareError(ArrayType const &A, ArrayType const &B)
 {
   typename ArrayType::Type ret = distance::SquareDistance(A, B);
 
   ret = Divide(ret, typename ArrayType::Type(A.size()));
-
-  // TODO(private 343)
-  // division by 2 allows us to cancel out with a 2 in the derivative
-  ret = Divide(ret, typename ArrayType::Type(2));
 
   return ret;
 }
