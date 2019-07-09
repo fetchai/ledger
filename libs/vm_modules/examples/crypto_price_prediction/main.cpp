@@ -65,6 +65,16 @@ fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> read_csv(
   return vm->CreateNewObject<fetch::vm_modules::math::VMTensor>(tensor);
 }
 
+// read the weights and bias csv files
+fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> remove_leading_dimension(fetch::vm::VM *vm, fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> const &tensor)
+{
+  auto t = tensor->GetTensor();
+
+  t.Reshape({t.shape(1), t.shape(2)});
+
+  return vm->CreateNewObject<fetch::vm_modules::math::VMTensor>(tensor);
+}
+
 int main(int argc, char **argv)
 {
   if (argc < 5)

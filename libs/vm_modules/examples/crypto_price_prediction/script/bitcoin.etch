@@ -52,8 +52,6 @@ var input_labels = read_csv(System.Argv(1), true);
 var test_data = read_csv(System.Argv(2), true);
 var test_labels = read_csv(System.Argv(3), true);
 
-
-
 // set up graph
 var graph = Graph();
 build_graph(graph);
@@ -64,20 +62,21 @@ graph.addMeanSquareErrorLoss("Error", "Output", "Label");
 // Set up the optimiser
 var optimiser = AdamOptimiser(graph, "Input", "Label", "Error");
 
-// Begin training
-printLn("begin training...");
-var training_iterations = 10;
-var batch_size = 8u64;
-for(i in 0:training_iterations)
-    var loss = optimiser.Run(input_data, input_labels, batch_size);
-    print("Current Loss: ");
-    printLn(loss);
-endfor
+//// Begin training
+//printLn("begin training...");
+//var training_iterations = 10;
+//var batch_size = 8u64;
+//for(i in 0:training_iterations)
+//    var loss = optimiser.Run(input_data, input_labels, batch_size);
+//    print("Current Loss: ");
+//    printLn(loss);
+//endfor
 
 // Begin testing
 printLn("test prediction...");
 graph.SetInput("Input", test_data);
 var pred = graph.Evaluate("Output");
-print(pred.ToString());
+
+printLn(pred.ToString());
 
 endfunction
