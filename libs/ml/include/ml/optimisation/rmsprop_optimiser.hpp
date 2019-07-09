@@ -39,14 +39,19 @@ public:
   using DataType  = typename ArrayType::Type;
   using SizeType  = typename ArrayType::SizeType;
 
-  RMSPropOptimiser(std::shared_ptr<Graph<T>>
-
-                                                   graph,
+  RMSPropOptimiser(std::shared_ptr<Graph<T>>       graph,
                    std::vector<std::string> const &input_node_names,
                    std::string const &label_node_name, std::string const &output_node_name,
                    DataType const &learning_rate = DataType{0.001f},
                    DataType const &decay_rate    = DataType{0.9f},
                    DataType const &epsilon       = DataType{1e-8f});
+
+  RMSPropOptimiser(std::shared_ptr<Graph<T>>       graph,
+                   std::vector<std::string> const &input_node_names,
+                   std::string const &label_node_name, std::string const &output_node_name,
+                   fetch::ml::optimisers::LearningRateParam<DataType> const &learning_rate_param,
+                   DataType const &decay_rate = DataType{0.9f},
+                   DataType const &epsilon    = DataType{1e-8f});
 
   virtual ~RMSPropOptimiser() = default;
 
@@ -58,12 +63,23 @@ private:
 
   void ApplyGradients(SizeType batch_size) override;
   void ResetCache();
+  void Init();
 };
 
 template <class T>
-RMSPropOptimiser<T>::RMSPropOptimiser(std::shared_ptr<Graph<T>>
+void RMSPropOptimiser<T>::Init()
+{
+  auto weights = this->graph_->get_weights();
+  for (auto &train : this->graph_trainables_)
+  {
+    this->cache_.emplace_back(ArrayType(train->get_weights().shape()));
+  }
 
-                                                                      graph,
+  ResetCache();
+}
+
+template <class T>
+RMSPropOptimiser<T>::RMSPropOptimiser(std::shared_ptr<Graph<T>>       graph,
                                       std::vector<std::string> const &input_node_names,
                                       std::string const &             label_node_name,
                                       std::string const &             output_node_name,
@@ -75,13 +91,25 @@ RMSPropOptimiser<T>::RMSPropOptimiser(std::shared_ptr<Graph<T>>
   decay_rate_(decay_rate)
   , epsilon_(epsilon)
 {
-  auto weights = this->graph_->get_weights();
-  for (auto &train : this->graph_trainables_)
-  {
-    this->cache_.emplace_back(ArrayType(train->get_weights().shape()));
-  }
+  Init();
+}
 
-  ResetCache();
+template <class T>
+RMSPropOptimiser<T>::RMSPropOptimiser(
+    std::shared_ptr<Graph<T>>
+
+                                    graph,
+    std::vector<std::string> const &input_node_names, std::string const &label_node_name,
+    std::string const &                                       output_node_name,
+    fetch::ml::optimisers::LearningRateParam<DataType> const &learning_rate_param,
+    DataType const &decay_rate, DataType const &epsilon)
+  : Optimiser<T>(graph, input_node_names, label_node_name, output_node_name, learning_rate_param)
+  ,
+
+  decay_rate_(decay_rate)
+  , epsilon_(epsilon)
+{
+  Init();
 }
 
 // private

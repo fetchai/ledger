@@ -55,7 +55,7 @@ public:
     assert(inputs.size() == 1);
     assert(inputs.front().get().shape().size() == 2);
 
-    SizeType batch_size = inputs.front().get().shape(1);
+    SizeType batch_size = inputs.front().get().shape().at(1);
 
     // test embeddings_output_ not null ptr
     if (!this->embeddings_output_)
@@ -150,6 +150,13 @@ public:
       }
     }
     updated_rows_.clear();
+  }
+
+  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
+  {
+    std::vector<SizeType> output_shape = {
+        this->output_->shape().at(0), inputs.front().get().shape(0), inputs.front().get().shape(1)};
+    return output_shape;
   }
 
 private:
