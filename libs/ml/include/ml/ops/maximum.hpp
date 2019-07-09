@@ -33,16 +33,12 @@ public:
   using ArrayPtrType  = std::shared_ptr<ArrayType>;
   using VecTensorType = typename Ops<T>::VecTensorType;
 
-  Maximum()           = default;
-  virtual ~Maximum()  = default;
-  using ArrayPtrType  = std::shared_ptr<ArrayType>;
-  using VecTensorType = typename Ops<T>::VecTensorType;
-
-  Maximum() = default;
+  Maximum()          = default;
+  virtual ~Maximum() = default;
 
   /**
    * elementwise maximum
-   * @param inputs  left & mright inputs to get maximum
+   * @param inputs  left & right inputs to get maximum
    * @return
    */
   virtual void Forward(VecTensorType const &inputs, ArrayType &output)
