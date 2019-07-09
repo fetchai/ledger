@@ -215,7 +215,7 @@ TYPED_TEST(GraphTest, diamond_graph_backward)  // output=(input1*input2)-(input1
   TypeParam output = g.Evaluate(output_name);
 
   // Calculate Gradient
-  g.BackPropagate(output_name, error_signal);
+  g.BackPropagateSignal(output_name, error_signal);
 
   // Test gradient
   std::vector<TypeParam> gradients = g.GetGradients();
@@ -250,7 +250,7 @@ TYPED_TEST(GraphTest, diamond_graph_backward)  // output=(input1*input2)-(input1
   output = g.Evaluate("Diamond_Op3");
 
   // Calculate Gradient
-  g.BackPropagate(output_name, error_signal);
+  g.BackPropagateSignal(output_name, error_signal);
 
   // Test Weights
   std::vector<TypeParam> weights2 = g.get_weights();

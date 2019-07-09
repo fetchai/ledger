@@ -39,34 +39,34 @@ enum class OptimiserType
 };
 
 template <class T, class C, typename... Params>
-bool AddOptimiser(OptimiserType type, std::shared_ptr<Optimiser<T, C>> &optimiser_ptr,
+bool AddOptimiser(OptimiserType type, std::shared_ptr<Optimiser<T>> &optimiser_ptr,
                   Params... params)
 {
   switch (type)
   {
   case OptimiserType::ADAGRAD:
   {
-    optimiser_ptr.reset(new fetch::ml::optimisers::AdaGradOptimiser<T, C>(params...));
+    optimiser_ptr.reset(new fetch::ml::optimisers::AdaGradOptimiser<T>(params...));
     return true;
   }
   case OptimiserType::ADAM:
   {
-    optimiser_ptr.reset(new fetch::ml::optimisers::AdamOptimiser<T, C>(params...));
+    optimiser_ptr.reset(new fetch::ml::optimisers::AdamOptimiser<T>(params...));
     return true;
   }
   case OptimiserType::MOMENTUM:
   {
-    optimiser_ptr.reset(new fetch::ml::optimisers::MomentumOptimiser<T, C>(params...));
+    optimiser_ptr.reset(new fetch::ml::optimisers::MomentumOptimiser<T>(params...));
     return true;
   }
   case OptimiserType::RMSPROP:
   {
-    optimiser_ptr.reset(new fetch::ml::optimisers::RMSPropOptimiser<T, C>(params...));
+    optimiser_ptr.reset(new fetch::ml::optimisers::RMSPropOptimiser<T>(params...));
     return true;
   }
   case OptimiserType::SGD:
   {
-    optimiser_ptr.reset(new fetch::ml::optimisers::SGDOptimiser<T, C>(params...));
+    optimiser_ptr.reset(new fetch::ml::optimisers::SGDOptimiser<T>(params...));
     return true;
   }
   default:

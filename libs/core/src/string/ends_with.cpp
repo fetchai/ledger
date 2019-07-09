@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -17,25 +16,22 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/ops/loss_functions/mean_square_error_loss.hpp"
-#include "python/fetch_pybind.hpp"
-
-namespace py = pybind11;
+#include <string>
 
 namespace fetch {
-namespace ml {
-namespace ops {
+namespace core {
 
-template <typename T>
-void BuildMeanSquareErrorLoss(std::string const &custom_name, pybind11::module &module)
+bool EndsWith(std::string const &value, std::string const &ending)
 {
-  py::class_<fetch::ml::ops::MeanSquareErrorLoss<fetch::math::Tensor<T>>>(module,
-                                                                          custom_name.c_str())
-      .def(py::init<>())
-      .def("Forward", &fetch::ml::ops::MeanSquareErrorLoss<fetch::math::Tensor<T>>::Forward)
-      .def("Backward", &fetch::ml::ops::MeanSquareErrorLoss<fetch::math::Tensor<T>>::Backward);
+  bool success{false};
+
+  if (value.size() >= ending.size())
+  {
+    success = (value.substr(value.size() - ending.size()) == ending);
+  }
+
+  return success;
 }
 
-}  // namespace ops
-}  // namespace ml
+}  // namespace core
 }  // namespace fetch

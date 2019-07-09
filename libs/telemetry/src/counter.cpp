@@ -16,16 +16,30 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/string/ends_with.hpp"
 #include "telemetry/counter.hpp"
 
 #include <iostream>
 
 namespace fetch {
 namespace telemetry {
+namespace {
 
-//# HELP go_memstats_lookups_total Total number of pointer lookups.
-//# TYPE go_memstats_lookups_total counter
-// go_memstats_lookups_total 0
+bool ValidateName(std::string const &name)
+{
+  return core::EndsWith(name, "_total");
+}
+
+}  // namespace
+
+Counter::Counter(std::string name, std::string description, Labels labels)
+  : Measurement(std::move(name), std::move(description), std::move(labels))
+{
+  if (!ValidateName(this->name()))
+  {
+    throw std::runtime_error("Incorrect counter name, must end with _total");
+  }
+}
 
 void Counter::ToStream(std::ostream &stream) const
 {

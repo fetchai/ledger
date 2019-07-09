@@ -23,6 +23,10 @@
 
 #include "gtest/gtest.h"
 
+#include <cstdint>
+#include <vector>
+
+namespace {
 template <typename T>
 class DivideTest : public ::testing::Test
 {
@@ -91,3 +95,4 @@ TYPED_TEST(DivideTest, backward_test)
   ASSERT_TRUE(prediction[0].AllClose(gt_1, DataType(1e-5), DataType(1e-5)));
   ASSERT_TRUE(prediction[1].AllClose(gt_2, DataType(1e-5), DataType(1e-5)));
 }
+}  // namespace
