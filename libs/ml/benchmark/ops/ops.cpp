@@ -30,6 +30,7 @@
 #include "ml/ops/multiply.hpp"
 #include "ml/ops/sqrt.hpp"
 #include "ml/ops/subtract.hpp"
+#include "ml/ops/matrix_multiply.hpp"
 
 #include "vectorise/fixed_point/fixed_point.hpp"
 
@@ -159,6 +160,30 @@ BENCHMARK_TEMPLATE(BM_SqrtForward, double, 512)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_SqrtForward, double, 1024)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_SqrtForward, double, 2048)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_SqrtForward, double, 4096)->Unit(benchmark::kMicrosecond);
+
+
+template <class T, int N>
+void BM_SqrtBackward(benchmark::State &state)
+{
+    fetch::math::Tensor<T> input({1, N});
+    fetch::math::Tensor<T> error_signal({1, N});
+
+    std::vector<std::reference_wrapper<fetch::math::Tensor<T> const>> inputs;
+    inputs.push_back(input);
+    fetch::ml::ops::Sqrt<fetch::math::Tensor<T>> sqrt1;
+
+    for (auto _ : state)
+    {
+        sqrt1.Backward(inputs, error_signal);
+    }
+}
+
+BENCHMARK_TEMPLATE(BM_SqrtBackward, double, 2)->Unit(benchmark::kNanosecond);
+BENCHMARK_TEMPLATE(BM_SqrtBackward, double, 256)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_SqrtBackward, double, 512)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_SqrtBackward, double, 1024)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_SqrtBackward, double, 2048)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_SqrtBackward, double, 4096)->Unit(benchmark::kMicrosecond);
 
 template <class T, int N>
 void BM_LogForward(benchmark::State &state)
