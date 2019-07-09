@@ -1200,17 +1200,6 @@ bool Tensor<T, C>::Reshape(SizeVector const &shape)
 }
 
 /**
- * Resizes and reshapes tensor according to newly specified shape
- * @param shape the new shape to set
- */
-template <typename T, typename C>
-bool Tensor<T, C>::ResizeFromShape(SizeVector const &shape)
-{
-  // TODO(private issue 995): Get rid of this function
-  return Resize(shape, true);
-}
-
-/**
  * Set operator takes variable number of indices followed by one value.
  * This is made possible using the TensorSetter class to manage
  * template unrolling
