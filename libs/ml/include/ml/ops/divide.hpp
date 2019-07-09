@@ -29,50 +29,49 @@ class Divide : public fetch::ml::Ops<T>
 {
 public:
   using ArrayType     = T;
-  using ArrayPtrType  = std::shared_ptr<ArrayType>;
   using VecTensorType = typename Ops<T>::VecTensorType;
+  using SizeType      = typename ArrayType::SizeType;
 
   Divide()          = default;
   virtual ~Divide() = default;
 
   /**
-   * elementwise multiplication
+   * elementwise division
    * @param inputs  left & right inputs to Divide
    * @return
    */
-  virtual void Forward(std::vector<ArrayPtrType> const &inputs, ArrayType &output)
+  void Forward(VecTensorType const &inputs, ArrayType &output) override
   {
-    (void)output;
+    assert(output.shape() == this->ComputeOutputShape(inputs));
+
     assert(inputs.size() > 1);
     for (std::size_t i = 1; i < inputs.size(); ++i)
     {
-      assert(inputs[i]->shape() == inputs[i - 1]->shape());
+      assert(inputs[i].get().shape() == inputs[i - 1].get().shape());
     }
 
-    std::vector<std::uint64_t> outputShape(inputs[0]->shape());
-    if (!this->output_ || this->output_->shape() != outputShape)
-    {
-      this->output_ = std::make_shared<ArrayType>(outputShape);
-    }
-
-    fetch::math::Divide(inputs[0], inputs[1], this->output_);
+    fetch::math::Divide(inputs[0].get(), inputs[1].get(), output);
     if (inputs.size() > 2)
     {
       for (std::size_t i = 2; i < inputs.size(); ++i)
       {
-        fetch::math::Divide(this->output_, inputs[i], this->output_);
+        fetch::math::Divide(output, inputs[i].get(), output);
       }
     }
-
-    output = this->output_;
   }
 
   /**
-   * elementwise multiplication is not trainable - just pass the error signal back
+   * elementwise division is not trainable - just pass the error signal back
    */
-  virtual std::vector<ArrayPtrType> Backward(VecTensorType const &inputs, ArrayPtrType error_signal)
+  std::vector<ArrayType> Backward(VecTensorType const &inputs,
+                                  ArrayType const &    error_signal) override
   {
-    return std::vector<ArrayPtrType>(inputs.size(), error_signal);
+    return std::vector<ArrayType>(inputs.size(), error_signal);
+  }
+
+  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
+  {
+    return inputs.front().get().shape();
   }
 
   static constexpr char const *DESCRIPTOR = "Divide";
