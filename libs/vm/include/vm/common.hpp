@@ -143,7 +143,7 @@ enum class NodeKind : uint16_t
   Modulo                                    = 65,
   InplaceModulo                             = 66,
   ArraySeq                                  = 67,
-  ArrayMul                                  = 68
+  ArrayRep                                  = 68
 };
 
 enum class ExpressionKind : uint8_t

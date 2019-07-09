@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "meta/value_util.hpp"
 #include "vm/parser.hpp"
 
 // Must define YYSTYPE and YY_EXTRA_TYPE *before* including the flex-generated header
@@ -42,12 +43,7 @@ BlockNodePtr Parser::Parse(std::string const &filename, std::string const &sourc
 
   index_ = -1;
   token_ = nullptr;
-  errors_.clear();
-  blocks_.clear();
-  groups_.clear();
-  operators_.clear();
-  rpn_.clear();
-  infix_stack_.clear();
+  value_util::ClearAll(errors_, blocks_, groups_, operators_, rpn_, infix_stack_);
 
   BlockNodePtr root      = CreateBlockNode(NodeKind::Root, "", 0);
   BlockNodePtr file_node = CreateBlockNode(NodeKind::File, filename, 1);
@@ -56,12 +52,7 @@ BlockNodePtr Parser::Parse(std::string const &filename, std::string const &sourc
   bool const ok = errors_.size() == 0;
   errors        = std::move(errors_);
 
-  tokens_.clear();
-  blocks_.clear();
-  groups_.clear();
-  operators_.clear();
-  rpn_.clear();
-  infix_stack_.clear();
+  value_util::ClearAll(tokens_, blocks_, groups_, operators_, rpn_, infix_stack_);
 
   return value_util::And(ok, root);
 }
@@ -1627,7 +1618,7 @@ bool Parser::HandleCloser(bool is_conditional_expression)
       {
         return AddError("expected expression");
       }
-      if (topop.node->node_kind != NodeKind::ArrayMul)
+      if (topop.node->node_kind != NodeKind::ArrayRep)
       {
         ++topop.op_info.arity;
       }
@@ -1667,7 +1658,7 @@ bool Parser::HandleSemicolon()
     {
       // this all happens inside an array expression, but semicolon is the delimiter
       // so changing the expression kind
-      groupop.node->node_kind = NodeKind::ArrayMul;
+      groupop.node->node_kind = NodeKind::ArrayRep;
       groupop.op_info.arity   = 2;
       while (operators_.size() > operator_index + 1)
       {
@@ -1675,7 +1666,7 @@ bool Parser::HandleSemicolon()
         operators_.pop_back();
       }
       Expr &topop           = operators_.back();
-      topop.node->node_kind = NodeKind::ArrayMul;
+      topop.node->node_kind = NodeKind::ArrayRep;
       topop.op_info.arity   = 2;
       state_                = State::PreOperand;
       return true;
@@ -1706,7 +1697,7 @@ bool Parser::HandleComma()
     // commas are not allowed inside a parenthesis group
     return AddError("");
 
-  case NodeKind::ArrayMul:
+  case NodeKind::ArrayRep:
     // neither they are in semicolon-array expressions
     return AddError("comma and semicolon inside the same array expression");
 

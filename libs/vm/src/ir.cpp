@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "meta/value_util.hpp"
 #include "vm/ir.hpp"
 
 namespace fetch {
@@ -27,13 +28,12 @@ IR::IR(IR const &other)
 }
 
 IR::IR(IR &&other)
-{
-  name_      = std::move(other.name_);
-  root_      = std::move(other.root_);
-  types_     = std::move(other.types_);
-  variables_ = std::move(other.variables_);
-  functions_ = std::move(other.functions_);
-}
+  : name_{std::move(other.name_)}
+  , root_{std::move(other.root_)}
+  , types_{std::move(other.types_)}
+  , variables_{std::move(other.variables_)}
+  , functions_{std::move(other.functions_)}
+{}
 
 IR &IR::operator=(IR const &other)
 {
@@ -71,9 +71,7 @@ void IR::Reset()
     root_->Reset();
     root_ = nullptr;
   }
-  types_.clear();
-  variables_.clear();
-  functions_.clear();
+  value_util::ClearAll(types_, variables_, functions_);
 }
 
 void IR::Clone(IR const &other)
@@ -81,9 +79,7 @@ void IR::Clone(IR const &other)
   name_                = other.name_;
   IRNodePtr clone_root = CloneNode(other.root_);
   root_                = ConvertToIRBlockNodePtr(clone_root);
-  type_map_.Clear();
-  variable_map_.Clear();
-  function_map_.Clear();
+  value_util::ClearAll(type_map_, variable_map_, function_map_);
 }
 
 IRNodePtr IR::CloneNode(IRNodePtr const &node)

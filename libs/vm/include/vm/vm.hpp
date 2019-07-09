@@ -1595,7 +1595,7 @@ private:
   void Handler__PrimitiveModulo();
   void Handler__VariablePrimitiveInplaceModulo();
   void Handler__ArraySeq();
-  void Handler__ArrayMul();
+  void Handler__ArrayRep();
 
   friend class Object;
   friend class Module;

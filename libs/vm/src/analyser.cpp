@@ -57,7 +57,7 @@ void Analyser::Initialise()
                    {NodeKind::InplaceMultiply, Operator::InplaceMultiply},
                    {NodeKind::InplaceDivide, Operator::InplaceDivide},
                    {NodeKind::ArraySeq, Operator::ArraySeq},
-                   {NodeKind::ArrayMul, Operator::ArrayMul}};
+                   {NodeKind::ArrayRep, Operator::ArrayRep}};
 
   type_info_array_ = TypeInfoArray(TypeIds::NumReserved);
   value_util::ZeroAll(type_map_, type_info_map_, registered_types_, function_info_array_,
@@ -222,7 +222,8 @@ void Analyser::EnableIndexOperator(TypeIndex             type_index,
 bool Analyser::Analyse(BlockNodePtr const &root, std::vector<std::string> &errors)
 {
   root_ = root;
-  value_util::ZeroAll(blocks_, loops_, function_, errors_);
+  function_ = nullptr;
+  value_util::ClearAll(blocks_, loops_, errors_);
 
   root_->symbols = CreateSymbolTable();
 
@@ -233,7 +234,8 @@ bool Analyser::Analyse(BlockNodePtr const &root, std::vector<std::string> &error
   if (!errors_.empty())
   {
     errors = std::move(errors_);
-    value_util::ZeroAll(root_, blocks_, loops_, function_, errors_);
+    value_util::ZeroAll(root_, function_);
+    value_util::ClearAll(blocks_, loops_, errors_);
     return false;
   }
 
@@ -629,7 +631,7 @@ void Analyser::AnnotateVarStatement(BlockNodePtr const &parent_block_node,
   if (var_statement_node->node_kind == NodeKind::VarDeclarationStatement)
   {
     ExpressionNodePtr type_node = ConvertToExpressionNodePtr(var_statement_node->children[1]);
-    if (AnnotateTypeExpression(type_node) && !IsEmptyArray(type_node))
+    if (AnnotateTypeExpression(type_node))
     {
       variable->type = type_node->type;
     }
@@ -1110,7 +1112,7 @@ bool Analyser::AnnotateExpression(ExpressionNodePtr const &node)
     break;
   }
   case NodeKind::ArraySeq:
-  case NodeKind::ArrayMul:
+  case NodeKind::ArrayRep:
     return AnnotateArrayExpr(node);
 
   default:
@@ -1944,29 +1946,22 @@ TypePtr Analyser::ConvertType(TypePtr const &type, TypePtr const &instantiated_t
 
 bool Analyser::MatchType(TypePtr const &supplied_type, TypePtr const &expected_type) const
 {
-    STD_CERR << "SUPPLIED: " << supplied_type << "\n\nEXPECTED: " << expected_type << '\n';
   if (expected_type == any_type_)
   {
-	  STD_CERR << "Any\n";
     return true;
   }
   if (expected_type == any_primitive_type_)
   {
-	  STD_CERR << "Primitive\n";
     return supplied_type->IsPrimitive();
   }
-  STD_CERR << "Pointers: " << supplied_type.get() << ", " << expected_type.get() << '\n';
   if (supplied_type == expected_type)
   {
-	  STD_CERR << "Equal\n";
     return true;
   }
   if (expected_type->IsGroup())
   {
-	  STD_CERR << "Group\n";
     for (auto const &possible_type : expected_type->types)
     {
-	    STD_CERR << "Possible: " << possible_type << '\n';
       if (supplied_type == possible_type)
       {
         return true;
@@ -1983,7 +1978,6 @@ bool Analyser::MatchTypes(TypePtr const &type, TypePtrArray const &supplied_type
   std::size_t const num_types = expected_types.size();
   if (supplied_types.size() != num_types)
   {
-	  STD_CERR << "False 1\n";
     return false;
   }
   for (std::size_t i = 0; i < num_types; ++i)
@@ -1991,7 +1985,6 @@ bool Analyser::MatchTypes(TypePtr const &type, TypePtrArray const &supplied_type
     TypePtr const &supplied_type = supplied_types[i];
     if (supplied_type->IsVoid())
     {
-	  STD_CERR << "False 2, i = " << i << '\n';
       return false;
     }
     TypePtr expected_type = ConvertType(expected_types[i], type);
@@ -1999,7 +1992,6 @@ bool Analyser::MatchTypes(TypePtr const &type, TypePtrArray const &supplied_type
     {
       if (!expected_type->IsClass() && !expected_type->IsInstantiation())
       {
-	  STD_CERR << "False 3, i = " << i << '\n';
         // Not a match, can only convert null to a known reference type
         return false;
       }
@@ -2009,13 +2001,11 @@ bool Analyser::MatchTypes(TypePtr const &type, TypePtrArray const &supplied_type
     {
       if (!MatchType(supplied_type, expected_type))
       {
-	  STD_CERR << "False 4, i = " << i << '\n';
         return false;
       }
       actual_types.push_back(supplied_type);
     }
   }
-STD_CERR << "True\n";
   // Got a match
   return true;
 }
@@ -2029,21 +2019,14 @@ FunctionPtr Analyser::FindFunction(TypePtr const &type, FunctionGroupPtr const &
   for (FunctionPtr const &function : fg->functions)
   {
 	  if(function->name == "set") {
-		  STD_CERR << "FUNCTION SET\n";
-		  STD_CERR << "FUNCTION SET\n";
-		  STD_CERR << "FUNCTION SET\n";
-		  STD_CERR << "FUNCTION SET\n";
-		  STD_CERR << "FUNCTION SET\n";
 	  }
     TypePtrArray temp_actual_types;
     if (MatchTypes(type, supplied_types, function->parameter_types, temp_actual_types))
     {
-	    if(function->name == "set") STD_CERR << "Match\n";
       array.push_back(temp_actual_types);
       functions.push_back(function);
     }
   }
-STD_CERR << "Found " << functions.size() << " functions\n";
   if (functions.size() == 1)
   {
     actual_types = array[0];
@@ -2085,11 +2068,11 @@ SymbolPtr Analyser::FindSymbol(ExpressionNodePtr const &node)
     TypePtr           template_type                = ConvertToTypePtr(symbol);
     std::size_t const num_supplied_parameter_types = node->children.size() - 1;
     std::size_t const num_expected_parameter_types = template_type->types.size();
-    TypePtrArray      parameter_types;
     if (num_supplied_parameter_types != num_expected_parameter_types)
     {
       return nullptr;
     }
+    TypePtrArray      parameter_types;
     for (std::size_t i = 1; i <= num_expected_parameter_types; ++i)
     {
       ExpressionNodePtr parameter_type_node = ConvertToExpressionNodePtr(node->children[i]);
@@ -2284,7 +2267,7 @@ TypePtr Analyser::InternalCreateInstantiationType(TypeKind type_kind, TypePtr co
     name = std::accumulate(parameter_types.begin() + 1, parameter_types.end(),
                            name + parameter_types.front()->name,
                            [](std::string name, TypePtr const &parameter_type) {
-                             return std::move(name) + ", " + parameter_type->name;
+                             return std::move(name) + "," + parameter_type->name;
                            });
   }
   name += '>';

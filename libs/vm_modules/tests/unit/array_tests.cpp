@@ -39,11 +39,8 @@ TEST_F(ArrayTests, count_returns_the_number_of_elements_in_the_array)
     endfunction
   )";
 
-	std::cerr << "Point 0\n";
   ASSERT_TRUE(toolkit.Compile(TEXT));
-	std::cerr << "Point 1\n";
   ASSERT_TRUE(toolkit.Run());
-	std::cerr << "Point 2\n";
 
   ASSERT_EQ(stdout.str(), "2-5");
 }

@@ -1061,9 +1061,9 @@ void Generator::HandleExpression(IRExpressionNodePtr const &node)
     HandleArraySeq(node);
     break;
   }
-  case NodeKind::ArrayMul:
+  case NodeKind::ArrayRep:
   {
-    HandleArrayMul(node);
+    HandleArrayRep(node);
     break;
   }
   default:
@@ -1569,12 +1569,12 @@ void Generator::HandleArraySeq(IRExpressionNodePtr const &node)
   AddLineNumber(node->line, pc);
 }
 
-void Generator::HandleArrayMul(IRExpressionNodePtr const &node)
+void Generator::HandleArrayRep(IRExpressionNodePtr const &node)
 {
   HandleExpression(ConvertToIRExpressionNodePtr(node->children.front()));
   HandleExpression(ConvertToIRExpressionNodePtr(node->children.back()));
 
-  Executable::Instruction constructor(Opcodes::ArrayMul);
+  Executable::Instruction constructor(Opcodes::ArrayRep);
   constructor.type_id = node->type->resolved_id;
 
   std::uint16_t pc = function_->AddInstruction(constructor);

@@ -68,42 +68,29 @@ public:
 
   bool Compile(char const *text)
   {
-	  std::cerr << "Point 0.0\n";
     std::vector<std::string> errors{};
 
     // build the compiler and IR
-	  std::cerr << "Point 0.1\n";
     compiler_ = std::make_unique<Compiler>(module_.get());
-	  std::cerr << "Point 0.2\n";
     ir_       = std::make_unique<IR>();
 
-	  std::cerr << "Point 0.2\n";
     // compile the source code
     if (!compiler_->Compile(text, "default", *ir_, errors))
     {
-	  std::cerr << "Point 0.3\n";
       PrintErrors(errors);
-	  std::cerr << "Point 0.4\n";
       return false;
     }
 
-	  std::cerr << "Point 0.5\n";
     // build the executable
     executable_ = std::make_unique<Executable>();
-	  std::cerr << "Point 0.6\n";
     vm_         = std::make_unique<VM>(module_.get());
-	  std::cerr << "Point 0.7\n";
     vm_->SetIOObserver(*observer_);
-	  std::cerr << "Point 0.8\n";
     vm_->AttachOutputDevice(fetch::vm::VM::STDOUT, *stdout_);
-	  std::cerr << "Point 0.9\n";
 
     // generate the IR
     if (!vm_->GenerateExecutable(*ir_, "default_ir", *executable_, errors))
     {
-	  std::cerr << "Point 0.10\n";
       PrintErrors(errors);
-	  std::cerr << "Point 0.11\n";
       return false;
     }
 

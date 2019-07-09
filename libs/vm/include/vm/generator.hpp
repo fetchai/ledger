@@ -344,7 +344,7 @@ private:
   void     HandleDotOp(IRExpressionNodePtr const &node);
   void     HandleInvokeOp(IRExpressionNodePtr const &node);
   void     HandleArraySeq(IRExpressionNodePtr const &node);
-  void     HandleArrayMul(IRExpressionNodePtr const &node);
+  void     HandleArrayRep(IRExpressionNodePtr const &node);
   void     HandleVariablePrefixPostfixOp(IRExpressionNodePtr const &node,
                                          IRExpressionNodePtr const &operand);
   void     HandleIndexedPrefixPostfixOp(IRExpressionNodePtr const &node,

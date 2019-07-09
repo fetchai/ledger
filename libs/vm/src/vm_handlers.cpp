@@ -718,7 +718,7 @@ void VM::Handler__ArraySeq()
   Push().Construct(ret_val, instruction_->type_id);
 }
 
-void VM::Handler__ArrayMul()
+void VM::Handler__ArrayRep()
 {
   AnyInteger size;
   size.Construct(Pop());

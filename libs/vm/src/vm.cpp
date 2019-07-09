@@ -167,7 +167,7 @@ VM::VM(Module *module)
   AddOpcodeInfo(Opcodes::VariablePrimitiveInplaceModulo, "VariablePrimitiveInplaceModulo",
                 [](VM *vm) { vm->Handler__VariablePrimitiveInplaceModulo(); });
   AddOpcodeInfo(Opcodes::ArraySeq, "ArraySeq", [](VM *vm) { vm->Handler__ArraySeq(); });
-  AddOpcodeInfo(Opcodes::ArrayMul, "ArrayMul", [](VM *vm) { vm->Handler__ArrayMul(); });
+  AddOpcodeInfo(Opcodes::ArrayRep, "ArrayRep", [](VM *vm) { vm->Handler__ArrayRep(); });
 
   opcode_map_.clear();
   for (uint16_t i = 0; i < num_functions; ++i)
