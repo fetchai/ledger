@@ -24,7 +24,7 @@
 #include "ml/graph.hpp"
 #include "ml/layers/convolution_1d.hpp"
 #include "ml/ops/activation.hpp"
-#include "ml/ops/loss_functions/mean_square_error.hpp"
+#include "ml/ops/loss_functions/mean_square_error_loss.hpp"
 #include "ml/optimisation/adam_optimiser.hpp"
 
 #include <iostream>
