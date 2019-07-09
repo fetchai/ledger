@@ -26,6 +26,7 @@
 #include "http/query.hpp"
 #include "network/fetch_asio.hpp"
 
+#include <chrono>
 #include <cstddef>
 #include <cstdint>
 #include <string>
@@ -38,6 +39,9 @@ class HTTPRequest
 {
 public:
   using byte_array_type = byte_array::ConstByteArray;
+  using Clock           = std::chrono::high_resolution_clock;
+  using Timepoint       = Clock::time_point;
+  using Duration        = Clock::duration;
 
   static constexpr char const *LOGGING_NAME = "HTTPRequest";
 
@@ -136,6 +140,18 @@ public:
     return originating_port_;
   }
 
+  void SetProcessed()
+  {
+    processed_ = Clock::now();
+  }
+
+  double GetDuration() const
+  {
+    auto const duration = processed_ - created_;
+    return static_cast<double>(duration.count() * Clock::period::num) /
+           static_cast<double>(Clock::period::den);
+  }
+
 private:
   bool ParseStartLine(byte_array::ByteArray &line);
 
@@ -148,7 +164,7 @@ private:
   Header   header_;
   QuerySet query_;
 
-  Method          method_;
+  Method          method_{Method::GET};
   byte_array_type full_uri_;
   byte_array_type uri_;
   byte_array_type protocol_;
@@ -156,6 +172,12 @@ private:
   bool is_valid_ = true;
 
   std::size_t content_length_ = 0;
+
+  /// @name Metadata
+  /// @{
+  Timepoint created_{Clock::now()};
+  Timepoint processed_{};
+  /// @}
 };
 }  // namespace http
 }  // namespace fetch

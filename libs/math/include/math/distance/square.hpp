@@ -17,27 +17,33 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/ops/ops.hpp"
+#include "core/assert.hpp"
+#include <cmath>
 
 namespace fetch {
-namespace ml {
-namespace ops {
+namespace math {
+namespace distance {
 
-template <class T>
-class Criterion
+template <typename ArrayType>
+inline typename ArrayType::Type SquareDistance(ArrayType const &A, ArrayType const &B)
 {
-public:
-  using ArrayType    = T;
-  using Datatype     = typename ArrayType::Type;
-  using ArrayPtrType = std::shared_ptr<ArrayType>;
+  using Type = typename ArrayType::Type;
+  auto it1   = A.begin();
+  auto it2   = B.begin();
+  assert(it1.size() == it2.size());
+  Type ret = Type(0);
 
-  Criterion()
-  {}
+  while (it1.is_valid())
+  {
+    Type d = (*it1) - (*it2);
 
-  virtual typename ArrayType::Type Forward(std::vector<ArrayType> const &inputs)  = 0;
-  virtual ArrayType                Backward(std::vector<ArrayType> const &inputs) = 0;
-};
+    ret += d * d;
+    ++it1;
+    ++it2;
+  }
+  return ret;
+}
 
-}  // namespace ops
-}  // namespace ml
+}  // namespace distance
+}  // namespace math
 }  // namespace fetch

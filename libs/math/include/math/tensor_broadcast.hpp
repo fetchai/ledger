@@ -131,7 +131,7 @@ inline bool Broadcast(F function, Tensor<T, C> &a, Tensor<T, C> &b, Tensor<T, C>
   SizeVector cshape;
 
   ShapeFromBroadcast(a.shape(), b.shape(), cshape);
-  c.ResizeFromShape(cshape);
+  c.Reshape(cshape);
 
   std::vector<SizeVector> rangeA, rangeB, rangeC;
   for (auto &i : a.shape())

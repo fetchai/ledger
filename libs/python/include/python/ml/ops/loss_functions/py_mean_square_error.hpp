@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/ops/loss_functions/mean_square_error.hpp"
+#include "ml/ops/loss_functions/mean_square_error_loss.hpp"
 #include "python/fetch_pybind.hpp"
 
 namespace py = pybind11;
@@ -27,12 +27,13 @@ namespace ml {
 namespace ops {
 
 template <typename T>
-void BuildMeanSquareError(std::string const &custom_name, pybind11::module &module)
+void BuildMeanSquareErrorLoss(std::string const &custom_name, pybind11::module &module)
 {
-  py::class_<fetch::ml::ops::MeanSquareError<fetch::math::Tensor<T>>>(module, custom_name.c_str())
+  py::class_<fetch::ml::ops::MeanSquareErrorLoss<fetch::math::Tensor<T>>>(module,
+                                                                          custom_name.c_str())
       .def(py::init<>())
-      .def("Forward", &fetch::ml::ops::MeanSquareError<fetch::math::Tensor<T>>::Forward)
-      .def("Backward", &fetch::ml::ops::MeanSquareError<fetch::math::Tensor<T>>::Backward);
+      .def("Forward", &fetch::ml::ops::MeanSquareErrorLoss<fetch::math::Tensor<T>>::Forward)
+      .def("Backward", &fetch::ml::ops::MeanSquareErrorLoss<fetch::math::Tensor<T>>::Backward);
 }
 
 }  // namespace ops

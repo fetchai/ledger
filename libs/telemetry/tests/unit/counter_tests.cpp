@@ -73,7 +73,7 @@ TEST_F(CounterTests, CheckSerialisation)
   counter_->add(500);
 
   std::ostringstream oss;
-  counter_->ToStream(oss);
+  counter_->ToStream(oss, Counter::StreamMode::FULL);
 
   static char const *EXPECTED_TEXT = R"(# HELP test_counter_total Simple test counter
 # TYPE test_counter_total counter

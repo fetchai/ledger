@@ -284,7 +284,7 @@ TYPED_TEST(Convolution1DTest, node_backward_test)  // Use the class as a Node
       "Convolution1D", output_channels, input_channels, kernel_height, stride_size);
   conv.AddInput(placeholder);
   TypeParam prediction     = conv.Evaluate(true);
-  auto      backprop_error = conv.BackPropagate(error_signal);
+  auto      backprop_error = conv.BackPropagateSignal(error_signal);
 
   // test correct values
   ASSERT_EQ(backprop_error.size(), 1);
