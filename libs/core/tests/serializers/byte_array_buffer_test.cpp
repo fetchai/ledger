@@ -18,13 +18,13 @@
 
 #include "core/serializers/byte_array.hpp"
 #include "core/serializers/typed_byte_array_buffer.hpp"
-
+#include "core/serializers/main_serializer.hpp"
+#include "core/serializers/group_definitions.hpp"
 #include "gtest/gtest.h"
 
 namespace fetch {
 namespace serializers {
-/*
-TODO: Redo this test
+
 namespace {
 
 template <typename T>
@@ -88,29 +88,31 @@ struct A<void>
   ba_type y{"Y"};
 };
 
-template <typename T, typename X>
-void Serialize(T &serializer, A<X> const &a)
+template< typename X, typename D >
+struct ArraySerializer< A< X >, D >
 {
-  serializer.Append(a.x, a.y, a.t);
-}
+public:
+  using Type = A< X >;
+  using DriverType = D;
 
-template <typename T, typename X>
-void Deserialize(T &serializer, A<X> &a)
-{
-  serializer >> a.x >> a.y >> a.t;
-}
+  template< typename Constructor >
+  static void Serialize(Constructor & array_constructor, Type const & a)
+  {
+    auto array = array_constructor(3);
+    array.Append(a.x);
+    array.Append(a.y);
+    array.Append(a.t);    
+  }
 
-template <typename T>
-void Serialize(T &serializer, A<void> const &a)
-{
-  serializer.Append(a.x, a.y);
-}
+  template< typename ArrayDeserializer >
+  static void Deserialize(ArrayDeserializer & array, Type & a)
+  {
+    array.GetNextValue(a.x);
+    array.GetNextValue(a.y);
+    array.GetNextValue(a.t);
+  }  
+};
 
-template <typename T>
-void Deserialize(T &serializer, A<void> &a)
-{
-  serializer >> a.x >> a.y;
-}
 
 class ByteArrayBufferTest : public testing::Test
 {
@@ -287,6 +289,6 @@ TEST_F(ByteArrayBufferTest, test_stream_absolute_resize_with_preexisting_offset)
 }
 
 }  // namespace
-*/
+
 }  // namespace serializers
 }  // namespace fetch

@@ -361,36 +361,38 @@ public:
     // Serializing the size of the string
     if(val.size() < 32)
     {
-      uint8_t opcode = static_cast<uint8_t>( CODE_FIXED | (val.size() & 0x1f) );
+      uint8_t opcode = static_cast<uint8_t>( CODE_FIXED | (val.size() & 0x1f) );      
       interface.Allocate(sizeof(opcode) + val.size());
       interface.WriteBytes(&opcode, sizeof(opcode));
     }
-    else if(val.size() < ((1<<8)-1))
+    else if(val.size() < ((1<<8)))
     {
       uint8_t opcode = static_cast<uint8_t>( CODE8  );
+      std::cout << "YYYY: " << std::hex << static_cast<int>(opcode) << std::dec << std::endl;        
       uint8_t size = static_cast<uint8_t>(val.size());
+      std::cout << " -  " << static_cast<int>(size) << std::endl;
 
       interface.Allocate(sizeof(opcode) + sizeof(size) + val.size());
       interface.WriteBytes(&opcode, sizeof(opcode));
-      interface.WriteBytes(reinterpret_cast<uint8_t *>( &size ), sizeof(size));      
+      interface.template WritePrimitive<uint8_t>(size);      
     }    
-    else if(val.size() < ((1<<16)-1))
+    else if(val.size() < ((1<<16)))
     {
       uint8_t opcode = static_cast<uint8_t>( CODE16  );
       uint16_t size = static_cast<uint16_t>(val.size());
 
       interface.Allocate(sizeof(opcode) + sizeof(size) + val.size());
       interface.WriteBytes(&opcode, sizeof(opcode));
-      interface.WriteBytes(reinterpret_cast<uint8_t *>( &size ), sizeof(size));      
+      interface.template WritePrimitive<uint16_t>(size);      
     }
-    else if(val.size() < ((1ull<<32)-1))    
+    else if(val.size() < ((1ull<<32)))    
     {
       uint8_t opcode = static_cast<uint8_t>( CODE32 );
       uint32_t size = static_cast<uint32_t>(val.size());
       interface.Allocate(sizeof(opcode) + sizeof(size) + val.size());
 
       interface.WriteBytes(&opcode, sizeof(opcode));
-      interface.WriteBytes(reinterpret_cast<uint8_t *>( &size ), sizeof(size));
+      interface.template WritePrimitive<uint32_t>(size);  
     }
     else
     {
@@ -408,20 +410,18 @@ public:
     uint8_t opcode;
     uint32_t size;
     interface.ReadByte(opcode);
-
     switch(opcode)
     {
     case CODE8:
-      interface.ReadBytes(reinterpret_cast<uint8_t *>( &size ), sizeof(uint8_t));
+      interface.template ReadPrimitive<uint8_t>(size);
       break;
-    case CODE16:    
-      interface.ReadBytes(reinterpret_cast<uint8_t *>( &size ), sizeof(uint16_t));    
+    case CODE16:
+      interface.template ReadPrimitive<uint16_t>(size);    
       break;    
     case CODE32:
-      interface.ReadBytes(reinterpret_cast<uint8_t *>( &size ), sizeof(size));
+      interface.template ReadPrimitive<uint32_t>(size);
       break;
     default:
-      // TODO: check that opcode is correct.
       size = static_cast< uint32_t >( opcode & 0x1f );
     }
 

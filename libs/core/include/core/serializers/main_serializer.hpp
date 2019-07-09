@@ -539,6 +539,20 @@ public:
     ++pos_;
   }
 
+  template< typename WriteType, typename InitialType>
+  void WritePrimitive(InitialType const &val)
+  {
+    WriteType w = static_cast< WriteType >(val);
+    WriteBytes(reinterpret_cast<uint8_t const *>(&w), sizeof(w));
+  }
+
+  template< typename ReadType, typename FinalType>
+  void ReadPrimitive(FinalType &val)
+  {
+    ReadType r;
+    ReadBytes(reinterpret_cast<uint8_t *>(&r), sizeof(r));
+    val = static_cast<FinalType>(r);
+  }
 
   void ReadByte(uint8_t &val)
   {
