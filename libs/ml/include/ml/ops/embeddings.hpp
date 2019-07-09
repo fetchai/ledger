@@ -49,7 +49,7 @@ public:
 
   virtual ~Embeddings() = default;
 
-  virtual void Forward(VecTensorType const &inputs, ArrayType &output)
+  virtual void Forward(VecTensorType const &inputs, ArrayType &output) override
   {
     assert(this->output_);
     assert(inputs.size() == 1);
@@ -95,7 +95,7 @@ public:
   }
 
   virtual std::vector<ArrayType> Backward(VecTensorType const &inputs,
-                                          ArrayType const &    error_signal)
+                                          ArrayType const &    error_signal) override
   {
     assert(inputs.size() == 1);
     assert(inputs.front().get().shape().size() == 2);
@@ -130,7 +130,7 @@ public:
     return {ArrayType(error_signal.shape())};
   }
 
-  virtual void Step(typename T::Type learning_rate)
+  virtual void Step(typename T::Type learning_rate) override
   {
     for (auto const &r : updated_rows_)
     {
