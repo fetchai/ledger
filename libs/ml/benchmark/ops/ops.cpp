@@ -30,7 +30,6 @@
 #include "ml/ops/multiply.hpp"
 #include "ml/ops/sqrt.hpp"
 #include "ml/ops/subtract.hpp"
-#include "ml/ops/matrix_multiply.hpp"
 
 #include "vectorise/fixed_point/fixed_point.hpp"
 
@@ -161,21 +160,20 @@ BENCHMARK_TEMPLATE(BM_SqrtForward, double, 1024)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_SqrtForward, double, 2048)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_SqrtForward, double, 4096)->Unit(benchmark::kMicrosecond);
 
-
 template <class T, int N>
 void BM_SqrtBackward(benchmark::State &state)
 {
-    fetch::math::Tensor<T> input({1, N});
-    fetch::math::Tensor<T> error_signal({1, N});
+  fetch::math::Tensor<T> input({1, N});
+  fetch::math::Tensor<T> error_signal({1, N});
 
-    std::vector<std::reference_wrapper<fetch::math::Tensor<T> const>> inputs;
-    inputs.push_back(input);
-    fetch::ml::ops::Sqrt<fetch::math::Tensor<T>> sqrt1;
+  std::vector<std::reference_wrapper<fetch::math::Tensor<T> const>> inputs;
+  inputs.push_back(input);
+  fetch::ml::ops::Sqrt<fetch::math::Tensor<T>> sqrt1;
 
-    for (auto _ : state)
-    {
-        sqrt1.Backward(inputs, error_signal);
-    }
+  for (auto _ : state)
+  {
+    sqrt1.Backward(inputs, error_signal);
+  }
 }
 
 BENCHMARK_TEMPLATE(BM_SqrtBackward, double, 2)->Unit(benchmark::kNanosecond);
@@ -209,6 +207,29 @@ BENCHMARK_TEMPLATE(BM_LogForward, double, 2048)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_LogForward, double, 4096)->Unit(benchmark::kMicrosecond);
 
 template <class T, int N>
+void BM_LogBackward(benchmark::State &state)
+{
+  fetch::math::Tensor<T> input({1, N});
+  fetch::math::Tensor<T> error_signal({1, N});
+
+  std::vector<std::reference_wrapper<fetch::math::Tensor<T> const>> inputs;
+  inputs.push_back(input);
+  fetch::ml::ops::Log<fetch::math::Tensor<T>> log1;
+
+  for (auto _ : state)
+  {
+    log1.Backward(inputs, error_signal);
+  }
+}
+
+BENCHMARK_TEMPLATE(BM_LogBackward, double, 2)->Unit(benchmark::kNanosecond);
+BENCHMARK_TEMPLATE(BM_LogBackward, double, 256)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_LogBackward, double, 512)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_LogBackward, double, 1024)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_LogBackward, double, 2048)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_LogBackward, double, 4096)->Unit(benchmark::kMicrosecond);
+
+template <class T, int N>
 void BM_ExpForward(benchmark::State &state)
 {
   fetch::math::Tensor<T> input({1, N});
@@ -230,6 +251,29 @@ BENCHMARK_TEMPLATE(BM_ExpForward, double, 512)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_ExpForward, double, 1024)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_ExpForward, double, 2048)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_ExpForward, double, 4096)->Unit(benchmark::kMicrosecond);
+
+template <class T, int N>
+void BM_ExpBackward(benchmark::State &state)
+{
+  fetch::math::Tensor<T> input({1, N});
+  fetch::math::Tensor<T> error_signal({1, N});
+
+  std::vector<std::reference_wrapper<fetch::math::Tensor<T> const>> inputs;
+  inputs.push_back(input);
+  fetch::ml::ops::Exp<fetch::math::Tensor<T>> exp1;
+
+  for (auto _ : state)
+  {
+    exp1.Backward(inputs, error_signal);
+  }
+}
+
+BENCHMARK_TEMPLATE(BM_ExpBackward, double, 2)->Unit(benchmark::kNanosecond);
+BENCHMARK_TEMPLATE(BM_ExpBackward, double, 256)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_ExpBackward, double, 512)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_ExpBackward, double, 1024)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_ExpBackward, double, 2048)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_ExpBackward, double, 4096)->Unit(benchmark::kMicrosecond);
 
 template <class T, int N>
 void BM_DivideForward(benchmark::State &state)
@@ -257,6 +301,31 @@ BENCHMARK_TEMPLATE(BM_DivideForward, double, 2048)->Unit(benchmark::kMicrosecond
 BENCHMARK_TEMPLATE(BM_DivideForward, double, 4096)->Unit(benchmark::kMicrosecond);
 
 template <class T, int N>
+void BM_DivideBackward(benchmark::State &state)
+{
+  fetch::math::Tensor<T> input_1({1, N});
+  fetch::math::Tensor<T> input_2({1, N});
+  fetch::math::Tensor<T> error_signal({1, N});
+
+  std::vector<std::reference_wrapper<fetch::math::Tensor<T> const>> inputs;
+  inputs.push_back(input_1);
+  inputs.push_back(input_2);
+  fetch::ml::ops::Divide<fetch::math::Tensor<T>> div1;
+
+  for (auto _ : state)
+  {
+    div1.Backward(inputs, error_signal);
+  }
+}
+
+BENCHMARK_TEMPLATE(BM_DivideBackward, double, 2)->Unit(benchmark::kNanosecond);
+BENCHMARK_TEMPLATE(BM_DivideBackward, double, 256)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_DivideBackward, double, 512)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_DivideBackward, double, 1024)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_DivideBackward, double, 2048)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_DivideBackward, double, 4096)->Unit(benchmark::kMicrosecond);
+
+template <class T, int N>
 void BM_MultiplyForward(benchmark::State &state)
 {
   fetch::math::Tensor<T> input_1({1, N});
@@ -280,6 +349,31 @@ BENCHMARK_TEMPLATE(BM_MultiplyForward, double, 512)->Unit(benchmark::kMicrosecon
 BENCHMARK_TEMPLATE(BM_MultiplyForward, double, 1024)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_MultiplyForward, double, 2048)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_MultiplyForward, double, 4096)->Unit(benchmark::kMicrosecond);
+
+template <class T, int N>
+void BM_MultiplyBackward(benchmark::State &state)
+{
+  fetch::math::Tensor<T> input_1({1, N});
+  fetch::math::Tensor<T> input_2({1, N});
+  fetch::math::Tensor<T> error_signal({1, N});
+
+  std::vector<std::reference_wrapper<fetch::math::Tensor<T> const>> inputs;
+  inputs.push_back(input_1);
+  inputs.push_back(input_2);
+  fetch::ml::ops::Multiply<fetch::math::Tensor<T>> mul1;
+
+  for (auto _ : state)
+  {
+    mul1.Backward(inputs, error_signal);
+  }
+}
+
+BENCHMARK_TEMPLATE(BM_DivideBackward, double, 2)->Unit(benchmark::kNanosecond);
+BENCHMARK_TEMPLATE(BM_DivideBackward, double, 256)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_DivideBackward, double, 512)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_DivideBackward, double, 1024)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_DivideBackward, double, 2048)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_DivideBackward, double, 4096)->Unit(benchmark::kMicrosecond);
 
 template <class T, int N>
 void BM_AddForward(benchmark::State &state)
@@ -307,6 +401,31 @@ BENCHMARK_TEMPLATE(BM_AddForward, double, 2048)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_AddForward, double, 4096)->Unit(benchmark::kMicrosecond);
 
 template <class T, int N>
+void BM_AddBackward(benchmark::State &state)
+{
+  fetch::math::Tensor<T> input_1({1, N});
+  fetch::math::Tensor<T> input_2({1, N});
+  fetch::math::Tensor<T> error_signal({1, N});
+
+  std::vector<std::reference_wrapper<fetch::math::Tensor<T> const>> inputs;
+  inputs.push_back(input_1);
+  inputs.push_back(input_2);
+  fetch::ml::ops::Add<fetch::math::Tensor<T>> add1;
+
+  for (auto _ : state)
+  {
+    add1.Backward(inputs, error_signal);
+  }
+}
+
+BENCHMARK_TEMPLATE(BM_AddBackward, double, 2)->Unit(benchmark::kNanosecond);
+BENCHMARK_TEMPLATE(BM_AddBackward, double, 256)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_AddBackward, double, 512)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_AddBackward, double, 1024)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_AddBackward, double, 2048)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_AddBackward, double, 4096)->Unit(benchmark::kMicrosecond);
+
+template <class T, int N>
 void BM_SubtractForward(benchmark::State &state)
 {
   fetch::math::Tensor<T> input_1({1, N});
@@ -330,5 +449,30 @@ BENCHMARK_TEMPLATE(BM_SubtractForward, double, 512)->Unit(benchmark::kMicrosecon
 BENCHMARK_TEMPLATE(BM_SubtractForward, double, 1024)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_SubtractForward, double, 2048)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_SubtractForward, double, 4096)->Unit(benchmark::kMicrosecond);
+
+template <class T, int N>
+void BM_SubtractBackward(benchmark::State &state)
+{
+  fetch::math::Tensor<T> input_1({1, N});
+  fetch::math::Tensor<T> input_2({1, N});
+  fetch::math::Tensor<T> error_signal({1, N});
+
+  std::vector<std::reference_wrapper<fetch::math::Tensor<T> const>> inputs;
+  inputs.push_back(input_1);
+  inputs.push_back(input_2);
+  fetch::ml::ops::Subtract<fetch::math::Tensor<T>> sub1;
+
+  for (auto _ : state)
+  {
+    sub1.Backward(inputs, error_signal);
+  }
+}
+
+BENCHMARK_TEMPLATE(BM_SubtractBackward, double, 2)->Unit(benchmark::kNanosecond);
+BENCHMARK_TEMPLATE(BM_SubtractBackward, double, 256)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_SubtractBackward, double, 512)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_SubtractBackward, double, 1024)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_SubtractBackward, double, 2048)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_SubtractBackward, double, 4096)->Unit(benchmark::kMicrosecond);
 
 BENCHMARK_MAIN();
