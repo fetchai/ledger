@@ -23,6 +23,9 @@
 #include "math/ml/activation_functions/leaky_relu.hpp"
 #include "ml/ops/ops.hpp"
 
+#include <cassert>
+#include <vector>
+
 namespace fetch {
 namespace ml {
 namespace ops {
@@ -46,8 +49,7 @@ public:
     rng_.Seed(random_seed);
     UpdateRandomValue();
   }
-
-  virtual ~RandomizedRelu() = default;
+  ~RandomizedRelu() override = default;
 
   void Forward(VecTensorType const &inputs, ArrayType &output)
   {

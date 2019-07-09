@@ -37,23 +37,18 @@ public:
   using DataType  = typename ArrayType::Type;
   using SizeType  = typename ArrayType::SizeType;
 
-  SGDOptimiser(std::shared_ptr<Graph<T>>
+  SGDOptimiser(std::shared_ptr<Graph<T>> graph, std::vector<std::string> const &input_node_names,
+               std::string const &label_node_name, std::string const &output_node_name,
+               DataType const &learning_rate = DataType{0.001f});
 
-                                               graph,
-               std::vector<std::string> const &input_node_names, std::string const &label_node_name,
-               std::string const &output_node_name,
-               DataType const &   learning_rate = DataType{0.001f});
-
-  virtual ~SGDOptimiser() = default;
+  ~SGDOptimiser() override = default;
 
 private:
   void ApplyGradients(SizeType batch_size) override;
 };
 
 template <class T>
-SGDOptimiser<T>::SGDOptimiser(std::shared_ptr<Graph<T>>
-
-                                                              graph,
+SGDOptimiser<T>::SGDOptimiser(std::shared_ptr<Graph<T>>       graph,
                               std::vector<std::string> const &input_node_names,
                               std::string const &             label_node_name,
                               std::string const &output_node_name, DataType const &learning_rate)

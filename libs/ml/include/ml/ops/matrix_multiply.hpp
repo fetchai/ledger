@@ -21,6 +21,10 @@
 #include "math/tensor.hpp"
 #include "ml/ops/ops.hpp"
 
+#include <cassert>
+#include <memory>
+#include <vector>
+
 namespace fetch {
 namespace ml {
 namespace ops {
@@ -34,8 +38,8 @@ public:
   using SizeVector    = typename ArrayType::SizeVector;
   using VecTensorType = typename Ops<T>::VecTensorType;
 
-  MatrixMultiply()  = default;
-  ~MatrixMultiply() = default;
+  MatrixMultiply()           = default;
+  ~MatrixMultiply() override = default;
 
   void                   Forward(VecTensorType const &inputs, ArrayType &output);
   std::vector<ArrayType> Backward(VecTensorType const &inputs, ArrayType const &error_signal);
@@ -102,7 +106,6 @@ void MatrixMultiply<T>::Forward(VecTensorType const &inputs, ArrayType &output)
     // Iterate over batch
     for (SizeType i{0}; i < batch_size; i++)
     {
-
       auto output_slice = output.Slice(i, 2);
       output_slice_tensor_.Assign(output.Slice(i, 2));
 

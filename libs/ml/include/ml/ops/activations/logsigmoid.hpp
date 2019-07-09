@@ -24,6 +24,9 @@
 #include "math/standard_functions/log.hpp"
 #include "ml/ops/ops.hpp"
 
+#include <cassert>
+#include <vector>
+
 namespace fetch {
 namespace ml {
 namespace ops {
@@ -37,8 +40,8 @@ public:
   using SizeType      = typename ArrayType::SizeType;
   using VecTensorType = typename Ops<T>::VecTensorType;
 
-  LogSigmoid()          = default;
-  virtual ~LogSigmoid() = default;
+  LogSigmoid()           = default;
+  ~LogSigmoid() override = default;
 
   virtual void Forward(VecTensorType const &inputs, ArrayType &output)
   {

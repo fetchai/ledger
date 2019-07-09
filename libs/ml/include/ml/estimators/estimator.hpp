@@ -17,12 +17,12 @@
 //
 //------------------------------------------------------------------------------
 
-//#include "ml/meta/ml_type_traits.hpp"
-
 #include "ml/graph.hpp"
 #include "ml/ops/loss_functions/types.hpp"
 #include "ml/optimisation/optimiser.hpp"
 #include "ml/optimisation/types.hpp"
+
+#include <memory>
 
 namespace fetch {
 namespace ml {

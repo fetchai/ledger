@@ -19,14 +19,19 @@
 
 #include "crypto/bls_base.hpp"
 
+#include <cstdint>
+#include <stdexcept>
+#include <vector>
+
 namespace fetch {
 namespace crypto {
-
 namespace bls {
 namespace dkg {
+
 using VerificationVector = std::vector<bls::PublicKey>;
 using ContributionVector = std::vector<bls::PrivateKey>;
 using ParticipantVector  = std::vector<bls::Id>;
+
 struct Contribution
 {
   VerificationVector verification;
@@ -58,7 +63,7 @@ Contribution GenerateContribution(ParticipantVector const &participants, uint32_
 
 bls::PrivateKey AccumulateContributionShares(bls::PrivateKeyList list)
 {
-  if (list.size() == 0)
+  if (list.empty())
   {
     throw std::runtime_error("Cannot accumulate empty list");
   }

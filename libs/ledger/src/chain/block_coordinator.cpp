@@ -16,13 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chain/block_coordinator.hpp"
-
 #include "core/byte_array/encoders.hpp"
 #include "core/feature_flags.hpp"
 #include "core/threading.hpp"
 #include "ledger/block_packer_interface.hpp"
 #include "ledger/block_sink_interface.hpp"
+#include "ledger/chain/block_coordinator.hpp"
 #include "ledger/chain/consensus/dummy_miner.hpp"
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/chain/transaction.hpp"
@@ -36,7 +35,12 @@
 #include "telemetry/counter.hpp"
 #include "telemetry/registry.hpp"
 
+#include <cassert>
 #include <chrono>
+#include <cstddef>
+#include <cstdint>
+#include <memory>
+#include <utility>
 
 namespace fetch {
 namespace ledger {
@@ -373,10 +377,8 @@ BlockCoordinator::State BlockCoordinator::OnSynchronising()
 
     // we expect that the common parent in this case will always have been processed, but this
     // should be checked
-    if (!storage_unit_.HashExists(
-            common_parent->body.merkle_hash,
-            common_parent->body
-                .block_number) /*|| dag_ && !dag->HasEpoch(common_parent->body.dag_epoch)*/)
+    if (!storage_unit_.HashExists(common_parent->body.merkle_hash,
+                                  common_parent->body.block_number))
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "Ancestor block's state hash cannot be retrieved for block: 0x",
                       current_hash.ToHex(), " number; ", common_parent->body.block_number);

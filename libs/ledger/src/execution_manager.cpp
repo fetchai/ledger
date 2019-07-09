@@ -16,20 +16,17 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/execution_manager.hpp"
-
 #include "core/assert.hpp"
+#include "core/byte_array/decoders.hpp"
+#include "core/byte_array/encoders.hpp"
 #include "core/logger.hpp"
 #include "core/mutex.hpp"
 #include "core/threading.hpp"
+#include "ledger/execution_manager.hpp"
 #include "ledger/executor.hpp"
+#include "ledger/state_adapter.hpp"
 #include "moment/deadline_timer.hpp"
 #include "storage/resource_mapper.hpp"
-
-#include "ledger/state_adapter.hpp"
-
-#include "core/byte_array/decoders.hpp"
-#include "core/byte_array/encoders.hpp"
 
 #include <chrono>
 #include <memory>

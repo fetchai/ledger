@@ -23,6 +23,9 @@
 #include "math/standard_functions/log.hpp"
 #include "ml/ops/ops.hpp"
 
+#include <cassert>
+#include <vector>
+
 namespace fetch {
 namespace ml {
 namespace ops {
@@ -36,11 +39,10 @@ public:
   using SizeType      = typename ArrayType::SizeType;
   using VecTensorType = typename Ops<T>::VecTensorType;
 
-  LogSoftmax(SizeType axis = 0)
+  explicit LogSoftmax(SizeType axis = 0)
     : axis_(axis)
   {}
-
-  ~LogSoftmax() = default;
+  ~LogSoftmax() override = default;
 
   void Forward(VecTensorType const &inputs, ArrayType &output)
   {

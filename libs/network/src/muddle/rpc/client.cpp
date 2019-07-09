@@ -20,9 +20,15 @@
 #include "network/muddle/rpc/client.hpp"
 
 #include <chrono>
+#include <cstddef>
+#include <cstdint>
 #include <exception>
 #include <list>
 #include <memory>
+#include <mutex>
+#include <string>
+#include <thread>
+#include <utility>
 
 namespace fetch {
 namespace muddle {

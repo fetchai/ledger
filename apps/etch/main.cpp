@@ -23,6 +23,7 @@
 #include "core/commandline/parameter_parser.hpp"
 #include "core/json/document.hpp"
 #include "core/serializers/byte_array.hpp"
+#include "fetch_version.hpp"
 #include "variant/variant.hpp"
 #include "vm/common.hpp"
 #include "vm/generator.hpp"
@@ -33,8 +34,6 @@
 #include "vm/variant.hpp"
 #include "vm/vm.hpp"
 #include "vm_modules/vm_factory.hpp"
-
-#include "fetch_version.hpp"
 
 #include <cstddef>
 #include <cstdint>

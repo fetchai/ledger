@@ -23,6 +23,9 @@
 #include "math/ml/activation_functions/leaky_relu.hpp"
 #include "ml/ops/ops.hpp"
 
+#include <cassert>
+#include <vector>
+
 namespace fetch {
 namespace ml {
 namespace ops {
@@ -37,8 +40,8 @@ public:
   using ArrayPtrType  = std::shared_ptr<ArrayType>;
   using VecTensorType = typename Ops<T>::VecTensorType;
 
-  LeakyReluOp()          = default;
-  virtual ~LeakyReluOp() = default;
+  LeakyReluOp()           = default;
+  ~LeakyReluOp() override = default;
 
   // LeakyRelu(x,alpha)=max(0,x)+alpha*min(0,x)
   void Forward(VecTensorType const &inputs, ArrayType &output)

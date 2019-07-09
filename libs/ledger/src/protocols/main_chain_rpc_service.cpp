@@ -32,10 +32,6 @@
 
 #include <cstddef>
 #include <cstdint>
-#include <string>
-#include <unordered_set>
-#include <utility>
-#include <vector>
 
 // TODO(private 976) : This can crash the network as it's not enforced server side
 static const uint32_t MAX_CHAIN_REQUEST_SIZE = 10000;

@@ -20,6 +20,10 @@
 #include "ledger/dag/dag_sync_protocol.hpp"
 #include "ledger/dag/dag_sync_service.hpp"
 
+#include <cstdint>
+#include <memory>
+#include <mutex>
+
 namespace fetch {
 namespace ledger {
 

@@ -18,7 +18,6 @@
 //------------------------------------------------------------------------------
 
 #include "chain/consensus/proof_of_work.hpp"
-
 #include "fetch_pybind.hpp"
 
 namespace fetch {

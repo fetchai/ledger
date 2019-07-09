@@ -20,6 +20,7 @@
 #include "ml/dataloaders/word2vec_loaders/w2v_dataloader.hpp"
 
 #include <chrono>
+#include <iostream>
 
 using namespace std::chrono;
 

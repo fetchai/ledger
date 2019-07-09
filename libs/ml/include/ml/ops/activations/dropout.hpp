@@ -23,6 +23,9 @@
 #include "math/matrix_operations.hpp"
 #include "ml/ops/ops.hpp"
 
+#include <cassert>
+#include <vector>
+
 namespace fetch {
 namespace ml {
 namespace ops {
@@ -45,7 +48,7 @@ public:
     drop_values_ = ArrayType{0};
   }
 
-  virtual ~Dropout() = default;
+  ~Dropout() override = default;
 
   void Forward(VecTensorType const &inputs, ArrayType &output)
   {

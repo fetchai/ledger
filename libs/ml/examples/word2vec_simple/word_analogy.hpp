@@ -17,12 +17,14 @@
 //
 //------------------------------------------------------------------------------
 
+#include "math/matrix_operations.hpp"
+
+#include <cassert>
+#include <cmath>
 #include <iostream>
-#include <math.h>
+#include <stdexcept>
 #include <string>
 #include <vector>
-
-#include "math/matrix_operations.hpp"
 
 template <typename ArrayType>
 void NormVector(ArrayType &vector)

@@ -38,11 +38,11 @@ public:
   using SizeType      = typename ArrayType::SizeType;
   using VecTensorType = typename Ops<T>::VecTensorType;
 
-  Softmax(SizeType axis = 1)
+  explicit Softmax(SizeType axis = 1)
     : axis_(axis)
   {}
 
-  ~Softmax() = default;
+  ~Softmax() explicit = default;
 
   void Forward(VecTensorType const &inputs, ArrayType &output)
   {

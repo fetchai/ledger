@@ -39,16 +39,14 @@ public:
   using DataType  = typename ArrayType::Type;
   using SizeType  = typename ArrayType::SizeType;
 
-  RMSPropOptimiser(std::shared_ptr<Graph<T>>
-
-                                                   graph,
+  RMSPropOptimiser(std::shared_ptr<Graph<T>>       graph,
                    std::vector<std::string> const &input_node_names,
                    std::string const &label_node_name, std::string const &output_node_name,
                    DataType const &learning_rate = DataType{0.001f},
                    DataType const &decay_rate    = DataType{0.9f},
                    DataType const &epsilon       = DataType{1e-8f});
 
-  virtual ~RMSPropOptimiser() = default;
+  ~RMSPropOptimiser() override = default;
 
 private:
   std::vector<ArrayType> cache_;
@@ -61,9 +59,7 @@ private:
 };
 
 template <class T>
-RMSPropOptimiser<T>::RMSPropOptimiser(std::shared_ptr<Graph<T>>
-
-                                                                      graph,
+RMSPropOptimiser<T>::RMSPropOptimiser(std::shared_ptr<Graph<T>>       graph,
                                       std::vector<std::string> const &input_node_names,
                                       std::string const &             label_node_name,
                                       std::string const &             output_node_name,

@@ -21,6 +21,9 @@
 #include "math/ml/activation_functions/relu.hpp"
 #include "ml/ops/ops.hpp"
 
+#include <cassert>
+#include <vector>
+
 namespace fetch {
 namespace ml {
 namespace ops {
@@ -34,8 +37,8 @@ public:
   using SizeType      = typename ArrayType::SizeType;
   using VecTensorType = typename Ops<T>::VecTensorType;
 
-  Relu()          = default;
-  virtual ~Relu() = default;
+  Relu()           = default;
+  ~Relu() override = default;
 
   // f(x)=max(0,x);
   void Forward(VecTensorType const &inputs, ArrayType &output)

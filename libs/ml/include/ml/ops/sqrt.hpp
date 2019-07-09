@@ -19,6 +19,9 @@
 
 #include "ml/ops/ops.hpp"
 
+#include <cassert>
+#include <vector>
+
 namespace fetch {
 namespace ml {
 namespace ops {
@@ -32,8 +35,8 @@ public:
   using SizeType      = typename ArrayType::SizeType;
   using VecTensorType = typename Ops<T>::VecTensorType;
 
-  Sqrt()          = default;
-  virtual ~Sqrt() = default;
+  Sqrt()           = default;
+  ~Sqrt() override = default;
 
   /**
    * elementwise square root

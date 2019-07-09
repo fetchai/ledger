@@ -31,8 +31,6 @@ public:
   using SizeType = fetch::math::SizeType;
   using DataType = std::map<std::string, std::pair<SizeType, SizeType>>;
 
-  DataType data;
-
   Vocab() = default;
 
   void Save(std::string const &filename) const;
@@ -40,6 +38,9 @@ public:
 
   std::string WordFromIndex(SizeType index) const;
   SizeType    IndexFromWord(std::string const &word) const;
+
+private:
+  DataType data;
 };
 
 /**

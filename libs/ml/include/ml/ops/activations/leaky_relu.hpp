@@ -22,6 +22,9 @@
 #include "math/ml/activation_functions/leaky_relu.hpp"
 #include "ml/ops/ops.hpp"
 
+#include <cassert>
+#include <vector>
+
 namespace fetch {
 namespace ml {
 namespace ops {
@@ -35,11 +38,10 @@ public:
   using SizeType      = typename ArrayType::SizeType;
   using VecTensorType = typename Ops<T>::VecTensorType;
 
-  LeakyRelu(DataType a = DataType(0.01))
+  explicit LeakyRelu(DataType a = DataType(0.01))
     : a_(a)
   {}
-
-  virtual ~LeakyRelu() = default;
+  ~LeakyRelu() override = default;
 
   void Forward(VecTensorType const &inputs, ArrayType &output)
   {

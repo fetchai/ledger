@@ -23,6 +23,9 @@
 #include "math/standard_functions/clamp.hpp"
 #include "ml/ops/ops.hpp"
 
+#include <cassert>
+#include <vector>
+
 namespace fetch {
 namespace ml {
 namespace ops {
@@ -36,8 +39,8 @@ public:
   using SizeType      = typename ArrayType::SizeType;
   using VecTensorType = typename Ops<T>::VecTensorType;
 
-  Sigmoid()          = default;
-  virtual ~Sigmoid() = default;
+  Sigmoid()           = default;
+  ~Sigmoid() override = default;
 
   virtual void Forward(VecTensorType const &inputs, ArrayType &output)
   {

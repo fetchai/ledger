@@ -18,7 +18,7 @@
 
 #include "telemetry/measurement.hpp"
 
-#include <iostream>
+#include <ostream>
 
 namespace fetch {
 namespace telemetry {

@@ -26,6 +26,7 @@
 #include "storage/object_store.hpp"
 #include "storage/object_store_protocol.hpp"
 
+#include <cstddef>
 #include <memory>
 #include <vector>
 
