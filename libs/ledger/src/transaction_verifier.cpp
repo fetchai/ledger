@@ -61,15 +61,15 @@ std::string CreateMetricName(std::string const &prefix, std::string const &name)
 telemetry::GaugePtr<uint64_t> CreateGauge(std::string const &prefix, std::string const &name,
                                           std::string const &description)
 {
-  std::string const metric_name = CreateMetricName(prefix, name);
-  return Registry::Instance().CreateGauge<uint64_t>(metric_name, description);
+  std::string metric_name = CreateMetricName(prefix, name);
+  return Registry::Instance().CreateGauge<uint64_t>(std::move(metric_name), description);
 }
 
 telemetry::CounterPtr CreateCounter(std::string const &prefix, std::string const &name,
                                     std::string const &description)
 {
-  std::string const metric_name = CreateMetricName(prefix, name);
-  return Registry::Instance().CreateCounter(metric_name, description);
+  std::string metric_name = CreateMetricName(prefix, name);
+  return Registry::Instance().CreateCounter(std::move(metric_name), description);
 }
 
 }  // namespace

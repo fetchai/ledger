@@ -91,10 +91,6 @@ int main(int argc, char **argv)
       static constexpr std::size_t LOG2_VECTOR_SIZE = 7u;
       static constexpr std::size_t VECTOR_SIZE      = 1u << LOG2_VECTOR_SIZE;
 
-      // initialise the RNG
-      std::random_device rd{};
-      std::minstd_rand   rng(rd());
-
       BitVector vector{VECTOR_SIZE};
 
       TransactionSerializer serializer{};

@@ -42,6 +42,8 @@
 #include <chrono>
 #include <thread>
 #include <utility>
+#include <cassert>
+#include <cstring>
 
 namespace fetch {
 namespace ledger {
