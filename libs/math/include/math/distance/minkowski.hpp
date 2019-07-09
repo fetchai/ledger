@@ -36,11 +36,11 @@ inline meta::IfIsMathArray<ArrayType, typename ArrayType::Type> Minkowski(
   using DataType = typename ArrayType::Type;
 
   DataType sum{0};
-  auto     b_ptr = b.begin();
+  auto     b_it = b.begin();
   for (auto &val : a)
   {
-    sum += Pow(Max(val, *b_ptr) - Min(val, *b_ptr), n);
-    ++b_ptr;
+    sum += Pow(Max(val, *b_it) - Min(val, *b_it), n);
+    ++b_it;
   }
   return Pow(sum, DataType{1} / DataType{n});
 }

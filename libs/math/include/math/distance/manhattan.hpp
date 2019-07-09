@@ -33,11 +33,11 @@ inline typename ArrayType::Type Manhattan(ArrayType const &a, ArrayType const &b
   using Type = typename ArrayType::Type;
 
   Type result{0};
-  auto b_ptr = b.begin();
+  auto b_it = b.cbegin();
   for (auto &val : a)
   {
-    result += Abs(Subtract(val, *b_ptr));
-    ++b_ptr;
+    result += Abs(Subtract(val, *b_it));
+    ++b_it;
   }
 
   return result;
