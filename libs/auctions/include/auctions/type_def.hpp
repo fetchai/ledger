@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/byte_array.hpp"
+
 #include <cstddef>
 #include <unordered_map>
 

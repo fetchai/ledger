@@ -21,9 +21,6 @@
 #include "core/byte_array/consumers.hpp"
 #include "core/macros.hpp"
 #include "core/random.hpp"
-
-#include "vectorise/memory/array.hpp"
-
 #include "math/base_types.hpp"
 #include "math/matrix_operations.hpp"
 #include "math/ml/activation_functions/softmax.hpp"
@@ -37,12 +34,16 @@
 #include "math/tensor_iterator.hpp"
 #include "math/tensor_slice_iterator.hpp"
 #include "math/tensor_view.hpp"
+#include "vectorise/memory/array.hpp"
 
 #include <cassert>
+#include <cstdint>
 #include <memory>
 #include <numeric>
 #include <random>
+#include <stdexcept>
 #include <utility>
+#include <vector>
 
 namespace fetch {
 namespace math {

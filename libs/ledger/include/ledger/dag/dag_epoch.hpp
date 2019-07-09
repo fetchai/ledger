@@ -20,9 +20,10 @@
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/serializers/byte_array_buffer.hpp"
+#include "crypto/fnv.hpp"
 #include "crypto/sha256.hpp"
 
-#include <map>
+#include <set>
 
 namespace fetch {
 namespace ledger {

@@ -21,7 +21,10 @@
 
 #include "gtest/gtest.h"
 
+#include <cstddef>
 #include <iostream>
+#include <memory>
+#include <vector>
 
 using namespace fetch::auctions;
 
@@ -42,7 +45,6 @@ private:
 
 TEST(combinatorial_auction, many_bid_many_item_auction)
 {
-
   ErrorCode err;
 
   // set up auction

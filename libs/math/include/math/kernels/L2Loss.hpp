@@ -18,7 +18,9 @@
 //------------------------------------------------------------------------------
 
 #include "core/assert.hpp"
+
 #include <cmath>
+#include <cstddef>
 
 namespace fetch {
 namespace math {

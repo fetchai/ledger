@@ -29,8 +29,6 @@
 
 #include <cstddef>
 #include <cstdint>
-#include <string>
-#include <unordered_set>
 
 namespace fetch {
 namespace miner {

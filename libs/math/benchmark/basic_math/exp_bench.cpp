@@ -16,12 +16,14 @@
 //
 //------------------------------------------------------------------------------
 
-#include "benchmark/benchmark.h"
-#include <chrono>
-#include <cmath>
-
 #include "core/random/lcg.hpp"
 #include "math/approx_exp.hpp"
+
+#include "benchmark/benchmark.h"
+
+#include <cmath>
+#include <cstdint>
+#include <vector>
 
 template <uint8_t N, uint64_t C>
 static void BM_ApproxExpImplementation(benchmark::State &state)

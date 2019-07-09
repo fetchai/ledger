@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/logger.hpp"
+#include "crypto/fnv.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "ledger/storage_unit/lane_connectivity_details.hpp"
 #include "ledger/storage_unit/transaction_sinks.hpp"
@@ -34,7 +35,10 @@
 #include "storage/transient_object_store.hpp"
 #include "vectorise/platform.hpp"
 
-#include <set>
+#include <chrono>
+#include <cstdint>
+#include <string>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 
