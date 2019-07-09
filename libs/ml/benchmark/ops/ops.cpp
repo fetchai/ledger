@@ -24,6 +24,9 @@
 #include "math/tensor.hpp"
 #include "ml/ops/matrix_multiply.hpp"
 #include "ml/ops/sqrt.hpp"
+#include "ml/ops/log.hpp"
+#include "ml/ops/exp.hpp"
+
 #include "vectorise/fixed_point/fixed_point.hpp"
 
 template <class T, int F, int N, int B>
@@ -152,5 +155,51 @@ BENCHMARK_TEMPLATE(BM_SqrtForward, double, 512)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_SqrtForward, double, 1024)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_SqrtForward, double, 2048)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_SqrtForward, double, 4096)->Unit(benchmark::kMicrosecond);
+
+template <class T, int N>
+void BM_LogForward(benchmark::State &state)
+{
+    fetch::math::Tensor<T> input({1, N});
+    fetch::math::Tensor<T> output({1, N});
+
+    std::vector<std::reference_wrapper<fetch::math::Tensor<T> const>> inputs;
+    inputs.push_back(input);
+    fetch::ml::ops::Log<fetch::math::Tensor<T>> log1;
+
+    for (auto _ : state)
+    {
+        log1.Forward(inputs, output);
+    }
+}
+
+BENCHMARK_TEMPLATE(BM_LogForward, double, 2)->Unit(benchmark::kNanosecond);
+BENCHMARK_TEMPLATE(BM_LogForward, double, 256)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_LogForward, double, 512)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_LogForward, double, 1024)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_LogForward, double, 2048)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_LogForward, double, 4096)->Unit(benchmark::kMicrosecond);
+
+template <class T, int N>
+void BM_ExpForward(benchmark::State &state)
+{
+    fetch::math::Tensor<T> input({1, N});
+    fetch::math::Tensor<T> output({1, N});
+
+    std::vector<std::reference_wrapper<fetch::math::Tensor<T> const>> inputs;
+    inputs.push_back(input);
+    fetch::ml::ops::Exp<fetch::math::Tensor<T>> exp1;
+
+    for (auto _ : state)
+    {
+        exp1.Forward(inputs, output);
+    }
+}
+
+BENCHMARK_TEMPLATE(BM_ExpForward, double, 2)->Unit(benchmark::kNanosecond);
+BENCHMARK_TEMPLATE(BM_ExpForward, double, 256)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_ExpForward, double, 512)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_ExpForward, double, 1024)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_ExpForward, double, 2048)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_ExpForward, double, 4096)->Unit(benchmark::kMicrosecond);
 
 BENCHMARK_MAIN();
