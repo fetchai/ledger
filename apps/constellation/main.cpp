@@ -539,7 +539,7 @@ struct CommandLineArguments
   }
 
   friend std::ostream &operator<<(std::ostream &              s,
-                                  CommandLineArguments const &args) FETCH_MAYBE_UNUSED
+                                  CommandLineArguments const &args)
   {
     s << '\n';
     s << "port......................: " << args.port << '\n';

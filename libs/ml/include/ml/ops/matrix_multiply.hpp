@@ -41,9 +41,10 @@ public:
   MatrixMultiply()           = default;
   ~MatrixMultiply() override = default;
 
-  void                   Forward(VecTensorType const &inputs, ArrayType &output);
-  std::vector<ArrayType> Backward(VecTensorType const &inputs, ArrayType const &error_signal);
-  std::vector<SizeType>  ComputeOutputShape(VecTensorType const &inputs) const;
+  void                   Forward(VecTensorType const &inputs, ArrayType &output) override;
+  std::vector<ArrayType> Backward(VecTensorType const &inputs,
+                                  ArrayType const &    error_signal) override;
+  std::vector<SizeType>  ComputeOutputShape(VecTensorType const &inputs) const override;
 
   static constexpr char const *DESCRIPTOR = "MatrixMultiply";
 

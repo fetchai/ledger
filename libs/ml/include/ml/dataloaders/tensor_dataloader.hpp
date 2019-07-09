@@ -47,12 +47,12 @@ public:
   {}
   ~TensorDataLoader() override = default;
 
-  virtual ReturnType GetNext();
-  virtual bool       AddData(TensorType const &data, TensorType const &labels);
+  ReturnType   GetNext() override;
+  virtual bool AddData(TensorType const &data, TensorType const &labels);
 
-  virtual SizeType Size() const;
-  virtual bool     IsDone() const;
-  virtual void     Reset();
+  SizeType Size() const override;
+  bool     IsDone() const override;
+  void     Reset() override;
 
 protected:
   SizeType data_cursor_  = 0;

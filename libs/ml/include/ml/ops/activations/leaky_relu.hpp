@@ -43,13 +43,14 @@ public:
   {}
   ~LeakyRelu() override = default;
 
-  void Forward(VecTensorType const &inputs, ArrayType &output)
+  void Forward(VecTensorType const &inputs, ArrayType &output) override
   {
     assert(inputs.size() == 1);
     fetch::math::LeakyRelu(inputs.front().get(), a_, output);
   }
 
-  std::vector<ArrayType> Backward(VecTensorType const &inputs, ArrayType const &error_signal)
+  std::vector<ArrayType> Backward(VecTensorType const &inputs,
+                                  ArrayType const &    error_signal) override
   {
     assert(inputs.size() == 1);
     assert(inputs.front().get().shape() == error_signal.shape());
@@ -85,7 +86,7 @@ public:
     return {ret};
   }
 
-  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const
+  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
   {
     return inputs.front().get().shape();
   }

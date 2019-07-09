@@ -44,7 +44,7 @@ public:
   ~LeakyReluOp() override = default;
 
   // LeakyRelu(x,alpha)=max(0,x)+alpha*min(0,x)
-  void Forward(VecTensorType const &inputs, ArrayType &output)
+  void Forward(VecTensorType const &inputs, ArrayType &output) override
   {
     assert(inputs.size() == 2);
     assert(inputs.at(0).get().shape() == output.shape());
@@ -57,7 +57,8 @@ public:
   //    x>=0 f'(x)=1, x<0 f'(x)=alpha
   // Gradient of input.at(1)=alpha is:
   //    f'(alpha)=-Relu(-x)=min(0,x); x>=0 f'(alpha)=0, x<0 f'(alpha)=x
-  std::vector<ArrayType> Backward(VecTensorType const &inputs, ArrayType const &error_signal)
+  std::vector<ArrayType> Backward(VecTensorType const &inputs,
+                                  ArrayType const &    error_signal) override
   {
     assert(inputs.size() == 2);
     assert(inputs.at(0).get().size() == error_signal.size());
@@ -113,7 +114,7 @@ public:
     return {return_signal_1, return_signal_2};
   }
 
-  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const
+  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
   {
     return inputs.front().get().shape();
   }

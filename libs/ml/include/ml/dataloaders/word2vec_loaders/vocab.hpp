@@ -39,7 +39,6 @@ public:
   std::string WordFromIndex(SizeType index) const;
   SizeType    IndexFromWord(std::string const &word) const;
 
-private:
   DataType data;
 };
 

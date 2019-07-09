@@ -47,10 +47,9 @@ public:
     rng_.Seed(random_seed);
     drop_values_ = ArrayType{0};
   }
-
   ~Dropout() override = default;
 
-  void Forward(VecTensorType const &inputs, ArrayType &output)
+  void Forward(VecTensorType const &inputs, ArrayType &output) override
   {
     assert(inputs.size() == 1);
     assert(output.shape() == this->ComputeOutputShape(inputs));
@@ -88,7 +87,8 @@ public:
     }
   }
 
-  std::vector<ArrayType> Backward(VecTensorType const &inputs, ArrayType const &error_signal)
+  std::vector<ArrayType> Backward(VecTensorType const &inputs,
+                                  ArrayType const &    error_signal) override
   {
     FETCH_UNUSED(inputs);
     assert(inputs.size() == 1);
@@ -106,7 +106,7 @@ public:
     return {return_signal};
   }
 
-  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const
+  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
   {
     return inputs.front().get().shape();
   }
