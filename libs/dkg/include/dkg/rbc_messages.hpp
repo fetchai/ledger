@@ -146,59 +146,5 @@ namespace dkg {
             serialiser >> channel_id >> node_id >> sequence_counter >> message_;
         }
     };
-
-
-    /*
-
-    template<typename T>
-    inline void Serialize(T &serializer, RBroadcast const &broadcast) {
-        broadcast.serialize(serializer);
-    }
-
-    template<typename T>
-    inline void Deserialize(T &serializer, RBroadcast &broadcast) {
-        broadcast.deserialize(serializer);
-    }
-
-    template<typename T>
-    inline void Serialize(T &serializer, REcho const &echo) {
-        echo.serialize(serializer);
-    }
-
-    template<typename T>
-    inline void Deserialize(T &serializer, REcho &echo) {
-        echo.deserialize(serializer);
-    }
-
-    template<typename T>
-    inline void Serialize(T &serializer, RReady const &ready) {
-        ready.serialize(serializer);
-    }
-
-    template<typename T>
-    inline void Deserialize(T &serializer, RReady &ready) {
-        ready.deserialize(serializer);
-    }
-
-    template<typename T>
-    inline void Serialize(T &serializer, RRequest const &request) {
-        request.serialize(serializer);
-    }
-
-    template<typename T>
-    inline void Deserialize(T &serializer, RRequest &request) {
-        request.deserialize(serializer);
-    }
-
-    template<typename T>
-    inline void Serialize(T &serializer, RAnswer const &answer) {
-        answer.serialize(serializer);
-    }
-
-    template<typename T>
-    inline void Deserialize(T &serializer, RAnswer &answer) {
-        answer.deserialize(serializer);
-    }
-     */
 }
 }
