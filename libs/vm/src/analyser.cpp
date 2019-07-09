@@ -30,8 +30,6 @@
 #include <ostream>
 #include <string>
 
-#include "/build/fetch_point.hpp"
-
 namespace fetch {
 namespace vm {
 
@@ -221,7 +219,7 @@ void Analyser::EnableIndexOperator(TypeIndex             type_index,
 
 bool Analyser::Analyse(BlockNodePtr const &root, std::vector<std::string> &errors)
 {
-  root_ = root;
+  root_     = root;
   function_ = nullptr;
   value_util::ClearAll(blocks_, loops_, errors_);
 
@@ -2018,8 +2016,9 @@ FunctionPtr Analyser::FindFunction(TypePtr const &type, FunctionGroupPtr const &
   std::vector<TypePtrArray> array;
   for (FunctionPtr const &function : fg->functions)
   {
-	  if(function->name == "set") {
-	  }
+    if (function->name == "set")
+    {
+    }
     TypePtrArray temp_actual_types;
     if (MatchTypes(type, supplied_types, function->parameter_types, temp_actual_types))
     {
@@ -2072,7 +2071,7 @@ SymbolPtr Analyser::FindSymbol(ExpressionNodePtr const &node)
     {
       return nullptr;
     }
-    TypePtrArray      parameter_types;
+    TypePtrArray parameter_types;
     for (std::size_t i = 1; i <= num_expected_parameter_types; ++i)
     {
       ExpressionNodePtr parameter_type_node = ConvertToExpressionNodePtr(node->children[i]);
