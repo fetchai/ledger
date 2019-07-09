@@ -16,7 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/ml/activation_functions/sigmoid.hpp"
+#include "math/activation_functions/sigmoid.hpp"
 #include "math/tensor.hpp"
 
 #include "gtest/gtest.h"

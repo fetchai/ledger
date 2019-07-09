@@ -16,7 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/ml/loss_functions/l2_norm.hpp"
+#include "math/metrics/l2_norm.hpp"
 #include "math/tensor.hpp"
 
 #include "gtest/gtest.h"

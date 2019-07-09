@@ -17,9 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include "math/activation_functions/sigmoid.hpp"
 #include "math/fundamental_operators.hpp"
 #include "math/matrix_operations.hpp"
-#include "math/ml/activation_functions/sigmoid.hpp"
 #include "math/standard_functions/clamp.hpp"
 #include "ml/ops/ops.hpp"
 

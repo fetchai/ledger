@@ -16,21 +16,21 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/ml/loss_functions/mean_square_error_loss.hpp"
+#include "math/metrics/mean_absolute_error.hpp"
 #include "math/tensor.hpp"
 
 #include "gtest/gtest.h"
 
 template <typename T>
-class MeanSquareErrorTest : public ::testing::Test
+class MeanAbsoluteErrorTest : public ::testing::Test
 {
 };
 
 using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
                                  fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
-TYPED_TEST_CASE(MeanSquareErrorTest, MyTypes);
+TYPED_TEST_CASE(MeanAbsoluteErrorTest, MyTypes);
 
-TYPED_TEST(MeanSquareErrorTest, perfect_match_test)
+TYPED_TEST(MeanAbsoluteErrorTest, perfect_match_test)
 {
   TypeParam test_array = TypeParam{8};
   TypeParam gt_array   = TypeParam{8};
@@ -55,13 +55,13 @@ TYPED_TEST(MeanSquareErrorTest, perfect_match_test)
 
   // initialise to non-zero just to avoid correct value at initialisation
   typename TypeParam::Type score(100);
-  score = fetch::math::MeanSquareError(test_array, gt_array);
+  score = fetch::math::MeanAbsoluteError(test_array, gt_array);
 
   // test correct values
   ASSERT_NEAR(double(score), double(0.0), double(1.0e-5f));
 }
 
-TYPED_TEST(MeanSquareErrorTest, value_test)
+TYPED_TEST(MeanAbsoluteErrorTest, value_test)
 {
   TypeParam test_array = TypeParam{8};
   TypeParam gt_array   = TypeParam{8};
@@ -86,8 +86,8 @@ TYPED_TEST(MeanSquareErrorTest, value_test)
 
   // initialise to non-zero just to avoid correct value at initialisation
   typename TypeParam::Type score(0);
-  score = fetch::math::MeanSquareError(test_array, gt_array);
+  score = fetch::math::MeanAbsoluteError(test_array, gt_array);
 
   // test correct values
-  ASSERT_NEAR(double(score), double(191.18f / 8.0f), double(1.0e-5f));
+  ASSERT_NEAR(double(score), double(26.4f / 8.0f), double(1.0e-5f));
 }

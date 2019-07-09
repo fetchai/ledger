@@ -16,7 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/ml/activation_functions/softmax.hpp"
+#include "math/activation_functions/softmax.hpp"
 #include "math/statistics/mean.hpp"
 #include "math/tensor.hpp"
 #include "ml/layers/layers.hpp"
