@@ -19,11 +19,11 @@
 
 #include "core/byte_array/byte_array.hpp"
 #include "meta/type_traits.hpp"
-#include "vectorise/uint/uint.hpp"
 
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
+#include <type_traits>
 
 namespace fetch {
 namespace crypto {
@@ -144,6 +144,9 @@ byte_array::ByteArray HasherInterface<Derived>::Final()
 template <typename Derived>
 constexpr Derived &HasherInterface<Derived>::derived()
 {
+  static_assert(std::is_base_of<HasherInterface<Derived>, Derived>::value,
+                "CRTP interface misuse: Derived must inherit from HasherInterface<Derived>");
+
   return *static_cast<Derived *>(this);
 }
 
