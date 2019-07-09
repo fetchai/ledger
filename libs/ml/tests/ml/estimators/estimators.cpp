@@ -22,6 +22,8 @@
 
 #include "gtest/gtest.h"
 
+using SizeVector = fetch::math::SizeVector;
+
 template <typename T>
 class EstimatorsTest : public ::testing::Test
 {
@@ -33,11 +35,13 @@ using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor
 TYPED_TEST_CASE(EstimatorsTest, MyTypes);
 
 template <typename TypeParam>
-void PrepareTestDataAndLabels1D(TypeParam &data, TypeParam &gt, TypeParam &test_datum)
+void PrepareTestDataAndLabels1D(TypeParam &train_data, TypeParam &train_label,
+                                TypeParam &test_datum, TypeParam &test_label)
 {
-  data       = TypeParam::FromString("0, 1, 0; 1, 0, 0; 0, 0, 1");
-  gt         = TypeParam::FromString("0, 1, 0; 1, 0, 0; 0, 0, 1");
-  test_datum = TypeParam::FromString("0; 1; 0");
+  train_data  = TypeParam::FromString("0, 1, 0; 1, 0, 0; 0, 0, 1");
+  train_label = TypeParam::FromString("0, 0, 1; 0, 1, 0; 1, 0, 0");
+  test_datum  = TypeParam::FromString("0; 1; 0");
+  test_label  = TypeParam::FromString("0; 0; 1");
 }
 
 template <typename TypeParam, typename DataType, typename EstimatorType>
@@ -46,7 +50,9 @@ EstimatorType SetupEstimator(fetch::ml::estimator::EstimatorConfig<DataType> &es
 {
   // setup dataloader
   using DataLoaderType = fetch::ml::dataloaders::TensorDataLoader<TypeParam, TypeParam>;
-  auto data_loader_ptr = std::make_shared<DataLoaderType>();
+  SizeVector              label_shape = {gt.shape().at(0), 1};
+  std::vector<SizeVector> data_shape  = {{data.shape().at(0), 1}};
+  auto data_loader_ptr                = std::make_shared<DataLoaderType>(label_shape, data_shape);
   data_loader_ptr->AddData(data, gt);
 
   // run estimator in training mode
@@ -69,12 +75,12 @@ bool RunTest(fetch::ml::optimisers::OptimiserType optimiser_type)
   estimator_config.opt                                        = optimiser_type;
 
   // set up data
-  TypeParam data, gt, test_datum;
-  PrepareTestDataAndLabels1D<TypeParam>(data, gt, test_datum);
+  TypeParam train_data, train_labels, test_datum, test_label;
+  PrepareTestDataAndLabels1D<TypeParam>(train_data, train_labels, test_datum, test_label);
 
   // set up estimator
-  EstimatorType estimator =
-      SetupEstimator<TypeParam, DataType, EstimatorType>(estimator_config, data, gt);
+  EstimatorType estimator = SetupEstimator<TypeParam, DataType, EstimatorType>(
+      estimator_config, train_data, train_labels);
 
   // test loss decreases
   fetch::math::SizeType count{0};
@@ -96,7 +102,7 @@ bool RunTest(fetch::ml::optimisers::OptimiserType optimiser_type)
   bool success = estimator.Predict(test_datum, pred);
 
   EXPECT_TRUE(success);
-  EXPECT_TRUE(pred.AllClose(test_datum, static_cast<DataType>(1e-5), static_cast<DataType>(1e-5)));
+  EXPECT_TRUE(pred.AllClose(test_label, static_cast<DataType>(1e-5), static_cast<DataType>(1e-5)));
 
   return true;
 }

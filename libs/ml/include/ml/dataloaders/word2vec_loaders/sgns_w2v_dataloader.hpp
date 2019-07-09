@@ -215,6 +215,8 @@ void GraphW2VLoader<T>::Reset()
   current_sentence_ = 0;
   current_word_     = 0;
   unigram_table_.Reset();
+  labels_.Fill(BufferPositionUnused);
+  buffer_pos_ = 0;
   reset_count_++;
 }
 

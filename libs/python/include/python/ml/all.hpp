@@ -39,7 +39,7 @@ void BuildMLLibrary(pybind11::module &module)
   fetch::ml::BuildGraph<T>("Graph", module);
   fetch::ml::ops::BuildRelu<T>("Relu", module);
   fetch::ml::ops::BuildFullyConnected<T>("FullyConnected", module);
-  fetch::ml::ops::BuildMeanSquareError<T>("MeanSquareError", module);
+  fetch::ml::ops::BuildMeanSquareErrorLoss<T>("MeanSquareErrorLoss", module);
   fetch::ml::dataloaders::BuildMNISTLoader<T>("MNISTLoader", module);
 }
 

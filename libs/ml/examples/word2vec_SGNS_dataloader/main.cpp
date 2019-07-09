@@ -26,11 +26,11 @@
 #include "ml/dataloaders/word2vec_loaders/sgns_w2v_dataloader.hpp"
 #include "ml/graph.hpp"
 #include "ml/layers/skip_gram.hpp"
-#include "ml/ops/loss_functions/cross_entropy.hpp"
 #include "ml/optimisation/adam_optimiser.hpp"
 #include "ml/optimisation/sgd_optimiser.hpp"
 
 #include <iostream>
+#include <ml/ops/loss_functions.hpp>
 #include <string>
 #include <vector>
 
@@ -46,14 +46,18 @@ using SizeType  = typename ArrayType::SizeType;
 /// MODEL DEFINITION ///
 ////////////////////////
 
-std::string Model(fetch::ml::Graph<ArrayType> &g, SizeType embeddings_size, SizeType vocab_size)
+std::pair<std::string, std::string> Model(fetch::ml::Graph<ArrayType> &g, SizeType embeddings_size,
+                                          SizeType vocab_size)
 {
   g.AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>("Input", {});
   g.AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>("Context", {});
-  std::string ret_name = g.AddNode<fetch::ml::layers::SkipGram<ArrayType>>(
+  std::string label    = g.AddNode<PlaceHolder<ArrayType>>("Label", {});
+  std::string skipgram = g.AddNode<fetch::ml::layers::SkipGram<ArrayType>>(
       "SkipGram", {"Input", "Context"}, SizeType(1), SizeType(1), embeddings_size, vocab_size);
 
-  return ret_name;
+  std::string error = g.AddNode<CrossEntropyLoss<ArrayType>>("Error", {skipgram, label});
+
+  return std::pair<std::string, std::string>(error, skipgram);
 }
 
 void PrintWordAnalogy(GraphW2VLoader<DataType> const &dl, ArrayType const &embeddings,
@@ -153,15 +157,15 @@ std::string ReadFile(std::string const &path)
 
 struct TrainingParams
 {
-  SizeType max_word_count       = 100000000;  // maximum number to be trained
-  SizeType negative_sample_size = 5;          // number of negative sample per word-context pair
-  SizeType window_size          = 5;          // window size for context sampling
-  bool     train_mode           = true;       // reserve for future compatibility with CBOW
-  DataType freq_thresh          = 1e-3;       // frequency threshold for subsampling
-  SizeType min_count            = 5;          // infrequent word removal threshold
+  SizeType max_word_count       = 200;   // maximum number to be trained
+  SizeType negative_sample_size = 5;     // number of negative sample per word-context pair
+  SizeType window_size          = 5;     // window size for context sampling
+  bool     train_mode           = true;  // reserve for future compatibility with CBOW
+  DataType freq_thresh          = 1e-3;  // frequency threshold for subsampling
+  SizeType min_count            = 5;     // infrequent word removal threshold
 
-  SizeType batch_size      = 100000;  // training data batch size
-  SizeType embedding_size  = 100;     // dimension of embedding vec
+  SizeType batch_size      = 23;   // training data batch size
+  SizeType embedding_size  = 100;  // dimension of embedding vec
   SizeType training_epochs = 1;
   SizeType test_frequency  = 1;
   DataType starting_learning_rate_per_sample =
@@ -237,11 +241,11 @@ int main(int argc, char **argv)
 
   // set up model architecture
   std::cout << "building model architecture...: " << std::endl;
-  auto        g          = std::make_shared<fetch::ml::Graph<ArrayType>>();
-  std::string model_name = Model(*g, tp.embedding_size, data_loader.vocab_size());
-
-  // set up loss
-  CrossEntropy<ArrayType> criterion;
+  auto                                g = std::make_shared<fetch::ml::Graph<ArrayType>>();
+  std::pair<std::string, std::string> error_and_skipgram_layer =
+      Model(*g, tp.embedding_size, data_loader.vocab_size());
+  std::string error          = error_and_skipgram_layer.first;
+  std::string skipgram_layer = error_and_skipgram_layer.second;
 
   /////////////////////////////////
   /// TRAIN THE WORD EMBEDDINGS ///
@@ -250,8 +254,8 @@ int main(int argc, char **argv)
   std::cout << "beginning training...: " << std::endl;
 
   // Initialise Optimiser
-  fetch::ml::optimisers::SGDOptimiser<ArrayType, fetch::ml::ops::CrossEntropy<ArrayType>> optimiser(
-      g, {"Input", "Context"}, model_name, tp.learning_rate_param);
+  fetch::ml::optimisers::SGDOptimiser<ArrayType> optimiser(g, {"Input", "Context"}, "Label", error,
+                                                           tp.learning_rate_param);
 
   // Training loop
   for (SizeType i{0}; i < tp.training_epochs; i++)
@@ -262,8 +266,8 @@ int main(int argc, char **argv)
     // Test trained embeddings
     if (i % tp.test_frequency == 0)
     {
-      TestEmbeddings(*g, model_name, data_loader, tp.word0, tp.word1, tp.word2, tp.word3, tp.k);
-      TestEmbeddings(*g, model_name, data_loader, "france", "france", "paris", "italy", tp.k);
+      TestEmbeddings(*g, skipgram_layer, data_loader, tp.word0, tp.word1, tp.word2, tp.word3, tp.k);
+      TestEmbeddings(*g, skipgram_layer, data_loader, "france", "france", "paris", "italy", tp.k);
     }
   }
 

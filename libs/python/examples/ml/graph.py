@@ -23,7 +23,7 @@ g.AddRelu("Relu2", "FC2")
 g.AddFullyConnected("FC3", "Relu2", 100, 10)
 g.AddSoftmax("Softmax", "FC3")
 
-criterion = ml.MeanSquareError()
+criterion = ml.MeanSquareErrorLoss()
 dataloader = ml.MNISTLoader(
     "/PATH/TO/train-images-idx3-ubyte", "/PATH/TO/train-labels-idx1-ubyte")
 
@@ -38,7 +38,7 @@ for i in range(0, training_iteration):
     loss = criterion.Forward([res, gt])
     grad = criterion.Backward([res, gt])
 
-    g.Backpropagate(output_layer, grad)
+    g.BackPropagateError(output_layer)
     g.Step(learning_rate)
 
     print(str(loss))

@@ -19,10 +19,6 @@
 
 #include "ml/dataloaders/dataloader.hpp"
 
-//#include <memory>
-//#include <utility>
-//#include <vector>
-
 namespace fetch {
 namespace ml {
 namespace dataloaders {
@@ -34,12 +30,17 @@ class TensorDataLoader : public DataLoader<LabelType, InputType>
   using DataType   = typename TensorType::Type;
 
   using SizeType     = fetch::math::SizeType;
+  using SizeVector   = fetch::math::SizeVector;
   using ReturnType   = std::pair<LabelType, std::vector<TensorType>>;
   using IteratorType = typename TensorType::IteratorType;
 
 public:
-  TensorDataLoader(bool random_mode = false)
-    : DataLoader<LabelType, TensorType>(random_mode){};
+  TensorDataLoader(SizeVector const &label_shape, std::vector<SizeVector> const &data_shapes,
+                   bool random_mode = false)
+    : DataLoader<LabelType, TensorType>(random_mode)
+    , label_shape_(label_shape)
+    , data_shapes_(data_shapes){};
+
   virtual ~TensorDataLoader() = default;
 
   virtual ReturnType GetNext();
@@ -50,11 +51,15 @@ public:
   virtual void     Reset();
 
 protected:
-  SizeType data_cursor_;
-  SizeType label_cursor_;
+  SizeType data_cursor_  = 0;
+  SizeType label_cursor_ = 0;
+  SizeType n_samples_    = 0;  // number of data samples
 
   TensorType data_;
   TensorType labels_;
+
+  SizeVector              label_shape_;
+  std::vector<SizeVector> data_shapes_;
 };
 
 template <typename LabelType, typename InputType>
@@ -85,6 +90,8 @@ bool TensorDataLoader<LabelType, InputType>::AddData(TensorType const &data,
   data_cursor_  = 0;
   label_cursor_ = 0;
 
+  n_samples_ = data_.shape().at(data_.shape().size() - 1);
+
   return true;
 }
 
@@ -92,7 +99,7 @@ template <typename LabelType, typename InputType>
 typename TensorDataLoader<LabelType, InputType>::SizeType
 TensorDataLoader<LabelType, InputType>::Size() const
 {
-  return data_.size();
+  return n_samples_;
 }
 
 template <typename LabelType, typename InputType>

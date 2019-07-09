@@ -35,10 +35,12 @@
 //
 //------------------------------------------------------------------------------
 #include "math/base_types.hpp"
+#include "math/statistics/mean.hpp"
 #include "ml/dataloaders/dataloader.hpp"
 #include "ml/graph.hpp"
-#include "ml/ops/loss_functions/criterion.hpp"
+
 using namespace std::chrono;
+
 namespace fetch {
 namespace ml {
 namespace optimisers {
@@ -70,20 +72,20 @@ struct LearningRateParam
  * @tparam T ArrayType
  * @tparam C CriterionType
  */
-template <class T, class C>
+template <class T>
 class Optimiser
 {
 public:
-  using ArrayType     = T;
-  using CriterionType = C;
-  using DataType      = typename ArrayType::Type;
-  using SizeType      = typename ArrayType::SizeType;
+  using ArrayType = T;
+  using DataType  = typename ArrayType::Type;
+  using SizeType  = typename ArrayType::SizeType;
 
-  Optimiser(std::shared_ptr<Graph<T>> graph, std::vector<std::string> const input_node_names,
-            std::string const output_node_name, DataType const learning_rate);
+  Optimiser(std::shared_ptr<Graph<T>> graph, std::vector<std::string> input_node_names,
+            std::string label_node_name, std::string output_node_name,
+            DataType const &learning_rate = DataType(0.001));
 
-  Optimiser(std::shared_ptr<Graph<T>> graph, std::vector<std::string> const input_node_names,
-            std::string const                  output_node_name,
+  Optimiser(std::shared_ptr<Graph<T>> graph, std::vector<std::string> input_node_names,
+            std::string label_node_name, std::string output_node_name,
             LearningRateParam<DataType> const &learning_rate_param);
 
   virtual ~Optimiser() = default;
@@ -106,8 +108,8 @@ public:
 
 protected:
   std::shared_ptr<Graph<T>> graph_;
-  CriterionType             criterion_;
   std::vector<std::string>  input_node_names_ = {};
+  std::string               label_node_name_  = "";
   std::string               output_node_name_ = "";
   DataType                  learning_rate_    = fetch::math::numeric_max<DataType>();
   std::vector<std::shared_ptr<fetch::ml::ops::Trainable<ArrayType>>> graph_trainables_;
@@ -139,8 +141,8 @@ private:
                              SizeType subset_size = SIZE_NOT_SET);
 };
 
-template <class T, class C>
-void Optimiser<T, C>::Init()
+template <class T>
+void Optimiser<T>::Init()
 {
   graph_trainables_ = graph_->get_trainables();
   for (auto &train : graph_trainables_)
@@ -149,12 +151,13 @@ void Optimiser<T, C>::Init()
   }
 }
 
-template <class T, class C>
-Optimiser<T, C>::Optimiser(std::shared_ptr<Graph<T>>      graph,
-                           std::vector<std::string> const input_node_names,
-                           std::string const output_node_name, DataType const learning_rate)
+template <class T>
+Optimiser<T>::Optimiser(std::shared_ptr<Graph<T>> graph, std::vector<std::string> input_node_names,
+                        std::string label_node_name, std::string output_node_name,
+                        DataType const &learning_rate)
   : graph_(graph)
   , input_node_names_(std::move(input_node_names))
+  , label_node_name_(std::move(label_node_name))
   , output_node_name_(std::move(output_node_name))
   , learning_rate_(learning_rate)
   , epoch_(0)
@@ -162,13 +165,14 @@ Optimiser<T, C>::Optimiser(std::shared_ptr<Graph<T>>      graph,
   Init();
 }
 
-template <class T, class C>
-Optimiser<T, C>::Optimiser(std::shared_ptr<Graph<T>>          graph,
-                           std::vector<std::string> const     input_node_names,
-                           std::string const                  output_node_name,
-                           LearningRateParam<DataType> const &learning_rate_param)
+template <class T>
+Optimiser<T>::Optimiser(std::shared_ptr<Graph<T>>      graph,
+                        std::vector<std::string> const input_node_names,
+                        std::string const label_node_name, std::string const output_node_name,
+                        LearningRateParam<DataType> const &learning_rate_param)
   : graph_(graph)
   , input_node_names_(std::move(input_node_names))
+  , label_node_name_(std::move(label_node_name))
   , output_node_name_(std::move(output_node_name))
   , epoch_(0)
   , learning_rate_param_(learning_rate_param)
@@ -189,9 +193,9 @@ Optimiser<T, C>::Optimiser(std::shared_ptr<Graph<T>>          graph,
  * @return Sum of losses from all mini-batches
  */
 // TODO (private 1090): Optimise TensorSlice for graph-feeding without using .Copy
-template <class T, class C>
-typename T::Type Optimiser<T, C>::Run(std::vector<ArrayType> const &data, ArrayType const &labels,
-                                      SizeType batch_size)
+template <class T>
+typename T::Type Optimiser<T>::Run(std::vector<ArrayType> const &data, ArrayType const &labels,
+                                   SizeType batch_size)
 {
   assert(data.size() > 0);
   // Get trailing dimensions
@@ -247,15 +251,22 @@ typename T::Type Optimiser<T, C>::Run(std::vector<ArrayType> const &data, ArrayT
       }
       it++;
     }
+
+    // Set inputs
     auto name_it = input_node_names_.begin();
     for (auto &input : batch_data_)
     {
       graph_->SetInput(*name_it, input);
       ++name_it;
     }
-    auto label_pred = graph_->Evaluate(output_node_name_);
-    loss            = criterion_.Forward({label_pred, batch_labels_});
-    graph_->BackPropagate(output_node_name_, criterion_.Backward({label_pred, batch_labels_}));
+
+    // Set Label
+    graph_->SetInput(label_node_name_, batch_labels_);
+
+    auto loss_tensor = graph_->Evaluate(output_node_name_);
+    loss += *(loss_tensor.begin());
+    graph_->BackPropagateError(output_node_name_);
+
     // Compute and apply gradient
     ApplyGradients(batch_size);
 
@@ -278,10 +289,10 @@ typename T::Type Optimiser<T, C>::Run(std::vector<ArrayType> const &data, ArrayT
  * on begining of each epoch.
  * @return Sum of losses from all mini-batches
  */
-template <class T, class C>
-typename T::Type Optimiser<T, C>::Run(
-    fetch::ml::dataloaders::DataLoader<ArrayType, ArrayType> &loader,
-    LearningRateParam<DataType> learning_rate_param, SizeType batch_size, SizeType subset_size)
+template <class T>
+typename T::Type Optimiser<T>::Run(fetch::ml::dataloaders::DataLoader<ArrayType, ArrayType> &loader,
+                                   LearningRateParam<DataType> learning_rate_param,
+                                   SizeType batch_size, SizeType subset_size)
 {
   // setting up learning_rate_param_
   learning_rate_param_ = learning_rate_param;
@@ -294,16 +305,15 @@ typename T::Type Optimiser<T, C>::Run(
   return RunImplementation(loader, batch_size, subset_size);
 }
 
-template <class T, class C>
-typename T::Type Optimiser<T, C>::Run(
-    fetch::ml::dataloaders::DataLoader<ArrayType, ArrayType> &loader, SizeType batch_size,
-    SizeType subset_size)
+template <class T>
+typename T::Type Optimiser<T>::Run(fetch::ml::dataloaders::DataLoader<ArrayType, ArrayType> &loader,
+                                   SizeType batch_size, SizeType subset_size)
 {
   return RunImplementation(loader, batch_size, subset_size);
 }
 
-template <class T, class C>
-typename T::Type Optimiser<T, C>::RunImplementation(
+template <class T>
+typename T::Type Optimiser<T>::RunImplementation(
     fetch::ml::dataloaders::DataLoader<ArrayType, ArrayType> &loader, SizeType batch_size,
     SizeType subset_size)
 {
@@ -320,32 +330,37 @@ typename T::Type Optimiser<T, C>::RunImplementation(
   // variable for stats output
   start_time_ = high_resolution_clock::now();
 
-  while (!loader.IsDone() && step_ < subset_size)
+  // tracks whether loader is done, but dataloader will reset inside Prepare batch
+  bool is_done_set = loader.IsDone();
+
+  std::pair<ArrayType, std::vector<ArrayType>> input;
+
+  // - check not completed more steps than user specified subset_size
+  // - is_done_set checks if loader.IsDone inside PrepareBatch
+  // - loader.IsDone handles edge case where batch divides perfectly into data set size
+  while ((step_ < subset_size) && (!is_done_set) && (!loader.IsDone()))
   {
-    // prepare inputs
-    input_       = loader.PrepareBatch(batch_size);
+    is_done_set = false;
+
+    // Do batch back-propagation
+    input = loader.PrepareBatch(batch_size, is_done_set);
+
     auto name_it = input_node_names_.begin();
-    for (auto &cur_input : input_.second)
+    for (auto &cur_input : input.second)
     {
       graph_->SetInput(*name_it, cur_input);
       ++name_it;
     }
 
-    cur_label_  = input_.first;
-    pred_label_ = graph_->Evaluate(output_node_name_);
+    // Set Label
+    graph_->SetInput(label_node_name_, input.first);
 
-    loss_ = criterion_.Forward({pred_label_, cur_label_});
-    // Do batch back-propagation
-    graph_->BackPropagate(output_node_name_, criterion_.Backward({pred_label_, cur_label_}));
+    auto loss_tensor = graph_->Evaluate(output_node_name_);
+    loss_ += *(loss_tensor.begin());
+    graph_->BackPropagateError(output_node_name_);
+
     // Compute and apply gradient
-    if (input_.second.at(0).size() != batch_size)
-    {
-      ApplyGradients(input_.second.at(0).size());
-    }
-    else
-    {
-      ApplyGradients(batch_size);
-    }
+    ApplyGradients(batch_size);
 
     // increment step
     step_ += batch_size;
@@ -366,8 +381,8 @@ typename T::Type Optimiser<T, C>::RunImplementation(
   return loss_sum_;
 }
 
-template <typename T, typename C>
-void Optimiser<T, C>::PrintStats(SizeType batch_size, SizeType subset_size)
+template <typename T>
+void Optimiser<T>::PrintStats(SizeType batch_size, SizeType subset_size)
 {
   cur_time_  = high_resolution_clock::now();
   time_span_ = duration_cast<duration<double>>(cur_time_ - start_time_);
@@ -404,8 +419,8 @@ void Optimiser<T, C>::PrintStats(SizeType batch_size, SizeType subset_size)
  * @tparam C
  * @param new_learning_rate
  */
-template <class T, class C>
-void Optimiser<T, C>::UpdateLearningRate()
+template <class T>
+void Optimiser<T>::UpdateLearningRate()
 {
   switch (learning_rate_param_.mode)
   {
@@ -447,10 +462,10 @@ void Optimiser<T, C>::UpdateLearningRate()
  * @param subset_size
  * @return
  */
-template <class T, class C>
-typename Optimiser<T, C>::SizeType Optimiser<T, C>::UpdateBatchSize(SizeType const &batch_size,
-                                                                    SizeType const &data_size,
-                                                                    SizeType const &subset_size)
+template <class T>
+typename Optimiser<T>::SizeType Optimiser<T>::UpdateBatchSize(SizeType const &batch_size,
+                                                              SizeType const &data_size,
+                                                              SizeType const &subset_size)
 {
   SizeType updated_batch_size = batch_size;
   // If batch_size not specified do full batch

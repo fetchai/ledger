@@ -20,7 +20,6 @@
 #include "math/standard_functions/pow.hpp"
 #include "math/standard_functions/sqrt.hpp"
 #include "ml/graph.hpp"
-#include "ml/ops/loss_functions/criterion.hpp"
 #include "ml/optimisation/optimiser.hpp"
 
 namespace fetch {
@@ -32,8 +31,8 @@ namespace optimisers {
  * @tparam T ArrayType
  * @tparam C CriterionType
  */
-template <class T, class C>
-class AdamOptimiser : public Optimiser<T, C>
+template <class T>
+class AdamOptimiser : public Optimiser<T>
 {
 public:
   using ArrayType = T;
@@ -41,13 +40,13 @@ public:
   using SizeType  = typename ArrayType::SizeType;
 
   AdamOptimiser(std::shared_ptr<Graph<T>> graph, std::vector<std::string> const &input_node_names,
-                std::string const &output_node_name,
-                DataType const &   learning_rate = DataType{0.001f},
+                std::string const &label_node_name, std::string const &output_node_name,
+                DataType const &learning_rate = DataType{0.001f},
                 DataType const &beta1 = DataType{0.9f}, DataType const &beta2 = DataType{0.999f},
                 DataType const &epsilon = DataType{1e-4f});
 
   AdamOptimiser(std::shared_ptr<Graph<T>> graph, std::vector<std::string> const &input_node_names,
-                std::string const &                                       output_node_name,
+                std::string const &output_node_name, std::string const &label_node_name,
                 fetch::ml::optimisers::LearningRateParam<DataType> const &learning_rate_param,
                 DataType const &beta1 = DataType{0.9f}, DataType const &beta2 = DataType{0.999f},
                 DataType const &epsilon = DataType{1e-4f});
@@ -72,8 +71,8 @@ private:
   void Init();
 };
 
-template <class T, class C>
-void AdamOptimiser<T, C>::Init()
+template <class T>
+void AdamOptimiser<T>::Init()
 {
   for (auto &train : this->graph_trainables_)
   {
@@ -85,15 +84,16 @@ void AdamOptimiser<T, C>::Init()
   ResetCache();
 }
 
-template <class T, class C>
-AdamOptimiser<T, C>::AdamOptimiser(std::shared_ptr<Graph<T>>
+template <class T>
+AdamOptimiser<T>::AdamOptimiser(std::shared_ptr<Graph<T>>
 
-                                                                   graph,
-                                   std::vector<std::string> const &input_node_names,
-                                   std::string const &             output_node_name,
-                                   DataType const &learning_rate, DataType const &beta1,
-                                   DataType const &beta2, DataType const &epsilon)
-  : Optimiser<T, C>(graph, input_node_names, output_node_name, learning_rate)
+                                                                graph,
+                                std::vector<std::string> const &input_node_names,
+                                std::string const &             label_node_name,
+                                std::string const &output_node_name, DataType const &learning_rate,
+                                DataType const &beta1, DataType const &beta2,
+                                DataType const &epsilon)
+  : Optimiser<T>(graph, input_node_names, label_node_name, output_node_name, learning_rate)
   , beta1_(beta1)
   , beta2_(beta2)
   , beta1_t_(beta1)
@@ -103,13 +103,13 @@ AdamOptimiser<T, C>::AdamOptimiser(std::shared_ptr<Graph<T>>
   Init();
 }
 
-template <class T, class C>
-AdamOptimiser<T, C>::AdamOptimiser(
+template <class T>
+AdamOptimiser<T>::AdamOptimiser(
     std::shared_ptr<Graph<T>> graph, std::vector<std::string> const &input_node_names,
-    std::string const &                                       output_node_name,
+    std::string const &output_node_name, std::string const &label_node_name,
     fetch::ml::optimisers::LearningRateParam<DataType> const &learning_rate_param,
     DataType const &beta1, DataType const &beta2, DataType const &epsilon)
-  : Optimiser<T, C>(graph, input_node_names, output_node_name, learning_rate_param)
+  : Optimiser<T>(graph, input_node_names, label_node_name, output_node_name, learning_rate_param)
   , beta1_(beta1)
   , beta2_(beta2)
   , beta1_t_(beta1)
@@ -121,8 +121,8 @@ AdamOptimiser<T, C>::AdamOptimiser(
 
 // private
 
-template <class T, class C>
-void AdamOptimiser<T, C>::ApplyGradients(SizeType batch_size)
+template <class T>
+void AdamOptimiser<T>::ApplyGradients(SizeType batch_size)
 {
   // Do operation with gradient
   auto cached_weight_it = cache_.begin();
@@ -180,8 +180,8 @@ void AdamOptimiser<T, C>::ApplyGradients(SizeType batch_size)
   }
 }
 
-template <class T, class C>
-void AdamOptimiser<T, C>::ResetCache()
+template <class T>
+void AdamOptimiser<T>::ResetCache()
 {
   for (auto &val : this->cache_)
   {
