@@ -60,7 +60,7 @@ build_graph(graph);
 graph.addMeanSquareErrorLoss("Error", "Output", "Label");
 
 // Set up the optimiser
-var optimiser = AdamOptimiser(graph, "Input", "Output");
+var optimiser = AdamOptimiser(graph, "Input", "Label", "Error");
 
 // Begin training
 printLn("begin training...");
