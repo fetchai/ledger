@@ -52,6 +52,8 @@ var input_labels = read_csv(System.Argv(1), true);
 var test_data = read_csv(System.Argv(2), true);
 var test_labels = read_csv(System.Argv(3), true);
 
+
+
 // set up graph
 var graph = Graph();
 build_graph(graph);

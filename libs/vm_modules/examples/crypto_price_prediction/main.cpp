@@ -56,12 +56,13 @@ struct System : public fetch::vm::Object
 std::vector<std::string> System::args;
 
 // read the weights and bias csv files
-
 fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> read_csv(
     fetch::vm::VM *vm, fetch::vm::Ptr<fetch::vm::String> const &filename, bool transpose = false)
 {
-  ArrayType weights = fetch::ml::dataloaders::ReadCSV<ArrayType>(filename->str, 0, 0, transpose);
-  return vm->CreateNewObject<fetch::vm_modules::math::VMTensor>(weights);
+  ArrayType tensor = fetch::ml::dataloaders::ReadCSV<ArrayType>(filename->str, 0, 0, transpose);
+  tensor.Reshape({1, tensor.shape(0), tensor.shape(1)});
+
+  return vm->CreateNewObject<fetch::vm_modules::math::VMTensor>(tensor);
 }
 
 int main(int argc, char **argv)
