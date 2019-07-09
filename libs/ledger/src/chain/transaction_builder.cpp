@@ -55,7 +55,7 @@ TransactionBuilder::Sealer::Sealer(TransactionPtr tx)
   // ensure there is a from field
   if (partial_transaction_->from_.empty())
   {
-    throw std::runtime_error("Malformed transcation, missing transaction");
+    throw std::runtime_error("Malformed transaction, missing 'from' field");
   }
 
   // serialise the payload of the transaction which can be used for signing
