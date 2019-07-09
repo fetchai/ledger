@@ -39,11 +39,11 @@
 #include "storage/object_store_protocol.hpp"
 
 #include <array>
+#include <cassert>
 #include <chrono>
+#include <cstring>
 #include <thread>
 #include <utility>
-#include <cassert>
-#include <cstring>
 
 namespace fetch {
 namespace ledger {
