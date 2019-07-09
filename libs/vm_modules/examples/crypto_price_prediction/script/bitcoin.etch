@@ -62,20 +62,22 @@ graph.addMeanSquareErrorLoss("Error", "Output", "Label");
 // Set up the optimiser
 var optimiser = AdamOptimiser(graph, "Input", "Label", "Error");
 
-//// Begin training
-//printLn("begin training...");
-//var training_iterations = 10;
-//var batch_size = 8u64;
-//for(i in 0:training_iterations)
-//    var loss = optimiser.Run(input_data, input_labels, batch_size);
-//    print("Current Loss: ");
-//    printLn(loss);
-//endfor
+// Begin training
+printLn("begin training...");
+var training_iterations = 2;
+var batch_size = 8u64;
+for(i in 0:training_iterations)
+    var loss = optimiser.Run(input_data, input_labels, batch_size);
+    print("Current Loss: ");
+    printLn(loss);
+endfor
 
 // Begin testing
 printLn("test prediction...");
 graph.SetInput("Input", test_data);
 var pred = graph.Evaluate("Output");
+
+pred = remove_leading_dimension(pred);
 
 printLn(pred.ToString());
 
