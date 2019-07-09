@@ -51,9 +51,8 @@ public:
   }
 
   /**
-   * elementwise multiplication gradient is:
+   * elementwise absolute value gradient is:
    * f'(input0)=sign(input0)*error_signal
-   * f'(input1)=input1*error_signal
    */
   virtual std::vector<ArrayType> Backward(VecTensorType const &inputs,
                                           ArrayType const &    error_signal)

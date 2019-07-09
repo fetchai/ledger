@@ -36,7 +36,7 @@ public:
   virtual ~Exp() = default;
 
   /**
-   * elementwise square root
+   * elementwise exp
    * @param inputs vector containing one tensor which is the input tensor to Exp
    * @return
    */
@@ -49,7 +49,7 @@ public:
   }
 
   /**
-   * elementwise square root gradient is:
+   * elementwise exp gradient is:
    * f'(input0)= e^x * error_signal
    */
   virtual std::vector<ArrayType> Backward(VecTensorType const &inputs,

@@ -37,7 +37,7 @@ public:
   virtual ~Log() = default;
 
   /**
-   * elementwise square root
+   * elementwise Log
    * @param inputs vector containing one tensor which is the input tensor to Log
    * @return
    */
@@ -50,7 +50,7 @@ public:
   }
 
   /**
-   * elementwise square root gradient is 1/x * error:
+   * elementwise log gradient is 1/x * error:
    * f'(input0)= error_signal/input0
    */
   virtual std::vector<ArrayType> Backward(VecTensorType const &inputs,

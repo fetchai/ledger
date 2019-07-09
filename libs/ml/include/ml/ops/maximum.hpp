@@ -33,12 +33,16 @@ public:
   using ArrayPtrType  = std::shared_ptr<ArrayType>;
   using VecTensorType = typename Ops<T>::VecTensorType;
 
-  Maximum()          = default;
-  virtual ~Maximum() = default;
+  Maximum()           = default;
+  virtual ~Maximum()  = default;
+  using ArrayPtrType  = std::shared_ptr<ArrayType>;
+  using VecTensorType = typename Ops<T>::VecTensorType;
+
+  Maximum() = default;
 
   /**
-   * elementwise multiplication
-   * @param inputs  left & right inputs to multiply
+   * elementwise maximum
+   * @param inputs  left & mright inputs to get maximum
    * @return
    */
   virtual void Forward(VecTensorType const &inputs, ArrayType &output)
@@ -52,8 +56,8 @@ public:
 
   /**
    * elementwise maximum gradient is:
-   * f'(input0)=input0*error_signal
-   * f'(input1)=input1*error_signal
+   * f'(input0)=if(input0>input1)=error_signal
+   * f'(input1)=if(input0<=input1)=error_signal
    */
   virtual std::vector<ArrayType> Backward(VecTensorType const &inputs,
                                           ArrayType const &    error_signal)
