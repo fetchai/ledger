@@ -197,6 +197,8 @@ int main(int ac, char **av)
   TensorType              test_data       = data_and_labels.at(2);
   TensorType              test_label      = data_and_labels.at(3);
 
+  test_label.Reshape({test_label.shape().at(1), test_label.shape().at(2)});
+
   if (normalise)
   {
     TensorType orig_train_data  = train_data.Copy();
@@ -225,14 +227,16 @@ int main(int ac, char **av)
   {
     loss = optimiser.Run({train_data}, train_label, batch_size);
     std::cout << "Loss: " << loss << std::endl;
-  }
 
-  g->SetInput(input_name, test_data);
-  auto prediction = g->Evaluate(output_name, false);
-  prediction.Reshape({prediction.shape().at(1), prediction.shape().at(2)});
-  test_label.Reshape({test_label.shape().at(1), test_label.shape().at(2)});
-  auto result = fetch::math::MeanSquareErrorLoss(prediction, test_label);
-  std::cout << "result: " << result << std::endl;
+    g->SetInput(input_name, test_data);
+    auto prediction = g->Evaluate(output_name, false);
+    prediction.Reshape({prediction.shape().at(1), prediction.shape().at(2)});
+
+    // TODO: mean square error loss reports half the true MSE
+    auto result = fetch::math::MeanSquareErrorLoss(prediction, test_label);
+    std::cout << "mean square validation error: " << result << std::endl;
+
+  }
 
   return 0;
 }
