@@ -56,7 +56,7 @@ public:
     assert(inputs.front().get().shape().size() == 2);
 
     SizeType batch_size = inputs.front().get().shape().at(1);
-    
+
     // test embeddings_output_ not null ptr
     if (!this->embeddings_output_)
     {
