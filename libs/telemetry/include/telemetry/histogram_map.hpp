@@ -18,70 +18,52 @@
 //------------------------------------------------------------------------------
 
 #include "telemetry/measurement.hpp"
+#include "telemetry/telemetry.hpp"
 
-#include <atomic>
-#include <string>
+#include <mutex>
+#include <unordered_map>
+#include <vector>
 
 namespace fetch {
 namespace telemetry {
 
-class Counter : public Measurement
+class HistogramMap : public Measurement
 {
 public:
   // Construction / Destruction
-  explicit Counter(std::string name, std::string description, Labels labels = Labels{});
-  Counter(Counter const &) = delete;
-  Counter(Counter &&)      = delete;
-  ~Counter() override      = default;
+  HistogramMap(std::string const &name, std::string field, std::vector<double> buckets,
+               std::string const &description, Labels const &labels = Labels{});
+  HistogramMap(HistogramMap const &) = delete;
+  HistogramMap(HistogramMap &&)      = delete;
+  ~HistogramMap() override           = default;
 
   /// @name Accessors
   /// @{
-  uint64_t count() const;
-  void     increment();
-  void     add(uint64_t value);
+  void Add(std::string const &key, double const &value);
   /// @}
 
-  /// @name Metric Interface
+  /// @name Measurement Interface
   /// @{
   void ToStream(std::ostream &stream, StreamMode mode) const override;
   /// @}
 
   // Operators
-  Counter &operator++();
-  Counter &operator+=(uint64_t value);
-  Counter &operator=(Counter const &) = delete;
-  Counter &operator=(Counter &&) = delete;
+  HistogramMap &operator=(HistogramMap const &) = delete;
+  HistogramMap &operator=(HistogramMap &&) = delete;
 
 private:
-  std::atomic<uint64_t> counter_{0};
+  using Mutex               = std::mutex;
+  using LockGuard           = std::lock_guard<Mutex>;
+  using HistogramCollection = std::unordered_map<std::string, HistogramPtr>;
+
+  HistogramPtr LookupHistogram(std::string const &key);
+
+  std::string const         field_;
+  std::vector<double> const buckets_;
+
+  mutable Mutex       lock_;
+  HistogramCollection histograms_;
 };
-
-inline uint64_t Counter::count() const
-{
-  return counter_;
-}
-
-inline void Counter::increment()
-{
-  ++counter_;
-}
-
-inline void Counter::add(uint64_t value)
-{
-  counter_ += value;
-}
-
-inline Counter &Counter::operator++()
-{
-  ++counter_;
-  return *this;
-}
-
-inline Counter &Counter::operator+=(uint64_t value)
-{
-  counter_ += value;
-  return *this;
-}
 
 }  // namespace telemetry
 }  // namespace fetch

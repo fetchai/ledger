@@ -38,7 +38,10 @@
 #include "storage/document_store_protocol.hpp"
 #include "storage/object_store_protocol.hpp"
 
+#include <array>
+#include <cassert>
 #include <chrono>
+#include <cstring>
 #include <thread>
 #include <utility>
 
@@ -96,6 +99,8 @@ private:
    */
   struct MerkleTreeBlock
   {
+    static constexpr std::size_t DATA_BUFFER_SIZE = 512;
+
     MerkleTreeBlock()
     {
       std::memset(this, -1, sizeof(*this));
@@ -106,24 +111,24 @@ private:
       serializers::TypedByteArrayBuffer buff;
       buff << tree;
 
-      assert(buff.data().size() == 92 || buff.data().size() == 60);
+      assert(buff.data().size() < DATA_BUFFER_SIZE);
 
       size_ = buff.data().size();
-      std::memcpy((uint8_t *)data_, (uint8_t *)buff.data().pointer(), size_);
+      std::memcpy(data_.data(), buff.data().pointer(), size_);
     }
 
     crypto::MerkleTree Extract(uint64_t num_lanes)
     {
       crypto::MerkleTree ret{num_lanes};
 
-      serializers::TypedByteArrayBuffer buff;
-
-      buff.Allocate(size_);
-
-      std::memcpy((uint8_t *)buff.data().pointer(), (uint8_t *)data_, size_);
+      // extract the buffer
+      byte_array::ByteArray data{};
+      data.Resize(size_);
+      std::memcpy(data.pointer(), data_.data(), size_);
 
       try
       {
+        serializers::TypedByteArrayBuffer buff{data};
         buff >> ret;
       }
       catch (std::exception const &)
@@ -135,8 +140,10 @@ private:
       return ret;
     }
 
-    uint64_t size_{0};
-    uint8_t  data_[92];
+    using DataBuffer = std::array<uint8_t, DATA_BUFFER_SIZE>;
+
+    uint64_t   size_{0};
+    DataBuffer data_;
   };
 
   using Client               = muddle::rpc::Client;

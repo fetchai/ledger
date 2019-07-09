@@ -21,6 +21,7 @@
 #include "dkg/dkg_service.hpp"
 #include "health_check_http_module.hpp"
 #include "http/middleware/allow_origin.hpp"
+#include "http/middleware/telemetry.hpp"
 #include "ledger/chain/consensus/bad_miner.hpp"
 #include "ledger/chain/consensus/dummy_miner.hpp"
 #include "ledger/chaincode/contract_http_interface.hpp"
@@ -292,6 +293,7 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
 
   // configure the middleware of the http server
   http_.AddMiddleware(http::middleware::AllowOrigin("*"));
+  http_.AddMiddleware(http::middleware::Telemetry());
 
   // attach all the modules to the http server
   for (auto const &module : http_modules_)
