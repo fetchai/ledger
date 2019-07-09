@@ -64,7 +64,7 @@ var optimiser = AdamOptimiser(graph, "Input", "Label", "Error");
 
 // Begin training
 printLn("begin training...");
-var training_iterations = 2;
+var training_iterations = 10;
 var batch_size = 8u64;
 for(i in 0:training_iterations)
     var loss = optimiser.Run(input_data, input_labels, batch_size);
