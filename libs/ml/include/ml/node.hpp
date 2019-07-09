@@ -125,7 +125,7 @@ T &Node<T, O>::Evaluate(bool is_training)
       auto output_shape = this->ComputeOutputShape(inputs);
       if (cached_output_.shape() != output_shape)
       {
-        cached_output_.ResizeFromShape(output_shape);
+        cached_output_.Reshape(output_shape);
       }
     }
     this->Forward(inputs, cached_output_);

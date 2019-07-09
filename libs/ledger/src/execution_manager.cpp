@@ -431,6 +431,11 @@ void ExecutionManager::MonitorThreadEntrypoint()
           case ExecutionItem::Status::CHAIN_CODE_LOOKUP_FAILURE:
           case ExecutionItem::Status::CHAIN_CODE_EXEC_FAILURE:
           case ExecutionItem::Status::CONTRACT_NAME_PARSE_FAILURE:
+          case ExecutionItem::Status::CONTRACT_LOOKUP_FAILURE:
+          case ExecutionItem::Status::TX_NOT_VALID_FOR_BLOCK:
+          case ExecutionItem::Status::INSUFFICIENT_AVAILABLE_FUNDS:
+          case ExecutionItem::Status::TRANSFER_FAILURE:
+          case ExecutionItem::Status::INSUFFICIENT_CHARGE:
             ++num_errors;
             break;
           default:

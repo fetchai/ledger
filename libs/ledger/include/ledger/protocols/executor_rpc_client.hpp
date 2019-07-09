@@ -57,8 +57,8 @@ public:
   std::shared_ptr<Client> client;
 
   explicit ExecutorRpcClient(Muddle &muddle)
-    : client_(std::make_shared<Client>("R:Exec", muddle.AsEndpoint(), Muddle::Address(),
-                                       SERVICE_EXECUTOR, CHANNEL_RPC))
+    : client_(
+          std::make_shared<Client>("R:Exec", muddle.AsEndpoint(), SERVICE_EXECUTOR, CHANNEL_RPC))
   {}
 
   void Connect(Muddle &muddle, Uri uri,

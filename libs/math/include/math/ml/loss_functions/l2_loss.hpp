@@ -24,11 +24,25 @@ namespace fetch {
 namespace math {
 
 template <typename ArrayType>
-typename ArrayType::Type L2Loss(ArrayType const &A)
+meta::IfIsMathFixedPointArray<ArrayType, typename ArrayType::Type> L2Loss(ArrayType const &A)
 {
   auto tmp = Sum(Square(A));
   tmp      = (tmp / 2);
   return tmp;
+}
+
+template <typename ArrayType>
+meta::IfIsMathNonFixedPointArray<ArrayType, typename ArrayType::Type> L2Loss(ArrayType const &at)
+{
+  auto a = at.data();
+
+  using VectorRegisterType = typename ArrayType::VectorRegisterType;
+  using Type               = typename ArrayType::Type;
+
+  Type l2loss = a.in_parallel().SumReduce(memory::TrivialRange(0, a.size()),
+                                          [](VectorRegisterType const &x) { return x * x; });
+  l2loss /= 2;
+  return l2loss;
 }
 
 }  // namespace math

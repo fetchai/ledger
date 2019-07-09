@@ -18,70 +18,44 @@
 //------------------------------------------------------------------------------
 
 #include "telemetry/measurement.hpp"
+#include "telemetry/telemetry.hpp"
 
-#include <atomic>
-#include <string>
+#include <mutex>
+#include <unordered_map>
 
 namespace fetch {
 namespace telemetry {
 
-class Counter : public Measurement
+class CounterMap : public Measurement
 {
 public:
   // Construction / Destruction
-  explicit Counter(std::string name, std::string description, Labels labels = Labels{});
-  Counter(Counter const &) = delete;
-  Counter(Counter &&)      = delete;
-  ~Counter() override      = default;
+  CounterMap(std::string name, std::string description, Labels const &labels = Labels{});
+  CounterMap(CounterMap const &) = delete;
+  CounterMap(CounterMap &&)      = delete;
+  ~CounterMap() override         = default;
 
   /// @name Accessors
   /// @{
-  uint64_t count() const;
-  void     increment();
-  void     add(uint64_t value);
+  void Increment(Labels const &keys);
   /// @}
 
-  /// @name Metric Interface
-  /// @{
   void ToStream(std::ostream &stream, StreamMode mode) const override;
-  /// @}
 
   // Operators
-  Counter &operator++();
-  Counter &operator+=(uint64_t value);
-  Counter &operator=(Counter const &) = delete;
-  Counter &operator=(Counter &&) = delete;
+  CounterMap &operator=(CounterMap const &) = delete;
+  CounterMap &operator=(CounterMap &&) = delete;
 
 private:
-  std::atomic<uint64_t> counter_{0};
+  using Mutex     = std::mutex;
+  using LockGuard = std::lock_guard<Mutex>;
+  using Counters  = std::unordered_map<Labels, CounterPtr>;
+
+  CounterPtr LookupCounter(Labels const &keys);
+
+  mutable Mutex lock_;
+  Counters      counters_;
 };
-
-inline uint64_t Counter::count() const
-{
-  return counter_;
-}
-
-inline void Counter::increment()
-{
-  ++counter_;
-}
-
-inline void Counter::add(uint64_t value)
-{
-  counter_ += value;
-}
-
-inline Counter &Counter::operator++()
-{
-  ++counter_;
-  return *this;
-}
-
-inline Counter &Counter::operator+=(uint64_t value)
-{
-  counter_ += value;
-  return *this;
-}
 
 }  // namespace telemetry
 }  // namespace fetch

@@ -17,32 +17,14 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/assert.hpp"
-#include "math/fundamental_operators.hpp"
-#include "math/standard_functions/abs.hpp"
-#include <cmath>
+#include "http/server.hpp"
 
 namespace fetch {
-namespace math {
-namespace distance {
+namespace http {
+namespace middleware {
 
-template <typename ArrayType>
-inline typename ArrayType::Type Manhattan(ArrayType const &a, ArrayType const &b)
-{
-  assert(a.size() == b.size());
-  using Type = typename ArrayType::Type;
+HTTPServer::response_middleware_type Telemetry();
 
-  Type result{0};
-  auto b_it = b.cbegin();
-  for (auto &val : a)
-  {
-    result += Abs(Subtract(val, *b_it));
-    ++b_it;
-  }
-
-  return result;
-}
-
-}  // namespace distance
-}  // namespace math
+}  // namespace middleware
+}  // namespace http
 }  // namespace fetch

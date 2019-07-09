@@ -18,38 +18,59 @@
 
 #include "telemetry/measurement.hpp"
 
+#include <cassert>
 #include <ostream>
 
 namespace fetch {
 namespace telemetry {
 namespace {
 
-/**
- * Add the label information on to the stream if needed
- *
- * @param stream The stream to be populated
- * @param labels The labels of the measurement
- */
-void WriteLabels(std::ostream &stream, Measurement::Labels const &labels)
+struct LabelRefs
 {
-  if (!labels.empty())
+  Measurement::Labels const *main{nullptr};
+  Measurement::Labels const *extra{nullptr};
+
+  explicit LabelRefs(Measurement::Labels const &main)
+    : main{&main}
+  {}
+
+  LabelRefs(Measurement::Labels const &main, Measurement::Labels const &other)
+    : main{&main}
+    , extra{&other}
+  {}
+};
+
+std::ostream &operator<<(std::ostream &stream, LabelRefs const &refs)
+{
+  assert(refs.main);
+
+  // check to see if any of the labels exist
+  if ((refs.main && !refs.main->empty()) || (refs.extra && !refs.extra->empty()))
   {
     stream << '{';
 
     bool add_sep{false};
-    for (auto const &element : labels)
+    for (auto const *container : {refs.main, refs.extra})
     {
-      // add the seperator if needed (all but the first loop)
-      if (add_sep)
+      if (!container)
       {
-        stream << ',';
+        continue;
       }
 
-      // do the basic formatting
-      stream << element.first << "=\"" << element.second << '"';
+      for (auto const &element : *container)
+      {
+        // add the seperator if needed (all but the first loop)
+        if (add_sep)
+        {
+          stream << ',';
+        }
 
-      // after the first element seperators should always be added
-      add_sep = true;
+        // do the basic formatting
+        stream << element.first << "=\"" << element.second << '"';
+
+        // after the first element seperators should always be added
+        add_sep = true;
+      }
     }
 
     stream << '}';
@@ -57,19 +78,39 @@ void WriteLabels(std::ostream &stream, Measurement::Labels const &labels)
 
   // add the value spacer
   stream << ' ';
+  return stream;
 }
 
 }  // namespace
 
-std::ostream &Measurement::WritePrefix(std::ostream &stream, char const *type_name) const
+std::ostream &Measurement::WriteHeader(std::ostream &stream, char const *type_name,
+                                       StreamMode mode) const
 {
-  stream << "# HELP " << name() << ' ' << description() << '\n'
-         << "# TYPE " << name() << ' ' << type_name << '\n'
-         << name();
+  if (StreamMode::FULL == mode)
+  {
+    stream << "# HELP " << name() << ' ' << description() << '\n'
+           << "# TYPE " << name() << ' ' << type_name << '\n';
+  }
 
-  // add the labels
-  WriteLabels(stream, labels_);
+  return stream;
+}
 
+std::ostream &Measurement::WriteValuePrefix(std::ostream &stream) const
+{
+  stream << name() << LabelRefs{labels_};
+  return stream;
+}
+
+std::ostream &Measurement::WriteValuePrefix(std::ostream &stream, std::string const &suffix) const
+{
+  stream << name() << '_' << suffix << LabelRefs{labels_};
+  return stream;
+}
+
+std::ostream &Measurement::WriteValuePrefix(std::ostream &stream, std::string const &suffix,
+                                            Labels const &extra) const
+{
+  stream << name() << '_' << suffix << LabelRefs{labels_, extra};
   return stream;
 }
 
