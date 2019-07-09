@@ -18,7 +18,6 @@
 //------------------------------------------------------------------------------
 
 #include "core/logger.hpp"
-#include "crypto/fnv.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "ledger/storage_unit/lane_connectivity_details.hpp"
 #include "ledger/storage_unit/transaction_sinks.hpp"

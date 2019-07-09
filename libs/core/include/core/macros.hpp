@@ -21,4 +21,8 @@
 
 #define FETCH_MAYBE_UNUSED __attribute__((used))
 
-#define FETCH_GUARDED_BY(x) __attribute__((guarded_by(x)))
+#if defined(__clang__)
+#define FETCH_GUARDED_BY(x) FETCH_THREAD_ANNOTATION_ATTRIBUTE__(guarded_by(x))
+#else
+#define FETCH_GUARDED_BY(x)
+#endif
