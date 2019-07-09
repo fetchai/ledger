@@ -150,7 +150,7 @@ public:
         .CreateMemberFunction("AddSoftmax", &VMGraph::AddSoftmax)
         .CreateMemberFunction("AddDropout", &VMGraph::AddDropout)
         .CreateMemberFunction("AddCrossEntropyLoss", &VMGraph::AddCrossEntropyLoss)
-        .CreateMemberFunction("AddMeanSquareErrorLoss", &VMGraph::AddMeanSquareErrorLoss)
+        .CreateMemberFunction("addMeanSquareErrorLoss", &VMGraph::AddMeanSquareErrorLoss)
         .CreateMemberFunction("LoadStateDict", &VMGraph::LoadStateDict)
         .CreateMemberFunction("StateDict", &VMGraph::StateDict);
   }
