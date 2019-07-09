@@ -16,9 +16,41 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/macros.hpp"
 #include "crypto/md5.hpp"
 
-#include <openssl/md5.h>
+#include <cassert>
+#include <cstddef>
+#include <cstdint>
 
-static_assert(fetch::crypto::MD5::size_in_bytes == MD5_DIGEST_LENGTH,
-              "Incorrect value of MD5::size_in_bytes");
+namespace fetch {
+namespace crypto {
+
+void MD5::Reset()
+{
+  auto const success = openssl_hasher_.reset();
+  FETCH_UNUSED(success);
+  assert(success);
+}
+
+bool MD5::Update(uint8_t const *const data_to_hash, std::size_t const size)
+{
+  return openssl_hasher_.update(data_to_hash, size);
+}
+
+void MD5::Final(uint8_t *const hash)
+{
+  auto const success = openssl_hasher_.final(hash);
+  FETCH_UNUSED(success);
+  assert(success);
+}
+
+std::size_t MD5::HashSizeInBytes() const
+{
+  auto const size = openssl_hasher_.hash_size();
+  assert(size == size_in_bytes);
+  return size;
+}
+
+}  // namespace crypto
+}  // namespace fetch

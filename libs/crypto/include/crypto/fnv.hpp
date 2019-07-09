@@ -32,28 +32,29 @@ namespace internal {
 class FnvHasherInternals;
 }
 
-class FNV : private internal::HasherInterface<FNV>
+class FNV : public HasherInterface
 {
 public:
-  using BaseType = internal::HasherInterface<FNV>;
-
-  using BaseType::Final;
-  using BaseType::Reset;
-  using BaseType::Update;
+  using HasherInterface::Update;
+  using HasherInterface::Final;
 
   static constexpr std::size_t size_in_bytes = 8u;
 
   FNV();
-  ~FNV();
+  ~FNV() override;
+  FNV(FNV const &) = delete;
+  FNV(FNV &&)      = delete;
+
+  FNV &operator=(FNV const &) = delete;
+  FNV &operator=(FNV &&) = delete;
+
+  void        Reset() override;
+  bool        Update(uint8_t const *data_to_hash, std::size_t size) override;
+  void        Final(uint8_t *hash) override;
+  std::size_t HashSizeInBytes() const override;
 
 private:
-  void ResetHasherInternal();
-  bool UpdateHasherInternal(uint8_t const *data_to_hash, std::size_t size);
-  void FinaliseHasherInternal(uint8_t *hash);
-
   internal::FnvHasherInternals *impl_;
-
-  friend BaseType;
 };
 
 }  // namespace crypto

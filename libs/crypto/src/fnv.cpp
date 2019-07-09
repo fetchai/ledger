@@ -31,9 +31,6 @@ class FnvHasherInternals
 public:
   using ImplType = detail::FNV1a;
   ImplType ctx;
-
-  static_assert(FNV::size_in_bytes == ImplType::size_in_bytes,
-                "Incorrect value of FNV::size_in_bytes");
 };
 
 }  // namespace internal
@@ -49,22 +46,29 @@ FNV::~FNV()
   delete impl_;
 }
 
-void FNV::ResetHasherInternal()
+void FNV::Reset()
 {
   impl_->ctx.reset();
 }
 
-bool FNV::UpdateHasherInternal(uint8_t const *const data_to_hash, std::size_t const size)
+bool FNV::Update(uint8_t const *const data_to_hash, std::size_t size)
 {
   impl_->ctx.update(data_to_hash, size);
 
   return true;
 }
 
-void FNV::FinaliseHasherInternal(uint8_t *const hash)
+void FNV::Final(uint8_t *const hash)
 {
   auto hash_ptr = reinterpret_cast<internal::FnvHasherInternals::ImplType::number_type *>(hash);
   *hash_ptr     = impl_->ctx.context();
+}
+
+std::size_t FNV::HashSizeInBytes() const
+{
+  auto const size = internal::FnvHasherInternals::ImplType::size_in_bytes;
+  static_assert(size == size_in_bytes, "Size mismatch");
+  return size;
 }
 
 }  // namespace crypto

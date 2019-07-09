@@ -86,14 +86,11 @@ std::size_t to_digest_size(OpenSslDigestType const type)
 
 }  // namespace
 
-class OpenSslDigestContext
+class OpenSslHasherImpl
 {
 public:
-  explicit OpenSslDigestContext(OpenSslDigestType type)
-    : digest_size_bytes{to_digest_size(type)}
-    , evp_type{to_evp_type(type)}
-    , evp_ctx{EVP_MD_CTX_create()}
-  {}
+  explicit OpenSslHasherImpl(OpenSslDigestType);
+  ~OpenSslHasherImpl();
 
   std::size_t const   digest_size_bytes;
   EVP_MD const *const evp_type;
@@ -101,29 +98,54 @@ public:
 };
 
 OpenSslHasherImpl::OpenSslHasherImpl(OpenSslDigestType type)
-  : ctx_{new OpenSslDigestContext(type)}
+  : digest_size_bytes{to_digest_size(type)}
+  , evp_type{to_evp_type(type)}
+  , evp_ctx{EVP_MD_CTX_create()}
+{}
+
+OpenSslHasherImpl::~OpenSslHasherImpl()
+{
+  EVP_MD_CTX_destroy(evp_ctx);
+}
+
+bool OpenSslHasher::reset()
+{
+  auto const success = EVP_DigestInit_ex(impl_->evp_ctx, impl_->evp_type, nullptr) != 0;
+  assert(success);
+
+  return success;
+}
+
+bool OpenSslHasher::update(uint8_t const *const data_to_hash, std::size_t const size)
+{
+  auto const success = EVP_DigestUpdate(impl_->evp_ctx, data_to_hash, size) != 0;
+  assert(success);
+
+  return success;
+}
+
+bool OpenSslHasher::final(uint8_t *const hash)
+{
+  auto const success = EVP_DigestFinal_ex(impl_->evp_ctx, hash, nullptr) != 0;
+  assert(success);
+
+  return success;
+}
+
+OpenSslHasher::OpenSslHasher(OpenSslDigestType const type)
+  : impl_(new OpenSslHasherImpl(type))
 {
   reset();
 }
 
-OpenSslHasherImpl::~OpenSslHasherImpl()
+OpenSslHasher::~OpenSslHasher()
 {
-  delete ctx_;
+  delete impl_;
 }
 
-bool OpenSslHasherImpl::reset()
+std::size_t OpenSslHasher::hash_size() const
 {
-  return EVP_DigestInit_ex(ctx_->evp_ctx, ctx_->evp_type, nullptr) != 0;
-}
-
-bool OpenSslHasherImpl::update(uint8_t const *const data_to_hash, std::size_t const size)
-{
-  return EVP_DigestUpdate(ctx_->evp_ctx, data_to_hash, size) != 0;
-}
-
-bool OpenSslHasherImpl::final(uint8_t *const data_to_hash)
-{
-  return EVP_DigestFinal_ex(ctx_->evp_ctx, data_to_hash, nullptr) != 0;
+  return impl_->digest_size_bytes;
 }
 
 }  // namespace internal

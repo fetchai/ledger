@@ -16,9 +16,41 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/macros.hpp"
 #include "crypto/sha1.hpp"
 
-#include <openssl/sha.h>
+#include <cassert>
+#include <cstddef>
+#include <cstdint>
 
-static_assert(fetch::crypto::SHA1::size_in_bytes == SHA_DIGEST_LENGTH,
-              "Incorrect value of SHA1::size_in_bytes");
+namespace fetch {
+namespace crypto {
+
+void SHA1::Reset()
+{
+  auto const success = openssl_hasher_.reset();
+  FETCH_UNUSED(success);
+  assert(success);
+}
+
+bool SHA1::Update(uint8_t const *const data_to_hash, std::size_t const size)
+{
+  return openssl_hasher_.update(data_to_hash, size);
+}
+
+void SHA1::Final(uint8_t *const hash)
+{
+  auto const success = openssl_hasher_.final(hash);
+  FETCH_UNUSED(success);
+  assert(success);
+}
+
+std::size_t SHA1::HashSizeInBytes() const
+{
+  auto const size = openssl_hasher_.hash_size();
+  assert(size == size_in_bytes);
+  return size;
+}
+
+}  // namespace crypto
+}  // namespace fetch

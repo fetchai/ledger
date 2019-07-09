@@ -18,52 +18,19 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/byte_array.hpp"
-#include "meta/type_traits.hpp"
 
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
-#include <type_traits>
 
 namespace fetch {
 namespace crypto {
-namespace internal {
 
-/*
- * CRTP base class for digest contexts. Usage:
- *
- * ```
- *   class ExampleHasher : private HasherInterface<ExampleHasher>
- *   {
- *   public:
- *     using BaseType = HasherInterface<ExampleHasher>;
- *
- *     using BaseType::Final;
- *     using BaseType::Reset;
- *     using BaseType::Update;
- *
- *     static constexpr std::size_t size_in_bytes = [size of ExampleHasher's outputs];
- *
- *   private:
- *     void ResetHasherInternal();
- *     bool UpdateHasherInternal(uint8_t const *data_to_hash, std::size_t size);
- *     void FinaliseHasherInternal(uint8_t *hash);
- *
- *     friend BaseType;
- *   };
- * ```
- *
- * The `size_in_bytes` constant should be equal to the size of the hash (e.g. 32u for SHA256).
- * The `*Internal` methods should return `true` if their respective operation was successful,
- * `false` otherwise.
- *
- */
-template <typename Derived>
 class HasherInterface
 {
 public:
-  HasherInterface();
-  ~HasherInterface();
+  HasherInterface()                        = default;
+  virtual ~HasherInterface()               = default;
   HasherInterface(HasherInterface const &) = delete;
   HasherInterface(HasherInterface &&)      = delete;
 
@@ -71,85 +38,31 @@ public:
   HasherInterface &operator=(HasherInterface &&) = delete;
 
   // Direct call-through methods to Derived
-  void Reset();
-  bool Update(uint8_t const *data_to_hash, std::size_t size);
-  void Final(uint8_t *hash);
+  virtual void        Reset()                                               = 0;
+  virtual bool        Update(uint8_t const *data_to_hash, std::size_t size) = 0;
+  virtual void        Final(uint8_t *hash)                                  = 0;
+  virtual std::size_t HashSizeInBytes() const                               = 0;
 
   // Convenience methods
-  bool                  Update(byte_array::ConstByteArray const &data);
-  bool                  Update(std::string const &str);
-  byte_array::ByteArray Final();
+  bool Update(std::string const &str)
+  {
+    return Update(reinterpret_cast<uint8_t const *>(str.data()), str.size());
+  }
 
-private:
-  constexpr Derived &derived();
+  bool Update(byte_array::ConstByteArray const &s)
+  {
+    return Update(s.pointer(), s.size());
+  }
+
+  byte_array::ByteArray Final()
+  {
+    byte_array::ByteArray digest;
+    digest.Resize(HashSizeInBytes());
+    Final(digest.pointer());
+
+    return digest;
+  }
 };
 
-template <typename Derived>
-HasherInterface<Derived>::HasherInterface() = default;
-
-template <typename Derived>
-HasherInterface<Derived>::~HasherInterface() = default;
-
-template <typename Derived>
-void HasherInterface<Derived>::Reset()
-{
-  derived().ResetHasherInternal();
-}
-
-template <typename Derived>
-bool HasherInterface<Derived>::Update(uint8_t const *const data_to_hash, std::size_t size)
-{
-  auto const success = derived().UpdateHasherInternal(data_to_hash, size);
-  assert(success);
-
-  return success;
-}
-
-template <typename Derived>
-void HasherInterface<Derived>::Final(uint8_t *const hash)
-{
-  derived().FinaliseHasherInternal(hash);
-}
-
-template <typename Derived>
-bool HasherInterface<Derived>::Update(byte_array::ConstByteArray const &data)
-{
-  auto const success = derived().UpdateHasherInternal(data.pointer(), data.size());
-  assert(success);
-
-  return success;
-}
-
-template <typename Derived>
-bool HasherInterface<Derived>::Update(std::string const &str)
-{
-  auto const success =
-      derived().UpdateHasherInternal(reinterpret_cast<uint8_t const *>(str.data()), str.size());
-  assert(success);
-
-  return success;
-}
-
-template <typename Derived>
-byte_array::ByteArray HasherInterface<Derived>::Final()
-{
-  byte_array::ByteArray digest;
-  digest.Resize(Derived::size_in_bytes);
-
-  derived().FinaliseHasherInternal(digest.pointer());
-
-  return digest;
-}
-
-template <typename Derived>
-constexpr Derived &HasherInterface<Derived>::derived()
-{
-  static_assert(std::is_base_of<HasherInterface<Derived>, Derived>::value,
-                "CRTP interface misuse: Derived must inherit from HasherInterface<Derived>");
-
-  return *static_cast<Derived *>(this);
-}
-
-}  // namespace internal
 }  // namespace crypto
 }  // namespace fetch

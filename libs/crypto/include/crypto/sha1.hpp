@@ -17,13 +17,36 @@
 //
 //------------------------------------------------------------------------------
 
+#include "crypto/hasher_interface.hpp"
 #include "crypto/openssl_hasher.hpp"
 
 namespace fetch {
 namespace crypto {
 
-using SHA1 =
-    internal::OpenSslHasher<20u, internal::OpenSslDigestType, internal::OpenSslDigestType::SHA1>;
+class SHA1 : public HasherInterface
+{
+public:
+  using HasherInterface::Update;
+  using HasherInterface::Final;
+
+  static constexpr std::size_t size_in_bytes = 20u;
+
+  SHA1()             = default;
+  ~SHA1() override   = default;
+  SHA1(SHA1 const &) = delete;
+  SHA1(SHA1 &&)      = delete;
+
+  SHA1 &operator=(SHA1 const &) = delete;
+  SHA1 &operator=(SHA1 &&) = delete;
+
+  void        Reset() override;
+  bool        Update(uint8_t const *data_to_hash, std::size_t size) override;
+  void        Final(uint8_t *hash) override;
+  std::size_t HashSizeInBytes() const override;
+
+private:
+  internal::OpenSslHasher openssl_hasher_{internal::OpenSslDigestType::SHA1};
+};
 
 }  // namespace crypto
 }  // namespace fetch
