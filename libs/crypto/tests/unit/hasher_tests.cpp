@@ -137,6 +137,7 @@ public:
   ByteArray hash(ByteArray const &s)
   {
     ByteArray hash;
+    hash.Resize(hash_size(p.type));
 
     switch (p.type)
     {
@@ -160,6 +161,33 @@ public:
     return hash;
   };
 
+  ByteArray hash(uint8_t const *const input, std::size_t const input_size)
+  {
+    ByteArray hash;
+    hash.Resize(hash_size(p.type));
+
+    switch (p.type)
+    {
+    case Hasher::MD5:
+      Hash<crypto::MD5>(input, input_size, hash.pointer());
+      break;
+    case Hasher::SHA2_256:
+      Hash<crypto::SHA256>(input, input_size, hash.pointer());
+      break;
+    case Hasher::SHA2_512:
+      Hash<crypto::SHA512>(input, input_size, hash.pointer());
+      break;
+    case Hasher::SHA1:
+      Hash<crypto::SHA1>(input, input_size, hash.pointer());
+      break;
+    case Hasher::FNV:
+      Hash<crypto::FNV>(input, input_size, hash.pointer());
+      break;
+    }
+
+    return hash;
+  };
+
   HasherTestParam p;
 };
 
@@ -177,6 +205,20 @@ TEST_P(HasherTests, hash_is_consistent_across_calls)
   }
 }
 
+TEST_P(HasherTests, hash_is_consistent_across_calls2)
+{
+  for (auto const &input : p.all_inputs)
+  {
+    auto const hash1 = hash(input.pointer(), input.size());
+    auto const hash2 = hash(input.pointer(), input.size());
+    auto const hash3 = hash(input.pointer(), input.size());
+
+    EXPECT_EQ(hash1, hash2);
+    EXPECT_EQ(hash1, hash3);
+    EXPECT_EQ(hash2, hash3);
+  }
+}
+
 TEST_P(HasherTests, hash_size)
 {
   for (auto const &input : p.all_inputs)
@@ -185,9 +227,22 @@ TEST_P(HasherTests, hash_size)
   }
 }
 
+TEST_P(HasherTests, hash_size2)
+{
+  for (auto const &input : p.all_inputs)
+  {
+    EXPECT_EQ(hash(input.pointer(), input.size()).size(), p.expected_size);
+  }
+}
+
 TEST_P(HasherTests, empty_input)
 {
   EXPECT_EQ(ToHex(hash(p.input_empty)), p.expected_output_empty);
+}
+
+TEST_P(HasherTests, empty_input2)
+{
+  EXPECT_EQ(ToHex(hash(p.input_empty.pointer(), p.input_empty.size())), p.expected_output_empty);
 }
 
 TEST_P(HasherTests, non_empty_inputs)
@@ -195,6 +250,13 @@ TEST_P(HasherTests, non_empty_inputs)
   EXPECT_EQ(ToHex(hash(p.input1)), p.expected_output1);
   EXPECT_EQ(ToHex(hash(p.input2)), p.expected_output2);
   EXPECT_EQ(ToHex(hash(p.input3)), p.expected_output3);
+}
+
+TEST_P(HasherTests, non_empty_inputs2)
+{
+  EXPECT_EQ(ToHex(hash(p.input1.pointer(), p.input1.size())), p.expected_output1);
+  EXPECT_EQ(ToHex(hash(p.input2.pointer(), p.input2.size())), p.expected_output2);
+  EXPECT_EQ(ToHex(hash(p.input3.pointer(), p.input3.size())), p.expected_output3);
 }
 
 // clang-format off

@@ -17,8 +17,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/macros.hpp"
 #include "crypto/hasher_interface.hpp"
 
+#include <cassert>
 #include <cstddef>
 #include <cstdint>
 
@@ -88,9 +90,9 @@ public:
   OpenSslHasher &operator=(OpenSslHasher &&) = delete;
 
 private:
-  bool ResetHasherInternal();
+  void ResetHasherInternal();
   bool UpdateHasherInternal(uint8_t const *data_to_hash, std::size_t size);
-  bool FinaliseHasherInternal(uint8_t *hash);
+  void FinaliseHasherInternal(uint8_t *hash);
 
   internal::OpenSslHasherImpl impl_{hasher_type};
 
@@ -104,22 +106,29 @@ template <std::size_t hash_size, typename EnumClass, EnumClass hasher_type>
 OpenSslHasher<hash_size, EnumClass, hasher_type>::~OpenSslHasher() = default;
 
 template <std::size_t hash_size, typename EnumClass, EnumClass hasher_type>
-bool OpenSslHasher<hash_size, EnumClass, hasher_type>::ResetHasherInternal()
+void OpenSslHasher<hash_size, EnumClass, hasher_type>::ResetHasherInternal()
 {
-  return impl_.reset();
+  auto const success = impl_.reset();
+  FETCH_UNUSED(success);
+  assert(success);
 }
 
 template <std::size_t hash_size, typename EnumClass, EnumClass hasher_type>
 bool OpenSslHasher<hash_size, EnumClass, hasher_type>::UpdateHasherInternal(
-    uint8_t const *data_to_hash, std::size_t const size)
+    uint8_t const *const data_to_hash, std::size_t const size)
 {
-  return impl_.update(data_to_hash, size);
+  auto const success = impl_.update(data_to_hash, size);
+  assert(success);
+
+  return success;
 }
 
 template <std::size_t hash_size, typename EnumClass, EnumClass hasher_type>
-bool OpenSslHasher<hash_size, EnumClass, hasher_type>::FinaliseHasherInternal(uint8_t *hash)
+void OpenSslHasher<hash_size, EnumClass, hasher_type>::FinaliseHasherInternal(uint8_t *hash)
 {
-  return impl_.final(hash);
+  auto const success = impl_.final(hash);
+  FETCH_UNUSED(success);
+  assert(success);
 }
 
 }  // namespace internal

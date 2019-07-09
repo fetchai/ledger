@@ -47,9 +47,9 @@ public:
   ~FNV();
 
 private:
-  bool ResetHasherInternal();
+  void ResetHasherInternal();
   bool UpdateHasherInternal(uint8_t const *data_to_hash, std::size_t size);
-  bool FinaliseHasherInternal(uint8_t *hash);
+  void FinaliseHasherInternal(uint8_t *hash);
 
   internal::FnvHasherInternals *impl_;
 

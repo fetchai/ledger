@@ -116,7 +116,7 @@ bool OpenSslHasherImpl::reset()
   return EVP_DigestInit_ex(ctx_->evp_ctx, ctx_->evp_type, nullptr) != 0;
 }
 
-bool OpenSslHasherImpl::update(uint8_t const *data_to_hash, std::size_t const size)
+bool OpenSslHasherImpl::update(uint8_t const *const data_to_hash, std::size_t const size)
 {
   return EVP_DigestUpdate(ctx_->evp_ctx, data_to_hash, size) != 0;
 }

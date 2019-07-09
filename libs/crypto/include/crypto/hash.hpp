@@ -23,13 +23,23 @@ namespace fetch {
 namespace crypto {
 
 template <typename T>
-byte_array::ByteArray Hash(byte_array::ConstByteArray const &str)
+byte_array::ByteArray Hash(byte_array::ConstByteArray const &input)
 {
   T hasher;
 
   hasher.Reset();
-  hasher.Update(str);
+  hasher.Update(input);
   return hasher.Final();
+}
+
+template <typename T>
+void Hash(uint8_t const *const input, std::size_t const input_size, uint8_t *const output)
+{
+  T hasher;
+
+  hasher.Reset();
+  hasher.Update(input, input_size);
+  hasher.Final(output);
 }
 
 }  // namespace crypto

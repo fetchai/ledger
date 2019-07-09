@@ -49,26 +49,22 @@ FNV::~FNV()
   delete impl_;
 }
 
-bool FNV::ResetHasherInternal()
+void FNV::ResetHasherInternal()
 {
   impl_->ctx.reset();
-
-  return true;
 }
 
-bool FNV::UpdateHasherInternal(uint8_t const *data_to_hash, std::size_t const size)
+bool FNV::UpdateHasherInternal(uint8_t const *const data_to_hash, std::size_t const size)
 {
   impl_->ctx.update(data_to_hash, size);
 
   return true;
 }
 
-bool FNV::FinaliseHasherInternal(uint8_t *const hash)
+void FNV::FinaliseHasherInternal(uint8_t *const hash)
 {
   auto hash_ptr = reinterpret_cast<internal::FnvHasherInternals::ImplType::number_type *>(hash);
   *hash_ptr     = impl_->ctx.context();
-
-  return true;
 }
 
 }  // namespace crypto

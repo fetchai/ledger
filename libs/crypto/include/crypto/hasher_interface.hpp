@@ -18,7 +18,6 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/byte_array.hpp"
-#include "core/macros.hpp"
 #include "meta/type_traits.hpp"
 #include "vectorise/uint/uint.hpp"
 
@@ -46,9 +45,9 @@ namespace internal {
  *     static constexpr std::size_t size_in_bytes = [size of ExampleHasher's outputs];
  *
  *   private:
- *     bool ResetHasherInternal();
+ *     void ResetHasherInternal();
  *     bool UpdateHasherInternal(uint8_t const *data_to_hash, std::size_t size);
- *     bool FinaliseHasherInternal(uint8_t *hash);
+ *     void FinaliseHasherInternal(uint8_t *hash);
  *
  *     friend BaseType;
  *   };
@@ -94,13 +93,11 @@ HasherInterface<Derived>::~HasherInterface() = default;
 template <typename Derived>
 void HasherInterface<Derived>::Reset()
 {
-  auto const success = derived().ResetHasherInternal();
-  FETCH_UNUSED(success);
-  assert(success);
+  derived().ResetHasherInternal();
 }
 
 template <typename Derived>
-bool HasherInterface<Derived>::Update(uint8_t const *data_to_hash, std::size_t size)
+bool HasherInterface<Derived>::Update(uint8_t const *const data_to_hash, std::size_t size)
 {
   auto const success = derived().UpdateHasherInternal(data_to_hash, size);
   assert(success);
@@ -111,9 +108,7 @@ bool HasherInterface<Derived>::Update(uint8_t const *data_to_hash, std::size_t s
 template <typename Derived>
 void HasherInterface<Derived>::Final(uint8_t *const hash)
 {
-  auto const success = derived().FinaliseHasherInternal(hash);
-  FETCH_UNUSED(success);
-  assert(success);
+  derived().FinaliseHasherInternal(hash);
 }
 
 template <typename Derived>
@@ -141,9 +136,7 @@ byte_array::ByteArray HasherInterface<Derived>::Final()
   byte_array::ByteArray digest;
   digest.Resize(Derived::size_in_bytes);
 
-  auto const success = derived().FinaliseHasherInternal(digest.pointer());
-  FETCH_UNUSED(success);
-  assert(success);
+  derived().FinaliseHasherInternal(digest.pointer());
 
   return digest;
 }
