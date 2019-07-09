@@ -31,6 +31,7 @@ var conv1D_2_kernel_size    = 16;
 var conv1D_2_stride         = 4;
 
 graph.AddPlaceholder("Input");
+graph.AddPlaceholder("Label");
 graph.addConv1D("hidden_conv1D_1", "Input", conv1D_1_filters, conv1D_1_input_channels,
                 conv1D_1_kernel_size, conv1D_1_stride);
 graph.AddRelu("relu", "hidden_conv1D_1");
@@ -56,9 +57,7 @@ var graph = Graph();
 build_graph(graph);
 
 // add loss to graph
-graph.addConv1D("Error", "Output", conv1D_2_filters, conv1D_2_input_channels,
-                        conv1D_2_kernel_size, conv1D_2_stride);
-
+graph.addMeanSquareError("Error", "Output", "Label");
 
 // Set up the optimiser
 var optimiser = AdamOptimiser(graph, "Input", "Output");
