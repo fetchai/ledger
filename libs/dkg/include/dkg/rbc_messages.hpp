@@ -37,7 +37,7 @@ namespace dkg {
 
     public:
 
-        TagType getTag() {
+        TagType getTag() const {
             TagType msg_tag = channel_id;
             msg_tag <<= 48;
             msg_tag |= node_id;
@@ -46,6 +46,15 @@ namespace dkg {
         }
         MessageType getType() const {
             return type_;
+        }
+        uint8_t channelId() const {
+            return channel_id;
+        }
+        uint8_t seqCounter() const {
+            return sequence_counter;
+        }
+        uint32_t id() const {
+            return node_id;
         }
         virtual RBCSerializer serialize() const = 0;
     };

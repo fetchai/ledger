@@ -28,7 +28,7 @@ namespace dkg {
             serialiser >> serialisedMessage_;
         }
 
-        std::shared_ptr<RBCMessage> getMessage() {
+        std::shared_ptr<RBCMessage> getMessage() const {
             RBCSerializer serialiser {serialisedMessage_};
             switch (type_) {
                 case MessageType::RBROADCAST:
