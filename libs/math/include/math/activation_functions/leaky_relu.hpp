@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "math/comparison.hpp"
+#include "math/fundamental_operators.hpp"
 #include "math/standard_functions/exp.hpp"
 
 #include <cassert>
@@ -51,7 +52,7 @@ void LeakyRelu(ArrayType const &t, typename ArrayType::Type const &a, ArrayType 
     else
     {
       // f(x)=a*x for x<0
-      *rit = Multiply(a, *it);
+      Multiply(a, *it, *rit);
     }
     ++it;
     ++rit;
