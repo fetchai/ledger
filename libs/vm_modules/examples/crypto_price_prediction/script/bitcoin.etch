@@ -58,6 +58,7 @@ build_graph(graph);
 var optimiser = AdamOptimiser(graph, "Input", "Output");
 
 // Begin training
+printLn("begin training...")
 var training_iterations = 10;
 var batch_size = 8u64;
 for(i in 0:training_iterations)
@@ -67,6 +68,7 @@ for(i in 0:training_iterations)
 endfor
 
 // Begin testing
+printLn("test prediction...")
 graph.SetInput("Input", test_data);
 var pred = graph.Evaluate("Output");
 print(pred.ToString());
