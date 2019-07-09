@@ -9,53 +9,45 @@ namespace dkg {
 
     class RBCEnvelop {
     public:
+        using RBCSerializer = RBCMessage::RBCSerializer;
+        using MessageType = RBCMessage::MessageType;
         using Payload = byte_array::ConstByteArray;
 
-        enum class MessageType {
-            RBROADCAST,
-            RECHO,
-            RREADY,
-            RREQUEST,
-            RANSWER
-        };
-
         RBCEnvelop() = default;
-        explicit RBCEnvelop(MessageType type, const Payload &payload): type_{type}, serialisedMessage_{payload} {};
+        explicit RBCEnvelop(const RBCMessage &msg): type_{msg.getType()}, serialisedMessage_{msg.serialize().data()} {};
 
         template <typename T>
         void serialize(T &serialiser) const {
-            serialiser << type_ << serialisedMessage_;
+            serialiser << (uint8_t) type_ << serialisedMessage_;
         }
         template <typename T>
         void deserialize(T &serialiser) {
-            serialiser >> type_ >> serialisedMessage_;
+            uint8_t val;
+            serialiser >>  val;
+            type_ = (MessageType) val;
+            serialiser >> serialisedMessage_;
         }
 
-        uint8_t type() const {
-            return static_cast<uint8_t>(type_);
+        std::shared_ptr<RBCMessage> getMessage() {
+            RBCSerializer serialiser {serialisedMessage_};
+            switch (type_) {
+                case MessageType::RBROADCAST:
+                    return std::make_shared<RBroadcast>(serialiser);
+                case MessageType::RECHO:
+                    return std::make_shared<REcho>(serialiser);
+                case MessageType::RREADY:
+                    return std::make_shared<RReady>(serialiser);
+                case MessageType::RREQUEST:
+                    return std::make_shared<RRequest>(serialiser);
+                case MessageType::RANSWER:
+                    return std::make_shared<RAnswer>(serialiser);
+            }
         }
-        const Payload& payload() const {
-            return serialisedMessage_;
-        }
-
 
     private:
-        MessageType type_;
+        RBCMessage::MessageType type_;
         Payload serialisedMessage_;
-
     };
-
-    template<typename T>
-    void Serialize(T &serializer, RBCEnvelop::MessageType const &type) {
-        serializer << (uint8_t) type;
-    }
-
-    template<typename T>
-    void Deserialize(T &serializer, RBCEnvelop::MessageType &type) {
-        uint8_t val;
-        serializer >> val;
-        type = (RBCEnvelop::MessageType) val;
-    }
 
     template<typename T>
     inline void Serialize(T &serializer, RBCEnvelop const &env) {
