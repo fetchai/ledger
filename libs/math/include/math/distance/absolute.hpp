@@ -57,7 +57,8 @@ inline typename ArrayType::Type AbsoluteDistance(ArrayType const &A, ArrayType c
       }
     }
 
-    ret += d++ it1;
+    ret += d;
+    ++it1;
     ++it2;
   }
   return ret;
