@@ -320,7 +320,7 @@ inline constexpr KeptValues<StoredTypes...> KeepValues(StoredTypes &... values) 
     std::is_nothrow_constructible<KeptValues<StoredTypes...>, StoredTypes &...>::value)
 {
   return KeptValues<StoredTypes...>(values...);
-};
+}
 
 }  // namespace value_util
 }  // namespace fetch
