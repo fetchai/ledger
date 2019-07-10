@@ -21,7 +21,7 @@
 #include <memory>
 #include <vector>
 
-#include "math/ml/loss_functions/mean_square_error_loss.hpp"
+#include "math/metrics/mean_square_error.hpp"
 #include "ml/ops/ops.hpp"
 
 namespace fetch {
@@ -45,7 +45,8 @@ public:
     assert(inputs.size() == 2);
     assert(inputs.at(0).get().shape() == inputs.at(1).get().shape());
 
-    output(0, 0) = fetch::math::MeanSquareErrorLoss(inputs.at(0).get(), inputs.at(1).get());
+    // division by 2 allows us to cancel out with a 2 in the derivative for optimisation
+    output(0, 0) = fetch::math::MeanSquareError(inputs.at(0).get(), inputs.at(1).get()) / 2;
   }
 
   // grad[0]=2*err*(in[0]-in[1])/mean_size, grad[1]=-2*err*(in[0]-in[1])/mean_size,

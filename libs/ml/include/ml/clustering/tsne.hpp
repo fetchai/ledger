@@ -23,7 +23,7 @@
 #include "math/fundamental_operators.hpp"
 #include "math/matrix_operations.hpp"
 #include "math/meta/math_type_traits.hpp"
-#include "math/ml/loss_functions/kl_divergence.hpp"
+#include "math/metrics/kl_divergence.hpp"
 #include "math/normalize_array.hpp"
 #include "math/standard_functions/exp.hpp"
 #include "math/standard_functions/log.hpp"

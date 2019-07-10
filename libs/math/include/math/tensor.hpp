@@ -24,11 +24,11 @@
 
 #include "vectorise/memory/array.hpp"
 
+#include "math/activation_functions/softmax.hpp"
 #include "math/base_types.hpp"
 #include "math/matrix_operations.hpp"
-#include "math/ml/activation_functions/softmax.hpp"
-#include "math/ml/loss_functions/l2_loss.hpp"
-#include "math/ml/loss_functions/l2_norm.hpp"
+#include "math/metrics/l2_loss.hpp"
+#include "math/metrics/l2_norm.hpp"
 #include "math/standard_functions/abs.hpp"
 #include "math/standard_functions/exp.hpp"
 #include "math/standard_functions/fmod.hpp"
@@ -1196,17 +1196,6 @@ bool Tensor<T, C>::Resize(SizeVector const &shape, bool copy)
 template <typename T, typename C>
 bool Tensor<T, C>::Reshape(SizeVector const &shape)
 {
-  return Resize(shape, true);
-}
-
-/**
- * Resizes and reshapes tensor according to newly specified shape
- * @param shape the new shape to set
- */
-template <typename T, typename C>
-bool Tensor<T, C>::ResizeFromShape(SizeVector const &shape)
-{
-  // TODO(private issue 995): Get rid of this function
   return Resize(shape, true);
 }
 

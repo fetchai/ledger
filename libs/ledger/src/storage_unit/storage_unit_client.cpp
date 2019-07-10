@@ -57,8 +57,7 @@ StorageUnitClient::StorageUnitClient(MuddleEndpoint &muddle, ShardConfigs const 
                                      uint32_t log2_num_lanes)
   : addresses_(GenerateAddressList(shards))
   , log2_num_lanes_(log2_num_lanes)
-  , rpc_client_{std::make_shared<Client>("STUC", muddle, MuddleEndpoint::Address{},
-                                         SERVICE_LANE_CTRL, CHANNEL_RPC)}
+  , rpc_client_{std::make_shared<Client>("STUC", muddle, SERVICE_LANE_CTRL, CHANNEL_RPC)}
   , current_merkle_{num_lanes()}
 {
   if (num_lanes() != shards.size())
