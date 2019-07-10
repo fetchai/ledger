@@ -38,7 +38,7 @@ public:
   DataType        data;          // word -> (id, count)
   ReverseDataType reverse_data;  // id -> (word, count)
 
-  Vocab();
+  Vocab() = default;
 
   void Update();
 
@@ -57,11 +57,8 @@ public:
   SizeType    IndexFromWord(std::string const &word) const;
 };
 
-Vocab::Vocab()
-{}
-
 /**
- * Update the data in vocabulary every time vocabulary is changed
+ * Update the meta-data in vocabulary every time vocabulary is changed
  * updating including: word count and reverse data
  */
 void Vocab::Update()
@@ -92,7 +89,7 @@ bool Vocab::WordKnown(std::string const &word) const
 }
 
 /**
- * check if a word is known
+ * check if a word is known based on word index
  * @param id
  * @return
  */
@@ -106,7 +103,7 @@ bool Vocab::WordKnown(Vocab::SizeType id) const
 }
 
 /**
- * remove word that have less counts then min
+ * remove word that have fewer counts then min
  */
 void Vocab::RemoveInfrequentWord(fetch::ml::Vocab::SizeType min)
 {

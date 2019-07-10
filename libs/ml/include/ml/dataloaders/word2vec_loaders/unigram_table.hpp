@@ -121,7 +121,7 @@ bool UnigramTable::SampleNegative(SizeType positive_index, SizeType &ret)
 }
 
 /**
- *
+ * Sample the negative words based on proposed best probability distribution from original paper
  * @param positive_index
  * @param ret
  * @return

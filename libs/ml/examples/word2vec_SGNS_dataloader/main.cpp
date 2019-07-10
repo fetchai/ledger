@@ -157,7 +157,7 @@ std::string ReadFile(std::string const &path)
 
 struct TrainingParams
 {
-  SizeType max_word_count       = 1000000;  // maximum number to be trained
+  SizeType max_word_count       = fetch::math::numeric_max<SizeType>();  // maximum number to be trained
   SizeType negative_sample_size = 5;        // number of negative sample per word-context pair
   SizeType window_size          = 5;        // window size for context sampling
   bool     train_mode           = true;     // reserve for future compatibility with CBOW
@@ -267,13 +267,8 @@ int main(int argc, char **argv)
     if (i % tp.test_frequency == 0)
     {
       TestEmbeddings(*g, skipgram_layer, data_loader, tp.word0, tp.word1, tp.word2, tp.word3, tp.k);
-      TestEmbeddings(*g, skipgram_layer, data_loader, "france", "france", "paris", "italy", tp.k);
     }
   }
-
-  //////////////////////////////////////
-  /// EXTRACT THE TRAINED EMBEDDINGS ///
-  //////////////////////////////////////
 
   return 0;
 }
