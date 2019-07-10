@@ -212,10 +212,11 @@ private:
                                  ExpressionNodePtr const &rhs);
   TypePtr     ConvertType(TypePtr const &type, TypePtr const &instantiated_template_type);
   bool        MatchType(TypePtr const &supplied_type, TypePtr const &expected_type) const;
-  bool        MatchTypes(TypePtr const &type, TypePtrArray const &supplied_types,
+  bool        MatchTypes(TypePtr const &type, ExpressionNodePtrArray const &supplied_nodes,
                          TypePtrArray const &expected_types, TypePtrArray &actual_types);
   FunctionPtr FindFunction(TypePtr const &type, FunctionGroupPtr const &fg,
-                           TypePtrArray const &supplied_types, TypePtrArray &actual_types);
+                           ExpressionNodePtrArray const &supplied_nodes,
+                           TypePtrArray &                actual_types);
   TypePtr     FindType(ExpressionNodePtr const &node);
   SymbolPtr   FindSymbol(ExpressionNodePtr const &node);
   SymbolPtr   SearchSymbols(std::string const &name);
