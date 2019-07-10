@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/fundamental_operators.hpp"
+#include "math/standard_functions/log.hpp"
 #include "ml/ops/ops.hpp"
 
 namespace fetch {
@@ -25,67 +25,52 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class Divide : public fetch::ml::Ops<T>
+class Log : public fetch::ml::Ops<T>
 {
 public:
   using ArrayType     = T;
+  using DataType      = typename ArrayType::Type;
   using SizeType      = typename ArrayType::SizeType;
-  using ArrayPtrType  = std::shared_ptr<ArrayType>;
   using VecTensorType = typename Ops<T>::VecTensorType;
 
-  Divide()          = default;
-  virtual ~Divide() = default;
+  Log()          = default;
+  virtual ~Log() = default;
 
   /**
-   * elementwise division
-   * @param inputs  left & right inputs to Divide
+   * elementwise Log
+   * @param inputs vector containing one tensor which is the input tensor to Log
    * @return
    */
   virtual void Forward(VecTensorType const &inputs, ArrayType &output)
   {
-    assert(inputs.size() == 2);
-    assert(inputs.at(0).get().shape() == inputs.at(1).get().shape());
-    assert(inputs.at(0).get().shape() == output.shape());
+    assert(inputs.size() == 1);
+    assert(output.shape() == this->ComputeOutputShape(inputs));
 
-    fetch::math::Divide(inputs.at(0).get(), inputs.at(1).get(), output);
+    fetch::math::Log(inputs.at(0).get(), output);
   }
 
   /**
-   * f'(x)=(1/y)*err
-   * f'(y)=-(x/(y^2))*err
+   * elementwise log gradient is 1/x * error:
+   * f'(input0)= error_signal/input0
    */
   virtual std::vector<ArrayType> Backward(VecTensorType const &inputs,
                                           ArrayType const &    error_signal)
   {
-    ArrayType return_signal_1(inputs.at(0).get().shape());
-    ArrayType return_signal_2(return_signal_1.shape());
+    assert(inputs.size() == 1);
+    assert(error_signal.shape() == this->ComputeOutputShape(inputs));
 
-    auto a_it   = inputs.at(0).get().cbegin();
-    auto b_it   = inputs.at(1).get().cbegin();
-    auto err_it = error_signal.cbegin();
-    auto r_1_it = return_signal_1.begin();
-    auto r_2_it = return_signal_2.begin();
-    while (a_it.is_valid())
-    {
-      *r_1_it = (*err_it) / (*b_it);
-      *r_2_it = ((*err_it) * (*a_it)) / ((*b_it) * (*b_it));
+    ArrayType ret_error_signal(inputs.at(0).get().shape());
+    fetch::math::Divide(error_signal, inputs.at(0).get(), ret_error_signal);
 
-      ++a_it;
-      ++b_it;
-      ++err_it;
-      ++r_1_it;
-      ++r_2_it;
-    }
-
-    return {return_signal_1, return_signal_2};
+    return {ret_error_signal};
   }
 
-  virtual std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const
+  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const
   {
     return inputs.front().get().shape();
   }
 
-  static constexpr char const *DESCRIPTOR = "Divide";
+  static constexpr char const *DESCRIPTOR = "Log";
 };
 
 }  // namespace ops
