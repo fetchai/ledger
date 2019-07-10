@@ -299,9 +299,9 @@ public:
   template <typename T>
   explicit operator T() const;
 
-  /////////////////
-  /// operators ///
-  /////////////////
+  ////////////////////////////
+  /// assignment operators ///
+  ////////////////////////////
 
   constexpr FixedPoint &operator=(FixedPoint const &o);
   template <typename T>

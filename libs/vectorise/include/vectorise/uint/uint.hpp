@@ -130,13 +130,13 @@ public:
   constexpr UInt  operator&(UInt const &n) const;
   constexpr UInt  operator|(UInt const &n) const;
   constexpr UInt  operator^(UInt const &n) const;
-  constexpr UInt  &operator+=(UInt const &n) const;
-  constexpr UInt  &operator-=(UInt const &n) const;
-  constexpr UInt  &operator*=(UInt const &n) const;
-  constexpr UInt  &operator/=(UInt const &n) const;
-  constexpr UInt  &operator&=(UInt const &n) const;
-  constexpr UInt  &operator|=(UInt const &n) const;
-  constexpr UInt  &operator^=(UInt const &n) const;
+  constexpr UInt  &operator+=(UInt const &n);
+  constexpr UInt  &operator-=(UInt const &n);
+  constexpr UInt  &operator*=(UInt const &n);
+  constexpr UInt  &operator/=(UInt const &n);
+  constexpr UInt  &operator&=(UInt const &n);
+  constexpr UInt  &operator|=(UInt const &n);
+  constexpr UInt  &operator^=(UInt const &n);
   template <typename T>
   constexpr meta::IfIsInteger<T, UInt> operator+(T const &n) const;
   template <typename T>
@@ -152,19 +152,19 @@ public:
   template <typename T>
   constexpr meta::IfIsInteger<T, UInt>operator^(T const &n) const;
   template <typename T>
-  constexpr meta::IfIsInteger<T, UInt>&operator+=(T const &n) const;
+  constexpr meta::IfIsInteger<T, UInt>&operator+=(T const &n);
   template <typename T>
-  constexpr meta::IfIsInteger<T, UInt>&operator-=(T const &n) const;
+  constexpr meta::IfIsInteger<T, UInt>&operator-=(T const &n);
   template <typename T>
-  constexpr meta::IfIsInteger<T, UInt>&operator&=(T const &n) const;
+  constexpr meta::IfIsInteger<T, UInt>&operator&=(T const &n);
   template <typename T>
-  constexpr meta::IfIsInteger<T, UInt>&operator|=(T const &n) const;
+  constexpr meta::IfIsInteger<T, UInt>&operator|=(T const &n);
   template <typename T>
-  constexpr meta::IfIsInteger<T, UInt>&operator^=(T const &n) const;
+  constexpr meta::IfIsInteger<T, UInt>&operator^=(T const &n);
   template <typename T>
-  constexpr meta::IfIsInteger<T, UInt>&operator*=(T const &n) const;
+  constexpr meta::IfIsInteger<T, UInt>&operator*=(T const &n);
   template <typename T>
-  constexpr meta::IfIsInteger<T, UInt>&operator/=(T const &n) const;
+  constexpr meta::IfIsInteger<T, UInt>&operator/=(T const &n);
 
   constexpr UInt &operator<<=(std::size_t const &n);
   constexpr UInt &operator>>=(std::size_t const &n);
@@ -389,18 +389,15 @@ constexpr meta::IfIsInteger<T, bool> UInt<S>::operator>=(T const &other) const
 template <uint16_t S>
 constexpr UInt<S> &UInt<S>::operator++()
 {
-  for (std::size_t i = 0; i < data_.wide.size(); ++i)
-  {
-    ++data_.wide[i];
-    // If element is not zero, then we don't have an overflow and nothing to carry, stop here
-    if (data_.wide[i]) {
-      break;
-    }
-    if (i == data_.wide.size())
-    {
-      throw std::runtime_error("Overflow error in UInt object, use a larger size");
-    }
-  }
+  *this += 1;
+
+  return *this;
+}
+
+template <uint16_t S>
+constexpr UInt<S> &UInt<S>::operator--()
+{
+  *this -= 1;
 
   return *this;
 }
@@ -410,26 +407,396 @@ constexpr UInt<S> &UInt<S>::operator++()
 //////////////////////////////
 
 template <uint16_t S>
+constexpr UInt<S>  UInt<S>::operator+(UInt<S> const &n) const
+{
+  UInt<S> ret{*this};
+  ret += n;
+
+  return std::move(ret);
+}
+
+template <uint16_t S>
+constexpr UInt<S>  UInt<S>::operator-(UInt<S> const &n) const
+{
+  UInt<S> ret{*this};
+  ret -= n;
+
+  return std::move(ret);
+}
+
+template <uint16_t S>
+constexpr UInt<S>  UInt<S>::operator*(UInt<S> const &n) const
+{
+  UInt<S> ret{*this};
+  ret *= n;
+
+  return std::move(ret);
+}
+
+template <uint16_t S>
+constexpr UInt<S>  UInt<S>::operator/(UInt<S> const &n) const
+{
+  UInt<S> ret{*this};
+  ret /= n;
+
+  return std::move(ret);
+}
+
+template <uint16_t S>
+constexpr UInt<S>  UInt<S>::operator&(UInt<S> const &n) const
+{
+  UInt<S> ret{*this};
+  ret &= n;
+
+  return std::move(ret);
+}
+
+template <uint16_t S>
+constexpr UInt<S>  UInt<S>::operator|(UInt<S> const &n) const
+{
+  UInt<S> ret{*this};
+  ret |= n;
+
+  return std::move(ret);
+}
+
+template <uint16_t S>
+constexpr UInt<S>  UInt<S>::operator^(UInt<S> const &n) const
+{
+  UInt<S> ret{*this};
+  ret ^= n;
+
+  return std::move(ret);
+}
+
+template <uint16_t S>
+constexpr UInt<S>  &UInt<S>::operator+=(UInt<S> const &n)
+{
+  UInt<S>::WideType carry = 0, new_carry = 0;
+  for (std::size_t i = 0; i < WIDE_ELEMENTS; ++i)
+  {
+    // if sum of elements is smaller than the element itself, then we have overflow and carry
+    new_carry = (data_.wide[i] + n.elementAt(i) + carry < data_.wide[i]) ? 1 : 0;
+    data_.wide[i] += n.elementAt(i) + carry;
+    carry = new_carry;
+  }
+
+  return *this;
+}
+
+template <uint16_t S>
+constexpr UInt<S>  &UInt<S>::operator-=(UInt<S> const &n)
+{
+  if (*this < n)
+  {
+    *this = UInt<S>(0);
+  }
+  UInt<S>::WideType carry = 0, new_carry = 0;
+  for (std::size_t i = 0; i < WIDE_ELEMENTS; ++i)
+  {
+    // if diff of the elements is larger than the element itself, then we have underflow and carry
+    new_carry = (data_.wide[i] - n.elementAt(i) - carry > data_.wide[i]) ? 1 : 0;
+    data_.wide[i] -= n.elementAt(i) + carry;
+    carry = new_carry;
+  }
+
+  return *this;
+}
+
+// Implementation for 256-bits only
+template <>
+constexpr UInt<256>  &UInt<256>::operator*=(UInt<256> const &n)
+{
+  // Calculate all products between each uint64_t element in the UInts
+  // Use int128_t type to hold the actual product. 
+  __uint128_t products[WIDE_ELEMENTS][WIDE_ELEMENTS] = {};
+
+  for (std::size_t i = 0; i < WIDE_ELEMENTS; ++i)
+  {
+    for (std::size_t j = 0; j < WIDE_ELEMENTS; ++j)
+    {
+      products[i][j] = static_cast<__uint128_t>(data_.wide[i]) * static_cast<__uint128_t>(n.elementAt(j));
+    }
+  }
+
+  /* If a, b, two UInt<256> numbers, with the following elements (little endian order):
+   * |  a[3]  |  a[2]  |  a[1]  |  a[0]  |
+   * |  b[3]  |  b[2]  |  b[1]  |  b[0]  |
+   * Then both can be written in the following form:
+   * a = a[0] + (a[1] << 64) + (a[2] << 128) + (a[3] << 192)
+   * b = b[0] + (b[1] << 64) + (b[2] << 128) + (b[3] << 192)
+   *
+   * Then a * b is the following, truncating terms left shifted over 192 bits:
+   * a * b =  a[0] * b[0]
+   *       + (a[0] * b[1] + a[1] * b[0]) << 64
+   *       + (a[0] * b[2] + a[1] * b[1] + a[2] * b[0]) << 128
+   *       + (a[0] * b[3] + a[1] * b[2] + a[2] * b[1] + a[3] * b[0]) << 192
+   * In order to be accurate, we calculate these terms as 128-bit quantities and we add the high-64-bits as carry to the next term
+   */
+
+  __uint128_t carry = 0, terms[WIDE_ELEMENTS] = {};
+  terms[0] = static_cast<WideType>(products[0][0]);
+  carry = static_cast<WideType>(terms[0] >> WIDE_ELEMENT_SIZE);
+  terms[1] = products[0][1] + products[1][0] + carry;
+  carry = static_cast<WideType>(terms[1] >> WIDE_ELEMENT_SIZE);
+  terms[2] = products[0][2] + products[1][1] + products[2][0] + carry;
+  carry = static_cast<WideType>(terms[2] >> WIDE_ELEMENT_SIZE);
+  terms[3] = products[0][3] + products[1][2] + products[2][1] + products[3][0] + carry;
+  carry = static_cast<WideType>(terms[2] >> WIDE_ELEMENT_SIZE);
+  // TODO: decide what to do with overflow if carry > 0
+
+  for (std::size_t i = 0; i < WIDE_ELEMENTS; ++i)
+  {
+    data_.wide[i] = static_cast<WideType>(terms[i]);
+  }
+
+  return *this;
+}
+
+// Implementation for 256-bits only
+template <>
+constexpr UInt<256>  &UInt<256>::operator/=(UInt<256> const &n)
+{
+
+
+  return *this;
+}
+
+template <uint16_t S>
+constexpr UInt<S>  &UInt<S>::operator&=(UInt<S> const &n)
+{
+  for (std::size_t i = 0; i < WIDE_ELEMENTS; ++i)
+  {
+    data_.wide[i] &= n.elementAt(i);
+  }
+
+  return *this;
+}
+
+template <uint16_t S>
+constexpr UInt<S>  &UInt<S>::operator|=(UInt<S> const &n)
+{
+  for (std::size_t i = 0; i < WIDE_ELEMENTS; ++i)
+  {
+    data_.wide[i] |= n.elementAt(i);
+  }
+
+  return *this;
+}
+
+template <uint16_t S>
+constexpr UInt<S>  &UInt<S>::operator^=(UInt<S> const &n)
+{
+  for (std::size_t i = 0; i < WIDE_ELEMENTS; ++i)
+  {
+    data_.wide[i] ^= n.elementAt(i);
+  }
+
+  return *this;
+}
+
+template <uint16_t S>
+template <typename T>
+constexpr meta::IfIsInteger<T, UInt<S>> UInt<S>::operator+(T const &n) const
+{
+  UInt<S> ret{*this}, nint{n};
+  ret += nint;
+
+  return std::move(ret);
+}
+
+template <uint16_t S>
+template <typename T>
+constexpr meta::IfIsInteger<T, UInt<S>> UInt<S>::operator-(T const &n) const
+{
+  UInt<S> ret{*this}, nint{n};
+  ret -= nint;
+
+  return std::move(ret);
+}
+
+template <uint16_t S>
+template <typename T>
+constexpr meta::IfIsInteger<T, UInt<S>> UInt<S>::operator*(T const &n) const
+{
+  UInt<S> ret{*this}, nint{n};
+  ret *= nint;
+
+  return std::move(ret);
+}
+
+template <uint16_t S>
+template <typename T>
+constexpr meta::IfIsInteger<T, UInt<S>> UInt<S>::operator/(T const &n) const
+{
+  UInt<S> ret{*this}, nint{n};
+  ret /= nint;
+
+  return std::move(ret);
+}
+
+template <uint16_t S>
+template <typename T>
+constexpr meta::IfIsInteger<T, UInt<S>> UInt<S>::operator&(T const &n) const
+{
+  UInt<S> ret{*this}, nint{n};
+  ret &= nint;
+
+  return std::move(ret);
+}
+
+template <uint16_t S>
+template <typename T>
+constexpr meta::IfIsInteger<T, UInt<S>> UInt<S>::operator|(T const &n) const
+{
+  UInt<S> ret{*this}, nint{n};
+  ret |= nint;
+
+  return std::move(ret);
+}
+
+template <uint16_t S>
+template <typename T>
+constexpr meta::IfIsInteger<T, UInt<S>> UInt<S>::operator^(T const &n) const
+{
+  UInt<S> ret{*this}, nint{n};
+  ret ^= nint;
+
+  return std::move(ret);
+}
+
+template <uint16_t S>
+template <typename T>
+constexpr meta::IfIsInteger<T, UInt<S>> &UInt<S>::operator+=(T const &n)
+{
+  UInt<S> nint{n};
+  *this += nint;
+
+  return *this;
+}
+
+template <uint16_t S>
+template <typename T>
+constexpr meta::IfIsInteger<T, UInt<S>> &UInt<S>::operator-=(T const &n)
+{
+  UInt<S> nint{n};
+  *this -= nint;
+
+  return *this;
+}
+
+template <uint16_t S>
+template <typename T>
+constexpr meta::IfIsInteger<T, UInt<S>> &UInt<S>::operator*=(T const &n)
+{
+  UInt<S> nint{n};
+  *this *= nint;
+
+  return *this;
+}
+
+template <uint16_t S>
+template <typename T>
+constexpr meta::IfIsInteger<T, UInt<S>> &UInt<S>::operator/=(T const &n)
+{
+  UInt<S> nint{n};
+  *this /= nint;
+
+  return *this;
+}
+
+template <uint16_t S>
+template <typename T>
+constexpr meta::IfIsInteger<T, UInt<S>> &UInt<S>::operator&=(T const &n)
+{
+  UInt<S> nint{n};
+  *this &= nint;
+
+  return *this;
+}
+
+template <uint16_t S>
+template <typename T>
+constexpr meta::IfIsInteger<T, UInt<S>> &UInt<S>::operator|=(T const &n)
+{
+  UInt<S> nint{n};
+  *this |= nint;
+
+  return *this;
+}
+
+template <uint16_t S>
+template <typename T>
+constexpr meta::IfIsInteger<T, UInt<S>> &UInt<S>::operator^=(T const &n)
+{
+  UInt<S> nint{n};
+  *this ^= nint;
+
+  return *this;
+}
+
+template <uint16_t S>
 constexpr UInt<S> &UInt<S>::operator<<=(std::size_t const &bits)
 {
-  assert(bits < WIDE_ELEMENT_SIZE);
-  std::size_t nbits = WIDE_ELEMENT_SIZE - bits;
-  WideType carry = 0;
-  for (std::size_t i = 0; i < data_.wide.size(); ++i)
+  std::size_t full_words = bits / (sizeof(uint64_t) * 8);
+  std::size_t real_bits = bits - full_words * sizeof(uint64_t) * 8;
+  std::size_t nbits = WIDE_ELEMENT_SIZE - real_bits;
+  // No actual shifting involved, just move the elements
+  if (full_words)
   {
-    std::cout << "*this         = " << std::string(*this) << std::endl;
-    std::cout << "bits          = " << std::dec << bits << std::endl;
-    std::cout << "nbits         = " << std::dec << nbits << std::endl;
-    std::cout << "carry (old)   = " << std::hex << carry << std::endl;
-    WideType val = data_.wide[i];
-    std::cout << "data_.wide[" << i << "] = " << std::hex << val << std::endl;
-    std::cout << "val = " << std::hex << (val << bits) << std::endl;
+    for (std::size_t i = WIDE_ELEMENTS -1; i >= full_words; i--)
+    {
+      data_.wide[i] = data_.wide[i - full_words];
+    }
+    for (std::size_t i = 0; i < full_words; i++)
+    {
+      data_.wide[i] = 0;
+    }
+  }
+  // If real_bits == 0, nothing to do
+  if (real_bits)
+  {
+    WideType carry = 0;
+    for (std::size_t i = 0; i < WIDE_ELEMENTS; i++)
+    {
+      WideType val = data_.wide[i];
+      data_.wide[i] = (val << real_bits) | carry;
+      carry         = val >> nbits;
+    }
+  }
 
-    data_.wide[i] = (val << bits) | carry;
-    std::cout << "data_.wide[" << i << "] = " << std::hex << data_.wide[i] << std::endl;
-    std::cout << "*this = " << std::string(*this) << std::endl;
-    carry         = val >> nbits;
-    std::cout << "carry (new)    = " << std::hex << carry << std::endl;
+  return *this;
+}
+
+template <uint16_t S>
+constexpr UInt<S> &UInt<S>::operator>>=(std::size_t const &bits)
+{
+  std::size_t full_words = bits / (sizeof(uint64_t) * 8);
+  std::size_t real_bits = bits - full_words * sizeof(uint64_t) * 8;
+  std::size_t nbits = WIDE_ELEMENT_SIZE - real_bits;
+  // No actual shifting involved, just move the elements
+  if (full_words)
+  {
+    for (std::size_t i = 0; i < WIDE_ELEMENTS - full_words; i++)
+    {
+      data_.wide[i] = data_.wide[i + full_words];
+    }
+    for (std::size_t i = 0; i < full_words; i++)
+    {
+      data_.wide[WIDE_ELEMENTS - i - 1] = 0;
+    }
+  }
+
+  // If real_bits == 0, nothing to do
+  if (real_bits)
+  {
+    WideType carry = 0;
+    for (std::size_t i = 0; i < WIDE_ELEMENTS; i++)
+    {
+      WideType val = data_.wide[WIDE_ELEMENTS -1 - i];
+      data_.wide[WIDE_ELEMENTS -1 - i] = (val >> real_bits) | carry;
+      carry         = val << nbits;
+    }
   }
 
   return *this;
@@ -466,7 +833,7 @@ constexpr typename UInt<S>::WideType &UInt<S>::elementAt(std::size_t const &n)
 template <uint16_t S>
 constexpr uint64_t UInt<S>::TrimmedSize() const
 {
-  uint64_t ret = data_.wide.size();
+  uint64_t ret = WIDE_ELEMENTS;
   while ((ret != 0) && (data_.wide[ret - 1] == 0))
   {
     --ret;
@@ -483,7 +850,7 @@ constexpr uint8_t const *UInt<S>::pointer() const
 template <uint16_t S>
 constexpr uint64_t UInt<S>::size() const
 {
-  return data_.wide.size();
+  return ELEMENTS;
 }
 
 template <uint16_t S>
