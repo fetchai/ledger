@@ -21,10 +21,10 @@
 #include <memory>
 #include <vector>
 
+#include "math/activation_functions/sigmoid.hpp"
+#include "math/activation_functions/softmax.hpp"
 #include "math/fundamental_operators.hpp"
-#include "math/ml/activation_functions/sigmoid.hpp"
-#include "math/ml/activation_functions/softmax.hpp"
-#include "math/ml/loss_functions/cross_entropy.hpp"
+#include "math/metrics/cross_entropy.hpp"
 #include "ml/ops/ops.hpp"
 
 namespace fetch {
