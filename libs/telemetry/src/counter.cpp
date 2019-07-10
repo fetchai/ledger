@@ -41,9 +41,17 @@ Counter::Counter(std::string name, std::string description, Labels labels)
   }
 }
 
-void Counter::ToStream(std::ostream &stream) const
+/**
+ * Write the value of the metric to the stream so as to be consumed by external components
+ *
+ * @param stream The stream to be updated
+ * @param mode The mode to be used when generating the stream
+ */
+
+void Counter::ToStream(std::ostream &stream, StreamMode mode) const
 {
-  WritePrefix(stream, "counter") << counter_ << '\n';
+  WriteHeader(stream, "counter", mode);
+  WriteValuePrefix(stream) << counter_ << '\n';
 }
 
 }  // namespace telemetry

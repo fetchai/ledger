@@ -24,11 +24,11 @@
 
 #include "vectorise/memory/array.hpp"
 
+#include "math/activation_functions/softmax.hpp"
 #include "math/base_types.hpp"
 #include "math/matrix_operations.hpp"
-#include "math/ml/activation_functions/softmax.hpp"
-#include "math/ml/loss_functions/l2_loss.hpp"
-#include "math/ml/loss_functions/l2_norm.hpp"
+#include "math/metrics/l2_loss.hpp"
+#include "math/metrics/l2_norm.hpp"
 #include "math/standard_functions/abs.hpp"
 #include "math/standard_functions/exp.hpp"
 #include "math/standard_functions/fmod.hpp"
@@ -1200,17 +1200,6 @@ bool Tensor<T, C>::Reshape(SizeVector const &shape)
 }
 
 /**
- * Resizes and reshapes tensor according to newly specified shape
- * @param shape the new shape to set
- */
-template <typename T, typename C>
-bool Tensor<T, C>::ResizeFromShape(SizeVector const &shape)
-{
-  // TODO(private issue 995): Get rid of this function
-  return Resize(shape, true);
-}
-
-/**
  * Set operator takes variable number of indices followed by one value.
  * This is made possible using the TensorSetter class to manage
  * template unrolling
@@ -1804,7 +1793,7 @@ Tensor<T, C> Tensor<T, C>::InlineDivide(Tensor const &other)
 
 /**
  * Divide array by a scalar elementwise
- * @param scalar to subtract
+ * @param scalar to divide
  * @return new array output
  */
 template <typename T, typename C>
@@ -1828,7 +1817,7 @@ Tensor<T, C> Tensor<T, C>::InlineReverseDivide(Tensor const &other)
 
 /**
  * Divide scalar by array elementwise
- * @param scalar to subtract
+ * @param scalar to divide
  * @return new array output
  */
 template <typename T, typename C>
@@ -1848,7 +1837,9 @@ template <typename T, typename C>
 template <typename OtherType>
 Tensor<T, C> Tensor<T, C>::operator+(OtherType const &other)
 {
-  return InlineAdd(other);
+  Tensor<T, C> ret{this->shape()};
+  Add(*this, other, ret);
+  return ret;
 }
 
 template <typename T, typename C>
@@ -1868,7 +1859,9 @@ template <typename T, typename C>
 template <typename OtherType>
 Tensor<T, C> Tensor<T, C>::operator-(OtherType const &other)
 {
-  return InlineSubtract(other);
+  Tensor<T, C> ret{this->shape()};
+  Subtract(*this, other, ret);
+  return ret;
 }
 
 template <typename T, typename C>
@@ -1888,7 +1881,9 @@ template <typename T, typename C>
 template <typename OtherType>
 Tensor<T, C> Tensor<T, C>::operator*(OtherType const &other)
 {
-  return InlineMultiply(other);
+  Tensor<T, C> ret(this->shape());
+  Multiply(*this, other, ret);
+  return ret;
 }
 
 template <typename T, typename C>
@@ -1902,7 +1897,9 @@ template <typename T, typename C>
 template <typename OtherType>
 Tensor<T, C> Tensor<T, C>::operator/(OtherType const &other)
 {
-  return InlineDivide(other);
+  Tensor<T, C> ret(this->shape());
+  Divide(*this, other, ret);
+  return ret;
 }
 
 template <typename T, typename C>

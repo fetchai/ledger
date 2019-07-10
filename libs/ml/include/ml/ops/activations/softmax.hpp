@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/ml/activation_functions/softmax.hpp"
+#include "math/activation_functions/softmax.hpp"
 #include "ml/ops/ops.hpp"
 
 #include <cassert>
@@ -36,7 +36,6 @@ public:
   using ArrayType     = T;
   using DataType      = typename ArrayType::Type;
   using SizeType      = typename ArrayType::SizeType;
-  using ArrayPtrType  = std::shared_ptr<ArrayType>;
   using VecTensorType = typename Ops<T>::VecTensorType;
 
   Softmax(SizeType axis = 1)

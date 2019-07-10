@@ -48,8 +48,8 @@ public:
     , peer_(std::move(thepeer))
     , timeduration_(thetimeout)
     , muddle_(themuddle)
-    , client_(std::make_shared<Client>("R:ExecCW", muddle_.AsEndpoint(), Muddle::Address(),
-                                       SERVICE_EXECUTOR, CHANNEL_RPC))
+    , client_(
+          std::make_shared<Client>("R:ExecCW", muddle_.AsEndpoint(), SERVICE_EXECUTOR, CHANNEL_RPC))
   {
     state_machine_->RegisterHandler(State::INITIAL, this, &ExecutorConnectorWorker::OnInitial);
     state_machine_->RegisterHandler(State::CONNECTING, this,
