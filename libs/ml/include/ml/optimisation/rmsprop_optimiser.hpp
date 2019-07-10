@@ -85,22 +85,22 @@ RMSPropOptimiser<T>::RMSPropOptimiser(std::shared_ptr<Graph<T>>       graph,
                                       std::string const &             output_node_name,
                                       DataType const &learning_rate, DataType const &decay_rate,
                                       DataType const &epsilon)
-  : Optimiser<T>(graph, input_node_names, label_node_name, output_node_name, learning_rate),
-   decay_rate_(decay_rate),
-   epsilon_(epsilon)
+  : Optimiser<T>(graph, input_node_names, label_node_name, output_node_name, learning_rate)
+  , decay_rate_(decay_rate)
+  , epsilon_(epsilon)
 {
   Init();
 }
 
 template <class T>
-RMSPropOptimiser<T>::RMSPropOptimiser(std::shared_ptr<Graph<T>> graph,
-																	    std::vector<std::string> const &input_node_names, std::string const &label_node_name,
-																	    std::string const &                                       output_node_name,
-																	    fetch::ml::optimisers::LearningRateParam<DataType> const &learning_rate_param,
-																	    DataType const &decay_rate, DataType const &epsilon)
-  : Optimiser<T>(graph, input_node_names, label_node_name, output_node_name, learning_rate_param),
-  decay_rate_(decay_rate),
-  epsilon_(epsilon)
+RMSPropOptimiser<T>::RMSPropOptimiser(
+    std::shared_ptr<Graph<T>> graph, std::vector<std::string> const &input_node_names,
+    std::string const &label_node_name, std::string const &output_node_name,
+    fetch::ml::optimisers::LearningRateParam<DataType> const &learning_rate_param,
+    DataType const &decay_rate, DataType const &epsilon)
+  : Optimiser<T>(graph, input_node_names, label_node_name, output_node_name, learning_rate_param)
+  , decay_rate_(decay_rate)
+  , epsilon_(epsilon)
 {
   Init();
 }

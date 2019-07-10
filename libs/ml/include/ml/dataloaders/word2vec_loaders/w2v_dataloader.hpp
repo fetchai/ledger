@@ -37,7 +37,8 @@ template <typename T>
 class W2VLoader : public DataLoader<fetch::math::Tensor<T>, fetch::math::Tensor<T>>
 {
 public:
-	// The intended T is the typename for the data input to the neural network, which should be a float or double or fix-point type.
+  // The intended T is the typename for the data input to the neural network, which should be a
+  // float or double or fix-point type.
   static constexpr T WindowContextUnused = -1;
 
   using LabelType = fetch::math::Tensor<T>;
