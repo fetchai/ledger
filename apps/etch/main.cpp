@@ -24,6 +24,7 @@
 #include "core/json/document.hpp"
 #include "core/serializers/byte_array.hpp"
 #include "variant/variant.hpp"
+#include "vm/address.hpp"
 #include "vm/common.hpp"
 #include "vm/generator.hpp"
 #include "vm/io_observer_interface.hpp"
@@ -53,6 +54,7 @@ using fetch::vm::Executable;
 using fetch::vm::Ptr;
 using fetch::vm::VM;
 using fetch::vm::String;
+using fetch::vm::Address;
 using fetch::vm::TypeId;
 using fetch::vm_modules::VMFactory;
 using fetch::variant::Variant;
@@ -158,6 +160,31 @@ int32_t Argc(VM *, TypeId)
 Ptr<String> Argv(VM *vm, TypeId, int32_t index)
 {
   return {new String{vm, params.script().at(static_cast<std::size_t>(index))}};
+}
+
+const std::string ADDR_SIGNEE_PREFIX{"signee:"};
+
+Ptr<Address> ArgvAsAddr(VM *vm, TypeId, int32_t index)
+{
+  auto const &addr_param{params.script().at(static_cast<std::size_t>(index))};
+  bool const  is_signee =
+      std::equal(ADDR_SIGNEE_PREFIX.begin(), ADDR_SIGNEE_PREFIX.end(), addr_param.begin());
+
+  Ptr<String> addr_str;
+  if (is_signee)
+  {
+    auto const addr_substr{addr_param.substr(ADDR_SIGNEE_PREFIX.size(),
+                                             addr_param.size() - ADDR_SIGNEE_PREFIX.size())};
+    std::cout << "is signee, address = " << addr_substr << std::endl;
+    addr_str = new String{vm, addr_substr};
+  }
+  else
+  {
+    std::cout << "NOT signee, address = " << addr_param << std::endl;
+    addr_str = new String{vm, addr_param};
+  }
+
+  return new Address{vm, fetch::vm::TypeIds::Address, addr_str, is_signee};
 }
 
 // placeholder class
@@ -314,7 +341,8 @@ int main(int argc, char **argv)
   // additional module bindings
   module->CreateClassType<System>("System")
       .CreateStaticMemberFunction("Argc", &Argc)
-      .CreateStaticMemberFunction("Argv", &Argv);
+      .CreateStaticMemberFunction("Argv", &Argv)
+      .CreateStaticMemberFunction("ArgvAsAddr", &ArgvAsAddr);
 
   // attempt to compile the program
   auto errors = VMFactory::Compile(module, source, *executable);
