@@ -1304,7 +1304,11 @@ ExpressionNodePtr Parser::ParseExpression(bool is_conditional_expression)
       {
         break;
       }
+#ifdef __clang__
+      [[clang::fallthrough]];
+#else
       [[gnu::fallthrough]];
+#endif
     }
     default:
     {
