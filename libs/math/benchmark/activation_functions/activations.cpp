@@ -16,11 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/ml/activation_functions/elu.hpp"
-#include "math/ml/activation_functions/leaky_relu.hpp"
-#include "math/ml/activation_functions/relu.hpp"
-#include "math/ml/activation_functions/sigmoid.hpp"
-#include "math/ml/activation_functions/softmax.hpp"
+#include "math/activation_functions/elu.hpp"
+#include "math/activation_functions/leaky_relu.hpp"
+#include "math/activation_functions/relu.hpp"
+#include "math/activation_functions/sigmoid.hpp"
+#include "math/activation_functions/softmax.hpp"
 
 #include "benchmark/benchmark.h"
 #include "math/tensor.hpp"

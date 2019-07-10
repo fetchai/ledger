@@ -16,7 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/ml/loss_functions/mean_square_error_loss.hpp"
+#include "math/metrics/mean_square_error.hpp"
 #include "math/tensor.hpp"
 
 #include "gtest/gtest.h"
