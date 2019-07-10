@@ -42,7 +42,7 @@ TYPED_TEST(MeanAbsoluteErrorTest, perfect_match_test)
 
   // test correct values
   ASSERT_NEAR(static_cast<double>(score), double(0.0),
-              test_array.size() *
+              static_cast<double>(test_array.size()) *
                   static_cast<double>(fetch::math::function_tolerance<typename TypeParam::Type>()));
 }
 
@@ -57,6 +57,6 @@ TYPED_TEST(MeanAbsoluteErrorTest, value_test)
 
   // test correct values
   ASSERT_NEAR(static_cast<double>(score), double(3.3f),
-              test_array.size() *
+              static_cast<double>(test_array.size()) *
                   static_cast<double>(fetch::math::function_tolerance<typename TypeParam::Type>()));
 }
