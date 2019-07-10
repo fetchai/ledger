@@ -43,6 +43,7 @@ SUPPORTED_TEXT_FILE_PATTERNS = (
     '*.py',
     '*.rst',
     '*.sh',
+    '*.svg',
     '*.txt',
     '*.xml',
     '*.yaml',
