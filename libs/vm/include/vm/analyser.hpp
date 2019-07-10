@@ -342,7 +342,7 @@ private:
   static std::enable_if_t<type_util::ConjunctionV<std::is_same<Operator, Operators>...>>
   EnableRightOperator(TypePtr const &type, Operators... ops)
   {
-    value_util::ForEach([&type, this](auto op) { EnableRightOperator(type, op); }, ops...);
+    value_util::ForEach([&type](auto op) { Analyser::EnableRightOperator(type, op); }, ops...);
   }
 
   static bool IsOperatorEnabled(TypePtr const &type, Operator op)
