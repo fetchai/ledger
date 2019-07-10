@@ -21,7 +21,7 @@ TEST(rbc_messages, broadcast) {
 
 
 TEST(rbc_messages, echo) {
-    REcho echo{1,1,1, std::hash<std::string>{}("hello")};
+    REcho echo{1,1,1, "hello"};
 
     fetch::serializers::ByteArrayBuffer serialiser {echo.serialize()};
 
@@ -33,7 +33,7 @@ TEST(rbc_messages, echo) {
 }
 
 TEST(rbc_messages, ready) {
-    RReady ready{1,1,1, std::hash<std::string>{}("hello")};
+    RReady ready{1,1,1, "hello"};
 
     fetch::serializers::ByteArrayBuffer serialiser {ready.serialize()};
 

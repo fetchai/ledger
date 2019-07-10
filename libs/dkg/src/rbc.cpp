@@ -16,29 +16,34 @@ namespace rbc {
     }
 
 
-    RBC::RBC(Endpoint &endpoint, ConstByteArray address, uint32_t num_parties)
+    RBC::RBC(Endpoint &endpoint, MuddleAddress address, const CabinetMembers &cabinet, uint32_t threshold)
     : address_{std::move(address)}
     , endpoint_{endpoint}
+    , current_cabinet_{cabinet}
     , rbc_subscription_(endpoint.Subscribe(SERVICE_DKG, CHANNEL_BROADCAST))
-    , id_{cabinetIndex()} //TODO: Should only be called after the cabinet has been reset
-    , num_parties_{num_parties}
+    , threshold_{threshold}
     {
-            threshold_ = num_parties_ / 3; // Maximum number of byzantine parties the protocol can withstand
-            parties_.resize(num_parties);
+        num_parties_ = static_cast<uint32_t>(current_cabinet_.size());
+        assert(num_parties_ > 0);
+        auto it{current_cabinet_.find(address_)};
+        assert(it != current_cabinet_.end());
+        id_ = static_cast<uint32_t>(std::distance(current_cabinet_.begin(), current_cabinet_.find(address_)));
+        assert(num_parties_ > 3 * threshold_);
+        parties_.resize(num_parties_);
 
-            // set subscription for rbc
-            rbc_subscription_->SetMessageHandler([this](MuddleAddress const &from, uint16_t, uint16_t, uint16_t,
-                    muddle::Packet::Payload const &payload, MuddleAddress transmitter) {
+        // set subscription for rbc
+        rbc_subscription_->SetMessageHandler([this](MuddleAddress const &from, uint16_t, uint16_t, uint16_t,
+                                                    muddle::Packet::Payload const &payload, MuddleAddress transmitter) {
 
-                RBCSerializer serialiser(payload);
+            RBCSerializer serialiser(payload);
 
-                // deserialize the RBCEnvelop
-                RBCEnvelop env;
-                serialiser >> env;
+            // deserialize the RBCEnvelop
+            RBCEnvelop env;
+            serialiser >> env;
 
-                // dispatch the event
-                onRBC(from, env, transmitter);
-            });
+            // dispatch the event
+            onRBC(from, env, transmitter);
+        });
     }
 
     void RBC::send(const RBCEnvelop &env, const MuddleAddress &address) {
@@ -71,6 +76,7 @@ namespace rbc {
 
         RBCEnvelop env{RBroadcast(CHANNEL_BROADCAST, id_, ++s, msg)};
         broadcast(env);
+        onRBroadcast(std::dynamic_pointer_cast<RBroadcast>(env.getMessage()), id_);
     }
 
     void RBC::onRBC(MuddleAddress const &from, RBCEnvelop const &envelop, MuddleAddress const &transmitter) {
@@ -159,7 +165,7 @@ namespace rbc {
             return;
         }
         partyFlag(senderIndex, tag).ready_ = true;
-        FETCH_LOG_INFO(LOGGING_NAME, "onREcho: Node ", id_, " received msg ", tag, " from node ",
+        FETCH_LOG_INFO(LOGGING_NAME, "onRReady: Node ", id_, " received msg ", tag, " from node ",
                        senderIndex, " with sequence ", msg_ptr->seqCounter(), " and id ", msg_ptr->id());
         auto &msgsCount = broadcasts_[tag].msgsCount_[msg_ptr->hash()];
         msgsCount.r_d_++;
@@ -204,7 +210,7 @@ namespace rbc {
             return;
         }
         partyFlag(senderIndex, tag).request_ = true;
-        FETCH_LOG_INFO(LOGGING_NAME, "onREcho: Node ", id_, " received msg ", tag, " from node ",
+        FETCH_LOG_INFO(LOGGING_NAME, "onRRequest: Node ", id_, " received msg ", tag, " from node ",
                        senderIndex, " with sequence ", msg_ptr->seqCounter(), " and id ", msg_ptr->id());
         if (!broadcasts_[tag].mbar_.empty()) {
             RBCEnvelop env{RAnswer{msg_ptr->channelId(), msg_ptr->id(), msg_ptr->seqCounter(), broadcasts_[tag].mbar_}};
@@ -260,10 +266,6 @@ namespace rbc {
                 old_tag_msg = parties_[senderIndex].undelivered_msg.erase(old_tag_msg);
             }
         }
-    }
-
-    uint32_t RBC::cabinetIndex() const {
-        return static_cast<uint32_t>(std::distance(current_cabinet_.begin(), current_cabinet_.find(address_)));
     }
 
     uint32_t RBC::cabinetIndex(const MuddleAddress &other_address) const {
