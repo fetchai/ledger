@@ -6,30 +6,32 @@
 
 namespace fetch {
 namespace dkg {
+namespace rbc {
 
     class RBCEnvelop {
-    public:
-        using RBCSerializer = RBCMessage::RBCSerializer;
         using MessageType = RBCMessage::MessageType;
         using Payload = byte_array::ConstByteArray;
-
+    public:
         RBCEnvelop() = default;
-        explicit RBCEnvelop(const RBCMessage &msg): type_{msg.getType()}, serialisedMessage_{msg.serialize().data()} {};
 
-        template <typename T>
+        explicit RBCEnvelop(const RBCMessage &msg) : type_{msg.getType()},
+                                                     serialisedMessage_{msg.serialize().data()} {};
+
+        template<typename T>
         void serialize(T &serialiser) const {
             serialiser << (uint8_t) type_ << serialisedMessage_;
         }
-        template <typename T>
+
+        template<typename T>
         void deserialize(T &serialiser) {
             uint8_t val;
-            serialiser >>  val;
+            serialiser >> val;
             type_ = (MessageType) val;
             serialiser >> serialisedMessage_;
         }
 
         std::shared_ptr<RBCMessage> getMessage() const {
-            RBCSerializer serialiser {serialisedMessage_};
+            RBCSerializer serialiser{serialisedMessage_};
             switch (type_) {
                 case MessageType::RBROADCAST:
                     return std::make_shared<RBroadcast>(serialiser);
@@ -58,6 +60,6 @@ namespace dkg {
     inline void Deserialize(T &serializer, RBCEnvelop &env) {
         env.deserialize(serializer);
     }
-
+}
 }
 }

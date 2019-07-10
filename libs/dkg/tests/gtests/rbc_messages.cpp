@@ -1,10 +1,10 @@
-#include "dkg/rbc_envelope.hpp"
+#include "dkg/rbc_envelop.hpp"
 #include "core/serializers/byte_array_buffer.hpp"
 #include "core/serializers/counter.hpp"
 #include "gtest/gtest.h"
 
 using namespace fetch;
-using namespace fetch::dkg;
+using namespace fetch::dkg::rbc;
 
 
 TEST(rbc_messages, broadcast) {

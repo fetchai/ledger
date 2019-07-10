@@ -9,14 +9,15 @@
 
 namespace fetch {
 namespace dkg {
+namespace rbc {
+
+    using TruncatedHash = byte_array::ByteArray;
+    using TagType = uint64_t;
+    using RBCSerializer  = fetch::serializers::ByteArrayBuffer;
+    using RBCSerializerCounter = fetch::serializers::SizeCounter<fetch::serializers::ByteArrayBuffer>;
 
     class RBCMessage {
     public:
-        using TruncatedHash = uint64_t;
-        using TagType = uint64_t;
-        using RBCSerializer  = fetch::serializers::ByteArrayBuffer;
-        using RBCSerializerCounter = fetch::serializers::SizeCounter<fetch::serializers::ByteArrayBuffer>;
-
         enum class MessageType : uint8_t {
             RBROADCAST,
             RECHO,
@@ -24,18 +25,6 @@ namespace dkg {
             RREQUEST,
             RANSWER
         };
-    protected:
-        const MessageType type_;
-        // Tag of message
-        uint16_t channel_id{0}; // Is this safe to truncate to uint8_t?
-        uint32_t node_id{0}; // Should this be crypto::bls::Id?
-        uint8_t sequence_counter{0};
-
-        explicit RBCMessage(MessageType type): type_{type} {};
-        explicit RBCMessage(uint16_t channel, uint32_t node, uint8_t seq, MessageType type) : type_{type}, channel_id{channel}, node_id{node},
-            sequence_counter{seq} {};
-
-    public:
 
         TagType getTag() const {
             TagType msg_tag = channel_id;
@@ -44,7 +33,7 @@ namespace dkg {
             msg_tag <<= 32;
             return (msg_tag | uint64_t(sequence_counter));
         }
-        MessageType getType() const {
+        RBCMessage::MessageType getType() const {
             return type_;
         }
         uint8_t channelId() const {
@@ -57,14 +46,20 @@ namespace dkg {
             return node_id;
         }
         virtual RBCSerializer serialize() const = 0;
+
+    protected:
+        const MessageType type_;
+        // Tag of message
+        uint16_t channel_id{0}; // Is this safe to truncate to uint8_t?
+        uint32_t node_id{0}; // Should this be crypto::bls::Id?
+        uint8_t sequence_counter{0};
+
+        explicit RBCMessage(MessageType type): type_{type} {};
+        explicit RBCMessage(uint16_t channel, uint32_t node, uint8_t seq, MessageType type) : type_{type}, channel_id{channel}, node_id{node},
+            sequence_counter{seq} {};
     };
 
     class RMessage : public RBCMessage {
-    protected:
-        std::string message_;
-        explicit RMessage(MessageType type): RBCMessage{type} {};
-        RMessage(uint16_t channel, uint32_t node, uint8_t seq, std::string msg, MessageType type): RBCMessage{channel, node,
-                seq, type}, message_{std::move(msg)} {};
     public:
         RBCSerializer serialize() const override {
             RBCSerializer serialiser;
@@ -76,14 +71,14 @@ namespace dkg {
         const std::string& message() const {
             return message_;
         }
+    protected:
+        std::string message_;
+        explicit RMessage(MessageType type): RBCMessage{type} {};
+        RMessage(uint16_t channel, uint32_t node, uint8_t seq, std::string msg, MessageType type): RBCMessage{channel, node,
+                seq, type}, message_{std::move(msg)} {};
     };
 
     class RHash : public RBCMessage {
-    protected:
-        TruncatedHash hash_;
-        explicit RHash(MessageType type): RBCMessage{type} {};
-        RHash(uint16_t channel, uint32_t node, uint8_t seq, TruncatedHash msg_hash, MessageType type): RBCMessage{channel, node,
-                                                                                            seq, type}, hash_{msg_hash} {};
     public:
         RBCSerializer serialize() const override {
             RBCSerializer serialiser;
@@ -95,6 +90,11 @@ namespace dkg {
         const TruncatedHash& hash() const {
             return hash_;
         }
+    protected:
+        TruncatedHash hash_;
+        explicit RHash(MessageType type): RBCMessage{type} {};
+        RHash(uint16_t channel, uint32_t node, uint8_t seq, TruncatedHash msg_hash, MessageType type): RBCMessage{channel, node,
+                                                                                            seq, type}, hash_{msg_hash} {};
     };
 
     // Different RBC Messages:
@@ -155,5 +155,6 @@ namespace dkg {
             serialiser >> channel_id >> node_id >> sequence_counter >> message_;
         }
     };
+}
 }
 }
