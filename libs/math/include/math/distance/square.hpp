@@ -17,25 +17,33 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/ops/loss_functions/mean_square_error_loss.hpp"
-#include "python/fetch_pybind.hpp"
-
-namespace py = pybind11;
+#include "core/assert.hpp"
+#include <cmath>
 
 namespace fetch {
-namespace ml {
-namespace ops {
+namespace math {
+namespace distance {
 
-template <typename T>
-void BuildMeanSquareErrorLoss(std::string const &custom_name, pybind11::module &module)
+template <typename ArrayType>
+inline typename ArrayType::Type SquareDistance(ArrayType const &A, ArrayType const &B)
 {
-  py::class_<fetch::ml::ops::MeanSquareErrorLoss<fetch::math::Tensor<T>>>(module,
-                                                                          custom_name.c_str())
-      .def(py::init<>())
-      .def("Forward", &fetch::ml::ops::MeanSquareErrorLoss<fetch::math::Tensor<T>>::Forward)
-      .def("Backward", &fetch::ml::ops::MeanSquareErrorLoss<fetch::math::Tensor<T>>::Backward);
+  using Type = typename ArrayType::Type;
+  auto it1   = A.begin();
+  auto it2   = B.begin();
+  assert(it1.size() == it2.size());
+  Type ret = Type(0);
+
+  while (it1.is_valid())
+  {
+    Type d = (*it1) - (*it2);
+
+    ret += d * d;
+    ++it1;
+    ++it2;
+  }
+  return ret;
 }
 
-}  // namespace ops
-}  // namespace ml
+}  // namespace distance
+}  // namespace math
 }  // namespace fetch

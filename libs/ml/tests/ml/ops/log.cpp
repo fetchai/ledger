@@ -45,12 +45,11 @@ class LogBothTest : public ::testing::Test
 using FloatingPointTypes =
     ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>>;
 
-using FixedPointTypes =
-    ::testing::Types<fetch::math::Tensor<fetch::fixed_point::FixedPoint<16, 16>>,
-                     fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
+using FixedPointTypes = ::testing::Types<fetch::math::Tensor<fetch::fixed_point::fp32_t>,
+                                         fetch::math::Tensor<fetch::fixed_point::fp64_t>>;
 
-using BothTypes = ::testing::Types<fetch::math::Tensor<fetch::fixed_point::FixedPoint<16, 16>>,
-                                   fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>,
+using BothTypes = ::testing::Types<fetch::math::Tensor<fetch::fixed_point::fp32_t>,
+                                   fetch::math::Tensor<fetch::fixed_point::fp64_t>,
                                    fetch::math::Tensor<float>, fetch::math::Tensor<double>>;
 
 TYPED_TEST_CASE(LogFloatTest, FloatingPointTypes);
@@ -60,6 +59,7 @@ TYPED_TEST_CASE(LogBothTest, BothTypes);
 TYPED_TEST(LogBothTest, forward_all_positive_test)
 {
   using ArrayType = TypeParam;
+  using DataType  = typename TypeParam::Type;
 
   ArrayType data = ArrayType::FromString("1, 2, 4, 8, 100, 1000");
   ArrayType gt   = ArrayType::FromString(
@@ -71,8 +71,8 @@ TYPED_TEST(LogBothTest, forward_all_positive_test)
   TypeParam prediction(op.ComputeOutputShape({data}));
   op.Forward({data}, prediction);
 
-  ASSERT_TRUE(prediction.AllClose(gt, fetch::math::function_tolerance<typename ArrayType::Type>(),
-                                  fetch::math::function_tolerance<typename ArrayType::Type>()));
+  ASSERT_TRUE(prediction.AllClose(gt, fetch::math::function_tolerance<DataType>(),
+                                  fetch::math::function_tolerance<DataType>()));
 }
 
 // TODO(1195): fixed point and floating point tests should be unified.
@@ -87,7 +87,7 @@ TYPED_TEST(LogFloatTest, forward_all_negative_test)
   TypeParam pred(op.ComputeOutputShape({data}));
   op.Forward({data}, pred);
 
-  // gives NaN because sqrt of a negative number is undefined
+  // gives NaN because log of a negative number is undefined
   for (auto p_it : pred)
   {
     EXPECT_TRUE(std::isnan(p_it));
@@ -105,7 +105,7 @@ TYPED_TEST(LogFixedTest, forward_all_negative_test)
   TypeParam pred(op.ComputeOutputShape({data}));
   op.Forward({data}, pred);
 
-  // gives NaN because exp of a negative number is undefined
+  // gives NaN because log of a negative number is undefined
   for (auto p_it : pred)
   {
     EXPECT_TRUE(ArrayType::Type::IsNaN(p_it));
@@ -115,9 +115,10 @@ TYPED_TEST(LogFixedTest, forward_all_negative_test)
 TYPED_TEST(LogBothTest, backward_test)
 {
   using ArrayType = TypeParam;
+  using DataType  = typename TypeParam::Type;
 
-  ArrayType data  = ArrayType::FromString("1,   -2,         4,   -10,       100");
-  ArrayType error = ArrayType::FromString("1,   1,         1,    2,         0");
+  ArrayType data  = ArrayType::FromString("1, -2, 4, -10, 100");
+  ArrayType error = ArrayType::FromString("1, 1, 1, 2, 0");
   // (1 / data) * error = gt
   ArrayType gt = ArrayType::FromString("1,-0.5,0.25,-0.2,0");
 
@@ -125,7 +126,6 @@ TYPED_TEST(LogBothTest, backward_test)
 
   std::vector<ArrayType> prediction = op.Backward({data}, error);
 
-  ASSERT_TRUE(
-      prediction.at(0).AllClose(gt, fetch::math::function_tolerance<typename ArrayType::Type>(),
-                                fetch::math::function_tolerance<typename ArrayType::Type>()));
+  ASSERT_TRUE(prediction.at(0).AllClose(gt, fetch::math::function_tolerance<DataType>(),
+                                        fetch::math::function_tolerance<DataType>()));
 }

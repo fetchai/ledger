@@ -25,7 +25,7 @@
 #include "ml/ops/activations/relu.hpp"
 
 // loss functions
-#include "ml/ops/loss_functions/mean_square_error.hpp"
+#include "ml/ops/loss_functions/mean_square_error_loss.hpp"
 
 // optimisers
 #include "ml/optimisation/sgd_optimiser.hpp"
@@ -59,6 +59,7 @@ void BM_Setup_And_Train(benchmark::State &state)
 
     // set up the neural net architecture
     std::string input_name = g->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("", {});
+    std::string label_name = g->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("", {});
 
     std::string h_1 = g->template AddNode<fetch::ml::layers::FullyConnected<TensorType>>(
         "FC1", {input_name}, input_size, hidden_size);
@@ -68,9 +69,12 @@ void BM_Setup_And_Train(benchmark::State &state)
         "FC2", {a_1}, hidden_size, output_size);
     std::string output_name = g->template AddNode<fetch::ml::ops::Relu<TensorType>>("", {h_2});
 
+    std::string error_name = g->template AddNode<fetch::ml::ops::MeanSquareErrorLoss<TensorType>>(
+        "", {output_name, label_name});
+
     // Initialize Optimiser
-    fetch::ml::optimisers::SGDOptimiser<TensorType, fetch::ml::ops::MeanSquareError<TensorType>>
-        optimiser(g, {input_name}, output_name, learning_rate);
+    fetch::ml::optimisers::SGDOptimiser<TensorType> optimiser(g, {input_name}, label_name,
+                                                              error_name, learning_rate);
 
     // Do optimisation
     for (SizeType i = 0; i < n_epochs; ++i)

@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -17,25 +16,20 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/ops/loss_functions/mean_square_error_loss.hpp"
-#include "python/fetch_pybind.hpp"
+#include "core/string/ends_with.hpp"
 
-namespace py = pybind11;
+#include "gtest/gtest.h"
 
-namespace fetch {
-namespace ml {
-namespace ops {
+namespace {
 
-template <typename T>
-void BuildMeanSquareErrorLoss(std::string const &custom_name, pybind11::module &module)
+TEST(StringTests, CheckEndsWith)
 {
-  py::class_<fetch::ml::ops::MeanSquareErrorLoss<fetch::math::Tensor<T>>>(module,
-                                                                          custom_name.c_str())
-      .def(py::init<>())
-      .def("Forward", &fetch::ml::ops::MeanSquareErrorLoss<fetch::math::Tensor<T>>::Forward)
-      .def("Backward", &fetch::ml::ops::MeanSquareErrorLoss<fetch::math::Tensor<T>>::Backward);
+  EXPECT_TRUE(fetch::core::EndsWith("Hello World", "Hello World"));
+  EXPECT_TRUE(fetch::core::EndsWith("Hello World", "World"));
+  EXPECT_FALSE(fetch::core::EndsWith("Hello World", "World2"));
+  EXPECT_TRUE(fetch::core::EndsWith("Hello World", ""));
+  EXPECT_FALSE(fetch::core::EndsWith("Hello World", "o"));
+  EXPECT_FALSE(fetch::core::EndsWith("Hello World", "Hello"));
 }
 
-}  // namespace ops
-}  // namespace ml
-}  // namespace fetch
+}  // namespace

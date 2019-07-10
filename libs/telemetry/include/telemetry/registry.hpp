@@ -53,11 +53,10 @@ public:
 
   /// @name Metric Helpers
   /// @{
-  CounterPtr CreateCounter(std::string name, std::string description = "",
-                           Labels labels = Labels{});
+  CounterPtr CreateCounter(std::string name, std::string description, Labels labels = Labels{});
 
   template <typename T>
-  GaugePtr<T> CreateGauge(std::string name, std::string description = "", Labels labels = Labels{});
+  GaugePtr<T> CreateGauge(std::string name, std::string description, Labels labels = Labels{});
   /// @}
 
   void Collect(std::ostream &stream);

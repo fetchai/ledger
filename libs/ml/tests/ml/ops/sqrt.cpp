@@ -45,12 +45,11 @@ class SqrtBothTest : public ::testing::Test
 using FloatingPointTypes =
     ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>>;
 
-using FixedPointTypes =
-    ::testing::Types<fetch::math::Tensor<fetch::fixed_point::FixedPoint<16, 16>>,
-                     fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
+using FixedPointTypes = ::testing::Types<fetch::math::Tensor<fetch::fixed_point::fp32_t>,
+                                         fetch::math::Tensor<fetch::fixed_point::fp64_t>>;
 
-using BothTypes = ::testing::Types<fetch::math::Tensor<fetch::fixed_point::FixedPoint<16, 16>>,
-                                   fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>,
+using BothTypes = ::testing::Types<fetch::math::Tensor<fetch::fixed_point::fp32_t>,
+                                   fetch::math::Tensor<fetch::fixed_point::fp64_t>,
                                    fetch::math::Tensor<float>, fetch::math::Tensor<double>>;
 
 TYPED_TEST_CASE(SqrtFloatTest, FloatingPointTypes);
@@ -60,6 +59,7 @@ TYPED_TEST_CASE(SqrtBothTest, BothTypes);
 TYPED_TEST(SqrtBothTest, forward_all_positive_test)
 {
   using ArrayType = TypeParam;
+  using DataType  = typename ArrayType::Type;
 
   ArrayType data = ArrayType::FromString("0, 1, 2, 4, 10, 100");
   ArrayType gt   = ArrayType::FromString("0, 1, 1.41421356, 2, 3.1622776, 10");
@@ -69,13 +69,14 @@ TYPED_TEST(SqrtBothTest, forward_all_positive_test)
   TypeParam prediction(op.ComputeOutputShape({data}));
   op.Forward({data}, prediction);
 
-  ASSERT_TRUE(prediction.AllClose(gt, fetch::math::function_tolerance<typename ArrayType::Type>(),
-                                  fetch::math::function_tolerance<typename ArrayType::Type>()));
+  ASSERT_TRUE(prediction.AllClose(gt, fetch::math::function_tolerance<DataType>(),
+                                  fetch::math::function_tolerance<DataType>()));
 }
 
 TYPED_TEST(SqrtBothTest, backward_all_positive_test)
 {
   using ArrayType = TypeParam;
+  using DataType  = typename ArrayType::Type;
 
   ArrayType data  = ArrayType::FromString("1,   2,         4,   10,       100");
   ArrayType error = ArrayType::FromString("1,   1,         1,    2,         0");
@@ -86,9 +87,8 @@ TYPED_TEST(SqrtBothTest, backward_all_positive_test)
 
   std::vector<ArrayType> prediction = op.Backward({data}, error);
 
-  ASSERT_TRUE(
-      prediction.at(0).AllClose(gt, fetch::math::function_tolerance<typename ArrayType::Type>(),
-                                fetch::math::function_tolerance<typename ArrayType::Type>()));
+  ASSERT_TRUE(prediction.at(0).AllClose(gt, fetch::math::function_tolerance<DataType>(),
+                                        fetch::math::function_tolerance<DataType>()));
 }
 
 // TODO(1195): fixed point and floating point tests should be unified.

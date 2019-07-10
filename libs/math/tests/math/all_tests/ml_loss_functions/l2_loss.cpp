@@ -21,27 +21,20 @@
 
 #include "gtest/gtest.h"
 
+namespace {
 template <typename T>
 class L2LossTest : public ::testing::Test
 {
 };
 
 using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
+                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<16, 16>>,
                                  fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
 TYPED_TEST_CASE(L2LossTest, MyTypes);
 
 TYPED_TEST(L2LossTest, value_test)
 {
-  TypeParam test_array = TypeParam{8};
-
-  test_array[0] = typename TypeParam::Type(1);
-  test_array[1] = typename TypeParam::Type(-2);
-  test_array[2] = typename TypeParam::Type(3);
-  test_array[3] = typename TypeParam::Type(-4);
-  test_array[4] = typename TypeParam::Type(5);
-  test_array[5] = typename TypeParam::Type(-6);
-  test_array[6] = typename TypeParam::Type(7);
-  test_array[7] = typename TypeParam::Type(-8);
+  TypeParam test_array = TypeParam ::FromString("1, -2, 3, -4, 5, -6, 7, -8");
 
   // initialise to non-zero just to avoid correct value at initialisation
   typename TypeParam::Type score(0);
@@ -50,3 +43,4 @@ TYPED_TEST(L2LossTest, value_test)
   // test correct values
   EXPECT_NEAR(double(score), double(102), 1e-7);
 }
+}  // namespace

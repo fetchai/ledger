@@ -1804,7 +1804,7 @@ Tensor<T, C> Tensor<T, C>::InlineDivide(Tensor const &other)
 
 /**
  * Divide array by a scalar elementwise
- * @param scalar to subtract
+ * @param scalar to divide
  * @return new array output
  */
 template <typename T, typename C>
@@ -1828,7 +1828,7 @@ Tensor<T, C> Tensor<T, C>::InlineReverseDivide(Tensor const &other)
 
 /**
  * Divide scalar by array elementwise
- * @param scalar to subtract
+ * @param scalar to divide
  * @return new array output
  */
 template <typename T, typename C>
@@ -1848,7 +1848,9 @@ template <typename T, typename C>
 template <typename OtherType>
 Tensor<T, C> Tensor<T, C>::operator+(OtherType const &other)
 {
-  return InlineAdd(other);
+  Tensor<T, C> ret{this->shape()};
+  Add(*this, other, ret);
+  return ret;
 }
 
 template <typename T, typename C>
@@ -1868,7 +1870,9 @@ template <typename T, typename C>
 template <typename OtherType>
 Tensor<T, C> Tensor<T, C>::operator-(OtherType const &other)
 {
-  return InlineSubtract(other);
+  Tensor<T, C> ret{this->shape()};
+  Subtract(*this, other, ret);
+  return ret;
 }
 
 template <typename T, typename C>
@@ -1888,7 +1892,9 @@ template <typename T, typename C>
 template <typename OtherType>
 Tensor<T, C> Tensor<T, C>::operator*(OtherType const &other)
 {
-  return InlineMultiply(other);
+  Tensor<T, C> ret(this->shape());
+  Multiply(*this, other, ret);
+  return ret;
 }
 
 template <typename T, typename C>
@@ -1902,7 +1908,9 @@ template <typename T, typename C>
 template <typename OtherType>
 Tensor<T, C> Tensor<T, C>::operator/(OtherType const &other)
 {
-  return InlineDivide(other);
+  Tensor<T, C> ret(this->shape());
+  Divide(*this, other, ret);
+  return ret;
 }
 
 template <typename T, typename C>

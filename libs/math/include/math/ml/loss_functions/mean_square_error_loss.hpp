@@ -17,27 +17,26 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/ops/ops.hpp"
+#include "math/distance/square.hpp"
+#include "math/matrix_operations.hpp"
+#include <cassert>
 
 namespace fetch {
-namespace ml {
-namespace ops {
+namespace math {
 
-template <class T>
-class Criterion
+template <typename ArrayType>
+typename ArrayType::Type MeanSquareErrorLoss(ArrayType const &A, ArrayType const &B)
 {
-public:
-  using ArrayType    = T;
-  using Datatype     = typename ArrayType::Type;
-  using ArrayPtrType = std::shared_ptr<ArrayType>;
+  typename ArrayType::Type ret = distance::SquareDistance(A, B);
 
-  Criterion()
-  {}
+  ret = Divide(ret, typename ArrayType::Type(A.size()));
 
-  virtual typename ArrayType::Type Forward(std::vector<ArrayType> const &inputs)  = 0;
-  virtual ArrayType                Backward(std::vector<ArrayType> const &inputs) = 0;
-};
+  // TODO(private 343)
+  // division by 2 allows us to cancel out with a 2 in the derivative
+  ret = Divide(ret, typename ArrayType::Type(2));
 
-}  // namespace ops
-}  // namespace ml
+  return ret;
+}
+
+}  // namespace math
 }  // namespace fetch
