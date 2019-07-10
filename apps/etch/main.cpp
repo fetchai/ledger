@@ -175,12 +175,10 @@ Ptr<Address> ArgvAsAddr(VM *vm, TypeId, int32_t index)
   {
     auto const addr_substr{addr_param.substr(ADDR_SIGNEE_PREFIX.size(),
                                              addr_param.size() - ADDR_SIGNEE_PREFIX.size())};
-    std::cout << "is signee, address = " << addr_substr << std::endl;
     addr_str = new String{vm, addr_substr};
   }
   else
   {
-    std::cout << "NOT signee, address = " << addr_param << std::endl;
     addr_str = new String{vm, addr_param};
   }
 
