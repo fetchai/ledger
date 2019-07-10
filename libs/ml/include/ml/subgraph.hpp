@@ -75,7 +75,7 @@ std::vector<T> SubGraph<T>::Backward(VecTensorType const &inputs, ArrayType cons
   assert(inputs.size() == this->input_nodes_.size());
   FETCH_UNUSED(inputs);
   std::vector<std::pair<NodeInterface<T> *, ArrayType>> non_back_prop_err_signal =
-      this->output_node_->BackPropagate(error_signal);
+      this->output_node_->BackPropagateSignal(error_signal);
   std::vector<ArrayType> back_prop_err_signal;
 
   for (std::string const &s : input_nodes_)

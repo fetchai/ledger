@@ -186,6 +186,7 @@ bool StakeManager::LookupEntropy(Block const &previous, uint64_t &entropy)
 {
   bool success{false};
 
+  // Step 1. Lookup the entropy
   auto const it = entropy_cache_.find(previous.body.block_number);
   if (entropy_cache_.end() != it)
   {
@@ -207,6 +208,20 @@ bool StakeManager::LookupEntropy(Block const &previous, uint64_t &entropy)
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Unable to lookup entropy for block ",
                      previous.body.block_number);
+    }
+  }
+
+  // Step 2. Clean up
+  if (entropy_cache_.size() >= HISTORY_LENGTH)
+  {
+    auto const num_to_remove = entropy_cache_.size() - HISTORY_LENGTH;
+
+    if (num_to_remove > 0)
+    {
+      auto end = entropy_cache_.begin();
+      std::advance(end, static_cast<std::ptrdiff_t>(num_to_remove));
+
+      entropy_cache_.erase(entropy_cache_.begin(), end);
     }
   }
 

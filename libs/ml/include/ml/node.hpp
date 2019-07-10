@@ -38,7 +38,7 @@ public:
   virtual ArrayType &                                           Evaluate(bool is_training)      = 0;
   virtual void                                                  AddInput(NodePtrType const &i)  = 0;
   virtual void                                                  AddOutput(NodePtrType const &i) = 0;
-  virtual std::vector<std::pair<NodeInterface<T> *, ArrayType>> BackPropagate(
+  virtual std::vector<std::pair<NodeInterface<T> *, ArrayType>> BackPropagateSignal(
       ArrayType const &error_signal)                                          = 0;
   virtual void                            ResetCache(bool input_size_changed) = 0;
   virtual std::vector<NodePtrType> const &GetOutputs() const                  = 0;
@@ -70,7 +70,7 @@ public:
 
   std::vector<std::reference_wrapper<const ArrayType>>          GatherInputs() const;
   virtual ArrayType &                                           Evaluate(bool is_training);
-  virtual std::vector<std::pair<NodeInterface<T> *, ArrayType>> BackPropagate(
+  virtual std::vector<std::pair<NodeInterface<T> *, ArrayType>> BackPropagateSignal(
       ArrayType const &error_signal);
 
   void                                    AddInput(NodePtrType const &i);
@@ -115,7 +115,6 @@ template <typename T, class O>
 T &Node<T, O>::Evaluate(bool is_training)
 {
   this->SetTraining(is_training);
-  FETCH_LOG_INFO("ML_LIB", "Evaluating node [", name_, "]");
   if (cached_output_status_ != CachedOutputState::VALID_CACHE)
   {
     std::vector<std::reference_wrapper<const ArrayType>> inputs = GatherInputs();
@@ -124,7 +123,7 @@ T &Node<T, O>::Evaluate(bool is_training)
       auto output_shape = this->ComputeOutputShape(inputs);
       if (cached_output_.shape() != output_shape)
       {
-        cached_output_.ResizeFromShape(output_shape);
+        cached_output_.Reshape(output_shape);
       }
     }
     this->Forward(inputs, cached_output_);
@@ -142,10 +141,9 @@ T &Node<T, O>::Evaluate(bool is_training)
  * @return
  */
 template <typename T, class O>
-std::vector<std::pair<NodeInterface<T> *, T>> Node<T, O>::BackPropagate(
+std::vector<std::pair<NodeInterface<T> *, T>> Node<T, O>::BackPropagateSignal(
     ArrayType const &error_signal)
 {
-  FETCH_LOG_INFO("ML_LIB", "Backpropagating node [", name_, "]");
   std::vector<std::reference_wrapper<const ArrayType>> inputs = GatherInputs();
   std::vector<ArrayType> back_propagated_error_signals = this->Backward(inputs, error_signal);
   std::vector<std::pair<NodeInterface<T> *, ArrayType>> non_back_propagated_error_signals;
@@ -154,7 +152,7 @@ std::vector<std::pair<NodeInterface<T> *, T>> Node<T, O>::BackPropagate(
   auto bp_it = back_propagated_error_signals.begin();
   for (auto &i : input_nodes_)
   {
-    auto ret = i->BackPropagate(*bp_it);
+    auto ret = i->BackPropagateSignal(*bp_it);
     non_back_propagated_error_signals.insert(non_back_propagated_error_signals.end(), ret.begin(),
                                              ret.end());
     ++bp_it;

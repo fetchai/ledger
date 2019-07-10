@@ -21,7 +21,9 @@
 #include "core/mutex.hpp"
 #include "crypto/bls_base.hpp"
 
-#include <memory>
+#include <atomic>
+#include <cstddef>
+#include <cstdint>
 #include <mutex>
 
 namespace fetch {

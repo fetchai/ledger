@@ -19,10 +19,13 @@
 
 #include "meta/has_index.hpp"
 #include "vectorise/platform.hpp"
-#include <cstdint>
+
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <cstddef>
+#include <cstdint>
+#include <string>
 #include <vector>
 
 namespace fetch {

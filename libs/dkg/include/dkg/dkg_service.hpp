@@ -30,7 +30,10 @@
 #include "network/muddle/rpc/client.hpp"
 #include "network/muddle/rpc/server.hpp"
 
+#include <cstddef>
+#include <cstdint>
 #include <deque>
+#include <map>
 #include <memory>
 #include <unordered_map>
 #include <unordered_set>

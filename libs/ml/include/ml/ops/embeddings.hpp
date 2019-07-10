@@ -57,13 +57,22 @@ public:
 
     SizeType batch_size = inputs.front().get().shape(1);
 
-    if (!this->embeddings_output_ ||
-        this->embeddings_output_->shape().at(1) != inputs.front().get().shape().at(0) ||
-        this->embeddings_output_->shape().at(0) != this->output_->shape().at(0))
+    // test embeddings_output_ not null ptr
+    if (!this->embeddings_output_)
     {
       this->embeddings_output_ = std::make_shared<ArrayType>(std::vector<SizeType>(
           {this->output_->shape().at(0), inputs.front().get().shape(0), batch_size}));
     }
+    // test embeddings_output_ batch size has changed
+    else if (this->embeddings_output_->shape().at(2) != batch_size)
+    {
+      this->embeddings_output_->Reshape({this->embeddings_output_->shape().at(0),
+                                         this->embeddings_output_->shape().at(1), batch_size});
+    }
+
+    assert(this->embeddings_output_->shape().at(0) == this->output_->shape().at(0));
+    assert(this->embeddings_output_->shape().at(1) == inputs.front().get().shape().at(0));
+    assert(this->embeddings_output_->shape().at(2) == batch_size);
 
     ArrayType transposed_input = inputs.front().get().Transpose();
     auto      e_it             = transposed_input.begin();
@@ -123,22 +132,22 @@ public:
 
   virtual void Step(typename T::Type learning_rate)
   {
-    ArrayType embedding_slice;
-
     for (auto const &r : updated_rows_)
     {
       // get the relevant slice from gradients and embeddings
       auto grad_slice = this->gradient_accumulation_->Slice(r, 1);
       auto out_slice  = this->output_->Slice(r, 1);
 
-      embedding_slice = out_slice.Copy();
+      auto out_it  = out_slice.begin();
+      auto grad_it = grad_slice.begin();
 
-      // multiply accumulated gradients by learning rate, then subtract from current embeddings
-      embedding_slice.InlineSubtract(grad_slice.Copy().InlineMultiply(learning_rate));
-
-      // zero out gradients and assign new embeddings values
-      grad_slice.Assign(ArrayType::Zeroes(embedding_slice.shape()));
-      out_slice.Assign(embedding_slice);
+      while (out_it.is_valid())
+      {
+        *out_it  = *out_it - (*grad_it * learning_rate);
+        *grad_it = 0;
+        ++out_it;
+        ++grad_it;
+      }
     }
     updated_rows_.clear();
   }

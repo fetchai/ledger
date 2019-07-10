@@ -47,7 +47,7 @@ public:
     LOG_SET_CONTEXT_VARIABLE(stack_trace_)
   }
 
-  StorageException(const char *explanation)
+  StorageException(char const *explanation)
     : error_code_(error::TYPE_ERROR)
     , explanation_(std::string(explanation))
   {

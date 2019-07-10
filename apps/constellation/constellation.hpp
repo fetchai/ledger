@@ -27,8 +27,10 @@
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/consensus/entropy_generator_interface.hpp"
 #include "ledger/consensus/stake_manager.hpp"
+#include "ledger/dag/dag_interface.hpp"
 #include "ledger/execution_manager.hpp"
 #include "ledger/genesis_loading/genesis_file_creator.hpp"
+#include "ledger/protocols/dag_service.hpp"
 #include "ledger/protocols/main_chain_rpc_service.hpp"
 #include "ledger/storage_unit/lane_remote_control.hpp"
 #include "ledger/storage_unit/storage_unit_bundled_service.hpp"
@@ -41,9 +43,6 @@
 #include "network/p2pservice/p2p_service.hpp"
 #include "network/p2pservice/p2ptrust_bayrank.hpp"
 
-#include "ledger/dag/dag_interface.hpp"
-#include "ledger/protocols/dag_service.hpp"
-
 #include <atomic>
 #include <cstddef>
 #include <cstdint>
@@ -54,7 +53,6 @@
 
 namespace fetch {
 namespace dkg {
-
 class DkgService;
 }
 

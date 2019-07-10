@@ -33,7 +33,7 @@ namespace fetch {
 namespace muddle {
 namespace rpc {
 
-class Client : public service::ServiceClientInterface
+class Client : protected service::ServiceClientInterface
 {
 public:
   using Address       = MuddleEndpoint::Address;
@@ -49,8 +49,6 @@ public:
   static constexpr char const *LOGGING_NAME = "MuddleRpcClient";
 
   // Construction / Destruction
-  Client(std::string name, MuddleEndpoint &endpoint, Address address, uint16_t service,
-         uint16_t channel);
   Client(std::string name, MuddleEndpoint &endpoint, uint16_t service, uint16_t channel);
   Client(Client const &) = delete;
   Client(Client &&)      = delete;
@@ -60,6 +58,7 @@ public:
   Promise CallSpecificAddress(Address const &address, ProtocolId const &protocol,
                               FunctionId const &function, Args &&... args)
   {
+    FETCH_LOCK(call_mutex_);
     LOG_STACK_TRACE_POINT;
     // update the target address
     address_ = address;
@@ -91,8 +90,10 @@ private:
 
   SharedHandler handler_;
 
+  std::mutex call_mutex_;  // priority 1
+
   PromiseQueue            promise_queue_;
-  std::mutex              promise_queue_lock_;
+  std::mutex              promise_queue_lock_;  // priority 2
   std::condition_variable promise_queue_cv_;
 
   std::thread background_thread_;

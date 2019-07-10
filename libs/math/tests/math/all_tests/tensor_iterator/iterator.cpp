@@ -50,7 +50,7 @@ TEST(tensor_iterator, simple_iterator_permute_test)
   EXPECT_EQ(array.size(), 77);
 
   Tensor<double> ret;
-  ret.ResizeFromShape(array.shape());
+  ret.Reshape(array.shape());
 
   EXPECT_EQ(ret.size(), array.size());
   EXPECT_EQ(ret.shape(), array.shape());
