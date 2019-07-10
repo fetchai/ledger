@@ -18,9 +18,9 @@
 //------------------------------------------------------------------------------
 
 #include "core/assert.hpp"
+#include "math/activation_functions/leaky_relu.hpp"
 #include "math/fundamental_operators.hpp"
 #include "math/matrix_operations.hpp"
-#include "math/ml/activation_functions/leaky_relu.hpp"
 #include "ml/ops/ops.hpp"
 
 #include <cassert>

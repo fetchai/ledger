@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/assert.hpp"
-#include "math/ml/activation_functions/relu.hpp"
+#include "math/activation_functions/relu.hpp"
 #include "ml/ops/ops.hpp"
 
 #include <cassert>
