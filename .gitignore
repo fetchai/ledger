@@ -10,7 +10,6 @@ CMakeCache.txt
 nodes/
 .ipynb_checkpoints/
 /docker-images/
-fetch-ledger-develop-image
 
 # Legacy Editors
 \#*#
