@@ -38,6 +38,7 @@ TYPED_TEST_CASE(AbsTest, MyTypes);
 TYPED_TEST(AbsTest, forward_test)
 {
   using ArrayType = TypeParam;
+  using DataType  = typename TypeParam::Type;
 
   ArrayType data = ArrayType::FromString(
       "1, -2, 3,-4, 5,-6, 7,-8;"
@@ -53,14 +54,14 @@ TYPED_TEST(AbsTest, forward_test)
   op.Forward({data}, prediction);
 
   // test correct values
-  ASSERT_TRUE(
-      prediction.AllClose(gt, typename TypeParam::Type(1e-5), typename TypeParam::Type(1e-5)));
+  ASSERT_TRUE(prediction.AllClose(gt, fetch::math::function_tolerance<DataType>(),
+                                  fetch::math::function_tolerance<DataType>()));
 }
 
 TYPED_TEST(AbsTest, backward_test)
 {
-  using DataType  = typename TypeParam::Type;
   using ArrayType = TypeParam;
+  using DataType  = typename TypeParam::Type;
 
   ArrayType data = ArrayType::FromString(
       "1, -2, 3,-4, 5,-6, 7,-8;"
