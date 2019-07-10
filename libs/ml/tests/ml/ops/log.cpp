@@ -87,7 +87,7 @@ TYPED_TEST(LogFloatTest, forward_all_negative_test)
   TypeParam pred(op.ComputeOutputShape({data}));
   op.Forward({data}, pred);
 
-  // gives NaN because sqrt of a negative number is undefined
+  // gives NaN because log of a negative number is undefined
   for (auto p_it : pred)
   {
     EXPECT_TRUE(std::isnan(p_it));
@@ -105,7 +105,7 @@ TYPED_TEST(LogFixedTest, forward_all_negative_test)
   TypeParam pred(op.ComputeOutputShape({data}));
   op.Forward({data}, pred);
 
-  // gives NaN because exp of a negative number is undefined
+  // gives NaN because log of a negative number is undefined
   for (auto p_it : pred)
   {
     EXPECT_TRUE(ArrayType::Type::IsNaN(p_it));
