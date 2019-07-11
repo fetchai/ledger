@@ -23,7 +23,6 @@
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/byte_array/decoders.hpp"
-#include "core/commandline/cli_header.hpp"
 #include "core/commandline/params.hpp"
 #include "core/logger.hpp"
 #include "core/macros.hpp"
@@ -42,6 +41,8 @@
 #include "network/peer.hpp"
 #include "network/uri.hpp"
 #include "settings.hpp"
+#include "version/cli_header.hpp"
+#include "version/fetch_version.hpp"
 
 #include <atomic>
 #include <csignal>
@@ -188,7 +189,8 @@ int main(int argc, char **argv)
   }
 
   // version header
-  fetch::commandline::DisplayCLIHeader("Constellation");
+  fetch::version::DisplayCLIHeader("Constellation");
+
   if (!fetch::version::VALID)
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Unsupported version - git working tree is dirty");

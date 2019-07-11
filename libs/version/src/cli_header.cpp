@@ -1,7 +1,6 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -17,17 +16,21 @@
 //
 //------------------------------------------------------------------------------
 
-#include <cstdint>
+#include "version/fetch_version.hpp"
+
+#include <iostream>
+#include <string>
 
 namespace fetch {
 namespace version {
 
-constexpr char const *FULL        = "${FETCH_VERSION_STR}";
-constexpr uint32_t    MAJOR       = ${FETCH_VERSION_MAJOR};
-constexpr uint32_t    MINOR       = ${FETCH_VERSION_MINOR};
-constexpr uint32_t    PATCH       = ${FETCH_VERSION_PATCH};
-constexpr char const *COMMIT_HASH = "${FETCH_VERSION_COMMIT}";
-constexpr bool        VALID       = ${FETCH_VERSION_VALID};
+void DisplayCLIHeader(std::string const &name, std::string const &years,
+                      std::string const &additional)
+{
+  std::cout << " F E ╱     " << name << ' ' << version::FULL << '\n';
+  std::cout << "   T C     Copyright " << years << " (c) Fetch AI Ltd." << '\n';
+  std::cout << "     H     " << additional << '\n' << std::endl;
+}
 
-} // namespace version
-} // namespace fetch
+}  // namespace version
+}  // namespace fetch

@@ -340,7 +340,7 @@ macro (detect_environment)
 
 endmacro ()
 
-function (generate_configuration_file)
+function (generate_version_file)
 
   if (DEFINED ENV{FETCH_BUILD_VERSION})
 
@@ -415,8 +415,8 @@ function (generate_configuration_file)
   endif ()
 
   # generate the version file
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/fetch_version.hpp.in
-                 ${CMAKE_CURRENT_BINARY_DIR}/fetch_version.hpp)
+  configure_file(${CMAKE_SOURCE_DIR}/cmake/fetch_version.cpp.in
+                 ${CMAKE_BINARY_DIR}/libs/version/src/fetch_version.cpp)
 
   message(STATUS "Project Version: ${FETCH_VERSION_STR}")
 

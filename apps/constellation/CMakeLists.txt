@@ -27,5 +27,6 @@ target_link_libraries(constellation
                       PRIVATE fetch-ledger
                               fetch-miner
                               fetch-dkg
-                              fetch-settings)
+                              fetch-settings
+                              fetch-version)
 target_include_directories(constellation PRIVATE ${FETCH_ROOT_DIR}/libs/python/include)
