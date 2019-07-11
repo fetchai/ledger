@@ -22,12 +22,19 @@
 namespace fetch {
 namespace telemetry {
 
+class Measurement;
 class Counter;
+class CounterMap;
+class Histogram;
+class HistogramMap;
 
 template <typename T>
 class Gauge;
 
-using CounterPtr = std::shared_ptr<Counter>;
+using CounterPtr      = std::shared_ptr<Counter>;
+using CounterMapPtr   = std::shared_ptr<CounterMap>;
+using HistogramPtr    = std::shared_ptr<Histogram>;
+using HistogramMapPtr = std::shared_ptr<HistogramMap>;
 
 template <typename T>
 using GaugePtr = std::shared_ptr<Gauge<T>>;

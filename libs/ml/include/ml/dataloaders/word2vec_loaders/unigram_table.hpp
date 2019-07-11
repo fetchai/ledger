@@ -27,41 +27,54 @@ class UnigramTable
   using SizeType = fetch::math::SizeType;
 
 public:
-  explicit UnigramTable(unsigned int size = 0, std::vector<uint64_t> const &frequencies = {});
+  UnigramTable(std::vector<SizeType> const &frequencies = {}, SizeType size = 1e8);
 
-  void Reset(unsigned int size, std::vector<uint64_t> const &frequencies);
+  void Reset(std::vector<SizeType> const &frequencies, SizeType size);
   bool Sample(SizeType &ret);
-  bool SampleNegative(uint64_t positive_index, SizeType &ret);
+  bool SampleNegative(SizeType positive_index, SizeType &ret);
+  bool SampleNegative(fetch::math::Tensor<SizeType> const &positive_indices, SizeType &ret);
   void Reset();
 
 private:
-  std::vector<uint64_t>                      data_;
+  std::vector<SizeType>                      data_;
   fetch::random::LinearCongruentialGenerator rng_;
   SizeType                                   timeout_ = 100;
 };
 
-void UnigramTable::Reset(unsigned int size, std::vector<uint64_t> const &frequencies)
+/**
+ * reset the unigram frequency, and the sampling pool
+ * @param count
+ * @param size
+ */
+void UnigramTable::Reset(std::vector<SizeType> const &count, SizeType size)
 {
-  if (size > 0u && !frequencies.empty())
+
+  if (size && count.size())
   {
+    // sum_counts
+    SizeType sum_count =
+        static_cast<SizeType>(std::accumulate(std::begin(count), std::end(count), 0));
+
     data_.resize(size);
+
     double total(0);
-    for (auto const &e : frequencies)
+    for (auto const &c : count)
     {
-      total += std::pow(e, 0.75);
+      total += std::pow(static_cast<double>(c) / static_cast<double>(sum_count), 0.75);
     }
+
     std::size_t i(0);
-    double      n = pow(static_cast<double>(frequencies[i]), 0.75) / total;
+    double n = pow(static_cast<double>(count[i]) / static_cast<double>(sum_count), 0.75) / total;
     for (std::size_t j(0); j < size; ++j)
     {
       data_[j] = i;
       if (static_cast<double>(j) / static_cast<double>(size) > static_cast<double>(n))
       {
         i++;
-        n += pow(static_cast<double>(frequencies[i]), 0.75) / total;
+        n += pow(static_cast<double>(count[i]) / static_cast<double>(sum_count), 0.75) / total;
       }
     }
-    assert(i == frequencies.size() - 1);
+    assert(i == count.size() - 1);
   }
 }
 
@@ -70,9 +83,9 @@ void UnigramTable::Reset(unsigned int size, std::vector<uint64_t> const &frequen
  * @param size size of the table
  * @param frequencies vector of frequencies used to calculate how many rows per index
  */
-UnigramTable::UnigramTable(unsigned int size, std::vector<uint64_t> const &frequencies)
+UnigramTable::UnigramTable(std::vector<SizeType> const &frequencies, SizeType size)
 {
-  Reset(size, frequencies);
+  Reset(frequencies, size);
 }
 
 /**
@@ -90,7 +103,7 @@ bool UnigramTable::Sample(SizeType &ret)
  * @param positive_index
  * @return
  */
-bool UnigramTable::SampleNegative(uint64_t positive_index, SizeType &ret)
+bool UnigramTable::SampleNegative(SizeType positive_index, SizeType &ret)
 {
   ret = data_[rng_() % data_.size()];
 
@@ -105,6 +118,42 @@ bool UnigramTable::SampleNegative(uint64_t positive_index, SizeType &ret)
     }
   }
   return true;
+}
+
+/**
+ * Sample the negative words based on proposed best probability distribution from original paper
+ * @param positive_index
+ * @param ret
+ * @return
+ */
+bool UnigramTable::SampleNegative(fetch::math::Tensor<SizeType> const &positive_indices,
+                                  SizeType &                           ret)
+{
+  ret = data_[rng_() % data_.size()];
+
+  SizeType attempt_count = 0;
+  while (true)
+  {
+    bool in_positive_indices = false;
+    for (auto i : positive_indices)
+    {
+      if (ret == i)
+      {
+        in_positive_indices = true;
+        break;
+      }
+    }
+    if (!in_positive_indices)
+    {  // if ret is valid, stop searching
+      return true;
+    }
+    ret = data_[rng_() % data_.size()];
+    attempt_count++;
+    if (attempt_count > timeout_)
+    {
+      return false;
+    }
+  }
 }
 
 /**
