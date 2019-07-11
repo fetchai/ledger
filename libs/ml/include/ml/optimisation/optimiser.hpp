@@ -186,9 +186,11 @@ typename T::Type Optimiser<T>::Run(std::vector<ArrayType> const &data, ArrayType
   SizeType n_data      = data.at(0).shape().at(n_data_dimm);
   // for some input combinations batch size will be modified
   batch_size = UpdateBatchSize(batch_size, n_data);
-  DataType loss{0};
-  DataType loss_sum{0};
-  SizeType step{0};
+	loss_sum_  = 0;
+	step_      = 0;
+	loss_      = DataType{0};
+	// variable for stats output
+	start_time_ = high_resolution_clock::now();
   // Prepare output data tensors
   if (batch_data_.size() != data.size())
   {
@@ -211,7 +213,7 @@ typename T::Type Optimiser<T>::Run(std::vector<ArrayType> const &data, ArrayType
   {
     batch_labels_ = ArrayType{labels_size};
   }
-  while (step < n_data)
+  while (step_ < n_data)
   {
     // Prepare batch
     SizeType it{step};
@@ -283,7 +285,7 @@ typename T::Type Optimiser<T>::Run(fetch::ml::dataloaders::DataLoader<ArrayType,
   // reset learning rate related parameters as learning schedule is reset
   cumulative_step_ = 0;
   epoch_           = 0;
-  learning_rate_ - learning_rate_param_.starting_learning_rate;
+  learning_rate_ = learning_rate_param_.starting_learning_rate;
 
   return RunImplementation(loader, batch_size, subset_size);
 }
