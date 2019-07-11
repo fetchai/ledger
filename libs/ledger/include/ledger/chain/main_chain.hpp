@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/bloom_filter_interface.hpp"
+#include "core/bloom_filter.hpp"
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/decoders.hpp"
 #include "core/mutex.hpp"
@@ -123,9 +123,7 @@ public:
   };
 
   // Construction / Destruction
-  explicit MainChain(std::unique_ptr<BloomFilterInterface> bloom_filter =
-                         BloomFilterInterface::Create(BloomFilterInterface::Type::NULL_IMPL),
-                     Mode mode = Mode::IN_MEMORY_DB);
+  explicit MainChain(bool enable_bloom_filter = false, Mode mode = Mode::IN_MEMORY_DB);
   MainChain(MainChain const &rhs) = delete;
   MainChain(MainChain &&rhs)      = delete;
   ~MainChain();
@@ -258,12 +256,13 @@ private:
   mutable RMutex   lock_;         ///< Mutex protecting block_chain_, tips_ & heaviest_
   mutable BlockMap block_chain_;  ///< All recent blocks are kept in memory
   // The whole tree of previous-next relations among cached blocks
-  mutable References                    references_;
-  TipsMap                               tips_;          ///< Keep track of the tips
-  HeaviestTip                           heaviest_;      ///< Heaviest block/tip
-  LooseBlockMap                         loose_blocks_;  ///< Waiting (loose) blocks
-  std::unique_ptr<BloomFilterInterface> bloom_filter_;
-  telemetry::CounterPtr                 bloom_filter_false_positive_count_;
+  mutable References                references_;
+  TipsMap                           tips_;          ///< Keep track of the tips
+  HeaviestTip                       heaviest_;      ///< Heaviest block/tip
+  LooseBlockMap                     loose_blocks_;  ///< Waiting (loose) blocks
+  std::unique_ptr<BasicBloomFilter> bloom_filter_;
+  bool const                        enable_bloom_filter_;
+  telemetry::CounterPtr             bloom_filter_false_positive_count_;
 
   /**
    * Serializer for the DbRecord

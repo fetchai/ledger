@@ -303,17 +303,4 @@ bool BasicBloomFilter::ReportFalsePositives(std::size_t count)
   return false;
 }
 
-bool NullBloomFilter::Match(fetch::byte_array::ConstByteArray const &)
-{
-  return true;
-}
-
-void NullBloomFilter::Add(fetch::byte_array::ConstByteArray const &)
-{}
-
-bool NullBloomFilter::ReportFalsePositives(std::size_t)
-{
-  return true;
-}
-
 }  // namespace fetch
