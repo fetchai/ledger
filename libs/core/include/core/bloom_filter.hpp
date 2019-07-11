@@ -179,11 +179,14 @@ public:
   BasicBloomFilter &operator=(BasicBloomFilter &&) = delete;
 
   /*
-   * Check if the argument matches the Bloom filter. Returns false if the
-   * element had never been added; returns true if the argument had been
-   * added or is a false positive.
+   * Check if the argument matches the Bloom filter. Returns a pair of
+   * a Boolean (false if the element had never been added; true if the
+   * argument had been added or is a false positive) and a positive integer
+   * which indicates how many bits had to be checked before the function
+   * returned. The latter number will increase as the filter's performance
+   * degrades.
    */
-  bool Match(fetch::byte_array::ConstByteArray const &);
+  std::pair<bool, std::size_t> Match(fetch::byte_array::ConstByteArray const &);
   /*
    * Set the bits of the Bloom filter corresponding to the argument
    */

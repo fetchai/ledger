@@ -26,6 +26,7 @@
 #include "ledger/chain/transaction_layout_rpc_serializers.hpp"
 #include "network/generics/milli_timer.hpp"
 #include "telemetry/counter.hpp"
+#include "telemetry/gauge.hpp"
 #include "telemetry/registry.hpp"
 
 #include <algorithm>
@@ -67,6 +68,15 @@ void AddBlockToBloomFilter(BasicBloomFilter &bf, Block const &block)
 MainChain::MainChain(bool const enable_bloom_filter, Mode mode)
   : bloom_filter_{std::make_unique<BasicBloomFilter>()}
   , enable_bloom_filter_{enable_bloom_filter}
+  , bloom_filter_queried_bit_count_(telemetry::Registry::Instance().CreateGauge<std::size_t>(
+        "ledger_main_chain_bloom_filter_queried_bit_number",
+        "Total number of bits checked during each query to the Ledger Main Chain Bloom filter"))
+  , bloom_filter_query_count_(telemetry::Registry::Instance().CreateCounter(
+        "ledger_main_chain_bloom_filter_query_total",
+        "Total number of queries to the Ledger Main Chain Bloom filter"))
+  , bloom_filter_positive_count_(telemetry::Registry::Instance().CreateCounter(
+        "ledger_main_chain_bloom_filter_positive_total",
+        "Total number of positive queries (false and true) to the Ledger Main Chain Bloom filter"))
   , bloom_filter_false_positive_count_(telemetry::Registry::Instance().CreateCounter(
         "ledger_main_chain_bloom_filter_false_positive_total",
         "Total number of false positive queries to the Ledger Main Chain Bloom filter"))
@@ -1483,10 +1493,15 @@ DigestSet MainChain::DetectDuplicateTransactions(BlockHash const &starting_hash,
   DigestSet potential_duplicates{};
   for (auto const &digest : transactions)
   {
-    if (bloom_filter_->Match(digest))
+
+    std::pair<bool, std::size_t> const result = bloom_filter_->Match(digest);
+    bloom_filter_queried_bit_count_->set(result.second);
+    if (result.first)
     {
+      bloom_filter_positive_count_->increment();
       potential_duplicates.insert(digest);
     }
+    bloom_filter_query_count_->increment();
   }
 
   auto search_chain_for_duplicates =

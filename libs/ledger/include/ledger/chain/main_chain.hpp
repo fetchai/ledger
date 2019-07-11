@@ -262,6 +262,9 @@ private:
   LooseBlockMap                     loose_blocks_;  ///< Waiting (loose) blocks
   std::unique_ptr<BasicBloomFilter> bloom_filter_;
   bool const                        enable_bloom_filter_;
+  telemetry::GaugePtr<std::size_t>  bloom_filter_queried_bit_count_;
+  telemetry::CounterPtr             bloom_filter_query_count_;
+  telemetry::CounterPtr             bloom_filter_positive_count_;
   telemetry::CounterPtr             bloom_filter_false_positive_count_;
 
   /**
