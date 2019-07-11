@@ -31,20 +31,21 @@ using namespace fetch::crypto;
 using namespace fetch::dkg;
 using namespace fetch::byte_array;
 
-struct ParticipantData
+int main(int argc, char ** argv)
 {
-  Identity identity;
-  bls::Id id;
-};
+  if(argc < 2)
+  {
+    std::cerr << "usage: " << argv[0] << " [cabinet size]" << std::endl;
+    return -1;
+  }
 
-int main()
-{
-
+  // Initializing the BLS library
   bls::Init();
 
+  // Beacon parameters
   std::unordered_map< Identity, std::shared_ptr<BeaconManager> > nodes;
-  uint32_t threshold = 1;
-  uint64_t cabinet_size = 2;
+  uint64_t cabinet_size = static_cast<uint64_t>(atoi(argv[1]));
+  uint32_t threshold = static_cast< uint32_t >( cabinet_size >> 1);
 
   // Creating nodes
   for(uint64_t i = 0; i < cabinet_size; ++i)
@@ -55,7 +56,8 @@ int main()
   }
 
   // Communicating BLS identities
-  std::vector< ParticipantData > participants;
+  using ParticipantDetails = std::pair<Identity, bls::Id >;
+  std::vector< ParticipantDetails > participants;
   for(auto &m: nodes)
   {
     auto &n = *m.second;
@@ -70,7 +72,7 @@ int main()
 
     for(auto &p: participants)
     {
-      n.second->InsertMember(p.identity, p.id);
+      n.second->InsertMember(p.first, p.second);
     }
   }
 
@@ -83,14 +85,18 @@ int main()
   // Propagating shares & verification vectors
   for(auto &n: nodes)
   {
+    // Get the verification from the sender node
     auto from                = n.first;
     auto &sender             = *n.second;
     auto verification_vector = sender.GetVerificationVector();
 
+    // ... and promote it to all other nodes
     for(auto &m: nodes)    
     {
       auto to = m.first;
       auto &receiver = *m.second;
+
+      // ... along side the share.
       auto share = sender.GetShare(to);
 
       if(!receiver.AddShare(from, share, verification_vector))
@@ -100,13 +106,13 @@ int main()
     }
   }
 
-  // Creating key pairs
+  // Creating key public pairs
   for(auto &n: nodes)
   {
     n.second->CreateKeyPair();
   }
 
-  // Setting next message
+  // Setting next message for signing
   for(auto &n: nodes)
   {
     n.second->SetMessage("Hello world");
@@ -117,6 +123,7 @@ int main()
   {
     auto signed_message = n.second->Sign();
     auto identity = n.second->identity();
+
     for(auto &m: nodes)    
     {
       auto to = m.first;
