@@ -4,6 +4,10 @@
 *.db
 CMakeCache.txt
 
+# docs build
+/docs/build
+
+
 # Merge Outputs
 *.orig
 

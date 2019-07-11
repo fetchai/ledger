@@ -17,9 +17,9 @@
 //------------------------------------------------------------------------------
 
 #include "bootstrap_monitor.hpp"
-#include "fetch_version.hpp"
 #include "variant/variant.hpp"
 #include "variant/variant_utils.hpp"
+#include "version/fetch_version.hpp"
 
 #include <array>
 #include <chrono>

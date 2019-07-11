@@ -37,8 +37,8 @@ public:
   {
     module.CreateClassType<VMMeanSquareErrorLoss>("MeanSquareErrorLoss")
         .CreateConstuctor<>()
-        .CreateMemberFunction("Forward", &VMMeanSquareErrorLoss::ForwardWrapper)
-        .CreateMemberFunction("Backward", &VMMeanSquareErrorLoss::BackwardWrapper);
+        .CreateMemberFunction("forward", &VMMeanSquareErrorLoss::ForwardWrapper)
+        .CreateMemberFunction("backward", &VMMeanSquareErrorLoss::BackwardWrapper);
   }
 
   static fetch::vm::Ptr<VMMeanSquareErrorLoss> Constructor(fetch::vm::VM *   vm,

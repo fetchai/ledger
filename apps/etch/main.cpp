@@ -19,12 +19,13 @@
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/byte_array/decoders.hpp"
 #include "core/byte_array/encoders.hpp"
-#include "core/commandline/cli_header.hpp"
 #include "core/commandline/parameter_parser.hpp"
 #include "core/json/document.hpp"
 #include "core/serializers/byte_array.hpp"
 #include "fetch_version.hpp"
 #include "variant/variant.hpp"
+#include "version/cli_header.hpp"
+#include "version/fetch_version.hpp"
 #include "vm/common.hpp"
 #include "vm/generator.hpp"
 #include "vm/io_observer_interface.hpp"
@@ -302,7 +303,7 @@ int main(int argc, char **argv)
   }
 
   // print the header
-  fetch::commandline::DisplayCLIHeader("vm-lang");
+  fetch::version::DisplayCLIHeader("etch");
 
   // load the contents of the script file
   auto const source = ReadFileContents(params.program().GetArg(1));
