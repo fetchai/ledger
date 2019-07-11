@@ -50,7 +50,7 @@ using DataLoaderType   = typename fetch::ml::dataloaders::TensorDataLoader<Tenso
 struct TrainingParams
 {
   SizeType epochs{10};
-  SizeType batch_size{8};
+  SizeType batch_size{10};
   bool     normalise = true;
 };
 
@@ -186,7 +186,7 @@ std::shared_ptr<GraphType> BuildModel(std::string &input_name, std::string &outp
 
   typename TensorType::Type keep_prob_2{0.9};
 
-  SizeType conv1D_3_filters        = 8;
+  SizeType conv1D_3_filters        = 1;
   SizeType conv1D_3_input_channels = conv1D_2_filters;
   SizeType conv1D_3_kernel_size    = 47;
   SizeType conv1D_3_stride         = 1;
@@ -295,10 +295,9 @@ int main(int ac, char **av)
   OptimiserType optimiser(g, {input_name}, label_name, error_name, learning_rate_param);
 
   std::cout << "Begin training loop... " << std::endl;
-  DataType loss;
   for (SizeType i{0}; i < tp.epochs; i++)
   {
-    loss = optimiser.Run(loader, tp.batch_size);
+    optimiser.Run(loader, tp.batch_size);
 
     g->SetInput(input_name, test_data);
     auto prediction = g->Evaluate(output_name, false);
