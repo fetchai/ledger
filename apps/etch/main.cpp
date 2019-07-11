@@ -22,7 +22,6 @@
 #include "core/commandline/parameter_parser.hpp"
 #include "core/json/document.hpp"
 #include "core/serializers/byte_array.hpp"
-#include "fetch_version.hpp"
 #include "variant/variant.hpp"
 #include "version/cli_header.hpp"
 #include "version/fetch_version.hpp"
