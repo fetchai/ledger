@@ -28,10 +28,22 @@ namespace ml {
 class Vocab
 {
 public:
-  using SizeType = fetch::math::SizeType;
-  using DataType = std::map<std::string, std::pair<SizeType, SizeType>>;
+  using SizeType                         = fetch::math::SizeType;
+  using DataType                         = std::map<std::string, std::pair<SizeType, SizeType>>;
+  using ReverseDataType                  = std::map<SizeType, std::pair<std::string, SizeType>>;
+  static constexpr SizeType UNKNOWN_WORD = fetch::math::numeric_max<SizeType>();
 
   Vocab() = default;
+
+  void Update();
+
+  void                         RemoveInfrequentWord(SizeType min);
+  std::map<SizeType, SizeType> Compactify();
+
+  bool WordKnown(std::string const &word) const;
+  bool WordKnown(SizeType id) const;
+
+  ReverseDataType GetReverseVocab();
 
   void Save(std::string const &filename) const;
   void Load(std::string const &filename);
@@ -39,8 +51,103 @@ public:
   std::string WordFromIndex(SizeType index) const;
   SizeType    IndexFromWord(std::string const &word) const;
 
-  DataType data;
+  SizeType total_count;
+
+  DataType        data;          // word -> (id, count)
+  ReverseDataType reverse_data;  // id -> (word, count)
 };
+
+/**
+ * Update the meta-data in vocabulary every time vocabulary is changed
+ * updating including: word count and reverse data
+ */
+void Vocab::Update()
+{
+  // update total count
+  total_count = 0;
+  for (auto const &w : data)
+  {
+    total_count += w.second.second;
+  }
+
+  // update reverse vocab
+  reverse_data = GetReverseVocab();
+}
+
+/**
+ * check if a word is known
+ * @param word
+ * @return
+ */
+bool Vocab::WordKnown(std::string const &word) const
+{
+  if (IndexFromWord(word) == UNKNOWN_WORD)
+  {
+    return false;
+  }
+  return true;
+}
+
+/**
+ * check if a word is known based on word index
+ * @param id
+ * @return
+ */
+bool Vocab::WordKnown(Vocab::SizeType id) const
+{
+  if (id == UNKNOWN_WORD)
+  {
+    return false;
+  }
+  return true;
+}
+
+/**
+ * remove word that have fewer counts then min
+ */
+void Vocab::RemoveInfrequentWord(fetch::ml::Vocab::SizeType min)
+{
+  for (auto it = data.begin(); it != data.end();)
+  {
+    if (it->second.second < min)
+    {
+      it = data.erase(it);
+    }
+    else
+    {
+      ++it;
+    }
+  }
+}
+
+/**
+ * Compactify the vocabulary such that there is no skip in indexing
+ */
+std::map<Vocab::SizeType, Vocab::SizeType> Vocab::Compactify()
+{
+  std::map<SizeType, SizeType> old2new;  // store the old to new relation for futher use
+  SizeType                     i = 0;
+  for (auto &word : data)
+  {
+    old2new[word.second.first] = i;
+    word.second.first          = i;
+    i++;
+  }
+  return old2new;
+}
+
+/**
+ * Return a reversed vocabulary
+ */
+Vocab::ReverseDataType Vocab::GetReverseVocab()
+{
+  ReverseDataType reverse_data;
+  for (auto const &word : data)
+  {
+    reverse_data[word.second.first] = std::make_pair(word.first, word.second.second);
+  }
+  return reverse_data;
+}
 
 /**
  * save vocabulary to a file
@@ -122,7 +229,7 @@ math::SizeType Vocab::IndexFromWord(std::string const &word) const
   {
     return (data.at(word)).first;
   }
-  return 0;
+  return UNKNOWN_WORD;
 }
 
 }  // namespace ml

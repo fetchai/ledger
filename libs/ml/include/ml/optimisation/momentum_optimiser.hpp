@@ -44,6 +44,12 @@ public:
                     DataType const &learning_rate   = DataType{0.001f},
                     DataType const &momentum_update = DataType{0.9f});
 
+  MomentumOptimiser(std::shared_ptr<Graph<T>>       graph,
+                    std::vector<std::string> const &input_node_names,
+                    std::string const &label_node_name, std::string const &output_node_name,
+                    fetch::ml::optimisers::LearningRateParam<DataType> const &learning_rate_param,
+                    DataType const &momentum_update = DataType{0.9f});
+
   ~MomentumOptimiser() override = default;
 
 private:
@@ -54,7 +60,18 @@ private:
 
   void ApplyGradients(SizeType batch_size) override;
   void ResetMomentum();
+  void Init();
 };
+
+template <class T>
+void MomentumOptimiser<T>::Init()
+{
+  for (auto &train : this->graph_trainables_)
+  {
+    this->momentum_.emplace_back(ArrayType(train->get_weights().shape()));
+  }
+  ResetMomentum();
+}
 
 template <class T>
 MomentumOptimiser<T>::MomentumOptimiser(std::shared_ptr<Graph<T>>       graph,
@@ -66,11 +83,19 @@ MomentumOptimiser<T>::MomentumOptimiser(std::shared_ptr<Graph<T>>       graph,
   : Optimiser<T>(graph, input_node_names, label_node_name, output_node_name, learning_rate)
   , momentum_update_(momentum_update)
 {
-  for (auto &train : this->graph_trainables_)
-  {
-    this->momentum_.emplace_back(ArrayType(train->get_weights().shape()));
-  }
-  ResetMomentum();
+  Init();
+}
+
+template <class T>
+MomentumOptimiser<T>::MomentumOptimiser(
+    std::shared_ptr<Graph<T>> graph, std::vector<std::string> const &input_node_names,
+    std::string const &label_node_name, std::string const &output_node_name,
+    fetch::ml::optimisers::LearningRateParam<DataType> const &learning_rate_param,
+    DataType const &                                          momentum_update)
+  : Optimiser<T>(graph, input_node_names, label_node_name, output_node_name, learning_rate_param)
+  , momentum_update_(momentum_update)
+{
+  Init();
 }
 
 // private

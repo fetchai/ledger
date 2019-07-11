@@ -46,9 +46,11 @@ public:
     : random_mode_(random_mode)
   {}
 
-  virtual ~DataLoader()           = default;
-  virtual ReturnType    GetNext() = 0;
-  virtual ReturnType    PrepareBatch(fetch::math::SizeType subset_size, bool &is_done_set);
+  virtual ~DataLoader()        = default;
+  virtual ReturnType GetNext() = 0;
+
+  virtual ReturnType PrepareBatch(fetch::math::SizeType subset_size, bool &is_done_set);
+
   virtual std::uint64_t Size() const   = 0;
   virtual bool          IsDone() const = 0;
   virtual void          Reset()        = 0;
@@ -93,7 +95,7 @@ void DataLoader<LabelType, DataType>::SetDataSize(
  * dimension is subset_size
  * @tparam LabelType
  * @tparam DataType
- * @param subset_size i.e. batch size of returned Tensors
+ * @param batch_size i.e. batch size of returned Tensors
  * @return pair of label tensor and vector of data tensors with specified batch size
  */
 template <typename LabelType, typename DataType>
