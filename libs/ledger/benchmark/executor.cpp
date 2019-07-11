@@ -20,13 +20,12 @@
 
 #include "core/bitvector.hpp"
 #include "crypto/ecdsa.hpp"
-#include "ledger/identifier.hpp"
-#include "ledger/executor.hpp"
 #include "ledger/chain/address.hpp"
 #include "ledger/chain/transaction_builder.hpp"
 #include "ledger/chaincode/token_contract.hpp"
+#include "ledger/executor.hpp"
+#include "ledger/identifier.hpp"
 #include "ledger/state_sentinel_adapter.hpp"
-
 
 #include "benchmark/benchmark.h"
 
@@ -46,26 +45,25 @@ std::shared_ptr<Transaction> CreateSampleTransaction()
 {
   ECDSASigner entity1{};
   ECDSASigner entity2{};
-  Address entity1_address{entity1.identity()};
-  Address entity2_address{entity2.identity()};
+  Address     entity1_address{entity1.identity()};
+  Address     entity2_address{entity2.identity()};
 
   return TransactionBuilder()
-    .From(entity1_address)
-    .Transfer(entity2_address, 200)
-    .ValidUntil(1000)
-    .ChargeRate(1)
-    .ChargeLimit(50)
-    .Signer(entity1.identity())
-    .Seal()
-    .Sign(entity1)
-    .Build();
+      .From(entity1_address)
+      .Transfer(entity2_address, 200)
+      .ValidUntil(1000)
+      .ChargeRate(1)
+      .ChargeLimit(50)
+      .Signer(entity1.identity())
+      .Seal()
+      .Sign(entity1)
+      .Build();
 }
 
 void Executor_BasicBenchmark(benchmark::State &state)
 {
-  auto storage = std::make_shared<InMemoryStorageUnit>();
+  auto     storage = std::make_shared<InMemoryStorageUnit>();
   Executor executor{storage, nullptr};
-
 
   // create and add the transaction to storage
   auto tx = CreateSampleTransaction();
@@ -91,6 +89,6 @@ void Executor_BasicBenchmark(benchmark::State &state)
   }
 }
 
-} // namespace
+}  // namespace
 
 BENCHMARK(Executor_BasicBenchmark);

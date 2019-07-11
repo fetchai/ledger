@@ -17,13 +17,13 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chain/transaction.hpp"
 #include "ledger/chain/digest.hpp"
+#include "ledger/chain/transaction.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 
+#include <memory>
 #include <unordered_map>
 #include <unordered_set>
-#include <memory>
 
 class InMemoryStorageUnit : public fetch::ledger::StorageUnitInterface
 {
@@ -33,10 +33,10 @@ public:
   using DigestSet   = fetch::ledger::DigestSet;
 
   // Construction / Destruction
-  InMemoryStorageUnit() = default;
+  InMemoryStorageUnit()                            = default;
   InMemoryStorageUnit(InMemoryStorageUnit const &) = delete;
-  InMemoryStorageUnit(InMemoryStorageUnit &&) = delete;
-  ~InMemoryStorageUnit() override = default;
+  InMemoryStorageUnit(InMemoryStorageUnit &&)      = delete;
+  ~InMemoryStorageUnit() override                  = default;
 
   /// @name State Interface
   /// @{
@@ -73,10 +73,9 @@ public:
   InMemoryStorageUnit &operator=(InMemoryStorageUnit &&) = delete;
 
 private:
-
   using TransactionPtr   = std::shared_ptr<Transaction>;
-  using TransactionStore = std::unordered_map<Digest,TransactionPtr>;
-  using StateSnapshot    = std::unordered_map<Digest,StateValue>;
+  using TransactionStore = std::unordered_map<Digest, TransactionPtr>;
+  using StateSnapshot    = std::unordered_map<Digest, StateValue>;
   using StateSnapshotPtr = std::shared_ptr<StateSnapshot>;
   using StateSnapshots   = std::vector<StateSnapshotPtr>;
   using ShardLocks       = std::unordered_set<ShardIndex>;

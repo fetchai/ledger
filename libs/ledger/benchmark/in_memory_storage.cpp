@@ -55,7 +55,7 @@ Document InMemoryStorageUnit::GetOrCreate(ResourceAddress const &key)
     (*state_)[key.id()] = ret.document;
 
     ret.was_created = true;
-    ret.failed = false;
+    ret.failed      = false;
   }
 
   return ret;
