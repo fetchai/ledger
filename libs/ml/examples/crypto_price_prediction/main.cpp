@@ -59,7 +59,6 @@ class DataNormaliser
 {
 
 public:
-
   // set up min, max, and range tensors
   TensorType x_min;
   TensorType x_max;
@@ -71,10 +70,10 @@ public:
    * calculate the min, max, and range for reference data
    * @param reference_tensor
    */
-  void SetScale(TensorType & reference_tensor)
+  void SetScale(TensorType &reference_tensor)
   {
-    x_min = TensorType({1, reference_tensor.shape(1)});
-    x_max = TensorType({1, reference_tensor.shape(1)});
+    x_min   = TensorType({1, reference_tensor.shape(1)});
+    x_max   = TensorType({1, reference_tensor.shape(1)});
     x_range = TensorType({1, reference_tensor.shape(1)});
 
     x_min.Fill(fetch::math::numeric_max<DataType>());
@@ -117,7 +116,7 @@ public:
    * normalise tensor data with respect to reference data
    * @return
    */
-  void Normalise(TensorType const & input_tensor, TensorType & output_tensor)
+  void Normalise(TensorType const &input_tensor, TensorType &output_tensor)
   {
     output_tensor.Reshape(input_tensor.shape());
     SizeType batch_dim = input_tensor.shape().size() - 1;
@@ -144,7 +143,7 @@ public:
   /**
    * denormalise tensor data with respect to reference data
    */
-  void DeNormalise(TensorType const & input_tensor, TensorType & output_tensor)
+  void DeNormalise(TensorType const &input_tensor, TensorType &output_tensor)
   {
     output_tensor.Reshape(input_tensor.shape());
     SizeType batch_dim = input_tensor.shape().size() - 1;
@@ -251,15 +250,15 @@ int main(int ac, char **av)
   std::cout << "FETCH Crypto price prediction demo" << std::endl;
 
   std::cout << "Loading crypto price data... " << std::endl;
-  std::vector<TensorType> data_and_labels = LoadData(av[1], av[2], av[3], av[4]);
-  TensorType              orig_train_data = data_and_labels.at(0);
-  TensorType              orig_train_label     = data_and_labels.at(1);
-  TensorType              orig_test_data       = data_and_labels.at(2);
-  TensorType              orig_test_label      = data_and_labels.at(3);
-  TensorType train_data(orig_train_data);
-  TensorType train_label(orig_train_label);
-  TensorType test_data(orig_test_data);
-  TensorType test_label(orig_test_label);
+  std::vector<TensorType> data_and_labels  = LoadData(av[1], av[2], av[3], av[4]);
+  TensorType              orig_train_data  = data_and_labels.at(0);
+  TensorType              orig_train_label = data_and_labels.at(1);
+  TensorType              orig_test_data   = data_and_labels.at(2);
+  TensorType              orig_test_label  = data_and_labels.at(3);
+  TensorType              train_data(orig_train_data);
+  TensorType              train_label(orig_train_label);
+  TensorType              test_data(orig_test_data);
+  TensorType              test_label(orig_test_label);
   test_label.Reshape({test_label.shape().at(1), test_label.shape().at(2)});
 
   if (tp.normalise)
@@ -285,7 +284,7 @@ int main(int ac, char **av)
   DataType loss;
   for (SizeType i{0}; i < tp.epochs; i++)
   {
-    loss = optimiser.Run(loader, tp.batch_size);
+    loss = optimiser.Run(loader, tp.batch_size, 100);
 
     g->SetInput(input_name, test_data);
     auto prediction = g->Evaluate(output_name, false);
