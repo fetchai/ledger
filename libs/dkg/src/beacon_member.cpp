@@ -21,7 +21,6 @@
 namespace fetch {
 namespace dkg {
 
-
 void BeaconManager::Reset(uint64_t cabinet_size, uint32_t threshold)
 {
   cabinet_size_ = cabinet_size;
@@ -35,13 +34,13 @@ void BeaconManager::Reset(uint64_t cabinet_size, uint32_t threshold)
 
   // Creating member id
   // TODO(tfr): Make loadable
-  certificate_.reset( new ECDSASigner() );
-  certificate_->GenerateKeys(); 
+  certificate_.reset(new ECDSASigner());
+  certificate_->GenerateKeys();
   auto id = crypto::bls::PrivateKeyByCSPRNG();
-  id_.v = id.v;
+  id_.v   = id.v;
 }
 
-void BeaconManager::InsertMember(BeaconManager::Identity identity, BeaconManager::Id id) 
+void BeaconManager::InsertMember(BeaconManager::Identity identity, BeaconManager::Id id)
 {
   identity_to_id_[identity] = participants_.size();
   participants_.push_back(id);
@@ -59,9 +58,9 @@ BeaconManager::VerificationVector BeaconManager::GetVerificationVector() const
 
 BeaconManager::PrivateKey BeaconManager::GetShare(BeaconManager::Identity identity) const
 {
-  auto it    = identity_to_id_.find(identity);
+  auto it = identity_to_id_.find(identity);
 
-  if(it  == identity_to_id_.end())
+  if (it == identity_to_id_.end())
   {
     throw std::runtime_error("Could not find identity in GetShare.");
   }
@@ -70,21 +69,22 @@ BeaconManager::PrivateKey BeaconManager::GetShare(BeaconManager::Identity identi
   return contribution_.contributions[n];
 }
 
-bool BeaconManager::AddShare(BeaconManager::Identity from, BeaconManager::PrivateKey share, BeaconManager::VerificationVector verification)
+bool BeaconManager::AddShare(BeaconManager::Identity from, BeaconManager::PrivateKey share,
+                             BeaconManager::VerificationVector verification)
 {
-  auto it     = identity_to_id_.find(from);
-  assert(it  != identity_to_id_.end());
+  auto it = identity_to_id_.find(from);
+  assert(it != identity_to_id_.end());
 
-  if(it  == identity_to_id_.end())
+  if (it == identity_to_id_.end())
   {
     throw std::runtime_error("Could not find identity in AddShare.");
   }
 
-  uint64_t n = it->second;
+  uint64_t n               = it->second;
   verification_vectors_[n] = verification;
 
   bool verified = crypto::bls::dkg::VerifyContributionShare(id_, share, verification);
-  if(verified)
+  if (verified)
   {
     received_shares_[n] = share;
   }
@@ -98,24 +98,24 @@ void BeaconManager::CreateKeyPair()
 
   // TODO: Can be optimised
 
-  VerificationVector group_vectors = crypto::bls::dkg::AccumulateVerificationVectors(verification_vectors_);
+  VerificationVector group_vectors =
+      crypto::bls::dkg::AccumulateVerificationVectors(verification_vectors_);
   group_public_key_ = group_vectors[0];
-  public_key_ = crypto::bls::PublicKeyFromPrivate(secret_key_share_);
+  public_key_       = crypto::bls::PublicKeyFromPrivate(secret_key_share_);
 }
 
 void BeaconManager::SetMessage(BeaconManager::ConstByteArray next_message)
 {
   current_message_ = next_message;
   signature_buffer_.clear();
-  signer_ids_.clear();  
+  signer_ids_.clear();
 }
 
 BeaconManager::SignedMessage BeaconManager::Sign()
 {
   SignedMessage smsg;
-  smsg.signature   = crypto::bls::Sign(secret_key_share_, current_message_);
-  smsg.public_key  = public_key_;
-
+  smsg.signature  = crypto::bls::Sign(secret_key_share_, current_message_);
+  smsg.public_key = public_key_;
 
   if (!crypto::bls::Verify(smsg.signature, smsg.public_key, current_message_))
   {
@@ -125,18 +125,20 @@ BeaconManager::SignedMessage BeaconManager::Sign()
   return smsg;
 }
 
-bool BeaconManager::AddSignaturePart(BeaconManager::Identity from, BeaconManager::PublicKey public_key, BeaconManager::Signature signature)
+bool BeaconManager::AddSignaturePart(BeaconManager::Identity  from,
+                                     BeaconManager::PublicKey public_key,
+                                     BeaconManager::Signature signature)
 {
-  auto it     = identity_to_id_.find(from);
-  assert(it  != identity_to_id_.end());
+  auto it = identity_to_id_.find(from);
+  assert(it != identity_to_id_.end());
 
-  if(it  == identity_to_id_.end())
+  if (it == identity_to_id_.end())
   {
     throw std::runtime_error("Could not find identity in AddSignaturePart.");
   }
 
   uint64_t n  = it->second;
-  auto id = participants_[n];
+  auto     id = participants_[n];
 
   if (!crypto::bls::Verify(signature, public_key, current_message_))
   {
@@ -154,6 +156,5 @@ bool BeaconManager::Verify()
   return crypto::bls::Verify(signature, group_public_key_, current_message_);
 }
 
-
-}
-}
+}  // namespace dkg
+}  // namespace fetch

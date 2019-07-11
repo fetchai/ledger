@@ -19,8 +19,8 @@
 
 #include "crypto/bls_base.hpp"
 #include "crypto/bls_dkg.hpp"
-#include "crypto/identity.hpp"
 #include "crypto/ecdsa.hpp"
+#include "crypto/identity.hpp"
 
 #include <unordered_map>
 
@@ -36,17 +36,17 @@ public:
   using SignatureList      = crypto::bls::SignatureList;
   using PrivateKeyList     = crypto::bls::PrivateKeyList;
 
-  using Signature          = crypto::bls::Signature;
-  using PublicKey          = crypto::bls::PublicKey;
-  using PrivateKey         = crypto::bls::PrivateKey;  
-  using Id                 = crypto::bls::Id;
+  using Signature  = crypto::bls::Signature;
+  using PublicKey  = crypto::bls::PublicKey;
+  using PrivateKey = crypto::bls::PrivateKey;
+  using Id         = crypto::bls::Id;
 
-  using ECDSASigner        = crypto::ECDSASigner;
-  using Certificate        = std::shared_ptr<ECDSASigner>;  
-  using Identity           = crypto::Identity;
+  using ECDSASigner = crypto::ECDSASigner;
+  using Certificate = std::shared_ptr<ECDSASigner>;
+  using Identity    = crypto::Identity;
 
-  using Contribution       = crypto::bls::dkg::Contribution;
-  using ConstByteArray     = fetch::byte_array::ConstByteArray;
+  using Contribution   = crypto::bls::dkg::Contribution;
+  using ConstByteArray = fetch::byte_array::ConstByteArray;
 
   struct SignedMessage
   {
@@ -54,9 +54,9 @@ public:
     PublicKey public_key;
   };
 
-  BeaconManager() = default;
+  BeaconManager()                      = default;
   BeaconManager(BeaconManager const &) = delete;
-  BeaconManager& operator=(BeaconManager const &) = delete;
+  BeaconManager &operator=(BeaconManager const &) = delete;
 
   /*
    * @brief resets the class back to a state where a new cabinet is set up.
@@ -69,7 +69,7 @@ public:
    * @brief adds a member to the current cabinet.
    * @param identity is the network identity of the node
    * @param id is the BLS identifier used in the algorithm.
-   */  
+   */
   void InsertMember(Identity identity, Id id);
 
   /*
@@ -85,30 +85,30 @@ public:
   /*
    * @brief gets a share for given peer.
    * @param identity is the identity of the peer.
-   */  
+   */
   PrivateKey GetShare(Identity identity) const;
 
   /*
    * @brief adds a share from a peer to the internal share register
    * @param identity is the identity of the peer.
    * @param verification is the peers verification vector.
-   */  
+   */
   bool AddShare(Identity from, PrivateKey share, VerificationVector verification);
 
   /*
    * @brief creates the group key pair.
-   */  
+   */
   void CreateKeyPair();
 
   /*
    * @brief sets the next message to be signed.
    * @param next_message is the message to be signed.
-   */  
+   */
   void SetMessage(ConstByteArray next_message);
 
   /*
    * @brief signs the current message.
-   */  
+   */
   SignedMessage Sign();
 
   /*
@@ -116,14 +116,13 @@ public:
    * @param from is the identity of the sending node.
    * @param public_key is the public key of the peer.
    * @param signature is the signature part.
-   */  
-  bool AddSignaturePart(Identity from, PublicKey public_key,  Signature signature);
+   */
+  bool AddSignaturePart(Identity from, PublicKey public_key, Signature signature);
 
   /*
    * @brief verifies the group signature.
-   */  
+   */
   bool Verify();
-
 
   /// Property methods
   /// @{
@@ -142,7 +141,7 @@ public:
     return certificate_->identity();
   }
 
-  Id id() 
+  Id id()
   {
     return id_;
   }
@@ -153,42 +152,38 @@ private:
 
   /// Member details
   /// @{
-  std::unordered_map< Identity, uint64_t > identity_to_id_;
+  std::unordered_map<Identity, uint64_t> identity_to_id_;
   /// @}
-
 
   /// Member identity and secrets
   /// @{
-  Certificate      certificate_;
-  Id               id_;
-  Contribution     contribution_;
+  Certificate  certificate_;
+  Id           id_;
+  Contribution contribution_;
   /// }
 
   /// Beacon keys
   /// @{
-  PrivateKey    secret_key_share_;  
-  PublicKey     group_public_key_;
-  PublicKey     public_key_;
+  PrivateKey secret_key_share_;
+  PublicKey  group_public_key_;
+  PublicKey  public_key_;
   /// }
 
   /// Message signature management
   /// @{
-  SignatureList   signature_buffer_;
-  IdList          signer_ids_;
-  ConstByteArray  current_message_;
+  SignatureList  signature_buffer_;
+  IdList         signer_ids_;
+  ConstByteArray current_message_;
   /// }
 
   /// Details from other members
   /// @{
   PrivateKeyList                  received_shares_;
   ParticipantVector               participants_;
-  std::vector< PublicKey >        public_keys_;
+  std::vector<PublicKey>          public_keys_;
   std::vector<VerificationVector> verification_vectors_;
   /// }
-
-
-
 };
 
-}
-}
+}  // namespace dkg
+}  // namespace fetch

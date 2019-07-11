@@ -30,7 +30,7 @@ using ParticipantVector  = std::vector<bls::Id>;
 struct Contribution
 {
   VerificationVector verification;
-  ContributionVector contributions; // TODO(tfr): rename to "shares"
+  ContributionVector contributions;  // TODO(tfr): rename to "shares"
 };
 
 Contribution GenerateContribution(ParticipantVector const &participants, uint32_t threshold);

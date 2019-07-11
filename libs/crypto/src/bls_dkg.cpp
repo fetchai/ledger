@@ -16,14 +16,13 @@
 //
 //------------------------------------------------------------------------------
 
-
 #include "crypto/bls_dkg.hpp"
 
 namespace fetch {
 namespace crypto {
 namespace bls {
 namespace dkg {
-  
+
 Contribution GenerateContribution(ParticipantVector const &participants, uint32_t threshold)
 {
   Contribution        ret;

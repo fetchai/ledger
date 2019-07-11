@@ -76,10 +76,9 @@ public:
   using PrivateKey = openssl::ECDSAPrivateKey<>;
   using Signature  = openssl::ECDSASignature<>;
 
-  ECDSASigner() 
-  : private_key_{PrivateKey{}}
-  {
-  }
+  ECDSASigner()
+    : private_key_{PrivateKey{}}
+  {}
 
   explicit ECDSASigner(ConstByteArray const &private_key)
     : private_key_{private_key}

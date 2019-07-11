@@ -22,18 +22,18 @@
 
 #include <cstdint>
 #include <iostream>
-#include <stdexcept>
-#include <vector>
-#include <unordered_map>
 #include <random>
+#include <stdexcept>
+#include <unordered_map>
+#include <vector>
 
 using namespace fetch::crypto;
 using namespace fetch::dkg;
 using namespace fetch::byte_array;
 
-int main(int argc, char ** argv)
+int main(int argc, char **argv)
 {
-  if(argc < 2)
+  if (argc < 2)
   {
     std::cerr << "usage: " << argv[0] << " [cabinet size]" << std::endl;
     return -1;
@@ -43,12 +43,12 @@ int main(int argc, char ** argv)
   bls::Init();
 
   // Beacon parameters
-  std::unordered_map< Identity, std::shared_ptr<BeaconManager> > nodes;
+  std::unordered_map<Identity, std::shared_ptr<BeaconManager>> nodes;
   uint64_t cabinet_size = static_cast<uint64_t>(atoi(argv[1]));
-  uint32_t threshold = static_cast< uint32_t >( cabinet_size >> 1);
+  uint32_t threshold    = static_cast<uint32_t>(cabinet_size >> 1);
 
   // Creating nodes
-  for(uint64_t i = 0; i < cabinet_size; ++i)
+  for (uint64_t i = 0; i < cabinet_size; ++i)
   {
     std::shared_ptr<BeaconManager> node = std::make_shared<BeaconManager>();
     node->Reset(cabinet_size, threshold);
@@ -56,50 +56,50 @@ int main(int argc, char ** argv)
   }
 
   // Communicating BLS identities
-  using ParticipantDetails = std::pair<Identity, bls::Id >;
-  std::vector< ParticipantDetails > participants;
-  for(auto &m: nodes)
+  using ParticipantDetails = std::pair<Identity, bls::Id>;
+  std::vector<ParticipantDetails> participants;
+  for (auto &m : nodes)
   {
     auto &n = *m.second;
     participants.push_back({n.identity(), n.id()});
   }
 
   // Propagating identities
-  for(auto &n: nodes)
+  for (auto &n : nodes)
   {
     // Shuffling to similate random arrival order
     std::random_shuffle(participants.begin(), participants.end());
 
-    for(auto &p: participants)
+    for (auto &p : participants)
     {
       n.second->InsertMember(p.first, p.second);
     }
   }
 
   // Generating contributions
-  for(auto &n: nodes)
+  for (auto &n : nodes)
   {
     n.second->GenerateContribution();
   }
 
   // Propagating shares & verification vectors
-  for(auto &n: nodes)
+  for (auto &n : nodes)
   {
     // Get the verification from the sender node
-    auto from                = n.first;
-    auto &sender             = *n.second;
-    auto verification_vector = sender.GetVerificationVector();
+    auto  from                = n.first;
+    auto &sender              = *n.second;
+    auto  verification_vector = sender.GetVerificationVector();
 
     // ... and promote it to all other nodes
-    for(auto &m: nodes)    
+    for (auto &m : nodes)
     {
-      auto to = m.first;
+      auto  to       = m.first;
       auto &receiver = *m.second;
 
       // ... along side the share.
       auto share = sender.GetShare(to);
 
-      if(!receiver.AddShare(from, share, verification_vector))
+      if (!receiver.AddShare(from, share, verification_vector))
       {
         throw std::runtime_error("share could not be verified.");
       }
@@ -107,35 +107,35 @@ int main(int argc, char ** argv)
   }
 
   // Creating key public pairs
-  for(auto &n: nodes)
+  for (auto &n : nodes)
   {
     n.second->CreateKeyPair();
   }
 
   // Setting next message for signing
-  for(auto &n: nodes)
+  for (auto &n : nodes)
   {
     n.second->SetMessage("Hello world");
   }
 
   // Signing and broad casting message
-  for(auto &n: nodes)
+  for (auto &n : nodes)
   {
     auto signed_message = n.second->Sign();
-    auto identity = n.second->identity();
+    auto identity       = n.second->identity();
 
-    for(auto &m: nodes)    
+    for (auto &m : nodes)
     {
-      auto to = m.first;
+      auto  to       = m.first;
       auto &receiver = *m.second;
       receiver.AddSignaturePart(identity, signed_message.public_key, signed_message.signature);
     }
   }
 
   // Verifying
-  for(auto &n: nodes)
+  for (auto &n : nodes)
   {
-    if(n.second->Verify())
+    if (n.second->Verify())
     {
       std::cout << "Hurray, message verified." << std::endl;
     }

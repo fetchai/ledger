@@ -57,18 +57,18 @@ int main()
   bls::Init();
 
   // Creating members from predefined seeds
-  std::vector<ConstByteArray> member_seeds = {"12122",    "454323", "547456", "54",
-                                              "23423423", "68565",  "56465", "!@341", "23412351243", "sdfs23",
-                                              "ewrwrwer","Sdfsdf","asdadg","zxczxa","Qwrtsas","SASDafd",
-                                              "sdadSDASDSDW", "ASdadaddsa","DASDAD","aAASSS"};
-  std::vector<Member>         members;
-  uint32_t                    threshold = 10;
+  std::vector<ConstByteArray> member_seeds = {
+      "12122",   "454323",      "547456",       "54",         "23423423", "68565",  "56465",
+      "!@341",   "23412351243", "sdfs23",       "ewrwrwer",   "Sdfsdf",   "asdadg", "zxczxa",
+      "Qwrtsas", "SASDafd",     "sdadSDASDSDW", "ASdadaddsa", "DASDAD",   "aAASSS"};
+  std::vector<Member> members;
+  uint32_t            threshold = 10;
 
   for (auto &seed : member_seeds)
   {
     Member member;
     member.seed = seed;
-    member.sk   = bls::PrivateKeyByCSPRNG(); // bls::HashToPrivateKey(seed);
+    member.sk   = bls::PrivateKeyByCSPRNG();  // bls::HashToPrivateKey(seed);
     members.push_back(member);
   }
 
