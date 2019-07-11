@@ -18,6 +18,7 @@
 
 #include "math/normalize_array.hpp"
 #include "math/tensor.hpp"
+#include "math/metrics/mean_absolute_error.hpp"
 
 #include "vectorise/fixed_point/fixed_point.hpp"
 
@@ -27,9 +28,7 @@
 #include "ml/layers/convolution_1d.hpp"
 #include "ml/ops/activation.hpp"
 #include "ml/ops/loss_functions/mean_square_error_loss.hpp"
-
 #include "ml/optimisation/adam_optimiser.hpp"
-//#include "ml/optimisation/sgd_optimiser.hpp"
 
 #include <iostream>
 #include <ml/optimisation/sgd_optimiser.hpp>
@@ -294,7 +293,7 @@ int main(int ac, char **av)
     {
       scaler.DeNormalise(prediction, prediction);
     }
-    auto result = fetch::math::MeanSquareError(prediction, orig_test_label);
+    auto result = fetch::math::MeanAbsoluteError(prediction, orig_test_label);
     std::cout << "mean square validation error: " << result << std::endl;
   }
 
