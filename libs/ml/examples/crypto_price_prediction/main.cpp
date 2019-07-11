@@ -255,8 +255,8 @@ int main(int ac, char **av)
     test_label  = NormaliseFeatures(test_label, train_data);
   }
 
-//  DataLoaderType loader(train_label.shape(), {train_data.shape()}, false);
-//  loader.AddData(train_data, train_label);
+  DataLoaderType loader(train_label.shape(), {train_data.shape()}, false);
+  loader.AddData(train_data, train_label);
 
   std::cout << "Build model & optimiser... " << std::endl;
   std::string                input_name, output_name, label_name, error_name;
@@ -267,8 +267,7 @@ int main(int ac, char **av)
   DataType loss;
   for (SizeType i{0}; i < epochs; i++)
   {
-        loss = optimiser.Run({train_data}, train_label, batch_size);
-//    loss = optimiser.Run(loader, batch_size);
+    loss = optimiser.Run(loader, batch_size);
     std::cout << "Loss: " << loss << std::endl;
 
     g->SetInput(input_name, test_data);
