@@ -18,7 +18,6 @@
 
 #include "crypto/bls_base.hpp"
 #include "crypto/bls_dkg.hpp"
-#include "beacon_member.hpp"
 
 #include <cstdint>
 #include <iostream>
@@ -67,7 +66,7 @@ int main()
   {
     Member member;
     member.seed = seed;
-    member.sk   = bls::HashToPrivateKey(seed);
+    member.sk   = bls::PrivateKeyByCSPRNG(); // bls::HashToPrivateKey(seed);
     members.push_back(member);
   }
 
