@@ -17,12 +17,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include "settings/setting_base.hpp"
 #include "settings/detail/setting_list.hpp"
+#include "settings/setting_base.hpp"
 
+#include <iostream>
 #include <string>
 #include <vector>
-#include <iostream>
 
 namespace fetch {
 namespace settings {
@@ -33,13 +33,13 @@ template <typename T>
 class Setting : public SettingBase
 {
 public:
-
   // Construction / Destruction
-  Setting(SettingCollection &reg, std::string name, T const &default_value, std::string description);
+  Setting(SettingCollection &reg, std::string name, T const &default_value,
+          std::string description);
   Setting(SettingCollection &reg, std::string name, T &&default_value, std::string description);
   Setting(Setting const &) = delete;
-  Setting(Setting &&) = delete;
-  ~Setting() = default;
+  Setting(Setting &&)      = delete;
+  ~Setting()               = default;
 
   /// @name Accessors
   /// @{
@@ -63,27 +63,24 @@ public:
   Setting &operator=(Setting const &) = delete;
   Setting &operator=(Setting &&) = delete;
 
-
 private:
-  T           default_{};
-  T           value_{default_};
+  T default_{};
+  T value_{default_};
 };
 
-
-
 template <typename T>
-Setting<T>::Setting(SettingCollection &reg, std::string name, T const &default_value, std::string description)
+Setting<T>::Setting(SettingCollection &reg, std::string name, T const &default_value,
+                    std::string description)
   : SettingBase{reg, std::move(name), std::move(description)}
   , default_{default_value}
-{
-}
+{}
 
 template <typename T>
-Setting<T>::Setting(SettingCollection &reg, std::string name, T &&default_value, std::string description)
+Setting<T>::Setting(SettingCollection &reg, std::string name, T &&default_value,
+                    std::string description)
   : SettingBase{reg, std::move(name), std::move(description)}
   , default_{std::move(default_value)}
-{
-}
+{}
 
 template <typename T>
 T const &Setting<T>::value() const
@@ -127,5 +124,5 @@ void Setting<bool>::FromStream(std::istream &stream);
 template <>
 void Setting<bool>::ToStream(std::ostream &stream) const;
 
-} // namespace settings
-} // namespace fetch
+}  // namespace settings
+}  // namespace fetch

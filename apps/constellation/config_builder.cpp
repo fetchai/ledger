@@ -17,9 +17,9 @@
 //------------------------------------------------------------------------------
 
 #include "config_builder.hpp"
+#include "manifest_builder.hpp"
 #include "settings.hpp"
 #include "vectorise/platform.hpp"
-#include "manifest_builder.hpp"
 
 namespace fetch {
 namespace {
@@ -46,7 +46,7 @@ Constellation::NetworkMode GetNetworkMode(Settings const &settings)
   return mode;
 }
 
-} // namespace
+}  // namespace
 
 /**
  * Build the Constellation's configuration based on the settings based in.
@@ -59,9 +59,9 @@ Constellation::Config BuildConstellationConfig(Settings const &settings)
   Constellation::Config cfg;
 
   BuildManifest(settings, cfg.manifest);
-  cfg.log2_num_lanes = platform::ToLog2(settings.num_lanes.value());
-  cfg.num_slices     = settings.num_slices.value();
-  cfg.num_executors  = settings.num_executors.value();
+  cfg.log2_num_lanes        = platform::ToLog2(settings.num_lanes.value());
+  cfg.num_slices            = settings.num_slices.value();
+  cfg.num_executors         = settings.num_executors.value();
   cfg.db_prefix             = settings.db_prefix.value();
   cfg.processor_threads     = settings.num_processor_threads.value();
   cfg.verification_threads  = settings.num_verifier_threads.value();
@@ -81,4 +81,4 @@ Constellation::Config BuildConstellationConfig(Settings const &settings)
   return cfg;
 }
 
-} // namespace fetch
+}  // namespace fetch

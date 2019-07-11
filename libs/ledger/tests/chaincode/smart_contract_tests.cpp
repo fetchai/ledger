@@ -17,9 +17,9 @@
 //------------------------------------------------------------------------------
 
 #include "contract_test.hpp"
+#include "core/containers/is_in.hpp"
 #include "crypto/ecdsa.hpp"
 #include "crypto/sha256.hpp"
-#include "core/containers/is_in.hpp"
 #include "ledger/chain/transaction_builder.hpp"
 #include "ledger/chaincode/smart_contract.hpp"
 #include "ledger/state_adapter.hpp"

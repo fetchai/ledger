@@ -17,10 +17,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "settings/setting.hpp"
-#include "settings/setting_collection.hpp"
 #include "core/feature_flags.hpp"
 #include "network/uri.hpp"
+#include "settings/setting.hpp"
+#include "settings/setting_collection.hpp"
 
 #include <cstdint>
 #include <string>
@@ -39,16 +39,16 @@ public:
   // Construction / Destruction
   Settings();
   Settings(Settings const &) = delete;
-  Settings(Settings &&) = delete;
-  ~Settings() = default;
+  Settings(Settings &&)      = delete;
+  ~Settings()                = default;
 
-  bool Update(int argc, char** argv);
+  bool Update(int argc, char **argv);
 
   /// @name High Level Network Settings
   /// @{
-  settings::Setting<uint32_t>    num_lanes;
-  settings::Setting<uint32_t>    num_slices;
-  settings::Setting<uint32_t>    block_interval;
+  settings::Setting<uint32_t> num_lanes;
+  settings::Setting<uint32_t> num_slices;
+  settings::Setting<uint32_t> block_interval;
   /// @}
 
   /// @name Network Mode
@@ -103,7 +103,7 @@ public:
 
   /// @name Proof of Stake
   /// @{
-  settings::Setting<bool> proof_of_stake;
+  settings::Setting<bool>        proof_of_stake;
   settings::Setting<std::string> beacon_address;
   /// @}
 
@@ -114,8 +114,7 @@ public:
   friend std::ostream &operator<<(std::ostream &stream, Settings const &settings);
 
 private:
-
   bool Validate();
 };
 
-} // namespace fetch
+}  // namespace fetch

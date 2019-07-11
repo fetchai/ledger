@@ -31,16 +31,15 @@ class SettingBase;
 class SettingCollection
 {
 public:
-  using Settings = std::vector<SettingBase*>;
+  using Settings = std::vector<SettingBase *>;
 
   Settings const &settings() const;
 
   void Add(SettingBase &setting);
-  void UpdateFromArgs(int argc, char** argv);
+  void UpdateFromArgs(int argc, char **argv);
   void UpdateFromEnv(char const *prefix);
 
 private:
-
   Settings settings_;
 };
 
@@ -54,5 +53,5 @@ inline SettingCollection::Settings const &SettingCollection::settings() const
   return settings_;
 }
 
-} // namespace settings
-} // namespace fetch
+}  // namespace settings
+}  // namespace fetch

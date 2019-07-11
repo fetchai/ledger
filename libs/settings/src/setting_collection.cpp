@@ -17,8 +17,8 @@
 //------------------------------------------------------------------------------
 
 #include "core/commandline/parameter_parser.hpp"
-#include "settings/setting_collection.hpp"
 #include "settings/setting_base.hpp"
+#include "settings/setting_collection.hpp"
 
 namespace fetch {
 namespace settings {
@@ -36,23 +36,17 @@ std::string GetEnvironmentVariableName(char const *prefix, std::string const &na
 {
   std::string env_name{name};
 
-  std::transform(
-      env_name.begin(),
-      env_name.end(),
-      env_name.begin(),
-      [](char c) {
-        if (std::isalnum(c))
-        {
-          c = static_cast<char>(std::toupper(c));
-        }
-        else if (c == '-')
-        {
-          c = '_';
-        }
-        return c;
-      }
-  );
-
+  std::transform(env_name.begin(), env_name.end(), env_name.begin(), [](char c) {
+    if (std::isalnum(c))
+    {
+      c = static_cast<char>(std::toupper(c));
+    }
+    else if (c == '-')
+    {
+      c = '_';
+    }
+    return c;
+  });
 
   return prefix + env_name;
 }
@@ -70,7 +64,7 @@ char const *GetEnvironmentVariable(char const *prefix, std::string const &name)
   return std::getenv(env_name.c_str());
 }
 
-} // namespace
+}  // namespace
 
 using fetch::commandline::ParamsParser;
 
@@ -90,7 +84,7 @@ void SettingCollection::Add(SettingBase &setting)
  * @param argc
  * @param argv
  */
-void SettingCollection::UpdateFromArgs(int argc, char** argv)
+void SettingCollection::UpdateFromArgs(int argc, char **argv)
 {
   ParamsParser parser;
   parser.Parse(argc, argv);
@@ -124,5 +118,5 @@ void SettingCollection::UpdateFromEnv(char const *prefix)
   }
 }
 
-} // namespace settings
-} // namespace fetch
+}  // namespace settings
+}  // namespace fetch

@@ -14,14 +14,18 @@ add_executable(constellation
                constellation.cpp
                constellation.hpp
                health_check_http_module.hpp
+               key_generator.cpp
+               key_generator.hpp
                logging_http_module.hpp
                main.cpp
                manifest_builder.cpp
                manifest_builder.hpp
-               key_generator.cpp
-               key_generator.hpp
                settings.cpp
                settings.hpp
                telemetry_http_module.hpp)
-target_link_libraries(constellation PRIVATE fetch-ledger fetch-miner fetch-dkg fetch-settings)
+target_link_libraries(constellation
+                      PRIVATE fetch-ledger
+                              fetch-miner
+                              fetch-dkg
+                              fetch-settings)
 target_include_directories(constellation PRIVATE ${FETCH_ROOT_DIR}/libs/python/include)

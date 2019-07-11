@@ -24,8 +24,8 @@ namespace crypto {
 
 class Prover;
 
-} // namespace crypto
+}  // namespace crypto
 
 std::shared_ptr<crypto::Prover> GenerateP2PKey();
 
-} // namespace fetch
+}  // namespace fetch

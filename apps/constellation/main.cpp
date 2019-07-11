@@ -17,6 +17,8 @@
 //------------------------------------------------------------------------------
 
 #include "bootstrap_monitor.hpp"
+#include "config_builder.hpp"
+#include "constants.hpp"
 #include "constellation.hpp"
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/const_byte_array.hpp"
@@ -32,6 +34,7 @@
 #include "crypto/identity.hpp"
 #include "crypto/prover.hpp"
 #include "fetch_version.hpp"
+#include "key_generator.hpp"
 #include "ledger/chain/address.hpp"
 #include "network/adapters.hpp"
 #include "network/p2pservice/manifest.hpp"
@@ -39,9 +42,6 @@
 #include "network/peer.hpp"
 #include "network/uri.hpp"
 #include "settings.hpp"
-#include "config_builder.hpp"
-#include "key_generator.hpp"
-#include "constants.hpp"
 
 #include <atomic>
 #include <csignal>
@@ -217,7 +217,7 @@ int main(int argc, char **argv)
 
       // create the bootrap monitor (if configued to do so)
       auto initial_peers = settings.peers.value();
-      auto bootstrap = CreateBootstrap(settings, p2p_key, initial_peers);
+      auto bootstrap     = CreateBootstrap(settings, p2p_key, initial_peers);
 
       for (auto const &uri : initial_peers)
       {

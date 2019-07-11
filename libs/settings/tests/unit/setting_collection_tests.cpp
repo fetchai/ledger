@@ -31,9 +31,8 @@ using fetch::settings::SettingCollection;
 class SystemArgAdapter
 {
 public:
-
   SystemArgAdapter(std::vector<std::string> args)
-      : args_{std::move(args)}
+    : args_{std::move(args)}
   {
     argv_.resize(args_.size(), nullptr);
 
@@ -55,13 +54,13 @@ public:
 
 private:
   std::vector<std::string> args_;
-  std::vector<char *> argv_;
+  std::vector<char *>      argv_;
 };
 
 TEST(SettingCollectionTests, SimpleCheck)
 {
-  SettingCollection collection{};
-  Setting<uint32_t> lanes{collection, "lanes", 0, ""};
+  SettingCollection    collection{};
+  Setting<uint32_t>    lanes{collection, "lanes", 0, ""};
   Setting<std::string> name{collection, "name", "default", ""};
 
   SystemArgAdapter arguments({"-lanes", "256", "-name", "foo-bar-baz"});
@@ -72,4 +71,4 @@ TEST(SettingCollectionTests, SimpleCheck)
   EXPECT_EQ(name.value(), "foo-bar-baz");
 }
 
-} // namespace
+}  // namespace

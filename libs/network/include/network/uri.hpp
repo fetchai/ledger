@@ -43,9 +43,9 @@
 #include <cassert>
 #include <cstddef>
 #include <functional>
+#include <iosfwd>
 #include <stdexcept>
 #include <string>
-#include <iosfwd>
 
 namespace fetch {
 namespace network {

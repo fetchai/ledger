@@ -108,7 +108,7 @@ bool LoadManifestFromEnvironment(Manifest &manifest)
   return success;
 }
 
-} // namespace
+}  // namespace
 
 /**
  * Attempt to generate the system manifest from the settings provided
@@ -138,4 +138,4 @@ bool BuildManifest(Settings const &settings, network::Manifest &manifest)
   return success;
 }
 
-} // namespace fetch
+}  // namespace fetch

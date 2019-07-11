@@ -50,5 +50,5 @@ ConstByteArray ReadContentsOfFile(char const *filename)
   return {buffer};
 }
 
-} // namespace core
-} // namespace fetch
+}  // namespace core
+}  // namespace fetch

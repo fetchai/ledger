@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "settings/setting.hpp"
 #include "core/containers/is_in.hpp"
+#include "settings/setting.hpp"
 
 #include <istream>
 #include <unordered_set>
@@ -26,10 +26,10 @@ namespace fetch {
 namespace settings {
 namespace {
 
-const std::unordered_set<std::string> TRUE_VALUES = {"on", "1", "true", "enabled", "yes"};
+const std::unordered_set<std::string> TRUE_VALUES  = {"on", "1", "true", "enabled", "yes"};
 const std::unordered_set<std::string> FALSE_VALUES = {"off", "0", "false", "disabled", "no"};
 
-} // namespace
+}  // namespace
 
 template <>
 void Setting<bool>::FromStream(std::istream &stream)
@@ -42,11 +42,11 @@ void Setting<bool>::FromStream(std::istream &stream)
   {
     if (core::IsIn(TRUE_VALUES, value))
     {
-      value_  = true;
+      value_ = true;
     }
     else if (core::IsIn(FALSE_VALUES, value))
     {
-      value_  = false;
+      value_ = false;
     }
   }
 }
@@ -57,5 +57,5 @@ void Setting<bool>::ToStream(std::ostream &stream) const
   stream << ((value_) ? "Yes" : "No");
 }
 
-} // namespace settings
-} // namespace fetch
+}  // namespace settings
+}  // namespace fetch

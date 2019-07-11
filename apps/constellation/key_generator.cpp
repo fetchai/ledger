@@ -105,4 +105,4 @@ ProverPtr GenerateP2PKey()
   return certificate;
 }
 
-} // namespace fetch
+}  // namespace fetch

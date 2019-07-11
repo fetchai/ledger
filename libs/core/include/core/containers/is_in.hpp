@@ -26,5 +26,5 @@ bool IsIn(Container const &container, Value const &value)
   return container.find(value) != container.end();
 }
 
-} // namespace core
-} // namespace fetch
+}  // namespace core
+}  // namespace fetch

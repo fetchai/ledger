@@ -25,4 +25,4 @@ class Settings;
 
 Constellation::Config BuildConstellationConfig(Settings const &settings);
 
-} // namespace fetch
+}  // namespace fetch

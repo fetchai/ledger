@@ -21,8 +21,8 @@
 
 #include "gtest/gtest.h"
 
-#include <memory>
 #include <cstdint>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -52,7 +52,7 @@ TEST(SettingTests, CheckUInt32)
 
 TEST(SettingTests, CheckSizet)
 {
-  SettingCollection collection{};
+  SettingCollection    collection{};
   Setting<std::size_t> setting{collection, "block-interval", 250u, "A sample setting"};
 
   EXPECT_EQ(setting.name(), "block-interval");
@@ -72,7 +72,7 @@ TEST(SettingTests, CheckSizet)
 TEST(SettingTests, CheckDouble)
 {
   SettingCollection collection{};
-  Setting<double> setting{collection, "threshold", 10.0, "A sample setting"};
+  Setting<double>   setting{collection, "threshold", 10.0, "A sample setting"};
 
   EXPECT_EQ(setting.name(), "threshold");
   EXPECT_EQ(setting.description(), "A sample setting");
@@ -91,7 +91,7 @@ TEST(SettingTests, CheckDouble)
 TEST(SettingTests, CheckBool)
 {
   SettingCollection collection{};
-  Setting<bool> setting{collection, "flag", false, "A sample setting"};
+  Setting<bool>     setting{collection, "flag", false, "A sample setting"};
 
   EXPECT_EQ(setting.name(), "flag");
   EXPECT_EQ(setting.description(), "A sample setting");
@@ -129,7 +129,7 @@ TEST(SettingTests, CheckStringList)
 {
   using StringArray = std::vector<std::string>;
 
-  SettingCollection collection{};
+  SettingCollection    collection{};
   Setting<StringArray> setting{collection, "peers", {}, "A sample setting"};
 
   EXPECT_EQ(setting.name(), "peers");
@@ -158,9 +158,8 @@ TEST(SettingTests, CheckStringList)
     EXPECT_EQ(setting.name(), "peers");
     EXPECT_EQ(setting.description(), "A sample setting");
     EXPECT_EQ(setting.default_value(), StringArray{});
-    EXPECT_EQ(setting.value(), StringArray({"foo","bar","baz"}));
+    EXPECT_EQ(setting.value(), StringArray({"foo", "bar", "baz"}));
   }
 }
 
-
-} // namespace
+}  // namespace

@@ -47,8 +47,8 @@ public:
   std::string GetArg(std::size_t const &i, std::string const &default_value) const;
 
   template <typename T>
-  T           GetParam(std::string const &key, T const &default_value) const;
-  bool        LookupParam(std::string const &key, std::string &value) const;
+  T    GetParam(std::string const &key, T const &default_value) const;
+  bool LookupParam(std::string const &key, std::string &value) const;
 
   std::string GetParam(std::string const &key, std::string const &default_value) const;
 

@@ -24,5 +24,5 @@ namespace core {
 
 byte_array::ConstByteArray ReadContentsOfFile(char const *filename);
 
-} // namespace core
-} // namespace fetch
+}  // namespace core
+}  // namespace fetch

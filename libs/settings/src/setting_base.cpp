@@ -29,5 +29,5 @@ SettingBase::SettingBase(SettingCollection &reg, std::string &&name, std::string
   reg.Add(*this);
 }
 
-} // namespace settings
-} // namespace fetch
+}  // namespace settings
+}  // namespace fetch

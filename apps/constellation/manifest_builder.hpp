@@ -22,10 +22,10 @@ namespace network {
 
 class Manifest;
 
-} // namespace network
+}  // namespace network
 
 class Settings;
 
 bool BuildManifest(Settings const &settings, network::Manifest &manifest);
 
-} // namespace fetch
+}  // namespace fetch

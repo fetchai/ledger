@@ -18,14 +18,14 @@
 
 #include "settings.hpp"
 
-#include "core/logging.hpp"
 #include "core/commandline/parameter_parser.hpp"
+#include "core/logging.hpp"
 #include "vectorise/platform.hpp"
 
-#include <thread>
-#include <cctype>
 #include <algorithm>
+#include <cctype>
 #include <sstream>
+#include <thread>
 
 namespace fetch {
 namespace {
@@ -42,15 +42,15 @@ static const uint32_t DEFAULT_BLOCK_INTERVAL  = 0;  // milliseconds - zero means
 static const uint32_t DEFAULT_MAX_PEERS       = 3;
 static const uint32_t DEFAULT_TRANSIENT_PEERS = 1;
 static const uint32_t NUM_SYSTEM_THREADS =
-                          static_cast<uint32_t>(std::thread::hardware_concurrency());
+    static_cast<uint32_t>(std::thread::hardware_concurrency());
 
-} // namespace
+}  // namespace
 
 /**
  * Construct the settings object
  */
 Settings::Settings()
-// clang-format off
+  // clang-format off
   : num_lanes             {*this, "lanes",                   DEFAULT_NUM_LANES,        "The number of lanes to be used"}
   , num_slices            {*this, "slices",                  DEFAULT_NUM_SLICES,       "The number of slices to be used"}
   , block_interval        {*this, "block-interval",          DEFAULT_BLOCK_INTERVAL,   "The block interval is milliseconds"}
@@ -79,8 +79,7 @@ Settings::Settings()
   , proof_of_stake        {*this, "pos",                     false,                    "Enable Proof of Stake consensus"}
   , beacon_address        {*this, "beacon",                  "",                       "The address of the dealer node"}
 // clang-format on
-{
-}
+{}
 
 /**
  * Given the specified command line arguments, update the settings from the cmd line and the
@@ -89,7 +88,7 @@ Settings::Settings()
  * @param argc The number of command line arguments
  * @param argv The array of command line arguments
  */
-bool Settings::Update(int argc, char** argv)
+bool Settings::Update(int argc, char **argv)
 {
   UpdateFromEnv("CONSTELLATION_");
   UpdateFromArgs(argc, argv);
@@ -115,7 +114,7 @@ std::ostream &operator<<(std::ostream &stream, Settings const &settings)
   // Send pass display the settings
   for (auto const *setting : settings.settings())
   {
-    auto const &name = setting->name();
+    auto const &      name    = setting->name();
     std::size_t const padding = setting_name_length - name.size();
 
     // write name + padding
@@ -160,4 +159,4 @@ bool Settings::Validate()
   return valid;
 }
 
-} // namespace fetch
+}  // namespace fetch

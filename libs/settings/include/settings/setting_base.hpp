@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include <string>
 #include <iosfwd>
+#include <string>
 
 namespace fetch {
 namespace settings {
@@ -28,11 +28,10 @@ class SettingCollection;
 class SettingBase
 {
 public:
-
   // Construction / Destruction
   SettingBase(SettingBase const &) = delete;
-  SettingBase(SettingBase &&) = delete;
-  ~SettingBase() = default;
+  SettingBase(SettingBase &&)      = delete;
+  ~SettingBase()                   = default;
 
   /// @name Accessors
   /// @{
@@ -42,7 +41,7 @@ public:
 
   /// @name Stream operations
   /// @{
-  virtual void FromStream(std::istream &stream) = 0;
+  virtual void FromStream(std::istream &stream)     = 0;
   virtual void ToStream(std::ostream &stream) const = 0;
   /// @}
 
@@ -51,11 +50,9 @@ public:
   SettingBase &operator=(SettingBase &&) = delete;
 
 protected:
-
   SettingBase(SettingCollection &reg, std::string &&name, std::string &&description);
 
 private:
-
   std::string name_{};
   std::string description_{};
 };
@@ -70,17 +67,17 @@ inline std::string const &SettingBase::description() const
   return description_;
 }
 
-inline std::istream& operator>>(std::istream &stream, SettingBase &setting)
+inline std::istream &operator>>(std::istream &stream, SettingBase &setting)
 {
   setting.FromStream(stream);
   return stream;
 }
 
-inline std::ostream& operator<<(std::ostream &stream, SettingBase const &setting)
+inline std::ostream &operator<<(std::ostream &stream, SettingBase const &setting)
 {
   setting.ToStream(stream);
   return stream;
 }
 
-} // namespace settings
-} // namespace fetch
+}  // namespace settings
+}  // namespace fetch
