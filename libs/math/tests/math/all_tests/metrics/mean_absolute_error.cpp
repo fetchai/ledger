@@ -27,11 +27,17 @@ class MeanAbsoluteErrorTest : public ::testing::Test
 };
 
 using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
+<<<<<<< HEAD
                                  fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
+=======
+                                 fetch::math::Tensor<fetch::fixed_point::fp32_t>,
+                                 fetch::math::Tensor<fetch::fixed_point::fp64_t>>;
+>>>>>>> a8952cdbe0db8c87f4de751fddd042fc25debe88
 TYPED_TEST_CASE(MeanAbsoluteErrorTest, MyTypes);
 
 TYPED_TEST(MeanAbsoluteErrorTest, perfect_match_test)
 {
+<<<<<<< HEAD
   TypeParam test_array = TypeParam{8};
   TypeParam gt_array   = TypeParam{8};
 
@@ -52,17 +58,28 @@ TYPED_TEST(MeanAbsoluteErrorTest, perfect_match_test)
   gt_array[5] = typename TypeParam::Type(-6);
   gt_array[6] = typename TypeParam::Type(7);
   gt_array[7] = typename TypeParam::Type(-8);
+=======
+  TypeParam test_array = TypeParam::FromString("1, -2, 3, -4, 5, -6, 7, -8");
+  TypeParam gt_array   = TypeParam::FromString("1, -2, 3, -4, 5, -6, 7, -8");
+>>>>>>> a8952cdbe0db8c87f4de751fddd042fc25debe88
 
   // initialise to non-zero just to avoid correct value at initialisation
   typename TypeParam::Type score(100);
   score = fetch::math::MeanAbsoluteError(test_array, gt_array);
 
   // test correct values
+<<<<<<< HEAD
   ASSERT_NEAR(double(score), double(0.0), double(1.0e-5f));
+=======
+  ASSERT_NEAR(static_cast<double>(score), double(0.0),
+              static_cast<double>(test_array.size()) *
+                  static_cast<double>(fetch::math::function_tolerance<typename TypeParam::Type>()));
+>>>>>>> a8952cdbe0db8c87f4de751fddd042fc25debe88
 }
 
 TYPED_TEST(MeanAbsoluteErrorTest, value_test)
 {
+<<<<<<< HEAD
   TypeParam test_array = TypeParam{8};
   TypeParam gt_array   = TypeParam{8};
 
@@ -85,9 +102,21 @@ TYPED_TEST(MeanAbsoluteErrorTest, value_test)
   gt_array[7] = typename TypeParam::Type(-9.9);
 
   // initialise to non-zero just to avoid correct value at initialisation
+=======
+  TypeParam test_array = TypeParam::FromString("1.1, -2.2, 3.3, -4.4, 5.5, -6.6, 7.7, -8.8");
+  TypeParam gt_array   = TypeParam::FromString("1.1, 2.2, 7.7, 6.6, 0.0, -6.6, 7.7, -9.9");
+
+  // initialise to zero just to avoid correct value at initialisation
+>>>>>>> a8952cdbe0db8c87f4de751fddd042fc25debe88
   typename TypeParam::Type score(0);
   score = fetch::math::MeanAbsoluteError(test_array, gt_array);
 
   // test correct values
+<<<<<<< HEAD
   ASSERT_NEAR(double(score), double(26.4f / 8.0f), double(1.0e-5f));
+=======
+  ASSERT_NEAR(static_cast<double>(score), double(3.3f),
+              static_cast<double>(test_array.size()) *
+                  static_cast<double>(fetch::math::function_tolerance<typename TypeParam::Type>()));
+>>>>>>> a8952cdbe0db8c87f4de751fddd042fc25debe88
 }

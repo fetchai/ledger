@@ -17,7 +17,10 @@
 //------------------------------------------------------------------------------
 
 #include "telemetry/counter.hpp"
+#include "telemetry/counter_map.hpp"
 #include "telemetry/gauge.hpp"
+#include "telemetry/histogram.hpp"
+#include "telemetry/histogram_map.hpp"
 #include "telemetry/registry.hpp"
 
 namespace fetch {
@@ -45,7 +48,7 @@ bool Registry::ValidateName(std::string const &name)
 
   for (char c : name)
   {
-    valid = (c == '_') || ((c >= 'a') && (c <= 'z'));
+    valid = (c == '_') || ((c >= 'a') && (c <= 'z')) || ((c >= '0') && (c <= '9'));
 
     // exit as soon as it it not valid
     if (!valid)
@@ -85,6 +88,85 @@ CounterPtr Registry::CreateCounter(std::string name, std::string description, La
 }
 
 /**
+ * Create a counter map instance
+ *
+ * @param name The name of the metric
+ * @param description The description fo the metric
+ * @param labels The labels associated with the metric
+ * @return The pointer rot the created metric if successful, otherwise a nullptr
+ */
+CounterMapPtr Registry::CreateCounterMap(std::string name, std::string description, Labels labels)
+{
+  CounterMapPtr map{};
+
+  if (ValidateName(name))
+  {
+    // create the new counter
+    map = std::make_shared<CounterMap>(std::move(name), std::move(description), std::move(labels));
+
+    // add the counter to the register
+    {
+      LockGuard guard(lock_);
+      measurements_.emplace_back(map);
+    }
+  }
+
+  return map;
+}
+
+/**
+ * Create a histogram instance
+ *
+ * @param buckets The set of buckets to be used
+ * @param name The name of the metric
+ * @param description The description of the metric
+ * @param labels The labels assoicated with the metric
+ * @return The pointer to the created metric if successful, otherwise a nullptr
+ */
+HistogramPtr Registry::CreateHistogram(std::initializer_list<double> const &buckets,
+                                       std::string name, std::string description, Labels labels)
+{
+  HistogramPtr histogram{};
+
+  if (ValidateName(name))
+  {
+    // create the histogram
+    histogram = std::make_shared<Histogram>(buckets, name, description, labels);
+
+    // add the counter to the register
+    {
+      LockGuard guard(lock_);
+      measurements_.push_back(histogram);
+    }
+  }
+
+  return histogram;
+}
+
+HistogramMapPtr Registry::CreateHistogramMap(std::vector<double> buckets, std::string name,
+                                             std::string field, std::string description,
+                                             Labels labels)
+{
+  HistogramMapPtr histogram_map{};
+
+  if (ValidateName(name))
+  {
+    // create the histogram
+    histogram_map =
+        std::make_shared<HistogramMap>(std::move(name), std::move(field), std::move(buckets),
+                                       std::move(description), std::move(labels));
+
+    // add the counter to the register
+    {
+      LockGuard guard(lock_);
+      measurements_.emplace_back(histogram_map);
+    }
+  }
+
+  return histogram_map;
+}
+
+/**
  * Collect up all the metrics into a single stream to be presented to the requestor
  *
  * @param stream The reference to the stream to be populated
@@ -94,7 +176,7 @@ void Registry::Collect(std::ostream &stream)
   LockGuard guard(lock_);
   for (auto const &measurement : measurements_)
   {
-    measurement->ToStream(stream);
+    measurement->ToStream(stream, Measurement::StreamMode::FULL);
   }
 }
 

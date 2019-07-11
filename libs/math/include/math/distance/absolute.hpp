@@ -28,8 +28,8 @@ template <typename ArrayType>
 inline typename ArrayType::Type AbsoluteDistance(ArrayType const &A, ArrayType const &B)
 {
   using Type = typename ArrayType::Type;
-  auto it1   = A.begin();
-  auto it2   = B.begin();
+  auto it1   = A.cbegin();
+  auto it2   = B.cbegin();
   assert(it1.size() == it2.size());
   Type ret = Type(0);
   Type d;
@@ -39,6 +39,10 @@ inline typename ArrayType::Type AbsoluteDistance(ArrayType const &A, ArrayType c
     if ((*it1 > 0) && (*it2 > 0))
     {
       d = (*it1) - (*it2);
+      if (d < 0)
+      {
+        d = -d;
+      }
     }
     else if ((*it1) > 0)
     {
@@ -51,13 +55,14 @@ inline typename ArrayType::Type AbsoluteDistance(ArrayType const &A, ArrayType c
     else
     {
       d = (*it2) - (*it1);
-      if (ret < 0)
+      if (d < 0)
       {
-        d = -ret;
+        d = -d;
       }
     }
 
-    ret += d++ it1;
+    ret += d;
+    ++it1;
     ++it2;
   }
   return ret;

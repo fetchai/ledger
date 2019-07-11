@@ -292,7 +292,7 @@ def test_end_to_end(project_root, build_root):
     run_end_to_end_test.run_test(build_root, yaml_file, constellation_exe)
 
 
-def test_language(project_root, build_root):
+def test_language(build_root):
     LANGUAGE_TEST_RUNNER = os.path.join(SCRIPT_ROOT, 'run-language-tests.py')
     cmd = [LANGUAGE_TEST_RUNNER, build_root]
     subprocess.check_call(cmd)
@@ -328,6 +328,9 @@ def main():
             build_root,
             exclude_regex='|'.join(LABELS_TO_EXCLUDE_FOR_FAST_TESTS))
 
+    if args.language_tests:
+        test_language(build_root)
+
     if args.slow_tests:
         test_project(
             build_root,
@@ -340,9 +343,6 @@ def main():
 
     if args.end_to_end_tests:
         test_end_to_end(project_root, build_root)
-
-    if args.language_tests:
-        test_language(project_root, build_root)
 
 
 if __name__ == '__main__':

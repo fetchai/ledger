@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/distance/square.hpp"
+#include "math/distance/absolute.hpp"
 #include "math/matrix_operations.hpp"
 #include <cassert>
 
@@ -27,7 +27,7 @@ namespace math {
 template <typename ArrayType>
 typename ArrayType::Type MeanAbsoluteError(ArrayType const &A, ArrayType const &B)
 {
-  typename ArrayType::Type ret = distance::AbsDistance(A, B);
+  typename ArrayType::Type ret = distance::AbsoluteDistance(A, B);
   ret                          = Divide(ret, typename ArrayType::Type(A.size()));
   return ret;
 }

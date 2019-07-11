@@ -520,7 +520,7 @@ def run_test(build_directory, yaml_file, constellation_exe):
     # Read YAML file
     with open(yaml_file, 'r') as stream:
         try:
-            all_yaml = yaml.load_all(stream)
+            all_yaml = yaml.safe_load_all(stream)
 
             # Parse yaml documents as tests (sequentially)
             for test in all_yaml:
