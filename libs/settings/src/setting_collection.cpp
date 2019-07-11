@@ -20,6 +20,9 @@
 #include "settings/setting_base.hpp"
 #include "settings/setting_collection.hpp"
 
+#include <algorithm>
+#include <cassert>
+
 namespace fetch {
 namespace settings {
 namespace {

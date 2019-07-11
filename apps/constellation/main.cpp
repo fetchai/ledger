@@ -64,10 +64,7 @@ namespace {
 constexpr char const *LOGGING_NAME = "main";
 
 using fetch::Settings;
-using fetch::ledger::Address;
 using fetch::crypto::Prover;
-using fetch::byte_array::ByteArray;
-using fetch::byte_array::ConstByteArray;
 using fetch::Constellation;
 using fetch::BootstrapMonitor;
 using fetch::core::WeakRunnable;
