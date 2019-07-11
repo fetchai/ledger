@@ -184,11 +184,15 @@ typename T::Type Optimiser<T>::Run(std::vector<ArrayType> const &data, ArrayType
   // Get trailing dimensions
   SizeType n_data_dimm = data.at(0).shape().size() - 1;
   SizeType n_data      = data.at(0).shape().at(n_data_dimm);
+
   // for some input combinations batch size will be modified
   batch_size = UpdateBatchSize(batch_size, n_data);
-  DataType loss{0};
-  DataType loss_sum{0};
-  SizeType step{0};
+  loss_sum_  = 0;
+  step_      = 0;
+  loss_      = DataType{0};
+  // variable for stats output
+  start_time_ = high_resolution_clock::now();
+
   // Prepare output data tensors
   if (batch_data_.size() != data.size())
   {
@@ -211,10 +215,10 @@ typename T::Type Optimiser<T>::Run(std::vector<ArrayType> const &data, ArrayType
   {
     batch_labels_ = ArrayType{labels_size};
   }
-  while (step < n_data)
+  while (step_ < n_data)
   {
     // Prepare batch
-    SizeType it{step};
+    SizeType it{step_};
     for (SizeType i{0}; i < batch_size; i++)
     {
       if (it >= n_data)
@@ -247,19 +251,20 @@ typename T::Type Optimiser<T>::Run(std::vector<ArrayType> const &data, ArrayType
     graph_->SetInput(label_node_name_, batch_labels_);
 
     auto loss_tensor = graph_->Evaluate(output_node_name_);
-    loss += *(loss_tensor.begin());
+    loss_ += *(loss_tensor.begin());
     graph_->BackPropagateError(output_node_name_);
 
     // Compute and apply gradient
     ApplyGradients(batch_size);
 
-    FETCH_LOG_INFO("ML_LIB", "Batch loss: ", loss);
-    step += batch_size;
-    loss_sum += loss;
+    PrintStats(batch_size, n_data);
+    step_ += batch_size;
+    loss_sum_ += loss_;
+
+    UpdateLearningRate();
   }
-  UpdateLearningRate();
   epoch_++;
-  return loss_sum;
+  return loss_sum_;
 }
 /**
  * Does 1 training epoch using DataLoader
@@ -387,7 +392,7 @@ void Optimiser<T>::PrintStats(SizeType batch_size, SizeType subset_size)
         " samples / sec ";
   }
   // print it in log
-  FETCH_LOG_INFO("ML_LIB", "Training speed", stat_string_);
+  FETCH_LOG_INFO("ML_LIB", "Training speed: ", stat_string_);
   FETCH_LOG_INFO("ML_LIB", "Batch loss: ", loss_sum_ / static_cast<DataType>(step_ / batch_size));
 }
 /**
