@@ -257,9 +257,12 @@ typename T::Type Optimiser<T>::Run(std::vector<ArrayType> const &data, ArrayType
     // Compute and apply gradient
     ApplyGradients(batch_size);
 
-    PrintStats(batch_size, n_data);
     step_ += batch_size;
+    cumulative_step_ += batch_size;
+
     loss_sum_ += loss_;
+    loss_ = static_cast<DataType>(0);
+    PrintStats(batch_size, n_data);
 
     UpdateLearningRate();
   }
