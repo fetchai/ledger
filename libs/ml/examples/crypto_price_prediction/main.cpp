@@ -27,11 +27,14 @@
 #include "ml/layers/convolution_1d.hpp"
 #include "ml/ops/activation.hpp"
 #include "ml/ops/loss_functions/mean_square_error_loss.hpp"
+
 #include "ml/optimisation/adam_optimiser.hpp"
+//#include "ml/optimisation/sgd_optimiser.hpp"
 
 #include <iostream>
 #include <string>
 #include <vector>
+#include <ml/optimisation/sgd_optimiser.hpp>
 
 using namespace fetch::ml::ops;
 using namespace fetch::ml::layers;
@@ -270,7 +273,6 @@ int main(int ac, char **av)
     auto prediction = g->Evaluate(output_name, false);
     prediction.Reshape({prediction.shape().at(1), prediction.shape().at(2)});
 
-    // TODO: mean square error loss reports half the true MSE
     auto result = fetch::math::MeanSquareError(prediction, test_label);
     std::cout << "mean square validation error: " << result << std::endl;
   }

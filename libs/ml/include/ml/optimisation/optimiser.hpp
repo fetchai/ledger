@@ -356,8 +356,6 @@ typename T::Type Optimiser<T>::RunImplementation(
 
     // print the training stats every batch
     PrintStats(batch_size, subset_size);
-
-    FETCH_LOG_INFO("ML_LIB", "Batch loss: ", loss_);
   }
 
   epoch_++;
