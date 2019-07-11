@@ -435,7 +435,8 @@ MainChain::Blocks MainChain::GetChainPreceding(BlockHash start, uint64_t limit) 
  *
  * This function will search down both input references input nodes until a common ancestor is
  * found. Once found the blocks from the specified tip that to that common ancestor are returned.
- * Note: untrusted actors should not be allowed to call with the behaviour of returning the oldest block.
+ * Note: untrusted actors should not be allowed to call with the behaviour of returning the oldest
+ * block.
  *
  * @param blocks The output list of blocks (from heaviest to lightest)
  * @param tip The tip the output list should start from
