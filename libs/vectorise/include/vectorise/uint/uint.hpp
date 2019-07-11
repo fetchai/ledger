@@ -599,6 +599,63 @@ constexpr UInt<256>  &UInt<256>::operator*=(UInt<256> const &n)
 }
 
 template <uint16_t S>
+constexpr UInt<S>  &UInt<S>::operator/=(UInt<S> const &n)
+{
+  if (n == _0) {
+    throw std::runtime_error("division by zero!");
+  }
+  if (n == _1) {
+    *this = n;
+    return *this;
+  }
+  if (*this == n) {
+    *this = _1;
+    return *this;
+  }
+  if (*this == _0) {
+    *this = _0;
+    return *this;
+  }
+  // No fractions supported, if *this < n return 0
+  if (*this < _0) {
+    *this = _0;
+    return *this;
+  }
+
+  // Actual integer division algorithm
+  // First simplify dividend/divisor by shifting right by min LSB bit
+  // Essentially divide both by 2 as long as the LSB is zero
+  UInt<S> N{*this}, D{n};
+  std::size_t lsb = std::min(N.lsb(), D.lsb());
+  N >>= lsb;
+  D >>= lsb;
+  UInt<S> multiple = 1;
+
+  // Find smallest multiple of divisor (D) that is larger than the dividend (N)
+  while(N > D)
+  {
+    D <<= 1;
+    multiple <<= 1;
+  }
+  // Calculate Quotient in a loop, essentially divide divisor by 2 and subtract from Remainder
+  // Add multiple to Quotient
+  UInt<S> Q = _0, R = N;
+  do {
+    if(R >= D)
+    {
+      R -= D;
+      Q += multiple;
+    }
+    D >>= 1; // Divide by two.
+    multiple >>= 1;
+  } while(multiple != 0);
+
+  // Return the Quotient
+  *this = Q;
+  return *this;
+}
+
+template <uint16_t S>
 constexpr UInt<S>  &UInt<S>::operator%=(UInt<S> const &n)
 {
   UInt<S> q = *this / n;
@@ -895,64 +952,6 @@ constexpr std::size_t UInt<S>::lsb() const
     }
   }
   return lsb;
-}
-
-// Implementation for 256-bits only
-template <>
-constexpr UInt<256>  &UInt<256>::operator/=(UInt<256> const &n)
-{
-  if (n == _0) {
-    throw std::runtime_error("division by zero!");
-  }
-  if (n == _1) {
-    *this = n;
-    return *this;
-  }
-  if (*this == n) {
-    *this = _1;
-    return *this;
-  }
-  if (*this == _0) {
-    *this = _0;
-    return *this;
-  }
-  // No fractions supported, if *this < n return 0
-  if (*this < _0) {
-    *this = _0;
-    return *this;
-  }
-
-  // Actual integer division algorithm
-  // First simplify dividend/divisor by shifting right by min LSB bit
-  // Essentially divide both by 2 as long as the LSB is zero
-  UInt<256> N{*this}, D{n};
-  std::size_t lsb = std::min(N.lsb(), D.lsb());
-  N >>= lsb;
-  D >>= lsb;
-  UInt<256> multiple = 1;
-
-  // Find smallest multiple of divisor (D) that is larger than the dividend (N)
-  while(N > D)
-  {
-    D <<= 1;
-    multiple <<= 1;
-  }
-  // Calculate Quotient in a loop, essentially divide divisor by 2 and subtract from Remainder
-  // Add multiple to Quotient
-  UInt<256> Q = _0, R = N;
-  do {
-    if(R >= D)
-    {
-      R -= D;
-      Q += multiple;
-    }
-    D >>= 1; // Divide by two.
-    multiple >>= 1;
-  } while(multiple != 0);
-
-  // Return the Quotient
-  *this = Q;
-  return *this;
 }
 
 /////////////////////////
