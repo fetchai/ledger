@@ -39,8 +39,7 @@
 using namespace fetch::ml::ops;
 using namespace fetch::ml::layers;
 
-// using DataType   = fetch::fixed_point::fp64_t;
-using DataType   = float;
+using DataType   = fetch::fixed_point::fp64_t;
 using TensorType = fetch::math::Tensor<DataType>;
 using SizeType   = typename TensorType::SizeType;
 
@@ -53,39 +52,6 @@ std::shared_ptr<GraphType> BuildModel(std::string &input_name, std::string &outp
                                       std::string &label_name, std::string &error_name)
 {
   auto g = std::make_shared<GraphType>();
-  //
-  //      "CONV1D_1":
-  //    {
-  //      "STRIDE": 1,
-  //      "FILTERS": 8,
-  //      "KERNEL_SIZE": 60
-  //    },
-  //    "CONV1D_2":
-  //    {
-  //      "INPUT_SIZE": 197,
-  //      "STRIDE": 1,
-  //      "FILTERS": 4,
-  //      "KERNEL_SIZE": 46
-  //    },
-  //    "CONV1D_3":
-  //    {
-  //      "INPUT_SIZE": 152,
-  //      "STRIDE": 1,
-  //      "KERNEL_SIZE": 25
-  //    }
-
-  //
-  //  SizeType conv1D_1_filters        = 8;
-  //  SizeType conv1D_1_input_channels = 1;
-  //  SizeType conv1D_1_kernel_size    = 20;
-  //  SizeType conv1D_1_stride         = 3;
-  //
-  //  typename TensorType::Type keep_prob{0.5};
-  //
-  //  SizeType conv1D_2_filters        = 1;
-  //  SizeType conv1D_2_input_channels = conv1D_1_filters;
-  //  SizeType conv1D_2_kernel_size    = 16;
-  //  SizeType conv1D_2_stride         = 4;
 
   SizeType conv1D_1_filters        = 8;
   SizeType conv1D_1_input_channels = 1;
