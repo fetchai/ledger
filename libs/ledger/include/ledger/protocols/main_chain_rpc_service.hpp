@@ -41,6 +41,12 @@ class BlockCoordinator;
 class MainChain;
 class MainChainSyncWorker;
 
+/**
+ * The main chain rpc service ensures that nodes synchronise the main chain. Blocks are broadcast
+ * around and nodes will attempt to determine the heaviest chain of their peers and specifically
+ * request them. Peers are guarded by the main chain limiting request sizes.
+ *
+ */
 class MainChainRpcService : public muddle::rpc::Server,
                             public std::enable_shared_from_this<MainChainRpcService>
 {

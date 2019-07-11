@@ -379,7 +379,7 @@ BlockCoordinator::State BlockCoordinator::OnSynchronising()
                 .block_number) /*|| dag_ && !dag->HasEpoch(common_parent->body.dag_epoch)*/)
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "Ancestor block's state hash cannot be retrieved for block: 0x",
-                      current_hash.ToHex(), " number; ", common_parent->body.block_number);
+                      current_hash.ToHex(), " number: ", common_parent->body.block_number);
 
       // this is a bad situation so the easiest solution is to revert back to genesis
       execution_manager_.SetLastProcessedBlock(GENESIS_DIGEST);
