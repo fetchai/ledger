@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/fundamental_operators.hpp"
+#include "core/assert.hpp"
 #include "ml/ops/ops.hpp"
 
 namespace fetch {
@@ -25,7 +25,7 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class Divide : public fetch::ml::Ops<T>
+class Maximum : public fetch::ml::Ops<T>
 {
 public:
   using ArrayType     = T;
@@ -33,32 +33,37 @@ public:
   using ArrayPtrType  = std::shared_ptr<ArrayType>;
   using VecTensorType = typename Ops<T>::VecTensorType;
 
-  Divide()          = default;
-  virtual ~Divide() = default;
+  Maximum()          = default;
+  virtual ~Maximum() = default;
 
   /**
-   * elementwise division
-   * @param inputs  left & right inputs to Divide
+   * elementwise maximum
+   * @param inputs  left & right inputs to get maximum
    * @return
    */
   virtual void Forward(VecTensorType const &inputs, ArrayType &output)
   {
     assert(inputs.size() == 2);
-    assert(inputs.at(0).get().shape() == inputs.at(1).get().shape());
-    assert(inputs.at(0).get().shape() == output.shape());
+    assert(inputs.at(0).get().size() == inputs.at(1).get().size());
+    assert(output.shape() == this->ComputeOutputShape(inputs));
 
-    fetch::math::Divide(inputs.at(0).get(), inputs.at(1).get(), output);
+    fetch::math::Maximum(inputs[0].get(), inputs[1].get(), output);
   }
 
   /**
-   * f'(x)=(1/y)*err
-   * f'(y)=-(x/(y^2))*err
+   * elementwise maximum gradient is:
+   * f'(input0)=if(input0>input1)=error_signal
+   * f'(input1)=if(input0<=input1)=error_signal
    */
   virtual std::vector<ArrayType> Backward(VecTensorType const &inputs,
                                           ArrayType const &    error_signal)
   {
+    assert(inputs.size() == 2);
+    assert(inputs.at(0).get().size() == inputs.at(1).get().size());
+    assert(error_signal.size() == inputs.at(1).get().size());
+
     ArrayType return_signal_1(inputs.at(0).get().shape());
-    ArrayType return_signal_2(return_signal_1.shape());
+    ArrayType return_signal_2(inputs.at(1).get().shape());
 
     auto a_it   = inputs.at(0).get().cbegin();
     auto b_it   = inputs.at(1).get().cbegin();
@@ -67,8 +72,14 @@ public:
     auto r_2_it = return_signal_2.begin();
     while (a_it.is_valid())
     {
-      *r_1_it = (*err_it) / (*b_it);
-      *r_2_it = ((*err_it) * (*a_it)) / ((*b_it) * (*b_it));
+      if ((*a_it) > (*b_it))
+      {
+        *r_1_it = *err_it;
+      }
+      else
+      {
+        *r_2_it = *err_it;
+      }
 
       ++a_it;
       ++b_it;
@@ -85,7 +96,7 @@ public:
     return inputs.front().get().shape();
   }
 
-  static constexpr char const *DESCRIPTOR = "Divide";
+  static constexpr char const *DESCRIPTOR = "Maximum";
 };
 
 }  // namespace ops
