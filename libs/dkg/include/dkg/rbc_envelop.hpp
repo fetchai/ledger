@@ -30,21 +30,7 @@ namespace rbc {
             serialiser >> serialisedMessage_;
         }
 
-        std::shared_ptr<RBCMessage> getMessage() const {
-            RBCSerializer serialiser{serialisedMessage_};
-            switch (type_) {
-                case MessageType::RBROADCAST:
-                    return std::make_shared<RBroadcast>(serialiser);
-                case MessageType::RECHO:
-                    return std::make_shared<REcho>(serialiser);
-                case MessageType::RREADY:
-                    return std::make_shared<RReady>(serialiser);
-                case MessageType::RREQUEST:
-                    return std::make_shared<RRequest>(serialiser);
-                case MessageType::RANSWER:
-                    return std::make_shared<RAnswer>(serialiser);
-            }
-        }
+        std::shared_ptr<RBCMessage> getMessage() const;
 
     private:
         RBCMessage::MessageType type_;

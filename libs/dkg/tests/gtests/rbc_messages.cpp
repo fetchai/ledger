@@ -1,4 +1,5 @@
 #include "dkg/rbc_envelop.hpp"
+#include "core/serializers/byte_array.hpp"
 #include "core/serializers/byte_array_buffer.hpp"
 #include "core/serializers/counter.hpp"
 #include "gtest/gtest.h"

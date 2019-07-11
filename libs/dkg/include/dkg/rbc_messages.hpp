@@ -13,6 +13,7 @@ namespace rbc {
 
     using TruncatedHash = byte_array::ByteArray;
     using TagType = uint64_t;
+    using SerialisedMessage = byte_array::ConstByteArray;
     using RBCSerializer  = fetch::serializers::ByteArrayBuffer;
     using RBCSerializerCounter = fetch::serializers::SizeCounter<fetch::serializers::ByteArrayBuffer>;
 
@@ -37,7 +38,7 @@ namespace rbc {
             return type_;
         }
         uint8_t channelId() const {
-            return channel_id;
+            return static_cast<uint8_t>(channel_id);
         }
         uint8_t seqCounter() const {
             return sequence_counter;
@@ -68,13 +69,13 @@ namespace rbc {
         }
 
         // For tests:
-        const std::string& message() const {
+        const SerialisedMessage& message() const {
             return message_;
         }
     protected:
-        std::string message_;
+        SerialisedMessage message_;
         explicit RMessage(MessageType type): RBCMessage{type} {};
-        RMessage(uint16_t channel, uint32_t node, uint8_t seq, std::string msg, MessageType type): RBCMessage{channel, node,
+        RMessage(uint16_t channel, uint32_t node, uint8_t seq, SerialisedMessage msg, MessageType type): RBCMessage{channel, node,
                 seq, type}, message_{std::move(msg)} {};
     };
 
@@ -94,7 +95,7 @@ namespace rbc {
         TruncatedHash hash_;
         explicit RHash(MessageType type): RBCMessage{type} {};
         RHash(uint16_t channel, uint32_t node, uint8_t seq, TruncatedHash msg_hash, MessageType type): RBCMessage{channel, node,
-                                                                                            seq, type}, hash_{msg_hash} {};
+                                                                                            seq, type}, hash_{std::move(msg_hash)} {};
     };
 
     // Different RBC Messages:
@@ -102,7 +103,7 @@ namespace rbc {
     // Create this message for messages that need to be broadcasted
     class RBroadcast : public RMessage {
     public:
-        explicit RBroadcast(uint16_t channel, uint32_t node, uint8_t seq_counter, std::string msg):
+        explicit RBroadcast(uint16_t channel, uint32_t node, uint8_t seq_counter, SerialisedMessage msg):
             RMessage{channel, node, seq_counter, std::move(msg), MessageType::RBROADCAST} {};
         explicit RBroadcast(RBCSerializer &serialiser): RMessage{MessageType::RBROADCAST} {
             serialiser >> channel_id >> node_id >> sequence_counter >> message_;
@@ -113,7 +114,7 @@ namespace rbc {
     class REcho : public RHash {
     public:
         explicit REcho(uint16_t channel, uint32_t node, uint8_t seq_counter, TruncatedHash msg_hash):
-                RHash{channel, node, seq_counter, msg_hash, MessageType::RECHO} {};
+                RHash{channel, node, seq_counter, std::move(msg_hash), MessageType::RECHO} {};
         explicit REcho(RBCSerializer &serialiser): RHash{MessageType::RECHO} {
             serialiser >> channel_id >> node_id >> sequence_counter >> hash_;
         }
@@ -124,8 +125,8 @@ namespace rbc {
     class RReady : public RHash {
     public:
         explicit RReady(uint16_t channel, uint32_t node, uint8_t seq_counter, TruncatedHash msg_hash):
-                RHash{channel, node, seq_counter, msg_hash, MessageType::RREADY} {};
-        RReady(RBCSerializer &serialiser): RHash{MessageType::RREADY} {
+                RHash{channel, node, seq_counter, std::move(msg_hash), MessageType::RREADY} {};
+        explicit RReady(RBCSerializer &serialiser): RHash{MessageType::RREADY} {
             serialiser >> channel_id >> node_id >> sequence_counter >> hash_;
         }
     };
@@ -149,7 +150,7 @@ namespace rbc {
     // Reply to RRequest messages
     class RAnswer : public RMessage {
     public:
-        explicit RAnswer(uint16_t channel, uint32_t node, uint8_t seq_counter, std::string msg):
+        explicit RAnswer(uint16_t channel, uint32_t node, uint8_t seq_counter, SerialisedMessage msg):
                 RMessage{channel, node, seq_counter, std::move(msg), MessageType::RANSWER} {};
         explicit RAnswer(RBCSerializer &serialiser): RMessage{MessageType::RANSWER} {
             serialiser >> channel_id >> node_id >> sequence_counter >> message_;

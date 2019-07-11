@@ -20,7 +20,7 @@ namespace rbc {
         using SubscriptionPtr = std::shared_ptr<muddle::Subscription>;
 
         explicit RBC(Endpoint &endpoint, MuddleAddress address, const CabinetMembers &cabinet, uint32_t threshold);
-        void sendRBroadcast(const std::string &msg);
+        void sendRBroadcast(const SerialisedMessage &msg);
         void onRBC(MuddleAddress const &from, RBCEnvelop const &envelop, MuddleAddress const &transmitter);
     private:
         // structs useful in RBC
@@ -37,7 +37,7 @@ namespace rbc {
         };
 
         struct Broadcast { // information per tag
-            std::string mbar_; //message
+            SerialisedMessage mbar_; //message
             TruncatedHash dbar_; //hash of message
             std::unordered_map<TruncatedHash, MsgCount> msgsCount_;
         };
@@ -76,7 +76,7 @@ namespace rbc {
         void onRReady(std::shared_ptr<RReady> msg_ptr, uint32_t l);
         void onRRequest(std::shared_ptr<RRequest> msg_ptr, uint32_t l);
         void onRAnswer(std::shared_ptr<RAnswer> msg_ptr, uint32_t l);
-        void deliver(const std::string &msg, uint32_t l);
+        void deliver(const SerialisedMessage &msg, uint32_t l);
 
         uint32_t cabinetIndex(const MuddleAddress &other_address) const;
         bool checkTag(RBCMessage &msg);

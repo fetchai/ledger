@@ -10,11 +10,10 @@ namespace rbc {
     constexpr char const *LOGGING_NAME   = "RBC";
 
     // Function to compute truncation of message hash to 8 bytes. Truncation from left side.
-    TruncatedHash messageHash(const std::string &msg) {
+    TruncatedHash messageHash(const SerialisedMessage &msg) {
         byte_array::ByteArray msg_hash_256 {crypto::Hash<crypto::SHA256>(msg)};
         return msg_hash_256.SubArray(24);
     }
-
 
     RBC::RBC(Endpoint &endpoint, MuddleAddress address, const CabinetMembers &cabinet, uint32_t threshold)
     : address_{std::move(address)}
@@ -72,7 +71,7 @@ namespace rbc {
         endpoint_.Broadcast(SERVICE_DKG, CHANNEL_BROADCAST, env_serializer.data());
     }
 
-    void RBC::sendRBroadcast(const std::string &msg) {
+    void RBC::sendRBroadcast(const SerialisedMessage &msg) {
 
         RBCEnvelop env{RBroadcast(CHANNEL_BROADCAST, id_, ++s, msg)};
         broadcast(env);
@@ -253,8 +252,8 @@ namespace rbc {
         }
     }
 
-    void RBC::deliver(const std::string &msg, uint32_t senderIndex) {
-        std::string miner_id{*std::next(current_cabinet_.begin(), senderIndex)};
+    void RBC::deliver(const SerialisedMessage &msg, uint32_t senderIndex) {
+        MuddleAddress miner_id{*std::next(current_cabinet_.begin(), senderIndex)};
         //TODO: node_.onBroadcast(msg, miner_id);
         //Try to deliver old messages
         if (!parties_[senderIndex].undelivered_msg.empty()) {
