@@ -114,14 +114,19 @@ std::vector<std::reference_wrapper<const T>> Node<T, O>::GatherInputs() const
 template <typename T, class O>
 T &Node<T, O>::Evaluate(bool is_training)
 {
+
   this->SetTraining(is_training);
+
   if (cached_output_status_ != CachedOutputState::VALID_CACHE)
   {
     std::vector<std::reference_wrapper<const ArrayType>> inputs = GatherInputs();
+
     if (cached_output_status_ == CachedOutputState::CHANGED_SIZE)
     {
       auto output_shape = this->ComputeOutputShape(inputs);
-      if (cached_output_.shape() != output_shape)
+
+      if (cached_output_.shape() !=
+          output_shape)  // make shape compatible right before we do the forwarding
       {
         cached_output_.Reshape(output_shape);
       }
