@@ -191,7 +191,6 @@ std::shared_ptr<GraphType> BuildModel(std::string &input_name, std::string &outp
   SizeType conv1D_3_kernel_size    = 47;
   SizeType conv1D_3_stride         = 1;
 
-
   input_name = g->AddNode<PlaceHolder<TensorType>>("Input", {});
   label_name = g->AddNode<PlaceHolder<TensorType>>("Label", {});
 
@@ -289,7 +288,11 @@ int main(int ac, char **av)
   std::cout << "Build model & optimiser... " << std::endl;
   std::string                input_name, output_name, label_name, error_name;
   std::shared_ptr<GraphType> g = BuildModel(input_name, output_name, label_name, error_name);
-  OptimiserType              optimiser(g, {input_name}, label_name, error_name);
+
+  fetch::ml::optimisers::LearningRateParam<DataType> learning_rate_param;
+  learning_rate_param.mode =
+      fetch::ml::optimisers::LearningRateParam<DataType>::LearningRateDecay::LINEAR;
+  OptimiserType optimiser(g, {input_name}, label_name, error_name, learning_rate_param);
 
   std::cout << "Begin training loop... " << std::endl;
   DataType loss;
