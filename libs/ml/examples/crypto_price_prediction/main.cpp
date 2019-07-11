@@ -49,7 +49,7 @@ using DataLoaderType   = typename fetch::ml::dataloaders::TensorDataLoader<Tenso
 
 struct TrainingParams
 {
-  SizeType epochs{1};
+  SizeType epochs{10};
   SizeType batch_size{8};
   bool     normalise = true;
 };
@@ -283,7 +283,7 @@ int main(int ac, char **av)
   DataType loss;
   for (SizeType i{0}; i < tp.epochs; i++)
   {
-    loss = optimiser.Run(loader, tp.batch_size, 100);
+    loss = optimiser.Run(loader, tp.batch_size);
 
     g->SetInput(input_name, test_data);
     auto prediction = g->Evaluate(output_name, false);
@@ -294,7 +294,7 @@ int main(int ac, char **av)
       scaler.DeNormalise(prediction, prediction);
     }
     auto result = fetch::math::MeanAbsoluteError(prediction, orig_test_label);
-    std::cout << "mean square validation error: " << result << std::endl;
+    std::cout << "mean absolute validation error: " << result << std::endl;
   }
 
   return 0;
