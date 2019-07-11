@@ -111,7 +111,7 @@ TensorDataLoader<LabelType, InputType>::Size() const
 template <typename LabelType, typename InputType>
 bool TensorDataLoader<LabelType, InputType>::IsDone() const
 {
-  return (data_cursor_ >= data_.shape()[0]);
+  return (data_cursor_ >= data_.shape(batch_data_dim_));
 }
 
 template <typename LabelType, typename InputType>
