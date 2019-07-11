@@ -25,8 +25,10 @@
 #include <stdexcept>
 #include <vector>
 #include <unordered_map>
+#include <random>
 
 using namespace fetch::crypto;
+using namespace fetch::dkg;
 using namespace fetch::byte_array;
 
 struct ParticipantData
@@ -63,7 +65,9 @@ int main()
   // Propagating identities
   for(auto &n: nodes)
   {
-    // TODO: Test with shuffling
+    // Shuffling to similate random arrival order
+    std::random_shuffle(participants.begin(), participants.end());
+
     for(auto &p: participants)
     {
       n.second->InsertMember(p.identity, p.id);
@@ -133,8 +137,6 @@ int main()
       throw std::runtime_error("Signature not verified");
     }
   }
-
-  // TODO: Verify
 
   return 0;
 }
