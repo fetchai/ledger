@@ -48,6 +48,127 @@ using CostFunctionType = typename fetch::ml::ops::MeanSquareErrorLoss<TensorType
 using OptimiserType    = typename fetch::ml::optimisers::AdamOptimiser<TensorType>;
 using DataLoaderType   = typename fetch::ml::dataloaders::TensorDataLoader<TensorType, TensorType>;
 
+struct TrainingParams
+{
+  SizeType epochs{1};
+  SizeType batch_size{8};
+  bool     normalise = true;
+};
+
+class DataNormaliser
+{
+
+public:
+
+  // set up min, max, and range tensors
+  TensorType x_min;
+  TensorType x_max;
+  TensorType x_range;
+
+  DataNormaliser() = default;
+
+  /**
+   * calculate the min, max, and range for reference data
+   * @param reference_tensor
+   */
+  void SetScale(TensorType & reference_tensor)
+  {
+    x_min = TensorType({1, reference_tensor.shape(1)});
+    x_max = TensorType({1, reference_tensor.shape(1)});
+    x_range = TensorType({1, reference_tensor.shape(1)});
+
+    x_min.Fill(fetch::math::numeric_max<DataType>());
+    x_max.Fill(fetch::math::numeric_lowest<DataType>());
+    x_range.Fill(fetch::math::numeric_lowest<DataType>());
+
+    // calculate min, max, and range of each feature
+    for (std::size_t i = 0; i < reference_tensor.shape(2); ++i)
+    {
+      auto x_min_it   = x_min.begin();
+      auto x_max_it   = x_max.begin();
+      auto x_range_it = x_range.begin();
+      auto ref_it     = reference_tensor.Slice(i, 2).begin();
+      while (x_min_it.is_valid())
+      {
+        if (*x_min_it > *ref_it)
+        {
+          *x_min_it = *ref_it;
+        }
+
+        if (*x_max_it < *ref_it)
+        {
+          *x_max_it = *ref_it;
+        }
+
+        if (*x_range_it < (*x_max_it - *x_min_it))
+        {
+          *x_range_it = (*x_max_it - *x_min_it);
+        }
+
+        ++ref_it;
+        ++x_min_it;
+        ++x_max_it;
+        ++x_range_it;
+      }
+    }
+  }
+
+  /**
+   * normalise tensor data with respect to reference data
+   * @return
+   */
+  void Normalise(TensorType const & input_tensor, TensorType & output_tensor)
+  {
+    output_tensor.Reshape(input_tensor.shape());
+    SizeType batch_dim = input_tensor.shape().size() - 1;
+
+    // apply normalisation to each feature according to scale -1, 1
+    for (std::size_t i = 0; i < input_tensor.shape(2); ++i)
+    {
+      auto x_min_it   = x_min.begin();
+      auto x_range_it = x_range.begin();
+      auto in_it      = input_tensor.Slice(i, batch_dim).begin();
+      auto ret_it     = output_tensor.Slice(i, batch_dim).begin();
+      while (ret_it.is_valid())
+      {
+        *ret_it = (*in_it - *x_min_it) / (*x_range_it);
+
+        ++in_it;
+        ++ret_it;
+        ++x_min_it;
+        ++x_range_it;
+      }
+    }
+  }
+
+  /**
+   * denormalise tensor data with respect to reference data
+   */
+  void DeNormalise(TensorType const & input_tensor, TensorType & output_tensor)
+  {
+    output_tensor.Reshape(input_tensor.shape());
+    SizeType batch_dim = input_tensor.shape().size() - 1;
+
+    // apply normalisation to each feature according to scale -1, 1
+    for (std::size_t i = 0; i < input_tensor.shape(2); ++i)
+    {
+      auto x_min_it   = x_min.begin();
+      auto x_range_it = x_range.begin();
+      auto in_it      = input_tensor.Slice(i, batch_dim).begin();
+      auto ret_it     = output_tensor.Slice(i, batch_dim).begin();
+      while (ret_it.is_valid())
+      {
+        *ret_it = ((*in_it) * (*x_range_it)) + *x_min_it;
+
+        ++in_it;
+        ++ret_it;
+        ++x_min_it;
+        ++x_range_it;
+      }
+    }
+  }
+};
+
 std::shared_ptr<GraphType> BuildModel(std::string &input_name, std::string &output_name,
                                       std::string &label_name, std::string &error_name)
 {
@@ -114,80 +235,8 @@ std::vector<TensorType> LoadData(std::string const &train_data_filename,
   return {train_data_tensor, train_labels_tensor, test_data_tensor, test_labels_tensor};
 }
 
-/**
- * MinMax scaler normaliser
- * @param input_data
- * @param reference_data
- * @return
- */
-TensorType NormaliseFeatures(TensorType &input_data, TensorType const &reference_data)
-{
-  // set up return tensor
-  TensorType ret(input_data.shape());
-
-  // set up min, max, and range tensors
-  TensorType x_min({1, reference_data.shape(1)});
-  TensorType x_max({1, reference_data.shape(1)});
-  TensorType x_range({1, reference_data.shape(1)});
-
-  // calculate min, max, and range of each feature
-  for (std::size_t i = 0; i < reference_data.shape(2); ++i)
-  {
-    auto x_min_it   = x_min.begin();
-    auto x_max_it   = x_max.begin();
-    auto x_range_it = x_range.begin();
-    auto train_it   = input_data.Slice(i, 2).begin();
-    while (x_min_it.is_valid())
-    {
-      if (*x_min_it > *train_it)
-      {
-        *x_min_it = *train_it;
-      }
-
-      if (*x_max_it < *train_it)
-      {
-        *x_max_it = *train_it;
-      }
-
-      if (*x_range_it < (*x_max_it - *x_min_it))
-      {
-        *x_range_it = (*x_max_it - *x_min_it);
-      }
-
-      ++train_it;
-      ++x_min_it;
-      ++x_max_it;
-      ++x_range_it;
-    }
-  }
-
-  // apply normalisation to each feature according to scale -1, 1
-  for (std::size_t i = 0; i < reference_data.shape(2); ++i)
-  {
-    auto x_min_it   = x_min.begin();
-    auto x_range_it = x_range.begin();
-    auto ret_it     = ret.Slice(i, 2).begin();
-    while (ret_it.is_valid())
-    {
-      *ret_it = (*ret_it - *x_min_it) / (*x_range_it);
-
-      ++ret_it;
-      ++x_min_it;
-      ++x_range_it;
-    }
-  }
-  return ret;
-}
-//
-// void DeNormalisePrediction()
-//{}
-
 int main(int ac, char **av)
 {
-  SizeType epochs{10};
-  SizeType batch_size{8};
-  bool     normalise = false;
-
   if (ac < 5)
   {
     std::cout << "Usage : " << av[0]
@@ -196,29 +245,32 @@ int main(int ac, char **av)
     return 1;
   }
 
+  TrainingParams tp;
+  DataNormaliser scaler;
+
   std::cout << "FETCH Crypto price prediction demo" << std::endl;
 
   std::cout << "Loading crypto price data... " << std::endl;
   std::vector<TensorType> data_and_labels = LoadData(av[1], av[2], av[3], av[4]);
-  TensorType              train_data      = data_and_labels.at(0);
-  TensorType              train_label     = data_and_labels.at(1);
-  TensorType              test_data       = data_and_labels.at(2);
-  TensorType              test_label      = data_and_labels.at(3);
-
+  TensorType              orig_train_data = data_and_labels.at(0);
+  TensorType              orig_train_label     = data_and_labels.at(1);
+  TensorType              orig_test_data       = data_and_labels.at(2);
+  TensorType              orig_test_label      = data_and_labels.at(3);
+  TensorType train_data(orig_train_data);
+  TensorType train_label(orig_train_label);
+  TensorType test_data(orig_test_data);
+  TensorType test_label(orig_test_label);
   test_label.Reshape({test_label.shape().at(1), test_label.shape().at(2)});
 
-  if (normalise)
+  if (tp.normalise)
   {
-    TensorType orig_train_data  = train_data.Copy();
-    TensorType orig_train_label = train_label.Copy();
-    TensorType orig_test_data   = test_data.Copy();
-    TensorType orig_test_label  = test_label.Copy();
+    scaler.SetScale(train_data);
 
     // normalise training and test data with respect to training data range
-    train_data  = NormaliseFeatures(train_data, train_data);
-    train_label = NormaliseFeatures(train_label, train_data);
-    test_data   = NormaliseFeatures(test_data, train_data);
-    test_label  = NormaliseFeatures(test_label, train_data);
+    scaler.Normalise(orig_train_data, train_data);
+    scaler.Normalise(orig_train_label, train_label);
+    scaler.Normalise(orig_test_data, test_data);
+    scaler.Normalise(orig_test_label, test_label);
   }
 
   DataLoaderType loader(train_label.shape(), {train_data.shape()}, false);
@@ -231,16 +283,19 @@ int main(int ac, char **av)
 
   std::cout << "Begin training loop... " << std::endl;
   DataType loss;
-  for (SizeType i{0}; i < epochs; i++)
+  for (SizeType i{0}; i < tp.epochs; i++)
   {
-    loss = optimiser.Run(loader, batch_size);
-    std::cout << "Loss: " << loss << std::endl;
+    loss = optimiser.Run(loader, tp.batch_size);
 
     g->SetInput(input_name, test_data);
     auto prediction = g->Evaluate(output_name, false);
     prediction.Reshape({prediction.shape().at(1), prediction.shape().at(2)});
 
-    auto result = fetch::math::MeanSquareError(prediction, test_label);
+    if (tp.normalise)
+    {
+      scaler.DeNormalise(prediction, prediction);
+    }
+    auto result = fetch::math::MeanSquareError(prediction, orig_test_label);
     std::cout << "mean square validation error: " << result << std::endl;
   }
 
