@@ -302,7 +302,7 @@ int main(int argc, char **argv)
   }
 
   // print the header
-  fetch::version::DisplayCLIHeader("vm-lang");
+  fetch::version::DisplayCLIHeader("etch");
 
   // load the contents of the script file
   auto const source = ReadFileContents(params.program().GetArg(1));
