@@ -162,7 +162,7 @@ private:
     switch (type)
     {
     case Type::MD5:
-      openssl_type = EVP_sha512();
+      openssl_type = EVP_md5();
       break;
     case Type::SHA1:
       openssl_type = EVP_sha1();
