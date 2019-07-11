@@ -46,7 +46,8 @@ public:
     assert(inputs.at(0).get().shape() == inputs.at(1).get().shape());
 
     // division by 2 allows us to cancel out with a 2 in the derivative for optimisation
-    output(0, 0) = fetch::math::MeanSquareError(inputs.at(0).get(), inputs.at(1).get()) / 2;
+    output(0, 0) = fetch::math::MeanSquareError(inputs.at(0).get(), inputs.at(1).get()) /
+                   static_cast<DataType>(2);
   }
 
   // grad[0]=2*err*(in[0]-in[1])/mean_size, grad[1]=-2*err*(in[0]-in[1])/mean_size,

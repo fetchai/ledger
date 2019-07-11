@@ -19,6 +19,8 @@
 #include "math/normalize_array.hpp"
 #include "math/tensor.hpp"
 
+#include "vectorise/fixed_point/fixed_point.hpp"
+
 #include "ml/dataloaders/ReadCSV.hpp"
 #include "ml/dataloaders/tensor_dataloader.hpp"
 #include "ml/graph.hpp"
@@ -34,7 +36,7 @@
 using namespace fetch::ml::ops;
 using namespace fetch::ml::layers;
 
-using DataType   = float;
+using DataType   = fetch::fixed_point::fp64_t;
 using TensorType = fetch::math::Tensor<DataType>;
 using SizeType   = typename TensorType::SizeType;
 
@@ -47,26 +49,62 @@ std::shared_ptr<GraphType> BuildModel(std::string &input_name, std::string &outp
                                       std::string &label_name, std::string &error_name)
 {
   auto g = std::make_shared<GraphType>();
+  //
+  //      "CONV1D_1":
+  //    {
+  //      "STRIDE": 1,
+  //      "FILTERS": 8,
+  //      "KERNEL_SIZE": 60
+  //    },
+  //    "CONV1D_2":
+  //    {
+  //      "INPUT_SIZE": 197,
+  //      "STRIDE": 1,
+  //      "FILTERS": 4,
+  //      "KERNEL_SIZE": 46
+  //    },
+  //    "CONV1D_3":
+  //    {
+  //      "INPUT_SIZE": 152,
+  //      "STRIDE": 1,
+  //      "KERNEL_SIZE": 25
+  //    }
+
+  //
+  //  SizeType conv1D_1_filters        = 8;
+  //  SizeType conv1D_1_input_channels = 1;
+  //  SizeType conv1D_1_kernel_size    = 20;
+  //  SizeType conv1D_1_stride         = 3;
+  //
+  //  typename TensorType::Type keep_prob{0.5};
+  //
+  //  SizeType conv1D_2_filters        = 1;
+  //  SizeType conv1D_2_input_channels = conv1D_1_filters;
+  //  SizeType conv1D_2_kernel_size    = 16;
+  //  SizeType conv1D_2_stride         = 4;
 
   SizeType conv1D_1_filters        = 8;
   SizeType conv1D_1_input_channels = 1;
-  SizeType conv1D_1_kernel_size    = 20;
-  SizeType conv1D_1_stride         = 3;
+  SizeType conv1D_1_kernel_size    = 80;
+  SizeType conv1D_1_stride         = 1;
 
-  typename TensorType::Type keep_prob = 0.5;
+  typename TensorType::Type keep_prob{0.5};
 
   SizeType conv1D_2_filters        = 1;
   SizeType conv1D_2_input_channels = conv1D_1_filters;
-  SizeType conv1D_2_kernel_size    = 16;
-  SizeType conv1D_2_stride         = 4;
+  SizeType conv1D_2_kernel_size    = 50;
+  SizeType conv1D_2_stride         = 1;
 
-  input_name          = g->AddNode<PlaceHolder<TensorType>>("Input", {});
-  label_name          = g->AddNode<PlaceHolder<TensorType>>("Label", {});
+  input_name = g->AddNode<PlaceHolder<TensorType>>("Input", {});
+  label_name = g->AddNode<PlaceHolder<TensorType>>("Label", {});
+
   std::string layer_1 = g->AddNode<fetch::ml::layers::Convolution1D<TensorType>>(
       "Conv1D_1", {input_name}, conv1D_1_filters, conv1D_1_input_channels, conv1D_1_kernel_size,
       conv1D_1_stride, fetch::ml::details::ActivationType::RELU);
+
   std::string layer_2 = g->AddNode<Dropout<TensorType>>("Dropout_1", {layer_1}, keep_prob);
-  output_name         = g->AddNode<fetch::ml::layers::Convolution1D<TensorType>>(
+
+  output_name = g->AddNode<fetch::ml::layers::Convolution1D<TensorType>>(
       "Conv1D_2", {layer_2}, conv1D_2_filters, conv1D_2_input_channels, conv1D_2_kernel_size,
       conv1D_2_stride);
 
@@ -233,9 +271,8 @@ int main(int ac, char **av)
     prediction.Reshape({prediction.shape().at(1), prediction.shape().at(2)});
 
     // TODO: mean square error loss reports half the true MSE
-    auto result = fetch::math::MeanSquareErrorLoss(prediction, test_label);
+    auto result = fetch::math::MeanSquareError(prediction, test_label);
     std::cout << "mean square validation error: " << result << std::endl;
-
   }
 
   return 0;
