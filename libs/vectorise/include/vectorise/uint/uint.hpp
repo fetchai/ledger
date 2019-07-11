@@ -70,6 +70,7 @@ public:
   constexpr UInt(UInt const &other);
   constexpr UInt(UInt &&other) noexcept;
   constexpr explicit UInt(ContainerType const &&other);
+  constexpr explicit UInt(WideContainerType const &&other);
   template <typename T>
   constexpr UInt(T const &other, meta::IfIsAByteArray<T> * = nullptr);
   template <typename T>
@@ -130,6 +131,7 @@ public:
   constexpr UInt  operator-(UInt const &n) const;
   constexpr UInt  operator*(UInt const &n) const;
   constexpr UInt  operator/(UInt const &n) const;
+  constexpr UInt  operator%(UInt const &n) const;
   constexpr UInt  operator&(UInt const &n) const;
   constexpr UInt  operator|(UInt const &n) const;
   constexpr UInt  operator^(UInt const &n) const;
@@ -137,6 +139,7 @@ public:
   constexpr UInt  &operator-=(UInt const &n);
   constexpr UInt  &operator*=(UInt const &n);
   constexpr UInt  &operator/=(UInt const &n);
+  constexpr UInt  &operator%=(UInt const &n);
   constexpr UInt  &operator&=(UInt const &n);
   constexpr UInt  &operator|=(UInt const &n);
   constexpr UInt  &operator^=(UInt const &n);
@@ -149,28 +152,35 @@ public:
   template <typename T>
   constexpr meta::IfIsInteger<T, UInt> operator/(T const &n) const;
   template <typename T>
-  constexpr meta::IfIsInteger<T, UInt>operator&(T const &n) const;
+  constexpr meta::IfIsInteger<T, UInt> operator%(T const &n) const;
   template <typename T>
-  constexpr meta::IfIsInteger<T, UInt>operator|(T const &n) const;
+  constexpr meta::IfIsInteger<T, UInt> operator&(T const &n) const;
   template <typename T>
-  constexpr meta::IfIsInteger<T, UInt>operator^(T const &n) const;
+  constexpr meta::IfIsInteger<T, UInt> operator|(T const &n) const;
   template <typename T>
-  constexpr meta::IfIsInteger<T, UInt>&operator+=(T const &n);
+  constexpr meta::IfIsInteger<T, UInt> operator^(T const &n) const;
   template <typename T>
-  constexpr meta::IfIsInteger<T, UInt>&operator-=(T const &n);
+  constexpr meta::IfIsInteger<T, UInt> &operator+=(T const &n);
   template <typename T>
-  constexpr meta::IfIsInteger<T, UInt>&operator&=(T const &n);
+  constexpr meta::IfIsInteger<T, UInt> &operator-=(T const &n);
   template <typename T>
-  constexpr meta::IfIsInteger<T, UInt>&operator|=(T const &n);
+  constexpr meta::IfIsInteger<T, UInt> &operator*=(T const &n);
   template <typename T>
-  constexpr meta::IfIsInteger<T, UInt>&operator^=(T const &n);
+  constexpr meta::IfIsInteger<T, UInt> &operator/=(T const &n);
   template <typename T>
-  constexpr meta::IfIsInteger<T, UInt>&operator*=(T const &n);
+  constexpr meta::IfIsInteger<T, UInt> &operator%=(T const &n);
   template <typename T>
-  constexpr meta::IfIsInteger<T, UInt>&operator/=(T const &n);
+  constexpr meta::IfIsInteger<T, UInt> &operator&=(T const &n);
+  template <typename T>
+  constexpr meta::IfIsInteger<T, UInt> &operator|=(T const &n);
+  template <typename T>
+  constexpr meta::IfIsInteger<T, UInt> &operator^=(T const &n);
 
   constexpr UInt &operator<<=(std::size_t const &n);
   constexpr UInt &operator>>=(std::size_t const &n);
+
+  constexpr std::size_t msb() const;
+  constexpr std::size_t lsb() const;
 
   /////////////////////////
   /// element accessors ///
@@ -194,6 +204,13 @@ public:
 
   explicit operator std::string() const;
 
+  /////////////////
+  /// constants ///
+  /////////////////
+
+  static const UInt _0;
+  static const UInt _1;
+  static const UInt max;
 private:
   union
   {
@@ -201,6 +218,17 @@ private:
     WideContainerType wide;
   } data_;
 };
+
+/////////////////
+/// constants ///
+/////////////////
+
+template <uint16_t S>
+const UInt<S> UInt<S>::_0{0};
+template <uint16_t S>
+const UInt<S> UInt<S>::_1{1};
+template <uint16_t S>
+const UInt<S> UInt<S>::max{{ULONG_MAX, ULONG_MAX, ULONG_MAX, ULONG_MAX}};
 
 ////////////////////
 /// constructors ///
@@ -224,6 +252,11 @@ constexpr UInt<S>::UInt(UInt &&other) noexcept
 
 template <uint16_t S>
 constexpr UInt<S>::UInt(ContainerType const &&other)
+  : data_(std::move(other))
+{}
+
+template <uint16_t S>
+constexpr UInt<S>::UInt(WideContainerType const &&other)
   : data_(std::move(other))
 {}
 
@@ -392,7 +425,7 @@ constexpr meta::IfIsInteger<T, bool> UInt<S>::operator>=(T const &other) const
 template <uint16_t S>
 constexpr UInt<S> &UInt<S>::operator++()
 {
-  *this += 1;
+  *this += _1;
 
   return *this;
 }
@@ -400,7 +433,7 @@ constexpr UInt<S> &UInt<S>::operator++()
 template <uint16_t S>
 constexpr UInt<S> &UInt<S>::operator--()
 {
-  *this -= 1;
+  *this -= _1;
 
   return *this;
 }
@@ -441,6 +474,15 @@ constexpr UInt<S>  UInt<S>::operator/(UInt<S> const &n) const
 {
   UInt<S> ret{*this};
   ret /= n;
+
+  return std::move(ret);
+}
+
+template <uint16_t S>
+constexpr UInt<S>  UInt<S>::operator%(UInt<S> const &n) const
+{
+  UInt<S> ret{*this};
+  ret %= n;
 
   return std::move(ret);
 }
@@ -492,7 +534,7 @@ constexpr UInt<S>  &UInt<S>::operator-=(UInt<S> const &n)
 {
   if (*this < n)
   {
-    *this = UInt<S>(0);
+    *this = _0;
   }
   UInt<S>::WideType carry = 0, new_carry = 0;
   for (std::size_t i = 0; i < WIDE_ELEMENTS; ++i)
@@ -556,13 +598,11 @@ constexpr UInt<256>  &UInt<256>::operator*=(UInt<256> const &n)
   return *this;
 }
 
-// Implementation for 256-bits only
-template <>
-constexpr UInt<256>  &UInt<256>::operator/=(UInt<256> const &n)
+template <uint16_t S>
+constexpr UInt<S>  &UInt<S>::operator%=(UInt<S> const &n)
 {
-
-
-  return *this;
+  UInt<S> q = *this / n;
+  return *this - (n * q);
 }
 
 template <uint16_t S>
@@ -640,6 +680,16 @@ constexpr meta::IfIsInteger<T, UInt<S>> UInt<S>::operator/(T const &n) const
 
 template <uint16_t S>
 template <typename T>
+constexpr meta::IfIsInteger<T, UInt<S>> UInt<S>::operator%(T const &n) const
+{
+  UInt<S> ret{*this}, nint{n};
+  ret %= nint;
+
+  return std::move(ret);
+}
+
+template <uint16_t S>
+template <typename T>
 constexpr meta::IfIsInteger<T, UInt<S>> UInt<S>::operator&(T const &n) const
 {
   UInt<S> ret{*this}, nint{n};
@@ -704,6 +754,16 @@ constexpr meta::IfIsInteger<T, UInt<S>> &UInt<S>::operator/=(T const &n)
 {
   UInt<S> nint{n};
   *this /= nint;
+
+  return *this;
+}
+
+template <uint16_t S>
+template <typename T>
+constexpr meta::IfIsInteger<T, UInt<S>> &UInt<S>::operator%=(T const &n)
+{
+  UInt<S> nint{n};
+  *this %= nint;
 
   return *this;
 }
@@ -802,6 +862,96 @@ constexpr UInt<S> &UInt<S>::operator>>=(std::size_t const &bits)
     }
   }
 
+  return *this;
+}
+
+template <uint16_t S>
+constexpr std::size_t UInt<S>::msb() const
+{
+  std::size_t msb = 0;
+  for (std::size_t i = 0; i < WIDE_ELEMENTS; i++)
+  {
+    std::size_t msbi = platform::CountLeadingZeroes64(data_.wide[WIDE_ELEMENTS -1 - i]);
+    msb += msbi;
+    if (msbi < 64)
+    {
+      return msb;
+    }
+  }
+  return msb;
+}
+
+template <uint16_t S>
+constexpr std::size_t UInt<S>::lsb() const
+{
+  std::size_t lsb = 0;
+  for (std::size_t i = 0; i < WIDE_ELEMENTS; i++)
+  {
+    std::size_t lsbi = platform::CountTrailingZeroes64(data_.wide[i]);
+    lsb += lsbi;
+    if (lsb < 64)
+    {
+      return lsb;
+    }
+  }
+  return lsb;
+}
+
+// Implementation for 256-bits only
+template <>
+constexpr UInt<256>  &UInt<256>::operator/=(UInt<256> const &n)
+{
+  if (n == _0) {
+    throw std::runtime_error("division by zero!");
+  }
+  if (n == _1) {
+    *this = n;
+    return *this;
+  }
+  if (*this == n) {
+    *this = _1;
+    return *this;
+  }
+  if (*this == _0) {
+    *this = _0;
+    return *this;
+  }
+  // No fractions supported, if *this < n return 0
+  if (*this < _0) {
+    *this = _0;
+    return *this;
+  }
+
+  // Actual integer division algorithm
+  // First simplify dividend/divisor by shifting right by min LSB bit
+  // Essentially divide both by 2 as long as the LSB is zero
+  UInt<256> N{*this}, D{n};
+  std::size_t lsb = std::min(N.lsb(), D.lsb());
+  N >>= lsb;
+  D >>= lsb;
+  UInt<256> multiple = 1;
+
+  // Find smallest multiple of divisor (D) that is larger than the dividend (N)
+  while(N > D)
+  {
+    D <<= 1;
+    multiple <<= 1;
+  }
+  // Calculate Quotient in a loop, essentially divide divisor by 2 and subtract from Remainder
+  // Add multiple to Quotient
+  UInt<256> Q = _0, R = N;
+  do {
+    if(R >= D)
+    {
+      R -= D;
+      Q += multiple;
+    }
+    D >>= 1; // Divide by two.
+    multiple >>= 1;
+  } while(multiple != 0);
+
+  // Return the Quotient
+  *this = Q;
   return *this;
 }
 
@@ -913,6 +1063,8 @@ constexpr void Deserialize(T &s, UInt<S> &u)
 {
   s >> u.data_.base;
 }
+
+
 
 }  // namespace vectorise
 }  // namespace fetch

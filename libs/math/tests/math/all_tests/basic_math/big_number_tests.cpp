@@ -97,14 +97,9 @@ TEST(big_number_gtest, addition_tests)
   EXPECT_EQ(n3.elementAt(2), 0);
   EXPECT_EQ(n3.elementAt(3), 0);
 
-  std::cout << "n1 = " << std::string(n1) << std::endl;
   n1 <<= 32;
-  std::cout << "n1 = " << std::string(n1) << std::endl;
   ++n1;
-  std::cout << "n1 = " << std::string(n1) << std::endl;
-  std::cout << "n3 = " << std::string(n3) << std::endl;
   n3 += n1;
-  std::cout << "n3 = " << std::string(n3) << std::endl;
   EXPECT_EQ(n3.elementAt(0), 0xffffffff00000000);
   EXPECT_EQ(n3.elementAt(1), 0x00000000ffffffff);
   EXPECT_EQ(n3.elementAt(2), 0x1);
@@ -128,9 +123,7 @@ TEST(big_number_gtest, subtraction_tests)
   EXPECT_EQ(n3.elementAt(3), 0);
 
   n2 >>= 32;
-  std::cout << "n2 = " << std::string(n2) << std::endl;
   n3 -= n2;
-  std::cout << "n3 = " << std::string(n3) << std::endl;
   EXPECT_EQ(n3.elementAt(0), ULONG_MAX);
   EXPECT_EQ(n3.elementAt(1), 0);
   EXPECT_EQ(n3.elementAt(2), 0);
@@ -162,15 +155,35 @@ TEST(big_number_gtest, division_tests)
   n1.elementAt(3) = 0x00000000fffffffe;
   UInt<256> n2{ULONG_MAX};
   n2 <<= 64;
-  ++n2;
-  std::cout << "n1 = " << std::string(n1) << std::endl;
-  std::cout << "n2 = " << std::string(n2) << std::endl;
   UInt<256> n3 = n1 / n2;
-  std::cout << "n3 = " << std::string(n3) << std::endl;
   EXPECT_EQ(n3.elementAt(0), 0xffffffff00000000);
-  EXPECT_EQ(n3.elementAt(1), 0x00000001ffffffff);
-  EXPECT_EQ(n3.elementAt(2), 0xfffffffe00000001);
-  EXPECT_EQ(n3.elementAt(3), 0x00000000fffffffe);
+  EXPECT_EQ(n3.elementAt(1), 0x00000000fffffffe);
+  EXPECT_EQ(n3.elementAt(2), 0);
+  EXPECT_EQ(n3.elementAt(3), 0);
+  n3 <<= 64;
+  n3 /= 0xdeadbeefdeadbeef;
+  EXPECT_EQ(n3.elementAt(0), 0x72f4a7ca9e22b75b);
+  EXPECT_EQ(n3.elementAt(1), 0x00000001264eb563);
+  EXPECT_EQ(n3.elementAt(2), 0);
+  EXPECT_EQ(n3.elementAt(3), 0);
+}
+
+TEST(big_number_gtest, msb_lsb_tests)
+{
+  UInt<256> n1;
+  n1.elementAt(0) = 0xffffffff00000000;
+  n1.elementAt(1) = 0x00000001ffffffff;
+  n1.elementAt(2) = 0xfffffffe00000001;
+  n1.elementAt(3) = 0x00000000fffffffe;
+
+  EXPECT_EQ(n1.msb(), 32);
+  EXPECT_EQ(n1.lsb(), 32);
+  n1 <<= 17;
+  EXPECT_EQ(n1.msb(), 15);
+  EXPECT_EQ(n1.lsb(), 49);
+  n1 >>= 114;
+  EXPECT_EQ(n1.msb(), 129);
+  EXPECT_EQ(n1.lsb(), 31);
 }
 
 TEST(big_number_gtest, left_shift_tests)
