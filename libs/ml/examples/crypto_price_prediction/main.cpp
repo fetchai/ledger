@@ -16,9 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include "math/metrics/mean_absolute_error.hpp"
 #include "math/normalize_array.hpp"
 #include "math/tensor.hpp"
-#include "math/metrics/mean_absolute_error.hpp"
 
 #include "vectorise/fixed_point/fixed_point.hpp"
 
@@ -172,17 +172,25 @@ std::shared_ptr<GraphType> BuildModel(std::string &input_name, std::string &outp
 {
   auto g = std::make_shared<GraphType>();
 
-  SizeType conv1D_1_filters        = 8;
+  SizeType conv1D_1_filters        = 16;
   SizeType conv1D_1_input_channels = 1;
-  SizeType conv1D_1_kernel_size    = 80;
-  SizeType conv1D_1_stride         = 1;
+  SizeType conv1D_1_kernel_size    = 96;
+  SizeType conv1D_1_stride         = 3;
 
-  typename TensorType::Type keep_prob{1.0};
+  typename TensorType::Type keep_prob_1{0.9};
 
-  SizeType conv1D_2_filters        = 1;
+  SizeType conv1D_2_filters        = 8;
   SizeType conv1D_2_input_channels = conv1D_1_filters;
-  SizeType conv1D_2_kernel_size    = 50;
-  SizeType conv1D_2_stride         = 1;
+  SizeType conv1D_2_kernel_size    = 48;
+  SizeType conv1D_2_stride         = 2;
+
+  typename TensorType::Type keep_prob_2{0.9};
+
+  SizeType conv1D_3_filters        = 8;
+  SizeType conv1D_3_input_channels = conv1D_2_filters;
+  SizeType conv1D_3_kernel_size    = 47;
+  SizeType conv1D_3_stride         = 1;
+
 
   input_name = g->AddNode<PlaceHolder<TensorType>>("Input", {});
   label_name = g->AddNode<PlaceHolder<TensorType>>("Label", {});
@@ -190,12 +198,16 @@ std::shared_ptr<GraphType> BuildModel(std::string &input_name, std::string &outp
   std::string layer_1 = g->AddNode<fetch::ml::layers::Convolution1D<TensorType>>(
       "Conv1D_1", {input_name}, conv1D_1_filters, conv1D_1_input_channels, conv1D_1_kernel_size,
       conv1D_1_stride, fetch::ml::details::ActivationType::RELU);
+  std::string layer_2 = g->AddNode<Dropout<TensorType>>("Dropout_1", {layer_1}, keep_prob_1);
 
-  std::string layer_2 = g->AddNode<Dropout<TensorType>>("Dropout_1", {layer_1}, keep_prob);
+  std::string layer_3 = g->AddNode<fetch::ml::layers::Convolution1D<TensorType>>(
+      "Conv1D_2", {layer_2}, conv1D_2_filters, conv1D_2_input_channels, conv1D_2_kernel_size,
+      conv1D_2_stride, fetch::ml::details::ActivationType::RELU);
+  std::string layer_4 = g->AddNode<Dropout<TensorType>>("Dropout_2", {layer_3}, keep_prob_2);
 
   output_name = g->AddNode<fetch::ml::layers::Convolution1D<TensorType>>(
-      "Conv1D_2", {layer_2}, conv1D_2_filters, conv1D_2_input_channels, conv1D_2_kernel_size,
-      conv1D_2_stride);
+      "Conv1D_3", {layer_4}, conv1D_3_filters, conv1D_3_input_channels, conv1D_3_kernel_size,
+      conv1D_3_stride);
 
   error_name = g->AddNode<fetch::ml::ops::MeanSquareErrorLoss<TensorType>>(
       "error_name", {output_name, label_name});
