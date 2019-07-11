@@ -43,7 +43,7 @@ void StateSentinelAdapter_BasicBenchmark(benchmark::State &state)
 
   StateSentinelAdapter adapter{storage, Identifier{"foo.bar"}, shards};
 
-  std::string key{"baz"};
+  std::string          key{"baz"};
   std::vector<uint8_t> buffer(256);
 
   uint64_t size = buffer.size();
@@ -54,6 +54,6 @@ void StateSentinelAdapter_BasicBenchmark(benchmark::State &state)
   }
 }
 
-} // namespace
+}  // namespace
 
 BENCHMARK(StateSentinelAdapter_BasicBenchmark);
