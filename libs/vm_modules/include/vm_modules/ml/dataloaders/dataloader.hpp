@@ -44,9 +44,9 @@ public:
   {
     module.CreateClassType<VMDataLoader>("DataLoader")
         .CreateConstuctor<>()
-        .CreateMemberFunction("AddData", &VMDataLoader::AddData)
-        .CreateMemberFunction("GetNext", &VMDataLoader::GetNext)
-        .CreateMemberFunction("IsDone", &VMDataLoader::IsDone);
+        .CreateMemberFunction("addData", &VMDataLoader::AddData)
+        .CreateMemberFunction("getNext", &VMDataLoader::GetNext)
+        .CreateMemberFunction("isDone", &VMDataLoader::IsDone);
   }
 
   void AddData(fetch::vm::Ptr<fetch::vm::String> const &mode,

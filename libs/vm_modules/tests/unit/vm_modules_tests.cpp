@@ -33,7 +33,7 @@ TEST_F(VMTests, CheckCompileAndExecute)
 {
   static char const *TEXT = R"(
     function main()
-      print("Hello, world");
+      printLn("Hello, world");
     endfunction
   )";
 
@@ -45,13 +45,13 @@ TEST_F(VMTests, CheckRandom)
 {
   static char const *TEXT = R"(
     function main()
-      print('rnd = ' + toString(Rand(0u64, 1000u64)));
-      print('rnd = ' + toString(Rand(0u64, 1000u64)));
-      print('rnd = ' + toString(Rand(0u64, 1000u64)));
-      print('rnd = ' + toString(Rand(0u64, 1000u64)));
-      print('rnd = ' + toString(Rand(0u64, 1000u64)));
-      print('rnd = ' + toString(Rand(0.0f, 1000.0f)));
-      print('rnd = ' + toString(Rand(0.0, 1000.0)));
+      printLn('rnd = ' + toString(rand(0u64, 1000u64)));
+      printLn('rnd = ' + toString(rand(0u64, 1000u64)));
+      printLn('rnd = ' + toString(rand(0u64, 1000u64)));
+      printLn('rnd = ' + toString(rand(0u64, 1000u64)));
+      printLn('rnd = ' + toString(rand(0u64, 1000u64)));
+      printLn('rnd = ' + toString(rand(0.0f, 1000.0f)));
+      printLn('rnd = ' + toString(rand(0.0, 1000.0)));
     endfunction
   )";
 
