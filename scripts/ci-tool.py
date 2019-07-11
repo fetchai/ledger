@@ -161,7 +161,8 @@ def parse_commandline():
                         help='Run the end-to-end tests for the project')
     parser.add_argument('-L', '--language-tests', action='store_true',
                         help='Run the etch language tests')
-    parser.add_argument('-A', '--all', action='store_true', help='Run build and all tests')
+    parser.add_argument('-A', '--all', action='store_true',
+                        help='Run build and all tests')
     parser.add_argument(
         '-f', '--force-build-folder',
         help='Specify the folder directly that should be used for the build / test')
