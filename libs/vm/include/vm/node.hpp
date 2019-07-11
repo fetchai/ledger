@@ -396,7 +396,8 @@ struct ExpressionNode : public Node
   bool             function_invoked_on_instance;
   FunctionPtr      function;
 };
-using ExpressionNodePtr = std::shared_ptr<ExpressionNode>;
+using ExpressionNodePtr      = std::shared_ptr<ExpressionNode>;
+using ExpressionNodePtrArray = std::vector<ExpressionNodePtr>;
 
 inline ExpressionNodePtr CreateExpressionNode(NodeKind node_kind, std::string const &text,
                                               uint16_t line)

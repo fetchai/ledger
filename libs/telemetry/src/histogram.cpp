@@ -18,7 +18,7 @@
 
 #include "telemetry/histogram.hpp"
 
-#include <iostream>
+#include <ostream>
 
 namespace fetch {
 namespace telemetry {

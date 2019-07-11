@@ -1,8 +1,9 @@
 #!/bin/bash
 set -e
 
-# install the latest version of the ledger api
-pip3 install -e git+https://github.com/fetchai/ledger-api-py.git@master#egg=fetchai-ledger-api
+pip3 install wheel
 
-# install the latest version of the net utils
+pip3 install fetchai-ledger-api==0.5.1
 pip3 install -i https://test.pypi.org/simple/ fetchai-netutils==0.0.5a1
+
+pip3 install pyyaml

@@ -10,12 +10,15 @@ var training_iterations = 10;
 // Define the neural network
 var g = Graph();
 g.AddPlaceholder("Input");
+g.AddPlaceholder("Label");
 g.AddFullyConnected("FC_1", "Input", 28*28, 128);
 g.AddRelu("Relu_1", "FC_1");
 g.AddFullyConnected("FC_2", "Relu_1", 128, 64);
 g.AddRelu("Relu_2", "FC_2");
 g.AddFullyConnected("FC_3", "Relu_2", 64, 10);
 g.AddSoftmax("Softmax", "FC_3");
+g.AddCrossEntropyLoss("Error", "Softmax", "Label");
+
 
 // Set up the dataloader
 printLn(System.Argv(0));
@@ -24,7 +27,7 @@ var data_loader = DataLoader();
 data_loader.AddData("mnist", System.Argv(0), System.Argv(1));
 
 // Set up the optimiser
-var optimiser = AdamOptimiser(g, "Input", "Softmax");
+var optimiser = AdamOptimiser(g, "Input", "Label", "Error");
 
 // Begin the training loop
 var batch_size = 64u64;
