@@ -96,7 +96,7 @@ void BeaconManager::CreateKeyPair()
 {
   secret_key_share_ = crypto::bls::dkg::AccumulateContributionShares(received_shares_);
 
-  // TODO: Can be optimised
+  // TODO(tfr): Can be optimised
 
   VerificationVector group_vectors =
       crypto::bls::dkg::AccumulateVerificationVectors(verification_vectors_);
