@@ -161,6 +161,7 @@ def parse_commandline():
                         help='Run the end-to-end tests for the project')
     parser.add_argument('-L', '--language-tests', action='store_true',
                         help='Run the etch language tests')
+    parser.add_argument('-A', '--all', action='store_true', help='Run build and all tests')
     parser.add_argument(
         '-f', '--force-build-folder',
         help='Specify the folder directly that should be used for the build / test')
@@ -320,28 +321,28 @@ def main():
     if args.metrics:
         options['FETCH_ENABLE_METRICS'] = 1
 
-    if args.build:
+    if args.build or build.all:
         build_project(project_root, build_root, options, concurrency)
 
-    if args.test:
+    if args.test or build.all:
         test_project(
             build_root,
             exclude_regex='|'.join(LABELS_TO_EXCLUDE_FOR_FAST_TESTS))
 
-    if args.language_tests:
+    if args.language_tests or build.all:
         test_language(build_root)
 
-    if args.slow_tests:
+    if args.slow_tests or build.all:
         test_project(
             build_root,
             include_regex=SLOW_TEST_LABEL)
 
-    if args.integration_tests:
+    if args.integration_tests or build.all:
         test_project(
             build_root,
             include_regex=INTEGRATION_TEST_LABEL)
 
-    if args.end_to_end_tests:
+    if args.end_to_end_tests or build.all:
         test_end_to_end(project_root, build_root)
 
 
