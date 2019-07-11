@@ -321,28 +321,28 @@ def main():
     if args.metrics:
         options['FETCH_ENABLE_METRICS'] = 1
 
-    if args.build or build.all:
+    if args.build or args.all:
         build_project(project_root, build_root, options, concurrency)
 
-    if args.test or build.all:
+    if args.test or args.all:
         test_project(
             build_root,
             exclude_regex='|'.join(LABELS_TO_EXCLUDE_FOR_FAST_TESTS))
 
-    if args.language_tests or build.all:
+    if args.language_tests or args.all:
         test_language(build_root)
 
-    if args.slow_tests or build.all:
+    if args.slow_tests or args.all:
         test_project(
             build_root,
             include_regex=SLOW_TEST_LABEL)
 
-    if args.integration_tests or build.all:
+    if args.integration_tests or args.all:
         test_project(
             build_root,
             include_regex=INTEGRATION_TEST_LABEL)
 
-    if args.end_to_end_tests or build.all:
+    if args.end_to_end_tests or args.all:
         test_end_to_end(project_root, build_root)
 
 
