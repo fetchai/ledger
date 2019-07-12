@@ -59,7 +59,7 @@ public:
   {
     module.CreateClassType<VMStateDict>("StateDict")
         .CreateConstuctor<>()
-        .CreateMemberFunction("SetWeights", &VMStateDict::SetWeights);
+        .CreateMemberFunction("setWeights", &VMStateDict::SetWeights);
   }
 
   fetch::ml::StateDict<MathTensorType> state_dict_;

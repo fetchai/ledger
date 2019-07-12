@@ -51,64 +51,89 @@ TYPED_TEST(MeanSquareErrorTest, perfect_match_forward_test)
   EXPECT_EQ(result(0, 0), typename TypeParam::Type(0));
 }
 
-TYPED_TEST(MeanSquareErrorTest, one_dimensional_forward_test)
+TYPED_TEST(MeanSquareErrorTest, one_by_eight_dimensional_forward_test)
 {
-  TypeParam     data1({8, 1});
-  TypeParam     data2({8, 1});
-  std::uint64_t i(0);
-  for (double e : {1.1, -2.2, 3.3, -4.4, 5.5, -6.6, 7.7, -8.8})
-  {
-    data1.Set(i, 0, typename TypeParam::Type(e));
-    i++;
-  }
-  i = 0;
-  for (double e : {1.1, 2.2, 7.7, 6.6, 0.0, -6.6, 7.7, -9.9})
-  {
-    data2.Set(i, 0, typename TypeParam::Type(e));
-    i++;
-  }
+  TypeParam data1 = TypeParam::FromString("1.1; -2.2; 3.3; -4.4; 5.5; -6.6; 7.7; -8.8");
+  TypeParam data2 = TypeParam::FromString("1.1; 2.2; 7.7; 6.6; 0.0; -6.6; 7.7; -9.9");
+
+  TypeParam data1_transpose = data1.Transpose();
+  TypeParam data2_transpose = data2.Transpose();
 
   fetch::ml::ops::MeanSquareErrorLoss<TypeParam> op;
   TypeParam                                      result({1, 1});
-  op.Forward({data1, data2}, result);
+  op.Forward({data1_transpose, data2_transpose}, result);
 
   ASSERT_FLOAT_EQ(static_cast<float>(result(0, 0)), 191.18f / 8.0f / 2.0f);
   // fetch::math::MeanSquareErrorLoss divided sum by number of element (ie 8 in this case)
-  // and then further divide by do (cf issue 343)
+  // and then further divide by two (cf issue 343)
+
+  // Repeat the Test but this time with one eight dimensional data point
+  op.Forward({data1, data2}, result);
+
+  ASSERT_FLOAT_EQ(static_cast<float>(result(0, 0)), 191.18f / 2.0f);
+  // This time don't divide by 8
 }
 
-TYPED_TEST(MeanSquareErrorTest, one_dimensional_backward_test)
+TYPED_TEST(MeanSquareErrorTest, one_by_eight_dimensional_backward_test)
 {
   using DataType = typename TypeParam::Type;
 
-  TypeParam     data1({8, 1});
-  TypeParam     data2({8, 1});
-  TypeParam     gt({8, 1});
-  std::uint64_t i(0);
-  for (float e : {1.1f, -2.2f, 3.3f, -4.4f, 5.5f, -6.6f, 7.7f, -8.8f})
-  {
-    data1.Set(i, 0, typename TypeParam::Type(e));
-    i++;
-  }
-  i = 0;
-  for (float e : {1.1f, 2.2f, 7.7f, 6.6f, 0.0f, -6.6f, 7.7f, -9.9f})
-  {
-    data2.Set(i, 0, typename TypeParam::Type(e));
-    i++;
-  }
-  i = 0;
-  for (float e : {0.0f, -0.55f, -0.55f, -1.375f, 0.6875f, 0.0f, 0.0f, 0.1375f})
-  {
-    gt.Set(i, 0, typename TypeParam::Type(e));
-    i++;
-  }
+  // first test 8 one-dimensional data points
+  TypeParam data1 = TypeParam::FromString("1.1; -2.2; 3.3; -4.4; 5.5; -6.6; 7.7; -8.8");
+  TypeParam data2 = TypeParam::FromString("1.1; 2.2; 7.7; 6.6; 0.0; -6.6; 7.7; -9.9");
+  TypeParam gt    = TypeParam::FromString("0.0, -0.55, -0.55, -1.375, 0.6875, 0.0, 0.0, 0.1375");
+
+  TypeParam data1_transpose = data1.Transpose();
+  TypeParam data2_transpose = data2.Transpose();
+  //  TypeParam gt_transpose = gt.Transpose();
 
   TypeParam error_signal({1, 1});
   error_signal(0, 0) = DataType{1};
 
   fetch::ml::ops::MeanSquareErrorLoss<TypeParam> op;
+  std::vector<TypeParam> gradients = op.Backward({data1_transpose, data2_transpose}, error_signal);
+  EXPECT_TRUE(
+      gradients.at(0).AllClose(gt, fetch::math::function_tolerance<typename TypeParam::Type>(),
+                               fetch::math::function_tolerance<typename TypeParam::Type>()));
 
-  EXPECT_TRUE(op.Backward({data1, data2}, error_signal)
-                  .at(0)
-                  .AllClose(gt, typename TypeParam::Type(1e-5), typename TypeParam::Type(1e-5)));
+  // now test again for one eight-dimensional datapoint
+  TypeParam gt2 = TypeParam::FromString("0.0; -4.4; -4.4; -11.0; 5.5; 0.0; 0.0; 1.1");
+  gradients     = op.Backward({data1, data2}, error_signal);
+  EXPECT_TRUE(
+      gradients.at(0).AllClose(gt2, fetch::math::function_tolerance<typename TypeParam::Type>() * 8,
+                               fetch::math::function_tolerance<typename TypeParam::Type>()) *
+      8);
+}
+
+TYPED_TEST(MeanSquareErrorTest, two_dimensional_forward_test_with_weighting)
+{
+  TypeParam data1 = TypeParam::FromString("1.1, -2.2, 3.3, -4.4; 5.5, -6.6, 7.7, -8.8");
+  TypeParam data2 = TypeParam::FromString("1.1, 2.2, 7.7, 6.6; 0.0, -6.6, 7.7, -9.9");
+
+  TypeParam weightings = TypeParam::FromString("1.0, 2.0, 1.0, 0.5; 0.0, 0.0, 0.0, 0.0");
+  fetch::ml::ops::MeanSquareErrorLoss<TypeParam> op(weightings);
+  TypeParam                                      result({1, 1});
+  op.Forward({data1, data2}, result);
+
+  ASSERT_FLOAT_EQ(static_cast<float>(result(0, 0)), 118.58f / 4.0f / 2.0f);
+}
+
+TYPED_TEST(MeanSquareErrorTest, two_dimensional_backward_test_with_weighting)
+{
+  TypeParam data1        = TypeParam::FromString("1.1, -2.2, 3.3, -4.4; 5.5, -6.6, 7.7, -8.8");
+  TypeParam data2        = TypeParam::FromString("1.1, 2.2, 7.7, 6.6; 0.0, -6.6, 7.7, -9.9");
+  TypeParam error_signal = TypeParam::FromString("0.1, 0.2, 0.7, 0.6; 0.0, 0.6, 0.7, 0.9");
+  TypeParam weightings   = TypeParam::FromString("1.0, 2.0, 1.0, 0.5; 0.0, 0.0, 0.0, 0.0");
+  TypeParam gt           = TypeParam::FromString("0.0, -2.2, -1.1, -1.375; 0.0, 0.0, 0.0, 0.0");
+
+  fetch::ml::ops::MeanSquareErrorLoss<TypeParam> op(weightings);
+  std::vector<TypeParam> gradients = op.Backward({data1, data2}, error_signal);
+
+  std::cout << "gt: " << gt.ToString() << std::endl;
+  std::cout << "gradients.at(0).ToString(): " << gradients.at(0).ToString() << std::endl;
+
+  EXPECT_TRUE(
+      gradients.at(0).AllClose(gt, fetch::math::function_tolerance<typename TypeParam::Type>() * 4,
+                               fetch::math::function_tolerance<typename TypeParam::Type>()) *
+      4);
 }

@@ -16,7 +16,6 @@ graph.AddSoftmax("softmax_2", "hidden_dense_2");
 graph.AddDropout("dropout_2", "softmax_2", dropout_prob);
 graph.AddFullyConnected("output_dense", "dropout_2", second_dense_size, output_size);
 graph.AddSoftmax("softmax_3", "output_dense");
-
 graph.AddMeanSquareErrorLoss("Error", "softmax_3");
 
 endfunction

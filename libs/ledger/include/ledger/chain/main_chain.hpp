@@ -104,7 +104,7 @@ public:
   using TransactionLayoutSet = std::unordered_set<TransactionLayout>;
 
   static constexpr char const *LOGGING_NAME = "MainChain";
-  static constexpr uint64_t    UPPER_BOUND  = 100000ull;
+  static constexpr uint64_t    UPPER_BOUND  = 5000ull;
 
   enum class Mode
   {
