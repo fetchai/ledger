@@ -18,7 +18,6 @@
 //------------------------------------------------------------------------------
 
 #include "core/bitvector.hpp"
-#include "core/bloom_filter_interface.hpp"
 
 #include <cstddef>
 #include <functional>
@@ -159,7 +158,7 @@ private:
 
 }  // namespace internal
 
-class BasicBloomFilter : public BloomFilterInterface
+class BasicBloomFilter
 {
 public:
   using Functions = internal::HashSourceFactory::Functions;
@@ -174,27 +173,30 @@ public:
   explicit BasicBloomFilter(Functions const &);
   BasicBloomFilter(BasicBloomFilter const &) = delete;
   BasicBloomFilter(BasicBloomFilter &&)      = delete;
-  ~BasicBloomFilter() override               = default;
+  ~BasicBloomFilter()                        = default;
 
   BasicBloomFilter &operator=(BasicBloomFilter const &) = delete;
   BasicBloomFilter &operator=(BasicBloomFilter &&) = delete;
 
   /*
-   * Check if the argument matches the Bloom filter. Returns false if the
-   * element had never been added; returns true if the argument had been
-   * added or is a false positive.
+   * Check if the argument matches the Bloom filter. Returns a pair of
+   * a Boolean (false if the element had never been added; true if the
+   * argument had been added or is a false positive) and a positive integer
+   * which indicates how many bits had to be checked before the function
+   * returned. The latter number will increase as the filter's performance
+   * degrades.
    */
-  bool Match(fetch::byte_array::ConstByteArray const &) override;
+  std::pair<bool, std::size_t> Match(fetch::byte_array::ConstByteArray const &);
   /*
    * Set the bits of the Bloom filter corresponding to the argument
    */
-  void Add(fetch::byte_array::ConstByteArray const &) override;
+  void Add(fetch::byte_array::ConstByteArray const &);
   /*
    * Inform the Bloom filter of detected false positives. This is used to
    * track the quality of the filter. Returns false if the quality of the
    * filter has deteriorated below a predefined threshold; true otherwise.
    */
-  bool ReportFalsePositives(std::size_t) override;
+  bool ReportFalsePositives(std::size_t);
 
 public:
   BitVector                         bits_;
@@ -202,34 +204,6 @@ public:
   std::size_t                       entry_count_{};
   std::size_t                       positive_count_{};
   std::size_t                       false_positive_count_{};
-};
-
-/*
- * A fake Bloom filter which holds no data and treats any query as positive.
- */
-class NullBloomFilter : public BloomFilterInterface
-{
-public:
-  NullBloomFilter()                        = default;
-  NullBloomFilter(NullBloomFilter const &) = delete;
-  NullBloomFilter(NullBloomFilter &&)      = delete;
-  ~NullBloomFilter() override              = default;
-
-  NullBloomFilter &operator=(NullBloomFilter const &) = delete;
-  NullBloomFilter &operator=(NullBloomFilter &&) = delete;
-
-  /*
-   * No-op; returns true.
-   */
-  bool Match(fetch::byte_array::ConstByteArray const &) override;
-  /*
-   * No-op.
-   */
-  void Add(fetch::byte_array::ConstByteArray const &) override;
-  /*
-   * No-op; returns true.
-   */
-  bool ReportFalsePositives(std::size_t) override;
 };
 
 }  // namespace fetch
