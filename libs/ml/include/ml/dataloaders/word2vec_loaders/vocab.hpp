@@ -33,11 +33,6 @@ public:
   using ReverseDataType                  = std::map<SizeType, std::pair<std::string, SizeType>>;
   static constexpr SizeType UNKNOWN_WORD = fetch::math::numeric_max<SizeType>();
 
-  SizeType total_count;
-
-  DataType        data;          // word -> (id, count)
-  ReverseDataType reverse_data;  // id -> (word, count)
-
   Vocab() = default;
 
   void Update();
@@ -55,6 +50,11 @@ public:
 
   std::string WordFromIndex(SizeType index) const;
   SizeType    IndexFromWord(std::string const &word) const;
+
+  SizeType total_count;
+
+  DataType        data;          // word -> (id, count)
+  ReverseDataType reverse_data;  // id -> (word, count)
 };
 
 /**

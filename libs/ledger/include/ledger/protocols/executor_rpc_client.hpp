@@ -17,8 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include <memory>
-
 #include "core/future_timepoint.hpp"
 #include "core/serializers/stl_types.hpp"
 #include "core/service_ids.hpp"
@@ -31,6 +29,11 @@
 #include "network/muddle/rpc/server.hpp"
 #include "network/service/service_client.hpp"
 #include "network/tcp/tcp_client.hpp"
+
+#include <chrono>
+#include <cstddef>
+#include <cstdint>
+#include <memory>
 
 namespace fetch {
 namespace ledger {

@@ -21,6 +21,9 @@
 #include "math/activation_functions/relu.hpp"
 #include "ml/ops/ops.hpp"
 
+#include <cassert>
+#include <vector>
+
 namespace fetch {
 namespace ml {
 namespace ops {
@@ -34,11 +37,11 @@ public:
   using SizeType      = typename ArrayType::SizeType;
   using VecTensorType = typename Ops<T>::VecTensorType;
 
-  Relu()          = default;
-  virtual ~Relu() = default;
+  Relu()           = default;
+  ~Relu() override = default;
 
   // f(x)=max(0,x);
-  void Forward(VecTensorType const &inputs, ArrayType &output)
+  void Forward(VecTensorType const &inputs, ArrayType &output) override
   {
     assert(inputs.size() == 1);
     assert(output.shape() == this->ComputeOutputShape(inputs));
@@ -53,7 +56,8 @@ public:
    * @param error_signal
    * @return
    */
-  std::vector<ArrayType> Backward(VecTensorType const &inputs, ArrayType const &error_signal)
+  std::vector<ArrayType> Backward(VecTensorType const &inputs,
+                                  ArrayType const &    error_signal) override
   {
     assert(inputs.size() == 1);
     assert(inputs.at(0).get().shape() == error_signal.shape());
@@ -83,7 +87,7 @@ public:
     return {return_signal};
   }
 
-  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const
+  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
   {
     return inputs.front().get().shape();
   }

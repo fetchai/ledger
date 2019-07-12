@@ -24,8 +24,9 @@
 #include "network/muddle/muddle.hpp"
 #include "network/muddle/rpc/server.hpp"
 
-namespace fetch {
+#include <memory>
 
+namespace fetch {
 namespace ledger {
 
 class DAGService

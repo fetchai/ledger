@@ -17,7 +17,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include "crypto/hasher_interface.hpp"
+
 #include <cstddef>
+#include <cstdint>
 #include <memory>
 
 namespace fetch {
@@ -26,40 +29,39 @@ namespace byte_array {
 class ConstByteArray;
 }
 
-class BloomFilterInterface
+namespace crypto {
+namespace internal {
+
+enum class OpenSslDigestType
 {
-public:
-  enum class Type
-  {
-    NULL_IMPL,
-    BASIC
-  };
-
-  static std::unique_ptr<BloomFilterInterface> Create(Type);
-
-  virtual ~BloomFilterInterface() = default;
-
-  /*
-   * Query the Bloom filter for a given entry.
-   *
-   * Returns false if the entry is definitely absent; true otherwise.
-   */
-  virtual bool Match(fetch::byte_array::ConstByteArray const &) = 0;
-
-  /*
-   * Add a new entry to the filter.
-   */
-  virtual void Add(fetch::byte_array::ConstByteArray const &) = 0;
-
-  /*
-   * Clients may use this to report how many false positives they identified.
-   * This information is used internally by the filter to keep track of the
-   * false positive rate.
-   *
-   * Return false if the filter's measured false positive rate exceeds its
-   * target value and rebuilding the filter may be advisable; true otherwise.
-   */
-  virtual bool ReportFalsePositives(std::size_t) = 0;
+  MD5,
+  SHA1,
+  SHA2_256,
+  SHA2_512
 };
 
+class OpenSslHasherImpl;
+
+class OpenSslHasher
+{
+public:
+  explicit OpenSslHasher(OpenSslDigestType);
+  ~OpenSslHasher()                     = default;
+  OpenSslHasher(OpenSslHasher const &) = delete;
+  OpenSslHasher(OpenSslHasher &&)      = delete;
+
+  OpenSslHasher &operator=(OpenSslHasher const &) = delete;
+  OpenSslHasher &operator=(OpenSslHasher &&) = delete;
+
+  bool        Reset();
+  bool        Update(uint8_t const *data_to_hash, std::size_t size);
+  bool        Final(uint8_t *data_to_hash);
+  std::size_t HashSize() const;
+
+private:
+  std::shared_ptr<internal::OpenSslHasherImpl> impl_;
+};
+
+}  // namespace internal
+}  // namespace crypto
 }  // namespace fetch

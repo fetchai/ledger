@@ -19,6 +19,7 @@
 #include "crypto/bls_base.hpp"
 
 #include <atomic>
+#include <stdexcept>
 
 namespace fetch {
 namespace crypto {

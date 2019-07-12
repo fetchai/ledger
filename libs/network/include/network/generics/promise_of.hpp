@@ -88,7 +88,7 @@ public:
   explicit operator bool() const;
 
   PromiseOf &operator=(PromiseOf const &rhs) = default;
-  PromiseOf &operator=(PromiseOf &&rhs) = default;
+  PromiseOf &operator=(PromiseOf &&rhs) noexcept = default;
 
 private:
   Promise promise_;

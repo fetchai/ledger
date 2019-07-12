@@ -20,11 +20,13 @@
 #include "math/base_types.hpp"
 #include "math/tensor_iterator.hpp"
 
+#include <cassert>
 #include <type_traits>
 #include <utility>
 
 namespace fetch {
 namespace math {
+
 template <typename T, typename C = memory::SharedArray<T>>
 class TensorView
 {

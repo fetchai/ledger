@@ -16,9 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/ops/max_pool_1d.hpp"
-
 #include "math/tensor.hpp"
+#include "ml/ops/max_pool_1d.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 
 #include "gtest/gtest.h"

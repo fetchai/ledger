@@ -17,7 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "constellation.hpp"
-#include "core/bloom_filter_interface.hpp"
+#include "core/bloom_filter.hpp"
 #include "dkg/dkg_service.hpp"
 #include "health_check_http_module.hpp"
 #include "http/middleware/allow_origin.hpp"
@@ -226,10 +226,7 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
         [this] {
           return std::make_shared<Executor>(storage_, stake_ ? &stake_->update_queue() : nullptr);
         })}
-  , chain_{BloomFilterInterface::Create(
-               cfg_.features.IsEnabled(FeatureFlags::MAIN_CHAIN_BLOOM_FILTER)
-                   ? BloomFilterInterface::Type::BASIC
-                   : BloomFilterInterface::Type::NULL_IMPL),
+  , chain_{cfg_.features.IsEnabled(FeatureFlags::MAIN_CHAIN_BLOOM_FILTER),
            ledger::MainChain::Mode::LOAD_PERSISTENT_DB}
   , block_packer_{cfg_.log2_num_lanes}
   , block_coordinator_{chain_,

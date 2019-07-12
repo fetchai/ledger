@@ -23,8 +23,8 @@
 #include "ledger/executor_interface.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 
-#include <unordered_set>
-#include <vector>
+#include <cstdint>
+#include <memory>
 
 namespace fetch {
 namespace ledger {

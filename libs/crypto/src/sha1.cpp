@@ -16,23 +16,41 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/byte_array/encoders.hpp"
-#include "crypto/hash.hpp"
-#include "crypto/sha256.hpp"
+#include "core/macros.hpp"
+#include "crypto/sha1.hpp"
 
-#include "gtest/gtest.h"
+#include <cassert>
+#include <cstddef>
+#include <cstdint>
 
-using namespace fetch;
-using namespace fetch::crypto;
+namespace fetch {
+namespace crypto {
 
-using byte_array_type = byte_array::ByteArray;
-
-TEST(crypto_SHA_gtest, The_SHA256_implmentation_differs_from_other_libraries)
+void SHA1::Reset()
 {
-  auto hash = [](byte_array_type const &s) { return byte_array::ToHex(Hash<crypto::SHA256>(s)); };
-
-  byte_array_type input = "Hello world";
-  EXPECT_EQ(hash(input), "64ec88ca00b268e5ba1a35678a1b5316d212f4f366b2477232534a8aeca37f3c");
-  input = "some RandSom byte_array!! With !@#$%^&*() Symbols!";
-  EXPECT_EQ(hash(input), "3d4e08bae43f19e146065b7de2027f9a611035ae138a4ac1978f03cf43b61029");
+  auto const success = openssl_hasher_.Reset();
+  FETCH_UNUSED(success);
+  assert(success);
 }
+
+bool SHA1::Update(uint8_t const *const data_to_hash, std::size_t const size)
+{
+  return openssl_hasher_.Update(data_to_hash, size);
+}
+
+void SHA1::Final(uint8_t *const hash)
+{
+  auto const success = openssl_hasher_.Final(hash);
+  FETCH_UNUSED(success);
+  assert(success);
+}
+
+std::size_t SHA1::HashSizeInBytes() const
+{
+  auto const size = openssl_hasher_.HashSize();
+  assert(size == size_in_bytes);
+  return size;
+}
+
+}  // namespace crypto
+}  // namespace fetch
