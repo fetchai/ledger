@@ -60,12 +60,12 @@ TEST(big_number_gtest, incrementer_tests)
       c.bytes[i] = n1[i];
     }
     EXPECT_EQ(count, c.value);
-    EXPECT_EQ(n1.elementAt(0), count);
+    EXPECT_EQ(n1.ElementAt(0), count);
     ++n1;
   }
   ++n1;
-  EXPECT_EQ(n1.elementAt(0), 0);
-  EXPECT_EQ(n1.elementAt(1), 1);
+  EXPECT_EQ(n1.ElementAt(0), 0);
+  EXPECT_EQ(n1.ElementAt(1), 1);
 }
 
 TEST(big_number_gtest, decrementer_tests)
@@ -77,10 +77,10 @@ TEST(big_number_gtest, decrementer_tests)
   {
     --n1;
   }
-  EXPECT_EQ(n1.elementAt(0), ULONG_MAX - 99);
-  EXPECT_EQ(n1.elementAt(1), ULONG_MAX);
-  EXPECT_EQ(n1.elementAt(2), ULONG_MAX);
-  EXPECT_EQ(n1.elementAt(3), ULONG_MAX - 1);
+  EXPECT_EQ(n1.ElementAt(0), ULONG_MAX - 99);
+  EXPECT_EQ(n1.ElementAt(1), ULONG_MAX);
+  EXPECT_EQ(n1.ElementAt(2), ULONG_MAX);
+  EXPECT_EQ(n1.ElementAt(3), ULONG_MAX - 1);
 }
 
 TEST(big_number_gtest, addition_tests)
@@ -92,107 +92,107 @@ TEST(big_number_gtest, addition_tests)
   UInt<256> n3 = n1 + n2;
 
   // 0x100000000fffffffeffffffff
-  EXPECT_EQ(n3.elementAt(0), 0xfffffffeffffffff);
-  EXPECT_EQ(n3.elementAt(1), 0x100000000);
-  EXPECT_EQ(n3.elementAt(2), 0);
-  EXPECT_EQ(n3.elementAt(3), 0);
+  EXPECT_EQ(n3.ElementAt(0), 0xfffffffeffffffff);
+  EXPECT_EQ(n3.ElementAt(1), 0x100000000);
+  EXPECT_EQ(n3.ElementAt(2), 0);
+  EXPECT_EQ(n3.ElementAt(3), 0);
 
   n1 <<= 32;
   ++n1;
   n3 += n1;
-  EXPECT_EQ(n3.elementAt(0), 0xffffffff00000000);
-  EXPECT_EQ(n3.elementAt(1), 0x00000000ffffffff);
-  EXPECT_EQ(n3.elementAt(2), 0x1);
-  EXPECT_EQ(n3.elementAt(3), 0);
+  EXPECT_EQ(n3.ElementAt(0), 0xffffffff00000000);
+  EXPECT_EQ(n3.ElementAt(1), 0x00000000ffffffff);
+  EXPECT_EQ(n3.ElementAt(2), 0x1);
+  EXPECT_EQ(n3.ElementAt(3), 0);
 }
 
 TEST(big_number_gtest, subtraction_tests)
 {
   UInt<256> n1;
-  n1.elementAt(0) = 0xffffffff00000000;
-  n1.elementAt(1) = 0x00000000ffffffff;
-  n1.elementAt(2) = 0x1;
+  n1.ElementAt(0) = 0xffffffff00000000;
+  n1.ElementAt(1) = 0x00000000ffffffff;
+  n1.ElementAt(2) = 0x1;
   UInt<256> n2{ULONG_MAX};
   n2 <<= 64;
   ++n2;
   UInt<256> n3 = n1 - n2;
 
-  EXPECT_EQ(n3.elementAt(0), 0xfffffffeffffffff);
-  EXPECT_EQ(n3.elementAt(1), 0x0000000100000000);
-  EXPECT_EQ(n3.elementAt(2), 0);
-  EXPECT_EQ(n3.elementAt(3), 0);
+  EXPECT_EQ(n3.ElementAt(0), 0xfffffffeffffffff);
+  EXPECT_EQ(n3.ElementAt(1), 0x0000000100000000);
+  EXPECT_EQ(n3.ElementAt(2), 0);
+  EXPECT_EQ(n3.ElementAt(3), 0);
 
   n2 >>= 32;
   n3 -= n2;
-  EXPECT_EQ(n3.elementAt(0), ULONG_MAX);
-  EXPECT_EQ(n3.elementAt(1), 0);
-  EXPECT_EQ(n3.elementAt(2), 0);
-  EXPECT_EQ(n3.elementAt(3), 0);
+  EXPECT_EQ(n3.ElementAt(0), ULONG_MAX);
+  EXPECT_EQ(n3.ElementAt(1), 0);
+  EXPECT_EQ(n3.ElementAt(2), 0);
+  EXPECT_EQ(n3.ElementAt(3), 0);
 }
 
 TEST(big_number_gtest, multiplication_tests)
 {
   UInt<256> n1;
-  n1.elementAt(0) = 0xffffffff00000000;
-  n1.elementAt(1) = 0x00000000ffffffff;
-  n1.elementAt(2) = 0x1;
+  n1.ElementAt(0) = 0xffffffff00000000;
+  n1.ElementAt(1) = 0x00000000ffffffff;
+  n1.ElementAt(2) = 0x1;
   UInt<256> n2{ULONG_MAX};
   n2 <<= 64;
   ++n2;
   UInt<256> n3 = n1 * n2;
-  EXPECT_EQ(n3.elementAt(0), 0xffffffff00000000);
-  EXPECT_EQ(n3.elementAt(1), 0x00000001ffffffff);
-  EXPECT_EQ(n3.elementAt(2), 0xfffffffe00000001);
-  EXPECT_EQ(n3.elementAt(3), 0x00000000fffffffe);
+  EXPECT_EQ(n3.ElementAt(0), 0xffffffff00000000);
+  EXPECT_EQ(n3.ElementAt(1), 0x00000001ffffffff);
+  EXPECT_EQ(n3.ElementAt(2), 0xfffffffe00000001);
+  EXPECT_EQ(n3.ElementAt(3), 0x00000000fffffffe);
   UInt<256> n4;
-  n4.elementAt(0) = 0x72f4a7ca9e22b75b;
-  n4.elementAt(1) = 0x00000001264eb563;
-  n4.elementAt(2) = 0;
-  n4.elementAt(3) = 0;
+  n4.ElementAt(0) = 0x72f4a7ca9e22b75b;
+  n4.ElementAt(1) = 0x00000001264eb563;
+  n4.ElementAt(2) = 0;
+  n4.ElementAt(3) = 0;
   UInt<256> n5    = 0xdeadbeefdeadbeef;
   n4 *= n5;
-  EXPECT_EQ(n4.elementAt(0), 0x38fdb7f338fdb7f5);
-  EXPECT_EQ(n4.elementAt(1), 0xfffffffeffffffff);
-  EXPECT_EQ(n4.elementAt(2), 0x00000000fffffffe);
-  EXPECT_EQ(n4.elementAt(3), 0);
+  EXPECT_EQ(n4.ElementAt(0), 0x38fdb7f338fdb7f5);
+  EXPECT_EQ(n4.ElementAt(1), 0xfffffffeffffffff);
+  EXPECT_EQ(n4.ElementAt(2), 0x00000000fffffffe);
+  EXPECT_EQ(n4.ElementAt(3), 0);
 }
 
 TEST(big_number_gtest, division_tests)
 {
   UInt<256> n1;
-  n1.elementAt(0) = 0xffffffff00000000;
-  n1.elementAt(1) = 0x00000001ffffffff;
-  n1.elementAt(2) = 0xfffffffe00000001;
-  n1.elementAt(3) = 0x00000000fffffffe;
+  n1.ElementAt(0) = 0xffffffff00000000;
+  n1.ElementAt(1) = 0x00000001ffffffff;
+  n1.ElementAt(2) = 0xfffffffe00000001;
+  n1.ElementAt(3) = 0x00000000fffffffe;
   UInt<256> n2{ULONG_MAX};
   n2 <<= 64;
   UInt<256> n3 = n1 / n2;
-  EXPECT_EQ(n3.elementAt(0), 0xffffffff00000000);
-  EXPECT_EQ(n3.elementAt(1), 0x00000000fffffffe);
-  EXPECT_EQ(n3.elementAt(2), 0);
-  EXPECT_EQ(n3.elementAt(3), 0);
+  EXPECT_EQ(n3.ElementAt(0), 0xffffffff00000000);
+  EXPECT_EQ(n3.ElementAt(1), 0x00000000fffffffe);
+  EXPECT_EQ(n3.ElementAt(2), 0);
+  EXPECT_EQ(n3.ElementAt(3), 0);
   n3 <<= 64;
   UInt<256> n4{n3};
   n3 /= 0xdeadbeefdeadbeef;
-  EXPECT_EQ(n3.elementAt(0), 0x72f4a7ca9e22b75b);
-  EXPECT_EQ(n3.elementAt(1), 0x00000001264eb563);
-  EXPECT_EQ(n3.elementAt(2), 0);
-  EXPECT_EQ(n3.elementAt(3), 0);
+  EXPECT_EQ(n3.ElementAt(0), 0x72f4a7ca9e22b75b);
+  EXPECT_EQ(n3.ElementAt(1), 0x00000001264eb563);
+  EXPECT_EQ(n3.ElementAt(2), 0);
+  EXPECT_EQ(n3.ElementAt(3), 0);
 
   n4 %= 0xdeadbeefdeadbeef;
-  EXPECT_EQ(n4.elementAt(0), 0xc702480cc702480b);
-  EXPECT_EQ(n4.elementAt(1), 0);
-  EXPECT_EQ(n4.elementAt(2), 0);
-  EXPECT_EQ(n4.elementAt(3), 0);
+  EXPECT_EQ(n4.ElementAt(0), 0xc702480cc702480b);
+  EXPECT_EQ(n4.ElementAt(1), 0);
+  EXPECT_EQ(n4.ElementAt(2), 0);
+  EXPECT_EQ(n4.ElementAt(3), 0);
 }
 
 TEST(big_number_gtest, msb_lsb_tests)
 {
   UInt<256> n1;
-  n1.elementAt(0) = 0xffffffff00000000;
-  n1.elementAt(1) = 0x00000001ffffffff;
-  n1.elementAt(2) = 0xfffffffe00000001;
-  n1.elementAt(3) = 0x00000000fffffffe;
+  n1.ElementAt(0) = 0xffffffff00000000;
+  n1.ElementAt(1) = 0x00000001ffffffff;
+  n1.ElementAt(2) = 0xfffffffe00000001;
+  n1.ElementAt(3) = 0x00000000fffffffe;
 
   EXPECT_EQ(n1.msb(), 32);
   EXPECT_EQ(n1.lsb(), 32);
@@ -209,46 +209,46 @@ TEST(big_number_gtest, left_shift_tests)
   UInt<256> n2{ULONG_MAX};
   UInt<256> n3{ULONG_MAX};
   n2 <<= 63;
-  EXPECT_EQ(n2.elementAt(0), 0x8000000000000000);
-  EXPECT_EQ(n2.elementAt(1), ULONG_MAX >> 1);
+  EXPECT_EQ(n2.ElementAt(0), 0x8000000000000000);
+  EXPECT_EQ(n2.ElementAt(1), ULONG_MAX >> 1);
   n3 <<= 64;
-  EXPECT_EQ(n3.elementAt(0), 0);
-  EXPECT_EQ(n3.elementAt(1), ULONG_MAX);
+  EXPECT_EQ(n3.ElementAt(0), 0);
+  EXPECT_EQ(n3.ElementAt(1), ULONG_MAX);
   n3 <<= 126;
-  EXPECT_EQ(n3.elementAt(0), 0);
-  EXPECT_EQ(n3.elementAt(1), 0);
-  EXPECT_EQ(n3.elementAt(2), 0xc000000000000000);
-  EXPECT_EQ(n3.elementAt(3), ULONG_MAX >> 2);
+  EXPECT_EQ(n3.ElementAt(0), 0);
+  EXPECT_EQ(n3.ElementAt(1), 0);
+  EXPECT_EQ(n3.ElementAt(2), 0xc000000000000000);
+  EXPECT_EQ(n3.ElementAt(3), ULONG_MAX >> 2);
   n3 <<= 65;
-  EXPECT_EQ(n3.elementAt(0), 0);
-  EXPECT_EQ(n3.elementAt(1), 0);
-  EXPECT_EQ(n3.elementAt(2), 0);
-  EXPECT_EQ(n3.elementAt(3), 0x8000000000000000);
+  EXPECT_EQ(n3.ElementAt(0), 0);
+  EXPECT_EQ(n3.ElementAt(1), 0);
+  EXPECT_EQ(n3.ElementAt(2), 0);
+  EXPECT_EQ(n3.ElementAt(3), 0x8000000000000000);
 }
 
 TEST(big_number_gtest, right_shift_tests)
 {
   UInt<256> n1{ULONG_MAX};
   n1 <<= 192;
-  EXPECT_EQ(n1.elementAt(0), 0);
-  EXPECT_EQ(n1.elementAt(1), 0);
-  EXPECT_EQ(n1.elementAt(2), 0);
-  EXPECT_EQ(n1.elementAt(3), ULONG_MAX);
+  EXPECT_EQ(n1.ElementAt(0), 0);
+  EXPECT_EQ(n1.ElementAt(1), 0);
+  EXPECT_EQ(n1.ElementAt(2), 0);
+  EXPECT_EQ(n1.ElementAt(3), ULONG_MAX);
   n1 >>= 64;
-  EXPECT_EQ(n1.elementAt(0), 0);
-  EXPECT_EQ(n1.elementAt(1), 0);
-  EXPECT_EQ(n1.elementAt(2), ULONG_MAX);
-  EXPECT_EQ(n1.elementAt(3), 0);
+  EXPECT_EQ(n1.ElementAt(0), 0);
+  EXPECT_EQ(n1.ElementAt(1), 0);
+  EXPECT_EQ(n1.ElementAt(2), ULONG_MAX);
+  EXPECT_EQ(n1.ElementAt(3), 0);
   n1 >>= 126;
-  EXPECT_EQ(n1.elementAt(0), ULONG_MAX << 2);
-  EXPECT_EQ(n1.elementAt(1), 3);
-  EXPECT_EQ(n1.elementAt(2), 0);
-  EXPECT_EQ(n1.elementAt(3), 0);
+  EXPECT_EQ(n1.ElementAt(0), ULONG_MAX << 2);
+  EXPECT_EQ(n1.ElementAt(1), 3);
+  EXPECT_EQ(n1.ElementAt(2), 0);
+  EXPECT_EQ(n1.ElementAt(3), 0);
   n1 >>= 65;
-  EXPECT_EQ(n1.elementAt(0), 1);
-  EXPECT_EQ(n1.elementAt(1), 0);
-  EXPECT_EQ(n1.elementAt(2), 0);
-  EXPECT_EQ(n1.elementAt(3), 0);
+  EXPECT_EQ(n1.ElementAt(0), 1);
+  EXPECT_EQ(n1.ElementAt(1), 0);
+  EXPECT_EQ(n1.ElementAt(2), 0);
+  EXPECT_EQ(n1.ElementAt(3), 0);
 }
 
 TEST(big_number_gtest, testing_comparisons)

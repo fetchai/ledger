@@ -188,8 +188,8 @@ public:
 
   constexpr uint8_t   operator[](std::size_t const &n) const;
   constexpr uint8_t & operator[](std::size_t const &n);
-  constexpr WideType  elementAt(std::size_t const &n) const;
-  constexpr WideType &elementAt(std::size_t const &n);
+  constexpr WideType  ElementAt(std::size_t const &n) const;
+  constexpr WideType &ElementAt(std::size_t const &n);
 
   constexpr uint64_t TrimmedSize() const;
   constexpr uint64_t size() const;
@@ -326,7 +326,7 @@ constexpr bool UInt<S>::operator==(UInt const &other) const
   bool ret = true;
   for (std::size_t i = 0; i < WIDE_ELEMENTS; ++i)
   {
-    ret &= (data_.wide[i] == other.elementAt(i));
+    ret &= (data_.wide[i] == other.ElementAt(i));
   }
 
   return ret;
@@ -344,13 +344,13 @@ constexpr bool UInt<S>::operator<(UInt const &other) const
   // Simplified version, as we're dealing with wider elements
   for (std::size_t i = WIDE_ELEMENTS - 1; i >= 0; --i)
   {
-    if (data_.wide[i] == other.elementAt(i))
+    if (data_.wide[i] == other.ElementAt(i))
     {
       continue;
     }
     else
     {
-      return data_.wide[i] < other.elementAt(i);
+      return data_.wide[i] < other.ElementAt(i);
     }
   }
   return false;
@@ -523,8 +523,8 @@ constexpr UInt<S> &UInt<S>::operator+=(UInt<S> const &n)
   for (std::size_t i = 0; i < WIDE_ELEMENTS; ++i)
   {
     // if sum of elements is smaller than the element itself, then we have overflow and carry
-    new_carry = (data_.wide[i] + n.elementAt(i) + carry < data_.wide[i]) ? 1 : 0;
-    data_.wide[i] += n.elementAt(i) + carry;
+    new_carry = (data_.wide[i] + n.ElementAt(i) + carry < data_.wide[i]) ? 1 : 0;
+    data_.wide[i] += n.ElementAt(i) + carry;
     carry = new_carry;
   }
 
@@ -542,8 +542,8 @@ constexpr UInt<S> &UInt<S>::operator-=(UInt<S> const &n)
   for (std::size_t i = 0; i < WIDE_ELEMENTS; ++i)
   {
     // if diff of the elements is larger than the element itself, then we have underflow and carry
-    new_carry = (data_.wide[i] - n.elementAt(i) - carry > data_.wide[i]) ? 1 : 0;
-    data_.wide[i] -= n.elementAt(i) + carry;
+    new_carry = (data_.wide[i] - n.ElementAt(i) - carry > data_.wide[i]) ? 1 : 0;
+    data_.wide[i] -= n.ElementAt(i) + carry;
     carry = new_carry;
   }
 
@@ -563,7 +563,7 @@ constexpr UInt<256> &UInt<256>::operator*=(UInt<256> const &n)
     for (std::size_t j = 0; j < WIDE_ELEMENTS; ++j)
     {
       products[i][j] =
-          static_cast<__uint128_t>(data_.wide[i]) * static_cast<__uint128_t>(n.elementAt(j));
+          static_cast<__uint128_t>(data_.wide[i]) * static_cast<__uint128_t>(n.ElementAt(j));
     }
   }
 
@@ -678,7 +678,7 @@ constexpr UInt<S> &UInt<S>::operator&=(UInt<S> const &n)
 {
   for (std::size_t i = 0; i < WIDE_ELEMENTS; ++i)
   {
-    data_.wide[i] &= n.elementAt(i);
+    data_.wide[i] &= n.ElementAt(i);
   }
 
   return *this;
@@ -689,7 +689,7 @@ constexpr UInt<S> &UInt<S>::operator|=(UInt<S> const &n)
 {
   for (std::size_t i = 0; i < WIDE_ELEMENTS; ++i)
   {
-    data_.wide[i] |= n.elementAt(i);
+    data_.wide[i] |= n.ElementAt(i);
   }
 
   return *this;
@@ -700,7 +700,7 @@ constexpr UInt<S> &UInt<S>::operator^=(UInt<S> const &n)
 {
   for (std::size_t i = 0; i < WIDE_ELEMENTS; ++i)
   {
-    data_.wide[i] ^= n.elementAt(i);
+    data_.wide[i] ^= n.ElementAt(i);
   }
 
   return *this;
@@ -982,13 +982,13 @@ constexpr uint8_t &UInt<S>::operator[](std::size_t const &n)
 }
 
 template <uint16_t S>
-constexpr typename UInt<S>::WideType UInt<S>::elementAt(std::size_t const &n) const
+constexpr typename UInt<S>::WideType UInt<S>::ElementAt(std::size_t const &n) const
 {
   return data_.wide[n];
 }
 
 template <uint16_t S>
-constexpr typename UInt<S>::WideType &UInt<S>::elementAt(std::size_t const &n)
+constexpr typename UInt<S>::WideType &UInt<S>::ElementAt(std::size_t const &n)
 {
   return data_.wide[n];
 }
@@ -1032,7 +1032,7 @@ UInt<S>::operator std::string() const
 
 inline double Log(UInt<256> const &x)
 {
-  uint64_t last_word = x.elementAt(x.TrimmedSize() - 1);
+  uint64_t last_word = x.ElementAt(x.TrimmedSize() - 1);
 
   uint64_t tz       = uint64_t(platform::CountTrailingZeroes64(last_word));
   uint64_t exponent = (last_word << 3) - tz;
@@ -1042,7 +1042,7 @@ inline double Log(UInt<256> const &x)
 
 inline double ToDouble(UInt<256> const &x)
 {
-  uint64_t last_word = x.elementAt(x.TrimmedSize() - 1);
+  uint64_t last_word = x.ElementAt(x.TrimmedSize() - 1);
 
   auto tz       = static_cast<uint16_t>(platform::CountTrailingZeroes64(last_word));
   auto exponent = static_cast<uint16_t>((last_word << 3u) - tz);
