@@ -65,12 +65,6 @@ TYPED_TEST(MeanSquareErrorTest, one_by_eight_dimensional_forward_test)
   ASSERT_FLOAT_EQ(static_cast<float>(result(0, 0)), 191.18f / 8.0f / 2.0f);
   // fetch::math::MeanSquareErrorLoss divided sum by number of element (ie 8 in this case)
   // and then further divide by two (cf issue 343)
-
-  // Repeat the Test but this time with one eight dimensional data point
-  op.Forward({data1, data2}, result);
-
-  ASSERT_FLOAT_EQ(static_cast<float>(result(0, 0)), 191.18f / 2.0f);
-  // This time don't divide by 8
 }
 
 TYPED_TEST(MeanSquareErrorTest, one_by_eight_dimensional_backward_test)
@@ -94,14 +88,6 @@ TYPED_TEST(MeanSquareErrorTest, one_by_eight_dimensional_backward_test)
   EXPECT_TRUE(
       gradients.at(0).AllClose(gt, fetch::math::function_tolerance<typename TypeParam::Type>(),
                                fetch::math::function_tolerance<typename TypeParam::Type>()));
-
-  // now test again for one eight-dimensional datapoint
-  TypeParam gt2 = TypeParam::FromString("0.0; -4.4; -4.4; -11.0; 5.5; 0.0; 0.0; 1.1");
-  gradients     = op.Backward({data1, data2}, error_signal);
-  EXPECT_TRUE(
-      gradients.at(0).AllClose(gt2, fetch::math::function_tolerance<typename TypeParam::Type>() * 8,
-                               fetch::math::function_tolerance<typename TypeParam::Type>()) *
-      8);
 }
 
 TYPED_TEST(MeanSquareErrorTest, two_dimensional_forward_test_with_weighting)
@@ -114,7 +100,7 @@ TYPED_TEST(MeanSquareErrorTest, two_dimensional_forward_test_with_weighting)
   TypeParam                                      result({1, 1});
   op.Forward({data1, data2}, result);
 
-  ASSERT_FLOAT_EQ(static_cast<float>(result(0, 0)), 118.58f / 4.0f / 2.0f);
+  ASSERT_FLOAT_EQ(static_cast<float>(result(0, 0)), 118.58f / 8.0f / 2.0f);
 }
 
 TYPED_TEST(MeanSquareErrorTest, two_dimensional_backward_test_with_weighting)
