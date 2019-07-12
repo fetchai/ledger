@@ -18,7 +18,7 @@
 
 #include "math/matrix_operations.hpp"
 #include "math/tensor.hpp"
-#include "ml/dataloaders/word2vec_loaders/skipgram_dataloader.hpp"
+#include "ml/dataloaders/word2vec_loaders/sgns_w2v_dataloader.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 
 #include "gtest/gtest.h"
@@ -28,22 +28,18 @@
 using namespace fetch::ml;
 using namespace fetch::ml::dataloaders;
 
-template <typename T>
-SkipGramTextParams<T> SetParams()
+using SizeType  = fetch::math::SizeType;
+using ArrayType = fetch::math::Tensor<double>;
+
+struct TrainingParams
 {
-  using SizeType = typename T::SizeType;
-
-  SkipGramTextParams<T> ret;
-
-  ret.n_data_buffers     = SizeType(2);  // input and context buffers
-  ret.max_sentences      = SizeType(2);  // maximum number of sentences to use
-  ret.unigram_table      = false;        // unigram table for sampling negative training pairs
-  ret.discard_frequent   = false;        // discard most frqeuent words
-  ret.window_size        = SizeType(1);  // max size of context window one way
-  ret.k_negative_samples = SizeType(0);  // number of negative examples to sample
-
-  return ret;
-}
+  SizeType max_word_count       = 9;     // maximum number to be trained
+  SizeType negative_sample_size = 0;     // number of negative sample per word-context pair
+  SizeType window_size          = 1;     // window size for context sampling
+  bool     train_mode           = true;  // reserve for future compatibility with CBOW
+  double   freq_thresh          = 1;     // frequency threshold for subsampling
+  SizeType min_count            = 0;     // infrequent word removal threshold
+} tp;
 
 template <typename T>
 class SkipGramDataloaderTest : public ::testing::Test
@@ -57,18 +53,14 @@ TYPED_TEST_CASE(SkipGramDataloaderTest, MyTypes);
 
 TYPED_TEST(SkipGramDataloaderTest, loader_test)
 {
-  using SizeType = typename TypeParam::SizeType;
-
   std::string training_data = "This is a test sentence of total length ten words.";
-  SizeType    total_words   = 10;
 
-  SkipGramTextParams<TypeParam> p = SetParams<TypeParam>();
-  SkipGramLoader<TypeParam>     loader(p);
-  loader.AddData(training_data);
+  GraphW2VLoader<double> loader(tp.window_size, tp.negative_sample_size, tp.freq_thresh,
+                                tp.max_word_count, tp.train_mode);
+  loader.BuildVocab({training_data});
 
   std::vector<std::pair<std::string, std::string>> gt_input_context_pairs(
-      {std::pair<std::string, std::string>("this", "is"),
-       std::pair<std::string, std::string>("is", "this"),
+      {std::pair<std::string, std::string>("is", "this"),
        std::pair<std::string, std::string>("is", "a"),
        std::pair<std::string, std::string>("a", "is"),
        std::pair<std::string, std::string>("a", "test"),
@@ -81,37 +73,34 @@ TYPED_TEST(SkipGramDataloaderTest, loader_test)
        std::pair<std::string, std::string>("total", "of"),
        std::pair<std::string, std::string>("total", "length"),
        std::pair<std::string, std::string>("length", "total"),
-       std::pair<std::string, std::string>("length", "ten"),
-       std::pair<std::string, std::string>("ten", "length"),
-       std::pair<std::string, std::string>("ten", "words"),
-       std::pair<std::string, std::string>("words", "ten")});
+       std::pair<std::string, std::string>("length", "ten")});
 
-  std::vector<TypeParam> left_and_right;
+  // test that get next works when called individually
   for (std::size_t j = 0; j < 100; ++j)
   {
     if (loader.IsDone())
     {
       loader.Reset();
     }
-    left_and_right            = loader.GetNext().second;
-    std::string input         = loader.VocabLookup(SizeType(double(left_and_right.at(0).At(0, 0))));
-    std::string context       = loader.VocabLookup(SizeType(double(left_and_right.at(1).At(0, 0))));
+    std::vector<ArrayType> left_and_right = loader.GetNext().second;
+    std::string input = loader.WordFromIndex(static_cast<SizeType>(left_and_right.at(0).At(0, 0)));
+    std::string context =
+        loader.WordFromIndex(static_cast<SizeType>(left_and_right.at(1).At(0, 0)));
+    auto input_context = std::make_pair(input, context);
+
+    ASSERT_EQ(input_context, gt_input_context_pairs.at(j % gt_input_context_pairs.size()));
+  }
+
+  // test when preparebatch is called
+  bool is_done_set = false;
+  auto batch       = loader.PrepareBatch(50, is_done_set).second;
+  for (std::size_t j = 0; j < 50; j++)
+  {
+    std::string input         = loader.WordFromIndex(static_cast<SizeType>(batch.at(0).At(0, j)));
+    std::string context       = loader.WordFromIndex(static_cast<SizeType>(batch.at(1).At(0, j)));
     auto        input_context = std::make_pair(input, context);
 
-    if (j % total_words == 0)
-    {
-      ASSERT_EQ(input_context, gt_input_context_pairs.at(0));
-    }
-    else if (j % total_words == total_words - 1)
-    {
-      ASSERT_EQ(input_context, gt_input_context_pairs.back());
-    }
-    else
-    {
-      bool valid_option_one =
-          (input_context == gt_input_context_pairs.at((2 * (j % total_words)) - 1));
-      bool valid_option_two = (input_context == gt_input_context_pairs.at(2 * (j % total_words)));
-      ASSERT_NE(valid_option_one, valid_option_two);
-    }
+    ASSERT_EQ(input_context, gt_input_context_pairs.at(j % gt_input_context_pairs.size()));
   }
+  ASSERT_EQ(is_done_set, true);
 }

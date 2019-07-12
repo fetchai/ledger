@@ -29,8 +29,9 @@ class Divide : public fetch::ml::Ops<T>
 {
 public:
   using ArrayType     = T;
-  using VecTensorType = typename Ops<T>::VecTensorType;
   using SizeType      = typename ArrayType::SizeType;
+  using ArrayPtrType  = std::shared_ptr<ArrayType>;
+  using VecTensorType = typename Ops<T>::VecTensorType;
 
   Divide()          = default;
   virtual ~Divide() = default;
@@ -40,36 +41,46 @@ public:
    * @param inputs  left & right inputs to Divide
    * @return
    */
-  void Forward(VecTensorType const &inputs, ArrayType &output) override
+  virtual void Forward(VecTensorType const &inputs, ArrayType &output)
   {
-    assert(output.shape() == this->ComputeOutputShape(inputs));
+    assert(inputs.size() == 2);
+    assert(inputs.at(0).get().shape() == inputs.at(1).get().shape());
+    assert(inputs.at(0).get().shape() == output.shape());
 
-    assert(inputs.size() > 1);
-    for (std::size_t i = 1; i < inputs.size(); ++i)
-    {
-      assert(inputs[i].get().shape() == inputs[i - 1].get().shape());
-    }
-
-    fetch::math::Divide(inputs[0].get(), inputs[1].get(), output);
-    if (inputs.size() > 2)
-    {
-      for (std::size_t i = 2; i < inputs.size(); ++i)
-      {
-        fetch::math::Divide(output, inputs[i].get(), output);
-      }
-    }
+    fetch::math::Divide(inputs.at(0).get(), inputs.at(1).get(), output);
   }
 
   /**
-   * elementwise division is not trainable - just pass the error signal back
+   * f'(x)=(1/y)*err
+   * f'(y)=-(x/(y^2))*err
    */
-  std::vector<ArrayType> Backward(VecTensorType const &inputs,
-                                  ArrayType const &    error_signal) override
+  virtual std::vector<ArrayType> Backward(VecTensorType const &inputs,
+                                          ArrayType const &    error_signal)
   {
-    return std::vector<ArrayType>(inputs.size(), error_signal);
+    ArrayType return_signal_1(inputs.at(0).get().shape());
+    ArrayType return_signal_2(return_signal_1.shape());
+
+    auto a_it   = inputs.at(0).get().cbegin();
+    auto b_it   = inputs.at(1).get().cbegin();
+    auto err_it = error_signal.cbegin();
+    auto r_1_it = return_signal_1.begin();
+    auto r_2_it = return_signal_2.begin();
+    while (a_it.is_valid())
+    {
+      *r_1_it = (*err_it) / (*b_it);
+      *r_2_it = ((*err_it) * (*a_it)) / ((*b_it) * (*b_it));
+
+      ++a_it;
+      ++b_it;
+      ++err_it;
+      ++r_1_it;
+      ++r_2_it;
+    }
+
+    return {return_signal_1, return_signal_2};
   }
 
-  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
+  virtual std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const
   {
     return inputs.front().get().shape();
   }

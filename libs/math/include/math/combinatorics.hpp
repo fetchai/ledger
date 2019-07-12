@@ -17,9 +17,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include <cassert>
-
 #include "math/tensor.hpp"
+
+#include <algorithm>
+#include <cassert>
+#include <cstddef>
+#include <vector>
 
 namespace fetch {
 namespace math {

@@ -16,19 +16,17 @@
 //
 //------------------------------------------------------------------------------
 
-#include "benchmark/benchmark.h"
 #include "math/tensor.hpp"
 #include "ml/graph.hpp"
-
-// ops - layers - activations
 #include "ml/layers/fully_connected.hpp"
 #include "ml/ops/activations/relu.hpp"
-
-// loss functions
 #include "ml/ops/loss_functions/mean_square_error_loss.hpp"
-
-// optimisers
 #include "ml/optimisation/sgd_optimiser.hpp"
+
+#include "benchmark/benchmark.h"
+
+#include <memory>
+#include <string>
 
 template <typename T, fetch::math::SizeType B, fetch::math::SizeType I, fetch::math::SizeType H,
           fetch::math::SizeType O, fetch::math::SizeType E>
@@ -44,7 +42,7 @@ void BM_Setup_And_Train(benchmark::State &state)
   SizeType output_size = O;
   SizeType n_epochs    = E;
 
-  DataType learning_rate = DataType{0.1f};
+  auto learning_rate = DataType{0.1f};
 
   // Prepare data and labels
   TensorType data({input_size, batch_size});

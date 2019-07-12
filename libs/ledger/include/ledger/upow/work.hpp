@@ -28,6 +28,7 @@
 
 #include <limits>
 #include <memory>
+#include <vector>
 
 namespace fetch {
 namespace ledger {

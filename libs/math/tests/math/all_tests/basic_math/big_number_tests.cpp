@@ -21,6 +21,9 @@
 
 #include "gtest/gtest.h"
 
+#include <cstddef>
+#include <cstdint>
+
 using namespace fetch::vectorise;
 using namespace fetch::byte_array;
 

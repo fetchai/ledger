@@ -34,7 +34,10 @@
 #include "storage/transient_object_store.hpp"
 #include "vectorise/platform.hpp"
 
-#include <set>
+#include <chrono>
+#include <cstdint>
+#include <string>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 

@@ -17,12 +17,14 @@
 //
 //------------------------------------------------------------------------------
 
-#include <utility>
-
 #include "core/byte_array/byte_array.hpp"
 #include "crypto/fnv.hpp"
 #include "crypto/openssl_common.hpp"
 #include "crypto/signature_register.hpp"
+
+#include <cstddef>
+#include <cstdint>
+#include <utility>
 
 namespace fetch {
 namespace crypto {
@@ -32,8 +34,7 @@ class Identity
 public:
   using edcsa_curve_type = crypto::openssl::ECDSACurve<NID_secp256k1>;
 
-  Identity()
-  {}
+  Identity() = default;
 
   Identity(Identity const &other) = default;
   Identity &operator=(Identity const &other) = default;

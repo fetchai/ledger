@@ -589,7 +589,7 @@ TEST(new_revertible_store_test, stress_test)
       // TODO(private 1067): this could be better - stack oriented.
       if (!previous_states.empty() && store.HashExists(random_prev_commmit))
       {
-        assert(previous_states.size() != 0);
+        assert(!previous_states.empty());
         current_state = std::move(previous_states[random_prev_commmit]);
         previous_states.erase(random_prev_commmit);
 

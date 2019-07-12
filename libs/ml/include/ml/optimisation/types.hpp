@@ -17,11 +17,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/optimisation/optimiser.hpp"
-
 #include "ml/optimisation/adagrad_optimiser.hpp"
 #include "ml/optimisation/adam_optimiser.hpp"
 #include "ml/optimisation/momentum_optimiser.hpp"
+#include "ml/optimisation/optimiser.hpp"
 #include "ml/optimisation/rmsprop_optimiser.hpp"
 #include "ml/optimisation/sgd_optimiser.hpp"
 
@@ -38,7 +37,7 @@ enum class OptimiserType
   SGD
 };
 
-template <class T, class C, typename... Params>
+template <class T, typename... Params>
 bool AddOptimiser(OptimiserType type, std::shared_ptr<Optimiser<T>> &optimiser_ptr,
                   Params... params)
 {

@@ -32,10 +32,8 @@
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
-#include <fstream>
 #include <memory>
 #include <random>
-#include <unordered_map>
 
 using fetch::meta::IsLog2;
 using fetch::meta::Log2;
