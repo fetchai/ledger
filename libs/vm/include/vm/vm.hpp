@@ -230,6 +230,7 @@ class VM
 public:
   using InputDeviceMap  = std::unordered_map<std::string, std::istream *>;
   using OutputDeviceMap = std::unordered_map<std::string, std::ostream *>;
+  using ChargeAmount    = uint64_t;
 
   explicit VM(Module *module);
   ~VM() = default;
@@ -481,6 +482,21 @@ public:
     return constructor(this, type_id);
   }
 
+  ChargeAmount GetChargeTotal() const
+  {
+    return charge_total_;
+  }
+
+  ChargeAmount GetChargeLimit() const
+  {
+    return charge_limit_;
+  }
+
+  void SetChargeLimit(ChargeAmount limit)
+  {
+    charge_limit_ = limit;
+  }
+
 private:
   static const int FRAME_STACK_SIZE = 50;
   static const int STACK_SIZE       = 5000;
@@ -489,14 +505,24 @@ private:
 
   struct OpcodeInfo
   {
+    using ChargeEstimator = std::function<ChargeAmount()>;
+
     OpcodeInfo() = default;
     OpcodeInfo(std::string name__, Handler handler__)
       : name(std::move(name__))
       , handler(std::move(handler__))
     {}
 
-    std::string name;
-    Handler     handler;
+    OpcodeInfo(std::string name__, Handler handler__, ChargeAmount charge)
+        : name(std::move(name__))
+        , handler(std::move(handler__))
+        , charge{charge}
+    {}
+
+    std::string     name;
+    Handler         handler;
+    ChargeAmount    charge{1};
+    ChargeEstimator estimator{};
   };
   using OpcodeInfoArray = std::vector<OpcodeInfo>;
   using OpcodeMap       = std::unordered_map<std::string, uint16_t>;
@@ -570,6 +596,12 @@ private:
   OutputDeviceMap                output_devices_;
   InputDeviceMap                 input_devices_;
   DeserializeConstructorMap      deserialization_constructors_;
+
+  /// @name Charges
+  /// @{
+  ChargeAmount charge_limit_{0};
+  ChargeAmount charge_total_{0};
+  /// @}
 
   void AddOpcodeInfo(uint16_t opcode, std::string const &name, Handler const &handler)
   {

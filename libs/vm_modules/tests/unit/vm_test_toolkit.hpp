@@ -143,6 +143,11 @@ public:
     return *observer_;
   }
 
+  fetch::vm::VM &vm()
+  {
+    return *vm_;
+  }
+
   std::ostream *stdout_ = &std::cout;
   ObserverPtr   observer_;
   ModulePtr     module_;

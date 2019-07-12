@@ -218,16 +218,33 @@ bool VM::Execute(std::string &error, Variant &output)
   {
     instruction_pc_  = pc_;
     instruction_     = &function_->instructions[pc_++];
+
     OpcodeInfo &info = opcode_info_array_[instruction_->opcode];
-    if (info.handler)
-    {
-      info.handler(this);
-    }
-    else
+    assert(instruction_->opcode < opcode_info_array_.size());
+
+    if (!info.handler)
     {
       RuntimeError("unknown opcode");
       break;
     }
+
+    assert(static_cast<bool>(info.handler));
+
+    ChargeAmount const charge_estimate = (info.estimator) ? info.estimator() : info.charge;
+
+    // update the charge total
+    charge_total_ += charge_estimate;
+
+    // check for charge limit being reached
+    if (charge_limit_ && (charge_total_ >= charge_limit_))
+    {
+      RuntimeError("Insufficient charge, limit reached");
+      break;
+    }
+
+    // execute the handler for the op code
+    info.handler(this);
+
   } while (!stop_);
 
   bool const ok = !HasError();
