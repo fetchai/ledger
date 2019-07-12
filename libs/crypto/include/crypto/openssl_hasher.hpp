@@ -46,7 +46,7 @@ class OpenSslHasher
 {
 public:
   explicit OpenSslHasher(OpenSslDigestType);
-  ~OpenSslHasher();
+  ~OpenSslHasher()                     = default;
   OpenSslHasher(OpenSslHasher const &) = delete;
   OpenSslHasher(OpenSslHasher &&)      = delete;
 
@@ -61,8 +61,6 @@ public:
 private:
   std::shared_ptr<internal::OpenSslHasherImpl> impl_;
 };
-
-inline OpenSslHasher::~OpenSslHasher() = default;
 
 }  // namespace internal
 }  // namespace crypto

@@ -42,7 +42,7 @@ public:
   static constexpr std::size_t size_in_bytes = 8u;
 
   FNV();
-  ~FNV() override;
+  ~FNV()           = default;
   FNV(FNV const &) = delete;
   FNV(FNV &&)      = delete;
 
@@ -57,8 +57,6 @@ public:
 private:
   std::shared_ptr<internal::FnvHasherInternals> impl_;
 };
-
-inline FNV::~FNV() = default;
 
 }  // namespace crypto
 }  // namespace fetch

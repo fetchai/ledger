@@ -21,6 +21,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <memory>
 
 namespace fetch {
 namespace crypto {
@@ -36,7 +37,7 @@ public:
 }  // namespace internal
 
 FNV::FNV()
-  : impl_(new internal::FnvHasherInternals)
+  : impl_(std::make_shared<internal::FnvHasherInternals>())
 {
   impl_->ctx.reset();
 }
