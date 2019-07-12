@@ -16,22 +16,40 @@
 //
 //------------------------------------------------------------------------------
 
-#include "crypto/stream_hasher.hpp"
+#include "core/macros.hpp"
+#include "crypto/sha1.hpp"
+
+#include <cassert>
+#include <cstddef>
+#include <cstdint>
 
 namespace fetch {
 namespace crypto {
 
-bool StreamHasher::Update(byte_array::ConstByteArray const &s)
+void SHA1::Reset()
 {
-  return Update(s.pointer(), s.size());
+  auto const success = openssl_hasher_.Reset();
+  FETCH_UNUSED(success);
+  assert(success);
 }
 
-byte_array::ByteArray StreamHasher::Final()
+bool SHA1::Update(uint8_t const *const data_to_hash, std::size_t const size)
 {
-  byte_array::ByteArray digest;
-  digest.Resize(GetSizeInBytes());
-  Final(digest.pointer(), digest.size());
-  return digest;
+  return openssl_hasher_.Update(data_to_hash, size);
+}
+
+void SHA1::Final(uint8_t *const hash)
+{
+  auto const success = openssl_hasher_.Final(hash);
+  FETCH_UNUSED(success);
+  assert(success);
+}
+
+std::size_t SHA1::HashSizeInBytes() const
+{
+  auto const size = openssl_hasher_.HashSize();
+  assert(size == size_in_bytes);
+  return size;
 }
 
 }  // namespace crypto

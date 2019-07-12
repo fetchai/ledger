@@ -152,12 +152,18 @@ namespace std {
 template <>
 struct hash<fetch::crypto::Identity>
 {
-  std::size_t operator()(fetch::crypto::Identity const &value) const
+  std::size_t operator()(fetch::crypto::Identity const &value) const noexcept
   {
     fetch::crypto::FNV hashStream;
     hashStream.Update(value.identifier());
-    hashStream.Update(value.parameters());
-    return hashStream.Final<>();
+
+    auto const params = value.parameters();
+    hashStream.Update(&params, sizeof(decltype(params)));
+
+    auto const        arr = hashStream.Final();
+    std::size_t const out = *reinterpret_cast<std::size_t const *>(arr.pointer());
+
+    return out;
   }
 };
 
