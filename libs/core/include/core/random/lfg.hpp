@@ -28,7 +28,7 @@ template <uint64_t P = 418, uint64_t Q = 1279>
 class LaggedFibonacciGenerator
 {
 public:
-  using RandomType = uint64_t;  
+  using RandomType = uint64_t;
 
   // Note, breaking naming convention for STL compatibility
   using result_type = RandomType;
@@ -107,10 +107,10 @@ private:
     index_ = 0;
   }
 
-  uint64_t                 index_ = 0;
+  uint64_t                    index_ = 0;
   LinearCongruentialGenerator lcg_;
 
-  RandomType             buffer_[Q];
+  RandomType              buffer_[Q];
   static constexpr double inv_double_max_ =
       1. / static_cast<double>(std::numeric_limits<RandomType>::max());
 };

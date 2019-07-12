@@ -29,7 +29,7 @@ class LinearCongruentialGenerator
 public:
   using RandomType = uint64_t;
 
-  // Note, breaking naming convention for STL compatibility  
+  // Note, breaking naming convention for STL compatibility
   using result_type = RandomType;
 
   LinearCongruentialGenerator(RandomType seed = 42) noexcept
