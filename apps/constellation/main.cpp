@@ -32,7 +32,6 @@
 #include "crypto/fetch_identity.hpp"
 #include "crypto/identity.hpp"
 #include "crypto/prover.hpp"
-#include "fetch_version.hpp"
 #include "key_generator.hpp"
 #include "ledger/chain/address.hpp"
 #include "network/adapters.hpp"
