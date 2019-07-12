@@ -22,9 +22,13 @@
 #include "ml/regularisers/regulariser.hpp"
 #include "regularisation.hpp"
 
+#include <memory>
+#include <stdexcept>
+
 namespace fetch {
 namespace ml {
 namespace details {
+
 enum class RegularisationType
 {
   NONE,

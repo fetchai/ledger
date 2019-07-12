@@ -18,9 +18,13 @@
 //------------------------------------------------------------------------------
 
 #include "math/distance/square.hpp"
+<<<<<<< HEAD
 //#include "math/matrix_operations.hpp"
 #include "math/fundamental_operators.hpp"
 #include <cassert>
+=======
+#include "math/matrix_operations.hpp"
+>>>>>>> 36d42bba5680849390fd87960cce8768bdbf5b49
 
 namespace fetch {
 namespace math {

@@ -18,6 +18,7 @@
 
 #include "math/tensor.hpp"
 #include "ml/graph.hpp"
+#include "ml/layers/self_attention.hpp"
 #include "ml/ops/activations/relu.hpp"
 #include "ml/ops/loss_functions.hpp"
 #include "ml/ops/multiply.hpp"
@@ -28,8 +29,6 @@
 #include "ml/optimisation/momentum_optimiser.hpp"
 #include "ml/optimisation/rmsprop_optimiser.hpp"
 #include "ml/optimisation/sgd_optimiser.hpp"
-
-#include "ml/layers/self_attention.hpp"
 
 #include "gtest/gtest.h"
 

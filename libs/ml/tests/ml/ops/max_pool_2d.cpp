@@ -16,12 +16,13 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/ops/max_pool_2d.hpp"
-
 #include "math/tensor.hpp"
+#include "ml/ops/max_pool_2d.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 
 #include "gtest/gtest.h"
+
+#include <vector>
 
 template <typename T>
 class MaxPool2DTest : public ::testing::Test

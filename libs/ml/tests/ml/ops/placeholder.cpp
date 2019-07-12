@@ -16,9 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/ops/placeholder.hpp"
-
 #include "math/tensor.hpp"
+#include "ml/ops/placeholder.hpp"
 
 #include "gtest/gtest.h"
 
