@@ -27,6 +27,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <utility>
 #include <vector>
 
 // Aim for 1 false positive per this many positive queries
@@ -178,20 +179,23 @@ BasicBloomFilter::BasicBloomFilter(Functions const &functions)
   , hash_source_factory_(functions)
 {}
 
-bool BasicBloomFilter::Match(fetch::byte_array::ConstByteArray const &element)
+std::pair<bool, std::size_t> BasicBloomFilter::Match(
+    fetch::byte_array::ConstByteArray const &element)
 {
-  auto const source = hash_source_factory_(element);
+  auto const  source       = hash_source_factory_(element);
+  std::size_t bits_checked = 0u;
   for (std::size_t const hash : source)
   {
+    ++bits_checked;
     if (!bits_.bit(hash % bits_.size()))
     {
-      return false;
+      return {false, bits_checked};
     }
   }
 
   ++positive_count_;
 
-  return true;
+  return {true, bits_checked};
 }
 
 void BasicBloomFilter::Add(fetch::byte_array::ConstByteArray const &element)
@@ -227,19 +231,6 @@ bool BasicBloomFilter::ReportFalsePositives(std::size_t count)
   }
 
   return false;
-}
-
-bool NullBloomFilter::Match(fetch::byte_array::ConstByteArray const &)
-{
-  return true;
-}
-
-void NullBloomFilter::Add(fetch::byte_array::ConstByteArray const &)
-{}
-
-bool NullBloomFilter::ReportFalsePositives(std::size_t)
-{
-  return true;
 }
 
 }  // namespace fetch
