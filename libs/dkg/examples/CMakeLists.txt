@@ -1,8 +1,8 @@
 #
-# F E T C H   C R Y P T O   T E S T S
+# F E T C H   B E A C O N   E X A M P L E S
 #
 cmake_minimum_required(VERSION 3.5 FATAL_ERROR)
-project(fetch-crypto)
+project(fetch-dkg)
 
 # CMake configuration
 include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
@@ -10,4 +10,4 @@ include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
 # Compiler Configuration
 setup_compiler()
 
-fetch_add_test(fetch-crypto-unit-tests fetch-crypto unit/)
+setup_library_examples(fetch-dkg)
