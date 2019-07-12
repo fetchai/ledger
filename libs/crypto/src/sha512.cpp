@@ -28,26 +28,26 @@ namespace crypto {
 
 void SHA512::Reset()
 {
-  auto const success = openssl_hasher_.reset();
+  auto const success = openssl_hasher_.Reset();
   FETCH_UNUSED(success);
   assert(success);
 }
 
 bool SHA512::Update(uint8_t const *const data_to_hash, std::size_t const size)
 {
-  return openssl_hasher_.update(data_to_hash, size);
+  return openssl_hasher_.Update(data_to_hash, size);
 }
 
 void SHA512::Final(uint8_t *const hash)
 {
-  auto const success = openssl_hasher_.final(hash);
+  auto const success = openssl_hasher_.Final(hash);
   FETCH_UNUSED(success);
   assert(success);
 }
 
 std::size_t SHA512::HashSizeInBytes() const
 {
-  auto const size = openssl_hasher_.hash_size();
+  auto const size = openssl_hasher_.HashSize();
   assert(size == size_in_bytes);
   return size;
 }

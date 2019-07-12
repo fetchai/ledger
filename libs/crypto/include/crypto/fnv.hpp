@@ -24,6 +24,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <memory>
 
 namespace fetch {
 namespace crypto {
@@ -54,8 +55,10 @@ public:
   std::size_t HashSizeInBytes() const override;
 
 private:
-  internal::FnvHasherInternals *impl_;
+  std::shared_ptr<internal::FnvHasherInternals> impl_;
 };
+
+inline FNV::~FNV() = default;
 
 }  // namespace crypto
 }  // namespace fetch

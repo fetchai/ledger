@@ -26,6 +26,7 @@
 
 #include <cassert>
 #include <cstddef>
+#include <memory>
 #include <utility>
 
 namespace fetch {
@@ -108,7 +109,7 @@ OpenSslHasherImpl::~OpenSslHasherImpl()
   EVP_MD_CTX_destroy(evp_ctx);
 }
 
-bool OpenSslHasher::reset()
+bool OpenSslHasher::Reset()
 {
   auto const success = EVP_DigestInit_ex(impl_->evp_ctx, impl_->evp_type, nullptr) != 0;
   assert(success);
@@ -116,7 +117,7 @@ bool OpenSslHasher::reset()
   return success;
 }
 
-bool OpenSslHasher::update(uint8_t const *const data_to_hash, std::size_t const size)
+bool OpenSslHasher::Update(uint8_t const *const data_to_hash, std::size_t const size)
 {
   auto const success = EVP_DigestUpdate(impl_->evp_ctx, data_to_hash, size) != 0;
   assert(success);
@@ -124,7 +125,7 @@ bool OpenSslHasher::update(uint8_t const *const data_to_hash, std::size_t const 
   return success;
 }
 
-bool OpenSslHasher::final(uint8_t *const hash)
+bool OpenSslHasher::Final(uint8_t *const hash)
 {
   auto const success = EVP_DigestFinal_ex(impl_->evp_ctx, hash, nullptr) != 0;
   assert(success);
@@ -133,17 +134,12 @@ bool OpenSslHasher::final(uint8_t *const hash)
 }
 
 OpenSslHasher::OpenSslHasher(OpenSslDigestType const type)
-  : impl_(new OpenSslHasherImpl(type))
+  : impl_(std::make_shared<OpenSslHasherImpl>(type))
 {
-  reset();
+  Reset();
 }
 
-OpenSslHasher::~OpenSslHasher()
-{
-  delete impl_;
-}
-
-std::size_t OpenSslHasher::hash_size() const
+std::size_t OpenSslHasher::HashSize() const
 {
   return impl_->digest_size_bytes;
 }

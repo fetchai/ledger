@@ -73,9 +73,11 @@ std::size_t GenerateEchoId(Packet const &packet)
   hash.Update(reinterpret_cast<uint8_t const *>(&channel), sizeof(channel));
   hash.Update(reinterpret_cast<uint8_t const *>(&counter), sizeof(counter));
 
-  auto const res = hash.Final();
+  std::size_t out = 0;
 
-  std::size_t const out = *reinterpret_cast<std::size_t const *>(res.pointer());
+  static_assert(sizeof(decltype(out)) == decltype(hash)::size_in_bytes,
+                "Output type has incorrect size to contain hash");
+  hash.Final(reinterpret_cast<uint8_t *>(&out));
 
   return out;
 }

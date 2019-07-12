@@ -19,9 +19,9 @@
 
 #include "crypto/hasher_interface.hpp"
 
-#include <cassert>
 #include <cstddef>
 #include <cstdint>
+#include <memory>
 
 namespace fetch {
 
@@ -53,14 +53,16 @@ public:
   OpenSslHasher &operator=(OpenSslHasher const &) = delete;
   OpenSslHasher &operator=(OpenSslHasher &&) = delete;
 
-  bool        reset();
-  bool        update(uint8_t const *data_to_hash, std::size_t size);
-  bool        final(uint8_t *data_to_hash);
-  std::size_t hash_size() const;
+  bool        Reset();
+  bool        Update(uint8_t const *data_to_hash, std::size_t size);
+  bool        Final(uint8_t *data_to_hash);
+  std::size_t HashSize() const;
 
 private:
-  internal::OpenSslHasherImpl *impl_;
+  std::shared_ptr<internal::OpenSslHasherImpl> impl_;
 };
+
+inline OpenSslHasher::~OpenSslHasher() = default;
 
 }  // namespace internal
 }  // namespace crypto

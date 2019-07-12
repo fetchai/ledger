@@ -41,11 +41,6 @@ FNV::FNV()
   impl_->ctx.reset();
 }
 
-FNV::~FNV()
-{
-  delete impl_;
-}
-
 void FNV::Reset()
 {
   impl_->ctx.reset();
