@@ -67,15 +67,15 @@ printLn("begin training...");
 var training_iterations = 10;
 var batch_size = 8u64;
 for(i in 0:training_iterations)
-    var loss = optimiser.Run(input_data, input_labels, batch_size);
+    var loss = optimiser.run(input_data, input_labels, batch_size);
     print("Current Loss: ");
     printLn(loss);
 endfor
 
 // Begin testing
 printLn("test prediction...");
-graph.SetInput("Input", test_data);
-var pred = graph.Evaluate("Output");
+graph.setInput("Input", test_data);
+var pred = graph.evaluate("Output");
 
 pred = remove_leading_dimension(pred);
 
