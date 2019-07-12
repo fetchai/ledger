@@ -35,6 +35,13 @@ public:
   Divide()          = default;
   virtual ~Divide() = default;
 
+  std::shared_ptr<SaveableParams<ArrayType>> GetOpSaveableParams ()
+  {
+    SaveableParams<ArrayType> sp{};
+    sp.DESCRIPTOR = DESCRIPTOR;
+    return std::make_shared<SaveableParams<ArrayType>>(sp);
+  }
+
   /**
    * elementwise multiplication
    * @param inputs  left & right inputs to Divide

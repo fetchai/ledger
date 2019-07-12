@@ -40,6 +40,13 @@ public:
 
   ~Convolution2D() = default;
 
+  std::shared_ptr<SaveableParams<ArrayType>> GetOpSaveableParams ()
+  {
+    SaveableParams<ArrayType> sp{};
+    sp.DESCRIPTOR = DESCRIPTOR;
+    return std::make_shared<SaveableParams<ArrayType>>(sp);
+  }
+
   void Forward(VecTensorType const &inputs, ArrayType &output) override;
 
   std::vector<ArrayType> Backward(VecTensorType const &inputs,

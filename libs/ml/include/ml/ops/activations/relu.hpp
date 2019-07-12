@@ -37,6 +37,13 @@ public:
   Relu()          = default;
   virtual ~Relu() = default;
 
+  std::shared_ptr<SaveableParams<ArrayType>> GetOpSaveableParams ()
+  {
+    SaveableParams<ArrayType> sp{};
+    sp.DESCRIPTOR = DESCRIPTOR;
+    return std::make_shared<SaveableParams<ArrayType>>(sp);
+  }
+
   // f(x)=max(0,x);
   void Forward(VecTensorType const &inputs, ArrayType &output)
   {

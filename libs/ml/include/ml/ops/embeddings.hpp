@@ -49,6 +49,13 @@ public:
 
   virtual ~Embeddings() = default;
 
+  std::shared_ptr<SaveableParams<ArrayType>> GetOpSaveableParams ()
+  {
+    SaveableParams<ArrayType> sp{};
+    sp.DESCRIPTOR = DESCRIPTOR;
+    return std::make_shared<SaveableParams<ArrayType>>(sp);
+  }
+
   virtual void Forward(VecTensorType const &inputs, ArrayType &output)
   {
     assert(this->output_);
@@ -142,6 +149,8 @@ public:
     }
     updated_rows_.clear();
   }
+
+  static constexpr char const *DESCRIPTOR = "Embedding";
 
 private:
   ArrayPtrType                           embeddings_output_;

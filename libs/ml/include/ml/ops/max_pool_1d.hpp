@@ -40,6 +40,13 @@ public:
 
   ~MaxPool1D() = default;
 
+  std::shared_ptr<SaveableParams<ArrayType>> GetOpSaveableParams ()
+  {
+    SaveableParams<ArrayType> sp{};
+    sp.DESCRIPTOR = DESCRIPTOR;
+    return std::make_shared<SaveableParams<ArrayType>>(sp);
+  }
+
   /**
    * Applies 1D max pooling of kernel_size_ for each channel described here:
    * http://ais.uni-bonn.de/papers/icann2010_maxpool.pdf

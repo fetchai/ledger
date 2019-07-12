@@ -40,6 +40,13 @@ public:
   LeakyReluOp()          = default;
   virtual ~LeakyReluOp() = default;
 
+  std::shared_ptr<SaveableParams<ArrayType>> GetOpSaveableParams ()
+  {
+    SaveableParams<ArrayType> sp{};
+    sp.DESCRIPTOR = DESCRIPTOR;
+    return std::make_shared<SaveableParams<ArrayType>>(sp);
+  }
+
   // LeakyRelu(x,alpha)=max(0,x)+alpha*min(0,x)
   void Forward(VecTensorType const &inputs, ArrayType &output)
   {

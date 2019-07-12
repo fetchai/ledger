@@ -90,6 +90,14 @@ public:
   Weights()          = default;
   virtual ~Weights() = default;
 
+  std::shared_ptr<SaveableParams<ArrayType>> GetOpSaveableParams ()
+  {
+    TrainableSaveableParams<ArrayType > tp{};
+    tp.weights_ = this->output_;
+    tp.DESCRIPTOR = DESCRIPTOR;
+    return std::make_shared<TrainableSaveableParams<ArrayType>>(tp);
+  }
+
   virtual std::vector<ArrayType> Backward(VecTensorType const &inputs,
                                           ArrayType const &    error_signal)
   {
@@ -101,7 +109,8 @@ public:
 
   virtual bool SetData(ArrayType const &data)
   {
-    if (PlaceHolder<T>::SetData(data))  // if input_size_changed
+    bool shape_changed = PlaceHolder<T>::SetData(data);
+    if (shape_changed)
     {
       gradient_accumulation_ = std::make_shared<ArrayType>(this->output_->shape());
       return true;

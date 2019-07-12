@@ -35,6 +35,19 @@ public:
 
   PlaceHolder() = default;
 
+  explicit PlaceHolder(TrainableSaveableParams<ArrayType> tp)
+  {
+    output_ = tp.weights;
+  }
+
+  std::shared_ptr<SaveableParams<ArrayType>> GetOpSaveableParams ()
+  {
+    TrainableSaveableParams<ArrayType > tp{};
+    tp.weights_ = output_;
+    tp.DESCRIPTOR = DESCRIPTOR;
+    return std::make_shared<TrainableSaveableParams<ArrayType>>(tp);
+  }
+
   virtual void Forward(VecTensorType const &inputs, ArrayType &output)
   {
     FETCH_UNUSED(inputs);
@@ -53,13 +66,13 @@ public:
 
   virtual bool SetData(ArrayType const &data)
   {
-    std::vector<SizeType> old_shape;
+    bool shape_changed = true;
     if (this->output_)
     {
-      old_shape = this->output_->shape();
+      shape_changed = (this->output_->shape() != data.shape());
     }
     this->output_ = std::make_shared<ArrayType>(data);
-    return old_shape != this->output_->shape();
+    return shape_changed;
   }
 
   virtual std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const
@@ -72,6 +85,7 @@ public:
 
 protected:
   ArrayPtrType output_;
+
 };
 
 }  // namespace ops

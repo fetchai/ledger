@@ -35,6 +35,13 @@ public:
   Subtract()          = default;
   virtual ~Subtract() = default;
 
+  std::shared_ptr<SaveableParams<ArrayType>> GetOpSaveableParams ()
+  {
+    SaveableParams<ArrayType> sp{};
+    sp.DESCRIPTOR = DESCRIPTOR;
+    return std::make_shared<SaveableParams<ArrayType>>(sp);
+  }
+
   virtual void Forward(VecTensorType const &inputs, ArrayType &output)
   {
     assert(inputs.size() == 2);

@@ -19,6 +19,7 @@
 
 #include "core/assert.hpp"
 #include "math/tensor.hpp"
+#include "ml/saveable_params.hpp"
 #include <memory>
 #include <vector>
 
@@ -48,6 +49,15 @@ public:
    */
   virtual std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const = 0;
 
+  virtual std::shared_ptr<SaveableParams<ArrayType>> GetOpSaveableParams () = 0;
+
+  Ops() = default;
+
+  explicit Ops(SaveableParams<ArrayType> const & sp)
+  {
+    FETCH_UNUSED(sp);
+  }
+
   void SetTraining(bool is_training)
   {
     is_training_ = is_training;
@@ -55,6 +65,7 @@ public:
 
 protected:
   bool is_training_ = true;
+
 };
 
 }  // namespace ml
