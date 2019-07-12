@@ -153,7 +153,7 @@ private:
 
   /// Member details
   /// @{
-  std::unordered_map<Identity, uint64_t> identity_to_id_;
+  std::unordered_map<Identity, uint64_t> identity_to_index_;
   /// @}
 
   /// Member identity and secrets
