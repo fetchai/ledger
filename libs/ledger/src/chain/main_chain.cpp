@@ -1504,8 +1504,8 @@ DigestSet MainChain::DetectDuplicateTransactions(BlockHash const &starting_hash,
     bloom_filter_query_count_->increment();
   }
 
-  auto const search_chain_for_duplicates =
-      [this, &block](DigestSet const &transaction_digests) -> DigestSet {
+  auto search_chain_for_duplicates =
+      [this, block](DigestSet const &transaction_digests) mutable -> DigestSet {
     DigestSet duplicates{};
     for (;;)
     {

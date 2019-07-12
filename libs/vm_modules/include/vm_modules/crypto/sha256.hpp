@@ -50,7 +50,7 @@ public:
 
   void UpdateUInt256(vm::Ptr<vm_modules::math::UInt256Wrapper> const &uint)
   {
-    hasher_.Update(uint->number());
+    hasher_.Update(uint->number().pointer(), uint->number().size());
   }
 
   void UpdateString(vm::Ptr<vm::String> const &str)

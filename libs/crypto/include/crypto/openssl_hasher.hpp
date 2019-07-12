@@ -1,3 +1,4 @@
+#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -16,41 +17,51 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/macros.hpp"
-#include "crypto/sha256.hpp"
+#include "crypto/hasher_interface.hpp"
 
-#include <cassert>
 #include <cstddef>
 #include <cstdint>
+#include <memory>
 
 namespace fetch {
+
+namespace byte_array {
+class ConstByteArray;
+}
+
 namespace crypto {
+namespace internal {
 
-void SHA256::Reset()
+enum class OpenSslDigestType
 {
-  auto const success = openssl_hasher_.Reset();
-  FETCH_UNUSED(success);
-  assert(success);
-}
+  MD5,
+  SHA1,
+  SHA2_256,
+  SHA2_512
+};
 
-bool SHA256::Update(uint8_t const *const data_to_hash, std::size_t const size)
+class OpenSslHasherImpl;
+
+class OpenSslHasher
 {
-  return openssl_hasher_.Update(data_to_hash, size);
-}
+public:
+  explicit OpenSslHasher(OpenSslDigestType);
+  ~OpenSslHasher()                     = default;
+  OpenSslHasher(OpenSslHasher const &) = delete;
+  OpenSslHasher(OpenSslHasher &&)      = delete;
 
-void SHA256::Final(uint8_t *const hash)
-{
-  auto const success = openssl_hasher_.Final(hash);
-  FETCH_UNUSED(success);
-  assert(success);
-}
+  OpenSslHasher &operator=(OpenSslHasher const &) = delete;
+  OpenSslHasher &operator=(OpenSslHasher &&) = delete;
 
-std::size_t SHA256::HashSizeInBytes() const
-{
-  auto const size = openssl_hasher_.HashSize();
-  assert(size == size_in_bytes);
-  return size;
-}
+  bool        Reset();
+  bool        Update(uint8_t const *data_to_hash, std::size_t size);
+  bool        Final(uint8_t *data_to_hash);
+  std::size_t HashSize() const;
 
+private:
+  std::shared_ptr<internal::OpenSslHasherImpl> impl_;
+};
+
+}  // namespace internal
 }  // namespace crypto
 }  // namespace fetch
