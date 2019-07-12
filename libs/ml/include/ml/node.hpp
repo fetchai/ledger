@@ -18,7 +18,8 @@
 //------------------------------------------------------------------------------
 
 #include "core/logger.hpp"
-#include "ops/ops.hpp"
+#include "ml/ops/ops.hpp"
+#include "ml/saveable_params.hpp"
 
 #include <memory>
 #include <unordered_map>
@@ -60,11 +61,23 @@ public:
   using NodePtrType = std::shared_ptr<NodeInterface<T>>;
 
   template <typename... Params>
-  Node(std::string const name, Params... params)
+  explicit Node(std::string name, Params... params)
     : O(params...)
     , name_(std::move(name))
     , cached_output_status_(CachedOutputState::CHANGED_SIZE)
   {}
+
+  explicit Node(std::string name, fetch::ml::SaveableParams<ArrayType> const & sp)
+    : O(sp)
+    , name_(std::move(name))
+    , cached_output_status_(CachedOutputState::CHANGED_SIZE)
+  {}
+
+  std::shared_ptr<SaveableParams<ArrayType>> GetSaveableParams()
+  {
+    std::shared_ptr<SaveableParams<ArrayType>> sp = this->GetOpSaveableParams();
+    return sp;
+  }
 
   virtual ~Node() = default;
 
