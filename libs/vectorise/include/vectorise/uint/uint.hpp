@@ -49,11 +49,11 @@ public:
   using WideType = uint64_t;
   enum
   {
-    UINT_SIZE = S,
-    ELEMENT_SIZE = sizeof(BaseType) * 8,
-    ELEMENTS  = UINT_SIZE / ELEMENT_SIZE,
+    UINT_SIZE         = S,
+    ELEMENT_SIZE      = sizeof(BaseType) * 8,
+    ELEMENTS          = UINT_SIZE / ELEMENT_SIZE,
     WIDE_ELEMENT_SIZE = sizeof(WideType) * 8,
-    WIDE_ELEMENTS  = UINT_SIZE / WIDE_ELEMENT_SIZE
+    WIDE_ELEMENTS     = UINT_SIZE / WIDE_ELEMENT_SIZE
   };
   static_assert(S == (ELEMENTS * ELEMENT_SIZE),
                 "Size must be a multiple of 8 times the base type size.");
@@ -135,14 +135,14 @@ public:
   constexpr UInt  operator&(UInt const &n) const;
   constexpr UInt  operator|(UInt const &n) const;
   constexpr UInt  operator^(UInt const &n) const;
-  constexpr UInt  &operator+=(UInt const &n);
-  constexpr UInt  &operator-=(UInt const &n);
-  constexpr UInt  &operator*=(UInt const &n);
-  constexpr UInt  &operator/=(UInt const &n);
-  constexpr UInt  &operator%=(UInt const &n);
-  constexpr UInt  &operator&=(UInt const &n);
-  constexpr UInt  &operator|=(UInt const &n);
-  constexpr UInt  &operator^=(UInt const &n);
+  constexpr UInt &operator+=(UInt const &n);
+  constexpr UInt &operator-=(UInt const &n);
+  constexpr UInt &operator*=(UInt const &n);
+  constexpr UInt &operator/=(UInt const &n);
+  constexpr UInt &operator%=(UInt const &n);
+  constexpr UInt &operator&=(UInt const &n);
+  constexpr UInt &operator|=(UInt const &n);
+  constexpr UInt &operator^=(UInt const &n);
   template <typename T>
   constexpr meta::IfIsInteger<T, UInt> operator+(T const &n) const;
   template <typename T>
@@ -186,9 +186,9 @@ public:
   /// element accessors ///
   /////////////////////////
 
-  constexpr uint8_t operator[](std::size_t const &n) const;
-  constexpr uint8_t &operator[](std::size_t const &n);
-  constexpr WideType elementAt(std::size_t const &n) const;
+  constexpr uint8_t   operator[](std::size_t const &n) const;
+  constexpr uint8_t & operator[](std::size_t const &n);
+  constexpr WideType  elementAt(std::size_t const &n) const;
   constexpr WideType &elementAt(std::size_t const &n);
 
   constexpr uint64_t TrimmedSize() const;
@@ -211,10 +211,11 @@ public:
   static const UInt _0;
   static const UInt _1;
   static const UInt max;
+
 private:
   union
   {
-    ContainerType base;
+    ContainerType     base;
     WideContainerType wide;
   } data_;
 };
@@ -341,13 +342,14 @@ template <uint16_t S>
 constexpr bool UInt<S>::operator<(UInt const &other) const
 {
   // Simplified version, as we're dealing with wider elements
-  for (std::size_t i = WIDE_ELEMENTS -1; i >= 0; --i)
+  for (std::size_t i = WIDE_ELEMENTS - 1; i >= 0; --i)
   {
     if (data_.wide[i] == other.elementAt(i))
     {
       continue;
     }
-    else {
+    else
+    {
       return data_.wide[i] < other.elementAt(i);
     }
   }
@@ -443,7 +445,7 @@ constexpr UInt<S> &UInt<S>::operator--()
 //////////////////////////////
 
 template <uint16_t S>
-constexpr UInt<S>  UInt<S>::operator+(UInt<S> const &n) const
+constexpr UInt<S> UInt<S>::operator+(UInt<S> const &n) const
 {
   UInt<S> ret{*this};
   ret += n;
@@ -452,7 +454,7 @@ constexpr UInt<S>  UInt<S>::operator+(UInt<S> const &n) const
 }
 
 template <uint16_t S>
-constexpr UInt<S>  UInt<S>::operator-(UInt<S> const &n) const
+constexpr UInt<S> UInt<S>::operator-(UInt<S> const &n) const
 {
   UInt<S> ret{*this};
   ret -= n;
@@ -461,7 +463,7 @@ constexpr UInt<S>  UInt<S>::operator-(UInt<S> const &n) const
 }
 
 template <uint16_t S>
-constexpr UInt<S>  UInt<S>::operator*(UInt<S> const &n) const
+constexpr UInt<S> UInt<S>::operator*(UInt<S> const &n) const
 {
   UInt<S> ret{*this};
   ret *= n;
@@ -470,7 +472,7 @@ constexpr UInt<S>  UInt<S>::operator*(UInt<S> const &n) const
 }
 
 template <uint16_t S>
-constexpr UInt<S>  UInt<S>::operator/(UInt<S> const &n) const
+constexpr UInt<S> UInt<S>::operator/(UInt<S> const &n) const
 {
   UInt<S> ret{*this};
   ret /= n;
@@ -479,7 +481,7 @@ constexpr UInt<S>  UInt<S>::operator/(UInt<S> const &n) const
 }
 
 template <uint16_t S>
-constexpr UInt<S>  UInt<S>::operator%(UInt<S> const &n) const
+constexpr UInt<S> UInt<S>::operator%(UInt<S> const &n) const
 {
   UInt<S> ret{*this};
   ret %= n;
@@ -488,7 +490,7 @@ constexpr UInt<S>  UInt<S>::operator%(UInt<S> const &n) const
 }
 
 template <uint16_t S>
-constexpr UInt<S>  UInt<S>::operator&(UInt<S> const &n) const
+constexpr UInt<S> UInt<S>::operator&(UInt<S> const &n) const
 {
   UInt<S> ret{*this};
   ret &= n;
@@ -497,7 +499,7 @@ constexpr UInt<S>  UInt<S>::operator&(UInt<S> const &n) const
 }
 
 template <uint16_t S>
-constexpr UInt<S>  UInt<S>::operator|(UInt<S> const &n) const
+constexpr UInt<S> UInt<S>::operator|(UInt<S> const &n) const
 {
   UInt<S> ret{*this};
   ret |= n;
@@ -506,7 +508,7 @@ constexpr UInt<S>  UInt<S>::operator|(UInt<S> const &n) const
 }
 
 template <uint16_t S>
-constexpr UInt<S>  UInt<S>::operator^(UInt<S> const &n) const
+constexpr UInt<S> UInt<S>::operator^(UInt<S> const &n) const
 {
   UInt<S> ret{*this};
   ret ^= n;
@@ -515,7 +517,7 @@ constexpr UInt<S>  UInt<S>::operator^(UInt<S> const &n) const
 }
 
 template <uint16_t S>
-constexpr UInt<S>  &UInt<S>::operator+=(UInt<S> const &n)
+constexpr UInt<S> &UInt<S>::operator+=(UInt<S> const &n)
 {
   UInt<S>::WideType carry = 0, new_carry = 0;
   for (std::size_t i = 0; i < WIDE_ELEMENTS; ++i)
@@ -530,7 +532,7 @@ constexpr UInt<S>  &UInt<S>::operator+=(UInt<S> const &n)
 }
 
 template <uint16_t S>
-constexpr UInt<S>  &UInt<S>::operator-=(UInt<S> const &n)
+constexpr UInt<S> &UInt<S>::operator-=(UInt<S> const &n)
 {
   if (*this < n)
   {
@@ -550,17 +552,18 @@ constexpr UInt<S>  &UInt<S>::operator-=(UInt<S> const &n)
 
 // Implementation for 256-bits only
 template <>
-constexpr UInt<256>  &UInt<256>::operator*=(UInt<256> const &n)
+constexpr UInt<256> &UInt<256>::operator*=(UInt<256> const &n)
 {
   // Calculate all products between each uint64_t element in the UInts
-  // Use int128_t type to hold the actual product. 
+  // Use int128_t type to hold the actual product.
   __uint128_t products[WIDE_ELEMENTS][WIDE_ELEMENTS] = {};
 
   for (std::size_t i = 0; i < WIDE_ELEMENTS; ++i)
   {
     for (std::size_t j = 0; j < WIDE_ELEMENTS; ++j)
     {
-      products[i][j] = static_cast<__uint128_t>(data_.wide[i]) * static_cast<__uint128_t>(n.elementAt(j));
+      products[i][j] =
+          static_cast<__uint128_t>(data_.wide[i]) * static_cast<__uint128_t>(n.elementAt(j));
     }
   }
 
@@ -576,18 +579,19 @@ constexpr UInt<256>  &UInt<256>::operator*=(UInt<256> const &n)
    *       + (a[0] * b[1] + a[1] * b[0]) << 64
    *       + (a[0] * b[2] + a[1] * b[1] + a[2] * b[0]) << 128
    *       + (a[0] * b[3] + a[1] * b[2] + a[2] * b[1] + a[3] * b[0]) << 192
-   * In order to be accurate, we calculate these terms as 128-bit quantities and we add the high-64-bits as carry to the next term
+   * In order to be accurate, we calculate these terms as 128-bit quantities and we add the
+   * high-64-bits as carry to the next term
    */
 
   __uint128_t carry = 0, terms[WIDE_ELEMENTS] = {};
-  terms[0] = static_cast<WideType>(products[0][0]);
-  carry = static_cast<WideType>(terms[0] >> WIDE_ELEMENT_SIZE);
+  terms[0] = products[0][0];
+  carry    = static_cast<WideType>(terms[0] >> WIDE_ELEMENT_SIZE);
   terms[1] = products[0][1] + products[1][0] + carry;
-  carry = static_cast<WideType>(terms[1] >> WIDE_ELEMENT_SIZE);
+  carry    = static_cast<WideType>(terms[1] >> WIDE_ELEMENT_SIZE);
   terms[2] = products[0][2] + products[1][1] + products[2][0] + carry;
-  carry = static_cast<WideType>(terms[2] >> WIDE_ELEMENT_SIZE);
+  carry    = static_cast<WideType>(terms[2] >> WIDE_ELEMENT_SIZE);
   terms[3] = products[0][3] + products[1][2] + products[2][1] + products[3][0] + carry;
-  carry = static_cast<WideType>(terms[2] >> WIDE_ELEMENT_SIZE);
+  carry    = static_cast<WideType>(terms[3] >> WIDE_ELEMENT_SIZE);
   // TODO: decide what to do with overflow if carry > 0
 
   for (std::size_t i = 0; i < WIDE_ELEMENTS; ++i)
@@ -599,25 +603,30 @@ constexpr UInt<256>  &UInt<256>::operator*=(UInt<256> const &n)
 }
 
 template <uint16_t S>
-constexpr UInt<S>  &UInt<S>::operator/=(UInt<S> const &n)
+constexpr UInt<S> &UInt<S>::operator/=(UInt<S> const &n)
 {
-  if (n == _0) {
+  if (n == _0)
+  {
     throw std::runtime_error("division by zero!");
   }
-  if (n == _1) {
+  if (n == _1)
+  {
     *this = n;
     return *this;
   }
-  if (*this == n) {
+  if (*this == n)
+  {
     *this = _1;
     return *this;
   }
-  if (*this == _0) {
+  if (*this == _0)
+  {
     *this = _0;
     return *this;
   }
   // No fractions supported, if *this < n return 0
-  if (*this < _0) {
+  if (*this < _0)
+  {
     *this = _0;
     return *this;
   }
@@ -625,14 +634,14 @@ constexpr UInt<S>  &UInt<S>::operator/=(UInt<S> const &n)
   // Actual integer division algorithm
   // First simplify dividend/divisor by shifting right by min LSB bit
   // Essentially divide both by 2 as long as the LSB is zero
-  UInt<S> N{*this}, D{n};
+  UInt<S>     N{*this}, D{n};
   std::size_t lsb = std::min(N.lsb(), D.lsb());
   N >>= lsb;
   D >>= lsb;
   UInt<S> multiple = 1;
 
   // Find smallest multiple of divisor (D) that is larger than the dividend (N)
-  while(N > D)
+  while (N > D)
   {
     D <<= 1;
     multiple <<= 1;
@@ -640,15 +649,16 @@ constexpr UInt<S>  &UInt<S>::operator/=(UInt<S> const &n)
   // Calculate Quotient in a loop, essentially divide divisor by 2 and subtract from Remainder
   // Add multiple to Quotient
   UInt<S> Q = _0, R = N;
-  do {
-    if(R >= D)
+  do
+  {
+    if (R >= D)
     {
       R -= D;
       Q += multiple;
     }
-    D >>= 1; // Divide by two.
+    D >>= 1;  // Divide by two.
     multiple >>= 1;
-  } while(multiple != 0);
+  } while (multiple != 0);
 
   // Return the Quotient
   *this = Q;
@@ -656,14 +666,15 @@ constexpr UInt<S>  &UInt<S>::operator/=(UInt<S> const &n)
 }
 
 template <uint16_t S>
-constexpr UInt<S>  &UInt<S>::operator%=(UInt<S> const &n)
+constexpr UInt<S> &UInt<S>::operator%=(UInt<S> const &n)
 {
   UInt<S> q = *this / n;
-  return *this - (n * q);
+  *this -= q * n;
+  return *this;
 }
 
 template <uint16_t S>
-constexpr UInt<S>  &UInt<S>::operator&=(UInt<S> const &n)
+constexpr UInt<S> &UInt<S>::operator&=(UInt<S> const &n)
 {
   for (std::size_t i = 0; i < WIDE_ELEMENTS; ++i)
   {
@@ -674,7 +685,7 @@ constexpr UInt<S>  &UInt<S>::operator&=(UInt<S> const &n)
 }
 
 template <uint16_t S>
-constexpr UInt<S>  &UInt<S>::operator|=(UInt<S> const &n)
+constexpr UInt<S> &UInt<S>::operator|=(UInt<S> const &n)
 {
   for (std::size_t i = 0; i < WIDE_ELEMENTS; ++i)
   {
@@ -685,7 +696,7 @@ constexpr UInt<S>  &UInt<S>::operator|=(UInt<S> const &n)
 }
 
 template <uint16_t S>
-constexpr UInt<S>  &UInt<S>::operator^=(UInt<S> const &n)
+constexpr UInt<S> &UInt<S>::operator^=(UInt<S> const &n)
 {
   for (std::size_t i = 0; i < WIDE_ELEMENTS; ++i)
   {
@@ -859,12 +870,12 @@ template <uint16_t S>
 constexpr UInt<S> &UInt<S>::operator<<=(std::size_t const &bits)
 {
   std::size_t full_words = bits / (sizeof(uint64_t) * 8);
-  std::size_t real_bits = bits - full_words * sizeof(uint64_t) * 8;
-  std::size_t nbits = WIDE_ELEMENT_SIZE - real_bits;
+  std::size_t real_bits  = bits - full_words * sizeof(uint64_t) * 8;
+  std::size_t nbits      = WIDE_ELEMENT_SIZE - real_bits;
   // No actual shifting involved, just move the elements
   if (full_words)
   {
-    for (std::size_t i = WIDE_ELEMENTS -1; i >= full_words; i--)
+    for (std::size_t i = WIDE_ELEMENTS - 1; i >= full_words; i--)
     {
       data_.wide[i] = data_.wide[i - full_words];
     }
@@ -879,7 +890,7 @@ constexpr UInt<S> &UInt<S>::operator<<=(std::size_t const &bits)
     WideType carry = 0;
     for (std::size_t i = 0; i < WIDE_ELEMENTS; i++)
     {
-      WideType val = data_.wide[i];
+      WideType val  = data_.wide[i];
       data_.wide[i] = (val << real_bits) | carry;
       carry         = val >> nbits;
     }
@@ -892,8 +903,8 @@ template <uint16_t S>
 constexpr UInt<S> &UInt<S>::operator>>=(std::size_t const &bits)
 {
   std::size_t full_words = bits / (sizeof(uint64_t) * 8);
-  std::size_t real_bits = bits - full_words * sizeof(uint64_t) * 8;
-  std::size_t nbits = WIDE_ELEMENT_SIZE - real_bits;
+  std::size_t real_bits  = bits - full_words * sizeof(uint64_t) * 8;
+  std::size_t nbits      = WIDE_ELEMENT_SIZE - real_bits;
   // No actual shifting involved, just move the elements
   if (full_words)
   {
@@ -913,9 +924,9 @@ constexpr UInt<S> &UInt<S>::operator>>=(std::size_t const &bits)
     WideType carry = 0;
     for (std::size_t i = 0; i < WIDE_ELEMENTS; i++)
     {
-      WideType val = data_.wide[WIDE_ELEMENTS -1 - i];
-      data_.wide[WIDE_ELEMENTS -1 - i] = (val >> real_bits) | carry;
-      carry         = val << nbits;
+      WideType val                      = data_.wide[WIDE_ELEMENTS - 1 - i];
+      data_.wide[WIDE_ELEMENTS - 1 - i] = (val >> real_bits) | carry;
+      carry                             = val << nbits;
     }
   }
 
@@ -928,7 +939,7 @@ constexpr std::size_t UInt<S>::msb() const
   std::size_t msb = 0;
   for (std::size_t i = 0; i < WIDE_ELEMENTS; i++)
   {
-    std::size_t msbi = platform::CountLeadingZeroes64(data_.wide[WIDE_ELEMENTS -1 - i]);
+    std::size_t msbi = platform::CountLeadingZeroes64(data_.wide[WIDE_ELEMENTS - 1 - i]);
     msb += msbi;
     if (msbi < 64)
     {
@@ -1019,7 +1030,6 @@ UInt<S>::operator std::string() const
   return ret.str();
 }
 
-
 inline double Log(UInt<256> const &x)
 {
   uint64_t last_word = x.elementAt(x.TrimmedSize() - 1);
@@ -1062,8 +1072,6 @@ constexpr void Deserialize(T &s, UInt<S> &u)
 {
   s >> u.data_.base;
 }
-
-
 
 }  // namespace vectorise
 }  // namespace fetch

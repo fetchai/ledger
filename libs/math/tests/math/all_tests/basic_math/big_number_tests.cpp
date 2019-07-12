@@ -80,7 +80,7 @@ TEST(big_number_gtest, decrementer_tests)
   EXPECT_EQ(n1.elementAt(0), ULONG_MAX - 99);
   EXPECT_EQ(n1.elementAt(1), ULONG_MAX);
   EXPECT_EQ(n1.elementAt(2), ULONG_MAX);
-  EXPECT_EQ(n1.elementAt(3), ULONG_MAX -1);
+  EXPECT_EQ(n1.elementAt(3), ULONG_MAX - 1);
 }
 
 TEST(big_number_gtest, addition_tests)
@@ -144,6 +144,17 @@ TEST(big_number_gtest, multiplication_tests)
   EXPECT_EQ(n3.elementAt(1), 0x00000001ffffffff);
   EXPECT_EQ(n3.elementAt(2), 0xfffffffe00000001);
   EXPECT_EQ(n3.elementAt(3), 0x00000000fffffffe);
+  UInt<256> n4;
+  n4.elementAt(0) = 0x72f4a7ca9e22b75b;
+  n4.elementAt(1) = 0x00000001264eb563;
+  n4.elementAt(2) = 0;
+  n4.elementAt(3) = 0;
+  UInt<256> n5    = 0xdeadbeefdeadbeef;
+  n4 *= n5;
+  EXPECT_EQ(n4.elementAt(0), 0x38fdb7f338fdb7f5);
+  EXPECT_EQ(n4.elementAt(1), 0xfffffffeffffffff);
+  EXPECT_EQ(n4.elementAt(2), 0x00000000fffffffe);
+  EXPECT_EQ(n4.elementAt(3), 0);
 }
 
 TEST(big_number_gtest, division_tests)
@@ -161,11 +172,18 @@ TEST(big_number_gtest, division_tests)
   EXPECT_EQ(n3.elementAt(2), 0);
   EXPECT_EQ(n3.elementAt(3), 0);
   n3 <<= 64;
+  UInt<256> n4{n3};
   n3 /= 0xdeadbeefdeadbeef;
   EXPECT_EQ(n3.elementAt(0), 0x72f4a7ca9e22b75b);
   EXPECT_EQ(n3.elementAt(1), 0x00000001264eb563);
   EXPECT_EQ(n3.elementAt(2), 0);
   EXPECT_EQ(n3.elementAt(3), 0);
+
+  n4 %= 0xdeadbeefdeadbeef;
+  EXPECT_EQ(n4.elementAt(0), 0xc702480cc702480b);
+  EXPECT_EQ(n4.elementAt(1), 0);
+  EXPECT_EQ(n4.elementAt(2), 0);
+  EXPECT_EQ(n4.elementAt(3), 0);
 }
 
 TEST(big_number_gtest, msb_lsb_tests)
