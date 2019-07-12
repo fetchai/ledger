@@ -16,12 +16,13 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/ops/convolution_1d.hpp"
-
 #include "math/tensor.hpp"
+#include "ml/ops/convolution_1d.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 
 #include "gtest/gtest.h"
+
+#include <vector>
 
 template <typename T>
 class Convolution1DTest : public ::testing::Test
@@ -126,7 +127,6 @@ TYPED_TEST(Convolution1DTest, forward_1x5x1_1x1x3x1_stride_2)
 
 TYPED_TEST(Convolution1DTest, forward_1x5x2_1x1x3x2_stride_2)
 {
-  //  using DataType  = typename TypeParam::Type;
   using ArrayType = TypeParam;
   using SizeType  = typename TypeParam::SizeType;
 
@@ -267,7 +267,6 @@ TYPED_TEST(Convolution1DTest, backward_3x3x2_5x3x3x2)
     {
       for (SizeType i_o{0}; i_o < output_height; ++i_o)
       {
-
         error(i_oc, i_o, i_b) = static_cast<DataType>(i_o + 1);
       }
     }

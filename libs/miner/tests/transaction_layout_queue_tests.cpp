@@ -42,7 +42,7 @@ class TransactionLayoutQueueTests : public ::testing::Test
 {
 protected:
   using Rng     = LinearCongruentialGenerator;
-  using RngWord = Rng::random_type;
+  using RngWord = Rng::RandomType;
 
   void SetUp() override
   {

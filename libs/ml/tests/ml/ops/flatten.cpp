@@ -16,12 +16,13 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/ops/flatten.hpp"
-
 #include "math/tensor.hpp"
+#include "ml/ops/flatten.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 
-#include <gtest/gtest.h>
+#include "gtest/gtest.h"
+
+#include <cstdint>
 
 template <typename T>
 class FlattenTest : public ::testing::Test

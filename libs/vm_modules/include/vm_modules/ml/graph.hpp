@@ -119,18 +119,18 @@ public:
   {
     module.CreateClassType<VMGraph>("Graph")
         .CreateConstuctor<>()
-        .CreateMemberFunction("SetInput", &VMGraph::SetInput)
-        .CreateMemberFunction("Evaluate", &VMGraph::Evaluate)
-        .CreateMemberFunction("Backpropagate", &VMGraph::BackPropagateError)
-        .CreateMemberFunction("Step", &VMGraph::Step)
-        .CreateMemberFunction("AddPlaceholder", &VMGraph::AddPlaceholder)
-        .CreateMemberFunction("AddFullyConnected", &VMGraph::AddFullyConnected)
-        .CreateMemberFunction("AddRelu", &VMGraph::AddRelu)
-        .CreateMemberFunction("AddSoftmax", &VMGraph::AddSoftmax)
-        .CreateMemberFunction("AddDropout", &VMGraph::AddDropout)
-        .CreateMemberFunction("AddCrossEntropyLoss", &VMGraph::AddCrossEntropyLoss)
-        .CreateMemberFunction("LoadStateDict", &VMGraph::LoadStateDict)
-        .CreateMemberFunction("StateDict", &VMGraph::StateDict);
+        .CreateMemberFunction("setInput", &VMGraph::SetInput)
+        .CreateMemberFunction("evaluate", &VMGraph::Evaluate)
+        .CreateMemberFunction("backPropagate", &VMGraph::BackPropagateError)
+        .CreateMemberFunction("step", &VMGraph::Step)
+        .CreateMemberFunction("addPlaceholder", &VMGraph::AddPlaceholder)
+        .CreateMemberFunction("addFullyConnected", &VMGraph::AddFullyConnected)
+        .CreateMemberFunction("addRelu", &VMGraph::AddRelu)
+        .CreateMemberFunction("addSoftmax", &VMGraph::AddSoftmax)
+        .CreateMemberFunction("addDropout", &VMGraph::AddDropout)
+        .CreateMemberFunction("addCrossEntropyLoss", &VMGraph::AddCrossEntropyLoss)
+        .CreateMemberFunction("loadStateDict", &VMGraph::LoadStateDict)
+        .CreateMemberFunction("stateDict", &VMGraph::StateDict);
   }
 
   GraphType graph_;

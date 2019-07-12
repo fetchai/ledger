@@ -19,6 +19,10 @@
 
 #include "ml/ops/ops.hpp"
 
+#include <cassert>
+#include <memory>
+#include <vector>
+
 namespace fetch {
 namespace ml {
 namespace ops {
@@ -37,8 +41,7 @@ public:
     : kernel_size_{kernel_size}
     , stride_size_{stride_size}
   {}
-
-  ~MaxPool1D() = default;
+  ~MaxPool1D() override = default;
 
   /**
    * Applies 1D max pooling of kernel_size_ for each channel described here:

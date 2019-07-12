@@ -16,12 +16,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include <ml/ops/activations/dropout.hpp>
-#include <vector>
-
-#include "benchmark/benchmark.h"
-#include "math/tensor.hpp"
-
 #include "ml/ops/activations/dropout.hpp"
 #include "ml/ops/activations/elu.hpp"
 #include "ml/ops/activations/leaky_relu.hpp"
@@ -31,6 +25,12 @@
 #include "ml/ops/activations/relu.hpp"
 #include "ml/ops/activations/sigmoid.hpp"
 #include "ml/ops/activations/softmax.hpp"
+
+#include "benchmark/benchmark.h"
+#include "math/tensor.hpp"
+
+#include <functional>
+#include <vector>
 
 template <class T, int N>
 void BM_DropoutForward(benchmark::State &state)

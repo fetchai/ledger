@@ -27,10 +27,10 @@
 
 #include <algorithm>
 #include <chrono>
+#include <memory>
 #include <random>
 #include <thread>
-
-// using ::testing::_;
+#include <vector>
 
 class ExecutionManagerStateTests : public ::testing::TestWithParam<BlockConfig>
 {

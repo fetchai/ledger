@@ -16,9 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/layers/convolution_2d.hpp"
-
 #include "math/tensor.hpp"
+#include "ml/layers/convolution_2d.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 
 #include "gtest/gtest.h"

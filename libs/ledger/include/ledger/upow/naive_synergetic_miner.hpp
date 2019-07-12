@@ -18,11 +18,10 @@
 //------------------------------------------------------------------------------
 
 #include "core/state_machine.hpp"
+#include "ledger/dag/dag_interface.hpp"
 #include "ledger/upow/synergetic_contract.hpp"
 #include "ledger/upow/synergetic_miner_interface.hpp"
 #include "ledger/upow/work.hpp"
-
-#include "ledger/dag/dag_interface.hpp"
 
 #include <memory>
 

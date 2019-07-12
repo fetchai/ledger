@@ -19,10 +19,10 @@
 
 #include "core/assert.hpp"
 
-#include <cassert>
 #include <cmath>
 #include <cstdint>
 #include <vector>
+
 namespace fetch {
 namespace math {
 

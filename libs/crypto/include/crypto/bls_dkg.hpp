@@ -19,6 +19,10 @@
 
 #include "crypto/bls_base.hpp"
 
+#include <cstdint>
+#include <stdexcept>
+#include <vector>
+
 namespace fetch {
 namespace crypto {
 namespace bls {
@@ -27,6 +31,7 @@ namespace dkg {
 using VerificationVector = std::vector<bls::PublicKey>;
 using ContributionVector = std::vector<bls::PrivateKey>;
 using ParticipantVector  = std::vector<bls::Id>;
+
 struct Contribution
 {
   VerificationVector verification;

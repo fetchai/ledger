@@ -16,15 +16,17 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chain/block.hpp"
-#include "ledger/chain/constants.hpp"
-#include "vectorise/platform.hpp"
-
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
+#include "ledger/chain/block.hpp"
+#include "ledger/chain/constants.hpp"
 #include "ledger/testing/block_generator.hpp"
+#include "vectorise/platform.hpp"
 
+#include <cstddef>
+#include <cstdint>
 #include <cstring>
+#include <memory>
 
 namespace fetch {
 namespace ledger {

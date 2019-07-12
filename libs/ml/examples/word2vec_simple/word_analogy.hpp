@@ -17,12 +17,14 @@
 //
 //------------------------------------------------------------------------------
 
+#include "math/matrix_operations.hpp"
+
+#include <cassert>
+#include <cmath>
 #include <iostream>
-#include <math.h>
+#include <stdexcept>
 #include <string>
 #include <vector>
-
-#include "math/matrix_operations.hpp"
 
 template <typename ArrayType>
 void NormVector(ArrayType &vector)
@@ -32,7 +34,7 @@ void NormVector(ArrayType &vector)
   {
     l2 += (val * val);
   }
-  l2 = sqrt(l2);
+  l2 = static_cast<typename ArrayType::Type>(sqrt(l2));
   for (auto &val : vector)
   {
     val /= l2;
