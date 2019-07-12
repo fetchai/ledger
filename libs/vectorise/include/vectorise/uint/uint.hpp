@@ -344,13 +344,13 @@ constexpr bool UInt<S>::operator<(UInt const &other) const
   // Simplified version, as we're dealing with wider elements
   for (std::size_t i = 0; i < WIDE_ELEMENTS; ++i)
   {
-    if (data_.wide[WIDE_ELEMENTS -1 -i] == other.ElementAt(WIDE_ELEMENTS -1 -i))
+    if (data_.wide[WIDE_ELEMENTS - 1 - i] == other.ElementAt(WIDE_ELEMENTS - 1 - i))
     {
       continue;
     }
     else
     {
-      return data_.wide[WIDE_ELEMENTS -1 -i] < other.ElementAt(WIDE_ELEMENTS -1 -i);
+      return data_.wide[WIDE_ELEMENTS - 1 - i] < other.ElementAt(WIDE_ELEMENTS - 1 - i);
     }
   }
   return false;
