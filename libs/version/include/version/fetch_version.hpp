@@ -1,3 +1,4 @@
+#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -16,24 +17,17 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/bloom_filter.hpp"
-#include "core/bloom_filter_interface.hpp"
-
-#include <memory>
+#include <cstdint>
 
 namespace fetch {
+namespace version {
 
-std::unique_ptr<BloomFilterInterface> BloomFilterInterface::Create(Type type)
-{
-  switch (type)
-  {
-  case Type::BASIC:
-    return std::make_unique<fetch::BasicBloomFilter>();
-  case Type::NULL_IMPL:
-    return std::make_unique<fetch::NullBloomFilter>();
-  }
+extern char const *const FULL;
+extern uint32_t const    MAJOR;
+extern uint32_t const    MINOR;
+extern uint32_t const    PATCH;
+extern char const *const COMMIT_HASH;
+extern bool const        VALID;
 
-  return nullptr;
-}
-
+}  // namespace version
 }  // namespace fetch

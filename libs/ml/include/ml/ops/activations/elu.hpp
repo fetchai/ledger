@@ -22,6 +22,9 @@
 #include "math/matrix_operations.hpp"
 #include "ml/ops/ops.hpp"
 
+#include <cassert>
+#include <vector>
+
 namespace fetch {
 namespace ml {
 namespace ops {
@@ -35,7 +38,7 @@ public:
   using SizeType      = typename ArrayType::SizeType;
   using VecTensorType = typename Ops<T>::VecTensorType;
 
-  Elu(DataType a)
+  explicit Elu(DataType a)
     : a_(a)
   {}
 

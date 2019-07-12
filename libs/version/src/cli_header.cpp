@@ -16,13 +16,13 @@
 //
 //------------------------------------------------------------------------------
 
-#include "fetch_version.hpp"
+#include "version/fetch_version.hpp"
 
 #include <iostream>
 #include <string>
 
 namespace fetch {
-namespace commandline {
+namespace version {
 
 void DisplayCLIHeader(std::string const &name, std::string const &years,
                       std::string const &additional)
@@ -32,5 +32,5 @@ void DisplayCLIHeader(std::string const &name, std::string const &years,
   std::cout << "     H     " << additional << '\n' << std::endl;
 }
 
-}  // namespace commandline
+}  // namespace version
 }  // namespace fetch

@@ -19,6 +19,8 @@
 
 #include "ledger/chain/digest.hpp"
 
+#include <cstdint>
+
 namespace fetch {
 namespace ledger {
 

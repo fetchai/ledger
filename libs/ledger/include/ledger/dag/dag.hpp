@@ -27,21 +27,21 @@
 #include "crypto/fnv.hpp"
 #include "crypto/identity.hpp"
 #include "crypto/sha256.hpp"
-#include "network/p2pservice/p2p_service.hpp"
-
 #include "ledger/dag/dag_epoch.hpp"
 #include "ledger/dag/dag_interface.hpp"
 #include "ledger/dag/dag_node.hpp"
-
 #include "ledger/upow/work.hpp"
+#include "network/p2pservice/p2p_service.hpp"
 #include "storage/object_store.hpp"
 
+#include <cstdint>
 #include <deque>
 #include <limits>
 #include <list>
 #include <queue>
 #include <unordered_map>
 #include <unordered_set>
+#include <utility>
 #include <vector>
 
 namespace fetch {

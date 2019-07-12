@@ -26,8 +26,12 @@
 #include "ml/regularisers/regularisation.hpp"
 #include "ml/regularisers/regulariser.hpp"
 #include "ml/subgraph.hpp"
+
 #include <cmath>
+#include <functional>
 #include <random>
+#include <string>
+#include <vector>
 
 namespace fetch {
 namespace ml {
@@ -82,9 +86,8 @@ public:
   }
 
   std::vector<SizeType> ComputeOutputShape(
-      std::vector<std::reference_wrapper<ArrayType const>> const &inputs) const
+      std::vector<std::reference_wrapper<ArrayType const>> const &) const
   {
-    (void)inputs;
     return {this->out_size_, 1};
   }
 

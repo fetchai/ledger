@@ -17,11 +17,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/optimisation/optimiser.hpp"
-
 #include "ml/optimisation/adagrad_optimiser.hpp"
 #include "ml/optimisation/adam_optimiser.hpp"
 #include "ml/optimisation/momentum_optimiser.hpp"
+#include "ml/optimisation/optimiser.hpp"
 #include "ml/optimisation/rmsprop_optimiser.hpp"
 #include "ml/optimisation/sgd_optimiser.hpp"
 

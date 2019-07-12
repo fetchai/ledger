@@ -19,6 +19,10 @@
 
 #include "ml/dataloaders/dataloader.hpp"
 
+#include <cassert>
+#include <stdexcept>
+#include <utility>
+
 namespace fetch {
 namespace ml {
 namespace dataloaders {
@@ -39,16 +43,16 @@ public:
                    bool random_mode = false)
     : DataLoader<LabelType, TensorType>(random_mode)
     , label_shape_(label_shape)
-    , data_shapes_(data_shapes){};
+    , data_shapes_(data_shapes)
+  {}
+  ~TensorDataLoader() override = default;
 
-  virtual ~TensorDataLoader() = default;
+  ReturnType   GetNext() override;
+  virtual bool AddData(TensorType const &data, TensorType const &labels);
 
-  virtual ReturnType GetNext();
-  virtual bool       AddData(TensorType const &data, TensorType const &labels);
-
-  virtual SizeType Size() const;
-  virtual bool     IsDone() const;
-  virtual void     Reset();
+  SizeType Size() const override;
+  bool     IsDone() const override;
+  void     Reset() override;
 
 protected:
   SizeType data_cursor_  = 0;

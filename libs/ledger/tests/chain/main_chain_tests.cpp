@@ -114,7 +114,7 @@ protected:
 
     auto const main_chain_mode = GetParam();
 
-    chain_     = std::make_unique<MainChain>(std::make_unique<NullBloomFilter>(), main_chain_mode);
+    chain_     = std::make_unique<MainChain>(false, main_chain_mode);
     generator_ = std::make_unique<BlockGenerator>(NUM_LANES, NUM_SLICES);
   }
 

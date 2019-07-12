@@ -104,6 +104,7 @@ class TestInstance():
         self._metadata = None
         self._watchdog = None
         self._creation_time = time.perf_counter()
+        self._block_interval = 1000
 
         # Default to removing old tests
         for f in glob.glob(build_directory + "/end_to_end_test_*"):
@@ -152,6 +153,9 @@ class TestInstance():
             root,
             clear_path=False
         )
+
+        # Possibly soon to be depreciated functionality - set the block interval
+        instance._block_interval = self._block_interval
 
         # configure the lanes and slices
         instance.lanes = self._lanes

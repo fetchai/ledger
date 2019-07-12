@@ -22,11 +22,12 @@
 #include "ml/dataloaders/dataloader.hpp"
 #include "ml/graph.hpp"
 
-using namespace std::chrono;
+#include <chrono>
 
 namespace fetch {
 namespace ml {
 namespace optimisers {
+
 static constexpr fetch::math::SizeType SIZE_NOT_SET = fetch::math::numeric_max<math::SizeType>();
 
 /**
@@ -100,21 +101,21 @@ protected:
   SizeType                                                           epoch_ = SIZE_NOT_SET;
 
 private:
-  DataType                                     loss_;
-  DataType                                     loss_sum_;
-  SizeType                                     step_;
-  SizeType                                     cumulative_step_ = 0;
-  std::pair<ArrayType, std::vector<ArrayType>> input_;
-  ArrayType                                    cur_label_;
-  ArrayType                                    pred_label_;
-  high_resolution_clock::time_point            cur_time_;
-  high_resolution_clock::time_point            start_time_;
-  duration<double>                             time_span_;
-  std::string                                  stat_string_;
-  std::vector<ArrayType>                       batch_data_;
-  ArrayType                                    batch_labels_;
-  LearningRateParam<DataType>                  learning_rate_param_;
-  virtual void                                 ApplyGradients(SizeType batch_size) = 0;
+  DataType                                       loss_;
+  DataType                                       loss_sum_;
+  SizeType                                       step_;
+  SizeType                                       cumulative_step_ = 0;
+  std::pair<ArrayType, std::vector<ArrayType>>   input_;
+  ArrayType                                      cur_label_;
+  ArrayType                                      pred_label_;
+  std::chrono::high_resolution_clock::time_point cur_time_;
+  std::chrono::high_resolution_clock::time_point start_time_;
+  std::chrono::duration<double>                  time_span_;
+  std::string                                    stat_string_;
+  std::vector<ArrayType>                         batch_data_;
+  ArrayType                                      batch_labels_;
+  LearningRateParam<DataType>                    learning_rate_param_;
+  virtual void                                   ApplyGradients(SizeType batch_size) = 0;
 
   void PrintStats(SizeType batch_size, SizeType subset_size);
   void Init();
@@ -313,7 +314,7 @@ typename T::Type Optimiser<T>::RunImplementation(
   step_      = 0;
   loss_      = DataType{0};
   // variable for stats output
-  start_time_ = high_resolution_clock::now();
+  start_time_ = std::chrono::high_resolution_clock::now();
 
   // tracks whether loader is done, but dataloader will reset inside Prepare batch
   bool is_done_set = loader.IsDone();
@@ -369,8 +370,8 @@ typename T::Type Optimiser<T>::RunImplementation(
 template <typename T>
 void Optimiser<T>::PrintStats(SizeType batch_size, SizeType subset_size)
 {
-  cur_time_  = high_resolution_clock::now();
-  time_span_ = duration_cast<duration<double>>(cur_time_ - start_time_);
+  cur_time_  = std::chrono::high_resolution_clock::now();
+  time_span_ = std::chrono::duration_cast<std::chrono::duration<double>>(cur_time_ - start_time_);
   if (subset_size == fetch::math::numeric_max<math::SizeType>())
   {
     stat_string_ =
