@@ -351,6 +351,10 @@ int main(int argc, char **argv)
     {
       std::cout << "Graph output is the different from the test output - fail." << std::endl;
     }
+    // now for the interesting bit
+    auto gsp = g_ptr->GetSaveableParams();
+    std::cout << "checkpoint" << std::endl;
+
   }
   else
   {
