@@ -15,6 +15,18 @@ namespace rbc {
         return msg_hash_256.SubArray(24);
     }
 
+    std::string RBC::msgType_to_string(MsgType m) {
+      switch(m) {
+      case MsgType::R_SEND: return "r_send";
+      case MsgType::R_ECHO: return "r_echo";
+      case MsgType::R_READY: return "r_ready";
+      case MsgType::R_REQUEST: return "r_request";
+      case MsgType::R_ANSWER: return "r_answer";
+      default:
+        assert(false);
+      }
+    }
+
     RBC::RBC(Endpoint &endpoint, MuddleAddress address, const CabinetMembers &cabinet, uint32_t threshold)
     : address_{std::move(address)}
     , endpoint_{endpoint}
@@ -46,7 +58,6 @@ namespace rbc {
     }
 
     void RBC::send(const RBCEnvelop &env, const MuddleAddress &address) {
-
         // Serialise the RBCEnvelop
         RBCSerializerCounter env_counter;
         env_counter << env;
@@ -59,7 +70,6 @@ namespace rbc {
     }
 
     void RBC::broadcast(const RBCEnvelop &env) {
-
         // Serialise the RBCEnvelop
         RBCSerializerCounter env_counter;
         env_counter << env;
@@ -72,10 +82,46 @@ namespace rbc {
     }
 
     void RBC::sendRBroadcast(const SerialisedMessage &msg) {
-
-        RBCEnvelop env{RBroadcast(CHANNEL_BROADCAST, id_, ++s, msg)};
+        RBCEnvelop env{RBroadcast(CHANNEL_BROADCAST, id_, ++seq_, msg)};
         broadcast(env);
         onRBroadcast(std::dynamic_pointer_cast<RBroadcast>(env.getMessage()), id_);
+    }
+
+    bool RBC::setMbar(TagType tag, std::shared_ptr<RMessage> msg_ptr, uint32_t senderIndex) {
+      std::lock_guard<std::mutex> lock(mutex_broadcast_);
+      if (broadcasts_[tag].mbar_.empty()) {
+        broadcasts_[tag].mbar_ = msg_ptr->message();
+        return true;
+      }
+      if(broadcasts_[tag].mbar_ != msg_ptr->message()) {
+        FETCH_LOG_WARN(LOGGING_NAME, "Node ", id_, " received bad r-send message from ", senderIndex);
+      }
+      return false;
+    }
+
+    bool RBC::setDbar(TagType tag, std::shared_ptr<RHash> msg_ptr) {
+      std::lock_guard<std::mutex> lock(mutex_broadcast_);
+      broadcasts_[tag].dbar_ = msg_ptr->hash();
+      TruncatedHash msg_hash;
+      if (!broadcasts_[tag].mbar_.empty()) {
+        msg_hash = messageHash(broadcasts_[tag].mbar_);
+      }
+      return msg_hash == msg_ptr->hash();
+    }
+    
+    bool RBC::receivedEcho(TagType tag, std::shared_ptr<REcho> msg_ptr) {
+      std::lock_guard<std::mutex> lock(mutex_broadcast_);
+      auto &msgsCount = broadcasts_[tag].msgsCount_[msg_ptr->hash()];
+      msgsCount.e_d_++;
+      return (msgsCount.e_d_ == current_cabinet_.size() - threshold_ and msgsCount.r_d_ <= threshold_);
+    }
+    
+    struct RBC::MsgCount RBC::receivedReady(TagType tag, std::shared_ptr<RHash> msg_ptr) {
+      std::lock_guard<std::mutex> lock(mutex_broadcast_);
+      auto &msgsCount = broadcasts_[tag].msgsCount_[msg_ptr->hash()];
+      msgsCount.r_d_++;
+      MsgCount res = msgsCount;
+      return res;
     }
 
     void RBC::onRBC(MuddleAddress const &from, RBCEnvelop const &envelop, MuddleAddress const &transmitter) {
@@ -109,25 +155,20 @@ namespace rbc {
 
     void RBC::onRBroadcast(const std::shared_ptr<RBroadcast> msg_ptr, uint32_t senderIndex) {
         uint64_t tag{msg_ptr->getTag()};
-        if (partyFlag(senderIndex, tag).send_) {
+        if(!setPartyFlag(senderIndex, tag, MsgType::R_SEND)) {
             FETCH_LOG_WARN(LOGGING_NAME, "onRBroadcast: Node ", id_, " received repeated msg ", tag, " from node ",
                     senderIndex, " with sequence ", msg_ptr->seqCounter(), " and id ", msg_ptr->id());
             return;
         }
         FETCH_LOG_INFO(LOGGING_NAME, "onRBroadcast: Node ", id_, " received msg ", tag, " from node ",
                        senderIndex, " with sequence ", msg_ptr->seqCounter(), " and id ", msg_ptr->id());
-        partyFlag(senderIndex, tag).send_ = true;
         if (senderIndex == msg_ptr->id()) {
-            if (broadcasts_[tag].mbar_.empty()) {
+            if (setMbar(tag, msg_ptr, senderIndex)) {
                 broadcasts_[tag].mbar_ = msg_ptr->message();
                 RBCEnvelop env{REcho{msg_ptr->channelId(), msg_ptr->id(), msg_ptr->seqCounter(), messageHash(msg_ptr->message())}};
                 broadcast(env);
                 onREcho(std::dynamic_pointer_cast<REcho>(env.getMessage()), id_); // self sending.
-            } else if (broadcasts_[tag].mbar_ != msg_ptr->message()){
-                FETCH_LOG_WARN(LOGGING_NAME, "onRBroadcast: Node ", id_, " received bad r-send msg from node ",
-                               senderIndex, " for msg ", tag);
-                return;
-            }
+            } 
         } else {
             FETCH_LOG_WARN(LOGGING_NAME, "onRBroadcast: Node ", id_, " received wrong r-send msg from node ",
                            senderIndex, " for msg ", tag, " with id ", msg_ptr->id());
@@ -136,20 +177,14 @@ namespace rbc {
 
     void RBC::onREcho(const std::shared_ptr<REcho> msg_ptr, uint32_t senderIndex) {
         uint64_t tag{msg_ptr->getTag()};
-        bool echo {partyFlag(senderIndex, tag).echo_};
-        if (echo) {
+        if (!setPartyFlag(senderIndex, tag, MsgType::R_ECHO)) {
             FETCH_LOG_WARN(LOGGING_NAME, "onREcho: Node ", id_, " received repeated msg ", tag, " from node ",
                            senderIndex, " with sequence ", msg_ptr->seqCounter(), " and id ", msg_ptr->id());
             return;
         }
-        partyFlag(senderIndex, tag).echo_ = true;
         FETCH_LOG_INFO(LOGGING_NAME, "onREcho: Node ", id_, " received msg ", tag, " from node ",
                        senderIndex, " with sequence ", msg_ptr->seqCounter(), " and id ", msg_ptr->id());
-
-        auto &msgsCount = broadcasts_[tag].msgsCount_[msg_ptr->hash()];
-        msgsCount.e_d_++;
-        if (msgsCount.e_d_ == num_parties_ - threshold_ and
-                msgsCount.r_d_ <= threshold_) {
+        if (receivedEcho(tag, msg_ptr)) {
             RBCEnvelop env{RReady{msg_ptr->channelId(), msg_ptr->id(), msg_ptr->seqCounter(), msg_ptr->hash()}};
             broadcast(env);
             onRReady(std::dynamic_pointer_cast<RReady>(env.getMessage()), id_); // self sending.
@@ -158,17 +193,14 @@ namespace rbc {
 
     void RBC::onRReady(const std::shared_ptr<RReady> msg_ptr, uint32_t senderIndex) {
         uint64_t tag {msg_ptr->getTag()};
-        if (partyFlag(senderIndex, tag).ready_) {
+        if (!setPartyFlag(senderIndex, tag, MsgType::R_READY)) {
             FETCH_LOG_WARN(LOGGING_NAME, "onRReady: Node ", id_, " received repeated msg ", tag, " from node ",
                            senderIndex, " with sequence ", msg_ptr->seqCounter(), " and id ", msg_ptr->id());
             return;
         }
-        partyFlag(senderIndex, tag).ready_ = true;
         FETCH_LOG_INFO(LOGGING_NAME, "onRReady: Node ", id_, " received msg ", tag, " from node ",
                        senderIndex, " with sequence ", msg_ptr->seqCounter(), " and id ", msg_ptr->id());
-        auto &msgsCount = broadcasts_[tag].msgsCount_[msg_ptr->hash()];
-        msgsCount.r_d_++;
-
+        auto msgsCount = receivedReady(tag, msg_ptr);
         if (threshold_ > 0 and msgsCount.r_d_ == threshold_ + 1 and msgsCount.e_d_ < (num_parties_ - threshold_)) {
             RBCEnvelop env{RReady{msg_ptr->channelId(), msg_ptr->id(), msg_ptr->seqCounter(), msg_ptr->hash()}};
             broadcast(env);
@@ -177,10 +209,7 @@ namespace rbc {
             broadcasts_[tag].dbar_ = msg_ptr->hash();
 
             TruncatedHash msg_hash;
-            if (!broadcasts_[tag].mbar_.empty()) {
-                msg_hash = messageHash(broadcasts_[tag].mbar_);
-            }
-            if (msg_hash != msg_ptr->hash()) {
+            if (!setDbar(tag, msg_ptr)) {
                 RBCEnvelop env{RRequest{msg_ptr->channelId(), msg_ptr->id(), msg_ptr->seqCounter()}};
 
                 uint32_t counter {0};
@@ -203,12 +232,11 @@ namespace rbc {
 
     void RBC::onRRequest(const std::shared_ptr<RRequest> msg_ptr, uint32_t senderIndex) {
         uint64_t tag {msg_ptr->getTag()};
-        if (partyFlag(senderIndex, tag).request_) {
+        if (!setPartyFlag(senderIndex, tag, MsgType::R_REQUEST)) {
             FETCH_LOG_WARN(LOGGING_NAME, "onRRequest: Node ", id_, " received repeated msg ", tag, " from node ",
                            senderIndex, " with sequence ", msg_ptr->seqCounter(), " and id ", msg_ptr->id());
             return;
         }
-        partyFlag(senderIndex, tag).request_ = true;
         FETCH_LOG_INFO(LOGGING_NAME, "onRRequest: Node ", id_, " received msg ", tag, " from node ",
                        senderIndex, " with sequence ", msg_ptr->seqCounter(), " and id ", msg_ptr->id());
         if (!broadcasts_[tag].mbar_.empty()) {
@@ -221,10 +249,9 @@ namespace rbc {
 
     void RBC::onRAnswer(const std::shared_ptr<RAnswer> msg_ptr, uint32_t senderIndex) {
         uint64_t tag {msg_ptr->getTag()};
-        if (partyFlag(senderIndex, tag).answer_) {
+        if (!setPartyFlag(senderIndex, tag, MsgType::R_ANSWER)) {
             return;
         }
-        partyFlag(senderIndex, tag).answer_ = true;
         // If have not set dbar then we did not send a request message
         if (broadcasts_[tag].dbar_ == 0) {
             return;
@@ -235,7 +262,7 @@ namespace rbc {
             if (broadcasts_[tag].mbar_.empty()) {
                 broadcasts_[tag].mbar_ = msg_ptr->message();
             } else {
-                // TODO: Not sure about this part
+                // TODO: Double check this part of protocol
                 broadcasts_[tag].mbar_ = msg_ptr->message();
             }
         } else {
@@ -256,12 +283,14 @@ namespace rbc {
         MuddleAddress miner_id{*std::next(current_cabinet_.begin(), senderIndex)};
         //TODO: node_.onBroadcast(msg, miner_id);
         //Try to deliver old messages
+        std::lock_guard<std::mutex> lock(mutex_deliver_);
         if (!parties_[senderIndex].undelivered_msg.empty()) {
             FETCH_LOG_TRACE(LOGGING_NAME, "Node ", id_, " checks old tags for node ", senderIndex);
             auto old_tag_msg{parties_[senderIndex].undelivered_msg.begin()};
-            while (old_tag_msg != parties_[senderIndex].undelivered_msg.end() and checkTag(old_tag_msg->second)) {
-                uint64_t old_tag{old_tag_msg->second.getTag()};
-                //TODO: node_.onBroadcast(broadcasts_[old_tag].mbar_, miner_id);
+            while (old_tag_msg != parties_[senderIndex].undelivered_msg.end()
+                and old_tag_msg->second.id() == CHANNEL_BROADCAST
+                and old_tag_msg->second.seqCounter() == parties_[id_].deliver_s_) {
+                //TODO: node_.onBroadcast(broadcasts_[old_tag_msg->second.getTag()].mbar_, miner_id);
                 old_tag_msg = parties_[senderIndex].undelivered_msg.erase(old_tag_msg);
             }
         }
@@ -272,6 +301,7 @@ namespace rbc {
     }
 
     bool RBC::checkTag(RBCMessage &msg) {
+        std::lock_guard<std::mutex> lock(mutex_deliver_);
         uint8_t seq {parties_[msg.id()].deliver_s_};
         FETCH_LOG_TRACE(LOGGING_NAME, "Node ", id_, " has sequence ", seq, " for node ", msg.id());
         if (msg.channelId() == CHANNEL_BROADCAST and msg.seqCounter() == seq) {
@@ -287,15 +317,18 @@ namespace rbc {
         return false;
     }
 
-    RBC::MsgFlags& RBC::partyFlag(uint32_t senderIndex, TagType tag) {
-        if (parties_[senderIndex].flags_.find(tag) == parties_[senderIndex].flags_.end()) {
-            FETCH_LOG_TRACE(LOGGING_NAME, "Node ", id_, " create new msgs flags for party ", senderIndex, " tag ", tag);
-            parties_[senderIndex].flags_.insert({tag, MsgFlags()});
-        } else {
-            FETCH_LOG_TRACE(LOGGING_NAME, "Node ", id_, " has msgs flags for party ", senderIndex, " tag ", tag);
-        }
-        return parties_[senderIndex].flags_.at(tag);
+    bool RBC::setPartyFlag(uint32_t l, TagType tag, MsgType m) {
+      std::lock_guard<std::mutex> lock(mutex_flags_);
+      auto &iter = parties_[l].flags_[tag];
+      auto index = static_cast<uint32_t>(m);
+      if(iter[index]) {
+        FETCH_LOG_TRACE(LOGGING_NAME, "Node ", id_, " repeated msg type ", msgType_to_string(m),  " with tag ", tag);
+        return false;
+      }
+      iter.set(index);
+      return true;
     }
+
 }
 }
 }
