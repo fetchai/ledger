@@ -19,6 +19,7 @@
 
 #include "math/tensor.hpp"
 #include "vm/module.hpp"
+#include "vm_modules/math/type.hpp"
 
 namespace fetch {
 namespace vm_modules {
@@ -28,7 +29,7 @@ class VMTensor : public fetch::vm::Object
 {
 
 public:
-  using DataType   = float;
+  using DataType   = DataType;
   using ArrayType  = fetch::math::Tensor<DataType>;
   using SizeType   = ArrayType::SizeType;
   using SizeVector = ArrayType::SizeVector;

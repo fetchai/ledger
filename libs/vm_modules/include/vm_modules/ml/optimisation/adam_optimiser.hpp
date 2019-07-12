@@ -21,9 +21,12 @@
 #include "ml/optimisation/adam_optimiser.hpp"
 
 #include "vm_modules/math/tensor.hpp"
+#include "vm_modules/math/type.hpp"
+
 #include "vm_modules/ml/dataloaders/dataloader.hpp"
 #include "vm_modules/ml/graph.hpp"
 #include "vm_modules/ml/training_pair.hpp"
+
 #include <cstdint>
 #include <memory>
 #include <string>
@@ -36,7 +39,7 @@ namespace ml {
 class VMAdamOptimiser : public fetch::vm::Object
 {
 public:
-  using DataType  = float;
+  using DataType  = fetch::vm_modules::math::DataType;
   using ArrayType = fetch::math::Tensor<DataType>;
   using GraphType = fetch::ml::Graph<ArrayType>;
 

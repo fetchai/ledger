@@ -19,7 +19,10 @@
 #include "math/standard_functions/abs.hpp"
 #include "math/standard_functions/exp.hpp"
 #include "math/standard_functions/pow.hpp"
+
 #include "vm_modules/math/math.hpp"
+#include "vm_modules/math/type.hpp"
+
 #include "vm_test_toolkit.hpp"
 
 #include "gmock/gmock.h"
@@ -29,6 +32,8 @@
 using namespace fetch::vm;
 
 namespace {
+
+using DataType = fetch::vm_modules::math::DataType;
 
 class MathTests : public ::testing::Test
 {
@@ -170,9 +175,9 @@ TEST_F(MathTests, tensor_state_test)
   Variant res;
   ASSERT_TRUE(toolkit.Run(&res));
 
-  auto const                 tensor = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
-  fetch::math::Tensor<float> gt({2, 10});
-  gt.Fill(7.0);
+  auto const                    tensor = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
+  fetch::math::Tensor<DataType> gt({2, 10});
+  gt.Fill(static_cast<DataType>(7.0));
 
   EXPECT_TRUE(gt.AllClose(tensor->GetTensor()));
 }

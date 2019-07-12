@@ -30,6 +30,8 @@ namespace ml {
 
 class VMDataLoader : public fetch::vm::Object
 {
+  using DataType = fetch::vm_modules::math::DataType;
+
 public:
   VMDataLoader(fetch::vm::VM *vm, fetch::vm::TypeId type_id)
     : fetch::vm::Object(vm, type_id)
@@ -55,20 +57,21 @@ public:
   {
     if (mode->str == "commodity")
     {
-      fetch::ml::dataloaders::CommodityDataLoader<fetch::math::Tensor<float>,
-                                                  fetch::math::Tensor<float>>
+      fetch::ml::dataloaders::CommodityDataLoader<fetch::math::Tensor<DataType>,
+                                                  fetch::math::Tensor<DataType>>
           ld;
       ld.AddData(xfilename->str, yfilename->str);
 
       loader_ = std::make_shared<fetch::ml::dataloaders::CommodityDataLoader<
-          fetch::math::Tensor<float>, fetch::math::Tensor<float>>>(ld);
+          fetch::math::Tensor<DataType>, fetch::math::Tensor<DataType>>>(ld);
     }
     else if (mode->str == "mnist")
     {
 
-      loader_ = std::make_shared<fetch::ml::dataloaders::MNISTLoader<fetch::math::Tensor<float>,
-                                                                     fetch::math::Tensor<float>>>(
-          xfilename->str, yfilename->str);
+      loader_ =
+          std::make_shared<fetch::ml::dataloaders::MNISTLoader<fetch::math::Tensor<DataType>,
+                                                               fetch::math::Tensor<DataType>>>(
+              xfilename->str, yfilename->str);
     }
     else
     {
@@ -78,7 +81,7 @@ public:
 
   fetch::vm::Ptr<VMTrainingPair> GetNext()
   {
-    std::pair<fetch::math::Tensor<float>, std::vector<fetch::math::Tensor<float>>> next =
+    std::pair<fetch::math::Tensor<DataType>, std::vector<fetch::math::Tensor<DataType>>> next =
         loader_->GetNext();
 
     auto first      = this->vm_->CreateNewObject<math::VMTensor>(next.first);
@@ -93,8 +96,8 @@ public:
     return loader_->IsDone();
   }
 
-  std::shared_ptr<
-      fetch::ml::dataloaders::DataLoader<fetch::math::Tensor<float>, fetch::math::Tensor<float>>>
+  std::shared_ptr<fetch::ml::dataloaders::DataLoader<fetch::math::Tensor<DataType>,
+                                                     fetch::math::Tensor<DataType>>>
       loader_;
 };
 

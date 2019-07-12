@@ -17,20 +17,13 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/distance/absolute.hpp"
-#include "math/matrix_operations.hpp"
-#include <cassert>
+#include "vectorise/fixed_point/fixed_point.hpp"
 
 namespace fetch {
+namespace vm_modules {
 namespace math {
 
-template <typename ArrayType>
-typename ArrayType::Type MeanAbsoluteError(ArrayType const &A, ArrayType const &B)
-{
-  typename ArrayType::Type ret = distance::AbsoluteDistance(A, B);
-  ret = Divide(ret, typename ArrayType::Type(A.shape(A.shape().size() - 1)));
-  return ret;
+using DataType = fetch::fixed_point::fp64_t;
 }
-
-}  // namespace math
+}  // namespace vm_modules
 }  // namespace fetch

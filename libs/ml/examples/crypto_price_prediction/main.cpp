@@ -50,7 +50,7 @@ using DataLoaderType   = typename fetch::ml::dataloaders::TensorDataLoader<Tenso
 struct TrainingParams
 {
   SizeType epochs{10};
-  SizeType batch_size{10};
+  SizeType batch_size{1000};
   bool     normalise = true;
 };
 
