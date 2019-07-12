@@ -1540,8 +1540,7 @@ DigestSet MainChain::DetectDuplicateTransactions(BlockHash const &starting_hash,
   DigestSet const duplicates =
       search_chain_for_duplicates(enable_bloom_filter_ ? potential_duplicates : transactions);
 
-  auto const false_positives =
-      static_cast<std::size_t>(potential_duplicates.size() - duplicates.size());
+  auto const false_positives = potential_duplicates.size() - duplicates.size();
 
   bloom_filter_false_positive_count_->add(false_positives);
 
