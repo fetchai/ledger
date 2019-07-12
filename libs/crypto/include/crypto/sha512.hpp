@@ -17,37 +17,27 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/byte_array/byte_array.hpp"
-#include "core/byte_array/const_byte_array.hpp"
-#include "crypto/fnv_detail.hpp"
 #include "crypto/hasher_interface.hpp"
-
-#include <cstddef>
-#include <cstdint>
-#include <memory>
+#include "crypto/openssl_hasher.hpp"
 
 namespace fetch {
 namespace crypto {
 
-namespace internal {
-class FnvHasherInternals;
-}
-
-class FNV : public HasherInterface
+class SHA512 : public HasherInterface
 {
 public:
   using HasherInterface::Update;
   using HasherInterface::Final;
 
-  static constexpr std::size_t size_in_bytes = 8u;
+  static constexpr std::size_t size_in_bytes = 64u;
 
-  FNV();
-  ~FNV()           = default;
-  FNV(FNV const &) = delete;
-  FNV(FNV &&)      = delete;
+  SHA512()               = default;
+  ~SHA512() override     = default;
+  SHA512(SHA512 const &) = delete;
+  SHA512(SHA512 &&)      = delete;
 
-  FNV &operator=(FNV const &) = delete;
-  FNV &operator=(FNV &&) = delete;
+  SHA512 &operator=(SHA512 const &) = delete;
+  SHA512 &operator=(SHA512 &&) = delete;
 
   void        Reset() override;
   bool        Update(uint8_t const *data_to_hash, std::size_t size) override;
@@ -55,28 +45,8 @@ public:
   std::size_t HashSizeInBytes() const override;
 
 private:
-  std::shared_ptr<internal::FnvHasherInternals> impl_;
+  internal::OpenSslHasher openssl_hasher_{internal::OpenSslDigestType::SHA2_512};
 };
 
 }  // namespace crypto
 }  // namespace fetch
-
-namespace std {
-
-template <>
-struct hash<fetch::byte_array::ConstByteArray>
-{
-  std::size_t operator()(fetch::byte_array::ConstByteArray const &value) const noexcept
-  {
-    fetch::crypto::detail::FNV1a hash;
-    hash.update(value.pointer(), value.size());
-    return hash.context();
-  }
-};
-
-template <>
-struct hash<fetch::byte_array::ByteArray> : public hash<fetch::byte_array::ConstByteArray>
-{
-};
-
-}  // namespace std

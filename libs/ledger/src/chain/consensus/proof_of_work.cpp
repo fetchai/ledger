@@ -33,12 +33,12 @@ bool ProofOfWork::operator()()
   crypto::SHA256 hasher;
   hasher.Reset();
   hasher.Update(header_);
-  hasher.Update(*this);
+  hasher.Update(this->pointer(), this->size());
 
   digest_ = hasher.Final();
 
   hasher.Reset();
-  hasher.Update(digest_);
+  hasher.Update(digest_.pointer(), digest_.size());
 
   digest_ = hasher.Final();
 

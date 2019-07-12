@@ -41,12 +41,12 @@ TEST(big_number_gtest, elementary_left_shift)
   EXPECT_EQ(int(128), n1[1]);
   EXPECT_EQ(int(1), n1[2]);
 }
-TEST(big_number_gtest, incrementer_for_million_increments)
+
+TEST(big_number_gtest, test_incrementer_for_million_increments)
 {
-  // testing incrementer for a million increments
   UInt<256> n1(0);
   {
-    for (std::size_t count = 0; count < (1u << 12u); ++count)
+    for (std::size_t count = 0; count < (1ul << 12u); ++count)
     {
       union
       {
@@ -66,10 +66,11 @@ TEST(big_number_gtest, incrementer_for_million_increments)
     }
   }
 }
+
 TEST(big_number_gtest, testing_comparisons)
 {
   UInt<256> a(0), b(0);
-  for (std::size_t count = 0; count < (1u << 8u); ++count)
+  for (std::size_t count = 0; count < (1ul << 8u); ++count)
   {
     EXPECT_EQ(a, b);
     for (std::size_t i = 0; i < (1ul << 8u) / 2; ++i)
