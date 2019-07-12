@@ -35,7 +35,7 @@ graph.AddPlaceholder("Label");
 graph.addConv1D("hidden_conv1D_1", "Input", conv1D_1_filters, conv1D_1_input_channels,
                 conv1D_1_kernel_size, conv1D_1_stride);
 graph.AddRelu("relu", "hidden_conv1D_1");
-graph.AddDropout("dropout_1", "hidden_conv1D_1", keep_prob);
+graph.AddDropout("dropout_1", "relu", keep_prob);
 graph.addConv1D("Output", "dropout_1", conv1D_2_filters, conv1D_2_input_channels,
                         conv1D_2_kernel_size, conv1D_2_stride);
 

@@ -31,7 +31,6 @@
 #include "ml/optimisation/adam_optimiser.hpp"
 
 #include <iostream>
-#include <ml/optimisation/sgd_optimiser.hpp>
 #include <string>
 #include <vector>
 

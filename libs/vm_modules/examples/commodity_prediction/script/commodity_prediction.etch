@@ -6,16 +6,17 @@ var first_dense_size = 216;
 var second_dense_size = 108;
 var output_size = 54;
 
-graph.AddPlaceholder("num_input");
-graph.AddDropout("dropout_0", "num_input", dropout_prob);
-graph.AddFullyConnected("hidden_dense_1", "dropout_0", input_size, first_dense_size);
-graph.AddSoftmax("softmax_1", "hidden_dense_1");
-graph.AddDropout("dropout_1", "softmax_1", dropout_prob);
-graph.AddFullyConnected("hidden_dense_2", "dropout_1", first_dense_size, second_dense_size);
-graph.AddSoftmax("softmax_2", "hidden_dense_2");
-graph.AddDropout("dropout_2", "softmax_2", dropout_prob);
-graph.AddFullyConnected("output_dense", "dropout_2", second_dense_size, output_size);
-graph.AddSoftmax("softmax_3", "output_dense");
+graph.addPlaceholder("num_input");
+graph.addDropout("dropout_0", "num_input", dropout_prob);
+graph.addFullyConnected("hidden_dense_1", "dropout_0", input_size, first_dense_size);
+graph.addSoftmax("softmax_1", "hidden_dense_1");
+graph.addDropout("dropout_1", "softmax_1", dropout_prob);
+graph.addFullyConnected("hidden_dense_2", "dropout_1", first_dense_size, second_dense_size);
+graph.addSoftmax("softmax_2", "hidden_dense_2");
+graph.addDropout("dropout_2", "softmax_2", dropout_prob);
+graph.addFullyConnected("output_dense", "dropout_2", second_dense_size, output_size);
+graph.addSoftmax("softmax_3", "output_dense");
+
 graph.AddMeanSquareErrorLoss("Error", "softmax_3");
 
 endfunction
