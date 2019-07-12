@@ -59,6 +59,9 @@ template <typename T, typename OperationType, typename R = void>
 using IfIsNotTrainable = fetch::meta::EnableIf<IsNotTrainable<T, OperationType>, R>;
 
 template <typename T, typename OperationType, typename R = void>
+using IfIsNotGraph = fetch::meta::EnableIf<IsNotGraph<T, OperationType>, R>;
+
+template <typename T, typename OperationType, typename R = void>
 using IfIsNotGraphOrTrainable = fetch::meta::EnableIf<IsNotGraphOrTrainable<T, OperationType>, R>;
 
 }  // namespace meta
