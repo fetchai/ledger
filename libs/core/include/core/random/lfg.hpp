@@ -24,25 +24,30 @@
 namespace fetch {
 namespace random {
 
-template <std::size_t P = 418, std::size_t Q = 1279>
+template <uint64_t P = 418, uint64_t Q = 1279>
 class LaggedFibonacciGenerator
 {
 public:
-  using random_type = uint64_t;
-  LaggedFibonacciGenerator(random_type seed = 42)
+  using RandomType = uint64_t;  
+
+  // Note, breaking naming convention for STL compatibility
+  using result_type = RandomType;
+
+  LaggedFibonacciGenerator(RandomType seed = 42) noexcept
   {
     Seed(seed);
   }
 
-  random_type Seed() const
+  RandomType Seed() const noexcept
   {
     return lcg_.Seed();
   }
-  random_type Seed(random_type const &s)
-  {
-    random_type ret = lcg_.Seed(s);
 
-    for (std::size_t i = 0; i < Q; ++i)
+  RandomType Seed(RandomType const &s) noexcept
+  {
+    RandomType ret = lcg_.Seed(s);
+
+    for (uint64_t i = 0; i < Q; ++i)
     {
       buffer_[i] = lcg_();
     }
@@ -54,12 +59,12 @@ public:
     return ret;
   }
 
-  void Reset()
+  void Reset() noexcept
   {
     Seed(Seed());
   }
 
-  random_type operator()()
+  RandomType operator()() noexcept
   {
     if (index_ == (Q - 1))
     {
@@ -68,26 +73,26 @@ public:
     return buffer_[++index_];
   }
 
-  double AsDouble()
+  double AsDouble() noexcept
   {
     return double(this->operator()()) * inv_double_max_;
   }
 
-  static constexpr random_type min()
+  static constexpr RandomType min() noexcept
   {
-    return static_cast<random_type>(0);
+    return static_cast<RandomType>(0);
   }
 
-  static constexpr random_type max()
+  static constexpr RandomType max() noexcept
   {
-    return static_cast<random_type>(std::numeric_limits<random_type>::max());
+    return static_cast<RandomType>(std::numeric_limits<RandomType>::max());
   }
 
 private:
-  void FillBuffer()
+  void FillBuffer() noexcept
   {
-    std::size_t j = Q - P;
-    std::size_t i = 0;
+    uint64_t j = Q - P;
+    uint64_t i = 0;
     for (; i < P; ++i, ++j)
     {
       buffer_[i] += buffer_[j];
@@ -102,12 +107,12 @@ private:
     index_ = 0;
   }
 
-  std::size_t                 index_ = 0;
+  uint64_t                 index_ = 0;
   LinearCongruentialGenerator lcg_;
 
-  random_type             buffer_[Q];
+  RandomType             buffer_[Q];
   static constexpr double inv_double_max_ =
-      1. / static_cast<double>(std::numeric_limits<random_type>::max());
+      1. / static_cast<double>(std::numeric_limits<RandomType>::max());
 };
 }  // namespace random
 }  // namespace fetch
