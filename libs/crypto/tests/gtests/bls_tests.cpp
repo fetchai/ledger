@@ -21,7 +21,9 @@
 
 #include "gtest/gtest.h"
 
+#include <cstdint>
 #include <iostream>
+#include <ostream>
 
 using namespace fetch::crypto;
 using namespace fetch::byte_array;

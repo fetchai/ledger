@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/json/document.hpp"
 #include "core/logger.hpp"
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
@@ -23,16 +24,15 @@
 #include "ledger/storage_unit/cached_storage_adapter.hpp"
 #include "ledger/upow/synergetic_contract.hpp"
 #include "vectorise/uint/uint.hpp"
-
 #include "vm/compiler.hpp"
 #include "vm/vm.hpp"
-#include "vm_modules/vm_factory.hpp"
-
 #include "vm_modules/core/structured_data.hpp"
 #include "vm_modules/math/bignumber.hpp"
+#include "vm_modules/vm_factory.hpp"
 
-#include "core/json/document.hpp"
 #include <sstream>
+#include <stdexcept>
+#include <string>
 
 namespace fetch {
 namespace ledger {

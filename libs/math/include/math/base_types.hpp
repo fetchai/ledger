@@ -17,12 +17,13 @@
 //
 //------------------------------------------------------------------------------
 
-#include <cstdint>
-#include <unordered_set>
-#include <vector>
-
 #include "math/meta/math_type_traits.hpp"
 #include "math/tensor_declaration.hpp"
+
+#include <cstdint>
+#include <limits>
+#include <unordered_set>
+#include <vector>
 
 namespace fetch {
 namespace math {

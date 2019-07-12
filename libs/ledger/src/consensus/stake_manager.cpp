@@ -22,6 +22,8 @@
 #include "ledger/consensus/stake_snapshot.hpp"
 
 #include <algorithm>
+#include <cstddef>
+#include <iterator>
 
 namespace fetch {
 namespace ledger {

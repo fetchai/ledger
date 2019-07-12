@@ -38,20 +38,20 @@ public:
   using SizeType      = typename ArrayType::SizeType;
   using VecTensorType = typename Ops<T>::VecTensorType;
 
-  Softmax(SizeType axis = 1)
+  explicit Softmax(SizeType axis = 1)
     : axis_(axis)
   {}
+  ~Softmax() override = default;
 
-  ~Softmax() = default;
-
-  void Forward(VecTensorType const &inputs, ArrayType &output)
+  void Forward(VecTensorType const &inputs, ArrayType &output) override
   {
     assert(output.shape() == ComputeOutputShape(inputs));
     assert(inputs.size() == 1);
     fetch::math::Softmax(inputs.at(0).get(), output, axis_);
   }
 
-  std::vector<ArrayType> Backward(VecTensorType const &inputs, ArrayType const &error_signal)
+  std::vector<ArrayType> Backward(VecTensorType const &inputs,
+                                  ArrayType const &    error_signal) override
   {
     assert(inputs.size() == 1);
     assert(inputs.front().get().shape() == error_signal.shape());
@@ -84,7 +84,7 @@ public:
     return {return_signal};
   }
 
-  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const
+  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
   {
     return inputs.front().get().shape();
   }

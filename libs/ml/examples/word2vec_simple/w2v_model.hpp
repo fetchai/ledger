@@ -20,8 +20,7 @@
 #include "ml/dataloaders/word2vec_loaders/w2v_dataloader.hpp"
 
 #include <chrono>
-
-using namespace std::chrono;
+#include <iostream>
 
 namespace fetch {
 namespace ml {
@@ -58,9 +57,9 @@ private:
 
   dataloaders::W2VLoader<DataType> &data_loader_;
 
-  high_resolution_clock::time_point       cur_time_;
-  high_resolution_clock::time_point       last_time_;
-  fetch::math::ApproxExpImplementation<0> fexp_;
+  std::chrono::high_resolution_clock::time_point cur_time_;
+  std::chrono::high_resolution_clock::time_point last_time_;
+  fetch::math::ApproxExpImplementation<0>        fexp_;
 
 public:
   W2VModel(SizeType embeddings_size, SizeType negative, DataType starting_alpha,
@@ -70,7 +69,7 @@ public:
                   SizeType const &print_frequency);
 
   void UpdateLearningRate(SizeType i, SizeType iter, SizeType iterations);
-  void Train(SizeType iter, SizeType print_frequency, bool cbow = 1);
+  void Train(SizeType iter, SizeType print_frequency, bool cbow = true);
   void CBOWTrain(ArrayType &context, ArrayType &target);
   void SGNSTrain(ArrayType const &context, ArrayType const &target);
 
@@ -133,8 +132,9 @@ template <typename ArrayType>
 void W2VModel<ArrayType>::PrintStats(SizeType const &i, SizeType const &iter,
                                      SizeType const &iterations, SizeType const &print_frequency)
 {
-  cur_time_                  = high_resolution_clock::now();
-  duration<double> time_span = duration_cast<duration<double>>(cur_time_ - last_time_);
+  cur_time_ = std::chrono::high_resolution_clock::now();
+  auto time_span =
+      std::chrono::duration_cast<std::chrono::duration<double>>(cur_time_ - last_time_);
   std::cout << i << " / " << iter * iterations << " ("
             << static_cast<SizeType>(100.0 * static_cast<double>(i) /
                                      static_cast<double>(iter * iterations))
@@ -180,7 +180,7 @@ void W2VModel<ArrayType>::Train(SizeType iter, SizeType print_frequency, bool cb
   data_loader_.Reset();
   data_loader_.GetNext();
 
-  last_time_ = high_resolution_clock::now();
+  last_time_ = std::chrono::high_resolution_clock::now();
 
   SizeType iterations = data_loader_.Size();
 
@@ -375,7 +375,7 @@ void W2VModel<ArrayType>::CBOWTrain(ArrayType &target, ArrayType &context)
     }
   }
 
-  DataType div = static_cast<DataType>(valid_samples);
+  auto const div = static_cast<DataType>(valid_samples);
   for (auto &val : output_view)
   {
     val /= div;
@@ -401,9 +401,9 @@ void W2VModel<ArrayType>::CBOWTrain(ArrayType &target, ArrayType &context)
   ///////////////////////
   for (SizeType cur_neg_sample = 0; cur_neg_sample < negative_; cur_neg_sample++)
   {
-    DataType f     = error_signal_(cur_neg_sample, 0);
-    DataType label = (cur_neg_sample == 0) ? 1 : 0;
-    DataType sm    = static_cast<DataType>(static_cast<DataType>(fexp_(f) / (1. + fexp_(f))));
+    DataType   f     = error_signal_(cur_neg_sample, 0);
+    DataType   label = (cur_neg_sample == 0) ? 1 : 0;
+    auto const sm    = static_cast<DataType>(static_cast<DataType>(fexp_(f) / (1. + fexp_(f))));
     error_signal_.Set(cur_neg_sample, 0, label - sm);
   }
 

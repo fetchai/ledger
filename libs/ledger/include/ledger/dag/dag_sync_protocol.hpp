@@ -22,6 +22,9 @@
 #include "network/service/promise.hpp"
 #include "network/service/protocol.hpp"
 
+#include <cstdint>
+#include <memory>
+
 namespace fetch {
 namespace ledger {
 

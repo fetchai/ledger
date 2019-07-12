@@ -19,7 +19,7 @@
 #include "telemetry/measurement.hpp"
 
 #include <cassert>
-#include <iostream>
+#include <ostream>
 
 namespace fetch {
 namespace telemetry {

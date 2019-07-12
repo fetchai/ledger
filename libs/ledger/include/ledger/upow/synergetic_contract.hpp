@@ -17,16 +17,14 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm/analyser.hpp"
-#include "vm/common.hpp"
-
-#include "vm/compiler.hpp"
-#include "vm/module.hpp"
-#include "vm/vm.hpp"
-
 #include "ledger/chain/address.hpp"
 #include "ledger/chain/digest.hpp"
 #include "ledger/upow/synergetic_base_types.hpp"
+#include "vm/analyser.hpp"
+#include "vm/common.hpp"
+#include "vm/compiler.hpp"
+#include "vm/module.hpp"
+#include "vm/vm.hpp"
 
 #include <memory>
 #include <string>
