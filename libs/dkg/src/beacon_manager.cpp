@@ -47,7 +47,7 @@ bool BeaconManager::InsertMember(BeaconManager::Identity identity, BeaconManager
   {
     return false;
   }
-  
+
   // Note that participant size increases every time that InsertMember is called.
   // This ensures that every unique identity is given a unqiue id.
   identity_to_index_[identity] = participants_.size();

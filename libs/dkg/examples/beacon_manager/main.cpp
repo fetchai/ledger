@@ -70,7 +70,7 @@ int main(int argc, char **argv)
   for (auto &n : nodes)
   {
     // Shuffling to similate random arrival order
-    std::shuffle(participants.begin(), participants.end(), generator);  
+    std::shuffle(participants.begin(), participants.end(), generator);
 
     for (auto &p : participants)
     {
