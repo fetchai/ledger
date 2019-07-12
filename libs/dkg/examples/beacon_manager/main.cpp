@@ -65,10 +65,12 @@ int main(int argc, char **argv)
   }
 
   // Propagating identities
+  std::random_device rng_device;
+  std::mt19937       generator(rng_device());
   for (auto &n : nodes)
   {
     // Shuffling to similate random arrival order
-    std::random_shuffle(participants.begin(), participants.end());
+    std::shuffle(participants.begin(), participants.end(), generator);  
 
     for (auto &p : participants)
     {

@@ -40,10 +40,19 @@ void BeaconManager::Reset(uint64_t cabinet_size, uint32_t threshold)
   id_.v   = id.v;
 }
 
-void BeaconManager::InsertMember(BeaconManager::Identity identity, BeaconManager::Id id)
+bool BeaconManager::InsertMember(BeaconManager::Identity identity, BeaconManager::Id id)
 {
-  identity_to_id_[identity] = participants_.size();
+  auto it = identity_to_index_.find(identity);
+  if (it != identity_to_index_.end())
+  {
+    return false;
+  }
+  
+  // Note that participant size increases every time that InsertMember is called.
+  // This ensures that every unique identity is given a unqiue id.
+  identity_to_index_[identity] = participants_.size();
   participants_.push_back(id);
+  return true;
 }
 
 void BeaconManager::GenerateContribution()
@@ -58,9 +67,9 @@ BeaconManager::VerificationVector BeaconManager::GetVerificationVector() const
 
 BeaconManager::PrivateKey BeaconManager::GetShare(BeaconManager::Identity identity) const
 {
-  auto it = identity_to_id_.find(identity);
+  auto it = identity_to_index_.find(identity);
 
-  if (it == identity_to_id_.end())
+  if (it == identity_to_index_.end())
   {
     throw std::runtime_error("Could not find identity in GetShare.");
   }
@@ -72,10 +81,10 @@ BeaconManager::PrivateKey BeaconManager::GetShare(BeaconManager::Identity identi
 bool BeaconManager::AddShare(BeaconManager::Identity from, BeaconManager::PrivateKey share,
                              BeaconManager::VerificationVector verification)
 {
-  auto it = identity_to_id_.find(from);
-  assert(it != identity_to_id_.end());
+  auto it = identity_to_index_.find(from);
+  assert(it != identity_to_index_.end());
 
-  if (it == identity_to_id_.end())
+  if (it == identity_to_index_.end())
   {
     throw std::runtime_error("Could not find identity in AddShare.");
   }
@@ -129,10 +138,10 @@ bool BeaconManager::AddSignaturePart(BeaconManager::Identity  from,
                                      BeaconManager::PublicKey public_key,
                                      BeaconManager::Signature signature)
 {
-  auto it = identity_to_id_.find(from);
-  assert(it != identity_to_id_.end());
+  auto it = identity_to_index_.find(from);
+  assert(it != identity_to_index_.end());
 
-  if (it == identity_to_id_.end())
+  if (it == identity_to_index_.end())
   {
     throw std::runtime_error("Could not find identity in AddSignaturePart.");
   }

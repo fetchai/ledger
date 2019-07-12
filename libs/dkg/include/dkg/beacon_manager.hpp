@@ -69,8 +69,9 @@ public:
    * @brief adds a member to the current cabinet.
    * @param identity is the network identity of the node
    * @param id is the BLS identifier used in the algorithm.
+   * @returns true if successful.
    */
-  void InsertMember(Identity identity, Id id);
+  bool InsertMember(Identity identity, Id id);
 
   /*
    * @brief generates the shares and verification vectors.

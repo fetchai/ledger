@@ -36,19 +36,6 @@ struct Member
   bls::PrivateKey     secret_key_share;
 };
 
-void Test()
-{
-  ConstByteArray message     = "Hello world";
-  auto           private_key = bls::HashToPrivateKey("my really long phrase to generate a key");
-  auto           public_key  = bls::PublicKeyFromPrivate(private_key);
-
-  auto signature = bls::Sign(private_key, message);
-  if (bls::Verify(signature, public_key, message))
-  {
-    std::cout << "'Hello world' was signed." << std::endl;
-  }
-}
-
 int main()
 {
   using VerificationVector = bls::dkg::VerificationVector;
