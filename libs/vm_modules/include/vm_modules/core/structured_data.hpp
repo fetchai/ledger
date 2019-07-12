@@ -37,7 +37,6 @@ public:
   ~StructuredData() override = default;
 
 protected:
-
   bool SerializeTo(vm::ByteArrayBuffer &buffer) override;
   bool DeserializeFrom(vm::ByteArrayBuffer &buffer) override;
 
