@@ -192,7 +192,7 @@ typename T::Type Optimiser<T>::Run(std::vector<ArrayType> const &data, ArrayType
   step_      = 0;
   loss_      = DataType{0};
   // variable for stats output
-  start_time_ = high_resolution_clock::now();
+  start_time_ = std::chrono::high_resolution_clock::now();
 
   // Prepare output data tensors
   if (batch_data_.size() != data.size())
