@@ -85,6 +85,11 @@ public:
     this->SetOutputNode(output);
   }
 
+  std::shared_ptr<SaveableParams<ArrayType>> GetOpSaveableParams ()
+  {
+    throw std::runtime_error("This shouldn't be called!");
+  }
+
   std::shared_ptr<ops::Embeddings<ArrayType>> GetEmbeddings(std::shared_ptr<SkipGram<ArrayType>> &g)
   {
     return std::dynamic_pointer_cast<ops::Embeddings<ArrayType>>(g->GetNode(embed_in_));
