@@ -29,7 +29,7 @@ class BitStatistics
 public:
   enum
   {
-    E_BIT_COUNT = 8 * sizeof(typename T::random_type)
+    E_BIT_COUNT = 8 * sizeof(typename T::RandomType)
   };
   BitStatistics()
   {

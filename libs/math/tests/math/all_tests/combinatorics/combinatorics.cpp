@@ -21,6 +21,8 @@
 
 #include "gtest/gtest.h"
 
+#include <cstdint>
+
 using namespace fetch::math::combinatorics;
 
 using DataType  = double;

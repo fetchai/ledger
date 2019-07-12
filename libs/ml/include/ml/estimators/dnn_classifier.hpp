@@ -18,15 +18,18 @@
 //------------------------------------------------------------------------------
 
 #include "math/base_types.hpp"
-
-#include "ml/layers/fully_connected.hpp"
-#include "ml/ops/placeholder.hpp"
-
-#include "ml/ops/loss_functions/cross_entropy_loss.hpp"
-
 #include "ml/dataloaders/dataloader.hpp"
 #include "ml/estimators/estimator.hpp"
+#include "ml/layers/fully_connected.hpp"
+#include "ml/ops/loss_functions/cross_entropy_loss.hpp"
+#include "ml/ops/placeholder.hpp"
 #include "ml/optimisation/types.hpp"
+
+#include <cassert>
+#include <memory>
+#include <stdexcept>
+#include <string>
+#include <vector>
 
 namespace fetch {
 namespace ml {
@@ -48,10 +51,10 @@ public:
 
   void SetupModel(std::vector<SizeType> const &hidden_layers);
 
-  virtual bool Train(SizeType n_steps) override;
-  virtual bool Train(SizeType n_steps, DataType &loss) override;
-  virtual bool Validate() override;
-  virtual bool Predict(TensorType &input, TensorType &output) override;
+  bool Train(SizeType n_steps) override;
+  bool Train(SizeType n_steps, DataType &loss) override;
+  bool Validate() override;
+  bool Predict(TensorType &input, TensorType &output) override;
 
 private:
   std::shared_ptr<dataloaders::DataLoader<TensorType, TensorType>> data_loader_ptr_;
@@ -82,16 +85,15 @@ DNNClassifier<TensorType>::DNNClassifier(
   , data_loader_ptr_(data_loader_ptr)
 {
 
-  assert(hidden_layers.size() > 0);
+  assert(!hidden_layers.empty());
 
   // instantiate feed forward network graph
   SetupModel(hidden_layers);
 
   // instantiate optimiser
-  auto input = {input_};
-  if (!(fetch::ml::optimisers::AddOptimiser<TensorType, CostFunctionType>(
-          optimiser_type, optimiser_ptr_, this->graph_ptr_, input, label_, error_,
-          this->estimator_config_.learning_rate)))
+  if (!(fetch::ml::optimisers::AddOptimiser<TensorType>(
+          optimiser_type, optimiser_ptr_, this->graph_ptr_, std::vector<std::string>{input_},
+          label_, error_, this->estimator_config_.learning_rate_param)))
   {
     throw std::runtime_error("DNNClassifier initialised with unrecognised optimiser");
   }

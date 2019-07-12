@@ -17,47 +17,36 @@
 //
 //------------------------------------------------------------------------------
 
-#include "crypto/stream_hasher.hpp"
-
-#include <openssl/sha.h>
-
-#include <cstddef>
-#include <cstdint>
+#include "crypto/hasher_interface.hpp"
+#include "crypto/openssl_hasher.hpp"
 
 namespace fetch {
 namespace crypto {
 
-class SHA256 : public StreamHasher
+class SHA256 : public HasherInterface
 {
 public:
-  using StreamHasher::Update;
-  using StreamHasher::Final;
+  using HasherInterface::Update;
+  using HasherInterface::Final;
 
-  // Construction / Destruction
-  SHA256();
-  ~SHA256() override = default;
+  static constexpr std::size_t size_in_bytes = 32u;
 
-  static constexpr std::size_t size_in_bytes()
-  {
-    return SHA256_DIGEST_LENGTH;
-  }
+  SHA256()               = default;
+  ~SHA256() override     = default;
+  SHA256(SHA256 const &) = delete;
+  SHA256(SHA256 &&)      = delete;
 
-  /// @name Stream Hasher Interface
-  /// @{
+  SHA256 &operator=(SHA256 const &) = delete;
+  SHA256 &operator=(SHA256 &&) = delete;
+
   void        Reset() override;
-  bool        Update(uint8_t const *data_to_hash, std::size_t const &size) override;
-  void        Final(uint8_t *hash, std::size_t const &size) override;
-  std::size_t GetSizeInBytes() const override;
-  /// @}
+  bool        Update(uint8_t const *data_to_hash, std::size_t size) override;
+  void        Final(uint8_t *hash) override;
+  std::size_t HashSizeInBytes() const override;
 
 private:
-  SHA256_CTX context_;
+  internal::OpenSslHasher openssl_hasher_{internal::OpenSslDigestType::SHA2_256};
 };
-
-inline std::size_t SHA256::GetSizeInBytes() const
-{
-  return size_in_bytes();
-}
 
 }  // namespace crypto
 }  // namespace fetch

@@ -390,6 +390,7 @@ template <class OperationType>
 meta::IfIsTrainable<ArrayType, OperationType, void> Graph<ArrayType>::AddTrainable(
     std::string const &name, std::shared_ptr<Node<ArrayType, OperationType>> op)
 {
+
   trainable_.emplace_back(op);
   trainable_lookup_[name] = trainable_.size() - 1;
 }

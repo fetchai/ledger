@@ -21,7 +21,6 @@
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/byte_array/decoders.hpp"
-#include "core/commandline/cli_header.hpp"
 #include "core/commandline/params.hpp"
 #include "core/logger.hpp"
 #include "core/macros.hpp"
@@ -31,13 +30,14 @@
 #include "crypto/fetch_identity.hpp"
 #include "crypto/identity.hpp"
 #include "crypto/prover.hpp"
-#include "fetch_version.hpp"
 #include "ledger/chain/address.hpp"
 #include "network/adapters.hpp"
 #include "network/p2pservice/manifest.hpp"
 #include "network/p2pservice/p2p_service_defs.hpp"
 #include "network/peer.hpp"
 #include "network/uri.hpp"
+#include "version/cli_header.hpp"
+#include "version/fetch_version.hpp"
 
 #include <atomic>
 #include <csignal>
@@ -538,8 +538,7 @@ struct CommandLineArguments
     return present;
   }
 
-  friend std::ostream &operator<<(std::ostream &              s,
-                                  CommandLineArguments const &args) FETCH_MAYBE_UNUSED
+  friend std::ostream &operator<<(std::ostream &s, CommandLineArguments const &args)
   {
     s << '\n';
     s << "port......................: " << args.port << '\n';
@@ -706,7 +705,7 @@ int main(int argc, char **argv)
     return 0;
   }
 
-  fetch::commandline::DisplayCLIHeader("Constellation");
+  fetch::version::DisplayCLIHeader("Constellation");
 
   if (!fetch::version::VALID)
   {

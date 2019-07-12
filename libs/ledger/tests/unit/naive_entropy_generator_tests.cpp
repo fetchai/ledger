@@ -16,15 +16,16 @@
 //
 //------------------------------------------------------------------------------
 
-#include "random_address.hpp"
-
 #include "core/random/lcg.hpp"
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
 #include "ledger/consensus/naive_entropy_generator.hpp"
+#include "random_address.hpp"
 
 #include "gtest/gtest.h"
 
+#include <cstddef>
+#include <cstdint>
 #include <memory>
 
 namespace {

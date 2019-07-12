@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -17,13 +16,41 @@
 //
 //------------------------------------------------------------------------------
 
-#include <string>
+#include "core/macros.hpp"
+#include "crypto/md5.hpp"
+
+#include <cassert>
+#include <cstddef>
+#include <cstdint>
 
 namespace fetch {
-namespace commandline {
+namespace crypto {
 
-void DisplayCLIHeader(std::string const &name, std::string const &years = "2018-2019",
-                      std::string const &additional = "");
+void MD5::Reset()
+{
+  auto const success = openssl_hasher_.Reset();
+  FETCH_UNUSED(success);
+  assert(success);
+}
 
-}  // namespace commandline
+bool MD5::Update(uint8_t const *const data_to_hash, std::size_t const size)
+{
+  return openssl_hasher_.Update(data_to_hash, size);
+}
+
+void MD5::Final(uint8_t *const hash)
+{
+  auto const success = openssl_hasher_.Final(hash);
+  FETCH_UNUSED(success);
+  assert(success);
+}
+
+std::size_t MD5::HashSizeInBytes() const
+{
+  auto const size = openssl_hasher_.HashSize();
+  assert(size == size_in_bytes);
+  return size;
+}
+
+}  // namespace crypto
 }  // namespace fetch

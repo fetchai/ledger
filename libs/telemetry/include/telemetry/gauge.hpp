@@ -78,7 +78,7 @@ private:
  * Create a gauge measurement
  *
  * @tparam V The underlying gauge type
- * @param name The name of the gauge
+ * @param name The name of the gauge. Must not end in '_count'
  * @param description The description of the gauge
  * @param labels The labels for the gauge
  */

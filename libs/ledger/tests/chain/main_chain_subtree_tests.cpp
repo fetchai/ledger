@@ -53,8 +53,7 @@ protected:
   {
     block_generator_.Reset();
 
-    chain_ = std::make_unique<MainChain>(std::make_unique<fetch::NullBloomFilter>(),
-                                         MainChain::Mode::IN_MEMORY_DB);
+    chain_ = std::make_unique<MainChain>(false, MainChain::Mode::IN_MEMORY_DB);
   }
 
   void TearDown() override

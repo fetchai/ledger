@@ -32,7 +32,7 @@ template <typename RNG>
 fetch::ledger::Address GenerateRandomAddress(RNG &&rng)
 {
   using Address = fetch::ledger::Address;
-  using RngWord = typename std::decay_t<RNG>::random_type;
+  using RngWord = typename std::decay_t<RNG>::RandomType;
 
   static constexpr std::size_t ADDRESS_WORD_SIZE = Address::RAW_LENGTH / sizeof(RngWord);
   static_assert((Address::RAW_LENGTH % sizeof(RngWord)) == 0, "");

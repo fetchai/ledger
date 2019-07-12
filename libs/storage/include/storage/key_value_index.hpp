@@ -87,7 +87,7 @@ template <std::size_t S = 256, std::size_t N = 32>
 struct KeyValuePair
 {
   using HashFunction = crypto::SHA256;
-  static_assert(N == HashFunction::size_in_bytes(), "Hash size must match the hash function");
+  static_assert(N == HashFunction::size_in_bytes, "Hash size must match the hash function");
 
   using KeyType   = Key<S>;
   using IndexType = uint64_t;
@@ -140,7 +140,7 @@ struct KeyValuePair
 
     hasher.Update(right.hash, N);
     hasher.Update(left.hash, N);
-    hasher.Final(hash, N);
+    hasher.Final(hash);
 
     return true;
   }

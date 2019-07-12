@@ -16,24 +16,41 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/bloom_filter.hpp"
-#include "core/bloom_filter_interface.hpp"
+#include "core/macros.hpp"
+#include "crypto/sha1.hpp"
 
-#include <memory>
+#include <cassert>
+#include <cstddef>
+#include <cstdint>
 
 namespace fetch {
+namespace crypto {
 
-std::unique_ptr<BloomFilterInterface> BloomFilterInterface::Create(Type type)
+void SHA1::Reset()
 {
-  switch (type)
-  {
-  case Type::BASIC:
-    return std::make_unique<fetch::BasicBloomFilter>();
-  case Type::NULL_IMPL:
-    return std::make_unique<fetch::NullBloomFilter>();
-  }
-
-  return nullptr;
+  auto const success = openssl_hasher_.Reset();
+  FETCH_UNUSED(success);
+  assert(success);
 }
 
+bool SHA1::Update(uint8_t const *const data_to_hash, std::size_t const size)
+{
+  return openssl_hasher_.Update(data_to_hash, size);
+}
+
+void SHA1::Final(uint8_t *const hash)
+{
+  auto const success = openssl_hasher_.Final(hash);
+  FETCH_UNUSED(success);
+  assert(success);
+}
+
+std::size_t SHA1::HashSizeInBytes() const
+{
+  auto const size = openssl_hasher_.HashSize();
+  assert(size == size_in_bytes);
+  return size;
+}
+
+}  // namespace crypto
 }  // namespace fetch

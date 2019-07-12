@@ -16,12 +16,14 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/layers/PRelu.hpp"
-
 #include "math/tensor.hpp"
+#include "ml/layers/PRelu.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 
 #include "gtest/gtest.h"
+
+#include <memory>
+#include <vector>
 
 template <typename T>
 class PReluTest : public ::testing::Test

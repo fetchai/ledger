@@ -16,11 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include <cstdlib>
-#include <memory>
+#include "network/p2pservice/p2ptrust_bayrank.hpp"
 
 #include "gtest/gtest.h"
-#include "network/p2pservice/p2ptrust_bayrank.hpp"
+
+#include <cstdlib>
+#include <memory>
 
 using namespace fetch::p2p;
 using fetch::byte_array::ConstByteArray;

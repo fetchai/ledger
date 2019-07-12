@@ -16,12 +16,13 @@
 //
 //------------------------------------------------------------------------------
 
-#include "benchmark/benchmark.h"
-#include <chrono>
-#include <cmath>
-
 #include "core/random/lcg.hpp"
 #include "math/spline/linear.hpp"
+
+#include "benchmark/benchmark.h"
+
+#include <cmath>
+#include <cstddef>
 
 // This is to avoid ambiguity in instantation
 double dsin(double x)

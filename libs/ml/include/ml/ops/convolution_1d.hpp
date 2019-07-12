@@ -20,6 +20,10 @@
 #include "math/matrix_operations.hpp"
 #include "ml/ops/ops.hpp"
 
+#include <cassert>
+#include <memory>
+#include <vector>
+
 namespace fetch {
 namespace ml {
 namespace ops {
@@ -34,7 +38,7 @@ public:
   using ArrayPtrType  = std::shared_ptr<ArrayType>;
   using VecTensorType = typename Ops<T>::VecTensorType;
 
-  Convolution1D(SizeType stride_size = 1)
+  explicit Convolution1D(SizeType stride_size = 1)
     : stride_size_(stride_size)
   {}
 

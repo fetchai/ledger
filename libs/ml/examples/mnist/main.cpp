@@ -26,13 +26,9 @@
 #include "ml/regularisers/l1_regulariser.hpp"
 #include "ml/regularisers/regularisation.hpp"
 
-#include <cstddef>
-#include <cstdint>
 #include <iostream>
+#include <memory>
 #include <string>
-#include <unordered_map>
-#include <utility>
-#include <vector>
 
 using namespace fetch::ml::ops;
 using namespace fetch::ml::layers;

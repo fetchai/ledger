@@ -20,7 +20,6 @@
 #include "core/logging.hpp"
 #include "http/json_response.hpp"
 #include "http/module.hpp"
-
 #include "telemetry/registry.hpp"
 
 #include <sstream>
@@ -33,7 +32,7 @@ public:
   TelemetryHttpModule()
   {
     Get("/api/telemetry", [](http::ViewParameters const &, http::HTTPRequest const &) {
-      static const auto TXT_MIME_TYPE = http::mime_types::GetMimeTypeFromExtension(".txt");
+      static auto const TXT_MIME_TYPE = http::mime_types::GetMimeTypeFromExtension(".txt");
 
       // collect up the generated metrics for the system
       std::ostringstream stream;

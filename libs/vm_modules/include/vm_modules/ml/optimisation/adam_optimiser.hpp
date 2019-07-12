@@ -53,7 +53,7 @@ public:
         .CreateConstuctor<fetch::vm::Ptr<fetch::vm_modules::ml::VMGraph>,
                           fetch::vm::Ptr<fetch::vm::String>, fetch::vm::Ptr<fetch::vm::String>,
                           fetch::vm::Ptr<fetch::vm::String>>()
-        .CreateMemberFunction("Run", &fetch::vm_modules::ml::VMAdamOptimiser::Run);
+        .CreateMemberFunction("run", &fetch::vm_modules::ml::VMAdamOptimiser::Run);
   }
 
   static fetch::vm::Ptr<VMAdamOptimiser> Constructor(
