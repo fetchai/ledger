@@ -21,9 +21,6 @@
 #include "vectorise/platform.hpp"
 
 #include <algorithm>
-#include <array>
-#include <cmath>
-#include <cstddef>
 #include <cstdint>
 #include <string>
 #include <vector>
@@ -58,8 +55,8 @@ public:
   static_assert(S == (ELEMENTS * ELEMENT_SIZE),
                 "Size must be a multiple of 8 times the base type size.");
 
-  using WideContainerType                   = std::array<WideType, WIDE_ELEMENTS>;
-  using ContainerType                       = std::array<BaseType, ELEMENTS>;
+  using WideContainerType                   = WideType[WIDE_ELEMENTS];
+  using ContainerType                       = BaseType[ELEMENTS];
   static constexpr char const *LOGGING_NAME = "UInt";
 
   ////////////////////
@@ -193,6 +190,7 @@ public:
 
   constexpr uint64_t TrimmedSize() const;
   constexpr uint64_t size() const;
+  constexpr uint64_t elements() const;
 
   constexpr uint8_t const *pointer() const;
 
@@ -238,7 +236,7 @@ const UInt<S> UInt<S>::max{{ULONG_MAX, ULONG_MAX, ULONG_MAX, ULONG_MAX}};
 template <uint16_t S>
 constexpr UInt<S>::UInt()
 {
-  std::fill(data_.wide.begin(), data_.wide.end(), 0);
+  std::fill(data_.wide, data_.wide + WIDE_ELEMENTS, 0);
 }
 
 template <uint16_t S>
@@ -265,23 +263,23 @@ template <uint16_t S>
 template <typename T>
 constexpr UInt<S>::UInt(T const &other, meta::IfIsAByteArray<T> *)
 {
-  std::fill(data_.wide.begin(), data_.wide.end(), 0);
-  std::copy(other.pointer(), other.pointer() + other.size(), data_.base.begin());
+  std::fill(data_.wide, data_.wide + WIDE_ELEMENTS, 0);
+  std::copy(other.pointer(), other.pointer() + other.size(), data_.base);
 }
 
 template <uint16_t S>
 template <typename T>
 constexpr UInt<S>::UInt(T const &other, meta::IfIsStdString<T> *)
 {
-  std::fill(data_.wide.begin(), data_.wide.end(), 0);
-  std::copy(other.begin(), other.end(), data_.base.begin());
+  std::fill(data_.wide, data_.wide + WIDE_ELEMENTS, 0);
+  std::copy(other.begin(), other.end(), data_.base);
 }
 
 template <uint16_t S>
 template <typename T>
 constexpr UInt<S>::UInt(T const &number, meta::IfIsInteger<T> *)
 {
-  std::fill(data_.wide.begin(), data_.wide.end(), 0);
+  std::fill(data_.wide, data_.wide + WIDE_ELEMENTS, 0);
   data_.wide[0] = static_cast<uint64_t>(number);
 }
 
@@ -292,7 +290,7 @@ constexpr UInt<S>::UInt(T const &number, meta::IfIsInteger<T> *)
 template <uint16_t S>
 constexpr UInt<S> &UInt<S>::operator=(UInt const &v)
 {
-  data_.wide = v.data_.wide;
+  std::copy(v.pointer(), v.pointer() + ELEMENTS, data_.base);
   return *this;
 }
 
@@ -300,8 +298,8 @@ template <uint16_t S>
 template <typename ArrayType>
 constexpr meta::HasIndex<ArrayType, UInt<S>> &UInt<S>::operator=(ArrayType const &v)
 {
-  std::fill(data_.wide.begin(), data_.wide.end(), 0);
-  std::copy(v.pointer(), v.pointer() + v.capacity(), data_.base.begin());
+  std::fill(data_.wide, data_.wide + WIDE_ELEMENTS, 0);
+  std::copy(v.pointer(), v.pointer() + v.capacity(), data_.base);
 
   return *this;
 }
@@ -310,7 +308,7 @@ template <uint16_t S>
 template <typename T>
 constexpr meta::HasNoIndex<T, UInt<S>> &UInt<S>::operator=(T const &v)
 {
-  std::fill(data_.wide.begin(), data_.wide.end(), 0);
+  std::fill(data_.wide, data_.wide + WIDE_ELEMENTS, 0);
   data_.wide[0] = static_cast<WideType>(v);
 
   return *this;
@@ -562,6 +560,7 @@ constexpr UInt<256> &UInt<256>::operator*=(UInt<256> const &n)
   {
     for (std::size_t j = 0; j < WIDE_ELEMENTS; ++j)
     {
+      // Note: C++14 does not have constexpr std::array, we need to cast the array
       products[i][j] =
           static_cast<__uint128_t>(data_.wide[i]) * static_cast<__uint128_t>(n.ElementAt(j));
     }
@@ -1007,13 +1006,19 @@ constexpr uint64_t UInt<S>::TrimmedSize() const
 template <uint16_t S>
 constexpr uint8_t const *UInt<S>::pointer() const
 {
-  return data_.base.data();
+  return reinterpret_cast<uint8_t const *>(data_.base);
 }
 
 template <uint16_t S>
 constexpr uint64_t UInt<S>::size() const
 {
   return ELEMENTS;
+}
+
+template <uint16_t S>
+constexpr uint64_t UInt<S>::elements() const
+{
+  return WIDE_ELEMENTS;
 }
 
 template <uint16_t S>
@@ -1064,13 +1069,19 @@ inline double ToDouble(UInt<256> const &x)
 template <typename T, uint16_t S>
 constexpr void Serialize(T &s, UInt<S> const &u)
 {
-  s << u.data_.base;
+  for (std::size_t i = 0; i < u.elements(); i++)
+  {
+    s << u.ElementAt(i);
+  }
 }
 
 template <typename T, uint16_t S>
 constexpr void Deserialize(T &s, UInt<S> &u)
 {
-  s >> u.data_.base;
+  for (std::size_t i = 0; i < u.elements(); i++)
+  {
+    s >> u.ElementAt(i);
+  }
 }
 
 }  // namespace vectorise
