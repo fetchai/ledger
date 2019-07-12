@@ -16,16 +16,16 @@
 //
 //------------------------------------------------------------------------------
 
-#include "network/muddle/rpc/client.hpp"
-
 #include "core/logger.hpp"
 #include "core/serializers/byte_array.hpp"
 #include "network/muddle/muddle.hpp"
+#include "network/muddle/rpc/client.hpp"
 #include "network/muddle/rpc/server.hpp"
 #include "network/service/service_client.hpp"
 #include "service_consts.hpp"
 
 #include <chrono>
+#include <cstddef>
 #include <cstdlib>
 #include <iostream>
 #include <memory>

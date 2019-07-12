@@ -18,7 +18,6 @@
 //------------------------------------------------------------------------------
 
 #include "math/distance/square.hpp"
-//#include "math/matrix_operations.hpp"
 #include "math/fundamental_operators.hpp"
 #include <cassert>
 

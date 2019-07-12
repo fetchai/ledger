@@ -21,7 +21,9 @@
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 #include "vm/io_observer_interface.hpp"
 
-#include <unordered_set>
+#include <cstdint>
+#include <string>
+#include <vector>
 
 namespace fetch {
 namespace ledger {

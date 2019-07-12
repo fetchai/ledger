@@ -16,9 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/ops/sqrt.hpp"
-
 #include "math/tensor.hpp"
+#include "ml/ops/sqrt.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 
 #include "gtest/gtest.h"

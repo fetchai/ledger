@@ -53,7 +53,7 @@ public:
                    DataType const &decay_rate = DataType{0.9f},
                    DataType const &epsilon    = DataType{1e-8f});
 
-  virtual ~RMSPropOptimiser() = default;
+  ~RMSPropOptimiser() override = default;
 
 private:
   std::vector<ArrayType> cache_;

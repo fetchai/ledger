@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/byte_array/encoders.hpp"
 #include "core/mutex.hpp"
 #include "core/threading/synchronised_state.hpp"
 #include "ledger/chain/address.hpp"
@@ -28,15 +29,14 @@
 #include "network/details/thread_pool.hpp"
 #include "storage/object_store.hpp"
 
-#include "core/byte_array/encoders.hpp"
-
 #include <atomic>
-#include <chrono>
 #include <condition_variable>
-#include <future>
+#include <cstddef>
+#include <cstdint>
+#include <functional>
 #include <memory>
+#include <mutex>
 #include <thread>
-#include <unordered_set>
 #include <vector>
 
 namespace fetch {

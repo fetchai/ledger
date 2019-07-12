@@ -16,11 +16,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include <ml/ops/activations/dropout.hpp>
-#include <vector>
-
-#include "benchmark/benchmark.h"
-
 #include "math/tensor.hpp"
 #include "ml/ops/add.hpp"
 #include "ml/ops/divide.hpp"
@@ -32,6 +27,10 @@
 #include "ml/ops/subtract.hpp"
 
 #include "vectorise/fixed_point/fixed_point.hpp"
+
+#include "benchmark/benchmark.h"
+
+#include <vector>
 
 template <class T, int F, int N, int B>
 void BM_MatrixMultiply_Forward(benchmark::State &state)

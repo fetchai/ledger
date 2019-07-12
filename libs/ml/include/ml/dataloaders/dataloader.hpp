@@ -18,6 +18,8 @@
 //------------------------------------------------------------------------------
 
 #include "math/base_types.hpp"
+
+#include <cstdint>
 #include <memory>
 #include <utility>
 #include <vector>
