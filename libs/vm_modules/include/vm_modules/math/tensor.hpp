@@ -73,7 +73,7 @@ public:
         .CreateMemberFunction("toString", &VMTensor::ToString);
   }
 
-  fetch::math::SizeVector shape()
+  SizeVector shape()
   {
     return tensor_.shape();
   }
