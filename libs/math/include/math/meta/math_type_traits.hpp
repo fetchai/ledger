@@ -17,12 +17,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include <type_traits>
-
 #include "core/byte_array/byte_array.hpp"
 #include "math/tensor_declaration.hpp"
 #include "meta/type_traits.hpp"
 #include "vectorise/fixed_point/type_traits.hpp"
+
+#include <type_traits>
 
 namespace fetch {
 namespace math {

@@ -30,12 +30,8 @@
 #include "ledger/chain/address.hpp"
 #include "ledger/chain/transaction_serializer.hpp"
 
-#include <deque>
+#include <cstdint>
 #include <limits>
-#include <list>
-#include <queue>
-#include <unordered_map>
-#include <unordered_set>
 #include <vector>
 
 namespace fetch {
@@ -43,7 +39,6 @@ namespace ledger {
 
 struct DAGNode
 {
-
   using ConstByteArray = byte_array::ConstByteArray;
   using Digest         = ConstByteArray;
   using Signature      = ConstByteArray;

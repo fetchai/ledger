@@ -32,8 +32,7 @@
 #include "miner/resource_mapper.hpp"
 #include "network/p2pservice/p2p_service.hpp"
 #include "network/p2pservice/p2ptrust_interface.hpp"
-
-#include "fetch_version.hpp"
+#include "version/fetch_version.hpp"
 
 #include <random>
 #include <sstream>

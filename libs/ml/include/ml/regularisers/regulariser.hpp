@@ -19,12 +19,11 @@
 
 #include "core/assert.hpp"
 #include "math/tensor.hpp"
-#include <memory>
-#include <vector>
 
 namespace fetch {
 namespace ml {
 namespace regularisers {
+
 /*
  * Abstract Regulariser interface
  */

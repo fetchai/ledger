@@ -28,9 +28,7 @@
 #include "gtest/gtest.h"
 
 #include <algorithm>
-#include <iostream>
 #include <map>
-#include <stack>
 #include <string>
 #include <unordered_map>
 #include <vector>

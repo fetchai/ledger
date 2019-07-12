@@ -19,11 +19,7 @@
 
 #define FETCH_UNUSED(x) (void)(x)
 
-#ifdef __GNUC__
 #define FETCH_MAYBE_UNUSED __attribute__((used))
-#else
-#define FETCH_MAYBE_UNUSED
-#endif
 
 #if defined(__clang__)
 #define FETCH_THREAD_ANNOTATION_ATTRIBUTE__(x) __attribute__((x))

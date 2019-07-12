@@ -49,7 +49,7 @@ using fetch::ledger::Digest;
 using StatusCachePtr = std::unique_ptr<TransactionStatusCache>;
 using Clock          = TransactionStatusCache::Clock;
 using Timepoint      = TransactionStatusCache::Timepoint;
-using RngWord        = LinearCongruentialGenerator::random_type;
+using RngWord        = LinearCongruentialGenerator::RandomType;
 
 class TransactionStatusCacheTests : public ::testing::Test
 {
