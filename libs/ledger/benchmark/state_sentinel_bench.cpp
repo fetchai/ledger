@@ -29,7 +29,6 @@
 
 namespace {
 
-using fetch::byte_array::ConstByteArray;
 using fetch::ledger::StateSentinelAdapter;
 using fetch::ledger::Identifier;
 using fetch::BitVector;
