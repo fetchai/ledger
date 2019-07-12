@@ -19,9 +19,9 @@
 
 #include "ml/meta/ml_type_traits.hpp"
 #include "ml/node.hpp"
+#include "ml/ops/ops_lookup.hpp"
 #include "ml/ops/weights.hpp"
 #include "ml/saveable_params.hpp"
-#include "ml/ops/ops_lookup.hpp"
 
 #include <algorithm>
 #include <cassert>
@@ -35,7 +35,6 @@
 
 namespace fetch {
 namespace ml {
-
 
 /**
  * The full graph on which to run the computation
@@ -57,7 +56,7 @@ public:
   using RegPtrType         = std::shared_ptr<fetch::ml::regularisers::Regulariser<T>>;
 
   virtual ~Graph() = default;
-  Graph() = default;
+  Graph()          = default;
   explicit Graph(GraphSaveableParams<ArrayType> gs);
 
   ArrayType    Evaluate(std::string const &node_name, bool is_training = true);
@@ -82,17 +81,20 @@ public:
   void                          ApplyGradients(std::vector<ArrayType> &grad);
   std::vector<TrainablePtrType> get_trainables();
 
-  void ResetGradients();
-  GraphSaveableParams<ArrayType> GetSaveableParams() {return saveparams;}
+  void                           ResetGradients();
+  GraphSaveableParams<ArrayType> GetSaveableParams()
+  {
+    return saveparams;
+  }
 
   template <class OperationType>
-  meta::IfIsGraph<ArrayType, OperationType, void> AddSaveparams(std::string const &name,
-      std::vector<std::string> const &inputs,
+  meta::IfIsGraph<ArrayType, OperationType, void> AddSaveparams(
+      std::string const &name, std::vector<std::string> const &inputs,
       std::shared_ptr<Node<ArrayType, OperationType>> node_ptr);
 
   template <class OperationType>
-  meta::IfIsNotGraph<ArrayType, OperationType, void> AddSaveparams(std::string const &name,
-      std::vector<std::string> const &inputs,
+  meta::IfIsNotGraph<ArrayType, OperationType, void> AddSaveparams(
+      std::string const &name, std::vector<std::string> const &inputs,
       std::shared_ptr<Node<ArrayType, OperationType>> node_ptr);
 
 private:
@@ -117,8 +119,7 @@ protected:
   std::unordered_map<std::string, NodePtrType> nodes_;
   std::unordered_map<std::string, SizeType>    trainable_lookup_;
   std::vector<TrainablePtrType>                trainable_;
-  GraphSaveableParams<ArrayType > saveparams;
-
+  GraphSaveableParams<ArrayType>               saveparams;
 };
 
 /**
@@ -230,8 +231,8 @@ std::string Graph<ArrayType>::AddNode(std::string const &             node_name,
   std::string name = UpdateVariableName<OperationType>(node_name);
 
   // Instantiate the node
-  auto node_ptr      = std::make_shared<Node<ArrayType, OperationType>>(name, params...);
-  nodes_[name] = node_ptr;
+  auto node_ptr = std::make_shared<Node<ArrayType, OperationType>>(name, params...);
+  nodes_[name]  = node_ptr;
 
   // assign inputs and outputs
   for (auto const &i : inputs)
@@ -256,14 +257,14 @@ Graph<ArrayType>::Graph(GraphSaveableParams<ArrayType> gs)
   assert(nodes_.size() == 0);
 
   // goes through list of nodenames adding nodes
-  for (auto & node : gs.nodes)
+  for (auto &node : gs.nodes)
   {
-    std::string name = node.first;
+    std::string              name   = node.first;
     std::vector<std::string> inputs = node.second;
 
     // Instantiate the node
     SaveableParams<ArrayType> saved_node = saveparams.nodes[name];
-    NodePtrType op = ops::OpsLookup<ArrayType>(saved_node, name);
+    NodePtrType               op         = ops::OpsLookup<ArrayType>(saved_node, name);
 
     nodes_[name] = op;
 
@@ -277,7 +278,6 @@ Graph<ArrayType>::Graph(GraphSaveableParams<ArrayType> gs)
     // add to map of trainable ops if necessary
     AddTrainable(name, op);
   }
-
 }
 
 template <typename ArrayType>
@@ -490,7 +490,7 @@ meta::IfIsGraph<ArrayType, OperationType, void> Graph<ArrayType>::AddSaveparams(
   // the graph will already have created its own saveparams
   // so go through this checking the names
   std::map<std::string, std::string> old2newnames;
-  bool first = true;
+  bool                               first = true;
   for (auto &nodeconns : node_ptr->saveparams.connections)
   {
     // guarantee unique node name
@@ -498,17 +498,20 @@ meta::IfIsGraph<ArrayType, OperationType, void> Graph<ArrayType>::AddSaveparams(
     std::string resolved_name = UpdateVariableName<OperationType>(node_name);
     old2newnames.insert(std::make_pair(nodeconns.first, resolved_name));
 
-    saveparams.nodes.insert(std::make_pair(resolved_name, node_ptr->saveparams.nodes[nodeconns.first]));
+    saveparams.nodes.insert(
+        std::make_pair(resolved_name, node_ptr->saveparams.nodes[nodeconns.first]));
 
     if (first)
     {
       saveparams.connections.push_back(std::make_pair(resolved_name, inputs));
       first = false;
     }
-    else {
+    else
+    {
       // change names for inputs as well
       std::vector<std::string> resolved_conns;
-      for (auto &inp: nodeconns.second) {
+      for (auto &inp : nodeconns.second)
+      {
         resolved_conns.push_back(old2newnames[inp]);
       }
 

@@ -90,10 +90,10 @@ public:
   Weights()          = default;
   virtual ~Weights() = default;
 
-  std::shared_ptr<SaveableParams<ArrayType>> GetOpSaveableParams ()
+  std::shared_ptr<SaveableParams<ArrayType>> GetOpSaveableParams()
   {
-    TrainableSaveableParams<ArrayType > tp{};
-    tp.weights_ = this->output_;
+    TrainableSaveableParams<ArrayType> tp{};
+    tp.weights_   = this->output_;
     tp.DESCRIPTOR = DESCRIPTOR;
     return std::make_shared<TrainableSaveableParams<ArrayType>>(tp);
   }

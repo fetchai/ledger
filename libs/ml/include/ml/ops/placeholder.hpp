@@ -40,10 +40,10 @@ public:
     output_ = tp.weights;
   }
 
-  std::shared_ptr<SaveableParams<ArrayType>> GetOpSaveableParams ()
+  std::shared_ptr<SaveableParams<ArrayType>> GetOpSaveableParams()
   {
-    TrainableSaveableParams<ArrayType > tp{};
-    tp.weights_ = output_;
+    TrainableSaveableParams<ArrayType> tp{};
+    tp.weights_   = output_;
     tp.DESCRIPTOR = DESCRIPTOR;
     return std::make_shared<TrainableSaveableParams<ArrayType>>(tp);
   }
@@ -85,7 +85,6 @@ public:
 
 protected:
   ArrayPtrType output_;
-
 };
 
 }  // namespace ops

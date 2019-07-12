@@ -25,23 +25,27 @@ namespace ml {
 /* Generic container for all the saveable params of an op.
  * Some ops will have to declare subclasses (substructs?) of this.
  */
-template<class T>
-struct SaveableParams {
+template <class T>
+struct SaveableParams
+{
   std::string DESCRIPTOR;  // description of op
 };
 
-template<class T>
-struct TrainableSaveableParams : SaveableParams<T> {
+template <class T>
+struct TrainableSaveableParams : SaveableParams<T>
+{
   using ArrayType    = T;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
 
   ArrayPtrType weights_;
 };
 
-template<class T>
-struct GraphSaveableParams{
-  std::vector<std::pair<std::string, std::vector<std::string>>> connections;  // unique node name to list of inputs
+template <class T>
+struct GraphSaveableParams
+{
+  std::vector<std::pair<std::string, std::vector<std::string>>>
+                                                     connections;  // unique node name to list of inputs
   std::unordered_map<std::string, SaveableParams<T>> nodes;
 };
-}
-}
+}  // namespace ml
+}  // namespace fetch

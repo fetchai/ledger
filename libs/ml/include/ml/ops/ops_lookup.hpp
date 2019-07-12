@@ -22,28 +22,27 @@
 
 #include <typeindex>
 
-
 namespace fetch {
 namespace ml {
 namespace ops {
 
-
-//template <typename ArrayType>
-//std::map<std::string, std::type_index> OpsMap = {{Dropout<ArrayType>::DESCRIPTOR, typeid(Dropout<ArrayType>)},
-//                                                 {Relu<ArrayType>::DESCRIPTOR, typeid(Relu<ArrayType>)}};
-
+// template <typename ArrayType>
+// std::map<std::string, std::type_index> OpsMap = {{Dropout<ArrayType>::DESCRIPTOR,
+// typeid(Dropout<ArrayType>)},
+//                                                 {Relu<ArrayType>::DESCRIPTOR,
+//                                                 typeid(Relu<ArrayType>)}};
 
 template <typename ArrayType>
-std::shared_ptr<fetch::ml::NodeInterface<ArrayType>> OpsLookup(
-    SaveableParams<ArrayType> saved_node,
-    std::string name)
+std::shared_ptr<fetch::ml::NodeInterface<ArrayType>> OpsLookup(SaveableParams<ArrayType> saved_node,
+                                                               std::string               name)
 {
-  std::string descrip = saved_node.DESCRIPTOR;
+  std::string                                          descrip = saved_node.DESCRIPTOR;
   std::shared_ptr<fetch::ml::NodeInterface<ArrayType>> node_ptr;
 
   if (descrip == ops::Dropout<ArrayType>::DESCRIPTOR)
   {
-    auto castnode = dynamic_cast<SaveableParams<ArrayType>>(saved_node);  // todo: don't want to hardcode this
+    auto castnode =
+        dynamic_cast<SaveableParams<ArrayType>>(saved_node);  // todo: don't want to hardcode this
     node_ptr = std::make_shared<Node<ArrayType, ops::Dropout<ArrayType>>>(name, saved_node);
   }
   else if (descrip == ops::Relu<ArrayType>::DESCRIPTOR)
@@ -57,6 +56,6 @@ std::shared_ptr<fetch::ml::NodeInterface<ArrayType>> OpsLookup(
   return node_ptr;
 }
 
-}
-}
-}
+}  // namespace ops
+}  // namespace ml
+}  // namespace fetch

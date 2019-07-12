@@ -87,7 +87,7 @@ public:
     this->SetOutputNode(output);
   }
 
-  std::shared_ptr<SaveableParams<ArrayType>> GetOpSaveableParams ()
+  std::shared_ptr<SaveableParams<ArrayType>> GetOpSaveableParams()
   {
     throw std::runtime_error("This shouldn't be called!");
   }

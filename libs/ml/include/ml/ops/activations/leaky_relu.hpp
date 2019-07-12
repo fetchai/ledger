@@ -41,7 +41,7 @@ public:
 
   virtual ~LeakyRelu() = default;
 
-  std::shared_ptr<SaveableParams<ArrayType>> GetOpSaveableParams ()
+  std::shared_ptr<SaveableParams<ArrayType>> GetOpSaveableParams()
   {
     SaveableParams<ArrayType> sp{};
     sp.DESCRIPTOR = DESCRIPTOR;

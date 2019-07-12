@@ -354,7 +354,6 @@ int main(int argc, char **argv)
     // now for the interesting bit
     auto gsp = g_ptr->GetSaveableParams();
     std::cout << "checkpoint" << std::endl;
-
   }
   else
   {

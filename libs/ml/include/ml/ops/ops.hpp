@@ -49,11 +49,11 @@ public:
    */
   virtual std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const = 0;
 
-  virtual std::shared_ptr<SaveableParams<ArrayType>> GetOpSaveableParams () = 0;
+  virtual std::shared_ptr<SaveableParams<ArrayType>> GetOpSaveableParams() = 0;
 
   Ops() = default;
 
-  explicit Ops(SaveableParams<ArrayType> const & sp)
+  explicit Ops(SaveableParams<ArrayType> const &sp)
   {
     FETCH_UNUSED(sp);
   }
@@ -65,7 +65,6 @@ public:
 
 protected:
   bool is_training_ = true;
-
 };
 
 }  // namespace ml

@@ -67,7 +67,7 @@ public:
     , cached_output_status_(CachedOutputState::CHANGED_SIZE)
   {}
 
-  explicit Node(std::string name, fetch::ml::SaveableParams<ArrayType> const & sp)
+  explicit Node(std::string name, fetch::ml::SaveableParams<ArrayType> const &sp)
     : O(sp)
     , name_(std::move(name))
     , cached_output_status_(CachedOutputState::CHANGED_SIZE)
