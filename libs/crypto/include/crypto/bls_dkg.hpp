@@ -35,80 +35,17 @@ using ParticipantVector  = std::vector<bls::Id>;
 struct Contribution
 {
   VerificationVector verification;
-  ContributionVector contributions;
+  ContributionVector contributions;  // TODO(tfr): rename to "shares"
 };
 
-Contribution GenerateContribution(ParticipantVector const &participants, uint32_t threshold)
-{
-  Contribution        ret;
-  bls::PrivateKeyList private_keys;
+Contribution GenerateContribution(ParticipantVector const &participants, uint32_t threshold);
 
-  for (uint32_t i = 0; i < threshold; ++i)
-  {
-    auto sk = bls::PrivateKeyByCSPRNG();
-    private_keys.push_back(sk);
-
-    auto pk = bls::PublicKeyFromPrivate(sk);
-    ret.verification.push_back(pk);
-  }
-
-  for (auto &id : participants)
-  {
-    auto sk = bls::PrivateKeyShare(private_keys, id);
-    ret.contributions.push_back(sk);
-  }
-
-  return ret;
-}
-
-bls::PrivateKey AccumulateContributionShares(bls::PrivateKeyList list)
-{
-  if (list.empty())
-  {
-    throw std::runtime_error("Cannot accumulate empty list");
-  }
-
-  uint64_t i   = 0;
-  auto     sum = list[i++];
-  for (; i < list.size(); ++i)
-  {
-    bls::AddKeys(sum, list[i]);
-  }
-
-  return sum;
-}
+bls::PrivateKey AccumulateContributionShares(bls::PrivateKeyList list);
 
 bool VerifyContributionShare(bls::Id id, bls::PrivateKey const &contribution,
-                             bls::PublicKeyList const &pkl)
-{
-  bls::PublicKey pk1 = bls::PublicKeyShare(pkl, id);
-  bls::PublicKey pk2 = bls::GetPublicKey(contribution);
+                             bls::PublicKeyList const &pkl);
 
-  return bls::PublicKeyIsEqual(pk1, pk2);
-}
-
-VerificationVector AccumulateVerificationVectors(std::vector<VerificationVector> const &vectors)
-{
-  VerificationVector ret;
-  auto               N = vectors.size();
-  ret                  = vectors[0];
-  for (uint64_t i = 1; i < N; ++i)
-  {
-    auto const &subvec = vectors[i];
-    auto        M      = subvec.size();
-
-    if (M == 0)
-    {
-      throw std::runtime_error("vector length is zero in AccumulateVerificationVectors.");
-    }
-
-    for (uint64_t j = 0; j < M; ++j)
-    {
-      bls::AddKeys(ret[j], subvec[j]);
-    }
-  }
-  return ret;
-}
+VerificationVector AccumulateVerificationVectors(std::vector<VerificationVector> const &vectors);
 
 }  // namespace dkg
 }  // namespace bls
