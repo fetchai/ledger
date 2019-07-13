@@ -203,7 +203,6 @@ public:
 
   bool Resize(SizeVector const &shape, bool copy = false);
   bool Reshape(SizeVector const &shape);
-  bool ResizeFromShape(SizeVector const &shape);
 
   SizeVector const &stride() const;
   SizeVector const &shape() const;
