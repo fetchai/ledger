@@ -80,17 +80,17 @@ public:
   /// ACCESSING AND SETTING VALUES ///
   ////////////////////////////////////
 
-  DataType AtOne(uint64_t const &idx1)
+  DataType AtOne(uint64_t idx1)
   {
     return tensor_.At(idx1);
   }
 
-  DataType AtTwo(uint64_t const &idx1, uint64_t const &idx2)
+  DataType AtTwo(uint64_t idx1, uint64_t idx2)
   {
     return tensor_.At(idx1, idx2);
   }
 
-  DataType AtThree(uint64_t const &idx1, uint64_t const &idx2, uint64_t const &idx3)
+  DataType AtThree(uint64_t idx1, uint64_t idx2, uint64_t idx3)
   {
     return tensor_.At(idx1, idx2, idx3);
   }

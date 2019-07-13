@@ -44,7 +44,7 @@ public:
     : ConstByteArray(other)
   {}
 
-  Token(ConstByteArray const &other, std::size_t const &start, std::size_t const &length)
+  Token(ConstByteArray const &other, std::size_t start, std::size_t length)
     : ConstByteArray(other, start, length)
   {}
 
@@ -66,7 +66,7 @@ public:
   {
     line_ = l;
   }
-  void SetChar(std::size_t const &c)
+  void SetChar(std::size_t c)
   {
     char_ = c;
   }

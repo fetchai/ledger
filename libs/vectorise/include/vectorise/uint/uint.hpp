@@ -101,7 +101,7 @@ public:
     *this = std::forward<T>(other);
   }
 
-  explicit UInt(uint64_t const &number)
+  explicit UInt(uint64_t number)
   {
     union
     {
@@ -224,7 +224,7 @@ public:
     return *this;
   }
 
-  UInt &operator<<=(std::size_t const &n)
+  UInt &operator<<=(std::size_t n)
   {
     std::size_t bits  = n & 7;
     std::size_t bytes = n >> 3;
@@ -254,12 +254,12 @@ public:
     return *this;
   }
 
-  uint8_t operator[](std::size_t const &n) const
+  uint8_t operator[](std::size_t n) const
   {
     return data_[n];
   }
 
-  uint8_t &operator[](std::size_t const &n)
+  uint8_t &operator[](std::size_t n)
   {
     return data_[n];
   }

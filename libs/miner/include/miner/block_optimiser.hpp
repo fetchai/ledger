@@ -99,7 +99,7 @@ public:
    * the batch size). Likewise the inverse temperatures are likely to
    * change as the problem is changing.
    */
-  void ConfigureAnnealer(std::size_t const &sweeps, double const &b0, double const &b1)
+  void ConfigureAnnealer(std::size_t sweeps, double const &b0, double const &b1)
   {
     annealer_.SetSweeps(sweeps);
     annealer_.SetBetaStart(b0);
@@ -122,7 +122,7 @@ public:
    *
    * The resulting block is garantueed (issue 30) to be valid.
    */
-  void GenerateBlock(std::size_t const &lane_count, std::size_t const &slice_count,
+  void GenerateBlock(std::size_t lane_count, std::size_t slice_count,
                      Strategy strategy = Strategy::NOME, std::size_t batch_size = 1,
                      std::size_t explore = 10)
   {
@@ -267,7 +267,7 @@ public:
 
   /* Returns the absolute number of
    */
-  std::size_t const &block_occupancy()
+  std::size_t block_occupancy()
   {
     return occupancy_;
   }
@@ -287,7 +287,7 @@ private:
    * This function identifies conflicts between transactions and uses
    * this to create the binary optimisation problem.
    */
-  void Init(std::size_t const &lane_count = 16, Strategy strategy = Strategy::NOME,
+  void Init(std::size_t lane_count = 16, Strategy strategy = Strategy::NOME,
             std::size_t batch_size = std::size_t(-1), uint64_t penalty = 10)
   {
 

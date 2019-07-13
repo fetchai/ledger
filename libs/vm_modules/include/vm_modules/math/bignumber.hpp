@@ -148,7 +148,7 @@ public:
   }
 
   static fetch::vm::Ptr<UInt256Wrapper> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
-                                                    uint64_t const &val)
+                                                    uint64_t val)
   {
     try
     {
