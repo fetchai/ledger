@@ -86,7 +86,7 @@ private:
 class HashSource
 {
 public:
-  using Hashes = std::vector<size_t>;
+  using Hashes = std::vector<std::size_t>;
 
   HashSource()                       = delete;
   HashSource(HashSource const &)     = delete;
