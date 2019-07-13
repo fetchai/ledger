@@ -1024,304 +1024,170 @@ ExpressionNodePtr Parser::ParseExpression(bool is_conditional_expression)
   do
   {
     Next();
+    bool parses{true};
     switch (token_->kind)
     {
     case Token::Kind::Identifier:
-    {
-      if (HandleIdentifier() == false)
-      {
-        return nullptr;
-      }
+      parses = HandleIdentifier();
       break;
-    }
+
     case Token::Kind::Integer8:
-    {
-      if (HandleLiteral(NodeKind::Integer8) == false)
-      {
-        return nullptr;
-      }
+      parses = HandleLiteral(NodeKind::Integer8);
       break;
-    }
+
     case Token::Kind::UnsignedInteger8:
-    {
-      if (HandleLiteral(NodeKind::UnsignedInteger8) == false)
-      {
-        return nullptr;
-      }
+      parses = HandleLiteral(NodeKind::UnsignedInteger8);
       break;
-    }
+
     case Token::Kind::Integer16:
-    {
-      if (HandleLiteral(NodeKind::Integer16) == false)
-      {
-        return nullptr;
-      }
+      parses = HandleLiteral(NodeKind::Integer16);
       break;
-    }
+
     case Token::Kind::UnsignedInteger16:
-    {
-      if (HandleLiteral(NodeKind::UnsignedInteger16) == false)
-      {
-        return nullptr;
-      }
+      parses = HandleLiteral(NodeKind::UnsignedInteger16);
       break;
-    }
+
     case Token::Kind::Integer32:
-    {
-      if (HandleLiteral(NodeKind::Integer32) == false)
-      {
-        return nullptr;
-      }
+      parses = HandleLiteral(NodeKind::Integer32);
       break;
-    }
+
     case Token::Kind::UnsignedInteger32:
-    {
-      if (HandleLiteral(NodeKind::UnsignedInteger32) == false)
-      {
-        return nullptr;
-      }
+      parses = HandleLiteral(NodeKind::UnsignedInteger32);
       break;
-    }
+
     case Token::Kind::Integer64:
-    {
-      if (HandleLiteral(NodeKind::Integer64) == false)
-      {
-        return nullptr;
-      }
+      parses = HandleLiteral(NodeKind::Integer64);
       break;
-    }
+
     case Token::Kind::UnsignedInteger64:
-    {
-      if (HandleLiteral(NodeKind::UnsignedInteger64) == false)
-      {
-        return nullptr;
-      }
+      parses = HandleLiteral(NodeKind::UnsignedInteger64);
       break;
-    }
+
     case Token::Kind::Float32:
-    {
-      if (HandleLiteral(NodeKind::Float32) == false)
-      {
-        return nullptr;
-      }
+      parses = HandleLiteral(NodeKind::Float32);
       break;
-    }
+
     case Token::Kind::Float64:
-    {
-      if (HandleLiteral(NodeKind::Float64) == false)
-      {
-        return nullptr;
-      }
+      parses = HandleLiteral(NodeKind::Float64);
       break;
-    }
+
     case Token::Kind::Fixed32:
-    {
-      if (HandleLiteral(NodeKind::Fixed32) == false)
-      {
-        return nullptr;
-      }
+      parses = HandleLiteral(NodeKind::Fixed32);
       break;
-    }
+
     case Token::Kind::Fixed64:
-    {
-      if (HandleLiteral(NodeKind::Fixed64) == false)
-      {
-        return nullptr;
-      }
+      parses = HandleLiteral(NodeKind::Fixed64);
       break;
-    }
+
     case Token::Kind::String:
-    {
-      if (HandleLiteral(NodeKind::String) == false)
-      {
-        return nullptr;
-      }
+      parses = HandleLiteral(NodeKind::String);
       break;
-    }
+
     case Token::Kind::True:
-    {
-      if (HandleLiteral(NodeKind::True) == false)
-      {
-        return nullptr;
-      }
+      parses = HandleLiteral(NodeKind::True);
       break;
-    }
+
     case Token::Kind::False:
-    {
-      if (HandleLiteral(NodeKind::False) == false)
-      {
-        return nullptr;
-      }
+      parses = HandleLiteral(NodeKind::False);
       break;
-    }
+
     case Token::Kind::Null:
-    {
-      if (HandleLiteral(NodeKind::Null) == false)
-      {
-        return nullptr;
-      }
+      parses = HandleLiteral(NodeKind::Null);
       break;
-    }
+
     case Token::Kind::Plus:
-    {
       HandlePlus();
       break;
-    }
+
     case Token::Kind::Minus:
-    {
       HandleMinus();
       break;
-    }
+
     case Token::Kind::Multiply:
-    {
-      if (HandleBinaryOp(NodeKind::Multiply, OpInfo(6, Association::Left, 2)) == false)
-      {
-        return nullptr;
-      }
+      parses = HandleBinaryOp(NodeKind::Multiply, OpInfo(6, Association::Left, 2));
       break;
-    }
+
     case Token::Kind::Divide:
-    {
-      if (HandleBinaryOp(NodeKind::Divide, OpInfo(6, Association::Left, 2)) == false)
-      {
-        return nullptr;
-      }
+      parses = HandleBinaryOp(NodeKind::Divide, OpInfo(6, Association::Left, 2));
       break;
-    }
+
     case Token::Kind::Modulo:
-    {
-      if (HandleBinaryOp(NodeKind::Modulo, OpInfo(6, Association::Left, 2)) == false)
-      {
-        return nullptr;
-      }
+      parses = HandleBinaryOp(NodeKind::Modulo, OpInfo(6, Association::Left, 2));
       break;
-    }
+
     case Token::Kind::Equal:
-    {
-      if (HandleBinaryOp(NodeKind::Equal, OpInfo(3, Association::Left, 2)) == false)
-      {
-        return nullptr;
-      }
+      parses = HandleBinaryOp(NodeKind::Equal, OpInfo(3, Association::Left, 2));
       break;
-    }
+
     case Token::Kind::NotEqual:
-    {
-      if (HandleBinaryOp(NodeKind::NotEqual, OpInfo(3, Association::Left, 2)) == false)
-      {
-        return nullptr;
-      }
+      parses = HandleBinaryOp(NodeKind::NotEqual, OpInfo(3, Association::Left, 2));
       break;
-    }
+
     case Token::Kind::LessThan:
-    {
-      if (HandleBinaryOp(NodeKind::LessThan, OpInfo(4, Association::Left, 2)) == false)
-      {
-        return nullptr;
-      }
+      parses = HandleBinaryOp(NodeKind::LessThan, OpInfo(4, Association::Left, 2));
       break;
-    }
+
     case Token::Kind::LessThanOrEqual:
-    {
-      if (HandleBinaryOp(NodeKind::LessThanOrEqual, OpInfo(4, Association::Left, 2)) == false)
-      {
-        return nullptr;
-      }
+      parses = HandleBinaryOp(NodeKind::LessThanOrEqual, OpInfo(4, Association::Left, 2));
       break;
-    }
+
     case Token::Kind::GreaterThan:
-    {
-      if (HandleBinaryOp(NodeKind::GreaterThan, OpInfo(4, Association::Left, 2)) == false)
-      {
-        return nullptr;
-      }
+      parses = HandleBinaryOp(NodeKind::GreaterThan, OpInfo(4, Association::Left, 2));
       break;
-    }
+
     case Token::Kind::GreaterThanOrEqual:
-    {
-      if (HandleBinaryOp(NodeKind::GreaterThanOrEqual, OpInfo(4, Association::Left, 2)) == false)
-      {
-        return nullptr;
-      }
+      parses = HandleBinaryOp(NodeKind::GreaterThanOrEqual, OpInfo(4, Association::Left, 2));
       break;
-    }
+
     case Token::Kind::And:
-    {
-      if (HandleBinaryOp(NodeKind::And, OpInfo(2, Association::Left, 2)) == false)
-      {
-        return nullptr;
-      }
+      parses = HandleBinaryOp(NodeKind::And, OpInfo(2, Association::Left, 2));
       break;
-    }
+
     case Token::Kind::Or:
-    {
-      if (HandleBinaryOp(NodeKind::Or, OpInfo(1, Association::Left, 2)) == false)
-      {
-        return nullptr;
-      }
+      parses = HandleBinaryOp(NodeKind::Or, OpInfo(1, Association::Left, 2));
       break;
-    }
+
     case Token::Kind::Not:
-    {
       HandleNot();
       break;
-    }
+
     case Token::Kind::Inc:
-    {
       HandlePrefixPostfix(NodeKind::PrefixInc, OpInfo(7, Association::Right, 1),
                           NodeKind::PostfixInc, OpInfo(8, Association::Left, 1));
       break;
-    }
+
     case Token::Kind::Dec:
-    {
       HandlePrefixPostfix(NodeKind::PrefixDec, OpInfo(7, Association::Right, 1),
                           NodeKind::PostfixDec, OpInfo(8, Association::Left, 1));
       break;
-    }
+
     case Token::Kind::LeftParenthesis:
-    {
-      if (HandleOpener(NodeKind::ParenthesisGroup, NodeKind::Invoke, Token::Kind::RightParenthesis,
-                       ")") == false)
-      {
-        return nullptr;
-      }
+      parses = HandleOpener(NodeKind::ParenthesisGroup, NodeKind::Invoke, Token::Kind::RightParenthesis, ")");
       break;
-    }
+
     case Token::Kind::LeftSquareBracket:
-    {
-      if (HandleOpener(NodeKind::Unknown, NodeKind::Index, Token::Kind::RightSquareBracket, "]") ==
-          false)
-      {
-        return nullptr;
-      }
+      parses = HandleOpener(NodeKind::Unknown, NodeKind::Index, Token::Kind::RightSquareBracket, "]");
       break;
-    }
+
+    case Token::Kind::LeftBrace:
+      parses = HandleOpener(NodeKind::Unknown, NodeKind::Index, Token::Kind::RightBrace, "}");
+      break;
+
     case Token::Kind::RightParenthesis:
     case Token::Kind::RightSquareBracket:
-    {
-      if (HandleCloser(is_conditional_expression) == false)
-      {
-        return nullptr;
-      }
+    case Token::Kind::RightBrace:
+      parses = HandleCloser(is_conditional_expression);
       break;
-    }
+
     case Token::Kind::Dot:
-    {
-      if (HandleDot() == false)
-      {
-        return nullptr;
-      }
+      parses = HandleDot();
       break;
-    }
+
     case Token::Kind::Comma:
-    {
-      if (HandleComma() == false)
-      {
-        return nullptr;
-      }
+      parses = HandleComma();
       break;
-    }
+
     default:
-    {
       if (state_ == State::PreOperand)
       {
         if (token_->kind != Token::Kind::Unknown)
@@ -1336,8 +1202,12 @@ ExpressionNodePtr Parser::ParseExpression(bool is_conditional_expression)
       }
       found_expression_terminator_ = true;
       break;
-    }
+
     }  // switch
+    if (!parses)
+    {
+      return nullptr;
+    }
   } while (found_expression_terminator_ == false);
   if (groups_.size())
   {

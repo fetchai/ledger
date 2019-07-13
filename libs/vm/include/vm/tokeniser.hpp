@@ -23,9 +23,9 @@
 #define yyHEADER_H 1
 #define yyIN_HEADER 1
 
-#line 6 "../include/vm/tokeniser.hpp"
+#line 5 "../include/vm/tokeniser.hpp"
 
-#line 8 "../include/vm/tokeniser.hpp"
+#line 7 "../include/vm/tokeniser.hpp"
 
 #define  YY_INT_ALIGNED short int
 
@@ -71,7 +71,7 @@
 #if defined (__STDC_VERSION__) && __STDC_VERSION__ >= 199901L
 
 /* C99 says to define __STDC_LIMIT_MACROS before including stdint.h,
- * if you want the limit (max/min) macros for int types.
+ * if you want the limit (max/min) macros for int types. 
  */
 #ifndef __STDC_LIMIT_MACROS
 #define __STDC_LIMIT_MACROS 1
@@ -88,7 +88,7 @@ typedef uint32_t flex_uint32_t;
 typedef signed char flex_int8_t;
 typedef short int flex_int16_t;
 typedef int flex_int32_t;
-typedef unsigned char flex_uint8_t;
+typedef unsigned char flex_uint8_t; 
 typedef unsigned short int flex_uint16_t;
 typedef unsigned int flex_uint32_t;
 
@@ -524,10 +524,10 @@ extern int yylex \
 #undef yyTABLES_NAME
 #endif
 
-#line 227 "tokeniser.l"
+#line 229 "tokeniser.l"
 
 
-#line 510 "../include/vm/tokeniser.hpp"
+#line 509 "../include/vm/tokeniser.hpp"
 #undef yyIN_HEADER
 #endif /* yyHEADER_H */
 // clang-format on
