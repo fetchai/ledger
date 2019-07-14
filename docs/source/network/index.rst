@@ -125,5 +125,5 @@ If you fail to correctly define a serialiser/deserialiser, you will get a messag
 
 .. code-block:: bash
 
-                error: no matching function for call to ‘Deserialize(fetch::serializers::
-                TypedByte_ArrayBuffer&, fetch::quick_start::DataClass&)’
+                error: no matching function for call to 'Deserialize(fetch::serializers::
+                TypedByte_ArrayBuffer&, fetch::quick_start::DataClass&)'
