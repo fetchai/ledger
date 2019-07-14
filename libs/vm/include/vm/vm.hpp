@@ -39,6 +39,7 @@
 #include <utility>
 #include <vector>
 
+#include "../../../../fetch_point.hpp"
 namespace fetch {
 namespace vm {
 
@@ -440,17 +441,22 @@ public:
 
     if (it == deserialization_constructors_.end())
     {
+	    STD_CERR << "No deserconst\n";
       TypeInfo tinfo = GetTypeInfo(type_id);
+      STD_CERR << "TInfo: " << tinfo << '\n';
 
       if (tinfo.template_type_id == TypeIds::Unknown)
       {
+	      STD_CERR << "Unknown template\n";
         return false;
       }
 
       idx = registered_types_.GetTypeIndex(tinfo.template_type_id);
       it  = deserialization_constructors_.find(idx);
+STD_CERR << "template end: " << (it == deserialization_constructors_.end()) << '\n';
       return (it != deserialization_constructors_.end());
     }
+    STD_CERR << "Deser true\n";
     return true;
   }
 
@@ -571,9 +577,9 @@ private:
   InputDeviceMap                 input_devices_;
   DeserializeConstructorMap      deserialization_constructors_;
 
-  void AddOpcodeInfo(uint16_t opcode, std::string const &name, Handler const &handler)
+  void AddOpcodeInfo(uint16_t opcode, std::string name, Handler handler)
   {
-    opcode_info_array_[opcode] = OpcodeInfo(name, handler);
+    opcode_info_array_[opcode] = OpcodeInfo(std::move(name), std::move(handler));
   }
 
   bool Execute(std::string &error, Variant &output);

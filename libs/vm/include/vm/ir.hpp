@@ -110,19 +110,16 @@ inline IRVariablePtr CreateIRVariable(VariableKind variable_kind, std::string co
 
 struct IRFunction
 {
-  IRFunction(FunctionKind function_kind__, std::string const &name__,
-             std::string const &unique_id__, IRTypePtrArray const &parameter_types__,
-             IRVariablePtrArray const &parameter_variables__, IRTypePtr const &return_type__)
-  {
-    function_kind       = function_kind__;
-    name                = name__;
-    unique_id           = unique_id__;
-    parameter_types     = parameter_types__;
-    parameter_variables = parameter_variables__;
-    return_type         = return_type__;
-    index               = 0;
-    resolved_opcode     = Opcodes::Unknown;
-  }
+  IRFunction(FunctionKind function_kind__, std::string name__,
+             std::string unique_id__, IRTypePtrArray parameter_types__,
+             IRVariablePtrArray parameter_variables__, IRTypePtr return_type__)
+    : function_kind{function_kind__}
+    , name{std::move(name__)}
+    , unique_id{std::move(unique_id__)}
+    , parameter_types{std::move(parameter_types__)}
+    , parameter_variables{std::move(parameter_variables__)}
+    , return_type{std::move(return_type__)}
+  {}
   void Reset()
   {
     parameter_types.clear();
@@ -135,8 +132,8 @@ struct IRFunction
   IRTypePtrArray     parameter_types;
   IRVariablePtrArray parameter_variables;
   IRTypePtr          return_type;
-  uint16_t           index;
-  uint16_t           resolved_opcode;
+  uint16_t           index = 0;
+  uint16_t           resolved_opcode = Opcodes::Unknown;
 };
 using IRFunctionPtr      = std::shared_ptr<IRFunction>;
 using IRFunctionPtrArray = std::vector<IRFunctionPtr>;

@@ -26,6 +26,7 @@
 #include <string>
 #include <vector>
 
+#include "../../../../fetch_point.hpp"
 namespace fetch {
 namespace vm {
 
@@ -1518,6 +1519,7 @@ void Generator::HandleInvokeOp(IRExpressionNodePtr const &node)
   IRFunctionPtr       f   = node->function;
   if (f->function_kind == FunctionKind::MemberFunction)
   {
+	  STD_CERR << "Member function\n";
     // Arrange for the instance object to be pushed on to the stack
     HandleExpression(ConvertToIRExpressionNodePtr(lhs));
   }
@@ -1541,6 +1543,7 @@ void Generator::HandleInvokeOp(IRExpressionNodePtr const &node)
     // Opcode-invoked static member function
     // Opcode-invoked member function
     uint16_t                opcode = f->resolved_opcode;
+    STD_CERR << f->name << ": other cases; opcode = " << opcode << "\n";
     Executable::Instruction instruction(opcode);
     instruction.type_id = node->type->resolved_id;
     if (lhs->type)

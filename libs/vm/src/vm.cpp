@@ -22,6 +22,7 @@
 #include <cstddef>
 #include <cstdint>
 
+#include "../../../../fetch_point.hpp"
 namespace fetch {
 namespace vm {
 
@@ -170,7 +171,7 @@ VM::VM(Module *module)
   opcode_map_.clear();
   for (uint16_t i = 0; i < num_functions; ++i)
   {
-    auto        opcode = static_cast<uint16_t>(Opcodes::NumReserved + i);
+    uint16_t    opcode = Opcodes::NumReserved + i;
     auto const &info   = function_info_array[i];
     AddOpcodeInfo(opcode, info.unique_id, info.handler);
     opcode_map_[info.unique_id] = opcode;
@@ -219,12 +220,15 @@ bool VM::Execute(std::string &error, Variant &output)
     instruction_pc_  = pc_;
     instruction_     = &function_->instructions[pc_++];
     OpcodeInfo &info = opcode_info_array_[instruction_->opcode];
+    STD_CERR << "Handling " << info.name << '\n';
     if (info.handler)
     {
+	    STD_CERR << "Running handler\n";
       info.handler(this);
     }
     else
     {
+	    STD_CERR << "No handler\n";
       RuntimeError("unknown opcode");
       break;
     }
