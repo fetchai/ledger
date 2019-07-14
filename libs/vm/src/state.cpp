@@ -19,6 +19,9 @@
 #include "vm/io_observer_interface.hpp"
 #include "vm/state.hpp"
 
+#include "vm/node.hpp"
+#include "../../../../fetch_point.hpp"
+
 namespace fetch {
 namespace vm {
 
@@ -199,6 +202,7 @@ public:
 
   void Set(TemplateParameter1 const &value) override
   {
+	  STD_CERR << "Setting to " << type_id(value.type_id) << ' ' << value.Get<Ptr<Address>>()->AsString()->str << '\n';
     SetValue<>(value);
   }
 
@@ -225,21 +229,25 @@ private:
   {
     if (mod_status_ != eModifStatus::undefined)
     {
+	    STD_CERR << "Return 1\n";
       return {value_, template_param_type_id_};
     }
     else if (Existed())
     {
       if (ReadHelper(template_param_type_id_, name_, value_, vm_))
       {
+	    STD_CERR << "Return 2\n";
         mod_status_ = eModifStatus::deserialised;
         return {value_, template_param_type_id_};
       }
     }
     else if (default_value)
     {
+	    STD_CERR << "Return 3\n";
       return *default_value;
     }
 
+	    STD_CERR << "Return 4\n";
     vm_->RuntimeError(
         "The state does not represent any value. The value has not been assigned and/or it does "
         "not exist in data storage.");

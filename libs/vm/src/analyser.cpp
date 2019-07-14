@@ -30,6 +30,7 @@
 #include <ostream>
 #include <string>
 
+#include "../../../../fetch_point.hpp"
 namespace fetch {
 namespace vm {
 
@@ -1747,6 +1748,7 @@ bool Analyser::AnnotateInvokeOp(ExpressionNodePtr const &node)
     TypePtrArray actual_parameter_types;
     FunctionPtr  f =
         FindFunction(lhs->type, lhs->fg, supplied_parameter_nodes, actual_parameter_types);
+    STD_CERR << "Function found: " << f << '\n';
     if (f == nullptr)
     {
       // No matching function, or ambiguous

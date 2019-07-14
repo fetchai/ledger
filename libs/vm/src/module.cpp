@@ -242,7 +242,8 @@ Module::Module()
       .CreateSerializeDefaultConstuctor<>()
       //      .CreateConstuctor<>()
       .CreateConstuctor<Ptr<String>>()
-      .CreateMemberFunction("signedTx", &Address::HasSignedTx);
+      .CreateMemberFunction("signedTx", &Address::HasSignedTx)
+      .CreateMemberFunction("toString", &Address::AsString); // STD_CERR
 
   GetClassInterface<IState>()
       .CreateConstuctor<Ptr<String>>()
