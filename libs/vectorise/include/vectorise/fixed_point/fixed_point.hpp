@@ -2185,7 +2185,7 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::Sqrt(FixedPoint<I, F> const &x)
  *
  * Special cases
  * * x or y is NaN    -> pow(x, y) = NaN
- * * x == 0, y == 0   -> pow(x, y) = Nan
+ * * x == 0, y == 0   -> pow(x, y) = NaN
  * * x == 0, y != 0   -> pow(x, y) = 0
  * * x any, y == 0    -> pow(x, y) = 1
  * * x < 0, y non int -> pow(x, y) = NaN
@@ -2579,7 +2579,7 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::Tan(FixedPoint<I, F> const &x)
  * Special cases
  * * x is NaN    -> asin(x) = NaN
  * * x is +/-inf -> asin(x) = NaN
- * * |x| > 1     -> asin(x) = Nan
+ * * |x| > 1     -> asin(x) = NaN
  * * x < 0       -> asin(x) = -asin(-x)
  *
  * errors for x ∈ (-1, 1):
@@ -2658,7 +2658,7 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::ASin(FixedPoint<I, F> const &x)
  * Special cases
  * * x is NaN    -> acos(x) = NaN
  * * x is +/-inf -> acos(x) = NaN
- * * |x| > 1     -> acos(x) = Nan
+ * * |x| > 1     -> acos(x) = NaN
  *
  * We use the identity acos(x) = Pi/2 - asin(x) to calculate the value
  *
