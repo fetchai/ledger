@@ -115,7 +115,7 @@ void RBC::SendRBroadcast(const SerialisedMessage &msg)
 {
   RBCEnvelop env{RBroadcast(CHANNEL_BROADCAST, id_, ++seq_, msg)};
   Broadcast(env);
-  OnRBroadcast(std::dynamic_pointer_cast<RBroadcast>(env.getMessage()), id_);
+  OnRBroadcast(std::dynamic_pointer_cast<RBroadcast>(env.Message()), id_);
 }
 
 bool RBC::SetMbar(TagType tag, std::shared_ptr<RMessage> msg_ptr, uint32_t sender_index)
@@ -165,7 +165,7 @@ struct RBC::MsgCount RBC::ReceivedReady(TagType tag, std::shared_ptr<RHash> msg_
 void RBC::OnRBC(MuddleAddress const &from, RBCEnvelop const &envelop,
                 MuddleAddress const &transmitter)
 {
-  auto     msg_ptr = envelop.getMessage();
+  auto     msg_ptr = envelop.Message();
   uint32_t sender_index{CabinetIndex(from)};
   switch (msg_ptr->Type())
   {
@@ -215,7 +215,7 @@ void RBC::OnRBroadcast(const std::shared_ptr<RBroadcast> msg_ptr, uint32_t sende
       RBCEnvelop env{REcho{msg_ptr->ChannelId(), msg_ptr->Id(), msg_ptr->SeqCounter(),
                            MessageHash(msg_ptr->Message())}};
       Broadcast(env);
-      OnREcho(std::dynamic_pointer_cast<REcho>(env.getMessage()), id_);  // self sending.
+      OnREcho(std::dynamic_pointer_cast<REcho>(env.Message()), id_);  // self sending.
     }
   }
   else
@@ -243,7 +243,7 @@ void RBC::OnREcho(const std::shared_ptr<REcho> msg_ptr, uint32_t sender_index)
     RBCEnvelop env{
         RReady{msg_ptr->ChannelId(), msg_ptr->Id(), msg_ptr->SeqCounter(), msg_ptr->Hash()}};
     Broadcast(env);
-    OnRReady(std::dynamic_pointer_cast<RReady>(env.getMessage()), id_);  // self sending.
+    OnRReady(std::dynamic_pointer_cast<RReady>(env.Message()), id_);  // self sending.
   }
 }
 
@@ -266,7 +266,7 @@ void RBC::OnRReady(const std::shared_ptr<RReady> msg_ptr, uint32_t sender_index)
     RBCEnvelop env{
         RReady{msg_ptr->ChannelId(), msg_ptr->Id(), msg_ptr->SeqCounter(), msg_ptr->Hash()}};
     Broadcast(env);
-    OnRReady(std::dynamic_pointer_cast<RReady>(env.getMessage()), id_);  // self sending.
+    OnRReady(std::dynamic_pointer_cast<RReady>(env.Message()), id_);  // self sending.
   }
   else if (threshold_ > 0 and msgsCount.ready_count == 2 * threshold_ + 1)
   {

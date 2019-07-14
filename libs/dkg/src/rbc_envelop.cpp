@@ -25,7 +25,7 @@ namespace rbc {
 
 constexpr char const *LOGGING_NAME = "RBCMessage";
 
-std::shared_ptr<RBCMessage> RBCEnvelop::getMessage() const
+std::shared_ptr<RBCMessage> RBCEnvelop::Message() const
 {
   RBCSerializer serialiser{serialisedMessage_};
   switch (type_)
