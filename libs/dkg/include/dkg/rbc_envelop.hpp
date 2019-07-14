@@ -38,13 +38,13 @@ public:
     , serialisedMessage_{msg.Serialize().data()} {};
 
   template <typename T>
-  void serialize(T &serialiser) const
+  void Serialize(T &serialiser) const
   {
     serialiser << (uint8_t)type_ << serialisedMessage_;
   }
 
   template <typename T>
-  void deserialize(T &serialiser)
+  void Deserialize(T &serialiser)
   {
     uint8_t val;
     serialiser >> val;
@@ -52,7 +52,7 @@ public:
     serialiser >> serialisedMessage_;
   }
 
-  std::shared_ptr<RBCMessage> getMessage() const;
+  std::shared_ptr<RBCMessage> Message() const;
 
 private:
   RBCMessage::MessageType type_;
@@ -62,13 +62,13 @@ private:
 template <typename T>
 inline void Serialize(T &serializer, RBCEnvelop const &env)
 {
-  env.serialize(serializer);
+  env.Serialize(serializer);
 }
 
 template <typename T>
 inline void Deserialize(T &serializer, RBCEnvelop &env)
 {
-  env.deserialize(serializer);
+  env.Deserialize(serializer);
 }
 }  // namespace rbc
 }  // namespace dkg

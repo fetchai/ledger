@@ -109,7 +109,7 @@ TEST(rbc_messages, envelope)
   env_serialiser1 >> env1;
 
   // Check the message type of envelops match
-  EXPECT_EQ(env1.getMessage()->Type(), RBCMessage::MessageType::RANSWER);
-  EXPECT_EQ(env1.getMessage()->Tag(), answer.Tag());
-  EXPECT_EQ(std::dynamic_pointer_cast<RAnswer>(env1.getMessage())->Message(), answer.Message());
+  EXPECT_EQ(env1.Message()->Type(), RBCMessage::MessageType::RANSWER);
+  EXPECT_EQ(env1.Message()->Tag(), answer.Tag());
+  EXPECT_EQ(std::dynamic_pointer_cast<RAnswer>(env1.Message())->Message(), answer.Message());
 }
