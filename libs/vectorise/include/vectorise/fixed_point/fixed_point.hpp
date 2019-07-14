@@ -988,14 +988,7 @@ constexpr bool FixedPoint<I, F>::operator<(FixedPoint const &o) const
   else if (IsNegInfinity(*this))
   {
     // Negative infinity is always smaller than all other quantities except itself
-    if (IsNegInfinity(o))
-    {
-      return false;
-    }
-    else
-    {
-      return true;
-    }
+    return !IsNegInfinity(o);
   }
   else if (IsPosInfinity(*this))
   {
