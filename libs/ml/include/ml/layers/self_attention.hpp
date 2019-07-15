@@ -26,7 +26,10 @@
 #include "ml/ops/transpose.hpp"
 
 #include <cmath>
+#include <cstdint>
+#include <memory>
 #include <random>
+#include <string>
 
 namespace fetch {
 namespace ml {

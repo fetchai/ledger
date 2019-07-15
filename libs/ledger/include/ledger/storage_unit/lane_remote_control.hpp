@@ -22,7 +22,9 @@
 #include "network/muddle/rpc/client.hpp"
 #include "network/p2pservice/p2p_lane_management.hpp"
 
-#include <unordered_map>
+#include <cstdint>
+#include <unordered_set>
+#include <vector>
 
 namespace fetch {
 namespace ledger {

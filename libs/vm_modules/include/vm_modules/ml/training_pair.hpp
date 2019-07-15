@@ -40,8 +40,8 @@ public:
     module.CreateClassType<fetch::vm_modules::ml::VMTrainingPair>("TrainingPair")
         .CreateConstuctor<fetch::vm::Ptr<fetch::vm_modules::math::VMTensor>,
                           fetch::vm::Ptr<fetch::vm_modules::math::VMTensor>>()
-        .CreateMemberFunction("Data", &fetch::vm_modules::ml::VMTrainingPair::data)
-        .CreateMemberFunction("Label", &fetch::vm_modules::ml::VMTrainingPair::label);
+        .CreateMemberFunction("data", &fetch::vm_modules::ml::VMTrainingPair::data)
+        .CreateMemberFunction("label", &fetch::vm_modules::ml::VMTrainingPair::label);
   }
 
   static fetch::vm::Ptr<VMTrainingPair> Constructor(

@@ -16,19 +16,17 @@
 //
 //------------------------------------------------------------------------------
 
-#include "benchmark/benchmark.h"
 #include "math/tensor.hpp"
 #include "ml/graph.hpp"
-
-// ops - layers - activations
 #include "ml/layers/fully_connected.hpp"
 #include "ml/ops/activations/relu.hpp"
-
-// loss functions
-#include "ml/ops/loss_functions/mean_square_error.hpp"
-
-// optimisers
+#include "ml/ops/loss_functions/mean_square_error_loss.hpp"
 #include "ml/optimisation/sgd_optimiser.hpp"
+
+#include "benchmark/benchmark.h"
+
+#include <memory>
+#include <string>
 
 template <typename T, fetch::math::SizeType B, fetch::math::SizeType I, fetch::math::SizeType H,
           fetch::math::SizeType O, fetch::math::SizeType E>
@@ -44,7 +42,7 @@ void BM_Setup_And_Train(benchmark::State &state)
   SizeType output_size = O;
   SizeType n_epochs    = E;
 
-  DataType learning_rate = DataType{0.1f};
+  auto learning_rate = DataType{0.1f};
 
   // Prepare data and labels
   TensorType data({input_size, batch_size});
@@ -59,6 +57,7 @@ void BM_Setup_And_Train(benchmark::State &state)
 
     // set up the neural net architecture
     std::string input_name = g->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("", {});
+    std::string label_name = g->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("", {});
 
     std::string h_1 = g->template AddNode<fetch::ml::layers::FullyConnected<TensorType>>(
         "FC1", {input_name}, input_size, hidden_size);
@@ -68,9 +67,12 @@ void BM_Setup_And_Train(benchmark::State &state)
         "FC2", {a_1}, hidden_size, output_size);
     std::string output_name = g->template AddNode<fetch::ml::ops::Relu<TensorType>>("", {h_2});
 
+    std::string error_name = g->template AddNode<fetch::ml::ops::MeanSquareErrorLoss<TensorType>>(
+        "", {output_name, label_name});
+
     // Initialize Optimiser
-    fetch::ml::optimisers::SGDOptimiser<TensorType, fetch::ml::ops::MeanSquareError<TensorType>>
-        optimiser(g, {input_name}, output_name, learning_rate);
+    fetch::ml::optimisers::SGDOptimiser<TensorType> optimiser(g, {input_name}, label_name,
+                                                              error_name, learning_rate);
 
     // Do optimisation
     for (SizeType i = 0; i < n_epochs; ++i)

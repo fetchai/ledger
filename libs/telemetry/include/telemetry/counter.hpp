@@ -43,7 +43,7 @@ public:
 
   /// @name Metric Interface
   /// @{
-  void ToStream(std::ostream &stream) const override;
+  void ToStream(std::ostream &stream, StreamMode mode) const override;
   /// @}
 
   // Operators

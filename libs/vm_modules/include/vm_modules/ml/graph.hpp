@@ -20,6 +20,7 @@
 #include "ml/graph.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/ops/activation.hpp"
+#include "ml/ops/loss_functions/cross_entropy_loss.hpp"
 #include "vm/module.hpp"
 #include "vm_modules/math/tensor.hpp"
 #include "vm_modules/ml/state_dict.hpp"
@@ -59,9 +60,9 @@ public:
     return ret;
   }
 
-  void Backpropagate(VMPtrString const &name, fetch::vm::Ptr<math::VMTensor> const &dt)
+  void BackPropagateError(VMPtrString const &name)
   {
-    graph_.BackPropagate(name->str, (*dt).GetTensor());
+    graph_.BackPropagateError(name->str);
   }
 
   void Step(float lr)
@@ -91,6 +92,13 @@ public:
                                                                         {input_name->str});
   }
 
+  void AddCrossEntropyLoss(VMPtrString const &name, VMPtrString const &input_name,
+                           VMPtrString const &label_name)
+  {
+    graph_.AddNode<fetch::ml::ops::CrossEntropyLoss<fetch::math::Tensor<float>>>(
+        name->str, {input_name->str, label_name->str});
+  }
+
   void AddDropout(VMPtrString const &name, VMPtrString const &input_name, float const &prob)
   {
     graph_.AddNode<fetch::ml::ops::Dropout<MathTensorType>>(name->str, {input_name->str}, prob);
@@ -111,17 +119,18 @@ public:
   {
     module.CreateClassType<VMGraph>("Graph")
         .CreateConstuctor<>()
-        .CreateMemberFunction("SetInput", &VMGraph::SetInput)
-        .CreateMemberFunction("Evaluate", &VMGraph::Evaluate)
-        .CreateMemberFunction("Backpropagate", &VMGraph::Backpropagate)
-        .CreateMemberFunction("Step", &VMGraph::Step)
-        .CreateMemberFunction("AddPlaceholder", &VMGraph::AddPlaceholder)
-        .CreateMemberFunction("AddFullyConnected", &VMGraph::AddFullyConnected)
-        .CreateMemberFunction("AddRelu", &VMGraph::AddRelu)
-        .CreateMemberFunction("AddSoftmax", &VMGraph::AddSoftmax)
-        .CreateMemberFunction("AddDropout", &VMGraph::AddDropout)
-        .CreateMemberFunction("LoadStateDict", &VMGraph::LoadStateDict)
-        .CreateMemberFunction("StateDict", &VMGraph::StateDict);
+        .CreateMemberFunction("setInput", &VMGraph::SetInput)
+        .CreateMemberFunction("evaluate", &VMGraph::Evaluate)
+        .CreateMemberFunction("backPropagate", &VMGraph::BackPropagateError)
+        .CreateMemberFunction("step", &VMGraph::Step)
+        .CreateMemberFunction("addPlaceholder", &VMGraph::AddPlaceholder)
+        .CreateMemberFunction("addFullyConnected", &VMGraph::AddFullyConnected)
+        .CreateMemberFunction("addRelu", &VMGraph::AddRelu)
+        .CreateMemberFunction("addSoftmax", &VMGraph::AddSoftmax)
+        .CreateMemberFunction("addDropout", &VMGraph::AddDropout)
+        .CreateMemberFunction("addCrossEntropyLoss", &VMGraph::AddCrossEntropyLoss)
+        .CreateMemberFunction("loadStateDict", &VMGraph::LoadStateDict)
+        .CreateMemberFunction("stateDict", &VMGraph::StateDict);
   }
 
   GraphType graph_;

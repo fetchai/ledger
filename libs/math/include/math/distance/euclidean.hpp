@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/assert.hpp"
+#include "math/distance/square.hpp"
 #include "math/matrix_operations.hpp"
 #include "math/standard_functions/pow.hpp"
 #include "math/standard_functions/sqrt.hpp"
@@ -26,26 +27,6 @@
 namespace fetch {
 namespace math {
 namespace distance {
-
-template <typename ArrayType>
-typename ArrayType::Type SquareDistance(ArrayType const &A, ArrayType const &B)
-{
-  using Type = typename ArrayType::Type;
-  auto it1   = A.begin();
-  auto it2   = B.begin();
-  assert(it1.size() == it2.size());
-  Type ret = Type(0);
-
-  while (it1.is_valid())
-  {
-    Type d = (*it1) - (*it2);
-
-    ret += d * d;
-    ++it1;
-    ++it2;
-  }
-  return ret;
-}
 
 template <typename ArrayType>
 typename ArrayType::Type Euclidean(ArrayType const &A, ArrayType const &B)

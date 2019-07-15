@@ -20,12 +20,14 @@
 #include "core/bloom_filter.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "crypto/fnv.hpp"
+#include "crypto/hash.hpp"
+#include "crypto/md5.hpp"
+#include "crypto/sha1.hpp"
+#include "crypto/sha512.hpp"
 
-#include <openssl/evp.h>
-
-#include <cassert>
 #include <cstddef>
-#include <functional>
+#include <cstdint>
+#include <utility>
 #include <vector>
 
 // Aim for 1 false positive per this many positive queries
@@ -115,79 +117,13 @@ HashSource::HashSourceIterator::HashSourceIterator(HashSource const *source, std
 
 namespace {
 
-class OpenSslHasher
-{
-public:
-  enum class Type
-  {
-    MD5,
-    SHA1,
-    SHA2_512
-  };
-
-  explicit OpenSslHasher(Type type)
-    : openssl_type_{to_openssl_type(type)}
-    , ctx_{EVP_MD_CTX_create()}
-  {
-    EVP_MD_CTX_init(ctx_);
-  }
-
-  ~OpenSslHasher()
-  {
-    EVP_MD_CTX_destroy(ctx_);
-  }
-
-  void reset() const
-  {
-    EVP_DigestInit_ex(ctx_, openssl_type_, nullptr);
-  }
-
-  std::vector<std::size_t> operator()(fetch::byte_array::ConstByteArray const &input) const
-  {
-    const auto size_in_bytes = static_cast<std::size_t>(EVP_MD_CTX_size(ctx_));
-
-    std::vector<std::size_t> output((size_in_bytes + sizeof(std::size_t) - 1) /
-                                    sizeof(std::size_t));
-    EVP_DigestUpdate(ctx_, input.pointer(), input.size());
-
-    EVP_DigestFinal_ex(ctx_, reinterpret_cast<uint8_t *>(output.data()), nullptr);
-
-    return output;
-  }
-
-private:
-  EVP_MD const *to_openssl_type(Type const type) const
-  {
-    EVP_MD const *openssl_type = nullptr;
-    switch (type)
-    {
-    case Type::MD5:
-      openssl_type = EVP_sha512();
-      break;
-    case Type::SHA1:
-      openssl_type = EVP_sha1();
-      break;
-    case Type::SHA2_512:
-      openssl_type = EVP_sha512();
-      break;
-    }
-
-    assert(openssl_type);
-
-    return openssl_type;
-  }
-
-  EVP_MD const *const openssl_type_;
-  EVP_MD_CTX *const   ctx_;
-};
-
-std::vector<std::size_t> raw_data(fetch::byte_array::ConstByteArray const &input)
+HashSource::Hashes raw_data(fetch::byte_array::ConstByteArray const &input)
 {
   auto start = reinterpret_cast<std::size_t const *>(input.pointer());
 
-  const auto size_in_bytes = input.size();
+  auto const size_in_bytes = input.size();
 
-  std::vector<std::size_t> output((size_in_bytes + sizeof(std::size_t) - 1) / sizeof(std::size_t));
+  HashSource::Hashes output((size_in_bytes + sizeof(std::size_t) - 1) / sizeof(std::size_t));
 
   for (std::size_t i = 0; i < output.size(); ++i)
   {
@@ -197,43 +133,34 @@ std::vector<std::size_t> raw_data(fetch::byte_array::ConstByteArray const &input
   return output;
 }
 
-HashSource::Hashes md5(fetch::byte_array::ConstByteArray const &input)
+template <typename Hasher>
+HashSource::Hashes HashSourceFunction(fetch::byte_array::ConstByteArray const &input)
 {
-  static OpenSslHasher hasher(OpenSslHasher::Type::MD5);
-  hasher.reset();
+  HashSource::Hashes output((Hasher::size_in_bytes + sizeof(std::size_t) - 1) /
+                            sizeof(std::size_t));
+  crypto::Hash<Hasher>(input.pointer(), input.size(), reinterpret_cast<uint8_t *>(output.data()));
 
-  return hasher(input);
-}
-
-HashSource::Hashes sha1(fetch::byte_array::ConstByteArray const &input)
-{
-  static OpenSslHasher hasher(OpenSslHasher::Type::SHA1);
-  hasher.reset();
-
-  return hasher(input);
-}
-
-HashSource::Hashes sha2_512(fetch::byte_array::ConstByteArray const &input)
-{
-  static OpenSslHasher hasher(OpenSslHasher::Type::SHA2_512);
-  hasher.reset();
-
-  return hasher(input);
+  return output;
 }
 
 HashSource::Hashes fnv(fetch::byte_array::ConstByteArray const &input)
 {
-  static crypto::FNV hasher;
-  hasher.Reset();
+  return internal::HashSourceFunction<crypto::FNV>(input);
+}
 
-  hasher.Update(reinterpret_cast<std::uint8_t const *>(input.pointer()), input.size());
+HashSource::Hashes md5(fetch::byte_array::ConstByteArray const &input)
+{
+  return internal::HashSourceFunction<crypto::MD5>(input);
+}
 
-  const auto         size_in_bytes = hasher.GetSizeInBytes();
-  HashSource::Hashes output(size_in_bytes / sizeof(std::size_t));
+HashSource::Hashes sha1(fetch::byte_array::ConstByteArray const &input)
+{
+  return internal::HashSourceFunction<crypto::SHA1>(input);
+}
 
-  hasher.Final(reinterpret_cast<uint8_t *>(output.data()), output.size() * sizeof(std::size_t));
-
-  return output;
+HashSource::Hashes sha2_512(fetch::byte_array::ConstByteArray const &input)
+{
+  return HashSourceFunction<crypto::SHA512>(input);
 }
 
 }  // namespace
@@ -241,7 +168,7 @@ HashSource::Hashes fnv(fetch::byte_array::ConstByteArray const &input)
 }  // namespace internal
 
 BasicBloomFilter::Functions const default_hash_functions{
-    internal::raw_data, internal::md5, internal::sha1, internal::sha2_512, internal::fnv};
+    internal::raw_data, internal::fnv, internal::md5, internal::sha1, internal::sha2_512};
 
 BasicBloomFilter::BasicBloomFilter()
   : bits_(INITIAL_SIZE_IN_BITS)
@@ -253,19 +180,23 @@ BasicBloomFilter::BasicBloomFilter(Functions const &functions)
   , hash_source_factory_(functions)
 {}
 
-bool BasicBloomFilter::Match(fetch::byte_array::ConstByteArray const &element)
+std::pair<bool, std::size_t> BasicBloomFilter::Match(
+    fetch::byte_array::ConstByteArray const &element)
 {
-  auto const source = hash_source_factory_(element);
+  auto const  source       = hash_source_factory_(element);
+  std::size_t bits_checked = 0u;
   for (std::size_t const hash : source)
   {
+    ++bits_checked;
     if (!bits_.bit(hash % bits_.size()))
     {
-      return false;
+      return {false, bits_checked};
     }
   }
 
   ++positive_count_;
-  return true;
+
+  return {true, bits_checked};
 }
 
 void BasicBloomFilter::Add(fetch::byte_array::ConstByteArray const &element)
@@ -301,19 +232,6 @@ bool BasicBloomFilter::ReportFalsePositives(std::size_t count)
   }
 
   return false;
-}
-
-bool NullBloomFilter::Match(fetch::byte_array::ConstByteArray const &)
-{
-  return true;
-}
-
-void NullBloomFilter::Add(fetch::byte_array::ConstByteArray const &)
-{}
-
-bool NullBloomFilter::ReportFalsePositives(std::size_t)
-{
-  return true;
 }
 
 }  // namespace fetch

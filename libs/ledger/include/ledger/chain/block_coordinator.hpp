@@ -34,8 +34,11 @@
 
 #include <atomic>
 #include <chrono>
+#include <cstddef>
+#include <cstdint>
 #include <deque>
-#include <thread>
+#include <memory>
+#include <vector>
 
 namespace fetch {
 namespace core {

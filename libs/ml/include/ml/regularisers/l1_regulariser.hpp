@@ -20,12 +20,11 @@
 #include "core/assert.hpp"
 #include "math/tensor.hpp"
 #include "ml/regularisers/regulariser.hpp"
-#include <memory>
-#include <vector>
 
 namespace fetch {
 namespace ml {
 namespace regularisers {
+
 /*
  * L1 regularisation
  */
@@ -36,7 +35,7 @@ public:
   using ArrayType = T;
   using DataType  = typename ArrayType::Type;
 
-  ~L1Regulariser() = default;
+  ~L1Regulariser() override = default;
 
   /**
    * Applies regularisation gradient on specified tensor

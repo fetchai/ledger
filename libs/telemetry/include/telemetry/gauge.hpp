@@ -57,7 +57,7 @@ public:
 
   /// @name Metric Interface
   /// @{
-  void ToStream(std::ostream &stream) const override;
+  void ToStream(std::ostream &stream, StreamMode mode) const override;
   /// @}
 
   // Operators
@@ -78,7 +78,7 @@ private:
  * Create a gauge measurement
  *
  * @tparam V The underlying gauge type
- * @param name The name of the gauge
+ * @param name The name of the gauge. Must not end in '_count'
  * @param description The description of the gauge
  * @param labels The labels for the gauge
  */
@@ -208,15 +208,16 @@ typename std::enable_if<std::is_floating_point<V>::value>::type GaugeToStream(Ga
 }
 
 /**
- * Add the current measurement to the specified stream
+ * Write the value of the metric to the stream so as to be consumed by external components
  *
- * @tparam V The underlying gauge type
- * @param stream The stream to be populated
+ * @param stream The stream to be updated
+ * @param mode The mode to be used when generating the stream
  */
 template <typename V>
-void Gauge<V>::ToStream(std::ostream &stream) const
+void Gauge<V>::ToStream(std::ostream &stream, StreamMode mode) const
 {
-  WritePrefix(stream, "gauge");
+  WriteHeader(stream, "gauge", mode);
+  WriteValuePrefix(stream);
   GaugeToStream(*this, stream);
 }
 

@@ -24,7 +24,9 @@
 
 #include "gtest/gtest.h"
 
+#include <cstdint>
 #include <random>
+#include <string>
 #include <vector>
 
 using namespace fetch;
@@ -44,9 +46,6 @@ protected:
   {
     file_object_ = std::make_unique<FileObjectM>();
   }
-
-  void TearDown() override
-  {}
 
   char NewChar()
   {

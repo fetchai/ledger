@@ -18,10 +18,13 @@
 //------------------------------------------------------------------------------
 
 #include "core/random/lfg.hpp"
+#include "math/activation_functions/leaky_relu.hpp"
 #include "math/fundamental_operators.hpp"
 #include "math/matrix_operations.hpp"
-#include "math/ml/activation_functions/leaky_relu.hpp"
 #include "ml/ops/ops.hpp"
+
+#include <cassert>
+#include <vector>
 
 namespace fetch {
 namespace ml {
@@ -46,10 +49,9 @@ public:
     rng_.Seed(random_seed);
     UpdateRandomValue();
   }
+  ~RandomizedRelu() override = default;
 
-  virtual ~RandomizedRelu() = default;
-
-  void Forward(VecTensorType const &inputs, ArrayType &output)
+  void Forward(VecTensorType const &inputs, ArrayType &output) override
   {
     assert(inputs.size() == 1);
     assert(output.shape() == this->ComputeOutputShape(inputs));
@@ -63,7 +65,8 @@ public:
     fetch::math::LeakyRelu(inputs.front().get(), alpha, output);
   }
 
-  std::vector<ArrayType> Backward(VecTensorType const &inputs, ArrayType const &error_signal)
+  std::vector<ArrayType> Backward(VecTensorType const &inputs,
+                                  ArrayType const &    error_signal) override
   {
     assert(inputs.size() == 1);
     assert(inputs.front().get().shape() == error_signal.shape());
@@ -101,7 +104,7 @@ public:
     return {ret};
   }
 
-  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const
+  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
   {
     return inputs.front().get().shape();
   }

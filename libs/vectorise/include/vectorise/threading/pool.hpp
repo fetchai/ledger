@@ -38,8 +38,9 @@ public:
     : Pool(2 * std::thread::hardware_concurrency())
   {}
 
-  explicit Pool(std::size_t const &n, std::string name = std::string{})
-    : name_{std::move(name)}
+  explicit Pool(std::size_t n, std::string name = std::string{})
+    : concurrency_{n}
+    , name_{std::move(name)}
   {
     for (std::size_t i = 0; i < n; ++i)
     {
@@ -105,6 +106,11 @@ public:
     return tasks_.empty();
   }
 
+  std::size_t concurrency() const
+  {
+    return concurrency_;
+  }
+
 private:
   void Work()
   {
@@ -135,6 +141,7 @@ private:
     return task;
   }
 
+  std::size_t const                 concurrency_;
   std::string                       name_{};
   std::atomic<uint32_t>             tasks_in_progress_{0};
   std::atomic<bool>                 running_{true};

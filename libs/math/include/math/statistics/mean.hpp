@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/assert.hpp"
+#include "math/meta/math_type_traits.hpp"
 #include "vectorise/memory/range.hpp"
 
 #include <cmath>
@@ -27,27 +28,21 @@ namespace math {
 namespace statistics {
 
 template <typename ArrayType>
-meta::IfIsMathArray<ArrayType, void> Mean(ArrayType const &a, typename ArrayType::Type &ret)
+meta::IfIsMathArray<ArrayType, void> Mean(ArrayType const &array, typename ArrayType::Type &ret)
 {
   ret = typename ArrayType::Type(0);
-  for (std::size_t j = 0; j < a.size(); ++j)
+  for (auto &val : array)
   {
-    ret += a.At(j);
+    ret += val;
   }
-  ret /= static_cast<typename ArrayType::Type>(a.size());
-  return ret;
+  ret /= static_cast<typename ArrayType::Type>(array.size());
 }
 
 template <typename ArrayType>
-meta::IfIsMathArray<ArrayType, typename ArrayType::Type> Mean(ArrayType const &a)
+meta::IfIsMathArray<ArrayType, typename ArrayType::Type> Mean(ArrayType const &array)
 {
-
-  typename ArrayType::Type ret = 0;
-  for (std::size_t j = 0; j < a.size(); ++j)
-  {
-    ret += a.At(j);
-  }
-  ret /= static_cast<typename ArrayType::Type>(a.size());
+  typename ArrayType::Type ret;
+  Mean(array, ret);
   return ret;
 }
 
