@@ -604,7 +604,7 @@ TYPED_TEST(OptimisersTest, adam_optimiser_minibatch_training)
   DataType loss = optimiser.Run({data}, gt, 2);
 
   // Test loss
-  EXPECT_NEAR(static_cast<double>(loss), 1.9097378253936768, 1e-2);
+  EXPECT_NEAR(static_cast<double>(loss), 1.2803993316525915, 1e-5);
 
   // Test weights
   std::vector<TypeParam> weights = g->get_weights();
