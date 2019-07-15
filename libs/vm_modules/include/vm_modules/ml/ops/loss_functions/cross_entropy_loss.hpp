@@ -36,7 +36,7 @@ public:
   static void Bind(vm::Module &module)
   {
     module.CreateClassType<VMCrossEntropyLoss>("CrossEntropy")
-        .CreateConstuctor<>()
+        .CreateConstructor<>()
         .CreateMemberFunction("forward", &VMCrossEntropyLoss::ForwardWrapper)
         .CreateMemberFunction("backward", &VMCrossEntropyLoss::BackwardWrapper);
   }

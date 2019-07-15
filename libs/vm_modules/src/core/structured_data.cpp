@@ -49,7 +49,7 @@ void StructuredData::Bind(vm::Module &module)
 {
   auto interface = module.CreateClassType<StructuredData>("StructuredData");
 
-  interface.CreateConstuctor<>()
+  interface.CreateConstructor<>()
     // Getters
       .CreateMemberFunction("getInt32", &StructuredData::GetPrimitive<int32_t>)
       .CreateMemberFunction("getInt64", &StructuredData::GetPrimitive<int64_t>)

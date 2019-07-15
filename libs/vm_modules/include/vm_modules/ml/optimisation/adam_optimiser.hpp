@@ -50,9 +50,9 @@ public:
   static void Bind(vm::Module &module)
   {
     module.CreateClassType<fetch::vm_modules::ml::VMAdamOptimiser>("AdamOptimiser")
-        .CreateConstuctor<fetch::vm::Ptr<fetch::vm_modules::ml::VMGraph>,
-                          fetch::vm::Ptr<fetch::vm::String>, fetch::vm::Ptr<fetch::vm::String>,
-                          fetch::vm::Ptr<fetch::vm::String>>()
+        .CreateConstructor<fetch::vm::Ptr<fetch::vm_modules::ml::VMGraph>,
+                           fetch::vm::Ptr<fetch::vm::String>, fetch::vm::Ptr<fetch::vm::String>,
+                           fetch::vm::Ptr<fetch::vm::String>>()
         .CreateMemberFunction("run", &fetch::vm_modules::ml::VMAdamOptimiser::Run);
   }
 

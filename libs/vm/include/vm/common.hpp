@@ -59,10 +59,10 @@ static TypeId const Float32         = 12;
 static TypeId const Float64         = 13;
 static TypeId const Fixed32         = 14;
 static TypeId const Fixed64         = 15;
-static TypeId const PrimitiveMaxId  = 15;
-static TypeId const String          = 16;
-static TypeId const Address         = 17;
-static TypeId const InitializerList = 18;
+static TypeId const InitializerList = 16;
+static TypeId const PrimitiveMaxId  = 16;
+static TypeId const String          = 17;
+static TypeId const Address         = 18;
 static TypeId const NumReserved     = 19;
 }  // namespace TypeIds
 

@@ -36,7 +36,7 @@ public:
   static void Bind(vm::Module &module)
   {
     module.CreateClassType<VMMeanSquareErrorLoss>("MeanSquareErrorLoss")
-        .CreateConstuctor<>()
+        .CreateConstructor<>()
         .CreateMemberFunction("forward", &VMMeanSquareErrorLoss::ForwardWrapper)
         .CreateMemberFunction("backward", &VMMeanSquareErrorLoss::BackwardWrapper);
   }
@@ -74,7 +74,7 @@ public:
 inline void CreateMeanSquareErrorLoss(fetch::vm::Module &module)
 {
   module.CreateClassType<VMMeanSquareErrorLoss>("MeanSquareErrorLoss")
-      .CreateConstuctor<>()
+      .CreateConstructor<>()
       .CreateMemberFunction("Forward", &VMMeanSquareErrorLoss::ForwardWrapper)
       .CreateMemberFunction("Backward", &VMMeanSquareErrorLoss::BackwardWrapper);
 }

@@ -81,7 +81,7 @@ void Analyser::Initialise()
   CreatePrimitiveType("Fixed64", TypeIndex(typeid(fixed_point::fp64_t)), true, TypeIds::Fixed64,
                       fixed64_type_);
   CreatePrimitiveType("InitializerList", TypeIndex(typeid(InitializerListPlaceholder)), false,
-                      TypeIds::InitializerList, initializer_tree_type_);
+                      TypeIds::InitializerList, initializer_list_type_);
 
   CreateClassType("String", TypeIndex(typeid(String)), TypeIds::String, string_type_);
   EnableOperator(string_type_, Operator::Equal);
@@ -208,7 +208,7 @@ void Analyser::UnInitialise()
   state_type_               = nullptr;
   address_type_             = nullptr;
   sharded_state_type_       = nullptr;
-  initializer_tree_type_    = nullptr;
+  initializer_list_type_    = nullptr;
 }
 
 void Analyser::CreateClassType(std::string const &name, TypeIndex type_index)
@@ -1199,7 +1199,7 @@ bool Analyser::AnnotateInitializerList(ExpressionNodePtr const &node)
       return false;
     }
   }
-  SetRVExpression(node, initializer_tree_type_);
+  SetRVExpression(node, initializer_list_type_);
   return true;
 }
 
@@ -1214,7 +1214,7 @@ bool Analyser::ConvertInitializerList(ExpressionNodePtr const &node, TypePtr con
 
 bool Analyser::ConvertInitializerListToArray(ExpressionNodePtr const &node, TypePtr const &type)
 {
-  node->type                          = initializer_tree_type_;
+  node->type                          = initializer_list_type_;
   TypePtr const &element_type         = type->types[0];
   bool           element_is_primitive = element_type->IsPrimitive();
   for (NodePtr const &c : node->children)

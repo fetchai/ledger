@@ -118,7 +118,7 @@ public:
   static void Bind(fetch::vm::Module &module)
   {
     module.CreateClassType<VMGraph>("Graph")
-        .CreateConstuctor<>()
+        .CreateConstructor<>()
         .CreateMemberFunction("setInput", &VMGraph::SetInput)
         .CreateMemberFunction("evaluate", &VMGraph::Evaluate)
         .CreateMemberFunction("backPropagate", &VMGraph::BackPropagateError)

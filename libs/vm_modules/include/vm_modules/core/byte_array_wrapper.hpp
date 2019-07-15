@@ -31,7 +31,7 @@ public:
   static void Bind(vm::Module &module)
   {
     module.CreateClassType<ByteArrayWrapper>("Buffer")
-        .CreateConstuctor<int32_t>()
+        .CreateConstructor<int32_t>()
         .CreateMemberFunction("copy", &ByteArrayWrapper::Copy);
   }
 

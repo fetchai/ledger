@@ -164,7 +164,7 @@ private:
   TypePtr        map_type_;
   TypePtr        sharded_state_type_;
   TypePtr        state_type_;
-  TypePtr        initializer_tree_type_;
+  TypePtr        initializer_list_type_;
 
   BlockNodePtr             root_;
   BlockNodePtrArray        blocks_;
