@@ -22,7 +22,6 @@
 #include <string>
 #include <utility>
 
-#include "../../../../fetch_point.hpp"
 FakeIoObserver::Status FakeIoObserver::Read(std::string const &key, void *data, uint64_t &size)
 {
   // check to see if the key is permitted
@@ -66,16 +65,11 @@ FakeIoObserver::Status FakeIoObserver::Write(std::string const &key, void const 
 
   // store / update the data
   data_[key] = value;
-	STD_CERR << "Write Key: " << key << '\n';
-	for(auto const &kv: data_) STD_CERR << "Write Stored key: " << kv.first << '\n';
-
   return Status::OK;
 }
 
 FakeIoObserver::Status FakeIoObserver::Exists(std::string const &key)
 {
-	STD_CERR << "Exists Key: " << key << '\n';
-	for(auto const &kv: data_) STD_CERR << "Exists Stored key: " << kv.first << '\n';
   return (data_.find(key) != data_.end()) ? Status::OK : Status::ERROR;
 }
 

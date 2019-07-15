@@ -26,7 +26,6 @@
 #include <string>
 #include <vector>
 
-#include "../../../../fetch_point.hpp"
 namespace fetch {
 namespace vm {
 
@@ -341,7 +340,7 @@ void Generator::HandleBlock(IRBlockNodePtr const &block_node)
     {
       IRExpressionNodePtr expression = ConvertToIRExpressionNodePtr(child);
       HandleExpression(expression);
-      if (expression->type->IsVoid() == false)
+      if (!expression->type->IsVoid())
       {
         // The result of the expression is not consumed, so issue an
         // instruction that will pop it and throw it away
@@ -628,7 +627,7 @@ void Generator::HandleVarStatement(IRNodePtr const &node)
   uint16_t       variable_index = function_->AddVariable(v->name, type_id, scope_number);
   v->index                      = variable_index;
 
-  if (v->type->IsPrimitive() == false)
+  if (!v->type->IsPrimitive())
   {
     Scope &scope = scopes_[scope_number];
     scope.objects.push_back(variable_index);
@@ -1229,7 +1228,7 @@ void Generator::HandleFalse(IRExpressionNodePtr const &node)
 
 void Generator::HandleNull(IRExpressionNodePtr const &node)
 {
-  if (node->type->IsPrimitive() == false)
+  if (!node->type->IsPrimitive())
   {
     Executable::Instruction instruction(Opcodes::PushNull);
     instruction.type_id = node->type->resolved_id;
@@ -1519,7 +1518,6 @@ void Generator::HandleInvokeOp(IRExpressionNodePtr const &node)
   IRFunctionPtr       f   = node->function;
   if (f->function_kind == FunctionKind::MemberFunction)
   {
-	  STD_CERR << "Member function\n";
     // Arrange for the instance object to be pushed on to the stack
     HandleExpression(ConvertToIRExpressionNodePtr(lhs));
   }
@@ -1543,7 +1541,6 @@ void Generator::HandleInvokeOp(IRExpressionNodePtr const &node)
     // Opcode-invoked static member function
     // Opcode-invoked member function
     uint16_t                opcode = f->resolved_opcode;
-    STD_CERR << f->name << ": other cases; opcode = " << opcode << "\n";
     Executable::Instruction instruction(opcode);
     instruction.type_id = node->type->resolved_id;
     if (lhs->type)

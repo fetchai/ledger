@@ -20,7 +20,6 @@
 #include "vm/state.hpp"
 
 #include "vm/node.hpp"
-#include "../../../../fetch_point.hpp"
 
 namespace fetch {
 namespace vm {
@@ -56,16 +55,13 @@ inline bool ReadHelper(TypeId type, std::string const &name, Ptr<Object> &val, V
   using fetch::byte_array::ByteArray;
   using fetch::serializers::ByteArrayBuffer;
 
-  STD_CERR << "ReadHelper\n";
   if (!vm->HasIoObserver())
   {
-	  STD_CERR << "No observer\n";
     return true;
   }
 
   if (!vm->IsDefaultSerializeConstructable(type))
   {
-	  STD_CERR << "Not serconst\n";
     vm->RuntimeError("Cannot deserialise object of type " + vm->GetUniqueId(type) +
                      " for which no serialisation constructor exists.");
 
@@ -85,13 +81,11 @@ inline bool ReadHelper(TypeId type, std::string const &name, Ptr<Object> &val, V
 
   if (IoObserverInterface::Status::OK == result)
   {
-STD_CERR << "Status ok\n";
     // chop down the size of the buffer
     buffer.Resize(buffer_size);
   }
   else if (IoObserverInterface::Status::BUFFER_TOO_SMALL == result)
   {
-	  STD_CERR << "Status too small\n";
     // increase the buffer size
     buffer.Resize(buffer_size);
 
@@ -104,22 +98,18 @@ STD_CERR << "Status ok\n";
   // if we successfully extracted the data
   if (IoObserverInterface::Status::OK == result)
   {
-	  STD_CERR << "Status again ok\n";
     ByteArrayBuffer byte_buffer{buffer};
 
     retval = val->DeserializeFrom(byte_buffer);
     if (!retval)
     {
-	    STD_CERR << "Not a retval\n";
       if (!vm->HasError())
       {
-	      STD_CERR << "VM has error\n";
         vm->RuntimeError("Object deserialisation failed");
       }
     }
   }
 
-  STD_CERR << "retval: " << retval << '\n';
   return retval;
 }
 
@@ -129,13 +119,11 @@ inline bool WriteHelper(std::string const &name, Ptr<Object> const &val, VM *vm)
 
   if (!vm->HasIoObserver())
   {
-	  STD_CERR << "No observer\n";
     return true;
   }
 
   if (val == nullptr)
   {
-	  STD_CERR << "Nullptr\n";
     vm->RuntimeError("Cannot serialise null reference");
     return false;
   }
@@ -144,19 +132,15 @@ inline bool WriteHelper(std::string const &name, Ptr<Object> const &val, VM *vm)
   ByteArrayBuffer buffer;
   if (!val->SerializeTo(buffer))
   {
-	  STD_CERR << "Failed\n";
     if (!vm->HasError())
     {
-	    STD_CERR << "But no error\n";
       vm->RuntimeError("Serialisation of object failed.");
     }
     return false;
   }
 
-  STD_CERR << "Deserving observation\n";
   auto const result =
       vm->GetIOObserver().Write(name, buffer.data().pointer(), buffer.data().size());
-  STD_CERR << "Result: " << result << ", expected: " << IoObserverInterface::Status::OK << '\n';
   return result == IoObserverInterface::Status::OK;
 }
 
@@ -217,26 +201,21 @@ public:
 
   void Set(TemplateParameter1 const &value) override
   {
-	  STD_CERR << "Setting to " << type_id(value.type_id) << ' ' << value.Get<Ptr<Address>>()->AsString()->str << '\n';
     SetValue<>(value);
   }
 
   bool Existed() override
   {
-	  STD_CERR << "Existed? " << int(existed_) << "; observer? " << vm_->HasIoObserver() << '\n';
     if (eExisted::undefined == existed_ && vm_->HasIoObserver())
     {
       // mark the variable as existed if we get a positive result back
       existed_ = eExisted::no;
-      STD_CERR << "Probing: " << vm_->GetIOObserver().Exists(name_) << '\n';
       if (Status::OK == vm_->GetIOObserver().Exists(name_))
       {
-	      STD_CERR << "Exists!\n";
         existed_ = eExisted::yes;
       }
     }
 
-    STD_CERR << "Returning Existed: " << (existed_ == eExisted::yes) << '\n';
     return existed_ == eExisted::yes;
   }
 
@@ -248,26 +227,21 @@ private:
   {
     if (mod_status_ != eModifStatus::undefined)
     {
-	    STD_CERR << "Return 1\n";
       return {value_, template_param_type_id_};
     }
     else if (Existed())
     {
-	    STD_CERR << "It existed\n";
       if (ReadHelper(template_param_type_id_, name_, value_, vm_))
       {
-	    STD_CERR << "Return 2\n";
         mod_status_ = eModifStatus::deserialised;
         return {value_, template_param_type_id_};
       }
     }
     else if (default_value)
     {
-	    STD_CERR << "Return 3\n";
       return *default_value;
     }
 
-	    STD_CERR << "Return 4\n";
     vm_->RuntimeError(
         "The state does not represent any value. The value has not been assigned and/or it does "
         "not exist in data storage.");
@@ -278,7 +252,6 @@ private:
   template <typename Y = T>
   meta::EnableIf<IsPrimitive<Y>::value> SetValue(TemplateParameter1 const &value)
   {
-	  STD_CERR << "Setting primitive\n";
     value_      = value.Get<Value>();
     mod_status_ = eModifStatus::modified;
   }
@@ -286,7 +259,6 @@ private:
   template <typename Y = T>
   meta::EnableIf<IsPtr<Y>::value> SetValue(TemplateParameter1 const &value)
   {
-	  STD_CERR << "Setting Ptr\n";
     auto v{value.Get<Value>()};
     if (!v)
     {
@@ -301,7 +273,6 @@ private:
     // if we have an IO observer then inform it of the changes
     if (!vm_->HasError() && mod_status_ == eModifStatus::modified)
     {
-	    STD_CERR << "Flushing modified value\n";
       auto const result = WriteHelper(name_, value_, vm_);
       if (!result && !vm_->HasError())
       {

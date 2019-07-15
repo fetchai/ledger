@@ -43,27 +43,27 @@ using TypeIndex      = std::type_index;
 using TypeIndexArray = std::vector<TypeIndex>;
 
 namespace TypeIds {
-static TypeId const Unknown        = 0;
-static TypeId const Null           = 1;
-static TypeId const Void           = 2;
-static TypeId const Bool           = 3;
-static TypeId const Int8           = 4;
-static TypeId const UInt8          = 5;
-static TypeId const Int16          = 6;
-static TypeId const UInt16         = 7;
-static TypeId const Int32          = 8;
-static TypeId const UInt32         = 9;
-static TypeId const Int64          = 10;
-static TypeId const UInt64         = 11;
-static TypeId const Float32        = 12;
-static TypeId const Float64        = 13;
-static TypeId const Fixed32        = 14;
-static TypeId const Fixed64        = 15;
-static TypeId const PrimitiveMaxId = 15;
-static TypeId const String         = 16;
-static TypeId const Address        = 17;
-static TypeId const InitializerTree = 17;
-static TypeId const NumReserved    = 18;
+static TypeId const Unknown         = 0;
+static TypeId const Null            = 1;
+static TypeId const Void            = 2;
+static TypeId const Bool            = 3;
+static TypeId const Int8            = 4;
+static TypeId const UInt8           = 5;
+static TypeId const Int16           = 6;
+static TypeId const UInt16          = 7;
+static TypeId const Int32           = 8;
+static TypeId const UInt32          = 9;
+static TypeId const Int64           = 10;
+static TypeId const UInt64          = 11;
+static TypeId const Float32         = 12;
+static TypeId const Float64         = 13;
+static TypeId const Fixed32         = 14;
+static TypeId const Fixed64         = 15;
+static TypeId const PrimitiveMaxId  = 15;
+static TypeId const String          = 16;
+static TypeId const Address         = 17;
+static TypeId const InitializerTree = 18;
+static TypeId const NumReserved     = 19;
 }  // namespace TypeIds
 
 enum class NodeCategory : uint8_t
@@ -269,7 +269,9 @@ private:
   friend class Analyser;
 };
 
-struct InitializerTreePlaceholder {};
+struct InitializerTreePlaceholder
+{
+};
 
 }  // namespace vm
 }  // namespace fetch

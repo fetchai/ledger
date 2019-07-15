@@ -30,7 +30,6 @@
 #include <ostream>
 #include <string>
 
-#include "../../../../fetch_point.hpp"
 namespace fetch {
 namespace vm {
 
@@ -40,7 +39,7 @@ std::string Analyser::SET_INDEXED_VALUE = "[SetIndexedValue]";
 
 void Analyser::Initialise()
 {
-  operator_map_        = {{NodeKind::Equal, Operator::Equal},
+  operator_map_ = {{NodeKind::Equal, Operator::Equal},
                    {NodeKind::NotEqual, Operator::NotEqual},
                    {NodeKind::LessThan, Operator::LessThan},
                    {NodeKind::LessThanOrEqual, Operator::LessThanOrEqual},
@@ -81,7 +80,8 @@ void Analyser::Initialise()
                       fixed32_type_);
   CreatePrimitiveType("Fixed64", TypeIndex(typeid(fixed_point::fp64_t)), true, TypeIds::Fixed64,
                       fixed64_type_);
-  CreatePrimitiveType("InitializerTree", TypeIndex(typeid(InitializerTreePlaceholder)), false, TypeIds::InitializerTree, initializer_tree_type_);
+  CreatePrimitiveType("InitializerTree", TypeIndex(typeid(InitializerTreePlaceholder)), false,
+                      TypeIds::InitializerTree, initializer_tree_type_);
 
   CreateClassType("String", TypeIndex(typeid(String)), TypeIds::String, string_type_);
   EnableOperator(string_type_, Operator::Equal);
@@ -481,8 +481,8 @@ void Analyser::BuildIfStatement(NodePtr const &if_statement_node)
 void Analyser::AnnotateBlock(BlockNodePtr const &block_node)
 {
   blocks_.push_back(block_node);
-  bool const is_loop = ((block_node->node_kind == NodeKind::WhileStatement) ||
-                        (block_node->node_kind == NodeKind::ForStatement));
+  bool const is_loop = block_node->node_kind == NodeKind::WhileStatement ||
+                       block_node->node_kind == NodeKind::ForStatement;
   if (is_loop)
   {
     loops_.push_back(block_node);
@@ -589,7 +589,7 @@ void Analyser::AnnotateFunctionDefinitionStatement(BlockNodePtr const &function_
   AnnotateBlock(function_definition_node);
   if (errors_.size() == 0)
   {
-    if (function_->return_type->IsVoid() == false)
+    if (!function_->return_type->IsVoid())
     {
       if (TestBlock(function_definition_node))
       {
@@ -712,11 +712,11 @@ void Analyser::AnnotateVarStatement(BlockNodePtr const &parent_block_node,
     }
     if (expression_node->node_kind == NodeKind::InitializerTree)
     {
-	    if (!ConvertInitializerTree(expression_node, type_node->type))
-	    {
-		    AddError(type_node->line, "incompatible types");
-		    return;
-	    }
+      if (!ConvertInitializerTree(expression_node, type_node->type))
+      {
+        AddError(type_node->line, "incompatible types");
+        return;
+      }
     }
     else if (!expression_node->type->IsNull())
     {
@@ -767,11 +767,11 @@ void Analyser::AnnotateReturnStatement(NodePtr const &return_statement_node)
     }
     if (expression_node->node_kind == NodeKind::InitializerTree)
     {
-	    if (!ConvertInitializerTree(expression_node, function_->return_type))
-	    {
-		    AddError(expression_node->line, "incompatible types");
-		    return;
-	    }
+      if (!ConvertInitializerTree(expression_node, function_->return_type))
+      {
+        AddError(expression_node->line, "incompatible types");
+        return;
+      }
     }
     else if (!expression_node->type->IsNull())
     {
@@ -846,11 +846,11 @@ bool Analyser::AnnotateAssignOp(ExpressionNodePtr const &node)
 
   if (rhs->node_kind == NodeKind::InitializerTree)
   {
-	  if (!ConvertInitializerTree(rhs, lhs->type))
-	  {
-		  AddError(node->line, "incompatible types");
-		  return false;
-	  }
+    if (!ConvertInitializerTree(rhs, lhs->type))
+    {
+      AddError(node->line, "incompatible types");
+      return false;
+    }
   }
   else if (rhs->type->IsVoid())
   {
@@ -885,8 +885,7 @@ bool Analyser::AnnotateInplaceArithmeticOp(ExpressionNodePtr const &node)
 {
   ExpressionNodePtr lhs = ConvertToExpressionNodePtr(node->children[0]);
   ExpressionNodePtr rhs = ConvertToExpressionNodePtr(node->children[1]);
-  if (!AnnotateLHSExpression(node, lhs)
-      || !AnnotateExpression(rhs))
+  if (!AnnotateLHSExpression(node, lhs) || !AnnotateExpression(rhs))
   {
     return false;
   }
@@ -897,8 +896,7 @@ bool Analyser::AnnotateInplaceModuloOp(ExpressionNodePtr const &node)
 {
   ExpressionNodePtr lhs = ConvertToExpressionNodePtr(node->children[0]);
   ExpressionNodePtr rhs = ConvertToExpressionNodePtr(node->children[1]);
-  if (!AnnotateLHSExpression(node, lhs)
-      || !AnnotateExpression(rhs))
+  if (!AnnotateLHSExpression(node, lhs) || !AnnotateExpression(rhs))
   {
     return false;
   }
@@ -913,8 +911,7 @@ bool Analyser::AnnotateInplaceModuloOp(ExpressionNodePtr const &node)
 
 bool Analyser::AnnotateLHSExpression(ExpressionNodePtr const &parent, ExpressionNodePtr const &lhs)
 {
-  if (!AnnotateExpression(lhs)
-      || !IsWriteable(lhs))
+  if (!AnnotateExpression(lhs) || !IsWriteable(lhs))
   {
     return false;
   }
@@ -1178,11 +1175,11 @@ bool Analyser::AnnotateExpression(ExpressionNodePtr const &node)
   }
   case NodeKind::InitializerTree:
   {
-	  if (!AnnotateInitializerTree(node))
-	  {
-		  return false;
-	  }
-	  break;
+    if (!AnnotateInitializerTree(node))
+    {
+      return false;
+    }
+    break;
   }
   default:
   {
@@ -1195,62 +1192,62 @@ bool Analyser::AnnotateExpression(ExpressionNodePtr const &node)
 
 bool Analyser::AnnotateInitializerTree(ExpressionNodePtr const &node)
 {
- for (NodePtr const &child : node->children)
- {
-   if (!AnnotateExpression(ConvertToExpressionNodePtr(child)))
-   {
-     return false;
-   }
- }
- SetRVExpression(node, initializer_tree_type_);
- return true;
+  for (NodePtr const &child : node->children)
+  {
+    if (!AnnotateExpression(ConvertToExpressionNodePtr(child)))
+    {
+      return false;
+    }
+  }
+  SetRVExpression(node, initializer_tree_type_);
+  return true;
 }
 
 bool Analyser::ConvertInitializerTree(ExpressionNodePtr const &node, TypePtr const &type)
 {
- if (type->IsInstantiation())
- {
-	 return type->template_type == array_type_ && ConvertInitializerTreeToArray(node, type);
- }
- return false;
+  if (type->IsInstantiation())
+  {
+    return type->template_type == array_type_ && ConvertInitializerTreeToArray(node, type);
+  }
+  return false;
 }
 
 bool Analyser::ConvertInitializerTreeToArray(ExpressionNodePtr const &node, TypePtr const &type)
 {
-	node->type = initializer_tree_type_;
- TypePtr const &element_type = type->types[0];
- bool element_is_primitive = element_type->IsPrimitive();
- for (NodePtr const &c : node->children)
- {
-   auto child = ConvertToExpressionNodePtr(c);
-   switch (child->node_kind)
-   {
-	   case NodeKind::InitializerTree:
-		   if (!ConvertInitializerTree(child, element_type))
-		   {
-			   return false;
-		   }
-		   break;
+  node->type                          = initializer_tree_type_;
+  TypePtr const &element_type         = type->types[0];
+  bool           element_is_primitive = element_type->IsPrimitive();
+  for (NodePtr const &c : node->children)
+  {
+    auto child = ConvertToExpressionNodePtr(c);
+    switch (child->node_kind)
+    {
+    case NodeKind::InitializerTree:
+      if (!ConvertInitializerTree(child, element_type))
+      {
+        return false;
+      }
+      break;
 
-	   case NodeKind::Null:
-		   if (element_is_primitive)
-		   {
-			   child->type = null_type_;
-			   return false;
-		   }
-		   child->type = element_type;
-		   break;
+    case NodeKind::Null:
+      if (element_is_primitive)
+      {
+        child->type = null_type_;
+        return false;
+      }
+      child->type = element_type;
+      break;
 
-	   default:
-		   if (child->type->IsVoid() || child->type != element_type)
-		   {
-			   return false;
-		   }
-   }
- }
- // all children were convertible to the element type, so set the type
- node->type = type;
- return true;
+    default:
+      if (child->type->IsVoid() || child->type != element_type)
+      {
+        return false;
+      }
+    }
+  }
+  // all children were convertible to the element type, so set the type
+  node->type = type;
+  return true;
 }
 
 bool Analyser::AnnotateEqualityOp(ExpressionNodePtr const &node)
@@ -1277,22 +1274,22 @@ bool Analyser::AnnotateEqualityOp(ExpressionNodePtr const &node)
     bool const lhs_is_primitive = lhs->type->IsPrimitive();
     if (rhs_is_concrete_type)
     {
-	    if (rhs->node_kind == NodeKind::InitializerTree)
-	    {
-		    if (!ConvertInitializerTree(rhs, lhs->type))
-		    {
-			    AddError(node->line, "incompatible types");
-			    return false;
-		    }
-	    }
-	    else if (lhs->node_kind == NodeKind::InitializerTree)
-	    {
-		    if (!ConvertInitializerTree(lhs, rhs->type))
-		    {
-			    AddError(node->line, "incompatible types");
-			    return false;
-		    }
-	    }
+      if (rhs->node_kind == NodeKind::InitializerTree)
+      {
+        if (!ConvertInitializerTree(rhs, lhs->type))
+        {
+          AddError(node->line, "incompatible types");
+          return false;
+        }
+      }
+      else if (lhs->node_kind == NodeKind::InitializerTree)
+      {
+        if (!ConvertInitializerTree(lhs, rhs->type))
+        {
+          AddError(node->line, "incompatible types");
+          return false;
+        }
+      }
 
       if (lhs->type != rhs->type)
       {
@@ -1300,7 +1297,7 @@ bool Analyser::AnnotateEqualityOp(ExpressionNodePtr const &node)
         return false;
       }
       bool const enabled = IsOperatorEnabled(lhs->type, op);
-      if (enabled == false)
+      if (!enabled)
       {
         AddError(node->line, "operator not supported");
         return false;
@@ -1349,7 +1346,7 @@ bool Analyser::AnnotateRelationalOp(ExpressionNodePtr const &node)
   Operator const op = GetOperator(node->node_kind);
   for (NodePtr const &child : node->children)
   {
-    if (AnnotateExpression(ConvertToExpressionNodePtr(child)) == false)
+    if (!AnnotateExpression(ConvertToExpressionNodePtr(child)))
     {
       return false;
     }
@@ -1358,19 +1355,19 @@ bool Analyser::AnnotateRelationalOp(ExpressionNodePtr const &node)
   ExpressionNodePtr rhs = ConvertToExpressionNodePtr(node->children[1]);
   if (rhs->node_kind == NodeKind::InitializerTree)
   {
-	  if (!ConvertInitializerTree(rhs, lhs->type))
-	  {
-		  AddError(node->line, "incompatible types");
-		  return false;
-	  }
+    if (!ConvertInitializerTree(rhs, lhs->type))
+    {
+      AddError(node->line, "incompatible types");
+      return false;
+    }
   }
   else if (lhs->node_kind == NodeKind::InitializerTree)
   {
-	  if (!ConvertInitializerTree(lhs, rhs->type))
-	  {
-		  AddError(node->line, "incompatible types");
-		  return false;
-	  }
+    if (!ConvertInitializerTree(lhs, rhs->type))
+    {
+      AddError(node->line, "incompatible types");
+      return false;
+    }
   }
   if (lhs->type != rhs->type)
   {
@@ -1390,7 +1387,7 @@ bool Analyser::AnnotateBinaryLogicalOp(ExpressionNodePtr const &node)
 {
   for (NodePtr const &child : node->children)
   {
-    if (AnnotateExpression(ConvertToExpressionNodePtr(child)) == false)
+    if (!AnnotateExpression(ConvertToExpressionNodePtr(child)))
     {
       return false;
     }
@@ -1409,7 +1406,7 @@ bool Analyser::AnnotateBinaryLogicalOp(ExpressionNodePtr const &node)
 bool Analyser::AnnotateUnaryLogicalOp(ExpressionNodePtr const &node)
 {
   ExpressionNodePtr operand = ConvertToExpressionNodePtr(node->children[0]);
-  if (AnnotateExpression(operand) == false)
+  if (!AnnotateExpression(operand))
   {
     return false;
   }
@@ -1425,11 +1422,11 @@ bool Analyser::AnnotateUnaryLogicalOp(ExpressionNodePtr const &node)
 bool Analyser::AnnotatePrefixPostfixOp(ExpressionNodePtr const &node)
 {
   ExpressionNodePtr operand = ConvertToExpressionNodePtr(node->children[0]);
-  if (AnnotateLHSExpression(node, operand) == false)
+  if (!AnnotateLHSExpression(node, operand))
   {
     return false;
   }
-  if (MatchType(operand->type, any_integer_type_) == false)
+  if (!MatchType(operand->type, any_integer_type_))
   {
     AddError(node->line, "integral type expected");
     return false;
@@ -1442,11 +1439,11 @@ bool Analyser::AnnotateNegateOp(ExpressionNodePtr const &node)
 {
   Operator const    op      = GetOperator(node->node_kind);
   ExpressionNodePtr operand = ConvertToExpressionNodePtr(node->children[0]);
-  if (AnnotateExpression(operand) == false)
+  if (!AnnotateExpression(operand))
   {
     return false;
   }
-  if (IsOperatorEnabled(operand->type, op) == false)
+  if (!IsOperatorEnabled(operand->type, op))
   {
     AddError(node->line, "operator not supported");
     return false;
@@ -1459,7 +1456,7 @@ bool Analyser::AnnotateArithmeticOp(ExpressionNodePtr const &node)
 {
   for (NodePtr const &child : node->children)
   {
-    if (AnnotateExpression(ConvertToExpressionNodePtr(child)) == false)
+    if (!AnnotateExpression(ConvertToExpressionNodePtr(child)))
     {
       return false;
     }
@@ -1473,14 +1470,14 @@ bool Analyser::AnnotateModuloOp(ExpressionNodePtr const &node)
 {
   for (NodePtr const &child : node->children)
   {
-    if (AnnotateExpression(ConvertToExpressionNodePtr(child)) == false)
+    if (!AnnotateExpression(ConvertToExpressionNodePtr(child)))
     {
       return false;
     }
   }
   ExpressionNodePtr lhs = ConvertToExpressionNodePtr(node->children[0]);
   ExpressionNodePtr rhs = ConvertToExpressionNodePtr(node->children[1]);
-  if ((lhs->type != rhs->type) || (MatchType(lhs->type, any_integer_type_) == false))
+  if (lhs->type != rhs->type || !MatchType(lhs->type, any_integer_type_))
   {
     AddError(node->line, "integral operands expected");
     return false;
@@ -1500,7 +1497,7 @@ bool Analyser::AnnotateIndexOp(ExpressionNodePtr const &node)
       AddError(lhs->line, "unknown symbol '" + lhs->text + "'");
       return false;
     }
-    if (symbol->IsVariable() == false)
+    if (!symbol->IsVariable())
     {
       // Type name or function name
       AddError(lhs->line, "operand does not support index operator");
@@ -1551,7 +1548,7 @@ bool Analyser::AnnotateIndexOp(ExpressionNodePtr const &node)
   {
     NodePtr const &   supplied_index      = node->children[i];
     ExpressionNodePtr supplied_index_node = ConvertToExpressionNodePtr(supplied_index);
-    if (AnnotateExpression(supplied_index_node) == false)
+    if (!AnnotateExpression(supplied_index_node))
     {
       return false;
     }
@@ -1629,7 +1626,7 @@ bool Analyser::AnnotateDotOp(ExpressionNodePtr const &node)
   }
   else
   {
-    if (AnnotateExpression(lhs) == false)
+    if (!AnnotateExpression(lhs))
     {
       return false;
     }
@@ -1719,12 +1716,9 @@ bool Analyser::AnnotateInvokeOp(ExpressionNodePtr const &node)
       return false;
     }
   }
-  else
+  else if (!AnnotateExpression(lhs))
   {
-    if (AnnotateExpression(lhs) == false)
-    {
-      return false;
-    }
+    return false;
   }
 
   ExpressionNodePtrArray supplied_parameter_nodes;
@@ -1732,7 +1726,7 @@ bool Analyser::AnnotateInvokeOp(ExpressionNodePtr const &node)
   {
     NodePtr const &   supplied_parameter      = node->children[i];
     ExpressionNodePtr supplied_parameter_node = ConvertToExpressionNodePtr(supplied_parameter);
-    if (AnnotateExpression(supplied_parameter_node) == false)
+    if (!AnnotateExpression(supplied_parameter_node))
     {
       return false;
     }
@@ -1748,7 +1742,6 @@ bool Analyser::AnnotateInvokeOp(ExpressionNodePtr const &node)
     TypePtrArray actual_parameter_types;
     FunctionPtr  f =
         FindFunction(lhs->type, lhs->fg, supplied_parameter_nodes, actual_parameter_types);
-    STD_CERR << "Function found: " << f << '\n';
     if (f == nullptr)
     {
       // No matching function, or ambiguous
@@ -1766,7 +1759,7 @@ bool Analyser::AnnotateInvokeOp(ExpressionNodePtr const &node)
     }
     else if (f->function_kind == FunctionKind::MemberFunction)
     {
-      if (lhs->function_invoked_on_instance == false)
+      if (!lhs->function_invoked_on_instance)
       {
         AddError(lhs->line, "function '" + lhs->fg->name + "' is a non-static member function");
         return false;
@@ -1863,7 +1856,7 @@ bool Analyser::TestBlock(BlockNodePtr const &block_node)
           bool const   able_to_reach_reach_end_of_block = TestBlock(node);
           able_to_reach_end_of_if_statement |= able_to_reach_reach_end_of_block;
         }
-        if (able_to_reach_end_of_if_statement == false)
+        if (!able_to_reach_end_of_if_statement)
         {
           return false;
         }
@@ -1890,7 +1883,7 @@ bool Analyser::IsWriteable(ExpressionNodePtr const &lhs)
 {
   bool const is_variable_expression = lhs->IsVariableExpression();
   bool const is_lv_expression       = lhs->IsLVExpression();
-  if ((is_variable_expression == false) && (is_lv_expression == false))
+  if (!is_variable_expression && !is_lv_expression)
   {
     AddError(lhs->line, "assignment operand is not writeable");
     return false;
@@ -1940,23 +1933,24 @@ bool Analyser::AnnotateArithmetic(ExpressionNodePtr const &node, ExpressionNodeP
     {
       if (rhs_is_instantiation && IsLeftOperatorEnabled(rhs->type, op))
       {
-	      if (lhs->node_kind == NodeKind::InitializerTree)
-	      {
-		      if (!ConvertInitializerTree(lhs, rhs->type))
-		      {
-			      AddError(node->line, "incompatible types");
-			      return false;
-		      }
-	      }
-	      else {
-		      // primitive op object
-		      TypePtr const &rhs_type = rhs->type->types[0];
-		      if (lhs->type == rhs_type)
-		      {
-			      SetRVExpression(node, rhs->type);
-			      return true;
-		      }
-	      }
+        if (lhs->node_kind == NodeKind::InitializerTree)
+        {
+          if (!ConvertInitializerTree(lhs, rhs->type))
+          {
+            AddError(node->line, "incompatible types");
+            return false;
+          }
+        }
+        else
+        {
+          // primitive op object
+          TypePtr const &rhs_type = rhs->type->types[0];
+          if (lhs->type == rhs_type)
+          {
+            SetRVExpression(node, rhs->type);
+            return true;
+          }
+        }
       }
     }
   }
@@ -1967,22 +1961,23 @@ bool Analyser::AnnotateArithmetic(ExpressionNodePtr const &node, ExpressionNodeP
       // object op primitive
       if (lhs_is_instantiation && IsRightOperatorEnabled(lhs->type, op))
       {
-	      if (rhs->node_kind == NodeKind::InitializerTree)
-	      {
-		      if (!ConvertInitializerTree(rhs, lhs->type))
-		      {
-			      AddError(node->line, "incompatible types");
-			      return false;
-		      }
-	      }
-	      else {
-		      TypePtr const &lhs_type = lhs->type->types[0];
-		      if (lhs_type == rhs->type)
-		      {
-			      SetRVExpression(node, lhs->type);
-			      return true;
-		      }
-	      }
+        if (rhs->node_kind == NodeKind::InitializerTree)
+        {
+          if (!ConvertInitializerTree(rhs, lhs->type))
+          {
+            AddError(node->line, "incompatible types");
+            return false;
+          }
+        }
+        else
+        {
+          TypePtr const &lhs_type = lhs->type->types[0];
+          if (lhs_type == rhs->type)
+          {
+            SetRVExpression(node, lhs->type);
+            return true;
+          }
+        }
       }
     }
     else
@@ -2058,7 +2053,7 @@ bool Analyser::MatchTypes(TypePtr const &type, ExpressionNodePtrArray const &sup
   }
   for (std::size_t i = 0; i < num_types; ++i)
   {
-    auto const &supplied_node = supplied_nodes[i];
+    auto const &   supplied_node = supplied_nodes[i];
     TypePtr const &supplied_type = supplied_node->type;
     if (supplied_type->IsVoid())
     {
@@ -2076,14 +2071,14 @@ bool Analyser::MatchTypes(TypePtr const &type, ExpressionNodePtrArray const &sup
     }
     else if (supplied_node->node_kind == NodeKind::InitializerTree)
     {
-	    // if there's a matching type set, this node's type will be properly set in the end
-	    // otherwise, the whole script does not compile
-	    // so it does not matter if we change node's type now
-	  if (!ConvertInitializerTree(supplied_node, expected_type))
-	  {
-		  return false;
-	  }
-	  actual_types.push_back(expected_type);
+      // if there's a matching type set, this node's type will be properly set in the end
+      // otherwise, the whole script does not compile
+      // so it does not matter if we change node's type now
+      if (!ConvertInitializerTree(supplied_node, expected_type))
+      {
+        return false;
+      }
+      actual_types.push_back(expected_type);
     }
     else
     {
@@ -2119,11 +2114,11 @@ FunctionPtr Analyser::FindFunction(TypePtr const &type, FunctionGroupPtr const &
     actual_types = array[0];
     for (std::size_t i{}; i < actual_types.size(); ++i)
     {
-	    auto const &supplied_node = supplied_nodes[i];
-	    if (supplied_node->node_kind == NodeKind::InitializerTree)
-	    {
-		    ConvertInitializerTree(supplied_node, actual_types[i]);
-	    }
+      auto const &supplied_node = supplied_nodes[i];
+      if (supplied_node->node_kind == NodeKind::InitializerTree)
+      {
+        ConvertInitializerTree(supplied_node, actual_types[i]);
+      }
     }
     return functions[0];
   }
@@ -2134,11 +2129,11 @@ FunctionPtr Analyser::FindFunction(TypePtr const &type, FunctionGroupPtr const &
 TypePtr Analyser::FindType(ExpressionNodePtr const &node)
 {
   SymbolPtr symbol = FindSymbol(node);
-  if (symbol == nullptr || symbol->IsType() == false)
+  if (symbol && symbol->IsType())
   {
-    return nullptr;
+    return ConvertToTypePtr(symbol);
   }
-  return ConvertToTypePtr(symbol);
+  return {};
 }
 
 SymbolPtr Analyser::FindSymbol(ExpressionNodePtr const &node)
@@ -2166,7 +2161,7 @@ SymbolPtr Analyser::FindSymbol(ExpressionNodePtr const &node)
     {
       return nullptr;
     }
-    TypePtrArray      parameter_types;
+    TypePtrArray parameter_types;
     for (std::size_t i = 1; i <= num_expected_parameter_types; ++i)
     {
       ExpressionNodePtr parameter_type_node = ConvertToExpressionNodePtr(node->children[i]);
@@ -2202,7 +2197,7 @@ SymbolPtr Analyser::SearchSymbols(std::string const &name)
   {
     return symbol;
   }
-  for (auto it  = blocks_.rbegin(); it != blocks_.rend(); ++it)
+  for (auto it = blocks_.rbegin(); it != blocks_.rend(); ++it)
   {
     BlockNodePtr const &block_node = *it;
     symbol                         = block_node->symbols->Find(name);

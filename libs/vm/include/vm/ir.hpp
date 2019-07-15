@@ -110,9 +110,9 @@ inline IRVariablePtr CreateIRVariable(VariableKind variable_kind, std::string co
 
 struct IRFunction
 {
-  IRFunction(FunctionKind function_kind__, std::string name__,
-             std::string unique_id__, IRTypePtrArray parameter_types__,
-             IRVariablePtrArray parameter_variables__, IRTypePtr return_type__)
+  IRFunction(FunctionKind function_kind__, std::string name__, std::string unique_id__,
+             IRTypePtrArray parameter_types__, IRVariablePtrArray parameter_variables__,
+             IRTypePtr return_type__)
     : function_kind{function_kind__}
     , name{std::move(name__)}
     , unique_id{std::move(unique_id__)}
@@ -132,7 +132,7 @@ struct IRFunction
   IRTypePtrArray     parameter_types;
   IRVariablePtrArray parameter_variables;
   IRTypePtr          return_type;
-  uint16_t           index = 0;
+  uint16_t           index           = 0;
   uint16_t           resolved_opcode = Opcodes::Unknown;
 };
 using IRFunctionPtr      = std::shared_ptr<IRFunction>;

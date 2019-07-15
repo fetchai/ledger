@@ -63,15 +63,7 @@ BlockNodePtr Parser::Parse(std::string const &filename, std::string const &sourc
   rpn_.clear();
   infix_stack_.clear();
 
-  if (ok == false)
-  {
-    root = nullptr;
-    return nullptr;
-  }
-  else
-  {
-    return root;
-  }
+  return ok ? root : BlockNodePtr{};
 }
 
 void Parser::Tokenise(std::string const &source)
@@ -369,12 +361,12 @@ BlockNodePtr Parser::ParseFunctionDefinition()
     function_definition_node->children.push_back(return_type_node);
     ok = true;
   } while (false);
-  if (ok == false)
+  if (!ok)
   {
     SkipFunctionDefinition();
     return nullptr;
   }
-  if (ParseBlock(*function_definition_node) == false)
+  if (!ParseBlock(*function_definition_node))
   {
     return nullptr;
   }
@@ -544,7 +536,7 @@ BlockNodePtr Parser::ParseWhileStatement()
     return nullptr;
   }
   while_statement_node->children.push_back(std::move(expression));
-  if (ParseBlock(*while_statement_node) == false)
+  if (!ParseBlock(*while_statement_node))
   {
     return nullptr;
   }
@@ -618,7 +610,7 @@ BlockNodePtr Parser::ParseForStatement()
     AddError("expected ')'");
     return nullptr;
   }
-  if (ParseBlock(*for_statement_node) == false)
+  if (!ParseBlock(*for_statement_node))
   {
     return nullptr;
   }
@@ -647,7 +639,7 @@ NodePtr Parser::ParseIfStatement()
         return nullptr;
       }
       if_node->children.push_back(std::move(expression_node));
-      if (ParseBlock(*if_node) == false)
+      if (!ParseBlock(*if_node))
       {
         return nullptr;
       }
@@ -663,7 +655,7 @@ NodePtr Parser::ParseIfStatement()
         return nullptr;
       }
       elseif_node->children.push_back(std::move(expression_node));
-      if (ParseBlock(*elseif_node) == false)
+      if (!ParseBlock(*elseif_node))
       {
         return nullptr;
       }
@@ -673,7 +665,7 @@ NodePtr Parser::ParseIfStatement()
     else if (token_->kind == Token::Kind::Else)
     {
       BlockNodePtr else_node = CreateBlockNode(NodeKind::Else, token_->text, token_->line);
-      if (ParseBlock(*else_node) == false)
+      if (!ParseBlock(*else_node))
       {
         return nullptr;
       }
@@ -746,12 +738,12 @@ NodePtr Parser::ParseVarStatement()
     }
     return nullptr;
   }
-  if ((type == false) && (assign == false))
+  if (!type && !assign)
   {
     AddError("expected ':' or '='");
     return nullptr;
   }
-  if (type == false)
+  if (!type)
   {
     var_statement_node->node_kind = NodeKind::VarDeclarationTypelessAssignmentStatement;
   }
@@ -960,7 +952,7 @@ ExpressionNodePtr Parser::ParseType()
   std::string       name = token_->text;
   ExpressionNodePtr identifier_node =
       CreateExpressionNode(NodeKind::Identifier, token_->text, token_->line);
-  if (IsTemplateName(name) == false)
+  if (!IsTemplateName(name))
   {
     return identifier_node;
   }
@@ -1162,11 +1154,13 @@ ExpressionNodePtr Parser::ParseExpression(bool is_conditional_expression)
       break;
 
     case Token::Kind::LeftParenthesis:
-      parses = HandleOpener(NodeKind::ParenthesisGroup, NodeKind::Invoke, Token::Kind::RightParenthesis, ")");
+      parses = HandleOpener(NodeKind::ParenthesisGroup, NodeKind::Invoke,
+                            Token::Kind::RightParenthesis, ")");
       break;
 
     case Token::Kind::LeftSquareBracket:
-      parses = HandleOpener(NodeKind::Unknown, NodeKind::Index, Token::Kind::RightSquareBracket, "]");
+      parses =
+          HandleOpener(NodeKind::Unknown, NodeKind::Index, Token::Kind::RightSquareBracket, "]");
       break;
 
     case Token::Kind::LeftBrace:
@@ -1208,7 +1202,7 @@ ExpressionNodePtr Parser::ParseExpression(bool is_conditional_expression)
     {
       return nullptr;
     }
-  } while (found_expression_terminator_ == false);
+  } while (!found_expression_terminator_);
   if (groups_.size())
   {
     Expr const &groupop = operators_[groups_.back()];
@@ -1266,7 +1260,7 @@ bool Parser::HandleIdentifier()
     return true;
   }
   std::string name;
-  if (ParseExpressionIdentifier(name) == false)
+  if (!ParseExpressionIdentifier(name))
   {
     return false;
   }
@@ -1278,7 +1272,7 @@ bool Parser::ParseExpressionIdentifier(std::string &name)
 {
   AddOperand(NodeKind::Identifier);
   name = token_->text;
-  if (IsTemplateName(name) == false)
+  if (!IsTemplateName(name))
   {
     return true;
   }
@@ -1299,7 +1293,7 @@ bool Parser::ParseExpressionIdentifier(std::string &name)
       return false;
     }
     std::string subtypename;
-    if (ParseExpressionIdentifier(subtypename) == false)
+    if (!ParseExpressionIdentifier(subtypename))
     {
       return false;
     }

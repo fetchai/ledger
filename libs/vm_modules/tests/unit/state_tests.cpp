@@ -46,7 +46,6 @@ TEST_F(StateTests, AddressSerialisationTest)
   static char const *ser_src = R"(
     function main()
       State<Address>("addr").set(Address("MnrRHdvCkdZodEwM855vemS5V3p2hiWmcSQ8JEzD4ZjPdsYtB"));
-      printLn(State<Address>("addr").get().toString());
     endfunction
   )";
 

@@ -22,7 +22,6 @@
 #include <cstddef>
 #include <cstdint>
 
-#include "../../../../fetch_point.hpp"
 namespace fetch {
 namespace vm {
 
@@ -220,15 +219,12 @@ bool VM::Execute(std::string &error, Variant &output)
     instruction_pc_  = pc_;
     instruction_     = &function_->instructions[pc_++];
     OpcodeInfo &info = opcode_info_array_[instruction_->opcode];
-    STD_CERR << "Handling " << info.name << '\n';
     if (info.handler)
     {
-	    STD_CERR << "Running handler\n";
       info.handler(this);
     }
     else
     {
-	    STD_CERR << "No handler\n";
       RuntimeError("unknown opcode");
       break;
     }
