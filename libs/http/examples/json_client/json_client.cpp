@@ -16,10 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/commandline/params.hpp"
 #include "http/json_client.hpp"
 
-#include "core/commandline/params.hpp"
-
+#include <cstdint>
+#include <cstdlib>
 #include <iostream>
 
 using fetch::http::JsonClient;

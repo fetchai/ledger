@@ -21,9 +21,8 @@
 #include "http/module.hpp"
 #include "ledger/chaincode/chain_code_cache.hpp"
 
-#include <algorithm>
 #include <fstream>
-#include <sstream>
+#include <string>
 #include <vector>
 
 namespace fetch {

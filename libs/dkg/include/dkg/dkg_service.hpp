@@ -230,7 +230,7 @@ private:
   /// @{
   Promise    pending_promise_;          ///< The cached pending promise
   PrivateKey aeon_secret_share_{};      ///< The current secret share for the aeon
-  PublicKey  aeon_share_public_key_{};  /// < The shared public key for the aeon
+  PublicKey  aeon_share_public_key_{};  ///< The shared public key for the aeon
   PublicKey  aeon_public_key_{};        ///< The public key for our secret share
   /// @}
 

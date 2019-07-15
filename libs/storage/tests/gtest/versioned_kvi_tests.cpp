@@ -53,7 +53,7 @@ TestDataArray GenerateTestData(RNG &rng, ReferenceMap &ref_map)
   static constexpr std::size_t NUM_ENTRIES        = 5;
   static constexpr std::size_t IDENTITY_BIT_SIZE  = 256;
   static constexpr std::size_t IDENTITY_BYTE_SIZE = IDENTITY_BIT_SIZE / 8u;
-  static constexpr std::size_t IDENTITY_WORD_SIZE = IDENTITY_BYTE_SIZE / sizeof(RNG::random_type);
+  static constexpr std::size_t IDENTITY_WORD_SIZE = IDENTITY_BYTE_SIZE / sizeof(RNG::RandomType);
 
   TestDataArray values;
 
@@ -63,7 +63,7 @@ TestDataArray GenerateTestData(RNG &rng, ReferenceMap &ref_map)
     key.Resize(IDENTITY_BYTE_SIZE);
 
     // generate a random key
-    auto *key_raw = reinterpret_cast<RNG::random_type *>(key.pointer());
+    auto *key_raw = reinterpret_cast<RNG::RandomType *>(key.pointer());
     for (std::size_t j = 0; j < IDENTITY_WORD_SIZE; ++j)
     {
       key_raw[j] = rng();

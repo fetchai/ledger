@@ -36,6 +36,13 @@ public:
   StructuredData(vm::VM *vm, vm::TypeId type_id);
   ~StructuredData() override = default;
 
+protected:
+  bool SerializeTo(vm::ByteArrayBuffer &buffer) override;
+  bool DeserializeFrom(vm::ByteArrayBuffer &buffer) override;
+
+  bool ToJSON(vm::JSONVariant &variant) override;
+  bool FromJSON(vm::JSONVariant const &variant) override;
+
 private:
   bool Has(vm::Ptr<vm::String> const &s);
 

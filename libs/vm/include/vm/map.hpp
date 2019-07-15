@@ -29,8 +29,8 @@ namespace vm {
 class IMap : public Object
 {
 public:
-  IMap()          = delete;
-  virtual ~IMap() = default;
+  IMap()           = delete;
+  ~IMap() override = default;
   static Ptr<IMap>           Constructor(VM *vm, TypeId type_id);
   virtual int32_t            Count() const                                                     = 0;
   virtual TemplateParameter2 GetIndexedValue(TemplateParameter1 const &key)                    = 0;

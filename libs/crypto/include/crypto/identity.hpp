@@ -17,12 +17,14 @@
 //
 //------------------------------------------------------------------------------
 
-#include <utility>
-
 #include "core/byte_array/byte_array.hpp"
 #include "crypto/fnv.hpp"
 #include "crypto/openssl_common.hpp"
 #include "crypto/signature_register.hpp"
+
+#include <cstddef>
+#include <cstdint>
+#include <utility>
 
 namespace fetch {
 namespace crypto {
@@ -32,8 +34,7 @@ class Identity
 public:
   using edcsa_curve_type = crypto::openssl::ECDSACurve<NID_secp256k1>;
 
-  Identity()
-  {}
+  Identity() = default;
 
   Identity(Identity const &other) = default;
   Identity &operator=(Identity const &other) = default;
@@ -151,12 +152,18 @@ namespace std {
 template <>
 struct hash<fetch::crypto::Identity>
 {
-  std::size_t operator()(fetch::crypto::Identity const &value) const
+  std::size_t operator()(fetch::crypto::Identity const &value) const noexcept
   {
     fetch::crypto::FNV hashStream;
     hashStream.Update(value.identifier());
-    hashStream.Update(value.parameters());
-    return hashStream.Final<>();
+
+    auto const params = value.parameters();
+    hashStream.Update(&params, sizeof(decltype(params)));
+
+    auto const        arr = hashStream.Final();
+    std::size_t const out = *reinterpret_cast<std::size_t const *>(arr.pointer());
+
+    return out;
   }
 };
 

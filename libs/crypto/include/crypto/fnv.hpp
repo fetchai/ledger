@@ -18,32 +18,44 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/byte_array.hpp"
+#include "core/byte_array/const_byte_array.hpp"
 #include "crypto/fnv_detail.hpp"
-#include "crypto/stream_hasher.hpp"
+#include "crypto/hasher_interface.hpp"
+
+#include <cstddef>
+#include <cstdint>
+#include <memory>
 
 namespace fetch {
 namespace crypto {
 
-class FNV : public StreamHasher, protected detail::FNV1a
+namespace internal {
+class FnvHasherInternals;
+}
+
+class FNV : public HasherInterface
 {
 public:
-  using base_type      = StreamHasher;
-  using base_impl_type = detail::FNV1a;
-  using context_type   = typename base_impl_type::number_type;
+  using HasherInterface::Update;
+  using HasherInterface::Final;
 
-  using StreamHasher::Update;
-  using StreamHasher::Final;
+  static constexpr std::size_t size_in_bytes = 8u;
+
+  FNV();
+  ~FNV()           = default;
+  FNV(FNV const &) = delete;
+  FNV(FNV &&)      = delete;
+
+  FNV &operator=(FNV const &) = delete;
+  FNV &operator=(FNV &&) = delete;
 
   void        Reset() override;
-  bool        Update(uint8_t const *data_to_hash, std::size_t const &size) override;
-  void        Final(uint8_t *hash, std::size_t const &size) override;
-  std::size_t GetSizeInBytes() const override;
+  bool        Update(uint8_t const *data_to_hash, std::size_t size) override;
+  void        Final(uint8_t *hash) override;
+  std::size_t HashSizeInBytes() const override;
 
-  template <typename T = context_type>
-  auto Final() -> decltype(base_type::Final<T>())
-  {
-    return base_type::Final<T>();
-  }
+private:
+  std::shared_ptr<internal::FnvHasherInternals> impl_;
 };
 
 }  // namespace crypto
@@ -54,7 +66,7 @@ namespace std {
 template <>
 struct hash<fetch::byte_array::ConstByteArray>
 {
-  std::size_t operator()(fetch::byte_array::ConstByteArray const &value) const
+  std::size_t operator()(fetch::byte_array::ConstByteArray const &value) const noexcept
   {
     fetch::crypto::detail::FNV1a hash;
     hash.update(value.pointer(), value.size());

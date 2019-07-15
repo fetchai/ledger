@@ -1,3 +1,4 @@
+#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -16,23 +17,36 @@
 //
 //------------------------------------------------------------------------------
 
-#include "crypto/stream_hasher.hpp"
+#include "crypto/hasher_interface.hpp"
+#include "crypto/openssl_hasher.hpp"
 
 namespace fetch {
 namespace crypto {
 
-bool StreamHasher::Update(byte_array::ConstByteArray const &s)
+class SHA512 : public HasherInterface
 {
-  return Update(s.pointer(), s.size());
-}
+public:
+  using HasherInterface::Update;
+  using HasherInterface::Final;
 
-byte_array::ByteArray StreamHasher::Final()
-{
-  byte_array::ByteArray digest;
-  digest.Resize(GetSizeInBytes());
-  Final(digest.pointer(), digest.size());
-  return digest;
-}
+  static constexpr std::size_t size_in_bytes = 64u;
+
+  SHA512()               = default;
+  ~SHA512() override     = default;
+  SHA512(SHA512 const &) = delete;
+  SHA512(SHA512 &&)      = delete;
+
+  SHA512 &operator=(SHA512 const &) = delete;
+  SHA512 &operator=(SHA512 &&) = delete;
+
+  void        Reset() override;
+  bool        Update(uint8_t const *data_to_hash, std::size_t size) override;
+  void        Final(uint8_t *hash) override;
+  std::size_t HashSizeInBytes() const override;
+
+private:
+  internal::OpenSslHasher openssl_hasher_{internal::OpenSslDigestType::SHA2_512};
+};
 
 }  // namespace crypto
 }  // namespace fetch
