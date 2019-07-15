@@ -36,6 +36,7 @@
 #include "network/muddle/rpc/server.hpp"
 #include "network/service/service_client.hpp"
 #include "storage/document_store_protocol.hpp"
+#include "storage/object_stack.hpp"
 #include "storage/object_store_protocol.hpp"
 
 #include <array>
@@ -94,67 +95,16 @@ public:
   StorageUnitClient &operator=(StorageUnitClient &&) = delete;
 
 private:
-  /**
-   * On Disk representation of a merkle tree
-   */
-  struct MerkleTreeBlock
-  {
-    static constexpr std::size_t DATA_BUFFER_SIZE = 512;
-
-    MerkleTreeBlock()
-    {
-      std::memset(this, -1, sizeof(*this));
-    }
-
-    explicit MerkleTreeBlock(crypto::MerkleTree const &tree)
-    {
-      serializers::TypedByteArrayBuffer buff;
-      buff << tree;
-
-      assert(buff.data().size() < DATA_BUFFER_SIZE);
-
-      size_ = buff.data().size();
-      std::memcpy(data_.data(), buff.data().pointer(), size_);
-    }
-
-    crypto::MerkleTree Extract(uint64_t num_lanes)
-    {
-      crypto::MerkleTree ret{num_lanes};
-
-      // extract the buffer
-      byte_array::ByteArray data{};
-      data.Resize(size_);
-      std::memcpy(data.pointer(), data_.data(), size_);
-
-      try
-      {
-        serializers::TypedByteArrayBuffer buff{data};
-        buff >> ret;
-      }
-      catch (std::exception const &)
-      {
-        FETCH_LOG_WARN(LOGGING_NAME, "FAILED TO DESERIALIZE MERKLE TREE PROXY! ", size_);
-        return ret;
-      }
-
-      return ret;
-    }
-
-    using DataBuffer = std::array<uint8_t, DATA_BUFFER_SIZE>;
-
-    uint64_t   size_{0};
-    DataBuffer data_;
-  };
-
   using Client               = muddle::rpc::Client;
   using ClientPtr            = std::shared_ptr<Client>;
   using LaneIndex            = LaneIdentity::lane_type;
   using AddressList          = std::vector<MuddleEndpoint::Address>;
   using MerkleTree           = crypto::MerkleTree;
-  using PermanentMerkleStack = storage::RandomAccessStack<MerkleTreeBlock>;
+  using PermanentMerkleStack = fetch::storage::ObjectStack<crypto::MerkleTree>;
   using Mutex                = fetch::mutex::Mutex;
 
-  static constexpr char const *MERKLE_FILENAME = "merkle_stack.db";
+  static constexpr char const *MERKLE_FILENAME_DOC   = "merkle_stack.db";
+  static constexpr char const *MERKLE_FILENAME_INDEX = "merkle_stack_index.db";
 
   Address const &LookupAddress(ShardIndex shard) const;
   Address const &LookupAddress(storage::ResourceID const &resource) const;

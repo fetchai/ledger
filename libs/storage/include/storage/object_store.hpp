@@ -57,6 +57,7 @@ public:
   ObjectStore(ObjectStore &&rhs)      = delete;
   ObjectStore &operator=(ObjectStore const &rhs) = delete;
   ObjectStore &operator=(ObjectStore &&rhs) = delete;
+  virtual ~ObjectStore()                    = default;
 
   /**
    * Create a new file for the object store with the filename parameters for the
@@ -207,6 +208,7 @@ public:
 
   std::size_t size() const
   {
+    // std::lock_guard<mutex::Mutex> lock(mutex_); // huh?
     return store_.size();
   }
 

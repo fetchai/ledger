@@ -65,7 +65,7 @@ StorageUnitClient::StorageUnitClient(MuddleEndpoint &muddle, ShardConfigs const 
     throw std::logic_error("Incorrect number of shard configs");
   }
 
-  permanent_state_merkle_stack_.Load(MERKLE_FILENAME, true);
+  permanent_state_merkle_stack_.Load(MERKLE_FILENAME_DOC, MERKLE_FILENAME_INDEX, true);
   FETCH_LOG_INFO(LOGGING_NAME,
                  "After recovery, size of merkle stack is: ", permanent_state_merkle_stack_.size());
 }
@@ -142,14 +142,15 @@ bool StorageUnitClient::RevertToHash(Hash const &hash, uint64_t index)
       tree[i] = GENESIS_MERKLE_ROOT;
     }
 
-    permanent_state_merkle_stack_.New(MERKLE_FILENAME);  // clear the stack
-    permanent_state_merkle_stack_.Push(MerkleTreeBlock{tree});
+    permanent_state_merkle_stack_.New(MERKLE_FILENAME_DOC,
+                                      MERKLE_FILENAME_INDEX);  // clear the stack
+    permanent_state_merkle_stack_.Push(tree);
   }
   else
   {
     // Try to find whether we believe the hash exists (index into merkle stack)
-    MerkleTreeBlock merkle_block;
-    uint64_t const  merkle_stack_size = permanent_state_merkle_stack_.size();
+    MerkleTree     tree{num_lanes()};
+    uint64_t const merkle_stack_size = permanent_state_merkle_stack_.size();
 
     if (index >= merkle_stack_size)
     {
@@ -159,12 +160,12 @@ bool StorageUnitClient::RevertToHash(Hash const &hash, uint64_t index)
       return false;
     }
 
-    permanent_state_merkle_stack_.Get(index, merkle_block);
-    tree = merkle_block.Extract(num_lanes());
+    assert(permanent_state_merkle_stack_.Get(index, tree));
 
     if (tree.root() != hash)
     {
-      FETCH_LOG_ERROR(LOGGING_NAME, "Index given for merkle hash didn't match merkle stack!");
+      FETCH_LOG_ERROR(LOGGING_NAME, "Index given for merkle hash didn't match merkle stack! root: ",
+                      tree.root().ToBase64(), " expected: ", hash.ToBase64());
       return false;
     }
 
@@ -258,23 +259,25 @@ byte_array::ConstByteArray StorageUnitClient::Commit(uint64_t commit_index)
 
     if (permanent_state_merkle_stack_.size() != commit_index)
     {
-      FETCH_LOG_WARN(LOGGING_NAME,
-                     "Committing to an index where there is a mismatch to the merkle stack!");
+      FETCH_LOG_WARN(
+          LOGGING_NAME,
+          "Committing to an index where there is a mismatch to the merkle stack! commit: ",
+          commit_index, " stack: ", permanent_state_merkle_stack_.size());
     }
 
-    while (permanent_state_merkle_stack_.size() != commit_index + 1)
+    while (permanent_state_merkle_stack_.size() != commit_index)
     {
-      if (permanent_state_merkle_stack_.size() > commit_index + 1)
+      if (permanent_state_merkle_stack_.size() > commit_index)
       {
         permanent_state_merkle_stack_.Pop();
       }
       else
       {
-        permanent_state_merkle_stack_.Push(MerkleTreeBlock{});
+        permanent_state_merkle_stack_.Push(MerkleTree{num_lanes()});
       }
     }
 
-    permanent_state_merkle_stack_.Set(commit_index, MerkleTreeBlock{tree});
+    permanent_state_merkle_stack_.Push(tree);
     permanent_state_merkle_stack_.Flush(false);
   }
 
@@ -291,7 +294,7 @@ bool StorageUnitClient::HashExists(Hash const &hash, uint64_t index)
 // TODO(HUT): should be const correct
 bool StorageUnitClient::HashInStack(Hash const &hash, uint64_t index)
 {
-  MerkleTreeBlock proxy;
+  MerkleTree tree{num_lanes()};
   FETCH_LOCK(merkle_mutex_);
   uint64_t const merkle_stack_size = permanent_state_merkle_stack_.size();
 
@@ -302,10 +305,9 @@ bool StorageUnitClient::HashInStack(Hash const &hash, uint64_t index)
     return false;
   }
 
-  permanent_state_merkle_stack_.Get(index, proxy);
-  MerkleTree deser = proxy.Extract(num_lanes());
+  assert(permanent_state_merkle_stack_.Get(index, tree));
 
-  if (deser.root() == hash)
+  if (tree.root() == hash)
   {
     return true;
   }
@@ -602,7 +604,7 @@ void StorageUnitClient::Reset()
   // Clear merkle stack etc.
   FETCH_LOCK(merkle_mutex_);
   current_merkle_ = MerkleTree{num_lanes()};
-  permanent_state_merkle_stack_.New(MERKLE_FILENAME);
+  permanent_state_merkle_stack_.New(MERKLE_FILENAME_DOC, MERKLE_FILENAME_INDEX);
 }
 
 }  // namespace ledger
