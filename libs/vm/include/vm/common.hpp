@@ -62,7 +62,7 @@ static TypeId const Fixed64         = 15;
 static TypeId const PrimitiveMaxId  = 15;
 static TypeId const String          = 16;
 static TypeId const Address         = 17;
-static TypeId const InitializerTree = 18;
+static TypeId const InitializerList = 18;
 static TypeId const NumReserved     = 19;
 }  // namespace TypeIds
 
@@ -143,7 +143,7 @@ enum class NodeKind : uint16_t
   InplaceDivide                             = 64,
   Modulo                                    = 65,
   InplaceModulo                             = 66,
-  InitializerTree                           = 67
+  InitializerList                           = 67
 };
 
 enum class ExpressionKind : uint8_t
@@ -269,7 +269,7 @@ private:
   friend class Analyser;
 };
 
-struct InitializerTreePlaceholder
+struct InitializerListPlaceholder
 {
 };
 

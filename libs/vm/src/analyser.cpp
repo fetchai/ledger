@@ -80,8 +80,8 @@ void Analyser::Initialise()
                       fixed32_type_);
   CreatePrimitiveType("Fixed64", TypeIndex(typeid(fixed_point::fp64_t)), true, TypeIds::Fixed64,
                       fixed64_type_);
-  CreatePrimitiveType("InitializerTree", TypeIndex(typeid(InitializerTreePlaceholder)), false,
-                      TypeIds::InitializerTree, initializer_tree_type_);
+  CreatePrimitiveType("InitializerList", TypeIndex(typeid(InitializerListPlaceholder)), false,
+                      TypeIds::InitializerList, initializer_tree_type_);
 
   CreateClassType("String", TypeIndex(typeid(String)), TypeIds::String, string_type_);
   EnableOperator(string_type_, Operator::Equal);
@@ -710,9 +710,9 @@ void Analyser::AnnotateVarStatement(BlockNodePtr const &parent_block_node,
     {
       return;
     }
-    if (expression_node->node_kind == NodeKind::InitializerTree)
+    if (expression_node->node_kind == NodeKind::InitializerList)
     {
-      if (!ConvertInitializerTree(expression_node, type_node->type))
+      if (!ConvertInitializerList(expression_node, type_node->type))
       {
         AddError(type_node->line, "incompatible types");
         return;
@@ -765,9 +765,9 @@ void Analyser::AnnotateReturnStatement(NodePtr const &return_statement_node)
     {
       return;
     }
-    if (expression_node->node_kind == NodeKind::InitializerTree)
+    if (expression_node->node_kind == NodeKind::InitializerList)
     {
-      if (!ConvertInitializerTree(expression_node, function_->return_type))
+      if (!ConvertInitializerList(expression_node, function_->return_type))
       {
         AddError(expression_node->line, "incompatible types");
         return;
@@ -844,9 +844,9 @@ bool Analyser::AnnotateAssignOp(ExpressionNodePtr const &node)
     return false;
   }
 
-  if (rhs->node_kind == NodeKind::InitializerTree)
+  if (rhs->node_kind == NodeKind::InitializerList)
   {
-    if (!ConvertInitializerTree(rhs, lhs->type))
+    if (!ConvertInitializerList(rhs, lhs->type))
     {
       AddError(node->line, "incompatible types");
       return false;
@@ -1173,9 +1173,9 @@ bool Analyser::AnnotateExpression(ExpressionNodePtr const &node)
     }
     break;
   }
-  case NodeKind::InitializerTree:
+  case NodeKind::InitializerList:
   {
-    if (!AnnotateInitializerTree(node))
+    if (!AnnotateInitializerList(node))
     {
       return false;
     }
@@ -1190,7 +1190,7 @@ bool Analyser::AnnotateExpression(ExpressionNodePtr const &node)
   return true;
 }
 
-bool Analyser::AnnotateInitializerTree(ExpressionNodePtr const &node)
+bool Analyser::AnnotateInitializerList(ExpressionNodePtr const &node)
 {
   for (NodePtr const &child : node->children)
   {
@@ -1203,16 +1203,16 @@ bool Analyser::AnnotateInitializerTree(ExpressionNodePtr const &node)
   return true;
 }
 
-bool Analyser::ConvertInitializerTree(ExpressionNodePtr const &node, TypePtr const &type)
+bool Analyser::ConvertInitializerList(ExpressionNodePtr const &node, TypePtr const &type)
 {
   if (type->IsInstantiation())
   {
-    return type->template_type == array_type_ && ConvertInitializerTreeToArray(node, type);
+    return type->template_type == array_type_ && ConvertInitializerListToArray(node, type);
   }
   return false;
 }
 
-bool Analyser::ConvertInitializerTreeToArray(ExpressionNodePtr const &node, TypePtr const &type)
+bool Analyser::ConvertInitializerListToArray(ExpressionNodePtr const &node, TypePtr const &type)
 {
   node->type                          = initializer_tree_type_;
   TypePtr const &element_type         = type->types[0];
@@ -1222,8 +1222,8 @@ bool Analyser::ConvertInitializerTreeToArray(ExpressionNodePtr const &node, Type
     auto child = ConvertToExpressionNodePtr(c);
     switch (child->node_kind)
     {
-    case NodeKind::InitializerTree:
-      if (!ConvertInitializerTree(child, element_type))
+    case NodeKind::InitializerList:
+      if (!ConvertInitializerList(child, element_type))
       {
         return false;
       }
@@ -1274,17 +1274,17 @@ bool Analyser::AnnotateEqualityOp(ExpressionNodePtr const &node)
     bool const lhs_is_primitive = lhs->type->IsPrimitive();
     if (rhs_is_concrete_type)
     {
-      if (rhs->node_kind == NodeKind::InitializerTree)
+      if (rhs->node_kind == NodeKind::InitializerList)
       {
-        if (!ConvertInitializerTree(rhs, lhs->type))
+        if (!ConvertInitializerList(rhs, lhs->type))
         {
           AddError(node->line, "incompatible types");
           return false;
         }
       }
-      else if (lhs->node_kind == NodeKind::InitializerTree)
+      else if (lhs->node_kind == NodeKind::InitializerList)
       {
-        if (!ConvertInitializerTree(lhs, rhs->type))
+        if (!ConvertInitializerList(lhs, rhs->type))
         {
           AddError(node->line, "incompatible types");
           return false;
@@ -1305,7 +1305,7 @@ bool Analyser::AnnotateEqualityOp(ExpressionNodePtr const &node)
     }
     else
     {
-      if (lhs_is_primitive && lhs->node_kind != NodeKind::InitializerTree)
+      if (lhs_is_primitive && lhs->node_kind != NodeKind::InitializerList)
       {
         // unable to compare LHS primitive type to RHS null
         AddError(node->line, "incompatible types");
@@ -1320,7 +1320,7 @@ bool Analyser::AnnotateEqualityOp(ExpressionNodePtr const &node)
     if (rhs_is_concrete_type)
     {
       bool const rhs_is_primitive = rhs->type->IsPrimitive();
-      if (rhs_is_primitive && rhs->node_kind != NodeKind::InitializerTree)
+      if (rhs_is_primitive && rhs->node_kind != NodeKind::InitializerList)
       {
         // unable to compare LHS null to RHS primitive type
         AddError(node->line, "incompatible types");
@@ -1353,17 +1353,17 @@ bool Analyser::AnnotateRelationalOp(ExpressionNodePtr const &node)
   }
   ExpressionNodePtr lhs = ConvertToExpressionNodePtr(node->children[0]);
   ExpressionNodePtr rhs = ConvertToExpressionNodePtr(node->children[1]);
-  if (rhs->node_kind == NodeKind::InitializerTree)
+  if (rhs->node_kind == NodeKind::InitializerList)
   {
-    if (!ConvertInitializerTree(rhs, lhs->type))
+    if (!ConvertInitializerList(rhs, lhs->type))
     {
       AddError(node->line, "incompatible types");
       return false;
     }
   }
-  else if (lhs->node_kind == NodeKind::InitializerTree)
+  else if (lhs->node_kind == NodeKind::InitializerList)
   {
-    if (!ConvertInitializerTree(lhs, rhs->type))
+    if (!ConvertInitializerList(lhs, rhs->type))
     {
       AddError(node->line, "incompatible types");
       return false;
@@ -1519,7 +1519,7 @@ bool Analyser::AnnotateIndexOp(ExpressionNodePtr const &node)
     }
   }
 
-  if (lhs->node_kind == NodeKind::InitializerTree)
+  if (lhs->node_kind == NodeKind::InitializerList)
   {
     // TODO(bipll): while indexing into initialization trees makes perfect easily defined sense
     // a correct implementation would take too much for now
@@ -1933,9 +1933,9 @@ bool Analyser::AnnotateArithmetic(ExpressionNodePtr const &node, ExpressionNodeP
     {
       if (rhs_is_instantiation && IsLeftOperatorEnabled(rhs->type, op))
       {
-        if (lhs->node_kind == NodeKind::InitializerTree)
+        if (lhs->node_kind == NodeKind::InitializerList)
         {
-          if (!ConvertInitializerTree(lhs, rhs->type))
+          if (!ConvertInitializerList(lhs, rhs->type))
           {
             AddError(node->line, "incompatible types");
             return false;
@@ -1961,9 +1961,9 @@ bool Analyser::AnnotateArithmetic(ExpressionNodePtr const &node, ExpressionNodeP
       // object op primitive
       if (lhs_is_instantiation && IsRightOperatorEnabled(lhs->type, op))
       {
-        if (rhs->node_kind == NodeKind::InitializerTree)
+        if (rhs->node_kind == NodeKind::InitializerList)
         {
-          if (!ConvertInitializerTree(rhs, lhs->type))
+          if (!ConvertInitializerList(rhs, lhs->type))
           {
             AddError(node->line, "incompatible types");
             return false;
@@ -2069,12 +2069,12 @@ bool Analyser::MatchTypes(TypePtr const &type, ExpressionNodePtrArray const &sup
       }
       actual_types.push_back(expected_type);
     }
-    else if (supplied_node->node_kind == NodeKind::InitializerTree)
+    else if (supplied_node->node_kind == NodeKind::InitializerList)
     {
       // if there's a matching type set, this node's type will be properly set in the end
       // otherwise, the whole script does not compile
       // so it does not matter if we change node's type now
-      if (!ConvertInitializerTree(supplied_node, expected_type))
+      if (!ConvertInitializerList(supplied_node, expected_type))
       {
         return false;
       }
@@ -2115,9 +2115,9 @@ FunctionPtr Analyser::FindFunction(TypePtr const &type, FunctionGroupPtr const &
     for (std::size_t i{}; i < actual_types.size(); ++i)
     {
       auto const &supplied_node = supplied_nodes[i];
-      if (supplied_node->node_kind == NodeKind::InitializerTree)
+      if (supplied_node->node_kind == NodeKind::InitializerList)
       {
-        ConvertInitializerTree(supplied_node, actual_types[i]);
+        ConvertInitializerList(supplied_node, actual_types[i]);
       }
     }
     return functions[0];

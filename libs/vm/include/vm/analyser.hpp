@@ -207,14 +207,14 @@ private:
   bool    AnnotateIndexOp(ExpressionNodePtr const &node);
   bool    AnnotateDotOp(ExpressionNodePtr const &node);
   bool    AnnotateInvokeOp(ExpressionNodePtr const &node);
-  bool    AnnotateInitializerTree(ExpressionNodePtr const &node);
+  bool    AnnotateInitializerList(ExpressionNodePtr const &node);
   bool    TestBlock(BlockNodePtr const &block_node);
   bool    IsWriteable(ExpressionNodePtr const &lhs);
   bool    AnnotateArithmetic(ExpressionNodePtr const &node, ExpressionNodePtr const &lhs,
                              ExpressionNodePtr const &rhs);
   TypePtr ResolveType(TypePtr const &type, TypePtr const &instantiated_template_type);
-  bool    ConvertInitializerTree(ExpressionNodePtr const &node, TypePtr const &type);
-  bool    ConvertInitializerTreeToArray(ExpressionNodePtr const &node, TypePtr const &type);
+  bool    ConvertInitializerList(ExpressionNodePtr const &node, TypePtr const &type);
+  bool    ConvertInitializerListToArray(ExpressionNodePtr const &node, TypePtr const &type);
 
   bool        MatchType(TypePtr const &supplied_type, TypePtr const &expected_type) const;
   bool        MatchTypes(TypePtr const &type, ExpressionNodePtrArray const &supplied_nodes,
