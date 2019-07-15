@@ -72,10 +72,7 @@ int main(int ac, char **av)
   std::cout << "prediction.ToString(): " << prediction.ToString() << std::endl;
 
   // training loop - early stopping will prevent long training time
-  estimator.Train(1, loss);
-  std::cout << "initial loss: " << loss << std::endl;
   estimator.Train(1000000, loss);
-  std::cout << "final loss: " << loss << std::endl;
 
   // run estimator in testing mode
   estimator.Predict(test_input, prediction);
