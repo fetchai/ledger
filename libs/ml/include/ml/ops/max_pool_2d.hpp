@@ -19,6 +19,9 @@
 
 #include "ml/ops/ops.hpp"
 
+#include <cassert>
+#include <vector>
+
 namespace fetch {
 namespace ml {
 namespace ops {
@@ -37,8 +40,7 @@ public:
     : kernel_size_{kernel_size}
     , stride_size_{stride_size}
   {}
-
-  ~MaxPool2D() = default;
+  ~MaxPool2D() override = default;
 
   std::shared_ptr<SaveableParams<ArrayType>> GetOpSaveableParams()
   {
@@ -132,15 +134,16 @@ public:
     auto     erit = error_signal.cbegin();
     for (SizeType n_i{0}; n_i < error_signal.shape().at(2); n_i++)  // iterate over batch
     {
-      for (SizeType iw{0}; iw < error_signal.shape().at(1);
-           iw++)  // Iterate width over kernel stride
+      // Iterate width over kernel stride
+      for (SizeType iw{0}; iw < error_signal.shape().at(1); iw++)
       {
         iterw = iw * stride_size_;
-        for (SizeType ih{0}; ih < error_signal.shape().at(2);
-             ih++)  // Iterate height over kernel stride
+        // Iterate height over kernel stride
+        for (SizeType ih{0}; ih < error_signal.shape().at(2); ih++)
         {
           iterh = ih * stride_size_;
-          for (SizeType c{0}; c < error_signal.shape().at(0); ++c)  // Iterate over output channels
+          // Iterate over output channels
+          for (SizeType c{0}; c < error_signal.shape().at(0); ++c)
           {
             max       = inputs.at(0).get().At(c, iterw, iterh, n_i);
             max_iterw = iterw;

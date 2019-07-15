@@ -17,10 +17,13 @@
 //
 //------------------------------------------------------------------------------
 
+#include "math/activation_functions/elu.hpp"
 #include "math/fundamental_operators.hpp"
 #include "math/matrix_operations.hpp"
-#include "math/ml/activation_functions/elu.hpp"
 #include "ml/ops/ops.hpp"
+
+#include <cassert>
+#include <vector>
 
 namespace fetch {
 namespace ml {

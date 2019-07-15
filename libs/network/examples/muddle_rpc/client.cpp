@@ -48,9 +48,7 @@ int main()
   sleep_for(milliseconds{2000});
   FETCH_LOG_INFO("RpcClientMain", "============================");
 
-  auto const server_key = fetch::byte_array::FromBase64(SERVER_PUBLIC_KEY);
-
-  auto client = std::make_shared<Client>("Client", muddle.AsEndpoint(), server_key, 1, 1);
+  auto client = std::make_shared<Client>("Client", muddle.AsEndpoint(), 1, 1);
 
   PromiseList promises;
   promises.reserve(20);
@@ -59,7 +57,7 @@ int main()
 
   for (uint64_t i = 0; i < 20; ++i)
   {
-    promises.push_back(client->Call(1, 1, i, i));
+    promises.push_back(client->CallSpecificAddress(muddle.identity().identifier(), 1, 1, i, i));
   }
 
   for (auto &prom : promises)

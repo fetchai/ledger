@@ -16,20 +16,42 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/string/ends_with.hpp"
 #include "telemetry/counter.hpp"
 
 #include <iostream>
 
 namespace fetch {
 namespace telemetry {
+namespace {
 
-//# HELP go_memstats_lookups_total Total number of pointer lookups.
-//# TYPE go_memstats_lookups_total counter
-// go_memstats_lookups_total 0
-
-void Counter::ToStream(std::ostream &stream) const
+bool ValidateName(std::string const &name)
 {
-  WritePrefix(stream, "counter") << counter_ << '\n';
+  return core::EndsWith(name, "_total");
+}
+
+}  // namespace
+
+Counter::Counter(std::string name, std::string description, Labels labels)
+  : Measurement(std::move(name), std::move(description), std::move(labels))
+{
+  if (!ValidateName(this->name()))
+  {
+    throw std::runtime_error("Incorrect counter name, must end with _total");
+  }
+}
+
+/**
+ * Write the value of the metric to the stream so as to be consumed by external components
+ *
+ * @param stream The stream to be updated
+ * @param mode The mode to be used when generating the stream
+ */
+
+void Counter::ToStream(std::ostream &stream, StreamMode mode) const
+{
+  WriteHeader(stream, "counter", mode);
+  WriteValuePrefix(stream) << counter_ << '\n';
 }
 
 }  // namespace telemetry

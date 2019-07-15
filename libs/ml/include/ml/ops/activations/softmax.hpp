@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/ml/activation_functions/softmax.hpp"
+#include "math/activation_functions/softmax.hpp"
 #include "ml/ops/ops.hpp"
 
 #include <cassert>
@@ -36,14 +36,13 @@ public:
   using ArrayType     = T;
   using DataType      = typename ArrayType::Type;
   using SizeType      = typename ArrayType::SizeType;
-  using ArrayPtrType  = std::shared_ptr<ArrayType>;
   using VecTensorType = typename Ops<T>::VecTensorType;
 
   explicit Softmax(SizeType axis = 1)
     : axis_(axis)
   {}
+  ~Softmax() override = default;
 
-  ~Softmax() = default;
 
   std::shared_ptr<SaveableParams<ArrayType>> GetOpSaveableParams()
   {
@@ -52,14 +51,15 @@ public:
     return std::make_shared<SaveableParams<ArrayType>>(sp);
   }
 
-  void Forward(VecTensorType const &inputs, ArrayType &output)
+  void Forward(VecTensorType const &inputs, ArrayType &output) override
   {
     assert(output.shape() == ComputeOutputShape(inputs));
     assert(inputs.size() == 1);
     fetch::math::Softmax(inputs.at(0).get(), output, axis_);
   }
 
-  std::vector<ArrayType> Backward(VecTensorType const &inputs, ArrayType const &error_signal)
+  std::vector<ArrayType> Backward(VecTensorType const &inputs,
+                                  ArrayType const &    error_signal) override
   {
     assert(inputs.size() == 1);
     assert(inputs.front().get().shape() == error_signal.shape());
@@ -92,7 +92,7 @@ public:
     return {return_signal};
   }
 
-  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const
+  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
   {
     return inputs.front().get().shape();
   }

@@ -16,9 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ledger/chain/transaction_rpc_serializers.hpp"
 #include "ledger/storage_unit/transaction_store_sync_protocol.hpp"
 
-#include "ledger/chain/transaction_rpc_serializers.hpp"
+#include <algorithm>
+#include <cstdint>
+#include <vector>
 
 using fetch::byte_array::ConstByteArray;
 

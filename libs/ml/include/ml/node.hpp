@@ -21,9 +21,12 @@
 #include "ml/ops/ops.hpp"
 #include "ml/saveable_params.hpp"
 
+#include <functional>
 #include <memory>
+#include <string>
 #include <unordered_map>
 #include <unordered_set>
+#include <utility>
 #include <vector>
 
 namespace fetch {
@@ -39,7 +42,7 @@ public:
   virtual ArrayType &                                           Evaluate(bool is_training)      = 0;
   virtual void                                                  AddInput(NodePtrType const &i)  = 0;
   virtual void                                                  AddOutput(NodePtrType const &i) = 0;
-  virtual std::vector<std::pair<NodeInterface<T> *, ArrayType>> BackPropagate(
+  virtual std::vector<std::pair<NodeInterface<T> *, ArrayType>> BackPropagateSignal(
       ArrayType const &error_signal)                                          = 0;
   virtual void                            ResetCache(bool input_size_changed) = 0;
   virtual std::vector<NodePtrType> const &GetOutputs() const                  = 0;
@@ -83,7 +86,7 @@ public:
 
   std::vector<std::reference_wrapper<const ArrayType>>          GatherInputs() const;
   virtual ArrayType &                                           Evaluate(bool is_training);
-  virtual std::vector<std::pair<NodeInterface<T> *, ArrayType>> BackPropagate(
+  virtual std::vector<std::pair<NodeInterface<T> *, ArrayType>> BackPropagateSignal(
       ArrayType const &error_signal);
 
   void                                    AddInput(NodePtrType const &i);
@@ -127,16 +130,21 @@ std::vector<std::reference_wrapper<const T>> Node<T, O>::GatherInputs() const
 template <typename T, class O>
 T &Node<T, O>::Evaluate(bool is_training)
 {
+
   this->SetTraining(is_training);
+
   if (cached_output_status_ != CachedOutputState::VALID_CACHE)
   {
     std::vector<std::reference_wrapper<const ArrayType>> inputs = GatherInputs();
+
     if (cached_output_status_ == CachedOutputState::CHANGED_SIZE)
     {
       auto output_shape = this->ComputeOutputShape(inputs);
-      if (cached_output_.shape() != output_shape)
+
+      if (cached_output_.shape() !=
+          output_shape)  // make shape compatible right before we do the forwarding
       {
-        cached_output_.ResizeFromShape(output_shape);
+        cached_output_.Reshape(output_shape);
       }
     }
     this->Forward(inputs, cached_output_);
@@ -154,7 +162,7 @@ T &Node<T, O>::Evaluate(bool is_training)
  * @return
  */
 template <typename T, class O>
-std::vector<std::pair<NodeInterface<T> *, T>> Node<T, O>::BackPropagate(
+std::vector<std::pair<NodeInterface<T> *, T>> Node<T, O>::BackPropagateSignal(
     ArrayType const &error_signal)
 {
   std::vector<std::reference_wrapper<const ArrayType>> inputs = GatherInputs();
@@ -165,7 +173,7 @@ std::vector<std::pair<NodeInterface<T> *, T>> Node<T, O>::BackPropagate(
   auto bp_it = back_propagated_error_signals.begin();
   for (auto &i : input_nodes_)
   {
-    auto ret = i->BackPropagate(*bp_it);
+    auto ret = i->BackPropagateSignal(*bp_it);
     non_back_propagated_error_signals.insert(non_back_propagated_error_signals.end(), ret.begin(),
                                              ret.end());
     ++bp_it;

@@ -106,7 +106,7 @@ int main(int argc, char **argv)
 
   fetch::vm::VM vm(module.get());
   // attach std::cout for printing
-  vm.AttachOutputDevice("stdout", std::cout);
+  vm.AttachOutputDevice(fetch::vm::VM::STDOUT, std::cout);
 
   if (!vm.GenerateExecutable(ir, "main_ir", executable, errors))
   {

@@ -23,10 +23,12 @@
 
 #include <cassert>
 #include <cmath>
+#include <cstddef>
+#include <cstdint>
 #include <functional>
 #include <iomanip>
-#include <iostream>
 #include <limits>
+#include <ostream>
 
 namespace fetch {
 namespace fixed_point {
@@ -159,7 +161,7 @@ inline void Multiply(FixedPoint<I, F> const &lhs, FixedPoint<I, F> const &rhs,
 template <typename T>
 constexpr inline int32_t HighestSetBit(T n_input)
 {
-  const auto n = static_cast<uint64_t>(n_input);
+  auto const n = static_cast<uint64_t>(n_input);
 
   if (n == 0)
   {
@@ -2183,7 +2185,7 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::Sqrt(FixedPoint<I, F> const &x)
  *
  * Special cases
  * * x or y is NaN    -> pow(x, y) = NaN
- * * x == 0, y == 0   -> pow(x, y) = Nan
+ * * x == 0, y == 0   -> pow(x, y) = NaN
  * * x == 0, y != 0   -> pow(x, y) = 0
  * * x any, y == 0    -> pow(x, y) = 1
  * * x < 0, y non int -> pow(x, y) = NaN
@@ -2390,7 +2392,7 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::CosApproxPi4(FixedPoint<I, F> const
 }
 
 /**
- * Calculate the FixedPoint sinus of x sin(x).
+ * Calculate the FixedPoint sine of x sin(x).
  *
  * Special cases
  * * x is NaN    -> sin(x) = NaN
@@ -2439,7 +2441,7 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::Sin(FixedPoint<I, F> const &x)
 }
 
 /**
- * Calculate the FixedPoint cosinus of x cos(x).
+ * Calculate the FixedPoint cosine of x cos(x).
  *
  * Special cases
  * * x is NaN    -> cos(x) = NaN
@@ -2485,13 +2487,13 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::Cos(FixedPoint<I, F> const &x)
  * Calculate the FixedPoint tangent of x tan(x).
  *
  * Special cases
- * * x is NaN    -> sqrt(NaN) = NaN
- * * x == 1      -> sqrt(x) = 1
- * * x == 0      -> sqrt(x) = 0
- * * x < 0       -> sqrt(x) = NaN
- * * x == +inf   -> sqrt(+inf) = +inf
+ * * x is NaN    -> tan(NaN) = NaN
+ * * x == 1      -> tan(x) = 1
+ * * x == 0      -> tan(x) = 0
+ * * x < 0       -> tan(x) = NaN
+ * * x == +inf   -> tan(+inf) = +inf
  *
- * Calculation of cos(x) is done by doing range reduction of x in the range [0, 2*PI]
+ * Calculation of tan(x) is done by doing range reduction of x in the range [0, 2*PI]
  * The tan(r) is calculated using a Pade approximant, 6th order,
  *
  * if x < Pi/4:
@@ -2577,7 +2579,7 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::Tan(FixedPoint<I, F> const &x)
  * Special cases
  * * x is NaN    -> asin(x) = NaN
  * * x is +/-inf -> asin(x) = NaN
- * * |x| > 1     -> asin(x) = Nan
+ * * |x| > 1     -> asin(x) = NaN
  * * x < 0       -> asin(x) = -asin(-x)
  *
  * errors for x ∈ (-1, 1):
@@ -2654,9 +2656,9 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::ASin(FixedPoint<I, F> const &x)
  * Calculate the FixedPoint arccos of x acos(x).
  *
  * Special cases
- * * x is NaN    -> asin(x) = NaN
- * * x is +/-inf -> asin(x) = NaN
- * * |x| > 1     -> asin(x) = Nan
+ * * x is NaN    -> acos(x) = NaN
+ * * x is +/-inf -> acos(x) = NaN
+ * * |x| > 1     -> acos(x) = NaN
  *
  * We use the identity acos(x) = Pi/2 - asin(x) to calculate the value
  *
@@ -2839,7 +2841,7 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::ATan2(FixedPoint<I, F> const &y,
 }
 
 /**
- * Calculate the FixedPoint hyperbolic sinus of x sinh(x).
+ * Calculate the FixedPoint hyperbolic sine of x sinh(x).
  *
  * Special cases
  * * x is NaN    -> sinh(x) = NaN
@@ -2882,7 +2884,7 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::SinH(FixedPoint<I, F> const &x)
 }
 
 /**
- * Calculate the FixedPoint hyperbolic cosinus of x cosh(x).
+ * Calculate the FixedPoint hyperbolic cosine of x cosh(x).
  *
  * Special cases
  * * x is NaN    -> cosh(x) = NaN
@@ -2890,7 +2892,7 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::SinH(FixedPoint<I, F> const &x)
  * Calculated using the definition formula:
  *
  *            e^x + e^(-x)
- * sinh(x) = --------------
+ * cosh(x) = --------------
  *                2
  *
  * errors for x ∈ [-3, 3):
@@ -2928,7 +2930,7 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::CosH(FixedPoint<I, F> const &x)
  * Calculated using the definition formula:
  *
  *            e^x - e^(-x)
- * sinh(x) = --------------
+ * tanh(x) = --------------
  *            e^x + e^(-x)
  *
  * errors for x ∈ [-3, 3):
@@ -2964,7 +2966,7 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::TanH(FixedPoint<I, F> const &x)
 }
 
 /**
- * Calculate the FixedPoint inverse of hyperbolic sinus of x, asinh(x).
+ * Calculate the FixedPoint inverse of hyperbolic sine of x, asinh(x).
  *
  * Special cases
  * * x is NaN    -> asinh(x) = NaN
@@ -3003,7 +3005,7 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::ASinH(FixedPoint<I, F> const &x)
 }
 
 /**
- * Calculate the FixedPoint inverse of hyperbolic cosinus of x, acosh(x).
+ * Calculate the FixedPoint inverse of hyperbolic cosine of x, acosh(x).
  *
  * Special cases
  * * x is NaN    -> acosh(x) = NaN

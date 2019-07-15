@@ -23,6 +23,9 @@
 #include "math/matrix_operations.hpp"
 #include "ml/ops/ops.hpp"
 
+#include <cassert>
+#include <vector>
+
 namespace fetch {
 namespace ml {
 namespace ops {
@@ -44,8 +47,7 @@ public:
     rng_.Seed(random_seed);
     drop_values_ = ArrayType{0};
   }
-
-  virtual ~Dropout() = default;
+  ~Dropout() override = default;
 
   std::shared_ptr<SaveableParams<ArrayType>> GetOpSaveableParams()
   {
@@ -92,7 +94,8 @@ public:
     }
   }
 
-  std::vector<ArrayType> Backward(VecTensorType const &inputs, ArrayType const &error_signal)
+  std::vector<ArrayType> Backward(VecTensorType const &inputs,
+                                  ArrayType const &    error_signal) override
   {
     FETCH_UNUSED(inputs);
     assert(inputs.size() == 1);
@@ -110,7 +113,7 @@ public:
     return {return_signal};
   }
 
-  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const
+  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
   {
     return inputs.front().get().shape();
   }

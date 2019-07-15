@@ -17,7 +17,11 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/macros.hpp"
 #include "ml/ops/ops.hpp"
+
+#include <cassert>
+#include <vector>
 
 namespace fetch {
 namespace ml {
@@ -32,8 +36,8 @@ public:
   using SizeType      = typename ArrayType::SizeType;
   using VecTensorType = typename Ops<T>::VecTensorType;
 
-  Subtract()          = default;
-  virtual ~Subtract() = default;
+  Subtract()           = default;
+  ~Subtract() override = default;
 
   std::shared_ptr<SaveableParams<ArrayType>> GetOpSaveableParams()
   {
@@ -42,7 +46,7 @@ public:
     return std::make_shared<SaveableParams<ArrayType>>(sp);
   }
 
-  virtual void Forward(VecTensorType const &inputs, ArrayType &output)
+  void Forward(VecTensorType const &inputs, ArrayType &output) override
   {
     assert(inputs.size() == 2);
     assert(inputs.at(0).get().size() == inputs.at(1).get().size());
@@ -51,10 +55,10 @@ public:
     fetch::math::Subtract(inputs[0].get(), inputs[1].get(), output);
   }
 
-  virtual std::vector<ArrayType> Backward(VecTensorType const &inputs,
-                                          ArrayType const &    error_signal)
+  std::vector<ArrayType> Backward(VecTensorType const &inputs,
+                                  ArrayType const &    error_signal) override
   {
-    (void)inputs;
+    FETCH_UNUSED(inputs);
     assert(inputs.size() == 2);
     assert(inputs.at(0).get().size() == inputs.at(1).get().size());
     assert(error_signal.size() == inputs.at(1).get().size());
@@ -62,7 +66,7 @@ public:
     return {error_signal, fetch::math::Multiply(error_signal, DataType{-1})};
   }
 
-  virtual std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const
+  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
   {
     return inputs.front().get().shape();
   }

@@ -46,7 +46,7 @@ public:
   {
     assert(inputs.size() == 2);
     assert(output.shape() == this->ComputeOutputShape(inputs));
-    fetch::math::Add(inputs[0].get(), inputs[1].get(), output);
+    fetch::math::Add(inputs.at(0).get(), inputs.at(1).get(), output);
   }
 
   std::vector<ArrayType> Backward(VecTensorType const &inputs, ArrayType const &error_signal)

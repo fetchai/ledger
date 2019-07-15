@@ -19,24 +19,27 @@
 #include "file_loader.hpp"
 #include "math/distance/cosine.hpp"
 #include "math/tensor.hpp"
+#include "ml/dataloaders/ReadCSV.hpp"
 #include "ml/dataloaders/commodity_dataloader.hpp"
 #include "ml/graph.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/ops/activation.hpp"
-#include "ml/ops/loss_functions/mean_square_error.hpp"
+#include "ml/ops/loss_functions/mean_square_error_loss.hpp"
 #include "ml/ops/transpose.hpp"
 #include "ml/optimisation/adam_optimiser.hpp"
 #include "ml/state_dict.hpp"
 
 #include <fstream>
 #include <iostream>
+#include <sstream>
+#include <stdexcept>
 #include <string>
+#include <vector>
 
-using DataType         = double;
-using ArrayType        = fetch::math::Tensor<DataType>;
-using GraphType        = fetch::ml::Graph<ArrayType>;
-using CostFunctionType = typename fetch::ml::ops::MeanSquareError<ArrayType>;
-using OptimiserType    = typename fetch::ml::optimisers::AdamOptimiser<ArrayType, CostFunctionType>;
+using DataType      = double;
+using ArrayType     = fetch::math::Tensor<DataType>;
+using GraphType     = fetch::ml::Graph<ArrayType>;
+using OptimiserType = typename fetch::ml::optimisers::AdamOptimiser<ArrayType>;
 
 using namespace fetch::ml::ops;
 using namespace fetch::ml::layers;
@@ -133,7 +136,13 @@ std::pair<std::string, std::vector<std::string>> ReadArchitecture(
   previous_layer_name = layer_name;
   node_names.emplace_back(previous_layer_name);
 
-  g->AddNode<PlaceHolder<ArrayType>>(layer_name, {});  // add node for input
+  // add input node
+  g->AddNode<PlaceHolder<ArrayType>>(layer_name, {});
+
+  // Add label node
+  std::string label_name = "num_label";
+  g->AddNode<PlaceHolder<ArrayType>>(label_name, {});
+  node_names.push_back(label_name);
 
   // Iterate through fields adding nodes to graph
   while (previous_layer_name.find("output") == std::string::npos)
@@ -187,6 +196,11 @@ std::pair<std::string, std::vector<std::string>> ReadArchitecture(
     throw std::runtime_error("Unexpected node type");
   }
 
+  // Add loss function
+  std::string error_output = g->AddNode<fetch::ml::ops::MeanSquareErrorLoss<ArrayType>>(
+      "num_error", {layer_name, label_name});
+  node_names.emplace_back(error_output);
+
   return std::make_pair(dataname, node_names);
 }
 
@@ -213,7 +227,6 @@ DataType get_loss(std::shared_ptr<GraphType> const &g_ptr, std::string const &te
 {
   DataType                                                          loss         = 0;
   DataType                                                          loss_counter = 0;
-  CostFunctionType                                                  criterion;
   fetch::ml::dataloaders::CommodityDataLoader<ArrayType, ArrayType> loader;
 
   loader.AddData(test_x_file, test_y_file);
@@ -221,10 +234,11 @@ DataType get_loss(std::shared_ptr<GraphType> const &g_ptr, std::string const &te
   while (!loader.IsDone())
   {
     auto input = loader.GetNext();
+    g_ptr->SetInput(node_names.at(1), input.first);
     g_ptr->SetInput(node_names.front(), input.second.at(0));
 
-    auto slice_output = g_ptr->Evaluate(node_names.back(), false);
-    loss += criterion.Forward({slice_output, input.first});
+    auto loss_tensor = g_ptr->Evaluate(node_names.back(), false);
+    loss += *(loss_tensor.begin());
     loss_counter++;
   }
 
@@ -337,7 +351,7 @@ int main(int argc, char **argv)
       auto input = loader.GetNext();
       g_ptr->SetInput("num_input", input.second.at(0));
 
-      auto slice_output = g_ptr->Evaluate(node_names.back(), false);
+      auto slice_output = g_ptr->Evaluate(node_names.at(node_names.size() - 2), false);
       output.Slice(j).Assign(slice_output);
       test_y.Slice(j).Assign(input.first);
       j++;
@@ -362,7 +376,8 @@ int main(int argc, char **argv)
     DataType loss{0};
 
     // Initialise Optimiser
-    OptimiserType optimiser(g_ptr, {node_names.front()}, node_names.back(), LEARNING_RATE);
+    OptimiserType optimiser(g_ptr, {node_names.front()}, node_names.at(1), node_names.back(),
+                            LEARNING_RATE);
 
     fetch::ml::dataloaders::CommodityDataLoader<ArrayType, ArrayType> loader;
 
@@ -446,7 +461,7 @@ int main(int argc, char **argv)
       auto input = loader.GetNext();
       g_ptr->SetInput("num_input", input.second.at(0));
 
-      auto slice_output = g_ptr->Evaluate(node_names.back(), false);
+      auto slice_output = g_ptr->Evaluate(node_names.at(node_names.size() - 2), false);
       // write slice_output to csv
       if (first)
       {

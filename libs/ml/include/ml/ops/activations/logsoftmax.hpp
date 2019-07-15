@@ -18,10 +18,13 @@
 //------------------------------------------------------------------------------
 
 #include "core/macros.hpp"
+#include "math/activation_functions/softmax.hpp"
 #include "math/fundamental_operators.hpp"
-#include "math/ml/activation_functions/softmax.hpp"
 #include "math/standard_functions/log.hpp"
 #include "ml/ops/ops.hpp"
+
+#include <cassert>
+#include <vector>
 
 namespace fetch {
 namespace ml {
@@ -36,11 +39,10 @@ public:
   using SizeType      = typename ArrayType::SizeType;
   using VecTensorType = typename Ops<T>::VecTensorType;
 
-  LogSoftmax(SizeType axis = 0)
+  explicit LogSoftmax(SizeType axis = 0)
     : axis_(axis)
   {}
-
-  ~LogSoftmax() = default;
+  ~LogSoftmax() override = default;
 
   std::shared_ptr<SaveableParams<ArrayType>> GetOpSaveableParams()
   {
@@ -49,7 +51,7 @@ public:
     return std::make_shared<SaveableParams<ArrayType>>(sp);
   }
 
-  void Forward(VecTensorType const &inputs, ArrayType &output)
+  void Forward(VecTensorType const &inputs, ArrayType &output) override
   {
     assert(output.shape() == ComputeOutputShape(inputs));
     assert(inputs.size() == 1);
@@ -57,7 +59,8 @@ public:
     fetch::math::Log(output, output);
   }
 
-  std::vector<ArrayType> Backward(VecTensorType const &inputs, ArrayType const &error_signal)
+  std::vector<ArrayType> Backward(VecTensorType const &inputs,
+                                  ArrayType const &    error_signal) override
   {
     assert(inputs.size() == 1);
     assert(inputs.front().get().shape() == error_signal.shape());
@@ -90,7 +93,7 @@ public:
     return {return_signal};
   }
 
-  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const
+  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
   {
     return inputs.front().get().shape();
   }

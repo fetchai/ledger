@@ -56,21 +56,30 @@ public:
     return std::make_shared<SaveableParams<ArrayType>>(sp);
   }
 
-  virtual void Forward(VecTensorType const &inputs, ArrayType &output)
+  virtual void Forward(VecTensorType const &inputs, ArrayType &output) override
   {
     assert(this->output_);
     assert(inputs.size() == 1);
     assert(inputs.front().get().shape().size() == 2);
 
-    SizeType batch_size = inputs.front().get().shape(1);
+    SizeType batch_size = inputs.front().get().shape().at(1);
 
-    if (!this->embeddings_output_ ||
-        this->embeddings_output_->shape().at(1) != inputs.front().get().shape().at(0) ||
-        this->embeddings_output_->shape().at(0) != this->output_->shape().at(0))
+    // test embeddings_output_ not null ptr
+    if (!this->embeddings_output_)
     {
       this->embeddings_output_ = std::make_shared<ArrayType>(std::vector<SizeType>(
           {this->output_->shape().at(0), inputs.front().get().shape(0), batch_size}));
     }
+    // test embeddings_output_ batch size has changed
+    else if (this->embeddings_output_->shape().at(2) != batch_size)
+    {
+      this->embeddings_output_->Reshape({this->embeddings_output_->shape().at(0),
+                                         this->embeddings_output_->shape().at(1), batch_size});
+    }
+
+    assert(this->embeddings_output_->shape().at(0) == this->output_->shape().at(0));
+    assert(this->embeddings_output_->shape().at(1) == inputs.front().get().shape().at(0));
+    assert(this->embeddings_output_->shape().at(2) == batch_size);
 
     ArrayType transposed_input = inputs.front().get().Transpose();
     auto      e_it             = transposed_input.begin();
@@ -93,7 +102,7 @@ public:
   }
 
   virtual std::vector<ArrayType> Backward(VecTensorType const &inputs,
-                                          ArrayType const &    error_signal)
+                                          ArrayType const &    error_signal) override
   {
     assert(inputs.size() == 1);
     assert(inputs.front().get().shape().size() == 2);
@@ -128,7 +137,7 @@ public:
     return {ArrayType(error_signal.shape())};
   }
 
-  virtual void Step(typename T::Type learning_rate)
+  virtual void Step(typename T::Type learning_rate) override
   {
     for (auto const &r : updated_rows_)
     {
@@ -148,6 +157,13 @@ public:
       }
     }
     updated_rows_.clear();
+  }
+
+  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
+  {
+    std::vector<SizeType> output_shape = {
+        this->output_->shape().at(0), inputs.front().get().shape(0), inputs.front().get().shape(1)};
+    return output_shape;
   }
 
   static constexpr char const *DESCRIPTOR = "Embedding";

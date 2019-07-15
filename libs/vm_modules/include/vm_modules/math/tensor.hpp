@@ -63,12 +63,12 @@ public:
     module.CreateClassType<VMTensor>("Tensor")
         .CreateConstuctor<fetch::vm::Ptr<fetch::vm::Array<VMTensor::SizeType>>>()
         .CreateSerializeDefaultConstuctor<>()
-        .CreateMemberFunction("At", &VMTensor::AtOne)
-        .CreateMemberFunction("At", &VMTensor::AtTwo)
-        .CreateMemberFunction("At", &VMTensor::AtThree)
-        .CreateMemberFunction("SetAt", &VMTensor::SetAt)
-        .CreateMemberFunction("Fill", &VMTensor::Fill)
-        .CreateMemberFunction("ToString", &VMTensor::ToString);
+        .CreateMemberFunction("at", &VMTensor::AtOne)
+        .CreateMemberFunction("at", &VMTensor::AtTwo)
+        .CreateMemberFunction("at", &VMTensor::AtThree)
+        .CreateMemberFunction("setAt", &VMTensor::SetAt)
+        .CreateMemberFunction("fill", &VMTensor::Fill)
+        .CreateMemberFunction("toString", &VMTensor::ToString);
   }
 
   fetch::math::SizeVector shape()

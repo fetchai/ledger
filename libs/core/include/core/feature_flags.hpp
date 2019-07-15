@@ -31,6 +31,8 @@ namespace core {
 class FeatureFlags
 {
 public:
+  constexpr static char const *MAIN_CHAIN_BLOOM_FILTER = "main_chain_bloom_filter";
+
   using ConstByteArray = byte_array::ConstByteArray;
   using FlagSet        = std::unordered_set<ConstByteArray>;
   using Iterator       = FlagSet::iterator;

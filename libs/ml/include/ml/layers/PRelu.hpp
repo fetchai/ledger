@@ -23,7 +23,10 @@
 #include "vectorise/fixed_point/fixed_point.hpp"
 
 #include <cmath>
+#include <cstdint>
 #include <random>
+#include <string>
+#include <vector>
 
 namespace fetch {
 namespace ml {
@@ -38,8 +41,8 @@ public:
   using SizeType     = typename ArrayType::SizeType;
   using WeightsInit  = fetch::ml::ops::WeightsInitialisation;
 
-  PRelu(std::uint64_t in, std::string const &name = "PRelu",
-        WeightsInit init_mode = WeightsInit::XAVIER_GLOROT)
+  explicit PRelu(std::uint64_t in, std::string const &name = "PRelu",
+                 WeightsInit init_mode = WeightsInit::XAVIER_GLOROT)
   {
     std::string input =
         this->template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>(name + "_Input", {});

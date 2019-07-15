@@ -60,7 +60,7 @@ public:
     module.CreateClassType<VMStateDict>("StateDict")
         .CreateConstuctor<>()
         .CreateSerializeDefaultConstuctor<>()
-        .CreateMemberFunction("SetWeights", &VMStateDict::SetWeights);
+        .CreateMemberFunction("setWeights", &VMStateDict::SetWeights);
   }
 
   bool SerializeTo(serializers::ByteArrayBuffer &buffer) override

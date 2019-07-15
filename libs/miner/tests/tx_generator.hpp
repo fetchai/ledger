@@ -44,7 +44,7 @@ public:
 
 private:
   using Rng       = fetch::random::LinearCongruentialGenerator;
-  using RngWord   = Rng::random_type;
+  using RngWord   = Rng::RandomType;
   using Digest    = fetch::ledger::Digest;
   using ByteArray = fetch::byte_array::ByteArray;
 

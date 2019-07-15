@@ -19,6 +19,7 @@
 
 #include "ledger/upow/work.hpp"
 
+#include <memory>
 #include <queue>
 
 namespace fetch {

@@ -18,13 +18,18 @@
 //------------------------------------------------------------------------------
 
 #include "meta/has_index.hpp"
+
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <cstddef>
+#include <cstdint>
+#include <string>
 #include <vector>
 
 namespace fetch {
 namespace vectorise {
+
 /* Implements a subset of big number functionality.
  *
  * The purpose of this library is to implement a subset of number
@@ -44,7 +49,7 @@ public:
     UINT_SIZE = S,
     ELEMENTS  = UINT_SIZE / sizeof(BaseType) / 8
   };
-  static_assert(S == (ELEMENTS * sizeof(BaseType) << 3),
+  static_assert(S == (ELEMENTS * sizeof(BaseType) << 3u),
                 "Size must be a multiple of 8 times the base type size.");
 
   using ContainerType                       = std::array<uint8_t, ELEMENTS>;
@@ -54,7 +59,7 @@ public:
   {
     std::string ret;
     ret.resize(UINT_SIZE / 8);
-    uint8_t const *data = reinterpret_cast<uint8_t const *>(data_.data());
+    auto data = reinterpret_cast<uint8_t const *>(data_.data());
 
     for (uint64_t i = 0; i < ret.size(); ++i)
     {
@@ -302,7 +307,7 @@ public:
     return data_.data();
   }
 
-  uint64_t size() const
+  constexpr uint64_t size() const
   {
     return data_.size();
   }

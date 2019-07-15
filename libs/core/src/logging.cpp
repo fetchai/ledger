@@ -60,7 +60,19 @@ private:
 
   // Telemetry
   CounterPtr log_messages_{telemetry::Registry::Instance().CreateCounter(
-      "ledger_log_messages", "The number of log messages printed")};
+      "ledger_log_messages_total", "The number of log messages printed")};
+  CounterPtr log_trace_messages_{telemetry::Registry::Instance().CreateCounter(
+      "ledger_log_trace_messages_total", "The number of trace log messages printed")};
+  CounterPtr log_debug_messages_{telemetry::Registry::Instance().CreateCounter(
+      "ledger_log_debug_messages_total", "The number of debug log messages printed")};
+  CounterPtr log_info_messages_{telemetry::Registry::Instance().CreateCounter(
+      "ledger_log_info_messages_total", "The number of info log messages printed")};
+  CounterPtr log_warn_messages_{telemetry::Registry::Instance().CreateCounter(
+      "ledger_log_warn_messages_total", "The number of warning log messages printed")};
+  CounterPtr log_error_messages_{telemetry::Registry::Instance().CreateCounter(
+      "ledger_log_error_messages_total", "The number of error log messages printed")};
+  CounterPtr log_critical_messages_{telemetry::Registry::Instance().CreateCounter(
+      "ledger_log_critical_messages_total", "The number of critical log messages printed")};
 };
 
 constexpr LogLevel DEFAULT_LEVEL = LogLevel::INFO;
@@ -141,7 +153,29 @@ void LogRegistry::Log(LogLevel level, char const *name, std::string &&message)
     GetLogger(name).log(ConvertFromLevel(level), message);
   }
 
+  // telemetry
   log_messages_->increment();
+  switch (level)
+  {
+  case LogLevel::TRACE:
+    log_trace_messages_->increment();
+    break;
+  case LogLevel::DEBUG:
+    log_debug_messages_->increment();
+    break;
+  case LogLevel::INFO:
+    log_info_messages_->increment();
+    break;
+  case LogLevel::WARNING:
+    log_warn_messages_->increment();
+    break;
+  case LogLevel::ERROR:
+    log_error_messages_->increment();
+    break;
+  case LogLevel::CRITICAL:
+    log_critical_messages_->increment();
+    break;
+  }
 }
 
 void LogRegistry::SetLevel(char const *name, LogLevel level)

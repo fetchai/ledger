@@ -25,6 +25,8 @@
 
 namespace {
 
+using fetch::telemetry::Measurement;
+
 using IntegerTypes = ::testing::Types<uint32_t, uint64_t>;
 using FloatTypes   = ::testing::Types<float, double>;
 using AllTypes     = ::testing::Types<uint32_t, uint64_t, float, double>;
@@ -102,7 +104,7 @@ sample_gauge 200
 )";
 
   std::ostringstream oss;
-  this->gauge_->ToStream(oss);
+  this->gauge_->ToStream(oss, Measurement::StreamMode::FULL);
 
   EXPECT_EQ(oss.str(), std::string{EXPECTED_TEXT});
 }
@@ -124,7 +126,7 @@ sample_gauge 3.145600e+00
 )";
 
   std::ostringstream oss;
-  this->gauge_->ToStream(oss);
+  this->gauge_->ToStream(oss, Measurement::StreamMode::FULL);
 
   EXPECT_EQ(oss.str(), std::string{EXPECTED_TEXT});
 }

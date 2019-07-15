@@ -21,9 +21,13 @@
 
 #include "gtest/gtest.h"
 
+#include <cstddef>
+#include <cstdint>
+
 using namespace fetch::vectorise;
 using namespace fetch::byte_array;
-TEST(big_number_gtest, elemntary_left_shift)
+
+TEST(big_number_gtest, elementary_left_shift)
 {
   UInt<256> n1(0);
   // testing elementary left shifting
@@ -37,12 +41,12 @@ TEST(big_number_gtest, elemntary_left_shift)
   EXPECT_EQ(int(128), n1[1]);
   EXPECT_EQ(int(1), n1[2]);
 }
-TEST(big_number_gtest, incrementer_for_million_increments)
+
+TEST(big_number_gtest, test_incrementer_for_million_increments)
 {
-  // testing incrementer for a million increments
   UInt<256> n1(0);
   {
-    for (std::size_t count = 0; count < (1 << 12); ++count)
+    for (std::size_t count = 0; count < (1ul << 12u); ++count)
     {
       union
       {
@@ -54,7 +58,7 @@ TEST(big_number_gtest, incrementer_for_million_increments)
         c.bytes[i] = n1[i + 1];
       }
       EXPECT_EQ(count, c.value);
-      for (std::size_t i = 0; i < (1ul << 8); ++i)
+      for (std::size_t i = 0; i < (1ul << 8u); ++i)
       {
         EXPECT_EQ(int(n1[0]), i);
         ++n1;
@@ -62,29 +66,30 @@ TEST(big_number_gtest, incrementer_for_million_increments)
     }
   }
 }
+
 TEST(big_number_gtest, testing_comparisons)
 {
   UInt<256> a(0), b(0);
-  for (std::size_t count = 0; count < (1 << 8); ++count)
+  for (std::size_t count = 0; count < (1ul << 8u); ++count)
   {
     EXPECT_EQ(a, b);
-    for (std::size_t i = 0; i < (1ul << 8) / 2; ++i)
+    for (std::size_t i = 0; i < (1ul << 8u) / 2; ++i)
     {
       ++a;
       EXPECT_LT(b, a);
     }
-    for (std::size_t i = 0; i < (1ul << 8) / 2; ++i)
+    for (std::size_t i = 0; i < (1ul << 8u) / 2; ++i)
     {
       EXPECT_LT(b, a);
       ++b;
     }
     EXPECT_EQ(a, b);
-    for (std::size_t i = 0; i < (1ul << 8) / 2; ++i)
+    for (std::size_t i = 0; i < (1ul << 8u) / 2; ++i)
     {
       ++b;
       EXPECT_GT(b, a);
     }
-    for (std::size_t i = 0; i < (1ul << 8) / 2; ++i)
+    for (std::size_t i = 0; i < (1ul << 8u) / 2; ++i)
     {
       EXPECT_GT(b, a);
       ++a;

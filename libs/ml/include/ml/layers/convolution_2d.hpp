@@ -90,20 +90,10 @@ public:
   std::vector<SizeType> ComputeOutputShape(
       std::vector<std::reference_wrapper<ArrayType const>> const &inputs) const override
   {
-    std::vector<SizeType> output_shape;
-
-    // output_shape_[0]=number of output channels
-    output_shape.emplace_back(output_channels_);
-    // output_shape_[1]=number of stride_size steps over input height
-    output_shape.emplace_back((inputs.at(0).get().shape()[1] - kernel_size_ + stride_size_) /
-                              stride_size_);
-    // output_shape_[2]=number of stride_size steps over input width
-    output_shape.emplace_back((inputs.at(0).get().shape()[2] - kernel_size_ + stride_size_) /
-                              stride_size_);
-    // output_shape_[3]=batch dimension
-    output_shape.emplace_back(1);
-
-    return output_shape;
+    ArrayType weights_data(
+        std::vector<SizeType>{{output_channels_, input_channels_, kernel_size_, kernel_size_, 1}});
+    return fetch::ml::ops::Convolution2D<ArrayType>(stride_size_)
+        .ComputeOutputShape({inputs.at(0), weights_data});
   }
 
   static constexpr char const *DESCRIPTOR = "Convolution2D";

@@ -89,7 +89,7 @@ Ptr<String> String::Substring(int32_t start_index, int32_t end_index)
     return nullptr;
   }
 
-  const auto substring_length =
+  auto const substring_length =
       static_cast<std::size_t>(end_index) - static_cast<std::size_t>(start_index);
 
   return new String(vm_, str.substr(static_cast<std::size_t>(start_index), substring_length));

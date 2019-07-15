@@ -42,7 +42,7 @@ namespace byte_array {
 namespace {
 
 /** All alphanumeric characters except for "0", "I", "O", and "l" */
-static const char *pszBase58 = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+static char const *pszBase58 = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
 
 // clang-format off
 static const int8_t mapBase58[256] = {
@@ -79,7 +79,7 @@ ConstByteArray FromBase58(ConstByteArray const &str)
   auto const *raw_end   = raw_start + str.size();
 
   // Skip leading spaces.
-  while ((raw_start < raw_end) && IsSpace(*raw_start))
+  while (raw_start < raw_end && IsSpace(*raw_start))
   {
     raw_start++;
   }
@@ -87,7 +87,7 @@ ConstByteArray FromBase58(ConstByteArray const &str)
   // Skip and count leading '1's.
   int zeroes = 0;
   int length = 0;
-  while ((raw_start < raw_end) && *raw_start == '1') {
+  while (raw_start < raw_end && *raw_start == '1') {
     zeroes++;
     raw_start++;
   }
@@ -98,7 +98,7 @@ ConstByteArray FromBase58(ConstByteArray const &str)
 
   // Process the characters.
   static_assert(sizeof(mapBase58)/sizeof(mapBase58[0]) == 256, "mapBase58.size() should be 256"); // guarantee not out of range
-  while ((raw_start < raw_end) && !IsSpace(*raw_start)) {
+  while (raw_start < raw_end && !IsSpace(*raw_start)) {
     // Decode base58 character
     int carry = mapBase58[*raw_start];
     if (carry == -1)  // Invalid b58 character

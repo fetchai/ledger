@@ -19,6 +19,10 @@
 
 #include "ml/ops/ops.hpp"
 
+#include <cassert>
+#include <memory>
+#include <vector>
+
 namespace fetch {
 namespace ml {
 namespace ops {
@@ -37,8 +41,7 @@ public:
     : kernel_size_{kernel_size}
     , stride_size_{stride_size}
   {}
-
-  ~MaxPool1D() = default;
+  ~MaxPool1D() override = default;
 
   std::shared_ptr<SaveableParams<ArrayType>> GetOpSaveableParams()
   {

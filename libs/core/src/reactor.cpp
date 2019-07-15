@@ -23,6 +23,11 @@
 
 #include <chrono>
 #include <deque>
+#include <memory>
+#include <stdexcept>
+#include <string>
+#include <thread>
+#include <utility>
 
 static const std::chrono::milliseconds POLL_INTERVAL{15};
 

@@ -17,11 +17,14 @@
 //
 //------------------------------------------------------------------------------
 
+#include "math/activation_functions/sigmoid.hpp"
 #include "math/fundamental_operators.hpp"
 #include "math/matrix_operations.hpp"
-#include "math/ml/activation_functions/sigmoid.hpp"
 #include "math/standard_functions/clamp.hpp"
 #include "ml/ops/ops.hpp"
+
+#include <cassert>
+#include <vector>
 
 namespace fetch {
 namespace ml {
@@ -36,8 +39,8 @@ public:
   using SizeType      = typename ArrayType::SizeType;
   using VecTensorType = typename Ops<T>::VecTensorType;
 
-  Sigmoid()          = default;
-  virtual ~Sigmoid() = default;
+  Sigmoid()           = default;
+  ~Sigmoid() override = default;
 
   std::shared_ptr<SaveableParams<ArrayType>> GetOpSaveableParams()
   {
@@ -46,7 +49,7 @@ public:
     return std::make_shared<SaveableParams<ArrayType>>(sp);
   }
 
-  virtual void Forward(VecTensorType const &inputs, ArrayType &output)
+  void Forward(VecTensorType const &inputs, ArrayType &output) override
   {
     assert(inputs.size() == 1);
     assert(output.shape() == this->ComputeOutputShape(inputs));
@@ -56,8 +59,8 @@ public:
     fetch::math::Clamp(epsilon_, static_cast<DataType>(1) - epsilon_, output);
   }
 
-  virtual std::vector<ArrayType> Backward(VecTensorType const &inputs,
-                                          ArrayType const &    error_signal)
+  std::vector<ArrayType> Backward(VecTensorType const &inputs,
+                                  ArrayType const &    error_signal) override
   {
     assert(inputs.size() == 1);
     assert(inputs.front().get().shape() == error_signal.shape());
@@ -75,7 +78,7 @@ public:
     return {return_signal};
   }
 
-  virtual std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const
+  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
   {
     return inputs.front().get().shape();
   }

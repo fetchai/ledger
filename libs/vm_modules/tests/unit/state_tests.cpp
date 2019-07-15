@@ -332,4 +332,80 @@ TEST_F(StateTests, test_serialisation_of_complex_type_2)
   EXPECT_EQ(std::string{"fff"}, arr_1_1->PopFrontOne().Get<Ptr<String>>()->str);
 }
 
+TEST_F(StateTests, test_serialisation_of_structured_data)
+{
+  static char const *ser_src = R"(
+    function main()
+
+      var arr_i32 = Array<Int32>(1);
+      arr_i32[0] = 10i32;
+
+      var arr_i64 = Array<Int64>(1);
+      arr_i64[0] = 14i64;
+
+      var arr_u32 = Array<UInt32>(1);
+      arr_u32[0] = 180u32;
+
+      var arr_u64 = Array<UInt64>(1);
+      arr_u64[0] = 200u64;
+
+      var data = StructuredData();
+      data.set("string", "bar");
+      data.set("i32", 256i32);
+      data.set("u32", 512u32);
+      data.set("i64", 1024i64);
+      data.set("u64", 2048u64);
+      data.set("arr_i32", arr_i32);
+      data.set("arr_i64", arr_i64);
+      data.set("arr_u32", arr_u32);
+      data.set("arr_u64", arr_u64);
+
+      var state = State<StructuredData>("state_data");
+      state.set(data);
+    endfunction
+  )";
+
+  std::string const state_name{"state_data"};
+  EXPECT_CALL(toolkit.observer(), Write(state_name, _, _));
+
+  ASSERT_TRUE(toolkit.Compile(ser_src));
+  ASSERT_TRUE(toolkit.Run());
+
+  static char const *deser_src = R"(
+    function main()
+      var retrieved_state = State<StructuredData>("state_data");
+      var data = retrieved_state.get();
+
+      assert(data.getString("string") == "bar");
+      assert(data.getInt32("i32") == 256i32);
+      assert(data.getUInt32("u32") == 512u32);
+      assert(data.getInt64("i64") == 1024i64);
+      assert(data.getUInt64("u64") == 2048u64);
+
+      var arr_i32 = data.getArrayInt32("arr_i32");
+      assert(arr_i32.count() == 1);
+      assert(arr_i32[0] == 10i32);
+
+      var arr_i64 = data.getArrayInt64("arr_i64");
+      assert(arr_i64.count() == 1);
+      assert(arr_i64[0] == 14i64);
+
+      var arr_u32 = data.getArrayUInt32("arr_u32");
+      assert(arr_u32.count() == 1);
+      assert(arr_u32[0] == 180u32);
+
+      var arr_u64 = data.getArrayUInt64("arr_u64");
+      assert(arr_u64.count() == 1);
+      assert(arr_u64[0] == 200u64);
+
+    endfunction
+  )";
+
+  EXPECT_CALL(toolkit.observer(), Exists(state_name));
+  EXPECT_CALL(toolkit.observer(), Read(state_name, _, _));
+
+  ASSERT_TRUE(toolkit.Compile(deser_src));
+  ASSERT_TRUE(toolkit.Run());
+}
+
 }  // namespace

@@ -20,19 +20,23 @@
 #include "network/muddle/rpc/client.hpp"
 
 #include <chrono>
+#include <cstddef>
+#include <cstdint>
 #include <exception>
 #include <list>
 #include <memory>
+#include <mutex>
+#include <string>
+#include <thread>
+#include <utility>
 
 namespace fetch {
 namespace muddle {
 namespace rpc {
 
-Client::Client(std::string name, MuddleEndpoint &endpoint, Address address, uint16_t service,
-               uint16_t channel)
+Client::Client(std::string name, MuddleEndpoint &endpoint, uint16_t service, uint16_t channel)
   : name_(std::move(name))
   , endpoint_(endpoint)
-  , address_(std::move(address))
   , network_id_(endpoint.network_id())
   , service_(service)
   , channel_(channel)
@@ -56,10 +60,6 @@ Client::Client(std::string name, MuddleEndpoint &endpoint, Address address, uint
   running_           = true;
   background_thread_ = std::thread{&Client::BackgroundWorker, this};
 }
-
-Client::Client(std::string name, MuddleEndpoint &endpoint, uint16_t service, uint16_t channel)
-  : Client(std::move(name), endpoint, Address{}, service, channel)
-{}
 
 Client::~Client()
 {

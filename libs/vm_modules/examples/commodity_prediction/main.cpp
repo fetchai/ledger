@@ -23,12 +23,14 @@
 #include "math/tensor.hpp"
 #include "variant/variant.hpp"
 #include "vm/io_observer_interface.hpp"
+#include "ml/dataloaders/ReadCSV.hpp"
 #include "vm/module.hpp"
 #include "vm/variant.hpp"
 #include "vm_modules/core/print.hpp"
 #include "vm_modules/ml/ml.hpp"
 
-#include "variant/variant.hpp"
+#include <cstddef>
+#include <cstdint>
 #include <fstream>
 #include <iostream>
 #include <memory>
@@ -40,8 +42,8 @@ using ArrayType = fetch::math::Tensor<DataType>;
 
 struct System : public fetch::vm::Object
 {
-  System()          = delete;
-  virtual ~System() = default;
+  System()           = delete;
+  ~System() override = default;
 
   static int32_t Argc(fetch::vm::VM * /*vm*/, fetch::vm::TypeId /*type_id*/)
   {
@@ -232,7 +234,7 @@ int RunEtchScript(std::string const &filename, std::shared_ptr<fetch::vm::Module
   vm->SetIOObserver(observer);
 
   // attach std::cout for printing
-  vm->AttachOutputDevice("stdout", std::cout);
+  vm->AttachOutputDevice(fetch::vm::VM::STDOUT, std::cout);
 
   /// executing
   if (!vm->GenerateExecutable(ir, "main_ir", executable, errors))

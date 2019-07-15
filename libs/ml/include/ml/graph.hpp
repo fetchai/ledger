@@ -60,7 +60,8 @@ public:
   explicit Graph(GraphSaveableParams<ArrayType> gs);
 
   ArrayType    Evaluate(std::string const &node_name, bool is_training = true);
-  void         BackPropagate(std::string const &node_name, ArrayType const &error_signal);
+  void         BackPropagateSignal(std::string const &node_name, ArrayType const &error_signal);
+  void         BackPropagateError(std::string const &node_name);
   virtual void Step(DataType learning_rate);
 
   template <class OperationType, typename... Params>
@@ -179,17 +180,30 @@ ArrayType Graph<ArrayType>::Evaluate(std::string const &node_name, bool is_train
 }
 
 /**
- * Backpropagate an error signal through the graph
+ * Backpropagate an error signal through the graph.
+ * Given node needs to expect empty error_signal (loss function)
+ * @param node_name name of node from which to begin backprop
+ */
+template <typename ArrayType>
+void Graph<ArrayType>::BackPropagateError(std::string const &node_name)
+{
+  ArrayType error_signal;
+  nodes_[node_name]->BackPropagateSignal(error_signal);
+
+  // Applies regularisation to all trainables based on their configuration
+  ApplyRegularisation();
+}
+
+/**
+ * Backpropagate given error signal through the graph
  * @param node_name name of node from which to begin backprop
  * @param error_signal pointer to array containing error signal to backprop
  */
 template <typename ArrayType>
-void Graph<ArrayType>::BackPropagate(std::string const &node_name, ArrayType const &error_signal)
+void Graph<ArrayType>::BackPropagateSignal(std::string const &node_name,
+                                           ArrayType const &  error_signal)
 {
-  nodes_[node_name]->BackPropagate(error_signal);
-
-  // Applies regularisation to all trainables based on their configuration
-  ApplyRegularisation();
+  nodes_[node_name]->BackPropagateSignal(error_signal);
 }
 
 /**
@@ -427,6 +441,7 @@ template <class OperationType>
 meta::IfIsTrainable<ArrayType, OperationType, void> Graph<ArrayType>::AddTrainable(
     std::string const &name, std::shared_ptr<Node<ArrayType, OperationType>> op)
 {
+
   trainable_.emplace_back(op);
   trainable_lookup_[name] = trainable_.size() - 1;
 }

@@ -1,0 +1,8 @@
+function main()
+
+    var myString : String = "   Hello World  ";
+    myString.trim();
+
+    assert(myString == "Hello World");
+
+endfunction
