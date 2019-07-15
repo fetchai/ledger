@@ -162,4 +162,85 @@ TEST(SettingTests, CheckStringList)
   }
 }
 
+TEST(SettingTests, CheckUInt32Invalid)
+{
+  SettingCollection collection{};
+  Setting<uint32_t> setting{collection, "foo", 0, "A sample setting"};
+
+  EXPECT_EQ(setting.name(), "foo");
+  EXPECT_EQ(setting.description(), "A sample setting");
+  EXPECT_EQ(setting.default_value(), 0);
+  EXPECT_EQ(setting.value(), 0u);
+
+  std::istringstream iss{"blah blah blah"};
+  setting.FromStream(iss);
+
+  EXPECT_EQ(setting.name(), "foo");
+  EXPECT_EQ(setting.description(), "A sample setting");
+  EXPECT_EQ(setting.default_value(), 0u);
+  EXPECT_EQ(setting.value(), 0u);
+}
+
+TEST(SettingTests, CheckBoolInvalid)
+{
+  SettingCollection collection{};
+  Setting<bool>     setting{collection, "flag", false, "A sample setting"};
+
+  EXPECT_EQ(setting.name(), "flag");
+  EXPECT_EQ(setting.description(), "A sample setting");
+  EXPECT_EQ(setting.default_value(), false);
+  EXPECT_EQ(setting.value(), false);
+
+  for (auto const &on_value : {"blah", "please", "gogogo", "launch"})
+  {
+    setting.Update(false);
+
+    std::istringstream iss{on_value};
+    setting.FromStream(iss);
+
+    EXPECT_EQ(setting.name(), "flag");
+    EXPECT_EQ(setting.description(), "A sample setting");
+    EXPECT_EQ(setting.default_value(), false);
+    EXPECT_EQ(setting.value(), false);
+  }
+}
+
+TEST(SettingTests, CheckSizetInvalid)
+{
+  SettingCollection    collection{};
+  Setting<std::size_t> setting{collection, "block-interval", 250u, "A sample setting"};
+
+  EXPECT_EQ(setting.name(), "block-interval");
+  EXPECT_EQ(setting.description(), "A sample setting");
+  EXPECT_EQ(setting.default_value(), 250u);
+  EXPECT_EQ(setting.value(), 250u);
+
+  std::istringstream iss{"twenty-four"};
+  setting.FromStream(iss);
+
+  EXPECT_EQ(setting.name(), "block-interval");
+  EXPECT_EQ(setting.description(), "A sample setting");
+  EXPECT_EQ(setting.default_value(), 250u);
+  EXPECT_EQ(setting.value(), 250u);
+}
+
+TEST(SettingTests, CheckDoubleInvalid)
+{
+  SettingCollection collection{};
+  Setting<double>   setting{collection, "threshold", 10.0, "A sample setting"};
+
+  EXPECT_EQ(setting.name(), "threshold");
+  EXPECT_EQ(setting.description(), "A sample setting");
+  EXPECT_DOUBLE_EQ(setting.default_value(), 10.0);
+  EXPECT_DOUBLE_EQ(setting.value(), 10.0);
+
+  std::istringstream iss{"very-small-number"};
+  setting.FromStream(iss);
+
+  EXPECT_EQ(setting.name(), "threshold");
+  EXPECT_EQ(setting.description(), "A sample setting");
+  EXPECT_DOUBLE_EQ(setting.default_value(), 10.0);
+  EXPECT_DOUBLE_EQ(setting.value(), 10.0);
+}
+
 }  // namespace

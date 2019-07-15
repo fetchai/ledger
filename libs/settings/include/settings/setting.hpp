@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "settings/detail/setting_list.hpp"
+#include "settings/detail/csv_string_helpers.hpp"
 #include "settings/setting_base.hpp"
 
 #include <iostream>
@@ -109,7 +109,14 @@ void Setting<T>::Update(T &&value)
 template <typename T>
 void Setting<T>::FromStream(std::istream &stream)
 {
+  auto const original = value_;
+
   stream >> value_;
+
+  if (stream.fail())
+  {
+    value_ = original;
+  }
 }
 
 template <typename T>

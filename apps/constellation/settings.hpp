@@ -31,7 +31,7 @@ namespace fetch {
 /**
  * Command line / Environment variable settings
  */
-class Settings : protected settings::SettingCollection
+class Settings : private settings::SettingCollection
 {
 public:
   using PeerList = std::vector<network::Uri>;

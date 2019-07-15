@@ -1,5 +1,5 @@
 #
-# F E T C H   M I N E R   T E S T S
+# F E T C H   S E T T I N G S   T E S T S
 #
 cmake_minimum_required(VERSION 3.5 FATAL_ERROR)
 project(fetch-settings)

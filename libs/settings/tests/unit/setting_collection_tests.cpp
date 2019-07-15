@@ -71,4 +71,26 @@ TEST(SettingCollectionTests, SimpleCheck)
   EXPECT_EQ(name.value(), "foo-bar-baz");
 }
 
+TEST(SettingCollectionTests, CheckMispelt)
+{
+  SettingCollection    collection{};
+  Setting<uint32_t>    lanes{collection, "lanes", 0, ""};
+  Setting<std::string> name{collection, "name", "default", ""};
+
+  SystemArgAdapter arguments({"-lanex", "256", "-name", "foo-bar-baz"});
+
+  collection.UpdateFromArgs(arguments.argc(), arguments.argv());
+
+  EXPECT_EQ(lanes.value(), 0);
+  EXPECT_EQ(name.value(), "foo-bar-baz");
+}
+
+TEST(SettingCollectionTests, CheckEmpty)
+{
+  SettingCollection collection{};
+  SystemArgAdapter  arguments({"-lanex", "256", "-name", "foo-bar-baz"});
+
+  ASSERT_NO_THROW(collection.UpdateFromArgs(arguments.argc(), arguments.argv()));
+}
+
 }  // namespace
