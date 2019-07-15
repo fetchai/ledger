@@ -16,7 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-// TODO: try out exponential decay weightings on keras conv models
+// TODO: try out linear decay weightings on keras conv models
 // TODO: MSE now works with weightings, so set up exponential decay weightings in training
 // TODO: implement normalisation in etch crypto prediction
 // TODO: implement weightin in etch crypto prediction
