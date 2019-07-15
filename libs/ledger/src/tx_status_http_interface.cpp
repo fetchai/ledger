@@ -35,6 +35,25 @@ using fetch::variant::Variant;
 namespace fetch {
 namespace ledger {
 
+namespace {
+Variant toVariant(Digest const &digest, TransactionStatusCache::TxStatus const &tx_status)
+{
+  auto retval{Variant::Object()};
+  retval["tx"]     = ToBase64(digest);
+  retval["status"] = ToString(tx_status.status);
+  auto contr_ex_res_v{Variant::Object()};
+  contr_ex_res_v["status"]      = ToString(tx_status.contract_exec_result.status);
+  contr_ex_res_v["exit_code"]   = tx_status.contract_exec_result.return_value;
+  contr_ex_res_v["charge"]      = tx_status.contract_exec_result.charge;
+  contr_ex_res_v["charge_rate"] = tx_status.contract_exec_result.charge_rate;
+  contr_ex_res_v["fee"]         = tx_status.contract_exec_result.fee;
+
+  retval["contract_exec_result"] = contr_ex_res_v;
+
+  return retval;
+}
+}  // namespace
+
 TxStatusHttpInterface::TxStatusHttpInterface(TransactionStatusCache &status_cache)
   : status_cache_{status_cache}
 {
@@ -50,9 +69,7 @@ TxStatusHttpInterface::TxStatusHttpInterface(TransactionStatusCache &status_cach
           FETCH_LOG_DEBUG(LOGGING_NAME, "Querying status of: ", digest.ToBase64());
 
           // prepare the response
-          Variant response   = Variant::Object();
-          response["tx"]     = ToBase64(digest);
-          response["status"] = ToString(status_cache_.Query(digest));
+          auto const response{toVariant(digest, status_cache_.Query(digest))};
 
           return http::CreateJsonResponse(response);
         }

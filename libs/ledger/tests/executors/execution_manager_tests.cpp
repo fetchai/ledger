@@ -19,6 +19,7 @@
 #include "block_configs.hpp"
 #include "core/logger.hpp"
 #include "ledger/execution_manager.hpp"
+#include "ledger/transaction_status_cache.hpp"
 #include "mock_executor.hpp"
 #include "mock_storage_unit.hpp"
 #include "test_block.hpp"
@@ -30,19 +31,21 @@
 #include <random>
 #include <thread>
 
+namespace {
+
+using namespace fetch::ledger;
+
 class ExecutionManagerTests : public ::testing::TestWithParam<BlockConfig>
 {
 protected:
   using FakeExecutorPtr     = std::shared_ptr<FakeExecutor>;
   using FakeExecutorList    = std::vector<FakeExecutorPtr>;
-  using ExecutionManager    = fetch::ledger::ExecutionManager;
   using ExecutorFactory     = ExecutionManager::ExecutorFactory;
   using ExecutionManagerPtr = std::shared_ptr<ExecutionManager>;
   using MockStorageUnitPtr  = std::shared_ptr<MockStorageUnit>;
   using Clock               = std::chrono::high_resolution_clock;
   using ScheduleStatus      = ExecutionManager::ScheduleStatus;
   using State               = ExecutionManager::State;
-  using Digest              = fetch::ledger::Digest;
 
   static constexpr char const *LOGGING_NAME = "ExecutionManagerTests";
 
@@ -54,8 +57,9 @@ protected:
     executors_.clear();
 
     // create the manager
-    manager_ = std::make_shared<ExecutionManager>(
-        config.executors, config.log2_lanes, mock_storage_, [this]() { return CreateExecutor(); });
+    manager_ =
+        std::make_shared<ExecutionManager>(config.executors, config.log2_lanes, mock_storage_,
+                                           [this]() { return CreateExecutor(); }, tx_status_cache_);
   }
 
   void TearDown() override
@@ -160,9 +164,10 @@ protected:
     return success;
   }
 
-  MockStorageUnitPtr  mock_storage_;
-  ExecutionManagerPtr manager_;
-  FakeExecutorList    executors_;
+  MockStorageUnitPtr     mock_storage_;
+  ExecutionManagerPtr    manager_;
+  FakeExecutorList       executors_;
+  TransactionStatusCache tx_status_cache_;
 };
 
 TEST_P(ExecutionManagerTests, CheckIncrementalExecution)
@@ -194,3 +199,5 @@ TEST_P(ExecutionManagerTests, CheckIncrementalExecution)
 
 INSTANTIATE_TEST_CASE_P(Param, ExecutionManagerTests,
                         ::testing::ValuesIn(BlockConfig::REDUCED_SET), );
+
+}  // namespace

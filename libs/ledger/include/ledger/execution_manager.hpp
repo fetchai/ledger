@@ -42,6 +42,8 @@
 namespace fetch {
 namespace ledger {
 
+class TransactionStatusCache;
+
 /**
  * The Execution Manager is the object which orchestrates the execution of a
  * specified block across a series of executors and lanes.
@@ -56,7 +58,7 @@ public:
 
   // Construction / Destruction
   ExecutionManager(std::size_t num_executors, uint32_t log2_num_lanes, StorageUnitPtr storage,
-                   ExecutorFactory const &factory);
+                   ExecutorFactory const &factory, TransactionStatusCache &tx_status_cache);
 
   /// @name Execution Manager Interface
   /// @{
@@ -131,6 +133,8 @@ private:
 
   ThreadPool thread_pool_;
   ThreadPtr  monitor_thread_;
+
+  TransactionStatusCache &tx_status_cache_;  ///< Ref to the tx status cache
 
   void MonitorThreadEntrypoint();
 

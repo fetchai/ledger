@@ -34,7 +34,7 @@ DummyContract::DummyContract()
   OnTransaction("run", this, &DummyContract::Run);
 }
 
-DummyContract::Status DummyContract::Wait(Transaction const &, BlockIndex)
+DummyContract::Result DummyContract::Wait(Transaction const &, BlockIndex)
 {
   std::random_device rd;
   std::mt19937       rng;
@@ -54,13 +54,13 @@ DummyContract::Status DummyContract::Wait(Transaction const &, BlockIndex)
 
   ++counter_;
 
-  return Status::OK;
+  return {eStatus::OK};
 }
 
-DummyContract::Status DummyContract::Run(Transaction const &, BlockIndex)
+DummyContract::Result DummyContract::Run(Transaction const &, BlockIndex)
 {
   FETCH_LOG_DEBUG(LOGGING_NAME, "Running that contract...");
-  return Status::OK;
+  return {eStatus::OK};
 }
 
 }  // namespace ledger

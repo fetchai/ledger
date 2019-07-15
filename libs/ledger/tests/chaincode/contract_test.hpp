@@ -131,7 +131,7 @@ protected:
   };
 
   template <typename... Args>
-  Contract::Status SendSmartActionWithParams(ConstByteArray const &action, Args... args)
+  Contract::Result SendSmartActionWithParams(ConstByteArray const &action, Args... args)
   {
     // pack all the data into a single payload
     PayloadPacker p{args...};
@@ -139,7 +139,7 @@ protected:
     return SendSmartAction(action, p.GetBuffer());
   }
 
-  Contract::Status SendSmartAction(ConstByteArray const &action,
+  Contract::Result SendSmartAction(ConstByteArray const &action,
                                    ConstByteArray const &data = ConstByteArray{})
   {
     using fetch::ledger::TransactionBuilder;
@@ -167,7 +167,7 @@ protected:
     return status;
   }
 
-  Contract::Status SendAction(TransactionPtr const &tx)
+  Contract::Result SendAction(TransactionPtr const &tx)
   {
     // adapt the storage engine for this execution
     StateSentinelAdapter storage_adapter{*storage_, Identifier{tx->chain_code()}, shards_};
@@ -180,7 +180,7 @@ protected:
     return status;
   }
 
-  Contract::Status SendQuery(ConstByteArray const &query, Query const &request, Query &response)
+  Contract::eStatus SendQuery(ConstByteArray const &query, Query const &request, Query &response)
   {
     // adapt the storage engine for queries
     StateAdapter storage_adapter{*storage_, *contract_name_};
@@ -193,7 +193,7 @@ protected:
     return status;
   }
 
-  Contract::Status InvokeInit(Identity const &owner)
+  Contract::Result InvokeInit(Identity const &owner)
   {
     StateSentinelAdapter storage_adapter{*storage_, *contract_name_, shards_};
 

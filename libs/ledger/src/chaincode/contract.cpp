@@ -31,9 +31,9 @@ namespace ledger {
  * @param tx The reference to the originating transaction
  * @return The corresponding status result for the operation
  */
-Contract::Status Contract::DispatchInitialise(Address const &owner)
+Contract::Result Contract::DispatchInitialise(Address const &owner)
 {
-  Status status{Status::OK};
+  Result status{eStatus::OK};
 
   if (init_handler_)
   {
@@ -51,10 +51,10 @@ Contract::Status Contract::DispatchInitialise(Address const &owner)
  * @param response The output query parameters
  * @return The corresponding status result for the operation
  */
-Contract::Status Contract::DispatchQuery(ContractName const &name, Query const &query,
-                                         Query &response)
+Contract::eStatus Contract::DispatchQuery(ContractName const &name, Query const &query,
+                                          Query &response)
 {
-  Status status{Status::NOT_FOUND};
+  auto status{eStatus::NOT_FOUND};
 
   auto it = query_handlers_.find(name);
   if (it != query_handlers_.end())
@@ -73,10 +73,10 @@ Contract::Status Contract::DispatchQuery(ContractName const &name, Query const &
  * @param tx The input transaction
  * @return The corresponding status result for the operation
  */
-Contract::Status Contract::DispatchTransaction(byte_array::ConstByteArray const &name,
+Contract::Result Contract::DispatchTransaction(byte_array::ConstByteArray const &name,
                                                Transaction const &tx, BlockIndex block_index)
 {
-  Status status{Status::NOT_FOUND};
+  Result status{eStatus::NOT_FOUND};
 
   auto it = transaction_handlers_.find(name);
   if (it != transaction_handlers_.end())

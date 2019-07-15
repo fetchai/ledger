@@ -86,7 +86,7 @@ void TransactionProcessor::OnTransaction(TransactionPtr const &tx)
     packer_.EnqueueTransaction(*tx);
 
     // update the status cache with the state of this transaction
-    status_cache_.Update(tx->digest(), TransactionStatus::PENDING);
+    status_cache_.Update(tx->digest(), eTransactionStatus::PENDING);
     break;
 
   case Transaction::ContractMode::SYNERGETIC:
@@ -96,7 +96,7 @@ void TransactionProcessor::OnTransaction(TransactionPtr const &tx)
       dag_->AddTransaction(*tx, DAGInterface::DAGTypes::DATA);
 
       // update the status cache with the state of this transaction
-      status_cache_.Update(tx->digest(), TransactionStatus::SUBMITTED);
+      status_cache_.Update(tx->digest(), eTransactionStatus::SUBMITTED);
     }
 
     break;

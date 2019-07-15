@@ -27,24 +27,24 @@ using fetch::generics::MilliTimer;
 namespace fetch {
 namespace ledger {
 
-char const *ToString(TransactionStatus status)
+char const *ToString(eTransactionStatus status)
 {
   char const *text = "Unknown";
 
   switch (status)
   {
-  case TransactionStatus::UNKNOWN:
+  case eTransactionStatus::UNKNOWN:
     break;
-  case TransactionStatus::PENDING:
+  case eTransactionStatus::PENDING:
     text = "Pending";
     break;
-  case TransactionStatus::MINED:
+  case eTransactionStatus::MINED:
     text = "Mined";
     break;
-  case TransactionStatus::EXECUTED:
+  case eTransactionStatus::EXECUTED:
     text = "Executed";
     break;
-  case TransactionStatus::SUBMITTED:
+  case eTransactionStatus::SUBMITTED:
     text = "Submitted";
     break;
   }
@@ -52,9 +52,9 @@ char const *ToString(TransactionStatus status)
   return text;
 }
 
-TransactionStatus TransactionStatusCache::Query(Digest digest) const
+TransactionStatusCache::TxStatus TransactionStatusCache::Query(Digest digest) const
 {
-  TransactionStatus status{TransactionStatus::UNKNOWN};
+  TxStatus status;
 
   {
     FETCH_LOCK(mtx_);
@@ -62,19 +62,20 @@ TransactionStatus TransactionStatusCache::Query(Digest digest) const
     auto const it = cache_.find(digest);
     if (cache_.end() != it)
     {
-      status = it->second.status;
+      status = it->second;
     }
   }
 
   return status;
 }
 
-void TransactionStatusCache::Update(Digest digest, TransactionStatus status, Timepoint const &now)
+void TransactionStatusCache::Update(Digest digest, eTransactionStatus status,
+                                    ContractExecutionResult const execRes, Timepoint const &now)
 {
   FETCH_LOCK(mtx_);
 
   // update the cache
-  cache_[digest] = Element{status, now};
+  cache_[digest] = TxStatus{status, now, std::move(execRes)};
 
   // determine if we need to prune the cache
   auto const delta_prune = now - last_clean_;

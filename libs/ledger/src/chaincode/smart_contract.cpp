@@ -393,7 +393,7 @@ void AddToParameterPack(vm::VM *vm, vm::ParameterPack &params, vm::TypeId expect
  * @param tx The input transaction
  * @return The corresponding status result for the operation
  */
-Contract::Status SmartContract::InvokeAction(std::string const &name, Transaction const &tx,
+Contract::Result SmartContract::InvokeAction(std::string const &name, Transaction const &tx,
                                              BlockIndex index)
 {
   // Important to keep the handle alive as long as the msgpack::object is needed to avoid segfault!
@@ -415,7 +415,7 @@ Contract::Status SmartContract::InvokeAction(std::string const &name, Transactio
     if (!p.next(h))
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Parse error");
-      return Status::FAILED;
+      return {eStatus::FAILED};
     }
 
     auto const &container = h.get();
@@ -424,7 +424,7 @@ Contract::Status SmartContract::InvokeAction(std::string const &name, Transactio
     {
       FETCH_LOG_WARN(LOGGING_NAME,
                      "Incorrect format, expected array of arguments. Input: ", parameter_data);
-      return Status::FAILED;
+      return {eStatus::FAILED};
     }
 
     // access the elements of the array
@@ -443,7 +443,7 @@ Contract::Status SmartContract::InvokeAction(std::string const &name, Transactio
     FETCH_LOG_WARN(LOGGING_NAME,
                    "Incorrect number of parameters provided for target function. Received: ",
                    input_params.size(), " Expected: ", target_function->num_parameters);
-    return Status::FAILED;
+    return {eStatus::FAILED};
   }
 
   vm::ParameterPack params{vm->registered_types()};
@@ -462,7 +462,7 @@ Contract::Status SmartContract::InvokeAction(std::string const &name, Transactio
   catch (std::exception const &)
   {
     // this can happen for a number of reasons
-    return Status::FAILED;
+    return {eStatus::FAILED};
   }
 
   ValidateAddressesInParams(tx, params);
@@ -473,16 +473,23 @@ Contract::Status SmartContract::InvokeAction(std::string const &name, Transactio
   std::string        error;
   std::stringstream  console;
   fetch::vm::Variant output;
+  auto               status{eStatus::OK};
 
   vm->AttachOutputDevice(vm::VM::STDOUT, console);
 
   if (!vm->Execute(*executable_, name, error, output, params))
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Runtime error: ", error);
-    return Status::FAILED;
+    status = eStatus::FAILED;
   }
 
-  return Status::OK;
+  using ResponseType = int64_t;
+  Result result{status};
+  if (output.type_id == vm::TypeIds::Int64)
+  {
+    result.return_value = output.Get<ResponseType>();
+  }
+  return result;
 }
 
 /**
@@ -491,7 +498,7 @@ Contract::Status SmartContract::InvokeAction(std::string const &name, Transactio
  * @param owner The owner identity of the contract (i.e. the creator of the contract)
  * @return The corresponding status result for the operation
  */
-Contract::Status SmartContract::InvokeInit(Address const &owner)
+Contract::Result SmartContract::InvokeInit(Address const &owner)
 {
   // Get clean VM instance
   auto vm = std::make_unique<vm::VM>(module_.get());
@@ -521,16 +528,23 @@ Contract::Status SmartContract::InvokeInit(Address const &owner)
   std::string        error;
   std::stringstream  console;
   fetch::vm::Variant output;
+  auto               status{eStatus::OK};
 
   vm->AttachOutputDevice(vm::VM::STDOUT, console);
 
   if (!vm->Execute(*executable_, init_fn_name_, error, output, params))
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Runtime error: ", error);
-    return Status::FAILED;
+    status = eStatus::FAILED;
   }
 
-  return Status::OK;
+  using ResponseType = int64_t;
+  int64_t return_value{-1};
+  if (output.type_id == vm::TypeIds::Int64)
+  {
+    return_value = output.Get<ResponseType>();
+  }
+  return {status, return_value};
 }
 
 /**
@@ -538,11 +552,10 @@ Contract::Status SmartContract::InvokeInit(Address const &owner)
  *
  * @param name The name of the query
  * @param request The query request
- * @param response The query response
  * @return The corresponding status result for the operation
  */
-SmartContract::Status SmartContract::InvokeQuery(std::string const &name, Query const &request,
-                                                 Query &response)
+SmartContract::eStatus SmartContract::InvokeQuery(std::string const &name, Query const &request,
+                                                  Query &response)
 {
   // get clean VM instance
   auto vm = std::make_unique<vm::VM>(module_.get());
@@ -553,7 +566,7 @@ SmartContract::Status SmartContract::InvokeQuery(std::string const &name, Query 
   if (!target_function)
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Unable to lookup target function");
-    return Status::FAILED;
+    return eStatus::FAILED;
   }
 
   auto const num_parameters = static_cast<std::size_t>(target_function->num_parameters);
@@ -570,11 +583,12 @@ SmartContract::Status SmartContract::InvokeQuery(std::string const &name, Query 
       if (!request.Has(parameter.name))
       {
         FETCH_LOG_WARN(LOGGING_NAME, "Unable to lookup variable: ", parameter.name);
+        response           = Query::Object();
         response["status"] = "failed";
         response["msg"] = "Unable to lookup variable: " + static_cast<std::string>(parameter.name);
         response["console"] = "";
         response["result"]  = variant::Variant::Null();
-        return Status::FAILED;
+        return eStatus::FAILED;
       }
 
       // add to the parameter pack
@@ -584,11 +598,12 @@ SmartContract::Status SmartContract::InvokeQuery(std::string const &name, Query 
   catch (std::exception const &ex)
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Query failed during parameter packing: ", ex.what());
+    response            = Query::Object();
     response["status"]  = "failed";
     response["msg"]     = ex.what();
     response["console"] = "";
     response["result"]  = variant::Variant::Null();
-    return Status::FAILED;
+    return eStatus::FAILED;
   }
 
   // create the initial query response
@@ -607,7 +622,7 @@ SmartContract::Status SmartContract::InvokeQuery(std::string const &name, Query 
     response["msg"]     = error;
     response["console"] = console.str();
     response["result"]  = variant::Variant::Null();
-    return Status::FAILED;
+    return eStatus::FAILED;
   }
 
   // extract the result from the contract output
@@ -664,7 +679,7 @@ SmartContract::Status SmartContract::InvokeQuery(std::string const &name, Query 
       // TODO(tfr): add error - all types not covered
       response["result"] = variant::Variant::Null();
       FETCH_LOG_WARN(LOGGING_NAME, "Could not serialise result - possibly Void return-type");
-      return Status::OK;
+      return eStatus::OK;
     }
     else
     {
@@ -681,7 +696,7 @@ SmartContract::Status SmartContract::InvokeQuery(std::string const &name, Query 
           response["result"] = "Failed to serialise object to JSON variant";
           FETCH_LOG_WARN(LOGGING_NAME, "Failed to serialise object to JSON variant for " +
                                            output.object->GetUniqueId());
-          return Status::FAILED;
+          return eStatus::FAILED;
         }
       }
       response["result"] = var;
@@ -693,7 +708,7 @@ SmartContract::Status SmartContract::InvokeQuery(std::string const &name, Query 
   // update the status response to be successful
   response["status"] = "success";
 
-  return Status::OK;
+  return eStatus::OK;
 }
 
 }  // namespace ledger

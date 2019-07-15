@@ -158,10 +158,8 @@ bool TokenContract::TransferTokens(Transaction const &tx, Address const &to, uin
   return SubtractTokens(tx.from(), amount) && AddTokens(to, amount);
 }
 
-Contract::Status TokenContract::CreateWealth(Transaction const &tx, BlockIndex)
+Contract::Result TokenContract::CreateWealth(Transaction const &tx, BlockIndex)
 {
-  Contract::Status status{Contract::Status::FAILED};
-
   // parse the payload as JSON
   Variant data;
   if (ParseAsJson(tx, data))
@@ -173,12 +171,12 @@ Contract::Status TokenContract::CreateWealth(Transaction const &tx, BlockIndex)
       // mint new tokens
       if (AddTokens(tx.from(), amount))
       {
-        status = Contract::Status::OK;
+        return {Contract::eStatus::OK};
       }
     }
   }
 
-  return status;
+  return {Contract::eStatus::FAILED};
 }
 
 /**
@@ -192,12 +190,12 @@ Contract::Status TokenContract::CreateWealth(Transaction const &tx, BlockIndex)
  *
  * @return Status::OK if deed has been incorporated successfully.
  */
-Contract::Status TokenContract::Deed(Transaction const &tx, BlockIndex)
+Contract::Result TokenContract::Deed(Transaction const &tx, BlockIndex)
 {
   Variant data;
   if (!ParseAsJson(tx, data))
   {
-    return Status::FAILED;
+    return {eStatus::FAILED};
   }
 
   // retrieve the record (if it exists)
@@ -212,13 +210,13 @@ Contract::Status TokenContract::Deed(Transaction const &tx, BlockIndex)
     // currently in effect.
     if (!record.deed->Verify(tx, AMEND_NAME))
     {
-      return Status::FAILED;
+      return {eStatus::FAILED};
     }
 
     // Amend (replace) previous deed with new one.
     if (!record.CreateDeed(data))
     {
-      return Status::FAILED;
+      return {eStatus::FAILED};
     }
   }
   else
@@ -229,30 +227,28 @@ Contract::Status TokenContract::Deed(Transaction const &tx, BlockIndex)
     // MUST be present when NO preceding deed exists.
     if (!tx.IsSignedByFromAddress())
     {
-      return Status::FAILED;
+      return {eStatus::FAILED};
     }
 
     if (!record.CreateDeed(data))
     {
-      return Status::FAILED;
+      return {eStatus::FAILED};
     }
   }
 
   SetStateRecord(record, tx.from().display());
 
-  return Status::OK;
+  return {eStatus::OK};
 }
 
-Contract::Status TokenContract::Transfer(Transaction const &tx, BlockIndex)
+Contract::Result TokenContract::Transfer(Transaction const &tx, BlockIndex)
 {
   FETCH_UNUSED(tx);
-  return Status::FAILED;
+  return {eStatus::FAILED};
 }
 
-Contract::Status TokenContract::AddStake(Transaction const &tx, BlockIndex block)
+Contract::Result TokenContract::AddStake(Transaction const &tx, BlockIndex block)
 {
-  Status status{Status::FAILED};
-
   // parse the payload as JSON
   Variant data;
   if (ParseAsJson(tx, data))
@@ -281,20 +277,18 @@ Contract::Status TokenContract::AddStake(Transaction const &tx, BlockIndex block
             // save the state
             SetStateRecord(record, tx.from().display());
 
-            status = Status::OK;
+            return {eStatus::OK};
           }
         }
       }
     }
   }
 
-  return status;
+  return {eStatus::FAILED};
 }
 
-Contract::Status TokenContract::DeStake(Transaction const &tx, BlockIndex block)
+Contract::Result TokenContract::DeStake(Transaction const &tx, BlockIndex block)
 {
-  Status status{Status::FAILED};
-
   // parse the payload as JSON
   Variant data;
   if (ParseAsJson(tx, data))
@@ -323,20 +317,18 @@ Contract::Status TokenContract::DeStake(Transaction const &tx, BlockIndex block)
             SetStateRecord(record, tx.from().display());
 
             FETCH_LOG_WARN(LOGGING_NAME, "Destaked!!!!");
-            status = Status::OK;
+            return {eStatus::OK};
           }
         }
       }
     }
   }
 
-  return status;
+  return {eStatus::FAILED};
 }
 
-Contract::Status TokenContract::CollectStake(Transaction const &tx, BlockIndex block)
+Contract::Result TokenContract::CollectStake(Transaction const &tx, BlockIndex block)
 {
-  Status status{Status::FAILED};
-
   WalletRecord record{};
 
   if (GetStateRecord(record, tx.from().display()))
@@ -348,17 +340,15 @@ Contract::Status TokenContract::CollectStake(Transaction const &tx, BlockIndex b
       record.CollectStake(block);
       SetStateRecord(record, tx.from().display());
 
-      return Status::OK;
+      return {eStatus::OK};
     }
   }
 
-  return status;
+  return {eStatus::FAILED};
 }
 
-Contract::Status TokenContract::Balance(Query const &query, Query &response)
+Contract::eStatus TokenContract::Balance(Query const &query, Query &response)
 {
-  Status status = Status::FAILED;
-
   ConstByteArray input;
   if (Extract(query, ADDRESS_NAME, input))
   {
@@ -374,7 +364,7 @@ Contract::Status TokenContract::Balance(Query const &query, Query &response)
       response            = Variant::Object();
       response["balance"] = record.balance;
 
-      status = Status::OK;
+      return eStatus::OK;
     }
   }
   else
@@ -382,13 +372,11 @@ Contract::Status TokenContract::Balance(Query const &query, Query &response)
     FETCH_LOG_WARN(LOGGING_NAME, "Incorrect parameters to balance query");
   }
 
-  return status;
+  return eStatus::FAILED;
 }
 
-Contract::Status TokenContract::Stake(Query const &query, Query &response)
+Contract::eStatus TokenContract::Stake(Query const &query, Query &response)
 {
-  Status status = Status::FAILED;
-
   ConstByteArray input;
   if (Extract(query, ADDRESS_NAME, input))
   {
@@ -404,7 +392,7 @@ Contract::Status TokenContract::Stake(Query const &query, Query &response)
       response          = Variant::Object();
       response["stake"] = record.stake;
 
-      status = Status::OK;
+      return eStatus::OK;
     }
   }
   else
@@ -412,13 +400,11 @@ Contract::Status TokenContract::Stake(Query const &query, Query &response)
     FETCH_LOG_WARN(LOGGING_NAME, "Incorrect parameters to balance query");
   }
 
-  return status;
+  return eStatus::FAILED;
 }
 
-Contract::Status TokenContract::CooldownStake(Query const &query, Query &response)
+Contract::eStatus TokenContract::CooldownStake(Query const &query, Query &response)
 {
-  Status status = Status::FAILED;
-
   ConstByteArray input;
   if (Extract(query, ADDRESS_NAME, input))
   {
@@ -441,7 +427,7 @@ Contract::Status TokenContract::CooldownStake(Query const &query, Query &respons
 
       response["cooldownStake"] = keys;
 
-      status = Status::OK;
+      return eStatus::OK;
     }
   }
   else
@@ -449,7 +435,7 @@ Contract::Status TokenContract::CooldownStake(Query const &query, Query &respons
     FETCH_LOG_WARN(LOGGING_NAME, "Incorrect parameters to cooldown stake query");
   }
 
-  return status;
+  return eStatus::FAILED;
 }
 
 }  // namespace ledger

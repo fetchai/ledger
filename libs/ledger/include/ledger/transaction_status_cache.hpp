@@ -20,6 +20,7 @@
 #include "core/mutex.hpp"
 #include "core/threading/synchronised_state.hpp"
 #include "ledger/chain/digest.hpp"
+#include "ledger/execution_result.hpp"
 
 #include <chrono>
 #include <unordered_map>
@@ -27,7 +28,7 @@
 namespace fetch {
 namespace ledger {
 
-enum class TransactionStatus
+enum class eTransactionStatus : uint8_t
 {
   UNKNOWN,    ///< The status of the transaction is unknown
   PENDING,    ///< The transaction is waiting to be mined
@@ -36,7 +37,7 @@ enum class TransactionStatus
   SUBMITTED,  ///< Special case for the data based synergetic transactions
 };
 
-char const *ToString(TransactionStatus status);
+char const *ToString(eTransactionStatus status);
 
 class TransactionStatusCache
 {
@@ -44,14 +45,22 @@ public:
   using Clock     = std::chrono::steady_clock;
   using Timepoint = Clock::time_point;
 
+  struct TxStatus
+  {
+    eTransactionStatus      status{eTransactionStatus::UNKNOWN};
+    Timepoint               timestamp{Clock::now()};
+    ContractExecutionResult contract_exec_result{};
+  };
+
   // Construction / Destruction
   TransactionStatusCache()                               = default;
   TransactionStatusCache(TransactionStatusCache const &) = delete;
   TransactionStatusCache(TransactionStatusCache &&)      = delete;
   ~TransactionStatusCache()                              = default;
 
-  TransactionStatus Query(Digest digest) const;
-  void Update(Digest digest, TransactionStatus status, Timepoint const &now = Clock::now());
+  TxStatus Query(Digest digest) const;
+  void Update(Digest digest, eTransactionStatus status, ContractExecutionResult const execRes = {},
+              Timepoint const &now = Clock::now());
 
   // Operators
   TransactionStatusCache &operator=(TransactionStatusCache const &) = delete;
@@ -60,13 +69,7 @@ public:
 private:
   using Mutex = mutex::Mutex;
 
-  struct Element
-  {
-    TransactionStatus status{TransactionStatus::UNKNOWN};
-    Timepoint         timestamp{Clock::now()};
-  };
-
-  using Cache = DigestMap<Element>;
+  using Cache = DigestMap<TxStatus>;
 
   void PruneCache(Timepoint const &now);
 

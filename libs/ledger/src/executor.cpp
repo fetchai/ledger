@@ -33,6 +33,7 @@
 #include <algorithm>
 #include <chrono>
 #include <random>
+#include <vm/common.hpp>
 
 static constexpr char const *LOGGING_NAME    = "Executor";
 static constexpr uint64_t    TRANSFER_CHARGE = 1;
@@ -116,7 +117,7 @@ Executor::Result Executor::Execute(Digest const &digest, BlockIndex block, Slice
 {
   FETCH_LOG_DEBUG(LOGGING_NAME, "Executing tx ", byte_array::ToBase64(digest));
 
-  Result result{Status::INEXPLICABLE_FAILURE, 0, 0, 0};
+  Result result{Status::INEXPLICABLE_FAILURE};
 
   // cache the state for the current transaction
   block_          = block;
@@ -305,19 +306,21 @@ bool Executor::ExecuteTransactionContract(Result &result)
 
     // map the contract execution status
     result.status = Status::CHAIN_CODE_EXEC_FAILURE;
-    switch (contract_status)
+    switch (contract_status.status)
     {
-    case Contract::Status::OK:
+    case Contract::eStatus::OK:
       success       = true;
       result.status = Status::SUCCESS;
       break;
-    case Contract::Status::FAILED:
+    case Contract::eStatus::FAILED:
       FETCH_LOG_WARN(LOGGING_NAME, "Transaction execution failed!");
       break;
-    case Contract::Status::NOT_FOUND:
+    case Contract::eStatus::NOT_FOUND:
       FETCH_LOG_WARN(LOGGING_NAME, "Unable to lookup transaction handler");
       break;
     }
+
+    result.return_value = contract_status.return_value;
 
 #ifdef FETCH_ENABLE_METRICS
     Metrics::Timestamp const completed = Metrics::Clock::now();

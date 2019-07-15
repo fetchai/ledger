@@ -60,7 +60,7 @@ public:
       state_->Set(fetch::storage::ResourceAddress{digest}, "executed");
     }
 
-    return {Status::SUCCESS, 0, 0, 0};
+    return {Status::SUCCESS, 0, 0, 0, 0};
   }
 
   void SettleFees(Address const &miner, TokenAmount amount, uint32_t log2_num_lanes) override

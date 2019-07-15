@@ -43,34 +43,13 @@
 #include <memory>
 #include <ostream>
 
-namespace fetch {
-namespace ledger {
+namespace {
 
-std::ostream &operator<<(std::ostream &s, BlockCoordinator::State state)
-{
-  s << BlockCoordinator::ToString(state);
-  return s;
-}
+using namespace fetch::ledger;
 
-Digest GENESIS_DIGEST =
-    fetch::byte_array::FromBase64("0+++++++++++++++++Genesis+++++++++++++++++0=");
-Digest GENESIS_MERKLE_ROOT =
-    fetch::byte_array::FromBase64("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=");
-
-}  // namespace ledger
-}  // namespace fetch
-
-using fetch::ledger::BlockCoordinator;
-using fetch::ledger::MainChain;
-using fetch::ledger::BlockStatus;
-using fetch::ledger::Block;
 using fetch::byte_array::ToBase64;
-
 using fetch::crypto::ECDSASigner;
 using fetch::ledger::testing::BlockGenerator;
-using fetch::ledger::TransactionStatusCache;
-using fetch::ledger::TransactionLayout;
-using fetch::ledger::Address;
 using fetch::core::FeatureFlags;
 
 using ::testing::_;
@@ -92,6 +71,11 @@ using State               = fetch::ledger::BlockCoordinator::State;
 using AddressPtr          = std::unique_ptr<Address>;
 using DAGPtr              = BlockCoordinator::DAGPtr;
 using StakeManagerPtr     = std::shared_ptr<fetch::ledger::StakeManagerInterface>;
+
+Digest GENESIS_DIGEST =
+    fetch::byte_array::FromBase64("0+++++++++++++++++Genesis+++++++++++++++++0=");
+Digest GENESIS_MERKLE_ROOT =
+    fetch::byte_array::FromBase64("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=");
 
 static constexpr char const *LOGGING_NAME = "BlockCoordinatorTests";
 static constexpr std::size_t NUM_LANES    = 1;
@@ -115,10 +99,9 @@ protected:
     execution_manager_ = std::make_unique<StrictMock<MockExecutionManager>>(storage_unit_->fake);
     packer_            = std::make_unique<StrictMock<MockBlockPacker>>();
     block_sink_        = std::make_unique<FakeBlockSink>();
-    tx_status_         = std::make_unique<TransactionStatusCache>();
     block_coordinator_ = std::make_unique<BlockCoordinator>(
         *main_chain_, DAGPtr{}, StakeManagerPtr{}, *execution_manager_, *storage_unit_, *packer_,
-        *block_sink_, *tx_status_, FeatureFlags{}, signer, NUM_LANES, NUM_SLICES, 1u);
+        *block_sink_, FeatureFlags{}, signer, NUM_LANES, NUM_SLICES, 1u);
 
     block_coordinator_->SetBlockPeriod(std::chrono::seconds{10});
     block_coordinator_->EnableMining(true);
@@ -127,7 +110,6 @@ protected:
   void TearDown() override
   {
     block_coordinator_.reset();
-    tx_status_.reset();
     block_sink_.reset();
     packer_.reset();
     execution_manager_.reset();
@@ -221,7 +203,6 @@ protected:
   StorageUnitPtr      storage_unit_;
   BlockPackerPtr      packer_;
   BlockSinkPtr        block_sink_;
-  TxCachePtr          tx_status_;
   BlockCoordinatorPtr block_coordinator_;
   BlockGenerator      block_generator_{NUM_LANES, NUM_SLICES};
 };
@@ -1043,10 +1024,9 @@ protected:
     execution_manager_ = std::make_unique<NiceMock<MockExecutionManager>>(storage_unit_->fake);
     packer_            = std::make_unique<NiceMock<MockBlockPacker>>();
     block_sink_        = std::make_unique<FakeBlockSink>();
-    tx_status_         = std::make_unique<TransactionStatusCache>();
     block_coordinator_ = std::make_unique<BlockCoordinator>(
         *main_chain_, DAGPtr{}, StakeManagerPtr{}, *execution_manager_, *storage_unit_, *packer_,
-        *block_sink_, *tx_status_, FeatureFlags{}, signer, NUM_LANES, NUM_SLICES, 1u);
+        *block_sink_, FeatureFlags{}, signer, NUM_LANES, NUM_SLICES, 1u);
 
     block_coordinator_->SetBlockPeriod(std::chrono::seconds{10});
     block_coordinator_->EnableMining(true);
@@ -1089,3 +1069,5 @@ TEST_F(NiceMockBlockCoordinatorTests, UnknownTransactionDoesNotBlockForever)
 
   Tock(State::WAIT_FOR_TRANSACTIONS, State::SYNCHRONISED);
 }
+
+}  // namespace

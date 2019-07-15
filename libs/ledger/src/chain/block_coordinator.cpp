@@ -89,7 +89,6 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag, StakeManagerPtr
                                    ExecutionManagerInterface &execution_manager,
                                    StorageUnitInterface &storage_unit, BlockPackerInterface &packer,
                                    BlockSinkInterface &      block_sink,
-                                   TransactionStatusCache &  status_cache,
                                    core::FeatureFlags const &features, ProverPtr const &prover,
                                    std::size_t num_lanes, std::size_t num_slices,
                                    std::size_t block_difficulty)
@@ -100,7 +99,6 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag, StakeManagerPtr
   , storage_unit_{storage_unit}
   , block_packer_{packer}
   , block_sink_{block_sink}
-  , status_cache_{status_cache}
   , periodic_print_{NOTIFY_INTERVAL}
   , miner_{std::make_shared<consensus::DummyMiner>()}
   , last_executed_block_{GENESIS_DIGEST}
@@ -862,9 +860,6 @@ BlockCoordinator::State BlockCoordinator::OnPostExecBlockValidation()
   }
   else
   {
-    // mark all the transactions as been executed
-    UpdateTxStatus(*current_block_);
-
     // Commit this state
     storage_unit_.Commit(current_block_->body.block_number);
 
@@ -1039,9 +1034,6 @@ BlockCoordinator::State BlockCoordinator::OnTransmitBlock()
                      " txs: ", next_block_->GetTransactionCount(),
                      " number: ", next_block_->body.block_number);
 
-      // mark this blocks transactions as being executed
-      UpdateTxStatus(*next_block_);
-
       // signal the last block that has been executed
       last_executed_block_.Set(next_block_->body.hash);
 
@@ -1176,17 +1168,6 @@ BlockCoordinator::ExecutionStatus BlockCoordinator::QueryExecutorStatus()
 void BlockCoordinator::UpdateNextBlockTime()
 {
   next_block_time_ = Clock::now() + block_period_;
-}
-
-void BlockCoordinator::UpdateTxStatus(Block const &block)
-{
-  for (auto const &slice : block.body.slices)
-  {
-    for (auto const &tx : slice)
-    {
-      status_cache_.Update(tx.digest(), TransactionStatus::EXECUTED);
-    }
-  }
 }
 
 char const *BlockCoordinator::ToString(State state)
