@@ -806,7 +806,8 @@ BlockCoordinator::State BlockCoordinator::OnPostExecBlockValidation()
   {
     if (state_hash != current_block_->body.merkle_hash)
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Block validation failed: Merkle hash mismatch (block num: ", current_block_->body.block_number, " block: 0x",
+      FETCH_LOG_WARN(LOGGING_NAME, "Block validation failed: Merkle hash mismatch (block num: ",
+                     current_block_->body.block_number, " block: 0x",
                      current_block_->body.hash.ToHex(), " expected: 0x",
                      current_block_->body.merkle_hash.ToHex(), " actual: 0x", state_hash.ToHex(),
                      ")");
@@ -816,18 +817,17 @@ BlockCoordinator::State BlockCoordinator::OnPostExecBlockValidation()
     }
     else
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "Block validation great success: (block num: ", current_block_->body.block_number, " block: 0x",
-                      current_block_->body.hash.ToHex(), " expected: 0x",
-                      current_block_->body.merkle_hash.ToHex(), " actual: 0x", state_hash.ToHex(),
-                      ")");
+      FETCH_LOG_DEBUG(
+          LOGGING_NAME,
+          "Block validation great success: (block num: ", current_block_->body.block_number,
+          " block: 0x", current_block_->body.hash.ToHex(), " expected: 0x",
+          current_block_->body.merkle_hash.ToHex(), " actual: 0x", state_hash.ToHex(), ")");
     }
   }
 
   // After the checks have been completed, if the validation has failed, the system needs to recover
   if (invalid_block)
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "INVALID BLOCK \n\n");
-
     bool revert_successful{false};
 
     // we need to restore back to the previous block
@@ -865,12 +865,8 @@ BlockCoordinator::State BlockCoordinator::OnPostExecBlockValidation()
     // mark all the transactions as been executed
     UpdateTxStatus(*current_block_);
 
-    FETCH_LOG_INFO(LOGGING_NAME, "Committing");
-
     // Commit this state
     storage_unit_.Commit(current_block_->body.block_number);
-
-    FETCH_LOG_INFO(LOGGING_NAME, "Committed");
 
     // Notify the DAG of this epoch
     if (dag_)
@@ -881,8 +877,6 @@ BlockCoordinator::State BlockCoordinator::OnPostExecBlockValidation()
     // signal the last block that has been executed
     last_executed_block_.Set(current_block_->body.hash);
   }
-
-  FETCH_LOG_INFO(LOGGING_NAME, "return to reset state");
 
   return State::RESET;
 }

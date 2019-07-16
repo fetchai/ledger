@@ -208,7 +208,7 @@ public:
 
   std::size_t size() const
   {
-    // std::lock_guard<mutex::Mutex> lock(mutex_); // huh?
+    std::lock_guard<mutex::Mutex> lock(mutex_);
     return store_.size();
   }
 
@@ -311,7 +311,7 @@ public:
   }
 
 private:
-  mutex::Mutex         mutex_{__LINE__, __FILE__};
+  mutable mutex::Mutex mutex_{__LINE__, __FILE__};
   KeyByteArrayStore<S> store_;
 };
 
