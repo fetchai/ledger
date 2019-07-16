@@ -18,7 +18,7 @@
 
 #include "math/tensor.hpp"
 #include "ml/graph.hpp"
-#include "ml/layers/attention.hpp"
+#include "ml/layers/convolution_1d.hpp"
 #include "ml/ops/activations/relu.hpp"
 #include "ml/ops/multiply.hpp"
 #include "ml/ops/placeholder.hpp"
@@ -90,10 +90,8 @@ TYPED_TEST(GraphTest, no_such_node_test)  // Use the class as a Node
   using SizeType  = typename TypeParam::SizeType;
 
   fetch::ml::Graph<ArrayType> g;
-
   g.template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>("Input", {});
-  g.template AddNode<fetch::ml::layers::SelfAttention<ArrayType>>("SelfAttention", {"Input"}, 50u,
-                                                                  42u, 10u);
+  g.template AddNode<fetch::ml::layers::Convolution1D<ArrayType>>("Convolution", {"Input"}, 10u, 20u, 3u, 1u);
 
   ArrayType data(std::vector<SizeType>({5, 10}));
   g.SetInput("Input", data);
@@ -109,12 +107,9 @@ TYPED_TEST(GraphTest, two_nodes_same_name_test)
   fetch::ml::Graph<ArrayType> g;
 
   g.template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>("Input", {});
-  std::string sa_1 = g.template AddNode<fetch::ml::layers::SelfAttention<ArrayType>>(
-      "SelfAttention", {"Input"}, 50u, 42u, 10u);
-  std::string sa_2 = g.template AddNode<fetch::ml::layers::SelfAttention<ArrayType>>(
-      "SelfAttention", {"Input"}, 50u, 42u, 10u);
-  std::string sa_3 = g.template AddNode<fetch::ml::layers::SelfAttention<ArrayType>>(
-      "SelfAttention", {"Input"}, 50u, 42u, 10u);
+  std::string sa_1 = g.template AddNode<fetch::ml::layers::Convolution1D<ArrayType>>("Convolution", {"Input"}, 10u, 20u, 3u, 1u);
+  std::string sa_2 = g.template AddNode<fetch::ml::layers::Convolution1D<ArrayType>>("Convolution", {"Input"}, 10u, 20u, 3u, 1u);
+  std::string sa_3 = g.template AddNode<fetch::ml::layers::Convolution1D<ArrayType>>("Convolution", {"Input"}, 10u, 20u, 3u, 1u);
 
   ArrayType data(std::vector<SizeType>({5, 10}));
   g.SetInput("Input", data);
@@ -122,9 +117,9 @@ TYPED_TEST(GraphTest, two_nodes_same_name_test)
   EXPECT_NE(sa_1, sa_2);
   EXPECT_NE(sa_2, sa_3);
   EXPECT_NE(sa_1, sa_3);
-  EXPECT_EQ(sa_1, "SelfAttention");
-  EXPECT_EQ(sa_2, "SelfAttention_0");
-  EXPECT_EQ(sa_3, "SelfAttention_1");
+  EXPECT_EQ(sa_1, "Convolution");
+  EXPECT_EQ(sa_2, "Convolution1D_0");
+  EXPECT_EQ(sa_3, "Convolution1D_1");
 }
 
 TYPED_TEST(GraphTest,

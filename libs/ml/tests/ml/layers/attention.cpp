@@ -44,21 +44,6 @@ TYPED_TEST(SelfAttentionTest, output_shape_test)  // Use the class as a Node
   
   TypeParam data = TypeParam({5, 3, 1});
   data.Fill(1);
-//  TypeParam tmp_data = TypeParam::FromString("1, 2, 3, 4, 5; 6, 7, 8, 9, 10; 11, 12, 13, 14, 15");
-//
-//  auto data_view = data.View();
-//  auto tmp_data_view = tmp_data.View();
-//  data_view.Assign(tmp_data_view);
-//
-  auto data_it = data.begin();
-  while (data_it.is_valid())
-  {
-  	std::cout << "*data_it: " << *data_it << std::endl;
-  	++data_it;
-  }
-  
-  
-  
   
   g.SetInput("Input", data);
 

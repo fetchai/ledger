@@ -48,7 +48,7 @@ public:
 
     if((inputs.at(0).get().shape() == inputs.at(1).get().shape()) || (inputs.at(1).get().size() > 1)){ // array / array
 	    fetch::math::Divide(inputs.at(0).get(), inputs.at(1).get(), output);
-    }else{
+    }else{ // array / scalar
     	fetch::math::Divide(inputs.at(0).get(), *(inputs.at(1).get().cbegin()), output);
     }
     
@@ -63,6 +63,7 @@ public:
   {
 	  ArrayType return_signal_1(inputs.at(0).get().shape());
 	  ArrayType return_signal_2(inputs.at(1).get().shape());
+	  return_signal_2.Fill(0);
 	
 	  auto a_it   = inputs.at(0).get().cbegin();
 	  auto b_it   = inputs.at(1).get().cbegin();
@@ -73,7 +74,7 @@ public:
 		  while (a_it.is_valid())
 		  {
 			  *r_1_it = (*err_it) / (*b_it);
-			  *r_2_it = ((*err_it) * (*a_it)) / ((*b_it) * (*b_it));
+			  *r_2_it = -((*err_it) * (*a_it)) / ((*b_it) * (*b_it));
 			
 			  ++a_it;
 			  ++b_it;
@@ -82,17 +83,31 @@ public:
 			  ++r_2_it;
 		  }
   	}else if(inputs.at(1).get().size() == 1){ // array / scalar
-		  *r_2_it = 0;
 		  while (a_it.is_valid()){
 			  *r_1_it = (*err_it) / (*b_it);
-			  *r_2_it += ((*err_it) * (*a_it)) / ((*b_it) * (*b_it));
+			  *r_2_it += -((*err_it) * (*a_it)) / ((*b_it) * (*b_it));
 			  
 			  ++a_it;
 			  ++err_it;
 			  ++r_1_it;
 		  }
-  	}else{ // array / array different shape
-  	
+  	}else{ // array / array different shape 
+		  // TODO () This implementation only works in limited scenarios, as it does not resolve the axis the division happens along
+//  	  while (a_it.is_valid()){
+//  	  	*r_1_it = (*err_it) / (*b_it);
+//		    *r_2_it += -((*err_it) * (*a_it)) / ((*b_it) * (*b_it));
+//		    
+//		    ++a_it;
+//		    ++b_it;
+//		    ++err_it;
+//		    ++r_1_it;
+//		    ++r_2_it;
+//		    if(!r_2_it.is_valid()){ 
+//		    	r_2_it = return_signal_2.begin();
+//			    b_it   = inputs.at(1).get().cbegin();
+//		    }
+//  	  }
+		  throw std::runtime_error("softmax for nDimensions not yet handled");
   	}
 	  return {return_signal_1, return_signal_2};
   }

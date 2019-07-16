@@ -76,6 +76,25 @@ TYPED_TEST(SoftmaxTest, equal_proportion_test)
   }
 }
 
+TYPED_TEST(SoftmaxTest, multi_dimension_test){
+	TypeParam test_array({4, 3, 1});
+	TypeParam filling_array = TypeParam::FromString("1, 1, 1;2, 2, 2; 3, 3, 3; 4, 4, 4");
+	test_array.Slice(0, 2).Assign(filling_array);
+	
+	TypeParam gt_array({4, 3, 1});
+	gt_array.Fill(typename TypeParam::Type(double(1) / double(3)));
+	
+	typename TypeParam::SizeType axis = 0;
+	
+	fetch::math::Softmax(test_array, test_array, axis);
+	
+	// test correct values
+	for (std::size_t j = 0; j < gt_array.size(); ++j)
+	{
+		ASSERT_NEAR(double(test_array[j]), double(gt_array[j]), double(1e-7));
+	}
+}
+
 TYPED_TEST(SoftmaxTest, exact_values_test)
 {
 

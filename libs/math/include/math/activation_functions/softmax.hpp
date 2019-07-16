@@ -90,17 +90,22 @@ void Softmax(ArrayType const &array, ArrayType &ret, typename ArrayType::SizeTyp
 {
   assert(ret.size() == array.size());
 
-  if ((array.shape().size() == 1) && (ret.shape().size() == 1))
+  if ((array.shape().size() == 2) && (ret.shape().size() == 2))
   {
     assert(axis == 0);
-    details::Softmax1DImplementation(array, ret);
-  }
-  else if ((array.shape().size() == 2) && (ret.shape().size() == 2))
-  {
     details::Softmax2DImplementation(array, ret, axis);
+  }
+  else if ((array.shape().size() == 3) && (ret.shape().size() == 3))
+  {
+	  ArrayType tmp_ret = ret.Slice(0, 2).Copy().Squeeze();
+  	for(size_t i=0; i < array.shape()[2]; i++){
+		  details::Softmax2DImplementation(array.Slice(i, 2).Copy().Squeeze(), tmp_ret, axis);
+		  ret.Slice(i, 2).Assign(tmp_ret);
+  	}
   }
   else
   {
+	  // TODO (#1360) we should have a N dimension implementation for softmax, with which the 2D implementation should be merged.
     throw std::runtime_error("softmax for nDimensions not yet handled");
   }
 }
