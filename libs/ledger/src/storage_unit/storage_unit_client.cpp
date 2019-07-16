@@ -84,23 +84,26 @@ byte_array::ConstByteArray StorageUnitClient::CurrentHash()
     promises.push_back(promise);
   }
 
+  FETCH_LOG_INFO(LOGGING_NAME, "");
+
   std::size_t index = 0;
   for (auto &p : promises)
   {
     tree[index] = p->As<byte_array::ByteArray>();
 
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Merkle Hash ", index, ": 0x", tree[index].ToHex());
+    FETCH_LOG_INFO(LOGGING_NAME, "Merkle Hash ", index, ": 0x", tree[index].ToHex());
 
     ++index;
   }
 
   tree.CalculateRoot();
 
-  FETCH_LOG_DEBUG(LOGGING_NAME, "Merkle Final Hash: 0x", tree.root().ToHex());
+  FETCH_LOG_INFO(LOGGING_NAME, "Merkle Final Hash: 0x", tree.root().ToHex());
 
   return tree.root();
 }
 
+// TODO(HUT): delete this
 // return the last committed hash (should correspond to the state hash before you began execution)
 byte_array::ConstByteArray StorageUnitClient::LastCommitHash()
 {
@@ -128,10 +131,13 @@ bool StorageUnitClient::RevertToHash(Hash const &hash, uint64_t index)
   // determine if the unit requests the genesis block
   bool const genesis_state = hash == GENESIS_MERKLE_ROOT;
 
+  FETCH_LOG_INFO(LOGGING_NAME, "REVERTING: ", index, " HASH: ", hash.ToHex(), "at index: ", index);
+
   FETCH_LOCK(merkle_mutex_);
 
   // Set merkle stack to this hash, get the tree
   MerkleTree tree{num_lanes()};
+
   if (genesis_state && (index == 0))  // this is truly the genesis block
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Reverting state to genesis.");
@@ -148,8 +154,6 @@ bool StorageUnitClient::RevertToHash(Hash const &hash, uint64_t index)
   }
   else
   {
-    // Try to find whether we believe the hash exists (index into merkle stack)
-    MerkleTree     tree{num_lanes()};
     uint64_t const merkle_stack_size = permanent_state_merkle_stack_.size();
 
     if (index >= merkle_stack_size)
@@ -160,7 +164,12 @@ bool StorageUnitClient::RevertToHash(Hash const &hash, uint64_t index)
       return false;
     }
 
-    assert(permanent_state_merkle_stack_.Get(index, tree));
+    FETCH_LOG_INFO(LOGGING_NAME, "Getting stack.");
+
+    bool success = permanent_state_merkle_stack_.Get(index, tree);
+    assert(success);
+
+    FETCH_LOG_INFO(LOGGING_NAME, "reverting to tree: ", tree.root().ToHex());
 
     if (tree.root() != hash)
     {
@@ -169,7 +178,11 @@ bool StorageUnitClient::RevertToHash(Hash const &hash, uint64_t index)
       return false;
     }
 
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Successfully found merkle at: ", index);
+    FETCH_LOG_INFO(LOGGING_NAME, "Successfully found merkle at: ", index);
+    FETCH_LOG_INFO(LOGGING_NAME, "hash is: ", hash.ToHex());
+    FETCH_LOG_INFO(LOGGING_NAME, "root hash is: ", tree.root().ToHex());
+    FETCH_LOG_INFO(LOGGING_NAME, "leaf hash is: ", tree[0].ToHex());
+    //FETCH_LOG_INFO(LOGGING_NAME, "leaf is: ", tree.);
   }  // End set merkle stack
 
   // Note: we shouldn't be touching the lanes at this point from other threads
@@ -181,6 +194,8 @@ bool StorageUnitClient::RevertToHash(Hash const &hash, uint64_t index)
   for (auto const &lane_merkle_hash : tree)
   {
     assert(!hash.empty());
+
+    FETCH_LOG_INFO(LOGGING_NAME, "reverting tree leaf: ", lane_merkle_hash.ToHex());
 
     // make the call to the RPC server
     auto promise = rpc_client_->CallSpecificAddress(LookupAddress(lane_index++), RPC_STATE,
@@ -221,6 +236,7 @@ bool StorageUnitClient::RevertToHash(Hash const &hash, uint64_t index)
   return all_success;
 }
 
+// TODO(HUT): make const
 // We have finished execution presumably, commit this state
 byte_array::ConstByteArray StorageUnitClient::Commit(uint64_t commit_index)
 {
@@ -277,7 +293,12 @@ byte_array::ConstByteArray StorageUnitClient::Commit(uint64_t commit_index)
       }
     }
 
+    FETCH_LOG_INFO(LOGGING_NAME, "Committing merkle hash at index: ", commit_index, " to stack: ", tree.root().ToHex());
+
     permanent_state_merkle_stack_.Push(tree);
+
+    //MerkleTree testme;
+
     permanent_state_merkle_stack_.Flush(false);
   }
 
