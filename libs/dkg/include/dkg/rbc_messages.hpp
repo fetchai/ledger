@@ -20,7 +20,6 @@
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/serializers/byte_array_buffer.hpp"
 #include "core/serializers/stl_types.hpp"
-#include "crypto/bls_base.hpp"
 
 #include <cstdint>
 
@@ -34,6 +33,15 @@ using SerialisedMessage    = byte_array::ConstByteArray;
 using RBCSerializer        = fetch::serializers::ByteArrayBuffer;
 using RBCSerializerCounter = fetch::serializers::SizeCounter<fetch::serializers::ByteArrayBuffer>;
 
+/**
+ * Different messages using in reliable broadcast channel(RBC).
+ * RBroadcast - container for message to be sent using RBC and triggers the protocol
+ * REcho - reply to RBroadcast message, containing hash of message
+ * RReady - message signalling the receipt of protocol specified number of REcho's
+ * RRequest - request for original message if the hash of RReady messages does not match our
+ * RBroadcast message RAnswer - reply to RRequest message
+ */
+
 class RBCMessage
 {
 public:
@@ -46,46 +54,61 @@ public:
     RANSWER
   };
 
-  TagType Tag() const
+  /// @name Getter functions
+  /// @{
+  /**
+   * Creates unique tag for the message out of channel_, id_ and
+   * message counter
+   *
+   * @return Tag of message
+   */
+  TagType tag() const
   {
-    TagType msg_tag = channel_id_;
+    TagType msg_tag = channel_;
     msg_tag <<= 48;
-    msg_tag |= node_id_;
+    msg_tag |= id_;
     msg_tag <<= 32;
-    return (msg_tag | uint64_t(sequence_counter_));
+    return (msg_tag | uint64_t(counter_));
   }
-  RBCMessage::MessageType Type() const
+
+  RBCMessage::MessageType type() const
   {
     return type_;
   }
-  uint8_t ChannelId() const
+
+  uint8_t channel() const
   {
-    return static_cast<uint8_t>(channel_id_);
+    return static_cast<uint8_t>(channel_);
   }
-  uint8_t SeqCounter() const
+
+  uint8_t counter() const
   {
-    return sequence_counter_;
+    return counter_;
   }
-  uint32_t Id() const
+
+  uint32_t id() const
   {
-    return node_id_;
+    return id_;
   }
+  /// @}
+
   virtual RBCSerializer Serialize() const = 0;
 
 protected:
-  const MessageType type_;
-  // Tag of message
-  uint16_t channel_id_{0};  // Is this safe to truncate to uint8_t?
-  uint32_t node_id_{0};     // Should this be crypto::bls::Id?
-  uint8_t  sequence_counter_{0};
+  const MessageType type_;  ///< Type of the message
+  uint16_t
+           channel_;  ///< Channel Id of the broadcast channel (is this safe to truncate to uint8_t?)
+  uint32_t id_;       ///< Unique Id of the node
+  uint8_t  counter_;  ///< Counter for messages sent on RBC
 
+  // Construction
   explicit RBCMessage(MessageType type)
     : type_{type} {};
-  explicit RBCMessage(uint16_t channel, uint32_t node, uint8_t seq, MessageType type)
+  explicit RBCMessage(uint16_t channel, uint32_t id, uint8_t counter, MessageType type)
     : type_{type}
-    , channel_id_{channel}
-    , node_id_{node}
-    , sequence_counter_{seq} {};
+    , channel_{channel}
+    , id_{id}
+    , counter_{counter} {};
 };
 
 class RMessage : public RBCMessage
@@ -94,22 +117,23 @@ public:
   RBCSerializer Serialize() const override
   {
     RBCSerializer serialiser;
-    serialiser << channel_id_ << node_id_ << sequence_counter_ << message_;
+    serialiser << channel_ << id_ << counter_ << message_;
     return serialiser;
   }
 
-  // For tests:
-  const SerialisedMessage &Message() const
+  const SerialisedMessage &message() const
   {
     return message_;
   }
 
 protected:
-  SerialisedMessage message_;
+  SerialisedMessage message_;  ///< Serialised message to be sent using RBC
+
+  // Construction
   explicit RMessage(MessageType type)
     : RBCMessage{type} {};
-  RMessage(uint16_t channel, uint32_t node, uint8_t seq, SerialisedMessage msg, MessageType type)
-    : RBCMessage{channel, node, seq, type}
+  RMessage(uint16_t channel, uint32_t id, uint8_t counter, SerialisedMessage msg, MessageType type)
+    : RBCMessage{channel, id, counter, type}
     , message_{std::move(msg)} {};
 };
 
@@ -119,96 +143,95 @@ public:
   RBCSerializer Serialize() const override
   {
     RBCSerializer serialiser;
-    serialiser << channel_id_ << node_id_ << sequence_counter_ << hash_;
+    serialiser << channel_ << id_ << counter_ << hash_;
     return serialiser;
   }
 
-  // For tests:
-  const TruncatedHash &Hash() const
+  const TruncatedHash &hash() const
   {
     return hash_;
   }
 
 protected:
-  TruncatedHash hash_;
+  TruncatedHash hash_;  ///< Truncated hash of serialised message
+
+  // Construction
   explicit RHash(MessageType type)
     : RBCMessage{type} {};
-  RHash(uint16_t channel, uint32_t node, uint8_t seq, TruncatedHash msg_hash, MessageType type)
-    : RBCMessage{channel, node, seq, type}
+  RHash(uint16_t channel, uint32_t id, uint8_t counter, TruncatedHash msg_hash, MessageType type)
+    : RBCMessage{channel, id, counter, type}
     , hash_{std::move(msg_hash)} {};
 };
 
-// Different RBC Messages:
-
-// Create this message for messages that need to be broadcasted
 class RBroadcast : public RMessage
 {
 public:
-  explicit RBroadcast(uint16_t channel, uint32_t node, uint8_t seq_counter, SerialisedMessage msg)
-    : RMessage{channel, node, seq_counter, std::move(msg), MessageType::RBROADCAST} {};
+  // Construction
+  explicit RBroadcast(uint16_t channel, uint32_t id, uint8_t counter, SerialisedMessage msg)
+    : RMessage{channel, id, counter, std::move(msg), MessageType::RBROADCAST} {};
   explicit RBroadcast(RBCSerializer &serialiser)
     : RMessage{MessageType::RBROADCAST}
   {
-    serialiser >> channel_id_ >> node_id_ >> sequence_counter_ >> message_;
+    serialiser >> channel_ >> id_ >> counter_ >> message_;
   }
 };
 
-// Send an REcho when we receive an RBroadcast message
 class REcho : public RHash
 {
 public:
-  explicit REcho(uint16_t channel, uint32_t node, uint8_t seq_counter, TruncatedHash msg_hash)
-    : RHash{channel, node, seq_counter, std::move(msg_hash), MessageType::RECHO} {};
+  // COnstruction
+  explicit REcho(uint16_t channel, uint32_t id, uint8_t counter, TruncatedHash msg_hash)
+    : RHash{channel, id, counter, std::move(msg_hash), MessageType::RECHO} {};
   explicit REcho(RBCSerializer &serialiser)
     : RHash{MessageType::RECHO}
   {
-    serialiser >> channel_id_ >> node_id_ >> sequence_counter_ >> hash_;
+    serialiser >> channel_ >> id_ >> counter_ >> hash_;
   }
 };
 
-// RReady messages which are sent once we receive num_parties - threshold REcho's
 class RReady : public RHash
 {
 public:
-  explicit RReady(uint16_t channel, uint32_t node, uint8_t seq_counter, TruncatedHash msg_hash)
-    : RHash{channel, node, seq_counter, std::move(msg_hash), MessageType::RREADY} {};
+  // Construction
+  explicit RReady(uint16_t channel, uint32_t id, uint8_t counter, TruncatedHash msg_hash)
+    : RHash{channel, id, counter, std::move(msg_hash), MessageType::RREADY} {};
   explicit RReady(RBCSerializer &serialiser)
     : RHash{MessageType::RREADY}
   {
-    serialiser >> channel_id_ >> node_id_ >> sequence_counter_ >> hash_;
+    serialiser >> channel_ >> id_ >> counter_ >> hash_;
   }
 };
 
-// Make RRequest if the hash of RReady messages does not match our RBroadcast message
 class RRequest : public RBCMessage
 {
 public:
-  explicit RRequest(uint16_t channel, uint32_t node, uint8_t seq_counter)
-    : RBCMessage{channel, node, seq_counter, MessageType::RREQUEST} {};
+  // Constuction
+  explicit RRequest(uint16_t channel, uint32_t id, uint8_t counter)
+    : RBCMessage{channel, id, counter, MessageType::RREQUEST} {};
   explicit RRequest(RBCSerializer &serialiser)
     : RBCMessage{MessageType::RREQUEST}
   {
-    serialiser >> channel_id_ >> node_id_ >> sequence_counter_;
+    serialiser >> channel_ >> id_ >> counter_;
   }
 
   RBCSerializer Serialize() const override
   {
     RBCSerializer serialiser;
-    serialiser << channel_id_ << node_id_ << sequence_counter_;
+    serialiser << channel_ << id_ << counter_;
     return serialiser;
   }
 };
 
-// Reply to RRequest messages
 class RAnswer : public RMessage
 {
 public:
-  explicit RAnswer(uint16_t channel, uint32_t node, uint8_t seq_counter, SerialisedMessage msg)
-    : RMessage{channel, node, seq_counter, std::move(msg), MessageType::RANSWER} {};
+  // Construction
+  explicit RAnswer(uint16_t channel, uint32_t id, uint8_t counter, SerialisedMessage msg)
+    : RMessage{channel, id, counter, std::move(msg), MessageType::RANSWER} {};
   explicit RAnswer(RBCSerializer &serialiser)
     : RMessage{MessageType::RANSWER}
   {
-    serialiser >> channel_id_ >> node_id_ >> sequence_counter_ >> message_;
+    serialiser >> channel_ >> id_ >> counter_ >> message_;
   }
 };
 }  // namespace rbc

@@ -31,16 +31,16 @@ class RBCEnvelop
   using Payload     = byte_array::ConstByteArray;
 
 public:
+  // Constructor
   RBCEnvelop() = default;
-
   explicit RBCEnvelop(const RBCMessage &msg)
-    : type_{msg.Type()}
-    , serialisedMessage_{msg.Serialize().data()} {};
+    : type_{msg.type()}
+    , payload_{msg.Serialize().data()} {};
 
   template <typename T>
   void Serialize(T &serialiser) const
   {
-    serialiser << (uint8_t)type_ << serialisedMessage_;
+    serialiser << (uint8_t)type_ << payload_;
   }
 
   template <typename T>
@@ -49,14 +49,14 @@ public:
     uint8_t val;
     serialiser >> val;
     type_ = (MessageType)val;
-    serialiser >> serialisedMessage_;
+    serialiser >> payload_;
   }
 
   std::shared_ptr<RBCMessage> Message() const;
 
 private:
-  RBCMessage::MessageType type_;
-  Payload                 serialisedMessage_;
+  RBCMessage::MessageType type_;     ///< Type of message contained in envelop
+  Payload                 payload_;  ///< Serialised RBCMessage
 };
 
 template <typename T>
