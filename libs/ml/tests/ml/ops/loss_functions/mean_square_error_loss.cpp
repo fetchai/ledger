@@ -78,7 +78,6 @@ TYPED_TEST(MeanSquareErrorTest, one_by_eight_dimensional_backward_test)
 
   TypeParam data1_transpose = data1.Transpose();
   TypeParam data2_transpose = data2.Transpose();
-  //  TypeParam gt_transpose = gt.Transpose();
 
   TypeParam error_signal({1, 1});
   error_signal(0, 0) = DataType{1};
@@ -113,9 +112,6 @@ TYPED_TEST(MeanSquareErrorTest, two_dimensional_backward_test_with_weighting)
 
   fetch::ml::ops::MeanSquareErrorLoss<TypeParam> op(weightings);
   std::vector<TypeParam> gradients = op.Backward({data1, data2}, error_signal);
-
-  std::cout << "gt: " << gt.ToString() << std::endl;
-  std::cout << "gradients.at(0).ToString(): " << gradients.at(0).ToString() << std::endl;
 
   EXPECT_TRUE(
       gradients.at(0).AllClose(gt, fetch::math::function_tolerance<typename TypeParam::Type>() * 4,
