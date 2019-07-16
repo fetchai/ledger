@@ -34,8 +34,8 @@ TEST(rbc_messages, broadcast)
   fetch::serializers::ByteArrayBuffer serialiser1(serialiser.data());
   RBroadcast                          broadcast1{serialiser1};
 
-  EXPECT_EQ(broadcast1.Message(), broadcast.Message());
-  EXPECT_EQ(broadcast1.Tag(), broadcast.Tag());
+  EXPECT_EQ(broadcast1.message(), broadcast.message());
+  EXPECT_EQ(broadcast1.tag(), broadcast.tag());
 }
 
 TEST(rbc_messages, echo)
@@ -47,8 +47,8 @@ TEST(rbc_messages, echo)
   fetch::serializers::ByteArrayBuffer serialiser1(serialiser.data());
   REcho                               echo1{serialiser1};
 
-  EXPECT_EQ(echo1.Hash(), echo.Hash());
-  EXPECT_EQ(echo1.Tag(), echo.Tag());
+  EXPECT_EQ(echo1.hash(), echo.hash());
+  EXPECT_EQ(echo1.tag(), echo.tag());
 }
 
 TEST(rbc_messages, ready)
@@ -60,8 +60,8 @@ TEST(rbc_messages, ready)
   fetch::serializers::ByteArrayBuffer serialiser1(serialiser.data());
   RReady                              ready1{serialiser1};
 
-  EXPECT_EQ(ready1.Hash(), ready.Hash());
-  EXPECT_EQ(ready1.Tag(), ready.Tag());
+  EXPECT_EQ(ready1.hash(), ready.hash());
+  EXPECT_EQ(ready1.tag(), ready.tag());
 }
 
 TEST(rbc_messages, request)
@@ -73,7 +73,7 @@ TEST(rbc_messages, request)
   fetch::serializers::ByteArrayBuffer serialiser1(serialiser.data());
   RRequest                            request1{serialiser1};
 
-  EXPECT_EQ(request1.Tag(), request.Tag());
+  EXPECT_EQ(request1.tag(), request.tag());
 }
 
 TEST(rbc_messages, answer)
@@ -85,8 +85,8 @@ TEST(rbc_messages, answer)
   fetch::serializers::ByteArrayBuffer serialiser1(serialiser.data());
   RAnswer                             answer1{serialiser1};
 
-  EXPECT_EQ(answer1.Message(), answer.Message());
-  EXPECT_EQ(answer1.Tag(), answer.Tag());
+  EXPECT_EQ(answer1.message(), answer.message());
+  EXPECT_EQ(answer1.tag(), answer.tag());
 }
 
 TEST(rbc_messages, envelope)
@@ -109,7 +109,7 @@ TEST(rbc_messages, envelope)
   env_serialiser1 >> env1;
 
   // Check the message type of envelops match
-  EXPECT_EQ(env1.Message()->Type(), RBCMessage::MessageType::RANSWER);
-  EXPECT_EQ(env1.Message()->Tag(), answer.Tag());
-  EXPECT_EQ(std::dynamic_pointer_cast<RAnswer>(env1.Message())->Message(), answer.Message());
+  EXPECT_EQ(env1.Message()->type(), RBCMessage::MessageType::RANSWER);
+  EXPECT_EQ(env1.Message()->tag(), answer.tag());
+  EXPECT_EQ(std::dynamic_pointer_cast<RAnswer>(env1.Message())->message(), answer.message());
 }
