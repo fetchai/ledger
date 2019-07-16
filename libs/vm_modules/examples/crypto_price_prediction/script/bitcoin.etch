@@ -65,22 +65,34 @@ if (System.Argc() != 4) print("Usage: VM SCRIPT_FILE PATH/TO/TRAIN_DATA.CSV /PAT
     return;
 endif
 
-var input_data = read_csv(System.Argv(0), true);
-var input_labels = read_csv(System.Argv(1), true);
-var test_data = read_csv(System.Argv(2), true);
-var test_labels = read_csv(System.Argv(3), true);
+// LOAD THE DATA
+var orig_train_data = read_csv(System.Argv(0), true);
+var orig_train_labels = read_csv(System.Argv(1), true);
+var orig_test_data = read_csv(System.Argv(2), true);
+var orig_test_labels = read_csv(System.Argv(3), true);
 
-// set up graph
+// NORMALISE ALL DATA TO THE MAX RANGE OF THE TRAINING DATA
+var train_data = Tensor(orig_train_data.shape());
+var train_labels = Tensor(orig_train_labels.shape());
+var test_data = Tensor(orig_test_data.shape());
+var test_labels = Tensor(orig_test_labels.shape());
+
+Scaler scaler("min_max");
+scaler.SetScale(train_data);
+scaler.normalise(orig_train_data, train_data);
+scaler.normalise(orig_train_label, train_label);
+scaler.normalise(orig_test_data, test_data);
+scaler.normalise(orig_test_label, test_label);
+
+// SET UP GRAPH
 var graph = Graph();
 build_graph(graph);
-
-// add loss to graph
 graph.addMeanSquareErrorLoss("Error", "Output", "Label");
 
-// Set up the optimiser
+// SET UP THE OPTIMISER
 var optimiser = AdamOptimiser(graph, "Input", "Label", "Error");
 
-// Begin training
+// BEGIN TRAINING
 printLn("begin training...");
 var training_iterations = 10;
 var batch_size = 8u64;
@@ -94,8 +106,8 @@ endfor
 printLn("test prediction...");
 graph.setInput("Input", test_data);
 var pred = graph.evaluate("Output");
-
 pred = remove_leading_dimension(pred);
+scaler.deNormalise(pred, pred);
 
 printLn(pred.toString());
 

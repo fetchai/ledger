@@ -57,21 +57,13 @@ public:
   {
     if (mode->str == "commodity")
     {
-      fetch::ml::dataloaders::CommodityDataLoader<fetch::math::Tensor<DataType>,
-                                                  fetch::math::Tensor<DataType>>
-          ld;
-      ld.AddData(xfilename->str, yfilename->str);
-
-      loader_ = std::make_shared<fetch::ml::dataloaders::CommodityDataLoader<
-          fetch::math::Tensor<DataType>, fetch::math::Tensor<DataType>>>(ld);
+      fetch::ml::dataloaders::CommodityDataLoader<fetch::math::Tensor<DataType>, fetch::math::Tensor<DataType>> loader;
+      loader.AddData(xfilename->str, yfilename->str);
+      loader_ = std::make_shared<fetch::ml::dataloaders::CommodityDataLoader<fetch::math::Tensor<DataType>, fetch::math::Tensor<DataType>>>(loader);
     }
     else if (mode->str == "mnist")
     {
-
-      loader_ =
-          std::make_shared<fetch::ml::dataloaders::MNISTLoader<fetch::math::Tensor<DataType>,
-                                                               fetch::math::Tensor<DataType>>>(
-              xfilename->str, yfilename->str);
+      loader_ = std::make_shared<fetch::ml::dataloaders::MNISTLoader<fetch::math::Tensor<DataType>, fetch::math::Tensor<DataType>>>(xfilename->str, yfilename->str);
     }
     else
     {
@@ -96,9 +88,7 @@ public:
     return loader_->IsDone();
   }
 
-  std::shared_ptr<fetch::ml::dataloaders::DataLoader<fetch::math::Tensor<DataType>,
-                                                     fetch::math::Tensor<DataType>>>
-      loader_;
+  std::shared_ptr<fetch::ml::dataloaders::DataLoader<fetch::math::Tensor<DataType>, fetch::math::Tensor<DataType>>> loader_;
 };
 
 }  // namespace ml
