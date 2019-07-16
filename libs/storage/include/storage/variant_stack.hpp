@@ -162,7 +162,7 @@ public:
    *
    */
   template <typename T>
-  void Push(T const &object, uint64_t const &type = uint64_t(-1))
+  void Push(T const &object, uint64_t type = uint64_t(-1))
   {
     assert(bool(file_handle_));
     file_handle_.seekg(header_.end, file_handle_.beg);

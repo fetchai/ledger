@@ -40,11 +40,11 @@ public:
   void Parse(int argc, char **argv);
 
   template <typename T>
-  T GetArg(std::size_t const &i, T const &default_value) const;
+  T GetArg(std::size_t i, T const &default_value) const;
   template <typename T>
-  T           GetArg(std::size_t const &i) const;
-  std::string GetArg(std::size_t const &i) const;
-  std::string GetArg(std::size_t const &i, std::string const &default_value) const;
+  T           GetArg(std::size_t i) const;
+  std::string GetArg(std::size_t i) const;
+  std::string GetArg(std::size_t i, std::string const &default_value) const;
 
   template <typename T>
   T           GetParam(std::string const &key, T const &default_value) const;
@@ -63,7 +63,7 @@ private:
 };
 
 template <typename T>
-T ParamsParser::GetArg(std::size_t const &i, T const &default_value) const
+T ParamsParser::GetArg(std::size_t i, T const &default_value) const
 {
   if (i >= args_.size())
   {
@@ -77,7 +77,7 @@ T ParamsParser::GetArg(std::size_t const &i, T const &default_value) const
 }
 
 template <typename T>
-T ParamsParser::GetArg(std::size_t const &i) const
+T ParamsParser::GetArg(std::size_t i) const
 {
   if (i >= args_.size())
   {

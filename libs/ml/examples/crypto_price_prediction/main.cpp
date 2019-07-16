@@ -16,11 +16,14 @@
 //
 //------------------------------------------------------------------------------
 
+<<<<<<< HEAD
 // TODO: try out linear decay weightings on keras conv models
 // TODO: MSE now works with weightings, so set up exponential decay weightings in training
 // TODO: implement normalisation in etch crypto prediction
 // TODO: implement weightin in etch crypto prediction
 
+=======
+>>>>>>> 7f194b02605babc4ac6b1ec9b329a6495a01a9ce
 #include "math/metrics/mean_absolute_error.hpp"
 #include "math/normalize_array.hpp"
 #include "math/tensor.hpp"
@@ -34,7 +37,10 @@
 #include "ml/ops/activation.hpp"
 #include "ml/ops/loss_functions/mean_square_error_loss.hpp"
 #include "ml/optimisation/adam_optimiser.hpp"
+<<<<<<< HEAD
 #include "ml/utilities/min_max_scaler.hpp"
+=======
+>>>>>>> 7f194b02605babc4ac6b1ec9b329a6495a01a9ce
 
 #include <iostream>
 #include <string>
@@ -146,8 +152,13 @@ int main(int ac, char **av)
     return 1;
   }
 
+<<<<<<< HEAD
   TrainingParams                                 tp;
   fetch::ml::utilities::MinMaxScaler<TensorType> scaler;
+=======
+  TrainingParams tp;
+  DataNormaliser scaler;
+>>>>>>> 7f194b02605babc4ac6b1ec9b329a6495a01a9ce
 
   std::cout << "FETCH Crypto price prediction demo" << std::endl;
 
