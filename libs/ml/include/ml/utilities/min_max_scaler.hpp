@@ -100,7 +100,7 @@ void MinMaxScaler<TensorType>::Normalise(TensorType const &input_tensor, TensorT
   SizeType batch_dim = input_tensor.shape().size() - 1;
 
   // apply normalisation to each feature according to scale -1, 1
-  for (std::size_t i = 0; i < input_tensor.shape(2); ++i)
+  for (std::size_t i = 0; i < input_tensor.shape(batch_dim); ++i)
   {
     auto x_min_it   = x_min_.begin();
     auto x_range_it = x_range_.begin();
@@ -132,7 +132,7 @@ void MinMaxScaler<TensorType>::DeNormalise(TensorType const &input_tensor,
   SizeType batch_dim = input_tensor.shape().size() - 1;
 
   // apply normalisation to each feature according to scale -1, 1
-  for (std::size_t i = 0; i < input_tensor.shape(2); ++i)
+  for (std::size_t i = 0; i < input_tensor.shape(batch_dim); ++i)
   {
     auto x_min_it   = x_min_.begin();
     auto x_range_it = x_range_.begin();
