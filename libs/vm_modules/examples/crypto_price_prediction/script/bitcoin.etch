@@ -77,7 +77,7 @@ var train_labels = Tensor(orig_train_labels.shape());
 var test_data = Tensor(orig_test_data.shape());
 var test_labels = Tensor(orig_test_labels.shape());
 
-Scaler scaler("min_max");
+var scaler = Scaler("min_max");
 scaler.SetScale(train_data);
 scaler.normalise(orig_train_data, train_data);
 scaler.normalise(orig_train_label, train_label);

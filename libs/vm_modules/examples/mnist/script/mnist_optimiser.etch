@@ -19,7 +19,6 @@ g.addFullyConnected("FC_3", "Relu_2", 64, 10);
 g.addSoftmax("Softmax", "FC_3");
 g.addCrossEntropyLoss("Error", "Softmax", "Label");
 
-
 // Set up the dataloader
 printLn(System.Argv(0));
 printLn(System.Argv(1));

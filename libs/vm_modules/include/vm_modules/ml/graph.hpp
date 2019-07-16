@@ -35,7 +35,7 @@ namespace ml {
 class VMGraph : public fetch::vm::Object
 {
   using SizeType       = fetch::math::SizeType;
-  using DataType       = fetch::fixed_point::fp64_t;
+  using DataType       = fetch::vm_modules::math::DataType;
   using MathTensorType = fetch::math::Tensor<DataType>;
   using VMTensorType   = fetch::vm_modules::math::VMTensor;
   using GraphType      = fetch::ml::Graph<MathTensorType>;
