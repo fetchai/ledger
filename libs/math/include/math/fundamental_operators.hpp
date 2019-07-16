@@ -511,7 +511,8 @@ void Divide(ArrayType const &array1, ArrayType const &array2, ArrayType &ret)
     // TODO(issue 1257): Implement const version of Tensor::Broadcast
     ArrayType a = array1.Copy();
     ArrayType b = array2.Copy();
-    if (!(Broadcast([](typename ArrayType::Type x, typename ArrayType::Type y) { return x / y; }, a, b, ret)))
+    if (!(Broadcast([](typename ArrayType::Type x, typename ArrayType::Type y) { return x / y; }, a,
+                    b, ret)))
     {
       throw std::runtime_error("arrays not broadcastable for InlineAdd!");
     }
