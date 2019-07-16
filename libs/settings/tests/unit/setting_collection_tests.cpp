@@ -36,7 +36,7 @@ class SystemArgAdapter
 {
 public:
   explicit SystemArgAdapter(std::vector<std::string> args)
-      : args_{std::move(args)}
+    : args_{std::move(args)}
   {
     argv_.resize(args_.size(), nullptr);
 
@@ -64,10 +64,8 @@ private:
 class SettingCollectionTests : public ::testing::Test
 {
 public:
-
   ::testing::StrictMock<MockEnvironment> environment_;
 };
-
 
 TEST_F(SettingCollectionTests, SimpleCheck)
 {
@@ -120,8 +118,12 @@ TEST_F(SettingCollectionTests, CheckPrecedence)
 
   // null environment
   {
-    EXPECT_CALL(environment_, GetEnvironmentVariable(StrEq("FOO_LANES"))).Times(1).WillOnce(Return(nullptr));
-    EXPECT_CALL(environment_, GetEnvironmentVariable(StrEq("FOO_NAME"))).Times(1).WillOnce(Return(nullptr));
+    EXPECT_CALL(environment_, GetEnvironmentVariable(StrEq("FOO_LANES")))
+        .Times(1)
+        .WillOnce(Return(nullptr));
+    EXPECT_CALL(environment_, GetEnvironmentVariable(StrEq("FOO_NAME")))
+        .Times(1)
+        .WillOnce(Return(nullptr));
 
     collection.UpdateFromEnv("FOO_", environment_);
 
@@ -131,8 +133,12 @@ TEST_F(SettingCollectionTests, CheckPrecedence)
 
   // only lanes
   {
-    EXPECT_CALL(environment_, GetEnvironmentVariable(StrEq("BAR_LANES"))).Times(1).WillOnce(Return("512"));
-    EXPECT_CALL(environment_, GetEnvironmentVariable(StrEq("BAR_NAME"))).Times(1).WillOnce(Return(nullptr));
+    EXPECT_CALL(environment_, GetEnvironmentVariable(StrEq("BAR_LANES")))
+        .Times(1)
+        .WillOnce(Return("512"));
+    EXPECT_CALL(environment_, GetEnvironmentVariable(StrEq("BAR_NAME")))
+        .Times(1)
+        .WillOnce(Return(nullptr));
 
     collection.UpdateFromEnv("BAR_", environment_);
 
@@ -142,8 +148,12 @@ TEST_F(SettingCollectionTests, CheckPrecedence)
 
   // only name
   {
-    EXPECT_CALL(environment_, GetEnvironmentVariable(StrEq("BAZ_LANES"))).Times(1).WillOnce(Return(nullptr));
-    EXPECT_CALL(environment_, GetEnvironmentVariable(StrEq("BAZ_NAME"))).Times(1).WillOnce(Return("awesome"));
+    EXPECT_CALL(environment_, GetEnvironmentVariable(StrEq("BAZ_LANES")))
+        .Times(1)
+        .WillOnce(Return(nullptr));
+    EXPECT_CALL(environment_, GetEnvironmentVariable(StrEq("BAZ_NAME")))
+        .Times(1)
+        .WillOnce(Return("awesome"));
 
     collection.UpdateFromEnv("BAZ_", environment_);
 
@@ -153,8 +163,12 @@ TEST_F(SettingCollectionTests, CheckPrecedence)
 
   // both
   {
-    EXPECT_CALL(environment_, GetEnvironmentVariable(StrEq("FOO_LANES"))).Times(1).WillOnce(Return("1024"));
-    EXPECT_CALL(environment_, GetEnvironmentVariable(StrEq("FOO_NAME"))).Times(1).WillOnce(Return("great"));
+    EXPECT_CALL(environment_, GetEnvironmentVariable(StrEq("FOO_LANES")))
+        .Times(1)
+        .WillOnce(Return("1024"));
+    EXPECT_CALL(environment_, GetEnvironmentVariable(StrEq("FOO_NAME")))
+        .Times(1)
+        .WillOnce(Return("great"));
 
     collection.UpdateFromEnv("FOO_", environment_);
 

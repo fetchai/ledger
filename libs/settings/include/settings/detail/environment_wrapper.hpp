@@ -24,9 +24,8 @@ namespace detail {
 class EnvironmentInterface
 {
 public:
-
   // Construction / Destruction
-  EnvironmentInterface() = default;
+  EnvironmentInterface()          = default;
   virtual ~EnvironmentInterface() = default;
 
   /// @name Environment Interface
@@ -38,8 +37,7 @@ public:
 class Environment : public EnvironmentInterface
 {
 public:
-
-  Environment() = default;
+  Environment()           = default;
   ~Environment() override = default;
 
   /// @name Environment Interface
@@ -48,6 +46,6 @@ public:
   /// @}
 };
 
-} // namespace detail
-} // namespace settings
-} // namespace fetch
+}  // namespace detail
+}  // namespace settings
+}  // namespace fetch

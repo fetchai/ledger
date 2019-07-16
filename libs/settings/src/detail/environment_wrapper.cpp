@@ -29,6 +29,6 @@ char const *Environment::GetEnvironmentVariable(char const *name) const
   return std::getenv(name);
 }
 
-} // namespace detail
-} // namespace settings
-} // namespace fetch
+}  // namespace detail
+}  // namespace settings
+}  // namespace fetch

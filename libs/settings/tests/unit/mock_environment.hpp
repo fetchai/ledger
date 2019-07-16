@@ -24,6 +24,5 @@
 class MockEnvironment : public fetch::settings::detail::EnvironmentInterface
 {
 public:
-
   MOCK_CONST_METHOD1(GetEnvironmentVariable, char const *(char const *));
 };
