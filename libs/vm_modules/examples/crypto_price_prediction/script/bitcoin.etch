@@ -104,7 +104,7 @@ printLn("test prediction...");
 graph.setInput("Input", test_data);
 var pred = graph.evaluate("Output");
 pred = remove_leading_dimension(pred);
-scaler.deNormalise(pred, pred);
+pred = scaler.deNormalise(pred);
 
 printLn(pred.toString());
 
