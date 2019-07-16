@@ -192,7 +192,7 @@ public:
     return cost_type(ret * 0.5 * normalisation_constant_);
   }
 
-  void Resize(std::size_t const &n, std::size_t const & /*m*/ = std::size_t(-1))
+  void Resize(std::size_t n, std::size_t /*m*/ = std::size_t(-1))
   {
     sites_.resize(n);
     for (std::size_t i = 0; i < n; ++i)
@@ -210,7 +210,7 @@ public:
     coupling_magnitude_ = 0;
   }
 
-  void Insert(std::size_t const &i, std::size_t const &j, cost_type const &val)
+  void Insert(std::size_t i, std::size_t j, cost_type const &val)
   {
     if (i == j)
     {
@@ -230,7 +230,7 @@ public:
     }
   }
 
-  std::size_t const &size() const
+  std::size_t size() const
   {
     return size_;
   }

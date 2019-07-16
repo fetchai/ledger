@@ -177,9 +177,9 @@ public:
   Tensor FillArange(Type const &from, Type const &to);
 
   static Tensor UniformRandom(SizeType const &N);
-  static Tensor UniformRandomIntegers(SizeType const &N, int64_t const &min, int64_t const &max);
+  static Tensor UniformRandomIntegers(SizeType const &N, int64_t min, int64_t max);
   Tensor &      FillUniformRandom();
-  Tensor &      FillUniformRandomIntegers(int64_t const &min, int64_t const &max);
+  Tensor &      FillUniformRandomIntegers(int64_t min, int64_t max);
   static Tensor Zeroes(SizeVector const &shape);
   static Tensor Ones(SizeVector const &shape);
   SizeType      ComputeIndex(SizeVector const &indices) const;
@@ -1390,8 +1390,7 @@ Tensor<T, C> Tensor<T, C>::UniformRandom(SizeType const &N)
  * @return The return Tensor filled with random values
  */
 template <typename T, typename C>
-Tensor<T, C> Tensor<T, C>::UniformRandomIntegers(SizeType const &N, int64_t const &min,
-                                                 int64_t const &max)
+Tensor<T, C> Tensor<T, C>::UniformRandomIntegers(SizeType const &N, int64_t min, int64_t max)
 {
   Tensor ret;
   ret.Resize({N});
@@ -1425,11 +1424,11 @@ Tensor<T, C> &Tensor<T, C>::FillUniformRandom()
  * @return Fills tensor with random integers
  */
 template <typename T, typename C>
-Tensor<T, C> &Tensor<T, C>::FillUniformRandomIntegers(int64_t const &min, int64_t const &max)
+Tensor<T, C> &Tensor<T, C>::FillUniformRandomIntegers(int64_t min, int64_t max)
 {
   assert(min <= max);
 
-  uint64_t diff = uint64_t(max - min);
+  auto diff = uint64_t(max - min);
 
   for (SizeType i = 0; i < this->size(); ++i)
   {

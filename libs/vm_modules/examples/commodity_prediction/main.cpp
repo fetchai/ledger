@@ -44,7 +44,7 @@ struct System : public fetch::vm::Object
   }
 
   static fetch::vm::Ptr<fetch::vm::String> Argv(fetch::vm::VM *vm, fetch::vm::TypeId /*type_id*/,
-                                                int32_t const &a)
+                                                int32_t        a)
   {
     return fetch::vm::Ptr<fetch::vm::String>(
         new fetch::vm::String(vm, System::args[std::size_t(a)]));

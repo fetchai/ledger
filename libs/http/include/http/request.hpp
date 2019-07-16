@@ -80,12 +80,12 @@ public:
     return query_;
   }
 
-  std::size_t const &header_length() const
+  std::size_t header_length() const
   {
     return header_data_.size();
   }
 
-  std::size_t const &content_length() const
+  std::size_t content_length() const
   {
     return content_length_;
   }

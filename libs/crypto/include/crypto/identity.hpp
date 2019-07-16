@@ -52,7 +52,7 @@ public:
     : identifier_{std::move(identifier)}
   {}
 
-  uint8_t const &parameters() const
+  uint8_t parameters() const
   {
     return identity_parameters_;
   }
