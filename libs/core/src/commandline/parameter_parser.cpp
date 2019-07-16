@@ -78,6 +78,20 @@ std::string ParamsParser::GetArg(std::size_t i, std::string const &default_value
   return args_[i];
 }
 
+bool ParamsParser::LookupParam(std::string const &key, std::string &value) const
+{
+  bool success{false};
+
+  auto const it = params_.find(key);
+  if (it != params_.end())
+  {
+    value   = it->second;
+    success = true;
+  }
+
+  return success;
+}
+
 std::string ParamsParser::GetParam(std::string const &key, std::string const &default_value) const
 {
   if (params_.find(key) == params_.end())
