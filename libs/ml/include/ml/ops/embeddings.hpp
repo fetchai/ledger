@@ -19,7 +19,11 @@
 
 #include "core/assert.hpp"
 #include "ml/ops/weights.hpp"
+
+#include <cassert>
+#include <memory>
 #include <set>
+#include <vector>
 
 namespace fetch {
 namespace ml {
@@ -42,14 +46,14 @@ public:
     this->SetData(weights);
   }
 
-  Embeddings(ArrayType &weights)
+  explicit Embeddings(ArrayType &weights)
   {
     this->SetData(weights);
   }
 
-  virtual ~Embeddings() = default;
+  ~Embeddings() override = default;
 
-  virtual void Forward(VecTensorType const &inputs, ArrayType &output) override
+  void Forward(VecTensorType const &inputs, ArrayType &output) override
   {
     assert(this->output_);
     assert(inputs.size() == 1);
@@ -94,8 +98,8 @@ public:
     output = *this->embeddings_output_;
   }
 
-  virtual std::vector<ArrayType> Backward(VecTensorType const &inputs,
-                                          ArrayType const &    error_signal) override
+  std::vector<ArrayType> Backward(VecTensorType const &inputs,
+                                  ArrayType const &    error_signal) override
   {
     assert(inputs.size() == 1);
     assert(inputs.front().get().shape().size() == 2);
@@ -130,7 +134,7 @@ public:
     return {ArrayType(error_signal.shape())};
   }
 
-  virtual void Step(typename T::Type learning_rate) override
+  void Step(typename T::Type learning_rate) override
   {
     for (auto const &r : updated_rows_)
     {

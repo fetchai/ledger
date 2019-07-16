@@ -18,6 +18,7 @@
 
 #include "core/byte_array/encoders.hpp"
 #include "core/feature_flags.hpp"
+#include "core/macros.hpp"
 #include "core/threading.hpp"
 #include "ledger/block_packer_interface.hpp"
 #include "ledger/block_sink_interface.hpp"
@@ -518,7 +519,7 @@ BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
   auto fail{[this](char const *reason) {
     FETCH_LOG_WARN(LOGGING_NAME, "Block validation failed: ", reason, " (",
                    ToBase64(current_block_->body.hash), ')');
-    (void)reason;
+    FETCH_UNUSED(reason);
     chain_.RemoveBlock(current_block_->body.hash);
     return State::RESET;
   }};

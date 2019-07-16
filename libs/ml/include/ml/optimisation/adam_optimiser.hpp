@@ -22,6 +22,10 @@
 #include "ml/graph.hpp"
 #include "ml/optimisation/optimiser.hpp"
 
+#include <memory>
+#include <string>
+#include <vector>
+
 namespace fetch {
 namespace ml {
 namespace optimisers {
@@ -51,7 +55,7 @@ public:
                 DataType const &beta1 = DataType{0.9f}, DataType const &beta2 = DataType{0.999f},
                 DataType const &epsilon = DataType{1e-4f});
 
-  virtual ~AdamOptimiser() = default;
+  ~AdamOptimiser() override = default;
 
 private:
   std::vector<ArrayType> cache_;

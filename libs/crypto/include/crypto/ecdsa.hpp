@@ -60,9 +60,9 @@ public:
     return identity_;
   }
 
-  operator bool() const
+  explicit operator bool() const
   {
-    return identity_;
+    return static_cast<bool>(identity_);
   }
 
 private:

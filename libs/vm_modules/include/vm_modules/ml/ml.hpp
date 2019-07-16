@@ -25,8 +25,6 @@
 #include "vm_modules/ml/state_dict.hpp"
 #include "vm_modules/ml/training_pair.hpp"
 
-#include <cstdlib>
-
 namespace fetch {
 namespace vm_modules {
 namespace ml {
