@@ -16,10 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
+#include "random_address.hpp"
+
+#include "core/containers/is_in.hpp"
 #include "core/random/lcg.hpp"
 #include "ledger/consensus/stake_snapshot.hpp"
 #include "ledger/consensus/stake_update_queue.hpp"
-#include "random_address.hpp"
 
 #include "gtest/gtest.h"
 
@@ -27,18 +29,13 @@
 
 namespace {
 
+using fetch::core::IsIn;
 using fetch::ledger::StakeSnapshot;
 using fetch::ledger::StakeUpdateQueue;
 
 using RNG                 = fetch::random::LinearCongruentialGenerator;
 using StakeUpdateQueuePtr = std::unique_ptr<StakeUpdateQueue>;
 using StakeSnapshotPtr    = std::shared_ptr<StakeSnapshot>;
-
-template <typename Container, typename Value>
-bool IsIn(Container const &container, Value const &value)
-{
-  return container.find(value) != container.end();
-}
 
 class StakeUpdateQueueTests : public ::testing::Test
 {
