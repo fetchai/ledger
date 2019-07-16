@@ -105,8 +105,8 @@ private:
 
   // For broadcast
   static constexpr uint16_t SERVICE_DKG = 5001;
-  static constexpr uint16_t CHANNEL_BROADCAST =
-      2;  ///< Replaces what was previously uint8_t channelId_
+  static constexpr uint8_t CHANNEL_BROADCAST =
+      2;  ///< Channel for reliable broadcast
 
   MuddleAddress const address_;   ///< Our muddle address
   Endpoint &          endpoint_;  ///< The muddle endpoint to communicate on
@@ -116,8 +116,7 @@ private:
 
   void Send(const RBCEnvelop &env, const MuddleAddress &address);
   void Broadcast(const RBCEnvelop &env);
-  void OnRBC(MuddleAddress const &from, RBCEnvelop const &envelop,
-             MuddleAddress const &transmitter);
+  void OnRBC(MuddleAddress const &from, RBCEnvelop const &envelop);
   void OnRBroadcast(std::shared_ptr<RBroadcast> msg_ptr, uint32_t sender_index);
   void OnREcho(std::shared_ptr<REcho> msg_ptr, uint32_t sender_index);
   void OnRReady(std::shared_ptr<RReady> msg_ptr, uint32_t sender_index);
