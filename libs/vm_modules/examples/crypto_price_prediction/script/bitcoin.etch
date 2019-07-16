@@ -15,53 +15,58 @@
 //   limitations under the License.
 //
 //------------------------------------------------------------------------------
+//
+//function build_graph(graph : Graph)
+//
+//var conv1D_1_filters        = 16;
+//var conv1D_1_input_channels = 1;
+//var conv1D_1_kernel_size    = 96;
+//var conv1D_1_stride         = 3;
+//
+////var keep_prob_1 = 0.9fp64;
+//var keep_prob_1 = 0.9f;
+//
+//var conv1D_2_filters        = 8;
+//var conv1D_2_input_channels = conv1D_1_filters;
+//var conv1D_2_kernel_size    = 48;
+//var conv1D_2_stride         = 2;
+//
+////var keep_prob_2 = 0.9fp64;
+//var keep_prob_2 = 0.9f;
+//
+//var conv1D_3_filters        = 1;
+//var conv1D_3_input_channels = conv1D_2_filters;
+//var conv1D_3_kernel_size    = 47;
+//var conv1D_3_stride         = 1;
+//
+//
+//graph.addPlaceholder("Input");
+//graph.addPlaceholder("Label");
+//
+//graph.addConv1D("hidden_conv1D_1", "Input", conv1D_1_filters, conv1D_1_input_channels,
+//                conv1D_1_kernel_size, conv1D_1_stride);
+//graph.addRelu("relu_1", "hidden_conv1D_1");
+//
+//graph.addDropout("dropout_1", "relu_1", keep_prob_1);
+//
+//graph.addConv1D("hidden_conv1D_2", "dropout_1", conv1D_2_filters, conv1D_2_input_channels,
+//                        conv1D_2_kernel_size, conv1D_2_stride);
+//graph.addRelu("relu_2", "hidden_conv1D_2");
+//
+//graph.addDropout("dropout_2", "relu_2", keep_prob_2);
+//
+//graph.addConv1D("Output", "dropout_2", conv1D_3_filters, conv1D_3_input_channels,
+//                        conv1D_3_kernel_size, conv1D_3_stride);
+//
+//
+//endfunction
 
-function build_graph(graph : Graph)
+function main()
 
-var conv1D_1_filters        = 16;
-var conv1D_1_input_channels = 1;
-var conv1D_1_kernel_size    = 96;
-var conv1D_1_stride         = 3;
-
-//var keep_prob_1 = 0.9fp64;
-var keep_prob_1 = 0.9f;
-
-var conv1D_2_filters        = 8;
-var conv1D_2_input_channels = conv1D_1_filters;
-var conv1D_2_kernel_size    = 48;
-var conv1D_2_stride         = 2;
-
-//var keep_prob_2 = 0.9fp64;
-var keep_prob_2 = 0.9f;
-
-var conv1D_3_filters        = 1;
-var conv1D_3_input_channels = conv1D_2_filters;
-var conv1D_3_kernel_size    = 47;
-var conv1D_3_stride         = 1;
-
-
+var graph = Graph();
 graph.addPlaceholder("Input");
 graph.addPlaceholder("Label");
 
-graph.addConv1D("hidden_conv1D_1", "Input", conv1D_1_filters, conv1D_1_input_channels,
-                conv1D_1_kernel_size, conv1D_1_stride);
-graph.addRelu("relu_1", "hidden_conv1D_1");
-
-graph.addDropout("dropout_1", "relu_1", keep_prob_1);
-
-graph.addConv1D("hidden_conv1D_2", "dropout_1", conv1D_2_filters, conv1D_2_input_channels,
-                        conv1D_2_kernel_size, conv1D_2_stride);
-graph.addRelu("relu_2", "hidden_conv1D_2");
-
-graph.addDropout("dropout_2", "relu_2", keep_prob_2);
-
-graph.addConv1D("Output", "dropout_2", conv1D_3_filters, conv1D_3_input_channels,
-                        conv1D_3_kernel_size, conv1D_3_stride);
-
-
-endfunction
-
-function main()
 
 if (System.Argc() != 4) print("Usage: VM SCRIPT_FILE PATH/TO/TRAIN_DATA.CSV /PATH/TO/TRAIN_LABEL.CSV PATH/TO/TEST_DATA.CSV /PATH/TO/TEST_LABEL.CSV");
     return;

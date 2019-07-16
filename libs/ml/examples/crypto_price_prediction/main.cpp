@@ -40,7 +40,7 @@
 #include <string>
 #include <vector>
 
-    using namespace fetch::ml::ops;
+using namespace fetch::ml::ops;
 using namespace fetch::ml::layers;
 
 using DataType   = fetch::fixed_point::fp64_t;
