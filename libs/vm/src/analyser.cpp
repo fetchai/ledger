@@ -2103,7 +2103,7 @@ bool Analyser::CheckType(std::string const &type_name, TypeIndex type_index)
     if (found_type->name != type_name)
     {
       throw std::runtime_error("type index " + std::string(type_index.name()) +
-          " has already been registered with a different name");
+                               " has already been registered with a different name");
     }
     // Already created
     return true;
