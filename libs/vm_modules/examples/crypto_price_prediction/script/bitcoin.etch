@@ -75,11 +75,11 @@ var orig_test_labels = read_csv(System.Argv(3), true);
 
 // NORMALISE ALL DATA TO THE MAX RANGE OF THE TRAINING DATA
 var scaler = Scaler();
-scaler.SetScale(train_data, "min_max");
+scaler.setScale(orig_train_data, "min_max");
 var train_data = scaler.normalise(orig_train_data);
-var train_label = scaler.normalise(orig_train_label);
+var train_labels = scaler.normalise(orig_train_labels);
 var test_data = scaler.normalise(orig_test_data);
-var test_label = scaler.normalise(orig_test_label);
+var test_labels = scaler.normalise(orig_test_labels);
 
 // SET UP GRAPH
 var graph = Graph();
@@ -94,7 +94,7 @@ printLn("begin training...");
 var training_iterations = 10;
 var batch_size = 8u64;
 for(i in 0:training_iterations)
-    var loss = optimiser.run(input_data, input_labels, batch_size);
+    var loss = optimiser.run(train_data, train_labels, batch_size);
     print("Current Loss: ");
     printLn(loss);
 endfor
