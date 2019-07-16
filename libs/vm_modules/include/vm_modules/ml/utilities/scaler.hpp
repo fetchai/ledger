@@ -61,27 +61,27 @@ public:
     scaler_->SetScale(reference_tensor->GetConstTensor());
   }
 
-//  MathTensorType Normalise(fetch::vm::Ptr<VMTensorType> const &input_tensor)
-//  {
-//    MathTensorType output_tensor(input_tensor->shape());
-//    scaler_->Normalise(input_tensor->GetConstTensor(), output_tensor);
-//    return output_tensor;
-//  }
-//
-//  MathTensorType DeNormalise(fetch::vm::Ptr<VMTensorType> const &input_tensor)
-//  {
-//    MathTensorType output_tensor(input_tensor->shape());
-//    scaler_->DeNormalise(input_tensor->GetConstTensor(), output_tensor);
-//    return output_tensor;
-//  }
+  MathTensorType Normalise(fetch::vm::Ptr<VMTensorType> const &input_tensor)
+  {
+    MathTensorType output_tensor(input_tensor->shape());
+    scaler_->Normalise(input_tensor->GetConstTensor(), output_tensor);
+    return output_tensor;
+  }
+
+  MathTensorType DeNormalise(fetch::vm::Ptr<VMTensorType> const &input_tensor)
+  {
+    MathTensorType output_tensor(input_tensor->shape());
+    scaler_->DeNormalise(input_tensor->GetConstTensor(), output_tensor);
+    return output_tensor;
+  }
 
   static void Bind(fetch::vm::Module &module)
   {
-    module.CreateClassType<VMScaler>("Graph")
+    module.CreateClassType<VMScaler>("Scaler")
         .CreateConstuctor<>()
-        .CreateMemberFunction("setScale", &VMScaler::SetScale);
-//        .CreateMemberFunction("normalise", &VMScaler::Normalise)
-//        .CreateMemberFunction("deNormalise", &VMScaler::DeNormalise);
+        .CreateMemberFunction("setScale", &VMScaler::SetScale)
+        .CreateMemberFunction("normalise", &VMScaler::Normalise)
+        .CreateMemberFunction("deNormalise", &VMScaler::DeNormalise);
   }
 
   std::shared_ptr<ScalerType> scaler_;
