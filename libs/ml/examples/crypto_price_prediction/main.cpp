@@ -38,15 +38,15 @@
 #include "ml/ops/loss_functions/mean_square_error_loss.hpp"
 #include "ml/optimisation/adam_optimiser.hpp"
 <<<<<<< HEAD
-#include "ml/utilities/min_max_scaler.hpp"
+    #include "ml/utilities/min_max_scaler.hpp"
 =======
 >>>>>>> 7f194b02605babc4ac6b1ec9b329a6495a01a9ce
 
-#include <iostream>
+    #include < iostream >
 #include <string>
 #include <vector>
 
-using namespace fetch::ml::ops;
+    using namespace fetch::ml::ops;
 using namespace fetch::ml::layers;
 
 using DataType   = fetch::fixed_point::fp64_t;
