@@ -120,14 +120,7 @@ public:
         name->str, {input_name->str, label_name->str});
   }
 
-  void AddMeanSquareErrorLoss(VMPtrString const &name, VMPtrString const &input_name,
-                              VMPtrString const &label_name)
-  {
-    graph_.AddNode<fetch::ml::ops::MeanSquareErrorLoss<fetch::math::Tensor<float>>>(
-        name->str, {input_name->str, label_name->str});
-  }
-
-  void AddDropout(VMPtrString const &name, VMPtrString const &input_name, float const &prob)
+  void AddDropout(VMPtrString const &name, VMPtrString const &input_name, DataType const &prob)
   {
     graph_.AddNode<fetch::ml::ops::Dropout<MathTensorType>>(name->str, {input_name->str}, prob);
   }
