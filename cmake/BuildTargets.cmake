@@ -221,8 +221,7 @@ function (configure_vendor_targets)
   # Google Test
   add_subdirectory(${FETCH_ROOT_VENDOR_DIR}/googletest)
 
-  # MCL
-  # TODO: Work out how to get this to work with the already found version of OpenSSL
+  # MCL TODO: Work out how to get this to work with the already found version of OpenSSL
   set(USE_GMP OFF CACHE BOOL "use gmp" FORCE)
   set(USE_OPENSSL OFF CACHE BOOL "use openssl" FORCE)
   set(ONLY_LIB OFF CACHE BOOL "use openssl" FORCE)
@@ -239,7 +238,7 @@ function (configure_vendor_targets)
 
   # BLS
   add_library(vendor-bls-internal STATIC ${FETCH_ROOT_VENDOR_DIR}/bls/src/bls_c256.cpp
-                                     ${FETCH_ROOT_VENDOR_DIR}/bls/src/bls_c384.cpp)
+                                         ${FETCH_ROOT_VENDOR_DIR}/bls/src/bls_c384.cpp)
   target_link_libraries(vendor-bls-internal PUBLIC vendor-mcl)
   target_include_directories(vendor-bls-internal PUBLIC ${FETCH_ROOT_VENDOR_DIR}/bls/include)
   target_compile_definitions(vendor-bls-internal
