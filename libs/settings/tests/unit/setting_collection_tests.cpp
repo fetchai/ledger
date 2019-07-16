@@ -63,7 +63,7 @@ private:
 
 class SettingCollectionTests : public ::testing::Test
 {
-public:
+protected:
   ::testing::StrictMock<MockEnvironment> environment_;
 };
 
