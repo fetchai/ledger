@@ -123,7 +123,7 @@ public:
   using Digest         = ledger::Digest;
   using ConstByteArray = byte_array::ConstByteArray;
   using MuddleAddress  = ConstByteArray;
-  using CabinetMembers = std::unordered_set<MuddleAddress>;
+  using CabinetMembers = std::set<MuddleAddress>;
 
   // Construction / Destruction
   explicit DkgService(Endpoint &endpoint, ConstByteArray address, ConstByteArray dealer_address);
@@ -144,6 +144,8 @@ public:
   void SubmitSignatureShare(uint64_t round, crypto::bls::Id const &id,
                             crypto::bls::PublicKey const &public_key,
                             crypto::bls::Signature const &signature);
+
+  void OnRbcDeliver(MuddleAddress from, byte_array::ConstByteArray payload);
   /// @}
 
   /// @name Entropy Generator
