@@ -61,16 +61,18 @@ public:
     scaler_->SetScale(reference_tensor->GetConstTensor());
   }
 
-  void Normalise(fetch::vm::Ptr<VMTensorType> const &input_tensor,
-                 fetch::vm::Ptr<VMTensorType> const &output_tensor)
+  MathTensorType Normalise(fetch::vm::Ptr<VMTensorType> const &input_tensor)
   {
-    scaler_->Normalise(input_tensor->GetConstTensor(), output_tensor->GetTensor());
+    MathTensorType output_tensor(input_tensor->shape());
+    scaler_->Normalise(input_tensor->GetConstTensor(), output_tensor);
+    return output_tensor;
   }
 
-  void DeNormalise(fetch::vm::Ptr<VMTensorType> const &input_tensor,
-                   fetch::vm::Ptr<VMTensorType> const &output_tensor)
+  MathTensorType DeNormalise(fetch::vm::Ptr<VMTensorType> const &input_tensor)
   {
-    scaler_->DeNormalise(input_tensor->GetConstTensor(), output_tensor->GetTensor());
+    MathTensorType output_tensor(input_tensor->shape());
+    scaler_->DeNormalise(input_tensor->GetConstTensor(), output_tensor);
+    return output_tensor;
   }
 
   static void Bind(fetch::vm::Module &module)

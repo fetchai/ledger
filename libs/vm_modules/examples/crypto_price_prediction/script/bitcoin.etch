@@ -74,17 +74,12 @@ var orig_test_data = read_csv(System.Argv(2), true);
 var orig_test_labels = read_csv(System.Argv(3), true);
 
 // NORMALISE ALL DATA TO THE MAX RANGE OF THE TRAINING DATA
-var train_data = Tensor(orig_train_data.shape());
-var train_labels = Tensor(orig_train_labels.shape());
-var test_data = Tensor(orig_test_data.shape());
-var test_labels = Tensor(orig_test_labels.shape());
-
 var scaler = Scaler();
 scaler.SetScale(train_data, "min_max");
-scaler.normalise(orig_train_data, train_data);
-scaler.normalise(orig_train_label, train_label);
-scaler.normalise(orig_test_data, test_data);
-scaler.normalise(orig_test_label, test_label);
+var train_data = scaler.normalise(orig_train_data);
+var train_label = scaler.normalise(orig_train_label);
+var test_data = scaler.normalise(orig_test_data);
+var test_label = scaler.normalise(orig_test_label);
 
 // SET UP GRAPH
 var graph = Graph();
