@@ -70,9 +70,9 @@ RBC::RBC(Endpoint &endpoint, MuddleAddress address, CabinetMembers const &cabine
   : address_{std::move(address)}
   , endpoint_{endpoint}
   , current_cabinet_{cabinet}
-  , rbc_subscription_(endpoint.Subscribe(SERVICE_DKG, CHANNEL_BROADCAST))
   , threshold_{threshold}
   , dkg_service_{dkg_service}
+  , rbc_subscription_(endpoint.Subscribe(SERVICE_DKG, CHANNEL_BROADCAST))
 {
   // Set subscription for rbc
   rbc_subscription_->SetMessageHandler([this](MuddleAddress const &from, uint16_t, uint16_t,
@@ -85,6 +85,7 @@ RBC::RBC(Endpoint &endpoint, MuddleAddress address, CabinetMembers const &cabine
     serialiser >> env;
 
     // Dispatch the event
+    FETCH_LOG_TRACE(LOGGING_NAME, "Node ", id_ " received RBC message from node ", CabinetIndex(from), " transmitted by ", CabinetIndex(transmitter));
     OnRBC(from, env);
   });
 }

@@ -54,6 +54,9 @@ public:
     RANSWER
   };
 
+  //Destruction
+  virtual ~RBCMessage() = default;
+
   /// @name Getter functions
   /// @{
   /**
@@ -114,6 +117,9 @@ protected:
 class RMessage : public RBCMessage
 {
 public:
+  // Destruction
+  virtual ~RMessage() = default;
+
   RBCSerializer Serialize() const override
   {
     RBCSerializer serialiser;
@@ -140,6 +146,9 @@ protected:
 class RHash : public RBCMessage
 {
 public:
+  // Destruction
+  virtual ~RHash() = default;
+
   RBCSerializer Serialize() const override
   {
     RBCSerializer serialiser;
@@ -166,7 +175,7 @@ protected:
 class RBroadcast : public RMessage
 {
 public:
-  // Construction
+  // Construction/Destruction
   explicit RBroadcast(uint16_t channel, uint32_t id, uint8_t counter, SerialisedMessage msg)
     : RMessage{channel, id, counter, std::move(msg), MessageType::RBROADCAST} {};
   explicit RBroadcast(RBCSerializer &serialiser)
@@ -174,12 +183,13 @@ public:
   {
     serialiser >> channel_ >> id_ >> counter_ >> message_;
   }
+  ~RBroadcast() override = default;
 };
 
 class REcho : public RHash
 {
 public:
-  // COnstruction
+  // Construction/Destruction
   explicit REcho(uint16_t channel, uint32_t id, uint8_t counter, TruncatedHash msg_hash)
     : RHash{channel, id, counter, std::move(msg_hash), MessageType::RECHO} {};
   explicit REcho(RBCSerializer &serialiser)
@@ -187,12 +197,13 @@ public:
   {
     serialiser >> channel_ >> id_ >> counter_ >> hash_;
   }
+  ~REcho() override = default;
 };
 
 class RReady : public RHash
 {
 public:
-  // Construction
+  // Construction/Destruction
   explicit RReady(uint16_t channel, uint32_t id, uint8_t counter, TruncatedHash msg_hash)
     : RHash{channel, id, counter, std::move(msg_hash), MessageType::RREADY} {};
   explicit RReady(RBCSerializer &serialiser)
@@ -200,12 +211,13 @@ public:
   {
     serialiser >> channel_ >> id_ >> counter_ >> hash_;
   }
+  ~RReady() override = default;
 };
 
 class RRequest : public RBCMessage
 {
 public:
-  // Constuction
+  // Constuction/Destruction
   explicit RRequest(uint16_t channel, uint32_t id, uint8_t counter)
     : RBCMessage{channel, id, counter, MessageType::RREQUEST} {};
   explicit RRequest(RBCSerializer &serialiser)
@@ -213,6 +225,7 @@ public:
   {
     serialiser >> channel_ >> id_ >> counter_;
   }
+  ~RRequest() override = default;
 
   RBCSerializer Serialize() const override
   {
@@ -225,7 +238,7 @@ public:
 class RAnswer : public RMessage
 {
 public:
-  // Construction
+  // Construction/Destruction
   explicit RAnswer(uint16_t channel, uint32_t id, uint8_t counter, SerialisedMessage msg)
     : RMessage{channel, id, counter, std::move(msg), MessageType::RANSWER} {};
   explicit RAnswer(RBCSerializer &serialiser)
@@ -233,6 +246,7 @@ public:
   {
     serialiser >> channel_ >> id_ >> counter_ >> message_;
   }
+  ~RAnswer() override = default;
 };
 }  // namespace rbc
 }  // namespace dkg

@@ -92,9 +92,6 @@ private:
     }
   };
 
-  std::size_t &threshold_;  ///< Number of byzantine nodes
-  DkgService & dkg_service_;
-
   uint32_t           id_;  ///< Rank used in DKG (derived from position in current_cabinet_)
   uint8_t            msg_counter_;  ///< Counter for messages we have broadcasted
   std::vector<Party> parties_;      ///< Keeps track of messages from cabinet members
@@ -110,7 +107,9 @@ private:
   MuddleAddress const address_;   ///< Our muddle address
   Endpoint &          endpoint_;  ///< The muddle endpoint to communicate on
   CabinetMembers const
-      &current_cabinet_;  ///< The set of muddle addresses of the cabinet (including our own)
+      &current_cabinet_;       ///< The set of muddle addresses of the cabinet (including our own)
+  std::size_t &   threshold_;  ///< Number of byzantine nodes
+  DkgService &    dkg_service_;
   SubscriptionPtr rbc_subscription_;  ///< For receiving messages in the rbc channel
 
   void Send(const RBCEnvelop &env, const MuddleAddress &address);
