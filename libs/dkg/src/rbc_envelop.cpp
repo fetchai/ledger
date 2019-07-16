@@ -23,8 +23,6 @@ namespace fetch {
 namespace dkg {
 namespace rbc {
 
-constexpr char const *LOGGING_NAME = "RBCMessage";
-
 /**
  * Constructs a RBCMessage from serialised message
  *
