@@ -22,8 +22,11 @@
 #include "ml/ops/add.hpp"
 #include "ml/ops/flatten.hpp"
 #include "ml/ops/matrix_multiply.hpp"
+#include "ml/ops/divide.hpp"
 #include "ml/ops/placeholder.hpp"
 #include "ml/ops/transpose.hpp"
+#include "ml/ops/activations/dropout.hpp"
+#include "math/standard_functions/sqrt.hpp"
 
 #include <cmath>
 #include <cstdint>
@@ -36,58 +39,58 @@ namespace ml {
 namespace layers {
 
 template <class T>
-class SelfAttention : public SubGraph<T>
+class Attention : public SubGraph<T>
 {
 public:
   using ArrayType    = T;
   using SizeType     = typename ArrayType::SizeType;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
+  using DataType     = typename T::Type;
 
-  SelfAttention(std::uint64_t in, std::uint64_t out, std::uint64_t hidden,
-                std::string const &name = "SA")
-    : in_size_(in)
-    , out_size_(out)
+  Attention(std::uint64_t dk, std::uint64_t dv, DataType dropout=0.9,
+                std::string const &name = "Attention")
+    : key_dim_(dk)
+    , value_dim_(dv)
   {
 
-    std::string input =
-        this->template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>(name + "_Input", {});
+    std::string query =
+        this->template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>(name + "_Query", {});
+	  std::string key =
+	   this->template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>(name + "_Key", {});
+	  std::string value =
+	   this->template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>(name + "_Value", {});
+	
+	  std::string transpose_key = this->template AddNode<fetch::ml::ops::Transpose<ArrayType>>(
+	   name + "_TransposeKey", {key});
+	  std::string qk_matmul = this->template AddNode<fetch::ml::ops::MatrixMultiply<ArrayType>>(
+	   name + "_Query_Key_MatMul", {query, transpose_key});
+	
+	  ArrayType sqrt_dv_tensor = std::vector<SizeType>({1, 1});
+		sqrt_dv_tensor(0, 0) = fetch::math::Sqrt(static_cast<DataType>(key_dim_));
+	  std::string sqrt_dv_ph =
+	   this->template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>(name + "_Sqrt_Value_Dim", {}, sqrt_dv_tensor);
+	  
+	  std::string scaled_qk_matmul = this->template AddNode<fetch::ml::ops::Divide<ArrayType>>(
+	   name + "_Scaled_Query_Key_MatMul", {qk_matmul, sqrt_dv_ph});
+	
+	  // softmax
+	  std::string attention_weight =
+	   this->template AddNode<fetch::ml::ops::Softmax<ArrayType>>(name + "_Softmax", {scaled_qk_matmul});
+	  
+	  // dropout
+	  std::string dropout_attention_weight =
+	   this->template AddNode<fetch::ml::ops::Dropout<ArrayType>>(name + "_Dropout", {attention_weight}, dropout);
+		
+	  // attention vectors
+	  std::string weight_value_matmul = this->template AddNode<fetch::ml::ops::MatrixMultiply<ArrayType>>(
+	   name + "_Weights_Value_MatMul", {dropout_attention_weight, value});
+	
+	  // TODO () masking op
 
-    // key & value dense layer
-    std::string flat_input = this->template AddNode<fetch::ml::ops::Flatten<ArrayType>>(
-        name + "_Flatten_Input", {input});
-    std::string query_name = this->template AddNode<fetch::ml::layers::FullyConnected<ArrayType>>(
-        name + "_KEY_VAL", {flat_input}, in, hidden);
-
-    //////////////////////
-    /// attention part ///
-    //////////////////////
-
-    // query key matmul
-    std::string transpose_key = this->template AddNode<fetch::ml::ops::Transpose<ArrayType>>(
-        name + "_TransposeKey", {flat_input});
-    std::string qk_matmul = this->template AddNode<fetch::ml::ops::MatrixMultiply<ArrayType>>(
-        name + "_Query_Key_MatMul", {flat_input, transpose_key});
-
-    // TODO(707) normalise by square root of vector length
-
-    // softmax
-    std::string attention_weights =
-        this->template AddNode<fetch::ml::ops::Softmax<ArrayType>>(name + "_Softmax", {qk_matmul});
-
-    // attention & value matmul
-    std::string weighted_value = this->template AddNode<fetch::ml::ops::MatrixMultiply<ArrayType>>(
-        name + "_Att_Val_MatMul", {attention_weights, flat_input});
-
-    // residual connection to input
-    std::string decoding = this->template AddNode<fetch::ml::ops::Add<ArrayType>>(
-        name + "_ResidualConnection", {flat_input, weighted_value});
-
-    // final dense output
-    std::string output = this->template AddNode<fetch::ml::layers::FullyConnected<ArrayType>>(
-        name + "_OutputFC", {decoding}, in, out);
-
-    this->AddInputNode(input);
-    this->SetOutputNode(output);
+    this->AddInputNode(query);
+	  this->AddInputNode(key);
+	  this->AddInputNode(value);
+    this->SetOutputNode(weight_value_matmul);
   }
 
   virtual std::vector<SizeType> ComputeOutputShape(
@@ -96,11 +99,11 @@ public:
     return inputs.front().get().shape();
   }
 
-  static constexpr char const *DESCRIPTOR = "SelfAttention";
+  static constexpr char const *DESCRIPTOR = "Attention";
 
 private:
-  SizeType in_size_;
-  SizeType out_size_;
+  SizeType key_dim_;
+  SizeType value_dim_;
 };
 
 }  // namespace layers

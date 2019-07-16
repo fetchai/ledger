@@ -18,7 +18,7 @@
 
 #include "math/tensor.hpp"
 #include "ml/layers/fully_connected.hpp"
-#include "ml/layers/self_attention.hpp"
+#include "ml/layers/attention.hpp"
 
 #include "gtest/gtest.h"
 
@@ -29,17 +29,37 @@ class SelfAttentionTest : public ::testing::Test
 
 // TODO (private 507)
 using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>>;
+
 TYPED_TEST_CASE(SelfAttentionTest, MyTypes);
 
 TYPED_TEST(SelfAttentionTest, output_shape_test)  // Use the class as a Node
 {
+	using DataType = typename TypeParam::Type;
   fetch::ml::Graph<TypeParam> g;
 
   g.template AddNode<fetch::ml::ops::PlaceHolder<TypeParam>>("Input", {});
-  g.template AddNode<fetch::ml::layers::SelfAttention<TypeParam>>("SelfAttention", {"Input"}, 50u,
-                                                                  42u, 10u);
+  g.template AddNode<fetch::ml::layers::Attention<TypeParam>>("SelfAttention", {"Input", "Input", "Input"}, 5u,
+                                                                  5u, DataType(0.1));
 
-  TypeParam data({5, 10, 1});
+  
+  TypeParam data = TypeParam({5, 3, 1});
+  data.Fill(1);
+//  TypeParam tmp_data = TypeParam::FromString("1, 2, 3, 4, 5; 6, 7, 8, 9, 10; 11, 12, 13, 14, 15");
+//
+//  auto data_view = data.View();
+//  auto tmp_data_view = tmp_data.View();
+//  data_view.Assign(tmp_data_view);
+//
+  auto data_it = data.begin();
+  while (data_it.is_valid())
+  {
+  	std::cout << "*data_it: " << *data_it << std::endl;
+  	++data_it;
+  }
+  
+  
+  
+  
   g.SetInput("Input", data);
 
   TypeParam prediction = g.Evaluate("SelfAttention", true);
