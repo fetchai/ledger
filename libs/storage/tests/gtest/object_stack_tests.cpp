@@ -77,7 +77,7 @@ void CheckIdentical(ObjectStack<TestSerDeser> &      test_stack,
 
     EXPECT_EQ(ref_stack[i], getme);
   }
-};
+}
 
 TEST(storage_object_stack_basic_functionality, pushing_and_popping)
 {
