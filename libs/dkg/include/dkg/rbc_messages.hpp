@@ -54,7 +54,7 @@ public:
     RANSWER
   };
 
-  //Destruction
+  // Destruction
   virtual ~RBCMessage() = default;
 
   /// @name Getter functions

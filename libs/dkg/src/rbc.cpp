@@ -85,7 +85,8 @@ RBC::RBC(Endpoint &endpoint, MuddleAddress address, CabinetMembers const &cabine
     serialiser >> env;
 
     // Dispatch the event
-    FETCH_LOG_TRACE(LOGGING_NAME, "Node ", id_ " received RBC message from node ", CabinetIndex(from), " transmitted by ", CabinetIndex(transmitter));
+    FETCH_LOG_TRACE(LOGGING_NAME, "Node ", id_ " received RBC message from node ",
+                    CabinetIndex(from), " transmitted by ", CabinetIndex(transmitter));
     OnRBC(from, env);
   });
 }
