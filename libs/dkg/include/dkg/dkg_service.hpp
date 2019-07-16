@@ -124,6 +124,7 @@ public:
   using ConstByteArray = byte_array::ConstByteArray;
   using MuddleAddress  = ConstByteArray;
   using CabinetMembers = std::set<MuddleAddress>;
+  using RBCMessageType = std::string;
 
   // Construction / Destruction
   explicit DkgService(Endpoint &endpoint, ConstByteArray address, ConstByteArray dealer_address);
@@ -145,6 +146,7 @@ public:
                             crypto::bls::PublicKey const &public_key,
                             crypto::bls::Signature const &signature);
 
+  void SendReliableBroadcast(RBCMessageType const &msg);
   void OnRbcDeliver(MuddleAddress from, byte_array::ConstByteArray payload);
   /// @}
 

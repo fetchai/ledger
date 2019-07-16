@@ -182,16 +182,28 @@ void DkgService::SubmitSignatureShare(uint64_t round, crypto::bls::Id const &id,
 }
 
 /**
+ * Send a message using the reliable broadcast protocol
+ *
+ * @param msg Serialised message
+ */
+void DkgService::SendReliableBroadcast(RBCMessageType const &msg)
+{
+  rbc_.SendRBroadcast(msg);
+}
+
+/**
  * Handler for messages which have completed RBC protocol
  *
  * @param from Muddle address of the sender of the message
  * @param payload Serialised message
  */
-void DkgService::OnRbcDeliver(MuddleAddress from, byte_array::ConstByteArray payload) {
-    //TODO(jmw): DKGEnvelop    env;
-    //  DKGSerializer serializer{msg};
-    //  serializer >> env;
-    //  Pass message to DKG
+void DkgService::OnRbcDeliver(MuddleAddress from, byte_array::ConstByteArray payload)
+{
+  FETCH_LOG_INFO(LOGGING_NAME, "Received message ", payload, " from address ", from);
+  // TODO(jmw): DKGEnvelop    env;
+  //  DKGSerializer serializer{msg};
+  //  serializer >> env;
+  //  Pass message to DKG
 }
 
 /**
