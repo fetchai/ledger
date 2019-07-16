@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -19,41 +18,17 @@
 
 #include "settings/detail/environment_wrapper.hpp"
 
-#include <vector>
+#include <cstdlib>
 
 namespace fetch {
 namespace settings {
+namespace detail {
 
-class SettingBase;
-
-/**
- * A very simple collection of pointers to settings object. The use must make sure that the
- * lifetime of the settings is longer than this container
- */
-class SettingCollection
+char const *Environment::GetEnvironmentVariable(char const *name) const
 {
-public:
-  using Settings = std::vector<SettingBase *>;
-
-  Settings const &settings() const;
-
-  void Add(SettingBase &setting);
-  void UpdateFromArgs(int argc, char **argv);
-  void UpdateFromEnv(char const *prefix, detail::EnvironmentInterface const &env = detail::Environment{});
-
-private:
-  Settings settings_;
-};
-
-/**
- * Get the current array of settings
- *
- * @return The array of settings
- */
-inline SettingCollection::Settings const &SettingCollection::settings() const
-{
-  return settings_;
+  return std::getenv(name);
 }
 
-}  // namespace settings
-}  // namespace fetch
+} // namespace detail
+} // namespace settings
+} // namespace fetch

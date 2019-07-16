@@ -59,12 +59,13 @@ std::string GetEnvironmentVariableName(char const *prefix, std::string const &na
  * @param name
  * @return
  */
-char const *GetEnvironmentVariable(char const *prefix, std::string const &name)
+char const *GetEnvironmentVariable(char const *prefix, std::string const &name,
+                                   detail::EnvironmentInterface const &env)
 {
   // determine the environment variable name
   std::string env_name = GetEnvironmentVariableName(prefix, name);
 
-  return std::getenv(env_name.c_str());
+  return env.GetEnvironmentVariable(env_name.c_str());
 }
 
 }  // namespace
@@ -106,13 +107,13 @@ void SettingCollection::UpdateFromArgs(int argc, char **argv)
   }
 }
 
-void SettingCollection::UpdateFromEnv(char const *prefix)
+void SettingCollection::UpdateFromEnv(char const *prefix, detail::EnvironmentInterface const &env)
 {
   for (auto *setting : settings())
   {
     assert(setting);
 
-    auto const *env_value = GetEnvironmentVariable(prefix, setting->name());
+    auto const *env_value = GetEnvironmentVariable(prefix, setting->name(), env);
     if (env_value)
     {
       std::istringstream iss{env_value};

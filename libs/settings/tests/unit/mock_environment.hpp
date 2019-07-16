@@ -19,41 +19,11 @@
 
 #include "settings/detail/environment_wrapper.hpp"
 
-#include <vector>
+#include "gmock/gmock.h"
 
-namespace fetch {
-namespace settings {
-
-class SettingBase;
-
-/**
- * A very simple collection of pointers to settings object. The use must make sure that the
- * lifetime of the settings is longer than this container
- */
-class SettingCollection
+class MockEnvironment : public fetch::settings::detail::EnvironmentInterface
 {
 public:
-  using Settings = std::vector<SettingBase *>;
 
-  Settings const &settings() const;
-
-  void Add(SettingBase &setting);
-  void UpdateFromArgs(int argc, char **argv);
-  void UpdateFromEnv(char const *prefix, detail::EnvironmentInterface const &env = detail::Environment{});
-
-private:
-  Settings settings_;
+  MOCK_CONST_METHOD1(GetEnvironmentVariable, char const *(char const *));
 };
-
-/**
- * Get the current array of settings
- *
- * @return The array of settings
- */
-inline SettingCollection::Settings const &SettingCollection::settings() const
-{
-  return settings_;
-}
-
-}  // namespace settings
-}  // namespace fetch

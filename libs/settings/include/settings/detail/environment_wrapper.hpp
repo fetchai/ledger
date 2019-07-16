@@ -17,43 +17,37 @@
 //
 //------------------------------------------------------------------------------
 
-#include "settings/detail/environment_wrapper.hpp"
-
-#include <vector>
-
 namespace fetch {
 namespace settings {
+namespace detail {
 
-class SettingBase;
-
-/**
- * A very simple collection of pointers to settings object. The use must make sure that the
- * lifetime of the settings is longer than this container
- */
-class SettingCollection
+class EnvironmentInterface
 {
 public:
-  using Settings = std::vector<SettingBase *>;
 
-  Settings const &settings() const;
+  // Construction / Destruction
+  EnvironmentInterface() = default;
+  virtual ~EnvironmentInterface() = default;
 
-  void Add(SettingBase &setting);
-  void UpdateFromArgs(int argc, char **argv);
-  void UpdateFromEnv(char const *prefix, detail::EnvironmentInterface const &env = detail::Environment{});
-
-private:
-  Settings settings_;
+  /// @name Environment Interface
+  /// @{
+  virtual char const *GetEnvironmentVariable(char const *name) const = 0;
+  /// @}
 };
 
-/**
- * Get the current array of settings
- *
- * @return The array of settings
- */
-inline SettingCollection::Settings const &SettingCollection::settings() const
+class Environment : public EnvironmentInterface
 {
-  return settings_;
-}
+public:
 
-}  // namespace settings
-}  // namespace fetch
+  Environment() = default;
+  ~Environment() override = default;
+
+  /// @name Environment Interface
+  /// @{
+  char const *GetEnvironmentVariable(char const *name) const override;
+  /// @}
+};
+
+} // namespace detail
+} // namespace settings
+} // namespace fetch
