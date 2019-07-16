@@ -95,8 +95,7 @@ RBC::RBC(Endpoint &endpoint, MuddleAddress address, CabinetMembers const &cabine
 void RBC::ResetCabinet()
 {
   assert(!current_cabinet_.empty());
-  auto it{current_cabinet_.find(address_)};
-  assert(it != current_cabinet_.end());
+  assert(current_cabinet_.find(address_) != current_cabinet_.end());
   assert(current_cabinet_.size() > 3 * threshold_);
   std::lock_guard<std::mutex> lock{mutex_broadcast_};
   id_ = static_cast<uint32_t>(
