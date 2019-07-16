@@ -27,25 +27,22 @@ template <typename TensorType>
 class MinMaxScaler : public Scaler<TensorType>
 {
 public:
-  using DataType = typename TensorType::Type;
-  using SizeType = fetch::math::SizeType;
+  using DataType   = typename TensorType::Type;
+  using SizeType   = fetch::math::SizeType;
   using SizeVector = fetch::math::SizeVector;
 
   MinMaxScaler() = default;
 
-  void SetScale(TensorType &reference_tensor) override;
+  void SetScale(TensorType const &reference_tensor) override;
   void Normalise(TensorType const &input_tensor, TensorType &output_tensor) override;
   void DeNormalise(TensorType const &input_tensor, TensorType &output_tensor) override;
 
 private:
-
   TensorType x_min_;
   TensorType x_max_;
   TensorType x_range_;
 
   void InitialiseStatistics(SizeVector const &tensor_shape);
-
-
 };
 
 /**
@@ -54,7 +51,7 @@ private:
  * @param reference_tensor
  */
 template <typename TensorType>
-void MinMaxScaler<TensorType>::SetScale(TensorType &reference_tensor)
+void MinMaxScaler<TensorType>::SetScale(TensorType const &reference_tensor)
 {
   InitialiseStatistics({1, reference_tensor.shape(1)});
 
@@ -128,7 +125,8 @@ void MinMaxScaler<TensorType>::Normalise(TensorType const &input_tensor, TensorT
  * @param output_tensor
  */
 template <typename TensorType>
-void MinMaxScaler<TensorType>::DeNormalise(TensorType const &input_tensor, TensorType &output_tensor)
+void MinMaxScaler<TensorType>::DeNormalise(TensorType const &input_tensor,
+                                           TensorType &      output_tensor)
 {
   output_tensor.Reshape(input_tensor.shape());
   SizeType batch_dim = input_tensor.shape().size() - 1;
@@ -165,14 +163,14 @@ void MinMaxScaler<TensorType>::InitialiseStatistics(SizeVector const &tensor_sha
   x_range_ = TensorType(tensor_shape);
 
   // efficiently fill three tensors
-  auto x_min_it = x_min_.begin();
-  auto x_max_it = x_max_.begin();
+  auto x_min_it   = x_min_.begin();
+  auto x_max_it   = x_max_.begin();
   auto x_range_it = x_range_.begin();
 
-  while(x_min_it.is_valid())
+  while (x_min_it.is_valid())
   {
-    *x_min_it = fetch::math::numeric_max<DataType>();
-    *x_max_it = fetch::math::numeric_lowest<DataType>();
+    *x_min_it   = fetch::math::numeric_max<DataType>();
+    *x_max_it   = fetch::math::numeric_lowest<DataType>();
     *x_range_it = fetch::math::numeric_lowest<DataType>();
 
     ++x_min_it;
@@ -181,10 +179,6 @@ void MinMaxScaler<TensorType>::InitialiseStatistics(SizeVector const &tensor_sha
   }
 }
 
-} // utilities
-} // ml
-} // fetch
-
-
-
-
+}  // namespace utilities
+}  // namespace ml
+}  // namespace fetch

@@ -132,6 +132,11 @@ public:
     return tensor_;
   }
 
+  ArrayType const &GetConstTensor()
+  {
+    return tensor_;
+  }
+
   bool SerializeTo(serializers::ByteArrayBuffer &buffer) override
   {
     buffer << tensor_;

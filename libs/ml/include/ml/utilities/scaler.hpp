@@ -26,9 +26,10 @@ class Scaler
 {
 
 public:
-  Scaler() = default;
+  Scaler()          = default;
+  virtual ~Scaler() = default;
 
-  virtual void SetScale(TensorType &reference_tensor)                                 = 0;
+  virtual void SetScale(TensorType const &reference_tensor)                           = 0;
   virtual void Normalise(TensorType const &input_tensor, TensorType &output_tensor)   = 0;
   virtual void DeNormalise(TensorType const &input_tensor, TensorType &output_tensor) = 0;
 };

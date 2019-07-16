@@ -17,9 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-
-#include "ml/utilities/scaler.hpp"
 #include "ml/utilities/min_max_scaler.hpp"
+#include "ml/utilities/scaler.hpp"
 
 #include "vm/module.hpp"
 
@@ -30,54 +29,60 @@ namespace utilities {
 
 class VMScaler : public fetch::vm::Object
 {
-  using DataType       = fetch::fixed_point::fp64_t;
+  using DataType       = fetch::vm_modules::math::DataType;
   using MathTensorType = fetch::math::Tensor<DataType>;
   using VMTensorType   = fetch::vm_modules::math::VMTensor;
 
+  using ScalerType       = fetch::ml::utilities::Scaler<fetch::math::Tensor<DataType>>;
+  using MinMaxScalerType = fetch::ml::utilities::MinMaxScaler<MathTensorType>;
+
 public:
-  VMScaler(fetch::vm::VM *vm, fetch::vm::TypeId type_id, fetch::vm::Ptr<fetch::vm::String> const &mode)
+  VMScaler(fetch::vm::VM *vm, fetch::vm::TypeId type_id)
     : fetch::vm::Object(vm, type_id)
+  {}
+
+  static fetch::vm::Ptr<VMScaler> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id)
+  {
+    return new VMScaler(vm, type_id);
+  }
+
+  void SetScale(fetch::vm::Ptr<VMTensorType> const &     reference_tensor,
+                fetch::vm::Ptr<fetch::vm::String> const &mode)
   {
     if (mode->str == "min_max")
     {
-      scaler_ = std::make_shared<fetch::ml::utilities::MinMaxScaler<MathTensorType>>();
+      scaler_ = std::make_shared<MinMaxScalerType>();
     }
     else
     {
       throw std::runtime_error("unrecognised mode type");
     }
+
+    scaler_->SetScale(reference_tensor->GetConstTensor());
   }
 
-  static fetch::vm::Ptr<VMScaler> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id, fetch::vm::Ptr<fetch::vm::String> const &mode)
+  void Normalise(fetch::vm::Ptr<VMTensorType> const &input_tensor,
+                 fetch::vm::Ptr<VMTensorType> const &output_tensor)
   {
-    return new VMScaler(vm, type_id, mode);
+    scaler_->Normalise(input_tensor->GetConstTensor(), output_tensor->GetTensor());
   }
 
-  void SetScale(fetch::vm::Ptr<VMTensorType> const &reference_tensor)
+  void DeNormalise(fetch::vm::Ptr<VMTensorType> const &input_tensor,
+                   fetch::vm::Ptr<VMTensorType> const &output_tensor)
   {
-    scaler_.SetScaler(reference_tensor);
-  }
-
-  void Normalise(fetch::vm::Ptr<VMTensorType> const &input_tensor, fetch::vm::Ptr<VMTensorType> const &output_tensor)
-  {
-    scaler_.Normalise(input_tensor, output_tensor);
-  }
-
-  void DeNormalise(fetch::vm::Ptr<VMTensorType> const &input_tensor, fetch::vm::Ptr<VMTensorType> const &output_tensor)
-  {
-    scaler_.DeNormalise(input_tensor, output_tensor);
+    scaler_->DeNormalise(input_tensor->GetConstTensor(), output_tensor->GetTensor());
   }
 
   static void Bind(fetch::vm::Module &module)
   {
     module.CreateClassType<VMScaler>("Graph")
-        .CreateConstuctor<fetch::vm::Ptr<fetch::vm::String> const &>()
+        .CreateConstuctor<>()
         .CreateMemberFunction("setScale", &VMScaler::SetScale)
         .CreateMemberFunction("normalise", &VMScaler::Normalise)
         .CreateMemberFunction("deNormalise", &VMScaler::DeNormalise);
   }
 
-  std::shared_ptr<fetch::ml::utilities::Scaler<fetch::math::Tensor<DataType>>> scaler_;
+  std::shared_ptr<ScalerType> scaler_;
 };
 
 }  // namespace utilities
