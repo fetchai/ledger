@@ -74,6 +74,12 @@ public:
         .CreateMemberFunction("toString", &VMTensor::ToString);
   }
 
+  fetch::vm::Ptr<fetch::vm::Array<SizeType>> shape()
+  {
+    new fetch::vm::Array<SizeType>(vm_, tensor_.ToString());
+    return tensor_.Reshape(new_shape->elements);
+  }
+
   SizeVector shape()
   {
     return tensor_.shape();

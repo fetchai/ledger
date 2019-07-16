@@ -23,14 +23,16 @@ var conv1D_1_input_channels = 1;
 var conv1D_1_kernel_size    = 96;
 var conv1D_1_stride         = 3;
 
-var keep_prob_1 = 0.9fp64;
+//var keep_prob_1 = 0.9fp64;
+var keep_prob_1 = 0.9f;
 
 var conv1D_2_filters        = 8;
 var conv1D_2_input_channels = conv1D_1_filters;
 var conv1D_2_kernel_size    = 48;
 var conv1D_2_stride         = 2;
 
-var keep_prob_2 = 0.9fp64;
+//var keep_prob_2 = 0.9fp64;
+var keep_prob_2 = 0.9f;
 
 var conv1D_3_filters        = 1;
 var conv1D_3_input_channels = conv1D_2_filters;
@@ -77,8 +79,8 @@ var train_labels = Tensor(orig_train_labels.shape());
 var test_data = Tensor(orig_test_data.shape());
 var test_labels = Tensor(orig_test_labels.shape());
 
-var scaler = Scaler("min_max");
-scaler.SetScale(train_data);
+var scaler = Scaler();
+scaler.SetScale(train_data, "min_max");
 scaler.normalise(orig_train_data, train_data);
 scaler.normalise(orig_train_label, train_label);
 scaler.normalise(orig_test_data, test_data);
