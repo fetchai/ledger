@@ -104,9 +104,8 @@ private:
   std::mutex                              mutex_broadcast_;
 
   // For broadcast
-  static constexpr uint16_t SERVICE_DKG = 5001;
-  static constexpr uint8_t CHANNEL_BROADCAST =
-      2;  ///< Channel for reliable broadcast
+  static constexpr uint16_t SERVICE_DKG       = 5001;
+  static constexpr uint8_t  CHANNEL_BROADCAST = 2;  ///< Channel for reliable broadcast
 
   MuddleAddress const address_;   ///< Our muddle address
   Endpoint &          endpoint_;  ///< The muddle endpoint to communicate on

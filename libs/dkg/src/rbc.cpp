@@ -530,7 +530,8 @@ bool RBC::CheckTag(RBCMessage &msg)
                     " does not match tag counter ", msg.counter(), " for node ", msg.id());
     // Store tag of message for processing later
     if (parties_[msg.id()].undelivered_msg.find(msg.counter()) ==
-        parties_[msg.counter()].undelivered_msg.end()) {
+        parties_[msg.counter()].undelivered_msg.end())
+    {
       parties_[msg.id()].undelivered_msg.insert({msg.counter(), msg});
     }
   }
@@ -546,7 +547,7 @@ bool RBC::CheckTag(RBCMessage &msg)
  * @param m Message type of new RBCMessage received
  * @return Bool for whether the message flag for this message type has been set
  */
- bool RBC::SetPartyFlag(uint32_t sender_index, TagType tag, MsgType msg_type)
+bool RBC::SetPartyFlag(uint32_t sender_index, TagType tag, MsgType msg_type)
 {
   std::lock_guard<std::mutex> lock(mutex_flags_);
   auto &                      iter  = parties_[sender_index].flags[tag];
