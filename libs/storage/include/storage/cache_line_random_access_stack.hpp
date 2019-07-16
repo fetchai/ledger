@@ -100,7 +100,7 @@ public:
     on_before_flush_ = f;
   }
 
-  void Get(uint64_t const &i, type &object) const
+  void Get(uint64_t i, type &object) const
   {
     assert(i < objects_);
 
@@ -131,7 +131,7 @@ public:
    * @param: i The index
    * @param: object The object to write
    */
-  void Set(uint64_t const &i, type const &object)
+  void Set(uint64_t i, type const &object)
   {
     assert(i < objects_);
 
@@ -200,7 +200,7 @@ public:
     return ret;
   }
 
-  void Swap(uint64_t const &i, uint64_t const &j)
+  void Swap(uint64_t i, uint64_t j)
   {
     if (i == j)
     {

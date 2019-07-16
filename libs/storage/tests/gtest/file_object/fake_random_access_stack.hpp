@@ -46,19 +46,19 @@ public:
     is_open_                    = true;
   }
 
-  void Get(std::size_t const &i, STACK_ELEMENTS &object) const
+  void Get(std::size_t i, STACK_ELEMENTS &object) const
   {
     ThrowOnBadAccess(i, "Get");
     object = (*stack_).elements[i];
   }
 
-  void Set(std::size_t const &i, STACK_ELEMENTS const &object)
+  void Set(std::size_t i, STACK_ELEMENTS const &object)
   {
     ThrowOnBadAccess(i, "Set");
     (*stack_).elements[i] = object;
   }
 
-  void SetBulk(std::size_t const &i, std::size_t elements, STACK_ELEMENTS const *objects)
+  void SetBulk(std::size_t i, std::size_t elements, STACK_ELEMENTS const *objects)
   {
     for (std::size_t increment = 0; increment < elements; ++increment)
     {
@@ -67,14 +67,14 @@ public:
     }
   }
 
-  bool LazySetBulk(std::size_t const &i, std::size_t elements, STACK_ELEMENTS const *objects)
+  bool LazySetBulk(std::size_t i, std::size_t elements, STACK_ELEMENTS const *objects)
   {
     ThrowOnBadAccess(i + elements, "LazySetBulk");
     SetBulk(i, elements, objects);
     return true;
   }
 
-  void GetBulk(std::size_t const &i, std::size_t elements, STACK_ELEMENTS *objects)
+  void GetBulk(std::size_t i, std::size_t elements, STACK_ELEMENTS *objects)
   {
     for (std::size_t increment = 0; increment < elements; ++increment)
     {
@@ -102,12 +102,12 @@ public:
     return (*stack_).elements[(*stack_).elements.size() - 1];
   }
 
-  void SetExtraHeader(uint64_t const &he)
+  void SetExtraHeader(uint64_t he)
   {
     (*stack_).header = he;
   }
 
-  uint64_t const &header_extra() const
+  uint64_t header_extra() const
   {
     return (*stack_).header;
   }
@@ -135,7 +135,7 @@ public:
     return is_open_;
   }
 
-  void Swap(std::size_t const &i, std::size_t const &j)
+  void Swap(std::size_t i, std::size_t j)
   {
     ThrowOnBadAccess(i, "Swap");
     ThrowOnBadAccess(j, "Swap");
@@ -188,7 +188,7 @@ private:
     }
   }
 
-  void ThrowOnBadAccess(std::size_t const &i, std::string const &fn_name) const
+  void ThrowOnBadAccess(std::size_t i, std::string const &fn_name) const
   {
     if (!is_open_)
     {

@@ -21,6 +21,8 @@
 #include "vectorise/platform.hpp"
 
 #include <algorithm>
+#include <cmath>
+#include <cstddef>
 #include <cstdint>
 #include <string>
 #include <vector>

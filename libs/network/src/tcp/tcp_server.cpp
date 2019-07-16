@@ -30,7 +30,7 @@
 namespace fetch {
 namespace network {
 
-TCPServer::TCPServer(uint16_t const &port, network_manager_type const &network_manager)
+TCPServer::TCPServer(uint16_t port, network_manager_type const &network_manager)
   : network_manager_{network_manager}
   , port_{port}
 {
