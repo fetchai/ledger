@@ -30,7 +30,9 @@ class LoggingHttpModule : public http::HTTPModule
 public:
   LoggingHttpModule()
   {
-    Get("/api/logging/", [](http::ViewParameters const &, http::HTTPRequest const &) {
+    Get("/api/logging/",
+      "Returns a log of events.",
+      [](http::ViewParameters const &, http::HTTPRequest const &) {
       Variant response{Variant::Object()};
       for (auto const &element : GetLogLevelMap())
       {
@@ -40,7 +42,9 @@ public:
       return http::CreateJsonResponse(response);
     });
 
-    Patch("/api/logging/", [](http::ViewParameters const &, http::HTTPRequest const &req) {
+    Patch("/api/logging/", 
+      "TODO(tfr): yet to be written",
+      [](http::ViewParameters const &, http::HTTPRequest const &req) {
       std::string error{};
       try
       {

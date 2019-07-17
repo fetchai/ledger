@@ -35,11 +35,15 @@ public:
     , chain_service_{chain_service}
     , block_coordinator_{block_coordinator}
   {
-    Get("/api/health/alive", [](http::ViewParameters const &, http::HTTPRequest const &) {
+    Get("/api/health/alive",
+        "Endpoint to check if the server is alive.",
+     [](http::ViewParameters const &, http::HTTPRequest const &) {
       return http::CreateJsonResponse("{}");
     });
 
-    Get("/api/health/ready", [this](http::ViewParameters const &, http::HTTPRequest const &) {
+    Get("/api/health/ready", 
+        "Retrieves the current syncronisation status.", 
+      [this](http::ViewParameters const &, http::HTTPRequest const &) {
       // determine the state of the machine system state machines
       bool const chain_synced = chain_service_.IsSynced();
       bool const chain_executed_finished =

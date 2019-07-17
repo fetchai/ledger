@@ -120,7 +120,9 @@ ContractHttpInterface::ContractHttpInterface(StorageInterface &    storage,
 
       FETCH_LOG_INFO(LOGGING_NAME, "Query API: ", api_path);
 
-      Post(api_path, [this, contract_name, query_name](http::ViewParameters const &,
+      Post(api_path, 
+        "Calls contract query " + query_name + " for " + contract_name,
+        [this, contract_name, query_name](http::ViewParameters const &,
                                                        http::HTTPRequest const &request) {
         return OnQuery(contract_name, query_name, request);
       });
@@ -141,7 +143,9 @@ ContractHttpInterface::ContractHttpInterface(StorageInterface &    storage,
 
       FETCH_LOG_INFO(LOGGING_NAME, "   Tx API: ", api_path, " : ", canonical_contract_name);
 
-      Post(api_path, [this, canonical_contract_name](http::ViewParameters const &params,
+      Post(api_path, 
+        "Calls contract action " + transaction_name + " for " + contract_name,
+        [this, canonical_contract_name](http::ViewParameters const &params,
                                                      http::HTTPRequest const &   request) {
         FETCH_UNUSED(params);
         return OnTransaction(request, canonical_contract_name);
@@ -150,6 +154,11 @@ ContractHttpInterface::ContractHttpInterface(StorageInterface &    storage,
   }
 
   Post("/api/contract/(digest=[a-fA-F0-9]{64})/(identifier=[1-9A-HJ-NP-Za-km-z]{48,50})/(query=.+)",
+        "Submits a query to a contract",
+        {
+          {"digest", "The contract digest.", http::validators::StringValue() },
+          {"identifier", "The query identifier.", http::validators::StringValue() }
+        },    
        [this](http::ViewParameters const &params, http::HTTPRequest const &request) {
          // build the contract name
          auto const contract_name = params["digest"] + "." + params["identifier"];
@@ -159,6 +168,7 @@ ContractHttpInterface::ContractHttpInterface(StorageInterface &    storage,
        });
 
   Post("/api/contract/submit",
+        "Submits a new contract to the ledger.",
        [this](http::ViewParameters const &params, http::HTTPRequest const &request) {
          FETCH_UNUSED(params);
          return OnTransaction(request, ConstByteArray{});

@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "http/view_parameters.hpp"
+#include "http/validators.hpp"
 
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/const_byte_array.hpp"
@@ -49,6 +50,7 @@ public:
       {
         return false;
       }
+      // TODO(tfr): Add validators
     }
 
     return (i == path.size());
@@ -59,8 +61,8 @@ public:
     LOG_STACK_TRACE_POINT;
 
     // TODO(issue 35): No support for continued paths  atm.
-
     Route ret;
+    ret.path_ = "";
     ret.original_ = path;
 
     std::size_t last = 0;
@@ -79,15 +81,18 @@ public:
 
         if (count != 0)
         {
-          TODO_FAIL("unclosed parameter.");
+          throw std::runtime_error("unclosed parameter.");
         }
 
         byte_array::ByteArray match = path.SubArray(last, i - last);
         ++i;
-        byte_array::ByteArray param_name = path.SubArray(i, j - i - 1);
+        byte_array::ByteArray param_pattern = path.SubArray(i, j - i - 1);
 
         ret.AddMatch(match);
-        ret.AddParameter(param_name);
+        auto param_name = ret.AddParameter(param_pattern);
+        ret.path_.Append(match,"{",param_name, "}");
+        ret.path_parameters_.push_back(param_name);
+
         last = j;
         i    = j;
       }
@@ -97,9 +102,43 @@ public:
     {
       byte_array::ByteArray match = path.SubArray(last, i - last);
       ret.AddMatch(match);
+      ret.path_.Append(match);  
     }
 
     return ret;
+  }
+
+  void AddValidator(byte_array::ConstByteArray parameter, validators::Validator validator)
+  {
+    validators_[parameter] = std::move(validator);
+  }
+
+  byte_array::ConstByteArray const& path() const
+  {
+    return path_;
+  }
+
+  std::vector< byte_array::ConstByteArray > path_parameters() const 
+  {
+    return path_parameters_;
+  }
+
+  bool HasParameterDetails(byte_array::ConstByteArray const& name) const 
+  {
+    auto it = validators_.find(name);    
+    return it != validators_.end();
+  }
+
+  variant::Variant GetSchema(byte_array::ConstByteArray const& name) const 
+  {
+    auto it = validators_.find(name);
+    return it->second.schema;
+  }
+
+  byte_array::ConstByteArray GetDescription(byte_array::ConstByteArray const& name) const 
+  {
+    auto it = validators_.find(name);
+    return it->second.description;
   }
 
 private:
@@ -120,7 +159,7 @@ private:
     });
   }
 
-  void AddParameter(byte_array::ByteArray const &value)
+  byte_array::ByteArray AddParameter(byte_array::ByteArray const &value)
   {
     LOG_STACK_TRACE_POINT;
 
@@ -131,7 +170,7 @@ private:
     }
     if (i == value.size())
     {
-      TODO_FAIL("no regex found:", value);
+      throw std::runtime_error("could not find regex pattern in HTTP path description.");
     }
 
     byte_array::ByteArray var = value.SubArray(0, i);
@@ -150,7 +189,8 @@ private:
           {
             if (matches.size() != 1)
             {
-              TODO_FAIL("Only expected one match");
+              // Ambigous matches are treated as non-matches.
+              return false;
             }
 
             std::string m = matches[0];
@@ -162,10 +202,14 @@ private:
 
           return ret;
         });
+    return var;
   }
 
-  byte_array::ByteArray            original_;
-  std::vector<match_function_type> match_;
+  byte_array::ByteArray             original_;
+  byte_array::ByteArray             path_;
+  std::vector<match_function_type>  match_;
+  std::vector< byte_array::ConstByteArray >         path_parameters_;
+  std::unordered_map<byte_array::ConstByteArray, validators::Validator >     validators_;
 };
 }  // namespace http
 }  // namespace fetch

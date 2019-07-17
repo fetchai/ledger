@@ -63,6 +63,7 @@ public:
 
   struct MountedView
   {
+    byte_array::ConstByteArray description;
     Method    method;
     Route     route;
     view_type view;
@@ -186,6 +187,8 @@ public:
     manager_->Send(client, res);
   }
 
+
+
   // Accept static void to avoid having to create shared ptr to this class
   static void Accept(std::shared_ptr<socket_type> soc, std::shared_ptr<acceptor_type> accep,
                      std::shared_ptr<manager_type> manager)
@@ -226,9 +229,18 @@ public:
     post_view_middleware_.push_back(middleware);
   }
 
-  void AddView(Method method, byte_array::ByteArray const &path, view_type const &view)
+  void AddView(byte_array::ConstByteArray description, Method method, byte_array::ByteArray const &path, std::vector< HTTPParameter > const &parameters, view_type const &view)
   {
-    views_.push_back({method, Route::FromString(path), view});
+    auto route = Route::FromString(path);
+
+    for(auto const &param: parameters)
+    {
+      validators::Validator v = param.validator;
+      v.description = param.description;
+      route.AddValidator(param.name, v);
+    }
+
+    views_.push_back({std::move(description), method, std::move(route), view});
   }
 
   void AddModule(HTTPModule const &module)
@@ -236,10 +248,20 @@ public:
     LOG_STACK_TRACE_POINT;
     for (auto const &view : module.views())
     {
-      this->AddView(view.method, view.route, view.view);
+      this->AddView(view.description, view.method, view.route, view.parameters, view.view);
     }
   }
 
+  std::vector<MountedView> views()
+  {
+    std::lock_guard< std::mutex > lock(eval_mutex_);
+    return views_;
+  }
+
+  std::vector<MountedView> views_unsafe()
+  {
+    return views_;
+  }  
 private:
   std::mutex eval_mutex_;
 
