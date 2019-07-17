@@ -19,6 +19,7 @@
 #include "core/feature_flags.hpp"
 
 #include <cstddef>
+#include <iostream>
 
 namespace fetch {
 namespace core {
@@ -67,6 +68,37 @@ void FeatureFlags::Parse(ConstByteArray const &contents)
     // add the flag to the set
     flags_.emplace(std::move(token));
   }
+}
+
+std::ostream &operator<<(std::ostream &stream, core::FeatureFlags const &flags)
+{
+  bool add_sep{false};
+
+  for (auto const &element : flags)
+  {
+    if (add_sep)
+    {
+      stream << ',';
+    }
+
+    stream << element;
+    add_sep = true;
+  }
+
+  return stream;
+}
+
+std::istream &operator>>(std::istream &stream, core::FeatureFlags &flags)
+{
+  std::string value;
+  stream >> value;
+
+  if (!stream.fail())
+  {
+    flags.Parse(value);
+  }
+
+  return stream;
 }
 
 }  // namespace core

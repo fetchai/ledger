@@ -64,6 +64,9 @@ protected:
 
   SizeVector              label_shape_;
   std::vector<SizeVector> data_shapes_;
+
+  SizeType batch_label_dim_ = fetch::math::numeric_max<SizeType>();
+  SizeType batch_data_dim_  = fetch::math::numeric_max<SizeType>();
 };
 
 template <typename LabelType, typename InputType>
@@ -76,7 +79,8 @@ TensorDataLoader<LabelType, InputType>::GetNext()
   }
   else
   {
-    ReturnType ret(labels_.Slice(label_cursor_, 1).Copy(), {data_.Slice(label_cursor_, 1).Copy()});
+    ReturnType ret(labels_.Slice(label_cursor_, batch_label_dim_).Copy(),
+                   {data_.Slice(label_cursor_, batch_data_dim_).Copy()});
     data_cursor_++;
     label_cursor_++;
     return ret;
@@ -87,14 +91,16 @@ template <typename LabelType, typename InputType>
 bool TensorDataLoader<LabelType, InputType>::AddData(TensorType const &data,
                                                      TensorType const &labels)
 {
-  assert(data.shape().size() == 2);
-  assert(labels.shape().size() == 2);
+
   data_         = data.Copy();
   labels_       = labels.Copy();
   data_cursor_  = 0;
   label_cursor_ = 0;
 
   n_samples_ = data_.shape().at(data_.shape().size() - 1);
+
+  batch_label_dim_ = labels_.shape().size() - 1;
+  batch_data_dim_  = data_.shape().size() - 1;
 
   return true;
 }
@@ -109,7 +115,7 @@ TensorDataLoader<LabelType, InputType>::Size() const
 template <typename LabelType, typename InputType>
 bool TensorDataLoader<LabelType, InputType>::IsDone() const
 {
-  return (data_cursor_ >= data_.shape()[0]);
+  return (data_cursor_ >= data_.shape(batch_data_dim_));
 }
 
 template <typename LabelType, typename InputType>

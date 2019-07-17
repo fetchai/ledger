@@ -234,11 +234,11 @@ public:
     std::vector<CallableArgumentType>::push_back(CallableArgumentType{typeid(T), (void *)value});
   }
 
-  CallableArgumentType const &operator[](std::size_t const &n) const
+  CallableArgumentType const &operator[](std::size_t n) const
   {
     return std::vector<CallableArgumentType>::operator[](n);
   }
-  CallableArgumentType &operator[](std::size_t const &n)
+  CallableArgumentType &operator[](std::size_t n)
   {
     return std::vector<CallableArgumentType>::operator[](n);
   }
@@ -265,7 +265,7 @@ public:
   virtual void operator()(serializer_type &result, CallableArgumentList const &additional_args,
                           serializer_type &params)                          = 0;
 
-  uint64_t const &meta_data() const
+  uint64_t meta_data() const
   {
     return meta_data_;
   }

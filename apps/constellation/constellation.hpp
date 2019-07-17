@@ -79,7 +79,6 @@ public:
     uint32_t       log2_num_lanes{0};
     uint32_t       num_slices{0};
     uint32_t       num_executors{0};
-    std::string    interface_address{};
     std::string    db_prefix{};
     uint32_t       processor_threads{0};
     uint32_t       verification_threads{0};
