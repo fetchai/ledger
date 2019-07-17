@@ -29,7 +29,7 @@ class VMTensor : public fetch::vm::Object
 {
 
 public:
-  using DataType   = DataType;
+  using DataType   = fetch::vm_modules::math::DataType;
   using ArrayType  = fetch::math::Tensor<DataType>;
   using SizeType   = ArrayType::SizeType;
   using SizeVector = ArrayType::SizeVector;
