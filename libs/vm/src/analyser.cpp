@@ -53,7 +53,8 @@ void Analyser::Initialise()
                    {NodeKind::InplaceAdd, Operator::InplaceAdd},
                    {NodeKind::InplaceSubtract, Operator::InplaceSubtract},
                    {NodeKind::InplaceMultiply, Operator::InplaceMultiply},
-                   {NodeKind::InplaceDivide, Operator::InplaceDivide}};
+                   {NodeKind::InplaceDivide, Operator::InplaceDivide},
+		   {NodeKind::InitializerList, Operator::InitializerList}};
 
   type_map_            = TypeMap();
   type_info_array_     = TypeInfoArray(TypeIds::NumReserved);
@@ -64,6 +65,8 @@ void Analyser::Initialise()
   symbols_             = CreateSymbolTable();
 
   CreatePrimitiveType("Null", TypeIndex(typeid(std::nullptr_t)), false, TypeIds::Null, null_type_);
+  CreatePrimitiveType("InitializerList", TypeIndex(typeid(InitializerListPlaceholder)), false,
+                      TypeIds::InitializerList, initializer_list_type_);
   CreatePrimitiveType("Void", TypeIndex(typeid(void)), false, TypeIds::Void, void_type_);
   CreatePrimitiveType("Bool", TypeIndex(typeid(bool)), true, TypeIds::Bool, bool_type_);
   CreatePrimitiveType("Int8", TypeIndex(typeid(int8_t)), true, TypeIds::Int8, int8_type_);
@@ -80,8 +83,6 @@ void Analyser::Initialise()
                       fixed32_type_);
   CreatePrimitiveType("Fixed64", TypeIndex(typeid(fixed_point::fp64_t)), true, TypeIds::Fixed64,
                       fixed64_type_);
-  CreatePrimitiveType("InitializerList", TypeIndex(typeid(InitializerListPlaceholder)), false,
-                      TypeIds::InitializerList, initializer_list_type_);
 
   CreateClassType("String", TypeIndex(typeid(String)), TypeIds::String, string_type_);
   EnableOperator(string_type_, Operator::Equal);

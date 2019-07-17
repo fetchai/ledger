@@ -22,6 +22,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstdlib>
+#include <limits>
 #include <memory>
 #include <string>
 #include <vector>
@@ -1008,6 +1009,10 @@ void Generator::HandleExpression(IRExpressionNodePtr const &node)
     HandleFalse(node);
     break;
   }
+  case NodeKind::InitializerList:
+  {
+    HandleInitializerList(node);
+  }
   case NodeKind::Null:
   {
     HandleNull(node);
@@ -1223,6 +1228,28 @@ void Generator::HandleFalse(IRExpressionNodePtr const &node)
 {
   Executable::Instruction instruction(Opcodes::PushFalse);
   uint16_t                pc = function_->AddInstruction(instruction);
+  AddLineNumber(node->line, pc);
+}
+
+void Generator::HandleInitializerList(IRExpressionNodePtr const &node)
+{
+  auto const &node_type{node->type};
+  if (!node_type->IsInstantiation() || node_type->template_type->name != "Array")
+	  // NB: if there's no better way to check this, there _should_ be a better way to check this
+  {
+	  return;	// hypothetical no-op, in fact this situation is catched earlier
+  }
+  assert(node->children.size() <= static_cast<std::size_t>(std::numeric_limits<uint16_t>::max()));
+
+  for(auto expr: node->children)
+  {
+    HandleExpression(ConvertToIRExpressionNodePtr(expr));
+  }
+
+  Executable::Instruction instruction{Opcodes::InitializeArray};
+  instruction.type_id = node_type->resolved_id;
+  instruction.data = static_cast<uint16_t>(node->children.size());
+  uint16_t pc = function_->AddInstruction(instruction);
   AddLineNumber(node->line, pc);
 }
 

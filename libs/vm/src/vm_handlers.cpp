@@ -700,5 +700,10 @@ void VM::Handler__VariablePrimitiveInplaceModulo()
   DoVariableIntegralInplaceOp<PrimitiveModulo>();
 }
 
+void VM::Handler__InitializeArray()
+{
+
+}
+
 }  // namespace vm
 }  // namespace fetch

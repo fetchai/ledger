@@ -110,36 +110,32 @@ using AnnotationArray = std::vector<Annotation>;
 struct Executable
 {
   Executable() = default;
-  Executable(std::string const &name__)
-  {
-    name = name__;
-  }
+  Executable(std::string name__)
+    : name{std::move(name__)}
+  {}
   ~Executable() = default;
 
   struct Instruction
   {
     Instruction(uint16_t opcode__)
-    {
-      opcode  = opcode__;
-      type_id = 0;
-      index   = 0;
-      data    = 0;
-    }
+      : opcode{opcode__}
+    {}
+
     uint16_t opcode;
-    uint16_t type_id;
-    uint16_t index;
-    uint16_t data;
+    uint16_t type_id = 0;
+    uint16_t index = 0;
+    uint16_t data = 0;
   };
   using InstructionArray = std::vector<Instruction>;
 
   struct Variable
   {
-    Variable(std::string const &name__, TypeId type_id__, uint16_t scope_number__)
-    {
-      name         = name__;
-      type_id      = type_id__;
-      scope_number = scope_number__;
-    }
+    Variable(std::string name__, TypeId type_id__, uint16_t scope_number__)
+      : name{std::move(name__)}
+      , type_id{type_id__}
+      , scope_number{scope_number__}
+    {}
+
     std::string name;
     TypeId      type_id;
     uint16_t    scope_number;
@@ -151,25 +147,23 @@ struct Executable
 
   struct Function
   {
-    Function(std::string const &name__, AnnotationArray const &annotations__, int num_parameters__,
-             TypeId return_type_id__)
-    {
-      name           = name__;
-      annotations    = annotations__;
-      num_variables  = 0;
-      num_parameters = num_parameters__;
-      return_type_id = return_type_id__;
-    }
-    uint16_t AddVariable(std::string const &name, TypeId type_id, uint16_t scope_number)
+    Function(std::string name__, AnnotationArray annotations__, int num_parameters__, TypeId return_type_id__)
+      : name{std::move(name__)}
+      , annotations{std::move(annotations__)}
+      , num_parameters{num_parameters__}
+      , return_type_id{return_type_id__}
+    {} 
+
+    uint16_t AddVariable(std::string name, TypeId type_id, uint16_t scope_number)
     {
       auto const index = static_cast<uint16_t>(num_variables++);
-      variables.push_back(Variable(name, type_id, scope_number));
+      variables.push_back(Variable(std::move(name), type_id, scope_number));
       return index;
     }
-    uint16_t AddInstruction(Instruction const &instruction)
+    uint16_t AddInstruction(Instruction instruction)
     {
       auto const pc = static_cast<uint16_t>(instructions.size());
-      instructions.push_back(instruction);
+      instructions.push_back(std::move(instruction));
       return pc;
     }
     uint16_t FindLineNumber(uint16_t pc) const
@@ -177,9 +171,10 @@ struct Executable
       auto it = pc_to_line_map_.lower_bound(uint16_t(pc + 1));
       return (--it)->second;
     }
+
     std::string      name;
     AnnotationArray  annotations;
-    int              num_variables;  // parameters + locals
+    int              num_variables = 0;  // parameters + locals
     int              num_parameters;
     TypeId           return_type_id;
     VariableArray    variables;  // parameters + locals
@@ -203,10 +198,10 @@ struct Executable
     return index;
   }
 
-  uint16_t AddType(TypeInfo const &type_info)
+  uint16_t AddType(TypeInfo type_info)
   {
     auto const index = static_cast<uint16_t>(types.size());
-    types.push_back(type_info);
+    types.push_back(std::move(type_info));
     return index;
   }
 
@@ -244,14 +239,11 @@ private:
 
   struct Chain
   {
-    Chain()
-    {
-      kind = NodeKind::Unknown;
-    }
+    Chain() = default;
     Chain(NodeKind kind__)
-    {
-      kind = kind__;
-    }
+      : kind{kind__}
+    {}
+
     void Append(uint16_t pc)
     {
       pcs.push_back(pc);
@@ -260,7 +252,8 @@ private:
     {
       pcs.insert(pcs.end(), other_pcs.begin(), other_pcs.end());
     }
-    NodeKind              kind;
+
+    NodeKind              kind = NodeKind::Unknown;
     std::vector<uint16_t> pcs;
   };
 

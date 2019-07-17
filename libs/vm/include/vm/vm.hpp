@@ -1593,6 +1593,7 @@ private:
   void Handler__VariableObjectInplaceRightDivide();
   void Handler__PrimitiveModulo();
   void Handler__VariablePrimitiveInplaceModulo();
+  void Handler__InitializeArray();
 
   friend class Object;
   friend class Module;
