@@ -159,6 +159,14 @@ void AdamOptimiser<T>::ApplyGradients(SizeType batch_size)
     // vt   = momentum[i] / (one_ - beta2_t_);
     fetch::math::Divide(*momentum_it, (one_ - beta2_t_), *vt_it);
 
+    for (std::size_t j = 0; j < (*vt_it).shape(0); ++j)
+    {
+      for (std::size_t k = 0; k < (*vt_it).shape(2); ++k)
+      {
+        std::cout << "*vt_it: " << (*vt_it)(j, 0, k, 0) << std::endl;
+      }
+    }
+
     // output_gradients[i] = -this->learning_rate_ * mt / (sqrt(vt) + epsilon_);
     fetch::math::Sqrt(*vt_it, *gradient_it);
     fetch::math::Add(*gradient_it, epsilon_, *gradient_it);
