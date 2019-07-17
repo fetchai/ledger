@@ -52,8 +52,8 @@ public:
     , data_{std::move(data), offset, padded_height_ * width_}
   {}
 
-  IteratorType begin();
-  IteratorType end();
+  IteratorType      begin();
+  IteratorType      end();
   ConstIteratorType cbegin() const;
   ConstIteratorType cend() const;
 
@@ -82,10 +82,10 @@ public:
 
   static SizeType PadValue(SizeType size);
 
-  SizeType height() const;
-  SizeType width() const;
-  SizeType padded_size() const;
-  SizeType padded_height() const;
+  SizeType           height() const;
+  SizeType           width() const;
+  SizeType           padded_size() const;
+  SizeType           padded_height() const;
   constexpr SizeType padding();
 
   //////////////////
@@ -93,16 +93,14 @@ public:
   //////////////////
 
   ContainerType const &data() const;
-  ContainerType &data();
+  ContainerType &      data();
 
 private:
   SizeType      height_{0};
   SizeType      width_{0};
   SizeType      padded_height_{0};
   ContainerType data_{};
-
 };
-
 
 //////////////////////
 /// PUBLIC METHODS ///
@@ -184,14 +182,15 @@ void TensorView<T, C>::Assign(TensorView const &other)
 
 template <typename T, typename C>
 template <typename S>
-typename std::enable_if<std::is_integral<S>::value, T>::type TensorView<T, C>::operator()(S i, S j) const
+typename std::enable_if<std::is_integral<S>::value, T>::type TensorView<T, C>::operator()(S i,
+                                                                                          S j) const
 {
   return data_[static_cast<SizeType>(i) + static_cast<SizeType>(j) * padded_height_];
 }
 
 template <typename T, typename C>
 template <typename S>
-typename std::enable_if<std::is_integral<S>::value, T>::type & TensorView<T, C>::operator()(S i, S j)
+typename std::enable_if<std::is_integral<S>::value, T>::type &TensorView<T, C>::operator()(S i, S j)
 {
   return data_[static_cast<SizeType>(i) + static_cast<SizeType>(j) * padded_height_];
 }
@@ -205,7 +204,7 @@ typename std::enable_if<std::is_integral<S>::value, T>::type TensorView<T, C>::o
 
 template <typename T, typename C>
 template <typename S>
-typename std::enable_if<std::is_integral<S>::value, T>::type & TensorView<T, C>::operator()(S i)
+typename std::enable_if<std::is_integral<S>::value, T>::type &TensorView<T, C>::operator()(S i)
 {
   return data_[std::move(i)];
 }
@@ -219,13 +218,14 @@ typename std::enable_if<std::is_integral<S>::value, T>::type TensorView<T, C>::o
 
 template <typename T, typename C>
 template <typename S>
-typename std::enable_if<std::is_integral<S>::value, T>::type & TensorView<T, C>::operator[](S i)
+typename std::enable_if<std::is_integral<S>::value, T>::type &TensorView<T, C>::operator[](S i)
 {
   return data_[std::move(i)];
 }
 
 /**
- * @brief returns the smallest number which is a multiple of PADDING and greater than or equal to a desired size
+ * @brief returns the smallest number which is a multiple of PADDING and greater than or equal to a
+ * desired size
  * @param sizeis the size to be padded
  * @return the padded size
  */
@@ -271,13 +271,13 @@ constexpr SizeType TensorView<T, C>::padding()
 }
 
 template <typename T, typename C>
-typename TensorView<T, C>::ContainerType const & TensorView<T, C>::data() const
+typename TensorView<T, C>::ContainerType const &TensorView<T, C>::data() const
 {
   return data_;
 }
 
 template <typename T, typename C>
-typename TensorView<T, C>::ContainerType & TensorView<T, C>::data()
+typename TensorView<T, C>::ContainerType &TensorView<T, C>::data()
 {
   return data_;
 }

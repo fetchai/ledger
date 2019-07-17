@@ -803,6 +803,13 @@ typename Tensor<T, C>::ConstIteratorType Tensor<T, C>::cend() const
 ///////////////////////
 /// View Extraction ///
 ///////////////////////
+
+/**
+ * returns a view of the entire tensor
+ * @tparam T
+ * @tparam C
+ * @return
+ */
 template <typename T, typename C>
 typename Tensor<T, C>::ViewType Tensor<T, C>::View()
 {
@@ -813,6 +820,12 @@ typename Tensor<T, C>::ViewType Tensor<T, C>::View()
   return TensorView<Type, ContainerType>(data_, height(), width);
 }
 
+/**
+ * returns a constant view of the entire tensor
+ * @tparam T
+ * @tparam C
+ * @return
+ */
 template <typename T, typename C>
 typename Tensor<T, C>::ViewType const Tensor<T, C>::View() const
 {
@@ -823,6 +836,13 @@ typename Tensor<T, C>::ViewType const Tensor<T, C>::View() const
   return TensorView<Type, ContainerType>(data_, height(), width);
 }
 
+/**
+ * returns a
+ * @tparam T
+ * @tparam C
+ * @param index
+ * @return
+ */
 template <typename T, typename C>
 typename Tensor<T, C>::ViewType Tensor<T, C>::View(SizeType index)
 {
@@ -2139,7 +2159,7 @@ std::string Tensor<T, C>::ToString() const
       ss << At(i) << "\t";
     }
   }
-  if (shape_.size() == 2)
+  else if (shape_.size() == 2)
   {
     for (SizeType i(0); i < shape_[0]; ++i)
     {
@@ -2149,6 +2169,10 @@ std::string Tensor<T, C>::ToString() const
       }
       ss << "\n";
     }
+  }
+  else
+  {
+    throw std::runtime_error("cannot convert > 2D tensors to string");
   }
   return ss.str();
 }
