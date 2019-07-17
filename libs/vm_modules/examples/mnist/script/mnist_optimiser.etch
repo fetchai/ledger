@@ -26,7 +26,7 @@ var data_loader = DataLoader();
 data_loader.addData("mnist", System.Argv(0), System.Argv(1));
 
 // Set up the optimiser
-var optimiser = AdamOptimiser(g, "Input", "Label", "Error");
+var optimiser = AdamOptimiser("adam", g, "Input", "Label", "Error");
 
 // Begin the training loop
 var batch_size = 64u64;

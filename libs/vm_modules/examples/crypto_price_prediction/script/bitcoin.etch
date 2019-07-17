@@ -88,11 +88,11 @@ build_graph(graph);
 graph.addMeanSquareErrorLoss("Error", "Output", "Label");
 
 // SET UP THE OPTIMISER
-var optimiser = AdamOptimiser(graph, "Input", "Label", "Error");
+var optimiser = Optimiser("sgd", graph, "Input", "Label", "Error");
 
 // BEGIN TRAINING
 printLn("begin training...");
-var training_iterations = 1;
+var training_iterations = 10;
 var batch_size = 8u64;
 for(i in 0:training_iterations)
     var loss = optimiser.run(data_loader, batch_size);

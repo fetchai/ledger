@@ -18,7 +18,11 @@
 //------------------------------------------------------------------------------
 
 #include "ml/graph.hpp"
+
+#include "ml/optimisation/optimiser.hpp"
+
 #include "ml/optimisation/adam_optimiser.hpp"
+#include "ml/optimisation/sgd_optimiser.hpp"
 
 #include "vm_modules/math/tensor.hpp"
 #include "vm_modules/math/type.hpp"
@@ -36,64 +40,80 @@ namespace fetch {
 namespace vm_modules {
 namespace ml {
 
-class VMAdamOptimiser : public fetch::vm::Object
+class VMOptimiser : public fetch::vm::Object
 {
 public:
   using DataType  = fetch::vm_modules::math::DataType;
   using ArrayType = fetch::math::Tensor<DataType>;
   using GraphType = fetch::ml::Graph<ArrayType>;
 
-  VMAdamOptimiser(fetch::vm::VM *vm, fetch::vm::TypeId type_id, GraphType const &graph,
-                  std::vector<std::string> const &input_node_names,
-                  std::string const &label_node_name, std::string const &output_node_name)
+  using OptimiserType     = fetch::ml::optimisers::Optimiser<ArrayType>;
+  using AdamOptimiserType = fetch::ml::optimisers::AdamOptimiser<ArrayType>;
+  using SgdOptimiserType  = fetch::ml::optimisers::SGDOptimiser<ArrayType>;
+
+  VMOptimiser(fetch::vm::VM *vm, fetch::vm::TypeId type_id, std::string const &mode,
+              GraphType const &graph, std::vector<std::string> const &input_node_names,
+              std::string const &label_node_name, std::string const &output_node_name)
     : fetch::vm::Object(vm, type_id)
-    , optimiser_(std::make_shared<GraphType>(graph), input_node_names, label_node_name,
-                 output_node_name)
-  {}
+  {
+    if (mode == "adam")
+    {
+      AdamOptimiserType optimiser(std::make_shared<GraphType>(graph), input_node_names,
+                                  label_node_name, output_node_name);
+      optimiser_ = std::make_shared<AdamOptimiserType>(optimiser);
+    }
+    else if (mode == "sgd")
+    {
+      SgdOptimiserType optimiser(std::make_shared<GraphType>(graph), input_node_names,
+                                 label_node_name, output_node_name);
+      optimiser_ = std::make_shared<SgdOptimiserType>(optimiser);
+    }
+  }
 
   static void Bind(vm::Module &module)
   {
-    module.CreateClassType<fetch::vm_modules::ml::VMAdamOptimiser>("AdamOptimiser")
-        .CreateConstuctor<fetch::vm::Ptr<fetch::vm_modules::ml::VMGraph>,
+    module.CreateClassType<fetch::vm_modules::ml::VMOptimiser>("Optimiser")
+        .CreateConstuctor<fetch::vm::Ptr<fetch::vm::String>,
+                          fetch::vm::Ptr<fetch::vm_modules::ml::VMGraph>,
                           fetch::vm::Ptr<fetch::vm::String>, fetch::vm::Ptr<fetch::vm::String>,
                           fetch::vm::Ptr<fetch::vm::String>>()
-        .CreateMemberFunction("run", &fetch::vm_modules::ml::VMAdamOptimiser::RunData)
-        .CreateMemberFunction("run", &fetch::vm_modules::ml::VMAdamOptimiser::RunLoader)
-        .CreateMemberFunction("run", &fetch::vm_modules::ml::VMAdamOptimiser::RunLoaderNoSubset);
+        .CreateMemberFunction("run", &fetch::vm_modules::ml::VMOptimiser::RunData)
+        .CreateMemberFunction("run", &fetch::vm_modules::ml::VMOptimiser::RunLoader)
+        .CreateMemberFunction("run", &fetch::vm_modules::ml::VMOptimiser::RunLoaderNoSubset);
   }
 
-  static fetch::vm::Ptr<VMAdamOptimiser> Constructor(
-      fetch::vm::VM *vm, fetch::vm::TypeId type_id,
+  static fetch::vm::Ptr<VMOptimiser> Constructor(
+      fetch::vm::VM *vm, fetch::vm::TypeId type_id, fetch::vm::Ptr<fetch::vm::String> const &mode,
       fetch::vm::Ptr<fetch::vm_modules::ml::VMGraph> const &graph,
       fetch::vm::Ptr<fetch::vm::String> const &             input_node_names,
       fetch::vm::Ptr<fetch::vm::String> const &             label_node_name,
       fetch::vm::Ptr<fetch::vm::String> const &             output_node_names)
   {
-    return new VMAdamOptimiser(vm, type_id, graph->graph_, {input_node_names->str},
-                               label_node_name->str, output_node_names->str);
+    return new VMOptimiser(vm, type_id, mode->str, graph->graph_, {input_node_names->str},
+                           label_node_name->str, output_node_names->str);
   }
 
   DataType RunData(fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> const &data,
                    fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> const &labels,
                    uint64_t                                                 batch_size)
   {
-    return optimiser_.Run({(data->GetTensor())}, labels->GetTensor(), batch_size);
+    return optimiser_->Run({(data->GetTensor())}, labels->GetTensor(), batch_size);
   }
 
   DataType RunLoader(fetch::vm::Ptr<fetch::vm_modules::ml::VMDataLoader> const &loader,
                      uint64_t batch_size, uint64_t subset_size)
   {
-    return optimiser_.Run(*(loader->loader_), batch_size, subset_size);
+    return optimiser_->Run(*(loader->loader_), batch_size, subset_size);
   }
 
   DataType RunLoaderNoSubset(fetch::vm::Ptr<fetch::vm_modules::ml::VMDataLoader> const &loader,
                              uint64_t                                                   batch_size)
   {
-    return optimiser_.Run(*(loader->loader_), batch_size);
+    return optimiser_->Run(*(loader->loader_), batch_size);
   }
 
 private:
-  fetch::ml::optimisers::AdamOptimiser<ArrayType> optimiser_;
+  std::shared_ptr<OptimiserType> optimiser_;
 };
 
 }  // namespace ml
