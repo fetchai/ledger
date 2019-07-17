@@ -239,10 +239,10 @@ struct RBC::MsgCount RBC::ReceivedReady(TagType tag, std::shared_ptr<RHash> msg_
  */
 void RBC::OnRBC(MuddleAddress const &from, RBCEnvelop const &envelop)
 {
-  auto     msg_ptr = envelop.Message();
-  // To catch nullptr return in Message() switch statement default
-  if (msg_ptr == nullptr) {
-    return;
+  auto msg_ptr = envelop.Message();
+  if (msg_ptr == nullptr)
+  {
+    return;  // To catch nullptr return in Message() switch statement default
   }
   uint32_t sender_index{CabinetIndex(from)};
   switch (msg_ptr->type())
