@@ -23,6 +23,8 @@ namespace fetch {
 namespace dkg {
 namespace rbc {
 
+constexpr char const *LOGGING_NAME = "DKGMessage";
+
 /**
  * Constructs a RBCMessage from serialised message
  *
@@ -43,6 +45,9 @@ std::shared_ptr<RBCMessage> RBCEnvelop::Message() const
     return std::make_shared<RRequest>(serialiser);
   case MessageType::RANSWER:
     return std::make_shared<RAnswer>(serialiser);
+  default:
+    FETCH_LOG_ERROR(LOGGING_NAME, "Can not process payload");
+    assert(false);
   }
 }
 
