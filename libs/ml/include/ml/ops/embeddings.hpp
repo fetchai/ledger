@@ -34,6 +34,7 @@ public:
   using ArrayPtrType  = std::shared_ptr<ArrayType>;
   using SizeType      = typename ArrayType::SizeType;
   using VecTensorType = typename Weights<T>::VecTensorType;
+  using SPType        = WeightsSaveableParams<ArrayType>;
 
   Embeddings(SizeType dimensions, SizeType data_points)
   {
@@ -42,21 +43,27 @@ public:
     this->SetData(weights);
   }
 
-  Embeddings(ArrayType &weights)
+  explicit Embeddings(ArrayType &weights)
   {
     this->SetData(weights);
   }
 
-  virtual ~Embeddings() = default;
-
-  std::shared_ptr<SaveableParams<ArrayType>> GetOpSaveableParams()
+  explicit Embeddings(SPType const &sp)
   {
-    SaveableParams<ArrayType> sp{};
-    sp.DESCRIPTOR = DESCRIPTOR;
-    return std::make_shared<SaveableParams<ArrayType>>(sp);
+    this->output_ = sp.output;
   }
 
-  virtual void Forward(VecTensorType const &inputs, ArrayType &output) override
+  virtual ~Embeddings() = default;
+
+  std::shared_ptr<SaveableParams> GetOpSaveableParams()
+  {
+    SPType tp{};
+    tp.output     = this->output_;
+    tp.DESCRIPTOR = DESCRIPTOR;
+    return std::make_shared<SPType>(tp);
+  }
+
+  void Forward(VecTensorType const &inputs, ArrayType &output) override
   {
     assert(this->output_);
     assert(inputs.size() == 1);
@@ -101,8 +108,8 @@ public:
     output = *this->embeddings_output_;
   }
 
-  virtual std::vector<ArrayType> Backward(VecTensorType const &inputs,
-                                          ArrayType const &    error_signal) override
+  std::vector<ArrayType> Backward(VecTensorType const &inputs,
+                                  ArrayType const &    error_signal) override
   {
     assert(inputs.size() == 1);
     assert(inputs.front().get().shape().size() == 2);
@@ -137,7 +144,7 @@ public:
     return {ArrayType(error_signal.shape())};
   }
 
-  virtual void Step(typename T::Type learning_rate) override
+  void Step(typename T::Type learning_rate) override
   {
     for (auto const &r : updated_rows_)
     {

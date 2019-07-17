@@ -34,17 +34,25 @@ public:
   using ArrayType     = T;
   using SizeType      = typename ArrayType::SizeType;
   using VecTensorType = typename Ops<T>::VecTensorType;
+  using SPType        = ReshapeSaveableParams;
 
   explicit Reshape(std::vector<SizeType> new_shape)
     : new_shape_(new_shape)
   {}
+
+  explicit Reshape(SPType const &sp)
+  {
+    new_shape_ = sp.new_shape;  // todo: tests for this
+  }
+
   ~Reshape() = default;
 
-  std::shared_ptr<SaveableParams<ArrayType>> GetOpSaveableParams()
+  std::shared_ptr<SaveableParams> GetOpSaveableParams()
   {
-    SaveableParams<ArrayType> sp{};
+    SPType sp{};
     sp.DESCRIPTOR = DESCRIPTOR;
-    return std::make_shared<SaveableParams<ArrayType>>(sp);
+    sp.new_shape  = new_shape_;
+    return std::make_shared<SPType>(sp);
   }
 
   void Forward(VecTensorType const &inputs, ArrayType &output)

@@ -32,9 +32,22 @@ public:
   using SizeType      = typename ArrayType::SizeType;
   using ArrayPtrType  = std::shared_ptr<ArrayType>;
   using VecTensorType = typename Ops<T>::VecTensorType;
+  using SPType        = SaveableParams;
 
-  Maximum()          = default;
+  Maximum() = default;
+
+  explicit Maximum(SPType const &sp)
+    : Ops<T>(sp)
+  {}
+
   virtual ~Maximum() = default;
+
+  std::shared_ptr<SaveableParams> GetOpSaveableParams()
+  {
+    SPType sp{};
+    sp.DESCRIPTOR = DESCRIPTOR;
+    return std::make_shared<SPType>(sp);
+  }
 
   /**
    * elementwise maximum

@@ -39,7 +39,7 @@ public:
   using SizeType      = typename ArrayType::SizeType;
   using RNG           = fetch::random::LaggedFibonacciGenerator<>;
   using VecTensorType = typename Ops<T>::VecTensorType;
-  using SPType        = DropoutSaveableParams;
+  using SPType        = DropoutSaveableParams<ArrayType>;
 
   explicit Dropout(DataType const probability, SizeType const &random_seed = 25102015)
     : probability_(probability)

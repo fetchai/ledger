@@ -19,19 +19,36 @@
 
 #include "ml/graph.hpp"
 #include "ml/ops/activations/dropout.hpp"
+#include "ml/ops/activations/elu.hpp"
 #include "ml/ops/activations/leaky_relu.hpp"
 #include "ml/ops/activations/logsigmoid.hpp"
 #include "ml/ops/activations/logsoftmax.hpp"
+#include "ml/ops/activations/randomized_relu.hpp"
 #include "ml/ops/activations/relu.hpp"
 #include "ml/ops/activations/sigmoid.hpp"
 #include "ml/ops/activations/softmax.hpp"
 #include "ml/ops/add.hpp"
+#include "ml/ops/concatenate.hpp"
+#include "ml/ops/convolution_1d.hpp"
+#include "ml/ops/convolution_2d.hpp"
+#include "ml/ops/divide.hpp"
+#include "ml/ops/embeddings.hpp"
+#include "ml/ops/exp.hpp"
 #include "ml/ops/flatten.hpp"
+#include "ml/ops/log.hpp"
 #include "ml/ops/loss_functions.hpp"
 #include "ml/ops/matrix_multiply.hpp"
+#include "ml/ops/max_pool_1d.hpp"
+#include "ml/ops/max_pool_2d.hpp"
+#include "ml/ops/maximum.hpp"
+#include "ml/ops/multiply.hpp"
 #include "ml/ops/placeholder.hpp"
+#include "ml/ops/reshape.hpp"
+#include "ml/ops/sqrt.hpp"
+#include "ml/ops/subtract.hpp"
+#include "ml/ops/tanh.hpp"
+#include "ml/ops/transpose.hpp"
 #include "ml/ops/weights.hpp"
-#include "transpose.hpp"
 
 #include <typeindex>
 
@@ -65,6 +82,10 @@ void OpsLookup(
     MyAddNode<Graph<ArrayType>, typename ops::Dropout<ArrayType>>(g_ptr, saved_node, node_name,
                                                                   inputs);
   }
+  else if (descrip == ops::Elu<ArrayType>::DESCRIPTOR)
+  {
+    MyAddNode<Graph<ArrayType>, typename ops::Elu<ArrayType>>(g_ptr, saved_node, node_name, inputs);
+  }
   else if (descrip == ops::LeakyRelu<ArrayType>::DESCRIPTOR)
   {
     MyAddNode<Graph<ArrayType>, typename ops::LeakyRelu<ArrayType>>(g_ptr, saved_node, node_name,
@@ -79,6 +100,11 @@ void OpsLookup(
   {
     MyAddNode<Graph<ArrayType>, typename ops::LogSoftmax<ArrayType>>(g_ptr, saved_node, node_name,
                                                                      inputs);
+  }
+  else if (descrip == ops::RandomizedRelu<ArrayType>::DESCRIPTOR)
+  {
+    MyAddNode<Graph<ArrayType>, typename ops::RandomizedRelu<ArrayType>>(g_ptr, saved_node,
+                                                                         node_name, inputs);
   }
   else if (descrip == ops::Relu<ArrayType>::DESCRIPTOR)
   {
@@ -114,20 +140,98 @@ void OpsLookup(
   {
     MyAddNode<Graph<ArrayType>, typename ops::Add<ArrayType>>(g_ptr, saved_node, node_name, inputs);
   }
+  else if (descrip == ops::Concatenate<ArrayType>::DESCRIPTOR)
+  {
+    MyAddNode<Graph<ArrayType>, typename ops::Concatenate<ArrayType>>(g_ptr, saved_node, node_name,
+                                                                      inputs);
+  }
+  else if (descrip == ops::Convolution1D<ArrayType>::DESCRIPTOR)
+  {
+    MyAddNode<Graph<ArrayType>, typename ops::Convolution1D<ArrayType>>(g_ptr, saved_node,
+                                                                        node_name, inputs);
+  }
+  else if (descrip == ops::Convolution2D<ArrayType>::DESCRIPTOR)
+  {
+    MyAddNode<Graph<ArrayType>, typename ops::Convolution2D<ArrayType>>(g_ptr, saved_node,
+                                                                        node_name, inputs);
+  }
+  else if (descrip == ops::Divide<ArrayType>::DESCRIPTOR)
+  {
+    MyAddNode<Graph<ArrayType>, typename ops::Divide<ArrayType>>(g_ptr, saved_node, node_name,
+                                                                 inputs);
+  }
+  else if (descrip == ops::Embeddings<ArrayType>::DESCRIPTOR)
+  {
+    MyAddNode<Graph<ArrayType>, typename ops::Embeddings<ArrayType>>(g_ptr, saved_node, node_name,
+                                                                     inputs);
+  }
+  else if (descrip == ops::Exp<ArrayType>::DESCRIPTOR)
+  {
+    MyAddNode<Graph<ArrayType>, typename ops::Exp<ArrayType>>(g_ptr, saved_node, node_name, inputs);
+  }
   else if (descrip == ops::Flatten<ArrayType>::DESCRIPTOR)
   {
     MyAddNode<Graph<ArrayType>, typename ops::Flatten<ArrayType>>(g_ptr, saved_node, node_name,
                                                                   inputs);
+  }
+  else if (descrip == ops::LeakyRelu<ArrayType>::DESCRIPTOR)
+  {
+    MyAddNode<Graph<ArrayType>, typename ops::LeakyRelu<ArrayType>>(g_ptr, saved_node, node_name,
+                                                                    inputs);
+  }
+  else if (descrip == ops::Log<ArrayType>::DESCRIPTOR)
+  {
+    MyAddNode<Graph<ArrayType>, typename ops::Log<ArrayType>>(g_ptr, saved_node, node_name, inputs);
   }
   else if (descrip == ops::MatrixMultiply<ArrayType>::DESCRIPTOR)
   {
     MyAddNode<Graph<ArrayType>, typename ops::MatrixMultiply<ArrayType>>(g_ptr, saved_node,
                                                                          node_name, inputs);
   }
+  else if (descrip == ops::MaxPool1D<ArrayType>::DESCRIPTOR)
+  {
+    MyAddNode<Graph<ArrayType>, typename ops::MaxPool1D<ArrayType>>(g_ptr, saved_node, node_name,
+                                                                    inputs);
+  }
+  else if (descrip == ops::MaxPool2D<ArrayType>::DESCRIPTOR)
+  {
+    MyAddNode<Graph<ArrayType>, typename ops::MaxPool2D<ArrayType>>(g_ptr, saved_node, node_name,
+                                                                    inputs);
+  }
+  else if (descrip == ops::Maximum<ArrayType>::DESCRIPTOR)
+  {
+    MyAddNode<Graph<ArrayType>, typename ops::Maximum<ArrayType>>(g_ptr, saved_node, node_name,
+                                                                  inputs);
+  }
+  else if (descrip == ops::Multiply<ArrayType>::DESCRIPTOR)
+  {
+    MyAddNode<Graph<ArrayType>, typename ops::Multiply<ArrayType>>(g_ptr, saved_node, node_name,
+                                                                   inputs);
+  }
   else if (descrip == ops::PlaceHolder<ArrayType>::DESCRIPTOR)
   {
     MyAddNode<Graph<ArrayType>, typename ops::PlaceHolder<ArrayType>>(g_ptr, saved_node, node_name,
                                                                       inputs);
+  }
+  else if (descrip == ops::Reshape<ArrayType>::DESCRIPTOR)
+  {
+    MyAddNode<Graph<ArrayType>, typename ops::Reshape<ArrayType>>(g_ptr, saved_node, node_name,
+                                                                  inputs);
+  }
+  else if (descrip == ops::Sqrt<ArrayType>::DESCRIPTOR)
+  {
+    MyAddNode<Graph<ArrayType>, typename ops::Sqrt<ArrayType>>(g_ptr, saved_node, node_name,
+                                                               inputs);
+  }
+  else if (descrip == ops::Subtract<ArrayType>::DESCRIPTOR)
+  {
+    MyAddNode<Graph<ArrayType>, typename ops::Subtract<ArrayType>>(g_ptr, saved_node, node_name,
+                                                                   inputs);
+  }
+  else if (descrip == ops::TanH<ArrayType>::DESCRIPTOR)
+  {
+    MyAddNode<Graph<ArrayType>, typename ops::TanH<ArrayType>>(g_ptr, saved_node, node_name,
+                                                               inputs);
   }
   else if (descrip == ops::Transpose<ArrayType>::DESCRIPTOR)
   {
@@ -138,7 +242,7 @@ void OpsLookup(
   {
     MyAddNode<Graph<ArrayType>, typename ops::Weights<ArrayType>>(g_ptr, saved_node, node_name,
                                                                   inputs);
-  }  // todo: other ops
+  }
   else
   {
     throw std::runtime_error("Unknown Op type");

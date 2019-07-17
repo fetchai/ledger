@@ -36,18 +36,28 @@ public:
   using DataType      = typename ArrayType::Type;
   using ArrayPtrType  = std::shared_ptr<ArrayType>;
   using VecTensorType = typename Ops<T>::VecTensorType;
+  using SPType        = MaxPoolSaveableParams;
 
   MaxPool1D(SizeType const kernel_size, SizeType const stride_size)
     : kernel_size_{kernel_size}
     , stride_size_{stride_size}
   {}
+
+  explicit MaxPool1D(SPType const &sp)
+  {
+    kernel_size_ = sp.kernel_size;
+    stride_size_ = sp.stride_size;
+  }
+
   ~MaxPool1D() override = default;
 
-  std::shared_ptr<SaveableParams<ArrayType>> GetOpSaveableParams()
+  std::shared_ptr<SaveableParams> GetOpSaveableParams()
   {
-    SaveableParams<ArrayType> sp{};
-    sp.DESCRIPTOR = DESCRIPTOR;
-    return std::make_shared<SaveableParams<ArrayType>>(sp);
+    SPType sp{};
+    sp.DESCRIPTOR  = DESCRIPTOR;
+    sp.kernel_size = kernel_size_;
+    sp.stride_size = stride_size_;
+    return std::make_shared<SPType>(sp);
   }
 
   /**

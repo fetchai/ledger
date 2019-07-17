@@ -75,9 +75,10 @@ public:
   }
 
 protected:
-  fetch::ml::details::RegularisationType regularisation_type{};
-  RegPtrType                             regulariser_;
-  DataType                               regularisation_rate_ = static_cast<DataType>(0);
+  fetch::ml::details::RegularisationType regularisation_type =
+      fetch::ml::details::RegularisationType::NONE;
+  RegPtrType regulariser_;
+  DataType   regularisation_rate_ = static_cast<DataType>(0);
 };
 
 template <class T>

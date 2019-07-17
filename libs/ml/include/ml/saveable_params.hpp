@@ -42,15 +42,30 @@ struct WeightsSaveableParams : public SaveableParams
   typename ArrayType::Type               regularisation_rate;
 };
 
+template <class ArrayType>
 struct DropoutSaveableParams : public SaveableParams
 {
-  fetch::math::SizeType random_seed;
-  double                probability;
+  using DataType = typename ArrayType::Type;
+  using SizeType = typename ArrayType::SizeType;
+  SizeType random_seed{};
+  DataType probability;
 };
 
+template <class ArrayType>
 struct LeakyReluSaveableParams : public SaveableParams
 {
-  double a;
+  using DataType = typename ArrayType::Type;
+  DataType a;
+};
+
+template <class ArrayType>
+struct RandomizedReluSaveableParams : public SaveableParams
+{
+  using DataType = typename ArrayType::Type;
+  using SizeType = typename ArrayType::SizeType;
+  DataType lower_bound;
+  DataType upper_bound;
+  SizeType random_seed;
 };
 
 struct SoftmaxSaveableParams : public SaveableParams
@@ -58,9 +73,25 @@ struct SoftmaxSaveableParams : public SaveableParams
   fetch::math::SizeType axis;
 };
 
+struct Convolution1DSaveableParams : public SaveableParams
+{
+  fetch::math::SizeType stride_size;
+};
+
+struct MaxPoolSaveableParams : public SaveableParams
+{
+  fetch::math::SizeType kernel_size;
+  fetch::math::SizeType stride_size;
+};
+
 struct TransposeSaveableParams : public SaveableParams
 {
   std::vector<fetch::math::SizeType> transpose_vector;
+};
+
+struct ReshapeSaveableParams : public SaveableParams
+{
+  std::vector<fetch::math::SizeType> new_shape;
 };
 
 template <class T>

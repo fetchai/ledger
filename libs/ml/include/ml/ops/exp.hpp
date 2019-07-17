@@ -31,9 +31,22 @@ public:
   using DataType      = typename ArrayType::Type;
   using SizeType      = typename ArrayType::SizeType;
   using VecTensorType = typename Ops<T>::VecTensorType;
+  using SPType        = SaveableParams;
 
-  Exp()          = default;
+  Exp() = default;
+
+  explicit Exp(SPType const &sp)
+    : Ops<T>(sp)
+  {}
+
   virtual ~Exp() = default;
+
+  std::shared_ptr<SaveableParams> GetOpSaveableParams()
+  {
+    SPType sp{};
+    sp.DESCRIPTOR = DESCRIPTOR;
+    return std::make_shared<SPType>(sp);
+  }
 
   /**
    * elementwise exp

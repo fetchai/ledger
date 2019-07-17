@@ -32,9 +32,22 @@ public:
   using SizeType      = typename ArrayType::SizeType;
   using ArrayPtrType  = std::shared_ptr<ArrayType>;
   using VecTensorType = typename Ops<T>::VecTensorType;
+  using SPType        = SaveableParams;
 
-  Abs()          = default;
+  Abs() = default;
+
+  explicit Abs(SPType const &sp)
+    : Ops<T>(sp)
+  {}
+
   virtual ~Abs() = default;
+
+  std::shared_ptr<SaveableParams> GetOpSaveableParams()
+  {
+    auto sp_ptr        = std::make_shared<SPType>();
+    sp_ptr->DESCRIPTOR = DESCRIPTOR;
+    return sp_ptr;
+  }
 
   /**
    * elementwise absolute value

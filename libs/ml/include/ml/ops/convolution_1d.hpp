@@ -37,18 +37,25 @@ public:
   using DataType      = typename ArrayType::Type;
   using ArrayPtrType  = std::shared_ptr<ArrayType>;
   using VecTensorType = typename Ops<T>::VecTensorType;
+  using SPType        = Convolution1DSaveableParams;
 
   explicit Convolution1D(SizeType stride_size = 1)
     : stride_size_(stride_size)
   {}
 
+  explicit Convolution1D(SPType const &sp)
+  {
+    stride_size_ = sp.stride_size;
+  }
+
   ~Convolution1D() = default;
 
-  std::shared_ptr<SaveableParams<ArrayType>> GetOpSaveableParams()
+  std::shared_ptr<SaveableParams> GetOpSaveableParams()
   {
-    SaveableParams<ArrayType> sp{};
-    sp.DESCRIPTOR = DESCRIPTOR;
-    return std::make_shared<SaveableParams<ArrayType>>(sp);
+    SPType sp{};
+    sp.DESCRIPTOR  = DESCRIPTOR;
+    sp.stride_size = stride_size_;
+    return std::make_shared<SPType>(sp);
   }
 
   std::vector<typename ArrayType::SizeType> ComputeOutputShape(

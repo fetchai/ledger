@@ -39,6 +39,7 @@ public:
   using SizeType      = typename ArrayType::SizeType;
   using RNG           = fetch::random::LaggedFibonacciGenerator<>;
   using VecTensorType = typename Ops<T>::VecTensorType;
+  using SPType        = RandomizedReluSaveableParams<ArrayType>;
 
   RandomizedRelu(DataType const lower_bound, DataType const upper_bound,
                  SizeType const &random_seed = 25102015)
@@ -49,13 +50,27 @@ public:
     rng_.Seed(random_seed);
     UpdateRandomValue();
   }
+
+  explicit RandomizedRelu(SPType const &sp)
+  {
+    lower_bound_ = sp.lower_bound;
+    upper_bound_ = sp.upper_bound;
+    bounds_mean_ = ((upper_bound_ + lower_bound_) / DataType(2));
+    rng_.Seed(sp.random_seed);
+    UpdateRandomValue();
+  }
+
   ~RandomizedRelu() override = default;
 
-  std::shared_ptr<SaveableParams<ArrayType>> GetOpSaveableParams()
+  std::shared_ptr<SaveableParams> GetOpSaveableParams()
   {
-    SaveableParams<ArrayType> sp{};
-    sp.DESCRIPTOR = DESCRIPTOR;
-    return std::make_shared<SaveableParams<ArrayType>>(sp);
+    SPType sp{};
+    sp.DESCRIPTOR  = DESCRIPTOR;
+    sp.lower_bound = lower_bound_;
+    sp.upper_bound = upper_bound_;
+    sp.random_seed = rng_.Seed();
+
+    return std::make_shared<SPType>(sp);
   }
 
   void Forward(VecTensorType const &inputs, ArrayType &output) override
