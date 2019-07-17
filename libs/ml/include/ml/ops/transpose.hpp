@@ -31,18 +31,25 @@ public:
   using SizeType      = typename ArrayType::SizeType;
   using ArrayPtrType  = std::shared_ptr<ArrayType>;
   using VecTensorType = typename Ops<T>::VecTensorType;
+  using SPType        = TransposeSaveableParams;
 
-  Transpose(std::vector<SizeType> transpose_vector = {1, 0, 2})
+  explicit Transpose(std::vector<SizeType> transpose_vector = {1, 0, 2})
     : transpose_vector_(transpose_vector)
   {}
 
+  explicit Transpose(SPType const &sp)
+  {
+    transpose_vector_ = sp.transpose_vector;
+  }
+
   virtual ~Transpose() = default;
 
-  std::shared_ptr<SaveableParams<ArrayType>> GetOpSaveableParams()
+  std::shared_ptr<SaveableParams> GetOpSaveableParams()
   {
-    SaveableParams<ArrayType> sp{};
-    sp.DESCRIPTOR = DESCRIPTOR;
-    return std::make_shared<SaveableParams<ArrayType>>(sp);
+    SPType sp{};
+    sp.DESCRIPTOR       = DESCRIPTOR;
+    sp.transpose_vector = transpose_vector_;
+    return std::make_shared<SPType>(sp);
   }
 
   virtual void Forward(VecTensorType const &inputs, ArrayType &output)

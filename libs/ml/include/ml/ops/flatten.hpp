@@ -32,15 +32,21 @@ public:
   using SizeType      = typename ArrayType::SizeType;
   using ArrayPtrType  = std::shared_ptr<ArrayType>;
   using VecTensorType = typename Ops<T>::VecTensorType;
+  using SPType        = SaveableParams;
 
-  Flatten()          = default;
+  Flatten() = default;
+
+  explicit Flatten(SPType const &sp)
+    : Ops<T>(sp)
+  {}
+
   virtual ~Flatten() = default;
 
-  std::shared_ptr<SaveableParams<ArrayType>> GetOpSaveableParams()
+  std::shared_ptr<SaveableParams> GetOpSaveableParams()
   {
-    SaveableParams<ArrayType> sp{};
+    SPType sp{};
     sp.DESCRIPTOR = DESCRIPTOR;
-    return std::make_shared<SaveableParams<ArrayType>>(sp);
+    return std::make_shared<SPType>(sp);
   }
 
   virtual void Forward(VecTensorType const &inputs, ArrayType &output)

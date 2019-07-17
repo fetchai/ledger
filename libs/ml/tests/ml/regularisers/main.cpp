@@ -57,8 +57,7 @@ TYPED_TEST(WeightsTest, l1_regulariser_test)
   w.SetData(data);
 
   // Apply regularisation
-  w.SetRegularisation(fetch::ml::details::CreateRegulariser<TypeParam>(regulariser),
-                      regularisation_rate);
+  w.SetRegularisation(regulariser, regularisation_rate);
   w.ApplyRegularisation();
 
   // Evaluate weight
@@ -86,8 +85,7 @@ TYPED_TEST(WeightsTest, l2_regulariser_test)
   w.SetData(data);
 
   // Apply regularisation
-  w.SetRegularisation(fetch::ml::details::CreateRegulariser<TypeParam>(regulariser),
-                      regularisation_rate);
+  w.SetRegularisation(regulariser, regularisation_rate);
   w.ApplyRegularisation();
 
   // Evaluate weight

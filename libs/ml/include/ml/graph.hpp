@@ -70,9 +70,11 @@ public:
   NodePtrType GetNode(std::string const &node_name) const;
   void        SetInput(std::string const &node_name, ArrayType data);
   void        ResetGraphCache(std::shared_ptr<NodeInterface<T>> const &n, bool input_size_changed);
-  void SetRegularisation(RegPtrType regulariser, DataType regularisation_rate = DataType{0.0});
-  bool SetRegularisation(std::string node_name, RegPtrType regulariser,
-                         DataType regularisation_rate = DataType{0.0});
+  void        SetRegularisation(fetch::ml::details::RegularisationType regularisation_type,
+                                DataType regularisation_rate = DataType{0.0});
+  bool        SetRegularisation(std::string                            node_name,
+                                fetch::ml::details::RegularisationType regularisation_type,
+                                DataType regularisation_rate = DataType{0.0});
 
   virtual struct fetch::ml::StateDict<ArrayType> StateDict() const;
   virtual void LoadStateDict(struct fetch::ml::StateDict<T> const &dict);
@@ -83,10 +85,7 @@ public:
   std::vector<TrainablePtrType> get_trainables();
 
   void                           ResetGradients();
-  GraphSaveableParams<ArrayType> GetSaveableParams()
-  {
-    return saveparams;
-  }
+  GraphSaveableParams<ArrayType> GetGraphSaveableParams();
 
   template <class OperationType>
   meta::IfIsGraph<ArrayType, OperationType, void> AddSaveparams(
@@ -118,9 +117,13 @@ private:
 
 protected:
   std::unordered_map<std::string, NodePtrType> nodes_;
+  std::unordered_map<std::string, NodePtrType> flat_nodes;
   std::unordered_map<std::string, SizeType>    trainable_lookup_;
   std::vector<TrainablePtrType>                trainable_;
-  GraphSaveableParams<ArrayType>               saveparams;
+  //  GraphSaveableParams<ArrayType>               saveparams;
+  std::vector<std::pair<std::string, std::vector<std::string>>>
+                                     connections;  // unique node name to list of inputs
+  std::map<std::string, std::string> subgraph_outputs;
 };
 
 /**
@@ -130,11 +133,12 @@ protected:
  * @param regularisation_rate
  */
 template <typename ArrayType>
-void Graph<ArrayType>::SetRegularisation(RegPtrType regulariser, DataType regularisation_rate)
+void Graph<ArrayType>::SetRegularisation(fetch::ml::details::RegularisationType regularisation_type,
+                                         DataType                               regularisation_rate)
 {
   for (auto &t : trainable_)
   {
-    t->SetRegularisation(regulariser, regularisation_rate);
+    t->SetRegularisation(regularisation_type, regularisation_rate);
   }
 }
 
@@ -146,12 +150,13 @@ void Graph<ArrayType>::SetRegularisation(RegPtrType regulariser, DataType regula
  * @param regularisation_rate
  */
 template <typename ArrayType>
-bool Graph<ArrayType>::SetRegularisation(std::string node_name, RegPtrType regulariser,
-                                         DataType regularisation_rate)
+bool Graph<ArrayType>::SetRegularisation(std::string                            node_name,
+                                         fetch::ml::details::RegularisationType regularisation_type,
+                                         DataType                               regularisation_rate)
 {
   if (nodes_[node_name])
   {
-    trainable_[node_name]->SetRegularisation(regulariser, regularisation_rate);
+    trainable_[node_name]->SetRegularisation(regularisation_type, regularisation_rate);
     return true;
   }
   else
@@ -255,7 +260,23 @@ std::string Graph<ArrayType>::AddNode(std::string const &             node_name,
     nodes_[i]->AddOutput(nodes_[name]);
   }
 
-  AddSaveparams(name, inputs, node_ptr);
+  // because of subgraph some node will have changed name
+  std::vector<std::string> filtered_inputs;
+  for (auto const &input : inputs)
+  {
+    auto it = subgraph_outputs.find(input);
+    if (it != subgraph_outputs.end())
+    {
+      filtered_inputs.push_back(it->second);
+    }
+    else
+    {
+      filtered_inputs.push_back(input);
+    }
+  }
+
+  // add to graphsaveparams
+  AddSaveparams(name, filtered_inputs, node_ptr);
 
   // add to map of trainable ops if necessary
   AddTrainable(name, node_ptr);
@@ -265,32 +286,35 @@ std::string Graph<ArrayType>::AddNode(std::string const &             node_name,
 }
 
 template <typename ArrayType>
+GraphSaveableParams<ArrayType> Graph<ArrayType>::GetGraphSaveableParams()
+{
+  GraphSaveableParams<ArrayType> gs;
+  gs.connections = connections;
+
+  for (auto const &node : flat_nodes)
+  {
+    auto nsp = node.second->GetNodeSaveableParams();
+    gs.nodes.insert(std::make_pair(node.first, nsp));
+  }
+  return gs;
+}
+
+template <typename ArrayType>
 Graph<ArrayType>::Graph(GraphSaveableParams<ArrayType> gs)
 {
   // starts from empty graph
   assert(nodes_.size() == 0);
 
   // goes through list of nodenames adding nodes
-  for (auto &node : gs.nodes)
+  for (auto &node : gs.connections)
   {
     std::string              name   = node.first;
     std::vector<std::string> inputs = node.second;
 
     // Instantiate the node
-    SaveableParams<ArrayType> saved_node = saveparams.nodes[name];
-    NodePtrType               op         = ops::OpsLookup<ArrayType>(saved_node, name);
+    //    std::shared_ptr<SaveableParams<ArrayType>> saved_node = gs.nodes[name];
 
-    nodes_[name] = op;
-
-    // assign inputs and outputs
-    for (auto const &i : inputs)
-    {
-      nodes_[name]->AddInput(nodes_[i]);
-      nodes_[i]->AddOutput(nodes_[name]);
-    }
-
-    // add to map of trainable ops if necessary
-    AddTrainable(name, op);
+    ops::OpsLookup<ArrayType>(this, gs.nodes[name], name, inputs);
   }
 }
 
@@ -492,8 +516,8 @@ meta::IfIsNotGraph<ArrayType, OperationType, void> Graph<ArrayType>::AddSavepara
     std::string const &name, std::vector<std::string> const &inputs,
     std::shared_ptr<Node<ArrayType, OperationType>> node_ptr)
 {
-  saveparams.connections.push_back(std::make_pair(name, inputs));
-  saveparams.nodes.insert(std::make_pair(name, *node_ptr->GetSaveableParams()));
+  connections.push_back(std::make_pair(name, inputs));
+  flat_nodes.insert(std::make_pair(name, node_ptr));
 }
 
 template <typename ArrayType>
@@ -502,27 +526,31 @@ meta::IfIsGraph<ArrayType, OperationType, void> Graph<ArrayType>::AddSaveparams(
     std::string const &name, std::vector<std::string> const &inputs,
     std::shared_ptr<Node<ArrayType, OperationType>> node_ptr)
 {
-  // the graph will already have created its own saveparams
+  // the graph will already have created its own connections and flat node list
   // so go through this checking the names
   std::map<std::string, std::string> old2newnames;
-  bool                               first = true;
-  for (auto &nodeconns : node_ptr->saveparams.connections)
+  std::string                        lastnode{};
+  SizeType                           inputcounter = 0;
+
+  for (auto &nodeconns : node_ptr->connections)
   {
-    // guarantee unique node name
-    std::string node_name{name + '_' + nodeconns.first};
-    std::string resolved_name = UpdateVariableName<OperationType>(node_name);
-    old2newnames.insert(std::make_pair(nodeconns.first, resolved_name));
-
-    saveparams.nodes.insert(
-        std::make_pair(resolved_name, node_ptr->saveparams.nodes[nodeconns.first]));
-
-    if (first)
+    // if node is an input node, replace it with the input from the graph
+    if (std::find(node_ptr->input_node_names_.begin(), node_ptr->input_node_names_.end(),
+                  nodeconns.first) != node_ptr->input_node_names_.end())
     {
-      saveparams.connections.push_back(std::make_pair(resolved_name, inputs));
-      first = false;
+      old2newnames.insert(std::make_pair(nodeconns.first, inputs[inputcounter]));
+      inputcounter++;
+      // don't add to connectons or flat nodes
     }
     else
     {
+      // guarantee unique node name
+      std::string node_name{name + '_' + nodeconns.first};
+      std::string resolved_name = UpdateVariableName<OperationType>(node_name);
+      old2newnames.insert(std::make_pair(nodeconns.first, resolved_name));
+
+      flat_nodes.insert(std::make_pair(resolved_name, node_ptr->flat_nodes[nodeconns.first]));
+
       // change names for inputs as well
       std::vector<std::string> resolved_conns;
       for (auto &inp : nodeconns.second)
@@ -530,10 +558,12 @@ meta::IfIsGraph<ArrayType, OperationType, void> Graph<ArrayType>::AddSaveparams(
         resolved_conns.push_back(old2newnames[inp]);
       }
 
-      saveparams.connections.push_back(std::make_pair(resolved_name, resolved_conns));
+      connections.push_back(std::make_pair(resolved_name, resolved_conns));
+      lastnode = resolved_name;  // todo: this assumes the output node is the last one
     }
   }
-  // todo: last input will have changed name
+  // subgraph_outputs will disappear once subgraphs are no longer a thing!
+  subgraph_outputs.insert(std::make_pair(name, lastnode));
 }
 /**
  * generates a new variable name if necessary to ensure uniqueness within graph

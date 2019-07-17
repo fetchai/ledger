@@ -39,6 +39,7 @@ public:
   using SizeType      = typename ArrayType::SizeType;
   using RNG           = fetch::random::LaggedFibonacciGenerator<>;
   using VecTensorType = typename Ops<T>::VecTensorType;
+  using SPType        = DropoutSaveableParams;
 
   explicit Dropout(DataType const probability, SizeType const &random_seed = 25102015)
     : probability_(probability)
@@ -47,13 +48,23 @@ public:
     rng_.Seed(random_seed);
     drop_values_ = ArrayType{0};
   }
+
+  explicit Dropout(SPType const &sp)
+  {
+    probability_ = sp.probability;
+    rng_.Seed(sp.random_seed);
+    drop_values_ = ArrayType{0};
+  }
+
   ~Dropout() override = default;
 
-  std::shared_ptr<SaveableParams<ArrayType>> GetOpSaveableParams()
+  std::shared_ptr<SaveableParams> GetOpSaveableParams()
   {
-    SaveableParams<ArrayType> sp{};
-    sp.DESCRIPTOR = DESCRIPTOR;
-    return std::make_shared<SaveableParams<ArrayType>>(sp);
+    SPType sp{};
+    sp.DESCRIPTOR  = DESCRIPTOR;
+    sp.random_seed = rng_.Seed();
+    sp.probability = probability_;
+    return std::make_shared<SPType>(sp);
   }
 
   void Forward(VecTensorType const &inputs, ArrayType &output)

@@ -32,20 +32,19 @@ public:
   using SizeType      = typename ArrayType::SizeType;
   using ArrayPtrType  = std::shared_ptr<ArrayType>;
   using VecTensorType = typename Ops<T>::VecTensorType;
+  using SPType        = SaveableParams;
 
   PlaceHolder() = default;
 
-  explicit PlaceHolder(TrainableSaveableParams<ArrayType> tp)
-  {
-    output_ = tp.weights;
-  }
+  explicit PlaceHolder(SPType const &sp)
+    : Ops<T>(sp)
+  {}
 
-  std::shared_ptr<SaveableParams<ArrayType>> GetOpSaveableParams()
+  std::shared_ptr<SaveableParams> GetOpSaveableParams()
   {
-    TrainableSaveableParams<ArrayType> tp{};
-    tp.weights_   = output_;
+    SPType tp{};
     tp.DESCRIPTOR = DESCRIPTOR;
-    return std::make_shared<TrainableSaveableParams<ArrayType>>(tp);
+    return std::make_shared<SPType>(tp);
   }
 
   virtual void Forward(VecTensorType const &inputs, ArrayType &output)

@@ -51,8 +51,10 @@ protected:
 protected:
   SubGraph() = default;
 
+public:
+  std::vector<std::string> input_node_names_;
+
 private:
-  std::vector<std::string>          input_nodes_;
   std::shared_ptr<NodeInterface<T>> output_node_;
 };
 
@@ -66,10 +68,10 @@ private:
 template <typename T>
 void SubGraph<T>::Forward(VecTensorType const &inputs, ArrayType &output)
 {
-  assert(inputs.size() == this->input_nodes_.size());
+  assert(inputs.size() == this->input_node_names_.size());
   for (uint64_t i(0); i < inputs.size(); ++i)
   {
-    this->SetInput(input_nodes_[i], inputs.at(i));
+    this->SetInput(input_node_names_[i], inputs.at(i));
   }
   output = output_node_->Evaluate(this->is_training_);
 }
@@ -77,13 +79,13 @@ void SubGraph<T>::Forward(VecTensorType const &inputs, ArrayType &output)
 template <typename T>
 std::vector<T> SubGraph<T>::Backward(VecTensorType const &inputs, ArrayType const &error_signal)
 {
-  assert(inputs.size() == this->input_nodes_.size());
+  assert(inputs.size() == this->input_node_names_.size());
   FETCH_UNUSED(inputs);
   std::vector<std::pair<NodeInterface<T> *, ArrayType>> non_back_prop_err_signal =
       this->output_node_->BackPropagateSignal(error_signal);
   std::vector<ArrayType> back_prop_err_signal;
 
-  for (std::string const &s : input_nodes_)
+  for (std::string const &s : input_node_names_)
   {
     std::shared_ptr<NodeInterface<T>> node = this->nodes_[s];
     for (auto const &grad : non_back_prop_err_signal)
@@ -100,7 +102,7 @@ std::vector<T> SubGraph<T>::Backward(VecTensorType const &inputs, ArrayType cons
 template <typename T>
 void SubGraph<T>::AddInputNode(std::string const &node_name)
 {
-  input_nodes_.push_back(node_name);
+  input_node_names_.push_back(node_name);
 }
 
 template <typename T>

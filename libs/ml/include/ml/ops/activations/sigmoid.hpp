@@ -38,15 +38,21 @@ public:
   using DataType      = typename ArrayType::Type;
   using SizeType      = typename ArrayType::SizeType;
   using VecTensorType = typename Ops<T>::VecTensorType;
+  using SPType        = SaveableParams;
 
-  Sigmoid()           = default;
+  Sigmoid() = default;
+
+  explicit Sigmoid(SPType const &sp)
+    : Ops<T>(sp)
+  {}
+
   ~Sigmoid() override = default;
 
-  std::shared_ptr<SaveableParams<ArrayType>> GetOpSaveableParams()
+  std::shared_ptr<SaveableParams> GetOpSaveableParams()
   {
-    SaveableParams<ArrayType> sp{};
+    SPType sp{};
     sp.DESCRIPTOR = DESCRIPTOR;
-    return std::make_shared<SaveableParams<ArrayType>>(sp);
+    return std::make_shared<SPType>(sp);
   }
 
   void Forward(VecTensorType const &inputs, ArrayType &output) override

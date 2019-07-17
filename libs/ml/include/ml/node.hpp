@@ -46,6 +46,7 @@ public:
       ArrayType const &error_signal)                                          = 0;
   virtual void                            ResetCache(bool input_size_changed) = 0;
   virtual std::vector<NodePtrType> const &GetOutputs() const                  = 0;
+  virtual std::shared_ptr<SaveableParams> GetNodeSaveableParams()             = 0;
 };
 
 template <class T, class O>
@@ -70,15 +71,9 @@ public:
     , cached_output_status_(CachedOutputState::CHANGED_SIZE)
   {}
 
-  explicit Node(std::string name, fetch::ml::SaveableParams<ArrayType> const &sp)
-    : O(sp)
-    , name_(std::move(name))
-    , cached_output_status_(CachedOutputState::CHANGED_SIZE)
-  {}
-
-  std::shared_ptr<SaveableParams<ArrayType>> GetSaveableParams()
+  std::shared_ptr<SaveableParams> GetNodeSaveableParams()
   {
-    std::shared_ptr<SaveableParams<ArrayType>> sp = this->GetOpSaveableParams();
+    std::shared_ptr<SaveableParams> sp = this->GetOpSaveableParams();
     return sp;
   }
 

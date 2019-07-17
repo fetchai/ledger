@@ -37,18 +37,25 @@ public:
   using DataType      = typename ArrayType::Type;
   using SizeType      = typename ArrayType::SizeType;
   using VecTensorType = typename Ops<T>::VecTensorType;
+  using SPType        = SoftmaxSaveableParams;
 
   explicit Softmax(SizeType axis = 1)
     : axis_(axis)
   {}
+
+  explicit Softmax(SPType const &sp)
+  {
+    axis_ = sp.axis;
+  }
+
   ~Softmax() override = default;
 
-
-  std::shared_ptr<SaveableParams<ArrayType>> GetOpSaveableParams()
+  std::shared_ptr<SaveableParams> GetOpSaveableParams()
   {
-    SaveableParams<ArrayType> sp{};
-    sp.DESCRIPTOR = DESCRIPTOR;
-    return std::make_shared<SaveableParams<ArrayType>>(sp);
+    auto sp_ptr        = std::make_shared<SPType>();
+    sp_ptr->DESCRIPTOR = DESCRIPTOR;
+    sp_ptr->axis       = axis_;
+    return sp_ptr;
   }
 
   void Forward(VecTensorType const &inputs, ArrayType &output) override

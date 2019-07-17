@@ -46,6 +46,7 @@ public:
   using SizeType     = typename ArrayType::SizeType;
   using DataType     = typename ArrayType::Type;
   using WeightsInit  = fetch::ml::ops::WeightsInitialisation;
+  using SPType       = SaveableParams;
 
   FullyConnected(SizeType in, SizeType out,
                  details::ActivationType activation_type = details::ActivationType::NOTHING,
@@ -74,8 +75,7 @@ public:
 
     this->AddInputNode(input);
     this->SetOutputNode(output);
-    this->SetRegularisation(fetch::ml::details::CreateRegulariser<T>(regulariser),
-                            regularisation_rate);
+    this->SetRegularisation(regulariser, regularisation_rate);
 
     ArrayType weights_data(std::vector<SizeType>({out, in}));
     this->Initialise(weights_data, init_mode);
@@ -85,7 +85,7 @@ public:
     this->SetInput(bias, bias_data);
   }
 
-  std::shared_ptr<SaveableParams<ArrayType>> GetOpSaveableParams()
+  std::shared_ptr<SaveableParams> GetOpSaveableParams()
   {
     throw std::runtime_error("This shouldn't be called!");
   }

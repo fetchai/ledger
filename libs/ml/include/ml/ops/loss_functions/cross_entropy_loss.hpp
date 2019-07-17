@@ -39,15 +39,21 @@ public:
   using DataType      = typename ArrayType::Type;
   using SizeType      = typename ArrayType::SizeType;
   using VecTensorType = typename Ops<T>::VecTensorType;
+  using SPType        = SaveableParams;
 
-  CrossEntropyLoss()          = default;
+  CrossEntropyLoss() = default;
+
+  explicit CrossEntropyLoss(SPType const &sp)
+    : Ops<T>(sp)
+  {}
+
   virtual ~CrossEntropyLoss() = default;
 
-  std::shared_ptr<SaveableParams<ArrayType>> GetOpSaveableParams()
+  std::shared_ptr<SaveableParams> GetOpSaveableParams()
   {
-    SaveableParams<ArrayType> sp{};
+    SaveableParams sp{};
     sp.DESCRIPTOR = DESCRIPTOR;
-    return std::make_shared<SaveableParams<ArrayType>>(sp);
+    return std::make_shared<SaveableParams>(sp);
   }
 
   void Forward(VecTensorType const &inputs, ArrayType &output) override

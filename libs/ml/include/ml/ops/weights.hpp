@@ -19,6 +19,7 @@
 
 #include "core/random/lfg.hpp"
 #include "ml/ops/placeholder.hpp"
+#include "ml/regularisers/regularisation.hpp"
 #include "ml/regularisers/regulariser.hpp"
 #include "ml/state_dict.hpp"
 
@@ -64,15 +65,19 @@ public:
   virtual void             ApplyGradient(ArrayType const &grad)                      = 0;
   virtual void             ApplyRegularisation()                                     = 0;
 
-  void SetRegularisation(RegPtrType regulariser, DataType regularisation_rate = DataType{0.0})
+  void SetRegularisation(fetch::ml::details::RegularisationType type,
+                         DataType                               regularisation_rate = DataType{0.0})
   {
+    RegPtrType regulariser     = fetch::ml::details::CreateRegulariser<ArrayType>(type);
+    this->regularisation_type  = type;
     this->regulariser_         = regulariser;
     this->regularisation_rate_ = regularisation_rate;
   }
 
 protected:
-  RegPtrType regulariser_;
-  DataType   regularisation_rate_ = static_cast<DataType>(0);
+  fetch::ml::details::RegularisationType regularisation_type{};
+  RegPtrType                             regulariser_;
+  DataType                               regularisation_rate_ = static_cast<DataType>(0);
 };
 
 template <class T>
@@ -84,20 +89,30 @@ public:
   using DataType      = typename ArrayType::Type;
   using ArrayPtrType  = std::shared_ptr<ArrayType>;
   using VecTensorType = typename PlaceHolder<T>::VecTensorType;
+  using SPType        = WeightsSaveableParams<ArrayType>;
 
 protected:
   ArrayPtrType gradient_accumulation_;
 
 public:
-  Weights()          = default;
+  Weights() = default;
+
+  explicit Weights(SPType const &sp)
+  {
+    this->output_ = sp.output;
+    this->SetRegularisation(sp.regularisation_type, sp.regularisation_rate);
+  }
+
   virtual ~Weights() = default;
 
-  std::shared_ptr<SaveableParams<ArrayType>> GetOpSaveableParams()
+  std::shared_ptr<SaveableParams> GetOpSaveableParams()
   {
-    TrainableSaveableParams<ArrayType> tp{};
-    tp.weights_   = this->output_;
-    tp.DESCRIPTOR = DESCRIPTOR;
-    return std::make_shared<TrainableSaveableParams<ArrayType>>(tp);
+    SPType tp{};
+    tp.output              = this->output_;
+    tp.DESCRIPTOR          = DESCRIPTOR;
+    tp.regularisation_type = this->regularisation_type;
+    tp.regularisation_rate = this->regularisation_rate_;
+    return std::make_shared<SPType>(tp);
   }
 
   virtual std::vector<ArrayType> Backward(VecTensorType const &inputs,

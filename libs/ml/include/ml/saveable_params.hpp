@@ -17,7 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include "math/base_types.hpp"
 #include "ml/ops/ops.hpp"
+#include "ml/regularisers/regularisation.hpp"
 
 namespace fetch {
 namespace ml {
@@ -25,27 +27,48 @@ namespace ml {
 /* Generic container for all the saveable params of an op.
  * Some ops will have to declare subclasses (substructs?) of this.
  */
-template <class T>
 struct SaveableParams
 {
+  // needs to have at least one virtual funciton to be a polymorphic class
+  virtual ~SaveableParams() = default;
   std::string DESCRIPTOR;  // description of op
 };
 
-template <class T>
-struct TrainableSaveableParams : SaveableParams<T>
+template <class ArrayType>
+struct WeightsSaveableParams : public SaveableParams
 {
-  using ArrayType    = T;
-  using ArrayPtrType = std::shared_ptr<ArrayType>;
+  std::shared_ptr<ArrayType>             output;
+  fetch::ml::details::RegularisationType regularisation_type{};
+  typename ArrayType::Type               regularisation_rate;
+};
 
-  ArrayPtrType weights_;
+struct DropoutSaveableParams : public SaveableParams
+{
+  fetch::math::SizeType random_seed;
+  double                probability;
+};
+
+struct LeakyReluSaveableParams : public SaveableParams
+{
+  double a;
+};
+
+struct SoftmaxSaveableParams : public SaveableParams
+{
+  fetch::math::SizeType axis;
+};
+
+struct TransposeSaveableParams : public SaveableParams
+{
+  std::vector<fetch::math::SizeType> transpose_vector;
 };
 
 template <class T>
 struct GraphSaveableParams
 {
-  std::vector<std::pair<std::string, std::vector<std::string>>>
-                                                     connections;  // unique node name to list of inputs
-  std::unordered_map<std::string, SaveableParams<T>> nodes;
+  // unique node name to list of inputs
+  std::vector<std::pair<std::string, std::vector<std::string>>>    connections;
+  std::unordered_map<std::string, std::shared_ptr<SaveableParams>> nodes;
 };
 }  // namespace ml
 }  // namespace fetch
