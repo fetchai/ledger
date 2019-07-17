@@ -18,17 +18,16 @@
 //------------------------------------------------------------------------------
 
 #ifdef __AVX__
-#include "vectorise/info.hpp"
-#include "vectorise/info_avx.hpp"
 #include "vectorise/register.hpp"
+#include "vectorise/arch/avx/info.hpp"
+#include "vectorise/arch/avx/info_avx.hpp"
+#include "vectorise/arch/sse/sse.hpp"
 
 #include <cstddef>
 #include <cstdint>
 #include <emmintrin.h>
 #include <immintrin.h>
 #include <smmintrin.h>
-
-#include "vectorise/sse.hpp"
 
 namespace fetch {
 namespace vectorize {
