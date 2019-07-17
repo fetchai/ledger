@@ -26,24 +26,19 @@
 
 #include <memory>
 
-namespace fetch {
-namespace ledger {
+namespace {
 
-std::ostream &operator<<(std::ostream &s, TransactionStatus const &status)
-{
-  s << ToString(status);
-  return s;
-}
-
-}  // namespace ledger
-}  // namespace fetch
-
+using namespace fetch;
 using namespace fetch::ledger;
+
+using fetch::byte_array::ByteArray;
+using fetch::random::LinearCongruentialGenerator;
+using StatusCachePtr = TransactionStatusCache::ShrdPtr;
+using RngWord        = LinearCongruentialGenerator::RandomType;
+
 using testing::Return;
 using testing::HasSubstr;
 using testing::Invoke;
-
-namespace {
 
 struct ClockSteadyClockMock;
 
@@ -52,24 +47,12 @@ struct ClockMock : public std::chrono::steady_clock
   static std::shared_ptr<ClockSteadyClockMock> mock;
   static time_point                            now() noexcept;
 };
+std::shared_ptr<ClockSteadyClockMock> ClockMock::mock;
 
 struct ClockSteadyClockMock
 {
-  // ClockSteadyClockMock()
-  //{
-  //  ON_CALL(*this, now()).WillByDefault(Invoke(this, &ClockSteadyClockMock::now_fake));
-  //}
-
   MOCK_CONST_METHOD0(now, ClockMock::time_point());
-
-  // private:
-  //  ClockMock::time_point now_fake() const
-  //  {
-  //    return ClockMock::time_point::min();
-  //  }
 };
-
-std::shared_ptr<ClockSteadyClockMock> ClockMock::mock;
 
 ClockMock::time_point ClockMock::now() noexcept
 {
@@ -77,17 +60,8 @@ ClockMock::time_point ClockMock::now() noexcept
 }
 
 using TransactionStatusCacheForTest = TransactionStatusCacheImpl<ClockMock>;
-using fetch::byte_array::ByteArray;
-using fetch::ledger::TransactionStatusCache;
-using fetch::random::LinearCongruentialGenerator;
-using fetch::ledger::TransactionStatus;
-using fetch::ledger::ToString;
-using fetch::ledger::Digest;
-
-using StatusCachePtr = TransactionStatusCache::ShrdPtr;
-using Clock          = TransactionStatusCacheForTest::Clock;
-using Timepoint      = TransactionStatusCacheForTest::Timepoint;
-using RngWord        = LinearCongruentialGenerator::RandomType;
+using Clock                         = TransactionStatusCacheForTest::Clock;
+using Timepoint                     = TransactionStatusCacheForTest::Timepoint;
 
 class TransactionStatusCacheTests : public ::testing::Test
 {
