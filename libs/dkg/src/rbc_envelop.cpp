@@ -47,7 +47,8 @@ std::shared_ptr<RBCMessage> RBCEnvelop::Message() const
     return std::make_shared<RAnswer>(serialiser);
   default:
     FETCH_LOG_ERROR(LOGGING_NAME, "Can not process payload");
-    assert(false);  // For compiler warnings
+    assert(false);
+    return nullptr;  // For compiler warnings
   }
 }
 

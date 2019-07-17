@@ -53,6 +53,7 @@ std::string RBC::MsgTypeToString(MsgType msg_type)
     return "r_answer";
   default:
     assert(false);
+    return "";
   }
 }
 
