@@ -113,15 +113,15 @@ private:
     std::unordered_map<TypeIndex, TypePtr> map;
   };
 
-  struct FunctionSet
+  struct StringSet
   {
-    void Add(std::string const &unique_id)
+    void Add(std::string const &s)
     {
-      set.insert(unique_id);
+      set.insert(s);
     }
-    bool Find(std::string const &unique_id)
+    bool Find(std::string const &s)
     {
-      auto it = set.find(unique_id);
+      auto it = set.find(s);
       return it != set.end();
     }
     std::unordered_set<std::string> set;
@@ -129,11 +129,12 @@ private:
 
   OperatorMap       operator_map_;
   TypeMap           type_map_;
+  StringSet         type_set_;
   TypeInfoArray     type_info_array_;
   TypeInfoMap       type_info_map_;
   RegisteredTypes   registered_types_;
   FunctionInfoArray function_info_array_;
-  FunctionSet       function_set_;
+  StringSet         function_set_;
 
   SymbolTablePtr symbols_;
   TypePtr        null_type_;
@@ -226,6 +227,7 @@ private:
   void        SetTypeExpression(ExpressionNodePtr const &node, TypePtr const &type);
   void        SetFunctionGroupExpression(ExpressionNodePtr const &node, FunctionGroupPtr const &fg,
                                          TypePtr const &fg_owner, bool function_invoked_on_instance);
+  bool        CheckType(std::string const &type_name, TypeIndex type_index);
   void        CreatePrimitiveType(std::string const &type_name, TypeIndex type_index,
                                   bool add_to_symbol_table, TypeId type_id, TypePtr &type);
   void        CreateMetaType(std::string const &type_name, TypeIndex type_index, TypeId type_id,
