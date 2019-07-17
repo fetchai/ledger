@@ -58,7 +58,8 @@ public:
                           fetch::vm::Ptr<fetch::vm::String>, fetch::vm::Ptr<fetch::vm::String>,
                           fetch::vm::Ptr<fetch::vm::String>>()
         .CreateMemberFunction("run", &fetch::vm_modules::ml::VMAdamOptimiser::RunData)
-        .CreateMemberFunction("run", &fetch::vm_modules::ml::VMAdamOptimiser::RunLoader);
+        .CreateMemberFunction("run", &fetch::vm_modules::ml::VMAdamOptimiser::RunLoader)
+        .CreateMemberFunction("run", &fetch::vm_modules::ml::VMAdamOptimiser::RunLoaderNoSubset);
   }
 
   static fetch::vm::Ptr<VMAdamOptimiser> Constructor(
@@ -83,6 +84,12 @@ public:
                      uint64_t batch_size, uint64_t subset_size)
   {
     return optimiser_.Run(*(loader->loader_), batch_size, subset_size);
+  }
+
+  DataType RunLoaderNoSubset(fetch::vm::Ptr<fetch::vm_modules::ml::VMDataLoader> const &loader,
+                             uint64_t                                                   batch_size)
+  {
+    return optimiser_.Run(*(loader->loader_), batch_size);
   }
 
 private:

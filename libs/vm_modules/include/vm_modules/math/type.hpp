@@ -24,6 +24,7 @@ namespace vm_modules {
 namespace math {
 
 using DataType = fetch::fixed_point::fp64_t;
+// using DataType = float;
 
 }  // namespace math
 }  // namespace vm_modules

@@ -86,11 +86,11 @@ public:
         name->str, {input_name->str}, std::size_t(in), std::size_t(out));
   }
 
-  void AddConv1D(VMPtrString const &name, VMPtrString const &input_name, int out_channels,
+  void AddConv1D(VMPtrString const &name, VMPtrString const &input_name, int filters,
                  int in_channels, int kernel_size, int stride_size)
   {
     graph_.AddNode<fetch::ml::layers::Convolution1D<MathTensorType>>(
-        name->str, {input_name->str}, static_cast<SizeType>(out_channels),
+        name->str, {input_name->str}, static_cast<SizeType>(filters),
         static_cast<SizeType>(in_channels), static_cast<SizeType>(kernel_size),
         static_cast<SizeType>(stride_size));
   }

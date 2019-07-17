@@ -1,3 +1,22 @@
+#pragma once
+//------------------------------------------------------------------------------
+//
+//   Copyright 2018-2019 Fetch.AI Limited
+//
+//   Licensed under the Apache License, Version 2.0 (the "License");
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+//
+//------------------------------------------------------------------------------
+
 //#pragma once
 ////------------------------------------------------------------------------------
 ////
@@ -19,12 +38,12 @@
 //
 //#include "ml/dataloaders/dataloader.hpp"
 //
-//namespace fetch {
-//namespace ml {
-//namespace dataloaders {
+// namespace fetch {
+// namespace ml {
+// namespace dataloaders {
 //
-//template <typename LabelType, typename InputType>
-//class TensorDataLoader : public DataLoader<LabelType, InputType>
+// template <typename LabelType, typename InputType>
+// class TensorDataLoader : public DataLoader<LabelType, InputType>
 //{
 //  using TensorType = InputType;
 //  using DataType   = typename TensorType::Type;
@@ -33,7 +52,7 @@
 //  using ReturnType   = std::pair<LabelType, std::vector<TensorType>>;
 //  using IteratorType = typename TensorType::IteratorType;
 //
-//public:
+// public:
 //  TensorDataLoader(bool random_mode = false)
 //    : DataLoader<LabelType, TensorType>(random_mode){};
 //  virtual ~TensorDataLoader() = default;
@@ -45,7 +64,7 @@
 //  virtual bool     IsDone() const;
 //  virtual void     Reset();
 //
-//protected:
+// protected:
 //  SizeType data_cursor_;
 //  SizeType label_cursor_;
 //
@@ -53,9 +72,9 @@
 //  TensorType labels_;
 //};
 //
-//template <typename LabelType, typename InputType>
-//typename TensorDataLoader<LabelType, InputType>::ReturnType
-//TensorDataLoader<LabelType, InputType>::GetNext()
+// template <typename LabelType, typename InputType>
+// typename TensorDataLoader<LabelType, InputType>::ReturnType
+// TensorDataLoader<LabelType, InputType>::GetNext()
 //{
 //  if (this->random_mode_)
 //  {
@@ -63,15 +82,13 @@
 //  }
 //  else
 //  {
-//    ReturnType ret(labels_.Slice(label_cursor_, 1).Copy(), {data_.Slice(label_cursor_, 1).Copy()});
-//    data_cursor_++;
-//    label_cursor_++;
-//    return ret;
+//    ReturnType ret(labels_.Slice(label_cursor_, 1).Copy(), {data_.Slice(label_cursor_,
+//    1).Copy()}); data_cursor_++; label_cursor_++; return ret;
 //  }
 //}
 //
-//template <typename LabelType, typename InputType>
-//bool TensorDataLoader<LabelType, InputType>::AddData(TensorType const &data,
+// template <typename LabelType, typename InputType>
+// bool TensorDataLoader<LabelType, InputType>::AddData(TensorType const &data,
 //                                                     TensorType const &labels)
 //{
 //  assert(data.shape().size() == 2);
@@ -84,21 +101,21 @@
 //  return true;
 //}
 //
-//template <typename LabelType, typename InputType>
-//typename TensorDataLoader<LabelType, InputType>::SizeType
-//TensorDataLoader<LabelType, InputType>::Size() const
+// template <typename LabelType, typename InputType>
+// typename TensorDataLoader<LabelType, InputType>::SizeType
+// TensorDataLoader<LabelType, InputType>::Size() const
 //{
 //  return data_.size();
 //}
 //
-//template <typename LabelType, typename InputType>
-//bool TensorDataLoader<LabelType, InputType>::IsDone() const
+// template <typename LabelType, typename InputType>
+// bool TensorDataLoader<LabelType, InputType>::IsDone() const
 //{
 //  return (data_cursor_ >= data_.shape()[0]);
 //}
 //
-//template <typename LabelType, typename InputType>
-//void TensorDataLoader<LabelType, InputType>::Reset()
+// template <typename LabelType, typename InputType>
+// void TensorDataLoader<LabelType, InputType>::Reset()
 //{
 //  data_cursor_  = 0;
 //  label_cursor_ = 0;
