@@ -530,7 +530,9 @@ def run_test(build_directory, yaml_file, constellation_exe):
             for test in all_yaml:
                 # Create a new test instance
                 description = extract(test, 'test_description')
-                output("\nTest: {}".format(description))
+                output("\n=================================================")
+                output("Test: {}".format(description))
+                output("=================================================\n")
 
                 if "DISABLED" in description:
                     output("Skipping disabled test")

@@ -260,10 +260,10 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
 {
 
   // print the start up log banner
-  FETCH_LOG_INFO(LOGGING_NAME, "Constellation :: ", cfg_.interface_address, " E ",
-                 cfg_.num_executors, " S ", cfg_.num_lanes(), "x", cfg_.num_slices);
-  FETCH_LOG_INFO(LOGGING_NAME, "              :: ", ToBase64(p2p_.identity().identifier()));
+  FETCH_LOG_INFO(LOGGING_NAME, "Constellation :: ", cfg_.num_lanes(), "x", cfg_.num_slices, "x",
+                 cfg_.num_executors);
   FETCH_LOG_INFO(LOGGING_NAME, "              :: ", Address{p2p_.identity()}.display());
+  FETCH_LOG_INFO(LOGGING_NAME, "              :: ", ToBase64(p2p_.identity().identifier()));
   FETCH_LOG_INFO(LOGGING_NAME, "");
 
   // Enable experimental features
@@ -467,7 +467,7 @@ void Constellation::Run(UriList const &initial_peers, core::WeakRunnable bootstr
       // client connections. By delaying these notify() calls to the point when the node believes
       // it has successfully synchronised this ensures that cleaner network start up
       //
-      reactor_.Attach(bootstrap_monitor);
+      reactor_.Attach(std::move(bootstrap_monitor));
       start_up_in_progress = false;
 
       FETCH_LOG_INFO(LOGGING_NAME, "Startup complete");

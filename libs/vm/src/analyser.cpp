@@ -55,11 +55,12 @@ void Analyser::Initialise()
                    {NodeKind::InplaceMultiply, Operator::InplaceMultiply},
                    {NodeKind::InplaceDivide, Operator::InplaceDivide}};
   type_map_            = TypeMap();
+  type_set_            = StringSet();
   type_info_array_     = TypeInfoArray(TypeIds::NumReserved);
   type_info_map_       = TypeInfoMap();
   registered_types_    = RegisteredTypes();
   function_info_array_ = FunctionInfoArray();
-  function_set_        = FunctionSet();
+  function_set_        = StringSet();
   symbols_             = CreateSymbolTable();
   CreatePrimitiveType("Null", TypeIndex(typeid(std::nullptr_t)), false, TypeIds::Null, null_type_);
   CreatePrimitiveType("Void", TypeIndex(typeid(void)), false, TypeIds::Void, void_type_);
@@ -161,11 +162,12 @@ void Analyser::UnInitialise()
   operator_map_ = OperatorMap();
   type_map_.Reset();
   type_map_            = TypeMap();
+  type_set_            = StringSet();
   type_info_array_     = TypeInfoArray();
   type_info_map_       = TypeInfoMap();
   registered_types_    = RegisteredTypes();
   function_info_array_ = FunctionInfoArray();
-  function_set_        = FunctionSet();
+  function_set_        = StringSet();
   if (symbols_)
   {
     symbols_->Reset();
@@ -2093,10 +2095,32 @@ void Analyser::SetFunctionGroupExpression(ExpressionNodePtr const &node, Functio
   node->function_invoked_on_instance = function_invoked_on_instance;
 }
 
+bool Analyser::CheckType(std::string const &type_name, TypeIndex type_index)
+{
+  TypePtr found_type = type_map_.Find(type_index);
+  if (found_type)
+  {
+    if (found_type->name != type_name)
+    {
+      throw std::runtime_error("type index " + std::string(type_index.name()) +
+                               " has already been registered with a different name");
+    }
+    // Already created
+    return true;
+  }
+  if (type_set_.Find(type_name))
+  {
+    throw std::runtime_error("type name '" + type_name + "' has already been registered");
+  }
+  type_set_.Add(type_name);
+  // Not already created
+  return false;
+}
+
 void Analyser::CreatePrimitiveType(std::string const &type_name, TypeIndex type_index,
                                    bool add_to_symbol_table, TypeId type_id, TypePtr &type)
 {
-  if (type_map_.Find(type_index))
+  if (CheckType(type_name, type_index))
   {
     // Already created
     return;
@@ -2114,7 +2138,7 @@ void Analyser::CreatePrimitiveType(std::string const &type_name, TypeIndex type_
 void Analyser::CreateMetaType(std::string const &type_name, TypeIndex type_index, TypeId type_id,
                               TypePtr &type)
 {
-  if (type_map_.Find(type_index))
+  if (CheckType(type_name, type_index))
   {
     // Already created
     return;
@@ -2128,7 +2152,7 @@ void Analyser::CreateMetaType(std::string const &type_name, TypeIndex type_index
 void Analyser::CreateClassType(std::string const &type_name, TypeIndex type_index, TypeId type_id,
                                TypePtr &type)
 {
-  if (type_map_.Find(type_index))
+  if (CheckType(type_name, type_index))
   {
     // Already created
     return;
@@ -2144,7 +2168,7 @@ void Analyser::CreateClassType(std::string const &type_name, TypeIndex type_inde
 void Analyser::CreateTemplateType(std::string const &type_name, TypeIndex type_index,
                                   TypePtrArray const &allowed_types, TypeId type_id, TypePtr &type)
 {
-  if (type_map_.Find(type_index))
+  if (CheckType(type_name, type_index))
   {
     // Already created
     return;
@@ -2162,12 +2186,12 @@ void Analyser::CreateInstantiationType(TypeIndex type_index, TypePtr const &temp
                                        TypePtrArray const &parameter_types, TypeId type_id,
                                        TypePtr &type)
 {
-  if (type_map_.Find(type_index))
+  type = InternalCreateInstantiationType(TypeKind::Instantiation, template_type, parameter_types);
+  if (CheckType(type->name, type_index))
   {
     // Already created
     return;
   }
-  type = InternalCreateInstantiationType(TypeKind::Instantiation, template_type, parameter_types);
   TypeIdArray parameter_type_ids;
   for (auto const &parameter_type : parameter_types)
   {
@@ -2183,7 +2207,7 @@ void Analyser::CreateInstantiationType(TypeIndex type_index, TypePtr const &temp
 void Analyser::CreateGroupType(std::string const &type_name, TypeIndex type_index,
                                TypePtrArray const &allowed_types, TypeId type_id, TypePtr &type)
 {
-  if (type_map_.Find(type_index))
+  if (CheckType(type_name, type_index))
   {
     // Already created
     return;
