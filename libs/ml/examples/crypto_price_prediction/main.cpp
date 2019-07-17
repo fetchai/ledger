@@ -19,9 +19,6 @@
 #include "math/metrics/mean_absolute_error.hpp"
 #include "math/normalize_array.hpp"
 #include "math/tensor.hpp"
-
-#include "vectorise/fixed_point/fixed_point.hpp"
-
 #include "ml/dataloaders/ReadCSV.hpp"
 #include "ml/dataloaders/tensor_dataloader.hpp"
 #include "ml/graph.hpp"
@@ -29,8 +26,10 @@
 #include "ml/ops/activation.hpp"
 #include "ml/ops/loss_functions/mean_square_error_loss.hpp"
 #include "ml/optimisation/adam_optimiser.hpp"
+#include "vectorise/fixed_point/fixed_point.hpp"
 
 #include <iostream>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -39,12 +38,12 @@ using namespace fetch::ml::layers;
 
 using DataType   = fetch::fixed_point::fp64_t;
 using TensorType = fetch::math::Tensor<DataType>;
-using SizeType   = typename TensorType::SizeType;
+using SizeType   = TensorType::SizeType;
 
-using GraphType        = typename fetch::ml::Graph<TensorType>;
-using CostFunctionType = typename fetch::ml::ops::MeanSquareErrorLoss<TensorType>;
-using OptimiserType    = typename fetch::ml::optimisers::AdamOptimiser<TensorType>;
-using DataLoaderType   = typename fetch::ml::dataloaders::TensorDataLoader<TensorType, TensorType>;
+using GraphType        = fetch::ml::Graph<TensorType>;
+using CostFunctionType = fetch::ml::ops::MeanSquareErrorLoss<TensorType>;
+using OptimiserType    = fetch::ml::optimisers::AdamOptimiser<TensorType>;
+using DataLoaderType   = fetch::ml::dataloaders::TensorDataLoader<TensorType, TensorType>;
 
 struct TrainingParams
 {

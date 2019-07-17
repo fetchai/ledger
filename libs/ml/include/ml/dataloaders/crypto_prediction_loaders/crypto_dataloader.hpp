@@ -19,6 +19,11 @@
 
 #include "ml/dataloaders/dataloader.hpp"
 
+#include <cassert>
+#include <stdexcept>
+#include <utility>
+#include <vector>
+
 namespace fetch {
 namespace ml {
 namespace dataloaders {
@@ -35,15 +40,16 @@ class TensorDataLoader : public DataLoader<LabelType, InputType>
 
 public:
   TensorDataLoader(bool random_mode = false)
-    : DataLoader<LabelType, TensorType>(random_mode){};
-  virtual ~TensorDataLoader() = default;
+    : DataLoader<LabelType, TensorType>(random_mode)
+  {}
+  ~TensorDataLoader() override = default;
 
-  virtual ReturnType GetNext();
-  virtual bool       AddData(TensorType const &data, TensorType const &labels);
+  ReturnType   GetNext() override;
+  virtual bool AddData(TensorType const &data, TensorType const &labels);
 
-  virtual SizeType Size() const;
-  virtual bool     IsDone() const;
-  virtual void     Reset();
+  SizeType Size() const override;
+  bool     IsDone() const override;
+  void     Reset() override;
 
 protected:
   SizeType data_cursor_;

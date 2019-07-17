@@ -31,7 +31,7 @@ public:
   // Construction / Destruction
   SettingBase(SettingBase const &) = delete;
   SettingBase(SettingBase &&)      = delete;
-  ~SettingBase()                   = default;
+  virtual ~SettingBase()           = default;
 
   /// @name Accessors
   /// @{
@@ -56,28 +56,6 @@ private:
   std::string name_{};
   std::string description_{};
 };
-
-inline std::string const &SettingBase::name() const
-{
-  return name_;
-}
-
-inline std::string const &SettingBase::description() const
-{
-  return description_;
-}
-
-inline std::istream &operator>>(std::istream &stream, SettingBase &setting)
-{
-  setting.FromStream(stream);
-  return stream;
-}
-
-inline std::ostream &operator<<(std::ostream &stream, SettingBase const &setting)
-{
-  setting.ToStream(stream);
-  return stream;
-}
 
 }  // namespace settings
 }  // namespace fetch
