@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "http/view_parameters.hpp"
 #include "http/validators.hpp"
+#include "http/view_parameters.hpp"
 
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/const_byte_array.hpp"
@@ -62,7 +62,7 @@ public:
 
     // TODO(issue 35): No support for continued paths  atm.
     Route ret;
-    ret.path_ = "";
+    ret.path_     = "";
     ret.original_ = path;
 
     std::size_t last = 0;
@@ -90,7 +90,7 @@ public:
 
         ret.AddMatch(match);
         auto param_name = ret.AddParameter(param_pattern);
-        ret.path_.Append(match,"{",param_name, "}");
+        ret.path_.Append(match, "{", param_name, "}");
         ret.path_parameters_.push_back(param_name);
 
         last = j;
@@ -102,7 +102,7 @@ public:
     {
       byte_array::ByteArray match = path.SubArray(last, i - last);
       ret.AddMatch(match);
-      ret.path_.Append(match);  
+      ret.path_.Append(match);
     }
 
     return ret;
@@ -113,29 +113,29 @@ public:
     validators_[parameter] = std::move(validator);
   }
 
-  byte_array::ConstByteArray const& path() const
+  byte_array::ConstByteArray const &path() const
   {
     return path_;
   }
 
-  std::vector< byte_array::ConstByteArray > path_parameters() const 
+  std::vector<byte_array::ConstByteArray> path_parameters() const
   {
     return path_parameters_;
   }
 
-  bool HasParameterDetails(byte_array::ConstByteArray const& name) const 
+  bool HasParameterDetails(byte_array::ConstByteArray const &name) const
   {
-    auto it = validators_.find(name);    
+    auto it = validators_.find(name);
     return it != validators_.end();
   }
 
-  variant::Variant GetSchema(byte_array::ConstByteArray const& name) const 
+  variant::Variant GetSchema(byte_array::ConstByteArray const &name) const
   {
     auto it = validators_.find(name);
     return it->second.schema;
   }
 
-  byte_array::ConstByteArray GetDescription(byte_array::ConstByteArray const& name) const 
+  byte_array::ConstByteArray GetDescription(byte_array::ConstByteArray const &name) const
   {
     auto it = validators_.find(name);
     return it->second.description;
@@ -205,11 +205,11 @@ private:
     return var;
   }
 
-  byte_array::ByteArray             original_;
-  byte_array::ByteArray             path_;
-  std::vector<match_function_type>  match_;
-  std::vector< byte_array::ConstByteArray >         path_parameters_;
-  std::unordered_map<byte_array::ConstByteArray, validators::Validator >     validators_;
+  byte_array::ByteArray                                                 original_;
+  byte_array::ByteArray                                                 path_;
+  std::vector<match_function_type>                                      match_;
+  std::vector<byte_array::ConstByteArray>                               path_parameters_;
+  std::unordered_map<byte_array::ConstByteArray, validators::Validator> validators_;
 };
 }  // namespace http
 }  // namespace fetch

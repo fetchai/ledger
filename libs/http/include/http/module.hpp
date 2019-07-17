@@ -21,18 +21,18 @@
 #include "http/method.hpp"
 #include "http/request.hpp"
 #include "http/response.hpp"
-#include "http/view_parameters.hpp"
 #include "http/validators.hpp"
+#include "http/view_parameters.hpp"
 
 #include <vector>
 namespace fetch {
 namespace http {
-  
+
 struct HTTPParameter
 {
   byte_array::ConstByteArray name;
-  std::string description;
-  validators::Validator validator;
+  std::string                description;
+  validators::Validator      validator;
 };
 
 class HTTPModule
@@ -44,7 +44,7 @@ public:
     YAML = 2
   };
 
-  HTTPModule() = default; 
+  HTTPModule() = default;
 
   HTTPModule(HTTPModule const &rhs) = delete;
   HTTPModule(HTTPModule &&rhs)      = delete;
@@ -55,15 +55,15 @@ public:
 
   struct UnmountedView
   {
-    byte_array::ConstByteArray  description;
-    Method                method;
-    byte_array::ByteArray route;
-    std::vector< HTTPParameter > parameters;
-    view_type             view;
+    byte_array::ConstByteArray description;
+    Method                     method;
+    byte_array::ByteArray      route;
+    std::vector<HTTPParameter> parameters;
+    view_type                  view;
   };
 
   void Post(byte_array::ByteArray const &path, byte_array::ByteArray const &description,
-          std::vector< HTTPParameter > const &parameters, view_type const &view)
+            std::vector<HTTPParameter> const &parameters, view_type const &view)
   {
     LOG_STACK_TRACE_POINT;
 
@@ -71,15 +71,15 @@ public:
   }
 
   void Post(byte_array::ByteArray const &path, byte_array::ByteArray const &description,
-           view_type const &view)
+            view_type const &view)
   {
     LOG_STACK_TRACE_POINT;
 
     AddView(Method::POST, path, description, {}, view);
-  }  
+  }
 
   void Get(byte_array::ByteArray const &path, byte_array::ByteArray const &description,
-          std::vector< HTTPParameter > const &parameters, view_type const &view)
+           std::vector<HTTPParameter> const &parameters, view_type const &view)
   {
     LOG_STACK_TRACE_POINT;
 
@@ -95,7 +95,7 @@ public:
   }
 
   void Put(byte_array::ByteArray const &path, byte_array::ByteArray const &description,
-          std::vector< HTTPParameter > const &parameters, view_type const &view)
+           std::vector<HTTPParameter> const &parameters, view_type const &view)
   {
     LOG_STACK_TRACE_POINT;
 
@@ -108,11 +108,10 @@ public:
     LOG_STACK_TRACE_POINT;
 
     AddView(Method::PUT, path, description, {}, view);
-  }  
-
+  }
 
   void Patch(byte_array::ByteArray const &path, byte_array::ByteArray const &description,
-          std::vector< HTTPParameter > const &parameters, view_type const &view)
+             std::vector<HTTPParameter> const &parameters, view_type const &view)
   {
     LOG_STACK_TRACE_POINT;
 
@@ -120,7 +119,7 @@ public:
   }
 
   void Patch(byte_array::ByteArray const &path, byte_array::ByteArray const &description,
-           view_type const &view)
+             view_type const &view)
   {
     LOG_STACK_TRACE_POINT;
 
@@ -128,7 +127,7 @@ public:
   }
 
   void Delete(byte_array::ByteArray const &path, byte_array::ByteArray const &description,
-          std::vector< HTTPParameter > const &parameters, view_type const &view)
+              std::vector<HTTPParameter> const &parameters, view_type const &view)
   {
     LOG_STACK_TRACE_POINT;
 
@@ -136,21 +135,21 @@ public:
   }
 
   void Delete(byte_array::ByteArray const &path, byte_array::ByteArray const &description,
-           view_type const &view)
+              view_type const &view)
   {
     LOG_STACK_TRACE_POINT;
 
     AddView(Method::DELETE, path, description, {}, view);
   }
 
-  void AddView(Method method, byte_array::ByteArray const &path, byte_array::ByteArray const &description, 
-               std::vector< HTTPParameter > const &parameters, view_type const &view)
+  void AddView(Method method, byte_array::ByteArray const &path,
+               byte_array::ByteArray const &     description,
+               std::vector<HTTPParameter> const &parameters, view_type const &view)
   {
     LOG_STACK_TRACE_POINT;
 
     views_.push_back({description, method, path, parameters, view});
   }
-
 
   std::vector<UnmountedView> const &views() const
   {
@@ -162,7 +161,7 @@ public:
 private:
   std::vector<UnmountedView> views_;
   fetch::variant::Variant    interface_description_;
-  std::string name_;
+  std::string                name_;
 };
 }  // namespace http
 }  // namespace fetch

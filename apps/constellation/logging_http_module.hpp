@@ -30,63 +30,61 @@ class LoggingHttpModule : public http::HTTPModule
 public:
   LoggingHttpModule()
   {
-    Get("/api/logging/",
-      "Returns a log of events.",
-      [](http::ViewParameters const &, http::HTTPRequest const &) {
-      Variant response{Variant::Object()};
-      for (auto const &element : GetLogLevelMap())
-      {
-        response[element.first] = ToString(element.second);
-      }
+    Get("/api/logging/", "Returns a log of events.",
+        [](http::ViewParameters const &, http::HTTPRequest const &) {
+          Variant response{Variant::Object()};
+          for (auto const &element : GetLogLevelMap())
+          {
+            response[element.first] = ToString(element.second);
+          }
 
-      return http::CreateJsonResponse(response);
-    });
+          return http::CreateJsonResponse(response);
+        });
 
-    Patch("/api/logging/", 
-      "TODO(tfr): yet to be written",
-      [](http::ViewParameters const &, http::HTTPRequest const &req) {
-      std::string error{};
-      try
-      {
-        json::JSONDocument doc{req.body()};
-        auto const &       root = doc.root();
-
-        if (root.IsObject())
-        {
-          root.IterateObject([&error](ConstByteArray const &k, Variant const &value) {
-            std::string const key{k};
-            LogLevel          level{LogLevel::INFO};
-
-            if (!(value.IsString() && Parse(value.As<ConstByteArray>(), level)))
+    Patch("/api/logging/", "TODO(tfr): yet to be written",
+          [](http::ViewParameters const &, http::HTTPRequest const &req) {
+            std::string error{};
+            try
             {
-              error = "Unable to parse log level entry";
-              return false;
+              json::JSONDocument doc{req.body()};
+              auto const &       root = doc.root();
+
+              if (root.IsObject())
+              {
+                root.IterateObject([&error](ConstByteArray const &k, Variant const &value) {
+                  std::string const key{k};
+                  LogLevel          level{LogLevel::INFO};
+
+                  if (!(value.IsString() && Parse(value.As<ConstByteArray>(), level)))
+                  {
+                    error = "Unable to parse log level entry";
+                    return false;
+                  }
+
+                  // update the logging level
+                  SetLogLevel(key.c_str(), level);
+
+                  return true;
+                });
+              }
+              else
+              {
+                error = "Root is not a object";
+              }
+            }
+            catch (json::JSONParseException const &)
+            {
+              error = "Unable to parse input request";
             }
 
-            // update the logging level
-            SetLogLevel(key.c_str(), level);
+            if (!error.empty())
+            {
+              std::string const text = R"({"error": ")" + error + "\"}";
+              return http::CreateJsonResponse(text, http::Status::CLIENT_ERROR_BAD_REQUEST);
+            }
 
-            return true;
+            return http::CreateJsonResponse("{}");
           });
-        }
-        else
-        {
-          error = "Root is not a object";
-        }
-      }
-      catch (json::JSONParseException const &)
-      {
-        error = "Unable to parse input request";
-      }
-
-      if (!error.empty())
-      {
-        std::string const text = R"({"error": ")" + error + "\"}";
-        return http::CreateJsonResponse(text, http::Status::CLIENT_ERROR_BAD_REQUEST);
-      }
-
-      return http::CreateJsonResponse("{}");
-    });
   }
 
 private:

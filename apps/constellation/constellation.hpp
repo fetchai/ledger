@@ -113,6 +113,7 @@ public:
   void SignalStop();
 
   void DumpOpenAPI(std::ostream &stream);
+
 protected:
   void OnBlock(ledger::Block const &block) override;
 
@@ -210,9 +211,10 @@ private:
 
   /// @name HTTP Server
   /// @{
-  std::shared_ptr< OpenAPIHttpModule > http_open_api_module_; //< HTTP module that returns the API definition
-  HttpServer  http_;          ///< The HTTP server
-  HttpModules http_modules_;  ///< The set of modules currently configured
+  std::shared_ptr<OpenAPIHttpModule>
+              http_open_api_module_;  //< HTTP module that returns the API definition
+  HttpServer  http_;                  ///< The HTTP server
+  HttpModules http_modules_;          ///< The set of modules currently configured
   /// @}
 };
 

@@ -731,9 +731,9 @@ int main(int argc, char **argv)
         std::make_unique<fetch::Constellation>(std::move(p2p_key), std::move(args.cfg));
 
     /*
-    // TODO: Placeholder section for dumping 
+    // TODO: Placeholder section for dumping
     // to a file.
-    if(true)  
+    if(true)
     {
       constellation->DumpOpenAPI(std::cout);
       return EXIT_SUCCESS;

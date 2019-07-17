@@ -31,70 +31,67 @@ class OpenAPIHttpModule : public http::HTTPModule
 public:
   OpenAPIHttpModule()
   {
-    Get("/api/definitions",
-      "Returns the API definition.",
-      [this](http::ViewParameters const &, http::HTTPRequest const &) {
+    Get("/api/definitions", "Returns the API definition.",
+        [this](http::ViewParameters const &, http::HTTPRequest const &) {
+          std::lock_guard<std::mutex> lock(server_lock_);
 
-      std::lock_guard< std::mutex > lock(server_lock_);
-
-      Variant response{Variant::Object()};
-      if(server_ == nullptr)
-      {
-        return http::CreateJsonResponse(response);
-      }
-
-      Variant paths{Variant::Object()};
-      for(auto const &view: server_->views_unsafe())
-      {
-
-        std::string method = ToString(view.method);
-        std::transform(method.begin(), method.end(), method.begin(), 
-                   [](unsigned char c){ return std::tolower(c); });
-
-        if(!paths.Has(view.route.path()))
-        {
-          paths[view.route.path()] = Variant::Object();
-        }
-        Variant &path = paths[view.route.path()];
-        Variant details = Variant::Object();
-
-        auto params = view.route.path_parameters();
-        Variant parameters = Variant::Array( params.size() );
-
-        uint64_t i = 0;
-        for(auto &param: params)
-        {
-          Variant x = Variant::Object();
-
-          x["in"]   = "path";
-          x["name"] = param;
-
-          if(view.route.HasParameterDetails(param))
+          Variant response{Variant::Object()};
+          if (server_ == nullptr)
           {
-            x["description"] = view.route.GetDescription(param);          
-            x["schema"]      = view.route.GetSchema(param);
+            return http::CreateJsonResponse(response);
           }
-          
-          parameters[i] = x;
-          ++i;
-        }
 
-        details["description"] = view.description;
-        details["parameters"]  = parameters;
+          Variant paths{Variant::Object()};
+          for (auto const &view : server_->views_unsafe())
+          {
 
-        path[method] = details;
-      }
-      
-      response["paths"] = paths;
+            std::string method = ToString(view.method);
+            std::transform(method.begin(), method.end(), method.begin(),
+                           [](unsigned char c) { return std::tolower(c); });
 
-      return http::CreateJsonResponse(response);
-    });
+            if (!paths.Has(view.route.path()))
+            {
+              paths[view.route.path()] = Variant::Object();
+            }
+            Variant &path    = paths[view.route.path()];
+            Variant  details = Variant::Object();
 
+            auto    params     = view.route.path_parameters();
+            Variant parameters = Variant::Array(params.size());
+
+            uint64_t i = 0;
+            for (auto &param : params)
+            {
+              Variant x = Variant::Object();
+
+              x["in"]   = "path";
+              x["name"] = param;
+
+              if (view.route.HasParameterDetails(param))
+              {
+                x["description"] = view.route.GetDescription(param);
+                x["schema"]      = view.route.GetSchema(param);
+              }
+
+              parameters[i] = x;
+              ++i;
+            }
+
+            details["description"] = view.description;
+            details["parameters"]  = parameters;
+
+            path[method] = details;
+          }
+
+          response["paths"] = paths;
+
+          return http::CreateJsonResponse(response);
+        });
   }
 
   void Reset(http::HTTPServer *srv)
   {
-    std::lock_guard< std::mutex > lock(server_lock_);    
+    std::lock_guard<std::mutex> lock(server_lock_);
     server_ = std::move(srv);
   }
 
@@ -103,7 +100,7 @@ private:
   using ConstByteArray = byte_array::ConstByteArray;
 
   http::HTTPServer *server_{nullptr};
-  std::mutex server_lock_;
+  std::mutex        server_lock_;
 };
 
 }  // namespace fetch

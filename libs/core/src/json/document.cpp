@@ -308,8 +308,8 @@ void JSONDocument::Parse(ConstByteArray const &document)
  */
 void JSONDocument::Tokenise(ConstByteArray const &document)
 {
-  int      line = 0;
-  uint64_t pos  = 0;
+  int      line     = 0;
+  uint64_t pos      = 0;
   uint64_t last_pos = 0;
 
   objects_ = 0;
@@ -327,8 +327,8 @@ void JSONDocument::Tokenise(ConstByteArray const &document)
   uint8_t const *ptr = reinterpret_cast<uint8_t const *>(document.pointer());
   while (pos < document.size())
   {
-    auto        words16 = reinterpret_cast<uint16_t const *>(ptr + pos);
-    auto        words   = reinterpret_cast<uint32_t const *>(ptr + pos);
+    auto           words16 = reinterpret_cast<uint16_t const *>(ptr + pos);
+    auto           words   = reinterpret_cast<uint32_t const *>(ptr + pos);
     uint8_t const &c       = *(ptr + pos);
 
     if ((document.size() - pos) > 2)
@@ -480,7 +480,10 @@ void JSONDocument::Tokenise(ConstByteArray const &document)
           uint8_t(byte_array::consumers::NumberConsumer<NUMBER_INT, NUMBER_FLOAT>(document, pos));
       if (type == uint8_t(-1))
       {
-        throw JSONParseException("Unable to parse integer on line "+ std::to_string(line) + ", char " + std::to_string(pos-last_pos) + ", char value: "+ std::to_string(uint64_t(document[pos])) + ", " + std::to_string(c) );
+        throw JSONParseException("Unable to parse integer on line " + std::to_string(line) +
+                                 ", char " + std::to_string(pos - last_pos) +
+                                 ", char value: " + std::to_string(uint64_t(document[pos])) + ", " +
+                                 std::to_string(c));
       }
       tokens_.push_back({oldpos, pos - oldpos, type});
       break;

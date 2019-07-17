@@ -16,10 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "http/server.hpp"
-#include "http/json_response.hpp"
-#include "http/validators.hpp"
 #include "core/json/document.hpp"
+#include "http/json_response.hpp"
+#include "http/server.hpp"
+#include "http/validators.hpp"
 
 #include <fstream>
 #include <iostream>
@@ -27,26 +27,25 @@
 using namespace fetch::http;
 using namespace fetch::json;
 
-struct ExampleModule: HTTPModule
+struct ExampleModule : HTTPModule
 {
 
   ExampleModule() /*:HTTPModule("ExampleModule", INTERFACE)*/
   {
-    Get(
-      "/pages",
-      "Gets the pages", 
-      [](fetch::http::ViewParameters const &/*params*/, fetch::http::HTTPRequest const &/*request*/) {
-      return fetch::http::CreateJsonResponse("{}", fetch::http::Status::CLIENT_ERROR_BAD_REQUEST);
-    });
-    
-    Get("/pages/(id=\\d+)/", 
-        "Get a specific page",
-        {
-          {"id", "The page id.", validators::StringValue() }
-        },
-    [](fetch::http::ViewParameters const &/*params*/, fetch::http::HTTPRequest const &/*request*/) {
-      return fetch::http::CreateJsonResponse("{}", fetch::http::Status::CLIENT_ERROR_BAD_REQUEST);
-    });
+    Get("/pages", "Gets the pages",
+        [](fetch::http::ViewParameters const & /*params*/,
+           fetch::http::HTTPRequest const & /*request*/) {
+          return fetch::http::CreateJsonResponse("{}",
+                                                 fetch::http::Status::CLIENT_ERROR_BAD_REQUEST);
+        });
+
+    Get("/pages/(id=\\d+)/", "Get a specific page",
+        {{"id", "The page id.", validators::StringValue()}},
+        [](fetch::http::ViewParameters const & /*params*/,
+           fetch::http::HTTPRequest const & /*request*/) {
+          return fetch::http::CreateJsonResponse("{}",
+                                                 fetch::http::Status::CLIENT_ERROR_BAD_REQUEST);
+        });
   }
 };
 
@@ -56,7 +55,7 @@ int main()
   fetch::network::NetworkManager tm{"NetMgr", 1};
 
   ExampleModule module;
-  HTTPServer server(tm);
+  HTTPServer    server(tm);
   server.Start(8080);
 
   server.AddModule(module);

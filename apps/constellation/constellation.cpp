@@ -38,8 +38,8 @@
 #include "network/muddle/rpc/server.hpp"
 #include "network/p2pservice/p2p_http_interface.hpp"
 #include "network/uri.hpp"
-#include "telemetry_http_module.hpp"
 #include "open_api_http_module.hpp"
+#include "telemetry_http_module.hpp"
 
 #include <chrono>
 #include <cstddef>
@@ -317,25 +317,26 @@ void Constellation::DumpOpenAPI(std::ostream &stream)
 {
   stream << "paths:" << std::endl;
   byte_array::ConstByteArray last_path{};
-  for(auto const &view: http_.views())
+  for (auto const &view : http_.views())
   {
     std::string method = ToString(view.method);
-    std::transform(method.begin(), method.end(), method.begin(), 
-               [](unsigned char c){ return std::tolower(c); });
+    std::transform(method.begin(), method.end(), method.begin(),
+                   [](unsigned char c) { return std::tolower(c); });
 
-    if(last_path != view.route.path())
+    if (last_path != view.route.path())
     {
       stream << "  " << view.route.path() << ":" << std::endl;
     }
 
     last_path = view.route.path();
     stream << "    " << method << ":" << std::endl;
-    stream << "      description: " << "\"" <<  view.description << "\"" <<  std::endl;    
-    stream << "      parameters: " << "[" <<  std::endl;        
-    stream << "      ] " <<  std::endl;            
+    stream << "      description: "
+           << "\"" << view.description << "\"" << std::endl;
+    stream << "      parameters: "
+           << "[" << std::endl;
+    stream << "      ] " << std::endl;
   }
 }
-
 
 /**
  * Runs the constellation service with the specified initial peers
@@ -357,7 +358,7 @@ void Constellation::Run(UriList const &initial_peers, core::WeakRunnable bootstr
   /// NETWORKING INFRASTRUCTURE
 
   // start all the services
-  http_open_api_module_->Reset(&http_);  
+  http_open_api_module_->Reset(&http_);
   network_manager_.Start();
   http_network_manager_.Start();
   muddle_.Start({p2p_port_});
@@ -520,7 +521,6 @@ void Constellation::Run(UriList const &initial_peers, core::WeakRunnable bootstr
     GenesisFileCreator creator(block_coordinator_, *storage_, stake_.get(), dkg_.get());
     creator.CreateFile(SNAPSHOT_FILENAME);
   }
-
 
   http_.Stop();
   p2p_.Stop();
