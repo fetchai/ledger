@@ -18,9 +18,12 @@
 //------------------------------------------------------------------------------
 
 #include "math/tensor.hpp"
+
 #include "ml/dataloaders/commodity_dataloader.hpp"
 #include "ml/dataloaders/dataloader.hpp"
 #include "ml/dataloaders/mnist_loaders/mnist_loader.hpp"
+#include "ml/dataloaders/tensor_dataloader.hpp"
+
 #include "vm/module.hpp"
 #include "vm_modules/ml/training_pair.hpp"
 
@@ -31,6 +34,10 @@ namespace ml {
 class VMDataLoader : public fetch::vm::Object
 {
   using DataType = fetch::vm_modules::math::DataType;
+
+  using CommodityLoaderType = fetch::ml::dataloaders::CommodityDataLoader<fetch::math::Tensor<DataType>, fetch::math::Tensor<DataType>>;
+  using MnistLoaderType = fetch::ml::dataloaders::MNISTLoader<fetch::math::Tensor<DataType>, fetch::math::Tensor<DataType>>;
+  using TensorLoaderType = fetch::ml::dataloaders::TensorDataLoader<fetch::math::Tensor<DataType>, fetch::math::Tensor<DataType>>;
 
 public:
   VMDataLoader(fetch::vm::VM *vm, fetch::vm::TypeId type_id)
@@ -51,31 +58,72 @@ public:
         .CreateMemberFunction("isDone", &VMDataLoader::IsDone);
   }
 
-  void AddData(fetch::vm::Ptr<fetch::vm::String> const &mode,
-               fetch::vm::Ptr<fetch::vm::String> const &xfilename,
-               fetch::vm::Ptr<fetch::vm::String> const &yfilename)
+  template <typename ...Params>
+//  void AddData(fetch::vm::Ptr<fetch::vm::String> const &mode,
+//               fetch::vm::Ptr<fetch::vm::String> const &xfilename,
+//               fetch::vm::Ptr<fetch::vm::String> const &yfilename)
+  void AddData(fetch::vm::Ptr<fetch::vm::String> const &mode, Params... params)
   {
-    if (mode->str == "commodity")
+    switch (mode->str)
     {
-      fetch::ml::dataloaders::CommodityDataLoader<fetch::math::Tensor<DataType>,
-                                                  fetch::math::Tensor<DataType>>
-          loader;
-      loader.AddData(xfilename->str, yfilename->str);
-      loader_ = std::make_shared<fetch::ml::dataloaders::CommodityDataLoader<
-          fetch::math::Tensor<DataType>, fetch::math::Tensor<DataType>>>(loader);
-    }
-    else if (mode->str == "mnist")
-    {
-      loader_ =
-          std::make_shared<fetch::ml::dataloaders::MNISTLoader<fetch::math::Tensor<DataType>,
-                                                               fetch::math::Tensor<DataType>>>(
-              xfilename->str, yfilename->str);
-    }
-    else
-    {
-      throw std::runtime_error("Unrecognised loader type");
+      case "commodity":
+      {
+        AddCommodityData(params ...);
+        return;
+      }
+      case "mnist":
+      {
+        AddMnistData(params ...);
+        return;
+      }
+      case "tensor":
+      {
+        AddTensorData(params ...);
+        return;
+      }
+      default:
+      {
+        throw std::runtime_error("mode does not match any known dataloader type");
+      }
     }
   }
+
+  /**
+   * Add data to commodity data loader
+   * @param xfilename
+   * @param yfilename
+   */
+  void AddCommodityData(fetch::vm::Ptr<fetch::vm::String> const &xfilename, fetch::vm::Ptr<fetch::vm::String> const &yfilename)
+  {
+    CommodityLoaderType loader;
+    loader.AddData(xfilename->str, yfilename->str);
+    loader_ = std::make_shared<CommodityLoaderType>(loader);
+  }
+
+  /**
+   * Add data to mnist data loader
+   * @param xfilename
+   * @param yfilename
+   */
+  void AddMnistData(fetch::vm::Ptr<fetch::vm::String> const &xfilename, fetch::vm::Ptr<fetch::vm::String> const &yfilename)
+  {
+    MnistLoaderType loader;
+    loader.AddData(xfilename->str, yfilename->str);
+    loader_ = std::make_shared<MnistLoaderType>(xfilename->str, yfilename->str);
+  }
+
+  /**
+   * Add data to tensor data loader
+   * @param xfilename
+   * @param yfilename
+   */
+  void AddTensorData(fetch::vm::Ptr<fetch::vm::String> const &xfilename, fetch::vm::Ptr<fetch::vm::String> const &yfilename)
+  {
+    TensorLoaderType loader();
+    loader.AddData(xfilename->str, yfilename->str);
+    loader_ = std::make_shared<TensorLoaderType>(loader);
+  }
+
 
   fetch::vm::Ptr<VMTrainingPair> GetNext()
   {

@@ -81,6 +81,9 @@ var train_labels = scaler.normalise(orig_train_labels);
 var test_data = scaler.normalise(orig_test_data);
 var test_labels = scaler.normalise(orig_test_labels);
 
+var data_loader = DataLoader(train_label.shape(), {train_data.shape()}, false);
+data_loader.addData("tensor", train_data, train_label);
+
 // SET UP GRAPH
 var graph = Graph();
 build_graph(graph);
@@ -94,7 +97,7 @@ printLn("begin training...");
 var training_iterations = 1;
 var batch_size = 8u64;
 for(i in 0:training_iterations)
-    var loss = optimiser.run(train_data, train_labels, batch_size);
+    var loss = optimiser.run(data_loader, batch_size);
     print("Current Loss: ");
     printLn(loss);
 endfor

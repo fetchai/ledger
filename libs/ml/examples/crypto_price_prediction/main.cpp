@@ -18,8 +18,7 @@
 
 // TODO: try out linear decay weightings on keras conv models
 // TODO: MSE now works with weightings, so set up exponential decay weightings in training
-// TODO: implement normalisation in etch crypto prediction
-// TODO: implement weightin in etch crypto prediction
+// TODO: implement weighting in etch crypto prediction
 
 #include "math/metrics/mean_absolute_error.hpp"
 #include "math/normalize_array.hpp"
@@ -199,6 +198,7 @@ int main(int ac, char **av)
     {
       scaler.DeNormalise(prediction, prediction);
     }
+
     auto result = fetch::math::MeanAbsoluteError(prediction, orig_test_label);
     std::cout << "mean absolute validation error: " << result << std::endl;
   }
