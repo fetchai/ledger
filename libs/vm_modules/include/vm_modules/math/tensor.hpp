@@ -28,9 +28,10 @@ class VMTensor : public fetch::vm::Object
 {
 
 public:
-  using DataType  = float;
-  using ArrayType = fetch::math::Tensor<DataType>;
-  using SizeType  = ArrayType::SizeType;
+  using DataType   = float;
+  using ArrayType  = fetch::math::Tensor<DataType>;
+  using SizeType   = ArrayType::SizeType;
+  using SizeVector = ArrayType::SizeVector;
 
   VMTensor(fetch::vm::VM *vm, fetch::vm::TypeId type_id, std::vector<std::uint64_t> const &shape)
     : fetch::vm::Object(vm, type_id)
@@ -68,10 +69,11 @@ public:
         .CreateMemberFunction("at", &VMTensor::AtThree)
         .CreateMemberFunction("setAt", &VMTensor::SetAt)
         .CreateMemberFunction("fill", &VMTensor::Fill)
+        .CreateMemberFunction("reshape", &VMTensor::Reshape)
         .CreateMemberFunction("toString", &VMTensor::ToString);
   }
 
-  fetch::math::SizeVector shape()
+  SizeVector shape()
   {
     return tensor_.shape();
   }
@@ -80,17 +82,17 @@ public:
   /// ACCESSING AND SETTING VALUES ///
   ////////////////////////////////////
 
-  DataType AtOne(uint64_t const &idx1)
+  DataType AtOne(uint64_t idx1)
   {
     return tensor_.At(idx1);
   }
 
-  DataType AtTwo(uint64_t const &idx1, uint64_t const &idx2)
+  DataType AtTwo(uint64_t idx1, uint64_t idx2)
   {
     return tensor_.At(idx1, idx2);
   }
 
-  DataType AtThree(uint64_t const &idx1, uint64_t const &idx2, uint64_t const &idx3)
+  DataType AtThree(uint64_t idx1, uint64_t idx2, uint64_t idx3)
   {
     return tensor_.At(idx1, idx2, idx3);
   }
@@ -108,6 +110,11 @@ public:
   void Fill(DataType const &value)
   {
     tensor_.Fill(value);
+  }
+
+  bool Reshape(fetch::vm::Ptr<fetch::vm::Array<SizeType>> const &new_shape)
+  {
+    return tensor_.Reshape(new_shape->elements);
   }
 
   //////////////////////////////

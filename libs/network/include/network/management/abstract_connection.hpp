@@ -157,7 +157,7 @@ protected:
     address_ = addr;
   }
 
-  void SetPort(uint16_t const &p)
+  void SetPort(uint16_t p)
   {
     port_ = p;
   }

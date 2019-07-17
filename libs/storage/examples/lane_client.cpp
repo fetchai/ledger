@@ -39,7 +39,7 @@ public:
   using client_type        = ServiceClient<fetch::network::TCPClient>;
   using shared_client_type = std::shared_ptr<client_type>;
 
-  MultiLaneDBClient(uint32_t lanes, std::string const &host, uint16_t const &port,
+  MultiLaneDBClient(uint32_t lanes, std::string const &host, uint16_t port,
                     fetch::network::NetworkManager &tm)
   {
     id_ = "my-fetch-id";
@@ -95,7 +95,7 @@ public:
     promise.Wait(2000);
   }
 
-  void Commit(uint64_t const &bookmark)
+  void Commit(uint64_t bookmark)
   {
     std::vector<service::Promise> promises;
     for (std::size_t i = 0; i < lanes_.size(); ++i)
@@ -111,7 +111,7 @@ public:
     }
   }
 
-  void Revert(uint64_t const &bookmark)
+  void Revert(uint64_t bookmark)
   {
     std::vector<service::Promise> promises;
     for (std::size_t i = 0; i < lanes_.size(); ++i)

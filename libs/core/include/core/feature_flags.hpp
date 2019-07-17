@@ -40,7 +40,7 @@ public:
 
   // Construction / Destruction
   FeatureFlags()                         = default;
-  FeatureFlags(FeatureFlags const &)     = delete;
+  FeatureFlags(FeatureFlags const &)     = default;
   FeatureFlags(FeatureFlags &&) noexcept = default;
   ~FeatureFlags()                        = default;
 
@@ -61,8 +61,12 @@ public:
   std::size_t   size() const;
 
   // Operators
-  FeatureFlags &operator=(FeatureFlags const &) = delete;
+  FeatureFlags &operator=(FeatureFlags const &) = default;
   FeatureFlags &operator=(FeatureFlags &&) noexcept = default;
+
+  // Streaming Support
+  friend std::ostream &operator<<(std::ostream &stream, core::FeatureFlags const &flags);
+  friend std::istream &operator>>(std::istream &stream, core::FeatureFlags &flags);
 
 private:
   FlagSet flags_;  ///< Flag storage

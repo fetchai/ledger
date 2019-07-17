@@ -1019,7 +1019,7 @@ void Router::CleanEchoCache()
     // calculate the time delta
     auto const delta = now - it->second;
 
-    if (delta > std::chrono::seconds{30})
+    if (delta > std::chrono::seconds{600})
     {
       // remove the element
       it = echo_cache_.erase(it);

@@ -107,7 +107,7 @@ public:
    * This function is intended to be used by the <Protocol> through
    * which services can subscribe their clients to the feed.
    */
-  void Subscribe(uint64_t const &client, subscription_handler_type const &id)
+  void Subscribe(uint64_t client, subscription_handler_type const &id)
   {
     LOG_STACK_TRACE_POINT;
 
@@ -123,7 +123,7 @@ public:
    * This function is intended to be used by the <Protocol> through
    * which services can unsubscribe their clients to the feed.
    */
-  void Unsubscribe(uint64_t const &client, subscription_handler_type const &id)
+  void Unsubscribe(uint64_t client, subscription_handler_type const &id)
   {
     LOG_STACK_TRACE_POINT;
 

@@ -117,7 +117,7 @@ private:
       memset(this, 0, sizeof(decltype(*this)));
     }
 
-    HistorySwap(uint64_t const &i_, uint64_t const &j_)
+    HistorySwap(uint64_t i_, uint64_t j_)
     {
       // Clear the whole structure (including padded regions) are zeroed
       memset(this, 0, sizeof(decltype(*this)));
@@ -201,7 +201,7 @@ private:
       memset(this, 0, sizeof(decltype(*this)));
     }
 
-    HistorySet(uint64_t const &i_, T const &d)
+    HistorySet(uint64_t i_, T const &d)
     {
       // Clear the whole structure (including padded regions) are zeroed
       memset(this, 0, sizeof(decltype(*this)));
@@ -328,19 +328,19 @@ public:
     bookmark_ = stack_.header_extra().bookmark;
   }
 
-  type Get(std::size_t const &i) const
+  type Get(std::size_t i) const
   {
     type object;
     stack_.Get(i, object);
     return object;
   }
 
-  void Get(std::size_t const &i, type &object) const
+  void Get(std::size_t i, type &object) const
   {
     stack_.Get(i, object);
   }
 
-  void Set(std::size_t const &i, type const &object)
+  void Set(std::size_t i, type const &object)
   {
     type old_data;
     stack_.Get(i, old_data);
@@ -366,7 +366,7 @@ public:
     return stack_.Top();
   }
 
-  void Swap(std::size_t const &i, std::size_t const &j)
+  void Swap(std::size_t i, std::size_t j)
   {
     history_.Push(HistorySwap{i, j}, HistorySwap::value);
     stack_.Swap(i, j);
