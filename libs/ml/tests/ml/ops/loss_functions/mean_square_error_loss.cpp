@@ -99,7 +99,7 @@ TYPED_TEST(MeanSquareErrorTest, two_dimensional_forward_test_with_weighting)
   TypeParam                                      result({1, 1});
   op.Forward({data1, data2}, result);
 
-  ASSERT_FLOAT_EQ(static_cast<float>(result(0, 0)), 118.58f / 4.0f / 2.0f);
+  ASSERT_FLOAT_EQ(static_cast<float>(result(0, 0)), 118.58f / 8.0f / 2.0f);
 }
 
 TYPED_TEST(MeanSquareErrorTest, two_dimensional_backward_test_with_weighting)
