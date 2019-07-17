@@ -168,7 +168,7 @@ TEST_F(MathTests, tensor_state_test)
   )";
 
   EXPECT_CALL(toolkit.observer(), Exists(state_name));
-  EXPECT_CALL(toolkit.observer(), Read(state_name, _, _));
+  EXPECT_CALL(toolkit.observer(), Read(state_name, _, _)).Times(testing::AtLeast(1));
 
   ASSERT_TRUE(toolkit.Compile(tensor_deserialiase_src));
 
