@@ -52,57 +52,16 @@ public:
     , data_{std::move(data), offset, padded_height_ * width_}
   {}
 
-  IteratorType begin()
-  {
-    SizeType padded_size = padded_height_ * width_;
-    return IteratorType(data_.pointer(), height_ * width_, padded_size, height_, padded_height_);
-  }
+  IteratorType begin();
+  IteratorType end();
+  ConstIteratorType cbegin() const;
+  ConstIteratorType cend() const;
 
-  IteratorType end()
-  {
-    SizeType padded_size = padded_height_ * width_;
-    return IteratorType(data_.pointer() + padded_size, height_ * width_, padded_size, height_,
-                        padded_height_);
-  }
+  void Assign(TensorView const &other);
 
-  ConstIteratorType begin() const
-  {
-    return ConstIteratorType(data_.pointer(), height_ * width_, padded_height_ * width_, height_,
-                             padded_height_);
-  }
-
-  ConstIteratorType end() const
-  {
-    SizeType padded_size = padded_height_ * width_;
-    return ConstIteratorType(data_.pointer() + padded_size, height_ * width_, padded_size, height_,
-                             padded_height_);
-  }
-
-  ConstIteratorType cbegin() const
-  {
-    return ConstIteratorType(data_.pointer(), height_ * width_, padded_height_ * width_, height_,
-                             padded_height_);
-  }
-
-  ConstIteratorType cend() const
-  {
-    SizeType padded_size = padded_height_ * width_;
-    return ConstIteratorType(data_.pointer() + padded_size, height_ * width_, padded_size, height_,
-                             padded_height_);
-  }
-
-  void Assign(TensorView const &other)
-  {
-    auto it1 = begin();
-    auto it2 = other.begin();
-    assert(it1.size() == it2.size());
-    while (it1.is_valid())
-    {
-      *it1 = *it2;
-      ++it1;
-      ++it2;
-    }
-  }
+  /////////////////
+  /// OPERATORS ///
+  /////////////////
 
   template <typename S>
   typename std::enable_if<std::is_integral<S>::value, Type>::type operator()(S i, S j) const
@@ -195,7 +154,113 @@ private:
   SizeType      width_{0};
   SizeType      padded_height_{0};
   ContainerType data_{};
+
+
+//  /**
+//   * Begin that returns a constant iterator. This is useful privately in Assign
+//   * @return
+//   */
+//  ConstIteratorType begin() const;
+//  ConstIteratorType end() const;
 };
+
+
+//////////////////////
+/// PUBLIC METHODS ///
+//////////////////////
+
+/**
+ * Returns an iterator over the relevant view of the tensor starting at the beginning
+ * @tparam T
+ * @tparam C
+ * @return
+ */
+template <typename T, typename C>
+typename TensorView<T, C>::IteratorType TensorView<T, C>::begin()
+{
+  SizeType padded_size = padded_height_ * width_;
+  return IteratorType(data_.pointer(), height_ * width_, padded_size, height_, padded_height_);
+}
+
+/**
+ * Returns an iterator over the relevant view of the tensor starting at the end
+ * @tparam T
+ * @tparam C
+ * @return
+ */
+template <typename T, typename C>
+typename TensorView<T, C>::IteratorType TensorView<T, C>::end()
+{
+  SizeType padded_size = padded_height_ * width_;
+  return IteratorType(data_.pointer() + padded_size, height_ * width_, padded_size, height_,
+                      padded_height_);
+}
+
+/**
+ * Returns an iterator over the relevant view of the constant tensor starting at the beginning
+ * @tparam T
+ * @tparam C
+ * @return
+ */
+template <typename T, typename C>
+typename TensorView<T, C>::ConstIteratorType TensorView<T, C>::cbegin() const
+{
+  return ConstIteratorType(data_.pointer(), height_ * width_, padded_height_ * width_, height_,
+                           padded_height_);
+}
+
+/**
+ * Returns an iterator over the relevant view of the constant tensor starting at the end
+ * @tparam T
+ * @tparam C
+ * @return
+ */
+template <typename T, typename C>
+typename TensorView<T, C>::ConstIteratorType TensorView<T, C>::cend() const
+{
+  SizeType padded_size = padded_height_ * width_;
+  return ConstIteratorType(data_.pointer() + padded_size, height_ * width_, padded_size, height_,
+                           padded_height_);
+}
+
+/**
+ * Assigns the contents of one tensorview to another
+ * @tparam T
+ * @tparam C
+ * @param other
+ */
+template <typename T, typename C>
+void TensorView<T, C>:: Assign(TensorView const &other)
+{
+  auto it1 = begin();
+  auto it2 = other.cbegin();
+  assert(it1.size() == it2.size());
+  while (it1.is_valid())
+  {
+    *it1 = *it2;
+    ++it1;
+    ++it2;
+  }
+}
+
+///////////////////////
+/// PRIVATE METHODS ///
+///////////////////////
+
+//template <typename T, typename C>
+//typename TensorView<T, C>::ConstIteratorType TensorView<T, C>::begin() const
+//{
+//  return ConstIteratorType(data_.pointer(), height_ * width_, padded_height_ * width_, height_,
+//                           padded_height_);
+//}
+//
+//template <typename T, typename C>
+//typename TensorView<T, C>::ConstIteratorType TensorView<T, C>::end() const
+//{
+//  SizeType padded_size = padded_height_ * width_;
+//  return ConstIteratorType(data_.pointer() + padded_size, height_ * width_, padded_size, height_,
+//                           padded_height_);
+//}
 
 }  // namespace math
 }  // namespace fetch
