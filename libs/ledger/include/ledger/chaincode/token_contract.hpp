@@ -63,9 +63,9 @@ public:
   Result CollectStake(Transaction const &tx, BlockIndex);
 
   // queries
-  eStatus Balance(Query const &query, Query &response);
-  eStatus Stake(Query const &query, Query &response);
-  eStatus CooldownStake(Query const &query, Query &response);
+  Status Balance(Query const &query, Query &response);
+  Status Stake(Query const &query, Query &response);
+  Status CooldownStake(Query const &query, Query &response);
 
   void         ClearStakeUpdates();
   StakeUpdates stake_updates() const;

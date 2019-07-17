@@ -76,7 +76,7 @@ protected:
                    Variant const &request = Variant::Object())
   {
     Variant response;
-    EXPECT_EQ(SmartContract::eStatus::OK, SendQuery(query_method_name, request, response));
+    EXPECT_EQ(SmartContract::Status::OK, SendQuery(query_method_name, request, response));
 
     // check the response is as we expect
     ASSERT_TRUE(response.Has("result"));
@@ -135,7 +135,7 @@ TEST_F(SmartContractTests, CheckSimpleContract)
 
   // send the smart contract an "increment" action
   auto const status{SendSmartAction("increment")};
-  EXPECT_EQ(SmartContract::eStatus::OK, status.status);
+  EXPECT_EQ(SmartContract::Status::OK, status.status);
 
   VerifyQuery("value", int32_t{11});
 }
@@ -172,7 +172,7 @@ TEST_F(SmartContractTests, CheckActionResult)
 
   // send the smart contract an "increment" action
   auto const status_0{SendSmartAction("does_not_return")};
-  EXPECT_EQ(SmartContract::eStatus::OK, status_0.status);
+  EXPECT_EQ(SmartContract::Status::OK, status_0.status);
   EXPECT_EQ(0ll, status_0.return_value);
 
   {
@@ -185,7 +185,7 @@ TEST_F(SmartContractTests, CheckActionResult)
 
   // send the smart contract an "increment" action
   auto const status_1{SendSmartAction("returns_Int64")};
-  EXPECT_EQ(SmartContract::eStatus::OK, status_1.status);
+  EXPECT_EQ(SmartContract::Status::OK, status_1.status);
   EXPECT_EQ(123ll, status_1.return_value);
 }
 
@@ -305,7 +305,7 @@ TEST_F(SmartContractTests, CheckParameterizedActionAndQuery)
 
   // send the smart contract an "increment" action
   auto const status{SendSmartActionWithParams("increment", 20)};
-  EXPECT_EQ(SmartContract::eStatus::OK, status.status);
+  EXPECT_EQ(SmartContract::Status::OK, status.status);
 
   VerifyQuery("value", int32_t{30});
 
@@ -398,7 +398,7 @@ TEST_F(SmartContractTests, CheckBasicTokenContract)
   }
 
   auto const status_1{InvokeInit(certificate_->identity())};
-  EXPECT_EQ(SmartContract::eStatus::OK, status_1.status);
+  EXPECT_EQ(SmartContract::Status::OK, status_1.status);
 
   // make the query
   {
@@ -410,7 +410,7 @@ TEST_F(SmartContractTests, CheckBasicTokenContract)
   // send the smart contract an "increment" action
   auto const status_2{
       SendSmartActionWithParams("transfer", *owner_address_, target_address, 1000000000ull)};
-  EXPECT_EQ(SmartContract::eStatus::OK, status_2.status);
+  EXPECT_EQ(SmartContract::Status::OK, status_2.status);
 
   // make the query
   {
@@ -498,7 +498,7 @@ TEST_F(SmartContractTests, CheckShardedStateSetAndQuery)
 
   // send the smart contract an "increment" action
   auto const status{SendSmartAction("test_sharded_state")};
-  EXPECT_EQ(SmartContract::eStatus::OK, status.status);
+  EXPECT_EQ(SmartContract::Status::OK, status.status);
 
   VerifyQuery("query_foo", int32_t{20});
   VerifyQuery("query_bar", int32_t{30});
@@ -563,7 +563,7 @@ TEST_F(SmartContractTests, CheckShardedStateSetWithAddressAsName)
 
   // send the smart contract an "increment" action
   auto const status{SendSmartActionWithParams("test_sharded_state", address_as_name)};
-  EXPECT_EQ(SmartContract::eStatus::OK, status.status);
+  EXPECT_EQ(SmartContract::Status::OK, status.status);
 
   auto request{Variant::Object()};
   request["address"] = address_as_name.display();

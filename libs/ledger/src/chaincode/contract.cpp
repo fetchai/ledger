@@ -33,7 +33,7 @@ namespace ledger {
  */
 Contract::Result Contract::DispatchInitialise(Address const &owner)
 {
-  Result status{eStatus::OK};
+  Result status{Status::OK};
 
   if (init_handler_)
   {
@@ -51,10 +51,10 @@ Contract::Result Contract::DispatchInitialise(Address const &owner)
  * @param response The output query parameters
  * @return The corresponding status result for the operation
  */
-Contract::eStatus Contract::DispatchQuery(ContractName const &name, Query const &query,
-                                          Query &response)
+Contract::Status Contract::DispatchQuery(ContractName const &name, Query const &query,
+                                         Query &response)
 {
-  auto status{eStatus::NOT_FOUND};
+  auto status{Status::NOT_FOUND};
 
   auto it = query_handlers_.find(name);
   if (it != query_handlers_.end())
@@ -76,7 +76,7 @@ Contract::eStatus Contract::DispatchQuery(ContractName const &name, Query const 
 Contract::Result Contract::DispatchTransaction(byte_array::ConstByteArray const &name,
                                                Transaction const &tx, BlockIndex block_index)
 {
-  Result status{eStatus::NOT_FOUND};
+  Result status{Status::NOT_FOUND};
 
   auto it = transaction_handlers_.find(name);
   if (it != transaction_handlers_.end())

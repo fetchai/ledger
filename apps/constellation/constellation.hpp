@@ -170,10 +170,11 @@ private:
 
   /// @name Transaction and State Database shards
   /// @{
-  TxStatusCache        tx_status_cache_;  ///< Cache of transaction status
-  LaneServices         lane_services_;    ///< The lane services
-  StorageUnitClientPtr storage_;          ///< The storage client to the lane services
-  LaneRemoteControl    lane_control_;     ///< The lane control client for the lane services
+  TxStatusCache::ShrdPtr tx_status_cache_{
+      TxStatusCache::factory()};        ///< Cache of transaction status
+  LaneServices         lane_services_;  ///< The lane services
+  StorageUnitClientPtr storage_;        ///< The storage client to the lane services
+  LaneRemoteControl    lane_control_;   ///< The lane control client for the lane services
 
   DAGPtr             dag_;
   DAGServicePtr      dag_service_;

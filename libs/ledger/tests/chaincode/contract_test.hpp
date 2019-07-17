@@ -180,7 +180,7 @@ protected:
     return status;
   }
 
-  Contract::eStatus SendQuery(ConstByteArray const &query, Query const &request, Query &response)
+  Contract::Status SendQuery(ConstByteArray const &query, Query const &request, Query &response)
   {
     // adapt the storage engine for queries
     StateAdapter storage_adapter{*storage_, *contract_name_};

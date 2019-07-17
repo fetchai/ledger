@@ -48,7 +48,7 @@ class Address;
 class Contract
 {
 public:
-  enum class eStatus
+  enum class Status
   {
     OK = 0,
     FAILED,
@@ -57,7 +57,7 @@ public:
 
   struct Result
   {
-    eStatus status{eStatus::NOT_FOUND};
+    Status  status{Status::NOT_FOUND};
     int64_t return_value{0};
   };
 
@@ -69,7 +69,7 @@ public:
   using InitialiseHandler     = std::function<Result(Address const &)>;
   using TransactionHandler    = std::function<Result(Transaction const &, BlockIndex)>;
   using TransactionHandlerMap = std::unordered_map<ContractName, TransactionHandler>;
-  using QueryHandler          = std::function<eStatus(Query const &, Query &)>;
+  using QueryHandler          = std::function<Status(Query const &, Query &)>;
   using QueryHandlerMap       = std::unordered_map<ContractName, QueryHandler>;
   using Counter               = std::atomic<std::size_t>;
   using CounterMap            = std::unordered_map<ContractName, Counter>;
@@ -88,10 +88,10 @@ public:
   void Attach(ledger::StateAdapter &state);
   void Detach();
 
-  Result  DispatchInitialise(Address const &owner);
-  eStatus DispatchQuery(ContractName const &name, Query const &query, Query &response);
-  Result  DispatchTransaction(ConstByteArray const &name, Transaction const &tx,
-                              TransactionLayout::BlockIndex index);
+  Result DispatchInitialise(Address const &owner);
+  Status DispatchQuery(ContractName const &name, Query const &query, Query &response);
+  Result DispatchTransaction(ConstByteArray const &name, Transaction const &tx,
+                             TransactionLayout::BlockIndex index);
   /// @}
 
   /// @name Dispatch Maps Accessors
@@ -129,7 +129,7 @@ protected:
   /// @{
   void OnQuery(std::string const &name, QueryHandler &&handler);
   template <typename C>
-  void OnQuery(std::string const &name, C *instance, eStatus (C::*func)(Query const &, Query &));
+  void OnQuery(std::string const &name, C *instance, Status (C::*func)(Query const &, Query &));
   /// @}
 
   /// @name Chain Code State Utils
@@ -244,7 +244,7 @@ void Contract::OnTransaction(std::string const &name, C *instance,
  */
 template <typename C>
 void Contract::OnQuery(std::string const &name, C *instance,
-                       eStatus (C::*func)(Query const &, Query &))
+                       Status (C::*func)(Query const &, Query &))
 {
   OnQuery(name, [instance, func](Query const &query, Query &response) {
     return (instance->*func)(query, response);

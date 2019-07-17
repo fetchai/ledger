@@ -152,7 +152,7 @@ protected:
 
     // dispatch the transaction
     auto const status = SendAction(sealed_tx.Build());
-    return (Contract::eStatus::OK == status.status);
+    return (Contract::Status::OK == status.status);
   }
 
   bool CreateWealth(Entity const &entity, uint64_t amount)
@@ -182,7 +182,7 @@ protected:
     // send the action to the contract
     auto const status = SendAction(tx);
 
-    return (Contract::eStatus::OK == status.status);
+    return (Contract::Status::OK == status.status);
   }
 
   bool Transfer(Address const &from, Address const &to,
@@ -217,7 +217,7 @@ protected:
     }
 
     auto const status = SendAction(sealed_tx.Build());
-    return (Contract::eStatus::OK == status.status);
+    return (Contract::Status::OK == status.status);
   }
 
   bool GetBalance(Address const &address, uint64_t &balance)
@@ -237,7 +237,7 @@ protected:
     query["address"] = address.display();
 
     Query response;
-    if (Contract::eStatus::OK == SendQuery("balance", query, response))
+    if (Contract::Status::OK == SendQuery("balance", query, response))
     {
       balance = response["balance"].As<uint64_t>();
       success = true;

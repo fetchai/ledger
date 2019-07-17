@@ -444,7 +444,7 @@ def verify_txs(parameters, test_instance):
             while True:
                 status = api.tx.status(tx)
 
-                if status == "Executed" or expect_mined:
+                if status == "Successfully Executed" or expect_mined:
                     break
 
                 time.sleep(0.5)

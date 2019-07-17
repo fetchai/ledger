@@ -54,13 +54,13 @@ DummyContract::Result DummyContract::Wait(Transaction const &, BlockIndex)
 
   ++counter_;
 
-  return {eStatus::OK};
+  return {Status::OK};
 }
 
 DummyContract::Result DummyContract::Run(Transaction const &, BlockIndex)
 {
   FETCH_LOG_DEBUG(LOGGING_NAME, "Running that contract...");
-  return {eStatus::OK};
+  return {Status::OK};
 }
 
 }  // namespace ledger

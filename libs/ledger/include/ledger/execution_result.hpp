@@ -39,7 +39,7 @@ enum class ContractExecutionStatus
   INSUFFICIENT_CHARGE,
 
   // Fatal Errors
-  NOT_RUN,
+  NOT_RUN,  // TODO(issue ): Seems to be the same as `INEXPLICABLE_FAILURE`
   TX_LOOKUP_FAILURE,
   RESOURCE_FAILURE,
   INEXPLICABLE_FAILURE,

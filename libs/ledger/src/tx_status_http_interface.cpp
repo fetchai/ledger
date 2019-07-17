@@ -36,27 +36,84 @@ namespace fetch {
 namespace ledger {
 
 namespace {
-Variant toVariant(Digest const &digest, TransactionStatusCache::TxStatus const &tx_status)
+constexpr PublicTxStatus Convert(TransactionStatus       tx_processing_pipeline_status,
+                                 ContractExecutionStatus contract_exec_status)
+{
+  switch (tx_processing_pipeline_status)
+  {
+  case TransactionStatus::UNKNOWN:
+    return PublicTxStatus::UNKNOWN;
+
+  case TransactionStatus::PENDING:
+    return PublicTxStatus::PENDING;
+
+  case TransactionStatus::MINED:
+    return PublicTxStatus::MINED;
+
+  case TransactionStatus::EXECUTED:
+    switch (contract_exec_status)
+    {
+    case ContractExecutionStatus::SUCCESS:
+      return PublicTxStatus::SUCCESSFULLY_EXECUTED;
+
+    case ContractExecutionStatus::CHAIN_CODE_LOOKUP_FAILURE:
+      return PublicTxStatus::CHAIN_CODE_LOOKUP_FAILURE;
+
+    case ContractExecutionStatus::CHAIN_CODE_EXEC_FAILURE:
+      return PublicTxStatus::CHAIN_CODE_EXEC_FAILURE;
+
+    case ContractExecutionStatus::CONTRACT_LOOKUP_FAILURE:
+      return PublicTxStatus::CONTRACT_LOOKUP_FAILURE;
+
+    case ContractExecutionStatus::CONTRACT_NAME_PARSE_FAILURE:
+      return PublicTxStatus::CONTRACT_NAME_PARSE_FAILURE;
+
+    case ContractExecutionStatus::INSUFFICIENT_AVAILABLE_FUNDS:
+      return PublicTxStatus::INSUFFICIENT_AVAILABLE_FUNDS;
+
+    case ContractExecutionStatus::INSUFFICIENT_CHARGE:
+      return PublicTxStatus::INSUFFICIENT_CHARGE;
+
+    case ContractExecutionStatus::TRANSFER_FAILURE:
+      return PublicTxStatus::TRANSFER_FAILURE;
+
+    case ContractExecutionStatus::TX_NOT_VALID_FOR_BLOCK:
+      return PublicTxStatus::TX_NOT_VALID_FOR_BLOCK;
+
+    case ContractExecutionStatus::NOT_RUN:
+    case ContractExecutionStatus::RESOURCE_FAILURE:
+    case ContractExecutionStatus::TX_LOOKUP_FAILURE:
+    case ContractExecutionStatus::INEXPLICABLE_FAILURE:
+      return PublicTxStatus::FATAL_ERROR;
+    }
+    return PublicTxStatus::FATAL_ERROR;
+
+  case TransactionStatus::SUBMITTED:
+    return PublicTxStatus::SUBMITTED;
+  }
+
+  return PublicTxStatus::UNKNOWN;
+}
+
+Variant ToVariant(Digest const &digest, TransactionStatusCache::TxStatus const &tx_status)
 {
   auto retval{Variant::Object()};
-  retval["tx"]     = ToBase64(digest);
-  retval["status"] = ToString(tx_status.status);
-  auto contr_ex_res_v{Variant::Object()};
-  contr_ex_res_v["status"]      = ToString(tx_status.contract_exec_result.status);
-  contr_ex_res_v["exit_code"]   = tx_status.contract_exec_result.return_value;
-  contr_ex_res_v["charge"]      = tx_status.contract_exec_result.charge;
-  contr_ex_res_v["charge_rate"] = tx_status.contract_exec_result.charge_rate;
-  contr_ex_res_v["fee"]         = tx_status.contract_exec_result.fee;
-
-  retval["contract_exec_result"] = contr_ex_res_v;
+  retval["tx"]        = ToBase64(digest);
+  retval["status"]    = ToString(Convert(tx_status.status, tx_status.contract_exec_result.status));
+  retval["exit_code"] = tx_status.contract_exec_result.return_value;
+  retval["charge"]    = tx_status.contract_exec_result.charge;
+  retval["charge_rate"] = tx_status.contract_exec_result.charge_rate;
+  retval["fee"]         = tx_status.contract_exec_result.fee;
 
   return retval;
 }
 }  // namespace
 
-TxStatusHttpInterface::TxStatusHttpInterface(TransactionStatusCache &status_cache)
-  : status_cache_{status_cache}
+TxStatusHttpInterface::TxStatusHttpInterface(TxStatusCachePtr status_cache)
+  : status_cache_{std::move(status_cache)}
 {
+  assert(status_cache_);
+
   Get("/api/status/tx/(digest=[a-fA-F0-9]{64})",
       [this](http::ViewParameters const &params, http::HTTPRequest const &request) {
         FETCH_UNUSED(request);
@@ -69,7 +126,7 @@ TxStatusHttpInterface::TxStatusHttpInterface(TransactionStatusCache &status_cach
           FETCH_LOG_DEBUG(LOGGING_NAME, "Querying status of: ", digest.ToBase64());
 
           // prepare the response
-          auto const response{toVariant(digest, status_cache_.Query(digest))};
+          auto const response{ToVariant(digest, status_cache_->Query(digest))};
 
           return http::CreateJsonResponse(response);
         }

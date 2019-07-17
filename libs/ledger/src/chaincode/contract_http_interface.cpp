@@ -203,7 +203,7 @@ http::HTTPResponse ContractHttpInterface::OnQuery(ConstByteArray const &   contr
     auto const status = contract->DispatchQuery(query, doc.root(), response);
     contract->Detach();
 
-    if (Contract::eStatus::OK == status)
+    if (Contract::Status::OK == status)
     {
       return http::CreateJsonResponse(response);
     }

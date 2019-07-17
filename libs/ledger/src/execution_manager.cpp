@@ -48,12 +48,12 @@ namespace ledger {
  */
 ExecutionManager::ExecutionManager(std::size_t num_executors, uint32_t log2_num_lanes,
                                    StorageUnitPtr storage, ExecutorFactory const &factory,
-                                   TransactionStatusCache &tx_status_cache)
+                                   TransactionStatusCache::ShrdPtr tx_status_cache)
   : log2_num_lanes_{log2_num_lanes}
   , storage_{std::move(storage)}
   , idle_executors_{}
   , thread_pool_{network::MakeThreadPool(num_executors, "Executor")}
-  , tx_status_cache_{tx_status_cache}
+  , tx_status_cache_{std::move(tx_status_cache)}
 {
   // setup the executor pool
   {
@@ -450,7 +450,10 @@ void ExecutionManager::MonitorThreadEntrypoint()
           // update aggregate fees
           aggregate_block_fees += item->fee();
 
-          tx_status_cache_.Update(item->digest(), eTransactionStatus::EXECUTED, item->result());
+          if (tx_status_cache_)
+          {
+            tx_status_cache_->Update(item->digest(), item->result());
+          }
         }
 
         // only provide debug if required

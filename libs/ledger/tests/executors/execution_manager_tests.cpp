@@ -164,10 +164,10 @@ protected:
     return success;
   }
 
-  MockStorageUnitPtr     mock_storage_;
-  ExecutionManagerPtr    manager_;
-  FakeExecutorList       executors_;
-  TransactionStatusCache tx_status_cache_;
+  MockStorageUnitPtr              mock_storage_;
+  ExecutionManagerPtr             manager_;
+  FakeExecutorList                executors_;
+  TransactionStatusCache::ShrdPtr tx_status_cache_{TransactionStatusCache::factory()};
 };
 
 TEST_P(ExecutionManagerTests, CheckIncrementalExecution)

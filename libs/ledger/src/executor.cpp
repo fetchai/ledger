@@ -308,15 +308,16 @@ bool Executor::ExecuteTransactionContract(Result &result)
     result.status = Status::CHAIN_CODE_EXEC_FAILURE;
     switch (contract_status.status)
     {
-    case Contract::eStatus::OK:
+    case Contract::Status::OK:
       success       = true;
       result.status = Status::SUCCESS;
       break;
-    case Contract::eStatus::FAILED:
+    case Contract::Status::FAILED:
       FETCH_LOG_WARN(LOGGING_NAME, "Transaction execution failed!");
       break;
-    case Contract::eStatus::NOT_FOUND:
+    case Contract::Status::NOT_FOUND:
       FETCH_LOG_WARN(LOGGING_NAME, "Unable to lookup transaction handler");
+      result.status = Status::CHAIN_CODE_LOOKUP_FAILURE;
       break;
     }
 
