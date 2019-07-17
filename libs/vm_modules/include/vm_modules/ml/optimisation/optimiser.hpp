@@ -21,7 +21,10 @@
 
 #include "ml/optimisation/optimiser.hpp"
 
+#include "ml/optimisation/adagrad_optimiser.hpp"
 #include "ml/optimisation/adam_optimiser.hpp"
+#include "ml/optimisation/momentum_optimiser.hpp"
+#include "ml/optimisation/rmsprop_optimiser.hpp"
 #include "ml/optimisation/sgd_optimiser.hpp"
 
 #include "vm_modules/math/tensor.hpp"
@@ -47,26 +50,51 @@ public:
   using ArrayType = fetch::math::Tensor<DataType>;
   using GraphType = fetch::ml::Graph<ArrayType>;
 
-  using OptimiserType     = fetch::ml::optimisers::Optimiser<ArrayType>;
-  using AdamOptimiserType = fetch::ml::optimisers::AdamOptimiser<ArrayType>;
-  using SgdOptimiserType  = fetch::ml::optimisers::SGDOptimiser<ArrayType>;
+  using OptimiserType         = fetch::ml::optimisers::Optimiser<ArrayType>;
+  using AdagradOptimiserType  = fetch::ml::optimisers::AdaGradOptimiser<ArrayType>;
+  using AdamOptimiserType     = fetch::ml::optimisers::AdamOptimiser<ArrayType>;
+  using MomentumOptimiserType = fetch::ml::optimisers::MomentumOptimiser<ArrayType>;
+  using RmspropOptimiserType  = fetch::ml::optimisers::RMSPropOptimiser<ArrayType>;
+  using SgdOptimiserType      = fetch::ml::optimisers::SGDOptimiser<ArrayType>;
 
   VMOptimiser(fetch::vm::VM *vm, fetch::vm::TypeId type_id, std::string const &mode,
               GraphType const &graph, std::vector<std::string> const &input_node_names,
               std::string const &label_node_name, std::string const &output_node_name)
     : fetch::vm::Object(vm, type_id)
   {
-    if (mode == "adam")
+    if (mode == "adagrad")
+    {
+      AdagradOptimiserType optimiser(std::make_shared<GraphType>(graph), input_node_names,
+                                     label_node_name, output_node_name);
+      optimiser_ = std::make_shared<AdagradOptimiserType>(optimiser);
+    }
+    else if (mode == "adam")
     {
       AdamOptimiserType optimiser(std::make_shared<GraphType>(graph), input_node_names,
                                   label_node_name, output_node_name);
       optimiser_ = std::make_shared<AdamOptimiserType>(optimiser);
+    }
+    else if (mode == "momentum")
+    {
+      MomentumOptimiserType optimiser(std::make_shared<GraphType>(graph), input_node_names,
+                                      label_node_name, output_node_name);
+      optimiser_ = std::make_shared<MomentumOptimiserType>(optimiser);
+    }
+    else if (mode == "rmsprop")
+    {
+      RmspropOptimiserType optimiser(std::make_shared<GraphType>(graph), input_node_names,
+                                     label_node_name, output_node_name);
+      optimiser_ = std::make_shared<RmspropOptimiserType>(optimiser);
     }
     else if (mode == "sgd")
     {
       SgdOptimiserType optimiser(std::make_shared<GraphType>(graph), input_node_names,
                                  label_node_name, output_node_name);
       optimiser_ = std::make_shared<SgdOptimiserType>(optimiser);
+    }
+    else
+    {
+      throw std::runtime_error("unrecognised optimiser mode");
     }
   }
 
