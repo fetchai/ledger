@@ -28,7 +28,7 @@ template <typename ArrayType>
 typename ArrayType::Type MeanAbsoluteError(ArrayType const &A, ArrayType const &B)
 {
   typename ArrayType::Type ret = distance::AbsoluteDistance(A, B);
-  ret = Divide(ret, typename ArrayType::Type(A.shape(A.shape().size() - 1)));
+  Divide(ret, static_cast<typename ArrayType::Type>(A.size()), ret);
   return ret;
 }
 

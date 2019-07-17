@@ -49,14 +49,12 @@ public:
 
     if (weightings_.size() == static_cast<SizeType>(0))
     {
-      // division by 2 allows us to cancel out with a 2 in the derivative for optimisation
       output(0, 0) = fetch::math::MeanSquareError(inputs.at(0).get(), inputs.at(1).get());
     }
     // rescale according to weights
     else
     {
       SizeType data_size = inputs.at(0).get().shape(inputs.at(0).get().shape().size() - 1);
-      auto     count     = static_cast<DataType>(data_size);
 
       auto it1 = inputs.at(0).get().cbegin();
       auto it2 = inputs.at(1).get().cbegin();
@@ -109,9 +107,13 @@ public:
           }
         }
       }
-      fetch::math::Divide(output(0, 0), count, output(0, 0));
+
+      // divide by number of elements
+      fetch::math::Divide(output(0, 0), static_cast<DataType>(inputs.at(0).get().size()),
+                          output(0, 0));
     }
 
+    // division by 2 allows us to cancel out with a 2 in the derivative for optimisation
     fetch::math::Divide(output(0, 0), static_cast<DataType>(2), output(0, 0));
   }
 

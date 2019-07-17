@@ -42,8 +42,7 @@ typename ArrayType::Type MeanSquareError(ArrayType const &A, ArrayType const &B)
   DataType ret = distance::SquareDistance(A, B);
 
   // divide by data size to get the Mean
-  auto data_size = static_cast<DataType>(A.shape(A.shape().size() - 1));
-  Divide(ret, data_size, ret);
+  Divide(ret, static_cast<DataType>(A.size()), ret);
 
   return ret;
 }
