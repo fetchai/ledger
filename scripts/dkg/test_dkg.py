@@ -24,8 +24,6 @@ def print_json(arg):
     pp.pprint(arg)
 
 # Custom class for this example
-
-
 class DKGInstance(Instance):
     def __init__(self, app_path, port_start, root, clear_path=True):
         self._app_path = str(app_path)
@@ -82,6 +80,7 @@ class DKGInstance(Instance):
                 self._cmd.append(node._pub_key_b64)
 
 
+# This class cats the log file of one of the examples
 class LogFileFollower(object):
     def __init__(self):
         self._running = False
