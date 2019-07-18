@@ -32,12 +32,12 @@ using FeatureFlagsPtr = std::unique_ptr<FeatureFlags>;
 class FeatureFlagTests : public ::testing::Test
 {
 protected:
-  void SetUp() override
+  virtual void SetUp()
   {
     flags_ = std::make_unique<FeatureFlags>();
   }
 
-  void TearDown() override
+  virtual void TearDown()
   {
     flags_.reset();
   }
