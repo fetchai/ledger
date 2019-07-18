@@ -92,7 +92,7 @@ public:
   void Reset(http::HTTPServer *srv = nullptr)
   {
     std::lock_guard<std::mutex> lock(server_lock_);
-    server_ = std::move(srv);
+    server_ = srv;
   }
 
 private:
