@@ -117,7 +117,7 @@ struct StateDict
   template <typename S>
   friend void Serialize(S &serializer, StateDict const &t)
   {
-    if (t.weights_)  // todo: can't serialize null pointer?
+    if (t.weights_)
     {
       serializer << true;
       serializer << *(t.weights_.get());
@@ -141,14 +141,14 @@ struct StateDict
   friend void Deserialize(S &serializer, StateDict &t)
   {
     ulong       dictsize{0};
-    std::string nodename{};  // todo: do I need to initialise variables?
+    std::string nodename{};
     StateDict   node_sd;
     bool        hasweights{};
 
     serializer >> hasweights;
     if (hasweights)
     {
-      ArrayType weights;  // todo:: check this
+      ArrayType weights;
       serializer >> weights;
       t.weights_ = std::make_shared<ArrayType>(weights);
     }

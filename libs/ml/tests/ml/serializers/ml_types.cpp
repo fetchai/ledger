@@ -19,6 +19,7 @@
 #include "core/serializers/byte_array_buffer.hpp"
 #include "math/tensor.hpp"
 #include "ml/layers/fully_connected.hpp"
+#include "ml/ops/placeholder.hpp"
 #include "ml/serializers/ml_types.hpp"
 #include "vectorise/fixed_point/serializers.hpp"
 
@@ -57,4 +58,45 @@ TYPED_TEST(SerializersTest, serialize_state_dict)
   fetch::ml::StateDict<TypeParam> sd2;
   b >> sd2;
   EXPECT_EQ(sd1, sd2);
+}
+
+TYPED_TEST(SerializersTest, serialize_empty_graph_saveable_params)
+{
+  fetch::ml::GraphSaveableParams<TypeParam> gsp1;
+  fetch::serializers::ByteArrayBuffer b;
+  b << gsp1;
+  b.seek(0);
+  fetch::ml::GraphSaveableParams<TypeParam> gsp2;
+  b >> gsp2;
+  EXPECT_EQ(gsp1.connections, gsp2.connections);
+}
+
+TYPED_TEST(SerializersTest, serialize_graph_saveable_params)
+{
+  using ArrayType = TypeParam ;
+  using GraphType      = typename fetch::ml::Graph<ArrayType>;
+  // Prepare graph (copied from MNIST)
+  //  Input -> FC -> Relu -> FC -> Relu -> FC -> Softmax
+  auto g = std::make_shared<GraphType>();
+
+  std::string input = g->AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>("Input", {});
+  std::string label = g->AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>("Label", {});
+
+  std::string layer_1 = g->AddNode<FullyConnected<ArrayType>>(
+      "FC1", {input}, 28u * 28u, 10u, fetch::ml::details::ActivationType::RELU, regulariser,
+      reg_rate);
+  std::string layer_2 = g->AddNode<FullyConnected<ArrayType>>(
+      "FC2", {layer_1}, 10u, 10u, fetch::ml::details::ActivationType::RELU, regulariser, reg_rate);
+  std::string output = g->AddNode<FullyConnected<ArrayType>>(
+      "FC3", {layer_2}, 10u, 10u, fetch::ml::details::ActivationType::SOFTMAX, regulariser,
+      reg_rate);
+  std::string error = g->AddNode<CrossEntropyLoss<ArrayType>>("Error", {output, label});
+
+  fetch::ml::GraphSaveableParams<TypeParam> gsp1;
+  fetch::serializers::ByteArrayBuffer b;
+  b << gsp1;
+  b.seek(0);
+  fetch::ml::GraphSaveableParams<TypeParam> gsp2;
+  b >> gsp2;
+  EXPECT_EQ(gsp1.connections, gsp2.connections);
 }

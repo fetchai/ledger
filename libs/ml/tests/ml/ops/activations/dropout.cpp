@@ -183,3 +183,46 @@ TYPED_TEST(DropoutTest, backward_3d_tensor_test)
   // test correct values
   EXPECT_TRUE(prediction[0].AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
 }
+
+TYPED_TEST(DropoutTest, saveparams_test)
+{
+  using DataType      = typename TypeParam::Type;
+  using ArrayType     = TypeParam;
+  using VecTensorType = typename fetch::ml::Ops<ArrayType>::VecTensorType;
+
+  ArrayType                     data = ArrayType::FromString(R"(1, -2, 3, -4, 5, -6, 7, -8)");
+  ArrayType                     gt   = ArrayType::FromString(R"(0, -2, 0,  0, 5, -6, 7, -8)");
+  DataType                      prob{0.5};
+  typename ArrayType ::SizeType random_seed = 12345;
+
+  fetch::math::Multiply(gt, DataType{1} / prob, gt);
+
+  fetch::ml::ops::Dropout<ArrayType> op(prob, random_seed);
+
+  ArrayType     prediction(op.ComputeOutputShape({data}));
+  VecTensorType vec_data({data});
+
+  op.Forward(vec_data, prediction);
+
+  // extract saveparams
+  std::shared_ptr<fetch::ml::SaveableParams> sp = op.GetOpSaveableParams();
+
+  // downcast to correct type
+  auto dsp = std::dynamic_pointer_cast<typename fetch::ml::ops::Dropout<ArrayType>::SPType>(sp);
+
+  // check that values are correct
+  EXPECT_EQ(dsp->probability, prob);
+  EXPECT_EQ(dsp->random_seed, random_seed);
+//  EXPECT_EQ(dsp->DESCRIPTOR, fetch::ml::ops::Dropout<ArrayType>::DESCRIPTOR);
+//  EXPECT_EQ(dsp->DESCRIPTOR, op.DESCRIPTOR);
+
+  // rebuild node
+  fetch::ml::ops::Dropout<ArrayType> new_op(*dsp);
+
+  // check that new predictions match the old
+  ArrayType new_prediction(op.ComputeOutputShape({data}));
+  new_op.Forward(vec_data, new_prediction);
+
+  // test correct values
+  EXPECT_TRUE(new_prediction.AllClose(prediction, DataType{1e-5f}, DataType{1e-5f}));
+}

@@ -100,6 +100,22 @@ struct GraphSaveableParams
   // unique node name to list of inputs
   std::vector<std::pair<std::string, std::vector<std::string>>>    connections;
   std::unordered_map<std::string, std::shared_ptr<SaveableParams>> nodes;
+
+  ////////////////////////////////
+  /// Serialization operations ///
+  ////////////////////////////////
+
+  template <typename S>
+  friend void Serialize(S &serializer, GraphSaveableParams const &gsp)
+  {
+    serializer << gsp.connections;
+  }
+
+  template <typename S>
+  friend void Deserialize(S &serializer, GraphSaveableParams &gsp)
+  {
+    serializer >> gsp.connections;
+  }
 };
 }  // namespace ml
 }  // namespace fetch
