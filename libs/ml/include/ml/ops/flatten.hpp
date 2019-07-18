@@ -42,7 +42,8 @@ public:
     assert(output.shape() == ComputeOutputShape(inputs));
     input_shape_ = inputs.front().get().shape();
 
-    assert(output.shape().at(output.shape().size() - 1) == inputs.front().get().shape().at(inputs.front().get().shape().size() - 1));
+    assert(output.shape().at(output.shape().size() - 1) ==
+           inputs.front().get().shape().at(inputs.front().get().shape().size() - 1));
     output.Assign(inputs.front().get().View());
   }
 
@@ -53,7 +54,8 @@ public:
     assert(inputs.size() == 1);
     ArrayType ret(input_shape_);
 
-    assert(ret.shape().at(ret.shape().size() - 1) == error_signal.shape().at(error_signal.shape().size() - 1));
+    assert(ret.shape().at(ret.shape().size() - 1) ==
+           error_signal.shape().at(error_signal.shape().size() - 1));
     ret.Assign(error_signal.View());
 
     return {ret};
@@ -76,7 +78,6 @@ public:
 
 private:
   std::vector<std::uint64_t> input_shape_;
-
 };
 
 }  // namespace ops
