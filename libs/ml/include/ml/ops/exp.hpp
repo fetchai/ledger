@@ -45,7 +45,7 @@ public:
     assert(inputs.size() == 1);
     assert(output.shape() == this->ComputeOutputShape(inputs));
 
-    fetch::math::Exp(inputs.at(0).get(), output);
+    fetch::math::Exp((*inputs.at(0)), output);
   }
 
   /**
@@ -59,7 +59,7 @@ public:
     assert(error_signal.shape() == this->ComputeOutputShape(inputs));
 
     ArrayType ret_error_signal(inputs.at(0)->shape());
-    fetch::math::Exp(inputs.at(0).get(), ret_error_signal);
+    fetch::math::Exp((*inputs.at(0)), ret_error_signal);
     fetch::math::Multiply(error_signal, ret_error_signal, ret_error_signal);
 
     return {ret_error_signal};

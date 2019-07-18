@@ -48,7 +48,7 @@ public:
     std::vector<ArrayType> tensors;
     for (auto const &e : inputs)
     {
-      tensors.emplace_back(e.get());
+      tensors.emplace_back(*e);
     }
 
     output = ArrayType::Concat(tensors, axis_);
@@ -67,7 +67,7 @@ public:
     auto c_it = concat_points_.begin();
     for (auto const &e : inputs)
     {
-      *c_it = e.get().shape()[axis_];
+      *c_it = e->shape()[axis_];
       ++c_it;
     }
     return ArrayType::Split(error_signal, concat_points_, axis_);

@@ -101,11 +101,11 @@ void Convolution2D<ArrayType>::Forward(VecTensorType const &inputs, ArrayType &o
   // Input should be a 3D tensor [C x H x W x N]
   assert(inputs.at(0)->shape().size() == 4);
   // Kernels should be a 4D tensor [oC x iC x H x W x N]
-  assert(inputs.at(1).get().shape().size() == 5);
+  assert(inputs.at(1)->shape().size() == 5);
   assert(output.shape() == ComputeOutputShape(inputs));
 
-  ArrayType input   = inputs.at(0).get();
-  ArrayType kernels = inputs.at(1).get();
+  ArrayType input   = (*inputs.at(0));
+  ArrayType kernels = (*inputs.at(1));
 
   SizeType input_channels  = input.shape().at(0);
   SizeType batch_size      = input.shape().at(3);
@@ -159,17 +159,17 @@ std::vector<ArrayType> Convolution2D<ArrayType>::Backward(VecTensorType const &i
   // Input should be a 4D tensor [C x H x W x N]
   assert(inputs.at(0)->shape().size() == 4);
   // Kernels should be a 5D tensor [oC x iC x H x W x N]
-  assert(inputs.at(1).get().shape().size() == 5);
+  assert(inputs.at(1)->shape().size() == 5);
   assert(error_signal.shape() == ComputeOutputShape(inputs));
 
   // input data channels = kernel input channels
-  assert(inputs.at(0)->shape().at(0) == inputs.at(1).get().shape().at(1));
+  assert(inputs.at(0)->shape().at(0) == inputs.at(1)->shape().at(1));
 
   SizeType output_height = error_signal.shape().at(1);
   SizeType output_width  = error_signal.shape().at(2);
 
-  ArrayType input   = inputs.at(0).get();
-  ArrayType kernels = inputs.at(1).get();
+  ArrayType input   = (*inputs.at(0));
+  ArrayType kernels = (*inputs.at(1));
 
   SizeType  input_channels  = input.shape().at(0);
   SizeType  batch_size      = input.shape().at(3);
@@ -222,13 +222,13 @@ std::vector<typename ArrayType::SizeType> Convolution2D<ArrayType>::ComputeOutpu
   std::vector<SizeType> output_shape;
 
   // output_shape_[0]=number of output channels
-  output_shape.emplace_back(inputs.at(1).get().shape()[0]);
+  output_shape.emplace_back(inputs.at(1)->shape()[0]);
   // output_shape_[1]=number of stride_size steps over input height
   output_shape.emplace_back(
-      (inputs.at(0)->shape()[1] - inputs.at(1).get().shape()[2] + stride_size_) / stride_size_);
+      (inputs.at(0)->shape()[1] - inputs.at(1)->shape()[2] + stride_size_) / stride_size_);
   // output_shape_[2]=number of stride_size steps over input width
   output_shape.emplace_back(
-      (inputs.at(0)->shape()[2] - inputs.at(1).get().shape()[3] + stride_size_) / stride_size_);
+      (inputs.at(0)->shape()[2] - inputs.at(1)->shape()[3] + stride_size_) / stride_size_);
   // output_shape_[3]=batch dimension
   output_shape.emplace_back(inputs.at(0)->shape().at(3));
 

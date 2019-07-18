@@ -47,7 +47,7 @@ public:
   {
     assert(output.shape() == ComputeOutputShape(inputs));
     assert(inputs.size() == 1);
-    fetch::math::Softmax(inputs.at(0).get(), output, axis_);
+    fetch::math::Softmax((*inputs.at(0)), output, axis_);
   }
 
   std::vector<ArrayType> Backward(VecTensorType const &inputs,

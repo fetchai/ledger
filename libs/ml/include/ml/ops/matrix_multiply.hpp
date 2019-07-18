@@ -85,7 +85,7 @@ void MatrixMultiply<T>::Forward(VecTensorType const &inputs, ArrayType &output)
   if (inputs.at(0)->shape().size() == 2 && inputs.at(1)->shape().size() == 2)
   {
     assert((inputs.at(0)->shape().size() == 2 && inputs.at(1)->shape().size() == 2));
-    fetch::math::Dot(inputs.at(0).get(), inputs.at(1).get(), output);
+    fetch::math::Dot((*inputs.at(0)), (*inputs.at(1)), output);
   }
   // Batchwise 3D @ 3D or broadcast matmul 2D @ 3D, 3D @ 2D
   else
@@ -118,7 +118,7 @@ void MatrixMultiply<T>::Forward(VecTensorType const &inputs, ArrayType &output)
       }
       else
       {
-        fwd_in1_view_tensor_ = inputs.at(0).get();
+        fwd_in1_view_tensor_ = (*inputs.at(0));
       }
 
       // ? @ 3D case
@@ -129,7 +129,7 @@ void MatrixMultiply<T>::Forward(VecTensorType const &inputs, ArrayType &output)
       // 3D @ 2D case
       else
       {
-        fwd_in2_view_tensor_ = inputs.at(1).get();
+        fwd_in2_view_tensor_ = (*inputs.at(1));
       }
 
       fetch::math::Dot(fwd_in1_view_tensor_, fwd_in2_view_tensor_, output_view_tensor_);
@@ -152,8 +152,8 @@ std::vector<T> MatrixMultiply<T>::Backward(VecTensorType const &inputs,
   // Normal MatMul 2D @ 2D
   if (inputs.at(0)->shape().size() == 2 && inputs.at(1)->shape().size() == 2)
   {
-    fetch::math::DotTranspose(error_signal, inputs.at(1).get(), error_signal_1_);
-    fetch::math::TransposeDot(inputs.at(0).get(), error_signal, error_signal_2_);
+    fetch::math::DotTranspose(error_signal, (*inputs.at(1)), error_signal_1_);
+    fetch::math::TransposeDot((*inputs.at(0)), error_signal, error_signal_2_);
   }
   // Batchwise 3D @ 3D or broadcast matmul 2D @ 3D, 3D @ 2D
   else
@@ -189,7 +189,7 @@ std::vector<T> MatrixMultiply<T>::Backward(VecTensorType const &inputs,
       // 2D @ 3D case
       else
       {
-        back_in1_view_tensor_ = inputs.at(0).get();
+        back_in1_view_tensor_ = (*inputs.at(0));
       }
 
       // ? @ 3D case
@@ -200,7 +200,7 @@ std::vector<T> MatrixMultiply<T>::Backward(VecTensorType const &inputs,
       // 3D @ 2D case
       else
       {
-        back_in2_view_tensor_ = inputs.at(1).get();
+        back_in2_view_tensor_ = (*inputs.at(1));
       }
 
       /////////////////
@@ -257,14 +257,12 @@ std::vector<typename T::SizeType> MatrixMultiply<T>::ComputeOutputShape(
   // Batchwise matmul or 3D @ 2D broadcast matmul
   else if (inputs.at(0)->shape().size() == 3)
   {
-    return {inputs.at(0)->shape().at(0), inputs.at(1)->shape().at(1),
-            inputs.at(0)->shape().at(2)};
+    return {inputs.at(0)->shape().at(0), inputs.at(1)->shape().at(1), inputs.at(0)->shape().at(2)};
   }
   // 2D @ 3D broadcast matmul
   else
   {
-    return {inputs.at(0)->shape().at(0), inputs.at(1)->shape().at(1),
-            inputs.at(1)->shape().at(2)};
+    return {inputs.at(0)->shape().at(0), inputs.at(1)->shape().at(1), inputs.at(1)->shape().at(2)};
   }
 }
 
@@ -280,14 +278,11 @@ void MatrixMultiply<T>::UpdateContainersForward(VecTensorType const &inputs)
   if (!((inputs.at(0)->shape() == fwd_input_shape_1_) &&
         (inputs.at(1)->shape() == fwd_input_shape_2_)))
   {
-    fwd_input_shape_1_ = inputs.at(0)->shape();
-    fwd_input_shape_2_ = inputs.at(1)->shape();
-    fwd_in1_view_tensor_ =
-        ArrayType({inputs.at(0)->shape().at(0), inputs.at(0)->shape().at(1)});
-    fwd_in2_view_tensor_ =
-        ArrayType({inputs.at(1)->shape().at(0), inputs.at(1)->shape().at(1)});
-    output_view_tensor_ =
-        ArrayType({inputs.at(0)->shape().at(0), inputs.at(1)->shape().at(1)});
+    fwd_input_shape_1_   = inputs.at(0)->shape();
+    fwd_input_shape_2_   = inputs.at(1)->shape();
+    fwd_in1_view_tensor_ = ArrayType({inputs.at(0)->shape().at(0), inputs.at(0)->shape().at(1)});
+    fwd_in2_view_tensor_ = ArrayType({inputs.at(1)->shape().at(0), inputs.at(1)->shape().at(1)});
+    output_view_tensor_  = ArrayType({inputs.at(0)->shape().at(0), inputs.at(1)->shape().at(1)});
   }
 }
 

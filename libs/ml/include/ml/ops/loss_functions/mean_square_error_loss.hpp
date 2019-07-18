@@ -45,19 +45,19 @@ public:
   void Forward(VecTensorType const &inputs, ArrayType &output) override
   {
     assert(inputs.size() == 2);
-    assert(inputs.at(0)->shape() == inputs.at(1).get().shape());
+    assert(inputs.at(0)->shape() == inputs.at(1)->shape());
 
     if (weightings_.size() == static_cast<SizeType>(0))
     {
-      output(0, 0) = fetch::math::MeanSquareError(inputs.at(0).get(), inputs.at(1).get());
+      output(0, 0) = fetch::math::MeanSquareError((*inputs.at(0)), (*inputs.at(1)));
     }
     // rescale according to weights
     else
     {
       SizeType data_size = inputs.at(0)->shape(inputs.at(0)->shape().size() - 1);
 
-      auto it1 = inputs.at(0).get().cbegin();
-      auto it2 = inputs.at(1).get().cbegin();
+      auto it1 = inputs.at(0)->cbegin();
+      auto it2 = inputs.at(1)->cbegin();
 
       // weighting is scalar
       if (weightings_.shape().size() == static_cast<SizeType>(1))
@@ -89,7 +89,7 @@ public:
       {
         SizeType data_count = 0;
         SizeType data_stride;
-        fetch::math::Divide(inputs.at(0).get().size(), weightings_.size(), data_stride);
+        fetch::math::Divide(inputs.at(0)->size(), weightings_.size(), data_stride);
 
         auto w_it = weightings_.cbegin();
         while (it1.is_valid())
@@ -109,7 +109,7 @@ public:
       }
 
       // divide by number of elements
-      fetch::math::Divide(output(0, 0), static_cast<DataType>(inputs.at(0).get().size()),
+      fetch::math::Divide(output(0, 0), static_cast<DataType>(inputs.at(0)->size()),
                           output(0, 0));
     }
 
@@ -142,7 +142,7 @@ public:
     FETCH_UNUSED(error_signal);
 
     assert(inputs.size() == 2);
-    assert(inputs.at(0)->shape() == inputs.at(1).get().shape());
+    assert(inputs.at(0)->shape() == inputs.at(1)->shape());
 
     ArrayType return_signal(inputs.front()->shape());
 
@@ -150,8 +150,8 @@ public:
     auto     count     = static_cast<DataType>(data_size);
 
     // backprop update rule varies depending on shape of weightings
-    auto a_it = inputs.at(0).get().cbegin();
-    auto b_it = inputs.at(1).get().cbegin();
+    auto a_it = inputs.at(0)->cbegin();
+    auto b_it = inputs.at(1)->cbegin();
     auto r_it = return_signal.begin();
 
     // no weighting
@@ -199,7 +199,7 @@ public:
         auto     w_it       = weightings_.cbegin();
         SizeType data_count = 0;
         SizeType data_stride;
-        fetch::math::Divide(inputs.at(0).get().size(), weightings_.size(), data_stride);
+        fetch::math::Divide(inputs.at(0)->size(), weightings_.size(), data_stride);
         while (r_it.is_valid())
         {
           *r_it = (((*a_it) - (*b_it)) * (*w_it)) / (count);

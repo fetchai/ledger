@@ -117,7 +117,7 @@ public:
   {
     for (auto const &p : clientList)
     {
-      if (p.get() != this)
+      if ((*p) != this)
       {
         peers_.push_back(p);
       }

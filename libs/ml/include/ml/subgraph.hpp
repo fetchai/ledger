@@ -88,7 +88,7 @@ std::vector<T> SubGraph<T>::Backward(VecTensorType const &inputs, ArrayType cons
     std::shared_ptr<NodeInterface<T>> node = this->nodes_[s];
     for (auto const &grad : non_back_prop_err_signal)
     {
-      if (grad.first == node.get())
+      if (grad.first == (*node))
       {
         back_prop_err_signal.emplace_back(grad.second);
       }

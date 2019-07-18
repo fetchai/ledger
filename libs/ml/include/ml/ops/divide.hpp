@@ -44,10 +44,10 @@ public:
   virtual void Forward(VecTensorType const &inputs, ArrayType &output)
   {
     assert(inputs.size() == 2);
-    assert(inputs.at(0)->shape() == inputs.at(1).get().shape());
+    assert(inputs.at(0)->shape() == inputs.at(1)->shape());
     assert(inputs.at(0)->shape() == output.shape());
 
-    fetch::math::Divide(inputs.at(0).get(), inputs.at(1).get(), output);
+    fetch::math::Divide((*inputs.at(0)), (*inputs.at(1)), output);
   }
 
   /**
@@ -60,8 +60,8 @@ public:
     ArrayType return_signal_1(inputs.at(0)->shape());
     ArrayType return_signal_2(return_signal_1.shape());
 
-    auto a_it   = inputs.at(0).get().cbegin();
-    auto b_it   = inputs.at(1).get().cbegin();
+    auto a_it   = inputs.at(0)->cbegin();
+    auto b_it   = inputs.at(1)->cbegin();
     auto err_it = error_signal.cbegin();
     auto r_1_it = return_signal_1.begin();
     auto r_2_it = return_signal_2.begin();

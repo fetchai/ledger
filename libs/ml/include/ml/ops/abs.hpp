@@ -47,7 +47,7 @@ public:
     assert(inputs.at(0)->shape() == output.shape());
     assert(output.shape() == this->ComputeOutputShape(inputs));
 
-    fetch::math::Abs(inputs[0].get(), output);
+    fetch::math::Abs((*inputs.at(0)), output);
   }
 
   /**
@@ -58,11 +58,11 @@ public:
                                           ArrayType const &    error_signal)
   {
     assert(inputs.size() == 1);
-    assert(error_signal.size() == inputs.at(0).get().size());
+    assert(error_signal.size() == inputs.at(0)->size());
 
     ArrayType return_signal(inputs.at(0)->shape());
 
-    auto a_it   = inputs.at(0).get().cbegin();
+    auto a_it   = inputs.at(0)->cbegin();
     auto err_it = error_signal.cbegin();
     auto r_it   = return_signal.begin();
     while (a_it.is_valid())
