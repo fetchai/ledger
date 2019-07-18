@@ -13,8 +13,6 @@ add_executable(constellation
                config_builder.hpp
                constellation.cpp
                constellation.hpp
-               open_api_http_module.hpp               
-               open_api_http_module.cpp               
                health_check_http_module.hpp
                key_generator.cpp
                key_generator.hpp
@@ -22,6 +20,8 @@ add_executable(constellation
                main.cpp
                manifest_builder.cpp
                manifest_builder.hpp
+               open_api_http_module.cpp
+               open_api_http_module.hpp
                settings.cpp
                settings.hpp
                telemetry_http_module.hpp)
