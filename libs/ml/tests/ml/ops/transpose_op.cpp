@@ -57,7 +57,8 @@ TYPED_TEST(TransposeTest, backward_test)
   TypeParam gradient = TypeParam::FromString(R"(1, 2, -3; 4, 5, 6)");
 
   fetch::ml::ops::Transpose<TypeParam> op;
-  std::vector<TypeParam>               backpropagated_signals = op.Backward({std::make_shared<TypeParam>(a)}, error);
+  std::vector<TypeParam>               backpropagated_signals =
+      op.Backward({std::make_shared<TypeParam>(a)}, error);
 
   // test correct shapes
   ASSERT_EQ(backpropagated_signals.size(), 1);
@@ -89,7 +90,8 @@ TYPED_TEST(TransposeTest, backward_batch_test)
   TypeParam gradient({4, 5, 2});
 
   fetch::ml::ops::Transpose<TypeParam> op;
-  std::vector<TypeParam>               backpropagated_signals = op.Backward({std::make_shared<TypeParam>(a)}, error);
+  std::vector<TypeParam>               backpropagated_signals =
+      op.Backward({std::make_shared<TypeParam>(a)}, error);
 
   // test correct shapes
   ASSERT_EQ(backpropagated_signals.size(), 1);

@@ -120,8 +120,8 @@ TYPED_TEST(Convolution2DTest, ops_forward_test)  // Use the class as an Ops
   fetch::ml::layers::Convolution2D<TypeParam> conv(output_channels, input_channels, kernel_height,
                                                    stride_size);
 
-  ArrayType output(conv.ComputeOutputShape({input}));
-  conv.Forward({input}, output);
+  ArrayType output(conv.ComputeOutputShape({std::make_shared<TypeParam>(input)}));
+  conv.Forward({std::make_shared<TypeParam>(input)}, output);
 
   // test correct values
   ASSERT_EQ(output.shape().size(), 4);
@@ -189,10 +189,10 @@ TYPED_TEST(Convolution2DTest, ops_backward_test)  // Use the class as an Ops
   fetch::ml::layers::Convolution2D<TypeParam> conv(output_channels, input_channels, kernel_height,
                                                    stride_size);
 
-  ArrayType output(conv.ComputeOutputShape({input}));
-  conv.Forward({input}, output);
+  ArrayType output(conv.ComputeOutputShape({std::make_shared<TypeParam>(input)}));
+  conv.Forward({std::make_shared<TypeParam>(input)}, output);
 
-  std::vector<TypeParam> backprop_error = conv.Backward({input}, error_signal);
+  std::vector<TypeParam> backprop_error = conv.Backward({std::make_shared<TypeParam>(input)}, error_signal);
 
   // test correct values
   ASSERT_EQ(backprop_error.size(), 1);

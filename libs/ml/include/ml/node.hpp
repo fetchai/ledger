@@ -58,8 +58,8 @@ private:
   };
 
 public:
-  using ArrayType   = T;
-  using NodePtrType = std::shared_ptr<NodeInterface<T>>;
+  using ArrayType     = T;
+  using NodePtrType   = std::shared_ptr<NodeInterface<T>>;
   using VecTensorType = typename fetch::ml::Ops<T>::VecTensorType;
 
   template <typename... Params>
@@ -71,9 +71,10 @@ public:
 
   virtual ~Node() = default;
 
-  VecTensorType                 GatherInputs() const;
+  VecTensorType                                         GatherInputs() const;
   std::shared_ptr<T>                                    Evaluate(bool is_training) override;
-  std::vector<std::pair<NodeInterface<T> *, ArrayType>> BackPropagateSignal(ArrayType const &error_signal) override;
+  std::vector<std::pair<NodeInterface<T> *, ArrayType>> BackPropagateSignal(
+      ArrayType const &error_signal) override;
 
   void                                    AddInput(NodePtrType const &i) override;
   void                                    AddOutput(NodePtrType const &o) override;
@@ -151,7 +152,7 @@ template <typename T, class O>
 std::vector<std::pair<NodeInterface<T> *, T>> Node<T, O>::BackPropagateSignal(
     ArrayType const &error_signal)
 {
-  VecTensorType inputs = GatherInputs();
+  VecTensorType          inputs                        = GatherInputs();
   std::vector<ArrayType> back_propagated_error_signals = this->Backward(inputs, error_signal);
   std::vector<std::pair<NodeInterface<T> *, ArrayType>> non_back_propagated_error_signals;
   assert(back_propagated_error_signals.size() == inputs.size() || inputs.empty());
