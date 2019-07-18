@@ -41,7 +41,7 @@ public:
           return http::CreateJsonResponse(response);
         });
 
-    Patch("/api/logging/", "TODO(tfr): yet to be written",
+    Patch("/api/logging/", "Update the logging level for specified subsystem(s)",
           [](http::ViewParameters const &, http::HTTPRequest const &req) {
             std::string error{};
             try
