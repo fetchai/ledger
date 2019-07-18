@@ -312,10 +312,10 @@ void MatrixMultiply<T>::UpdateContainersBackward(VecTensorType const &inputs,
     back_in2_view_tensor_ =
         ArrayType({inputs.at(1).get().shape().at(0), inputs.at(1).get().shape().at(1)});
 
-    err1_                 = ArrayType(error_signal_1_.shape());
-    err2_                 = ArrayType(error_signal_2_.shape());
-    error_signal_1_       = ArrayType(back_input_shape_1_);
-    error_signal_2_       = ArrayType(back_input_shape_2_);
+    err1_                = ArrayType(error_signal_1_.shape());
+    err2_                = ArrayType(error_signal_2_.shape());
+    error_signal_1_      = ArrayType(back_input_shape_1_);
+    error_signal_2_      = ArrayType(back_input_shape_2_);
     err_sig_view_tensor_ = ArrayType({error_signal.shape().at(0), error_signal.shape().at(1)});
   }
 }
