@@ -174,7 +174,7 @@ TEST_F(MathTests, tensor_state_test)
 
   Variant res;
   EXPECT_CALL(toolkit.observer(), Exists(state_name));
-  EXPECT_CALL(toolkit.observer(), Read(state_name, _, _)).Times(Between(1,2));
+  EXPECT_CALL(toolkit.observer(), Read(state_name, _, _)).Times(Between(1, 2));
   ASSERT_TRUE(toolkit.Run(&res));
 
   auto const                    tensor = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
