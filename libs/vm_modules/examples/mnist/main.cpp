@@ -18,6 +18,7 @@
 
 #include "vm/module.hpp"
 #include "vm_modules/core/print.hpp"
+#include "vm_modules/core/system.hpp"
 #include "vm_modules/ml/ml.hpp"
 
 #include <cstdint>
@@ -29,39 +30,17 @@
 #include <utility>
 #include <vector>
 
-struct System : public fetch::vm::Object
-{
-  System()           = delete;
-  ~System() override = default;
-
-  static int32_t Argc(fetch::vm::VM * /*vm*/, fetch::vm::TypeId /*type_id*/)
-  {
-    return int32_t(System::args.size());
-  }
-
-  static fetch::vm::Ptr<fetch::vm::String> Argv(fetch::vm::VM *vm, fetch::vm::TypeId /*type_id*/,
-                                                int32_t        a)
-  {
-    return fetch::vm::Ptr<fetch::vm::String>(
-        new fetch::vm::String(vm, System::args[std::size_t(a)]));
-  }
-
-  static std::vector<std::string> args;
-};
-
-std::vector<std::string> System::args;
 
 int main(int argc, char **argv)
 {
-  if (argc < 2)
-  {
-    std::cerr << "usage ./" << argv[0] << " [filename]" << std::endl;
-    std::exit(-9);
-  }
+  // parse the command line parameters
+  fetch::vm_modules::System::Parse(argc, argv);
 
-  for (int i = 2; i < argc; ++i)
+  // ensure the program has the correct number of args
+  if (2u != fetch::vm_modules::System::GetParamParser().arg_size())
   {
-    System::args.push_back(std::string(argv[i]));
+    std::cerr << "Usage: " << argv[0] << " [options] <filename> -- [script args]..." << std::endl;
+    return 1;
   }
 
   // Reading file
@@ -77,9 +56,7 @@ int main(int argc, char **argv)
 
   auto module = std::make_shared<fetch::vm::Module>();
 
-  module->CreateClassType<System>("System")
-      .CreateStaticMemberFunction("Argc", &System::Argc)
-      .CreateStaticMemberFunction("Argv", &System::Argv);
+  fetch::vm_modules::System::Bind(*module);
 
   fetch::vm_modules::ml::BindML(*module);
 

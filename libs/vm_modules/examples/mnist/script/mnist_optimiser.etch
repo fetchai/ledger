@@ -1,6 +1,6 @@
 function main()
 
-if (System.Argc() != 2)
+if (System.Argc() != 3)
   print("Usage: VM SCRIPT_FILE PATH/TO/train-images-idx3-ubyte PATH/TO/train-labels-idx1-ubyte");
   return;
 endif
@@ -21,10 +21,10 @@ g.addCrossEntropyLoss("Error", "Softmax", "Label");
 
 
 // Set up the dataloader
-printLn(System.Argv(0));
 printLn(System.Argv(1));
+printLn(System.Argv(2));
 var data_loader = DataLoader();
-data_loader.addData("mnist", System.Argv(0), System.Argv(1));
+data_loader.addData("mnist", System.Argv(1), System.Argv(2));
 
 // Set up the optimiser
 var optimiser = AdamOptimiser(g, "Input", "Label", "Error");
