@@ -79,7 +79,7 @@ public:
       ArrayType sum = return_signal.Slice(0, 1 - axis_).Copy();
       for (size_t i = 0; i < return_signal.shape()[2]; i++)
       {
-        sum.View({i}).Assign(ReduceSum(return_signal.Slice(i, 2).Copy().Squeeze(), 1 - axis_));
+        sum.View(i).Assign(ReduceSum(return_signal.Slice(i, 2).Copy().Squeeze(), 1 - axis_).View());
       }
 
       t.InlineMultiply(sum);
