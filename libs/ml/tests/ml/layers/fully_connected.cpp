@@ -92,7 +92,7 @@ TYPED_TEST(FullyConnectedTest, node_forward_test)  // Use the class as a Node
                                                                               42u);
   fc.AddInput(placeholder);
 
-  TypeParam prediction = fc.Evaluate(true);
+  TypeParam prediction = *fc.Evaluate(true);
 
   ASSERT_EQ(prediction.shape().size(), 2);
   ASSERT_EQ(prediction.shape()[0], 42);
@@ -109,7 +109,7 @@ TYPED_TEST(FullyConnectedTest, node_backward_test)  // Use the class as a Node
   fetch::ml::Node<TypeParam, fetch::ml::layers::FullyConnected<TypeParam>> fc("FullyConnected", 50u,
                                                                               42u);
   fc.AddInput(placeholder);
-  TypeParam prediction = fc.Evaluate(true);
+  TypeParam prediction = *fc.Evaluate(true);
 
   TypeParam error_signal(std::vector<typename TypeParam::SizeType>({42, 2}));
   auto      backprop_error = fc.BackPropagateSignal(error_signal);

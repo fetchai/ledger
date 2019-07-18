@@ -180,7 +180,8 @@ private:
     if (input_matrix.shape().size() != 2)
     {
       fetch::ml::ops::Flatten<ArrayType> flatten_op;
-      ArrayType                          flat_input(flatten_op.ComputeOutputShape({std::make_shared<ArrayType>(input_matrix)}));
+      ArrayType                          flat_input(
+          flatten_op.ComputeOutputShape({std::make_shared<ArrayType>(input_matrix)}));
       flatten_op.Forward({std::make_shared<ArrayType>(input_matrix)}, flat_input);
       input_matrix_ = flat_input.Transpose();
     }
