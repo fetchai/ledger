@@ -210,7 +210,7 @@ private:
   byte_array::ByteArray original_;
   byte_array::ByteArray path_;
   MatchingVector        match_;
-  ParamaterList         path_parameters_;
+  ParameterList         path_parameters_;
   ValidatorMap          validators_;
 };
 }  // namespace http

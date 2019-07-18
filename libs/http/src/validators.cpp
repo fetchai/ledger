@@ -22,7 +22,7 @@ namespace fetch {
 namespace http {
 namespace validators {
 
-inline Validator StringValue(uint16_t min_length = 0, uint16_t max_length = uint16_t(-1))
+inline Validator StringValue(uint16_t min_length, uint16_t max_length)
 {
   Validator x;
   x.validator           = [](byte_array::ConstByteArray) { return true; };
