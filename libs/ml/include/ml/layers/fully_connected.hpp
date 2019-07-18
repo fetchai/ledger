@@ -46,7 +46,7 @@ public:
   using SizeType      = typename ArrayType::SizeType;
   using DataType      = typename ArrayType::Type;
   using WeightsInit   = fetch::ml::ops::WeightsInitialisation;
-  using VecTensorType = SubGraph<T>::VecTensorType;
+  using VecTensorType = typename SubGraph<T>::VecTensorType;
 
   FullyConnected(SizeType in, SizeType out,
                  details::ActivationType activation_type = details::ActivationType::NOTHING,

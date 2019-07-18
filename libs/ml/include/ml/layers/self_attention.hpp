@@ -42,7 +42,7 @@ public:
   using ArrayType     = T;
   using SizeType      = typename ArrayType::SizeType;
   using ArrayPtrType  = std::shared_ptr<ArrayType>;
-  using VecTensorType = SubGraph<T>::VecTensorType;
+  using VecTensorType = typename SubGraph<T>::VecTensorType;
 
   SelfAttention(std::uint64_t in, std::uint64_t out, std::uint64_t hidden,
                 std::string const &name = "SA")
