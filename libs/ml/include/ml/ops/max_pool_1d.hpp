@@ -71,12 +71,12 @@ public:
         iter = i * stride_size_;
         for (SizeType c{0}; c < output.shape().at(0); ++c)  // Iterate over output channels
         {
-          max = inputs.at(0)->(c, iter, n_i);
+          max = inputs.at(0)->At(c, iter, n_i);
 
           // Get maximum value on kernel_size_ window
           for (SizeType j{1}; j < kernel_size_; j++)  // Iterate over kernel width
           {
-            val = inputs.at(0)->(c, iter + j, n_i);
+            val = inputs.at(0)->At(c, iter + j, n_i);
             if (val > max)
             {
               max = val;
@@ -125,13 +125,13 @@ public:
         iter = i * stride_size_;
         for (SizeType c{0}; c < output_shape.at(0); ++c)  // Iterate over output channels
         {
-          max      = inputs.at(0)->(c, iter, n_i);
+          max      = inputs.at(0)->At(c, iter, n_i);
           max_iter = iter;
 
           // Find max node
           for (SizeType j{0}; j < kernel_size_; j++)  // Iterate over kernel width
           {
-            val = inputs.at(0)->(c, iter + j, n_i);
+            val = inputs.at(0)->At(c, iter + j, n_i);
             if (val > max)
             {
               max      = val;

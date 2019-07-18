@@ -236,7 +236,8 @@ TYPED_TEST(Convolution2DTest, backward_3x3x3x2_5x3x3x3x2)
   }
 
   fetch::ml::ops::Convolution2D<ArrayType> op;
-  std::vector<ArrayType>                   prediction = op.Backward({input, kernels}, error);
+  std::vector<ArrayType>                   prediction = op.Backward(
+      {std::make_shared<ArrayType>(input), std::make_shared<ArrayType>(kernels)}, error);
 
   // Test correct gradient shape
   ASSERT_EQ(prediction.at(0).shape(), input.shape());

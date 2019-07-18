@@ -188,8 +188,9 @@ TYPED_TEST(Convolution1DTest, forward_3x3x2_5x3x3x2)
   }
 
   fetch::ml::ops::Convolution1D<ArrayType> op;
-  ArrayType                                output(op.ComputeOutputShape({input, kernels}));
-  op.Forward({input, kernels}, output);
+  ArrayType                                output(op.ComputeOutputShape(
+      {std::make_shared<ArrayType>(input), std::make_shared<ArrayType>(kernels)}));
+  op.Forward({std::make_shared<ArrayType>(input), std::make_shared<ArrayType>(kernels)}, output);
 
   // Generate gt
   gt(0, 0, 0) = DataType{9};
@@ -279,7 +280,8 @@ TYPED_TEST(Convolution1DTest, backward_3x3x2_5x3x3x2)
   }
 
   fetch::ml::ops::Convolution1D<ArrayType> op;
-  std::vector<ArrayType>                   prediction = op.Backward({input, kernels}, error);
+  std::vector<ArrayType>                   prediction = op.Backward(
+      {std::make_shared<ArrayType>(input), std::make_shared<ArrayType>(kernels)}, error);
 
   // Test correct gradient shape
   ASSERT_EQ(prediction.at(0).shape(), input.shape());
