@@ -537,7 +537,7 @@ State DkgService::OnCompleteState()
 bool DkgService::BuildAeonKeys()
 {
   FETCH_LOG_DEBUG(LOGGING_NAME,
-                 "Build new aeons key shares. Current cabinet size: ", current_cabinet_.size());
+                  "Build new aeons key shares. Current cabinet size: ", current_cabinet_.size());
 
   FETCH_LOCK(cabinet_lock_);
   FETCH_LOCK(dealer_lock_);
