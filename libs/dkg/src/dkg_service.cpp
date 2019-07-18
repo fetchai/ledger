@@ -43,9 +43,8 @@ using MuddleAddress = muddle::Packet::Address;
 using State         = DkgService::State;
 using PromiseState  = service::PromiseState;
 
-constexpr char const *LOGGING_NAME   = "DkgService";
-constexpr uint64_t    READ_AHEAD     = 3;
-constexpr uint64_t    HISTORY_LENGTH = 10;
+constexpr uint64_t READ_AHEAD     = 3;
+constexpr uint64_t HISTORY_LENGTH = 10;
 
 const ConstByteArray GENESIS_PAYLOAD = "=~=~ Genesis ~=~=";
 

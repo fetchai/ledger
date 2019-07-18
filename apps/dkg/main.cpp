@@ -108,10 +108,17 @@ int main(int argc, char **argv)
   }
 
   // Important! Block until there are peers - dkg not resistant to this case
-  while (muddle->AsEndpoint().GetDirectlyConnectedPeers().empty())
+  while (!(muddle->AsEndpoint().GetDirectlyConnectedPeers().size() == peer_ip_addresses.size()))
   {
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
   }
+
+  FETCH_LOG_INFO(LOGGING_NAME,
+                 "Connected peers: ", muddle->AsEndpoint().GetDirectlyConnectedPeers().size());
+  FETCH_LOG_INFO(LOGGING_NAME, "expected connected peers: ", peer_ip_addresses.size());
+  FETCH_LOG_INFO(LOGGING_NAME, "Resetting cabinet");
+
+  std::this_thread::sleep_for(std::chrono::milliseconds(5000));
 
   dkg->ResetCabinet(members, std::size_t(std::stoi(args[2])));
 
