@@ -61,17 +61,23 @@ public:
     this->Forward(inputs, t);
     return_signal.InlineMultiply(t);
 
-    // 1D softmax
-    if (inputs.front().get().shape().size() == 1)
+    // 1D softmax with 1 batch dimension
+    if (inputs.front().get().shape().size() == 2)
     {
-      typename ArrayType::Type sum = return_signal.Sum();
+      assert(axis_ == 1);
+      ArrayType sum = ReduceSum(return_signal, 0);
+
       t.InlineMultiply(sum);
     }
-    // 2D softmax
-    else if (inputs.front().get().shape().size() == 2)
+    // 2D softmax with 1 batch dimension
+    else if (inputs.front().get().shape().size() == 3)
     {
-      ArrayType sum;
-      sum = ReduceSum(return_signal, 1 - axis_);
+      assert((axis_ == 1) || (axis_ == 0));
+      ArrayType sum = return_signal.Slice(0, 1 - axis_).Copy();
+      for (size_t i = 0; i < return_signal.shape()[2]; i++)
+      {
+        sum.View(i).Assign(ReduceSum(return_signal.Slice(i, 2).Copy().Squeeze(), 1 - axis_).View());
+      }
 
       t.InlineMultiply(sum);
     }
