@@ -39,8 +39,8 @@ public:
   using match_function_type =
       std::function<bool(std::size_t &, byte_array::ByteArray const &, ViewParameters &)>;
   using MatchingVector = std::vector<match_function_type>;
-  using ParameterList = std::vector<byte_array::ConstByteArray>;
-  using ValidatorMap = std::unordered_map<byte_array::ConstByteArray, validators::Validator>;
+  using ParameterList  = std::vector<byte_array::ConstByteArray>;
+  using ValidatorMap   = std::unordered_map<byte_array::ConstByteArray, validators::Validator>;
 
   bool Match(byte_array::ConstByteArray const &path, ViewParameters &params)
   {

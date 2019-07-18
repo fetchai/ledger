@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -17,27 +16,23 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/logging.hpp"
-#include "http/json_response.hpp"
-#include "http/module.hpp"
-#include "http/server.hpp"
-
-#include <string>
+#include "http/validators.hpp"
 
 namespace fetch {
+namespace http {
+namespace validators {
 
-class OpenAPIHttpModule : public http::HTTPModule
+inline Validator StringValue(uint16_t min_length = 0, uint16_t max_length = uint16_t(-1))
 {
-public:
-  OpenAPIHttpModule();
-  void Reset(http::HTTPServer *srv = nullptr);
+  Validator x;
+  x.validator           = [](byte_array::ConstByteArray) { return true; };
+  x.schema              = variant::Variant::Object();
+  x.schema["type"]      = "string";
+  x.schema["minLength"] = min_length;
+  x.schema["maxLength"] = max_length;
+  return x;
+}
 
-private:
-  using Variant        = variant::Variant;
-  using ConstByteArray = byte_array::ConstByteArray;
-
-  http::HTTPServer *server_{nullptr};
-  std::mutex        server_lock_;
-};
-
+}  // namespace validators
+}  // namespace http
 }  // namespace fetch
