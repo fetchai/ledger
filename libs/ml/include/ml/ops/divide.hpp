@@ -47,12 +47,15 @@ public:
     assert(inputs.size() == 2);
     assert(inputs.at(0).get().shape() == output.shape());
 
-    if((inputs.at(0).get().shape() == inputs.at(1).get().shape()) || (inputs.at(1).get().size() > 1)){ // array / array
-	    fetch::math::Divide(inputs.at(0).get(), inputs.at(1).get(), output);
-    }else{ // array / scalar
-    	fetch::math::Divide(inputs.at(0).get(), *(inputs.at(1).get().cbegin()), output);
+    if ((inputs.at(0).get().shape() == inputs.at(1).get().shape()) ||
+        (inputs.at(1).get().size() > 1))
+    {  // array / array
+      fetch::math::Divide(inputs.at(0).get(), inputs.at(1).get(), output);
     }
-    
+    else
+    {  // array / scalar
+      fetch::math::Divide(inputs.at(0).get(), *(inputs.at(1).get().cbegin()), output);
+    }
   }
 
   /**
@@ -62,55 +65,62 @@ public:
   virtual std::vector<ArrayType> Backward(VecTensorType const &inputs,
                                           ArrayType const &    error_signal)
   {
-	  ArrayType return_signal_1(inputs.at(0).get().shape());
-	  ArrayType return_signal_2(inputs.at(1).get().shape());
-	  return_signal_2.Fill(static_cast<DataType>(0));
-	
-	  auto a_it   = inputs.at(0).get().cbegin();
-	  auto b_it   = inputs.at(1).get().cbegin();
-	  auto err_it = error_signal.cbegin();
-	  auto r_1_it = return_signal_1.begin();
-	  auto r_2_it = return_signal_2.begin();
-  	if(inputs.at(0).get().shape() == inputs.at(1).get().shape()){ // array / array same shape
-		  while (a_it.is_valid())
-		  {
-			  *r_1_it = (*err_it) / (*b_it);
-			  *r_2_it = -((*err_it) * (*a_it)) / ((*b_it) * (*b_it));
-			
-			  ++a_it;
-			  ++b_it;
-			  ++err_it;
-			  ++r_1_it;
-			  ++r_2_it;
-		  }
-  	}else if(inputs.at(1).get().size() == 1){ // array / scalar
-		  while (a_it.is_valid()){
-			  *r_1_it = (*err_it) / (*b_it);
-			  *r_2_it += -((*err_it) * (*a_it)) / ((*b_it) * (*b_it));
-			  
-			  ++a_it;
-			  ++err_it;
-			  ++r_1_it;
-		  }
-  	}else{ // array / array different shape 
-		  // TODO () This implementation only works in limited scenarios, as it does not resolve the axis the division happens along
-//  	  while (a_it.is_valid()){
-//  	  	*r_1_it = (*err_it) / (*b_it);
-//		    *r_2_it += -((*err_it) * (*a_it)) / ((*b_it) * (*b_it));
-//		    
-//		    ++a_it;
-//		    ++b_it;
-//		    ++err_it;
-//		    ++r_1_it;
-//		    ++r_2_it;
-//		    if(!r_2_it.is_valid()){ 
-//		    	r_2_it = return_signal_2.begin();
-//			    b_it   = inputs.at(1).get().cbegin();
-//		    }
-//  	  }
-		  throw std::runtime_error("array array division of different shapes is not yet handled");
-  	}
-	  return {return_signal_1, return_signal_2};
+    ArrayType return_signal_1(inputs.at(0).get().shape());
+    ArrayType return_signal_2(inputs.at(1).get().shape());
+    return_signal_2.Fill(static_cast<DataType>(0));
+
+    auto a_it   = inputs.at(0).get().cbegin();
+    auto b_it   = inputs.at(1).get().cbegin();
+    auto err_it = error_signal.cbegin();
+    auto r_1_it = return_signal_1.begin();
+    auto r_2_it = return_signal_2.begin();
+    if (inputs.at(0).get().shape() == inputs.at(1).get().shape())
+    {  // array / array same shape
+      while (a_it.is_valid())
+      {
+        *r_1_it = (*err_it) / (*b_it);
+        *r_2_it = -((*err_it) * (*a_it)) / ((*b_it) * (*b_it));
+
+        ++a_it;
+        ++b_it;
+        ++err_it;
+        ++r_1_it;
+        ++r_2_it;
+      }
+    }
+    else if (inputs.at(1).get().size() == 1)
+    {  // array / scalar
+      while (a_it.is_valid())
+      {
+        *r_1_it = (*err_it) / (*b_it);
+        *r_2_it += -((*err_it) * (*a_it)) / ((*b_it) * (*b_it));
+
+        ++a_it;
+        ++err_it;
+        ++r_1_it;
+      }
+    }
+    else
+    {  // array / array different shape
+      // TODO () This implementation only works in limited scenarios, as it does not resolve the
+      // axis the division happens along
+      //  	  while (a_it.is_valid()){
+      //  	  	*r_1_it = (*err_it) / (*b_it);
+      //		    *r_2_it += -((*err_it) * (*a_it)) / ((*b_it) * (*b_it));
+      //
+      //		    ++a_it;
+      //		    ++b_it;
+      //		    ++err_it;
+      //		    ++r_1_it;
+      //		    ++r_2_it;
+      //		    if(!r_2_it.is_valid()){
+      //		    	r_2_it = return_signal_2.begin();
+      //			    b_it   = inputs.at(1).get().cbegin();
+      //		    }
+      //  	  }
+      throw std::runtime_error("array array division of different shapes is not yet handled");
+    }
+    return {return_signal_1, return_signal_2};
   }
 
   virtual std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const
