@@ -274,7 +274,7 @@ TYPED_TEST(Convolution2DTest, node_forward_test)  // Use the class as a Node
       "Convolution2D", output_channels, input_channels, kernel_height, stride_size);
   conv.AddInput(placeholder);
 
-  TypeParam prediction = conv.Evaluate(true);
+  TypeParam prediction = *conv.Evaluate(true);
 
   // test correct values
   ASSERT_EQ(prediction.shape().size(), 4);
@@ -346,7 +346,7 @@ TYPED_TEST(Convolution2DTest, node_backward_test)  // Use the class as a Node
   fetch::ml::Node<TypeParam, fetch::ml::layers::Convolution2D<TypeParam>> conv(
       "Convolution2D", output_channels, input_channels, kernel_height, stride_size);
   conv.AddInput(placeholder);
-  TypeParam prediction     = conv.Evaluate(true);
+  TypeParam prediction     = *conv.Evaluate(true);
   auto      backprop_error = conv.BackPropagateSignal(error_signal);
 
   // test correct values

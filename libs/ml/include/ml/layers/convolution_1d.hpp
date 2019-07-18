@@ -83,12 +83,12 @@ public:
     this->SetOutputNode(output);
   }
 
-  virtual std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
+  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
   {
     ArrayType weights_data(
         std::vector<SizeType>{{output_channels_, input_channels_, kernel_size_, 1}});
     return fetch::ml::ops::Convolution1D<ArrayType>(stride_size_)
-        .ComputeOutputShape({inputs.at(0), weights_data});
+        .ComputeOutputShape({inputs.at(0), std::make_shared<ArrayType>(weights_data)});
   }
 
   static constexpr char const *DESCRIPTOR = "Convolution1D";

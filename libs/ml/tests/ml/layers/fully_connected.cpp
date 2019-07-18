@@ -52,8 +52,8 @@ TYPED_TEST(FullyConnectedTest, ops_forward_test)  // Use the class as an Ops
   fetch::ml::layers::FullyConnected<TypeParam> fc(50, 10);
   TypeParam input_data(std::vector<typename TypeParam::SizeType>({5, 10, 2}));
 
-  TypeParam output(fc.ComputeOutputShape({input_data}));
-  fc.Forward({input_data}, output);
+  TypeParam output(fc.ComputeOutputShape({std::make_shared<TypeParam>(input_data)}));
+  fc.Forward({std::make_shared<TypeParam>(input_data)}, output);
 
   ASSERT_EQ(output.shape().size(), 2);
   ASSERT_EQ(output.shape()[0], 10);
@@ -66,12 +66,13 @@ TYPED_TEST(FullyConnectedTest, ops_backward_test)  // Use the class as an Ops
   fetch::ml::layers::FullyConnected<TypeParam> fc(50, 10);
   TypeParam input_data(std::vector<typename TypeParam::SizeType>({5, 10, 2}));
 
-  TypeParam output(fc.ComputeOutputShape({input_data}));
-  fc.Forward({input_data}, output);
+  TypeParam output(fc.ComputeOutputShape({std::make_shared<TypeParam>(input_data)}));
+  fc.Forward({std::make_shared<TypeParam>(input_data)}, output);
 
   TypeParam error_signal(std::vector<typename TypeParam::SizeType>({10, 2}));
 
-  std::vector<TypeParam> backprop_error = fc.Backward({input_data}, error_signal);
+  std::vector<TypeParam> backprop_error =
+      fc.Backward({std::make_shared<TypeParam>(input_data)}, error_signal);
   ASSERT_EQ(backprop_error.size(), 1);
   ASSERT_EQ(backprop_error[0].shape().size(), 3);
   ASSERT_EQ(backprop_error[0].shape()[0], 5);

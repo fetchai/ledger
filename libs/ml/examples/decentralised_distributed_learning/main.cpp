@@ -106,7 +106,7 @@ public:
 
   bool AddPeer(std::shared_ptr<TrainingClient> p)
   {
-    if (*p != this)
+    if (p.get() != this)
     {
       return peers_.insert(p).second;
     }
