@@ -156,10 +156,10 @@ DkgService::SecretKeyReq DkgService::RequestSecretKey(MuddleAddress const &addre
   else
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Failed to provide node: ", address.ToBase64(),
-                   " with secret share. Not in current cabinet secrets! Size: ", current_cabinet_secrets_.size());
+                   " with secret share. Not in current cabinet secrets! Size: ",
+                   current_cabinet_secrets_.size());
 
-
-    for(auto const &i : current_cabinet_secrets_)
+    for (auto const &i : current_cabinet_secrets_)
     {
       FETCH_LOG_INFO(LOGGING_NAME, i.first.ToBase64());
     }
@@ -475,7 +475,9 @@ State DkgService::OnCollectSignaturesState()
   }
   else
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Still awaiting shares. Threshold: ", current_threshold_, " Number of shares: ", round->GetNumShares(), " has signature: ", round->HasSignature());
+    FETCH_LOG_INFO(LOGGING_NAME, "Still awaiting shares. Threshold: ", current_threshold_,
+                   " Number of shares: ", round->GetNumShares(),
+                   " has signature: ", round->HasSignature());
   }
 
   // if there have been no updates on this iteration, wait for a period of time
@@ -540,7 +542,8 @@ State DkgService::OnCompleteState()
  */
 bool DkgService::BuildAeonKeys()
 {
-  FETCH_LOG_INFO(LOGGING_NAME, "Build new aeons key shares. Current cabinet size: ", current_cabinet_.size());
+  FETCH_LOG_INFO(LOGGING_NAME,
+                 "Build new aeons key shares. Current cabinet size: ", current_cabinet_.size());
 
   FETCH_LOCK(cabinet_lock_);
   FETCH_LOCK(dealer_lock_);

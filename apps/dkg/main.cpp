@@ -26,8 +26,8 @@
 #include "network/management/network_manager.hpp"
 #include "network/muddle/muddle.hpp"
 
-#include "../../apps/constellation/key_generator.hpp"
 #include "../../apps/constellation/key_generator.cpp"
+#include "../../apps/constellation/key_generator.hpp"
 
 using namespace fetch;
 using namespace fetch::crypto;
@@ -43,10 +43,13 @@ int main(int argc, char **argv)
   // External tool needs this
   std::cout << p2p_key->identity().identifier().ToBase64() << std::endl;
 
-  // The arguments for this program shall be : ./exe beacon_address port threshold peer1 priv_key_b64 peer2 priv_key_b64...
-  if(argc == 1)
+  // The arguments for this program shall be : ./exe beacon_address port threshold peer1
+  // priv_key_b64 peer2 priv_key_b64...
+  if (argc == 1)
   {
-    FETCH_LOG_INFO("MAIN", "Usage: ./exe beacon_address port threshold peer1 priv_key_b64 peer2 priv_key_b64...");
+    FETCH_LOG_INFO(
+        "MAIN",
+        "Usage: ./exe beacon_address port threshold peer1 priv_key_b64 peer2 priv_key_b64...");
     return 0;
   }
 
@@ -58,9 +61,9 @@ int main(int argc, char **argv)
   {
     args.emplace_back(std::string{argv[i]});
 
-    if(i >= 4)
+    if (i >= 4)
     {
-      if(!(i & 0x1))
+      if (!(i & 0x1))
       {
         peer_ip_addresses.push_back(args.back());
       }
@@ -72,22 +75,25 @@ int main(int argc, char **argv)
   }
 
   // Muddle setup/gubbins
-  fetch::network::NetworkManager          network_manager{"NetworkManager", 2};
-  fetch::core::Reactor                 reactor{"ReactorName"};
-  auto muddle = std::make_shared<fetch::muddle::Muddle>(fetch::muddle::NetworkId{"TestDKGNetwork"}, p2p_key, network_manager, true, true);
+  fetch::network::NetworkManager network_manager{"NetworkManager", 2};
+  fetch::core::Reactor           reactor{"ReactorName"};
+  auto muddle = std::make_shared<fetch::muddle::Muddle>(fetch::muddle::NetworkId{"TestDKGNetwork"},
+                                                        p2p_key, network_manager, true, true);
 
   dkg::DkgService::CabinetMembers members{};
 
-  for(auto const &i : peer_addresses)
+  for (auto const &i : peer_addresses)
   {
     members.insert(byte_array::FromBase64(i));
   }
 
   auto beacon_address = byte_array::FromBase64(args[0]);
 
-  FETCH_LOG_INFO(LOGGING_NAME, "beacon address: ", beacon_address, " B64: ", beacon_address.ToBase64());
+  FETCH_LOG_INFO(LOGGING_NAME, "beacon address: ", beacon_address,
+                 " B64: ", beacon_address.ToBase64());
 
-  std::shared_ptr<dkg::DkgService> dkg = std::make_unique<dkg::DkgService>(muddle->AsEndpoint(), p2p_key->identity().identifier(), beacon_address);
+  std::shared_ptr<dkg::DkgService> dkg = std::make_unique<dkg::DkgService>(
+      muddle->AsEndpoint(), p2p_key->identity().identifier(), beacon_address);
 
   // Start networking etc.
   network_manager.Start();
@@ -95,13 +101,14 @@ int main(int argc, char **argv)
 
   std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
-  for(auto const &i : peer_ip_addresses)
+  for (auto const &i : peer_ip_addresses)
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Telling muddle to connect to peer: ", i);
     muddle->AddPeer(fetch::network::Uri{i});
   }
 
-  while(muddle->AsEndpoint().GetDirectlyConnectedPeers().empty())
+  // Important! Block until there are peers - dkg not resistant to this case
+  while (muddle->AsEndpoint().GetDirectlyConnectedPeers().empty())
   {
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
   }
@@ -112,7 +119,7 @@ int main(int argc, char **argv)
   reactor.Attach(dkg->GetWeakRunnable());
   reactor.Start();
 
-  std::this_thread::sleep_for(std::chrono::milliseconds(60000)); // 1 min
+  std::this_thread::sleep_for(std::chrono::milliseconds(60000));  // 1 min
 
   FETCH_LOG_INFO(LOGGING_NAME, "Finished. Quitting");
 

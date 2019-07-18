@@ -18,15 +18,18 @@ import threading
 from fetch.cluster.instance import Instance
 from fetch.cluster.monitor import MonitoredLogFile
 
+
 def print_json(arg):
     pp = pprint.PrettyPrinter(indent=4)
     pp.pprint(arg)
 
 # Custom class for this example
+
+
 class DKGInstance(Instance):
     def __init__(self, app_path, port_start, root, clear_path=True):
-        self._app_path       = str(app_path)
-        self._port_start     = int(port_start)
+        self._app_path = str(app_path)
+        self._port_start = int(port_start)
 
         # Ensure root dir exists
         if not os.path.exists(root):
@@ -36,7 +39,7 @@ class DKGInstance(Instance):
         super().__init__([], root)
 
         # Run the program with no arguments to get the public key
-        self._cmd = [ self._app_path, ]
+        self._cmd = [self._app_path, ]
 
         # if requested clear the current directory
         if clear_path:
@@ -57,23 +60,27 @@ class DKGInstance(Instance):
     def start(self):
         super().start()
 
-        print('Started DKG instance {} on pid {}'.format(self._port_start, self._process.pid))
+        print('Started DKG instance {} on pid {}'.format(
+            self._port_start, self._process.pid))
         print_json(self._cmd)
         print("")
 
     def configure_cmd_for_demo(self, node_list, threshold):
         # args shall be : ./exe beacon_address port threshold peer1 priv_key_b64 peer2 priv_key_b64...
-        self._cmd = [ self._app_path, ]
+        self._cmd = [self._app_path, ]
         self._cmd.append(node_list[0]._pub_key_b64)     # beacon address
-        self._cmd.append(str(self._port_start)) # this port
+        self._cmd.append(str(self._port_start))  # this port
         self._cmd.append(str(threshold))                # threshold
 
         for node in node_list:
             if node is self:
                 print("found self")
             else:
-                self._cmd.append("tcp://127.0.0.1:"+str(node._port_start))       # other peer IP
-                self._cmd.append(node._pub_key_b64)                              # other peer address
+                # other peer IP
+                self._cmd.append("tcp://127.0.0.1:"+str(node._port_start))
+                # other peer address
+                self._cmd.append(node._pub_key_b64)
+
 
 class LogFileFollower(object):
     def __init__(self):
@@ -118,7 +125,8 @@ def run_test(dkg_exe, output_directory, number_nodes, threshold):
 
     # Create DKG nodes
     for index in range(number_nodes):
-        DKG_nodes.append(DKGInstance(dkg_exe, start_port, output_directory+"/"+str(start_port)))
+        DKG_nodes.append(DKGInstance(dkg_exe, start_port,
+                                     output_directory+"/"+str(start_port)))
         start_port = start_port + 1
 
     # Start DKG nodes in reverse
@@ -135,6 +143,7 @@ def run_test(dkg_exe, output_directory, number_nodes, threshold):
     follow.stop()
     print("Finished. Actually quitting")
     sys.exit(0)
+
 
 def parse_commandline():
 
@@ -157,6 +166,7 @@ def parse_commandline():
                         help='Threshold for number of nodes to be honest')
 
     return parser.parse_args()
+
 
 def main():
     args = parse_commandline()
