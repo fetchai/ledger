@@ -60,6 +60,7 @@ private:
 public:
   using ArrayType   = T;
   using NodePtrType = std::shared_ptr<NodeInterface<T>>;
+  using VecTensorType = typename fetch::ml::Ops<T>::VecTensorType;
 
   template <typename... Params>
   Node(std::string const name, Params... params)
@@ -70,7 +71,7 @@ public:
 
   virtual ~Node() = default;
 
-  std::vector<std::shared_ptr<const ArrayType>>                 GatherInputs() const;
+  VecTensorType                 GatherInputs() const;
   virtual ArrayType &                                           Evaluate(bool is_training);
   virtual std::vector<std::pair<NodeInterface<T> *, ArrayType>> BackPropagateSignal(
       ArrayType const &error_signal);
@@ -94,9 +95,9 @@ private:
  * @return vector of reference_wrapped tensors
  */
 template <class T, class O>
-std::vector<std::shared_ptr<const T>> Node<T, O>::GatherInputs() const
+typename Node<T, O>::VecTensorType Node<T, O>::GatherInputs() const
 {
-  std::vector<std::shared_ptr<const ArrayType>> inputs;
+  VecTensorType inputs;
   for (auto const &i : input_nodes_)
   {
     inputs.push_back(i->Evaluate(this->is_training_));
@@ -121,7 +122,7 @@ T &Node<T, O>::Evaluate(bool is_training)
 
   if (cached_output_status_ != CachedOutputState::VALID_CACHE)
   {
-    std::vector<std::shared_ptr<const ArrayType>> inputs = GatherInputs();
+    VecTensorType inputs = GatherInputs();
 
     if (cached_output_status_ == CachedOutputState::CHANGED_SIZE)
     {
@@ -151,7 +152,7 @@ template <typename T, class O>
 std::vector<std::pair<NodeInterface<T> *, T>> Node<T, O>::BackPropagateSignal(
     ArrayType const &error_signal)
 {
-  std::vector<std::shared_ptr<const ArrayType>> inputs = GatherInputs();
+  VecTensorType inputs = GatherInputs();
   std::vector<ArrayType> back_propagated_error_signals = this->Backward(inputs, error_signal);
   std::vector<std::pair<NodeInterface<T> *, ArrayType>> non_back_propagated_error_signals;
   assert(back_propagated_error_signals.size() == inputs.size() || inputs.empty());
