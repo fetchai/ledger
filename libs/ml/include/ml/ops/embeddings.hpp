@@ -82,9 +82,9 @@ public:
       {
         trailing_indices1.at(0) = i;
         trailing_indices1.at(1) = n;
-        auto embedding_view    = this->embeddings_output_->View(trailing_indices1);
+        auto embedding_view     = this->embeddings_output_->View(trailing_indices1);
         trailing_indices2.at(0) = static_cast<SizeType>(*e_it);
-        auto output_view       = this->output_->View(trailing_indices2);
+        auto output_view        = this->output_->View(trailing_indices2);
 
         embedding_view.Assign(output_view);
         ++e_it;
@@ -111,9 +111,9 @@ public:
 
         trailing_indices1.at(0) = i;
         trailing_indices1.at(1) = n;
-        auto error_view        = error_signal.View(trailing_indices1);
+        auto error_view         = error_signal.View(trailing_indices1);
         trailing_indices2.at(0) = static_cast<SizeType>(*e_it);
-        auto gradient_view     = this->gradient_accumulation_->View(trailing_indices2);
+        auto gradient_view      = this->gradient_accumulation_->View(trailing_indices2);
 
         auto error_view_it    = error_view.cbegin();
         auto gradient_view_it = gradient_view.begin();
