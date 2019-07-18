@@ -27,8 +27,8 @@
 #include <cstdint>
 #include <functional>
 #include <iomanip>
-#include <limits>
 #include <iostream>
+#include <limits>
 
 namespace fetch {
 namespace fixed_point {
@@ -1293,7 +1293,7 @@ constexpr FixedPoint<I, F> &FixedPoint<I, F>::operator+=(FixedPoint<I, F> const 
       *this = NaN;
     }
     else
-    { 
+    {
       fp_state |= STATE_INFINITY;
       *this = NEGATIVE_INFINITY;
     }
@@ -1305,7 +1305,7 @@ constexpr FixedPoint<I, F> &FixedPoint<I, F>::operator+=(FixedPoint<I, F> const 
       fp_state |= STATE_OVERFLOW;
     }
     Type fp = data_ + n.Data();
-    *this = FromBase(fp);
+    *this   = FromBase(fp);
   }
   return *this;
 }
@@ -1359,7 +1359,7 @@ constexpr FixedPoint<I, F> &FixedPoint<I, F>::operator-=(FixedPoint<I, F> const 
       fp_state |= STATE_OVERFLOW;
     }
     Type fp = data_ - n.Data();
-    *this = FromBase(fp);
+    *this   = FromBase(fp);
   }
   return *this;
 }
@@ -1381,7 +1381,7 @@ constexpr FixedPoint<I, F> &FixedPoint<I, F>::operator*=(FixedPoint<I, F> const 
   {
     fp_state |= STATE_INFINITY;
     *this = infinity((IsPosInfinity(*this) && IsPosInfinity(n)) ||
-                    (IsNegInfinity(*this) && IsNegInfinity(n)));
+                     (IsNegInfinity(*this) && IsNegInfinity(n)));
   }
   else if (IsInfinity(*this))
   {
@@ -1421,7 +1421,7 @@ constexpr FixedPoint<I, F> &FixedPoint<I, F>::operator*=(FixedPoint<I, F> const 
       fp_state |= STATE_OVERFLOW;
     }
     Type fp = Type(prod >> FRACTIONAL_BITS);
-    *this = FromBase(fp);
+    *this   = FromBase(fp);
   }
   return *this;
 }
@@ -1434,7 +1434,7 @@ constexpr FixedPoint<I, F> &FixedPoint<I, F>::operator*=(FixedPoint<I, F> const 
 template <std::uint16_t I, std::uint16_t F>
 constexpr FixedPoint<I, F> &FixedPoint<I, F>::operator/=(FixedPoint<I, F> const &n)
 {
-    if (IsNaN(*this) || IsNaN(n))
+  if (IsNaN(*this) || IsNaN(n))
   {
     fp_state |= STATE_NAN;
     *this = NaN;
@@ -1471,7 +1471,7 @@ constexpr FixedPoint<I, F> &FixedPoint<I, F>::operator/=(FixedPoint<I, F> const 
     FixedPoint abs_n     = Abs(*this);
     NextType   numerator = NextType(abs_n.Data()) << FRACTIONAL_BITS;
     NextType   quotient  = numerator / NextType(n.Data());
-    *this = sign * FromBase(Type(quotient));
+    *this                = sign * FromBase(Type(quotient));
   }
   return *this;
 }
