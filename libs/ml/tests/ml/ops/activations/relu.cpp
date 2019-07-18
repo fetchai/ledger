@@ -37,8 +37,7 @@ TYPED_TEST_CASE(ReluTest, MyTypes);
 
 TYPED_TEST(ReluTest, forward_all_positive_test)
 {
-  using ArrayType     = TypeParam;
-  using VecTensorType = typename fetch::ml::Ops<TypeParam>::VecTensorType;
+  using ArrayType = TypeParam;
 
   ArrayType data = ArrayType::FromString(R"(1, 2, 3, 4, 5, 6, 7, 8)");
   ArrayType gt   = ArrayType::FromString(R"(1, 2, 3, 4, 5, 6, 7, 8)");

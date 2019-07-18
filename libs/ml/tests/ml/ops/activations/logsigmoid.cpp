@@ -34,8 +34,8 @@ TYPED_TEST_CASE(LogSigmoidTest, MyTypes);
 
 TYPED_TEST(LogSigmoidTest, forward_test)
 {
-  using DataType      = typename TypeParam::Type;
-  using ArrayType     = TypeParam;
+  using DataType  = typename TypeParam::Type;
+  using ArrayType = TypeParam;
 
   ArrayType data = ArrayType::FromString(R"(1, -2, 3, -4, 5, -6, 7, -8)");
   ArrayType gt   = ArrayType::FromString(
@@ -51,9 +51,9 @@ TYPED_TEST(LogSigmoidTest, forward_test)
 
 TYPED_TEST(LogSigmoidTest, forward_3d_tensor_test)
 {
-  using DataType      = typename TypeParam::Type;
-  using ArrayType     = TypeParam;
-  using SizeType      = typename TypeParam::SizeType;
+  using DataType  = typename TypeParam::Type;
+  using ArrayType = TypeParam;
+  using SizeType  = typename TypeParam::SizeType;
 
   ArrayType           data({2, 2, 2});
   ArrayType           gt({2, 2, 2});

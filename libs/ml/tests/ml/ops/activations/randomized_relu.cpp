@@ -34,9 +34,9 @@ TYPED_TEST_CASE(RandomizedReluTest, MyTypes);
 
 TYPED_TEST(RandomizedReluTest, forward_test)
 {
-  using DataType      = typename TypeParam::Type;
-  using ArrayType     = TypeParam;
-  using SizeType      = typename TypeParam::SizeType;
+  using DataType  = typename TypeParam::Type;
+  using ArrayType = TypeParam;
+  using SizeType  = typename TypeParam::SizeType;
 
   ArrayType           data(8);
   ArrayType           gt(8);
@@ -85,9 +85,9 @@ TYPED_TEST(RandomizedReluTest, forward_test)
 
 TYPED_TEST(RandomizedReluTest, forward_3d_tensor_test)
 {
-  using DataType      = typename TypeParam::Type;
-  using ArrayType     = TypeParam;
-  using SizeType      = typename TypeParam::SizeType;
+  using DataType  = typename TypeParam::Type;
+  using ArrayType = TypeParam;
+  using SizeType  = typename TypeParam::SizeType;
 
   ArrayType           data({2, 2, 2});
   ArrayType           gt({2, 2, 2});
@@ -116,9 +116,9 @@ TYPED_TEST(RandomizedReluTest, forward_3d_tensor_test)
 
 TYPED_TEST(RandomizedReluTest, backward_test)
 {
-  using DataType      = typename TypeParam::Type;
-  using ArrayType     = TypeParam;
-  using SizeType      = typename TypeParam::SizeType;
+  using DataType  = typename TypeParam::Type;
+  using ArrayType = TypeParam;
+  using SizeType  = typename TypeParam::SizeType;
 
   ArrayType           data(8);
   ArrayType           error(8);
