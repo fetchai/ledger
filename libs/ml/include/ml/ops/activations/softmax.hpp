@@ -64,8 +64,9 @@ public:
     // 1D softmax with 1 batch dimension
     if (inputs.front().get().shape().size() == 2)
     {
-      typename ArrayType::Type sum = return_signal.Sum();
-      t.InlineMultiply(sum);
+	    ArrayType sum = ReduceSum(return_signal, 1 - axis_);
+	
+	    t.InlineMultiply(sum);
     }
     // 2D softmax with 1 batch dimension
     else if (inputs.front().get().shape().size() == 3)
