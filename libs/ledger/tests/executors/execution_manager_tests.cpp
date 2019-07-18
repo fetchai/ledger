@@ -165,7 +165,7 @@ protected:
   FakeExecutorList    executors_;
 };
 
-TEST_P(ExecutionManagerTests, CheckIncrementalExecution)
+TEST_P(ExecutionManagerTests, DISABLED_CheckIncrementalExecution)
 {
   BlockConfig const &config = GetParam();
 

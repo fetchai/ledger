@@ -158,8 +158,7 @@ protected:
     server->Add(PROTOCOL, &protocol);
 
     // create the client
-    auto client =
-        std::make_shared<RpcClient>("Client", endpoint, FromBase64(target), SERVICE, CHANNEL);
+    auto client = std::make_shared<RpcClient>("Client", endpoint, SERVICE, CHANNEL);
 
     if (NETWORK_A_PUBLIC_KEY == target)
     {
@@ -173,8 +172,8 @@ protected:
       uint8_t const        fill = static_cast<uint8_t>(loop);
       ConstByteArray const data = GenerateData(PAYLOAD_LENGTH, fill);
 
-      auto promise =
-          client->Call(endpoint.network_id().value(), PROTOCOL, TestProtocol::EXCHANGE, data);
+      Promise promise =
+          client->CallSpecificAddress(FromBase64(target), PROTOCOL, TestProtocol::EXCHANGE, data);
       promise->WithHandlers()
           .Then([promise, fill]() {
             auto const result = promise->As<ConstByteArray>();
