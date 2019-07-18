@@ -46,9 +46,9 @@ TYPED_TEST(SelfAttentionTest, output_shape_test)  // Use the class as a Node
   TypeParam query_data = TypeParam({7, 4, 1});
 	TypeParam key_data = TypeParam({5, 4, 1});
 	TypeParam value_data = TypeParam({5, 3, 1});
-  query_data.Fill(1);
-	key_data.Fill(1);
-	value_data.Fill(1);
+  query_data.Fill(static_cast<DataType>(1));
+	key_data.Fill(static_cast<DataType>(1));
+	value_data.Fill(static_cast<DataType>(1));
   
   g.SetInput(query, query_data);
 	g.SetInput(key, key_data);

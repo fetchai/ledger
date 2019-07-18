@@ -85,7 +85,7 @@ public:
 	  std::string weight_value_matmul = this->template AddNode<fetch::ml::ops::MatrixMultiply<ArrayType>>(
 	   name + "_Weights_Value_MatMul", {dropout_attention_weight, value});
 	
-	  // TODO () masking op
+	  // TODO () masking op translation decoder
 
     this->AddInputNode(query);
 	  this->AddInputNode(key);

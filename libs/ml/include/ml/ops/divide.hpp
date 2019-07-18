@@ -32,6 +32,7 @@ public:
   using SizeType      = typename ArrayType::SizeType;
   using ArrayPtrType  = std::shared_ptr<ArrayType>;
   using VecTensorType = typename Ops<T>::VecTensorType;
+  using DataType      = typename T::Type;
 
   Divide()          = default;
   virtual ~Divide() = default;
@@ -63,7 +64,7 @@ public:
   {
 	  ArrayType return_signal_1(inputs.at(0).get().shape());
 	  ArrayType return_signal_2(inputs.at(1).get().shape());
-	  return_signal_2.Fill(0);
+	  return_signal_2.Fill(static_cast<DataType>(0));
 	
 	  auto a_it   = inputs.at(0).get().cbegin();
 	  auto b_it   = inputs.at(1).get().cbegin();
@@ -107,7 +108,7 @@ public:
 //			    b_it   = inputs.at(1).get().cbegin();
 //		    }
 //  	  }
-		  throw std::runtime_error("softmax for nDimensions not yet handled");
+		  throw std::runtime_error("array array division of different shapes is not yet handled");
   	}
 	  return {return_signal_1, return_signal_2};
   }
