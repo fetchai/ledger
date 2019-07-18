@@ -58,6 +58,7 @@ public:
   ConstIteratorType cend() const;
 
   void Assign(TensorView const &other);
+  void Assign(Tensor<T, C> const &other);
 
   /////////////////
   /// OPERATORS ///
@@ -178,6 +179,19 @@ void TensorView<T, C>::Assign(TensorView const &other)
     ++it1;
     ++it2;
   }
+}
+
+/**
+ * Assigns the entire contents of one tensor to this tensorview
+ * @tparam T
+ * @tparam C
+ * @param other
+ */
+template <typename T, typename C>
+void TensorView<T, C>::Assign(Tensor<T, C> const &other)
+{
+  auto other_view = other.View();
+  Assign(other_view);
 }
 
 template <typename T, typename C>

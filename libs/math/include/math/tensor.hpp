@@ -140,6 +140,7 @@ public:
   void Assign(TensorSliceImplementation<G> const &other);
   void Assign(TensorSlice const &other);
   void Assign(Tensor const &other);
+  void Assign(TensorView<T, C> const &other);
 
   template <typename... Indices>
   Type &At(Indices... indices);
@@ -1000,6 +1001,19 @@ void Tensor<T, C>::Assign(Tensor const &other)
     ++it1;
     ++it2;
   }
+}
+
+/**
+ * Assign makes a deep copy of data from another tensor into this one
+ * @tparam T
+ * @tparam C
+ * @param other Another tensorview to assign data from into this
+ */
+template <typename T, typename C>
+void Tensor<T, C>::Assign(TensorView<Type, ContainerType> const &other)
+{
+  auto this_view = this->View();
+  this_view.Assign(other);
 }
 
 /**

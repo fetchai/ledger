@@ -107,13 +107,16 @@ void MatrixMultiply<T>::Forward(VecTensorType const &inputs, ArrayType &output)
     // Iterate over batch
     for (SizeType i{0}; i < batch_size; i++)
     {
-      auto output_slice = output.Slice(i, 2);
-      output_slice_tensor_.Assign(output.Slice(i, 2));
+//        auto output_slice = output.Slice(i, 2);
+//        output_slice_tensor_.Assign(output.Slice(i, 2));
+      auto output_slice = output.View(i);
+      output_slice_tensor_.Assign(output.View(i));
 
       // 3D @ ? case
       if (inputs.at(0).get().shape().size() == 3)
       {
-        fwd_in1_slice_tensor_.Assign(inputs.at(0).get().Slice(i, 2));
+//        fwd_in1_slice_tensor_.Assign(inputs.at(0).get().Slice(i, 2));
+        fwd_in1_slice_tensor_.Assign(inputs.at(0).get().View(i));
         // 2D @ 3D case
       }
       else
@@ -124,7 +127,8 @@ void MatrixMultiply<T>::Forward(VecTensorType const &inputs, ArrayType &output)
       // ? @ 3D case
       if (inputs.at(1).get().shape().size() == 3)
       {
-        fwd_in2_slice_tensor_.Assign(inputs.at(1).get().Slice(i, 2));
+//        fwd_in2_slice_tensor_.Assign(inputs.at(1).get().Slice(i, 2));
+        fwd_in2_slice_tensor_.Assign(inputs.at(1).get().View(i));
       }
       // 3D @ 2D case
       else
