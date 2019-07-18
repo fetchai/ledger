@@ -87,7 +87,8 @@ TYPED_TEST(LogSoftmaxTest, backward_test)
   ArrayType data  = ArrayType::FromString("1; -2; 3; -4; 5; -6; 7; -8");
   ArrayType error = ArrayType::FromString("0; 0; 0; 1; 1; 1; 0; 0");
   ArrayType gt    = ArrayType::FromString(
-      "-6.4312e-03; -3.2019e-04; -4.7521e-02;  9.9996e-01;  6.4887e-01; 9.9999e-01; -2.59454; -7.9368e-07");
+      "-6.4312e-03; -3.2019e-04; -4.7521e-02;  9.9996e-01;  6.4887e-01; 9.9999e-01; -2.59454; "
+      "-7.9368e-07");
 
   fetch::ml::ops::LogSoftmax<ArrayType> op{1};
   std::vector<ArrayType>                prediction = op.Backward({data}, error);
