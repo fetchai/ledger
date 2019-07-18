@@ -16,10 +16,6 @@
 //
 //------------------------------------------------------------------------------
 
-// TODO: try out linear decay weightings on keras conv models
-// TODO: MSE now works with weightings, so set up exponential decay weightings in training
-// TODO: implement weighting in etch crypto prediction
-
 #include "math/metrics/mean_absolute_error.hpp"
 #include "math/normalize_array.hpp"
 #include "math/tensor.hpp"
