@@ -76,14 +76,14 @@ public:
 
           for (SizeType c{0}; c < output.shape().at(0); ++c)  // Iterate over output channels
           {
-            max = inputs.at(0)->(c, iterw, iterh, n_i);
+            max = inputs.at(0)->At(c, iterw, iterh, n_i);
 
             // Get maximum value on kernel_size_ x kernel_size_ window
             for (SizeType jw{0}; jw < kernel_size_; jw++)  // Iterate over kernel width
             {
               for (SizeType jh{0}; jh < kernel_size_; jh++)  // Iterate over kernel width
               {
-                val = inputs.at(0)->(c, iterw + jw, iterh + jh, n_i);
+                val = inputs.at(0)->At(c, iterw + jw, iterh + jh, n_i);
                 if (val > max)
                 {
                   max = val;
@@ -138,7 +138,7 @@ public:
           // Iterate over output channels
           for (SizeType c{0}; c < error_signal.shape().at(0); ++c)
           {
-            max       = inputs.at(0)->(c, iterw, iterh, n_i);
+            max       = inputs.at(0)->At(c, iterw, iterh, n_i);
             max_iterw = iterw;
             max_iterh = iterh;
 
@@ -148,7 +148,7 @@ public:
               for (SizeType jh{0}; jh < kernel_size_; jh++)  // Iterate over kernel width
               {
 
-                val = inputs.at(0)->(c, iterw + jw, iterh + jh, n_i);
+                val = inputs.at(0)->At(c, iterw + jw, iterh + jh, n_i);
                 if (val > max)
                 {
                   max       = val;
