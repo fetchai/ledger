@@ -109,8 +109,7 @@ public:
       }
 
       // divide by number of elements
-      fetch::math::Divide(output(0, 0), static_cast<DataType>(inputs.at(0)->size()),
-                          output(0, 0));
+      fetch::math::Divide(output(0, 0), static_cast<DataType>(inputs.at(0)->size()), output(0, 0));
     }
 
     // division by 2 allows us to cancel out with a 2 in the derivative for optimisation

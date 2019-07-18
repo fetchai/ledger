@@ -224,11 +224,11 @@ std::vector<typename ArrayType::SizeType> Convolution2D<ArrayType>::ComputeOutpu
   // output_shape_[0]=number of output channels
   output_shape.emplace_back(inputs.at(1)->shape()[0]);
   // output_shape_[1]=number of stride_size steps over input height
-  output_shape.emplace_back(
-      (inputs.at(0)->shape()[1] - inputs.at(1)->shape()[2] + stride_size_) / stride_size_);
+  output_shape.emplace_back((inputs.at(0)->shape()[1] - inputs.at(1)->shape()[2] + stride_size_) /
+                            stride_size_);
   // output_shape_[2]=number of stride_size steps over input width
-  output_shape.emplace_back(
-      (inputs.at(0)->shape()[2] - inputs.at(1)->shape()[3] + stride_size_) / stride_size_);
+  output_shape.emplace_back((inputs.at(0)->shape()[2] - inputs.at(1)->shape()[3] + stride_size_) /
+                            stride_size_);
   // output_shape_[3]=batch dimension
   output_shape.emplace_back(inputs.at(0)->shape().at(3));
 

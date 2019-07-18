@@ -213,8 +213,7 @@ std::vector<typename ArrayType::SizeType> Convolution1D<ArrayType>::ComputeOutpu
   output_shape.emplace_back(inputs.at(1)->shape().at(0));
   // output_shape_[1]=number of stride_size steps over input size
   output_shape.emplace_back(
-      (inputs.at(0)->shape().at(1) - inputs.at(1)->shape().at(2) + stride_size_) /
-      stride_size_);
+      (inputs.at(0)->shape().at(1) - inputs.at(1)->shape().at(2) + stride_size_) / stride_size_);
   // output_shape_[2]=batch dimension
   output_shape.emplace_back(inputs.at(0)->shape().at(2));
 
