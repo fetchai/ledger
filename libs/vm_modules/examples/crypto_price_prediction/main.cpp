@@ -20,8 +20,8 @@
 #include "ml/dataloaders/ReadCSV.hpp"
 #include "vm/module.hpp"
 #include "vm_modules/core/print.hpp"
-#include "vm_modules/ml/ml.hpp"
 #include "vm_modules/core/system.hpp"
+#include "vm_modules/ml/ml.hpp"
 
 #include <cstddef>
 #include <cstdint>
@@ -33,7 +33,7 @@
 
 using DataType  = typename fetch::vm_modules::math::VMTensor::DataType;
 using ArrayType = fetch::math::Tensor<DataType>;
-using System = fetch::vm_modules::System;
+using System    = fetch::vm_modules::System;
 
 // read the weights and bias csv files
 fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> read_csv(
@@ -60,12 +60,13 @@ int main(int argc, char **argv)
   // parse the command line parameters
   System::Parse(argc, argv);
 
-  fetch::commandline::ParamsParser const & pp = System::GetParamParser();
+  fetch::commandline::ParamsParser const &pp = System::GetParamParser();
 
   // ensure the program has the correct number of args
   if (2u != pp.arg_size())
   {
-    std::cerr << "Usage: " << pp.GetArg(0) << " [options] <filename> -- [script args]..." << std::endl;
+    std::cerr << "Usage: " << pp.GetArg(0) << " [options] <filename> -- [script args]..."
+              << std::endl;
     return 1;
   }
 

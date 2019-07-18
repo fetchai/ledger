@@ -30,7 +30,6 @@
 #include <utility>
 #include <vector>
 
-
 int main(int argc, char **argv)
 {
   // parse the command line parameters

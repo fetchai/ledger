@@ -23,13 +23,15 @@
 namespace fetch {
 namespace vm_modules {
 
-class Parameters {
+class Parameters
+{
 public:
   using ParamParser = fetch::commandline::ParamsParser;
   using ArgList     = std::vector<char *>;
   using StringList  = std::vector<std::string>;
 
-  void Parse(int argc, char **argv) {
+  void Parse(int argc, char **argv)
+  {
     const std::string SEPARATOR{"--"};
 
     ArgList program_args{};
@@ -41,11 +43,15 @@ public:
 
     // loop through all the parameters
     ArgList *current_list = &program_args;
-    for (int i = 1; i < argc; ++i) {
-      if (SEPARATOR == argv[i]) {
+    for (int i = 1; i < argc; ++i)
+    {
+      if (SEPARATOR == argv[i])
+      {
         // switch the list
         current_list = &script_args;
-      } else {
+      }
+      else
+      {
         // add the string to the list
         current_list->push_back(argv[i]);
       }
@@ -55,47 +61,56 @@ public:
     program_params_.Parse(static_cast<int>(program_args.size()), program_args.data());
 
     // copy the script arguments
-    for (auto const *s : script_args) {
+    for (auto const *s : script_args)
+    {
       script_args_.emplace_back(s);
     }
   }
 
-  ParamParser const &program() const {
+  ParamParser const &program() const
+  {
     return program_params_;
   }
 
-  StringList const &script() const {
+  StringList const &script() const
+  {
     return script_args_;
   }
 
 private:
   ParamParser program_params_{};
-  StringList script_args_{};
+  StringList  script_args_{};
 };
 
-struct System : public fetch::vm::Object {
+struct System : public fetch::vm::Object
+{
   System()           = delete;
   ~System() override = default;
 
-  static void Bind(fetch::vm::Module & module) {
+  static void Bind(fetch::vm::Module &module)
+  {
     module.CreateClassType<System>("System")
         .CreateStaticMemberFunction("Argc", &System::Argc)
         .CreateStaticMemberFunction("Argv", &System::Argv);
   }
 
-  static int32_t Argc(fetch::vm::VM *, fetch::vm::TypeId) {
+  static int32_t Argc(fetch::vm::VM *, fetch::vm::TypeId)
+  {
     return static_cast<int32_t>(params.script().size());
   }
 
-  static fetch::vm::Ptr <fetch::vm::String> Argv(fetch::vm::VM *vm, fetch::vm::TypeId, int32_t index) {
+  static fetch::vm::Ptr<fetch::vm::String> Argv(fetch::vm::VM *vm, fetch::vm::TypeId, int32_t index)
+  {
     return {new fetch::vm::String{vm, params.script().at(static_cast<std::size_t>(index))}};
   }
 
-  static void Parse(int argc, char **argv) {
+  static void Parse(int argc, char **argv)
+  {
     params.Parse(argc, argv);
   }
 
-  static Parameters::ParamParser const & GetParamParser(){
+  static Parameters::ParamParser const &GetParamParser()
+  {
     return params.program();
   }
 
@@ -103,5 +118,5 @@ private:
   static Parameters params;
 };
 
-}
-}
+}  // namespace vm_modules
+}  // namespace fetch
