@@ -81,16 +81,16 @@ public:
     for (SizeType i{0}; i < batch_size; i++)
     {
 
-      // Slice along batch dimension
-      auto input1_slice = inputs.at(0).get().Slice(i, t_batch_dimension);
-      auto rs1_slice    = return_signal_1.Slice(i, t_batch_dimension);
-      auto error_slice  = error_signal.Slice(i, 1);
+      // View along batch dimension
+      auto input1_view = inputs.at(0).get().View(i);
+      auto rs1_view    = return_signal_1.View(i);
+      auto error_view  = error_signal.View(i);
 
-      auto rs1_it    = rs1_slice.begin();
+      auto rs1_it    = rs1_view.begin();
       auto rs2_it    = return_signal_2.begin();
-      auto input1_it = input1_slice.begin();
+      auto input1_it = input1_view.begin();
       auto input2_it = inputs.at(1).get().begin();
-      auto error_it  = error_slice.begin();
+      auto error_it  = error_view.begin();
 
       while (input1_it.is_valid())
       {

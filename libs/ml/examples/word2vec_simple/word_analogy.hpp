@@ -68,9 +68,9 @@ void EvalAnalogy(DataLoaderType const &data_loader, ArrayType const &embeds, Siz
     throw std::runtime_error("word3 not found");
   }
 
-  auto word_vector_1 = embeddings.Slice(word1_idx, 1).Copy();
-  auto word_vector_2 = embeddings.Slice(word2_idx, 1).Copy();
-  auto word_vector_3 = embeddings.Slice(word3_idx, 1).Copy();
+  auto word_vector_1 = embeddings.View(word1_idx).Copy();
+  auto word_vector_2 = embeddings.View(word2_idx).Copy();
+  auto word_vector_3 = embeddings.View(word3_idx).Copy();
 
   // normalise the test target vectors
   NormVector(word_vector_1);
