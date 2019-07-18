@@ -152,7 +152,6 @@ ArrayType Graph<ArrayType>::Evaluate(std::string const &node_name, bool is_train
 {
   if (nodes_[node_name])
   {
-  	auto result = nodes_[node_name]->Evaluate(is_training);
     return nodes_[node_name]->Evaluate(is_training);
   }
   else
