@@ -86,7 +86,8 @@ TYPED_TEST(SoftmaxTest, backward_test)
   ArrayType data  = ArrayType::FromString("1; -2; 3; -4; 5; -6; 7; -8");
   ArrayType error = ArrayType::FromString("0; 0; 0; 0; 1; 0; 0; 0");
   ArrayType gt    = ArrayType::FromString(
-      "-2.5091e-04; -1.2492e-05; -1.8540e-03; -1.6906e-06; 1.0335e-01; -2.2880e-07; -1.0123e-01; -3.0965e-08");
+      "-2.5091e-04; -1.2492e-05; -1.8540e-03; -1.6906e-06; 1.0335e-01; -2.2880e-07; -1.0123e-01; "
+      "-3.0965e-08");
 
   fetch::ml::ops::Softmax<ArrayType> op(1);
   std::vector<ArrayType>             prediction = op.Backward({data}, error);
