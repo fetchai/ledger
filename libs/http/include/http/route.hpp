@@ -36,6 +36,11 @@ class Route
 {
 public:
   static constexpr char const *LOGGING_NAME = "HttpRoute";
+  using match_function_type =
+      std::function<bool(std::size_t &, byte_array::ByteArray const &, ViewParameters &)>;
+  using MatchingVector = std::vector<match_function_type>;
+  using ParameterList = std::vector<byte_array::ConstByteArray>;
+  using ValidatorMap = std::unordered_map<byte_array::ConstByteArray, validators::Validator>;
 
   bool Match(byte_array::ConstByteArray const &path, ViewParameters &params)
   {
@@ -50,7 +55,7 @@ public:
       {
         return false;
       }
-      // TODO(tfr): Add validators
+      // TODO(issue 1371): Add validators
     }
 
     return (i == path.size());
@@ -118,7 +123,7 @@ public:
     return path_;
   }
 
-  std::vector<byte_array::ConstByteArray> path_parameters() const
+  ParameterList path_parameters() const
   {
     return path_parameters_;
   }
@@ -142,9 +147,6 @@ public:
   }
 
 private:
-  using match_function_type =
-      std::function<bool(std::size_t &, byte_array::ByteArray const &, ViewParameters &)>;
-
   void AddMatch(byte_array::ByteArray const &value)
   {
     LOG_STACK_TRACE_POINT;
@@ -205,11 +207,11 @@ private:
     return var;
   }
 
-  byte_array::ByteArray                                                 original_;
-  byte_array::ByteArray                                                 path_;
-  std::vector<match_function_type>                                      match_;
-  std::vector<byte_array::ConstByteArray>                               path_parameters_;
-  std::unordered_map<byte_array::ConstByteArray, validators::Validator> validators_;
+  byte_array::ByteArray original_;
+  byte_array::ByteArray path_;
+  MatchingVector        match_;
+  ParamaterList         path_parameters_;
+  ValidatorMap          validators_;
 };
 }  // namespace http
 }  // namespace fetch
