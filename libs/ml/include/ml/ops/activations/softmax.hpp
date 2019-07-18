@@ -61,14 +61,14 @@ public:
     this->Forward(inputs, t);
     return_signal.InlineMultiply(t);
 
-    // 1D softmax
-    if (inputs.front().get().shape().size() == 1)
+    // 1D softmax with 1 batch dimension
+    if (inputs.front().get().shape().size() == 2)
     {
       typename ArrayType::Type sum = return_signal.Sum();
       t.InlineMultiply(sum);
     }
-    // 2D softmax
-    else if (inputs.front().get().shape().size() == 2)
+    // 2D softmax with 1 batch dimension
+    else if (inputs.front().get().shape().size() == 3)
     {
       ArrayType sum;
       sum = ReduceSum(return_signal, 1 - axis_);
