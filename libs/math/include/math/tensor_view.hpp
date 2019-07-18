@@ -57,8 +57,9 @@ public:
   ConstIteratorType cbegin() const;
   ConstIteratorType cend() const;
 
-  void Assign(TensorView const &other);
-  void Assign(Tensor<T, C> const &other);
+  void         Assign(TensorView const &other);
+  void         Assign(Tensor<T, C> const &other);
+  Tensor<T, C> Copy() const;
 
   /////////////////
   /// OPERATORS ///
@@ -192,6 +193,20 @@ void TensorView<T, C>::Assign(Tensor<T, C> const &other)
 {
   auto other_view = other.View();
   Assign(other_view);
+}
+
+/**
+ * Construct a new Tensor by copying the data specified by the view
+ * @tparam T
+ * @tparam C
+ * @return
+ */
+template <typename T, typename C>
+Tensor<T, C> TensorView<T, C>::Copy() const
+{
+  Tensor<T, C> ret({height_, width_});
+  ret.Assign(*this);
+  return ret;
 }
 
 template <typename T, typename C>

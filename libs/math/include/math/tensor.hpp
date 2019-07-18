@@ -113,6 +113,12 @@ public:
     Resize({0});
   }
 
+  Tensor(ContainerType &container_data)
+  {
+    Reshape(container_data.shape());
+    data_ = container_data;
+  }
+
   static Tensor FromString(byte_array::ConstByteArray const &c);
   explicit Tensor(SizeType const &n);
   Tensor(Tensor &&other)      = default;

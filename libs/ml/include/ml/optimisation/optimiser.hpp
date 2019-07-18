@@ -231,7 +231,7 @@ typename T::Type Optimiser<T>::Run(std::vector<ArrayType> const &data, ArrayType
       for (SizeType j{0}; j < data.size(); j++)
       {
         // Fill data[j] view
-        auto     data_view         = batch_data_.at(j).View(i);
+        auto data_view = batch_data_.at(j).View(i);
         data_view.Assign(data.at(j).View(it));
       }
       it++;
