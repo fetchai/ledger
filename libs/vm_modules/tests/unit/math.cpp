@@ -33,6 +33,8 @@ using namespace fetch::vm;
 
 namespace {
 
+using ::testing::Between;
+
 using DataType = fetch::vm_modules::math::DataType;
 
 class MathTests : public ::testing::Test
@@ -155,9 +157,10 @@ TEST_F(MathTests, tensor_state_test)
   )";
 
   std::string const state_name{"tensor"};
-  EXPECT_CALL(toolkit.observer(), Write(state_name, _, _));
 
   ASSERT_TRUE(toolkit.Compile(tensor_serialiase_src));
+
+  EXPECT_CALL(toolkit.observer(), Write(state_name, _, _));
   ASSERT_TRUE(toolkit.Run());
 
   static char const *tensor_deserialiase_src = R"(
@@ -167,12 +170,11 @@ TEST_F(MathTests, tensor_state_test)
     endfunction
   )";
 
-  EXPECT_CALL(toolkit.observer(), Exists(state_name));
-  EXPECT_CALL(toolkit.observer(), Read(state_name, _, _)).Times(testing::AtLeast(1));
-
   ASSERT_TRUE(toolkit.Compile(tensor_deserialiase_src));
 
   Variant res;
+  EXPECT_CALL(toolkit.observer(), Exists(state_name));
+  EXPECT_CALL(toolkit.observer(), Read(state_name, _, _)).Times(Between(1, 2));
   ASSERT_TRUE(toolkit.Run(&res));
 
   auto const                    tensor = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
