@@ -76,7 +76,7 @@ template <typename LabelType, typename DataType>
 void DataLoader<LabelType, DataType>::SetDataSize(
     std::pair<LabelType, std::vector<DataType>> &ret_pair)
 {
-  ret_pair_.first        = ret_pair.first.Copy();
+  ret_pair_.first = ret_pair.first.Copy();
 
   // set each tensor in the data vector to the correct shape
   for (auto &tensor : ret_pair.second)
@@ -152,7 +152,7 @@ typename DataLoader<LabelType, DataType>::ReturnType DataLoader<LabelType, DataT
     for (SizeType j{0}; j < cur_training_pair_.second.size(); j++)
     {
       // Fill data[j] view
-      auto data_view = ret_pair_.second.at(j).view(data_idx);
+      auto data_view = ret_pair_.second.at(j).View(data_idx);
       data_view.Assign(cur_training_pair_.second.at(j));
     }
 
