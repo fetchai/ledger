@@ -24,6 +24,7 @@
 #include "core/state_machine.hpp"
 #include "crypto/bls_base.hpp"
 #include "dkg/dkg_rpc_protocol.hpp"
+#include "dkg/rbc.hpp"
 #include "dkg/round.hpp"
 #include "ledger/chain/address.hpp"
 #include "ledger/consensus/entropy_generator_interface.hpp"
@@ -124,7 +125,8 @@ public:
   using Digest         = ledger::Digest;
   using ConstByteArray = byte_array::ConstByteArray;
   using MuddleAddress  = ConstByteArray;
-  using CabinetMembers = std::unordered_set<MuddleAddress>;
+  using CabinetMembers = std::set<MuddleAddress>;
+  using RBCMessageType = std::string;
 
   // Construction / Destruction
   explicit DkgService(Endpoint &endpoint, ConstByteArray address, ConstByteArray dealer_address);
@@ -145,6 +147,9 @@ public:
   void SubmitSignatureShare(uint64_t round, crypto::bls::Id const &id,
                             crypto::bls::PublicKey const &public_key,
                             crypto::bls::Signature const &signature);
+
+  void SendReliableBroadcast(RBCMessageType const &msg);
+  void OnRbcDeliver(MuddleAddress from, byte_array::ConstByteArray payload);
   /// @}
 
   /// @name Entropy Generator
@@ -167,6 +172,7 @@ public:
 
     FETCH_LOG_INFO(LOGGING_NAME, "Resetting cabinet. Cabinet size: ", cabinet.size(),
                    " threshold: ", threshold);
+    rbc_.ResetCabinet();
   }
   /// @}
 
@@ -230,6 +236,7 @@ private:
   muddle::rpc::Client   rpc_client_;      ///< The services' RPC client
   RpcProtocolPtr        rpc_proto_;       ///< The services RPC protocol
   StateMachinePtr       state_machine_;   ///< The service state machine
+  rbc::RBC              rbc_;             ///< Runs the RBC protocol
 
   /// @name State Machine Data
   /// @{

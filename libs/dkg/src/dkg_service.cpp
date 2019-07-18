@@ -113,6 +113,7 @@ DkgService::DkgService(Endpoint &endpoint, ConstByteArray address, ConstByteArra
   , rpc_server_{endpoint_, SERVICE_DKG, CHANNEL_RPC}
   , rpc_client_{"dkg", endpoint_, SERVICE_DKG, CHANNEL_RPC}
   , state_machine_{std::make_shared<StateMachine>("dkg", State::BUILD_AEON_KEYS, ToString)}
+  , rbc_{endpoint_, address_, current_cabinet_, current_threshold_, *this}
 {
   // RPC server registration
   rpc_proto_ = std::make_unique<DkgRpcProtocol>(*this);
@@ -178,6 +179,31 @@ void DkgService::SubmitSignatureShare(uint64_t round, crypto::bls::Id const &id,
 
   FETCH_LOCK(round_lock_);
   pending_signatures_.emplace_back(Submission{round, id, public_key, signature});
+}
+
+/**
+ * Send a message using the reliable broadcast protocol
+ *
+ * @param msg Serialised message
+ */
+void DkgService::SendReliableBroadcast(RBCMessageType const &msg)
+{
+  rbc_.SendRBroadcast(msg);
+}
+
+/**
+ * Handler for messages which have completed RBC protocol
+ *
+ * @param from Muddle address of the sender of the message
+ * @param payload Serialised message
+ */
+void DkgService::OnRbcDeliver(MuddleAddress from, byte_array::ConstByteArray payload)
+{
+  FETCH_LOG_INFO(LOGGING_NAME, "Received message ", payload, " from address ", from);
+  // TODO(jmw): DKGEnvelop    env;
+  //  DKGSerializer serializer{msg};
+  //  serializer >> env;
+  //  Pass message to DKG
 }
 
 /**
