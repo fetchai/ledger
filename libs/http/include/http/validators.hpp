@@ -33,7 +33,7 @@ struct Validator
   variant::Variant                                schema;
 };
 
-inline Validator StringValue(uint16_t min_length = 0, uint16_t max_length = uint16_t(-1));
+Validator StringValue(uint16_t min_length = 0, uint16_t max_length = uint16_t(-1));
 
 }  // namespace validators
 }  // namespace http
