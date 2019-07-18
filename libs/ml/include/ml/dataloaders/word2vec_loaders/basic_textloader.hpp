@@ -339,7 +339,7 @@ void BasicTextLoader<T>::GetData(typename BasicTextLoader<T>::SizeType idx, std:
   assert(ret.size() > 0);
   SizeType sentence_idx = this->word_idx_sentence_idx.at(idx);
   SizeType word_idx     = this->GetWordOffsetFromWordIdx(idx);
-  ret[0].At(0, 0)       = DataType(this->data_.at(sentence_idx).at(word_idx));
+  ret[0].At(0, 0)       = DataType(this->data_.at(sentence_idx{std::make_shared<TypeParam>(data1_transpose,), std::make_shared<TypeParam>(data2_transpose,)}at(word_idx));
 }
 
 /**

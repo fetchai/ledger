@@ -37,7 +37,7 @@ public:
   using ArrayType   = T;
   using NodePtrType = std::shared_ptr<NodeInterface<T>>;
 
-  virtual ArrayType &                                           Evaluate(bool is_training)      = 0;
+  virtual std::shared_ptr<T>                                    Evaluate(bool is_training)      = 0;
   virtual void                                                  AddInput(NodePtrType const &i)  = 0;
   virtual void                                                  AddOutput(NodePtrType const &i) = 0;
   virtual std::vector<std::pair<NodeInterface<T> *, ArrayType>> BackPropagateSignal(
@@ -72,14 +72,13 @@ public:
   virtual ~Node() = default;
 
   VecTensorType                 GatherInputs() const;
-  virtual ArrayType &                                           Evaluate(bool is_training);
-  virtual std::vector<std::pair<NodeInterface<T> *, ArrayType>> BackPropagateSignal(
-      ArrayType const &error_signal);
+  std::shared_ptr<T>                                    Evaluate(bool is_training) override;
+  std::vector<std::pair<NodeInterface<T> *, ArrayType>> BackPropagateSignal(ArrayType const &error_signal) override;
 
-  void                                    AddInput(NodePtrType const &i);
-  void                                    AddOutput(NodePtrType const &o);
-  virtual std::vector<NodePtrType> const &GetOutputs() const;
-  virtual void                            ResetCache(bool input_size_changed);
+  void                                    AddInput(NodePtrType const &i) override;
+  void                                    AddOutput(NodePtrType const &o) override;
+  virtual std::vector<NodePtrType> const &GetOutputs() const override;
+  virtual void                            ResetCache(bool input_size_changed) override;
 
 private:
   std::vector<NodePtrType> input_nodes_;
@@ -115,7 +114,7 @@ typename Node<T, O>::VecTensorType Node<T, O>::GatherInputs() const
  * @return the tensor with the forward result
  */
 template <typename T, class O>
-T &Node<T, O>::Evaluate(bool is_training)
+std::shared_ptr<T> Node<T, O>::Evaluate(bool is_training)
 {
 
   this->SetTraining(is_training);
@@ -138,7 +137,7 @@ T &Node<T, O>::Evaluate(bool is_training)
     cached_output_status_ = CachedOutputState::VALID_CACHE;
   }
 
-  return cached_output_;
+  return std::make_shared<T>(cached_output_);
 }
 
 /**

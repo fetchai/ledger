@@ -77,5 +77,5 @@ TEST(node_test, node_relu)
 
   EXPECT_EQ(output, data);
   EXPECT_EQ(placeholder->Evaluate(true), data);
-  EXPECT_TRUE(relu->Evaluate(true).Copy().AllClose(gt));
+  EXPECT_TRUE(relu->Evaluate(true)->Copy().AllClose(gt));
 }

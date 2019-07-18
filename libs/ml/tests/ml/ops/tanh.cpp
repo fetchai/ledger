@@ -55,8 +55,8 @@ TYPED_TEST(TanhTest, forward_all_positive_test)
 
   fetch::ml::ops::TanH<TypeParam> op;
 
-  TypeParam prediction(op.ComputeOutputShape({std::make_shared<const ArrayType>(data)}));
-  op.Forward({std::make_shared<const ArrayType>(data)}, prediction);
+  TypeParam prediction(op.ComputeOutputShape({std::make_shared<const TypeParam>(data)}));
+  op.Forward({std::make_shared<const TypeParam>(data)}, prediction);
 
   ASSERT_TRUE(
       prediction.AllClose(gt, typename TypeParam::Type(1e-4), typename TypeParam::Type(1e-4)));
@@ -80,8 +80,8 @@ TYPED_TEST(TanhTest, forward_all_negative_test)
 
   fetch::ml::ops::TanH<TypeParam> op;
 
-  TypeParam prediction(op.ComputeOutputShape({std::make_shared<const ArrayType>(data)}));
-  op.Forward({std::make_shared<const ArrayType>(data)}, prediction);
+  TypeParam prediction(op.ComputeOutputShape({std::make_shared<const TypeParam>(data)}));
+  op.Forward({std::make_shared<const TypeParam>(data)}, prediction);
 
   ASSERT_TRUE(
       prediction.AllClose(gt, typename TypeParam::Type(1e-4), typename TypeParam::Type(1e-4)));
@@ -104,7 +104,7 @@ TYPED_TEST(TanhTest, backward_all_positive_test)
     gt.Set(i, typename TypeParam::Type(gtInput[i]));
   }
   fetch::ml::ops::TanH<TypeParam> op;
-  std::vector<TypeParam> prediction = op.Backward({std::make_shared<const ArrayType>(data)}, error);
+  std::vector<TypeParam> prediction = op.Backward({std::make_shared<const TypeParam>(data)}, error);
 
   // test correct values
   ASSERT_TRUE(
@@ -128,7 +128,7 @@ TYPED_TEST(TanhTest, backward_all_negative_test)
     gt.Set(i, typename TypeParam::Type(gtInput[i]));
   }
   fetch::ml::ops::TanH<TypeParam> op;
-  std::vector<TypeParam> prediction = op.Backward({std::make_shared<const ArrayType>(data)}, error);
+  std::vector<TypeParam> prediction = op.Backward({std::make_shared<const TypeParam>(data)}, error);
 
   // test correct values
   ASSERT_TRUE(
