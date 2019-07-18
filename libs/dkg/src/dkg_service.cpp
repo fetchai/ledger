@@ -156,7 +156,13 @@ DkgService::SecretKeyReq DkgService::RequestSecretKey(MuddleAddress const &addre
   else
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Failed to provide node: ", address.ToBase64(),
-                   " with secret share");
+                   " with secret share. Not in current cabinet secrets! Size: ", current_cabinet_secrets_.size());
+
+
+    for(auto const &i : current_cabinet_secrets_)
+    {
+      FETCH_LOG_INFO(LOGGING_NAME, i.first.ToBase64());
+    }
   }
 
   return req;
@@ -221,8 +227,11 @@ DkgService::Status DkgService::GenerateEntropy(Digest block_digest, uint64_t blo
  */
 State DkgService::OnBuildAeonKeysState()
 {
+  FETCH_LOG_INFO(LOGGING_NAME, "Build aeon keys");
+
   if (is_dealer_)
   {
+    FETCH_LOG_INFO(LOGGING_NAME, "Is dealer");
     BuildAeonKeys();
 
     // since we are the dealer we do not need to request a signature from ourselves
@@ -239,6 +248,8 @@ State DkgService::OnBuildAeonKeysState()
  */
 State DkgService::OnRequestSecretKeyState()
 {
+  FETCH_LOG_INFO(LOGGING_NAME, "Request secret key state");
+
   // request from the beacon for the secret key
   pending_promise_ = rpc_client_.CallSpecificAddress(dealer_address_, RPC_DKG_BEACON,
                                                      DkgRpcProtocol::REQUEST_SECRET, address_);
@@ -253,6 +264,8 @@ State DkgService::OnRequestSecretKeyState()
  */
 State DkgService::OnWaitForSecretKeyState()
 {
+  FETCH_LOG_INFO(LOGGING_NAME, "wait for request secret key state");
+
   State next_state{State::WAIT_FOR_SECRET_KEY};
 
   FETCH_LOG_DEBUG(LOGGING_NAME, "State: Wait for secret");
@@ -311,6 +324,8 @@ State DkgService::OnWaitForSecretKeyState()
  */
 State DkgService::OnBroadcastSignatureState()
 {
+  FETCH_LOG_INFO(LOGGING_NAME, "OnBroadcastSignatureState");
+
   State next_state{State::COLLECT_SIGNATURES};
 
   auto const this_round = current_round_.load();
@@ -370,6 +385,7 @@ State DkgService::OnBroadcastSignatureState()
  */
 State DkgService::OnCollectSignaturesState()
 {
+  FETCH_LOG_INFO(LOGGING_NAME, "OnCollectSignaturesState");
   State next_state{State::COLLECT_SIGNATURES};
 
   FETCH_LOCK(round_lock_);
@@ -420,6 +436,7 @@ State DkgService::OnCollectSignaturesState()
           // successful verified this signature share - add it to the round
           round->AddShare(it->id, it->signature);
           updates = true;
+          FETCH_LOG_INFO(LOGGING_NAME, "Successfully added share");
         }
       }
 
@@ -433,6 +450,7 @@ State DkgService::OnCollectSignaturesState()
     }
   }
 
+  // TODO(HUT): looks like a bug here
   // Step 2. Determine if we have completed any signatures
   if (!round->HasSignature() && round->GetNumShares() >= current_threshold_)
   {
@@ -455,6 +473,10 @@ State DkgService::OnCollectSignaturesState()
 
     next_state = State::COMPLETE;
   }
+  else
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "Still awaiting shares. Threshold: ", current_threshold_, " Number of shares: ", round->GetNumShares(), " has signature: ", round->HasSignature());
+  }
 
   // if there have been no updates on this iteration, wait for a period of time
   if (!updates)
@@ -474,6 +496,7 @@ State DkgService::OnCollectSignaturesState()
  */
 State DkgService::OnCompleteState()
 {
+  FETCH_LOG_INFO(LOGGING_NAME, "OnCompleteState");
   FETCH_LOG_DEBUG(LOGGING_NAME, "State: Complete round: ", requesting_iteration_.load(),
                   " read: ", current_iteration_.load());
 
@@ -517,7 +540,7 @@ State DkgService::OnCompleteState()
  */
 bool DkgService::BuildAeonKeys()
 {
-  FETCH_LOG_DEBUG(LOGGING_NAME, "Build new aeons key shares");
+  FETCH_LOG_INFO(LOGGING_NAME, "Build new aeons key shares. Current cabinet size: ", current_cabinet_.size());
 
   FETCH_LOCK(cabinet_lock_);
   FETCH_LOCK(dealer_lock_);
@@ -551,6 +574,8 @@ bool DkgService::BuildAeonKeys()
 
     // update the cabinet map
     current_cabinet_secrets_[member] = secret_share;
+
+    FETCH_LOG_INFO(LOGGING_NAME, "Added member: ", member.ToBase64(), " to current cabinet");
   }
 
   return true;
