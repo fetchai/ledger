@@ -44,8 +44,8 @@ public:
   virtual void Forward(VecTensorType const &inputs, ArrayType &output)
   {
     assert(inputs.size() == 2);
-    assert(inputs.at(0).get().shape() == inputs.at(1).get().shape());
-    assert(inputs.at(0).get().shape() == output.shape());
+    assert(inputs.at(0)->shape() == inputs.at(1).get().shape());
+    assert(inputs.at(0)->shape() == output.shape());
 
     fetch::math::Divide(inputs.at(0).get(), inputs.at(1).get(), output);
   }
@@ -57,7 +57,7 @@ public:
   virtual std::vector<ArrayType> Backward(VecTensorType const &inputs,
                                           ArrayType const &    error_signal)
   {
-    ArrayType return_signal_1(inputs.at(0).get().shape());
+    ArrayType return_signal_1(inputs.at(0)->shape());
     ArrayType return_signal_2(return_signal_1.shape());
 
     auto a_it   = inputs.at(0).get().cbegin();
@@ -82,7 +82,7 @@ public:
 
   virtual std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const
   {
-    return inputs.front().get().shape();
+    return inputs.front()->shape();
   }
 
   static constexpr char const *DESCRIPTOR = "Divide";

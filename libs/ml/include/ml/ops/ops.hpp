@@ -35,7 +35,7 @@ public:
   using ArrayType     = T;
   using SizeType      = typename ArrayType::SizeType;
   using ArrayPtrType  = std::shared_ptr<ArrayType>;
-  using VecTensorType = std::vector<std::reference_wrapper<ArrayType const>>;
+  using VecTensorType = std::vector<std::shared_ptr<ArrayType const>>;
 
   virtual ~Ops() = default;
 

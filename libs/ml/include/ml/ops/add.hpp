@@ -45,31 +45,31 @@ public:
   std::vector<ArrayType> Backward(VecTensorType const &inputs, ArrayType const &error_signal)
   {
     assert(inputs.size() == 2);
-    assert(inputs.at(0).get().shape().size() == inputs.at(1).get().shape().size());
-    assert(inputs.at(0).get().shape() == error_signal.shape());
+    assert(inputs.at(0)->shape().size() == inputs.at(1).get().shape().size());
+    assert(inputs.at(0)->shape() == error_signal.shape());
     assert(error_signal.shape() == ComputeOutputShape(inputs));
 
     // Test if input is broadcastable by batch dimension
     assert(inputs.at(1).get().shape().at(inputs.at(1).get().shape().size() - 1) == 1);
-    for (SizeType i{0}; i < inputs.at(0).get().shape().size() - 1; i++)
+    for (SizeType i{0}; i < inputs.at(0)->shape().size() - 1; i++)
     {
-      assert(inputs.at(0).get().shape().at(i) == inputs.at(1).get().shape().at(i));
+      assert(inputs.at(0)->shape().at(i) == inputs.at(1).get().shape().at(i));
     }
 
-    if (inputs.at(0).get().shape() == inputs.at(1).get().shape())
+    if (inputs.at(0)->shape() == inputs.at(1).get().shape())
     {
       return {error_signal, error_signal};
     }
     else
     {
-      SizeType batch_dimension = inputs.at(0).get().shape().size() - 1;
+      SizeType batch_dimension = inputs.at(0)->shape().size() - 1;
       return {error_signal, fetch::math::ReduceSum(error_signal, batch_dimension)};
     }
   }
 
   std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const
   {
-    return inputs.at(0).get().shape();
+    return inputs.at(0)->shape();
   }
 
   static constexpr char const *DESCRIPTOR = "Add";

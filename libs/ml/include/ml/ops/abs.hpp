@@ -44,7 +44,7 @@ public:
   virtual void Forward(VecTensorType const &inputs, ArrayType &output)
   {
     assert(inputs.size() == 1);
-    assert(inputs.at(0).get().shape() == output.shape());
+    assert(inputs.at(0)->shape() == output.shape());
     assert(output.shape() == this->ComputeOutputShape(inputs));
 
     fetch::math::Abs(inputs[0].get(), output);
@@ -60,7 +60,7 @@ public:
     assert(inputs.size() == 1);
     assert(error_signal.size() == inputs.at(0).get().size());
 
-    ArrayType return_signal(inputs.at(0).get().shape());
+    ArrayType return_signal(inputs.at(0)->shape());
 
     auto a_it   = inputs.at(0).get().cbegin();
     auto err_it = error_signal.cbegin();
@@ -86,7 +86,7 @@ public:
 
   virtual std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const
   {
-    return inputs.front().get().shape();
+    return inputs.front()->shape();
   }
 
   static constexpr char const *DESCRIPTOR = "Abs";

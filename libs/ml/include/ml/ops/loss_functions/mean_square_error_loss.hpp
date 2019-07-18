@@ -45,7 +45,7 @@ public:
   void Forward(VecTensorType const &inputs, ArrayType &output) override
   {
     assert(inputs.size() == 2);
-    assert(inputs.at(0).get().shape() == inputs.at(1).get().shape());
+    assert(inputs.at(0)->shape() == inputs.at(1).get().shape());
 
     if (weightings_.size() == static_cast<SizeType>(0))
     {
@@ -54,7 +54,7 @@ public:
     // rescale according to weights
     else
     {
-      SizeType data_size = inputs.at(0).get().shape(inputs.at(0).get().shape().size() - 1);
+      SizeType data_size = inputs.at(0)->shape(inputs.at(0)->shape().size() - 1);
 
       auto it1 = inputs.at(0).get().cbegin();
       auto it2 = inputs.at(1).get().cbegin();
@@ -71,7 +71,7 @@ public:
         }
       }
       // weighting tensor is same shape as input (one weight for every parameter)
-      else if (weightings_.shape() == inputs.at(0).get().shape())
+      else if (weightings_.shape() == inputs.at(0)->shape())
       {
         auto w_it = weightings_.cbegin();
         while (it1.is_valid())
@@ -142,11 +142,11 @@ public:
     FETCH_UNUSED(error_signal);
 
     assert(inputs.size() == 2);
-    assert(inputs.at(0).get().shape() == inputs.at(1).get().shape());
+    assert(inputs.at(0)->shape() == inputs.at(1).get().shape());
 
-    ArrayType return_signal(inputs.front().get().shape());
+    ArrayType return_signal(inputs.front()->shape());
 
-    SizeType data_size = inputs.at(0).get().shape(inputs.at(0).get().shape().size() - 1);
+    SizeType data_size = inputs.at(0)->shape(inputs.at(0)->shape().size() - 1);
     auto     count     = static_cast<DataType>(data_size);
 
     // backprop update rule varies depending on shape of weightings
@@ -180,7 +180,7 @@ public:
         }
       }
       // weighting tensor is same shape as input (one weight for every parameter)
-      else if (weightings_.shape() == inputs.at(0).get().shape())
+      else if (weightings_.shape() == inputs.at(0)->shape())
       {
         auto w_it = weightings_.cbegin();
         while (r_it.is_valid())

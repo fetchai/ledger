@@ -43,8 +43,8 @@ TYPED_TEST(LogSoftmaxTest, forward_test)
       R"(-6.14520134, -9.14520134, -4.14520134, -11.14520134, -2.14520134, -13.14520134, -0.14520134, -15.14520134)");
 
   fetch::ml::ops::LogSoftmax<ArrayType> op;
-  ArrayType                             prediction(op.ComputeOutputShape({data}));
-  op.Forward(VecTensorType({data}), prediction);
+  ArrayType prediction(op.ComputeOutputShape({std::make_shared<const ArrayType>(data)}));
+  op.Forward({std::make_shared<const ArrayType>(data)}, prediction);
 
   // test correct values
   ASSERT_TRUE(prediction.AllClose(gt, DataType{1e-3f}, DataType{1e-3f}));
@@ -72,8 +72,8 @@ TYPED_TEST(LogSoftmaxTest, forward_2d_tensor_axis_0_test)
   }
 
   fetch::ml::ops::LogSoftmax<ArrayType> op{0};
-  ArrayType                             prediction(op.ComputeOutputShape({data}));
-  op.Forward(VecTensorType({data}), prediction);
+  ArrayType prediction(op.ComputeOutputShape({std::make_shared<const ArrayType>(data)}));
+  op.Forward({std::make_shared<const ArrayType>(data)}, prediction);
 
   // test correct values
   ASSERT_TRUE(prediction.AllClose(gt, DataType{1e-3f}, DataType{1e-3f}));
@@ -90,7 +90,7 @@ TYPED_TEST(LogSoftmaxTest, backward_test)
       R"(-6.4312e-03, -3.2019e-04, -4.7521e-02,  9.9996e-01,  6.4887e-01, 9.9999e-01, -2.59454, -7.9368e-07)");
 
   fetch::ml::ops::LogSoftmax<ArrayType> op;
-  std::vector<ArrayType>                prediction = op.Backward({data}, error);
+  std::vector<ArrayType> prediction = op.Backward({std::make_shared<const ArrayType>(data)}, error);
 
   // test correct values
   ASSERT_TRUE(prediction[0].AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
@@ -119,7 +119,7 @@ TYPED_TEST(LogSoftmaxTest, backward_2d_tensor_axis_0_test)
     }
   }
   fetch::ml::ops::LogSoftmax<ArrayType> op{0};
-  std::vector<ArrayType>                prediction = op.Backward({data}, error);
+  std::vector<ArrayType> prediction = op.Backward({std::make_shared<const ArrayType>(data)}, error);
 
   // test correct values
   ASSERT_TRUE(prediction[0].AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));

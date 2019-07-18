@@ -38,7 +38,7 @@ void BM_DropoutForward(benchmark::State &state)
   fetch::math::Tensor<T> input({1, N});
   fetch::math::Tensor<T> output({1, N});
 
-  std::vector<std::reference_wrapper<fetch::math::Tensor<T> const>> inputs;
+  std::vector<std::shared_ptr<fetch::math::Tensor<T> const>> inputs;
   inputs.push_back(input);
   fetch::ml::ops::Dropout<fetch::math::Tensor<T>> dm(0.5);
 
@@ -61,7 +61,7 @@ void BM_EluForward(benchmark::State &state)
   fetch::math::Tensor<T> input({1, N});
   fetch::math::Tensor<T> output({1, N});
 
-  std::vector<std::reference_wrapper<fetch::math::Tensor<T> const>> inputs;
+  std::vector<std::shared_ptr<fetch::math::Tensor<T> const>> inputs;
   inputs.push_back(input);
 
   T                                           a = T(0.2);
@@ -86,7 +86,7 @@ void BM_LeakyReluForward(benchmark::State &state)
   fetch::math::Tensor<T> input({1, N});
   fetch::math::Tensor<T> output({1, N});
 
-  std::vector<std::reference_wrapper<fetch::math::Tensor<T> const>> inputs;
+  std::vector<std::shared_ptr<fetch::math::Tensor<T> const>> inputs;
   inputs.push_back(input);
   fetch::ml::ops::LeakyRelu<fetch::math::Tensor<T>> lrm;
 
@@ -109,7 +109,7 @@ void BM_LogSigmoidForward(benchmark::State &state)
   fetch::math::Tensor<T> input({1, N});
   fetch::math::Tensor<T> output({1, N});
 
-  std::vector<std::reference_wrapper<fetch::math::Tensor<T> const>> inputs;
+  std::vector<std::shared_ptr<fetch::math::Tensor<T> const>> inputs;
   inputs.push_back(input);
   fetch::ml::ops::LogSigmoid<fetch::math::Tensor<T>> lsm;
 
@@ -132,7 +132,7 @@ void BM_LogSoftmaxForward(benchmark::State &state)
   fetch::math::Tensor<T> input({1, N});
   fetch::math::Tensor<T> output({1, N});
 
-  std::vector<std::reference_wrapper<fetch::math::Tensor<T> const>> inputs;
+  std::vector<std::shared_ptr<fetch::math::Tensor<T> const>> inputs;
   inputs.push_back(input);
   fetch::ml::ops::LogSoftmax<fetch::math::Tensor<T>> lsm;
 
@@ -155,7 +155,7 @@ void BM_RandomizedReluForward(benchmark::State &state)
   fetch::math::Tensor<T> input({1, N});
   fetch::math::Tensor<T> output({1, N});
 
-  std::vector<std::reference_wrapper<fetch::math::Tensor<T> const>> inputs;
+  std::vector<std::shared_ptr<fetch::math::Tensor<T> const>> inputs;
   inputs.push_back(input);
 
   T                                                      lb = T(0.2);
@@ -181,7 +181,7 @@ void BM_ReluForward(benchmark::State &state)
   fetch::math::Tensor<T> input({1, N});
   fetch::math::Tensor<T> output({1, N});
 
-  std::vector<std::reference_wrapper<fetch::math::Tensor<T> const>> inputs;
+  std::vector<std::shared_ptr<fetch::math::Tensor<T> const>> inputs;
   inputs.push_back(input);
   fetch::ml::ops::Relu<fetch::math::Tensor<T>> rm;
 
@@ -204,7 +204,7 @@ void BM_SigmoidForward(benchmark::State &state)
   fetch::math::Tensor<T> input({1, N});
   fetch::math::Tensor<T> output({1, N});
 
-  std::vector<std::reference_wrapper<fetch::math::Tensor<T> const>> inputs;
+  std::vector<std::shared_ptr<fetch::math::Tensor<T> const>> inputs;
   inputs.push_back(input);
   fetch::ml::ops::Sigmoid<fetch::math::Tensor<T>> sm;
 
@@ -227,7 +227,7 @@ void BM_SoftmaxForward(benchmark::State &state)
   fetch::math::Tensor<T> input({1, N});
   fetch::math::Tensor<T> output({1, N});
 
-  std::vector<std::reference_wrapper<fetch::math::Tensor<T> const>> inputs;
+  std::vector<std::shared_ptr<fetch::math::Tensor<T> const>> inputs;
   inputs.push_back(input);
   fetch::ml::ops::Softmax<fetch::math::Tensor<T>> sm;
 

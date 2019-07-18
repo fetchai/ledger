@@ -62,7 +62,7 @@ public:
     assert(inputs.at(0).get().size() == inputs.at(1).get().size());
     assert(error_signal.size() == inputs.at(1).get().size());
 
-    ArrayType error_signal_1(inputs.at(0).get().shape());
+    ArrayType error_signal_1(inputs.at(0)->shape());
     ArrayType error_signal_2(inputs.at(1).get().shape());
 
     fetch::math::Multiply(inputs.at(1).get(), error_signal, error_signal_1);
@@ -73,7 +73,7 @@ public:
 
   virtual std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const
   {
-    return inputs.front().get().shape();
+    return inputs.front()->shape();
   }
 
   static constexpr char const *DESCRIPTOR = "Multiply";

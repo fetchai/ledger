@@ -42,8 +42,8 @@ TYPED_TEST(LeakyReluTest, forward_test)
   ArrayType gt   = ArrayType::FromString(R"(1, -0.02, 3, -0.04, 5, -0.06, 7, -0.08)");
 
   fetch::ml::ops::LeakyRelu<ArrayType> op(DataType{0.01f});
-  ArrayType                            prediction(op.ComputeOutputShape({data}));
-  op.Forward(VecTensorType({data}), prediction);
+  ArrayType prediction(op.ComputeOutputShape({std::make_shared<const ArrayType>(data)}));
+  op.Forward({std::make_shared<const ArrayType>(data)}, prediction);
 
   // test correct values
   ASSERT_TRUE(prediction.AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
@@ -75,8 +75,8 @@ TYPED_TEST(LeakyReluTest, forward_3d_tensor_test)
 
   fetch::ml::ops::LeakyRelu<ArrayType> op(DataType{0.01f});
 
-  ArrayType prediction(op.ComputeOutputShape({data}));
-  op.Forward(VecTensorType({data}), prediction);
+  ArrayType prediction(op.ComputeOutputShape({std::make_shared<const ArrayType>(data)}));
+  op.Forward({std::make_shared<const ArrayType>(data)}, prediction);
 
   // test correct values
   ASSERT_TRUE(prediction.AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
@@ -92,7 +92,7 @@ TYPED_TEST(LeakyReluTest, backward_test)
   ArrayType gt    = ArrayType::FromString(R"(0, 0, 0, 0.005, 1, 0.01, 0, 0)");
 
   fetch::ml::ops::LeakyRelu<ArrayType> op(DataType{0.01f});
-  std::vector<ArrayType>               prediction = op.Backward({data}, error);
+  std::vector<ArrayType> prediction = op.Backward({std::make_shared<const ArrayType>(data)}, error);
 
   // test correct values
   ASSERT_TRUE(prediction[0].AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
@@ -125,7 +125,7 @@ TYPED_TEST(LeakyReluTest, backward_3d_tensor_test)
   }
 
   fetch::ml::ops::LeakyRelu<ArrayType> op(DataType{0.01f});
-  std::vector<ArrayType>               prediction = op.Backward({data}, error);
+  std::vector<ArrayType> prediction = op.Backward({std::make_shared<const ArrayType>(data)}, error);
 
   // test correct values
   ASSERT_TRUE(prediction[0].AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));

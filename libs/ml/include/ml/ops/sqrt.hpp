@@ -61,7 +61,7 @@ public:
     assert(inputs.size() == 1);
     assert(error_signal.shape() == this->ComputeOutputShape(inputs));
 
-    ArrayType ret_error_signal(inputs.at(0).get().shape());
+    ArrayType ret_error_signal(inputs.at(0)->shape());
 
     fetch::math::Sqrt(inputs.at(0).get(), ret_error_signal);
     fetch::math::Divide(static_cast<DataType>(0.5), ret_error_signal, ret_error_signal);
@@ -72,7 +72,7 @@ public:
 
   std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
   {
-    return inputs.front().get().shape();
+    return inputs.front()->shape();
   }
 
   static constexpr char const *DESCRIPTOR = "Sqrt";

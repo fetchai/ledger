@@ -47,7 +47,7 @@ public:
   void Forward(VecTensorType const &inputs, ArrayType &output) override
   {
     assert(inputs.size() == 2);
-    assert(inputs.at(0).get().shape() == output.shape());
+    assert(inputs.at(0)->shape() == output.shape());
     assert(inputs.at(1).get().shape().at(inputs.at(1).get().shape().size() - 1) == 1);
 
     fetch::math::LeakyRelu(inputs.at(0).get(), inputs.at(1).get(), output);
@@ -66,17 +66,17 @@ public:
     // Test if batch dimension for alpha is 1
     assert(inputs.at(1).get().shape().at(inputs.at(1).get().shape().size() - 1) == 1);
 
-    ArrayType return_signal_1{inputs.at(0).get().shape()};
+    ArrayType return_signal_1{inputs.at(0)->shape()};
 
     SizeType a_size{1};
-    for (SizeType i{0}; i < inputs.at(0).get().shape().size() - 1; i++)
+    for (SizeType i{0}; i < inputs.at(0)->shape().size() - 1; i++)
     {
-      a_size *= inputs.at(0).get().shape().at(i);
+      a_size *= inputs.at(0)->shape().at(i);
     }
     ArrayType return_signal_2({a_size, 1});
 
-    SizeType t_batch_dimension = inputs.at(0).get().shape().size() - 1;
-    SizeType batch_size        = inputs.at(0).get().shape().at(t_batch_dimension);
+    SizeType t_batch_dimension = inputs.at(0)->shape().size() - 1;
+    SizeType batch_size        = inputs.at(0)->shape().at(t_batch_dimension);
 
     for (SizeType i{0}; i < batch_size; i++)
     {
@@ -116,7 +116,7 @@ public:
 
   std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
   {
-    return inputs.front().get().shape();
+    return inputs.front()->shape();
   }
 
   static constexpr char const *DESCRIPTOR = "LeakyReluOp";

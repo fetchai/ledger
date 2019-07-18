@@ -50,8 +50,7 @@ public:
     assert(inputs.at(0).get().size() == inputs.at(1).get().size());
 
     // sanity check the softmax adds up to 1
-    assert(Sum(fetch::math::Softmax(inputs.at(0).get())) -
-               (DataType(inputs.at(0).get().shape().at(0))) <
+    assert(Sum(fetch::math::Softmax(inputs.at(0).get())) - (DataType(inputs.at(0)->shape().at(0))) <
            0.0001);
 
     // softmax forward & then CrossEntropy
@@ -67,7 +66,7 @@ public:
     assert(inputs.size() == 2);
     assert(inputs.at(0).get().size() == inputs.at(1).get().size());
 
-    ArrayType ret({inputs.at(0).get().shape()});
+    ArrayType ret({inputs.at(0)->shape()});
     fetch::math::Softmax(inputs.at(0).get(), ret);
     fetch::math::Subtract(ret, inputs.at(1).get(), ret);
 

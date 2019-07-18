@@ -44,8 +44,8 @@ TYPED_TEST(EluTest, forward_test)
 
   fetch::ml::ops::Elu<ArrayType> op(DataType{2.0});
 
-  ArrayType prediction(op.ComputeOutputShape({data}));
-  op.Forward(VecTensorType({data}), prediction);
+  ArrayType prediction(op.ComputeOutputShape({std::make_shared<const ArrayType>(data)}));
+  op.Forward({std::make_shared<const ArrayType>(data)}, prediction);
 
   // test correct values
   ASSERT_TRUE(prediction.AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
@@ -78,8 +78,8 @@ TYPED_TEST(EluTest, forward_3d_tensor_test)
 
   fetch::ml::ops::Elu<ArrayType> op(DataType{2.0});
 
-  ArrayType prediction(op.ComputeOutputShape({data}));
-  op.Forward(VecTensorType({data}), prediction);
+  ArrayType prediction(op.ComputeOutputShape({std::make_shared<const ArrayType>(data)}));
+  op.Forward({std::make_shared<const ArrayType>(data)}, prediction);
 
   // test correct values
   ASSERT_TRUE(prediction.AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
@@ -95,7 +95,7 @@ TYPED_TEST(EluTest, backward_test)
   ArrayType gt    = ArrayType::FromString(R"(0, 0, 0, 0.0183156133, 1, 0.0049575567, 0, 0)");
 
   fetch::ml::ops::Elu<ArrayType> op(DataType{2.0});
-  std::vector<ArrayType>         prediction = op.Backward({data}, error);
+  std::vector<ArrayType> prediction = op.Backward({std::make_shared<const ArrayType>(data)}, error);
 
   // test correct values
   ASSERT_TRUE(prediction[0].AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
@@ -128,7 +128,7 @@ TYPED_TEST(EluTest, backward_3d_tensor_test)
   }
 
   fetch::ml::ops::Elu<ArrayType> op(DataType{2.0});
-  std::vector<ArrayType>         prediction = op.Backward({data}, error);
+  std::vector<ArrayType> prediction = op.Backward({std::make_shared<const ArrayType>(data)}, error);
 
   // test correct values
   ASSERT_TRUE(prediction[0].AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));

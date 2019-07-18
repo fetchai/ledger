@@ -41,11 +41,12 @@ template <class T>
 class FullyConnected : public SubGraph<T>
 {
 public:
-  using ArrayType    = T;
-  using ArrayPtrType = std::shared_ptr<ArrayType>;
-  using SizeType     = typename ArrayType::SizeType;
-  using DataType     = typename ArrayType::Type;
-  using WeightsInit  = fetch::ml::ops::WeightsInitialisation;
+  using ArrayType     = T;
+  using ArrayPtrType  = std::shared_ptr<ArrayType>;
+  using SizeType      = typename ArrayType::SizeType;
+  using DataType      = typename ArrayType::Type;
+  using WeightsInit   = fetch::ml::ops::WeightsInitialisation;
+  using VecTensorType = SubGraph<T>::VecTensorType;
 
   FullyConnected(SizeType in, SizeType out,
                  details::ActivationType activation_type = details::ActivationType::NOTHING,
@@ -85,8 +86,7 @@ public:
     this->SetInput(bias, bias_data);
   }
 
-  std::vector<SizeType> ComputeOutputShape(
-      std::vector<std::reference_wrapper<ArrayType const>> const &) const
+  std::vector<SizeType> ComputeOutputShape(VecTensorType const &) const
   {
     return {this->out_size_, 1};
   }

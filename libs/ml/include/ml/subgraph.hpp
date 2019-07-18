@@ -38,7 +38,7 @@ class SubGraph : public Graph<T>, public Ops<T>
 {
 public:
   using ArrayType     = T;
-  using VecTensorType = std::vector<std::reference_wrapper<ArrayType const>>;
+  using VecTensorType = std::vector<std::shared_ptr<ArrayType const>>;
 
   virtual void                   Forward(VecTensorType const &inputs, ArrayType &output);
   virtual std::vector<ArrayType> Backward(VecTensorType const &inputs,

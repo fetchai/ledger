@@ -62,7 +62,7 @@ public:
     assert(inputs.at(0).get().size() == inputs.at(1).get().size());
     assert(error_signal.size() == inputs.at(1).get().size());
 
-    ArrayType return_signal_1(inputs.at(0).get().shape());
+    ArrayType return_signal_1(inputs.at(0)->shape());
     ArrayType return_signal_2(inputs.at(1).get().shape());
 
     auto a_it   = inputs.at(0).get().cbegin();
@@ -93,7 +93,7 @@ public:
 
   virtual std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const
   {
-    return inputs.front().get().shape();
+    return inputs.front()->shape();
   }
 
   static constexpr char const *DESCRIPTOR = "Maximum";

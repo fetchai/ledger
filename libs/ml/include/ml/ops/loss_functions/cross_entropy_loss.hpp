@@ -58,10 +58,10 @@ public:
 
     assert(inputs.size() == 2);
     assert(inputs.at(0).get().size() == inputs.at(1).get().size());
-    assert(inputs.at(0).get().shape().size() == 2);
+    assert(inputs.at(0)->shape().size() == 2);
 
-    ArrayType ret({inputs.at(0).get().shape()});
-    if (inputs.at(0).get().shape().at(0) == 1)  // not one-hot
+    ArrayType ret({inputs.at(0)->shape()});
+    if (inputs.at(0)->shape().at(0) == 1)  // not one-hot
     {
       // (Sigmoid(x)-y)*x
       auto     a_it = inputs.at(0).get().cbegin();
@@ -92,7 +92,7 @@ public:
         ++r_it;
       }
     }
-    else if (inputs.at(0).get().shape().size())  // one-hot
+    else if (inputs.at(0)->shape().size())  // one-hot
     {
       fetch::math::Softmax(inputs.at(0).get(), ret, 1);
 
