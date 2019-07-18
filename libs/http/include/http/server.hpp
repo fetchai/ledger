@@ -237,7 +237,7 @@ public:
     {
       validators::Validator v = param.validator;
       v.description           = param.description;
-      route.AddValidator(param.name, v);
+      route.AddValidator(param.name, std::move(v));
     }
 
     views_.push_back({std::move(description), method, std::move(route), view});
