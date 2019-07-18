@@ -16,6 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include "open_api_http_module.hpp"
+
 namespace fetch {
 
 OpenAPIHttpModule::OpenAPIHttpModule()

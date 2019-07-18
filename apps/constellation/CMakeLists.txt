@@ -13,6 +13,8 @@ add_executable(constellation
                config_builder.hpp
                constellation.cpp
                constellation.hpp
+               open_api_http_module.hpp               
+               open_api_http_module.cpp               
                health_check_http_module.hpp
                key_generator.cpp
                key_generator.hpp
@@ -26,6 +28,7 @@ add_executable(constellation
 target_link_libraries(constellation
                       PRIVATE fetch-ledger
                               fetch-miner
+                              fetch-http
                               fetch-dkg
                               fetch-settings
                               fetch-version)
