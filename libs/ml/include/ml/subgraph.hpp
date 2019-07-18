@@ -69,9 +69,9 @@ void SubGraph<T>::Forward(VecTensorType const &inputs, ArrayType &output)
   assert(inputs.size() == this->input_nodes_.size());
   for (uint64_t i(0); i < inputs.size(); ++i)
   {
-    this->SetInput(input_nodes_[i], inputs.at(i));
+    this->SetInput(input_nodes_[i], *(inputs.at(i)));
   }
-  output = output_node_->Evaluate(this->is_training_);
+  output = *(output_node_->Evaluate(this->is_training_));
 }
 
 template <typename T>
@@ -88,7 +88,7 @@ std::vector<T> SubGraph<T>::Backward(VecTensorType const &inputs, ArrayType cons
     std::shared_ptr<NodeInterface<T>> node = this->nodes_[s];
     for (auto const &grad : non_back_prop_err_signal)
     {
-      if (grad.first == (*node))
+      if (grad.first == node.get())
       {
         back_prop_err_signal.emplace_back(grad.second);
       }

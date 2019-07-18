@@ -113,11 +113,11 @@ public:
     return g_.StateDict();
   }
 
-  void AddPeers(std::vector<std::shared_ptr<TrainingClient>> const &clientList)
+  void AddPeers(std::vector<std::shared_ptr<TrainingClient>> const &clients)
   {
-    for (auto const &p : clientList)
+    for (auto const &p : clients)
     {
-      if ((*p) != this)
+      if (p.get() != this)
       {
         peers_.push_back(p);
       }
