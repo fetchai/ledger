@@ -18,17 +18,31 @@
 //------------------------------------------------------------------------------
 
 #include "math/distance/square.hpp"
-#include "math/matrix_operations.hpp"
+#include "math/fundamental_operators.hpp"
+#include <cassert>
 
 namespace fetch {
 namespace math {
 
+/**
+ * This implementation assumes that the trailing dimension is the data/batch dimension, and all
+ * other dimensions must therefore be feature dimensions
+ * @tparam ArrayType
+ * @param A Testing data tensor
+ * @param B Ground truth data tensor
+ * @return
+ */
 template <typename ArrayType>
 typename ArrayType::Type MeanSquareError(ArrayType const &A, ArrayType const &B)
 {
-  typename ArrayType::Type ret = distance::SquareDistance(A, B);
+  using DataType = typename ArrayType::Type;
+  assert(A.shape() == B.shape());
 
-  ret = Divide(ret, typename ArrayType::Type(A.size()));
+  // compute the squared distance
+  DataType ret = distance::SquareDistance(A, B);
+
+  // divide by data size to get the Mean
+  Divide(ret, static_cast<DataType>(A.size()), ret);
 
   return ret;
 }
