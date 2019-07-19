@@ -60,6 +60,7 @@ public:
   void         Assign(TensorView const &other);
   void         Assign(Tensor<T, C> const &other);
   Tensor<T, C> Copy() const;
+  Tensor<T, C> Copy(SizeVector const &tensor_shape) const;
 
   /////////////////
   /// OPERATORS ///
@@ -205,6 +206,21 @@ template <typename T, typename C>
 Tensor<T, C> TensorView<T, C>::Copy() const
 {
   Tensor<T, C> ret({height_, width_});
+  ret.Assign(*this);
+  return ret;
+}
+
+/**
+ * Construct a new Tensor by copying the data specified by the view
+ * @tparam T
+ * @tparam C
+ * @return
+ */
+template <typename T, typename C>
+Tensor<T, C> TensorView<T, C>::Copy(SizeVector const &tensor_shape) const
+{
+  Tensor<T, C> ret(tensor_shape);
+  assert(ret.size() == height_ * width_);
   ret.Assign(*this);
   return ret;
 }
