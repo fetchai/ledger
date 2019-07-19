@@ -1,0 +1,3 @@
+function main()
+    var graph = Graph();
+endfunction
