@@ -17,7 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "math/tensor.hpp"
-#include "ml/utilities/scaler.hpp"
+#include "ml/utilities/min_max_scaler.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 
 #include "gtest/gtest.h"
@@ -42,13 +42,13 @@ TYPED_TEST(ScalerTest, min_max_test)
   TypeParam de_norm_data(std::vector<fetch::math::SizeType>({8, 6, 4}));
 
   fetch::ml::utilities::MinMaxScaler<TypeParam> scaler;
-  scaler.setScale(data);
+  scaler.SetScale(data);
 
   scaler.Normalise(data, norm_data);
-  scaler.deNormalise(norm_data, de_norm_data);
+  scaler.DeNormalise(norm_data, de_norm_data);
 
   EXPECT_EQ(data.shape(), norm_data.shape());
   EXPECT_EQ(de_norm_data.shape(), norm_data.shape());
 
-  EXPECT_TRUE(data.AllCLose(de_norm_data));
+  EXPECT_TRUE(data.AllClose(de_norm_data));
 }
