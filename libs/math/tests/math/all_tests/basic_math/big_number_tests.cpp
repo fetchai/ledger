@@ -29,9 +29,9 @@ using namespace fetch::byte_array;
 
 TEST(big_number_gtest, elementary_left_shift)
 {
-  UInt<256> n1(0);
+  UInt<256> n1(0ull);
   // testing elementary left shifting
-  n1 = 3;
+  n1 = 3ull;
   EXPECT_EQ(3, n1[0]);
   n1 <<= 8;
   EXPECT_EQ(0, n1[0]);
@@ -45,7 +45,7 @@ TEST(big_number_gtest, elementary_left_shift)
   n1 <<= 35;
   n1 <<= 58;
 
-  UInt<512> n2(INT_MAX);
+  UInt<512> n2(UINT_MAX);
   n2 <<= 63;
 }
 TEST(big_number_gtest, incrementer_tests)
@@ -257,7 +257,7 @@ TEST(big_number_gtest, right_shift_tests)
 
 TEST(big_number_gtest, testing_comparisons)
 {
-  UInt<256> a(0), b(0);
+  UInt<256> a(0u), b(0u);
   for (std::size_t count = 0; count < (1ul << 8u); ++count)
   {
     EXPECT_EQ(a, b);
@@ -283,4 +283,21 @@ TEST(big_number_gtest, testing_comparisons)
       ++a;
     }
   }
+}
+
+TEST(big_number_gtest, test_bits_size_not_alligned_with_wide_element_array_size)
+{
+  UInt<272> n1{ULONG_MAX};
+  n1 <<= (272 - 64);
+  EXPECT_EQ(n1.ElementAt(0), 0);
+  EXPECT_EQ(n1.ElementAt(1), 0);
+  EXPECT_EQ(n1.ElementAt(2), 0);
+  EXPECT_EQ(n1.ElementAt(3), 0xffffffffffff0000);
+  EXPECT_EQ(n1.ElementAt(4), 0x000000000000ffff);
+  n1 >>= 8;
+  EXPECT_EQ(n1.ElementAt(0), 0);
+  EXPECT_EQ(n1.ElementAt(1), 0);
+  EXPECT_EQ(n1.ElementAt(2), 0);
+  EXPECT_EQ(n1.ElementAt(3), 0xffffffffffffff00);
+  EXPECT_EQ(n1.ElementAt(4), 0x00000000000000ff);
 }
