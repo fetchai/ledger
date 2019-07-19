@@ -34,8 +34,6 @@ namespace variant {
  */
 Variant &Variant::operator=(Variant const &value)
 {
-  Reset();
-
   // update the type
   type_ = value.type_;
 
@@ -62,7 +60,7 @@ Variant &Variant::operator=(Variant const &value)
     ResizeArray(value.array_.size());
     for (std::size_t i = 0, end = value.array_.size(); i < end; ++i)
     {
-      *(array_.at(i)) = *(value.array_.at(i));
+      array_.at(i) = value.array_.at(i);
     }
     break;
 
@@ -70,15 +68,8 @@ Variant &Variant::operator=(Variant const &value)
   {
     for (auto const &element : value.object_)
     {
-      // create an element
-      Variant *obj = pool().Allocate();
-      obj->parent_ = parent();
-
-      // make a deep copy
-      *obj = *element.second;
-
       // update our object
-      object_.emplace(element.first, obj);
+      object_.emplace(element.first, element.second);
     }
     break;
   }
@@ -136,7 +127,7 @@ bool Variant::operator==(Variant const &other) const
         for (std::size_t i = 0; i < array_.size(); ++i)
         {
           // if the pointers are different and the contents are different
-          if ((array_[i] != other.array_[i]) && (*array_[i] != *other.array_[i]))
+          if (array_[i] != other.array_[i] )
           {
             equal = false;
             break;
@@ -161,7 +152,7 @@ bool Variant::operator==(Variant const &other) const
         }
 
         // if the pointers are different and the contents are different
-        if ((element.second != it->second) && (*element.second != *(it->second)))
+        if ((element.second != it->second) && (element.second != it->second))
         {
           equal = false;
           break;
@@ -176,52 +167,6 @@ bool Variant::operator==(Variant const &other) const
   return equal;
 }
 
-/**
- * Internal: Reset the variant to its undefined state, releasing all held resources
- */
-void Variant::Reset()
-{
-  switch (type_)
-  {
-  case Type::UNDEFINED:
-  case Type::NULL_VALUE:
-  case Type::INTEGER:
-  case Type::FLOATING_POINT:
-  case Type::FIXED_POINT:
-  case Type::BOOLEAN:
-    break;
-  case Type::STRING:
-    string_ = ConstByteArray();
-    break;
-
-  case Type::ARRAY:
-    ResizeArray(0);
-    break;
-
-  case Type::OBJECT:
-  {
-    Variant *parent = (parent_) ? parent_ : this;
-
-    auto it = object_.begin();
-    while (it != object_.end())
-    {
-      Variant *variant = it->second;
-      it               = object_.erase(it);
-
-      assert(variant->parent_ == parent);
-      FETCH_UNUSED(parent);
-
-      variant->Reset();
-      variant->parent_ = nullptr;
-
-      pool().Release(variant);
-    }
-    break;
-  }
-  }
-
-  type_ = Type::UNDEFINED;
-}
 
 /**
  * Stream variant object out as a JSON encoded sequence
@@ -275,7 +220,7 @@ std::ostream &operator<<(std::ostream &stream, Variant const &variant)
       }
 
       // recursively call the stream operator
-      stream << *(variant.array_[i]);
+      stream << variant.array_[i];
     }
 
     stream << "]";
@@ -293,7 +238,7 @@ std::ostream &operator<<(std::ostream &stream, Variant const &variant)
       }
 
       // format the element
-      stream << std::quoted(std::string{element.first}) << ": " << *(element.second);
+      stream << std::quoted(std::string{element.first}) << ": " << element.second;
 
       ++i;
     }

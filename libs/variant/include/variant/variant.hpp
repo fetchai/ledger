@@ -77,7 +77,7 @@ public:
 
   // Construction / Destruction
   Variant() = default;
-  explicit Variant(std::size_t pool_reserve);
+//  explicit Variant(std::size_t pool_reserve);
   Variant(Variant const &);
   Variant(Variant &&) noexcept = default;
   ~Variant();
@@ -216,8 +216,8 @@ public:
   friend std::ostream &operator<<(std::ostream &stream, Variant const &variant);
 
 private:
-  using VariantList   = std::vector<Variant *>;
-  using VariantObject = std::unordered_map<ConstByteArray, Variant *>;
+  using VariantList   = std::vector<Variant>;
+  using VariantObject = std::unordered_map<ConstByteArray, Variant>;
   using Pool          = detail::ElementPool<Variant>;
 
   union PrimitiveData
@@ -226,17 +226,6 @@ private:
     double  float_point;
     bool    boolean;
   };
-
-  /// @name Helper Methods
-  /// @{
-  Pool &   pool();
-  Variant *parent();
-  void     Reset();
-  /// @}
-
-  // Memory management
-  Variant *parent_{nullptr};  ///< The parent to which all sub-variants are allocated
-  Pool     pool_;             ///< The pool of variant objects (populated for top only)
 
   // Data Elements
   Type           type_{Type::UNDEFINED};  ///< The type of the variant
@@ -291,7 +280,7 @@ inline Variant Variant::Array(std::size_t elements)
 inline Variant Variant::Object()
 {
   Variant v;
-  v.type_ = Type::OBJECT;
+  v.type_   = Type::OBJECT;
 
   return v;
 }
@@ -301,9 +290,11 @@ inline Variant Variant::Object()
  *
  * @param pool_reserve The number of elements to preallocate
  */
+/*
 inline Variant::Variant(std::size_t pool_reserve)
   : pool_(pool_reserve)
 {}
+*/
 
 /**
  * (Deep) copy construct a variant from another variant
@@ -321,7 +312,6 @@ inline Variant::Variant(Variant const &other)
  */
 inline Variant::~Variant()
 {
-  Reset();
 }
 
 /**
@@ -584,7 +574,6 @@ meta::IfIsStdString<T, std::string> Variant::As() const
 template <typename T>
 meta::IfIsBoolean<T, Variant &> Variant::operator=(T const &value)
 {
-  Reset();
 
   type_              = Type::BOOLEAN;
   primitive_.boolean = value;
@@ -602,7 +591,6 @@ meta::IfIsBoolean<T, Variant &> Variant::operator=(T const &value)
 template <typename T>
 meta::IfIsInteger<T, Variant &> Variant::operator=(T const &value)
 {
-  Reset();
 
   type_              = Type::INTEGER;
   primitive_.integer = static_cast<int64_t>(value);
@@ -620,7 +608,6 @@ meta::IfIsInteger<T, Variant &> Variant::operator=(T const &value)
 template <typename T>
 meta::IfIsFloat<T, Variant &> Variant::operator=(T const &value)
 {
-  Reset();
 
   type_                  = Type::FLOATING_POINT;
   primitive_.float_point = static_cast<double>(value);
@@ -638,7 +625,6 @@ meta::IfIsFloat<T, Variant &> Variant::operator=(T const &value)
 template <typename T>
 meta::IfIsFixedPoint<T, Variant &> Variant::operator=(T const &value)
 {
-  Reset();
 
   type_              = Type::FIXED_POINT;
   primitive_.integer = value.Data();
@@ -656,7 +642,6 @@ meta::IfIsFixedPoint<T, Variant &> Variant::operator=(T const &value)
 template <typename T>
 meta::IfIsAByteArray<T, Variant &> Variant::operator=(T const &value)
 {
-  Reset();
 
   type_   = Type::STRING;
   string_ = value;
@@ -674,7 +659,6 @@ meta::IfIsAByteArray<T, Variant &> Variant::operator=(T const &value)
 template <typename T>
 meta::IfIsStdString<T, Variant &> Variant::operator=(T const &value)
 {
-  Reset();
 
   type_   = Type::STRING;
   string_ = ConstByteArray{value};
@@ -690,7 +674,6 @@ meta::IfIsStdString<T, Variant &> Variant::operator=(T const &value)
  */
 inline Variant &Variant::operator=(char const *value)
 {
-  Reset();
 
   type_   = Type::STRING;
   string_ = ConstByteArray{value};
@@ -712,7 +695,7 @@ inline Variant &Variant::operator[](std::size_t index)
     throw std::runtime_error("Unable to access index of non-array variant");
   }
 
-  return *(array_.at(index));
+  return array_.at(index);
 }
 
 /**
@@ -729,7 +712,7 @@ inline Variant const &Variant::operator[](std::size_t index) const
     throw std::runtime_error("Unable to access index of non-array variant");
   }
 
-  return *(array_.at(index));
+  return array_.at(index);
 }
 
 /**
@@ -750,18 +733,17 @@ inline Variant &Variant::operator[](ConstByteArray const &key)
   auto it = object_.find(key);
   if (it != object_.end())
   {
-    return *(it->second);
+    return it->second;
   }
 
   // allocate an element
-  Variant *variant = pool().Allocate();
-  variant->parent_ = parent();
-
+  Variant variant; 
+  
   // update the map
-  object_[key] = variant;
+  object_[key] = variant; // TODO: std:: move
 
   // return the variant
-  return *variant;
+  return object_[key];
 }
 
 /**
@@ -785,7 +767,7 @@ inline Variant const &Variant::operator[](ConstByteArray const &key) const
     throw std::out_of_range("Key not present in object");
   }
 
-  return *(it->second);
+  return it->second;
 }
 
 /**
@@ -848,27 +830,6 @@ inline std::size_t Variant::size() const
 }
 
 /**
- * Internal: Helper to lookup the correct pool
- *
- * @return The reference to the pool to allocate from
- */
-inline Variant::Pool &Variant::pool()
-{
-  assert((parent_) ? pool_.empty() : true);
-  return (parent_) ? parent_->pool_ : pool_;
-}
-
-/**
- * Internal: Calculate the correct value for a parent field of a sub object
- *
- * @return The pointer to the parent variant
- */
-inline Variant *Variant::parent()
-{
-  return (parent_) ? parent_ : this;
-}
-
-/**
  * Update the size of the array to match the new given length
  *
  * When increasing the size of the array new elements are added to the end of the array and are
@@ -888,32 +849,8 @@ inline void Variant::ResizeArray(std::size_t length)
     throw std::runtime_error("Unable to resize non-array type");
   }
 
-  Variant *parent = (parent_) ? parent_ : this;
-
   // increase the array size
-  while (length > array_.size())
-  {
-    Variant *variant = pool().Allocate();
-
-    assert(variant->parent_ == nullptr);
-    variant->parent_ = parent;
-
-    array_.push_back(variant);
-  }
-
-  // decrease the array size
-  while (length < array_.size())
-  {
-    Variant *variant = array_.back();
-    assert(variant->parent_ == parent);
-
-    variant->Reset();
-    variant->parent_ = nullptr;
-
-    pool().Release(variant);
-
-    array_.pop_back();
-  }
+  array_.resize(length);
 }
 
 /**
@@ -951,7 +888,7 @@ void Variant::IterateObject(Function const &function) const
   {
     for (auto const &item : object_)
     {
-      if (!function(item.first, *item.second))
+      if (!function(item.first, item.second))
       {
         break;
       }
