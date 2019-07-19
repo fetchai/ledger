@@ -165,6 +165,7 @@ public:
   void ResetCabinet(CabinetMembers cabinet, std::size_t threshold)
   {
     FETCH_LOCK(cabinet_lock_);
+    assert(cabinet.size() > 3 * threshold);  // To meet the requirements for the RBC
     current_cabinet_   = std::move(cabinet);
     current_threshold_ = threshold;
     rbc_.ResetCabinet();

@@ -67,14 +67,14 @@ std::string RBC::MsgTypeToString(MsgType msg_type)
  * @param dkg
  */
 RBC::RBC(Endpoint &endpoint, MuddleAddress address, CabinetMembers const &cabinet,
-         std::size_t &threshold, DkgService &dkg_service)
+         DkgService &dkg_service)
   : address_{std::move(address)}
   , endpoint_{endpoint}
   , current_cabinet_{cabinet}
-  , threshold_{threshold}
   , dkg_service_{dkg_service}
   , rbc_subscription_(endpoint.Subscribe(SERVICE_DKG, CHANNEL_BROADCAST))
 {
+
   // Set subscription for rbc
   rbc_subscription_->SetMessageHandler([this](MuddleAddress const &from, uint16_t, uint16_t,
                                               uint16_t, muddle::Packet::Payload const &payload,
@@ -97,6 +97,16 @@ void RBC::ResetCabinet()
 {
   assert(!current_cabinet_.empty());
   assert(current_cabinet_.find(address_) != current_cabinet_.end());
+
+  // Set threshold depending on size of committee
+  if (current_cabinet_.size() % 3 == 0)
+  {
+    threshold_ = static_cast<uint32_t>(current_cabinet_.size() / 3 - 1);
+  }
+  else
+  {
+    threshold_ = static_cast<uint32_t>(current_cabinet_.size() / 3);
+  }
   assert(current_cabinet_.size() > 3 * threshold_);
   std::lock_guard<std::mutex> lock{mutex_broadcast_};
   id_ = static_cast<uint32_t>(

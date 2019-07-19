@@ -16,7 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "dkg/dkg_helper.hpp"
+#include "crypto/mcl_dkg.hpp"
 #include <cstddef>
 #include <iostream>
 #include <mcl/bn256.hpp>
@@ -129,24 +129,24 @@ bn::Fr ComputeZi(std::vector<uint32_t> const &parties, std::vector<bn::Fr> const
 
 std::vector<bn::Fr> InterpolatePolynom(std::vector<bn::Fr> const &a, std::vector<bn::Fr> const &b)
 {
-  auto m = static_cast<uint32_t>(a.size());
+  size_t m = a.size();
   if ((b.size() != m) || (m == 0))
   {
     throw std::invalid_argument("mcl_interpolate_polynom: bad m");
   }
   std::vector<bn::Fr> prod{a}, res(m, 0);
   bn::Fr              t1, t2;
-  for (uint32_t k = 0; k < m; k++)
+  for (size_t k = 0; k < m; k++)
   {
     t1 = 1;
-    for (uint32_t i = k - 1; i >= 0; i--)
+    for (std::size_t i = k - 1; i >= 0; i--)
     {
       bn::Fr::mul(t1, t1, a[k]);
       bn::Fr::add(t1, t1, prod[i]);
     }
 
     t2 = 0;
-    for (uint32_t i = k - 1; i >= 0; i--)
+    for (std::size_t i = k - 1; i >= 0; i--)
     {
       bn::Fr::mul(t2, t2, a[k]);
       bn::Fr::add(t2, t2, res[i]);
@@ -173,7 +173,7 @@ std::vector<bn::Fr> InterpolatePolynom(std::vector<bn::Fr> const &a, std::vector
       {
         bn::Fr::neg(t1, a[k]);
         bn::Fr::add(prod[k], t1, prod[k - 1]);
-        for (uint32_t i = k - 1; i >= 1; i--)
+        for (std::size_t i = k - 1; i >= 1; i--)
         {
           bn::Fr::mul(t2, prod[i], t1);
           bn::Fr::add(prod[i], t2, prod[i - 1]);
@@ -195,20 +195,6 @@ bn::G1 SignShare(byte_array::ConstByteArray const &message, bn::Fr const &x_i)
   bn::mapToG1(PH, Hm);
   bn::G1::mul(sign, PH, x_i);  // sign = s H(m)
   return sign;
-}
-
-bool VerifyShare(bn::G2 const &v_i, byte_array::ConstByteArray const &message, bn::G1 const &sign,
-                 bn::G2 const &G)
-{
-  bn::Fp12 e1, e2;
-  bn::Fp   Hm;
-  bn::G1   PH;
-  Hm.setHashOf(&message, message.size());
-  bn::mapToG1(PH, Hm);
-
-  bn::pairing(e1, sign, G);  // should this be H?
-  bn::pairing(e2, PH, v_i);
-  return e1 == e2;
 }
 
 bool VerifySign(bn::G2 const &y, byte_array::ConstByteArray const &message, bn::G1 const &sign,

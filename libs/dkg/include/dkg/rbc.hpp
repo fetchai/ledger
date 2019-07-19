@@ -47,7 +47,7 @@ public:
 
   // Constructor
   explicit RBC(Endpoint &endpoint, MuddleAddress address, CabinetMembers const &cabinet,
-               std::size_t &threshold, DkgService &dkg_service);
+               DkgService &dkg_service);
 
   // Operators
   void ResetCabinet();
@@ -107,8 +107,9 @@ private:
   MuddleAddress const address_;   ///< Our muddle address
   Endpoint &          endpoint_;  ///< The muddle endpoint to communicate on
   CabinetMembers const
-      &current_cabinet_;       ///< The set of muddle addresses of the cabinet (including our own)
-  std::size_t &   threshold_;  ///< Number of byzantine nodes
+      &    current_cabinet_;  ///< The set of muddle addresses of the cabinet (including our own)
+  uint32_t threshold_;  ///< Number of byzantine nodes (this is assumed to take the maximum allowed
+                        ///< value satisying threshold_ < current_cabinet_.size()
   DkgService &    dkg_service_;
   SubscriptionPtr rbc_subscription_;  ///< For receiving messages in the rbc channel
 

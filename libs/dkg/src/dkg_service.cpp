@@ -114,7 +114,7 @@ DkgService::DkgService(Endpoint &endpoint, ConstByteArray address, ConstByteArra
   , rpc_server_{endpoint_, SERVICE_DKG, CHANNEL_RPC}
   , rpc_client_{"dkg", endpoint_, SERVICE_DKG, CHANNEL_RPC}
   , state_machine_{std::make_shared<StateMachine>("dkg", State::BUILD_AEON_KEYS, ToString)}
-  , rbc_{endpoint_, address_, current_cabinet_, current_threshold_, *this}
+  , rbc_{endpoint_, address_, current_cabinet_, *this}
 {
   // RPC server registration
   rpc_proto_ = std::make_unique<DkgRpcProtocol>(*this);
