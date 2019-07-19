@@ -77,7 +77,7 @@ public:
 
   // Construction / Destruction
   Variant() = default;
-//  explicit Variant(std::size_t pool_reserve);
+  //  explicit Variant(std::size_t pool_reserve);
   Variant(Variant const &);
   Variant(Variant &&) noexcept = default;
   ~Variant();
@@ -280,7 +280,7 @@ inline Variant Variant::Array(std::size_t elements)
 inline Variant Variant::Object()
 {
   Variant v;
-  v.type_   = Type::OBJECT;
+  v.type_ = Type::OBJECT;
 
   return v;
 }
@@ -311,8 +311,7 @@ inline Variant::Variant(Variant const &other)
  * Destructor
  */
 inline Variant::~Variant()
-{
-}
+{}
 
 /**
  * Boolean constructor
@@ -737,10 +736,10 @@ inline Variant &Variant::operator[](ConstByteArray const &key)
   }
 
   // allocate an element
-  Variant variant; 
-  
+  Variant variant;
+
   // update the map
-  object_[key] = variant; // TODO: std:: move
+  object_[key] = variant;  // TODO: std:: move
 
   // return the variant
   return object_[key];

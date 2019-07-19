@@ -127,7 +127,7 @@ bool Variant::operator==(Variant const &other) const
         for (std::size_t i = 0; i < array_.size(); ++i)
         {
           // if the pointers are different and the contents are different
-          if (array_[i] != other.array_[i] )
+          if (array_[i] != other.array_[i])
           {
             equal = false;
             break;
@@ -166,7 +166,6 @@ bool Variant::operator==(Variant const &other) const
 
   return equal;
 }
-
 
 /**
  * Stream variant object out as a JSON encoded sequence
