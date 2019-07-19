@@ -439,7 +439,7 @@ State DkgService::OnCollectSignaturesState()
         // verify the signature
         if (!crypto::bls::Verify(it->signature, it->public_key, payload))
         {
-          FETCH_LOG_ERROR(LOGGING_NAME, "Failed to very signature submision. Discarding");
+          FETCH_LOG_ERROR(LOGGING_NAME, "Failed to very signature submission. Discarding");
         }
         else
         {
