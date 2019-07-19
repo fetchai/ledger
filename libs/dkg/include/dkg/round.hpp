@@ -52,7 +52,7 @@ public:
 
   void           AddShare(crypto::bls::Id const &id, crypto::bls::Signature const &sig);
   bool           HasSignature() const;
-  std::size_t    GetNumShares() const;
+  uint64_t       GetNumShares() const;
   uint64_t       GetEntropy() const;
   void           SetSignature(crypto::bls::Signature const &sig);
   ConstByteArray GetRoundEntropy() const;
@@ -70,8 +70,8 @@ private:
   crypto::bls::Signature     round_signature_{};
   byte_array::ConstByteArray round_entropy_{};
 
-  std::atomic<std::size_t> num_shares_{0};
-  std::atomic<bool>        has_signature_{};
+  std::atomic<uint64_t> num_shares_{0};
+  std::atomic<bool>     has_signature_{};
 };
 
 /**
@@ -109,7 +109,7 @@ inline bool Round::HasSignature() const
  *
  * @return The number of shares present
  */
-inline std::size_t Round::GetNumShares() const
+inline uint64_t Round::GetNumShares() const
 {
   return num_shares_;
 }
