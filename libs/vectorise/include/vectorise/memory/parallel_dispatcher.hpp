@@ -41,7 +41,7 @@ public:
   using VectorRegisterType         = typename vectorize::VectorRegister<type, vector_size>;
   using VectorRegisterIteratorType = vectorize::VectorRegisterIterator<type, vector_size>;
 
-  ConstParallelDispatcher(type *ptr, std::size_t const &size)
+  ConstParallelDispatcher(type *ptr, std::size_t size)
     : pointer_(ptr)
     , size_(size)
   {}
@@ -239,7 +239,6 @@ public:
   template <typename F, typename V>
   type SumReduce(TrivialRange const &range, F &&vector_reduce, V const &a, V const &b)
   {
-
     VectorRegisterType c(type(0)), tmp, self;
 
     VectorRegisterType a_val;
@@ -431,7 +430,6 @@ public:
                          template Unroll<Args...>::signature_type const &kernel,
                      Args &&... args)
   {
-
     VectorRegisterType         regs[sizeof...(args)];
     VectorRegisterIteratorType iters[sizeof...(args)];
     InitializeVectorIterators(0, this->size(), iters, std::forward<Args>(args)...);
@@ -457,7 +455,6 @@ public:
               VectorRegisterType (*vector_reduction)(VectorRegisterType const &,
                                                      VectorRegisterType const &)) const
   {
-
     int SFL = int(range.SIMDFromLower<VectorRegisterType::E_BLOCK_COUNT>());
 
     int SF = int(range.SIMDFromUpper<VectorRegisterType::E_BLOCK_COUNT>());
@@ -531,10 +528,12 @@ public:
   {
     return pointer_;
   }
-  std::size_t const &size() const
+
+  std::size_t size() const
   {
     return size_;
   }
+
   std::size_t &size()
   {
     return size_;
@@ -545,52 +544,50 @@ protected:
   {
     return pointer_;
   }
+
   type *      pointer_;
   std::size_t size_;
 
   template <typename G, typename... Args>
-  static void InitializeVectorIterators(std::size_t const &offset, std::size_t const &size,
+  static void InitializeVectorIterators(std::size_t offset, std::size_t size,
                                         VectorRegisterIteratorType *iters, G &next,
                                         Args &&... remaining)
   {
-
     assert(next.padded_size() >= offset + size);
     (*iters) = VectorRegisterIteratorType(next.pointer() + offset, size);
     InitializeVectorIterators(offset, size, iters + 1, std::forward<Args>(remaining)...);
   }
 
   template <typename G>
-  static void InitializeVectorIterators(std::size_t const &offset, std::size_t const &size,
+  static void InitializeVectorIterators(std::size_t offset, std::size_t size,
                                         VectorRegisterIteratorType *iters, G &next)
   {
     assert(next.padded_size() >= offset + size);
     (*iters) = VectorRegisterIteratorType(next.pointer() + offset, size);
   }
 
-  static void InitializeVectorIterators(std::size_t const & /*offset*/,
-                                        std::size_t const & /*size*/,
+  static void InitializeVectorIterators(std::size_t /*offset*/, std::size_t /*size*/,
                                         VectorRegisterIteratorType * /*iters*/)
   {}
 
   template <typename G, typename... Args>
-  static void SetPointers(std::size_t const &offset, std::size_t const &size, type const **regs,
-                          G &next, Args &&... remaining)
+  static void SetPointers(std::size_t offset, std::size_t size, type const **regs, G &next,
+                          Args &&... remaining)
   {
-
     assert(next.size() >= offset + size);
     *regs = next.pointer() + offset;
     SetPointers(offset, size, regs + 1, std::forward<Args>(remaining)...);
   }
 
   template <typename G>
-  static void SetPointers(std::size_t const &offset, std::size_t const & /*size*/,
-                          type const **regs, G &next)
+  static void SetPointers(std::size_t offset, std::size_t size, type const **regs, G &next)
   {
-    // assert(next.size() >= offset + size); // Size not used
+    assert(next.size() >= offset + size);
+    (void)size;
     *regs = next.pointer() + offset;
   }
 
-  static void SetPointers(std::size_t const & /*offset*/, std::size_t const & /*size*/,
+  static void SetPointers(std::size_t /*offset*/, std::size_t /*size*/,
                           VectorRegisterIteratorType * /*iters*/)
   {}
 };
@@ -610,7 +607,7 @@ public:
   using VectorRegisterType         = typename vectorize::VectorRegister<type, vector_size>;
   using VectorRegisterIteratorType = vectorize::VectorRegisterIterator<type, vector_size>;
 
-  ParallelDispatcher(type *ptr, std::size_t const &size)
+  ParallelDispatcher(type *ptr, std::size_t size)
     : super_type(ptr, size)
   {}
 
@@ -732,7 +729,6 @@ public:
         c          = shift_elements_right(c);
         if (Q <= i)
         {
-
           this->pointer()[SFL + i] = value;
         }
       }
@@ -750,7 +746,6 @@ public:
 
     if (STU != ST)
     {
-
       details::UnrollNext<sizeof...(args), VectorRegisterType, VectorRegisterIteratorType>::Apply(
           regs, iters);
       details::MatrixApplyFreeFunction<VectorRegisterType, void>::template Unroll<Args...>::Apply(
@@ -782,8 +777,6 @@ public:
 
     for (std::size_t i = 0; i < N; i += VectorRegisterType::E_BLOCK_COUNT)
     {
-      //      assert(i < N);
-
       details::UnrollNext<sizeof...(args), VectorRegisterType, VectorRegisterIteratorType>::Apply(
           regs, iters);
 
@@ -811,7 +804,6 @@ public:
       void>::type
   Apply(C const &cls, Args &&... args)
   {
-
     return Apply(cls, &C::operator(), std::forward<Args>(args)...);
   }
 
@@ -819,8 +811,6 @@ public:
   {
     return super_type::pointer();
   }
-
-private:
 };
 
 }  // namespace memory

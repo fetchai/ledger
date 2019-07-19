@@ -43,9 +43,8 @@ using MuddleAddress = muddle::Packet::Address;
 using State         = DkgService::State;
 using PromiseState  = service::PromiseState;
 
-constexpr char const *LOGGING_NAME   = "DkgService";
-constexpr uint64_t    READ_AHEAD     = 3;
-constexpr uint64_t    HISTORY_LENGTH = 10;
+constexpr uint64_t READ_AHEAD     = 3;
+constexpr uint64_t HISTORY_LENGTH = 10;
 
 const ConstByteArray GENESIS_PAYLOAD = "=~=~ Genesis ~=~=";
 
@@ -114,6 +113,7 @@ DkgService::DkgService(Endpoint &endpoint, ConstByteArray address, ConstByteArra
   , rpc_server_{endpoint_, SERVICE_DKG, CHANNEL_RPC}
   , rpc_client_{"dkg", endpoint_, SERVICE_DKG, CHANNEL_RPC}
   , state_machine_{std::make_shared<StateMachine>("dkg", State::BUILD_AEON_KEYS, ToString)}
+  , rbc_{endpoint_, address_, current_cabinet_, current_threshold_, *this}
 {
   // RPC server registration
   rpc_proto_ = std::make_unique<DkgRpcProtocol>(*this);
@@ -156,7 +156,8 @@ DkgService::SecretKeyReq DkgService::RequestSecretKey(MuddleAddress const &addre
   else
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Failed to provide node: ", address.ToBase64(),
-                   " with secret share");
+                   " with secret share. Not in current cabinet secrets! Size: ",
+                   current_cabinet_secrets_.size());
   }
 
   return req;
@@ -178,6 +179,31 @@ void DkgService::SubmitSignatureShare(uint64_t round, crypto::bls::Id const &id,
 
   FETCH_LOCK(round_lock_);
   pending_signatures_.emplace_back(Submission{round, id, public_key, signature});
+}
+
+/**
+ * Send a message using the reliable broadcast protocol
+ *
+ * @param msg Serialised message
+ */
+void DkgService::SendReliableBroadcast(RBCMessageType const &msg)
+{
+  rbc_.SendRBroadcast(msg);
+}
+
+/**
+ * Handler for messages which have completed RBC protocol
+ *
+ * @param from Muddle address of the sender of the message
+ * @param payload Serialised message
+ */
+void DkgService::OnRbcDeliver(MuddleAddress from, byte_array::ConstByteArray payload)
+{
+  FETCH_LOG_INFO(LOGGING_NAME, "Received message ", payload, " from address ", from);
+  // TODO(jmw): DKGEnvelop    env;
+  //  DKGSerializer serializer{msg};
+  //  serializer >> env;
+  //  Pass message to DKG
 }
 
 /**
@@ -221,8 +247,11 @@ DkgService::Status DkgService::GenerateEntropy(Digest block_digest, uint64_t blo
  */
 State DkgService::OnBuildAeonKeysState()
 {
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Build aeon keys");
+
   if (is_dealer_)
   {
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Is dealer");
     BuildAeonKeys();
 
     // since we are the dealer we do not need to request a signature from ourselves
@@ -239,6 +268,8 @@ State DkgService::OnBuildAeonKeysState()
  */
 State DkgService::OnRequestSecretKeyState()
 {
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Request secret key state");
+
   // request from the beacon for the secret key
   pending_promise_ = rpc_client_.CallSpecificAddress(dealer_address_, RPC_DKG_BEACON,
                                                      DkgRpcProtocol::REQUEST_SECRET, address_);
@@ -253,6 +284,8 @@ State DkgService::OnRequestSecretKeyState()
  */
 State DkgService::OnWaitForSecretKeyState()
 {
+  FETCH_LOG_DEBUG(LOGGING_NAME, "wait for request secret key state");
+
   State next_state{State::WAIT_FOR_SECRET_KEY};
 
   FETCH_LOG_DEBUG(LOGGING_NAME, "State: Wait for secret");
@@ -311,6 +344,8 @@ State DkgService::OnWaitForSecretKeyState()
  */
 State DkgService::OnBroadcastSignatureState()
 {
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Broadcast signature");
+
   State next_state{State::COLLECT_SIGNATURES};
 
   auto const this_round = current_round_.load();
@@ -370,6 +405,7 @@ State DkgService::OnBroadcastSignatureState()
  */
 State DkgService::OnCollectSignaturesState()
 {
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Collect signatures");
   State next_state{State::COLLECT_SIGNATURES};
 
   FETCH_LOCK(round_lock_);
@@ -413,13 +449,14 @@ State DkgService::OnCollectSignaturesState()
         // verify the signature
         if (!crypto::bls::Verify(it->signature, it->public_key, payload))
         {
-          FETCH_LOG_ERROR(LOGGING_NAME, "Failed to very signature submision. Discarding");
+          FETCH_LOG_ERROR(LOGGING_NAME, "Failed to very signature submission. Discarding");
         }
         else
         {
           // successful verified this signature share - add it to the round
           round->AddShare(it->id, it->signature);
           updates = true;
+          FETCH_LOG_INFO(LOGGING_NAME, "Successfully added share");
         }
       }
 
@@ -433,6 +470,7 @@ State DkgService::OnCollectSignaturesState()
     }
   }
 
+  // TODO(HUT): looks like a bug here
   // Step 2. Determine if we have completed any signatures
   if (!round->HasSignature() && round->GetNumShares() >= current_threshold_)
   {
@@ -454,6 +492,12 @@ State DkgService::OnCollectSignaturesState()
     ++current_round_;
 
     next_state = State::COMPLETE;
+  }
+  else
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "Still awaiting shares. Threshold: ", current_threshold_,
+                   " Number of shares: ", round->GetNumShares(),
+                   " has signature: ", round->HasSignature());
   }
 
   // if there have been no updates on this iteration, wait for a period of time
@@ -517,7 +561,8 @@ State DkgService::OnCompleteState()
  */
 bool DkgService::BuildAeonKeys()
 {
-  FETCH_LOG_DEBUG(LOGGING_NAME, "Build new aeons key shares");
+  FETCH_LOG_DEBUG(LOGGING_NAME,
+                  "Build new aeons key shares. Current cabinet size: ", current_cabinet_.size());
 
   FETCH_LOCK(cabinet_lock_);
   FETCH_LOCK(dealer_lock_);

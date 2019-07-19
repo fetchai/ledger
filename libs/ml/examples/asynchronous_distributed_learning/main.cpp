@@ -55,9 +55,8 @@
 using namespace fetch::ml::ops;
 using namespace fetch::ml::layers;
 
-using DataType       = float;
-using ArrayType      = fetch::math::Tensor<DataType>;
-using ConstSliceType = typename ArrayType::ConstSliceType;
+using DataType  = float;
+using ArrayType = fetch::math::Tensor<DataType>;
 
 class TrainingClient
 {

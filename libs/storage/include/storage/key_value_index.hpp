@@ -125,7 +125,7 @@ struct KeyValuePair
     return split == S;
   }
 
-  bool UpdateLeaf(uint64_t const &val, byte_array::ConstByteArray const &data)
+  bool UpdateLeaf(uint64_t val, byte_array::ConstByteArray const &data)
   {
     memcpy(hash, data.pointer(), N);
     value = val;
@@ -295,7 +295,7 @@ public:
     throw StorageException("Not implemented");
   }
 
-  void GetElement(uint64_t const &i, index_type &v)
+  void GetElement(uint64_t i, index_type &v)
   {
     key_value_pair p;
     stack_.Get(i, p);
@@ -342,7 +342,7 @@ public:
    *
    */
   template <typename... Args>
-  void Set(byte_array::ConstByteArray const &key_str, uint64_t const &val,
+  void Set(byte_array::ConstByteArray const &key_str, uint64_t val,
            byte_array::ConstByteArray const &data)
   {
     key_type       key(key_str);
@@ -533,7 +533,7 @@ public:
 
   //*/
 
-  uint64_t const &root_element() const
+  uint64_t root_element() const
   {
     return root_;
   }

@@ -808,7 +808,8 @@ BlockCoordinator::State BlockCoordinator::OnPostExecBlockValidation()
   {
     if (state_hash != current_block_->body.merkle_hash)
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Block validation failed: Merkle hash mismatch (block: 0x",
+      FETCH_LOG_WARN(LOGGING_NAME, "Block validation failed: Merkle hash mismatch (block num: ",
+                     current_block_->body.block_number, " block: 0x",
                      current_block_->body.hash.ToHex(), " expected: 0x",
                      current_block_->body.merkle_hash.ToHex(), " actual: 0x", state_hash.ToHex(),
                      ")");
@@ -818,10 +819,11 @@ BlockCoordinator::State BlockCoordinator::OnPostExecBlockValidation()
     }
     else
     {
-      FETCH_LOG_DEBUG(LOGGING_NAME, "Block validation great success: (block: 0x",
-                      current_block_->body.hash.ToHex(), " expected: 0x",
-                      current_block_->body.merkle_hash.ToHex(), " actual: 0x", state_hash.ToHex(),
-                      ")");
+      FETCH_LOG_DEBUG(
+          LOGGING_NAME,
+          "Block validation great success: (block num: ", current_block_->body.block_number,
+          " block: 0x", current_block_->body.hash.ToHex(), " expected: 0x",
+          current_block_->body.merkle_hash.ToHex(), " actual: 0x", state_hash.ToHex(), ")");
     }
   }
 
