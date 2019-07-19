@@ -71,10 +71,12 @@ protected:
   MsgSignature      signature_;  ///< ECDSA signature of message
 
   explicit DKGMessage(MessageType type)
-    : type_{type} {};
-  explicit DKGMessage(MessageType type, MsgSignature sig)
     : type_{type}
-    , signature_{std::move(sig)} {};
+  {}
+  DKGMessage(MessageType type, MsgSignature sig)
+    : type_{type}
+    , signature_{std::move(sig)}
+  {}
 };
 
 class CoefficientsMessage : public DKGMessage
@@ -87,11 +89,12 @@ public:
     : DKGMessage{MessageType::COEFFICIENT}
   {
     serialiser >> phase_ >> coefficients_ >> signature_;
-  };
-  explicit CoefficientsMessage(uint8_t phase, std::vector<Coefficient> coeff, MsgSignature sig)
+  }
+  CoefficientsMessage(uint8_t phase, std::vector<Coefficient> coeff, MsgSignature sig)
     : DKGMessage{MessageType::COEFFICIENT, std::move(sig)}
     , phase_{phase}
-    , coefficients_{std::move(coeff)} {};
+    , coefficients_{std::move(coeff)}
+  {}
   ~CoefficientsMessage() override = default;
 
   DKGSerializer Serialize() const override
@@ -124,13 +127,13 @@ public:
     : DKGMessage{MessageType::SHARE}
   {
     serialiser >> phase_ >> shares_ >> signature_;
-  };
-  explicit SharesMessage(uint8_t                                                phase,
-                         std::unordered_map<CabinetId, std::pair<Share, Share>> shares,
-                         MsgSignature                                           sig)
+  }
+  SharesMessage(uint8_t phase, std::unordered_map<CabinetId, std::pair<Share, Share>> shares,
+                MsgSignature sig)
     : DKGMessage{MessageType::SHARE, std::move(sig)}
     , phase_{phase}
-    , shares_{std::move(shares)} {};
+    , shares_{std::move(shares)}
+  {}
   ~SharesMessage() override = default;
 
   DKGSerializer Serialize() const override
@@ -163,10 +166,11 @@ public:
     : DKGMessage{MessageType::COMPLAINT}
   {
     serialiser >> complaints_ >> signature_;
-  };
-  explicit ComplaintsMessage(std::unordered_set<CabinetId> complaints, MsgSignature sig)
+  }
+  ComplaintsMessage(std::unordered_set<CabinetId> complaints, MsgSignature sig)
     : DKGMessage{MessageType::COMPLAINT, std::move(sig)}
-    , complaints_{std::move(complaints)} {};
+    , complaints_{std::move(complaints)}
+  {}
   ~ComplaintsMessage() override = default;
 
   DKGSerializer Serialize() const override
@@ -194,7 +198,8 @@ public:
   DKGEnvelop() = default;
   explicit DKGEnvelop(DKGMessage const &msg)
     : type_{msg.type()}
-    , serialisedMessage_{msg.Serialize().data()} {};
+    , serialisedMessage_{msg.Serialize().data()}
+  {}
 
   template <typename T>
   void Serialize(T &serialiser) const

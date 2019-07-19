@@ -105,12 +105,14 @@ protected:
   uint8_t  counter_;  ///< Counter for messages sent on RBC
 
   explicit RBCMessage(MessageType type)
-    : type_{type} {};
-  explicit RBCMessage(uint16_t channel, uint32_t id, uint8_t counter, MessageType type)
+    : type_{type}
+  {}
+  RBCMessage(uint16_t channel, uint32_t id, uint8_t counter, MessageType type)
     : type_{type}
     , channel_{channel}
     , id_{id}
-    , counter_{counter} {};
+    , counter_{counter}
+  {}
 };
 
 class RMessage : public RBCMessage
@@ -135,10 +137,12 @@ protected:
   SerialisedMessage message_;  ///< Serialised message to be sent using RBC
 
   explicit RMessage(MessageType type)
-    : RBCMessage{type} {};
+    : RBCMessage{type}
+  {}
   RMessage(uint16_t channel, uint32_t id, uint8_t counter, SerialisedMessage msg, MessageType type)
     : RBCMessage{channel, id, counter, type}
-    , message_{std::move(msg)} {};
+    , message_{std::move(msg)}
+  {}
 };
 
 class RHash : public RBCMessage
@@ -164,17 +168,20 @@ protected:
 
   // Construction
   explicit RHash(MessageType type)
-    : RBCMessage{type} {};
+    : RBCMessage{type}
+  {}
   RHash(uint16_t channel, uint32_t id, uint8_t counter, TruncatedHash msg_hash, MessageType type)
     : RBCMessage{channel, id, counter, type}
-    , hash_{std::move(msg_hash)} {};
+    , hash_{std::move(msg_hash)}
+  {}
 };
 
 class RBroadcast : public RMessage
 {
 public:
-  explicit RBroadcast(uint16_t channel, uint32_t id, uint8_t counter, SerialisedMessage msg)
-    : RMessage{channel, id, counter, std::move(msg), MessageType::RBROADCAST} {};
+  RBroadcast(uint16_t channel, uint32_t id, uint8_t counter, SerialisedMessage msg)
+    : RMessage{channel, id, counter, std::move(msg), MessageType::RBROADCAST}
+  {}
   explicit RBroadcast(RBCSerializer &serialiser)
     : RMessage{MessageType::RBROADCAST}
   {
@@ -186,8 +193,9 @@ public:
 class REcho : public RHash
 {
 public:
-  explicit REcho(uint16_t channel, uint32_t id, uint8_t counter, TruncatedHash msg_hash)
-    : RHash{channel, id, counter, std::move(msg_hash), MessageType::RECHO} {};
+  REcho(uint16_t channel, uint32_t id, uint8_t counter, TruncatedHash msg_hash)
+    : RHash{channel, id, counter, std::move(msg_hash), MessageType::RECHO}
+  {}
   explicit REcho(RBCSerializer &serialiser)
     : RHash{MessageType::RECHO}
   {
@@ -200,8 +208,9 @@ class RReady : public RHash
 {
 public:
   // Construction/Destruction
-  explicit RReady(uint16_t channel, uint32_t id, uint8_t counter, TruncatedHash msg_hash)
-    : RHash{channel, id, counter, std::move(msg_hash), MessageType::RREADY} {};
+  RReady(uint16_t channel, uint32_t id, uint8_t counter, TruncatedHash msg_hash)
+    : RHash{channel, id, counter, std::move(msg_hash), MessageType::RREADY}
+  {}
   explicit RReady(RBCSerializer &serialiser)
     : RHash{MessageType::RREADY}
   {
@@ -213,8 +222,9 @@ public:
 class RRequest : public RBCMessage
 {
 public:
-  explicit RRequest(uint16_t channel, uint32_t id, uint8_t counter)
-    : RBCMessage{channel, id, counter, MessageType::RREQUEST} {};
+  RRequest(uint16_t channel, uint32_t id, uint8_t counter)
+    : RBCMessage{channel, id, counter, MessageType::RREQUEST}
+  {}
   explicit RRequest(RBCSerializer &serialiser)
     : RBCMessage{MessageType::RREQUEST}
   {
@@ -233,8 +243,9 @@ public:
 class RAnswer : public RMessage
 {
 public:
-  explicit RAnswer(uint16_t channel, uint32_t id, uint8_t counter, SerialisedMessage msg)
-    : RMessage{channel, id, counter, std::move(msg), MessageType::RANSWER} {};
+  RAnswer(uint16_t channel, uint32_t id, uint8_t counter, SerialisedMessage msg)
+    : RMessage{channel, id, counter, std::move(msg), MessageType::RANSWER}
+  {}
   explicit RAnswer(RBCSerializer &serialiser)
     : RMessage{MessageType::RANSWER}
   {

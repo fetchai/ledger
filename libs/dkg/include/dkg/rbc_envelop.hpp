@@ -35,7 +35,8 @@ public:
   RBCEnvelop() = default;
   explicit RBCEnvelop(RBCMessage const &msg)
     : type_{msg.type()}
-    , payload_{msg.Serialize().data()} {};
+    , payload_{msg.Serialize().data()}
+  {}
 
   template <typename T>
   void Serialize(T &serialiser) const
