@@ -443,7 +443,7 @@ void BM_ExpBackward(benchmark::State &state)
   error_signal.FillUniformRandom();
 
   VecTensorType inputs;
-  inputs.push_back(input);
+  inputs.emplace_back(std::make_shared<TensorType>(input));
   fetch::ml::ops::Exp<fetch::math::Tensor<T>> exp1;
 
   for (auto _ : state)
@@ -496,8 +496,8 @@ void BM_DivideForward(benchmark::State &state)
   output.FillUniformRandom();
 
   VecTensorType inputs;
-  inputs.push_back(input_1);
-  inputs.push_back(input_2);
+  inputs.emplace_back(std::make_shared<TensorType>(input_1));
+  inputs.emplace_back(std::make_shared<TensorType>(input_2));
   fetch::ml::ops::Divide<fetch::math::Tensor<T>> div1;
 
   for (auto _ : state)
