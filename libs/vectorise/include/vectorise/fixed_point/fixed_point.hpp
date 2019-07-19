@@ -27,8 +27,8 @@
 #include <cstdint>
 #include <functional>
 #include <iomanip>
-#include <iostream>
 #include <limits>
+#include <ostream>
 
 namespace fetch {
 namespace fixed_point {
@@ -39,8 +39,6 @@ class FixedPoint;
 using fp32_t  = FixedPoint<16, 16>;
 using fp64_t  = FixedPoint<32, 32>;
 using fp128_t = FixedPoint<64, 64>;
-
-namespace {
 
 // struct for inferring what underlying types to use
 template <int T>
@@ -119,28 +117,6 @@ struct TypeFromSize<8>
   using SignedType                        = int8_t;
   using NextSize                          = TypeFromSize<16>;
 };
-
-/**
- * finds most significant set bit in type
- * @tparam T
- * @param n
- * @return
- */
-template <typename T>
-constexpr inline int32_t HighestSetBit(T n_input)
-{
-  auto const n = static_cast<uint64_t>(n_input);
-
-  if (n == 0)
-  {
-    return 0;
-  }
-
-  return static_cast<int32_t>((sizeof(uint64_t) * 8)) -
-         static_cast<int32_t>(platform::CountLeadingZeroes64(n));
-}
-
-}  // namespace
 
 struct BaseFixedpointType
 {
@@ -1994,7 +1970,7 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::Log2(FixedPoint<I, F> const &x)
   {
     y = _1 / x;
   }
-  Type       k = HighestSetBit(y.Data()) - Type(FRACTIONAL_BITS);
+  Type       k = platform::HighestSetBit(y.Data()) - Type(FRACTIONAL_BITS);
   FixedPoint k_shifted{Type(1) << k};
   FixedPoint r = y / k_shifted;
 
