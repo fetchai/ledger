@@ -34,9 +34,10 @@ public:
   using VecTensorType = typename Ops<T>::VecTensorType;
 
   PlaceHolder() = default;
-  
-  PlaceHolder(ArrayType const & value){
-  	SetData(value);
+
+  PlaceHolder(ArrayType const &value)
+  {
+    SetData(value);
   }
 
   virtual void Forward(VecTensorType const &inputs, ArrayType &output)

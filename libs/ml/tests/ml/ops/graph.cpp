@@ -91,7 +91,8 @@ TYPED_TEST(GraphTest, no_such_node_test)  // Use the class as a Node
 
   fetch::ml::Graph<ArrayType> g;
   g.template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>("Input", {});
-  g.template AddNode<fetch::ml::layers::Convolution1D<ArrayType>>("Convolution", {"Input"}, 10u, 20u, 3u, 1u);
+  g.template AddNode<fetch::ml::layers::Convolution1D<ArrayType>>("Convolution", {"Input"}, 10u,
+                                                                  20u, 3u, 1u);
 
   ArrayType data(std::vector<SizeType>({5, 10}));
   g.SetInput("Input", data);
@@ -107,9 +108,12 @@ TYPED_TEST(GraphTest, two_nodes_same_name_test)
   fetch::ml::Graph<ArrayType> g;
 
   g.template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>("Input", {});
-  std::string sa_1 = g.template AddNode<fetch::ml::layers::Convolution1D<ArrayType>>("Convolution", {"Input"}, 10u, 20u, 3u, 1u);
-  std::string sa_2 = g.template AddNode<fetch::ml::layers::Convolution1D<ArrayType>>("Convolution", {"Input"}, 10u, 20u, 3u, 1u);
-  std::string sa_3 = g.template AddNode<fetch::ml::layers::Convolution1D<ArrayType>>("Convolution", {"Input"}, 10u, 20u, 3u, 1u);
+  std::string sa_1 = g.template AddNode<fetch::ml::layers::Convolution1D<ArrayType>>(
+      "Convolution", {"Input"}, 10u, 20u, 3u, 1u);
+  std::string sa_2 = g.template AddNode<fetch::ml::layers::Convolution1D<ArrayType>>(
+      "Convolution", {"Input"}, 10u, 20u, 3u, 1u);
+  std::string sa_3 = g.template AddNode<fetch::ml::layers::Convolution1D<ArrayType>>(
+      "Convolution", {"Input"}, 10u, 20u, 3u, 1u);
 
   ArrayType data(std::vector<SizeType>({5, 10}));
   g.SetInput("Input", data);
