@@ -42,7 +42,7 @@ private:
   TensorType x_max_;
   TensorType x_range_;
 
-  void InitialiseStatistics(SizeVector const &tensor_shape);
+  void InitialiseStatistics(SizeType tensor_shape);
 };
 
 /**
@@ -53,7 +53,8 @@ private:
 template <typename TensorType>
 void MinMaxScaler<TensorType>::SetScale(TensorType const &reference_tensor)
 {
-  InitialiseStatistics({1, reference_tensor.shape(1)});
+  InitialiseStatistics(reference_tensor.size() /
+                       reference_tensor.shape(reference_tensor.shape().size() - 1));
 
   // calculate min, max, and range of each feature
   for (std::size_t i = 0; i < reference_tensor.shape(2); ++i)
@@ -156,11 +157,11 @@ void MinMaxScaler<TensorType>::DeNormalise(TensorType const &input_tensor,
  * @param tensor_shape
  */
 template <typename TensorType>
-void MinMaxScaler<TensorType>::InitialiseStatistics(SizeVector const &tensor_shape)
+void MinMaxScaler<TensorType>::InitialiseStatistics(SizeType tensor_size)
 {
-  x_min_   = TensorType(tensor_shape);
-  x_max_   = TensorType(tensor_shape);
-  x_range_ = TensorType(tensor_shape);
+  x_min_   = TensorType(tensor_size);
+  x_max_   = TensorType(tensor_size);
+  x_range_ = TensorType(tensor_size);
 
   // efficiently fill three tensors
   auto x_min_it   = x_min_.begin();

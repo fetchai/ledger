@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "math/base_types.hpp"
 #include "math/tensor.hpp"
 #include "ml/utilities/min_max_scaler.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
@@ -27,8 +28,7 @@ class ScalerTest : public ::testing::Test
 {
 };
 
-using MyTypes = ::testing::Types<fetch::math::Tensor<int>, fetch::math::Tensor<float>,
-                                 fetch::math::Tensor<double>,
+using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
                                  fetch::math::Tensor<fetch::fixed_point::FixedPoint<16, 16>>,
                                  fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
 TYPED_TEST_CASE(ScalerTest, MyTypes);
@@ -36,7 +36,7 @@ TYPED_TEST_CASE(ScalerTest, MyTypes);
 TYPED_TEST(ScalerTest, min_max_test)
 {
   using DataType = typename TypeParam::Type;
-  
+
   TypeParam data(std::vector<fetch::math::SizeType>({8, 6, 4}));
   data.FillUniformRandom();
 
@@ -52,5 +52,6 @@ TYPED_TEST(ScalerTest, min_max_test)
   EXPECT_EQ(data.shape(), norm_data.shape());
   EXPECT_EQ(de_norm_data.shape(), norm_data.shape());
 
-  EXPECT_TRUE(data.AllClose(de_norm_data, fetch::math::function_tolerance<DataType>(), fetch::math::function_tolerance<DataType>()));
+  EXPECT_TRUE(data.AllClose(de_norm_data, fetch::math::function_tolerance<DataType>(),
+                            fetch::math::function_tolerance<DataType>()));
 }
