@@ -35,6 +35,8 @@ TYPED_TEST_CASE(ScalerTest, MyTypes);
 
 TYPED_TEST(ScalerTest, min_max_test)
 {
+  using DataType = typename TypeParam::Type;
+  
   TypeParam data(std::vector<fetch::math::SizeType>({8, 6, 4}));
   data.FillUniformRandom();
 
@@ -50,5 +52,5 @@ TYPED_TEST(ScalerTest, min_max_test)
   EXPECT_EQ(data.shape(), norm_data.shape());
   EXPECT_EQ(de_norm_data.shape(), norm_data.shape());
 
-  EXPECT_TRUE(data.AllClose(de_norm_data));
+  EXPECT_TRUE(data.AllClose(de_norm_data, fetch::math::function_tolerance<DataType>(), fetch::math::function_tolerance<DataType>()));
 }
