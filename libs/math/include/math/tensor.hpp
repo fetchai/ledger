@@ -813,8 +813,8 @@ typename Tensor<T, C>::ConstIteratorType Tensor<T, C>::cend() const
 
 /**
  * returns a view of the entire tensor
- * @tparam T
- * @tparam C
+ * @tparam T Type
+ * @tparam C Container
  * @return
  */
 template <typename T, typename C>
@@ -829,8 +829,8 @@ typename Tensor<T, C>::ViewType Tensor<T, C>::View()
 
 /**
  * returns a constant view of the entire tensor
- * @tparam T
- * @tparam C
+ * @tparam T Type
+ * @tparam C Container
  * @return
  */
 template <typename T, typename C>
@@ -844,10 +844,10 @@ typename Tensor<T, C>::ViewType const Tensor<T, C>::View() const
 }
 
 /**
- * returns a
- * @tparam T
- * @tparam C
- * @param index
+ * returns a tensor view based on the trailing dimension
+ * @tparam T Type
+ * @tparam C Container
+ * @param index which index of the trailing dimension to view
  * @return
  */
 template <typename T, typename C>
