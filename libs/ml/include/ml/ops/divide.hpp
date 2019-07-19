@@ -46,7 +46,7 @@ public:
   {
     assert(inputs.size() == 2);
     assert(inputs.at(0).get().shape() == output.shape());
-    
+
     if (inputs.at(1).get().size() > 1)
     {  // array / array
       fetch::math::Divide(inputs.at(0).get(), inputs.at(1).get(), output);
@@ -100,7 +100,7 @@ public:
     }
     else
     {  // array / array different shape
-	    // TODO (#1380) Write backpropagation for array array division of different shapes
+       // TODO (#1380) Write backpropagation for array array division of different shapes
       throw std::runtime_error("array array division of different shapes is not yet handled");
     }
     return {return_signal_1, return_signal_2};
