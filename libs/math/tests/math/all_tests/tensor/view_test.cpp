@@ -153,3 +153,20 @@ TYPED_TEST(TensorViewTests, data_layout)
     }
   }
 }
+
+
+TYPED_TEST(TensorViewTests, view_copy)
+{
+  TypeParam t1({2, 3, 4, 5, 6});
+  TypeParam t2({2, 3, 4, 5, 6});
+
+  t1.FillUniformRandom();
+  t2 = t1.View().Copy(t1.shape());
+
+  EXPECT_EQ(t1.shape(), t2.shape());
+  EXPECT_TRUE(t1.AllClose(t2));
+
+  auto t3 = t1.View().Copy();
+  EXPECT_TRUE(t1.AllClose(t3));
+
+}
