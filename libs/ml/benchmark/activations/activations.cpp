@@ -40,7 +40,7 @@ void BM_DropoutForward(benchmark::State &state)
   auto output      = TensorType({1, N});
 
   std::vector<std::shared_ptr<fetch::math::Tensor<T> const>> inputs;
-  inputs.push_back(std::make_shared<TensorType>(input));
+  inputs.emplace_back(std::make_shared<TensorType>(input));
   fetch::ml::ops::Dropout<fetch::math::Tensor<T>> dm(0.5);
 
   for (auto _ : state)
@@ -64,7 +64,7 @@ void BM_EluForward(benchmark::State &state)
   TensorType output({1, N});
 
   std::vector<std::shared_ptr<fetch::math::Tensor<T> const>> inputs;
-  inputs.push_back(std::make_shared<TensorType>(input));
+  inputs.emplace_back(std::make_shared<TensorType>(input));
 
   T                                           a = T(0.2);
   fetch::ml::ops::Elu<fetch::math::Tensor<T>> em(a);
@@ -89,7 +89,7 @@ void BM_LeakyReluForward(benchmark::State &state)
   fetch::math::Tensor<T> output({1, N});
 
   std::vector<std::shared_ptr<fetch::math::Tensor<T> const>> inputs;
-  inputs.push_back(input);
+  inputs.emplace_back(input);
   fetch::ml::ops::LeakyRelu<fetch::math::Tensor<T>> lrm;
 
   for (auto _ : state)
@@ -113,7 +113,7 @@ void BM_LogSigmoidForward(benchmark::State &state)
   TensorType output({1, N});
 
   std::vector<std::shared_ptr<fetch::math::Tensor<T> const>> inputs;
-  inputs.push_back(std::make_shared<TensorType>(input));
+  inputs.emplace_back(std::make_shared<TensorType>(input));
   fetch::ml::ops::LogSigmoid<fetch::math::Tensor<T>> lsm;
 
   for (auto _ : state)
@@ -137,7 +137,7 @@ void BM_LogSoftmaxForward(benchmark::State &state)
   TensorType output({1, N});
 
   std::vector<std::shared_ptr<fetch::math::Tensor<T> const>> inputs;
-  inputs.push_back(std::make_shared<TensorType>(input));
+  inputs.emplace_back(std::make_shared<TensorType>(input));
   fetch::ml::ops::LogSoftmax<fetch::math::Tensor<T>> lsm;
 
   for (auto _ : state)
@@ -161,7 +161,7 @@ void BM_RandomizedReluForward(benchmark::State &state)
   TensorType output({1, N});
 
   std::vector<std::shared_ptr<fetch::math::Tensor<T> const>> inputs;
-  inputs.push_back(std::make_shared<TensorType>(input));
+  inputs.emplace_back(std::make_shared<TensorType>(input));
 
   T                                                      lb = T(0.2);
   T                                                      ub = T(0.8);
@@ -188,7 +188,7 @@ void BM_ReluForward(benchmark::State &state)
   TensorType output({1, N});
 
   std::vector<std::shared_ptr<fetch::math::Tensor<T> const>> inputs;
-  inputs.push_back(std::make_shared<TensorType>(input));
+  inputs.emplace_back(std::make_shared<TensorType>(input));
   fetch::ml::ops::Relu<fetch::math::Tensor<T>> rm;
 
   for (auto _ : state)
@@ -212,7 +212,7 @@ void BM_SigmoidForward(benchmark::State &state)
   TensorType output({1, N});
 
   std::vector<std::shared_ptr<fetch::math::Tensor<T> const>> inputs;
-  inputs.push_back(std::make_shared<TensorType>(input));
+  inputs.emplace_back(std::make_shared<TensorType>(input));
   fetch::ml::ops::Sigmoid<fetch::math::Tensor<T>> sm;
 
   for (auto _ : state)
@@ -236,7 +236,7 @@ void BM_SoftmaxForward(benchmark::State &state)
   TensorType output({1, N});
 
   std::vector<std::shared_ptr<fetch::math::Tensor<T> const>> inputs;
-  inputs.push_back(std::make_shared<TensorType>(input));
+  inputs.emplace_back(std::make_shared<TensorType>(input));
   fetch::ml::ops::Softmax<fetch::math::Tensor<T>> sm;
 
   for (auto _ : state)

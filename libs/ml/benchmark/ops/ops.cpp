@@ -342,7 +342,6 @@ void BM_LogBackward(benchmark::State &state)
   input.FillUniformRandom();
   error_signal.FillUniformRandom();
 
-
   VecTensorType inputs;
   inputs.emplace_back(std::make_shared<T>(input));
   fetch::ml::ops::Log<fetch::math::Tensor<T>> log1;
