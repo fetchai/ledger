@@ -147,8 +147,8 @@ void CommodityDataLoader<LabelType, InputType>::Reset()
 template <typename LabelType, typename InputType>
 void CommodityDataLoader<LabelType, InputType>::GetAtIndex(CommodityDataLoader::SizeType index)
 {
-  buffer_.first  = labels_.Slice(index, 1).Copy();
-  buffer_.second = std::vector<InputType>({data_.Slice(index, 1).Copy()});
+  buffer_.first  = labels_.View(index).Copy();
+  buffer_.second = std::vector<InputType>({data_.View(index).Copy()});
 }
 
 }  // namespace dataloaders
