@@ -29,6 +29,10 @@
 
 namespace bn = mcl::bn256;
 
+/**
+ * Helper functions for computations used in the DKG
+ */
+
 namespace fetch {
 namespace dkg {
 

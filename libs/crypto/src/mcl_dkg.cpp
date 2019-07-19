@@ -23,10 +23,13 @@
 
 namespace bn = mcl::bn256;
 
-// TODO(jmw): Add descriptions for functions
-
 namespace fetch {
 namespace dkg {
+
+/**
+ * LHS and RHS functions are used for checking validity of publicly broadcasted coefficients and
+ * secret shares distributed privately
+ */
 
 bn::G2 ComputeLHS(bn::G2 &tmpG, bn::G2 const &G, bn::G2 const &H, bn::Fr const &share1,
                   bn::Fr const &share2)
@@ -56,12 +59,18 @@ void UpdateRHS(uint32_t rank, bn::G2 &rhsG, std::vector<bn::G2> const &input)
   assert(!input.empty());
   for (uint32_t k = 1; k < input.size(); k++)
   {
-    bn::Fr::pow(tmpF, rank + 1, k);  // adjust index $i$ in computation
+    bn::Fr::pow(tmpF, rank + 1, k);  // adjust rank in computation
     bn::G2::mul(tmpG, input[k], tmpF);
     bn::G2::add(rhsG, rhsG, tmpG);
   }
 }
 
+/**
+ * Computes the product
+ * @param rank
+ * @param input
+ * @return
+ */
 bn::G2 ComputeRHS(uint32_t rank, std::vector<bn::G2> const &input)
 {
   bn::Fr tmpF;
@@ -75,8 +84,18 @@ bn::G2 ComputeRHS(uint32_t rank, std::vector<bn::G2> const &input)
   return rhsG;
 }
 
+/**
+ * Given two polynomials (f and f') with coefficients a_i and b_i, we compute the evaluation of
+ * these polynomials at different points
+ *
+ * @param s_i The value of f(index)
+ * @param sprime_i The value of f'(index)
+ * @param a_i The vector of coefficients for f
+ * @param b_i The vector of coefficients for f'
+ * @param index The point at which you evaluate the polynomial
+ */
 void ComputeShares(bn::Fr &s_i, bn::Fr &sprime_i, std::vector<bn::Fr> const &a_i,
-                   std::vector<bn::Fr> const &b_i, uint32_t rank)
+                   std::vector<bn::Fr> const &b_i, uint32_t index)
 {
   bn::Fr pow, tmpF;
   assert(a_i.size() == b_i.size());
@@ -85,7 +104,7 @@ void ComputeShares(bn::Fr &s_i, bn::Fr &sprime_i, std::vector<bn::Fr> const &a_i
   sprime_i = b_i[0];
   for (uint32_t k = 1; k < a_i.size(); k++)
   {
-    bn::Fr::pow(pow, rank + 1, k);   // adjust index $j$ in computation
+    bn::Fr::pow(pow, index + 1, k);  // adjust index in computation
     bn::Fr::mul(tmpF, pow, b_i[k]);  // j^k * b_i[k]
     bn::Fr::add(sprime_i, sprime_i, tmpF);
     bn::Fr::mul(tmpF, pow, a_i[k]);  // j^k * a_i[k]
@@ -93,6 +112,13 @@ void ComputeShares(bn::Fr &s_i, bn::Fr &sprime_i, std::vector<bn::Fr> const &a_i
   }
 }
 
+/**
+ * Computation of the a polynomial (whose coefficients are unknown) evaluated at 0
+ *
+ * @param parties Set of points (not equal to 0) at which the polynomial has been evaluated
+ * @param shares The value of polynomial at the points parties
+ * @return The value of the polynomial evaluated at 0 (z_i)
+ */
 bn::Fr ComputeZi(std::vector<uint32_t> const &parties, std::vector<bn::Fr> const &shares)
 {
   // compute $z_i$ using Lagrange interpolation (without corrupted parties)
@@ -105,8 +131,7 @@ bn::Fr ComputeZi(std::vector<uint32_t> const &parties, std::vector<bn::Fr> const
     {
       if (lt != jt)
       {
-        // adjust index in computation
-        bn::Fr::mul(rhsF, rhsF, lt + 1);
+        bn::Fr::mul(rhsF, rhsF, lt + 1);  // adjust index in computation
       }
     }
     for (auto lt : parties)
@@ -127,6 +152,13 @@ bn::Fr ComputeZi(std::vector<uint32_t> const &parties, std::vector<bn::Fr> const
   return z;
 }
 
+/**
+ * Computes the coefficients of a polynomial
+ *
+ * @param a Points at which polynomial has been evaluated
+ * @param b Value of the polynomial at points a
+ * @return The vector of coefficients of the polynomial
+ */
 std::vector<bn::Fr> InterpolatePolynom(std::vector<bn::Fr> const &a, std::vector<bn::Fr> const &b)
 {
   size_t m = a.size();
@@ -185,25 +217,41 @@ std::vector<bn::Fr> InterpolatePolynom(std::vector<bn::Fr> const &a, std::vector
   return res;
 }
 
+/**
+ * Computes signature share of a message
+ *
+ * @param message Message to be signed
+ * @param x_i Secret key share
+ * @return Signature share
+ */
 bn::G1 SignShare(byte_array::ConstByteArray const &message, bn::Fr const &x_i)
 {
   bn::Fp Hm;
   bn::G1 PH;
   bn::G1 sign;
   sign.clear();
-  Hm.setHashOf(&message, message.size());
+  Hm.setHashOf(message.pointer(), message.size());
   bn::mapToG1(PH, Hm);
   bn::G1::mul(sign, PH, x_i);  // sign = s H(m)
   return sign;
 }
 
+/**
+ * Verifies a signature
+ *
+ * @param y The public key (can be the group public key, or public key share)
+ * @param message Message that was signed
+ * @param sign Signature to be verified
+ * @param G Group used in DKG
+ * @return
+ */
 bool VerifySign(bn::G2 const &y, byte_array::ConstByteArray const &message, bn::G1 const &sign,
                 bn::G2 const &G)
 {
   bn::Fp12 e1, e2;
   bn::Fp   Hm;
   bn::G1   PH;
-  Hm.setHashOf(&message, message.size());
+  Hm.setHashOf(message.pointer(), message.size());
   bn::mapToG1(PH, Hm);
 
   bn::pairing(e1, sign, G);
@@ -212,6 +260,13 @@ bool VerifySign(bn::G2 const &y, byte_array::ConstByteArray const &message, bn::
   return e1 == e2;
 }
 
+/**
+ * Computes the group signature using the indices and signature shares of threshold_ + 1
+ * parties
+ *
+ * @param shares Unordered map of indices and their corresponding signature shares
+ * @return Group signature
+ */
 bn::G1 LagrangeInterpolation(std::unordered_map<uint32_t, bn::G1> const &shares)
 {
   assert(!shares.empty());
@@ -221,18 +276,13 @@ bn::G1 LagrangeInterpolation(std::unordered_map<uint32_t, bn::G1> const &shares)
   }
   bn::G1 res;
   res.clear();
-  /*
-    delta_{i,S}(0) = prod_{j != i} S[j] / (S[j] - S[i]) = a / b
-    where a = prod S[j], b = S[i] * prod_{j != i} (S[j] - S[i])
-  */
+
   bn::Fr a = 1;
   for (auto &p : shares)
   {
     a *= bn::Fr(p.first + 1);
   }
-  /*
-    f(0) = sum_i f(S[i]) delta_{i,S}(0)
-  */
+
   for (auto &p1 : shares)
   {
     auto b = static_cast<bn::Fr>(p1.first + 1);
