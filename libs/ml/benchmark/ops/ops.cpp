@@ -117,8 +117,8 @@ void BM_MatrixMultiply_Backward(benchmark::State &state)
   err_sig.FillUniformRandom();
 
   VecTensorType inputs;
-  inputs.emplace_back(std::make_shared<T>(input_1));
-  inputs.emplace_back(std::make_shared<T>(input_2));
+  inputs.emplace_back(std::make_shared<TensorType>(input_1));
+  inputs.emplace_back(std::make_shared<TensorType>(input_2));
   fetch::ml::ops::MatrixMultiply<fetch::math::Tensor<T>> matmul;
 
   for (auto _ : state)
@@ -182,7 +182,7 @@ void BM_SqrtForward(benchmark::State &state)
   output.FillUniformRandom();
 
   VecTensorType inputs;
-  inputs.emplace_back(std::make_shared<T>(input));
+  inputs.emplace_back(std::make_shared<TensorType>(input));
   fetch::ml::ops::Sqrt<fetch::math::Tensor<T>> sqrt1;
 
   for (auto _ : state)
@@ -233,7 +233,7 @@ void BM_SqrtBackward(benchmark::State &state)
   error_signal.FillUniformRandom();
 
   VecTensorType inputs;
-  inputs.emplace_back(std::make_shared<T>(input));
+  inputs.emplace_back(std::make_shared<TensorType>(input));
   fetch::ml::ops::Sqrt<fetch::math::Tensor<T>> sqrt1;
 
   for (auto _ : state)
@@ -290,7 +290,7 @@ void BM_LogForward(benchmark::State &state)
   output.FillUniformRandom();
 
   VecTensorType inputs;
-  inputs.emplace_back(std::make_shared<T>(input));
+  inputs.emplace_back(std::make_shared<TensorType>(input));
   fetch::ml::ops::Log<fetch::math::Tensor<T>> log1;
 
   for (auto _ : state)
@@ -341,7 +341,7 @@ void BM_LogBackward(benchmark::State &state)
   error_signal.FillUniformRandom();
 
   VecTensorType inputs;
-  inputs.emplace_back(std::make_shared<T>(input));
+  inputs.emplace_back(std::make_shared<TensorType>(input));
   fetch::ml::ops::Log<fetch::math::Tensor<T>> log1;
 
   for (auto _ : state)
@@ -392,7 +392,7 @@ void BM_ExpForward(benchmark::State &state)
   output.FillUniformRandom();
 
   VecTensorType inputs;
-  inputs.emplace_back(std::make_shared<T>(input));
+  inputs.emplace_back(std::make_shared<TensorType>(input));
   fetch::ml::ops::Exp<fetch::math::Tensor<T>> exp1;
 
   for (auto _ : state)
