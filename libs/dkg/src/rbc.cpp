@@ -291,7 +291,7 @@ void RBC::OnRBC(MuddleAddress const &from, RBCEnvelop const &envelop)
  */
 void RBC::OnRBroadcast(std::shared_ptr<RBroadcast> const msg_ptr, uint32_t sender_index)
 {
-  uint64_t tag = msg_ptr->tag();
+  TagType tag = msg_ptr->tag();
   if (!SetPartyFlag(sender_index, tag, MsgType::R_SEND))
   {
     FETCH_LOG_WARN(LOGGING_NAME, "onRBroadcast: Node ", id_, " received repeated msg ", tag,
@@ -329,7 +329,7 @@ void RBC::OnRBroadcast(std::shared_ptr<RBroadcast> const msg_ptr, uint32_t sende
  */
 void RBC::OnREcho(std::shared_ptr<REcho> const msg_ptr, uint32_t sender_index)
 {
-  uint64_t tag = msg_ptr->tag();
+  TagType tag = msg_ptr->tag();
   if (!SetPartyFlag(sender_index, tag, MsgType::R_ECHO))
   {
     FETCH_LOG_WARN(LOGGING_NAME, "onREcho: Node ", id_, " received repeated msg ", tag,
@@ -357,7 +357,7 @@ void RBC::OnREcho(std::shared_ptr<REcho> const msg_ptr, uint32_t sender_index)
  */
 void RBC::OnRReady(std::shared_ptr<RReady> const msg_ptr, uint32_t sender_index)
 {
-  uint64_t tag = msg_ptr->tag();
+  TagType tag = msg_ptr->tag();
   if (!SetPartyFlag(sender_index, tag, MsgType::R_READY))
   {
     FETCH_LOG_WARN(LOGGING_NAME, "onRReady: Node ", id_, " received repeated msg ", tag,
@@ -415,7 +415,7 @@ void RBC::OnRReady(std::shared_ptr<RReady> const msg_ptr, uint32_t sender_index)
  */
 void RBC::OnRRequest(std::shared_ptr<RRequest> const msg_ptr, uint32_t sender_index)
 {
-  uint64_t tag = msg_ptr->tag();
+  TagType tag = msg_ptr->tag();
   if (!SetPartyFlag(sender_index, tag, MsgType::R_REQUEST))
   {
     FETCH_LOG_WARN(LOGGING_NAME, "onRRequest: Node ", id_, " received repeated msg ", tag,
@@ -443,7 +443,7 @@ void RBC::OnRRequest(std::shared_ptr<RRequest> const msg_ptr, uint32_t sender_in
  */
 void RBC::OnRAnswer(std::shared_ptr<RAnswer> const msg_ptr, uint32_t sender_index)
 {
-  uint64_t tag = msg_ptr->tag();
+  TagType tag = msg_ptr->tag();
   if (!SetPartyFlag(sender_index, tag, MsgType::R_ANSWER))
   {
     return;
