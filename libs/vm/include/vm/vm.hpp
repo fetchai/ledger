@@ -481,10 +481,10 @@ public:
   }
 
 private:
-  static const int FRAME_STACK_SIZE = 50;
-  static const int STACK_SIZE       = 5000;
-  static const int MAX_LIVE_OBJECTS = 200;
-  static const int MAX_RANGE_LOOPS  = 50;
+  static constexpr int FRAME_STACK_SIZE = 50;
+  static constexpr int STACK_SIZE       = 5000;
+  static constexpr int MAX_LIVE_OBJECTS = 200;
+  static constexpr int MAX_RANGE_LOOPS  = 50;
 
   struct OpcodeInfo
   {

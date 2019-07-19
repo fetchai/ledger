@@ -43,27 +43,27 @@ using TypeIndex      = std::type_index;
 using TypeIndexArray = std::vector<TypeIndex>;
 
 namespace TypeIds {
-static TypeId const Unknown         = 0;
-static TypeId const Null            = 1;
-static TypeId const InitializerList = 2;
-static TypeId const Void            = 3;
-static TypeId const Bool            = 4;
-static TypeId const Int8            = 5;
-static TypeId const UInt8           = 6;
-static TypeId const Int16           = 7;
-static TypeId const UInt16          = 8;
-static TypeId const Int32           = 9;
-static TypeId const UInt32          = 10;
-static TypeId const Int64           = 11;
-static TypeId const UInt64          = 12;
-static TypeId const Float32         = 13;
-static TypeId const Float64         = 14;
-static TypeId const Fixed32         = 15;
-static TypeId const Fixed64         = 16;
-static TypeId const PrimitiveMaxId  = 16;
-static TypeId const String          = 17;
-static TypeId const Address         = 18;
-static TypeId const NumReserved     = 19;
+static constexpr TypeId Unknown         = 0;
+static constexpr TypeId Null            = 1;
+static constexpr TypeId InitializerList = 2;
+static constexpr TypeId Void            = 3;
+static constexpr TypeId Bool            = 4;
+static constexpr TypeId Int8            = 5;
+static constexpr TypeId UInt8           = 6;
+static constexpr TypeId Int16           = 7;
+static constexpr TypeId UInt16          = 8;
+static constexpr TypeId Int32           = 9;
+static constexpr TypeId UInt32          = 10;
+static constexpr TypeId Int64           = 11;
+static constexpr TypeId UInt64          = 12;
+static constexpr TypeId Float32         = 13;
+static constexpr TypeId Float64         = 14;
+static constexpr TypeId Fixed32         = 15;
+static constexpr TypeId Fixed64         = 16;
+static constexpr TypeId PrimitiveMaxId  = 16;
+static constexpr TypeId String          = 17;
+static constexpr TypeId Address         = 18;
+static constexpr TypeId NumReserved     = 19;
 }  // namespace TypeIds
 
 enum class NodeCategory : uint8_t
