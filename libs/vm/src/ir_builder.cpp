@@ -161,7 +161,7 @@ IRTypePtrArray IRBuilder::BuildTypes(const TypePtrArray &types)
 IRVariablePtrArray IRBuilder::BuildVariables(const VariablePtrArray &variables)
 {
   IRVariablePtrArray array;
-  array.reserve(types.size());
+  array.reserve(variables.size());
   for (auto const &variable : variables)
   {
     array.push_back(BuildVariable(variable));

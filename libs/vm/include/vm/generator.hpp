@@ -123,8 +123,8 @@ struct Executable
 
     uint16_t opcode;
     uint16_t type_id = 0;
-    uint16_t index = 0;
-    uint16_t data = 0;
+    uint16_t index   = 0;
+    uint16_t data    = 0;
   };
   using InstructionArray = std::vector<Instruction>;
 
@@ -147,12 +147,13 @@ struct Executable
 
   struct Function
   {
-    Function(std::string name__, AnnotationArray annotations__, int num_parameters__, TypeId return_type_id__)
+    Function(std::string name__, AnnotationArray annotations__, int num_parameters__,
+             TypeId return_type_id__)
       : name{std::move(name__)}
       , annotations{std::move(annotations__)}
       , num_parameters{num_parameters__}
       , return_type_id{return_type_id__}
-    {} 
+    {}
 
     uint16_t AddVariable(std::string name, TypeId type_id, uint16_t scope_number)
     {
@@ -324,6 +325,7 @@ private:
   void     HandleString(IRExpressionNodePtr const &node);
   void     HandleTrue(IRExpressionNodePtr const &node);
   void     HandleFalse(IRExpressionNodePtr const &node);
+  void     HandleInitializerList(IRExpressionNodePtr const &node);
   void     HandleNull(IRExpressionNodePtr const &node);
   void     HandlePrefixPostfixOp(IRExpressionNodePtr const &node);
   void     HandleBinaryOp(IRExpressionNodePtr const &node);

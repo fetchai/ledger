@@ -77,6 +77,7 @@ public:
     // compile the source code
     if (!compiler_->Compile(text, "default", *ir_, errors))
     {
+      PrintErrors(errors);
       return false;
     }
 

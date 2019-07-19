@@ -53,8 +53,8 @@ void Analyser::Initialise()
                    {NodeKind::InplaceAdd, Operator::InplaceAdd},
                    {NodeKind::InplaceSubtract, Operator::InplaceSubtract},
                    {NodeKind::InplaceMultiply, Operator::InplaceMultiply},
-                   {NodeKind::InplaceDivide, Operator::InplaceDivide},
-		   {NodeKind::InitializerList, Operator::InitializerList}};
+                   {NodeKind::InplaceDivide, Operator::InplaceDivide}/*,
+		   {NodeKind::InitializerList, Operator::InitializerList}*/};
 
   type_map_            = TypeMap();
   type_info_array_     = TypeInfoArray(TypeIds::NumReserved);
@@ -563,6 +563,10 @@ void Analyser::AnnotateBlock(BlockNodePtr const &block_node)
       AnnotateInplaceModuloOp(ConvertToExpressionNodePtr(child));
       break;
     }
+    case NodeKind::InitializerList:
+      AddError(child->line, "cannot infer list type");
+      break;
+
     default:
     {
       AnnotateExpression(ConvertToExpressionNodePtr(child));
@@ -747,7 +751,8 @@ void Analyser::AnnotateVarStatement(BlockNodePtr const &parent_block_node,
     {
       return;
     }
-    if (expression_node->type->IsVoid() || expression_node->type->IsNull())
+    if (expression_node->type->IsVoid() || expression_node->type->IsNull() ||
+        expression_node->node_kind == NodeKind::InitializerList)
     {
       AddError(expression_node->line, "unable to infer type");
       return;
@@ -835,12 +840,7 @@ bool Analyser::AnnotateAssignOp(ExpressionNodePtr const &node)
   ExpressionNodePtr lhs = ConvertToExpressionNodePtr(node->children[0]);
   ExpressionNodePtr rhs = ConvertToExpressionNodePtr(node->children[1]);
 
-  if (!AnnotateLHSExpression(node, lhs))
-  {
-    return false;
-  }
-
-  if (!AnnotateExpression(rhs))
+  if (!AnnotateLHSExpression(node, lhs) || !AnnotateExpression(rhs))
   {
     return false;
   }
@@ -1206,11 +1206,8 @@ bool Analyser::AnnotateInitializerList(ExpressionNodePtr const &node)
 
 bool Analyser::ConvertInitializerList(ExpressionNodePtr const &node, TypePtr const &type)
 {
-  if (type->IsInstantiation())
-  {
-    return type->template_type == array_type_ && ConvertInitializerListToArray(node, type);
-  }
-  return false;
+  return type->IsInstantiation() && type->template_type == array_type_ &&
+         ConvertInitializerListToArray(node, type);
 }
 
 bool Analyser::ConvertInitializerListToArray(ExpressionNodePtr const &node, TypePtr const &type)
@@ -1522,9 +1519,8 @@ bool Analyser::AnnotateIndexOp(ExpressionNodePtr const &node)
 
   if (lhs->node_kind == NodeKind::InitializerList)
   {
-    // TODO(bipll): while indexing into initialization trees makes perfect easily defined sense
-    // a correct implementation would take too much for now
-    AddError(lhs->line, "indexing into initializer lists not supported yet");
+    AddError(lhs->line, "indexing into initializer lists not supported");
+    return false;
   }
 
   if (lhs->IsTypeExpression() || lhs->IsFunctionGroupExpression())

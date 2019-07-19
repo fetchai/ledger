@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "vm/array.hpp"
 #include "vm/vm.hpp"
 
 #include <cstdint>
@@ -700,9 +701,20 @@ void VM::Handler__VariablePrimitiveInplaceModulo()
   DoVariableIntegralInplaceOp<PrimitiveModulo>();
 }
 
-void VM::Handler__InitializeArray()
+void VM::Handler__InitialiseArray()
 {
+  auto seq_size{instruction_->data};
 
+  auto               ret_val{IArray::Constructor(this, instruction_->type_id, seq_size)};
+  TemplateParameter1 element;
+  for (AnyInteger i(seq_size, TypeIds::UInt16); i.primitive.ui16 > 0;)
+  {
+    --i.primitive.ui16;
+    element.Construct(Pop());
+    ret_val->SetIndexedValue(i, element);
+  }
+
+  Push().Construct(ret_val, instruction_->type_id);
 }
 
 }  // namespace vm

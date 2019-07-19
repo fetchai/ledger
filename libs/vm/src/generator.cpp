@@ -1012,6 +1012,7 @@ void Generator::HandleExpression(IRExpressionNodePtr const &node)
   case NodeKind::InitializerList:
   {
     HandleInitializerList(node);
+    break;
   }
   case NodeKind::Null:
   {
@@ -1234,22 +1235,24 @@ void Generator::HandleFalse(IRExpressionNodePtr const &node)
 void Generator::HandleInitializerList(IRExpressionNodePtr const &node)
 {
   auto const &node_type{node->type};
-  if (!node_type->IsInstantiation() || node_type->template_type->name != "Array")
-	  // NB: if there's no better way to check this, there _should_ be a better way to check this
+  if (!node_type->IsInstantiation() || node_type->template_type->name != "Array" ||
+      node_type->parameter_types.size() == 0)
+  // NB: if there's no better way to check this, there _should_ be a better way to check this
   {
-	  return;	// hypothetical no-op, in fact this situation is catched earlier
+    return;  // hypothetical no-op, in fact this situation is catched earlier
   }
-  assert(node->children.size() <= static_cast<std::size_t>(std::numeric_limits<uint16_t>::max()));
+  assert(node->children.size() <= static_cast<std::size_t>(std::numeric_limits<uint16_t>::max()) &&
+         node_type->parameter_types.size() != 0 && bool(node_type->parameter_types.front()));
 
-  for(auto expr: node->children)
+  for (auto expr : node->children)
   {
     HandleExpression(ConvertToIRExpressionNodePtr(expr));
   }
 
-  Executable::Instruction instruction{Opcodes::InitializeArray};
+  Executable::Instruction instruction{Opcodes::InitialiseArray};
   instruction.type_id = node_type->resolved_id;
-  instruction.data = static_cast<uint16_t>(node->children.size());
-  uint16_t pc = function_->AddInstruction(instruction);
+  instruction.data    = static_cast<uint16_t>(node->children.size());
+  uint16_t pc         = function_->AddInstruction(instruction);
   AddLineNumber(node->line, pc);
 }
 

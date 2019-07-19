@@ -101,7 +101,7 @@ static constexpr uint16_t VariableObjectInplaceDivide        = 74;
 static constexpr uint16_t VariableObjectInplaceRightDivide   = 75;
 static constexpr uint16_t PrimitiveModulo                    = 76;
 static constexpr uint16_t VariablePrimitiveInplaceModulo     = 77;
-static constexpr uint16_t InitializeArray                    = 78;
+static constexpr uint16_t InitialiseArray                    = 78;
 static constexpr uint16_t NumReserved                        = 79;
 }  // namespace Opcodes
 
