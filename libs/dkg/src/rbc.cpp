@@ -67,7 +67,7 @@ std::string RBC::MsgTypeToString(MsgType msg_type)
  * @param dkg
  */
 RBC::RBC(Endpoint &endpoint, MuddleAddress address, CabinetMembers const &cabinet,
-         std::size_t &threshold, DkgService &dkg_service)
+         uint64_t &threshold, DkgService &dkg_service)
   : address_{std::move(address)}
   , endpoint_{endpoint}
   , current_cabinet_{cabinet}
@@ -145,7 +145,7 @@ void RBC::Broadcast(const RBCEnvelop &env)
 }
 
 /**
- * Places a serialised message to be broadcasted via RBC into a RBCEnvelop and broadcats
+ * Places a serialised message to be broadcasted via RBC into a RBCEnvelop and broadcasts
  * envelop
  *
  * @param msg Serialised message to be broadcast
