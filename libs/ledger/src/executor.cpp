@@ -133,8 +133,9 @@ Executor::Result Executor::Execute(Digest const &digest, BlockIndex block, Slice
   }
   else
   {
-    // update the charge rate
-    result.charge_rate = current_tx_->charge();
+    // update the charge related data provided by Tx sender
+    result.charge_rate  = current_tx_->charge();
+    result.charge_limit = current_tx_->charge_limit();
 
     // create the storage cache
     storage_cache_ = std::make_shared<CachedStorageAdapter>(*storage_);

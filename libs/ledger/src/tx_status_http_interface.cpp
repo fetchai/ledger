@@ -54,7 +54,7 @@ constexpr PublicTxStatus Convert(TransactionStatus       tx_processing_pipeline_
     switch (contract_exec_status)
     {
     case ContractExecutionStatus::SUCCESS:
-      return PublicTxStatus::SUCCESSFULLY_EXECUTED;
+      return PublicTxStatus::EXECUTED;
 
     case ContractExecutionStatus::CHAIN_CODE_LOOKUP_FAILURE:
       return PublicTxStatus::CHAIN_CODE_LOOKUP_FAILURE;

@@ -172,8 +172,8 @@ TEST_F(TransactionStatusCacheTests, CheckUpdateForContractExecutionResult)
   cache_->Update(tx1, TransactionStatus::PENDING);
   ASSERT_EQ(TransactionStatus::PENDING, cache_->Query(tx1).status);
 
-  ContractExecutionResult const expected_result{ContractExecutionStatus::INEXPLICABLE_FAILURE, 1, 2,
-                                                3, -2};
+  ContractExecutionResult const expected_result{
+      ContractExecutionStatus::INEXPLICABLE_FAILURE, 1, 2, 3, 4, -2};
 
   EXPECT_CALL(*clock_mock_, now()).WillOnce(Return(start));
   cache_->Update(tx1, expected_result);
@@ -183,6 +183,7 @@ TEST_F(TransactionStatusCacheTests, CheckUpdateForContractExecutionResult)
   EXPECT_EQ(expected_result.status, received_result.contract_exec_result.status);
   EXPECT_EQ(expected_result.return_value, received_result.contract_exec_result.return_value);
   EXPECT_EQ(expected_result.fee, received_result.contract_exec_result.fee);
+  EXPECT_EQ(expected_result.charge_limit, received_result.contract_exec_result.charge_limit);
   EXPECT_EQ(expected_result.charge_rate, received_result.contract_exec_result.charge_rate);
   EXPECT_EQ(expected_result.charge, received_result.contract_exec_result.charge);
 }

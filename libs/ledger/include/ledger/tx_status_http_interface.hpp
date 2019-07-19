@@ -52,7 +52,7 @@ enum class PublicTxStatus
   SUBMITTED,    ///< Special case for the data based synergetic transactions
 
   // Contract Execution Errors
-  SUCCESSFULLY_EXECUTED,
+  EXECUTED,
   CHAIN_CODE_LOOKUP_FAILURE,
   CHAIN_CODE_EXEC_FAILURE,
   CONTRACT_NAME_PARSE_FAILURE,
@@ -76,8 +76,8 @@ constexpr char const *ToString(PublicTxStatus status)
     return "Mined";
   case PublicTxStatus::SUBMITTED:
     return "Submitted";
-  case PublicTxStatus::SUCCESSFULLY_EXECUTED:
-    return "Successfully Executed";
+  case PublicTxStatus::EXECUTED:
+    return "Executed";
   case PublicTxStatus::CHAIN_CODE_LOOKUP_FAILURE:
     return "Chain Code Lookup Failure";
   case PublicTxStatus::CHAIN_CODE_EXEC_FAILURE:
