@@ -162,7 +162,7 @@ public:
     return state_machine_;
   }
 
-  void ResetCabinet(CabinetMembers cabinet, std::size_t threshold)
+  void ResetCabinet(CabinetMembers cabinet, uint64_t threshold)
   {
     FETCH_LOCK(cabinet_lock_);
     current_cabinet_   = std::move(cabinet);
@@ -244,7 +244,7 @@ private:
   /// @name Cabinet / Aeon Data
   /// @{
   mutable RMutex cabinet_lock_{};        // Priority 1.
-  std::size_t    current_threshold_{1};  ///< The current threshold for the aeon
+  uint64_t       current_threshold_{1};  ///< The current threshold for the aeon
   CabinetMembers current_cabinet_{};     ///< The set of muddle addresses of the cabinet
   /// @}
 

@@ -118,7 +118,7 @@ public:
     {
 
       SizeType i{0};
-      auto     it = ret_images.at(0).Slice(index, 2).begin();
+      auto     it = ret_images.at(0).View(index).begin();
       while (it.is_valid())
       {
         *it = static_cast<DataType>(data_[cursor_][i]) / DataType{256};
