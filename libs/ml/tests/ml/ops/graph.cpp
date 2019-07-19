@@ -18,11 +18,13 @@
 
 #include "math/tensor.hpp"
 #include "ml/graph.hpp"
+#include "ml/layers/fully_connected.hpp"
 #include "ml/layers/self_attention.hpp"
 #include "ml/ops/activations/relu.hpp"
 #include "ml/ops/multiply.hpp"
 #include "ml/ops/placeholder.hpp"
 #include "ml/ops/subtract.hpp"
+
 
 #include "gtest/gtest.h"
 
@@ -101,30 +103,17 @@ TYPED_TEST(GraphTest, no_such_node_test)  // Use the class as a Node
   ASSERT_ANY_THROW(g.Evaluate("FullyConnected"));
 }
 
-TYPED_TEST(GraphTest, two_nodes_same_name_test)
-{
-  using ArrayType = TypeParam;
-  using SizeType  = typename TypeParam::SizeType;
-
-  fetch::ml::Graph<ArrayType> g;
-
-  g.template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>("Input", {});
-  std::string sa_1 = g.template AddNode<fetch::ml::layers::SelfAttention<ArrayType>>(
-      "SelfAttention", {"Input"}, 50u, 42u, 10u);
-  std::string sa_2 = g.template AddNode<fetch::ml::layers::SelfAttention<ArrayType>>(
-      "SelfAttention", {"Input"}, 50u, 42u, 10u);
-  std::string sa_3 = g.template AddNode<fetch::ml::layers::SelfAttention<ArrayType>>(
-      "SelfAttention", {"Input"}, 50u, 42u, 10u);
-
-  ArrayType data(std::vector<SizeType>({5, 10}));
-  g.SetInput("Input", data);
-
-  EXPECT_NE(sa_1, sa_2);
-  EXPECT_NE(sa_2, sa_3);
-  EXPECT_NE(sa_1, sa_3);
-  EXPECT_EQ(sa_1, "SelfAttention");
-  EXPECT_EQ(sa_2, "SelfAttention_0");
-  EXPECT_EQ(sa_3, "SelfAttention_1");
+TYPED_TEST(GraphTest, shared_weight_layer_construction_test){
+	using ArrayType = TypeParam;
+	using DataType = typename TypeParam::Type;
+	
+	fetch::ml::Graph<ArrayType> g;
+	
+	std::string input = g.template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>("Input", {});
+	std::string fc_1 = g.template AddNode<fetch::ml::layers::FullyConnected<ArrayType>>(
+	 "FC1", {input}, 28u * 28u, 10u, fetch::ml::details::ActivationType::NOTHING, fetch::ml::details::RegularisationType::NONE,
+	 static_cast<DataType>(0));
+	std::string fc_2 = g.template AddNode<fetch::ml::layers::FullyConnected<ArrayType>>("FC1", {input});
 }
 
 TYPED_TEST(GraphTest,

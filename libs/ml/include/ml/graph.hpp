@@ -95,7 +95,7 @@ private:
       std::string const &name, std::shared_ptr<Node<ArrayType, OperationType>> op);
 
   template <typename OperationType>
-  std::string UpdateVariableName(std::string const &name);
+  std::pair<bool, std::string> UpdateVariableName(std::string const &name);
 
 protected:
   std::unordered_map<std::string, NodePtrType> nodes_;
@@ -222,24 +222,34 @@ std::string Graph<ArrayType>::AddNode(std::string const &             node_name,
                                       std::vector<std::string> const &inputs, Params... params)
 {
   // guarantee unique op name
-  std::string name = UpdateVariableName<OperationType>(node_name);
-
-  // Instantiate the node
-  auto op      = std::make_shared<Node<ArrayType, OperationType>>(name, params...);
-  nodes_[name] = op;
+	auto naming_result = UpdateVariableName<OperationType>(node_name);
+	bool is_duplicate   = naming_result.first;
+	std::string updated_name = naming_result.second;
+	
+	NodePtrType op;
+	if(!is_duplicate){
+		// Instantiate the node based on params
+		op      = std::make_shared<Node<ArrayType, OperationType>>(updated_name, params...);
+	}else{// if shared weight is specified by duplicate naming
+		// Instantiate the node based on pointer to shared target node
+		NodePtrType target_node = GetNode(node_name);
+		op      = std::make_shared<Node<ArrayType, OperationType>>(updated_name, target_node);
+	}
+	nodes_[updated_name] = op;
+	
 
   // assign inputs and outputs
   for (auto const &i : inputs)
   {
-    nodes_[name]->AddInput(nodes_[i]);
-    nodes_[i]->AddOutput(nodes_[name]);
+    nodes_[updated_name]->AddInput(nodes_[i]);
+    nodes_[i]->AddOutput(nodes_[updated_name]);
   }
 
   // add to map of trainable ops if necessary
-  AddTrainable(name, op);
+  AddTrainable(updated_name, op);
 
   // return unique node name (may not be identical to node_name)
-  return name;
+  return updated_name;
 }
 
 template <typename ArrayType>
@@ -410,7 +420,7 @@ meta::IfIsGraph<ArrayType, OperationType, void> Graph<ArrayType>::AddTrainable(
   {
     // guarantee unique op name
     std::string node_name(name + "_" + trainable.first);
-    std::string resolved_name = UpdateVariableName<OperationType>(node_name);
+    std::string resolved_name = UpdateVariableName<OperationType>(node_name).second;
 
     trainable_.emplace_back(op->trainable_.at(trainable.second));
     trainable_lookup_[resolved_name] = trainable_.size() - 1;
@@ -441,23 +451,33 @@ meta::IfIsNotGraphOrTrainable<ArrayType, OperationType, void> Graph<ArrayType>::
  */
 template <typename ArrayType>
 template <typename OperationType>
-std::string Graph<ArrayType>::UpdateVariableName(std::string const &name)
+std::pair<bool, std::string> Graph<ArrayType>::UpdateVariableName(std::string const &name)
 {
   std::string ret           = name;
   std::string op_descriptor = (OperationType::DESCRIPTOR);
+  bool        is_duplicate  = false;
   // search graph for existing variable names
-  if ((nodes_.find(ret) != nodes_.end()) || ret.empty())
-  {
-    std::uint64_t name_idx = 0;
-    ret                    = op_descriptor + "_" + std::to_string(name_idx);
+  if (ret.empty()){ // if no name is specified, generate a default name
+	  std::uint64_t name_idx = 0;
+	  ret                    = op_descriptor + "_" + std::to_string(name_idx);
+	  while (!(nodes_.find(ret) == nodes_.end()))
+	  {
+		  ++name_idx;
+		  ret = op_descriptor + "_" + std::to_string(name_idx);
+	  }
+  }
+  else if (nodes_.find(ret) != nodes_.end()){ // if a duplicated name is specified, shared weight is assumed
+  	is_duplicate           = true;
+    std::uint64_t name_idx = 1;
+    ret                    = name + "_Copy_" + std::to_string(name_idx);
     while (!(nodes_.find(ret) == nodes_.end()))
     {
       ++name_idx;
-      ret = op_descriptor + "_" + std::to_string(name_idx);
+      ret = name + "_Copy_" + std::to_string(name_idx);
     }
   }
 
-  return ret;
+  return std::make_pair(is_duplicate, ret);
 }
 
 /**

@@ -84,6 +84,7 @@ public:
   using DataType      = typename ArrayType::Type;
   using ArrayPtrType  = std::shared_ptr<ArrayType>;
   using VecTensorType = typename PlaceHolder<T>::VecTensorType;
+	using WeightsPtrType  = typename std::shared_ptr<Weights<ArrayType>>;
 
 protected:
   ArrayPtrType gradient_accumulation_;
@@ -91,7 +92,15 @@ protected:
 public:
   Weights()          = default;
   virtual ~Weights() = default;
-
+	
+  ArrayPtrType GetSharableWeights(){
+    return this->output_;
+  }
+  
+  void ShareWeightsWith(WeightsPtrType target_weights){
+  	this->output_ = target_weights->GetSharableWeights();
+  }
+  
   virtual std::vector<ArrayType> Backward(VecTensorType const &inputs,
                                           ArrayType const &    error_signal)
   {
