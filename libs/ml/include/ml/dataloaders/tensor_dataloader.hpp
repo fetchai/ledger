@@ -79,8 +79,7 @@ TensorDataLoader<LabelType, InputType>::GetNext()
   }
   else
   {
-    ReturnType ret(labels_.Slice(label_cursor_, batch_label_dim_).Copy(),
-                   {data_.Slice(label_cursor_, batch_data_dim_).Copy()});
+    ReturnType ret(labels_.View(label_cursor_).Copy(), {data_.View(label_cursor_).Copy()});
     data_cursor_++;
     label_cursor_++;
     return ret;
