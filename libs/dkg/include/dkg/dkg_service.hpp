@@ -109,6 +109,8 @@ namespace dkg {
 class DkgService : public ledger::EntropyGeneratorInterface
 {
 public:
+  static constexpr char const *LOGGING_NAME = "DkgService";
+
   enum class State
   {
     BUILD_AEON_KEYS,
@@ -167,6 +169,9 @@ public:
     FETCH_LOCK(cabinet_lock_);
     current_cabinet_   = std::move(cabinet);
     current_threshold_ = threshold;
+
+    FETCH_LOG_INFO(LOGGING_NAME, "Resetting cabinet. Cabinet size: ", cabinet.size(),
+                   " threshold: ", threshold);
     rbc_.ResetCabinet();
   }
   /// @}
