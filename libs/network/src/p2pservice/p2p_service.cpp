@@ -38,7 +38,7 @@ P2PService::P2PService(Muddle &muddle, LaneManagement &lane_management, TrustInt
   , identity_cache_{}
   , resolver_{identity_cache_}
   , resolver_proto_{resolver_, *this}
-  , client_("R:P2P", muddle_ep_, Muddle::Address(), SERVICE_P2P, CHANNEL_RPC)
+  , client_("R:P2P", muddle_ep_, SERVICE_P2P, CHANNEL_RPC)
   , local_services_(lane_management_)
   , max_peers_(max_peers)
   , transient_peers_(transient_peers)

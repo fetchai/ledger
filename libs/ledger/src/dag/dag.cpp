@@ -16,15 +16,16 @@
 //
 //------------------------------------------------------------------------------
 
-#include <utility>
-
 #include "core/serializers/byte_array.hpp"
 #include "core/serializers/byte_array_buffer.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "ledger/dag/dag.hpp"
 #include "ledger/dag/dag_node.hpp"
 
+#include <cstdint>
 #include <random>
+#include <string>
+#include <utility>
 
 using namespace fetch::ledger;
 
@@ -32,7 +33,6 @@ DAG::DAG(std::string db_name, bool load, CertificatePtr certificate)
   : db_name_{std::move(db_name)}
   , certificate_{std::move(certificate)}
 {
-
   // Fallback is to reset everything
   auto CreateCleanState = [this]() {
     epochs_.New(db_name_ + "_epochs.db", db_name_ + "_epochs.index.db");

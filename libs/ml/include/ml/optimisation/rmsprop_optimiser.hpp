@@ -19,7 +19,6 @@
 
 #include "math/standard_functions/sqrt.hpp"
 #include "ml/graph.hpp"
-#include "ml/ops/loss_functions/criterion.hpp"
 #include "optimiser.hpp"
 
 namespace fetch {
@@ -32,24 +31,29 @@ namespace optimisers {
  * @tparam T ArrayType
  * @tparam C CriterionType
  */
-template <class T, class C>
-class RMSPropOptimiser : public Optimiser<T, C>
+template <class T>
+class RMSPropOptimiser : public Optimiser<T>
 {
 public:
   using ArrayType = T;
   using DataType  = typename ArrayType::Type;
   using SizeType  = typename ArrayType::SizeType;
 
-  RMSPropOptimiser(std::shared_ptr<Graph<T>>
-
-                                                   graph,
+  RMSPropOptimiser(std::shared_ptr<Graph<T>>       graph,
                    std::vector<std::string> const &input_node_names,
-                   std::string const &             output_node_name,
-                   DataType const &                learning_rate = DataType{0.001f},
-                   DataType const &                decay_rate    = DataType{0.9f},
-                   DataType const &                epsilon       = DataType{1e-8f});
+                   std::string const &label_node_name, std::string const &output_node_name,
+                   DataType const &learning_rate = DataType{0.001f},
+                   DataType const &decay_rate    = DataType{0.9f},
+                   DataType const &epsilon       = DataType{1e-8f});
 
-  virtual ~RMSPropOptimiser() = default;
+  RMSPropOptimiser(std::shared_ptr<Graph<T>>       graph,
+                   std::vector<std::string> const &input_node_names,
+                   std::string const &label_node_name, std::string const &output_node_name,
+                   fetch::ml::optimisers::LearningRateParam<DataType> const &learning_rate_param,
+                   DataType const &decay_rate = DataType{0.9f},
+                   DataType const &epsilon    = DataType{1e-8f});
+
+  ~RMSPropOptimiser() override = default;
 
 private:
   std::vector<ArrayType> cache_;
@@ -59,21 +63,11 @@ private:
 
   void ApplyGradients(SizeType batch_size) override;
   void ResetCache();
+  void Init();
 };
 
-template <class T, class C>
-RMSPropOptimiser<T, C>::RMSPropOptimiser(std::shared_ptr<Graph<T>>
-
-                                                                         graph,
-                                         std::vector<std::string> const &input_node_names,
-                                         std::string const &             output_node_name,
-                                         DataType const &learning_rate, DataType const &decay_rate,
-                                         DataType const &epsilon)
-  : Optimiser<T, C>(graph, input_node_names, output_node_name, learning_rate)
-  ,
-
-  decay_rate_(decay_rate)
-  , epsilon_(epsilon)
+template <class T>
+void RMSPropOptimiser<T>::Init()
 {
   auto weights = this->graph_->get_weights();
   for (auto &train : this->graph_trainables_)
@@ -84,10 +78,37 @@ RMSPropOptimiser<T, C>::RMSPropOptimiser(std::shared_ptr<Graph<T>>
   ResetCache();
 }
 
+template <class T>
+RMSPropOptimiser<T>::RMSPropOptimiser(std::shared_ptr<Graph<T>>       graph,
+                                      std::vector<std::string> const &input_node_names,
+                                      std::string const &             label_node_name,
+                                      std::string const &             output_node_name,
+                                      DataType const &learning_rate, DataType const &decay_rate,
+                                      DataType const &epsilon)
+  : Optimiser<T>(graph, input_node_names, label_node_name, output_node_name, learning_rate)
+  , decay_rate_(decay_rate)
+  , epsilon_(epsilon)
+{
+  Init();
+}
+
+template <class T>
+RMSPropOptimiser<T>::RMSPropOptimiser(
+    std::shared_ptr<Graph<T>> graph, std::vector<std::string> const &input_node_names,
+    std::string const &label_node_name, std::string const &output_node_name,
+    fetch::ml::optimisers::LearningRateParam<DataType> const &learning_rate_param,
+    DataType const &decay_rate, DataType const &epsilon)
+  : Optimiser<T>(graph, input_node_names, label_node_name, output_node_name, learning_rate_param)
+  , decay_rate_(decay_rate)
+  , epsilon_(epsilon)
+{
+  Init();
+}
+
 // private
 
-template <class T, class C>
-void RMSPropOptimiser<T, C>::ApplyGradients(SizeType batch_size)
+template <class T>
+void RMSPropOptimiser<T>::ApplyGradients(SizeType batch_size)
 {
   // Do operation with gradient
   auto cached_weight_it = cache_.begin();
@@ -122,8 +143,8 @@ void RMSPropOptimiser<T, C>::ApplyGradients(SizeType batch_size)
   }
 }
 
-template <class T, class C>
-void RMSPropOptimiser<T, C>::ResetCache()
+template <class T>
+void RMSPropOptimiser<T>::ResetCache()
 {
   for (auto &val : this->cache_)
   {

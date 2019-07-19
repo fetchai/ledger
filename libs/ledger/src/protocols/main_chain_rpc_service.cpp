@@ -32,12 +32,7 @@
 
 #include <cstddef>
 #include <cstdint>
-#include <string>
-#include <unordered_set>
-#include <utility>
-#include <vector>
 
-// TODO(private 976) : This can crash the network as it's not enforced server side
 static const uint32_t MAX_CHAIN_REQUEST_SIZE = 10000;
 static const uint64_t MAX_SUB_CHAIN_SIZE     = 1000;
 
@@ -88,7 +83,7 @@ MainChainRpcService::MainChainRpcService(MuddleEndpoint &endpoint, MainChain &ch
   , trust_(trust)
   , block_subscription_(endpoint.Subscribe(SERVICE_MAIN_CHAIN, CHANNEL_BLOCKS))
   , main_chain_protocol_(chain_)
-  , rpc_client_("R:MChain", endpoint, Address{}, SERVICE_MAIN_CHAIN, CHANNEL_RPC)
+  , rpc_client_("R:MChain", endpoint, SERVICE_MAIN_CHAIN, CHANNEL_RPC)
   , state_machine_{std::make_shared<StateMachine>("MainChain", GetInitialState(mode_),
                                                   [](State state) { return ToString(state); })}
   , recv_block_count_{telemetry::Registry::Instance().CreateCounter(
@@ -345,6 +340,11 @@ void MainChainRpcService::HandleChainResponse(Address const &address, BlockList 
   }
 }
 
+/**
+ * Request from a random peer the heaviest chain, starting from the newest block
+ * and going backwards. The client is free to return less blocks than requested.
+ *
+ */
 MainChainRpcService::State MainChainRpcService::OnRequestHeaviestChain()
 {
   state_request_heaviest_->increment();
@@ -374,7 +374,7 @@ MainChainRpcService::State MainChainRpcService::OnWaitForHeaviestChain()
 
   if (!current_request_)
   {
-    // something went wrong we should attempt to request the chain
+    // something went wrong we should attempt to request the chain again
     next_state = State::REQUEST_HEAVIEST_CHAIN;
   }
   else

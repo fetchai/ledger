@@ -17,10 +17,11 @@
 //------------------------------------------------------------------------------
 
 #include "constellation.hpp"
-#include "core/bloom_filter_interface.hpp"
+#include "core/bloom_filter.hpp"
 #include "dkg/dkg_service.hpp"
 #include "health_check_http_module.hpp"
 #include "http/middleware/allow_origin.hpp"
+#include "http/middleware/telemetry.hpp"
 #include "ledger/chain/consensus/bad_miner.hpp"
 #include "ledger/chain/consensus/dummy_miner.hpp"
 #include "ledger/chaincode/contract_http_interface.hpp"
@@ -225,10 +226,7 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
         [this] {
           return std::make_shared<Executor>(storage_, stake_ ? &stake_->update_queue() : nullptr);
         })}
-  , chain_{BloomFilterInterface::Create(
-               cfg_.features.IsEnabled(FeatureFlags::MAIN_CHAIN_BLOOM_FILTER)
-                   ? BloomFilterInterface::Type::BASIC
-                   : BloomFilterInterface::Type::NULL_IMPL),
+  , chain_{cfg_.features.IsEnabled(FeatureFlags::MAIN_CHAIN_BLOOM_FILTER),
            ledger::MainChain::Mode::LOAD_PERSISTENT_DB}
   , block_packer_{cfg_.log2_num_lanes}
   , block_coordinator_{chain_,
@@ -262,10 +260,10 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
 {
 
   // print the start up log banner
-  FETCH_LOG_INFO(LOGGING_NAME, "Constellation :: ", cfg_.interface_address, " E ",
-                 cfg_.num_executors, " S ", cfg_.num_lanes(), "x", cfg_.num_slices);
-  FETCH_LOG_INFO(LOGGING_NAME, "              :: ", ToBase64(p2p_.identity().identifier()));
+  FETCH_LOG_INFO(LOGGING_NAME, "Constellation :: ", cfg_.num_lanes(), "x", cfg_.num_slices, "x",
+                 cfg_.num_executors);
   FETCH_LOG_INFO(LOGGING_NAME, "              :: ", Address{p2p_.identity()}.display());
+  FETCH_LOG_INFO(LOGGING_NAME, "              :: ", ToBase64(p2p_.identity().identifier()));
   FETCH_LOG_INFO(LOGGING_NAME, "");
 
   // Enable experimental features
@@ -292,6 +290,7 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
 
   // configure the middleware of the http server
   http_.AddMiddleware(http::middleware::AllowOrigin("*"));
+  http_.AddMiddleware(http::middleware::Telemetry());
 
   // attach all the modules to the http server
   for (auto const &module : http_modules_)
@@ -468,7 +467,7 @@ void Constellation::Run(UriList const &initial_peers, core::WeakRunnable bootstr
       // client connections. By delaying these notify() calls to the point when the node believes
       // it has successfully synchronised this ensures that cleaner network start up
       //
-      reactor_.Attach(bootstrap_monitor);
+      reactor_.Attach(std::move(bootstrap_monitor));
       start_up_in_progress = false;
 
       FETCH_LOG_INFO(LOGGING_NAME, "Startup complete");

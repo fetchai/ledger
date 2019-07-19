@@ -29,7 +29,7 @@ class BitStatistics
 public:
   enum
   {
-    E_BIT_COUNT = 8 * sizeof(typename T::random_type)
+    E_BIT_COUNT = 8 * sizeof(typename T::RandomType)
   };
   BitStatistics()
   {
@@ -47,7 +47,7 @@ public:
     ++counter_;
   }
 
-  void Repeat(std::size_t const &N)
+  void Repeat(std::size_t N)
   {
     for (std::size_t i = 0; i < N; ++i)
     {
@@ -76,7 +76,7 @@ public:
     return ret;
   }
 
-  bool TestAccuracy(std::size_t const &N, double tol)
+  bool TestAccuracy(std::size_t N, double tol)
   {
     Reset();
     Repeat(N);

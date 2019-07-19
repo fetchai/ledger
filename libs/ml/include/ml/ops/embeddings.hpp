@@ -49,21 +49,30 @@ public:
 
   virtual ~Embeddings() = default;
 
-  virtual void Forward(VecTensorType const &inputs, ArrayType &output)
+  virtual void Forward(VecTensorType const &inputs, ArrayType &output) override
   {
     assert(this->output_);
     assert(inputs.size() == 1);
     assert(inputs.front().get().shape().size() == 2);
 
-    SizeType batch_size = inputs.front().get().shape(1);
+    SizeType batch_size = inputs.front().get().shape().at(1);
 
-    if (!this->embeddings_output_ ||
-        this->embeddings_output_->shape().at(1) != inputs.front().get().shape().at(0) ||
-        this->embeddings_output_->shape().at(0) != this->output_->shape().at(0))
+    // test embeddings_output_ not null ptr
+    if (!this->embeddings_output_)
     {
       this->embeddings_output_ = std::make_shared<ArrayType>(std::vector<SizeType>(
           {this->output_->shape().at(0), inputs.front().get().shape(0), batch_size}));
     }
+    // test embeddings_output_ batch size has changed
+    else if (this->embeddings_output_->shape().at(2) != batch_size)
+    {
+      this->embeddings_output_->Reshape({this->embeddings_output_->shape().at(0),
+                                         this->embeddings_output_->shape().at(1), batch_size});
+    }
+
+    assert(this->embeddings_output_->shape().at(0) == this->output_->shape().at(0));
+    assert(this->embeddings_output_->shape().at(1) == inputs.front().get().shape().at(0));
+    assert(this->embeddings_output_->shape().at(2) == batch_size);
 
     ArrayType transposed_input = inputs.front().get().Transpose();
     auto      e_it             = transposed_input.begin();
@@ -73,11 +82,11 @@ public:
       {
         trailing_indices1.at(0) = i;
         trailing_indices1.at(1) = n;
-        auto embedding_slice    = this->embeddings_output_->View(trailing_indices1);
+        auto embedding_view     = this->embeddings_output_->View(trailing_indices1);
         trailing_indices2.at(0) = static_cast<SizeType>(*e_it);
-        auto output_slice       = this->output_->View(trailing_indices2);
+        auto output_view        = this->output_->View(trailing_indices2);
 
-        embedding_slice.Assign(output_slice);
+        embedding_view.Assign(output_view);
         ++e_it;
       }
     }
@@ -86,7 +95,7 @@ public:
   }
 
   virtual std::vector<ArrayType> Backward(VecTensorType const &inputs,
-                                          ArrayType const &    error_signal)
+                                          ArrayType const &    error_signal) override
   {
     assert(inputs.size() == 1);
     assert(inputs.front().get().shape().size() == 2);
@@ -102,17 +111,17 @@ public:
 
         trailing_indices1.at(0) = i;
         trailing_indices1.at(1) = n;
-        auto error_slice        = error_signal.View(trailing_indices1);
+        auto error_view         = error_signal.View(trailing_indices1);
         trailing_indices2.at(0) = static_cast<SizeType>(*e_it);
-        auto gradient_slice     = this->gradient_accumulation_->View(trailing_indices2);
+        auto gradient_view      = this->gradient_accumulation_->View(trailing_indices2);
 
-        auto error_slice_it    = error_slice.cbegin();
-        auto gradient_slice_it = gradient_slice.begin();
-        while (error_slice_it.is_valid())
+        auto error_view_it    = error_view.cbegin();
+        auto gradient_view_it = gradient_view.begin();
+        while (error_view_it.is_valid())
         {
-          *gradient_slice_it += *error_slice_it;
-          ++error_slice_it;
-          ++gradient_slice_it;
+          *gradient_view_it += *error_view_it;
+          ++error_view_it;
+          ++gradient_view_it;
         }
         ++e_it;
       }
@@ -121,16 +130,16 @@ public:
     return {ArrayType(error_signal.shape())};
   }
 
-  virtual void Step(typename T::Type learning_rate)
+  virtual void Step(typename T::Type learning_rate) override
   {
     for (auto const &r : updated_rows_)
     {
-      // get the relevant slice from gradients and embeddings
-      auto grad_slice = this->gradient_accumulation_->Slice(r, 1);
-      auto out_slice  = this->output_->Slice(r, 1);
+      // get the relevant view from gradients and embeddings
+      auto grad_view = this->gradient_accumulation_->View(r);
+      auto out_view  = this->output_->View(r);
 
-      auto out_it  = out_slice.begin();
-      auto grad_it = grad_slice.begin();
+      auto out_it  = out_view.begin();
+      auto grad_it = grad_view.begin();
 
       while (out_it.is_valid())
       {
@@ -141,6 +150,13 @@ public:
       }
     }
     updated_rows_.clear();
+  }
+
+  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
+  {
+    std::vector<SizeType> output_shape = {
+        this->output_->shape().at(0), inputs.front().get().shape(0), inputs.front().get().shape(1)};
+    return output_shape;
   }
 
 private:

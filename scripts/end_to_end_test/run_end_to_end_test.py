@@ -104,6 +104,7 @@ class TestInstance():
         self._metadata = None
         self._watchdog = None
         self._creation_time = time.perf_counter()
+        self._block_interval = 1000
 
         # Default to removing old tests
         for f in glob.glob(build_directory + "/end_to_end_test_*"):
@@ -152,6 +153,9 @@ class TestInstance():
             root,
             clear_path=False
         )
+
+        # Possibly soon to be depreciated functionality - set the block interval
+        instance._block_interval = self._block_interval
 
         # configure the lanes and slices
         instance.lanes = self._lanes
@@ -520,13 +524,15 @@ def run_test(build_directory, yaml_file, constellation_exe):
     # Read YAML file
     with open(yaml_file, 'r') as stream:
         try:
-            all_yaml = yaml.load_all(stream)
+            all_yaml = yaml.safe_load_all(stream)
 
             # Parse yaml documents as tests (sequentially)
             for test in all_yaml:
                 # Create a new test instance
                 description = extract(test, 'test_description')
-                output("\nTest: {}".format(description))
+                output("\n=================================================")
+                output("Test: {}".format(description))
+                output("=================================================\n")
 
                 if "DISABLED" in description:
                     output("Skipping disabled test")

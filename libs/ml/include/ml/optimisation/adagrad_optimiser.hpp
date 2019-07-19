@@ -19,7 +19,6 @@
 
 #include "math/standard_functions/sqrt.hpp"
 #include "ml/graph.hpp"
-#include "ml/ops/loss_functions/criterion.hpp"
 #include "ml/optimisation/optimiser.hpp"
 
 namespace fetch {
@@ -32,8 +31,8 @@ namespace optimisers {
  * @tparam T ArrayType
  * @tparam C CriterionType
  */
-template <class T, class C>
-class AdaGradOptimiser : public Optimiser<T, C>
+template <class T>
+class AdaGradOptimiser : public Optimiser<T>
 {
 public:
   using ArrayType = T;
@@ -42,9 +41,15 @@ public:
 
   AdaGradOptimiser(std::shared_ptr<Graph<T>>       graph,
                    std::vector<std::string> const &input_node_names,
-                   std::string const &             output_node_name,
-                   DataType const &                learning_rate = DataType{0.001f},
-                   DataType const &                epsilon       = DataType{1e-8f});
+                   std::string const &label_node_name, std::string const &output_node_name,
+                   DataType const &learning_rate = DataType{0.001f},
+                   DataType const &epsilon       = DataType{1e-8f});
+
+  AdaGradOptimiser(std::shared_ptr<Graph<T>>       graph,
+                   std::vector<std::string> const &input_node_names,
+                   std::string const &label_node_name, std::string const &output_node_name,
+                   fetch::ml::optimisers::LearningRateParam<DataType> const &learning_rate_param,
+                   DataType const &epsilon = DataType{1e-8f});
 
   virtual ~AdaGradOptimiser() = default;
 
@@ -56,12 +61,29 @@ private:
   void ResetCache();
 };
 
-template <class T, class C>
-AdaGradOptimiser<T, C>::AdaGradOptimiser(std::shared_ptr<Graph<T>>       graph,
-                                         std::vector<std::string> const &input_node_names,
-                                         std::string const &             output_node_name,
-                                         DataType const &learning_rate, DataType const &epsilon)
-  : Optimiser<T, C>(graph, input_node_names, output_node_name, learning_rate)
+template <class T>
+AdaGradOptimiser<T>::AdaGradOptimiser(std::shared_ptr<Graph<T>>       graph,
+                                      std::vector<std::string> const &input_node_names,
+                                      std::string const &             label_node_name,
+                                      std::string const &             output_node_name,
+                                      DataType const &learning_rate, DataType const &epsilon)
+  : Optimiser<T>(graph, input_node_names, label_node_name, output_node_name, learning_rate)
+  , epsilon_(epsilon)
+{
+  for (auto &train : this->graph_trainables_)
+  {
+    this->cache_.emplace_back(ArrayType(train->get_weights().shape()));
+  }
+  ResetCache();
+}
+
+template <class T>
+AdaGradOptimiser<T>::AdaGradOptimiser(
+    std::shared_ptr<Graph<T>> graph, std::vector<std::string> const &input_node_names,
+    std::string const &label_node_name, std::string const &output_node_name,
+    fetch::ml::optimisers::LearningRateParam<DataType> const &learning_rate_param,
+    DataType const &                                          epsilon)
+  : Optimiser<T>(graph, input_node_names, label_node_name, output_node_name, learning_rate_param)
   , epsilon_(epsilon)
 {
   for (auto &train : this->graph_trainables_)
@@ -73,8 +95,8 @@ AdaGradOptimiser<T, C>::AdaGradOptimiser(std::shared_ptr<Graph<T>>       graph,
 
 // private
 
-template <class T, class C>
-void AdaGradOptimiser<T, C>::ApplyGradients(SizeType batch_size)
+template <class T>
+void AdaGradOptimiser<T>::ApplyGradients(SizeType batch_size)
 {
   // Do operation with gradient
   auto cached_weight_it = cache_.begin();
@@ -106,8 +128,8 @@ void AdaGradOptimiser<T, C>::ApplyGradients(SizeType batch_size)
   }
 }
 
-template <class T, class C>
-void AdaGradOptimiser<T, C>::ResetCache()
+template <class T>
+void AdaGradOptimiser<T>::ResetCache()
 {
   for (auto &val : this->cache_)
   {

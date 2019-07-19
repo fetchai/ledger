@@ -57,8 +57,7 @@ StorageUnitClient::StorageUnitClient(MuddleEndpoint &muddle, ShardConfigs const 
                                      uint32_t log2_num_lanes)
   : addresses_(GenerateAddressList(shards))
   , log2_num_lanes_(log2_num_lanes)
-  , rpc_client_{std::make_shared<Client>("STUC", muddle, MuddleEndpoint::Address{},
-                                         SERVICE_LANE_CTRL, CHANNEL_RPC)}
+  , rpc_client_{std::make_shared<Client>("STUC", muddle, SERVICE_LANE_CTRL, CHANNEL_RPC)}
   , current_merkle_{num_lanes()}
 {
   if (num_lanes() != shards.size())
@@ -66,7 +65,7 @@ StorageUnitClient::StorageUnitClient(MuddleEndpoint &muddle, ShardConfigs const 
     throw std::logic_error("Incorrect number of shard configs");
   }
 
-  permanent_state_merkle_stack_.Load(MERKLE_FILENAME, true);
+  permanent_state_merkle_stack_.Load(MERKLE_FILENAME_DOC, MERKLE_FILENAME_INDEX, true);
   FETCH_LOG_INFO(LOGGING_NAME,
                  "After recovery, size of merkle stack is: ", permanent_state_merkle_stack_.size());
 }
@@ -133,6 +132,7 @@ bool StorageUnitClient::RevertToHash(Hash const &hash, uint64_t index)
 
   // Set merkle stack to this hash, get the tree
   MerkleTree tree{num_lanes()};
+
   if (genesis_state && (index == 0))  // this is truly the genesis block
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Reverting state to genesis.");
@@ -143,14 +143,13 @@ bool StorageUnitClient::RevertToHash(Hash const &hash, uint64_t index)
       tree[i] = GENESIS_MERKLE_ROOT;
     }
 
-    permanent_state_merkle_stack_.New(MERKLE_FILENAME);  // clear the stack
-    permanent_state_merkle_stack_.Push(MerkleTreeBlock{tree});
+    permanent_state_merkle_stack_.New(MERKLE_FILENAME_DOC,
+                                      MERKLE_FILENAME_INDEX);  // clear the stack
+    permanent_state_merkle_stack_.Push(tree);
   }
   else
   {
-    // Try to find whether we believe the hash exists (index into merkle stack)
-    MerkleTreeBlock merkle_block;
-    uint64_t const  merkle_stack_size = permanent_state_merkle_stack_.size();
+    uint64_t const merkle_stack_size = permanent_state_merkle_stack_.size();
 
     if (index >= merkle_stack_size)
     {
@@ -160,12 +159,14 @@ bool StorageUnitClient::RevertToHash(Hash const &hash, uint64_t index)
       return false;
     }
 
-    permanent_state_merkle_stack_.Get(index, merkle_block);
-    tree = merkle_block.Extract(num_lanes());
+    bool success = permanent_state_merkle_stack_.Get(index, tree);
+    assert(success);
+    FETCH_UNUSED(success);
 
     if (tree.root() != hash)
     {
-      FETCH_LOG_ERROR(LOGGING_NAME, "Index given for merkle hash didn't match merkle stack!");
+      FETCH_LOG_ERROR(LOGGING_NAME, "Index given for merkle hash didn't match merkle stack! root: ",
+                      tree.root().ToBase64(), " expected: ", hash.ToBase64());
       return false;
     }
 
@@ -181,6 +182,8 @@ bool StorageUnitClient::RevertToHash(Hash const &hash, uint64_t index)
   for (auto const &lane_merkle_hash : tree)
   {
     assert(!hash.empty());
+
+    FETCH_LOG_INFO(LOGGING_NAME, "reverting tree leaf: ", lane_merkle_hash.ToHex());
 
     // make the call to the RPC server
     auto promise = rpc_client_->CallSpecificAddress(LookupAddress(lane_index++), RPC_STATE,
@@ -222,7 +225,7 @@ bool StorageUnitClient::RevertToHash(Hash const &hash, uint64_t index)
 }
 
 // We have finished execution presumably, commit this state
-byte_array::ConstByteArray StorageUnitClient::Commit(uint64_t commit_index)
+byte_array::ConstByteArray StorageUnitClient::Commit(uint64_t const commit_index)
 {
   FETCH_LOG_DEBUG(LOGGING_NAME, "Committing: ", commit_index);
 
@@ -259,23 +262,28 @@ byte_array::ConstByteArray StorageUnitClient::Commit(uint64_t commit_index)
 
     if (permanent_state_merkle_stack_.size() != commit_index)
     {
-      FETCH_LOG_WARN(LOGGING_NAME,
-                     "Committing to an index where there is a mismatch to the merkle stack!");
+      FETCH_LOG_WARN(
+          LOGGING_NAME,
+          "Committing to an index where there is a mismatch to the merkle stack! commit: ",
+          commit_index, " stack: ", permanent_state_merkle_stack_.size());
     }
 
-    while (permanent_state_merkle_stack_.size() != commit_index + 1)
+    while (permanent_state_merkle_stack_.size() != commit_index)
     {
-      if (permanent_state_merkle_stack_.size() > commit_index + 1)
+      if (permanent_state_merkle_stack_.size() > commit_index)
       {
         permanent_state_merkle_stack_.Pop();
       }
       else
       {
-        permanent_state_merkle_stack_.Push(MerkleTreeBlock{});
+        permanent_state_merkle_stack_.Push(MerkleTree{num_lanes()});
       }
     }
 
-    permanent_state_merkle_stack_.Set(commit_index, MerkleTreeBlock{tree});
+    FETCH_LOG_INFO(LOGGING_NAME, "Committing merkle hash at index: ", commit_index,
+                   " to stack: ", tree.root().ToHex());
+
+    permanent_state_merkle_stack_.Push(tree);
     permanent_state_merkle_stack_.Flush(false);
   }
 
@@ -292,7 +300,7 @@ bool StorageUnitClient::HashExists(Hash const &hash, uint64_t index)
 // TODO(HUT): should be const correct
 bool StorageUnitClient::HashInStack(Hash const &hash, uint64_t index)
 {
-  MerkleTreeBlock proxy;
+  MerkleTree tree{num_lanes()};
   FETCH_LOCK(merkle_mutex_);
   uint64_t const merkle_stack_size = permanent_state_merkle_stack_.size();
 
@@ -303,10 +311,11 @@ bool StorageUnitClient::HashInStack(Hash const &hash, uint64_t index)
     return false;
   }
 
-  permanent_state_merkle_stack_.Get(index, proxy);
-  MerkleTree deser = proxy.Extract(num_lanes());
+  bool const result = permanent_state_merkle_stack_.Get(index, tree);
+  assert(result);
+  FETCH_UNUSED(result);
 
-  if (deser.root() == hash)
+  if (tree.root() == hash)
   {
     return true;
   }
@@ -603,7 +612,7 @@ void StorageUnitClient::Reset()
   // Clear merkle stack etc.
   FETCH_LOCK(merkle_mutex_);
   current_merkle_ = MerkleTree{num_lanes()};
-  permanent_state_merkle_stack_.New(MERKLE_FILENAME);
+  permanent_state_merkle_stack_.New(MERKLE_FILENAME_DOC, MERKLE_FILENAME_INDEX);
 }
 
 }  // namespace ledger

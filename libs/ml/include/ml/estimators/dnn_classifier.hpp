@@ -18,15 +18,18 @@
 //------------------------------------------------------------------------------
 
 #include "math/base_types.hpp"
-
-#include "ml/layers/fully_connected.hpp"
-#include "ml/ops/placeholder.hpp"
-
-#include "ml/ops/loss_functions/cross_entropy.hpp"
-
 #include "ml/dataloaders/dataloader.hpp"
 #include "ml/estimators/estimator.hpp"
+#include "ml/layers/fully_connected.hpp"
+#include "ml/ops/loss_functions/cross_entropy_loss.hpp"
+#include "ml/ops/placeholder.hpp"
 #include "ml/optimisation/types.hpp"
+
+#include <cassert>
+#include <memory>
+#include <stdexcept>
+#include <string>
+#include <vector>
 
 namespace fetch {
 namespace ml {
@@ -38,7 +41,7 @@ class DNNClassifier : public Estimator<TensorType>
 public:
   using SizeType         = fetch::math::SizeType;
   using DataType         = typename TensorType::Type;
-  using CostFunctionType = fetch::ml::ops::CrossEntropy<TensorType>;
+  using CostFunctionType = fetch::ml::ops::CrossEntropyLoss<TensorType>;
   using OptimiserType    = fetch::ml::optimisers::OptimiserType;
 
   DNNClassifier(EstimatorConfig<DataType>                                        estimator_config,
@@ -48,17 +51,19 @@ public:
 
   void SetupModel(std::vector<SizeType> const &hidden_layers);
 
-  virtual bool Train(SizeType n_steps) override;
-  virtual bool Train(SizeType n_steps, DataType &loss) override;
-  virtual bool Validate() override;
-  virtual bool Predict(TensorType &input, TensorType &output) override;
+  bool Train(SizeType n_steps) override;
+  bool Train(SizeType n_steps, DataType &loss) override;
+  bool Validate() override;
+  bool Predict(TensorType &input, TensorType &output) override;
 
 private:
-  std::shared_ptr<dataloaders::DataLoader<TensorType, TensorType>>     data_loader_ptr_;
-  std::shared_ptr<optimisers::Optimiser<TensorType, CostFunctionType>> optimiser_ptr_;
+  std::shared_ptr<dataloaders::DataLoader<TensorType, TensorType>> data_loader_ptr_;
+  std::shared_ptr<optimisers::Optimiser<TensorType>>               optimiser_ptr_;
 
   std::string input_;
+  std::string label_;
   std::string output_;
+  std::string error_;
 
   void PrintStats(SizeType epoch, DataType loss);
 };
@@ -80,16 +85,15 @@ DNNClassifier<TensorType>::DNNClassifier(
   , data_loader_ptr_(data_loader_ptr)
 {
 
-  assert(hidden_layers.size() > 0);
+  assert(!hidden_layers.empty());
 
   // instantiate feed forward network graph
   SetupModel(hidden_layers);
 
   // instantiate optimiser
-  auto input = {input_};
-  if (!(fetch::ml::optimisers::AddOptimiser<TensorType, CostFunctionType>(
-          optimiser_type, optimiser_ptr_, this->graph_ptr_, input, output_,
-          this->estimator_config_.learning_rate)))
+  if (!(fetch::ml::optimisers::AddOptimiser<TensorType>(
+          optimiser_type, optimiser_ptr_, this->graph_ptr_, std::vector<std::string>{input_},
+          label_, error_, this->estimator_config_.learning_rate_param)))
   {
     throw std::runtime_error("DNNClassifier initialised with unrecognised optimiser");
   }
@@ -114,6 +118,9 @@ void DNNClassifier<TensorType>::SetupModel(std::vector<SizeType> const &hidden_l
   output_ = this->graph_ptr_->template AddNode<layers::FullyConnected<TensorType>>(
       "Output", {cur_input}, hidden_layers.at(hidden_layers.size() - 2),
       hidden_layers.at(hidden_layers.size() - 1), fetch::ml::details::ActivationType::SOFTMAX);
+
+  label_ = this->graph_ptr_->template AddNode<ops::PlaceHolder<TensorType>>("Label", {});
+  error_ = this->graph_ptr_->template AddNode<CostFunctionType>("Error", {output_, label_});
 }
 
 /**

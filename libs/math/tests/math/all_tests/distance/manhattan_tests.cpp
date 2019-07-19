@@ -22,11 +22,12 @@
 
 #include "gtest/gtest.h"
 
+namespace {
 using namespace fetch::math::distance;
 using namespace fetch::math;
 
 template <typename T>
-class ManhattenTest : public ::testing::Test
+class ManhattanTest : public ::testing::Test
 {
 };
 
@@ -34,28 +35,29 @@ using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor
                                  fetch::math::Tensor<fetch::fixed_point::FixedPoint<16, 16>>,
                                  fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
 
-TYPED_TEST_CASE(ManhattenTest, MyTypes);
+TYPED_TEST_CASE(ManhattanTest, MyTypes);
 
-TYPED_TEST(ManhattenTest, simple_test)
+TYPED_TEST(ManhattanTest, simple_test)
 {
-  using SizeType = typename TypeParam::SizeType;
+  using Type = typename TypeParam::Type;
 
-  Tensor<double> A = Tensor<double>(3);
-  A.Fill(0);
-  A.Set(SizeType{0}, 1);
-  EXPECT_EQ(0, Manhattan(A, A));
+  TypeParam a   = TypeParam::FromString("1, 0, 0");
+  TypeParam b   = TypeParam::FromString("0, 1, 0");
+  Type      ret = Manhattan(a, b);
+  EXPECT_NEAR(static_cast<double>(ret), 2, static_cast<double>(function_tolerance<Type>()));
 
-  Tensor<double> B = Tensor<double>(3);
-  B.Fill(0);
-  B.Set(SizeType{1}, 1);
-  EXPECT_EQ(Manhattan(A, B), 2);
+  a   = TypeParam::FromString("2, 3, 5");
+  ret = Manhattan(a, a);
+  EXPECT_NEAR(static_cast<double>(ret), 0, static_cast<double>(function_tolerance<Type>()));
 
-  B.Fill(0);
-  B.Set(SizeType{1}, 2);
-  EXPECT_EQ(Manhattan(A, B), 3);
+  a   = TypeParam::FromString("1, 0, 0");
+  b   = TypeParam::FromString("0, 2, 0");
+  ret = Manhattan(a, b);
+  EXPECT_NEAR(static_cast<double>(ret), 3, static_cast<double>(function_tolerance<Type>()));
 
-  B.Fill(0);
-  B.Set(SizeType{0}, 1);
-  B.Set(SizeType{1}, 1);
-  EXPECT_EQ(Manhattan(A, B), 1);
+  a   = TypeParam::FromString("1, 0, 0");
+  b   = TypeParam::FromString("1, 1, 0");
+  ret = Manhattan(a, b);
+  EXPECT_NEAR(static_cast<double>(ret), 1, static_cast<double>(function_tolerance<Type>()));
 }
+}  // namespace

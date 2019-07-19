@@ -20,13 +20,11 @@
 #include "core/mutex.hpp"
 #include "ledger/chain/address.hpp"
 #include "ledger/chain/digest.hpp"
+#include "ledger/dag/dag_interface.hpp"
 #include "ledger/upow/synergetic_execution_manager_interface.hpp"
 #include "ledger/upow/work.hpp"
-
 #include "ledger/upow/work_queue.hpp"
 #include "vectorise/threading/pool.hpp"
-
-#include "ledger/dag/dag_interface.hpp"
 
 #include <functional>
 #include <unordered_map>

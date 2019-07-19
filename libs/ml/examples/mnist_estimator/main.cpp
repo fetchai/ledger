@@ -45,11 +45,13 @@ int main(int ac, char **av)
 
   /// setup config ///
   EstimatorConfig<DataType> estimator_config;
-  estimator_config.learning_rate  = 0.001f;  // initial learning rate
-  estimator_config.lr_decay       = 0.99f;   // learning rate decay multiplier per epoch
-  estimator_config.batch_size     = 64;      // minibatch training size
-  estimator_config.subset_size    = 1000;    // only train on the first 1000 samples
-  estimator_config.early_stopping = true;    // stop early if no improvement
+  estimator_config.learning_rate_param.mode =
+      fetch::ml::optimisers::LearningRateParam<DataType>::LearningRateDecay::EXPONENTIAL;
+  estimator_config.learning_rate_param.starting_learning_rate = static_cast<DataType>(0.001);
+  estimator_config.learning_rate_param.exponential_decay_rate = static_cast<DataType>(0.99);
+  estimator_config.batch_size                                 = 64;  // minibatch training size
+  estimator_config.subset_size    = 1000;  // only train on the first 1000 samples
+  estimator_config.early_stopping = true;  // stop early if no improvement
   estimator_config.patience       = 30;
   estimator_config.opt            = OptimiserType::ADAM;
   estimator_config.print_stats    = true;
@@ -70,10 +72,7 @@ int main(int ac, char **av)
   std::cout << "prediction.ToString(): " << prediction.ToString() << std::endl;
 
   // training loop - early stopping will prevent long training time
-  estimator.Train(1, loss);
-  std::cout << "initial loss: " << loss << std::endl;
   estimator.Train(1000000, loss);
-  std::cout << "final loss: " << loss << std::endl;
 
   // run estimator in testing mode
   estimator.Predict(test_input, prediction);

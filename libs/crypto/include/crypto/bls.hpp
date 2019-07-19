@@ -23,11 +23,11 @@
 #include "crypto/prover.hpp"
 #include "crypto/signature_register.hpp"
 #include "crypto/verifier.hpp"
-
 #include "fetch_bls.hpp"
 
 #include <atomic>
 #include <sstream>
+#include <string>
 #include <utility>
 
 namespace fetch {

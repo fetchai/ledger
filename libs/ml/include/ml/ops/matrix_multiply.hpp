@@ -21,6 +21,10 @@
 #include "math/tensor.hpp"
 #include "ml/ops/ops.hpp"
 
+#include <cassert>
+#include <memory>
+#include <vector>
+
 namespace fetch {
 namespace ml {
 namespace ops {
@@ -34,12 +38,13 @@ public:
   using SizeVector    = typename ArrayType::SizeVector;
   using VecTensorType = typename Ops<T>::VecTensorType;
 
-  MatrixMultiply()  = default;
-  ~MatrixMultiply() = default;
+  MatrixMultiply()           = default;
+  ~MatrixMultiply() override = default;
 
-  void                   Forward(VecTensorType const &inputs, ArrayType &output);
-  std::vector<ArrayType> Backward(VecTensorType const &inputs, ArrayType const &error_signal);
-  std::vector<SizeType>  ComputeOutputShape(VecTensorType const &inputs) const;
+  void                   Forward(VecTensorType const &inputs, ArrayType &output) override;
+  std::vector<ArrayType> Backward(VecTensorType const &inputs,
+                                  ArrayType const &    error_signal) override;
+  std::vector<SizeType>  ComputeOutputShape(VecTensorType const &inputs) const override;
 
   static constexpr char const *DESCRIPTOR = "MatrixMultiply";
 
@@ -51,16 +56,16 @@ private:
   // forward pass
   SizeVector fwd_input_shape_1_{};
   SizeVector fwd_input_shape_2_{};
-  ArrayType  output_slice_tensor_;
-  ArrayType  fwd_in1_slice_tensor_;
-  ArrayType  fwd_in2_slice_tensor_;
+  ArrayType  output_view_tensor_;
+  ArrayType  fwd_in1_view_tensor_;
+  ArrayType  fwd_in2_view_tensor_;
 
   // backward pass
   SizeVector back_input_shape_1_{};
   SizeVector back_input_shape_2_{};
-  ArrayType  back_in1_slice_tensor_;
-  ArrayType  back_in2_slice_tensor_;
-  ArrayType  err_sig_slice_tensor_;
+  ArrayType  back_in1_view_tensor_;
+  ArrayType  back_in2_view_tensor_;
+  ArrayType  err_sig_view_tensor_;
   ArrayType  err1_;
   ArrayType  err2_;
 
@@ -102,36 +107,35 @@ void MatrixMultiply<T>::Forward(VecTensorType const &inputs, ArrayType &output)
     // Iterate over batch
     for (SizeType i{0}; i < batch_size; i++)
     {
-
-      auto output_slice = output.Slice(i, 2);
-      output_slice_tensor_.Assign(output.Slice(i, 2));
+      auto output_view = output.View(i);
+      output_view_tensor_.Assign(output.View(i));
 
       // 3D @ ? case
       if (inputs.at(0).get().shape().size() == 3)
       {
-        fwd_in1_slice_tensor_.Assign(inputs.at(0).get().Slice(i, 2));
+        fwd_in1_view_tensor_.Assign(inputs.at(0).get().View(i));
         // 2D @ 3D case
       }
       else
       {
-        fwd_in1_slice_tensor_ = inputs.at(0).get();
+        fwd_in1_view_tensor_ = inputs.at(0).get();
       }
 
       // ? @ 3D case
       if (inputs.at(1).get().shape().size() == 3)
       {
-        fwd_in2_slice_tensor_.Assign(inputs.at(1).get().Slice(i, 2));
+        fwd_in2_view_tensor_.Assign(inputs.at(1).get().View(i));
       }
       // 3D @ 2D case
       else
       {
-        fwd_in2_slice_tensor_ = inputs.at(1).get();
+        fwd_in2_view_tensor_ = inputs.at(1).get();
       }
 
-      fetch::math::Dot(fwd_in1_slice_tensor_, fwd_in2_slice_tensor_, output_slice_tensor_);
+      fetch::math::Dot(fwd_in1_view_tensor_, fwd_in2_view_tensor_, output_view_tensor_);
 
       // Copy data to original array
-      output_slice.Assign(output_slice_tensor_);
+      output_view.Assign(output_view_tensor_);
     }
   }
 }
@@ -171,7 +175,7 @@ std::vector<T> MatrixMultiply<T>::Backward(VecTensorType const &inputs,
     // Iterate over batch
     for (SizeType i{0}; i < batch_size; i++)
     {
-      err_sig_slice_tensor_.Assign(error_signal.Slice(i, 2));
+      err_sig_view_tensor_.Assign(error_signal.View(i));
 
       ///////////////////////////////
       /// PREPARE DATA FOR MATMUL ///
@@ -180,42 +184,42 @@ std::vector<T> MatrixMultiply<T>::Backward(VecTensorType const &inputs,
       // 3D @ ? case
       if (inputs.at(0).get().shape().size() == 3)
       {
-        back_in1_slice_tensor_.Assign(inputs.at(0).get().Slice(i, 2));
+        back_in1_view_tensor_.Assign(inputs.at(0).get().View(i));
       }
       // 2D @ 3D case
       else
       {
-        back_in1_slice_tensor_ = inputs.at(0).get();
+        back_in1_view_tensor_ = inputs.at(0).get();
       }
 
       // ? @ 3D case
       if (inputs.at(1).get().shape().size() == 3)
       {
-        back_in2_slice_tensor_.Assign(inputs.at(1).get().Slice(i, 2));
+        back_in2_view_tensor_.Assign(inputs.at(1).get().View(i));
       }
       // 3D @ 2D case
       else
       {
-        back_in2_slice_tensor_ = inputs.at(1).get();
+        back_in2_view_tensor_ = inputs.at(1).get();
       }
 
       /////////////////
       /// DO MATMUL ///
       /////////////////
 
-      fetch::math::DotTranspose(err_sig_slice_tensor_, back_in2_slice_tensor_, err1_);
-      fetch::math::TransposeDot(back_in1_slice_tensor_, err_sig_slice_tensor_, err2_);
+      fetch::math::DotTranspose(err_sig_view_tensor_, back_in2_view_tensor_, err1_);
+      fetch::math::TransposeDot(back_in1_view_tensor_, err_sig_view_tensor_, err2_);
 
       ////////////////////////////////
-      /// COPY DATA BACK TO SLICES ///
+      /// COPY DATA BACK TO Views ///
       ////////////////////////////////
 
       // Copy data to original array
       // 3D @ ? case
       if (inputs.at(0).get().shape().size() == 3)
       {
-        auto err1_slice = error_signal_1_.Slice(i, 2);
-        err1_slice.Assign(err1_);
+        auto err1_view = error_signal_1_.View(i);
+        err1_view.Assign(err1_);
       }
       // 2D @ 3D case
       else
@@ -227,8 +231,8 @@ std::vector<T> MatrixMultiply<T>::Backward(VecTensorType const &inputs,
       // ? @ 3D case
       if (inputs.at(1).get().shape().size() == 3)
       {
-        auto err2_slice = error_signal_2_.Slice(i, 2);
-        err2_slice.Assign(err2_);
+        auto err2_view = error_signal_2_.View(i);
+        err2_view.Assign(err2_);
       }
       // 3D @ 2D case
       else
@@ -278,11 +282,11 @@ void MatrixMultiply<T>::UpdateContainersForward(VecTensorType const &inputs)
   {
     fwd_input_shape_1_ = inputs.at(0).get().shape();
     fwd_input_shape_2_ = inputs.at(1).get().shape();
-    fwd_in1_slice_tensor_ =
+    fwd_in1_view_tensor_ =
         ArrayType({inputs.at(0).get().shape().at(0), inputs.at(0).get().shape().at(1)});
-    fwd_in2_slice_tensor_ =
+    fwd_in2_view_tensor_ =
         ArrayType({inputs.at(1).get().shape().at(0), inputs.at(1).get().shape().at(1)});
-    output_slice_tensor_ =
+    output_view_tensor_ =
         ArrayType({inputs.at(0).get().shape().at(0), inputs.at(1).get().shape().at(1)});
   }
 }
@@ -303,16 +307,16 @@ void MatrixMultiply<T>::UpdateContainersBackward(VecTensorType const &inputs,
     back_input_shape_1_ = inputs.at(0).get().shape();
     back_input_shape_2_ = inputs.at(1).get().shape();
 
-    back_in1_slice_tensor_ =
+    back_in1_view_tensor_ =
         ArrayType({inputs.at(0).get().shape().at(0), inputs.at(0).get().shape().at(1)});
-    back_in2_slice_tensor_ =
+    back_in2_view_tensor_ =
         ArrayType({inputs.at(1).get().shape().at(0), inputs.at(1).get().shape().at(1)});
 
-    err1_                 = ArrayType(error_signal_1_.shape());
-    err2_                 = ArrayType(error_signal_2_.shape());
-    error_signal_1_       = ArrayType(back_input_shape_1_);
-    error_signal_2_       = ArrayType(back_input_shape_2_);
-    err_sig_slice_tensor_ = ArrayType({error_signal.shape().at(0), error_signal.shape().at(1)});
+    err1_                = ArrayType(error_signal_1_.shape());
+    err2_                = ArrayType(error_signal_2_.shape());
+    error_signal_1_      = ArrayType(back_input_shape_1_);
+    error_signal_2_      = ArrayType(back_input_shape_2_);
+    err_sig_view_tensor_ = ArrayType({error_signal.shape().at(0), error_signal.shape().at(1)});
   }
 }
 

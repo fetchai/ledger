@@ -79,7 +79,7 @@ public:
   /* Constructor for HasPublicationFeed.
    * @n is the maximum number of support feeds.
    */
-  HasPublicationFeed(std::size_t const &n = 256)
+  HasPublicationFeed(std::size_t n = 256)
   {
     LOG_STACK_TRACE_POINT;
 

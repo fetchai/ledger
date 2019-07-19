@@ -62,9 +62,6 @@ include(${FETCH_ROOT_CMAKE_DIR}/BuildTargets.cmake)
 # detect the current environment
 detect_environment()
 
-# generate the project configuration file
-generate_configuration_file()
-
 if (FETCH_STATIC_LINK)
   set(OPENSSL_USE_STATIC_LIBS TRUE)
 endif (FETCH_STATIC_LINK)

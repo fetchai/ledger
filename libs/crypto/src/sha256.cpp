@@ -16,53 +16,40 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/macros.hpp"
 #include "crypto/sha256.hpp"
-#include <stdexcept>
+
+#include <cassert>
+#include <cstddef>
+#include <cstdint>
 
 namespace fetch {
 namespace crypto {
 
-namespace {
-
-void ResetContext(SHA256_CTX &context)
-{
-  if (!SHA256_Init(&context))
-  {
-    throw std::runtime_error("could not intialialise SHA256.");
-  }
-}
-}  // namespace
-
-SHA256::SHA256()
-{
-  ResetContext(context_);
-}
-
 void SHA256::Reset()
 {
-  ResetContext(context_);
+  auto const success = openssl_hasher_.Reset();
+  FETCH_UNUSED(success);
+  assert(success);
 }
 
-bool SHA256::Update(uint8_t const *data_to_hash, std::size_t const &size)
+bool SHA256::Update(uint8_t const *const data_to_hash, std::size_t const size)
 {
-  if (!SHA256_Update(&context_, data_to_hash, size))
-  {
-    return false;
-  }
-  return true;
+  return openssl_hasher_.Update(data_to_hash, size);
 }
 
-void SHA256::Final(uint8_t *hash, std::size_t const &size)
+void SHA256::Final(uint8_t *const hash)
 {
-  if (size < size_in_bytes())
-  {
-    throw std::runtime_error("size of input buffer is smaller than hash size.");
-  }
+  auto const success = openssl_hasher_.Final(hash);
+  FETCH_UNUSED(success);
+  assert(success);
+}
 
-  if (!SHA256_Final(hash, &context_))
-  {
-    throw std::runtime_error("could not finalize SHA256.");
-  }
+std::size_t SHA256::HashSizeInBytes() const
+{
+  auto const size = openssl_hasher_.HashSize();
+  assert(size == size_in_bytes);
+  return size;
 }
 
 }  // namespace crypto

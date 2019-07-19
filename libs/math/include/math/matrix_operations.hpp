@@ -278,8 +278,10 @@ void Max(ArrayType const &array, typename ArrayType::SizeType const &axis, Array
     ret[0] = Max(array);
   }
   else
-  {  // Argmax along a single axis
+  {
+    // Max along a single axis
     SizeType axis_length = array.shape()[axis];
+
     assert(axis_length > 1);
     assert(ret.size() == Divide(Product(array.shape()), array.shape()[axis]));
 
