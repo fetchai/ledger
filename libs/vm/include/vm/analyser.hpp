@@ -127,6 +127,24 @@ private:
     std::unordered_set<std::string> set;
   };
 
+  struct FunctionMap
+  {
+    void Add(std::string const &unique_id, FunctionPtr const &function)
+    {
+      map[unique_id] = function;
+    }
+    FunctionPtr Find(std::string const &unique_id)
+    {
+      auto it = map.find(unique_id);
+      if (it != map.end())
+      {
+        return it->second;
+      }
+      return nullptr;
+    }
+    std::unordered_map<std::string, FunctionPtr> map;
+  };
+
   OperatorMap       operator_map_;
   TypeMap           type_map_;
   StringSet         type_set_;
@@ -134,7 +152,7 @@ private:
   TypeInfoMap       type_info_map_;
   RegisteredTypes   registered_types_;
   FunctionInfoArray function_info_array_;
-  StringSet         function_set_;
+  FunctionMap       function_map_;
 
   SymbolTablePtr symbols_;
   TypePtr        null_type_;
