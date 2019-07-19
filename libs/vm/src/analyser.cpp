@@ -53,8 +53,7 @@ void Analyser::Initialise()
                    {NodeKind::InplaceAdd, Operator::InplaceAdd},
                    {NodeKind::InplaceSubtract, Operator::InplaceSubtract},
                    {NodeKind::InplaceMultiply, Operator::InplaceMultiply},
-                   {NodeKind::InplaceDivide, Operator::InplaceDivide}/*,
-		   {NodeKind::InitializerList, Operator::InitializerList}*/};
+                   {NodeKind::InplaceDivide, Operator::InplaceDivide}};
 
   type_map_            = TypeMap();
   type_set_            = StringSet();
