@@ -19,6 +19,7 @@
 #include "core/byte_array/encoders.hpp"
 #include "vectorise/uint/uint.hpp"
 
+#include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
 #include <cstddef>
@@ -26,6 +27,8 @@
 
 using namespace fetch::vectorise;
 using namespace fetch::byte_array;
+
+using testing::HasSubstr;
 
 TEST(big_number_gtest, elementary_left_shift)
 {
@@ -300,4 +303,25 @@ TEST(big_number_gtest, test_bits_size_not_alligned_with_wide_element_array_size)
   EXPECT_EQ(n1.ElementAt(2), 0);
   EXPECT_EQ(n1.ElementAt(3), 0xffffffffffffff00);
   EXPECT_EQ(n1.ElementAt(4), 0x00000000000000ff);
+}
+
+TEST(big_number_gtest, test_construction_from_byte_array_fails_if_too_long)
+{
+  constexpr std::size_t bits{256};
+
+  // Verify that construction pass is size is <= bits/8
+  UInt<bits> shall_pass{ConstByteArray(bits / 8)};
+
+  bool exception_thrown = false;
+  try
+  {
+    UInt<bits> shall_throw{ConstByteArray(bits / 8 + 1)};
+  }
+  catch (std::runtime_error const &ex)
+  {
+    EXPECT_THAT(ex.what(), HasSubstr("Size of input byte array is bigger than"));
+    exception_thrown = true;
+  }
+
+  EXPECT_TRUE(exception_thrown);
 }
