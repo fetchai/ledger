@@ -1,0 +1,7 @@
+function main()
+
+    var tensor = Tensor();
+    var scaler = Scaler();
+    scaler.setScaler(tensor, "min_max");
+
+endfunction
