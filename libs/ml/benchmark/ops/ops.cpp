@@ -560,8 +560,8 @@ void BM_DivideBackward(benchmark::State &state)
   error_signal.FillUniformRandom();
 
   VecTensorType inputs;
-  inputs.emplace_back(input_1);
-  inputs.emplace_back(input_2);
+  inputs.emplace_back(std::make_shared<TensorType>(input_1));
+  inputs.emplace_back(std::make_shared<TensorType>(input_2));
   fetch::ml::ops::Divide<fetch::math::Tensor<T>> div1;
 
   for (auto _ : state)
@@ -624,8 +624,8 @@ void BM_MultiplyForward(benchmark::State &state)
   output.FillUniformRandom();
 
   VecTensorType inputs;
-  inputs.emplace_back(input_1);
-  inputs.emplace_back(input_2);
+  inputs.emplace_back(std::make_shared<TensorType>(input_1));
+  inputs.emplace_back(std::make_shared<TensorType>(input_2));
   fetch::ml::ops::Multiply<fetch::math::Tensor<T>> mul1;
 
   for (auto _ : state)
@@ -688,8 +688,8 @@ void BM_MultiplyBackward(benchmark::State &state)
   error_signal.FillUniformRandom();
 
   VecTensorType inputs;
-  inputs.emplace_back(input_1);
-  inputs.emplace_back(input_2);
+  inputs.emplace_back(std::make_shared<TensorType>(input_1));
+  inputs.emplace_back(std::make_shared<TensorType>(input_2));
   fetch::ml::ops::Multiply<fetch::math::Tensor<T>> mul1;
 
   for (auto _ : state)
@@ -754,8 +754,8 @@ void BM_AddForward(benchmark::State &state)
   output.FillUniformRandom();
 
   VecTensorType inputs;
-  inputs.emplace_back(input_1);
-  inputs.emplace_back(input_2);
+  inputs.emplace_back(std::make_shared<TensorType>(input_1));
+  inputs.emplace_back(std::make_shared<TensorType>(input_2));
   fetch::ml::ops::Add<fetch::math::Tensor<T>> add1;
 
   for (auto _ : state)
@@ -808,8 +808,8 @@ void BM_AddBackward(benchmark::State &state)
   error_signal.FillUniformRandom();
 
   VecTensorType inputs;
-  inputs.emplace_back(input_1);
-  inputs.emplace_back(input_2);
+  inputs.emplace_back(std::make_shared<TensorType>(input_1));
+  inputs.emplace_back(std::make_shared<TensorType>(input_2));
   fetch::ml::ops::Add<fetch::math::Tensor<T>> add1;
 
   for (auto _ : state)
@@ -862,8 +862,8 @@ void BM_SubtractForward(benchmark::State &state)
   output.FillUniformRandom();
 
   VecTensorType inputs;
-  inputs.emplace_back(input_1);
-  inputs.emplace_back(input_2);
+  inputs.emplace_back(std::make_shared<TensorType>(input_1));
+  inputs.emplace_back(std::make_shared<TensorType>(input_2));
   fetch::ml::ops::Subtract<fetch::math::Tensor<T>> subtract1;
 
   for (auto _ : state)
@@ -926,8 +926,8 @@ void BM_SubtractBackward(benchmark::State &state)
   error_signal.FillUniformRandom();
 
   VecTensorType inputs;
-  inputs.emplace_back(input_1);
-  inputs.emplace_back(input_2);
+  inputs.emplace_back(std::make_shared<TensorType>(input_1));
+  inputs.emplace_back(std::make_shared<TensorType>(input_2));
   fetch::ml::ops::Subtract<fetch::math::Tensor<T>> sub1;
 
   for (auto _ : state)
