@@ -50,15 +50,10 @@ std::vector<bn::Fr> InterpolatePolynom(std::vector<bn::Fr> const &a, std::vector
 
 bn::G1 SignShare(byte_array::ConstByteArray const &message, bn::Fr const &x_i);
 
-bool VerifyShare(bn::G2 const &v_i, byte_array::ConstByteArray const &message, const bn::G1 &sign,
-                 bn::G2 const &G);
-
 bool VerifySign(bn::G2 const &y, byte_array::ConstByteArray const &message, bn::G1 const &sign,
                 bn::G2 const &G);
 
 bn::G1 LagrangeInterpolation(std::unordered_map<uint32_t, bn::G1> const &shares);
 
-bool MyLagrangeInterpolation(bn::G1 &out, const std::vector<bn::Fr> &S,
-                             const std::vector<bn::G1> &vec, size_t k);
 }  // namespace dkg
 }  // namespace fetch

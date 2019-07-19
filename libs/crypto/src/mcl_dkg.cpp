@@ -139,14 +139,14 @@ std::vector<bn::Fr> InterpolatePolynom(std::vector<bn::Fr> const &a, std::vector
   for (size_t k = 0; k < m; k++)
   {
     t1 = 1;
-    for (std::size_t i = k - 1; i >= 0; i--)
+    for (std::size_t i = k - 1; i != 0; i--)
     {
       bn::Fr::mul(t1, t1, a[k]);
       bn::Fr::add(t1, t1, prod[i]);
     }
 
     t2 = 0;
-    for (std::size_t i = k - 1; i >= 0; i--)
+    for (std::size_t i = k - 1; i != 0; i--)
     {
       bn::Fr::mul(t2, t2, a[k]);
       bn::Fr::add(t2, t2, res[i]);
@@ -214,7 +214,7 @@ bool VerifySign(bn::G2 const &y, byte_array::ConstByteArray const &message, bn::
 
 bn::G1 LagrangeInterpolation(std::unordered_map<uint32_t, bn::G1> const &shares)
 {
-  assert(shares.size() > 0);
+  assert(!shares.empty());
   if (shares.size() == 1)
   {
     return shares.begin()->second;
