@@ -1,3 +1,24 @@
 function main()
+
+    var data_shape = Array<UInt64>(2);
+    data_shape[0] = 2u64;
+    data_shape[1] = 4u64;
+
+    var label_shape = Array<UInt64>(2);
+    label_shape[0] = 2u64;
+    label_shape[1] = 4u64;
+
+    var data_tensor = Tensor(data_shape);
+    var label_tensor = Tensor(label_shape);
+
+    var dataloader = DataLoader();
+    dataloader.addData("tensor", data_tensor, label_tensor);
+
     var graph = Graph();
+    graph.addPlaceholder("Input");
+    graph.addPlaceholder("Label");
+    graph.addRelu("Output", "Input");
+    graph.addMeanSquareErrorLoss("Error", "Output", "Label");
+
+
 endfunction

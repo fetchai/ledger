@@ -1,3 +1,41 @@
 function main()
-    var optimiser = Optimiser();
+    var data_shape = Array<UInt64>(2);
+    data_shape[0] = 2u64;
+    data_shape[1] = 4u64;
+
+    var label_shape = Array<UInt64>(2);
+    label_shape[0] = 2u64;
+    label_shape[1] = 4u64;
+
+    var data_tensor = Tensor(data_shape);
+    var label_tensor = Tensor(label_shape);
+
+    var dataloader = DataLoader();
+    dataloader.addData("tensor", data_tensor, label_tensor);
+
+    var graph = Graph();
+    graph.addPlaceholder("Input");
+    graph.addPlaceholder("Label");
+    graph.addRelu("Output", "Input");
+    graph.addMeanSquareErrorLoss("Error", "Output", "Label");
+
+
+    var batch_size = 8u64;
+
+    var optimiser1 = Optimiser("adagrad", graph, "Input", "Label", "Error");
+    optimiser1.run(dataloader, batch_size);
+
+    var optimiser2 = Optimiser("adam", graph, "Input", "Label", "Error");
+    optimiser2.run(dataloader, batch_size);
+
+    var optimiser3 = Optimiser("momentum", graph, "Input", "Label", "Error");
+    optimiser3.run(dataloader, batch_size);
+
+    var optimiser4 = Optimiser("rmsprop", graph, "Input", "Label", "Error");
+    optimiser4.run(dataloader, batch_size);
+
+    var optimiser5 = Optimiser("sgd", graph, "Input", "Label", "Error");
+    optimiser5.run(dataloader, batch_size);
+
+
 endfunction
