@@ -164,7 +164,7 @@ struct TrainingParams
   SizeType min_count            = 5;     // infrequent word removal threshold
 
   SizeType batch_size      = 100000;  // training data batch size
-  SizeType embedding_size  = 200;     // dimension of embedding vec
+  SizeType embedding_size  = 100;     // dimension of embedding vec
   SizeType training_epochs = 1;
   SizeType test_frequency  = 1;
   DataType starting_learning_rate_per_sample =
