@@ -33,8 +33,6 @@
 
 #include <vector>
 
-namespace {
-
 template <typename T, int F, int N, int B>
 void BM_MatrixMultiply_Forward(benchmark::State &state)
 {
@@ -51,8 +49,8 @@ void BM_MatrixMultiply_Forward(benchmark::State &state)
   output.FillUniformRandom();
 
   VecTensorType inputs;
-  inputs.emplace_back(std::make_shared<T>(input_1));
-  inputs.emplace_back(std::make_shared<T>(input_2));
+  inputs.emplace_back(std::make_shared<TensorType>(input_1));
+  inputs.emplace_back(std::make_shared<TensorType>(input_2));
   fetch::ml::ops::MatrixMultiply<fetch::math::Tensor<T>> matmul;
 
   for (auto _ : state)
@@ -979,4 +977,3 @@ BENCHMARK_TEMPLATE(BM_SubtractBackward, fetch::fixed_point::fp64_t, 4096)
     ->Unit(benchmark::kMicrosecond);
 
 BENCHMARK_MAIN();
-}  // namespace
