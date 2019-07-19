@@ -155,7 +155,7 @@ void RBC::Broadcast(RBCEnvelop const &env)
 }
 
 /**
- * Places a serialised message to be broadcasted via RBC into a RBCEnvelop and broadcats
+ * Places a serialised message to be broadcasted via RBC into a RBCEnvelop and broadcasts
  * envelop
  *
  * @param msg Serialised message to be broadcast

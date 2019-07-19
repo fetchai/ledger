@@ -109,6 +109,8 @@ namespace dkg {
 class DkgService : public ledger::EntropyGeneratorInterface
 {
 public:
+  static constexpr char const *LOGGING_NAME = "DkgService";
+
   enum class State
   {
     BUILD_AEON_KEYS,
@@ -162,12 +164,15 @@ public:
     return state_machine_;
   }
 
-  void ResetCabinet(CabinetMembers cabinet, std::size_t threshold)
+  void ResetCabinet(CabinetMembers cabinet, uint64_t threshold)
   {
     FETCH_LOCK(cabinet_lock_);
     assert(cabinet.size() > 3 * threshold);  // To meet the requirements for the RBC
     current_cabinet_   = std::move(cabinet);
     current_threshold_ = threshold;
+
+    FETCH_LOG_INFO(LOGGING_NAME, "Resetting cabinet. Cabinet size: ", cabinet.size(),
+                   " threshold: ", threshold);
     rbc_.ResetCabinet();
   }
   /// @}
@@ -245,7 +250,7 @@ private:
   /// @name Cabinet / Aeon Data
   /// @{
   mutable RMutex cabinet_lock_{};        // Priority 1.
-  std::size_t    current_threshold_{1};  ///< The current threshold for the aeon
+  uint64_t       current_threshold_{1};  ///< The current threshold for the aeon
   CabinetMembers current_cabinet_{};     ///< The set of muddle addresses of the cabinet
   /// @}
 

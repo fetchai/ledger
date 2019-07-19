@@ -45,8 +45,7 @@ public:
   using Subscription    = muddle::Subscription;
   using SubscriptionPtr = std::shared_ptr<muddle::Subscription>;
 
-  // Constructor
-  explicit RBC(Endpoint &endpoint, MuddleAddress address, CabinetMembers const &cabinet,
+  RBC(Endpoint &endpoint, MuddleAddress address, CabinetMembers const &cabinet,
                DkgService &dkg_service);
 
   // Operators
@@ -65,11 +64,7 @@ private:
 
   struct MsgCount
   {
-    size_t echo_count, ready_count;  ///< Count of RReady and RRecho messages
-    MsgCount()
-      : echo_count{0}
-      , ready_count{0}
-    {}
+    uint64_t echo_count, ready_count;  ///< Count of RReady and RRecho messages
   };
 
   struct Broadcast
@@ -83,22 +78,19 @@ private:
   struct Party
   {
     std::unordered_map<TagType, std::bitset<sizeof(MsgType) * 8>>
-                                    flags;  ///< Marks for each message tag what messages have been received
-    uint8_t                         deliver_s;        ///< Counter for messages delivered
+            flags;          ///< Marks for each message tag what messages have been received
+    uint8_t deliver_s = 1;  ///< Counter for messages delivered - initialised to 1
     std::map<uint8_t, RBCMessage &> undelivered_msg;  ///< Undelivered messages indexed by tag
-    Party()
-    {
-      deliver_s = 1;  // initialize sequence counter by 1
-    }
   };
 
   uint32_t           id_;  ///< Rank used in DKG (derived from position in current_cabinet_)
   uint8_t            msg_counter_;  ///< Counter for messages we have broadcasted
   std::vector<Party> parties_;      ///< Keeps track of messages from cabinet members
   std::unordered_map<uint64_t, Broadcast> broadcasts_;  ///< map from tag to broadcasts
-  std::mutex                              mutex_flags_;
-  std::mutex                              mutex_deliver_;
-  std::mutex                              mutex_broadcast_;
+
+  std::mutex mutex_flags_;      // protects access to Party message flags
+  std::mutex mutex_deliver_;    // protects the delivered message queue
+  std::mutex mutex_broadcast_;  // protects broadcasts_
 
   // For broadcast
   static constexpr uint16_t SERVICE_DKG       = 5001;
@@ -107,10 +99,10 @@ private:
   MuddleAddress const address_;   ///< Our muddle address
   Endpoint &          endpoint_;  ///< The muddle endpoint to communicate on
   CabinetMembers const
-      &    current_cabinet_;  ///< The set of muddle addresses of the cabinet (including our own)
+      &       current_cabinet_;  ///< The set of muddle addresses of the cabinet (including our own)
   uint32_t threshold_;  ///< Number of byzantine nodes (this is assumed to take the maximum allowed
                         ///< value satisying threshold_ < current_cabinet_.size()
-  DkgService &    dkg_service_;
+  DkgService &dkg_service_;
   SubscriptionPtr rbc_subscription_;  ///< For receiving messages in the rbc channel
 
   void Send(RBCEnvelop const &env, MuddleAddress const &address);
