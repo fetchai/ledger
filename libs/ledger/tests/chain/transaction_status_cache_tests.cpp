@@ -38,7 +38,6 @@ using RngWord        = LinearCongruentialGenerator::RandomType;
 
 using testing::Return;
 using testing::HasSubstr;
-using testing::Invoke;
 
 struct ClockSteadyClockMock;
 
