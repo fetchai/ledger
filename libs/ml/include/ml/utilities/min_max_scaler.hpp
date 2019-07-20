@@ -53,16 +53,16 @@ private:
 template <typename TensorType>
 void MinMaxScaler<TensorType>::SetScale(TensorType const &reference_tensor)
 {
-  InitialiseStatistics(reference_tensor.size() /
-                       reference_tensor.shape(reference_tensor.shape().size() - 1));
+  SizeType batch_dim = reference_tensor.shape().size() - 1;
+  InitialiseStatistics(reference_tensor.size() / reference_tensor.shape(batch_dim));
 
   // calculate min, max, and range of each feature
-  for (std::size_t i = 0; i < reference_tensor.shape(2); ++i)
+  for (std::size_t i = 0; i < batch_dim; ++i)
   {
     auto x_min_it   = x_min_.begin();
     auto x_max_it   = x_max_.begin();
     auto x_range_it = x_range_.begin();
-    auto ref_it     = reference_tensor.Slice(i, 2).begin();
+    auto ref_it     = reference_tensor.View(i).cbegin();
     while (x_min_it.is_valid())
     {
       if (*x_min_it > *ref_it)
