@@ -36,27 +36,22 @@ namespace bn = mcl::bn256;
 namespace fetch {
 namespace dkg {
 
+template <typename T>
+void Init(std::vector<std::vector<T>> &data, uint32_t i, uint32_t j);
+template <typename T>
+void   Init(std::vector<T> &data, uint32_t i);
 bn::G2 ComputeLHS(bn::G2 &tmpG, bn::G2 const &G, bn::G2 const &H, bn::Fr const &share1,
                   bn::Fr const &share2);
-
 bn::G2 ComputeLHS(bn::G2 const &G, bn::G2 const &H, bn::Fr const &share1, bn::Fr const &share2);
-
-void UpdateRHS(uint32_t rank, bn::G2 &rhsG, std::vector<bn::G2> const &input);
-
+void   UpdateRHS(uint32_t rank, bn::G2 &rhsG, std::vector<bn::G2> const &input);
 bn::G2 ComputeRHS(uint32_t rank, std::vector<bn::G2> const &input);
-
-void ComputeShares(bn::Fr &s_i, bn::Fr &sprime_i, std::vector<bn::Fr> const &a_i,
-                   std::vector<bn::Fr> const &b_i, uint32_t rank);
-
+void   ComputeShares(bn::Fr &s_i, bn::Fr &sprime_i, std::vector<bn::Fr> const &a_i,
+                     std::vector<bn::Fr> const &b_i, uint32_t rank);
 bn::Fr ComputeZi(std::vector<uint32_t> const &parties, std::vector<bn::Fr> const &shares);
-
 std::vector<bn::Fr> InterpolatePolynom(std::vector<bn::Fr> const &a, std::vector<bn::Fr> const &b);
-
-bn::G1 SignShare(byte_array::ConstByteArray const &message, bn::Fr const &x_i);
-
-bool VerifySign(bn::G2 const &y, byte_array::ConstByteArray const &message, bn::G1 const &sign,
-                bn::G2 const &G);
-
+bn::G1              SignShare(byte_array::ConstByteArray const &message, bn::Fr const &x_i);
+bool   VerifySign(bn::G2 const &y, byte_array::ConstByteArray const &message, bn::G1 const &sign,
+                  bn::G2 const &G);
 bn::G1 LagrangeInterpolation(std::unordered_map<uint32_t, bn::G1> const &shares);
 
 }  // namespace dkg

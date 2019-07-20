@@ -27,6 +27,45 @@ namespace fetch {
 namespace dkg {
 
 /**
+ * Vector initialisation for mcl data structures
+ *
+ * @tparam T Type in vector
+ * @param data Vector to be initialised
+ * @param i Number of columns
+ */
+template <typename T>
+void Init(std::vector<T> &data, uint32_t i)
+{
+  data.resize(i);
+  for (auto &data_i : data)
+  {
+    data_i.clear();
+  }
+}
+
+/**
+ * Matrix initialisation for mcl data structures
+ *
+ * @tparam T Type in matrix
+ * @param data Matrix to be initialised
+ * @param i Number of rows
+ * @param j Number of columns
+ */
+template <typename T>
+void Init(std::vector<std::vector<T>> &data, uint32_t i, uint32_t j)
+{
+  data.resize(i);
+  for (auto &data_i : data)
+  {
+    data_i.resize(j);
+    for (auto &data_ij : data_i)
+    {
+      data_ij.clear();
+    }
+  }
+}
+
+/**
  * LHS and RHS functions are used for checking validity of publicly broadcasted coefficients and
  * secret shares distributed privately
  */
