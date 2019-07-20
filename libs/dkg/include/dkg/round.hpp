@@ -19,12 +19,14 @@
 
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/mutex.hpp"
-#include "crypto/bls_base.hpp"
+#include "crypto/fetch_mcl.hpp"
 
 #include <atomic>
 #include <cstddef>
 #include <cstdint>
 #include <mutex>
+
+namespace bn = mcl::bn256;
 
 namespace fetch {
 namespace dkg {
@@ -44,17 +46,17 @@ public:
   Round(Round &&)      = delete;
   ~Round()             = default;
 
-  uint64_t                      round() const;
-  crypto::bls::Signature const &round_signature() const
+  uint64_t      round() const;
+  bn::G1 const &round_signature() const
   {
     return round_signature_;
   }
 
-  void           AddShare(crypto::bls::Id const &id, crypto::bls::Signature const &sig);
+  void           AddShare(uint32_t const &id, bn::G1 const &sig);
   bool           HasSignature() const;
   uint64_t       GetNumShares() const;
   uint64_t       GetEntropy() const;
-  void           SetSignature(crypto::bls::Signature const &sig);
+  void           SetSignature(bn::G1 const &sig);
   ConstByteArray GetRoundEntropy() const;
   void           RecoverSignature();
 
@@ -63,12 +65,11 @@ public:
   Round &operator=(Round &&) = delete;
 
 private:
-  uint64_t const             round_;
-  mutable std::mutex         lock_{};
-  crypto::bls::IdList        sig_ids_{};
-  crypto::bls::SignatureList sig_shares_{};
-  crypto::bls::Signature     round_signature_{};
-  byte_array::ConstByteArray round_entropy_{};
+  uint64_t const                       round_;
+  mutable std::mutex                   lock_{};
+  std::unordered_map<uint32_t, bn::G1> round_sig_shares_;
+  bn::G1                               round_signature_;
+  byte_array::ConstByteArray           round_entropy_{};
 
   std::atomic<uint64_t> num_shares_{0};
   std::atomic<bool>     has_signature_{};
