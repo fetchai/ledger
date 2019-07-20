@@ -29,17 +29,12 @@
 
 namespace bn = mcl::bn256;
 
-/**
- * Helper functions for computations used in the DKG
- */
-
 namespace fetch {
 namespace dkg {
 
-template <typename T>
-void Init(std::vector<std::vector<T>> &data, uint32_t i, uint32_t j);
-template <typename T>
-void   Init(std::vector<T> &data, uint32_t i);
+/**
+ * Helper functions for computations used in the DKG
+ */
 bn::G2 ComputeLHS(bn::G2 &tmpG, bn::G2 const &G, bn::G2 const &H, bn::Fr const &share1,
                   bn::Fr const &share2);
 bn::G2 ComputeLHS(bn::G2 const &G, bn::G2 const &H, bn::Fr const &share1, bn::Fr const &share2);
@@ -53,6 +48,45 @@ bn::G1              SignShare(byte_array::ConstByteArray const &message, bn::Fr 
 bool   VerifySign(bn::G2 const &y, byte_array::ConstByteArray const &message, bn::G1 const &sign,
                   bn::G2 const &G);
 bn::G1 LagrangeInterpolation(std::unordered_map<uint32_t, bn::G1> const &shares);
+
+/**
+ * Vector initialisation for mcl data structures
+ *
+ * @tparam T Type in vector
+ * @param data Vector to be initialised
+ * @param i Number of columns
+ */
+template <typename T>
+void Init(std::vector<T> &data, uint32_t i)
+{
+  data.resize(i);
+  for (auto &data_i : data)
+  {
+    data_i.clear();
+  }
+}
+
+/**
+ * Matrix initialisation for mcl data structures
+ *
+ * @tparam T Type in matrix
+ * @param data Matrix to be initialised
+ * @param i Number of rows
+ * @param j Number of columns
+ */
+template <typename T>
+void Init(std::vector<std::vector<T>> &data, uint32_t i, uint32_t j)
+{
+  data.resize(i);
+  for (auto &data_i : data)
+  {
+    data_i.resize(j);
+    for (auto &data_ij : data_i)
+    {
+      data_ij.clear();
+    }
+  }
+}
 
 }  // namespace dkg
 }  // namespace fetch
