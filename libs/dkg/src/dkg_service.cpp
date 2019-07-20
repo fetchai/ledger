@@ -152,9 +152,6 @@ void DkgService::SendShares(MuddleAddress const &                      destinati
 void DkgService::SubmitSignatureShare(uint64_t round, uint32_t const &id,
                                       std::string const &sig_str)
 {
-  FETCH_LOG_INFO(LOGGING_NAME, "Node: ", id_, " submit signature for round ", round, " from node ",
-                 id, " signature ", sig_str);
-
   bn::G1 signature;
   signature.clear();
   signature.setStr(sig_str);

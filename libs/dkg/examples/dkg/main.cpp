@@ -137,6 +137,7 @@ int main()
       member->reactor.Start();
     }
 
+    // Need to increase this depending on number of nodes to complete 3 rounds of DRB
     std::this_thread::sleep_for(std::chrono::seconds(25));
   }
 
