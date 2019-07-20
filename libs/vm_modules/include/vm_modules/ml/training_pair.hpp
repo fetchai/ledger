@@ -21,14 +21,14 @@ namespace fetch {
 namespace vm_modules {
 namespace ml {
 
-class TrainingPair : public fetch::vm::Object,
-                     public std::pair<fetch::vm::Ptr<fetch::vm_modules::math::VMTensor>,
-                                      fetch::vm::Ptr<fetch::vm_modules::math::VMTensor>>
+class VMTrainingPair : public fetch::vm::Object,
+                       public std::pair<fetch::vm::Ptr<fetch::vm_modules::math::VMTensor>,
+                                        fetch::vm::Ptr<fetch::vm_modules::math::VMTensor>>
 {
 public:
-  TrainingPair(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
-               fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> ta,
-               fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> tb)
+  VMTrainingPair(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
+                 fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> ta,
+                 fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> tb)
     : fetch::vm::Object(vm, type_id)
   {
     this->first  = ta;
@@ -37,19 +37,19 @@ public:
 
   static void Bind(vm::Module &module)
   {
-    module.CreateClassType<fetch::vm_modules::ml::TrainingPair>("TrainingPair")
+    module.CreateClassType<fetch::vm_modules::ml::VMTrainingPair>("TrainingPair")
         .CreateConstuctor<fetch::vm::Ptr<fetch::vm_modules::math::VMTensor>,
                           fetch::vm::Ptr<fetch::vm_modules::math::VMTensor>>()
-        .CreateMemberFunction("Data", &fetch::vm_modules::ml::TrainingPair::data)
-        .CreateMemberFunction("Label", &fetch::vm_modules::ml::TrainingPair::label);
+        .CreateMemberFunction("data", &fetch::vm_modules::ml::VMTrainingPair::data)
+        .CreateMemberFunction("label", &fetch::vm_modules::ml::VMTrainingPair::label);
   }
 
-  static fetch::vm::Ptr<TrainingPair> Constructor(
+  static fetch::vm::Ptr<VMTrainingPair> Constructor(
       fetch::vm::VM *vm, fetch::vm::TypeId type_id,
       fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> ta,
       fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> tb)
   {
-    return new TrainingPair(vm, type_id, ta, tb);
+    return new VMTrainingPair(vm, type_id, ta, tb);
   }
 
   fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> data()

@@ -18,6 +18,9 @@
 //------------------------------------------------------------------------------
 
 #include "core/assert.hpp"
+#include "math/comparison.hpp"
+#include "math/meta/math_type_traits.hpp"
+#include "math/standard_functions/pow.hpp"
 
 #include <cmath>
 
@@ -26,20 +29,20 @@ namespace math {
 namespace distance {
 
 template <typename ArrayType>
-inline typename ArrayType::Type Minkowski(ArrayType const &a, ArrayType const &b,
-                                          typename ArrayType::type n)
+inline meta::IfIsMathArray<ArrayType, typename ArrayType::Type> Minkowski(
+    ArrayType const &a, ArrayType const &b, typename ArrayType::Type n)
 {
   detailed_assert(a.size() == b.size());
   using DataType = typename ArrayType::Type;
-  using SizeType = typename ArrayType::SizeType;
 
-  SizeType count = 0;
-  DataType sum   = 0;
+  DataType sum{0};
+  auto     b_it = b.begin();
   for (auto &val : a)
   {
-    sum += Pow(Max(val, b.At(count)) - Min(val, b.At(count)), n);
+    sum += Pow(Max(val, *b_it) - Min(val, *b_it), n);
+    ++b_it;
   }
-  return Pow(sum, 1. / double(n));
+  return Pow(sum, DataType{1} / DataType{n});
 }
 
 }  // namespace distance

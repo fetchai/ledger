@@ -24,10 +24,11 @@
 #include "ledger/chain/common_types.hpp"
 #include "ledger/chain/digest.hpp"
 #include "ledger/upow/synergetic_base_types.hpp"
-#include "math/bignumber.hpp"
+#include "vectorise/uint/uint.hpp"
 
 #include <limits>
 #include <memory>
+#include <vector>
 
 namespace fetch {
 namespace ledger {
@@ -37,6 +38,7 @@ class Work
 public:
   using ConstByteArray = byte_array::ConstByteArray;
   using ProblemData    = std::vector<ConstByteArray>;
+  using UInt256        = vectorise::UInt<256>;
 
   enum
   {
@@ -50,25 +52,25 @@ public:
   ~Work()            = default;
 
   // Getters
-  Digest const &           contract_digest() const;
-  crypto::Identity const & miner() const;
-  math::BigUnsigned const &nonce() const;
-  WorkScore                score() const;
+  Digest const &          contract_digest() const;
+  crypto::Identity const &miner() const;
+  UInt256 const &         nonce() const;
+  WorkScore               score() const;
 
   // Setters
   void UpdateDigest(Digest digest);
   void UpdateIdentity(crypto::Identity const &identity);
   void UpdateScore(WorkScore score);
-  void UpdateNonce(math::BigUnsigned const &nonce);
+  void UpdateNonce(UInt256 const &nonce);
 
   // Actions
-  math::BigUnsigned CreateHashedNonce() const;
+  UInt256 CreateHashedNonce() const;
 
 private:
-  Digest            contract_digest_{};
-  crypto::Identity  miner_{};
-  math::BigUnsigned nonce_{};
-  WorkScore         score_{std::numeric_limits<WorkScore>::max()};
+  Digest           contract_digest_{};
+  crypto::Identity miner_{};
+  UInt256          nonce_{};
+  WorkScore        score_{std::numeric_limits<WorkScore>::max()};
 
   template <typename T>
   friend void Serialize(T &serializer, Work const &work);
@@ -91,7 +93,7 @@ inline crypto::Identity const &Work::miner() const
   return miner_;
 }
 
-inline math::BigUnsigned const &Work::nonce() const
+inline Work::UInt256 const &Work::nonce() const
 {
   return nonce_;
 }
@@ -116,25 +118,25 @@ inline void Work::UpdateScore(WorkScore score)
   score_ = score;
 }
 
-inline void Work::UpdateNonce(math::BigUnsigned const &nonce)
+inline void Work::UpdateNonce(UInt256 const &nonce)
 {
   nonce_ = nonce;
 }
 
-inline math::BigUnsigned Work::CreateHashedNonce() const
+inline Work::UInt256 Work::CreateHashedNonce() const
 {
   crypto::SHA256 hasher{};
   hasher.Reset();
 
   hasher.Update(contract_digest_);
   hasher.Update(miner_.identifier());
-  hasher.Update(nonce_);
+  hasher.Update(nonce_.pointer(), nonce_.size());
 
   auto const digest1 = hasher.Final();
   hasher.Reset();
   hasher.Update(digest1);
 
-  return math::BigUnsigned{hasher.Final()};
+  return UInt256{hasher.Final()};
 }
 
 template <typename T>

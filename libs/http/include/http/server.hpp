@@ -160,12 +160,21 @@ public:
 
     for (auto &v : views_)
     {
+      // skip all views that don't match the required method
+      if (v.method != req.method())
+      {
+        continue;
+      }
+
       if (v.route.Match(req.uri(), params))
       {
         res = v.view(params, req);
         break;
       }
     }
+
+    // signal that the request has been processed
+    req.SetProcessed();
 
     for (auto &m : post_view_middleware_)
     {

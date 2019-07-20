@@ -23,9 +23,7 @@
 #include "gtest/gtest.h"
 
 #include <algorithm>
-#include <chrono>
-#include <cmath>
-#include <string>
+#include <cstdint>
 #include <vector>
 
 using namespace fetch::math;

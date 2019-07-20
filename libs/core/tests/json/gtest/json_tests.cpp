@@ -16,23 +16,24 @@
 //
 //------------------------------------------------------------------------------
 
-#include "./json_long_strings.hpp"
 #include "core/json/document.hpp"
 #include "core/json/exceptions.hpp"
+#include "json_long_strings.hpp"
 
 #include "gtest/gtest.h"
 
 #include <memory>
 #include <ostream>
+#include <sstream>
 
 using namespace fetch::json;
 using namespace fetch::byte_array;
 
 struct TestCase
 {
-  const char *input_text;
+  char const *input_text;
   bool        expect_output;
-  const char *output_text;
+  char const *output_text;
   bool        expect_throw;
 };
 
@@ -412,8 +413,8 @@ TEST_P(JsonTests, CheckParsing)
 {
   TestCase const &config = GetParam();
 
-  JSONDocument      doc;
-  std::stringstream ss;
+  JSONDocument       doc;
+  std::ostringstream ss;
 
   bool did_throw = false;
 

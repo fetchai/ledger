@@ -1,9 +1,6 @@
 [submodule "vendor/asio"]
 	path = vendor/asio
 	url = https://github.com/chriskohlhoff/asio.git
-[submodule "vendor/pybind11"]
-	path = vendor/pybind11
-	url = https://github.com/pybind/pybind11.git
 [submodule "vendor/googletest"]
 	path = vendor/googletest
 	url = https://github.com/google/googletest.git
@@ -19,3 +16,12 @@
 [submodule "vendor/backward-cpp"]
 	path = vendor/backward-cpp
 	url = https://github.com/n-hutton/backward-cpp.git
+[submodule "vendor/spdlog"]
+	path = vendor/spdlog
+	url = https://github.com/gabime/spdlog.git
+[submodule "vendor/mcl"]
+	path = vendor/mcl
+	url = https://github.com/herumi/mcl.git
+[submodule "vendor/bls"]
+	path = vendor/bls
+	url = https://github.com/herumi/bls.git

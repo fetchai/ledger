@@ -16,12 +16,14 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/layers/PRelu.hpp"
-
 #include "math/tensor.hpp"
+#include "ml/layers/PRelu.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 
 #include "gtest/gtest.h"
+
+#include <memory>
+#include <vector>
 
 template <typename T>
 class PReluTest : public ::testing::Test
@@ -37,13 +39,14 @@ TYPED_TEST_CASE(PReluTest, MyTypes);
 TYPED_TEST(PReluTest, set_input_and_evaluate_test)  // Use the class as a subgraph
 {
   fetch::ml::layers::PRelu<TypeParam> fc(100u);
-  TypeParam input_data(std::vector<typename TypeParam::SizeType>({10, 10}));
+  TypeParam input_data(std::vector<typename TypeParam::SizeType>({10, 10, 2}));
   fc.SetInput("PRelu_Input", input_data);
-  TypeParam output = fc.Evaluate("PRelu_LeakyReluOp");
+  TypeParam output = fc.Evaluate("PRelu_LeakyReluOp", true);
 
-  ASSERT_EQ(output.shape().size(), 2);
+  ASSERT_EQ(output.shape().size(), 3);
   ASSERT_EQ(output.shape()[0], 10);
   ASSERT_EQ(output.shape()[1], 10);
+  ASSERT_EQ(output.shape()[2], 2);
 
   // No way to test actual values for now as weights are randomly initialised.
 }
@@ -53,36 +56,39 @@ TYPED_TEST(PReluTest, ops_forward_test)  // Use the class as an Ops
   using VecTensorType = typename fetch::ml::Ops<TypeParam>::VecTensorType;
 
   fetch::ml::layers::PRelu<TypeParam> pr(50);
-  TypeParam input_data(std::vector<typename TypeParam::SizeType>({5, 10}));
+  TypeParam input_data(std::vector<typename TypeParam::SizeType>({5, 10, 2}));
 
   TypeParam output(pr.ComputeOutputShape({input_data}));
   pr.Forward(VecTensorType({input_data}), output);
 
-  ASSERT_EQ(output.shape().size(), 2);
+  ASSERT_EQ(output.shape().size(), 3);
   ASSERT_EQ(output.shape()[0], 5);
   ASSERT_EQ(output.shape()[1], 10);
+  ASSERT_EQ(output.shape()[2], 2);
   // No way to test actual values for now as weights are randomly initialised.
 }
 
 TYPED_TEST(PReluTest, ops_backward_test)  // Use the class as an Ops
 {
   fetch::ml::layers::PRelu<TypeParam> fc(50);
-  TypeParam input_data(std::vector<typename TypeParam::SizeType>({5, 10}));
+  TypeParam input_data(std::vector<typename TypeParam::SizeType>({5, 10, 2}));
   TypeParam output(fc.ComputeOutputShape({input_data}));
   fc.Forward({input_data}, output);
-  TypeParam error_signal(std::vector<typename TypeParam::SizeType>({1, 50}));
+  TypeParam error_signal(std::vector<typename TypeParam::SizeType>({50, 2}));
 
   std::vector<TypeParam> bp_err = fc.Backward({input_data}, error_signal);
   ASSERT_EQ(bp_err.size(), 1);
-  ASSERT_EQ(bp_err[0].shape().size(), 2);
-  ASSERT_EQ(bp_err[0].shape()[0], 1);
-  ASSERT_EQ(bp_err[0].shape()[1], 50);
+  ASSERT_EQ(bp_err[0].shape().size(), 3);
+  ASSERT_EQ(bp_err[0].shape()[0], 5);
+  ASSERT_EQ(bp_err[0].shape()[1], 10);
+  ASSERT_EQ(bp_err[0].shape()[2], 2);
+
   // No way to test actual values for now as weights are randomly initialised.
 }
 
 TYPED_TEST(PReluTest, node_forward_test)  // Use the class as a Node
 {
-  TypeParam data(std::vector<typename TypeParam::SizeType>({5, 10}));
+  TypeParam data(std::vector<typename TypeParam::SizeType>({5, 10, 2}));
   std::shared_ptr<fetch::ml::Node<TypeParam, fetch::ml::ops::PlaceHolder<TypeParam>>> placeholder =
       std::make_shared<fetch::ml::Node<TypeParam, fetch::ml::ops::PlaceHolder<TypeParam>>>("Input");
   placeholder->SetData(data);
@@ -90,31 +96,33 @@ TYPED_TEST(PReluTest, node_forward_test)  // Use the class as a Node
   fetch::ml::Node<TypeParam, fetch::ml::layers::PRelu<TypeParam>> fc("PRelu", 50u, "PRelu");
   fc.AddInput(placeholder);
 
-  TypeParam prediction = fc.Evaluate();
+  TypeParam prediction = fc.Evaluate(true);
 
-  ASSERT_EQ(prediction.shape().size(), 2);
+  ASSERT_EQ(prediction.shape().size(), 3);
   ASSERT_EQ(prediction.shape()[0], 5);
   ASSERT_EQ(prediction.shape()[1], 10);
+  ASSERT_EQ(prediction.shape()[2], 2);
 }
 
 TYPED_TEST(PReluTest, node_backward_test)  // Use the class as a Node
 {
-  TypeParam                                                                           data({5, 10});
+  TypeParam data({5, 10, 2});
   std::shared_ptr<fetch::ml::Node<TypeParam, fetch::ml::ops::PlaceHolder<TypeParam>>> placeholder =
       std::make_shared<fetch::ml::Node<TypeParam, fetch::ml::ops::PlaceHolder<TypeParam>>>("Input");
   placeholder->SetData(data);
 
   fetch::ml::Node<TypeParam, fetch::ml::layers::PRelu<TypeParam>> fc("PRelu", 50u, "PRelu");
   fc.AddInput(placeholder);
-  TypeParam prediction = fc.Evaluate();
+  TypeParam prediction = fc.Evaluate(true);
 
-  TypeParam error_signal(std::vector<typename TypeParam::SizeType>({1, 50}));
-  auto      bp_err = fc.BackPropagate(error_signal);
+  TypeParam error_signal(std::vector<typename TypeParam::SizeType>({5, 10, 2}));
+  auto      bp_err = fc.BackPropagateSignal(error_signal);
 
   ASSERT_EQ(bp_err.size(), 1);
-  ASSERT_EQ(bp_err[0].second.shape().size(), 2);
-  ASSERT_EQ(bp_err[0].second.shape()[0], 1);
-  ASSERT_EQ(bp_err[0].second.shape()[1], 50);
+  ASSERT_EQ(bp_err[0].second.shape().size(), 3);
+  ASSERT_EQ(bp_err[0].second.shape()[0], 5);
+  ASSERT_EQ(bp_err[0].second.shape()[1], 10);
+  ASSERT_EQ(bp_err[0].second.shape()[2], 2);
 }
 
 TYPED_TEST(PReluTest, graph_forward_test)  // Use the class as a Node
@@ -124,13 +132,14 @@ TYPED_TEST(PReluTest, graph_forward_test)  // Use the class as a Node
   g.template AddNode<fetch::ml::ops::PlaceHolder<TypeParam>>("Input", {});
   g.template AddNode<fetch::ml::layers::PRelu<TypeParam>>("PRelu", {"Input"}, 50u);
 
-  TypeParam data({5, 10});
+  TypeParam data({5, 10, 2});
   g.SetInput("Input", data);
 
-  TypeParam prediction = g.Evaluate("PRelu");
-  ASSERT_EQ(prediction.shape().size(), 2);
+  TypeParam prediction = g.Evaluate("PRelu", true);
+  ASSERT_EQ(prediction.shape().size(), 3);
   ASSERT_EQ(prediction.shape()[0], 5);
   ASSERT_EQ(prediction.shape()[1], 10);
+  ASSERT_EQ(prediction.shape()[2], 2);
 }
 
 TYPED_TEST(PReluTest, getStateDict)
@@ -143,5 +152,5 @@ TYPED_TEST(PReluTest, getStateDict)
 
   ASSERT_NE(sd.dict_["PReluTest_Alpha"].weights_, nullptr);
   EXPECT_EQ(sd.dict_["PReluTest_Alpha"].weights_->shape(),
-            std::vector<typename TypeParam::SizeType>({1, 50}));
+            std::vector<typename TypeParam::SizeType>({50, 1}));
 }

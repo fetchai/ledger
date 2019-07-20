@@ -20,6 +20,7 @@
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "crypto/openssl_memory.hpp"
+#include "crypto/signature_register.hpp"
 
 #include <openssl/obj_mac.h>
 
@@ -34,7 +35,7 @@ template <int P_ECDSA_Curve_NID = NID_secp256k1>
 struct ECDSACurve
 {
   static const int         nid;
-  static const char *const sn;
+  static const uint8_t     sn;
   static const std::size_t privateKeySize;
   static const std::size_t publicKeySize;
   static const std::size_t signatureSize;
@@ -44,7 +45,7 @@ template <int P_ECDSA_Curve_NID>
 const int ECDSACurve<P_ECDSA_Curve_NID>::nid = P_ECDSA_Curve_NID;
 
 template <>
-const char *const ECDSACurve<NID_secp256k1>::sn;
+const uint8_t ECDSACurve<NID_secp256k1>::sn;
 template <>
 const std::size_t ECDSACurve<NID_secp256k1>::privateKeySize;
 template <>
@@ -77,8 +78,8 @@ public:
 
   static byte_array::ByteArray Convert2Canonical(BIGNUM const *const x, BIGNUM const *const y)
   {
-    const auto xBytes = static_cast<std::size_t>(BN_num_bytes(x));
-    const auto yBytes = static_cast<std::size_t>(BN_num_bytes(y));
+    auto const xBytes = static_cast<std::size_t>(BN_num_bytes(x));
+    auto const yBytes = static_cast<std::size_t>(BN_num_bytes(y));
 
     byte_array::ByteArray canonical_data;
     canonical_data.Resize(x_size + y_size);

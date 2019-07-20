@@ -17,40 +17,43 @@
 //
 //------------------------------------------------------------------------------
 
+#include "math/activation_functions/elu.hpp"
 #include "math/fundamental_operators.hpp"
 #include "math/matrix_operations.hpp"
-#include "math/ml/activation_functions/elu.hpp"
 #include "ml/ops/ops.hpp"
+
+#include <cassert>
+#include <vector>
 
 namespace fetch {
 namespace ml {
 namespace ops {
 
 template <class T>
-class Elu : public fetch::ml::ElementWiseOps<T>
+class Elu : public fetch::ml::Ops<T>
 {
 public:
   using ArrayType     = T;
   using DataType      = typename ArrayType::Type;
-  using VecTensorType = typename ElementWiseOps<T>::VecTensorType;
+  using SizeType      = typename ArrayType::SizeType;
+  using VecTensorType = typename Ops<T>::VecTensorType;
 
-  Elu(DataType a)
+  explicit Elu(DataType a)
     : a_(a)
   {}
 
   virtual ~Elu() = default;
 
-  virtual void Forward(VecTensorType const &inputs, ArrayType &output)
+  void Forward(VecTensorType const &inputs, ArrayType &output)
   {
-    ASSERT(inputs.size() == 1);
+    assert(inputs.size() == 1);
     fetch::math::Elu(inputs.front().get(), a_, output);
   }
 
-  virtual std::vector<ArrayType> Backward(VecTensorType const &inputs,
-                                          ArrayType const &    error_signal)
+  std::vector<ArrayType> Backward(VecTensorType const &inputs, ArrayType const &error_signal)
   {
-    ASSERT(inputs.size() == 1);
-    ASSERT(inputs.front().get().shape() == error_signal.shape());
+    assert(inputs.size() == 1);
+    assert(inputs.front().get().shape() == error_signal.shape());
     ArrayType ret{error_signal.shape()};
 
     DataType zero{0};
@@ -80,6 +83,11 @@ public:
     fetch::math::Multiply(error_signal, ret, ret);
 
     return {ret};
+  }
+
+  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const
+  {
+    return inputs.front().get().shape();
   }
 
   static constexpr char const *DESCRIPTOR = "Elu";

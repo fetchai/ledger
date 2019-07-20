@@ -20,8 +20,7 @@
 #include "ml/dataloaders/word2vec_loaders/w2v_dataloader.hpp"
 
 #include <chrono>
-
-using namespace std::chrono;
+#include <iostream>
 
 namespace fetch {
 namespace ml {
@@ -58,9 +57,9 @@ private:
 
   dataloaders::W2VLoader<DataType> &data_loader_;
 
-  high_resolution_clock::time_point       cur_time_;
-  high_resolution_clock::time_point       last_time_;
-  fetch::math::ApproxExpImplementation<0> fexp_;
+  std::chrono::high_resolution_clock::time_point cur_time_;
+  std::chrono::high_resolution_clock::time_point last_time_;
+  fetch::math::ApproxExpImplementation<0>        fexp_;
 
 public:
   W2VModel(SizeType embeddings_size, SizeType negative, DataType starting_alpha,
@@ -70,7 +69,7 @@ public:
                   SizeType const &print_frequency);
 
   void UpdateLearningRate(SizeType i, SizeType iter, SizeType iterations);
-  void Train(SizeType iter, SizeType print_frequency, bool cbow = 1);
+  void Train(SizeType iter, SizeType print_frequency, bool cbow = true);
   void CBOWTrain(ArrayType &context, ArrayType &target);
   void SGNSTrain(ArrayType const &context, ArrayType const &target);
 
@@ -133,8 +132,9 @@ template <typename ArrayType>
 void W2VModel<ArrayType>::PrintStats(SizeType const &i, SizeType const &iter,
                                      SizeType const &iterations, SizeType const &print_frequency)
 {
-  cur_time_                  = high_resolution_clock::now();
-  duration<double> time_span = duration_cast<duration<double>>(cur_time_ - last_time_);
+  cur_time_ = std::chrono::high_resolution_clock::now();
+  auto time_span =
+      std::chrono::duration_cast<std::chrono::duration<double>>(cur_time_ - last_time_);
   std::cout << i << " / " << iter * iterations << " ("
             << static_cast<SizeType>(100.0 * static_cast<double>(i) /
                                      static_cast<double>(iter * iterations))
@@ -180,7 +180,7 @@ void W2VModel<ArrayType>::Train(SizeType iter, SizeType print_frequency, bool cb
   data_loader_.Reset();
   data_loader_.GetNext();
 
-  last_time_ = high_resolution_clock::now();
+  last_time_ = std::chrono::high_resolution_clock::now();
 
   SizeType iterations = data_loader_.Size();
 
@@ -213,6 +213,130 @@ void W2VModel<ArrayType>::Train(SizeType iter, SizeType print_frequency, bool cb
   }
 
   std::cout << "Done Training" << std::endl;
+}
+
+template <typename ArrayType>
+void W2VModel<ArrayType>::SGNSTrain(  // TODO (#1304) CBOW implementation not SGNS
+    ArrayType const &target, ArrayType const &context)
+{
+  for (DataType const &cur_context_word : context)
+  {
+    if (cur_context_word != data_loader_.WindowContextUnused)
+    {
+
+      ///////////////////////
+      /// FORWARD
+      ///////////////////////
+
+      // assign current context word
+      auto output_view = word_vector_.View(0);
+      Assign(output_view,
+             embeddings_.View(fetch::math::SizeType(
+                 cur_context_word)));  // TODO (#1304) the w2v should be drawn from target weights
+
+      // assign target weights (Embeddings: target -> weights)
+      SizeType j = 0;
+
+      for (DataType const &i : target)
+      {
+        auto view1 = target_weights_.View(j);
+        auto view2 = weights_.View(fetch::math::SizeType(i));
+
+        Assign(view1, view2);
+        j++;
+      }
+
+      // MatrixMultiply: Forward
+      fetch::math::TransposeDot(
+          target_weights_, word_vector_,
+          error_signal_);  // TODO (#1304) negative samples are drew from the wrong weight matrix
+                           // and the context word is trained agaisnt the wrong target
+
+      ///////////////////////
+      // ERROR
+      ///////////////////////
+      for (SizeType cur_neg_sample = 0; cur_neg_sample < negative_; cur_neg_sample++)
+      {
+        for (SizeType cur_example = 0; cur_example < error_signal_.shape()[1];
+             cur_example++)  // error_signal_.shape()[1] is simply one, not sure why we have a for
+                             // loop here.
+        {
+          DataType f     = error_signal_(cur_neg_sample, cur_example);
+          DataType label = (cur_neg_sample == 0) ? 1 : 0;
+          auto     sm    = static_cast<DataType>(static_cast<DataType>(fexp_(f) / (1. + fexp_(f))));
+          error_signal_.Set(cur_neg_sample, cur_example, label - sm);
+        }
+      }
+
+      ///////////////////////
+      // BACKWARD
+      ///////////////////////
+
+      // MatrixMultiply: Backward
+      fetch::math::Dot(target_weights_, error_signal_, error_words_);
+      fetch::math::DotTranspose(word_vector_, error_signal_, error_target_weights_);
+
+      // Embeddings: context Backward
+      auto error_signal_view = error_words_.View(0);
+      auto view1 = gradient_embeddings_.View(static_cast<fetch::math::SizeType>(cur_context_word));
+      PolyfillInlineAdd(view1, error_signal_view);
+
+      // Embeddings: target Backward
+      j = 0;
+      for (DataType const &i : target)
+      {
+        auto ii = fetch::math::SizeType(double(i));
+        updated_rows_weights_.push_back(ii);
+
+        auto view2 = gradient_weights_.View(fetch::math::SizeType(double(i)));
+        auto view3 = error_target_weights_.View(j);
+
+        PolyfillInlineAdd(view2, view3);
+
+        j++;
+      }
+
+      ///////////////////////
+      // STEP
+      ///////////////////////
+
+      // TODO(1157) original implementation has a new set of 25 random samples for each context
+      // value. but we're using a single set of 25 random samples for one who dynamic window
+
+      // Embeddings: step for all weights
+      float learning_rate      = alpha_;
+      using VectorRegisterType = typename fetch::math::TensorView<DataType>::VectorRegisterType;
+      fetch::memory::TrivialRange range(0, std::size_t(gradient_weights_.height()));
+      VectorRegisterType          rate(learning_rate);
+      VectorRegisterType          zero(static_cast<DataType>(0));
+
+      for (auto const &r : updated_rows_weights_)
+      {
+        auto input = gradient_weights_.View(r);
+        auto ret   = weights_.View(r);  // embeddings.View(r);
+
+        ret.data().in_parallel().Apply(
+            range,
+            [rate](VectorRegisterType const &a, VectorRegisterType const &b,
+                   VectorRegisterType &c) { c = b + a * rate; },
+            input.data(), ret.data());
+        input.data().in_parallel().Apply([zero](VectorRegisterType &a) { a = zero; });
+      }
+
+      updated_rows_weights_.clear();
+
+      // Embeddings: Step for only the current context value
+      auto it1 = (gradient_embeddings_.View(static_cast<SizeType>(cur_context_word))).begin();
+      auto it2 = (embeddings_.View(static_cast<SizeType>(cur_context_word))).begin();
+      while (it1.is_valid())
+      {
+        *it2 += (*it1 * learning_rate);
+        *it1 = 0;
+        ++it1;
+        ++it2;
+      }
+    }
+  }
 }
 
 /**
@@ -251,7 +375,7 @@ void W2VModel<ArrayType>::CBOWTrain(ArrayType &target, ArrayType &context)
     }
   }
 
-  DataType div = static_cast<DataType>(valid_samples);
+  auto const div = static_cast<DataType>(valid_samples);
   for (auto &val : output_view)
   {
     val /= div;
@@ -277,9 +401,9 @@ void W2VModel<ArrayType>::CBOWTrain(ArrayType &target, ArrayType &context)
   ///////////////////////
   for (SizeType cur_neg_sample = 0; cur_neg_sample < negative_; cur_neg_sample++)
   {
-    DataType f     = error_signal_(cur_neg_sample, 0);
-    DataType label = (cur_neg_sample == 0) ? 1 : 0;
-    DataType sm    = static_cast<DataType>(static_cast<DataType>(fexp_(f) / (1. + fexp_(f))));
+    DataType   f     = error_signal_(cur_neg_sample, 0);
+    DataType   label = (cur_neg_sample == 0) ? 1 : 0;
+    auto const sm    = static_cast<DataType>(static_cast<DataType>(fexp_(f) / (1. + fexp_(f))));
     error_signal_.Set(cur_neg_sample, 0, label - sm);
   }
 
@@ -360,122 +484,6 @@ void W2VModel<ArrayType>::CBOWTrain(ArrayType &target, ArrayType &context)
   }
 
   updated_rows_embeddings_.clear();
-}
-
-template <typename ArrayType>
-void W2VModel<ArrayType>::SGNSTrain(ArrayType const &target, ArrayType const &context)
-{
-  for (DataType const &cur_context_word : context)
-  {
-    if (cur_context_word >= 0)
-    {
-
-      ///////////////////////
-      /// FORWARD
-      ///////////////////////
-
-      // assign current context word
-      auto output_view = word_vector_.View(0);
-      Assign(output_view, embeddings_.View(fetch::math::SizeType(cur_context_word)));
-
-      // assign target weights (Embeddings: target -> weights)
-      SizeType j = 0;
-
-      for (DataType const &i : target)
-      {
-        auto view1 = target_weights_.View(j);
-        auto view2 = weights_.View(fetch::math::SizeType(i));
-
-        Assign(view1, view2);
-        j++;
-      }
-
-      // MatrixMultiply: Forward
-      fetch::math::TransposeDot(target_weights_, word_vector_, error_signal_);
-
-      ///////////////////////
-      // ERROR
-      ///////////////////////
-      for (SizeType cur_neg_sample = 0; cur_neg_sample < negative_; cur_neg_sample++)
-      {
-        for (SizeType cur_example = 0; cur_example < error_signal_.shape()[1]; cur_example++)
-        {
-          DataType f     = error_signal_(cur_neg_sample, cur_example);
-          DataType label = (cur_neg_sample == 0) ? 1 : 0;
-          auto     sm    = static_cast<DataType>(static_cast<DataType>(fexp_(f) / (1. + fexp_(f))));
-          error_signal_.Set(cur_neg_sample, cur_example, label - sm);
-        }
-      }
-
-      ///////////////////////
-      // BACKWARD
-      ///////////////////////
-
-      // MatrixMultiply: Backward
-      fetch::math::Dot(target_weights_, error_signal_, error_words_);
-      fetch::math::DotTranspose(word_vector_, error_signal_, error_target_weights_);
-
-      // Embeddings: context Backward
-      auto error_signal_view = error_words_.View(0);
-      auto view1 = gradient_embeddings_.View(static_cast<fetch::math::SizeType>(cur_context_word));
-      PolyfillInlineAdd(view1, error_signal_view);
-
-      // Embeddings: target Backward
-      j = 0;
-      for (DataType const &i : target)
-      {
-        auto ii = fetch::math::SizeType(double(i));
-        updated_rows_weights_.push_back(ii);
-
-        auto view2 = gradient_weights_.View(fetch::math::SizeType(double(i)));
-        auto view3 = error_target_weights_.View(j);
-
-        PolyfillInlineAdd(view2, view3);
-
-        j++;
-      }
-
-      ///////////////////////
-      // STEP
-      ///////////////////////
-
-      // TODO(1157) original implementation has a new set of 25 random samples for each context
-      // value. but we're using a single set of 25 random samples for one who dynamic window
-
-      // Embeddings: step for all weights
-      float learning_rate      = alpha_;
-      using VectorRegisterType = typename fetch::math::TensorView<DataType>::VectorRegisterType;
-      fetch::memory::TrivialRange range(0, std::size_t(gradient_weights_.height()));
-      VectorRegisterType          rate(learning_rate);
-      VectorRegisterType          zero(static_cast<DataType>(0));
-
-      for (auto const &r : updated_rows_weights_)
-      {
-        auto input = gradient_weights_.View(r);
-        auto ret   = weights_.View(r);  // embeddings.View(r);
-
-        ret.data().in_parallel().Apply(
-            range,
-            [rate](VectorRegisterType const &a, VectorRegisterType const &b,
-                   VectorRegisterType &c) { c = b + a * rate; },
-            input.data(), ret.data());
-        input.data().in_parallel().Apply([zero](VectorRegisterType &a) { a = zero; });
-      }
-
-      updated_rows_weights_.clear();
-
-      // Embeddings: Step for only the current context value
-      auto it1 = (gradient_embeddings_.View(static_cast<SizeType>(cur_context_word))).begin();
-      auto it2 = (embeddings_.View(static_cast<SizeType>(cur_context_word))).begin();
-      while (it1.is_valid())
-      {
-        *it2 += (*it1 * learning_rate);
-        *it1 = 0;
-        ++it1;
-        ++it2;
-      }
-    }
-  }
 }
 
 /**

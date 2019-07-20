@@ -16,19 +16,14 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/logger.hpp"
 #include "fake_io_observer.hpp"
 
 #include <cstdint>
 #include <string>
 #include <utility>
 
-static constexpr char const *LOGGING_NAME = "FakeIO";
-
 FakeIoObserver::Status FakeIoObserver::Read(std::string const &key, void *data, uint64_t &size)
 {
-  FETCH_LOG_INFO(LOGGING_NAME, "Reading: ", key);
-
   // check to see if the key is permitted
   if (!IsPermittedKey(key))
   {
@@ -44,15 +39,15 @@ FakeIoObserver::Status FakeIoObserver::Read(std::string const &key, void *data, 
 
   // ensure the buffer is the correct size
   auto const &stored_data = it->second;
-  size                    = stored_data.size();
-  if (size < stored_data.size())
+  auto const  orig_size{size};
+  size = stored_data.size();
+  if (orig_size < stored_data.size())
   {
     return Status::BUFFER_TOO_SMALL;
   }
 
   // copy the data back
   stored_data.ReadBytes(reinterpret_cast<uint8_t *>(data), size);
-  size = stored_data.size();
 
   return Status::OK;
 }
@@ -61,8 +56,6 @@ FakeIoObserver::Status FakeIoObserver::Write(std::string const &key, void const 
                                              uint64_t size)
 {
   ConstByteArray const value{reinterpret_cast<uint8_t const *>(data), size};
-
-  FETCH_LOG_INFO(LOGGING_NAME, "Writing: ", key, " (size: ", size, " value: ", value.ToHex(), ")");
 
   // check to see if the key is permitted
   if (!IsPermittedKey(key))

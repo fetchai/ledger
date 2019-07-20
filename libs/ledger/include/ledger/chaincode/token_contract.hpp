@@ -20,6 +20,7 @@
 #include "ledger/chain/transaction.hpp"
 #include "ledger/chaincode/contract.hpp"
 
+#include <cstdint>
 #include <vector>
 
 namespace fetch {
@@ -58,10 +59,13 @@ public:
   Status Deed(Transaction const &tx, BlockIndex);
   Status Transfer(Transaction const &tx, BlockIndex);
   Status AddStake(Transaction const &tx, BlockIndex);
+  Status DeStake(Transaction const &tx, BlockIndex);
+  Status CollectStake(Transaction const &tx, BlockIndex);
 
   // queries
   Status Balance(Query const &query, Query &response);
   Status Stake(Query const &query, Query &response);
+  Status CooldownStake(Query const &query, Query &response);
 
   void         ClearStakeUpdates();
   StakeUpdates stake_updates() const;

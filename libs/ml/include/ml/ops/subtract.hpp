@@ -17,24 +17,29 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/macros.hpp"
 #include "ml/ops/ops.hpp"
+
+#include <cassert>
+#include <vector>
 
 namespace fetch {
 namespace ml {
 namespace ops {
 
 template <class T>
-class Subtract : public fetch::ml::ElementWiseOps<T>
+class Subtract : public fetch::ml::Ops<T>
 {
 public:
   using ArrayType     = T;
   using DataType      = typename ArrayType::Type;
-  using VecTensorType = typename ElementWiseOps<T>::VecTensorType;
+  using SizeType      = typename ArrayType::SizeType;
+  using VecTensorType = typename Ops<T>::VecTensorType;
 
-  Subtract()          = default;
-  virtual ~Subtract() = default;
+  Subtract()           = default;
+  ~Subtract() override = default;
 
-  virtual void Forward(VecTensorType const &inputs, ArrayType &output)
+  void Forward(VecTensorType const &inputs, ArrayType &output) override
   {
     assert(inputs.size() == 2);
     assert(inputs.at(0).get().size() == inputs.at(1).get().size());
@@ -43,15 +48,20 @@ public:
     fetch::math::Subtract(inputs[0].get(), inputs[1].get(), output);
   }
 
-  virtual std::vector<ArrayType> Backward(VecTensorType const &inputs,
-                                          ArrayType const &    error_signal)
+  std::vector<ArrayType> Backward(VecTensorType const &inputs,
+                                  ArrayType const &    error_signal) override
   {
-    (void)inputs;
+    FETCH_UNUSED(inputs);
     assert(inputs.size() == 2);
     assert(inputs.at(0).get().size() == inputs.at(1).get().size());
     assert(error_signal.size() == inputs.at(1).get().size());
 
     return {error_signal, fetch::math::Multiply(error_signal, DataType{-1})};
+  }
+
+  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
+  {
+    return inputs.front().get().shape();
   }
 
   static constexpr char const *DESCRIPTOR = "Subtract";

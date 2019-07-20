@@ -106,5 +106,27 @@ std::string Uri::ToString() const
   }
 }
 
+std::ostream &operator<<(std::ostream &stream, Uri const &uri)
+{
+  stream << uri.ToString();
+  return stream;
+}
+
+std::istream &operator>>(std::istream &stream, Uri &uri)
+{
+  std::string value{};
+  stream >> value;
+
+  if (!stream.fail())
+  {
+    if (!uri.Parse(value))
+    {
+      throw std::runtime_error("Failed to parse input peer: " + value);
+    }
+  }
+
+  return stream;
+}
+
 }  // namespace network
 }  // namespace fetch

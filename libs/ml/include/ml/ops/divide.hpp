@@ -29,50 +29,86 @@ class Divide : public fetch::ml::Ops<T>
 {
 public:
   using ArrayType     = T;
+  using SizeType      = typename ArrayType::SizeType;
   using ArrayPtrType  = std::shared_ptr<ArrayType>;
   using VecTensorType = typename Ops<T>::VecTensorType;
+  using DataType      = typename T::Type;
 
   Divide()          = default;
   virtual ~Divide() = default;
 
   /**
-   * elementwise multiplication
+   * elementwise division
    * @param inputs  left & right inputs to Divide
    * @return
    */
-  virtual void Forward(std::vector<ArrayPtrType> const &inputs, ArrayType &output)
+  virtual void Forward(VecTensorType const &inputs, ArrayType &output)
   {
-    (void)output;
-    assert(inputs.size() > 1);
-    for (std::size_t i = 1; i < inputs.size(); ++i)
-    {
-      assert(inputs[i]->shape() == inputs[i - 1]->shape());
-    }
+    assert(inputs.size() == 2);
+    assert(inputs.at(0).get().shape() == output.shape());
 
-    std::vector<std::uint64_t> outputShape(inputs[0]->shape());
-    if (!this->output_ || this->output_->shape() != outputShape)
-    {
-      this->output_ = std::make_shared<ArrayType>(outputShape);
+    if (inputs.at(1).get().size() > 1)
+    {  // array / array
+      fetch::math::Divide(inputs.at(0).get(), inputs.at(1).get(), output);
     }
-
-    fetch::math::Divide(inputs[0], inputs[1], this->output_);
-    if (inputs.size() > 2)
-    {
-      for (std::size_t i = 2; i < inputs.size(); ++i)
-      {
-        fetch::math::Divide(this->output_, inputs[i], this->output_);
-      }
+    else
+    {  // array / scalar
+      fetch::math::Divide(inputs.at(0).get(), *(inputs.at(1).get().cbegin()), output);
     }
-
-    output = this->output_;
   }
 
   /**
-   * elementwise multiplication is not trainable - just pass the error signal back
+   * f'(a)=(1/b)*err
+   * f'(b)=-(a/(b^2))*err
    */
-  virtual std::vector<ArrayPtrType> Backward(VecTensorType const &inputs, ArrayPtrType error_signal)
+  virtual std::vector<ArrayType> Backward(VecTensorType const &inputs,
+                                          ArrayType const &    error_signal)
   {
-    return std::vector<ArrayPtrType>(inputs.size(), error_signal);
+    ArrayType return_signal_1(inputs.at(0).get().shape());
+    ArrayType return_signal_2(inputs.at(1).get().shape());
+
+    auto a_it   = inputs.at(0).get().cbegin();
+    auto b_it   = inputs.at(1).get().cbegin();
+    auto err_it = error_signal.cbegin();
+    auto r_1_it = return_signal_1.begin();
+    auto r_2_it = return_signal_2.begin();
+    if (inputs.at(0).get().shape() == inputs.at(1).get().shape())
+    {  // array / array same shape
+      while (a_it.is_valid())
+      {
+        *r_1_it = (*err_it) / (*b_it);
+        *r_2_it = -((*err_it) * (*a_it)) / ((*b_it) * (*b_it));
+
+        ++a_it;
+        ++b_it;
+        ++err_it;
+        ++r_1_it;
+        ++r_2_it;
+      }
+    }
+    else if (inputs.at(1).get().size() == 1)
+    {  // array / scalar
+      while (a_it.is_valid())
+      {
+        *r_1_it = (*err_it) / (*b_it);
+        *r_2_it += -((*err_it) * (*a_it)) / ((*b_it) * (*b_it));
+
+        ++a_it;
+        ++err_it;
+        ++r_1_it;
+      }
+    }
+    else
+    {  // array / array different shape
+       // TODO (#1380) Write backpropagation for array array division of different shapes
+      throw std::runtime_error("array array division of different shapes is not yet handled");
+    }
+    return {return_signal_1, return_signal_2};
+  }
+
+  virtual std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const
+  {
+    return inputs.front().get().shape();
   }
 
   static constexpr char const *DESCRIPTOR = "Divide";

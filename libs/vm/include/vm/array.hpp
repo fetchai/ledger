@@ -25,6 +25,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <iterator>
+#include <utility>
 
 namespace fetch {
 namespace vm {
@@ -81,7 +82,7 @@ struct Array : public IArray
   Array(VM *vm, TypeId type_id, TypeId element_type_id__, int32_t size)
     : IArray(vm, type_id)
     , element_type_id(element_type_id__)
-    , elements(static_cast<std::size_t>(size), ElementType(0))
+    , elements(static_cast<std::size_t>(size), ElementType{})
   {}
 
   int32_t Count() const override
@@ -176,7 +177,7 @@ struct Array : public IArray
 
     std::move(elements.begin(), elements.begin() + num_to_pop, array->elements.begin());
 
-    const auto popped_size = static_cast<std::size_t>(num_to_pop);
+    auto const popped_size = static_cast<std::size_t>(num_to_pop);
 
     // Shift remaining elements to the right
     for (auto i = popped_size; i < elements.size(); ++i)
@@ -260,19 +261,112 @@ struct Array : public IArray
 
   bool SerializeTo(ByteArrayBuffer &buffer) override
   {
-    buffer << element_type_id << elements;
-    return true;
+    return ApplySerialize(buffer, elements);
   }
 
   bool DeserializeFrom(ByteArrayBuffer &buffer) override
   {
-    buffer >> element_type_id >> elements;
-    return true;
+    return ApplyDeserialize(buffer, elements);
   }
 
   TypeId element_type_id;
   // ElementType must NOT be bool because std::vector<bool> is a partial specialisation
   std::vector<ElementType> elements;
+
+private:
+  bool ApplySerialize(ByteArrayBuffer &buffer, std::vector<Ptr<Object>> const &data)
+  {
+    if (!vm_->IsDefaultSerializeConstructable(element_type_id))
+    {
+      vm_->RuntimeError("Cannot deserialize type " + vm_->GetUniqueId(element_type_id) +
+                        " as no serialisation constructor exists.");
+      return false;
+    }
+
+    buffer << GetUniqueId() << static_cast<uint64_t>(elements.size());
+    for (Ptr<Object> v : data)
+    {
+      if (!v)
+      {
+        RuntimeError("Cannot serialise null reference element in " + GetUniqueId());
+        return false;
+      }
+
+      if (!v->SerializeTo(buffer))
+      {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  template <typename G>
+  typename std::enable_if<IsPrimitive<G>::value, bool>::type ApplySerialize(
+      ByteArrayBuffer &buffer, std::vector<G> const &data)
+  {
+    buffer << GetUniqueId() << static_cast<uint64_t>(elements.size());
+    for (G const &v : data)
+    {
+      buffer << v;
+    }
+    return true;
+  }
+
+  bool ApplyDeserialize(ByteArrayBuffer &buffer, std::vector<Ptr<Object>> &data)
+  {
+    uint64_t    size;
+    std::string uid;
+    buffer >> uid >> size;
+
+    if (uid != GetUniqueId())
+    {
+      vm_->RuntimeError("Type mismatch during deserialization. Got " + uid + " but expected " +
+                        GetUniqueId());
+      return false;
+    }
+
+    data.resize(size);
+
+    if (!vm_->IsDefaultSerializeConstructable(element_type_id))
+    {
+      vm_->RuntimeError("Cannot deserialize type " + vm_->GetUniqueId(element_type_id) +
+                        " as no serialisation constructor exists.");
+      return false;
+    }
+
+    data.resize(size);
+    for (Ptr<Object> &v : data)
+    {
+      v = vm_->DefaultSerializeConstruct(element_type_id);
+      if (!v || !v->DeserializeFrom(buffer))
+      {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  template <typename G>
+  typename std::enable_if<IsPrimitive<G>::value, bool>::type ApplyDeserialize(
+      ByteArrayBuffer &buffer, std::vector<G> &data)
+  {
+    uint64_t    size;
+    std::string uid;
+    buffer >> uid >> size;
+    if (uid != GetUniqueId())
+    {
+      vm_->RuntimeError("Type mismatch during deserialization. Got " + uid + " but expected " +
+                        GetUniqueId());
+      return false;
+    }
+
+    data.resize(size);
+    for (G &v : data)
+    {
+      buffer >> v;
+    }
+    return true;
+  }
 };
 
 template <typename... Args>
@@ -349,7 +443,7 @@ inline Ptr<IArray> IArray::Constructor(VM *vm, TypeId type_id, int32_t size)
   {
     vm->RuntimeError("negative size");
 
-    return nullptr;
+    return {};
   }
   return Construct(vm, type_id, size);
 }

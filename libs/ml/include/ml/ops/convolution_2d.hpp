@@ -20,21 +20,25 @@
 #include "math/matrix_operations.hpp"
 #include "ml/ops/ops.hpp"
 
+#include <cassert>
+#include <memory>
+#include <vector>
+
 namespace fetch {
 namespace ml {
 namespace ops {
 
 template <class T>
-class Convolution2D : public BatchOps<T>
+class Convolution2D : public Ops<T>
 {
 public:
   using ArrayType     = T;
   using SizeType      = typename ArrayType::SizeType;
   using DataType      = typename ArrayType::Type;
   using ArrayPtrType  = std::shared_ptr<ArrayType>;
-  using VecTensorType = typename ElementWiseOps<T>::VecTensorType;
+  using VecTensorType = typename Ops<T>::VecTensorType;
 
-  Convolution2D(SizeType stride_size = 1)
+  explicit Convolution2D(SizeType stride_size = 1)
     : stride_size_(stride_size)
   {}
 
@@ -62,19 +66,20 @@ private:
   void FillHorizontalStride(ArrayType &input, ArrayType &horizontal_stride,
                             SizeType const output_height, SizeType const output_width,
                             SizeType const input_channels, SizeType const kernel_height,
-                            SizeType const kernel_width);
+                            SizeType const kernel_width, SizeType const batch_size);
 
   void ReverseFillHorizontalStride(ArrayType &input, ArrayType &horizontal_stride,
                                    SizeType const output_height, SizeType const output_width,
                                    SizeType const input_channels, SizeType const kernel_height,
-                                   SizeType const kernel_width);
+                                   SizeType const kernel_width, SizeType const batch_size);
 
   void FillOutput(ArrayType const &gemm_output, ArrayType &output, SizeType const output_channels,
-                  SizeType const output_height, SizeType const output_width);
+                  SizeType const output_height, SizeType const output_width,
+                  SizeType const batch_size);
 
   void ReverseFillOutput(ArrayType &gemm_output, ArrayType const &output,
                          SizeType const output_channels, SizeType const output_height,
-                         SizeType const output_width);
+                         SizeType const output_width, SizeType const batch_size);
 
   SizeType stride_size_;
 };
@@ -92,17 +97,18 @@ private:
 template <class ArrayType>
 void Convolution2D<ArrayType>::Forward(VecTensorType const &inputs, ArrayType &output)
 {
-  ASSERT(inputs.size() == 2);
+  assert(inputs.size() == 2);
   // Input should be a 3D tensor [C x H x W x N]
-  ASSERT(inputs.at(0).get().shape().size() == 4);
+  assert(inputs.at(0).get().shape().size() == 4);
   // Kernels should be a 4D tensor [oC x iC x H x W x N]
-  ASSERT(inputs.at(1).get().shape().size() == 5);
-  ASSERT(output.shape() == ComputeOutputShape(inputs));
+  assert(inputs.at(1).get().shape().size() == 5);
+  assert(output.shape() == ComputeOutputShape(inputs));
 
   ArrayType input   = inputs.at(0).get();
   ArrayType kernels = inputs.at(1).get();
 
   SizeType input_channels  = input.shape().at(0);
+  SizeType batch_size      = input.shape().at(3);
   SizeType output_channels = kernels.shape().at(0);
   SizeType kernel_height   = kernels.shape().at(2);
   SizeType kernel_width    = kernels.shape().at(3);
@@ -110,7 +116,7 @@ void Convolution2D<ArrayType>::Forward(VecTensorType const &inputs, ArrayType &o
   SizeType output_width    = output.shape().at(2);
 
   SizeType horizontal_stride_width  = kernel_width * kernel_height * input_channels;
-  SizeType horizontal_stride_height = output_height * output_width;
+  SizeType horizontal_stride_height = output_height * output_width * batch_size;
   SizeType vertical_stride_width    = output_channels;
 
   // Horizontal stride contains input data
@@ -120,7 +126,7 @@ void Convolution2D<ArrayType>::Forward(VecTensorType const &inputs, ArrayType &o
 
   // Reshape input data to horizontal stride - im2col
   FillHorizontalStride(input, horizontal_stride, output_height, output_width, input_channels,
-                       kernel_height, kernel_width);
+                       kernel_height, kernel_width, batch_size);
 
   // Reshape kernel data to vertical stride - im2col
   FillVerticalStride(kernels, vertical_stride, output_channels, input_channels, kernel_height,
@@ -130,7 +136,7 @@ void Convolution2D<ArrayType>::Forward(VecTensorType const &inputs, ArrayType &o
   ArrayType reshaped_output = fetch::math::Dot(vertical_stride, horizontal_stride);
 
   // Reshape values after matmul to output
-  FillOutput(reshaped_output, output, output_channels, output_height, output_width);
+  FillOutput(reshaped_output, output, output_channels, output_height, output_width, batch_size);
 }
 
 /**
@@ -149,12 +155,15 @@ template <class ArrayType>
 std::vector<ArrayType> Convolution2D<ArrayType>::Backward(VecTensorType const &inputs,
                                                           ArrayType const &    error_signal)
 {
-  ASSERT(inputs.size() == 2);
-  // Input should be a 3D tensor [C x H x W x N]
-  ASSERT(inputs.at(0).get().shape().size() == 4);
-  // Kernels should be a 4D tensor [oC x iC x H x W x N]
-  ASSERT(inputs.at(1).get().shape().size() == 5);
-  ASSERT(error_signal.shape() == ComputeOutputShape(inputs));
+  assert(inputs.size() == 2);
+  // Input should be a 4D tensor [C x H x W x N]
+  assert(inputs.at(0).get().shape().size() == 4);
+  // Kernels should be a 5D tensor [oC x iC x H x W x N]
+  assert(inputs.at(1).get().shape().size() == 5);
+  assert(error_signal.shape() == ComputeOutputShape(inputs));
+
+  // input data channels = kernel input channels
+  assert(inputs.at(0).get().shape().at(0) == inputs.at(1).get().shape().at(1));
 
   SizeType output_height = error_signal.shape().at(1);
   SizeType output_width  = error_signal.shape().at(2);
@@ -163,6 +172,7 @@ std::vector<ArrayType> Convolution2D<ArrayType>::Backward(VecTensorType const &i
   ArrayType kernels = inputs.at(1).get();
 
   SizeType  input_channels  = input.shape().at(0);
+  SizeType  batch_size      = input.shape().at(3);
   SizeType  output_channels = kernels.shape().at(0);
   SizeType  kernel_height   = kernels.shape().at(2);
   SizeType  kernel_width    = kernels.shape().at(3);
@@ -170,7 +180,7 @@ std::vector<ArrayType> Convolution2D<ArrayType>::Backward(VecTensorType const &i
   ArrayType kernel_error(kernels.shape());
 
   SizeType horizontal_stride_width  = kernel_width * kernel_height * input_channels;
-  SizeType horizontal_stride_height = output_height * output_width;
+  SizeType horizontal_stride_height = output_height * output_width * batch_size;
   SizeType vertical_stride_width    = output_channels;
 
   // Horizontal stride contains input data
@@ -180,7 +190,7 @@ std::vector<ArrayType> Convolution2D<ArrayType>::Backward(VecTensorType const &i
 
   // Reshape input data to horizontal stride - im2col
   FillHorizontalStride(input, horizontal_stride, output_height, output_width, input_channels,
-                       kernel_height, kernel_width);
+                       kernel_height, kernel_width, batch_size);
 
   // Reshape kernel data to vertical stride - im2col
   FillVerticalStride(kernels, vertical_stride, output_channels, input_channels, kernel_height,
@@ -188,7 +198,7 @@ std::vector<ArrayType> Convolution2D<ArrayType>::Backward(VecTensorType const &i
 
   // Reshape error_signal to error for matmul
   ArrayType error{{vertical_stride_width, horizontal_stride_height}};
-  ReverseFillOutput(error, error_signal, output_channels, output_height, output_width);
+  ReverseFillOutput(error, error_signal, output_channels, output_height, output_width, batch_size);
 
   // Backwards matmul
   ArrayType error2 = fetch::math::DotTranspose(error, horizontal_stride);
@@ -196,7 +206,7 @@ std::vector<ArrayType> Convolution2D<ArrayType>::Backward(VecTensorType const &i
 
   // Reshape horizontal stride to input data error_signal - reversed im2col
   ReverseFillHorizontalStride(input_error, error1, output_height, output_width, input_channels,
-                              kernel_height, kernel_width);
+                              kernel_height, kernel_width, batch_size);
 
   // Reshape vertical stride to kernel data error_signal - reversed im2col
   ReverseFillVerticalStride(kernel_error, error2, output_channels, input_channels, kernel_height,
@@ -222,7 +232,7 @@ std::vector<typename ArrayType::SizeType> Convolution2D<ArrayType>::ComputeOutpu
       (inputs.at(0).get().shape()[2] - inputs.at(1).get().shape()[3] + stride_size_) /
       stride_size_);
   // output_shape_[3]=batch dimension
-  output_shape.emplace_back(1);
+  output_shape.emplace_back(inputs.at(0).get().shape().at(3));
 
   return output_shape;
 }
@@ -312,36 +322,37 @@ void Convolution2D<ArrayType>::ReverseFillVerticalStride(
  * @param kernel_width
  */
 template <class ArrayType>
-void Convolution2D<ArrayType>::FillHorizontalStride(ArrayType &input, ArrayType &horizontal_stride,
-                                                    SizeType const output_height,
-                                                    SizeType const output_width,
-                                                    SizeType const input_channels,
-                                                    SizeType const kernel_height,
-                                                    SizeType const kernel_width)
+void Convolution2D<ArrayType>::FillHorizontalStride(
+    ArrayType &input, ArrayType &horizontal_stride, SizeType const output_height,
+    SizeType const output_width, SizeType const input_channels, SizeType const kernel_height,
+    SizeType const kernel_width, SizeType const batch_size)
 {
   SizeType i_s;  // stride width index
   SizeType j_s;  // stride height index
 
   j_s = 0;
-  for (SizeType i_o{0}; i_o < output_height; ++i_o)  // Iterate over output height
+  for (SizeType i_b{0}; i_b < batch_size; ++i_b)  // Iterate over batch
   {
-    for (SizeType j_o{0}; j_o < output_width; ++j_o)  // Iterate over output width
+    for (SizeType i_o{0}; i_o < output_height; ++i_o)  // Iterate over output height
     {
-      i_s = 0;
-      for (SizeType i_ic(0); i_ic < input_channels; ++i_ic)  // Iterate over input channels
+      for (SizeType j_o{0}; j_o < output_width; ++j_o)  // Iterate over output width
       {
-
-        for (SizeType i_k(0); i_k < kernel_height; i_k++)  // Iterate over kernel height
+        i_s = 0;
+        for (SizeType i_ic(0); i_ic < input_channels; ++i_ic)  // Iterate over input channels
         {
-          for (SizeType j_k(0); j_k < kernel_width; j_k++)  // Iterate over kernel width
+
+          for (SizeType i_k(0); i_k < kernel_height; i_k++)  // Iterate over kernel height
           {
-            horizontal_stride(i_s, j_s) =
-                input.At(i_ic, i_o * stride_size_ + i_k, j_o * stride_size_ + j_k, 0);
-            ++i_s;
+            for (SizeType j_k(0); j_k < kernel_width; j_k++)  // Iterate over kernel width
+            {
+              horizontal_stride(i_s, j_s) =
+                  input.At(i_ic, i_o * stride_size_ + i_k, j_o * stride_size_ + j_k, i_b);
+              ++i_s;
+            }
           }
         }
+        ++j_s;
       }
-      ++j_s;
     }
   }
 }
@@ -362,31 +373,34 @@ template <class ArrayType>
 void Convolution2D<ArrayType>::ReverseFillHorizontalStride(
     ArrayType &input, ArrayType &horizontal_stride, SizeType const output_height,
     SizeType const output_width, SizeType const input_channels, SizeType const kernel_height,
-    SizeType const kernel_width)
+    SizeType const kernel_width, SizeType const batch_size)
 {
   SizeType i_s;  // stride width index
   SizeType j_s;  // stride height index
 
   j_s = 0;
-  for (SizeType i_o{0}; i_o < output_height; ++i_o)  // Iterate over output height
+  for (SizeType i_b{0}; i_b < batch_size; ++i_b)  // Iterate over batch
   {
-    for (SizeType j_o{0}; j_o < output_width; ++j_o)  // Iterate over output width
+    for (SizeType i_o{0}; i_o < output_height; ++i_o)  // Iterate over output height
     {
-      i_s = 0;
-      for (SizeType i_ic(0); i_ic < input_channels; ++i_ic)  // Iterate over input channels
+      for (SizeType j_o{0}; j_o < output_width; ++j_o)  // Iterate over output width
       {
-
-        for (SizeType i_k(0); i_k < kernel_height; i_k++)  // Iterate over kernel height
+        i_s = 0;
+        for (SizeType i_ic(0); i_ic < input_channels; ++i_ic)  // Iterate over input channels
         {
-          for (SizeType j_k(0); j_k < kernel_width; j_k++)  // Iterate over kernel width
+
+          for (SizeType i_k(0); i_k < kernel_height; i_k++)  // Iterate over kernel height
           {
-            input(i_ic, i_o * stride_size_ + i_k, j_o * stride_size_ + j_k, 0) =
-                horizontal_stride.At(i_s, j_s);
-            ++i_s;
+            for (SizeType j_k(0); j_k < kernel_width; j_k++)  // Iterate over kernel width
+            {
+              input(i_ic, i_o * stride_size_ + i_k, j_o * stride_size_ + j_k, i_b) =
+                  horizontal_stride.At(i_s, j_s);
+              ++i_s;
+            }
           }
         }
+        ++j_s;
       }
-      ++j_s;
     }
   }
 }
@@ -404,19 +418,23 @@ void Convolution2D<ArrayType>::ReverseFillHorizontalStride(
 template <class ArrayType>
 void Convolution2D<ArrayType>::FillOutput(ArrayType const &gemm_output, ArrayType &output,
                                           SizeType const output_channels,
-                                          SizeType const output_height, SizeType const output_width)
+                                          SizeType const output_height, SizeType const output_width,
+                                          SizeType const batch_size)
 {
 
   SizeType it;
   for (SizeType i_oc{0}; i_oc < output_channels; ++i_oc)  // Iterate over output channels
   {
     it = 0;
-    for (SizeType i_o{0}; i_o < output_height; ++i_o)  // Iterate over output height
+    for (SizeType i_b{0}; i_b < batch_size; ++i_b)  // Iterate over batch
     {
-      for (SizeType j_o{0}; j_o < output_width; ++j_o)  // Iterate over output width
+      for (SizeType i_o{0}; i_o < output_height; ++i_o)  // Iterate over output height
       {
-        output(i_oc, i_o, j_o, 0) = gemm_output.At(i_oc, it);
-        ++it;
+        for (SizeType j_o{0}; j_o < output_width; ++j_o)  // Iterate over output width
+        {
+          output(i_oc, i_o, j_o, i_b) = gemm_output.At(i_oc, it);
+          ++it;
+        }
       }
     }
   }
@@ -436,19 +454,23 @@ template <class ArrayType>
 void Convolution2D<ArrayType>::ReverseFillOutput(ArrayType &gemm_output, ArrayType const &output,
                                                  SizeType const output_channels,
                                                  SizeType const output_height,
-                                                 SizeType const output_width)
+                                                 SizeType const output_width,
+                                                 SizeType const batch_size)
 {
 
   SizeType it;
   for (SizeType i_oc{0}; i_oc < output_channels; ++i_oc)  // Iterate over output channels
   {
     it = 0;
-    for (SizeType i_o{0}; i_o < output_height; ++i_o)  // Iterate over output height
+    for (SizeType i_b{0}; i_b < batch_size; ++i_b)  // Iterate over batch
     {
-      for (SizeType j_o{0}; j_o < output_width; ++j_o)  // Iterate over output width
+      for (SizeType i_o{0}; i_o < output_height; ++i_o)  // Iterate over output height
       {
-        gemm_output(i_oc, it) = output.At(i_oc, i_o, j_o, 0);
-        ++it;
+        for (SizeType j_o{0}; j_o < output_width; ++j_o)  // Iterate over output width
+        {
+          gemm_output(i_oc, it) = output.At(i_oc, i_o, j_o, i_b);
+          ++it;
+        }
       }
     }
   }

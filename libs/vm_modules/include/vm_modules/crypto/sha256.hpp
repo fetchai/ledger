@@ -18,10 +18,9 @@
 //------------------------------------------------------------------------------
 
 #include "crypto/sha256.hpp"
-
-#include "vm_modules/core/byte_array_wrapper.hpp"
-
 #include "vm/module.hpp"
+#include "vm_modules/core/byte_array_wrapper.hpp"
+#include "vm_modules/math/bignumber.hpp"
 
 namespace fetch {
 namespace vm_modules {
@@ -35,17 +34,23 @@ public:
   using Ptr    = fetch::vm::Ptr<T>;
   using String = fetch::vm::String;
 
-  SHA256Wrapper()          = delete;
-  virtual ~SHA256Wrapper() = default;
+  SHA256Wrapper()           = delete;
+  ~SHA256Wrapper() override = default;
 
   static void Bind(vm::Module &module)
   {
     module.CreateClassType<SHA256Wrapper>("SHA256")
         .CreateConstuctor<>()
+        .CreateMemberFunction("update", &SHA256Wrapper::UpdateUInt256)
         .CreateMemberFunction("update", &SHA256Wrapper::UpdateString)
         .CreateMemberFunction("update", &SHA256Wrapper::UpdateBuffer)
         .CreateMemberFunction("final", &SHA256Wrapper::Final)
         .CreateMemberFunction("reset", &SHA256Wrapper::Reset);
+  }
+
+  void UpdateUInt256(vm::Ptr<vm_modules::math::UInt256Wrapper> const &uint)
+  {
+    hasher_.Update(uint->number().pointer(), uint->number().size());
   }
 
   void UpdateString(vm::Ptr<vm::String> const &str)
@@ -63,7 +68,12 @@ public:
     hasher_.Reset();
   }
 
-  Ptr<ByteArrayWrapper> Final()
+  Ptr<math::UInt256Wrapper> Final()
+  {
+    return vm_->CreateNewObject<math::UInt256Wrapper>(hasher_.Final());
+  }
+
+  Ptr<ByteArrayWrapper> FinalAsBuffer()
   {
     return vm_->CreateNewObject<ByteArrayWrapper>(hasher_.Final());
   }

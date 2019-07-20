@@ -25,6 +25,7 @@
 
 namespace fetch {
 namespace optimisers {
+
 class BinaryProblem
 {
 public:
@@ -50,7 +51,7 @@ public:
     normalisation_constant_ = 1.0;
   }
 
-  void Resize(std::size_t const &n, std::size_t const &max_connectivity = std::size_t(-1))
+  void Resize(std::size_t n, std::size_t max_connectivity = std::size_t(-1))
   {
     couplings_.Resize(n, n);
     coupling_sum_ = memory::SharedArray<cost_type>(n);
@@ -62,7 +63,7 @@ public:
     Reset();
   }
 
-  bool Insert(std::size_t const &i, std::size_t const &j, cost_type c)
+  bool Insert(std::size_t i, std::size_t j, cost_type c)
   {
     std::size_t A = i;
     std::size_t B = j;
@@ -170,7 +171,7 @@ public:
   {
     return couplings_;
   }
-  std::size_t const &size() const
+  std::size_t size() const
   {
     return size_;
   }

@@ -138,21 +138,21 @@ public:
 
   void Write(byte_array::ConstByteArray const &arr);
 
-  void Write(uint8_t const *bytes, uint64_t const &num);
+  void Write(uint8_t const *bytes, uint64_t num);
 
   void Read(byte_array::ByteArray &arr);
 
-  void Read(uint8_t *bytes, uint64_t const &m);
+  void Read(uint8_t *bytes, uint64_t m);
 
-  uint64_t const &id() const;
+  uint64_t id() const;
 
   uint64_t FileObjectSize() const;
 
   byte_array::ConstByteArray Hash();
 
-  void UpdateHash(crypto::StreamHasher &hasher);
+  void UpdateHash(hasher_type &hasher);
 
-  bool SeekFile(std::size_t const &position);
+  bool SeekFile(std::size_t position);
 
   void CreateNewFile(uint64_t size = 0);
 
@@ -204,7 +204,7 @@ private:
 
   void FreeBlocksInList(uint64_t remove_index);
 
-  void ReadWriteHelper(uint8_t const *bytes, uint64_t const &num, Action action);
+  void ReadWriteHelper(uint8_t const *bytes, uint64_t num, Action action);
 
   void Get(uint64_t index, block_type &block);
 
@@ -347,7 +347,7 @@ void FileObject<S>::Write(byte_array::ConstByteArray const &arr)
  *
  */
 template <typename S>
-void FileObject<S>::ReadWriteHelper(uint8_t const *bytes, uint64_t const &num, Action action)
+void FileObject<S>::ReadWriteHelper(uint8_t const *bytes, uint64_t num, Action action)
 {
   assert(id_ != 0 &&
          "Attempt to write to the free block as if it were a file is a programmer error in "
@@ -394,7 +394,7 @@ void FileObject<S>::ReadWriteHelper(uint8_t const *bytes, uint64_t const &num, A
 
 // TODO(private 1067): num -> bytes_left_to_write renaming consistency
 template <typename S>
-void FileObject<S>::Write(uint8_t const *bytes, uint64_t const &num)
+void FileObject<S>::Write(uint8_t const *bytes, uint64_t num)
 {
   ReadWriteHelper(bytes, num, Action::WRITE);
 }
@@ -407,13 +407,13 @@ void FileObject<S>::Read(byte_array::ByteArray &arr)
 
 // TODO(private 1067): rename m -> num
 template <typename S>
-void FileObject<S>::Read(uint8_t *bytes, uint64_t const &m)
+void FileObject<S>::Read(uint8_t *bytes, uint64_t m)
 {
   ReadWriteHelper(bytes, m, Action::READ);
 }
 
 template <typename S>
-uint64_t const &FileObject<S>::id() const
+uint64_t FileObject<S>::id() const
 {
   return id_;
 }
@@ -435,7 +435,7 @@ byte_array::ConstByteArray FileObject<S>::Hash()
 }
 
 template <typename S>
-void FileObject<S>::UpdateHash(crypto::StreamHasher &hasher)
+void FileObject<S>::UpdateHash(hasher_type &hasher)
 {
   Seek(0);
   byte_array::ByteArray arr;
@@ -449,7 +449,7 @@ void FileObject<S>::UpdateHash(crypto::StreamHasher &hasher)
 }
 
 template <typename S>
-bool FileObject<S>::SeekFile(std::size_t const &position)
+bool FileObject<S>::SeekFile(std::size_t position)
 {
   if (position >= stack_.size())
   {

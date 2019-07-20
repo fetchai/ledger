@@ -51,7 +51,7 @@ public:
   using self_type  = SharedArray<T, type_size>;
   using type       = T;
 
-  explicit SharedArray(std::size_t const &n)
+  explicit SharedArray(std::size_t n)
     : super_type()
   {
     this->size_ = n;
@@ -65,13 +65,14 @@ public:
     }
   }
 
-  SharedArray() = default;
-  SharedArray(SharedArray const &other)
+  constexpr SharedArray() = default;
+
+  SharedArray(SharedArray const &other) noexcept
     : super_type(other.pointer_, other.size())
     , data_(other.data_)
   {}
 
-  SharedArray(SharedArray const &other, uint64_t offset, uint64_t size)
+  SharedArray(SharedArray const &other, uint64_t offset, uint64_t size) noexcept
     : super_type(other.data_.get() + offset, size)
     , data_(other.data_)
   {}
@@ -83,7 +84,7 @@ public:
     std::swap(this->pointer_, other.pointer_);
   }
 
-  SharedArray &operator=(SharedArray &&other)
+  SharedArray &operator=(SharedArray &&other) noexcept
   {
     std::swap(this->size_, other.size_);
     std::swap(this->data_, other.data_);
@@ -91,7 +92,7 @@ public:
     return *this;
   }
 
-  self_type &operator=(SharedArray const &other)
+  self_type &operator=(SharedArray const &other) noexcept
   {
     if (&other == this)
     {

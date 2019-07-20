@@ -31,7 +31,7 @@ fetch::meta::IfIsInteger<T, T> Rand(fetch::vm::VM *vm, T const &a = T{0}, T cons
 {
   if (a >= b)
   {
-    vm->RuntimeError("Invalid argument: Rand(a, b) must satisfy a < b");
+    vm->RuntimeError("Invalid argument: rand(a, b) must satisfy a < b");
     return T{0};
   }
 
@@ -46,7 +46,7 @@ fetch::meta::IfIsFloat<T, T> Rand(fetch::vm::VM *vm, T const &a = T{.0}, T const
 {
   if (a >= b)
   {
-    vm->RuntimeError("Invalid argument: Rand(a, b) must satisfy a < b");
+    vm->RuntimeError("Invalid argument: rand(a, b) must satisfy a < b");
     return T{.0};
   }
 
@@ -56,21 +56,16 @@ fetch::meta::IfIsFloat<T, T> Rand(fetch::vm::VM *vm, T const &a = T{.0}, T const
   return std::uniform_real_distribution<T>{a, b}(mt);
 }
 
-static void BindRand(fetch::vm::Module &module)
+inline void BindRand(fetch::vm::Module &module)
 {
-  module.CreateFreeFunction<int16_t>("Rand", &Rand<int16_t>);
-  module.CreateFreeFunction<int32_t>("Rand", &Rand<int32_t>);
-  module.CreateFreeFunction<int64_t>("Rand", &Rand<int64_t>);
-  module.CreateFreeFunction<uint16_t>("Rand", &Rand<uint16_t>);
-  module.CreateFreeFunction<uint32_t>("Rand", &Rand<uint32_t>);
-  module.CreateFreeFunction<uint64_t>("Rand", &Rand<uint64_t>);
-  module.CreateFreeFunction<float_t>("Rand", &Rand<float_t>);
-  module.CreateFreeFunction<double_t>("Rand", &Rand<double_t>);
-}
-
-inline void BindRand(std::shared_ptr<fetch::vm::Module> module)
-{
-  BindRand(*module.get());
+  module.CreateFreeFunction<int16_t>("rand", &Rand<int16_t>);
+  module.CreateFreeFunction<int32_t>("rand", &Rand<int32_t>);
+  module.CreateFreeFunction<int64_t>("rand", &Rand<int64_t>);
+  module.CreateFreeFunction<uint16_t>("rand", &Rand<uint16_t>);
+  module.CreateFreeFunction<uint32_t>("rand", &Rand<uint32_t>);
+  module.CreateFreeFunction<uint64_t>("rand", &Rand<uint64_t>);
+  module.CreateFreeFunction<float_t>("rand", &Rand<float_t>);
+  module.CreateFreeFunction<double_t>("rand", &Rand<double_t>);
 }
 
 }  // namespace math

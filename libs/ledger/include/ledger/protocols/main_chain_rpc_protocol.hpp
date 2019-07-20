@@ -33,7 +33,6 @@ public:
   enum
   {
     HEAVIEST_CHAIN   = 1,
-    CHAIN_PRECEDING  = 2,
     COMMON_SUB_CHAIN = 3
   };
 
@@ -41,7 +40,6 @@ public:
     : chain_(chain)
   {
     Expose(HEAVIEST_CHAIN, this, &MainChainProtocol::GetHeaviestChain);
-    Expose(CHAIN_PRECEDING, this, &MainChainProtocol::GetChainPreceding);
     Expose(COMMON_SUB_CHAIN, this, &MainChainProtocol::GetCommonSubChain);
   }
 
@@ -50,12 +48,6 @@ private:
   {
     LOG_STACK_TRACE_POINT;
     return Copy(chain_.GetHeaviestChain(maxsize));
-  }
-
-  Blocks GetChainPreceding(Digest const &at, uint32_t maxsize)
-  {
-    LOG_STACK_TRACE_POINT;
-    return Copy(chain_.GetChainPreceding(at, maxsize));
   }
 
   Blocks GetCommonSubChain(Digest const &start, Digest const &last_seen, uint64_t limit)

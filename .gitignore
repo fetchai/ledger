@@ -4,12 +4,17 @@
 *.db
 CMakeCache.txt
 
+# docs build
+/docs/build
+
+
 # Merge Outputs
 *.orig
 
 nodes/
 .ipynb_checkpoints/
 /docker-images/
+docker_ccache/
 
 # Legacy Editors
 \#*#
@@ -25,3 +30,4 @@ tags
 
 *.DS_Store
 *.ipynb_checkpoints/
+

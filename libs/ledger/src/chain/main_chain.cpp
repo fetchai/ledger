@@ -17,17 +17,27 @@
 //------------------------------------------------------------------------------
 
 #include "core/assert.hpp"
-#include "ledger/chain/main_chain.hpp"
-
+#include "core/bloom_filter.hpp"
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
+#include "ledger/chain/main_chain.hpp"
 #include "ledger/chain/transaction_layout_rpc_serializers.hpp"
 #include "network/generics/milli_timer.hpp"
+#include "telemetry/counter.hpp"
+#include "telemetry/gauge.hpp"
+#include "telemetry/registry.hpp"
 
 #include <algorithm>
+#include <cassert>
+#include <cstddef>
+#include <cstdint>
+#include <deque>
+#include <stdexcept>
+#include <string>
 #include <utility>
+#include <vector>
 
 using fetch::byte_array::ToBase64;
 using fetch::generics::MilliTimer;
@@ -35,12 +45,41 @@ using fetch::generics::MilliTimer;
 namespace fetch {
 namespace ledger {
 
+namespace {
+
+void AddBlockToBloomFilter(BasicBloomFilter &bf, Block const &block)
+{
+  for (auto const &slice : block.body.slices)
+  {
+    for (auto const &tx : slice)
+    {
+      bf.Add(tx.digest());
+    }
+  }
+}
+
+}  // namespace
+
 /**
  * Constructs the main chain
  *
  * @param mode Flag to signal which storage mode has been requested
  */
-MainChain::MainChain(Mode mode)
+MainChain::MainChain(bool const enable_bloom_filter, Mode mode)
+  : bloom_filter_{std::make_unique<BasicBloomFilter>()}
+  , enable_bloom_filter_{enable_bloom_filter}
+  , bloom_filter_queried_bit_count_(telemetry::Registry::Instance().CreateGauge<std::size_t>(
+        "ledger_main_chain_bloom_filter_queried_bit_number",
+        "Total number of bits checked during each query to the Ledger Main Chain Bloom filter"))
+  , bloom_filter_query_count_(telemetry::Registry::Instance().CreateCounter(
+        "ledger_main_chain_bloom_filter_query_total",
+        "Total number of queries to the Ledger Main Chain Bloom filter"))
+  , bloom_filter_positive_count_(telemetry::Registry::Instance().CreateCounter(
+        "ledger_main_chain_bloom_filter_positive_total",
+        "Total number of positive queries (false and true) to the Ledger Main Chain Bloom filter"))
+  , bloom_filter_false_positive_count_(telemetry::Registry::Instance().CreateCounter(
+        "ledger_main_chain_bloom_filter_false_positive_total",
+        "Total number of false positive queries to the Ledger Main Chain Bloom filter"))
 {
   if (Mode::IN_MEMORY_DB != mode)
   {
@@ -106,18 +145,17 @@ BlockStatus MainChain::AddBlock(Block const &blk)
   // create a copy of the block
   auto block = std::make_shared<Block>(blk);
 
-  // update the weight based on the proof and the number of transactions
-  block->weight       = 1;
+  // At this point we assume that the weight has been correctly set by the miner
   block->total_weight = 1;
-  for (auto const &slice : block->body.slices)
-  {
-    block->weight += slice.size();
-  }
 
-  // pass the block to the
   auto const status = InsertBlock(block);
   FETCH_LOG_DEBUG(LOGGING_NAME, "New Block: 0x", block->body.hash.ToHex(), " -> ", ToString(status),
                   " (weight: ", block->weight, " total: ", block->total_weight, ")");
+
+  if (status == BlockStatus::ADDED)
+  {
+    AddBlockToBloomFilter(*bloom_filter_, *block);
+  }
 
   return status;
 }
@@ -145,7 +183,7 @@ void MainChain::CacheBlock(IntBlockPtr const &block) const
  * @param hash The hash of the block to be erased
  * @return amount of blocks erased (1 or 0, if not found)
  */
-MainChain::BlockMap::size_type MainChain::UncacheBlock(BlockHash hash) const
+MainChain::BlockMap::size_type MainChain::UncacheBlock(BlockHash const &hash) const
 {
   return block_chain_.erase(hash);
   // references are kept intact while this cache is alive
@@ -210,8 +248,11 @@ bool MainChain::LoadBlock(BlockHash const &hash, Block &block) const
   if (block_store_->Get(storage::ResourceID(hash), record))
   {
     block = record.block;
+    AddBlockToBloomFilter(*bloom_filter_, block);
+
     return true;
   }
+
   return false;
 }
 
@@ -290,7 +331,7 @@ bool MainChain::RemoveTree(BlockHash const &removed_hash, BlockHashSet &invalida
  * @param hash The hash to be removed
  * @return True if successful, otherwise false
  */
-bool MainChain::RemoveBlock(BlockHash hash)
+bool MainChain::RemoveBlock(BlockHash const &hash)
 {
   FETCH_LOCK(lock_);
 
@@ -329,7 +370,7 @@ bool MainChain::RemoveBlock(BlockHash hash)
     }
   }
 
-  // Step 3. Since we might have removed a whole series of blocks the tips datastructure
+  // Step 3. Since we might have removed a whole series of blocks the tips data structure
   // is likely to have been invalidated. We need to evaluate the changes here
   return ReindexTips();
 }
@@ -363,7 +404,7 @@ MainChain::Blocks MainChain::GetHeaviestChain(uint64_t limit) const
  */
 MainChain::Blocks MainChain::GetChainPreceding(BlockHash start, uint64_t limit) const
 {
-  limit = std::min(limit, uint64_t{MainChain::UPPER_BOUND});
+  limit = std::min(limit, static_cast<uint64_t>(MainChain::UPPER_BOUND));
   MilliTimer myTimer("MainChain::ChainPreceding");
 
   FETCH_LOCK(lock_);
@@ -405,11 +446,15 @@ MainChain::Blocks MainChain::GetChainPreceding(BlockHash start, uint64_t limit) 
  *
  * This function will search down both input references input nodes until a common ancestor is
  * found. Once found the blocks from the specified tip that to that common ancestor are returned.
+ * Note: untrusted actors should not be allowed to call with the behaviour of returning the oldest
+ * block.
  *
  * @param blocks The output list of blocks (from heaviest to lightest)
  * @param tip The tip the output list should start from
  * @param node A node in chain that is searched for
  * @param limit The maximum number of nodes to be returned
+ * @param behaviour What to do when the limit is exceeded - either return most or least recent.
+ *
  * @return true if successful, otherwise false
  */
 bool MainChain::GetPathToCommonAncestor(Blocks &blocks, BlockHash tip, BlockHash node,
@@ -509,7 +554,7 @@ bool MainChain::GetPathToCommonAncestor(Blocks &blocks, BlockHash tip, BlockHash
   blocks.resize(res.size());
   std::move(res.begin(), res.end(), blocks.begin());
 
-  // If an lookup error has occured then we do not return anything
+  // If an lookup error has occurred then we do not return anything
   if (!success)
   {
     blocks.clear();
@@ -524,7 +569,7 @@ bool MainChain::GetPathToCommonAncestor(Blocks &blocks, BlockHash tip, BlockHash
  * @param hash The hash being queried
  * @return The a valid shared pointer to the block if found, otherwise an empty pointer
  */
-MainChain::BlockPtr MainChain::GetBlock(BlockHash hash) const
+MainChain::BlockPtr MainChain::GetBlock(BlockHash const &hash) const
 {
   FETCH_LOCK(lock_);
 
@@ -532,7 +577,7 @@ MainChain::BlockPtr MainChain::GetBlock(BlockHash hash) const
 
   // attempt to lookup the block
   auto internal_block = std::make_shared<Block>();
-  if (LookupBlock(std::move(hash), internal_block))
+  if (LookupBlock(hash, internal_block))
   {
     // convert the pointer type to per const
     output_block = std::static_pointer_cast<Block const>(internal_block);
@@ -558,7 +603,7 @@ MainChain::BlockHashSet MainChain::GetMissingTips() const
   for (auto const &element : loose_blocks_)
   {
     // tips are blocks that are referenced but we have not seen them yet. Since all loose blocks are
-    // stored in the cache, we simply evalute which of the loose references we do not currently
+    // stored in the cache, we simply evaluate which of the loose references we do not currently
     // have in the cache
     if (!IsBlockInCache(element.first))
     {
@@ -811,7 +856,7 @@ void MainChain::WriteToFile()
           break;
         }
 
-        // Continue to push prevs into file
+        // Continue to push previous into file
         LookupBlock(block->body.previous_hash, block);
       }
 
@@ -1100,7 +1145,7 @@ BlockStatus MainChain::InsertBlock(IntBlockPtr const &block, bool evaluate_loose
     return BlockStatus::LOOSE;
   }
 
-  // we exepect only non-loose blocks here
+  // we expect only non-loose blocks here
   assert(!block->is_loose);
 
   // by definition this also means we expect blocks to have a valid parent block too
@@ -1146,7 +1191,7 @@ BlockStatus MainChain::InsertBlock(IntBlockPtr const &block, bool evaluate_loose
  *
  * @return true if successful, otherwise false
  */
-bool MainChain::LookupBlock(BlockHash hash, IntBlockPtr &block, bool add_to_cache) const
+bool MainChain::LookupBlock(BlockHash const &hash, IntBlockPtr &block, bool add_to_cache) const
 {
   return LookupBlockFromCache(hash, block) || LookupBlockFromStorage(hash, block, add_to_cache);
 }
@@ -1158,7 +1203,7 @@ bool MainChain::LookupBlock(BlockHash hash, IntBlockPtr &block, bool add_to_cach
  * @param block The output block to be populated
  * @return true if successful, otherwise false
  */
-bool MainChain::LookupBlockFromCache(BlockHash hash, IntBlockPtr &block) const
+bool MainChain::LookupBlockFromCache(BlockHash const &hash, IntBlockPtr &block) const
 {
   bool success{false};
 
@@ -1182,7 +1227,8 @@ bool MainChain::LookupBlockFromCache(BlockHash hash, IntBlockPtr &block) const
  * @param block The output block to be populated
  * @return true if successful, otherwise false
  */
-bool MainChain::LookupBlockFromStorage(BlockHash hash, IntBlockPtr &block, bool add_to_cache) const
+bool MainChain::LookupBlockFromStorage(BlockHash const &hash, IntBlockPtr &block,
+                                       bool add_to_cache) const
 {
   bool success{false};
 
@@ -1192,7 +1238,7 @@ bool MainChain::LookupBlockFromStorage(BlockHash hash, IntBlockPtr &block, bool 
     auto output_block = std::make_shared<Block>();
 
     // attempt to read the block from the storage engine
-    success = LoadBlock(std::move(hash), *output_block);
+    success = LoadBlock(hash, *output_block);
 
     if (success)
     {
@@ -1219,7 +1265,7 @@ bool MainChain::LookupBlockFromStorage(BlockHash hash, IntBlockPtr &block, bool 
  * @param hash The hash to query
  * @return true if the block is present, otherwise false
  */
-bool MainChain::IsBlockInCache(BlockHash hash) const
+bool MainChain::IsBlockInCache(BlockHash const &hash) const
 {
   return block_chain_.find(hash) != block_chain_.end();
 }
@@ -1403,7 +1449,7 @@ MainChain::BlockHash MainChain::GetHeadHash()
   {
     buffer.Resize(32);
 
-    // return to the begining and overwrite the hash
+    // return to the beginning and overwrite the hash
     head_store_.seekg(0);
     head_store_.read(reinterpret_cast<char *>(buffer.pointer()),
                      static_cast<std::streamsize>(buffer.size()));
@@ -1430,7 +1476,7 @@ void MainChain::SetHeadHash(BlockHash const &hash)
  *
  * @return: bool whether the starting hash referred to a valid block on a valid chain
  */
-DigestSet MainChain::DetectDuplicateTransactions(BlockHash        starting_hash,
+DigestSet MainChain::DetectDuplicateTransactions(BlockHash const &starting_hash,
                                                  DigestSet const &transactions) const
 {
   MilliTimer const timer{"DuplicateTransactionsCheck", 100};
@@ -1438,40 +1484,69 @@ DigestSet MainChain::DetectDuplicateTransactions(BlockHash        starting_hash,
   FETCH_LOG_DEBUG(LOGGING_NAME, "Starting TX uniqueness verify");
 
   IntBlockPtr block;
-  if (!LookupBlock(std::move(starting_hash), block, false) || block->is_loose)
+  if (!LookupBlock(starting_hash, block, false) || block->is_loose)
   {
     FETCH_LOG_WARN(LOGGING_NAME, "TX uniqueness verify on bad block hash");
     return {};
   }
 
-  // Need a set for quickly checking whether transactions are in our container
-  DigestSet duplicates{};
-  bool      searching{true};
-  while (searching)
+  DigestSet potential_duplicates{};
+  for (auto const &digest : transactions)
   {
-    // Traversing the chain fully is costly: break out early if we know the transactions are all
-    // duplicated (or empty)
-    if (transactions.size() == duplicates.size())
-    {
-      break;
-    }
 
-    for (auto const &slice : block->body.slices)
+    std::pair<bool, std::size_t> const result = bloom_filter_->Match(digest);
+    bloom_filter_queried_bit_count_->set(result.second);
+    if (result.first)
     {
-      for (auto const &tx : slice)
+      bloom_filter_positive_count_->increment();
+      potential_duplicates.insert(digest);
+    }
+    bloom_filter_query_count_->increment();
+  }
+
+  auto search_chain_for_duplicates =
+      [this, block](DigestSet const &transaction_digests) mutable -> DigestSet {
+    DigestSet duplicates{};
+    for (;;)
+    {
+      // Traversing the chain fully is costly: break out early if we know the transactions are all
+      // duplicated (or both sets are empty)
+      if (transaction_digests.size() == duplicates.size())
       {
-        if (transactions.find(tx.digest()) != transactions.end())
+        break;
+      }
+
+      for (auto const &slice : block->body.slices)
+      {
+        for (auto const &tx : slice)
         {
-          duplicates.insert(tx.digest());
+          if (transaction_digests.find(tx.digest()) != transaction_digests.end())
+          {
+            duplicates.insert(tx.digest());
+          }
         }
+      }
+
+      // exit the loop once we can no longer find the block
+      if (!LookupBlock(block->body.previous_hash, block, false))
+      {
+        break;
       }
     }
 
-    // exit the loop once we can no longer find the block
-    if (!LookupBlock(block->body.previous_hash, block, false))
-    {
-      break;
-    }
+    return duplicates;
+  };
+
+  DigestSet const duplicates =
+      search_chain_for_duplicates(enable_bloom_filter_ ? potential_duplicates : transactions);
+
+  auto const false_positives = potential_duplicates.size() - duplicates.size();
+
+  bloom_filter_false_positive_count_->add(false_positives);
+
+  if (!bloom_filter_->ReportFalsePositives(false_positives))
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Bloom filter false positive rate exceeded threshold");
   }
 
   return duplicates;

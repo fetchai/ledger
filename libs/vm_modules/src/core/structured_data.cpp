@@ -19,8 +19,11 @@
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/byte_array/decoders.hpp"
 #include "core/byte_array/encoders.hpp"
+#include "core/json/document.hpp"
 #include "vm/module.hpp"
 #include "vm_modules/core/structured_data.hpp"
+
+#include <sstream>
 
 namespace fetch {
 namespace vm_modules {
@@ -117,6 +120,83 @@ vm::Ptr<StructuredData> StructuredData::Constructor(vm::VM *vm, vm::TypeId type_
 StructuredData::StructuredData(vm::VM *vm, vm::TypeId type_id)
   : vm::Object(vm, type_id)
 {}
+
+bool StructuredData::SerializeTo(vm::ByteArrayBuffer &buffer)
+{
+  bool success{false};
+
+  try
+  {
+    std::ostringstream oss;
+    oss << contents_;
+
+    buffer << ConstByteArray{oss.str()};
+
+    success = true;
+  }
+  catch (std::exception const &ex)
+  {
+    vm_->RuntimeError(std::string{"Error extracting from JSON: "} + ex.what());
+  }
+
+  return success;
+}
+
+bool StructuredData::DeserializeFrom(vm::ByteArrayBuffer &buffer)
+{
+  bool success{false};
+
+  try
+  {
+    ConstByteArray data;
+    buffer >> data;
+
+    json::JSONDocument doc{data};
+    contents_ = doc.root();
+
+    success = true;
+  }
+  catch (std::exception const &ex)
+  {
+    vm_->RuntimeError(std::string{"Error extracting from JSON: "} + ex.what());
+  }
+
+  return success;
+}
+
+bool StructuredData::ToJSON(vm::JSONVariant &variant)
+{
+  bool success{false};
+
+  try
+  {
+    variant = contents_;
+    success = true;
+  }
+  catch (std::exception const &ex)
+  {
+    vm_->RuntimeError(std::string{"Error generating JSON: "} + ex.what());
+  }
+
+  return success;
+}
+
+bool StructuredData::FromJSON(vm::JSONVariant const &variant)
+{
+  bool success{false};
+
+  try
+  {
+    contents_ = variant;
+    success   = true;
+  }
+  catch (std::exception const &ex)
+  {
+    vm_->RuntimeError(std::string{"Error extracting from JSON: "} + ex.what());
+  }
+
+  return success;
+}
 
 bool StructuredData::Has(vm::Ptr<vm::String> const &s)
 {

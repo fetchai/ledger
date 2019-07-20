@@ -16,12 +16,13 @@
 //
 //------------------------------------------------------------------------------
 
+#include "math/statistics/mean.hpp"
 #include "math/tensor.hpp"
 #include "ml/dataloaders/mnist_loaders/mnist_loader.hpp"
 #include "ml/graph.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/ops/activation.hpp"
-#include "ml/ops/loss_functions/cross_entropy.hpp"
+#include "ml/ops/loss_functions/cross_entropy_loss.hpp"
 
 #include <cstdint>
 #include <cstdlib>
@@ -67,12 +68,14 @@ public:
     g_.AddNode<Relu<ArrayType>>("Relu2", {"FC1"});
     g_.AddNode<FullyConnected<ArrayType>>("FC3", {"Relu2"}, 10u, 10u);
     g_.AddNode<Softmax<ArrayType>>("Softmax", {"FC3"});
+    g_.AddNode<PlaceHolder<ArrayType>>("Label", {});
+    g_.AddNode<CrossEntropyLoss<ArrayType>>("Error", {"Softmax", "Label"});
   }
 
   void Train(unsigned int numberOfBatches)
   {
     float                                        loss = 0;
-    CrossEntropy<ArrayType>                      criterion;
+    CrossEntropyLoss<ArrayType>                  criterion;
     std::pair<ArrayType, std::vector<ArrayType>> input;
     for (unsigned int i(0); i < numberOfBatches; ++i)
     {
@@ -82,9 +85,13 @@ public:
         // Randomly sampling the dataset, should ensure everyone is training on different data
         input = dataloader_.GetNext();
         g_.SetInput("Input", input.second.at(0));
-        ArrayType results = g_.Evaluate("Softmax").Copy();
-        loss += criterion.Forward({results, input.first});
-        g_.BackPropagate("Softmax", criterion.Backward({results, input.first}));
+        g_.SetInput("Label", input.first);
+
+        ArrayType results     = g_.Evaluate("Softmax");
+        ArrayType loss_tensor = g_.Evaluate("Error");
+
+        loss += *(loss_tensor.begin());
+        g_.BackPropagateError("Error");
       }
       losses_values_.push_back(loss);
       // Updating the weights

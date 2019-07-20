@@ -17,9 +17,9 @@
 //------------------------------------------------------------------------------
 
 #include "bootstrap_monitor.hpp"
-#include "fetch_version.hpp"
 #include "variant/variant.hpp"
 #include "variant/variant_utils.hpp"
+#include "version/fetch_version.hpp"
 
 #include <array>
 #include <chrono>
@@ -38,7 +38,7 @@ using network::Uri;
 using http::JsonClient;
 using byte_array::ConstByteArray;
 
-const char *               BOOTSTRAP_HOST = "https://bootstrap.fetch.ai";
+char const *               BOOTSTRAP_HOST = "https://bootstrap.fetch.ai";
 const std::chrono::seconds UPDATE_INTERVAL{30};
 constexpr char const *     LOGGING_NAME = "bootstrap";
 

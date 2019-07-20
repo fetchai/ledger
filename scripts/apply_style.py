@@ -26,7 +26,28 @@ from multiprocessing import Lock, Pool
 from os.path import abspath, basename, commonpath, dirname, isdir, isfile, join
 
 PROJECT_ROOT = abspath(dirname(dirname(__file__)))
-CHECKED_IN_BINARY_FILE_PATTERNS = ('*.png', '*.npy')
+SUPPORTED_TEXT_FILE_PATTERNS = (
+    '*.cmake',
+    '*.c',
+    '*.cc',
+    '*.cpp',
+    '*.cxx',
+    '*.etch',
+    '*.h',
+    '*.hh',
+    '*.hpp',
+    '*.hxx',
+    '*.in',
+    '*.json',
+    '*.md',
+    '*.py',
+    '*.rst',
+    '*.sh',
+    '*.svg',
+    '*.txt',
+    '*.xml',
+    '*.yaml',
+    '*.yml')
 INCLUDE_GUARD = '#pragma once'
 DISALLOWED_HEADER_FILE_EXTENSIONS = ('*.h', '*.hxx', '*.hh')
 CMAKE_VERSION_REQUIREMENT = 'cmake_minimum_required(VERSION 3.5 FATAL_ERROR)'
@@ -39,21 +60,31 @@ AUTOPEP8_REQUIRED_VERSION = '1.4.4'
 
 
 def find_excluded_dirs():
-    def get_abspath(name):
-        return abspath(join(PROJECT_ROOT, name))
+    def is_cmake_build_tree_root(dir_path):
+        return isfile(join(dir_path, 'CMakeCache.txt'))
 
-    def cmake_build_tree_roots():
-        direct_subdirectories = os.listdir(PROJECT_ROOT)
+    def is_git_dir(dir_path):
+        return basename(dir_path) == '.git'
 
-        return [name for name in direct_subdirectories
-                if isfile(join(get_abspath(name), 'CMakeCache.txt'))]
+    def is_nested_git_submodule(dir_path):
+        return isfile(join(dir_path, '.git'))
 
-    directories_to_exclude = ['.git', 'vendor'] + \
-        cmake_build_tree_roots()
+    def is_nested_git_repo(dir_path):
+        return dir_path != PROJECT_ROOT and isdir(join(dir_path, '.git'))
 
-    return [get_abspath(name)
-            for name in directories_to_exclude
-            if isdir(get_abspath(name))]
+    directories_to_exclude = [abspath(join(PROJECT_ROOT, name))
+                              for name in ('vendor',)]
+
+    for root, dirs, files in os.walk(PROJECT_ROOT):
+        if is_cmake_build_tree_root(root) or \
+                is_git_dir(root) or \
+                is_nested_git_submodule(root) or \
+                is_nested_git_repo(root):
+            directories_to_exclude += [root]
+
+    return sorted(set([dir_path
+                       for dir_path in directories_to_exclude
+                       if isdir(dir_path)]))
 
 
 EXCLUDED_DIRS = find_excluded_dirs()
@@ -203,10 +234,7 @@ def fix_license_header(text, path_to_file):
 
 @include_patterns('*.py')
 def format_python(text, path_to_file):
-    if text.strip():
-        return autopep8.fix_code(text)
-
-    return text.strip()
+    return autopep8.fix_code(text)
 
 
 @include_patterns('*.hpp')
@@ -217,9 +245,19 @@ def fix_missing_include_guards(text, path_to_file):
     return text
 
 
+@include_patterns('*')
+def fix_trailing_whitespace(text, path_to_file):
+    lines = text.split('\n')
+    output = ''
+    for line in lines:
+        output += line.rstrip() + '\n'
+
+    return output
+
+
 @include_patterns('CMakeLists.txt')
 def fix_cmake_version_requirements(text, path_to_file):
-    lines = text.splitlines()
+    lines = text.split('\n')
     counter = 0
     for line in lines:
         if not line.startswith('#') and line.startswith(CMAKE_VERSION_REQUIREMENT):
@@ -235,10 +273,7 @@ def fix_cmake_version_requirements(text, path_to_file):
 
 @include_patterns('*')
 def fix_terminal_newlines(text, path_to_file):
-    if len(text) and text[-1] != '\n':
-        return text + '\n'
-
-    return text
+    return text.strip() + '\n'
 
 
 def check_for_headers_with_non_hpp_extension(file_paths):
@@ -258,16 +293,18 @@ def check_for_headers_with_non_hpp_extension(file_paths):
         sys.exit(1)
 
 
-def is_checked_in_binary_file(absolute_path):
-    return any([fnmatch.fnmatch(basename(absolute_path), pattern) for pattern in CHECKED_IN_BINARY_FILE_PATTERNS])
+def is_supported_text_file(absolute_path):
+    return any([fnmatch.fnmatch(basename(absolute_path), pattern)
+                for pattern in SUPPORTED_TEXT_FILE_PATTERNS])
 
 
 def get_changed_paths_from_git(commit):
     raw_relative_paths = subprocess.check_output(['git', 'diff', '--name-only', commit]) \
         .strip() \
-        .splitlines()
+        .decode('utf-8') \
+        .split('\n')
 
-    relative_paths = [rel_path.decode('utf-8').strip()
+    relative_paths = [rel_path.strip()
                       for rel_path in raw_relative_paths]
 
     return [abspath(join(PROJECT_ROOT, rel_path)) for rel_path in relative_paths
@@ -294,9 +331,9 @@ def files_of_interest(commit):
     else:
         ret = get_changed_paths_from_git(commit)
 
-    # Filter out binary files and symbolic links
+    # Filter out unsupported files and symbolic links
     ret = [abs_path for abs_path in ret
-           if isfile(abs_path) and not is_checked_in_binary_file(abs_path)]
+           if is_supported_text_file(abs_path) and isfile(abs_path)]
 
     total_files_to_process = len(ret)
 
@@ -365,6 +402,7 @@ TRANSFORMATIONS = [
     fix_cmake_version_requirements,
     fix_license_header,
     fix_missing_include_guards,
+    fix_trailing_whitespace,
     fix_terminal_newlines,
     external_formatter(**SUPPORTED_LANGUAGES['cpp']),
     external_formatter(**SUPPORTED_LANGUAGES['cmake']),
@@ -378,14 +416,18 @@ def apply_transformations_to_file(path_to_file):
             original_text = f.read()
             text = original_text
 
-            for transformation in TRANSFORMATIONS:
-                text = transformation(text, path_to_file)
+            if text.strip():
+                for transformation in TRANSFORMATIONS:
+                    text = transformation(text, path_to_file)
+            else:
+                text = text.strip()
 
             if text != original_text:
                 f.seek(0)
                 f.truncate(0)
                 f.write(text)
     except:
+        output('Error: failed to process {}'.format(path_to_file))
         output(traceback.format_exc())
         raise
 

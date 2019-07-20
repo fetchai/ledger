@@ -76,9 +76,6 @@ macro (setup_compiler)
   # warnings
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wconversion -Wpedantic")
 
-  # Suppress visibility link warnings
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility=hidden")
-
   if (${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-pragmas -Wno-unknown-pragmas")
   elseif (_is_clang_compiler)
@@ -147,13 +144,17 @@ macro (setup_compiler)
   endif ()
 
   # based on the configued logging level
-  if ("${FETCH_COMPILE_LOGGING_LEVEL}" STREQUAL "debug")
-    add_definitions(-DFETCH_COMPILE_LOGGING_LEVEL=4)
+  if ("${FETCH_COMPILE_LOGGING_LEVEL}" STREQUAL "trace")
+    add_definitions(-DFETCH_COMPILE_LOGGING_LEVEL=6)
+  elseif ("${FETCH_COMPILE_LOGGING_LEVEL}" STREQUAL "debug")
+    add_definitions(-DFETCH_COMPILE_LOGGING_LEVEL=5)
   elseif ("${FETCH_COMPILE_LOGGING_LEVEL}" STREQUAL "info")
-    add_definitions(-DFETCH_COMPILE_LOGGING_LEVEL=3)
+    add_definitions(-DFETCH_COMPILE_LOGGING_LEVEL=4)
   elseif ("${FETCH_COMPILE_LOGGING_LEVEL}" STREQUAL "warn")
-    add_definitions(-DFETCH_COMPILE_LOGGING_LEVEL=2)
+    add_definitions(-DFETCH_COMPILE_LOGGING_LEVEL=3)
   elseif ("${FETCH_COMPILE_LOGGING_LEVEL}" STREQUAL "error")
+    add_definitions(-DFETCH_COMPILE_LOGGING_LEVEL=2)
+  elseif ("${FETCH_COMPILE_LOGGING_LEVEL}" STREQUAL "critical")
     add_definitions(-DFETCH_COMPILE_LOGGING_LEVEL=1)
   elseif ("${FETCH_COMPILE_LOGGING_LEVEL}" STREQUAL "none")
     add_definitions(-DFETCH_DISABLE_COUT_LOGGING)
@@ -214,11 +215,37 @@ function (configure_vendor_targets)
     target_compile_definitions(vendor-asio INTERFACE ASIO_HAS_STD_STRING_VIEW)
   endif (APPLE)
 
-  # Pybind11
-  add_subdirectory(${FETCH_ROOT_VENDOR_DIR}/pybind11)
-
   # Google Test
   add_subdirectory(${FETCH_ROOT_VENDOR_DIR}/googletest)
+
+  # MCL TODO: Work out how to get this to work with the already found version of OpenSSL
+  set(USE_GMP OFF CACHE BOOL "use gmp" FORCE)
+  set(USE_OPENSSL OFF CACHE BOOL "use openssl" FORCE)
+  set(ONLY_LIB OFF CACHE BOOL "use openssl" FORCE)
+  add_subdirectory(${FETCH_ROOT_VENDOR_DIR}/mcl)
+  target_include_directories(mcl_st INTERFACE ${FETCH_ROOT_VENDOR_DIR}/mcl/include)
+  target_compile_definitions(mcl_st
+                             INTERFACE
+                             -DMCL_USE_VINT
+                             -DMCL_VINT_FIXED_BUFFER
+                             -DMCLBN_FP_UNIT_SIZE=4)
+
+  add_library(vendor-mcl INTERFACE)
+  target_link_libraries(vendor-mcl INTERFACE mcl_st)
+
+  # BLS
+  add_library(vendor-bls-internal STATIC ${FETCH_ROOT_VENDOR_DIR}/bls/src/bls_c256.cpp
+                                         ${FETCH_ROOT_VENDOR_DIR}/bls/src/bls_c384.cpp)
+  target_link_libraries(vendor-bls-internal PUBLIC vendor-mcl)
+  target_include_directories(vendor-bls-internal PUBLIC ${FETCH_ROOT_VENDOR_DIR}/bls/include)
+  target_compile_definitions(vendor-bls-internal
+                             PUBLIC
+                             -DMCL_USE_VINT
+                             -DMCL_VINT_FIXED_BUFFER)
+
+  add_library(vendor-bls INTERFACE)
+  target_link_libraries(vendor-bls INTERFACE vendor-bls-internal)
+  target_compile_definitions(vendor-bls INTERFACE -DMCLBN_FP_UNIT_SIZE=4)
 
   # Google Benchmark Do not build the google benchmark library tests
   if (FETCH_ENABLE_BENCHMARKS)
@@ -238,6 +265,10 @@ function (configure_vendor_targets)
   add_library(vendor-msgpack INTERFACE)
   target_include_directories(vendor-msgpack INTERFACE ${FETCH_ROOT_VENDOR_DIR}/msgpack/include)
   target_compile_definitions(vendor-msgpack INTERFACE -DMSGPACK_CXX11=ON)
+
+  # Spdlog
+  add_library(vendor-spdlog INTERFACE)
+  target_include_directories(vendor-spdlog INTERFACE ${FETCH_ROOT_VENDOR_DIR}/spdlog/include)
 
 endfunction (configure_vendor_targets)
 
@@ -301,7 +332,7 @@ macro (detect_environment)
 
 endmacro ()
 
-function (generate_configuration_file)
+function (generate_version_file)
 
   if (DEFINED ENV{FETCH_BUILD_VERSION})
 
@@ -376,8 +407,8 @@ function (generate_configuration_file)
   endif ()
 
   # generate the version file
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/fetch_version.hpp.in
-                 ${CMAKE_CURRENT_BINARY_DIR}/fetch_version.hpp)
+  configure_file(${CMAKE_SOURCE_DIR}/cmake/fetch_version.cpp.in
+                 ${CMAKE_BINARY_DIR}/libs/version/src/fetch_version.cpp)
 
   message(STATUS "Project Version: ${FETCH_VERSION_STR}")
 

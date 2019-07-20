@@ -16,16 +16,16 @@
 //
 //------------------------------------------------------------------------------
 
-#include "network/muddle/rpc/client.hpp"
-
 #include "core/logger.hpp"
 #include "core/serializers/byte_array.hpp"
 #include "network/muddle/muddle.hpp"
+#include "network/muddle/rpc/client.hpp"
 #include "network/muddle/rpc/server.hpp"
 #include "network/service/service_client.hpp"
 #include "service_consts.hpp"
 
 #include <chrono>
+#include <cstddef>
 #include <cstdlib>
 #include <iostream>
 #include <memory>
@@ -57,8 +57,8 @@ int main()
   client_muddle->Start({});
   auto peer = fetch::network::Uri("tcp://127.0.0.1:8080");
   client_muddle->AddPeer(peer);
-  auto client = std::make_shared<Client>("Client", client_muddle->AsEndpoint(), Muddle::Address(),
-                                         SERVICE_TEST, CHANNEL_RPC);
+  auto client =
+      std::make_shared<Client>("Client", client_muddle->AsEndpoint(), SERVICE_TEST, CHANNEL_RPC);
   std::this_thread::sleep_for(std::chrono::milliseconds(100));
   Muddle::Address target_address;
   if (!client_muddle->UriToDirectAddress(peer, target_address))
@@ -84,7 +84,6 @@ int main()
     std::cout << "p1 is not yet fulfilled" << std::endl;
   }
 
-  FETCH_LOG_PROMISE();
   p1->Wait();
 
   // Converting to a type implicitly invokes Wait (as is the case for p2)
@@ -118,11 +117,9 @@ int main()
   {
     promises.push_back(client->CallSpecificAddress(target_address, MYPROTO, ADD, 4, 3));
   }
-  fetch::logger.Highlight("DONE!");
 
   std::cout << "Waiting for last promise: " << promises.back()->id() << std::endl;
 
-  FETCH_LOG_PROMISE();
   promises.back()->Wait(false);
 
   std::size_t failed = 0, not_fulfilled = 0;

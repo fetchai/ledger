@@ -21,6 +21,11 @@
 
 #include "gtest/gtest.h"
 
+#include <cstddef>
+#include <cstdint>
+
+namespace {
+
 using namespace fetch::memory;
 
 using data_type  = uint64_t;
@@ -84,3 +89,5 @@ TEST_P(TestClass, basic_Test)
 }
 
 INSTANTIATE_TEST_CASE_P(Basic_test, TestClass, ::testing::Range(0, 100), );
+
+}  // namespace

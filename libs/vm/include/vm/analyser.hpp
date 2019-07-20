@@ -19,6 +19,16 @@
 
 #include "vm/node.hpp"
 
+#include <cstdint>
+#include <memory>
+#include <stdexcept>
+#include <string>
+#include <typeindex>
+#include <unordered_map>
+#include <unordered_set>
+#include <utility>
+#include <vector>
+
 namespace fetch {
 namespace vm {
 
@@ -103,41 +113,76 @@ private:
     std::unordered_map<TypeIndex, TypePtr> map;
   };
 
+  struct StringSet
+  {
+    void Add(std::string const &s)
+    {
+      set.insert(s);
+    }
+    bool Find(std::string const &s)
+    {
+      auto it = set.find(s);
+      return it != set.end();
+    }
+    std::unordered_set<std::string> set;
+  };
+
+  struct FunctionMap
+  {
+    void Add(std::string const &unique_id, FunctionPtr const &function)
+    {
+      map[unique_id] = function;
+    }
+    FunctionPtr Find(std::string const &unique_id)
+    {
+      auto it = map.find(unique_id);
+      if (it != map.end())
+      {
+        return it->second;
+      }
+      return nullptr;
+    }
+    std::unordered_map<std::string, FunctionPtr> map;
+  };
+
   OperatorMap       operator_map_;
   TypeMap           type_map_;
+  StringSet         type_set_;
   TypeInfoArray     type_info_array_;
   TypeInfoMap       type_info_map_;
   RegisteredTypes   registered_types_;
   FunctionInfoArray function_info_array_;
-  SymbolTablePtr    symbols_;
-  TypePtr           null_type_;
-  TypePtr           void_type_;
-  TypePtr           bool_type_;
-  TypePtr           int8_type_;
-  TypePtr           uint8_type_;
-  TypePtr           int16_type_;
-  TypePtr           uint16_type_;
-  TypePtr           int32_type_;
-  TypePtr           uint32_type_;
-  TypePtr           int64_type_;
-  TypePtr           uint64_type_;
-  TypePtr           float32_type_;
-  TypePtr           float64_type_;
-  TypePtr           fixed32_type_;
-  TypePtr           fixed64_type_;
-  TypePtr           string_type_;
-  TypePtr           address_type_;
-  TypePtr           template_parameter1_type_;
-  TypePtr           template_parameter2_type_;
-  TypePtr           any_type_;
-  TypePtr           any_primitive_type_;
-  TypePtr           any_integer_type_;
-  TypePtr           any_floating_point_type_;
-  TypePtr           matrix_type_;
-  TypePtr           array_type_;
-  TypePtr           map_type_;
-  TypePtr           sharded_state_type_;
-  TypePtr           state_type_;
+  FunctionMap       function_map_;
+
+  SymbolTablePtr symbols_;
+  TypePtr        null_type_;
+  TypePtr        void_type_;
+  TypePtr        bool_type_;
+  TypePtr        int8_type_;
+  TypePtr        uint8_type_;
+  TypePtr        int16_type_;
+  TypePtr        uint16_type_;
+  TypePtr        int32_type_;
+  TypePtr        uint32_type_;
+  TypePtr        int64_type_;
+  TypePtr        uint64_type_;
+  TypePtr        float32_type_;
+  TypePtr        float64_type_;
+  TypePtr        fixed32_type_;
+  TypePtr        fixed64_type_;
+  TypePtr        string_type_;
+  TypePtr        address_type_;
+  TypePtr        template_parameter1_type_;
+  TypePtr        template_parameter2_type_;
+  TypePtr        any_type_;
+  TypePtr        any_primitive_type_;
+  TypePtr        any_integer_type_;
+  TypePtr        any_floating_point_type_;
+  TypePtr        matrix_type_;
+  TypePtr        array_type_;
+  TypePtr        map_type_;
+  TypePtr        sharded_state_type_;
+  TypePtr        state_type_;
 
   BlockNodePtr             root_;
   BlockNodePtrArray        blocks_;
@@ -186,10 +231,11 @@ private:
                                  ExpressionNodePtr const &rhs);
   TypePtr     ConvertType(TypePtr const &type, TypePtr const &instantiated_template_type);
   bool        MatchType(TypePtr const &supplied_type, TypePtr const &expected_type) const;
-  bool        MatchTypes(TypePtr const &type, TypePtrArray const &supplied_types,
+  bool        MatchTypes(TypePtr const &type, ExpressionNodePtrArray const &supplied_nodes,
                          TypePtrArray const &expected_types, TypePtrArray &actual_types);
   FunctionPtr FindFunction(TypePtr const &type, FunctionGroupPtr const &fg,
-                           TypePtrArray const &supplied_types, TypePtrArray &actual_types);
+                           ExpressionNodePtrArray const &supplied_nodes,
+                           TypePtrArray &                actual_types);
   TypePtr     FindType(ExpressionNodePtr const &node);
   SymbolPtr   FindSymbol(ExpressionNodePtr const &node);
   SymbolPtr   SearchSymbols(std::string const &name);
@@ -199,6 +245,7 @@ private:
   void        SetTypeExpression(ExpressionNodePtr const &node, TypePtr const &type);
   void        SetFunctionGroupExpression(ExpressionNodePtr const &node, FunctionGroupPtr const &fg,
                                          TypePtr const &fg_owner, bool function_invoked_on_instance);
+  bool        CheckType(std::string const &type_name, TypeIndex type_index);
   void        CreatePrimitiveType(std::string const &type_name, TypeIndex type_index,
                                   bool add_to_symbol_table, TypeId type_id, TypePtr &type);
   void        CreateMetaType(std::string const &type_name, TypeIndex type_index, TypeId type_id,
@@ -217,6 +264,7 @@ private:
                                  TypePtr const &return_type, Handler const &handler);
   void        CreateConstructor(TypePtr const &type, TypePtrArray const &parameter_types,
                                 Handler const &handler);
+
   void        CreateStaticMemberFunction(TypePtr const &type, std::string const &name,
                                          TypePtrArray const &parameter_types, TypePtr const &return_type,
                                          Handler const &handler);
@@ -232,6 +280,7 @@ private:
                                   Handler const &set_handler);
   void        AddTypeInfo(TypeInfo const &info, TypeId type_id, TypePtr const &type);
   void        AddFunctionInfo(FunctionPtr const &function, Handler const &handler);
+
   std::string BuildUniqueId(TypePtr const &type, std::string const &function_name,
                             TypePtrArray const &parameter_types, TypePtr const &return_type);
   void        AddFunctionToSymbolTable(SymbolTablePtr const &symbols, FunctionPtr const &function);

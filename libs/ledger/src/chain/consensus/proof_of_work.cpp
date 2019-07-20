@@ -33,12 +33,12 @@ bool ProofOfWork::operator()()
   crypto::SHA256 hasher;
   hasher.Reset();
   hasher.Update(header_);
-  hasher.Update(*this);
+  hasher.Update(this->pointer(), this->size());
 
   digest_ = hasher.Final();
 
   hasher.Reset();
-  hasher.Update(digest_);
+  hasher.Update(digest_.pointer(), digest_.size());
 
   digest_ = hasher.Final();
 
@@ -48,10 +48,10 @@ bool ProofOfWork::operator()()
 void ProofOfWork::SetTarget(std::size_t zeros)
 {
   target_ = 1;
-  target_ <<= 8 * sizeof(uint8_t) * super_type::size() - 1 - zeros;
+  target_ <<= 8 * sizeof(uint8_t) * UInt256::size() - 1 - zeros;
 }
 
-void ProofOfWork::SetTarget(math::BigUnsigned &&target)
+void ProofOfWork::SetTarget(vectorise::UInt<256> &&target)
 {
   target_ = std::move(target);
 }

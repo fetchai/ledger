@@ -1,0 +1,23 @@
+function fibonacci(n: Int32) : Int32
+
+    var a = 0;
+    var b = 1;
+    var temp = 0;
+
+    for(i in 0:n)
+        temp = a;
+        a = b;
+        b = temp + b;
+    endfor
+
+    return a;
+
+endfunction
+
+function main()
+
+    var result = fibonacci(10);
+
+    assert(result == 55);
+
+endfunction

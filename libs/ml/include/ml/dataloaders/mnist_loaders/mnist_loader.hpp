@@ -39,39 +39,47 @@ public:
   using DataType   = typename T::Type;
   using ReturnType = std::pair<LabelType, std::vector<T>>;
 
-  MNISTLoader(std::string const &imagesFile, std::string const &labelsFile,
+private:
+  std::uint32_t                  cursor_;
+  std::uint32_t                  size_;
+  static constexpr std::uint32_t FIGURE_WIDTH  = 28;
+  static constexpr std::uint32_t FIGURE_HEIGHT = 28;
+  static constexpr std::uint32_t FIGURE_SIZE   = 28 * 28;
+  static constexpr std::uint32_t LABEL_SIZE    = 10;
+
+public:
+  MNISTLoader(std::string const &images_file, std::string const &labelsFile,
               bool random_mode = false)
     : DataLoader<LabelType, T>(random_mode)
     , cursor_(0)
   {
-    std::uint32_t recordLength(0);
-    data_        = read_mnist_images(imagesFile, size_, recordLength);
-    labels_      = read_mnist_labels(labelsFile, size_);
-    figure_size_ = 28 * 28;
-    assert(recordLength == figure_size_);
+    std::uint32_t record_length(0);
+    data_   = read_mnist_images(images_file, size_, record_length);
+    labels_ = read_mnist_labels(labelsFile, size_);
+    assert(record_length == FIGURE_SIZE);
 
     // Prepare return buffer
-    buffer_.second.push_back(T({28u, 28u, 1u}));
-    buffer_.first = LabelType({10u, 1u});
+    buffer_.second.push_back(T({FIGURE_WIDTH, FIGURE_HEIGHT, 1u}));
+    buffer_.first = LabelType({LABEL_SIZE, 1u});
   }
 
-  virtual SizeType Size() const
+  virtual SizeType Size() const override
   {
     // MNIST files store the size as uint32_t but Dataloader interface require uint64_t
     return static_cast<SizeType>(size_);
   }
 
-  virtual bool IsDone() const
+  virtual bool IsDone() const override
   {
     return cursor_ >= size_;
   }
 
-  virtual void Reset()
+  virtual void Reset() override
   {
     cursor_ = 0;
   }
 
-  virtual ReturnType GetNext()
+  virtual ReturnType GetNext() override
   {
     if (this->random_mode_)
     {
@@ -87,9 +95,9 @@ public:
 
   void Display(T const &data) const
   {
-    for (SizeType i{0}; i < 28u; ++i)
+    for (SizeType i{0}; i < FIGURE_WIDTH; ++i)
     {
-      for (SizeType j{0}; j < 28u; ++j)
+      for (SizeType j{0}; j < FIGURE_HEIGHT; ++j)
       {
 
         std::cout << (data.At(j, i, 0) > typename T::Type(0.5) ? char(219) : ' ');
@@ -99,27 +107,35 @@ public:
     std::cout << std::endl;
   }
 
-  ReturnType SubsetToArray(SizeType subset_size)
+  ReturnType PrepareBatch(SizeType subset_size, bool &is_done_set) override
   {
-    T              ret_labels({1, subset_size});
-    std::vector<T> ret_images;
-    ret_images.push_back(T({figure_size_, subset_size}));
+    T ret_labels({LABEL_SIZE, subset_size});
 
-    for (fetch::math::SizeType i(0); i < subset_size; ++i)
+    std::vector<T> ret_images;
+    ret_images.push_back(T({FIGURE_WIDTH, FIGURE_HEIGHT, subset_size}));
+
+    for (fetch::math::SizeType index{0}; index < subset_size; ++index)
     {
-      ret_labels(0, i) = static_cast<typename T::Type>(labels_[i]);
-      for (fetch::math::SizeType j{0}; j < figure_size_; ++j)
+
+      SizeType i{0};
+      auto     it = ret_images.at(0).View(index).begin();
+      while (it.is_valid())
       {
-        ret_images.at(0)(j, i) = static_cast<typename T::Type>(data_[i][j]) / typename T::Type(256);
+        *it = static_cast<DataType>(data_[cursor_][i]) / DataType{256};
+        i++;
+        ++it;
+      }
+      ret_labels(labels_[cursor_], index) = static_cast<typename LabelType::Type>(1);
+
+      ++cursor_;
+      if (IsDone())
+      {
+        is_done_set = true;
+        Reset();
       }
     }
 
     return std::make_pair(ret_labels, ret_images);
-  }
-
-  std::pair<LabelType, std::vector<T>> ToArray()
-  {
-    return SubsetToArray(size_);
   }
 
 private:
@@ -230,10 +246,6 @@ private:
   }
 
 private:
-  std::uint32_t cursor_;
-  std::uint32_t size_;
-  std::uint32_t figure_size_;
-
   ReturnType buffer_;
 
   unsigned char **data_;

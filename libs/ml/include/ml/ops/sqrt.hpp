@@ -19,27 +19,31 @@
 
 #include "ml/ops/ops.hpp"
 
+#include <cassert>
+#include <vector>
+
 namespace fetch {
 namespace ml {
 namespace ops {
 
 template <class T>
-class Sqrt : public fetch::ml::ElementWiseOps<T>
+class Sqrt : public fetch::ml::Ops<T>
 {
 public:
   using ArrayType     = T;
   using DataType      = typename ArrayType::Type;
-  using VecTensorType = typename ElementWiseOps<T>::VecTensorType;
+  using SizeType      = typename ArrayType::SizeType;
+  using VecTensorType = typename Ops<T>::VecTensorType;
 
-  Sqrt()          = default;
-  virtual ~Sqrt() = default;
+  Sqrt()           = default;
+  ~Sqrt() override = default;
 
   /**
    * elementwise square root
    * @param inputs vector containing one tensor which is the input tensor to Sqrt
    * @return
    */
-  virtual void Forward(VecTensorType const &inputs, ArrayType &output)
+  void Forward(VecTensorType const &inputs, ArrayType &output) override
   {
     assert(inputs.size() == 1);
     assert(output.shape() == this->ComputeOutputShape(inputs));
@@ -51,8 +55,8 @@ public:
    * elementwise square root gradient is:
    * f'(input0)= 0.5 * (input0 ^ -0.5) * error_signal
    */
-  virtual std::vector<ArrayType> Backward(VecTensorType const &inputs,
-                                          ArrayType const &    error_signal)
+  std::vector<ArrayType> Backward(VecTensorType const &inputs,
+                                  ArrayType const &    error_signal) override
   {
     assert(inputs.size() == 1);
     assert(error_signal.shape() == this->ComputeOutputShape(inputs));
@@ -64,6 +68,11 @@ public:
     fetch::math::Multiply(error_signal, ret_error_signal, ret_error_signal);
 
     return {ret_error_signal};
+  }
+
+  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
+  {
+    return inputs.front().get().shape();
   }
 
   static constexpr char const *DESCRIPTOR = "Sqrt";

@@ -20,6 +20,8 @@
 
 #include "gmock/gmock.h"
 
+#include <sstream>
+
 namespace {
 
 // TODO(WK): extract test helpers library and move this test suite to the libs/vm
@@ -34,7 +36,7 @@ TEST_F(CoreEtchTests, in_for_loop_break_exits_the_loop)
 {
   static char const *TEXT = R"(
     function main()
-      for (i in 0u8:5u8)
+      for (i in 0u8:6u8)
         if (i == 2u8)
           break;
         endif
@@ -76,8 +78,8 @@ TEST_F(CoreEtchTests, in_nested_for_loop_break_exits_the_inner_loop)
 {
   static char const *TEXT = R"(
     function main()
-      for (j in 0u8:3u8)
-        for (i in 0u8:5u8)
+      for (j in 0u8:4u8)
+        for (i in 0u8:6u8)
           if (i == 2u8)
             break;
           endif
@@ -151,7 +153,7 @@ TEST_F(CoreEtchTests, in_while_loop_inside_a_for_loop_break_exits_the_inner_loop
 {
   static char const *TEXT = R"(
     function main()
-      for (j in 0u8:3u8)
+      for (j in 0u8:4u8)
         var i = 0u8;
         while (i < 5u8)
           if (i == 2u8)
@@ -176,7 +178,7 @@ TEST_F(CoreEtchTests, in_for_loop_continue_skips_to_the_next_iteration)
 {
   static char const *TEXT = R"(
     function main()
-      for (i in 0u8:5u8)
+      for (i in 0u8:6u8)
         print(i);
         if (i > 2u8)
           continue;
@@ -220,8 +222,8 @@ TEST_F(CoreEtchTests, in_nested_for_loop_continue_skips_to_the_next_iteration_of
 {
   static char const *TEXT = R"(
     function main()
-      for (j in 0u8:2u8)
-        for (i in 0u8:5u8)
+      for (j in 0u8:3u8)
+        for (i in 0u8:6u8)
           print(i);
           if (i > 2u8)
             continue;
@@ -275,7 +277,7 @@ TEST_F(CoreEtchTests,
     function main()
       var j = 0u8;
       while (j < 3u8)
-        for (i in 0u8:5u8)
+        for (i in 0u8:6u8)
           print(i);
           if (i > 2u8)
             continue;
@@ -300,7 +302,7 @@ TEST_F(CoreEtchTests,
 {
   static char const *TEXT = R"(
     function main()
-      for (j in 0u8:3u8)
+      for (j in 0u8:4u8)
         var i = 0u8;
         while (i < 5u8)
           print(i);
@@ -320,6 +322,152 @@ TEST_F(CoreEtchTests,
   ASSERT_TRUE(toolkit.Run());
 
   ASSERT_EQ(stdout.str(), "0.1.234_0.1.234_0.1.234_0.1.234_ end");
+}
+
+TEST_F(CoreEtchTests,
+       boolean_or_operator_does_not_execute_second_operand_if_first_operand_evaluates_to_true)
+{
+  static char const *TEXT = R"(
+    function returns_true() : Bool
+      print('one');
+      return true;
+    endfunction
+
+    function returns_false() : Bool
+      print('not printed');
+      return false;
+    endfunction
+
+    function main()
+      if (returns_true() || returns_false())
+        print('_two');
+      endif
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_TRUE(toolkit.Run());
+
+  ASSERT_EQ(stdout.str(), "one_two");
+}
+
+TEST_F(CoreEtchTests,
+       boolean_and_operator_does_not_execute_second_operand_if_first_operand_evaluates_to_false)
+{
+  static char const *TEXT = R"(
+    function returns_true() : Bool
+      print('not printed');
+      return true;
+    endfunction
+
+    function returns_false() : Bool
+      print('one');
+      return false;
+    endfunction
+
+    function main()
+      if (returns_false() && returns_true())
+        print('not printed');
+      endif
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_TRUE(toolkit.Run());
+
+  ASSERT_EQ(stdout.str(), "one");
+}
+
+TEST_F(CoreEtchTests,
+       boolean_or_operator_executes_both_operands_if_first_operand_evaluates_to_false)
+{
+  static char const *TEXT = R"(
+    function returns_true() : Bool
+      print('two');
+      return true;
+    endfunction
+
+    function returns_false() : Bool
+      print('one_');
+      return false;
+    endfunction
+
+    function main()
+      if (returns_false() || returns_true())
+        print('_three');
+      endif
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_TRUE(toolkit.Run());
+
+  ASSERT_EQ(stdout.str(), "one_two_three");
+}
+
+TEST_F(CoreEtchTests,
+       boolean_and_operator_executes_both_operands_if_first_operand_evaluates_to_true)
+{
+  static char const *TEXT = R"(
+    function returns_true() : Bool
+      print('one_');
+      return true;
+    endfunction
+
+    function returns_false() : Bool
+      print('two');
+      return false;
+    endfunction
+
+    function main()
+      if (returns_true() && returns_false())
+        print('not printed');
+      endif
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_TRUE(toolkit.Run());
+
+  ASSERT_EQ(stdout.str(), "one_two");
+}
+
+TEST_F(CoreEtchTests, range_for_loop_excludes_end_of_range)
+{
+  static char const *TEXT = R"(
+    function main()
+      for (i in 0:3)
+        print(i);
+      endfor
+
+      print('_');
+
+      for (i in 1:6:2)
+        print(i);
+      endfor
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_TRUE(toolkit.Run());
+
+  ASSERT_EQ(stdout.str(), "012_135");
+}
+
+TEST_F(CoreEtchTests, range_with_equal_bounds_is_empty)
+{
+  static char const *TEXT = R"(
+    function main()
+      for (i in 1:1)
+        print("Not printed " + toString(i));
+      endfor
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_TRUE(toolkit.Run());
+
+  ASSERT_EQ(stdout.str(), "");
 }
 
 }  // namespace

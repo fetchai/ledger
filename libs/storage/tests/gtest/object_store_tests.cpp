@@ -70,7 +70,7 @@ struct TestSerDeser
  * @param: b The class to serialize
  */
 template <typename T>
-inline void Serialize(T &serializer, TestSerDeser const &b)
+void Serialize(T &serializer, TestSerDeser const &b)
 {
   serializer << b.first;
   serializer << b.second;
@@ -84,7 +84,7 @@ inline void Serialize(T &serializer, TestSerDeser const &b)
  * @param: b The class to deserialize
  */
 template <typename T>
-inline void Deserialize(T &serializer, TestSerDeser &b)
+void Deserialize(T &serializer, TestSerDeser &b)
 {
   serializer >> b.first;
   serializer >> b.second;
@@ -286,10 +286,11 @@ TEST(storage_object_store_with_STL_gtest, iterator_over_basic_struct)
   }
 }
 
-TEST(storage_object_store_with_STL_gtest, subtree_iterator_over_basic_struct)
+TEST(storage_object_store_with_STL_gtest,
+     subtree_iterator_over_basic_struct_1_to_8_bits_root_sizes_split)
 {
-  std::vector<std::size_t> keyTests{9,  1,  2,  3,  4, 5, 6, 7,  8,  9,   10,  11,
-                                    12, 13, 14, 99, 0, 1, 9, 12, 14, 100, 1000};
+  std::vector<std::size_t> keyTests{0,  1,  2,  3,  4,  5,  6,   7,   8,   9,
+                                    10, 11, 12, 13, 14, 99, 100, 133, 998, 1001};
   for (auto const &numberOfKeys : keyTests)
   {
     using testType = TestSerDeser;
@@ -297,9 +298,7 @@ TEST(storage_object_store_with_STL_gtest, subtree_iterator_over_basic_struct)
     testStore.New("testFile.db", "testIndex.db");
 
     std::vector<testType>                     objects;
-    std::vector<testType>                     objectsCopy;
     fetch::random::LaggedFibonacciGenerator<> lfg;
-    testType                                  dummy;
 
     ByteArray array;
     array.Resize(256 / 8);
@@ -324,107 +323,38 @@ TEST(storage_object_store_with_STL_gtest, subtree_iterator_over_basic_struct)
       objects.push_back(test);
     }
 
-    constexpr uint8_t bits{4};
-    constexpr uint8_t max_val{1 << bits};
-    // Now, aim to split the store up and copy it across perfectly
-    for (uint8_t keyBegin = 0; keyBegin < max_val; ++keyBegin)
+    for (std::uint8_t root_size_in_bits{1}; root_size_in_bits <= 8; ++root_size_in_bits)
     {
-      array[0] = static_cast<uint8_t>(keyBegin);
+      std::vector<testType> objectsCopy;
 
-      auto rid = ResourceID(array);
-
-      testStore.Get(rid, dummy);
-
-      auto it = testStore.GetSubtree(rid, uint64_t{bits});
-
-      while (it != testStore.end())
+      // Now, aim to split the store up and copy it across perfectly
+      for (uint64_t root = 0, end = (1u << root_size_in_bits); root < end; ++root)
       {
-        objectsCopy.push_back(*it);
-        ++it;
-      }
-    }
+        array[0] = static_cast<uint8_t>(root);
 
-    // expect iterator test to go well
-    EXPECT_EQ(objectsCopy.size(), objects.size());
+        auto rid = ResourceID(array);
 
-    std::sort(objects.begin(), objects.end());
-    std::sort(objectsCopy.begin(), objectsCopy.end());
+        auto it = testStore.GetSubtree(rid, root_size_in_bits);
 
-    bool allMatch = std::equal(objectsCopy.begin(), objectsCopy.end(), objects.begin());
-    EXPECT_TRUE(allMatch);
-  }
-}
-
-TEST(storage_object_store_with_STL_gtest, subtree_iterator_over_basic_struc_split_into_256)
-{
-  std::vector<std::size_t> keyTests{23, 100, 1,  2,  3,   4, 5, 6, 7,  8,  9,   10,  11,
-                                    12, 13,  14, 99, 999, 0, 1, 9, 12, 14, 100, 1000};
-  for (auto const &numberOfKeys : keyTests)
-  {
-    using testType = TestSerDeser;
-    ObjectStore<testType> testStore;
-    testStore.New("testFile.db", "testIndex.db");
-
-    std::vector<testType>                     objects;
-    std::vector<testType>                     objectsCopy;
-    fetch::random::LaggedFibonacciGenerator<> lfg;
-
-    ByteArray array;
-    array.Resize(256 / 8);
-
-    for (std::size_t i = 0; i < array.size(); ++i)
-    {
-      array[i] = 0;
-    }
-
-    testType dummy;
-
-    // Create vector of random numbers
-    for (std::size_t i = 0; i < numberOfKeys; ++i)
-    {
-      uint64_t random = lfg();
-
-      testType test;
-      test.first  = int(-random);
-      test.second = random;
-
-      test.third = std::to_string(random);
-
-      testStore.Set(ResourceAddress(test.third), test);
-      objects.push_back(test);
-    }
-
-    // Now, aim to split the store up and copy it across perfectly
-    for (uint8_t keyBegin = 0;; ++keyBegin)
-    {
-      array[0] = (keyBegin);
-
-      auto rid = ResourceID(array);
-
-      testStore.Get(rid, dummy);
-
-      auto it = testStore.GetSubtree(rid, uint64_t(8));
-
-      while (it != testStore.end())
-      {
-        objectsCopy.push_back(*it);
-        ++it;
+        while (it != testStore.end())
+        {
+          objectsCopy.push_back(*it);
+          ++it;
+        }
       }
 
-      if (keyBegin == 0xFF)
-      {
-        break;
-      }
+      std::cout << "Test for " << static_cast<uint64_t>(root_size_in_bits)
+                << " bits long root, and " << numberOfKeys
+                << " number of elements stored in storage." << std::endl;
+      // expect iterator test to go well
+      EXPECT_EQ(objects.size(), objectsCopy.size());
+
+      std::sort(objects.begin(), objects.end());
+      std::sort(objectsCopy.begin(), objectsCopy.end());
+
+      bool allMatch = std::equal(objectsCopy.begin(), objectsCopy.end(), objects.begin());
+      EXPECT_TRUE(allMatch);
     }
-
-    // expect iterator test to go well
-    EXPECT_EQ(objectsCopy.size(), objects.size());
-
-    std::sort(objects.begin(), objects.end());
-    std::sort(objectsCopy.begin(), objectsCopy.end());
-
-    bool allMatch = std::equal(objectsCopy.begin(), objectsCopy.end(), objects.begin());
-    EXPECT_EQ(allMatch, true);
   }
 }
 

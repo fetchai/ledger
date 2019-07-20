@@ -101,7 +101,7 @@ JsonClient JsonClient::CreateFromUrl(std::string const &url)
   {
     // convert the port to an integer (from a string)
     char const *port_str   = port.first.base();
-    const auto  port_value = std::strtol(port_str, nullptr, 10);
+    auto const  port_value = std::strtol(port_str, nullptr, 10);
     if (errno == ERANGE)
     {
       errno = 0;

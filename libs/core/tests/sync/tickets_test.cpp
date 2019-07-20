@@ -24,6 +24,7 @@
 #include <limits>
 #include <memory>
 #include <thread>
+#include <vector>
 
 namespace fetch {
 namespace core {

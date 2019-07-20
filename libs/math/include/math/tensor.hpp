@@ -21,14 +21,11 @@
 #include "core/byte_array/consumers.hpp"
 #include "core/macros.hpp"
 #include "core/random.hpp"
-
-#include "vectorise/memory/array.hpp"
-
+#include "math/activation_functions/softmax.hpp"
 #include "math/base_types.hpp"
 #include "math/matrix_operations.hpp"
-#include "math/ml/activation_functions/softmax.hpp"
-#include "math/ml/loss_functions/l2_loss.hpp"
-#include "math/ml/loss_functions/l2_norm.hpp"
+#include "math/metrics/l2_loss.hpp"
+#include "math/metrics/l2_norm.hpp"
 #include "math/standard_functions/abs.hpp"
 #include "math/standard_functions/exp.hpp"
 #include "math/standard_functions/fmod.hpp"
@@ -37,12 +34,16 @@
 #include "math/tensor_iterator.hpp"
 #include "math/tensor_slice_iterator.hpp"
 #include "math/tensor_view.hpp"
+#include "vectorise/memory/array.hpp"
 
 #include <cassert>
+#include <cstdint>
 #include <memory>
 #include <numeric>
 #include <random>
+#include <stdexcept>
 #include <utility>
+#include <vector>
 
 namespace fetch {
 namespace math {
@@ -112,6 +113,12 @@ public:
     Resize({0});
   }
 
+  Tensor(ContainerType &container_data)
+  {
+    Reshape(container_data.shape());
+    data_ = container_data;
+  }
+
   static Tensor FromString(byte_array::ConstByteArray const &c);
   explicit Tensor(SizeType const &n);
   Tensor(Tensor &&other)      = default;
@@ -139,6 +146,7 @@ public:
   void Assign(TensorSliceImplementation<G> const &other);
   void Assign(TensorSlice const &other);
   void Assign(Tensor const &other);
+  void Assign(TensorView<T, C> const &other);
 
   template <typename... Indices>
   Type &At(Indices... indices);
@@ -176,9 +184,9 @@ public:
   Tensor FillArange(Type const &from, Type const &to);
 
   static Tensor UniformRandom(SizeType const &N);
-  static Tensor UniformRandomIntegers(SizeType const &N, int64_t const &min, int64_t const &max);
+  static Tensor UniformRandomIntegers(SizeType const &N, int64_t min, int64_t max);
   Tensor &      FillUniformRandom();
-  Tensor &      FillUniformRandomIntegers(int64_t const &min, int64_t const &max);
+  Tensor &      FillUniformRandomIntegers(int64_t min, int64_t max);
   static Tensor Zeroes(SizeVector const &shape);
   static Tensor Ones(SizeVector const &shape);
   SizeType      ComputeIndex(SizeVector const &indices) const;
@@ -282,14 +290,15 @@ public:
   ConstSliceType Slice(SizeType i, SizeType axis = 0) const;
   TensorSlice    Slice(SizeType i, SizeType axis = 0);
 
-  //////////////
-  /// Views  ///
-  //////////////
+  /////////////
+  /// Views ///
+  /////////////
   TensorView<Type, ContainerType>       View();
   TensorView<Type, ContainerType> const View() const;
   TensorView<Type, ContainerType>       View(SizeType index);
   TensorView<Type, ContainerType> const View(SizeType index) const;
   TensorView<Type, ContainerType>       View(std::vector<SizeType> indices);
+  TensorView<Type, ContainerType> const View(std::vector<SizeType> indices) const;
 
   /////////////////////////
   /// general utilities ///
@@ -801,6 +810,13 @@ typename Tensor<T, C>::ConstIteratorType Tensor<T, C>::cend() const
 ///////////////////////
 /// View Extraction ///
 ///////////////////////
+
+/**
+ * returns a view of the entire tensor
+ * @tparam T Type
+ * @tparam C Container
+ * @return
+ */
 template <typename T, typename C>
 typename Tensor<T, C>::ViewType Tensor<T, C>::View()
 {
@@ -811,6 +827,12 @@ typename Tensor<T, C>::ViewType Tensor<T, C>::View()
   return TensorView<Type, ContainerType>(data_, height(), width);
 }
 
+/**
+ * returns a constant view of the entire tensor
+ * @tparam T Type
+ * @tparam C Container
+ * @return
+ */
 template <typename T, typename C>
 typename Tensor<T, C>::ViewType const Tensor<T, C>::View() const
 {
@@ -821,6 +843,13 @@ typename Tensor<T, C>::ViewType const Tensor<T, C>::View() const
   return TensorView<Type, ContainerType>(data_, height(), width);
 }
 
+/**
+ * returns a tensor view based on the trailing dimension
+ * @tparam T Type
+ * @tparam C Container
+ * @param index which index of the trailing dimension to view
+ * @return
+ */
 template <typename T, typename C>
 typename Tensor<T, C>::ViewType Tensor<T, C>::View(SizeType index)
 {
@@ -849,6 +878,26 @@ typename Tensor<T, C>::ViewType const Tensor<T, C>::View(SizeType index) const
 
 template <typename T, typename C>
 typename Tensor<T, C>::ViewType Tensor<T, C>::View(std::vector<SizeType> indices)
+{
+  assert(shape_.size() >= 1 + indices.size());
+
+  SizeType N                = shape_.size() - 1 - indices.size();
+  SizeType dimension_length = (N == 0 ? padded_height_ : shape_[N]);
+  SizeType volume           = dimension_length * stride_[N];
+  SizeType width            = volume / padded_height_;
+  SizeType offset           = 0;
+
+  for (SizeType i = 0; i < indices.size(); ++i)
+  {
+    SizeType g = N + i + 1;
+    offset += stride_[g] * indices[i];
+  }
+
+  return TensorView<Type, ContainerType>(data_, height(), width, offset);
+}
+
+template <typename T, typename C>
+typename Tensor<T, C>::ViewType const Tensor<T, C>::View(std::vector<SizeType> indices) const
 {
   assert(shape_.size() >= 1 + indices.size());
 
@@ -958,6 +1007,19 @@ void Tensor<T, C>::Assign(Tensor const &other)
     ++it1;
     ++it2;
   }
+}
+
+/**
+ * Assign makes a deep copy of data from another tensor into this one
+ * @tparam T
+ * @tparam C
+ * @param other Another tensorview to assign data from into this
+ */
+template <typename T, typename C>
+void Tensor<T, C>::Assign(TensorView<Type, ContainerType> const &other)
+{
+  auto this_view = this->View();
+  this_view.Assign(other);
 }
 
 /**
@@ -1179,17 +1241,6 @@ bool Tensor<T, C>::Reshape(SizeVector const &shape)
 }
 
 /**
- * Resizes and reshapes tensor according to newly specified shape
- * @param shape the new shape to set
- */
-template <typename T, typename C>
-bool Tensor<T, C>::ResizeFromShape(SizeVector const &shape)
-{
-  // TODO(private issue 995): Get rid of this function
-  return Resize(shape, true);
-}
-
-/**
  * Set operator takes variable number of indices followed by one value.
  * This is made possible using the TensorSetter class to manage
  * template unrolling
@@ -1379,8 +1430,7 @@ Tensor<T, C> Tensor<T, C>::UniformRandom(SizeType const &N)
  * @return The return Tensor filled with random values
  */
 template <typename T, typename C>
-Tensor<T, C> Tensor<T, C>::UniformRandomIntegers(SizeType const &N, int64_t const &min,
-                                                 int64_t const &max)
+Tensor<T, C> Tensor<T, C>::UniformRandomIntegers(SizeType const &N, int64_t min, int64_t max)
 {
   Tensor ret;
   ret.Resize({N});
@@ -1414,11 +1464,11 @@ Tensor<T, C> &Tensor<T, C>::FillUniformRandom()
  * @return Fills tensor with random integers
  */
 template <typename T, typename C>
-Tensor<T, C> &Tensor<T, C>::FillUniformRandomIntegers(int64_t const &min, int64_t const &max)
+Tensor<T, C> &Tensor<T, C>::FillUniformRandomIntegers(int64_t min, int64_t max)
 {
   assert(min <= max);
 
-  uint64_t diff = uint64_t(max - min);
+  auto diff = uint64_t(max - min);
 
   for (SizeType i = 0; i < this->size(); ++i)
   {
@@ -1544,7 +1594,16 @@ Tensor<T, C> Tensor<T, C>::Transpose(SizeVector &new_axes) const
   assert(shape_.size() > 1);
   assert(shape_.size() == new_axes.size());
 
-  Tensor ret(shape());
+  SizeVector new_shape;
+  new_shape.reserve(new_shape.size());
+
+  for (auto &val : new_axes)
+  {
+    new_shape.push_back(shape_.at(val));
+  }
+
+  Tensor ret(new_shape);
+
   TransposeImplementation(new_axes, ret);
   return ret;
 }
@@ -1558,9 +1617,8 @@ Tensor<T, C> Tensor<T, C>::Transpose(SizeVector &new_axes) const
 template <typename T, typename C>
 Tensor<T, C> &Tensor<T, C>::Squeeze()
 {
-  // TODO(private issue 998): Make last dimension for efficiency
   auto shape = shape_;
-  shape.erase(shape.begin());
+  shape.erase(shape.end() - 1);
   Reshape(shape);
 
   return *this;
@@ -1575,8 +1633,8 @@ Tensor<T, C> &Tensor<T, C>::Squeeze()
 template <typename T, typename C>
 Tensor<T, C> &Tensor<T, C>::Unsqueeze()
 {
-  auto shape = shape_;  // TODO: Make last dimension for efficiency
-  shape.insert(shape.begin(), 1);
+  auto shape = shape_;
+  shape.push_back(1);
 
   Reshape(shape);
 
@@ -1671,19 +1729,7 @@ fetch::meta::IfIsUnsignedInteger<S, typename Tensor<T, C>::Type> Tensor<T, C>::G
 template <typename T, typename C>
 Tensor<T, C> Tensor<T, C>::InlineAdd(Tensor const &other)
 {
-  if (other.shape() == shape_)
-  {
-    Add(*this, other, *this);
-  }
-  else
-  {
-    Tensor self_copy  = this->Copy();
-    Tensor other_copy = other.Copy();
-    if (!(Broadcast([](T x, T y) { return x + y; }, self_copy, other_copy, *this)))
-    {
-      throw std::runtime_error("arrays not broadcastable for InlineAdd!");
-    }
-  }
+  Add(*this, other, *this);
   return *this;
 }
 
@@ -1707,19 +1753,7 @@ Tensor<T, C> Tensor<T, C>::InlineAdd(Type const &scalar)
 template <typename T, typename C>
 Tensor<T, C> Tensor<T, C>::InlineSubtract(Tensor const &other)
 {
-  if (other.shape() == shape_)
-  {
-    Subtract(*this, other, *this);
-  }
-  else
-  {
-    Tensor self_copy  = this->Copy();
-    Tensor other_copy = other.Copy();
-    if (!(Broadcast([](T x, T y) { return x - y; }, self_copy, other_copy, *this)))
-    {
-      throw std::runtime_error("arrays not broadcastable for InlineSubtract!");
-    }
-  }
+  Subtract(*this, other, *this);
   return *this;
 }
 
@@ -1743,19 +1777,7 @@ Tensor<T, C> Tensor<T, C>::InlineSubtract(Type const &scalar)
 template <typename T, typename C>
 Tensor<T, C> Tensor<T, C>::InlineReverseSubtract(Tensor const &other)
 {
-  if (other.shape() == shape_)
-  {
-    Subtract(other, *this, *this);
-  }
-  else
-  {
-    Tensor self_copy  = this->Copy();
-    Tensor other_copy = other.Copy();
-    if (!(Broadcast([](T x, T y) { return x - y; }, other_copy, self_copy, *this)))
-    {
-      throw std::runtime_error("arrays not broadcastable for InlineReverseSubtract!");
-    }
-  }
+  Subtract(other, *this, *this);
   return *this;
 }
 
@@ -1781,19 +1803,7 @@ Tensor<T, C> Tensor<T, C>::InlineReverseSubtract(Type const &scalar)
 template <typename T, typename C>
 Tensor<T, C> Tensor<T, C>::InlineMultiply(Tensor const &other)
 {
-  if (other.shape() == shape_)
-  {
-    Multiply(*this, other, *this);
-  }
-  else
-  {
-    Tensor self_copy  = this->Copy();
-    Tensor other_copy = other.Copy();
-    if (!(Broadcast([](T x, T y) { return x * y; }, other_copy, self_copy, *this)))
-    {
-      throw std::runtime_error("arrays not broadcastable for InlineMultiply!");
-    }
-  }
+  Multiply(*this, other, *this);
   return *this;
 }
 
@@ -1817,25 +1827,13 @@ Tensor<T, C> Tensor<T, C>::InlineMultiply(Type const &scalar)
 template <typename T, typename C>
 Tensor<T, C> Tensor<T, C>::InlineDivide(Tensor const &other)
 {
-  if (other.shape() == shape_)
-  {
-    Divide(*this, other, *this);
-  }
-  else
-  {
-    Tensor self_copy  = this->Copy();
-    Tensor other_copy = other.Copy();
-    if (!(Broadcast([](T x, T y) { return x / y; }, self_copy, other_copy, *this)))
-    {
-      throw std::runtime_error("arrays not broadcastable for InlineDivide!");
-    }
-  }
+  Divide(*this, other, *this);
   return *this;
 }
 
 /**
  * Divide array by a scalar elementwise
- * @param scalar to subtract
+ * @param scalar to divide
  * @return new array output
  */
 template <typename T, typename C>
@@ -1853,25 +1851,13 @@ Tensor<T, C> Tensor<T, C>::InlineDivide(Type const &scalar)
 template <typename T, typename C>
 Tensor<T, C> Tensor<T, C>::InlineReverseDivide(Tensor const &other)
 {
-  if (other.shape() == shape_)
-  {
-    Divide(other, *this, *this);
-  }
-  else
-  {
-    Tensor self_copy  = this->Copy();
-    Tensor other_copy = other.Copy();
-    if (!(Broadcast([](T x, T y) { return x / y; }, other_copy, self_copy, *this)))
-    {
-      throw std::runtime_error("arrays not broadcastable for InlineReverseDivide!");
-    }
-  }
+  Divide(other, *this, *this);
   return *this;
 }
 
 /**
  * Divide scalar by array elementwise
- * @param scalar to subtract
+ * @param scalar to divide
  * @return new array output
  */
 template <typename T, typename C>
@@ -1891,7 +1877,9 @@ template <typename T, typename C>
 template <typename OtherType>
 Tensor<T, C> Tensor<T, C>::operator+(OtherType const &other)
 {
-  return InlineAdd(other);
+  Tensor<T, C> ret{this->shape()};
+  Add(*this, other, ret);
+  return ret;
 }
 
 template <typename T, typename C>
@@ -1911,7 +1899,9 @@ template <typename T, typename C>
 template <typename OtherType>
 Tensor<T, C> Tensor<T, C>::operator-(OtherType const &other)
 {
-  return InlineSubtract(other);
+  Tensor<T, C> ret{this->shape()};
+  Subtract(*this, other, ret);
+  return ret;
 }
 
 template <typename T, typename C>
@@ -1931,7 +1921,9 @@ template <typename T, typename C>
 template <typename OtherType>
 Tensor<T, C> Tensor<T, C>::operator*(OtherType const &other)
 {
-  return InlineMultiply(other);
+  Tensor<T, C> ret(this->shape());
+  Multiply(*this, other, ret);
+  return ret;
 }
 
 template <typename T, typename C>
@@ -1945,7 +1937,9 @@ template <typename T, typename C>
 template <typename OtherType>
 Tensor<T, C> Tensor<T, C>::operator/(OtherType const &other)
 {
-  return InlineDivide(other);
+  Tensor<T, C> ret(this->shape());
+  Divide(*this, other, ret);
+  return ret;
 }
 
 template <typename T, typename C>
@@ -2185,7 +2179,7 @@ std::string Tensor<T, C>::ToString() const
       ss << At(i) << "\t";
     }
   }
-  if (shape_.size() == 2)
+  else if (shape_.size() == 2)
   {
     for (SizeType i(0); i < shape_[0]; ++i)
     {
@@ -2195,6 +2189,10 @@ std::string Tensor<T, C>::ToString() const
       }
       ss << "\n";
     }
+  }
+  else
+  {
+    throw std::runtime_error("cannot convert > 2D tensors to string");
   }
   return ss.str();
 }

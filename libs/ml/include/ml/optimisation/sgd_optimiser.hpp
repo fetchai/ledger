@@ -18,7 +18,6 @@
 //------------------------------------------------------------------------------
 
 #include "ml/graph.hpp"
-#include "ml/ops/loss_functions/criterion.hpp"
 #include "optimiser.hpp"
 
 namespace fetch {
@@ -30,40 +29,48 @@ namespace optimisers {
  * @tparam T ArrayType
  * @tparam C CriterionType
  */
-template <class T, class C>
-class SGDOptimiser : public Optimiser<T, C>
+template <class T>
+class SGDOptimiser : public Optimiser<T>
 {
 public:
   using ArrayType = T;
   using DataType  = typename ArrayType::Type;
   using SizeType  = typename ArrayType::SizeType;
 
-  SGDOptimiser(std::shared_ptr<Graph<T>>
+  SGDOptimiser(std::shared_ptr<Graph<T>> graph, std::vector<std::string> const &input_node_names,
+               std::string const &label_node_name, std::string const &output_node_name,
+               DataType const &learning_rate = DataType{0.001f});
 
-                                               graph,
-               std::vector<std::string> const &input_node_names,
-               std::string const &             output_node_name,
-               DataType const &                learning_rate = DataType{0.001f});
+  SGDOptimiser(std::shared_ptr<Graph<T>> graph, std::vector<std::string> const &input_node_names,
+               std::string const &label_node_name, std::string const &output_node_name,
+               fetch::ml::optimisers::LearningRateParam<DataType> const &learning_rate_param);
 
-  virtual ~SGDOptimiser() = default;
+  ~SGDOptimiser() override = default;
 
 private:
   void ApplyGradients(SizeType batch_size) override;
 };
 
-template <class T, class C>
-SGDOptimiser<T, C>::SGDOptimiser(std::shared_ptr<Graph<T>>
+template <class T>
+SGDOptimiser<T>::SGDOptimiser(std::shared_ptr<Graph<T>>       graph,
+                              std::vector<std::string> const &input_node_names,
+                              std::string const &             label_node_name,
+                              std::string const &output_node_name, DataType const &learning_rate)
+  : Optimiser<T>(graph, input_node_names, label_node_name, output_node_name, learning_rate)
+{}
 
-                                                                 graph,
-                                 std::vector<std::string> const &input_node_names,
-                                 std::string const &output_node_name, DataType const &learning_rate)
-  : Optimiser<T, C>(graph, input_node_names, output_node_name, learning_rate)
+template <class T>
+SGDOptimiser<T>::SGDOptimiser(
+    std::shared_ptr<Graph<T>> graph, std::vector<std::string> const &input_node_names,
+    std::string const &label_node_name, std::string const &output_node_name,
+    fetch::ml::optimisers::LearningRateParam<SGDOptimiser<T>::DataType> const &learning_rate_param)
+  : Optimiser<T>(graph, input_node_names, label_node_name, output_node_name, learning_rate_param)
 {}
 
 // private
 
-template <class T, class C>
-void SGDOptimiser<T, C>::ApplyGradients(SizeType batch_size)
+template <class T>
+void SGDOptimiser<T>::ApplyGradients(SizeType batch_size)
 {
   auto trainable_it = this->graph_trainables_.begin();
   auto gradient_it  = this->gradients_.begin();

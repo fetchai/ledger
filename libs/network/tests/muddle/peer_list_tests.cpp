@@ -80,10 +80,7 @@ protected:
               register_, dispatcher_)
     , peer_list_(router_)
     , peer_(Peer{"0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef", 42})
-    , connection_(::std::make_shared<fetch::muddle::DevNull>())
-  {}
-
-  void SetUp() override
+    , connection_(std::make_shared<fetch::muddle::DevNull>())
   {}
 
   Dispatcher         dispatcher_;
@@ -112,7 +109,7 @@ TEST_F(PeerConnectionListTests, CheckDisconnect)
   EXPECT_EQ(peer_list_.GetStateForPeer(peer_), ConnectionState(int(ConnectionState::BACKOFF) + 1));
   {
     using namespace std::chrono_literals;
-    ::std::this_thread::sleep_for(2s);
+    std::this_thread::sleep_for(2s);
   }
   peer_list_.OnConnectionEstablished(peer_);
   EXPECT_EQ(peer_list_.GetStateForPeer(peer_), ConnectionState::CONNECTED);

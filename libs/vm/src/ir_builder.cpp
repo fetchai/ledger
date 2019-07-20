@@ -18,6 +18,9 @@
 
 #include "vm/ir_builder.hpp"
 
+#include <memory>
+#include <utility>
+
 namespace fetch {
 namespace vm {
 
@@ -92,12 +95,14 @@ IRTypePtr IRBuilder::BuildType(TypePtr const &type)
   {
     return ir_type;
   }
+  IRTypePtr      template_type;
   IRTypePtrArray parameter_types;
   if (type->IsInstantiation())
   {
+    template_type   = BuildType(type->template_type);
     parameter_types = BuildTypes(type->types);
   }
-  ir_type = CreateIRType(type->type_kind, type->name, parameter_types);
+  ir_type = CreateIRType(type->type_kind, type->name, template_type, parameter_types);
   type_map_.AddPair(type, ir_type);
   ir_->AddType(ir_type);
   return ir_type;

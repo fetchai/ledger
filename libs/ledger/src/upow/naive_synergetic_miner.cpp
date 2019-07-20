@@ -19,12 +19,10 @@
 #include "core/serializers/byte_array.hpp"
 #include "core/serializers/byte_array_buffer.hpp"
 #include "ledger/chain/digest.hpp"
-#include "ledger/upow/naive_synergetic_miner.hpp"
-#include "ledger/upow/work.hpp"
-
 #include "ledger/chaincode/smart_contract_manager.hpp"
+#include "ledger/upow/naive_synergetic_miner.hpp"
 #include "ledger/upow/synergetic_base_types.hpp"
-
+#include "ledger/upow/work.hpp"
 #include "vm_modules/math/bignumber.hpp"
 
 #include <random>
@@ -36,7 +34,7 @@ namespace {
 
 constexpr char const *LOGGING_NAME = "NaiveSynMiner";
 
-using math::BigUnsigned;
+using UInt256 = vectorise::UInt<256>;
 using serializers::ByteArrayBuffer;
 using byte_array::ConstByteArray;
 
@@ -220,7 +218,7 @@ WorkPtr NaiveSynergeticMiner::MineSolution(Digest const &     contract_digest,
 
   // update the initial nonce
   std::random_device rd;
-  BigUnsigned        nonce{rd()};
+  UInt256            nonce{rd()};
 
   // generate a series of solutions for each of the problems
   WorkPtr best_work{};

@@ -22,6 +22,8 @@
 #include "ledger/consensus/stake_snapshot.hpp"
 
 #include <algorithm>
+#include <cstddef>
+#include <iterator>
 
 namespace fetch {
 namespace ledger {
@@ -44,7 +46,7 @@ std::size_t SafeDecrement(std::size_t value, std::size_t decrement)
 }  // namespace
 
 StakeManager::StakeManager(EntropyGeneratorInterface &entropy)
-  : entropy_{entropy}
+  : entropy_{&entropy}
 {}
 
 void StakeManager::UpdateCurrentBlock(Block const &current)
@@ -86,7 +88,13 @@ StakeManager::CommitteePtr StakeManager::GetCommittee(Block const &previous)
   assert(static_cast<bool>(current_));
 
   // generate the entropy for the previous block
-  auto const entropy = entropy_.GenerateEntropy(previous.body.hash, previous.body.block_number);
+  uint64_t entropy{0};
+  if (!LookupEntropy(previous, entropy))
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Unable to lookup committee for ", previous.body.block_number,
+                   " (entropy not ready)");
+    return {};
+  }
 
   // lookup the snapshot associated
   auto snapshot = LookupStakeSnapshot(previous.body.block_number);
@@ -174,6 +182,65 @@ void StakeManager::ResetInternal(StakeSnapshotPtr &&snapshot, std::size_t commit
   // current
   current_             = std::move(snapshot);
   current_block_index_ = 0;
+}
+
+bool StakeManager::LookupEntropy(Block const &previous, uint64_t &entropy)
+{
+  bool success{false};
+
+  // Step 1. Lookup the entropy
+  auto const it = entropy_cache_.find(previous.body.block_number);
+  if (entropy_cache_.end() != it)
+  {
+    entropy = it->second;
+    success = true;
+  }
+  else
+  {
+    // generate the entropy for the previous block
+    auto const status =
+        entropy_->GenerateEntropy(previous.body.hash, previous.body.block_number, entropy);
+
+    if (EntropyGeneratorInterface::Status::OK == status)
+    {
+      entropy_cache_[previous.body.block_number] = entropy;
+      success                                    = true;
+    }
+    else
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Unable to lookup entropy for block ",
+                     previous.body.block_number);
+    }
+  }
+
+  // Step 2. Clean up
+  if (entropy_cache_.size() >= HISTORY_LENGTH)
+  {
+    auto const num_to_remove = entropy_cache_.size() - HISTORY_LENGTH;
+
+    if (num_to_remove > 0)
+    {
+      auto end = entropy_cache_.begin();
+      std::advance(end, static_cast<std::ptrdiff_t>(num_to_remove));
+
+      entropy_cache_.erase(entropy_cache_.begin(), end);
+    }
+  }
+
+  return success;
+}
+
+bool StakeManager::ValidMinerForBlock(Block const &previous, Address const &address)
+{
+  auto const committee = GetCommittee(previous);
+
+  if (!committee || committee->empty())
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Unable to determine committee for block validation");
+    return false;
+  }
+
+  return std::find((*committee).begin(), (*committee).end(), address) != (*committee).end();
 }
 
 }  // namespace ledger

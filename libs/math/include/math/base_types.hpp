@@ -17,12 +17,13 @@
 //
 //------------------------------------------------------------------------------
 
-#include <cstdint>
-#include <unordered_set>
-#include <vector>
-
 #include "math/meta/math_type_traits.hpp"
 #include "math/tensor_declaration.hpp"
+
+#include <cstdint>
+#include <limits>
+#include <unordered_set>
+#include <vector>
 
 namespace fetch {
 namespace math {
@@ -42,7 +43,7 @@ static constexpr meta::IfIsNonFixedPointArithmetic<T, T> numeric_max()
 template <typename T>
 static constexpr meta::IfIsFixedPoint<T, T> numeric_max()
 {
-  return T::CONST_MAX;
+  return T::FP_MAX;
 }
 
 template <typename T>
@@ -66,7 +67,7 @@ static constexpr meta::IfIsNonFixedPointArithmetic<T, T> numeric_lowest()
 template <typename T>
 static constexpr meta::IfIsFixedPoint<T, T> numeric_lowest()
 {
-  return T::CONST_MIN;
+  return T::FP_MIN;
 }
 
 template <typename T>

@@ -16,9 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/ops/matrix_multiply.hpp"
-
 #include "math/tensor.hpp"
+#include "ml/ops/matrix_multiply.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 
 #include "gtest/gtest.h"
@@ -36,87 +35,30 @@ TYPED_TEST_CASE(MatrixMultiplyTest, MyTypes);
 
 TYPED_TEST(MatrixMultiplyTest, forward_test)
 {
-  using SizeType = typename TypeParam::SizeType;
-
-  TypeParam a(std::vector<std::uint64_t>({1, 5}));
-  TypeParam b(std::vector<std::uint64_t>({5, 4}));
-  TypeParam gt(std::vector<std::uint64_t>({1, 4}));
-
-  std::vector<int> data({1, 2, -3, 4, 5});
-  std::vector<int> weights(
-      {-11, 12, 13, 14, 21, 22, 23, 24, 31, 32, 33, 34, 41, 42, 43, 44, 51, 52, 53, 54});
-  std::vector<int> results({357, 388, 397, 406});
-
-  for (SizeType i(0); i < data.size(); ++i)
-  {
-    a.Set(0, i, typename TypeParam::Type(data[i]));
-  }
-  for (SizeType i(0); i < 5; ++i)
-  {
-    for (SizeType j(0); j < 4; ++j)
-    {
-      b.Set(i, j, typename TypeParam::Type(weights[i * 4 + j]));
-    }
-  }
-  for (SizeType i{0}; i < results.size(); ++i)
-  {
-    gt.Set(0, i, typename TypeParam::Type(results[i]));
-  }
+  TypeParam a = TypeParam::FromString(R"(1, 2, -3, 4, 5)");
+  TypeParam b = TypeParam::FromString(
+      R"(-11, 12, 13, 14; 21, 22, 23, 24; 31, 32, 33, 34; 41, 42, 43, 44; 51, 52, 53, 54)");
+  TypeParam gt = TypeParam::FromString(R"(357, 388, 397, 406)");
 
   fetch::ml::ops::MatrixMultiply<TypeParam> op;
 
   TypeParam prediction(op.ComputeOutputShape({a, b}));
   op.Forward({a, b}, prediction);
 
-  // // test correct values
+  // test correct values
   ASSERT_EQ(prediction.shape(), std::vector<typename TypeParam::SizeType>({1, 4}));
   ASSERT_TRUE(prediction.AllClose(gt));
 }
 
 TYPED_TEST(MatrixMultiplyTest, backward_test)
 {
-  using SizeType = typename TypeParam::SizeType;
-
-  TypeParam a(std::vector<std::uint64_t>({1, 5}));
-  TypeParam b(std::vector<std::uint64_t>({5, 4}));
-  TypeParam error(std::vector<std::uint64_t>({1, 4}));
-  TypeParam gradient_a(std::vector<std::uint64_t>({1, 5}));
-  TypeParam gradient_b(std::vector<std::uint64_t>({5, 4}));
-
-  std::vector<int> data({1, 2, -3, 4, 5});
-  std::vector<int> weights(
-      {-11, 12, 13, 14, 21, 22, 23, 24, 31, 32, 33, 34, 41, 42, 43, 44, 51, 52, 53, 54});
-  std::vector<int> error_signal({1, 2, 3, -4});
-  std::vector<int> inputGrad({-4, 38, 58, 78, 98});
-  std::vector<int> weightsGrad(
-      {1, 2, 3, -4, 2, 4, 6, -8, -3, -6, -9, 12, 4, 8, 12, -16, 5, 10, 15, -20});
-
-  for (SizeType i{0}; i < data.size(); ++i)
-  {
-    a.Set(0, i, typename TypeParam::Type(data[i]));
-  }
-  for (SizeType i{0}; i < 5; ++i)
-  {
-    for (SizeType j{0}; j < 4; ++j)
-    {
-      b.Set(i, j, typename TypeParam::Type(weights[i * 4 + j]));
-    }
-  }
-  for (SizeType i{0}; i < error_signal.size(); ++i)
-  {
-    error.Set(0, i, typename TypeParam::Type(error_signal[i]));
-  }
-  for (SizeType i{0}; i < inputGrad.size(); ++i)
-  {
-    gradient_a.Set(0, i, typename TypeParam::Type(inputGrad[i]));
-  }
-  for (SizeType i{0}; i < 5; ++i)
-  {
-    for (SizeType j{0}; j < 4; ++j)
-    {
-      gradient_b.Set(i, j, typename TypeParam::Type(weightsGrad[i * 4 + j]));
-    }
-  }
+  TypeParam a = TypeParam::FromString(R"(1, 2, -3, 4, 5)");
+  TypeParam b = TypeParam::FromString(
+      R"(-11, 12, 13, 14; 21, 22, 23, 24; 31, 32, 33, 34; 41, 42, 43, 44; 51, 52, 53, 54)");
+  TypeParam error      = TypeParam::FromString(R"(1, 2, 3, -4)");
+  TypeParam gradient_a = TypeParam::FromString(R"(-4, 38, 58, 78, 98)");
+  TypeParam gradient_b = TypeParam::FromString(
+      R"(1, 2, 3, -4; 2, 4, 6, -8; -3, -6, -9, 12; 4, 8, 12, -16; 5, 10, 15, -20)");
 
   fetch::ml::ops::MatrixMultiply<TypeParam> op;
   std::vector<TypeParam>                    backpropagated_signals = op.Backward({a, b}, error);
@@ -125,6 +67,46 @@ TYPED_TEST(MatrixMultiplyTest, backward_test)
   ASSERT_EQ(backpropagated_signals.size(), 2);
   ASSERT_EQ(backpropagated_signals[0].shape(), std::vector<typename TypeParam::SizeType>({1, 5}));
   ASSERT_EQ(backpropagated_signals[1].shape(), std::vector<typename TypeParam::SizeType>({5, 4}));
+
+  // test correct values
+  EXPECT_TRUE(backpropagated_signals[0].AllClose(gradient_a));
+  EXPECT_TRUE(backpropagated_signals[1].AllClose(gradient_b));
+}
+
+TYPED_TEST(MatrixMultiplyTest, forward_batch_test)
+{
+
+  TypeParam a({3, 4, 2});
+  TypeParam b({4, 3, 2});
+  TypeParam gt({3, 3, 2});
+
+  fetch::ml::ops::MatrixMultiply<TypeParam> op;
+
+  TypeParam prediction(op.ComputeOutputShape({a, b}));
+  op.Forward({a, b}, prediction);
+
+  // test correct values
+  ASSERT_EQ(prediction.shape(), std::vector<typename TypeParam::SizeType>({3, 3, 2}));
+  ASSERT_TRUE(prediction.AllClose(gt));
+}
+
+TYPED_TEST(MatrixMultiplyTest, backward_batch_test)
+{
+  TypeParam a({3, 4, 2});
+  TypeParam b({4, 3, 2});
+  TypeParam error({3, 3, 2});
+  TypeParam gradient_a({3, 4, 2});
+  TypeParam gradient_b({4, 3, 2});
+
+  fetch::ml::ops::MatrixMultiply<TypeParam> op;
+  std::vector<TypeParam>                    backpropagated_signals = op.Backward({a, b}, error);
+
+  // test correct shapes
+  ASSERT_EQ(backpropagated_signals.size(), 2);
+  ASSERT_EQ(backpropagated_signals[0].shape(),
+            std::vector<typename TypeParam::SizeType>({3, 4, 2}));
+  ASSERT_EQ(backpropagated_signals[1].shape(),
+            std::vector<typename TypeParam::SizeType>({4, 3, 2}));
 
   // test correct values
   EXPECT_TRUE(backpropagated_signals[0].AllClose(gradient_a));

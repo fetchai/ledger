@@ -16,26 +16,31 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chain/block_coordinator.hpp"
-
 #include "core/byte_array/encoders.hpp"
 #include "core/feature_flags.hpp"
 #include "core/threading.hpp"
 #include "ledger/block_packer_interface.hpp"
 #include "ledger/block_sink_interface.hpp"
+#include "ledger/chain/block_coordinator.hpp"
 #include "ledger/chain/consensus/dummy_miner.hpp"
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "ledger/consensus/stake_manager_interface.hpp"
+#include "ledger/dag/dag_interface.hpp"
 #include "ledger/execution_manager_interface.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 #include "ledger/transaction_status_cache.hpp"
-
-#include "ledger/dag/dag_interface.hpp"
 #include "ledger/upow/synergetic_execution_manager.hpp"
 #include "ledger/upow/synergetic_executor.hpp"
+#include "telemetry/counter.hpp"
+#include "telemetry/registry.hpp"
 
+#include <cassert>
 #include <chrono>
+#include <cstddef>
+#include <cstdint>
+#include <memory>
+#include <utility>
 
 namespace fetch {
 namespace ledger {
@@ -109,6 +114,54 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag, StakeManagerPtr
   , exec_wait_periodic_{EXEC_NOTIFY_INTERVAL}
   , syncing_periodic_{NOTIFY_INTERVAL}
   , synergetic_exec_mgr_{CreateSynergeticExecutor(features, dag, storage_unit_)}
+  , reload_state_count_{telemetry::Registry::Instance().CreateCounter(
+        "ledger_block_coordinator_reload_state_total",
+        "The total number of times in the reload state")}
+  , synchronising_state_count_{telemetry::Registry::Instance().CreateCounter(
+        "ledger_block_coordinator_synchronising_state_total",
+        "The total number of times in the synchronising state")}
+  , synchronised_state_count_{telemetry::Registry::Instance().CreateCounter(
+        "ledger_block_coordinator_synchronised_state_total",
+        "The total number of times in the synchronised state")}
+  , pre_valid_state_count_{telemetry::Registry::Instance().CreateCounter(
+        "ledger_block_coordinator_pre_valid_state_total",
+        "The total number of times in the pre validation state")}
+  , wait_tx_state_count_{telemetry::Registry::Instance().CreateCounter(
+        "ledger_block_coordinator_wait_tx_state_total",
+        "The total number of times in the wait for tx state")}
+  , syn_exec_state_count_{telemetry::Registry::Instance().CreateCounter(
+        "ledger_block_coordinator_syn_exec_state_total",
+        "The total number of times in the synergetic execution state")}
+  , sch_block_state_count_{telemetry::Registry::Instance().CreateCounter(
+        "ledger_block_coordinator_sch_block_state_total",
+        "The total number of times in the schedule block exec state")}
+  , wait_exec_state_count_{telemetry::Registry::Instance().CreateCounter(
+        "ledger_block_coordinator_wait_exec_state_total",
+        "The total number of times in the waiting for exec state")}
+  , post_valid_state_count_{telemetry::Registry::Instance().CreateCounter(
+        "ledger_block_coordinator_post_valid_state_total",
+        "The total number of times in the post validation state")}
+  , pack_block_state_count_{telemetry::Registry::Instance().CreateCounter(
+        "ledger_block_coordinator_pack_block_state_total",
+        "The total number of times in the pack new block state")}
+  , new_syn_state_count_{telemetry::Registry::Instance().CreateCounter(
+        "ledger_block_coordinator_new_syn_state_total",
+        "The total number of times in the new synergetic state")}
+  , new_exec_state_count_{telemetry::Registry::Instance().CreateCounter(
+        "ledger_block_coordinator_new_exec_state_total",
+        "The total number of times in the new synergetic exec state")}
+  , new_wait_exec_state_count_{telemetry::Registry::Instance().CreateCounter(
+        "ledger_block_coordinator_new_wait_exec_state_total",
+        "The total number of times in the new wait exec state")}
+  , proof_search_state_count_{telemetry::Registry::Instance().CreateCounter(
+        "ledger_block_coordinator_proof_search_state_total",
+        "The total number of times in the proof search state")}
+  , transmit_state_count_{telemetry::Registry::Instance().CreateCounter(
+        "ledger_block_coordinator_transmit_state_total",
+        "The total number of times in the transmit state")}
+  , reset_state_count_{telemetry::Registry::Instance().CreateCounter(
+        "ledger_block_coordinator_reset_state_total",
+        "The total number of times in the reset state")}
 {
   // configure the state machine
   // clang-format off
@@ -121,7 +174,7 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag, StakeManagerPtr
   state_machine_->RegisterHandler(State::SYNERGETIC_EXECUTION,         this, &BlockCoordinator::OnSynergeticExecution);
   state_machine_->RegisterHandler(State::WAIT_FOR_TRANSACTIONS,        this, &BlockCoordinator::OnWaitForTransactions);
   state_machine_->RegisterHandler(State::SCHEDULE_BLOCK_EXECUTION,     this, &BlockCoordinator::OnScheduleBlockExecution);
-  state_machine_->RegisterHandler(State::WAIT_FOR_EXECUTION,           this, &BlockCoordinator::OnWaitForExecution);  
+  state_machine_->RegisterHandler(State::WAIT_FOR_EXECUTION,           this, &BlockCoordinator::OnWaitForExecution);
   state_machine_->RegisterHandler(State::POST_EXEC_BLOCK_VALIDATION,   this, &BlockCoordinator::OnPostExecBlockValidation);
 
   // Pipe 2
@@ -161,6 +214,8 @@ void BlockCoordinator::TriggerBlockGeneration()
 
 BlockCoordinator::State BlockCoordinator::OnReloadState()
 {
+  reload_state_count_->increment();
+
   // if no current block then this is the first time in the state therefore lookup the heaviest
   // block
   if (!current_block_)
@@ -199,6 +254,8 @@ BlockCoordinator::State BlockCoordinator::OnReloadState()
 
 BlockCoordinator::State BlockCoordinator::OnSynchronising()
 {
+  synchronising_state_count_->increment();
+
   // ensure that we have a current block that we are executing
   if (!current_block_)
   {
@@ -320,13 +377,11 @@ BlockCoordinator::State BlockCoordinator::OnSynchronising()
 
     // we expect that the common parent in this case will always have been processed, but this
     // should be checked
-    if (!storage_unit_.HashExists(
-            common_parent->body.merkle_hash,
-            common_parent->body
-                .block_number) /*|| dag_ && !dag->HasEpoch(common_parent->body.dag_epoch)*/)
+    if (!storage_unit_.HashExists(common_parent->body.merkle_hash,
+                                  common_parent->body.block_number))
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "Ancestor block's state hash cannot be retrieved for block: 0x",
-                      current_hash.ToHex(), " number; ", common_parent->body.block_number);
+                      current_hash.ToHex(), " number: ", common_parent->body.block_number);
 
       // this is a bad situation so the easiest solution is to revert back to genesis
       execution_manager_.SetLastProcessedBlock(GENESIS_DIGEST);
@@ -386,6 +441,8 @@ BlockCoordinator::State BlockCoordinator::OnSynchronising()
 
 BlockCoordinator::State BlockCoordinator::OnSynchronised(State current, State previous)
 {
+  synchronised_state_count_->increment();
+
   FETCH_UNUSED(current);
 
   // ensure the periodic print is not trigger once we have synced
@@ -416,6 +473,11 @@ BlockCoordinator::State BlockCoordinator::OnSynchronised(State current, State pr
     next_block_->body.previous_hash = current_block_->body.hash;
     next_block_->body.block_number  = current_block_->body.block_number + 1;
     next_block_->body.miner         = mining_address_;
+
+    if (stake_)
+    {
+      next_block_->weight = stake_->GetBlockGenerationWeight(*current_block_, mining_address_);
+    }
 
     // Attach current DAG state
     if (dag_)
@@ -449,6 +511,8 @@ BlockCoordinator::State BlockCoordinator::OnSynchronised(State current, State pr
 
 BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
 {
+  pre_valid_state_count_->increment();
+
   bool const is_genesis = current_block_->body.previous_hash == GENESIS_DIGEST;
 
   auto fail{[this](char const *reason) {
@@ -467,6 +531,21 @@ BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
     if (!previous)
     {
       return fail("No previous block in chain");
+    }
+
+    // Check that the weight as given by the proof is correct
+    if (stake_)
+    {
+      if (!stake_->ValidMinerForBlock(*previous, current_block_->body.miner))
+      {
+        return fail("Block signed by miner deemed invalid by the staking mechanism");
+      }
+
+      if (current_block_->weight !=
+          stake_->GetBlockGenerationWeight(*previous, current_block_->body.miner))
+      {
+        return fail("Incorrect stake weight found for block");
+      }
     }
 
     // Check: Ensure the block number is continuous
@@ -521,6 +600,8 @@ BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
 
 BlockCoordinator::State BlockCoordinator::OnSynergeticExecution()
 {
+  syn_exec_state_count_->count();
+
   bool const is_genesis = current_block_->body.previous_hash == GENESIS_DIGEST;
 
   // Executing synergetic work
@@ -559,6 +640,8 @@ BlockCoordinator::State BlockCoordinator::OnSynergeticExecution()
 
 BlockCoordinator::State BlockCoordinator::OnWaitForTransactions(State current, State previous)
 {
+  wait_tx_state_count_->increment();
+
   if (previous == current)
   {
     if (have_asked_for_missing_txs_)
@@ -663,6 +746,8 @@ BlockCoordinator::State BlockCoordinator::OnWaitForTransactions(State current, S
 
 BlockCoordinator::State BlockCoordinator::OnScheduleBlockExecution()
 {
+  sch_block_state_count_->increment();
+
   State next_state{State::RESET};
 
   // schedule the current block for execution
@@ -678,6 +763,8 @@ BlockCoordinator::State BlockCoordinator::OnScheduleBlockExecution()
 
 BlockCoordinator::State BlockCoordinator::OnWaitForExecution()
 {
+  wait_exec_state_count_->increment();
+
   State next_state{State::WAIT_FOR_EXECUTION};
 
   auto const status = QueryExecutorStatus();
@@ -711,6 +798,8 @@ BlockCoordinator::State BlockCoordinator::OnWaitForExecution()
 
 BlockCoordinator::State BlockCoordinator::OnPostExecBlockValidation()
 {
+  post_valid_state_count_->increment();
+
   // Check: Ensure the merkle hash is correct for this block
   auto const state_hash = storage_unit_.CurrentHash();
 
@@ -719,7 +808,8 @@ BlockCoordinator::State BlockCoordinator::OnPostExecBlockValidation()
   {
     if (state_hash != current_block_->body.merkle_hash)
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Block validation failed: Merkle hash mismatch (block: 0x",
+      FETCH_LOG_WARN(LOGGING_NAME, "Block validation failed: Merkle hash mismatch (block num: ",
+                     current_block_->body.block_number, " block: 0x",
                      current_block_->body.hash.ToHex(), " expected: 0x",
                      current_block_->body.merkle_hash.ToHex(), " actual: 0x", state_hash.ToHex(),
                      ")");
@@ -729,10 +819,11 @@ BlockCoordinator::State BlockCoordinator::OnPostExecBlockValidation()
     }
     else
     {
-      FETCH_LOG_DEBUG(LOGGING_NAME, "Block validation great success: (block: 0x",
-                      current_block_->body.hash.ToHex(), " expected: 0x",
-                      current_block_->body.merkle_hash.ToHex(), " actual: 0x", state_hash.ToHex(),
-                      ")");
+      FETCH_LOG_DEBUG(
+          LOGGING_NAME,
+          "Block validation great success: (block num: ", current_block_->body.block_number,
+          " block: 0x", current_block_->body.hash.ToHex(), " expected: 0x",
+          current_block_->body.merkle_hash.ToHex(), " actual: 0x", state_hash.ToHex(), ")");
     }
   }
 
@@ -794,9 +885,9 @@ BlockCoordinator::State BlockCoordinator::OnPostExecBlockValidation()
 
 BlockCoordinator::State BlockCoordinator::OnPackNewBlock()
 {
-  State next_state{State::RESET};
+  pack_block_state_count_->increment();
 
-  // TODO(unknown): Pull the generated block off the DAG
+  State next_state{State::RESET};
 
   try
   {
@@ -819,6 +910,8 @@ BlockCoordinator::State BlockCoordinator::OnPackNewBlock()
 
 BlockCoordinator::State BlockCoordinator::OnNewSynergeticExecution()
 {
+  new_syn_state_count_->increment();
+
   if (synergetic_exec_mgr_ && dag_)
   {
     // lookup the previous block
@@ -847,6 +940,8 @@ BlockCoordinator::State BlockCoordinator::OnNewSynergeticExecution()
 
 BlockCoordinator::State BlockCoordinator::OnExecuteNewBlock()
 {
+  new_exec_state_count_->increment();
+
   State next_state{State::RESET};
 
   // schedule the current block for execution
@@ -862,6 +957,8 @@ BlockCoordinator::State BlockCoordinator::OnExecuteNewBlock()
 
 BlockCoordinator::State BlockCoordinator::OnWaitForNewBlockExecution()
 {
+  new_wait_exec_state_count_->increment();
+
   State next_state{State::WAIT_FOR_NEW_BLOCK_EXECUTION};
 
   auto const status = QueryExecutorStatus();
@@ -909,6 +1006,8 @@ BlockCoordinator::State BlockCoordinator::OnWaitForNewBlockExecution()
 
 BlockCoordinator::State BlockCoordinator::OnProofSearch()
 {
+  proof_search_state_count_->increment();
+
   State next_state{State::PROOF_SEARCH};
 
   if (miner_->Mine(*next_block_, 100))  // TODO(unknown): what is this hard-coded number?
@@ -931,13 +1030,16 @@ BlockCoordinator::State BlockCoordinator::OnProofSearch()
 
 BlockCoordinator::State BlockCoordinator::OnTransmitBlock()
 {
+  transmit_state_count_->increment();
+
   try
   {
     // ensure that the main chain is aware of the block
     if (BlockStatus::ADDED == chain_.AddBlock(*next_block_))
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "Generating new block: 0x", next_block_->body.hash.ToHex(),
-                     " txs: ", next_block_->GetTransactionCount());
+      FETCH_LOG_INFO(LOGGING_NAME, "Broadcasting new block: 0x", next_block_->body.hash.ToHex(),
+                     " txs: ", next_block_->GetTransactionCount(),
+                     " number: ", next_block_->body.block_number);
 
       // mark this blocks transactions as being executed
       UpdateTxStatus(*next_block_);
@@ -959,6 +1061,8 @@ BlockCoordinator::State BlockCoordinator::OnTransmitBlock()
 
 BlockCoordinator::State BlockCoordinator::OnReset()
 {
+  reset_state_count_->increment();
+
   // trigger stake updates at the end of the block lifecycle
   if (stake_)
   {

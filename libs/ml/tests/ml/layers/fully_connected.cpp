@@ -18,6 +18,7 @@
 
 #include "math/tensor.hpp"
 #include "ml/layers/fully_connected.hpp"
+#include "ml/regularisers/regulariser.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 
 #include "gtest/gtest.h"
@@ -36,51 +37,52 @@ TYPED_TEST_CASE(FullyConnectedTest, MyTypes);
 TYPED_TEST(FullyConnectedTest, set_input_and_evaluate_test)  // Use the class as a subgraph
 {
   fetch::ml::layers::FullyConnected<TypeParam> fc(100u, 10u);
-  TypeParam input_data(std::vector<typename TypeParam::SizeType>({10, 10}));
+  TypeParam input_data(std::vector<typename TypeParam::SizeType>({10, 10, 2}));
   fc.SetInput("FC_Input", input_data);
-  TypeParam output = fc.Evaluate("FC_MatrixMultiply");
+  TypeParam output = fc.Evaluate("FC_MatrixMultiply", true);
 
   ASSERT_EQ(output.shape().size(), 2);
   ASSERT_EQ(output.shape()[0], 10);
-  ASSERT_EQ(output.shape()[1], 1);
+  ASSERT_EQ(output.shape()[1], 2);
   // No way to test actual values for now as weights are randomly initialised.
 }
 
 TYPED_TEST(FullyConnectedTest, ops_forward_test)  // Use the class as an Ops
 {
   fetch::ml::layers::FullyConnected<TypeParam> fc(50, 10);
-  TypeParam input_data(std::vector<typename TypeParam::SizeType>({5, 10}));
+  TypeParam input_data(std::vector<typename TypeParam::SizeType>({5, 10, 2}));
 
   TypeParam output(fc.ComputeOutputShape({input_data}));
   fc.Forward({input_data}, output);
 
   ASSERT_EQ(output.shape().size(), 2);
   ASSERT_EQ(output.shape()[0], 10);
-  ASSERT_EQ(output.shape()[1], 1);
+  ASSERT_EQ(output.shape()[1], 2);
   // No way to test actual values for now as weights are randomly initialised.
 }
 
 TYPED_TEST(FullyConnectedTest, ops_backward_test)  // Use the class as an Ops
 {
   fetch::ml::layers::FullyConnected<TypeParam> fc(50, 10);
-  TypeParam input_data(std::vector<typename TypeParam::SizeType>({5, 10}));
+  TypeParam input_data(std::vector<typename TypeParam::SizeType>({5, 10, 2}));
 
   TypeParam output(fc.ComputeOutputShape({input_data}));
   fc.Forward({input_data}, output);
 
-  TypeParam error_signal(std::vector<typename TypeParam::SizeType>({10, 1}));
+  TypeParam error_signal(std::vector<typename TypeParam::SizeType>({10, 2}));
 
   std::vector<TypeParam> backprop_error = fc.Backward({input_data}, error_signal);
   ASSERT_EQ(backprop_error.size(), 1);
-  ASSERT_EQ(backprop_error[0].shape().size(), 2);
+  ASSERT_EQ(backprop_error[0].shape().size(), 3);
   ASSERT_EQ(backprop_error[0].shape()[0], 5);
   ASSERT_EQ(backprop_error[0].shape()[1], 10);
+  ASSERT_EQ(backprop_error[0].shape()[2], 2);
   // No way to test actual values for now as weights are randomly initialised.
 }
 
 TYPED_TEST(FullyConnectedTest, node_forward_test)  // Use the class as a Node
 {
-  TypeParam data(std::vector<typename TypeParam::SizeType>({5, 10}));
+  TypeParam data(std::vector<typename TypeParam::SizeType>({5, 10, 2}));
   std::shared_ptr<fetch::ml::Node<TypeParam, fetch::ml::ops::PlaceHolder<TypeParam>>> placeholder =
       std::make_shared<fetch::ml::Node<TypeParam, fetch::ml::ops::PlaceHolder<TypeParam>>>("Input");
   placeholder->SetData(data);
@@ -89,16 +91,16 @@ TYPED_TEST(FullyConnectedTest, node_forward_test)  // Use the class as a Node
                                                                               42u);
   fc.AddInput(placeholder);
 
-  TypeParam prediction = fc.Evaluate();
+  TypeParam prediction = fc.Evaluate(true);
 
   ASSERT_EQ(prediction.shape().size(), 2);
   ASSERT_EQ(prediction.shape()[0], 42);
-  ASSERT_EQ(prediction.shape()[1], 1);
+  ASSERT_EQ(prediction.shape()[1], 2);
 }
 
 TYPED_TEST(FullyConnectedTest, node_backward_test)  // Use the class as a Node
 {
-  TypeParam                                                                           data({5, 10});
+  TypeParam data({5, 10, 2});
   std::shared_ptr<fetch::ml::Node<TypeParam, fetch::ml::ops::PlaceHolder<TypeParam>>> placeholder =
       std::make_shared<fetch::ml::Node<TypeParam, fetch::ml::ops::PlaceHolder<TypeParam>>>("Input");
   placeholder->SetData(data);
@@ -106,15 +108,16 @@ TYPED_TEST(FullyConnectedTest, node_backward_test)  // Use the class as a Node
   fetch::ml::Node<TypeParam, fetch::ml::layers::FullyConnected<TypeParam>> fc("FullyConnected", 50u,
                                                                               42u);
   fc.AddInput(placeholder);
-  TypeParam prediction = fc.Evaluate();
+  TypeParam prediction = fc.Evaluate(true);
 
-  TypeParam error_signal(std::vector<typename TypeParam::SizeType>({42, 1}));
-  auto      backprop_error = fc.BackPropagate(error_signal);
+  TypeParam error_signal(std::vector<typename TypeParam::SizeType>({42, 2}));
+  auto      backprop_error = fc.BackPropagateSignal(error_signal);
 
   ASSERT_EQ(backprop_error.size(), 1);
-  ASSERT_EQ(backprop_error[0].second.shape().size(), 2);
+  ASSERT_EQ(backprop_error[0].second.shape().size(), 3);
   ASSERT_EQ(backprop_error[0].second.shape()[0], 5);
   ASSERT_EQ(backprop_error[0].second.shape()[1], 10);
+  ASSERT_EQ(backprop_error[0].second.shape()[2], 2);
 }
 
 TYPED_TEST(FullyConnectedTest, graph_forward_test)  // Use the class as a Node
@@ -125,19 +128,22 @@ TYPED_TEST(FullyConnectedTest, graph_forward_test)  // Use the class as a Node
   g.template AddNode<fetch::ml::layers::FullyConnected<TypeParam>>("FullyConnected", {"Input"}, 50u,
                                                                    42u);
 
-  TypeParam data({5, 10});
+  TypeParam data({5, 10, 2});
   g.SetInput("Input", data);
 
-  TypeParam prediction = g.Evaluate("FullyConnected");
+  TypeParam prediction = g.Evaluate("FullyConnected", true);
   ASSERT_EQ(prediction.shape().size(), 2);
   ASSERT_EQ(prediction.shape()[0], 42);
-  ASSERT_EQ(prediction.shape()[1], 1);
+  ASSERT_EQ(prediction.shape()[1], 2);
 }
 
 TYPED_TEST(FullyConnectedTest, getStateDict)
 {
+  using DataType = typename TypeParam::Type;
+  using RegType  = fetch::ml::details::RegularisationType;
+
   fetch::ml::layers::FullyConnected<TypeParam> fc(
-      50, 10, fetch::ml::details::ActivationType::NOTHING, "FCTest");
+      50, 10, fetch::ml::details::ActivationType::NOTHING, RegType::NONE, DataType{0}, "FCTest");
   fetch::ml::StateDict<TypeParam> sd = fc.StateDict();
 
   EXPECT_EQ(sd.weights_, nullptr);

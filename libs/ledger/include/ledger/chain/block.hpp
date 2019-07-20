@@ -23,10 +23,11 @@
 #include "ledger/chain/consensus/proof_of_work.hpp"
 #include "ledger/chain/digest.hpp"
 #include "ledger/chain/transaction_layout.hpp"
-
 #include "ledger/dag/dag_epoch.hpp"
 
+#include <cstdint>
 #include <memory>
+#include <vector>
 
 namespace fetch {
 namespace ledger {
@@ -68,9 +69,11 @@ public:
   Proof    proof;     ///< The consensus proof
   /// @}
 
+  // TODO(HUT): This should be part of body since it's no longer going to be metadata
+  uint64_t weight = 1;
+
   /// @name Metadata for block management
   /// @{
-  uint64_t weight       = 1;
   uint64_t total_weight = 1;
   bool     is_loose     = false;
   /// @}

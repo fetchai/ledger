@@ -17,8 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include <memory>
-
 #include "core/future_timepoint.hpp"
 #include "core/serializers/stl_types.hpp"
 #include "core/service_ids.hpp"
@@ -31,6 +29,11 @@
 #include "network/muddle/rpc/server.hpp"
 #include "network/service/service_client.hpp"
 #include "network/tcp/tcp_client.hpp"
+
+#include <chrono>
+#include <cstddef>
+#include <cstdint>
+#include <memory>
 
 namespace fetch {
 namespace ledger {
@@ -54,8 +57,8 @@ public:
   std::shared_ptr<Client> client;
 
   explicit ExecutorRpcClient(Muddle &muddle)
-    : client_(std::make_shared<Client>("R:Exec", muddle.AsEndpoint(), Muddle::Address(),
-                                       SERVICE_EXECUTOR, CHANNEL_RPC))
+    : client_(
+          std::make_shared<Client>("R:Exec", muddle.AsEndpoint(), SERVICE_EXECUTOR, CHANNEL_RPC))
   {}
 
   void Connect(Muddle &muddle, Uri uri,
@@ -110,7 +113,7 @@ private:
   Muddle::Address         address_;
   BackgroundedWork        bg_work_;
   BackgroundedWorkThreadP workthread_;
-  size_t                  connections_ = 0;
+  std::size_t             connections_ = 0;
 };
 
 }  // namespace ledger

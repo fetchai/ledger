@@ -25,12 +25,13 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class Multiply : public fetch::ml::ElementWiseOps<T>
+class Multiply : public fetch::ml::Ops<T>
 {
 public:
   using ArrayType     = T;
+  using SizeType      = typename ArrayType::SizeType;
   using ArrayPtrType  = std::shared_ptr<ArrayType>;
-  using VecTensorType = typename ElementWiseOps<T>::VecTensorType;
+  using VecTensorType = typename Ops<T>::VecTensorType;
 
   Multiply()          = default;
   virtual ~Multiply() = default;
@@ -42,32 +43,37 @@ public:
    */
   virtual void Forward(VecTensorType const &inputs, ArrayType &output)
   {
-    ASSERT(inputs.size() == 2);
-    ASSERT(inputs.at(0).get().size() == inputs.at(1).get().size());
-    ASSERT(output.shape() == this->ComputeOutputShape(inputs));
+    assert(inputs.size() == 2);
+    assert(inputs.at(0).get().size() == inputs.at(1).get().size());
+    assert(output.shape() == this->ComputeOutputShape(inputs));
 
     fetch::math::Multiply(inputs[0].get(), inputs[1].get(), output);
   }
 
   /**
    * elementwise multiplication gradient is:
-   * f'(input0)=input0*error_signal
-   * f'(input1)=input1*error_signal
+   * f'(input0)=input1*error_signal
+   * f'(input1)=input0*error_signal
    */
   virtual std::vector<ArrayType> Backward(VecTensorType const &inputs,
                                           ArrayType const &    error_signal)
   {
-    ASSERT(inputs.size() == 2);
-    ASSERT(inputs.at(0).get().size() == inputs.at(1).get().size());
-    ASSERT(error_signal.size() == inputs.at(1).get().size());
+    assert(inputs.size() == 2);
+    assert(inputs.at(0).get().size() == inputs.at(1).get().size());
+    assert(error_signal.size() == inputs.at(1).get().size());
 
-    ArrayType error_signal1(inputs.at(0).get().shape());
-    ArrayType error_signal2(inputs.at(1).get().shape());
+    ArrayType error_signal_1(inputs.at(0).get().shape());
+    ArrayType error_signal_2(inputs.at(1).get().shape());
 
-    fetch::math::Multiply(inputs.at(1).get(), error_signal, error_signal1);
-    fetch::math::Multiply(inputs.at(0).get(), error_signal, error_signal2);
+    fetch::math::Multiply(inputs.at(1).get(), error_signal, error_signal_1);
+    fetch::math::Multiply(inputs.at(0).get(), error_signal, error_signal_2);
 
-    return {error_signal1, error_signal2};
+    return {error_signal_1, error_signal_2};
+  }
+
+  virtual std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const
+  {
+    return inputs.front().get().shape();
   }
 
   static constexpr char const *DESCRIPTOR = "Multiply";

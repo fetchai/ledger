@@ -30,6 +30,7 @@
 #include "network/muddle/rpc/server.hpp"
 #include "network/muddle/subscription.hpp"
 #include "network/p2pservice/p2ptrust_interface.hpp"
+#include "telemetry/telemetry.hpp"
 
 #include <memory>
 
@@ -40,6 +41,12 @@ class BlockCoordinator;
 class MainChain;
 class MainChainSyncWorker;
 
+/**
+ * The main chain rpc service ensures that nodes synchronise the main chain. Blocks are broadcast
+ * around and nodes will attempt to determine the heaviest chain of their peers and specifically
+ * request them. Peers are guarded by the main chain limiting request sizes.
+ *
+ */
 class MainChainRpcService : public muddle::rpc::Server,
                             public std::enable_shared_from_this<MainChainRpcService>
 {
@@ -154,6 +161,21 @@ private:
   Address         current_peer_address_;
   BlockHash       current_missing_block_;
   Promise         current_request_;
+  /// @}
+
+  /// @name Telemetry
+  /// @{
+  telemetry::CounterPtr recv_block_count_;
+  telemetry::CounterPtr recv_block_valid_count_;
+  telemetry::CounterPtr recv_block_loose_count_;
+  telemetry::CounterPtr recv_block_duplicate_count_;
+  telemetry::CounterPtr recv_block_invalid_count_;
+  telemetry::CounterPtr state_request_heaviest_;
+  telemetry::CounterPtr state_wait_heaviest_;
+  telemetry::CounterPtr state_synchronising_;
+  telemetry::CounterPtr state_wait_response_;
+  telemetry::CounterPtr state_synchronised_;
+
   /// @}
 };
 

@@ -29,7 +29,7 @@ uint16_t    ColorFromString(std::string name);
 std::string GetColor(int const &fg, int const &bg);
 std::string GetColor(std::string const &f, std::string const &b);
 
-inline static constexpr const char *DefaultAttributes()
+inline static constexpr char const *DefaultAttributes()
 {
 #ifdef FETCH_DISABLE_COLOUR_LOG_OUTPUT
   return "";
@@ -37,7 +37,7 @@ inline static constexpr const char *DefaultAttributes()
   return "\33[0m";
 #endif  // FETCH_DISABLE_COLOUR_LOG_OUTPUT
 }
-inline static constexpr const char *ClearScreen()
+inline static constexpr char const *ClearScreen()
 {
   return "\33[2J";
 }

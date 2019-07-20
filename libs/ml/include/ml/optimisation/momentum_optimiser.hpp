@@ -18,7 +18,6 @@
 //------------------------------------------------------------------------------
 
 #include "ml/graph.hpp"
-#include "ml/ops/loss_functions/criterion.hpp"
 #include "ml/optimisation/optimiser.hpp"
 
 namespace fetch {
@@ -31,23 +30,27 @@ namespace optimisers {
  * @tparam T ArrayType
  * @tparam C CriterionType
  */
-template <class T, class C>
-class MomentumOptimiser : public Optimiser<T, C>
+template <class T>
+class MomentumOptimiser : public Optimiser<T>
 {
 public:
   using ArrayType = T;
   using DataType  = typename ArrayType::Type;
   using SizeType  = typename ArrayType::SizeType;
 
-  MomentumOptimiser(std::shared_ptr<Graph<T>>
-
-                                                    graph,
+  MomentumOptimiser(std::shared_ptr<Graph<T>>       graph,
                     std::vector<std::string> const &input_node_names,
-                    std::string const &             output_node_name,
-                    DataType const &                learning_rate   = DataType{0.001f},
-                    DataType const &                momentum_update = DataType{0.9f});
+                    std::string const &label_node_name, std::string const &output_node_name,
+                    DataType const &learning_rate   = DataType{0.001f},
+                    DataType const &momentum_update = DataType{0.9f});
 
-  virtual ~MomentumOptimiser() = default;
+  MomentumOptimiser(std::shared_ptr<Graph<T>>       graph,
+                    std::vector<std::string> const &input_node_names,
+                    std::string const &label_node_name, std::string const &output_node_name,
+                    fetch::ml::optimisers::LearningRateParam<DataType> const &learning_rate_param,
+                    DataType const &momentum_update = DataType{0.9f});
+
+  ~MomentumOptimiser() override = default;
 
 private:
   std::vector<ArrayType> momentum_;
@@ -57,18 +60,11 @@ private:
 
   void ApplyGradients(SizeType batch_size) override;
   void ResetMomentum();
+  void Init();
 };
 
-template <class T, class C>
-MomentumOptimiser<T, C>::MomentumOptimiser(std::shared_ptr<Graph<T>>
-
-                                                                           graph,
-                                           std::vector<std::string> const &input_node_names,
-                                           std::string const &             output_node_name,
-                                           DataType const &                learning_rate,
-                                           DataType const &                momentum_update)
-  : Optimiser<T, C>(graph, input_node_names, output_node_name, learning_rate)
-  , momentum_update_(momentum_update)
+template <class T>
+void MomentumOptimiser<T>::Init()
 {
   for (auto &train : this->graph_trainables_)
   {
@@ -77,10 +73,35 @@ MomentumOptimiser<T, C>::MomentumOptimiser(std::shared_ptr<Graph<T>>
   ResetMomentum();
 }
 
+template <class T>
+MomentumOptimiser<T>::MomentumOptimiser(std::shared_ptr<Graph<T>>       graph,
+                                        std::vector<std::string> const &input_node_names,
+                                        std::string const &             label_node_name,
+                                        std::string const &             output_node_name,
+                                        DataType const &                learning_rate,
+                                        DataType const &                momentum_update)
+  : Optimiser<T>(graph, input_node_names, label_node_name, output_node_name, learning_rate)
+  , momentum_update_(momentum_update)
+{
+  Init();
+}
+
+template <class T>
+MomentumOptimiser<T>::MomentumOptimiser(
+    std::shared_ptr<Graph<T>> graph, std::vector<std::string> const &input_node_names,
+    std::string const &label_node_name, std::string const &output_node_name,
+    fetch::ml::optimisers::LearningRateParam<DataType> const &learning_rate_param,
+    DataType const &                                          momentum_update)
+  : Optimiser<T>(graph, input_node_names, label_node_name, output_node_name, learning_rate_param)
+  , momentum_update_(momentum_update)
+{
+  Init();
+}
+
 // private
 
-template <class T, class C>
-void MomentumOptimiser<T, C>::ApplyGradients(SizeType batch_size)
+template <class T>
+void MomentumOptimiser<T>::ApplyGradients(SizeType batch_size)
 {
   auto trainable_it = this->graph_trainables_.begin();
   auto gradient_it  = this->gradients_.begin();
@@ -107,8 +128,8 @@ void MomentumOptimiser<T, C>::ApplyGradients(SizeType batch_size)
   }
 }
 
-template <class T, class C>
-void MomentumOptimiser<T, C>::ResetMomentum()
+template <class T>
+void MomentumOptimiser<T>::ResetMomentum()
 {
   for (auto &moment : this->momentum_)
   {

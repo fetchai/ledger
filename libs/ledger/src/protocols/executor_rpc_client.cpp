@@ -16,12 +16,13 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/protocols/executor_rpc_client.hpp"
-
 #include "core/state_machine.hpp"
 #include "ledger/chain/address.hpp"
+#include "ledger/protocols/executor_rpc_client.hpp"
 
+#include <chrono>
 #include <memory>
+#include <utility>
 
 namespace fetch {
 namespace ledger {
@@ -46,10 +47,10 @@ public:
     : state_machine_{std::make_shared<core::StateMachine<State>>("ExecutorConnectorWorker",
                                                                  State::INITIAL)}
     , peer_(std::move(thepeer))
-    , timeduration_(std::move(thetimeout))
+    , timeduration_(thetimeout)
     , muddle_(themuddle)
-    , client_(std::make_shared<Client>("R:ExecCW", muddle_.AsEndpoint(), Muddle::Address(),
-                                       SERVICE_EXECUTOR, CHANNEL_RPC))
+    , client_(
+          std::make_shared<Client>("R:ExecCW", muddle_.AsEndpoint(), SERVICE_EXECUTOR, CHANNEL_RPC))
   {
     state_machine_->RegisterHandler(State::INITIAL, this, &ExecutorConnectorWorker::OnInitial);
     state_machine_->RegisterHandler(State::CONNECTING, this,

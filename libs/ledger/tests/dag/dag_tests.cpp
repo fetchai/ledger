@@ -16,19 +16,22 @@
 //
 //------------------------------------------------------------------------------
 
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
-
-#include "ledger/dag/dag.hpp"
-#include "ledger/dag/dag_interface.hpp"
-
 #include "crypto/ecdsa.hpp"
 #include "crypto/hash.hpp"
 #include "crypto/prover.hpp"
 #include "crypto/sha256.hpp"
+#include "ledger/dag/dag.hpp"
+#include "ledger/dag/dag_interface.hpp"
+
+#include "gmock/gmock.h"
 
 #include <algorithm>
+#include <cstddef>
+#include <cstdint>
+#include <memory>
 #include <random>
+#include <string>
+#include <vector>
 
 using namespace fetch;
 
@@ -62,9 +65,6 @@ protected:
     return dag;
   }
 
-  void TearDown() override
-  {}
-
   // Verify that the nodes in the latest dag epoch match the sanity check epoch_history_
   void VerifyEpochNodes(uint64_t index)
   {
@@ -91,8 +91,8 @@ protected:
   {
     EXPECT_EQ(dag_->CurrentEpoch(), 0);
 
-    const size_t epochs_to_create = 10;
-    const size_t nodes_in_epoch   = 1000;
+    const std::size_t epochs_to_create = 5;
+    const std::size_t nodes_in_epoch   = 100;
 
     epoch_history_.resize(epochs_to_create);
     epochs_.resize(epochs_to_create);
@@ -155,9 +155,9 @@ TEST_F(DagTests, CheckDagRevertsCorrectly)
 {
   PopulateDAG();
 
-  while (epoch_history_.size() > 0)
+  while (!epoch_history_.empty())
   {
-    const auto epochs_head = epoch_history_.size() - 1;
+    auto const epochs_head = epoch_history_.size() - 1;
     VerifyEpochNodes(epochs_head);
 
     if (epochs_head != 0)
@@ -181,7 +181,7 @@ TEST_F(DagTests, CheckDagMaintainsTipsCorrectly)
   // -Create epoch 1 on DAG 2 and synchronise (contains items A)
   // -Create epoch 2 on DAG 1 and synchronise (contains items B)
 
-  const size_t nodes_to_push = 1000;
+  const std::size_t nodes_to_push = 1000;
 
   std::vector<std::string> items_A;
   std::vector<std::string> items_B;

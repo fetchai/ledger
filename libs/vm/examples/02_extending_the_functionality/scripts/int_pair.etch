@@ -1,6 +1,0 @@
-function main()
-  var g = IntPair(2,1);
-  var x = IntPair(g.second(), g.first());
-  
-  print(toString(x.first())+", " +toString(x.second()));
-endfunction

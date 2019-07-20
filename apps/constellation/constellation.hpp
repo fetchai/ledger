@@ -27,8 +27,10 @@
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/consensus/entropy_generator_interface.hpp"
 #include "ledger/consensus/stake_manager.hpp"
+#include "ledger/dag/dag_interface.hpp"
 #include "ledger/execution_manager.hpp"
 #include "ledger/genesis_loading/genesis_file_creator.hpp"
+#include "ledger/protocols/dag_service.hpp"
 #include "ledger/protocols/main_chain_rpc_service.hpp"
 #include "ledger/storage_unit/lane_remote_control.hpp"
 #include "ledger/storage_unit/storage_unit_bundled_service.hpp"
@@ -41,9 +43,6 @@
 #include "network/p2pservice/p2p_service.hpp"
 #include "network/p2pservice/p2ptrust_bayrank.hpp"
 
-#include "ledger/dag/dag_interface.hpp"
-#include "ledger/protocols/dag_service.hpp"
-
 #include <atomic>
 #include <cstddef>
 #include <cstdint>
@@ -53,6 +52,9 @@
 #include <vector>
 
 namespace fetch {
+namespace dkg {
+class DkgService;
+}
 
 /**
  * Top level container for all components that are required to run a ledger instance
@@ -66,31 +68,32 @@ public:
   using Manifest         = network::Manifest;
   using NetworkMode      = ledger::MainChainRpcService::Mode;
   using FeatureFlags     = core::FeatureFlags;
+  using ConstByteArray   = byte_array::ConstByteArray;
 
   static constexpr uint32_t DEFAULT_BLOCK_DIFFICULTY = 6;
 
   struct Config
   {
-    Manifest     manifest{};
-    uint32_t     log2_num_lanes{0};
-    uint32_t     num_slices{0};
-    uint32_t     num_executors{0};
-    std::string  interface_address{};
-    std::string  db_prefix{};
-    uint32_t     processor_threads{0};
-    uint32_t     verification_threads{0};
-    uint32_t     max_peers{0};
-    uint32_t     transient_peers{0};
-    uint32_t     block_interval_ms{0};
-    uint32_t     block_difficulty{DEFAULT_BLOCK_DIFFICULTY};
-    uint32_t     peers_update_cycle_ms{0};
-    bool         disable_signing{false};
-    bool         sign_broadcasts{false};
-    bool         dump_state_file{false};
-    bool         load_state_file{false};
-    bool         proof_of_stake{false};
-    NetworkMode  network_mode{NetworkMode::PUBLIC_NETWORK};
-    FeatureFlags features{};
+    Manifest       manifest{};
+    uint32_t       log2_num_lanes{0};
+    uint32_t       num_slices{0};
+    uint32_t       num_executors{0};
+    std::string    db_prefix{};
+    uint32_t       processor_threads{0};
+    uint32_t       verification_threads{0};
+    uint32_t       max_peers{0};
+    uint32_t       transient_peers{0};
+    uint32_t       block_interval_ms{0};
+    uint32_t       block_difficulty{DEFAULT_BLOCK_DIFFICULTY};
+    uint32_t       peers_update_cycle_ms{0};
+    bool           disable_signing{false};
+    bool           sign_broadcasts{false};
+    bool           dump_state_file{false};
+    bool           load_state_file{false};
+    bool           proof_of_stake{false};
+    NetworkMode    network_mode{NetworkMode::PUBLIC_NETWORK};
+    ConstByteArray beacon_address{};
+    FeatureFlags   features{};
 
     uint32_t num_lanes() const
     {
@@ -138,6 +141,7 @@ private:
   using NaiveSynergeticMiner   = ledger::NaiveSynergeticMiner;
   using StakeManagerPtr        = std::shared_ptr<ledger::StakeManager>;
   using EntropyPtr             = std::unique_ptr<ledger::EntropyGeneratorInterface>;
+  using DkgServicePtr          = std::shared_ptr<dkg::DkgService>;
 
   using ShardConfigs  = ledger::ShardConfigs;
   using TxStatusCache = ledger::TransactionStatusCache;
@@ -178,6 +182,7 @@ private:
 
   /// @name Staking
   /// @{
+  DkgServicePtr   dkg_;      ///< The DKG system
   EntropyPtr      entropy_;  ///< The entropy system
   StakeManagerPtr stake_;    ///< The stake system
   /// @}

@@ -19,6 +19,11 @@
 
 #include "vm/node.hpp"
 
+#include <cstddef>
+#include <string>
+#include <unordered_set>
+#include <vector>
+
 namespace fetch {
 namespace vm {
 
@@ -80,7 +85,7 @@ private:
   std::vector<NodeKind>    blocks_;
   State                    state_;
   bool                     found_expression_terminator_;
-  std::vector<size_t>      groups_;
+  std::vector<std::size_t> groups_;
   std::vector<Expr>        operators_;
   std::vector<Expr>        rpn_;
   std::vector<Expr>        infix_stack_;

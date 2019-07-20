@@ -17,29 +17,32 @@
 //
 //------------------------------------------------------------------------------
 
+#include "math/activation_functions/sigmoid.hpp"
 #include "math/fundamental_operators.hpp"
 #include "math/matrix_operations.hpp"
-#include "math/ml/activation_functions/sigmoid.hpp"
 #include "math/standard_functions/clamp.hpp"
 #include "ml/ops/ops.hpp"
+
+#include <cassert>
+#include <vector>
 
 namespace fetch {
 namespace ml {
 namespace ops {
 
 template <class T>
-class Sigmoid : public fetch::ml::ElementWiseOps<T>
+class Sigmoid : public fetch::ml::Ops<T>
 {
 public:
   using ArrayType     = T;
   using DataType      = typename ArrayType::Type;
   using SizeType      = typename ArrayType::SizeType;
-  using VecTensorType = typename ElementWiseOps<T>::VecTensorType;
+  using VecTensorType = typename Ops<T>::VecTensorType;
 
-  Sigmoid()          = default;
-  virtual ~Sigmoid() = default;
+  Sigmoid()           = default;
+  ~Sigmoid() override = default;
 
-  virtual void Forward(VecTensorType const &inputs, ArrayType &output)
+  void Forward(VecTensorType const &inputs, ArrayType &output) override
   {
     assert(inputs.size() == 1);
     assert(output.shape() == this->ComputeOutputShape(inputs));
@@ -49,8 +52,8 @@ public:
     fetch::math::Clamp(epsilon_, static_cast<DataType>(1) - epsilon_, output);
   }
 
-  virtual std::vector<ArrayType> Backward(VecTensorType const &inputs,
-                                          ArrayType const &    error_signal)
+  std::vector<ArrayType> Backward(VecTensorType const &inputs,
+                                  ArrayType const &    error_signal) override
   {
     assert(inputs.size() == 1);
     assert(inputs.front().get().shape() == error_signal.shape());
@@ -59,13 +62,18 @@ public:
 
     // gradient of sigmoid function is s(x)(1 - s(x))
     Forward(inputs, t);
-    fetch::math::Subtract(DataType(1), t, return_signal);
+    fetch::math::Subtract(static_cast<DataType>(1), t, return_signal);
     fetch::math::Multiply(t, return_signal, return_signal);
 
     // multiply by error_signal (chain rule)
     fetch::math::Multiply(error_signal, return_signal, return_signal);
 
     return {return_signal};
+  }
+
+  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
+  {
+    return inputs.front().get().shape();
   }
 
   static constexpr char const *DESCRIPTOR = "Sigmoid";

@@ -30,12 +30,8 @@
 #include "ledger/chain/address.hpp"
 #include "ledger/chain/transaction_serializer.hpp"
 
-#include <deque>
+#include <cstdint>
 #include <limits>
-#include <list>
-#include <queue>
-#include <unordered_map>
-#include <unordered_set>
 #include <vector>
 
 namespace fetch {
@@ -43,7 +39,6 @@ namespace ledger {
 
 struct DAGNode
 {
-
   using ConstByteArray = byte_array::ConstByteArray;
   using Digest         = ConstByteArray;
   using Signature      = ConstByteArray;
@@ -108,15 +103,8 @@ struct DAGNode
   {
     serializers::ByteArrayBuffer buf;
 
-    buf << type;
-    buf << previous;
-    buf << contents;
-    buf << contract_digest;
-    buf << identity;
-    buf << hash;
-    buf << signature;
-    buf << oldest_epoch_referenced;
-    buf << weight;
+    buf << type << previous << contents << contract_digest << identity << hash << signature
+        << oldest_epoch_referenced << weight;
 
     HasherType hasher;
     hasher.Reset();
@@ -148,29 +136,15 @@ struct DAGNode
 template <typename T>
 void Serialize(T &serializer, DAGNode const &node)
 {
-  serializer << node.type;
-  serializer << node.previous;
-  serializer << node.contents;
-  serializer << node.contract_digest;
-  serializer << node.identity;
-  serializer << node.hash;
-  serializer << node.signature;
-  serializer << node.oldest_epoch_referenced;
-  serializer << node.weight;
+  serializer << node.type << node.previous << node.contents << node.contract_digest << node.identity
+             << node.hash << node.signature << node.oldest_epoch_referenced << node.weight;
 }
 
 template <typename T>
 void Deserialize(T &serializer, DAGNode &node)
 {
-  serializer >> node.type;
-  serializer >> node.previous;
-  serializer >> node.contents;
-  serializer >> node.contract_digest;
-  serializer >> node.identity;
-  serializer >> node.hash;
-  serializer >> node.signature;
-  serializer >> node.oldest_epoch_referenced;
-  serializer >> node.weight;
+  serializer >> node.type >> node.previous >> node.contents >> node.contract_digest >>
+      node.identity >> node.hash >> node.signature >> node.oldest_epoch_referenced >> node.weight;
 }
 
 constexpr char const *DAGNodeTypeToString(uint64_t type)

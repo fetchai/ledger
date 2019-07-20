@@ -32,8 +32,7 @@
 #include "miner/resource_mapper.hpp"
 #include "network/p2pservice/p2p_service.hpp"
 #include "network/p2pservice/p2ptrust_interface.hpp"
-
-#include "fetch_version.hpp"
+#include "version/fetch_version.hpp"
 
 #include <random>
 #include <sstream>
@@ -169,7 +168,7 @@ private:
 
     std::vector<variant::Variant> peer_data_list;
 
-    for (const auto &pt : peers_trusts)
+    for (auto const &pt : peers_trusts)
     {
       variant::Variant peer_data = variant::Variant::Object();
       peer_data["target"]        = pt.name;

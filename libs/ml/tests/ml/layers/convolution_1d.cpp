@@ -16,9 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/layers/convolution_1d.hpp"
-
 #include "math/tensor.hpp"
+#include "ml/layers/convolution_1d.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 
 #include "gtest/gtest.h"
@@ -60,7 +59,7 @@ TYPED_TEST(Convolution1DTest, set_input_and_evaluate_test)  // Use the class as 
   fetch::ml::layers::Convolution1D<TypeParam> conv(output_channels, input_channels, kernel_height,
                                                    stride_size);
   conv.SetInput("Conv1D_Input", input);
-  TypeParam output = conv.Evaluate("Conv1D_Conv1D");
+  TypeParam output = conv.Evaluate("Conv1D_Conv1D", true);
 
   // test correct values
   ASSERT_EQ(output.shape().size(), 3);
@@ -221,7 +220,7 @@ TYPED_TEST(Convolution1DTest, node_forward_test)  // Use the class as a Node
       "Convolution1D", output_channels, input_channels, kernel_height, stride_size);
   conv.AddInput(placeholder);
 
-  TypeParam prediction = conv.Evaluate();
+  TypeParam prediction = conv.Evaluate(true);
 
   // test correct values
   ASSERT_EQ(prediction.shape().size(), 3);
@@ -283,8 +282,8 @@ TYPED_TEST(Convolution1DTest, node_backward_test)  // Use the class as a Node
   fetch::ml::Node<TypeParam, fetch::ml::layers::Convolution1D<TypeParam>> conv(
       "Convolution1D", output_channels, input_channels, kernel_height, stride_size);
   conv.AddInput(placeholder);
-  TypeParam prediction     = conv.Evaluate();
-  auto      backprop_error = conv.BackPropagate(error_signal);
+  TypeParam prediction     = conv.Evaluate(true);
+  auto      backprop_error = conv.BackPropagateSignal(error_signal);
 
   // test correct values
   ASSERT_EQ(backprop_error.size(), 1);
@@ -344,7 +343,7 @@ TYPED_TEST(Convolution1DTest, graph_forward_test)  // Use the class as a Node
       "Convolution1D", {"Input"}, output_channels, input_channels, kernel_height, stride_size);
   g.SetInput("Input", input);
 
-  TypeParam prediction = g.Evaluate("Convolution1D");
+  TypeParam prediction = g.Evaluate("Convolution1D", true);
 
   // test correct values
   ASSERT_EQ(prediction.shape().size(), 3);

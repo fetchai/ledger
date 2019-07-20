@@ -17,14 +17,15 @@
 //
 //------------------------------------------------------------------------------
 
-//#include "ledger/chain/block_coordinator.hpp"
-//#include "ledger/storage_unit/storage_unit_interface.hpp"
-//#include "storage/resource_mapper.hpp"
-//#include "variant/variant.hpp"
+#include <string>
 
 namespace fetch {
 namespace variant {
 class Variant;
+}
+
+namespace dkg {
+class DkgService;
 }
 
 namespace ledger {
@@ -38,7 +39,7 @@ class GenesisFileCreator
 public:
   // Construction / Destruction
   GenesisFileCreator(BlockCoordinator &block_coordinator, StorageUnitInterface &storage_unit,
-                     StakeManager *stake_manager);
+                     StakeManager *stake_manager, dkg::DkgService *dkg);
   GenesisFileCreator(GenesisFileCreator const &) = delete;
   GenesisFileCreator(GenesisFileCreator &&)      = delete;
   ~GenesisFileCreator()                          = default;
@@ -55,18 +56,21 @@ private:
   void DumpStake(variant::Variant &object);
   void LoadState(variant::Variant const &object);
   void LoadStake(variant::Variant const &object);
+  void LoadDKG(variant::Variant const &object);
 
   BlockCoordinator &    block_coordinator_;
   StorageUnitInterface &storage_unit_;
   StakeManager *        stake_manager_{nullptr};
+  dkg::DkgService *     dkg_{nullptr};
 };
 
 inline GenesisFileCreator::GenesisFileCreator(BlockCoordinator &    block_coordinator,
                                               StorageUnitInterface &storage_unit,
-                                              StakeManager *        stake_manager)
+                                              StakeManager *stake_manager, dkg::DkgService *dkg)
   : block_coordinator_{block_coordinator}
   , storage_unit_{storage_unit}
   , stake_manager_{stake_manager}
+  , dkg_{dkg}
 {}
 
 }  // namespace ledger

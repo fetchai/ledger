@@ -23,7 +23,8 @@
 #include "core/logger.hpp"
 #include "core/serializers/counter.hpp"
 
-#include <type_traits>
+#include <cstddef>
+#include <cstdint>
 
 namespace fetch {
 namespace serializers {
@@ -64,7 +65,7 @@ public:
     , size_counter_{from.size_counter_}
   {}
 
-  ByteArrayBufferEx(std::size_t const &capacity)
+  ByteArrayBufferEx(std::size_t capacity)
     : data_(capacity)
     , pos_{0}
     , size_counter_{capacity}
@@ -76,14 +77,13 @@ public:
     return *this;
   }
 
-  void Allocate(std::size_t const &delta)
+  void Allocate(std::size_t delta)
   {
     Resize(delta, ResizeParadigm::RELATIVE);
   }
 
-  void Resize(std::size_t const &   size,
-              ResizeParadigm const &resize_paradigm     = ResizeParadigm::RELATIVE,
-              bool const            zero_reserved_space = true)
+  void Resize(std::size_t size, ResizeParadigm const &resize_paradigm = ResizeParadigm::RELATIVE,
+              bool const zero_reserved_space = true)
   {
     data_.Resize(size, resize_paradigm, zero_reserved_space);
 
@@ -101,32 +101,31 @@ public:
     };
   }
 
-  void Reserve(std::size_t const &   size,
-               ResizeParadigm const &resize_paradigm     = ResizeParadigm::RELATIVE,
-               bool const            zero_reserved_space = true)
+  void Reserve(std::size_t size, ResizeParadigm const &resize_paradigm = ResizeParadigm::RELATIVE,
+               bool const zero_reserved_space = true)
   {
     data_.Reserve(size, resize_paradigm, zero_reserved_space);
   }
 
-  void WriteBytes(uint8_t const *arr, std::size_t const &size)
+  void WriteBytes(uint8_t const *arr, std::size_t size)
   {
     data_.WriteBytes(arr, size, pos_);
     pos_ += size;
   }
 
-  void ReadBytes(uint8_t *arr, std::size_t const &size)
+  void ReadBytes(uint8_t *arr, std::size_t size)
   {
     data_.ReadBytes(arr, size, pos_);
     pos_ += size;
   }
 
-  void ReadByteArray(byte_array::ConstByteArray &b, std::size_t const &size)
+  void ReadByteArray(byte_array::ConstByteArray &b, std::size_t size)
   {
     b = data_.SubArray(pos_, size);
     pos_ += size;
   }
 
-  void SkipBytes(std::size_t const &size)
+  void SkipBytes(std::size_t size)
   {
     pos_ += size;
   }

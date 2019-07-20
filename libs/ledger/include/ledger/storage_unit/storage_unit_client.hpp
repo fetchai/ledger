@@ -36,11 +36,17 @@
 #include "network/muddle/rpc/server.hpp"
 #include "network/service/service_client.hpp"
 #include "storage/document_store_protocol.hpp"
+#include "storage/object_stack.hpp"
 #include "storage/object_store_protocol.hpp"
 
-#include <chrono>
-#include <thread>
-#include <utility>
+#include <array>
+#include <cassert>
+#include <cstdint>
+#include <cstring>
+#include <exception>
+#include <memory>
+#include <string>
+#include <vector>
 
 namespace fetch {
 namespace ledger {
@@ -91,63 +97,16 @@ public:
   StorageUnitClient &operator=(StorageUnitClient &&) = delete;
 
 private:
-  /**
-   * On Disk representation of a merkle tree
-   */
-  struct MerkleTreeBlock
-  {
-    MerkleTreeBlock()
-    {
-      std::memset(this, -1, sizeof(*this));
-    }
-
-    explicit MerkleTreeBlock(crypto::MerkleTree const &tree)
-    {
-      serializers::TypedByteArrayBuffer buff;
-      buff << tree;
-
-      assert(buff.data().size() == 92 || buff.data().size() == 60);
-
-      size_ = buff.data().size();
-      std::memcpy((uint8_t *)data_, (uint8_t *)buff.data().pointer(), size_);
-    }
-
-    crypto::MerkleTree Extract(uint64_t num_lanes)
-    {
-      crypto::MerkleTree ret{num_lanes};
-
-      serializers::TypedByteArrayBuffer buff;
-
-      buff.Allocate(size_);
-
-      std::memcpy((uint8_t *)buff.data().pointer(), (uint8_t *)data_, size_);
-
-      try
-      {
-        buff >> ret;
-      }
-      catch (std::exception const &)
-      {
-        FETCH_LOG_WARN(LOGGING_NAME, "FAILED TO DESERIALIZE MERKLE TREE PROXY! ", size_);
-        return ret;
-      }
-
-      return ret;
-    }
-
-    uint64_t size_{0};
-    uint8_t  data_[92];
-  };
-
   using Client               = muddle::rpc::Client;
   using ClientPtr            = std::shared_ptr<Client>;
   using LaneIndex            = LaneIdentity::lane_type;
   using AddressList          = std::vector<MuddleEndpoint::Address>;
   using MerkleTree           = crypto::MerkleTree;
-  using PermanentMerkleStack = storage::RandomAccessStack<MerkleTreeBlock>;
+  using PermanentMerkleStack = fetch::storage::ObjectStack<crypto::MerkleTree>;
   using Mutex                = fetch::mutex::Mutex;
 
-  static constexpr char const *MERKLE_FILENAME = "merkle_stack.db";
+  static constexpr char const *MERKLE_FILENAME_DOC   = "merkle_stack.db";
+  static constexpr char const *MERKLE_FILENAME_INDEX = "merkle_stack_index.db";
 
   Address const &LookupAddress(ShardIndex shard) const;
   Address const &LookupAddress(storage::ResourceID const &resource) const;

@@ -16,10 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/layers/self_attention.hpp"
-
 #include "math/tensor.hpp"
 #include "ml/layers/fully_connected.hpp"
+#include "ml/layers/self_attention.hpp"
 
 #include "gtest/gtest.h"
 
@@ -40,10 +39,10 @@ TYPED_TEST(SelfAttentionTest, output_shape_test)  // Use the class as a Node
   g.template AddNode<fetch::ml::layers::SelfAttention<TypeParam>>("SelfAttention", {"Input"}, 50u,
                                                                   42u, 10u);
 
-  TypeParam data({5, 10});
+  TypeParam data({5, 10, 1});
   g.SetInput("Input", data);
 
-  TypeParam prediction = g.Evaluate("SelfAttention");
+  TypeParam prediction = g.Evaluate("SelfAttention", true);
   ASSERT_EQ(prediction.shape().size(), 2);
   ASSERT_EQ(prediction.shape()[0], 42);
   ASSERT_EQ(prediction.shape()[1], 1);

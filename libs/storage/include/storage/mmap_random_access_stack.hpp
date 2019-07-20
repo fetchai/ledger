@@ -104,7 +104,7 @@ public:
   }
 
   // Enable constructor for unit tests
-  MMapRandomAccessStack(const char *is_testing)
+  MMapRandomAccessStack(char const *is_testing)
   {
     if (!(std::string(is_testing).compare(std::string("test")) == 0))
     {
@@ -237,7 +237,7 @@ public:
    * @param: object The object to copy from the stack
    *
    */
-  void Get(std::size_t const &i, type &object)
+  void Get(std::size_t i, type &object)
   {
     assert(filename_ != "");
     assert(i < size());
@@ -258,7 +258,7 @@ public:
    * @param: object The object to copy to the stack
    *
    */
-  void Set(std::size_t const &i, type const &object)
+  void Set(std::size_t i, type const &object)
   {
     assert(filename_ != "");
     assert(i <= size());
@@ -281,7 +281,7 @@ public:
    * @param: objects Pointer to array of elements
    *
    */
-  void SetBulk(std::size_t const &i, std::size_t elements, type *objects)
+  void SetBulk(std::size_t i, std::size_t elements, type *objects)
   {
     assert(filename_ != "");
     if ((i + elements) > header_->objects)
@@ -314,7 +314,7 @@ public:
    * @param: elements Number of elements to copy
    * @param: objects Pointer to array of elements
    */
-  void GetBulk(std::size_t const &i, std::size_t &elements, type *objects)
+  void GetBulk(std::size_t i, std::size_t &elements, type *objects)
   {
     assert(filename_ != "");
     assert(header_->objects > i);
@@ -377,7 +377,7 @@ public:
    * @param: j Location of the second object
    *
    */
-  void Swap(std::size_t const &i, std::size_t const &j)
+  void Swap(std::size_t i, std::size_t j)
   {
     // if both elements are in mapping then dont create temp map
     if (i == j)
@@ -502,7 +502,7 @@ private:
    *
    * If i's offset is greater then file-length then file will be resized.
    */
-  void MapIndex(std::size_t const &i)
+  void MapIndex(std::size_t i)
   {
     mapped_data_.unmap();
     mapped_index_              = i - (i % MAX);
@@ -549,7 +549,7 @@ private:
    * @elements: elements to be written. File size will be extend if elements exceeds the existing
    * file size.
    */
-  void ResizeFile(size_t index, std::size_t elements)
+  void ResizeFile(std::size_t index, std::size_t elements)
   {
     std::size_t obj_capacity, expected_obj_count, adjusted_obj_count, block_count, total_length;
 

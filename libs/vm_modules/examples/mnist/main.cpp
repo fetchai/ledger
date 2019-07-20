@@ -16,18 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/tensor.hpp"
-#include "ml/graph.hpp"
-#include "ml/layers/fully_connected.hpp"
-#include "ml/ops/activation.hpp"
-#include "ml/ops/loss_functions/mean_square_error.hpp"
-
 #include "vm/module.hpp"
-
-#include "vm_modules/ml/dataloaders/mnist_dataloader.hpp"
-#include "vm_modules/ml/graph.hpp"
-#include "vm_modules/ml/optimisation/adam_optimiser.hpp"
-#include "vm_modules/ml/training_pair.hpp"
+#include "vm_modules/core/print.hpp"
+#include "vm_modules/ml/ml.hpp"
 
 #include <cstdint>
 #include <cstdlib>
@@ -49,7 +40,7 @@ struct System : public fetch::vm::Object
   }
 
   static fetch::vm::Ptr<fetch::vm::String> Argv(fetch::vm::VM *vm, fetch::vm::TypeId /*type_id*/,
-                                                int32_t const &a)
+                                                int32_t        a)
   {
     return fetch::vm::Ptr<fetch::vm::String>(
         new fetch::vm::String(vm, System::args[std::size_t(a)]));
@@ -59,23 +50,6 @@ struct System : public fetch::vm::Object
 };
 
 std::vector<std::string> System::args;
-
-template <typename T>
-static void PrintNumber(fetch::vm::VM * /*vm*/, T const &s)
-{
-  std::cout << s << std::endl;
-}
-
-static void Print(fetch::vm::VM * /*vm*/, fetch::vm::Ptr<fetch::vm::String> const &s)
-{
-  std::cout << s->str << std::endl;
-}
-
-fetch::vm::Ptr<fetch::vm::String> toString(fetch::vm::VM *vm, float const &a)
-{
-  fetch::vm::Ptr<fetch::vm::String> ret(new fetch::vm::String(vm, std::to_string(a)));
-  return ret;
-}
 
 int main(int argc, char **argv)
 {
@@ -91,7 +65,11 @@ int main(int argc, char **argv)
   }
 
   // Reading file
-  std::ifstream      file(argv[1], std::ios::binary);
+  std::ifstream file(argv[1], std::ios::binary);
+  if (file.fail())
+  {
+    throw std::runtime_error("Cannot open file " + std::string(argv[1]));
+  }
   std::ostringstream ss;
   ss << file.rdbuf();
   const std::string source = ss.str();
@@ -99,24 +77,13 @@ int main(int argc, char **argv)
 
   auto module = std::make_shared<fetch::vm::Module>();
 
-  module->CreateFreeFunction("print", &PrintNumber<int>);
-  module->CreateFreeFunction("print", &PrintNumber<uint64_t>);
-  module->CreateFreeFunction("print", &PrintNumber<float>);
-  module->CreateFreeFunction("print", &PrintNumber<double>);
-  module->CreateFreeFunction("print", &Print);
-  module->CreateFreeFunction("toString", &toString);
-
   module->CreateClassType<System>("System")
       .CreateStaticMemberFunction("Argc", &System::Argc)
       .CreateStaticMemberFunction("Argv", &System::Argv);
 
-  fetch::vm_modules::math::VMTensor::Bind(*module);
-  fetch::vm_modules::ml::VMStateDict::Bind(*module);
-  fetch::vm_modules::ml::VMGraph::Bind(*module);
+  fetch::vm_modules::ml::BindML(*module);
 
-  fetch::vm_modules::ml::TrainingPair::Bind(*module);
-  fetch::vm_modules::ml::MnistDataLoader::Bind(*module);
-  fetch::vm_modules::ml::VMAdamOptimiser::Bind(*module);
+  fetch::vm_modules::CreatePrint(*module);
 
   // Setting compiler up
   auto                     compiler = std::make_unique<fetch::vm::Compiler>(module.get());
@@ -138,6 +105,9 @@ int main(int argc, char **argv)
   }
 
   fetch::vm::VM vm(module.get());
+  // attach std::cout for printing
+  vm.AttachOutputDevice(fetch::vm::VM::STDOUT, std::cout);
+
   if (!vm.GenerateExecutable(ir, "main_ir", executable, errors))
   {
     std::cout << "Failed to generate executable" << std::endl;

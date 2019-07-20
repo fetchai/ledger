@@ -23,12 +23,13 @@
 #include "math/fundamental_operators.hpp"
 #include "math/matrix_operations.hpp"
 #include "math/meta/math_type_traits.hpp"
-#include "math/ml/loss_functions/kl_divergence.hpp"
+#include "math/metrics/kl_divergence.hpp"
 #include "math/normalize_array.hpp"
 #include "math/standard_functions/exp.hpp"
 #include "math/standard_functions/log.hpp"
 #include "math/tensor.hpp"
 #include "meta/type_traits.hpp"
+#include "ml/ops/flatten.hpp"
 
 #include <cmath>
 
@@ -44,10 +45,11 @@ template <class T>
 class TSNE
 {
 public:
-  using ArrayType = T;
-  using DataType  = typename ArrayType::Type;
-  using SizeType  = typename ArrayType::SizeType;
-  using RNG       = fetch::random::LaggedFibonacciGenerator<>;
+  using ArrayType  = T;
+  using DataType   = typename ArrayType::Type;
+  using SizeType   = typename ArrayType::SizeType;
+  using SizeVector = typename ArrayType::SizeVector;
+  using RNG        = fetch::random::LaggedFibonacciGenerator<>;
 
   static constexpr char const *DESCRIPTOR = "TSNE";
 
@@ -71,11 +73,12 @@ public:
   TSNE(ArrayType const &input_matrix, SizeType const &output_dimensions, DataType const &perplexity,
        SizeType const &random_seed)
   {
-    assert(input_matrix.shape().size() == 2);
-    ArrayType output_matrix({input_matrix.shape().at(1), output_dimensions});
+    assert(input_matrix.shape().size() >= 2);
+    ArrayType output_matrix(
+        {input_matrix.shape().at(input_matrix.shape().size() - 1), output_dimensions});
     rng_.Seed(random_seed);
     RandomInitWeights(output_matrix);
-    Init(input_matrix.Transpose(), output_matrix, perplexity);
+    Init(input_matrix, output_matrix, perplexity);
   }
 
   /**
@@ -88,7 +91,7 @@ public:
                 SizeType const &final_momentum_steps, SizeType const &p_later_correction_iteration)
   {
     // Initialize variables
-    output_symmetric_affinities_.Fill(DataType(0));
+    output_symmetric_affinities_.Fill(static_cast<DataType>(0));
     DataType min_gain{0.01f};
     DataType momentum = initial_momentum;
     assert(output_matrix_.shape().size() == 2);
@@ -98,7 +101,7 @@ public:
 
     // Initialize gains with value 1.0
     ArrayType gains(output_matrix_.shape());
-    gains.Fill(DataType(1));
+    gains.Fill(static_cast<DataType>(1));
 
     // Start optimisation
     for (SizeType iter{0}; iter < max_iters; iter++)
@@ -173,16 +176,28 @@ private:
   void Init(ArrayType const &input_matrix, ArrayType const &output_matrix,
             DataType const &perplexity)
   {
+    // Flatten input
+    if (input_matrix.shape().size() != 2)
+    {
+      fetch::ml::ops::Flatten<ArrayType> flatten_op;
+      ArrayType                          flat_input(flatten_op.ComputeOutputShape({input_matrix}));
+      flatten_op.Forward({input_matrix}, flat_input);
+      input_matrix_ = flat_input.Transpose();
+    }
+    else
+    {
+      input_matrix_ = input_matrix.Transpose();
+    }
+
     DataType perplexity_tolerance{1e-5f};
     SizeType max_tries{50};
 
     // Initialize high dimensional values
-    input_matrix_            = input_matrix;
-    SizeType input_data_size = input_matrix.shape().at(0);
+    SizeType input_data_size = input_matrix_.shape().at(0);
 
     // Find Pj|i values for given perplexity value within perplexity_tolerance
     input_pairwise_affinities_ = ArrayType({input_data_size, input_data_size});
-    CalculatePairwiseAffinitiesP(input_matrix, input_pairwise_affinities_, perplexity,
+    CalculatePairwiseAffinitiesP(input_matrix_, input_pairwise_affinities_, perplexity,
                                  perplexity_tolerance, max_tries);
 
     // Calculate input_symmetric_affinities from input_pairwise_affinities
@@ -211,7 +226,7 @@ private:
   {
     for (auto &val : output_matrix)
     {
-      val = GetRandom(DataType(0), DataType(1));
+      val = GetRandom(static_cast<DataType>(0), static_cast<DataType>(1));
     }
   }
 
@@ -228,7 +243,7 @@ private:
   {
     // p = -exp(d * beta)
     p = fetch::math::Exp(fetch::math::Multiply(DataType(-1), fetch::math::Multiply(d, beta)));
-    p.Set(0, k, DataType(0));
+    p.Set(0, k, static_cast<DataType>(0));
 
     DataType sum_p = fetch::math::Sum(p);
 
@@ -270,7 +285,7 @@ private:
     // beta = 1/(2*sigma^2)
     // Prefill beta array with 1.0
     ArrayType beta(input_data_size);
-    beta.Fill(DataType(1));
+    beta.Fill(static_cast<DataType>(1));
 
     // Calculate entropy value from perplexity
     // DataType target_entropy = std::log(target_perplexity);
@@ -291,7 +306,7 @@ private:
       ArrayType this_P(input_data_size);
 
       DataType current_entropy;
-      d.Set(i, i, DataType(0));
+      d.Set(i, i, static_cast<DataType>(0));
       Hbeta(d.Slice(i).Copy(), this_P, current_entropy, beta.At(i), i);
 
       // Evaluate whether the perplexity is within tolerance
@@ -338,7 +353,7 @@ private:
       {
         if (i == j)
         {
-          pairwise_affinities.Set(i, j, DataType(0));
+          pairwise_affinities.Set(i, j, static_cast<DataType>(0));
           continue;
         }
         pairwise_affinities.Set(i, j, this_P.At(0, j));
@@ -368,13 +383,14 @@ private:
                                 fetch::math::DotTranspose(output_matrix, output_matrix));
 
     // num = 1 / (1 + (num+sum_y).T+sum_y)
-    ArrayType tmp_val((num + sum_y).Transpose());
-    num = fetch::math::Divide(DataType(1), fetch::math::Add(DataType(1), (tmp_val + sum_y)));
+    ArrayType val((num + sum_y).Transpose());
+    num = fetch::math::Divide(static_cast<DataType>(1),
+                              fetch::math::Add(static_cast<DataType>(1), (val + sum_y)));
 
     // num[range(n), range(n)] = 0.
     for (SizeType i{0}; i < num.shape().at(0); i++)
     {
-      num.Set(i, i, DataType(0));
+      num.Set(i, i, static_cast<DataType>(0));
     }
 
     // Q = num / sum(num)
@@ -409,13 +425,13 @@ private:
                             ArrayType const &input_symmetric_affinities,
                             ArrayType const &output_symmetric_affinities, ArrayType const &num)
   {
-    ASSERT(input_matrix_.shape().at(0) == output_matrix.shape().at(0));
+    assert(input_matrix_.shape().at(0) == output_matrix.shape().at(0));
 
     ArrayType ret(output_matrix.shape());
 
     for (SizeType i{0}; i < output_matrix.shape().at(0); i++)
     {
-      ArrayType tmp_slice(output_matrix.shape().at(1));
+      ArrayType output(output_matrix.shape().at(1));
       for (SizeType j{0}; j < output_matrix.shape().at(0); j++)
       {
         if (i == j)
@@ -423,25 +439,31 @@ private:
           continue;
         }
 
-        DataType tmp_p_i_j;
-        tmp_p_i_j = input_symmetric_affinities.At(i, j);
+        DataType p_i_j;
+        p_i_j = input_symmetric_affinities.At(i, j);
 
-        DataType tmp_q_i_j = output_symmetric_affinities.At(i, j);
+        DataType q_i_j = output_symmetric_affinities.At(i, j);
 
         // (Pij-Qij)
-        DataType tmp_val = tmp_p_i_j - tmp_q_i_j;
+        DataType val = p_i_j - q_i_j;
 
         // /(1+||yi-yj||^2)
-        fetch::math::Multiply(num.At(i, j), tmp_val, tmp_val);
+        fetch::math::Multiply(num.At(i, j), val, val);
 
-        // tmp_val*(yi-yj), where tmp_val=(Pij-Qij)/(1+||yi-yj||^2)
-        tmp_slice += Multiply(tmp_val, (output_matrix.Slice(j).Copy().Squeeze()) -
-                                           (output_matrix.Slice(i).Copy().Squeeze()));
+        // val*(yi-yj), where val=(Pij-Qij)/(1+||yi-yj||^2)
+
+        ArrayType diff = (output_matrix.Slice(j).Copy()) - (output_matrix.Slice(i).Copy());
+
+        SizeVector shape = diff.shape();
+        shape.erase(shape.begin());
+        diff.Reshape(shape);
+
+        output += Multiply(val, diff);
       }
 
       for (SizeType k = 0; k < output_matrix.shape().at(1); k++)
       {
-        ret.Set(i, k, fetch::math::Multiply(DataType(-1), tmp_slice.At(k)));
+        ret(i, k) = fetch::math::Multiply(static_cast<DataType>(-1), output.At(k));
       }
     }
 
