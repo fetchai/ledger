@@ -172,7 +172,7 @@ VM::VM(Module *module)
   opcode_map_.clear();
   for (uint16_t i = 0; i < num_functions; ++i)
   {
-    uint16_t    opcode = Opcodes::NumReserved + i;
+    auto        opcode = static_cast<uint16_t>(Opcodes::NumReserved + i);
     auto const &info   = function_info_array[i];
     AddOpcodeInfo(opcode, info.unique_id, info.handler);
     opcode_map_[info.unique_id] = opcode;
