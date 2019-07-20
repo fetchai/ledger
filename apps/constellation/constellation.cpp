@@ -172,11 +172,9 @@ DkgServicePtr CreateDkgService(Constellation::Config const &cfg, ConstByteArray 
 {
   DkgServicePtr dkg{};
 
-  if (cfg.proof_of_stake && !cfg.beacon_address.empty())
+  if (cfg.proof_of_stake)
   {
-    crypto::bls::Init();
-
-    dkg = std::make_unique<dkg::DkgService>(endpoint, address, cfg.beacon_address);
+    dkg = std::make_unique<dkg::DkgService>(endpoint, address);
   }
 
   return dkg;
