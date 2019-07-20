@@ -32,8 +32,8 @@ class DkgRpcProtocol : public service::Protocol
 public:
   enum
   {
-    REQUEST_SECRET,
     SUBMIT_SIGNATURE,
+    SUBMIT_SHARE,
   };
 
   // Construction / Destruction
