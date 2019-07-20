@@ -325,7 +325,7 @@ private:
   void     HandleString(IRExpressionNodePtr const &node);
   void     HandleTrue(IRExpressionNodePtr const &node);
   void     HandleFalse(IRExpressionNodePtr const &node);
-  void     HandleInitializerList(IRExpressionNodePtr const &node);
+  void     HandleInitialiserList(IRExpressionNodePtr const &node);
   void     HandleNull(IRExpressionNodePtr const &node);
   void     HandlePrefixPostfixOp(IRExpressionNodePtr const &node);
   void     HandleBinaryOp(IRExpressionNodePtr const &node);

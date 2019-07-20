@@ -1009,9 +1009,9 @@ void Generator::HandleExpression(IRExpressionNodePtr const &node)
     HandleFalse(node);
     break;
   }
-  case NodeKind::InitializerList:
+  case NodeKind::InitialiserList:
   {
-    HandleInitializerList(node);
+    HandleInitialiserList(node);
     break;
   }
   case NodeKind::Null:
@@ -1232,7 +1232,7 @@ void Generator::HandleFalse(IRExpressionNodePtr const &node)
   AddLineNumber(node->line, pc);
 }
 
-void Generator::HandleInitializerList(IRExpressionNodePtr const &node)
+void Generator::HandleInitialiserList(IRExpressionNodePtr const &node)
 {
   auto const &node_type{node->type};
   if (!node_type->IsInstantiation() || node_type->template_type->name != "Array" ||

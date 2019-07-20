@@ -45,7 +45,7 @@ using TypeIndexArray = std::vector<TypeIndex>;
 namespace TypeIds {
 static constexpr TypeId Unknown         = 0;
 static constexpr TypeId Null            = 1;
-static constexpr TypeId InitializerList = 2;
+static constexpr TypeId InitialiserList = 2;
 static constexpr TypeId Void            = 3;
 static constexpr TypeId Bool            = 4;
 static constexpr TypeId Int8            = 5;
@@ -143,7 +143,7 @@ enum class NodeKind : uint16_t
   InplaceDivide                             = 64,
   Modulo                                    = 65,
   InplaceModulo                             = 66,
-  InitializerList                           = 67
+  InitialiserList                           = 67
 };
 
 enum class ExpressionKind : uint8_t
@@ -269,7 +269,7 @@ private:
   friend class Analyser;
 };
 
-struct InitializerListPlaceholder
+struct InitialiserListPlaceholder
 {
 };
 

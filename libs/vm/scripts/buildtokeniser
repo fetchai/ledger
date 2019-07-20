@@ -28,8 +28,8 @@ prepend_this="//----------------------------------------------------------------
 
 append_this="// clang-format on"
 
-echo -e "$prepend_pragma\\n$prepend_this" | cat - ../include/vm/tokeniser.hpp > temp && mv temp ../include/vm/tokeniser.hpp
-echo -e "$prepend_this" | cat - ../src/tokeniser.cpp > temp && mv temp ../src/tokeniser.cpp
+echo -e "$prepend_pragma\\n$prepend_this" | cat - ../include/vm/tokeniser.hpp | sed 's/nitialize/nitialise/g' > temp && mv temp ../include/vm/tokeniser.hpp
+echo -e "$prepend_this" | cat - ../src/tokeniser.cpp | sed 's/nitialize/nitialise/g' > temp && mv temp ../src/tokeniser.cpp
 
 echo -e "$append_this" >> ../include/vm/tokeniser.hpp
 echo -e "$append_this" >> ../src/tokeniser.cpp
