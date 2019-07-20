@@ -65,6 +65,7 @@ FakeIoObserver::Status FakeIoObserver::Write(std::string const &key, void const 
 
   // store / update the data
   data_[key] = value;
+
   return Status::OK;
 }
 
