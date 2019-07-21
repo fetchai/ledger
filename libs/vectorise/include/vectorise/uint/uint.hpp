@@ -40,7 +40,7 @@ namespace vectorise {
  * one easily use this in combination with hashes etc.
  */
 
-// TODO(issue 1383): Handle 'lef-over' bits in the last element of `wide_` array
+// TODO(issue 1383): Handle 'residual' bits in the last element of `wide_` array
 template <uint16_t S = 256>
 class UInt
 {
@@ -53,11 +53,13 @@ public:
     ELEMENT_SIZE      = sizeof(BaseType) * 8,
     ELEMENTS          = UINT_SIZE / ELEMENT_SIZE,
     WIDE_ELEMENT_SIZE = sizeof(WideType) * 8,
-    WIDE_ELEMENTS     = (UINT_SIZE + WIDE_ELEMENT_SIZE - 1) / WIDE_ELEMENT_SIZE
+    WIDE_ELEMENTS     = (UINT_SIZE + WIDE_ELEMENT_SIZE - 1) / WIDE_ELEMENT_SIZE,
+    RESIDUAL_BITS     = WIDE_ELEMENTS * WIDE_ELEMENT_SIZE - UINT_SIZE,
   };
   static_assert(S == (ELEMENTS * ELEMENT_SIZE),
                 "Size must be a multiple of 8 times the base type size.");
 
+  // From C++17 up, the `WideContainerType` type can be `std::array<WideType, WIDE_ELEMENTS>;`
   using WideContainerType                   = WideType[WIDE_ELEMENTS];
   using ContainerType                       = BaseType[ELEMENTS];
   static constexpr char const *LOGGING_NAME = "UInt";
@@ -120,6 +122,7 @@ public:
 
   constexpr UInt &operator++();
   constexpr UInt &operator--();
+  constexpr UInt &operator~();
 
   //////////////////////////////
   /// math and bit operators ///
@@ -214,8 +217,22 @@ public:
 private:
   WideContainerType wide_;
 
+  static constexpr WideType RESIDUAL_BITS_MASK{~WideType{0} >> RESIDUAL_BITS};
+
   constexpr ContainerType const &base() const;
   constexpr ContainerType &      base();
+
+  struct MaxConstr
+  {
+  };
+  constexpr UInt(MaxConstr)
+  {
+    for (auto &itm : wide_)
+    {
+      itm = ~WideType{0};
+    }
+    wide_[WIDE_ELEMENTS - 1] &= RESIDUAL_BITS_MASK;
+  }
 };
 
 template <uint16_t S>
@@ -239,7 +256,7 @@ const UInt<S> UInt<S>::_0{0ull};
 template <uint16_t S>
 const UInt<S> UInt<S>::_1{1ull};
 template <uint16_t S>
-const UInt<S> UInt<S>::max{{ULONG_MAX, ULONG_MAX, ULONG_MAX, ULONG_MAX}};
+const UInt<S> UInt<S>::max{UInt(MaxConstr{})};
 
 ////////////////////
 /// constructors ///
@@ -421,7 +438,7 @@ constexpr meta::IfIsUnsignedInteger<T, bool> UInt<S>::operator>=(T other) const
 
 ///////////////////////
 /// unary operators ///
-///////////////////////
+//////////////////////1/
 
 template <uint16_t S>
 constexpr UInt<S> &UInt<S>::operator++()
@@ -435,6 +452,18 @@ template <uint16_t S>
 constexpr UInt<S> &UInt<S>::operator--()
 {
   *this -= _1;
+
+  return *this;
+}
+
+template <uint16_t S>
+constexpr UInt<S> &UInt<S>::operator~()
+{
+  for (auto item : wide_)
+  {
+    item = ~item;
+  }
+  wide_[WIDE_ELEMENTS - 1] &= RESIDUAL_BITS_MASK;
 
   return *this;
 }

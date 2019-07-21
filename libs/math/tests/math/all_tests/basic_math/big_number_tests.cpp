@@ -325,3 +325,41 @@ TEST(big_number_gtest, test_construction_from_byte_array_fails_if_too_long)
 
   EXPECT_TRUE(exception_thrown);
 }
+
+// TODO(issue 1383): Enable test when issue is resolved
+TEST(big_number_gtest, DISABLED_test_issue_1383_demo_with_bitshift_oper)
+{
+  using UIntT = UInt<72>;
+
+  UIntT n1{1u};
+
+  // Scenario where bit-shift does *NOT* go over UIntT::UINT_SIZE boundary
+  ASSERT_EQ(n1, 1u);
+  n1 <<= UIntT::UINT_SIZE - 1;
+  n1 >>= UIntT::UINT_SIZE - 1;
+  ASSERT_EQ(n1, 1u);
+
+  // Scenario where bit-shift *GOES* over UIntT::UINT_SIZE boundary
+  n1 <<= UIntT::UINT_SIZE;
+  n1 >>= UIntT::UINT_SIZE;
+
+  EXPECT_EQ(n1, 0u);
+}
+
+// TODO(issue 1383): Enable test when issue is resolved
+TEST(big_number_gtest, DISABLED_test_issue_1383_demo_overflow_with_plus_minus_oper)
+{
+  using UIntT = UInt<72>;
+  UIntT n1{UIntT::max};
+  ASSERT_EQ(UIntT::max.ElementAt(0), ~UIntT::WideType{0});
+  ASSERT_EQ(UIntT::max.ElementAt(1), 255);
+
+  ASSERT_EQ(n1.ElementAt(0), ~UIntT::WideType{0});
+  ASSERT_EQ(n1.ElementAt(1),
+            ~UIntT::WideType{0} >>
+                (UIntT::WIDE_ELEMENT_SIZE - (UIntT::UINT_SIZE % UIntT::WIDE_ELEMENT_SIZE)));
+
+  n1 += 1u;
+  n1 -= 1u;
+  EXPECT_EQ(n1, 0u);
+}
