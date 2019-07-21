@@ -45,10 +45,6 @@ using fetch::generics::MilliTimer;
 namespace fetch {
 namespace ledger {
 
-namespace {
-
-}  // namespace
-
 /**
  * Constructs the main chain
  *
