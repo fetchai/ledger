@@ -504,7 +504,6 @@ def main():
     check_tool_versions()
 
     commit, fail_if_changes, jobs = parse_commandline()
-    print("Commit:", commit)
 
     files_to_process = files_of_interest(commit)
     check_for_headers_with_non_hpp_extension(files_to_process)

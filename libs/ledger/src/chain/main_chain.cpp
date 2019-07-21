@@ -419,25 +419,23 @@ MainChain::Blocks MainChain::GetChainPreceding(BlockHash start, std::uint64_t li
   Blocks result;
 
   // lookup the heaviest block hash
-  BlockPtr  block;
-  BlockHash current_hash = std::move(start);
-
-  // exit once we have gathered enough blocks or reached genesis
-  while (result.size() < limit && current_hash != GENESIS_DIGEST)
+  for (BlockHash current_hash = std::move(start);
+       // exit once we have gathered enough blocks or reached genesis
+       result.size() < limit && current_hash != GENESIS_DIGEST;)
   {
     // lookup the block
-    block = GetBlock(current_hash);
+    auto block = GetBlock(current_hash);
     if (!block)
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "Block lookup failure for block: ", ToBase64(current_hash));
       throw std::runtime_error("Failed to lookup block");
     }
 
-    // update the results
-    result.push_back(block);
-
     // walk the hash
     current_hash = block->body.previous_hash;
+
+    // update the results
+    result.push_back(std::move(block));
   }
 
   return result;
