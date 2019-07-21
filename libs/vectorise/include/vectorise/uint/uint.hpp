@@ -40,6 +40,7 @@ namespace vectorise {
  * one easily use this in combination with hashes etc.
  */
 
+// TODO(issue 1383): Handle 'lef-over' bits in the last element of `wide_` array
 template <uint16_t S = 256>
 class UInt
 {
@@ -279,7 +280,8 @@ constexpr UInt<S>::UInt(T number)
 {
   std::fill(wide_, wide_ + WIDE_ELEMENTS, 0);
   // This will work properly only on LITTLE endian hardware.
-  reinterpret_cast<T &>(wide_[0]) = number;
+  char *d                   = reinterpret_cast<char *>(wide_);
+  *reinterpret_cast<T *>(d) = number;
 }
 
 ////////////////////////////
@@ -447,7 +449,7 @@ constexpr UInt<S> UInt<S>::operator+(UInt<S> const &n) const
   UInt<S> ret{*this};
   ret += n;
 
-  return std::move(ret);
+  return ret;
 }
 
 template <uint16_t S>
@@ -456,7 +458,7 @@ constexpr UInt<S> UInt<S>::operator-(UInt<S> const &n) const
   UInt<S> ret{*this};
   ret -= n;
 
-  return std::move(ret);
+  return ret;
 }
 
 template <uint16_t S>
@@ -465,7 +467,7 @@ constexpr UInt<S> UInt<S>::operator*(UInt<S> const &n) const
   UInt<S> ret{*this};
   ret *= n;
 
-  return std::move(ret);
+  return ret;
 }
 
 template <uint16_t S>
@@ -474,7 +476,7 @@ constexpr UInt<S> UInt<S>::operator/(UInt<S> const &n) const
   UInt<S> ret{*this};
   ret /= n;
 
-  return std::move(ret);
+  return ret;
 }
 
 template <uint16_t S>
@@ -483,7 +485,7 @@ constexpr UInt<S> UInt<S>::operator%(UInt<S> const &n) const
   UInt<S> ret{*this};
   ret %= n;
 
-  return std::move(ret);
+  return ret;
 }
 
 template <uint16_t S>
@@ -492,7 +494,7 @@ constexpr UInt<S> UInt<S>::operator&(UInt<S> const &n) const
   UInt<S> ret{*this};
   ret &= n;
 
-  return std::move(ret);
+  return ret;
 }
 
 template <uint16_t S>
@@ -501,7 +503,7 @@ constexpr UInt<S> UInt<S>::operator|(UInt<S> const &n) const
   UInt<S> ret{*this};
   ret |= n;
 
-  return std::move(ret);
+  return ret;
 }
 
 template <uint16_t S>
@@ -510,7 +512,7 @@ constexpr UInt<S> UInt<S>::operator^(UInt<S> const &n) const
   UInt<S> ret{*this};
   ret ^= n;
 
-  return std::move(ret);
+  return ret;
 }
 
 template <uint16_t S>
