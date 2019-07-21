@@ -37,13 +37,13 @@ static constexpr auto IsNothrowAccumulatableV = IsNothrowAccumulatable<F, Seq...
 template <class F, class A, class B, class... Tail>
 struct IsNothrowAccumulatable<F, A, B, Tail...>
   : std::integral_constant<bool,
-                           type_util::IsNothrowInvocableV<std::add_lvalue_reference_t<F>, A, B> &&
-                               IsNothrowAccumulatableV<F, type_util::InvokeResultT<F, A, B>, Tail...>>
+                           meta::IsNothrowInvocableV<std::add_lvalue_reference_t<F>, A, B> &&
+                               IsNothrowAccumulatableV<F, meta::InvokeResultT<F, A, B>, Tail...>>
 {
 };
 
 template <class F, class A, class B>
-struct IsNothrowAccumulatable<F, A, B> : type_util::IsNothrowInvocable<F, A, B>
+struct IsNothrowAccumulatable<F, A, B> : meta::IsNothrowInvocable<F, A, B>
 {
 };
 
@@ -184,38 +184,36 @@ constexpr void ForEach(F &&) noexcept
 {}
 
 template <class F, class T>
-constexpr void ForEach(F &&f, T &&t) noexcept(type_util::IsNothrowInvocableV<F, T>)
+constexpr void ForEach(F &&f, T &&t) noexcept(meta::IsNothrowInvocableV<F, T>)
 {
   std::forward<F>(f)(std::forward<T>(t));
 }
 
 template <class F, class T, class... Ts>
 constexpr void ForEach(F &&f, T &&t, Ts &&... ts) noexcept(
-    type_util::AllV<type_util::Bind<type_util::IsNothrowInvocable, F>::template type, T, Ts...>);
+    type_util::AllV<type_util::Bind<meta::IsNothrowInvocable, F>::template type, T, Ts...>);
 
 template <class F, class T, class... Ts>
 constexpr void ForEach(F &&f, T &&t, Ts &&... ts) noexcept(
-    type_util::AllV<type_util::Bind<type_util::IsNothrowInvocable, F>::template type, T, Ts...>)
+    type_util::AllV<type_util::Bind<meta::IsNothrowInvocable, F>::template type, T, Ts...>)
 {
   f(std::forward<T>(t)), ForEach(std::forward<F>(f), std::forward<Ts>(ts)...);
 }
 
-struct ResetOne
+struct ZeroOne
 {
   template <class T>
-  constexpr void operator()(T &&t) noexcept(
-      std::is_nothrow_constructible<std::decay_t<T>>::value
-          &&std::is_nothrow_move_assignable<std::decay_t<T>>::value)
+  constexpr void operator()(T &&t) noexcept(std::is_nothrow_constructible<std::decay_t<T>>::value
+                                                &&noexcept(std::forward<T>(t) = std::decay_t<T>{}))
   {
-    t = std::decay_t<T>{};
+    std::forward<T>(t) = std::decay_t<T>{};
   }
 };
 
 template <class... Ts>
-constexpr void ResetAll(Ts &&... ts) noexcept(noexcept(ForEach(ResetOne{},
-                                                               std::forward<Ts>(ts)...)))
+constexpr void ZeroAll(Ts &&... ts) noexcept(noexcept(ForEach(ZeroOne{}, std::forward<Ts>(ts)...)))
 {
-  ForEach(ResetOne{}, std::forward<Ts>(ts)...);
+  ForEach(ZeroOne{}, std::forward<Ts>(ts)...);
 }
 
 struct ClearOne
@@ -248,7 +246,7 @@ constexpr void no_op(Ts &&... /*ts*/) noexcept
 
 template <class F, class... Args>
 constexpr decltype(auto) Invoke(F &&f,
-                                Args &&... args) noexcept(type_util::IsNothrowInvocableV<F, Args...>)
+                                Args &&... args) noexcept(meta::IsNothrowInvocableV<F, Args...>)
 {
   return std::forward<F>(f)(std::forward<Args>(args)...);
 }
@@ -257,42 +255,71 @@ template <class RV, class C, class... Args1, class... Args>
 constexpr decltype(auto) Invoke(RV (std::decay_t<C>::*f)(Args1...), C &&c,
                                 Args &&... args) /* noexcept(...) */
 {
-  return (std::forward<C>(c).*f)(f)(std::forward<Args>(args)...);
+  return (std::forward<C>(c).*f)(std::forward<Args>(args)...);
 }
 
 template <class RV, class C, class... Args1, class... Args>
 constexpr decltype(auto) Invoke(RV (std::decay_t<C>::*f)(Args1...) const, C &&c,
                                 Args &&... args) /* noexcept(...) */
 {
-  return (std::forward<C>(c).*f)(f)(std::forward<Args>(args)...);
+  return (std::forward<C>(c).*f)(std::forward<Args>(args)...);
 }
 
 template <class RV, class C, class... Args1, class... Args>
 constexpr decltype(auto) Invoke(RV (std::decay_t<C>::*f)(Args1...) &, C &&c,
                                 Args &&... args) /* noexcept(...) */
 {
-  return (std::forward<C>(c).*f)(f)(std::forward<Args>(args)...);
+  return (std::forward<C>(c).*f)(std::forward<Args>(args)...);
 }
 
 template <class RV, class C, class... Args1, class... Args>
 constexpr decltype(auto) Invoke(RV (std::decay_t<C>::*f)(Args1...) const &, C &&c,
                                 Args &&... args) /* noexcept(...) */
 {
-  return (std::forward<C>(c).*f)(f)(std::forward<Args>(args)...);
+  return (std::forward<C>(c).*f)(std::forward<Args>(args)...);
 }
 
 template <class RV, class C, class... Args1, class... Args>
 constexpr decltype(auto) Invoke(RV (std::decay_t<C>::*f)(Args1...) &&, C &&c,
                                 Args &&... args) /* noexcept(...) */
 {
-  return (std::forward<C>(c).*f)(f)(std::forward<Args>(args)...);
+  return (std::forward<C>(c).*f)(std::forward<Args>(args)...);
 }
 
 template <class RV, class C, class... Args1, class... Args>
 constexpr decltype(auto) Invoke(RV (std::decay_t<C>::*f)(Args1...) const &&, C &&c,
                                 Args &&... args) /* noexcept(...) */
 {
-  return (std::forward<C>(c).*f)(f)(std::forward<Args>(args)...);
+  return (std::forward<C>(c).*f)(std::forward<Args>(args)...);
+}
+
+template <class... StoredTypes>
+class KeptValues
+{
+  using StorageType = std::tuple<StoredTypes...>;
+  using RecoverType = std::tuple<StoredTypes &...>;
+
+  StorageType storage_;
+  RecoverType recover_;
+
+public:
+  constexpr KeptValues(StoredTypes &... values) noexcept(
+      std::is_nothrow_constructible<StorageType, StoredTypes &...>::value
+          &&std::is_nothrow_constructible<RecoverType, StoredTypes &...>::value)
+    : storage_{values...}
+    , recover_{values...}
+  {}
+
+  ~KeptValues()
+  {
+    recover_ = std::move(storage_);
+  }
+};
+template <class... StoredTypes>
+inline constexpr KeptValues<StoredTypes...> KeepValues(StoredTypes &... values) noexcept(
+    std::is_nothrow_constructible<KeptValues<StoredTypes...>, StoredTypes &...>::value)
+{
+  return KeptValues<StoredTypes...>(values...);
 }
 
 }  // namespace value_util

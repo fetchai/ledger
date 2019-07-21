@@ -46,13 +46,13 @@ public:
   }
 
 private:
-  Blocks GetHeaviestChain(uint64_t maxsize) const
+  Blocks GetHeaviestChain(uint64_t maxsize)
   {
     LOG_STACK_TRACE_POINT;
     return Copy(chain_.GetHeaviestChain(maxsize));
   }
 
-  Blocks GetCommonSubChain(Digest start, Digest last_seen, uint64_t limit) const
+  Blocks GetCommonSubChain(Digest start, Digest last_seen, uint64_t limit)
   {
     LOG_STACK_TRACE_POINT;
 
@@ -65,7 +65,7 @@ private:
     return Copy(blocks);
   }
 
-  Blocks TimeTravel(Digest start, int64_t limit) const
+  Blocks TimeTravel(Digest start, int64_t limit)
   {
     LOG_STACK_TRACE_POINT;
     return Copy(chain_.TimeTravel(std::move(start), limit));

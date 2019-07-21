@@ -194,14 +194,17 @@ void MainChain::KeepBlock(IntBlockPtr const &block) const
 
   if (block->body.previous_hash != GENESIS_DIGEST)
   {
-    // notify stored parent
-    if (block_store_->Get(storage::ResourceID(block->body.previous_hash), record) &&
-        record.next_hash != hash)
-    {
-      record.next_hash = hash;
-      block_store_->Set(storage::ResourceID(record.hash()), record);
-      record.next_hash = GENESIS_DIGEST;
-    }
+	  // notify stored parent
+	  if (block_store_->Get(storage::ResourceID(block->body.previous_hash), record))
+	  {
+		  if(record.next_hash != hash)
+		  {
+			  record.next_hash = hash;
+			  block_store_->Set(storage::ResourceID(record.hash()), record);
+		  }
+		  // before checking for this block's children in storage, reset next_hash to genesis
+		  record.next_hash = GENESIS_DIGEST;
+	  }
   }
   record.block = *block;
 
@@ -448,7 +451,7 @@ MainChain::Blocks MainChain::GetChainPreceding(BlockHash start, std::uint64_t li
  *
  * @param start The hash of the first block
  * @param limit The maximum number of blocks to be returned, negative for towards genesis, positive for towards tip
- * @return The array of blocks; if forward time travel ended earlier than limit due to a missing block in the storage, the array is 0-terminated
+ * @return The array of blocks
  * @throws std::runtime_error if a block lookup occurs
  */
 MainChain::Blocks MainChain::TimeTravel(BlockHash start, std::int64_t limit) const
@@ -457,7 +460,7 @@ MainChain::Blocks MainChain::TimeTravel(BlockHash start, std::int64_t limit) con
 	  return GetChainPreceding(std::move(start), static_cast<std::uint64_t>(-limit));
   }
 
-  limit = std::min(limit, static_cast<std::int64_t>(MainChain::UPPER_BOUND));
+  const auto lim = static_cast<std::size_t>(std::min(limit, static_cast<std::int64_t>(MainChain::UPPER_BOUND)));
   MilliTimer myTimer("MainChain::ChainPreceding");
 
   FETCH_LOCK(lock_);
@@ -471,24 +474,16 @@ MainChain::Blocks MainChain::TimeTravel(BlockHash start, std::int64_t limit) con
   // exit once we have gathered enough blocks or reached genesis
   for (BlockHash current_hash{std::move(start)};
        // check for returned subchain size
-       result.size() < limit
+       result.size() < lim
        // genesis as the next hash designates the tip of the chain
        && current_hash != GENESIS_DIGEST
+    // lookup the block in storage
+       && LoadBlock(current_hash, block, &next_hash);
        // walk the stack
        current_hash = std::move(next_hash))
   {
-    // lookup the block in storage
-    if (LoadBlock(current_hash, block, &next_hash))
-    {
-	    // update the results
-	    result.push_back(std::make_unique<Block>(block));
-    }
-    else {
-	    // here storage ends, but not the chain
-	    // add trailing zero to indicate that the chain may still go on
-	    result.emplace_back();
-	    break;
-    }
+	  // update the results
+	  result.push_back(std::make_unique<Block>(block));
   }
 
   return result;
