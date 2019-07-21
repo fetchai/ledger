@@ -742,7 +742,7 @@ inline Variant &Variant::operator[](ConstByteArray const &key)
   object_.emplace(key, std::move(variant));
 
   // return the variant
-  return *variant;
+  return *object_[key];
 }
 
 /**
