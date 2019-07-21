@@ -73,7 +73,7 @@ public:
   }
 
   JSONDocument(JSONDocument const &)     = default;
-  JSONDocument(JSONDocument &&) noexcept = delete;
+  JSONDocument(JSONDocument &&) noexcept = default;
   ~JSONDocument()                        = default;
 
   Variant &operator[](std::size_t i)
