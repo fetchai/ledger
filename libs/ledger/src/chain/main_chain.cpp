@@ -448,7 +448,7 @@ MainChain::Blocks MainChain::GetChainPreceding(BlockHash start, std::uint64_t li
  *
  * @param start The hash of the first block
  * @param limit The maximum number of blocks to be returned, negative for towards genesis, positive for towards tip
- * @return The array of blocks
+ * @return The array of blocks; if forward time travel ended earlier than limit due to a missing block in the storage, the array is 0-terminated
  * @throws std::runtime_error if a block lookup occurs
  */
 MainChain::Blocks MainChain::TimeTravel(BlockHash start, std::int64_t limit) const
@@ -474,13 +474,21 @@ MainChain::Blocks MainChain::TimeTravel(BlockHash start, std::int64_t limit) con
        result.size() < limit
        // genesis as the next hash designates the tip of the chain
        && current_hash != GENESIS_DIGEST
-       // lookup the block in storage
-       && LoadBlock(current_hash, block, &next_hash);
        // walk the stack
-       current_hash = next_hash)
+       current_hash = std::move(next_hash))
   {
-    // update the results
-    result.push_back(std::make_unique<Block>(block));
+    // lookup the block in storage
+    if (LoadBlock(current_hash, block, &next_hash))
+    {
+	    // update the results
+	    result.push_back(std::make_unique<Block>(block));
+    }
+    else {
+	    // here storage ends, but not the chain
+	    // add trailing zero to indicate that the chain may still go on
+	    result.emplace_back();
+	    break;
+    }
   }
 
   return result;

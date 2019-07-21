@@ -33,8 +33,8 @@ public:
   enum
   {
     HEAVIEST_CHAIN   = 1,
-    TIME_TRAVEL      = 2,
-    COMMON_SUB_CHAIN = 3
+    COMMON_SUB_CHAIN = 2,
+    TIME_TRAVEL      = 3
   };
 
   explicit MainChainProtocol(MainChain &chain)
@@ -46,13 +46,13 @@ public:
   }
 
 private:
-  Blocks GetHeaviestChain(uint64_t maxsize)
+  Blocks GetHeaviestChain(uint64_t maxsize) const
   {
     LOG_STACK_TRACE_POINT;
     return Copy(chain_.GetHeaviestChain(maxsize));
   }
 
-  Blocks GetCommonSubChain(Digest start, Digest last_seen, uint64_t limit)
+  Blocks GetCommonSubChain(Digest start, Digest last_seen, uint64_t limit) const
   {
     LOG_STACK_TRACE_POINT;
 
@@ -65,7 +65,7 @@ private:
     return Copy(blocks);
   }
 
-  Blocks TimeTravel(Digest start, int64_t limit)
+  Blocks TimeTravel(Digest start, int64_t limit) const
   {
     LOG_STACK_TRACE_POINT;
     return Copy(chain_.TimeTravel(std::move(start), limit));
