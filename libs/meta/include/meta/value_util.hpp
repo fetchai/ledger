@@ -37,13 +37,13 @@ static constexpr auto IsNothrowAccumulatableV = IsNothrowAccumulatable<F, Seq...
 template <class F, class A, class B, class... Tail>
 struct IsNothrowAccumulatable<F, A, B, Tail...>
   : std::integral_constant<bool,
-                           meta::IsNothrowInvocableV<std::add_lvalue_reference_t<F>, A, B> &&
-                               IsNothrowAccumulatableV<F, meta::InvokeResultT<F, A, B>, Tail...>>
+                           type_util::IsNothrowInvocableV<std::add_lvalue_reference_t<F>, A, B> &&
+                               IsNothrowAccumulatableV<F, type_util::InvokeResultT<F, A, B>, Tail...>>
 {
 };
 
 template <class F, class A, class B>
-struct IsNothrowAccumulatable<F, A, B> : meta::IsNothrowInvocable<F, A, B>
+struct IsNothrowAccumulatable<F, A, B> : type_util::IsNothrowInvocable<F, A, B>
 {
 };
 
@@ -184,18 +184,18 @@ constexpr void ForEach(F &&) noexcept
 {}
 
 template <class F, class T>
-constexpr void ForEach(F &&f, T &&t) noexcept(meta::IsNothrowInvocableV<F, T>)
+constexpr void ForEach(F &&f, T &&t) noexcept(type_util::IsNothrowInvocableV<F, T>)
 {
   std::forward<F>(f)(std::forward<T>(t));
 }
 
 template <class F, class T, class... Ts>
 constexpr void ForEach(F &&f, T &&t, Ts &&... ts) noexcept(
-    type_util::AllV<type_util::Bind<meta::IsNothrowInvocable, F>::template type, T, Ts...>);
+    type_util::AllV<type_util::Bind<type_util::IsNothrowInvocable, F>::template type, T, Ts...>);
 
 template <class F, class T, class... Ts>
 constexpr void ForEach(F &&f, T &&t, Ts &&... ts) noexcept(
-    type_util::AllV<type_util::Bind<meta::IsNothrowInvocable, F>::template type, T, Ts...>)
+    type_util::AllV<type_util::Bind<type_util::IsNothrowInvocable, F>::template type, T, Ts...>)
 {
   f(std::forward<T>(t)), ForEach(std::forward<F>(f), std::forward<Ts>(ts)...);
 }
@@ -248,7 +248,7 @@ constexpr void no_op(Ts &&... /*ts*/) noexcept
 
 template <class F, class... Args>
 constexpr decltype(auto) Invoke(F &&f,
-                                Args &&... args) noexcept(meta::IsNothrowInvocableV<F, Args...>)
+                                Args &&... args) noexcept(type_util::IsNothrowInvocableV<F, Args...>)
 {
   return std::forward<F>(f)(std::forward<Args>(args)...);
 }
