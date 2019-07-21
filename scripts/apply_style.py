@@ -319,7 +319,7 @@ def files_of_interest(commit):
 
     ret = []
 
-    if commit is None:
+    if commit is None or commit == []:
         for root, _, files in walk_source_directories(PROJECT_ROOT):
             for file_name in files:
                 absolute_path = abspath(join(root, file_name))
@@ -397,6 +397,7 @@ def parse_commandline():
     return find_names('.', args.files) if args.commit is None else args.commit[0], \
         args.diff, \
         args.jobs
+
 
 TRANSFORMATIONS = [
     fix_cmake_version_requirements,

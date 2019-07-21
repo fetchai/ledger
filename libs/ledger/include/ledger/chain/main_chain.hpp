@@ -103,8 +103,8 @@ public:
   using BlockHashSet         = std::unordered_set<BlockHash>;
   using TransactionLayoutSet = std::unordered_set<TransactionLayout>;
 
-  static constexpr char const *LOGGING_NAME = "MainChain";
-  static constexpr std::uint64_t    UPPER_BOUND  = 5000ull;
+  static constexpr char const *  LOGGING_NAME = "MainChain";
+  static constexpr std::uint64_t UPPER_BOUND  = 5000ull;
 
   enum class Mode
   {
@@ -143,7 +143,8 @@ public:
   BlockHash GetHeaviestBlockHash() const;
   Blocks    GetHeaviestChain(uint64_t limit = UPPER_BOUND) const;
   Blocks    GetChainPreceding(BlockHash at, std::uint64_t limit = UPPER_BOUND) const;
-  Blocks    TimeTravel(BlockHash starting_point, std::int64_t limit = static_cast<std::int64_t>(UPPER_BOUND)) const;
+  Blocks    TimeTravel(BlockHash    starting_point,
+                       std::int64_t limit = static_cast<std::int64_t>(UPPER_BOUND)) const;
   bool      GetPathToCommonAncestor(
            Blocks &blocks, BlockHash tip, BlockHash node, std::uint64_t limit = UPPER_BOUND,
            BehaviourWhenLimit behaviour = BehaviourWhenLimit::RETURN_MOST_RECENT) const;
@@ -200,7 +201,7 @@ private:
   struct HeaviestTip
   {
     std::uint64_t weight{0};
-    BlockHash hash{GENESIS_DIGEST};
+    BlockHash     hash{GENESIS_DIGEST};
 
     bool Update(Block const &);
   };
@@ -235,7 +236,7 @@ private:
   void                CacheBlock(IntBlockPtr const &block) const;
   BlockMap::size_type UncacheBlock(BlockHash const &hash) const;
   void                KeepBlock(IntBlockPtr const &block) const;
-  bool                LoadBlock(BlockHash const &hash, Block &block, BlockHash *next_hash = nullptr) const;
+  bool LoadBlock(BlockHash const &hash, Block &block, BlockHash *next_hash = nullptr) const;
   /// @}
 
   /// @name Tip Management

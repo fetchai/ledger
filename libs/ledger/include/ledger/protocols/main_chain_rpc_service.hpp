@@ -126,9 +126,9 @@ private:
   /// @name Utilities
   /// @{
   static constexpr char const *ToString(State state) noexcept;
-  Address            GetRandomTrustedPeer() const;
-  void               HandleChainResponse(Address const &peer, BlockList block_list);
-  bool               IsBlockValid(Block &block) const;
+  Address                      GetRandomTrustedPeer() const;
+  void                         HandleChainResponse(Address const &peer, BlockList block_list);
+  bool                         IsBlockValid(Block &block) const;
   /// @}
 
   /// @name State Machine Handlers
