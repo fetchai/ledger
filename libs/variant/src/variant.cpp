@@ -68,8 +68,9 @@ Variant &Variant::operator=(Variant const &value)
   {
     for (auto const &element : value.object_)
     {
+      std::unique_ptr<Variant> variant{new Variant(*element.second)};
       // update our object
-      object_.emplace(element.first, element.second);
+      object_.emplace(element.first, std::move(variant));
     }
     break;
   }
@@ -152,7 +153,7 @@ bool Variant::operator==(Variant const &other) const
         }
 
         // if the pointers are different and the contents are different
-        if ((element.second != it->second) && (element.second != it->second))
+        if (*(element.second) != *(it->second))
         {
           equal = false;
           break;
@@ -237,7 +238,7 @@ std::ostream &operator<<(std::ostream &stream, Variant const &variant)
       }
 
       // format the element
-      stream << std::quoted(std::string{element.first}) << ": " << element.second;
+      stream << std::quoted(std::string{element.first}) << ": " << *element.second;
 
       ++i;
     }

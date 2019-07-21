@@ -217,7 +217,7 @@ public:
 
 private:
   using VariantList   = std::vector<Variant>;
-  using VariantObject = std::unordered_map<ConstByteArray, Variant>;
+  using VariantObject = std::unordered_map<ConstByteArray, std::unique_ptr<Variant>>;
   using Pool          = detail::ElementPool<Variant>;
 
   union PrimitiveData
@@ -732,17 +732,17 @@ inline Variant &Variant::operator[](ConstByteArray const &key)
   auto it = object_.find(key);
   if (it != object_.end())
   {
-    return it->second;
+    return *(it->second);
   }
 
   // allocate an element
-  Variant variant;
+  std::unique_ptr<Variant> variant{new Variant()};
 
   // update the map
-  object_[key] = variant;  // TODO: std:: move
+  object_.emplace(key, std::move(variant));
 
   // return the variant
-  return object_[key];
+  return *variant;
 }
 
 /**
@@ -766,7 +766,7 @@ inline Variant const &Variant::operator[](ConstByteArray const &key) const
     throw std::out_of_range("Key not present in object");
   }
 
-  return it->second;
+  return *(it->second);
 }
 
 /**
@@ -887,7 +887,7 @@ void Variant::IterateObject(Function const &function) const
   {
     for (auto const &item : object_)
     {
-      if (!function(item.first, item.second))
+      if (!function(item.first, *item.second))
       {
         break;
       }
