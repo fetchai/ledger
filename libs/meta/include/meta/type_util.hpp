@@ -92,19 +92,19 @@ struct Bind
 };
 
 template <class T, class... Ts>
-using IsAnyOf = Any<Bind<std::is_same, T>::template type, Ts...>;
+using IsAnyOf = Disjunction<std::is_same<T, Ts>...>;
 
 template <class T, class... Ts>
 static constexpr auto IsAnyOfV = IsAnyOf<T, Ts...>::value;
 
-template <class T, template <class...> class Predicate>
-using Satisfies = Predicate<T>;
-
-template <class T, template <class...> class Predicate>
-static constexpr bool SatisfiesV = Satisfies<T, Predicate>::value;
+template <class T, template <class...> class... Predicates>
+using Satisfies = Conjunction<Predicates<T>...>;
 
 template <class T, template <class...> class... Predicates>
-using SatisfiesAll = Conjunction<Predicates<T>...>;
+static constexpr bool SatisfiesV = Satisfies<T, Predicates...>::value;
+
+template <class T, template <class...> class... Predicates>
+using SatisfiesAll = Satisfies<T, Predicates...>;
 
 template <class T, template <class...> class... Predicates>
 static constexpr bool SatisfiesAllV = SatisfiesAll<T, Predicates...>::value;
@@ -183,27 +183,33 @@ struct Select<Car, Cdr...>
 {
 };
 
-template <class...>
+template <class... Ts>
 struct Head;
 
 template <class... Ts>
 using HeadT = typename Head<Ts...>::type;
 
-template <class Car, class... Cdr>
-struct Head<Car, Cdr...> : TypeConstant<Car>
+template <class... Ts>
+struct Head : Accumulate<HeadT, Ts...> {};
+
+template <class Car, class Cdr>
+struct Head<Car, Cdr> : TypeConstant<Car>
 {
 };
 
-template <class, class R>
-using Second = TypeConstant<R>;
-template <class L, class R>
-using SecondT = typename Second<L, R>::type;
-
 template <class... Ts>
-using Last = AccumulateT<Second, Ts...>;
+struct Last;
 
 template <class... Ts>
 using LastT = typename Last<Ts...>::type;
+
+template <class... Ts>
+struct Last: Accumulate<LastT, Ts...>;
+
+template<class Car, class Cdr>
+struct Last<Car, Cdr> : TypeConstant<Cdr>
+{
+};
 
 template <class T>
 struct HeadArgument;
