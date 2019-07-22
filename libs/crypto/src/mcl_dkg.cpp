@@ -27,8 +27,8 @@ namespace fetch {
 namespace dkg {
 
 /**
- * LHS and RHS functions are used for checking validity of publicly broadcasted coefficients and
- * secret shares distributed privately
+ * LHS and RHS functions are used for checking consistency between publicly broadcasted coefficients
+ * and secret shares distributed privately
  */
 
 bn::G2 ComputeLHS(bn::G2 &tmpG, bn::G2 const &G, bn::G2 const &H, bn::Fr const &share1,
@@ -65,12 +65,6 @@ void UpdateRHS(uint32_t rank, bn::G2 &rhsG, std::vector<bn::G2> const &input)
   }
 }
 
-/**
- * Computes the product
- * @param rank
- * @param input
- * @return
- */
 bn::G2 ComputeRHS(uint32_t rank, std::vector<bn::G2> const &input)
 {
   bn::Fr tmpF;
