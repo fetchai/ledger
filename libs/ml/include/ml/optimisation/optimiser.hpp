@@ -73,7 +73,6 @@ public:
             LearningRateParam<DataType> const &learning_rate_param);
 
   virtual ~Optimiser() = default;
-  // TODO (private 1090): Optimise TensorSlice for graph-feeding without using .Copy
 
   /// DATA RUN INTERFACES ///
   DataType Run(std::vector<ArrayType> const &data, ArrayType const &labels,
@@ -176,7 +175,6 @@ Optimiser<T>::Optimiser(std::shared_ptr<Graph<T>>      graph,
  * @param batch_size size of mini-batch, if batch_size==0 it will be set to n_data size
  * @return Sum of losses from all mini-batches
  */
-// TODO (private 1090): Optimise TensorSlice for graph-feeding without using .Copy
 template <class T>
 typename T::Type Optimiser<T>::Run(std::vector<ArrayType> const &data, ArrayType const &labels,
                                    SizeType batch_size)
@@ -185,11 +183,15 @@ typename T::Type Optimiser<T>::Run(std::vector<ArrayType> const &data, ArrayType
   // Get trailing dimensions
   SizeType n_data_dimm = data.at(0).shape().size() - 1;
   SizeType n_data      = data.at(0).shape().at(n_data_dimm);
+
   // for some input combinations batch size will be modified
   batch_size = UpdateBatchSize(batch_size, n_data);
-  DataType loss{0};
-  DataType loss_sum{0};
-  SizeType step{0};
+  loss_sum_  = 0;
+  step_      = 0;
+  loss_      = DataType{0};
+  // variable for stats output
+  start_time_ = std::chrono::high_resolution_clock::now();
+
   // Prepare output data tensors
   if (batch_data_.size() != data.size())
   {
@@ -212,26 +214,25 @@ typename T::Type Optimiser<T>::Run(std::vector<ArrayType> const &data, ArrayType
   {
     batch_labels_ = ArrayType{labels_size};
   }
-  while (step < n_data)
+  while (step_ < n_data)
   {
     // Prepare batch
-    SizeType it{step};
+    SizeType it{step_};
     for (SizeType i{0}; i < batch_size; i++)
     {
       if (it >= n_data)
       {
         it = 0;
       }
-      // Fill label slice
-      auto label_slice = batch_labels_.Slice(i, label_batch_dimension);
-      label_slice.Assign(labels.Slice(it, label_batch_dimension));
+      // Fill label view
+      auto label_view = batch_labels_.View(i);
+      label_view.Assign(labels.View(it));
       // Fill all data from data vector
       for (SizeType j{0}; j < data.size(); j++)
       {
-        // Fill data[j] slice
-        SizeType cur_data_batch_dim = data.at(j).shape().size() - 1;
-        auto     data_slice         = batch_data_.at(j).Slice(i, cur_data_batch_dim);
-        data_slice.Assign(data.at(j).Slice(it, cur_data_batch_dim));
+        // Fill data[j] view
+        auto data_view = batch_data_.at(j).View(i);
+        data_view.Assign(data.at(j).View(it));
       }
       it++;
     }
@@ -248,19 +249,23 @@ typename T::Type Optimiser<T>::Run(std::vector<ArrayType> const &data, ArrayType
     graph_->SetInput(label_node_name_, batch_labels_);
 
     auto loss_tensor = graph_->Evaluate(output_node_name_);
-    loss += *(loss_tensor.begin());
+    loss_ += *(loss_tensor.begin());
     graph_->BackPropagateError(output_node_name_);
 
     // Compute and apply gradient
     ApplyGradients(batch_size);
 
-    FETCH_LOG_INFO("ML_LIB", "Batch loss: ", loss);
-    step += batch_size;
-    loss_sum += loss;
+    step_ += batch_size;
+    cumulative_step_ += batch_size;
+
+    loss_sum_ += loss_;
+    loss_ = static_cast<DataType>(0);
+    PrintStats(batch_size, n_data);
+
+    UpdateLearningRate();
   }
-  UpdateLearningRate();
   epoch_++;
-  return loss_sum;
+  return loss_sum_;
 }
 /**
  * Does 1 training epoch using DataLoader
@@ -357,8 +362,6 @@ typename T::Type Optimiser<T>::RunImplementation(
 
     // print the training stats every batch
     PrintStats(batch_size, subset_size);
-
-    FETCH_LOG_INFO("ML_LIB", "Batch loss: ", loss_);
   }
 
   epoch_++;
@@ -390,7 +393,7 @@ void Optimiser<T>::PrintStats(SizeType batch_size, SizeType subset_size)
         " samples / sec ";
   }
   // print it in log
-  FETCH_LOG_INFO("ML_LIB", "Training speed", stat_string_);
+  FETCH_LOG_INFO("ML_LIB", "Training speed: ", stat_string_);
   FETCH_LOG_INFO("ML_LIB", "Batch loss: ", loss_sum_ / static_cast<DataType>(step_ / batch_size));
 }
 /**

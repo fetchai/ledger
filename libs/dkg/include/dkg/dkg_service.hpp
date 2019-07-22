@@ -24,6 +24,7 @@
 #include "core/state_machine.hpp"
 #include "crypto/bls_base.hpp"
 #include "dkg/dkg_rpc_protocol.hpp"
+#include "dkg/rbc.hpp"
 #include "dkg/round.hpp"
 #include "ledger/chain/address.hpp"
 #include "ledger/consensus/entropy_generator_interface.hpp"
@@ -108,6 +109,8 @@ namespace dkg {
 class DkgService : public ledger::EntropyGeneratorInterface
 {
 public:
+  static constexpr char const *LOGGING_NAME = "DkgService";
+
   enum class State
   {
     BUILD_AEON_KEYS,
@@ -122,7 +125,8 @@ public:
   using Digest         = ledger::Digest;
   using ConstByteArray = byte_array::ConstByteArray;
   using MuddleAddress  = ConstByteArray;
-  using CabinetMembers = std::unordered_set<MuddleAddress>;
+  using CabinetMembers = std::set<MuddleAddress>;
+  using RBCMessageType = std::string;
 
   // Construction / Destruction
   explicit DkgService(Endpoint &endpoint, ConstByteArray address, ConstByteArray dealer_address);
@@ -143,6 +147,9 @@ public:
   void SubmitSignatureShare(uint64_t round, crypto::bls::Id const &id,
                             crypto::bls::PublicKey const &public_key,
                             crypto::bls::Signature const &signature);
+
+  void SendReliableBroadcast(RBCMessageType const &msg);
+  void OnRbcDeliver(MuddleAddress from, byte_array::ConstByteArray payload);
   /// @}
 
   /// @name Entropy Generator
@@ -157,11 +164,15 @@ public:
     return state_machine_;
   }
 
-  void ResetCabinet(CabinetMembers cabinet, std::size_t threshold)
+  void ResetCabinet(CabinetMembers cabinet, uint64_t threshold)
   {
     FETCH_LOCK(cabinet_lock_);
     current_cabinet_   = std::move(cabinet);
     current_threshold_ = threshold;
+
+    FETCH_LOG_INFO(LOGGING_NAME, "Resetting cabinet. Cabinet size: ", cabinet.size(),
+                   " threshold: ", threshold);
+    rbc_.ResetCabinet();
   }
   /// @}
 
@@ -225,6 +236,7 @@ private:
   muddle::rpc::Client   rpc_client_;      ///< The services' RPC client
   RpcProtocolPtr        rpc_proto_;       ///< The services RPC protocol
   StateMachinePtr       state_machine_;   ///< The service state machine
+  rbc::RBC              rbc_;             ///< Runs the RBC protocol
 
   /// @name State Machine Data
   /// @{
@@ -237,7 +249,7 @@ private:
   /// @name Cabinet / Aeon Data
   /// @{
   mutable RMutex cabinet_lock_{};        // Priority 1.
-  std::size_t    current_threshold_{1};  ///< The current threshold for the aeon
+  uint64_t       current_threshold_{1};  ///< The current threshold for the aeon
   CabinetMembers current_cabinet_{};     ///< The set of muddle addresses of the cabinet
   /// @}
 

@@ -51,7 +51,7 @@ public:
   using self_type  = SharedArray<T, type_size>;
   using type       = T;
 
-  explicit SharedArray(std::size_t const &n)
+  explicit SharedArray(std::size_t n)
     : super_type()
   {
     this->size_ = n;

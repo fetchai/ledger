@@ -135,10 +135,8 @@ TYPED_TEST(EmbeddingsTest, backward)
 
   // Get a copy of the gradients and check that they were zeroed out after Step
   ArrayType grads_copy = e.get_gradients();
-  EXPECT_TRUE(ArrayType::Zeroes({6, 1}).AllClose(
-      grads_copy.Slice(SizeType(input.At(0, 0)), SizeType{1}).Copy()));
-  EXPECT_TRUE(ArrayType::Zeroes({6, 1}).AllClose(
-      grads_copy.Slice(SizeType(input.At(1, 0)), SizeType{1}).Copy()));
+  EXPECT_TRUE(ArrayType::Zeroes({6, 1}).AllClose(grads_copy.View(SizeType(input(0, 0))).Copy()));
+  EXPECT_TRUE(ArrayType::Zeroes({6, 1}).AllClose(grads_copy.View(SizeType(input(1, 0))).Copy()));
 
   output = ArrayType(e.ComputeOutputShape({input}));
   e.Forward({input}, output);

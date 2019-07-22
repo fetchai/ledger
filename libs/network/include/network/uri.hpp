@@ -43,6 +43,7 @@
 #include <cassert>
 #include <cstddef>
 #include <functional>
+#include <iosfwd>
 #include <stdexcept>
 #include <string>
 
@@ -104,6 +105,9 @@ public:
   static bool IsUri(const std::string &possible_uri);
 
   bool IsDirectlyConnectable() const;
+
+  friend std::ostream &operator<<(std::ostream &stream, Uri const &uri);
+  friend std::istream &operator>>(std::istream &stream, Uri &uri);
 
 private:
   ConstByteArray uri_;
