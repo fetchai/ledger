@@ -1,20 +1,32 @@
 function main()
 
+    var height = 20u64;
+    var width = 40u64;
     var data_shape = Array<UInt64>(2);
-    data_shape[0] = 2u64;
-    data_shape[1] = 4u64;
-
-    var label_shape = Array<UInt64>(2);
-    label_shape[0] = 2u64;
-    label_shape[1] = 4u64;
+    data_shape[0] = height;
+    data_shape[1] = width;
 
     var data_tensor = Tensor(data_shape);
+    data_tensor.fillRandom();
 
     var scaler = Scaler();
-
     scaler.setScale(data_tensor, "min_max");
 
     var norm_data_tensor = scaler.normalise(data_tensor);
     var denorm_data_tensor = scaler.deNormalise(norm_data_tensor);
+
+    for(i in 0u64:height)
+        for(j in 0u64:width)
+            assert(norm_data_tensor.at(i, j) <= 1.0fp64);
+            assert(norm_data_tensor.at(i, j) >= 0.0fp64);
+
+            var diff = abs(data_tensor.at(i, j) - denorm_data_tensor.at(i, j));
+            printLn(data_tensor.at(i, j));
+            printLn(norm_data_tensor.at(i, j));
+            printLn(denorm_data_tensor.at(i, j));
+            printLn(diff);
+            assert(diff < 0.1fp64);
+        endfor
+    endfor
 
 endfunction
