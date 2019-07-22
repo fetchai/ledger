@@ -203,8 +203,38 @@ public:
     std::swap(ranges_[a], ranges_[b]);
   }
 
-  // TODO: Name correctly
-  void MoveAxesToFront(SizeType const &a)
+  void MoveAxesToFront(std::vector<SizeType> const &a)
+  {
+    std::vector<TensorSliceIteratorRange> new_ranges;
+    new_ranges.reserve(ranges_.size());
+
+    // Insert axes at beginning
+    for (SizeType i = 0; i < a.size(); ++i)
+    {
+      new_ranges.push_back(ranges_[a[i]]);
+    }
+
+    for (SizeType i = 0; i < ranges_.size(); ++i)
+    {
+      // Search for axis
+      bool add_node = true;
+      for (SizeType j = 0; j < a.size(); ++j)
+      {
+        if (i == a[j])
+        {
+          add_node = false;
+          break;
+        }
+      }
+      // Add axis if wasn't added at beginning
+      if (!add_node)
+        continue;
+      new_ranges.push_back(ranges_[i]);
+    }
+    std::swap(new_ranges, ranges_);
+  }
+
+  void MoveAxisToFront(SizeType const &a)
   {
     std::vector<TensorSliceIteratorRange> new_ranges;
     new_ranges.reserve(ranges_.size());

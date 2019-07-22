@@ -289,6 +289,7 @@ public:
 
   ConstSliceType Slice(SizeType i, SizeType axis = 0) const;
   TensorSlice    Slice(SizeType i, SizeType axis = 0);
+  TensorSlice    Slice(std::vector<SizeType> i, std::vector<SizeType> axis);
 
   /////////////
   /// Views ///
@@ -341,6 +342,7 @@ public:
     using TensorSliceImplementation<Tensor>::TensorSliceImplementation;
     using TensorSliceImplementation<Tensor>::begin;
     using TensorSliceImplementation<Tensor>::end;
+    using TensorSliceImplementation<Tensor>::Slice;
 
     SliceIteratorType begin();
     SliceIteratorType end();
@@ -645,13 +647,14 @@ private:
     using Type = typename STensor::Type;
 
     TensorSliceImplementation<STensor>(STensor &t, std::vector<std::vector<SizeType>> range,
-                                       SizeType axis = 0)
+                                       std::vector<SizeType> axis)
       : tensor_{t}
       , range_{std::move(range)}
       , axis_{std::move(axis)}
     {}
 
     Tensor                 Copy() const;
+    TensorSlice            Slice(SizeType i, SizeType axis);
     ConstSliceIteratorType begin() const;
     ConstSliceIteratorType end() const;
     SizeType               size() const;
@@ -660,7 +663,7 @@ private:
   protected:
     STensor &                          tensor_;
     std::vector<std::vector<SizeType>> range_;
-    SizeType                           axis_;
+    std::vector<SizeType>              axis_;
   };
 };
 
@@ -2128,7 +2131,7 @@ typename Tensor<T, C>::ConstSliceType Tensor<T, C>::Slice(SizeType i, SizeType a
     }
   }
 
-  return ConstSliceType(*this, range, axis);
+  return ConstSliceType(*this, range, {axis});
 }
 
 /**
@@ -2154,6 +2157,27 @@ typename Tensor<T, C>::TensorSlice Tensor<T, C>::Slice(SizeType i, SizeType axis
     {
       range.push_back({0, shape().at(j), 1});
     }
+  }
+
+  return TensorSlice(*this, range, {axis});
+}
+
+template <typename T, typename C>
+typename Tensor<T, C>::TensorSlice Tensor<T, C>::Slice(std::vector<SizeType> i,
+                                                       std::vector<SizeType> axis)
+{
+  std::vector<std::vector<SizeType>> range;
+
+  for (SizeType j = 0; j < shape().size(); ++j)
+  {
+    range.push_back({0, shape().at(j), 1});
+  }
+
+  for (SizeType j = 0; j < i.size(); ++j)
+  {
+    range.at(axis.at(j)).at(0) = i.at(j);
+    range.at(axis.at(j)).at(1) = i.at(j) + 1;
+    range.at(axis.at(j)).at(2) = 1;
   }
 
   return TensorSlice(*this, range, axis);
@@ -2585,10 +2609,7 @@ template <typename T, typename C>
 typename Tensor<T, C>::SliceIteratorType Tensor<T, C>::TensorSlice::begin()
 {
   auto ret = SliceIteratorType(this->tensor_, this->range_);
-  if (this->axis_ != 0)
-  {
-    ret.MoveAxesToFront(this->axis_);
-  }
+  ret.MoveAxesToFront(this->axis_);
   return ret;
 }
 
@@ -2656,14 +2677,34 @@ Tensor<T, C> Tensor<T, C>::TensorSliceImplementation<STensor>::Copy() const
 
 template <typename T, typename C>
 template <typename STensor>
+typename Tensor<T, C>::TensorSlice Tensor<T, C>::TensorSliceImplementation<STensor>::Slice(
+    SizeType i, SizeType axis)
+{
+  assert(axis < tensor_.shape().size());
+  assert(axis_.size() < tensor_.shape().size());
+  assert(i < tensor_.shape().at(axis));
+  for (SizeType i = 0; i < axis_.size(); i++)
+  {
+    assert(axis_.at(i) != axis);
+  }
+
+  std::vector<std::vector<SizeType>> range(range_);
+  range.at(axis).at(0) = i;
+  range.at(axis).at(1) = i + 1;
+  range.at(axis).at(2) = 1;
+
+  axis_.push_back(axis);
+
+  return TensorSlice(tensor_, range, axis_);
+}
+
+template <typename T, typename C>
+template <typename STensor>
 typename Tensor<T, C>::ConstSliceIteratorType
 Tensor<T, C>::TensorSliceImplementation<STensor>::begin() const
 {
   auto ret = ConstSliceIteratorType(tensor_, range_);
-  if (axis_ != 0)
-  {
-    ret.MoveAxesToFront(axis_);
-  }
+  ret.MoveAxesToFront(axis_);
   return ret;
 }
 
