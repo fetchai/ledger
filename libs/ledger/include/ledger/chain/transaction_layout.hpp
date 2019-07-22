@@ -71,7 +71,7 @@ private:
   BlockIndex     valid_until_{0};
 
   // Native serializers
-  template<typename T, typename D>
+  template <typename T, typename D>
   friend struct serializers::MapSerializer;
 };
 

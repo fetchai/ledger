@@ -87,20 +87,19 @@ struct ServiceIdentifier
     return (service_type == other.service_type) && (instance_number == other.instance_number);
   }
 };
-} // namespace network
+}  // namespace network
 
-namespace serializers
-{
+namespace serializers {
 
-template< typename D >
-struct MapSerializer< network::ServiceIdentifier, D >
+template <typename D>
+struct MapSerializer<network::ServiceIdentifier, D>
 {
 public:
   using DriverType = D;
-  using Type = network::ServiceIdentifier;
+  using Type       = network::ServiceIdentifier;
 
   static const uint8_t SERVICE_TYPE    = 1;
-  static const uint8_t INSTANCE_NUMBER  = 2;  
+  static const uint8_t INSTANCE_NUMBER = 2;
 
   template <typename T>
   static inline void Serialize(T &map_constructor, Type const &x)
@@ -114,17 +113,16 @@ public:
   static inline void Deserialize(T &map, Type &x)
   {
     byte_array::ConstByteArray uri;
-    uint8_t key;
-    uint16_t service_type;
+    uint8_t                    key;
+    uint16_t                   service_type;
     map.GetNextKeyPair(key, service_type);
     map.GetNextKeyPair(key, x.instance_number);
     x.service_type = static_cast<network::ServiceType>(service_type);
-    // TODO(EJF): This still needs validation     
+    // TODO(EJF): This still needs validation
   }
 };
 
-
-}  // namespace network
+}  // namespace serializers
 }  // namespace fetch
 
 namespace std {

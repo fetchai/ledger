@@ -162,11 +162,8 @@ private:
   void         SetStamped(bool set = true) noexcept;
   BinaryHeader StaticHeader() const noexcept;
 
-
-  template< typename V, typename D >
+  template <typename V, typename D>
   friend struct serializers::MapSerializer;
-
-
 };
 
 inline Packet::Packet(Address const &source_address, uint32_t network_id)
@@ -391,14 +388,12 @@ inline bool Packet::Verify() const
 
 }  // namespace muddle
 
-
-namespace serializers
-{
-template< typename D >
-struct MapSerializer< muddle::Packet, D >
+namespace serializers {
+template <typename D>
+struct MapSerializer<muddle::Packet, D>
 {
 public:
-  using Type = muddle::Packet;
+  using Type       = muddle::Packet;
   using DriverType = D;
 
   static const uint8_t HEADER  = 1;
@@ -409,12 +404,12 @@ public:
   static void Serialize(T &map_constructor, Type const &packet)
   {
     auto map = map_constructor(3);
-    map.Append(HEADER,  *reinterpret_cast<Type::BinaryHeader const *>(&packet.header_));
+    map.Append(HEADER, *reinterpret_cast<Type::BinaryHeader const *>(&packet.header_));
     map.Append(PAYLOAD, packet.payload_);
     map.Append(STAMP, packet.stamp_);  // TODO: add support optional fields.
     /*
-    serializer << *reinterpret_cast<Packet::BinaryHeader const *>(&packet.header_) << packet.payload_;
-    if (packet.header_.stamped)
+    serializer << *reinterpret_cast<Packet::BinaryHeader const *>(&packet.header_) <<
+    packet.payload_; if (packet.header_.stamped)
     {
       serializer << packet.stamp_;
     }
@@ -426,7 +421,7 @@ public:
   {
     uint8_t key;
     map.GetNextKeyPair(key, *reinterpret_cast<Type::BinaryHeader *>(&packet.header_));
-    map.GetNextKeyPair(key, packet.payload_); // TODO: Test keys
+    map.GetNextKeyPair(key, packet.payload_);  // TODO: Test keys
     map.GetNextKeyPair(key, packet.stamp_);
     /*
     serializer >> *reinterpret_cast<Packet::BinaryHeader *>(&packet.header_) >> packet.payload_;
@@ -437,7 +432,7 @@ public:
     */
   }
 };
-}
+}  // namespace serializers
 
 }  // namespace fetch
 

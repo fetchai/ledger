@@ -71,7 +71,8 @@ int main()
   auto res  = prom->As<std::string>();
   std::cout << res << std::endl;
 
-  auto px = client->CallSpecificAddress(target_address, MYPROTO, SLOWFUNCTION, std::string("Greet"));
+  auto px =
+      client->CallSpecificAddress(target_address, MYPROTO, SLOWFUNCTION, std::string("Greet"));
 
   // Promises
   auto p1 = client->CallSpecificAddress(target_address, MYPROTO, SLOWFUNCTION, 2, 7);

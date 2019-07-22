@@ -23,22 +23,20 @@
 namespace fetch {
 namespace serializers {
 
-
-
-template <std::uint16_t I, std::uint16_t F, typename D >
-struct ForwardSerializer< fixed_point::FixedPoint<I, F> , D >
+template <std::uint16_t I, std::uint16_t F, typename D>
+struct ForwardSerializer<fixed_point::FixedPoint<I, F>, D>
 {
-  using Type = fixed_point::FixedPoint<I, F> ;
+  using Type       = fixed_point::FixedPoint<I, F>;
   using DriverType = D;
 
-  template< typename Interface >
-  static void Serialize(Interface & interface, Type const &n)
+  template <typename Interface>
+  static void Serialize(Interface &interface, Type const &n)
   {
     interface << n.Data();
   }
 
-  template< typename Interface >
-  static void Deserialize(Interface & interface, Type &n)
+  template <typename Interface>
+  static void Deserialize(Interface &interface, Type &n)
   {
     typename fixed_point::FixedPoint<I, F>::Type data;
     interface >> data;

@@ -17,12 +17,11 @@
 //
 //------------------------------------------------------------------------------
 
-
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/byte_array/encoders.hpp"
+#include "core/serializers/group_definitions.hpp"
 #include "crypto/fnv.hpp"
 #include "network/peer.hpp"
-#include "core/serializers/group_definitions.hpp"
 
 #include <cassert>
 #include <cstddef>
@@ -78,7 +77,7 @@ public:
 
   std::string ToString() const;
 
-  template< typename T, typename D >
+  template <typename T, typename D>
   friend struct serializers::MapSerializer;
 
   static Uri  FromIdentity(ConstByteArray const &identity);
@@ -142,32 +141,30 @@ inline Uri Uri::FromIdentity(ConstByteArray const &identity)
 
 }  // namespace network
 
-namespace serializers
-{
+namespace serializers {
 
-template< typename D >
-struct MapSerializer< network::Uri, D > // TODO: Use other than Mapserializder
+template <typename D>
+struct MapSerializer<network::Uri, D>  // TODO: Use other than Mapserializder
 {
 public:
   using DriverType = D;
-  using Type = network::Uri;
+  using Type       = network::Uri;
 
-  static const uint8_t URI  = 1;
+  static const uint8_t URI = 1;
 
   template <typename T>
   static inline void Serialize(T &map_constructor, Type const &x)
   {
     auto map = map_constructor(1);
     map.Append(URI, x.uri_);
-
   }
 
   template <typename T>
   static inline void Deserialize(T &map, Type &x)
   {
     byte_array::ConstByteArray uri;
-    uint8_t key;
-    map.GetNextKeyPair(key, uri); // TODO: check
+    uint8_t                    key;
+    map.GetNextKeyPair(key, uri);  // TODO: check
 
     if (!x.Parse(uri))
     {
@@ -176,8 +173,7 @@ public:
   }
 };
 
-}
-
+}  // namespace serializers
 
 }  // namespace fetch
 

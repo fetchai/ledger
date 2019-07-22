@@ -33,6 +33,6 @@ template void Serialize<ByteArrayBuffer>(ByteArrayBuffer &, Transaction const &)
 template void Deserialize<ByteArrayBuffer>(ByteArrayBuffer &, TransactionLayout &);
 template void Deserialize<ByteArrayBuffer>(ByteArrayBuffer &, Transaction &);
 */
-  
+
 }  // namespace ledger
 }  // namespace fetch

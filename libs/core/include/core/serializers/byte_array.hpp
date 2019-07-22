@@ -25,7 +25,5 @@
 namespace fetch {
 namespace serializers {
 
-
-
 }  // namespace serializers
 }  // namespace fetch

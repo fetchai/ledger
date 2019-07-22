@@ -179,7 +179,6 @@ public:
   };
 
 private:
-
   using IntBlockPtr   = std::shared_ptr<Block>;
   using BlockMap      = std::unordered_map<BlockHash, IntBlockPtr>;
   using References    = std::unordered_multimap<BlockHash, BlockHash>;
@@ -256,40 +255,37 @@ private:
   TipsMap            tips_;          ///< Keep track of the tips
   HeaviestTip        heaviest_;      ///< Heaviest block/tip
   LooseBlockMap      loose_blocks_;  ///< Waiting (loose) blocks
-
 };
 
 }  // namespace ledger
 
 namespace serializers {
 
-
-template< typename D >
-struct MapSerializer< ledger::MainChain::DbRecord, D > 
+template <typename D>
+struct MapSerializer<ledger::MainChain::DbRecord, D>
 {
 public:
-  using Type = ledger::MainChain::DbRecord;
+  using Type       = ledger::MainChain::DbRecord;
   using DriverType = D;
 
   static uint8_t const BLOCK     = 1;
-  static uint8_t const NEXT_HASH = 2;  
+  static uint8_t const NEXT_HASH = 2;
 
-  template< typename Constructor >
-  static void Serialize(Constructor & map_constructor, Type const & dbRecord)
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &dbRecord)
   {
     auto map = map_constructor(2);
     map.Append(BLOCK, dbRecord.block);
     map.Append(NEXT_HASH, dbRecord.next_hash);
   }
 
-  template< typename MapDeserializer >
-  static void Deserialize(MapDeserializer & map, Type & dbRecord)
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &dbRecord)
   {
     map.ExpectKeyGetValue(BLOCK, dbRecord.block);
     map.ExpectKeyGetValue(NEXT_HASH, dbRecord.next_hash);
-  }  
+  }
 };
-}
-
+}  // namespace serializers
 
 }  // namespace fetch

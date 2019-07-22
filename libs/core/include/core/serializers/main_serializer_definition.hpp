@@ -36,7 +36,7 @@ class MsgPackByteArrayBuffer
   static char const *const LOGGING_NAME;
 
 public:
-  using ByteArray   = byte_array::ByteArray;
+  using ByteArray         = byte_array::ByteArray;
   using size_counter_type = serializers::SizeCounter<MsgPackByteArrayBuffer>;
 
   enum : uint8_t
@@ -45,11 +45,9 @@ public:
     // TODO: add the rest and replace in code.
   };
 
-
   MsgPackByteArrayBuffer()                              = default;
   MsgPackByteArrayBuffer(MsgPackByteArrayBuffer &&from) = default;
   MsgPackByteArrayBuffer &operator=(MsgPackByteArrayBuffer &&from) = default;
-
 
   /**
    * @brief Contructting from MUTABLE ByteArray.
@@ -73,23 +71,23 @@ public:
 
   void Allocate(uint64_t const &delta);
 
-  void Resize(uint64_t const &   size,
+  void Resize(uint64_t const &      size,
               ResizeParadigm const &resize_paradigm     = ResizeParadigm::RELATIVE,
               bool const            zero_reserved_space = true);
 
-  void Reserve(uint64_t const &   size,
+  void Reserve(uint64_t const &      size,
                ResizeParadigm const &resize_paradigm     = ResizeParadigm::RELATIVE,
                bool const            zero_reserved_space = true);
   void WriteBytes(uint8_t const *arr, uint64_t const &size);
 
   void WriteByte(uint8_t const &val);
 
-  template< typename WriteType, typename InitialType>
+  template <typename WriteType, typename InitialType>
   void WritePrimitive(InitialType const &val);
 
-  template< typename ReadType, typename FinalType>
+  template <typename ReadType, typename FinalType>
   void ReadPrimitive(FinalType &val);
-  
+
   void ReadByte(uint8_t &val);
 
   void ReadBytes(uint8_t *arr, uint64_t const &size);
@@ -127,7 +125,6 @@ public:
   template <typename T>
   typename BooleanSerializer<T, MsgPackByteArrayBuffer>::DriverType &operator>>(T &val);
 
-
   template <typename T>
   typename StringSerializer<T, MsgPackByteArrayBuffer>::DriverType &operator<<(T const &val);
 
@@ -142,7 +139,6 @@ public:
 
   template <typename T>
   typename ArraySerializer<T, MsgPackByteArrayBuffer>::DriverType &operator<<(T const &val);
-
 
   template <typename T>
   typename ArraySerializer<T, MsgPackByteArrayBuffer>::DriverType &operator>>(T &val);
@@ -161,13 +157,13 @@ public:
   template <typename T>
   MsgPackByteArrayBuffer &Unpack(T &val);
 
-  void seek(uint64_t p);
+  void     seek(uint64_t p);
   uint64_t tell() const;
 
   uint64_t size() const;
   uint64_t capacity() const;
 
-  int64_t bytes_left() const;
+  int64_t                      bytes_left() const;
   byte_array::ByteArray const &data() const;
 
   template <typename... ARGS>
@@ -178,12 +174,10 @@ private:
   void AppendInternal(T const &arg, ARGS const &... args);
   void AppendInternal();
 
-  ByteArray   data_;
+  ByteArray         data_;
   uint64_t          pos_ = 0;
   size_counter_type size_counter_;
 };
-
-
 
 }  // namespace serializers
 }  // namespace fetch

@@ -26,7 +26,8 @@
 
 #include "gtest/gtest.h"
 
-//struct fetch::serializers::MapSerializer<fetch::crypto::MerkleTree, fetch::serializers::MsgPackByteArrayBuffer >;
+// struct fetch::serializers::MapSerializer<fetch::crypto::MerkleTree,
+// fetch::serializers::MsgPackByteArrayBuffer >;
 
 using namespace fetch;
 using namespace fetch::crypto;
@@ -145,11 +146,11 @@ TEST(crypto_merkle_tree, complete_tree_and_deterministic)
 TEST(crypto_merkle_tree, serializes_deserializes)
 {
   constexpr uint64_t S = 256;
-  MerkleTree tree{S};   // Reference
-  MerkleTree tree2{S};  // Calculate root then serialize
-  MerkleTree tree3{S};  // Don't calculate root until after serialize
-  MerkleTree tree2_deser{S};
-  MerkleTree tree3_deser{S};
+  MerkleTree         tree{S};   // Reference
+  MerkleTree         tree2{S};  // Calculate root then serialize
+  MerkleTree         tree3{S};  // Don't calculate root until after serialize
+  MerkleTree         tree2_deser{S};
+  MerkleTree         tree3_deser{S};
 
   for (std::size_t i = 0; i < S; ++i)
   {

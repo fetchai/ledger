@@ -54,30 +54,26 @@ struct DAGEpoch
   void Finalise();
 };
 
-
 }  // namespace ledger
 
+namespace serializers {
 
-
-namespace serializers
-{
-
-template< typename D >
-struct MapSerializer< ledger::DAGEpoch, D > 
+template <typename D>
+struct MapSerializer<ledger::DAGEpoch, D>
 {
 public:
-  using Type = ledger::DAGEpoch;
+  using Type       = ledger::DAGEpoch;
   using DriverType = D;
 
-  static uint8_t const BLOCK_NUMBER   = 0; 
+  static uint8_t const BLOCK_NUMBER   = 0;
   static uint8_t const TIPS           = 1;
-  static uint8_t const DATA_NODES     = 2; 
+  static uint8_t const DATA_NODES     = 2;
   static uint8_t const SOLUTION_NODES = 3;
   static uint8_t const HASH           = 4;
   static uint8_t const ALL_NODES      = 5;
 
-  template< typename Constructor >
-  static void Serialize(Constructor & map_constructor, Type const & node)
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &node)
   {
     auto map = map_constructor(6);
 
@@ -89,8 +85,8 @@ public:
     map.Append(ALL_NODES, node.all_nodes);
   }
 
-  template< typename MapDeserializer >
-  static void Deserialize(MapDeserializer & map, Type & node)
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &node)
   {
     map.ExpectKeyGetValue(BLOCK_NUMBER, node.block_number);
     map.ExpectKeyGetValue(TIPS, node.tips);
@@ -98,17 +94,12 @@ public:
     map.ExpectKeyGetValue(SOLUTION_NODES, node.solution_nodes);
     map.ExpectKeyGetValue(HASH, node.hash);
     map.ExpectKeyGetValue(ALL_NODES, node.all_nodes);
-
   }
-
 };
-
 
 }  // namespace serializers
 
-
-namespace ledger
-{
+namespace ledger {
 
 inline void DAGEpoch::Finalise()
 {
@@ -123,7 +114,6 @@ inline void DAGEpoch::Finalise()
   this->hash = hasher.Final();
 }
 
-
-}
+}  // namespace ledger
 
 }  // namespace fetch

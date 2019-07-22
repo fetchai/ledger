@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "meta/has_index.hpp"
 #include "core/serializers/group_definitions.hpp"
+#include "meta/has_index.hpp"
 #include <algorithm>
 #include <array>
 #include <cmath>
@@ -308,7 +308,7 @@ public:
     return data_.size();
   }
 
-  template< typename X , typename D>
+  template <typename X, typename D>
   friend struct serializers::ArraySerializer;
 
 private:
@@ -379,41 +379,39 @@ inline double ToDouble(UInt<256> const &x)
   return conv.value;
 }
 
-
 }  // namespace vectorise
 
-namespace serializers
-{
-template< typename D, uint16_t S >
-struct ArraySerializer<vectorise::UInt<S>, D >
+namespace serializers {
+template <typename D, uint16_t S>
+struct ArraySerializer<vectorise::UInt<S>, D>
 {
 public:
   using Type       = vectorise::UInt<S>;
   using DriverType = D;
-  
-  template< typename Constructor >
-  static void Serialize(Constructor & array_constructor, Type const & u)
+
+  template <typename Constructor>
+  static void Serialize(Constructor &array_constructor, Type const &u)
   {
     auto array = array_constructor(u.data_.size());
-    for(auto const &v: u.data_)
+    for (auto const &v : u.data_)
     {
       array.Append(v);
     }
   }
-  
-  template< typename ArrayDeserializer >
-  static void Deserialize(ArrayDeserializer & array, Type & u)
+
+  template <typename ArrayDeserializer>
+  static void Deserialize(ArrayDeserializer &array, Type &u)
   {
-    if(array.size() != u.data_.size())
+    if (array.size() != u.data_.size())
     {
       // TODO: Throw
     }
-    for(auto &v: u.data_)
+    for (auto &v : u.data_)
     {
       array.GetNextValue(v);
     }
-  }  
+  }
 };
-}
+}  // namespace serializers
 
 }  // namespace fetch

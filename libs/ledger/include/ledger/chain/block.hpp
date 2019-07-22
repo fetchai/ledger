@@ -82,30 +82,29 @@ public:
   void        UpdateDigest();
   void        UpdateTimestamp();
 };
-} // namespace ledger
-
+}  // namespace ledger
 
 namespace serializers {
 
-template< typename D >
-struct MapSerializer< ledger::Block::Body, D > 
+template <typename D>
+struct MapSerializer<ledger::Block::Body, D>
 {
 public:
-  using Type = ledger::Block::Body;
+  using Type       = ledger::Block::Body;
   using DriverType = D;
 
-  static uint8_t const HASH = 1;
-  static uint8_t const PREVIOUS_HASH = 2;
-  static uint8_t const MERKLE_HASH = 3;
-  static uint8_t const BLOCK_NUMBER = 4;  
-  static uint8_t const MINER = 5;
+  static uint8_t const HASH           = 1;
+  static uint8_t const PREVIOUS_HASH  = 2;
+  static uint8_t const MERKLE_HASH    = 3;
+  static uint8_t const BLOCK_NUMBER   = 4;
+  static uint8_t const MINER          = 5;
   static uint8_t const LOG2_NUM_LANES = 6;
-  static uint8_t const SLICES = 7;
-  static uint8_t const DAG_EPOCH = 8;  
-  static uint8_t const TIMESTAMP = 9;  
+  static uint8_t const SLICES         = 7;
+  static uint8_t const DAG_EPOCH      = 8;
+  static uint8_t const TIMESTAMP      = 9;
 
-  template< typename Constructor >
-  static void Serialize(Constructor & map_constructor, Type const & body)
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &body)
   {
     auto map = map_constructor(9);
     map.Append(HASH, body.hash);
@@ -118,8 +117,8 @@ public:
     map.Append(TIMESTAMP, body.timestamp);
   }
 
-  template< typename MapDeserializer >
-  static void Deserialize(MapDeserializer & map, Type & body)
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &body)
   {
     map.ExpectKeyGetValue(HASH, body.hash);
     map.ExpectKeyGetValue(PREVIOUS_HASH, body.previous_hash);
@@ -132,42 +131,40 @@ public:
   }
 };
 
-template< typename D >
-struct MapSerializer< ledger::Block, D >
+template <typename D>
+struct MapSerializer<ledger::Block, D>
 {
 public:
-  using Type = ledger::Block;
+  using Type       = ledger::Block;
   using DriverType = D;
 
-  static uint8_t const BODY = 1;
-  static uint8_t const NONCE = 2;
-  static uint8_t const PROOF = 3;  
-  static uint8_t const WEIGHT = 4;  
+  static uint8_t const BODY         = 1;
+  static uint8_t const NONCE        = 2;
+  static uint8_t const PROOF        = 3;
+  static uint8_t const WEIGHT       = 4;
   static uint8_t const TOTAL_WEIGHT = 5;
 
-  template< typename Constructor >
-  static void Serialize(Constructor & map_constructor, Type const & block)
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &block)
   {
     auto map = map_constructor(5);
     map.Append(BODY, block.body);
     map.Append(NONCE, block.nonce);
-    map.Append(PROOF, block.proof); 
+    map.Append(PROOF, block.proof);
     map.Append(WEIGHT, block.weight);
     map.Append(TOTAL_WEIGHT, block.total_weight);
   }
 
-  template< typename MapDeserializer >
-  static void Deserialize(MapDeserializer & map, Type & block)
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &block)
   {
     map.ExpectKeyGetValue(BODY, block.body);
     map.ExpectKeyGetValue(NONCE, block.nonce);
-    map.ExpectKeyGetValue(PROOF, block.proof); 
+    map.ExpectKeyGetValue(PROOF, block.proof);
     map.ExpectKeyGetValue(WEIGHT, block.weight);
     map.ExpectKeyGetValue(TOTAL_WEIGHT, block.total_weight);
-
-  }  
+  }
 };
-
 
 }  // namespace serializers
 }  // namespace fetch

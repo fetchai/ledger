@@ -62,9 +62,8 @@ private:
   Container      leaf_nodes_;
   mutable Digest root_;
 
-  template< typename T, typename D >
+  template <typename T, typename D>
   friend struct serializers::MapSerializer;
-
 };
 
 inline MerkleTree::Digest const &MerkleTree::root() const
@@ -112,38 +111,35 @@ inline MerkleTree::ConstIterator MerkleTree::cend() const
   return leaf_nodes_.cend();
 }
 
-
 }  // namespace crypto
 
-namespace serializers
-{
+namespace serializers {
 
-template< typename D >
-struct MapSerializer<crypto::MerkleTree, D >
+template <typename D>
+struct MapSerializer<crypto::MerkleTree, D>
 {
 public:
-  using Type = crypto::MerkleTree;
+  using Type       = crypto::MerkleTree;
   using DriverType = D;
 
-  static constexpr uint8_t  LEAF_NODES  = 1;
-  static constexpr uint8_t  ROOT = 2;
+  static constexpr uint8_t LEAF_NODES = 1;
+  static constexpr uint8_t ROOT       = 2;
 
-  template< typename Constructor >
-  static inline void Serialize(Constructor & map_constructor, Type const & data)
+  template <typename Constructor>
+  static inline void Serialize(Constructor &map_constructor, Type const &data)
   {
     auto map = map_constructor(2);
-    map.Append(LEAF_NODES,  data.leaf_nodes_);
+    map.Append(LEAF_NODES, data.leaf_nodes_);
     map.Append(ROOT, data.root_);
   }
 
-  template< typename MapDeserializer >
-  static inline void Deserialize(MapDeserializer & map, Type & data)
+  template <typename MapDeserializer>
+  static inline void Deserialize(MapDeserializer &map, Type &data)
   {
-    map.ExpectKeyGetValue(LEAF_NODES,  data.leaf_nodes_);
+    map.ExpectKeyGetValue(LEAF_NODES, data.leaf_nodes_);
     map.ExpectKeyGetValue(ROOT, data.root_);
-  }  
+  }
 };
 
-
-}
+}  // namespace serializers
 }  // namespace fetch

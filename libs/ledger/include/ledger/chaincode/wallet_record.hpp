@@ -169,46 +169,43 @@ struct WalletRecord
       it = cooldown_stake.erase(it);
     }
   }
-
 };
 
 }  // namespace ledger
 
-namespace serializers
-{
-template< typename D >
-struct ArraySerializer< ledger::WalletRecord, D >
+namespace serializers {
+template <typename D>
+struct ArraySerializer<ledger::WalletRecord, D>
 {
 public:
   using Type       = ledger::WalletRecord;
   using DriverType = D;
-  
-  template< typename Constructor >
-  static void Serialize(Constructor & array_constructor, Type const & b)
+
+  template <typename Constructor>
+  static void Serialize(Constructor &array_constructor, Type const &b)
   {
     auto array = array_constructor(b.deed ? 2 : 1);
     array.Append(b.balance);
-    if(b.deed)
+    if (b.deed)
     {
       array.Append(*b.deed);
     }
   }
-  
-  template< typename ArrayDeserializer >
-  static void Deserialize(ArrayDeserializer & array, Type & b)
+
+  template <typename ArrayDeserializer>
+  static void Deserialize(ArrayDeserializer &array, Type &b)
   {
     array.GetNextValue(b.balance);
-    if(array.size() == 2)
+    if (array.size() == 2)
     {
-      if(!b.deed)
+      if (!b.deed)
       {
-        b.deed.reset(new ledger::Deed{});        
+        b.deed.reset(new ledger::Deed{});
       }
-      array.GetNextValue(*b.deed);      
+      array.GetNextValue(*b.deed);
     }
-  }  
+  }
 };
-}
-
+}  // namespace serializers
 
 }  // namespace fetch

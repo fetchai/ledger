@@ -28,12 +28,12 @@ class Transaction;
 
 struct Deed
 {
-  using Weight             = uint64_t; 
+  using Weight             = uint64_t;
   using Threshold          = Weight;
   using DeedOperation      = byte_array::ConstByteArray;
   using Signees            = std::unordered_map<Address, Weight>;
   using OperationTresholds = std::unordered_map<DeedOperation, Threshold>;
-  using Weights            = std::unordered_map<Weight, uint64_t>; 
+  using Weights            = std::unordered_map<Weight, uint64_t>;
   using MandatorityMatrix  = std::unordered_map<Threshold, Weights>;
 
   bool              IsSane() const;
@@ -55,40 +55,38 @@ private:
   // Derived data:
   Weight full_weight_{0};
 
-  template< typename T, typename D>
+  template <typename T, typename D>
   friend struct serializers::MapSerializer;
 };
 
 }  // namespace ledger
 
-
-namespace serializers
-{
-template< typename D >
-struct MapSerializer< ledger::Deed, D >
+namespace serializers {
+template <typename D>
+struct MapSerializer<ledger::Deed, D>
 {
 public:
   using Type       = ledger::Deed;
   using DriverType = D;
 
-  static uint8_t const SIGNEES = 1;
+  static uint8_t const SIGNEES             = 1;
   static uint8_t const OPERATION_THRESHOLD = 2;
 
-  template< typename Constructor >
-  static void Serialize(Constructor & map_constructor, Type const & deed)
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &deed)
   {
     auto map = map_constructor(2);
     map.Append(SIGNEES, deed.signees_);
-    map.Append(OPERATION_THRESHOLD,   deed.operation_thresholds_);
+    map.Append(OPERATION_THRESHOLD, deed.operation_thresholds_);
   }
 
-  template< typename MapDeserializer >
-  static void Deserialize(MapDeserializer & map, Type & deed)
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &deed)
   {
     map.ExpectKeyGetValue(SIGNEES, deed.signees_);
-    map.ExpectKeyGetValue(OPERATION_THRESHOLD,   deed.operation_thresholds_);
-  }  
+    map.ExpectKeyGetValue(OPERATION_THRESHOLD, deed.operation_thresholds_);
+  }
 };
-}
+}  // namespace serializers
 
 }  // namespace fetch

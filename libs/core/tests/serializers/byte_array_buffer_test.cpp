@@ -17,17 +17,15 @@
 //------------------------------------------------------------------------------
 
 #include "core/serializers/byte_array.hpp"
-#include "core/serializers/typed_byte_array_buffer.hpp"
-#include "core/serializers/main_serializer.hpp"
-#include "core/serializers/group_definitions.hpp"
 #include "core/serializers/byte_array_buffer.hpp"
+#include "core/serializers/group_definitions.hpp"
+#include "core/serializers/main_serializer.hpp"
+#include "core/serializers/typed_byte_array_buffer.hpp"
 
 #include "gtest/gtest.h"
 
-namespace fetch 
-{
-namespace serializers 
-{
+namespace fetch {
+namespace serializers {
 
 template <typename T>
 struct A
@@ -90,53 +88,52 @@ struct A<void>
   ba_type y{"Y"};
 };
 
-template< typename X, typename D >
-struct ArraySerializer< A< X >, D >
+template <typename X, typename D>
+struct ArraySerializer<A<X>, D>
 {
 public:
-  using Type = A< X >;
+  using Type       = A<X>;
   using DriverType = D;
 
-  template< typename Constructor >
-  static void Serialize(Constructor & array_constructor, Type const & a)
+  template <typename Constructor>
+  static void Serialize(Constructor &array_constructor, Type const &a)
   {
     auto array = array_constructor(3);
     array.Append(a.x);
     array.Append(a.y);
-    array.Append(a.t);    
+    array.Append(a.t);
   }
 
-  template< typename ArrayDeserializer >
-  static void Deserialize(ArrayDeserializer & array, Type & a)
+  template <typename ArrayDeserializer>
+  static void Deserialize(ArrayDeserializer &array, Type &a)
   {
     array.GetNextValue(a.x);
     array.GetNextValue(a.y);
     array.GetNextValue(a.t);
-  }  
+  }
 };
 
-
-template< typename D >
-struct ArraySerializer< A< void >, D >
+template <typename D>
+struct ArraySerializer<A<void>, D>
 {
 public:
-  using Type = A< void >;
+  using Type       = A<void>;
   using DriverType = D;
 
-  template< typename Constructor >
-  static void Serialize(Constructor & array_constructor, Type const & a)
+  template <typename Constructor>
+  static void Serialize(Constructor &array_constructor, Type const &a)
   {
     auto array = array_constructor(3);
     array.Append(a.x);
     array.Append(a.y);
   }
 
-  template< typename ArrayDeserializer >
-  static void Deserialize(ArrayDeserializer & array, Type & a)
+  template <typename ArrayDeserializer>
+  static void Deserialize(ArrayDeserializer &array, Type &a)
   {
     array.GetNextValue(a.x);
     array.GetNextValue(a.y);
-  }  
+  }
 };
 
 class ByteArrayBufferTest : public testing::Test

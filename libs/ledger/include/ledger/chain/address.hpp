@@ -184,33 +184,32 @@ inline bool Address::operator>=(Address const &other) const
 
 namespace serializers {
 
-
-template< typename D >
-struct MapSerializer< ledger::Address, D > // TODO: Consider using forward to bytearray
+template <typename D>
+struct MapSerializer<ledger::Address, D>  // TODO: Consider using forward to bytearray
 {
 public:
-  using Type = ledger::Address;
+  using Type       = ledger::Address;
   using DriverType = D;
 
   static uint8_t const ADDRESS = 1;
 
-  template< typename Constructor >
-  static void Serialize(Constructor & map_constructor, Type const & data)
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &data)
   {
     auto map = map_constructor(1);
     map.Append(ADDRESS, data.address());
   }
 
-  template< typename MapDeserializer >
-  static void Deserialize(MapDeserializer & map, Type & address)
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &address)
   {
-    uint8_t key;
-    byte_array::ConstByteArray data;  
+    uint8_t                    key;
+    byte_array::ConstByteArray data;
     map.GetNextKeyPair(key, data);
     address = Type{data};
-  }  
+  }
 };
-}
+}  // namespace serializers
 
 }  // namespace fetch
 

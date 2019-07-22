@@ -24,14 +24,14 @@
 namespace fetch {
 namespace serializers {
 
-template< typename D >
-struct ForwardSerializer< ledger::Transaction, D >
+template <typename D>
+struct ForwardSerializer<ledger::Transaction, D>
 {
 public:
-  using Type = ledger::Transaction;
+  using Type       = ledger::Transaction;
   using DriverType = D;
 
-  template< typename Serializer >
+  template <typename Serializer>
   static inline void Serialize(Serializer &s, Type const &tx)
   {
     ledger::TransactionSerializer serializer{};
@@ -40,7 +40,7 @@ public:
     s << serializer.data();
   }
 
-  template< typename Serializer >
+  template <typename Serializer>
   static inline void Deserialize(Serializer &s, Type &tx)
   {
     // extract the data from the stream
@@ -53,6 +53,5 @@ public:
   }
 };
 
-
-}  // namespace ledger
+}  // namespace serializers
 }  // namespace fetch

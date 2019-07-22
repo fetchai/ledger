@@ -21,28 +21,28 @@
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/logger.hpp"
+#include "core/serializers/array_interface.hpp"
+#include "core/serializers/binary_interface.hpp"
+#include "core/serializers/container_constructor_interface.hpp"
 #include "core/serializers/counter.hpp"
 #include "core/serializers/exception.hpp"
 #include "core/serializers/group_definitions.hpp"
-#include "vectorise/platform.hpp"
-#include "core/serializers/binary_interface.hpp"
-#include "core/serializers/array_interface.hpp"
 #include "core/serializers/map_interface.hpp"
-#include "core/serializers/container_constructor_interface.hpp"
+#include "vectorise/platform.hpp"
 
 #include <type_traits>
 
 namespace fetch {
 namespace serializers {
 
-template< typename WriteType, typename InitialType>
+template <typename WriteType, typename InitialType>
 void MsgPackByteArrayBuffer::WritePrimitive(InitialType const &val)
 {
-  WriteType w = static_cast< WriteType >(val);
+  WriteType w = static_cast<WriteType>(val);
   WriteBytes(reinterpret_cast<uint8_t const *>(&w), sizeof(w));
 }
 
-template< typename ReadType, typename FinalType>
+template <typename ReadType, typename FinalType>
 void MsgPackByteArrayBuffer::ReadPrimitive(FinalType &val)
 {
   ReadType r;
@@ -51,93 +51,105 @@ void MsgPackByteArrayBuffer::ReadPrimitive(FinalType &val)
 }
 
 template <typename T>
-typename IgnoredSerializer<T, MsgPackByteArrayBuffer>::DriverType &MsgPackByteArrayBuffer::operator<<(T const &)
+typename IgnoredSerializer<T, MsgPackByteArrayBuffer>::DriverType &MsgPackByteArrayBuffer::
+                                                                   operator<<(T const &)
 {
   return *this;
 }
 
 template <typename T>
-typename IgnoredSerializer<T, MsgPackByteArrayBuffer>::DriverType &MsgPackByteArrayBuffer::operator>>(T &)
+typename IgnoredSerializer<T, MsgPackByteArrayBuffer>::DriverType &MsgPackByteArrayBuffer::
+                                                                   operator>>(T &)
 {
   return *this;
 }
 
 template <typename T>
-typename ForwardSerializer<T, MsgPackByteArrayBuffer>::DriverType &MsgPackByteArrayBuffer::operator<<(T const &val)
+typename ForwardSerializer<T, MsgPackByteArrayBuffer>::DriverType &MsgPackByteArrayBuffer::
+                                                                   operator<<(T const &val)
 {
-  ForwardSerializer<T, MsgPackByteArrayBuffer >::Serialize(*this, val);
+  ForwardSerializer<T, MsgPackByteArrayBuffer>::Serialize(*this, val);
   return *this;
 }
 
 template <typename T>
-typename ForwardSerializer<T, MsgPackByteArrayBuffer>::DriverType &MsgPackByteArrayBuffer::operator>>(T &val)
+typename ForwardSerializer<T, MsgPackByteArrayBuffer>::DriverType &MsgPackByteArrayBuffer::
+                                                                   operator>>(T &val)
 {
-  ForwardSerializer<T, MsgPackByteArrayBuffer >::Deserialize(*this, val);
+  ForwardSerializer<T, MsgPackByteArrayBuffer>::Deserialize(*this, val);
   return *this;
 }
 
 template <typename T>
-typename IntegerSerializer<T, MsgPackByteArrayBuffer>::DriverType &MsgPackByteArrayBuffer::operator<<(T const &val)
+typename IntegerSerializer<T, MsgPackByteArrayBuffer>::DriverType &MsgPackByteArrayBuffer::
+                                                                   operator<<(T const &val)
 {
-  IntegerSerializer<T, MsgPackByteArrayBuffer >::Serialize(*this, val);
+  IntegerSerializer<T, MsgPackByteArrayBuffer>::Serialize(*this, val);
   return *this;
 }
 
 template <typename T>
-typename IntegerSerializer<T, MsgPackByteArrayBuffer>::DriverType &MsgPackByteArrayBuffer::operator>>(T &val)
+typename IntegerSerializer<T, MsgPackByteArrayBuffer>::DriverType &MsgPackByteArrayBuffer::
+                                                                   operator>>(T &val)
 {
-  IntegerSerializer<T, MsgPackByteArrayBuffer >::Deserialize(*this, val);
+  IntegerSerializer<T, MsgPackByteArrayBuffer>::Deserialize(*this, val);
   return *this;
 }
 
 template <typename T>
-typename FloatSerializer<T, MsgPackByteArrayBuffer>::DriverType &MsgPackByteArrayBuffer::operator<<(T const &val)
+typename FloatSerializer<T, MsgPackByteArrayBuffer>::DriverType &MsgPackByteArrayBuffer::operator<<(
+    T const &val)
 {
-  FloatSerializer<T, MsgPackByteArrayBuffer >::Serialize(*this, val);
+  FloatSerializer<T, MsgPackByteArrayBuffer>::Serialize(*this, val);
   return *this;
 }
 
 template <typename T>
-typename FloatSerializer<T, MsgPackByteArrayBuffer>::DriverType &MsgPackByteArrayBuffer::operator>>(T &val)
+typename FloatSerializer<T, MsgPackByteArrayBuffer>::DriverType &MsgPackByteArrayBuffer::operator>>(
+    T &val)
 {
-  FloatSerializer<T, MsgPackByteArrayBuffer >::Deserialize(*this, val);
+  FloatSerializer<T, MsgPackByteArrayBuffer>::Deserialize(*this, val);
   return *this;
 }
 
 template <typename T>
-typename BooleanSerializer<T, MsgPackByteArrayBuffer>::DriverType &MsgPackByteArrayBuffer::operator<<(T const &val)
+typename BooleanSerializer<T, MsgPackByteArrayBuffer>::DriverType &MsgPackByteArrayBuffer::
+                                                                   operator<<(T const &val)
 {
-  BooleanSerializer<T, MsgPackByteArrayBuffer >::Serialize(*this, val);
+  BooleanSerializer<T, MsgPackByteArrayBuffer>::Serialize(*this, val);
   return *this;
 }
 
 template <typename T>
-typename BooleanSerializer<T, MsgPackByteArrayBuffer>::DriverType &MsgPackByteArrayBuffer::operator>>(T &val)
+typename BooleanSerializer<T, MsgPackByteArrayBuffer>::DriverType &MsgPackByteArrayBuffer::
+                                                                   operator>>(T &val)
 {
-  BooleanSerializer<T, MsgPackByteArrayBuffer >::Deserialize(*this, val);
-  return *this;
-}
-
-
-template <typename T>
-typename StringSerializer<T, MsgPackByteArrayBuffer>::DriverType &MsgPackByteArrayBuffer::operator<<(T const &val)
-{
-  StringSerializer<T, MsgPackByteArrayBuffer >::Serialize(*this, val);
+  BooleanSerializer<T, MsgPackByteArrayBuffer>::Deserialize(*this, val);
   return *this;
 }
 
 template <typename T>
-typename StringSerializer<T, MsgPackByteArrayBuffer>::DriverType &MsgPackByteArrayBuffer::operator>>(T &val)
+typename StringSerializer<T, MsgPackByteArrayBuffer>::DriverType &MsgPackByteArrayBuffer::
+                                                                  operator<<(T const &val)
 {
-  StringSerializer<T, MsgPackByteArrayBuffer >::Deserialize(*this, val);
+  StringSerializer<T, MsgPackByteArrayBuffer>::Serialize(*this, val);
   return *this;
 }
 
 template <typename T>
-typename BinarySerializer<T, MsgPackByteArrayBuffer>::DriverType &MsgPackByteArrayBuffer::operator<<(T const &val)
+typename StringSerializer<T, MsgPackByteArrayBuffer>::DriverType &MsgPackByteArrayBuffer::
+                                                                  operator>>(T &val)
 {
-  using Serializer  = BinarySerializer<T, MsgPackByteArrayBuffer >;
-  using Constructor = interfaces::BinaryConstructorInterface<0xc4, 0xc5, 0xc6 >;
+  StringSerializer<T, MsgPackByteArrayBuffer>::Deserialize(*this, val);
+  return *this;
+}
+
+template <typename T>
+typename BinarySerializer<T, MsgPackByteArrayBuffer>::DriverType &MsgPackByteArrayBuffer::
+                                                                  operator<<(T const &val)
+{
+  using Serializer  = BinarySerializer<T, MsgPackByteArrayBuffer>;
+  using Constructor = interfaces::BinaryConstructorInterface<0xc4, 0xc5, 0xc6>;
 
   Constructor constructor(*this);
   Serializer::Serialize(constructor, val);
@@ -145,60 +157,60 @@ typename BinarySerializer<T, MsgPackByteArrayBuffer>::DriverType &MsgPackByteArr
 }
 
 template <typename T>
-typename BinarySerializer<T, MsgPackByteArrayBuffer>::DriverType &MsgPackByteArrayBuffer::operator>>(T &val)
+typename BinarySerializer<T, MsgPackByteArrayBuffer>::DriverType &MsgPackByteArrayBuffer::
+                                                                  operator>>(T &val)
 {
-  using Serializer = BinarySerializer<T, MsgPackByteArrayBuffer >;
+  using Serializer = BinarySerializer<T, MsgPackByteArrayBuffer>;
   interfaces::BinaryDeserializer stream(*this);
   Serializer::Deserialize(stream, val);
   return *this;
 }
 
-
-
 template <typename T>
-typename ArraySerializer<T, MsgPackByteArrayBuffer>::DriverType &MsgPackByteArrayBuffer::operator<<(T const &val)
+typename ArraySerializer<T, MsgPackByteArrayBuffer>::DriverType &MsgPackByteArrayBuffer::operator<<(
+    T const &val)
 {
-  using Serializer = ArraySerializer<T, MsgPackByteArrayBuffer >;
-  using Constructor = interfaces::ContainerConstructorInterface<interfaces::ArrayInterface, 0x90, 0xdc, 0xdd >;
+  using Serializer = ArraySerializer<T, MsgPackByteArrayBuffer>;
+  using Constructor =
+      interfaces::ContainerConstructorInterface<interfaces::ArrayInterface, 0x90, 0xdc, 0xdd>;
 
   Constructor constructor(*this);
   Serializer::Serialize(constructor, val);
   return *this;
 }
 
-
-
 template <typename T>
-typename ArraySerializer<T, MsgPackByteArrayBuffer>::DriverType &MsgPackByteArrayBuffer::operator>>(T &val)
+typename ArraySerializer<T, MsgPackByteArrayBuffer>::DriverType &MsgPackByteArrayBuffer::operator>>(
+    T &val)
 {
-  using Serializer = ArraySerializer<T, MsgPackByteArrayBuffer >;
+  using Serializer = ArraySerializer<T, MsgPackByteArrayBuffer>;
   interfaces::ArrayDeserializer array(*this);
   Serializer::Deserialize(array, val);
   return *this;
-}  
-
+}
 
 template <typename T>
-typename MapSerializer<T, MsgPackByteArrayBuffer>::DriverType &MsgPackByteArrayBuffer::operator<<(T const &val)
+typename MapSerializer<T, MsgPackByteArrayBuffer>::DriverType &MsgPackByteArrayBuffer::operator<<(
+    T const &val)
 {
-  using Serializer = MapSerializer<T, MsgPackByteArrayBuffer >;
-  using Constructor = interfaces::ContainerConstructorInterface< interfaces::MapInterface, 0x80, 0xde, 0xdf >;
+  using Serializer = MapSerializer<T, MsgPackByteArrayBuffer>;
+  using Constructor =
+      interfaces::ContainerConstructorInterface<interfaces::MapInterface, 0x80, 0xde, 0xdf>;
 
   Constructor constructor(*this);
   Serializer::Serialize(constructor, val);
   return *this;
 }
 
-
 template <typename T>
-typename MapSerializer<T, MsgPackByteArrayBuffer>::DriverType &MsgPackByteArrayBuffer::operator>>(T &val)
+typename MapSerializer<T, MsgPackByteArrayBuffer>::DriverType &MsgPackByteArrayBuffer::operator>>(
+    T &val)
 {
-  using Serializer = MapSerializer<T, MsgPackByteArrayBuffer >;
+  using Serializer = MapSerializer<T, MsgPackByteArrayBuffer>;
   interfaces::MapDeserializer map(*this);
   Serializer::Deserialize(map, val);
   return *this;
-}  
-
+}
 
 template <typename T>
 MsgPackByteArrayBuffer &MsgPackByteArrayBuffer::Pack(T const *val)

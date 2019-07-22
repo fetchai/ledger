@@ -28,10 +28,9 @@
 
 #include "core/serializers/main_serializer_definition.hpp"
 
-#include "core/serializers/binary_interface.hpp"
 #include "core/serializers/array_interface.hpp"
-#include "core/serializers/map_interface.hpp"
+#include "core/serializers/binary_interface.hpp"
 #include "core/serializers/container_constructor_interface.hpp"
+#include "core/serializers/map_interface.hpp"
 
 #include "core/serializers/main_serializer_impl.hpp"
-

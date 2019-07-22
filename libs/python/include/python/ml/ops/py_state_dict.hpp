@@ -38,17 +38,17 @@ void BuildStateDict(std::string const &custom_name, pybind11::module &module)
       .def_readwrite("weights", &fetch::ml::StateDict<ArrayType>::weights_)
       .def_readwrite("dict", &fetch::ml::StateDict<ArrayType>::dict_)
       .def("Merge", &fetch::ml::StateDict<ArrayType>::Merge);
-/*
-      .def("Serialize",
-           [](fetch::ml::StateDict<ArrayType> &sd) {
-             fetch::serializers::ByteArrayBuffer b;
-             b << sd;
-             return b;             
-           })
+  /*
+        .def("Serialize",
+             [](fetch::ml::StateDict<ArrayType> &sd) {
+               fetch::serializers::ByteArrayBuffer b;
+               b << sd;
+               return b;
+             })
 
-      .def("Deserialize", [](fetch::ml::StateDict<ArrayType> &   sd,
-                             fetch::serializers::ByteArrayBuffer b) { b >> sd; });
-     */                             
+        .def("Deserialize", [](fetch::ml::StateDict<ArrayType> &   sd,
+                               fetch::serializers::ByteArrayBuffer b) { b >> sd; });
+       */
 }
 
 }  // namespace ops

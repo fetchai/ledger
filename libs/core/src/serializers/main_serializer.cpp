@@ -23,14 +23,13 @@
 #include "core/serializers/counter.hpp"
 #include "core/serializers/exception.hpp"
 #include "core/serializers/group_definitions.hpp"
-#include "vectorise/platform.hpp"
 #include "core/serializers/main_serializer.hpp"
+#include "vectorise/platform.hpp"
 
 #include <type_traits>
 
 namespace fetch {
 namespace serializers {
-
 
 MsgPackByteArrayBuffer::MsgPackByteArrayBuffer(byte_array::ByteArray const &s)
   : data_{s.Copy()}
@@ -55,9 +54,8 @@ void MsgPackByteArrayBuffer::Allocate(uint64_t const &delta)
   Resize(delta, ResizeParadigm::RELATIVE);
 }
 
-void MsgPackByteArrayBuffer::Resize(uint64_t const &   size,
-            ResizeParadigm const &resize_paradigm,
-            bool const            zero_reserved_space)
+void MsgPackByteArrayBuffer::Resize(uint64_t const &size, ResizeParadigm const &resize_paradigm,
+                                    bool const zero_reserved_space)
 {
   data_.Resize(size, resize_paradigm, zero_reserved_space);
 
@@ -75,9 +73,8 @@ void MsgPackByteArrayBuffer::Resize(uint64_t const &   size,
   };
 }
 
-void MsgPackByteArrayBuffer::Reserve(uint64_t const &   size,
-             ResizeParadigm const &resize_paradigm,
-             bool const            zero_reserved_space)
+void MsgPackByteArrayBuffer::Reserve(uint64_t const &size, ResizeParadigm const &resize_paradigm,
+                                     bool const zero_reserved_space)
 {
   data_.Reserve(size, resize_paradigm, zero_reserved_space);
 }
@@ -93,7 +90,6 @@ void MsgPackByteArrayBuffer::WriteByte(uint8_t const &val)
   data_.WriteBytes(&val, 1, pos_);
   ++pos_;
 }
-
 
 void MsgPackByteArrayBuffer::ReadByte(uint8_t &val)
 {
@@ -150,7 +146,6 @@ byte_array::ByteArray const &MsgPackByteArrayBuffer::data() const
 
 void MsgPackByteArrayBuffer::AppendInternal()
 {}
-
 
 }  // namespace serializers
 }  // namespace fetch

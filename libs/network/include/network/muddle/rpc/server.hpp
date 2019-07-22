@@ -122,7 +122,7 @@ private:
     context.sender_address      = from;
     context.transmitter_address = transmitter;
     context.MarkAsValid();
-    
+
     // dispatch down to the core RPC level
     try
     {

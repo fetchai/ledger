@@ -57,9 +57,6 @@ inline uint64_t FromBigEndian(uint64_t x)
   return __builtin_bswap64(x);
 }
 
-
-
-
 inline int8_t ToBigEndian(int8_t x)
 {
   return x;
@@ -94,9 +91,6 @@ inline int64_t FromBigEndian(int64_t x)
 {
   return static_cast<int64_t>(__builtin_bswap64(static_cast<uint64_t>(x)));
 }
-
-
-
 
 struct Parallelisation
 {

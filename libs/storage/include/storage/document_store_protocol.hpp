@@ -128,8 +128,7 @@ public:
     // print an error message on failure
     if (!success)
     {
-      FETCH_LOG_WARN(LOGGING_NAME,
-                     "Resource lock failed for: ", context.sender_address.ToBase64());
+      FETCH_LOG_WARN(LOGGING_NAME, "Resource lock failed for: ", context.sender_address.ToBase64());
     }
 
     return success;

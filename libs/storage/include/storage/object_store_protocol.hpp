@@ -17,15 +17,15 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/serializers/group_definitions.hpp"
 #include "network/service/protocol.hpp"
 #include "storage/object_store_protocol.hpp"
 #include "storage/transient_object_store.hpp"
-#include "core/serializers/group_definitions.hpp"
 
 namespace fetch {
 namespace storage {
 
-template< typename T >
+template <typename T>
 struct ResourceKeyValuePair
 {
   ResourceID key;
@@ -40,7 +40,7 @@ public:
 
   static constexpr char const *LOGGING_NAME = "ObjectStoreProto";
 
-  using Element = ResourceKeyValuePair<T>;
+  using Element     = ResourceKeyValuePair<T>;
   using ElementList = std::vector<Element>;
 
   enum
@@ -102,35 +102,33 @@ private:
 
 }  // namespace storage
 
-namespace serializers
-{
+namespace serializers {
 
-template< typename T, typename D >
-struct MapSerializer<storage::ResourceKeyValuePair<T>, D >
+template <typename T, typename D>
+struct MapSerializer<storage::ResourceKeyValuePair<T>, D>
 {
 public:
-  using Type = storage::ResourceKeyValuePair<T>;
+  using Type       = storage::ResourceKeyValuePair<T>;
   using DriverType = D;
 
-  static uint8_t const KEY = 1;
+  static uint8_t const KEY   = 1;
   static uint8_t const VALUE = 2;
 
-  template< typename Constructor >
-  static void Serialize(Constructor & map_constructor, Type const & data)
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &data)
   {
     auto map = map_constructor(2);
-    map.Append(KEY,  data.key);
+    map.Append(KEY, data.key);
     map.Append(VALUE, data.value);
   }
 
-  template< typename MapDeserializer >
-  static void Deserialize(MapDeserializer & map, Type & data)
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &data)
   {
-    map.ExpectKeyGetValue(KEY,  data.key);
+    map.ExpectKeyGetValue(KEY, data.key);
     map.ExpectKeyGetValue(VALUE, data.value);
-  }  
+  }
 };
 
-
-}
+}  // namespace serializers
 }  // namespace fetch

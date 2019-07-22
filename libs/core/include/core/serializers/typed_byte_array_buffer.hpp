@@ -26,7 +26,7 @@
 namespace fetch {
 namespace serializers {
 
-using TypedByteArrayBuffer       = MsgPackByteArrayBuffer;
+using TypedByteArrayBuffer = MsgPackByteArrayBuffer;
 
 }  // namespace serializers
 }  // namespace fetch

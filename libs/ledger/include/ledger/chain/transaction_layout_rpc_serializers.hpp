@@ -21,45 +21,42 @@
 
 namespace fetch {
 
+namespace serializers {
 
-namespace serializers
-{
-
-template< typename D >
-struct MapSerializer< ledger::TransactionLayout, D >
+template <typename D>
+struct MapSerializer<ledger::TransactionLayout, D>
 {
 public:
   using Type       = ledger::TransactionLayout;
   using DriverType = D;
 
-  static uint8_t const DIGEST = 1;
-  static uint8_t const MASK = 2;
-  static uint8_t const CHARGE = 3;
-  static uint8_t const VALID_FROM = 4;
-  static uint8_t const VALID_UNTIL = 5;  
+  static uint8_t const DIGEST      = 1;
+  static uint8_t const MASK        = 2;
+  static uint8_t const CHARGE      = 3;
+  static uint8_t const VALID_FROM  = 4;
+  static uint8_t const VALID_UNTIL = 5;
 
-  template< typename Constructor >
-  static void Serialize(Constructor & map_constructor, Type const & tx)
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &tx)
   {
     auto map = map_constructor(5);
     map.Append(DIGEST, tx.digest_);
-    map.Append(MASK,   tx.mask_);
-    map.Append(CHARGE, tx.charge_);  
-    map.Append(VALID_FROM, tx.valid_from_);      
-    map.Append(VALID_UNTIL, tx.valid_until_);    
+    map.Append(MASK, tx.mask_);
+    map.Append(CHARGE, tx.charge_);
+    map.Append(VALID_FROM, tx.valid_from_);
+    map.Append(VALID_UNTIL, tx.valid_until_);
   }
 
-  template< typename MapDeserializer >
-  static void Deserialize(MapDeserializer & map, Type & tx)
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &tx)
   {
     map.ExpectKeyGetValue(DIGEST, tx.digest_);
-    map.ExpectKeyGetValue(MASK,   tx.mask_);
+    map.ExpectKeyGetValue(MASK, tx.mask_);
     map.ExpectKeyGetValue(CHARGE, tx.charge_);
     map.ExpectKeyGetValue(VALID_FROM, tx.valid_from_);
     map.ExpectKeyGetValue(VALID_UNTIL, tx.valid_until_);
-  }  
+  }
 };
-
 
 }  // namespace serializers
 

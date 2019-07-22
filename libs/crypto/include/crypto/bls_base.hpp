@@ -166,108 +166,99 @@ inline byte_array::ConstByteArray ToBinary(Signature const &sig)
 
 }  // namespace crypto
 
-namespace serializers
-{
+namespace serializers {
 
-template< typename D>
-struct BinarySerializer<::blsId, D > // TODO: Use internal alias
+template <typename D>
+struct BinarySerializer<::blsId, D>  // TODO: Use internal alias
 {
 public:
   using Type       = ::blsId;
   using DriverType = D;
-  
-  template< typename Constructor >
-  static void Serialize(Constructor & binary_construtor, Type const & id)
+
+  template <typename Constructor>
+  static void Serialize(Constructor &binary_construtor, Type const &id)
   {
-    auto data = binary_construtor( sizeof(id) );
-    auto const *raw = reinterpret_cast<uint8_t const *>(&id);    
+    auto        data = binary_construtor(sizeof(id));
+    auto const *raw  = reinterpret_cast<uint8_t const *>(&id);
     data.Write(raw, sizeof(id));
   }
-  
-  template< typename BinaryDeserializer >
-  static void Deserialize(BinaryDeserializer & binary_stream, Type & id)
+
+  template <typename BinaryDeserializer>
+  static void Deserialize(BinaryDeserializer &binary_stream, Type &id)
   {
     auto *raw = reinterpret_cast<uint8_t *>(&id);
     binary_stream.Read(raw, sizeof(id));
-  }  
+  }
 };
 
-
-template< typename D>
-struct BinarySerializer<::blsPublicKey, D > // TODO: Use internal alias
+template <typename D>
+struct BinarySerializer<::blsPublicKey, D>  // TODO: Use internal alias
 {
 public:
   using Type       = ::blsPublicKey;
   using DriverType = D;
-  
-  template< typename Constructor >
-  static void Serialize(Constructor & binary_construtor, Type const & id)
+
+  template <typename Constructor>
+  static void Serialize(Constructor &binary_construtor, Type const &id)
   {
-    auto data = binary_construtor( sizeof(id) );
-    auto const *raw = reinterpret_cast<uint8_t const *>(&id);    
+    auto        data = binary_construtor(sizeof(id));
+    auto const *raw  = reinterpret_cast<uint8_t const *>(&id);
     data.Write(raw, sizeof(id));
   }
-  
-  template< typename BinaryDeserializer >
-  static void Deserialize(BinaryDeserializer & binary_stream, Type & id)
+
+  template <typename BinaryDeserializer>
+  static void Deserialize(BinaryDeserializer &binary_stream, Type &id)
   {
     auto *raw = reinterpret_cast<uint8_t *>(&id);
     binary_stream.Read(raw, sizeof(id));
-  }  
+  }
 };
 
-
-template< typename D>
-struct BinarySerializer<::blsSecretKey, D > // TODO: Use internal alias
+template <typename D>
+struct BinarySerializer<::blsSecretKey, D>  // TODO: Use internal alias
 {
 public:
   using Type       = ::blsSecretKey;
   using DriverType = D;
-  
-  template< typename Constructor >
-  static void Serialize(Constructor & binary_construtor, Type const & id)
+
+  template <typename Constructor>
+  static void Serialize(Constructor &binary_construtor, Type const &id)
   {
-    auto data = binary_construtor( sizeof(id) );
-    auto const *raw = reinterpret_cast<uint8_t const *>(&id);    
+    auto        data = binary_construtor(sizeof(id));
+    auto const *raw  = reinterpret_cast<uint8_t const *>(&id);
     data.Write(raw, sizeof(id));
   }
-  
-  template< typename BinaryDeserializer >
-  static void Deserialize(BinaryDeserializer & binary_stream, Type & id)
+
+  template <typename BinaryDeserializer>
+  static void Deserialize(BinaryDeserializer &binary_stream, Type &id)
   {
     auto *raw = reinterpret_cast<uint8_t *>(&id);
     binary_stream.Read(raw, sizeof(id));
-  }  
+  }
 };
 
-
-template< typename D>
-struct BinarySerializer<::blsSignature, D > // TODO: Use internal alias
+template <typename D>
+struct BinarySerializer<::blsSignature, D>  // TODO: Use internal alias
 {
 public:
   using Type       = ::blsSignature;
   using DriverType = D;
-  
-  template< typename Constructor >
-  static void Serialize(Constructor & binary_construtor, Type const & id)
+
+  template <typename Constructor>
+  static void Serialize(Constructor &binary_construtor, Type const &id)
   {
-    auto data = binary_construtor( sizeof(id) );
-    auto const *raw = reinterpret_cast<uint8_t const *>(&id);    
+    auto        data = binary_construtor(sizeof(id));
+    auto const *raw  = reinterpret_cast<uint8_t const *>(&id);
     data.Write(raw, sizeof(id));
   }
-  
-  template< typename BinaryDeserializer >
-  static void Deserialize(BinaryDeserializer & binary_stream, Type & id)
+
+  template <typename BinaryDeserializer>
+  static void Deserialize(BinaryDeserializer &binary_stream, Type &id)
   {
     auto *raw = reinterpret_cast<uint8_t *>(&id);
     binary_stream.Read(raw, sizeof(id));
-  }  
+  }
 };
-
 
 }  // namespace serializers
 }  // namespace fetch
-
-
-
-

@@ -19,8 +19,8 @@
 
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/const_byte_array.hpp"
-#include "vectorise/uint/uint.hpp"
 #include "core/serializers/group_definitions.hpp"
+#include "vectorise/uint/uint.hpp"
 
 #include <cstddef>
 #include <utility>
@@ -71,44 +71,43 @@ inline vectorise::UInt<256> const &ProofOfWork::target() const
   return target_;
 }
 
-} // namespace consensus
-} // namespace ledger
+}  // namespace consensus
+}  // namespace ledger
 
-namespace serializers
-{
+namespace serializers {
 
-template< typename D >
-struct MapSerializer< ledger::consensus::ProofOfWork, D > // TODO: Consider using forward to bytearray
+template <typename D>
+struct MapSerializer<ledger::consensus::ProofOfWork,
+                     D>  // TODO: Consider using forward to bytearray
 {
 public:
-  using Type = ledger::consensus::ProofOfWork;
+  using Type       = ledger::consensus::ProofOfWork;
   using DriverType = D;
 
   static uint8_t const HEADER = 1;
   static uint8_t const TARGET = 2;
 
-  template< typename Constructor >
-  static void Serialize(Constructor & map_constructor, Type const & p)
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &p)
   {
     auto map = map_constructor(2);
     map.Append(HEADER, p.header());
     map.Append(TARGET, p.target());
   }
 
-  template< typename MapDeserializer >
-  static void Deserialize(MapDeserializer & map, Type & p)
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &p)
   {
     byte_array::ConstByteArray header;
     vectorise::UInt<256>       target;
-  
+
     map.ExpectKeyGetValue(HEADER, header);
     map.ExpectKeyGetValue(TARGET, target);
 
     p.SetHeader(header);
-    p.SetTarget(std::move(target));    
-  }  
+    p.SetTarget(std::move(target));
+  }
 };
-
 
 }  // namespace serializers
 }  // namespace fetch

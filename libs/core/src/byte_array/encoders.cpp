@@ -118,14 +118,14 @@ ConstByteArray PartialHex(ConstByteArray const &str)
   for (std::size_t i = 0; i < str.size(); ++i)
   {
     uint8_t c = data[i];
-    if(' ' <= c && c <='~')
+    if (' ' <= c && c <= '~')
     {
       ret[j++] = c;
     }
     else
     {
-      ret[j++]  = uint8_t(details::hexChars[(c >> 4) & 0xF]);
-      ret[j++]  = uint8_t(details::hexChars[c & 0xF]);
+      ret[j++] = uint8_t(details::hexChars[(c >> 4) & 0xF]);
+      ret[j++] = uint8_t(details::hexChars[c & 0xF]);
     }
   }
   ret.Resize(j);

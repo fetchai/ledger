@@ -35,39 +35,38 @@ struct Document
   bool                  failed      = false;
 };
 
-} // namespace storage
+}  // namespace storage
 
-namespace serializers
-{
+namespace serializers {
 
-template< typename D >
-struct MapSerializer<storage::Document, D >
+template <typename D>
+struct MapSerializer<storage::Document, D>
 {
 public:
-  using Type = storage::Document;
+  using Type       = storage::Document;
   using DriverType = D;
 
-  static uint8_t const DOCUMENT = 1;
-  static uint8_t const WAS_CREATED = 2;  
-  static uint8_t const FAILED = 3;
+  static uint8_t const DOCUMENT    = 1;
+  static uint8_t const WAS_CREATED = 2;
+  static uint8_t const FAILED      = 3;
 
-  template< typename Constructor >
-  static void Serialize(Constructor & map_constructor, Type const & data)
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &data)
   {
     auto map = map_constructor(3);
-    map.Append(DOCUMENT,  data.document);
+    map.Append(DOCUMENT, data.document);
     map.Append(WAS_CREATED, data.was_created);
     map.Append(FAILED, data.failed);
   }
 
-  template< typename MapDeserializer >
-  static void Deserialize(MapDeserializer & map, Type & data)
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &data)
   {
-    map.ExpectKeyGetValue(DOCUMENT,  data.document);
+    map.ExpectKeyGetValue(DOCUMENT, data.document);
     map.ExpectKeyGetValue(WAS_CREATED, data.was_created);
     map.ExpectKeyGetValue(FAILED, data.failed);
-  }  
+  }
 };
 
-}  
+}  // namespace serializers
 }  // namespace fetch

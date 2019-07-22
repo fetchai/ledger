@@ -21,7 +21,6 @@
 #include "ledger/chain/block.hpp"
 #include "ledger/chain/main_chain.hpp"
 
-
 #include "ledger/testing/block_generator.hpp"
 
 #include "gtest/gtest.h"

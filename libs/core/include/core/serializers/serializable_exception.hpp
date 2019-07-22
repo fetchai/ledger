@@ -25,17 +25,15 @@
 namespace fetch {
 namespace serializers {
 
-
-
-template< typename D >
-struct MapSerializer< SerializableException, D >
+template <typename D>
+struct MapSerializer<SerializableException, D>
 {
 public:
-  using Type = SerializableException;
+  using Type       = SerializableException;
   using DriverType = D;
 
-  static const uint8_t  KEY_CODE        = 1;
-  static const uint8_t  KEY_EXPLANATION = 2;
+  static const uint8_t KEY_CODE        = 1;
+  static const uint8_t KEY_EXPLANATION = 2;
 
   template <typename T>
   static inline void Serialize(T &map_constructor, Type const &s)
@@ -45,37 +43,35 @@ public:
     auto map = map_constructor(2);
     map.Append(KEY_CODE, code);
     map.Append(KEY_EXPLANATION, s.explanation());
-   /* 
-    serializer.Allocate(sizeof(error::error_type) + sizeof(uint64_t) + s.explanation().size());
+    /*
+     serializer.Allocate(sizeof(error::error_type) + sizeof(uint64_t) + s.explanation().size());
 
-    serializer.WriteBytes(reinterpret_cast<uint8_t const *>(&code), sizeof(error::error_type));
-    serializer.WriteBytes(reinterpret_cast<uint8_t const *>(&size), sizeof(uint64_t));
-    serializer.WriteBytes(reinterpret_cast<uint8_t const *>(s.explanation().c_str()), size);
-    */
+     serializer.WriteBytes(reinterpret_cast<uint8_t const *>(&code), sizeof(error::error_type));
+     serializer.WriteBytes(reinterpret_cast<uint8_t const *>(&size), sizeof(uint64_t));
+     serializer.WriteBytes(reinterpret_cast<uint8_t const *>(s.explanation().c_str()), size);
+     */
   }
 
   template <typename T>
   static inline void Deserialize(T &map, Type &s)
   {
-    error::error_type code;
-    byte_array::ByteArray buffer;    
-    uint8_t key;
-
-    map.GetNextKeyPair(key, code); // TODO: Test keys
-    map.GetNextKeyPair(key, buffer);
-/*
-    serializer.ReadBytes(reinterpret_cast<uint8_t *>(&code), sizeof(error::error_type));
-    serializer.ReadBytes(reinterpret_cast<uint8_t *>(&size), sizeof(uint64_t));
-
+    error::error_type     code;
     byte_array::ByteArray buffer;
-    buffer.Resize(size);
-    serializer.ReadBytes(buffer.pointer(), size);
-*/
+    uint8_t               key;
+
+    map.GetNextKeyPair(key, code);  // TODO: Test keys
+    map.GetNextKeyPair(key, buffer);
+    /*
+        serializer.ReadBytes(reinterpret_cast<uint8_t *>(&code), sizeof(error::error_type));
+        serializer.ReadBytes(reinterpret_cast<uint8_t *>(&size), sizeof(uint64_t));
+
+        byte_array::ByteArray buffer;
+        buffer.Resize(size);
+        serializer.ReadBytes(buffer.pointer(), size);
+    */
     s = Type(code, buffer);
   }
-
 };
-
 
 }  // namespace serializers
 }  // namespace fetch

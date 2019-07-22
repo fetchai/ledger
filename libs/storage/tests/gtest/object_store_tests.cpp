@@ -18,11 +18,10 @@
 
 #include "core/byte_array/decoders.hpp"
 #include "core/random/lfg.hpp"
-#include "core/serializers/group_definitions.hpp"
 #include "core/serializers/base_types.hpp"
+#include "core/serializers/group_definitions.hpp"
 #include "storage/object_store.hpp"
 #include "testing/common_testing_functionality.hpp"
-
 
 #include "gtest/gtest.h"
 
@@ -66,19 +65,17 @@ struct TestSerDeser
   }
 };
 
-namespace fetch
+namespace fetch {
+namespace serializers {
+template <typename D>
+struct ArraySerializer<TestSerDeser, D>
 {
-namespace serializers
-{
-template< typename D >
-struct ArraySerializer< TestSerDeser, D >
-{
-public: 
-  using Type = TestSerDeser;
+public:
+  using Type       = TestSerDeser;
   using DriverType = D;
 
-  template< typename Constructor >
-  static void Serialize(Constructor & array_constructor, Type const & b)
+  template <typename Constructor>
+  static void Serialize(Constructor &array_constructor, Type const &b)
   {
     auto array = array_constructor(3);
     array.Append(b.first);
@@ -86,22 +83,21 @@ public:
     array.Append(b.third);
   }
 
-  template< typename ArrayDeserializer >
-  static void Deserialize(ArrayDeserializer & array, Type & b)
+  template <typename ArrayDeserializer>
+  static void Deserialize(ArrayDeserializer &array, Type &b)
   {
-    if(array.size() != 3)
+    if (array.size() != 3)
     {
       throw SerializableException(std::string("expected 3 elements."));
     }
 
     array.GetNextValue(b.first);
     array.GetNextValue(b.second);
-    array.GetNextValue(b.third);    
-  }  
-
+    array.GetNextValue(b.third);
+  }
 };
-}
-}
+}  // namespace serializers
+}  // namespace fetch
 
 TEST(storage_object_store_basic_functionality, Setting_and_getting_elements)
 {
@@ -300,7 +296,7 @@ TEST(storage_object_store_with_STL_gtest,
      subtree_iterator_over_basic_struct_1_to_8_bits_root_sizes_split)
 {
   std::vector<uint64_t> keyTests{0,  1,  2,  3,  4,  5,  6,   7,   8,   9,
-                                    10, 11, 12, 13, 14, 99, 100, 133, 998, 1001};
+                                 10, 11, 12, 13, 14, 99, 100, 133, 998, 1001};
   for (auto const &numberOfKeys : keyTests)
   {
     using testType = TestSerDeser;
