@@ -17,17 +17,30 @@
 //
 //------------------------------------------------------------------------------
 
+#include "vectorise/arch/avx2.hpp"
+
+#include <cstddef>
+
 namespace fetch {
 namespace vectorize {
 
-inline VectorRegister<float, 128> sqrt(VectorRegister<float, 128> const &a)
+template <typename T, std::size_t S>
+VectorRegister<T, S> exp(VectorRegister<T, S> x, T const &precision = 0.00001)
 {
-  return VectorRegister<float, 128>(_mm_sqrt_ps(a.data()));
-}
+  VectorRegister<T, S> ret(T(0)), xserie(T(1));
+  VectorRegister<T, S> p(precision);
+  std::size_t          n = 0;
 
-inline VectorRegister<double, 128> sqrt(VectorRegister<double, 128> const &a)
-{
-  return VectorRegister<double, 128>(_mm_sqrt_pd(a.data()));
+  while (any_less_than(p, abs(xserie)))
+  {
+    ret = ret + xserie;
+    ++n;
+
+    VectorRegister<T, S> vecn((T(n)));
+    xserie = xserie * (x / vecn);
+  }
+
+  return ret;
 }
 
 }  // namespace vectorize

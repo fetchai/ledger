@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vectorise/arch/sse/info.hpp"
-#include "vectorise/arch/sse/register_int32.hpp"
+#include "vectorise/arch/avx2/info.hpp"
+#include "vectorise/arch/avx2/register_int32.hpp"
 
 #include <cmath>
 #include <cstddef>

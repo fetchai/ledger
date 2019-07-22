@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "vectorise/info.hpp"
-#include "vectorise/info_sse.hpp"
+#include "vectorise/info_avx2.hpp"
 #include "vectorise/register.hpp"
 
 #include <cmath>

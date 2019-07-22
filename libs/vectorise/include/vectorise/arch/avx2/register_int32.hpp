@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vectorise/arch/sse/info.hpp"
+#include "vectorise/arch/avx2/info.hpp"
 #include "vectorise/info.hpp"
 #include "vectorise/register.hpp"
 

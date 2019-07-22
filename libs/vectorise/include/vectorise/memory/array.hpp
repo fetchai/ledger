@@ -17,6 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
+
+#include "meta/type_traits.hpp"
 #include "meta/log2.hpp"
 #include "vectorise/memory/iterator.hpp"
 #include "vectorise/memory/parallel_dispatcher.hpp"
@@ -40,7 +42,7 @@ class Array : public VectorSlice<T, type_size>
 {
 public:
   static_assert(sizeof(T) >= type_size, "Invalid object size");
-  static_assert(std::is_pod<T>::value, "Can only be used with POD types");
+  // static_assert(meta::IsPOD<T>, "Can only be used with POD types");
 
   using SizeType   = std::size_t;
   using data_type  = std::shared_ptr<T>;

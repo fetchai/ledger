@@ -31,10 +31,10 @@ set(FETCH_COMPILE_LOGGING_LEVEL "info" CACHE STRING "The precompiled logging lev
 # cmake-format: off
 # target architecture (to be replaced with automatic detection) sysctl -a | grep machdep.cpu.features
 option(FETCH_ARCH_SSE3  "Architecture maximally supports SSE3"    OFF)
-option(FETCH_ARCH_SSE42 "Architecture maximally supports SSE4.2"  ON)
+option(FETCH_ARCH_SSE42 "Architecture maximally supports SSE4.2"  OFF)
 option(FETCH_ARCH_AVX   "Architecture maximally supports AVX"     OFF)
 option(FETCH_ARCH_FMA   "Architecture maximally supports FMA"     OFF)
-option(FETCH_ARCH_AVX2  "Architecture maximally supports AVX2"    OFF)
+option(FETCH_ARCH_AVX2  "Architecture maximally supports AVX2"    ON)
 # cmake-format: on
 
 # advanced options

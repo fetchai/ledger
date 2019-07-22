@@ -366,6 +366,8 @@ public:
 
   constexpr Type Data() const;
   constexpr void SetData(Type n) const;
+  constexpr Type const *pointer() const;
+  constexpr Type *pointer();
 
   ///////////////////////////////////////////////////////////////////
   /// FixedPoint implementations of common mathematical functions ///
@@ -1725,6 +1727,26 @@ template <std::uint16_t I, std::uint16_t F>
 constexpr void FixedPoint<I, F>::SetData(typename FixedPoint<I, F>::Type const n) const
 {
   data_ = n;
+}
+
+/**
+ * Return a pointer to the contents of the FixedPoint object
+ * @return a pointer to the contents of the FixedPoint object
+ */
+template <std::uint16_t I, std::uint16_t F>
+constexpr typename FixedPoint<I, F>::Type const *FixedPoint<I, F>::pointer() const
+{
+  return &data_;
+}
+
+/**
+ * Return a pointer to the contents of the FixedPoint object
+ * @return a pointer to the contents of the FixedPoint object
+ */
+template <std::uint16_t I, std::uint16_t F>
+constexpr typename FixedPoint<I, F>::Type *FixedPoint<I, F>::pointer()
+{
+  return &data_;
 }
 
 ///////////////////////////////////////////////////////////////////

@@ -24,13 +24,13 @@
 #include <cstdlib>
 #include <iostream>
 
-using type        = float;
+using type        = fetch::fixed_point::fp32_t;
 using array_type  = fetch::memory::Array<type>;
 using vector_type = typename array_type::VectorRegisterType;
 
 void RelativeDifference(array_type const &A, array_type const &B, array_type &C)
 {
-  vector_type cst(0.5);
+  vector_type cst(type(0.5));
   C.in_parallel().Apply([cst](vector_type const &a, vector_type const &b,
                               vector_type &c) { c = cst * (a - b) / (a + b); },
                         A, B);
@@ -52,7 +52,7 @@ int main(int argc, char const **argv)
   for (std::size_t i = 0; i < N; ++i)
   {
     A[i] = type(i);
-    B[i] = 2 * type(i);
+    B[i] = type(i) * 2;
   }
 
   std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();
