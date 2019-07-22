@@ -37,6 +37,10 @@ template <typename T>
 class W2VLoader : public DataLoader<fetch::math::Tensor<T>, fetch::math::Tensor<T>>
 {
 public:
+  // The intended T is the typename for the data input to the neural network, which should be a
+  // float or double or fix-point type.
+  static constexpr T WindowContextUnused = -1;
+
   using LabelType = fetch::math::Tensor<T>;
   using DataType  = fetch::math::Tensor<T>;
 
@@ -136,7 +140,7 @@ bool W2VLoader<T>::IsDone() const
   }
   else if (current_sentence_ >= data_.size() - 1)  // In the last sentence
   {
-    if (current_word_ > data_.at(current_sentence_).size() - (2 * window_size_ + 1))
+    if (current_word_ >= data_.at(current_sentence_).size() - window_size_)
     {
       return true;
     }
@@ -199,7 +203,7 @@ void W2VLoader<T>::InitUnigramTable()
   {
     frequencies[kvp.second.first] = kvp.second.second;
   }
-  unigram_table_.Reset(1e8, frequencies);
+  unigram_table_.Reset(frequencies, 1e8);
 }
 
 /**
@@ -211,22 +215,29 @@ void W2VLoader<T>::InitUnigramTable()
 template <typename T>
 void W2VLoader<T>::GetNext(ReturnType &ret)
 {
+  // the current word should start from position that allows full context window
+  if (current_word_ < window_size_)
+  {
+    current_word_ = window_size_;
+  }
+
   // select random window size
   SizeType dynamic_size = rng_() % window_size_ + 1;
 
-  // set the positive sample
-  ret.first.Set(0, 0, T(data_[current_sentence_][current_word_ + dynamic_size]));
+  // for the interested one word
+  ret.first.Set(0, 0, T(data_[current_sentence_][current_word_]));
+
+  // set the context samples
   for (SizeType i = 0; i < dynamic_size; ++i)
   {
-    ret.second.at(0).Set(i, 0, T(data_[current_sentence_][current_word_ + i]));
-    ret.second.at(0).Set(i + dynamic_size, 0,
-                         T(data_[current_sentence_][current_word_ + dynamic_size + i + 1]));
+    ret.second.at(0).Set(i, 0, T(data_[current_sentence_][current_word_ - i - 1]));
+    ret.second.at(0).Set(i + dynamic_size, 0, T(data_[current_sentence_][current_word_ + i + 1]));
   }
 
-  // pad the unused part of the window
+  // denote the unused part of the window
   for (SizeType i = (dynamic_size * 2); i < ret.second.at(0).size(); ++i)
   {
-    ret.second.at(0)(i, 0) = -1;
+    ret.second.at(0)(i, 0) = WindowContextUnused;
   }
 
   // negative sampling
@@ -246,10 +257,15 @@ void W2VLoader<T>::GetNext(ReturnType &ret)
           "length and that data loaded correctly.");
     }
   }
+
   current_word_++;
-  if (current_word_ >= data_.at(current_sentence_).size() - (2 * window_size_))
+  // check if the word is window size away form either end of the sentence
+  if (current_word_ >=
+      data_.at(current_sentence_).size() -
+          window_size_)  // the current word end when a full context window can be allowed
   {
-    current_word_ = 0;
+    current_word_ =
+        window_size_;  // the current word start from position that allows full context window
     current_sentence_++;
   }
 }
@@ -272,7 +288,9 @@ template <typename T>
 bool W2VLoader<T>::BuildVocab(std::string const &s)
 {
   std::vector<SizeType> indexes = StringsToIndices(PreprocessString(s));
-  if (indexes.size() >= 2 * window_size_ + 1)
+  if (indexes.size() >=
+      2 * window_size_ + 1)  // each sentence stored in the data_ are guaranteed to have minimum
+                             // length to handle window_size context sampling
   {
     data_.push_back(std::move(indexes));
     return true;
@@ -369,8 +387,8 @@ std::vector<math::SizeType> W2VLoader<T>::StringsToIndices(std::vector<std::stri
     indexes.reserve(strings.size());
     for (std::string const &s : strings)
     {
-      auto value =
-          vocab_.data.insert(std::make_pair(s, std::make_pair((SizeType)(vocab_.data.size()), 0)));
+      auto value = vocab_.data.insert(
+          std::make_pair(s, std::make_pair((SizeType)(vocab_.data.size() + 1), 0)));
       indexes.push_back((*value.first).second.first);
       value.first->second.second++;
     }

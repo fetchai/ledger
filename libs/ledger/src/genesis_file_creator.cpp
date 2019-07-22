@@ -16,6 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/byte_array/decoders.hpp"
+#include "core/json/document.hpp"
+#include "crypto/hash.hpp"
+#include "crypto/sha256.hpp"
 #include "dkg/dkg_service.hpp"
 #include "ledger/chain/address.hpp"
 #include "ledger/chain/block.hpp"
@@ -26,16 +30,13 @@
 #include "ledger/genesis_loading/genesis_file_creator.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 #include "storage/resource_mapper.hpp"
-
-#include "core/byte_array/decoders.hpp"
-#include "core/json/document.hpp"
 #include "variant/variant.hpp"
 #include "variant/variant_utils.hpp"
 
-#include "crypto/hash.hpp"
-#include "crypto/sha256.hpp"
-
+#include <cstddef>
 #include <fstream>
+#include <sstream>
+#include <string>
 
 namespace fetch {
 namespace ledger {
@@ -352,7 +353,7 @@ void GenesisFileCreator::LoadDKG(variant::Variant const &object)
 {
   if (dkg_)
   {
-    std::size_t threshold{1};
+    uint32_t threshold{1};
 
     if (!variant::Extract(object, "threshold", threshold))
     {

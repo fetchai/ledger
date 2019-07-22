@@ -16,13 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chain/block_coordinator.hpp"
-
 #include "core/byte_array/encoders.hpp"
 #include "core/feature_flags.hpp"
 #include "core/threading.hpp"
 #include "ledger/block_packer_interface.hpp"
 #include "ledger/block_sink_interface.hpp"
+#include "ledger/chain/block_coordinator.hpp"
 #include "ledger/chain/consensus/dummy_miner.hpp"
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/chain/transaction.hpp"
@@ -36,7 +35,12 @@
 #include "telemetry/counter.hpp"
 #include "telemetry/registry.hpp"
 
+#include <cassert>
 #include <chrono>
+#include <cstddef>
+#include <cstdint>
+#include <memory>
+#include <utility>
 
 namespace fetch {
 namespace ledger {
@@ -111,37 +115,53 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag, StakeManagerPtr
   , syncing_periodic_{NOTIFY_INTERVAL}
   , synergetic_exec_mgr_{CreateSynergeticExecutor(features, dag, storage_unit_)}
   , reload_state_count_{telemetry::Registry::Instance().CreateCounter(
-        "ledger_block_coordinator_reload_state_count")}
+        "ledger_block_coordinator_reload_state_total",
+        "The total number of times in the reload state")}
   , synchronising_state_count_{telemetry::Registry::Instance().CreateCounter(
-        "ledger_block_coordinator_synchronising_state_count")}
+        "ledger_block_coordinator_synchronising_state_total",
+        "The total number of times in the synchronising state")}
   , synchronised_state_count_{telemetry::Registry::Instance().CreateCounter(
-        "ledger_block_coordinator_synchronised_state_count")}
+        "ledger_block_coordinator_synchronised_state_total",
+        "The total number of times in the synchronised state")}
   , pre_valid_state_count_{telemetry::Registry::Instance().CreateCounter(
-        "ledger_block_coordinator_pre_valid_state_count")}
+        "ledger_block_coordinator_pre_valid_state_total",
+        "The total number of times in the pre validation state")}
   , wait_tx_state_count_{telemetry::Registry::Instance().CreateCounter(
-        "ledger_block_coordinator_wait_tx_state_count")}
+        "ledger_block_coordinator_wait_tx_state_total",
+        "The total number of times in the wait for tx state")}
   , syn_exec_state_count_{telemetry::Registry::Instance().CreateCounter(
-        "ledger_block_coordinator_syn_exec_state_count")}
+        "ledger_block_coordinator_syn_exec_state_total",
+        "The total number of times in the synergetic execution state")}
   , sch_block_state_count_{telemetry::Registry::Instance().CreateCounter(
-        "ledger_block_coordinator_sch_block_state_count")}
+        "ledger_block_coordinator_sch_block_state_total",
+        "The total number of times in the schedule block exec state")}
   , wait_exec_state_count_{telemetry::Registry::Instance().CreateCounter(
-        "ledger_block_coordinator_wait_exec_state_count")}
+        "ledger_block_coordinator_wait_exec_state_total",
+        "The total number of times in the waiting for exec state")}
   , post_valid_state_count_{telemetry::Registry::Instance().CreateCounter(
-        "ledger_block_coordinator_post_valid_state_count")}
+        "ledger_block_coordinator_post_valid_state_total",
+        "The total number of times in the post validation state")}
   , pack_block_state_count_{telemetry::Registry::Instance().CreateCounter(
-        "ledger_block_coordinator_pack_block_state_count")}
+        "ledger_block_coordinator_pack_block_state_total",
+        "The total number of times in the pack new block state")}
   , new_syn_state_count_{telemetry::Registry::Instance().CreateCounter(
-        "ledger_block_coordinator_new_syn_state_count")}
+        "ledger_block_coordinator_new_syn_state_total",
+        "The total number of times in the new synergetic state")}
   , new_exec_state_count_{telemetry::Registry::Instance().CreateCounter(
-        "ledger_block_coordinator_new_exec_state_count")}
+        "ledger_block_coordinator_new_exec_state_total",
+        "The total number of times in the new synergetic exec state")}
   , new_wait_exec_state_count_{telemetry::Registry::Instance().CreateCounter(
-        "ledger_block_coordinator_new_wait_exec_state_count")}
+        "ledger_block_coordinator_new_wait_exec_state_total",
+        "The total number of times in the new wait exec state")}
   , proof_search_state_count_{telemetry::Registry::Instance().CreateCounter(
-        "ledger_block_coordinator_proof_search_state_count")}
+        "ledger_block_coordinator_proof_search_state_total",
+        "The total number of times in the proof search state")}
   , transmit_state_count_{telemetry::Registry::Instance().CreateCounter(
-        "ledger_block_coordinator_transmit_state_count")}
-  , reset_state_count_{
-        telemetry::Registry::Instance().CreateCounter("ledger_block_coordinator_reset_state_count")}
+        "ledger_block_coordinator_transmit_state_total",
+        "The total number of times in the transmit state")}
+  , reset_state_count_{telemetry::Registry::Instance().CreateCounter(
+        "ledger_block_coordinator_reset_state_total",
+        "The total number of times in the reset state")}
 {
   // configure the state machine
   // clang-format off
@@ -357,13 +377,11 @@ BlockCoordinator::State BlockCoordinator::OnSynchronising()
 
     // we expect that the common parent in this case will always have been processed, but this
     // should be checked
-    if (!storage_unit_.HashExists(
-            common_parent->body.merkle_hash,
-            common_parent->body
-                .block_number) /*|| dag_ && !dag->HasEpoch(common_parent->body.dag_epoch)*/)
+    if (!storage_unit_.HashExists(common_parent->body.merkle_hash,
+                                  common_parent->body.block_number))
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "Ancestor block's state hash cannot be retrieved for block: 0x",
-                      current_hash.ToHex(), " number; ", common_parent->body.block_number);
+                      current_hash.ToHex(), " number: ", common_parent->body.block_number);
 
       // this is a bad situation so the easiest solution is to revert back to genesis
       execution_manager_.SetLastProcessedBlock(GENESIS_DIGEST);
@@ -790,7 +808,8 @@ BlockCoordinator::State BlockCoordinator::OnPostExecBlockValidation()
   {
     if (state_hash != current_block_->body.merkle_hash)
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Block validation failed: Merkle hash mismatch (block: 0x",
+      FETCH_LOG_WARN(LOGGING_NAME, "Block validation failed: Merkle hash mismatch (block num: ",
+                     current_block_->body.block_number, " block: 0x",
                      current_block_->body.hash.ToHex(), " expected: 0x",
                      current_block_->body.merkle_hash.ToHex(), " actual: 0x", state_hash.ToHex(),
                      ")");
@@ -800,10 +819,11 @@ BlockCoordinator::State BlockCoordinator::OnPostExecBlockValidation()
     }
     else
     {
-      FETCH_LOG_DEBUG(LOGGING_NAME, "Block validation great success: (block: 0x",
-                      current_block_->body.hash.ToHex(), " expected: 0x",
-                      current_block_->body.merkle_hash.ToHex(), " actual: 0x", state_hash.ToHex(),
-                      ")");
+      FETCH_LOG_DEBUG(
+          LOGGING_NAME,
+          "Block validation great success: (block num: ", current_block_->body.block_number,
+          " block: 0x", current_block_->body.hash.ToHex(), " expected: 0x",
+          current_block_->body.merkle_hash.ToHex(), " actual: 0x", state_hash.ToHex(), ")");
     }
   }
 

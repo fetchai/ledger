@@ -23,10 +23,11 @@
 #include "ledger/chain/consensus/proof_of_work.hpp"
 #include "ledger/chain/digest.hpp"
 #include "ledger/chain/transaction_layout.hpp"
-
 #include "ledger/dag/dag_epoch.hpp"
 
+#include <cstdint>
 #include <memory>
+#include <vector>
 
 namespace fetch {
 namespace ledger {

@@ -73,7 +73,13 @@ std::size_t GenerateEchoId(Packet const &packet)
   hash.Update(reinterpret_cast<uint8_t const *>(&channel), sizeof(channel));
   hash.Update(reinterpret_cast<uint8_t const *>(&counter), sizeof(counter));
 
-  return hash.Final<std::size_t>();
+  std::size_t out = 0;
+
+  static_assert(sizeof(out) == hash.size_in_bytes,
+                "Output type has incorrect size to contain hash");
+  hash.Final(reinterpret_cast<uint8_t *>(&out));
+
+  return out;
 }
 
 /**
@@ -446,7 +452,7 @@ void Router::Debug(std::string const &prefix) const
   FETCH_LOCK(routing_table_lock_);
   FETCH_LOG_WARN(LOGGING_NAME, prefix,
                  "direct_address_map_: --------------------------------------");
-  for (const auto &routing : direct_address_map_)
+  for (auto const &routing : direct_address_map_)
   {
     auto output = ToBase64(routing.second);
     FETCH_LOG_WARN(LOGGING_NAME, prefix, static_cast<std::string>(output),
@@ -456,7 +462,7 @@ void Router::Debug(std::string const &prefix) const
                  "direct_address_map_: --------------------------------------");
 
   FETCH_LOG_WARN(LOGGING_NAME, prefix, "routing_table_: --------------------------------------");
-  for (const auto &routing : routing_table_)
+  for (auto const &routing : routing_table_)
   {
     ByteArray output(routing.first.size());
     std::copy(routing.first.begin(), routing.first.end(), output.pointer());
@@ -814,7 +820,7 @@ void Router::SendToConnection(Handle handle, PacketPtr packet)
     serializers::ByteArrayBuffer buffer;
     buffer << *packet;
 
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Sending out", DescribePacket(*packet));
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Sending out: ", DescribePacket(*packet));
 
     // dispatch to the connection object
     conn->Send(buffer.data());
@@ -1013,7 +1019,7 @@ void Router::CleanEchoCache()
     // calculate the time delta
     auto const delta = now - it->second;
 
-    if (delta > std::chrono::seconds{30})
+    if (delta > std::chrono::seconds{600})
     {
       // remove the element
       it = echo_cache_.erase(it);

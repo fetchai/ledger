@@ -17,10 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-//#include "ledger/chain/block_coordinator.hpp"
-//#include "ledger/storage_unit/storage_unit_interface.hpp"
-//#include "storage/resource_mapper.hpp"
-//#include "variant/variant.hpp"
+#include <string>
 
 namespace fetch {
 namespace variant {

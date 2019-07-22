@@ -19,6 +19,16 @@
 
 #include "vm/node.hpp"
 
+#include <cstdint>
+#include <memory>
+#include <stdexcept>
+#include <string>
+#include <typeindex>
+#include <unordered_map>
+#include <unordered_set>
+#include <utility>
+#include <vector>
+
 namespace fetch {
 namespace vm {
 
@@ -103,27 +113,46 @@ private:
     std::unordered_map<TypeIndex, TypePtr> map;
   };
 
-  struct FunctionSet
+  struct StringSet
   {
-    void Add(std::string const &unique_id)
+    void Add(std::string const &s)
     {
-      set.insert(unique_id);
+      set.insert(s);
     }
-    bool Find(std::string const &unique_id)
+    bool Find(std::string const &s)
     {
-      auto it = set.find(unique_id);
+      auto it = set.find(s);
       return it != set.end();
     }
     std::unordered_set<std::string> set;
   };
 
+  struct FunctionMap
+  {
+    void Add(std::string const &unique_id, FunctionPtr const &function)
+    {
+      map[unique_id] = function;
+    }
+    FunctionPtr Find(std::string const &unique_id)
+    {
+      auto it = map.find(unique_id);
+      if (it != map.end())
+      {
+        return it->second;
+      }
+      return nullptr;
+    }
+    std::unordered_map<std::string, FunctionPtr> map;
+  };
+
   OperatorMap       operator_map_;
   TypeMap           type_map_;
+  StringSet         type_set_;
   TypeInfoArray     type_info_array_;
   TypeInfoMap       type_info_map_;
   RegisteredTypes   registered_types_;
   FunctionInfoArray function_info_array_;
-  FunctionSet       function_set_;
+  FunctionMap       function_map_;
 
   SymbolTablePtr symbols_;
   TypePtr        null_type_;
@@ -202,10 +231,11 @@ private:
                                  ExpressionNodePtr const &rhs);
   TypePtr     ConvertType(TypePtr const &type, TypePtr const &instantiated_template_type);
   bool        MatchType(TypePtr const &supplied_type, TypePtr const &expected_type) const;
-  bool        MatchTypes(TypePtr const &type, TypePtrArray const &supplied_types,
+  bool        MatchTypes(TypePtr const &type, ExpressionNodePtrArray const &supplied_nodes,
                          TypePtrArray const &expected_types, TypePtrArray &actual_types);
   FunctionPtr FindFunction(TypePtr const &type, FunctionGroupPtr const &fg,
-                           TypePtrArray const &supplied_types, TypePtrArray &actual_types);
+                           ExpressionNodePtrArray const &supplied_nodes,
+                           TypePtrArray &                actual_types);
   TypePtr     FindType(ExpressionNodePtr const &node);
   SymbolPtr   FindSymbol(ExpressionNodePtr const &node);
   SymbolPtr   SearchSymbols(std::string const &name);
@@ -215,6 +245,7 @@ private:
   void        SetTypeExpression(ExpressionNodePtr const &node, TypePtr const &type);
   void        SetFunctionGroupExpression(ExpressionNodePtr const &node, FunctionGroupPtr const &fg,
                                          TypePtr const &fg_owner, bool function_invoked_on_instance);
+  bool        CheckType(std::string const &type_name, TypeIndex type_index);
   void        CreatePrimitiveType(std::string const &type_name, TypeIndex type_index,
                                   bool add_to_symbol_table, TypeId type_id, TypePtr &type);
   void        CreateMetaType(std::string const &type_name, TypeIndex type_index, TypeId type_id,

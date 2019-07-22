@@ -20,6 +20,9 @@
 
 #include "gtest/gtest.h"
 
+#include <cstddef>
+#include <sstream>
+
 using fetch::json::JSONDocument;
 using fetch::variant::Variant;
 

@@ -17,12 +17,13 @@
 //------------------------------------------------------------------------------
 
 #include "math/tensor.hpp"
+#include "ml/dataloaders/ReadCSV.hpp"
 #include "vm/module.hpp"
 #include "vm_modules/core/print.hpp"
-#include "vm_modules/ml/dataloaders/commodity_dataloader.hpp"
-#include "vm_modules/ml/graph.hpp"
-#include "vm_modules/ml/training_pair.hpp"
+#include "vm_modules/ml/ml.hpp"
 
+#include <cstddef>
+#include <cstdint>
 #include <fstream>
 #include <iostream>
 #include <memory>
@@ -34,8 +35,8 @@ using ArrayType = fetch::math::Tensor<DataType>;
 
 struct System : public fetch::vm::Object
 {
-  System()          = delete;
-  virtual ~System() = default;
+  System()           = delete;
+  ~System() override = default;
 
   static int32_t Argc(fetch::vm::VM * /*vm*/, fetch::vm::TypeId /*type_id*/)
   {
@@ -43,7 +44,7 @@ struct System : public fetch::vm::Object
   }
 
   static fetch::vm::Ptr<fetch::vm::String> Argv(fetch::vm::VM *vm, fetch::vm::TypeId /*type_id*/,
-                                                int32_t const &a)
+                                                int32_t        a)
   {
     return fetch::vm::Ptr<fetch::vm::String>(
         new fetch::vm::String(vm, System::args[std::size_t(a)]));
@@ -59,50 +60,7 @@ std::vector<std::string> System::args;
 fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> read_csv(
     fetch::vm::VM *vm, fetch::vm::Ptr<fetch::vm::String> const &filename, bool transpose = false)
 {
-  std::ifstream file(filename->str);
-  std::string   buf;
-
-  // find number of rows and columns in the file
-  char                  delimiter = ',';
-  std::string           field_value;
-  fetch::math::SizeType row{0};
-  fetch::math::SizeType col{0};
-
-  while (std::getline(file, buf, '\n'))
-  {
-    std::stringstream ss(buf);
-
-    while (row == 0 && std::getline(ss, field_value, delimiter))
-    {
-      ++col;
-    }
-    ++row;
-  }
-
-  ArrayType weights({row, col});
-
-  // read data into weights array
-  file.clear();
-  file.seekg(0, std::ios::beg);
-
-  row = 0;
-  while (std::getline(file, buf, '\n'))
-  {
-    col = 0;
-    std::stringstream ss(buf);
-    while (std::getline(ss, field_value, delimiter))
-    {
-      weights(row, col) = static_cast<DataType>(std::stod(field_value));
-      ++col;
-    }
-    ++row;
-  }
-
-  if (transpose)
-  {
-    weights = weights.Transpose();
-  }
-
+  ArrayType weights = fetch::ml::dataloaders::ReadCSV<ArrayType>(filename->str, 0, 0, transpose);
   return vm->CreateNewObject<fetch::vm_modules::math::VMTensor>(weights);
 }
 
@@ -120,7 +78,11 @@ int main(int argc, char **argv)
   }
 
   // Reading file
-  std::ifstream      file(argv[1], std::ios::binary);
+  std::ifstream file(argv[1], std::ios::binary);
+  if (file.fail())
+  {
+    throw std::runtime_error("Cannot open file " + std::string(argv[1]));
+  }
   std::ostringstream ss;
   ss << file.rdbuf();
   const std::string source = ss.str();
@@ -132,11 +94,8 @@ int main(int argc, char **argv)
       .CreateStaticMemberFunction("Argc", &System::Argc)
       .CreateStaticMemberFunction("Argv", &System::Argv);
 
-  fetch::vm_modules::math::VMTensor::Bind(*module);
-  fetch::vm_modules::ml::VMStateDict::Bind(*module);
-  fetch::vm_modules::ml::VMGraph::Bind(*module);
-  fetch::vm_modules::ml::VMTrainingPair::Bind(*module);
-  fetch::vm_modules::ml::VMCommodityDataLoader::Bind(*module);
+  fetch::vm_modules::ml::BindML(*module);
+
   fetch::vm_modules::CreatePrint(*module);
 
   module->CreateFreeFunction("read_csv", &read_csv);
@@ -163,7 +122,7 @@ int main(int argc, char **argv)
   fetch::vm::VM vm(module.get());
 
   // attach std::cout for printing
-  vm.AttachOutputDevice("stdout", std::cout);
+  vm.AttachOutputDevice(fetch::vm::VM::STDOUT, std::cout);
 
   if (!vm.GenerateExecutable(ir, "main_ir", executable, errors))
   {
@@ -189,5 +148,6 @@ int main(int argc, char **argv)
   {
     std::cout << "Runtime error on line " << error << std::endl;
   }
+
   return 0;
 }

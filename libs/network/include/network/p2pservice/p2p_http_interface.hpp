@@ -32,8 +32,7 @@
 #include "miner/resource_mapper.hpp"
 #include "network/p2pservice/p2p_service.hpp"
 #include "network/p2pservice/p2ptrust_interface.hpp"
-
-#include "fetch_version.hpp"
+#include "version/fetch_version.hpp"
 
 #include <random>
 #include <sstream>
@@ -64,31 +63,31 @@ public:
     , packer_(packer)
     , state_machines_(std::move(state_machines))
   {
-    Get("/api/status/chain",
+    Get("/api/status/chain", "Gets the status of the chain.",
         [this](http::ViewParameters const &params, http::HTTPRequest const &request) {
           return GetChainStatus(params, request);
         });
-    Get("/api/status/muddle",
+    Get("/api/status/muddle", "Gives the status of the muddle.",
         [this](http::ViewParameters const &params, http::HTTPRequest const &request) {
           return GetMuddleStatus(params, request);
         });
-    Get("/api/status/p2p",
+    Get("/api/status/p2p", "Returns the status of the P2P subsystem.",
         [this](http::ViewParameters const &params, http::HTTPRequest const &request) {
           return GetP2PStatus(params, request);
         });
-    Get("/api/status/trust",
+    Get("/api/status/trust", "Provides details on the trust subsystem.",
         [this](http::ViewParameters const &params, http::HTTPRequest const &request) {
           return GetTrustStatus(params, request);
         });
-    Get("/api/status/backlog",
+    Get("/api/status/backlog", "Provides mem pool status.",
         [this](http::ViewParameters const &params, http::HTTPRequest const &request) {
           return GetBacklogStatus(params, request);
         });
-    Get("/api/status/states",
+    Get("/api/status/states", "Provides the state of the state machine.",
         [this](http::ViewParameters const &params, http::HTTPRequest const &request) {
           return GetStateMachineStatus(params, request);
         });
-    Get("/api/status",
+    Get("/api/status", "Provides high level system status.",
         [this](http::ViewParameters const &params, http::HTTPRequest const &request) {
           return GetGeneralStatus(params, request);
         });
@@ -169,7 +168,7 @@ private:
 
     std::vector<variant::Variant> peer_data_list;
 
-    for (const auto &pt : peers_trusts)
+    for (auto const &pt : peers_trusts)
     {
       variant::Variant peer_data = variant::Variant::Object();
       peer_data["target"]        = pt.name;

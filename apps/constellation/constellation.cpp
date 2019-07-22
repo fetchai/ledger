@@ -17,28 +17,29 @@
 //------------------------------------------------------------------------------
 
 #include "constellation.hpp"
+#include "core/bloom_filter.hpp"
+#include "dkg/dkg_service.hpp"
 #include "health_check_http_module.hpp"
 #include "http/middleware/allow_origin.hpp"
+#include "http/middleware/telemetry.hpp"
 #include "ledger/chain/consensus/bad_miner.hpp"
 #include "ledger/chain/consensus/dummy_miner.hpp"
-#include "logging_http_module.hpp"
-#include "telemetry_http_module.hpp"
-
 #include "ledger/chaincode/contract_http_interface.hpp"
-#include "ledger/dag/dag_interface.hpp"
-
-#include "dkg/dkg_service.hpp"
 #include "ledger/consensus/naive_entropy_generator.hpp"
 #include "ledger/consensus/stake_snapshot.hpp"
+#include "ledger/dag/dag_interface.hpp"
 #include "ledger/execution_manager.hpp"
 #include "ledger/storage_unit/lane_remote_control.hpp"
 #include "ledger/tx_query_http_interface.hpp"
 #include "ledger/tx_status_http_interface.hpp"
+#include "logging_http_module.hpp"
 #include "network/generics/atomic_inflight_counter.hpp"
 #include "network/muddle/rpc/client.hpp"
 #include "network/muddle/rpc/server.hpp"
 #include "network/p2pservice/p2p_http_interface.hpp"
 #include "network/uri.hpp"
+#include "open_api_http_module.hpp"
+#include "telemetry_http_module.hpp"
 
 #include <chrono>
 #include <cstddef>
@@ -172,11 +173,9 @@ DkgServicePtr CreateDkgService(Constellation::Config const &cfg, ConstByteArray 
 {
   DkgServicePtr dkg{};
 
-  if (cfg.proof_of_stake && !cfg.beacon_address.empty())
+  if (cfg.proof_of_stake)
   {
-    crypto::bls::Init();
-
-    dkg = std::make_unique<dkg::DkgService>(endpoint, address, cfg.beacon_address);
+    dkg = std::make_unique<dkg::DkgService>(endpoint, address);
   }
 
   return dkg;
@@ -226,7 +225,8 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
         [this] {
           return std::make_shared<Executor>(storage_, stake_ ? &stake_->update_queue() : nullptr);
         })}
-  , chain_{ledger::MainChain::Mode::LOAD_PERSISTENT_DB}
+  , chain_{cfg_.features.IsEnabled(FeatureFlags::MAIN_CHAIN_BLOOM_FILTER),
+           ledger::MainChain::Mode::LOAD_PERSISTENT_DB}
   , block_packer_{cfg_.log2_num_lanes}
   , block_coordinator_{chain_,
                        dag_,
@@ -244,8 +244,10 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
   , main_chain_service_{std::make_shared<MainChainRpcService>(p2p_.AsEndpoint(), chain_, trust_,
                                                               cfg_.network_mode)}
   , tx_processor_{dag_, *storage_, block_packer_, tx_status_cache_, cfg_.processor_threads}
+  , http_open_api_module_{std::make_shared<OpenAPIHttpModule>()}
   , http_{http_network_manager_}
   , http_modules_{
+        http_open_api_module_,
         std::make_shared<p2p::P2PHttpInterface>(
             cfg_.log2_num_lanes, chain_, muddle_, p2p_, trust_, block_packer_,
             p2p::P2PHttpInterface::WeakStateMachines{main_chain_service_->GetWeakStateMachine(),
@@ -259,10 +261,10 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
 {
 
   // print the start up log banner
-  FETCH_LOG_INFO(LOGGING_NAME, "Constellation :: ", cfg_.interface_address, " E ",
-                 cfg_.num_executors, " S ", cfg_.num_lanes(), "x", cfg_.num_slices);
-  FETCH_LOG_INFO(LOGGING_NAME, "              :: ", ToBase64(p2p_.identity().identifier()));
+  FETCH_LOG_INFO(LOGGING_NAME, "Constellation :: ", cfg_.num_lanes(), "x", cfg_.num_slices, "x",
+                 cfg_.num_executors);
   FETCH_LOG_INFO(LOGGING_NAME, "              :: ", Address{p2p_.identity()}.display());
+  FETCH_LOG_INFO(LOGGING_NAME, "              :: ", ToBase64(p2p_.identity().identifier()));
   FETCH_LOG_INFO(LOGGING_NAME, "");
 
   // Enable experimental features
@@ -272,10 +274,13 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
     dag_service_ = std::make_shared<ledger::DAGService>(muddle_.AsEndpoint(), dag_);
     reactor_.Attach(dag_service_->GetWeakRunnable());
 
-    NaiveSynergeticMiner *syn_miner = new NaiveSynergeticMiner{dag_, *storage_, certificate};
-    reactor_.Attach(syn_miner->GetWeakRunnable());
-
-    synergetic_miner_.reset(syn_miner);
+    auto syn_miner = std::make_unique<NaiveSynergeticMiner>(dag_, *storage_, certificate);
+    if (!reactor_.Attach(syn_miner->GetWeakRunnable()))
+    {
+      FETCH_LOG_ERROR(LOGGING_NAME, "Failed to attach synergetic miner to reactor.");
+      throw std::runtime_error("Failed to attach synergetic miner to reactor.");
+    }
+    synergetic_miner_ = std::move(syn_miner);
   }
 
   // attach the services to the reactor
@@ -286,6 +291,7 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
 
   // configure the middleware of the http server
   http_.AddMiddleware(http::middleware::AllowOrigin("*"));
+  http_.AddMiddleware(http::middleware::Telemetry());
 
   // attach all the modules to the http server
   for (auto const &module : http_modules_)
@@ -297,6 +303,36 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
   if (dkg_)
   {
     stake_->UpdateEntropy(*dkg_);
+  }
+}
+
+/**
+ * Writes OpenAPI information about the HTTP REST interface to a stream.
+ *
+ * @param stream is stream to which the API is dumped to.
+ */
+void Constellation::DumpOpenAPI(std::ostream &stream)
+{
+  stream << "paths:" << std::endl;
+  byte_array::ConstByteArray last_path{};
+  for (auto const &view : http_.views())
+  {
+    std::string method = ToString(view.method);
+    std::transform(method.begin(), method.end(), method.begin(),
+                   [](unsigned char c) { return std::tolower(c); });
+
+    if (last_path != view.route.path())
+    {
+      stream << "  " << view.route.path() << ":" << std::endl;
+    }
+
+    last_path = view.route.path();
+    stream << "    " << method << ":" << std::endl;
+    stream << "      description: "
+           << "\"" << view.description << "\"" << std::endl;
+    stream << "      parameters: "
+           << "[" << std::endl;
+    stream << "      ] " << std::endl;
   }
 }
 
@@ -320,15 +356,17 @@ void Constellation::Run(UriList const &initial_peers, core::WeakRunnable bootstr
   /// NETWORKING INFRASTRUCTURE
 
   // start all the services
+  http_open_api_module_->Reset(&http_);
   network_manager_.Start();
-
   http_network_manager_.Start();
   muddle_.Start({p2p_port_});
+
   /// LANE / SHARD SERVERS
 
   // start all the lane services and wait for them to start accepting
   // connections
   lane_services_.Start();
+
   FETCH_LOG_INFO(LOGGING_NAME, "Starting shard services...");
   if (!WaitForLaneServersToStart())
   {
@@ -461,7 +499,7 @@ void Constellation::Run(UriList const &initial_peers, core::WeakRunnable bootstr
       // client connections. By delaying these notify() calls to the point when the node believes
       // it has successfully synchronised this ensures that cleaner network start up
       //
-      reactor_.Attach(bootstrap_monitor);
+      reactor_.Attach(std::move(bootstrap_monitor));
       start_up_in_progress = false;
 
       FETCH_LOG_INFO(LOGGING_NAME, "Startup complete");
@@ -495,6 +533,8 @@ void Constellation::Run(UriList const &initial_peers, core::WeakRunnable bootstr
   muddle_.Stop();
   http_network_manager_.Stop();
   network_manager_.Stop();
+
+  http_open_api_module_->Reset(nullptr);
 
   FETCH_LOG_INFO(LOGGING_NAME, "Shutting down...complete");
 }

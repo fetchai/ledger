@@ -38,6 +38,8 @@
 #include <tuple>
 #include <type_traits>
 #include <typeinfo>
+#include <utility>
+#include <vector>
 
 namespace fetch {
 namespace vm {
@@ -89,7 +91,6 @@ public:
   template <typename Type>
   class ClassInterface
   {
-
   public:
     ClassInterface(Module *module__, TypeIndex type_index__)
       : module_(module__)

@@ -19,24 +19,27 @@
 #include "file_loader.hpp"
 #include "math/distance/cosine.hpp"
 #include "math/tensor.hpp"
+#include "ml/dataloaders/ReadCSV.hpp"
 #include "ml/dataloaders/commodity_dataloader.hpp"
 #include "ml/graph.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/ops/activation.hpp"
-#include "ml/ops/loss_functions/mean_square_error.hpp"
+#include "ml/ops/loss_functions/mean_square_error_loss.hpp"
 #include "ml/ops/transpose.hpp"
 #include "ml/optimisation/adam_optimiser.hpp"
 #include "ml/state_dict.hpp"
 
 #include <fstream>
 #include <iostream>
+#include <sstream>
+#include <stdexcept>
 #include <string>
+#include <vector>
 
-using DataType         = double;
-using ArrayType        = fetch::math::Tensor<DataType>;
-using GraphType        = fetch::ml::Graph<ArrayType>;
-using CostFunctionType = typename fetch::ml::ops::MeanSquareError<ArrayType>;
-using OptimiserType    = typename fetch::ml::optimisers::AdamOptimiser<ArrayType, CostFunctionType>;
+using DataType      = double;
+using ArrayType     = fetch::math::Tensor<DataType>;
+using GraphType     = fetch::ml::Graph<ArrayType>;
+using OptimiserType = typename fetch::ml::optimisers::AdamOptimiser<ArrayType>;
 
 using namespace fetch::ml::ops;
 using namespace fetch::ml::layers;
@@ -81,83 +84,6 @@ LayerType GetLayerType(std::string const &layer_name)
     throw std::runtime_error("Node name does not uniquely specify the node type.");
   }
   return layer_type;
-}
-
-/**
- * Loads a csv file into a Tensor
- * The Tensor will have the same number of rows as this file has (minus rows_to_skip) and the same
- * number of columns (minus cols_to_skip) as the file, unless transpose=true is specified in which
- * case it will be transposed.
- * @param filename  name of the file
- * @param cols_to_skip  number of columns to skip
- * @param rows_to_skip  number of rows to skip
- * @param transpose  whether to transpose the resulting Tensor
- * @return  Tensor with data
- */
-ArrayType ReadCSV(std::string const &filename, SizeType const cols_to_skip = 0,
-                  SizeType rows_to_skip = 0, bool transpose = false)
-{
-  std::ifstream file(filename);
-  if (file.fail())
-  {
-    throw std::runtime_error("ReadCSV cannot open file " + filename);
-  }
-
-  std::string           buf;
-  const char            delimiter = ',';
-  std::string           field_value;
-  fetch::math::SizeType row{0};
-  fetch::math::SizeType col{0};
-
-  // find number of rows and columns in the file
-  while (std::getline(file, buf, '\n'))
-  {
-    if (row == 0)
-    {
-      std::stringstream ss(buf);
-      while (std::getline(ss, field_value, delimiter))
-      {
-        ++col;
-      }
-    }
-    ++row;
-  }
-
-  ArrayType weights({row - rows_to_skip, col - cols_to_skip});
-
-  // read data into weights array
-  std::string token;
-  file.clear();
-  file.seekg(0, std::ios::beg);
-
-  while (rows_to_skip)
-  {
-    std::getline(file, buf, '\n');
-    rows_to_skip--;
-  }
-
-  row = 0;
-  while (std::getline(file, buf, '\n'))
-  {
-    col = 0;
-    std::stringstream ss(buf);
-    for (SizeType i = 0; i < cols_to_skip; i++)
-    {
-      std::getline(ss, field_value, delimiter);
-    }
-    while (std::getline(ss, field_value, delimiter))
-    {
-      weights(row, col) = static_cast<DataType>(stod(field_value));
-      ++col;
-    }
-    ++row;
-  }
-
-  if (transpose)
-  {
-    weights = weights.Transpose();
-  }
-  return weights;
 }
 
 /**
@@ -210,7 +136,13 @@ std::pair<std::string, std::vector<std::string>> ReadArchitecture(
   previous_layer_name = layer_name;
   node_names.emplace_back(previous_layer_name);
 
-  g->AddNode<PlaceHolder<ArrayType>>(layer_name, {});  // add node for input
+  // add input node
+  g->AddNode<PlaceHolder<ArrayType>>(layer_name, {});
+
+  // Add label node
+  std::string label_name = "num_label";
+  g->AddNode<PlaceHolder<ArrayType>>(label_name, {});
+  node_names.push_back(label_name);
 
   // Iterate through fields adding nodes to graph
   while (previous_layer_name.find("output") == std::string::npos)
@@ -264,6 +196,11 @@ std::pair<std::string, std::vector<std::string>> ReadArchitecture(
     throw std::runtime_error("Unexpected node type");
   }
 
+  // Add loss function
+  std::string error_output = g->AddNode<fetch::ml::ops::MeanSquareErrorLoss<ArrayType>>(
+      "num_error", {layer_name, label_name});
+  node_names.emplace_back(error_output);
+
   return std::make_pair(dataname, node_names);
 }
 
@@ -290,7 +227,6 @@ DataType get_loss(std::shared_ptr<GraphType> const &g_ptr, std::string const &te
 {
   DataType                                                          loss         = 0;
   DataType                                                          loss_counter = 0;
-  CostFunctionType                                                  criterion;
   fetch::ml::dataloaders::CommodityDataLoader<ArrayType, ArrayType> loader;
 
   loader.AddData(test_x_file, test_y_file);
@@ -299,9 +235,10 @@ DataType get_loss(std::shared_ptr<GraphType> const &g_ptr, std::string const &te
   {
     auto input = loader.GetNext();
     g_ptr->SetInput(node_names.front(), input.second.at(0).Transpose());
+    g_ptr->SetInput(node_names.at(1), input.first);
 
-    auto slice_output = g_ptr->Evaluate(node_names.back(), false);
-    loss += criterion.Forward({slice_output, input.first});
+    auto loss_tensor = g_ptr->Evaluate(node_names.back(), false);
+    loss += *(loss_tensor.begin());
     loss_counter++;
   }
 
@@ -377,8 +314,10 @@ int main(int argc, char **argv)
 
         std::string node_weights_dir = weights_dir + "/" + name + "/" + actual_dirs[0];
         // the weights array for the node has number of columns = number of features
-        ArrayType weights = ReadCSV(node_weights_dir + "/kernel:0.csv", 0, 0, true);
-        ArrayType bias    = ReadCSV(node_weights_dir + "/bias:0.csv", 0, 0, false);
+        ArrayType weights = fetch::ml::dataloaders::ReadCSV<ArrayType>(
+            node_weights_dir + "/kernel:0.csv", 0, 0, true);
+        ArrayType bias = fetch::ml::dataloaders::ReadCSV<ArrayType>(
+            node_weights_dir + "/bias:0.csv", 0, 0, false);
 
         assert(bias.shape()[0] == weights.shape()[0]);
 
@@ -410,9 +349,9 @@ int main(int argc, char **argv)
     while (!loader.IsDone())
     {
       auto input = loader.GetNext();
-      g_ptr->SetInput("num_input", input.second.at(0).Transpose());
+      g_ptr->SetInput("num_input", input.second.at(0));
 
-      auto slice_output = g_ptr->Evaluate(node_names.back(), false);
+      auto slice_output = g_ptr->Evaluate(node_names.at(node_names.size() - 2), false);
       output.Slice(j).Assign(slice_output);
       test_y.Slice(j).Assign(input.first);
       j++;
@@ -434,7 +373,8 @@ int main(int argc, char **argv)
     DataType loss{0};
 
     // Initialise Optimiser
-    OptimiserType optimiser(g_ptr, {node_names.front()}, node_names.back(), LEARNING_RATE);
+    OptimiserType optimiser(g_ptr, {node_names.front()}, node_names.at(1), node_names.back(),
+                            LEARNING_RATE);
 
     fetch::ml::dataloaders::CommodityDataLoader<ArrayType, ArrayType> loader;
 
@@ -516,9 +456,9 @@ int main(int argc, char **argv)
     while (!loader.IsDone())
     {
       auto input = loader.GetNext();
-      g_ptr->SetInput("num_input", input.second.at(0).Transpose());
+      g_ptr->SetInput("num_input", input.second.at(0));
 
-      auto slice_output = g_ptr->Evaluate(node_names.back(), false);
+      auto slice_output = g_ptr->Evaluate(node_names.at(node_names.size() - 2), false);
       // write slice_output to csv
       if (first)
       {

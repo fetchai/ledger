@@ -20,6 +20,8 @@ MAX_CPUS = 7  # as defined by CI workflow
 AVAILABLE_CPUS = multiprocessing.cpu_count()
 CONCURRENCY = min(MAX_CPUS, AVAILABLE_CPUS)
 
+SCRIPT_ROOT = os.path.dirname(os.path.abspath(__file__))
+
 SLOW_TEST_LABEL = 'Slow'
 INTEGRATION_TEST_LABEL = 'Integration'
 
@@ -157,6 +159,10 @@ def parse_commandline():
                         .format(INTEGRATION_TEST_LABEL))
     parser.add_argument('-E', '--end-to-end-tests', action='store_true',
                         help='Run the end-to-end tests for the project')
+    parser.add_argument('-L', '--language-tests', action='store_true',
+                        help='Run the etch language tests')
+    parser.add_argument('-A', '--all', action='store_true',
+                        help='Run build and all tests')
     parser.add_argument(
         '-f', '--force-build-folder',
         help='Specify the folder directly that should be used for the build / test')
@@ -288,6 +294,12 @@ def test_end_to_end(project_root, build_root):
     run_end_to_end_test.run_test(build_root, yaml_file, constellation_exe)
 
 
+def test_language(build_root):
+    LANGUAGE_TEST_RUNNER = os.path.join(SCRIPT_ROOT, 'run-language-tests.py')
+    cmd = [LANGUAGE_TEST_RUNNER, build_root]
+    subprocess.check_call(cmd)
+
+
 def main():
     # parse the options from the command line
     args = parse_commandline()
@@ -310,25 +322,28 @@ def main():
     if args.metrics:
         options['FETCH_ENABLE_METRICS'] = 1
 
-    if args.build:
+    if args.build or args.all:
         build_project(project_root, build_root, options, concurrency)
 
-    if args.test:
+    if args.test or args.all:
         test_project(
             build_root,
             exclude_regex='|'.join(LABELS_TO_EXCLUDE_FOR_FAST_TESTS))
 
-    if args.slow_tests:
+    if args.language_tests or args.all:
+        test_language(build_root)
+
+    if args.slow_tests or args.all:
         test_project(
             build_root,
             include_regex=SLOW_TEST_LABEL)
 
-    if args.integration_tests:
+    if args.integration_tests or args.all:
         test_project(
             build_root,
             include_regex=INTEGRATION_TEST_LABEL)
 
-    if args.end_to_end_tests:
+    if args.end_to_end_tests or args.all:
         test_end_to_end(project_root, build_root)
 
 

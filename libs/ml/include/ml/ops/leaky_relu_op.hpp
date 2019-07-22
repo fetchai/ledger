@@ -18,10 +18,13 @@
 //------------------------------------------------------------------------------
 
 #include "core/assert.hpp"
+#include "math/activation_functions/leaky_relu.hpp"
 #include "math/fundamental_operators.hpp"
 #include "math/matrix_operations.hpp"
-#include "math/ml/activation_functions/leaky_relu.hpp"
 #include "ml/ops/ops.hpp"
+
+#include <cassert>
+#include <vector>
 
 namespace fetch {
 namespace ml {
@@ -37,11 +40,11 @@ public:
   using ArrayPtrType  = std::shared_ptr<ArrayType>;
   using VecTensorType = typename Ops<T>::VecTensorType;
 
-  LeakyReluOp()          = default;
-  virtual ~LeakyReluOp() = default;
+  LeakyReluOp()           = default;
+  ~LeakyReluOp() override = default;
 
   // LeakyRelu(x,alpha)=max(0,x)+alpha*min(0,x)
-  void Forward(VecTensorType const &inputs, ArrayType &output)
+  void Forward(VecTensorType const &inputs, ArrayType &output) override
   {
     assert(inputs.size() == 2);
     assert(inputs.at(0).get().shape() == output.shape());
@@ -54,7 +57,8 @@ public:
   //    x>=0 f'(x)=1, x<0 f'(x)=alpha
   // Gradient of input.at(1)=alpha is:
   //    f'(alpha)=-Relu(-x)=min(0,x); x>=0 f'(alpha)=0, x<0 f'(alpha)=x
-  std::vector<ArrayType> Backward(VecTensorType const &inputs, ArrayType const &error_signal)
+  std::vector<ArrayType> Backward(VecTensorType const &inputs,
+                                  ArrayType const &    error_signal) override
   {
     assert(inputs.size() == 2);
     assert(inputs.at(0).get().size() == error_signal.size());
@@ -77,16 +81,16 @@ public:
     for (SizeType i{0}; i < batch_size; i++)
     {
 
-      // Slice along batch dimension
-      auto input1_slice = inputs.at(0).get().Slice(i, t_batch_dimension);
-      auto rs1_slice    = return_signal_1.Slice(i, t_batch_dimension);
-      auto error_slice  = error_signal.Slice(i, 1);
+      // View along batch dimension
+      auto input1_view = inputs.at(0).get().View(i);
+      auto rs1_view    = return_signal_1.View(i);
+      auto error_view  = error_signal.View(i);
 
-      auto rs1_it    = rs1_slice.begin();
+      auto rs1_it    = rs1_view.begin();
       auto rs2_it    = return_signal_2.begin();
-      auto input1_it = input1_slice.begin();
+      auto input1_it = input1_view.begin();
       auto input2_it = inputs.at(1).get().begin();
-      auto error_it  = error_slice.begin();
+      auto error_it  = error_view.begin();
 
       while (input1_it.is_valid())
       {
@@ -110,7 +114,7 @@ public:
     return {return_signal_1, return_signal_2};
   }
 
-  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const
+  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
   {
     return inputs.front().get().shape();
   }

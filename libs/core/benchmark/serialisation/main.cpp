@@ -24,8 +24,11 @@
 #include "core/serializers/typed_byte_array_buffer.hpp"
 
 #include <chrono>
+#include <cstdint>
 #include <iomanip>
 #include <iostream>
+#include <memory>
+#include <string>
 #include <vector>
 
 using namespace fetch::serializers;

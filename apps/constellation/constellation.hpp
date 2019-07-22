@@ -27,8 +27,10 @@
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/consensus/entropy_generator_interface.hpp"
 #include "ledger/consensus/stake_manager.hpp"
+#include "ledger/dag/dag_interface.hpp"
 #include "ledger/execution_manager.hpp"
 #include "ledger/genesis_loading/genesis_file_creator.hpp"
+#include "ledger/protocols/dag_service.hpp"
 #include "ledger/protocols/main_chain_rpc_service.hpp"
 #include "ledger/storage_unit/lane_remote_control.hpp"
 #include "ledger/storage_unit/storage_unit_bundled_service.hpp"
@@ -40,9 +42,7 @@
 #include "network/p2pservice/manifest.hpp"
 #include "network/p2pservice/p2p_service.hpp"
 #include "network/p2pservice/p2ptrust_bayrank.hpp"
-
-#include "ledger/dag/dag_interface.hpp"
-#include "ledger/protocols/dag_service.hpp"
+#include "open_api_http_module.hpp"
 
 #include <atomic>
 #include <cstddef>
@@ -54,7 +54,6 @@
 
 namespace fetch {
 namespace dkg {
-
 class DkgService;
 }
 
@@ -80,7 +79,6 @@ public:
     uint32_t       log2_num_lanes{0};
     uint32_t       num_slices{0};
     uint32_t       num_executors{0};
-    std::string    interface_address{};
     std::string    db_prefix{};
     uint32_t       processor_threads{0};
     uint32_t       verification_threads{0};
@@ -112,6 +110,8 @@ public:
 
   void Run(UriList const &initial_peers, core::WeakRunnable bootstrap_monitor);
   void SignalStop();
+
+  void DumpOpenAPI(std::ostream &stream);
 
 protected:
   void OnBlock(ledger::Block const &block) override;
@@ -210,8 +210,10 @@ private:
 
   /// @name HTTP Server
   /// @{
-  HttpServer  http_;          ///< The HTTP server
-  HttpModules http_modules_;  ///< The set of modules currently configured
+  std::shared_ptr<OpenAPIHttpModule>
+              http_open_api_module_;  //< HTTP module that returns the API definition
+  HttpServer  http_;                  ///< The HTTP server
+  HttpModules http_modules_;          ///< The set of modules currently configured
   /// @}
 };
 

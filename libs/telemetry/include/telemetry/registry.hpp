@@ -28,38 +28,41 @@
 namespace fetch {
 namespace telemetry {
 
-class Measurement;
-class Counter;
-
-template <typename T>
-class Gauge;
-
 /**
  * Global registry of metrics across the system
  */
 class Registry
 {
 public:
-  using Labels = std::unordered_map<std::string, std::string>;
+  static constexpr char const *LOGGING_NAME = "TeleRegistry";
 
   template <typename T>
   using GaugePtr = std::shared_ptr<Gauge<T>>;
+  using Labels   = std::unordered_map<std::string, std::string>;
 
   static Registry &Instance();
 
   // Construction / Destruction
-  Registry()                 = default;
   Registry(Registry const &) = delete;
   Registry(Registry &&)      = delete;
-  ~Registry()                = default;
 
   /// @name Metric Helpers
   /// @{
-  CounterPtr CreateCounter(std::string name, std::string description = "",
-                           Labels labels = Labels{});
+  CounterPtr CreateCounter(std::string name, std::string description, Labels labels = Labels{});
+
+  CounterMapPtr CreateCounterMap(std::string name, std::string description,
+                                 Labels labels = Labels{});
 
   template <typename T>
-  GaugePtr<T> CreateGauge(std::string name, std::string description = "", Labels labels = Labels{});
+  GaugePtr<T> CreateGauge(std::string name, std::string description, Labels labels = Labels{});
+
+  HistogramPtr CreateHistogram(std::initializer_list<double> const &buckets, std::string name,
+                               std::string description = "", Labels labels = Labels{});
+
+  HistogramMapPtr CreateHistogramMap(std::vector<double> buckets, std::string name,
+                                     std::string field, std::string description,
+                                     Labels labels = Labels{});
+
   /// @}
 
   void Collect(std::ostream &stream);
@@ -73,6 +76,10 @@ private:
   using Measurements   = std::vector<MeasurementPtr>;
   using Mutex          = std::mutex;
   using LockGuard      = std::lock_guard<std::mutex>;
+
+  // Construction / Destruction
+  Registry()  = default;
+  ~Registry() = default;
 
   static bool ValidateName(std::string const &name);
 

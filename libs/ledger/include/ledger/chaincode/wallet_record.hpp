@@ -19,7 +19,10 @@
 
 #include "core/byte_array/decoders.hpp"
 #include "ledger/chaincode/deed.hpp"
+
+#include <cstdint>
 #include <map>
+#include <memory>
 
 // TODO(HUT): doesn't putting this here pollute the namespace?
 using fetch::variant::Variant;

@@ -18,7 +18,6 @@
 
 #include "core/byte_array/consumers.hpp"
 #include "core/byte_array/tokenizer/tokenizer.hpp"
-#include "core/commandline/cli_header.hpp"
 #include "core/commandline/parameter_parser.hpp"
 #include "core/json/document.hpp"
 #include "core/logger.hpp"
@@ -26,9 +25,11 @@
 #include "ledger/chain/transaction.hpp"
 #include "network/service/service_client.hpp"
 #include "storage/document_store_protocol.hpp"
-#include <iostream>
-using namespace fetch;
+#include "version/cli_header.hpp"
 
+#include <iostream>
+
+using namespace fetch;
 using namespace fetch::service;
 using namespace fetch::byte_array;
 
@@ -38,7 +39,7 @@ public:
   using client_type        = ServiceClient<fetch::network::TCPClient>;
   using shared_client_type = std::shared_ptr<client_type>;
 
-  MultiLaneDBClient(uint32_t lanes, std::string const &host, uint16_t const &port,
+  MultiLaneDBClient(uint32_t lanes, std::string const &host, uint16_t port,
                     fetch::network::NetworkManager &tm)
   {
     id_ = "my-fetch-id";
@@ -94,7 +95,7 @@ public:
     promise.Wait(2000);
   }
 
-  void Commit(uint64_t const &bookmark)
+  void Commit(uint64_t bookmark)
   {
     std::vector<service::Promise> promises;
     for (std::size_t i = 0; i < lanes_.size(); ++i)
@@ -110,7 +111,7 @@ public:
     }
   }
 
-  void Revert(uint64_t const &bookmark)
+  void Revert(uint64_t bookmark)
   {
     std::vector<service::Promise> promises;
     for (std::size_t i = 0; i < lanes_.size(); ++i)
@@ -205,7 +206,7 @@ int main(int argc, char const **argv)
   uint32_t lane_count = params.GetParam<uint32_t>("lane-count", 1);
 
   std::cout << std::endl;
-  fetch::commandline::DisplayCLIHeader("Multi-lane client");
+  fetch::version::DisplayCLIHeader("Multi-lane client");
   std::cout << "Connecting with " << lane_count << " lanes." << std::endl;
 
   // Client setup

@@ -21,9 +21,8 @@
 #include "http/module.hpp"
 #include "ledger/chaincode/chain_code_cache.hpp"
 
-#include <algorithm>
 #include <fstream>
-#include <sstream>
+#include <string>
 #include <vector>
 
 namespace fetch {
@@ -89,6 +88,7 @@ private:
   http::HTTPResponse OnTransaction(http::HTTPRequest const &req, ConstByteArray expected_contract);
   SubmitTxStatus     SubmitJsonTx(http::HTTPRequest const &req, ConstByteArray expected_contract,
                                   TxHashes &txs);
+  SubmitTxStatus     SubmitBulkTx(http::HTTPRequest const &req);
   /// @}
 
   /// @name Access Log

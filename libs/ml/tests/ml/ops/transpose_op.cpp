@@ -16,12 +16,13 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/ops/transpose.hpp"
-
 #include "math/tensor.hpp"
+#include "ml/ops/transpose.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 
-#include <gtest/gtest.h>
+#include "gtest/gtest.h"
+
+#include <vector>
 
 template <typename T>
 class TransposeTest : public ::testing::Test

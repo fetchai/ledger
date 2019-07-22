@@ -78,8 +78,8 @@ public:
 
   static byte_array::ByteArray Convert2Canonical(BIGNUM const *const x, BIGNUM const *const y)
   {
-    const auto xBytes = static_cast<std::size_t>(BN_num_bytes(x));
-    const auto yBytes = static_cast<std::size_t>(BN_num_bytes(y));
+    auto const xBytes = static_cast<std::size_t>(BN_num_bytes(x));
+    auto const yBytes = static_cast<std::size_t>(BN_num_bytes(y));
 
     byte_array::ByteArray canonical_data;
     canonical_data.Resize(x_size + y_size);

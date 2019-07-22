@@ -17,7 +17,9 @@
 //------------------------------------------------------------------------------
 
 #include "crypto/bls.hpp"
+
 #include <iostream>
+
 using namespace fetch::crypto;
 
 int main()

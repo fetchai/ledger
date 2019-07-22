@@ -18,11 +18,9 @@
 //------------------------------------------------------------------------------
 
 #include "crypto/sha256.hpp"
-
+#include "vm/module.hpp"
 #include "vm_modules/core/byte_array_wrapper.hpp"
 #include "vm_modules/math/bignumber.hpp"
-
-#include "vm/module.hpp"
 
 namespace fetch {
 namespace vm_modules {
@@ -36,8 +34,8 @@ public:
   using Ptr    = fetch::vm::Ptr<T>;
   using String = fetch::vm::String;
 
-  SHA256Wrapper()          = delete;
-  virtual ~SHA256Wrapper() = default;
+  SHA256Wrapper()           = delete;
+  ~SHA256Wrapper() override = default;
 
   static void Bind(vm::Module &module)
   {
@@ -52,7 +50,7 @@ public:
 
   void UpdateUInt256(vm::Ptr<vm_modules::math::UInt256Wrapper> const &uint)
   {
-    hasher_.Update(uint->number());
+    hasher_.Update(uint->number().pointer(), uint->number().size());
   }
 
   void UpdateString(vm::Ptr<vm::String> const &str)

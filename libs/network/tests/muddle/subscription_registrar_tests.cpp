@@ -28,7 +28,7 @@
 #include <memory>
 #include <utility>
 
-static const auto SAMPLE_ADDRESS = fetch::byte_array::FromBase64(
+static auto const SAMPLE_ADDRESS = fetch::byte_array::FromBase64(
     "wvV0DQgjcMNsmtkTTTZtX0JSAGA9+bHi7iRTczWDZsVJznK4c5enNJFSUyZScG40D3Dp2gdpT2WmnZO1lkUheQ==");
 
 class SubscriptionManagerTests : public ::testing::Test

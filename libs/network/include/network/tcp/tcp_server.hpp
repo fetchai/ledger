@@ -58,7 +58,7 @@ public:
     message_type           message;
   };
 
-  TCPServer(uint16_t const &port, network_manager_type const &network_manager);
+  TCPServer(uint16_t port, network_manager_type const &network_manager);
   ~TCPServer() override;
 
   // Start will block until the server has started

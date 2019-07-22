@@ -16,8 +16,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/executor.hpp"
-
 #include "core/assert.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "core/logger.hpp"
@@ -27,10 +25,10 @@
 #include "ledger/chaincode/contract.hpp"
 #include "ledger/chaincode/token_contract.hpp"
 #include "ledger/consensus/stake_update_interface.hpp"
+#include "ledger/executor.hpp"
+#include "ledger/state_sentinel_adapter.hpp"
 #include "ledger/storage_unit/cached_storage_adapter.hpp"
 #include "metrics/metrics.hpp"
-
-#include "ledger/state_sentinel_adapter.hpp"
 
 #include <algorithm>
 #include <chrono>

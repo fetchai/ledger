@@ -22,7 +22,7 @@
 #include "core/serializers/byte_array_buffer.hpp"
 #include "crypto/sha256.hpp"
 
-#include <map>
+#include <set>
 
 namespace fetch {
 namespace ledger {

@@ -21,6 +21,8 @@
 #include "core/byte_array/decoders.hpp"
 #include "core/json/document.hpp"
 #include "core/logger.hpp"
+#include "core/serializers/byte_array.hpp"
+#include "core/serializers/byte_array_buffer.hpp"
 #include "core/serializers/stl_types.hpp"
 #include "core/string/replace.hpp"
 #include "http/json_response.hpp"
@@ -118,10 +120,11 @@ ContractHttpInterface::ContractHttpInterface(StorageInterface &    storage,
 
       FETCH_LOG_INFO(LOGGING_NAME, "Query API: ", api_path);
 
-      Post(api_path, [this, contract_name, query_name](http::ViewParameters const &,
-                                                       http::HTTPRequest const &request) {
-        return OnQuery(contract_name, query_name, request);
-      });
+      Post(api_path, "Calls contract query " + query_name + " for " + contract_name,
+           [this, contract_name, query_name](http::ViewParameters const &,
+                                             http::HTTPRequest const &request) {
+             return OnQuery(contract_name, query_name, request);
+           });
     }
 
     auto const &transaction_handlers = contract->transaction_handlers();
@@ -139,15 +142,19 @@ ContractHttpInterface::ContractHttpInterface(StorageInterface &    storage,
 
       FETCH_LOG_INFO(LOGGING_NAME, "   Tx API: ", api_path, " : ", canonical_contract_name);
 
-      Post(api_path, [this, canonical_contract_name](http::ViewParameters const &params,
-                                                     http::HTTPRequest const &   request) {
-        FETCH_UNUSED(params);
-        return OnTransaction(request, canonical_contract_name);
-      });
+      Post(api_path, "Calls contract action " + transaction_name + " for " + contract_name,
+           [this, canonical_contract_name](http::ViewParameters const &params,
+                                           http::HTTPRequest const &   request) {
+             FETCH_UNUSED(params);
+             return OnTransaction(request, canonical_contract_name);
+           });
     }
   }
 
   Post("/api/contract/(digest=[a-fA-F0-9]{64})/(identifier=[1-9A-HJ-NP-Za-km-z]{48,50})/(query=.+)",
+       "Submits a query to a contract",
+       {{"digest", "The contract digest.", http::validators::StringValue()},
+        {"identifier", "The query identifier.", http::validators::StringValue()}},
        [this](http::ViewParameters const &params, http::HTTPRequest const &request) {
          // build the contract name
          auto const contract_name = params["digest"] + "." + params["identifier"];
@@ -156,7 +163,7 @@ ContractHttpInterface::ContractHttpInterface(StorageInterface &    storage,
          return OnQuery(contract_name, params["query"], request);
        });
 
-  Post("/api/contract/submit",
+  Post("/api/contract/submit", "Submits a new contract to the ledger.",
        [this](http::ViewParameters const &params, http::HTTPRequest const &request) {
          FETCH_UNUSED(params);
          return OnTransaction(request, ConstByteArray{});
@@ -246,9 +253,15 @@ http::HTTPResponse ContractHttpInterface::OnTransaction(http::HTTPRequest const 
     TxHashes txs{};
     bool     unknown_format = true;
     if (content_type == "application/vnd+fetch.transaction+json" ||
+        content_type == "application/vnd.fetch-ai.transaction+json" ||
         content_type == "application/json")
     {
       submitted      = SubmitJsonTx(request, expected_contract, txs);
+      unknown_format = false;
+    }
+    else if (content_type == "application/vnd.fetch-ai.transaction+bulk")
+    {
+      submitted      = SubmitBulkTx(request);
       unknown_format = false;
     }
 
@@ -354,6 +367,38 @@ ContractHttpInterface::SubmitTxStatus ContractHttpInterface::SubmitJsonTx(
                   request.originating_address(), ':', request.originating_port());
 
   return SubmitTxStatus{submitted, expected_count};
+}
+
+ContractHttpInterface::SubmitTxStatus ContractHttpInterface::SubmitBulkTx(
+    http::HTTPRequest const &request)
+{
+  std::size_t                 submitted{0};
+  std::vector<ConstByteArray> encoded_txs{};
+
+  try
+  {
+    // extract out all the transaction payloads
+    serializers::ByteArrayBuffer buffer{request.body()};
+    buffer >> encoded_txs;
+
+    for (auto const &encoded_tx : encoded_txs)
+    {
+      auto tx = std::make_shared<Transaction>();
+
+      // extract out the transaction contents
+      TransactionSerializer tx_serializer{encoded_tx};
+      tx_serializer.Deserialize(*tx);
+
+      processor_.AddTransaction(std::move(tx));
+      ++submitted;
+    }
+  }
+  catch (std::exception const &e)
+  {
+    FETCH_LOG_ERROR(LOGGING_NAME, "Error processing bulk tx: ", e.what());
+  }
+
+  return SubmitTxStatus{submitted, encoded_txs.size()};
 }
 
 /**

@@ -1,0 +1,112 @@
+function main()
+
+    // Sin, Cos, & Tan
+    var x = 1.0;
+    assert(toString(sin(x)) == "0.841471");
+
+    x = 0.5;
+    assert(toString(sin(x)) == "0.479426");
+
+    x = 0.0;
+    assert(toString(sin(x)) == "0.000000");
+
+    x = 1.0;
+    assert(toString(cos(x)) == "0.540302");
+
+    x = 0.5;
+    assert(toString(cos(x)) == "0.877583");
+
+    x = 0.0;
+    assert(toString(cos(x)) == "1.000000");
+
+    x = 1.0;
+    assert(toString(tan(x)) == "1.557408");
+
+    x = 0.5;
+    assert(toString(tan(x)) == "0.546302");
+
+    x = 0.0;
+    assert(toString(tan(x)) == "0.000000");
+
+
+    // ArcSin, ArcCos, & ArcTan
+    x = 1.0;
+    assert(toString(asin(x)) == "1.570796");
+
+    x = 0.5;
+    assert(toString(asin(x)) == "0.523599");
+
+    x = 0.0;
+    assert(toString(asin(x)) == "0.000000");
+
+    x = 1.0;
+    assert(toString(acos(x)) == "0.000000");
+
+    x = 0.5;
+    assert(toString(acos(x)) == "1.047198");
+
+    x = 0.0;
+    assert(toString(acos(x)) == "1.570796");
+
+    x = 1.0;
+    assert(toString(atan(x)) == "0.785398");
+
+    x = 0.5;
+    assert(toString(atan(x)) == "0.463648");
+
+    x = 0.0;
+    assert(toString(atan(x)) == "0.000000");
+
+
+    // Hyperbolic Sin, Cos, & Tan
+    x = 1.0;
+    assert(toString(sinh(x)) == "1.175201");
+
+    x = 0.5;
+    assert(toString(sinh(x)) == "0.521095");
+
+    x = 0.0;
+    assert(toString(sinh(x)) == "0.000000");
+
+    x = 1.0;
+    assert(toString(cosh(x)) == "1.543081");
+
+    x = 0.5;
+    assert(toString(cosh(x)) == "1.127626");
+
+    x = 0.0;
+    assert(toString(cosh(x)) == "1.000000");
+
+    x = 1.0;
+    assert(toString(tanh(x)) == "0.761594");
+
+    x = 0.5;
+    assert(toString(tanh(x)) == "0.462117");
+
+    x = 0.0;
+    assert(toString(tanh(x)) == "0.000000");
+
+
+    // Hyperbolic ArcSin, ArcCos, & ArcTan
+    x = 1.0;
+    assert(toString(asinh(x)) == "0.881374");
+
+    x = 0.5;
+    assert(toString(asinh(x)) == "0.481212");
+
+    x = 0.0;
+    assert(toString(asinh(x)) == "0.000000");
+
+    x = 1.0;
+    assert(toString(acosh(x)) == "0.000000");
+
+    x = 1.0;
+    assert(toString(atanh(x)) == "inf");
+
+    x = 0.5;
+    assert(toString(atanh(x)) == "0.549306");
+
+    x = 0.0;
+    assert(toString(atanh(x)) == "0.000000");
+
+endfunction

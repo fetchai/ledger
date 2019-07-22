@@ -20,3 +20,6 @@ target_link_libraries(fetch-dkg
                              fetch-crypto
                              fetch-network
                              fetch-ledger)
+
+add_test_target()
+add_subdirectory(examples/)

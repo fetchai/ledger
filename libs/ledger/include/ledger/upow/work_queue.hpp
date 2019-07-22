@@ -19,6 +19,7 @@
 
 #include "ledger/upow/work.hpp"
 
+#include <memory>
 #include <queue>
 
 namespace fetch {
@@ -29,7 +30,14 @@ struct WorkQueueSort
 {
   bool operator()(WorkPtr const &a, WorkPtr const &b) const
   {
-    return a->score() > b->score();
+    if (a->score() != b->score())
+    {
+      return a->score() > b->score();
+    }
+    else  // (a->score() == b->score())
+    {
+      return a->nonce() > b->nonce();
+    }
   }
 };
 

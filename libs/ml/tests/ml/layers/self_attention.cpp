@@ -16,10 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/layers/self_attention.hpp"
-
 #include "math/tensor.hpp"
 #include "ml/layers/fully_connected.hpp"
+#include "ml/layers/self_attention.hpp"
 
 #include "gtest/gtest.h"
 

@@ -18,6 +18,9 @@
 
 #include "ledger/dag/dag_sync_protocol.hpp"
 
+#include <cstdint>
+#include <utility>
+
 using namespace fetch::ledger;
 
 DAGSyncProtocol::DAGSyncProtocol(std::shared_ptr<ledger::DAGInterface> dag)

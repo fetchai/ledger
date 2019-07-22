@@ -194,7 +194,7 @@ public:
     return !(*this == other);
   }
 
-  constexpr std::size_t const &capacity() const noexcept
+  constexpr std::size_t capacity() const noexcept
   {
     return data_.size();
   }
@@ -248,12 +248,12 @@ public:
 
   std::size_t Find(char c, std::size_t pos) const
   {
-    value_type const *position =
+    auto position =
         static_cast<value_type const *>(std::memchr(arr_pointer_ + pos, c, length_ - pos));
     return position ? static_cast<std::size_t>(position - arr_pointer_) : NPOS;
   }
 
-  constexpr std::size_t const &size() const noexcept
+  constexpr std::size_t size() const noexcept
   {
     return length_;
   }
@@ -284,7 +284,7 @@ public:
   {
     std::string const value{*this};
 
-    const auto ret = std::strtol(value.c_str(), nullptr, 10);
+    auto const ret = std::strtol(value.c_str(), nullptr, 10);
     if (errno == ERANGE)
     {
       errno = 0;
@@ -300,7 +300,7 @@ public:
   {
     std::string const value{*this};
 
-    const auto ret = std::strtod(value.c_str(), nullptr);
+    auto const ret = std::strtod(value.c_str(), nullptr);
     if (errno == ERANGE)
     {
       errno = 0;

@@ -28,6 +28,7 @@
 
 #include <limits>
 #include <memory>
+#include <vector>
 
 namespace fetch {
 namespace ledger {
@@ -127,7 +128,7 @@ inline Work::UInt256 Work::CreateHashedNonce() const
 
   hasher.Update(contract_digest_);
   hasher.Update(miner_.identifier());
-  hasher.Update(nonce_);
+  hasher.Update(nonce_.pointer(), nonce_.size());
 
   auto const digest1 = hasher.Final();
   hasher.Reset();

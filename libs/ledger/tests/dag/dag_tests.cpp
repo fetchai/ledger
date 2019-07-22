@@ -16,19 +16,22 @@
 //
 //------------------------------------------------------------------------------
 
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
-
-#include "ledger/dag/dag.hpp"
-#include "ledger/dag/dag_interface.hpp"
-
 #include "crypto/ecdsa.hpp"
 #include "crypto/hash.hpp"
 #include "crypto/prover.hpp"
 #include "crypto/sha256.hpp"
+#include "ledger/dag/dag.hpp"
+#include "ledger/dag/dag_interface.hpp"
+
+#include "gmock/gmock.h"
 
 #include <algorithm>
+#include <cstddef>
+#include <cstdint>
+#include <memory>
 #include <random>
+#include <string>
+#include <vector>
 
 using namespace fetch;
 
@@ -61,9 +64,6 @@ protected:
     dag.reset(new DAGChild(id, load_from_file, certificate));
     return dag;
   }
-
-  void TearDown() override
-  {}
 
   // Verify that the nodes in the latest dag epoch match the sanity check epoch_history_
   void VerifyEpochNodes(uint64_t index)
@@ -155,9 +155,9 @@ TEST_F(DagTests, CheckDagRevertsCorrectly)
 {
   PopulateDAG();
 
-  while (epoch_history_.size() > 0)
+  while (!epoch_history_.empty())
   {
-    const auto epochs_head = epoch_history_.size() - 1;
+    auto const epochs_head = epoch_history_.size() - 1;
     VerifyEpochNodes(epochs_head);
 
     if (epochs_head != 0)
