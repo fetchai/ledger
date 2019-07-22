@@ -17,38 +17,24 @@
 //
 //------------------------------------------------------------------------------
 
-#include "network/service/protocol.hpp"
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wconversion"
+#pragma GCC diagnostic ignored "-Wpedantic"
+#endif
 
-namespace fetch {
-namespace dkg {
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wconversion"
+#pragma clang diagnostic ignored "-Wpedantic"
+#endif
 
-class DkgService;
+#include <mcl/bn256.hpp>
 
-/**
- * The RPC protocol class for the DKG Service
- */
-class DkgRpcProtocol : public service::Protocol
-{
-public:
-  enum
-  {
-    SUBMIT_SIGNATURE,
-    SUBMIT_SHARE,
-  };
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
 
-  // Construction / Destruction
-  explicit DkgRpcProtocol(DkgService &service);
-  DkgRpcProtocol(DkgRpcProtocol const &) = delete;
-  DkgRpcProtocol(DkgRpcProtocol &&)      = delete;
-  ~DkgRpcProtocol() override             = default;
-
-  // Operators
-  DkgRpcProtocol &operator=(DkgRpcProtocol const &) = delete;
-  DkgRpcProtocol &operator=(DkgRpcProtocol &&) = delete;
-
-private:
-  DkgService &service_;
-};
-
-}  // namespace dkg
-}  // namespace fetch
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif

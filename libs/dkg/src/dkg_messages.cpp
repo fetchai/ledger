@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -17,38 +16,37 @@
 //
 //------------------------------------------------------------------------------
 
-#include "network/service/protocol.hpp"
+#include "core/logging.hpp"
+#include "dkg/dkg_messages.hpp"
 
 namespace fetch {
 namespace dkg {
 
-class DkgService;
+constexpr char const *LOGGING_NAME = "DKGMessage";
 
 /**
- * The RPC protocol class for the DKG Service
+ * Getter funcion for the serialised message contained inside the
+ * DKGEnvelop
+ *
+ * @return Shared pointer to deserialised message
  */
-class DkgRpcProtocol : public service::Protocol
+std::shared_ptr<DKGMessage> DKGEnvelop::Message() const
 {
-public:
-  enum
+  DKGSerializer serialiser{serialisedMessage_};
+  switch (type_)
   {
-    SUBMIT_SIGNATURE,
-    SUBMIT_SHARE,
-  };
-
-  // Construction / Destruction
-  explicit DkgRpcProtocol(DkgService &service);
-  DkgRpcProtocol(DkgRpcProtocol const &) = delete;
-  DkgRpcProtocol(DkgRpcProtocol &&)      = delete;
-  ~DkgRpcProtocol() override             = default;
-
-  // Operators
-  DkgRpcProtocol &operator=(DkgRpcProtocol const &) = delete;
-  DkgRpcProtocol &operator=(DkgRpcProtocol &&) = delete;
-
-private:
-  DkgService &service_;
-};
+  case MessageType::COEFFICIENT:
+    return std::make_shared<CoefficientsMessage>(serialiser);
+  case MessageType::SHARE:
+    return std::make_shared<SharesMessage>(serialiser);
+  case MessageType::COMPLAINT:
+    return std::make_shared<ComplaintsMessage>(serialiser);
+  default:
+    FETCH_LOG_ERROR(LOGGING_NAME, "Can not process payload");
+    assert(false);
+    return nullptr;  // For compiler warnings
+  }
+}
 
 }  // namespace dkg
 }  // namespace fetch
