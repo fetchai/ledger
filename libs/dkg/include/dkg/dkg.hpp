@@ -150,9 +150,10 @@ class DistributedKeyGeneration
   void CheckComplaintAnswer(std::shared_ptr<SharesMessage> const &answer,
                             MuddleAddress const &from_id, uint32_t from_index);
   bool BuildQual();
-  void ComputeSecretShare();
-  bool RunReconstruction();
-  void ComputePublicKeys();
+  std::unordered_map<MuddleAddress, std::pair<MsgShare, MsgShare>> ComputeQualComplaints();
+  void                                                             ComputeSecretShare();
+  bool                                                             RunReconstruction();
+  void                                                             ComputePublicKeys();
   /// @}
 
 public:

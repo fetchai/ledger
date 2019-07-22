@@ -189,45 +189,8 @@ void DistributedKeyGeneration::BroadcastComplaintsAnswer()
  */
 void DistributedKeyGeneration::BroadcastQualComplaints()
 {
-  std::unordered_set<MuddleAddress> complaints_local;
-  uint32_t                          i  = 0;
-  auto                              iq = cabinet_.begin();
-  for (auto const &miner : qual_)
-  {
-    while (*iq != miner)
-    {
-      ++iq;
-      ++i;
-    }
-    if (i != cabinet_index_)
-    {
-      // Can only require this if G, H do not take the default values from clear()
-      if (A_ik[i][0] != zeroG2_)
-      {
-        bn::G2 rhs, lhs;
-        lhs = g__s_ij[i][cabinet_index_];
-        rhs = ComputeRHS(cabinet_index_, A_ik[i]);
-        if (lhs != rhs)
-        {
-          complaints_local.insert(miner);
-        }
-      }
-      else
-      {
-        complaints_local.insert(miner);
-      }
-    }
-  }
-
-  std::unordered_map<MuddleAddress, std::pair<MsgShare, MsgShare>> QUAL_complaints;
-  for (auto &c : complaints_local)
-  {
-    uint32_t c_index{CabinetIndex(c)};
-    QUAL_complaints.insert(
-        {c, {s_ij[cabinet_index_][c_index].getStr(), sprime_ij[cabinet_index_][c_index].getStr()}});
-  }
   SendBroadcast(DKGEnvelop{SharesMessage{static_cast<uint64_t>(State::WAITING_FOR_QUAL_COMPLAINTS),
-                                         QUAL_complaints, "signature"}});
+                                         ComputeQualComplaints(), "signature"}});
   state_ = State::WAITING_FOR_QUAL_COMPLAINTS;
   ReceivedQualComplaint();
 }
@@ -470,7 +433,7 @@ void DistributedKeyGeneration::OnExposedShares(std::shared_ptr<SharesMessage> co
 void DistributedKeyGeneration::OnNewShares(MuddleAddress                        from,
                                            std::pair<MsgShare, MsgShare> const &shares)
 {
-  FETCH_LOG_INFO(LOGGING_NAME, "Node ", cabinet_index_, " received shares from node  ",
+  FETCH_LOG_INFO(LOGGING_NAME, "Node ", cabinet_index_, " begin received shares from node  ",
                  CabinetIndex(from));
   uint32_t from_index{CabinetIndex(from)};
   s_ij[from_index][cabinet_index_].setStr(shares.first);
@@ -478,6 +441,8 @@ void DistributedKeyGeneration::OnNewShares(MuddleAddress                        
 
   ++shares_received_;
   ReceivedCoefficientsAndShares();
+  FETCH_LOG_INFO(LOGGING_NAME, "Node ", cabinet_index_, " end received shares from node  ",
+                 CabinetIndex(from));
 }
 
 /**
@@ -756,7 +721,53 @@ bool DistributedKeyGeneration::BuildQual()
 }
 
 /**
- * If in qual a member Computes individual share of the secret key and further computes and
+ * Checks coefficients sent by qual members and puts their address and the secret shares we received
+ * from them into a complaints maps if the coefficients are not valid
+ *
+ * @return Map of address and pair of secret shares for each qual member we wish to complain against
+ */
+std::unordered_map<
+    DistributedKeyGeneration::MuddleAddress,
+    std::pair<DistributedKeyGeneration::MsgShare, DistributedKeyGeneration::MsgShare>>
+DistributedKeyGeneration::ComputeQualComplaints()
+{
+  std::unordered_map<MuddleAddress, std::pair<MsgShare, MsgShare>> qual_complaints;
+
+  uint32_t i  = 0;
+  auto     iq = cabinet_.begin();
+  for (auto const &miner : qual_)
+  {
+    while (*iq != miner)
+    {
+      ++iq;
+      ++i;
+    }
+    if (i != cabinet_index_)
+    {
+      // Can only require this if G, H do not take the default values from clear()
+      if (A_ik[i][0] != zeroG2_)
+      {
+        bn::G2 rhs, lhs;
+        lhs = g__s_ij[i][cabinet_index_];
+        rhs = ComputeRHS(cabinet_index_, A_ik[i]);
+        if (lhs != rhs)
+        {
+          qual_complaints.insert(
+              {miner, {s_ij[cabinet_index_][i].getStr(), sprime_ij[cabinet_index_][i].getStr()}});
+        }
+      }
+      else
+      {
+        qual_complaints.insert(
+            {miner, {s_ij[cabinet_index_][i].getStr(), sprime_ij[cabinet_index_][i].getStr()}});
+      }
+    }
+  }
+  return qual_complaints;
+}
+
+/**
+ * If in qual a member computes individual share of the secret key and further computes and
  * broadcasts qual coefficients
  */
 void DistributedKeyGeneration::ComputeSecretShare()
