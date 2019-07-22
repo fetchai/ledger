@@ -523,14 +523,13 @@ void ReduceSum(ArrayType const &obj1, SizeType axis, ArrayType &ret)
   if (axis == 0)
   {
     assert(ret.shape()[0] == 1);
-    assert(ret.shape()[1] == obj1.shape()[1]);
+    assert(ret.shape(ret.shape().size() - 1) == obj1.shape(obj1.shape().size() - 1));
 
-    auto it  = obj1.cbegin();
     auto rit = ret.begin();
-    while (rit.is_valid())
+    for (SizeType j{0}; j < obj1.shape().at(obj1.shape().size() - 1); ++j)
     {
-      *rit = typename ArrayType::Type{0};
-      for (SizeType j{0}; j < obj1.shape().at(0); ++j)
+      auto it = obj1.View(j).cbegin();
+      while(it.is_valid())
       {
         *rit += *it;
         ++it;
