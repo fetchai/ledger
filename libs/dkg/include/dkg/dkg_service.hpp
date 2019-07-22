@@ -144,16 +144,23 @@ public:
     return state_machine_;
   }
 
-  void ResetCabinet(CabinetMembers cabinet, uint32_t threshold)
+  void ResetCabinet(CabinetMembers cabinet, uint32_t threshold = UINT32_MAX)
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Resetting cabinet. Cabinet size: ", cabinet.size(),
-                   " threshold: ", threshold);
     FETCH_LOCK(cabinet_lock_);
-    assert(cabinet.size() > 3 * threshold);  // To meet the requirements for the RBC
-    current_cabinet_   = std::move(cabinet);
-    current_threshold_ = threshold;
-    id_                = static_cast<uint32_t>(
+    current_cabinet_ = std::move(cabinet);
+    if (threshold == UINT32_MAX)
+    {
+      current_threshold_ = static_cast<uint32_t>(current_cabinet_.size() / 2 - 1);
+    }
+    else
+    {
+      current_threshold_ = threshold;
+    }
+    assert(current_cabinet_.size() > 3 * threshold);  // To meet the requirements for the RBC
+    id_ = static_cast<uint32_t>(
         std::distance(current_cabinet_.begin(), current_cabinet_.find(address_)));
+    FETCH_LOG_INFO(LOGGING_NAME, "Resetting cabinet. Cabinet size: ", current_cabinet_.size(),
+                   " threshold: ", threshold);
     dkg_.ResetCabinet();
     rbc_.ResetCabinet();
   }
