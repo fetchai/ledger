@@ -20,28 +20,24 @@
 #include "core/logging.hpp"
 #include "http/json_response.hpp"
 #include "http/module.hpp"
-#include "telemetry/registry.hpp"
+#include "http/server.hpp"
 
-#include <sstream>
+#include <string>
 
 namespace fetch {
 
-class TelemetryHttpModule : public http::HTTPModule
+class OpenAPIHttpModule : public http::HTTPModule
 {
 public:
-  TelemetryHttpModule()
-  {
-    Get("/api/telemetry", "Telementry feed.",
-        [](http::ViewParameters const &, http::HTTPRequest const &) {
-          static auto const TXT_MIME_TYPE = http::mime_types::GetMimeTypeFromExtension(".txt");
+  OpenAPIHttpModule();
+  void Reset(http::HTTPServer *srv = nullptr);
 
-          // collect up the generated metrics for the system
-          std::ostringstream stream;
-          telemetry::Registry::Instance().Collect(stream);
+private:
+  using Variant        = variant::Variant;
+  using ConstByteArray = byte_array::ConstByteArray;
 
-          return http::HTTPResponse(stream.str(), TXT_MIME_TYPE);
-        });
-  }
+  http::HTTPServer *server_{nullptr};
+  std::mutex        server_lock_;
 };
 
 }  // namespace fetch

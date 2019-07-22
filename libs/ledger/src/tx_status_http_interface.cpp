@@ -38,7 +38,10 @@ namespace ledger {
 TxStatusHttpInterface::TxStatusHttpInterface(TransactionStatusCache &status_cache)
   : status_cache_{status_cache}
 {
-  Get("/api/status/tx/(digest=[a-fA-F0-9]{64})",
+  Get("/api/status/tx/(digest=[a-fA-F0-9]{64})", "Retrieves a transaction status.",
+      {
+          {"digest", "The transaction hash.", http::validators::StringValue()},
+      },
       [this](http::ViewParameters const &params, http::HTTPRequest const &request) {
         FETCH_UNUSED(request);
 

@@ -42,6 +42,7 @@
 #include "network/p2pservice/manifest.hpp"
 #include "network/p2pservice/p2p_service.hpp"
 #include "network/p2pservice/p2ptrust_bayrank.hpp"
+#include "open_api_http_module.hpp"
 
 #include <atomic>
 #include <cstddef>
@@ -109,6 +110,8 @@ public:
 
   void Run(UriList const &initial_peers, core::WeakRunnable bootstrap_monitor);
   void SignalStop();
+
+  void DumpOpenAPI(std::ostream &stream);
 
 protected:
   void OnBlock(ledger::Block const &block) override;
@@ -207,8 +210,10 @@ private:
 
   /// @name HTTP Server
   /// @{
-  HttpServer  http_;          ///< The HTTP server
-  HttpModules http_modules_;  ///< The set of modules currently configured
+  std::shared_ptr<OpenAPIHttpModule>
+              http_open_api_module_;  //< HTTP module that returns the API definition
+  HttpServer  http_;                  ///< The HTTP server
+  HttpModules http_modules_;          ///< The set of modules currently configured
   /// @}
 };
 
