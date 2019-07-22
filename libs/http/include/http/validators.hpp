@@ -17,31 +17,24 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/logging.hpp"
-#include "http/json_response.hpp"
-#include "http/module.hpp"
-#include "telemetry/registry.hpp"
+#include "core/byte_array/const_byte_array.hpp"
+#include "variant/variant.hpp"
 
-#include <sstream>
+#include <functional>
 
 namespace fetch {
+namespace http {
+namespace validators {
 
-class TelemetryHttpModule : public http::HTTPModule
+struct Validator
 {
-public:
-  TelemetryHttpModule()
-  {
-    Get("/api/telemetry", "Telementry feed.",
-        [](http::ViewParameters const &, http::HTTPRequest const &) {
-          static auto const TXT_MIME_TYPE = http::mime_types::GetMimeTypeFromExtension(".txt");
-
-          // collect up the generated metrics for the system
-          std::ostringstream stream;
-          telemetry::Registry::Instance().Collect(stream);
-
-          return http::HTTPResponse(stream.str(), TXT_MIME_TYPE);
-        });
-  }
+  byte_array::ConstByteArray                      description;
+  std::function<bool(byte_array::ConstByteArray)> validator;
+  variant::Variant                                schema;
 };
 
+Validator StringValue(uint16_t min_length = 0, uint16_t max_length = uint16_t(-1));
+
+}  // namespace validators
+}  // namespace http
 }  // namespace fetch
