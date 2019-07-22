@@ -195,10 +195,10 @@ public:
   static uint8_t const ADDRESS = 1;
 
   template< typename Constructor >
-  static void Serialize(Constructor & map_constructor, Type const & address)
+  static void Serialize(Constructor & map_constructor, Type const & data)
   {
     auto map = map_constructor(1);
-    map.Append(ADDRESS, address);
+    map.Append(ADDRESS, data.address());
   }
 
   template< typename MapDeserializer >

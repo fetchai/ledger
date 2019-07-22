@@ -20,12 +20,14 @@
 #include "core/serializers/typed_byte_array_buffer.hpp"
 #include "core/serializers/main_serializer.hpp"
 #include "core/serializers/group_definitions.hpp"
+#include "core/serializers/byte_array_buffer.hpp"
+
 #include "gtest/gtest.h"
 
-namespace fetch {
-namespace serializers {
-
-namespace {
+namespace fetch 
+{
+namespace serializers 
+{
 
 template <typename T>
 struct A
@@ -113,6 +115,29 @@ public:
   }  
 };
 
+
+template< typename D >
+struct ArraySerializer< A< void >, D >
+{
+public:
+  using Type = A< void >;
+  using DriverType = D;
+
+  template< typename Constructor >
+  static void Serialize(Constructor & array_constructor, Type const & a)
+  {
+    auto array = array_constructor(3);
+    array.Append(a.x);
+    array.Append(a.y);
+  }
+
+  template< typename ArrayDeserializer >
+  static void Deserialize(ArrayDeserializer & array, Type & a)
+  {
+    array.GetNextValue(a.x);
+    array.GetNextValue(a.y);
+  }  
+};
 
 class ByteArrayBufferTest : public testing::Test
 {
@@ -287,8 +312,6 @@ TEST_F(ByteArrayBufferTest, test_stream_absolute_resize_with_preexisting_offset)
   EXPECT_EQ(preallocated_amount, stream.data().capacity());
   EXPECT_EQ(small_size, stream.tell());
 }
-
-}  // namespace
 
 }  // namespace serializers
 }  // namespace fetch

@@ -144,13 +144,14 @@ TEST(crypto_merkle_tree, complete_tree_and_deterministic)
 
 TEST(crypto_merkle_tree, serializes_deserializes)
 {
-  MerkleTree tree{256};   // Reference
-  MerkleTree tree2{256};  // Calculate root then serialize
-  MerkleTree tree3{256};  // Don't calculate root until after serialize
-  MerkleTree tree2_deser{256};
-  MerkleTree tree3_deser{256};
+  constexpr uint64_t S = 256;
+  MerkleTree tree{S};   // Reference
+  MerkleTree tree2{S};  // Calculate root then serialize
+  MerkleTree tree3{S};  // Don't calculate root until after serialize
+  MerkleTree tree2_deser{S};
+  MerkleTree tree3_deser{S};
 
-  for (std::size_t i = 0; i < 256; ++i)
+  for (std::size_t i = 0; i < S; ++i)
   {
     tree[i]  = ByteArray{std::to_string(i)};
     tree2[i] = ByteArray{std::to_string(i)};

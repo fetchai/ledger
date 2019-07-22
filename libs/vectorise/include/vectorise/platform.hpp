@@ -22,6 +22,82 @@
 namespace fetch {
 namespace platform {
 
+inline uint8_t ToBigEndian(uint8_t x)
+{
+  return x;
+}
+
+inline uint16_t ToBigEndian(uint16_t x)
+{
+  return __builtin_bswap16(x);
+}
+
+inline uint16_t FromBigEndian(uint16_t x)
+{
+  return __builtin_bswap16(x);
+}
+
+inline uint32_t ToBigEndian(uint32_t x)
+{
+  return __builtin_bswap32(x);
+}
+
+inline uint32_t FromBigEndian(uint32_t x)
+{
+  return __builtin_bswap32(x);
+}
+
+inline uint64_t ToBigEndian(uint64_t x)
+{
+  return __builtin_bswap64(x);
+}
+
+inline uint64_t FromBigEndian(uint64_t x)
+{
+  return __builtin_bswap64(x);
+}
+
+
+
+
+inline int8_t ToBigEndian(int8_t x)
+{
+  return x;
+}
+
+inline int16_t ToBigEndian(int16_t x)
+{
+  return static_cast<int16_t>(__builtin_bswap16(static_cast<uint16_t>(x)));
+}
+
+inline int16_t FromBigEndian(int16_t x)
+{
+  return static_cast<int16_t>(__builtin_bswap16(static_cast<uint16_t>(x)));
+}
+
+inline int32_t ToBigEndian(int32_t x)
+{
+  return static_cast<int32_t>(__builtin_bswap32(static_cast<uint32_t>(x)));
+}
+
+inline int32_t FromBigEndian(int32_t x)
+{
+  return static_cast<int32_t>(__builtin_bswap32(static_cast<uint32_t>(x)));
+}
+
+inline int64_t ToBigEndian(int64_t x)
+{
+  return static_cast<int64_t>(__builtin_bswap64(static_cast<uint64_t>(x)));
+}
+
+inline int64_t FromBigEndian(int64_t x)
+{
+  return static_cast<int64_t>(__builtin_bswap64(static_cast<uint64_t>(x)));
+}
+
+
+
+
 struct Parallelisation
 {
   enum

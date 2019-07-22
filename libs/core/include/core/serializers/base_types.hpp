@@ -1,4 +1,11 @@
 #pragma once
+
+#include "core/serializers/group_definitions.hpp"
+#include "core/serializers/exception.hpp"
+#include "core/byte_array/byte_array.hpp"
+#include "core/byte_array/const_byte_array.hpp"
+#include "vectorise/platform.hpp"
+
 #include <array>
 #include <map>
 #include <set>
@@ -8,10 +15,6 @@
 #include <unordered_set>
 #include <utility>
 #include <vector>
-#include "core/serializers/group_definitions.hpp"
-#include "core/serializers/exception.hpp"
-#include "core/byte_array/byte_array.hpp"
-#include "core/byte_array/const_byte_array.hpp"
 
 namespace fetch
 {
@@ -34,7 +37,7 @@ struct SignedIntegerSerializerImplementation
       interface.Allocate(sizeof(uint8_t));
       interface.WriteByte(static_cast<uint8_t>(val));
     }
-    // TODO: Support for small negative integers
+    // TODO: Support for small negative integers?
     else
     {
       interface.Allocate(sizeof(uint8_t) + sizeof(val));
@@ -250,272 +253,140 @@ struct FloatSerializer< double, D >
   }
 };
 
+template<typename T>
+struct StringPointerGetter
+{
+  static uint8_t const * GetPointer(T const& arr)
+  {
+    return reinterpret_cast<uint8_t const *>( arr.pointer() );
+  }
+};
+
+template<>
+struct StringPointerGetter<std::string>
+{
+  static uint8_t const * GetPointer(std::string const& arr)
+  {
+    return reinterpret_cast<uint8_t const *>( arr.c_str() );
+  }
+};
+
+
+template< typename T,  typename D >
+struct StringSerializerImplementation
+{
+public:
+  using Type = T;
+  using DriverType = D;
+  enum 
+  {
+    CODE_FIXED  = 0xa0,
+    CODE8       = 0xd9,
+    CODE16      = 0xda,
+    CODE32      = 0xdb
+  };
+
+  template< typename Interface >
+  static void Serialize(Interface & interface, Type const &val)
+  {
+    // Serializing the size of the string
+    uint8_t opcode;
+    if(val.size() < 32)
+    {
+      opcode = static_cast<uint8_t>( CODE_FIXED | (val.size() & 0x1f) );
+      interface.Allocate(sizeof(opcode) + val.size());
+      interface.WriteBytes(&opcode, sizeof(opcode));
+    }
+    else if(val.size() < (1<<8))
+    {
+      opcode = static_cast<uint8_t>( CODE8  );
+      uint8_t size = static_cast<uint8_t>(val.size());
+
+      interface.Allocate(sizeof(opcode) + sizeof(size) + val.size());
+      interface.WriteBytes(&opcode, sizeof(opcode));
+      interface.WriteBytes(reinterpret_cast<uint8_t *>( &size ), sizeof(size));      
+    }    
+    else if(val.size() < (1<<16))
+    {
+      opcode = static_cast<uint8_t>( CODE16  );
+      uint16_t size = static_cast<uint16_t>(val.size());
+
+      interface.Allocate(sizeof(opcode) + sizeof(size) + val.size());
+      interface.WriteBytes(&opcode, sizeof(opcode));
+      interface.WriteBytes(reinterpret_cast<uint8_t *>( &size ), sizeof(size));      
+    }
+    else if(val.size() < (1ull<<32))    
+    {
+      opcode = static_cast<uint8_t>( CODE32 );
+      uint32_t size = static_cast<uint32_t>(val.size());
+      interface.Allocate(sizeof(opcode) + sizeof(size) + val.size());
+
+      interface.WriteBytes(&opcode, sizeof(opcode));
+      interface.WriteBytes(reinterpret_cast<uint8_t *>( &size ), sizeof(size));
+    }
+    else
+    {
+      throw SerializableException(error::TYPE_ERROR,
+              std::string("Cannot create maps with more than 1 << 32 elements"));   
+    }
+    // Serializing the payload
+    interface.WriteBytes(StringPointerGetter<Type>::GetPointer(val), val.size());
+  }
+
+  template< typename Interface >
+  static void Deserialize(Interface & interface, Type &val)
+  {
+    uint8_t opcode;
+    uint32_t size;
+    interface.ReadByte(opcode);
+
+
+    switch(opcode)
+    {
+    case CODE8:
+    {
+      uint8_t tmp;
+      interface.ReadBytes(reinterpret_cast<uint8_t *>( &tmp ), sizeof(uint8_t));
+      size = static_cast<uint32_t>(tmp);
+      break;
+    }
+    case CODE16:    
+    {
+      uint8_t tmp;      
+      interface.ReadBytes(reinterpret_cast<uint8_t *>( &tmp ), sizeof(uint16_t));   
+      size = static_cast<uint32_t>(tmp);
+      break;    
+    }
+    case CODE32:
+      interface.ReadBytes(reinterpret_cast<uint8_t *>( &size ), sizeof(size));
+      break;
+    default: // Default CODE_FIXED
+      if((opcode & 0xE0) != CODE_FIXED)
+      {
+        // TODO: Change to serializable exception.
+        throw std::runtime_error("expected CODE_FIXED in opcode.");
+      }
+      size = static_cast< uint32_t >( opcode & 0x1f );
+    }
+    byte_array::ByteArray arr;
+    interface.ReadByteArray(arr, size);
+    val = static_cast<Type>(arr);
+  }
+};
+
+
 template< typename D >
 struct StringSerializer< std::string, D >
-{
-public:
-  using Type = std::string;
-  using DriverType = D;
-  enum 
-  {
-    CODE_FIXED  = 0xa0,
-    CODE8       = 0xd9,
-    CODE16      = 0xda,
-    CODE32      = 0xdb
-  };
-
-  template< typename Interface >
-  static void Serialize(Interface & interface, Type const &val)
-  {
-    // Serializing the size of the string
-    if(val.size() < 32)
-    {
-      uint8_t opcode = static_cast<uint8_t>( CODE_FIXED | (val.size() & 0x1f) );
-      interface.Allocate(sizeof(opcode) + val.size());
-      interface.WriteBytes(&opcode, sizeof(opcode));
-    }
-    else if(val.size() < ((1<<8)-1))
-    {
-      uint8_t opcode = static_cast<uint8_t>( CODE8  );
-      uint8_t size = static_cast<uint8_t>(val.size());
-
-      interface.Allocate(sizeof(opcode) + sizeof(size) + val.size());
-      interface.WriteBytes(&opcode, sizeof(opcode));
-      interface.WriteBytes(reinterpret_cast<uint8_t *>( &size ), sizeof(size));      
-    }    
-    else if(val.size() < ((1<<16)-1))
-    {
-      uint8_t opcode = static_cast<uint8_t>( CODE16  );
-      uint16_t size = static_cast<uint16_t>(val.size());
-
-      interface.Allocate(sizeof(opcode) + sizeof(size) + val.size());
-      interface.WriteBytes(&opcode, sizeof(opcode));
-      interface.WriteBytes(reinterpret_cast<uint8_t *>( &size ), sizeof(size));      
-    }
-    else if(val.size() < ((1ull<<32)-1))    
-    {
-      uint8_t opcode = static_cast<uint8_t>( CODE32 );
-      uint32_t size = static_cast<uint32_t>(val.size());
-      interface.Allocate(sizeof(opcode) + sizeof(size) + val.size());
-
-      interface.WriteBytes(&opcode, sizeof(opcode));
-      interface.WriteBytes(reinterpret_cast<uint8_t *>( &size ), sizeof(size));
-    }
-    else
-    {
-      throw SerializableException(error::TYPE_ERROR,
-              std::string("Cannot create maps with more than 1 << 32 elements"));   
-    }
-
-    // Serializing the payload
-    interface.WriteBytes(reinterpret_cast<uint8_t const *>( val.c_str() ), val.size());
-  }
-
-  template< typename Interface >
-  static void Deserialize(Interface & interface, Type &val)
-  {
-    uint8_t opcode;
-    uint32_t size;
-    interface.ReadByte(opcode);
-
-    switch(opcode)
-    {
-    case CODE8:
-      interface.ReadBytes(reinterpret_cast<uint8_t *>( &size ), sizeof(uint8_t));
-      break;
-    case CODE16:    
-      interface.ReadBytes(reinterpret_cast<uint8_t *>( &size ), sizeof(uint16_t));    
-      break;    
-    case CODE32:
-      interface.ReadBytes(reinterpret_cast<uint8_t *>( &size ), sizeof(size));
-      break;
-    default:
-      // TODO: check that opcode is correct.
-      size = static_cast< uint32_t >( opcode & 0x1f );
-    }
-
-    byte_array::ConstByteArray arr;
-    interface.ReadByteArray(arr, size);
-    val = static_cast<std::string>(arr);
-  }
-};
-
-
+: public StringSerializerImplementation< std::string, D >
+{ };
 template< typename D >
 struct StringSerializer< byte_array::ConstByteArray, D >
-{
-public:
-  using Type = byte_array::ConstByteArray;
-  using DriverType = D;
-  enum 
-  {
-    CODE_FIXED  = 0xa0,
-    CODE8       = 0xd9,
-    CODE16      = 0xda,
-    CODE32      = 0xdb
-  };
-
-  template< typename Interface >
-  static void Serialize(Interface & interface, Type const &val)
-  {
-    // Serializing the size of the string
-    if(val.size() < 32)
-    {
-      uint8_t opcode = static_cast<uint8_t>( CODE_FIXED | (val.size() & 0x1f) );      
-      interface.Allocate(sizeof(opcode) + val.size());
-      interface.WriteBytes(&opcode, sizeof(opcode));
-    }
-    else if(val.size() < ((1<<8)))
-    {
-      uint8_t opcode = static_cast<uint8_t>( CODE8  );
-      std::cout << "YYYY: " << std::hex << static_cast<int>(opcode) << std::dec << std::endl;        
-      uint8_t size = static_cast<uint8_t>(val.size());
-      std::cout << " -  " << static_cast<int>(size) << std::endl;
-
-      interface.Allocate(sizeof(opcode) + sizeof(size) + val.size());
-      interface.WriteBytes(&opcode, sizeof(opcode));
-      interface.template WritePrimitive<uint8_t>(size);      
-    }    
-    else if(val.size() < ((1<<16)))
-    {
-      uint8_t opcode = static_cast<uint8_t>( CODE16  );
-      uint16_t size = static_cast<uint16_t>(val.size());
-
-      interface.Allocate(sizeof(opcode) + sizeof(size) + val.size());
-      interface.WriteBytes(&opcode, sizeof(opcode));
-      interface.template WritePrimitive<uint16_t>(size);      
-    }
-    else if(val.size() < ((1ull<<32)))    
-    {
-      uint8_t opcode = static_cast<uint8_t>( CODE32 );
-      uint32_t size = static_cast<uint32_t>(val.size());
-      interface.Allocate(sizeof(opcode) + sizeof(size) + val.size());
-
-      interface.WriteBytes(&opcode, sizeof(opcode));
-      interface.template WritePrimitive<uint32_t>(size);  
-    }
-    else
-    {
-      throw SerializableException(error::TYPE_ERROR,
-              std::string("Cannot create maps with more than 1 << 32 elements"));   
-    }
-
-    // Serializing the payload
-    interface.WriteBytes(reinterpret_cast<uint8_t const *>( val.pointer() ), val.size());
-  }
-
-  template< typename Interface >
-  static void Deserialize(Interface & interface, Type &val)
-  {
-    uint8_t opcode;
-    uint32_t size;
-    interface.ReadByte(opcode);
-    switch(opcode)
-    {
-    case CODE8:
-      interface.template ReadPrimitive<uint8_t>(size);
-      break;
-    case CODE16:
-      interface.template ReadPrimitive<uint16_t>(size);    
-      break;    
-    case CODE32:
-      interface.template ReadPrimitive<uint32_t>(size);
-      break;
-    default:
-      size = static_cast< uint32_t >( opcode & 0x1f );
-    }
-
-    interface.ReadByteArray(val, size);
-  }
-};
-
+: public StringSerializerImplementation< byte_array::ConstByteArray, D >
+{ };
 template< typename D >
 struct StringSerializer< byte_array::ByteArray, D >
-{
-public:
-  using Type = byte_array::ByteArray;
-  using DriverType = D;
-  enum 
-  {
-    CODE_FIXED  = 0xa0,
-    CODE8       = 0xd9,
-    CODE16      = 0xda,
-    CODE32      = 0xdb
-  };
-
-  template< typename Interface >
-  static void Serialize(Interface & interface, Type const &val)
-  {
-    // Serializing the size of the string
-    if(val.size() < 32)
-    {
-      uint8_t opcode = static_cast<uint8_t>( CODE_FIXED | (val.size() & 0x1f) );
-      interface.Allocate(sizeof(opcode) + val.size());
-      interface.WriteBytes(&opcode, sizeof(opcode));
-    }
-    else if(val.size() < ((1<<8)-1))
-    {
-      uint8_t opcode = static_cast<uint8_t>( CODE8  );
-      uint8_t size = static_cast<uint8_t>(val.size());
-
-      interface.Allocate(sizeof(opcode) + sizeof(size) + val.size());
-      interface.WriteBytes(&opcode, sizeof(opcode));
-      interface.WriteBytes(reinterpret_cast<uint8_t *>( &size ), sizeof(size));      
-    }    
-    else if(val.size() < ((1<<16)-1))
-    {
-      uint8_t opcode = static_cast<uint8_t>( CODE16  );
-      uint16_t size = static_cast<uint16_t>(val.size());
-
-      interface.Allocate(sizeof(opcode) + sizeof(size) + val.size());
-      interface.WriteBytes(&opcode, sizeof(opcode));
-      interface.WriteBytes(reinterpret_cast<uint8_t *>( &size ), sizeof(size));      
-    }
-    else if(val.size() < ((1ull<<32)-1))    
-    {
-      uint8_t opcode = static_cast<uint8_t>( CODE32 );
-      uint32_t size = static_cast<uint32_t>(val.size());
-      interface.Allocate(sizeof(opcode) + sizeof(size) + val.size());
-
-      interface.WriteBytes(&opcode, sizeof(opcode));
-      interface.WriteBytes(reinterpret_cast<uint8_t *>( &size ), sizeof(size));
-    }
-    else
-    {
-      throw SerializableException(error::TYPE_ERROR,
-              std::string("Cannot create maps with more than 1 << 32 elements"));   
-    }
-
-    // Serializing the payload
-    interface.WriteBytes(reinterpret_cast<uint8_t const *>( val.pointer() ), val.size());
-  }
-
-  template< typename Interface >
-  static void Deserialize(Interface & interface, Type &val)
-  {
-    uint8_t opcode;
-    uint32_t size;
-    interface.ReadByte(opcode);
-
-    switch(opcode)
-    {
-    case CODE8:
-      interface.ReadBytes(reinterpret_cast<uint8_t *>( &size ), sizeof(uint8_t));
-      break;
-    case CODE16:    
-      interface.ReadBytes(reinterpret_cast<uint8_t *>( &size ), sizeof(uint16_t));    
-      break;    
-    case CODE32:
-      interface.ReadBytes(reinterpret_cast<uint8_t *>( &size ), sizeof(size));
-      break;
-    default:
-      // TODO: check that opcode is correct.
-      size = static_cast< uint32_t >( opcode & 0x1f );
-    }
-
-    interface.ReadByteArray(val, size);
-  }
-};
+: public StringSerializerImplementation< byte_array::ByteArray, D >
+{ };
 
 
 template< typename V, typename D >
