@@ -60,8 +60,13 @@ public:
   virtual void Step(DataType learning_rate);
 
   template <class OperationType, typename... Params>
-  std::string AddNode(std::string const &node_name, std::vector<std::string> const &inputs,
-                      Params... params);
+  meta::IfIsFullyConnected<ArrayType, OperationType, std::string> AddNode(
+      std::string const &node_name, std::vector<std::string> const &inputs, Params... params);
+
+  template <class OperationType, typename... Params>
+  meta::IfIsNotFullyConnected<ArrayType, OperationType, std::string> AddNode(
+      std::string const &node_name, std::vector<std::string> const &inputs, Params... params);
+
   NodePtrType GetNode(std::string const &node_name) const;
   void        SetInput(std::string const &node_name, ArrayType data);
   void        ResetGraphCache(std::shared_ptr<NodeInterface<T>> const &n, bool input_size_changed);
@@ -218,25 +223,56 @@ void Graph<ArrayType>::ApplyRegularisation()
  */
 template <typename ArrayType>
 template <class OperationType, typename... Params>
-std::string Graph<ArrayType>::AddNode(std::string const &             node_name,
-                                      std::vector<std::string> const &inputs, Params... params)
+meta::IfIsFullyConnected<ArrayType, OperationType, std::string> Graph<ArrayType>::AddNode(
+    std::string const &node_name, std::vector<std::string> const &inputs, Params... params)
 {
   // guarantee unique op name
-	auto naming_result = UpdateVariableName<OperationType>(node_name);
-	bool is_duplicate   = naming_result.first;
-	std::string updated_name = naming_result.second;
-	
-	NodePtrType op;
-	if(!is_duplicate){
-		// Instantiate the node based on params
-		op      = std::make_shared<Node<ArrayType, OperationType>>(updated_name, params...);
-	}else{// if shared weight is specified by duplicate naming
-		// Instantiate the node based on pointer to shared target node
-		NodePtrType target_node = GetNode(node_name);
-		op      = std::make_shared<Node<ArrayType, OperationType>>(updated_name, target_node);
-	}
-	nodes_[updated_name] = op;
-	
+  auto        naming_result = UpdateVariableName<OperationType>(node_name);
+  bool        is_duplicate  = naming_result.first;
+  std::string updated_name  = naming_result.second;
+
+  std::shared_ptr<fetch::ml::Node<ArrayType, OperationType>> op;
+  if (!is_duplicate)
+  {
+    // Instantiate the node based on params
+    op = std::make_shared<Node<ArrayType, OperationType>>(updated_name, params...);
+  }
+  else
+  {  // if shared weight is specified by duplicate naming
+    // Instantiate the node based on pointer to shared target node
+    NodePtrType target_node = GetNode(node_name);
+
+    op = std::make_shared<Node<ArrayType, OperationType>>(updated_name, target_node, params...);
+  }
+  nodes_[updated_name] = op;
+
+  // assign inputs and outputs
+  for (auto const &i : inputs)
+  {
+    nodes_[updated_name]->AddInput(nodes_[i]);
+    nodes_[i]->AddOutput(nodes_[updated_name]);
+  }
+
+  // add to map of trainable ops if necessary
+  AddTrainable(updated_name, op);
+
+  // return unique node name (may not be identical to node_name)
+  return updated_name;
+}
+
+template <typename ArrayType>
+template <class OperationType, typename... Params>
+meta::IfIsNotFullyConnected<ArrayType, OperationType, std::string> Graph<ArrayType>::AddNode(
+    std::string const &node_name, std::vector<std::string> const &inputs, Params... params)
+{
+  // guarantee unique op name
+  auto naming_result = UpdateVariableName<OperationType>(node_name);
+
+  std::string updated_name = naming_result.second;
+
+  auto op = std::make_shared<Node<ArrayType, OperationType>>(updated_name, params...);
+
+  nodes_[updated_name] = op;
 
   // assign inputs and outputs
   for (auto const &i : inputs)
@@ -457,17 +493,19 @@ std::pair<bool, std::string> Graph<ArrayType>::UpdateVariableName(std::string co
   std::string op_descriptor = (OperationType::DESCRIPTOR);
   bool        is_duplicate  = false;
   // search graph for existing variable names
-  if (ret.empty()){ // if no name is specified, generate a default name
-	  std::uint64_t name_idx = 0;
-	  ret                    = op_descriptor + "_" + std::to_string(name_idx);
-	  while (!(nodes_.find(ret) == nodes_.end()))
-	  {
-		  ++name_idx;
-		  ret = op_descriptor + "_" + std::to_string(name_idx);
-	  }
+  if (ret.empty())
+  {  // if no name is specified, generate a default name
+    std::uint64_t name_idx = 0;
+    ret                    = op_descriptor + "_" + std::to_string(name_idx);
+    while (!(nodes_.find(ret) == nodes_.end()))
+    {
+      ++name_idx;
+      ret = op_descriptor + "_" + std::to_string(name_idx);
+    }
   }
-  else if (nodes_.find(ret) != nodes_.end()){ // if a duplicated name is specified, shared weight is assumed
-  	is_duplicate           = true;
+  else if (nodes_.find(ret) != nodes_.end())
+  {  // if a duplicated name is specified, shared weight is assumed
+    is_duplicate           = true;
     std::uint64_t name_idx = 1;
     ret                    = name + "_Copy_" + std::to_string(name_idx);
     while (!(nodes_.find(ret) == nodes_.end()))

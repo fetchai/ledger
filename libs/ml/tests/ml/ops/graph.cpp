@@ -25,7 +25,6 @@
 #include "ml/ops/placeholder.hpp"
 #include "ml/ops/subtract.hpp"
 
-
 #include "gtest/gtest.h"
 
 template <typename T>
@@ -103,17 +102,24 @@ TYPED_TEST(GraphTest, no_such_node_test)  // Use the class as a Node
   ASSERT_ANY_THROW(g.Evaluate("FullyConnected"));
 }
 
-TYPED_TEST(GraphTest, shared_weight_layer_construction_test){
-	using ArrayType = TypeParam;
-	using DataType = typename TypeParam::Type;
-	
-	fetch::ml::Graph<ArrayType> g;
-	
-	std::string input = g.template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>("Input", {});
-	std::string fc_1 = g.template AddNode<fetch::ml::layers::FullyConnected<ArrayType>>(
-	 "FC1", {input}, 28u * 28u, 10u, fetch::ml::details::ActivationType::NOTHING, fetch::ml::details::RegularisationType::NONE,
-	 static_cast<DataType>(0));
-	std::string fc_2 = g.template AddNode<fetch::ml::layers::FullyConnected<ArrayType>>("FC1", {input});
+TYPED_TEST(GraphTest, shared_weight_layer_construction_test)
+{
+  using ArrayType = TypeParam;
+  using DataType  = typename TypeParam::Type;
+
+  fetch::ml::Graph<ArrayType> g;
+
+  std::string input = g.template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>("Input", {});
+  std::string fc_1  = g.template AddNode<fetch::ml::layers::FullyConnected<ArrayType>>(
+      "FC1", {input}, 10u, 10u, fetch::ml::details::ActivationType::NOTHING,
+      fetch::ml::details::RegularisationType::NONE, static_cast<DataType>(0));
+  std::string fc_2 = g.template AddNode<fetch::ml::layers::FullyConnected<ArrayType>>(
+      "FC1", {input}, 10u, 10u, fetch::ml::details::ActivationType::NOTHING,
+      fetch::ml::details::RegularisationType::NONE, static_cast<DataType>(0));
+  std::string fc_3 = g.template AddNode<fetch::ml::layers::FullyConnected<ArrayType>>(
+      "FC1", {input}, 10u, 10u, fetch::ml::details::ActivationType::NOTHING,
+      fetch::ml::details::RegularisationType::NONE, static_cast<DataType>(0));
+  std::cout << fc_1 << "|||" << fc_2 << "|||" << fc_3 << std::endl;
 }
 
 TYPED_TEST(GraphTest,
