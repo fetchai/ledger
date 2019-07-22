@@ -98,8 +98,7 @@ public:
   json::JSONDocument JSON() const
   {
     LOG_STACK_TRACE_POINT;
-    json::JSONDocument x{body()};
-    return x;
+    return json::JSONDocument(body());
   }
 
   void SetMethod(Method method)
