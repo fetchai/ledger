@@ -36,8 +36,14 @@ class MsgPackByteArrayBuffer
   static char const *const LOGGING_NAME;
 
 public:
-  using byte_array_type   = byte_array::ByteArray;
+  using ByteArray   = byte_array::ByteArray;
   using size_counter_type = serializers::SizeCounter<MsgPackByteArrayBuffer>;
+
+  enum : uint8_t
+  {
+    SIGNED_INT8 = 0xd0
+    // TODO: add the rest and replace in code.
+  };
 
 
   MsgPackByteArrayBuffer()                              = default;
@@ -172,7 +178,7 @@ private:
   void AppendInternal(T const &arg, ARGS const &... args);
   void AppendInternal();
 
-  byte_array_type   data_;
+  ByteArray   data_;
   uint64_t          pos_ = 0;
   size_counter_type size_counter_;
 };

@@ -21,7 +21,7 @@ public:
     ++pos_;
     if(pos_ > size_)
     {
-      throw SerializableException(std::string("exceeded number of allocated elements in array serialization"));
+      throw SerializableException(std::string("exceeded number of allocated elements in map serialization"));
     }
     serializer_ << key;
     serializer_ << val;
@@ -33,7 +33,7 @@ public:
     ++pos_;
     if(pos_ > size_)
     {
-      throw SerializableException(std::string("exceeded number of allocated elements in array serialization"));
+      throw SerializableException(std::string("exceeded number of allocated elements in map serialization"));
     }
     serializer_ << key;
     serializer_ << val;

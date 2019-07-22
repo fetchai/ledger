@@ -88,7 +88,7 @@ public:
 namespace serializers {
 
 template< typename D >
-struct MapSerializer< ledger::Block::Body, D > // TODO: Consider using forward to bytearray
+struct MapSerializer< ledger::Block::Body, D > 
 {
 public:
   using Type = ledger::Block::Body;
@@ -107,7 +107,6 @@ public:
   template< typename Constructor >
   static void Serialize(Constructor & map_constructor, Type const & body)
   {
-
     auto map = map_constructor(9);
     map.Append(HASH, body.hash);
     map.Append(PREVIOUS_HASH, body.previous_hash);
@@ -122,22 +121,19 @@ public:
   template< typename MapDeserializer >
   static void Deserialize(MapDeserializer & map, Type & body)
   {
-    uint8_t key; 
-    // TODO: Change to expect
-    map.GetNextKeyPair(key, body.hash);
-    map.GetNextKeyPair(key, body.previous_hash);
-    map.GetNextKeyPair(key, body.merkle_hash);
-    map.GetNextKeyPair(key, body.block_number);
-    map.GetNextKeyPair(key, body.miner);
-    map.GetNextKeyPair(key, body.log2_num_lanes);
-    map.GetNextKeyPair(key, body.slices);
-    map.GetNextKeyPair(key, body.dag_epoch);
-    map.GetNextKeyPair(key, body.timestamp);
+    map.ExpectKeyGetValue(HASH, body.hash);
+    map.ExpectKeyGetValue(PREVIOUS_HASH, body.previous_hash);
+    map.ExpectKeyGetValue(MERKLE_HASH, body.merkle_hash);
+    map.ExpectKeyGetValue(BLOCK_NUMBER, body.block_number);
+    map.ExpectKeyGetValue(MINER, body.miner);
+    map.ExpectKeyGetValue(LOG2_NUM_LANES, body.log2_num_lanes);
+    map.ExpectKeyGetValue(DAG_EPOCH, body.dag_epoch);
+    map.ExpectKeyGetValue(TIMESTAMP, body.timestamp);
   }
 };
 
 template< typename D >
-struct MapSerializer< ledger::Block, D > // TODO: Consider using forward to bytearray
+struct MapSerializer< ledger::Block, D >
 {
 public:
   using Type = ledger::Block;
@@ -163,13 +159,11 @@ public:
   template< typename MapDeserializer >
   static void Deserialize(MapDeserializer & map, Type & block)
   {
-    uint8_t key;
-    // TODO: Change to expect    
-    map.GetNextKeyPair(key, block.body);
-    map.GetNextKeyPair(key, block.nonce);
-    map.GetNextKeyPair(key, block.proof); 
-    map.GetNextKeyPair(key, block.weight);
-    map.GetNextKeyPair(key, block.total_weight);
+    map.ExpectKeyGetValue(BODY, block.body);
+    map.ExpectKeyGetValue(NONCE, block.nonce);
+    map.ExpectKeyGetValue(PROOF, block.proof); 
+    map.ExpectKeyGetValue(WEIGHT, block.weight);
+    map.ExpectKeyGetValue(TOTAL_WEIGHT, block.total_weight);
 
   }  
 };

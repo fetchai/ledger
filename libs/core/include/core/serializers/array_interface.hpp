@@ -14,17 +14,15 @@ public:
   : serializer_{serializer}
   , size_{std::move(size)}
   { 
-    std::cout << "  - Serializing " << size << " elements." << std::endl;
   }
 
   template< typename T >
   void Append(T const &val)
   {
-    std::cout << "  - Element " << pos_ << " / " << size_ << std::endl;
     ++pos_;
     if(pos_ > size_)
     {
-      throw SerializableException(std::string("exceeded number of allocated elements in array serialization"));
+      throw SerializableException(std::string("exceded number of allocated elements in array serialization"));
     }
 
     serializer_ << val;
@@ -64,11 +62,12 @@ public:
       serializer_.ReadBytes(reinterpret_cast<uint8_t *>( &size ), sizeof(uint32_t));
       break;
     default:
-      if((opcode & CODE_FIXED) != CODE_FIXED)
+      if((opcode & 0xF0) != CODE_FIXED)
       {
+        std::cout << std::hex << int(opcode  & 0xF0) << " " << CODE_FIXED << " " << int(opcode) << std::endl;
         throw SerializableException(std::string("incorrect size opcode for array size."));
       }
-      size = static_cast< uint32_t >( opcode & 15 );
+      size = static_cast< uint32_t >( opcode & 0x0F );
     }
     size_ = static_cast< uint64_t >(size);
   }
