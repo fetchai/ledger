@@ -51,36 +51,35 @@ struct TestSerDeser
 
 namespace fetch {
 namespace serializers {
-
 template <typename D>
-struct MapSerializer<TestSerDeser, D>
+struct ArraySerializer<TestSerDeser, D>
 {
 public:
   using Type       = TestSerDeser;
   using DriverType = D;
 
-  static uint8_t const FIRST  = 1;
-  static uint8_t const SECOND = 2;
-  static uint8_t const THIRD  = 3;
-
   template <typename Constructor>
-  static void Serialize(Constructor &map_constructor, Type const &val)
+  static void Serialize(Constructor &array_constructor, Type const &b)
   {
-    auto map = map_constructor(3);
-    map.Append(FIRST, val.first);
-    map.Append(SECOND, val.second);
-    map.Append(THIRD, val.third);
+    auto array = array_constructor(3);
+    array.Append(b.first);
+    array.Append(b.second);
+    array.Append(b.third);
   }
 
-  template <typename MapDeserializer>
-  static void Deserialize(MapDeserializer &map, Type &val)
+  template <typename ArrayDeserializer>
+  static void Deserialize(ArrayDeserializer &array, Type &b)
   {
-    map.ExpectKeyGetValue(FIRST, val.first);
-    map.ExpectKeyGetValue(SECOND, val.second);
-    map.ExpectKeyGetValue(THIRD, val.third);
+    if (array.size() != 3)
+    {
+      throw SerializableException(std::string("expected 3 elements."));
+    }
+
+    array.GetNextValue(b.first);
+    array.GetNextValue(b.second);
+    array.GetNextValue(b.third);
   }
 };
-
 }  // namespace serializers
 }  // namespace fetch
 

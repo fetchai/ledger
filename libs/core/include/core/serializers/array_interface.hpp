@@ -78,7 +78,9 @@ public:
     default:
       if ((opcode & 0xF0) != CODE_FIXED)
       {
-        throw SerializableException(std::string("incorrect size opcode for array size."));
+        throw SerializableException(
+            std::string("incorrect size opcode for array size: " + std::to_string(int(opcode)) +
+                        " vs " + std::to_string(int(CODE_FIXED))));
       }
       size = static_cast<uint32_t>(opcode & 0x0F);
     }
