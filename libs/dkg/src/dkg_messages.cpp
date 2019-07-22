@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -18,30 +17,36 @@
 //------------------------------------------------------------------------------
 
 #include "core/logging.hpp"
-#include "http/json_response.hpp"
-#include "http/module.hpp"
-#include "telemetry/registry.hpp"
-
-#include <sstream>
+#include "dkg/dkg_messages.hpp"
 
 namespace fetch {
+namespace dkg {
 
-class TelemetryHttpModule : public http::HTTPModule
+constexpr char const *LOGGING_NAME = "DKGMessage";
+
+/**
+ * Getter funcion for the serialised message contained inside the
+ * DKGEnvelop
+ *
+ * @return Shared pointer to deserialised message
+ */
+std::shared_ptr<DKGMessage> DKGEnvelop::Message() const
 {
-public:
-  TelemetryHttpModule()
+  DKGSerializer serialiser{serialisedMessage_};
+  switch (type_)
   {
-    Get("/api/telemetry", "Telementry feed.",
-        [](http::ViewParameters const &, http::HTTPRequest const &) {
-          static auto const TXT_MIME_TYPE = http::mime_types::GetMimeTypeFromExtension(".txt");
-
-          // collect up the generated metrics for the system
-          std::ostringstream stream;
-          telemetry::Registry::Instance().Collect(stream);
-
-          return http::HTTPResponse(stream.str(), TXT_MIME_TYPE);
-        });
+  case MessageType::COEFFICIENT:
+    return std::make_shared<CoefficientsMessage>(serialiser);
+  case MessageType::SHARE:
+    return std::make_shared<SharesMessage>(serialiser);
+  case MessageType::COMPLAINT:
+    return std::make_shared<ComplaintsMessage>(serialiser);
+  default:
+    FETCH_LOG_ERROR(LOGGING_NAME, "Can not process payload");
+    assert(false);
+    return nullptr;  // For compiler warnings
   }
-};
+}
 
+}  // namespace dkg
 }  // namespace fetch

@@ -17,31 +17,24 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/logging.hpp"
-#include "http/json_response.hpp"
-#include "http/module.hpp"
-#include "telemetry/registry.hpp"
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wconversion"
+#pragma GCC diagnostic ignored "-Wpedantic"
+#endif
 
-#include <sstream>
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wconversion"
+#pragma clang diagnostic ignored "-Wpedantic"
+#endif
 
-namespace fetch {
+#include <mcl/bn256.hpp>
 
-class TelemetryHttpModule : public http::HTTPModule
-{
-public:
-  TelemetryHttpModule()
-  {
-    Get("/api/telemetry", "Telementry feed.",
-        [](http::ViewParameters const &, http::HTTPRequest const &) {
-          static auto const TXT_MIME_TYPE = http::mime_types::GetMimeTypeFromExtension(".txt");
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
 
-          // collect up the generated metrics for the system
-          std::ostringstream stream;
-          telemetry::Registry::Instance().Collect(stream);
-
-          return http::HTTPResponse(stream.str(), TXT_MIME_TYPE);
-        });
-  }
-};
-
-}  // namespace fetch
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif

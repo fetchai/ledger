@@ -19,8 +19,6 @@
 #include "core/macros.hpp"
 #include "core/reactor.hpp"
 
-#include "crypto/bls.hpp"
-#include "crypto/bls_dkg.hpp"
 #include "dkg/dkg_service.hpp"
 
 #include "network/management/network_manager.hpp"
@@ -34,8 +32,6 @@ using namespace fetch::crypto;
 
 int main(int argc, char **argv)
 {
-  fetch::crypto::details::BLSInitialiser init{};
-
   // Create (or load from file) this node's identity (pub/private key)
   // and print it out for external tool to use
   auto p2p_key = fetch::GenerateP2PKey();
@@ -56,7 +52,6 @@ int main(int argc, char **argv)
   // Parse command line args
   std::vector<std::string> args;
   std::vector<std::string> peer_ip_addresses;
-  std::vector<std::string> peer_addresses;
   for (int i = 1; i < argc; ++i)
   {
     args.emplace_back(std::string{argv[i]});
@@ -67,10 +62,6 @@ int main(int argc, char **argv)
       {
         peer_ip_addresses.push_back(args.back());
       }
-      else
-      {
-        peer_addresses.push_back(args.back());
-      }
     }
   }
 
@@ -80,20 +71,8 @@ int main(int argc, char **argv)
   auto muddle = std::make_shared<fetch::muddle::Muddle>(fetch::muddle::NetworkId{"TestDKGNetwork"},
                                                         p2p_key, network_manager, true, true);
 
-  dkg::DkgService::CabinetMembers members{};
-
-  for (auto const &i : peer_addresses)
-  {
-    members.insert(byte_array::FromBase64(i));
-  }
-
-  auto beacon_address = byte_array::FromBase64(args[0]);
-
-  FETCH_LOG_INFO(LOGGING_NAME, "beacon address: ", beacon_address,
-                 " B64: ", beacon_address.ToBase64());
-
-  std::shared_ptr<dkg::DkgService> dkg = std::make_unique<dkg::DkgService>(
-      muddle->AsEndpoint(), p2p_key->identity().identifier(), beacon_address);
+  std::shared_ptr<dkg::DkgService> dkg =
+      std::make_unique<dkg::DkgService>(muddle->AsEndpoint(), p2p_key->identity().identifier());
 
   // Start networking etc.
   network_manager.Start();
@@ -108,7 +87,7 @@ int main(int argc, char **argv)
   }
 
   // Important! Block until there are peers - dkg not resistant to this case
-  while (!(muddle->AsEndpoint().GetDirectlyConnectedPeers().size() == peer_ip_addresses.size()))
+  while (muddle->AsEndpoint().GetDirectlyConnectedPeers().size() != peer_ip_addresses.size())
   {
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
   }
@@ -116,17 +95,26 @@ int main(int argc, char **argv)
   FETCH_LOG_INFO(LOGGING_NAME,
                  "Connected peers: ", muddle->AsEndpoint().GetDirectlyConnectedPeers().size());
   FETCH_LOG_INFO(LOGGING_NAME, "expected connected peers: ", peer_ip_addresses.size());
-  FETCH_LOG_INFO(LOGGING_NAME, "Resetting cabinet");
+
+  // Create cabinet
+  dkg::DkgService::CabinetMembers members{p2p_key->identity().identifier()};
+  for (auto const &address : muddle->AsEndpoint().GetDirectlyConnectedPeers())
+  {
+    members.insert(address);
+  }
+  assert(members.size() == peer_ip_addresses.size() + 1);
+  auto index = std::distance(members.begin(), members.find(p2p_key->identity().identifier()));
+  FETCH_LOG_INFO(LOGGING_NAME, "Node ", index, " resetting cabinet");
 
   std::this_thread::sleep_for(std::chrono::milliseconds(5000));
 
-  dkg->ResetCabinet(members, std::size_t(std::stoi(args[2])));
+  dkg->ResetCabinet(members, uint32_t(std::stoi(args[2])));
 
   // Machinery to drive the FSM - attach and begin!
   reactor.Attach(dkg->GetWeakRunnable());
   reactor.Start();
 
-  std::this_thread::sleep_for(std::chrono::milliseconds(60000));  // 1 min
+  std::this_thread::sleep_for(std::chrono::seconds(1000));  // 1 min
 
   FETCH_LOG_INFO(LOGGING_NAME, "Finished. Quitting");
 

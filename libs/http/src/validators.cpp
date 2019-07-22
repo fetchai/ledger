@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -17,31 +16,23 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/logging.hpp"
-#include "http/json_response.hpp"
-#include "http/module.hpp"
-#include "telemetry/registry.hpp"
-
-#include <sstream>
+#include "http/validators.hpp"
 
 namespace fetch {
+namespace http {
+namespace validators {
 
-class TelemetryHttpModule : public http::HTTPModule
+Validator StringValue(uint16_t min_length, uint16_t max_length)
 {
-public:
-  TelemetryHttpModule()
-  {
-    Get("/api/telemetry", "Telementry feed.",
-        [](http::ViewParameters const &, http::HTTPRequest const &) {
-          static auto const TXT_MIME_TYPE = http::mime_types::GetMimeTypeFromExtension(".txt");
+  Validator x;
+  x.validator           = [](byte_array::ConstByteArray) { return true; };
+  x.schema              = variant::Variant::Object();
+  x.schema["type"]      = "string";
+  x.schema["minLength"] = min_length;
+  x.schema["maxLength"] = max_length;
+  return x;
+}
 
-          // collect up the generated metrics for the system
-          std::ostringstream stream;
-          telemetry::Registry::Instance().Collect(stream);
-
-          return http::HTTPResponse(stream.str(), TXT_MIME_TYPE);
-        });
-  }
-};
-
+}  // namespace validators
+}  // namespace http
 }  // namespace fetch
