@@ -736,7 +736,7 @@ inline Variant &Variant::operator[](ConstByteArray const &key)
   }
 
   // allocate an element
-  std::unique_ptr<Variant> variant{new Variant()};
+auto variant = std::make_unique<Variant>();
 
   // update the map
   object_.emplace(key, std::move(variant));
