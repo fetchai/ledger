@@ -68,7 +68,7 @@ Variant &Variant::operator=(Variant const &value)
   {
     for (auto const &element : value.object_)
     {
-      std::unique_ptr<Variant> variant{new Variant(*element.second)};
+auto variant = std::make_unique<Variant>(*element.second);
       // update our object
       object_.emplace(element.first, std::move(variant));
     }
