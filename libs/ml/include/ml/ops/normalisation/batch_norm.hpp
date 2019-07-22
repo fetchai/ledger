@@ -63,7 +63,7 @@ public:
     {
       auto t_it = inputs.at(0).get().View(i).cbegin();
       auto r_it = output.at(0).get().View(i).begin();
-      while(t_it.is_valid)
+      while (t_it.is_valid)
       {
         *r_it = ((*t_it) - mean) / (std_dev + fetch::math::numeric_lowest<DataType>());
         ++r_it;

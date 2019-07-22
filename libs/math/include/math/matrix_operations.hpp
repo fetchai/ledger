@@ -529,7 +529,7 @@ void ReduceSum(ArrayType const &obj1, SizeType axis, ArrayType &ret)
     for (SizeType j{0}; j < obj1.shape().at(obj1.shape().size() - 1); ++j)
     {
       auto it = obj1.View(j).cbegin();
-      while(it.is_valid())
+      while (it.is_valid())
       {
         *rit += *it;
         ++it;

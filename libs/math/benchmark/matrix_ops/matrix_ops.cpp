@@ -38,29 +38,29 @@ void BM_BooleanMaskEmpty(benchmark::State &state)
   }
 }
 
-BENCHMARK_TEMPLATE(BM_BooleanMaskEmpty, int, 3, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_BooleanMaskEmpty, float, 3, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_BooleanMaskEmpty, double, 3, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_BooleanMaskEmpty, int, 3, 256, 256)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_BooleanMaskEmpty, float, 3, 256, 256)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_BooleanMaskEmpty, double, 3, 256, 256)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_BooleanMaskEmpty, fetch::fixed_point::FixedPoint<16, 16>, 3, 256, 256)
-    ->Unit(benchmark::kMillisecond);
+    ->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_BooleanMaskEmpty, fetch::fixed_point::FixedPoint<32, 32>, 3, 256, 256)
-    ->Unit(benchmark::kMillisecond);
+    ->Unit(benchmark::kMicrosecond);
 
-BENCHMARK_TEMPLATE(BM_BooleanMaskEmpty, int, 128, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_BooleanMaskEmpty, float, 128, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_BooleanMaskEmpty, double, 128, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_BooleanMaskEmpty, int, 128, 256, 256)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_BooleanMaskEmpty, float, 128, 256, 256)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_BooleanMaskEmpty, double, 128, 256, 256)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_BooleanMaskEmpty, fetch::fixed_point::FixedPoint<16, 16>, 128, 256, 256)
-    ->Unit(benchmark::kMillisecond);
+    ->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_BooleanMaskEmpty, fetch::fixed_point::FixedPoint<32, 32>, 128, 256, 256)
-    ->Unit(benchmark::kMillisecond);
+    ->Unit(benchmark::kMicrosecond);
 
-BENCHMARK_TEMPLATE(BM_BooleanMaskEmpty, int, 256, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_BooleanMaskEmpty, float, 256, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_BooleanMaskEmpty, double, 256, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_BooleanMaskEmpty, int, 256, 256, 256)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_BooleanMaskEmpty, float, 256, 256, 256)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_BooleanMaskEmpty, double, 256, 256, 256)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_BooleanMaskEmpty, fetch::fixed_point::FixedPoint<16, 16>, 256, 256, 256)
-    ->Unit(benchmark::kMillisecond);
+    ->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_BooleanMaskEmpty, fetch::fixed_point::FixedPoint<32, 32>, 256, 256, 256)
-    ->Unit(benchmark::kMillisecond);
+    ->Unit(benchmark::kMicrosecond);
 
 template <class T, int C, int H, int W>
 void BM_BooleanMaskFull(benchmark::State &state)
@@ -77,23 +77,23 @@ void BM_BooleanMaskFull(benchmark::State &state)
   }
 }
 
-BENCHMARK_TEMPLATE(BM_BooleanMaskFull, int, 3, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_BooleanMaskFull, float, 3, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_BooleanMaskFull, double, 3, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_BooleanMaskFull, int, 3, 256, 256)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_BooleanMaskFull, float, 3, 256, 256)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_BooleanMaskFull, double, 3, 256, 256)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_BooleanMaskFull, fetch::fixed_point::FixedPoint<32, 32>, 3, 256, 256)
-    ->Unit(benchmark::kMillisecond);
+    ->Unit(benchmark::kMicrosecond);
 
-BENCHMARK_TEMPLATE(BM_BooleanMaskFull, int, 128, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_BooleanMaskFull, float, 128, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_BooleanMaskFull, double, 128, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_BooleanMaskFull, int, 128, 256, 256)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_BooleanMaskFull, float, 128, 256, 256)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_BooleanMaskFull, double, 128, 256, 256)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_BooleanMaskFull, fetch::fixed_point::FixedPoint<32, 32>, 128, 256, 256)
-    ->Unit(benchmark::kMillisecond);
+    ->Unit(benchmark::kMicrosecond);
 
-BENCHMARK_TEMPLATE(BM_BooleanMaskFull, int, 256, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_BooleanMaskFull, float, 256, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_BooleanMaskFull, double, 256, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_BooleanMaskFull, int, 256, 256, 256)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_BooleanMaskFull, float, 256, 256, 256)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_BooleanMaskFull, double, 256, 256, 256)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_BooleanMaskFull, fetch::fixed_point::FixedPoint<32, 32>, 256, 256, 256)
-    ->Unit(benchmark::kMillisecond);
+    ->Unit(benchmark::kMicrosecond);
 
 template <class T, int D, int H, int W>
 void BM_Scatter3D(benchmark::State &state)
@@ -123,29 +123,29 @@ void BM_Scatter3D(benchmark::State &state)
   }
 }
 
-BENCHMARK_TEMPLATE(BM_Scatter3D, int, 3, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_Scatter3D, float, 3, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_Scatter3D, double, 3, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_Scatter3D, int, 3, 256, 256)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_Scatter3D, float, 3, 256, 256)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_Scatter3D, double, 3, 256, 256)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_Scatter3D, fetch::fixed_point::FixedPoint<16, 16>, 3, 256, 256)
-    ->Unit(benchmark::kMillisecond);
+    ->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_Scatter3D, fetch::fixed_point::FixedPoint<32, 32>, 3, 256, 256)
-    ->Unit(benchmark::kMillisecond);
+    ->Unit(benchmark::kMicrosecond);
 
-BENCHMARK_TEMPLATE(BM_Scatter3D, int, 128, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_Scatter3D, float, 128, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_Scatter3D, double, 128, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_Scatter3D, int, 128, 256, 256)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_Scatter3D, float, 128, 256, 256)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_Scatter3D, double, 128, 256, 256)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_Scatter3D, fetch::fixed_point::FixedPoint<16, 16>, 128, 256, 256)
-    ->Unit(benchmark::kMillisecond);
+    ->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_Scatter3D, fetch::fixed_point::FixedPoint<32, 32>, 128, 256, 256)
-    ->Unit(benchmark::kMillisecond);
+    ->Unit(benchmark::kMicrosecond);
 
-BENCHMARK_TEMPLATE(BM_Scatter3D, int, 256, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_Scatter3D, float, 256, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_Scatter3D, double, 256, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_Scatter3D, int, 256, 256, 256)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_Scatter3D, float, 256, 256, 256)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_Scatter3D, double, 256, 256, 256)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_Scatter3D, fetch::fixed_point::FixedPoint<16, 16>, 256, 256, 256)
-    ->Unit(benchmark::kMillisecond);
+    ->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_Scatter3D, fetch::fixed_point::FixedPoint<32, 32>, 256, 256, 256)
-    ->Unit(benchmark::kMillisecond);
+    ->Unit(benchmark::kMicrosecond);
 
 template <class T, int C, int H, int W>
 void BM_Product(benchmark::State &state)
@@ -160,29 +160,29 @@ void BM_Product(benchmark::State &state)
   }
 }
 
-BENCHMARK_TEMPLATE(BM_Product, int, 3, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_Product, float, 3, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_Product, double, 3, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_Product, int, 3, 256, 256)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_Product, float, 3, 256, 256)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_Product, double, 3, 256, 256)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_Product, fetch::fixed_point::FixedPoint<16, 16>, 3, 256, 256)
-    ->Unit(benchmark::kMillisecond);
+    ->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_Product, fetch::fixed_point::FixedPoint<32, 32>, 3, 256, 256)
-    ->Unit(benchmark::kMillisecond);
+    ->Unit(benchmark::kMicrosecond);
 
-BENCHMARK_TEMPLATE(BM_Product, int, 128, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_Product, float, 128, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_Product, double, 128, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_Product, int, 128, 256, 256)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_Product, float, 128, 256, 256)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_Product, double, 128, 256, 256)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_Product, fetch::fixed_point::FixedPoint<16, 16>, 128, 256, 256)
-    ->Unit(benchmark::kMillisecond);
+    ->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_Product, fetch::fixed_point::FixedPoint<32, 32>, 128, 256, 256)
-    ->Unit(benchmark::kMillisecond);
+    ->Unit(benchmark::kMicrosecond);
 
-BENCHMARK_TEMPLATE(BM_Product, int, 256, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_Product, float, 256, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_Product, double, 256, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_Product, int, 256, 256, 256)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_Product, float, 256, 256, 256)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_Product, double, 256, 256, 256)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_Product, fetch::fixed_point::FixedPoint<16, 16>, 256, 256, 256)
-    ->Unit(benchmark::kMillisecond);
+    ->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_Product, fetch::fixed_point::FixedPoint<32, 32>, 256, 256, 256)
-    ->Unit(benchmark::kMillisecond);
+    ->Unit(benchmark::kMicrosecond);
 
 template <class T, int C, int H, int W>
 void BM_Max(benchmark::State &state)
@@ -197,29 +197,29 @@ void BM_Max(benchmark::State &state)
   }
 }
 
-BENCHMARK_TEMPLATE(BM_Max, int, 3, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_Max, float, 3, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_Max, double, 3, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_Max, int, 3, 256, 256)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_Max, float, 3, 256, 256)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_Max, double, 3, 256, 256)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_Max, fetch::fixed_point::FixedPoint<16, 16>, 3, 256, 256)
-    ->Unit(benchmark::kMillisecond);
+    ->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_Max, fetch::fixed_point::FixedPoint<32, 32>, 3, 256, 256)
-    ->Unit(benchmark::kMillisecond);
+    ->Unit(benchmark::kMicrosecond);
 
-BENCHMARK_TEMPLATE(BM_Max, int, 128, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_Max, float, 128, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_Max, double, 128, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_Max, int, 128, 256, 256)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_Max, float, 128, 256, 256)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_Max, double, 128, 256, 256)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_Max, fetch::fixed_point::FixedPoint<16, 16>, 128, 256, 256)
-    ->Unit(benchmark::kMillisecond);
+    ->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_Max, fetch::fixed_point::FixedPoint<32, 32>, 128, 256, 256)
-    ->Unit(benchmark::kMillisecond);
+    ->Unit(benchmark::kMicrosecond);
 
-BENCHMARK_TEMPLATE(BM_Max, int, 256, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_Max, float, 256, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_Max, double, 256, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_Max, int, 256, 256, 256)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_Max, float, 256, 256, 256)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_Max, double, 256, 256, 256)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_Max, fetch::fixed_point::FixedPoint<16, 16>, 256, 256, 256)
-    ->Unit(benchmark::kMillisecond);
+    ->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_Max, fetch::fixed_point::FixedPoint<32, 32>, 256, 256, 256)
-    ->Unit(benchmark::kMillisecond);
+    ->Unit(benchmark::kMicrosecond);
 
 template <class T, int C, int H, int W>
 void BM_MaxAxis(benchmark::State &state)
@@ -235,29 +235,29 @@ void BM_MaxAxis(benchmark::State &state)
   }
 }
 
-BENCHMARK_TEMPLATE(BM_MaxAxis, int, 3, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_MaxAxis, float, 3, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_MaxAxis, double, 3, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_MaxAxis, int, 3, 256, 256)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_MaxAxis, float, 3, 256, 256)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_MaxAxis, double, 3, 256, 256)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_MaxAxis, fetch::fixed_point::FixedPoint<16, 16>, 3, 256, 256)
-    ->Unit(benchmark::kMillisecond);
+    ->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_MaxAxis, fetch::fixed_point::FixedPoint<32, 32>, 3, 256, 256)
-    ->Unit(benchmark::kMillisecond);
+    ->Unit(benchmark::kMicrosecond);
 
-BENCHMARK_TEMPLATE(BM_MaxAxis, int, 128, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_MaxAxis, float, 128, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_MaxAxis, double, 128, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_MaxAxis, int, 128, 256, 256)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_MaxAxis, float, 128, 256, 256)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_MaxAxis, double, 128, 256, 256)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_MaxAxis, fetch::fixed_point::FixedPoint<16, 16>, 128, 256, 256)
-    ->Unit(benchmark::kMillisecond);
+    ->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_MaxAxis, fetch::fixed_point::FixedPoint<32, 32>, 128, 256, 256)
-    ->Unit(benchmark::kMillisecond);
+    ->Unit(benchmark::kMicrosecond);
 
-BENCHMARK_TEMPLATE(BM_MaxAxis, int, 256, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_MaxAxis, float, 256, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_MaxAxis, double, 256, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_MaxAxis, int, 256, 256, 256)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_MaxAxis, float, 256, 256, 256)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_MaxAxis, double, 256, 256, 256)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_MaxAxis, fetch::fixed_point::FixedPoint<16, 16>, 256, 256, 256)
-    ->Unit(benchmark::kMillisecond);
+    ->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_MaxAxis, fetch::fixed_point::FixedPoint<32, 32>, 256, 256, 256)
-    ->Unit(benchmark::kMillisecond);
+    ->Unit(benchmark::kMicrosecond);
 
 template <class T, int C, int H, int W>
 void BM_Min(benchmark::State &state)
@@ -272,29 +272,29 @@ void BM_Min(benchmark::State &state)
   }
 }
 
-BENCHMARK_TEMPLATE(BM_Min, int, 3, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_Min, float, 3, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_Min, double, 3, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_Min, int, 3, 256, 256)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_Min, float, 3, 256, 256)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_Min, double, 3, 256, 256)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_Min, fetch::fixed_point::FixedPoint<16, 16>, 3, 256, 256)
-    ->Unit(benchmark::kMillisecond);
+    ->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_Min, fetch::fixed_point::FixedPoint<32, 32>, 3, 256, 256)
-    ->Unit(benchmark::kMillisecond);
+    ->Unit(benchmark::kMicrosecond);
 
-BENCHMARK_TEMPLATE(BM_Min, int, 128, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_Min, float, 128, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_Min, double, 128, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_Min, int, 128, 256, 256)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_Min, float, 128, 256, 256)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_Min, double, 128, 256, 256)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_Min, fetch::fixed_point::FixedPoint<16, 16>, 128, 256, 256)
-    ->Unit(benchmark::kMillisecond);
+    ->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_Min, fetch::fixed_point::FixedPoint<32, 32>, 128, 256, 256)
-    ->Unit(benchmark::kMillisecond);
+    ->Unit(benchmark::kMicrosecond);
 
-BENCHMARK_TEMPLATE(BM_Min, int, 256, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_Min, float, 256, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_Min, double, 256, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_Min, int, 256, 256, 256)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_Min, float, 256, 256, 256)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_Min, double, 256, 256, 256)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_Min, fetch::fixed_point::FixedPoint<16, 16>, 256, 256, 256)
-    ->Unit(benchmark::kMillisecond);
+    ->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_Min, fetch::fixed_point::FixedPoint<32, 32>, 256, 256, 256)
-    ->Unit(benchmark::kMillisecond);
+    ->Unit(benchmark::kMicrosecond);
 
 template <class T, int H, int W>
 void BM_MinAxis(benchmark::State &state)
@@ -310,29 +310,29 @@ void BM_MinAxis(benchmark::State &state)
   }
 }
 
-BENCHMARK_TEMPLATE(BM_MinAxis, int, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_MinAxis, float, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_MinAxis, double, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_MinAxis, int, 256, 256)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_MinAxis, float, 256, 256)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_MinAxis, double, 256, 256)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_MinAxis, fetch::fixed_point::FixedPoint<16, 16>, 256, 256)
-    ->Unit(benchmark::kMillisecond);
+    ->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_MinAxis, fetch::fixed_point::FixedPoint<32, 32>, 256, 256)
-    ->Unit(benchmark::kMillisecond);
+    ->Unit(benchmark::kMicrosecond);
 
-BENCHMARK_TEMPLATE(BM_MinAxis, int, 512, 512)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_MinAxis, float, 512, 512)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_MinAxis, double, 512, 512)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_MinAxis, int, 512, 512)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_MinAxis, float, 512, 512)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_MinAxis, double, 512, 512)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_MinAxis, fetch::fixed_point::FixedPoint<16, 16>, 512, 512)
-    ->Unit(benchmark::kMillisecond);
+    ->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_MinAxis, fetch::fixed_point::FixedPoint<32, 32>, 512, 512)
-    ->Unit(benchmark::kMillisecond);
+    ->Unit(benchmark::kMicrosecond);
 
-BENCHMARK_TEMPLATE(BM_MinAxis, int, 1024, 1024)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_MinAxis, float, 1024, 1024)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_MinAxis, double, 1024, 1024)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_MinAxis, int, 1024, 1024)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_MinAxis, float, 1024, 1024)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_MinAxis, double, 1024, 1024)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_MinAxis, fetch::fixed_point::FixedPoint<16, 16>, 1024, 1024)
-    ->Unit(benchmark::kMillisecond);
+    ->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_MinAxis, fetch::fixed_point::FixedPoint<32, 32>, 1024, 1024)
-    ->Unit(benchmark::kMillisecond);
+    ->Unit(benchmark::kMicrosecond);
 
 template <class T, int C, int H, int W>
 void BM_Maximum(benchmark::State &state)
@@ -348,29 +348,29 @@ void BM_Maximum(benchmark::State &state)
   }
 }
 
-BENCHMARK_TEMPLATE(BM_Maximum, int, 3, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_Maximum, float, 3, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_Maximum, double, 3, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_Maximum, int, 3, 256, 256)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_Maximum, float, 3, 256, 256)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_Maximum, double, 3, 256, 256)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_Maximum, fetch::fixed_point::FixedPoint<16, 16>, 3, 256, 256)
-    ->Unit(benchmark::kMillisecond);
+    ->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_Maximum, fetch::fixed_point::FixedPoint<32, 32>, 3, 256, 256)
-    ->Unit(benchmark::kMillisecond);
+    ->Unit(benchmark::kMicrosecond);
 
-BENCHMARK_TEMPLATE(BM_Maximum, int, 128, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_Maximum, float, 128, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_Maximum, double, 128, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_Maximum, int, 128, 256, 256)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_Maximum, float, 128, 256, 256)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_Maximum, double, 128, 256, 256)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_Maximum, fetch::fixed_point::FixedPoint<16, 16>, 128, 256, 256)
-    ->Unit(benchmark::kMillisecond);
+    ->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_Maximum, fetch::fixed_point::FixedPoint<32, 32>, 128, 256, 256)
-    ->Unit(benchmark::kMillisecond);
+    ->Unit(benchmark::kMicrosecond);
 
-BENCHMARK_TEMPLATE(BM_Maximum, int, 256, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_Maximum, float, 256, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_Maximum, double, 256, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_Maximum, int, 256, 256, 256)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_Maximum, float, 256, 256, 256)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_Maximum, double, 256, 256, 256)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_Maximum, fetch::fixed_point::FixedPoint<16, 16>, 256, 256, 256)
-    ->Unit(benchmark::kMillisecond);
+    ->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_Maximum, fetch::fixed_point::FixedPoint<32, 32>, 256, 256, 256)
-    ->Unit(benchmark::kMillisecond);
+    ->Unit(benchmark::kMicrosecond);
 
 template <class T, int H, int W>
 void BM_ArgMaxAxis(benchmark::State &state)
@@ -386,29 +386,29 @@ void BM_ArgMaxAxis(benchmark::State &state)
   }
 }
 
-BENCHMARK_TEMPLATE(BM_ArgMaxAxis, int, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_ArgMaxAxis, float, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_ArgMaxAxis, double, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_ArgMaxAxis, int, 256, 256)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_ArgMaxAxis, float, 256, 256)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_ArgMaxAxis, double, 256, 256)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_ArgMaxAxis, fetch::fixed_point::FixedPoint<16, 16>, 256, 256)
-    ->Unit(benchmark::kMillisecond);
+    ->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_ArgMaxAxis, fetch::fixed_point::FixedPoint<32, 32>, 256, 256)
-    ->Unit(benchmark::kMillisecond);
+    ->Unit(benchmark::kMicrosecond);
 
-BENCHMARK_TEMPLATE(BM_ArgMaxAxis, int, 512, 512)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_ArgMaxAxis, float, 512, 512)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_ArgMaxAxis, double, 512, 512)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_ArgMaxAxis, int, 512, 512)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_ArgMaxAxis, float, 512, 512)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_ArgMaxAxis, double, 512, 512)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_ArgMaxAxis, fetch::fixed_point::FixedPoint<16, 16>, 512, 512)
-    ->Unit(benchmark::kMillisecond);
+    ->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_ArgMaxAxis, fetch::fixed_point::FixedPoint<32, 32>, 512, 512)
-    ->Unit(benchmark::kMillisecond);
+    ->Unit(benchmark::kMicrosecond);
 
-BENCHMARK_TEMPLATE(BM_ArgMaxAxis, int, 1024, 1024)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_ArgMaxAxis, float, 1024, 1024)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_ArgMaxAxis, double, 1024, 1024)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_ArgMaxAxis, int, 1024, 1024)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_ArgMaxAxis, float, 1024, 1024)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_ArgMaxAxis, double, 1024, 1024)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_ArgMaxAxis, fetch::fixed_point::FixedPoint<16, 16>, 1024, 1024)
-    ->Unit(benchmark::kMillisecond);
+    ->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_ArgMaxAxis, fetch::fixed_point::FixedPoint<32, 32>, 1024, 1024)
-    ->Unit(benchmark::kMillisecond);
+    ->Unit(benchmark::kMicrosecond);
 
 template <class T, int C, int H, int W>
 void BM_Sum(benchmark::State &state)
@@ -423,32 +423,70 @@ void BM_Sum(benchmark::State &state)
   }
 }
 
-BENCHMARK_TEMPLATE(BM_Sum, int, 3, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_Sum, float, 3, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_Sum, double, 3, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_Sum, int, 3, 256, 256)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_Sum, float, 3, 256, 256)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_Sum, double, 3, 256, 256)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_Sum, fetch::fixed_point::FixedPoint<16, 16>, 3, 256, 256)
-    ->Unit(benchmark::kMillisecond);
+    ->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_Sum, fetch::fixed_point::FixedPoint<32, 32>, 3, 256, 256)
-    ->Unit(benchmark::kMillisecond);
+    ->Unit(benchmark::kMicrosecond);
 
-BENCHMARK_TEMPLATE(BM_Sum, int, 128, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_Sum, float, 128, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_Sum, double, 128, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_Sum, int, 128, 256, 256)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_Sum, float, 128, 256, 256)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_Sum, double, 128, 256, 256)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_Sum, fetch::fixed_point::FixedPoint<16, 16>, 128, 256, 256)
-    ->Unit(benchmark::kMillisecond);
+    ->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_Sum, fetch::fixed_point::FixedPoint<32, 32>, 128, 256, 256)
-    ->Unit(benchmark::kMillisecond);
+    ->Unit(benchmark::kMicrosecond);
 
-BENCHMARK_TEMPLATE(BM_Sum, int, 256, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_Sum, float, 256, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_Sum, double, 256, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_Sum, int, 256, 256, 256)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_Sum, float, 256, 256, 256)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_Sum, double, 256, 256, 256)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_Sum, fetch::fixed_point::FixedPoint<16, 16>, 256, 256, 256)
-    ->Unit(benchmark::kMillisecond);
+    ->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_Sum, fetch::fixed_point::FixedPoint<32, 32>, 256, 256, 256)
-    ->Unit(benchmark::kMillisecond);
+    ->Unit(benchmark::kMicrosecond);
 
 template <class T, int H, int W>
-void BM_ReduceSum(benchmark::State &state)
+void BM_ReduceSum_FastAxis(benchmark::State &state)
+{
+  using SizeType = fetch::math::SizeType;
+
+  fetch::math::Tensor<T> t(std::vector<SizeType>{H, W});
+  fetch::math::Tensor<T> ret(std::vector<SizeType>{1, H});
+
+  for (auto _ : state)
+  {
+    fetch::math::ReduceSum(t, SizeType(0), ret);
+  }
+}
+
+BENCHMARK_TEMPLATE(BM_ReduceSum_FastAxis, int, 256, 256)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_ReduceSum_FastAxis, float, 256, 256)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_ReduceSum_FastAxis, double, 256, 256)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_ReduceSum_FastAxis, fetch::fixed_point::FixedPoint<16, 16>, 256, 256)
+    ->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_ReduceSum_FastAxis, fetch::fixed_point::FixedPoint<32, 32>, 256, 256)
+    ->Unit(benchmark::kMicrosecond);
+
+BENCHMARK_TEMPLATE(BM_ReduceSum_FastAxis, int, 512, 512)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_ReduceSum_FastAxis, float, 512, 512)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_ReduceSum_FastAxis, double, 512, 512)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_ReduceSum_FastAxis, fetch::fixed_point::FixedPoint<16, 16>, 512, 512)
+    ->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_ReduceSum_FastAxis, fetch::fixed_point::FixedPoint<32, 32>, 512, 512)
+    ->Unit(benchmark::kMicrosecond);
+
+BENCHMARK_TEMPLATE(BM_ReduceSum_FastAxis, int, 1024, 1024)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_ReduceSum_FastAxis, float, 1024, 1024)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_ReduceSum_FastAxis, double, 1024, 1024)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_ReduceSum_FastAxis, fetch::fixed_point::FixedPoint<16, 16>, 1024, 1024)
+    ->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_ReduceSum_FastAxis, fetch::fixed_point::FixedPoint<32, 32>, 1024, 1024)
+    ->Unit(benchmark::kMicrosecond);
+
+template <class T, int H, int W>
+void BM_ReduceSum_SlowAxis(benchmark::State &state)
 {
   using SizeType = fetch::math::SizeType;
 
@@ -461,29 +499,29 @@ void BM_ReduceSum(benchmark::State &state)
   }
 }
 
-BENCHMARK_TEMPLATE(BM_ReduceSum, int, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_ReduceSum, float, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_ReduceSum, double, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_ReduceSum, fetch::fixed_point::FixedPoint<16, 16>, 256, 256)
-    ->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_ReduceSum, fetch::fixed_point::FixedPoint<32, 32>, 256, 256)
-    ->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_ReduceSum_SlowAxis, int, 256, 256)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_ReduceSum_SlowAxis, float, 256, 256)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_ReduceSum_SlowAxis, double, 256, 256)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_ReduceSum_SlowAxis, fetch::fixed_point::FixedPoint<16, 16>, 256, 256)
+    ->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_ReduceSum_SlowAxis, fetch::fixed_point::FixedPoint<32, 32>, 256, 256)
+    ->Unit(benchmark::kMicrosecond);
 
-BENCHMARK_TEMPLATE(BM_ReduceSum, int, 512, 512)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_ReduceSum, float, 512, 512)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_ReduceSum, double, 512, 512)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_ReduceSum, fetch::fixed_point::FixedPoint<16, 16>, 512, 512)
-    ->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_ReduceSum, fetch::fixed_point::FixedPoint<32, 32>, 512, 512)
-    ->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_ReduceSum_SlowAxis, int, 512, 512)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_ReduceSum_SlowAxis, float, 512, 512)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_ReduceSum_SlowAxis, double, 512, 512)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_ReduceSum_SlowAxis, fetch::fixed_point::FixedPoint<16, 16>, 512, 512)
+    ->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_ReduceSum_SlowAxis, fetch::fixed_point::FixedPoint<32, 32>, 512, 512)
+    ->Unit(benchmark::kMicrosecond);
 
-BENCHMARK_TEMPLATE(BM_ReduceSum, int, 1024, 1024)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_ReduceSum, float, 1024, 1024)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_ReduceSum, double, 1024, 1024)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_ReduceSum, fetch::fixed_point::FixedPoint<16, 16>, 1024, 1024)
-    ->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_ReduceSum, fetch::fixed_point::FixedPoint<32, 32>, 1024, 1024)
-    ->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_ReduceSum_SlowAxis, int, 1024, 1024)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_ReduceSum_SlowAxis, float, 1024, 1024)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_ReduceSum_SlowAxis, double, 1024, 1024)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_ReduceSum_SlowAxis, fetch::fixed_point::FixedPoint<16, 16>, 1024, 1024)
+    ->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_ReduceSum_SlowAxis, fetch::fixed_point::FixedPoint<32, 32>, 1024, 1024)
+    ->Unit(benchmark::kMicrosecond);
 
 template <class T, int H, int W>
 void BM_ReduceMean(benchmark::State &state)
@@ -499,29 +537,29 @@ void BM_ReduceMean(benchmark::State &state)
   }
 }
 
-BENCHMARK_TEMPLATE(BM_ReduceMean, int, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_ReduceMean, float, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_ReduceMean, double, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_ReduceMean, int, 256, 256)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_ReduceMean, float, 256, 256)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_ReduceMean, double, 256, 256)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_ReduceMean, fetch::fixed_point::FixedPoint<16, 16>, 256, 256)
-    ->Unit(benchmark::kMillisecond);
+    ->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_ReduceMean, fetch::fixed_point::FixedPoint<32, 32>, 256, 256)
-    ->Unit(benchmark::kMillisecond);
+    ->Unit(benchmark::kMicrosecond);
 
-BENCHMARK_TEMPLATE(BM_ReduceMean, int, 512, 512)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_ReduceMean, float, 512, 512)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_ReduceMean, double, 512, 512)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_ReduceMean, int, 512, 512)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_ReduceMean, float, 512, 512)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_ReduceMean, double, 512, 512)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_ReduceMean, fetch::fixed_point::FixedPoint<16, 16>, 512, 512)
-    ->Unit(benchmark::kMillisecond);
+    ->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_ReduceMean, fetch::fixed_point::FixedPoint<32, 32>, 512, 512)
-    ->Unit(benchmark::kMillisecond);
+    ->Unit(benchmark::kMicrosecond);
 
-BENCHMARK_TEMPLATE(BM_ReduceMean, int, 1024, 1024)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_ReduceMean, float, 1024, 1024)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_ReduceMean, double, 1024, 1024)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_ReduceMean, int, 1024, 1024)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_ReduceMean, float, 1024, 1024)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_ReduceMean, double, 1024, 1024)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_ReduceMean, fetch::fixed_point::FixedPoint<16, 16>, 1024, 1024)
-    ->Unit(benchmark::kMillisecond);
+    ->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_ReduceMean, fetch::fixed_point::FixedPoint<32, 32>, 1024, 1024)
-    ->Unit(benchmark::kMillisecond);
+    ->Unit(benchmark::kMicrosecond);
 
 template <class T, int C, int H, int W>
 void BM_PeakToPeak(benchmark::State &state)
@@ -536,29 +574,29 @@ void BM_PeakToPeak(benchmark::State &state)
   }
 }
 
-BENCHMARK_TEMPLATE(BM_PeakToPeak, int, 3, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_PeakToPeak, float, 3, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_PeakToPeak, double, 3, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_PeakToPeak, int, 3, 256, 256)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_PeakToPeak, float, 3, 256, 256)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_PeakToPeak, double, 3, 256, 256)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_PeakToPeak, fetch::fixed_point::FixedPoint<16, 16>, 3, 256, 256)
-    ->Unit(benchmark::kMillisecond);
+    ->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_PeakToPeak, fetch::fixed_point::FixedPoint<32, 32>, 3, 256, 256)
-    ->Unit(benchmark::kMillisecond);
+    ->Unit(benchmark::kMicrosecond);
 
-BENCHMARK_TEMPLATE(BM_PeakToPeak, int, 128, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_PeakToPeak, float, 128, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_PeakToPeak, double, 128, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_PeakToPeak, int, 128, 256, 256)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_PeakToPeak, float, 128, 256, 256)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_PeakToPeak, double, 128, 256, 256)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_PeakToPeak, fetch::fixed_point::FixedPoint<16, 16>, 128, 256, 256)
-    ->Unit(benchmark::kMillisecond);
+    ->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_PeakToPeak, fetch::fixed_point::FixedPoint<32, 32>, 128, 256, 256)
-    ->Unit(benchmark::kMillisecond);
+    ->Unit(benchmark::kMicrosecond);
 
-BENCHMARK_TEMPLATE(BM_PeakToPeak, int, 256, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_PeakToPeak, float, 256, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_PeakToPeak, double, 256, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_PeakToPeak, int, 256, 256, 256)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_PeakToPeak, float, 256, 256, 256)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_PeakToPeak, double, 256, 256, 256)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_PeakToPeak, fetch::fixed_point::FixedPoint<16, 16>, 256, 256, 256)
-    ->Unit(benchmark::kMillisecond);
+    ->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_PeakToPeak, fetch::fixed_point::FixedPoint<32, 32>, 256, 256, 256)
-    ->Unit(benchmark::kMillisecond);
+    ->Unit(benchmark::kMicrosecond);
 
 template <class T, int H, int W>
 void BM_Dot(benchmark::State &state)
@@ -574,29 +612,29 @@ void BM_Dot(benchmark::State &state)
   }
 }
 
-BENCHMARK_TEMPLATE(BM_Dot, int, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_Dot, float, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_Dot, double, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_Dot, int, 256, 256)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_Dot, float, 256, 256)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_Dot, double, 256, 256)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_Dot, fetch::fixed_point::FixedPoint<16, 16>, 256, 256)
-    ->Unit(benchmark::kMillisecond);
+    ->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_Dot, fetch::fixed_point::FixedPoint<32, 32>, 256, 256)
-    ->Unit(benchmark::kMillisecond);
+    ->Unit(benchmark::kMicrosecond);
 
-BENCHMARK_TEMPLATE(BM_Dot, int, 384, 384)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_Dot, float, 384, 384)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_Dot, double, 384, 384)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_Dot, int, 384, 384)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_Dot, float, 384, 384)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_Dot, double, 384, 384)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_Dot, fetch::fixed_point::FixedPoint<16, 16>, 384, 384)
-    ->Unit(benchmark::kMillisecond);
+    ->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_Dot, fetch::fixed_point::FixedPoint<32, 32>, 384, 384)
-    ->Unit(benchmark::kMillisecond);
+    ->Unit(benchmark::kMicrosecond);
 
-BENCHMARK_TEMPLATE(BM_Dot, int, 512, 512)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_Dot, float, 512, 512)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_Dot, double, 512, 512)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_Dot, int, 512, 512)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_Dot, float, 512, 512)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_Dot, double, 512, 512)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_Dot, fetch::fixed_point::FixedPoint<16, 16>, 512, 512)
-    ->Unit(benchmark::kMillisecond);
+    ->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_Dot, fetch::fixed_point::FixedPoint<32, 32>, 512, 512)
-    ->Unit(benchmark::kMillisecond);
+    ->Unit(benchmark::kMicrosecond);
 
 template <class T, int H, int W>
 void BM_DotTranspose(benchmark::State &state)
@@ -612,29 +650,29 @@ void BM_DotTranspose(benchmark::State &state)
   }
 }
 
-BENCHMARK_TEMPLATE(BM_DotTranspose, int, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_DotTranspose, float, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_DotTranspose, double, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_DotTranspose, int, 256, 256)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_DotTranspose, float, 256, 256)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_DotTranspose, double, 256, 256)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_DotTranspose, fetch::fixed_point::FixedPoint<16, 16>, 256, 256)
-    ->Unit(benchmark::kMillisecond);
+    ->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_DotTranspose, fetch::fixed_point::FixedPoint<32, 32>, 256, 256)
-    ->Unit(benchmark::kMillisecond);
+    ->Unit(benchmark::kMicrosecond);
 
-BENCHMARK_TEMPLATE(BM_DotTranspose, int, 384, 384)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_DotTranspose, float, 384, 384)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_DotTranspose, double, 384, 384)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_DotTranspose, int, 384, 384)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_DotTranspose, float, 384, 384)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_DotTranspose, double, 384, 384)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_DotTranspose, fetch::fixed_point::FixedPoint<16, 16>, 384, 384)
-    ->Unit(benchmark::kMillisecond);
+    ->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_DotTranspose, fetch::fixed_point::FixedPoint<32, 32>, 384, 384)
-    ->Unit(benchmark::kMillisecond);
+    ->Unit(benchmark::kMicrosecond);
 
-BENCHMARK_TEMPLATE(BM_DotTranspose, int, 512, 512)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_DotTranspose, float, 512, 512)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_DotTranspose, double, 512, 512)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_DotTranspose, int, 512, 512)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_DotTranspose, float, 512, 512)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_DotTranspose, double, 512, 512)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_DotTranspose, fetch::fixed_point::FixedPoint<16, 16>, 512, 512)
-    ->Unit(benchmark::kMillisecond);
+    ->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_DotTranspose, fetch::fixed_point::FixedPoint<32, 32>, 512, 512)
-    ->Unit(benchmark::kMillisecond);
+    ->Unit(benchmark::kMicrosecond);
 
 template <class T, int H, int W>
 void BM_TransposeDot(benchmark::State &state)
@@ -650,29 +688,29 @@ void BM_TransposeDot(benchmark::State &state)
   }
 }
 
-BENCHMARK_TEMPLATE(BM_TransposeDot, int, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_TransposeDot, float, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_TransposeDot, double, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_TransposeDot, int, 256, 256)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_TransposeDot, float, 256, 256)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_TransposeDot, double, 256, 256)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_TransposeDot, fetch::fixed_point::FixedPoint<16, 16>, 256, 256)
-    ->Unit(benchmark::kMillisecond);
+    ->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_TransposeDot, fetch::fixed_point::FixedPoint<32, 32>, 256, 256)
-    ->Unit(benchmark::kMillisecond);
+    ->Unit(benchmark::kMicrosecond);
 
-BENCHMARK_TEMPLATE(BM_TransposeDot, int, 384, 384)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_TransposeDot, float, 384, 384)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_TransposeDot, double, 384, 384)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_TransposeDot, int, 384, 384)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_TransposeDot, float, 384, 384)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_TransposeDot, double, 384, 384)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_TransposeDot, fetch::fixed_point::FixedPoint<16, 16>, 384, 384)
-    ->Unit(benchmark::kMillisecond);
+    ->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_TransposeDot, fetch::fixed_point::FixedPoint<32, 32>, 384, 384)
-    ->Unit(benchmark::kMillisecond);
+    ->Unit(benchmark::kMicrosecond);
 
-BENCHMARK_TEMPLATE(BM_TransposeDot, int, 512, 512)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_TransposeDot, float, 512, 512)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_TransposeDot, double, 512, 512)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_TransposeDot, int, 512, 512)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_TransposeDot, float, 512, 512)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_TransposeDot, double, 512, 512)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_TransposeDot, fetch::fixed_point::FixedPoint<16, 16>, 512, 512)
-    ->Unit(benchmark::kMillisecond);
+    ->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_TransposeDot, fetch::fixed_point::FixedPoint<32, 32>, 512, 512)
-    ->Unit(benchmark::kMillisecond);
+    ->Unit(benchmark::kMicrosecond);
 
 template <class T, int C, int H, int W>
 void BM_DynamicStitch(benchmark::State &state)
@@ -689,28 +727,28 @@ void BM_DynamicStitch(benchmark::State &state)
   }
 }
 
-BENCHMARK_TEMPLATE(BM_DynamicStitch, int, 3, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_DynamicStitch, float, 3, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_DynamicStitch, double, 3, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_DynamicStitch, int, 3, 256, 256)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_DynamicStitch, float, 3, 256, 256)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_DynamicStitch, double, 3, 256, 256)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_DynamicStitch, fetch::fixed_point::FixedPoint<16, 16>, 3, 256, 256)
-    ->Unit(benchmark::kMillisecond);
+    ->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_DynamicStitch, fetch::fixed_point::FixedPoint<32, 32>, 3, 256, 256)
-    ->Unit(benchmark::kMillisecond);
+    ->Unit(benchmark::kMicrosecond);
 
-BENCHMARK_TEMPLATE(BM_DynamicStitch, int, 128, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_DynamicStitch, float, 128, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_DynamicStitch, double, 128, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_DynamicStitch, int, 128, 256, 256)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_DynamicStitch, float, 128, 256, 256)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_DynamicStitch, double, 128, 256, 256)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_DynamicStitch, fetch::fixed_point::FixedPoint<16, 16>, 128, 256, 256)
-    ->Unit(benchmark::kMillisecond);
+    ->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_DynamicStitch, fetch::fixed_point::FixedPoint<32, 32>, 128, 256, 256)
-    ->Unit(benchmark::kMillisecond);
+    ->Unit(benchmark::kMicrosecond);
 
-BENCHMARK_TEMPLATE(BM_DynamicStitch, int, 256, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_DynamicStitch, float, 256, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_DynamicStitch, double, 256, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_DynamicStitch, int, 256, 256, 256)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_DynamicStitch, float, 256, 256, 256)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_DynamicStitch, double, 256, 256, 256)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_DynamicStitch, fetch::fixed_point::FixedPoint<16, 16>, 256, 256, 256)
-    ->Unit(benchmark::kMillisecond);
+    ->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_DynamicStitch, fetch::fixed_point::FixedPoint<32, 32>, 256, 256, 256)
-    ->Unit(benchmark::kMillisecond);
+    ->Unit(benchmark::kMicrosecond);
 
 BENCHMARK_MAIN();

@@ -58,21 +58,22 @@ public:
     std::string input =
         this->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>(name + "_Input", {});
 
-//    std::string gamma =
-//        this->template AddNode<fetch::ml::ops::Weights<TensorType>>(name + "_Gamma", {});
-//    TensorType gamma_data(data_shape);
-//    fetch::ml::ops::Weights<TensorType>::Initialise(gamma_data, data_size, 1, init_mode);
-//
-//    std::string beta =
-//        this->template AddNode<fetch::ml::ops::Weights<TensorType>>(name + "_Beta", {});
-//    TensorType beta_data(data_shape);
-//    fetch::ml::ops::Weights<TensorType>::Initialise(beta_data, data_size, 1, init_mode);
-//
-//    this->SetInput(gamma, gamma_data);
-//    this->SetInput(beta, beta_data);
+    //    std::string gamma =
+    //        this->template AddNode<fetch::ml::ops::Weights<TensorType>>(name + "_Gamma", {});
+    //    TensorType gamma_data(data_shape);
+    //    fetch::ml::ops::Weights<TensorType>::Initialise(gamma_data, data_size, 1, init_mode);
+    //
+    //    std::string beta =
+    //        this->template AddNode<fetch::ml::ops::Weights<TensorType>>(name + "_Beta", {});
+    //    TensorType beta_data(data_shape);
+    //    fetch::ml::ops::Weights<TensorType>::Initialise(beta_data, data_size, 1, init_mode);
+    //
+    //    this->SetInput(gamma, gamma_data);
+    //    this->SetInput(beta, beta_data);
 
     std::string mean_normalise_output =
-        this->template AddNode<fetch::ml::ops::BatchNorm<TensorType>>(name + "_MeanNormalise", {input});
+        this->template AddNode<fetch::ml::ops::BatchNorm<TensorType>>(name + "_MeanNormalise",
+                                                                      {input});
 
     this->AddInputNode(input);
     this->SetOutputNode(output);
