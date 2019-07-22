@@ -33,15 +33,21 @@ using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor
                                  fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
 TYPED_TEST_CASE(ScalerTest, MyTypes);
 
-TYPED_TEST(ScalerTest, min_max_test)
+TYPED_TEST(ScalerTest, min_max_2d_test)
 {
   using DataType = typename TypeParam::Type;
+  using SizeType = typename fetch::math::SizeType;
 
-  TypeParam data(std::vector<fetch::math::SizeType>({8, 6, 4}));
+  std::vector<SizeType> tensor_shape = {2, 4};
+
+  TypeParam data(tensor_shape);
   data.FillUniformRandom();
 
-  TypeParam norm_data(std::vector<fetch::math::SizeType>({8, 6, 4}));
-  TypeParam de_norm_data(std::vector<fetch::math::SizeType>({8, 6, 4}));
+  // multiplication to push data outside of 0-1 range
+  data *= static_cast<DataType>(1000);
+
+  TypeParam norm_data(tensor_shape);
+  TypeParam de_norm_data(tensor_shape);
 
   fetch::ml::utilities::MinMaxScaler<TypeParam> scaler;
   scaler.SetScale(data);
@@ -54,4 +60,36 @@ TYPED_TEST(ScalerTest, min_max_test)
 
   EXPECT_TRUE(data.AllClose(de_norm_data, fetch::math::function_tolerance<DataType>(),
                             fetch::math::function_tolerance<DataType>()));
+
+  EXPECT_TRUE(fetch::math::Max(norm_data) <= static_cast<DataType>(1));
+  EXPECT_TRUE(fetch::math::Min(norm_data) >= static_cast<DataType>(0));
+}
+
+TYPED_TEST(ScalerTest, min_max_3d_test)
+{
+  using DataType = typename TypeParam::Type;
+  using SizeType = typename fetch::math::SizeType;
+
+  std::vector<SizeType> tensor_shape = {2, 3, 4};
+
+  TypeParam data(tensor_shape);
+  data.FillUniformRandom();
+
+  TypeParam norm_data(tensor_shape);
+  TypeParam de_norm_data(tensor_shape);
+
+  fetch::ml::utilities::MinMaxScaler<TypeParam> scaler;
+  scaler.SetScale(data);
+
+  scaler.Normalise(data, norm_data);
+  scaler.DeNormalise(norm_data, de_norm_data);
+
+  EXPECT_EQ(data.shape(), norm_data.shape());
+  EXPECT_EQ(de_norm_data.shape(), norm_data.shape());
+
+  EXPECT_TRUE(data.AllClose(de_norm_data, fetch::math::function_tolerance<DataType>(),
+                            fetch::math::function_tolerance<DataType>()));
+
+  EXPECT_TRUE(fetch::math::Max(norm_data) <= static_cast<DataType>(1));
+  EXPECT_TRUE(fetch::math::Min(norm_data) >= static_cast<DataType>(0));
 }

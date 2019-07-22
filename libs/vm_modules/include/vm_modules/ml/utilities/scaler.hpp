@@ -65,14 +65,18 @@ public:
   {
     MathTensorType output_tensor(input_tensor->shape());
     scaler_->Normalise(input_tensor->GetConstTensor(), output_tensor);
-    return this->vm_->CreateNewObject<VMTensorType>(output_tensor);
+    auto tmp = this->vm_->CreateNewObject<VMTensorType>(output_tensor);
+    std::cout << "tmp.ToString(): " << tmp->GetTensor().ToString() << std::endl;
+    return tmp;
   }
 
   fetch::vm::Ptr<VMTensorType> DeNormalise(fetch::vm::Ptr<VMTensorType> const &input_tensor)
   {
     MathTensorType output_tensor(input_tensor->shape());
     scaler_->DeNormalise(input_tensor->GetConstTensor(), output_tensor);
-    return this->vm_->CreateNewObject<VMTensorType>(output_tensor);
+    auto tmp = this->vm_->CreateNewObject<VMTensorType>(output_tensor);
+    std::cout << "tmp.ToString(): " << tmp->GetTensor().ToString() << std::endl;
+    return tmp;
   }
 
   static void Bind(fetch::vm::Module &module)

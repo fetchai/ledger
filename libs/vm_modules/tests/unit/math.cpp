@@ -183,4 +183,5 @@ TEST_F(MathTests, tensor_state_test)
 
   EXPECT_TRUE(gt.AllClose(tensor->GetTensor()));
 }
+
 }  // namespace

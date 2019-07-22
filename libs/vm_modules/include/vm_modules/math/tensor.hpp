@@ -70,7 +70,9 @@ public:
         .CreateMemberFunction("at", &VMTensor::AtThree)
         .CreateMemberFunction("setAt", &VMTensor::SetAt)
         .CreateMemberFunction("fill", &VMTensor::Fill)
+        .CreateMemberFunction("fillRandom", &VMTensor::FillRandom)
         .CreateMemberFunction("reshape", &VMTensor::Reshape)
+        .CreateMemberFunction("size", &VMTensor::size)
         .CreateMemberFunction("toString", &VMTensor::ToString);
   }
 
@@ -79,11 +81,16 @@ public:
     return tensor_.shape();
   }
 
+  SizeType size()
+  {
+    return tensor_.size();
+  }
+
   ////////////////////////////////////
   /// ACCESSING AND SETTING VALUES ///
   ////////////////////////////////////
 
-  DataType AtOne(uint64_t idx1)
+  DataType AtOne(SizeType idx1)
   {
     return tensor_.At(idx1);
   }
@@ -111,6 +118,11 @@ public:
   void Fill(DataType const &value)
   {
     tensor_.Fill(value);
+  }
+
+  void FillRandom()
+  {
+    tensor_.FillUniformRandom();
   }
 
   bool Reshape(fetch::vm::Ptr<fetch::vm::Array<SizeType>> const &new_shape)
