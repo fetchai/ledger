@@ -19,7 +19,7 @@
 #include "math/activation_functions/softmax.hpp"
 #include "math/statistics/mean.hpp"
 #include "math/tensor.hpp"
-#include "ml/layers/layers.hpp"
+#include "ml/layers/fully_connected.hpp"
 #include "ml/ops/activation.hpp"
 #include "ml/ops/loss_functions.hpp"
 #include "ml/ops/weights.hpp"
