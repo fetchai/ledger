@@ -21,7 +21,7 @@
 
 #include "gtest/gtest.h"
 
-using namespace fetch::vectorize;
+using namespace fetch::vectorise;
 
 TEST(vectorise_sse_gtest, register_test1)
 {

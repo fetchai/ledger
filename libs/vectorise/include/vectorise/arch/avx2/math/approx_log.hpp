@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 namespace fetch {
-namespace vectorize {
+namespace vectorise {
 
 inline VectorRegister<float, 128> approx_log(VectorRegister<float, 128> const &x)
 {
@@ -63,5 +63,5 @@ inline VectorRegister<double, 128> approx_log(VectorRegister<double, 128> const 
   return a * (y - b);
 }
 
-}  // namespace vectorize
+}  // namespace vectorise
 }  // namespace fetch

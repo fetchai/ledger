@@ -31,7 +31,7 @@ using vector_type = typename array_type::VectorRegisterType;
 void Exponentials(array_type const &A, array_type &C)
 {
   C.in_parallel().Apply(
-      [](vector_type const &x, vector_type &y) { y = fetch::vectorize::approx_exp(x); }, A);
+      [](vector_type const &x, vector_type &y) { y = fetch::vectorise::approx_exp(x); }, A);
 }
 
 TEST(vectorise_approx_exp_gtest, exp_test)

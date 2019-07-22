@@ -31,7 +31,7 @@
 #include <iostream>
 
 namespace fetch {
-namespace vectorize {
+namespace vectorise {
 
 // SSE integers
 template <>
@@ -180,5 +180,5 @@ inline VectorRegister<int32_t, 128> shift_elements_right(VectorRegister<int32_t,
   return n;
 }
 
-}  // namespace vectorize
+}  // namespace vectorise
 }  // namespace fetch

@@ -22,7 +22,7 @@
 #include <cassert>
 
 namespace fetch {
-namespace vectorize {
+namespace vectorise {
 
 template <typename T, std::size_t N = sizeof(T)>
 class VectorRegisterIterator
@@ -53,5 +53,5 @@ private:
   mm_register_type *ptr_;
   mm_register_type *end_;
 };
-}  // namespace vectorize
+}  // namespace vectorise
 }  // namespace fetch

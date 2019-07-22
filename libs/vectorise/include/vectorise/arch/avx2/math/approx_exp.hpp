@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 namespace fetch {
-namespace vectorize {
+namespace vectorise {
 
 inline VectorRegister<float, 128> approx_exp(VectorRegister<float, 128> const &x)
 {
@@ -62,5 +62,5 @@ inline VectorRegister<double, 128> approx_exp(VectorRegister<double, 128> const 
   return VectorRegister<double, 128>(_mm_castsi128_pd(conv));
 }
 
-}  // namespace vectorize
+}  // namespace vectorise
 }  // namespace fetch

@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 namespace fetch {
-namespace vectorize {
+namespace vectorise {
 
 template <typename T, std::size_t S>
 VectorRegister<T, S> pow(VectorRegister<T, S> base, int p)
@@ -43,5 +43,5 @@ VectorRegister<T, S> pow(VectorRegister<T, S> base, int p)
   return result;
 }
 
-}  // namespace vectorize
+}  // namespace vectorise
 }  // namespace fetch

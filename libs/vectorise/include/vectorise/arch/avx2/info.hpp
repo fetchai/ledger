@@ -25,7 +25,7 @@
 #include <smmintrin.h>
 
 namespace fetch {
-namespace vectorize {
+namespace vectorise {
 
 template <>
 struct VectorInfo<uint8_t, 128>
@@ -124,5 +124,5 @@ struct VectorInfo<double, 256>
   using naitve_type   = double;
   using register_type = __m256d;
 };
-}  // namespace vectorize
+}  // namespace vectorise
 }  // namespace fetch

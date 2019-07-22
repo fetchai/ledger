@@ -22,7 +22,7 @@
 #include <cstddef>
 
 namespace fetch {
-namespace vectorize {
+namespace vectorise {
 
 template <typename T, std::size_t S>
 VectorRegister<T, S> exp(VectorRegister<T, S> x, T const &precision = 0.00001)
@@ -43,5 +43,5 @@ VectorRegister<T, S> exp(VectorRegister<T, S> x, T const &precision = 0.00001)
   return ret;
 }
 
-}  // namespace vectorize
+}  // namespace vectorise
 }  // namespace fetch

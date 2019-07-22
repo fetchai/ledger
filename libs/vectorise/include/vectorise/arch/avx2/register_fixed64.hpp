@@ -31,7 +31,7 @@
 #include <iostream>
 
 namespace fetch {
-namespace vectorize {
+namespace vectorise {
 
 template <>
 class VectorRegister<fixed_point::FixedPoint<32, 32>, 128>
@@ -223,5 +223,5 @@ inline fixed_point::FixedPoint<32, 32> reduce(
   return fixed_point::FixedPoint<32, 32>{};
 }
 
-}  // namespace vectorize
+}  // namespace vectorise
 }  // namespace fetch

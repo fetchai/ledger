@@ -30,7 +30,7 @@
 #include <smmintrin.h>
 
 namespace fetch {
-namespace vectorize {
+namespace vectorise {
 
 // SSE integers
 template <typename T>
@@ -447,6 +447,6 @@ inline float first_element(VectorRegister<float, 256> const &x)
   return _mm256_cvtss_f32(x.data());
 }
 
-}  // namespace vectorize
+}  // namespace vectorise
 }  // namespace fetch
 #endif

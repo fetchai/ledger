@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 namespace fetch {
-namespace vectorize {
+namespace vectorise {
 
 inline VectorRegister<float, 128> min(VectorRegister<float, 128> const &a,
                                       VectorRegister<float, 128> const &b)
@@ -32,5 +32,5 @@ inline VectorRegister<double, 128> min(VectorRegister<double, 128> const &a,
   return VectorRegister<double, 128>(_mm_min_pd(a.data(), b.data()));
 }
 
-}  // namespace vectorize
+}  // namespace vectorise
 }  // namespace fetch

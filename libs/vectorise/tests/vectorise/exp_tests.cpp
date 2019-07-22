@@ -31,7 +31,7 @@ using vector_type = typename array_type::VectorRegisterType;
 
 void Exponentials(array_type const &A, array_type &C)
 {
-  C.in_parallel().Apply([](vector_type const &a, vector_type &c) { c = fetch::vectorize::exp(a); },
+  C.in_parallel().Apply([](vector_type const &a, vector_type &c) { c = fetch::vectorise::exp(a); },
                         A);
 }
 

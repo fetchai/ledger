@@ -19,8 +19,8 @@
 
 #include "vectorise/arch/avx2/info.hpp"
 #include "vectorise/arch/avx2/register_double.hpp"
-#include "vectorise/arch/avx2/register_fixed16_16.hpp"
-#include "vectorise/arch/avx2/register_fixed32_32.hpp"
+#include "vectorise/arch/avx2/register_fixed32.hpp"
+#include "vectorise/arch/avx2/register_fixed64.hpp"
 #include "vectorise/arch/avx2/register_float.hpp"
 #include "vectorise/arch/avx2/register_int32.hpp"
 

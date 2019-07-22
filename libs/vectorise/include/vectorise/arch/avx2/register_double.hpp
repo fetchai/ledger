@@ -31,7 +31,7 @@
 #include <smmintrin.h>
 
 namespace fetch {
-namespace vectorize {
+namespace vectorise {
 
 namespace details {
 template <typename T, std::size_t N>
@@ -278,5 +278,5 @@ inline bool any_less_than(VectorRegister<double, 128> const &x,
   return _mm_movemask_epi8(r) != 0;
 }
 
-}  // namespace vectorize
+}  // namespace vectorise
 }  // namespace fetch

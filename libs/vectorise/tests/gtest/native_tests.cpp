@@ -26,7 +26,7 @@
 
 namespace {
 
-using namespace fetch::vectorize;
+using namespace fetch::vectorise;
 
 template <typename T>
 using NativeRegister = VectorRegister<T>;

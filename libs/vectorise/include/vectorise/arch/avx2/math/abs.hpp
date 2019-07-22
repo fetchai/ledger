@@ -23,7 +23,7 @@
 #include <limits>
 
 namespace fetch {
-namespace vectorize {
+namespace vectorise {
 
 inline VectorRegister<float, 128> abs(VectorRegister<float, 128> const &a)
 {
@@ -37,5 +37,5 @@ inline VectorRegister<double, 128> abs(VectorRegister<double, 128> const &a)
   return VectorRegister<double, 128>(_mm_and_pd(mask, a.data()));
 }
 
-}  // namespace vectorize
+}  // namespace vectorise
 }  // namespace fetch

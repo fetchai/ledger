@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 namespace fetch {
-namespace vectorize {
+namespace vectorise {
 
 inline VectorRegister<float, 128> sqrt(VectorRegister<float, 128> const &a)
 {
@@ -30,5 +30,5 @@ inline VectorRegister<double, 128> sqrt(VectorRegister<double, 128> const &a)
   return VectorRegister<double, 128>(_mm_sqrt_pd(a.data()));
 }
 
-}  // namespace vectorize
+}  // namespace vectorise
 }  // namespace fetch

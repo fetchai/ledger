@@ -53,7 +53,7 @@ struct UnrollSet<T, 0>
 // clang-format on
 
 namespace fetch {
-namespace vectorize {
+namespace vectorise {
 
 template <typename T, std::size_t N = sizeof(T)>
 class VectorRegister
@@ -106,5 +106,5 @@ private:
 };
 
 #undef APPLY_OPERATOR_LIST
-}  // namespace vectorize
+}  // namespace vectorise
 }  // namespace fetch

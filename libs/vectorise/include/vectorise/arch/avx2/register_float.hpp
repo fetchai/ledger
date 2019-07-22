@@ -30,7 +30,7 @@
 #include <iostream>
 
 namespace fetch {
-namespace vectorize {
+namespace vectorise {
 
 template <>
 class VectorRegister<float, 128>
@@ -270,5 +270,5 @@ inline bool any_less_than(VectorRegister<double, 128> const &x,
 }
 */
 
-}  // namespace vectorize
+}  // namespace vectorise
 }  // namespace fetch
