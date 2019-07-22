@@ -49,10 +49,8 @@ struct TestSerDeser
   }
 };
 
-namespace fetch
-{
-namespace serializers
-{
+namespace fetch {
+namespace serializers {
 
 template <typename D>
 struct MapSerializer<TestSerDeser, D>
@@ -61,9 +59,9 @@ public:
   using Type       = TestSerDeser;
   using DriverType = D;
 
-  static uint8_t const FIRST     = 1;
-  static uint8_t const SECOND    = 2; 
-  static uint8_t const THIRD     = 3; 
+  static uint8_t const FIRST  = 1;
+  static uint8_t const SECOND = 2;
+  static uint8_t const THIRD  = 3;
 
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &val)
@@ -71,7 +69,7 @@ public:
     auto map = map_constructor(3);
     map.Append(FIRST, val.first);
     map.Append(SECOND, val.second);
-    map.Append(THIRD, val.third);    
+    map.Append(THIRD, val.third);
   }
 
   template <typename MapDeserializer>
@@ -79,12 +77,12 @@ public:
   {
     map.ExpectKeyGetValue(FIRST, val.first);
     map.ExpectKeyGetValue(SECOND, val.second);
-    map.ExpectKeyGetValue(THIRD, val.third); 
+    map.ExpectKeyGetValue(THIRD, val.third);
   }
 };
 
-}
-}
+}  // namespace serializers
+}  // namespace fetch
 
 void CheckIdentical(ObjectStack<TestSerDeser> &      test_stack,
                     std::vector<TestSerDeser> const &ref_stack)

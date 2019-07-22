@@ -42,6 +42,7 @@ public:
 
   template <typename T, typename D>
   friend struct serializers::MapSerializer;
+
 private:
   RBCMessage::MessageType type_;     ///< Type of message contained in envelop
   Payload                 payload_;  ///< Serialised RBCMessage
@@ -50,9 +51,7 @@ private:
 }  // namespace rbc
 }  // namespace dkg
 
-
-namespace serializers
-{
+namespace serializers {
 template <typename D>
 struct MapSerializer<dkg::rbc::RBCEnvelop, D>
 {
@@ -60,8 +59,8 @@ public:
   using Type       = dkg::rbc::RBCEnvelop;
   using DriverType = D;
 
-  static uint8_t const TYPE     = 1;
-  static uint8_t const MESSAGE  = 2;
+  static uint8_t const TYPE    = 1;
+  static uint8_t const MESSAGE = 2;
 
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &env)
@@ -81,8 +80,6 @@ public:
   }
 };
 
-} // namespace serializers
-
-
+}  // namespace serializers
 
 }  // namespace fetch

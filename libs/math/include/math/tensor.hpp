@@ -21,6 +21,7 @@
 #include "core/byte_array/consumers.hpp"
 #include "core/macros.hpp"
 #include "core/random.hpp"
+#include "core/serializers/group_definitions.hpp"
 #include "math/activation_functions/softmax.hpp"
 #include "math/base_types.hpp"
 #include "math/matrix_operations.hpp"
@@ -35,7 +36,6 @@
 #include "math/tensor_slice_iterator.hpp"
 #include "math/tensor_view.hpp"
 #include "vectorise/memory/array.hpp"
-#include "core/serializers/group_definitions.hpp"
 
 #include <cassert>
 #include <cstdint>

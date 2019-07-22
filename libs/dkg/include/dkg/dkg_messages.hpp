@@ -22,8 +22,8 @@
 #include "core/serializers/byte_array_buffer.hpp"
 #include "network/muddle/rpc/client.hpp"
 
-#include "core/serializers/group_definitions.hpp"
 #include "core/serializers/base_types.hpp"
+#include "core/serializers/group_definitions.hpp"
 #include "core/serializers/main_serializer.hpp"
 
 namespace fetch {
@@ -209,6 +209,7 @@ public:
 
   template <typename T, typename D>
   friend struct serializers::MapSerializer;
+
 private:
   MessageType type_;               ///< Type of message contained in the envelope
   Payload     serialisedMessage_;  ///< Serialised message
@@ -216,8 +217,7 @@ private:
 
 }  // namespace dkg
 
-namespace serializers
-{
+namespace serializers {
 template <typename D>
 struct MapSerializer<dkg::DKGEnvelop, D>
 {
@@ -225,8 +225,8 @@ public:
   using Type       = dkg::DKGEnvelop;
   using DriverType = D;
 
-  static uint8_t const TYPE     = 1;
-  static uint8_t const MESSAGE  = 2;
+  static uint8_t const TYPE    = 1;
+  static uint8_t const MESSAGE = 2;
 
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &env)
@@ -246,6 +246,6 @@ public:
   }
 };
 
-} // namespace serializers
+}  // namespace serializers
 
 }  // namespace fetch

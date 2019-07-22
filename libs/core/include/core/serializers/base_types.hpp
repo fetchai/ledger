@@ -622,7 +622,6 @@ public:
   }
 };
 
-
 template <typename K, typename V, typename D>
 struct ArraySerializer<std::pair<K, V>, D>
 {
