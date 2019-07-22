@@ -62,7 +62,7 @@ public:
   {}
   VectorRegister(type const &c)
   {
-    data_ = _mm_load_ps1(&c);
+    data_ = _mm_set1_ps(c);
   }
 
   explicit operator mm_register_type()
@@ -77,6 +77,67 @@ public:
   void Stream(type *ptr) const
   {
     _mm_stream_ps(ptr, data_);
+  }
+
+  mm_register_type const &data() const
+  {
+    return data_;
+  }
+  mm_register_type &data()
+  {
+    return data_;
+  }
+
+private:
+  mm_register_type data_;
+};
+
+
+template <>
+class VectorRegister<float, 256>
+{
+public:
+  using type             = float;
+  using mm_register_type = __m256;
+
+  enum
+  {
+    E_VECTOR_SIZE   = 256,
+    E_REGISTER_SIZE = sizeof(mm_register_type),
+    E_BLOCK_COUNT   = E_REGISTER_SIZE / sizeof(type)
+  };
+
+  static_assert((E_BLOCK_COUNT * sizeof(type)) == E_REGISTER_SIZE,
+                "type cannot be contained in the given register size.");
+
+  VectorRegister() = default;
+  VectorRegister(type const *d)
+  {
+    data_ = _mm256_load_ps(d);
+  }
+  VectorRegister(mm_register_type const &d)
+    : data_(d)
+  {}
+  VectorRegister(mm_register_type &&d)
+    : data_(d)
+  {}
+  VectorRegister(type const &c)
+  {
+    data_ = _mm256_set1_ps(c);
+  }
+
+  explicit operator mm_register_type()
+  {
+    return data_;
+  }
+
+  void Store(type *ptr) const
+  {
+    _mm256_store_ps(ptr, data_);
+  }
+  void Stream(type *ptr) const
+  {
+    _mm256_stream_ps(ptr, data_);
   }
 
   mm_register_type const &data() const
