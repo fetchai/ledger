@@ -189,11 +189,8 @@ struct Head;
 template <class... Ts>
 using HeadT = typename Head<Ts...>::type;
 
-template <class... Ts>
-struct Head : Accumulate<HeadT, Ts...> {};
-
-template <class Car, class Cdr>
-struct Head<Car, Cdr> : TypeConstant<Car>
+template <class Car, class... Cdr>
+struct Head<Car, Cdr...> : TypeConstant<Car>
 {
 };
 
@@ -204,9 +201,9 @@ template <class... Ts>
 using LastT = typename Last<Ts...>::type;
 
 template <class... Ts>
-struct Last: Accumulate<LastT, Ts...>;
+struct Last : Accumulate<LastT, Ts...>;
 
-template<class Car, class Cdr>
+template <class Car, class Cdr>
 struct Last<Car, Cdr> : TypeConstant<Cdr>
 {
 };
