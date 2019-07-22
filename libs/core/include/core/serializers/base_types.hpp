@@ -622,5 +622,34 @@ public:
   }
 };
 
+
+template <typename K, typename V, typename D>
+struct ArraySerializer<std::pair<K, V>, D>
+{
+public:
+  using Type       = std::pair<V, K>;
+  using DriverType = D;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &array_constructor, Type const &input)
+  {
+    auto array = array_constructor(2);
+    array.Append(input.first);
+    array.Append(input.second);
+  }
+
+  template <typename ArrayDeserializer>
+  static void Deserialize(ArrayDeserializer &array, Type &output)
+  {
+    if (array.size() != 2)
+    {
+      throw SerializableException(std::string("std::pair must have exactly 2 elements."));
+    }
+
+    array.GetNextValue(output.first);
+    array.GetNextValue(output.second);
+  }
+};
+
 }  // namespace serializers
 }  // namespace fetch

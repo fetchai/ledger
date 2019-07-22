@@ -248,12 +248,13 @@ private:
 
 }  // namespace dkg
 
+/*
 namespace serializers {
 template <typename D>
-struct ArraySerializer<dkg::DkgService::SecretKeyReq, D>
+struct ArraySerializer<dkg::DkgService::PrivateKey, D>
 {
 public:
-  using Type       = dkg::DkgService::SecretKeyReq;
+  using Type       = dkg::DkgService::PrivateKey;
   using DriverType = D;
 
   template <typename Constructor>
@@ -286,6 +287,7 @@ public:
     }
   }
 };
-}  // namespace serializers
 
+}  // namespace serializers
+*/
 }  // namespace fetch

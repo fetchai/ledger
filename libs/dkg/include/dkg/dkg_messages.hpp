@@ -22,6 +22,10 @@
 #include "core/serializers/byte_array_buffer.hpp"
 #include "network/muddle/rpc/client.hpp"
 
+#include "core/serializers/group_definitions.hpp"
+#include "core/serializers/base_types.hpp"
+#include "core/serializers/main_serializer.hpp"
+
 namespace fetch {
 namespace dkg {
 
@@ -201,39 +205,47 @@ public:
     , serialisedMessage_{msg.Serialize().data()}
   {}
 
-  template <typename T>
-  void Serialize(T &serialiser) const
-  {
-    serialiser << static_cast<uint8_t>(type_) << serialisedMessage_;
-  }
-
-  template <typename T>
-  void Deserialize(T &serialiser)
-  {
-    uint8_t val;
-    serialiser >> val;
-    type_ = static_cast<MessageType>(val);
-    serialiser >> serialisedMessage_;
-  }
-
   std::shared_ptr<DKGMessage> Message() const;
 
+  template <typename T, typename D>
+  friend struct serializers::MapSerializer;
 private:
   MessageType type_;               ///< Type of message contained in the envelope
   Payload     serialisedMessage_;  ///< Serialised message
 };
 
-template <typename T>
-inline void Serialize(T &serializer, DKGEnvelop const &env)
-{
-  env.Serialize(serializer);
-}
-
-template <typename T>
-inline void Deserialize(T &serializer, DKGEnvelop &env)
-{
-  env.Deserialize(serializer);
-}
-
 }  // namespace dkg
+
+namespace serializers
+{
+template <typename D>
+struct MapSerializer<dkg::DKGEnvelop, D>
+{
+public:
+  using Type       = dkg::DKGEnvelop;
+  using DriverType = D;
+
+  static uint8_t const TYPE     = 1;
+  static uint8_t const MESSAGE  = 2;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &env)
+  {
+    auto map = map_constructor(2);
+    map.Append(TYPE, static_cast<uint8_t>(env.type_));
+    map.Append(MESSAGE, env.serialisedMessage_);
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &env)
+  {
+    uint8_t type;
+    map.ExpectKeyGetValue(TYPE, type);
+    map.ExpectKeyGetValue(MESSAGE, env.serialisedMessage_);
+    env.type_ = static_cast<dkg::DKGEnvelop::MessageType>(type);
+  }
+};
+
+} // namespace serializers
+
 }  // namespace fetch

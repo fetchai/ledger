@@ -17,6 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/serializers/base_types.hpp"
+
 namespace fetch {
 namespace serializers {
 namespace interfaces {

@@ -38,39 +38,51 @@ public:
     , payload_{msg.Serialize().data()}
   {}
 
-  template <typename T>
-  void Serialize(T &serialiser) const
-  {
-    serialiser << static_cast<uint8_t>(type_) << payload_;
-  }
-
-  template <typename T>
-  void Deserialize(T &serialiser)
-  {
-    uint8_t val;
-    serialiser >> val;
-    type_ = (MessageType)val;
-    serialiser >> payload_;
-  }
-
   std::shared_ptr<RBCMessage> Message() const;
 
+  template <typename T, typename D>
+  friend struct serializers::MapSerializer;
 private:
   RBCMessage::MessageType type_;     ///< Type of message contained in envelop
   Payload                 payload_;  ///< Serialised RBCMessage
 };
 
-template <typename T>
-inline void Serialize(T &serializer, RBCEnvelop const &env)
-{
-  env.Serialize(serializer);
-}
-
-template <typename T>
-inline void Deserialize(T &serializer, RBCEnvelop &env)
-{
-  env.Deserialize(serializer);
-}
 }  // namespace rbc
 }  // namespace dkg
+
+
+namespace serializers
+{
+template <typename D>
+struct MapSerializer<dkg::rbc::RBCEnvelop, D>
+{
+public:
+  using Type       = dkg::rbc::RBCEnvelop;
+  using DriverType = D;
+
+  static uint8_t const TYPE     = 1;
+  static uint8_t const MESSAGE  = 2;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &env)
+  {
+    auto map = map_constructor(2);
+    map.Append(TYPE, static_cast<uint8_t>(env.type_));
+    map.Append(MESSAGE, env.payload_);
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &env)
+  {
+    uint8_t type;
+    map.ExpectKeyGetValue(TYPE, type);
+    map.ExpectKeyGetValue(MESSAGE, env.payload_);
+    env.type_ = static_cast<dkg::rbc::RBCEnvelop::MessageType>(type);
+  }
+};
+
+} // namespace serializers
+
+
+
 }  // namespace fetch

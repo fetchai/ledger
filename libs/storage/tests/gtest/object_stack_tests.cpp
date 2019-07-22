@@ -49,20 +49,41 @@ struct TestSerDeser
   }
 };
 
-template <typename T>
-void Serialize(T &serializer, TestSerDeser const &b)
+namespace fetch
 {
-  serializer << b.first;
-  serializer << b.second;
-  serializer << b.third;
-}
+namespace serializers
+{
 
-template <typename T>
-void Deserialize(T &serializer, TestSerDeser &b)
+template <typename D>
+struct MapSerializer<TestSerDeser, D>
 {
-  serializer >> b.first;
-  serializer >> b.second;
-  serializer >> b.third;
+public:
+  using Type       = TestSerDeser;
+  using DriverType = D;
+
+  static uint8_t const FIRST     = 1;
+  static uint8_t const SECOND    = 2; 
+  static uint8_t const THIRD     = 3; 
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &val)
+  {
+    auto map = map_constructor(3);
+    map.Append(FIRST, val.first);
+    map.Append(SECOND, val.second);
+    map.Append(THIRD, val.third);    
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &val)
+  {
+    map.ExpectKeyGetValue(FIRST, val.first);
+    map.ExpectKeyGetValue(SECOND, val.second);
+    map.ExpectKeyGetValue(THIRD, val.third); 
+  }
+};
+
+}
 }
 
 void CheckIdentical(ObjectStack<TestSerDeser> &      test_stack,
