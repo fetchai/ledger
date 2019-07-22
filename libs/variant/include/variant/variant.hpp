@@ -77,7 +77,6 @@ public:
 
   // Construction / Destruction
   Variant() = default;
-  //  explicit Variant(std::size_t pool_reserve);
   Variant(Variant const &);
   Variant(Variant &&) noexcept = default;
   ~Variant();
@@ -284,17 +283,6 @@ inline Variant Variant::Object()
 
   return v;
 }
-
-/**
- * Creates a variant with a predefined pool reserve of elements
- *
- * @param pool_reserve The number of elements to preallocate
- */
-/*
-inline Variant::Variant(std::size_t pool_reserve)
-  : pool_(pool_reserve)
-{}
-*/
 
 /**
  * (Deep) copy construct a variant from another variant
