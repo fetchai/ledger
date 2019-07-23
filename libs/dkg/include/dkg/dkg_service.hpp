@@ -151,13 +151,13 @@ public:
     FETCH_LOCK(cabinet_lock_);
     assert(cabinet.size() > threshold);
     // Check threshold meets the requirements for the RBC
-    if (cabinet.size()%3 == 0)
+    if (cabinet.size() % 3 == 0)
     {
-      assert(threshold >= static_cast<uint32_t>(cabinet.size()/3 - 1));
+      assert(threshold >= static_cast<uint32_t>(cabinet.size() / 3 - 1));
     }
     else
     {
-      assert(threshold >= static_cast<uint32_t>(cabinet.size()/3));
+      assert(threshold >= static_cast<uint32_t>(cabinet.size() / 3));
     }
     current_cabinet_   = std::move(cabinet);
     current_threshold_ = threshold;
