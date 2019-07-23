@@ -2588,7 +2588,13 @@ template <typename T, typename C>
 typename Tensor<T, C>::SliceIteratorType Tensor<T, C>::TensorSlice::begin()
 {
   auto ret = SliceIteratorType(this->tensor_, this->range_);
-  ret.MoveAxesToFront(this->axis_);
+
+  // If there is only one axis and is 0, it's already at front
+  if (this->axis_.size() != 1 || this->axis_.at(0) != 0)
+  {
+    ret.MoveAxesToFront(this->axis_);
+  }
+
   return ret;
 }
 
@@ -2708,7 +2714,13 @@ typename Tensor<T, C>::ConstSliceIteratorType
 Tensor<T, C>::TensorSliceImplementation<STensor>::cbegin() const
 {
   auto ret = ConstSliceIteratorType(tensor_, range_);
-  ret.MoveAxesToFront(axis_);
+
+  // If there is only one axis and is 0, it's already at front
+  if (this->axis_.size() != 1 || this->axis_.at(0) != 0)
+  {
+    ret.MoveAxesToFront(this->axis_);
+  }
+
   return ret;
 }
 
