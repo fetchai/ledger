@@ -34,13 +34,13 @@ TYPED_TEST(TensorOperationsTest, inline_add_test)
 {
   using SizeType = typename fetch::math::Tensor<TypeParam>::SizeType;
 
-  fetch::math::Tensor<TypeParam> t1(std::vector<std::uint64_t>({2, 4}));
-  fetch::math::Tensor<TypeParam> t2(std::vector<std::uint64_t>({2, 4}));
+  fetch::math::Tensor<TypeParam> t1(std::vector<SizeType>({2, 4}));
+  fetch::math::Tensor<TypeParam> t2(std::vector<SizeType>({2, 4}));
 
   std::vector<int> t1Input({1, -2, 3, -4, 5, -6, 7, -8});
   std::vector<int> t2Input({-1, 2, 3, -5, -8, 13, -21, -34});
   std::vector<int> gtInput({0, 0, 6, -9, -3, 7, -14, -42});
-  std::uint64_t    counter{0};
+  SizeType    counter{0};
   for (SizeType i(0); i < 2; ++i)
   {
     for (SizeType j(0); j < 4; ++j)
@@ -54,9 +54,9 @@ TYPED_TEST(TensorOperationsTest, inline_add_test)
   t1.InlineAdd(t2);
 
   counter = 0;
-  for (std::uint64_t i(0); i < 2; ++i)
+  for (SizeType i(0); i < 2; ++i)
   {
-    for (std::uint64_t j(0); j < 4; ++j)
+    for (SizeType j(0); j < 4; ++j)
     {
       EXPECT_EQ(t1.At(i, j), TypeParam(gtInput[counter]));
       EXPECT_EQ(t2.At(i, j), TypeParam(t2Input[counter]));
@@ -69,13 +69,13 @@ TYPED_TEST(TensorOperationsTest, inline_mul_test)
 {
   using SizeType = typename fetch::math::Tensor<TypeParam>::SizeType;
 
-  fetch::math::Tensor<TypeParam> t1(std::vector<std::uint64_t>({2, 4}));
-  fetch::math::Tensor<TypeParam> t2(std::vector<std::uint64_t>({2, 4}));
+  fetch::math::Tensor<TypeParam> t1(std::vector<SizeType>({2, 4}));
+  fetch::math::Tensor<TypeParam> t2(std::vector<SizeType>({2, 4}));
 
   std::vector<int> t1Input({1, -2, 3, -4, 5, -6, 7, -8});
   std::vector<int> t2Input({-1, 2, 3, -5, -8, 13, -11, -14});
   std::vector<int> gtInput({-1, -4, 9, 20, -40, -78, -77, 112});
-  std::uint64_t    counter{0};
+  SizeType    counter{0};
   for (SizeType i(0); i < 2; ++i)
   {
     for (SizeType j(0); j < 4; ++j)
@@ -87,9 +87,9 @@ TYPED_TEST(TensorOperationsTest, inline_mul_test)
   }
   t1.InlineMultiply(t2);
   counter = 0;
-  for (std::uint64_t i(0); i < 2; ++i)
+  for (SizeType i(0); i < 2; ++i)
   {
-    for (std::uint64_t j(0); j < 4; ++j)
+    for (SizeType j(0); j < 4; ++j)
     {
       EXPECT_EQ(t1.At(i, j), TypeParam(gtInput[counter]));
       EXPECT_EQ(t2.At(i, j), TypeParam(t2Input[counter]));
@@ -102,12 +102,12 @@ TYPED_TEST(TensorOperationsTest, sum_test)
 {
   using SizeType = typename fetch::math::Tensor<TypeParam>::SizeType;
 
-  fetch::math::Tensor<TypeParam> t1(std::vector<std::uint64_t>({2, 4}));
-  fetch::math::Tensor<TypeParam> t2(std::vector<std::uint64_t>({2, 4}));
+  fetch::math::Tensor<TypeParam> t1(std::vector<SizeType>({2, 4}));
+  fetch::math::Tensor<TypeParam> t2(std::vector<SizeType>({2, 4}));
 
   std::vector<int> t1Input({1, -2, 3, -4, 5, -6, 7, -8});
   std::vector<int> t2Input({-1, 2, 3, -5, -8, 13, -11, -14});
-  std::uint64_t    counter{0};
+  SizeType    counter{0};
   for (SizeType i(0); i < 2; ++i)
   {
     for (SizeType j(0); j < 4; ++j)
@@ -124,11 +124,13 @@ TYPED_TEST(TensorOperationsTest, sum_test)
 
 TYPED_TEST(TensorOperationsTest, transpose_test)
 {
-  fetch::math::Tensor<TypeParam> t1(std::vector<std::uint64_t>({3, 5}));
-  std::uint64_t                  counter{0};
-  for (std::uint64_t i(0); i < 3; ++i)
+  using SizeType = typename fetch::math::Tensor<TypeParam>::SizeType;
+
+  fetch::math::Tensor<TypeParam> t1(std::vector<SizeType>({3, 5}));
+  SizeType                  counter{0};
+  for (SizeType i(0); i < 3; ++i)
   {
-    for (std::uint64_t j(0); j < 5; ++j)
+    for (SizeType j(0); j < 5; ++j)
     {
       t1.At(i, j) = TypeParam(counter);
       counter++;
@@ -136,12 +138,12 @@ TYPED_TEST(TensorOperationsTest, transpose_test)
   }
   fetch::math::Tensor<TypeParam> t2 = t1.Transpose();
 
-  EXPECT_EQ(t1.shape(), std::vector<std::uint64_t>({3, 5}));
-  EXPECT_EQ(t2.shape(), std::vector<std::uint64_t>({5, 3}));
+  EXPECT_EQ(t1.shape(), std::vector<SizeType>({3, 5}));
+  EXPECT_EQ(t2.shape(), std::vector<SizeType>({5, 3}));
 
-  for (std::uint64_t i(0); i < 3; ++i)
+  for (SizeType i(0); i < 3; ++i)
   {
-    for (std::uint64_t j(0); j < 5; ++j)
+    for (SizeType j(0); j < 5; ++j)
     {
       EXPECT_EQ(t1.At(i, j), t2.At(j, i));
     }
@@ -150,28 +152,30 @@ TYPED_TEST(TensorOperationsTest, transpose_test)
 
 TYPED_TEST(TensorOperationsTest, transpose_untranspose_test)
 {
-  fetch::math::Tensor<TypeParam> t1(std::vector<std::uint64_t>({3, 5}));
-  std::uint64_t                  counter{0};
-  for (std::uint64_t i(0); i < 3; ++i)
+    using SizeType = typename fetch::math::Tensor<TypeParam>::SizeType;
+
+  fetch::math::Tensor<TypeParam> t1(std::vector<SizeType>({3, 5}));
+  SizeType                  counter{0};
+  for (SizeType i(0); i < 3; ++i)
   {
-    for (std::uint64_t j(0); j < 5; ++j)
+    for (SizeType j(0); j < 5; ++j)
     {
       t1.At(i, j) = TypeParam(counter);
       counter++;
     }
   }
   fetch::math::Tensor<TypeParam> t2 = t1.Transpose();
-  EXPECT_EQ(t1.shape(), std::vector<std::uint64_t>({3, 5}));
-  EXPECT_EQ(t2.shape(), std::vector<std::uint64_t>({5, 3}));
+  EXPECT_EQ(t1.shape(), std::vector<SizeType>({3, 5}));
+  EXPECT_EQ(t2.shape(), std::vector<SizeType>({5, 3}));
   fetch::math::Tensor<TypeParam> t3 = t2.Transpose();
-  EXPECT_EQ(t1.shape(), std::vector<std::uint64_t>({3, 5}));
-  EXPECT_EQ(t2.shape(), std::vector<std::uint64_t>({5, 3}));
-  EXPECT_EQ(t3.shape(), std::vector<std::uint64_t>({3, 5}));
+  EXPECT_EQ(t1.shape(), std::vector<SizeType>({3, 5}));
+  EXPECT_EQ(t2.shape(), std::vector<SizeType>({5, 3}));
+  EXPECT_EQ(t3.shape(), std::vector<SizeType>({3, 5}));
 
   counter = 0;
-  for (std::uint64_t i(0); i < 3; ++i)
+  for (SizeType i(0); i < 3; ++i)
   {
-    for (std::uint64_t j(0); j < 5; ++j)
+    for (SizeType j(0); j < 5; ++j)
     {
       EXPECT_EQ(t1.At(i, j), TypeParam(counter));
       EXPECT_EQ(t3.At(i, j), TypeParam(counter));
@@ -182,11 +186,13 @@ TYPED_TEST(TensorOperationsTest, transpose_untranspose_test)
 
 TYPED_TEST(TensorOperationsTest, transpose_and_slice_test)
 {
-  fetch::math::Tensor<TypeParam> t1(std::vector<std::uint64_t>({3, 5}));
-  std::uint64_t                  count = 0;
-  for (std::uint64_t i{0}; i < 3; ++i)
+    using SizeType = typename fetch::math::Tensor<TypeParam>::SizeType;
+
+  fetch::math::Tensor<TypeParam> t1(std::vector<SizeType>({3, 5}));
+  SizeType                  count = 0;
+  for (SizeType i{0}; i < 3; ++i)
   {
-    for (std::uint64_t j{0}; j < 5; ++j)
+    for (SizeType j{0}; j < 5; ++j)
     {
       t1.At(i, j) = TypeParam(count);
       ++count;
@@ -194,9 +200,9 @@ TYPED_TEST(TensorOperationsTest, transpose_and_slice_test)
   }
   fetch::math::Tensor<TypeParam> t2 = t1.Transpose();
 
-  EXPECT_EQ(t2.shape(), std::vector<std::uint64_t>({5, 3}));
+  EXPECT_EQ(t2.shape(), std::vector<SizeType>({5, 3}));
   fetch::math::Tensor<TypeParam> t3 = t2.Slice(2).Copy();
-  EXPECT_EQ(t3.shape(), std::vector<std::uint64_t>({1, 3}));
+  EXPECT_EQ(t3.shape(), std::vector<SizeType>({1, 3}));
 
   EXPECT_EQ(t3.At(0, 0), TypeParam(2));
   EXPECT_EQ(t3.At(0, 1), TypeParam(7));
@@ -205,13 +211,15 @@ TYPED_TEST(TensorOperationsTest, transpose_and_slice_test)
 
 TYPED_TEST(TensorOperationsTest, slice_and_transpose_test)
 {
-  fetch::math::Tensor<TypeParam> t1(std::vector<std::uint64_t>({3, 5, 2}));
-  std::uint64_t                  count = 0;
-  for (std::uint64_t i{0}; i < 2; ++i)
+    using SizeType = typename fetch::math::Tensor<TypeParam>::SizeType;
+
+  fetch::math::Tensor<TypeParam> t1(std::vector<SizeType>({3, 5, 2}));
+  SizeType                  count = 0;
+  for (SizeType i{0}; i < 2; ++i)
   {
-    for (std::uint64_t j{0}; j < 3; ++j)
+    for (SizeType j{0}; j < 3; ++j)
     {
-      for (std::uint64_t k{0}; k < 5; ++k)
+      for (SizeType k{0}; k < 5; ++k)
       {
         t1.At(j, k, i) = TypeParam(count);
         ++count;
@@ -220,7 +228,7 @@ TYPED_TEST(TensorOperationsTest, slice_and_transpose_test)
   }
 
   fetch::math::Tensor<TypeParam> t2 = t1.Slice(1, 2).Copy();
-  EXPECT_EQ(t2.shape(), std::vector<std::uint64_t>({3, 5, 1}));
+  EXPECT_EQ(t2.shape(), std::vector<SizeType>({3, 5, 1}));
 
   EXPECT_EQ(t2.At(0, 0, 0), TypeParam(15));
   EXPECT_EQ(t2.At(1, 0, 0), TypeParam(20));
@@ -239,7 +247,7 @@ TYPED_TEST(TensorOperationsTest, slice_and_transpose_test)
   EXPECT_EQ(t2.At(2, 4, 0), TypeParam(29));
 
   fetch::math::Tensor<TypeParam> t3 = (t2.Squeeze()).Transpose();
-  EXPECT_EQ(t3.shape(), std::vector<std::uint64_t>({5, 3}));
+  EXPECT_EQ(t3.shape(), std::vector<SizeType>({5, 3}));
 
   // tensor is column major
   EXPECT_EQ(t3.At(0, 0), TypeParam(15));
@@ -261,13 +269,15 @@ TYPED_TEST(TensorOperationsTest, slice_and_transpose_test)
 
 TYPED_TEST(TensorOperationsTest, multiple_slices_test)
 {
-  fetch::math::Tensor<TypeParam> t1(std::vector<std::uint64_t>({3, 5, 2}));
-  std::uint64_t                  count = 0;
-  for (std::uint64_t i{0}; i < 2; ++i)
+    using SizeType = typename fetch::math::Tensor<TypeParam>::SizeType;
+
+  fetch::math::Tensor<TypeParam> t1(std::vector<SizeType>({3, 5, 2}));
+  SizeType                  count = 0;
+  for (SizeType i{0}; i < 2; ++i)
   {
-    for (std::uint64_t j{0}; j < 3; ++j)
+    for (SizeType j{0}; j < 3; ++j)
     {
-      for (std::uint64_t k{0}; k < 5; ++k)
+      for (SizeType k{0}; k < 5; ++k)
       {
         t1.At(j, k, i) = TypeParam(count);
         ++count;
@@ -276,7 +286,7 @@ TYPED_TEST(TensorOperationsTest, multiple_slices_test)
   }
 
   fetch::math::Tensor<TypeParam> t2 = t1.Slice(1, 2).Slice(2, 1).Copy();
-  EXPECT_EQ(t2.shape(), std::vector<std::uint64_t>({3, 1, 1}));
+  EXPECT_EQ(t2.shape(), std::vector<SizeType>({3, 1, 1}));
 
   EXPECT_EQ(t2.At(0, 0, 0), TypeParam(17));
   EXPECT_EQ(t2.At(1, 0, 0), TypeParam(22));
@@ -285,13 +295,15 @@ TYPED_TEST(TensorOperationsTest, multiple_slices_test)
 
 TYPED_TEST(TensorOperationsTest, multiple_slices_separated_test)
 {
-  fetch::math::Tensor<TypeParam> t1(std::vector<std::uint64_t>({3, 5, 2}));
-  std::uint64_t                  count = 0;
-  for (std::uint64_t i{0}; i < 2; ++i)
+    using SizeType = typename fetch::math::Tensor<TypeParam>::SizeType;
+
+  fetch::math::Tensor<TypeParam> t1(std::vector<SizeType>({3, 5, 2}));
+  SizeType                  count = 0;
+  for (SizeType i{0}; i < 2; ++i)
   {
-    for (std::uint64_t j{0}; j < 3; ++j)
+    for (SizeType j{0}; j < 3; ++j)
     {
-      for (std::uint64_t k{0}; k < 5; ++k)
+      for (SizeType k{0}; k < 5; ++k)
       {
         t1.At(j, k, i) = TypeParam(count);
         ++count;
@@ -303,7 +315,7 @@ TYPED_TEST(TensorOperationsTest, multiple_slices_separated_test)
   auto t2s = t1s.Slice(2, 1);
 
   fetch::math::Tensor<TypeParam> t1t = t1s.Copy();
-  EXPECT_EQ(t1t.shape(), std::vector<std::uint64_t>({3, 5, 1}));
+  EXPECT_EQ(t1t.shape(), std::vector<SizeType>({3, 5, 1}));
 
   EXPECT_EQ(t1t.At(0, 0, 0), TypeParam(15));
   EXPECT_EQ(t1t.At(1, 0, 0), TypeParam(20));
@@ -322,7 +334,7 @@ TYPED_TEST(TensorOperationsTest, multiple_slices_separated_test)
   EXPECT_EQ(t1t.At(2, 4, 0), TypeParam(29));
 
   fetch::math::Tensor<TypeParam> t2t = t2s.Copy();
-  EXPECT_EQ(t2t.shape(), std::vector<std::uint64_t>({3, 1, 1}));
+  EXPECT_EQ(t2t.shape(), std::vector<SizeType>({3, 1, 1}));
 
   EXPECT_EQ(t2t.At(0, 0, 0), TypeParam(17));
   EXPECT_EQ(t2t.At(1, 0, 0), TypeParam(22));
@@ -331,13 +343,15 @@ TYPED_TEST(TensorOperationsTest, multiple_slices_separated_test)
 
 TYPED_TEST(TensorOperationsTest, multiple_const_slices_separated_test)
 {
-  fetch::math::Tensor<TypeParam> t1(std::vector<std::uint64_t>({3, 5, 2}));
-  std::uint64_t                  count = 0;
-  for (std::uint64_t i{0}; i < 2; ++i)
+    using SizeType = typename fetch::math::Tensor<TypeParam>::SizeType;
+
+  fetch::math::Tensor<TypeParam> t1(std::vector<SizeType>({3, 5, 2}));
+  SizeType                  count = 0;
+  for (SizeType i{0}; i < 2; ++i)
   {
-    for (std::uint64_t j{0}; j < 3; ++j)
+    for (SizeType j{0}; j < 3; ++j)
     {
-      for (std::uint64_t k{0}; k < 5; ++k)
+      for (SizeType k{0}; k < 5; ++k)
       {
         t1.At(j, k, i) = TypeParam(count);
         ++count;
@@ -351,7 +365,7 @@ TYPED_TEST(TensorOperationsTest, multiple_const_slices_separated_test)
   auto t2s = t1s.Slice(2, 1);
 
   fetch::math::Tensor<TypeParam> t1t = t1s.Copy();
-  EXPECT_EQ(t1t.shape(), std::vector<std::uint64_t>({3, 5, 1}));
+  EXPECT_EQ(t1t.shape(), std::vector<SizeType>({3, 5, 1}));
 
   EXPECT_EQ(t1t.At(0, 0, 0), TypeParam(15));
   EXPECT_EQ(t1t.At(1, 0, 0), TypeParam(20));
@@ -370,7 +384,7 @@ TYPED_TEST(TensorOperationsTest, multiple_const_slices_separated_test)
   EXPECT_EQ(t1t.At(2, 4, 0), TypeParam(29));
 
   fetch::math::Tensor<TypeParam> t2t = t2s.Copy();
-  EXPECT_EQ(t2t.shape(), std::vector<std::uint64_t>({3, 1, 1}));
+  EXPECT_EQ(t2t.shape(), std::vector<SizeType>({3, 1, 1}));
 
   EXPECT_EQ(t2t.At(0, 0, 0), TypeParam(17));
   EXPECT_EQ(t2t.At(1, 0, 0), TypeParam(22));
@@ -379,15 +393,17 @@ TYPED_TEST(TensorOperationsTest, multiple_const_slices_separated_test)
 
 TYPED_TEST(TensorOperationsTest, multiple_slices_assign_test)
 {
-  fetch::math::Tensor<TypeParam> t1(std::vector<std::uint64_t>({3, 5, 2}));
-  fetch::math::Tensor<TypeParam> t2(std::vector<std::uint64_t>({3, 2, 3}));
+    using SizeType = typename fetch::math::Tensor<TypeParam>::SizeType;
 
-  std::uint64_t count = 0;
-  for (std::uint64_t i{0}; i < 2; ++i)
+  fetch::math::Tensor<TypeParam> t1(std::vector<SizeType>({3, 5, 2}));
+  fetch::math::Tensor<TypeParam> t2(std::vector<SizeType>({3, 2, 3}));
+
+  SizeType count = 0;
+  for (SizeType i{0}; i < 2; ++i)
   {
-    for (std::uint64_t j{0}; j < 3; ++j)
+    for (SizeType j{0}; j < 3; ++j)
     {
-      for (std::uint64_t k{0}; k < 5; ++k)
+      for (SizeType k{0}; k < 5; ++k)
       {
         t1.At(j, k, i) = TypeParam(count);
         ++count;
@@ -396,11 +412,11 @@ TYPED_TEST(TensorOperationsTest, multiple_slices_assign_test)
   }
 
   count = 0;
-  for (std::uint64_t i{0}; i < 3; ++i)
+  for (SizeType i{0}; i < 3; ++i)
   {
-    for (std::uint64_t j{0}; j < 3; ++j)
+    for (SizeType j{0}; j < 3; ++j)
     {
-      for (std::uint64_t k{0}; k < 2; ++k)
+      for (SizeType k{0}; k < 2; ++k)
       {
         t2.At(j, k, i) = TypeParam(count);
         ++count;
@@ -418,8 +434,8 @@ TYPED_TEST(TensorOperationsTest, multiple_slices_assign_test)
   fetch::math::Tensor<TypeParam> t3 = t3s.Copy();
   fetch::math::Tensor<TypeParam> t4 = t4s.Copy();
 
-  EXPECT_EQ(t3.shape(), std::vector<std::uint64_t>({3, 1, 1}));
-  EXPECT_EQ(t4.shape(), std::vector<std::uint64_t>({3, 1, 1}));
+  EXPECT_EQ(t3.shape(), std::vector<SizeType>({3, 1, 1}));
+  EXPECT_EQ(t4.shape(), std::vector<SizeType>({3, 1, 1}));
 
   EXPECT_EQ(t3.At(0, 0, 0), TypeParam(7));
   EXPECT_EQ(t3.At(1, 0, 0), TypeParam(9));

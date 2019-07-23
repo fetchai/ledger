@@ -214,4 +214,27 @@ BENCHMARK_TEMPLATE(BM_TensorSum, int, 256, 256, 256)->Unit(benchmark::kMilliseco
 BENCHMARK_TEMPLATE(BM_TensorSum, float, 256, 256, 256)->Unit(benchmark::kMillisecond);
 BENCHMARK_TEMPLATE(BM_TensorSum, double, 256, 256, 256)->Unit(benchmark::kMillisecond);
 
+template <class T, int C, int H, int W>
+void BM_TensorSlice(benchmark::State &state)
+{
+  fetch::math::Tensor<T> t(std::vector<std::uint64_t>{C, H, W});
+
+  for (auto _ : state)
+  {
+    benchmark::DoNotOptimize(t.Slice(1,1).begin());
+  }
+}
+
+BENCHMARK_TEMPLATE(BM_TensorSlice, int, 3, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_TensorSlice, float, 3, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_TensorSlice, double, 3, 256, 256)->Unit(benchmark::kMillisecond);
+
+BENCHMARK_TEMPLATE(BM_TensorSlice, int, 128, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_TensorSlice, float, 128, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_TensorSlice, double, 128, 256, 256)->Unit(benchmark::kMillisecond);
+
+BENCHMARK_TEMPLATE(BM_TensorSlice, int, 256, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_TensorSlice, float, 256, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_TensorSlice, double, 256, 256, 256)->Unit(benchmark::kMillisecond);
+
 BENCHMARK_MAIN();
