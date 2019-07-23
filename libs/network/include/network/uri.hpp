@@ -148,7 +148,7 @@ inline Uri Uri::FromIdentity(ConstByteArray const &identity)
 namespace serializers {
 
 template <typename D>
-struct MapSerializer<network::Uri, D>  // TODO: Use other than Mapserializder
+struct MapSerializer<network::Uri, D>  
 {
 public:
   using DriverType = D;
@@ -168,7 +168,7 @@ public:
   {
     byte_array::ConstByteArray uri;
     uint8_t                    key;
-    map.GetNextKeyPair(key, uri);  // TODO: check
+    map.GetNextKeyPair(key, uri);  // TODO(tfr): check
 
     if (!x.Parse(uri))
     {

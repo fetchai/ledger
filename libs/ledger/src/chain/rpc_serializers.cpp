@@ -25,14 +25,6 @@ using fetch::serializers::ByteArrayBuffer;
 
 namespace fetch {
 namespace ledger {
-/*
-TODO: Legacy
-template void Serialize<ByteArrayBuffer>(ByteArrayBuffer &, TransactionLayout const &);
-template void Serialize<ByteArrayBuffer>(ByteArrayBuffer &, Transaction const &);
-
-template void Deserialize<ByteArrayBuffer>(ByteArrayBuffer &, TransactionLayout &);
-template void Deserialize<ByteArrayBuffer>(ByteArrayBuffer &, Transaction &);
-*/
 
 }  // namespace ledger
 }  // namespace fetch

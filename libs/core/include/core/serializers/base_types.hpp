@@ -48,14 +48,14 @@ struct SignedIntegerSerializerImplementation
   template <typename Interface>
   static void Serialize(Interface &interface, Type const &val)
   {
-    // TODO: Work out whether it is workwhile to make a
+    // TODO(tfr): Work out whether it is workwhile to make a
     // specialised small integer for speed.
     if (0 <= val && val < 128)
     {
       interface.Allocate(sizeof(uint8_t));
       interface.WriteByte(static_cast<uint8_t>(val));
     }
-    // TODO: Support for small negative integers?
+    // TODO(tfr): Support for small negative integers?
     else
     {
       interface.Allocate(sizeof(uint8_t) + sizeof(val));
@@ -74,13 +74,13 @@ struct SignedIntegerSerializerImplementation
     {
       val = static_cast<Type>(code);
     }
-    else if ((code & (7 << 5)) == (7 << 5))  // TODO: test
+    else if ((code & (7 << 5)) == (7 << 5))  // TODO(tfr): test
     {
       val = static_cast<Type>(code);
     }
     else
     {
-      // TODO: Test code
+      // TODO(tfr): Test code
       interface.ReadBytes(reinterpret_cast<uint8_t *>(&val), sizeof(val));
     }
   }
@@ -122,14 +122,14 @@ struct UnsignedIntegerSerializerImplementation
     {
       val = static_cast<Type>(code);
     }
-    else if ((code & (7 << 5)) == (7 << 5))  // TODO: test
+    else if ((code & (7 << 5)) == (7 << 5))  // TODO(tfr): test
     {
-      // TODO: Throw
+      // TODO(tfr): Throw
       val = static_cast<Type>(code);
     }
     else
     {
-      // TODO: Test code
+      // TODO(tfr): Test code
       interface.ReadBytes(reinterpret_cast<uint8_t *>(&val), sizeof(val));
     }
   }
@@ -411,7 +411,7 @@ public:
     default:  // Default CODE_FIXED
       if ((opcode & TypeCodes::FIXED_MASK2) != CODE_FIXED)
       {
-        // TODO: Change to serializable exception.
+        // TODO(tfr): Change to serializable exception.
         throw std::runtime_error("expected CODE_FIXED in opcode: " + std::to_string(int(opcode)) +
                                  " vs " + std::to_string(int(CODE_FIXED)));
       }

@@ -35,8 +35,6 @@ MsgPackByteArrayBuffer::MsgPackByteArrayBuffer(byte_array::ByteArray const &s)
   : data_{s.Copy()}
 {}
 
-// TODO: We should implement move constructor to allow maximal efficiency
-
 MsgPackByteArrayBuffer::MsgPackByteArrayBuffer(MsgPackByteArrayBuffer const &from)
   : data_{from.data_.Copy()}
   , pos_{from.pos_}

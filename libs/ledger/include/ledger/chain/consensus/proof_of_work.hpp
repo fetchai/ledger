@@ -78,7 +78,7 @@ namespace serializers {
 
 template <typename D>
 struct MapSerializer<ledger::consensus::ProofOfWork,
-                     D>  // TODO: Consider using forward to bytearray
+                     D>  // TODO(tfr): Consider using forward to bytearray
 {
 public:
   using Type       = ledger::consensus::ProofOfWork;

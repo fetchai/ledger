@@ -185,7 +185,7 @@ inline bool Address::operator>=(Address const &other) const
 namespace serializers {
 
 template <typename D>
-struct MapSerializer<ledger::Address, D>  // TODO: Consider using forward to bytearray
+struct MapSerializer<ledger::Address, D>  // TODO(tfr): Consider using forward to bytearray
 {
 public:
   using Type       = ledger::Address;
