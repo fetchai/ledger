@@ -77,5 +77,4 @@ public:
 };
 
 }  // namespace serializers
-
 }  // namespace fetch
