@@ -30,7 +30,7 @@ bn::G2                DistributedKeyGeneration::group_g_;
 bn::G2                DistributedKeyGeneration::group_h_;
 
 DistributedKeyGeneration::DistributedKeyGeneration(
-    MuddleAddress address, CabinetMembers &cabinet, uint32_t &threshold,
+    MuddleAddress address, CabinetMembers const &cabinet, uint32_t const &threshold,
     std::function<void(DKGEnvelop const &)> broadcast_callback,
     std::function<void(MuddleAddress const &, std::pair<std::string, std::string> const &)>
         rpc_callback)
