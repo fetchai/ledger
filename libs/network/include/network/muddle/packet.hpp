@@ -71,7 +71,8 @@ namespace muddle {
 class Packet
 {
 public:
-  static constexpr std::size_t ADDRESS_SIZE = 64;
+  static constexpr std::size_t ADDRESS_SIZE   = 64;
+  static constexpr std::size_t SIGNATURE_SIZE = 64;
 
   using RawAddress = std::array<uint8_t, ADDRESS_SIZE>;
   using Address    = byte_array::ConstByteArray;
@@ -133,6 +134,7 @@ public:
   Address const &   GetSender() const;
   Payload const &   GetPayload() const noexcept;
   Stamp const &     GetStamp() const noexcept;
+  std::size_t GetPacketSize() const;
 
   // Setters
   void SetDirect(bool set = true) noexcept;
@@ -146,6 +148,10 @@ public:
   void SetTarget(RawAddress const &address);
   void SetTarget(Address const &address);
   void SetPayload(Payload const &payload);
+
+  // Binary
+  static bool ToBuffer(Packet const &packet, void *buffer, std::size_t length);
+  static bool FromBuffer(Packet &packet, void const *buffer, std::size_t length);
 
   void Sign(crypto::Prover &prover);
   bool Verify() const;
@@ -367,6 +373,7 @@ inline void Packet::Sign(crypto::Prover &prover)
 
   if (!signature.empty())
   {
+    assert(signature.size() == SIGNATURE_SIZE);
     stamp_ = signature;
   }
   else
@@ -386,57 +393,20 @@ inline bool Packet::Verify() const
   return retVal;
 }
 
-}  // namespace muddle
-
-namespace serializers {
-template <typename D>
-struct MapSerializer<muddle::Packet, D>
+inline std::size_t Packet::GetPacketSize() const
 {
-public:
-  using Type       = muddle::Packet;
-  using DriverType = D;
+  std::size_t size{sizeof(RoutingHeader)};
 
-  static const uint8_t HEADER  = 1;
-  static const uint8_t PAYLOAD = 2;
-  static const uint8_t STAMP   = 3;
-
-  template <typename T>
-  static void Serialize(T &map_constructor, Type const &packet)
+  size += payload_.size();
+  if (IsStamped())
   {
-    auto map = map_constructor(3);
-    map.Append(HEADER, *reinterpret_cast<Type::BinaryHeader const *>(&packet.header_));
-    map.Append(PAYLOAD, packet.payload_);
-    map.Append(STAMP,   packet.stamp_);  // TODO: add support optional fields.
-    /*
-    serializer << *reinterpret_cast<Packet::BinaryHeader const *>(&packet.header_) <<
-    packet.payload_; if (packet.header_.stamped)
-    {
-      serializer << packet.stamp_;
-    }
-    */
+    size += stamp_.size();
   }
 
-  template <typename T>
-  static void Deserialize(T &map, Type &packet)
-  {
-    if(map.size() != 3)
-    {
-      throw std::runtime_error("Packet must have exactly 3 elements, but " + std::to_string(map.size()) + " found.");
-    }
-    map.ExpectKeyGetValue(HEADER, *reinterpret_cast<Type::BinaryHeader *>(&packet.header_));
-    map.ExpectKeyGetValue(PAYLOAD, packet.payload_);
-    map.ExpectKeyGetValue(STAMP, packet.stamp_);  // TODO: add support optional fields.
-    /*
-    serializer >> *reinterpret_cast<Packet::BinaryHeader *>(&packet.header_) >> packet.payload_;
-    if (packet.header_.stamped)
-    {
-      serializer >> packet.stamp_;
-    }
-    */
-  }
-};
-}  // namespace serializers
+  return size;
+}
 
+}  // namespace muddle
 }  // namespace fetch
 
 namespace std {

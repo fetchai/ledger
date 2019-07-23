@@ -85,19 +85,16 @@ private:
   {
     try
     {
-      LOG_STACK_TRACE_POINT;
-      // un-marshall the data
-      ByteArrayBuffer buffer(msg);
-
       auto packet = std::make_shared<Packet>();
-
+      if (Packet::FromBuffer(*packet, msg.pointer(), msg.size()))
       {
-        LOG_STACK_TRACE_POINT;
-        buffer >> *packet;
+        // dispatch the message to router
+        router_.Route(client, packet);
       }
-
-      // dispatch the message to router
-      router_.Route(client, packet);
+      else
+      {
+        FETCH_LOG_WARN(LOGGING_NAME, "Failed to extract packet from message");
+      }
     }
     catch (std::exception const &ex)
     {
