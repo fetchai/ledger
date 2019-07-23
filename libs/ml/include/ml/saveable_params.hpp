@@ -37,18 +37,19 @@ struct SaveableParams
   std::string DESCRIPTOR;  // description of op
 
   template <class S>
-  friend void Serialize(S &serializer, SaveableParams const & sp)
+  friend void Serialize(S &serializer, SaveableParams const &sp)
   {
     serializer << sp.DESCRIPTOR;
   }
 
   template <class S>
-  friend void Deserialize(S &serializer, SaveableParams & sp)
+  friend void Deserialize(S &serializer, SaveableParams &sp)
   {
     serializer >> sp.DESCRIPTOR;
   }
 
-  virtual std::string GetDescription(){
+  virtual std::string GetDescription()
+  {
     return sp_descriptor;
   }
 };
@@ -56,20 +57,22 @@ struct SaveableParams
 template <class ArrayType>
 struct WeightsSaveableParams : public SaveableParams
 {
-  static constexpr char const *sp_descriptor =
-      "WeightsSaveableParams";
+  static constexpr char const *          sp_descriptor = "WeightsSaveableParams";
   std::shared_ptr<ArrayType>             output;
   fetch::ml::details::RegularisationType regularisation_type{};
   typename ArrayType::Type               regularisation_rate;
 
   template <class S>
-  friend void Serialize(S &serializer, WeightsSaveableParams<ArrayType> const & sp)
+  friend void Serialize(S &serializer, WeightsSaveableParams<ArrayType> const &sp)
   {
     serializer << sp.DESCRIPTOR;
-    if (sp.output) {
+    if (sp.output)
+    {
       serializer << bool{true};
       serializer << *(sp.output);
-    } else {
+    }
+    else
+    {
       serializer << bool{false};
     }
     serializer << static_cast<int>(sp.regularisation_type);
@@ -77,12 +80,13 @@ struct WeightsSaveableParams : public SaveableParams
   }
 
   template <class S>
-  friend void Deserialize(S &serializer, WeightsSaveableParams<ArrayType> & sp)
+  friend void Deserialize(S &serializer, WeightsSaveableParams<ArrayType> &sp)
   {
     serializer >> sp.DESCRIPTOR;
     bool has_weights{};
     serializer >> has_weights;
-    if (has_weights) {
+    if (has_weights)
+    {
       ArrayType output_temp;
       serializer >> output_temp;
       sp.output = std::make_shared<ArrayType>(output_temp);
@@ -93,7 +97,8 @@ struct WeightsSaveableParams : public SaveableParams
     serializer >> sp.regularisation_rate;
   }
 
-  std::string GetDescription() override{
+  std::string GetDescription() override
+  {
     return sp_descriptor;
   }
 };
@@ -108,7 +113,7 @@ struct DropoutSaveableParams : public SaveableParams
   DataType                     probability{};
 
   template <class S>
-  friend void Serialize(S &serializer, DropoutSaveableParams<ArrayType> const & sp)
+  friend void Serialize(S &serializer, DropoutSaveableParams<ArrayType> const &sp)
   {
     serializer << sp.DESCRIPTOR;
     serializer << sp.random_seed;
@@ -116,14 +121,15 @@ struct DropoutSaveableParams : public SaveableParams
   }
 
   template <class S>
-  friend void Deserialize(S &serializer, DropoutSaveableParams<ArrayType> & sp)
+  friend void Deserialize(S &serializer, DropoutSaveableParams<ArrayType> &sp)
   {
     serializer >> sp.DESCRIPTOR;
     serializer >> sp.random_seed;
     serializer >> sp.probability;
   }
 
-  std::string GetDescription() override{
+  std::string GetDescription() override
+  {
     return sp_descriptor;
   }
 };
@@ -136,20 +142,21 @@ struct LeakyReluSaveableParams : public SaveableParams
   DataType                     a;
 
   template <class S>
-  friend void Serialize(S &serializer, LeakyReluSaveableParams<ArrayType> const & sp)
+  friend void Serialize(S &serializer, LeakyReluSaveableParams<ArrayType> const &sp)
   {
     serializer << sp.DESCRIPTOR;
     serializer << sp.a;
   }
 
   template <class S>
-  friend void Deserialize(S &serializer, LeakyReluSaveableParams<ArrayType> & sp)
+  friend void Deserialize(S &serializer, LeakyReluSaveableParams<ArrayType> &sp)
   {
     serializer >> sp.DESCRIPTOR;
     serializer >> sp.a;
   }
 
-  std::string GetDescription() override{
+  std::string GetDescription() override
+  {
     return sp_descriptor;
   }
 };
@@ -165,21 +172,25 @@ struct RandomizedReluSaveableParams : public SaveableParams
   SizeType                     random_seed;
 
   template <class S>
-  friend void Serialize(S &serializer, RandomizedReluSaveableParams<ArrayType> const & sp)
+  friend void Serialize(S &serializer, RandomizedReluSaveableParams<ArrayType> const &sp)
   {
     serializer << sp.DESCRIPTOR;
-    serializer << sp.lower_bound << sp.upper_bound;
+    serializer << sp.lower_bound;
+    serializer << sp.upper_bound;
+    serializer << sp.random_seed;
   }
 
   template <class S>
-  friend void Deserialize(S &serializer, RandomizedReluSaveableParams<ArrayType> & sp)
+  friend void Deserialize(S &serializer, RandomizedReluSaveableParams<ArrayType> &sp)
   {
     serializer >> sp.DESCRIPTOR;
     serializer >> sp.lower_bound;
     serializer >> sp.upper_bound;
+    serializer >> sp.random_seed;
   }
 
-  std::string GetDescription() override{
+  std::string GetDescription() override
+  {
     return sp_descriptor;
   }
 };
@@ -190,20 +201,21 @@ struct SoftmaxSaveableParams : public SaveableParams
   fetch::math::SizeType        axis;
 
   template <class S>
-  friend void Serialize(S &serializer, SoftmaxSaveableParams const & sp)
+  friend void Serialize(S &serializer, SoftmaxSaveableParams const &sp)
   {
     serializer << sp.DESCRIPTOR;
     serializer << sp.axis;
   }
 
   template <class S>
-  friend void Deserialize(S &serializer, SoftmaxSaveableParams & sp)
+  friend void Deserialize(S &serializer, SoftmaxSaveableParams &sp)
   {
     serializer >> sp.DESCRIPTOR;
     serializer >> sp.axis;
   }
 
-  std::string GetDescription() override{
+  std::string GetDescription() override
+  {
     return sp_descriptor;
   }
 };
@@ -214,20 +226,21 @@ struct Convolution1DSaveableParams : public SaveableParams
   fetch::math::SizeType        stride_size;
 
   template <class S>
-  friend void Serialize(S &serializer, Convolution1DSaveableParams const & sp)
+  friend void Serialize(S &serializer, Convolution1DSaveableParams const &sp)
   {
     serializer << sp.DESCRIPTOR;
     serializer << sp.stride_size;
   }
 
   template <class S>
-  friend void Deserialize(S &serializer, Convolution1DSaveableParams & sp)
+  friend void Deserialize(S &serializer, Convolution1DSaveableParams &sp)
   {
     serializer >> sp.DESCRIPTOR;
     serializer >> sp.stride_size;
   }
 
-  std::string GetDescription() override{
+  std::string GetDescription() override
+  {
     return sp_descriptor;
   }
 };
@@ -239,7 +252,7 @@ struct MaxPoolSaveableParams : public SaveableParams
   fetch::math::SizeType        stride_size;
 
   template <class S>
-  friend void Serialize(S &serializer, MaxPoolSaveableParams const & sp)
+  friend void Serialize(S &serializer, MaxPoolSaveableParams const &sp)
   {
     serializer << sp.DESCRIPTOR;
     serializer << sp.kernel_size;
@@ -247,14 +260,15 @@ struct MaxPoolSaveableParams : public SaveableParams
   }
 
   template <class S>
-  friend void Deserialize(S &serializer, MaxPoolSaveableParams & sp)
+  friend void Deserialize(S &serializer, MaxPoolSaveableParams &sp)
   {
     serializer >> sp.DESCRIPTOR;
     serializer >> sp.kernel_size;
     serializer >> sp.stride_size;
   }
 
-  std::string GetDescription() override{
+  std::string GetDescription() override
+  {
     return sp_descriptor;
   }
 };
@@ -265,20 +279,21 @@ struct TransposeSaveableParams : public SaveableParams
   std::vector<fetch::math::SizeType> transpose_vector;
 
   template <class S>
-  friend void Serialize(S &serializer, TransposeSaveableParams const & sp)
+  friend void Serialize(S &serializer, TransposeSaveableParams const &sp)
   {
     serializer << sp.DESCRIPTOR;
     serializer << sp.transpose_vector;
   }
 
   template <class S>
-  friend void Deserialize(S &serializer, TransposeSaveableParams & sp)
+  friend void Deserialize(S &serializer, TransposeSaveableParams &sp)
   {
     serializer >> sp.DESCRIPTOR;
     serializer >> sp.transpose_vector;
   }
 
-  std::string GetDescription() override{
+  std::string GetDescription() override
+  {
     return sp_descriptor;
   }
 };
@@ -289,20 +304,21 @@ struct ReshapeSaveableParams : public SaveableParams
   std::vector<fetch::math::SizeType> new_shape;
 
   template <class S>
-  friend void Serialize(S &serializer, ReshapeSaveableParams const & sp)
+  friend void Serialize(S &serializer, ReshapeSaveableParams const &sp)
   {
     serializer << sp.DESCRIPTOR;
     serializer << sp.new_shape;
   }
 
   template <class S>
-  friend void Deserialize(S &serializer, ReshapeSaveableParams & sp)
+  friend void Deserialize(S &serializer, ReshapeSaveableParams &sp)
   {
     serializer >> sp.DESCRIPTOR;
     serializer >> sp.new_shape;
   }
 
-  std::string GetDescription() override{
+  std::string GetDescription() override
+  {
     return sp_descriptor;
   }
 };

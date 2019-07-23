@@ -16,9 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/serializers/byte_array_buffer.hpp"
+#include "math/base_types.hpp"
 #include "math/tensor.hpp"
 #include "ml/ops/activations/leaky_relu.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
+#include "vectorise/fixed_point/serializers.hpp"
 
 #include "gtest/gtest.h"
 
@@ -38,8 +41,8 @@ TYPED_TEST(LeakyReluTest, forward_test)
   using ArrayType     = TypeParam;
   using VecTensorType = typename fetch::ml::Ops<ArrayType>::VecTensorType;
 
-  ArrayType data = ArrayType::FromString(R"(1, -2, 3, -4, 5, -6, 7, -8)");
-  ArrayType gt   = ArrayType::FromString(R"(1, -0.02, 3, -0.04, 5, -0.06, 7, -0.08)");
+  ArrayType data = ArrayType::FromString("1, -2, 3, -4, 5, -6, 7, -8");
+  ArrayType gt   = ArrayType::FromString("1, -0.02, 3, -0.04, 5, -0.06, 7, -0.08");
 
   fetch::ml::ops::LeakyRelu<ArrayType> op(DataType{0.01f});
   ArrayType                            prediction(op.ComputeOutputShape({data}));
@@ -87,9 +90,9 @@ TYPED_TEST(LeakyReluTest, backward_test)
   using DataType  = typename TypeParam::Type;
   using ArrayType = TypeParam;
 
-  ArrayType data  = ArrayType::FromString(R"(1, -2, 3, -4, 5, -6, 7, -8)");
-  ArrayType error = ArrayType::FromString(R"(0, 0, 0, 0.5, 1, 1, 0, 0)");
-  ArrayType gt    = ArrayType::FromString(R"(0, 0, 0, 0.005, 1, 0.01, 0, 0)");
+  ArrayType data  = ArrayType::FromString("1, -2, 3, -4, 5, -6, 7, -8");
+  ArrayType error = ArrayType::FromString("0, 0, 0, 0.5, 1, 1, 0, 0");
+  ArrayType gt    = ArrayType::FromString("0, 0, 0, 0.005, 1, 0.01, 0, 0");
 
   fetch::ml::ops::LeakyRelu<ArrayType> op(DataType{0.01f});
   std::vector<ArrayType>               prediction = op.Backward({data}, error);
@@ -129,4 +132,44 @@ TYPED_TEST(LeakyReluTest, backward_3d_tensor_test)
 
   // test correct values
   ASSERT_TRUE(prediction[0].AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
+}
+
+TYPED_TEST(LeakyReluTest, saveparams_test)
+{
+  using DataType      = typename TypeParam::Type;
+  using ArrayType     = TypeParam;
+  using VecTensorType = typename fetch::ml::Ops<ArrayType>::VecTensorType;
+  using SPType        = typename fetch::ml::ops::LeakyRelu<ArrayType>::SPType;
+
+  ArrayType data = ArrayType::FromString("1, -2, 3, -4, 5, -6, 7, -8");
+  ArrayType gt   = ArrayType::FromString("1, -0.02, 3, -0.04, 5, -0.06, 7, -0.08");
+
+  fetch::ml::ops::LeakyRelu<ArrayType> op(DataType{0.01f});
+  ArrayType                            prediction(op.ComputeOutputShape({data}));
+  op.Forward(VecTensorType({data}), prediction);
+
+  // extract saveparams
+  std::shared_ptr<fetch::ml::SaveableParams> sp = op.GetOpSaveableParams();
+
+  // downcast to correct type
+  auto dsp = std::dynamic_pointer_cast<SPType>(sp);
+
+  // serialize
+  fetch::serializers::ByteArrayBuffer b;
+  b << *dsp;
+
+  // deserialize
+  b.seek(0);
+  auto dsp2 = std::make_shared<SPType>();
+  b >> *dsp2;
+
+  // rebuild node
+  fetch::ml::ops::LeakyRelu<ArrayType> new_op(*dsp2);
+
+  // check that new predictions match the old
+  ArrayType new_prediction(op.ComputeOutputShape({data}));
+  new_op.Forward(VecTensorType({data}), new_prediction);
+
+  // test correct values
+  EXPECT_TRUE(new_prediction.AllClose(prediction, DataType{1e-5f}, DataType{1e-5f}));
 }

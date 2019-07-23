@@ -16,9 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/serializers/byte_array_buffer.hpp"
+#include "math/base_types.hpp"
 #include "math/tensor.hpp"
 #include "ml/ops/activations/randomized_relu.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
+#include "vectorise/fixed_point/serializers.hpp"
 
 #include "gtest/gtest.h"
 
@@ -201,4 +204,49 @@ TYPED_TEST(RandomizedReluTest, backward_3d_tensor_test)
 
   // test correct values
   ASSERT_TRUE(prediction[0].AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
+}
+
+TYPED_TEST(RandomizedReluTest, saveparams_test)
+{
+  using DataType      = typename TypeParam::Type;
+  using ArrayType     = TypeParam;
+  using VecTensorType = typename fetch::ml::Ops<ArrayType>::VecTensorType;
+  using SPType        = typename fetch::ml::ops::RandomizedRelu<ArrayType>::SPType;
+  using OpType        = typename fetch::ml::ops::RandomizedRelu<ArrayType>;
+
+  ArrayType data = ArrayType::FromString("1, -2, 3, -4, 5, -6, 7, -8");
+  ArrayType gt =
+      ArrayType::FromString("1, -0.062793536, 3, -0.12558707, 5, -0.1883806, 7, -0.2511741");
+
+  fetch::ml::ops::RandomizedRelu<ArrayType> op(DataType{0.03f}, DataType{0.08f}, 12345);
+  ArrayType                                 prediction(op.ComputeOutputShape({data}));
+  VecTensorType                             vec_data({data});
+
+  op.Forward(vec_data, prediction);
+
+  // extract saveparams
+  std::shared_ptr<fetch::ml::SaveableParams> sp = op.GetOpSaveableParams();
+
+  // downcast to correct type
+  auto dsp = std::dynamic_pointer_cast<SPType>(sp);
+
+  // serialize
+  fetch::serializers::ByteArrayBuffer b;
+  b << *dsp;
+
+  // deserialize
+  b.seek(0);
+  auto dsp2 = std::make_shared<SPType>();
+  b >> *dsp2;
+
+  // rebuild node
+  OpType new_op(*dsp2);
+
+  // check that new predictions match the old
+  ArrayType new_prediction(op.ComputeOutputShape({data}));
+  new_op.Forward(vec_data, new_prediction);
+
+  // test correct values
+  EXPECT_TRUE(new_prediction.AllClose(prediction, fetch::math::function_tolerance<DataType>(),
+                                      fetch::math::function_tolerance<DataType>()));
 }

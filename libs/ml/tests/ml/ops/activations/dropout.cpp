@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/serializers/byte_array_buffer.hpp"
+#include "math/base_types.hpp"
 #include "math/tensor.hpp"
 #include "ml/ops/activations/dropout.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
@@ -191,7 +192,8 @@ TYPED_TEST(DropoutTest, saveparams_test)
   using ArrayType     = TypeParam;
   using DataType      = typename TypeParam::Type;
   using VecTensorType = typename fetch::ml::Ops<ArrayType>::VecTensorType;
-  using SPType = typename fetch::ml::ops::Dropout<ArrayType>::SPType;
+  using SPType        = typename fetch::ml::ops::Dropout<ArrayType>::SPType;
+  using OpType        = typename fetch::ml::ops::Dropout<ArrayType>;
 
   ArrayType                     data = ArrayType::FromString("1, -2, 3, -4, 5, -6, 7, -8");
   ArrayType                     gt   = ArrayType::FromString("0, -2, 0,  0, 5, -6, 7, -8");
@@ -200,7 +202,7 @@ TYPED_TEST(DropoutTest, saveparams_test)
 
   fetch::math::Multiply(gt, DataType{1} / prob, gt);
 
-  fetch::ml::ops::Dropout<ArrayType> op(prob, random_seed);
+  OpType op(prob, random_seed);
 
   ArrayType     prediction(op.ComputeOutputShape({data}));
   VecTensorType vec_data({data});
@@ -223,12 +225,13 @@ TYPED_TEST(DropoutTest, saveparams_test)
   b >> *dsp2;
 
   // rebuild node
-  fetch::ml::ops::Dropout<ArrayType> new_op(*dsp2);
+  OpType new_op(*dsp2);
 
   // check that new predictions match the old
   ArrayType new_prediction(op.ComputeOutputShape({data}));
   new_op.Forward(vec_data, new_prediction);
 
   // test correct values
-  EXPECT_TRUE(new_prediction.AllClose(prediction, DataType{1e-5f}, DataType{1e-5f}));
+  EXPECT_TRUE(new_prediction.AllClose(prediction, fetch::math::function_tolerance<DataType>(),
+                                      fetch::math::function_tolerance<DataType>()));
 }
