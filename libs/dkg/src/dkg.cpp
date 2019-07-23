@@ -885,11 +885,17 @@ void DistributedKeyGeneration::ResetCabinet()
 {
   assert((threshold_ * 2) < cabinet_.size());
   assert(cabinet_.find(address_) != cabinet_.end());  // We should be in the cabinet
+
+  std::lock_guard<std::mutex> lock_{mutex_};
   finished_      = false;
   state_         = State::INITIAL;
   cabinet_index_ = static_cast<uint32_t>(std::distance(cabinet_.begin(), cabinet_.find(address_)));
   auto cabinet_size{static_cast<uint32_t>(cabinet_.size())};
   auto polynomial_size{static_cast<uint32_t>(threshold_ + 1)};
+  secret_share_.clear();
+  public_key_.clear();
+  qual_.clear();
+  xprime_i.clear();
   Init(y_i, cabinet_size);
   Init(public_key_shares_, cabinet_size);
   Init(s_ij, cabinet_size, cabinet_size);
@@ -902,6 +908,20 @@ void DistributedKeyGeneration::ResetCabinet()
 
   complaints_manager_.ResetCabinet(cabinet_size);
   complaints_answer_manager_.ResetCabinet(cabinet_size);
+
+  received_all_coef_and_shares_ = false;
+  received_all_complaints_ = false;
+  received_all_complaints_answer_ = false;
+  received_all_qual_shares_ = false;
+  received_all_qual_complaints_ = false;
+  received_all_reconstruction_shares_ = false;
+
+  shares_received_ = 0;
+  C_ik_received_ = 0;
+  A_ik_received_ = 0;
+  reconstruction_shares_received_ = 0;
+
+  reconstruction_shares.clear();
 }
 
 /**
