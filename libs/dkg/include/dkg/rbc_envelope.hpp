@@ -22,7 +22,6 @@
 
 namespace fetch {
 namespace dkg {
-namespace rbc {
 
 class RBCEnvelope
 {
@@ -46,16 +45,14 @@ private:
   RBCMessage::MessageType type_;     ///< Type of message contained in envelope
   Payload                 payload_;  ///< Serialised RBCMessage
 };
-
-}  // namespace rbc
 }  // namespace dkg
 
 namespace serializers {
 template <typename D>
-struct MapSerializer<dkg::rbc::RBCEnvelope, D>
+struct MapSerializer<dkg::RBCEnvelope, D>
 {
 public:
-  using Type       = dkg::rbc::RBCEnvelope;
+  using Type       = dkg::RBCEnvelope;
   using DriverType = D;
 
   static uint8_t const TYPE    = 1;
@@ -75,7 +72,7 @@ public:
     uint8_t type;
     map.ExpectKeyGetValue(TYPE, type);
     map.ExpectKeyGetValue(MESSAGE, env.payload_);
-    env.type_ = static_cast<dkg::rbc::RBCEnvelope::MessageType>(type);
+    env.type_ = static_cast<dkg::RBCEnvelope::MessageType>(type);
   }
 };
 
