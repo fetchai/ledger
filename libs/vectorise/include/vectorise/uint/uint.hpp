@@ -93,7 +93,7 @@ public:
   template <typename... T, std::enable_if_t<meta::Is<BaseType>::SameAsEvery<T...>::value &&
                                             (sizeof...(T) <= ELEMENTS)> * = nullptr>
   constexpr UInt(T &&... data)
-    : wide_{reinterpret_cast<WideContainerType>(
+    : wide_{reinterpret_cast<WideContainerType&&>(
           Array<BaseType, ELEMENTS>{{std::forward<T>(data)...}})}
   {}
 
