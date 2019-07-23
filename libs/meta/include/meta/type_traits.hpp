@@ -36,6 +36,42 @@ struct BaseFixedpointType;
 
 namespace meta {
 
+template <typename T, typename...>
+struct First
+{
+  using type = T;
+};
+
+template <typename... T>
+struct Is
+{
+  template <typename... Y>
+  struct SameAs
+  {
+    static constexpr bool value = std::is_same<std::tuple<T...>, std::tuple<Y...>>::value;
+  };
+
+  template <typename Y0, typename... Y>
+  struct SameAsEvery
+  {
+    static_assert(sizeof...(T) == 1,
+                  "There must be just single type T provided in to encapsulating  `Is<T...>` "
+                  "template in order to evaluate SameAsEvery<...> sub-template.");
+    using FirstT                = typename std::tuple_element<0ull, std::tuple<T...>>::type;
+    static constexpr bool value = std::is_same<FirstT, Y0>::value && SameAsEvery<Y...>::value;
+  };
+
+  template <typename Y>
+  struct SameAsEvery<Y>
+  {
+    static_assert(sizeof...(T) == 1,
+                  "There must be just single type T provided in to encapsulating  `Is<T...>` "
+                  "template in order to evaluate SameAsEvery<...> sub-template.");
+    using FirstT                = typename std::tuple_element<0ull, std::tuple<T...>>::type;
+    static constexpr bool value = std::is_same<FirstT, Y>::value;
+  };
+};
+
 template <typename T>
 static constexpr bool IsBoolean = std::is_same<T, bool>::value;
 

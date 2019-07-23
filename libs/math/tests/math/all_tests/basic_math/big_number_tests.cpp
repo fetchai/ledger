@@ -326,6 +326,43 @@ TEST(big_number_gtest, test_construction_from_byte_array_fails_if_too_long)
   EXPECT_TRUE(exception_thrown);
 }
 
+TEST(big_number_gtest, test_bit_inverse)
+{
+  using UIntT = UInt<72>;
+
+  UIntT const inv{~UIntT::_0};
+  EXPECT_EQ(inv.ElementAt(0), 0xffffffffffffffff);
+  EXPECT_EQ(inv.ElementAt(1), 0xff);
+  EXPECT_EQ(UIntT::max, inv);
+
+  // UIntT val{};
+  // val.ElementAt(0) = 0xf0f0f0f0f0f0f0f0;
+  // val.ElementAt(1) = 0xf0;
+  UIntT val{UIntT::WideType{0xf0f0f0f0f0f0f0f0ull}, UIntT::WideType{0xf0ull}};
+
+  auto const inv2{~val};
+
+  ASSERT_EQ(inv2.ElementAt(0), 0x0f0f0f0f0f0f0f0f);
+  ASSERT_EQ(inv2.ElementAt(1), 0x0f);
+}
+
+TEST(big_number_gtest, test_default_constructor)
+{
+  using UIntT = UInt<72>;
+
+  UIntT const def;
+  ASSERT_EQ(def.ElementAt(0), 0u);
+  ASSERT_EQ(def.ElementAt(1), 0u);
+}
+
+TEST(big_number_gtest, test_zero)
+{
+  using UIntT = UInt<72>;
+
+  EXPECT_EQ(UIntT::_0.ElementAt(0), 0u);
+  EXPECT_EQ(UIntT::_0.ElementAt(1), 0u);
+}
+
 // TODO(issue 1383): Enable test when issue is resolved
 TEST(big_number_gtest, DISABLED_test_issue_1383_demo_with_bitshift_oper)
 {
@@ -352,7 +389,7 @@ TEST(big_number_gtest, DISABLED_test_issue_1383_demo_overflow_with_plus_minus_op
   using UIntT = UInt<72>;
   UIntT n1{UIntT::max};
   ASSERT_EQ(UIntT::max.ElementAt(0), ~UIntT::WideType{0});
-  ASSERT_EQ(UIntT::max.ElementAt(1), 255);
+  ASSERT_EQ(UIntT::max.ElementAt(1), 0xff);
 
   ASSERT_EQ(n1.ElementAt(0), ~UIntT::WideType{0});
   ASSERT_EQ(n1.ElementAt(1),
