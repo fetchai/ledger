@@ -646,12 +646,24 @@ private:
   public:
     using Type = typename STensor::Type;
 
+    /**
+     * Construct TensorSlice with multiple axes
+     * @param t Original tensor
+     * @param range
+     * @param axes
+     */
     TensorSliceImplementation<STensor>(STensor &t, std::vector<SizeVector> range, SizeVector axes)
       : tensor_{t}
       , range_{std::move(range)}
       , axes_{std::move(axes)}
     {}
 
+    /**
+     * Construct TensorSlice with single axis
+     * @param t Original tensor
+     * @param range
+     * @param axis
+     */
     TensorSliceImplementation<STensor>(STensor &t, std::vector<SizeVector> range, SizeType axis = 0)
       : tensor_{t}
       , range_{std::move(range)}
@@ -2620,29 +2632,43 @@ typename Tensor<T, C>::SliceIteratorType Tensor<T, C>::TensorSlice::end()
   return SliceIteratorType::EndIterator(this->tensor_);
 }
 
+/**
+ * Returns a Slice of a Slice
+ * @tparam T Slice Type
+ * @tparam C Slice ContainerType
+ * @tparam STensor original tensor type
+ * @param i offset
+ * @param axis
+ * @return
+ */
 template <typename T, typename C>
 typename Tensor<T, C>::TensorSlice Tensor<T, C>::TensorSlice::Slice(SizeType i, SizeType axis)
 {
-  assert(axis < this->tensor_.shape().size());
-  assert(this->axes_.size() < this->tensor_.shape().size());
-  assert(i < this->tensor_.shape().at(axis));
-  for (SizeType i = 0; i < this->axes_.size(); i++)
-  {
-    assert(this->axes_.at(i) != axis);
-  }
+  std::vector<SizeType> new_axes(this->axes_);
 
-  std::vector<std::vector<SizeType>> new_range(this->range_);
-  std::vector<SizeType>              new_axes(this->axes_);
-
+  // If new axes are empty, it means that there was single axis
   if (new_axes.size() == 0)
   {
     new_axes.push_back(this->axis_);
   }
 
+  // Test validity
+  assert(axis < this->tensor_.shape().size());
+  assert(this->new_axes.size() < this->tensor_.shape().size());
+  assert(i < this->tensor_.shape().at(axis));
+  for (SizeType i = 0; i < this->new_axes.size(); i++)
+  {
+    assert(this->new_axes.at(i) != axis);
+  }
+
+  std::vector<std::vector<SizeType>> new_range(this->range_);
+
+  // Modify range based on specified offset i
   new_range.at(axis).at(0) = i;
   new_range.at(axis).at(1) = i + 1;
   new_range.at(axis).at(2) = 1;
 
+  // Add new axis
   new_axes.push_back(axis);
 
   return TensorSlice(this->tensor_, new_range, new_axes);
@@ -2704,30 +2730,45 @@ Tensor<T, C> Tensor<T, C>::TensorSliceImplementation<STensor>::Copy() const
   return ret;
 }
 
+/**
+ * Returns a ConstSlice of a ConstSlice that is not permitted to alter the original tensor
+ * @tparam T Slice Type
+ * @tparam C Slice ContainerType
+ * @tparam STensor original tensor type
+ * @param i offset
+ * @param axis
+ * @return
+ */
 template <typename T, typename C>
 template <typename STensor>
 typename Tensor<T, C>::ConstSliceType Tensor<T, C>::TensorSliceImplementation<STensor>::Slice(
     SizeType i, SizeType axis) const
 {
-  assert(axis < tensor_.shape().size());
-  assert(axes_.size() < tensor_.shape().size());
-  assert(i < tensor_.shape().at(axis));
-  for (SizeType i = 0; i < axes_.size(); i++)
-  {
-    assert(axes_.at(i) != axis);
-  }
+  std::vector<SizeType> new_axes(axes_);
 
-  std::vector<std::vector<SizeType>> new_range(range_);
-  std::vector<SizeType>              new_axes(axes_);
+  // If new axes are empty, it means that there was single axis
   if (axes_.size() == 0)
   {
     new_axes.push_back(axis_);
   }
 
+  // Test validity
+  assert(axis < tensor_.shape().size());
+  assert(new_axes.size() < tensor_.shape().size());
+  assert(i < tensor_.shape().at(axis));
+  for (SizeType i = 0; i < new_axes.size(); i++)
+  {
+    assert(new_axes.at(i) != axis);
+  }
+
+  std::vector<std::vector<SizeType>> new_range(range_);
+
+  // Modify range based on specified offset i
   new_range.at(axis).at(0) = i;
   new_range.at(axis).at(1) = i + 1;
   new_range.at(axis).at(2) = 1;
 
+  // Add new axis
   new_axes.push_back(axis);
 
   return ConstSliceType(tensor_, new_range, new_axes);
