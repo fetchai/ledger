@@ -45,7 +45,6 @@ public:
   using ArrayPtrType       = std::shared_ptr<ArrayType>;
   using SizeType           = typename ArrayType::SizeType;
   using DataType           = typename ArrayType::Type;
-  using ConstSliceType     = typename ArrayType::ConstSliceType;
   using NodePtrType        = typename std::shared_ptr<fetch::ml::NodeInterface<ArrayType>>;
   using TrainablePtrType   = typename std::shared_ptr<fetch::ml::ops::Trainable<ArrayType>>;
   using GraphPtrType       = typename std::shared_ptr<fetch::ml::Graph<ArrayType>>;

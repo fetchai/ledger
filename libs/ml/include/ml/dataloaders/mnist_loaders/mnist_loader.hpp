@@ -118,7 +118,7 @@ public:
     {
 
       SizeType i{0};
-      auto     it = ret_images.at(0).Slice(index, 2).begin();
+      auto     it = ret_images.at(0).View(index).begin();
       while (it.is_valid())
       {
         *it = static_cast<DataType>(data_[cursor_][i]) / DataType{256};
@@ -153,7 +153,7 @@ private:
     }
 
     buffer_.first.Fill(DataType{0});
-    buffer_.first(labels_[index], 0) = DataType{1.0};
+    buffer_.first(labels_[index], 0) = static_cast<DataType>(1.0);
 
     ret = buffer_;
   }

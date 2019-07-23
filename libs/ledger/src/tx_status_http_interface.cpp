@@ -114,7 +114,10 @@ TxStatusHttpInterface::TxStatusHttpInterface(TxStatusCachePtr status_cache)
 {
   assert(status_cache_);
 
-  Get("/api/status/tx/(digest=[a-fA-F0-9]{64})",
+  Get("/api/status/tx/(digest=[a-fA-F0-9]{64})", "Retrieves a transaction status.",
+      {
+          {"digest", "The transaction hash.", http::validators::StringValue()},
+      },
       [this](http::ViewParameters const &params, http::HTTPRequest const &request) {
         FETCH_UNUSED(request);
 
