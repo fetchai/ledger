@@ -289,7 +289,6 @@ public:
 
   ConstSliceType Slice(SizeType i, SizeType axis = 0) const;
   TensorSlice    Slice(SizeType i, SizeType axis = 0);
-  TensorSlice    Slice(std::vector<SizeType> i, std::vector<SizeType> axis);
 
   /////////////
   /// Views ///
@@ -654,7 +653,7 @@ private:
     {}
 
     Tensor                 Copy() const;
-    TensorSlice            Slice(SizeType i, SizeType axis);
+    TensorSlice            Slice(SizeType i, SizeType axis) const;
     ConstSliceIteratorType begin() const;
     ConstSliceIteratorType end() const;
     SizeType               size() const;
@@ -2162,27 +2161,6 @@ typename Tensor<T, C>::TensorSlice Tensor<T, C>::Slice(SizeType i, SizeType axis
   return TensorSlice(*this, range, {axis});
 }
 
-template <typename T, typename C>
-typename Tensor<T, C>::TensorSlice Tensor<T, C>::Slice(std::vector<SizeType> i,
-                                                       std::vector<SizeType> axis)
-{
-  std::vector<std::vector<SizeType>> range;
-
-  for (SizeType j = 0; j < shape().size(); ++j)
-  {
-    range.push_back({0, shape().at(j), 1});
-  }
-
-  for (SizeType j = 0; j < i.size(); ++j)
-  {
-    range.at(axis.at(j)).at(0) = i.at(j);
-    range.at(axis.at(j)).at(1) = i.at(j) + 1;
-    range.at(axis.at(j)).at(2) = 1;
-  }
-
-  return TensorSlice(*this, range, axis);
-}
-
 ////////////////////////////////////////
 /// Tensor methods: general utilites ///
 ////////////////////////////////////////
@@ -2678,7 +2656,7 @@ Tensor<T, C> Tensor<T, C>::TensorSliceImplementation<STensor>::Copy() const
 template <typename T, typename C>
 template <typename STensor>
 typename Tensor<T, C>::TensorSlice Tensor<T, C>::TensorSliceImplementation<STensor>::Slice(
-    SizeType i, SizeType axis)
+    SizeType i, SizeType axis) const
 {
   assert(axis < tensor_.shape().size());
   assert(axis_.size() < tensor_.shape().size());
@@ -2688,14 +2666,16 @@ typename Tensor<T, C>::TensorSlice Tensor<T, C>::TensorSliceImplementation<STens
     assert(axis_.at(i) != axis);
   }
 
-  std::vector<std::vector<SizeType>> range(range_);
-  range.at(axis).at(0) = i;
-  range.at(axis).at(1) = i + 1;
-  range.at(axis).at(2) = 1;
+  std::vector<std::vector<SizeType>> new_range(range_);
+  std::vector<SizeType>              new_axis(axis_);
 
-  axis_.push_back(axis);
+  new_range.at(axis).at(0) = i;
+  new_range.at(axis).at(1) = i + 1;
+  new_range.at(axis).at(2) = 1;
 
-  return TensorSlice(tensor_, range, axis_);
+  new_axis.push_back(axis);
+
+  return TensorSlice(tensor_, new_range, new_axis);
 }
 
 template <typename T, typename C>
