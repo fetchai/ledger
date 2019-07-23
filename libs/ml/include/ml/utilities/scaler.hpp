@@ -17,32 +17,23 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/assert.hpp"
-#include <cmath>
-
 namespace fetch {
-namespace math {
-namespace distance {
+namespace ml {
+namespace utilities {
 
-template <typename ArrayType>
-inline typename ArrayType::Type SquareDistance(ArrayType const &A, ArrayType const &B)
+template <typename TensorType>
+class Scaler
 {
-  using Type = typename ArrayType::Type;
-  auto it1   = A.begin();
-  auto it2   = B.begin();
-  assert(it1.size() == it2.size());
-  Type ret = Type(0);
 
-  while (it1.is_valid())
-  {
-    Type d = (*it1) - (*it2);
-    ret += d * d;
-    ++it1;
-    ++it2;
-  }
-  return ret;
-}
+public:
+  Scaler()          = default;
+  virtual ~Scaler() = default;
 
-}  // namespace distance
-}  // namespace math
+  virtual void SetScale(TensorType const &reference_tensor)                           = 0;
+  virtual void Normalise(TensorType const &input_tensor, TensorType &output_tensor)   = 0;
+  virtual void DeNormalise(TensorType const &input_tensor, TensorType &output_tensor) = 0;
+};
+
+}  // namespace utilities
+}  // namespace ml
 }  // namespace fetch

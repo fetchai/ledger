@@ -19,6 +19,7 @@
 
 #include "math/tensor.hpp"
 #include "vm/module.hpp"
+#include "vm_modules/math/type.hpp"
 
 namespace fetch {
 namespace vm_modules {
@@ -28,7 +29,7 @@ class VMTensor : public fetch::vm::Object
 {
 
 public:
-  using DataType   = float;
+  using DataType   = fetch::vm_modules::math::DataType;
   using ArrayType  = fetch::math::Tensor<DataType>;
   using SizeType   = ArrayType::SizeType;
   using SizeVector = ArrayType::SizeVector;
@@ -69,7 +70,9 @@ public:
         .CreateMemberFunction("at", &VMTensor::AtThree)
         .CreateMemberFunction("setAt", &VMTensor::SetAt)
         .CreateMemberFunction("fill", &VMTensor::Fill)
+        .CreateMemberFunction("fillRandom", &VMTensor::FillRandom)
         .CreateMemberFunction("reshape", &VMTensor::Reshape)
+        .CreateMemberFunction("size", &VMTensor::size)
         .CreateMemberFunction("toString", &VMTensor::ToString);
   }
 
@@ -78,11 +81,16 @@ public:
     return tensor_.shape();
   }
 
+  SizeType size()
+  {
+    return tensor_.size();
+  }
+
   ////////////////////////////////////
   /// ACCESSING AND SETTING VALUES ///
   ////////////////////////////////////
 
-  DataType AtOne(uint64_t idx1)
+  DataType AtOne(SizeType idx1)
   {
     return tensor_.At(idx1);
   }
@@ -112,6 +120,11 @@ public:
     tensor_.Fill(value);
   }
 
+  void FillRandom()
+  {
+    tensor_.FillUniformRandom();
+  }
+
   bool Reshape(fetch::vm::Ptr<fetch::vm::Array<SizeType>> const &new_shape)
   {
     return tensor_.Reshape(new_shape->elements);
@@ -127,6 +140,11 @@ public:
   }
 
   ArrayType &GetTensor()
+  {
+    return tensor_;
+  }
+
+  ArrayType const &GetConstTensor()
   {
     return tensor_;
   }

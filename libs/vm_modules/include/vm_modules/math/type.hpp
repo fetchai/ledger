@@ -17,32 +17,14 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/assert.hpp"
-#include <cmath>
+#include "vectorise/fixed_point/fixed_point.hpp"
 
 namespace fetch {
+namespace vm_modules {
 namespace math {
-namespace distance {
 
-template <typename ArrayType>
-inline typename ArrayType::Type SquareDistance(ArrayType const &A, ArrayType const &B)
-{
-  using Type = typename ArrayType::Type;
-  auto it1   = A.begin();
-  auto it2   = B.begin();
-  assert(it1.size() == it2.size());
-  Type ret = Type(0);
+using DataType = fetch::fixed_point::fp64_t;
 
-  while (it1.is_valid())
-  {
-    Type d = (*it1) - (*it2);
-    ret += d * d;
-    ++it1;
-    ++it2;
-  }
-  return ret;
-}
-
-}  // namespace distance
 }  // namespace math
+}  // namespace vm_modules
 }  // namespace fetch
