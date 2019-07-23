@@ -180,7 +180,6 @@ std::vector<bn::Fr> InterpolatePolynom(std::vector<bn::Fr> const &a, std::vector
       bn::Fr::mul(t2, t2, a[k]);
       bn::Fr::add(t2, t2, res[i]);
     }
-    //	throw false;
     bn::Fr::neg(t1, t1);
 
     bn::Fr::sub(t2, b[k], t2);
