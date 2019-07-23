@@ -909,16 +909,16 @@ void DistributedKeyGeneration::ResetCabinet()
   complaints_manager_.ResetCabinet(cabinet_size);
   complaints_answer_manager_.ResetCabinet(cabinet_size);
 
-  received_all_coef_and_shares_ = false;
-  received_all_complaints_ = false;
-  received_all_complaints_answer_ = false;
-  received_all_qual_shares_ = false;
-  received_all_qual_complaints_ = false;
+  received_all_coef_and_shares_       = false;
+  received_all_complaints_            = false;
+  received_all_complaints_answer_     = false;
+  received_all_qual_shares_           = false;
+  received_all_qual_complaints_       = false;
   received_all_reconstruction_shares_ = false;
 
-  shares_received_ = 0;
-  C_ik_received_ = 0;
-  A_ik_received_ = 0;
+  shares_received_                = 0;
+  C_ik_received_                  = 0;
+  A_ik_received_                  = 0;
   reconstruction_shares_received_ = 0;
 
   reconstruction_shares.clear();
