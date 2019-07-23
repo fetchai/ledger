@@ -23,7 +23,6 @@
 
 namespace fetch {
 namespace dkg {
-namespace rbc {
 
 class RBCEnvelope
 {
@@ -71,6 +70,5 @@ inline void Deserialize(T &serializer, RBCEnvelope &env)
 {
   env.Deserialize(serializer);
 }
-}  // namespace rbc
 }  // namespace dkg
 }  // namespace fetch
