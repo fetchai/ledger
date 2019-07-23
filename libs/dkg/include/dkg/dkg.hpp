@@ -64,8 +64,8 @@ class DistributedKeyGeneration
   static bn::G2 group_g_;  ///< Generator of group used in DKG
   static bn::G2 group_h_;  ///< Generator of subgroup used in DKG
 
-  CabinetMembers &cabinet_;        ///< Muddle addresses of cabinet members
-  uint32_t &      threshold_;      ///< Number of cooperating members required to generate keys
+  CabinetMembers const &cabinet_;        ///< Muddle addresses of cabinet members
+  uint32_t const &      threshold_;      ///< Number of cooperating members required to generate keys
   MuddleAddress   address_;        ///< Our muddle address
   uint32_t        cabinet_index_;  ///< Index of our address in cabinet_
   // DkgService &       dkg_service_;
@@ -163,7 +163,7 @@ class DistributedKeyGeneration
 
 public:
   DistributedKeyGeneration(
-      MuddleAddress address, CabinetMembers &cabinet, uint32_t &threshold,
+      MuddleAddress address, CabinetMembers const &cabinet, uint32_t const &threshold,
       std::function<void(DKGEnvelop const &)> broadcast_callback,
       std::function<void(MuddleAddress const &, std::pair<std::string, std::string> const &)>
           rpc_callback);
