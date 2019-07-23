@@ -24,42 +24,42 @@ struct TypeCodes
 {
   enum
   {
-    BOOL_TRUE        = 0xc3,
-    BOOL_FALSE       = 0xc2,
-    INT8             = 0xd0,
-    INT16            = 0xd1,
-    INT32            = 0xd2,
-    INT64            = 0xd4,
-    
-    UINT8            = 0xcc,
-    UINT16           = 0xcd,
-    UINT32           = 0xce,
-    UINT64           = 0xcf,
+    BOOL_TRUE  = 0xc3,
+    BOOL_FALSE = 0xc2,
+    INT8       = 0xd0,
+    INT16      = 0xd1,
+    INT32      = 0xd2,
+    INT64      = 0xd4,
 
-    FLOAT            = 0xca,
-    DOUBLE           = 0xcb,
+    UINT8  = 0xcc,
+    UINT16 = 0xcd,
+    UINT32 = 0xce,
+    UINT64 = 0xcf,
+
+    FLOAT  = 0xca,
+    DOUBLE = 0xcb,
 
     BINARY_CODE_FIXED = 0xc4,
-    BINARY_CODE16     = 0xc5, 
+    BINARY_CODE16     = 0xc5,
     BINARY_CODE32     = 0xc6,
 
     ARRAY_CODE_FIXED = 0x90,
     ARRAY_CODE16     = 0xdc,
     ARRAY_CODE32     = 0xdd,
 
-    MAP_CODE_FIXED   = 0x80,
-    MAP_CODE16       = 0xde,
-    MAP_CODE32       = 0xdf,
+    MAP_CODE_FIXED = 0x80,
+    MAP_CODE16     = 0xde,
+    MAP_CODE32     = 0xdf,
 
-    FIXED_MASK1      = 0xF0,
-    FIXED_MASK2      = 0xE0,
-    FIXED_VAL_MASK   = 0x0F,
-    FIXED_VAL_MASK2  = 0x1F,
+    FIXED_MASK1     = 0xF0,
+    FIXED_MASK2     = 0xE0,
+    FIXED_VAL_MASK  = 0x0F,
+    FIXED_VAL_MASK2 = 0x1F,
 
     STRING_CODE_FIXED = 0xa0,
     STRING_CODE8      = 0xd9,
     STRING_CODE16     = 0xda,
-    STRING_CODE32     = 0xdb    
+    STRING_CODE32     = 0xdb
   };
 };
 

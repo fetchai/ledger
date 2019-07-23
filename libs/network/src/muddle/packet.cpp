@@ -19,7 +19,7 @@
 #include "core/byte_array/byte_array.hpp"
 #include "network/muddle/packet.hpp"
 
-#include <cstring> // memcpy
+#include <cstring>  // memcpy
 
 namespace fetch {
 namespace muddle {
@@ -118,5 +118,5 @@ bool Packet::FromBuffer(Packet &packet, void const *buffer, std::size_t length)
   return true;
 }
 
-} // namespace muddle
-} // namespace fetch
+}  // namespace muddle
+}  // namespace fetch

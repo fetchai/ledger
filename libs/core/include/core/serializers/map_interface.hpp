@@ -94,7 +94,7 @@ public:
       {
         throw SerializableException(std::string("incorrect size opcode for map size."));
       }
-      size = static_cast<uint32_t>(opcode &  TypeCodes::FIXED_VAL_MASK); 
+      size = static_cast<uint32_t>(opcode & TypeCodes::FIXED_VAL_MASK);
     }
     size_ = static_cast<uint64_t>(size);
   }
@@ -125,7 +125,10 @@ public:
     serializer_ >> k;
     if (k != key)
     {
-      throw SerializableException(std::string("Key mismatch while deserialising map: " + std::to_string(pos_-1) + " / " + std::to_string(size_)) + ", " + std::to_string(k) + " != "+ std::to_string(key));
+      throw SerializableException(
+          std::string("Key mismatch while deserialising map: " + std::to_string(pos_ - 1) + " / " +
+                      std::to_string(size_)) +
+          ", " + std::to_string(k) + " != " + std::to_string(key));
     }
     serializer_ >> value;
     return true;

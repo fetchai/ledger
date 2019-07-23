@@ -134,7 +134,7 @@ public:
   Address const &   GetSender() const;
   Payload const &   GetPayload() const noexcept;
   Stamp const &     GetStamp() const noexcept;
-  std::size_t GetPacketSize() const;
+  std::size_t       GetPacketSize() const;
 
   // Setters
   void SetDirect(bool set = true) noexcept;

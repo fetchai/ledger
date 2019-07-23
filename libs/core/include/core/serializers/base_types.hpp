@@ -136,7 +136,8 @@ struct UnsignedIntegerSerializerImplementation
 };
 
 template <typename D>
-struct IntegerSerializer<int8_t, D> : public SignedIntegerSerializerImplementation<int8_t, D, TypeCodes::INT8>
+struct IntegerSerializer<int8_t, D>
+  : public SignedIntegerSerializerImplementation<int8_t, D, TypeCodes::INT8>
 {
 };
 template <typename D>
@@ -195,7 +196,8 @@ struct SpecialTypeSerializer
 };
 
 template <typename D>
-struct BooleanSerializer<std::true_type, D> : public SpecialTypeSerializer<std::true_type, D, TypeCodes::BOOL_TRUE>
+struct BooleanSerializer<std::true_type, D>
+  : public SpecialTypeSerializer<std::true_type, D, TypeCodes::BOOL_TRUE>
 {
 };
 
@@ -406,11 +408,12 @@ public:
     case CODE32:
       interface.ReadBytes(reinterpret_cast<uint8_t *>(&size), sizeof(size));
       break;
-    default: // Default CODE_FIXED
+    default:  // Default CODE_FIXED
       if ((opcode & TypeCodes::FIXED_MASK2) != CODE_FIXED)
       {
         // TODO: Change to serializable exception.
-        throw std::runtime_error("expected CODE_FIXED in opcode: " + std::to_string(int(opcode)) + " vs " + std::to_string(int(CODE_FIXED)));
+        throw std::runtime_error("expected CODE_FIXED in opcode: " + std::to_string(int(opcode)) +
+                                 " vs " + std::to_string(int(CODE_FIXED)));
       }
       size = static_cast<uint32_t>(opcode & TypeCodes::FIXED_VAL_MASK2);
     }

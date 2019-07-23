@@ -71,10 +71,11 @@ typename ForwardSerializer<T, MsgPackByteArrayBuffer>::DriverType &MsgPackByteAr
   try
   {
     ForwardSerializer<T, MsgPackByteArrayBuffer>::Serialize(*this, val);
-  } 
-  catch(std::exception const&e)
+  }
+  catch (std::exception const &e)
   {
-    throw std::runtime_error("Error serializing " + static_cast<std::string>(typeid(T).name()) + ".\n" + std::string(e.what()));
+    throw std::runtime_error("Error serializing " + static_cast<std::string>(typeid(T).name()) +
+                             ".\n" + std::string(e.what()));
   }
 
   return *this;
@@ -87,10 +88,11 @@ typename ForwardSerializer<T, MsgPackByteArrayBuffer>::DriverType &MsgPackByteAr
   try
   {
     ForwardSerializer<T, MsgPackByteArrayBuffer>::Deserialize(*this, val);
-  } 
-  catch(std::exception const&e)
+  }
+  catch (std::exception const &e)
   {
-    throw std::runtime_error("Error deserializing " + static_cast<std::string>(typeid(T).name()) + ".\n" + std::string(e.what()));
+    throw std::runtime_error("Error deserializing " + static_cast<std::string>(typeid(T).name()) +
+                             ".\n" + std::string(e.what()));
   }
 
   return *this;
@@ -103,10 +105,11 @@ typename IntegerSerializer<T, MsgPackByteArrayBuffer>::DriverType &MsgPackByteAr
   try
   {
     IntegerSerializer<T, MsgPackByteArrayBuffer>::Serialize(*this, val);
-  } 
-  catch(std::exception const&e)
+  }
+  catch (std::exception const &e)
   {
-    throw std::runtime_error("Error serializing " + static_cast<std::string>(typeid(T).name()) + ".\n" + std::string(e.what()));
+    throw std::runtime_error("Error serializing " + static_cast<std::string>(typeid(T).name()) +
+                             ".\n" + std::string(e.what()));
   }
 
   return *this;
@@ -119,10 +122,11 @@ typename IntegerSerializer<T, MsgPackByteArrayBuffer>::DriverType &MsgPackByteAr
   try
   {
     IntegerSerializer<T, MsgPackByteArrayBuffer>::Deserialize(*this, val);
-  } 
-  catch(std::exception const&e)
+  }
+  catch (std::exception const &e)
   {
-    throw std::runtime_error("Error deserializing " + static_cast<std::string>(typeid(T).name()) + ".\n" + std::string(e.what()));
+    throw std::runtime_error("Error deserializing " + static_cast<std::string>(typeid(T).name()) +
+                             ".\n" + std::string(e.what()));
   }
 
   return *this;
@@ -135,10 +139,11 @@ typename FloatSerializer<T, MsgPackByteArrayBuffer>::DriverType &MsgPackByteArra
   try
   {
     FloatSerializer<T, MsgPackByteArrayBuffer>::Serialize(*this, val);
-  } 
-  catch(std::exception const&e)
+  }
+  catch (std::exception const &e)
   {
-    throw std::runtime_error("Error serializing " + static_cast<std::string>(typeid(T).name()) + ".\n" + std::string(e.what()));
+    throw std::runtime_error("Error serializing " + static_cast<std::string>(typeid(T).name()) +
+                             ".\n" + std::string(e.what()));
   }
 
   return *this;
@@ -151,10 +156,11 @@ typename FloatSerializer<T, MsgPackByteArrayBuffer>::DriverType &MsgPackByteArra
   try
   {
     FloatSerializer<T, MsgPackByteArrayBuffer>::Deserialize(*this, val);
-  } 
-  catch(std::exception const&e)
+  }
+  catch (std::exception const &e)
   {
-    throw std::runtime_error("Error deserializing " + static_cast<std::string>(typeid(T).name()) + ".\n" + std::string(e.what()));
+    throw std::runtime_error("Error deserializing " + static_cast<std::string>(typeid(T).name()) +
+                             ".\n" + std::string(e.what()));
   }
 
   return *this;
@@ -167,10 +173,11 @@ typename BooleanSerializer<T, MsgPackByteArrayBuffer>::DriverType &MsgPackByteAr
   try
   {
     BooleanSerializer<T, MsgPackByteArrayBuffer>::Serialize(*this, val);
-  } 
-  catch(std::exception const&e)
+  }
+  catch (std::exception const &e)
   {
-    throw std::runtime_error("Error serializing " + static_cast<std::string>(typeid(T).name()) + ".\n" + std::string(e.what()));
+    throw std::runtime_error("Error serializing " + static_cast<std::string>(typeid(T).name()) +
+                             ".\n" + std::string(e.what()));
   }
 
   return *this;
@@ -183,10 +190,11 @@ typename BooleanSerializer<T, MsgPackByteArrayBuffer>::DriverType &MsgPackByteAr
   try
   {
     BooleanSerializer<T, MsgPackByteArrayBuffer>::Deserialize(*this, val);
-  } 
-  catch(std::exception const&e)
+  }
+  catch (std::exception const &e)
   {
-    throw std::runtime_error("Error deserializing " + static_cast<std::string>(typeid(T).name()) + ".\n" + std::string(e.what()));
+    throw std::runtime_error("Error deserializing " + static_cast<std::string>(typeid(T).name()) +
+                             ".\n" + std::string(e.what()));
   }
 
   return *this;
@@ -197,12 +205,13 @@ typename StringSerializer<T, MsgPackByteArrayBuffer>::DriverType &MsgPackByteArr
                                                                   operator<<(T const &val)
 {
   try
-  {  
-    StringSerializer<T, MsgPackByteArrayBuffer>::Serialize(*this, val);
-  } 
-  catch(std::exception const&e)
   {
-    throw std::runtime_error("Error serializing " + static_cast<std::string>(typeid(T).name()) + ".\n" + std::string(e.what()));
+    StringSerializer<T, MsgPackByteArrayBuffer>::Serialize(*this, val);
+  }
+  catch (std::exception const &e)
+  {
+    throw std::runtime_error("Error serializing " + static_cast<std::string>(typeid(T).name()) +
+                             ".\n" + std::string(e.what()));
   }
 
   return *this;
@@ -215,10 +224,11 @@ typename StringSerializer<T, MsgPackByteArrayBuffer>::DriverType &MsgPackByteArr
   try
   {
     StringSerializer<T, MsgPackByteArrayBuffer>::Deserialize(*this, val);
-  } 
-  catch(std::exception const&e)
+  }
+  catch (std::exception const &e)
   {
-    throw std::runtime_error("Error deserializing " + static_cast<std::string>(typeid(T).name()) + ".\n" + std::string(e.what()));
+    throw std::runtime_error("Error deserializing " + static_cast<std::string>(typeid(T).name()) +
+                             ".\n" + std::string(e.what()));
   }
   return *this;
 }
@@ -227,17 +237,20 @@ template <typename T>
 typename BinarySerializer<T, MsgPackByteArrayBuffer>::DriverType &MsgPackByteArrayBuffer::
                                                                   operator<<(T const &val)
 {
-  using Serializer  = BinarySerializer<T, MsgPackByteArrayBuffer>;
-  using Constructor = interfaces::BinaryConstructorInterface< TypeCodes::BINARY_CODE_FIXED, TypeCodes::BINARY_CODE16, TypeCodes::BINARY_CODE32>;
+  using Serializer = BinarySerializer<T, MsgPackByteArrayBuffer>;
+  using Constructor =
+      interfaces::BinaryConstructorInterface<TypeCodes::BINARY_CODE_FIXED, TypeCodes::BINARY_CODE16,
+                                             TypeCodes::BINARY_CODE32>;
 
   try
   {
-    Constructor constructor(*this);  
+    Constructor constructor(*this);
     Serializer::Serialize(constructor, val);
-  } 
-  catch(std::exception const&e)
+  }
+  catch (std::exception const &e)
   {
-    throw std::runtime_error("Error deserializing " + static_cast<std::string>(typeid(T).name()) + ".\n" + std::string(e.what()));
+    throw std::runtime_error("Error deserializing " + static_cast<std::string>(typeid(T).name()) +
+                             ".\n" + std::string(e.what()));
   }
 
   return *this;
@@ -253,9 +266,10 @@ typename BinarySerializer<T, MsgPackByteArrayBuffer>::DriverType &MsgPackByteArr
     interfaces::BinaryDeserializer stream(*this);
     Serializer::Deserialize(stream, val);
   }
-  catch(std::exception const&e)
+  catch (std::exception const &e)
   {
-    throw std::runtime_error("Error deserializing " + static_cast<std::string>(typeid(T).name()) + ".\n" + std::string(e.what()));
+    throw std::runtime_error("Error deserializing " + static_cast<std::string>(typeid(T).name()) +
+                             ".\n" + std::string(e.what()));
   }
 
   return *this;
@@ -267,16 +281,19 @@ typename ArraySerializer<T, MsgPackByteArrayBuffer>::DriverType &MsgPackByteArra
 {
   using Serializer = ArraySerializer<T, MsgPackByteArrayBuffer>;
   using Constructor =
-      interfaces::ContainerConstructorInterface<interfaces::ArrayInterface, TypeCodes::ARRAY_CODE_FIXED, TypeCodes::ARRAY_CODE16, TypeCodes::ARRAY_CODE32>;
+      interfaces::ContainerConstructorInterface<interfaces::ArrayInterface,
+                                                TypeCodes::ARRAY_CODE_FIXED,
+                                                TypeCodes::ARRAY_CODE16, TypeCodes::ARRAY_CODE32>;
 
   try
   {
     Constructor constructor(*this);
     Serializer::Serialize(constructor, val);
   }
-  catch(std::exception const&e)
+  catch (std::exception const &e)
   {
-    throw std::runtime_error("Error deserializing " + static_cast<std::string>(typeid(T).name()) + ".\n" + std::string(e.what()));
+    throw std::runtime_error("Error deserializing " + static_cast<std::string>(typeid(T).name()) +
+                             ".\n" + std::string(e.what()));
   }
 
   return *this;
@@ -292,9 +309,10 @@ typename ArraySerializer<T, MsgPackByteArrayBuffer>::DriverType &MsgPackByteArra
     interfaces::ArrayDeserializer array(*this);
     Serializer::Deserialize(array, val);
   }
-  catch(std::exception const&e)
+  catch (std::exception const &e)
   {
-    throw std::runtime_error("Error deserializing " + static_cast<std::string>(typeid(T).name()) + ".\n" + std::string(e.what()));
+    throw std::runtime_error("Error deserializing " + static_cast<std::string>(typeid(T).name()) +
+                             ".\n" + std::string(e.what()));
   }
 
   return *this;
@@ -306,16 +324,18 @@ typename MapSerializer<T, MsgPackByteArrayBuffer>::DriverType &MsgPackByteArrayB
 {
   using Serializer = MapSerializer<T, MsgPackByteArrayBuffer>;
   using Constructor =
-      interfaces::ContainerConstructorInterface<interfaces::MapInterface, TypeCodes::MAP_CODE_FIXED, TypeCodes::MAP_CODE16, TypeCodes::MAP_CODE32>;
+      interfaces::ContainerConstructorInterface<interfaces::MapInterface, TypeCodes::MAP_CODE_FIXED,
+                                                TypeCodes::MAP_CODE16, TypeCodes::MAP_CODE32>;
 
   try
   {
     Constructor constructor(*this);
     Serializer::Serialize(constructor, val);
-  } 
-  catch(std::exception const&e)
+  }
+  catch (std::exception const &e)
   {
-    throw std::runtime_error("Error deserializing " + static_cast<std::string>(typeid(T).name()) + ".\n" + std::string(e.what()));
+    throw std::runtime_error("Error deserializing " + static_cast<std::string>(typeid(T).name()) +
+                             ".\n" + std::string(e.what()));
   }
 
   return *this;
@@ -330,10 +350,11 @@ typename MapSerializer<T, MsgPackByteArrayBuffer>::DriverType &MsgPackByteArrayB
   {
     interfaces::MapDeserializer map(*this);
     Serializer::Deserialize(map, val);
-  } 
-  catch(std::exception const&e)
+  }
+  catch (std::exception const &e)
   {
-    throw std::runtime_error("Error deserializing " + static_cast<std::string>(typeid(T).name()) + ".\n" + std::string(e.what()));
+    throw std::runtime_error("Error deserializing " + static_cast<std::string>(typeid(T).name()) +
+                             ".\n" + std::string(e.what()));
   }
 
   return *this;
