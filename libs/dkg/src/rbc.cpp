@@ -69,7 +69,7 @@ RBC::RBC(Endpoint &endpoint, MuddleAddress address, CabinetMembers const &cabine
   : address_{std::move(address)}
   , endpoint_{endpoint}
   , current_cabinet_{cabinet}
-  , deliver_msg_callback_{call_back}
+  , deliver_msg_callback_{std::move(call_back)}
   , rbc_subscription_(endpoint.Subscribe(SERVICE_DKG, CHANNEL_BROADCAST))
 {
 
