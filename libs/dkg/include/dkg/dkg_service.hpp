@@ -144,11 +144,12 @@ public:
     return state_machine_;
   }
 
-  void ResetCabinet(CabinetMembers cabinet, uint32_t threshold = UINT32_MAX)
+  void ResetCabinet(CabinetMembers cabinet,
+                    uint32_t       threshold = std::numeric_limits<uint32_t>::max())
   {
     FETCH_LOCK(cabinet_lock_);
     current_cabinet_ = std::move(cabinet);
-    if (threshold == UINT32_MAX)
+    if (threshold == std::numeric_limits<uint32_t>::max())
     {
       current_threshold_ = static_cast<uint32_t>(current_cabinet_.size() / 2 - 1);
     }
