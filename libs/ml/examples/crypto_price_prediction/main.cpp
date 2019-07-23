@@ -124,7 +124,7 @@ public:
     {
       auto x_min_it   = x_min.begin();
       auto x_range_it = x_range.begin();
-      auto in_it      = input_tensor.Slice(i, batch_dim).begin();
+      auto in_it      = input_tensor.Slice(i, batch_dim).cbegin();
       auto ret_it     = output_tensor.Slice(i, batch_dim).begin();
       while (ret_it.is_valid())
       {
@@ -151,7 +151,7 @@ public:
     {
       auto x_min_it   = x_min.begin();
       auto x_range_it = x_range.begin();
-      auto in_it      = input_tensor.Slice(i, batch_dim).begin();
+      auto in_it      = input_tensor.Slice(i, batch_dim).cbegin();
       auto ret_it     = output_tensor.Slice(i, batch_dim).begin();
       while (ret_it.is_valid())
       {

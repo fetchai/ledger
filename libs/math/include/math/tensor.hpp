@@ -339,8 +339,8 @@ public:
   public:
     using Type = T;
     using TensorSliceImplementation<Tensor>::TensorSliceImplementation;
-    using TensorSliceImplementation<Tensor>::begin;
-    using TensorSliceImplementation<Tensor>::end;
+    using TensorSliceImplementation<Tensor>::cbegin;
+    using TensorSliceImplementation<Tensor>::cend;
     using TensorSliceImplementation<Tensor>::Slice;
 
     SliceIteratorType begin();
@@ -655,8 +655,8 @@ private:
 
     Tensor                 Copy() const;
     ConstSliceType         Slice(SizeType i, SizeType axis) const;
-    ConstSliceIteratorType begin() const;
-    ConstSliceIteratorType end() const;
+    ConstSliceIteratorType cbegin() const;
+    ConstSliceIteratorType cend() const;
     SizeType               size() const;
     SizeVector             shape() const;
 
@@ -962,7 +962,7 @@ template <typename G>
 void Tensor<T, C>::Assign(TensorSliceImplementation<G> const &other)
 {
   auto it1 = begin();
-  auto it2 = other.begin();
+  auto it2 = other.cbegin();
   assert(it1.size() == it2.size());
   while (it1.is_valid())
   {
@@ -2626,7 +2626,7 @@ template <typename G>
 void Tensor<T, C>::TensorSlice::Assign(TensorSliceImplementation<G> const &other)
 {
   auto it1 = begin();
-  auto it2 = other.begin();
+  auto it2 = other.cbegin();
   assert(it1.size() == it2.size());
   while (it1.is_valid())
   {
@@ -2705,7 +2705,7 @@ typename Tensor<T, C>::ConstSliceType Tensor<T, C>::TensorSliceImplementation<ST
 template <typename T, typename C>
 template <typename STensor>
 typename Tensor<T, C>::ConstSliceIteratorType
-Tensor<T, C>::TensorSliceImplementation<STensor>::begin() const
+Tensor<T, C>::TensorSliceImplementation<STensor>::cbegin() const
 {
   auto ret = ConstSliceIteratorType(tensor_, range_);
   ret.MoveAxesToFront(axis_);
@@ -2715,7 +2715,7 @@ Tensor<T, C>::TensorSliceImplementation<STensor>::begin() const
 template <typename T, typename C>
 template <typename STensor>
 typename Tensor<T, C>::ConstSliceIteratorType
-Tensor<T, C>::TensorSliceImplementation<STensor>::end() const
+Tensor<T, C>::TensorSliceImplementation<STensor>::cend() const
 {
   return ConstSliceIteratorType::EndIterator(tensor_);
 }
