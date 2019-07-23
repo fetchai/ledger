@@ -339,14 +339,17 @@ void Muddle::CreateTcpClient(Uri const &peer)
   strong_conn->OnMessage([this, peer, conn_handle](network::message_type const &msg) {
     try
     {
-      // un-marshall the data
-      serializers::ByteArrayBuffer buffer(msg);
-
       auto packet = std::make_shared<Packet>();
-      buffer >> *packet;
 
-      // dispatch the message to router
-      router_.Route(conn_handle, packet);
+      if (Packet::FromBuffer(*packet, msg.pointer(), msg.size()))
+      {
+        // dispatch the message to router
+        router_.Route(conn_handle, packet);
+      }
+      else
+      {
+        FETCH_LOG_WARN(LOGGING_NAME, "Failed to read packet from buffer");
+      }
     }
     catch (std::exception const &ex)
     {

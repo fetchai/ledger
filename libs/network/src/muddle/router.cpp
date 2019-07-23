@@ -817,13 +817,19 @@ void Router::SendToConnection(Handle handle, PacketPtr packet)
     }
 
     // serialize the packet to the buffer
-    serializers::ByteArrayBuffer buffer;
-    buffer << *packet;
+    ByteArray buffer;
+    buffer.Resize(packet->GetPacketSize());
+    if (Packet::ToBuffer(*packet, buffer.pointer(), buffer.size()))
+    {
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Sending out: ", DescribePacket(*packet));
 
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Sending out: ", DescribePacket(*packet));
-
-    // dispatch to the connection object
-    conn->Send(buffer.data());
+      // dispatch to the connection object
+      conn->Send(buffer);
+    }
+    else
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Failed to generate binary stream for packet");
+    }
   }
   else
   {
@@ -872,11 +878,17 @@ void Router::RoutePacket(PacketPtr packet, bool external)
     }
 
     // serialize the packet to the buffer
-    serializers::ByteArrayBuffer buffer;
-    buffer << *packet;
-
-    // broadcast the data across the network
-    register_.Broadcast(buffer.data());
+    ByteArray buffer{};
+    buffer.Resize(packet->GetPacketSize());
+    if (Packet::ToBuffer(*packet, buffer.pointer(), buffer.size()))
+    {
+      // broadcast the data across the network
+      register_.Broadcast(buffer);
+    }
+    else
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Failed to serialise muddle packet to stream");
+    }
   }
   else
   {
