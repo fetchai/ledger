@@ -345,6 +345,7 @@ public:
 
     SliceIteratorType begin();
     SliceIteratorType end();
+    TensorSlice       Slice(SizeType i, SizeType axis);
     template <typename G>
     void Assign(TensorSliceImplementation<G> const &other);
     void Assign(Tensor const &other);
@@ -653,7 +654,7 @@ private:
     {}
 
     Tensor                 Copy() const;
-    TensorSlice            Slice(SizeType i, SizeType axis) const;
+    ConstSliceType         Slice(SizeType i, SizeType axis) const;
     ConstSliceIteratorType begin() const;
     ConstSliceIteratorType end() const;
     SizeType               size() const;
@@ -2598,6 +2599,29 @@ typename Tensor<T, C>::SliceIteratorType Tensor<T, C>::TensorSlice::end()
 }
 
 template <typename T, typename C>
+typename Tensor<T, C>::TensorSlice Tensor<T, C>::TensorSlice::Slice(SizeType i, SizeType axis)
+{
+  assert(axis < this->tensor_.shape().size());
+  assert(this->axis_.size() < this->tensor_.shape().size());
+  assert(i < this->tensor_.shape().at(axis));
+  for (SizeType i = 0; i < this->axis_.size(); i++)
+  {
+    assert(this->axis_.at(i) != axis);
+  }
+
+  std::vector<std::vector<SizeType>> new_range(this->range_);
+  std::vector<SizeType>              new_axis(this->axis_);
+
+  new_range.at(axis).at(0) = i;
+  new_range.at(axis).at(1) = i + 1;
+  new_range.at(axis).at(2) = 1;
+
+  new_axis.push_back(axis);
+
+  return TensorSlice(this->tensor_, new_range, new_axis);
+}
+
+template <typename T, typename C>
 template <typename G>
 void Tensor<T, C>::TensorSlice::Assign(TensorSliceImplementation<G> const &other)
 {
@@ -2655,7 +2679,7 @@ Tensor<T, C> Tensor<T, C>::TensorSliceImplementation<STensor>::Copy() const
 
 template <typename T, typename C>
 template <typename STensor>
-typename Tensor<T, C>::TensorSlice Tensor<T, C>::TensorSliceImplementation<STensor>::Slice(
+typename Tensor<T, C>::ConstSliceType Tensor<T, C>::TensorSliceImplementation<STensor>::Slice(
     SizeType i, SizeType axis) const
 {
   assert(axis < tensor_.shape().size());
@@ -2675,7 +2699,7 @@ typename Tensor<T, C>::TensorSlice Tensor<T, C>::TensorSliceImplementation<STens
 
   new_axis.push_back(axis);
 
-  return TensorSlice(tensor_, new_range, new_axis);
+  return ConstSliceType(tensor_, new_range, new_axis);
 }
 
 template <typename T, typename C>
