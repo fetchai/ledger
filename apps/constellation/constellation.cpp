@@ -224,23 +224,17 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
         cfg_.num_executors, cfg_.log2_num_lanes, storage_,
         [this] {
           return std::make_shared<Executor>(storage_, stake_ ? &stake_->update_queue() : nullptr);
-        })}
+        },
+        tx_status_cache_)}
   , chain_{cfg_.features.IsEnabled(FeatureFlags::MAIN_CHAIN_BLOOM_FILTER),
            ledger::MainChain::Mode::LOAD_PERSISTENT_DB}
   , block_packer_{cfg_.log2_num_lanes}
-  , block_coordinator_{chain_,
-                       dag_,
-                       stake_,
-                       *execution_manager_,
-                       *storage_,
-                       block_packer_,
-                       *this,
-                       tx_status_cache_,
-                       cfg_.features,
-                       certificate,
-                       cfg_.num_lanes(),
-                       cfg_.num_slices,
-                       cfg_.block_difficulty}
+  , block_coordinator_{chain_,          dag_,
+                       stake_,          *execution_manager_,
+                       *storage_,       block_packer_,
+                       *this,           cfg_.features,
+                       certificate,     cfg_.num_lanes(),
+                       cfg_.num_slices, cfg_.block_difficulty}
   , main_chain_service_{std::make_shared<MainChainRpcService>(p2p_.AsEndpoint(), chain_, trust_,
                                                               cfg_.network_mode)}
   , tx_processor_{dag_, *storage_, block_packer_, tx_status_cache_, cfg_.processor_threads}

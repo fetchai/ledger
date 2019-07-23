@@ -17,36 +17,14 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chaincode/contract.hpp"
-
-#include <atomic>
+#include "vectorise/fixed_point/fixed_point.hpp"
 
 namespace fetch {
-namespace ledger {
+namespace vm_modules {
+namespace math {
 
-class DummyContract : public Contract
-{
-public:
-  static constexpr char const *NAME = "fetch.dummy";
+using DataType = fetch::fixed_point::fp64_t;
 
-  DummyContract();
-  ~DummyContract() override = default;
-
-  static constexpr char const *LOGGING_NAME = "DummyContract";
-
-  std::size_t counter() const
-  {
-    return counter_;
-  }
-
-private:
-  using Counter = std::atomic<std::size_t>;
-
-  Result Wait(Transaction const &tx, BlockIndex);
-  Result Run(Transaction const &tx, BlockIndex);
-
-  Counter counter_{0};
-};
-
-}  // namespace ledger
+}  // namespace math
+}  // namespace vm_modules
 }  // namespace fetch

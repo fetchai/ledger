@@ -17,36 +17,23 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chaincode/contract.hpp"
-
-#include <atomic>
-
 namespace fetch {
-namespace ledger {
+namespace ml {
+namespace utilities {
 
-class DummyContract : public Contract
+template <typename TensorType>
+class Scaler
 {
+
 public:
-  static constexpr char const *NAME = "fetch.dummy";
+  Scaler()          = default;
+  virtual ~Scaler() = default;
 
-  DummyContract();
-  ~DummyContract() override = default;
-
-  static constexpr char const *LOGGING_NAME = "DummyContract";
-
-  std::size_t counter() const
-  {
-    return counter_;
-  }
-
-private:
-  using Counter = std::atomic<std::size_t>;
-
-  Result Wait(Transaction const &tx, BlockIndex);
-  Result Run(Transaction const &tx, BlockIndex);
-
-  Counter counter_{0};
+  virtual void SetScale(TensorType const &reference_tensor)                           = 0;
+  virtual void Normalise(TensorType const &input_tensor, TensorType &output_tensor)   = 0;
+  virtual void DeNormalise(TensorType const &input_tensor, TensorType &output_tensor) = 0;
 };
 
-}  // namespace ledger
+}  // namespace utilities
+}  // namespace ml
 }  // namespace fetch
