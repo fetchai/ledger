@@ -35,7 +35,8 @@ namespace ml {
 class VMGraph : public fetch::vm::Object
 {
   using SizeType       = fetch::math::SizeType;
-  using MathTensorType = fetch::math::Tensor<float>;
+  using DataType       = fetch::vm_modules::math::DataType;
+  using MathTensorType = fetch::math::Tensor<DataType>;
   using VMTensorType   = fetch::vm_modules::math::VMTensor;
   using GraphType      = fetch::ml::Graph<MathTensorType>;
   using VMPtrString    = fetch::vm::Ptr<fetch::vm::String>;
@@ -69,7 +70,7 @@ public:
     graph_.BackPropagateError(name->str);
   }
 
-  void Step(float lr)
+  void Step(DataType lr)
   {
     graph_.Step(lr);
   }
@@ -85,11 +86,11 @@ public:
         name->str, {input_name->str}, std::size_t(in), std::size_t(out));
   }
 
-  void AddConv1D(VMPtrString const &name, VMPtrString const &input_name, int out_channels,
+  void AddConv1D(VMPtrString const &name, VMPtrString const &input_name, int filters,
                  int in_channels, int kernel_size, int stride_size)
   {
     graph_.AddNode<fetch::ml::layers::Convolution1D<MathTensorType>>(
-        name->str, {input_name->str}, static_cast<SizeType>(out_channels),
+        name->str, {input_name->str}, static_cast<SizeType>(filters),
         static_cast<SizeType>(in_channels), static_cast<SizeType>(kernel_size),
         static_cast<SizeType>(stride_size));
   }
@@ -101,25 +102,25 @@ public:
 
   void AddSoftmax(VMPtrString const &name, VMPtrString const &input_name)
   {
-    graph_.AddNode<fetch::ml::ops::Softmax<fetch::math::Tensor<float>>>(name->str,
-                                                                        {input_name->str});
+    graph_.AddNode<fetch::ml::ops::Softmax<fetch::math::Tensor<DataType>>>(name->str,
+                                                                           {input_name->str});
   }
 
   void AddCrossEntropyLoss(VMPtrString const &name, VMPtrString const &input_name,
                            VMPtrString const &label_name)
   {
-    graph_.AddNode<fetch::ml::ops::CrossEntropyLoss<fetch::math::Tensor<float>>>(
+    graph_.AddNode<fetch::ml::ops::CrossEntropyLoss<fetch::math::Tensor<DataType>>>(
         name->str, {input_name->str, label_name->str});
   }
 
   void AddMeanSquareErrorLoss(VMPtrString const &name, VMPtrString const &input_name,
                               VMPtrString const &label_name)
   {
-    graph_.AddNode<fetch::ml::ops::MeanSquareErrorLoss<fetch::math::Tensor<float>>>(
+    graph_.AddNode<fetch::ml::ops::MeanSquareErrorLoss<fetch::math::Tensor<DataType>>>(
         name->str, {input_name->str, label_name->str});
   }
 
-  void AddDropout(VMPtrString const &name, VMPtrString const &input_name, float const &prob)
+  void AddDropout(VMPtrString const &name, VMPtrString const &input_name, DataType const &prob)
   {
     graph_.AddNode<fetch::ml::ops::Dropout<MathTensorType>>(name->str, {input_name->str}, prob);
   }
