@@ -29,6 +29,7 @@
 #include "math/linalg/blas/gemm_tn_vector.hpp"
 #include "math/linalg/prototype.hpp"
 #include "math/meta/math_type_traits.hpp"
+#include "math/standard_functions/sqrt.hpp"
 
 #include <cassert>
 #include <numeric>
@@ -516,11 +517,13 @@ meta::IfIsMathArray<ArrayType, typename ArrayType::Type> Sum(ArrayType const &ar
 template <typename ArrayType>
 void ReduceSum(ArrayType const &obj1, SizeType axis, ArrayType &ret)
 {
-  assert((axis == 0) || (axis == 1));
-  assert(obj1.shape().size() == 2);
+  //  assert((axis == 0) || (axis == 1));
+  //  assert(obj1.shape().size() == 2);
+  //
+  //  SizeVector access_idx{0, 0};
 
-  SizeVector access_idx{0, 0};
-  if (axis == 0)
+  // last dimension axis is cheaply handled with a view
+  if (axis == obj1.shape().size() - 1)
   {
     assert(ret.shape()[0] == 1);
     assert(ret.shape(ret.shape().size() - 1) == obj1.shape(obj1.shape().size() - 1));
@@ -537,69 +540,127 @@ void ReduceSum(ArrayType const &obj1, SizeType axis, ArrayType &ret)
       ++rit;
     }
   }
+  // non last dimension axes are more expensively handled
   else
   {
-    assert(ret.shape()[0] == obj1.shape()[0]);
-    assert(ret.shape()[1] == 1);
-
-    auto rit = ret.begin();
-    for (SizeType i = 0; i < ret.size(); ++i)
+    if (obj1.shape().size() == 2)
     {
-      *rit = typename ArrayType::Type{0};
-      for (SizeType j = 0; j < obj1.shape().at(1); ++j)
+      assert(ret.shape()[0] == obj1.shape()[0]);
+      assert(ret.shape()[1] == 1);
+
+      auto rit = ret.begin();
+      for (SizeType i = 0; i < ret.size(); ++i)
       {
-        // Todo(issue 1015) Replace with transposed iterator
-        *rit += obj1(i, j);
+        *rit = typename ArrayType::Type{0};
+        for (SizeType j = 0; j < obj1.shape().at(1); ++j)
+        {
+          // Todo(issue 1015) Replace with transposed iterator
+          *rit += obj1(i, j);
+        }
+        ++rit;
       }
-      ++rit;
+    }
+    else
+    {
+      throw std::runtime_error(
+          "n-dimensional reduce sum for axis != last dimension not yet handled");
     }
   }
 }
-
-template <typename ArrayType>
-ArrayType ReduceSum(ArrayType const &obj1, SizeType axis)
-{
-  assert((axis == 0) || (axis == 1));
-  if (axis == 0)
-  {
-    SizeVector new_shape{1, obj1.shape()[1]};
-    ArrayType  ret{new_shape};
-    ReduceSum(obj1, axis, ret);
-    return ret;
-  }
-  else
-  {
-    SizeVector new_shape{obj1.shape()[0], 1};
-    ArrayType  ret{new_shape};
-    ReduceSum(obj1, axis, ret);
-    return ret;
-  }
-}
+//
+// template <typename ArrayType>
+// ArrayType ReduceSum(ArrayType const &obj1, SizeType axis)
+//{
+//  assert((axis == 0) || (axis == 1));
+//  if (axis == 0)
+//  {
+//    SizeVector new_shape{1, obj1.shape()[1]};
+//    ArrayType  ret{new_shape};
+//    ReduceSum(obj1, axis, ret);
+//    return ret;
+//  }
+//  else
+//  {
+//    SizeVector new_shape{obj1.shape()[0], 1};
+//    ArrayType  ret{new_shape};
+//    ReduceSum(obj1, axis, ret);
+//    return ret;
+//  }
+//}
 
 template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, void> ReduceMean(ArrayType const &                   obj1,
                                                 typename ArrayType::SizeType const &axis,
                                                 ArrayType &                         ret)
 {
-  using Type = typename ArrayType::Type;
-
-  assert(axis == 0 || axis == 1);
-  Type n = static_cast<Type>(obj1.shape().at(1 - axis));
+  using DataType = typename ArrayType::Type;
   ReduceSum(obj1, axis, ret);
-  Divide(ret, n, ret);
+  Divide(ret, static_cast<DataType>(obj1.shape(axis)), ret);
 }
 
+/**
+ * computes the variance of data in a tensor across an axis, reducing down to a 1D tensor
+ * @tparam ArrayType
+ * @param input_tensor
+ * @param axis
+ * @param ret
+ * @return
+ */
 template <typename ArrayType>
-meta::IfIsMathArray<ArrayType, ArrayType> ReduceMean(ArrayType const &                   obj1,
-                                                     typename ArrayType::SizeType const &axis)
+meta::IfIsMathArray<ArrayType, void> ReduceVariance(ArrayType const &input_tensor,
+                                                    typename ArrayType::SizeType const &axis,
+                                                    ArrayType &                         ret)
 {
-  using Type = typename ArrayType::Type;
+  SizeType batch_dim = input_tensor.shape().size() - 1;
 
-  assert(axis == 0 || axis == 1);
-  Type n   = static_cast<Type>(obj1.shape().at(1 - axis));
-  Type ret = ReduceSum(obj1, axis);
-  Divide(ret, n, ret);
-  return ret;
+  assert(ret.size() == input_tensor.shape(batch_dim));
+
+  ArrayType means(ret.shape());
+
+  // store computed means in ret first
+  ReduceMean(input_tensor, axis, means);
+
+  //
+  if (axis == batch_dim)
+  {
+    // compute variance of one view per data sample
+    for (SizeType i = 0; i < input_tensor.shape(batch_dim); ++i)
+    {
+      auto t_view    = input_tensor.View(i);
+      auto t_view_it = t_view.cbegin();
+      auto r_it      = ret.begin();
+      auto means_it  = means.cbegin();
+
+      while (t_view_it.is_valid())
+      {
+        *r_it += ((*t_view_it - *means_it) * (*t_view_it - *means_it));
+        ++t_view_it;
+      }
+      *r_it /= t_view.size();
+      ++means_it;
+    }
+  }
+  else
+  {
+    throw std::runtime_error(
+        "variance not yet implementated for tensors with axis != last dimesion");
+  }
+}
+
+/**
+ * computes the standard deviation of data in a tensor across an axis, reducing down to a 1D tensor
+ * @tparam ArrayType
+ * @param input_tensor
+ * @param axis
+ * @param ret
+ * @return
+ */
+template <typename ArrayType>
+meta::IfIsMathArray<ArrayType, void> ReduceStandardDeviation(
+    ArrayType const &input_tensor, typename ArrayType::SizeType const &axis, ArrayType &ret)
+{
+  ReduceVariance(input_tensor, axis, ret);
+  fetch::math::Sqrt(ret, ret);
 }
 
 /**

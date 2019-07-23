@@ -20,6 +20,7 @@
 #include "math/activation_functions/leaky_relu.hpp"
 #include "math/fundamental_operators.hpp"
 #include "math/matrix_operations.hpp"
+#include "math/statistics/standard_deviation.hpp"
 #include "ml/ops/ops.hpp"
 
 #include <cassert>
@@ -30,7 +31,7 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class LeakyRelu : public fetch::ml::Ops<T>
+class BatchNorm : public fetch::ml::Ops<T>
 {
 public:
   using ArrayType     = T;
@@ -38,10 +39,10 @@ public:
   using SizeType      = typename ArrayType::SizeType;
   using VecTensorType = typename Ops<T>::VecTensorType;
 
-  explicit LeakyRelu(DataType a = DataType(0.01))
+  explicit BatchNorm(DataType a = DataType(0.01))
     : a_(a)
   {}
-  ~LeakyRelu() override = default;
+  ~BatchNorm() override = default;
 
   void Forward(VecTensorType const &inputs, ArrayType &output) override
   {
@@ -51,10 +52,9 @@ public:
     auto batch_dim = inputs.at(0).get().shape().size() - 1;
 
     DataType mean;
-    fetch::math::Mean(inputs.at(0).get(), mean);
+    fetch::math::ReduceMean(inputs.at(0).get(), batch_dim, mean);
 
-    DataType std_dev;
-    fetch::math::StandardDeviation(inputs.at(0).get(), std_dev);
+    DataType std_dev = fetch::math::statistics::StandardDeviation(inputs.at(0).get());
 
     auto t_it = inputs.at(0).get().cbegin();
 
@@ -114,7 +114,7 @@ public:
     return inputs.front().get().shape();
   }
 
-  static constexpr char const *DESCRIPTOR = "LeakyRelu";
+  static constexpr char const *DESCRIPTOR = "BatchNorm";
 
 private:
   DataType a_;

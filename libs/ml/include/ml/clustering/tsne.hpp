@@ -145,8 +145,9 @@ public:
       output_matrix_ = fetch::math::Add(output_matrix_, i_y);
 
       //  Y = Y - np.tile(np.mean(Y, 0), (n, 1))
-      ArrayType y_mean = fetch::math::Divide(fetch::math::ReduceSum(output_matrix_, 0),
-                                             static_cast<DataType>(output_matrix_.shape().at(0)));
+      ArrayType rsum({1, output_matrix_.shape(1)});
+      fetch::math::ReduceSum(output_matrix_, 0, rsum);
+      ArrayType y_mean = fetch::math::Divide(rsum, static_cast<DataType>(output_matrix_.shape().at(0)));
 
       output_matrix_ -= y_mean;
 
