@@ -90,7 +90,7 @@ public:
       serializer_.ReadBytes(reinterpret_cast<uint8_t *>(&size), sizeof(uint32_t));
       break;
     default:
-      if ((opcode & TypeCodes::FIXED_MASK2) != CODE_FIXED)
+      if ((opcode & TypeCodes::FIXED_MASK1) != CODE_FIXED)
       {
         throw SerializableException(std::string("incorrect size opcode for map size."));
       }
