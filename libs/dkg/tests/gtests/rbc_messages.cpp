@@ -24,7 +24,7 @@
 #include "gtest/gtest.h"
 
 using namespace fetch;
-using namespace fetch::dkg::rbc;
+using namespace fetch::dkg;
 
 TEST(rbc_messages, broadcast)
 {
