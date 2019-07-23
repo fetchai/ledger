@@ -377,4 +377,53 @@ TYPED_TEST(TensorOperationsTest, multiple_const_slices_separated_test)
   EXPECT_EQ(t2t.At(2, 0, 0), TypeParam(27));
 }
 
+TYPED_TEST(TensorOperationsTest, multiple_slices_assign_test)
+{
+  fetch::math::Tensor<TypeParam> t1(std::vector<std::uint64_t>({3, 5, 2}));
+  fetch::math::Tensor<TypeParam> t2(std::vector<std::uint64_t>({3, 2, 3}));
+
+  std::uint64_t count = 0;
+  for (std::uint64_t i{0}; i < 2; ++i)
+  {
+    for (std::uint64_t j{0}; j < 3; ++j)
+    {
+      for (std::uint64_t k{0}; k < 5; ++k)
+      {
+        t1.At(j, k, i) = TypeParam(count);
+        ++count;
+      }
+    }
+  }
+
+  count = 0;
+  for (std::uint64_t i{0}; i < 3; ++i)
+  {
+    for (std::uint64_t j{0}; j < 3; ++j)
+    {
+      for (std::uint64_t k{0}; k < 2; ++k)
+      {
+        t2.At(j, k, i) = TypeParam(count);
+        ++count;
+      }
+    }
+  }
+
+  const fetch::math::Tensor<TypeParam> t2c = t2.Copy();
+
+  auto t3s = t1.Slice(1, 2).Slice(2, 1);
+  auto t4s = t2c.Slice(1, 2).Slice(1, 1);
+
+  t3s.Assign(t4s);
+
+  fetch::math::Tensor<TypeParam> t3 = t3s.Copy();
+  fetch::math::Tensor<TypeParam> t4 = t4s.Copy();
+
+  EXPECT_EQ(t3.shape(), std::vector<std::uint64_t>({3, 1, 1}));
+  EXPECT_EQ(t4.shape(), std::vector<std::uint64_t>({3, 1, 1}));
+
+  EXPECT_EQ(t3.At(0, 0, 0), TypeParam(7));
+  EXPECT_EQ(t3.At(1, 0, 0), TypeParam(9));
+  EXPECT_EQ(t3.At(2, 0, 0), TypeParam(11));
+}
+
 // TODO (private 867) - reimplement shuffle & test
