@@ -19,6 +19,8 @@
 #include "dkg/dkg.hpp"
 #include "dkg/dkg_service.hpp"
 
+#include <mutex>
+
 namespace fetch {
 namespace dkg {
 
@@ -37,7 +39,9 @@ DistributedKeyGeneration::DistributedKeyGeneration(MuddleAddress address, Cabine
   , address_{std::move(address)}
   , dkg_service_{dkg_service}
 {
-  static bool once = []() {
+  static std::once_flag flag;
+
+  std::call_once(flag, []() {
     bn::initPairing();
     zeroG2_.clear();
     zeroFr_.clear();
@@ -53,13 +57,7 @@ DistributedKeyGeneration::DistributedKeyGeneration(MuddleAddress address, Cabine
         "12726557692714943631796519264243881146330337674186001442981874079441363994424");
     bn::mapToG2(group_g_, g);
     bn::mapToG2(group_h_, h);
-
-    return true;
-  }();
-  if (!once)
-  {
-    std::cerr << "Node::initPairing failed.\n";  // just to eliminate warnings from the compiler.
-  }
+  });
 }
 
 /**

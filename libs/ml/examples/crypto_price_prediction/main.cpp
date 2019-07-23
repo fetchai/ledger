@@ -29,6 +29,7 @@
 #include "ml/ops/activation.hpp"
 #include "ml/ops/loss_functions/mean_square_error_loss.hpp"
 #include "ml/optimisation/adam_optimiser.hpp"
+#include "ml/utilities/min_max_scaler.hpp"
 
 #include <iostream>
 #include <string>
@@ -49,7 +50,7 @@ using DataLoaderType   = typename fetch::ml::dataloaders::TensorDataLoader<Tenso
 struct TrainingParams
 {
   SizeType epochs{10};
-  SizeType batch_size{10};
+  SizeType batch_size{1000};
   bool     normalise = true;
 };
 
@@ -253,8 +254,8 @@ int main(int ac, char **av)
     return 1;
   }
 
-  TrainingParams tp;
-  DataNormaliser scaler;
+  TrainingParams                                 tp;
+  fetch::ml::utilities::MinMaxScaler<TensorType> scaler;
 
   std::cout << "FETCH Crypto price prediction demo" << std::endl;
 
@@ -306,6 +307,7 @@ int main(int ac, char **av)
     {
       scaler.DeNormalise(prediction, prediction);
     }
+
     auto result = fetch::math::MeanAbsoluteError(prediction, orig_test_label);
     std::cout << "mean absolute validation error: " << result << std::endl;
   }

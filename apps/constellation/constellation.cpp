@@ -38,6 +38,7 @@
 #include "network/muddle/rpc/server.hpp"
 #include "network/p2pservice/p2p_http_interface.hpp"
 #include "network/uri.hpp"
+#include "open_api_http_module.hpp"
 #include "telemetry_http_module.hpp"
 
 #include <chrono>
@@ -223,28 +224,24 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
         cfg_.num_executors, cfg_.log2_num_lanes, storage_,
         [this] {
           return std::make_shared<Executor>(storage_, stake_ ? &stake_->update_queue() : nullptr);
-        })}
+        },
+        tx_status_cache_)}
   , chain_{cfg_.features.IsEnabled(FeatureFlags::MAIN_CHAIN_BLOOM_FILTER),
            ledger::MainChain::Mode::LOAD_PERSISTENT_DB}
   , block_packer_{cfg_.log2_num_lanes}
-  , block_coordinator_{chain_,
-                       dag_,
-                       stake_,
-                       *execution_manager_,
-                       *storage_,
-                       block_packer_,
-                       *this,
-                       tx_status_cache_,
-                       cfg_.features,
-                       certificate,
-                       cfg_.num_lanes(),
-                       cfg_.num_slices,
-                       cfg_.block_difficulty}
+  , block_coordinator_{chain_,          dag_,
+                       stake_,          *execution_manager_,
+                       *storage_,       block_packer_,
+                       *this,           cfg_.features,
+                       certificate,     cfg_.num_lanes(),
+                       cfg_.num_slices, cfg_.block_difficulty}
   , main_chain_service_{std::make_shared<MainChainRpcService>(p2p_.AsEndpoint(), chain_, trust_,
                                                               cfg_.network_mode)}
   , tx_processor_{dag_, *storage_, block_packer_, tx_status_cache_, cfg_.processor_threads}
+  , http_open_api_module_{std::make_shared<OpenAPIHttpModule>()}
   , http_{http_network_manager_}
   , http_modules_{
+        http_open_api_module_,
         std::make_shared<p2p::P2PHttpInterface>(
             cfg_.log2_num_lanes, chain_, muddle_, p2p_, trust_, block_packer_,
             p2p::P2PHttpInterface::WeakStateMachines{main_chain_service_->GetWeakStateMachine(),
@@ -304,6 +301,36 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
 }
 
 /**
+ * Writes OpenAPI information about the HTTP REST interface to a stream.
+ *
+ * @param stream is stream to which the API is dumped to.
+ */
+void Constellation::DumpOpenAPI(std::ostream &stream)
+{
+  stream << "paths:" << std::endl;
+  byte_array::ConstByteArray last_path{};
+  for (auto const &view : http_.views())
+  {
+    std::string method = ToString(view.method);
+    std::transform(method.begin(), method.end(), method.begin(),
+                   [](unsigned char c) { return std::tolower(c); });
+
+    if (last_path != view.route.path())
+    {
+      stream << "  " << view.route.path() << ":" << std::endl;
+    }
+
+    last_path = view.route.path();
+    stream << "    " << method << ":" << std::endl;
+    stream << "      description: "
+           << "\"" << view.description << "\"" << std::endl;
+    stream << "      parameters: "
+           << "[" << std::endl;
+    stream << "      ] " << std::endl;
+  }
+}
+
+/**
  * Runs the constellation service with the specified initial peers
  *
  * @param initial_peers The peers that should be initially connected to
@@ -323,6 +350,7 @@ void Constellation::Run(UriList const &initial_peers, core::WeakRunnable bootstr
   /// NETWORKING INFRASTRUCTURE
 
   // start all the services
+  http_open_api_module_->Reset(&http_);
   network_manager_.Start();
   http_network_manager_.Start();
   muddle_.Start({p2p_port_});
@@ -499,6 +527,8 @@ void Constellation::Run(UriList const &initial_peers, core::WeakRunnable bootstr
   muddle_.Stop();
   http_network_manager_.Stop();
   network_manager_.Stop();
+
+  http_open_api_module_->Reset(nullptr);
 
   FETCH_LOG_INFO(LOGGING_NAME, "Shutting down...complete");
 }

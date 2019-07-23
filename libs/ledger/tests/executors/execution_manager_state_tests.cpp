@@ -19,6 +19,7 @@
 #include "block_configs.hpp"
 #include "core/logger.hpp"
 #include "ledger/execution_manager.hpp"
+#include "ledger/transaction_status_cache.hpp"
 #include "mock_executor.hpp"
 #include "mock_storage_unit.hpp"
 #include "test_block.hpp"
@@ -31,20 +32,21 @@
 #include <random>
 #include <thread>
 #include <vector>
+namespace {
+
+using namespace fetch::ledger;
 
 class ExecutionManagerStateTests : public ::testing::TestWithParam<BlockConfig>
 {
 public:
   using FakeExecutorPtr     = std::shared_ptr<FakeExecutor>;
   using FakeExecutorList    = std::vector<FakeExecutorPtr>;
-  using ExecutionManager    = fetch::ledger::ExecutionManager;
   using ExecutorFactory     = ExecutionManager::ExecutorFactory;
   using ExecutionManagerPtr = std::shared_ptr<ExecutionManager>;
   using MockStorageUnitPtr  = std::shared_ptr<MockStorageUnit>;
   using Clock               = std::chrono::high_resolution_clock;
   using ScheduleStatus      = ExecutionManager::ScheduleStatus;
   using State               = ExecutionManager::State;
-  using Digest              = fetch::ledger::Digest;
 
 protected:
   void SetUp() override
@@ -56,7 +58,8 @@ protected:
 
     // create the manager
     manager_ = std::make_shared<ExecutionManager>(config.executors, 0, mock_storage_,
-                                                  [this]() { return CreateExecutor(); });
+                                                  [this]() { return CreateExecutor(); },
+                                                  TransactionStatusCache::factory());
   }
 
   FakeExecutorPtr CreateExecutor()
@@ -134,35 +137,6 @@ protected:
   FakeExecutorList    executors_;
 };
 
-std::ostream &operator<<(std::ostream &s, ExecutionManagerStateTests::ScheduleStatus status)
-{
-  using fetch::ledger::ExecutionManager;
-
-  switch (status)
-  {
-  case ExecutionManager::ScheduleStatus::SCHEDULED:
-    s << "Status::SCHEDULED";
-    break;
-  case ExecutionManager::ScheduleStatus::NOT_STARTED:
-    s << "Status::ScheduleStatus";
-    break;
-  case ExecutionManager::ScheduleStatus::ALREADY_RUNNING:
-    s << "Status::ALREADY_RUNNING";
-    break;
-  case ExecutionManager::ScheduleStatus::NO_PARENT_BLOCK:
-    s << "Status::NO_PARENT_BLOCK";
-    break;
-  case ExecutionManager::ScheduleStatus::UNABLE_TO_PLAN:
-    s << "Status::UNABLE_TO_PLAN";
-    break;
-  default:
-    s << "Status::UNKNOWN";
-    break;
-  }
-
-  return s;
-}
-
 // TODO(private issue 633): Reinstate this test
 #if 0
 TEST_P(ExecutionManagerStateTests, DISABLED_CheckStateRollBack)
@@ -230,3 +204,5 @@ TEST_P(ExecutionManagerStateTests, DISABLED_CheckStateRollBack)
 
 INSTANTIATE_TEST_CASE_P(Param, ExecutionManagerStateTests,
                         ::testing::ValuesIn(BlockConfig::REDUCED_SET), );
+
+}  // namespace
