@@ -100,7 +100,10 @@ DkgService::DkgService(Endpoint &endpoint, ConstByteArray address)
          [this](MuddleAddress const &address, ConstByteArray const &payload) -> void {
            OnRbcDeliver(address, payload);
          }}
-  , dkg_{address_, current_cabinet_, current_threshold_, *this}
+  , dkg_{address_, current_cabinet_, current_threshold_,
+         [this](DKGEnvelop const &envelop) -> void { SendReliableBroadcast(envelop); },
+         [this](MuddleAddress const &destination, std::pair<std::string, std::string> const &shares)
+             -> void { SendShares(destination, shares); }}
 {
   group_g_.clear();
   group_g_ = dkg_.group();
