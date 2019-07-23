@@ -2654,11 +2654,11 @@ typename Tensor<T, C>::TensorSlice Tensor<T, C>::TensorSlice::Slice(SizeType i, 
 
   // Test validity
   assert(axis < this->tensor_.shape().size());
-  assert(this->new_axes.size() < this->tensor_.shape().size());
+  assert(new_axes.size() < this->tensor_.shape().size());
   assert(i < this->tensor_.shape().at(axis));
-  for (SizeType i = 0; i < this->new_axes.size(); i++)
+  for (SizeType i = 0; i < new_axes.size(); i++)
   {
-    assert(this->new_axes.at(i) != axis);
+    assert(new_axes.at(i) != axis);
   }
 
   std::vector<std::vector<SizeType>> new_range(this->range_);
