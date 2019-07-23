@@ -40,6 +40,26 @@ inline VectorRegister<float, 128> approx_log(VectorRegister<float, 128> const &x
   return a * (y - b);
 }
 
+inline VectorRegister<float, 256> approx_log(VectorRegister<float, 256> const &x)
+{
+  enum
+  {
+    mantissa = 23,
+    exponent = 8,
+  };
+
+  constexpr float                  multiplier      = float(1ull << mantissa);
+  constexpr float                  exponent_offset = (float(((1ull << (exponent - 1)) - 1)));
+  const VectorRegister<float, 256> a(float(M_LN2 / multiplier));
+  const VectorRegister<float, 256> b(float(exponent_offset * multiplier - 60801));
+
+  __m256i conv = _mm256_castps_si256(x.data());
+
+  VectorRegister<float, 256> y(_mm256_cvtepi32_ps(conv));
+
+  return a * (y - b);
+}
+
 inline VectorRegister<double, 128> approx_log(VectorRegister<double, 128> const &x)
 {
   enum
@@ -59,6 +79,30 @@ inline VectorRegister<double, 128> approx_log(VectorRegister<double, 128> const 
   conv         = _mm_and_si128(conv, *reinterpret_cast<__m128i const *>(mask));
 
   VectorRegister<double, 128> y(_mm_cvtepi32_pd(conv));
+
+  return a * (y - b);
+}
+
+inline VectorRegister<double, 256> approx_log(VectorRegister<double, 256> const &x)
+{
+  enum
+  {
+    mantissa = 20,
+    exponent = 11,
+  };
+
+  alignas(32) constexpr uint64_t    mask[4]         = {uint64_t(-1), 0, 0 ,0};
+  constexpr double                  multiplier      = double(1ull << mantissa);
+  constexpr double                  exponent_offset = (double(((1ull << (exponent - 1)) - 1)));
+  const VectorRegister<double, 256> a(double(M_LN2 / multiplier));
+  const VectorRegister<double, 256> b(double(exponent_offset * multiplier - 60801));
+
+  __m256i conv = _mm256_castpd_si256(x.data());
+  conv         = _mm256_shuffle_epi32(conv, 1 | (3 << 2) | (0 << 4) | (2 << 6));
+  conv         = _mm256_and_si256(conv, *reinterpret_cast<__m256i const *>(mask));
+
+  // Note: _mm256_cvtepi32_pd returns a __m128i, fix
+  VectorRegister<double, 256> y(_mm256_castsi256_pd(conv));
 
   return a * (y - b);
 }

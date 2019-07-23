@@ -16,7 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vectorise/arch/sse.hpp"
+#include "vectorise/arch/avx2.hpp"
 #include "vectorise/register.hpp"
 
 #include "gtest/gtest.h"

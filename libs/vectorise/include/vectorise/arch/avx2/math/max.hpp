@@ -26,10 +26,22 @@ inline VectorRegister<float, 128> max(VectorRegister<float, 128> const &a,
   return VectorRegister<float, 128>(_mm_max_ps(a.data(), b.data()));
 }
 
+inline VectorRegister<float, 256> max(VectorRegister<float, 256> const &a,
+                                      VectorRegister<float, 256> const &b)
+{
+  return VectorRegister<float, 256>(_mm256_max_ps(a.data(), b.data()));
+}
+
 inline VectorRegister<double, 128> max(VectorRegister<double, 128> const &a,
                                        VectorRegister<double, 128> const &b)
 {
   return VectorRegister<double, 128>(_mm_max_pd(a.data(), b.data()));
+}
+
+inline VectorRegister<double, 256> max(VectorRegister<double, 256> const &a,
+                                       VectorRegister<double, 256> const &b)
+{
+  return VectorRegister<double, 256>(_mm256_max_pd(a.data(), b.data()));
 }
 
 }  // namespace vectorise

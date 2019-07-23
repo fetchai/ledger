@@ -92,7 +92,6 @@ private:
   mm_register_type data_;
 };
 
-
 template <>
 class VectorRegister<float, 256>
 {
@@ -153,27 +152,33 @@ private:
   mm_register_type data_;
 };
 
-#define FETCH_ADD_OPERATOR(zero, type, fnc)                                      \
-  inline VectorRegister<type, 128> operator-(VectorRegister<type, 128> const &x) \
+#define FETCH_ADD_OPERATOR(zero, type, size, fnc)                                      \
+  inline VectorRegister<type, size> operator-(VectorRegister<type, size> const &x) \
   {                                                                              \
-    return VectorRegister<type, 128>(fnc(zero(), x.data()));                     \
+    return VectorRegister<type, size>(fnc(zero(), x.data()));                     \
   }
 
-FETCH_ADD_OPERATOR(_mm_setzero_ps, float, _mm_sub_ps)
+FETCH_ADD_OPERATOR(_mm_setzero_ps, float, 128, _mm_sub_ps)
+FETCH_ADD_OPERATOR(_mm256_setzero_ps, float, 256, _mm256_sub_ps)
 #undef FETCH_ADD_OPERATOR
 
-#define FETCH_ADD_OPERATOR(op, type, L, fnc)                                       \
-  inline VectorRegister<type, 128> operator op(VectorRegister<type, 128> const &a, \
-                                               VectorRegister<type, 128> const &b) \
+#define FETCH_ADD_OPERATOR(op, type, size, L, fnc)                                       \
+  inline VectorRegister<type, size> operator op(VectorRegister<type, size> const &a, \
+                                               VectorRegister<type, size> const &b) \
   {                                                                                \
     L ret = fnc(a.data(), b.data());                                               \
-    return VectorRegister<type, 128>(ret);                                         \
+    return VectorRegister<type, size>(ret);                                         \
   }
 
-FETCH_ADD_OPERATOR(*, float, __m128, _mm_mul_ps)
-FETCH_ADD_OPERATOR(-, float, __m128, _mm_sub_ps)
-FETCH_ADD_OPERATOR(/, float, __m128, _mm_div_ps)
-FETCH_ADD_OPERATOR(+, float, __m128, _mm_add_ps)
+FETCH_ADD_OPERATOR(*, float, 128, __m128, _mm_mul_ps)
+FETCH_ADD_OPERATOR(-, float, 128, __m128, _mm_sub_ps)
+FETCH_ADD_OPERATOR(/, float, 128, __m128, _mm_div_ps)
+FETCH_ADD_OPERATOR(+, float, 128, __m128, _mm_add_ps)
+
+FETCH_ADD_OPERATOR(*, float, 256, __m256, _mm256_mul_ps)
+FETCH_ADD_OPERATOR(-, float, 256, __m256, _mm256_sub_ps)
+FETCH_ADD_OPERATOR(/, float, 256, __m256, _mm256_div_ps)
+FETCH_ADD_OPERATOR(+, float, 256, __m256, _mm256_add_ps)
 
 #undef FETCH_ADD_OPERATOR
 
@@ -183,8 +188,7 @@ FETCH_ADD_OPERATOR(+, float, __m128, _mm_add_ps)
   {                                                                                \
     L              imm  = fnc(a.data(), b.data());                                 \
     __m128i        ival = _mm_castps_si128(imm);                                   \
-    constexpr type done = type(1);                                                 \
-    const __m128i  one  = _mm_castps_si128(_mm_load_ps1(&done));                   \
+    const __m128i  one  = _mm_castps_si128(_mm_set1_ps(1.0));                      \
     __m128i        ret  = _mm_and_si128(ival, one);                                \
     return VectorRegister<type, 128>(_mm_castsi128_ps(ret));                       \
   }
@@ -195,6 +199,26 @@ FETCH_ADD_OPERATOR(>=, float, __m128, _mm_cmpge_ps)
 FETCH_ADD_OPERATOR(>, float, __m128, _mm_cmpgt_ps)
 FETCH_ADD_OPERATOR(<=, float, __m128, _mm_cmple_ps)
 FETCH_ADD_OPERATOR(<, float, __m128, _mm_cmplt_ps)
+
+#undef FETCH_ADD_OPERATOR
+
+#define FETCH_ADD_OPERATOR(op, type, L, fnc)                                       \
+  inline VectorRegister<type, 256> operator op(VectorRegister<type, 256> const &a, \
+                                               VectorRegister<type, 256> const &b) \
+  {                                                                                \
+    L              imm  = _mm256_cmp_ps(a.data(), b.data(), fnc);                                 \
+    __m256i        ival = _mm256_castps_si256(imm);                                   \
+    const __m256i  one  = _mm256_castps_si256(_mm256_set1_pd(1.0));                   \
+    __m256i        ret  = _mm256_and_si256(ival, one);                                \
+    return VectorRegister<type, 256>(_mm256_castsi256_ps(ret));                       \
+  }
+
+FETCH_ADD_OPERATOR(==, float, __m256, _CMP_EQ_OQ)
+FETCH_ADD_OPERATOR(!=, float, __m256, _CMP_NEQ_UQ)
+FETCH_ADD_OPERATOR(>=, float, __m256, _CMP_GE_OQ)
+FETCH_ADD_OPERATOR(>, float, __m256, _CMP_GT_OQ)
+FETCH_ADD_OPERATOR(<=, float, __m256, _CMP_LE_OQ)
+FETCH_ADD_OPERATOR(<, float, __m256, _CMP_LT_OQ)
 
 #undef FETCH_ADD_OPERATOR
 
@@ -215,6 +239,18 @@ inline VectorRegister<float, 128> vector_zero_below_element(VectorRegister<float
   return VectorRegister<float, 128>(_mm_castsi128_ps(conv));
 }
 
+inline VectorRegister<float, 256> vector_zero_below_element(VectorRegister<float, 256> const &a,
+                                                            int const &                       n)
+{
+  alignas(32) const uint32_t mask[8] = {uint32_t(-(0 >= n)), uint32_t(-(1 >= n)),
+                                        uint32_t(-(2 >= n)), uint32_t(-(3 >= n))};
+
+  __m256i conv = _mm256_castps_si256(a.data());
+  conv         = _mm256_and_si256(conv, *reinterpret_cast<__m256i const *>(mask));
+
+  return VectorRegister<float, 256>(_mm256_castsi256_ps(conv));
+}
+
 inline VectorRegister<float, 128> vector_zero_above_element(VectorRegister<float, 128> const &a,
                                                             int const &                       n)
 {
@@ -227,11 +263,30 @@ inline VectorRegister<float, 128> vector_zero_above_element(VectorRegister<float
   return VectorRegister<float, 128>(_mm_castsi128_ps(conv));
 }
 
+inline VectorRegister<float, 256> vector_zero_above_element(VectorRegister<float, 256> const &a,
+                                                            int const &                       n)
+{
+  alignas(32) const uint32_t mask[8] = {uint32_t(-(0 <= n)), uint32_t(-(1 <= n)),
+                                        uint32_t(-(2 <= n)), uint32_t(-(3 <= n))};
+
+  __m256i conv = _mm256_castps_si256(a.data());
+  conv         = _mm256_and_si256(conv, *reinterpret_cast<__m256i const *>(mask));
+
+  return VectorRegister<float, 256>(_mm256_castsi256_ps(conv));
+}
+
 inline VectorRegister<float, 128> shift_elements_left(VectorRegister<float, 128> const &x)
 {
   __m128i n = _mm_castps_si128(x.data());
   n         = _mm_bslli_si128(n, 4);
   return VectorRegister<float, 128>(_mm_castsi128_ps(n));
+}
+
+inline VectorRegister<float, 256> shift_elements_left(VectorRegister<float, 256> const &x)
+{
+  __m256i n = _mm256_castps_si256(x.data());
+  n         = _mm256_bslli_epi128(n, 4);
+  return VectorRegister<float, 256>(_mm256_castsi256_ps(n));
 }
 
 inline VectorRegister<float, 128> shift_elements_right(VectorRegister<float, 128> const &x)
@@ -241,9 +296,21 @@ inline VectorRegister<float, 128> shift_elements_right(VectorRegister<float, 128
   return VectorRegister<float, 128>(_mm_castsi128_ps(n));
 }
 
+inline VectorRegister<float, 256> shift_elements_right(VectorRegister<float, 256> const &x)
+{
+  __m256i n = _mm256_castps_si256(x.data());
+  n         = _mm256_bsrli_epi128(n, 4);
+  return VectorRegister<float, 256>(_mm256_castsi256_ps(n));
+}
+
 inline float first_element(VectorRegister<float, 128> const &x)
 {
   return _mm_cvtss_f32(x.data());
+}
+
+inline float first_element(VectorRegister<float, 256> const &x)
+{
+  return _mm256_cvtss_f32(x.data());
 }
 
 inline float reduce(VectorRegister<float, 128> const &x)
@@ -251,6 +318,13 @@ inline float reduce(VectorRegister<float, 128> const &x)
   __m128 r = _mm_hadd_ps(x.data(), _mm_setzero_ps());
   r        = _mm_hadd_ps(r, _mm_setzero_ps());
   return _mm_cvtss_f32(r);
+}
+
+inline float reduce(VectorRegister<float, 256> const &x)
+{
+  __m256 r = _mm256_hadd_ps(x.data(), _mm256_setzero_ps());
+  r        = _mm256_hadd_ps(r, _mm256_setzero_ps());
+  return _mm256_cvtss_f32(r);
 }
 
 /*

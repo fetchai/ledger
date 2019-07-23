@@ -33,7 +33,6 @@
 namespace fetch {
 namespace vectorise {
 
-// SSE integers
 template <>
 class VectorRegister<int32_t, 128>
 {
@@ -59,9 +58,7 @@ public:
 
   VectorRegister(type const &c)
   {
-    alignas(16) type constant[E_BLOCK_COUNT];
-    details::UnrollSet<type, E_BLOCK_COUNT>::Set(constant, c);
-    data_ = _mm_load_si128((mm_register_type *)constant);
+    data_ = _mm_set1_epi32(c);
   }
 
   VectorRegister(mm_register_type const &d)
@@ -100,9 +97,78 @@ private:
   mm_register_type data_;
 };
 
+template <>
+class VectorRegister<int32_t, 256>
+{
+public:
+  using type             = int32_t;
+  using mm_register_type = __m256i;
+
+  enum
+  {
+    E_VECTOR_SIZE   = 256,
+    E_REGISTER_SIZE = sizeof(mm_register_type),
+    E_BLOCK_COUNT   = E_REGISTER_SIZE / sizeof(type)
+  };
+
+  static_assert((E_BLOCK_COUNT * sizeof(type)) == E_REGISTER_SIZE,
+                "type cannot be contained in the given register size.");
+
+  VectorRegister() = default;
+  VectorRegister(type const *d)
+  {
+    data_ = _mm256_load_si256((mm_register_type *)d);
+  }
+
+  VectorRegister(type const &c)
+  {
+    data_ = _mm256_set1_epi32(c);
+  }
+
+  VectorRegister(mm_register_type const &d)
+    : data_(d)
+  {}
+
+  VectorRegister(mm_register_type &&d)
+    : data_(d)
+  {}
+
+  explicit operator mm_register_type()
+  {
+    return data_;
+  }
+
+  void Store(type *ptr) const
+  {
+    _mm256_store_si256(reinterpret_cast<mm_register_type *>(ptr), data_);
+  }
+
+  void Stream(type *ptr) const
+  {
+    _mm256_stream_si256(reinterpret_cast<mm_register_type *>(ptr), data_);
+  }
+
+  mm_register_type const &data() const
+  {
+    return data_;
+  }
+  mm_register_type &data()
+  {
+    return data_;
+  }
+
+private:
+  mm_register_type data_;
+};
+
 inline VectorRegister<int32_t, 128> operator-(VectorRegister<int32_t, 128> const &x)
 {
   return VectorRegister<int32_t, 128>(_mm_sub_epi32(_mm_setzero_si128(), x.data()));
+}
+
+inline VectorRegister<int32_t, 256> operator-(VectorRegister<int32_t, 256> const &x)
+{
+  return VectorRegister<int32_t, 256>(_mm256_sub_epi32(_mm256_setzero_si256(), x.data()));
 }
 
 inline VectorRegister<int32_t, 128> operator+(VectorRegister<int32_t, 128> const &a,
@@ -112,6 +178,13 @@ inline VectorRegister<int32_t, 128> operator+(VectorRegister<int32_t, 128> const
   return VectorRegister<int32_t, 128>(ret);
 }
 
+inline VectorRegister<int32_t, 256> operator+(VectorRegister<int32_t, 256> const &a,
+                                              VectorRegister<int32_t, 256> const &b)
+{
+  __m256i ret = _mm256_add_epi32(a.data(), b.data());
+  return VectorRegister<int32_t, 256>(ret);
+}
+
 inline VectorRegister<int32_t, 128> operator-(VectorRegister<int32_t, 128> const &a,
                                               VectorRegister<int32_t, 128> const &b)
 {
@@ -119,11 +192,25 @@ inline VectorRegister<int32_t, 128> operator-(VectorRegister<int32_t, 128> const
   return VectorRegister<int32_t, 128>(ret);
 }
 
+inline VectorRegister<int32_t, 256> operator-(VectorRegister<int32_t, 256> const &a,
+                                              VectorRegister<int32_t, 256> const &b)
+{
+  __m256i ret = _mm256_sub_epi32(a.data(), b.data());
+  return VectorRegister<int32_t, 256>(ret);
+}
+
 inline VectorRegister<int32_t, 128> operator*(VectorRegister<int32_t, 128> const &a,
                                               VectorRegister<int32_t, 128> const &b)
 {
   __m128i ret = _mm_mullo_epi32(a.data(), b.data());
   return VectorRegister<int32_t, 128>(ret);
+}
+
+inline VectorRegister<int32_t, 256> operator*(VectorRegister<int32_t, 256> const &a,
+                                              VectorRegister<int32_t, 256> const &b)
+{
+  __m256i ret = _mm256_mullo_epi32(a.data(), b.data());
+  return VectorRegister<int32_t, 256>(ret);
 }
 
 inline VectorRegister<int32_t, 128> operator/(VectorRegister<int32_t, 128> const &a,
@@ -149,11 +236,41 @@ inline VectorRegister<int32_t, 128> operator/(VectorRegister<int32_t, 128> const
   return VectorRegister<int32_t, 128>(ret);
 }
 
+inline VectorRegister<int32_t, 256> operator/(VectorRegister<int32_t, 256> const &a,
+                                              VectorRegister<int32_t, 256> const &b)
+{
+
+  // TODO(private 440): SSE implementation required
+  int32_t d1[8];
+  _mm256_store_si256(reinterpret_cast<__m256i *>(d1), a.data());
+
+  int32_t d2[8];
+  _mm256_store_si256(reinterpret_cast<__m256i *>(d2), b.data());
+
+  int32_t ret[8];
+
+  // don't divide by zero
+  // set each of the 4 values in the vector register to either the solution of the division or 0
+  for (size_t i = 0; i < 8; i++)
+  {
+    ret[i] = d2[i] != 0 ? d1[i] / d2[i] : 0;
+  }
+
+  return VectorRegister<int32_t, 256>(ret);
+}
+
 inline VectorRegister<int32_t, 128> operator==(VectorRegister<int32_t, 128> const &a,
                                                VectorRegister<int32_t, 128> const &b)
 {
   __m128i ret = _mm_cmpeq_epi32(a.data(), b.data());
   return VectorRegister<int32_t, 128>(ret);
+}
+
+inline VectorRegister<int32_t, 256> operator==(VectorRegister<int32_t, 256> const &a,
+                                               VectorRegister<int32_t, 256> const &b)
+{
+  __m256i ret = _mm256_cmpeq_epi32(a.data(), b.data());
+  return VectorRegister<int32_t, 256>(ret);
 }
 
 inline VectorRegister<int32_t, 128> operator<(VectorRegister<int32_t, 128> const &a,
@@ -163,9 +280,21 @@ inline VectorRegister<int32_t, 128> operator<(VectorRegister<int32_t, 128> const
   return VectorRegister<int32_t, 128>(ret);
 }
 
+inline VectorRegister<int32_t, 256> operator<(VectorRegister<int32_t, 256> const &a,
+                                              VectorRegister<int32_t, 256> const &b)
+{
+  __m256i ret = _mm256_or_si256(_mm256_cmpgt_epi32(b.data(), a.data()), _mm256_cmpeq_epi32(a.data(), b.data()));
+  return VectorRegister<int32_t, 256>(ret);
+}
+
 inline int32_t first_element(VectorRegister<int32_t, 128> const &x)
 {
   return static_cast<int32_t>(_mm_extract_epi32(x.data(), 0));
+}
+
+inline int32_t first_element(VectorRegister<int32_t, 256> const &x)
+{
+  return static_cast<int32_t>(_mm256_extract_epi32(x.data(), 0));
 }
 
 inline VectorRegister<int32_t, 128> shift_elements_left(VectorRegister<int32_t, 128> const &x)
@@ -174,9 +303,21 @@ inline VectorRegister<int32_t, 128> shift_elements_left(VectorRegister<int32_t, 
   return n;
 }
 
+inline VectorRegister<int32_t, 256> shift_elements_left(VectorRegister<int32_t, 256> const &x)
+{
+  __m256i n = _mm256_bslli_epi128(x.data(), 4);
+  return n;
+}
+
 inline VectorRegister<int32_t, 128> shift_elements_right(VectorRegister<int32_t, 128> const &x)
 {
   __m128i n = _mm_bsrli_si128(x.data(), 4);
+  return n;
+}
+
+inline VectorRegister<int32_t, 256> shift_elements_right(VectorRegister<int32_t, 256> const &x)
+{
+  __m256i n = _mm256_bsrli_epi128(x.data(), 4);
   return n;
 }
 

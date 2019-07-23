@@ -25,9 +25,19 @@ inline VectorRegister<float, 128> sqrt(VectorRegister<float, 128> const &a)
   return VectorRegister<float, 128>(_mm_sqrt_ps(a.data()));
 }
 
+inline VectorRegister<float, 256> sqrt(VectorRegister<float, 256> const &a)
+{
+  return VectorRegister<float, 256>(_mm256_sqrt_ps(a.data()));
+}
+
 inline VectorRegister<double, 128> sqrt(VectorRegister<double, 128> const &a)
 {
   return VectorRegister<double, 128>(_mm_sqrt_pd(a.data()));
+}
+
+inline VectorRegister<double, 256> sqrt(VectorRegister<double, 256> const &a)
+{
+  return VectorRegister<double, 256>(_mm256_sqrt_pd(a.data()));
 }
 
 }  // namespace vectorise
