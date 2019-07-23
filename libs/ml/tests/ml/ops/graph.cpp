@@ -102,7 +102,7 @@ TYPED_TEST(GraphTest, no_such_node_test)  // Use the class as a Node
   ASSERT_ANY_THROW(g.Evaluate("FullyConnected"));
 }
 
-TYPED_TEST(GraphTest, shared_weight_layer_construction_test)
+TYPED_TEST(GraphTest, multi_nodes_have_same_name)
 {
   using ArrayType = TypeParam;
   using DataType  = typename TypeParam::Type;
@@ -114,12 +114,16 @@ TYPED_TEST(GraphTest, shared_weight_layer_construction_test)
       "FC1", {input}, 10u, 10u, fetch::ml::details::ActivationType::NOTHING,
       fetch::ml::details::RegularisationType::NONE, static_cast<DataType>(0));
   std::string fc_2 = g.template AddNode<fetch::ml::layers::FullyConnected<ArrayType>>(
-      "FC1", {input}, 10u, 10u, fetch::ml::details::ActivationType::NOTHING,
+      "FC1", {fc_1}, 10u, 10u, fetch::ml::details::ActivationType::NOTHING,
       fetch::ml::details::RegularisationType::NONE, static_cast<DataType>(0));
   std::string fc_3 = g.template AddNode<fetch::ml::layers::FullyConnected<ArrayType>>(
-      "FC1", {input}, 10u, 10u, fetch::ml::details::ActivationType::NOTHING,
+      "FC1", {fc_2}, 10u, 10u, fetch::ml::details::ActivationType::NOTHING,
       fetch::ml::details::RegularisationType::NONE, static_cast<DataType>(0));
-  std::cout << fc_1 << "|||" << fc_2 << "|||" << fc_3 << std::endl;
+
+  // check the naming is correct
+  ASSERT_EQ(fc_1, "FC1");
+  ASSERT_EQ(fc_2, "FC1_Copy_1");
+  ASSERT_EQ(fc_3, "FC1_Copy_2");
 }
 
 TYPED_TEST(GraphTest,

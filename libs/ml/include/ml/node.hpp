@@ -44,6 +44,7 @@ public:
       ArrayType const &error_signal)                                          = 0;
   virtual void                            ResetCache(bool input_size_changed) = 0;
   virtual std::vector<NodePtrType> const &GetOutputs() const                  = 0;
+  virtual std::string const &             GetNodeName()                       = 0;
 };
 
 template <class T, class O>
@@ -69,6 +70,11 @@ public:
   {}
 
   virtual ~Node() = default;
+
+  std::string const &GetNodeName() override
+  {
+    return name_;
+  }
 
   std::vector<std::reference_wrapper<const ArrayType>>          GatherInputs() const;
   virtual ArrayType &                                           Evaluate(bool is_training);

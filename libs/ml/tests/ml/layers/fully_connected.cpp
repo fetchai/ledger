@@ -143,7 +143,7 @@ TYPED_TEST(FullyConnectedTest, getStateDict)
   using RegType  = fetch::ml::details::RegularisationType;
 
   fetch::ml::layers::FullyConnected<TypeParam> fc(
-      50, 10, fetch::ml::details::ActivationType::NOTHING, RegType::NONE, DataType{0}, "FCTest");
+      50, 10, fetch::ml::details::ActivationType::NOTHING, RegType::NONE, DataType{0});
   fetch::ml::StateDict<TypeParam> sd = fc.StateDict();
 
   EXPECT_EQ(sd.weights_, nullptr);

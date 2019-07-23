@@ -60,11 +60,11 @@ public:
   virtual void Step(DataType learning_rate);
 
   template <class OperationType, typename... Params>
-  meta::IfIsFullyConnected<ArrayType, OperationType, std::string> AddNode(
+  meta::IfIsShareable<ArrayType, OperationType, std::string> AddNode(
       std::string const &node_name, std::vector<std::string> const &inputs, Params... params);
 
   template <class OperationType, typename... Params>
-  meta::IfIsNotFullyConnected<ArrayType, OperationType, std::string> AddNode(
+  meta::IfIsNotShareable<ArrayType, OperationType, std::string> AddNode(
       std::string const &node_name, std::vector<std::string> const &inputs, Params... params);
 
   NodePtrType GetNode(std::string const &node_name) const;
@@ -223,7 +223,7 @@ void Graph<ArrayType>::ApplyRegularisation()
  */
 template <typename ArrayType>
 template <class OperationType, typename... Params>
-meta::IfIsFullyConnected<ArrayType, OperationType, std::string> Graph<ArrayType>::AddNode(
+meta::IfIsShareable<ArrayType, OperationType, std::string> Graph<ArrayType>::AddNode(
     std::string const &node_name, std::vector<std::string> const &inputs, Params... params)
 {
   // guarantee unique op name
@@ -262,7 +262,7 @@ meta::IfIsFullyConnected<ArrayType, OperationType, std::string> Graph<ArrayType>
 
 template <typename ArrayType>
 template <class OperationType, typename... Params>
-meta::IfIsNotFullyConnected<ArrayType, OperationType, std::string> Graph<ArrayType>::AddNode(
+meta::IfIsNotShareable<ArrayType, OperationType, std::string> Graph<ArrayType>::AddNode(
     std::string const &node_name, std::vector<std::string> const &inputs, Params... params)
 {
   // guarantee unique op name

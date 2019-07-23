@@ -48,11 +48,11 @@ template <typename T, typename OperationType>
 constexpr bool IsGraph = std::is_base_of<fetch::ml::Graph<T>, OperationType>::value;
 
 template <typename T, typename OperationType>
-constexpr bool IsFullyConnected =
+constexpr bool IsShareable =
     std::is_base_of<fetch::ml::layers::FullyConnected<T>, OperationType>::value;
 
 template <typename T, typename OperationType>
-constexpr bool IsNotFullyConnected = !IsFullyConnected<T, OperationType>;
+constexpr bool IsNotShareable = !IsShareable<T, OperationType>;
 
 template <typename T, typename OperationType>
 constexpr bool IsNotGraph = !IsGraph<T, OperationType>;
@@ -68,10 +68,10 @@ template <typename T, typename OperationType, typename R = void>
 using IfIsGraph = fetch::meta::EnableIf<IsGraph<T, OperationType>, R>;
 
 template <typename T, typename OperationType, typename R = void>
-using IfIsFullyConnected = fetch::meta::EnableIf<IsFullyConnected<T, OperationType>, R>;
+using IfIsShareable = fetch::meta::EnableIf<IsShareable<T, OperationType>, R>;
 
 template <typename T, typename OperationType, typename R = void>
-using IfIsNotFullyConnected = fetch::meta::EnableIf<IsNotFullyConnected<T, OperationType>, R>;
+using IfIsNotShareable = fetch::meta::EnableIf<IsNotShareable<T, OperationType>, R>;
 
 template <typename T, typename OperationType, typename R = void>
 using IfIsNotTrainable = fetch::meta::EnableIf<IsNotTrainable<T, OperationType>, R>;
