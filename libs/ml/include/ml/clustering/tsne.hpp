@@ -147,7 +147,8 @@ public:
       //  Y = Y - np.tile(np.mean(Y, 0), (n, 1))
       ArrayType rsum({1, output_matrix_.shape(1)});
       fetch::math::ReduceSum(output_matrix_, 0, rsum);
-      ArrayType y_mean = fetch::math::Divide(rsum, static_cast<DataType>(output_matrix_.shape().at(0)));
+      ArrayType y_mean =
+          fetch::math::Divide(rsum, static_cast<DataType>(output_matrix_.shape().at(0)));
 
       output_matrix_ -= y_mean;
 
@@ -275,7 +276,8 @@ private:
      * Initialize some variables
      */
     // sum_x = sum(square(x), 1)
-    ArrayType sum_x = fetch::math::ReduceSum(fetch::math::Square(input_matrix), 1);
+    ArrayType sum_x({input_matrix.shape(0), 1});
+    fetch::math::ReduceSum(fetch::math::Square(input_matrix), 1, sum_x);
 
     // d= ((-2 * dot(X, X.T))+sum_x).T+sum_x
     ArrayType d =
@@ -377,7 +379,8 @@ private:
     ArrayType output_matrix_T = output_matrix.Transpose();
 
     // sum_y = sum(square(y), 1)
-    ArrayType sum_y = fetch::math::ReduceSum(fetch::math::Square(output_matrix), 1);
+    ArrayType sum_y({output_matrix.shape(0), 1});
+    fetch::math::ReduceSum(fetch::math::Square(output_matrix), 1, sum_y);
 
     // num = -2. * dot(Y, Y.T)
     num = fetch::math::Multiply(DataType(-2),

@@ -62,8 +62,10 @@ public:
     }
     else
     {
-      SizeType batch_dimension = inputs.at(0).get().shape().size() - 1;
-      return {error_signal, fetch::math::ReduceSum(error_signal, batch_dimension)};
+      SizeType  batch_dimension = inputs.at(0).get().shape().size() - 1;
+      ArrayType rsum({error_signal.shape(0), 1});
+      fetch::math::ReduceSum(error_signal, batch_dimension, rsum);
+      return {error_signal, rsum};
     }
   }
 

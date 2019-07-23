@@ -39,16 +39,14 @@ public:
   using SizeType      = typename ArrayType::SizeType;
   using VecTensorType = typename Ops<T>::VecTensorType;
 
-  explicit LogSoftmax(SizeType axis = 0)
-    : axis_(axis)
-  {}
+  explicit LogSoftmax()  = default;
   ~LogSoftmax() override = default;
 
   void Forward(VecTensorType const &inputs, ArrayType &output) override
   {
     assert(output.shape() == ComputeOutputShape(inputs));
     assert(inputs.size() == 1);
-    fetch::math::Softmax(inputs.front().get(), output, axis_);
+    fetch::math::Softmax(inputs.front().get(), output, 0);
     fetch::math::Log(output, output);
   }
 
@@ -60,7 +58,7 @@ public:
 
     ArrayType return_signal = error_signal.Copy();
     ArrayType t(error_signal.shape());
-    fetch::math::Softmax(inputs.front().get(), t, axis_);
+    fetch::math::Softmax(inputs.front().get(), t, 0);
 
     // return_signal.InlineMultiply(t);
 
@@ -73,8 +71,9 @@ public:
     // 2D softmax
     else if (inputs.front().get().shape().size() == 2)
     {
-      ArrayType sum;
-      sum = ReduceSum(return_signal, 1 - axis_);
+      ArrayType sum({return_signal.shape(0), 1});
+      ReduceSum(return_signal, 1, sum);
+
       t.InlineMultiply(sum);
     }
     else
@@ -92,9 +91,6 @@ public:
   }
 
   static constexpr char const *DESCRIPTOR = "LogSoftmax";
-
-private:
-  SizeType axis_;
 };
 
 }  // namespace ops

@@ -71,7 +71,7 @@ TYPED_TEST(LogSoftmaxTest, forward_2d_tensor_axis_0_test)
     }
   }
 
-  fetch::ml::ops::LogSoftmax<ArrayType> op{0};
+  fetch::ml::ops::LogSoftmax<ArrayType> op;
   ArrayType                             prediction(op.ComputeOutputShape({data}));
   op.Forward(VecTensorType({data}), prediction);
 
@@ -118,7 +118,7 @@ TYPED_TEST(LogSoftmaxTest, backward_2d_tensor_axis_0_test)
       gt.Set(i, j, static_cast<DataType>(gt_input[j + 3 * i]));
     }
   }
-  fetch::ml::ops::LogSoftmax<ArrayType> op{0};
+  fetch::ml::ops::LogSoftmax<ArrayType> op;
   std::vector<ArrayType>                prediction = op.Backward({data}, error);
 
   // test correct values

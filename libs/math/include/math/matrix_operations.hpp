@@ -514,25 +514,25 @@ meta::IfIsMathArray<ArrayType, typename ArrayType::Type> Sum(ArrayType const &ar
   return ret;
 }
 
+
 template <typename ArrayType>
 void ReduceSum(ArrayType const &obj1, SizeType axis, ArrayType &ret)
 {
-  //  assert((axis == 0) || (axis == 1));
-  //  assert(obj1.shape().size() == 2);
-  //
-  //  SizeVector access_idx{0, 0};
+  assert((axis == 0) || (axis == 1));
+  assert(obj1.shape().size() == 2);
 
-  // last dimension axis is cheaply handled with a view
-  if (axis == obj1.shape().size() - 1)
+  SizeVector access_idx{0, 0};
+  if (axis == 0)
   {
     assert(ret.shape()[0] == 1);
-    assert(ret.shape(ret.shape().size() - 1) == obj1.shape(obj1.shape().size() - 1));
+    assert(ret.shape()[1] == obj1.shape()[1]);
 
+    auto it  = obj1.cbegin();
     auto rit = ret.begin();
-    for (SizeType j{0}; j < obj1.shape().at(obj1.shape().size() - 1); ++j)
+    while (rit.is_valid())
     {
-      auto it = obj1.View(j).cbegin();
-      while (it.is_valid())
+      *rit = typename ArrayType::Type{0};
+      for (SizeType j{0}; j < obj1.shape().at(0); ++j)
       {
         *rit += *it;
         ++it;
@@ -540,30 +540,21 @@ void ReduceSum(ArrayType const &obj1, SizeType axis, ArrayType &ret)
       ++rit;
     }
   }
-  // non last dimension axes are more expensively handled
   else
   {
-    if (obj1.shape().size() == 2)
-    {
-      assert(ret.shape()[0] == obj1.shape()[0]);
-      assert(ret.shape()[1] == 1);
+    assert(ret.shape()[0] == obj1.shape()[0]);
+    assert(ret.shape()[1] == 1);
 
-      auto rit = ret.begin();
-      for (SizeType i = 0; i < ret.size(); ++i)
-      {
-        *rit = typename ArrayType::Type{0};
-        for (SizeType j = 0; j < obj1.shape().at(1); ++j)
-        {
-          // Todo(issue 1015) Replace with transposed iterator
-          *rit += obj1(i, j);
-        }
-        ++rit;
-      }
-    }
-    else
+    auto rit = ret.begin();
+    for (SizeType i = 0; i < ret.size(); ++i)
     {
-      throw std::runtime_error(
-          "n-dimensional reduce sum for axis != last dimension not yet handled");
+      *rit = typename ArrayType::Type{0};
+      for (SizeType j = 0; j < obj1.shape().at(1); ++j)
+      {
+        // Todo(issue 1015) Replace with transposed iterator
+        *rit += obj1(i, j);
+      }
+      ++rit;
     }
   }
 }
