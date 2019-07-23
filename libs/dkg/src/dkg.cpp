@@ -17,7 +17,6 @@
 //------------------------------------------------------------------------------
 
 #include "dkg/dkg.hpp"
-#include "dkg/dkg_service.hpp"
 
 #include <mutex>
 
@@ -32,12 +31,16 @@ bn::Fr                DistributedKeyGeneration::zeroFr_;
 bn::G2                DistributedKeyGeneration::group_g_;
 bn::G2                DistributedKeyGeneration::group_h_;
 
-DistributedKeyGeneration::DistributedKeyGeneration(MuddleAddress address, CabinetMembers &cabinet,
-                                                   uint32_t &threshold, DkgService &dkg_service)
+DistributedKeyGeneration::DistributedKeyGeneration(
+    MuddleAddress address, CabinetMembers &cabinet, uint32_t &threshold,
+    std::function<void(DKGEnvelop const &)> broadcast_callback,
+    std::function<void(MuddleAddress const &, std::pair<std::string, std::string> const &)>
+        rpc_callback)
   : cabinet_{cabinet}
   , threshold_{threshold}
   , address_{std::move(address)}
-  , dkg_service_{dkg_service}
+  , broadcast_callback_{std::move(broadcast_callback)}
+  , rpc_callback_{std::move(rpc_callback)}
 {
   static std::once_flag flag;
 
@@ -67,7 +70,7 @@ DistributedKeyGeneration::DistributedKeyGeneration(MuddleAddress address, Cabine
  */
 void DistributedKeyGeneration::SendBroadcast(DKGEnvelope const &env)
 {
-  dkg_service_.SendReliableBroadcast(env);
+  broadcast_callback_(env);
 }
 
 /**
@@ -112,7 +115,7 @@ void DistributedKeyGeneration::SendShares(std::vector<bn::Fr> const &a_i,
     {
       std::pair<MsgShare, MsgShare> shares{s_ij[cabinet_index_][j].getStr(),
                                            sprime_ij[cabinet_index_][j].getStr()};
-      dkg_service_.SendShares(cab_i, shares);
+      rpc_callback_(cab_i, shares);
     }
     ++j;
   }
