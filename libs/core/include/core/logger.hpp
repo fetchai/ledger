@@ -201,32 +201,23 @@ public:
     using Timepoint = Clock::time_point;
     using Duration  = Clock::duration;
 
-    int color    = 9;
-    int bg_color = 9;
-
     char const *level_name = "UNKNWN";
     switch (level)
     {
     case Level::INFO:
-      color      = 3;
       level_name = "INFO  ";
       break;
     case Level::WARNING:
-      color      = 6;
       level_name = "WARN  ";
       break;
     case Level::ERROR:
-      color      = 1;
       level_name = "ERROR ";
       break;
     case Level::DEBUG:
       level_name = "DEBUG ";
-      color      = 7;
       break;
     case Level::HIGHLIGHT:
       level_name = "HLIGHT";
-      bg_color   = 4;
-      color      = 7;
       break;
     }
 
