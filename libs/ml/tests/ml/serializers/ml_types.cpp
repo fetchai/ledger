@@ -18,10 +18,10 @@
 
 #include "core/serializers/byte_array_buffer.hpp"
 #include "math/tensor.hpp"
+#include "ml/graph.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/ops/placeholder.hpp"
 #include "ml/serializers/ml_types.hpp"
-#include "ml/graph.hpp"
 #include "vectorise/fixed_point/serializers.hpp"
 
 #include "gtest/gtest.h"
@@ -31,13 +31,7 @@ class SerializersTest : public ::testing::Test
 {
 };
 
-//using MyTypes = ::testing::Types<fetch::math::Tensor<int32_t>, fetch::math::Tensor<float>,
-//                                 fetch::math::Tensor<double>,
-//                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<16, 16>>,
-//                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
-
-using MyTypes = ::testing::Types<fetch::math::Tensor<float>,
-                                 fetch::math::Tensor<double>,
+using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
                                  fetch::math::Tensor<fetch::fixed_point::FixedPoint<16, 16>>,
                                  fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
 TYPED_TEST_CASE(SerializersTest, MyTypes);
@@ -69,7 +63,7 @@ TYPED_TEST(SerializersTest, serialize_state_dict)
 TYPED_TEST(SerializersTest, serialize_empty_graph_saveable_params)
 {
   fetch::ml::GraphSaveableParams<TypeParam> gsp1;
-  fetch::serializers::ByteArrayBuffer b;
+  fetch::serializers::ByteArrayBuffer       b;
   b << gsp1;
   b.seek(0);
   fetch::ml::GraphSaveableParams<TypeParam> gsp2;
@@ -80,8 +74,8 @@ TYPED_TEST(SerializersTest, serialize_empty_graph_saveable_params)
 
 TYPED_TEST(SerializersTest, serialize_graph_saveable_params)
 {
-  using ArrayType = TypeParam ;
-  using DataType = typename TypeParam::Type;
+  using ArrayType = TypeParam;
+  using DataType  = typename TypeParam::Type;
   using GraphType = typename fetch::ml::Graph<ArrayType>;
 
   fetch::ml::details::RegularisationType regulariser = fetch::ml::details::RegularisationType::L1;
@@ -102,10 +96,11 @@ TYPED_TEST(SerializersTest, serialize_graph_saveable_params)
   std::string output = g->template AddNode<fetch::ml::layers::FullyConnected<ArrayType>>(
       "FC3", {layer_2}, 10u, 10u, fetch::ml::details::ActivationType::SOFTMAX, regulariser,
       reg_rate);
-  std::string error = g->template AddNode<fetch::ml::ops::CrossEntropyLoss<ArrayType>>("Error", {output, label});
+  std::string error =
+      g->template AddNode<fetch::ml::ops::CrossEntropyLoss<ArrayType>>("Error", {output, label});
 
   fetch::ml::GraphSaveableParams<TypeParam> gsp1 = g->GetGraphSaveableParams();
-  fetch::serializers::ByteArrayBuffer b;
+  fetch::serializers::ByteArrayBuffer       b;
   b << gsp1;
   b.seek(0);
   fetch::ml::GraphSaveableParams<TypeParam> gsp2;
@@ -113,14 +108,15 @@ TYPED_TEST(SerializersTest, serialize_graph_saveable_params)
 
   EXPECT_EQ(gsp1.connections, gsp2.connections);
 
-  for (auto const & gsp2_node_pair: gsp2.nodes){
-    std::cout << "gsp2_node.first: " << gsp2_node_pair.first << std::endl;
+  for (auto const &gsp2_node_pair : gsp2.nodes)
+  {
     auto gsp2_node = gsp2_node_pair.second;
     auto gsp1_node = gsp1.nodes[gsp2_node_pair.first];
 
-    std::cout << "gsp1_node->sp_descriptor: " << gsp1_node->sp_descriptor << std::endl;
-    std::cout << "gsp2_node->sp_descriptor: " << gsp2_node->sp_descriptor << std::endl;
-
-    EXPECT_TRUE(gsp1_node->sp_descriptor == gsp2_node->sp_descriptor);
+    EXPECT_TRUE(gsp1_node->GetDescription() == gsp2_node->GetDescription());
   }
+
+  auto g2 = GraphType(gsp2);
+
+  // todo: do something with graph.
 }

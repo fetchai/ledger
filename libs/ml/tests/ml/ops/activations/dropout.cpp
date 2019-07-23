@@ -16,9 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/serializers/byte_array_buffer.hpp"
 #include "math/tensor.hpp"
 #include "ml/ops/activations/dropout.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
+#include "vectorise/fixed_point/serializers.hpp"
 
 #include "gtest/gtest.h"
 
@@ -186,12 +188,13 @@ TYPED_TEST(DropoutTest, backward_3d_tensor_test)
 
 TYPED_TEST(DropoutTest, saveparams_test)
 {
-  using DataType      = typename TypeParam::Type;
   using ArrayType     = TypeParam;
+  using DataType      = typename TypeParam::Type;
   using VecTensorType = typename fetch::ml::Ops<ArrayType>::VecTensorType;
+  using SPType = typename fetch::ml::ops::Dropout<ArrayType>::SPType;
 
-  ArrayType                     data = ArrayType::FromString(R"(1, -2, 3, -4, 5, -6, 7, -8)");
-  ArrayType                     gt   = ArrayType::FromString(R"(0, -2, 0,  0, 5, -6, 7, -8)");
+  ArrayType                     data = ArrayType::FromString("1, -2, 3, -4, 5, -6, 7, -8");
+  ArrayType                     gt   = ArrayType::FromString("0, -2, 0,  0, 5, -6, 7, -8");
   DataType                      prob{0.5};
   typename ArrayType ::SizeType random_seed = 12345;
 
@@ -208,16 +211,19 @@ TYPED_TEST(DropoutTest, saveparams_test)
   std::shared_ptr<fetch::ml::SaveableParams> sp = op.GetOpSaveableParams();
 
   // downcast to correct type
-  auto dsp = std::dynamic_pointer_cast<typename fetch::ml::ops::Dropout<ArrayType>::SPType>(sp);
+  auto dsp = std::dynamic_pointer_cast<SPType>(sp);
 
-  // check that values are correct
-  EXPECT_EQ(dsp->probability, prob);
-  EXPECT_EQ(dsp->random_seed, random_seed);
-//  EXPECT_EQ(dsp->DESCRIPTOR, fetch::ml::ops::Dropout<ArrayType>::DESCRIPTOR);
-//  EXPECT_EQ(dsp->DESCRIPTOR, op.DESCRIPTOR);
+  // serialize
+  fetch::serializers::ByteArrayBuffer b;
+  b << *dsp;
+
+  // deserialize
+  b.seek(0);
+  auto dsp2 = std::make_shared<SPType>();
+  b >> *dsp2;
 
   // rebuild node
-  fetch::ml::ops::Dropout<ArrayType> new_op(*dsp);
+  fetch::ml::ops::Dropout<ArrayType> new_op(*dsp2);
 
   // check that new predictions match the old
   ArrayType new_prediction(op.ComputeOutputShape({data}));

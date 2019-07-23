@@ -368,7 +368,17 @@ int main(int argc, char **argv)
 
     // now for the interesting bit
     auto      gsp = g_ptr->GetGraphSaveableParams();
-    GraphType newgraph{gsp};
+    // serialize
+    fetch::serializers::ByteArrayBuffer       b;
+    b << gsp;
+    
+    // deserialize
+    b.seek(0);
+    fetch::ml::GraphSaveableParams<ArrayType> gsp2;
+    b >> gsp2;
+    
+    // remake graph
+    GraphType newgraph{gsp2};
 
     //// run same test as above:
     /// LOAD DATA ///
