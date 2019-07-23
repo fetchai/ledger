@@ -83,7 +83,6 @@ void DistributedKeyGeneration::SendBroadcast(DKGEnvelope const &env)
 void DistributedKeyGeneration::SendCoefficients(std::vector<bn::Fr> const &a_i,
                                                 std::vector<bn::Fr> const &b_i)
 {
-
   // Let z_i = f(0)
   z_i[cabinet_index_] = a_i[0];
 
