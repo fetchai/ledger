@@ -149,7 +149,16 @@ public:
     FETCH_LOG_INFO(LOGGING_NAME, "Resetting cabinet. Cabinet size: ", cabinet.size(),
                    " threshold: ", threshold);
     FETCH_LOCK(cabinet_lock_);
-    assert(cabinet.size() > 3 * threshold);  // To meet the requirements for the RBC
+    assert(cabinet.size() > threshold);
+    // Check threshold meets the requirements for the RBC
+    if (cabinet.size()%3 == 0)
+    {
+      assert(threshold >= static_cast<uint32_t>(cabinet.size()/3 - 1));
+    }
+    else
+    {
+      assert(threshold >= static_cast<uint32_t>(cabinet.size()/3));
+    }
     current_cabinet_   = std::move(cabinet);
     current_threshold_ = threshold;
     id_                = static_cast<uint32_t>(

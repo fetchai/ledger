@@ -375,7 +375,7 @@ void RBC::OnRReady(std::shared_ptr<RReady> const msg_ptr, uint32_t sender_index)
     Broadcast(env);
     OnRReady(std::dynamic_pointer_cast<RReady>(env.Message()), id_);  // self sending.
   }
-  else if (threshold_ > 0 && msgsCount.ready_count == 2 * threshold_ + 1)
+  else if (msgsCount.ready_count == 2 * threshold_ + 1)
   {
     broadcasts_[tag].dbar = msg_ptr->hash();
 
