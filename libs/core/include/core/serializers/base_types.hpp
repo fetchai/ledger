@@ -400,7 +400,7 @@ public:
     }
     case CODE16:
     {
-      uint8_t tmp;
+      uint16_t tmp;
       interface.ReadBytes(reinterpret_cast<uint8_t *>(&tmp), sizeof(uint16_t));
       size = static_cast<uint32_t>(tmp);
       break;

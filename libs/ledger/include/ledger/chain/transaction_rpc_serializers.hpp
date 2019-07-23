@@ -36,7 +36,6 @@ public:
   {
     ledger::TransactionSerializer serializer{};
     serializer << tx;
-
     s << serializer.data();
   }
 
@@ -46,7 +45,6 @@ public:
     // extract the data from the stream
     byte_array::ConstByteArray data;
     s >> data;
-
     // create and extract the serializer
     ledger::TransactionSerializer serializer{data};
     serializer >> tx;
