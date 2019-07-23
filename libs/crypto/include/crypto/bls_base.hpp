@@ -173,7 +173,7 @@ inline byte_array::ConstByteArray ToBinary(Signature const &sig)
 namespace serializers {
 
 template <typename D>
-struct BinarySerializer<::blsId, D>  
+struct BinarySerializer<::blsId, D>
 {
 public:
   using Type       = ::blsId;
@@ -196,7 +196,7 @@ public:
 };
 
 template <typename D>
-struct BinarySerializer<::blsPublicKey, D> 
+struct BinarySerializer<::blsPublicKey, D>
 {
 public:
   using Type       = ::blsPublicKey;
@@ -242,7 +242,7 @@ public:
 };
 
 template <typename D>
-struct BinarySerializer<::blsSignature, D> 
+struct BinarySerializer<::blsSignature, D>
 {
 public:
   using Type       = ::blsSignature;

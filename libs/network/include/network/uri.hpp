@@ -148,7 +148,7 @@ inline Uri Uri::FromIdentity(ConstByteArray const &identity)
 namespace serializers {
 
 template <typename D>
-struct MapSerializer<network::Uri, D>  
+struct MapSerializer<network::Uri, D>
 {
 public:
   using DriverType = D;
