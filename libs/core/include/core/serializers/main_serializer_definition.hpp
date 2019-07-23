@@ -57,9 +57,6 @@ public:
    *          value as explained above)
    */
   MsgPackByteArrayBuffer(byte_array::ByteArray const &s);
-
-  // TODO: We should implement move constructor to allow maximal efficiency
-
   MsgPackByteArrayBuffer(MsgPackByteArrayBuffer const &from);
 
   MsgPackByteArrayBuffer &operator=(MsgPackByteArrayBuffer const &from);
