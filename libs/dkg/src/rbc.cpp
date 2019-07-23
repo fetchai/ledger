@@ -31,7 +31,7 @@ constexpr char const *LOGGING_NAME = "RBC";
 /**
  * Helper function to compute truncation of message hash to 8 bytes. Truncation from left side.
  */
-TruncatedHash MessageHash(const SerialisedMessage &msg)
+TruncatedHash MessageHash(SerialisedMessage const &msg)
 {
   byte_array::ByteArray msg_hash_256{crypto::Hash<crypto::SHA256>(msg)};
   return msg_hash_256.SubArray(24);
@@ -67,14 +67,14 @@ std::string RBC::MsgTypeToString(MsgType msg_type)
  * @param dkg
  */
 RBC::RBC(Endpoint &endpoint, MuddleAddress address, CabinetMembers const &cabinet,
-         std::size_t &threshold, DkgService &dkg_service)
+         DkgService &dkg_service)
   : address_{std::move(address)}
   , endpoint_{endpoint}
   , current_cabinet_{cabinet}
-  , threshold_{threshold}
   , dkg_service_{dkg_service}
   , rbc_subscription_(endpoint.Subscribe(SERVICE_DKG, CHANNEL_BROADCAST))
 {
+
   // Set subscription for rbc
   rbc_subscription_->SetMessageHandler([this](MuddleAddress const &from, uint16_t, uint16_t,
                                               uint16_t, muddle::Packet::Payload const &payload,
@@ -97,6 +97,16 @@ void RBC::ResetCabinet()
 {
   assert(!current_cabinet_.empty());
   assert(current_cabinet_.find(address_) != current_cabinet_.end());
+
+  // Set threshold depending on size of committee
+  if (current_cabinet_.size() % 3 == 0)
+  {
+    threshold_ = static_cast<uint32_t>(current_cabinet_.size() / 3 - 1);
+  }
+  else
+  {
+    threshold_ = static_cast<uint32_t>(current_cabinet_.size() / 3);
+  }
   assert(current_cabinet_.size() > 3 * threshold_);
   std::lock_guard<std::mutex> lock{mutex_broadcast_};
   id_ = static_cast<uint32_t>(
@@ -112,7 +122,7 @@ void RBC::ResetCabinet()
  * @param env RBCEnvelop to be serialised and sent
  * @param address Destination muddle address
  */
-void RBC::Send(const RBCEnvelop &env, const MuddleAddress &address)
+void RBC::Send(RBCEnvelop const &env, MuddleAddress const &address)
 {
   // Serialise the RBCEnvelop
   RBCSerializerCounter env_counter;
@@ -130,7 +140,7 @@ void RBC::Send(const RBCEnvelop &env, const MuddleAddress &address)
  *
  * @param env RBCEnvelop message to be serialised and broadcasted
  */
-void RBC::Broadcast(const RBCEnvelop &env)
+void RBC::Broadcast(RBCEnvelop const &env)
 {
   // Serialise the RBCEnvelop
   RBCSerializerCounter env_counter;
@@ -145,12 +155,12 @@ void RBC::Broadcast(const RBCEnvelop &env)
 }
 
 /**
- * Places a serialised message to be broadcasted via RBC into a RBCEnvelop and broadcats
+ * Places a serialised message to be broadcasted via RBC into a RBCEnvelop and broadcasts
  * envelop
  *
  * @param msg Serialised message to be broadcast
  */
-void RBC::SendRBroadcast(const SerialisedMessage &msg)
+void RBC::SendRBroadcast(SerialisedMessage const &msg)
 {
   RBCEnvelop env{RBroadcast(CHANNEL_BROADCAST, id_, ++msg_counter_, msg)};
   Broadcast(env);
@@ -211,7 +221,7 @@ bool RBC::ReceivedEcho(TagType tag, std::shared_ptr<REcho> msg_ptr)
   std::lock_guard<std::mutex> lock(mutex_broadcast_);
   auto &                      msg_count = broadcasts_[tag].msgs_count[msg_ptr->hash()];
   msg_count.echo_count++;
-  return (msg_count.echo_count == current_cabinet_.size() - threshold_ and
+  return (msg_count.echo_count == current_cabinet_.size() - threshold_ &&
           msg_count.ready_count <= threshold_);
 }
 
@@ -279,9 +289,9 @@ void RBC::OnRBC(MuddleAddress const &from, RBCEnvelop const &envelop)
  * @param msg_ptr Shared pointer to RBroadcast message
  * @param sender_index Index of sender in current_cabinet_
  */
-void RBC::OnRBroadcast(const std::shared_ptr<RBroadcast> msg_ptr, uint32_t sender_index)
+void RBC::OnRBroadcast(std::shared_ptr<RBroadcast> const msg_ptr, uint32_t sender_index)
 {
-  uint64_t tag{msg_ptr->tag()};
+  TagType tag = msg_ptr->tag();
   if (!SetPartyFlag(sender_index, tag, MsgType::R_SEND))
   {
     FETCH_LOG_WARN(LOGGING_NAME, "onRBroadcast: Node ", id_, " received repeated msg ", tag,
@@ -317,9 +327,9 @@ void RBC::OnRBroadcast(const std::shared_ptr<RBroadcast> msg_ptr, uint32_t sende
  * @param msg_ptr Shared pointer to REcho message
  * @param sender_index Index of sender in current_cabinet_
  */
-void RBC::OnREcho(const std::shared_ptr<REcho> msg_ptr, uint32_t sender_index)
+void RBC::OnREcho(std::shared_ptr<REcho> const msg_ptr, uint32_t sender_index)
 {
-  uint64_t tag{msg_ptr->tag()};
+  TagType tag = msg_ptr->tag();
   if (!SetPartyFlag(sender_index, tag, MsgType::R_ECHO))
   {
     FETCH_LOG_WARN(LOGGING_NAME, "onREcho: Node ", id_, " received repeated msg ", tag,
@@ -327,8 +337,8 @@ void RBC::OnREcho(const std::shared_ptr<REcho> msg_ptr, uint32_t sender_index)
                    msg_ptr->id());
     return;
   }
-  FETCH_LOG_INFO(LOGGING_NAME, "onREcho: Node ", id_, " received msg ", tag, " from node ",
-                 sender_index, " with counter ", msg_ptr->counter(), " and id ", msg_ptr->id());
+  FETCH_LOG_TRACE(LOGGING_NAME, "onREcho: Node ", id_, " received msg ", tag, " from node ",
+                  sender_index, " with counter ", msg_ptr->counter(), " and id ", msg_ptr->id());
   if (ReceivedEcho(tag, msg_ptr))
   {
     RBCEnvelop env{RReady{msg_ptr->channel(), msg_ptr->id(), msg_ptr->counter(), msg_ptr->hash()}};
@@ -345,9 +355,9 @@ void RBC::OnREcho(const std::shared_ptr<REcho> msg_ptr, uint32_t sender_index)
  * @param msg_ptr Shared pointer to RReady message
  * @param sender_index Index of sender in current_cabinet_
  */
-void RBC::OnRReady(const std::shared_ptr<RReady> msg_ptr, uint32_t sender_index)
+void RBC::OnRReady(std::shared_ptr<RReady> const msg_ptr, uint32_t sender_index)
 {
-  uint64_t tag{msg_ptr->tag()};
+  TagType tag = msg_ptr->tag();
   if (!SetPartyFlag(sender_index, tag, MsgType::R_READY))
   {
     FETCH_LOG_WARN(LOGGING_NAME, "onRReady: Node ", id_, " received repeated msg ", tag,
@@ -355,17 +365,17 @@ void RBC::OnRReady(const std::shared_ptr<RReady> msg_ptr, uint32_t sender_index)
                    msg_ptr->id());
     return;
   }
-  FETCH_LOG_INFO(LOGGING_NAME, "onRReady: Node ", id_, " received msg ", tag, " from node ",
-                 sender_index, " with counter ", msg_ptr->counter(), " and id ", msg_ptr->id());
+  FETCH_LOG_TRACE(LOGGING_NAME, "onRReady: Node ", id_, " received msg ", tag, " from node ",
+                  sender_index, " with counter ", msg_ptr->counter(), " and id ", msg_ptr->id());
   auto msgsCount = ReceivedReady(tag, msg_ptr);
-  if (threshold_ > 0 and msgsCount.ready_count == threshold_ + 1 and
+  if (threshold_ > 0 && msgsCount.ready_count == threshold_ + 1 &&
       msgsCount.echo_count < (current_cabinet_.size() - threshold_))
   {
     RBCEnvelop env{RReady{msg_ptr->channel(), msg_ptr->id(), msg_ptr->counter(), msg_ptr->hash()}};
     Broadcast(env);
     OnRReady(std::dynamic_pointer_cast<RReady>(env.Message()), id_);  // self sending.
   }
-  else if (threshold_ > 0 and msgsCount.ready_count == 2 * threshold_ + 1)
+  else if (threshold_ > 0 && msgsCount.ready_count == 2 * threshold_ + 1)
   {
     broadcasts_[tag].dbar = msg_ptr->hash();
 
@@ -375,7 +385,7 @@ void RBC::OnRReady(const std::shared_ptr<RReady> msg_ptr, uint32_t sender_index)
       RBCEnvelop env{RRequest{msg_ptr->channel(), msg_ptr->id(), msg_ptr->counter()}};
 
       uint32_t counter{0};
-      auto     im{current_cabinet_.begin()};
+      auto     im = current_cabinet_.begin();
       assert(2 * threshold_ + 1 <= current_cabinet_.size());
       while (counter < 2 * threshold_ + 1)
       {
@@ -403,9 +413,9 @@ void RBC::OnRReady(const std::shared_ptr<RReady> msg_ptr, uint32_t sender_index)
  * @param msg_ptr Shared pointer to RRequest message
  * @param sender_index Index of sender in current_cabinet_
  */
-void RBC::OnRRequest(const std::shared_ptr<RRequest> msg_ptr, uint32_t sender_index)
+void RBC::OnRRequest(std::shared_ptr<RRequest> const msg_ptr, uint32_t sender_index)
 {
-  uint64_t tag{msg_ptr->tag()};
+  TagType tag = msg_ptr->tag();
   if (!SetPartyFlag(sender_index, tag, MsgType::R_REQUEST))
   {
     FETCH_LOG_WARN(LOGGING_NAME, "onRRequest: Node ", id_, " received repeated msg ", tag,
@@ -413,8 +423,8 @@ void RBC::OnRRequest(const std::shared_ptr<RRequest> msg_ptr, uint32_t sender_in
                    msg_ptr->id());
     return;
   }
-  FETCH_LOG_INFO(LOGGING_NAME, "onRRequest: Node ", id_, " received msg ", tag, " from node ",
-                 sender_index, " with counter ", msg_ptr->counter(), " and id ", msg_ptr->id());
+  FETCH_LOG_TRACE(LOGGING_NAME, "onRRequest: Node ", id_, " received msg ", tag, " from node ",
+                  sender_index, " with counter ", msg_ptr->counter(), " and id ", msg_ptr->id());
   if (!broadcasts_[tag].mbar.empty())
   {
     RBCEnvelop env{
@@ -431,9 +441,9 @@ void RBC::OnRRequest(const std::shared_ptr<RRequest> msg_ptr, uint32_t sender_in
  * @param msg_ptr Shared pointer to RAnswer message
  * @param sender_index Index of sender in current_cabinet_
  */
-void RBC::OnRAnswer(const std::shared_ptr<RAnswer> msg_ptr, uint32_t sender_index)
+void RBC::OnRAnswer(std::shared_ptr<RAnswer> const msg_ptr, uint32_t sender_index)
 {
-  uint64_t tag{msg_ptr->tag()};
+  TagType tag = msg_ptr->tag();
   if (!SetPartyFlag(sender_index, tag, MsgType::R_ANSWER))
   {
     return;
@@ -479,7 +489,7 @@ void RBC::OnRAnswer(const std::shared_ptr<RAnswer> msg_ptr, uint32_t sender_inde
  * @param msg Serialised message which has been reliably broadcasted
  * @param sender_index Index of sender in current_cabinet_
  */
-void RBC::Deliver(const SerialisedMessage &msg, uint32_t sender_index)
+void RBC::Deliver(SerialisedMessage const &msg, uint32_t sender_index)
 {
   MuddleAddress miner_id{*std::next(current_cabinet_.begin(), sender_index)};
   dkg_service_.OnRbcDeliver(miner_id, msg);
@@ -488,9 +498,9 @@ void RBC::Deliver(const SerialisedMessage &msg, uint32_t sender_index)
   if (!parties_[sender_index].undelivered_msg.empty())
   {
     FETCH_LOG_TRACE(LOGGING_NAME, "Node ", id_, " checks old tags for node ", sender_index);
-    auto old_tag_msg{parties_[sender_index].undelivered_msg.begin()};
-    while (old_tag_msg != parties_[sender_index].undelivered_msg.end() and
-           old_tag_msg->second.id() == CHANNEL_BROADCAST and
+    auto old_tag_msg = parties_[sender_index].undelivered_msg.begin();
+    while (old_tag_msg != parties_[sender_index].undelivered_msg.end() &&
+           old_tag_msg->second.id() == CHANNEL_BROADCAST &&
            old_tag_msg->second.counter() == parties_[id_].deliver_s)
     {
       dkg_service_.OnRbcDeliver(miner_id, broadcasts_[old_tag_msg->second.tag()].mbar);
@@ -505,7 +515,7 @@ void RBC::Deliver(const SerialisedMessage &msg, uint32_t sender_index)
  * @param other_address Muddle address of cabinet member
  * @return Index of other_address
  */
-uint32_t RBC::CabinetIndex(const MuddleAddress &other_address) const
+uint32_t RBC::CabinetIndex(MuddleAddress const &other_address) const
 {
   return static_cast<uint32_t>(
       std::distance(current_cabinet_.begin(), current_cabinet_.find(other_address)));
@@ -521,14 +531,14 @@ uint32_t RBC::CabinetIndex(const MuddleAddress &other_address) const
 bool RBC::CheckTag(RBCMessage &msg)
 {
   std::lock_guard<std::mutex> lock(mutex_deliver_);
-  uint8_t                     msg_counter{parties_[msg.id()].deliver_s};
+  uint8_t                     msg_counter = parties_[msg.id()].deliver_s;
   FETCH_LOG_TRACE(LOGGING_NAME, "Node ", id_, " has counter ", msg_counter, " for node ", msg.id());
-  if (msg.channel() == CHANNEL_BROADCAST and msg.counter() == msg_counter)
+  if (msg.channel() == CHANNEL_BROADCAST && msg.counter() == msg_counter)
   {
     ++parties_[msg.id()].deliver_s;  // Increase counter
     return true;
   }
-  else if (msg.channel() == CHANNEL_BROADCAST and msg.counter() > msg_counter)
+  else if (msg.channel() == CHANNEL_BROADCAST && msg.counter() > msg_counter)
   {
     FETCH_LOG_TRACE(LOGGING_NAME, "Node ", id_, " has counter ", msg_counter,
                     " does not match tag counter ", msg.counter(), " for node ", msg.id());

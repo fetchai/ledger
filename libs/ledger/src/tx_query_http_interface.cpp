@@ -39,7 +39,10 @@ namespace ledger {
 TxQueryHttpInterface::TxQueryHttpInterface(StorageUnitInterface &storage_unit)
   : storage_unit_{storage_unit}
 {
-  Get("/api/tx/(digest=[a-fA-F0-9]{64})/",
+  Get("/api/tx/(digest=[a-fA-F0-9]{64})/", "Retrieves a transaction.",
+      {
+          {"digest", "The transaction hash.", http::validators::StringValue()},
+      },
       [this](http::ViewParameters const &params, http::HTTPRequest const &request) {
         FETCH_UNUSED(request);
 
@@ -86,7 +89,7 @@ TxQueryHttpInterface::TxQueryHttpInterface(StorageUnitInterface &storage_unit)
         case Transaction::ContractMode::NOT_PRESENT:
           break;
         case Transaction::ContractMode::PRESENT:
-          tx_obj["contractDigest"]  = tx.contract_digest().display();
+          tx_obj["contractDigest"]  = tx.contract_digest().address().ToHex();
           tx_obj["contractAddress"] = tx.contract_address().display();
           tx_obj["action"]          = tx.action();
           tx_obj["data"]            = tx.data().ToBase64();

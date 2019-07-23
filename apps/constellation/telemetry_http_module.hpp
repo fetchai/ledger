@@ -31,15 +31,16 @@ class TelemetryHttpModule : public http::HTTPModule
 public:
   TelemetryHttpModule()
   {
-    Get("/api/telemetry", [](http::ViewParameters const &, http::HTTPRequest const &) {
-      static auto const TXT_MIME_TYPE = http::mime_types::GetMimeTypeFromExtension(".txt");
+    Get("/api/telemetry", "Telementry feed.",
+        [](http::ViewParameters const &, http::HTTPRequest const &) {
+          static auto const TXT_MIME_TYPE = http::mime_types::GetMimeTypeFromExtension(".txt");
 
-      // collect up the generated metrics for the system
-      std::ostringstream stream;
-      telemetry::Registry::Instance().Collect(stream);
+          // collect up the generated metrics for the system
+          std::ostringstream stream;
+          telemetry::Registry::Instance().Collect(stream);
 
-      return http::HTTPResponse(stream.str(), TXT_MIME_TYPE);
-    });
+          return http::HTTPResponse(stream.str(), TXT_MIME_TYPE);
+        });
   }
 };
 

@@ -45,15 +45,17 @@ public:
 
   AdamOptimiser(std::shared_ptr<Graph<T>> graph, std::vector<std::string> const &input_node_names,
                 std::string const &label_node_name, std::string const &output_node_name,
-                DataType const &learning_rate = DataType{0.001f},
-                DataType const &beta1 = DataType{0.9f}, DataType const &beta2 = DataType{0.999f},
-                DataType const &epsilon = DataType{1e-4f});
+                DataType const &learning_rate = static_cast<DataType>(0.001f),
+                DataType const &beta1         = static_cast<DataType>(0.9f),
+                DataType const &beta2         = static_cast<DataType>(0.999f),
+                DataType const &epsilon       = static_cast<DataType>(1e-4f));
 
   AdamOptimiser(std::shared_ptr<Graph<T>> graph, std::vector<std::string> const &input_node_names,
                 std::string const &label_node_name, std::string const &output_node_name,
                 fetch::ml::optimisers::LearningRateParam<DataType> const &learning_rate_param,
-                DataType const &beta1 = DataType{0.9f}, DataType const &beta2 = DataType{0.999f},
-                DataType const &epsilon = DataType{1e-4f});
+                DataType const &beta1   = static_cast<DataType>(0.9f),
+                DataType const &beta2   = static_cast<DataType>(0.999f),
+                DataType const &epsilon = static_cast<DataType>(1e-4f));
 
   ~AdamOptimiser() override = default;
 
@@ -155,7 +157,6 @@ void AdamOptimiser<T>::ApplyGradients(SizeType batch_size)
     fetch::math::Divide((*trainable_it)->get_gradients(), static_cast<DataType>(batch_size),
                         *vt_it);
     fetch::math::Square(*vt_it, *vt_it);
-
     fetch::math::Multiply(*vt_it, (one_ - beta2_t_), *vt_it);
     fetch::math::Multiply(*momentum_it, beta2_t_, *momentum_it);
     fetch::math::Add(*momentum_it, *vt_it, *momentum_it);

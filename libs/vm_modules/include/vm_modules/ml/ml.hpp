@@ -21,9 +21,10 @@
 #include "vm_modules/math/tensor.hpp"
 #include "vm_modules/ml/dataloaders/dataloader.hpp"
 #include "vm_modules/ml/graph.hpp"
-#include "vm_modules/ml/optimisation/adam_optimiser.hpp"
+#include "vm_modules/ml/optimisation/optimiser.hpp"
 #include "vm_modules/ml/state_dict.hpp"
 #include "vm_modules/ml/training_pair.hpp"
+#include "vm_modules/ml/utilities/scaler.hpp"
 
 namespace fetch {
 namespace vm_modules {
@@ -43,7 +44,10 @@ inline void BindML(fetch::vm::Module &module)
   VMDataLoader::Bind(module);
 
   // optimisers
-  VMAdamOptimiser::Bind(module);
+  VMOptimiser::Bind(module);
+
+  // utilities
+  utilities::VMScaler::Bind(module);
 }
 
 }  // namespace ml
