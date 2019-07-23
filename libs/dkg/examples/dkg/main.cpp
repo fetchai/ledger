@@ -30,7 +30,6 @@ using namespace fetch::network;
 using namespace fetch::crypto;
 using namespace fetch::muddle;
 using namespace fetch::dkg;
-using namespace fetch::dkg::rbc;
 
 using Prover         = fetch::crypto::Prover;
 using ProverPtr      = std::shared_ptr<Prover>;
