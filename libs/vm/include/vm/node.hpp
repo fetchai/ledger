@@ -113,6 +113,7 @@ struct Type;
 using TypePtr      = std::shared_ptr<Type>;
 using TypePtrArray = std::vector<TypePtr>;
 using Operators    = std::unordered_set<Operator>;
+
 struct Type : public Symbol
 {
   Type(TypeKind type_kind__, std::string const &name)
@@ -121,8 +122,9 @@ struct Type : public Symbol
     type_kind = type_kind__;
     id        = TypeIds::Unknown;
   }
-  virtual ~Type() = default;
-  virtual void Reset() override
+  ~Type() override = default;
+
+  void Reset() override
   {
     if (symbols)
     {
@@ -186,8 +188,9 @@ struct Variable : public Symbol
   {
     variable_kind = variable_kind__;
   }
-  virtual ~Variable() = default;
-  virtual void Reset() override
+  ~Variable() override = default;
+
+  void Reset() override
   {
     type = nullptr;
   }
@@ -249,8 +252,9 @@ struct FunctionGroup : public Symbol
   FunctionGroup(std::string const &name)
     : Symbol(SymbolKind::FunctionGroup, name)
   {}
-  virtual ~FunctionGroup() = default;
-  virtual void Reset() override
+  ~FunctionGroup() override = default;
+
+  void Reset() override
   {
     for (auto &function : functions)
     {
@@ -326,8 +330,9 @@ struct BlockNode : public Node
   {
     block_terminator_line = 0;
   }
-  virtual ~BlockNode() = default;
-  virtual void Reset() override
+  ~BlockNode() override = default;
+
+  void Reset() override
   {
     Node::Reset();
     for (auto &child : block_children)
@@ -360,8 +365,9 @@ struct ExpressionNode : public Node
     expression_kind              = ExpressionKind::Unknown;
     function_invoked_on_instance = false;
   }
-  virtual ~ExpressionNode() = default;
-  virtual void Reset() override
+  ~ExpressionNode() override = default;
+
+  void Reset() override
   {
     Node::Reset();
     type     = nullptr;
