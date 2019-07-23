@@ -20,12 +20,15 @@ add_executable(constellation
                main.cpp
                manifest_builder.cpp
                manifest_builder.hpp
+               open_api_http_module.cpp
+               open_api_http_module.hpp
                settings.cpp
                settings.hpp
                telemetry_http_module.hpp)
 target_link_libraries(constellation
                       PRIVATE fetch-ledger
                               fetch-miner
+                              fetch-http
                               fetch-dkg
                               fetch-settings
                               fetch-version)
