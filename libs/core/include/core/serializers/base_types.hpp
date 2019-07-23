@@ -410,7 +410,7 @@ public:
       if ((opcode & 0xE0) != CODE_FIXED)
       {
         // TODO: Change to serializable exception.
-        throw std::runtime_error("expected CODE_FIXED in opcode.");
+        throw std::runtime_error("expected CODE_FIXED in opcode: " + std::to_string(int(opcode)) + " vs " + std::to_string(int(CODE_FIXED)));
       }
       size = static_cast<uint32_t>(opcode & 0x1f);
     }
@@ -538,7 +538,6 @@ public:
   static void Serialize(Constructor &array_constructor, Type const &input)
   {
     auto array = array_constructor(N);
-
     for (auto &v : input)
     {
       array.Append(v);

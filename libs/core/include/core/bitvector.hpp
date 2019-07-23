@@ -169,6 +169,5 @@ public:
   }
 };
 
-};  // namespace serializers
-
+}  // namespace serializers
 }  // namespace fetch

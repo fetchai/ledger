@@ -125,7 +125,7 @@ public:
     serializer_ >> k;
     if (k != key)
     {
-      throw SerializableException(std::string("Key mismatch while deserialising map."));
+      throw SerializableException(std::string("Key mismatch while deserialising map: " + std::to_string(pos_-1) + " / " + std::to_string(size_)) + ", " + std::to_string(k) + " != "+ std::to_string(key));
     }
     serializer_ >> value;
     return true;

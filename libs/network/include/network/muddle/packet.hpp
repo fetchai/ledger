@@ -406,7 +406,7 @@ public:
     auto map = map_constructor(3);
     map.Append(HEADER, *reinterpret_cast<Type::BinaryHeader const *>(&packet.header_));
     map.Append(PAYLOAD, packet.payload_);
-    map.Append(STAMP, packet.stamp_);  // TODO: add support optional fields.
+    map.Append(STAMP,   packet.stamp_);  // TODO: add support optional fields.
     /*
     serializer << *reinterpret_cast<Packet::BinaryHeader const *>(&packet.header_) <<
     packet.payload_; if (packet.header_.stamped)
@@ -419,10 +419,13 @@ public:
   template <typename T>
   static void Deserialize(T &map, Type &packet)
   {
-    uint8_t key;
-    map.GetNextKeyPair(key, *reinterpret_cast<Type::BinaryHeader *>(&packet.header_));
-    map.GetNextKeyPair(key, packet.payload_);  // TODO: Test keys
-    map.GetNextKeyPair(key, packet.stamp_);
+    if(map.size() != 3)
+    {
+      throw std::runtime_error("Packet must have exactly 3 elements, but " + std::to_string(map.size()) + " found.");
+    }
+    map.ExpectKeyGetValue(HEADER, *reinterpret_cast<Type::BinaryHeader *>(&packet.header_));
+    map.ExpectKeyGetValue(PAYLOAD, packet.payload_);
+    map.ExpectKeyGetValue(STAMP, packet.stamp_);  // TODO: add support optional fields.
     /*
     serializer >> *reinterpret_cast<Packet::BinaryHeader *>(&packet.header_) >> packet.payload_;
     if (packet.header_.stamped)
