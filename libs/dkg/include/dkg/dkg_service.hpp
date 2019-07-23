@@ -248,46 +248,5 @@ private:
 
 }  // namespace dkg
 
-/*
-namespace serializers {
-template <typename D>
-struct ArraySerializer<dkg::DkgService::PrivateKey, D>
-{
-public:
-  using Type       = dkg::DkgService::PrivateKey;
-  using DriverType = D;
 
-  template <typename Constructor>
-  static void Serialize(Constructor &array_constructor, Type const &req)
-  {
-    if (req.success)
-    {
-      auto array = array_constructor(2);
-      array.Append(req.secret_share);
-      array.Append(req.shared_public_key);
-    }
-    else
-    {
-      array_constructor(0);
-    }
-  }
-
-  template <typename ArrayDeserializer>
-  static void Deserialize(ArrayDeserializer &array, Type &req)
-  {
-    if (array.size() == 2)
-    {
-      req.success = true;
-      array.GetNextValue(req.secret_share);
-      array.GetNextValue(req.shared_public_key);
-    }
-    else
-    {
-      req.success = false;
-    }
-  }
-};
-
-}  // namespace serializers
-*/
 }  // namespace fetch

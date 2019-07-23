@@ -67,9 +67,9 @@ class MapDeserializer
 public:
   enum
   {
-    CODE_FIXED = 0x80,
-    CODE16     = 0xde,
-    CODE32     = 0xdf
+    CODE_FIXED = TypeCodes::MAP_CODE_FIXED,
+    CODE16     = TypeCodes::MAP_CODE16,
+    CODE32     = TypeCodes::MAP_CODE32
   };
   MapDeserializer(MsgPackByteArrayBuffer &serializer)
     : serializer_{serializer}
@@ -90,11 +90,11 @@ public:
       serializer_.ReadBytes(reinterpret_cast<uint8_t *>(&size), sizeof(uint32_t));
       break;
     default:
-      if ((opcode & CODE_FIXED) != CODE_FIXED)
+      if ((opcode & TypeCodes::FIXED_MASK2) != CODE_FIXED)
       {
         throw SerializableException(std::string("incorrect size opcode for map size."));
       }
-      size = static_cast<uint32_t>(opcode & 15);
+      size = static_cast<uint32_t>(opcode &  TypeCodes::FIXED_VAL_MASK); 
     }
     size_ = static_cast<uint64_t>(size);
   }

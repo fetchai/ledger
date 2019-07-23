@@ -24,6 +24,7 @@
 #include "core/serializers/counter.hpp"
 #include "core/serializers/exception.hpp"
 #include "core/serializers/group_definitions.hpp"
+
 #include "vectorise/platform.hpp"
 
 #include <type_traits>
@@ -38,12 +39,6 @@ class MsgPackByteArrayBuffer
 public:
   using ByteArray         = byte_array::ByteArray;
   using size_counter_type = serializers::SizeCounter<MsgPackByteArrayBuffer>;
-
-  enum : uint8_t
-  {
-    SIGNED_INT8 = 0xd0
-    // TODO: add the rest and replace in code.
-  };
 
   MsgPackByteArrayBuffer()                              = default;
   MsgPackByteArrayBuffer(MsgPackByteArrayBuffer &&from) = default;

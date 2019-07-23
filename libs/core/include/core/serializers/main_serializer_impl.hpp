@@ -228,7 +228,7 @@ typename BinarySerializer<T, MsgPackByteArrayBuffer>::DriverType &MsgPackByteArr
                                                                   operator<<(T const &val)
 {
   using Serializer  = BinarySerializer<T, MsgPackByteArrayBuffer>;
-  using Constructor = interfaces::BinaryConstructorInterface<0xc4, 0xc5, 0xc6>;
+  using Constructor = interfaces::BinaryConstructorInterface< TypeCodes::BINARY_CODE_FIXED, TypeCodes::BINARY_CODE16, TypeCodes::BINARY_CODE32>;
 
   try
   {
@@ -267,7 +267,7 @@ typename ArraySerializer<T, MsgPackByteArrayBuffer>::DriverType &MsgPackByteArra
 {
   using Serializer = ArraySerializer<T, MsgPackByteArrayBuffer>;
   using Constructor =
-      interfaces::ContainerConstructorInterface<interfaces::ArrayInterface, 0x90, 0xdc, 0xdd>;
+      interfaces::ContainerConstructorInterface<interfaces::ArrayInterface, TypeCodes::ARRAY_CODE_FIXED, TypeCodes::ARRAY_CODE16, TypeCodes::ARRAY_CODE32>;
 
   try
   {
@@ -306,7 +306,7 @@ typename MapSerializer<T, MsgPackByteArrayBuffer>::DriverType &MsgPackByteArrayB
 {
   using Serializer = MapSerializer<T, MsgPackByteArrayBuffer>;
   using Constructor =
-      interfaces::ContainerConstructorInterface<interfaces::MapInterface, 0x80, 0xde, 0xdf>;
+      interfaces::ContainerConstructorInterface<interfaces::MapInterface, TypeCodes::MAP_CODE_FIXED, TypeCodes::MAP_CODE16, TypeCodes::MAP_CODE32>;
 
   try
   {

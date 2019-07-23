@@ -53,9 +53,10 @@ class ArrayDeserializer
 public:
   enum
   {
-    CODE_FIXED = 0x90,
-    CODE16     = 0xdc,
-    CODE32     = 0xdd
+    CODE_FIXED = TypeCodes::ARRAY_CODE_FIXED,
+    CODE16     = TypeCodes::ARRAY_CODE16,
+    CODE32     = TypeCodes::ARRAY_CODE32
+
   };
   ArrayDeserializer(MsgPackByteArrayBuffer &serializer)
     : serializer_{serializer}
@@ -76,13 +77,13 @@ public:
       serializer_.ReadBytes(reinterpret_cast<uint8_t *>(&size), sizeof(uint32_t));
       break;
     default:
-      if ((opcode & 0xF0) != CODE_FIXED)
+      if ((opcode & TypeCodes::FIXED_MASK2) != CODE_FIXED)
       {
         throw SerializableException(
             std::string("incorrect size opcode for array size: " + std::to_string(int(opcode)) +
                         " vs " + std::to_string(int(CODE_FIXED))));
       }
-      size = static_cast<uint32_t>(opcode & 0x0F);
+      size = static_cast<uint32_t>(opcode & TypeCodes::FIXED_VAL_MASK);
     }
     size_ = static_cast<uint64_t>(size);
   }

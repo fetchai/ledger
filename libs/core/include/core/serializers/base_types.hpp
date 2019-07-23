@@ -136,43 +136,43 @@ struct UnsignedIntegerSerializerImplementation
 };
 
 template <typename D>
-struct IntegerSerializer<int8_t, D> : public SignedIntegerSerializerImplementation<int8_t, D, 0xd0>
+struct IntegerSerializer<int8_t, D> : public SignedIntegerSerializerImplementation<int8_t, D, TypeCodes::INT8>
 {
 };
 template <typename D>
 struct IntegerSerializer<int16_t, D>
-  : public SignedIntegerSerializerImplementation<int16_t, D, 0xd1>
+  : public SignedIntegerSerializerImplementation<int16_t, D, TypeCodes::INT16>
 {
 };
 template <typename D>
 struct IntegerSerializer<int32_t, D>
-  : public SignedIntegerSerializerImplementation<int32_t, D, 0xd2>
+  : public SignedIntegerSerializerImplementation<int32_t, D, TypeCodes::INT32>
 {
 };
 template <typename D>
 struct IntegerSerializer<int64_t, D>
-  : public SignedIntegerSerializerImplementation<int64_t, D, 0xd4>
+  : public SignedIntegerSerializerImplementation<int64_t, D, TypeCodes::INT64>
 {
 };
 
 template <typename D>
 struct IntegerSerializer<uint8_t, D>
-  : public UnsignedIntegerSerializerImplementation<uint8_t, D, 0xcc>
+  : public UnsignedIntegerSerializerImplementation<uint8_t, D, TypeCodes::UINT8>
 {
 };
 template <typename D>
 struct IntegerSerializer<uint16_t, D>
-  : public UnsignedIntegerSerializerImplementation<uint16_t, D, 0xcd>
+  : public UnsignedIntegerSerializerImplementation<uint16_t, D, TypeCodes::UINT16>
 {
 };
 template <typename D>
 struct IntegerSerializer<uint32_t, D>
-  : public UnsignedIntegerSerializerImplementation<uint32_t, D, 0xce>
+  : public UnsignedIntegerSerializerImplementation<uint32_t, D, TypeCodes::UINT32>
 {
 };
 template <typename D>
 struct IntegerSerializer<uint64_t, D>
-  : public UnsignedIntegerSerializerImplementation<uint64_t, D, 0xcf>
+  : public UnsignedIntegerSerializerImplementation<uint64_t, D, TypeCodes::UINT64>
 {
 };
 
@@ -195,13 +195,13 @@ struct SpecialTypeSerializer
 };
 
 template <typename D>
-struct BooleanSerializer<std::true_type, D> : public SpecialTypeSerializer<std::true_type, D, 0xc3>
+struct BooleanSerializer<std::true_type, D> : public SpecialTypeSerializer<std::true_type, D, TypeCodes::BOOL_TRUE>
 {
 };
 
 template <typename D>
 struct BooleanSerializer<std::false_type, D>
-  : public SpecialTypeSerializer<std::false_type, D, 0xc2>
+  : public SpecialTypeSerializer<std::false_type, D, TypeCodes::BOOL_FALSE>
 {
 };
 
@@ -252,7 +252,7 @@ struct FloatSerializer<float, D>
   template <typename Interface>
   static void Serialize(Interface &interface, Type const &val)
   {
-    uint8_t opcode = static_cast<uint8_t>(0xca);
+    uint8_t opcode = static_cast<uint8_t>(TypeCodes::FLOAT);
     interface.Allocate(sizeof(opcode) + sizeof(val));
     interface.WriteBytes(&opcode, sizeof(opcode));
     interface.WriteBytes(reinterpret_cast<uint8_t const *>(&val), sizeof(val));
@@ -263,7 +263,7 @@ struct FloatSerializer<float, D>
   {
     uint8_t opcode;
     interface.ReadByte(opcode);
-    if (opcode != static_cast<uint8_t>(0xca))
+    if (opcode != static_cast<uint8_t>(TypeCodes::FLOAT))
     {
       throw SerializableException(
           std::string("expected float for deserialisation, but other type found."));
@@ -281,7 +281,7 @@ struct FloatSerializer<double, D>
   template <typename Interface>
   static void Serialize(Interface &interface, Type const &val)
   {
-    uint8_t opcode = static_cast<uint8_t>(0xcb);
+    uint8_t opcode = static_cast<uint8_t>(TypeCodes::DOUBLE);
     interface.Allocate(sizeof(opcode) + sizeof(val));
     interface.WriteBytes(&opcode, sizeof(opcode));
     interface.WriteBytes(reinterpret_cast<uint8_t const *>(&val), sizeof(val));
@@ -292,7 +292,7 @@ struct FloatSerializer<double, D>
   {
     uint8_t opcode;
     interface.ReadByte(opcode);
-    if (opcode != static_cast<uint8_t>(0xcb))
+    if (opcode != static_cast<uint8_t>(TypeCodes::DOUBLE))
     {
       throw SerializableException(
           std::string("expected double for deserialisation, but other type found."));
@@ -327,10 +327,10 @@ public:
   using DriverType = D;
   enum
   {
-    CODE_FIXED = 0xa0,
-    CODE8      = 0xd9,
-    CODE16     = 0xda,
-    CODE32     = 0xdb
+    CODE_FIXED = TypeCodes::STRING_CODE_FIXED,
+    CODE8      = TypeCodes::STRING_CODE8,
+    CODE16     = TypeCodes::STRING_CODE16,
+    CODE32     = TypeCodes::STRING_CODE32
   };
 
   template <typename Interface>
@@ -340,7 +340,7 @@ public:
     uint8_t opcode;
     if (val.size() < 32)
     {
-      opcode = static_cast<uint8_t>(CODE_FIXED | (val.size() & 0x1f));
+      opcode = static_cast<uint8_t>(CODE_FIXED | (val.size() & TypeCodes::FIXED_VAL_MASK2));
       interface.Allocate(sizeof(opcode) + val.size());
       interface.WriteBytes(&opcode, sizeof(opcode));
     }
@@ -406,13 +406,13 @@ public:
     case CODE32:
       interface.ReadBytes(reinterpret_cast<uint8_t *>(&size), sizeof(size));
       break;
-    default:  // Default CODE_FIXED
-      if ((opcode & 0xE0) != CODE_FIXED)
+    default: // Default CODE_FIXED
+      if ((opcode & TypeCodes::FIXED_MASK2) != CODE_FIXED)
       {
         // TODO: Change to serializable exception.
         throw std::runtime_error("expected CODE_FIXED in opcode: " + std::to_string(int(opcode)) + " vs " + std::to_string(int(CODE_FIXED)));
       }
-      size = static_cast<uint32_t>(opcode & 0x1f);
+      size = static_cast<uint32_t>(opcode & TypeCodes::FIXED_VAL_MASK2);
     }
     byte_array::ByteArray arr;
     interface.ReadByteArray(arr, size);
