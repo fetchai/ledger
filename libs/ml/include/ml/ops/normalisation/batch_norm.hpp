@@ -42,6 +42,12 @@ public:
   explicit BatchNorm() = default;
   ~BatchNorm() override = default;
 
+  /**
+   * Forward pass consists of calculating mean and standard deviation, mean-covariance shift normalising, and then
+   * linearly transforming with trainable parameters gamma and beta
+   * @param inputs
+   * @param output
+   */
   void Forward(VecTensorType const &inputs, ArrayType &output) override
   {
     // input tensor, gamma, beta
@@ -87,38 +93,19 @@ public:
   std::vector<ArrayType> Backward(VecTensorType const &inputs,
                                   ArrayType const &    error_signal) override
   {
-    assert(inputs.size() == 1);
-    assert(inputs.front().get().shape() == error_signal.shape());
-    DataType  zero{0};
-    DataType  one{1};
-    ArrayType ret{error_signal.shape()};
-    ArrayType t{inputs.front().get().shape()};
 
-    // gradient of leaky relu function is a where x<0; and 1.0 where x>=0
-    this->Forward(inputs, t);
+    SizeType  batch_dimension = inputs.at(0).get().shape().size() - 1;
 
-    auto it  = t.cbegin();
-    auto rit = ret.begin();
-    while (it.is_valid())
-    {
-      if (*it >= zero)
-      {
-        // f'(x)=1 for x>=0
-        *rit = one;
-      }
-      else
-      {
-        // f'(x)=a for x<0
-        *rit = a_;
-      }
-      ++it;
-      ++rit;
-    }
 
-    // multiply by error_signal (chain rule)
-    fetch::math::Multiply(error_signal, ret, ret);
+    ArrayType beta_err_signal({error_signal.shape(0), 1});
+    fetch::math::Multiply(inputs.at(0).get(), error_signal, beta_err_signal);
 
-    return {ret};
+    ArrayType beta_err_signal({error_signal.shape(0), 1});
+    fetch::math::ReduceSum(error_signal, batch_dimension, beta_err_signal);
+
+    return {error_signal, gamma_err_signal, beta_err_signal};
+
+
   }
 
   std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
