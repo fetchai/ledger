@@ -646,11 +646,16 @@ private:
   public:
     using Type = typename STensor::Type;
 
-    TensorSliceImplementation<STensor>(STensor &t, std::vector<std::vector<SizeType>> range,
-                                       std::vector<SizeType> axis)
+    TensorSliceImplementation<STensor>(STensor &t, std::vector<SizeVector> range, SizeVector axes)
       : tensor_{t}
       , range_{std::move(range)}
-      , axis_{std::move(axis)}
+      , axes_{std::move(axes)}
+    {}
+
+    TensorSliceImplementation<STensor>(STensor &t, std::vector<SizeVector> range, SizeType axis = 0)
+      : tensor_{t}
+      , range_{std::move(range)}
+      , axis_{axis}
     {}
 
     Tensor                 Copy() const;
@@ -663,7 +668,8 @@ private:
   protected:
     STensor &                          tensor_;
     std::vector<std::vector<SizeType>> range_;
-    std::vector<SizeType>              axis_;
+    std::vector<SizeType>              axes_;
+    SizeType                           axis_;
   };
 };
 
@@ -2131,7 +2137,7 @@ typename Tensor<T, C>::ConstSliceType Tensor<T, C>::Slice(SizeType i, SizeType a
     }
   }
 
-  return ConstSliceType(*this, range, {axis});
+  return ConstSliceType(*this, range, axis);
 }
 
 /**
@@ -2159,7 +2165,7 @@ typename Tensor<T, C>::TensorSlice Tensor<T, C>::Slice(SizeType i, SizeType axis
     }
   }
 
-  return TensorSlice(*this, range, {axis});
+  return TensorSlice(*this, range, axis);
 }
 
 ////////////////////////////////////////
@@ -2589,10 +2595,20 @@ typename Tensor<T, C>::SliceIteratorType Tensor<T, C>::TensorSlice::begin()
 {
   auto ret = SliceIteratorType(this->tensor_, this->range_);
 
-  // If there is only one axis and is 0, it's already at front
-  if ((this->axis_.size() != 1) || (this->axis_.at(0) != 0))
+  if (this->axes_.size() == 0)
   {
-    ret.MoveAxesToFront(this->axis_);
+    if (this->axis_ != 0)
+    {
+      ret.MoveAxisToFront(this->axis_);
+    }
+  }
+  else
+  {
+    // If there is only one axis and is 0, it's already at front
+    if ((this->axes_.size() != 1) || (this->axes_.at(0) != 0))
+    {
+      ret.MoveAxesToFront(this->axes_);
+    }
   }
 
   return ret;
@@ -2608,23 +2624,28 @@ template <typename T, typename C>
 typename Tensor<T, C>::TensorSlice Tensor<T, C>::TensorSlice::Slice(SizeType i, SizeType axis)
 {
   assert(axis < this->tensor_.shape().size());
-  assert(this->axis_.size() < this->tensor_.shape().size());
+  assert(this->axes_.size() < this->tensor_.shape().size());
   assert(i < this->tensor_.shape().at(axis));
-  for (SizeType i = 0; i < this->axis_.size(); i++)
+  for (SizeType i = 0; i < this->axes_.size(); i++)
   {
-    assert(this->axis_.at(i) != axis);
+    assert(this->axes_.at(i) != axis);
   }
 
   std::vector<std::vector<SizeType>> new_range(this->range_);
-  std::vector<SizeType>              new_axis(this->axis_);
+  std::vector<SizeType>              new_axes(this->axes_);
+
+  if (new_axes.size() == 0)
+  {
+    new_axes.push_back(this->axis_);
+  }
 
   new_range.at(axis).at(0) = i;
   new_range.at(axis).at(1) = i + 1;
   new_range.at(axis).at(2) = 1;
 
-  new_axis.push_back(axis);
+  new_axes.push_back(axis);
 
-  return TensorSlice(this->tensor_, new_range, new_axis);
+  return TensorSlice(this->tensor_, new_range, new_axes);
 }
 
 template <typename T, typename C>
@@ -2689,23 +2710,27 @@ typename Tensor<T, C>::ConstSliceType Tensor<T, C>::TensorSliceImplementation<ST
     SizeType i, SizeType axis) const
 {
   assert(axis < tensor_.shape().size());
-  assert(axis_.size() < tensor_.shape().size());
+  assert(axes_.size() < tensor_.shape().size());
   assert(i < tensor_.shape().at(axis));
-  for (SizeType i = 0; i < axis_.size(); i++)
+  for (SizeType i = 0; i < axes_.size(); i++)
   {
-    assert(axis_.at(i) != axis);
+    assert(axes_.at(i) != axis);
   }
 
   std::vector<std::vector<SizeType>> new_range(range_);
-  std::vector<SizeType>              new_axis(axis_);
+  std::vector<SizeType>              new_axes(axes_);
+  if (axes_.size() == 0)
+  {
+    new_axes.push_back(axis_);
+  }
 
   new_range.at(axis).at(0) = i;
   new_range.at(axis).at(1) = i + 1;
   new_range.at(axis).at(2) = 1;
 
-  new_axis.push_back(axis);
+  new_axes.push_back(axis);
 
-  return ConstSliceType(tensor_, new_range, new_axis);
+  return ConstSliceType(tensor_, new_range, new_axes);
 }
 
 template <typename T, typename C>
@@ -2715,10 +2740,22 @@ Tensor<T, C>::TensorSliceImplementation<STensor>::cbegin() const
 {
   auto ret = ConstSliceIteratorType(tensor_, range_);
 
-  // If there is only one axis and is 0, it's already at front
-  if ((this->axis_.size() != 1) || (this->axis_.at(0) != 0))
+  // axis_ is used when using only one axis
+  if (this->axes_.size() == 0)
   {
-    ret.MoveAxesToFront(this->axis_);
+    if (this->axis_ != 0)
+    {
+      ret.MoveAxisToFront(this->axis_);
+    }
+    // axes_ is used when using more than one axis
+  }
+  else
+  {
+    // If there is only one axis and is 0, it's already at front
+    if ((this->axes_.size() != 1) || (this->axes_.at(0) != 0))
+    {
+      ret.MoveAxesToFront(this->axes_);
+    }
   }
 
   return ret;

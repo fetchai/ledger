@@ -40,7 +40,7 @@ TYPED_TEST(TensorOperationsTest, inline_add_test)
   std::vector<int> t1Input({1, -2, 3, -4, 5, -6, 7, -8});
   std::vector<int> t2Input({-1, 2, 3, -5, -8, 13, -21, -34});
   std::vector<int> gtInput({0, 0, 6, -9, -3, 7, -14, -42});
-  SizeType    counter{0};
+  SizeType         counter{0};
   for (SizeType i(0); i < 2; ++i)
   {
     for (SizeType j(0); j < 4; ++j)
@@ -75,7 +75,7 @@ TYPED_TEST(TensorOperationsTest, inline_mul_test)
   std::vector<int> t1Input({1, -2, 3, -4, 5, -6, 7, -8});
   std::vector<int> t2Input({-1, 2, 3, -5, -8, 13, -11, -14});
   std::vector<int> gtInput({-1, -4, 9, 20, -40, -78, -77, 112});
-  SizeType    counter{0};
+  SizeType         counter{0};
   for (SizeType i(0); i < 2; ++i)
   {
     for (SizeType j(0); j < 4; ++j)
@@ -107,7 +107,7 @@ TYPED_TEST(TensorOperationsTest, sum_test)
 
   std::vector<int> t1Input({1, -2, 3, -4, 5, -6, 7, -8});
   std::vector<int> t2Input({-1, 2, 3, -5, -8, 13, -11, -14});
-  SizeType    counter{0};
+  SizeType         counter{0};
   for (SizeType i(0); i < 2; ++i)
   {
     for (SizeType j(0); j < 4; ++j)
@@ -127,7 +127,7 @@ TYPED_TEST(TensorOperationsTest, transpose_test)
   using SizeType = typename fetch::math::Tensor<TypeParam>::SizeType;
 
   fetch::math::Tensor<TypeParam> t1(std::vector<SizeType>({3, 5}));
-  SizeType                  counter{0};
+  SizeType                       counter{0};
   for (SizeType i(0); i < 3; ++i)
   {
     for (SizeType j(0); j < 5; ++j)
@@ -152,10 +152,10 @@ TYPED_TEST(TensorOperationsTest, transpose_test)
 
 TYPED_TEST(TensorOperationsTest, transpose_untranspose_test)
 {
-    using SizeType = typename fetch::math::Tensor<TypeParam>::SizeType;
+  using SizeType = typename fetch::math::Tensor<TypeParam>::SizeType;
 
   fetch::math::Tensor<TypeParam> t1(std::vector<SizeType>({3, 5}));
-  SizeType                  counter{0};
+  SizeType                       counter{0};
   for (SizeType i(0); i < 3; ++i)
   {
     for (SizeType j(0); j < 5; ++j)
@@ -186,10 +186,10 @@ TYPED_TEST(TensorOperationsTest, transpose_untranspose_test)
 
 TYPED_TEST(TensorOperationsTest, transpose_and_slice_test)
 {
-    using SizeType = typename fetch::math::Tensor<TypeParam>::SizeType;
+  using SizeType = typename fetch::math::Tensor<TypeParam>::SizeType;
 
   fetch::math::Tensor<TypeParam> t1(std::vector<SizeType>({3, 5}));
-  SizeType                  count = 0;
+  SizeType                       count = 0;
   for (SizeType i{0}; i < 3; ++i)
   {
     for (SizeType j{0}; j < 5; ++j)
@@ -211,10 +211,10 @@ TYPED_TEST(TensorOperationsTest, transpose_and_slice_test)
 
 TYPED_TEST(TensorOperationsTest, slice_and_transpose_test)
 {
-    using SizeType = typename fetch::math::Tensor<TypeParam>::SizeType;
+  using SizeType = typename fetch::math::Tensor<TypeParam>::SizeType;
 
   fetch::math::Tensor<TypeParam> t1(std::vector<SizeType>({3, 5, 2}));
-  SizeType                  count = 0;
+  SizeType                       count = 0;
   for (SizeType i{0}; i < 2; ++i)
   {
     for (SizeType j{0}; j < 3; ++j)
@@ -269,10 +269,10 @@ TYPED_TEST(TensorOperationsTest, slice_and_transpose_test)
 
 TYPED_TEST(TensorOperationsTest, multiple_slices_test)
 {
-    using SizeType = typename fetch::math::Tensor<TypeParam>::SizeType;
+  using SizeType = typename fetch::math::Tensor<TypeParam>::SizeType;
 
   fetch::math::Tensor<TypeParam> t1(std::vector<SizeType>({3, 5, 2}));
-  SizeType                  count = 0;
+  SizeType                       count = 0;
   for (SizeType i{0}; i < 2; ++i)
   {
     for (SizeType j{0}; j < 3; ++j)
@@ -295,10 +295,10 @@ TYPED_TEST(TensorOperationsTest, multiple_slices_test)
 
 TYPED_TEST(TensorOperationsTest, multiple_slices_separated_test)
 {
-    using SizeType = typename fetch::math::Tensor<TypeParam>::SizeType;
+  using SizeType = typename fetch::math::Tensor<TypeParam>::SizeType;
 
   fetch::math::Tensor<TypeParam> t1(std::vector<SizeType>({3, 5, 2}));
-  SizeType                  count = 0;
+  SizeType                       count = 0;
   for (SizeType i{0}; i < 2; ++i)
   {
     for (SizeType j{0}; j < 3; ++j)
@@ -343,10 +343,10 @@ TYPED_TEST(TensorOperationsTest, multiple_slices_separated_test)
 
 TYPED_TEST(TensorOperationsTest, multiple_const_slices_separated_test)
 {
-    using SizeType = typename fetch::math::Tensor<TypeParam>::SizeType;
+  using SizeType = typename fetch::math::Tensor<TypeParam>::SizeType;
 
   fetch::math::Tensor<TypeParam> t1(std::vector<SizeType>({3, 5, 2}));
-  SizeType                  count = 0;
+  SizeType                       count = 0;
   for (SizeType i{0}; i < 2; ++i)
   {
     for (SizeType j{0}; j < 3; ++j)
@@ -393,7 +393,7 @@ TYPED_TEST(TensorOperationsTest, multiple_const_slices_separated_test)
 
 TYPED_TEST(TensorOperationsTest, multiple_slices_assign_test)
 {
-    using SizeType = typename fetch::math::Tensor<TypeParam>::SizeType;
+  using SizeType = typename fetch::math::Tensor<TypeParam>::SizeType;
 
   fetch::math::Tensor<TypeParam> t1(std::vector<SizeType>({3, 5, 2}));
   fetch::math::Tensor<TypeParam> t2(std::vector<SizeType>({3, 2, 3}));
@@ -440,6 +440,63 @@ TYPED_TEST(TensorOperationsTest, multiple_slices_assign_test)
   EXPECT_EQ(t3.At(0, 0, 0), TypeParam(7));
   EXPECT_EQ(t3.At(1, 0, 0), TypeParam(9));
   EXPECT_EQ(t3.At(2, 0, 0), TypeParam(11));
+}
+
+TYPED_TEST(TensorOperationsTest, slices_same_tensor_test)
+{
+  using SizeType = typename fetch::math::Tensor<TypeParam>::SizeType;
+
+  fetch::math::Tensor<TypeParam> t1(std::vector<SizeType>({3, 5, 2}));
+
+  SizeType count = 0;
+  for (SizeType i{0}; i < 2; ++i)
+  {
+    for (SizeType j{0}; j < 3; ++j)
+    {
+      for (SizeType k{0}; k < 5; ++k)
+      {
+        t1.At(j, k, i) = static_cast<TypeParam>(count);
+        ++count;
+      }
+    }
+  }
+
+  // Create first and second slice
+  auto t1s = t1.Slice(1, 2).Slice(2, 1);
+  auto t2s = t1.Slice(1, 2).Slice(2, 0);
+
+  auto it = t1s.begin();
+
+  // Modify first slice
+  count = 0;
+  while (it.is_valid())
+  {
+    *it = static_cast<TypeParam>(count);
+    ++it;
+    count++;
+  }
+
+  fetch::math::Tensor<TypeParam> t1t = t1s.Copy();
+  fetch::math::Tensor<TypeParam> t2t = t2s.Copy();
+
+  EXPECT_EQ(t1t.shape(), std::vector<SizeType>({3, 1, 1}));
+  EXPECT_EQ(t2t.shape(), std::vector<SizeType>({1, 5, 1}));
+
+  // Test second slice
+  EXPECT_EQ(t2t.At(0, 0, 0), TypeParam(25));
+  EXPECT_EQ(t2t.At(0, 1, 0), TypeParam(26));
+  EXPECT_EQ(t2t.At(0, 2, 0), TypeParam(2));
+  EXPECT_EQ(t2t.At(0, 3, 0), TypeParam(28));
+  EXPECT_EQ(t2t.At(0, 4, 0), TypeParam(29));
+
+  // Test original tensor
+  EXPECT_EQ(t1.At(2, 0, 1), TypeParam(25));
+  EXPECT_EQ(t1.At(2, 1, 1), TypeParam(26));
+  EXPECT_EQ(t1.At(0, 2, 1), TypeParam(0));
+  EXPECT_EQ(t1.At(1, 2, 1), TypeParam(1));
+  EXPECT_EQ(t1.At(2, 2, 1), TypeParam(2));
+  EXPECT_EQ(t1.At(2, 3, 1), TypeParam(28));
+  EXPECT_EQ(t1.At(2, 4, 1), TypeParam(29));
 }
 
 // TODO (private 867) - reimplement shuffle & test

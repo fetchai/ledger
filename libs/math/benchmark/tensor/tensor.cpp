@@ -221,7 +221,7 @@ void BM_TensorSlice(benchmark::State &state)
 
   for (auto _ : state)
   {
-    benchmark::DoNotOptimize(t.Slice(1,1).begin());
+    benchmark::DoNotOptimize(t.Slice(1, 1).begin());
   }
 }
 
