@@ -47,33 +47,26 @@ public:
   using DataType      = typename TensorType::Type;
   using WeightsInit   = fetch::ml::ops::WeightsInitialisation;
 
-  BatchNorm(SizeVector data_shape, DataType epsilon = fetch::math::numeric_lowest<DataType>(),
+  BatchNorm(SizeType data_size, DataType epsilon = fetch::math::numeric_lowest<DataType>(),
             DataType    regularisation_rate = static_cast<DataType>(0),
             WeightsInit init_mode           = WeightsInit::XAVIER_GLOROT)
-    : data_shape_(data_shape)
+    : data_size_(data_size)
   {
-    data_shape.emplace_back(static_cast<SizeType>(1));
-    SizeType data_size = fetch::math::Product(data_shape);
-
     std::string input =
         this->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>(name + "_Input", {});
 
-    //    std::string gamma =
-    //        this->template AddNode<fetch::ml::ops::Weights<TensorType>>(name + "_Gamma", {});
-    //    TensorType gamma_data(data_shape);
-    //    fetch::ml::ops::Weights<TensorType>::Initialise(gamma_data, data_size, 1, init_mode);
-    //
-    //    std::string beta =
-    //        this->template AddNode<fetch::ml::ops::Weights<TensorType>>(name + "_Beta", {});
-    //    TensorType beta_data(data_shape);
-    //    fetch::ml::ops::Weights<TensorType>::Initialise(beta_data, data_size, 1, init_mode);
-    //
-    //    this->SetInput(gamma, gamma_data);
-    //    this->SetInput(beta, beta_data);
+    // instantiate gamma (the multiplicative training component)
+    std::string gamma = this->template AddNode<fetch::ml::ops::Weights<ArrayType>>(name + "_Gamma", {});
+    ArrayType gamma_data({data_size_, 1});
+    fetch::ml::ops::Weights<ArrayType>::Initialise(gamma_data, data_size_, init_mode);
 
-    std::string mean_normalise_output =
-        this->template AddNode<fetch::ml::ops::BatchNorm<TensorType>>(name + "_MeanNormalise",
-                                                                      {input});
+    // instantiate beta (the additive training component)
+    std::string beta = this->template AddNode<fetch::ml::ops::Weights<ArrayType>>(name + "_Beta", {});
+    ArrayType beta_data({data_size_, 1});
+    fetch::ml::ops::Weights<ArrayType>::Initialise(beta_data, data_size_, init_mode);
+
+
+    std::string output = this->template AddNode<fetch::ml::ops::BatchNorm<TensorType>>(name + "_BatchNorm", {input, gamma, beta});
 
     this->AddInputNode(input);
     this->SetOutputNode(output);
@@ -82,7 +75,7 @@ public:
   std::vector<SizeType> ComputeOutputShape(
       std::vector<std::reference_wrapper<TensorType const>> const &) const
   {
-    return {this->data_size_, 1};
+    return {inputs.at(0).get().shape()};
   }
 
   static constexpr char const *DESCRIPTOR = "BatchNorm";
@@ -90,10 +83,6 @@ public:
 private:
   SizeType data_size_;
 
-  void Initialise(TensorType &weights, WeightsInit init_mode)
-  {
-    fetch::ml::ops::Weights<TensorType>::Initialise(weights, in_size_, data_size_, init_mode);
-  }
 };
 
 }  // namespace layers

@@ -39,9 +39,7 @@ public:
   using SizeType      = typename ArrayType::SizeType;
   using VecTensorType = typename Ops<T>::VecTensorType;
 
-  explicit BatchNorm(DataType a = DataType(0.01))
-    : a_(a)
-  {}
+  explicit BatchNorm() = default;
   ~BatchNorm() override = default;
 
   void Forward(VecTensorType const &inputs, ArrayType &output) override
@@ -49,24 +47,38 @@ public:
     // input tensor, gamma, beta
     assert(inputs.size() == 3);
 
-    auto batch_dim = inputs.at(0).get().shape().size() - 1;
+    // TODO - different behaviour if IsTraining is false
 
+    // compute mean and standard deviations along batch dimension
+    auto batch_dim = inputs.at(0).get().shape().size() - 1;
     DataType mean;
     fetch::math::ReduceMean(inputs.at(0).get(), batch_dim, mean);
-
     DataType std_dev = fetch::math::statistics::StandardDeviation(inputs.at(0).get());
 
+    // forward batch normalise
     auto t_it = inputs.at(0).get().cbegin();
-
-    // mean covariance shift normalisation (plus epsilon to avoid / 0 )
     for (SizeType i = 0; i < ipnuts.at(0).get().shape(batch_dim); ++SizeType i)
     {
       auto t_it = inputs.at(0).get().View(i).cbegin();
       auto r_it = output.at(0).get().View(i).begin();
+
+      auto g_it = inputs.at(1).get().cbegin();
+      auto b_it = inputs.at(2).get().cbegin();
+
       while (t_it.is_valid)
       {
+        // mean covariance shift normalisation (plus epsilon to avoid / 0 )
         *r_it = ((*t_it) - mean) / (std_dev + fetch::math::numeric_lowest<DataType>());
+
+        // multiply by gamma trainable param
+        *r_it *= *g_it;
+
+        // plus beta trainable param
+        *r_it += *b_it;
+
         ++r_it;
+        ++g_it;
+        ++b_it;
         ++t_it;
       }
     }
@@ -115,9 +127,6 @@ public:
   }
 
   static constexpr char const *DESCRIPTOR = "BatchNorm";
-
-private:
-  DataType a_;
 };
 
 }  // namespace ops
