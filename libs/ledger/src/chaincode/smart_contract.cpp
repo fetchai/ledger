@@ -22,9 +22,9 @@
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
 #include "ledger/chain/transaction.hpp"
+#include "ledger/chaincode/contract.hpp"
 #include "ledger/chaincode/smart_contract.hpp"
 #include "ledger/chaincode/smart_contract_exception.hpp"
-#include "ledger/chaincode/vm_definition.hpp"
 #include "ledger/fetch_msgpack.hpp"
 #include "ledger/state_adapter.hpp"
 #include "ledger/storage_unit/cached_storage_adapter.hpp"
@@ -32,11 +32,19 @@
 #include "variant/variant_utils.hpp"
 #include "vm/address.hpp"
 #include "vm/function_decorators.hpp"
+#include "vm/module.hpp"
 #include "vm_modules/vm_factory.hpp"
 
 #include <algorithm>
+#include <cstddef>
+#include <cstdint>
+#include <exception>
+#include <memory>
 #include <stdexcept>
 #include <string>
+#include <unordered_set>
+#include <utility>
+#include <vector>
 
 using fetch::byte_array::ConstByteArray;
 using fetch::vm_modules::VMFactory;
@@ -393,7 +401,7 @@ void AddToParameterPack(vm::VM *vm, vm::ParameterPack &params, vm::TypeId expect
  * @param tx The input transaction
  * @return The corresponding status result for the operation
  */
-Contract::Status SmartContract::InvokeAction(std::string const &name, Transaction const &tx,
+Contract::Result SmartContract::InvokeAction(std::string const &name, Transaction const &tx,
                                              BlockIndex index)
 {
   // Important to keep the handle alive as long as the msgpack::object is needed to avoid segfault!
@@ -415,7 +423,7 @@ Contract::Status SmartContract::InvokeAction(std::string const &name, Transactio
     if (!p.next(h))
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Parse error");
-      return Status::FAILED;
+      return {Status::FAILED};
     }
 
     auto const &container = h.get();
@@ -424,7 +432,7 @@ Contract::Status SmartContract::InvokeAction(std::string const &name, Transactio
     {
       FETCH_LOG_WARN(LOGGING_NAME,
                      "Incorrect format, expected array of arguments. Input: ", parameter_data);
-      return Status::FAILED;
+      return {Status::FAILED};
     }
 
     // access the elements of the array
@@ -443,7 +451,7 @@ Contract::Status SmartContract::InvokeAction(std::string const &name, Transactio
     FETCH_LOG_WARN(LOGGING_NAME,
                    "Incorrect number of parameters provided for target function. Received: ",
                    input_params.size(), " Expected: ", target_function->num_parameters);
-    return Status::FAILED;
+    return {Status::FAILED};
   }
 
   vm::ParameterPack params{vm->registered_types()};
@@ -462,7 +470,7 @@ Contract::Status SmartContract::InvokeAction(std::string const &name, Transactio
   catch (std::exception const &)
   {
     // this can happen for a number of reasons
-    return Status::FAILED;
+    return {Status::FAILED};
   }
 
   ValidateAddressesInParams(tx, params);
@@ -473,16 +481,23 @@ Contract::Status SmartContract::InvokeAction(std::string const &name, Transactio
   std::string        error;
   std::stringstream  console;
   fetch::vm::Variant output;
+  auto               status{Status::OK};
 
   vm->AttachOutputDevice(vm::VM::STDOUT, console);
 
   if (!vm->Execute(*executable_, name, error, output, params))
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Runtime error: ", error);
-    return Status::FAILED;
+    status = Status::FAILED;
   }
 
-  return Status::OK;
+  using ResponseType = int64_t;
+  Result result{status};
+  if (output.type_id == vm::TypeIds::Int64)
+  {
+    result.return_value = output.Get<ResponseType>();
+  }
+  return result;
 }
 
 /**
@@ -491,7 +506,7 @@ Contract::Status SmartContract::InvokeAction(std::string const &name, Transactio
  * @param owner The owner identity of the contract (i.e. the creator of the contract)
  * @return The corresponding status result for the operation
  */
-Contract::Status SmartContract::InvokeInit(Address const &owner)
+Contract::Result SmartContract::InvokeInit(Address const &owner)
 {
   // Get clean VM instance
   auto vm = std::make_unique<vm::VM>(module_.get());
@@ -521,16 +536,23 @@ Contract::Status SmartContract::InvokeInit(Address const &owner)
   std::string        error;
   std::stringstream  console;
   fetch::vm::Variant output;
+  auto               status{Status::OK};
 
   vm->AttachOutputDevice(vm::VM::STDOUT, console);
 
   if (!vm->Execute(*executable_, init_fn_name_, error, output, params))
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Runtime error: ", error);
-    return Status::FAILED;
+    status = Status::FAILED;
   }
 
-  return Status::OK;
+  using ResponseType = int64_t;
+  int64_t return_value{-1};
+  if (output.type_id == vm::TypeIds::Int64)
+  {
+    return_value = output.Get<ResponseType>();
+  }
+  return {status, return_value};
 }
 
 /**
@@ -538,7 +560,6 @@ Contract::Status SmartContract::InvokeInit(Address const &owner)
  *
  * @param name The name of the query
  * @param request The query request
- * @param response The query response
  * @return The corresponding status result for the operation
  */
 SmartContract::Status SmartContract::InvokeQuery(std::string const &name, Query const &request,
@@ -570,6 +591,7 @@ SmartContract::Status SmartContract::InvokeQuery(std::string const &name, Query 
       if (!request.Has(parameter.name))
       {
         FETCH_LOG_WARN(LOGGING_NAME, "Unable to lookup variable: ", parameter.name);
+        response           = Query::Object();
         response["status"] = "failed";
         response["msg"] = "Unable to lookup variable: " + static_cast<std::string>(parameter.name);
         response["console"] = "";
@@ -584,6 +606,7 @@ SmartContract::Status SmartContract::InvokeQuery(std::string const &name, Query 
   catch (std::exception const &ex)
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Query failed during parameter packing: ", ex.what());
+    response            = Query::Object();
     response["status"]  = "failed";
     response["msg"]     = ex.what();
     response["console"] = "";

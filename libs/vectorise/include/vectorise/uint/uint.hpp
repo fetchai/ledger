@@ -201,8 +201,8 @@ public:
   template <typename T>
   constexpr meta::IfIsUnsignedInteger<T, UInt> &operator^=(T n);
 
-  constexpr UInt &operator<<=(std::size_t const &n);
-  constexpr UInt &operator>>=(std::size_t const &n);
+  constexpr UInt &operator<<=(std::size_t n);
+  constexpr UInt &operator>>=(std::size_t n);
 
   constexpr std::size_t msb() const;
   constexpr std::size_t lsb() const;
@@ -904,7 +904,7 @@ constexpr meta::IfIsUnsignedInteger<T, UInt<S>> &UInt<S>::operator^=(T n)
 }
 
 template <uint16_t S>
-constexpr UInt<S> &UInt<S>::operator<<=(std::size_t const &bits)
+constexpr UInt<S> &UInt<S>::operator<<=(std::size_t bits)
 {
   std::size_t full_words = bits / (sizeof(uint64_t) * 8);
   std::size_t real_bits  = bits - full_words * sizeof(uint64_t) * 8;
@@ -937,7 +937,7 @@ constexpr UInt<S> &UInt<S>::operator<<=(std::size_t const &bits)
 }
 
 template <uint16_t S>
-constexpr UInt<S> &UInt<S>::operator>>=(std::size_t const &bits)
+constexpr UInt<S> &UInt<S>::operator>>=(std::size_t bits)
 {
   std::size_t full_words = bits / (sizeof(uint64_t) * 8);
   std::size_t real_bits  = bits - full_words * sizeof(uint64_t) * 8;

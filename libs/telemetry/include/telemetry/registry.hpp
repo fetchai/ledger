@@ -19,6 +19,7 @@
 
 #include "telemetry/telemetry.hpp"
 
+#include <initializer_list>
 #include <memory>
 #include <mutex>
 #include <string>

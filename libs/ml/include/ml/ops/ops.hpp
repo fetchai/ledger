@@ -19,6 +19,8 @@
 
 #include "core/assert.hpp"
 #include "math/tensor.hpp"
+
+#include <functional>
 #include <memory>
 #include <vector>
 
