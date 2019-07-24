@@ -16,9 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
+#include "math/base_types.hpp"
 #include "math/tensor.hpp"
 #include "ml/ops/max_pool_1d.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
+#include "vectorise/fixed_point/serializers.hpp"
 
 #include "gtest/gtest.h"
 
@@ -237,4 +239,73 @@ TYPED_TEST(MaxPool1DTest, forward_test_2_4_2)
 
   // test correct values
   ASSERT_TRUE(prediction.AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
+}
+
+TYPED_TEST(MaxPool1DTest, saveparams_test)
+{
+  using ArrayType     = TypeParam;
+  using DataType      = typename TypeParam::Type;
+  using VecTensorType = typename fetch::ml::Ops<ArrayType>::VecTensorType;
+  using SPType        = typename fetch::ml::ops::MaxPool1D<ArrayType>::SPType;
+  using OpType        = typename fetch::ml::ops::MaxPool1D<ArrayType>;
+  using SizeType      = typename TypeParam::SizeType;
+
+  ArrayType           data({2, 5, 2});
+  ArrayType           gt({2, 2, 2});
+  std::vector<double> data_input({1, -2, 3, -4, 5, -6, 7, -8, 9, -10});
+  std::vector<double> gt_input({3, 5, 9, 9});
+
+  for (SizeType i_b{0}; i_b < 2; i_b++)
+  {
+    for (SizeType i{0}; i < 2; ++i)
+    {
+      for (SizeType j{0}; j < 5; ++j)
+      {
+        data(i, j, i_b) =
+            static_cast<DataType>(data_input[i * 5 + j]) + static_cast<DataType>(i_b * 10);
+      }
+    }
+
+    for (SizeType i{0}; i < 2; ++i)
+    {
+      for (SizeType j{0}; j < 2; ++j)
+      {
+        gt(i, j, i_b) =
+            static_cast<DataType>(gt_input[i * 2 + j]) + static_cast<DataType>(i_b * 10);
+      }
+    }
+  }
+
+  OpType op(4, 1);
+
+  ArrayType     prediction(op.ComputeOutputShape({data}));
+  VecTensorType vec_data({data});
+
+  op.Forward(vec_data, prediction);
+
+  // extract saveparams
+  std::shared_ptr<fetch::ml::SaveableParams> sp = op.GetOpSaveableParams();
+
+  // downcast to correct type
+  auto dsp = std::dynamic_pointer_cast<SPType>(sp);
+
+  // serialize
+  fetch::serializers::ByteArrayBuffer b;
+  b << *dsp;
+
+  // deserialize
+  b.seek(0);
+  auto dsp2 = std::make_shared<SPType>();
+  b >> *dsp2;
+
+  // rebuild node
+  OpType new_op(*dsp2);
+
+  // check that new predictions match the old
+  ArrayType new_prediction(op.ComputeOutputShape({data}));
+  new_op.Forward(vec_data, new_prediction);
+
+  // test correct values
+  EXPECT_TRUE(new_prediction.AllClose(prediction, fetch::math::function_tolerance<DataType>(),
+                                      fetch::math::function_tolerance<DataType>()));
 }

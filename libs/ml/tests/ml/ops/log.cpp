@@ -18,8 +18,10 @@
 
 #include "ml/ops/log.hpp"
 
+#include "math/base_types.hpp"
 #include "math/tensor.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
+#include "vectorise/fixed_point/serializers.hpp"
 
 #include "gtest/gtest.h"
 
@@ -128,4 +130,51 @@ TYPED_TEST(LogBothTest, backward_test)
 
   ASSERT_TRUE(prediction.at(0).AllClose(gt, fetch::math::function_tolerance<DataType>(),
                                         fetch::math::function_tolerance<DataType>()));
+}
+
+TYPED_TEST(LogBothTest, saveparams_test)
+{
+  using ArrayType     = TypeParam;
+  using DataType      = typename TypeParam::Type;
+  using VecTensorType = typename fetch::ml::Ops<ArrayType>::VecTensorType;
+  using SPType        = typename fetch::ml::ops::Log<ArrayType>::SPType;
+  using OpType        = typename fetch::ml::ops::Log<ArrayType>;
+
+  ArrayType data = ArrayType::FromString("1, 2, 4, 8, 100, 1000");
+  ArrayType gt   = ArrayType::FromString(
+      "0, 0.693147180559945, 1.38629436111989, 2.07944154167984, 4.60517018598809, "
+      "6.90775527898214");
+
+  OpType op;
+
+  ArrayType     prediction(op.ComputeOutputShape({data}));
+  VecTensorType vec_data({data});
+
+  op.Forward(vec_data, prediction);
+
+  // extract saveparams
+  std::shared_ptr<fetch::ml::SaveableParams> sp = op.GetOpSaveableParams();
+
+  // downcast to correct type
+  auto dsp = std::dynamic_pointer_cast<SPType>(sp);
+
+  // serialize
+  fetch::serializers::ByteArrayBuffer b;
+  b << *dsp;
+
+  // deserialize
+  b.seek(0);
+  auto dsp2 = std::make_shared<SPType>();
+  b >> *dsp2;
+
+  // rebuild node
+  OpType new_op(*dsp2);
+
+  // check that new predictions match the old
+  ArrayType new_prediction(op.ComputeOutputShape({data}));
+  new_op.Forward(vec_data, new_prediction);
+
+  // test correct values
+  EXPECT_TRUE(new_prediction.AllClose(prediction, fetch::math::function_tolerance<DataType>(),
+                                      fetch::math::function_tolerance<DataType>()));
 }

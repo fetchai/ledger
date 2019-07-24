@@ -16,9 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
+#include "math/base_types.hpp"
 #include "math/tensor.hpp"
 #include "ml/ops/max_pool_2d.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
+#include "vectorise/fixed_point/serializers.hpp"
 
 #include "gtest/gtest.h"
 
@@ -225,4 +227,83 @@ TYPED_TEST(MaxPool2DTest, backward_2_channels_test)
 
   // test correct values
   ASSERT_TRUE(prediction[0].AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
+}
+
+TYPED_TEST(MaxPool2DTest, saveparams_test)
+{
+  using ArrayType     = TypeParam;
+  using DataType      = typename TypeParam::Type;
+  using VecTensorType = typename fetch::ml::Ops<ArrayType>::VecTensorType;
+  using SPType        = typename fetch::ml::ops::MaxPool2D<ArrayType>::SPType;
+  using OpType        = typename fetch::ml::ops::MaxPool2D<ArrayType>;
+  using SizeType      = typename TypeParam::SizeType;
+
+  SizeType const channels_size = 2;
+  SizeType const input_width   = 10;
+  SizeType const input_height  = 5;
+
+  SizeType const output_width  = 4;
+  SizeType const output_height = 2;
+
+  SizeType const batch_size = 2;
+
+  ArrayType           data({channels_size, input_width, input_height, batch_size});
+  ArrayType           gt({channels_size, output_width, output_height, batch_size});
+  std::vector<double> gt_input({4, 8, 12, 16, 8, 16, 24, 32, 8, 16, 24, 32, 16, 32, 48, 64});
+
+  for (SizeType c{0}; c < channels_size; ++c)
+  {
+    for (SizeType i{0}; i < input_width; ++i)
+    {
+      for (SizeType j{0}; j < input_height; ++j)
+      {
+        data(c, i, j, 0) = static_cast<DataType>((c + 1) * i * j);
+      }
+    }
+  }
+
+  for (SizeType c{0}; c < channels_size; ++c)
+  {
+    for (SizeType i{0}; i < output_width; ++i)
+    {
+      for (SizeType j{0}; j < output_height; ++j)
+      {
+        gt(c, i, j, 0) = static_cast<DataType>(
+            gt_input[c * output_width * output_height + (i + j * output_width)]);
+      }
+    }
+  }
+
+  OpType op(3, 2);
+
+  ArrayType     prediction(op.ComputeOutputShape({data}));
+  VecTensorType vec_data({data});
+
+  op.Forward(vec_data, prediction);
+
+  // extract saveparams
+  std::shared_ptr<fetch::ml::SaveableParams> sp = op.GetOpSaveableParams();
+
+  // downcast to correct type
+  auto dsp = std::dynamic_pointer_cast<SPType>(sp);
+
+  // serialize
+  fetch::serializers::ByteArrayBuffer b;
+  b << *dsp;
+
+  // deserialize
+  b.seek(0);
+  auto dsp2 = std::make_shared<SPType>();
+  b >> *dsp2;
+
+  // rebuild node
+  OpType new_op(*dsp2);
+
+  // check that new predictions match the old
+  ArrayType new_prediction(op.ComputeOutputShape({data}));
+  new_op.Forward(vec_data, new_prediction);
+
+  // test correct values
+  EXPECT_TRUE(new_prediction.AllClose(prediction, fetch::math::function_tolerance<DataType>(),
+                                      fetch::math::function_tolerance<DataType>()));
 }

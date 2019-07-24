@@ -16,9 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
+#include "math/base_types.hpp"
 #include "math/tensor.hpp"
 #include "ml/ops/matrix_multiply.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
+#include "vectorise/fixed_point/serializers.hpp"
 
 #include "gtest/gtest.h"
 
@@ -111,4 +113,51 @@ TYPED_TEST(MatrixMultiplyTest, backward_batch_test)
   // test correct values
   EXPECT_TRUE(backpropagated_signals[0].AllClose(gradient_a));
   EXPECT_TRUE(backpropagated_signals[1].AllClose(gradient_b));
+}
+
+TYPED_TEST(MatrixMultiplyTest, saveparams_test)
+{
+  using ArrayType     = TypeParam;
+  using DataType      = typename TypeParam::Type;
+  using VecTensorType = typename fetch::ml::Ops<ArrayType>::VecTensorType;
+  using SPType        = typename fetch::ml::ops::MatrixMultiply<ArrayType>::SPType;
+  using OpType        = typename fetch::ml::ops::MatrixMultiply<ArrayType>;
+
+  TypeParam data_1 = TypeParam::FromString("1, 2, -3, 4, 5");
+  TypeParam data_2 = TypeParam::FromString(
+      "-11, 12, 13, 14; 21, 22, 23, 24; 31, 32, 33, 34; 41, 42, 43, 44; 51, 52, 53, 54");
+  TypeParam gt = TypeParam::FromString("357, 388, 397, 406");
+
+  OpType op;
+
+  ArrayType     prediction(op.ComputeOutputShape({data_1, data_2}));
+  VecTensorType vec_data({data_1, data_2});
+
+  op.Forward(vec_data, prediction);
+
+  // extract saveparams
+  std::shared_ptr<fetch::ml::SaveableParams> sp = op.GetOpSaveableParams();
+
+  // downcast to correct type
+  auto dsp = std::dynamic_pointer_cast<SPType>(sp);
+
+  // serialize
+  fetch::serializers::ByteArrayBuffer b;
+  b << *dsp;
+
+  // deserialize
+  b.seek(0);
+  auto dsp2 = std::make_shared<SPType>();
+  b >> *dsp2;
+
+  // rebuild node
+  OpType new_op(*dsp2);
+
+  // check that new predictions match the old
+  ArrayType new_prediction(op.ComputeOutputShape({data_1, data_2}));
+  new_op.Forward(vec_data, new_prediction);
+
+  // test correct values
+  EXPECT_TRUE(new_prediction.AllClose(prediction, fetch::math::function_tolerance<DataType>(),
+                                      fetch::math::function_tolerance<DataType>()));
 }

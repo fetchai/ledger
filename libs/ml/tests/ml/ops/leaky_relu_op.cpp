@@ -16,9 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
+#include "math/base_types.hpp"
 #include "math/tensor.hpp"
 #include "ml/ops/leaky_relu_op.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
+#include "vectorise/fixed_point/serializers.hpp"
 
 #include "gtest/gtest.h"
 
@@ -36,19 +38,15 @@ TYPED_TEST(LeakyReluOpTest, forward_test)
 {
   using ArrayType = TypeParam;
 
-  ArrayType data = ArrayType::FromString(R"(
-  	 1, -2, 3,-4, 5,-6, 7,-8;
-    -1,  2,-3, 4,-5, 6,-7, 8)")
-                       .Transpose();
+  ArrayType data =
+      ArrayType::FromString("1, -2, 3,-4, 5,-6, 7,-8; -1,  2,-3, 4,-5, 6,-7, 8").Transpose();
 
-  ArrayType gt = ArrayType::FromString(R"(
-  	   1,-0.4,   3,-1.6,   5,-3.6,   7,-6.4;
-    -0.1,   2,-0.9,   4,-2.5,   6,-4.9,   8)")
-                     .Transpose();
+  ArrayType gt =
+      ArrayType::FromString(
+          "1,-0.4,   3,-1.6,   5,-3.6,   7,-6.4; -0.1,   2,-0.9,   4,-2.5,   6,-4.9,   8")
+          .Transpose();
 
-  ArrayType alpha = ArrayType::FromString(R"(
-    0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8)")
-                        .Transpose();
+  ArrayType alpha = ArrayType::FromString("0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8").Transpose();
 
   fetch::ml::ops::LeakyReluOp<ArrayType> op;
 
@@ -89,4 +87,56 @@ TYPED_TEST(LeakyReluOpTest, backward_test)
 
   // test correct values
   ASSERT_TRUE(prediction[0].AllClose(gt, DataType(1e-5), DataType(1e-5)));
+}
+
+TYPED_TEST(LeakyReluOpTest, saveparams_test)
+{
+  using ArrayType     = TypeParam;
+  using DataType      = typename TypeParam::Type;
+  using VecTensorType = typename fetch::ml::Ops<ArrayType>::VecTensorType;
+  using SPType        = typename fetch::ml::ops::LeakyReluOp<ArrayType>::SPType;
+  using OpType        = typename fetch::ml::ops::LeakyReluOp<ArrayType>;
+
+  ArrayType data =
+      ArrayType::FromString("1, -2, 3,-4, 5,-6, 7,-8; -1,  2,-3, 4,-5, 6,-7, 8").Transpose();
+
+  ArrayType gt =
+      ArrayType::FromString(
+          "1,-0.4,   3,-1.6,   5,-3.6,   7,-6.4; -0.1,   2,-0.9,   4,-2.5,   6,-4.9,   8")
+          .Transpose();
+
+  ArrayType alpha = ArrayType::FromString("0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8").Transpose();
+
+  OpType op;
+
+  ArrayType     prediction(op.ComputeOutputShape({data, alpha}));
+  VecTensorType vec_data({data, alpha});
+
+  op.Forward(vec_data, prediction);
+
+  // extract saveparams
+  std::shared_ptr<fetch::ml::SaveableParams> sp = op.GetOpSaveableParams();
+
+  // downcast to correct type
+  auto dsp = std::dynamic_pointer_cast<SPType>(sp);
+
+  // serialize
+  fetch::serializers::ByteArrayBuffer b;
+  b << *dsp;
+
+  // deserialize
+  b.seek(0);
+  auto dsp2 = std::make_shared<SPType>();
+  b >> *dsp2;
+
+  // rebuild node
+  OpType new_op(*dsp2);
+
+  // check that new predictions match the old
+  ArrayType new_prediction(op.ComputeOutputShape({data, alpha}));
+  new_op.Forward(vec_data, new_prediction);
+
+  // test correct values
+  EXPECT_TRUE(new_prediction.AllClose(prediction, fetch::math::function_tolerance<DataType>(),
+                                      fetch::math::function_tolerance<DataType>()));
 }

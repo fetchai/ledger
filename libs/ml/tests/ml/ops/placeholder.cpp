@@ -16,70 +16,107 @@
 //
 //------------------------------------------------------------------------------
 
+#include "math/base_types.hpp"
 #include "math/tensor.hpp"
 #include "ml/ops/placeholder.hpp"
+#include "vectorise/fixed_point/serializers.hpp"
 
 #include "gtest/gtest.h"
 
-TEST(placeholder_test, setData)
+template <typename T>
+class PlaceholderTest : public ::testing::Test
 {
-  fetch::math::Tensor<int> data(8);
-  fetch::math::Tensor<int> gt(8);
-  std::uint64_t            i(0);
-  for (int e : {1, 2, 3, 4, 5, 6, 7, 8})
-  {
-    data.Set(i, e);
-    gt.Set(i, e);
-    i++;
-  }
-  fetch::ml::ops::PlaceHolder<fetch::math::Tensor<int>> op;
+};
+
+using MyTypes = ::testing::Types<fetch::math::Tensor<int>, fetch::math::Tensor<float>,
+                                 fetch::math::Tensor<double>,
+                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<16, 16>>,
+                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
+
+TYPED_TEST_CASE(PlaceholderTest, MyTypes);
+
+TYPED_TEST(PlaceholderTest, setData)
+{
+  TypeParam data = TypeParam::FromString("1, 2, 3, 4, 5, 6, 7, 8");
+  TypeParam gt   = TypeParam::FromString("1, 2, 3, 4, 5, 6, 7, 8");
+
+  fetch::ml::ops::PlaceHolder<TypeParam> op;
   op.SetData(data);
 
-  fetch::math::Tensor<int> prediction(op.ComputeOutputShape({}));
+  TypeParam prediction(op.ComputeOutputShape({}));
   op.Forward({}, prediction);
 
   // test correct values
   ASSERT_TRUE(prediction.AllClose(gt));
 }
 
-TEST(placeholder_test, resetData)
+TYPED_TEST(PlaceholderTest, resetData)
 {
-  fetch::math::Tensor<int> data(8);
-  fetch::math::Tensor<int> gt(8);
-  {
-    std::uint64_t i(0);
-    for (int e : {1, 2, 3, 4, 5, 6, 7, 8})
-    {
-      data.Set(i, e);
-      gt.Set(i, e);
-      i++;
-    }
-  }
-  fetch::ml::ops::PlaceHolder<fetch::math::Tensor<int>> op;
+  TypeParam data = TypeParam::FromString("1, 2, 3, 4, 5, 6, 7, 8");
+  TypeParam gt   = TypeParam::FromString("1, 2, 3, 4, 5, 6, 7, 8");
+
+  fetch::ml::ops::PlaceHolder<TypeParam> op;
   op.SetData(data);
 
-  fetch::math::Tensor<int> prediction(op.ComputeOutputShape({}));
+  TypeParam prediction(op.ComputeOutputShape({}));
   op.Forward({}, prediction);
 
   // test correct values
   ASSERT_TRUE(prediction.AllClose(gt));
 
   // reset
-  {
-    std::uint64_t i(0);
-    for (int e : {12, 13, -14, 15, 16, -17, 18, 19})
-    {
-      data.Set(i, e);
-      gt.Set(i, e);
-      i++;
-    }
-  }
+  data = TypeParam::FromString("12, 13, -14, 15, 16, -17, 18, 19");
+  gt   = TypeParam::FromString("12, 13, -14, 15, 16, -17, 18, 19");
 
   op.SetData(data);
 
-  prediction = fetch::math::Tensor<int>(op.ComputeOutputShape({}));
+  prediction = TypeParam(op.ComputeOutputShape({}));
   op.Forward({}, prediction);
 
   // test correct values
   ASSERT_TRUE(prediction.AllClose(gt));
+}
+
+TYPED_TEST(PlaceholderTest, saveparams_test)
+{
+  using ArrayType = TypeParam;
+  using DataType  = typename TypeParam::Type;
+  using SPType    = typename fetch::ml::ops::PlaceHolder<ArrayType>::SPType;
+  using OpType    = typename fetch::ml::ops::PlaceHolder<ArrayType>;
+
+  ArrayType data = ArrayType::FromString("1, -2, 3, -4, 5, -6, 7, -8");
+  ArrayType gt   = ArrayType::FromString("1, -2, 3, -4, 5, -6, 7, -8");
+
+  OpType op;
+  op.SetData(data);
+
+  ArrayType prediction(op.ComputeOutputShape({data}));
+
+  op.Forward({}, prediction);
+
+  // extract saveparams
+  std::shared_ptr<fetch::ml::SaveableParams> sp = op.GetOpSaveableParams();
+
+  // downcast to correct type
+  auto dsp = std::dynamic_pointer_cast<SPType>(sp);
+
+  // serialize
+  fetch::serializers::ByteArrayBuffer b;
+  b << *dsp;
+
+  // deserialize
+  b.seek(0);
+  auto dsp2 = std::make_shared<SPType>();
+  b >> *dsp2;
+
+  // rebuild node
+  OpType new_op(*dsp2);
+
+  // check that new predictions match the old
+  ArrayType new_prediction(op.ComputeOutputShape({data}));
+  new_op.Forward({}, new_prediction);
+
+  // test correct values
+  EXPECT_TRUE(new_prediction.AllClose(prediction, fetch::math::function_tolerance<DataType>(),
+                                      fetch::math::function_tolerance<DataType>()));
 }
