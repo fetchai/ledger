@@ -9,19 +9,20 @@ project(fetch)
 # ------------------------------------------------------------------------------
 
 # cmake-format: off
-option(FETCH_ENABLE_TESTS           "Enable test targets"               ON)
-option(FETCH_ENABLE_BENCHMARKS      "Enable benchmarking targets"       ON)
-option(FETCH_ENABLE_EXAMPLES        "Enable example targets"            ON)
-option(FETCH_ENABLE_BENCHMARKS      "Enable benchmark targets"          ON)
-option(FETCH_ENABLE_PYTHON_BINDINGS "Build Python examples"             ON)
-option(FETCH_ENABLE_CCACHE          "Speed build times with ccache"     ON)
-option(FETCH_WARNINGS_AS_ERRORS     "Enable warnings as errors"         ON)
-option(FETCH_VERBOSE_CMAKE          "Enable verbose cmake output"       OFF)
-option(FETCH_ENABLE_CLANG_TIDY      "Enable clang tidy checking"        OFF)
-option(FETCH_ENABLE_COVERAGE        "Enable coverage generation"        OFF)
-option(FETCH_ENABLE_METRICS         "Enable the collection of metrics"  OFF)
-option(FETCH_DISABLE_COLOUR_LOG     "Disable the colour logging"        OFF)
-option(FETCH_STATIC_LINK            "Enable static linking"             OFF)
+option(FETCH_ENABLE_TESTS               "Enable test targets"                   ON)
+option(FETCH_ENABLE_BENCHMARKS          "Enable benchmarking targets"           ON)
+option(FETCH_ENABLE_EXAMPLES            "Enable example targets"                ON)
+option(FETCH_ENABLE_BENCHMARKS          "Enable benchmark targets"              ON)
+option(FETCH_ENABLE_PYTHON_BINDINGS     "Build Python examples"                 ON)
+option(FETCH_ENABLE_CCACHE              "Speed build times with ccache"         ON)
+option(FETCH_WARNINGS_AS_ERRORS         "Enable warnings as errors"             ON)
+option(FETCH_ENABLED_DEADLOCK_DETECTION "Enable deadlock detection on mutexes"  OFF)
+option(FETCH_VERBOSE_CMAKE              "Enable verbose cmake output"           OFF)
+option(FETCH_ENABLE_CLANG_TIDY          "Enable clang tidy checking"            OFF)
+option(FETCH_ENABLE_COVERAGE            "Enable coverage generation"            OFF)
+option(FETCH_ENABLE_METRICS             "Enable the collection of metrics"      OFF)
+option(FETCH_DISABLE_COLOUR_LOG         "Disable the colour logging"            OFF)
+option(FETCH_STATIC_LINK                "Enable static linking"                 OFF)
 # cmake-format: on
 
 # custom string options
