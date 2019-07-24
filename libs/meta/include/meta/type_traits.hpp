@@ -36,12 +36,6 @@ struct BaseFixedpointType;
 
 namespace meta {
 
-template <typename T, typename...>
-struct First
-{
-  using type = T;
-};
-
 template <typename... T>
 struct Is
 {
