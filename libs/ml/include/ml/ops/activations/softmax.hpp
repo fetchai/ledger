@@ -76,7 +76,8 @@ public:
       ArrayType sum = return_signal.Slice(0, 1 - axis_).Copy();
       for (size_t i = 0; i < return_signal.shape()[2]; i++)
       {
-        sum.View(i).Assign(ReduceSum(return_signal.Slice(i, 2).Copy().Squeeze(), 1 - axis_).View());
+        auto cur_sum = ReduceSum(return_signal.Slice(i, 2).Copy().Squeeze(), 1 - axis_).View();
+        sum.View(i).Assign(cur_sum);
       }
 
       t.InlineMultiply(sum);

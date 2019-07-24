@@ -90,10 +90,7 @@ TYPED_TEST(SoftmaxTest, multi_dimension_test)
   fetch::math::Softmax(test_array, test_array, axis);
 
   // test correct values
-  for (std::size_t j = 0; j < gt_array.size(); ++j)
-  {
-    ASSERT_NEAR(double(test_array[j]), double(gt_array[j]), double(1e-7));
-  }
+  ASSERT_TRUE(test_array.AllClose(gt_array, fetch::math::function_tolerance<TypeParam>()));
 }
 
 TYPED_TEST(SoftmaxTest, exact_values_test)
