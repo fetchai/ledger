@@ -55,6 +55,46 @@ struct SaveableParams
 };
 
 template <class ArrayType>
+struct PlaeholderSaveableParams : public SaveableParams
+{
+  static constexpr char const *          sp_descriptor = "PlaceholderSaveableParams";
+  std::shared_ptr<ArrayType>             output;
+
+  template <class S>
+  friend void Serialize(S &serializer, PlaeholderSaveableParams<ArrayType> const &sp)
+  {
+    serializer << sp.DESCRIPTOR;
+    if (sp.output)
+    {
+      serializer << bool{true};
+      serializer << *(sp.output);
+    }
+    else
+    {
+      serializer << bool{false};
+    }
+  }
+
+  template <class S>
+  friend void Deserialize(S &serializer, PlaeholderSaveableParams<ArrayType> &sp)
+  {
+    serializer >> sp.DESCRIPTOR;
+    bool has_weights{};
+    serializer >> has_weights;
+    if (has_weights)
+    {
+      ArrayType output_temp;
+      serializer >> output_temp;
+      sp.output = std::make_shared<ArrayType>(output_temp);
+    }
+  }
+
+  std::string GetDescription() override
+  {
+    return sp_descriptor;
+  }
+};
+template <class ArrayType>
 struct WeightsSaveableParams : public SaveableParams
 {
   static constexpr char const *          sp_descriptor = "WeightsSaveableParams";
