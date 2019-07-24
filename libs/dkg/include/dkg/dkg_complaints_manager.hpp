@@ -61,6 +61,7 @@ public:
 
   std::set<MuddleAddress> ComplaintsFrom() const;
   std::set<MuddleAddress> Complaints() const;
+  uint32_t                ComplaintsCount(MuddleAddress const &address);
 };
 
 /**
