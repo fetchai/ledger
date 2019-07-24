@@ -18,8 +18,10 @@
 
 #include "ml/ops/exp.hpp"
 
+#include "math/base_types.hpp"
 #include "math/tensor.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
+#include "vectorise/fixed_point/serializers.hpp"
 
 #include "gtest/gtest.h"
 
@@ -84,4 +86,56 @@ TYPED_TEST(ExpTest, backward_test)
   // test correct values
   ASSERT_TRUE(prediction[0].AllClose(gt, fetch::math::function_tolerance<DataType>(),
                                      fetch::math::function_tolerance<DataType>()));
+}
+
+TYPED_TEST(ExpTest, saveparams_test)
+{
+  using ArrayType     = TypeParam;
+  using DataType      = typename TypeParam::Type;
+  using VecTensorType = typename fetch::ml::Ops<ArrayType>::VecTensorType;
+  using SPType        = typename fetch::ml::ops::Exp<ArrayType>::SPType;
+  using OpType        = typename fetch::ml::ops::Exp<ArrayType>;
+
+  ArrayType data = ArrayType::FromString(
+      " 0, -2, 3,-4, 5,-6, 7,-8;"
+      "-1,  2,-3, 4,-5, 6,-7, 8");
+
+  ArrayType gt = ArrayType::FromString(
+      "1, 0.135335283236613, 20.0855369231877, 0.018315638888734, 148.413159102577, "
+      "0.002478752176666, 1096.63315842846, 0.000335462627903;"
+      "0.367879441171442, 7.38905609893065, 0.049787068367864, 54.5981500331442, "
+      "0.006737946999085, 403.428793492735, 0.000911881965555, 2980.95798704173");
+
+  OpType op;
+
+  ArrayType     prediction(op.ComputeOutputShape({data}));
+  VecTensorType vec_data({data});
+
+  op.Forward(vec_data, prediction);
+
+  // extract saveparams
+  std::shared_ptr<fetch::ml::SaveableParams> sp = op.GetOpSaveableParams();
+
+  // downcast to correct type
+  auto dsp = std::dynamic_pointer_cast<SPType>(sp);
+
+  // serialize
+  fetch::serializers::ByteArrayBuffer b;
+  b << *dsp;
+
+  // deserialize
+  b.seek(0);
+  auto dsp2 = std::make_shared<SPType>();
+  b >> *dsp2;
+
+  // rebuild node
+  OpType new_op(*dsp2);
+
+  // check that new predictions match the old
+  ArrayType new_prediction(op.ComputeOutputShape({data}));
+  new_op.Forward(vec_data, new_prediction);
+
+  // test correct values
+  EXPECT_TRUE(new_prediction.AllClose(prediction, fetch::math::function_tolerance<DataType>(),
+                                      fetch::math::function_tolerance<DataType>()));
 }
