@@ -130,7 +130,7 @@ public:
     serializer_.ReadByte(opcode);
     switch (opcode)
     {
-    case CODE8(tfr):  // TODO: Fix reading.
+    case CODE8:  // TODO(tfr): Fix reading.
       serializer_.ReadBytes(reinterpret_cast<uint8_t *>(&size), sizeof(uint8_t));
       break;
     case CODE16:
