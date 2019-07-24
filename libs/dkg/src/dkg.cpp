@@ -291,7 +291,7 @@ void DistributedKeyGeneration::ReceivedQualShares()
 {
   std::unique_lock<std::mutex> lock{mutex_};
   if (!received_all_qual_shares_ && (state_ == State::WAITING_FOR_QUAL_SHARES) &&
-      (A_ik_received_.load() == cabinet_.size() - 1))
+      (A_ik_received_.load() == qual_.size() - 1))
   {
     received_all_qual_shares_.store(true);
     lock.unlock();
