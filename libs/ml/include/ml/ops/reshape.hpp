@@ -64,7 +64,8 @@ public:
     output.Assign(inputs.front().get());
   }
 
-  std::vector<ArrayType> Backward(VecTensorType const &inputs, ArrayType const &error_signal) override
+  std::vector<ArrayType> Backward(VecTensorType const &inputs,
+                                  ArrayType const &    error_signal) override
   {
     assert(inputs.size() == 1);
     ArrayType ret(inputs.front().get().shape());
