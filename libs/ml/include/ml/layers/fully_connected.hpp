@@ -85,13 +85,13 @@ public:
     this->SetInput(bias, bias_data);
   }
 
-  std::shared_ptr<SaveableParams> GetOpSaveableParams()
+  std::shared_ptr<SaveableParams> GetOpSaveableParams() override
   {
     throw std::runtime_error("This shouldn't be called!");
   }
 
   std::vector<SizeType> ComputeOutputShape(
-      std::vector<std::reference_wrapper<ArrayType const>> const &) const
+      std::vector<std::reference_wrapper<ArrayType const>> const &) const override
   {
     return {this->out_size_, 1};
   }

@@ -38,7 +38,7 @@ public:
   using VecTensorType = typename Ops<T>::VecTensorType;
   using SPType        = SaveableParams;
 
-  PlaceHolder()           = default;
+  PlaceHolder() = default;
 
   explicit PlaceHolder(SPType const &sp)
     : Ops<T>(sp)
@@ -46,7 +46,7 @@ public:
 
   ~PlaceHolder() override = default;
 
-  std::shared_ptr<SaveableParams> GetOpSaveableParams()
+  std::shared_ptr<SaveableParams> GetOpSaveableParams() override
   {
     SPType tp{};
     tp.DESCRIPTOR = DESCRIPTOR;

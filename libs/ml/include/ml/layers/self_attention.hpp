@@ -90,13 +90,13 @@ public:
     this->SetOutputNode(output);
   }
 
-  std::shared_ptr<SaveableParams> GetOpSaveableParams()
+  std::shared_ptr<SaveableParams> GetOpSaveableParams() override
   {
     throw std::runtime_error("This shouldn't be called!");
   }
 
-  virtual std::vector<SizeType> ComputeOutputShape(
-      std::vector<std::reference_wrapper<ArrayType const>> const &inputs) const
+  std::vector<SizeType> ComputeOutputShape(
+      std::vector<std::reference_wrapper<ArrayType const>> const &inputs) const override
   {
     return inputs.front().get().shape();
   }

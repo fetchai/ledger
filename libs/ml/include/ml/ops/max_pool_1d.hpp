@@ -51,7 +51,7 @@ public:
 
   ~MaxPool1D() override = default;
 
-  std::shared_ptr<SaveableParams> GetOpSaveableParams()
+  std::shared_ptr<SaveableParams> GetOpSaveableParams() override
   {
     SPType sp{};
     sp.DESCRIPTOR  = DESCRIPTOR;

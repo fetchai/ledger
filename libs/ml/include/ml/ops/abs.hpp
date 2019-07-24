@@ -38,7 +38,7 @@ public:
   using VecTensorType = typename Ops<T>::VecTensorType;
   using SPType        = SaveableParams;
 
-  Abs()           = default;
+  Abs() = default;
 
   explicit Abs(SPType const &sp)
     : Ops<T>(sp)
@@ -46,7 +46,7 @@ public:
 
   ~Abs() override = default;
 
-  std::shared_ptr<SaveableParams> GetOpSaveableParams()
+  std::shared_ptr<SaveableParams> GetOpSaveableParams() override
   {
     auto sp_ptr        = std::make_shared<SPType>();
     sp_ptr->DESCRIPTOR = DESCRIPTOR;

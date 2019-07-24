@@ -50,7 +50,7 @@ public:
 
   ~Softmax() override = default;
 
-  std::shared_ptr<SaveableParams> GetOpSaveableParams()
+  std::shared_ptr<SaveableParams> GetOpSaveableParams() override
   {
     auto sp_ptr        = std::make_shared<SPType>();
     sp_ptr->DESCRIPTOR = DESCRIPTOR;

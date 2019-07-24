@@ -38,8 +38,6 @@ public:
   using VecTensorType = typename Ops<T>::VecTensorType;
   using SPType        = SaveableParams;
 
-  MeanSquareErrorLoss() = default;
-
   explicit MeanSquareErrorLoss(SPType const &sp)
     : Ops<T>(sp)
   {}
@@ -50,7 +48,7 @@ public:
 
   ~MeanSquareErrorLoss() override = default;
 
-  std::shared_ptr<SaveableParams> GetOpSaveableParams()
+  std::shared_ptr<SaveableParams> GetOpSaveableParams() override
   {
     SPType sp{};
     sp.DESCRIPTOR = DESCRIPTOR;

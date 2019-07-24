@@ -43,8 +43,8 @@ TYPED_TEST(MeanSquareErrorTest, perfect_match_forward_test)
     i++;
   }
 
-  fetch::ml::ops::MeanSquareErrorLoss<TypeParam> op;
-  TypeParam                                      result({1, 1});
+  auto      op = fetch::ml::ops::MeanSquareErrorLoss<TypeParam>();
+  TypeParam result({1, 1});
   op.Forward({data1, data2}, result);
 
   EXPECT_EQ(result(0, 0), typename TypeParam::Type(0));
@@ -82,7 +82,7 @@ TYPED_TEST(MeanSquareErrorTest, one_by_eight_dimensional_backward_test)
   TypeParam error_signal({1, 1});
   error_signal(0, 0) = DataType{1};
 
-  fetch::ml::ops::MeanSquareErrorLoss<TypeParam> op;
+  auto                   op        = fetch::ml::ops::MeanSquareErrorLoss<TypeParam>();
   std::vector<TypeParam> gradients = op.Backward({data1_transpose, data2_transpose}, error_signal);
   EXPECT_TRUE(
       gradients.at(0).AllClose(gt, fetch::math::function_tolerance<typename TypeParam::Type>(),

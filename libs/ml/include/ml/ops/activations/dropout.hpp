@@ -58,7 +58,7 @@ public:
 
   ~Dropout() override = default;
 
-  std::shared_ptr<SaveableParams> GetOpSaveableParams()
+  std::shared_ptr<SaveableParams> GetOpSaveableParams() override
   {
     SPType sp{};
     sp.DESCRIPTOR  = DESCRIPTOR;
@@ -67,7 +67,7 @@ public:
     return std::make_shared<SPType>(sp);
   }
 
-  void Forward(VecTensorType const &inputs, ArrayType &output)
+  void Forward(VecTensorType const &inputs, ArrayType &output) override
   {
     assert(inputs.size() == 1);
     assert(output.shape() == this->ComputeOutputShape(inputs));

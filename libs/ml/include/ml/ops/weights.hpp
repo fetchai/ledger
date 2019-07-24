@@ -109,7 +109,7 @@ public:
 
   ~Weights() override = default;
 
-  std::shared_ptr<SaveableParams> GetOpSaveableParams()
+  std::shared_ptr<SaveableParams> GetOpSaveableParams() override
   {
     SPType tp{};
     tp.output              = this->output_;

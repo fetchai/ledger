@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "math/base_types.hpp"
 #include "math/tensor.hpp"
 #include <list>
 
@@ -33,6 +34,8 @@ struct StateDict
 {
   using ArrayType    = T;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
+  using SizeType     = fetch::math::SizeType;
+
   ArrayPtrType                        weights_;
   std::map<std::string, StateDict<T>> dict_;
 
@@ -127,7 +130,7 @@ struct StateDict
       serializer << false;
     }
 
-    ulong dictsize = t.dict_.size();
+    SizeType dictsize = t.dict_.size();
     serializer << dictsize;
 
     for (auto const &d : t.dict_)
@@ -140,7 +143,7 @@ struct StateDict
   template <typename S>
   friend void Deserialize(S &serializer, StateDict &t)
   {
-    ulong       dictsize{0};
+    SizeType    dictsize{0};
     std::string nodename{};
     StateDict   node_sd;
     bool        hasweights{};
@@ -154,7 +157,7 @@ struct StateDict
     }
     serializer >> dictsize;
 
-    for (ulong i = 0; i < dictsize; i++)
+    for (SizeType i = 0; i < dictsize; i++)
     {
       serializer >> nodename;
       Deserialize(serializer, node_sd);

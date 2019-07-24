@@ -72,7 +72,7 @@ public:
     , cached_output_status_(CachedOutputState::CHANGED_SIZE)
   {}
 
-  std::shared_ptr<SaveableParams> GetNodeSaveableParams()
+  std::shared_ptr<SaveableParams> GetNodeSaveableParams() override
   {
     std::shared_ptr<SaveableParams> sp = this->GetOpSaveableParams();
     return sp;
