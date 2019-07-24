@@ -20,6 +20,7 @@
 #include "core/mutex.hpp"
 #include "network/muddle/packet.hpp"
 #include "network/service/promise.hpp"
+#include "telemetry/telemetry.hpp"
 
 #include <atomic>
 #include <chrono>
@@ -30,12 +31,15 @@
 namespace fetch {
 namespace muddle {
 
+class NetworkId;
+
 class Dispatcher
 {
 public:
   using Promise   = service::Promise;
   using PacketPtr = std::shared_ptr<Packet>;
   using Clock     = std::chrono::steady_clock;
+  using Duration  = Clock::duration;
   using Timepoint = Clock::time_point;
   using Handle    = uint64_t;
   using Address   = Packet::Address;
@@ -43,7 +47,7 @@ public:
   static constexpr char const *LOGGING_NAME = "MuddleDispatch";
 
   // Construction / Destruction
-  Dispatcher()                   = default;
+  explicit Dispatcher(NetworkId const &network_id, Packet::Address const &address);
   Dispatcher(Dispatcher const &) = delete;
   Dispatcher(Dispatcher &&)      = delete;
   ~Dispatcher()                  = default;
@@ -88,6 +92,15 @@ private:
 
   Mutex     handles_lock_{__LINE__, __FILE__};
   HandleMap handles_;
+
+
+  /// @name Telemetry
+  /// @{
+  telemetry::CounterPtr       exchange_success_totals_;
+  telemetry::CounterPtr       exchange_failure_totals_;
+  telemetry::HistogramPtr     exchange_times_;
+  telemetry::GaugePtr<double> exchange_time_max_;
+  /// @}
 };
 
 inline uint16_t Dispatcher::GetNextCounter()
