@@ -41,8 +41,7 @@ public:
   explicit Convolution1D(SizeType stride_size = 1)
     : stride_size_(stride_size)
   {}
-
-  ~Convolution1D() = default;
+  ~Convolution1D() override = default;
 
   std::vector<typename ArrayType::SizeType> ComputeOutputShape(
       VecTensorType const &inputs) const override;

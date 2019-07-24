@@ -41,8 +41,7 @@ public:
   explicit Convolution2D(SizeType stride_size = 1)
     : stride_size_(stride_size)
   {}
-
-  ~Convolution2D() = default;
+  ~Convolution2D() override = default;
 
   void Forward(VecTensorType const &inputs, ArrayType &output) override;
 
