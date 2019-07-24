@@ -59,7 +59,8 @@ public:
     rng_.Seed(sp.random_seed);
     rng_.SetBuffer(sp.buffer);
     rng_.SetIndex(sp.index);
-    UpdateRandomValue();
+//    UpdateRandomValue();
+    random_value_ = sp.random_value;
   }
 
   ~RandomizedRelu() override = default;
@@ -73,6 +74,7 @@ public:
     sp.random_seed = rng_.Seed();
     sp.buffer = rng_.GetBuffer();
     sp.index = rng_.GetIndex();
+    sp.random_value = random_value_;
     return std::make_shared<SPType>(sp);
   }
 

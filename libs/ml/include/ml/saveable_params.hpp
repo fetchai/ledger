@@ -178,6 +178,7 @@ struct RandomizedReluSaveableParams : public SaveableParams
   SizeType                     random_seed;
   std::vector<uint64_t> buffer;
   uint64_t index;
+  DataType random_value;
 
   template <class S>
   friend void Serialize(S &serializer, RandomizedReluSaveableParams<ArrayType> const &sp)
@@ -188,6 +189,7 @@ struct RandomizedReluSaveableParams : public SaveableParams
     serializer << sp.random_seed;
     serializer << sp.buffer;
     serializer << sp.index;
+    serializer << sp.random_value;
   }
 
   template <class S>
@@ -199,6 +201,7 @@ struct RandomizedReluSaveableParams : public SaveableParams
     serializer >> sp.random_seed;
     serializer >> sp.buffer;
     serializer >> sp.index;
+    serializer >> sp.random_value;
   }
 
   std::string GetDescription() override
