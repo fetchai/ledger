@@ -87,8 +87,7 @@ TYPED_TEST(SerializersTest, serialize_graph_saveable_params)
   std::string input = g->template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>("Input", {});
 
   std::string layer_1 = g->template AddNode<fetch::ml::layers::FullyConnected<ArrayType>>(
-      "FC1", {input}, 10u, 20u, fetch::ml::details::ActivationType::RELU, regulariser,
-      reg_rate);
+      "FC1", {input}, 10u, 20u, fetch::ml::details::ActivationType::RELU, regulariser, reg_rate);
   std::string layer_2 = g->template AddNode<fetch::ml::layers::FullyConnected<ArrayType>>(
       "FC2", {layer_1}, 20u, 10u, fetch::ml::details::ActivationType::RELU, regulariser, reg_rate);
   std::string output = g->template AddNode<fetch::ml::layers::FullyConnected<ArrayType>>(
@@ -120,10 +119,10 @@ TYPED_TEST(SerializersTest, serialize_graph_saveable_params)
   g2.SetInput("Input", data.Transpose());
 
   ArrayType prediction = g->Evaluate(output);
-  
+
   // nodes have changed name because of subgraph flattening
-  std::string new_output_node = gsp2.connections.at(gsp2.connections.size()-1).first;
-  ArrayType prediction2 = g2.Evaluate(new_output_node);
+  std::string new_output_node = gsp2.connections.at(gsp2.connections.size() - 1).first;
+  ArrayType   prediction2     = g2.Evaluate(new_output_node);
 
   // test correct values
   EXPECT_TRUE(prediction.AllClose(prediction2, fetch::math::function_tolerance<DataType>(),

@@ -280,10 +280,10 @@ TYPED_TEST(CrossEntropyTest, non_one_hot_dimensional_backward_test)
 
 TYPED_TEST(CrossEntropyTest, saveparams_test)
 {
-  using ArrayType     = TypeParam;
-  using DataType      = typename TypeParam::Type;
-  using SPType        = typename fetch::ml::ops::CrossEntropyLoss<ArrayType>::SPType;
-  using OpType        = typename fetch::ml::ops::CrossEntropyLoss<ArrayType>;
+  using ArrayType = TypeParam;
+  using DataType  = typename TypeParam::Type;
+  using SPType    = typename fetch::ml::ops::CrossEntropyLoss<ArrayType>::SPType;
+  using OpType    = typename fetch::ml::ops::CrossEntropyLoss<ArrayType>;
 
   std::uint64_t n_classes     = 4;
   std::uint64_t n_data_points = 8;
@@ -323,8 +323,8 @@ TYPED_TEST(CrossEntropyTest, saveparams_test)
     }
   }
 
-  OpType op;
-  TypeParam  result({1, 1});
+  OpType    op;
+  TypeParam result({1, 1});
   op.Forward({data1, data2}, result);
 
   // extract saveparams
@@ -354,5 +354,5 @@ TYPED_TEST(CrossEntropyTest, saveparams_test)
 
   // test correct values
   EXPECT_NEAR(static_cast<double>(result(0, 0)), static_cast<double>(new_result(0, 0)),
-      static_cast<double>(fetch::math::function_tolerance<DataType>()));
+              static_cast<double>(fetch::math::function_tolerance<DataType>()));
 }

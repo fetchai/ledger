@@ -194,11 +194,11 @@ TYPED_TEST(SoftmaxCrossEntropyTest, backward_test)
 
 TYPED_TEST(SoftmaxCrossEntropyTest, saveparams_test)
 {
-  using ArrayType     = TypeParam;
-  using SizeType = typename TypeParam::SizeType;
-  using DataType = typename TypeParam::Type;
-  using SPType        = typename fetch::ml::ops::SoftmaxCrossEntropyLoss<ArrayType>::SPType;
-  using OpType        = typename fetch::ml::ops::SoftmaxCrossEntropyLoss<ArrayType>;
+  using ArrayType = TypeParam;
+  using SizeType  = typename TypeParam::SizeType;
+  using DataType  = typename TypeParam::Type;
+  using SPType    = typename fetch::ml::ops::SoftmaxCrossEntropyLoss<ArrayType>::SPType;
+  using OpType    = typename fetch::ml::ops::SoftmaxCrossEntropyLoss<ArrayType>;
 
   SizeType n_classes     = 4;
   SizeType n_data_points = 4;
@@ -224,8 +224,8 @@ TYPED_TEST(SoftmaxCrossEntropyTest, saveparams_test)
     }
   }
 
-  OpType op;
-  TypeParam                                          result({1, 1});
+  OpType    op;
+  TypeParam result({1, 1});
   op.Forward({data1, data2}, result);
 
   // extract saveparams
@@ -255,5 +255,5 @@ TYPED_TEST(SoftmaxCrossEntropyTest, saveparams_test)
 
   // test correct values
   EXPECT_NEAR(static_cast<double>(result(0, 0)), static_cast<double>(new_result(0, 0)),
-      static_cast<double>(fetch::math::function_tolerance<DataType>()));
+              static_cast<double>(fetch::math::function_tolerance<DataType>()));
 }

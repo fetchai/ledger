@@ -42,7 +42,8 @@ public:
 
   explicit PlaceHolder(SPType const &sp)
   {
-    if (sp.output) {
+    if (sp.output)
+    {
       SetData(*(sp.output));
     }
   }
@@ -53,7 +54,8 @@ public:
   {
     SPType tp{};
     tp.DESCRIPTOR = DESCRIPTOR;
-    if (output_) {
+    if (output_)
+    {
       tp.output = std::make_shared<ArrayType>(output_->Copy());
     }
     return std::make_shared<SPType>(tp);
