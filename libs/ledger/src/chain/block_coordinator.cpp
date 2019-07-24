@@ -58,7 +58,7 @@ using DAGPtr               = std::shared_ptr<ledger::DAGInterface>;
 
 // Constants
 const std::chrono::milliseconds TX_SYNC_NOTIFY_INTERVAL{1000};
-const std::chrono::milliseconds EXEC_NOTIFY_INTERVAL{500};
+const std::chrono::milliseconds EXEC_NOTIFY_INTERVAL{5000};
 const std::chrono::seconds      NOTIFY_INTERVAL{10};
 const std::chrono::seconds      WAIT_BEFORE_ASKING_FOR_MISSING_TX_INTERVAL{30};
 const std::chrono::seconds      WAIT_FOR_TX_TIMEOUT_INTERVAL{30};
@@ -389,7 +389,7 @@ BlockCoordinator::State BlockCoordinator::OnSynchronising()
                                   common_parent->body.block_number))
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "Ancestor block's state hash cannot be retrieved for block: 0x",
-                      current_hash.ToHex(), " number: ", common_parent->body.block_number);
+                      current_hash.ToHex(), " number: ", common_parent->body.block_number, " merkle hash: ", common_parent->body.merkle_hash.ToHex());
 
       // this is a bad situation so the easiest solution is to revert back to genesis
       execution_manager_.SetLastProcessedBlock(GENESIS_DIGEST);
@@ -999,7 +999,7 @@ BlockCoordinator::State BlockCoordinator::OnWaitForNewBlockExecution()
   case ExecutionStatus::RUNNING:
     if (exec_wait_periodic_.Poll())
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Waiting for new block execution (following: ",
+      FETCH_LOG_INFO(LOGGING_NAME, "Waiting for new block execution (following: ",
                      next_block_->body.previous_hash.ToBase64(), ")");
     }
 
