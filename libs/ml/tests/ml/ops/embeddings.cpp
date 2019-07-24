@@ -16,9 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
+#include "math/base_types.hpp"
 #include "math/tensor.hpp"
 #include "ml/ops/embeddings.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
+#include "vectorise/fixed_point/serializers.hpp"
 
 #include "gtest/gtest.h"
 
@@ -150,4 +152,58 @@ TYPED_TEST(EmbeddingsTest, backward)
       EXPECT_EQ(output.At(k, j, 0), static_cast<DataType>(gt[(j * 6) + k]));
     }
   }
+}
+
+TYPED_TEST(EmbeddingsTest, saveparams_test)
+{
+  using ArrayType = TypeParam;
+  using DataType  = typename TypeParam::Type;
+  using SPType    = typename fetch::ml::ops::Embeddings<ArrayType>::SPType;
+  using OpType    = typename fetch::ml::ops::Embeddings<ArrayType>;
+
+  TypeParam weights(std::vector<uint64_t>({6, 10}));
+
+  for (unsigned int i(0); i < 10; ++i)
+  {
+    for (unsigned int j(0); j < 6; ++j)
+    {
+      weights(j, i) = typename TypeParam::Type(i * 10 + j);
+    }
+  }
+  TypeParam input(std::vector<uint64_t>({2, 1}));
+  input.At(0, 0) = typename TypeParam::Type(3);
+  input.At(1, 0) = typename TypeParam::Type(5);
+
+  OpType op(6, 10);
+  op.SetData(weights);
+
+  ArrayType prediction(op.ComputeOutputShape({weights}));
+
+  op.Forward({input}, prediction);
+
+  // extract saveparams
+  std::shared_ptr<fetch::ml::SaveableParams> sp = op.GetOpSaveableParams();
+
+  // downcast to correct type
+  auto dsp = std::dynamic_pointer_cast<SPType>(sp);
+
+  // serialize
+  fetch::serializers::ByteArrayBuffer b;
+  b << *dsp;
+
+  // deserialize
+  b.seek(0);
+  auto dsp2 = std::make_shared<SPType>();
+  b >> *dsp2;
+
+  // rebuild node
+  OpType new_op(*dsp2);
+
+  // check that new predictions match the old
+  ArrayType new_prediction(op.ComputeOutputShape({weights}));
+  new_op.Forward({input}, new_prediction);
+
+  // test correct values
+  EXPECT_TRUE(new_prediction.AllClose(prediction, fetch::math::function_tolerance<DataType>(),
+                                      fetch::math::function_tolerance<DataType>()));
 }
