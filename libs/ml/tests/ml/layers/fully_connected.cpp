@@ -39,8 +39,8 @@ TYPED_TEST(FullyConnectedTest, set_input_and_evaluate_test)  // Use the class as
 {
   fetch::ml::layers::FullyConnected<TypeParam> fc(100u, 10u);
   TypeParam input_data(std::vector<typename TypeParam::SizeType>({10, 10, 2}));
-  fc.SetInput("FC_Input", input_data);
-  TypeParam output = fc.Evaluate("FC_MatrixMultiply", true);
+  fc.SetInput("FullyConnected_Input", input_data);
+  TypeParam output = fc.Evaluate("FullyConnected_MatrixMultiply", true);
 
   ASSERT_EQ(output.shape().size(), 2);
   ASSERT_EQ(output.shape()[0], 10);
@@ -313,11 +313,11 @@ TYPED_TEST(FullyConnectedTest, getStateDict)
   EXPECT_EQ(sd.weights_, nullptr);
   EXPECT_EQ(sd.dict_.size(), 2);
 
-  ASSERT_NE(sd.dict_["FCTest_Weights"].weights_, nullptr);
-  EXPECT_EQ(sd.dict_["FCTest_Weights"].weights_->shape(),
+  ASSERT_NE(sd.dict_["FullyConnected_Weights"].weights_, nullptr);
+  EXPECT_EQ(sd.dict_["FullyConnected_Weights"].weights_->shape(),
             std::vector<typename TypeParam::SizeType>({10, 50}));
 
-  ASSERT_NE(sd.dict_["FCTest_Bias"].weights_, nullptr);
-  EXPECT_EQ(sd.dict_["FCTest_Bias"].weights_->shape(),
+  ASSERT_NE(sd.dict_["FullyConnected_Bias"].weights_, nullptr);
+  EXPECT_EQ(sd.dict_["FullyConnected_Bias"].weights_->shape(),
             std::vector<typename TypeParam::SizeType>({10, 1}));
 }
