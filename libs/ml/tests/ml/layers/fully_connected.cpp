@@ -91,23 +91,6 @@ TYPED_TEST(FullyConnectedTest, ops_backward_test)  // Use the class as an Ops
   // No way to test actual values for now as weights are randomly initialised.
 }
 
-TYPED_TEST(FullyConnectedTest, share_weight_with_incompatible_layer)
-{
-  using ArrayType = TypeParam;
-
-  fetch::ml::Graph<ArrayType> g;
-
-  std::string input = g.template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>("Input", {});
-  std::string fc_1 =
-      g.template AddNode<fetch::ml::layers::FullyConnected<ArrayType>>("FC1", {input}, 10u, 20u);
-  ASSERT_ANY_THROW(std::string fc_2 =
-                       g.template AddNode<fetch::ml::layers::FullyConnected<ArrayType>>(
-                           "FC1", {input}, 10u, 21u));
-  ASSERT_ANY_THROW(std::string fc_3 =
-                       g.template AddNode<fetch::ml::layers::FullyConnected<ArrayType>>(
-                           "FC1", {input}, 11u, 20u));
-}
-
 TYPED_TEST(FullyConnectedNoIntTest, share_weight_backward_test)
 {
   using ArrayType       = TypeParam;
