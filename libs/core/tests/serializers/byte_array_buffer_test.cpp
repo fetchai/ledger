@@ -119,12 +119,6 @@ class ByteArrayBufferTest : public testing::Test
 protected:
   using B = A<A<A<void>>>;
 
-  void SetUp()
-  {}
-
-  void TearDown()
-  {}
-
   void test_nested_append_serialisation(ByteArrayBuffer &stream)
   {
     B const            b0{"b0x", "b0y"};

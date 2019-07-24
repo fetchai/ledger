@@ -39,7 +39,7 @@ public:
   Setting(SettingCollection &reg, std::string name, T &&default_value, std::string description);
   Setting(Setting const &) = delete;
   Setting(Setting &&)      = delete;
-  ~Setting()               = default;
+  ~Setting() override      = default;
 
   /// @name Accessors
   /// @{

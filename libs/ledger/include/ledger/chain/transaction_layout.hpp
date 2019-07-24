@@ -19,6 +19,7 @@
 
 #include "core/bitvector.hpp"
 #include "core/byte_array/const_byte_array.hpp"
+#include "ledger/execution_result.hpp"
 
 namespace fetch {
 namespace ledger {
@@ -49,11 +50,12 @@ public:
 
   /// @name Accessors
   /// @{
-  Digest const &   digest() const;
-  BitVector const &mask() const;
-  TokenAmount      charge() const;
-  BlockIndex       valid_from() const;
-  BlockIndex       valid_until() const;
+  Digest const &                 digest() const;
+  BitVector const &              mask() const;
+  TokenAmount                    charge() const;
+  BlockIndex                     valid_from() const;
+  BlockIndex                     valid_until() const;
+  ContractExecutionResult const &exec_result() const;
   /// @}
 
   bool operator==(TransactionLayout const &other) const;
@@ -63,11 +65,12 @@ public:
   TransactionLayout &operator=(TransactionLayout &&) = default;
 
 private:
-  ConstByteArray digest_{};
-  BitVector      mask_{};
-  TokenAmount    charge_{0};
-  BlockIndex     valid_from_{0};
-  BlockIndex     valid_until_{0};
+  ConstByteArray          digest_{};
+  BitVector               mask_{};
+  TokenAmount             charge_{0};
+  BlockIndex              valid_from_{0};
+  BlockIndex              valid_until_{0};
+  ContractExecutionResult exec_result_{};  // Intentionally *NOT* serialised
 
   // Native serializers
   template <typename T>

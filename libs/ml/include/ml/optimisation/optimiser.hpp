@@ -265,8 +265,10 @@ typename T::Type Optimiser<T>::Run(std::vector<ArrayType> const &data, ArrayType
     UpdateLearningRate();
   }
   epoch_++;
+
   return loss_sum_;
 }
+
 /**
  * Does 1 training epoch using DataLoader
  * @tparam T ArrayType
