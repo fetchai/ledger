@@ -29,6 +29,7 @@
 #include "network/details/thread_pool.hpp"
 #include "storage/object_store.hpp"
 #include "transaction_status_cache.hpp"
+#include "telemetry/telemetry.hpp"
 
 #include <atomic>
 #include <condition_variable>
@@ -104,6 +105,8 @@ private:
   using AtomicState       = std::atomic<State>;
   using SyncCounters      = SynchronisedState<Counters>;
   using SyncedState       = SynchronisedState<State>;
+  using CounterPtr        = telemetry::CounterPtr;
+  using HistogramPtr      = telemetry::HistogramPtr;
 
   uint32_t const log2_num_lanes_;
 
@@ -136,6 +139,12 @@ private:
   ThreadPtr  monitor_thread_;
 
   TransactionStatusCache::ShrdPtr tx_status_cache_;  ///< Ref to the tx status cache
+  // Telemetry
+  CounterPtr   tx_executed_count_;
+  CounterPtr   slices_executed_count_;
+  CounterPtr   fees_settled_count_;
+  CounterPtr   blocks_completed_count_;
+  HistogramPtr execution_duration_;
 
   void MonitorThreadEntrypoint();
 

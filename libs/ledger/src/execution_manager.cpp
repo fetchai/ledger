@@ -28,6 +28,10 @@
 #include "ledger/transaction_status_cache.hpp"
 #include "moment/deadline_timer.hpp"
 #include "storage/resource_mapper.hpp"
+#include "telemetry/counter.hpp"
+#include "telemetry/registry.hpp"
+#include "telemetry/histogram.hpp"
+#include "telemetry/utils/timer.hpp"
 
 #include <chrono>
 #include <memory>
@@ -40,6 +44,8 @@ static constexpr std::size_t STARTUP_ITERATION_TIME_MS = 100;
 
 namespace fetch {
 namespace ledger {
+
+using telemetry::Registry;
 
 /**
  * Constructs a execution manager instance
@@ -54,7 +60,72 @@ ExecutionManager::ExecutionManager(std::size_t num_executors, uint32_t log2_num_
   , idle_executors_{}
   , thread_pool_{network::MakeThreadPool(num_executors, "Executor")}
   , tx_status_cache_{std::move(tx_status_cache)}
+  , tx_executed_count_(Registry::Instance().CreateCounter(
+        "ledger_exec_mgr_tx_executed_total", "The total number of executed transactions"))
+  , slices_executed_count_(Registry::Instance().CreateCounter(
+        "ledger_exec_mgr_slice_executed_total", "The total number of executed slices"))
+  , fees_settled_count_(Registry::Instance().CreateCounter(
+        "ledger_exec_mgr_fees_settled_total", "The total number of settle fees rounds"))
+  , blocks_completed_count_(Registry::Instance().CreateCounter(
+        "ledger_exec_mgr_blocks_completed_total", "The total number of settle fees rounds"))
+  , execution_duration_(Registry::Instance().CreateHistogram(
+        {0.000001, 0.000002, 0.000003, 0.000004, 0.000005, 0.000006, 0.000007, 0.000008, 0.000009,
+         0.00001,  0.00002,  0.00003,  0.00004,  0.00005,  0.00006,  0.00007,  0.00008,  0.00009,
+         0.0001,   0.0002,   0.0003,   0.0004,   0.0005,   0.0006,   0.0007,   0.0008,   0.0009,
+         0.001,    0.01,     0.1,      1,        10.,      100.},
+        "ledger_exec_mgr_block_duration", "The execution duration in seconds for blocks"))
 {
+  // create all the executor metrics
+  Registry::Instance().CreateHistogram(
+      {0.000001, 0.000002, 0.000003, 0.000004, 0.000005, 0.000006, 0.000007, 0.000008, 0.000009,
+       0.00001,  0.00002,  0.00003,  0.00004,  0.00005,  0.00006,  0.00007,  0.00008,  0.00009,
+       0.0001,   0.0002,   0.0003,   0.0004,   0.0005,   0.0006,   0.0007,   0.0008,   0.0009,
+       0.001,    0.01,     0.1,      1,        10.,      100.},
+      "ledger_executor_overall_duration",
+      "The execution duration in seconds for executing a transaction");
+  Registry::Instance().CreateHistogram(
+      {0.000001, 0.000002, 0.000003, 0.000004, 0.000005, 0.000006, 0.000007, 0.000008, 0.000009,
+       0.00001,  0.00002,  0.00003,  0.00004,  0.00005,  0.00006,  0.00007,  0.00008,  0.00009,
+       0.0001,   0.0002,   0.0003,   0.0004,   0.0005,   0.0006,   0.0007,   0.0008,   0.0009,
+       0.001,    0.01,     0.1,      1,        10.,      100.},
+      "ledger_executor_tx_retrieve_duration",
+      "The execution duration in seconds for retrieving the transaction");
+  Registry::Instance().CreateHistogram(
+      {0.000001, 0.000002, 0.000003, 0.000004, 0.000005, 0.000006, 0.000007, 0.000008, 0.000009,
+       0.00001,  0.00002,  0.00003,  0.00004,  0.00005,  0.00006,  0.00007,  0.00008,  0.00009,
+       0.0001,   0.0002,   0.0003,   0.0004,   0.0005,   0.0006,   0.0007,   0.0008,   0.0009,
+       0.001,    0.01,     0.1,      1,        10.,      100.},
+      "ledger_executor_validation_checks_duration",
+      "The execution duration in seconds for performming the pre-validation checks transaction");
+  Registry::Instance().CreateHistogram(
+      {0.000001, 0.000002, 0.000003, 0.000004, 0.000005, 0.000006, 0.000007, 0.000008, 0.000009,
+       0.00001,  0.00002,  0.00003,  0.00004,  0.00005,  0.00006,  0.00007,  0.00008,  0.00009,
+       0.0001,   0.0002,   0.0003,   0.0004,   0.0005,   0.0006,   0.0007,   0.0008,   0.0009,
+       0.001,    0.01,     0.1,      1,        10.,      100.},
+      "ledger_executor_contract_execution_duration",
+      "The execution duration in seconds for executing the chain code or smart contract");
+  Registry::Instance().CreateHistogram(
+      {0.000001, 0.000002, 0.000003, 0.000004, 0.000005, 0.000006, 0.000007, 0.000008, 0.000009,
+       0.00001,  0.00002,  0.00003,  0.00004,  0.00005,  0.00006,  0.00007,  0.00008,  0.00009,
+       0.0001,   0.0002,   0.0003,   0.0004,   0.0005,   0.0006,   0.0007,   0.0008,   0.0009,
+       0.001,    0.01,     0.1,      1,        10.,      100.},
+      "ledger_executor_transfers_duration",
+      "The execution duration in seconds for executing the transfers of a transaction");
+  Registry::Instance().CreateHistogram(
+      {0.000001, 0.000002, 0.000003, 0.000004, 0.000005, 0.000006, 0.000007, 0.000008, 0.000009,
+       0.00001,  0.00002,  0.00003,  0.00004,  0.00005,  0.00006,  0.00007,  0.00008,  0.00009,
+       0.0001,   0.0002,   0.0003,   0.0004,   0.0005,   0.0006,   0.0007,   0.0008,   0.0009,
+       0.001,    0.01,     0.1,      1,        10.,      100.},
+      "ledger_executor_deduct_fees_duration",
+      "The execution duration in seconds for executing a transaction");
+  Registry::Instance().CreateHistogram(
+      {0.000001, 0.000002, 0.000003, 0.000004, 0.000005, 0.000006, 0.000007, 0.000008, 0.000009,
+       0.00001,  0.00002,  0.00003,  0.00004,  0.00005,  0.00006,  0.00007,  0.00008,  0.00009,
+       0.0001,   0.0002,   0.0003,   0.0004,   0.0005,   0.0006,   0.0007,   0.0008,   0.0009,
+       0.001,    0.01,     0.1,      1,        10.,      100.},
+      "ledger_executor_settle_fees_duration",
+      "The execution duration in seconds for executing a transaction");
+
   // setup the executor pool
   {
     FETCH_LOCK(idle_executors_lock_);
@@ -204,6 +275,7 @@ void ExecutionManager::DispatchExecution(ExecutionItem &item)
     });
 
     ++completed_executions_;
+    tx_executed_count_->increment();
 
     {
       FETCH_LOCK(idle_executors_lock_);
@@ -344,6 +416,8 @@ void ExecutionManager::MonitorThreadEntrypoint()
 
     case MonitorState::IDLE:
     {
+      blocks_completed_count_->increment();
+
       state_.Set(State::IDLE);
 
       FETCH_LOG_DEBUG(LOGGING_NAME, "Now Idle");
@@ -374,6 +448,8 @@ void ExecutionManager::MonitorThreadEntrypoint()
     {
       FETCH_LOCK(execution_plan_lock_);
 
+      slices_executed_count_->increment();
+
       if (execution_plan_.empty())
       {
         monitor_state = MonitorState::SETTLE_FEES;
@@ -390,7 +466,10 @@ void ExecutionManager::MonitorThreadEntrypoint()
         for (auto &item : slice_plan)
         {
           // create the closure and dispatch to the thread pool
-          thread_pool_->Post([self, &item]() { self->DispatchExecution(*item); });
+          thread_pool_->Post([self, &item]() {
+            telemetry::FunctionTimer const timer{*(self->execution_duration_)};
+            self->DispatchExecution(*item);
+          });
         }
 
         monitor_state = MonitorState::RUNNING;
@@ -522,6 +601,7 @@ void ExecutionManager::MonitorThreadEntrypoint()
             idle_executors_.front()->SettleFees(last_block_miner_, aggregate_block_fees,
                                                 log2_num_lanes_);
 
+            fees_settled_count_->increment();
             break;
           }
         }
