@@ -101,6 +101,11 @@ std::set<ComplaintsMessage::MuddleAddress> ComplaintsManager::ComplaintsFrom() c
   return complaints_from_;
 }
 
+uint32_t ComplaintsManager::ComplaintsCount(MuddleAddress const &address)
+{
+  return complaints_counter_[address];
+}
+
 std::set<ComplaintsMessage::MuddleAddress> ComplaintsManager::Complaints() const
 {
   std::lock_guard<std::mutex> lock(mutex_);
