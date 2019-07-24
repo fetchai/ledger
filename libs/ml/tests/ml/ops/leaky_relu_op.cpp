@@ -38,9 +38,13 @@ TYPED_TEST(LeakyReluOpTest, forward_test)
 {
   using ArrayType = TypeParam;
 
-  ArrayType data = ArrayType::FromString("1, -2, 3,-4, 5,-6, 7,-8; -1,  2,-3, 4,-5, 6,-7, 8").Transpose();
+  ArrayType data =
+      ArrayType::FromString("1, -2, 3,-4, 5,-6, 7,-8; -1,  2,-3, 4,-5, 6,-7, 8").Transpose();
 
-  ArrayType gt = ArrayType::FromString("1,-0.4,   3,-1.6,   5,-3.6,   7,-6.4; -0.1,   2,-0.9,   4,-2.5,   6,-4.9,   8").Transpose();
+  ArrayType gt =
+      ArrayType::FromString(
+          "1,-0.4,   3,-1.6,   5,-3.6,   7,-6.4; -0.1,   2,-0.9,   4,-2.5,   6,-4.9,   8")
+          .Transpose();
 
   ArrayType alpha = ArrayType::FromString("0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8").Transpose();
 
@@ -85,7 +89,6 @@ TYPED_TEST(LeakyReluOpTest, backward_test)
   ASSERT_TRUE(prediction[0].AllClose(gt, DataType(1e-5), DataType(1e-5)));
 }
 
-
 TYPED_TEST(LeakyReluOpTest, saveparams_test)
 {
   using ArrayType     = TypeParam;
@@ -94,9 +97,13 @@ TYPED_TEST(LeakyReluOpTest, saveparams_test)
   using SPType        = typename fetch::ml::ops::LeakyReluOp<ArrayType>::SPType;
   using OpType        = typename fetch::ml::ops::LeakyReluOp<ArrayType>;
 
-  ArrayType data = ArrayType::FromString("1, -2, 3,-4, 5,-6, 7,-8; -1,  2,-3, 4,-5, 6,-7, 8").Transpose();
+  ArrayType data =
+      ArrayType::FromString("1, -2, 3,-4, 5,-6, 7,-8; -1,  2,-3, 4,-5, 6,-7, 8").Transpose();
 
-  ArrayType gt = ArrayType::FromString("1,-0.4,   3,-1.6,   5,-3.6,   7,-6.4; -0.1,   2,-0.9,   4,-2.5,   6,-4.9,   8").Transpose();
+  ArrayType gt =
+      ArrayType::FromString(
+          "1,-0.4,   3,-1.6,   5,-3.6,   7,-6.4; -0.1,   2,-0.9,   4,-2.5,   6,-4.9,   8")
+          .Transpose();
 
   ArrayType alpha = ArrayType::FromString("0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8").Transpose();
 
@@ -133,4 +140,3 @@ TYPED_TEST(LeakyReluOpTest, saveparams_test)
   EXPECT_TRUE(new_prediction.AllClose(prediction, fetch::math::function_tolerance<DataType>(),
                                       fetch::math::function_tolerance<DataType>()));
 }
-
