@@ -181,36 +181,9 @@ public:
       return *this;
     }
 
-    // input type 1, input type 2 ... input type N, output type
-    template <typename... Types>
-    ClassInterface &EnableIndexOperator()  // order changed!
+    ClassInterface &EnableIndexOperator()
     {
-      static_assert(sizeof...(Types) >= 2, "2 or more types expected");
-      using Tuple       = std::tuple<Types...>;
-      using InputsTuple = typename meta::RemoveLastType<Tuple>::type;
-      using OutputType  = typename meta::GetLastType<Tuple>::type;
-      using Getter      = typename IndexedValueGetter<Type, InputsTuple, OutputType>::type;
-      using Setter      = typename IndexedValueSetter<Type, InputsTuple, OutputType>::type;
-      TypeIndex const type_index__ = type_index_;
-      TypeIndexArray  input_type_index_array;
-      UnrollTypes<Types...>::Unroll(input_type_index_array);
-      TypeIndex const output_type_index = input_type_index_array.back();
-      input_type_index_array.pop_back();
-      Getter  gf          = &Type::GetIndexedValue;
-      Handler get_handler = [gf](VM *vm) {
-        InvokeMemberFunction(vm, vm->instruction_->type_id, gf);
-      };
-      Setter  sf          = &Type::SetIndexedValue;
-      Handler set_handler = [sf](VM *vm) {
-        InvokeMemberFunction(vm, vm->instruction_->type_id, sf);
-      };
-      auto compiler_setup_function = [type_index__, input_type_index_array, output_type_index,
-                                      get_handler, set_handler](Compiler *compiler) {
-        compiler->EnableIndexOperator(type_index__, input_type_index_array, output_type_index,
-                                      get_handler, set_handler);
-      };
-      module_->AddCompilerSetupFunction(compiler_setup_function);
-      return *this;
+      return InternalEnableIndexOperator(&Type::GetIndexedValue, &Type::SetIndexedValue);
     }
 
     template <typename InstantiationType>
@@ -231,6 +204,43 @@ public:
     }
 
   private:
+    template <typename GetterReturnType, typename... GetterArgs, typename SetterReturnType,
+              typename... SetterArgs>
+    ClassInterface &InternalEnableIndexOperator(GetterReturnType (Type::*getter)(GetterArgs...),
+                                                SetterReturnType (Type::*setter)(SetterArgs...))
+    {
+      static_assert(sizeof...(GetterArgs) >= 1, "Getter should take at least one parameter");
+      static_assert(sizeof...(SetterArgs) >= 2, "Setter should take at least two parameters");
+      static_assert(
+          std::is_same<GetterReturnType,
+                       std::remove_cv_t<std::remove_reference_t<
+                           typename meta::GetLastType<std::tuple<SetterArgs...>>::type>>>::value,
+          "Inconsistent getter and setter definitions: getter return type should be the "
+          "same as last setter parameter type (allowing for const and reference declarators)");
+
+      TypeIndex const type_index__ = type_index_;
+      TypeIndexArray  input_type_index_array;
+      UnrollTypes<std::remove_cv_t<std::remove_reference_t<SetterArgs>>...>::Unroll(
+          input_type_index_array);
+      TypeIndex const output_type_index = input_type_index_array.back();
+      input_type_index_array.pop_back();
+
+      Handler get_handler = [getter](VM *vm) {
+        InvokeMemberFunction(vm, vm->instruction_->type_id, getter);
+      };
+      Handler set_handler = [setter](VM *vm) {
+        InvokeMemberFunction(vm, vm->instruction_->type_id, setter);
+      };
+
+      auto compiler_setup_function = [type_index__, input_type_index_array, output_type_index,
+                                      get_handler, set_handler](Compiler *compiler) {
+        compiler->EnableIndexOperator(type_index__, input_type_index_array, output_type_index,
+                                      get_handler, set_handler);
+      };
+      module_->AddCompilerSetupFunction(compiler_setup_function);
+      return *this;
+    }
+
     template <typename ReturnType, typename MemberFunction, typename... Ts>
     ClassInterface &InternalCreateMemberFunction(std::string const &function_name, MemberFunction f)
     {
