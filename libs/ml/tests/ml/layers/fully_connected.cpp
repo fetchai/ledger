@@ -238,7 +238,9 @@ TYPED_TEST(FullyConnectedTest, share_weight_backward_test)
     ArrayType not_shared_gradient =
         g_not_shared_weights_after[i] + g_not_shared_weights_after[i + 2] -
         g_not_shared_weights_before[i] - g_not_shared_weights_before[i + 2];
-    ASSERT_TRUE(shared_gradient.AllClose(not_shared_gradient, static_cast<DataType>(1e-5)));
+    ASSERT_TRUE(shared_gradient.AllClose(
+        not_shared_gradient,
+        static_cast<DataType>(100) * fetch::math::function_tolerance<DataType>()));
   }
 }
 
