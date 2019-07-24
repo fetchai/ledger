@@ -57,6 +57,8 @@ public:
     upper_bound_ = sp.upper_bound;
     bounds_mean_ = ((upper_bound_ + lower_bound_) / DataType(2));
     rng_.Seed(sp.random_seed);
+    rng_.SetBuffer(sp.buffer);
+    rng_.SetIndex(sp.index);
     UpdateRandomValue();
   }
 
@@ -69,7 +71,8 @@ public:
     sp.lower_bound = lower_bound_;
     sp.upper_bound = upper_bound_;
     sp.random_seed = rng_.Seed();
-
+    sp.buffer = rng_.GetBuffer();
+    sp.index = rng_.GetIndex();
     return std::make_shared<SPType>(sp);
   }
 

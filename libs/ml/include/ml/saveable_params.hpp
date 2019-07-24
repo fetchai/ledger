@@ -111,6 +111,8 @@ struct DropoutSaveableParams : public SaveableParams
   static constexpr char const *sp_descriptor = "DropoutSaveableParams";
   SizeType                     random_seed{};
   DataType                     probability{};
+  std::vector<uint64_t> buffer;
+  uint64_t index;
 
   template <class S>
   friend void Serialize(S &serializer, DropoutSaveableParams<ArrayType> const &sp)
@@ -118,6 +120,8 @@ struct DropoutSaveableParams : public SaveableParams
     serializer << sp.DESCRIPTOR;
     serializer << sp.random_seed;
     serializer << sp.probability;
+    serializer << sp.buffer;
+    serializer << sp.index;
   }
 
   template <class S>
@@ -126,6 +130,8 @@ struct DropoutSaveableParams : public SaveableParams
     serializer >> sp.DESCRIPTOR;
     serializer >> sp.random_seed;
     serializer >> sp.probability;
+    serializer >> sp.buffer;
+    serializer >> sp.index;
   }
 
   std::string GetDescription() override
@@ -170,6 +176,8 @@ struct RandomizedReluSaveableParams : public SaveableParams
   DataType                     lower_bound;
   DataType                     upper_bound;
   SizeType                     random_seed;
+  std::vector<uint64_t> buffer;
+  uint64_t index;
 
   template <class S>
   friend void Serialize(S &serializer, RandomizedReluSaveableParams<ArrayType> const &sp)
@@ -178,6 +186,8 @@ struct RandomizedReluSaveableParams : public SaveableParams
     serializer << sp.lower_bound;
     serializer << sp.upper_bound;
     serializer << sp.random_seed;
+    serializer << sp.buffer;
+    serializer << sp.index;
   }
 
   template <class S>
@@ -187,6 +197,8 @@ struct RandomizedReluSaveableParams : public SaveableParams
     serializer >> sp.lower_bound;
     serializer >> sp.upper_bound;
     serializer >> sp.random_seed;
+    serializer >> sp.buffer;
+    serializer >> sp.index;
   }
 
   std::string GetDescription() override

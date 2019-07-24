@@ -20,6 +20,7 @@
 #include "lcg.hpp"
 #include <cstdint>
 #include <limits>
+#include <vector>
 
 namespace fetch {
 namespace random {
@@ -86,6 +87,26 @@ public:
   static constexpr RandomType max() noexcept
   {
     return static_cast<RandomType>(std::numeric_limits<RandomType>::max());
+  }
+
+  std::vector<RandomType> GetBuffer(){
+	  std::vector<RandomType > dest(std::begin(buffer_), std::end(buffer_));
+    return dest;
+  }
+
+  void SetBuffer(std::vector<RandomType> const & buffer){
+    for (uint64_t i = 0; i < Q; ++i)
+    {
+      buffer_[i] = buffer[i];
+    }
+  }
+
+  uint64_t GetIndex(){
+    return index_;
+  }
+
+  void SetIndex(uint64_t index){
+    index_ = index;
   }
 
 private:
