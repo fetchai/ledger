@@ -54,7 +54,7 @@ public:
     }
   }
 
-  void clear(void)
+  void clear()
   {
     callbacks_.clear();
   }

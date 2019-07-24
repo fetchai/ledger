@@ -353,7 +353,7 @@ void GenesisFileCreator::LoadDKG(variant::Variant const &object)
 {
   if (dkg_)
   {
-    std::size_t threshold{1};
+    uint32_t threshold{1};
 
     if (!variant::Extract(object, "threshold", threshold))
     {

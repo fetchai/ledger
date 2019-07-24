@@ -22,9 +22,12 @@
 #include "ml/regularisers/regulariser.hpp"
 #include "ml/state_dict.hpp"
 
+#include <cassert>
 #include <cmath>
 #include <cstdint>
+#include <iostream>
 #include <memory>
+#include <utility>
 #include <vector>
 
 namespace fetch {
@@ -90,8 +93,8 @@ protected:
   ArrayPtrType gradient_accumulation_;
 
 public:
-  Weights()          = default;
-  virtual ~Weights() = default;
+  Weights()           = default;
+  ~Weights() override = default;
 
   ArrayPtrType GetSharableWeights()
   {
@@ -103,8 +106,8 @@ public:
     this->output_ = target_weights->GetSharableWeights();
   }
 
-  virtual std::vector<ArrayType> Backward(VecTensorType const &inputs,
-                                          ArrayType const &    error_signal)
+  std::vector<ArrayType> Backward(VecTensorType const &inputs,
+                                  ArrayType const &    error_signal) override
   {
     FETCH_UNUSED(inputs);
     assert(inputs.empty());
@@ -112,7 +115,7 @@ public:
     return {};
   }
 
-  virtual bool SetData(ArrayType const &data)
+  bool SetData(ArrayType const &data) override
   {
     if (PlaceHolder<T>::SetData(data))  // if input_size_changed
     {
@@ -122,14 +125,14 @@ public:
     return false;
   }
 
-  virtual void Step(typename T::Type learning_rate)
+  void Step(typename T::Type learning_rate) override
   {
     this->gradient_accumulation_->InlineMultiply(-learning_rate);
     this->output_->InlineAdd(*gradient_accumulation_);
     ResetGradients();
   }
 
-  virtual void ApplyGradient(ArrayType const &grad)
+  void ApplyGradient(ArrayType const &grad) override
   {
     this->output_->InlineAdd(grad);
     ResetGradients();
@@ -138,12 +141,12 @@ public:
   /**
    * Set all gradient values to 0
    */
-  virtual void ResetGradients()
+  void ResetGradients() override
   {
     gradient_accumulation_->Fill(typename T::Type(0));
   }
 
-  void ApplyRegularisation()
+  void ApplyRegularisation() override
   {
     if (this->regulariser_)
     {
@@ -155,7 +158,7 @@ public:
    * constructs a state dictionary used for exporting/saving weights
    * @return
    */
-  virtual struct fetch::ml::StateDict<T> StateDict() const
+  struct fetch::ml::StateDict<T> StateDict() const override
   {
     struct fetch::ml::StateDict<T> d;
     d.weights_ = this->output_;
@@ -166,8 +169,8 @@ public:
    * load from a state dictionary to import weights
    * @param dict
    */
-  virtual void
-  LoadStateDict(struct fetch::ml::StateDict<T> const &dict)
+  void
+  LoadStateDict(struct fetch::ml::StateDict<T> const &dict) override
   {
     assert(dict.dict_.empty());
     SetData(*dict.weights_);
@@ -216,7 +219,7 @@ public:
    * exports the weight values Array
    * @return const reference to internal values Array
    */
-  ArrayType const &get_weights() const
+  ArrayType const &get_weights() const override
   {
     return *this->output_;
   }
@@ -225,7 +228,7 @@ public:
    * exports the weight gradients Array
    * @return const reference to internal accumulated gradient Array
    */
-  ArrayType const &get_gradients() const
+  ArrayType const &get_gradients() const override
   {
     return *this->gradient_accumulation_;
   }

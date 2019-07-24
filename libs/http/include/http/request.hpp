@@ -98,7 +98,6 @@ public:
   json::JSONDocument JSON() const
   {
     LOG_STACK_TRACE_POINT;
-
     return json::JSONDocument(body());
   }
 
