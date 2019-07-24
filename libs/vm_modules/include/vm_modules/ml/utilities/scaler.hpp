@@ -78,7 +78,7 @@ public:
   static void Bind(fetch::vm::Module &module)
   {
     module.CreateClassType<VMScaler>("Scaler")
-        .CreateConstuctor<>()
+        .CreateConstuctor()
         .CreateMemberFunction("setScale", &VMScaler::SetScale)
         .CreateMemberFunction("normalise", &VMScaler::Normalise)
         .CreateMemberFunction("deNormalise", &VMScaler::DeNormalise);

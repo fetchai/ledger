@@ -94,7 +94,7 @@ private:
   {
     auto state{
         IState::ConstructIntrinsic(vm_, TypeIds::Unknown, value_type_id_, ComposeFullKey(index))};
-    return state->Get(default_value);
+    return state->GetWithDefault(default_value);
   }
 
   void SetIndexedValueInternal(Ptr<String> const &index, TemplateParameter1 const &value_v)
@@ -104,12 +104,12 @@ private:
     state->Set(value_v);
   }
 
-  TemplateParameter1 Get(Ptr<String> const &key) override
+  TemplateParameter1 GetFromString(Ptr<String> const &key) override
   {
     return GetIndexedValueInternal(key);
   }
 
-  TemplateParameter1 Get(Ptr<Address> const &key) override
+  TemplateParameter1 GetFromAddress(Ptr<Address> const &key) override
   {
     if (!key)
     {
@@ -119,12 +119,14 @@ private:
     return GetIndexedValueInternal(key->AsString());
   }
 
-  TemplateParameter1 Get(Ptr<String> const &key, TemplateParameter1 const &default_value) override
+  TemplateParameter1 GetFromStringWithDefault(Ptr<String> const &       key,
+                                              TemplateParameter1 const &default_value) override
   {
     return GetIndexedValueInternal(key, default_value);
   }
 
-  TemplateParameter1 Get(Ptr<Address> const &key, TemplateParameter1 const &default_value) override
+  TemplateParameter1 GetFromAddressWithDefault(Ptr<Address> const &      key,
+                                               TemplateParameter1 const &default_value) override
   {
     if (!key)
     {
@@ -134,12 +136,12 @@ private:
     return GetIndexedValueInternal(key->AsString(), default_value);
   }
 
-  void Set(Ptr<String> const &key, TemplateParameter1 const &value) override
+  void SetFromString(Ptr<String> const &key, TemplateParameter1 const &value) override
   {
     SetIndexedValueInternal(key, value);
   }
 
-  void Set(Ptr<Address> const &key, TemplateParameter1 const &value) override
+  void SetFromAddress(Ptr<Address> const &key, TemplateParameter1 const &value) override
   {
     if (!key)
     {

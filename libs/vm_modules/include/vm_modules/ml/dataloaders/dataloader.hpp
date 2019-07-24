@@ -58,7 +58,7 @@ public:
   static void Bind(fetch::vm::Module &module)
   {
     module.CreateClassType<VMDataLoader>("DataLoader")
-        .CreateConstuctor<>()
+        .CreateConstuctor()
         .CreateMemberFunction("addData", &VMDataLoader::AddDataByFiles)
         .CreateMemberFunction("addData", &VMDataLoader::AddDataByData)
         .CreateMemberFunction("getNext", &VMDataLoader::GetNext)

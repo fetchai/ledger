@@ -42,14 +42,14 @@ public:
   virtual TemplateParameter1 GetIndexedValue(Ptr<Address> const &key)                    = 0;
   virtual void SetIndexedValue(Ptr<Address> const &key, TemplateParameter1 const &value) = 0;
 
-  virtual TemplateParameter1 Get(Ptr<String> const &key)                                   = 0;
-  virtual TemplateParameter1 Get(Ptr<Address> const &key)                                  = 0;
-  virtual TemplateParameter1 Get(Ptr<String> const &       key,
-                                 TemplateParameter1 const &default_value)                  = 0;
-  virtual TemplateParameter1 Get(Ptr<Address> const &      key,
-                                 TemplateParameter1 const &default_value)                  = 0;
-  virtual void               Set(Ptr<String> const &key, TemplateParameter1 const &value)  = 0;
-  virtual void               Set(Ptr<Address> const &key, TemplateParameter1 const &value) = 0;
+  virtual TemplateParameter1 GetFromString(Ptr<String> const &key)                              = 0;
+  virtual TemplateParameter1 GetFromAddress(Ptr<Address> const &key)                            = 0;
+  virtual TemplateParameter1 GetFromStringWithDefault(Ptr<String> const &       key,
+                                                      TemplateParameter1 const &default_value)  = 0;
+  virtual TemplateParameter1 GetFromAddressWithDefault(Ptr<Address> const &      key,
+                                                       TemplateParameter1 const &default_value) = 0;
+  virtual void SetFromString(Ptr<String> const &key, TemplateParameter1 const &value)           = 0;
+  virtual void SetFromAddress(Ptr<Address> const &key, TemplateParameter1 const &value)         = 0;
 };
 
 }  // namespace vm

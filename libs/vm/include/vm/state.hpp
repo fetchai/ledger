@@ -36,10 +36,10 @@ public:
   static Ptr<IState> ConstructIntrinsic(VM *vm, TypeId type_id, TypeId template_param_type_id,
                                         Ptr<String> const &name);
 
-  virtual TemplateParameter1 Get()                                        = 0;
-  virtual TemplateParameter1 Get(TemplateParameter1 const &default_value) = 0;
-  virtual void               Set(TemplateParameter1 const &value)         = 0;
-  virtual bool               Existed()                                    = 0;
+  virtual TemplateParameter1 Get()                                                   = 0;
+  virtual TemplateParameter1 GetWithDefault(TemplateParameter1 const &default_value) = 0;
+  virtual void               Set(TemplateParameter1 const &value)                    = 0;
+  virtual bool               Existed()                                               = 0;
 
 protected:
   IState(VM *vm, TypeId type_id)

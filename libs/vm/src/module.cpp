@@ -225,7 +225,7 @@ Module::Module()
       .CreateInstantiationType<Array<Ptr<Address>>>();
 
   GetClassInterface<String>()
-      .CreateSerializeDefaultConstuctor<>()
+      .CreateSerializeDefaultConstuctor()
       .CreateMemberFunction("find", &String::Find)
       .CreateMemberFunction("length", &String::Length)
       .CreateMemberFunction("reverse", &String::Reverse)
@@ -234,23 +234,20 @@ Module::Module()
       .CreateMemberFunction("trim", &String::Trim);
 
   GetClassInterface<IMap>()
-      .CreateConstuctor<>()
+      .CreateConstuctor()
       .CreateMemberFunction("count", &IMap::Count)
       .EnableIndexOperator<TemplateParameter1, TemplateParameter2>();
 
   GetClassInterface<Address>()
-      .CreateSerializeDefaultConstuctor<>()
-      //      .CreateConstuctor<>()
+      .CreateSerializeDefaultConstuctor()
       .CreateConstuctor<Ptr<String>>()
       .CreateMemberFunction("signedTx", &Address::HasSignedTx);
 
   GetClassInterface<IState>()
       .CreateConstuctor<Ptr<String>>()
       .CreateConstuctor<Ptr<Address>>()
-      .CreateMemberFunction("get", static_cast<TemplateParameter1 (IState::*)()>(&IState::Get))
-      .CreateMemberFunction(
-          "get",
-          static_cast<TemplateParameter1 (IState::*)(TemplateParameter1 const &)>(&IState::Get))
+      .CreateMemberFunction("get", &IState::Get)
+      .CreateMemberFunction("get", &IState::GetWithDefault)
       .CreateMemberFunction("set", &IState::Set)
       .CreateMemberFunction("existed", &IState::Existed);
 
@@ -260,26 +257,12 @@ Module::Module()
       // TODO (issue 1172): This will be enabled once the issue is resolved
       //.EnableIndexOperator<Ptr<String>, TemplateParameter1>()
       //.EnableIndexOperator<Ptr<Address>, TemplateParameter1>();
-      .CreateMemberFunction("get",
-                            static_cast<TemplateParameter1 (IShardedState::*)(Ptr<String> const &)>(
-                                &IShardedState::Get))
-      .CreateMemberFunction(
-          "get", static_cast<TemplateParameter1 (IShardedState::*)(Ptr<Address> const &)>(
-                     &IShardedState::Get))
-      .CreateMemberFunction(
-          "get", static_cast<TemplateParameter1 (IShardedState::*)(
-                     Ptr<String> const &, TemplateParameter1 const &)>(&IShardedState::Get))
-      .CreateMemberFunction(
-          "get", static_cast<TemplateParameter1 (IShardedState::*)(
-                     Ptr<Address> const &, TemplateParameter1 const &)>(&IShardedState::Get))
-      .CreateMemberFunction(
-          "set",
-          static_cast<void (IShardedState::*)(Ptr<String> const &, TemplateParameter1 const &)>(
-              &IShardedState::Set))
-      .CreateMemberFunction(
-          "set",
-          static_cast<void (IShardedState::*)(Ptr<Address> const &, TemplateParameter1 const &)>(
-              &IShardedState::Set));
+      .CreateMemberFunction("get", &IShardedState::GetFromString)
+      .CreateMemberFunction("get", &IShardedState::GetFromAddress)
+      .CreateMemberFunction("get", &IShardedState::GetFromStringWithDefault)
+      .CreateMemberFunction("get", &IShardedState::GetFromAddressWithDefault)
+      .CreateMemberFunction("set", &IShardedState::SetFromString)
+      .CreateMemberFunction("set", &IShardedState::SetFromAddress);
 }
 
 }  // namespace vm

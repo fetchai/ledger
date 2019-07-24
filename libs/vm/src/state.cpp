@@ -192,7 +192,7 @@ public:
     return GetInternal();
   }
 
-  TemplateParameter1 Get(TemplateParameter1 const &default_value) override
+  TemplateParameter1 GetWithDefault(TemplateParameter1 const &default_value) override
   {
     return GetInternal(&default_value);
   }

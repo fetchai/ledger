@@ -64,7 +64,7 @@ public:
   {
     module.CreateClassType<VMTensor>("Tensor")
         .CreateConstuctor<fetch::vm::Ptr<fetch::vm::Array<VMTensor::SizeType>>>()
-        .CreateSerializeDefaultConstuctor<>()
+        .CreateSerializeDefaultConstuctor()
         .CreateMemberFunction("at", &VMTensor::AtOne)
         .CreateMemberFunction("at", &VMTensor::AtTwo)
         .CreateMemberFunction("at", &VMTensor::AtThree)
