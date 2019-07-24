@@ -26,6 +26,7 @@
 namespace {
 
 using fetch::telemetry::Histogram;
+using fetch::telemetry::OutputStream;
 
 using HistogramPtr = std::unique_ptr<Histogram>;
 
@@ -58,7 +59,8 @@ TEST_F(HistogramTests, SimpleCheck)
   histogram_->Add(10.0);
 
   std::ostringstream oss;
-  histogram_->ToStream(oss, Histogram::StreamMode::FULL);
+  OutputStream stream{oss};
+  histogram_->ToStream(stream);
 
   static char const *EXPECTED_TEXT = R"(# HELP request_time Test Metric
 # TYPE request_time histogram

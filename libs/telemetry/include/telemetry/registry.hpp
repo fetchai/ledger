@@ -25,6 +25,7 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include <algorithm>
 
 namespace fetch {
 namespace telemetry {
@@ -63,7 +64,12 @@ public:
   HistogramMapPtr CreateHistogramMap(std::vector<double> buckets, std::string name,
                                      std::string field, std::string description,
                                      Labels labels = Labels{});
+  /// @}
 
+  /// @name Metric Lookups
+  /// @{
+  template <typename T>
+  std::shared_ptr<T> LookupMeasurement(std::string const &name) const;
   /// @}
 
   void Collect(std::ostream &stream);
@@ -84,8 +90,8 @@ private:
 
   static bool ValidateName(std::string const &name);
 
-  Mutex        lock_;
-  Measurements measurements_;
+  mutable Mutex lock_;
+  Measurements  measurements_;
 };
 
 /**
@@ -115,6 +121,50 @@ Registry::GaugePtr<T> Registry::CreateGauge(std::string name, std::string descri
   }
 
   return gauge;
+}
+
+/**
+ * Lookup and existing metric from the registry
+ *
+ * @tparam T The underlying metric type being requested
+ * @param name The name of the metric
+ * @return A metric matching the name, otherwise a null shared pointer
+ */
+template <typename T>
+std::shared_ptr<T> Registry::LookupMeasurement(std::string const &name) const
+{
+  std::shared_ptr<T> measurement{};
+
+  auto const matcher = [&name](MeasurementPtr const &m) {
+    return (m->name() == name);
+  };
+
+  LockGuard guard{lock_};
+
+  // attempt to find the first metric matching the name with the type
+  for (auto start = measurements_.begin(), end = measurements_.end(); start != end;)
+  {
+    // attempt to locate the next match
+    auto match = std::find_if(start, end, matcher);
+
+    if (match != measurements_.end())
+    {
+      // attempt to convert the measurement to the chosen type
+      measurement = std::dynamic_pointer_cast<T>(*match);
+      if (measurement)
+      {
+        break;
+      }
+
+      // otherwise advance the iterator to move to the next element (since the type mismatched)
+      ++match;
+    }
+
+    // move the next element
+    start = match;
+  }
+
+  return measurement;
 }
 
 }  // namespace telemetry

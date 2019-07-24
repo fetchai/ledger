@@ -25,6 +25,7 @@
 namespace {
 
 using fetch::telemetry::HistogramMap;
+using fetch::telemetry::OutputStream;
 
 using HistogramMapPtr = std::unique_ptr<HistogramMap>;
 
@@ -65,7 +66,8 @@ TEST_F(HistogramMapTests, SimpleCheck)
   histogram_map_->Add("/status", 0.7);
 
   std::ostringstream oss;
-  histogram_map_->ToStream(oss, HistogramMap::StreamMode::FULL);
+  OutputStream stream{oss};
+  histogram_map_->ToStream(stream);
 
   static char const *EXPECTED_TEXT = R"(# HELP http_requests Request time for HTTP paths
 # TYPE http_requests histogram

@@ -25,6 +25,7 @@
 namespace {
 
 using fetch::telemetry::Counter;
+using fetch::telemetry::OutputStream;
 
 using Labels     = Counter::Labels;
 using CounterPtr = std::unique_ptr<Counter>;
@@ -73,7 +74,8 @@ TEST_F(CounterTests, CheckSerialisation)
   counter_->add(500);
 
   std::ostringstream oss;
-  counter_->ToStream(oss, Counter::StreamMode::FULL);
+  OutputStream stream{oss};
+  counter_->ToStream(stream);
 
   static char const *EXPECTED_TEXT = R"(# HELP test_counter_total Simple test counter
 # TYPE test_counter_total counter

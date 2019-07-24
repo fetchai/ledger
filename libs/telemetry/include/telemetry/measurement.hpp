@@ -20,10 +20,29 @@
 #include <iosfwd>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <utility>
 
 namespace fetch {
 namespace telemetry {
+
+class OutputStream
+{
+public:
+
+  explicit OutputStream(std::ostream &stream);
+
+  template <typename T>
+  OutputStream &operator<<(T &&element);
+
+  bool HeaderIsRequired(std::string const &name);
+
+private:
+  using NameSet = std::unordered_set<std::string>;
+
+  std::ostream &stream_;
+  NameSet       metrics_;
+};
 
 class Measurement
 {
@@ -56,15 +75,15 @@ public:
    * @param stream The stream to be updated
    * @param mode The mode to be used when generating the stream
    */
-  virtual void ToStream(std::ostream &stream, StreamMode mode) const = 0;
+  virtual void ToStream(OutputStream &stream) const = 0;
 
   /// @}
 
 protected:
-  std::ostream &WriteHeader(std::ostream &stream, char const *type_name, StreamMode mode) const;
-  std::ostream &WriteValuePrefix(std::ostream &stream) const;
-  std::ostream &WriteValuePrefix(std::ostream &stream, std::string const &suffix) const;
-  std::ostream &WriteValuePrefix(std::ostream &stream, std::string const &suffix,
+  OutputStream &WriteHeader(OutputStream &stream, char const *type_name) const;
+  OutputStream &WriteValuePrefix(OutputStream &stream) const;
+  OutputStream &WriteValuePrefix(OutputStream &stream, std::string const &suffix) const;
+  OutputStream &WriteValuePrefix(OutputStream &stream, std::string const &suffix,
                                  Labels const &extra) const;
 
 private:
@@ -72,6 +91,13 @@ private:
   std::string const description_;
   Labels            labels_;
 };
+
+template <typename T>
+OutputStream &OutputStream::operator<<(T &&element)
+{
+  stream_ << element;
+  return *this;
+}
 
 inline Measurement::Measurement(std::string name, std::string description, Labels labels)
   : name_{std::move(name)}
