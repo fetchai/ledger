@@ -20,6 +20,8 @@
 #include "ml/layers/fully_connected.hpp"
 #include "ml/regularisers/regulariser.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
+#include "ml/optimisation/sgd_optimiser.hpp"
+#include "ml/ops/loss_functions.hpp"
 
 #include "gtest/gtest.h"
 
@@ -28,7 +30,7 @@ class FullyConnectedTest : public ::testing::Test
 {
 };
 
-using MyTypes = ::testing::Types<fetch::math::Tensor<int>, fetch::math::Tensor<float>,
+using MyTypes = ::testing::Types<fetch::math::Tensor<float>,
                                  fetch::math::Tensor<double>,
                                  fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>,
                                  fetch::math::Tensor<fetch::fixed_point::FixedPoint<16, 16>>>;
@@ -78,6 +80,103 @@ TYPED_TEST(FullyConnectedTest, ops_backward_test)  // Use the class as an Ops
   ASSERT_EQ(backprop_error[0].shape()[1], 10);
   ASSERT_EQ(backprop_error[0].shape()[2], 2);
   // No way to test actual values for now as weights are randomly initialised.
+}
+
+TYPED_TEST(FullyConnectedTest, share_weight_with_incompatible_layer)
+{
+	using ArrayType = TypeParam;
+	
+	fetch::ml::Graph<ArrayType> g;
+	
+	std::string input = g.template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>("Input", {});
+	std::string fc_1  = g.template AddNode<fetch::ml::layers::FullyConnected<ArrayType>>(
+	 "FC1", {input}, 10u, 20u);
+	ASSERT_ANY_THROW(std::string fc_2 = g.template AddNode<fetch::ml::layers::FullyConnected<ArrayType>>(
+	 "FC1", {input}, 10u, 21u));
+	ASSERT_ANY_THROW(std::string fc_3 = g.template AddNode<fetch::ml::layers::FullyConnected<ArrayType>>(
+	 "FC1", {input}, 11u, 20u));
+}
+
+TYPED_TEST(FullyConnectedTest, share_weight_backward_test)
+{
+	using ArrayType = TypeParam;
+	using DataType = typename ArrayType::Type;
+	using GraphType = typename fetch::ml::Graph<ArrayType>;
+	
+	std::string descriptor = fetch::ml::layers::FullyConnected<ArrayType>::DESCRIPTOR;
+	
+	// create an auto encoder of two dense layers, both share same weights
+	auto g_shared = std::make_shared<GraphType>();
+	
+	std::string g_shared_input = g_shared->template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>("Input", {});
+	std::string g_shared_intermediate  = g_shared->template AddNode<fetch::ml::layers::FullyConnected<ArrayType>>(
+	 "FC1", {g_shared_input}, 10u, 10u, fetch::ml::details::ActivationType::NOTHING, fetch::ml::details::RegularisationType::NONE, static_cast<DataType>(0), fetch::ml::ops::WeightsInitialisation::XAVIER_GLOROT);
+	std::string g_shared_output = g_shared->template AddNode<fetch::ml::layers::FullyConnected<ArrayType>>(
+	 "FC1", {g_shared_intermediate}, 10u, 10u, fetch::ml::details::ActivationType::NOTHING, fetch::ml::details::RegularisationType::NONE, static_cast<DataType>(0));
+	std::string g_shared_label = g_shared->template AddNode<fetch::ml::ops::PlaceHolder<TypeParam>>("Label", {});
+	std::string g_shared_error = g_shared->template AddNode<fetch::ml::ops::MeanSquareErrorLoss<TypeParam>>(
+	 "Error", {g_shared_output, g_shared_label});
+	
+	// create an auto encoder of two dense layers, both have different weights
+	auto g_not_shared = std::make_shared<GraphType>();
+	
+	std::string g_not_shared_input = g_not_shared->template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>("Input", {});
+	std::string g_not_shared_intermediate  = g_not_shared->template AddNode<fetch::ml::layers::FullyConnected<ArrayType>>(
+	 "FC4", {g_not_shared_input}, 10u, 10u, fetch::ml::details::ActivationType::NOTHING, fetch::ml::details::RegularisationType::NONE, static_cast<DataType>(0), fetch::ml::ops::WeightsInitialisation::XAVIER_GLOROT);
+	std::string g_not_shared_output = g_not_shared->template AddNode<fetch::ml::layers::FullyConnected<ArrayType>>(
+	 "FC5", {g_not_shared_intermediate}, 10u, 10u, fetch::ml::details::ActivationType::NOTHING, fetch::ml::details::RegularisationType::NONE, static_cast<DataType>(0), fetch::ml::ops::WeightsInitialisation::XAVIER_GLOROT);
+	std::string g_not_shared_label = g_not_shared->template AddNode<fetch::ml::ops::PlaceHolder<TypeParam>>("Label", {});
+	std::string g_not_shared_error = g_not_shared->template AddNode<fetch::ml::ops::MeanSquareErrorLoss<TypeParam>>(
+	 "Error", {g_not_shared_output, g_not_shared_label});
+	
+	// check that all weights are equal
+	std::cout << "**************************BEFORE TRAINING**************************" << std::endl;
+	auto g_shared_statedict = g_shared->StateDict();
+	std::cout << "state dict for shared weight graph" << std::endl;
+	for(auto i : g_shared_statedict.dict_){
+		std::cout << "i.first: " << i.first << std::endl;
+		std::cout << "i.second.weights_->ToString(): " << std::endl << i.second.weights_->ToString() << std::endl;
+	}
+	
+	auto g_not_shared_statedict = g_not_shared->StateDict();
+	std::cout << "state dict for not shared weight graph" << std::endl;
+	for(auto i : g_not_shared_statedict.dict_){
+		std::cout << "i.first: " << i.first << std::endl;
+		std::cout << "i.second.weights_->ToString(): " << std::endl << i.second.weights_->ToString() << std::endl;
+	}
+	
+	// start training
+	// set data
+	ArrayType data;
+	data.Resize({10, 1});
+	for(int i=0; i<10; i++){
+		data.Set(i, 0, DataType(i));
+	}
+
+	// Run 1 iteration of training on g shared
+	auto lr = static_cast<DataType>(1);
+	fetch::ml::optimisers::SGDOptimiser<ArrayType> g_shared_optimiser(g_shared, {g_shared_input}, g_shared_label, g_shared_error, lr);
+	g_shared_optimiser.Run({data}, data, 1);
+	// Run 1 iteration of training on g not shared
+	fetch::ml::optimisers::SGDOptimiser<ArrayType> g_not_shared_optimiser(g_not_shared, {g_not_shared_input}, g_not_shared_label, g_not_shared_error, lr);
+	g_not_shared_optimiser.Run({data}, data, 1);
+	
+	// check that all weights are equal
+	std::cout << "**************************AFTER TRAINING**************************" << std::endl;
+	g_shared_statedict = g_shared->StateDict();
+	std::cout << "state dict for shared weight graph" << std::endl;
+	for(auto i : g_shared_statedict.dict_){
+		std::cout << "i.first: " << i.first << std::endl;
+		std::cout << "i.second.weights_->ToString(): " << std::endl << i.second.weights_->ToString() << std::endl;
+	}
+	
+	g_not_shared_statedict = g_not_shared->StateDict();
+	std::cout << "state dict for not shared weight graph" << std::endl;
+	for(auto i : g_not_shared_statedict.dict_){
+		std::cout << "i.first: " << i.first << std::endl;
+		std::cout << "i.second.weights_->ToString(): " << std::endl << i.second.weights_->ToString() << std::endl;
+	}
+	
 }
 
 TYPED_TEST(FullyConnectedTest, node_forward_test)  // Use the class as a Node

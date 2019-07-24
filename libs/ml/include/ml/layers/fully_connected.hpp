@@ -59,10 +59,13 @@ public:
                  details::ActivationType activation_type = details::ActivationType::NOTHING,
                  fetch::ml::details::RegularisationType regulariser =
                      fetch::ml::details::RegularisationType::NONE,
-                 DataType regularisation_rate = static_cast<DataType>(0))
+                 DataType regularisation_rate = static_cast<DataType>(0),
+                 WeightsInit init_mode           = WeightsInit::XAVIER_GLOROT)
     : in_size_(in)
     , out_size_(out)
   {
+  	FETCH_UNUSED(init_mode);
+  	
     // setup overall architecture of the model
     SetupArchitecture(activation_type, regulariser, regularisation_rate);
 
@@ -120,6 +123,13 @@ public:
       throw std::runtime_error("the shared weight from node: " + target_node_ptr->GetNodeName() +
                                " is incompatible with the specified shape of this layer");
     }
+    
+    // Set sudo weights to handle initilization issues
+	  ArrayType   weights_data(std::vector<SizeType>({out_size_, in_size_}));
+	  this->SetInput(name + "_Weights", weights_data);
+	  ArrayType bias_data(std::vector<SizeType>({out_size_, 1}));
+	  this->SetInput(name + "_Bias", bias_data);
+    
     // Share weights and parameter among these weights layers
     weights_ptr->ShareWeightsWith(target_weights_ptr);
     bias_ptr->ShareWeightsWith(target_bias_ptr);
