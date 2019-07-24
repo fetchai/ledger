@@ -243,17 +243,6 @@ private:
     set_count_->increment();
   }
 
-  void SetBulk(std::unordered_map<ResourceID, byte_array::ConstByteArray> const &updates)
-  {
-    telemetry::FunctionTimer const timer{*set_bulk_durations_};
-
-    for (auto const &element : updates)
-    {
-      doc_store_->Set(element.first, element.second);
-      set_count_->increment();
-    }
-  }
-
   NewRevertibleDocumentStore::Hash Commit()
   {
     auto const hash = doc_store_->Commit();

@@ -75,8 +75,6 @@ public:
                                      "The histogram of set operation durations in seconds")}
     , get_durations_{CreateHistogram(lane, "ledger_tx_store_get_duration",
                                      "The histogram of get operation durations in seconds")}
-    , get_bulk_durations_{CreateHistogram(lane, "ledger_tx_store_get_bulk_duration",
-                                     "The histogram of get bulk operation durations in seconds")}
   {
     this->Expose(GET, this, &self_type::Get);
     this->Expose(SET, this, &self_type::Set);
