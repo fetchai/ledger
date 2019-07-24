@@ -20,6 +20,8 @@
 #include "math/standard_functions/log.hpp"
 #include "ml/ops/ops.hpp"
 
+#include <cassert>
+
 namespace fetch {
 namespace ml {
 namespace ops {
@@ -33,15 +35,15 @@ public:
   using SizeType      = typename ArrayType::SizeType;
   using VecTensorType = typename Ops<T>::VecTensorType;
 
-  Log()          = default;
-  virtual ~Log() = default;
+  Log()           = default;
+  ~Log() override = default;
 
   /**
    * elementwise Log
    * @param inputs vector containing one tensor which is the input tensor to Log
    * @return
    */
-  virtual void Forward(VecTensorType const &inputs, ArrayType &output)
+  void Forward(VecTensorType const &inputs, ArrayType &output) override
   {
     assert(inputs.size() == 1);
     assert(output.shape() == this->ComputeOutputShape(inputs));
@@ -53,8 +55,8 @@ public:
    * elementwise log gradient is 1/x * error:
    * f'(input0)= error_signal/input0
    */
-  virtual std::vector<ArrayType> Backward(VecTensorType const &inputs,
-                                          ArrayType const &    error_signal)
+  std::vector<ArrayType> Backward(VecTensorType const &inputs,
+                                  ArrayType const &    error_signal) override
   {
     assert(inputs.size() == 1);
     assert(error_signal.shape() == this->ComputeOutputShape(inputs));
@@ -65,7 +67,7 @@ public:
     return {ret_error_signal};
   }
 
-  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const
+  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
   {
     return inputs.front()->shape();
   }

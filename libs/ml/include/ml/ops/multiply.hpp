@@ -20,6 +20,10 @@
 #include "core/assert.hpp"
 #include "ml/ops/ops.hpp"
 
+#include <cassert>
+#include <memory>
+#include <vector>
+
 namespace fetch {
 namespace ml {
 namespace ops {
@@ -33,15 +37,15 @@ public:
   using ArrayPtrType  = std::shared_ptr<ArrayType>;
   using VecTensorType = typename Ops<T>::VecTensorType;
 
-  Multiply()          = default;
-  virtual ~Multiply() = default;
+  Multiply()           = default;
+  ~Multiply() override = default;
 
   /**
    * elementwise multiplication
    * @param inputs  left & right inputs to multiply
    * @return
    */
-  virtual void Forward(VecTensorType const &inputs, ArrayType &output)
+  void Forward(VecTensorType const &inputs, ArrayType &output) override
   {
     assert(inputs.size() == 2);
     assert(inputs.at(0)->size() == inputs.at(1)->size());
@@ -55,8 +59,8 @@ public:
    * f'(input0)=input1*error_signal
    * f'(input1)=input0*error_signal
    */
-  virtual std::vector<ArrayType> Backward(VecTensorType const &inputs,
-                                          ArrayType const &    error_signal)
+  std::vector<ArrayType> Backward(VecTensorType const &inputs,
+                                  ArrayType const &    error_signal) override
   {
     assert(inputs.size() == 2);
     assert(inputs.at(0)->size() == inputs.at(1)->size());
@@ -71,7 +75,7 @@ public:
     return {error_signal_1, error_signal_2};
   }
 
-  virtual std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const
+  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
   {
     return inputs.front()->shape();
   }

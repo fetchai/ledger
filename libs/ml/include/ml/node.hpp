@@ -19,11 +19,12 @@
 
 #include "ops/ops.hpp"
 
+#include <algorithm>
+#include <cassert>
+#include <cstdint>
 #include <functional>
 #include <memory>
 #include <string>
-#include <unordered_map>
-#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -63,13 +64,12 @@ public:
   using VecTensorType = typename fetch::ml::Ops<T>::VecTensorType;
 
   template <typename... Params>
-  Node(std::string const name, Params... params)
+  explicit Node(std::string name, Params... params)
     : O(params...)
     , name_(std::move(name))
     , cached_output_status_(CachedOutputState::CHANGED_SIZE)
   {}
-
-  virtual ~Node() = default;
+  ~Node() override = default;
 
   VecTensorType                                         GatherInputs() const;
   std::shared_ptr<T>                                    Evaluate(bool is_training) override;

@@ -39,8 +39,8 @@ public:
   using Ptr    = fetch::vm::Ptr<T>;
   using String = fetch::vm::String;
 
-  UInt256Wrapper()          = delete;
-  virtual ~UInt256Wrapper() = default;
+  UInt256Wrapper()           = delete;
+  ~UInt256Wrapper() override = default;
 
   static fetch::vm::Ptr<fetch::vm::String> ToString(fetch::vm::VM *vm, Ptr<UInt256Wrapper> const &n)
   {

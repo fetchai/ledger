@@ -25,6 +25,7 @@
 #include "ledger/execution_manager.hpp"
 #include "ledger/executor.hpp"
 #include "ledger/state_adapter.hpp"
+#include "ledger/transaction_status_cache.hpp"
 #include "moment/deadline_timer.hpp"
 #include "storage/resource_mapper.hpp"
 
@@ -46,11 +47,13 @@ namespace ledger {
  * @param num_executors The specified number of executors (and threads)
  */
 ExecutionManager::ExecutionManager(std::size_t num_executors, uint32_t log2_num_lanes,
-                                   StorageUnitPtr storage, ExecutorFactory const &factory)
+                                   StorageUnitPtr storage, ExecutorFactory const &factory,
+                                   TransactionStatusCache::ShrdPtr tx_status_cache)
   : log2_num_lanes_{log2_num_lanes}
-  , storage_(std::move(storage))
-  , idle_executors_()
-  , thread_pool_(network::MakeThreadPool(num_executors, "Executor"))
+  , storage_{std::move(storage)}
+  , idle_executors_{}
+  , thread_pool_{network::MakeThreadPool(num_executors, "Executor")}
+  , tx_status_cache_{std::move(tx_status_cache)}
 {
   // setup the executor pool
   {
@@ -186,12 +189,13 @@ void ExecutionManager::DispatchExecution(ExecutionItem &item)
 
     // execute the item
     item.Execute(*executor);
+    auto const &result{item.result()};
 
     // determine what the status is
-    if (ExecutorInterface::Status::SUCCESS != item.status())
+    if (ExecutorInterface::Status::SUCCESS != result.status)
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Error executing tx: 0x", item.digest().ToHex(),
-                     " status: ", ledger::ToString(item.status()));
+                     " status: ", ledger::ToString(result.status));
     }
 
     counters_.Apply([](Counters &counters) {
@@ -420,7 +424,7 @@ void ExecutionManager::MonitorThreadEntrypoint()
         {
           assert(item);
 
-          switch (item->status())
+          switch (item->result().status)
           {
           case ExecutionItem::Status::SUCCESS:
             ++num_complete;
@@ -445,6 +449,11 @@ void ExecutionManager::MonitorThreadEntrypoint()
 
           // update aggregate fees
           aggregate_block_fees += item->fee();
+
+          if (tx_status_cache_)
+          {
+            tx_status_cache_->Update(item->digest(), item->result());
+          }
         }
 
         // only provide debug if required

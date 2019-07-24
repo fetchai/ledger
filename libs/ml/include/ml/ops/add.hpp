@@ -19,6 +19,9 @@
 
 #include "ml/ops/ops.hpp"
 
+#include <cassert>
+#include <vector>
+
 namespace fetch {
 namespace ml {
 namespace ops {
@@ -32,17 +35,18 @@ public:
   using SizeType      = typename ArrayType::SizeType;
   using VecTensorType = typename Ops<T>::VecTensorType;
 
-  Add()          = default;
-  virtual ~Add() = default;
+  Add()           = default;
+  ~Add() override = default;
 
-  void Forward(VecTensorType const &inputs, ArrayType &output)
+  void Forward(VecTensorType const &inputs, ArrayType &output) override
   {
     assert(inputs.size() == 2);
     assert(output.shape() == this->ComputeOutputShape(inputs));
     fetch::math::Add((*inputs.at(0)), (*inputs.at(1)), output);
   }
 
-  std::vector<ArrayType> Backward(VecTensorType const &inputs, ArrayType const &error_signal)
+  std::vector<ArrayType> Backward(VecTensorType const &inputs,
+                                  ArrayType const &    error_signal) override
   {
     assert(inputs.size() == 2);
     assert(inputs.at(0)->shape().size() == inputs.at(1)->shape().size());
@@ -67,7 +71,7 @@ public:
     }
   }
 
-  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const
+  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
   {
     return inputs.at(0)->shape();
   }

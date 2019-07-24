@@ -580,7 +580,7 @@ typename GraphW2VLoader<T>::SizeType GraphW2VLoader<T>::WindowSize()
 }
 
 /**
- * converts string to indices and inserts into vocab as necessary
+ * converts string to indices and inserts into vocab as necessary
  * @tparam T
  * @param strings
  * @return

@@ -196,10 +196,9 @@ http::HTTPResponse ContractHttpInterface::OnQuery(ConstByteArray const &   contr
     // parse the incoming request
     json::JSONDocument doc;
     doc.Parse(request.body());
-
-    // dispatch the contract type
     variant::Variant response;
-    auto             contract = contract_cache_.Lookup(contract_id, storage_);
+    // dispatch the contract type
+    auto contract = contract_cache_.Lookup(contract_id, storage_);
 
     // adapt the storage engine so that that get and sets are sandboxed for the contract
     StateAdapter storage_adapter{storage_, contract_id};

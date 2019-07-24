@@ -45,8 +45,8 @@ public:
   explicit DataLoader(bool random_mode)
     : random_mode_(random_mode)
   {}
+  virtual ~DataLoader() = default;
 
-  virtual ~DataLoader()        = default;
   virtual ReturnType GetNext() = 0;
 
   virtual ReturnType PrepareBatch(fetch::math::SizeType subset_size, bool &is_done_set);
@@ -96,9 +96,8 @@ void DataLoader<LabelType, DataType>::SetDataSize(
  */
 template <typename LabelType, typename DataType>
 typename DataLoader<LabelType, DataType>::ReturnType DataLoader<LabelType, DataType>::PrepareBatch(
-    fetch::math::SizeType subset_size, bool &is_done_set)
+    fetch::math::SizeType batch_size, bool &is_done_set)
 {
-  //
   if (size_not_set_)
   {
     // first ever call to PrepareBatch requires a dummy GetNext to identify tensor shapes
@@ -110,10 +109,10 @@ typename DataLoader<LabelType, DataType>::ReturnType DataLoader<LabelType, DataT
   }
 
   // if the label is set to be the wrong batch_size reshape
-  if (ret_pair_.first.shape().at(ret_pair_.first.shape().size() - 1) != subset_size)
+  if (ret_pair_.first.shape().at(ret_pair_.first.shape().size() - 1) != batch_size)
   {
     SizeVector new_shape               = ret_pair_.first.shape();
-    new_shape.at(new_shape.size() - 1) = subset_size;
+    new_shape.at(new_shape.size() - 1) = batch_size;
     ret_pair_.first.Reshape(new_shape);
   }
 
@@ -123,16 +122,16 @@ typename DataLoader<LabelType, DataType>::ReturnType DataLoader<LabelType, DataT
     // reshape the tensor to the correct batch size
     if (ret_pair_.second.at(tensor_count)
             .shape()
-            .at(ret_pair_.second.at(tensor_count).shape().size() - 1) != subset_size)
+            .at(ret_pair_.second.at(tensor_count).shape().size() - 1) != batch_size)
     {
       SizeVector new_shape               = ret_pair_.second.at(tensor_count).shape();
-      new_shape.at(new_shape.size() - 1) = subset_size;
+      new_shape.at(new_shape.size() - 1) = batch_size;
       ret_pair_.second.at(tensor_count).Reshape(new_shape);
     }
   }
 
   SizeType data_idx{0};
-  while (data_idx < subset_size)
+  while (data_idx < batch_size)
   {
     // check if end of data
     if (IsDone())

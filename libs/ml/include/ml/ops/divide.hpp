@@ -20,6 +20,10 @@
 #include "math/fundamental_operators.hpp"
 #include "ml/ops/ops.hpp"
 
+#include <cassert>
+#include <memory>
+#include <vector>
+
 namespace fetch {
 namespace ml {
 namespace ops {
@@ -34,15 +38,15 @@ public:
   using VecTensorType = typename Ops<T>::VecTensorType;
   using DataType      = typename T::Type;
 
-  Divide()          = default;
-  virtual ~Divide() = default;
+  Divide()           = default;
+  ~Divide() override = default;
 
   /**
    * elementwise division
    * @param inputs  left & right inputs to Divide
    * @return
    */
-  virtual void Forward(VecTensorType const &inputs, ArrayType &output)
+  void Forward(VecTensorType const &inputs, ArrayType &output) override
   {
     assert(inputs.size() == 2);
     assert(inputs.at(0)->shape() == output.shape());
@@ -61,8 +65,8 @@ public:
    * f'(a)=(1/b)*err
    * f'(b)=-(a/(b^2))*err
    */
-  virtual std::vector<ArrayType> Backward(VecTensorType const &inputs,
-                                          ArrayType const &    error_signal)
+  std::vector<ArrayType> Backward(VecTensorType const &inputs,
+                                  ArrayType const &    error_signal) override
   {
     ArrayType return_signal_1(inputs.at(0)->shape());
     ArrayType return_signal_2(inputs.at(1)->shape());
@@ -106,7 +110,7 @@ public:
     return {return_signal_1, return_signal_2};
   }
 
-  virtual std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const
+  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
   {
     return inputs.front()->shape();
   }

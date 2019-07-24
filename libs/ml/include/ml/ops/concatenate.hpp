@@ -37,13 +37,12 @@ public:
   explicit Concatenate(SizeType axis)
     : axis_(axis)
   {}
-
-  virtual ~Concatenate() = default;
+  ~Concatenate() override = default;
 
   /**
    * concatenates multiple input tensors into one
    */
-  virtual void Forward(VecTensorType const &inputs, ArrayType &output)
+  void Forward(VecTensorType const &inputs, ArrayType &output) override
   {
     std::vector<ArrayType> tensors;
     for (auto const &e : inputs)
@@ -60,8 +59,8 @@ public:
    * @param error_signal
    * @return
    */
-  virtual std::vector<ArrayType> Backward(VecTensorType const &inputs,
-                                          ArrayType const &    error_signal)
+  std::vector<ArrayType> Backward(VecTensorType const &inputs,
+                                  ArrayType const &    error_signal) override
   {
     concat_points_.resize(inputs.size());
     auto c_it = concat_points_.begin();
@@ -70,10 +69,11 @@ public:
       *c_it = e->shape()[axis_];
       ++c_it;
     }
+
     return ArrayType::Split(error_signal, concat_points_, axis_);
   }
 
-  virtual std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const
+  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
   {
     return inputs.front()->shape();
   }

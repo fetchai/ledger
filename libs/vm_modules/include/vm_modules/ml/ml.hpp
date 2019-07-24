@@ -26,8 +26,6 @@
 #include "vm_modules/ml/training_pair.hpp"
 #include "vm_modules/ml/utilities/scaler.hpp"
 
-#include <cstdlib>
-
 namespace fetch {
 namespace vm_modules {
 namespace ml {

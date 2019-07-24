@@ -17,13 +17,15 @@
 //
 //------------------------------------------------------------------------------
 
-#include <fstream>
-#include <vector>
-
 #include "core/random.hpp"
 #include "math/base_types.hpp"
 #include "math/tensor.hpp"
 #include "ml/dataloaders/dataloader.hpp"
+
+#include <fstream>
+#include <sstream>
+#include <stdexcept>
+#include <string>
 
 namespace fetch {
 namespace ml {

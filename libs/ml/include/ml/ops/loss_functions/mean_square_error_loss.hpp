@@ -17,12 +17,12 @@
 //
 //------------------------------------------------------------------------------
 
+#include "math/metrics/mean_square_error.hpp"
+#include "ml/ops/ops.hpp"
+
 #include <cassert>
 #include <memory>
 #include <vector>
-
-#include "math/metrics/mean_square_error.hpp"
-#include "ml/ops/ops.hpp"
 
 namespace fetch {
 namespace ml {
@@ -40,7 +40,7 @@ public:
   explicit MeanSquareErrorLoss(ArrayType const &weightings = ArrayType())
     : weightings_(weightings)
   {}
-  virtual ~MeanSquareErrorLoss() = default;
+  ~MeanSquareErrorLoss() override = default;
 
   void Forward(VecTensorType const &inputs, ArrayType &output) override
   {
