@@ -678,10 +678,10 @@ private:
     SizeVector             shape() const;
 
   protected:
-    STensor &                          tensor_;
-    std::vector<std::vector<SizeType>> range_;
-    std::vector<SizeType>              axes_;
-    SizeType                           axis_;
+    STensor &               tensor_;
+    std::vector<SizeVector> range_;
+    std::vector<SizeType>   axes_;
+    SizeType                axis_;
   };
 };
 
@@ -2135,7 +2135,7 @@ typename Tensor<T, C>::MAJOR_ORDER Tensor<T, C>::MajorOrder() const
 template <typename T, typename C>
 typename Tensor<T, C>::ConstSliceType Tensor<T, C>::Slice(SizeType i, SizeType axis) const
 {
-  std::vector<std::vector<SizeType>> range;
+  std::vector<SizeVector> range;
 
   for (SizeType j = 0; j < shape().size(); ++j)
   {
@@ -2163,7 +2163,7 @@ typename Tensor<T, C>::ConstSliceType Tensor<T, C>::Slice(SizeType i, SizeType a
 template <typename T, typename C>
 typename Tensor<T, C>::TensorSlice Tensor<T, C>::Slice(SizeType i, SizeType axis)
 {
-  std::vector<std::vector<SizeType>> range;
+  std::vector<SizeVector> range;
 
   for (SizeType j = 0; j < shape().size(); ++j)
   {
@@ -2300,10 +2300,10 @@ Tensor<T, C> Tensor<T, C>::Concat(std::vector<Tensor> const &tensors, SizeType c
   Tensor ret{ret_tensor_shape};
 
   // copy the data across for each tensor
-  SizeType                           cur_from{0};
-  SizeType                           cur_to{0};
-  std::vector<std::vector<SizeType>> step{ret_tensor_shape.size()};
-  std::vector<SizeType>              cur_step(3);
+  SizeType                cur_from{0};
+  SizeType                cur_to{0};
+  std::vector<SizeVector> step{ret_tensor_shape.size()};
+  std::vector<SizeType>   cur_step(3);
 
   cur_step[2] = 1;  // stepsize always 1 for now
 
@@ -2359,10 +2359,10 @@ typename std::vector<Tensor<T, C>> Tensor<T, C>::Split(Tensor const &    tensor,
   std::vector<Tensor> ret{concat_points.size()};
 
   // Move implementation to Tensor::UnConcatenate
-  SizeType                           cur_from{0};
-  SizeType                           cur_to{0};
-  std::vector<std::vector<SizeType>> step{tensor.shape().size()};
-  std::vector<SizeType>              cur_step(3);
+  SizeType                cur_from{0};
+  SizeType                cur_to{0};
+  std::vector<SizeVector> step{tensor.shape().size()};
+  std::vector<SizeType>   cur_step(3);
   cur_step[2] = 1;  // stepsize always 1 for now
 
   for (SizeType i{0}; i < ret.size(); ++i)
@@ -2661,7 +2661,7 @@ typename Tensor<T, C>::TensorSlice Tensor<T, C>::TensorSlice::Slice(SizeType i, 
     assert(new_axes.at(i) != axis);
   }
 
-  std::vector<std::vector<SizeType>> new_range(this->range_);
+  std::vector<SizeVector> new_range(this->range_);
 
   // Modify range based on specified offset i
   new_range.at(axis).at(0) = i;
@@ -2761,7 +2761,7 @@ typename Tensor<T, C>::ConstSliceType Tensor<T, C>::TensorSliceImplementation<ST
     assert(new_axes.at(i) != axis);
   }
 
-  std::vector<std::vector<SizeType>> new_range(range_);
+  std::vector<SizeVector> new_range(range_);
 
   // Modify range based on specified offset i
   new_range.at(axis).at(0) = i;
