@@ -19,7 +19,10 @@
 #include "core/string/ends_with.hpp"
 #include "telemetry/counter.hpp"
 
-#include <iostream>
+#include <ostream>
+#include <stdexcept>
+#include <string>
+#include <utility>
 
 namespace fetch {
 namespace telemetry {

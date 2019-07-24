@@ -22,6 +22,7 @@
 #include "core/macros.hpp"
 #include "core/serializers/stl_types.hpp"
 #include "core/serializers/type_register.hpp"
+
 #include <type_traits>
 
 namespace fetch {
@@ -64,7 +65,7 @@ public:
   void Reserve(std::size_t size, ResizeParadigm const &resize_paradigm = ResizeParadigm::RELATIVE,
                bool const zero_reserved_space = true)
   {
-    (void)zero_reserved_space;
+    FETCH_UNUSED(zero_reserved_space);
 
     switch (resize_paradigm)
     {

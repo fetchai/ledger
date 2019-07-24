@@ -28,6 +28,7 @@
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 #include "network/details/thread_pool.hpp"
 #include "storage/object_store.hpp"
+#include "transaction_status_cache.hpp"
 
 #include <atomic>
 #include <condition_variable>
@@ -41,6 +42,8 @@
 
 namespace fetch {
 namespace ledger {
+
+class TransactionStatusCache;
 
 /**
  * The Execution Manager is the object which orchestrates the execution of a
@@ -56,7 +59,7 @@ public:
 
   // Construction / Destruction
   ExecutionManager(std::size_t num_executors, uint32_t log2_num_lanes, StorageUnitPtr storage,
-                   ExecutorFactory const &factory);
+                   ExecutorFactory const &factory, TransactionStatusCache::ShrdPtr tx_status_cache);
 
   /// @name Execution Manager Interface
   /// @{
@@ -131,6 +134,8 @@ private:
 
   ThreadPool thread_pool_;
   ThreadPtr  monitor_thread_;
+
+  TransactionStatusCache::ShrdPtr tx_status_cache_;  ///< Ref to the tx status cache
 
   void MonitorThreadEntrypoint();
 

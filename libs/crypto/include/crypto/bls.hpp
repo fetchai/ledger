@@ -92,9 +92,9 @@ public:
     return identity_;
   }
 
-  operator bool() const
+  explicit operator bool() const
   {
-    return identity_;
+    return static_cast<bool>(identity_);
   }
 
 private:
@@ -130,7 +130,7 @@ public:
 
   ConstByteArray Sign(ConstByteArray const &text) const final
   {
-    std::string    m = static_cast<std::string>(text);
+    auto const     m = static_cast<std::string>(text);
     bls::Signature s;
     private_key_.sign(s, m.c_str());
     std::stringstream signature;

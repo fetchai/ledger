@@ -153,7 +153,7 @@ private:
     }
 
     buffer_.first.Fill(DataType{0});
-    buffer_.first(labels_[index], 0) = DataType{1.0};
+    buffer_.first(labels_[index], 0) = static_cast<DataType>(1.0);
 
     ret = buffer_;
   }

@@ -20,7 +20,6 @@
 #include "core/logging.hpp"  // temporary
 
 #include "core/abstract_mutex.hpp"
-#include "core/commandline/vt100.hpp"
 
 #include "spdlog/spdlog.h"
 
@@ -202,33 +201,23 @@ public:
     using Timepoint = Clock::time_point;
     using Duration  = Clock::duration;
 
-    using namespace fetch::commandline::VT100;
-    int color    = 9;
-    int bg_color = 9;
-
     char const *level_name = "UNKNWN";
     switch (level)
     {
     case Level::INFO:
-      color      = 3;
       level_name = "INFO  ";
       break;
     case Level::WARNING:
-      color      = 6;
       level_name = "WARN  ";
       break;
     case Level::ERROR:
-      color      = 1;
       level_name = "ERROR ";
       break;
     case Level::DEBUG:
       level_name = "DEBUG ";
-      color      = 7;
       break;
     case Level::HIGHLIGHT:
       level_name = "HLIGHT";
-      bg_color   = 4;
-      color      = 7;
       break;
     }
 
@@ -240,8 +229,8 @@ public:
 
     // format and generate the time
     std::time_t now_c = std::chrono::system_clock::to_time_t(now);
-    std::cout << "[ " << GetColor(color, bg_color) << std::put_time(std::localtime(&now_c), "%F %T")
-              << "." << std::setw(3) << millis << DefaultAttributes();
+    std::cout << "[ " << std::put_time(std::localtime(&now_c), "%F %T") << "." << std::setw(3)
+              << millis;
 
     // thread information
     std::cout << ", #" << std::setw(2) << thread_number << ' ' << level_name;
@@ -263,8 +252,6 @@ public:
       std::cout << ": " << std::setw(15) << ctx->instance() << std::setw(20) << ctx->context(18)
                 << " ] ";
     }
-    std::cout << GetColor(color, bg_color);
-
 #endif
   }
 
@@ -280,14 +267,6 @@ public:
   {
 #ifndef FETCH_DISABLE_COUT_LOGGING
     std::cout << s;
-#endif
-  }
-
-  virtual void CloseEntry(Level)
-  {
-#ifndef FETCH_DISABLE_COUT_LOGGING
-    using namespace fetch::commandline::VT100;
-    std::cout << DefaultAttributes() << std::endl;
 #endif
   }
 };
@@ -327,7 +306,6 @@ public:
       {
         log_->Append(item);
       }
-      log_->CloseEntry(DefaultLogger::Level::DEBUG);
     }
   }
 
@@ -547,7 +525,6 @@ private:
     {
       log_->StartEntry(level, name, TopContextImpl());
       Unroll<Args...>::Append(this, std::forward<Args>(args)...);
-      log_->CloseEntry(level);
     }
   }
 
@@ -589,15 +566,13 @@ private:
 
   void PrintTrace(shared_context_type ctx, uint32_t max = uint32_t(-1)) const
   {
-    using namespace fetch::commandline::VT100;
     std::size_t i = 0;
     while (ctx)
     {
       std::cout << std::setw(3) << i << ": In thread #"
                 << ReadableThread::GetThreadID(ctx->thread_id()) << ": ";
-      std::cout << GetColor(5, 9) << ctx->context() << DefaultAttributes() << " " << ctx->filename()
-                << ", ";
-      std::cout << GetColor(3, 9) << ctx->line() << DefaultAttributes() << std::endl;
+      std::cout << ctx->context() << " " << ctx->filename() << ", ";
+      std::cout << ctx->line() << std::endl;
 
       if (ctx->derived_from())
       {

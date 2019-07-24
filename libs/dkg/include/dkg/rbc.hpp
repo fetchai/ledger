@@ -45,13 +45,12 @@ public:
   using Subscription    = muddle::Subscription;
   using SubscriptionPtr = std::shared_ptr<muddle::Subscription>;
 
-  // Constructor
-  RBC(Endpoint &endpoint, MuddleAddress address, CabinetMembers const &cabinet, uint64_t &threshold,
+  RBC(Endpoint &endpoint, MuddleAddress address, CabinetMembers const &cabinet,
       DkgService &dkg_service);
 
   // Operators
   void ResetCabinet();
-  void SendRBroadcast(const SerialisedMessage &msg);
+  void SendRBroadcast(SerialisedMessage const &msg);
 
 private:
   enum class MsgType : uint8_t
@@ -100,23 +99,24 @@ private:
   MuddleAddress const address_;   ///< Our muddle address
   Endpoint &          endpoint_;  ///< The muddle endpoint to communicate on
   CabinetMembers const
-      &       current_cabinet_;  ///< The set of muddle addresses of the cabinet (including our own)
-  uint64_t &  threshold_;        ///< Number of byzantine nodes
-  DkgService &dkg_service_;
+      &    current_cabinet_;  ///< The set of muddle addresses of the cabinet (including our own)
+  uint32_t threshold_;  ///< Number of byzantine nodes (this is assumed to take the maximum allowed
+                        ///< value satisying threshold_ < current_cabinet_.size()
+  DkgService &    dkg_service_;
   SubscriptionPtr rbc_subscription_;  ///< For receiving messages in the rbc channel
 
-  void Send(const RBCEnvelop &env, const MuddleAddress &address);
-  void Broadcast(const RBCEnvelop &env);
+  void Send(RBCEnvelop const &env, MuddleAddress const &address);
+  void Broadcast(RBCEnvelop const &env);
   void OnRBC(MuddleAddress const &from, RBCEnvelop const &envelop);
   void OnRBroadcast(std::shared_ptr<RBroadcast> msg_ptr, uint32_t sender_index);
   void OnREcho(std::shared_ptr<REcho> msg_ptr, uint32_t sender_index);
   void OnRReady(std::shared_ptr<RReady> msg_ptr, uint32_t sender_index);
   void OnRRequest(std::shared_ptr<RRequest> msg_ptr, uint32_t sender_index);
   void OnRAnswer(std::shared_ptr<RAnswer> msg_ptr, uint32_t sender_index);
-  void Deliver(const SerialisedMessage &msg, uint32_t sender_index);
+  void Deliver(SerialisedMessage const &msg, uint32_t sender_index);
 
   static std::string MsgTypeToString(MsgType msg_type);
-  uint32_t           CabinetIndex(const MuddleAddress &other_address) const;
+  uint32_t           CabinetIndex(MuddleAddress const &other_address) const;
   bool               CheckTag(RBCMessage &msg);
   bool               SetMbar(TagType tag, std::shared_ptr<RMessage> msg_ptr, uint32_t sender_index);
   bool               SetDbar(TagType tag, std::shared_ptr<RHash> msg_ptr);
@@ -124,6 +124,7 @@ private:
   struct MsgCount    ReceivedReady(TagType tag, std::shared_ptr<RHash> msg_ptr);
   bool               SetPartyFlag(uint32_t sender_index, TagType tag, MsgType msg_type);
 };
+
 }  // namespace rbc
 }  // namespace dkg
 }  // namespace fetch

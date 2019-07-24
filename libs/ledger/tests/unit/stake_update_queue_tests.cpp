@@ -16,12 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "random_address.hpp"
-
 #include "core/containers/is_in.hpp"
 #include "core/random/lcg.hpp"
 #include "ledger/consensus/stake_snapshot.hpp"
 #include "ledger/consensus/stake_update_queue.hpp"
+#include "random_address.hpp"
 
 #include "gtest/gtest.h"
 
@@ -44,11 +43,6 @@ protected:
   {
     rng_.Seed(42);
     stake_update_queue_ = std::make_unique<StakeUpdateQueue>();
-  }
-
-  void TearDown() override
-  {
-    stake_update_queue_.reset();
   }
 
   StakeUpdateQueuePtr stake_update_queue_;
