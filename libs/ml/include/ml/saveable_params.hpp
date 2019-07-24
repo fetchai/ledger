@@ -57,8 +57,8 @@ struct SaveableParams
 template <class ArrayType>
 struct PlaeholderSaveableParams : public SaveableParams
 {
-  static constexpr char const *          sp_descriptor = "PlaceholderSaveableParams";
-  std::shared_ptr<ArrayType>             output;
+  static constexpr char const *sp_descriptor = "PlaceholderSaveableParams";
+  std::shared_ptr<ArrayType>   output;
 
   template <class S>
   friend void Serialize(S &serializer, PlaeholderSaveableParams<ArrayType> const &sp)
