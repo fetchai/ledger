@@ -43,14 +43,10 @@ enum Configuration
   public final String label
 }
 
-def is_master_branch()
-{
-  return BRANCH_NAME == 'master'
-}
-
 def is_master_or_pull_request_head_branch()
 {
-  return is_master_branch() || BRANCH_NAME ==~ /^PR-\d+-head$/
+  return BRANCH_NAME == 'master' || BRANCH_NAME ==~ /^PR-\d+-head$/
+      || BRANCH_NAME ==~ /^PR-\d+$/
 }
 
 def static_analysis()
