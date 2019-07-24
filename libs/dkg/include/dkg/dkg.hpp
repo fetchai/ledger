@@ -113,7 +113,7 @@ class DistributedKeyGeneration
 
   /// @name Methods to send messages
   /// @{
-  void SendBroadcast(DKGEnvelop const &env);
+  void SendBroadcast(DKGEnvelope const &env);
   void SendCoefficients(std::vector<bn::Fr> const &a_i, std::vector<bn::Fr> const &b_i);
   void SendShares(std::vector<bn::Fr> const &a_i, std::vector<bn::Fr> const &b_i);
   void BroadcastComplaints();
