@@ -111,8 +111,8 @@ struct DropoutSaveableParams : public SaveableParams
   static constexpr char const *sp_descriptor = "DropoutSaveableParams";
   SizeType                     random_seed{};
   DataType                     probability{};
-  std::vector<uint64_t> buffer;
-  uint64_t index;
+  std::vector<uint64_t>        buffer;
+  uint64_t                     index;
 
   template <class S>
   friend void Serialize(S &serializer, DropoutSaveableParams<ArrayType> const &sp)
@@ -176,9 +176,9 @@ struct RandomizedReluSaveableParams : public SaveableParams
   DataType                     lower_bound;
   DataType                     upper_bound;
   SizeType                     random_seed;
-  std::vector<uint64_t> buffer;
-  uint64_t index;
-  DataType random_value;
+  std::vector<uint64_t>        buffer;
+  uint64_t                     index;
+  DataType                     random_value;
 
   template <class S>
   friend void Serialize(S &serializer, RandomizedReluSaveableParams<ArrayType> const &sp)

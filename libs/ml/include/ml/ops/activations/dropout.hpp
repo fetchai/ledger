@@ -66,8 +66,8 @@ public:
     sp.DESCRIPTOR  = DESCRIPTOR;
     sp.random_seed = rng_.Seed();
     sp.probability = probability_;
-    sp.buffer = rng_.GetBuffer();
-    sp.index = rng_.GetIndex();
+    sp.buffer      = rng_.GetBuffer();
+    sp.index       = rng_.GetIndex();
     return std::make_shared<SPType>(sp);
   }
 
