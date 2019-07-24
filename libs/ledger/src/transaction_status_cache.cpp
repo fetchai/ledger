@@ -18,6 +18,8 @@
 
 #include "ledger/transaction_status_cache_impl.hpp"
 
+#include <memory>
+
 namespace fetch {
 namespace ledger {
 

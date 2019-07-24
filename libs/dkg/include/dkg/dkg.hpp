@@ -23,8 +23,11 @@
 #include "network/muddle/rpc/client.hpp"
 
 #include <atomic>
-#include <iostream>
+#include <mutex>
 #include <set>
+#include <string>
+#include <unordered_set>
+#include <vector>
 
 namespace fetch {
 namespace muddle {

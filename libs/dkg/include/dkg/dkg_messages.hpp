@@ -22,6 +22,8 @@
 #include "core/serializers/byte_array_buffer.hpp"
 #include "network/muddle/rpc/client.hpp"
 
+#include <string>
+
 namespace fetch {
 namespace dkg {
 

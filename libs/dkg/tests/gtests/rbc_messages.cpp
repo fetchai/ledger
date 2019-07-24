@@ -20,6 +20,7 @@
 #include "core/serializers/byte_array_buffer.hpp"
 #include "core/serializers/counter.hpp"
 #include "dkg/rbc_envelop.hpp"
+
 #include "gtest/gtest.h"
 
 using namespace fetch;

@@ -318,7 +318,7 @@ TEST_F(SmartContractTests, CheckBasicTokenContract)
 {
   std::string const contract_source = R"(
     @init
-    function initialize(owner: Address)
+    function initialise(owner: Address)
         var INITIAL_SUPPLY = 100000000000u64;
         State<UInt64>(owner).set(INITIAL_SUPPLY);
     endfunction

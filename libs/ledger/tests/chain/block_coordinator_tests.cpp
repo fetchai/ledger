@@ -85,8 +85,6 @@ class BlockCoordinatorTests : public ::testing::Test
 protected:
   void SetUp() override
   {
-    FETCH_UNUSED(LOGGING_NAME);
-
     block_generator_.Reset();
 
     // generate a public/private key pair
@@ -104,17 +102,6 @@ protected:
 
     block_coordinator_->SetBlockPeriod(std::chrono::seconds{10});
     block_coordinator_->EnableMining(true);
-  }
-
-  void TearDown() override
-  {
-    block_coordinator_.reset();
-    block_sink_.reset();
-    packer_.reset();
-    execution_manager_.reset();
-    storage_unit_.reset();
-    main_chain_.reset();
-    address_.reset();
   }
 
   /**
@@ -186,8 +173,6 @@ protected:
 
       if (max_iterations == 0)
       {
-        FETCH_LOG_ERROR(LOGGING_NAME, "Failed to advance state machine after ", max_iterations,
-                        " iterations!");
         throw std::runtime_error("Failed test.");
       }
     }
@@ -367,19 +352,6 @@ TEST_F(BlockCoordinatorTests, CheckLongBlockStartUp)
   ASSERT_EQ(BlockStatus::ADDED, main_chain_->AddBlock(*b1));
   ASSERT_EQ(BlockStatus::ADDED, main_chain_->AddBlock(*b2));
   ASSERT_EQ(BlockStatus::ADDED, main_chain_->AddBlock(*b3));
-
-  FETCH_LOG_INFO(LOGGING_NAME, "Genesis: ", ToBase64(genesis->body.hash), " <- ",
-                 ToBase64(genesis->body.previous_hash));
-  FETCH_LOG_INFO(LOGGING_NAME, "B1     : ", ToBase64(b1->body.hash), " <- ",
-                 ToBase64(b1->body.previous_hash));
-  FETCH_LOG_INFO(LOGGING_NAME, "B2     : ", ToBase64(b2->body.hash), " <- ",
-                 ToBase64(b2->body.previous_hash));
-  FETCH_LOG_INFO(LOGGING_NAME, "B3     : ", ToBase64(b3->body.hash), " <- ",
-                 ToBase64(b3->body.previous_hash));
-  FETCH_LOG_INFO(LOGGING_NAME, "B4     : ", ToBase64(b4->body.hash), " <- ",
-                 ToBase64(b4->body.previous_hash));
-  FETCH_LOG_INFO(LOGGING_NAME, "B5     : ", ToBase64(b5->body.hash), " <- ",
-                 ToBase64(b5->body.previous_hash));
 
   // processing of genesis block
   ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), fetch::ledger::GENESIS_DIGEST);
@@ -1010,8 +982,6 @@ class NiceMockBlockCoordinatorTests : public BlockCoordinatorTests
 protected:
   void SetUp() override
   {
-    FETCH_UNUSED(LOGGING_NAME);
-
     block_generator_.Reset();
 
     // generate a public/private key pair

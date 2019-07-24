@@ -19,15 +19,19 @@
 #include "core/serializers/byte_array_buffer.hpp"
 #include "core/serializers/counter.hpp"
 #include "dkg/dkg_messages.hpp"
+
 #include "gtest/gtest.h"
+
+#include <string>
+#include <vector>
 
 using namespace fetch;
 using namespace fetch::dkg;
 
 TEST(dkg_messages, coefficients)
 {
-  std::vector<std::string> coefficients;
-  coefficients.push_back("coeff1");
+  std::vector<std::string> coefficients = {"coeff1"};
+
   CoefficientsMessage coeff{1, coefficients, "signature"};
 
   fetch::serializers::ByteArrayBuffer serialiser{coeff.Serialize()};
@@ -55,7 +59,7 @@ TEST(dkg_messages, shares)
   fetch::serializers::ByteArrayBuffer serialiser1(serialiser.data());
   SharesMessage                       shareMessage1{serialiser1};
 
-  for (const auto &i_share : shareMessage.shares())
+  for (auto const &i_share : shareMessage.shares())
   {
     EXPECT_EQ(shareMessage1.shares().find(i_share.first) != shareMessage1.shares().end(), true);
     EXPECT_EQ(i_share.second.first, shareMessage1.shares().at(i_share.first).first);
