@@ -20,6 +20,10 @@
 #include "core/assert.hpp"
 #include "ml/ops/ops.hpp"
 
+#include <cassert>
+#include <memory>
+#include <vector>
+
 namespace fetch {
 namespace ml {
 namespace ops {
@@ -34,11 +38,13 @@ public:
   using VecTensorType = typename Ops<T>::VecTensorType;
   using SPType        = SaveableParams;
 
-  PlaceHolder() = default;
+  PlaceHolder()           = default;
 
   explicit PlaceHolder(SPType const &sp)
     : Ops<T>(sp)
   {}
+
+  ~PlaceHolder() override = default;
 
   std::shared_ptr<SaveableParams> GetOpSaveableParams()
   {
@@ -47,7 +53,7 @@ public:
     return std::make_shared<SPType>(tp);
   }
 
-  virtual void Forward(VecTensorType const &inputs, ArrayType &output)
+  void Forward(VecTensorType const &inputs, ArrayType &output) override
   {
     FETCH_UNUSED(inputs);
     assert(inputs.empty());
@@ -55,8 +61,8 @@ public:
     output = *(this->output_);
   }
 
-  virtual std::vector<ArrayType> Backward(VecTensorType const &inputs,
-                                          ArrayType const &    error_signal)
+  std::vector<ArrayType> Backward(VecTensorType const &inputs,
+                                  ArrayType const &    error_signal) override
   {
     FETCH_UNUSED(inputs);
     assert(inputs.empty());
@@ -74,7 +80,7 @@ public:
     return shape_changed;
   }
 
-  virtual std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const
+  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
   {
     FETCH_UNUSED(inputs);
     return this->output_->shape();

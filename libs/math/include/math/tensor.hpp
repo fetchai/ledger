@@ -113,6 +113,12 @@ public:
     Resize({0});
   }
 
+  Tensor(ContainerType &container_data)
+  {
+    Reshape(container_data.shape());
+    data_ = container_data;
+  }
+
   static Tensor FromString(byte_array::ConstByteArray const &c);
   explicit Tensor(SizeType const &n);
   Tensor(Tensor &&other)      = default;
@@ -140,6 +146,7 @@ public:
   void Assign(TensorSliceImplementation<G> const &other);
   void Assign(TensorSlice const &other);
   void Assign(Tensor const &other);
+  void Assign(TensorView<T, C> const &other);
 
   template <typename... Indices>
   Type &At(Indices... indices);
@@ -177,9 +184,9 @@ public:
   Tensor FillArange(Type const &from, Type const &to);
 
   static Tensor UniformRandom(SizeType const &N);
-  static Tensor UniformRandomIntegers(SizeType const &N, int64_t const &min, int64_t const &max);
+  static Tensor UniformRandomIntegers(SizeType const &N, int64_t min, int64_t max);
   Tensor &      FillUniformRandom();
-  Tensor &      FillUniformRandomIntegers(int64_t const &min, int64_t const &max);
+  Tensor &      FillUniformRandomIntegers(int64_t min, int64_t max);
   static Tensor Zeroes(SizeVector const &shape);
   static Tensor Ones(SizeVector const &shape);
   SizeType      ComputeIndex(SizeVector const &indices) const;
@@ -203,7 +210,6 @@ public:
 
   bool Resize(SizeVector const &shape, bool copy = false);
   bool Reshape(SizeVector const &shape);
-  bool ResizeFromShape(SizeVector const &shape);
 
   SizeVector const &stride() const;
   SizeVector const &shape() const;
@@ -803,6 +809,13 @@ typename Tensor<T, C>::ConstIteratorType Tensor<T, C>::cend() const
 ///////////////////////
 /// View Extraction ///
 ///////////////////////
+
+/**
+ * returns a view of the entire tensor
+ * @tparam T Type
+ * @tparam C Container
+ * @return
+ */
 template <typename T, typename C>
 typename Tensor<T, C>::ViewType Tensor<T, C>::View()
 {
@@ -813,6 +826,12 @@ typename Tensor<T, C>::ViewType Tensor<T, C>::View()
   return TensorView<Type, ContainerType>(data_, height(), width);
 }
 
+/**
+ * returns a constant view of the entire tensor
+ * @tparam T Type
+ * @tparam C Container
+ * @return
+ */
 template <typename T, typename C>
 typename Tensor<T, C>::ViewType const Tensor<T, C>::View() const
 {
@@ -823,6 +842,13 @@ typename Tensor<T, C>::ViewType const Tensor<T, C>::View() const
   return TensorView<Type, ContainerType>(data_, height(), width);
 }
 
+/**
+ * returns a tensor view based on the trailing dimension
+ * @tparam T Type
+ * @tparam C Container
+ * @param index which index of the trailing dimension to view
+ * @return
+ */
 template <typename T, typename C>
 typename Tensor<T, C>::ViewType Tensor<T, C>::View(SizeType index)
 {
@@ -980,6 +1006,19 @@ void Tensor<T, C>::Assign(Tensor const &other)
     ++it1;
     ++it2;
   }
+}
+
+/**
+ * Assign makes a deep copy of data from another tensor into this one
+ * @tparam T
+ * @tparam C
+ * @param other Another tensorview to assign data from into this
+ */
+template <typename T, typename C>
+void Tensor<T, C>::Assign(TensorView<Type, ContainerType> const &other)
+{
+  auto this_view = this->View();
+  this_view.Assign(other);
 }
 
 /**
@@ -1390,8 +1429,7 @@ Tensor<T, C> Tensor<T, C>::UniformRandom(SizeType const &N)
  * @return The return Tensor filled with random values
  */
 template <typename T, typename C>
-Tensor<T, C> Tensor<T, C>::UniformRandomIntegers(SizeType const &N, int64_t const &min,
-                                                 int64_t const &max)
+Tensor<T, C> Tensor<T, C>::UniformRandomIntegers(SizeType const &N, int64_t min, int64_t max)
 {
   Tensor ret;
   ret.Resize({N});
@@ -1425,11 +1463,11 @@ Tensor<T, C> &Tensor<T, C>::FillUniformRandom()
  * @return Fills tensor with random integers
  */
 template <typename T, typename C>
-Tensor<T, C> &Tensor<T, C>::FillUniformRandomIntegers(int64_t const &min, int64_t const &max)
+Tensor<T, C> &Tensor<T, C>::FillUniformRandomIntegers(int64_t min, int64_t max)
 {
   assert(min <= max);
 
-  uint64_t diff = uint64_t(max - min);
+  auto diff = uint64_t(max - min);
 
   for (SizeType i = 0; i < this->size(); ++i)
   {
@@ -2140,7 +2178,7 @@ std::string Tensor<T, C>::ToString() const
       ss << At(i) << "\t";
     }
   }
-  if (shape_.size() == 2)
+  else if (shape_.size() == 2)
   {
     for (SizeType i(0); i < shape_[0]; ++i)
     {
@@ -2150,6 +2188,10 @@ std::string Tensor<T, C>::ToString() const
       }
       ss << "\n";
     }
+  }
+  else
+  {
+    throw std::runtime_error("cannot convert > 2D tensors to string");
   }
   return ss.str();
 }

@@ -86,7 +86,7 @@ private:
 class HashSource
 {
 public:
-  using Hashes = std::vector<size_t>;
+  using Hashes = std::vector<std::size_t>;
 
   HashSource()                       = delete;
   HashSource(HashSource const &)     = delete;
@@ -198,7 +198,7 @@ public:
    */
   bool ReportFalsePositives(std::size_t);
 
-public:
+private:
   BitVector                         bits_;
   internal::HashSourceFactory const hash_source_factory_;
   std::size_t                       entry_count_{};

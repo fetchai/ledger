@@ -48,7 +48,7 @@ public:
     stride_size_ = sp.stride_size;
   }
 
-  ~Convolution1D() = default;
+  ~Convolution1D() override = default;
 
   std::shared_ptr<SaveableParams> GetOpSaveableParams()
   {

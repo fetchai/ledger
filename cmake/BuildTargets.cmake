@@ -76,9 +76,6 @@ macro (setup_compiler)
   # warnings
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wconversion -Wpedantic")
 
-  # Suppress visibility link warnings
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility=hidden")
-
   if (${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-pragmas -Wno-unknown-pragmas")
   elseif (_is_clang_compiler)
@@ -218,41 +215,36 @@ function (configure_vendor_targets)
     target_compile_definitions(vendor-asio INTERFACE ASIO_HAS_STD_STRING_VIEW)
   endif (APPLE)
 
-  # Pybind11
-  add_subdirectory(${FETCH_ROOT_VENDOR_DIR}/pybind11)
-
   # Google Test
   add_subdirectory(${FETCH_ROOT_VENDOR_DIR}/googletest)
 
-  # MCL
+  # MCL TODO: Work out how to get this to work with the already found version of OpenSSL
   set(USE_GMP OFF CACHE BOOL "use gmp" FORCE)
   set(USE_OPENSSL OFF CACHE BOOL "use openssl" FORCE)
-  # TODO: Work out how to get this to work with the already found version of OpenSSL
-
+  set(ONLY_LIB OFF CACHE BOOL "use openssl" FORCE)
   add_subdirectory(${FETCH_ROOT_VENDOR_DIR}/mcl)
-  target_include_directories(mcl INTERFACE ${FETCH_ROOT_VENDOR_DIR}/mcl/include)
-  target_compile_definitions(mcl
+  target_include_directories(mcl_st INTERFACE ${FETCH_ROOT_VENDOR_DIR}/mcl/include)
+  target_compile_definitions(mcl_st
                              INTERFACE
                              -DMCL_USE_VINT
-                             -DMCL_VINT_FIXED_BUFFER)
+                             -DMCL_VINT_FIXED_BUFFER
+                             -DMCLBN_FP_UNIT_SIZE=4)
 
   add_library(vendor-mcl INTERFACE)
-  target_link_libraries(vendor-mcl INTERFACE mcl)
-  target_compile_definitions(vendor-mcl INTERFACE -DMCLBN_FP_UNIT_SIZE=4)
+  target_link_libraries(vendor-mcl INTERFACE mcl_st)
 
   # BLS
-  add_library(libbls-internal STATIC ${FETCH_ROOT_VENDOR_DIR}/bls/src/bls_c256.cpp
-                                     ${FETCH_ROOT_VENDOR_DIR}/bls/src/bls_c384.cpp
-                                     ${FETCH_ROOT_VENDOR_DIR}/bls/src/bls_c384_256.cpp)
-  target_link_libraries(libbls-internal PUBLIC mcl)
-  target_include_directories(libbls-internal PUBLIC ${FETCH_ROOT_VENDOR_DIR}/bls/include)
-  target_compile_definitions(libbls-internal
+  add_library(vendor-bls-internal STATIC ${FETCH_ROOT_VENDOR_DIR}/bls/src/bls_c256.cpp
+                                         ${FETCH_ROOT_VENDOR_DIR}/bls/src/bls_c384.cpp)
+  target_link_libraries(vendor-bls-internal PUBLIC vendor-mcl)
+  target_include_directories(vendor-bls-internal PUBLIC ${FETCH_ROOT_VENDOR_DIR}/bls/include)
+  target_compile_definitions(vendor-bls-internal
                              PUBLIC
                              -DMCL_USE_VINT
                              -DMCL_VINT_FIXED_BUFFER)
 
   add_library(vendor-bls INTERFACE)
-  target_link_libraries(vendor-bls INTERFACE libbls-internal)
+  target_link_libraries(vendor-bls INTERFACE vendor-bls-internal)
   target_compile_definitions(vendor-bls INTERFACE -DMCLBN_FP_UNIT_SIZE=4)
 
   # Google Benchmark Do not build the google benchmark library tests

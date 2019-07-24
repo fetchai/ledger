@@ -17,15 +17,15 @@
 //
 //------------------------------------------------------------------------------
 
-#include <cassert>
-#include <memory>
-#include <vector>
-
 #include "math/activation_functions/sigmoid.hpp"
 #include "math/activation_functions/softmax.hpp"
 #include "math/fundamental_operators.hpp"
 #include "math/metrics/cross_entropy.hpp"
 #include "ml/ops/ops.hpp"
+
+#include <cassert>
+#include <memory>
+#include <vector>
 
 namespace fetch {
 namespace ml {
@@ -47,7 +47,7 @@ public:
     : Ops<T>(sp)
   {}
 
-  virtual ~CrossEntropyLoss() = default;
+  ~CrossEntropyLoss() override = default;
 
   std::shared_ptr<SaveableParams> GetOpSaveableParams()
   {

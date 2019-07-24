@@ -19,6 +19,9 @@
 
 #include "ml/ops/ops.hpp"
 
+#include <cassert>
+#include <vector>
+
 namespace fetch {
 namespace ml {
 namespace ops {
@@ -39,7 +42,7 @@ public:
     : Ops<T>(sp)
   {}
 
-  virtual ~Exp() = default;
+  ~Exp() override = default;
 
   std::shared_ptr<SaveableParams> GetOpSaveableParams()
   {
@@ -53,7 +56,7 @@ public:
    * @param inputs vector containing one tensor which is the input tensor to Exp
    * @return
    */
-  virtual void Forward(VecTensorType const &inputs, ArrayType &output)
+  void Forward(VecTensorType const &inputs, ArrayType &output) override
   {
     assert(inputs.size() == 1);
     assert(output.shape() == this->ComputeOutputShape(inputs));
@@ -65,8 +68,8 @@ public:
    * elementwise exp gradient is:
    * f'(input0)= e^x * error_signal
    */
-  virtual std::vector<ArrayType> Backward(VecTensorType const &inputs,
-                                          ArrayType const &    error_signal)
+  std::vector<ArrayType> Backward(VecTensorType const &inputs,
+                                  ArrayType const &    error_signal) override
   {
     assert(inputs.size() == 1);
     assert(error_signal.shape() == this->ComputeOutputShape(inputs));
@@ -78,7 +81,7 @@ public:
     return {ret_error_signal};
   }
 
-  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const
+  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
   {
     return inputs.front().get().shape();
   }

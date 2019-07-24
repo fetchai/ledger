@@ -18,8 +18,10 @@
 //------------------------------------------------------------------------------
 
 #include "ml/state_dict.hpp"
+
 #include "vm/module.hpp"
 #include "vm_modules/math/tensor.hpp"
+#include "vm_modules/math/type.hpp"
 
 namespace fetch {
 namespace vm_modules {
@@ -28,7 +30,7 @@ namespace ml {
 class VMStateDict : public fetch::vm::Object
 {
 public:
-  using DataType       = float;
+  using DataType       = fetch::vm_modules::math::DataType;
   using MathTensorType = fetch::math::Tensor<DataType>;
   using VMTensorType   = fetch::vm_modules::math::VMTensor;
 

@@ -19,7 +19,11 @@
 
 #include "core/assert.hpp"
 #include "ml/ops/weights.hpp"
+
+#include <cassert>
+#include <memory>
 #include <set>
+#include <vector>
 
 namespace fetch {
 namespace ml {
@@ -53,7 +57,7 @@ public:
     this->output_ = sp.output;
   }
 
-  virtual ~Embeddings() = default;
+  ~Embeddings() override = default;
 
   std::shared_ptr<SaveableParams> GetOpSaveableParams()
   {
@@ -96,11 +100,11 @@ public:
       {
         trailing_indices1.at(0) = i;
         trailing_indices1.at(1) = n;
-        auto embedding_slice    = this->embeddings_output_->View(trailing_indices1);
+        auto embedding_view     = this->embeddings_output_->View(trailing_indices1);
         trailing_indices2.at(0) = static_cast<SizeType>(*e_it);
-        auto output_slice       = this->output_->View(trailing_indices2);
+        auto output_view        = this->output_->View(trailing_indices2);
 
-        embedding_slice.Assign(output_slice);
+        embedding_view.Assign(output_view);
         ++e_it;
       }
     }
@@ -125,17 +129,17 @@ public:
 
         trailing_indices1.at(0) = i;
         trailing_indices1.at(1) = n;
-        auto error_slice        = error_signal.View(trailing_indices1);
+        auto error_view         = error_signal.View(trailing_indices1);
         trailing_indices2.at(0) = static_cast<SizeType>(*e_it);
-        auto gradient_slice     = this->gradient_accumulation_->View(trailing_indices2);
+        auto gradient_view      = this->gradient_accumulation_->View(trailing_indices2);
 
-        auto error_slice_it    = error_slice.cbegin();
-        auto gradient_slice_it = gradient_slice.begin();
-        while (error_slice_it.is_valid())
+        auto error_view_it    = error_view.cbegin();
+        auto gradient_view_it = gradient_view.begin();
+        while (error_view_it.is_valid())
         {
-          *gradient_slice_it += *error_slice_it;
-          ++error_slice_it;
-          ++gradient_slice_it;
+          *gradient_view_it += *error_view_it;
+          ++error_view_it;
+          ++gradient_view_it;
         }
         ++e_it;
       }
@@ -148,12 +152,12 @@ public:
   {
     for (auto const &r : updated_rows_)
     {
-      // get the relevant slice from gradients and embeddings
-      auto grad_slice = this->gradient_accumulation_->Slice(r, 1);
-      auto out_slice  = this->output_->Slice(r, 1);
+      // get the relevant view from gradients and embeddings
+      auto grad_view = this->gradient_accumulation_->View(r);
+      auto out_view  = this->output_->View(r);
 
-      auto out_it  = out_slice.begin();
-      auto grad_it = grad_slice.begin();
+      auto out_it  = out_view.begin();
+      auto grad_it = grad_view.begin();
 
       while (out_it.is_valid())
       {

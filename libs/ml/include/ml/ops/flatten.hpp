@@ -20,6 +20,10 @@
 #include "math/matrix_operations.hpp"
 #include "ml/ops/ops.hpp"
 
+#include <cassert>
+#include <memory>
+#include <vector>
+
 namespace fetch {
 namespace ml {
 namespace ops {
@@ -40,7 +44,7 @@ public:
     : Ops<T>(sp)
   {}
 
-  virtual ~Flatten() = default;
+  ~Flatten() override = default;
 
   std::shared_ptr<SaveableParams> GetOpSaveableParams()
   {
@@ -49,27 +53,32 @@ public:
     return std::make_shared<SPType>(sp);
   }
 
-  virtual void Forward(VecTensorType const &inputs, ArrayType &output)
+  void Forward(VecTensorType const &inputs, ArrayType &output) override
   {
     assert(inputs.size() == 1);
     assert(output.shape() == ComputeOutputShape(inputs));
     input_shape_ = inputs.front().get().shape();
 
-    FlattenImpl(inputs.front().get(), output);
+    assert(output.shape().at(output.shape().size() - 1) ==
+           inputs.front().get().shape().at(inputs.front().get().shape().size() - 1));
+    output.Assign(inputs.front().get().View());
   }
 
-  virtual std::vector<ArrayType> Backward(VecTensorType const &inputs,
-                                          ArrayType const &    error_signal)
+  std::vector<ArrayType> Backward(VecTensorType const &inputs,
+                                  ArrayType const &    error_signal) override
   {
     FETCH_UNUSED(inputs);
     assert(inputs.size() == 1);
     ArrayType ret(input_shape_);
-    FlattenImpl(error_signal, ret);
+
+    assert(ret.shape().at(ret.shape().size() - 1) ==
+           error_signal.shape().at(error_signal.shape().size() - 1));
+    ret.Assign(error_signal.View());
 
     return {ret};
   }
 
-  virtual std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const
+  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
   {
     SizeType batch_size =
         inputs.at(0).get().shape().at(inputs.at(0).get().shape().size() - SizeType{1});
@@ -86,23 +95,6 @@ public:
 
 private:
   std::vector<std::uint64_t> input_shape_;
-
-  void FlattenImpl(ArrayType const &A, ArrayType &ret)
-  {
-    // Test if batch dimensions are equal
-    assert(ret.shape().at(ret.shape().size() - 1) == A.shape().at(A.shape().size() - 1));
-
-    SizeType input_batch_dimension  = A.shape().size() - 1;
-    SizeType output_batch_dimension = ret.shape().size() - 1;
-    SizeType batch_size             = ret.shape().at(output_batch_dimension);
-
-    for (SizeType i{0}; i < batch_size; i++)
-    {
-      auto input_slice  = A.Slice(i, input_batch_dimension);
-      auto output_slice = ret.Slice(i, output_batch_dimension);
-      output_slice.Assign(input_slice);
-    }
-  }
 };
 
 }  // namespace ops

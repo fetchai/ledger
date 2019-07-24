@@ -23,7 +23,12 @@
 #include "network/message.hpp"
 
 #include <atomic>
+#include <cstdint>
+#include <functional>
 #include <memory>
+#include <mutex>
+#include <string>
+#include <utility>
 
 namespace fetch {
 namespace network {
@@ -157,7 +162,7 @@ protected:
     address_ = addr;
   }
 
-  void SetPort(uint16_t const &p)
+  void SetPort(uint16_t p)
   {
     port_ = p;
   }
@@ -166,7 +171,7 @@ protected:
   {
     FETCH_LOG_DEBUG(LOGGING_NAME, "Connection terminated for handle ", handle_.load(),
                     ", SignalLeave called.");
-    std::function<void(void)> cb;
+    std::function<void()> cb;
     {
       std::lock_guard<fetch::mutex::Mutex> lock(callback_mutex_);
       cb = on_leave_;

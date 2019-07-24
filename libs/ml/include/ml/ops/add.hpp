@@ -19,6 +19,9 @@
 
 #include "ml/ops/ops.hpp"
 
+#include <cassert>
+#include <vector>
+
 namespace fetch {
 namespace ml {
 namespace ops {
@@ -39,7 +42,7 @@ public:
     : Ops<T>(sp)
   {}
 
-  virtual ~Add() = default;
+  ~Add() override = default;
 
   std::shared_ptr<SaveableParams> GetOpSaveableParams()
   {
@@ -48,14 +51,15 @@ public:
     return std::make_shared<SPType>(sp);
   }
 
-  void Forward(VecTensorType const &inputs, ArrayType &output)
+  void Forward(VecTensorType const &inputs, ArrayType &output) override
   {
     assert(inputs.size() == 2);
     assert(output.shape() == this->ComputeOutputShape(inputs));
     fetch::math::Add(inputs.at(0).get(), inputs.at(1).get(), output);
   }
 
-  std::vector<ArrayType> Backward(VecTensorType const &inputs, ArrayType const &error_signal)
+  std::vector<ArrayType> Backward(VecTensorType const &inputs,
+                                  ArrayType const &    error_signal) override
   {
     assert(inputs.size() == 2);
     assert(inputs.at(0).get().shape().size() == inputs.at(1).get().shape().size());
@@ -80,7 +84,7 @@ public:
     }
   }
 
-  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const
+  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
   {
     return inputs.at(0).get().shape();
   }

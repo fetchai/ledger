@@ -19,6 +19,9 @@
 
 #include "ml/ops/ops.hpp"
 
+#include <cassert>
+#include <vector>
+
 namespace fetch {
 namespace ml {
 namespace ops {
@@ -42,7 +45,7 @@ public:
     transpose_vector_ = sp.transpose_vector;
   }
 
-  virtual ~Transpose() = default;
+  ~Transpose() override = default;
 
   std::shared_ptr<SaveableParams> GetOpSaveableParams()
   {
@@ -52,7 +55,7 @@ public:
     return std::make_shared<SPType>(sp);
   }
 
-  virtual void Forward(VecTensorType const &inputs, ArrayType &output)
+  void Forward(VecTensorType const &inputs, ArrayType &output) override
   {
     assert(inputs.size() == 1);
     assert(output.shape() == this->ComputeOutputShape(inputs));
@@ -67,8 +70,8 @@ public:
     }
   }
 
-  virtual std::vector<ArrayType> Backward(VecTensorType const &inputs,
-                                          ArrayType const &    error_signal)
+  std::vector<ArrayType> Backward(VecTensorType const &inputs,
+                                  ArrayType const &    error_signal) override
   {
     FETCH_UNUSED(inputs);
     assert(inputs.size() == 1);
@@ -84,7 +87,7 @@ public:
     }
   }
 
-  virtual std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const
+  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
   {
     // 2D transpose
     if (inputs.at(0).get().shape().size() == 2)

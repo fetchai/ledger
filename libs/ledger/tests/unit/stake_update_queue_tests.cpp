@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/containers/is_in.hpp"
 #include "core/random/lcg.hpp"
 #include "ledger/consensus/stake_snapshot.hpp"
 #include "ledger/consensus/stake_update_queue.hpp"
@@ -27,18 +28,13 @@
 
 namespace {
 
+using fetch::core::IsIn;
 using fetch::ledger::StakeSnapshot;
 using fetch::ledger::StakeUpdateQueue;
 
 using RNG                 = fetch::random::LinearCongruentialGenerator;
 using StakeUpdateQueuePtr = std::unique_ptr<StakeUpdateQueue>;
 using StakeSnapshotPtr    = std::shared_ptr<StakeSnapshot>;
-
-template <typename Container, typename Value>
-bool IsIn(Container const &container, Value const &value)
-{
-  return container.find(value) != container.end();
-}
 
 class StakeUpdateQueueTests : public ::testing::Test
 {
@@ -47,11 +43,6 @@ protected:
   {
     rng_.Seed(42);
     stake_update_queue_ = std::make_unique<StakeUpdateQueue>();
-  }
-
-  void TearDown() override
-  {
-    stake_update_queue_.reset();
   }
 
   StakeUpdateQueuePtr stake_update_queue_;

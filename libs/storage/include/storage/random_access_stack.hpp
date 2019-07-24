@@ -223,7 +223,7 @@ public:
    * @param: object The object reference to fill
    *
    */
-  void Get(std::size_t const &i, type &object) const
+  void Get(std::size_t i, type &object) const
   {
     assert(filename_ != "");
     assert(i < size());
@@ -241,7 +241,7 @@ public:
    * @param: object The object to copy to the stack
    *
    */
-  void Set(std::size_t const &i, type const &object)
+  void Set(std::size_t i, type const &object)
   {
     assert(filename_ != "");
     assert(i < size());
@@ -260,7 +260,7 @@ public:
    * @param: objects Pointer to array of elements
    *
    */
-  void SetBulk(std::size_t const &i, std::size_t elements, type const *objects)
+  void SetBulk(std::size_t i, std::size_t elements, type const *objects)
   {
     auto ret = LazySetBulk(i, elements, objects);
 
@@ -279,7 +279,7 @@ public:
    *
    * @return bool Whether the bulk set updated the header (number of elements)
    */
-  bool LazySetBulk(std::size_t const &i, std::size_t elements, type const *objects)
+  bool LazySetBulk(std::size_t i, std::size_t elements, type const *objects)
   {
     assert(filename_ != "");
 
@@ -307,7 +307,7 @@ public:
    * @param: elements Number of elements to copy
    * @param: objects Pointer to array of elements
    */
-  void GetBulk(std::size_t const &i, std::size_t elements, type *objects)
+  void GetBulk(std::size_t i, std::size_t elements, type *objects)
   {
     assert(filename_ != "");
 
@@ -394,7 +394,7 @@ public:
    * @param: j Location of the second object
    *
    */
-  void Swap(std::size_t const &i, std::size_t const &j)
+  void Swap(std::size_t i, std::size_t j)
   {
     if (i == j)
     {

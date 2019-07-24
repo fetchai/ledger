@@ -21,13 +21,10 @@
 #include "vm_modules/math/tensor.hpp"
 #include "vm_modules/ml/dataloaders/dataloader.hpp"
 #include "vm_modules/ml/graph.hpp"
-#include "vm_modules/ml/ops/loss_functions/cross_entropy_loss.hpp"
-#include "vm_modules/ml/ops/loss_functions/mean_square_error_loss.hpp"
-#include "vm_modules/ml/optimisation/adam_optimiser.hpp"
+#include "vm_modules/ml/optimisation/optimiser.hpp"
 #include "vm_modules/ml/state_dict.hpp"
 #include "vm_modules/ml/training_pair.hpp"
-
-#include <cstdlib>
+#include "vm_modules/ml/utilities/scaler.hpp"
 
 namespace fetch {
 namespace vm_modules {
@@ -46,12 +43,11 @@ inline void BindML(fetch::vm::Module &module)
   // dataloader
   VMDataLoader::Bind(module);
 
-  // loss functions
-  VMCrossEntropyLoss::Bind(module);
-  VMMeanSquareErrorLoss::Bind(module);
-
   // optimisers
-  VMAdamOptimiser::Bind(module);
+  VMOptimiser::Bind(module);
+
+  // utilities
+  utilities::VMScaler::Bind(module);
 }
 
 }  // namespace ml

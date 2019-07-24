@@ -21,11 +21,12 @@
 #include "ml/ops/ops.hpp"
 #include "ml/saveable_params.hpp"
 
+#include <algorithm>
+#include <cassert>
+#include <cstdint>
 #include <functional>
 #include <memory>
 #include <string>
-#include <unordered_map>
-#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -77,17 +78,17 @@ public:
     return sp;
   }
 
-  virtual ~Node() = default;
+  ~Node() override = default;
 
-  std::vector<std::reference_wrapper<const ArrayType>>          GatherInputs() const;
-  virtual ArrayType &                                           Evaluate(bool is_training);
-  virtual std::vector<std::pair<NodeInterface<T> *, ArrayType>> BackPropagateSignal(
-      ArrayType const &error_signal);
+  std::vector<std::reference_wrapper<const ArrayType>>  GatherInputs() const;
+  ArrayType &                                           Evaluate(bool is_training) override;
+  std::vector<std::pair<NodeInterface<T> *, ArrayType>> BackPropagateSignal(
+      ArrayType const &error_signal) override;
 
-  void                                    AddInput(NodePtrType const &i);
-  void                                    AddOutput(NodePtrType const &o);
-  virtual std::vector<NodePtrType> const &GetOutputs() const;
-  virtual void                            ResetCache(bool input_size_changed);
+  void                            AddInput(NodePtrType const &i) override;
+  void                            AddOutput(NodePtrType const &o) override;
+  std::vector<NodePtrType> const &GetOutputs() const override;
+  void                            ResetCache(bool input_size_changed) override;
 
 private:
   std::vector<NodePtrType> input_nodes_;

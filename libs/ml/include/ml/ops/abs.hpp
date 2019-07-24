@@ -20,6 +20,10 @@
 #include "core/assert.hpp"
 #include "ml/ops/ops.hpp"
 
+#include <cassert>
+#include <memory>
+#include <vector>
+
 namespace fetch {
 namespace ml {
 namespace ops {
@@ -34,13 +38,13 @@ public:
   using VecTensorType = typename Ops<T>::VecTensorType;
   using SPType        = SaveableParams;
 
-  Abs() = default;
+  Abs()           = default;
 
   explicit Abs(SPType const &sp)
     : Ops<T>(sp)
   {}
 
-  virtual ~Abs() = default;
+  ~Abs() override = default;
 
   std::shared_ptr<SaveableParams> GetOpSaveableParams()
   {
@@ -54,7 +58,7 @@ public:
    * @param inputs - one input for elementwise abs
    * @return
    */
-  virtual void Forward(VecTensorType const &inputs, ArrayType &output)
+  void Forward(VecTensorType const &inputs, ArrayType &output) override
   {
     assert(inputs.size() == 1);
     assert(inputs.at(0).get().shape() == output.shape());
@@ -67,8 +71,8 @@ public:
    * elementwise absolute value gradient is:
    * f'(input0)=sign(input0)*error_signal
    */
-  virtual std::vector<ArrayType> Backward(VecTensorType const &inputs,
-                                          ArrayType const &    error_signal)
+  std::vector<ArrayType> Backward(VecTensorType const &inputs,
+                                  ArrayType const &    error_signal) override
   {
     assert(inputs.size() == 1);
     assert(error_signal.size() == inputs.at(0).get().size());
@@ -97,7 +101,7 @@ public:
     return {return_signal};
   }
 
-  virtual std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const
+  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
   {
     return inputs.front().get().shape();
   }

@@ -22,6 +22,7 @@
 #include "core/macros.hpp"
 #include "core/serializers/stl_types.hpp"
 #include "core/serializers/type_register.hpp"
+
 #include <type_traits>
 
 namespace fetch {
@@ -33,14 +34,13 @@ class SizeCounter
 public:
   using self_type = SizeCounter;
 
-  void Allocate(std::size_t const &delta)
+  void Allocate(std::size_t delta)
   {
     Resize(delta, ResizeParadigm::RELATIVE);
   }
 
-  void Resize(std::size_t const &   size,
-              ResizeParadigm const &resize_paradigm     = ResizeParadigm::RELATIVE,
-              bool const            zero_reserved_space = true)
+  void Resize(std::size_t size, ResizeParadigm const &resize_paradigm = ResizeParadigm::RELATIVE,
+              bool const zero_reserved_space = true)
   {
     FETCH_UNUSED(zero_reserved_space);
 
@@ -62,11 +62,10 @@ public:
     };
   }
 
-  void Reserve(std::size_t const &   size,
-               ResizeParadigm const &resize_paradigm     = ResizeParadigm::RELATIVE,
-               bool const            zero_reserved_space = true)
+  void Reserve(std::size_t size, ResizeParadigm const &resize_paradigm = ResizeParadigm::RELATIVE,
+               bool const zero_reserved_space = true)
   {
-    (void)zero_reserved_space;
+    FETCH_UNUSED(zero_reserved_space);
 
     switch (resize_paradigm)
     {
@@ -83,12 +82,12 @@ public:
     };
   }
 
-  void WriteBytes(uint8_t const *, std::size_t const &size)
+  void WriteBytes(uint8_t const *, std::size_t size)
   {
     pos_ += size;
   }
 
-  void SkipBytes(std::size_t const &size)
+  void SkipBytes(std::size_t size)
   {
     pos_ += size;
   }
@@ -119,7 +118,7 @@ public:
     return this->operator<<(val);
   }
 
-  void seek(std::size_t const &p)
+  void seek(std::size_t p)
   {
     pos_ = p;
   }

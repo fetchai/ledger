@@ -18,9 +18,12 @@
 //------------------------------------------------------------------------------
 
 #include "ml/graph.hpp"
+#include "ml/layers/convolution_1d.hpp"
 #include "ml/layers/fully_connected.hpp"
+
 #include "ml/ops/activation.hpp"
 #include "ml/ops/loss_functions/cross_entropy_loss.hpp"
+#include "ml/ops/loss_functions/mean_square_error_loss.hpp"
 #include "vm/module.hpp"
 #include "vm_modules/math/tensor.hpp"
 #include "vm_modules/ml/state_dict.hpp"
@@ -31,7 +34,9 @@ namespace ml {
 
 class VMGraph : public fetch::vm::Object
 {
-  using MathTensorType = fetch::math::Tensor<float>;
+  using SizeType       = fetch::math::SizeType;
+  using DataType       = fetch::vm_modules::math::DataType;
+  using MathTensorType = fetch::math::Tensor<DataType>;
   using VMTensorType   = fetch::vm_modules::math::VMTensor;
   using GraphType      = fetch::ml::Graph<MathTensorType>;
   using VMPtrString    = fetch::vm::Ptr<fetch::vm::String>;
@@ -65,7 +70,7 @@ public:
     graph_.BackPropagateError(name->str);
   }
 
-  void Step(float lr)
+  void Step(DataType lr)
   {
     graph_.Step(lr);
   }
@@ -81,6 +86,15 @@ public:
         name->str, {input_name->str}, std::size_t(in), std::size_t(out));
   }
 
+  void AddConv1D(VMPtrString const &name, VMPtrString const &input_name, int filters,
+                 int in_channels, int kernel_size, int stride_size)
+  {
+    graph_.AddNode<fetch::ml::layers::Convolution1D<MathTensorType>>(
+        name->str, {input_name->str}, static_cast<SizeType>(filters),
+        static_cast<SizeType>(in_channels), static_cast<SizeType>(kernel_size),
+        static_cast<SizeType>(stride_size));
+  }
+
   void AddRelu(VMPtrString const &name, VMPtrString const &input_name)
   {
     graph_.AddNode<fetch::ml::ops::Relu<MathTensorType>>(name->str, {input_name->str});
@@ -88,18 +102,25 @@ public:
 
   void AddSoftmax(VMPtrString const &name, VMPtrString const &input_name)
   {
-    graph_.AddNode<fetch::ml::ops::Softmax<fetch::math::Tensor<float>>>(name->str,
-                                                                        {input_name->str});
+    graph_.AddNode<fetch::ml::ops::Softmax<fetch::math::Tensor<DataType>>>(name->str,
+                                                                           {input_name->str});
   }
 
   void AddCrossEntropyLoss(VMPtrString const &name, VMPtrString const &input_name,
                            VMPtrString const &label_name)
   {
-    graph_.AddNode<fetch::ml::ops::CrossEntropyLoss<fetch::math::Tensor<float>>>(
+    graph_.AddNode<fetch::ml::ops::CrossEntropyLoss<fetch::math::Tensor<DataType>>>(
         name->str, {input_name->str, label_name->str});
   }
 
-  void AddDropout(VMPtrString const &name, VMPtrString const &input_name, float const &prob)
+  void AddMeanSquareErrorLoss(VMPtrString const &name, VMPtrString const &input_name,
+                              VMPtrString const &label_name)
+  {
+    graph_.AddNode<fetch::ml::ops::MeanSquareErrorLoss<fetch::math::Tensor<DataType>>>(
+        name->str, {input_name->str, label_name->str});
+  }
+
+  void AddDropout(VMPtrString const &name, VMPtrString const &input_name, DataType const &prob)
   {
     graph_.AddNode<fetch::ml::ops::Dropout<MathTensorType>>(name->str, {input_name->str}, prob);
   }
@@ -125,10 +146,12 @@ public:
         .CreateMemberFunction("step", &VMGraph::Step)
         .CreateMemberFunction("addPlaceholder", &VMGraph::AddPlaceholder)
         .CreateMemberFunction("addFullyConnected", &VMGraph::AddFullyConnected)
+        .CreateMemberFunction("addConv1D", &VMGraph::AddConv1D)
         .CreateMemberFunction("addRelu", &VMGraph::AddRelu)
         .CreateMemberFunction("addSoftmax", &VMGraph::AddSoftmax)
         .CreateMemberFunction("addDropout", &VMGraph::AddDropout)
         .CreateMemberFunction("addCrossEntropyLoss", &VMGraph::AddCrossEntropyLoss)
+        .CreateMemberFunction("addMeanSquareErrorLoss", &VMGraph::AddMeanSquareErrorLoss)
         .CreateMemberFunction("loadStateDict", &VMGraph::LoadStateDict)
         .CreateMemberFunction("stateDict", &VMGraph::StateDict);
   }

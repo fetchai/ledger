@@ -18,6 +18,7 @@
 
 #include "core/byte_array/encoders.hpp"
 #include "core/feature_flags.hpp"
+#include "core/macros.hpp"
 #include "core/threading.hpp"
 #include "ledger/block_packer_interface.hpp"
 #include "ledger/block_sink_interface.hpp"
@@ -89,7 +90,6 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag, StakeManagerPtr
                                    ExecutionManagerInterface &execution_manager,
                                    StorageUnitInterface &storage_unit, BlockPackerInterface &packer,
                                    BlockSinkInterface &      block_sink,
-                                   TransactionStatusCache &  status_cache,
                                    core::FeatureFlags const &features, ProverPtr const &prover,
                                    std::size_t num_lanes, std::size_t num_slices,
                                    std::size_t block_difficulty)
@@ -100,7 +100,6 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag, StakeManagerPtr
   , storage_unit_{storage_unit}
   , block_packer_{packer}
   , block_sink_{block_sink}
-  , status_cache_{status_cache}
   , periodic_print_{NOTIFY_INTERVAL}
   , miner_{std::make_shared<consensus::DummyMiner>()}
   , last_executed_block_{GENESIS_DIGEST}
@@ -518,7 +517,7 @@ BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
   auto fail{[this](char const *reason) {
     FETCH_LOG_WARN(LOGGING_NAME, "Block validation failed: ", reason, " (",
                    ToBase64(current_block_->body.hash), ')');
-    (void)reason;
+    FETCH_UNUSED(reason);
     chain_.RemoveBlock(current_block_->body.hash);
     return State::RESET;
   }};
@@ -808,7 +807,8 @@ BlockCoordinator::State BlockCoordinator::OnPostExecBlockValidation()
   {
     if (state_hash != current_block_->body.merkle_hash)
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Block validation failed: Merkle hash mismatch (block: 0x",
+      FETCH_LOG_WARN(LOGGING_NAME, "Block validation failed: Merkle hash mismatch (block num: ",
+                     current_block_->body.block_number, " block: 0x",
                      current_block_->body.hash.ToHex(), " expected: 0x",
                      current_block_->body.merkle_hash.ToHex(), " actual: 0x", state_hash.ToHex(),
                      ")");
@@ -818,10 +818,11 @@ BlockCoordinator::State BlockCoordinator::OnPostExecBlockValidation()
     }
     else
     {
-      FETCH_LOG_DEBUG(LOGGING_NAME, "Block validation great success: (block: 0x",
-                      current_block_->body.hash.ToHex(), " expected: 0x",
-                      current_block_->body.merkle_hash.ToHex(), " actual: 0x", state_hash.ToHex(),
-                      ")");
+      FETCH_LOG_DEBUG(
+          LOGGING_NAME,
+          "Block validation great success: (block num: ", current_block_->body.block_number,
+          " block: 0x", current_block_->body.hash.ToHex(), " expected: 0x",
+          current_block_->body.merkle_hash.ToHex(), " actual: 0x", state_hash.ToHex(), ")");
     }
   }
 
@@ -862,9 +863,6 @@ BlockCoordinator::State BlockCoordinator::OnPostExecBlockValidation()
   }
   else
   {
-    // mark all the transactions as been executed
-    UpdateTxStatus(*current_block_);
-
     // Commit this state
     storage_unit_.Commit(current_block_->body.block_number);
 
@@ -1039,9 +1037,6 @@ BlockCoordinator::State BlockCoordinator::OnTransmitBlock()
                      " txs: ", next_block_->GetTransactionCount(),
                      " number: ", next_block_->body.block_number);
 
-      // mark this blocks transactions as being executed
-      UpdateTxStatus(*next_block_);
-
       // signal the last block that has been executed
       last_executed_block_.Set(next_block_->body.hash);
 
@@ -1176,17 +1171,6 @@ BlockCoordinator::ExecutionStatus BlockCoordinator::QueryExecutorStatus()
 void BlockCoordinator::UpdateNextBlockTime()
 {
   next_block_time_ = Clock::now() + block_period_;
-}
-
-void BlockCoordinator::UpdateTxStatus(Block const &block)
-{
-  for (auto const &slice : block.body.slices)
-  {
-    for (auto const &tx : slice)
-    {
-      status_cache_.Update(tx.digest(), TransactionStatus::EXECUTED);
-    }
-  }
 }
 
 char const *BlockCoordinator::ToString(State state)

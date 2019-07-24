@@ -16,6 +16,9 @@ graph.addSoftmax("softmax_2", "hidden_dense_2");
 graph.addDropout("dropout_2", "softmax_2", dropout_prob);
 graph.addFullyConnected("output_dense", "dropout_2", second_dense_size, output_size);
 graph.addSoftmax("softmax_3", "output_dense");
+
+graph.AddMeanSquareErrorLoss("Error", "softmax_3");
+
 endfunction
 
 function read_weights(graph: Graph)
@@ -55,7 +58,7 @@ if (testing)
     printLn("Finished successfully");
 else
     // Set up the optimiser
-    var optimiser = AdamOptimiser(graph, "num_input", "softmax_3");
+    var optimiser = Optimiser("adam", graph, "num_input", "softmax_3", "error");
 
     // Begin the training loop
     var training_iterations = 10;

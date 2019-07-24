@@ -23,6 +23,7 @@
 #include "ml/dataloaders/ReadCSV.hpp"
 #include "ml/dataloaders/dataloader.hpp"
 
+#include <cassert>
 #include <fstream>
 #include <sstream>
 #include <stdexcept>
@@ -46,15 +47,12 @@ public:
     : DataLoader<LabelType, InputType>(random_mode)
   {}
 
-  ~CommodityDataLoader() = default;
+  ~CommodityDataLoader() override = default;
 
-  virtual ReturnType GetNext();
-
-  virtual SizeType Size() const;
-
-  virtual bool IsDone() const;
-
-  virtual void Reset();
+  ReturnType GetNext() override;
+  SizeType   Size() const override;
+  bool       IsDone() const override;
+  void       Reset() override;
 
   void AddData(std::string const &xfilename, std::string const &yfilename);
 
@@ -104,7 +102,7 @@ CommodityDataLoader<LabelType, InputType>::GetNext()
 {
   if (this->random_mode_)
   {
-    GetAtIndex(static_cast<SizeType>(rand.generator()) % Size());
+    GetAtIndex(static_cast<SizeType>(decltype(rand)::generator()) % Size());
     return buffer_;
   }
   else
@@ -147,8 +145,8 @@ void CommodityDataLoader<LabelType, InputType>::Reset()
 template <typename LabelType, typename InputType>
 void CommodityDataLoader<LabelType, InputType>::GetAtIndex(CommodityDataLoader::SizeType index)
 {
-  buffer_.first  = labels_.Slice(index, 1).Copy();
-  buffer_.second = std::vector<InputType>({data_.Slice(index, 1).Copy()});
+  buffer_.first  = labels_.View(index).Copy();
+  buffer_.second = std::vector<InputType>({data_.View(index).Copy()});
 }
 
 }  // namespace dataloaders

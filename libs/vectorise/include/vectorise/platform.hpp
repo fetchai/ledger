@@ -187,12 +187,32 @@ inline uint64_t ConvertToBigEndian(uint64_t x)
 
 inline uint64_t CountLeadingZeroes64(uint64_t x)
 {
-  return static_cast<uint64_t>(__builtin_clzll(x));
+  return x == 0 ? 64 : static_cast<uint64_t>(__builtin_clzll(x));
 }
 
 inline uint64_t CountTrailingZeroes64(uint64_t x)
 {
-  return static_cast<uint64_t>(__builtin_ctzll(x));
+  return x == 0 ? 64 : static_cast<uint64_t>(__builtin_ctzll(x));
+}
+
+/**
+ * finds most significant set bit in type
+ * @tparam T
+ * @param n
+ * @return
+ */
+template <typename T>
+constexpr inline int32_t HighestSetBit(T n_input)
+{
+  auto const n = static_cast<uint64_t>(n_input);
+
+  if (n == 0)
+  {
+    return 0;
+  }
+
+  return static_cast<int32_t>((sizeof(uint64_t) * 8)) -
+         static_cast<int32_t>(CountLeadingZeroes64(n));
 }
 
 // Return the minimum number of bits required to represent x

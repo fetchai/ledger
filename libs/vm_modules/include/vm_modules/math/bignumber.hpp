@@ -39,8 +39,8 @@ public:
   using Ptr    = fetch::vm::Ptr<T>;
   using String = fetch::vm::String;
 
-  UInt256Wrapper()          = delete;
-  virtual ~UInt256Wrapper() = default;
+  UInt256Wrapper()           = delete;
+  ~UInt256Wrapper() override = default;
 
   static fetch::vm::Ptr<fetch::vm::String> ToString(fetch::vm::VM *vm, Ptr<UInt256Wrapper> const &n)
   {
@@ -148,7 +148,7 @@ public:
   }
 
   static fetch::vm::Ptr<UInt256Wrapper> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
-                                                    uint64_t const &val)
+                                                    uint64_t val)
   {
     try
     {
@@ -168,16 +168,7 @@ public:
 
   int32_t ToInt32()
   {
-    union
-    {
-      uint8_t bytes[4];
-      int32_t value;
-    } x;
-    x.bytes[0] = number_[0];
-    x.bytes[1] = number_[1];
-    x.bytes[2] = number_[2];
-    x.bytes[3] = number_[3];
-    return x.value;
+    return static_cast<int32_t>(number_[0]);
   }
 
   double LogValue()

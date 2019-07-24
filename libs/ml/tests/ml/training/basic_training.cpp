@@ -224,9 +224,9 @@ void CategoricalPlusOneTest(bool add_softmax = false)
 
   for (SizeType step{0}; step < n_data; ++step)
   {
-    auto cur_input = data.Slice(step, 1).Copy();
+    auto cur_input = data.View(step).Copy();
     g.SetInput(input_name, cur_input);
-    auto cur_gt = gt.Slice(step, 1).Copy();
+    auto cur_gt = gt.View(step).Copy();
     g.SetInput(label_name, cur_gt);
 
     auto error_tensor = g.Evaluate(error_name);
@@ -253,9 +253,9 @@ void CategoricalPlusOneTest(bool add_softmax = false)
 
     for (SizeType step{0}; step < n_data; ++step)
     {
-      auto cur_input = data.Slice(step, 1).Copy();
+      auto cur_input = data.View(step).Copy();
       g.SetInput(input_name, cur_input);
-      auto cur_gt = gt.Slice(step, 1).Copy();
+      auto cur_gt = gt.View(step).Copy();
       g.SetInput(label_name, cur_gt);
 
       auto error_tensor = g.Evaluate(error_name);
@@ -326,9 +326,9 @@ void CategoricalXorTest(bool add_softmax = false)
 
   for (SizeType step{0}; step < n_data; ++step)
   {
-    cur_input = data.Slice(step, 1).Copy();
+    cur_input = data.View(step).Copy();
     g.SetInput(input_name, cur_input);
-    cur_gt = gt.Slice(step, 1).Copy();
+    cur_gt = gt.View(step).Copy();
     g.SetInput(label_name, cur_gt);
 
     auto error_tensor = g.Evaluate(error_name);
@@ -355,9 +355,9 @@ void CategoricalXorTest(bool add_softmax = false)
 
     for (SizeType step{0}; step < n_data; ++step)
     {
-      cur_input = data.Slice(step, 1).Copy();
+      cur_input = data.View(step).Copy();
       g.SetInput(input_name, cur_input);
-      cur_gt            = gt.Slice(step, 1).Copy();
+      cur_gt            = gt.View(step).Copy();
       auto error_tensor = g.Evaluate(error_name);
       loss += error_tensor(0, 0);
       g.BackPropagateError(error_name);

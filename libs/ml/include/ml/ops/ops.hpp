@@ -20,6 +20,8 @@
 #include "core/assert.hpp"
 #include "math/tensor.hpp"
 #include "ml/saveable_params.hpp"
+
+#include <functional>
 #include <memory>
 #include <vector>
 
