@@ -18,8 +18,10 @@
 
 #include "ml/ops/maximum.hpp"
 
+#include "math/base_types.hpp"
 #include "math/tensor.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
+#include "vectorise/fixed_point/serializers.hpp"
 
 #include "gtest/gtest.h"
 
@@ -103,7 +105,6 @@ TYPED_TEST(MaximumTest, saveparams_test)
   using VecTensorType = typename fetch::ml::Ops<ArrayType>::VecTensorType;
   using SPType        = typename fetch::ml::ops::Maximum<ArrayType>::SPType;
   using OpType        = typename fetch::ml::ops::Maximum<ArrayType>;
-
 
   ArrayType data_1 = ArrayType::FromString(
       "1, -2, 3,-4, 5,-6, 7,-8;"
