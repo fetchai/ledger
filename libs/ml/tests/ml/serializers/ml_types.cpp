@@ -81,23 +81,19 @@ TYPED_TEST(SerializersTest, serialize_graph_saveable_params)
   fetch::ml::details::RegularisationType regulariser = fetch::ml::details::RegularisationType::L1;
   DataType                               reg_rate{0.01f};
 
-  // Prepare graph (copied from MNIST)
-  //  Input -> FC -> Relu -> FC -> Relu -> FC -> Softmax
+  // Prepare graph with fairly random architecture
   auto g = std::make_shared<GraphType>();
 
   std::string input = g->template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>("Input", {});
-  std::string label = g->template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>("Label", {});
 
   std::string layer_1 = g->template AddNode<fetch::ml::layers::FullyConnected<ArrayType>>(
-      "FC1", {input}, 28u * 28u, 10u, fetch::ml::details::ActivationType::RELU, regulariser,
+      "FC1", {input}, 10u, 20u, fetch::ml::details::ActivationType::RELU, regulariser,
       reg_rate);
   std::string layer_2 = g->template AddNode<fetch::ml::layers::FullyConnected<ArrayType>>(
-      "FC2", {layer_1}, 10u, 10u, fetch::ml::details::ActivationType::RELU, regulariser, reg_rate);
+      "FC2", {layer_1}, 20u, 10u, fetch::ml::details::ActivationType::RELU, regulariser, reg_rate);
   std::string output = g->template AddNode<fetch::ml::layers::FullyConnected<ArrayType>>(
       "FC3", {layer_2}, 10u, 10u, fetch::ml::details::ActivationType::SOFTMAX, regulariser,
       reg_rate);
-  std::string error =
-      g->template AddNode<fetch::ml::ops::CrossEntropyLoss<ArrayType>>("Error", {output, label});
 
   fetch::ml::GraphSaveableParams<TypeParam> gsp1 = g->GetGraphSaveableParams();
   fetch::serializers::ByteArrayBuffer       b;
@@ -118,5 +114,18 @@ TYPED_TEST(SerializersTest, serialize_graph_saveable_params)
 
   auto g2 = GraphType(gsp2);
 
-  // todo: do something with graph.
+  ArrayType data = ArrayType::FromString("1, 2, 3, 4, 5, 6, 7, 8, 9, 10");
+
+  g->SetInput("Input", data.Transpose());
+  g2.SetInput("Input", data.Transpose());
+
+  ArrayType prediction = g->Evaluate(output);
+  
+  // nodes have changed name because of subgraph flattening
+  std::string new_output_node = gsp2.connections.at(gsp2.connections.size()-1).first;
+  ArrayType prediction2 = g2.Evaluate(new_output_node);
+
+  // test correct values
+  EXPECT_TRUE(prediction.AllClose(prediction2, fetch::math::function_tolerance<DataType>(),
+                                  fetch::math::function_tolerance<DataType>()));
 }

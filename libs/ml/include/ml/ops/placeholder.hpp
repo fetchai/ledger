@@ -36,13 +36,15 @@ public:
   using SizeType      = typename ArrayType::SizeType;
   using ArrayPtrType  = std::shared_ptr<ArrayType>;
   using VecTensorType = typename Ops<T>::VecTensorType;
-  using SPType        = PlaeholderSaveableParams<ArrayType>;
+  using SPType        = PlaceholderSaveableParams<ArrayType>;
 
   PlaceHolder() = default;
 
   explicit PlaceHolder(SPType const &sp)
   {
-    SetData(*(sp.output));
+    if (sp.output) {
+      SetData(*(sp.output));
+    }
   }
 
   ~PlaceHolder() override = default;
@@ -51,7 +53,9 @@ public:
   {
     SPType tp{};
     tp.DESCRIPTOR = DESCRIPTOR;
-    tp.output     = std::make_shared<ArrayType>(output_->Copy());
+    if (output_) {
+      tp.output = std::make_shared<ArrayType>(output_->Copy());
+    }
     return std::make_shared<SPType>(tp);
   }
 

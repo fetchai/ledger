@@ -55,13 +55,13 @@ struct SaveableParams
 };
 
 template <class ArrayType>
-struct PlaeholderSaveableParams : public SaveableParams
+struct PlaceholderSaveableParams : public SaveableParams
 {
   static constexpr char const *sp_descriptor = "PlaceholderSaveableParams";
   std::shared_ptr<ArrayType>   output;
 
   template <class S>
-  friend void Serialize(S &serializer, PlaeholderSaveableParams<ArrayType> const &sp)
+  friend void Serialize(S &serializer, PlaceholderSaveableParams<ArrayType> const &sp)
   {
     serializer << sp.DESCRIPTOR;
     if (sp.output)
@@ -76,7 +76,7 @@ struct PlaeholderSaveableParams : public SaveableParams
   }
 
   template <class S>
-  friend void Deserialize(S &serializer, PlaeholderSaveableParams<ArrayType> &sp)
+  friend void Deserialize(S &serializer, PlaceholderSaveableParams<ArrayType> &sp)
   {
     serializer >> sp.DESCRIPTOR;
     bool has_weights{};
@@ -417,6 +417,10 @@ struct GraphSaveableParams
       {
         SerializeHelper<S, SaveableParams>(serializer, node.second);
       }
+      else if (next_sp_descriptor == PlaceholderSaveableParams<ArrayType>::sp_descriptor)
+      {
+        SerializeHelper<S, PlaceholderSaveableParams<ArrayType>>(serializer, node.second);
+      }
       else if (next_sp_descriptor == WeightsSaveableParams<ArrayType>::sp_descriptor)
       {
         SerializeHelper<S, WeightsSaveableParams<ArrayType>>(serializer, node.second);
@@ -478,6 +482,10 @@ struct GraphSaveableParams
       if (next_sp_descriptor == SaveableParams::sp_descriptor)
       {
         nsp_ptr = DeserializeHelper<S, SaveableParams>(serializer);
+      }
+      else if (next_sp_descriptor == PlaceholderSaveableParams<ArrayType>::sp_descriptor)
+      {
+        nsp_ptr = DeserializeHelper<S, PlaceholderSaveableParams<ArrayType>>(serializer);
       }
       else if (next_sp_descriptor == WeightsSaveableParams<ArrayType>::sp_descriptor)
       {

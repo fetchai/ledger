@@ -103,7 +103,9 @@ public:
 
   explicit Weights(SPType const &sp)
   {
-    this->output_ = std::make_shared<ArrayType>(sp.output->Copy());
+    if (sp.output){
+      this->SetData(*sp.output);
+    }
     this->SetRegularisation(sp.regularisation_type, sp.regularisation_rate);
   }
 
@@ -112,7 +114,9 @@ public:
   std::shared_ptr<SaveableParams> GetOpSaveableParams() override
   {
     SPType tp{};
-    tp.output              = std::make_shared<ArrayType>(this->output_->Copy());
+    if (this->output_) {
+      tp.output = std::make_shared<ArrayType>(this->output_->Copy());
+    }
     tp.DESCRIPTOR          = DESCRIPTOR;
     tp.regularisation_type = this->regularisation_type;
     tp.regularisation_rate = this->regularisation_rate_;
