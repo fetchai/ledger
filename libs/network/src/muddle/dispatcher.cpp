@@ -19,10 +19,10 @@
 #include "core/time/to_seconds.hpp"
 #include "network/muddle/dispatcher.hpp"
 #include "network/muddle/network_id.hpp"
-#include "telemetry/histogram.hpp"
-#include "telemetry/registry.hpp"
 #include "telemetry/counter.hpp"
 #include "telemetry/gauge.hpp"
+#include "telemetry/histogram.hpp"
+#include "telemetry/registry.hpp"
 
 namespace fetch {
 namespace muddle {
@@ -74,8 +74,7 @@ Dispatcher::Dispatcher(NetworkId const &network_id, Packet::Address const &addre
         "ledger_muddle_exchange_time_max", "The largest exchange time observed",
         {{"network_id", network_id.ToString()},
          {"address", static_cast<std::string>(address.ToBase64())}})}
-{
-}
+{}
 
 /**
  * Register that a exchange is scheduled to take place and create a promise to track the response

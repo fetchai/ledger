@@ -21,8 +21,8 @@
 #include "storage/object_store_protocol.hpp"
 #include "storage/transient_object_store.hpp"
 #include "telemetry/counter.hpp"
-#include "telemetry/registry.hpp"
 #include "telemetry/histogram.hpp"
+#include "telemetry/registry.hpp"
 #include "telemetry/utils/timer.hpp"
 
 namespace fetch {
@@ -84,14 +84,15 @@ public:
   }
 
 private:
-
-  static telemetry::CounterPtr CreateCounter(uint32_t lane, char const *name, char const *description)
+  static telemetry::CounterPtr CreateCounter(uint32_t lane, char const *name,
+                                             char const *description)
   {
     return telemetry::Registry::Instance().CreateCounter(name, description,
                                                          {{"lane", std::to_string(lane)}});
   }
 
-  static telemetry::HistogramPtr CreateHistogram(uint32_t lane, char const *name, char const *description)
+  static telemetry::HistogramPtr CreateHistogram(uint32_t lane, char const *name,
+                                                 char const *description)
   {
     return telemetry::Registry::Instance().CreateHistogram(
         {0.000001, 0.00001, 0.0001, 0.001, 0.01, 0.1, 1, 10., 100.}, name, description,

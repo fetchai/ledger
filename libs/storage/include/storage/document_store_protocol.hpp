@@ -201,13 +201,15 @@ public:
   }
 
 private:
-
-  static telemetry::CounterPtr CreateCounter(lane_type lane, char const *name, char const *description)
+  static telemetry::CounterPtr CreateCounter(lane_type lane, char const *name,
+                                             char const *description)
   {
-    return telemetry::Registry::Instance().CreateCounter(name, description, {{"lane", std::to_string(lane)}});
+    return telemetry::Registry::Instance().CreateCounter(name, description,
+                                                         {{"lane", std::to_string(lane)}});
   }
 
-  static telemetry::HistogramPtr CreateHistogram(lane_type lane, char const *name, char const *description)
+  static telemetry::HistogramPtr CreateHistogram(lane_type lane, char const *name,
+                                                 char const *description)
   {
     return telemetry::Registry::Instance().CreateHistogram(
         {0.000001, 0.000002, 0.000003, 0.000004, 0.000005, 0.000006, 0.000007, 0.000008, 0.000009,

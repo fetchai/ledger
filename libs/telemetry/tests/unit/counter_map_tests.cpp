@@ -62,7 +62,7 @@ TEST_F(CounterMapTests, SimpleCheck)
   counter_map_->Increment({{"service", "1"}, {"channel", "2"}});
 
   std::ostringstream oss;
-  OutputStream stream{oss};
+  OutputStream       stream{oss};
   counter_map_->ToStream(stream);
 
   static char const *EXPECTED_TEXT = R"(# HELP muddle_stats_total Some test muddle stats

@@ -74,7 +74,7 @@ TEST_F(CounterTests, CheckSerialisation)
   counter_->add(500);
 
   std::ostringstream oss;
-  OutputStream stream{oss};
+  OutputStream       stream{oss};
   counter_->ToStream(stream);
 
   static char const *EXPECTED_TEXT = R"(# HELP test_counter_total Simple test counter

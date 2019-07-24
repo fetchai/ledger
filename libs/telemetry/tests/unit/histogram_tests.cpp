@@ -59,7 +59,7 @@ TEST_F(HistogramTests, SimpleCheck)
   histogram_->Add(10.0);
 
   std::ostringstream oss;
-  OutputStream stream{oss};
+  OutputStream       stream{oss};
   histogram_->ToStream(stream);
 
   static char const *EXPECTED_TEXT = R"(# HELP request_time Test Metric

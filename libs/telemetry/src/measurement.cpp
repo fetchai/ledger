@@ -85,8 +85,7 @@ std::ostream &operator<<(std::ostream &stream, LabelRefs const &refs)
 
 OutputStream::OutputStream(std::ostream &stream)
   : stream_{stream}
-{
-}
+{}
 
 bool OutputStream::HeaderIsRequired(std::string const &name)
 {

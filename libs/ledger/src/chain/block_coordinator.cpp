@@ -162,14 +162,11 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag, StakeManagerPtr
         "ledger_block_coordinator_reset_state_total",
         "The total number of times in the reset state")}
   , executed_block_count_{telemetry::Registry::Instance().CreateCounter(
-        "ledger_block_coordinator_executed_block_total",
-        "The total number of executed blocks")}
+        "ledger_block_coordinator_executed_block_total", "The total number of executed blocks")}
   , mined_block_count_{telemetry::Registry::Instance().CreateCounter(
-        "ledger_block_coordinator_mined_block_total",
-        "The total number of mined blocks")}
+        "ledger_block_coordinator_mined_block_total", "The total number of mined blocks")}
   , executed_tx_count_{telemetry::Registry::Instance().CreateCounter(
-        "ledger_block_coordinator_executed_tx_total",
-        "The total number of executed transactions")}
+        "ledger_block_coordinator_executed_tx_total", "The total number of executed transactions")}
 {
   // configure the state machine
   // clang-format off
@@ -389,7 +386,8 @@ BlockCoordinator::State BlockCoordinator::OnSynchronising()
                                   common_parent->body.block_number))
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "Ancestor block's state hash cannot be retrieved for block: 0x",
-                      current_hash.ToHex(), " number: ", common_parent->body.block_number, " merkle hash: ", common_parent->body.merkle_hash.ToHex());
+                      current_hash.ToHex(), " number: ", common_parent->body.block_number,
+                      " merkle hash: ", common_parent->body.merkle_hash.ToHex());
 
       // this is a bad situation so the easiest solution is to revert back to genesis
       execution_manager_.SetLastProcessedBlock(GENESIS_DIGEST);

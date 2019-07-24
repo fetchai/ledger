@@ -19,13 +19,13 @@
 
 #include "telemetry/telemetry.hpp"
 
+#include <algorithm>
 #include <initializer_list>
 #include <memory>
 #include <mutex>
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include <algorithm>
 
 namespace fetch {
 namespace telemetry {
@@ -135,9 +135,7 @@ std::shared_ptr<T> Registry::LookupMeasurement(std::string const &name) const
 {
   std::shared_ptr<T> measurement{};
 
-  auto const matcher = [&name](MeasurementPtr const &m) {
-    return (m->name() == name);
-  };
+  auto const matcher = [&name](MeasurementPtr const &m) { return (m->name() == name); };
 
   LockGuard guard{lock_};
 

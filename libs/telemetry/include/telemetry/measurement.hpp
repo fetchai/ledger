@@ -29,7 +29,6 @@ namespace telemetry {
 class OutputStream
 {
 public:
-
   explicit OutputStream(std::ostream &stream);
 
   template <typename T>

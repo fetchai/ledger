@@ -27,11 +27,10 @@ class Histogram;
 class FunctionTimer
 {
 public:
-
   // Construction / Destruction
   explicit FunctionTimer(Histogram &histogram);
   FunctionTimer(FunctionTimer const &) = delete;
-  FunctionTimer(FunctionTimer &&) = delete;
+  FunctionTimer(FunctionTimer &&)      = delete;
   ~FunctionTimer();
 
   // Operators
@@ -46,5 +45,5 @@ private:
   Timepoint  started_;
 };
 
-} // namespace telemetry
-} // namespace fetch
+}  // namespace telemetry
+}  // namespace fetch

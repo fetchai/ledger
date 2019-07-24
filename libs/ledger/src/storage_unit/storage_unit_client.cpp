@@ -299,7 +299,8 @@ bool StorageUnitClient::HashExists(Hash const &hash, uint64_t index)
     success = true;
   }
   else
-  {    success = HashInStack(hash, index);
+  {
+    success = HashInStack(hash, index);
   }
 
   return success;

@@ -29,8 +29,8 @@
 #include "moment/deadline_timer.hpp"
 #include "storage/resource_mapper.hpp"
 #include "telemetry/counter.hpp"
-#include "telemetry/registry.hpp"
 #include "telemetry/histogram.hpp"
+#include "telemetry/registry.hpp"
 #include "telemetry/utils/timer.hpp"
 
 #include <chrono>

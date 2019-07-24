@@ -28,8 +28,8 @@
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 #include "network/details/thread_pool.hpp"
 #include "storage/object_store.hpp"
-#include "transaction_status_cache.hpp"
 #include "telemetry/telemetry.hpp"
+#include "transaction_status_cache.hpp"
 
 #include <atomic>
 #include <condition_variable>

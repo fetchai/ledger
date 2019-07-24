@@ -22,9 +22,9 @@
 namespace fetch {
 
 template <typename R, typename P>
-double ToSeconds(std::chrono::duration<R,P> const &value)
+double ToSeconds(std::chrono::duration<R, P> const &value)
 {
   return std::chrono::duration_cast<std::chrono::duration<double>>(value).count();
 }
 
-} // namespace fetch
+}  // namespace fetch

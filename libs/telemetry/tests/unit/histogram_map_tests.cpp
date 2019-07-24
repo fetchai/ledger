@@ -66,7 +66,7 @@ TEST_F(HistogramMapTests, SimpleCheck)
   histogram_map_->Add("/status", 0.7);
 
   std::ostringstream oss;
-  OutputStream stream{oss};
+  OutputStream       stream{oss};
   histogram_map_->ToStream(stream);
 
   static char const *EXPECTED_TEXT = R"(# HELP http_requests Request time for HTTP paths
