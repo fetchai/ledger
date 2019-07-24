@@ -241,7 +241,6 @@ TYPED_TEST(MaxPool1DTest, forward_test_2_4_2)
   ASSERT_TRUE(prediction.AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
 }
 
-
 TYPED_TEST(MaxPool1DTest, saveparams_test)
 {
   using ArrayType     = TypeParam;
