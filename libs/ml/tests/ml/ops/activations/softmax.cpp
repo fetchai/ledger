@@ -43,6 +43,7 @@ TYPED_TEST(SoftmaxTest, forward_test)
 
   fetch::ml::ops::Softmax<ArrayType> op;
   ArrayType                          prediction(op.ComputeOutputShape({data}));
+  std::cout << "prediction.ToString(): " << prediction.ToString() << std::endl;
   op.Forward({data}, prediction);
 
   // test correct values

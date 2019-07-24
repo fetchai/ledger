@@ -56,17 +56,19 @@ public:
         this->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>(name + "_Input", {});
 
     // instantiate gamma (the multiplicative training component)
-    std::string gamma = this->template AddNode<fetch::ml::ops::Weights<ArrayType>>(name + "_Gamma", {});
+    std::string gamma =
+        this->template AddNode<fetch::ml::ops::Weights<ArrayType>>(name + "_Gamma", {});
     ArrayType gamma_data({data_size_, 1});
     fetch::ml::ops::Weights<ArrayType>::Initialise(gamma_data, data_size_, init_mode);
 
     // instantiate beta (the additive training component)
-    std::string beta = this->template AddNode<fetch::ml::ops::Weights<ArrayType>>(name + "_Beta", {});
+    std::string beta =
+        this->template AddNode<fetch::ml::ops::Weights<ArrayType>>(name + "_Beta", {});
     ArrayType beta_data({data_size_, 1});
     fetch::ml::ops::Weights<ArrayType>::Initialise(beta_data, data_size_, init_mode);
 
-
-    std::string output = this->template AddNode<fetch::ml::ops::BatchNorm<TensorType>>(name + "_BatchNorm", {input, gamma, beta});
+    std::string output = this->template AddNode<fetch::ml::ops::BatchNorm<TensorType>>(
+        name + "_BatchNorm", {input, gamma, beta});
 
     this->AddInputNode(input);
     this->SetOutputNode(output);
@@ -82,7 +84,6 @@ public:
 
 private:
   SizeType data_size_;
-
 };
 
 }  // namespace layers

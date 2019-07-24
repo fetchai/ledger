@@ -39,12 +39,12 @@ public:
   using SizeType      = typename ArrayType::SizeType;
   using VecTensorType = typename Ops<T>::VecTensorType;
 
-  explicit BatchNorm() = default;
+  explicit BatchNorm()  = default;
   ~BatchNorm() override = default;
 
   /**
-   * Forward pass consists of calculating mean and standard deviation, mean-covariance shift normalising, and then
-   * linearly transforming with trainable parameters gamma and beta
+   * Forward pass consists of calculating mean and standard deviation, mean-covariance shift
+   * normalising, and then linearly transforming with trainable parameters gamma and beta
    * @param inputs
    * @param output
    */
@@ -56,7 +56,7 @@ public:
     // TODO - different behaviour if IsTraining is false
 
     // compute mean and standard deviations along batch dimension
-    auto batch_dim = inputs.at(0).get().shape().size() - 1;
+    auto     batch_dim = inputs.at(0).get().shape().size() - 1;
     DataType mean;
     fetch::math::ReduceMean(inputs.at(0).get(), batch_dim, mean);
     DataType std_dev = fetch::math::statistics::StandardDeviation(inputs.at(0).get());
@@ -94,8 +94,7 @@ public:
                                   ArrayType const &    error_signal) override
   {
 
-    SizeType  batch_dimension = inputs.at(0).get().shape().size() - 1;
-
+    SizeType batch_dimension = inputs.at(0).get().shape().size() - 1;
 
     ArrayType beta_err_signal({error_signal.shape(0), 1});
     fetch::math::Multiply(inputs.at(0).get(), error_signal, beta_err_signal);
@@ -104,8 +103,6 @@ public:
     fetch::math::ReduceSum(error_signal, batch_dimension, beta_err_signal);
 
     return {error_signal, gamma_err_signal, beta_err_signal};
-
-
   }
 
   std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
