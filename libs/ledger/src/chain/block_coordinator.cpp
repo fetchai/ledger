@@ -835,7 +835,10 @@ BlockCoordinator::State BlockCoordinator::OnPostExecBlockValidation()
     BlockPtr previous_block = chain_.GetBlock(current_block_->body.previous_hash);
     if (previous_block)
     {
-      revert_successful = dag_->RevertToEpoch(previous_block->body.block_number);
+      if (dag_)
+      {
+        revert_successful = dag_->RevertToEpoch(previous_block->body.block_number);
+      }
 
       // signal the storage engine to make these changes
       if (storage_unit_.RevertToHash(previous_block->body.merkle_hash,
