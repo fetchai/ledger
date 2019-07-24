@@ -37,10 +37,10 @@ fetch::math::meta::IfIsMath<T, T> Exp(fetch::vm::VM *, T const &a)
 
 inline void BindExp(fetch::vm::Module &module)
 {
-  module.CreateFreeFunction<float_t>("exp", &Exp<float_t>);
-  module.CreateFreeFunction<double_t>("exp", &Exp<double_t>);
-  module.CreateFreeFunction<fixed_point::fp32_t>("exp", &Exp<fixed_point::fp32_t>);
-  module.CreateFreeFunction<fixed_point::fp64_t>("exp", &Exp<fixed_point::fp64_t>);
+  module.CreateFreeFunction("exp", &Exp<float_t>);
+  module.CreateFreeFunction("exp", &Exp<double_t>);
+  module.CreateFreeFunction("exp", &Exp<fixed_point::fp32_t>);
+  module.CreateFreeFunction("exp", &Exp<fixed_point::fp64_t>);
 }
 
 }  // namespace math

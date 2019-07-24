@@ -37,10 +37,10 @@ fetch::math::meta::IfIsMath<T, T> Pow(fetch::vm::VM *, T const &a, T const &b)
 
 inline void BindPow(fetch::vm::Module &module)
 {
-  module.CreateFreeFunction<float_t>("pow", &Pow<float_t>);
-  module.CreateFreeFunction<double_t>("pow", &Pow<double_t>);
-  module.CreateFreeFunction<fixed_point::fp32_t>("pow", &Pow<fixed_point::fp32_t>);
-  module.CreateFreeFunction<fixed_point::fp64_t>("pow", &Pow<fixed_point::fp64_t>);
+  module.CreateFreeFunction("pow", &Pow<float_t>);
+  module.CreateFreeFunction("pow", &Pow<double_t>);
+  module.CreateFreeFunction("pow", &Pow<fixed_point::fp32_t>);
+  module.CreateFreeFunction("pow", &Pow<fixed_point::fp64_t>);
 }
 
 }  // namespace math
