@@ -241,7 +241,6 @@ TYPED_TEST(Convolution2DTest, backward_3x3x3x2_5x3x3x3x2)
   ASSERT_TRUE(prediction[1].AllClose(gt2, DataType{1e-5f}, DataType{1e-5f}));
 }
 
-
 TYPED_TEST(Convolution2DTest, saveparams_test)
 {
   using ArrayType     = TypeParam;

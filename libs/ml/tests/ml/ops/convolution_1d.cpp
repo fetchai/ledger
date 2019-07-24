@@ -283,3 +283,51 @@ TYPED_TEST(Convolution1DTest, backward_3x3x2_5x3x3x2)
   ASSERT_TRUE(prediction[0].AllClose(gt1, DataType{1e-5f}, DataType{1e-5f}));
   ASSERT_TRUE(prediction[1].AllClose(gt2, DataType{1e-5f}, DataType{1e-5f}));
 }
+
+TYPED_TEST(Convolution1DTest, saveparams_test)
+{
+  using ArrayType     = TypeParam;
+  using DataType      = typename TypeParam::Type;
+  using VecTensorType = typename fetch::ml::Ops<ArrayType>::VecTensorType;
+  using SPType        = typename fetch::ml::ops::Convolution1D<ArrayType>::SPType;
+  using OpType        = typename fetch::ml::ops::Convolution1D<ArrayType>;
+
+  ArrayType input({1, 1, 2});
+  ArrayType weights({1, 1, 1, 1});
+  input.At(0, 0, 0)      = DataType{5};
+  input.At(0, 0, 1)      = DataType{6};
+  weights.At(0, 0, 0, 0) = DataType{-4};
+
+  OpType op;
+
+  ArrayType     prediction(op.ComputeOutputShape({input, weights}));
+  VecTensorType vec_data({input, weights});
+
+  op.Forward(vec_data, prediction);
+
+  // extract saveparams
+  std::shared_ptr<fetch::ml::SaveableParams> sp = op.GetOpSaveableParams();
+
+  // downcast to correct type
+  auto dsp = std::dynamic_pointer_cast<SPType>(sp);
+
+  // serialize
+  fetch::serializers::ByteArrayBuffer b;
+  b << *dsp;
+
+  // deserialize
+  b.seek(0);
+  auto dsp2 = std::make_shared<SPType>();
+  b >> *dsp2;
+
+  // rebuild node
+  OpType new_op(*dsp2);
+
+  // check that new predictions match the old
+  ArrayType new_prediction(op.ComputeOutputShape({input, weights}));
+  new_op.Forward(vec_data, new_prediction);
+
+  // test correct values
+  EXPECT_TRUE(new_prediction.AllClose(prediction, fetch::math::function_tolerance<DataType>(),
+                                      fetch::math::function_tolerance<DataType>()));
+}
