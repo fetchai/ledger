@@ -18,8 +18,10 @@
 
 #include "ml/ops/tanh.hpp"
 
+#include "math/base_types.hpp"
 #include "math/tensor.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
+#include "vectorise/fixed_point/serializers.hpp"
 
 #include "gtest/gtest.h"
 
@@ -133,4 +135,49 @@ TYPED_TEST(TanhTest, backward_all_negative_test)
   // test correct values
   ASSERT_TRUE(
       prediction[0].AllClose(gt, typename TypeParam::Type(1e-4), typename TypeParam::Type(1e-4)));
+}
+
+TYPED_TEST(TanhTest, saveparams_test)
+{
+  using ArrayType     = TypeParam;
+  using DataType      = typename TypeParam::Type;
+  using VecTensorType = typename fetch::ml::Ops<ArrayType>::VecTensorType;
+  using SPType        = typename fetch::ml::ops::TanH<ArrayType>::SPType;
+  using OpType        = typename fetch::ml::ops::TanH<ArrayType>;
+
+  ArrayType data = TypeParam::FromString("0, 0.2, 0.4, -0, -0.2, -0.4");
+  ArrayType gt   = TypeParam::FromString("0.0, 0.197375, 0.379949, -0.0, -0.197375, -0.379949");
+
+  OpType op;
+
+  ArrayType     prediction(op.ComputeOutputShape({data}));
+  VecTensorType vec_data({data});
+
+  op.Forward(vec_data, prediction);
+
+  // extract saveparams
+  std::shared_ptr<fetch::ml::SaveableParams> sp = op.GetOpSaveableParams();
+
+  // downcast to correct type
+  auto dsp = std::dynamic_pointer_cast<SPType>(sp);
+
+  // serialize
+  fetch::serializers::ByteArrayBuffer b;
+  b << *dsp;
+
+  // deserialize
+  b.seek(0);
+  auto dsp2 = std::make_shared<SPType>();
+  b >> *dsp2;
+
+  // rebuild node
+  OpType new_op(*dsp2);
+
+  // check that new predictions match the old
+  ArrayType new_prediction(op.ComputeOutputShape({data}));
+  new_op.Forward(vec_data, new_prediction);
+
+  // test correct values
+  EXPECT_TRUE(new_prediction.AllClose(prediction, fetch::math::function_tolerance<DataType>(),
+                                      fetch::math::function_tolerance<DataType>()));
 }

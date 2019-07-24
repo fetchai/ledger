@@ -113,18 +113,18 @@ TYPED_TEST(WeightsTest, loadStateDict)
 
 TYPED_TEST(WeightsTest, saveparams_test)
 {
-  using ArrayType     = TypeParam;
-  using DataType      = typename TypeParam::Type;
-  using SPType        = typename fetch::ml::ops::Weights<ArrayType>::SPType;
-  using OpType        = typename fetch::ml::ops::Weights<ArrayType>;
+  using ArrayType = TypeParam;
+  using DataType  = typename TypeParam::Type;
+  using SPType    = typename fetch::ml::ops::Weights<ArrayType>::SPType;
+  using OpType    = typename fetch::ml::ops::Weights<ArrayType>;
 
-  ArrayType                     data = ArrayType::FromString("1, -2, 3, -4, 5, -6, 7, -8");
-  ArrayType                     gt   = ArrayType::FromString("1, -2, 3, -4, 5, -6, 7, -8");
+  ArrayType data = ArrayType::FromString("1, -2, 3, -4, 5, -6, 7, -8");
+  ArrayType gt   = ArrayType::FromString("1, -2, 3, -4, 5, -6, 7, -8");
 
   OpType op;
   op.SetData(data);
 
-  ArrayType     prediction(op.ComputeOutputShape({data}));
+  ArrayType prediction(op.ComputeOutputShape({data}));
 
   op.Forward({}, prediction);
 
