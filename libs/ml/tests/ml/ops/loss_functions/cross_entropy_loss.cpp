@@ -277,3 +277,82 @@ TYPED_TEST(CrossEntropyTest, non_one_hot_dimensional_backward_test)
                   .at(0)
                   .AllClose(gt, typename TypeParam::Type(1e-5), typename TypeParam::Type(1e-5)));
 }
+
+TYPED_TEST(CrossEntropyTest, saveparams_test)
+{
+  using ArrayType     = TypeParam;
+  using DataType      = typename TypeParam::Type;
+  using SPType        = typename fetch::ml::ops::CrossEntropyLoss<ArrayType>::SPType;
+  using OpType        = typename fetch::ml::ops::CrossEntropyLoss<ArrayType>;
+
+  std::uint64_t n_classes     = 4;
+  std::uint64_t n_data_points = 8;
+
+  TypeParam data1(std::vector<std::uint64_t>{n_classes, n_data_points});
+  TypeParam data2(std::vector<std::uint64_t>{n_classes, n_data_points});
+
+  // set gt data
+  std::vector<std::uint64_t> gt_data = {1, 2, 3, 0, 3, 1, 0, 2};
+  for (std::uint64_t i = 0; i < n_data_points; ++i)
+  {
+    for (std::uint64_t j = 0; j < n_classes; ++j)
+    {
+      if (gt_data[i] == j)
+      {
+        data2.Set(j, i, DataType(1));
+      }
+      else
+      {
+        data2.Set(j, i, DataType(0));
+      }
+    }
+  }
+
+  // set softmax probabilities
+  std::vector<double> logits{0.1, 0.8, 0.05, 0.05, 0.2, 0.5, 0.2, 0.1, 0.05, 0.05, 0.8,
+                             0.1, 0.5, 0.1,  0.1,  0.3, 0.2, 0.3, 0.1, 0.4,  0.1,  0.7,
+                             0.1, 0.1, 0.7,  0.1,  0.1, 0.1, 0.1, 0.1, 0.5,  0.3};
+
+  std::uint64_t counter{0};
+  for (std::uint64_t i{0}; i < n_data_points; ++i)
+  {
+    for (std::uint64_t j{0}; j < n_classes; ++j)
+    {
+      data1.Set(j, i, DataType(logits[counter]));
+      ++counter;
+    }
+  }
+
+  OpType op;
+  TypeParam  result({1, 1});
+  op.Forward({data1, data2}, result);
+
+  // extract saveparams
+  std::shared_ptr<fetch::ml::SaveableParams> sp = op.GetOpSaveableParams();
+
+  // downcast to correct type
+  auto dsp = std::dynamic_pointer_cast<SPType>(sp);
+
+  // serialize
+  fetch::serializers::ByteArrayBuffer b;
+  b << *dsp;
+
+  // make another prediction with the original graph
+  op.Forward({data1, data2}, result);
+
+  // deserialize
+  b.seek(0);
+  auto dsp2 = std::make_shared<SPType>();
+  b >> *dsp2;
+
+  // rebuild node
+  OpType new_op(*dsp2);
+
+  // check that new predictions match the old
+  TypeParam new_result({1, 1});
+  op.Forward({data1, data2}, new_result);
+
+  // test correct values
+  EXPECT_NEAR(static_cast<double>(result(0, 0)), static_cast<double>(new_result(0, 0)),
+      static_cast<double>(fetch::math::function_tolerance<DataType>()));
+}
