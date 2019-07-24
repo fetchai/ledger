@@ -102,7 +102,8 @@ public:
     return embed_in_;
   }
 
-  std::vector<SizeType> ComputeOutputShape(std::vector<std::reference_wrapper<ArrayType const>> const &inputs) const override
+  std::vector<SizeType> ComputeOutputShape(
+      std::vector<std::reference_wrapper<ArrayType const>> const &inputs) const override
   {
     return {inputs.front().get().shape().at(1), 1};
   }
