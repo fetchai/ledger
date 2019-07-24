@@ -16,9 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
+
+#include "math/base_types.hpp"
 #include "math/tensor.hpp"
 #include "ml/ops/convolution_1d.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
+#include "vectorise/fixed_point/serializers.hpp"
 
 #include "gtest/gtest.h"
 

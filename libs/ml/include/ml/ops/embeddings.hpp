@@ -62,7 +62,7 @@ public:
   std::shared_ptr<SaveableParams> GetOpSaveableParams() override
   {
     SPType tp{};
-    tp.output = std::make_shared<ArrayType>(this->output_->Copy());
+    tp.output     = std::make_shared<ArrayType>(this->output_->Copy());
     tp.DESCRIPTOR = DESCRIPTOR;
     return std::make_shared<SPType>(tp);
   }
