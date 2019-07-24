@@ -54,7 +54,7 @@ public:
 
   explicit Embeddings(SPType const &sp)
   {
-    this->output_ = sp.output;
+    this->SetData(sp.output);
   }
 
   ~Embeddings() override = default;
@@ -62,7 +62,7 @@ public:
   std::shared_ptr<SaveableParams> GetOpSaveableParams() override
   {
     SPType tp{};
-    tp.output     = this->output_;
+    tp.output = std::make_shared<ArrayType>(this->output_->Copy());
     tp.DESCRIPTOR = DESCRIPTOR;
     return std::make_shared<SPType>(tp);
   }

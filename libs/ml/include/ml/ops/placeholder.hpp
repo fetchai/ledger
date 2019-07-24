@@ -42,7 +42,7 @@ public:
 
   explicit PlaceHolder(SPType const &sp)
   {
-    output_ = std::make_shared<ArrayType>(sp.output->Copy());
+    SetData(*(sp.output));
   }
 
   ~PlaceHolder() override = default;
