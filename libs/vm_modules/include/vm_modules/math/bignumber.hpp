@@ -75,9 +75,9 @@ public:
   {
     module.CreateClassType<UInt256Wrapper>("UInt256")
         .CreateSerializeDefaultConstuctor<uint64_t>(static_cast<uint64_t>(0))
-        .CreateConstuctor<uint64_t>()
-        .CreateConstuctor<Ptr<vm::String>>()
-        .CreateConstuctor<Ptr<ByteArrayWrapper>>()
+        .CreateConstuctor(&UInt256Wrapper::Constructor)
+        .CreateConstuctor(&UInt256Wrapper::ConstructorFromString)
+        .CreateConstuctor(&UInt256Wrapper::ConstructorFromBytes)
         .EnableOperator(vm::Operator::Equal)
         .EnableOperator(vm::Operator::NotEqual)
         .EnableOperator(vm::Operator::LessThan)
@@ -119,8 +119,8 @@ public:
     , number_(data)
   {}
 
-  static fetch::vm::Ptr<UInt256Wrapper> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
-                                                    fetch::vm::Ptr<ByteArrayWrapper> const &ba)
+  static fetch::vm::Ptr<UInt256Wrapper> ConstructorFromBytes(
+      fetch::vm::VM *vm, fetch::vm::TypeId type_id, fetch::vm::Ptr<ByteArrayWrapper> const &ba)
   {
     try
     {
@@ -133,8 +133,9 @@ public:
     return nullptr;
   }
 
-  static fetch::vm::Ptr<UInt256Wrapper> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
-                                                    fetch::vm::Ptr<vm::String> const &ba)
+  static fetch::vm::Ptr<UInt256Wrapper> ConstructorFromString(fetch::vm::VM *   vm,
+                                                              fetch::vm::TypeId type_id,
+                                                              fetch::vm::Ptr<vm::String> const &ba)
   {
     try
     {

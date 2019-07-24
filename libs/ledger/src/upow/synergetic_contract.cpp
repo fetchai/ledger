@@ -124,7 +124,8 @@ VmStructuredData CreateProblemData(vm::VM *vm, ConstByteArray const &problem_dat
     json::JSONDocument doc{problem_data};
 
     // create the structured data
-    data = StructuredData::Constructor(vm, vm->GetTypeId<VmStructuredData>(), doc.root());
+    data =
+        StructuredData::ConstructorFromVariant(vm, vm->GetTypeId<VmStructuredData>(), doc.root());
   }
   catch (std::exception const &ex)
   {

@@ -49,8 +49,9 @@ public:
     , tensor_{}
   {}
 
-  static fetch::vm::Ptr<VMTensor> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
-                                              fetch::vm::Ptr<fetch::vm::Array<SizeType>> shape)
+  static fetch::vm::Ptr<VMTensor> ConstructorFromShape(
+      fetch::vm::VM *vm, fetch::vm::TypeId type_id,
+      fetch::vm::Ptr<fetch::vm::Array<SizeType>> shape)
   {
     return {new VMTensor(vm, type_id, shape->elements)};
   }
@@ -63,7 +64,7 @@ public:
   static void Bind(fetch::vm::Module &module)
   {
     module.CreateClassType<VMTensor>("Tensor")
-        .CreateConstuctor<fetch::vm::Ptr<fetch::vm::Array<VMTensor::SizeType>>>()
+        .CreateConstuctor(&VMTensor::ConstructorFromShape)
         .CreateSerializeDefaultConstuctor()
         .CreateMemberFunction("at", &VMTensor::AtOne)
         .CreateMemberFunction("at", &VMTensor::AtTwo)

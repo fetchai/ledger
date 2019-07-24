@@ -97,14 +97,15 @@ public:
       , type_index_(type_index__)
     {}
 
-    template <typename... Ts>
-    ClassInterface &CreateConstuctor()
+    template <typename ReturnType, typename... Args>
+    ClassInterface &CreateConstuctor(ReturnType (*constructor)(VM *, TypeId, Args...))
     {
       TypeIndex const type_index__ = type_index_;
       TypeIndexArray  parameter_type_index_array;
-      UnrollTypes<Ts...>::Unroll(parameter_type_index_array);
-      Handler handler = [](VM *vm) {
-        InvokeConstructor<Type, Ts...>(vm, vm->instruction_->type_id);
+      UnrollTypes<std::remove_cv_t<std::remove_reference_t<Args>>...>::Unroll(
+          parameter_type_index_array);
+      Handler handler = [constructor](VM *vm) {
+        InvokeConstructor(vm, vm->instruction_->type_id, constructor);
       };
       auto compiler_setup_function = [type_index__, parameter_type_index_array,
                                       handler](Compiler *compiler) {
@@ -113,9 +114,9 @@ public:
 
       module_->AddCompilerSetupFunction(compiler_setup_function);
 
-      if (sizeof...(Ts) == 0)
+      if (sizeof...(Args) == 0)
       {
-        DefaultConstructorHandler h = details::CreateSerializeConstructor<Type, Ts...>::Apply();
+        DefaultConstructorHandler h = details::CreateSerializeConstructor<Type, Args...>::Apply();
         module_->deserialization_constructors_.insert({type_index__, std::move(h)});
       }
 

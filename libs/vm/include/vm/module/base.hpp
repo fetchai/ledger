@@ -245,5 +245,13 @@ struct FunctorTraits<ReturnType (Class_::*)(Args...)>
   using args_tuple_type = std::tuple<Args...>;
 };
 
+template <typename T>
+struct TypeFromPtr;
+template <typename T>
+struct TypeFromPtr<Ptr<T>>
+{
+  using type = T;
+};
+
 }  // namespace vm
 }  // namespace fetch

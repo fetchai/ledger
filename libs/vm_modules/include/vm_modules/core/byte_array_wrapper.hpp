@@ -31,7 +31,7 @@ public:
   static void Bind(vm::Module &module)
   {
     module.CreateClassType<ByteArrayWrapper>("Buffer")
-        .CreateConstuctor<int32_t>()
+        .CreateConstuctor(&ByteArrayWrapper::Constructor)
         .CreateMemberFunction("copy", &ByteArrayWrapper::Copy);
   }
 
@@ -45,12 +45,6 @@ public:
                                                       int32_t n)
   {
     return new ByteArrayWrapper(vm, type_id, byte_array::ByteArray(std::size_t(n)));
-  }
-
-  static fetch::vm::Ptr<ByteArrayWrapper> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
-                                                      byte_array::ByteArray bytearray)
-  {
-    return new ByteArrayWrapper(vm, type_id, bytearray);
   }
 
   fetch::vm::Ptr<ByteArrayWrapper> Copy()

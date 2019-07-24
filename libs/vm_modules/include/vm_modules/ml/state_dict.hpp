@@ -60,7 +60,7 @@ public:
   static void Bind(fetch::vm::Module &module)
   {
     module.CreateClassType<VMStateDict>("StateDict")
-        .CreateConstuctor()
+        .CreateConstuctor(&VMStateDict::Constructor)
         .CreateMemberFunction("setWeights", &VMStateDict::SetWeights);
   }
 

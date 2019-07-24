@@ -323,7 +323,7 @@ struct StateFactory<T, std::enable_if_t<IsMetatype<T>>>
 
 }  // namespace
 
-Ptr<IState> IState::Constructor(VM *vm, TypeId type_id, Ptr<String> const &name)
+Ptr<IState> IState::ConstructorFromString(VM *vm, TypeId type_id, Ptr<String> const &name)
 {
   if (name)
   {
@@ -334,7 +334,7 @@ Ptr<IState> IState::Constructor(VM *vm, TypeId type_id, Ptr<String> const &name)
   return nullptr;
 }
 
-Ptr<IState> IState::Constructor(VM *vm, TypeId type_id, Ptr<Address> const &name)
+Ptr<IState> IState::ConstructorFromAddress(VM *vm, TypeId type_id, Ptr<Address> const &name)
 {
   if (name)
   {

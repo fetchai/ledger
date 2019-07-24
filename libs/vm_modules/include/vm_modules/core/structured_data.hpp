@@ -29,8 +29,8 @@ class StructuredData : public vm::Object
 public:
   static void                    Bind(vm::Module &module);
   static vm::Ptr<StructuredData> Constructor(vm::VM *vm, vm::TypeId type_id);
-  static vm::Ptr<StructuredData> Constructor(vm::VM *vm, vm::TypeId type_id,
-                                             variant::Variant const &data);
+  static vm::Ptr<StructuredData> ConstructorFromVariant(vm::VM *vm, vm::TypeId type_id,
+                                                        variant::Variant const &data);
 
   StructuredData() = delete;
   StructuredData(vm::VM *vm, vm::TypeId type_id);

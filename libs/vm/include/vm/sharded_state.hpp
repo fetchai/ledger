@@ -28,8 +28,9 @@ class IShardedState : public Object
 {
 public:
   // Factory
-  static Ptr<IShardedState> Constructor(VM *vm, TypeId type_id, Ptr<String> const &name);
-  static Ptr<IShardedState> Constructor(VM *vm, TypeId type_id, Ptr<Address> const &name);
+  static Ptr<IShardedState> ConstructorFromString(VM *vm, TypeId type_id, Ptr<String> const &name);
+  static Ptr<IShardedState> ConstructorFromAddress(VM *vm, TypeId type_id,
+                                                   Ptr<Address> const &name);
 
   IShardedState(VM *vm, TypeId type_id)
     : Object(vm, type_id)

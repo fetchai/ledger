@@ -47,10 +47,9 @@ vm::Ptr<vm::Array<T>> CreateNewPrimitiveArray(vm::VM *vm, std::vector<T> &&items
 
 void StructuredData::Bind(vm::Module &module)
 {
-  auto interface = module.CreateClassType<StructuredData>("StructuredData");
-
-  interface.CreateConstuctor()
-    // Getters
+  module.CreateClassType<StructuredData>("StructuredData")
+      .CreateConstuctor(&StructuredData::Constructor)
+      // Getters
       .CreateMemberFunction("getInt32", &StructuredData::GetPrimitive<int32_t>)
       .CreateMemberFunction("getInt64", &StructuredData::GetPrimitive<int64_t>)
       .CreateMemberFunction("getUInt32", &StructuredData::GetPrimitive<uint32_t>)
@@ -64,7 +63,7 @@ void StructuredData::Bind(vm::Module &module)
       .CreateMemberFunction("getArrayUInt64", &StructuredData::GetArray<uint64_t>)
       .CreateMemberFunction("getArrayFloat32", &StructuredData::GetArray<float>)
       .CreateMemberFunction("getArrayFloat64", &StructuredData::GetArray<double>)
-    // Setters
+      // Setters
       .CreateMemberFunction("set", &StructuredData::SetArray<int32_t>)
       .CreateMemberFunction("set", &StructuredData::SetArray<int64_t>)
       .CreateMemberFunction("set", &StructuredData::SetArray<uint32_t>)
@@ -89,8 +88,8 @@ vm::Ptr<StructuredData> StructuredData::Constructor(vm::VM *vm, vm::TypeId type_
   return new StructuredData(vm, type_id);
 }
 
-vm::Ptr<StructuredData> StructuredData::Constructor(vm::VM *vm, vm::TypeId type_id,
-                                                    variant::Variant const &data)
+vm::Ptr<StructuredData> StructuredData::ConstructorFromVariant(vm::VM *vm, vm::TypeId type_id,
+                                                               variant::Variant const &data)
 {
   vm::Ptr<StructuredData> structured_data{};
 

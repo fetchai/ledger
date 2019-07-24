@@ -40,7 +40,7 @@ public:
     return new Address{vm, type_id};
   }
 
-  static Ptr<Address> Constructor(VM *vm, TypeId type_id, Ptr<String> const &address)
+  static Ptr<Address> ConstructorFromString(VM *vm, TypeId type_id, Ptr<String> const &address)
   {
     return new Address{vm, type_id, address};
   }

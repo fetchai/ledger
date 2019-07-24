@@ -190,13 +190,13 @@ Module::Module()
   CreateFreeFunction("toFixed64", &toFixed64);
 
   GetClassInterface<IMatrix>()
-      .CreateConstuctor<int32_t, int32_t>()
+      .CreateConstuctor(&IMatrix::Constructor)
       .EnableIndexOperator()
       .CreateInstantiationType<Matrix<double>>()
       .CreateInstantiationType<Matrix<float>>();
 
   GetClassInterface<IArray>()
-      .CreateConstuctor<int32_t>()
+      .CreateConstuctor(&IArray::Constructor)
       .CreateSerializeDefaultConstuctor<int32_t>(static_cast<int32_t>(0))
       .CreateMemberFunction("append", &IArray::Append)
       .CreateMemberFunction("count", &IArray::Count)
@@ -234,26 +234,26 @@ Module::Module()
       .CreateMemberFunction("trim", &String::Trim);
 
   GetClassInterface<IMap>()
-      .CreateConstuctor()
+      .CreateConstuctor(&IMap::Constructor)
       .CreateMemberFunction("count", &IMap::Count)
       .EnableIndexOperator();
 
   GetClassInterface<Address>()
       .CreateSerializeDefaultConstuctor()
-      .CreateConstuctor<Ptr<String>>()
+      .CreateConstuctor(&Address::ConstructorFromString)
       .CreateMemberFunction("signedTx", &Address::HasSignedTx);
 
   GetClassInterface<IState>()
-      .CreateConstuctor<Ptr<String>>()
-      .CreateConstuctor<Ptr<Address>>()
+      .CreateConstuctor(&IState::ConstructorFromString)
+      .CreateConstuctor(&IState::ConstructorFromAddress)
       .CreateMemberFunction("get", &IState::Get)
       .CreateMemberFunction("get", &IState::GetWithDefault)
       .CreateMemberFunction("set", &IState::Set)
       .CreateMemberFunction("existed", &IState::Existed);
 
   GetClassInterface<IShardedState>()
-      .CreateConstuctor<Ptr<String>>()
-      .CreateConstuctor<Ptr<Address>>()
+      .CreateConstuctor(&IShardedState::ConstructorFromString)
+      .CreateConstuctor(&IShardedState::ConstructorFromAddress)
       // TODO (issue 1172): This will be enabled once the issue is resolved
       //.EnableIndexOperator<Ptr<String>, TemplateParameter1>()
       //.EnableIndexOperator<Ptr<Address>, TemplateParameter1>();

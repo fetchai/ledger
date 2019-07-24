@@ -101,10 +101,7 @@ public:
   static void Bind(vm::Module &module)
   {
     module.CreateClassType<fetch::vm_modules::ml::VMOptimiser>("Optimiser")
-        .CreateConstuctor<fetch::vm::Ptr<fetch::vm::String>,
-                          fetch::vm::Ptr<fetch::vm_modules::ml::VMGraph>,
-                          fetch::vm::Ptr<fetch::vm::String>, fetch::vm::Ptr<fetch::vm::String>,
-                          fetch::vm::Ptr<fetch::vm::String>>()
+        .CreateConstuctor(&fetch::vm_modules::ml::VMOptimiser::Constructor)
         .CreateMemberFunction("run", &fetch::vm_modules::ml::VMOptimiser::RunData)
         .CreateMemberFunction("run", &fetch::vm_modules::ml::VMOptimiser::RunLoader)
         .CreateMemberFunction("run", &fetch::vm_modules::ml::VMOptimiser::RunLoaderNoSubset);

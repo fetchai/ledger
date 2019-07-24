@@ -153,7 +153,8 @@ private:
 
 }  // namespace
 
-Ptr<IShardedState> IShardedState::Constructor(VM *vm, TypeId type_id, Ptr<String> const &name)
+Ptr<IShardedState> IShardedState::ConstructorFromString(VM *vm, TypeId type_id,
+                                                        Ptr<String> const &name)
 {
   if (name)
   {
@@ -166,9 +167,10 @@ Ptr<IShardedState> IShardedState::Constructor(VM *vm, TypeId type_id, Ptr<String
   return nullptr;
 }
 
-Ptr<IShardedState> IShardedState::Constructor(VM *vm, TypeId type_id, Ptr<Address> const &name)
+Ptr<IShardedState> IShardedState::ConstructorFromAddress(VM *vm, TypeId type_id,
+                                                         Ptr<Address> const &name)
 {
-  return Constructor(vm, type_id, name ? name->AsString() : nullptr);
+  return ConstructorFromString(vm, type_id, name ? name->AsString() : nullptr);
 }
 
 }  // namespace vm
