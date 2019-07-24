@@ -54,6 +54,8 @@ public:
     probability_ = sp.probability;
     rng_.Seed(sp.random_seed);
     drop_values_ = ArrayType{0};
+    rng_.SetBuffer(sp.buffer);
+    rng_.SetIndex(sp.index);
   }
 
   ~Dropout() override = default;
@@ -64,6 +66,8 @@ public:
     sp.DESCRIPTOR  = DESCRIPTOR;
     sp.random_seed = rng_.Seed();
     sp.probability = probability_;
+    sp.buffer      = rng_.GetBuffer();
+    sp.index       = rng_.GetIndex();
     return std::make_shared<SPType>(sp);
   }
 

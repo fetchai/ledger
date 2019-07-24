@@ -234,6 +234,9 @@ TYPED_TEST(RandomizedReluTest, saveparams_test)
   fetch::serializers::ByteArrayBuffer b;
   b << *dsp;
 
+  // make another prediction with the original graph
+  op.Forward(vec_data, prediction);
+
   // deserialize
   b.seek(0);
   auto dsp2 = std::make_shared<SPType>();

@@ -57,7 +57,10 @@ public:
     upper_bound_ = sp.upper_bound;
     bounds_mean_ = ((upper_bound_ + lower_bound_) / DataType(2));
     rng_.Seed(sp.random_seed);
-    UpdateRandomValue();
+    rng_.SetBuffer(sp.buffer);
+    rng_.SetIndex(sp.index);
+    //    UpdateRandomValue();
+    random_value_ = sp.random_value;
   }
 
   ~RandomizedRelu() override = default;
@@ -65,11 +68,13 @@ public:
   std::shared_ptr<SaveableParams> GetOpSaveableParams() override
   {
     SPType sp{};
-    sp.DESCRIPTOR  = DESCRIPTOR;
-    sp.lower_bound = lower_bound_;
-    sp.upper_bound = upper_bound_;
-    sp.random_seed = rng_.Seed();
-
+    sp.DESCRIPTOR   = DESCRIPTOR;
+    sp.lower_bound  = lower_bound_;
+    sp.upper_bound  = upper_bound_;
+    sp.random_seed  = rng_.Seed();
+    sp.buffer       = rng_.GetBuffer();
+    sp.index        = rng_.GetIndex();
+    sp.random_value = random_value_;
     return std::make_shared<SPType>(sp);
   }
 
