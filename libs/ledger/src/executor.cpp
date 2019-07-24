@@ -164,9 +164,6 @@ Executor::Result Executor::Execute(Digest const &digest, BlockIndex block, Slice
     storage_cache_->Flush();
   }
 
-  // clean up any used resources
-  Cleanup();
-
   return result;
 }
 
@@ -446,11 +443,6 @@ void Executor::DeductFees(Result &result)
   token_contract_->SubtractTokens(from, result.fee);
 
   token_contract_->Detach();
-}
-
-bool Executor::Cleanup()
-{
-  return false;
 }
 
 }  // namespace ledger

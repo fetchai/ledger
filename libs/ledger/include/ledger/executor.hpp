@@ -65,7 +65,6 @@ private:
   bool ExecuteTransactionContract(Result &result);
   bool ProcessTransfers(Result &result);
   void DeductFees(Result &result);
-  bool Cleanup();
 
   /// @name Resources
   /// @{
