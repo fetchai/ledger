@@ -414,35 +414,42 @@ bool Executor::ExecuteTransactionContract(Result &result)
 
 bool Executor::ProcessTransfers(Result &result)
 {
+  telemetry::FunctionTimer const timer{*transfers_duration_};
+
   bool success{true};
 
-  // attach the token contract to the storage engine
-  StateSentinelAdapter storage_adapter{*storage_cache_, Identifier{"fetch.token"}, allowed_shards_};
-  token_contract_->Attach(storage_adapter);
-
-  // only process transfers if the previous steps have been successful
-  if (Status::SUCCESS == result.status)
+  // ensure that we have transfers to make
+  if (!current_tx_->transfers().empty())
   {
-    // make all the transfers that are necessary
-    for (auto const &transfer : current_tx_->transfers())
+    // attach the token contract to the storage engine
+    StateSentinelAdapter storage_adapter{*storage_cache_, Identifier{"fetch.token"},
+                                         allowed_shards_};
+    token_contract_->Attach(storage_adapter);
+
+    // only process transfers if the previous steps have been successful
+    if (Status::SUCCESS == result.status)
     {
-      // make the individual transfers
-      if (!token_contract_->TransferTokens(*current_tx_, transfer.to, transfer.amount))
+      // make all the transfers that are necessary
+      for (auto const &transfer : current_tx_->transfers())
       {
-        result.status = Status::TRANSFER_FAILURE;
-        success       = false;
-        break;
-      }
-      else
-      {
-        // the cost in charge units to make a transfer
-        result.charge += TRANSFER_CHARGE;
+        // make the individual transfers
+        if (!token_contract_->TransferTokens(*current_tx_, transfer.to, transfer.amount))
+        {
+          result.status = Status::TRANSFER_FAILURE;
+          success       = false;
+          break;
+        }
+        else
+        {
+          // the cost in charge units to make a transfer
+          result.charge += TRANSFER_CHARGE;
+        }
       }
     }
-  }
 
-  // detach the contract
-  token_contract_->Detach();
+    // detach the contract
+    token_contract_->Detach();
+  }
 
   return success;
 }
