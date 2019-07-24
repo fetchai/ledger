@@ -115,8 +115,6 @@ TYPED_TEST(MatrixMultiplyTest, backward_batch_test)
   EXPECT_TRUE(backpropagated_signals[1].AllClose(gradient_b));
 }
 
-
-
 TYPED_TEST(MatrixMultiplyTest, saveparams_test)
 {
   using ArrayType     = TypeParam;
@@ -126,7 +124,8 @@ TYPED_TEST(MatrixMultiplyTest, saveparams_test)
   using OpType        = typename fetch::ml::ops::MatrixMultiply<ArrayType>;
 
   TypeParam data_1 = TypeParam::FromString("1, 2, -3, 4, 5");
-  TypeParam data_2 = TypeParam::FromString("-11, 12, 13, 14; 21, 22, 23, 24; 31, 32, 33, 34; 41, 42, 43, 44; 51, 52, 53, 54");
+  TypeParam data_2 = TypeParam::FromString(
+      "-11, 12, 13, 14; 21, 22, 23, 24; 31, 32, 33, 34; 41, 42, 43, 44; 51, 52, 53, 54");
   TypeParam gt = TypeParam::FromString("357, 388, 397, 406");
 
   OpType op;
