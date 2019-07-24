@@ -29,7 +29,7 @@ struct TypeCodes
     INT8       = 0xd0,
     INT16      = 0xd1,
     INT32      = 0xd2,
-    INT64      = 0xd4,
+    INT64      = 0xd3,
 
     UINT8  = 0xcc,
     UINT16 = 0xcd,

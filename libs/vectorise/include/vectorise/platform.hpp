@@ -27,6 +27,11 @@ inline uint8_t ToBigEndian(uint8_t x)
   return x;
 }
 
+inline uint8_t  FromBigEndian(uint8_t x)
+{
+  return x;
+}
+
 inline uint16_t ToBigEndian(uint16_t x)
 {
   return __builtin_bswap16(x);
@@ -61,6 +66,12 @@ inline int8_t ToBigEndian(int8_t x)
 {
   return x;
 }
+
+inline int8_t FromBigEndian(int8_t x)
+{
+  return x;
+}
+
 
 inline int16_t ToBigEndian(int16_t x)
 {
