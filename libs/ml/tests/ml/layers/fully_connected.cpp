@@ -30,10 +30,20 @@ class FullyConnectedTest : public ::testing::Test
 {
 };
 
-using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
-                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>,
-                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<16, 16>>>;
-TYPED_TEST_CASE(FullyConnectedTest, MyTypes);
+template <typename T>
+class FullyConnectedNoIntTest : public ::testing::Test
+{
+};
+
+using HasIntTypes = ::testing::Types<fetch::math::Tensor<int>, fetch::math::Tensor<float>,
+                                     fetch::math::Tensor<double>,
+                                     fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>,
+                                     fetch::math::Tensor<fetch::fixed_point::FixedPoint<16, 16>>>;
+using NoIntTypes  = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
+                                    fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>,
+                                    fetch::math::Tensor<fetch::fixed_point::FixedPoint<16, 16>>>;
+TYPED_TEST_CASE(FullyConnectedTest, HasIntTypes);
+TYPED_TEST_CASE(FullyConnectedNoIntTest, NoIntTypes);
 
 TYPED_TEST(FullyConnectedTest, set_input_and_evaluate_test)  // Use the class as a subgraph
 {
@@ -98,28 +108,30 @@ TYPED_TEST(FullyConnectedTest, share_weight_with_incompatible_layer)
                            "FC1", {input}, 11u, 20u));
 }
 
-TYPED_TEST(FullyConnectedTest, share_weight_backward_test)
+TYPED_TEST(FullyConnectedNoIntTest, share_weight_backward_test)
 {
-  using ArrayType = TypeParam;
-  using DataType  = typename ArrayType::Type;
-  using GraphType = typename fetch::ml::Graph<ArrayType>;
+  using ArrayType       = TypeParam;
+  using DataType        = typename ArrayType::Type;
+  using SizeType        = typename ArrayType::SizeType;
+  using GraphType       = typename fetch::ml::Graph<ArrayType>;
+  using FCType          = typename fetch::ml::layers::FullyConnected<ArrayType>;
+  using RegType         = fetch::ml::details::RegularisationType;
+  using WeightsInitType = fetch::ml::ops::WeightsInitialisation;
+  using ActivationType  = fetch::ml::details::ActivationType;
 
-  std::string descriptor = fetch::ml::layers::FullyConnected<ArrayType>::DESCRIPTOR;
+  std::string descriptor = FCType::DESCRIPTOR;
 
   // create an auto encoder of two dense layers, both share same weights
   auto g_shared = std::make_shared<GraphType>();
 
   std::string g_shared_input =
       g_shared->template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>("Input", {});
-  std::string g_shared_intermediate =
-      g_shared->template AddNode<fetch::ml::layers::FullyConnected<ArrayType>>(
-          "FC1", {g_shared_input}, 10u, 10u, fetch::ml::details::ActivationType::NOTHING,
-          fetch::ml::details::RegularisationType::NONE, static_cast<DataType>(0),
-          fetch::ml::ops::WeightsInitialisation::XAVIER_GLOROT);
-  std::string g_shared_output =
-      g_shared->template AddNode<fetch::ml::layers::FullyConnected<ArrayType>>(
-          "FC1", {g_shared_intermediate}, 10u, 10u, fetch::ml::details::ActivationType::NOTHING,
-          fetch::ml::details::RegularisationType::NONE, static_cast<DataType>(0));
+  std::string g_shared_intermediate = g_shared->template AddNode<FCType>(
+      "FC1", {g_shared_input}, 10u, 10u, ActivationType::NOTHING, RegType::NONE,
+      static_cast<DataType>(0), WeightsInitType::XAVIER_GLOROT);
+  std::string g_shared_output = g_shared->template AddNode<FCType>(
+      "FC1", {g_shared_intermediate}, 10u, 10u, ActivationType::NOTHING, RegType::NONE,
+      static_cast<DataType>(0));
   std::string g_shared_label =
       g_shared->template AddNode<fetch::ml::ops::PlaceHolder<TypeParam>>("Label", {});
   std::string g_shared_error =
@@ -131,16 +143,12 @@ TYPED_TEST(FullyConnectedTest, share_weight_backward_test)
 
   std::string g_not_shared_input =
       g_not_shared->template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>("Input", {});
-  std::string g_not_shared_intermediate =
-      g_not_shared->template AddNode<fetch::ml::layers::FullyConnected<ArrayType>>(
-          "FC4", {g_not_shared_input}, 10u, 10u, fetch::ml::details::ActivationType::NOTHING,
-          fetch::ml::details::RegularisationType::NONE, static_cast<DataType>(0),
-          fetch::ml::ops::WeightsInitialisation::XAVIER_GLOROT);
-  std::string g_not_shared_output =
-      g_not_shared->template AddNode<fetch::ml::layers::FullyConnected<ArrayType>>(
-          "FC5", {g_not_shared_intermediate}, 10u, 10u, fetch::ml::details::ActivationType::NOTHING,
-          fetch::ml::details::RegularisationType::NONE, static_cast<DataType>(0),
-          fetch::ml::ops::WeightsInitialisation::XAVIER_GLOROT);
+  std::string g_not_shared_intermediate = g_not_shared->template AddNode<FCType>(
+      "FC4", {g_not_shared_input}, 10u, 10u, ActivationType::NOTHING, RegType::NONE,
+      static_cast<DataType>(0), WeightsInitType::XAVIER_GLOROT);
+  std::string g_not_shared_output = g_not_shared->template AddNode<FCType>(
+      "FC5", {g_not_shared_intermediate}, 10u, 10u, fetch::ml::details::ActivationType::NOTHING,
+      RegType::NONE, static_cast<DataType>(0), WeightsInitType::XAVIER_GLOROT);
   std::string g_not_shared_label =
       g_not_shared->template AddNode<fetch::ml::ops::PlaceHolder<TypeParam>>("Label", {});
   std::string g_not_shared_error =
@@ -183,23 +191,23 @@ TYPED_TEST(FullyConnectedTest, share_weight_backward_test)
   // set data
   ArrayType data;
   data.Resize({10, 1});
-  for (int i = 0; i < 10; i++)
+  for (SizeType i = 0; i < 10; i++)
   {
-    data.Set(i, 0, DataType(i));
+    data.Set(i, 0, static_cast<DataType>(i));
   }
 
-  // Run 1 iteration of training on g shared
+  // SGD is chosen to be the optimizer to reflect the gradient throw change in weights after 1
+  // iteration of training. Run 1 iteration of SGD to train on g shared
   auto                                           lr = static_cast<DataType>(1);
   fetch::ml::optimisers::SGDOptimiser<ArrayType> g_shared_optimiser(
       g_shared, {g_shared_input}, g_shared_label, g_shared_error, lr);
   g_shared_optimiser.Run({data}, data, 1);
-  // Run 1 iteration of training on g not shared
+  // Run 1 iteration of SGD to train on g not shared
   fetch::ml::optimisers::SGDOptimiser<ArrayType> g_not_shared_optimiser(
       g_not_shared, {g_not_shared_input}, g_not_shared_label, g_not_shared_error, lr);
   g_not_shared_optimiser.Run({data}, data, 1);
 
   // check that all weights are equal
-  std::cout << "**************************AFTER TRAINING**************************" << std::endl;
   auto                   g_shared_statedict_after = g_shared->StateDict();
   std::vector<ArrayType> g_shared_weights_after;
   g_shared_weights_after.emplace_back(
@@ -222,12 +230,23 @@ TYPED_TEST(FullyConnectedTest, share_weight_backward_test)
   g_not_shared_weights_after.emplace_back(
       g_not_shared_statedict_after.dict_["FC5_FullyConnected_Bias"].weights_->Copy());
 
-  // check the shared weight graph has tied weights, and the not shared weight graph has untied
-  // weights
+  // check the all weights are initialized to be the same
   for (size_t i = 0; i < 2; i++)
   {
     ASSERT_TRUE(g_shared_weights_before[i] == g_shared_weights_before[i + 2]);
     ASSERT_TRUE(g_not_shared_weights_before[i] == g_not_shared_weights_before[i + 2]);
+  }
+
+  // check the weights are equal after training for shared weights
+  for (size_t i = 0; i < 2; i++)
+  {
+    ASSERT_TRUE(g_shared_weights_after[i] == g_shared_weights_after[i + 2]);
+  }
+
+  // check the weights are different after training for not shared weights
+  for (size_t i = 0; i < 2; i++)
+  {
+    ASSERT_FALSE(g_not_shared_weights_after[i] == g_not_shared_weights_after[i + 2]);
   }
 
   // check the gradient of the shared weight matrices are the sum of individual weight matrice

@@ -100,7 +100,11 @@ private:
       std::string const &name, std::shared_ptr<Node<ArrayType, OperationType>> op);
 
   template <typename OperationType>
-  std::pair<bool, std::string> UpdateVariableName(std::string const &name);
+  bool UpdateVariableName(std::string const &name, std::string &ret);
+
+  template <class OperationType, typename... Params>
+  void LinkNodesInGraph(std::string const &node_name, std::vector<std::string> const &inputs,
+                        std::shared_ptr<fetch::ml::Node<ArrayType, OperationType>> op);
 
 protected:
   std::unordered_map<std::string, NodePtrType> nodes_;
@@ -227,9 +231,8 @@ meta::IfIsShareable<ArrayType, OperationType, std::string> Graph<ArrayType>::Add
     std::string const &node_name, std::vector<std::string> const &inputs, Params... params)
 {
   // guarantee unique op name
-  auto        naming_result = UpdateVariableName<OperationType>(node_name);
-  bool        is_duplicate  = naming_result.first;
-  std::string updated_name  = naming_result.second;
+  std::string updated_name;
+  bool        is_duplicate = UpdateVariableName<OperationType>(node_name, updated_name);
 
   std::shared_ptr<fetch::ml::Node<ArrayType, OperationType>> op;
   if (!is_duplicate)
@@ -244,14 +247,9 @@ meta::IfIsShareable<ArrayType, OperationType, std::string> Graph<ArrayType>::Add
 
     op = std::make_shared<Node<ArrayType, OperationType>>(updated_name, target_node, params...);
   }
-  nodes_[updated_name] = op;
 
-  // assign inputs and outputs
-  for (auto const &i : inputs)
-  {
-    nodes_[updated_name]->AddInput(nodes_[i]);
-    nodes_[i]->AddOutput(nodes_[updated_name]);
-  }
+  // assign inputs and outputs to the new node
+  LinkNodesInGraph(updated_name, inputs, op);
 
   // add to map of trainable ops if necessary
   AddTrainable(updated_name, op);
@@ -266,20 +264,13 @@ meta::IfIsNotShareable<ArrayType, OperationType, std::string> Graph<ArrayType>::
     std::string const &node_name, std::vector<std::string> const &inputs, Params... params)
 {
   // guarantee unique op name
-  auto naming_result = UpdateVariableName<OperationType>(node_name);
-
-  std::string updated_name = naming_result.second;
+  std::string updated_name;
+  UpdateVariableName<OperationType>(node_name, updated_name);
 
   auto op = std::make_shared<Node<ArrayType, OperationType>>(updated_name, params...);
 
-  nodes_[updated_name] = op;
-
-  // assign inputs and outputs
-  for (auto const &i : inputs)
-  {
-    nodes_[updated_name]->AddInput(nodes_[i]);
-    nodes_[i]->AddOutput(nodes_[updated_name]);
-  }
+  // assign inputs and outputs to the new node
+  LinkNodesInGraph(updated_name, inputs, op);
 
   // add to map of trainable ops if necessary
   AddTrainable(updated_name, op);
@@ -424,6 +415,23 @@ void Graph<ArrayType>::ApplyGradients(std::vector<ArrayType> &grad)
   }
 }
 
+template <typename ArrayType>
+template <class OperationType, typename... Params>
+void Graph<ArrayType>::LinkNodesInGraph(
+    std::string const &node_name, std::vector<std::string> const &inputs,
+    std::shared_ptr<fetch::ml::Node<ArrayType, OperationType>> op)
+{
+  // put node in look up table
+  nodes_[node_name] = op;
+
+  // assign inputs and outputs
+  for (auto const &i : inputs)
+  {
+    nodes_[node_name]->AddInput(nodes_[i]);
+    nodes_[i]->AddOutput(nodes_[node_name]);
+  }
+}
+
 /**
  * Appends op to map of trainable nodes. Called by AddNode if the node is for a trainable op
  * @tparam OperationType template class of operation
@@ -456,7 +464,8 @@ meta::IfIsGraph<ArrayType, OperationType, void> Graph<ArrayType>::AddTrainable(
   {
     // guarantee unique op name
     std::string node_name(name + "_" + trainable.first);
-    std::string resolved_name = UpdateVariableName<OperationType>(node_name).second;
+    std::string resolved_name;
+    UpdateVariableName<OperationType>(node_name, resolved_name);
 
     trainable_.emplace_back(op->trainable_.at(trainable.second));
     trainable_lookup_[resolved_name] = trainable_.size() - 1;
@@ -487,9 +496,9 @@ meta::IfIsNotGraphOrTrainable<ArrayType, OperationType, void> Graph<ArrayType>::
  */
 template <typename ArrayType>
 template <typename OperationType>
-std::pair<bool, std::string> Graph<ArrayType>::UpdateVariableName(std::string const &name)
+bool Graph<ArrayType>::UpdateVariableName(std::string const &name, std::string &ret)
 {
-  std::string ret           = name;
+  ret                       = name;
   std::string op_descriptor = (OperationType::DESCRIPTOR);
   bool        is_duplicate  = false;
   // search graph for existing variable names
@@ -515,7 +524,7 @@ std::pair<bool, std::string> Graph<ArrayType>::UpdateVariableName(std::string co
     }
   }
 
-  return std::make_pair(is_duplicate, ret);
+  return is_duplicate;
 }
 
 /**

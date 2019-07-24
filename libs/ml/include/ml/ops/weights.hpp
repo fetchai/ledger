@@ -96,14 +96,9 @@ public:
   Weights()           = default;
   ~Weights() override = default;
 
-  ArrayPtrType GetSharableWeights()
+  ArrayPtrType GetShareableWeights()
   {
     return this->output_;
-  }
-
-  void ShareWeightsWith(WeightsPtrType target_weights)
-  {
-    this->output_ = target_weights->GetSharableWeights();
   }
 
   std::vector<ArrayType> Backward(VecTensorType const &inputs,

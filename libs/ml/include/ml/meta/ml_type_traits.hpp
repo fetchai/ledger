@@ -67,6 +67,7 @@ using IfIsTrainable = fetch::meta::EnableIf<IsTrainable<T, OperationType>, R>;
 template <typename T, typename OperationType, typename R = void>
 using IfIsGraph = fetch::meta::EnableIf<IsGraph<T, OperationType>, R>;
 
+// TODO (#1397) Need to implement shared weight for every shareable weight layers and ops
 template <typename T, typename OperationType, typename R = void>
 using IfIsShareable = fetch::meta::EnableIf<IsShareable<T, OperationType>, R>;
 

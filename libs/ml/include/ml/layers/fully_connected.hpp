@@ -66,7 +66,7 @@ public:
   {
     FETCH_UNUSED(init_mode);
 
-    // setup overall architecture of the model
+    // setup overall architecture of the layer
     SetupArchitecture(activation_type, regulariser, regularisation_rate);
 
     // share weight with target_node
@@ -118,21 +118,13 @@ public:
     // check if the shared weight is compatible with input shape
     auto w_s = target_weights_ptr->get_weights().shape();
     auto b_s = target_bias_ptr->get_weights().shape();
-    if ((w_s[0] != out_size_) || (w_s[1] != in_size_) || (b_s[0] != out_size_))
-    {
-      throw std::runtime_error("the shared weight from node: " + target_node_ptr->GetNodeName() +
-                               " is incompatible with the specified shape of this layer");
-    }
-
-    // Set sudo weights to handle initilization issues
-    ArrayType weights_data(std::vector<SizeType>({out_size_, in_size_}));
-    this->SetInput(name + "_Weights", weights_data);
-    ArrayType bias_data(std::vector<SizeType>({out_size_, 1}));
-    this->SetInput(name + "_Bias", bias_data);
+    ASSERT((w_s[0] == out_size_) && (w_s[1] == in_size_) && (b_s[0] == out_size_));
 
     // Share weights and parameter among these weights layers
-    weights_ptr->ShareWeightsWith(target_weights_ptr);
-    bias_ptr->ShareWeightsWith(target_bias_ptr);
+    auto shared_weights = *(target_weights_ptr->GetShareableWeights());
+    auto shared_bias    = *(target_bias_ptr->GetShareableWeights());
+    this->SetInput(name + "_Weights", shared_weights);
+    this->SetInput(name + "_Bias", shared_bias);
   }
 
   void SetupArchitecture(details::ActivationType activation_type = details::ActivationType::NOTHING,
