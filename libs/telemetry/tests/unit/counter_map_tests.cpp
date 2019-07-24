@@ -24,7 +24,6 @@
 
 namespace {
 
-using fetch::telemetry::Measurement;
 using fetch::telemetry::CounterMap;
 using fetch::telemetry::OutputStream;
 

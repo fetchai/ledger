@@ -28,8 +28,6 @@ namespace fetch {
 namespace muddle {
 namespace {
 
-using std::chrono::duration_cast;
-using std::chrono::microseconds;
 using telemetry::Registry;
 
 const std::chrono::seconds PROMISE_TIMEOUT{30};

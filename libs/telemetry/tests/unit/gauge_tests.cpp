@@ -25,7 +25,6 @@
 
 namespace {
 
-using fetch::telemetry::Measurement;
 using fetch::telemetry::OutputStream;
 
 using IntegerTypes = ::testing::Types<uint32_t, uint64_t>;
