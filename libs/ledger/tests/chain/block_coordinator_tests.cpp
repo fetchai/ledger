@@ -76,9 +76,8 @@ Digest GENESIS_DIGEST =
 Digest GENESIS_MERKLE_ROOT =
     fetch::byte_array::FromBase64("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=");
 
-static constexpr char const *LOGGING_NAME = "BlockCoordinatorTests";
-static constexpr std::size_t NUM_LANES    = 1;
-static constexpr std::size_t NUM_SLICES   = 1;
+static constexpr std::size_t NUM_LANES  = 1;
+static constexpr std::size_t NUM_SLICES = 1;
 
 class BlockCoordinatorTests : public ::testing::Test
 {
