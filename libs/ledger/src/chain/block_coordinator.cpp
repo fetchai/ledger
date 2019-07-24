@@ -161,6 +161,15 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag, StakeManagerPtr
   , reset_state_count_{telemetry::Registry::Instance().CreateCounter(
         "ledger_block_coordinator_reset_state_total",
         "The total number of times in the reset state")}
+  , executed_block_count_{telemetry::Registry::Instance().CreateCounter(
+        "ledger_block_coordinator_executed_block_total",
+        "The total number of executed blocks")}
+  , mined_block_count_{telemetry::Registry::Instance().CreateCounter(
+        "ledger_block_coordinator_mined_block_total",
+        "The total number of mined blocks")}
+  , executed_tx_count_{telemetry::Registry::Instance().CreateCounter(
+        "ledger_block_coordinator_executed_tx_total",
+        "The total number of executed transactions")}
 {
   // configure the state machine
   // clang-format off
@@ -877,6 +886,10 @@ BlockCoordinator::State BlockCoordinator::OnPostExecBlockValidation()
 
     // signal the last block that has been executed
     last_executed_block_.Set(current_block_->body.hash);
+
+    // update the telemetry
+    executed_block_count_->increment();
+    executed_tx_count_->add(current_block_->GetTransactionCount());
   }
 
   return State::RESET;
@@ -1036,6 +1049,10 @@ BlockCoordinator::State BlockCoordinator::OnTransmitBlock()
     // ensure that the main chain is aware of the block
     if (BlockStatus::ADDED == chain_.AddBlock(*next_block_))
     {
+      // update the telemetry
+      mined_block_count_->increment();
+      executed_block_count_->increment();
+
       FETCH_LOG_INFO(LOGGING_NAME, "Broadcasting new block: 0x", next_block_->body.hash.ToHex(),
                      " txs: ", next_block_->GetTransactionCount(),
                      " number: ", next_block_->body.block_number);

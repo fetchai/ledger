@@ -368,6 +368,9 @@ private:
   telemetry::CounterPtr proof_search_state_count_;
   telemetry::CounterPtr transmit_state_count_;
   telemetry::CounterPtr reset_state_count_;
+  telemetry::CounterPtr executed_block_count_;
+  telemetry::CounterPtr mined_block_count_;
+  telemetry::CounterPtr executed_tx_count_;
   /// @}
 };
 
