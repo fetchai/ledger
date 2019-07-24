@@ -18,8 +18,10 @@
 
 #include "ml/ops/divide.hpp"
 
+#include "math/base_types.hpp"
 #include "math/tensor.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
+#include "vectorise/fixed_point/serializers.hpp"
 
 #include "gtest/gtest.h"
 
@@ -99,7 +101,6 @@ TYPED_TEST(DivideTest, backward_test)
   ASSERT_TRUE(prediction[1].AllClose(gt_2, fetch::math::function_tolerance<DataType>(),
                                      fetch::math::function_tolerance<DataType>()));
 }
-
 
 TYPED_TEST(DivideTest, saveparams_test)
 {
