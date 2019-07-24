@@ -54,7 +54,7 @@ public:
 
   explicit Embeddings(SPType const &sp)
   {
-    this->SetData(sp.output);
+    this->SetData(*sp.output);
   }
 
   ~Embeddings() override = default;
