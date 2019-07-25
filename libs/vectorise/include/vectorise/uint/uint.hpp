@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/containers/array.hpp"
 #include "meta/has_index.hpp"
 #include "meta/type_traits.hpp"
 #include "vectorise/platform.hpp"
@@ -45,17 +46,6 @@ namespace vectorise {
 template <uint16_t S = 256>
 class UInt
 {
-  // TODO (issue 1393): Replace this with `std::array<...>` once C++17 feature set will be enabled.
-  template <typename T, std::size_t SIZE>
-  struct Array
-  {
-    using ElementType = T;
-    static constexpr std::size_t Size{SIZE};
-    using NativeType = ElementType[Size];
-
-    NativeType data = {0};
-  };
-
 public:
   using BaseType = uint8_t;
   using WideType = uint64_t;
@@ -71,10 +61,18 @@ public:
   static_assert(S == (ELEMENTS * ELEMENT_SIZE),
                 "Size must be a multiple of 8 times the base type size.");
 
-  // From C++17 up, the `WideContainerType` type can be `std::array<WideType, WIDE_ELEMENTS>;`
-  using WideContainerType                   = Array<WideType, WIDE_ELEMENTS>;
+  // TODO (issue 1393): Replace this with `std::array<...>` once C++17 feature set will be enabled.
+  using WideContainerType                   = core::Array<WideType, WIDE_ELEMENTS>;
   using ContainerType                       = BaseType[ELEMENTS];
   static constexpr char const *LOGGING_NAME = "UInt";
+
+  template <typename... T>
+  using IfIsWideInitialiserList = std::enable_if_t<meta::Is<WideType>::SameAsEvery<T...>::value &&
+                                                   (sizeof...(T) <= WIDE_ELEMENTS)>;
+
+  template <typename... T>
+  using IfIsBaseInitialiserList =
+      std::enable_if_t<meta::Is<BaseType>::SameAsEvery<T...>::value && (sizeof...(T) <= ELEMENTS)>;
 
   ////////////////////
   /// constructors ///
@@ -84,17 +82,15 @@ public:
   constexpr UInt(UInt const &other)     = default;
   constexpr UInt(UInt &&other) noexcept = default;
 
-  template <typename... T, std::enable_if_t<meta::Is<WideType>::SameAsEvery<T...>::value &&
-                                            (sizeof...(T) <= WIDE_ELEMENTS)> * = nullptr>
+  template <typename... T, IfIsWideInitialiserList<T...> * = nullptr>
   constexpr UInt(T &&... data)
     : wide_{{std::forward<T>(data)...}}
   {}
 
-  template <typename... T, std::enable_if_t<meta::Is<BaseType>::SameAsEvery<T...>::value &&
-                                            (sizeof...(T) <= ELEMENTS)> * = nullptr>
+  template <typename... T, IfIsBaseInitialiserList<T...> * = nullptr>
   constexpr UInt(T &&... data)
     : wide_{reinterpret_cast<WideContainerType &&>(
-          Array<BaseType, ELEMENTS>{{std::forward<T>(data)...}})}
+          core::Array<BaseType, ELEMENTS>{{std::forward<T>(data)...}})}
   {}
 
   template <typename T, meta::IfIsAByteArray<T> * = nullptr>
@@ -239,7 +235,6 @@ public:
   static const UInt max;
 
 private:
-  // TODO (issue 1393): Replace this with `std::array<...>` once C++17 feature set will be enabled.
   WideContainerType wide_;
 
   static constexpr WideType RESIDUAL_BITS_MASK{~WideType{0} >> RESIDUAL_BITS};
@@ -252,24 +247,24 @@ private:
   };
   constexpr UInt(MaxConstr)
   {
-    for (auto &itm : wide_.data)
+    for (auto &itm : wide_)
     {
       itm = ~WideType{0};
     }
-    wide_.data[WIDE_ELEMENTS - 1] &= RESIDUAL_BITS_MASK;
+    wide_[WIDE_ELEMENTS - 1] &= RESIDUAL_BITS_MASK;
   }
 };
 
 template <uint16_t S>
 constexpr typename UInt<S>::ContainerType const &UInt<S>::base() const
 {
-  return reinterpret_cast<ContainerType const &>(wide_.data);
+  return reinterpret_cast<ContainerType const &>(wide_.data());
 }
 
 template <uint16_t S>
 constexpr typename UInt<S>::ContainerType &UInt<S>::base()
 {
-  return reinterpret_cast<ContainerType &>(wide_.data);
+  return reinterpret_cast<ContainerType &>(wide_.data());
 }
 
 /////////////////
@@ -304,7 +299,7 @@ template <typename T, meta::IfIsUnsignedInteger<T> *>
 constexpr UInt<S>::UInt(T number)
 {
   // This will work properly only on LITTLE endian hardware.
-  char *d                   = reinterpret_cast<char *>(wide_.data);
+  char *d                   = reinterpret_cast<char *>(wide_.data());
   *reinterpret_cast<T *>(d) = number;
 }
 
@@ -323,7 +318,7 @@ template <uint16_t S>
 template <typename ArrayType>
 meta::IfHasIndex<ArrayType, UInt<S>> &UInt<S>::operator=(ArrayType const &v)
 {
-  std::fill(wide_.data, wide_.data + WIDE_ELEMENTS, 0);
+  wide_.fill(0);
   std::copy(v.pointer(), v.pointer() + v.capacity(), base());
 
   return *this;
@@ -333,8 +328,8 @@ template <uint16_t S>
 template <typename T>
 constexpr meta::IfHasNoIndex<T, UInt<S>> &UInt<S>::operator=(T const &v)
 {
-  std::fill(wide_.data, wide_.data + WIDE_ELEMENTS, 0);
-  wide_.data[0] = static_cast<WideType>(v);
+  wide_.fill(0);
+  wide_[0] = static_cast<WideType>(v);
 
   return *this;
 }
@@ -349,7 +344,7 @@ constexpr bool UInt<S>::operator==(UInt const &other) const
   bool ret = true;
   for (std::size_t i = 0; i < WIDE_ELEMENTS; ++i)
   {
-    ret &= (wide_.data[i] == other.ElementAt(i));
+    ret &= (wide_[i] == other.ElementAt(i));
   }
 
   return ret;
@@ -367,13 +362,13 @@ constexpr bool UInt<S>::operator<(UInt const &other) const
   // Simplified version, as we're dealing with wider elements
   for (std::size_t i = 0; i < WIDE_ELEMENTS; ++i)
   {
-    if (wide_.data[WIDE_ELEMENTS - 1 - i] == other.ElementAt(WIDE_ELEMENTS - 1 - i))
+    if (wide_[WIDE_ELEMENTS - 1 - i] == other.ElementAt(WIDE_ELEMENTS - 1 - i))
     {
       continue;
     }
     else
     {
-      return wide_.data[WIDE_ELEMENTS - 1 - i] < other.ElementAt(WIDE_ELEMENTS - 1 - i);
+      return wide_[WIDE_ELEMENTS - 1 - i] < other.ElementAt(WIDE_ELEMENTS - 1 - i);
     }
   }
   return false;
@@ -469,9 +464,9 @@ constexpr UInt<S> UInt<S>::operator~() const
   UInt<S> retval;
   for (std::size_t i{0}; i < WIDE_ELEMENTS; ++i)
   {
-    retval.wide_.data[i] = ~wide_.data[i];
+    retval.wide_[i] = ~wide_[i];
   }
-  retval.wide_.data[WIDE_ELEMENTS - 1] &= RESIDUAL_BITS_MASK;
+  retval.wide_[WIDE_ELEMENTS - 1] &= RESIDUAL_BITS_MASK;
 
   return retval;
 }
@@ -559,8 +554,8 @@ constexpr UInt<S> &UInt<S>::operator+=(UInt<S> const &n)
   for (std::size_t i = 0; i < WIDE_ELEMENTS; ++i)
   {
     // if sum of elements is smaller than the element itself, then we have overflow and carry
-    new_carry = (wide_.data[i] + n.ElementAt(i) + carry < wide_.data[i]) ? 1 : 0;
-    wide_.data[i] += n.ElementAt(i) + carry;
+    new_carry = (wide_[i] + n.ElementAt(i) + carry < wide_[i]) ? 1 : 0;
+    wide_[i] += n.ElementAt(i) + carry;
     carry = new_carry;
   }
 
@@ -578,8 +573,8 @@ constexpr UInt<S> &UInt<S>::operator-=(UInt<S> const &n)
   for (std::size_t i = 0; i < WIDE_ELEMENTS; ++i)
   {
     // if diff of the elements is larger than the element itself, then we have underflow and carry
-    new_carry = (wide_.data[i] - n.ElementAt(i) - carry > wide_.data[i]) ? 1 : 0;
-    wide_.data[i] -= n.ElementAt(i) + carry;
+    new_carry = (wide_[i] - n.ElementAt(i) - carry > wide_[i]) ? 1 : 0;
+    wide_[i] -= n.ElementAt(i) + carry;
     carry = new_carry;
   }
 
@@ -600,7 +595,7 @@ constexpr UInt<256> &UInt<256>::operator*=(UInt<256> const &n)
     {
       // Note: C++14 does not have constexpr std::array, we need to cast the array
       products[i][j] =
-          static_cast<__uint128_t>(wide_.data[i]) * static_cast<__uint128_t>(n.ElementAt(j));
+          static_cast<__uint128_t>(wide_[i]) * static_cast<__uint128_t>(n.ElementAt(j));
     }
   }
 
@@ -633,7 +628,7 @@ constexpr UInt<256> &UInt<256>::operator*=(UInt<256> const &n)
 
   for (std::size_t i = 0; i < WIDE_ELEMENTS; ++i)
   {
-    wide_.data[i] = static_cast<WideType>(terms[i]);
+    wide_[i] = static_cast<WideType>(terms[i]);
   }
 
   return *this;
@@ -715,7 +710,7 @@ constexpr UInt<S> &UInt<S>::operator&=(UInt<S> const &n)
 {
   for (std::size_t i = 0; i < WIDE_ELEMENTS; ++i)
   {
-    wide_.data[i] &= n.ElementAt(i);
+    wide_[i] &= n.ElementAt(i);
   }
 
   return *this;
@@ -726,7 +721,7 @@ constexpr UInt<S> &UInt<S>::operator|=(UInt<S> const &n)
 {
   for (std::size_t i = 0; i < WIDE_ELEMENTS; ++i)
   {
-    wide_.data[i] |= n.ElementAt(i);
+    wide_[i] |= n.ElementAt(i);
   }
 
   return *this;
@@ -737,7 +732,7 @@ constexpr UInt<S> &UInt<S>::operator^=(UInt<S> const &n)
 {
   for (std::size_t i = 0; i < WIDE_ELEMENTS; ++i)
   {
-    wide_.data[i] ^= n.ElementAt(i);
+    wide_[i] ^= n.ElementAt(i);
   }
 
   return *this;
@@ -914,11 +909,11 @@ constexpr UInt<S> &UInt<S>::operator<<=(std::size_t bits)
   {
     for (std::size_t i = WIDE_ELEMENTS - 1; i >= full_words; i--)
     {
-      wide_.data[i] = wide_.data[i - full_words];
+      wide_[i] = wide_[i - full_words];
     }
     for (std::size_t i = 0; i < full_words; i++)
     {
-      wide_.data[i] = 0;
+      wide_[i] = 0;
     }
   }
   // If real_bits == 0, nothing to do
@@ -927,9 +922,9 @@ constexpr UInt<S> &UInt<S>::operator<<=(std::size_t bits)
     WideType carry = 0;
     for (std::size_t i = 0; i < WIDE_ELEMENTS; i++)
     {
-      WideType val  = wide_.data[i];
-      wide_.data[i] = (val << real_bits) | carry;
-      carry         = val >> nbits;
+      WideType val = wide_[i];
+      wide_[i]     = (val << real_bits) | carry;
+      carry        = val >> nbits;
     }
   }
 
@@ -947,11 +942,11 @@ constexpr UInt<S> &UInt<S>::operator>>=(std::size_t bits)
   {
     for (std::size_t i = 0; i < WIDE_ELEMENTS - full_words; i++)
     {
-      wide_.data[i] = wide_.data[i + full_words];
+      wide_[i] = wide_[i + full_words];
     }
     for (std::size_t i = 0; i < full_words; i++)
     {
-      wide_.data[WIDE_ELEMENTS - i - 1] = 0;
+      wide_[WIDE_ELEMENTS - i - 1] = 0;
     }
   }
 
@@ -961,9 +956,9 @@ constexpr UInt<S> &UInt<S>::operator>>=(std::size_t bits)
     WideType carry = 0;
     for (std::size_t i = 0; i < WIDE_ELEMENTS; i++)
     {
-      WideType val                      = wide_.data[WIDE_ELEMENTS - 1 - i];
-      wide_.data[WIDE_ELEMENTS - 1 - i] = (val >> real_bits) | carry;
-      carry                             = val << nbits;
+      WideType val                 = wide_[WIDE_ELEMENTS - 1 - i];
+      wide_[WIDE_ELEMENTS - 1 - i] = (val >> real_bits) | carry;
+      carry                        = val << nbits;
     }
   }
 
@@ -976,7 +971,7 @@ constexpr std::size_t UInt<S>::msb() const
   std::size_t msb = 0;
   for (std::size_t i = 0; i < WIDE_ELEMENTS; i++)
   {
-    std::size_t msbi = platform::CountLeadingZeroes64(wide_.data[WIDE_ELEMENTS - 1 - i]);
+    std::size_t msbi = platform::CountLeadingZeroes64(wide_[WIDE_ELEMENTS - 1 - i]);
     msb += msbi;
     if (msbi < 64)
     {
@@ -992,7 +987,7 @@ constexpr std::size_t UInt<S>::lsb() const
   std::size_t lsb = 0;
   for (std::size_t i = 0; i < WIDE_ELEMENTS; i++)
   {
-    std::size_t lsbi = platform::CountTrailingZeroes64(wide_.data[i]);
+    std::size_t lsbi = platform::CountTrailingZeroes64(wide_[i]);
     lsb += lsbi;
     if (lsb < 64)
     {
@@ -1021,20 +1016,20 @@ constexpr uint8_t &UInt<S>::operator[](std::size_t n)
 template <uint16_t S>
 constexpr typename UInt<S>::WideType UInt<S>::ElementAt(std::size_t n) const
 {
-  return wide_.data[n];
+  return wide_[n];
 }
 
 template <uint16_t S>
 constexpr typename UInt<S>::WideType &UInt<S>::ElementAt(std::size_t n)
 {
-  return wide_.data[n];
+  return wide_[n];
 }
 
 template <uint16_t S>
 constexpr uint64_t UInt<S>::TrimmedSize() const
 {
   uint64_t ret = WIDE_ELEMENTS;
-  while ((ret != 0) && (wide_.data[ret - 1] == 0))
+  while ((ret != 0) && (wide_[ret - 1] == 0))
   {
     --ret;
   }
@@ -1044,7 +1039,7 @@ constexpr uint64_t UInt<S>::TrimmedSize() const
 template <uint16_t S>
 constexpr uint8_t const *UInt<S>::pointer() const
 {
-  return reinterpret_cast<uint8_t const *>(wide_.data);
+  return reinterpret_cast<uint8_t const *>(wide_.data());
 }
 
 template <uint16_t S>
