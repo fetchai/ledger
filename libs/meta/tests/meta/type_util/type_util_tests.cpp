@@ -221,7 +221,7 @@ public:
 
 TEST(TypeUtilTests, BinarySwitch)
 {
-  using BS = fetch::type_util::BinarySwitch<Setter<0>, Setter<1>, Setter<2>>;
+  using BS = fetch::type_util::BinarySwitch<Setter<2>, Setter<0>, Setter<1>>;
 
   Values v{};
 
