@@ -58,7 +58,7 @@ using namespace fetch::ml::layers;
 
 using DataType  = float;
 using ArrayType = fetch::math::Tensor<DataType>;
-using SizeType = fetch::math::SizeType;
+using SizeType  = fetch::math::SizeType;
 
 class TrainingClient
 {
@@ -143,7 +143,6 @@ public:
     }
     // Shuffle the peers list to get new contact for next update
     fetch::random::Shuffle(gen_, peers_, peers_);
-
   }
 
   std::vector<float> const &GetLossesValues() const
