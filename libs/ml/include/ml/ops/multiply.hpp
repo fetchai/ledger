@@ -48,10 +48,10 @@ public:
   void Forward(VecTensorType const &inputs, ArrayType &output) override
   {
     assert(inputs.size() == 2);
-    assert(inputs.at(0).get().size() == inputs.at(1).get().size());
+    assert(inputs.at(0)->size() == inputs.at(1)->size());
     assert(output.shape() == this->ComputeOutputShape(inputs));
 
-    fetch::math::Multiply(inputs[0].get(), inputs[1].get(), output);
+    fetch::math::Multiply((*inputs.at(0)), (*inputs.at(1)), output);
   }
 
   /**
@@ -63,21 +63,21 @@ public:
                                   ArrayType const &    error_signal) override
   {
     assert(inputs.size() == 2);
-    assert(inputs.at(0).get().size() == inputs.at(1).get().size());
-    assert(error_signal.size() == inputs.at(1).get().size());
+    assert(inputs.at(0)->size() == inputs.at(1)->size());
+    assert(error_signal.size() == inputs.at(1)->size());
 
-    ArrayType error_signal_1(inputs.at(0).get().shape());
-    ArrayType error_signal_2(inputs.at(1).get().shape());
+    ArrayType error_signal_1(inputs.at(0)->shape());
+    ArrayType error_signal_2(inputs.at(1)->shape());
 
-    fetch::math::Multiply(inputs.at(1).get(), error_signal, error_signal_1);
-    fetch::math::Multiply(inputs.at(0).get(), error_signal, error_signal_2);
+    fetch::math::Multiply((*inputs.at(1)), error_signal, error_signal_1);
+    fetch::math::Multiply((*inputs.at(0)), error_signal, error_signal_2);
 
     return {error_signal_1, error_signal_2};
   }
 
   std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
   {
-    return inputs.front().get().shape();
+    return inputs.front()->shape();
   }
 
   static constexpr char const *DESCRIPTOR = "Multiply";

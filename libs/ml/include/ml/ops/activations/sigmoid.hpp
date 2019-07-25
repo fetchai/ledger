@@ -46,7 +46,7 @@ public:
   {
     assert(inputs.size() == 1);
     assert(output.shape() == this->ComputeOutputShape(inputs));
-    fetch::math::Sigmoid(inputs.front().get(), output);
+    fetch::math::Sigmoid(*(inputs.front()), output);
 
     // ensures numerical stability
     fetch::math::Clamp(epsilon_, static_cast<DataType>(1) - epsilon_, output);
@@ -56,9 +56,9 @@ public:
                                   ArrayType const &    error_signal) override
   {
     assert(inputs.size() == 1);
-    assert(inputs.front().get().shape() == error_signal.shape());
+    assert(inputs.front()->shape() == error_signal.shape());
     ArrayType return_signal{error_signal.shape()};
-    ArrayType t{inputs.front().get().shape()};
+    ArrayType t{inputs.front()->shape()};
 
     // gradient of sigmoid function is s(x)(1 - s(x))
     Forward(inputs, t);
@@ -73,7 +73,7 @@ public:
 
   std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
   {
-    return inputs.front().get().shape();
+    return inputs.front()->shape();
   }
 
   static constexpr char const *DESCRIPTOR = "Sigmoid";

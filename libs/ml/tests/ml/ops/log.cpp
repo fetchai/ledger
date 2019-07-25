@@ -67,8 +67,8 @@ TYPED_TEST(LogBothTest, forward_all_positive_test)
 
   fetch::ml::ops::Log<TypeParam> op;
 
-  TypeParam prediction(op.ComputeOutputShape({data}));
-  op.Forward({data}, prediction);
+  TypeParam prediction(op.ComputeOutputShape({std::make_shared<const ArrayType>(data)}));
+  op.Forward({std::make_shared<const ArrayType>(data)}, prediction);
 
   ASSERT_TRUE(prediction.AllClose(gt, fetch::math::function_tolerance<DataType>(),
                                   fetch::math::function_tolerance<DataType>()));
@@ -83,8 +83,8 @@ TYPED_TEST(LogFloatTest, forward_all_negative_test)
 
   fetch::ml::ops::Log<TypeParam> op;
 
-  TypeParam pred(op.ComputeOutputShape({data}));
-  op.Forward({data}, pred);
+  TypeParam pred(op.ComputeOutputShape({std::make_shared<const ArrayType>(data)}));
+  op.Forward({std::make_shared<const ArrayType>(data)}, pred);
 
   // gives NaN because log of a negative number is undefined
   for (auto p_it : pred)
@@ -101,8 +101,8 @@ TYPED_TEST(LogFixedTest, forward_all_negative_test)
 
   fetch::ml::ops::Log<TypeParam> op;
 
-  TypeParam pred(op.ComputeOutputShape({data}));
-  op.Forward({data}, pred);
+  TypeParam pred(op.ComputeOutputShape({std::make_shared<const ArrayType>(data)}));
+  op.Forward({std::make_shared<const ArrayType>(data)}, pred);
 
   // gives NaN because log of a negative number is undefined
   for (auto p_it : pred)
@@ -123,7 +123,7 @@ TYPED_TEST(LogBothTest, backward_test)
 
   fetch::ml::ops::Log<TypeParam> op;
 
-  std::vector<ArrayType> prediction = op.Backward({data}, error);
+  std::vector<ArrayType> prediction = op.Backward({std::make_shared<const ArrayType>(data)}, error);
 
   ASSERT_TRUE(prediction.at(0).AllClose(gt, fetch::math::function_tolerance<DataType>(),
                                         fetch::math::function_tolerance<DataType>()));
