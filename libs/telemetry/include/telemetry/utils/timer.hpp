@@ -17,44 +17,32 @@
 //
 //------------------------------------------------------------------------------
 
-#include "telemetry/measurement.hpp"
-#include "telemetry/telemetry.hpp"
-
-#include <mutex>
-#include <unordered_map>
+#include <chrono>
 
 namespace fetch {
 namespace telemetry {
 
-class CounterMap : public Measurement
+class Histogram;
+
+class FunctionTimer
 {
 public:
   // Construction / Destruction
-  CounterMap(std::string name, std::string description, Labels const &labels = Labels{});
-  CounterMap(CounterMap const &) = delete;
-  CounterMap(CounterMap &&)      = delete;
-  ~CounterMap() override         = default;
-
-  /// @name Accessors
-  /// @{
-  void Increment(Labels const &keys);
-  /// @}
-
-  void ToStream(OutputStream &stream) const override;
+  explicit FunctionTimer(Histogram &histogram);
+  FunctionTimer(FunctionTimer const &) = delete;
+  FunctionTimer(FunctionTimer &&)      = delete;
+  ~FunctionTimer();
 
   // Operators
-  CounterMap &operator=(CounterMap const &) = delete;
-  CounterMap &operator=(CounterMap &&) = delete;
+  FunctionTimer &operator=(FunctionTimer const &) = delete;
+  FunctionTimer &operator=(FunctionTimer &&) = delete;
 
 private:
-  using Mutex     = std::mutex;
-  using LockGuard = std::lock_guard<Mutex>;
-  using Counters  = std::unordered_map<Labels, CounterPtr>;
+  using Clock     = std::chrono::high_resolution_clock;
+  using Timepoint = Clock::time_point;
 
-  CounterPtr LookupCounter(Labels const &keys);
-
-  mutable Mutex lock_;
-  Counters      counters_;
+  Histogram &histogram_;
+  Timepoint  started_;
 };
 
 }  // namespace telemetry

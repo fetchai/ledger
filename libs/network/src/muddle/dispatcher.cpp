@@ -16,11 +16,19 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/time/to_seconds.hpp"
 #include "network/muddle/dispatcher.hpp"
+#include "network/muddle/network_id.hpp"
+#include "telemetry/counter.hpp"
+#include "telemetry/gauge.hpp"
+#include "telemetry/histogram.hpp"
+#include "telemetry/registry.hpp"
 
 namespace fetch {
 namespace muddle {
 namespace {
+
+using telemetry::Registry;
 
 const std::chrono::seconds PROMISE_TIMEOUT{30};
 
@@ -45,6 +53,26 @@ uint64_t Combine(uint16_t service, uint16_t channel, uint16_t counter)
 }
 
 }  // namespace
+
+Dispatcher::Dispatcher(NetworkId const &network_id, Packet::Address const &address)
+  : exchange_success_totals_{Registry::Instance().CreateCounter(
+        "ledger_muddle_exchange_success_total", "The total number of successful exchanges",
+        {{"network_id", network_id.ToString()},
+         {"address", static_cast<std::string>(address.ToBase64())}})}
+  , exchange_failure_totals_{Registry::Instance().CreateCounter(
+        "ledger_muddle_exchange_failure_total", "The total number of failed exchanges",
+        {{"network_id", network_id.ToString()},
+         {"address", static_cast<std::string>(address.ToBase64())}})}
+  , exchange_times_{Registry::Instance().CreateHistogram(
+        {0.000001, 0.00001, 0.0001, 0.001, 0.01, 0.1, 1, 10., 100.}, "ledger_muddle_exchange_times",
+        "The histogram of exchange times",
+        {{"network_id", network_id.ToString()},
+         {"address", static_cast<std::string>(address.ToBase64())}})}
+  , exchange_time_max_{Registry::Instance().CreateGauge<double>(
+        "ledger_muddle_exchange_time_max", "The largest exchange time observed",
+        {{"network_id", network_id.ToString()},
+         {"address", static_cast<std::string>(address.ToBase64())}})}
+{}
 
 /**
  * Register that a exchange is scheduled to take place and create a promise to track the response
@@ -86,26 +114,47 @@ bool Dispatcher::Dispatch(PacketPtr packet)
   LOG_STACK_TRACE_POINT;
   bool success = false;
 
-  FETCH_LOCK(promises_lock_);
-  uint64_t const id = Combine(packet->GetService(), packet->GetProtocol(), packet->GetMessageNum());
-
-  auto it = promises_.find(id);
-  if (it != promises_.end())
+  double duration_secs{0.0};
   {
-    assert(it->second.promise);
-    if (packet->GetSender() == it->second.address)
+    FETCH_LOCK(promises_lock_);
+    uint64_t const id =
+        Combine(packet->GetService(), packet->GetProtocol(), packet->GetMessageNum());
+
+    auto it = promises_.find(id);
+    if (it != promises_.end())
     {
-      it->second.promise->Fulfill(packet->GetPayload());
-      // finally remove the promise from the map (since it has been completed)
-      promises_.erase(it);
-      success = true;
+      assert(it->second.promise);
+      if (packet->GetSender() == it->second.address)
+      {
+        // capture the network time
+        duration_secs = ToSeconds(Clock::now() - it->second.timestamp);
+
+        // fulfill the pending promise
+        it->second.promise->Fulfill(packet->GetPayload());
+
+        // finally remove the promise from the map (since it has been completed)
+        promises_.erase(it);
+        success = true;
+      }
+      else
+      {
+        FETCH_LOG_INFO(LOGGING_NAME, "Recieved response from wrong address");
+        FETCH_LOG_INFO(LOGGING_NAME, "Expected : " + ToBase64(it->second.address));
+        FETCH_LOG_INFO(LOGGING_NAME, "Recieved : " + ToBase64(packet->GetSender()));
+      }
     }
-    else
-    {
-      FETCH_LOG_INFO(LOGGING_NAME, "Recieved response from wrong address");
-      FETCH_LOG_INFO(LOGGING_NAME, "Expected : " + ToBase64(it->second.address));
-      FETCH_LOG_INFO(LOGGING_NAME, "Recieved : " + ToBase64(packet->GetSender()));
-    }
+  }
+
+  // telemetry
+  if (success)
+  {
+    exchange_success_totals_->increment();
+    exchange_times_->Add(duration_secs);
+    exchange_time_max_->max(duration_secs);
+  }
+  else
+  {
+    exchange_failure_totals_->increment();
   }
 
   return success;

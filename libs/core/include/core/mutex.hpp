@@ -197,10 +197,10 @@ private:
   std::unique_ptr<MutexTimeout> timeout_;    ///< The timeout monitor for this mutex
 };
 
-#ifdef NDEBUG
-using Mutex = ProductionMutex;
-#else
+#if defined(FETCH_DEBUG_MUTEX) && !(defined(NDEBUG))
 using Mutex = DebugMutex;
+#else
+using Mutex = ProductionMutex;
 #endif
 
 #define FETCH_JOIN_IMPL(x, y) x##y
