@@ -799,8 +799,12 @@ void DistributedKeyGeneration::CheckComplaintAnswer(std::shared_ptr<SharesMessag
                      CabinetIndex(from_id), " complaint answer succeeded");
       if (reporter_index == cabinet_index_)
       {
+        FETCH_LOG_INFO(LOGGING_NAME, "Node: ", cabinet_index_, " reset shares for ",
+                       from_index);
         s_ij[from_index][cabinet_index_]      = s;
         sprime_ij[from_index][cabinet_index_] = sprime;
+        g__s_ij[from_index][cabinet_index_].clear();
+        bn::G2::mul(g__s_ij[from_index][cabinet_index_], group_g_, s_ij[from_index][cabinet_index_]);
       }
     }
   }
