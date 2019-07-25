@@ -99,11 +99,11 @@ void Histogram::Add(double const &value)
  * @param stream The stream to be updated
  * @param mode The mode to be used when generating the stream
  */
-void Histogram::ToStream(std::ostream &stream, StreamMode mode) const
+void Histogram::ToStream(OutputStream &stream) const
 {
   LockGuard guard{lock_};
 
-  WriteHeader(stream, "histogram", mode);
+  WriteHeader(stream, "histogram");
   for (auto const &element : buckets_)
   {
     WriteValuePrefix(stream, "bucket", {{"le", std::to_string(element.first)}})

@@ -143,6 +143,11 @@ macro (setup_compiler)
     set(FETCH_COMPILE_LOGGING_LEVEL "info")
   endif ()
 
+  # debug mutex configuration
+  if (FETCH_ENABLE_DEADLOCK_DETECTION)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DFETCH_DEBUG_MUTEX")
+  endif (FETCH_ENABLE_DEADLOCK_DETECTION)
+
   # based on the configued logging level
   if ("${FETCH_COMPILE_LOGGING_LEVEL}" STREQUAL "trace")
     add_definitions(-DFETCH_COMPILE_LOGGING_LEVEL=6)
