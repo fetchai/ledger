@@ -16,16 +16,18 @@
 //
 //------------------------------------------------------------------------------
 
-#include "network/service/server.hpp"
-
 #include "core/threading/synchronised_state.hpp"
 #include "network/muddle/muddle.hpp"
 #include "network/muddle/rpc/client.hpp"
 #include "network/muddle/rpc/server.hpp"
+#include "network/service/server.hpp"
 #include "service_ids.hpp"
 
 #include <iostream>
-#include <set>
+#include <memory>
+#include <unordered_set>
+#include <utility>
+#include <vector>
 
 using fetch::muddle::Muddle;
 using fetch::muddle::NetworkId;

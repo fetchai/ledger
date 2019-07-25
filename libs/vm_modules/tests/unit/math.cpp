@@ -19,10 +19,8 @@
 #include "math/standard_functions/abs.hpp"
 #include "math/standard_functions/exp.hpp"
 #include "math/standard_functions/pow.hpp"
-
 #include "vm_modules/math/math.hpp"
 #include "vm_modules/math/type.hpp"
-
 #include "vm_test_toolkit.hpp"
 
 #include "gmock/gmock.h"

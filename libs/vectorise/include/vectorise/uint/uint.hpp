@@ -61,7 +61,6 @@ public:
   static_assert(S == (ELEMENTS * ELEMENT_SIZE),
                 "Size must be a multiple of 8 times the base type size.");
 
-  // TODO (issue 1393): Replace this with `std::array<...>` once C++17 feature set will be enabled.
   using WideContainerType                   = core::Array<WideType, WIDE_ELEMENTS>;
   using ContainerType                       = BaseType[ELEMENTS];
   static constexpr char const *LOGGING_NAME = "UInt";

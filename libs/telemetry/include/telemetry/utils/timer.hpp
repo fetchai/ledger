@@ -17,19 +17,33 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/fundamental_operators.hpp"
-#include "math/standard_functions/pow.hpp"
-#include "math/standard_functions/sqrt.hpp"
+#include <chrono>
 
 namespace fetch {
-namespace math {
+namespace telemetry {
 
-template <typename ArrayType>
-typename ArrayType::Type L2Norm(ArrayType const &A)
+class Histogram;
+
+class FunctionTimer
 {
-  ArrayType ret{A.shape()};
-  return Sqrt(Sum(Square(A)));
-}
+public:
+  // Construction / Destruction
+  explicit FunctionTimer(Histogram &histogram);
+  FunctionTimer(FunctionTimer const &) = delete;
+  FunctionTimer(FunctionTimer &&)      = delete;
+  ~FunctionTimer();
 
-}  // namespace math
+  // Operators
+  FunctionTimer &operator=(FunctionTimer const &) = delete;
+  FunctionTimer &operator=(FunctionTimer &&) = delete;
+
+private:
+  using Clock     = std::chrono::high_resolution_clock;
+  using Timepoint = Clock::time_point;
+
+  Histogram &histogram_;
+  Timepoint  started_;
+};
+
+}  // namespace telemetry
 }  // namespace fetch

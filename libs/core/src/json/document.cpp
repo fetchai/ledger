@@ -324,7 +324,7 @@ void JSONDocument::Tokenise(ConstByteArray const &document)
 
   uint16_t element_counter = 0;
 
-  uint8_t const *ptr = reinterpret_cast<uint8_t const *>(document.pointer());
+  auto ptr = reinterpret_cast<uint8_t const *>(document.pointer());
   while (pos < document.size())
   {
     auto           words16 = reinterpret_cast<uint16_t const *>(ptr + pos);

@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/bitvector.hpp"
 #include "crypto/ecdsa.hpp"
-#include "crypto/identity.hpp"
 #include "ledger/chain/address.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "ledger/chain/transaction_builder.hpp"

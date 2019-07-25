@@ -22,6 +22,8 @@
 #include "core/serializers/byte_array_buffer.hpp"
 #include "network/muddle/rpc/client.hpp"
 
+#include <string>
+
 namespace fetch {
 namespace dkg {
 
@@ -189,14 +191,14 @@ public:
   ///@}
 };
 
-class DKGEnvelop
+class DKGEnvelope
 {
   using MessageType = DKGMessage::MessageType;
   using Payload     = byte_array::ConstByteArray;
 
 public:
-  DKGEnvelop() = default;
-  explicit DKGEnvelop(DKGMessage const &msg)
+  DKGEnvelope() = default;
+  explicit DKGEnvelope(DKGMessage const &msg)
     : type_{msg.type()}
     , serialisedMessage_{msg.Serialize().data()}
   {}
@@ -224,13 +226,13 @@ private:
 };
 
 template <typename T>
-inline void Serialize(T &serializer, DKGEnvelop const &env)
+inline void Serialize(T &serializer, DKGEnvelope const &env)
 {
   env.Serialize(serializer);
 }
 
 template <typename T>
-inline void Deserialize(T &serializer, DKGEnvelop &env)
+inline void Deserialize(T &serializer, DKGEnvelope &env)
 {
   env.Deserialize(serializer);
 }

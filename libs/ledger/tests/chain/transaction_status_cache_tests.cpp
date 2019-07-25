@@ -22,7 +22,6 @@
 #include "ledger/transaction_status_cache_impl.hpp"
 
 #include "gmock/gmock.h"
-#include "gtest/gtest.h"
 
 #include <memory>
 

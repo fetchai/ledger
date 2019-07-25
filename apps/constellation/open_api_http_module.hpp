@@ -22,7 +22,7 @@
 #include "http/module.hpp"
 #include "http/server.hpp"
 
-#include <string>
+#include <mutex>
 
 namespace fetch {
 

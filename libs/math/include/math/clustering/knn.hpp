@@ -18,7 +18,10 @@
 //------------------------------------------------------------------------------
 
 #include "math/distance/cosine.hpp"
+
+#include <cassert>
 #include <utility>
+#include <vector>
 
 namespace fetch {
 namespace math {

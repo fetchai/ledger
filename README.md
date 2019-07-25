@@ -42,7 +42,7 @@ cd ledger
 ./scripts/quickstart.sh
 ```
 
-Or follow our online documentation at [building the ledger](http://etch-docs.economicagents.com/getting-started/installation-mac/).
+Or follow our online documentation at [building the ledger](http://docs.fetch.ai/getting-started/installation-mac/).
 
 ## Connecting to a test network
 

@@ -90,7 +90,7 @@ public:
                 DataType const &initial_momentum, DataType const &final_momentum,
                 SizeType const &final_momentum_steps, SizeType const &p_later_correction_iteration)
   {
-    // Initialize variables
+    // Initialise variables
     output_symmetric_affinities_.Fill(static_cast<DataType>(0));
     DataType min_gain{0.01f};
     DataType momentum = initial_momentum;
@@ -99,7 +99,7 @@ public:
     // i_y is output_matrix value from last iteration
     ArrayType i_y(output_matrix_.shape());
 
-    // Initialize gains with value 1.0
+    // Initialise gains with value 1.0
     ArrayType gains(output_matrix_.shape());
     gains.Fill(static_cast<DataType>(1));
 
@@ -192,7 +192,7 @@ private:
     DataType perplexity_tolerance{1e-5f};
     SizeType max_tries{50};
 
-    // Initialize high dimensional values
+    // Initialise high dimensional values
     SizeType input_data_size = input_matrix_.shape().at(0);
 
     // Find Pj|i values for given perplexity value within perplexity_tolerance
@@ -213,7 +213,7 @@ private:
     // Limit minimum value to 1e-12
     LimitMin(input_symmetric_affinities_, tsne_tolerance<DataType>());
 
-    // Initialize low dimensional values
+    // Initialise low dimensional values
     output_matrix_               = output_matrix;
     output_symmetric_affinities_ = ArrayType(input_pairwise_affinities_.shape());
   }
@@ -271,7 +271,7 @@ private:
     SizeType input_data_size = input_matrix.shape().at(0);
 
     /*
-     * Initialize some variables
+     * Initialise some variables
      */
     // sum_x = sum(square(x), 1)
     ArrayType sum_x = fetch::math::ReduceSum(fetch::math::Square(input_matrix), 1);

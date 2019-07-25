@@ -19,8 +19,14 @@
 #include "core/serializers/stl_types.hpp"
 #include "network/tcp/tcp_client.hpp"
 
-#include <cstdlib>
+#include <chrono>
+#include <cstring>
+#include <exception>
 #include <iostream>
+#include <string>
+#include <thread>
+#include <utility>
+
 using namespace fetch::network;
 
 class Client : public TCPClient

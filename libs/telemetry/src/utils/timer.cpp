@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -17,19 +16,22 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/fundamental_operators.hpp"
-#include "math/standard_functions/pow.hpp"
-#include "math/standard_functions/sqrt.hpp"
+#include "core/time/to_seconds.hpp"
+#include "telemetry/histogram.hpp"
+#include "telemetry/utils/timer.hpp"
 
 namespace fetch {
-namespace math {
+namespace telemetry {
 
-template <typename ArrayType>
-typename ArrayType::Type L2Norm(ArrayType const &A)
+FunctionTimer::FunctionTimer(Histogram &histogram)
+  : histogram_{histogram}
+  , started_{Clock::now()}
+{}
+
+FunctionTimer::~FunctionTimer()
 {
-  ArrayType ret{A.shape()};
-  return Sqrt(Sum(Square(A)));
+  histogram_.Add(ToSeconds(Clock::now() - started_));
 }
 
-}  // namespace math
+}  // namespace telemetry
 }  // namespace fetch

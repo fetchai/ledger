@@ -74,9 +74,9 @@ public:
   static void Bind(vm::Module &module)
   {
     module.CreateClassType<UInt256Wrapper>("UInt256")
-        .CreateSerializeDefaultConstuctor<uint64_t>(static_cast<uint64_t>(0))
-        .CreateConstuctor<uint64_t>()
-        .CreateConstuctor<Ptr<ByteArrayWrapper>>()
+        .CreateSerializeDefaultConstructor<uint64_t>(static_cast<uint64_t>(0))
+        .CreateConstructor<uint64_t>()
+        .CreateConstructor<Ptr<ByteArrayWrapper>>()
         .EnableOperator(vm::Operator::Equal)
         .EnableOperator(vm::Operator::NotEqual)
         .EnableOperator(vm::Operator::LessThan)

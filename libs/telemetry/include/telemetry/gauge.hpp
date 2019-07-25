@@ -57,7 +57,7 @@ public:
 
   /// @name Metric Interface
   /// @{
-  void ToStream(std::ostream &stream, StreamMode mode) const override;
+  void ToStream(OutputStream &stream) const override;
   /// @}
 
   // Operators
@@ -165,7 +165,7 @@ void Gauge<V>::max(V const &value)
  * @param gauge The reference to the current gauge
  * @param stream The stream to be populated
  */
-inline void GaugeToStream(Gauge<int8_t> const &gauge, std::ostream &stream)
+inline void GaugeToStream(Gauge<int8_t> const &gauge, OutputStream &stream)
 {
   stream << static_cast<int32_t>(gauge.get()) << '\n';
 }
@@ -176,7 +176,7 @@ inline void GaugeToStream(Gauge<int8_t> const &gauge, std::ostream &stream)
  * @param gauge The reference to the current gauge
  * @param stream The stream to be populated
  */
-inline void GaugeToStream(Gauge<uint8_t> const &gauge, std::ostream &stream)
+inline void GaugeToStream(Gauge<uint8_t> const &gauge, OutputStream &stream)
 {
   stream << static_cast<uint32_t>(gauge.get()) << '\n';
 }
@@ -189,7 +189,7 @@ inline void GaugeToStream(Gauge<uint8_t> const &gauge, std::ostream &stream)
  */
 template <typename V>
 typename std::enable_if<std::is_integral<V>::value>::type GaugeToStream(Gauge<V> const &gauge,
-                                                                        std::ostream &  stream)
+                                                                        OutputStream &  stream)
 {
   stream << gauge.get() << '\n';
 }
@@ -202,7 +202,7 @@ typename std::enable_if<std::is_integral<V>::value>::type GaugeToStream(Gauge<V>
  */
 template <typename V>
 typename std::enable_if<std::is_floating_point<V>::value>::type GaugeToStream(Gauge<V> const &gauge,
-                                                                              std::ostream &stream)
+                                                                              OutputStream &stream)
 {
   stream << std::scientific << gauge.get() << '\n';
 }
@@ -214,9 +214,9 @@ typename std::enable_if<std::is_floating_point<V>::value>::type GaugeToStream(Ga
  * @param mode The mode to be used when generating the stream
  */
 template <typename V>
-void Gauge<V>::ToStream(std::ostream &stream, StreamMode mode) const
+void Gauge<V>::ToStream(OutputStream &stream) const
 {
-  WriteHeader(stream, "gauge", mode);
+  WriteHeader(stream, "gauge");
   WriteValuePrefix(stream);
   GaugeToStream(*this, stream);
 }

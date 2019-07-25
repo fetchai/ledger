@@ -31,14 +31,14 @@ void CounterMap::Increment(Labels const &keys)
   LookupCounter(keys)->increment();
 }
 
-void CounterMap::ToStream(std::ostream &stream, StreamMode mode) const
+void CounterMap::ToStream(OutputStream &stream) const
 {
   LockGuard guard{lock_};
 
-  WriteHeader(stream, "counter", mode);
+  WriteHeader(stream, "counter");
   for (auto const &element : counters_)
   {
-    element.second->ToStream(stream, StreamMode::WITHOUT_HEADER);
+    element.second->ToStream(stream);
   }
 }
 
