@@ -25,15 +25,15 @@ namespace fetch {
 namespace dkg {
 namespace rbc {
 
-class RBCEnvelop
+class RBCEnvelope
 {
   using MessageType = RBCMessage::MessageType;
   using Payload     = byte_array::ConstByteArray;
 
 public:
   // Constructor
-  RBCEnvelop() = default;
-  explicit RBCEnvelop(RBCMessage const &msg)
+  RBCEnvelope() = default;
+  explicit RBCEnvelope(RBCMessage const &msg)
     : type_{msg.type()}
     , payload_{msg.Serialize().data()}
   {}
@@ -56,18 +56,18 @@ public:
   std::shared_ptr<RBCMessage> Message() const;
 
 private:
-  RBCMessage::MessageType type_;     ///< Type of message contained in envelop
+  RBCMessage::MessageType type_;     ///< Type of message contained in envelope
   Payload                 payload_;  ///< Serialised RBCMessage
 };
 
 template <typename T>
-inline void Serialize(T &serializer, RBCEnvelop const &env)
+inline void Serialize(T &serializer, RBCEnvelope const &env)
 {
   env.Serialize(serializer);
 }
 
 template <typename T>
-inline void Deserialize(T &serializer, RBCEnvelop &env)
+inline void Deserialize(T &serializer, RBCEnvelope &env)
 {
   env.Deserialize(serializer);
 }

@@ -32,6 +32,7 @@
 #include <random>
 #include <thread>
 #include <vector>
+
 namespace {
 
 using namespace fetch::ledger;

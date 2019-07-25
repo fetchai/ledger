@@ -43,8 +43,6 @@
 namespace fetch {
 namespace ledger {
 
-class TransactionStatusCache;
-
 /**
  * The Execution Manager is the object which orchestrates the execution of a
  * specified block across a series of executors and lanes.

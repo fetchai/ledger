@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "network/tcp/loopback_server.hpp"
+
 #include <iostream>
 
 int main(int /*argc*/, char ** /*argv*/)
@@ -31,5 +32,6 @@ int main(int /*argc*/, char ** /*argv*/)
   }
 
   std::cout << "Finished" << std::endl;
+
   return 0;
 }

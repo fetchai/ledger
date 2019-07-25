@@ -39,13 +39,13 @@ int main(int argc, char **argv)
     return -1;
   }
 
-  // Initializing the BLS library
+  // Initialising the BLS library
   bls::Init();
 
   // Beacon parameters
   std::unordered_map<Identity, std::shared_ptr<BeaconManager>> nodes;
-  uint64_t cabinet_size = static_cast<uint64_t>(atoi(argv[1]));
-  uint32_t threshold    = static_cast<uint32_t>(cabinet_size >> 1);
+  auto cabinet_size = static_cast<uint64_t>(std::atoi(argv[1]));
+  auto threshold    = static_cast<uint32_t>(cabinet_size >> 1);
 
   // Creating nodes
   for (uint64_t i = 0; i < cabinet_size; ++i)
