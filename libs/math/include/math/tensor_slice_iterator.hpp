@@ -203,15 +203,57 @@ public:
     std::swap(ranges_[a], ranges_[b]);
   }
 
-  // TODO: Name correctly
-  void MoveAxesToFront(SizeType const &a)
+  /**
+   * Permutes ranges_ where specified ranges in axes vector are moved to front
+   * old ranges_{r0,r1.r2,r3} with axes{3,2}
+   * Will result in ranges_ {r3.r2,r0,r1}
+   * @param axes vector of axes indexes
+   */
+  void MoveAxesToFront(std::vector<SizeType> const &axes)
   {
     std::vector<TensorSliceIteratorRange> new_ranges;
     new_ranges.reserve(ranges_.size());
-    new_ranges.push_back(ranges_[a]);
+
+    // Insert axes at beginning
+    for (SizeType i = 0; i < axes.size(); ++i)
+    {
+      new_ranges.push_back(ranges_[axes[i]]);
+    }
+
     for (SizeType i = 0; i < ranges_.size(); ++i)
     {
-      if (i != a)
+      // Search for axis
+      bool add_axis = true;
+      for (SizeType j = 0; j < axes.size(); ++j)
+      {
+        if (i == axes[j])
+        {
+          add_axis = false;
+          break;
+        }
+      }
+      // Add axis if wasn't added at beginning
+      if (!add_axis)
+        continue;
+      new_ranges.push_back(ranges_[i]);
+    }
+    std::swap(new_ranges, ranges_);
+  }
+
+  /**
+   * Permutes ranges_ where range at specified axis index is moved to front
+   * old ranges_{r0,r1.r2,r3} with axis=2
+   * Will result in ranges_ {r2.r0,r1,r3}
+   * @param index of range to be moved to front in range_ vector
+   */
+  void MoveAxisToFront(SizeType const &axis)
+  {
+    std::vector<TensorSliceIteratorRange> new_ranges;
+    new_ranges.reserve(ranges_.size());
+    new_ranges.push_back(ranges_[axis]);
+    for (SizeType i = 0; i < ranges_.size(); ++i)
+    {
+      if (i != axis)
       {
         new_ranges.push_back(ranges_[i]);
       }
