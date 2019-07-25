@@ -193,5 +193,8 @@ TEST(TypeUtilTests, BinarySwitch) {
 	ASSERT_HOLDS(BS::Call(fetch::pack::SizeConstant<1>{}, [](auto &&x){ x.get() = 42; return 1; }, v) == 1);
 	ASSERT_HOLDS(BS::Call(fetch::pack::SizeConstant<2>{}, [](auto &&x){ x.get() = 3; return 2; }, v) == 2);
 
+	// try to match an index unknown to this switch
+	ASSERT_HOLDS(BS::Call(fetch::pack::SizeConstant<3>{}, [](auto &&x){ x.get() = 14; return 42; }, v) == 0);
+
 	ASSERT_HOLDS(v == Values{'H', 42, 3});
 }
