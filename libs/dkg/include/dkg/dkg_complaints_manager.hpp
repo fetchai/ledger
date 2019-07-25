@@ -78,6 +78,7 @@ class QualComplaintsManager
 {
   using MuddleAddress = byte_array::ConstByteArray;
 
+  bool finished_ {false};
   std::set<MuddleAddress> complaints_;           ///< Cabinet members we complain against
   std::set<MuddleAddress> complaints_received_;  ///< Set of cabinet members we have received a qual
                                                  ///< complaint message from
@@ -90,7 +91,8 @@ public:
   void        Received(MuddleAddress const &id);
   std::size_t ComplaintsSize() const;
   bool        ComplaintsFind(MuddleAddress const &id) const;
-  bool        IsFinished(std::set<MuddleAddress> const &qual, MuddleAddress const &node_id);
+    std::set<QualComplaintsManager::MuddleAddress> Complaints() const;
+    bool        IsFinished(std::set<MuddleAddress> const &qual, MuddleAddress const &node_id);
   void        Clear();
 };
 
@@ -114,7 +116,7 @@ public:
   void                    Init(std::set<MuddleAddress> const &complaints);
   void                    ResetCabinet(uint32_t cabinet_size);
   void                    Add(MuddleAddress const &miner);
-  void                    Count(uint32_t from_index);
+  bool                    Count(uint32_t from_index);
   bool                    IsFinished(std::set<MuddleAddress> const &miners, uint32_t index);
   std::set<MuddleAddress> BuildQual(std::set<MuddleAddress> const &miners);
   void                    Clear();
