@@ -91,8 +91,6 @@ protected:
   // random generators
   fetch::random::LaggedFibonacciGenerator<>  lfg_;
   fetch::random::LinearCongruentialGenerator lcg_;
-  //
-  //  std::random_device rd_;
 
   // containers for the data and labels
   std::vector<std::vector<SizeType>> data_buffers_;
