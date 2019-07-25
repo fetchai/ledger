@@ -319,7 +319,7 @@ void Max(ArrayType const &array, typename ArrayType::SizeType const &axis, Array
       for (SizeType n{1}; n < axis_length; ++n)
       {
         auto cur_slice    = array.Slice(n, axis);
-        auto cur_slice_it = cur_slice.begin();
+        auto cur_slice_it = cur_slice.cbegin();
         auto rit          = ret.begin();
 
         // check every element in the n-1 dimensional return
@@ -437,7 +437,7 @@ void Min(ArrayType const &array, typename ArrayType::SizeType const &axis, Array
       for (SizeType n{1}; n < axis_length; ++n)
       {
         auto cur_slice    = array.Slice(n, axis);
-        auto cur_slice_it = cur_slice.begin();
+        auto cur_slice_it = cur_slice.cbegin();
         auto rit          = ret.begin();
 
         // check every element in the n-1 dimensional return
@@ -709,7 +709,7 @@ void PeakToPeak(ArrayType const &array, typename ArrayType::SizeType const &axis
       for (SizeType n{1}; n < axis_length; ++n)
       {
         auto cur_slice    = array.Slice(n, axis);
-        auto cur_slice_it = cur_slice.begin();
+        auto cur_slice_it = cur_slice.cbegin();
         auto rit          = ret.begin();
         auto mit          = min.begin();
 
@@ -823,7 +823,7 @@ meta::IfIsMathArray<ArrayType, void> ArgMax(ArrayType const &array, ArrayType &r
         auto cur_slice = array.Slice(n, axis);
 
         auto max_slice_it = max_slice.begin();
-        auto cur_slice_it = cur_slice.begin();
+        auto cur_slice_it = cur_slice.cbegin();
         auto ret_it       = ret.begin();
 
         // check every element in the n-1 dimensional return
