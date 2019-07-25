@@ -55,13 +55,19 @@ public:
     NOT_FOUND,
   };
 
+  struct Result
+  {
+    Status  status{Status::NOT_FOUND};
+    int64_t return_value{0};
+  };
+
   using BlockIndex            = TransactionLayout::BlockIndex;
   using Identity              = crypto::Identity;
   using ConstByteArray        = byte_array::ConstByteArray;
   using ContractName          = ConstByteArray;
   using Query                 = variant::Variant;
-  using InitialiseHandler     = std::function<Status(Address const &)>;
-  using TransactionHandler    = std::function<Status(Transaction const &, BlockIndex)>;
+  using InitialiseHandler     = std::function<Result(Address const &)>;
+  using TransactionHandler    = std::function<Result(Transaction const &, BlockIndex)>;
   using TransactionHandlerMap = std::unordered_map<ContractName, TransactionHandler>;
   using QueryHandler          = std::function<Status(Query const &, Query &)>;
   using QueryHandlerMap       = std::unordered_map<ContractName, QueryHandler>;
@@ -82,9 +88,9 @@ public:
   void Attach(ledger::StateAdapter &state);
   void Detach();
 
-  Status DispatchInitialise(Address const &owner);
+  Result DispatchInitialise(Address const &owner);
   Status DispatchQuery(ContractName const &name, Query const &query, Query &response);
-  Status DispatchTransaction(ConstByteArray const &name, Transaction const &tx,
+  Result DispatchTransaction(ConstByteArray const &name, Transaction const &tx,
                              TransactionLayout::BlockIndex index);
   /// @}
 
@@ -108,7 +114,7 @@ protected:
   /// @{
   void OnInitialise(InitialiseHandler &&handler);
   template <typename C>
-  void OnInitialise(C *instance, Status (C::*func)(Address const &));
+  void OnInitialise(C *instance, Result (C::*func)(Address const &));
   /// @}
 
   /// @name Transaction Handlers
@@ -116,7 +122,7 @@ protected:
   void OnTransaction(std::string const &name, TransactionHandler &&handler);
   template <typename C>
   void OnTransaction(std::string const &name, C *instance,
-                     Status (C::*func)(Transaction const &, BlockIndex));
+                     Result (C::*func)(Transaction const &, BlockIndex));
   /// @}
 
   /// @name Query Handler Registration
@@ -205,7 +211,7 @@ inline Contract::TransactionHandlerMap const &Contract::transaction_handlers() c
  * @param func The member function pointer
  */
 template <typename C>
-void Contract::OnInitialise(C *instance, Status (C::*func)(Address const &))
+void Contract::OnInitialise(C *instance, Result (C::*func)(Address const &))
 {
   OnInitialise([instance, func](Address const &owner) { return (instance->*func)(owner); });
 }
@@ -220,7 +226,7 @@ void Contract::OnInitialise(C *instance, Status (C::*func)(Address const &))
  */
 template <typename C>
 void Contract::OnTransaction(std::string const &name, C *instance,
-                             Status (C::*func)(Transaction const &, BlockIndex))
+                             Result (C::*func)(Transaction const &, BlockIndex))
 {
   // create the function handler and pass it to the normal function
   OnTransaction(name, [instance, func](Transaction const &tx, BlockIndex block_index) {

@@ -16,9 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ledger/chain/transaction.hpp"
 #include "ledger/chaincode/deed.hpp"
 
-#include "ledger/chain/transaction.hpp"
+#include <unordered_set>
+#include <utility>
 
 namespace fetch {
 namespace ledger {

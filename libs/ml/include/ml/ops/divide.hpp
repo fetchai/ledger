@@ -20,6 +20,10 @@
 #include "math/fundamental_operators.hpp"
 #include "ml/ops/ops.hpp"
 
+#include <cassert>
+#include <memory>
+#include <vector>
+
 namespace fetch {
 namespace ml {
 namespace ops {
@@ -34,26 +38,26 @@ public:
   using VecTensorType = typename Ops<T>::VecTensorType;
   using DataType      = typename T::Type;
 
-  Divide()          = default;
-  virtual ~Divide() = default;
+  Divide()           = default;
+  ~Divide() override = default;
 
   /**
    * elementwise division
    * @param inputs  left & right inputs to Divide
    * @return
    */
-  virtual void Forward(VecTensorType const &inputs, ArrayType &output)
+  void Forward(VecTensorType const &inputs, ArrayType &output) override
   {
     assert(inputs.size() == 2);
-    assert(inputs.at(0).get().shape() == output.shape());
+    assert(inputs.at(0)->shape() == output.shape());
 
-    if (inputs.at(1).get().size() > 1)
+    if (inputs.at(1)->size() > 1)
     {  // array / array
-      fetch::math::Divide(inputs.at(0).get(), inputs.at(1).get(), output);
+      fetch::math::Divide(*inputs.at(0), *inputs.at(1), output);
     }
     else
     {  // array / scalar
-      fetch::math::Divide(inputs.at(0).get(), *(inputs.at(1).get().cbegin()), output);
+      fetch::math::Divide(*inputs.at(0), *(inputs.at(1)->cbegin()), output);
     }
   }
 
@@ -61,18 +65,18 @@ public:
    * f'(a)=(1/b)*err
    * f'(b)=-(a/(b^2))*err
    */
-  virtual std::vector<ArrayType> Backward(VecTensorType const &inputs,
-                                          ArrayType const &    error_signal)
+  std::vector<ArrayType> Backward(VecTensorType const &inputs,
+                                  ArrayType const &    error_signal) override
   {
-    ArrayType return_signal_1(inputs.at(0).get().shape());
-    ArrayType return_signal_2(inputs.at(1).get().shape());
+    ArrayType return_signal_1(inputs.at(0)->shape());
+    ArrayType return_signal_2(inputs.at(1)->shape());
 
-    auto a_it   = inputs.at(0).get().cbegin();
-    auto b_it   = inputs.at(1).get().cbegin();
+    auto a_it   = inputs.at(0)->cbegin();
+    auto b_it   = inputs.at(1)->cbegin();
     auto err_it = error_signal.cbegin();
     auto r_1_it = return_signal_1.begin();
     auto r_2_it = return_signal_2.begin();
-    if (inputs.at(0).get().shape() == inputs.at(1).get().shape())
+    if (inputs.at(0)->shape() == inputs.at(1)->shape())
     {  // array / array same shape
       while (a_it.is_valid())
       {
@@ -86,7 +90,7 @@ public:
         ++r_2_it;
       }
     }
-    else if (inputs.at(1).get().size() == 1)
+    else if (inputs.at(1)->size() == 1)
     {  // array / scalar
       while (a_it.is_valid())
       {
@@ -106,9 +110,9 @@ public:
     return {return_signal_1, return_signal_2};
   }
 
-  virtual std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const
+  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
   {
-    return inputs.front().get().shape();
+    return inputs.front()->shape();
   }
 
   static constexpr char const *DESCRIPTOR = "Divide";

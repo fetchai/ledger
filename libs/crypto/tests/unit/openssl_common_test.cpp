@@ -17,7 +17,11 @@
 //------------------------------------------------------------------------------
 
 #include "crypto/openssl_common.hpp"
+
 #include "gtest/gtest.h"
+
+#include <cstddef>
+#include <cstdint>
 
 namespace fetch {
 namespace crypto {

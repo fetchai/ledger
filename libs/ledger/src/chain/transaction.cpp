@@ -16,10 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chain/transaction.hpp"
-
 #include "crypto/verifier.hpp"
+#include "ledger/chain/transaction.hpp"
 #include "ledger/chain/transaction_serializer.hpp"
+
+#include <algorithm>
+#include <cassert>
 
 namespace fetch {
 namespace ledger {

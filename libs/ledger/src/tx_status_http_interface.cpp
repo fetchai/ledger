@@ -16,15 +16,16 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/tx_status_http_interface.hpp"
-
 #include "core/byte_array/decoders.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "core/logger.hpp"
 #include "core/macros.hpp"
 #include "http/json_response.hpp"
 #include "ledger/transaction_status_cache.hpp"
+#include "ledger/tx_status_http_interface.hpp"
 #include "variant/variant.hpp"
+
+#include <utility>
 
 static constexpr char const *LOGGING_NAME = "TxStatusHttp";
 
@@ -35,9 +36,85 @@ using fetch::variant::Variant;
 namespace fetch {
 namespace ledger {
 
-TxStatusHttpInterface::TxStatusHttpInterface(TransactionStatusCache &status_cache)
-  : status_cache_{status_cache}
+namespace {
+constexpr PublicTxStatus Convert(TransactionStatus       tx_processing_pipeline_status,
+                                 ContractExecutionStatus contract_exec_status)
 {
+  switch (tx_processing_pipeline_status)
+  {
+  case TransactionStatus::UNKNOWN:
+    return PublicTxStatus::UNKNOWN;
+
+  case TransactionStatus::PENDING:
+    return PublicTxStatus::PENDING;
+
+  case TransactionStatus::MINED:
+    return PublicTxStatus::MINED;
+
+  case TransactionStatus::EXECUTED:
+    switch (contract_exec_status)
+    {
+    case ContractExecutionStatus::SUCCESS:
+      return PublicTxStatus::EXECUTED;
+
+    case ContractExecutionStatus::CHAIN_CODE_LOOKUP_FAILURE:
+      return PublicTxStatus::CHAIN_CODE_LOOKUP_FAILURE;
+
+    case ContractExecutionStatus::CHAIN_CODE_EXEC_FAILURE:
+      return PublicTxStatus::CHAIN_CODE_EXEC_FAILURE;
+
+    case ContractExecutionStatus::CONTRACT_LOOKUP_FAILURE:
+      return PublicTxStatus::CONTRACT_LOOKUP_FAILURE;
+
+    case ContractExecutionStatus::CONTRACT_NAME_PARSE_FAILURE:
+      return PublicTxStatus::CONTRACT_NAME_PARSE_FAILURE;
+
+    case ContractExecutionStatus::INSUFFICIENT_AVAILABLE_FUNDS:
+      return PublicTxStatus::INSUFFICIENT_AVAILABLE_FUNDS;
+
+    case ContractExecutionStatus::INSUFFICIENT_CHARGE:
+      return PublicTxStatus::INSUFFICIENT_CHARGE;
+
+    case ContractExecutionStatus::TRANSFER_FAILURE:
+      return PublicTxStatus::TRANSFER_FAILURE;
+
+    case ContractExecutionStatus::TX_NOT_VALID_FOR_BLOCK:
+      return PublicTxStatus::TX_NOT_VALID_FOR_BLOCK;
+
+    case ContractExecutionStatus::NOT_RUN:
+    case ContractExecutionStatus::RESOURCE_FAILURE:
+    case ContractExecutionStatus::TX_LOOKUP_FAILURE:
+    case ContractExecutionStatus::INEXPLICABLE_FAILURE:
+      return PublicTxStatus::FATAL_ERROR;
+    }
+    return PublicTxStatus::FATAL_ERROR;
+
+  case TransactionStatus::SUBMITTED:
+    return PublicTxStatus::SUBMITTED;
+  }
+
+  return PublicTxStatus::UNKNOWN;
+}
+
+Variant ToVariant(Digest const &digest, TransactionStatusCache::TxStatus const &tx_status)
+{
+  auto retval{Variant::Object()};
+  retval["tx"]        = ToBase64(digest);
+  retval["status"]    = ToString(Convert(tx_status.status, tx_status.contract_exec_result.status));
+  retval["exit_code"] = tx_status.contract_exec_result.return_value;
+  retval["charge"]    = tx_status.contract_exec_result.charge;
+  retval["charge_rate"] = tx_status.contract_exec_result.charge_rate;
+  retval["fee"]         = tx_status.contract_exec_result.fee;
+
+  return retval;
+}
+}  // namespace
+
+TxStatusHttpInterface::TxStatusHttpInterface(TxStatusCachePtr status_cache)
+  : status_cache_{std::move(status_cache)}
+{
+  assert(status_cache_);
+
   Get("/api/status/tx/(digest=[a-fA-F0-9]{64})", "Retrieves a transaction status.",
       {
           {"digest", "The transaction hash.", http::validators::StringValue()},
@@ -53,9 +130,7 @@ TxStatusHttpInterface::TxStatusHttpInterface(TransactionStatusCache &status_cach
           FETCH_LOG_DEBUG(LOGGING_NAME, "Querying status of: ", digest.ToBase64());
 
           // prepare the response
-          Variant response   = Variant::Object();
-          response["tx"]     = ToBase64(digest);
-          response["status"] = ToString(status_cache_.Query(digest));
+          auto const response{ToVariant(digest, status_cache_->Query(digest))};
 
           return http::CreateJsonResponse(response);
         }

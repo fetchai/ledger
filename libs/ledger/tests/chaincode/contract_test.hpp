@@ -67,16 +67,6 @@ protected:
     storage_       = std::make_unique<StrictMockStorageUnit>();
   }
 
-  void TearDown() override
-  {
-    contract_.reset();
-    contract_address_.reset();
-    contract_name_.reset();
-    storage_.reset();
-    owner_address_.reset();
-    certificate_.reset();
-  }
-
   class PayloadPacker
   {
   public:
@@ -131,7 +121,7 @@ protected:
   };
 
   template <typename... Args>
-  Contract::Status SendSmartActionWithParams(ConstByteArray const &action, Args... args)
+  Contract::Result SendSmartActionWithParams(ConstByteArray const &action, Args... args)
   {
     // pack all the data into a single payload
     PayloadPacker p{args...};
@@ -139,7 +129,7 @@ protected:
     return SendSmartAction(action, p.GetBuffer());
   }
 
-  Contract::Status SendSmartAction(ConstByteArray const &action,
+  Contract::Result SendSmartAction(ConstByteArray const &action,
                                    ConstByteArray const &data = ConstByteArray{})
   {
     using fetch::ledger::TransactionBuilder;
@@ -167,7 +157,7 @@ protected:
     return status;
   }
 
-  Contract::Status SendAction(TransactionPtr const &tx)
+  Contract::Result SendAction(TransactionPtr const &tx)
   {
     // adapt the storage engine for this execution
     StateSentinelAdapter storage_adapter{*storage_, Identifier{tx->chain_code()}, shards_};
@@ -193,7 +183,7 @@ protected:
     return status;
   }
 
-  Contract::Status InvokeInit(Identity const &owner)
+  Contract::Result InvokeInit(Identity const &owner)
   {
     StateSentinelAdapter storage_adapter{*storage_, *contract_name_, shards_};
 

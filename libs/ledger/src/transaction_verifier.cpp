@@ -16,26 +16,29 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/transaction_verifier.hpp"
-#include "telemetry/counter.hpp"
-#include "telemetry/gauge.hpp"
-#include "telemetry/registry.hpp"
-
 #include "core/logger.hpp"
 #include "core/string/to_lower.hpp"
 #include "core/threading.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "ledger/storage_unit/transaction_sinks.hpp"
+#include "ledger/transaction_verifier.hpp"
 #include "metrics/metrics.hpp"
 #include "network/generics/milli_timer.hpp"
+#include "telemetry/counter.hpp"
+#include "telemetry/gauge.hpp"
+#include "telemetry/registry.hpp"
 
+#include <algorithm>
 #include <chrono>
+#include <string>
 
 static const std::chrono::milliseconds POP_TIMEOUT{300};
 
 namespace fetch {
 namespace ledger {
+
 namespace {
+
 using telemetry::Registry;
 
 std::string CreateMetricName(std::string const &prefix, std::string const &name)
@@ -100,6 +103,8 @@ TransactionVerifier::TransactionVerifier(TransactionSink &sink, std::size_t veri
                                      "The total number of verified transactions seen"))
   , discarded_tx_total_(CreateCounter(name, "discarded_transactions_total",
                                       "The total number of verified transactions seen"))
+  , dispatched_tx_total_(CreateCounter(name, "dispatched_transactions_total",
+                                       "The total number of verified that have been dispatched"))
   , num_threads_(CreateGauge(name, "threads", "The current number of processing threads in use"))
 {
   // since these lengths are fixed
@@ -239,7 +244,7 @@ void TransactionVerifier::Dispatcher()
         sink_.OnTransaction(tx);
 
         verified_queue_length_->decrement();
-        verified_tx_total_->increment();
+        dispatched_tx_total_->increment();
       }
     }
     catch (std::exception const &e)

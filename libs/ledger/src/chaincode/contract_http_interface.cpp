@@ -16,8 +16,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chaincode/contract_http_interface.hpp"
-
 #include "core/byte_array/decoders.hpp"
 #include "core/json/document.hpp"
 #include "core/logger.hpp"
@@ -29,12 +27,20 @@
 #include "ledger/chain/json_transaction.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "ledger/chaincode/contract.hpp"
+#include "ledger/chaincode/contract_http_interface.hpp"
 #include "ledger/state_adapter.hpp"
 #include "ledger/transaction_processor.hpp"
 #include "variant/variant.hpp"
 
+#include <ctime>
+#include <exception>
+#include <iomanip>
 #include <memory>
+#include <sstream>
 #include <string>
+#include <unordered_map>
+#include <unordered_set>
+#include <utility>
 
 namespace fetch {
 namespace ledger {
@@ -196,10 +202,9 @@ http::HTTPResponse ContractHttpInterface::OnQuery(ConstByteArray const &   contr
     // parse the incoming request
     json::JSONDocument doc;
     doc.Parse(request.body());
-
-    // dispatch the contract type
     variant::Variant response;
-    auto             contract = contract_cache_.Lookup(contract_id, storage_);
+    // dispatch the contract type
+    auto contract = contract_cache_.Lookup(contract_id, storage_);
 
     // adapt the storage engine so that that get and sets are sandboxed for the contract
     StateAdapter storage_adapter{storage_, contract_id};

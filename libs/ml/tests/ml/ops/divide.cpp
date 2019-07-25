@@ -16,9 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/ops/divide.hpp"
-
 #include "math/tensor.hpp"
+#include "ml/ops/divide.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 
 #include "gtest/gtest.h"
@@ -57,8 +56,10 @@ TYPED_TEST(DivideTest, forward_test)
 
   fetch::ml::ops::Divide<ArrayType> op;
 
-  TypeParam prediction(op.ComputeOutputShape({data_1, data_2}));
-  op.Forward({data_1, data_2}, prediction);
+  TypeParam prediction(op.ComputeOutputShape(
+      {std::make_shared<ArrayType>(data_1), std::make_shared<ArrayType>(data_2)}));
+  op.Forward({std::make_shared<ArrayType>(data_1), std::make_shared<ArrayType>(data_2)},
+             prediction);
 
   // test correct values
   ASSERT_TRUE(prediction.AllClose(gt, fetch::math::function_tolerance<DataType>(),
@@ -91,7 +92,8 @@ TYPED_TEST(DivideTest, backward_test)
       "5, -5, 6, -6, 7, -7, 8, -8");
 
   fetch::ml::ops::Divide<ArrayType> op;
-  std::vector<ArrayType>            prediction = op.Backward({data_1, data_2}, error);
+  std::vector<ArrayType>            prediction = op.Backward(
+      {std::make_shared<ArrayType>(data_1), std::make_shared<ArrayType>(data_2)}, error);
 
   // test correct values
   ASSERT_TRUE(prediction[0].AllClose(gt_1, fetch::math::function_tolerance<DataType>(),

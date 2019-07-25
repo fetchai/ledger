@@ -19,6 +19,7 @@
 
 #include "math/distance/square.hpp"
 #include "math/fundamental_operators.hpp"
+
 #include <cassert>
 
 namespace fetch {

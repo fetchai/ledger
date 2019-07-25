@@ -16,7 +16,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/logger.hpp"
 #include "network/details/thread_pool.hpp"
 
 #include "gmock/gmock.h"
