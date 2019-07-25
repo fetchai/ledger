@@ -19,6 +19,8 @@
 #include "dkg/dkg.hpp"
 #include "dkg/dkg_service.hpp"
 
+#include <mutex>
+
 namespace fetch {
 namespace dkg {
 
@@ -37,7 +39,9 @@ DistributedKeyGeneration::DistributedKeyGeneration(MuddleAddress address, Cabine
   , address_{std::move(address)}
   , dkg_service_{dkg_service}
 {
-  static bool once = []() {
+  static std::once_flag flag;
+
+  std::call_once(flag, []() {
     bn::initPairing();
     zeroG2_.clear();
     zeroFr_.clear();
@@ -53,21 +57,15 @@ DistributedKeyGeneration::DistributedKeyGeneration(MuddleAddress address, Cabine
         "12726557692714943631796519264243881146330337674186001442981874079441363994424");
     bn::mapToG2(group_g_, g);
     bn::mapToG2(group_h_, h);
-
-    return true;
-  }();
-  if (!once)
-  {
-    std::cerr << "Node::initPairing failed.\n";  // just to eliminate warnings from the compiler.
-  }
+  });
 }
 
 /**
  * Sends DKG message via reliable broadcast channel in dkg_service
  *
- * @param env DKGEnvelop containing message to the broadcasted
+ * @param env DKGEnvelope containing message to the broadcasted
  */
-void DistributedKeyGeneration::SendBroadcast(DKGEnvelop const &env)
+void DistributedKeyGeneration::SendBroadcast(DKGEnvelope const &env)
 {
   dkg_service_.SendReliableBroadcast(env);
 }
@@ -92,8 +90,8 @@ void DistributedKeyGeneration::SendCoefficients(std::vector<bn::Fr> const &a_i,
     C_ik[cabinet_index_][k] = ComputeLHS(g__a_i[k], group_g_, group_h_, a_i[k], b_i[k]);
     coefficients.push_back(C_ik[cabinet_index_][k].getStr());
   }
-  SendBroadcast(DKGEnvelop{CoefficientsMessage{static_cast<uint8_t>(State::WAITING_FOR_SHARE),
-                                               coefficients, "signature"}});
+  SendBroadcast(DKGEnvelope{CoefficientsMessage{static_cast<uint8_t>(State::WAITING_FOR_SHARE),
+                                                coefficients, "signature"}});
 }
 
 /**
@@ -154,7 +152,7 @@ void DistributedKeyGeneration::BroadcastComplaints()
 
   FETCH_LOG_INFO(LOGGING_NAME, "Node ", cabinet_index_, " broadcasts complaints size ",
                  complaints_local.size());
-  SendBroadcast(DKGEnvelop{ComplaintsMessage{complaints_local, "signature"}});
+  SendBroadcast(DKGEnvelope{ComplaintsMessage{complaints_local, "signature"}});
   state_ = State::WAITING_FOR_COMPLAINTS;
   ReceivedComplaint();
 }
@@ -176,8 +174,8 @@ void DistributedKeyGeneration::BroadcastComplaintsAnswer()
                                sprime_ij[cabinet_index_][from_index].getStr()}});
   }
   SendBroadcast(
-      DKGEnvelop{SharesMessage{static_cast<uint64_t>(State::WAITING_FOR_COMPLAINT_ANSWERS),
-                               complaints_answer, "signature"}});
+      DKGEnvelope{SharesMessage{static_cast<uint64_t>(State::WAITING_FOR_COMPLAINT_ANSWERS),
+                                complaints_answer, "signature"}});
   state_ = State::WAITING_FOR_COMPLAINT_ANSWERS;
   ReceivedComplaintsAnswer();
 }
@@ -215,8 +213,8 @@ void DistributedKeyGeneration::BroadcastReconstructionShares()
          {s_ij[in_index][cabinet_index_].getStr(), sprime_ij[in_index][cabinet_index_].getStr()}});
   }
   SendBroadcast(
-      DKGEnvelop{SharesMessage{static_cast<uint64_t>(State::WAITING_FOR_RECONSTRUCTION_SHARES),
-                               complaint_shares, "signature"}});
+      DKGEnvelope{SharesMessage{static_cast<uint64_t>(State::WAITING_FOR_RECONSTRUCTION_SHARES),
+                                complaint_shares, "signature"}});
   state_ = State::WAITING_FOR_RECONSTRUCTION_SHARES;
   ReceivedReconstructionShares();
 }
@@ -787,8 +785,8 @@ void DistributedKeyGeneration::ComputeSecretShare()
     A_ik[cabinet_index_][k] = g__a_i[k];
     coefficients.push_back(A_ik[cabinet_index_][k].getStr());
   }
-  SendBroadcast(DKGEnvelop{CoefficientsMessage{static_cast<uint8_t>(State::WAITING_FOR_QUAL_SHARES),
-                                               coefficients, "signature"}});
+  SendBroadcast(DKGEnvelope{CoefficientsMessage{
+      static_cast<uint8_t>(State::WAITING_FOR_QUAL_SHARES), coefficients, "signature"}});
   complaints_answer_manager_.Clear();
   state_ = State::WAITING_FOR_QUAL_SHARES;
   ReceivedQualShares();

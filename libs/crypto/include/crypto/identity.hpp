@@ -44,11 +44,11 @@ public:
   // Fully relying on caller that it will behave = will NOT modify value passed
   // (Const)ByteArray(s)
   Identity(uint8_t identity_parameters, byte_array::ConstByteArray identifier)
-    : identity_parameters_{std::move(identity_parameters)}
+    : identity_parameters_{identity_parameters}
     , identifier_{std::move(identifier)}
   {}
 
-  Identity(byte_array::ConstByteArray identifier)
+  explicit Identity(byte_array::ConstByteArray identifier)
     : identifier_{std::move(identifier)}
   {}
 
@@ -69,10 +69,10 @@ public:
 
   void SetParameters(uint8_t p)
   {
-    identity_parameters_ = std::move(p);
+    identity_parameters_ = p;
   }
 
-  operator bool() const
+  explicit operator bool() const
   {
     return TestIdentityParameterSize(identity_parameters_, identifier_.size());
   }

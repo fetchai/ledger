@@ -19,6 +19,7 @@
 #include "core/byte_array/byte_array.hpp"
 #include "core/filesystem/read_file_contents.hpp"
 
+#include <cstddef>
 #include <fstream>
 
 namespace fetch {

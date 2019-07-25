@@ -207,8 +207,9 @@ struct IRBlockNode : public IRNode
               IRNodePtrArray const &children)
     : IRNode(NodeCategory::Block, node_kind, text, line, children)
   {}
-  virtual ~IRBlockNode() = default;
-  virtual void Reset() override
+  ~IRBlockNode() override = default;
+
+  void Reset() override
   {
     IRNode::Reset();
     for (auto &child : block_children)
@@ -237,8 +238,9 @@ struct IRExpressionNode : public IRNode
   {
     expression_kind = ExpressionKind::Unknown;
   }
-  virtual ~IRExpressionNode() = default;
-  virtual void Reset() override
+  ~IRExpressionNode() override = default;
+
+  void Reset() override
   {
     IRNode::Reset();
     type     = nullptr;

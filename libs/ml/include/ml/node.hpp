@@ -19,11 +19,12 @@
 
 #include "ops/ops.hpp"
 
+#include <algorithm>
+#include <cassert>
+#include <cstdint>
 #include <functional>
 #include <memory>
 #include <string>
-#include <unordered_map>
-#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -62,23 +63,22 @@ public:
   using NodePtrType = std::shared_ptr<NodeInterface<T>>;
 
   template <typename... Params>
-  Node(std::string const name, Params... params)
+  explicit Node(std::string name, Params... params)
     : O(params...)
     , name_(std::move(name))
     , cached_output_status_(CachedOutputState::CHANGED_SIZE)
   {}
+  ~Node() override = default;
 
-  virtual ~Node() = default;
+  std::vector<std::reference_wrapper<const ArrayType>>  GatherInputs() const;
+  ArrayType &                                           Evaluate(bool is_training) override;
+  std::vector<std::pair<NodeInterface<T> *, ArrayType>> BackPropagateSignal(
+      ArrayType const &error_signal) override;
 
-  std::vector<std::reference_wrapper<const ArrayType>>          GatherInputs() const;
-  virtual ArrayType &                                           Evaluate(bool is_training);
-  virtual std::vector<std::pair<NodeInterface<T> *, ArrayType>> BackPropagateSignal(
-      ArrayType const &error_signal);
-
-  void                                    AddInput(NodePtrType const &i);
-  void                                    AddOutput(NodePtrType const &o);
-  virtual std::vector<NodePtrType> const &GetOutputs() const;
-  virtual void                            ResetCache(bool input_size_changed);
+  void                            AddInput(NodePtrType const &i) override;
+  void                            AddOutput(NodePtrType const &o) override;
+  std::vector<NodePtrType> const &GetOutputs() const override;
+  void                            ResetCache(bool input_size_changed) override;
 
 private:
   std::vector<NodePtrType> input_nodes_;

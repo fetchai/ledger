@@ -38,8 +38,8 @@ public:
   static void Bind(vm::Module &module)
   {
     module.CreateClassType<fetch::vm_modules::ml::VMTrainingPair>("TrainingPair")
-        .CreateConstuctor<fetch::vm::Ptr<fetch::vm_modules::math::VMTensor>,
-                          fetch::vm::Ptr<fetch::vm_modules::math::VMTensor>>()
+        .CreateConstructor<fetch::vm::Ptr<fetch::vm_modules::math::VMTensor>,
+                           fetch::vm::Ptr<fetch::vm_modules::math::VMTensor>>()
         .CreateMemberFunction("data", &fetch::vm_modules::ml::VMTrainingPair::data)
         .CreateMemberFunction("label", &fetch::vm_modules::ml::VMTrainingPair::label);
   }

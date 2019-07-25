@@ -481,7 +481,7 @@ TYPED_TEST(Convolution2DTest, getStateDict)
   SizeType const kernel_height   = 3;
   SizeType const stride_size     = 1;
 
-  // Initialize weights
+  // Initialise weights
   fetch::ml::layers::Convolution2D<ArrayType> conv(
       output_channels, input_channels, kernel_height, stride_size,
       fetch::ml::details::ActivationType::NOTHING, "ConvTest");

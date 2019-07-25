@@ -21,7 +21,7 @@
 #include "ledger/chain/address.hpp"
 #include "network/muddle/muddle_endpoint.hpp"
 #include "network/muddle/rpc/server.hpp"
-#include "rbc_envelop.hpp"
+#include "rbc_envelope.hpp"
 
 #include <bitset>
 
@@ -105,9 +105,9 @@ private:
   DkgService &    dkg_service_;
   SubscriptionPtr rbc_subscription_;  ///< For receiving messages in the rbc channel
 
-  void Send(RBCEnvelop const &env, MuddleAddress const &address);
-  void Broadcast(RBCEnvelop const &env);
-  void OnRBC(MuddleAddress const &from, RBCEnvelop const &envelop);
+  void Send(RBCEnvelope const &env, MuddleAddress const &address);
+  void Broadcast(RBCEnvelope const &env);
+  void OnRBC(MuddleAddress const &from, RBCEnvelope const &envelope);
   void OnRBroadcast(std::shared_ptr<RBroadcast> msg_ptr, uint32_t sender_index);
   void OnREcho(std::shared_ptr<REcho> msg_ptr, uint32_t sender_index);
   void OnRReady(std::shared_ptr<RReady> msg_ptr, uint32_t sender_index);

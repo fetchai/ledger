@@ -17,13 +17,13 @@
 //
 //------------------------------------------------------------------------------
 
-#include <fstream>
-#include <vector>
-
 #include "core/random.hpp"
 #include "math/base_types.hpp"
 #include "math/tensor.hpp"
 #include "ml/dataloaders/dataloader.hpp"
+
+#include <fstream>
+#include <string>
 
 namespace fetch {
 namespace ml {
@@ -52,7 +52,7 @@ ArrayType ReadCSV(std::string const &filename, math::SizeType const cols_to_skip
   }
 
   std::string           buf;
-  const char            delimiter = ',';
+  char const            delimiter = ',';
   std::string           field_value;
   fetch::math::SizeType row{0};
   fetch::math::SizeType col{0};
