@@ -47,7 +47,6 @@ namespace {
 
 using namespace fetch::ledger;
 
-using fetch::byte_array::ToBase64;
 using fetch::crypto::ECDSASigner;
 using fetch::ledger::testing::BlockGenerator;
 using fetch::core::FeatureFlags;
