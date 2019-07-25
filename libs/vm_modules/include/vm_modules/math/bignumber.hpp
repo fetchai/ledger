@@ -76,7 +76,6 @@ public:
     module.CreateClassType<UInt256Wrapper>("UInt256")
         .CreateSerializeDefaultConstructor<uint64_t>(static_cast<uint64_t>(0))
         .CreateConstructor<uint64_t>()
-        .CreateConstructor<Ptr<vm::String>>()
         .CreateConstructor<Ptr<ByteArrayWrapper>>()
         .EnableOperator(vm::Operator::Equal)
         .EnableOperator(vm::Operator::NotEqual)
@@ -109,11 +108,6 @@ public:
     , number_(data)
   {}
 
-  UInt256Wrapper(fetch::vm::VM *vm, fetch::vm::TypeId type_id, std::string const &data)
-    : fetch::vm::Object(vm, type_id)
-    , number_(data)
-  {}
-
   UInt256Wrapper(fetch::vm::VM *vm, fetch::vm::TypeId type_id, uint64_t data)
     : fetch::vm::Object(vm, type_id)
     , number_(data)
@@ -125,20 +119,6 @@ public:
     try
     {
       return new UInt256Wrapper(vm, type_id, ba->byte_array());
-    }
-    catch (std::runtime_error const &e)
-    {
-      vm->RuntimeError(e.what());
-    }
-    return nullptr;
-  }
-
-  static fetch::vm::Ptr<UInt256Wrapper> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
-                                                    fetch::vm::Ptr<vm::String> const &ba)
-  {
-    try
-    {
-      return new UInt256Wrapper(vm, type_id, ba->str);
     }
     catch (std::runtime_error const &e)
     {

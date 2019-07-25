@@ -40,11 +40,12 @@ template <class T>
 class FullyConnected : public SubGraph<T>
 {
 public:
-  using ArrayType    = T;
-  using ArrayPtrType = std::shared_ptr<ArrayType>;
-  using SizeType     = typename ArrayType::SizeType;
-  using DataType     = typename ArrayType::Type;
-  using WeightsInit  = fetch::ml::ops::WeightsInitialisation;
+  using ArrayType     = T;
+  using ArrayPtrType  = std::shared_ptr<ArrayType>;
+  using SizeType      = typename ArrayType::SizeType;
+  using DataType      = typename ArrayType::Type;
+  using WeightsInit   = fetch::ml::ops::WeightsInitialisation;
+  using VecTensorType = typename SubGraph<T>::VecTensorType;
   using NodeType =
       typename fetch::ml::Node<ArrayType, fetch::ml::layers::FullyConnected<ArrayType>>;
   using NodeInterfaceType = typename fetch::ml::NodeInterface<ArrayType>;
@@ -154,8 +155,7 @@ public:
                             regularisation_rate);
   }
 
-  std::vector<SizeType> ComputeOutputShape(
-      std::vector<std::reference_wrapper<ArrayType const>> const &) const
+  std::vector<SizeType> ComputeOutputShape(VecTensorType const &) const
   {
     return {this->out_size_, 1};
   }
