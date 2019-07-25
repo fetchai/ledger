@@ -46,7 +46,7 @@ TEST(MsgPacker, long_strings)
   text_buffer.Resize((1ull << 16) + 20);
   for (std::size_t j = 0; j < text_buffer.size(); ++j)
   {
-    text_buffer[j] = 'a' + static_cast<uint8_t>(j % 26);
+    text_buffer[j] = static_cast<uint8_t>(static_cast<char>('a') + static_cast<char>(j % 26));
   }
 
   // len(value) = 65526
