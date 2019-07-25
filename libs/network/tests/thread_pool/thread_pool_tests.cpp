@@ -101,7 +101,7 @@ protected:
   ThreadPool pool_;
 };
 
-TEST_P(ThreadPoolTests, CheckBasicOperation)
+TEST_P(ThreadPoolTests, DISABLED_CheckBasicOperation)
 {
   std::size_t const work_count = 500;
 
@@ -116,7 +116,7 @@ TEST_P(ThreadPoolTests, CheckBasicOperation)
   ASSERT_TRUE(WaitForCompletion(work_count));
 }
 
-TEST_P(ThreadPoolTests, CheckFutureOperation)
+TEST_P(ThreadPoolTests, DISABLED_CheckFutureOperation)
 {
   std::size_t const work_count = 500;
 
@@ -131,7 +131,7 @@ TEST_P(ThreadPoolTests, CheckFutureOperation)
   ASSERT_TRUE(WaitForCompletion(work_count));
 }
 
-TEST_P(ThreadPoolTests, CheckIdleWorkers)
+TEST_P(ThreadPoolTests, DISABLED_CheckIdleWorkers)
 {
   static constexpr std::size_t INTERVAL_MS         = 100;
   static constexpr std::size_t EXPECTED_ITERATIONS = 20;
@@ -179,7 +179,7 @@ TEST_P(ThreadPoolTests, CheckIdleWorkers)
   }
 }
 
-TEST_P(ThreadPoolTests, SaturationCheck)
+TEST_P(ThreadPoolTests, DISABLED_SaturationCheck)
 {
   std::size_t const num_threads = GetParam();
 

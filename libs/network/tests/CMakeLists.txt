@@ -19,10 +19,7 @@ fetch_add_test(p2p_gtest fetch-network p2p)
 fetch_add_test(network_peer_gtest fetch-network gtest)
 fetch_add_test(packet_gtest fetch-network packet)
 
-fetch_add_slow_test(thread_pool_gtest
-                    fetch-network
-                    thread_pool
-                    DISABLED)
+fetch_add_slow_test(thread_pool_gtest fetch-network thread_pool)
 
 fetch_add_slow_test(network_gtest
                     fetch-network
