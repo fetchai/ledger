@@ -74,7 +74,7 @@ public:
   static void Bind(vm::Module &module)
   {
     module.CreateClassType<UInt256Wrapper>("UInt256")
-        .CreateSerializeDefaultConstructor<uint64_t>(static_cast<uint64_t>(0))
+        .CreateSerializeDefaultConstructor(&UInt256Wrapper::Constructor, {})
         .CreateConstructor(&UInt256Wrapper::Constructor)
         .CreateConstructor(&UInt256Wrapper::ConstructorFromString)
         .CreateConstructor(&UInt256Wrapper::ConstructorFromBytes)

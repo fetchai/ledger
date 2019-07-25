@@ -197,7 +197,7 @@ Module::Module()
 
   GetClassInterface<IArray>()
       .CreateConstructor(&IArray::Constructor)
-      .CreateSerializeDefaultConstructor<int32_t>(static_cast<int32_t>(0))
+      .CreateSerializeDefaultConstructor(&IArray::Constructor, {})
       .CreateMemberFunction("append", &IArray::Append)
       .CreateMemberFunction("count", &IArray::Count)
       .CreateMemberFunction("erase", &IArray::Erase)
@@ -225,7 +225,7 @@ Module::Module()
       .CreateInstantiationType<Array<Ptr<Address>>>();
 
   GetClassInterface<String>()
-      .CreateSerializeDefaultConstructor()
+      .CreateSerializeDefaultConstructor(&String::Constructor)
       .CreateMemberFunction("find", &String::Find)
       .CreateMemberFunction("length", &String::Length)
       .CreateMemberFunction("reverse", &String::Reverse)
@@ -239,7 +239,7 @@ Module::Module()
       .EnableIndexOperator();
 
   GetClassInterface<Address>()
-      .CreateSerializeDefaultConstructor()
+      .CreateSerializeDefaultConstructor(&Address::Constructor)
       .CreateConstructor(&Address::ConstructorFromString)
       .CreateMemberFunction("signedTx", &Address::HasSignedTx);
 

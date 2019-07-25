@@ -45,10 +45,12 @@ namespace fetch {
 namespace vm {
 
 namespace details {
-template <typename T, typename... Ts>
+
+template <typename T, typename... Args>
 struct CreateSerializeConstructor
 {
-  static DefaultConstructorHandler Apply()
+  template <typename ReturnType>
+  static DefaultConstructorHandler Apply(ReturnType (*)(VM *, TypeId, Args...))
   {
     return [](VM *vm, TypeId) -> Ptr<Object> {
       vm->RuntimeError("No support for non-default constructors.");
@@ -56,27 +58,23 @@ struct CreateSerializeConstructor
     };
   }
 
-  static DefaultConstructorHandler Apply(Ts... args)
+  template <typename ReturnType>
+  static DefaultConstructorHandler Apply(ReturnType (*constructor)(VM *, TypeId, Args...),
+                                         Args const &... args)
   {
-    return [args...](VM *vm, TypeId id) -> Ptr<Object> { return T::Constructor(vm, id, args...); };
+    return [constructor, args...](VM *vm, TypeId id) -> Ptr<Object> {
+      return constructor(vm, id, args...);
+    };
   }
 };
 
 template <typename T>
 struct CreateSerializeConstructor<T>
 {
-  static DefaultConstructorHandler Apply()
+  template <typename ReturnType, typename... Args>
+  static DefaultConstructorHandler Apply(ReturnType (*constructor)(VM *, TypeId, Args...))
   {
-    return [](VM *vm, TypeId id) -> Ptr<Object> { return T::Constructor(vm, id); };
-  }
-};
-
-template <>
-struct CreateSerializeConstructor<String>
-{
-  static DefaultConstructorHandler Apply()
-  {
-    return [](VM *vm, TypeId /*id*/) -> Ptr<Object> { return new String(vm, ""); };
+    return [constructor](VM *vm, TypeId id) -> Ptr<Object> { return constructor(vm, id); };
   }
 };
 
@@ -104,9 +102,11 @@ public:
       TypeIndexArray  parameter_type_index_array;
       UnrollTypes<std::remove_cv_t<std::remove_reference_t<Args>>...>::Unroll(
           parameter_type_index_array);
+
       Handler handler = [constructor](VM *vm) {
         InvokeConstructor(vm, vm->instruction_->type_id, constructor);
       };
+
       auto compiler_setup_function = [type_index__, parameter_type_index_array,
                                       handler](Compiler *compiler) {
         compiler->CreateConstructor(type_index__, parameter_type_index_array, handler);
@@ -116,22 +116,26 @@ public:
 
       if (sizeof...(Args) == 0)
       {
-        DefaultConstructorHandler h = details::CreateSerializeConstructor<Type, Args...>::Apply();
+        DefaultConstructorHandler h =
+            details::CreateSerializeConstructor<Type, Args...>::Apply(constructor);
         module_->deserialization_constructors_.insert({type_index__, std::move(h)});
       }
 
       return *this;
     }
 
-    template <typename... Ts>
-    ClassInterface &CreateSerializeDefaultConstructor(Ts... args)
+    template <typename ReturnType, typename... Args>
+    ClassInterface &CreateSerializeDefaultConstructor(ReturnType (*constructor)(VM *, TypeId,
+                                                                                Args...),
+                                                      Args... args)
     {
       TypeIndex const type_index__ = type_index_;
       TypeIndexArray  parameter_type_index_array;
-      UnrollTypes<Ts...>::Unroll(parameter_type_index_array);
+      UnrollTypes<std::remove_cv_t<std::remove_reference_t<Args>>...>::Unroll(
+          parameter_type_index_array);
 
       DefaultConstructorHandler h =
-          details::CreateSerializeConstructor<Type, Ts...>::Apply(std::forward<Ts>(args)...);
+          details::CreateSerializeConstructor<Type, Args...>::Apply(constructor, args...);
       module_->deserialization_constructors_.insert({type_index__, std::move(h)});
 
       return *this;

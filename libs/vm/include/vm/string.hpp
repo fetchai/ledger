@@ -35,6 +35,8 @@ struct Array;
 
 struct String : public Object
 {
+  static Ptr<String> Constructor(VM *vm, TypeId);
+
   String()           = delete;
   ~String() override = default;
 

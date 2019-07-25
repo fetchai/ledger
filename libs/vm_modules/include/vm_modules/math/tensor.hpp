@@ -65,7 +65,7 @@ public:
   {
     module.CreateClassType<VMTensor>("Tensor")
         .CreateConstructor(&VMTensor::ConstructorFromShape)
-        .CreateSerializeDefaultConstructor()
+        .CreateSerializeDefaultConstructor(&VMTensor::Constructor)
         .CreateMemberFunction("at", &VMTensor::AtOne)
         .CreateMemberFunction("at", &VMTensor::AtTwo)
         .CreateMemberFunction("at", &VMTensor::AtThree)

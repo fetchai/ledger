@@ -29,6 +29,7 @@ namespace fetch {
 namespace vm {
 
 namespace {
+
 bool is_not_whitespace(int ch)
 {
   return !std::isspace(ch);
@@ -214,6 +215,11 @@ void String::Add(Ptr<Object> &lhso, Ptr<Object> &rhso)
     Ptr<String> s(new String(vm_, lhs->str + rhs->str));
     lhso = std::move(s);
   }
+}
+
+Ptr<String> String::Constructor(VM *vm, TypeId)
+{
+  return new String(vm, "");
 }
 
 bool String::SerializeTo(ByteArrayBuffer &buffer)
