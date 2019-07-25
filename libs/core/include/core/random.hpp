@@ -41,7 +41,7 @@ static void Shuffle(LaggedFibonacciGenerator<> & gen, std::vector<T> const &in_v
 
   for (std::size_t i = out_vec.size() - 1; i > 0; --i)
   {
-    std::size_t j = gen() % (i + 1);
+    std::size_t j = (gen() >> 19) % (i + 1);
 
     // swap i and j
     T temp     = out_vec[i];
@@ -61,7 +61,7 @@ static void Shuffle(LinearCongruentialGenerator & gen, std::vector<T> const &in_
 
   for (std::size_t i = out_vec.size() - 1; i > 0; --i)
   {
-    std::size_t j = gen() % (i + 1);
+    std::size_t j = (gen() >> 19) % (i + 1);
 
     // swap i and j
     T temp     = out_vec[i];
