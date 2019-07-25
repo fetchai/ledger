@@ -19,7 +19,8 @@
 #include "core/serializers/byte_array.hpp"
 #include "core/serializers/byte_array_buffer.hpp"
 #include "core/serializers/counter.hpp"
-#include "dkg/rbc_envelop.hpp"
+#include "dkg/rbc_envelope.hpp"
+
 #include "gtest/gtest.h"
 
 using namespace fetch;
@@ -93,10 +94,10 @@ TEST(rbc_messages, envelope)
 {
   RAnswer answer{1, 1, 1, "hello"};
 
-  // Put into RBCEnvelop
-  RBCEnvelop env{answer};
+  // Put into RBCEnvelope
+  RBCEnvelope env{answer};
 
-  // Serialise the envelop
+  // Serialise the envelope
   fetch::serializers::SizeCounter<fetch::serializers::ByteArrayBuffer> env_counter;
   env_counter << env;
 
@@ -105,10 +106,10 @@ TEST(rbc_messages, envelope)
   env_serialiser << env;
 
   fetch::serializers::ByteArrayBuffer env_serialiser1{env_serialiser.data()};
-  RBCEnvelop                          env1;
+  RBCEnvelope                         env1;
   env_serialiser1 >> env1;
 
-  // Check the message type of envelops match
+  // Check the message type of envelopes match
   EXPECT_EQ(env1.Message()->type(), RBCMessage::MessageType::RANSWER);
   EXPECT_EQ(env1.Message()->tag(), answer.tag());
   EXPECT_EQ(std::dynamic_pointer_cast<RAnswer>(env1.Message())->message(), answer.message());

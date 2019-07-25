@@ -16,26 +16,29 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/transaction_verifier.hpp"
-#include "telemetry/counter.hpp"
-#include "telemetry/gauge.hpp"
-#include "telemetry/registry.hpp"
-
 #include "core/logger.hpp"
 #include "core/string/to_lower.hpp"
 #include "core/threading.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "ledger/storage_unit/transaction_sinks.hpp"
+#include "ledger/transaction_verifier.hpp"
 #include "metrics/metrics.hpp"
 #include "network/generics/milli_timer.hpp"
+#include "telemetry/counter.hpp"
+#include "telemetry/gauge.hpp"
+#include "telemetry/registry.hpp"
 
+#include <algorithm>
 #include <chrono>
+#include <string>
 
 static const std::chrono::milliseconds POP_TIMEOUT{300};
 
 namespace fetch {
 namespace ledger {
+
 namespace {
+
 using telemetry::Registry;
 
 std::string CreateMetricName(std::string const &prefix, std::string const &name)

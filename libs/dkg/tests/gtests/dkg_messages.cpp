@@ -19,15 +19,19 @@
 #include "core/serializers/byte_array_buffer.hpp"
 #include "core/serializers/counter.hpp"
 #include "dkg/dkg_messages.hpp"
+
 #include "gtest/gtest.h"
+
+#include <string>
+#include <vector>
 
 using namespace fetch;
 using namespace fetch::dkg;
 
 TEST(dkg_messages, coefficients)
 {
-  std::vector<std::string> coefficients;
-  coefficients.push_back("coeff1");
+  std::vector<std::string> coefficients = {"coeff1"};
+
   CoefficientsMessage coeff{1, coefficients, "signature"};
 
   fetch::serializers::ByteArrayBuffer serialiser{coeff.Serialize()};
@@ -55,7 +59,7 @@ TEST(dkg_messages, shares)
   fetch::serializers::ByteArrayBuffer serialiser1(serialiser.data());
   SharesMessage                       shareMessage1{serialiser1};
 
-  for (const auto &i_share : shareMessage.shares())
+  for (auto const &i_share : shareMessage.shares())
   {
     EXPECT_EQ(shareMessage1.shares().find(i_share.first) != shareMessage1.shares().end(), true);
     EXPECT_EQ(i_share.second.first, shareMessage1.shares().at(i_share.first).first);
@@ -83,10 +87,10 @@ TEST(dkg_messages, envelope)
   std::unordered_set<DKGMessage::CabinetId> complaints;
   ComplaintsMessage                         complaintMsg{complaints, "signature"};
 
-  // Put into DKGEnvelop
-  DKGEnvelop env{complaintMsg};
+  // Put into DKGEnvelope
+  DKGEnvelope env{complaintMsg};
 
-  // Serialise the envelop
+  // Serialise the envelope
   fetch::serializers::SizeCounter<fetch::serializers::ByteArrayBuffer> env_counter;
   env_counter << env;
 
@@ -95,10 +99,10 @@ TEST(dkg_messages, envelope)
   env_serialiser << env;
 
   fetch::serializers::ByteArrayBuffer env_serialiser1{env_serialiser.data()};
-  DKGEnvelop                          env1;
+  DKGEnvelope                         env1;
   env_serialiser1 >> env1;
 
-  // Check the message type of envelops match
+  // Check the message type of envelopes match
   EXPECT_EQ(env1.Message()->type(), DKGMessage::MessageType::COMPLAINT);
   EXPECT_EQ(env1.Message()->signature(), complaintMsg.signature());
   EXPECT_EQ(std::dynamic_pointer_cast<ComplaintsMessage>(env1.Message())->complaints(),

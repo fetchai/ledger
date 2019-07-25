@@ -43,34 +43,12 @@
 #include <memory>
 #include <ostream>
 
-namespace fetch {
-namespace ledger {
+namespace {
 
-std::ostream &operator<<(std::ostream &s, BlockCoordinator::State state)
-{
-  s << BlockCoordinator::ToString(state);
-  return s;
-}
-
-Digest GENESIS_DIGEST =
-    fetch::byte_array::FromBase64("0+++++++++++++++++Genesis+++++++++++++++++0=");
-Digest GENESIS_MERKLE_ROOT =
-    fetch::byte_array::FromBase64("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=");
-
-}  // namespace ledger
-}  // namespace fetch
-
-using fetch::ledger::BlockCoordinator;
-using fetch::ledger::MainChain;
-using fetch::ledger::BlockStatus;
-using fetch::ledger::Block;
-using fetch::byte_array::ToBase64;
+using namespace fetch::ledger;
 
 using fetch::crypto::ECDSASigner;
 using fetch::ledger::testing::BlockGenerator;
-using fetch::ledger::TransactionStatusCache;
-using fetch::ledger::TransactionLayout;
-using fetch::ledger::Address;
 using fetch::core::FeatureFlags;
 
 using ::testing::_;
@@ -87,23 +65,24 @@ using BlockPackerPtr      = std::unique_ptr<MockBlockPacker>;
 using BlockPtr            = std::shared_ptr<Block>;
 using ScheduleStatus      = fetch::ledger::ExecutionManagerInterface::ScheduleStatus;
 using BlockSinkPtr        = std::unique_ptr<FakeBlockSink>;
-using TxCachePtr          = std::unique_ptr<TransactionStatusCache>;
 using State               = fetch::ledger::BlockCoordinator::State;
 using AddressPtr          = std::unique_ptr<Address>;
 using DAGPtr              = BlockCoordinator::DAGPtr;
 using StakeManagerPtr     = std::shared_ptr<fetch::ledger::StakeManagerInterface>;
 
-static constexpr char const *LOGGING_NAME = "BlockCoordinatorTests";
-static constexpr std::size_t NUM_LANES    = 1;
-static constexpr std::size_t NUM_SLICES   = 1;
+Digest GENESIS_DIGEST =
+    fetch::byte_array::FromBase64("0+++++++++++++++++Genesis+++++++++++++++++0=");
+Digest GENESIS_MERKLE_ROOT =
+    fetch::byte_array::FromBase64("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=");
+
+static constexpr std::size_t NUM_LANES  = 1;
+static constexpr std::size_t NUM_SLICES = 1;
 
 class BlockCoordinatorTests : public ::testing::Test
 {
 protected:
   void SetUp() override
   {
-    FETCH_UNUSED(LOGGING_NAME);
-
     block_generator_.Reset();
 
     // generate a public/private key pair
@@ -115,25 +94,12 @@ protected:
     execution_manager_ = std::make_unique<StrictMock<MockExecutionManager>>(storage_unit_->fake);
     packer_            = std::make_unique<StrictMock<MockBlockPacker>>();
     block_sink_        = std::make_unique<FakeBlockSink>();
-    tx_status_         = std::make_unique<TransactionStatusCache>();
     block_coordinator_ = std::make_unique<BlockCoordinator>(
         *main_chain_, DAGPtr{}, StakeManagerPtr{}, *execution_manager_, *storage_unit_, *packer_,
-        *block_sink_, *tx_status_, FeatureFlags{}, signer, NUM_LANES, NUM_SLICES, 1u);
+        *block_sink_, FeatureFlags{}, signer, NUM_LANES, NUM_SLICES, 1u);
 
     block_coordinator_->SetBlockPeriod(std::chrono::seconds{10});
     block_coordinator_->EnableMining(true);
-  }
-
-  void TearDown() override
-  {
-    block_coordinator_.reset();
-    tx_status_.reset();
-    block_sink_.reset();
-    packer_.reset();
-    execution_manager_.reset();
-    storage_unit_.reset();
-    main_chain_.reset();
-    address_.reset();
   }
 
   /**
@@ -205,8 +171,6 @@ protected:
 
       if (max_iterations == 0)
       {
-        FETCH_LOG_ERROR(LOGGING_NAME, "Failed to advance state machine after ", max_iterations,
-                        " iterations!");
         throw std::runtime_error("Failed test.");
       }
     }
@@ -221,7 +185,6 @@ protected:
   StorageUnitPtr      storage_unit_;
   BlockPackerPtr      packer_;
   BlockSinkPtr        block_sink_;
-  TxCachePtr          tx_status_;
   BlockCoordinatorPtr block_coordinator_;
   BlockGenerator      block_generator_{NUM_LANES, NUM_SLICES};
 };
@@ -387,19 +350,6 @@ TEST_F(BlockCoordinatorTests, CheckLongBlockStartUp)
   ASSERT_EQ(BlockStatus::ADDED, main_chain_->AddBlock(*b1));
   ASSERT_EQ(BlockStatus::ADDED, main_chain_->AddBlock(*b2));
   ASSERT_EQ(BlockStatus::ADDED, main_chain_->AddBlock(*b3));
-
-  FETCH_LOG_INFO(LOGGING_NAME, "Genesis: ", ToBase64(genesis->body.hash), " <- ",
-                 ToBase64(genesis->body.previous_hash));
-  FETCH_LOG_INFO(LOGGING_NAME, "B1     : ", ToBase64(b1->body.hash), " <- ",
-                 ToBase64(b1->body.previous_hash));
-  FETCH_LOG_INFO(LOGGING_NAME, "B2     : ", ToBase64(b2->body.hash), " <- ",
-                 ToBase64(b2->body.previous_hash));
-  FETCH_LOG_INFO(LOGGING_NAME, "B3     : ", ToBase64(b3->body.hash), " <- ",
-                 ToBase64(b3->body.previous_hash));
-  FETCH_LOG_INFO(LOGGING_NAME, "B4     : ", ToBase64(b4->body.hash), " <- ",
-                 ToBase64(b4->body.previous_hash));
-  FETCH_LOG_INFO(LOGGING_NAME, "B5     : ", ToBase64(b5->body.hash), " <- ",
-                 ToBase64(b5->body.previous_hash));
 
   // processing of genesis block
   ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), fetch::ledger::GENESIS_DIGEST);
@@ -1030,8 +980,6 @@ class NiceMockBlockCoordinatorTests : public BlockCoordinatorTests
 protected:
   void SetUp() override
   {
-    FETCH_UNUSED(LOGGING_NAME);
-
     block_generator_.Reset();
 
     // generate a public/private key pair
@@ -1043,10 +991,9 @@ protected:
     execution_manager_ = std::make_unique<NiceMock<MockExecutionManager>>(storage_unit_->fake);
     packer_            = std::make_unique<NiceMock<MockBlockPacker>>();
     block_sink_        = std::make_unique<FakeBlockSink>();
-    tx_status_         = std::make_unique<TransactionStatusCache>();
     block_coordinator_ = std::make_unique<BlockCoordinator>(
         *main_chain_, DAGPtr{}, StakeManagerPtr{}, *execution_manager_, *storage_unit_, *packer_,
-        *block_sink_, *tx_status_, FeatureFlags{}, signer, NUM_LANES, NUM_SLICES, 1u);
+        *block_sink_, FeatureFlags{}, signer, NUM_LANES, NUM_SLICES, 1u);
 
     block_coordinator_->SetBlockPeriod(std::chrono::seconds{10});
     block_coordinator_->EnableMining(true);
@@ -1089,3 +1036,5 @@ TEST_F(NiceMockBlockCoordinatorTests, UnknownTransactionDoesNotBlockForever)
 
   Tock(State::WAIT_FOR_TRANSACTIONS, State::SYNCHRONISED);
 }
+
+}  // namespace

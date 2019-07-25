@@ -23,8 +23,8 @@
 
 
 
-int Set(fetch::vm::Token* token, const fetch::vm::Token::Kind kind, const char* text,
-	const uint16_t length, fetch::vm::Location* location)
+int Set(fetch::vm::Token *token, const fetch::vm::Token::Kind kind, char const *text,
+	uint16_t const length, fetch::vm::Location *location)
 {
 	//printf("kind=%d text=[%s] length=%d line=%d offset=%d\n",
 		//kind, text, length, location->line, location->offset);
