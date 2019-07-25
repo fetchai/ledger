@@ -71,7 +71,7 @@ public:
     else if (inputs.front().get().shape().size() == 2)
     {
       ArrayType sum;
-      sum = ReduceSum(return_signal, 1 - axis_);
+      sum = ReduceSum(return_signal, axis_);
 
       t.InlineMultiply(sum);
     }

@@ -94,7 +94,7 @@ public:
     }
     else if (inputs.at(0).get().shape().size())  // one-hot
     {
-      fetch::math::Softmax(inputs.at(0).get(), ret, 1);
+      fetch::math::Softmax(inputs.at(0).get(), ret, 0);
 
       auto b_it = inputs.at(1).get().cbegin();
       auto r_it = ret.begin();

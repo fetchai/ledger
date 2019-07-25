@@ -288,7 +288,9 @@ public:
   //////////////
 
   ConstSliceType Slice(SizeType i, SizeType axis = 0) const;
+  ConstSliceType Slice(SizeVector i, SizeVector axes) const;
   TensorSlice    Slice(SizeType i, SizeType axis = 0);
+  TensorSlice    Slice(SizeVector i, SizeVector axes);
 
   /////////////
   /// Views ///
@@ -346,6 +348,8 @@ public:
     SliceIteratorType begin();
     SliceIteratorType end();
     TensorSlice       Slice(SizeType i, SizeType axis);
+    void              ModifyRange(SizeType i, SizeType axis);
+
     template <typename G>
     void Assign(TensorSliceImplementation<G> const &other);
     void Assign(Tensor const &other);
@@ -2152,6 +2156,27 @@ typename Tensor<T, C>::ConstSliceType Tensor<T, C>::Slice(SizeType i, SizeType a
   return ConstSliceType(*this, range, axis);
 }
 
+template <typename T, typename C>
+typename Tensor<T, C>::ConstSliceType Tensor<T, C>::Slice(std::vector<SizeType> i,
+                                                          std::vector<SizeType> axes) const
+{
+  std::vector<std::vector<SizeType>> range;
+
+  for (SizeType j = 0; j < shape().size(); ++j)
+  {
+    range.push_back({0, shape().at(j), 1});
+  }
+
+  for (SizeType j = 0; j < i.size(); ++j)
+  {
+    range.at(axes.at(j)).at(0) = i.at(j);
+    range.at(axes.at(j)).at(1) = i.at(j) + 1;
+    range.at(axes.at(j)).at(2) = 1;
+  }
+
+  return ConstSliceType(*this, range, axes);
+}
+
 /**
  * Returns a Slice of the tensor
  * @tparam T
@@ -2178,6 +2203,27 @@ typename Tensor<T, C>::TensorSlice Tensor<T, C>::Slice(SizeType i, SizeType axis
   }
 
   return TensorSlice(*this, range, axis);
+}
+
+template <typename T, typename C>
+typename Tensor<T, C>::TensorSlice Tensor<T, C>::Slice(std::vector<SizeType> i,
+                                                       std::vector<SizeType> axes)
+{
+  std::vector<std::vector<SizeType>> range;
+
+  for (SizeType j = 0; j < shape().size(); ++j)
+  {
+    range.push_back({0, shape().at(j), 1});
+  }
+
+  for (SizeType j = 0; j < i.size(); ++j)
+  {
+    range.at(axes.at(j)).at(0) = i.at(j);
+    range.at(axes.at(j)).at(1) = i.at(j) + 1;
+    range.at(axes.at(j)).at(2) = 1;
+  }
+
+  return TensorSlice(*this, range, axes);
 }
 
 ////////////////////////////////////////
@@ -2672,6 +2718,15 @@ typename Tensor<T, C>::TensorSlice Tensor<T, C>::TensorSlice::Slice(SizeType i, 
   new_axes.push_back(axis);
 
   return TensorSlice(this->tensor_, new_range, new_axes);
+}
+
+template <typename T, typename C>
+void Tensor<T, C>::TensorSlice::ModifyRange(SizeType i, SizeType axis)
+{
+  // Modify range based on specified offset i
+  this->range_.at(axis).at(0) = i;
+  this->range_.at(axis).at(1) = i + 1;
+  this->range_.at(axis).at(2) = 1;
 }
 
 template <typename T, typename C>

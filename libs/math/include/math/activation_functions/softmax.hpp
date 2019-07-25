@@ -70,17 +70,106 @@ template <typename ArrayType>
 void Softmax2DImplementation(ArrayType const &array, ArrayType &ret,
                              typename ArrayType::SizeType axis)
 {
-  assert(ret.size() == array.size());
-  assert(array.shape().size() == 2);
-  assert(ret.shape().size() == 2);
-  assert((axis == 0) || (axis == 1));
+  using DataType = typename ArrayType::Type;
 
-  for (std::size_t i = 0; i < array.shape()[axis]; ++i)
+  assert(array.size() >= 2);
+  assert(axis < array.size());
+
+  // Array is const and ModifyRange can't be called on ConstSlice
+  ret.Copy(array);
+
+  // Prepare Slice
+  SizeType              reduced_size = ret.shape().size() - 1;
+  std::vector<SizeType> offsets;
+  offsets.resize(reduced_size);
+  std::vector<SizeType> axes;
+  axes.resize(reduced_size);
+
+  SizeType j = 0;
+  for (SizeType i = 0; i < reduced_size; i++)
   {
-    auto cur_slice = array.Slice(i, axis).Copy();
-    auto ret_slice = ret.Slice(i, axis).Copy();
-    Softmax1DImplementation(cur_slice, ret_slice);
-    ret.Slice(i, axis).Assign(ret_slice);
+    if (j == axis)
+    {
+      j++;
+    }
+
+    axes.at(i)    = j;
+    offsets.at(i) = 0;
+    j++;
+  }
+  auto ret_slice = ret.Slice(offsets, axes);
+
+  // Iterate over all possible offsets combinations
+  DataType sum(0);
+  DataType array_max;
+  bool     is_done = false;
+  while (offsets.at(offsets.size() - 1) < ret.shape().at(axes.at(axes.size() - 1)))
+  {
+
+    for (SizeType i = 0; i < offsets.size(); i++)
+    {
+
+      if (offsets.at(i) >= ret.shape().at(axes.at(i)))
+      {
+        if (i == offsets.size() - 1)
+        {
+          // Terminate counter otherwise it would overflow
+          is_done = true;
+          break;
+        }
+
+        offsets.at(i) = 0;
+        ret_slice.ModifyRange(offsets.at(i), axes.at(i));
+
+        offsets.at(i + 1)++;
+      }
+      else
+      {
+
+        // End of digit transmission
+        ret_slice.ModifyRange(offsets.at(i), axes.at(i));
+        break;
+      }
+    }
+    if (is_done)
+      break;
+
+    // Operation with Slice
+
+    // Cannot call Max on a slice
+    // Get maximum
+    array_max = numeric_lowest<DataType>();
+    auto it1  = ret_slice.begin();
+    while (it1.is_valid())
+    {
+      if (*it1 > array_max)
+      {
+        array_max = (*it1);
+      }
+      ++it1;
+    }
+
+    // ret=exp(array - max)
+    sum      = static_cast<DataType>(0);
+    auto it2 = ret_slice.begin();
+    while (it2.is_valid())
+    {
+      *it2 = Exp((*it2) - array_max);
+      sum += *it2;
+      ++it2;
+    }
+
+    // Cannot divide slice by scalar
+    // ret=ret/sum(ret)
+    auto it3 = ret_slice.begin();
+    while (it3.is_valid())
+    {
+      *it3 = (*it3) / sum;
+      ++it3;
+    }
+    // End operation with slice
+
+    offsets.at(0)++;
   }
 }
 }  // namespace details
@@ -123,7 +212,7 @@ template <typename ArrayType>
 ArrayType Softmax(ArrayType const &array)
 {
   ArrayType ret{array.shape()};
-  Softmax(array, ret, 0);
+  Softmax(array, ret, 1);
   return ret;
 }
 

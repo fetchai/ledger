@@ -39,7 +39,7 @@ public:
   using SizeType      = typename ArrayType::SizeType;
   using VecTensorType = typename Ops<T>::VecTensorType;
 
-  explicit LogSoftmax(SizeType axis = 0)
+  explicit LogSoftmax(SizeType axis = 1)
     : axis_(axis)
   {}
   ~LogSoftmax() override = default;
@@ -74,7 +74,7 @@ public:
     else if (inputs.front().get().shape().size() == 2)
     {
       ArrayType sum;
-      sum = ReduceSum(return_signal, 1 - axis_);
+      sum = ReduceSum(return_signal, axis_);
       t.InlineMultiply(sum);
     }
     else
