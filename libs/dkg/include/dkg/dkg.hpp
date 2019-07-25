@@ -121,8 +121,8 @@ class DistributedKeyGeneration
   virtual void BroadcastComplaints();
   virtual void BroadcastComplaintsAnswer();
   virtual void BroadcastQualCoefficients();
-  void         BroadcastQualComplaints();
-  void         BroadcastReconstructionShares();
+  virtual void BroadcastQualComplaints();
+  virtual void BroadcastReconstructionShares();
   /// @}
 
   /// @name Methods to check if enough messages have been received to trigger state transition

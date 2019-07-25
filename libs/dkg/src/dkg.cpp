@@ -208,6 +208,7 @@ void DistributedKeyGeneration::BroadcastQualCoefficients()
  */
 void DistributedKeyGeneration::BroadcastQualComplaints()
 {
+<<<<<<< HEAD
   std::unordered_set<MuddleAddress> complaints_local;
   uint32_t                          i  = 0;
   auto                              iq = cabinet_.begin();
@@ -251,6 +252,10 @@ void DistributedKeyGeneration::BroadcastQualComplaints()
   }
   SendBroadcast(DKGEnvelope{SharesMessage{static_cast<uint64_t>(State::WAITING_FOR_QUAL_COMPLAINTS),
                                          QUAL_complaints, "signature"}});
+=======
+  SendBroadcast(DKGEnvelop{SharesMessage{static_cast<uint64_t>(State::WAITING_FOR_QUAL_COMPLAINTS),
+                                         ComputeQualComplaints(), "signature"}});
+>>>>>>> More tests and bug fixes
   state_ = State::WAITING_FOR_QUAL_COMPLAINTS;
   ReceivedQualComplaint();
 }
@@ -260,10 +265,11 @@ void DistributedKeyGeneration::BroadcastQualComplaints()
  * the secret shares we received from them to all cabinet members and collect the shares broadcasted
  * by others
  */
+
 void DistributedKeyGeneration::BroadcastReconstructionShares()
 {
   std::unordered_map<MuddleAddress, std::pair<MsgShare, MsgShare>> complaint_shares;
-  for (auto const &in : complaints_manager_.Complaints())
+  for (auto const &in : qual_complaints_manager_.Complaints())
   {
     assert(qual_.find(in) != qual_.end());
     uint32_t in_index{CabinetIndex(in)};
@@ -381,8 +387,8 @@ void DistributedKeyGeneration::ReceivedQualComplaint()
 
     if (size > threshold_)
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Node: ", cabinet_index_,
-                     " protocol has failed: complaints size ", size);
+      FETCH_LOG_WARN(LOGGING_NAME, "Node: ", cabinet_index_, " DKG has failed: complaints size ",
+                     size);
       finished_ = true;
       lock.unlock();
       return;
@@ -392,7 +398,7 @@ void DistributedKeyGeneration::ReceivedQualComplaint()
       FETCH_LOG_WARN(LOGGING_NAME, "Node: ", cabinet_index_, " is in qual complaints");
       lock.unlock();
       ComputePublicKeys();
-      qual_complaints_manager_.Clear();
+      // qual_complaints_manager_.Clear();
       return;
     }
     assert(qual_.find(address_) != qual_.end());
@@ -421,6 +427,7 @@ void DistributedKeyGeneration::ReceivedReconstructionShares()
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Node: ", cabinet_index_,
                      " DKG failed due to reconstruction failure");
+      finished_ = true;
     }
     else
     {
@@ -648,21 +655,24 @@ void DistributedKeyGeneration::OnQualComplaints(std::shared_ptr<SharesMessage> c
                        from_index, " for node ", victim_index);
         qual_complaints_manager_.Complaints(from_id);
       }
-      // check equation (5)
-      bn::G2::mul(lhs, group_g_, s);  // G^s
-      rhs = ComputeRHS(from_index, A_ik[victim_index]);
-      if (lhs != rhs)
-      {
-        FETCH_LOG_WARN(LOGGING_NAME, "Node ", cabinet_index_,
-                       " received shares failing qual coefficients verification from node ",
-                       from_index, " for node ", victim_index);
-        qual_complaints_manager_.Complaints(share.first);
-      }
       else
       {
-        FETCH_LOG_WARN(LOGGING_NAME, "Node ", cabinet_index_, " received incorrect complaint from ",
-                       from_index);
-        qual_complaints_manager_.Complaints(from_id);
+        // check equation (5)
+        bn::G2::mul(lhs, group_g_, s);  // G^s
+        rhs = ComputeRHS(from_index, A_ik[victim_index]);
+        if (lhs != rhs)
+        {
+          FETCH_LOG_WARN(LOGGING_NAME, "Node ", cabinet_index_,
+                         " received shares failing qual coefficients verification from node ",
+                         from_index, " for node ", victim_index);
+          qual_complaints_manager_.Complaints(share.first);
+        }
+        else
+        {
+          FETCH_LOG_WARN(LOGGING_NAME, "Node ", cabinet_index_,
+                         " received incorrect complaint from ", from_index);
+          qual_complaints_manager_.Complaints(from_id);
+        }
       }
     }
   }
@@ -680,16 +690,29 @@ void DistributedKeyGeneration::OnQualComplaints(std::shared_ptr<SharesMessage> c
 void DistributedKeyGeneration::OnReconstructionShares(
     std::shared_ptr<SharesMessage> const &shares_ptr, MuddleAddress const &from_id)
 {
+  uint32_t from_index{CabinetIndex(from_id)};
   // Return if the sender is in complaints, or not in QUAL
   if (qual_complaints_manager_.ComplaintsFind(from_id) or qual_.find(from_id) == qual_.end())
   {
     return;
   }
-  uint32_t from_index{CabinetIndex(from_id)};
   for (auto const &share : shares_ptr->shares())
   {
+    if (reconstruction_shares.find(share.first) == reconstruction_shares.end())
+    {
+      reconstruction_shares.insert(
+          {share.first, {{}, std::vector<bn::Fr>(cabinet_.size(), zeroFr_)}});
+    }
+    else if (reconstruction_shares.at(share.first).second[from_index] != zeroFr_)
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Node ", cabinet_index_,
+                     " received duplicate reconstruction shares from node ", from_index);
+      return;
+    }
     uint32_t victim_index{CabinetIndex(share.first)};
-    assert(qual_complaints_manager_.ComplaintsFind(share.first));
+    // assert(qual_complaints_manager_.ComplaintsFind(share.first)); // Fails for nodes who receive
+    // shares for themselves when they
+    // don't know they are being complained against
     bn::G2 lhs, rhs;
     bn::Fr s, sprime;
     lhs.clear();
@@ -702,11 +725,18 @@ void DistributedKeyGeneration::OnReconstructionShares(
     lhs = ComputeLHS(group_g_, group_h_, s, sprime);
     rhs = ComputeRHS(from_index, C_ik[victim_index]);
     // check equation (4)
-    if (lhs == rhs && reconstruction_shares.at(share.first).second[from_index] == zeroFr_)
+    if (lhs == rhs)
     {
       std::lock_guard<std::mutex> lock{mutex_};
+      FETCH_LOG_INFO(LOGGING_NAME, "Node ", cabinet_index_, "received good share from node ",
+                     from_index, "for reconstructing node ", victim_index);
       reconstruction_shares.at(share.first).first.push_back(from_index);  // good share received
       reconstruction_shares.at(share.first).second[from_index] = s;
+    }
+    else
+    {
+      FETCH_LOG_INFO(LOGGING_NAME, "Node ", cabinet_index_, "received bad share from node ",
+                     from_index, "for reconstructing node ", victim_index);
     }
   }
   ++reconstruction_shares_received_;
@@ -799,12 +829,12 @@ void DistributedKeyGeneration::CheckComplaintAnswer(std::shared_ptr<SharesMessag
                      CabinetIndex(from_id), " complaint answer succeeded");
       if (reporter_index == cabinet_index_)
       {
-        FETCH_LOG_INFO(LOGGING_NAME, "Node: ", cabinet_index_, " reset shares for ",
-                       from_index);
+        FETCH_LOG_INFO(LOGGING_NAME, "Node: ", cabinet_index_, " reset shares for ", from_index);
         s_ij[from_index][cabinet_index_]      = s;
         sprime_ij[from_index][cabinet_index_] = sprime;
         g__s_ij[from_index][cabinet_index_].clear();
-        bn::G2::mul(g__s_ij[from_index][cabinet_index_], group_g_, s_ij[from_index][cabinet_index_]);
+        bn::G2::mul(g__s_ij[from_index][cabinet_index_], group_g_,
+                    s_ij[from_index][cabinet_index_]);
       }
     }
   }
@@ -863,14 +893,18 @@ DistributedKeyGeneration::SharesExposedMap DistributedKeyGeneration::ComputeQual
         rhs = ComputeRHS(cabinet_index_, A_ik[i]);
         if (lhs != rhs)
         {
+          FETCH_LOG_WARN(LOGGING_NAME, "Node ", cabinet_index_,
+                         " received qual coefficients from node ", i, " which failed verification");
           qual_complaints.insert(
-              {miner, {s_ij[cabinet_index_][i].getStr(), sprime_ij[cabinet_index_][i].getStr()}});
+                  {miner, {s_ij[i][cabinet_index_].getStr(), sprime_ij[i][cabinet_index_].getStr()}});
         }
       }
       else
       {
+        FETCH_LOG_WARN(LOGGING_NAME, "Node ", cabinet_index_,
+                       "received vanishing qual coefficients from node ", i);
         qual_complaints.insert(
-            {miner, {s_ij[cabinet_index_][i].getStr(), sprime_ij[cabinet_index_][i].getStr()}});
+                {miner, {s_ij[i][cabinet_index_].getStr(), sprime_ij[i][cabinet_index_].getStr()}});
       }
     }
   }
@@ -878,7 +912,11 @@ DistributedKeyGeneration::SharesExposedMap DistributedKeyGeneration::ComputeQual
 }
 
 /**
+<<<<<<< HEAD
  * If in qual a member computes individual share of the secret key and further computes and
+=======
+ * If in qual a member Computes individual share of the secret key and further computes and
+>>>>>>> More tests and bug fixes
  * broadcasts qual coefficients
  */
 void DistributedKeyGeneration::ComputeSecretShare()
@@ -910,8 +948,8 @@ bool DistributedKeyGeneration::RunReconstruction()
     if (parties.size() <= threshold_)
     {
       // Do not have enough good shares to be able to do reconstruction
-      FETCH_LOG_WARN(LOGGING_NAME, "Node: ", cabinet_index_, " reconstruction for ", in.first,
-                     " failed with party size ", parties.size());
+      FETCH_LOG_WARN(LOGGING_NAME, "Node: ", cabinet_index_, " reconstruction for ",
+                     CabinetIndex(in.first), " failed with party size ", parties.size());
       return false;
     }
     // compute $z_i$ using Lagrange interpolation (without corrupted parties)
@@ -920,6 +958,8 @@ bool DistributedKeyGeneration::RunReconstruction()
     std::vector<bn::Fr> points(parties.size(), 0), shares_f(parties.size(), 0);
     for (size_t k = 0; k < parties.size(); k++)
     {
+      FETCH_LOG_INFO(LOGGING_NAME, "Node ", cabinet_index_, "run reconstruction for node ",
+                     victim_index, "with shares from node ", parties[k]);
       points[k]   = parties[k] + 1;  // adjust index in computation
       shares_f[k] = shares[parties[k]];
     }
