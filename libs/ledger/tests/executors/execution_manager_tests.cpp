@@ -17,8 +17,8 @@
 //------------------------------------------------------------------------------
 
 #include "block_configs.hpp"
-#include "core/logger.hpp"
 #include "ledger/execution_manager.hpp"
+#include "ledger/transaction_status_cache.hpp"
 #include "mock_executor.hpp"
 #include "mock_storage_unit.hpp"
 #include "test_block.hpp"
@@ -27,24 +27,26 @@
 
 #include <algorithm>
 #include <chrono>
+#include <memory>
 #include <random>
 #include <thread>
+#include <vector>
+
+namespace {
+
+using namespace fetch::ledger;
 
 class ExecutionManagerTests : public ::testing::TestWithParam<BlockConfig>
 {
 protected:
   using FakeExecutorPtr     = std::shared_ptr<FakeExecutor>;
   using FakeExecutorList    = std::vector<FakeExecutorPtr>;
-  using ExecutionManager    = fetch::ledger::ExecutionManager;
   using ExecutorFactory     = ExecutionManager::ExecutorFactory;
   using ExecutionManagerPtr = std::shared_ptr<ExecutionManager>;
   using MockStorageUnitPtr  = std::shared_ptr<MockStorageUnit>;
   using Clock               = std::chrono::high_resolution_clock;
   using ScheduleStatus      = ExecutionManager::ScheduleStatus;
   using State               = ExecutionManager::State;
-  using Digest              = fetch::ledger::Digest;
-
-  static constexpr char const *LOGGING_NAME = "ExecutionManagerTests";
 
   void SetUp() override
   {
@@ -54,15 +56,9 @@ protected:
     executors_.clear();
 
     // create the manager
-    manager_ = std::make_shared<ExecutionManager>(
-        config.executors, config.log2_lanes, mock_storage_, [this]() { return CreateExecutor(); });
-  }
-
-  void TearDown() override
-  {
-    manager_.reset();
-    executors_.clear();
-    mock_storage_.reset();
+    manager_ =
+        std::make_shared<ExecutionManager>(config.executors, config.log2_lanes, mock_storage_,
+                                           [this]() { return CreateExecutor(); }, tx_status_cache_);
   }
 
   bool IsManagerIdle() const
@@ -160,9 +156,10 @@ protected:
     return success;
   }
 
-  MockStorageUnitPtr  mock_storage_;
-  ExecutionManagerPtr manager_;
-  FakeExecutorList    executors_;
+  MockStorageUnitPtr              mock_storage_;
+  ExecutionManagerPtr             manager_;
+  FakeExecutorList                executors_;
+  TransactionStatusCache::ShrdPtr tx_status_cache_{TransactionStatusCache::factory()};
 };
 
 TEST_P(ExecutionManagerTests, DISABLED_CheckIncrementalExecution)
@@ -172,7 +169,6 @@ TEST_P(ExecutionManagerTests, DISABLED_CheckIncrementalExecution)
   // generate a block with the desired lane and slice configuration
   auto block = TestBlock::Generate(config.log2_lanes, config.slices, __LINE__);
 
-  FETCH_LOG_INFO(LOGGING_NAME, "Num transactions: ", block.num_transactions);
   EXPECT_GT(block.num_transactions, 0);
 
   // start the execution manager
@@ -194,3 +190,5 @@ TEST_P(ExecutionManagerTests, DISABLED_CheckIncrementalExecution)
 
 INSTANTIATE_TEST_CASE_P(Param, ExecutionManagerTests,
                         ::testing::ValuesIn(BlockConfig::REDUCED_SET), );
+
+}  // namespace

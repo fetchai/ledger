@@ -16,15 +16,23 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chain/transaction_serializer.hpp"
-
 #include "core/byte_array/byte_array.hpp"
 #include "core/serializers/byte_array_buffer.hpp"
 #include "crypto/sha256.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "ledger/chain/transaction_encoding.hpp"
+#include "ledger/chain/transaction_serializer.hpp"
 #include "meta/type_traits.hpp"
 #include "vectorise/platform.hpp"
+
+#include <cassert>
+#include <cstddef>
+#include <cstdint>
+#include <cstdlib>
+#include <memory>
+#include <stdexcept>
+#include <type_traits>
+#include <utility>
 
 namespace fetch {
 namespace ledger {

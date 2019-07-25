@@ -25,8 +25,8 @@ namespace dkg {
 DkgRpcProtocol::DkgRpcProtocol(DkgService &service)
   : service_{service}
 {
-  Expose(REQUEST_SECRET, &service_, &DkgService::RequestSecretKey);
   Expose(SUBMIT_SIGNATURE, &service_, &DkgService::SubmitSignatureShare);
+  Expose(SUBMIT_SHARE, &service_, &DkgService::SubmitShare);
 }
 
 }  // namespace dkg

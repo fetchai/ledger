@@ -28,7 +28,11 @@
 
 #include "gtest/gtest.h"
 
+#include <atomic>
 #include <chrono>
+#include <cstddef>
+#include <cstdint>
+#include <memory>
 #include <thread>
 
 using std::this_thread::sleep_for;
@@ -50,9 +54,9 @@ protected:
       "646y3U97FbC8Q5MYTO+elrKOFWsMqwqpRGieAC7G0qZUeRhJN+xESV/PJ4NeDXtkp6KkVLzoqRmNKTXshBIftA==";
   static constexpr char const *NETWORK_B_PRIVATE_KEY =
       "4DW/sW8JLey8Z9nqi2yJJHaGzkLXIqaYc/fwHfK0w0Y=";
-  static constexpr char const *LOGGING_NAME = "MuddleRpcStressTests";
-  static constexpr uint16_t    SERVICE      = 10;
-  static constexpr uint16_t    CHANNEL      = 12;
+
+  static constexpr uint16_t SERVICE = 10;
+  static constexpr uint16_t CHANNEL = 12;
 
   using NetworkManager    = fetch::network::NetworkManager;
   using NetworkManagerPtr = std::unique_ptr<NetworkManager>;
@@ -78,9 +82,6 @@ protected:
     // load the key
     auto signer = std::make_unique<Signer>();
     signer->Load(FromBase64(private_key));
-
-    FETCH_LOG_INFO(LOGGING_NAME, private_key);
-    FETCH_LOG_INFO(LOGGING_NAME, ToBase64(signer->public_key()));
 
     return signer;
   }
@@ -177,9 +178,6 @@ protected:
     subscription->SetMessageHandler(
         [&num_messages, &endpoint](Address const &from, uint16_t service, uint16_t channel,
                                    uint16_t counter, Payload const &payload, Address const &) {
-          FETCH_LOG_INFO(LOGGING_NAME, "Handling message from: ", ToBase64(from),
-                         " size: ", payload.size());
-
           EXPECT_EQ(service, uint16_t{SERVICE});
           EXPECT_EQ(channel, uint16_t{CHANNEL});
           EXPECT_EQ(payload.size(), PAYLOAD_LENGTH);

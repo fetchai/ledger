@@ -16,8 +16,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chaincode/contract_http_interface.hpp"
-
 #include "core/byte_array/decoders.hpp"
 #include "core/json/document.hpp"
 #include "core/logger.hpp"
@@ -29,12 +27,20 @@
 #include "ledger/chain/json_transaction.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "ledger/chaincode/contract.hpp"
+#include "ledger/chaincode/contract_http_interface.hpp"
 #include "ledger/state_adapter.hpp"
 #include "ledger/transaction_processor.hpp"
 #include "variant/variant.hpp"
 
+#include <ctime>
+#include <exception>
+#include <iomanip>
 #include <memory>
+#include <sstream>
 #include <string>
+#include <unordered_map>
+#include <unordered_set>
+#include <utility>
 
 namespace fetch {
 namespace ledger {
@@ -120,10 +126,11 @@ ContractHttpInterface::ContractHttpInterface(StorageInterface &    storage,
 
       FETCH_LOG_INFO(LOGGING_NAME, "Query API: ", api_path);
 
-      Post(api_path, [this, contract_name, query_name](http::ViewParameters const &,
-                                                       http::HTTPRequest const &request) {
-        return OnQuery(contract_name, query_name, request);
-      });
+      Post(api_path, "Calls contract query " + query_name + " for " + contract_name,
+           [this, contract_name, query_name](http::ViewParameters const &,
+                                             http::HTTPRequest const &request) {
+             return OnQuery(contract_name, query_name, request);
+           });
     }
 
     auto const &transaction_handlers = contract->transaction_handlers();
@@ -141,15 +148,19 @@ ContractHttpInterface::ContractHttpInterface(StorageInterface &    storage,
 
       FETCH_LOG_INFO(LOGGING_NAME, "   Tx API: ", api_path, " : ", canonical_contract_name);
 
-      Post(api_path, [this, canonical_contract_name](http::ViewParameters const &params,
-                                                     http::HTTPRequest const &   request) {
-        FETCH_UNUSED(params);
-        return OnTransaction(request, canonical_contract_name);
-      });
+      Post(api_path, "Calls contract action " + transaction_name + " for " + contract_name,
+           [this, canonical_contract_name](http::ViewParameters const &params,
+                                           http::HTTPRequest const &   request) {
+             FETCH_UNUSED(params);
+             return OnTransaction(request, canonical_contract_name);
+           });
     }
   }
 
   Post("/api/contract/(digest=[a-fA-F0-9]{64})/(identifier=[1-9A-HJ-NP-Za-km-z]{48,50})/(query=.+)",
+       "Submits a query to a contract",
+       {{"digest", "The contract digest.", http::validators::StringValue()},
+        {"identifier", "The query identifier.", http::validators::StringValue()}},
        [this](http::ViewParameters const &params, http::HTTPRequest const &request) {
          // build the contract name
          auto const contract_name = params["digest"] + "." + params["identifier"];
@@ -158,7 +169,7 @@ ContractHttpInterface::ContractHttpInterface(StorageInterface &    storage,
          return OnQuery(contract_name, params["query"], request);
        });
 
-  Post("/api/contract/submit",
+  Post("/api/contract/submit", "Submits a new contract to the ledger.",
        [this](http::ViewParameters const &params, http::HTTPRequest const &request) {
          FETCH_UNUSED(params);
          return OnTransaction(request, ConstByteArray{});
@@ -191,10 +202,9 @@ http::HTTPResponse ContractHttpInterface::OnQuery(ConstByteArray const &   contr
     // parse the incoming request
     json::JSONDocument doc;
     doc.Parse(request.body());
-
-    // dispatch the contract type
     variant::Variant response;
-    auto             contract = contract_cache_.Lookup(contract_id, storage_);
+    // dispatch the contract type
+    auto contract = contract_cache_.Lookup(contract_id, storage_);
 
     // adapt the storage engine so that that get and sets are sandboxed for the contract
     StateAdapter storage_adapter{storage_, contract_id};

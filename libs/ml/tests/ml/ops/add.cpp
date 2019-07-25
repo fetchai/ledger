@@ -16,12 +16,13 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/ops/add.hpp"
-
 #include "math/tensor.hpp"
+#include "ml/ops/add.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 
 #include "gtest/gtest.h"
+
+#include <vector>
 
 template <typename T>
 class AddTest : public ::testing::Test

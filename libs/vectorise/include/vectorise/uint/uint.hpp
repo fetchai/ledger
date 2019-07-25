@@ -39,7 +39,6 @@ namespace vectorise {
  * The implementation subclasses a <byte_array::ConstByteArray> such
  * one easily use this in combination with hashes etc.
  */
-
 template <uint16_t S = 256>
 class UInt
 {
@@ -175,8 +174,8 @@ public:
   template <typename T>
   constexpr meta::IfIsInteger<T, UInt> &operator^=(T const &n);
 
-  constexpr UInt &operator<<=(std::size_t const &n);
-  constexpr UInt &operator>>=(std::size_t const &n);
+  constexpr UInt &operator<<=(std::size_t n);
+  constexpr UInt &operator>>=(std::size_t n);
 
   constexpr std::size_t msb() const;
   constexpr std::size_t lsb() const;
@@ -185,10 +184,10 @@ public:
   /// element accessors ///
   /////////////////////////
 
-  constexpr uint8_t   operator[](std::size_t const &n) const;
-  constexpr uint8_t & operator[](std::size_t const &n);
-  constexpr WideType  ElementAt(std::size_t const &n) const;
-  constexpr WideType &ElementAt(std::size_t const &n);
+  constexpr uint8_t   operator[](std::size_t n) const;
+  constexpr uint8_t & operator[](std::size_t n);
+  constexpr WideType  ElementAt(std::size_t n) const;
+  constexpr WideType &ElementAt(std::size_t n);
 
   constexpr uint64_t TrimmedSize() const;
   constexpr uint64_t size() const;
@@ -868,7 +867,7 @@ constexpr meta::IfIsInteger<T, UInt<S>> &UInt<S>::operator^=(T const &n)
 }
 
 template <uint16_t S>
-constexpr UInt<S> &UInt<S>::operator<<=(std::size_t const &bits)
+constexpr UInt<S> &UInt<S>::operator<<=(std::size_t bits)
 {
   std::size_t full_words = bits / (sizeof(uint64_t) * 8);
   std::size_t real_bits  = bits - full_words * sizeof(uint64_t) * 8;
@@ -901,7 +900,7 @@ constexpr UInt<S> &UInt<S>::operator<<=(std::size_t const &bits)
 }
 
 template <uint16_t S>
-constexpr UInt<S> &UInt<S>::operator>>=(std::size_t const &bits)
+constexpr UInt<S> &UInt<S>::operator>>=(std::size_t bits)
 {
   std::size_t full_words = bits / (sizeof(uint64_t) * 8);
   std::size_t real_bits  = bits - full_words * sizeof(uint64_t) * 8;
@@ -971,25 +970,25 @@ constexpr std::size_t UInt<S>::lsb() const
 /////////////////////////
 
 template <uint16_t S>
-constexpr uint8_t UInt<S>::operator[](std::size_t const &n) const
+constexpr uint8_t UInt<S>::operator[](std::size_t n) const
 {
   return data_.base[n];
 }
 
 template <uint16_t S>
-constexpr uint8_t &UInt<S>::operator[](std::size_t const &n)
+constexpr uint8_t &UInt<S>::operator[](std::size_t n)
 {
   return data_.base[n];
 }
 
 template <uint16_t S>
-constexpr typename UInt<S>::WideType UInt<S>::ElementAt(std::size_t const &n) const
+constexpr typename UInt<S>::WideType UInt<S>::ElementAt(std::size_t n) const
 {
   return data_.wide[n];
 }
 
 template <uint16_t S>
-constexpr typename UInt<S>::WideType &UInt<S>::ElementAt(std::size_t const &n)
+constexpr typename UInt<S>::WideType &UInt<S>::ElementAt(std::size_t n)
 {
   return data_.wide[n];
 }

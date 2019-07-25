@@ -71,7 +71,7 @@ class StakeManagerInterface;
  *
  * - Catching up on a new block
  * - Mining / generating a new block
- * - Waiting in and idle / syncronised state
+ * - Waiting in and idle / synchronised state
  *
  *                                  ┌──────────────────┐
  *                                  │   Synchronise    │
@@ -187,9 +187,8 @@ public:
   BlockCoordinator(MainChain &chain, DAGPtr dag, StakeManagerPtr stake_mgr,
                    ExecutionManagerInterface &execution_manager, StorageUnitInterface &storage_unit,
                    BlockPackerInterface &packer, BlockSinkInterface &block_sink,
-                   TransactionStatusCache &status_cache, core::FeatureFlags const &features,
-                   ProverPtr const &prover, std::size_t num_lanes, std::size_t num_slices,
-                   std::size_t block_difficulty);
+                   core::FeatureFlags const &features, ProverPtr const &prover,
+                   std::size_t num_lanes, std::size_t num_slices, std::size_t block_difficulty);
   BlockCoordinator(BlockCoordinator const &) = delete;
   BlockCoordinator(BlockCoordinator &&)      = delete;
   ~BlockCoordinator()                        = default;
@@ -299,7 +298,6 @@ private:
   bool            ScheduleBlock(Block const &block);
   ExecutionStatus QueryExecutorStatus();
   void            UpdateNextBlockTime();
-  void            UpdateTxStatus(Block const &block);
 
   static char const *ToString(ExecutionStatus state);
 
@@ -312,7 +310,6 @@ private:
   StorageUnitInterface &     storage_unit_;       ///< Ref to the storage unit
   BlockPackerInterface &     block_packer_;       ///< Ref to the block packer
   BlockSinkInterface &       block_sink_;         ///< Ref to the output sink interface
-  TransactionStatusCache &   status_cache_;       ///< Ref to the tx status cache
   PeriodicAction             periodic_print_;
   MinerPtr                   miner_;
   MainChain::Blocks blocks_to_common_ancestor_;  ///< Partial vector of blocks from main chain HEAD

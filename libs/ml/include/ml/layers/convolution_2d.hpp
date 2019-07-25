@@ -23,8 +23,10 @@
 #include "ml/ops/weights.hpp"
 #include "ml/subgraph.hpp"
 
-#include <cmath>
-#include <random>
+#include <functional>
+#include <memory>
+#include <string>
+#include <vector>
 
 namespace fetch {
 namespace ml {
@@ -47,8 +49,8 @@ public:
    * @param stride_size step size
    * @param activation_type type of activation function applied after convolution
    * @param name name of graph ops
-   * @param init_mode mode in which wights(kernel) will be initialized
-   * @param seed random seed for weights(kernel) initialization
+   * @param init_mode mode in which wights(kernel) will be initialised
+   * @param seed random seed for weights(kernel) initialisation
    */
   Convolution2D(SizeType const output_channels, SizeType const input_channels,
                 SizeType const kernel_size, SizeType const stride_size,

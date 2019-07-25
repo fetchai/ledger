@@ -19,6 +19,7 @@
 #include "core/future_timepoint.hpp"
 #include "core/service_ids.hpp"
 #include "ledger/storage_unit/lane_connectivity_details.hpp"
+#include "ledger/storage_unit/lane_controller.hpp"
 #include "ledger/storage_unit/lane_identity.hpp"
 #include "ledger/storage_unit/lane_identity_protocol.hpp"
 #include "network/generics/requesting_queue.hpp"
@@ -29,11 +30,11 @@
 #include "network/service/service_client.hpp"
 #include "network/uri.hpp"
 
-#include "ledger/storage_unit/lane_controller.hpp"
-
+#include <memory>
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>
+#include <vector>
 
 namespace fetch {
 namespace ledger {

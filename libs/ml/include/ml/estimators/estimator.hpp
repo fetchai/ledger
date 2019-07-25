@@ -65,7 +65,7 @@ public:
   using DataType = typename TensorType::Type;
   using SizeType = fetch::math::SizeType;
 
-  Estimator(EstimatorConfig<DataType> estimator_config = EstimatorConfig<DataType>())
+  explicit Estimator(EstimatorConfig<DataType> estimator_config = EstimatorConfig<DataType>())
     : estimator_config_(estimator_config)
   {}
 

@@ -160,7 +160,7 @@ template <typename T>
 class State : public IState
 {
 public:
-  // Construct state object, default argument = get from state DB, initializing to value if not
+  // Construct state object, default argument = get from state DB, initialising to value if not
   // found
   State(VM *vm, TypeId type_id, TypeId template_param_type_id, Ptr<String> const &name)
     : IState(vm, type_id)

@@ -22,7 +22,7 @@
 #include "core/containers/mapping.hpp"
 #include "core/mutex.hpp"
 #include "core/state_machine.hpp"
-#include "crypto/bls_base.hpp"
+#include "dkg/dkg.hpp"
 #include "dkg/dkg_rpc_protocol.hpp"
 #include "dkg/rbc.hpp"
 #include "dkg/round.hpp"
@@ -62,7 +62,7 @@ namespace dkg {
  *
  *                       ┌───────────────────────┐
  *                       │                       │
- *                       │      Build Keys       │◀ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─
+ *                       │       Start DKG       │◀ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─
  *                       │                       │                         │
  *                       └───────────────────────┘
  *                                   │                                     │
@@ -70,15 +70,7 @@ namespace dkg {
  *                                   ▼                                of the next
  *                       ┌───────────────────────┐                       aeon
  *                       │                       │                         │
- *                       │  Request Secret Key   │
- *                       │                       │                         │
- *                       └───────────────────────┘
- *                                   │                                     │
- *                                   │
- *                                   ▼                                     │
- *                       ┌───────────────────────┐
- *                       │                       │                         │
- *                       │  Wait for Secret Key  │
+ *                       │Wait for DKG Completion│
  *                       │                       │                         │
  *                       └───────────────────────┘
  *                                   │                                     │
@@ -109,11 +101,12 @@ namespace dkg {
 class DkgService : public ledger::EntropyGeneratorInterface
 {
 public:
+  static constexpr char const *LOGGING_NAME = "DkgService";
+
   enum class State
   {
     BUILD_AEON_KEYS,
-    REQUEST_SECRET_KEY,
-    WAIT_FOR_SECRET_KEY,
+    WAIT_FOR_DKG_COMPLETION,
     BROADCAST_SIGNATURE,
     COLLECT_SIGNATURES,
     COMPLETE,
@@ -124,30 +117,19 @@ public:
   using ConstByteArray = byte_array::ConstByteArray;
   using MuddleAddress  = ConstByteArray;
   using CabinetMembers = std::set<MuddleAddress>;
-  using RBCMessageType = std::string;
+  using RBCMessageType = DKGEnvelope;
 
   // Construction / Destruction
-  explicit DkgService(Endpoint &endpoint, ConstByteArray address, ConstByteArray dealer_address);
+  explicit DkgService(Endpoint &endpoint, ConstByteArray address);
   DkgService(DkgService const &) = delete;
   DkgService(DkgService &&)      = delete;
   ~DkgService() override         = default;
 
   /// @name External Events
   /// @{
-  struct SecretKeyReq
-  {
-    bool                    success{false};
-    crypto::bls::PrivateKey secret_share{};
-    crypto::bls::PublicKey  shared_public_key{};
-  };
-  SecretKeyReq RequestSecretKey(MuddleAddress const &address);
-
-  void SubmitSignatureShare(uint64_t round, crypto::bls::Id const &id,
-                            crypto::bls::PublicKey const &public_key,
-                            crypto::bls::Signature const &signature);
-
-  void SendReliableBroadcast(RBCMessageType const &msg);
-  void OnRbcDeliver(MuddleAddress from, byte_array::ConstByteArray payload);
+  void SubmitSignatureShare(uint64_t round, uint32_t const &id, std::string const &signature);
+  void SubmitShare(MuddleAddress const &address, std::pair<std::string, std::string> const &shares);
+  void OnRbcDeliver(MuddleAddress const &from, byte_array::ConstByteArray const &payload);
   /// @}
 
   /// @name Entropy Generator
@@ -162,13 +144,30 @@ public:
     return state_machine_;
   }
 
-  void ResetCabinet(CabinetMembers cabinet, std::size_t threshold)
+  void ResetCabinet(CabinetMembers cabinet,
+                    uint32_t       threshold = std::numeric_limits<uint32_t>::max())
   {
     FETCH_LOCK(cabinet_lock_);
-    current_cabinet_   = std::move(cabinet);
-    current_threshold_ = threshold;
+    current_cabinet_ = std::move(cabinet);
+    if (threshold == std::numeric_limits<uint32_t>::max())
+    {
+      current_threshold_ = static_cast<uint32_t>(current_cabinet_.size() / 2 - 1);
+    }
+    else
+    {
+      current_threshold_ = threshold;
+    }
+    assert(current_cabinet_.size() > 3 * threshold);  // To meet the requirements for the RBC
+    id_ = static_cast<uint32_t>(
+        std::distance(current_cabinet_.begin(), current_cabinet_.find(address_)));
+    FETCH_LOG_INFO(LOGGING_NAME, "Resetting cabinet. Cabinet size: ", current_cabinet_.size(),
+                   " threshold: ", threshold);
+    dkg_.ResetCabinet();
     rbc_.ResetCabinet();
   }
+  void SendShares(MuddleAddress const &                      destination,
+                  std::pair<std::string, std::string> const &shares);
+  void SendReliableBroadcast(RBCMessageType const &msg);
   /// @}
 
   // Operators
@@ -180,27 +179,25 @@ private:
   using SubscriptionPtr = std::shared_ptr<muddle::Subscription>;
   using AddressMapping  = core::Mapping<MuddleAddress, Address>;
   using EntropyHistory  = std::unordered_map<uint64_t, uint64_t>;
-  using CabinetIds      = std::unordered_map<MuddleAddress, crypto::bls::Id>;
-  using CabinetKeys     = std::unordered_map<MuddleAddress, crypto::bls::PrivateKey>;
+  using CabinetIds      = std::unordered_map<MuddleAddress, uint32_t>;
   using StateMachine    = core::StateMachine<State>;
   using StateMachinePtr = std::shared_ptr<StateMachine>;
   using RpcProtocolPtr  = std::unique_ptr<DkgRpcProtocol>;
   using Promise         = service::Promise;
   using RMutex          = std::recursive_mutex;
   using Mutex           = std::mutex;
-  using SignaturePtr    = std::unique_ptr<crypto::bls::Signature>;
+  using SignaturePtr    = std::unique_ptr<bn::G1>;
   using SignatureMap    = std::map<uint64_t, SignaturePtr>;
   using RoundMap        = std::map<uint64_t, RoundPtr>;
-  using PrivateKey      = crypto::bls::PrivateKey;
-  using PublicKey       = crypto::bls::PublicKey;
-  using PublicKeyList   = crypto::bls::PublicKeyList;
+  using PrivateKey      = bn::Fr;
+  using PublicKey       = bn::G2;
+  using PublicKeyList   = std::vector<bn::G2>;
 
   struct Submission
   {
-    uint64_t               round;
-    crypto::bls::Id        id;
-    crypto::bls::PublicKey public_key;
-    crypto::bls::Signature signature;
+    uint64_t round;
+    uint32_t id;
+    bn::G1   signature;
   };
 
   using SubmissionList = std::deque<Submission>;
@@ -208,8 +205,7 @@ private:
   /// @name State Handlers
   /// @{
   State OnBuildAeonKeysState();
-  State OnRequestSecretKeyState();
-  State OnWaitForSecretKeyState();
+  State OnWaitForDkgCompletionState();
   State OnBroadcastSignatureState();
   State OnCollectSignaturesState();
   State OnCompleteState();
@@ -217,42 +213,35 @@ private:
 
   /// @name Utils
   /// @{
-  bool     BuildAeonKeys();
   bool     GetSignaturePayload(uint64_t round, ConstByteArray &payload);
   RoundPtr LookupRound(uint64_t round, bool create = false);
   /// @}
 
-  ConstByteArray const  address_;         ///< Our muddle address
-  crypto::bls::Id const id_;              ///< Our BLS ID (derived from the muddle address)
-  ConstByteArray const  dealer_address_;  ///< The address of the dealer
-  bool const            is_dealer_;       ///< Flag to signal if we are the dealer
-  Endpoint &            endpoint_;        ///< The muddle endpoint to communicate on
-  muddle::rpc::Server   rpc_server_;      ///< The services' RPC server
-  muddle::rpc::Client   rpc_client_;      ///< The services' RPC client
-  RpcProtocolPtr        rpc_proto_;       ///< The services RPC protocol
-  StateMachinePtr       state_machine_;   ///< The service state machine
-  rbc::RBC              rbc_;             ///< Runs the RBC protocol
+  ConstByteArray const     address_;        ///< Our muddle address
+  uint32_t                 id_;             ///< Our DKG ID (derived from index in current_cabinet_)
+  Endpoint &               endpoint_;       ///< The muddle endpoint to communicate on
+  muddle::rpc::Server      rpc_server_;     ///< The services' RPC server
+  muddle::rpc::Client      rpc_client_;     ///< The services' RPC client
+  RpcProtocolPtr           rpc_proto_;      ///< The services RPC protocol
+  StateMachinePtr          state_machine_;  ///< The service state machine
+  rbc::RBC                 rbc_;            ///< Runs the RBC protocol
+  DistributedKeyGeneration dkg_;            ///< Runs DKG protocol
 
   /// @name State Machine Data
   /// @{
-  Promise    pending_promise_;          ///< The cached pending promise
-  PrivateKey aeon_secret_share_{};      ///< The current secret share for the aeon
-  PublicKey  aeon_share_public_key_{};  ///< The shared public key for the aeon
-  PublicKey  aeon_public_key_{};        ///< The public key for our secret share
+  static bn::G2 group_g_;
+  PrivateKey    aeon_secret_share_;  ///< The current secret share for the aeon
+  PublicKey     aeon_public_key_;    ///< The public key for our secret share
+  CabinetMembers
+                aeon_qual_set_;  ///< The set of muddle addresses which successfully completed the DKG
+  PublicKeyList aeon_public_key_shares_;  ///< The public keys for DKG qualified set
   /// @}
 
   /// @name Cabinet / Aeon Data
   /// @{
   mutable RMutex cabinet_lock_{};        // Priority 1.
-  std::size_t    current_threshold_{1};  ///< The current threshold for the aeon
+  uint32_t       current_threshold_{1};  ///< The current threshold for the aeon
   CabinetMembers current_cabinet_{};     ///< The set of muddle addresses of the cabinet
-  /// @}
-
-  /// @name Dealer Specific Data
-  /// @{
-  mutable RMutex dealer_lock_;                // Priority 2.
-  PublicKey      shared_public_key_;          ///< The shared public key for the aeon
-  CabinetKeys    current_cabinet_secrets_{};  ///< The map of address to secrets
   /// @}
 
   /// @name Round Data
@@ -262,30 +251,8 @@ private:
   std::atomic<uint64_t> earliest_completed_round_{0};  ///< The round idx for the next entropy req
   std::atomic<uint64_t> current_round_{0};             ///< The current round being generated
   RoundMap              rounds_{};                     ///< The map of round data
-  /// @}
+                                                       /// @}
 };
-
-template <typename T>
-void Serialize(T &stream, DkgService::SecretKeyReq const &req)
-{
-  stream << req.success;
-
-  if (req.success)
-  {
-    stream << req.secret_share << req.shared_public_key;
-  }
-}
-
-template <typename T>
-void Deserialize(T &stream, DkgService::SecretKeyReq &req)
-{
-  stream >> req.success;
-
-  if (req.success)
-  {
-    stream >> req.secret_share >> req.shared_public_key;
-  }
-}
 
 }  // namespace dkg
 }  // namespace fetch

@@ -31,8 +31,9 @@
 #include "metrics/metrics.hpp"
 
 #include <algorithm>
-#include <chrono>
-#include <random>
+#include <exception>
+#include <memory>
+#include <utility>
 
 static constexpr char const *LOGGING_NAME    = "Executor";
 static constexpr uint64_t    TRANSFER_CHARGE = 1;
@@ -116,7 +117,7 @@ Executor::Result Executor::Execute(Digest const &digest, BlockIndex block, Slice
 {
   FETCH_LOG_DEBUG(LOGGING_NAME, "Executing tx ", byte_array::ToBase64(digest));
 
-  Result result{Status::INEXPLICABLE_FAILURE, 0, 0, 0};
+  Result result{Status::INEXPLICABLE_FAILURE};
 
   // cache the state for the current transaction
   block_          = block;
@@ -132,8 +133,9 @@ Executor::Result Executor::Execute(Digest const &digest, BlockIndex block, Slice
   }
   else
   {
-    // update the charge rate
-    result.charge_rate = current_tx_->charge();
+    // update the charge related data provided by Tx sender
+    result.charge_rate  = current_tx_->charge();
+    result.charge_limit = current_tx_->charge_limit();
 
     // create the storage cache
     storage_cache_ = std::make_shared<CachedStorageAdapter>(*storage_);
@@ -305,7 +307,7 @@ bool Executor::ExecuteTransactionContract(Result &result)
 
     // map the contract execution status
     result.status = Status::CHAIN_CODE_EXEC_FAILURE;
-    switch (contract_status)
+    switch (contract_status.status)
     {
     case Contract::Status::OK:
       success       = true;
@@ -316,8 +318,11 @@ bool Executor::ExecuteTransactionContract(Result &result)
       break;
     case Contract::Status::NOT_FOUND:
       FETCH_LOG_WARN(LOGGING_NAME, "Unable to lookup transaction handler");
+      result.status = Status::CHAIN_CODE_LOOKUP_FAILURE;
       break;
     }
+
+    result.return_value = contract_status.return_value;
 
 #ifdef FETCH_ENABLE_METRICS
     Metrics::Timestamp const completed = Metrics::Clock::now();

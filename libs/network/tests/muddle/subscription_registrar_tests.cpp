@@ -18,7 +18,6 @@
 
 #include "core/byte_array/decoders.hpp"
 #include "core/byte_array/encoders.hpp"
-#include "core/logger.hpp"
 #include "core/serializers/byte_array.hpp"
 #include "network/muddle/subscription.hpp"
 #include "network/muddle/subscription_registrar.hpp"

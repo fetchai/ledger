@@ -23,6 +23,13 @@
 #include "telemetry/histogram_map.hpp"
 #include "telemetry/registry.hpp"
 
+#include <initializer_list>
+#include <memory>
+#include <ostream>
+#include <string>
+#include <utility>
+#include <vector>
+
 namespace fetch {
 namespace telemetry {
 

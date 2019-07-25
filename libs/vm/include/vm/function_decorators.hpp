@@ -17,6 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/logging.hpp"
+#include "vm/generator.hpp"
+
 namespace fetch {
 namespace vm {
 
