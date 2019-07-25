@@ -70,7 +70,7 @@ public:
     {
       uint16_t tmp;
       serializer_.ReadBytes(reinterpret_cast<uint8_t *>(&tmp), sizeof(uint16_t));
-      tmp = platform::FromBigEndian(tmp);
+      tmp  = platform::FromBigEndian(tmp);
       size = static_cast<uint32_t>(tmp);
       break;
     }

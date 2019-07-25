@@ -27,7 +27,7 @@ inline uint8_t ToBigEndian(uint8_t x)
   return x;
 }
 
-inline uint8_t  FromBigEndian(uint8_t x)
+inline uint8_t FromBigEndian(uint8_t x)
 {
   return x;
 }
@@ -72,7 +72,6 @@ inline int8_t FromBigEndian(int8_t x)
   return x;
 }
 
-
 inline int16_t ToBigEndian(int16_t x)
 {
   return static_cast<int16_t>(__builtin_bswap16(static_cast<uint16_t>(x)));
@@ -103,12 +102,11 @@ inline int64_t FromBigEndian(int64_t x)
   return static_cast<int64_t>(__builtin_bswap64(static_cast<uint64_t>(x)));
 }
 
-
 inline float ToBigEndian(float x)
 {
-  union 
+  union
   {
-    float value;
+    float    value;
     uint32_t bytes;
   } conversion;
   conversion.value = x;
@@ -118,9 +116,9 @@ inline float ToBigEndian(float x)
 
 inline float FromBigEndian(float x)
 {
-  union 
+  union
   {
-    float value;
+    float    value;
     uint32_t bytes;
   } conversion;
   conversion.value = x;
@@ -128,12 +126,11 @@ inline float FromBigEndian(float x)
   return conversion.value;
 }
 
-
 inline double ToBigEndian(double x)
 {
-  union 
+  union
   {
-    double value;
+    double   value;
     uint64_t bytes;
   } conversion;
   conversion.value = x;
@@ -143,9 +140,9 @@ inline double ToBigEndian(double x)
 
 inline double FromBigEndian(double x)
 {
-  union 
+  union
   {
-    double value;
+    double   value;
     uint64_t bytes;
   } conversion;
   conversion.value = x;

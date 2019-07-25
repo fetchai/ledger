@@ -36,7 +36,9 @@
 namespace fetch {
 namespace serializers {
 
-template <typename T, typename D, uint8_t UL = 128, uint8_t C8 = TypeCodes::UINT8, uint8_t C16 = TypeCodes::UINT16, uint8_t C32 = TypeCodes::UINT32, uint8_t C64 = TypeCodes::UINT64>
+template <typename T, typename D, uint8_t UL = 128, uint8_t C8 = TypeCodes::UINT8,
+          uint8_t C16 = TypeCodes::UINT16, uint8_t C32 = TypeCodes::UINT32,
+          uint8_t C64 = TypeCodes::UINT64>
 struct UnsignedIntegerSerializerImplementation
 {
   using Type       = T;
@@ -51,23 +53,22 @@ struct UnsignedIntegerSerializerImplementation
       interface.Allocate(sizeof(uint8_t));
       interface.WriteByte(static_cast<uint8_t>(val));
     }
-    else if(val < (1<<8))
+    else if (val < (1 << 8))
     {
       Pack<Interface, uint8_t>(C8, interface, val);
     }
-    else if(val < (1<<16))
+    else if (val < (1 << 16))
     {
-      Pack<Interface, uint16_t>(C16, interface, val);      
+      Pack<Interface, uint16_t>(C16, interface, val);
     }
-    else if(val < (1ull<<32))
+    else if (val < (1ull << 32))
     {
-      Pack<Interface, uint32_t>(C32, interface, val);      
+      Pack<Interface, uint32_t>(C32, interface, val);
     }
-    else 
+    else
     {
-      Pack<Interface, uint64_t>(C64, interface, val);      
+      Pack<Interface, uint64_t>(C64, interface, val);
     }
-
   }
 
   template <typename Interface>
@@ -76,7 +77,7 @@ struct UnsignedIntegerSerializerImplementation
     uint8_t code;
 
     interface.ReadByte(code);
-    switch(code)
+    switch (code)
     {
     case TypeCodes::UINT8:
       Unpack<Interface, uint8_t>(interface, val);
@@ -90,8 +91,8 @@ struct UnsignedIntegerSerializerImplementation
     case TypeCodes::UINT64:
       Unpack<Interface, uint64_t>(interface, val);
       break;
-    default: // Small integer
-      if(code > 0x7f)
+    default:  // Small integer
+      if (code > 0x7f)
       {
         throw std::runtime_error("Incorrect code for unsigned integer: " + std::to_string(code));
       }
@@ -100,71 +101,71 @@ struct UnsignedIntegerSerializerImplementation
     }
   }
 
-  template<typename Interface, typename ResultType>
+  template <typename Interface, typename ResultType>
   static void Pack(uint8_t code, Interface &interface, Type val)
   {
-    auto serialize_val = platform::ToBigEndian(static_cast<ResultType>(val));      
+    auto serialize_val = platform::ToBigEndian(static_cast<ResultType>(val));
     interface.Allocate(sizeof(uint8_t) + sizeof(ResultType));
     interface.WriteByte(code);
-    interface.WriteBytes(reinterpret_cast<uint8_t const *>(&serialize_val), sizeof(ResultType));     
+    interface.WriteBytes(reinterpret_cast<uint8_t const *>(&serialize_val), sizeof(ResultType));
   }
 
-  template<typename Interface, typename ResultType>
+  template <typename Interface, typename ResultType>
   static void Unpack(Interface &interface, Type &val)
   {
-    if(sizeof(ResultType) > sizeof(Type))
+    if (sizeof(ResultType) > sizeof(Type))
     {
-      throw std::runtime_error("Unable to fit integer type of size " + std::to_string(sizeof(ResultType)) + " in type of size " + std::to_string(sizeof(Type)));
+      throw std::runtime_error("Unable to fit integer type of size " +
+                               std::to_string(sizeof(ResultType)) + " in type of size " +
+                               std::to_string(sizeof(Type)));
     }
 
     ResultType deser_val;
     interface.ReadBytes(reinterpret_cast<uint8_t *>(&deser_val), sizeof(ResultType));
-    val = static_cast<Type>( platform::FromBigEndian(deser_val) );
+    val = static_cast<Type>(platform::FromBigEndian(deser_val));
   }
 };
-
-
 
 template <typename T, typename U, typename D>
 struct SignedIntegerSerializerImplementation
 {
-  using Type       = T;
-  using DriverType = D;
-  using UnsignedType =  U;
+  using Type         = T;
+  using DriverType   = D;
+  using UnsignedType = U;
 
   template <typename Interface>
   static void Serialize(Interface &interface, Type val)
   {
     // Unsigned integers are redirected
-    if(val >= static_cast<Type>(0))
+    if (val >= static_cast<Type>(0))
     {
-      UnsignedIntegerSerializerImplementation<U,D>::template Serialize<Interface>(interface, static_cast<U>(val));
+      UnsignedIntegerSerializerImplementation<U, D>::template Serialize<Interface>(
+          interface, static_cast<U>(val));
       return;
     }
 
     // Garantueed to be smaller than 0
-    if (-0x20<= val) 
+    if (-0x20 <= val)
     {
       interface.Allocate(sizeof(uint8_t));
       interface.WriteByte(static_cast<uint8_t>(val));
-    }    
-    else if( (-(1 << 7) <= val)  )
+    }
+    else if ((-(1 << 7) <= val))
     {
       Pack<Interface, int8_t>(TypeCodes::INT8, interface, val);
     }
-    else if(-(1 << 15) <= val)
+    else if (-(1 << 15) <= val)
     {
-      Pack<Interface, int16_t>(TypeCodes::INT16, interface, val);      
+      Pack<Interface, int16_t>(TypeCodes::INT16, interface, val);
     }
-    else if(-(1ll << 31) <= val) 
+    else if (-(1ll << 31) <= val)
     {
-      Pack<Interface, int32_t>(TypeCodes::INT32, interface, val);      
+      Pack<Interface, int32_t>(TypeCodes::INT32, interface, val);
     }
-    else 
+    else
     {
-      Pack<Interface, int64_t>(TypeCodes::INT64, interface, val);      
+      Pack<Interface, int64_t>(TypeCodes::INT64, interface, val);
     }
-
   }
 
   template <typename Interface>
@@ -173,34 +174,38 @@ struct SignedIntegerSerializerImplementation
     uint8_t code;
 
     interface.ReadByte(code);
-    switch(code)
+    switch (code)
     {
     case TypeCodes::UINT8:
     {
       UnsignedType x;
-      UnsignedIntegerSerializerImplementation<U,D>::template Unpack<Interface, uint8_t>(interface, x);
-      val = static_cast< Type >(x);
+      UnsignedIntegerSerializerImplementation<U, D>::template Unpack<Interface, uint8_t>(interface,
+                                                                                         x);
+      val = static_cast<Type>(x);
       break;
     }
     case TypeCodes::UINT16:
     {
-      UnsignedType x;    
-      UnsignedIntegerSerializerImplementation<U,D>::template Unpack<Interface, uint16_t>(interface, x);
-      val = static_cast< Type >(x);
+      UnsignedType x;
+      UnsignedIntegerSerializerImplementation<U, D>::template Unpack<Interface, uint16_t>(interface,
+                                                                                          x);
+      val = static_cast<Type>(x);
       break;
     }
     case TypeCodes::UINT32:
     {
-      UnsignedType x;    
-      UnsignedIntegerSerializerImplementation<U,D>::template Unpack<Interface, uint32_t>(interface, x);
-      val = static_cast< Type >(x);
+      UnsignedType x;
+      UnsignedIntegerSerializerImplementation<U, D>::template Unpack<Interface, uint32_t>(interface,
+                                                                                          x);
+      val = static_cast<Type>(x);
       break;
     }
     case TypeCodes::UINT64:
     {
-      UnsignedType x;      
-      UnsignedIntegerSerializerImplementation<U,D>::template Unpack<Interface, uint64_t>(interface, x);
-      val = static_cast< Type >(x);
+      UnsignedType x;
+      UnsignedIntegerSerializerImplementation<U, D>::template Unpack<Interface, uint64_t>(interface,
+                                                                                          x);
+      val = static_cast<Type>(x);
       break;
     }
     case TypeCodes::INT8:
@@ -215,16 +220,16 @@ struct SignedIntegerSerializerImplementation
     case TypeCodes::INT64:
       Unpack<Interface, int64_t>(interface, val);
       break;
-    default: // Small integer
+    default:  // Small integer
     {
       union
       {
         uint8_t code;
-        int8_t value;
+        int8_t  value;
       } conversion;
       conversion.code = code;
 
-      if(conversion.value < -0x20 || conversion.value >= 0x80)
+      if (conversion.value < -0x20 || conversion.value >= 0x80)
       {
         throw std::runtime_error("Incorrect code for unsigned integer: " + std::to_string(code));
       }
@@ -234,29 +239,30 @@ struct SignedIntegerSerializerImplementation
     }
   }
 
-  template<typename Interface, typename ResultType>
+  template <typename Interface, typename ResultType>
   static void Pack(uint8_t code, Interface &interface, Type val)
   {
     auto serialize_val = platform::ToBigEndian(static_cast<ResultType>(val));
 
-    interface.Allocate(sizeof(uint8_t) + sizeof(ResultType));    
+    interface.Allocate(sizeof(uint8_t) + sizeof(ResultType));
     interface.WriteByte(code);
-    interface.WriteBytes(reinterpret_cast<uint8_t const *>(&serialize_val), sizeof(ResultType));     
+    interface.WriteBytes(reinterpret_cast<uint8_t const *>(&serialize_val), sizeof(ResultType));
   }
 
-  template<typename Interface, typename ResultType>
+  template <typename Interface, typename ResultType>
   static void Unpack(Interface &interface, Type &val)
   {
-    if(sizeof(ResultType) > sizeof(Type))
+    if (sizeof(ResultType) > sizeof(Type))
     {
-      throw std::runtime_error("Unable to fit integer type of size " + std::to_string(sizeof(ResultType)) + " in type of size " + std::to_string(sizeof(Type)));
+      throw std::runtime_error("Unable to fit integer type of size " +
+                               std::to_string(sizeof(ResultType)) + " in type of size " +
+                               std::to_string(sizeof(Type)));
     }
     ResultType deser_val;
     interface.ReadBytes(reinterpret_cast<uint8_t *>(&deser_val), sizeof(ResultType));
-    val = static_cast<Type>( platform::FromBigEndian(deser_val) );
+    val = static_cast<Type>(platform::FromBigEndian(deser_val));
   }
 };
-
 
 template <typename D>
 struct IntegerSerializer<int8_t, D>
@@ -280,23 +286,19 @@ struct IntegerSerializer<int64_t, D>
 };
 
 template <typename D>
-struct IntegerSerializer<uint8_t, D>
-  : public UnsignedIntegerSerializerImplementation<uint8_t, D>
+struct IntegerSerializer<uint8_t, D> : public UnsignedIntegerSerializerImplementation<uint8_t, D>
 {
 };
 template <typename D>
-struct IntegerSerializer<uint16_t, D>
-  : public UnsignedIntegerSerializerImplementation<uint16_t, D>
+struct IntegerSerializer<uint16_t, D> : public UnsignedIntegerSerializerImplementation<uint16_t, D>
 {
 };
 template <typename D>
-struct IntegerSerializer<uint32_t, D>
-  : public UnsignedIntegerSerializerImplementation<uint32_t, D>
+struct IntegerSerializer<uint32_t, D> : public UnsignedIntegerSerializerImplementation<uint32_t, D>
 {
 };
 template <typename D>
-struct IntegerSerializer<uint64_t, D>
-  : public UnsignedIntegerSerializerImplementation<uint64_t, D>
+struct IntegerSerializer<uint64_t, D> : public UnsignedIntegerSerializerImplementation<uint64_t, D>
 {
 };
 
@@ -377,7 +379,7 @@ struct FloatSerializer<float, D>
   template <typename Interface>
   static void Serialize(Interface &interface, Type val)
   {
-    val = platform::ToBigEndian(val);
+    val            = platform::ToBigEndian(val);
     uint8_t opcode = static_cast<uint8_t>(TypeCodes::FLOAT);
     interface.Allocate(sizeof(opcode) + sizeof(val));
     interface.WriteBytes(&opcode, sizeof(opcode));
@@ -395,7 +397,7 @@ struct FloatSerializer<float, D>
           std::string("expected float for deserialisation, but other type found."));
     }
     interface.ReadBytes(reinterpret_cast<uint8_t *>(&val), sizeof(val));
-    val = platform::FromBigEndian(val);    
+    val = platform::FromBigEndian(val);
   }
 };
 
@@ -408,7 +410,7 @@ struct FloatSerializer<double, D>
   template <typename Interface>
   static void Serialize(Interface &interface, Type val)
   {
-    val = platform::ToBigEndian(val);
+    val            = platform::ToBigEndian(val);
     uint8_t opcode = static_cast<uint8_t>(TypeCodes::DOUBLE);
     interface.Allocate(sizeof(opcode) + sizeof(val));
     interface.WriteBytes(&opcode, sizeof(opcode));
@@ -486,7 +488,7 @@ public:
     {
       opcode        = static_cast<uint8_t>(CODE16);
       uint16_t size = static_cast<uint16_t>(val.size());
-      size = platform::ToBigEndian(size);
+      size          = platform::ToBigEndian(size);
 
       interface.Allocate(sizeof(opcode) + sizeof(size) + val.size());
       interface.WriteBytes(&opcode, sizeof(opcode));
@@ -496,7 +498,7 @@ public:
     {
       opcode        = static_cast<uint8_t>(CODE32);
       uint32_t size = static_cast<uint32_t>(val.size());
-      size = platform::ToBigEndian(size);
+      size          = platform::ToBigEndian(size);
 
       interface.Allocate(sizeof(opcode) + sizeof(size) + val.size());
 
@@ -538,7 +540,7 @@ public:
     }
     case CODE32:
       interface.ReadBytes(reinterpret_cast<uint8_t *>(&size), sizeof(size));
-      size = platform::FromBigEndian(size);      
+      size = platform::FromBigEndian(size);
       break;
     default:  // Default CODE_FIXED
       if ((opcode & TypeCodes::FIXED_MASK2) != CODE_FIXED)

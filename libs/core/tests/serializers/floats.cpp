@@ -16,13 +16,13 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/byte_array/decoders.hpp"
+#include "core/byte_array/encoders.hpp"
 #include "core/serializers/byte_array.hpp"
 #include "core/serializers/byte_array_buffer.hpp"
 #include "core/serializers/group_definitions.hpp"
 #include "core/serializers/main_serializer.hpp"
 #include "core/serializers/typed_byte_array_buffer.hpp"
-#include "core/byte_array/decoders.hpp"
-#include "core/byte_array/encoders.hpp"
 
 #include "gtest/gtest.h"
 
@@ -35,15 +35,13 @@ namespace fetch {
 
 namespace serializers {
 
-
-
 TEST(MsgPacker, floats)
 {
   // Setup
   ByteArrayBuffer stream;
-  double value;
+  double          value;
 
-  value = static_cast<double>(2.34);
+  value  = static_cast<double>(2.34);
   stream = ByteArrayBuffer();
   stream << value;
   std::cout << ToHex(stream.data()) << std::endl;
@@ -52,11 +50,6 @@ TEST(MsgPacker, floats)
   value = 0;
   stream >> value;
   EXPECT_EQ(value, 2.34);
-
-
-
-
-
 }
 
 }  // namespace serializers

@@ -59,7 +59,7 @@ public:
       serializer_.WriteBytes(&opcode, sizeof(opcode));
 
       uint16_t size = static_cast<uint16_t>(count);
-      size = platform::ToBigEndian(size);
+      size          = platform::ToBigEndian(size);
       serializer_.Allocate(sizeof(size));
       serializer_.WriteBytes(reinterpret_cast<uint8_t *>(&size), sizeof(size));
     }
@@ -70,7 +70,7 @@ public:
       serializer_.WriteBytes(&opcode, sizeof(opcode));
 
       uint32_t size = static_cast<uint32_t>(count);
-      size = platform::ToBigEndian(size);      
+      size          = platform::ToBigEndian(size);
       serializer_.Allocate(sizeof(size));
       serializer_.WriteBytes(reinterpret_cast<uint8_t *>(&size), sizeof(size));
     }

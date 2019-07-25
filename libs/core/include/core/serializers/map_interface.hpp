@@ -44,11 +44,10 @@ public:
   }
 
   template <typename V>
-  void Append(char const* key, V const &val)
+  void Append(char const *key, V const &val)
   {
     Append(static_cast<std::string>(key), val);
   }
-
 
   template <typename K, typename V>
   void Append(K const &key, V const &val)
@@ -90,7 +89,7 @@ public:
     {
       uint16_t tmp;
       serializer_.ReadBytes(reinterpret_cast<uint8_t *>(&tmp), sizeof(uint16_t));
-      tmp = platform::FromBigEndian(tmp); 
+      tmp  = platform::FromBigEndian(tmp);
       size = static_cast<uint32_t>(tmp);
       break;
     }
@@ -111,11 +110,10 @@ public:
   template <typename K, typename V>
   void GetNextKeyPair(K &key, V &value)
   {
-    if(state_ != State::KEY_VALUE_NEXT)
+    if (state_ != State::KEY_VALUE_NEXT)
     {
-      throw SerializableException(
-          std::string("Next entry is not a key-value pair."));      
-    }    
+      throw SerializableException(std::string("Next entry is not a key-value pair."));
+    }
 
     ++pos_;
     if (pos_ > size_)
@@ -129,11 +127,10 @@ public:
   template <typename V>
   bool ExpectKeyGetValue(uint8_t key, V &value)
   {
-    if(state_ != State::KEY_VALUE_NEXT)
+    if (state_ != State::KEY_VALUE_NEXT)
     {
-      throw SerializableException(
-          std::string("Next entry is not a key-value pair."));      
-    }    
+      throw SerializableException(std::string("Next entry is not a key-value pair."));
+    }
 
     ++pos_;
     if (pos_ > size_)
@@ -157,11 +154,10 @@ public:
   template <typename K, typename V>
   bool ExpectKeyGetValue(K const &key, V &value)
   {
-    if(state_ != State::KEY_VALUE_NEXT)
+    if (state_ != State::KEY_VALUE_NEXT)
     {
-      throw SerializableException(
-          std::string("Next entry is not a key-value pair."));      
-    }    
+      throw SerializableException(std::string("Next entry is not a key-value pair."));
+    }
     ++pos_;
     if (pos_ > size_)
     {
@@ -186,10 +182,9 @@ public:
   template <typename K>
   void GetKey(K &key)
   {
-    if(state_ != State::KEY_VALUE_NEXT)
+    if (state_ != State::KEY_VALUE_NEXT)
     {
-      throw SerializableException(
-          std::string("Next entry is not a key in map."));      
+      throw SerializableException(std::string("Next entry is not a key in map."));
     }
     ++pos_;
     if (pos_ > size_)
@@ -204,25 +199,26 @@ public:
   template <typename V>
   void GetValue(V &value)
   {
-    if(state_ != State::VALUE_NEXT)
+    if (state_ != State::VALUE_NEXT)
     {
-      throw SerializableException(
-          std::string("Next entry is not a value in map."));      
+      throw SerializableException(std::string("Next entry is not a value in map."));
     }
 
     serializer_ >> value;
-    state_ = State::KEY_VALUE_NEXT;    
-  }  
+    state_ = State::KEY_VALUE_NEXT;
+  }
+
 private:
-  enum class State {
+  enum class State
+  {
     KEY_VALUE_NEXT = 0,
-    VALUE_NEXT = 1
+    VALUE_NEXT     = 1
   };
 
   MsgPackByteArrayBuffer &serializer_;
   uint64_t                size_{0};
   uint64_t                pos_{0};
-  State state_{State::KEY_VALUE_NEXT};
+  State                   state_{State::KEY_VALUE_NEXT};
 };
 
 }  // namespace interfaces
