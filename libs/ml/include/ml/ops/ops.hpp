@@ -37,7 +37,7 @@ public:
   using ArrayType     = T;
   using SizeType      = typename ArrayType::SizeType;
   using ArrayPtrType  = std::shared_ptr<ArrayType>;
-  using VecTensorType = std::vector<std::reference_wrapper<ArrayType const>>;
+  using VecTensorType = std::vector<std::shared_ptr<ArrayType const>>;
 
   virtual ~Ops() = default;
 
@@ -45,7 +45,7 @@ public:
   virtual std::vector<ArrayType> Backward(VecTensorType const &inputs,
                                           ArrayType const &    error_signal)                 = 0;
   /*
-   * ComputeOutputShape is usually expensive function and should be used only for initialization or
+   * ComputeOutputShape is usually expensive function and should be used only for initialisation or
    * in ASSERT. On Forward you can use output.shape() and on Backward there is error_signal.shape()
    */
   virtual std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const = 0;

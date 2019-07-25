@@ -1,5 +1,5 @@
 #
-# F E T C H   D K G  T E S T S
+# F E T C H   D K G   T E S T S
 #
 cmake_minimum_required(VERSION 3.5 FATAL_ERROR)
 project(fetch-dkg)

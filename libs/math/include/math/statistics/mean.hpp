@@ -21,8 +21,6 @@
 #include "math/meta/math_type_traits.hpp"
 #include "vectorise/memory/range.hpp"
 
-#include <cmath>
-
 namespace fetch {
 namespace math {
 namespace statistics {
@@ -43,6 +41,7 @@ meta::IfIsMathArray<ArrayType, typename ArrayType::Type> Mean(ArrayType const &a
 {
   typename ArrayType::Type ret;
   Mean(array, ret);
+
   return ret;
 }
 

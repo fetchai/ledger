@@ -500,8 +500,8 @@ void GraphW2VLoader<T>::BuildVocab(std::vector<std::string> const &sents, SizeTy
   std::cout << "Removing infrequent words" << std::endl;
   RemoveInfrequent(min_count);
 
-  // initialize unigram
-  std::cout << "Initializing unigram" << std::endl;
+  // initialise unigram
+  std::cout << "Initialising unigram" << std::endl;
   InitUnigramTable();
 }
 
