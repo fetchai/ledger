@@ -84,13 +84,17 @@ public:
   template <typename... T, IfIsWideInitialiserList<T...> * = nullptr>
   constexpr UInt(T &&... data)
     : wide_{{std::forward<T>(data)...}}
-  {}
+  {
+    mask_residual_bits();
+  }
 
   template <typename... T, IfIsBaseInitialiserList<T...> * = nullptr>
   constexpr UInt(T &&... data)
     : wide_{reinterpret_cast<WideContainerType &&>(
           core::Array<BaseType, ELEMENTS>{{std::forward<T>(data)...}})}
-  {}
+  {
+    mask_residual_bits();
+  }
 
   template <typename T, meta::IfIsAByteArray<T> * = nullptr>
   UInt(T const &other);
@@ -241,16 +245,21 @@ private:
   constexpr ContainerType const &base() const;
   constexpr ContainerType &      base();
 
-  struct MaxConstr
+  constexpr void mask_residual_bits()
+  {
+    wide_[WIDE_ELEMENTS - 1] &= RESIDUAL_BITS_MASK;
+  }
+
+  struct MaxValueConstructorEnabler
   {
   };
-  constexpr UInt(MaxConstr)
+  constexpr explicit UInt(MaxValueConstructorEnabler)
   {
     for (auto &itm : wide_)
     {
       itm = ~WideType{0};
     }
-    wide_[WIDE_ELEMENTS - 1] &= RESIDUAL_BITS_MASK;
+    mask_residual_bits();
   }
 };
 
@@ -275,7 +284,7 @@ const UInt<S> UInt<S>::_0{0ull};
 template <uint16_t S>
 const UInt<S> UInt<S>::_1{1ull};
 template <uint16_t S>
-const UInt<S> UInt<S>::max{UInt{MaxConstr{}}};
+const UInt<S> UInt<S>::max{MaxValueConstructorEnabler{}};
 
 ////////////////////
 /// constructors ///
