@@ -17,9 +17,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vectorise/arch/avx2.hpp"
+#include "vectorise/vectorise.hpp"
 
 #include <cstddef>
+#include <cmath>
 
 namespace fetch {
 namespace vectorise {

@@ -47,8 +47,8 @@ protected:
   {}
 
   ndarray_type a_, b_;
-};
-BENCHMARK_TEMPLATE_F(ParallelDispatcherKernelBench, kernel_implementation, float)
+}; 
+BENCHMARK_TEMPLATE_F(ParallelDispatcherKernelBench, kernel_implementation, double)
 (benchmark::State &st)
 {
   // Standard implementation

@@ -17,7 +17,11 @@
 //
 //------------------------------------------------------------------------------
 
+#ifdef __AVX2__
 #include "vectorise/arch/avx2.hpp"
+#else
 #include "vectorise/info.hpp"
-#include "vectorise/iterator.hpp"
 #include "vectorise/register.hpp"
+#endif
+
+#include "vectorise/iterator.hpp"

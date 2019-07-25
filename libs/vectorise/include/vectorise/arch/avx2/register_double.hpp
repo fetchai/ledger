@@ -209,10 +209,10 @@ FETCH_ADD_OPERATOR(+, double, 256, __m256d, _mm256_add_pd)
                                                VectorRegister<type, 128> const &b) \
   {                                                                                \
     L              imm  = fnc(a.data(), b.data());                                 \
-    __m128i        ival = _mm_castps_si128(imm);                                   \
-    const __m128i  one  = _mm_castps_si128(_mm_set1_ps(1.0));                   \
+    __m128i        ival = _mm_castpd_si128(imm);                                   \
+    const __m128i  one  = _mm_castpd_si128(_mm_set1_pd(1.0));                   \
     __m128i        ret  = _mm_and_si128(ival, one);                                \
-    return VectorRegister<type, 128>(_mm_castsi128_ps(ret));                       \
+    return VectorRegister<type, 128>(_mm_castsi128_pd(ret));                       \
   }
 
 FETCH_ADD_OPERATOR(==, double, __m128d, _mm_cmpeq_pd)

@@ -40,7 +40,7 @@ struct VectorRegisterSize
 #ifdef __AVX2__
     value = 256
 #else
-    value = 32
+    value = 64
 #endif
   };
 };

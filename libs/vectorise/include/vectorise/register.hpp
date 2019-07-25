@@ -20,6 +20,7 @@
 #include "vectorise/info.hpp"
 
 #include <cstddef>
+#include <cmath>
 
 namespace details {
 template <typename T, std::size_t N>
@@ -88,8 +89,17 @@ public:
     return data_;
   }
 
+  type const data() const
+  {
+    return data_;
+  }
+  type &data() 
+  {
+    return data_;
+  }
+
 #define FETCH_ADD_OPERATOR(OP)                            \
-  VectorRegister operator OP(VectorRegister const &other) \
+  VectorRegister operator OP(VectorRegister const &other) const \
   {                                                       \
     return VectorRegister(type(data_ OP other.data_));    \
   }
@@ -104,6 +114,55 @@ public:
 private:
   type data_;
 };
+
+template <typename T, std::size_t N = sizeof(T)>
+inline VectorRegister<T, N> abs(VectorRegister<T, N> const &x)
+{
+  return VectorRegister<T, N>(std::abs(x.data()));
+}
+
+template <typename T, std::size_t N = sizeof(T)>
+inline VectorRegister<T, N> approx_log(VectorRegister<T, N> const &x)
+{
+  return VectorRegister<T, N>(std::log(x.data()));
+}
+
+template <typename T, std::size_t N = sizeof(T)>
+inline VectorRegister<T, N> approx_exp(VectorRegister<T, N> const &x)
+{
+  return VectorRegister<T, N>(std::exp(x.data()));
+}
+
+template <typename T, std::size_t N = sizeof(T)>
+inline VectorRegister<T, N> shift_elements_right(VectorRegister<T, N> const &x)
+{
+  return VectorRegister<T, N>(x.data());
+}
+
+template <typename T, std::size_t N = sizeof(T)>
+inline VectorRegister<T, N> shift_elements_left(VectorRegister<T, N> const &x)
+{
+  return VectorRegister<T, N>(x.data());
+}
+
+template <typename T, std::size_t N = sizeof(T)>
+inline bool any_less_than(VectorRegister<T, N> const &x,
+                          VectorRegister<T, N> const &y)
+{
+  return x.data() < y.data();
+}
+
+template <typename T, std::size_t N = sizeof(T)>
+inline T first_element(VectorRegister<T, N> const &x)
+{
+  return x.data();
+}
+
+template <typename T, std::size_t N = sizeof(T)>
+inline T reduce(VectorRegister<T, N> const &x)
+{
+  return x.data();
+}
 
 #undef APPLY_OPERATOR_LIST
 }  // namespace vectorise

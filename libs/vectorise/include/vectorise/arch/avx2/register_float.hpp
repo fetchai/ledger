@@ -208,7 +208,7 @@ FETCH_ADD_OPERATOR(<, float, __m128, _mm_cmplt_ps)
   {                                                                                \
     L              imm  = _mm256_cmp_ps(a.data(), b.data(), fnc);                                 \
     __m256i        ival = _mm256_castps_si256(imm);                                   \
-    const __m256i  one  = _mm256_castps_si256(_mm256_set1_pd(1.0));                   \
+    const __m256i  one  = _mm256_castps_si256(_mm256_set1_ps(1.0));                   \
     __m256i        ret  = _mm256_and_si256(ival, one);                                \
     return VectorRegister<type, 256>(_mm256_castsi256_ps(ret));                       \
   }

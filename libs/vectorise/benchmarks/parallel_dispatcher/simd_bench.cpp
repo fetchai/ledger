@@ -49,7 +49,7 @@ protected:
   ndarray_type        a_, b_;
   const unsigned long MAX_ = N;
 };
-BENCHMARK_TEMPLATE_F(ParallelDispatcherSSEBench, Standard_implementation, float)
+BENCHMARK_TEMPLATE_F(ParallelDispatcherSSEBench, Standard_implementation, double )
 (benchmark::State &st)
 {
   // Standard implementation
