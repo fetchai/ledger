@@ -299,8 +299,18 @@ byte_array::ConstByteArray StorageUnitClient::Commit(uint64_t const commit_index
 
 bool StorageUnitClient::HashExists(Hash const &hash, uint64_t index)
 {
-  // FETCH_LOCK(merkle_mutex_);
-  return HashInStack(hash, index);
+  bool success{false};
+
+  if (hash == GENESIS_MERKLE_ROOT)
+  {
+    success = true;
+  }
+  else
+  {
+    success = HashInStack(hash, index);
+  }
+
+  return success;
 }
 
 // Search backwards through stack
