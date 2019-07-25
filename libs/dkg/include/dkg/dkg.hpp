@@ -112,13 +112,14 @@ protected:
 
   /// @name Methods to send messages
   /// @{
-  void SendBroadcast(DKGEnvelop const &env);
-  void SendCoefficients(std::vector<bn::Fr> const &a_i, std::vector<bn::Fr> const &b_i);
-  void SendShares(std::vector<bn::Fr> const &a_i, std::vector<bn::Fr> const &b_i);
-  void BroadcastComplaints();
-  void BroadcastComplaintsAnswer();
-  void BroadcastQualComplaints();
-  void BroadcastReconstructionShares();
+  void         SendBroadcast(DKGEnvelop const &env);
+  void         SendCoefficients(std::vector<bn::Fr> const &a_i, std::vector<bn::Fr> const &b_i);
+  void         SendShares(std::vector<bn::Fr> const &a_i, std::vector<bn::Fr> const &b_i);
+  virtual void BroadcastComplaints();
+  virtual void BroadcastComplaintsAnswer();
+  virtual void BroadcastQualCoefficients();
+  void         BroadcastQualComplaints();
+  void         BroadcastReconstructionShares();
   /// @}
 
   /// @name Methods to check if enough messages have been received to trigger state transition
