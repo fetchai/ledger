@@ -47,14 +47,14 @@ public:
   {
     assert(output.shape() == ComputeOutputShape(inputs));
     assert(inputs.size() == 1);
-    fetch::math::Softmax(inputs.at(0).get(), output, axis_);
+    fetch::math::Softmax((*inputs.at(0)), output, axis_);
   }
 
   std::vector<ArrayType> Backward(VecTensorType const &inputs,
                                   ArrayType const &    error_signal) override
   {
     assert(inputs.size() == 1);
-    assert(inputs.front().get().shape() == error_signal.shape());
+    assert(inputs.front()->shape() == error_signal.shape());
 
     ArrayType return_signal = error_signal.Copy();
     ArrayType t(error_signal.shape());
@@ -62,13 +62,13 @@ public:
     return_signal.InlineMultiply(t);
 
     // 1D softmax
-    if (inputs.front().get().shape().size() == 1)
+    if (inputs.front()->shape().size() == 1)
     {
       typename ArrayType::Type sum = return_signal.Sum();
       t.InlineMultiply(sum);
     }
     // 2D softmax
-    else if (inputs.front().get().shape().size() == 2)
+    else if (inputs.front()->shape().size() == 2)
     {
       ArrayType sum;
       sum = ReduceSum(return_signal, 1 - axis_);
@@ -86,7 +86,7 @@ public:
 
   std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
   {
-    return inputs.front().get().shape();
+    return inputs.front()->shape();
   }
 
   static constexpr char const *DESCRIPTOR = "Softmax";

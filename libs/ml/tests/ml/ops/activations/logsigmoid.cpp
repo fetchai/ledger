@@ -34,17 +34,16 @@ TYPED_TEST_CASE(LogSigmoidTest, MyTypes);
 
 TYPED_TEST(LogSigmoidTest, forward_test)
 {
-  using DataType      = typename TypeParam::Type;
-  using ArrayType     = TypeParam;
-  using VecTensorType = typename fetch::ml::Ops<ArrayType>::VecTensorType;
+  using DataType  = typename TypeParam::Type;
+  using ArrayType = TypeParam;
 
   ArrayType data = ArrayType::FromString(R"(1, -2, 3, -4, 5, -6, 7, -8)");
   ArrayType gt   = ArrayType::FromString(
       R"(-0.31326, -2.126928, -0.048587, -4.01815, -0.006715, -6.002476, -0.000911466, -8.000335)");
 
   fetch::ml::ops::LogSigmoid<ArrayType> op;
-  ArrayType                             prediction(op.ComputeOutputShape({data}));
-  op.Forward(VecTensorType({data}), prediction);
+  ArrayType prediction(op.ComputeOutputShape({std::make_shared<const ArrayType>(data)}));
+  op.Forward({std::make_shared<const ArrayType>(data)}, prediction);
 
   // test correct values
   ASSERT_TRUE(prediction.AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
@@ -52,10 +51,9 @@ TYPED_TEST(LogSigmoidTest, forward_test)
 
 TYPED_TEST(LogSigmoidTest, forward_3d_tensor_test)
 {
-  using DataType      = typename TypeParam::Type;
-  using ArrayType     = TypeParam;
-  using SizeType      = typename TypeParam::SizeType;
-  using VecTensorType = typename fetch::ml::Ops<ArrayType>::VecTensorType;
+  using DataType  = typename TypeParam::Type;
+  using ArrayType = TypeParam;
+  using SizeType  = typename TypeParam::SizeType;
 
   ArrayType           data({2, 2, 2});
   ArrayType           gt({2, 2, 2});
@@ -76,8 +74,8 @@ TYPED_TEST(LogSigmoidTest, forward_3d_tensor_test)
   }
 
   fetch::ml::ops::LogSigmoid<ArrayType> op;
-  ArrayType                             prediction(op.ComputeOutputShape({data}));
-  op.Forward(VecTensorType({data}), prediction);
+  ArrayType prediction(op.ComputeOutputShape({std::make_shared<const ArrayType>(data)}));
+  op.Forward({std::make_shared<const ArrayType>(data)}, prediction);
 
   // test correct values
   ASSERT_TRUE(prediction.AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
@@ -93,7 +91,7 @@ TYPED_TEST(LogSigmoidTest, backward_test)
   ArrayType gt    = ArrayType::FromString(R"(0, 0, 0, 0.4910068810, 0.006692850, 0.997527, 0, 0)");
 
   fetch::ml::ops::LogSigmoid<ArrayType> op;
-  std::vector<ArrayType>                prediction = op.Backward({data}, error);
+  std::vector<ArrayType> prediction = op.Backward({std::make_shared<const ArrayType>(data)}, error);
 
   // test correct values
   ASSERT_TRUE(prediction[0].AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
@@ -126,7 +124,7 @@ TYPED_TEST(LogSigmoidTest, backward_3d_tensor_test)
   }
 
   fetch::ml::ops::LogSigmoid<ArrayType> op;
-  std::vector<ArrayType>                prediction = op.Backward({data}, error);
+  std::vector<ArrayType> prediction = op.Backward({std::make_shared<const ArrayType>(data)}, error);
 
   // test correct values
   ASSERT_TRUE(prediction[0].AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));

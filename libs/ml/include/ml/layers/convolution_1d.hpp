@@ -36,10 +36,11 @@ template <class T>
 class Convolution1D : public SubGraph<T>
 {
 public:
-  using ArrayType    = T;
-  using ArrayPtrType = std::shared_ptr<ArrayType>;
-  using SizeType     = typename ArrayType::SizeType;
-  using WeightsInit  = fetch::ml::ops::WeightsInitialisation;
+  using ArrayType     = T;
+  using ArrayPtrType  = std::shared_ptr<ArrayType>;
+  using SizeType      = typename ArrayType::SizeType;
+  using WeightsInit   = fetch::ml::ops::WeightsInitialisation;
+  using VecTensorType = typename SubGraph<T>::VecTensorType;
 
   /**
    * Creates 1D convolution layer with trainable kernel
@@ -84,13 +85,12 @@ public:
     this->SetOutputNode(output);
   }
 
-  virtual std::vector<SizeType> ComputeOutputShape(
-      std::vector<std::reference_wrapper<ArrayType const>> const &inputs) const override
+  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
   {
     ArrayType weights_data(
         std::vector<SizeType>{{output_channels_, input_channels_, kernel_size_, 1}});
     return fetch::ml::ops::Convolution1D<ArrayType>(stride_size_)
-        .ComputeOutputShape({inputs.at(0), weights_data});
+        .ComputeOutputShape({inputs.at(0), std::make_shared<ArrayType>(weights_data)});
   }
 
   static constexpr char const *DESCRIPTOR = "Convolution1D";
