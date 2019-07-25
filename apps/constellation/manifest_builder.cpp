@@ -17,15 +17,17 @@
 //------------------------------------------------------------------------------
 
 #include "constants.hpp"
-#include "manifest_builder.hpp"
-
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/byte_array/decoders.hpp"
 #include "core/filesystem/read_file_contents.hpp"
+#include "manifest_builder.hpp"
 #include "network/p2pservice/manifest.hpp"
 #include "network/p2pservice/p2p_service_defs.hpp"
 #include "network/peer.hpp"
 #include "settings.hpp"
+
+#include <cstdint>
+#include <string>
 
 namespace fetch {
 namespace {

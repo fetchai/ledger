@@ -17,8 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/assert.hpp"
-#include <cmath>
+#include <cassert>
 
 namespace fetch {
 namespace math {
@@ -40,6 +39,7 @@ inline typename ArrayType::Type SquareDistance(ArrayType const &A, ArrayType con
     ++it1;
     ++it2;
   }
+
   return ret;
 }
 

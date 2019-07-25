@@ -45,8 +45,7 @@ enum Configuration
 
 def is_master_or_pull_request_head_branch()
 {
-  return BRANCH_NAME == 'master' || BRANCH_NAME ==~ /^PR-\d+-head$/
-      || BRANCH_NAME ==~ /^PR-\d+$/
+  return BRANCH_NAME == 'master' || BRANCH_NAME ==~ /^PR-\d+-head$/ || BRANCH_NAME ==~ /^PR-\d+$/
 }
 
 def static_analysis()

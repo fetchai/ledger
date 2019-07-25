@@ -17,7 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/logging.hpp"
-#include "dkg/rbc_envelop.hpp"
+#include "dkg/rbc_envelope.hpp"
 
 namespace fetch {
 namespace dkg {
@@ -30,7 +30,7 @@ constexpr char const *LOGGING_NAME = "DKGMessage";
  *
  * @return Shared pointer to RBCMessage
  */
-std::shared_ptr<RBCMessage> RBCEnvelop::Message() const
+std::shared_ptr<RBCMessage> RBCEnvelope::Message() const
 {
   RBCSerializer serialiser{payload_};
   switch (type_)

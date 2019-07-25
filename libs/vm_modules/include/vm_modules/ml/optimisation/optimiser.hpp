@@ -18,18 +18,14 @@
 //------------------------------------------------------------------------------
 
 #include "ml/graph.hpp"
-
-#include "ml/optimisation/optimiser.hpp"
-
 #include "ml/optimisation/adagrad_optimiser.hpp"
 #include "ml/optimisation/adam_optimiser.hpp"
 #include "ml/optimisation/momentum_optimiser.hpp"
+#include "ml/optimisation/optimiser.hpp"
 #include "ml/optimisation/rmsprop_optimiser.hpp"
 #include "ml/optimisation/sgd_optimiser.hpp"
-
 #include "vm_modules/math/tensor.hpp"
 #include "vm_modules/math/type.hpp"
-
 #include "vm_modules/ml/dataloaders/dataloader.hpp"
 #include "vm_modules/ml/graph.hpp"
 #include "vm_modules/ml/training_pair.hpp"
@@ -101,10 +97,10 @@ public:
   static void Bind(vm::Module &module)
   {
     module.CreateClassType<fetch::vm_modules::ml::VMOptimiser>("Optimiser")
-        .CreateConstuctor<fetch::vm::Ptr<fetch::vm::String>,
-                          fetch::vm::Ptr<fetch::vm_modules::ml::VMGraph>,
-                          fetch::vm::Ptr<fetch::vm::String>, fetch::vm::Ptr<fetch::vm::String>,
-                          fetch::vm::Ptr<fetch::vm::String>>()
+        .CreateConstructor<fetch::vm::Ptr<fetch::vm::String>,
+                           fetch::vm::Ptr<fetch::vm_modules::ml::VMGraph>,
+                           fetch::vm::Ptr<fetch::vm::String>, fetch::vm::Ptr<fetch::vm::String>,
+                           fetch::vm::Ptr<fetch::vm::String>>()
         .CreateMemberFunction("run", &fetch::vm_modules::ml::VMOptimiser::RunData)
         .CreateMemberFunction("run", &fetch::vm_modules::ml::VMOptimiser::RunLoader)
         .CreateMemberFunction("run", &fetch::vm_modules::ml::VMOptimiser::RunLoaderNoSubset);

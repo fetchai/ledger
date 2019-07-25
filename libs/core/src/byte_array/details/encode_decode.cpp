@@ -17,7 +17,10 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/details/encode_decode.hpp"
+
+#include <cstdint>
 #include <stdexcept>
+
 namespace fetch {
 namespace byte_array {
 namespace details {

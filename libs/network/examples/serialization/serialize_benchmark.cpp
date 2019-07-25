@@ -16,17 +16,17 @@
 //
 //------------------------------------------------------------------------------
 
-#include <iostream>
-
 #include "core/random/lfg.hpp"
 #include "core/serializers/byte_array.hpp"
 #include "core/serializers/byte_array_buffer.hpp"
 #include "core/serializers/counter.hpp"
 #include "core/serializers/stl_types.hpp"
-
 #include "network/service/server.hpp"
 #include "network/service/service_client.hpp"
+
+#include <algorithm>
 #include <chrono>
+#include <iostream>
 #include <vector>
 
 using namespace fetch::serializers;
@@ -36,6 +36,7 @@ using namespace std::chrono;
 
 fetch::random::LaggedFibonacciGenerator<> lfg;
 ByteArray                                 TestString;
+
 enum
 {
   GET     = 1,

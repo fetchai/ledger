@@ -160,7 +160,7 @@ Optimiser<T>::Optimiser(std::shared_ptr<Graph<T>>      graph,
   , epoch_(0)
   , learning_rate_param_(learning_rate_param)
 {
-  // initialize learning rate
+  // initialise learning rate
   learning_rate_ = learning_rate_param_.starting_learning_rate;
 
   Init();
