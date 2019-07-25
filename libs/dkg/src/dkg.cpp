@@ -187,8 +187,8 @@ void DistributedKeyGeneration::BroadcastComplaintsAnswer()
  */
 void DistributedKeyGeneration::BroadcastQualComplaints()
 {
-  SendBroadcast(DKGEnvelop{SharesMessage{static_cast<uint64_t>(State::WAITING_FOR_QUAL_COMPLAINTS),
-                                         ComputeQualComplaints(), "signature"}});
+  SendBroadcast(DKGEnvelope{SharesMessage{static_cast<uint64_t>(State::WAITING_FOR_QUAL_COMPLAINTS),
+                                          ComputeQualComplaints(), "signature"}});
   state_ = State::WAITING_FOR_QUAL_COMPLAINTS;
   ReceivedQualComplaint();
 }
