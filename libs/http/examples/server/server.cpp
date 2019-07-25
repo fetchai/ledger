@@ -21,8 +21,13 @@
 #include "http/server.hpp"
 #include "http/validators.hpp"
 
+#include <atomic>
+#include <chrono>
+#include <cstdint>
 #include <fstream>
 #include <iostream>
+#include <string>
+#include <thread>
 
 using namespace fetch::http;
 using namespace fetch::json;
@@ -51,7 +56,6 @@ struct ExampleModule : HTTPModule
 
 int main()
 {
-
   fetch::network::NetworkManager tm{"NetMgr", 1};
 
   ExampleModule module;

@@ -81,12 +81,12 @@ protected:
 
   MockContextPrimitive::SharedPtr &contextMock_ = MockContextPrimitive::value;
 
-  void SetUp()
+  void SetUp() override
   {
     contextMock_ = std::make_shared<MockContextPrimitive::Type>();
   }
 
-  void TearDown()
+  void TearDown() override
   {
     contextMock_ = MockContextPrimitive::SharedPtr();
   }

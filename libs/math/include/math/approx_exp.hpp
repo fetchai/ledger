@@ -95,11 +95,11 @@ private:
   double b_ = exponent_offset_ * multiplier_pow2_ - C;
 
   static double corrections_[E_ENTRIES];
-  static bool   initialized_;
+  static bool   initialised_;
 
   void CreateCorrectionTable()
   {
-    if (initialized_)
+    if (initialised_)
     {
       return;
     }
@@ -139,7 +139,7 @@ private:
       corrections_[i] = accumulated[i] / frequency[i];
     }
 
-    initialized_ = true;
+    initialised_ = true;
   }
 };
 
@@ -186,7 +186,7 @@ public:
 };
 
 template <uint8_t N, uint64_t C, bool OF>
-bool ApproxExpImplementation<N, C, OF>::initialized_ = false;
+bool ApproxExpImplementation<N, C, OF>::initialised_ = false;
 
 template <uint8_t N, uint64_t C, bool OF>
 double ApproxExpImplementation<N, C, OF>::corrections_[E_ENTRIES] = {0};

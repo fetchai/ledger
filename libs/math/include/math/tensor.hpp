@@ -113,7 +113,7 @@ public:
     Resize({0});
   }
 
-  Tensor(ContainerType &container_data)
+  explicit Tensor(ContainerType &container_data)
   {
     Reshape(container_data.shape());
     data_ = container_data;
@@ -210,7 +210,6 @@ public:
 
   bool Resize(SizeVector const &shape, bool copy = false);
   bool Reshape(SizeVector const &shape);
-  bool ResizeFromShape(SizeVector const &shape);
 
   SizeVector const &stride() const;
   SizeVector const &shape() const;
@@ -769,7 +768,7 @@ Tensor<T, C> Tensor<T, C>::FromString(byte_array::ConstByteArray const &c)
 ///////////////////////////
 
 /**
- * Constructor builds an Tensor with n elements initialized to 0
+ * Constructor builds an Tensor with n elements initialised to 0
  * @param n   number of elements in array (no shape specified, assume 1-D)
  */
 template <typename T, typename C>

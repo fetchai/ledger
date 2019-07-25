@@ -39,8 +39,8 @@ public:
   using Ptr    = fetch::vm::Ptr<T>;
   using String = fetch::vm::String;
 
-  UInt256Wrapper()          = delete;
-  virtual ~UInt256Wrapper() = default;
+  UInt256Wrapper()           = delete;
+  ~UInt256Wrapper() override = default;
 
   static fetch::vm::Ptr<fetch::vm::String> ToString(fetch::vm::VM *vm, Ptr<UInt256Wrapper> const &n)
   {
@@ -74,10 +74,10 @@ public:
   static void Bind(vm::Module &module)
   {
     module.CreateClassType<UInt256Wrapper>("UInt256")
-        .CreateSerializeDefaultConstuctor<uint64_t>(static_cast<uint64_t>(0))
-        .CreateConstuctor<uint64_t>()
-        .CreateConstuctor<Ptr<vm::String>>()
-        .CreateConstuctor<Ptr<ByteArrayWrapper>>()
+        .CreateSerializeDefaultConstructor<uint64_t>(static_cast<uint64_t>(0))
+        .CreateConstructor<uint64_t>()
+        .CreateConstructor<Ptr<vm::String>>()
+        .CreateConstructor<Ptr<ByteArrayWrapper>>()
         .EnableOperator(vm::Operator::Equal)
         .EnableOperator(vm::Operator::NotEqual)
         .EnableOperator(vm::Operator::LessThan)

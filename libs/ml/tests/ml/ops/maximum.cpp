@@ -16,12 +16,13 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/ops/maximum.hpp"
-
 #include "math/tensor.hpp"
+#include "ml/ops/maximum.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 
 #include "gtest/gtest.h"
+
+#include <vector>
 
 template <typename T>
 class MaximumTest : public ::testing::Test

@@ -25,7 +25,6 @@
 #include "ml/ops/multiply.hpp"
 #include "ml/ops/sqrt.hpp"
 #include "ml/ops/subtract.hpp"
-
 #include "vectorise/fixed_point/fixed_point.hpp"
 
 #include "benchmark/benchmark.h"

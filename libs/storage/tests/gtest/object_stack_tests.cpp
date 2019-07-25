@@ -23,7 +23,9 @@
 
 #include "gtest/gtest.h"
 
-#include <algorithm>
+#include <cstddef>
+#include <cstdint>
+#include <string>
 
 using namespace fetch::storage;
 using namespace fetch::byte_array;

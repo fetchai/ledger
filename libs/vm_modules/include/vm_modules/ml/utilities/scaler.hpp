@@ -19,8 +19,11 @@
 
 #include "ml/utilities/min_max_scaler.hpp"
 #include "ml/utilities/scaler.hpp"
-
 #include "vm/module.hpp"
+#include "vm/object.hpp"
+
+#include <memory>
+#include <stdexcept>
 
 namespace fetch {
 namespace vm_modules {
@@ -78,7 +81,7 @@ public:
   static void Bind(fetch::vm::Module &module)
   {
     module.CreateClassType<VMScaler>("Scaler")
-        .CreateConstuctor<>()
+        .CreateConstructor<>()
         .CreateMemberFunction("setScale", &VMScaler::SetScale)
         .CreateMemberFunction("normalise", &VMScaler::Normalise)
         .CreateMemberFunction("deNormalise", &VMScaler::DeNormalise);

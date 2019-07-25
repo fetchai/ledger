@@ -19,7 +19,6 @@
 
 #include "math/distance/absolute.hpp"
 #include "math/matrix_operations.hpp"
-#include <cassert>
 
 namespace fetch {
 namespace math {

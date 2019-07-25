@@ -17,12 +17,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include "http/validators.hpp"
-#include "http/view_parameters.hpp"
-
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/logger.hpp"
+#include "http/validators.hpp"
+#include "http/view_parameters.hpp"
+
 #include <functional>
 #include <regex>
 #include <vector>
@@ -191,7 +191,7 @@ private:
           {
             if (matches.size() != 1)
             {
-              // Ambigous matches are treated as non-matches.
+              // Ambiguous matches are treated as non-matches.
               return false;
             }
 
