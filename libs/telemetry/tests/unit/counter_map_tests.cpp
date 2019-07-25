@@ -24,8 +24,8 @@
 
 namespace {
 
-using fetch::telemetry::Measurement;
 using fetch::telemetry::CounterMap;
+using fetch::telemetry::OutputStream;
 
 using CounterMapPtr = std::unique_ptr<CounterMap>;
 
@@ -61,7 +61,8 @@ TEST_F(CounterMapTests, SimpleCheck)
   counter_map_->Increment({{"service", "1"}, {"channel", "2"}});
 
   std::ostringstream oss;
-  counter_map_->ToStream(oss, Measurement::StreamMode::FULL);
+  OutputStream       stream{oss};
+  counter_map_->ToStream(stream);
 
   static char const *EXPECTED_TEXT = R"(# HELP muddle_stats_total Some test muddle stats
 # TYPE muddle_stats_total counter
