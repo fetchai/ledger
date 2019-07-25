@@ -40,6 +40,7 @@ namespace dkg {
  */
 class DistributedKeyGeneration
 {
+protected:
   using MuddleAddress  = byte_array::ConstByteArray;
   using CabinetMembers = std::set<MuddleAddress>;
   using Endpoint       = muddle::MuddleEndpoint;
