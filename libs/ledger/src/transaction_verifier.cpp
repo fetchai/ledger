@@ -103,6 +103,8 @@ TransactionVerifier::TransactionVerifier(TransactionSink &sink, std::size_t veri
                                      "The total number of verified transactions seen"))
   , discarded_tx_total_(CreateCounter(name, "discarded_transactions_total",
                                       "The total number of verified transactions seen"))
+  , dispatched_tx_total_(CreateCounter(name, "dispatched_transactions_total",
+                                       "The total number of verified that have been dispatched"))
   , num_threads_(CreateGauge(name, "threads", "The current number of processing threads in use"))
 {
   // since these lengths are fixed
@@ -242,7 +244,7 @@ void TransactionVerifier::Dispatcher()
         sink_.OnTransaction(tx);
 
         verified_queue_length_->decrement();
-        verified_tx_total_->increment();
+        dispatched_tx_total_->increment();
       }
     }
     catch (std::exception const &e)

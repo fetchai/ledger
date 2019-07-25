@@ -93,7 +93,7 @@ LaneService::LaneService(NetworkManager nm, ShardConfig config, bool sign_packet
     break;
   }
 
-  tx_store_protocol_ = std::make_shared<TxStoreProto>(tx_store_.get());
+  tx_store_protocol_ = std::make_shared<TxStoreProto>(tx_store_.get(), cfg_.lane_id);
   internal_rpc_server_->Add(RPC_TX_STORE, tx_store_protocol_.get());
 
   // Controller

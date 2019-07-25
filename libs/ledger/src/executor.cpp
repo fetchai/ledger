@@ -29,6 +29,9 @@
 #include "ledger/state_sentinel_adapter.hpp"
 #include "ledger/storage_unit/cached_storage_adapter.hpp"
 #include "metrics/metrics.hpp"
+#include "telemetry/histogram.hpp"
+#include "telemetry/registry.hpp"
+#include "telemetry/utils/timer.hpp"
 
 #include <algorithm>
 #include <exception>
@@ -40,6 +43,8 @@ static constexpr uint64_t    TRANSFER_CHARGE = 1;
 
 using fetch::byte_array::ConstByteArray;
 using fetch::storage::ResourceAddress;
+using fetch::telemetry::Histogram;
+using fetch::telemetry::Registry;
 
 #ifdef FETCH_ENABLE_METRICS
 using fetch::metrics::Metrics;
@@ -101,6 +106,20 @@ Executor::Executor(StorageUnitPtr storage, StakeUpdateInterface *stake_updates)
   : stake_updates_{stake_updates}
   , storage_{std::move(storage)}
   , token_contract_{std::make_shared<TokenContract>()}
+  , overall_duration_{Registry::Instance().LookupMeasurement<Histogram>(
+        "ledger_executor_overall_duration")}
+  , tx_retrieve_duration_{Registry::Instance().LookupMeasurement<Histogram>(
+        "ledger_executor_tx_retrieve_duration")}
+  , validation_checks_duration_{Registry::Instance().LookupMeasurement<Histogram>(
+        "ledger_executor_validation_checks_duration")}
+  , contract_execution_duration_{Registry::Instance().LookupMeasurement<Histogram>(
+        "ledger_executor_contract_execution_duration")}
+  , transfers_duration_{Registry::Instance().LookupMeasurement<Histogram>(
+        "ledger_executor_transfers_duration")}
+  , deduct_fees_duration_{Registry::Instance().LookupMeasurement<Histogram>(
+        "ledger_executor_deduct_fees_duration")}
+  , settle_fees_duration_{
+        Registry::Instance().LookupMeasurement<Histogram>("ledger_executor_settle_fees_duration")}
 {}
 
 /**
@@ -115,6 +134,8 @@ Executor::Executor(StorageUnitPtr storage, StakeUpdateInterface *stake_updates)
 Executor::Result Executor::Execute(Digest const &digest, BlockIndex block, SliceIndex slice,
                                    BitVector const &shards)
 {
+  telemetry::FunctionTimer const timer{*overall_duration_};
+
   FETCH_LOG_DEBUG(LOGGING_NAME, "Executing tx ", byte_array::ToBase64(digest));
 
   Result result{Status::INEXPLICABLE_FAILURE};
@@ -164,14 +185,13 @@ Executor::Result Executor::Execute(Digest const &digest, BlockIndex block, Slice
     storage_cache_->Flush();
   }
 
-  // clean up any used resources
-  Cleanup();
-
   return result;
 }
 
 void Executor::SettleFees(Address const &miner, TokenAmount amount, uint32_t log2_num_lanes)
 {
+  telemetry::FunctionTimer const timer{*settle_fees_duration_};
+
   FETCH_LOG_DEBUG(LOGGING_NAME, "Settling fees");
 
   // only if there are fees to settle then update the state database
@@ -194,6 +214,8 @@ void Executor::SettleFees(Address const &miner, TokenAmount amount, uint32_t log
 
 bool Executor::RetrieveTransaction(Digest const &digest)
 {
+  telemetry::FunctionTimer const timer{*tx_retrieve_duration_};
+
   bool success{false};
 
   try
@@ -214,6 +236,8 @@ bool Executor::RetrieveTransaction(Digest const &digest)
 
 bool Executor::ValidationChecks(Result &result)
 {
+  telemetry::FunctionTimer const timer{*validation_checks_duration_};
+
   // SHORT TERM EXEMPTION - While no state file exists (and the wealth endpoint is still present)
   // this and only this contract is exempt from the pre-validation checks
   if (IsCreateWealth(*current_tx_))
@@ -257,6 +281,8 @@ bool Executor::ValidationChecks(Result &result)
 
 bool Executor::ExecuteTransactionContract(Result &result)
 {
+  telemetry::FunctionTimer const timer{*contract_execution_duration_};
+
   bool success{false};
 
   try
@@ -344,9 +370,9 @@ bool Executor::ExecuteTransactionContract(Result &result)
       uint64_t const scaled_charge =
           std::max<uint64_t>(allowed_shards_.PopCount(), 1) * base_charge;
 
-      FETCH_LOG_INFO(LOGGING_NAME, "Calculated charge for 0x", current_tx_->digest().ToHex(), ": ",
-                     scaled_charge, " (base: ", base_charge, " storage: ", storage_charge,
-                     " compute: ", compute_charge, " shards: ", allowed_shards_.PopCount(), ")");
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Calculated charge for 0x", current_tx_->digest().ToHex(), ": ",
+                      scaled_charge, " (base: ", base_charge, " storage: ", storage_charge,
+                      " compute: ", compute_charge, " shards: ", allowed_shards_.PopCount(), ")");
 
       // create wealth transactions are always free
       if (!IsCreateWealth(*current_tx_))
@@ -388,41 +414,50 @@ bool Executor::ExecuteTransactionContract(Result &result)
 
 bool Executor::ProcessTransfers(Result &result)
 {
+  telemetry::FunctionTimer const timer{*transfers_duration_};
+
   bool success{true};
 
-  // attach the token contract to the storage engine
-  StateSentinelAdapter storage_adapter{*storage_cache_, Identifier{"fetch.token"}, allowed_shards_};
-  token_contract_->Attach(storage_adapter);
-
-  // only process transfers if the previous steps have been successful
-  if (Status::SUCCESS == result.status)
+  // ensure that we have transfers to make
+  if (!current_tx_->transfers().empty())
   {
-    // make all the transfers that are necessary
-    for (auto const &transfer : current_tx_->transfers())
+    // attach the token contract to the storage engine
+    StateSentinelAdapter storage_adapter{*storage_cache_, Identifier{"fetch.token"},
+                                         allowed_shards_};
+    token_contract_->Attach(storage_adapter);
+
+    // only process transfers if the previous steps have been successful
+    if (Status::SUCCESS == result.status)
     {
-      // make the individual transfers
-      if (!token_contract_->TransferTokens(*current_tx_, transfer.to, transfer.amount))
+      // make all the transfers that are necessary
+      for (auto const &transfer : current_tx_->transfers())
       {
-        result.status = Status::TRANSFER_FAILURE;
-        success       = false;
-        break;
-      }
-      else
-      {
-        // the cost in charge units to make a transfer
-        result.charge += TRANSFER_CHARGE;
+        // make the individual transfers
+        if (!token_contract_->TransferTokens(*current_tx_, transfer.to, transfer.amount))
+        {
+          result.status = Status::TRANSFER_FAILURE;
+          success       = false;
+          break;
+        }
+        else
+        {
+          // the cost in charge units to make a transfer
+          result.charge += TRANSFER_CHARGE;
+        }
       }
     }
-  }
 
-  // detach the contract
-  token_contract_->Detach();
+    // detach the contract
+    token_contract_->Detach();
+  }
 
   return success;
 }
 
 void Executor::DeductFees(Result &result)
 {
+  telemetry::FunctionTimer const timer{*deduct_fees_duration_};
+
   // attach the token contract to the storage engine
   StateSentinelAdapter storage_adapter{*storage_cache_, Identifier{"fetch.token"}, allowed_shards_};
   token_contract_->Attach(storage_adapter);
@@ -446,11 +481,6 @@ void Executor::DeductFees(Result &result)
   token_contract_->SubtractTokens(from, result.fee);
 
   token_contract_->Detach();
-}
-
-bool Executor::Cleanup()
-{
-  return false;
 }
 
 }  // namespace ledger
