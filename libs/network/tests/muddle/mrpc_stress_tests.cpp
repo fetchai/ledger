@@ -39,7 +39,6 @@ using std::chrono::seconds;
 using fetch::byte_array::ByteArray;
 using fetch::byte_array::ConstByteArray;
 using fetch::byte_array::FromBase64;
-using fetch::byte_array::ToBase64;
 using fetch::muddle::NetworkId;
 
 class TestProtocol : public fetch::service::Protocol
