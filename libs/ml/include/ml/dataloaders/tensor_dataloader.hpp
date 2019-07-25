@@ -63,6 +63,49 @@ public:
   bool     IsDone() const override;
   void     Reset() override;
 
+  ////////////////////////////////
+  /// Serialization operations ///
+  ////////////////////////////////
+
+  template <typename S>
+  friend void Serialize(S &serializer, TensorDataLoader<LabelType, InputType> const &dl)
+  {
+    serializer << dl.data_cursor_;
+    serializer << dl.label_cursor_;
+    serializer << dl.n_samples_;
+
+    serializer << dl.data_;
+    serializer << dl.labels_;
+
+    serializer << dl.label_shape_;
+    serializer << dl.one_sample_label_shape_;
+    serializer << dl.data_shapes_;
+    serializer << dl.one_sample_data_shapes_;
+
+    serializer << dl.batch_label_dim_;
+    serializer << dl.batch_data_dim_;
+  }
+
+  template <typename S>
+  friend void Deserialize(S &serializer, TensorDataLoader<LabelType, InputType> &dl)
+  {
+
+    serializer >> dl.data_cursor_;
+    serializer >> dl.label_cursor_;
+    serializer >> dl.n_samples_;
+
+    serializer >> dl.data_;
+    serializer >> dl.labels_;
+
+    serializer >> dl.label_shape_;
+    serializer >> dl.one_sample_label_shape_;
+    serializer >> dl.data_shapes_;
+    serializer >> dl.one_sample_data_shapes_;
+
+    serializer >> dl.batch_label_dim_;
+    serializer >> dl.batch_data_dim_;
+  }
+
 protected:
   SizeType data_cursor_  = 0;
   SizeType label_cursor_ = 0;
