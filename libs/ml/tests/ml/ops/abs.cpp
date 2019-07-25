@@ -17,12 +17,13 @@
 //------------------------------------------------------------------------------
 
 #include "math/base_types.hpp"
-#include "ml/ops/abs.hpp"
-
 #include "math/tensor.hpp"
+#include "ml/ops/abs.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 
 #include "gtest/gtest.h"
+
+#include <vector>
 
 template <typename T>
 class AbsTest : public ::testing::Test

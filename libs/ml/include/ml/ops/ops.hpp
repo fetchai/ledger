@@ -45,7 +45,7 @@ public:
   virtual std::vector<ArrayType> Backward(VecTensorType const &inputs,
                                           ArrayType const &    error_signal)                 = 0;
   /*
-   * ComputeOutputShape is usually expensive function and should be used only for initialization or
+   * ComputeOutputShape is usually expensive function and should be used only for initialisation or
    * in ASSERT. On Forward you can use output.shape() and on Backward there is error_signal.shape()
    */
   virtual std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const = 0;

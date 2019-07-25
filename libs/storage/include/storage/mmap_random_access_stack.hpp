@@ -187,7 +187,7 @@ public:
    */
   void Load(std::string const &filename, bool const &create_if_not_exist = false)
   {
-    bool is_initialized = false;
+    bool is_initialised = false;
     filename_           = filename;
     file_handle_        = std::fstream(filename_, std::ios::in | std::ios::out | std::ios::binary);
     if (!file_handle_)
@@ -195,16 +195,16 @@ public:
       if (create_if_not_exist)
       {
         New(filename_);
-        is_initialized = true;
+        is_initialised = true;
       }
       else
       {
         throw StorageException("Could not load file");
       }
     }
-    if (!is_initialized)
+    if (!is_initialised)
     {
-      InitializeMapping();
+      InitialiseMapping();
       SignalFileLoaded();
     }
   }
@@ -227,7 +227,7 @@ public:
     {
       throw StorageException("Could not open file");
     }
-    InitializeMapping();
+    InitialiseMapping();
     SignalFileLoaded();
   }
   /**
@@ -575,7 +575,7 @@ private:
       std::cerr << "error: " << e.what() << std::endl;
     }
   }
-  void InitializeMapping()
+  void InitialiseMapping()
   {
     std::error_code error;
     mapped_header_ = mio::make_mmap_sink(filename_, 0, sizeof(Header), error);

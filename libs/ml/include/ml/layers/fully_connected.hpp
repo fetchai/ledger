@@ -27,9 +27,8 @@
 #include "ml/regularisers/regulariser.hpp"
 #include "ml/subgraph.hpp"
 
-#include <cmath>
 #include <functional>
-#include <random>
+#include <memory>
 #include <string>
 #include <vector>
 

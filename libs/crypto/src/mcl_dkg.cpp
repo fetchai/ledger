@@ -17,9 +17,13 @@
 //------------------------------------------------------------------------------
 
 #include "crypto/mcl_dkg.hpp"
-#include <cstddef>
-#include <iostream>
+
 #include <mcl/bn256.hpp>
+
+#include <cassert>
+#include <cstddef>
+#include <stdexcept>
+#include <unordered_map>
 
 namespace bn = mcl::bn256;
 
@@ -30,7 +34,6 @@ namespace dkg {
  * LHS and RHS functions are used for checking consistency between publicly broadcasted coefficients
  * and secret shares distributed privately
  */
-
 bn::G2 ComputeLHS(bn::G2 &tmpG, bn::G2 const &G, bn::G2 const &H, bn::Fr const &share1,
                   bn::Fr const &share2)
 {
@@ -72,7 +75,7 @@ bn::G2 ComputeRHS(uint32_t rank, std::vector<bn::G2> const &input)
   tmpG.clear();
   rhsG.clear();
   assert(!input.empty());
-  // initialize rhsG
+  // initialise rhsG
   rhsG = input[0];
   UpdateRHS(rank, rhsG, input);
   return rhsG;

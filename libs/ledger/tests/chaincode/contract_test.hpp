@@ -67,16 +67,6 @@ protected:
     storage_       = std::make_unique<StrictMockStorageUnit>();
   }
 
-  void TearDown() override
-  {
-    contract_.reset();
-    contract_address_.reset();
-    contract_name_.reset();
-    storage_.reset();
-    owner_address_.reset();
-    certificate_.reset();
-  }
-
   class PayloadPacker
   {
   public:

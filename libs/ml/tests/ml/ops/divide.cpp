@@ -16,9 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/ops/divide.hpp"
-
 #include "math/tensor.hpp"
+#include "ml/ops/divide.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 
 #include "gtest/gtest.h"

@@ -21,9 +21,9 @@
 #include "math/activation_functions/relu.hpp"
 #include "math/activation_functions/sigmoid.hpp"
 #include "math/activation_functions/softmax.hpp"
+#include "math/tensor.hpp"
 
 #include "benchmark/benchmark.h"
-#include "math/tensor.hpp"
 
 using namespace fetch::math;
 

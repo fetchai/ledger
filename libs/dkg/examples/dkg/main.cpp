@@ -19,12 +19,16 @@
 #include "core/reactor.hpp"
 #include "core/serializers/byte_array_buffer.hpp"
 #include "core/serializers/counter.hpp"
-#include "dkg/dkg_service.hpp"
-
 #include "crypto/ecdsa.hpp"
 #include "crypto/prover.hpp"
+#include "dkg/dkg_service.hpp"
 #include "network/muddle/muddle.hpp"
-#include <iostream>
+
+#include <chrono>
+#include <cstdint>
+#include <memory>
+#include <thread>
+#include <vector>
 
 using namespace fetch::network;
 using namespace fetch::crypto;
