@@ -52,8 +52,9 @@ TYPED_TEST(LeakyReluOpTest, forward_test)
 
   fetch::ml::ops::LeakyReluOp<ArrayType> op;
 
-  TypeParam prediction(op.ComputeOutputShape({data, alpha}));
-  op.Forward({data, alpha}, prediction);
+  TypeParam prediction(op.ComputeOutputShape(
+      {std::make_shared<TypeParam>(data), std::make_shared<TypeParam>(alpha)}));
+  op.Forward({std::make_shared<TypeParam>(data), std::make_shared<TypeParam>(alpha)}, prediction);
 
   // test correct values
   ASSERT_TRUE(
@@ -85,7 +86,8 @@ TYPED_TEST(LeakyReluOpTest, backward_test)
                         .Transpose();
 
   fetch::ml::ops::LeakyReluOp<ArrayType> op;
-  std::vector<ArrayType>                 prediction = op.Backward({data, alpha}, error);
+  std::vector<ArrayType>                 prediction =
+      op.Backward({std::make_shared<TypeParam>(data), std::make_shared<TypeParam>(alpha)}, error);
 
   // test correct values
   ASSERT_TRUE(prediction[0].AllClose(gt, DataType(1e-5), DataType(1e-5)));
