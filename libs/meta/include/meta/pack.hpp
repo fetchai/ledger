@@ -551,5 +551,25 @@ template<class Car, class Cadr, class... Cddr> struct IsSorted<Pack<Car, Cadr, C
 template<class Car> struct IsSorted<Pack<Car>>: std::true_type {};
 template<> struct IsSorted<Nil>: std::true_type {};
 
+// Args retrieves arguments of a template instantiation, or a function, and packs them in a Pack.
+template<class T> struct Args;
+template<class T> using ArgsT = typename Args<T>::type;
+
+template<template<class...> class Ctor, class... As> struct Args<Ctor<As...>>: Constant<Pack<As...>> {};
+
+template<class R, class... As> struct Args<R (*)(As...)>: Constant<Pack<As...>> {};
+
+template<class R, class C, class... As> struct Args<R (C::*)(As...)>: Constant<Pack<As...>> {};
+
+template<class R, class C, class... As> struct Args<R (C::*)(As...) const>: Constant<Pack<As...>> {};
+
+template<class R, class C, class... As> struct Args<R (C::*)(As...) &>: Constant<Pack<As...>> {};
+
+template<class R, class C, class... As> struct Args<R (C::*)(As...) const &>: Constant<Pack<As...>> {};
+
+template<class R, class C, class... As> struct Args<R (C::*)(As...) &&>: Constant<Pack<As...>> {};
+
+template<class R, class C, class... As> struct Args<R (C::*)(As...) const &&>: Constant<Pack<As...>> {};
+
 }  // namespace pack
 }  // namespace fetch

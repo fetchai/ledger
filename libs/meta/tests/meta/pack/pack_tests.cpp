@@ -87,6 +87,8 @@ TEST(PackTests, MemberTypes) {
 class NonConstructible {
 public:
 	NonConstructible(bool);
+	void M(char, int, NonConstructible, double);
+	void CM(char, int, NonConstructible, double) const;
 };
 
 using InputList = fetch::pack::Pack<char, int, NonConstructible, double>;
@@ -228,13 +230,15 @@ TEST(PackTests, SwitchesAndSelects) {
 		       std::false_type, char,
 		       std::false_type, int,
 		       std::true_type, NonConstructible,
-		       std::false_type, double>>, NonConstructible);
+		       std::false_type, double>>,
+		       NonConstructible);
 	ASSERT_TYPE_EQ(fetch::pack::SwitchT<fetch::pack::Pack<
 		       std::false_type, char,
 		       std::false_type, int,
 		       std::false_type, NonConstructible,
 		       std::false_type, double,
-		       InputList>>, InputList);
+		       InputList>>,
+		       InputList);
 
 	struct A {};
 	struct B {};
@@ -253,4 +257,11 @@ TEST(PackTests, Sort) {
 
 	//                                                        3  2  1  2  0  2  0  1                      0  1  2  3
 	ASSERT_TYPE_EQ(fetch::pack::UniqueSortT<fetch::pack::Pack<D, C, B, C, A, C, E, B>>, fetch::pack::Pack<A, B, C, D>);
+}
+
+TEST(PackTests, Args) {
+	ASSERT_TYPE_EQ(fetch::pack::ArgsT<std::is_constructible<char, int, NonConstructible, double>>, InputList);
+	ASSERT_TYPE_EQ(fetch::pack::ArgsT<decltype(&f)>, InputList);
+	ASSERT_TYPE_EQ(fetch::pack::ArgsT<decltype(&NonConstructible::M)>, InputList);
+	ASSERT_TYPE_EQ(fetch::pack::ArgsT<decltype(&NonConstructible::CM)>, InputList);
 }

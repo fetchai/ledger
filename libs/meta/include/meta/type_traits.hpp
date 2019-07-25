@@ -74,7 +74,7 @@ template <typename T>
 static constexpr bool IsNullPtr = std::is_null_pointer<T>::value;
 
 template <class C>
-static constexpr bool IsPOD = type_util::SatisfiesAllV<C, std::is_trivial, std::is_standard_layout>;
+static constexpr bool IsPOD = type_util::SatisfiesV<C, std::is_trivial, std::is_standard_layout>;
 
 template <typename T>
 constexpr bool IsAny8BitInteger = std::is_same<T, int8_t>::value || std::is_same<T, uint8_t>::value;

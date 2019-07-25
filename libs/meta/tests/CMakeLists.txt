@@ -11,5 +11,6 @@ include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
 setup_compiler()
 
 fetch_add_test(pack_gtest fetch-meta meta/pack)
+fetch_add_test(type_util_gtest fetch-meta meta/type_util)
 
 target_include_directories(pack_gtest PRIVATE meta)
