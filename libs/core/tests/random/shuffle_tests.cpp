@@ -17,9 +17,8 @@
 //------------------------------------------------------------------------------
 
 #include "core/random.hpp"
-#include "vectorise/fixed_point/fixed_point.hpp"
 #include "gtest/gtest.h"
-
+#include "vectorise/fixed_point/fixed_point.hpp"
 
 template <typename T>
 class ShuffleTest : public ::testing::Test
