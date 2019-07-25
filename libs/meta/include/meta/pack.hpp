@@ -503,8 +503,9 @@ constexpr char Invocable(...) noexcept;
 
 }  // namespace detail_
 
-// IsInvocable, IsNothrowInvocable and InvokeResult are limited backports of their C++17's
+// IsInvocable and InvokeResult are limited backports of their C++17's
 // namesakes. For the purpose of this header, argument packs are encapsulated in Packs.
+// IsNothrowInvocable is hardly reasonable portably implemented in C++14.
 template <class F, class P>
 struct IsInvocable;
 template <class F, class P>

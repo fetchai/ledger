@@ -26,33 +26,6 @@
 namespace fetch {
 namespace value_util {
 
-namespace detail_ {
-template <class F, typename...>
-struct IsNothrowAccumulatable;
-template <class F, typename... Seq>
-static constexpr auto IsNothrowAccumulatableV = IsNothrowAccumulatable<F, Seq...>::value;
-
-template <class F, class A, class B, class... Tail>
-struct IsNothrowAccumulatable<F, A, B, Tail...>
-{
-  enum : bool
-  {
-    value = type_util::IsNothrowInvocableV<std::add_lvalue_reference_t<F>, A, B> &&
-            IsNothrowAccumulatableV<F, type_util::InvokeResultT<F, A, B>, Tail...>
-  };
-};
-
-template <class F, class A, class B>
-struct IsNothrowAccumulatable<F, A, B> : type_util::IsNothrowInvocable<F, A, B>
-{
-};
-
-template <class F, class A>
-struct IsNothrowAccumulatable<F, A> : std::is_nothrow_move_constructible<A>
-{
-};
-}  // namespace detail_
-
 /**
  * Accumulate(f, a0, a1, a2, ..., an) returns f(f(...(f(a0, a1), a2), ...), an).
  * It is a left-fold, similar to std::accumulate, but operating on argument packs rather than
@@ -61,26 +34,24 @@ struct IsNothrowAccumulatable<F, A> : std::is_nothrow_move_constructible<A>
 
 // The zero case: the pack is empty past a0.
 template <class F, typename RV>
-constexpr auto Accumulate(F &&, RV &&rv) noexcept(detail_::IsNothrowAccumulatableV<F, RV>)
+constexpr auto Accumulate(F &&, RV &&rv)
 {
-  return rv;
+  return std::forward<RV>(rv);
 }
 
 template <class F, typename A, typename B, typename... Seq>
-constexpr auto Accumulate(F &&f, A &&a, B &&b, Seq &&... seq) noexcept(
-    detail_::IsNothrowAccumulatableV<F, A, B, Seq...>);
+constexpr auto Accumulate(F &&f, A &&a, B &&b, Seq &&... seq);
 
 // The recursion base: last step, only two values left.
 template <class F, typename A, typename B>
-constexpr auto Accumulate(F &&f, A &&a, B &&b) noexcept(detail_::IsNothrowAccumulatableV<F, A, B>)
+constexpr auto Accumulate(F &&f, A &&a, B &&b)
 {
   return std::forward<F>(f)(std::forward<A>(a), std::forward<B>(b));
 }
 
 // The generic case.
 template <class F, typename A, typename B, typename... Seq>
-constexpr auto Accumulate(F &&f, A &&a, B &&b,
-                          Seq &&... seq) noexcept(detail_::IsNothrowAccumulatableV<F, A, B, Seq...>)
+constexpr auto Accumulate(F &&f, A &&a, B &&b, Seq &&... seq)
 {
   return Accumulate(std::forward<F>(f), f(std::forward<A>(a), std::forward<B>(b)),
                     std::forward<Seq>(seq)...);
@@ -90,15 +61,13 @@ constexpr auto Accumulate(F &&f, A &&a, B &&b,
 // Since Accumulate() itself operates on packs rather than ranges,
 // there's no special overload to calculate simple sum, like in STL.
 template <typename H, typename... Ts>
-constexpr auto Sum(H &&h, Ts &&... ts) noexcept(
-    detail_::IsNothrowAccumulatableV<std::plus<void>, H, Ts...>)
+constexpr auto Sum(H &&h, Ts &&... ts)
 {
   return Accumulate(std::plus<void>{}, std::forward<H>(h), std::forward<Ts>(ts)...);
 }
 
 template <typename H, typename... Ts>
-constexpr auto Product(H &&h, Ts &&... ts) noexcept(
-    detail_::IsNothrowAccumulatableV<std::multiplies<void>, H, Ts...>)
+constexpr auto Product(H &&h, Ts &&... ts)
 {
   return Accumulate(std::multiplies<void>{}, std::forward<H>(h), std::forward<Ts>(ts)...);
 }
