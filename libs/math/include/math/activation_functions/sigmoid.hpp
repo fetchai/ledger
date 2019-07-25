@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/fundamental_operators.hpp"  // add, subtract etc.
+#include "math/fundamental_operators.hpp"
 #include "math/standard_functions/exp.hpp"
 
 namespace fetch {
@@ -64,6 +64,7 @@ ArrayType Sigmoid(ArrayType const &t)
 {
   ArrayType ret(t.shape());
   Sigmoid(t, ret);
+
   return ret;
 }
 
