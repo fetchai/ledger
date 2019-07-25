@@ -18,9 +18,9 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/const_byte_array.hpp"
+#include "core/byte_array/encoders.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "ledger/chain/transaction_serializer.hpp"
-
 namespace fetch {
 namespace serializers {
 
@@ -45,6 +45,7 @@ public:
     // extract the data from the stream
     byte_array::ConstByteArray data;
     s >> data;
+
     // create and extract the serializer
     ledger::TransactionSerializer serializer{data};
     serializer >> tx;

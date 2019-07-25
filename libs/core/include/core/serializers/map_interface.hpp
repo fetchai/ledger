@@ -62,6 +62,11 @@ public:
     serializer_ << val;
   }
 
+  MsgPackByteArrayBuffer &serializer()
+  {
+    return serializer_;
+  }
+
 private:
   MsgPackByteArrayBuffer &serializer_;
   uint64_t                size_;
@@ -206,6 +211,11 @@ public:
 
     serializer_ >> value;
     state_ = State::KEY_VALUE_NEXT;
+  }
+
+  MsgPackByteArrayBuffer &serializer()
+  {
+    return serializer_;
   }
 
 private:

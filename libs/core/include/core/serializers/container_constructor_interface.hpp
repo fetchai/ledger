@@ -85,6 +85,11 @@ public:
     return Type(serializer_, count);
   }
 
+  MsgPackByteArrayBuffer &serializer()
+  {
+    return serializer_;
+  }
+
 private:
   bool                    created_{false};
   MsgPackByteArrayBuffer &serializer_;

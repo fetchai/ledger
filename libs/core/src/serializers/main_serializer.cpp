@@ -97,12 +97,24 @@ void MsgPackByteArrayBuffer::ReadByte(uint8_t &val)
 
 void MsgPackByteArrayBuffer::ReadBytes(uint8_t *arr, uint64_t const &size)
 {
+#ifndef NDEBUG
+  if (size + pos_ > data_.size())
+  {
+    throw std::runtime_error("Attempted read exceeds buffer size.");
+  }
+#endif
   data_.ReadBytes(arr, size, pos_);
   pos_ += size;
 }
 
 void MsgPackByteArrayBuffer::ReadByteArray(byte_array::ConstByteArray &b, uint64_t const &size)
 {
+#ifndef NDEBUG
+  if (size + pos_ > data_.size())
+  {
+    throw std::runtime_error("Attempted read exceeds buffer size.");
+  }
+#endif
   b = data_.SubArray(pos_, size);
   pos_ += size;
 }

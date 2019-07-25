@@ -42,6 +42,11 @@ public:
     serializer_ << val;
   }
 
+  MsgPackByteArrayBuffer &serializer()
+  {
+    return serializer_;
+  }
+
 private:
   MsgPackByteArrayBuffer &serializer_;
   uint64_t                size_;
@@ -105,6 +110,11 @@ public:
   uint64_t size() const
   {
     return size_;
+  }
+
+  MsgPackByteArrayBuffer &serializer()
+  {
+    return serializer_;
   }
 
 private:

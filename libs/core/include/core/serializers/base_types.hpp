@@ -526,16 +526,16 @@ public:
     case CODE8:
     {
       uint8_t tmp;
-      interface.ReadBytes(reinterpret_cast<uint8_t *>(&tmp), sizeof(uint8_t));
+      interface.ReadBytes(reinterpret_cast<uint8_t *>(&tmp), sizeof(tmp));
       size = static_cast<uint32_t>(tmp);
       break;
     }
     case CODE16:
     {
       uint16_t tmp;
-      interface.ReadBytes(reinterpret_cast<uint8_t *>(&tmp), sizeof(uint16_t));
+      interface.ReadBytes(reinterpret_cast<uint8_t *>(&tmp), sizeof(tmp));
+      tmp  = platform::FromBigEndian(tmp);
       size = static_cast<uint32_t>(tmp);
-      size = platform::FromBigEndian(size);
       break;
     }
     case CODE32:
@@ -551,6 +551,7 @@ public:
       }
       size = static_cast<uint32_t>(opcode & TypeCodes::FIXED_VAL_MASK2);
     }
+
     byte_array::ByteArray arr;
     interface.ReadByteArray(arr, size);
     val = static_cast<Type>(arr);

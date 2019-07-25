@@ -40,6 +40,11 @@ public:
     serializer_.WriteBytes(arr, partial_size);
   }
 
+  MsgPackByteArrayBuffer &serializer()
+  {
+    return serializer_;
+  }
+
 private:
   MsgPackByteArrayBuffer &serializer_;
   uint64_t                size_;
@@ -110,6 +115,11 @@ public:
 
     created_ = true;
     return BinaryInterface(serializer_, count);
+  }
+
+  MsgPackByteArrayBuffer &serializer()
+  {
+    return serializer_;
   }
 
 private:
