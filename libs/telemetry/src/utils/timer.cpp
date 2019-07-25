@@ -16,45 +16,21 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/string/ends_with.hpp"
-#include "telemetry/counter.hpp"
-
-#include <ostream>
-#include <stdexcept>
-#include <string>
-#include <utility>
+#include "core/time/to_seconds.hpp"
+#include "telemetry/histogram.hpp"
+#include "telemetry/utils/timer.hpp"
 
 namespace fetch {
 namespace telemetry {
-namespace {
 
-bool ValidateName(std::string const &name)
+FunctionTimer::FunctionTimer(Histogram &histogram)
+  : histogram_{histogram}
+  , started_{Clock::now()}
+{}
+
+FunctionTimer::~FunctionTimer()
 {
-  return core::EndsWith(name, "_total");
-}
-
-}  // namespace
-
-Counter::Counter(std::string name, std::string description, Labels labels)
-  : Measurement(std::move(name), std::move(description), std::move(labels))
-{
-  if (!ValidateName(this->name()))
-  {
-    throw std::runtime_error("Incorrect counter name, must end with _total");
-  }
-}
-
-/**
- * Write the value of the metric to the stream so as to be consumed by external components
- *
- * @param stream The stream to be updated
- * @param mode The mode to be used when generating the stream
- */
-
-void Counter::ToStream(OutputStream &stream) const
-{
-  WriteHeader(stream, "counter");
-  WriteValuePrefix(stream) << counter_ << '\n';
+  histogram_.Add(ToSeconds(Clock::now() - started_));
 }
 
 }  // namespace telemetry

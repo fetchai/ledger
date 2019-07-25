@@ -64,7 +64,7 @@ void GenerateDefaultManifest(std::string const &external_address, uint16_t port,
   // register all of the lanes (storage shards)
   for (uint32_t i = 0; i < num_lanes; ++i)
   {
-    peer.Update(external_address, static_cast<uint16_t>(port + STORAGE_PORT_OFFSET + i));
+    peer.Update(external_address, static_cast<uint16_t>(port + STORAGE_PORT_OFFSET + (2 * i)));
 
     manifest.AddService(ServiceIdentifier{ServiceType::LANE, static_cast<uint16_t>(i)},
                         Manifest::Entry{Uri{peer}});
