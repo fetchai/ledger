@@ -561,6 +561,7 @@ void DistributedKeyGeneration::OnNewCoefficients(
       {
         FETCH_LOG_WARN(LOGGING_NAME, "Node ", cabinet_index_,
                        " received duplicate qual coefficients from node ", from_index);
+        return;
       }
     }
     ++A_ik_received_;
