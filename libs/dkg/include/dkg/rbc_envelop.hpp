@@ -33,14 +33,15 @@ class RBCEnvelop
 public:
   // Constructor
   RBCEnvelop() = default;
-  explicit RBCEnvelop(const RBCMessage &msg)
+  explicit RBCEnvelop(RBCMessage const &msg)
     : type_{msg.type()}
-    , payload_{msg.Serialize().data()} {};
+    , payload_{msg.Serialize().data()}
+  {}
 
   template <typename T>
   void Serialize(T &serialiser) const
   {
-    serialiser << (uint8_t)type_ << payload_;
+    serialiser << static_cast<uint8_t>(type_) << payload_;
   }
 
   template <typename T>

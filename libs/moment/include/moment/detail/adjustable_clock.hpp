@@ -31,18 +31,18 @@ public:
   /// @{
   Timestamp Now() const override
   {
-    return clock.Now() + offset;
+    return clock_.Now() + offset_;
   }
 
   void AddOffset(Duration const &duration) override
   {
-    offset += duration;
+    offset_ += duration;
   }
   /// @}
 
 private:
-  ClockType clock;
-  Duration  offset;
+  ClockType clock_;
+  Duration  offset_;
 };
 
 }  // namespace detail

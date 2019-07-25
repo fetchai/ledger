@@ -17,9 +17,12 @@
 //
 //------------------------------------------------------------------------------
 
+#include <atomic>
 #include <condition_variable>
+#include <cstddef>
 #include <list>
-#include <string>
+#include <mutex>
+#include <vector>
 
 namespace fetch {
 namespace generics {
@@ -69,17 +72,17 @@ public:
     cv_.notify_one();
   }
 
-  bool empty(void) const
+  bool empty() const
   {
     return count_.load() == 0;
   }
 
-  std::size_t size(void) const
+  std::size_t size() const
   {
     return count_.load();
   }
 
-  bool Remaining(void)
+  bool Remaining()
   {
     lock_type lock(mutex_);
     return !q_.empty();
