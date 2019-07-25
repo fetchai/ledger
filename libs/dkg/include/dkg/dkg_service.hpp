@@ -158,7 +158,7 @@ public:
     {
       assert(threshold >= static_cast<uint32_t>(cabinet.size() / 3));
     }
-    current_cabinet_   = std::move(cabinet);
+    current_cabinet_ = std::move(cabinet);
     if (threshold == std::numeric_limits<uint32_t>::max())
     {
       current_threshold_ = static_cast<uint32_t>(current_cabinet_.size() / 2 - 1);
@@ -167,7 +167,7 @@ public:
     {
       current_threshold_ = threshold;
     }
-    id_                = static_cast<uint32_t>(
+    id_ = static_cast<uint32_t>(
         std::distance(current_cabinet_.begin(), current_cabinet_.find(address_)));
     FETCH_LOG_INFO(LOGGING_NAME, "Resetting cabinet. Cabinet size: ", current_cabinet_.size(),
                    " threshold: ", threshold);
