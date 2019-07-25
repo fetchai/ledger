@@ -118,8 +118,8 @@ protected:
   virtual void BroadcastComplaints();
   virtual void BroadcastComplaintsAnswer();
   virtual void BroadcastQualCoefficients();
-  void         BroadcastQualComplaints();
-  void         BroadcastReconstructionShares();
+  virtual void BroadcastQualComplaints();
+  virtual void BroadcastReconstructionShares();
   /// @}
 
   /// @name Methods to check if enough messages have been received to trigger state transition
@@ -153,6 +153,8 @@ protected:
   void CheckComplaintAnswer(std::shared_ptr<SharesMessage> const &answer,
                             MuddleAddress const &from_id, uint32_t from_index);
   bool BuildQual();
+  std::unordered_map<MuddleAddress, std::pair<MsgShare, MsgShare>> ComputeQualComplaints();
+
   void ComputeSecretShare();
   bool RunReconstruction();
   void ComputePublicKeys();

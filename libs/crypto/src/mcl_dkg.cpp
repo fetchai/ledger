@@ -157,22 +157,20 @@ std::vector<bn::Fr> InterpolatePolynom(std::vector<bn::Fr> const &a, std::vector
 {
   size_t m = a.size();
   if ((b.size() != m) || (m == 0))
-  {
     throw std::invalid_argument("mcl_interpolate_polynom: bad m");
-  }
   std::vector<bn::Fr> prod{a}, res(m, 0);
   bn::Fr              t1, t2;
   for (size_t k = 0; k < m; k++)
   {
     t1 = 1;
-    for (std::size_t i = k - 1; i != 0; i--)
+    for (long i = k - 1; i >= 0; i--)
     {
       bn::Fr::mul(t1, t1, a[k]);
       bn::Fr::add(t1, t1, prod[i]);
     }
 
     t2 = 0;
-    for (std::size_t i = k - 1; i != 0; i--)
+    for (long i = k - 1; i >= 0; i--)
     {
       bn::Fr::mul(t2, t2, a[k]);
       bn::Fr::add(t2, t2, res[i]);
@@ -191,14 +189,12 @@ std::vector<bn::Fr> InterpolatePolynom(std::vector<bn::Fr> const &a, std::vector
     if (k < (m - 1))
     {
       if (k == 0)
-      {
         bn::Fr::neg(prod[0], prod[0]);
-      }
       else
       {
         bn::Fr::neg(t1, a[k]);
         bn::Fr::add(prod[k], t1, prod[k - 1]);
-        for (std::size_t i = k - 1; i >= 1; i--)
+        for (long i = k - 1; i >= 1; i--)
         {
           bn::Fr::mul(t2, prod[i], t1);
           bn::Fr::add(prod[i], t2, prod[i - 1]);

@@ -72,7 +72,7 @@ class QualComplaintsManager
 {
   using MuddleAddress = byte_array::ConstByteArray;
 
-  bool finished_ {false};
+  bool                    finished_{false};
   std::set<MuddleAddress> complaints_;           ///< Cabinet members we complain against
   std::set<MuddleAddress> complaints_received_;  ///< Set of cabinet members we have received a qual
                                                  ///< complaint message from
@@ -81,13 +81,13 @@ class QualComplaintsManager
 public:
   QualComplaintsManager() = default;
 
-  void        Complaints(MuddleAddress const &id);
-  void        Received(MuddleAddress const &id);
-  std::size_t ComplaintsSize() const;
-  bool        ComplaintsFind(MuddleAddress const &id) const;
-    std::set<QualComplaintsManager::MuddleAddress> Complaints() const;
-    bool        IsFinished(std::set<MuddleAddress> const &qual, MuddleAddress const &node_id);
-  void        Clear();
+  void                                           Complaints(MuddleAddress const &id);
+  void                                           Received(MuddleAddress const &id);
+  std::size_t                                    ComplaintsSize() const;
+  bool                                           ComplaintsFind(MuddleAddress const &id) const;
+  std::set<QualComplaintsManager::MuddleAddress> Complaints() const;
+  bool IsFinished(std::set<MuddleAddress> const &qual, MuddleAddress const &node_id);
+  void Clear();
 };
 
 /**
