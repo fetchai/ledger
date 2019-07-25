@@ -21,6 +21,8 @@
 namespace fetch {
 namespace dkg {
 
+constexpr char const *LOGGING_NAME = "DKGComplaints";
+
 void ComplaintsManager::ResetCabinet(uint32_t cabinet_size)
 {
   cabinet_size_        = cabinet_size;
@@ -46,7 +48,7 @@ void ComplaintsManager::Add(std::shared_ptr<ComplaintsMessage> const &msg_ptr,
   }
   else
   {
-    complaints_.insert(from_id);
+    FETCH_LOG_WARN(LOGGING_NAME, "Duplicate complaints received from node ", from_index);
     return;
   }
 
@@ -129,6 +131,12 @@ void QualComplaintsManager::Complaints(MuddleAddress const &id)
   complaints_.insert(id);
 }
 
+std::set<QualComplaintsManager::MuddleAddress> QualComplaintsManager::Complaints() const {
+  std::lock_guard<std::mutex> lock(mutex_);
+  assert(finished_ == true);
+  return complaints_;
+}
+
 void QualComplaintsManager::Received(MuddleAddress const &id)
 {
   std::lock_guard<std::mutex> lock(mutex_);
@@ -162,6 +170,7 @@ bool QualComplaintsManager::IsFinished(std::set<MuddleAddress> const &qual,
         complaints_.insert(iq);
       }
     }
+    finished_ = true;
     return true;
   }
   return false;
@@ -172,6 +181,7 @@ void QualComplaintsManager::Clear()
   std::lock_guard<std::mutex> lock{mutex_};
   complaints_.clear();
   complaints_received_.clear();
+  finished_ = false;
 }
 
 void ComplaintsAnswerManager::Init(std::set<MuddleAddress> const &complaints)
@@ -192,11 +202,19 @@ void ComplaintsAnswerManager::Add(MuddleAddress const &member)
   complaints_.insert(member);
 }
 
-void ComplaintsAnswerManager::Count(uint32_t from_index)
+bool ComplaintsAnswerManager::Count(uint32_t from_index)
 {
   std::lock_guard<std::mutex> lock{mutex_};
-  complaint_answers_received_[from_index] = true;
-  ++complaint_answers_received_counter_;
+  if (!complaint_answers_received_[from_index])
+  {
+    complaint_answers_received_[from_index] = true;
+    ++complaint_answers_received_counter_;
+    return true;
+  }
+  else
+  {
+    return false;
+  }
 }
 
 bool ComplaintsAnswerManager::IsFinished(std::set<MuddleAddress> const &cabinet, uint32_t index)
