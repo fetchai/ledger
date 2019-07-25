@@ -432,7 +432,7 @@ public:
   {
     VectorRegisterType         regs[sizeof...(args)];
     VectorRegisterIteratorType iters[sizeof...(args)];
-    InitializeVectorIterators(0, this->size(), iters, std::forward<Args>(args)...);
+    InitialiseVectorIterators(0, this->size(), iters, std::forward<Args>(args)...);
 
     VectorRegisterIteratorType self_iter(this->pointer(), this->size());
     VectorRegisterType         c(type(0)), tmp, self;
@@ -549,24 +549,24 @@ protected:
   std::size_t size_;
 
   template <typename G, typename... Args>
-  static void InitializeVectorIterators(std::size_t offset, std::size_t size,
+  static void InitialiseVectorIterators(std::size_t offset, std::size_t size,
                                         VectorRegisterIteratorType *iters, G &next,
                                         Args &&... remaining)
   {
     assert(next.padded_size() >= offset + size);
     (*iters) = VectorRegisterIteratorType(next.pointer() + offset, size);
-    InitializeVectorIterators(offset, size, iters + 1, std::forward<Args>(remaining)...);
+    InitialiseVectorIterators(offset, size, iters + 1, std::forward<Args>(remaining)...);
   }
 
   template <typename G>
-  static void InitializeVectorIterators(std::size_t offset, std::size_t size,
+  static void InitialiseVectorIterators(std::size_t offset, std::size_t size,
                                         VectorRegisterIteratorType *iters, G &next)
   {
     assert(next.padded_size() >= offset + size);
     (*iters) = VectorRegisterIteratorType(next.pointer() + offset, size);
   }
 
-  static void InitializeVectorIterators(std::size_t /*offset*/, std::size_t /*size*/,
+  static void InitialiseVectorIterators(std::size_t /*offset*/, std::size_t /*size*/,
                                         VectorRegisterIteratorType * /*iters*/)
   {}
 
@@ -634,7 +634,7 @@ public:
   {
     VectorRegisterType         regs[sizeof...(args)], c;
     VectorRegisterIteratorType iters[sizeof...(args)];
-    ConstParallelDispatcher<T>::InitializeVectorIterators(0, this->size(), iters,
+    ConstParallelDispatcher<T>::InitialiseVectorIterators(0, this->size(), iters,
                                                           std::forward<Args>(args)...);
 
     std::size_t N = this->size();
@@ -712,7 +712,7 @@ public:
     VectorRegisterType         regs[sizeof...(args)], c;
     VectorRegisterIteratorType iters[sizeof...(args)];
 
-    ConstParallelDispatcher<T>::InitializeVectorIterators(std::size_t(SFL), std::size_t(SIMDSize),
+    ConstParallelDispatcher<T>::InitialiseVectorIterators(std::size_t(SFL), std::size_t(SIMDSize),
                                                           iters, std::forward<Args>(args)...);
 
     if (SFL != SF)
@@ -773,7 +773,7 @@ public:
     VectorRegisterType         c;
     VectorRegisterIteratorType iters[sizeof...(args)];
     std::size_t                N = super_type::size();
-    ConstParallelDispatcher<T>::InitializeVectorIterators(0, N, iters, std::forward<Args>(args)...);
+    ConstParallelDispatcher<T>::InitialiseVectorIterators(0, N, iters, std::forward<Args>(args)...);
 
     for (std::size_t i = 0; i < N; i += VectorRegisterType::E_BLOCK_COUNT)
     {

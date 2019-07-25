@@ -39,7 +39,6 @@ namespace vectorise {
  * The implementation subclasses a <byte_array::ConstByteArray> such
  * one easily use this in combination with hashes etc.
  */
-
 template <uint16_t S = 256>
 class UInt
 {

@@ -22,6 +22,7 @@
 #include "variant/variant.hpp"
 
 #include <sstream>
+
 namespace fetch {
 namespace http {
 

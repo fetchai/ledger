@@ -23,6 +23,8 @@
 
 #include "gtest/gtest.h"
 
+#include <vector>
+
 template <typename T>
 class ScalerTest : public ::testing::Test
 {
