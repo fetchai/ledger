@@ -48,6 +48,7 @@ public:
     if (count < 16)
     {
       opcode = static_cast<uint8_t>(CODE_FIXED | (count & 0xF));
+      opcode = platform::ToBigEndian(opcode);
       serializer_.Allocate(sizeof(opcode));
       serializer_.WriteBytes(&opcode, sizeof(opcode));
     }
@@ -58,6 +59,7 @@ public:
       serializer_.WriteBytes(&opcode, sizeof(opcode));
 
       uint16_t size = static_cast<uint16_t>(count);
+      size = platform::ToBigEndian(size);
       serializer_.Allocate(sizeof(size));
       serializer_.WriteBytes(reinterpret_cast<uint8_t *>(&size), sizeof(size));
     }
@@ -67,8 +69,10 @@ public:
       serializer_.Allocate(sizeof(opcode));
       serializer_.WriteBytes(&opcode, sizeof(opcode));
 
-      serializer_.Allocate(sizeof(count));
-      serializer_.WriteBytes(reinterpret_cast<uint8_t *>(&count), sizeof(count));
+      uint32_t size = static_cast<uint32_t>(count);
+      size = platform::ToBigEndian(size);      
+      serializer_.Allocate(sizeof(size));
+      serializer_.WriteBytes(reinterpret_cast<uint8_t *>(&size), sizeof(size));
     }
     else
     {

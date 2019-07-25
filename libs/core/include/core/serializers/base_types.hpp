@@ -375,8 +375,9 @@ struct FloatSerializer<float, D>
   using DriverType = D;
 
   template <typename Interface>
-  static void Serialize(Interface &interface, Type const &val)
+  static void Serialize(Interface &interface, Type val)
   {
+    val = platform::ToBigEndian(val);
     uint8_t opcode = static_cast<uint8_t>(TypeCodes::FLOAT);
     interface.Allocate(sizeof(opcode) + sizeof(val));
     interface.WriteBytes(&opcode, sizeof(opcode));
@@ -394,6 +395,7 @@ struct FloatSerializer<float, D>
           std::string("expected float for deserialisation, but other type found."));
     }
     interface.ReadBytes(reinterpret_cast<uint8_t *>(&val), sizeof(val));
+    val = platform::FromBigEndian(val);    
   }
 };
 
@@ -404,8 +406,9 @@ struct FloatSerializer<double, D>
   using DriverType = D;
 
   template <typename Interface>
-  static void Serialize(Interface &interface, Type const &val)
+  static void Serialize(Interface &interface, Type val)
   {
+    val = platform::ToBigEndian(val);
     uint8_t opcode = static_cast<uint8_t>(TypeCodes::DOUBLE);
     interface.Allocate(sizeof(opcode) + sizeof(val));
     interface.WriteBytes(&opcode, sizeof(opcode));
@@ -423,6 +426,7 @@ struct FloatSerializer<double, D>
           std::string("expected double for deserialisation, but other type found."));
     }
     interface.ReadBytes(reinterpret_cast<uint8_t *>(&val), sizeof(val));
+    val = platform::FromBigEndian(val);
   }
 };
 
@@ -482,6 +486,7 @@ public:
     {
       opcode        = static_cast<uint8_t>(CODE16);
       uint16_t size = static_cast<uint16_t>(val.size());
+      size = platform::ToBigEndian(size);
 
       interface.Allocate(sizeof(opcode) + sizeof(size) + val.size());
       interface.WriteBytes(&opcode, sizeof(opcode));
@@ -491,6 +496,8 @@ public:
     {
       opcode        = static_cast<uint8_t>(CODE32);
       uint32_t size = static_cast<uint32_t>(val.size());
+      size = platform::ToBigEndian(size);
+
       interface.Allocate(sizeof(opcode) + sizeof(size) + val.size());
 
       interface.WriteBytes(&opcode, sizeof(opcode));
@@ -526,10 +533,12 @@ public:
       uint16_t tmp;
       interface.ReadBytes(reinterpret_cast<uint8_t *>(&tmp), sizeof(uint16_t));
       size = static_cast<uint32_t>(tmp);
+      size = platform::FromBigEndian(size);
       break;
     }
     case CODE32:
       interface.ReadBytes(reinterpret_cast<uint8_t *>(&size), sizeof(size));
+      size = platform::FromBigEndian(size);      
       break;
     default:  // Default CODE_FIXED
       if ((opcode & TypeCodes::FIXED_MASK2) != CODE_FIXED)

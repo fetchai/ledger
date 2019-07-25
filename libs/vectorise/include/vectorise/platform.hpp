@@ -103,6 +103,56 @@ inline int64_t FromBigEndian(int64_t x)
   return static_cast<int64_t>(__builtin_bswap64(static_cast<uint64_t>(x)));
 }
 
+
+inline float ToBigEndian(float x)
+{
+  union 
+  {
+    float value;
+    uint32_t bytes;
+  } conversion;
+  conversion.value = x;
+  conversion.bytes = __builtin_bswap32(conversion.bytes);
+  return conversion.value;
+}
+
+inline float FromBigEndian(float x)
+{
+  union 
+  {
+    float value;
+    uint32_t bytes;
+  } conversion;
+  conversion.value = x;
+  conversion.bytes = __builtin_bswap32(conversion.bytes);
+  return conversion.value;
+}
+
+
+inline double ToBigEndian(double x)
+{
+  union 
+  {
+    double value;
+    uint64_t bytes;
+  } conversion;
+  conversion.value = x;
+  conversion.bytes = __builtin_bswap64(conversion.bytes);
+  return conversion.value;
+}
+
+inline double FromBigEndian(double x)
+{
+  union 
+  {
+    double value;
+    uint64_t bytes;
+  } conversion;
+  conversion.value = x;
+  conversion.bytes = __builtin_bswap64(conversion.bytes);
+  return conversion.value;
+}
+
 struct Parallelisation
 {
   enum

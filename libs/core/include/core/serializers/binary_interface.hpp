@@ -75,6 +75,7 @@ public:
       serializer_.WriteBytes(&opcode, sizeof(opcode));
 
       uint8_t size = static_cast<uint8_t>(count);
+      size = platform::ToBigEndian(size);      
       serializer_.Allocate(sizeof(size));
       serializer_.WriteBytes(&size, sizeof(size));
     }
@@ -85,6 +86,7 @@ public:
       serializer_.WriteBytes(&opcode, sizeof(opcode));
 
       uint16_t size = static_cast<uint16_t>(count);
+      size = platform::ToBigEndian(size);      
       serializer_.Allocate(sizeof(size));
       serializer_.WriteBytes(reinterpret_cast<uint8_t *>(&size), sizeof(size));
     }
@@ -94,6 +96,8 @@ public:
       serializer_.Allocate(sizeof(opcode));
       serializer_.WriteBytes(&opcode, sizeof(opcode));
 
+      uint32_t size = static_cast<uint32_t>(count);
+      size = platform::ToBigEndian(size);      
       serializer_.Allocate(sizeof(count));
       serializer_.WriteBytes(reinterpret_cast<uint8_t *>(&count), sizeof(count));
     }
@@ -118,7 +122,7 @@ class BinaryDeserializer
 public:
   enum
   {
-    CODE8  = 0xc4,
+    CODE8  = 0xc4, // TODO(tfr): Needs to be move to central place
     CODE16 = 0xc5,
     CODE32 = 0xc6
   };
@@ -130,15 +134,30 @@ public:
     serializer_.ReadByte(opcode);
     switch (opcode)
     {
-    case CODE8:  // TODO(tfr): Fix reading.
-      serializer_.ReadBytes(reinterpret_cast<uint8_t *>(&size), sizeof(uint8_t));
+    case CODE8:  
+    {
+      uint8_t tmp;
+      serializer_.ReadBytes(reinterpret_cast<uint8_t *>(&tmp), sizeof(tmp));
+      tmp = platform::FromBigEndian(tmp);
+      size = static_cast< uint32_t >(tmp);
       break;
+    }
     case CODE16:
-      serializer_.ReadBytes(reinterpret_cast<uint8_t *>(&size), sizeof(uint16_t));
+    {
+      uint16_t tmp;
+      serializer_.ReadBytes(reinterpret_cast<uint8_t *>(&tmp), sizeof(tmp));
+      tmp = platform::FromBigEndian(tmp);
+      size = static_cast< uint32_t >(tmp);
       break;
+    }
     case CODE32:
-      serializer_.ReadBytes(reinterpret_cast<uint8_t *>(&size), sizeof(uint32_t));
+    {
+      uint32_t tmp;
+      serializer_.ReadBytes(reinterpret_cast<uint8_t *>(&tmp), sizeof(tmp));
+      tmp = platform::FromBigEndian(tmp);
+      size = static_cast< uint32_t >(tmp);
       break;
+    }
     default:
       throw SerializableException(std::string("incorrect size opcode for binary stream size."));
     }

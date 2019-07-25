@@ -70,11 +70,13 @@ public:
     {
       uint16_t tmp;
       serializer_.ReadBytes(reinterpret_cast<uint8_t *>(&tmp), sizeof(uint16_t));
+      tmp = platform::FromBigEndian(tmp);
       size = static_cast<uint32_t>(tmp);
       break;
     }
     case CODE32:
       serializer_.ReadBytes(reinterpret_cast<uint8_t *>(&size), sizeof(uint32_t));
+      size = platform::FromBigEndian(size);
       break;
     default:
       if ((opcode & TypeCodes::FIXED_MASK1) != CODE_FIXED)
