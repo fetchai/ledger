@@ -322,7 +322,7 @@ TEST(PackTests, Sort)
 
   //                                                        3  2  1  2  0  2  0  1
   ASSERT_TYPE_EQ(fetch::pack::UniqueSortT<fetch::pack::Pack<D, C, B, C, A, C, E, B>>,
-  //                               0  1  2  3
+                 //                               0  1  2  3
                  fetch::pack::Pack<A, B, C, D>);
 }
 
