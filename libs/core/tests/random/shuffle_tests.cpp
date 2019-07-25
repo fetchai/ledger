@@ -33,7 +33,7 @@ using MyTypes =
 
 TYPED_TEST_CASE(ShuffleTest, MyTypes);
 
-TYPED_TEST(ShuffleTest, basic_test)
+TYPED_TEST(ShuffleTest, lfg_test)
 {
   // fill input vector with ascending values
   std::size_t            vec_length = 10;
@@ -51,6 +51,28 @@ TYPED_TEST(ShuffleTest, basic_test)
 
   fetch::random::LaggedFibonacciGenerator<> lfg(123456789);
   fetch::random::Shuffle(lfg, input_vector, output_vector);
+
+  EXPECT_EQ(output_vector, gt);
+}
+
+TYPED_TEST(ShuffleTest, lcg_test)
+{
+  // fill input vector with ascending values
+  std::size_t            vec_length = 10;
+  std::vector<TypeParam> input_vector(vec_length);
+  for (std::size_t j = 0; j < vec_length; ++j)
+  {
+    input_vector.at(j) = static_cast<TypeParam>(j);
+  }
+  std::vector<TypeParam> output_vector(vec_length);
+  std::vector<TypeParam> gt{static_cast<TypeParam>(6), static_cast<TypeParam>(3),
+                            static_cast<TypeParam>(8), static_cast<TypeParam>(7),
+                            static_cast<TypeParam>(1), static_cast<TypeParam>(0),
+                            static_cast<TypeParam>(4), static_cast<TypeParam>(9),
+                            static_cast<TypeParam>(5), static_cast<TypeParam>(2)};
+
+  fetch::random::LinearCongruentialGenerator lcg(123456789);
+  fetch::random::Shuffle(lcg, input_vector, output_vector);
 
   EXPECT_EQ(output_vector, gt);
 }
