@@ -64,8 +64,8 @@ public:
   static void Bind(fetch::vm::Module &module)
   {
     module.CreateClassType<VMTensor>("Tensor")
-        .CreateConstuctor(&VMTensor::ConstructorFromShape)
-        .CreateSerializeDefaultConstuctor()
+        .CreateConstructor(&VMTensor::ConstructorFromShape)
+        .CreateSerializeDefaultConstructor()
         .CreateMemberFunction("at", &VMTensor::AtOne)
         .CreateMemberFunction("at", &VMTensor::AtTwo)
         .CreateMemberFunction("at", &VMTensor::AtThree)

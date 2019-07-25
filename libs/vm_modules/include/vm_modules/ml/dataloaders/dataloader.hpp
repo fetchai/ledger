@@ -18,14 +18,16 @@
 //------------------------------------------------------------------------------
 
 #include "math/tensor.hpp"
-
 #include "ml/dataloaders/commodity_dataloader.hpp"
 #include "ml/dataloaders/dataloader.hpp"
 #include "ml/dataloaders/mnist_loaders/mnist_loader.hpp"
 #include "ml/dataloaders/tensor_dataloader.hpp"
-
 #include "vm/module.hpp"
 #include "vm_modules/ml/training_pair.hpp"
+
+#include <memory>
+#include <stdexcept>
+#include <utility>
 
 namespace fetch {
 namespace vm_modules {
@@ -58,7 +60,7 @@ public:
   static void Bind(fetch::vm::Module &module)
   {
     module.CreateClassType<VMDataLoader>("DataLoader")
-        .CreateConstuctor(&VMDataLoader::Constructor)
+        .CreateConstructor(&VMDataLoader::Constructor)
         .CreateMemberFunction("addData", &VMDataLoader::AddDataByFiles)
         .CreateMemberFunction("addData", &VMDataLoader::AddDataByData)
         .CreateMemberFunction("getNext", &VMDataLoader::GetNext)

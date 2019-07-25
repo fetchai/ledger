@@ -48,7 +48,7 @@ vm::Ptr<vm::Array<T>> CreateNewPrimitiveArray(vm::VM *vm, std::vector<T> &&items
 void StructuredData::Bind(vm::Module &module)
 {
   module.CreateClassType<StructuredData>("StructuredData")
-      .CreateConstuctor(&StructuredData::Constructor)
+      .CreateConstructor(&StructuredData::Constructor)
       // Getters
       .CreateMemberFunction("getInt32", &StructuredData::GetPrimitive<int32_t>)
       .CreateMemberFunction("getInt64", &StructuredData::GetPrimitive<int64_t>)

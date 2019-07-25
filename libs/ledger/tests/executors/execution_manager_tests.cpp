@@ -17,7 +17,6 @@
 //------------------------------------------------------------------------------
 
 #include "block_configs.hpp"
-#include "core/logger.hpp"
 #include "ledger/execution_manager.hpp"
 #include "ledger/transaction_status_cache.hpp"
 #include "mock_executor.hpp"
@@ -28,8 +27,10 @@
 
 #include <algorithm>
 #include <chrono>
+#include <memory>
 #include <random>
 #include <thread>
+#include <vector>
 
 namespace {
 
@@ -47,8 +48,6 @@ protected:
   using ScheduleStatus      = ExecutionManager::ScheduleStatus;
   using State               = ExecutionManager::State;
 
-  static constexpr char const *LOGGING_NAME = "ExecutionManagerTests";
-
   void SetUp() override
   {
     BlockConfig const &config = GetParam();
@@ -60,13 +59,6 @@ protected:
     manager_ =
         std::make_shared<ExecutionManager>(config.executors, config.log2_lanes, mock_storage_,
                                            [this]() { return CreateExecutor(); }, tx_status_cache_);
-  }
-
-  void TearDown() override
-  {
-    manager_.reset();
-    executors_.clear();
-    mock_storage_.reset();
   }
 
   bool IsManagerIdle() const
@@ -177,7 +169,6 @@ TEST_P(ExecutionManagerTests, CheckIncrementalExecution)
   // generate a block with the desired lane and slice configuration
   auto block = TestBlock::Generate(config.log2_lanes, config.slices, __LINE__);
 
-  FETCH_LOG_INFO(LOGGING_NAME, "Num transactions: ", block.num_transactions);
   EXPECT_GT(block.num_transactions, 0);
 
   // start the execution manager

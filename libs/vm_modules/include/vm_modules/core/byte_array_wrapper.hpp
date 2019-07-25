@@ -25,13 +25,13 @@ namespace vm_modules {
 class ByteArrayWrapper : public fetch::vm::Object
 {
 public:
-  ByteArrayWrapper()          = delete;
-  virtual ~ByteArrayWrapper() = default;
+  ByteArrayWrapper()           = delete;
+  ~ByteArrayWrapper() override = default;
 
   static void Bind(vm::Module &module)
   {
     module.CreateClassType<ByteArrayWrapper>("Buffer")
-        .CreateConstuctor(&ByteArrayWrapper::Constructor)
+        .CreateConstructor(&ByteArrayWrapper::Constructor)
         .CreateMemberFunction("copy", &ByteArrayWrapper::Copy);
   }
 

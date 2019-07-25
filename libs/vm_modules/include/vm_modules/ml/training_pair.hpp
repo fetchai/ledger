@@ -17,6 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include <utility>
+
 namespace fetch {
 namespace vm_modules {
 namespace ml {
@@ -38,7 +40,7 @@ public:
   static void Bind(vm::Module &module)
   {
     module.CreateClassType<fetch::vm_modules::ml::VMTrainingPair>("TrainingPair")
-        .CreateConstuctor(&fetch::vm_modules::ml::VMTrainingPair::Constructor)
+        .CreateConstructor(&fetch::vm_modules::ml::VMTrainingPair::Constructor)
         .CreateMemberFunction("data", &fetch::vm_modules::ml::VMTrainingPair::data)
         .CreateMemberFunction("label", &fetch::vm_modules::ml::VMTrainingPair::label);
   }

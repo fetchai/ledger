@@ -98,7 +98,7 @@ public:
     {}
 
     template <typename ReturnType, typename... Args>
-    ClassInterface &CreateConstuctor(ReturnType (*constructor)(VM *, TypeId, Args...))
+    ClassInterface &CreateConstructor(ReturnType (*constructor)(VM *, TypeId, Args...))
     {
       TypeIndex const type_index__ = type_index_;
       TypeIndexArray  parameter_type_index_array;
@@ -124,7 +124,7 @@ public:
     }
 
     template <typename... Ts>
-    ClassInterface &CreateSerializeDefaultConstuctor(Ts... args)
+    ClassInterface &CreateSerializeDefaultConstructor(Ts... args)
     {
       TypeIndex const type_index__ = type_index_;
       TypeIndexArray  parameter_type_index_array;

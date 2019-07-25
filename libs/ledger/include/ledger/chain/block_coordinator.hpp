@@ -71,7 +71,7 @@ class StakeManagerInterface;
  *
  * - Catching up on a new block
  * - Mining / generating a new block
- * - Waiting in and idle / syncronised state
+ * - Waiting in and idle / synchronised state
  *
  *                                  ┌──────────────────┐
  *                                  │   Synchronise    │

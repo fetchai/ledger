@@ -23,6 +23,8 @@
 #include "core/serializers/stl_types.hpp"
 #include "core/serializers/type_register.hpp"
 
+#include <cstddef>
+#include <cstdint>
 #include <type_traits>
 
 namespace fetch {
