@@ -83,7 +83,7 @@ protected:
     , connection_(std::make_shared<fetch::muddle::DevNull>())
   {}
 
-  Dispatcher         dispatcher_;
+  Dispatcher         dispatcher_{NetworkId{"TEST"}, "addresss"};
   MuddleRegister     register_;
   Router             router_;
   PeerConnectionList peer_list_;
