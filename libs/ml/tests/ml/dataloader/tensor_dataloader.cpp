@@ -1,4 +1,3 @@
-
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -34,9 +33,10 @@ class TensorDataloaderTest : public ::testing::Test
 {
 };
 
-using MyTypes = ::testing::Types<fetch::math::Tensor<int>, fetch::math::Tensor<float>,
-                                 fetch::math::Tensor<double>, fetch::math::Tensor<fetch::fixed_point::FixedPoint<16, 16>,
-                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
+using MyTypes = ::testing::Types < fetch::math::Tensor<int>, fetch::math::Tensor<float>,
+      fetch::math::Tensor<double>,
+      fetch::math::Tensor<fetch::fixed_point::FixedPoint<16, 16>,
+                          fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
 TYPED_TEST_CASE(TensorDataloaderTest, MyTypes);
 
 TYPED_TEST(TensorDataloaderTest, serialize_tensor_dataloader)
@@ -46,9 +46,10 @@ TYPED_TEST(TensorDataloaderTest, serialize_tensor_dataloader)
   TypeParam data2_tensor({1, 3, 4});
 
   // generate a plausible tensor data loader
-  auto t = fetch::ml::dataloaders::TensorDataLoader<TypeParam, TypeParam>(label_tensor.shape(), {data1_tensor.shape(), data2_tensor.shape()};);
+  auto t = fetch::ml::dataloaders::TensorDataLoader<TypeParam, TypeParam>(
+      label_tensor.shape(), {data1_tensor.shape(), data2_tensor.shape()};);
 
-  fetch::serializers::ByteArrayBuffer          b;
+  fetch::serializers::ByteArrayBuffer b;
   b << t;
   b.seek(0);
   fetch::ml::dataloaders::TensorDataLoader<TypeParam, TypeParam> t2;
