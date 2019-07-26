@@ -17,10 +17,13 @@
 //------------------------------------------------------------------------------
 
 #include "network/muddle/dispatcher.hpp"
+#include "network/muddle/network_id.hpp"
 
 #include "gmock/gmock.h"
 
 #include <memory>
+
+using fetch::muddle::NetworkId;
 
 class DispatcherTests : public ::testing::Test
 {
@@ -34,7 +37,7 @@ protected:
 
   void SetUp() override
   {
-    dispatcher_ = std::make_unique<Dispatcher>();
+    dispatcher_ = std::make_unique<Dispatcher>(NetworkId{"TEST"}, "address");
   }
 
   PacketPtr CreatePacket(uint16_t service, uint16_t channel, uint16_t counter,
