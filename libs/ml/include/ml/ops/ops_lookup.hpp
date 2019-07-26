@@ -19,6 +19,11 @@
 
 #include "ml/graph.hpp"
 #include "ml/layers/fully_connected.hpp"
+#include "ml/layers/convolution_1d.hpp"
+#include "ml/layers/convolution_2d.hpp"
+#include "ml/layers/PRelu.hpp"
+#include "ml/layers/self_attention.hpp"
+#include "ml/layers/skip_gram.hpp"
 #include "ml/ops/activations/dropout.hpp"
 #include "ml/ops/activations/elu.hpp"
 #include "ml/ops/activations/leaky_relu.hpp"
@@ -249,6 +254,31 @@ void OpsLookup(
     MyAddNode<Graph<ArrayType>, typename layers::FullyConnected<ArrayType>>(g_ptr, saved_node,
                                                                             node_name, inputs);
   }
+  else if (descrip == layers::Convolution1D<ArrayType>::DESCRIPTOR)
+  {
+    MyAddNode<Graph<ArrayType>, typename layers::Convolution1D<ArrayType>>(g_ptr, saved_node,
+                                                                            node_name, inputs);
+  }
+  else if (descrip == layers::Convolution2D<ArrayType>::DESCRIPTOR)
+  {
+    MyAddNode<Graph<ArrayType>, typename layers::Convolution2D<ArrayType>>(g_ptr, saved_node,
+                                                                            node_name, inputs);
+  }
+  else if (descrip == layers::PRelu<ArrayType>::DESCRIPTOR)
+  {
+    MyAddNode<Graph<ArrayType>, typename layers::PRelu<ArrayType>>(g_ptr, saved_node,
+                                                                            node_name, inputs);
+  }
+//  else if (descrip == layers::SelfAttention<ArrayType>::DESCRIPTOR)
+//  {
+//    MyAddNode<Graph<ArrayType>, typename layers::SelfAttention<ArrayType>>(g_ptr, saved_node,
+//                                                                            node_name, inputs);
+//  }
+//  else if (descrip == layers::SkipGram<ArrayType>::DESCRIPTOR)
+//  {
+//    MyAddNode<Graph<ArrayType>, typename layers::SkipGram<ArrayType>>(g_ptr, saved_node,
+//                                                                            node_name, inputs);
+//  }
   else
   {
     throw std::runtime_error("Unknown Op type " + descrip);

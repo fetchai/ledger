@@ -41,6 +41,7 @@ public:
   using SizeType      = typename ArrayType::SizeType;
   using WeightsInit   = fetch::ml::ops::WeightsInitialisation;
   using VecTensorType = typename SubGraph<T>::VecTensorType;
+  using SPType = SubGraphSaveableParams<ArrayType>;
 
   explicit PRelu(std::uint64_t in, std::string const &name = "PRelu",
                  WeightsInit init_mode = WeightsInit::XAVIER_GLOROT)
@@ -61,6 +62,15 @@ public:
 
     this->AddInputNode(input);
     this->SetOutputNode(output);
+  }
+
+  explicit PRelu(SPType const &gs)
+    : SubGraph<ArrayType>(gs)
+  {}
+
+  std::shared_ptr<SaveableParams> GetOpSaveableParams() override
+  {
+    return SubGraph<ArrayType >::GetOpSaveableParams();
   }
 
   std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override

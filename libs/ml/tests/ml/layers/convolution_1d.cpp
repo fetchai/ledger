@@ -392,3 +392,58 @@ TYPED_TEST(Convolution1DTest, getStateDict)
   EXPECT_FLOAT_EQ(static_cast<float>(weights_ptr->At(1, 1, 1, 0)), 0.55109727f);
   EXPECT_FLOAT_EQ(static_cast<float>(weights_ptr->At(4, 2, 2, 0)), -0.97583634f);
 }
+
+TYPED_TEST(Convolution1DTest, saveparams_test)  // Use the class as a subgraph
+{
+  using DataType  = typename TypeParam::Type;
+  using ArrayType = TypeParam;
+  using SizeType  = typename TypeParam::SizeType;
+
+  SizeType const input_channels  = 3;
+  SizeType const output_channels = 5;
+  SizeType const input_height    = 3;
+  SizeType const kernel_height   = 3;
+  SizeType const output_height   = 1;
+  SizeType const stride_size     = 1;
+
+  // Generate input
+  TypeParam input(std::vector<typename TypeParam::SizeType>({input_channels, input_height, 1}));
+
+  for (SizeType i_ic{0}; i_ic < input_channels; ++i_ic)
+  {
+    for (SizeType i_i{0}; i_i < input_height; ++i_i)
+    {
+      input(i_ic, i_i, 0) = static_cast<DataType>(i_i + 1);
+    }
+  }
+
+  // Evaluate
+  fetch::ml::layers::Convolution1D<TypeParam> conv(output_channels, input_channels, kernel_height,
+                                                   stride_size);
+  conv.SetInput("Conv1D_Input", input);
+  TypeParam output = conv.Evaluate("Conv1D_Conv1D", true);
+
+  // extract saveparams
+  auto sp = conv.GetOpSaveableParams();
+  
+  // downcast to correct type
+  auto dsp = std::dynamic_pointer_cast<conv.SPType>(sp);
+
+  // serialize
+  fetch::serializers::ByteArrayBuffer b;
+  b << *dsp;
+
+  // deserialize
+  b.seek(0);
+  auto dsp2 = std::make_shared<conv.SPType>();
+  b >> *dsp2;
+  
+  // rebuild
+  fetch::ml::layers::Convolution1D<TypeParam> conv2(*dsp2);
+  
+  conv2.SetInput("Conv1D_Input", input);
+  TypeParam output2 = conv2.Evaluate("Conv1D_Conv1D", true);
+
+  ASSERT_TRUE(output.AllClose(output2, fetch::math::function_tolerance<DataType>(),
+                              fetch::math::function_tolerance<DataType>()));
+}

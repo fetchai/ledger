@@ -516,6 +516,48 @@ struct FullyConnectedSaveableParams : SubGraphSaveableParams<ArrayType>
   }
 };
 
+template <class ArrayType>
+struct ConvolutionLayerSaveableParams : SubGraphSaveableParams<ArrayType>
+{
+  using SizeType = typename ArrayType::SizeType;
+  static constexpr char const *sp_descriptor = "ConvolutionLayerSaveableParams";
+
+  SizeType kernel_size;
+  SizeType input_channels;
+  SizeType output_channels;
+  SizeType stride_size;
+
+  template <typename S>
+  friend void Serialize(S &serializer, ConvolutionLayerSaveableParams const &gsp)
+  {
+    // serialize parent class first
+    auto base_pointer = static_cast<SubGraphSaveableParams<ArrayType> const *>(&gsp);
+    Serialize(serializer, *base_pointer);
+
+    serializer << gsp.kernel_size;
+    serializer << gsp.input_channels;
+    serializer << gsp.output_channels;
+    serializer << gsp.stride_size;
+  }
+
+  template <typename S>
+  friend void Deserialize(S &serializer, ConvolutionLayerSaveableParams &gsp)
+  {
+    // deserialize parent class first
+    auto base_pointer = static_cast<SubGraphSaveableParams<ArrayType>*>(&gsp);
+    Deserialize(serializer, *base_pointer);
+
+    serializer >> gsp.kernel_size;
+    serializer >> gsp.input_channels;
+    serializer >> gsp.output_channels;
+    serializer >> gsp.stride_size;
+  }
+
+  std::string GetDescription() override
+  {
+    return sp_descriptor;
+  }
+};
 template <class S, class ArrayType>
 void SerializeIfElse(S &serializer, std::shared_ptr<SaveableParams> const &nsp)
 {
@@ -569,6 +611,10 @@ void SerializeIfElse(S &serializer, std::shared_ptr<SaveableParams> const &nsp)
   else if (next_sp_descriptor == FullyConnectedSaveableParams<ArrayType>::sp_descriptor)
   {
     SerializeHelper<S, FullyConnectedSaveableParams<ArrayType>>(serializer, nsp);
+  }
+  else if (next_sp_descriptor == ConvolutionLayerSaveableParams<ArrayType>::sp_descriptor)
+  {
+    SerializeHelper<S, ConvolutionLayerSaveableParams<ArrayType>>(serializer, nsp);
   }
   else
   {
@@ -631,6 +677,10 @@ std::shared_ptr<SaveableParams> DeserializeIfElse(S &serializer)
   else if (next_sp_descriptor == FullyConnectedSaveableParams<ArrayType>::sp_descriptor)
   {
     nsp_ptr = DeserializeHelper<S, FullyConnectedSaveableParams<ArrayType>>(serializer);
+  }
+  else if (next_sp_descriptor == ConvolutionLayerSaveableParams<ArrayType>::sp_descriptor)
+  {
+    nsp_ptr = DeserializeHelper<S, ConvolutionLayerSaveableParams<ArrayType>>(serializer);
   }
   else
   {
