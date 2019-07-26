@@ -75,9 +75,6 @@ void Softmax2DImplementation(ArrayType const &array, ArrayType &ret,
   assert(array.size() >= 2);
   assert(axis < array.size());
 
-  // Array is const and ModifyRange can't be called on ConstSlice
-  ret.Copy(array);
-
   // Prepare Slice
   SizeType              reduced_size = ret.shape().size() - 1;
   std::vector<SizeType> offsets;
@@ -97,7 +94,8 @@ void Softmax2DImplementation(ArrayType const &array, ArrayType &ret,
     offsets.at(i) = 0;
     j++;
   }
-  auto ret_slice = ret.Slice(offsets, axes);
+  auto ret_slice   = ret.Slice(offsets, axes);
+  auto array_slice = array.Slice(offsets, axes);
 
   // Iterate over all possible offsets combinations
   DataType sum(0);
@@ -120,14 +118,15 @@ void Softmax2DImplementation(ArrayType const &array, ArrayType &ret,
 
         offsets.at(i) = 0;
         ret_slice.ModifyRange(offsets.at(i), axes.at(i));
+        array_slice.ModifyRange(offsets.at(i), axes.at(i));
 
         offsets.at(i + 1)++;
       }
       else
       {
-
         // End of digit transmission
         ret_slice.ModifyRange(offsets.at(i), axes.at(i));
+        array_slice.ModifyRange(offsets.at(i), axes.at(i));
         break;
       }
     }
@@ -139,7 +138,7 @@ void Softmax2DImplementation(ArrayType const &array, ArrayType &ret,
     // Cannot call Max on a slice
     // Get maximum
     array_max = numeric_lowest<DataType>();
-    auto it1  = ret_slice.begin();
+    auto it1  = array_slice.cbegin();
     while (it1.is_valid())
     {
       if (*it1 > array_max)
@@ -150,13 +149,15 @@ void Softmax2DImplementation(ArrayType const &array, ArrayType &ret,
     }
 
     // ret=exp(array - max)
-    sum      = static_cast<DataType>(0);
-    auto it2 = ret_slice.begin();
-    while (it2.is_valid())
+    sum        = static_cast<DataType>(0);
+    auto it2_a = array_slice.cbegin();
+    auto it2_r = ret_slice.begin();
+    while (it2_a.is_valid())
     {
-      *it2 = Exp((*it2) - array_max);
-      sum += *it2;
-      ++it2;
+      *it2_r = Exp((*it2_a) - array_max);
+      sum += *it2_r;
+      ++it2_a;
+      ++it2_r;
     }
 
     // Cannot divide slice by scalar
