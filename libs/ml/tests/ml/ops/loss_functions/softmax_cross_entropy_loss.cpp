@@ -132,9 +132,6 @@ TYPED_TEST(SoftmaxCrossEntropyTest, trivial_one_dimensional_backward_test)
 
   fetch::ml::ops::SoftmaxCrossEntropyLoss<TypeParam> op;
 
-  std::cout << "pred: " << op.Backward({data1, data2}, error_signal).at(0).ToString() << std::endl;
-  std::cout << "gt:   " << gt.ToString() << std::endl;
-
   EXPECT_TRUE(
       op.Backward({data1, data2}, error_signal).at(0).AllClose(gt, DataType(1e-5), DataType(1e-5)));
 }
