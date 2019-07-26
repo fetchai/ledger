@@ -23,8 +23,8 @@
 #include "core/serializers/group_definitions.hpp"
 #include "core/serializers/main_serializer.hpp"
 #include "ledger/chain/address.hpp"
-#include "ledger/chain/proof_of_work.hpp"
 #include "ledger/chain/block.hpp"
+#include "ledger/chain/proof_of_work.hpp"
 
 #include "gtest/gtest.h"
 
@@ -39,8 +39,8 @@ namespace serializers {
 
 TEST(LedgerSerializers, address)
 {
-  std::array< uint8_t, 32 > raw_address; 
-  for(uint8_t i=0; i < raw_address.size(); ++i)
+  std::array<uint8_t, 32> raw_address;
+  for (uint8_t i = 0; i < raw_address.size(); ++i)
   {
     raw_address[i] = i;
   }
