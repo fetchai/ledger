@@ -415,6 +415,16 @@ void Graph<ArrayType>::ApplyGradients(std::vector<ArrayType> &grad)
   }
 }
 
+/**
+ * Connect the new node to the current graph by setting input and output nodes to it and saving it
+ * in the lookup table
+ * @tparam ArrayType
+ * @tparam OperationType
+ * @tparam Params
+ * @param node_name
+ * @param inputs
+ * @param op
+ */
 template <typename ArrayType>
 template <class OperationType, typename... Params>
 void Graph<ArrayType>::LinkNodesInGraph(

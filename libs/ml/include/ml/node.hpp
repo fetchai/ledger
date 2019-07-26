@@ -77,11 +77,11 @@ public:
   std::vector<std::pair<NodeInterface<T> *, ArrayType>> BackPropagateSignal(
       ArrayType const &error_signal) override;
 
-  void                                    AddInput(NodePtrType const &i) override;
-  void                                    AddOutput(NodePtrType const &o) override;
-  virtual std::vector<NodePtrType> const &GetOutputs() const override;
-  virtual void                            ResetCache(bool input_size_changed) override;
-  std::string const &                     GetNodeName() override
+  void                            AddInput(NodePtrType const &i) override;
+  void                            AddOutput(NodePtrType const &o) override;
+  std::vector<NodePtrType> const &GetOutputs() const override;
+  void                            ResetCache(bool input_size_changed) override;
+  std::string const &             GetNodeName() override
   {
     return name_;
   }

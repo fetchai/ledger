@@ -55,6 +55,17 @@ public:
   using WeightsType       = typename fetch::ml::ops::Weights<ArrayType>;
   using WeightsPtrType    = typename std::shared_ptr<WeightsType>;
 
+  /**
+   * This initializer allows weight sharing to another fully connected layer through node interface
+   * pointer.
+   * @param target_node_ptr
+   * @param in
+   * @param out
+   * @param activation_type
+   * @param regulariser
+   * @param regularisation_rate
+   * @param init_mode
+   */
   FullyConnected(NodePtrType target_node_ptr, SizeType in, SizeType out,
                  details::ActivationType activation_type = details::ActivationType::NOTHING,
                  fetch::ml::details::RegularisationType regulariser =
@@ -64,6 +75,7 @@ public:
     : in_size_(in)
     , out_size_(out)
   {
+    // since the weight is shared, we do not need to initialize the weight matrices.
     FETCH_UNUSED(init_mode);
 
     // setup overall architecture of the layer
@@ -73,6 +85,15 @@ public:
     ShareWeights(target_node_ptr);
   }
 
+  /**
+   * Normal fully connected layer constructor
+   * @param in
+   * @param out
+   * @param activation_type
+   * @param regulariser
+   * @param regularisation_rate
+   * @param init_mode
+   */
   FullyConnected(SizeType in, SizeType out,
                  details::ActivationType activation_type = details::ActivationType::NOTHING,
                  fetch::ml::details::RegularisationType regulariser =
