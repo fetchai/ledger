@@ -56,7 +56,7 @@ public:
 
     if (!this->is_training_)
     {
-      output.Copy(inputs.front().get());
+      output.Copy((*inputs.front()));
     }
     else
     {
@@ -66,7 +66,7 @@ public:
       }
 
       auto out_it = output.begin();
-      auto in_it  = inputs.front().get().cbegin();
+      auto in_it  = inputs.front()->cbegin();
       auto it     = drop_values_.begin();
       while (it.is_valid())
       {
@@ -92,8 +92,8 @@ public:
   {
     FETCH_UNUSED(inputs);
     assert(inputs.size() == 1);
-    assert(error_signal.shape() == inputs.front().get().shape());
-    assert(drop_values_.shape() == inputs.front().get().shape());
+    assert(error_signal.shape() == inputs.front()->shape());
+    assert(drop_values_.shape() == inputs.front()->shape());
     assert(this->is_training_);
 
     ArrayType return_signal{error_signal.shape()};
@@ -108,7 +108,7 @@ public:
 
   std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
   {
-    return inputs.front().get().shape();
+    return inputs.front()->shape();
   }
 
   static constexpr char const *DESCRIPTOR = "Dropout";
