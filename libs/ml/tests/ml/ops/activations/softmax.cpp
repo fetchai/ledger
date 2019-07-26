@@ -45,9 +45,6 @@ TYPED_TEST(SoftmaxTest, forward_test)
   ArrayType                          prediction(op.ComputeOutputShape({data}));
   op.Forward({data}, prediction);
 
-  std::cout << "pred:" << std::endl << prediction.ToString() << std::endl;
-  std::cout << "gt:  " << std::endl << gt.ToString() << std::endl;
-
   // test correct values
   ASSERT_TRUE(prediction.AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
 }

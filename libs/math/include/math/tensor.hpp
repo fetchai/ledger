@@ -2722,6 +2722,9 @@ typename Tensor<T, C>::TensorSlice Tensor<T, C>::TensorSlice::Slice(SizeType i, 
 template <typename T, typename C>
 void Tensor<T, C>::TensorSlice::ModifyRange(SizeType i, SizeType axis)
 {
+  assert(axis < this->tensor_.shape().size());
+  assert(i < this->tensor_.shape().at(axis));
+
   // Modify range based on specified offset i
   this->range_.at(axis).at(0) = i;
   this->range_.at(axis).at(1) = i + 1;
