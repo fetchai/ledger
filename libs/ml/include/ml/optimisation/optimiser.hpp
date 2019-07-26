@@ -21,6 +21,7 @@
 #include "math/statistics/mean.hpp"
 #include "ml/dataloaders/dataloader.hpp"
 #include "ml/graph.hpp"
+#include "ml/optimisation/learning_rate_params.hpp"
 
 #include <chrono>
 
@@ -29,27 +30,6 @@ namespace ml {
 namespace optimisers {
 
 static constexpr fetch::math::SizeType SIZE_NOT_SET = fetch::math::numeric_max<math::SizeType>();
-
-/**
- * Training annealing config
- * @tparam T
- */
-template <typename T>
-struct LearningRateParam
-{
-  using DataType = T;
-  enum class LearningRateDecay
-  {
-    EXPONENTIAL,
-    LINEAR,
-    NONE
-  };
-  LearningRateDecay mode                   = LearningRateDecay::NONE;
-  DataType          starting_learning_rate = static_cast<DataType>(0.1);
-  DataType          ending_learning_rate   = static_cast<DataType>(0.0001);
-  DataType          linear_decay_rate      = static_cast<DataType>(0.0000000000001);
-  DataType          exponential_decay_rate = static_cast<DataType>(0.999);
-};
 
 /**
  * Abstract gradient optimiser class
@@ -122,6 +102,114 @@ private:
   DataType RunImplementation(fetch::ml::dataloaders::DataLoader<ArrayType, ArrayType> &loader,
                              SizeType batch_size  = SIZE_NOT_SET,
                              SizeType subset_size = SIZE_NOT_SET);
+
+public:
+
+  /// serialisation ///
+
+  template <typename S>
+  friend void Serialize(S &serializer, Optimiser<T> const &o)
+  {
+    o.graph_.Serialize(serializer, o.graph_);
+
+    for (auto & val : o.input_node_names_)
+    {
+      serializer << val;
+    }
+
+    serializer << o.label_node_name_;
+    serializer << o.output_node_name_;
+    serializer << o.learning_rate_;
+
+    for (auto & val : o.graph_trainables_)
+    {
+      val->Serialize(serializer, val);
+    }
+    for (auto & val : o.gradients_)
+    {
+      val.Serialize(serializer, val);
+    }
+    serializer << o.epoch_;
+
+    serializer << o.loss_;
+    serializer << o.loss_sum_;
+    serializer << o.step_;
+    serializer << o.cumulative_step_;
+    o.input_.first.Serialize(serializer, o.input_.first);
+    for (auto & val : o.input_.second)
+    {
+      o.input_.second.Serialize(serializer, o.input_.second);
+    }
+    o.cur_label_.Serialize(serializer, o.cur_label_);
+    o.pred_label_.Serialize(serializer, o.pred_label_);
+    o.pred_label_.Serialize(serializer, o.pred_label_);
+
+    serializer << o.cur_time_;
+    serializer << o.start_time_;
+    serializer << o.time_span_;
+    serializer << o.stat_string_;
+
+    for (auto & val : o.batch_data_)
+    {
+      o.batch_data_.Serialize(serializer, val);
+    }
+    o.batch_labels_.Serialize(serializer, o.batch_labels_);
+
+    o.learning_rate_param_.Serialize(serializer, o.learning_rate_param_);
+  }
+
+  template <typename S>
+  friend void Deserialize(S &serializer, Optimiser<T> &o)
+  {
+
+    o.graph_.Deserialize(serializer, o.graph_);
+
+    for (auto & val : o.input_node_names_)
+    {
+      serializer >> val;
+    }
+
+    serializer >> o.label_node_name_;
+    serializer >> o.output_node_name_;
+    serializer >> o.learning_rate_;
+
+    for (auto & val : o.graph_trainables_)
+    {
+      val->Deserialize(serializer, val);
+    }
+    for (auto & val : o.gradients_)
+    {
+      val.Deserialize(serializer, val);
+    }
+    serializer >> o.epoch_;
+
+    serializer >> o.loss_;
+    serializer >> o.loss_sum_;
+    serializer >> o.step_;
+    serializer >> o.cumulative_step_;
+    o.input_.first.Deserialize(serializer, o.input_.first);
+    for (auto & val : o.input_.second)
+    {
+      o.input_.second.Deserialize(serializer, o.input_.second);
+    }
+    o.cur_label_.Deserialize(serializer, o.cur_label_);
+    o.pred_label_.Deserialize(serializer, o.pred_label_);
+    o.pred_label_.Deserialize(serializer, o.pred_label_);
+
+    serializer >> o.cur_time_;
+    serializer >> o.start_time_;
+    serializer >> o.time_span_;
+    serializer >> o.stat_string_;
+
+    for (auto & val : o.batch_data_)
+    {
+      o.batch_data_.Deserialize(serializer, val);
+    }
+    o.batch_labels_.Deserialize(serializer, o.batch_labels_);
+
+    o.learning_rate_param_.Deserialize(serializer, o.learning_rate_param_);
+  }
+
 };
 
 template <class T>
