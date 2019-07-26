@@ -19,10 +19,12 @@
 
 #include "core/byte_array/byte_array.hpp"
 #include "core/serializers/stl_types.hpp"
+#include "core/serializers/base_types.hpp"
 #include "ledger/chain/address.hpp"
 #include "ledger/chain/consensus/proof_of_work.hpp"
 #include "ledger/chain/digest.hpp"
 #include "ledger/chain/transaction_layout.hpp"
+#include "ledger/chain/transaction_layout_rpc_serializers.hpp"
 #include "ledger/dag/dag_epoch.hpp"
 
 #include <cstdint>
@@ -114,6 +116,7 @@ public:
     map.Append(BLOCK_NUMBER, body.block_number);
     map.Append(MINER, body.miner);
     map.Append(LOG2_NUM_LANES, body.log2_num_lanes);
+    map.Append(SLICES, body.slices);    
     map.Append(DAG_EPOCH, body.dag_epoch);
     map.Append(TIMESTAMP, body.timestamp);
   }
@@ -127,6 +130,7 @@ public:
     map.ExpectKeyGetValue(BLOCK_NUMBER, body.block_number);
     map.ExpectKeyGetValue(MINER, body.miner);
     map.ExpectKeyGetValue(LOG2_NUM_LANES, body.log2_num_lanes);
+    map.ExpectKeyGetValue(SLICES, body.slices);    
     map.ExpectKeyGetValue(DAG_EPOCH, body.dag_epoch);
     map.ExpectKeyGetValue(TIMESTAMP, body.timestamp);
   }
