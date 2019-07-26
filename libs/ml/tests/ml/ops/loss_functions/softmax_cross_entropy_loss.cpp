@@ -54,7 +54,7 @@ TYPED_TEST(SoftmaxCrossEntropyTest, perfect_match_forward_test)
 
   fetch::ml::ops::SoftmaxCrossEntropyLoss<TypeParam> op;
   TypeParam                                          result({1, 1});
-  op.Forward({data1, data2}, result);
+  op.Forward({std::make_shared<TypeParam>(data1), std::make_shared<TypeParam>(data2)}, result);
 
   EXPECT_EQ(result(0, 0), DataType(0));
 }
@@ -90,7 +90,7 @@ TYPED_TEST(SoftmaxCrossEntropyTest, simple_forward_test)
 
   fetch::ml::ops::SoftmaxCrossEntropyLoss<TypeParam> op;
   TypeParam                                          result({1, 1});
-  op.Forward({data1, data2}, result);
+  op.Forward({std::make_shared<TypeParam>(data1), std::make_shared<TypeParam>(data2)}, result);
 
   ASSERT_FLOAT_EQ(static_cast<float>(result(0, 0)),
                   static_cast<float>((1.4480233671411693 + 0.8925382250479597 + 1.5925382250479596 +
@@ -132,8 +132,10 @@ TYPED_TEST(SoftmaxCrossEntropyTest, trivial_one_dimensional_backward_test)
 
   fetch::ml::ops::SoftmaxCrossEntropyLoss<TypeParam> op;
 
-  EXPECT_TRUE(
-      op.Backward({data1, data2}, error_signal).at(0).AllClose(gt, DataType(1e-5), DataType(1e-5)));
+  EXPECT_TRUE(op.Backward({std::make_shared<TypeParam>(data1), std::make_shared<TypeParam>(data2)},
+                          error_signal)
+                  .at(0)
+                  .AllClose(gt, DataType(1e-5), DataType(1e-5)));
 }
 
 TYPED_TEST(SoftmaxCrossEntropyTest, backward_test)
@@ -189,6 +191,8 @@ TYPED_TEST(SoftmaxCrossEntropyTest, backward_test)
   TypeParam error_signal({1, 1});
   error_signal(0, 0) = DataType{1};
 
-  EXPECT_TRUE(
-      op.Backward({data1, data2}, error_signal).at(0).AllClose(gt, DataType(1e-7), DataType(1e-7)));
+  EXPECT_TRUE(op.Backward({std::make_shared<TypeParam>(data1), std::make_shared<TypeParam>(data2)},
+                          error_signal)
+                  .at(0)
+                  .AllClose(gt, DataType(1e-7), DataType(1e-7)));
 }
