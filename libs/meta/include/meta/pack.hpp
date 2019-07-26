@@ -441,8 +441,8 @@ struct Bind<F, Pack<Prefix...>>
   using type = F<Prefix..., Args...>;
 };
 
-// And<A, B> is lispish binary operator && on types.
-// It is a true type if both A and B are.
+// And<A, B> is a lispish binary operator && on types.
+// Its result is a true type if both A and B are.
 // A::value should be defined and convertible to bool.
 // No requirements imposed on B.
 template <class A, class B>
@@ -464,8 +464,8 @@ using All = Conjunction<TransformT<F, Pack>>;
 template <template <class...> class F, class Pack>
 static constexpr auto AllV = All<F, Pack>::value;
 
-// Or<A, B> is lispish binary operator || on types.
-// It is a true type if either A or B is.
+// Or<A, B> is a lispish binary operator || on types.
+// Its result is a true type if either A or B is.
 // A::value should be defined and convertible to bool.
 // No requirements imposed on B.
 template <class A, class B>
@@ -481,7 +481,7 @@ using DisjunctionT = typename Disjunction<Pack>::type;
 template <class Pack>
 static constexpr auto DisjunctionV = Disjunction<Pack>::value;
 
-// All<F, Pack> is a true type iff F applied to at least one element of Pack returns a true type.
+// Any<F, Pack> is a true type iff F applied to at least one element of Pack returns a true type.
 template <template <class...> class F, class Pack>
 using Any = Disjunction<TransformT<F, Pack>>;
 template <template <class...> class F, class Pack>
@@ -505,7 +505,7 @@ constexpr char Invocable(...) noexcept;
 
 // IsInvocable and InvokeResult are limited backports of their C++17's
 // namesakes. For the purpose of this header, argument packs are encapsulated in Packs.
-// IsNothrowInvocable is hardly reasonable portably implemented in C++14.
+// IsNothrowInvocable can hardly be reasonably portably implemented in C++14.
 template <class F, class P>
 struct IsInvocable;
 template <class F, class P>
