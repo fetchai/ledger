@@ -61,12 +61,6 @@ protected:
     pool_->Start();
   }
 
-  void TearDown() override
-  {
-    pool_.reset();
-    mock_.reset();
-  }
-
   bool WaitForCompletion(std::size_t min_count)
   {
     using Clock     = std::chrono::high_resolution_clock;
@@ -100,7 +94,7 @@ protected:
   ThreadPool pool_;
 };
 
-TEST_P(ThreadPoolTests, CheckBasicOperation)
+TEST_P(ThreadPoolTests, DISABLED_CheckBasicOperation)
 {
   std::size_t const work_count = 500;
 
@@ -115,7 +109,7 @@ TEST_P(ThreadPoolTests, CheckBasicOperation)
   ASSERT_TRUE(WaitForCompletion(work_count));
 }
 
-TEST_P(ThreadPoolTests, CheckFutureOperation)
+TEST_P(ThreadPoolTests, DISABLED_CheckFutureOperation)
 {
   std::size_t const work_count = 500;
 
@@ -130,7 +124,7 @@ TEST_P(ThreadPoolTests, CheckFutureOperation)
   ASSERT_TRUE(WaitForCompletion(work_count));
 }
 
-TEST_P(ThreadPoolTests, CheckIdleWorkers)
+TEST_P(ThreadPoolTests, DISABLED_CheckIdleWorkers)
 {
   static constexpr std::size_t INTERVAL_MS         = 100;
   static constexpr std::size_t EXPECTED_ITERATIONS = 20;
@@ -147,12 +141,12 @@ TEST_P(ThreadPoolTests, CheckIdleWorkers)
 
   pool_->SetIdleInterval(INTERVAL_MS);
   pool_->PostIdle([this, &log_mutex, &log]() {
-    Timepoint const now = Clock::now();
-
     // update the log
-    log_mutex.lock();
-    log.push_back(now);
-    log_mutex.unlock();
+    {
+      std::lock_guard<std::mutex> lock(log_mutex);
+      Timepoint const             now = Clock::now();
+      log.push_back(now);
+    }
 
     // update the mock
     mock_->Run();
@@ -178,7 +172,7 @@ TEST_P(ThreadPoolTests, CheckIdleWorkers)
   }
 }
 
-TEST_P(ThreadPoolTests, SaturationCheck)
+TEST_P(ThreadPoolTests, DISABLED_SaturationCheck)
 {
   std::size_t const num_threads = GetParam();
 
