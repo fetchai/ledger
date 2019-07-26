@@ -24,7 +24,6 @@
 #include "core/serializers/main_serializer.hpp"
 #include "ledger/chain/address.hpp"
 #include "ledger/chain/block.hpp"
-#include "ledger/chain/proof_of_work.hpp"
 
 #include "gtest/gtest.h"
 
