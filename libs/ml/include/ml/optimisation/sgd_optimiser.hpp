@@ -47,7 +47,6 @@ public:
 
   ~SGDOptimiser() override = default;
 
-
   template <typename S>
   friend void Serialize(S &serializer, SGDOptimiser<T> const &t)
   {
@@ -106,12 +105,14 @@ void SGDOptimiser<T>::ApplyGradients(SizeType batch_size)
   auto gradient_it  = this->gradients_.begin();
 
   // this part of the computation does not change within the while loop, so execute it once
-  DataType neg_learning_rate_div_batch_size = (-this->learning_rate_) / static_cast<DataType>(batch_size);
+  DataType neg_learning_rate_div_batch_size =
+      (-this->learning_rate_) / static_cast<DataType>(batch_size);
 
   while (gradient_it != this->gradients_.end())
   {
     // output_grad[i] = (input_grad[i] / batch_size) * -learning_rate
-    fetch::math::Multiply((*trainable_it)->get_gradients(), neg_learning_rate_div_batch_size, *gradient_it);
+    fetch::math::Multiply((*trainable_it)->get_gradients(), neg_learning_rate_div_batch_size,
+                          *gradient_it);
 
     // Apply gradient weights[i]+=output_grad[i]
     (*trainable_it)->ApplyGradient(*gradient_it);

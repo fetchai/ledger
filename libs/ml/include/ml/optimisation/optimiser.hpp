@@ -104,7 +104,6 @@ private:
                              SizeType subset_size = SIZE_NOT_SET);
 
 public:
-
   /// serialisation ///
 
   template <typename S>
@@ -112,7 +111,7 @@ public:
   {
     o.graph_.Serialize(serializer, o.graph_);
 
-    for (auto & val : o.input_node_names_)
+    for (auto &val : o.input_node_names_)
     {
       serializer << val;
     }
@@ -121,11 +120,11 @@ public:
     serializer << o.output_node_name_;
     serializer << o.learning_rate_;
 
-    for (auto & val : o.graph_trainables_)
+    for (auto &val : o.graph_trainables_)
     {
       val->Serialize(serializer, val);
     }
-    for (auto & val : o.gradients_)
+    for (auto &val : o.gradients_)
     {
       val.Serialize(serializer, val);
     }
@@ -136,7 +135,7 @@ public:
     serializer << o.step_;
     serializer << o.cumulative_step_;
     o.input_.first.Serialize(serializer, o.input_.first);
-    for (auto & val : o.input_.second)
+    for (auto &val : o.input_.second)
     {
       o.input_.second.Serialize(serializer, o.input_.second);
     }
@@ -149,7 +148,7 @@ public:
     serializer << o.time_span_;
     serializer << o.stat_string_;
 
-    for (auto & val : o.batch_data_)
+    for (auto &val : o.batch_data_)
     {
       o.batch_data_.Serialize(serializer, val);
     }
@@ -164,7 +163,7 @@ public:
 
     o.graph_.Deserialize(serializer, o.graph_);
 
-    for (auto & val : o.input_node_names_)
+    for (auto &val : o.input_node_names_)
     {
       serializer >> val;
     }
@@ -173,11 +172,11 @@ public:
     serializer >> o.output_node_name_;
     serializer >> o.learning_rate_;
 
-    for (auto & val : o.graph_trainables_)
+    for (auto &val : o.graph_trainables_)
     {
       val->Deserialize(serializer, val);
     }
-    for (auto & val : o.gradients_)
+    for (auto &val : o.gradients_)
     {
       val.Deserialize(serializer, val);
     }
@@ -188,7 +187,7 @@ public:
     serializer >> o.step_;
     serializer >> o.cumulative_step_;
     o.input_.first.Deserialize(serializer, o.input_.first);
-    for (auto & val : o.input_.second)
+    for (auto &val : o.input_.second)
     {
       o.input_.second.Deserialize(serializer, o.input_.second);
     }
@@ -201,7 +200,7 @@ public:
     serializer >> o.time_span_;
     serializer >> o.stat_string_;
 
-    for (auto & val : o.batch_data_)
+    for (auto &val : o.batch_data_)
     {
       o.batch_data_.Deserialize(serializer, val);
     }
@@ -209,7 +208,6 @@ public:
 
     o.learning_rate_param_.Deserialize(serializer, o.learning_rate_param_);
   }
-
 };
 
 template <class T>

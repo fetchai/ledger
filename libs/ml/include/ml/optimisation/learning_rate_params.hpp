@@ -27,7 +27,6 @@
 namespace fetch {
 namespace ml {
 namespace optimisers {
-
 }
 /**
  * Training annealing config
@@ -49,7 +48,6 @@ struct LearningRateParam
   DataType          linear_decay_rate      = static_cast<DataType>(0.0000000000001);
   DataType          exponential_decay_rate = static_cast<DataType>(0.999);
 
-
   template <typename S>
   friend void Serialize(S &serializer, LearningRateParam<T> const &lp)
   {
@@ -70,28 +68,26 @@ struct LearningRateParam
     serializer >> linear_decay_rate;
     serializer >> exponential_decay_rate;
 
-//    LearningRateDecay mode;
-//    DataType          starting_learning_rate;
-//    DataType          ending_learning_rate;
-//    DataType          linear_decay_rate;
-//    DataType          exponential_decay_rate;
-//
-//    serializer >> mode;
-//    serializer >> starting_learning_rate;
-//    serializer >> ending_learning_rate;
-//    serializer >> linear_decay_rate;
-//    serializer >> exponential_decay_rate;
-//
-//    lp.mode = mode;
-//    lp.starting_learning_rate = starting_learning_rate;
-//    lp.ending_learning_rate = ending_learning_rate;
-//    lp.linear_decay_rate = linear_decay_rate;
-//    lp.exponential_decay_rate = exponential_decay_rate;
+    //    LearningRateDecay mode;
+    //    DataType          starting_learning_rate;
+    //    DataType          ending_learning_rate;
+    //    DataType          linear_decay_rate;
+    //    DataType          exponential_decay_rate;
+    //
+    //    serializer >> mode;
+    //    serializer >> starting_learning_rate;
+    //    serializer >> ending_learning_rate;
+    //    serializer >> linear_decay_rate;
+    //    serializer >> exponential_decay_rate;
+    //
+    //    lp.mode = mode;
+    //    lp.starting_learning_rate = starting_learning_rate;
+    //    lp.ending_learning_rate = ending_learning_rate;
+    //    lp.linear_decay_rate = linear_decay_rate;
+    //    lp.exponential_decay_rate = exponential_decay_rate;
   }
 };
 
-
-
-}  // namespace optimisers
 }  // namespace ml
+}  // namespace fetch
 }  // namespace fetch
