@@ -76,10 +76,12 @@ public:
     else if (inputs.front()->shape().size() == 3)
     {
       assert((axis_ == 1) || (axis_ == 0));
-      ArrayType sum = return_signal.Slice(0, 1 - axis_).Copy();
+      auto sum_shape = return_signal.shape();
+      sum_shape.at(1 - axis_) = 1;
+      ArrayType sum(sum_shape);
       for (size_t i = 0; i < return_signal.shape()[2]; i++)
       {
-        auto cur_sum = ReduceSum(return_signal.Slice(i, 2).Copy().Squeeze(), 1 - axis_).View();
+        auto cur_sum = ReduceSum(return_signal.View(i).Copy(), 1 - axis_).View();
         sum.View(i).Assign(cur_sum);
       }
 
