@@ -1133,7 +1133,7 @@ typename Tensor<T, C>::Type Tensor<T, C>::operator()(SizeType const &index) cons
  * @tparam T Type
  * @tparam C Container
  * @tparam S Integral type for accessing
- * @param i index to access tensor
+ * @param index index to access tensor
  * @return data stored at indexed location
  */
 template <typename T, typename C>
@@ -1162,7 +1162,7 @@ typename std::enable_if<std::is_integral<S>::value, typename Tensor<T, C>::Type>
  * @tparam T Type
  * @tparam C Container
  * @tparam S Integral type for accessing
- * @param i index to access tensor
+ * @param index index to access tensor
  * @return data stored at indexed location
  */
 template <typename T, typename C>
@@ -2132,7 +2132,7 @@ typename Tensor<T, C>::MAJOR_ORDER Tensor<T, C>::MajorOrder() const
  * Returns a Slice that is not permitted to alter the original tensor
  * @tparam T
  * @tparam C
- * @param i
+ * @param index
  * @param axis
  * @return
  */
@@ -2156,6 +2156,14 @@ typename Tensor<T, C>::ConstSliceType Tensor<T, C>::Slice(SizeType index, SizeTy
   return ConstSliceType(*this, range, axis);
 }
 
+/**
+ * Returns a Slice along multiple dimensions that is not permitted to alter the original tensor
+ * @tparam T
+ * @tparam C
+ * @param indexes
+ * @param axes
+ * @return
+ */
 template <typename T, typename C>
 typename Tensor<T, C>::ConstSliceType Tensor<T, C>::Slice(std::vector<SizeType> indexes,
                                                           std::vector<SizeType> axes) const
@@ -2181,7 +2189,7 @@ typename Tensor<T, C>::ConstSliceType Tensor<T, C>::Slice(std::vector<SizeType> 
  * Returns a Slice of the tensor
  * @tparam T
  * @tparam C
- * @param i
+ * @param index
  * @param axis
  * @return
  */
@@ -2205,6 +2213,14 @@ typename Tensor<T, C>::TensorSlice Tensor<T, C>::Slice(SizeType index, SizeType 
   return TensorSlice(*this, range, axis);
 }
 
+/**
+ * Returns a Slice along multiple dimensions that is not permitted to alter the original tensor
+ * @tparam T
+ * @tparam C
+ * @param indexes
+ * @param axes
+ * @return
+ */
 template <typename T, typename C>
 typename Tensor<T, C>::TensorSlice Tensor<T, C>::Slice(std::vector<SizeType> indexes,
                                                        std::vector<SizeType> axes)
@@ -2683,7 +2699,7 @@ typename Tensor<T, C>::SliceIteratorType Tensor<T, C>::TensorSlice::end()
  * @tparam T Slice Type
  * @tparam C Slice ContainerType
  * @tparam STensor original tensor type
- * @param i offset
+ * @param index offset
  * @param axis
  * @return
  */
@@ -2793,7 +2809,7 @@ Tensor<T, C> Tensor<T, C>::TensorSliceImplementation<STensor>::Copy() const
  * @tparam T Slice Type
  * @tparam C Slice ContainerType
  * @tparam STensor original tensor type
- * @param i offset
+ * @param index offset
  * @param axis
  * @return
  */
