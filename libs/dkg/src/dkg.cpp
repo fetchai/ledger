@@ -39,8 +39,8 @@ DistributedKeyGeneration::DistributedKeyGeneration(
   : cabinet_{cabinet}
   , threshold_{threshold}
   , address_{std::move(address)}
-  , broadcast_callback_{std::move(broadcast_function)}
-  , rpc_callback_{std::move(rpc_function)}
+  , broadcast_function_{std::move(broadcast_function)}
+  , rpc_function_{std::move(rpc_function)}
 {
   static std::once_flag flag;
 
@@ -70,7 +70,7 @@ DistributedKeyGeneration::DistributedKeyGeneration(
  */
 void DistributedKeyGeneration::SendBroadcast(DKGEnvelope const &env)
 {
-  broadcast_callback_(env);
+  broadcast_function_(env);
 }
 
 /**
@@ -114,7 +114,7 @@ void DistributedKeyGeneration::SendShares(std::vector<bn::Fr> const &a_i,
     {
       std::pair<MsgShare, MsgShare> shares{s_ij[cabinet_index_][j].getStr(),
                                            sprime_ij[cabinet_index_][j].getStr()};
-      rpc_callback_(cab_i, shares);
+      rpc_function_(cab_i, shares);
     }
     ++j;
   }
