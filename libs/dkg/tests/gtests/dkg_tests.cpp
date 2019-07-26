@@ -433,7 +433,7 @@ struct CabinetMember
 
 void GenerateTest(uint32_t cabinet_size, uint32_t threshold, uint32_t qual_size,
                   uint32_t                                             expected_completion_size,
-                  const std::vector<std::vector<FaultyDkg::Failures>> &failures = {})
+                  const std::vector<std::vector<FaultyDkg::Failures>> &failures = {}, uint32_t num_dkg_rounds = 1)
 {
   RBC::CabinetMembers cabinet;
 
@@ -497,64 +497,56 @@ void GenerateTest(uint32_t cabinet_size, uint32_t threshold, uint32_t qual_size,
   assert(cabinet.size() == cabinet_size);
 
   // Reset cabinet
-  for (auto &member : committee)
+  for (uint32_t round_i = 0; round_i < num_dkg_rounds; ++round_i)
   {
-    member->dkg.ResetCabinet();
-    member->rbc.ResetCabinet();
-  }
-
-  // Start at DKG
-  {
-    for (auto &member : committee)
-    {
-      member->dkg.BroadcastShares();
+    for (auto &member : committee) {
+      member->dkg.ResetCabinet();
+      member->rbc.ResetCabinet();
     }
 
-    // Loop until everyone is finished with DKG
-    uint32_t pp = 0;
-    while (pp < cabinet_size)
+    // Start at DKG
     {
-      std::this_thread::sleep_for(std::chrono::seconds(5));
-      for (const auto &member : committee)
-      {
-        if (!member->dkg.finished())
-        {
-          break;
-        }
-        else
-        {
-          ++pp;
+      for (auto &member : committee) {
+        member->dkg.BroadcastShares();
+      }
+
+      // Loop until everyone is finished with DKG
+      uint32_t pp = 0;
+      while (pp < cabinet_size) {
+        std::this_thread::sleep_for(std::chrono::seconds(5));
+        for (const auto &member : committee) {
+          if (!member->dkg.finished()) {
+            break;
+          } else {
+            ++pp;
+          }
         }
       }
-    }
 
-    std::this_thread::sleep_for(std::chrono::seconds(1));
+      std::this_thread::sleep_for(std::chrono::seconds(1));
 
-    // Set DKG outputs
-    for (auto &member : committee)
-    {
-      member->SetOutput();
-    }
+      // Set DKG outputs
+      for (auto &member : committee) {
+        member->SetOutput();
+      }
 
-    // Check everyone in qual agrees on qual
-    uint32_t start_qual = cabinet_size - qual_size;
-    for (uint32_t nn = start_qual + 1; nn < cabinet_size; ++nn)
-    {
-      EXPECT_EQ(committee[start_qual]->qual_set, expected_qual);
-    }
+      // Check everyone in qual agrees on qual
+      uint32_t start_qual = cabinet_size - qual_size;
+      for (uint32_t nn = start_qual + 1; nn < cabinet_size; ++nn) {
+        EXPECT_EQ(committee[start_qual]->qual_set, expected_qual);
+      }
 
-    // Check DKG is working correctly for everyone who completes the DKG successfully
-    uint32_t start_complete = cabinet_size - expected_completion_size;
-    for (uint32_t nn = start_complete + 1; nn < cabinet_size; ++nn)
-    {
-      EXPECT_EQ(committee[start_complete]->public_key, committee[nn]->public_key);
-      EXPECT_EQ(committee[start_complete]->public_key_shares, committee[nn]->public_key_shares);
-      EXPECT_NE(committee[start_complete]->public_key_shares[start_complete],
-                committee[nn]->public_key_shares[nn]);
-      for (uint32_t qq = nn + 1; qq < cabinet_size; ++qq)
-      {
-        EXPECT_NE(committee[start_complete]->public_key_shares[nn],
-                  committee[start_complete]->public_key_shares[qq]);
+      // Check DKG is working correctly for everyone who completes the DKG successfully
+      uint32_t start_complete = cabinet_size - expected_completion_size;
+      for (uint32_t nn = start_complete + 1; nn < cabinet_size; ++nn) {
+        EXPECT_EQ(committee[start_complete]->public_key, committee[nn]->public_key);
+        EXPECT_EQ(committee[start_complete]->public_key_shares, committee[nn]->public_key_shares);
+        EXPECT_NE(committee[start_complete]->public_key_shares[start_complete],
+                  committee[nn]->public_key_shares[nn]);
+        for (uint32_t qq = nn + 1; qq < cabinet_size; ++qq) {
+          EXPECT_NE(committee[start_complete]->public_key_shares[nn],
+                    committee[start_complete]->public_key_shares[qq]);
+        }
       }
     }
   }
@@ -681,4 +673,9 @@ TEST(dkg, withold_reconstruction_shares)
   GenerateTest(4, 2, 4, 0,
                {{FaultyDkg::Failures::BAD_QUAL_COEFFICIENTS},
                 {FaultyDkg::Failures::WITHOLD_RECONSTRUCTION_SHARES}});
+}
+
+TEST(dkg, successive_dkgs)
+{
+  GenerateTest(4,1,4,4,{},4);
 }
