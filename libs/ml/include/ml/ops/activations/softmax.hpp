@@ -75,13 +75,109 @@ public:
 
       t.InlineMultiply(sum);
     }
+    // N-D softmax
     else
     {
-      throw std::runtime_error("Softmax over >= 3 dimensions not implemented");
+      MultiplyBySum(t, return_signal, axis_);
     }
 
     return_signal.InlineSubtract(t);
     return {return_signal};
+  }
+
+  /**
+   * Multiply each element of array1 by sum of values for each 1D slice of array2 in given axis
+   * @param array1
+   * @param array2
+   * @param axis
+   */
+  void MultiplyBySum(ArrayType &array1, ArrayType &array2, SizeType axis)
+  {
+    using DataType = typename ArrayType::Type;
+
+    assert(array1.size() >= 2);
+    assert(axis < array1.size());
+
+    // Prepare Slice
+    SizeType              reduced_size = array1.shape().size() - 1;
+    std::vector<SizeType> offsets;
+    offsets.resize(reduced_size);
+    std::vector<SizeType> axes;
+    axes.resize(reduced_size);
+
+    SizeType j = 0;
+    for (SizeType i = 0; i < reduced_size; i++)
+    {
+      if (j == axis)
+      {
+        j++;
+      }
+
+      axes.at(i)    = j;
+      offsets.at(i) = 0;
+      j++;
+    }
+    auto array1_slice = array1.Slice(offsets, axes);
+    auto array2_slice = array2.Slice(offsets, axes);
+
+    // Iterate over all possible offsets combinations
+    DataType sum(0);
+    bool     is_done = false;
+    while (offsets.at(offsets.size() - 1) < array1.shape().at(axes.at(axes.size() - 1)))
+    {
+
+      for (SizeType i = 0; i < offsets.size(); i++)
+      {
+
+        if (offsets.at(i) >= array1.shape().at(axes.at(i)))
+        {
+          if (i == offsets.size() - 1)
+          {
+            // Terminate counter otherwise it would overflow
+            is_done = true;
+            break;
+          }
+
+          offsets.at(i) = 0;
+          array1_slice.ModifyRange(offsets.at(i), axes.at(i));
+          array2_slice.ModifyRange(offsets.at(i), axes.at(i));
+
+          offsets.at(i + 1)++;
+        }
+        else
+        {
+          // End of digit transmission
+          array1_slice.ModifyRange(offsets.at(i), axes.at(i));
+          array2_slice.ModifyRange(offsets.at(i), axes.at(i));
+          break;
+        }
+      }
+      if (is_done)
+        break;
+
+      // Operation with Slice
+
+      // ret=exp(array - max)
+      sum      = static_cast<DataType>(0);
+      auto it1 = array2_slice.cbegin();
+      while (it1.is_valid())
+      {
+        sum += *it1;
+        ++it1;
+      }
+
+      // Cannot divide slice by scalar
+      // ret=ret/sum(ret)
+      auto it2 = array1_slice.begin();
+      while (it2.is_valid())
+      {
+        *it2 = (*it2) * sum;
+        ++it2;
+      }
+      // End operation with slice
+
+      offsets.at(0)++;
+    }
   }
 
   std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override

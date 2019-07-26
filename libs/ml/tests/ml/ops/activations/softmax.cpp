@@ -49,7 +49,7 @@ TYPED_TEST(SoftmaxTest, forward_test)
   ASSERT_TRUE(prediction.AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
 }
 
-TYPED_TEST(SoftmaxTest, forward_2d_tensor_axis_0_test)
+TYPED_TEST(SoftmaxTest, forward_2d_tensor_axis_1_test)
 {
   using DataType  = typename TypeParam::Type;
   using ArrayType = TypeParam;
@@ -94,7 +94,7 @@ TYPED_TEST(SoftmaxTest, backward_test)
   ASSERT_TRUE(prediction[0].AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
 }
 
-TYPED_TEST(SoftmaxTest, backward_2d_tensor_axis_0_test)
+TYPED_TEST(SoftmaxTest, backward_2d_tensor_axis_1_test)
 {
   using DataType  = typename TypeParam::Type;
   using ArrayType = TypeParam;
@@ -114,6 +114,78 @@ TYPED_TEST(SoftmaxTest, backward_2d_tensor_axis_0_test)
       error.Set(i, j, static_cast<DataType>(errorInput[j + 3 * i]));
       gt.Set(i, j, static_cast<DataType>(gt_input[j + 3 * i]));
     }
+  }
+
+  fetch::ml::ops::Softmax<ArrayType> op{1};
+  std::vector<ArrayType>             prediction = op.Backward({data}, error);
+
+  // test correct values
+  ASSERT_TRUE(prediction[0].AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
+}
+
+TYPED_TEST(SoftmaxTest, forward_3d_tensor_axis_1_test)
+{
+  using DataType  = typename TypeParam::Type;
+  using ArrayType = TypeParam;
+  using SizeType  = typename TypeParam::SizeType;
+
+  ArrayType           data({2, 2, 2});
+  ArrayType           error({2, 2, 2});
+  ArrayType           gt({2, 2, 2});
+  std::vector<double> data_input({1, -2, 3, -4, 5, -6, 7, -8});
+  std::vector<double> gt_input(
+      {0.119203, 0.880797, 0.880797, 0.119203, 0.119203, 0.880797, 0.880797, 0.119203});
+
+  SizeType cnt  = 0;
+  auto     it_d = data.begin();
+  auto     it_g = gt.begin();
+
+  while (it_d.is_valid())
+  {
+    *it_d = static_cast<DataType>(data_input.at(cnt));
+    *it_g = static_cast<DataType>(gt_input.at(cnt));
+
+    cnt++;
+    ++it_d;
+    ++it_g;
+  }
+
+  fetch::ml::ops::Softmax<ArrayType> op{1};
+  ArrayType                          prediction(op.ComputeOutputShape({data}));
+  op.Forward({data}, prediction);
+
+  // test correct values
+  ASSERT_TRUE(prediction.AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
+}
+
+TYPED_TEST(SoftmaxTest, backward_3d_tensor_axis_1_test)
+{
+  using DataType  = typename TypeParam::Type;
+  using ArrayType = TypeParam;
+  using SizeType  = typename TypeParam::SizeType;
+
+  ArrayType           data({2, 2, 2});
+  ArrayType           error({2, 2, 2});
+  ArrayType           gt({2, 2, 2});
+  std::vector<double> data_input({1, -2, 3, -4, 5, -6, 7, -8});
+  std::vector<double> errorInput({0, 0, 0, 0, 1, 0, 0, 0});
+  std::vector<double> gt_input({0, 0, 0, 0, 0.104994, 0, -0.104994, 0});
+
+  SizeType cnt  = 0;
+  auto     it_d = data.begin();
+  auto     it_e = error.begin();
+  auto     it_g = gt.begin();
+
+  while (it_d.is_valid())
+  {
+    *it_d = static_cast<DataType>(data_input.at(cnt));
+    *it_e = static_cast<DataType>(errorInput.at(cnt));
+    *it_g = static_cast<DataType>(gt_input.at(cnt));
+
+    cnt++;
+    ++it_d;
+    ++it_e;
+    ++it_g;
   }
 
   fetch::ml::ops::Softmax<ArrayType> op{1};
