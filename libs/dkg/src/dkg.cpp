@@ -870,7 +870,6 @@ uint32_t DistributedKeyGeneration::CabinetIndex(MuddleAddress const &other_addre
  */
 void DistributedKeyGeneration::ResetCabinet()
 {
-  assert((threshold_ * 2) < cabinet_.size());
   assert(cabinet_.find(address_) != cabinet_.end());  // We should be in the cabinet
   finished_      = false;
   state_         = State::INITIAL;
