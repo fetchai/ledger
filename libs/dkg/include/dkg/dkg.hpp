@@ -109,7 +109,7 @@ class DistributedKeyGeneration
   std::atomic<uint32_t> A_ik_received_{0};
   std::atomic<uint32_t> reconstruction_shares_received_{0};
 
-  std::unordered_map<MuddleAddress, std::pair<std::vector<uint32_t>, std::vector<bn::Fr>>>
+  std::unordered_map<MuddleAddress, std::pair<std::set<uint32_t>, std::vector<bn::Fr>>>
       reconstruction_shares;  ///< Map from id of node_i in complaints to a pair <parties which
                               ///< exposed shares of node_i, the shares that were exposed>
 
