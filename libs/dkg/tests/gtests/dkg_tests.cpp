@@ -562,12 +562,6 @@ void GenerateTest(uint32_t cabinet_size, uint32_t threshold, uint32_t qual_size,
       }
     }
   }
-
-  for (auto &member : committee)
-  {
-    member->muddle.Stop();
-  }
-  std::this_thread::sleep_for(std::chrono::seconds(1));
 }
 
 TEST(dkg, small_scale_test)
