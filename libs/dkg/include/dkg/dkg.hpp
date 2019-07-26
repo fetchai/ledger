@@ -69,9 +69,9 @@ protected:
   uint32_t const &      threshold_;  ///< Number of cooperating members required to generate keys
   MuddleAddress         address_;    ///< Our muddle address
   uint32_t              cabinet_index_;  ///< Index of our address in cabinet_
-  std::function<void(DKGEnvelope const &)> broadcast_callback_;
+  std::function<void(DKGEnvelope const &)> broadcast_function_;
   std::function<void(MuddleAddress const &, std::pair<std::string, std::string> const &)>
-                     rpc_callback_;
+                     rpc_function_;
   std::atomic<State> state_{State::INITIAL};
   std::mutex         mutex_;
 
