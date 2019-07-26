@@ -112,7 +112,13 @@ std::set<ComplaintsMessage::MuddleAddress> ComplaintsManager::ComplaintsFrom() c
 
 uint32_t ComplaintsManager::ComplaintsCount(MuddleAddress const &address)
 {
-  return complaints_counter_[address];
+  std::lock_guard<std::mutex> lock(mutex_);
+  auto iter = complaints_counter_.find(address);
+  if (iter == complaints_counter_.end())
+  {
+    return 0;
+  }
+  return complaints_counter_.at(address);
 }
 
 std::set<ComplaintsMessage::MuddleAddress> ComplaintsManager::Complaints() const
