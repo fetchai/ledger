@@ -42,6 +42,7 @@ public:
   {
     assert(inputs.size() == 2);
     assert(output.shape() == inputs.at(0)->shape());
+    // we allow addition forward as long as the second input has shape broadcastable on first input
     fetch::math::Add((*inputs.at(0)), (*inputs.at(1)), output);
   }
 
@@ -49,26 +50,38 @@ public:
                                   ArrayType const &    error_signal) override
   {
     assert(inputs.size() == 2);
-    assert(inputs.at(0)->shape().size() == inputs.at(1)->shape().size());
+    assert(inputs.at(0)->shape().size() <= 3); // we do not support input of more than 3D (including batch dims)
+    assert(inputs.at(0)->shape().size() == inputs.at(1)->shape().size()); // check if addition is broadcastable
     assert(inputs.at(0)->shape() == error_signal.shape());
-    assert(error_signal.shape() == ComputeOutputShape(inputs));
-
-    // Test if input is broadcastable by batch dimension
-    assert(inputs.at(1)->shape().at(inputs.at(1)->shape().size() - 1) == 1);
-    for (SizeType i{0}; i < inputs.at(0)->shape().size() - 1; i++)
-    {
-      assert(inputs.at(0)->shape().at(i) == inputs.at(1)->shape().at(i));
-    }
-
-    if (inputs.at(0)->shape() == inputs.at(1)->shape())
-    {
-      return {error_signal, error_signal};
-    }
-    else
-    {
-      SizeType batch_dimension = inputs.at(0)->shape().size() - 1;
-      return {error_signal, fetch::math::ReduceSum(error_signal, batch_dimension)};
-    }
+	
+	  if (inputs.at(0)->shape() == inputs.at(1)->shape())
+	  {
+		  return {error_signal, error_signal};
+	  }else if(inputs.at(1)->size() == 1) {
+		  // if second input is a scalar
+		  auto second_error_signal = ArrayType(inputs.at(1)->shape().at(0));
+		  fetch::math::Sum(error_signal, *second_error_signal.begin());
+		  return {error_signal, second_error_signal};
+	  }
+    else{
+		  // since the shape is not compatible, then the second input must have size 1 in batch dims
+		  SizeType batch_dimension = inputs.at(0)->shape().size() - 1;
+		  assert(inputs.at(1)->shape().at(batch_dimension) == 1);
+		  if (inputs.at(1)->shape().size() == 2){
+		  	// the bias addition case
+			  return {error_signal, fetch::math::ReduceSum(error_signal, batch_dimension)};
+		  }else{ // in the case where we have three dims
+					// We only support backward broadcast through shape (N, 1, 1)
+					assert(inputs.at(1)->shape(1) == 1);
+					
+					ArrayType error_sum({inputs.at(1)->shape(0), 1});
+					for(SizeType batch=0; batch < inputs.at(0)->shape(batch_dimension); batch++){
+						error_sum += fetch::math::ReduceSum(inputs.at(0)->View(batch).Copy(), SizeType(1));
+					}
+					error_sum.Reshape(inputs.at(1)->shape());
+			    return {error_signal, error_sum};
+		    }
+		  }
   }
 
   std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override

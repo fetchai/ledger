@@ -27,24 +27,18 @@ class LayerNormTest : public ::testing::Test
 {
 };
 
-using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
-                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
+using MyTypes = ::testing::Types<fetch::math::Tensor<float>>;
 TYPED_TEST_CASE(LayerNormTest, MyTypes);
 
 TYPED_TEST(LayerNormTest, broadcast_test)
 {
-	using ArrayType = typename fetch::math::Tensor<float>;
+	using ArrayType = TypeParam;
 	using DataType = float;
 	
 	auto a = ArrayType({3, 4});
 	a.Fill(DataType(2));
-	auto b = ArrayType({3, 1});
-	b.Fill(DataType(3));
-	auto c = ArrayType({3});
-	c.Fill(DataType(3));
-	
-	ArrayType d;
-	fetch::math::implementations::Multiply(a, c, d);
-	
-	std::cout << "d.ToString(): " << d.ToString() << std::endl;
+	auto b = a.View(0).Copy().Squeeze();
+
+	std::cout << "out: \n" << a.ToString() << std::endl;
+	std::cout << "out: \n" << b.ToString() << std::endl;
 }
