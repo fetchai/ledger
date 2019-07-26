@@ -160,7 +160,9 @@ std::vector<bn::Fr> InterpolatePolynom(std::vector<bn::Fr> const &a, std::vector
 {
   size_t m = a.size();
   if ((b.size() != m) || (m == 0))
+  {
     throw std::invalid_argument("mcl_interpolate_polynom: bad m");
+  }
   std::vector<bn::Fr> prod{a}, res(m, 0);
   bn::Fr              t1, t2;
   for (size_t k = 0; k < m; k++)
@@ -192,7 +194,9 @@ std::vector<bn::Fr> InterpolatePolynom(std::vector<bn::Fr> const &a, std::vector
     if (k < (m - 1))
     {
       if (k == 0)
+      {
         bn::Fr::neg(prod[0], prod[0]);
+      }
       else
       {
         bn::Fr::neg(t1, a[k]);
