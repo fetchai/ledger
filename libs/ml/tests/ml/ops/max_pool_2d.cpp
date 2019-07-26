@@ -71,8 +71,8 @@ TYPED_TEST(MaxPool2DTest, forward_test_3_2)
 
   fetch::ml::ops::MaxPool2D<ArrayType> op(3, 2);
 
-  ArrayType prediction(op.ComputeOutputShape({data}));
-  op.Forward({data}, prediction);
+  ArrayType prediction(op.ComputeOutputShape({std::make_shared<const ArrayType>(data)}));
+  op.Forward({std::make_shared<const ArrayType>(data)}, prediction);
 
   // test correct values
   ASSERT_TRUE(prediction.AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
@@ -121,8 +121,8 @@ TYPED_TEST(MaxPool2DTest, forward_2_channels_test_3_2)
   }
 
   fetch::ml::ops::MaxPool2D<ArrayType> op(3, 2);
-  ArrayType                            prediction(op.ComputeOutputShape({data}));
-  op.Forward({data}, prediction);
+  ArrayType prediction(op.ComputeOutputShape({std::make_shared<const ArrayType>(data)}));
+  op.Forward({std::make_shared<const ArrayType>(data)}, prediction);
 
   // test correct values
   ASSERT_TRUE(prediction.AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
@@ -167,7 +167,7 @@ TYPED_TEST(MaxPool2DTest, backward_test)
   gt(0, 4, 4, 0) = DataType{3};
 
   fetch::ml::ops::MaxPool2D<ArrayType> op(3, 2);
-  std::vector<ArrayType>               prediction = op.Backward({data}, error);
+  std::vector<ArrayType> prediction = op.Backward({std::make_shared<const ArrayType>(data)}, error);
 
   // test correct values
   ASSERT_TRUE(prediction[0].AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
@@ -223,7 +223,7 @@ TYPED_TEST(MaxPool2DTest, backward_2_channels_test)
   gt(1, 4, 4, 0) = DataType{6};
 
   fetch::ml::ops::MaxPool2D<ArrayType> op(3, 2);
-  std::vector<ArrayType>               prediction = op.Backward({data}, error);
+  std::vector<ArrayType> prediction = op.Backward({std::make_shared<const ArrayType>(data)}, error);
 
   // test correct values
   ASSERT_TRUE(prediction[0].AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));

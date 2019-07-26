@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "lcg.hpp"
+
 #include <cstdint>
 #include <limits>
 #include <vector>

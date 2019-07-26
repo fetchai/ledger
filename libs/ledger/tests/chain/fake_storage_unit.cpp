@@ -16,13 +16,15 @@
 //
 //------------------------------------------------------------------------------
 
-#include "fake_storage_unit.hpp"
-
 #include "core/byte_array/byte_array.hpp"
 #include "core/macros.hpp"
 #include "crypto/sha256.hpp"
+#include "fake_storage_unit.hpp"
 
 #include <algorithm>
+#include <cassert>
+#include <memory>
+#include <stdexcept>
 
 FakeStorageUnit::Document FakeStorageUnit::Get(ResourceAddress const &key)
 {
@@ -158,7 +160,7 @@ bool FakeStorageUnit::RevertToHash(Hash const &hash, uint64_t index)
     // sanity check
     if (state_history_.find(hash) == state_history_.end())
     {
-      throw std::runtime_error("Syncronisation issue between map and stack");
+      throw std::runtime_error("Synchronisation issue between map and stack");
     }
 
     // perform the reverting options

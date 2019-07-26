@@ -89,18 +89,18 @@ public:
     }
 
     DataType alpha = this->is_training_ ? random_value_ : bounds_mean_;
-    fetch::math::LeakyRelu(inputs.front().get(), alpha, output);
+    fetch::math::LeakyRelu((*inputs.front()), alpha, output);
   }
 
   std::vector<ArrayType> Backward(VecTensorType const &inputs,
                                   ArrayType const &    error_signal) override
   {
     assert(inputs.size() == 1);
-    assert(inputs.front().get().shape() == error_signal.shape());
+    assert(inputs.front()->shape() == error_signal.shape());
     DataType  zero{0};
     DataType  one{1};
     ArrayType ret{error_signal.shape()};
-    ArrayType t{inputs.front().get().shape()};
+    ArrayType t{inputs.front()->shape()};
 
     DataType alpha = this->is_training_ ? random_value_ : bounds_mean_;
 
@@ -133,7 +133,7 @@ public:
 
   std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
   {
-    return inputs.front().get().shape();
+    return inputs.front()->shape();
   }
 
   static constexpr char const *DESCRIPTOR = "RandomizedRelu";

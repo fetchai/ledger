@@ -61,18 +61,18 @@ public:
   void Forward(VecTensorType const &inputs, ArrayType &output) override
   {
     assert(inputs.size() == 1);
-    fetch::math::LeakyRelu(inputs.front().get(), a_, output);
+    fetch::math::LeakyRelu((*inputs.front()), a_, output);
   }
 
   std::vector<ArrayType> Backward(VecTensorType const &inputs,
                                   ArrayType const &    error_signal) override
   {
     assert(inputs.size() == 1);
-    assert(inputs.front().get().shape() == error_signal.shape());
+    assert(inputs.front()->shape() == error_signal.shape());
     DataType  zero{0};
     DataType  one{1};
     ArrayType ret{error_signal.shape()};
-    ArrayType t{inputs.front().get().shape()};
+    ArrayType t{inputs.front()->shape()};
 
     // gradient of leaky relu function is a where x<0; and 1.0 where x>=0
     this->Forward(inputs, t);
@@ -103,7 +103,7 @@ public:
 
   std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
   {
-    return inputs.front().get().shape();
+    return inputs.front()->shape();
   }
 
   static constexpr char const *DESCRIPTOR = "LeakyRelu";

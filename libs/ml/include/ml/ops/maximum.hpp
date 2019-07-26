@@ -61,10 +61,10 @@ public:
   void Forward(VecTensorType const &inputs, ArrayType &output) override
   {
     assert(inputs.size() == 2);
-    assert(inputs.at(0).get().size() == inputs.at(1).get().size());
+    assert(inputs.at(0)->size() == inputs.at(1)->size());
     assert(output.shape() == this->ComputeOutputShape(inputs));
 
-    fetch::math::Maximum(inputs[0].get(), inputs[1].get(), output);
+    fetch::math::Maximum((*inputs.at(0)), (*inputs.at(1)), output);
   }
 
   /**
@@ -76,14 +76,14 @@ public:
                                   ArrayType const &    error_signal) override
   {
     assert(inputs.size() == 2);
-    assert(inputs.at(0).get().size() == inputs.at(1).get().size());
-    assert(error_signal.size() == inputs.at(1).get().size());
+    assert(inputs.at(0)->size() == inputs.at(1)->size());
+    assert(error_signal.size() == inputs.at(1)->size());
 
-    ArrayType return_signal_1(inputs.at(0).get().shape());
-    ArrayType return_signal_2(inputs.at(1).get().shape());
+    ArrayType return_signal_1(inputs.at(0)->shape());
+    ArrayType return_signal_2(inputs.at(1)->shape());
 
-    auto a_it   = inputs.at(0).get().cbegin();
-    auto b_it   = inputs.at(1).get().cbegin();
+    auto a_it   = inputs.at(0)->cbegin();
+    auto b_it   = inputs.at(1)->cbegin();
     auto err_it = error_signal.cbegin();
     auto r_1_it = return_signal_1.begin();
     auto r_2_it = return_signal_2.begin();
@@ -110,7 +110,7 @@ public:
 
   std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
   {
-    return inputs.front().get().shape();
+    return inputs.front()->shape();
   }
 
   static constexpr char const *DESCRIPTOR = "Maximum";

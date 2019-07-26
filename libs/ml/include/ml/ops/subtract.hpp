@@ -55,10 +55,10 @@ public:
   void Forward(VecTensorType const &inputs, ArrayType &output) override
   {
     assert(inputs.size() == 2);
-    assert(inputs.at(0).get().size() == inputs.at(1).get().size());
+    assert(inputs.at(0)->size() == inputs.at(1)->size());
     assert(output.shape() == this->ComputeOutputShape(inputs));
 
-    fetch::math::Subtract(inputs[0].get(), inputs[1].get(), output);
+    fetch::math::Subtract((*inputs.at(0)), (*inputs.at(1)), output);
   }
 
   std::vector<ArrayType> Backward(VecTensorType const &inputs,
@@ -66,15 +66,15 @@ public:
   {
     FETCH_UNUSED(inputs);
     assert(inputs.size() == 2);
-    assert(inputs.at(0).get().size() == inputs.at(1).get().size());
-    assert(error_signal.size() == inputs.at(1).get().size());
+    assert(inputs.at(0)->size() == inputs.at(1)->size());
+    assert(error_signal.size() == inputs.at(1)->size());
 
     return {error_signal, fetch::math::Multiply(error_signal, DataType{-1})};
   }
 
   std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
   {
-    return inputs.front().get().shape();
+    return inputs.front()->shape();
   }
 
   static constexpr char const *DESCRIPTOR = "Subtract";

@@ -36,10 +36,11 @@ template <class T>
 class PRelu : public SubGraph<T>
 {
 public:
-  using ArrayType    = T;
-  using ArrayPtrType = std::shared_ptr<ArrayType>;
-  using SizeType     = typename ArrayType::SizeType;
-  using WeightsInit  = fetch::ml::ops::WeightsInitialisation;
+  using ArrayType     = T;
+  using ArrayPtrType  = std::shared_ptr<ArrayType>;
+  using SizeType      = typename ArrayType::SizeType;
+  using WeightsInit   = fetch::ml::ops::WeightsInitialisation;
+  using VecTensorType = typename SubGraph<T>::VecTensorType;
 
   explicit PRelu(std::uint64_t in, std::string const &name = "PRelu",
                  WeightsInit init_mode = WeightsInit::XAVIER_GLOROT)
@@ -62,15 +63,9 @@ public:
     this->SetOutputNode(output);
   }
 
-  std::shared_ptr<SaveableParams> GetOpSaveableParams() override
+  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
   {
-    throw std::runtime_error("This shouldn't be called!");
-  }
-
-  std::vector<SizeType> ComputeOutputShape(
-      std::vector<std::reference_wrapper<ArrayType const>> const &inputs) const override
-  {
-    return {inputs.at(0).get().shape()};
+    return {inputs.at(0)->shape()};
   }
 
   static constexpr char const *DESCRIPTOR = "ParametricRelu";

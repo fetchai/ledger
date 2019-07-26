@@ -127,7 +127,7 @@ CounterMapPtr Registry::CreateCounterMap(std::string name, std::string descripti
  * @param buckets The set of buckets to be used
  * @param name The name of the metric
  * @param description The description of the metric
- * @param labels The labels assoicated with the metric
+ * @param labels The labels associated with the metric
  * @return The pointer to the created metric if successful, otherwise a nullptr
  */
 HistogramPtr Registry::CreateHistogram(std::initializer_list<double> const &buckets,
@@ -180,10 +180,12 @@ HistogramMapPtr Registry::CreateHistogramMap(std::vector<double> buckets, std::s
  */
 void Registry::Collect(std::ostream &stream)
 {
+  OutputStream telemetry_stream{stream};
+
   LockGuard guard(lock_);
   for (auto const &measurement : measurements_)
   {
-    measurement->ToStream(stream, Measurement::StreamMode::FULL);
+    measurement->ToStream(telemetry_stream);
   }
 }
 

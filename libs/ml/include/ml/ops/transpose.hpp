@@ -60,13 +60,13 @@ public:
     assert(inputs.size() == 1);
     assert(output.shape() == this->ComputeOutputShape(inputs));
 
-    if (inputs.front().get().shape().size() == 2)
+    if (inputs.front()->shape().size() == 2)
     {
-      output.Copy(inputs.front().get().Transpose());
+      output.Copy(inputs.front()->Transpose());
     }
     else
     {
-      output.Copy(inputs.front().get().Transpose(transpose_vector_));
+      output.Copy(inputs.front()->Transpose(transpose_vector_));
     }
   }
 
@@ -90,14 +90,14 @@ public:
   std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
   {
     // 2D transpose
-    if (inputs.at(0).get().shape().size() == 2)
+    if (inputs.at(0)->shape().size() == 2)
     {
-      return {inputs.front().get().shape().at(1), inputs.front().get().shape().at(0)};
+      return {inputs.front()->shape().at(1), inputs.front()->shape().at(0)};
     }
     // Transpose by given vector
     else
     {
-      std::vector<SizeType> input_shape = inputs.front().get().shape();
+      std::vector<SizeType> input_shape = inputs.front()->shape();
       std::vector<SizeType> shape;
 
       shape.reserve(shape.size());

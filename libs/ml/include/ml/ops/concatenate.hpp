@@ -62,7 +62,7 @@ public:
     std::vector<ArrayType> tensors;
     for (auto const &e : inputs)
     {
-      tensors.emplace_back(e.get());
+      tensors.emplace_back(*e);
     }
 
     output = ArrayType::Concat(tensors, axis_);
@@ -81,7 +81,7 @@ public:
     auto c_it = concat_points_.begin();
     for (auto const &e : inputs)
     {
-      *c_it = e.get().shape()[axis_];
+      *c_it = e->shape()[axis_];
       ++c_it;
     }
 
@@ -90,7 +90,7 @@ public:
 
   std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
   {
-    return inputs.front().get().shape();
+    return inputs.front()->shape();
   }
 
   static constexpr char const *DESCRIPTOR = "Concatenate";

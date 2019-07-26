@@ -81,8 +81,8 @@ RBC::RBC(Endpoint &endpoint, MuddleAddress address, CabinetMembers const &cabine
                                               MuddleAddress) {
     RBCSerializer serialiser(payload);
 
-    // Deserialize the RBCEnvelop
-    RBCEnvelop env;
+    // Deserialize the RBCEnvelope
+    RBCEnvelope env;
     serialiser >> env;
 
     // Dispatch the event
@@ -118,13 +118,13 @@ void RBC::ResetCabinet()
 }
 
 /**
- * Sends an RBCEnvelop to a particular address
- * @param env RBCEnvelop to be serialised and sent
+ * Sends an RBCEnvelope to a particular address
+ * @param env RBCEnvelope to be serialised and sent
  * @param address Destination muddle address
  */
-void RBC::Send(RBCEnvelop const &env, MuddleAddress const &address)
+void RBC::Send(RBCEnvelope const &env, MuddleAddress const &address)
 {
-  // Serialise the RBCEnvelop
+  // Serialise the RBCEnvelope
   RBCSerializerCounter env_counter;
   env_counter << env;
 
@@ -136,13 +136,13 @@ void RBC::Send(RBCEnvelop const &env, MuddleAddress const &address)
 }
 
 /**
- * Broadcasts RBCEnvelop to all subscribed to RBC channel
+ * Broadcasts RBCEnvelope to all subscribed to RBC channel
  *
- * @param env RBCEnvelop message to be serialised and broadcasted
+ * @param env RBCEnvelope message to be serialised and broadcast
  */
-void RBC::Broadcast(RBCEnvelop const &env)
+void RBC::Broadcast(RBCEnvelope const &env)
 {
-  // Serialise the RBCEnvelop
+  // Serialise the RBCEnvelope
   RBCSerializerCounter env_counter;
   env_counter << env;
 
@@ -155,14 +155,14 @@ void RBC::Broadcast(RBCEnvelop const &env)
 }
 
 /**
- * Places a serialised message to be broadcasted via RBC into a RBCEnvelop and broadcasts
- * envelop
+ * Places a serialised message to be broadcast via RBC into an RBCEnvelope and broadcasts
+ * the envelope
  *
  * @param msg Serialised message to be broadcast
  */
 void RBC::SendRBroadcast(SerialisedMessage const &msg)
 {
-  RBCEnvelop env{RBroadcast(CHANNEL_BROADCAST, id_, ++msg_counter_, msg)};
+  RBCEnvelope env{RBroadcast(CHANNEL_BROADCAST, id_, ++msg_counter_, msg)};
   Broadcast(env);
   OnRBroadcast(std::dynamic_pointer_cast<RBroadcast>(env.Message()), id_);  // Self sending
 }
@@ -241,15 +241,15 @@ struct RBC::MsgCount RBC::ReceivedReady(TagType tag, std::shared_ptr<RHash> msg_
 }
 
 /**
- * Handler for a new RBCEnvelop message
+ * Handler for a new RBCEnvelope message
  *
  * @param from Muddle address of sender
- * @param envelop RBCEnvelop message
+ * @param envelope RBCEnvelope message
  * @param transmitter Muddle address of transmitter
  */
-void RBC::OnRBC(MuddleAddress const &from, RBCEnvelop const &envelop)
+void RBC::OnRBC(MuddleAddress const &from, RBCEnvelope const &envelope)
 {
-  auto msg_ptr = envelop.Message();
+  auto msg_ptr = envelope.Message();
   if (msg_ptr == nullptr)
   {
     return;  // To catch nullptr return in Message() switch statement default
@@ -306,8 +306,8 @@ void RBC::OnRBroadcast(std::shared_ptr<RBroadcast> const msg_ptr, uint32_t sende
     if (SetMbar(tag, msg_ptr, sender_index))
     {
       broadcasts_[tag].mbar = msg_ptr->message();
-      RBCEnvelop env{REcho{msg_ptr->channel(), msg_ptr->id(), msg_ptr->counter(),
-                           MessageHash(msg_ptr->message())}};
+      RBCEnvelope env{REcho{msg_ptr->channel(), msg_ptr->id(), msg_ptr->counter(),
+                            MessageHash(msg_ptr->message())}};
       Broadcast(env);
       OnREcho(std::dynamic_pointer_cast<REcho>(env.Message()), id_);  // self sending.
     }
@@ -341,7 +341,7 @@ void RBC::OnREcho(std::shared_ptr<REcho> const msg_ptr, uint32_t sender_index)
                   sender_index, " with counter ", msg_ptr->counter(), " and id ", msg_ptr->id());
   if (ReceivedEcho(tag, msg_ptr))
   {
-    RBCEnvelop env{RReady{msg_ptr->channel(), msg_ptr->id(), msg_ptr->counter(), msg_ptr->hash()}};
+    RBCEnvelope env{RReady{msg_ptr->channel(), msg_ptr->id(), msg_ptr->counter(), msg_ptr->hash()}};
     Broadcast(env);
     OnRReady(std::dynamic_pointer_cast<RReady>(env.Message()), id_);  // self sending.
   }
@@ -371,18 +371,18 @@ void RBC::OnRReady(std::shared_ptr<RReady> const msg_ptr, uint32_t sender_index)
   if (threshold_ > 0 && msgsCount.ready_count == threshold_ + 1 &&
       msgsCount.echo_count < (current_cabinet_.size() - threshold_))
   {
-    RBCEnvelop env{RReady{msg_ptr->channel(), msg_ptr->id(), msg_ptr->counter(), msg_ptr->hash()}};
+    RBCEnvelope env{RReady{msg_ptr->channel(), msg_ptr->id(), msg_ptr->counter(), msg_ptr->hash()}};
     Broadcast(env);
     OnRReady(std::dynamic_pointer_cast<RReady>(env.Message()), id_);  // self sending.
   }
-  else if (threshold_ > 0 && msgsCount.ready_count == 2 * threshold_ + 1)
+  else if (msgsCount.ready_count == 2 * threshold_ + 1)
   {
     broadcasts_[tag].dbar = msg_ptr->hash();
 
     TruncatedHash msg_hash;
     if (!SetDbar(tag, msg_ptr))
     {
-      RBCEnvelop env{RRequest{msg_ptr->channel(), msg_ptr->id(), msg_ptr->counter()}};
+      RBCEnvelope env{RRequest{msg_ptr->channel(), msg_ptr->id(), msg_ptr->counter()}};
 
       uint32_t counter{0};
       auto     im = current_cabinet_.begin();
@@ -427,7 +427,7 @@ void RBC::OnRRequest(std::shared_ptr<RRequest> const msg_ptr, uint32_t sender_in
                   sender_index, " with counter ", msg_ptr->counter(), " and id ", msg_ptr->id());
   if (!broadcasts_[tag].mbar.empty())
   {
-    RBCEnvelop env{
+    RBCEnvelope env{
         RAnswer{msg_ptr->channel(), msg_ptr->id(), msg_ptr->counter(), broadcasts_[tag].mbar}};
 
     auto im = std::next(current_cabinet_.begin(), sender_index);

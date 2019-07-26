@@ -29,9 +29,8 @@
 #include "ml/saveable_params.hpp"
 #include "ml/subgraph.hpp"
 
-#include <cmath>
 #include <functional>
-#include <random>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -43,11 +42,12 @@ template <class T>
 class FullyConnected : public SubGraph<T>
 {
 public:
-  using ArrayType    = T;
-  using ArrayPtrType = std::shared_ptr<ArrayType>;
-  using SizeType     = typename ArrayType::SizeType;
-  using DataType     = typename ArrayType::Type;
-  using WeightsInit  = fetch::ml::ops::WeightsInitialisation;
+  using ArrayType     = T;
+  using ArrayPtrType  = std::shared_ptr<ArrayType>;
+  using SizeType      = typename ArrayType::SizeType;
+  using DataType      = typename ArrayType::Type;
+  using WeightsInit   = fetch::ml::ops::WeightsInitialisation;
+  using VecTensorType = typename SubGraph<T>::VecTensorType;
   using SPType       = FullyConnectedSaveableParams<ArrayType>;
 
   FullyConnected(SizeType in, SizeType out,
@@ -109,8 +109,7 @@ public:
     return sp;
   }
 
-  std::vector<SizeType> ComputeOutputShape(
-      std::vector<std::reference_wrapper<ArrayType const>> const &) const override
+  std::vector<SizeType> ComputeOutputShape(VecTensorType const &) const override
   {
     return {this->out_size_, 1};
   }

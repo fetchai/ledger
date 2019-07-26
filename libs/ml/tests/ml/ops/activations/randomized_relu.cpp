@@ -37,10 +37,9 @@ TYPED_TEST_CASE(RandomizedReluTest, MyTypes);
 
 TYPED_TEST(RandomizedReluTest, forward_test)
 {
-  using DataType      = typename TypeParam::Type;
-  using ArrayType     = TypeParam;
-  using SizeType      = typename TypeParam::SizeType;
-  using VecTensorType = typename fetch::ml::Ops<ArrayType>::VecTensorType;
+  using DataType  = typename TypeParam::Type;
+  using ArrayType = TypeParam;
+  using SizeType  = typename TypeParam::SizeType;
 
   ArrayType           data(8);
   ArrayType           gt(8);
@@ -52,8 +51,8 @@ TYPED_TEST(RandomizedReluTest, forward_test)
     gt.Set(i, static_cast<DataType>(gt_input[i]));
   }
   fetch::ml::ops::RandomizedRelu<ArrayType> op(DataType{0.03f}, DataType{0.08f}, 12345);
-  ArrayType                                 prediction(op.ComputeOutputShape({data}));
-  op.Forward(VecTensorType({data}), prediction);
+  ArrayType prediction(op.ComputeOutputShape({std::make_shared<const ArrayType>(data)}));
+  op.Forward({std::make_shared<const ArrayType>(data)}, prediction);
 
   // test correct values
   ASSERT_TRUE(prediction.AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
@@ -65,8 +64,8 @@ TYPED_TEST(RandomizedReluTest, forward_test)
     gt.Set(i, static_cast<DataType>(gt_input[i]));
   }
 
-  prediction = ArrayType(op.ComputeOutputShape({data}));
-  op.Forward(VecTensorType({data}), prediction);
+  prediction = ArrayType(op.ComputeOutputShape({std::make_shared<const ArrayType>(data)}));
+  op.Forward({std::make_shared<const ArrayType>(data)}, prediction);
 
   // test correct values
   ASSERT_TRUE(prediction.AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
@@ -80,8 +79,8 @@ TYPED_TEST(RandomizedReluTest, forward_test)
     gt.Set(i, static_cast<DataType>(gt_input[i]));
   }
 
-  prediction = ArrayType(op.ComputeOutputShape({data}));
-  op.Forward(VecTensorType({data}), prediction);
+  prediction = ArrayType(op.ComputeOutputShape({std::make_shared<const ArrayType>(data)}));
+  op.Forward({std::make_shared<const ArrayType>(data)}, prediction);
 
   // test correct values
   ASSERT_TRUE(prediction.AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
@@ -89,10 +88,9 @@ TYPED_TEST(RandomizedReluTest, forward_test)
 
 TYPED_TEST(RandomizedReluTest, forward_3d_tensor_test)
 {
-  using DataType      = typename TypeParam::Type;
-  using ArrayType     = TypeParam;
-  using SizeType      = typename TypeParam::SizeType;
-  using VecTensorType = typename fetch::ml::Ops<ArrayType>::VecTensorType;
+  using DataType  = typename TypeParam::Type;
+  using ArrayType = TypeParam;
+  using SizeType  = typename TypeParam::SizeType;
 
   ArrayType           data({2, 2, 2});
   ArrayType           gt({2, 2, 2});
@@ -112,8 +110,8 @@ TYPED_TEST(RandomizedReluTest, forward_3d_tensor_test)
   }
 
   fetch::ml::ops::RandomizedRelu<ArrayType> op(DataType{0.03f}, DataType{0.08f}, 12345);
-  ArrayType                                 prediction(op.ComputeOutputShape({data}));
-  op.Forward(VecTensorType({data}), prediction);
+  ArrayType prediction(op.ComputeOutputShape({std::make_shared<const ArrayType>(data)}));
+  op.Forward({std::make_shared<const ArrayType>(data)}, prediction);
 
   // test correct values
   ASSERT_TRUE(prediction.AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
@@ -121,10 +119,9 @@ TYPED_TEST(RandomizedReluTest, forward_3d_tensor_test)
 
 TYPED_TEST(RandomizedReluTest, backward_test)
 {
-  using DataType      = typename TypeParam::Type;
-  using ArrayType     = TypeParam;
-  using SizeType      = typename TypeParam::SizeType;
-  using VecTensorType = typename fetch::ml::Ops<ArrayType>::VecTensorType;
+  using DataType  = typename TypeParam::Type;
+  using ArrayType = TypeParam;
+  using SizeType  = typename TypeParam::SizeType;
 
   ArrayType           data(8);
   ArrayType           error(8);
@@ -139,22 +136,22 @@ TYPED_TEST(RandomizedReluTest, backward_test)
     gt.Set(i, static_cast<DataType>(gt_input[i]));
   }
   fetch::ml::ops::RandomizedRelu<ArrayType> op(DataType{0.03f}, DataType{0.08f}, 12345);
-  std::vector<ArrayType>                    prediction = op.Backward({data}, error);
+  std::vector<ArrayType> prediction = op.Backward({std::make_shared<const ArrayType>(data)}, error);
 
   // test correct values
   ASSERT_TRUE(prediction[0].AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
 
   // Test after generating new random alpha value
   // Forward pass will update random value
-  ArrayType output(op.ComputeOutputShape({data}));
-  op.Forward(VecTensorType({data}), output);
+  ArrayType output(op.ComputeOutputShape({std::make_shared<const ArrayType>(data)}));
+  op.Forward({std::make_shared<const ArrayType>(data)}, output);
 
   gt_input = {0, 0, 0, 0, 1, 0.0788452, 0, 0};
   for (SizeType i{0}; i < 8; ++i)
   {
     gt.Set(i, static_cast<DataType>(gt_input[i]));
   }
-  prediction = op.Backward({data}, error);
+  prediction = op.Backward({std::make_shared<const ArrayType>(data)}, error);
 
   // test correct values
   ASSERT_TRUE(prediction[0].AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
@@ -167,7 +164,7 @@ TYPED_TEST(RandomizedReluTest, backward_test)
   {
     gt.Set(i, static_cast<DataType>(gt_input[i]));
   }
-  prediction = op.Backward({data}, error);
+  prediction = op.Backward({std::make_shared<const ArrayType>(data)}, error);
 
   // test correct values
   ASSERT_TRUE(prediction[0].AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
@@ -200,7 +197,7 @@ TYPED_TEST(RandomizedReluTest, backward_3d_tensor_test)
   }
 
   fetch::ml::ops::RandomizedRelu<ArrayType> op(DataType{0.03f}, DataType{0.08f}, 12345);
-  std::vector<ArrayType>                    prediction = op.Backward({data}, error);
+  std::vector<ArrayType> prediction = op.Backward({std::make_shared<const ArrayType>(data)}, error);
 
   // test correct values
   ASSERT_TRUE(prediction[0].AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));

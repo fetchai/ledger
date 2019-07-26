@@ -23,8 +23,6 @@
 #include "ml/dataloaders/dataloader.hpp"
 
 #include <fstream>
-#include <sstream>
-#include <stdexcept>
 #include <string>
 
 namespace fetch {
@@ -54,7 +52,7 @@ ArrayType ReadCSV(std::string const &filename, math::SizeType const cols_to_skip
   }
 
   std::string           buf;
-  const char            delimiter = ',';
+  char const            delimiter = ',';
   std::string           field_value;
   fetch::math::SizeType row{0};
   fetch::math::SizeType col{0};

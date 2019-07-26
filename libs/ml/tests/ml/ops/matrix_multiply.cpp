@@ -44,8 +44,9 @@ TYPED_TEST(MatrixMultiplyTest, forward_test)
 
   fetch::ml::ops::MatrixMultiply<TypeParam> op;
 
-  TypeParam prediction(op.ComputeOutputShape({a, b}));
-  op.Forward({a, b}, prediction);
+  TypeParam prediction(
+      op.ComputeOutputShape({std::make_shared<TypeParam>(a), std::make_shared<TypeParam>(b)}));
+  op.Forward({std::make_shared<TypeParam>(a), std::make_shared<TypeParam>(b)}, prediction);
 
   // test correct values
   ASSERT_EQ(prediction.shape(), std::vector<typename TypeParam::SizeType>({1, 4}));
@@ -63,7 +64,8 @@ TYPED_TEST(MatrixMultiplyTest, backward_test)
       R"(1, 2, 3, -4; 2, 4, 6, -8; -3, -6, -9, 12; 4, 8, 12, -16; 5, 10, 15, -20)");
 
   fetch::ml::ops::MatrixMultiply<TypeParam> op;
-  std::vector<TypeParam>                    backpropagated_signals = op.Backward({a, b}, error);
+  std::vector<TypeParam>                    backpropagated_signals =
+      op.Backward({std::make_shared<TypeParam>(a), std::make_shared<TypeParam>(b)}, error);
 
   // test correct shapes
   ASSERT_EQ(backpropagated_signals.size(), 2);
@@ -84,8 +86,9 @@ TYPED_TEST(MatrixMultiplyTest, forward_batch_test)
 
   fetch::ml::ops::MatrixMultiply<TypeParam> op;
 
-  TypeParam prediction(op.ComputeOutputShape({a, b}));
-  op.Forward({a, b}, prediction);
+  TypeParam prediction(
+      op.ComputeOutputShape({std::make_shared<TypeParam>(a), std::make_shared<TypeParam>(b)}));
+  op.Forward({std::make_shared<TypeParam>(a), std::make_shared<TypeParam>(b)}, prediction);
 
   // test correct values
   ASSERT_EQ(prediction.shape(), std::vector<typename TypeParam::SizeType>({3, 3, 2}));
@@ -101,7 +104,8 @@ TYPED_TEST(MatrixMultiplyTest, backward_batch_test)
   TypeParam gradient_b({4, 3, 2});
 
   fetch::ml::ops::MatrixMultiply<TypeParam> op;
-  std::vector<TypeParam>                    backpropagated_signals = op.Backward({a, b}, error);
+  std::vector<TypeParam>                    backpropagated_signals =
+      op.Backward({std::make_shared<TypeParam>(a), std::make_shared<TypeParam>(b)}, error);
 
   // test correct shapes
   ASSERT_EQ(backpropagated_signals.size(), 2);

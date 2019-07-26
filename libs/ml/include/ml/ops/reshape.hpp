@@ -59,16 +59,16 @@ public:
   {
     assert(inputs.size() == 1);
     assert(output.shape() == ComputeOutputShape(inputs));
-    assert(inputs.front().get().size() == output.size());
+    assert(inputs.front()->size() == output.size());
 
-    output.Assign(inputs.front().get());
+    output.Assign((*inputs.front()));
   }
 
   std::vector<ArrayType> Backward(VecTensorType const &inputs,
                                   ArrayType const &    error_signal) override
   {
     assert(inputs.size() == 1);
-    ArrayType ret(inputs.front().get().shape());
+    ArrayType ret(inputs.front()->shape());
     ret.Assign(error_signal);
     return {ret};
   }
@@ -79,9 +79,9 @@ public:
     std::vector<SizeType> output_size;
     for (SizeType i{0}; i < new_shape_.size(); i++)
     {
-      if (new_shape_.at(i) < inputs.front().get().shape().size())
+      if (new_shape_.at(i) < inputs.front()->shape().size())
       {
-        output_size.push_back(inputs.front().get().shape().at(new_shape_.at(i)));
+        output_size.push_back(inputs.front()->shape().at(new_shape_.at(i)));
       }
       else
       {

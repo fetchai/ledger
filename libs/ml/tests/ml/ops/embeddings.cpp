@@ -49,8 +49,8 @@ TYPED_TEST(EmbeddingsTest, forward_shape)
     input.At(i, 0) = typename TypeParam::Type(i);
   }
 
-  TypeParam output(e.ComputeOutputShape({input}));
-  e.Forward({input}, output);
+  TypeParam output(e.ComputeOutputShape({std::make_shared<TypeParam>(input)}));
+  e.Forward({std::make_shared<TypeParam>(input)}, output);
 
   ASSERT_EQ(output.shape(), std::vector<typename TypeParam::SizeType>({60, 10, 1}));
 }
@@ -74,8 +74,8 @@ TYPED_TEST(EmbeddingsTest, forward)
   input.At(0, 0) = typename TypeParam::Type(3);
   input.At(1, 0) = typename TypeParam::Type(5);
 
-  TypeParam output(e.ComputeOutputShape({input}));
-  e.Forward({input}, output);
+  TypeParam output(e.ComputeOutputShape({std::make_shared<TypeParam>(input)}));
+  e.Forward({std::make_shared<TypeParam>(input)}, output);
 
   ASSERT_EQ(output.shape(), std::vector<typename TypeParam::SizeType>({6, 2, 1}));
 
@@ -117,8 +117,8 @@ TYPED_TEST(EmbeddingsTest, backward)
   input.At(0, 0) = DataType{3};
   input.At(1, 0) = DataType{5};
 
-  ArrayType output(e.ComputeOutputShape({input}));
-  e.Forward({input}, output);
+  ArrayType output(e.ComputeOutputShape({std::make_shared<TypeParam>(input)}));
+  e.Forward({std::make_shared<TypeParam>(input)}, output);
 
   ArrayType error_signal(std::vector<uint64_t>({6, 2, 1}));
   for (SizeType j{0}; j < 2; ++j)
@@ -129,7 +129,7 @@ TYPED_TEST(EmbeddingsTest, backward)
     }
   }
 
-  e.Backward({input}, error_signal);
+  e.Backward({std::make_shared<TypeParam>(input)}, error_signal);
 
   ArrayType grad = e.get_gradients();
   fetch::math::Multiply(grad, DataType{-1}, grad);
@@ -140,8 +140,8 @@ TYPED_TEST(EmbeddingsTest, backward)
   EXPECT_TRUE(ArrayType::Zeroes({6, 1}).AllClose(grads_copy.View(SizeType(input(0, 0))).Copy()));
   EXPECT_TRUE(ArrayType::Zeroes({6, 1}).AllClose(grads_copy.View(SizeType(input(1, 0))).Copy()));
 
-  output = ArrayType(e.ComputeOutputShape({input}));
-  e.Forward({input}, output);
+  output = ArrayType(e.ComputeOutputShape({std::make_shared<TypeParam>(input)}));
+  e.Forward({std::make_shared<TypeParam>(input)}, output);
 
   std::vector<int> gt{30, 30, 30, 30, 30, 30, 44, 44, 44, 44, 44, 44};
 

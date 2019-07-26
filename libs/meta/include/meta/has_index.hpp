@@ -30,7 +30,7 @@ struct HasIndexImpl
 {
   template <class T1, class IndexDeduced = Index,
             class Reference = decltype((std::declval<T>())[std::declval<IndexDeduced>()]),
-            class           = typename std::enable_if<!std::is_void<Reference>::value>::type>
+            class           = std::enable_if_t<!std::is_void<Reference>::value>>
   static std::true_type test(int);
 
   template <class>
@@ -41,15 +41,14 @@ struct HasIndexImpl
 
 }  // namespace detail
 
-template <typename T, typename R>
-using HasIndex = typename std::enable_if<
-    std::is_same<typename detail::HasIndexImpl<T, std::size_t>::Type, std::true_type>::value,
-    R>::type;
+template <typename T, typename Index>
+constexpr bool HasIndex = detail::HasIndexImpl<T, Index>::Type::value;
 
 template <typename T, typename R>
-using HasNoIndex = typename std::enable_if<
-    std::is_same<typename detail::HasIndexImpl<T, std::size_t>::Type, std::false_type>::value,
-    R>::type;
+using IfHasIndex = std::enable_if_t<HasIndex<T, std::size_t>, R>;
+
+template <typename T, typename R>
+using IfHasNoIndex = std::enable_if_t<!HasIndex<T, std::size_t>, R>;
 
 }  // namespace meta
 }  // namespace fetch

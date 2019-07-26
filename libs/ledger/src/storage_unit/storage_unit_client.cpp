@@ -16,13 +16,20 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/storage_unit/storage_unit_client.hpp"
-
 #include "ledger/chain/constants.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "ledger/chain/transaction_layout_rpc_serializers.hpp"
 #include "ledger/chain/transaction_rpc_serializers.hpp"
+#include "ledger/storage_unit/storage_unit_client.hpp"
 #include "ledger/storage_unit/transaction_finder_protocol.hpp"
+
+#include <cstddef>
+#include <iterator>
+#include <map>
+#include <memory>
+#include <stdexcept>
+#include <unordered_set>
+#include <utility>
 
 using fetch::storage::ResourceID;
 using fetch::storage::RevertibleDocumentStoreProtocol;
@@ -292,8 +299,18 @@ byte_array::ConstByteArray StorageUnitClient::Commit(uint64_t const commit_index
 
 bool StorageUnitClient::HashExists(Hash const &hash, uint64_t index)
 {
-  // FETCH_LOCK(merkle_mutex_);
-  return HashInStack(hash, index);
+  bool success{false};
+
+  if (hash == GENESIS_MERKLE_ROOT)
+  {
+    success = true;
+  }
+  else
+  {
+    success = HashInStack(hash, index);
+  }
+
+  return success;
 }
 
 // Search backwards through stack

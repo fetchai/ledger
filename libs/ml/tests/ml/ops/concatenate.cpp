@@ -42,8 +42,9 @@ TYPED_TEST(ConcatenateTest, forward_test)
 
   fetch::ml::ops::Concatenate<TypeParam> op{1};
 
-  TypeParam prediction(op.ComputeOutputShape({data1, data2}));
-  op.Forward({data1, data2}, prediction);
+  TypeParam prediction(op.ComputeOutputShape(
+      {std::make_shared<TypeParam>(data1), std::make_shared<TypeParam>(data2)}));
+  op.Forward({std::make_shared<TypeParam>(data1), std::make_shared<TypeParam>(data2)}, prediction);
 
   // test correct shape
   ASSERT_EQ(prediction.shape(), std::vector<typename TypeParam::SizeType>({8, 16}));
@@ -56,11 +57,13 @@ TYPED_TEST(ConcatenateTest, backward_test)
 
   fetch::ml::ops::Concatenate<TypeParam> op{1};
 
-  TypeParam prediction(op.ComputeOutputShape({data1, data2}));
-  op.Forward({data1, data2}, prediction);
+  TypeParam prediction(op.ComputeOutputShape(
+      {std::make_shared<TypeParam>(data1), std::make_shared<TypeParam>(data2)}));
+  op.Forward({std::make_shared<TypeParam>(data1), std::make_shared<TypeParam>(data2)}, prediction);
 
   TypeParam              error_signal(prediction.shape());
-  std::vector<TypeParam> gradients = op.Backward({data1, data2}, error_signal);
+  std::vector<TypeParam> gradients = op.Backward(
+      {std::make_shared<TypeParam>(data1), std::make_shared<TypeParam>(data2)}, error_signal);
 
   ASSERT_EQ(gradients.size(), 2);
   ASSERT_EQ(gradients[0].shape(), std::vector<typename TypeParam::SizeType>({8, 8}));

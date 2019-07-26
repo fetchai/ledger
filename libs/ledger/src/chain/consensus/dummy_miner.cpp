@@ -16,11 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chain/consensus/dummy_miner.hpp"
-
 #include "core/byte_array/encoders.hpp"
 #include "ledger/chain/block.hpp"
+#include "ledger/chain/consensus/dummy_miner.hpp"
 
+#include <cstdint>
+#include <limits>
 #include <random>
 
 static uint32_t GetRandom()

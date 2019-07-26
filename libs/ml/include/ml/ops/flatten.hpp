@@ -57,11 +57,11 @@ public:
   {
     assert(inputs.size() == 1);
     assert(output.shape() == ComputeOutputShape(inputs));
-    input_shape_ = inputs.front().get().shape();
+    input_shape_ = inputs.front()->shape();
 
     assert(output.shape().at(output.shape().size() - 1) ==
-           inputs.front().get().shape().at(inputs.front().get().shape().size() - 1));
-    output.Assign(inputs.front().get().View());
+           inputs.front()->shape().at(inputs.front()->shape().size() - 1));
+    output.Assign(inputs.front()->View());
   }
 
   std::vector<ArrayType> Backward(VecTensorType const &inputs,
@@ -80,12 +80,11 @@ public:
 
   std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
   {
-    SizeType batch_size =
-        inputs.at(0).get().shape().at(inputs.at(0).get().shape().size() - SizeType{1});
-    SizeType data_size = 1;
-    for (SizeType i{0}; i < inputs.at(0).get().shape().size() - SizeType{1}; i++)
+    SizeType batch_size = inputs.at(0)->shape().at(inputs.at(0)->shape().size() - SizeType{1});
+    SizeType data_size  = 1;
+    for (SizeType i{0}; i < inputs.at(0)->shape().size() - SizeType{1}; i++)
     {
-      data_size *= inputs.at(0).get().shape().at(i);
+      data_size *= inputs.at(0)->shape().at(i);
     }
 
     return {data_size, batch_size};

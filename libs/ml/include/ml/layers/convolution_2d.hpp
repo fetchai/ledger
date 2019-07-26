@@ -23,8 +23,10 @@
 #include "ml/ops/weights.hpp"
 #include "ml/subgraph.hpp"
 
-#include <cmath>
-#include <random>
+#include <functional>
+#include <memory>
+#include <string>
+#include <vector>
 
 namespace fetch {
 namespace ml {
@@ -34,10 +36,11 @@ template <class T>
 class Convolution2D : public SubGraph<T>
 {
 public:
-  using ArrayType    = T;
-  using ArrayPtrType = std::shared_ptr<ArrayType>;
-  using SizeType     = typename ArrayType::SizeType;
-  using WeightsInit  = fetch::ml::ops::WeightsInitialisation;
+  using ArrayType     = T;
+  using ArrayPtrType  = std::shared_ptr<ArrayType>;
+  using SizeType      = typename ArrayType::SizeType;
+  using WeightsInit   = fetch::ml::ops::WeightsInitialisation;
+  using VecTensorType = typename SubGraph<T>::VecTensorType;
 
   /**
    * Creates 2D convolution layer with trainable kernel
@@ -47,8 +50,8 @@ public:
    * @param stride_size step size
    * @param activation_type type of activation function applied after convolution
    * @param name name of graph ops
-   * @param init_mode mode in which wights(kernel) will be initialized
-   * @param seed random seed for weights(kernel) initialization
+   * @param init_mode mode in which wights(kernel) will be initialised
+   * @param seed random seed for weights(kernel) initialisation
    */
   Convolution2D(SizeType const output_channels, SizeType const input_channels,
                 SizeType const kernel_size, SizeType const stride_size,
@@ -82,18 +85,12 @@ public:
     this->SetOutputNode(output);
   }
 
-  std::shared_ptr<SaveableParams> GetOpSaveableParams() override
-  {
-    throw std::runtime_error("This shouldn't be called!");
-  }
-
-  std::vector<SizeType> ComputeOutputShape(
-      std::vector<std::reference_wrapper<ArrayType const>> const &inputs) const override
+  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
   {
     ArrayType weights_data(
         std::vector<SizeType>{{output_channels_, input_channels_, kernel_size_, kernel_size_, 1}});
     return fetch::ml::ops::Convolution2D<ArrayType>(stride_size_)
-        .ComputeOutputShape({inputs.at(0), weights_data});
+        .ComputeOutputShape({inputs.at(0), std::make_shared<ArrayType>(weights_data)});
   }
 
   static constexpr char const *DESCRIPTOR = "Convolution2D";

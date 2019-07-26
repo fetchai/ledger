@@ -59,9 +59,9 @@ public:
   void Forward(VecTensorType const &inputs, ArrayType &output) override
   {
     assert(inputs.size() == 2);
-    assert(inputs.at(0).get().size() == inputs.at(1).get().size());
+    assert(inputs.at(0)->size() == inputs.at(1)->size());
 
-    output(0, 0) = fetch::math::CrossEntropyLoss(inputs.at(0).get(), inputs.at(1).get());
+    output(0, 0) = fetch::math::CrossEntropyLoss((*inputs.at(0)), (*inputs.at(1)));
   }
 
   std::vector<ArrayType> Backward(VecTensorType const &inputs,
@@ -70,15 +70,15 @@ public:
     FETCH_UNUSED(error_signal);
 
     assert(inputs.size() == 2);
-    assert(inputs.at(0).get().size() == inputs.at(1).get().size());
-    assert(inputs.at(0).get().shape().size() == 2);
+    assert(inputs.at(0)->size() == inputs.at(1)->size());
+    assert(inputs.at(0)->shape().size() == 2);
 
-    ArrayType ret({inputs.at(0).get().shape()});
-    if (inputs.at(0).get().shape().at(0) == 1)  // not one-hot
+    ArrayType ret({inputs.at(0)->shape()});
+    if (inputs.at(0)->shape().at(0) == 1)  // not one-hot
     {
       // (Sigmoid(x)-y)*x
-      auto     a_it = inputs.at(0).get().cbegin();
-      auto     b_it = inputs.at(1).get().cbegin();
+      auto     a_it = inputs.at(0)->cbegin();
+      auto     b_it = inputs.at(1)->cbegin();
       auto     r_it = ret.begin();
       DataType zero{0};
       DataType one{1};
@@ -105,11 +105,11 @@ public:
         ++r_it;
       }
     }
-    else if (inputs.at(0).get().shape().size())  // one-hot
+    else if (inputs.at(0)->shape().size())  // one-hot
     {
-      fetch::math::Softmax(inputs.at(0).get(), ret, 1);
+      fetch::math::Softmax((*inputs.at(0)), ret, 1);
 
-      auto b_it = inputs.at(1).get().cbegin();
+      auto b_it = inputs.at(1)->cbegin();
       auto r_it = ret.begin();
       while (b_it.is_valid())
       {

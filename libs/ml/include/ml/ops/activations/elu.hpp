@@ -61,21 +61,21 @@ public:
   void Forward(VecTensorType const &inputs, ArrayType &output) override
   {
     assert(inputs.size() == 1);
-    fetch::math::Elu(inputs.front().get(), a_, output);
+    fetch::math::Elu((*inputs.front()), a_, output);
   }
 
   std::vector<ArrayType> Backward(VecTensorType const &inputs,
                                   ArrayType const &    error_signal) override
   {
     assert(inputs.size() == 1);
-    assert(inputs.front().get().shape() == error_signal.shape());
+    assert(inputs.front()->shape() == error_signal.shape());
     ArrayType ret{error_signal.shape()};
 
     DataType zero{0};
     DataType one{1};
 
     // gradient of elu function is a*e^x where x<0; and 1.0 where x>=0
-    auto it  = inputs.front().get().cbegin();
+    auto it  = inputs.front()->cbegin();
     auto rit = ret.begin();
     while (it.is_valid())
     {
@@ -102,7 +102,7 @@ public:
 
   std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
   {
-    return inputs.front().get().shape();
+    return inputs.front()->shape();
   }
 
   static constexpr char const *DESCRIPTOR = "Elu";

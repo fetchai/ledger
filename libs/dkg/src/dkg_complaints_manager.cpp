@@ -81,7 +81,7 @@ bool ComplaintsManager::IsFinished(std::set<MuddleAddress> const &miners, uint32
       ++miner_it;
     }
     // All miners who have received over t complaints are also disqualified
-    for (const auto &node_complaints : complaints_counter_)
+    for (auto const &node_complaints : complaints_counter_)
     {
       if (node_complaints.second > threshold)
       {
@@ -150,7 +150,7 @@ bool QualComplaintsManager::IsFinished(std::set<MuddleAddress> const &qual,
   {
     // Add QUAL members which did not send a complaint to complaints (redundant for now but will
     // be necessary when we do not wait for a message from everyone)
-    for (const auto &iq : qual)
+    for (auto const &iq : qual)
     {
       if (iq != node_id && complaints_received_.find(iq) == complaints_received_.end())
       {

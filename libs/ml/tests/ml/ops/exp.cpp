@@ -16,14 +16,20 @@
 //
 //------------------------------------------------------------------------------
 
+<<<<<<< HEAD
 #include "ml/ops/exp.hpp"
 
 #include "math/base_types.hpp"
+=======
+>>>>>>> 59a522e74611199d626f9f41100205d2a18da2ae
 #include "math/tensor.hpp"
+#include "ml/ops/exp.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 #include "vectorise/fixed_point/serializers.hpp"
 
 #include "gtest/gtest.h"
+
+#include <vector>
 
 template <typename T>
 class ExpTest : public ::testing::Test
@@ -53,8 +59,8 @@ TYPED_TEST(ExpTest, forward_test)
 
   fetch::ml::ops::Exp<ArrayType> op;
 
-  TypeParam prediction(op.ComputeOutputShape({data}));
-  op.Forward({data}, prediction);
+  TypeParam prediction(op.ComputeOutputShape({std::make_shared<const ArrayType>(data)}));
+  op.Forward({std::make_shared<const ArrayType>(data)}, prediction);
 
   // test correct values
   ASSERT_TRUE(prediction.AllClose(gt, fetch::math::function_tolerance<DataType>(),
@@ -81,7 +87,7 @@ TYPED_TEST(ExpTest, backward_test)
       "5, -5, 6, -6, 7, -7, 8, -8");
 
   fetch::ml::ops::Exp<ArrayType> op;
-  std::vector<ArrayType>         prediction = op.Backward({data}, error);
+  std::vector<ArrayType> prediction = op.Backward({std::make_shared<const ArrayType>(data)}, error);
 
   // test correct values
   ASSERT_TRUE(prediction[0].AllClose(gt, fetch::math::function_tolerance<DataType>(),

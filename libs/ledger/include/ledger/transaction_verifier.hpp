@@ -91,6 +91,7 @@ private:
   CounterPtr unverified_tx_total_;
   CounterPtr verified_tx_total_;
   CounterPtr discarded_tx_total_;
+  CounterPtr dispatched_tx_total_;
   GaugePtr   num_threads_;
 };
 

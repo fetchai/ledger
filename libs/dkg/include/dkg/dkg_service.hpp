@@ -117,7 +117,7 @@ public:
   using ConstByteArray = byte_array::ConstByteArray;
   using MuddleAddress  = ConstByteArray;
   using CabinetMembers = std::set<MuddleAddress>;
-  using RBCMessageType = DKGEnvelop;
+  using RBCMessageType = DKGEnvelope;
 
   // Construction / Destruction
   explicit DkgService(Endpoint &endpoint, ConstByteArray address);
@@ -148,6 +148,16 @@ public:
                     uint32_t       threshold = std::numeric_limits<uint32_t>::max())
   {
     FETCH_LOCK(cabinet_lock_);
+    assert(cabinet.size() > threshold);
+    // Check threshold meets the requirements for the RBC
+    if (cabinet.size() % 3 == 0)
+    {
+      assert(threshold >= static_cast<uint32_t>(cabinet.size() / 3 - 1));
+    }
+    else
+    {
+      assert(threshold >= static_cast<uint32_t>(cabinet.size() / 3));
+    }
     current_cabinet_ = std::move(cabinet);
     if (threshold == std::numeric_limits<uint32_t>::max())
     {
@@ -157,7 +167,6 @@ public:
     {
       current_threshold_ = threshold;
     }
-    assert(current_cabinet_.size() > 3 * threshold);  // To meet the requirements for the RBC
     id_ = static_cast<uint32_t>(
         std::distance(current_cabinet_.begin(), current_cabinet_.find(address_)));
     FETCH_LOG_INFO(LOGGING_NAME, "Resetting cabinet. Cabinet size: ", current_cabinet_.size(),

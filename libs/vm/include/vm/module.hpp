@@ -98,7 +98,7 @@ public:
     {}
 
     template <typename... Ts>
-    ClassInterface &CreateConstuctor()
+    ClassInterface &CreateConstructor()
     {
       TypeIndex const type_index__ = type_index_;
       TypeIndexArray  parameter_type_index_array;
@@ -123,7 +123,7 @@ public:
     }
 
     template <typename... Ts>
-    ClassInterface &CreateSerializeDefaultConstuctor(Ts... args)
+    ClassInterface &CreateSerializeDefaultConstructor(Ts... args)
     {
       TypeIndex const type_index__ = type_index_;
       TypeIndexArray  parameter_type_index_array;

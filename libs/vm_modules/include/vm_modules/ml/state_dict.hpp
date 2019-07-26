@@ -18,10 +18,12 @@
 //------------------------------------------------------------------------------
 
 #include "ml/state_dict.hpp"
-
 #include "vm/module.hpp"
+#include "vm/object.hpp"
 #include "vm_modules/math/tensor.hpp"
 #include "vm_modules/math/type.hpp"
+
+#include <utility>
 
 namespace fetch {
 namespace vm_modules {
@@ -60,8 +62,12 @@ public:
   static void Bind(fetch::vm::Module &module)
   {
     module.CreateClassType<VMStateDict>("StateDict")
+<<<<<<< HEAD
         .CreateConstuctor<>()
         .CreateSerializeDefaultConstuctor<>()
+=======
+        .CreateConstructor<>()
+>>>>>>> 59a522e74611199d626f9f41100205d2a18da2ae
         .CreateMemberFunction("setWeights", &VMStateDict::SetWeights);
   }
 

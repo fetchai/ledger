@@ -42,7 +42,7 @@ using ClusteringType = Tensor<std::int64_t>;
 enum class InitMode
 {
   KMeansPP = 0,  // kmeans++, a good default choice
-  Forgy    = 1,  // Forgy, randomly initialize clusters to data points
+  Forgy    = 1,  // Forgy, randomly initialise clusters to data points
   PrevK    = 2   // PrevK, use previous k_assignment to determine cluster centres
 };
 enum class KInferenceMode
@@ -92,7 +92,7 @@ public:
    * @param ret the return matrix of shape n_points x 1 with values in range 0 -> K-1
    * @param r_seed a random seed for the data shuffling
    * @param max_loops maximum number of loops before assuming convergence
-   * @param init_mode what type of initialization to use
+   * @param init_mode what type of initialisation to use
    */
   KMeansImplementation(ArrayType const &data, SizeType const &n_clusters, ClusteringType &ret,
                        SizeType const &r_seed, SizeType const &max_loops,
@@ -106,7 +106,7 @@ public:
     n_points_     = data.shape()[0];
     n_dimensions_ = data.shape()[1];
 
-    init_mode_ = InitMode::PrevK;  // since prev_k_assignment is specified, the initialization will
+    init_mode_ = InitMode::PrevK;  // since prev_k_assignment is specified, the initialisation will
                                    // be to use that
 
     KMeansSetup(data, r_seed);
@@ -135,7 +135,7 @@ public:
     n_points_     = data.shape()[0];
     n_dimensions_ = data.shape()[1];
 
-    init_mode_ = InitMode::PrevK;  // since prev_k_assignment is specified, the initialization will
+    init_mode_ = InitMode::PrevK;  // since prev_k_assignment is specified, the initialisation will
     // be to use that
 
     KMeansSetup(data, r_seed);
@@ -153,7 +153,7 @@ public:
   }
 
   /**
-   * The remainder of initialization that is common to all constructors is carried out here
+   * The remainder of initialisation that is common to all constructors is carried out here
    */
   void KMeansSetup(ArrayType const &data, SizeType const &r_seed)
   {
@@ -287,7 +287,7 @@ private:
       break;
     }
     default:
-      throw std::runtime_error("no such initialization mode for KMeans");
+      throw std::runtime_error("no such initialisation mode for KMeans");
     }
 
     // reset the kcount

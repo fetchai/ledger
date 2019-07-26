@@ -23,8 +23,11 @@
 #include "network/muddle/rpc/client.hpp"
 
 #include <atomic>
-#include <iostream>
+#include <mutex>
 #include <set>
+#include <string>
+#include <unordered_set>
+#include <vector>
 
 namespace fetch {
 namespace muddle {
@@ -42,10 +45,11 @@ class DkgService;
  */
 class DistributedKeyGeneration
 {
-  using MuddleAddress  = byte_array::ConstByteArray;
-  using CabinetMembers = std::set<MuddleAddress>;
-  using Endpoint       = muddle::MuddleEndpoint;
-  using MsgShare       = std::string;
+  using MuddleAddress    = byte_array::ConstByteArray;
+  using CabinetMembers   = std::set<MuddleAddress>;
+  using Endpoint         = muddle::MuddleEndpoint;
+  using MsgShare         = std::string;
+  using SharesExposedMap = std::unordered_map<MuddleAddress, std::pair<MsgShare, MsgShare>>;
 
   enum class State : uint8_t
   {
@@ -110,7 +114,7 @@ class DistributedKeyGeneration
 
   /// @name Methods to send messages
   /// @{
-  void SendBroadcast(DKGEnvelop const &env);
+  void SendBroadcast(DKGEnvelope const &env);
   void SendCoefficients(std::vector<bn::Fr> const &a_i, std::vector<bn::Fr> const &b_i);
   void SendShares(std::vector<bn::Fr> const &a_i, std::vector<bn::Fr> const &b_i);
   void BroadcastComplaints();
@@ -147,12 +151,13 @@ class DistributedKeyGeneration
   /// @{
   uint32_t                          CabinetIndex(MuddleAddress const &other_address) const;
   std::unordered_set<MuddleAddress> ComputeComplaints();
-  void CheckComplaintAnswer(std::shared_ptr<SharesMessage> const &answer,
-                            MuddleAddress const &from_id, uint32_t from_index);
-  bool BuildQual();
-  void ComputeSecretShare();
-  bool RunReconstruction();
-  void ComputePublicKeys();
+  void             CheckComplaintAnswer(std::shared_ptr<SharesMessage> const &answer,
+                                        MuddleAddress const &from_id, uint32_t from_index);
+  bool             BuildQual();
+  SharesExposedMap ComputeQualComplaints();
+  void             ComputeSecretShare();
+  bool             RunReconstruction();
+  void             ComputePublicKeys();
   /// @}
 
 public:

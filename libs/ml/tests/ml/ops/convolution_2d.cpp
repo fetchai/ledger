@@ -47,8 +47,9 @@ TYPED_TEST(Convolution2DTest, forward_1x1x1x2_1x1x1x1x2)
   weights.At(0, 0, 0, 0, 0) = DataType{-4};
   fetch::ml::ops::Convolution2D<ArrayType> c;
 
-  ArrayType output(c.ComputeOutputShape({input, weights}));
-  c.Forward({input, weights}, output);
+  ArrayType output(c.ComputeOutputShape(
+      {std::make_shared<ArrayType>(input), std::make_shared<ArrayType>(weights)}));
+  c.Forward({std::make_shared<ArrayType>(input), std::make_shared<ArrayType>(weights)}, output);
 
   ASSERT_EQ(output.shape(), std::vector<SizeType>({1, 1, 1, 2}));
   EXPECT_EQ(output.At(0, 0, 0, 0), DataType{-20});
@@ -73,8 +74,9 @@ TYPED_TEST(Convolution2DTest, forward_1x3x3x1_1x1x3x3x1)
   }
   fetch::ml::ops::Convolution2D<ArrayType> c;
 
-  ArrayType output(c.ComputeOutputShape({input, weights}));
-  c.Forward({input, weights}, output);
+  ArrayType output(c.ComputeOutputShape(
+      {std::make_shared<ArrayType>(input), std::make_shared<ArrayType>(weights)}));
+  c.Forward({std::make_shared<ArrayType>(input), std::make_shared<ArrayType>(weights)}, output);
 
   ASSERT_EQ(output.shape(), std::vector<SizeType>({1, 1, 1, 1}));
   EXPECT_EQ(output.At(0, 0, 0, 0), DataType{204});
@@ -103,8 +105,9 @@ TYPED_TEST(Convolution2DTest, forward_3x3x3x1_1x3x3x3x1)
   }
   fetch::ml::ops::Convolution2D<ArrayType> c;
 
-  ArrayType output(c.ComputeOutputShape({input, weights}));
-  c.Forward({input, weights}, output);
+  ArrayType output(c.ComputeOutputShape(
+      {std::make_shared<ArrayType>(input), std::make_shared<ArrayType>(weights)}));
+  c.Forward({std::make_shared<ArrayType>(input), std::make_shared<ArrayType>(weights)}, output);
 
   ASSERT_EQ(output.shape(), std::vector<SizeType>({1, 1, 1, 1}));
   EXPECT_EQ(output.At(0, 0, 0, 0), DataType{6201});
@@ -120,8 +123,9 @@ TYPED_TEST(Convolution2DTest, forward_3x3x3x1_5x3x3x3x1)
   ArrayType                                weights(std::vector<SizeType>({5, 3, 3, 3, 1}));
   fetch::ml::ops::Convolution2D<ArrayType> c;
 
-  ArrayType output(c.ComputeOutputShape({input, weights}));
-  c.Forward({input, weights}, output);
+  ArrayType output(c.ComputeOutputShape(
+      {std::make_shared<ArrayType>(input), std::make_shared<ArrayType>(weights)}));
+  c.Forward({std::make_shared<ArrayType>(input), std::make_shared<ArrayType>(weights)}, output);
 
   ASSERT_EQ(output.shape(), std::vector<SizeType>({5, 1, 1, 1}));
 }
@@ -136,8 +140,9 @@ TYPED_TEST(Convolution2DTest, forward_1x5x5x3_1x1x3x3x3)
   ArrayType                                weights(std::vector<SizeType>({1, 1, 3, 3, 1}));
   fetch::ml::ops::Convolution2D<ArrayType> c;
 
-  ArrayType output(c.ComputeOutputShape({input, weights}));
-  c.Forward({input, weights}, output);
+  ArrayType output(c.ComputeOutputShape(
+      {std::make_shared<ArrayType>(input), std::make_shared<ArrayType>(weights)}));
+  c.Forward({std::make_shared<ArrayType>(input), std::make_shared<ArrayType>(weights)}, output);
 
   ASSERT_EQ(output.shape(), std::vector<SizeType>({1, 3, 3, 3}));
 }
@@ -152,8 +157,9 @@ TYPED_TEST(Convolution2DTest, forward_1x5x5x3_1x1x3x3x3_stride_2)
   ArrayType                                weights(std::vector<SizeType>({1, 1, 3, 3, 3}));
   fetch::ml::ops::Convolution2D<ArrayType> c(2);
 
-  ArrayType output(c.ComputeOutputShape({input, weights}));
-  c.Forward({input, weights}, output);
+  ArrayType output(c.ComputeOutputShape(
+      {std::make_shared<ArrayType>(input), std::make_shared<ArrayType>(weights)}));
+  c.Forward({std::make_shared<ArrayType>(input), std::make_shared<ArrayType>(weights)}, output);
 
   ASSERT_EQ(output.shape(), std::vector<SizeType>({1, 2, 2, 3}));
 }
@@ -232,7 +238,8 @@ TYPED_TEST(Convolution2DTest, backward_3x3x3x2_5x3x3x3x2)
   }
 
   fetch::ml::ops::Convolution2D<ArrayType> op;
-  std::vector<ArrayType>                   prediction = op.Backward({input, kernels}, error);
+  std::vector<ArrayType>                   prediction = op.Backward(
+      {std::make_shared<ArrayType>(input), std::make_shared<ArrayType>(kernels)}, error);
 
   // Test correct gradient shape
   ASSERT_EQ(prediction.at(0).shape(), input.shape());
