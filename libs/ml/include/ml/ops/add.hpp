@@ -37,10 +37,13 @@ public:
 
   Add()           = default;
   ~Add() override = default;
-
+	
+  // for inputs to the add layer, if broadcasting is required, make sure the first input is the one with the complete shape
+  
   void Forward(VecTensorType const &inputs, ArrayType &output) override
   {
     assert(inputs.size() == 2);
+	  assert(inputs.at(0)->shape().size() <= 3); // we do not support input of more than 3D (including batch dims)
     assert(output.shape() == inputs.at(0)->shape());
     // we allow addition forward as long as the second input has shape broadcastable on first input
     fetch::math::Add((*inputs.at(0)), (*inputs.at(1)), output);
@@ -75,13 +78,14 @@ public:
 					assert(inputs.at(1)->shape(1) == 1);
 					
 					ArrayType error_sum({inputs.at(1)->shape(0), 1});
-					for(SizeType batch=0; batch < inputs.at(0)->shape(batch_dimension); batch++){
-						error_sum += fetch::math::ReduceSum(inputs.at(0)->View(batch).Copy(), SizeType(1));
+					for(SizeType batch=0; batch < error_signal.shape(batch_dimension); batch++){
+//						error_sum += fetch::math::ReduceSum(inputs.at(0)->View(batch).Copy(), SizeType(1));
+						error_sum += fetch::math::ReduceSum(error_signal.View(batch).Copy(), SizeType(1));
 					}
 					error_sum.Reshape(inputs.at(1)->shape());
 			    return {error_signal, error_sum};
-		    }
 		  }
+    }
   }
 
   std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override

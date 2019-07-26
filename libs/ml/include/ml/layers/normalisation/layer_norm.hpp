@@ -87,7 +87,6 @@ public:
     std::string scaled_output = this->template AddNode<fetch::ml::ops::Multiply<ArrayType>>(name + "_Gamma_Multiply", {normalized_output, gamma});
     
     // do the re-shifting
-	  // TODO (local) Allow broadcastable for inputs with dims 3
     std::string shifted_output = this->template AddNode<fetch::ml::ops::Add<ArrayType>>(name + "_Beta_Addition", {normalized_output, beta});
     
     

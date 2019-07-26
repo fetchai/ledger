@@ -97,8 +97,8 @@ TYPED_TEST(AddTest, backward_test_NMB_N11)
 	using ArrayType = TypeParam;
 	
 	ArrayType data_1 = ArrayType::FromString(
-	 "1, 2, 5, 6;"
-	 "3, 4, 7, 8");
+	 "1, 1, 1, 1;"
+	 "1, 1, 1, 1");
 	data_1.Reshape({2, 2, 2});
 	
 	ArrayType data_2 = ArrayType::FromString(
@@ -110,8 +110,8 @@ TYPED_TEST(AddTest, backward_test_NMB_N11)
 	 "22");
 	
 	ArrayType error = ArrayType::FromString(
-	 "1, 1, 1, 1;"
-	 "1, 1, 1, 1");
+	 "1, 2, 5, 6;"
+	 "3, 4, 7, 8");
 	error.Reshape({2, 2, 2});
 	
 	fetch::ml::ops::Add<ArrayType> op;
