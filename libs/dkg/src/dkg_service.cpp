@@ -101,7 +101,7 @@ DkgService::DkgService(Endpoint &endpoint, ConstByteArray address)
            OnRbcDeliver(address, payload);
          }}
   , dkg_{address_, current_cabinet_, current_threshold_,
-         [this](DKGEnvelop const &envelop) -> void { SendReliableBroadcast(envelop); },
+         [this](DKGEnvelope const &envelope) -> void { SendReliableBroadcast(envelope); },
          [this](MuddleAddress const &destination, std::pair<std::string, std::string> const &shares)
              -> void { SendShares(destination, shares); }}
 {

@@ -43,6 +43,7 @@ namespace dkg {
  */
 class DistributedKeyGeneration
 {
+protected:
   using MuddleAddress    = byte_array::ConstByteArray;
   using CabinetMembers   = std::set<MuddleAddress>;
   using Endpoint         = muddle::MuddleEndpoint;
@@ -68,7 +69,6 @@ class DistributedKeyGeneration
   uint32_t const &      threshold_;  ///< Number of cooperating members required to generate keys
   MuddleAddress         address_;    ///< Our muddle address
   uint32_t              cabinet_index_;  ///< Index of our address in cabinet_
-  // DkgService &       dkg_service_;
   std::function<void(DKGEnvelope const &)> broadcast_callback_;
   std::function<void(MuddleAddress const &, std::pair<std::string, std::string> const &)>
                      rpc_callback_;
