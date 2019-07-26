@@ -101,8 +101,8 @@ void Softmax(ArrayType const &array, ArrayType &ret, typename ArrayType::SizeTyp
   }
   else if ((array.shape().size() == 3) && (ret.shape().size() == 3))
   {
-	  assert(axis == 0 || axis == 1);
-	  // TODO (#1320) - Copy()s can be removed when softmax2dimplementation handles IsIterable types
+    assert(axis == 0 || axis == 1);
+    // TODO (#1320) - Copy()s can be removed when softmax2dimplementation handles IsIterable types
     auto tmp_ret = ret.View(0).Copy();
     for (size_t i = 0; i < array.shape()[2]; i++)
     {

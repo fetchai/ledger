@@ -76,7 +76,7 @@ public:
     else if (inputs.front()->shape().size() == 3)
     {
       assert((axis_ == 1) || (axis_ == 0));
-      auto sum_shape = return_signal.shape();
+      auto sum_shape          = return_signal.shape();
       sum_shape.at(1 - axis_) = 1;
       ArrayType sum(sum_shape);
       for (size_t i = 0; i < return_signal.shape()[2]; i++)
