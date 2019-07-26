@@ -40,11 +40,11 @@ TYPED_TEST(ShuffleTest, lfg_test)
     input_vector.at(j) = static_cast<TypeParam>(j);
   }
   std::vector<TypeParam> output_vector(vec_length);
-  std::vector<TypeParam> gt{static_cast<TypeParam>(1), static_cast<TypeParam>(4),
-                            static_cast<TypeParam>(3), static_cast<TypeParam>(7),
-                            static_cast<TypeParam>(5), static_cast<TypeParam>(6),
-                            static_cast<TypeParam>(2), static_cast<TypeParam>(0),
-                            static_cast<TypeParam>(9), static_cast<TypeParam>(8)};
+  std::vector<TypeParam> gt{static_cast<TypeParam>(9), static_cast<TypeParam>(7),
+                            static_cast<TypeParam>(6), static_cast<TypeParam>(5),
+                            static_cast<TypeParam>(2), static_cast<TypeParam>(8),
+                            static_cast<TypeParam>(0), static_cast<TypeParam>(3),
+                            static_cast<TypeParam>(4), static_cast<TypeParam>(1)};
 
   fetch::random::LaggedFibonacciGenerator<> lfg(123456789);
   fetch::random::Shuffle(lfg, input_vector, output_vector);
@@ -62,11 +62,11 @@ TYPED_TEST(ShuffleTest, lcg_test)
     input_vector.at(j) = static_cast<TypeParam>(j);
   }
   std::vector<TypeParam> output_vector(vec_length);
-  std::vector<TypeParam> gt{static_cast<TypeParam>(6), static_cast<TypeParam>(3),
-                            static_cast<TypeParam>(8), static_cast<TypeParam>(7),
-                            static_cast<TypeParam>(1), static_cast<TypeParam>(0),
-                            static_cast<TypeParam>(4), static_cast<TypeParam>(9),
-                            static_cast<TypeParam>(5), static_cast<TypeParam>(2)};
+  std::vector<TypeParam> gt{static_cast<TypeParam>(7), static_cast<TypeParam>(9),
+                            static_cast<TypeParam>(3), static_cast<TypeParam>(2),
+                            static_cast<TypeParam>(0), static_cast<TypeParam>(8),
+                            static_cast<TypeParam>(1), static_cast<TypeParam>(4),
+                            static_cast<TypeParam>(5), static_cast<TypeParam>(6)};
 
   fetch::random::LinearCongruentialGenerator lcg(123456789);
   fetch::random::Shuffle(lcg, input_vector, output_vector);
