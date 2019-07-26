@@ -19,6 +19,7 @@
 
 #include "math/matrix_operations.hpp"
 #include "ml/ops/ops.hpp"
+#include "ml/saveparams/saveable_params.hpp"
 
 #include <cassert>
 #include <memory>

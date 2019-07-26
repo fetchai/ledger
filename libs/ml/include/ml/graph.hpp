@@ -19,9 +19,7 @@
 
 #include "ml/meta/ml_type_traits.hpp"
 #include "ml/node.hpp"
-#include "ml/ops/ops_lookup.hpp"
 #include "ml/ops/weights.hpp"
-#include "ml/saveable_params.hpp"
 
 #include <algorithm>
 #include <cassert>
@@ -56,7 +54,6 @@ public:
 
   virtual ~Graph() = default;
   Graph()          = default;
-  explicit Graph(GraphSaveableParams<ArrayType> gs);
 
   ArrayType    Evaluate(std::string const &node_name, bool is_training = true);
   void         BackPropagateSignal(std::string const &node_name, ArrayType const &error_signal);
@@ -271,22 +268,6 @@ GraphSaveableParams<ArrayType> Graph<ArrayType>::GetGraphSaveableParams()
     gs.nodes.insert(std::make_pair(node.first, nsp));
   }
   return gs;
-}
-
-template <typename ArrayType>
-Graph<ArrayType>::Graph(GraphSaveableParams<ArrayType> gs)
-{
-  // starts from empty graph
-  assert(nodes_.size() == 0);
-
-  // goes through list of nodenames adding nodes
-  for (auto &node : gs.connections)
-  {
-    std::string              name   = node.first;
-    std::vector<std::string> inputs = node.second;
-
-    ops::OpsLookup<ArrayType>(this, gs.nodes[name], name, inputs);
-  }
 }
 
 template <typename ArrayType>

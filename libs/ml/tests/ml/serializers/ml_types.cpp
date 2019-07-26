@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include <ml/saveparams/ops_lookup.hpp>
 #include "core/serializers/byte_array_buffer.hpp"
 #include "math/tensor.hpp"
 #include "ml/graph.hpp"
@@ -98,12 +99,14 @@ TYPED_TEST(SerializersTest, serialize_graph_saveable_params)
   fetch::serializers::ByteArrayBuffer       b;
   b << gsp1;
   b.seek(0);
-  fetch::ml::GraphSaveableParams<TypeParam> gsp2;
-  b >> gsp2;
+//  fetch::ml::GraphSaveableParams<TypeParam> gsp2;
+  auto gsp2 = std::make_shared<fetch::ml::GraphSaveableParams<TypeParam>>();
 
-  EXPECT_EQ(gsp1.connections, gsp2.connections);
+  b >> *gsp2;
 
-  for (auto const &gsp2_node_pair : gsp2.nodes)
+  EXPECT_EQ(gsp1.connections, gsp2->connections);
+
+  for (auto const &gsp2_node_pair : gsp2->nodes)
   {
     auto gsp2_node = gsp2_node_pair.second;
     auto gsp1_node = gsp1.nodes[gsp2_node_pair.first];
@@ -111,7 +114,7 @@ TYPED_TEST(SerializersTest, serialize_graph_saveable_params)
     EXPECT_TRUE(gsp1_node->GetDescription() == gsp2_node->GetDescription());
   }
 
-  auto g2 = GraphType(gsp2);
+  auto g2 = fetch::ml::ops::GraphReconstructor(gsp2);
 
   ArrayType data = ArrayType::FromString("1, 2, 3, 4, 5, 6, 7, 8, 9, 10");
 
@@ -120,9 +123,7 @@ TYPED_TEST(SerializersTest, serialize_graph_saveable_params)
 
   ArrayType prediction = g->Evaluate(output);
 
-  // nodes have changed name because of subgraph flattening
-  std::string new_output_node = gsp2.connections.at(gsp2.connections.size() - 1).first;
-  ArrayType   prediction2     = g2.Evaluate(new_output_node);
+  ArrayType   prediction2     = g2.Evaluate(output);
 
   // test correct values
   EXPECT_TRUE(prediction.AllClose(prediction2, fetch::math::function_tolerance<DataType>(),

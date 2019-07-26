@@ -22,12 +22,11 @@
 #include "ml/ops/add.hpp"
 #include "ml/ops/flatten.hpp"
 #include "ml/ops/matrix_multiply.hpp"
-#include "ml/ops/ops_lookup.hpp"
 #include "ml/ops/weights.hpp"
 #include "ml/regularisers/regularisation.hpp"
 #include "ml/regularisers/regulariser.hpp"
-#include "ml/saveable_params.hpp"
 #include "ml/subgraph.hpp"
+#include "ml/saveparams/saveable_params.hpp"
 
 #include <functional>
 #include <memory>

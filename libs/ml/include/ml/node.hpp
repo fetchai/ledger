@@ -19,7 +19,7 @@
 
 #include "core/logger.hpp"
 #include "ml/ops/ops.hpp"
-#include "ml/saveable_params.hpp"
+#include "ml/saveparams/saveable_params.hpp"
 
 #include <algorithm>
 #include <cassert>

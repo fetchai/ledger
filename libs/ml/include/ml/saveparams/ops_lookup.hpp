@@ -55,6 +55,7 @@
 #include "ml/ops/tanh.hpp"
 #include "ml/ops/transpose.hpp"
 #include "ml/ops/weights.hpp"
+#include "ml/saveparams/saveable_params.hpp"
 
 #include <typeindex>
 
@@ -63,7 +64,20 @@ namespace ml {
 namespace ops {
 
 template <typename GraphType, typename Op>
-void MyAddNode(GraphType *g_ptr,  // nb: needs to be raw pointer because it's called with "this"
+void MyAddNode(std::shared_ptr<GraphType> g_ptr,
+               std::shared_ptr<SaveableParams> saved_node, std::string node_name,
+               std::vector<std::string> const &inputs)
+{
+  auto castnode = std::dynamic_pointer_cast<typename Op::SPType>(saved_node);
+  if (!castnode)
+  {
+    throw std::runtime_error("Node downcasting failed.");
+  }
+  g_ptr->template AddNode<Op>(node_name, inputs, *castnode);
+}
+
+template <typename GraphType, typename Op>
+void MyAddSubgraph(std::shared_ptr<GraphType> g_ptr,
                std::shared_ptr<SaveableParams> saved_node, std::string node_name,
                std::vector<std::string> const &inputs)
 {
@@ -77,8 +91,9 @@ void MyAddNode(GraphType *g_ptr,  // nb: needs to be raw pointer because it's ca
 
 template <typename ArrayType>
 void OpsLookup(
-    Graph<ArrayType> *g_ptr,  // nb: needs to be raw pointer because it's called with "this"
-    std::shared_ptr<SaveableParams> saved_node, std::string node_name,
+    std::shared_ptr<Graph<ArrayType>> g_ptr,
+    std::shared_ptr<SaveableParams> const & saved_node,
+    std::string const & node_name,
     std::vector<std::string> const &inputs)
 {
   std::string descrip = saved_node->DESCRIPTOR;
@@ -284,6 +299,31 @@ void OpsLookup(
     throw std::runtime_error("Unknown Op type " + descrip);
   }
 }
+
+// todo: this should be recursive
+// when you want to add a subgraph call this with the subgraph as GraphType
+// Use MyAddNode to add nodes that are not graphs
+// MyAddSubgraph currently does nothing! But should call this.
+// Pass in a pointer to the current graph to graph reconstructor.
+// todo: self_attention need getopsaveableparams
+// todo: tests for all the layers
+
+template <class ArrayType, GraphType>
+void GraphReconstructor(std::shared_ptr<GraphSaveableParams<ArrayType>> gsp)
+{
+  auto g = std::make_shared<Graph<ArrayType>>();
+
+  // goes through list of nodenames adding nodes
+  for (auto &node : gsp->connections)
+  {
+    std::string              name   = node.first;
+    std::vector<std::string> inputs = node.second;
+
+    ops::OpsLookup<ArrayType>(g, gsp->nodes[name], name, inputs);
+  }
+  return *g;
+}
+
 
 }  // namespace ops
 }  // namespace ml

@@ -38,12 +38,8 @@ class SubGraph : public Graph<T>, public Ops<T>
 {
 public:
   using ArrayType     = T;
-<<<<<<< HEAD
-  using VecTensorType = std::vector<std::reference_wrapper<ArrayType const>>;
-  using SPType = SubGraphSaveableParams<ArrayType>;
-=======
   using VecTensorType = std::vector<std::shared_ptr<ArrayType const>>;
->>>>>>> 59a522e74611199d626f9f41100205d2a18da2ae
+  using SPType = SubGraphSaveableParams<ArrayType>;
 
   virtual void                   Forward(VecTensorType const &inputs, ArrayType &output);
   virtual std::vector<ArrayType> Backward(VecTensorType const &inputs,
@@ -100,15 +96,9 @@ void SubGraph<T>::Forward(VecTensorType const &inputs, ArrayType &output)
   assert(inputs.size() == this->input_node_names_.size());
   for (uint64_t i(0); i < inputs.size(); ++i)
   {
-<<<<<<< HEAD
-    this->SetInput(input_node_names_[i], inputs.at(i));
+    this->SetInput(input_node_names_[i], *(inputs.at(i)));
   }
-  output = this->nodes_[output_node_name_]->Evaluate(this->is_training_);
-=======
-    this->SetInput(input_nodes_[i], *(inputs.at(i)));
-  }
-  output = *(output_node_->Evaluate(this->is_training_));
->>>>>>> 59a522e74611199d626f9f41100205d2a18da2ae
+  output = *(this->nodes_[output_node_name_]->Evaluate(this->is_training_));
 }
 
 template <typename T>
