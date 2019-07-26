@@ -165,14 +165,14 @@ private:
           bn::Fr trivial_share;
           trivial_share.clear();
           std::pair<MsgShare, MsgShare> shares{trivial_share.getStr(), trivial_share.getStr()};
-          rpc_callback_(cab_i, shares);
+          rpc_function_(cab_i, shares);
           sent_bad = true;
         }
         else
         {
           std::pair<MsgShare, MsgShare> shares{s_ij[cabinet_index_][j].getStr(),
                                                sprime_ij[cabinet_index_][j].getStr()};
-          rpc_callback_(cab_i, shares);
+          rpc_function_(cab_i, shares);
         }
       }
       ++j;
@@ -192,7 +192,7 @@ private:
         {
           std::pair<MsgShare, MsgShare> shares{s_ij[cabinet_index_][j].getStr(),
                                                sprime_ij[cabinet_index_][j].getStr()};
-          rpc_callback_(cab_i, shares);
+          rpc_function_(cab_i, shares);
           bad_share = true;
         }
         else
@@ -200,7 +200,7 @@ private:
           ComputeShares(s_ij[cabinet_index_][j], sprime_ij[cabinet_index_][j], a_i, b_i, j);
           std::pair<MsgShare, MsgShare> shares{s_ij[cabinet_index_][j].getStr(),
                                                sprime_ij[cabinet_index_][j].getStr()};
-          rpc_callback_(cab_i, shares);
+          rpc_function_(cab_i, shares);
         }
       }
       ++j;
