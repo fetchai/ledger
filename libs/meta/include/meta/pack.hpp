@@ -361,6 +361,11 @@ using InitT = typename Init<P>::type;
 
 namespace std {
 
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wmismatched-tags"
+#endif
+
 template <class... Ts>
 struct tuple_size<fetch::pack::Pack<Ts...>> : fetch::pack::TupleSize<fetch::pack::Pack<Ts...>>
 {
@@ -370,6 +375,10 @@ struct tuple_element<i, fetch::pack::Pack<Ts...>>
   : fetch::pack::TupleElement<fetch::pack::SizeConstant<i>, fetch::pack::Pack<Ts...>>
 {
 };
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
 
 }  // namespace std
 
