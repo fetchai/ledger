@@ -48,7 +48,7 @@ public:
     assert(inputs.size() == 1);
     assert(output.shape() == this->ComputeOutputShape(inputs));
 
-    fetch::math::Sigmoid(inputs.front().get(), output);
+    fetch::math::Sigmoid((*inputs.front()), output);
     fetch::math::Log(output, output);
 
     // ensures numerical stability
@@ -62,12 +62,11 @@ public:
                                   ArrayType const &    error_signal) override
   {
     assert(inputs.size() == 1);
-    assert(inputs.front().get().shape() == error_signal.shape());
+    assert(inputs.front()->shape() == error_signal.shape());
     ArrayType return_signal{error_signal.shape()};
 
     // gradient of log-sigmoid function is 1/(e^x + 1))
-    fetch::math::Add(fetch::math::Exp(inputs.front().get()), static_cast<DataType>(1),
-                     return_signal);
+    fetch::math::Add(fetch::math::Exp((*inputs.front())), static_cast<DataType>(1), return_signal);
     fetch::math::Divide(static_cast<DataType>(1), return_signal, return_signal);
 
     // multiply by error_signal (chain rule)
@@ -78,7 +77,7 @@ public:
 
   std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
   {
-    return inputs.front().get().shape();
+    return inputs.front()->shape();
   }
 
   static constexpr char const *DESCRIPTOR = "LogSigmoid";
