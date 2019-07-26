@@ -38,7 +38,7 @@ public:
   using SizeType      = typename ArrayType::SizeType;
   using VecTensorType = typename Ops<T>::VecTensorType;
 
-  explicit Softmax(SizeType axis = 1)
+  explicit Softmax(SizeType axis = 0)
     : axis_(axis)
   {}
   ~Softmax() override = default;
