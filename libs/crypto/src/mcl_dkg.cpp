@@ -168,17 +168,17 @@ std::vector<bn::Fr> InterpolatePolynom(std::vector<bn::Fr> const &a, std::vector
   for (size_t k = 0; k < m; k++)
   {
     t1 = 1;
-    for (long i = k - 1; i >= 0; i--)
+    for (long i = static_cast<long>(k - 1); i >= 0; i--)
     {
       bn::Fr::mul(t1, t1, a[k]);
-      bn::Fr::add(t1, t1, prod[i]);
+      bn::Fr::add(t1, t1, prod[static_cast<size_t>(i)]);
     }
 
     t2 = 0;
-    for (long i = k - 1; i >= 0; i--)
+    for (long i = static_cast<long>(k - 1); i >= 0; i--)
     {
       bn::Fr::mul(t2, t2, a[k]);
-      bn::Fr::add(t2, t2, res[i]);
+      bn::Fr::add(t2, t2, res[static_cast<size_t>(i)]);
     }
     bn::Fr::neg(t1, t1);
 
@@ -201,10 +201,10 @@ std::vector<bn::Fr> InterpolatePolynom(std::vector<bn::Fr> const &a, std::vector
       {
         bn::Fr::neg(t1, a[k]);
         bn::Fr::add(prod[k], t1, prod[k - 1]);
-        for (long i = k - 1; i >= 1; i--)
+        for (long i = static_cast<long>(k - 1); i >= 1; i--)
         {
-          bn::Fr::mul(t2, prod[i], t1);
-          bn::Fr::add(prod[i], t2, prod[i - 1]);
+          bn::Fr::mul(t2, prod[static_cast<size_t>(i)], t1);
+          bn::Fr::add(prod[static_cast<size_t>(i)], t2, prod[static_cast<size_t>(i - 1)]);
         }
         bn::Fr::mul(prod[0], prod[0], t1);
       }

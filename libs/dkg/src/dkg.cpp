@@ -33,14 +33,14 @@ bn::G2                DistributedKeyGeneration::group_h_;
 
 DistributedKeyGeneration::DistributedKeyGeneration(
     MuddleAddress address, CabinetMembers const &cabinet, uint32_t const &threshold,
-    std::function<void(DKGEnvelope const &)> broadcast_callback,
+    std::function<void(DKGEnvelope const &)> broadcast_function,
     std::function<void(MuddleAddress const &, std::pair<std::string, std::string> const &)>
-        rpc_callback)
+        rpc_function)
   : cabinet_{cabinet}
   , threshold_{threshold}
   , address_{std::move(address)}
-  , broadcast_callback_{std::move(broadcast_callback)}
-  , rpc_callback_{std::move(rpc_callback)}
+  , broadcast_callback_{std::move(broadcast_function)}
+  , rpc_callback_{std::move(rpc_function)}
 {
   static std::once_flag flag;
 
