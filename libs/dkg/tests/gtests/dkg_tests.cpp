@@ -319,7 +319,6 @@ private:
     std::unordered_map<MuddleAddress, std::pair<MsgShare, MsgShare>> complaint_shares;
     if (Failure(Failures::WITHOLD_RECONSTRUCTION_SHARES))
     {
-      std::cout << "Node " << cabinet_index_ << "BROADCAST EMPTY SHARES" << std::endl;
       SendBroadcast(
           DKGEnvelop{SharesMessage{static_cast<uint64_t>(State::WAITING_FOR_RECONSTRUCTION_SHARES),
                                    complaint_shares, "signature"}});
@@ -332,14 +331,13 @@ private:
         assert(qual_.find(in) != qual_.end());
         uint32_t in_index{CabinetIndex(in)};
         reconstruction_shares.insert({in, {{}, std::vector<bn::Fr>(cabinet_.size(), zeroFr_)}});
-        reconstruction_shares.at(in).first.push_back(cabinet_index_);
+        reconstruction_shares.at(in).first.insert(cabinet_index_);
         reconstruction_shares.at(in).second[cabinet_index_] = s_ij[in_index][cabinet_index_];
         complaint_shares.insert({in,
                                  {s_ij[in_index][cabinet_index_].getStr(),
                                   sprime_ij[in_index][cabinet_index_].getStr()}});
       }
-      std::cout << "Node " << cabinet_index_ << " reconstruction shares size "
-                << complaint_shares.size() << std::endl;
+      << complaint_shares.size() << std::endl;
       SendBroadcast(
           DKGEnvelop{SharesMessage{static_cast<uint64_t>(State::WAITING_FOR_RECONSTRUCTION_SHARES),
                                    complaint_shares, "signature"}});
@@ -435,7 +433,8 @@ struct CabinetMember
   }
 };
 
-void GenerateTest(uint32_t cabinet_size, uint32_t threshold, uint32_t expected_completion_size,
+void GenerateTest(uint32_t cabinet_size, uint32_t threshold, uint32_t qual_size,
+                  uint32_t                                             expected_completion_size,
                   const std::vector<std::vector<FaultyDkg::Failures>> &failures = {})
 {
   RBC::CabinetMembers cabinet;
@@ -454,7 +453,7 @@ void GenerateTest(uint32_t cabinet_size, uint32_t threshold, uint32_t expected_c
     {
       committee.emplace_back(new CabinetMember{port_number, ii, cabinet, threshold});
     }
-    if (ii >= (cabinet_size - expected_completion_size))
+    if (ii >= (cabinet_size - qual_size))
     {
       expected_qual.insert(committee[ii]->muddle.identity().identifier());
       qual_index.insert(ii);
@@ -513,9 +512,9 @@ void GenerateTest(uint32_t cabinet_size, uint32_t threshold, uint32_t expected_c
       member->dkg.BroadcastShares();
     }
 
-    // Loop until everyone in QUAL is finished with DKG
+    // Loop until everyone is finished with DKG
     uint32_t pp = 0;
-    while (pp != cabinet_size)
+    while (pp < cabinet_size)
     {
       std::this_thread::sleep_for(std::chrono::seconds(5));
       for (const auto &member : committee)
@@ -539,22 +538,25 @@ void GenerateTest(uint32_t cabinet_size, uint32_t threshold, uint32_t expected_c
       member->SetOutput();
     }
 
-    // Check qual
-    uint32_t start = cabinet_size - expected_completion_size;
-    for (uint32_t nn = start + 1; nn < cabinet_size; ++nn)
+    // Check everyone in qual agrees on qual
+    uint32_t start_qual = cabinet_size - qual_size;
+    for (uint32_t nn = start_qual + 1; nn < cabinet_size; ++nn)
     {
-      EXPECT_EQ(committee[start]->qual_set, expected_qual);
+      EXPECT_EQ(committee[start_qual]->qual_set, expected_qual);
     }
 
-    // Check DKG is working correctly
-    for (uint32_t nn = start + 1; nn < cabinet_size; ++nn)
+    // Check DKG is working correctly for everyone who completes the DKG successfully
+    uint32_t start_complete = cabinet_size - expected_completion_size;
+    for (uint32_t nn = start_complete + 1; nn < cabinet_size; ++nn)
     {
-      EXPECT_EQ(committee[start]->public_key, committee[nn]->public_key);
-      EXPECT_EQ(committee[start]->public_key_shares, committee[nn]->public_key_shares);
-      EXPECT_NE(committee[start]->public_key_shares[start], committee[nn]->public_key_shares[nn]);
+      EXPECT_EQ(committee[start_complete]->public_key, committee[nn]->public_key);
+      EXPECT_EQ(committee[start_complete]->public_key_shares, committee[nn]->public_key_shares);
+      EXPECT_NE(committee[start_complete]->public_key_shares[start_complete],
+                committee[nn]->public_key_shares[nn]);
       for (uint32_t qq = nn + 1; qq < cabinet_size; ++qq)
       {
-        EXPECT_NE(committee[start]->public_key_shares[nn], committee[start]->public_key_shares[qq]);
+        EXPECT_NE(committee[start_complete]->public_key_shares[nn],
+                  committee[start_complete]->public_key_shares[qq]);
       }
     }
   }
@@ -566,10 +568,9 @@ void GenerateTest(uint32_t cabinet_size, uint32_t threshold, uint32_t expected_c
   std::this_thread::sleep_for(std::chrono::seconds(1));
 }
 
-/*
 TEST(dkg, small_scale_test)
 {
-  GenerateTest(4, 1, 4);
+  GenerateTest(4, 1, 4, 4);
 }
 
 TEST(dkg, send_bad_share)
@@ -577,14 +578,14 @@ TEST(dkg, send_bad_share)
   // Node 0 sends bad secret shares to Node 1 which complains against it.
   // Node 0 then broadcasts its real shares as defense and then is allowed into
   // qual
-  GenerateTest(4, 1, 4, {{FaultyDkg::Failures::SEND_BAD_SHARE}});
+  GenerateTest(4, 1, 4, 4, {{FaultyDkg::Failures::SEND_BAD_SHARE}});
 }
 
 TEST(dkg, bad_coefficients)
 {
   // Node 0 broadcasts bad coefficients which fails verification by everyone.
   // Rejected from qual
-  GenerateTest(4, 1, 3, {{FaultyDkg::Failures::BAD_COEFFICIENT}});
+  GenerateTest(4, 1, 3, 3, {{FaultyDkg::Failures::BAD_COEFFICIENT}});
 }
 
 TEST(dkg, compute_bad_shares)
@@ -592,7 +593,7 @@ TEST(dkg, compute_bad_shares)
   // Node 0 sends computes bad secret shares to Node 1 which complains against it.
   // Node 0 then broadcasts the shares sent to Node 1 as defense but as they have been
   // computed wrong they are not in qual
-  GenerateTest(4, 1, 3, {{FaultyDkg::Failures::COMPUTE_BAD_SHARE}});
+  GenerateTest(4, 1, 3, 3, {{FaultyDkg::Failures::COMPUTE_BAD_SHARE}});
 }
 
 TEST(dkg, send_empty_complaints_answer)
@@ -601,81 +602,76 @@ TEST(dkg, send_empty_complaints_answer)
   // Node 0 then does not send real shares and instead sends empty complaint answer.
   // Node 0 should be disqualified from qual
   GenerateTest(
-      4, 1, 3,
+      4, 1, 3, 3,
       {{FaultyDkg::Failures::SEND_BAD_SHARE, FaultyDkg::Failures::SEND_EMPTY_COMPLAINT_ANSWER}});
 }
 
 TEST(dkg, send_multiple_complaints)
 {
   // Node 0 sends multiple complaint messages in the first round of complaints
-  GenerateTest(4, 1, 4, {{FaultyDkg::Failures::SEND_MULTIPLE_COMPLAINTS}});
+  GenerateTest(4, 1, 4, 4, {{FaultyDkg::Failures::SEND_MULTIPLE_COMPLAINTS}});
 }
 
 TEST(dkg, send_multiple_coefficients)
 {
   // Node 0 sends multiple coefficients. Should trigger warning but everyone
   // should succeed in DKG
-  GenerateTest(4, 1, 4, {{FaultyDkg::Failures::SEND_MULTIPLE_COEFFICIENTS}});
+  GenerateTest(4, 1, 4, 4, {{FaultyDkg::Failures::SEND_MULTIPLE_COEFFICIENTS}});
 }
 
 TEST(dkg, send_multiple_complaint_answers)
 {
   // Node 0 sends multiple complaint answers. Should trigger warning but everyone
   // should succeed in DKG
-  GenerateTest(4, 1, 4, {{FaultyDkg::Failures::SEND_MULTIPLE_COMPLAINT_ANSWERS}});
+  GenerateTest(4, 1, 4, 4, {{FaultyDkg::Failures::SEND_MULTIPLE_COMPLAINT_ANSWERS}});
 }
 
 TEST(dkg, qual_below_threshold)
 {
   // Qual size is below threshold as two many nodes were disqualified so DKG fails for
   // everyone
-  GenerateTest(4, 2, 0,
+  GenerateTest(4, 2, 2, 0,
                {{FaultyDkg::Failures::BAD_COEFFICIENT}, {FaultyDkg::Failures::BAD_COEFFICIENT}});
 }
 
-//THIS ONE FAILS
 TEST(dkg, bad_qual_coefficients)
 {
   // Node 0 computes bad qual coefficients so node 0 is in qual complaints but everyone reconstructs
   // their shares. Everyone else except node 0 succeeds in DKG
-  GenerateTest(4, 1, 3, {{FaultyDkg::Failures::BAD_QUAL_COEFFICIENTS}});
+  GenerateTest(4, 1, 4, 3, {{FaultyDkg::Failures::BAD_QUAL_COEFFICIENTS}});
 }
-
 
 TEST(dkg, send_multiple_qual_coefficients)
 {
   // Node 0 sends multiple qual coefficients so node 0.
   // Should trigger warning but everyone should succeed in DKG
-  GenerateTest(4, 1, 4, {{FaultyDkg::Failures::SEND_MULTIPLE_QUAL_COEFFICIENTS}});
+  GenerateTest(4, 1, 4, 4, {{FaultyDkg::Failures::SEND_MULTIPLE_QUAL_COEFFICIENTS}});
 }
 
-
-// FAILS DUE TO RECONSTRUCTION
 TEST(dkg, send_fake_qual_complaint)
 {
-  // Node 0 sends multiple qual coefficients so node 0.
-  // Should trigger warning and node 0's shares will be reconstructed but everyone should succeed in
-DKG GenerateTest(4, 1, 4, {{FaultyDkg::Failures::SEND_FALSE_QUAL_COMPLAINT}});
+  // Node 0 sends multiple qual coefficients. Should trigger warning and node 0's shares will be
+  // reconstructed but everyone else should succeed in the DKG. Important test as it means
+  // reconstruction computes the correct thing.
+  GenerateTest(4, 1, 4, 4, {{FaultyDkg::Failures::SEND_FALSE_QUAL_COMPLAINT}});
 }
-*/
 
 TEST(dkg, too_many_bad_qual_coefficients)
 {
   // Two nodes send bad qual coefficients which means that there are
   // not enough parties not (threshold + 1) parities not in complaints.
   // DKG fails
-  GenerateTest(4, 2, 0,
+  GenerateTest(4, 2, 4, 0,
                {{FaultyDkg::Failures::BAD_QUAL_COEFFICIENTS},
                 {FaultyDkg::Failures::BAD_QUAL_COEFFICIENTS},
                 {FaultyDkg::Failures::BAD_QUAL_COEFFICIENTS}});
 }
 
-// FAILS DUE TO RECONSTRUCTION
 TEST(dkg, send_multiple_reconstruction_shares)
 {
   // Node sends multiple reconstruction shares which triggers warning but
   // DKG succeeds
-  GenerateTest(4, 1, 4,
+  GenerateTest(4, 1, 4, 3,
                {{FaultyDkg::Failures::BAD_QUAL_COEFFICIENTS},
                 {FaultyDkg::Failures::SEND_MULTIPLE_RECONSTRUCTION_SHARES}});
 }
@@ -684,7 +680,7 @@ TEST(dkg, withold_reconstruction_shares)
 {
   // Node 0 sends bad qual coefficients and another in collusion does not broadcast node 0's shares
   // so there are not enough shares to run reconstruction
-  GenerateTest(4, 2, 0,
+  GenerateTest(4, 2, 4, 0,
                {{FaultyDkg::Failures::BAD_QUAL_COEFFICIENTS},
                 {FaultyDkg::Failures::WITHOLD_RECONSTRUCTION_SHARES}});
 }
