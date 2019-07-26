@@ -194,8 +194,8 @@ void DistributedKeyGeneration::BroadcastQualCoefficients()
     A_ik[cabinet_index_][k] = g__a_i[k];
     coefficients.push_back(A_ik[cabinet_index_][k].getStr());
   }
-  SendBroadcast(DKGEnvelope{CoefficientsMessage{static_cast<uint8_t>(State::WAITING_FOR_QUAL_SHARES),
-                                               coefficients, "signature"}});
+  SendBroadcast(DKGEnvelope{CoefficientsMessage{
+      static_cast<uint8_t>(State::WAITING_FOR_QUAL_SHARES), coefficients, "signature"}});
   complaints_answer_manager_.Clear();
   state_ = State::WAITING_FOR_QUAL_SHARES;
   ReceivedQualShares();
@@ -208,54 +208,8 @@ void DistributedKeyGeneration::BroadcastQualCoefficients()
  */
 void DistributedKeyGeneration::BroadcastQualComplaints()
 {
-<<<<<<< HEAD
-  std::unordered_set<MuddleAddress> complaints_local;
-  uint32_t                          i  = 0;
-  auto                              iq = cabinet_.begin();
-  for (auto const &miner : qual_)
-  {
-    while (*iq != miner)
-    {
-      ++iq;
-      ++i;
-    }
-    if (i != cabinet_index_)
-    {
-      // Can only require this if G, H do not take the default values from clear()
-      if (A_ik[i][0] != zeroG2_)
-      {
-        bn::G2 rhs, lhs;
-        lhs = g__s_ij[i][cabinet_index_];
-        rhs = ComputeRHS(cabinet_index_, A_ik[i]);
-        if (lhs != rhs)
-        {
-          FETCH_LOG_WARN(LOGGING_NAME, "Node ", cabinet_index_, " received coefficients from node ",
-                         i, " which failed verification");
-          complaints_local.insert(miner);
-        }
-      }
-      else
-      {
-        FETCH_LOG_WARN(LOGGING_NAME, "Node ", cabinet_index_,
-                       "received vanishing coefficients from node ", i);
-        complaints_local.insert(miner);
-      }
-    }
-  }
-
-  std::unordered_map<MuddleAddress, std::pair<MsgShare, MsgShare>> QUAL_complaints;
-  for (auto &c : complaints_local)
-  {
-    uint32_t c_index{CabinetIndex(c)};
-    QUAL_complaints.insert(
-        {c, {s_ij[c_index][cabinet_index_].getStr(), sprime_ij[c_index][cabinet_index_].getStr()}});
-  }
   SendBroadcast(DKGEnvelope{SharesMessage{static_cast<uint64_t>(State::WAITING_FOR_QUAL_COMPLAINTS),
-                                         QUAL_complaints, "signature"}});
-=======
-  SendBroadcast(DKGEnvelop{SharesMessage{static_cast<uint64_t>(State::WAITING_FOR_QUAL_COMPLAINTS),
-                                         ComputeQualComplaints(), "signature"}});
->>>>>>> More tests and bug fixes
+                                          ComputeQualComplaints(), "signature"}});
   state_ = State::WAITING_FOR_QUAL_COMPLAINTS;
   ReceivedQualComplaint();
 }
@@ -894,7 +848,7 @@ DistributedKeyGeneration::SharesExposedMap DistributedKeyGeneration::ComputeQual
           FETCH_LOG_WARN(LOGGING_NAME, "Node ", cabinet_index_,
                          " received qual coefficients from node ", i, " which failed verification");
           qual_complaints.insert(
-                  {miner, {s_ij[i][cabinet_index_].getStr(), sprime_ij[i][cabinet_index_].getStr()}});
+              {miner, {s_ij[i][cabinet_index_].getStr(), sprime_ij[i][cabinet_index_].getStr()}});
         }
       }
       else
@@ -902,7 +856,7 @@ DistributedKeyGeneration::SharesExposedMap DistributedKeyGeneration::ComputeQual
         FETCH_LOG_WARN(LOGGING_NAME, "Node ", cabinet_index_,
                        "received vanishing qual coefficients from node ", i);
         qual_complaints.insert(
-                {miner, {s_ij[i][cabinet_index_].getStr(), sprime_ij[i][cabinet_index_].getStr()}});
+            {miner, {s_ij[i][cabinet_index_].getStr(), sprime_ij[i][cabinet_index_].getStr()}});
       }
     }
   }
@@ -910,11 +864,7 @@ DistributedKeyGeneration::SharesExposedMap DistributedKeyGeneration::ComputeQual
 }
 
 /**
-<<<<<<< HEAD
  * If in qual a member computes individual share of the secret key and further computes and
-=======
- * If in qual a member Computes individual share of the secret key and further computes and
->>>>>>> More tests and bug fixes
  * broadcasts qual coefficients
  */
 void DistributedKeyGeneration::ComputeSecretShare()
@@ -1042,11 +992,9 @@ void DistributedKeyGeneration::ResetCabinet()
   Init(g__s_ij, cabinet_size, cabinet_size);
   Init(g__a_i, polynomial_size);
 
-  complaints_manager_.Clear();
-  complaints_answer_manager_.Clear();
-  qual_complaints_manager_.Clear();
   complaints_manager_.ResetCabinet(cabinet_size);
   complaints_answer_manager_.ResetCabinet(cabinet_size);
+  qual_complaints_manager_.Reset();
 
   received_all_coef_and_shares_       = false;
   received_all_complaints_            = false;

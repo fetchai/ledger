@@ -76,7 +76,7 @@ public:
     WITHOLD_RECONSTRUCTION_SHARES
   };
   FaultyDkg(MuddleAddress address, CabinetMembers const &cabinet, uint32_t const &threshold,
-            std::function<void(DKGEnvelop const &)> broadcast_callback,
+            std::function<void(DKGEnvelope const &)> broadcast_callback,
             std::function<void(MuddleAddress const &, std::pair<std::string, std::string> const &)>
                                          rpc_callback,
             const std::vector<Failures> &failures = {})
@@ -106,7 +106,7 @@ public:
       SendCoefficients(a_i, b_i);
       if (Failure(Failures::SEND_MULTIPLE_COEFFICIENTS))
       {
-        SendBroadcast(DKGEnvelop{
+        SendBroadcast(DKGEnvelope{
             CoefficientsMessage{static_cast<uint8_t>(State::WAITING_FOR_SHARE), {}, "signature"}});
       }
     }
@@ -146,8 +146,8 @@ private:
       C_ik[cabinet_index_][k] = ComputeLHS(g__a_i[k], group_g_, group_h_, a_i[k], b_i[k]);
     }
     // Send empty coefficients to everyone
-    SendBroadcast(DKGEnvelop{CoefficientsMessage{static_cast<uint8_t>(State::WAITING_FOR_SHARE),
-                                                 coefficients, "signature"}});
+    SendBroadcast(DKGEnvelope{CoefficientsMessage{static_cast<uint8_t>(State::WAITING_FOR_SHARE),
+                                                  coefficients, "signature"}});
   }
 
   void SendBadShares(std::vector<bn::Fr> const &a_i, std::vector<bn::Fr> const &b_i)
@@ -214,10 +214,10 @@ private:
     {
       complaints_manager_.Count(cab);
     }
-    SendBroadcast(DKGEnvelop{ComplaintsMessage{complaints_local, "signature"}});
+    SendBroadcast(DKGEnvelope{ComplaintsMessage{complaints_local, "signature"}});
     if (Failure(Failures::SEND_MULTIPLE_COMPLAINTS))
     {
-      SendBroadcast(DKGEnvelop{ComplaintsMessage{complaints_local, "signature"}});
+      SendBroadcast(DKGEnvelope{ComplaintsMessage{complaints_local, "signature"}});
     }
     state_ = State::WAITING_FOR_COMPLAINTS;
     ReceivedComplaint();
@@ -237,13 +237,13 @@ private:
       }
     }
     SendBroadcast(
-        DKGEnvelop{SharesMessage{static_cast<uint64_t>(State::WAITING_FOR_COMPLAINT_ANSWERS),
-                                 complaints_answer, "signature"}});
+        DKGEnvelope{SharesMessage{static_cast<uint64_t>(State::WAITING_FOR_COMPLAINT_ANSWERS),
+                                  complaints_answer, "signature"}});
     if (Failure(Failures::SEND_MULTIPLE_COMPLAINT_ANSWERS))
     {
       SendBroadcast(
-          DKGEnvelop{SharesMessage{static_cast<uint64_t>(State::WAITING_FOR_COMPLAINT_ANSWERS),
-                                   complaints_answer, "signature"}});
+          DKGEnvelope{SharesMessage{static_cast<uint64_t>(State::WAITING_FOR_COMPLAINT_ANSWERS),
+                                    complaints_answer, "signature"}});
     }
     state_ = State::WAITING_FOR_COMPLAINT_ANSWERS;
     ReceivedComplaintsAnswer();
@@ -259,7 +259,7 @@ private:
         A_ik[cabinet_index_][k] = zeroG2_;
         coefficients.push_back(A_ik[cabinet_index_][k].getStr());
       }
-      SendBroadcast(DKGEnvelop{CoefficientsMessage{
+      SendBroadcast(DKGEnvelope{CoefficientsMessage{
           static_cast<uint8_t>(State::WAITING_FOR_QUAL_SHARES), coefficients, "signature"}});
     }
     else
@@ -269,11 +269,11 @@ private:
         A_ik[cabinet_index_][k] = g__a_i[k];
         coefficients.push_back(A_ik[cabinet_index_][k].getStr());
       }
-      SendBroadcast(DKGEnvelop{CoefficientsMessage{
+      SendBroadcast(DKGEnvelope{CoefficientsMessage{
           static_cast<uint8_t>(State::WAITING_FOR_QUAL_SHARES), coefficients, "signature"}});
       if (Failure(Failures::SEND_MULTIPLE_QUAL_COEFFICIENTS))
       {
-        SendBroadcast(DKGEnvelop{CoefficientsMessage{
+        SendBroadcast(DKGEnvelope{CoefficientsMessage{
             static_cast<uint8_t>(State::WAITING_FOR_QUAL_SHARES), coefficients, "signature"}});
       }
     }
@@ -294,21 +294,21 @@ private:
         ++victim;
         ++i;
       }
-      SendBroadcast(DKGEnvelop{SharesMessage{
+      SendBroadcast(DKGEnvelope{SharesMessage{
           static_cast<uint64_t>(State::WAITING_FOR_QUAL_COMPLAINTS),
           {{*victim, {s_ij[i][cabinet_index_].getStr(), sprime_ij[i][cabinet_index_].getStr()}}},
           "signature"}});
     }
     else if (Failure(Failures::WITHOLD_RECONSTRUCTION_SHARES))
     {
-      SendBroadcast(DKGEnvelop{SharesMessage{
+      SendBroadcast(DKGEnvelope{SharesMessage{
           static_cast<uint64_t>(State::WAITING_FOR_QUAL_COMPLAINTS), {}, "signature"}});
     }
     else
     {
       SendBroadcast(
-          DKGEnvelop{SharesMessage{static_cast<uint64_t>(State::WAITING_FOR_QUAL_COMPLAINTS),
-                                   ComputeQualComplaints(), "signature"}});
+          DKGEnvelope{SharesMessage{static_cast<uint64_t>(State::WAITING_FOR_QUAL_COMPLAINTS),
+                                    ComputeQualComplaints(), "signature"}});
     }
     state_ = State::WAITING_FOR_QUAL_COMPLAINTS;
     ReceivedQualComplaint();
@@ -320,8 +320,8 @@ private:
     if (Failure(Failures::WITHOLD_RECONSTRUCTION_SHARES))
     {
       SendBroadcast(
-          DKGEnvelop{SharesMessage{static_cast<uint64_t>(State::WAITING_FOR_RECONSTRUCTION_SHARES),
-                                   complaint_shares, "signature"}});
+          DKGEnvelope{SharesMessage{static_cast<uint64_t>(State::WAITING_FOR_RECONSTRUCTION_SHARES),
+                                    complaint_shares, "signature"}});
     }
     else
     {
@@ -337,13 +337,12 @@ private:
                                  {s_ij[in_index][cabinet_index_].getStr(),
                                   sprime_ij[in_index][cabinet_index_].getStr()}});
       }
-      << complaint_shares.size() << std::endl;
       SendBroadcast(
-          DKGEnvelop{SharesMessage{static_cast<uint64_t>(State::WAITING_FOR_RECONSTRUCTION_SHARES),
-                                   complaint_shares, "signature"}});
+          DKGEnvelope{SharesMessage{static_cast<uint64_t>(State::WAITING_FOR_RECONSTRUCTION_SHARES),
+                                    complaint_shares, "signature"}});
       if (Failure(Failures::SEND_MULTIPLE_RECONSTRUCTION_SHARES))
       {
-        SendBroadcast(DKGEnvelop{
+        SendBroadcast(DKGEnvelope{
             SharesMessage{static_cast<uint64_t>(State::WAITING_FOR_RECONSTRUCTION_SHARES),
                           complaint_shares, "signature"}});
       }
@@ -379,7 +378,7 @@ struct CabinetMember
     , shares_subscription(muddle.AsEndpoint().Subscribe(SERVICE_DKG, CHANNEL_SHARES))
     , rbc{muddle.AsEndpoint(), muddle_certificate->identity().identifier(), current_cabinet,
           [this](ConstByteArray const &address, ConstByteArray const &payload) -> void {
-            DKGEnvelop    env;
+            DKGEnvelope   env;
             DKGSerializer serializer{payload};
             serializer >> env;
             dkg.OnDkgMessage(address, env.Message());
@@ -387,9 +386,9 @@ struct CabinetMember
     , dkg{muddle_certificate->identity().identifier(),
           current_cabinet,
           threshold,
-          [this](DKGEnvelop const &envelop) -> void {
+          [this](DKGEnvelope const &envelope) -> void {
             DKGSerializer serialiser;
-            envelop.Serialize(serialiser);
+            envelope.Serialize(serialiser);
             rbc.SendRBroadcast(serialiser.data());
           },
           [this](ConstByteArray const &                     destination,
@@ -398,13 +397,12 @@ struct CabinetMember
           },
           failures}
   {
-    // Set subscription for rbc
+    // Set subscription for receiving shares
     shares_subscription->SetMessageHandler([this](ConstByteArray const &from, uint16_t, uint16_t,
                                                   uint16_t, muddle::Packet::Payload const &payload,
                                                   ConstByteArray) {
       fetch::serializers::ByteArrayBuffer serialiser(payload);
 
-      // Deserialize the RBCEnvelop
       std::pair<std::string, std::string> shares;
       serialiser >> shares;
 
