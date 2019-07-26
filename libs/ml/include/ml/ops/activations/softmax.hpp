@@ -78,7 +78,14 @@ public:
     // N-D softmax
     else
     {
-      MultiplyBySum(t, return_signal, axis_);
+      if (axis_ == 0)
+      {
+        MultiplyBySumAxis0(t, return_signal);
+      }
+      else
+      {
+        MultiplyBySumAnyAxis(t, return_signal, axis_);
+      }
     }
 
     return_signal.InlineSubtract(t);
@@ -87,11 +94,12 @@ public:
 
   /**
    * Multiply each element of array1 by sum of values for each 1D slice of array2 in given axis
+   * Implemented using Slices
    * @param array1
    * @param array2
    * @param axis
    */
-  void MultiplyBySum(ArrayType &array1, ArrayType &array2, SizeType axis)
+  void MultiplyBySumAnyAxis(ArrayType &array1, ArrayType &array2, SizeType axis)
   {
     using DataType = typename ArrayType::Type;
 
@@ -168,6 +176,86 @@ public:
 
       // array1=array1*sum(array2)
       auto it2 = array1_slice.begin();
+      while (it2.is_valid())
+      {
+        *it2 = (*it2) * sum;
+        ++it2;
+      }
+
+      // Next iteration step
+      offsets.at(0)++;
+    }
+  }
+
+  /**
+   * Multiply each element of array1 by sum of values for each 1D slice of array2 along axis 0
+   * Implementation using views
+   * Implemented using Slices
+   * @param array1
+   * @param array2
+   * @param axis
+   */
+  void MultiplyBySumAxis0(ArrayType &array1, ArrayType &array2)
+  {
+    using DataType = typename ArrayType::Type;
+
+    assert(array1.size() >= 2);
+
+    // Prepare Slice
+    SizeType              reduced_size = array1.shape().size() - 1;
+    std::vector<SizeType> offsets;
+    offsets.resize(reduced_size);
+
+    for (SizeType i = 0; i < reduced_size; i++)
+    {
+      offsets.at(i) = 0;
+    }
+
+    // Iterate over all possible offsets combinations
+    DataType sum(0);
+    bool     is_done = false;
+    while (offsets.at(offsets.size() - 1) < array1.shape().at(array1.shape().size() - 1))
+    {
+      // Prepare slice
+      for (SizeType i = 0; i < offsets.size(); i++)
+      {
+
+        if (offsets.at(i) >= array1.shape().at(i + 1))
+        {
+          if (i == offsets.size() - 1)
+          {
+            // Terminate counter otherwise it would overflow
+            is_done = true;
+            break;
+          }
+
+          offsets.at(i) = 0;
+          offsets.at(i + 1)++;
+        }
+        else
+        {
+          // End of digit transmission
+          break;
+        }
+      }
+      if (is_done)
+        break;
+
+      // Do operation with slice
+      auto array1_view = array1.View(offsets);
+      auto array2_view = array2.View(offsets);
+
+      // sum=sum(array2)
+      sum      = static_cast<DataType>(0);
+      auto it1 = array2_view.cbegin();
+      while (it1.is_valid())
+      {
+        sum += *it1;
+        ++it1;
+      }
+
+      // array1=array1*sum(array2)
+      auto it2 = array1_view.begin();
       while (it2.is_valid())
       {
         *it2 = (*it2) * sum;

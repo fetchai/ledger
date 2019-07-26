@@ -66,9 +66,16 @@ void Softmax1DImplementation(ArrayType1 const &array, ArrayType2 &ret)
   }
 }
 
+/**
+ * Any-D softmax implementation using Slices
+ * @tparam ArrayType
+ * @param array
+ * @param ret
+ * @param axis
+ */
 template <typename ArrayType>
-void Softmax2DImplementation(ArrayType const &array, ArrayType &ret,
-                             typename ArrayType::SizeType axis)
+void MultiSoftmaxAnyAxisImplementation(ArrayType const &array, ArrayType &ret,
+                                       typename ArrayType::SizeType axis)
 {
   using DataType = typename ArrayType::Type;
 
@@ -172,6 +179,105 @@ void Softmax2DImplementation(ArrayType const &array, ArrayType &ret,
     offsets.at(0)++;
   }
 }
+
+/**
+ * Axis 0 restricted any-D softmax implementation using Views
+ * @tparam ArrayType
+ * @param array
+ * @param ret
+ */
+template <typename ArrayType>
+void MultiSoftmaxAxis0Implementation(ArrayType const &array, ArrayType &ret)
+{
+  using DataType = typename ArrayType::Type;
+
+  assert(array.size() >= 2);
+
+  // Prepare offsets
+  SizeType              reduced_size = ret.shape().size() - 1;
+  std::vector<SizeType> offsets;
+  offsets.resize(reduced_size);
+
+  for (SizeType i = 0; i < reduced_size; i++)
+  {
+    offsets.at(i) = 0;
+  }
+
+  // Iterate over all possible offsets combinations
+  DataType sum(0);
+  DataType array_max;
+  bool     is_done = false;
+  while (offsets.at(offsets.size() - 1) < ret.shape().at(ret.shape().size() - 1))
+  {
+    // Prepare view
+    for (SizeType i = 0; i < offsets.size(); i++)
+    {
+
+      if (offsets.at(i) >= ret.shape().at(i + 1))
+      {
+        if (i == offsets.size() - 1)
+        {
+          // Terminate counter otherwise it would overflow
+          is_done = true;
+          break;
+        }
+
+        offsets.at(i) = 0;
+        offsets.at(i + 1)++;
+      }
+      else
+      {
+        // End of digit transmission
+        break;
+      }
+    }
+    if (is_done)
+      break;
+
+    // Create views
+    auto ret_view   = ret.View(offsets);
+    auto array_view = array.View(offsets);
+
+    // Operation with view
+    // ret=exp(array - array_max)/sum(exp(array - array_max))
+
+    // array_max=max(array)
+    array_max = fetch::math::numeric_lowest<DataType>();
+    auto it1  = array_view.cbegin();
+    while (it1.is_valid())
+    {
+      if (*it1 > array_max)
+      {
+        array_max = (*it1);
+      }
+      ++it1;
+    }
+
+    // ret=exp(array - array_max)
+    sum        = static_cast<DataType>(0);
+    auto it2_a = array_view.cbegin();
+    auto it2_r = ret_view.begin();
+    while (it2_a.is_valid())
+    {
+      *it2_r = fetch::math::Exp((*it2_a) - array_max);
+      sum += *it2_r;
+      ++it2_a;
+      ++it2_r;
+    }
+
+    // ret=ret/sum(ret)
+    auto it3 = ret_view.begin();
+    while (it3.is_valid())
+    {
+      *it3 = (*it3) / sum;
+      ++it3;
+    }
+
+    // Next iteration step
+    offsets.at(0)++;
+  }
+}
+
 }  // namespace details
 
 template <typename ArrayType>
@@ -186,7 +292,14 @@ void Softmax(ArrayType const &array, ArrayType &ret, typename ArrayType::SizeTyp
   }
   else
   {
-    details::Softmax2DImplementation(array, ret, axis);
+    if (axis == 0)
+    {
+      details::MultiSoftmaxAxis0Implementation(array, ret);
+    }
+    else
+    {
+      details::MultiSoftmaxAnyAxisImplementation(array, ret, axis);
+    }
   }
 }
 
