@@ -65,8 +65,8 @@ TYPED_TEST(SqrtBothTest, forward_all_positive_test)
 
   fetch::ml::ops::Sqrt<TypeParam> op;
 
-  TypeParam prediction(op.ComputeOutputShape({data}));
-  op.Forward({data}, prediction);
+  TypeParam prediction(op.ComputeOutputShape({std::make_shared<const ArrayType>(data)}));
+  op.Forward({std::make_shared<const ArrayType>(data)}, prediction);
 
   ASSERT_TRUE(prediction.AllClose(gt, fetch::math::function_tolerance<DataType>(),
                                   fetch::math::function_tolerance<DataType>()));
@@ -84,7 +84,7 @@ TYPED_TEST(SqrtBothTest, backward_all_positive_test)
 
   fetch::ml::ops::Sqrt<TypeParam> op;
 
-  std::vector<ArrayType> prediction = op.Backward({data}, error);
+  std::vector<ArrayType> prediction = op.Backward({std::make_shared<const ArrayType>(data)}, error);
 
   ASSERT_TRUE(prediction.at(0).AllClose(gt, fetch::math::function_tolerance<DataType>(),
                                         fetch::math::function_tolerance<DataType>()));
@@ -99,8 +99,8 @@ TYPED_TEST(SqrtFloatTest, forward_all_negative_test)
 
   fetch::ml::ops::Sqrt<TypeParam> op;
 
-  TypeParam pred(op.ComputeOutputShape({data}));
-  op.Forward({data}, pred);
+  TypeParam pred(op.ComputeOutputShape({std::make_shared<const ArrayType>(data)}));
+  op.Forward({std::make_shared<const ArrayType>(data)}, pred);
 
   // gives NaN because sqrt of a negative number is undefined
   for (auto p_it : pred)
@@ -117,8 +117,8 @@ TYPED_TEST(SqrtFixedTest, forward_all_negative_test)
 
   fetch::ml::ops::Sqrt<TypeParam> op;
 
-  TypeParam pred(op.ComputeOutputShape({data}));
-  op.Forward({data}, pred);
+  TypeParam pred(op.ComputeOutputShape({std::make_shared<const ArrayType>(data)}));
+  op.Forward({std::make_shared<const ArrayType>(data)}, pred);
 
   // gives NaN because sqrt of a negative number is undefined
   for (auto p_it : pred)
@@ -136,7 +136,7 @@ TYPED_TEST(SqrtFloatTest, backward_all_negative_test)
 
   fetch::ml::ops::Sqrt<TypeParam> op;
 
-  std::vector<ArrayType> pred = op.Backward({data}, error);
+  std::vector<ArrayType> pred = op.Backward({std::make_shared<const ArrayType>(data)}, error);
   // gives NaN because sqrt of a negative number is undefined
   for (auto p_it : pred.at(0))
   {
@@ -153,7 +153,7 @@ TYPED_TEST(SqrtFixedTest, backward_all_negative_test)
 
   fetch::ml::ops::Sqrt<TypeParam> op;
 
-  std::vector<ArrayType> pred = op.Backward({data}, error);
+  std::vector<ArrayType> pred = op.Backward({std::make_shared<const ArrayType>(data)}, error);
   // gives NaN because sqrt of a negative number is undefined
   for (auto p_it : pred.at(0))
   {
@@ -170,7 +170,7 @@ TYPED_TEST(SqrtFloatTest, backward_zero_test)
 
   fetch::ml::ops::Sqrt<TypeParam> op;
 
-  std::vector<ArrayType> pred = op.Backward({data}, error);
+  std::vector<ArrayType> pred = op.Backward({std::make_shared<const ArrayType>(data)}, error);
   // gives NaN because of division by zero
   for (auto p_it : pred.at(0))
   {
@@ -187,7 +187,7 @@ TYPED_TEST(SqrtFixedTest, backward_zero_test)
 
   fetch::ml::ops::Sqrt<TypeParam> op;
 
-  std::vector<ArrayType> pred = op.Backward({data}, error);
+  std::vector<ArrayType> pred = op.Backward({std::make_shared<const ArrayType>(data)}, error);
   // gives NaN because of division by zero
   for (auto p_it : pred.at(0))
   {
