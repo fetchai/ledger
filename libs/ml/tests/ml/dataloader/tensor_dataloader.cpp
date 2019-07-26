@@ -16,9 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/serializers/byte_array_buffer.hpp"
+#include "math/base_types.hpp"
 #include "math/tensor.hpp"
 #include "ml/dataloaders/tensor_dataloader.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
+#include "vectorise/fixed_point/serializers.hpp"
 
 #include "gtest/gtest.h"
 
@@ -33,26 +36,48 @@ class TensorDataloaderTest : public ::testing::Test
 {
 };
 
-using MyTypes = ::testing::Types < fetch::math::Tensor<int>, fetch::math::Tensor<float>,
-      fetch::math::Tensor<double>,
-      fetch::math::Tensor<fetch::fixed_point::FixedPoint<16, 16>,
-                          fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
+using MyTypes = ::testing::Types<fetch::math::Tensor<int>, fetch::math::Tensor<float>,
+                                 fetch::math::Tensor<double>,
+                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<16, 16>>,
+                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
 TYPED_TEST_CASE(TensorDataloaderTest, MyTypes);
 
 TYPED_TEST(TensorDataloaderTest, serialize_tensor_dataloader)
 {
-  TypeParam label_tensor({1, 4});
-  TypeParam data1_tensor({2, 3, 4});
-  TypeParam data2_tensor({1, 3, 4});
+  TypeParam label_tensor = TypeParam::UniformRandom(4);
+  TypeParam data1_tensor = TypeParam::UniformRandom(24);
+  label_tensor.Reshape({1, 4});
+  data1_tensor.Reshape({2, 3, 4});
 
   // generate a plausible tensor data loader
-  auto t = fetch::ml::dataloaders::TensorDataLoader<TypeParam, TypeParam>(
-      label_tensor.shape(), {data1_tensor.shape(), data2_tensor.shape()};);
+  auto tdl = fetch::ml::dataloaders::TensorDataLoader<TypeParam, TypeParam>(label_tensor.shape(),
+                                                                            {data1_tensor.shape()});
+
+  // add some data
+  tdl.AddData(data1_tensor, label_tensor);
 
   fetch::serializers::ByteArrayBuffer b;
-  b << t;
+  b << tdl;
+
   b.seek(0);
-  fetch::ml::dataloaders::TensorDataLoader<TypeParam, TypeParam> t2;
-  b >> t2;
-  EXPECT_EQ(t, t2);
+
+  // initialise a new tensor dataloader with the wrong shape parameters
+  // these will get updated by deserialisation
+  fetch::ml::dataloaders::TensorDataLoader<TypeParam, TypeParam> tdl_2({1, 1}, {{1, 1}});
+  b >> tdl_2;
+
+  EXPECT_EQ(tdl.Size(), tdl_2.Size());
+  EXPECT_EQ(tdl.IsDone(), tdl_2.IsDone());
+  EXPECT_EQ(tdl.GetNext(), tdl_2.GetNext());
+
+  // add some new data
+  label_tensor = TypeParam::UniformRandom(4);
+  data1_tensor = TypeParam::UniformRandom(24);
+  label_tensor.Reshape({1, 4});
+  data1_tensor.Reshape({2, 3, 4});
+  EXPECT_EQ(tdl.AddData(data1_tensor, label_tensor), tdl_2.AddData(data1_tensor, label_tensor));
+
+  EXPECT_EQ(tdl.Size(), tdl_2.Size());
+  EXPECT_EQ(tdl.IsDone(), tdl_2.IsDone());
+  EXPECT_EQ(tdl.GetNext(), tdl_2.GetNext());
 }

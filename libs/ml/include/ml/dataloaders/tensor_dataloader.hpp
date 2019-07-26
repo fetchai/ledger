@@ -40,12 +40,9 @@ class TensorDataLoader : public DataLoader<LabelType, InputType>
 
 public:
   TensorDataLoader(SizeVector const &label_shape, std::vector<SizeVector> const &data_shapes,
-                   bool random_mode = false)
-    : DataLoader<LabelType, TensorType>(random_mode)
-    , label_shape_(label_shape)
-    , data_shapes_(data_shapes)
+                   bool random_mode = false);
 
-          ~TensorDataLoader() override = default;
+  ~TensorDataLoader() override = default;
 
   ReturnType   GetNext() override;
   virtual bool AddData(TensorType const &data, TensorType const &labels);
@@ -57,8 +54,8 @@ public:
   template <typename S>
   friend void Serialize(S &serializer, TensorDataLoader<LabelType, InputType> const &dl)
   {
-    auto base_ptr = std::make_shared<DataLoader<LabelType, InputType>>(dl);
-    base_ptr->Serialize(serializer, *base_ptr);
+    auto d_ptr = static_cast<const DataLoader<LabelType, InputType> *>(&dl);
+    Serialize(serializer, *d_ptr);
 
     serializer << dl.data_cursor_;
     serializer << dl.label_cursor_;
@@ -79,8 +76,11 @@ public:
   template <typename S>
   friend void Deserialize(S &serializer, TensorDataLoader<LabelType, InputType> &dl)
   {
-    auto base_ptr = std::make_shared<DataLoader<LabelType, InputType>>(dl);
-    base_ptr->Deserialize(serializer, *base_ptr);
+
+    std::shared_ptr<DataLoader<LabelType, InputType>> d_ptr =
+        std::static_pointer_cast<DataLoader<LabelType, InputType>>(
+            std::make_shared<TensorDataLoader<LabelType, InputType>>(dl));
+    Deserialize(serializer, *d_ptr);
 
     serializer >> dl.data_cursor_;
     serializer >> dl.label_cursor_;

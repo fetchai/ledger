@@ -45,6 +45,7 @@ public:
   explicit DataLoader(bool random_mode)
     : random_mode_(random_mode)
   {}
+
   virtual ~DataLoader() = default;
 
   virtual ReturnType GetNext() = 0;
@@ -61,13 +62,13 @@ public:
     serializer << dl.random_mode_;
     serializer << dl.size_not_set_;
 
-    dl.cur_training_pair_.first.Serialize(serializer, dl.cur_training_pair_.first);
+    Serialize(serializer, dl.cur_training_pair_.first);
     for (auto &val : dl.cur_training_pair_.second)
     {
       serializer << val;
     }
 
-    dl.ret_pair_.first.Serialize(serializer, dl.ret_pair_.first);
+    Serialize(serializer, dl.ret_pair_.first);
     for (auto &val : dl.ret_pair_.second)
     {
       serializer << val;
@@ -80,13 +81,13 @@ public:
     serializer >> dl.random_mode_;
     serializer >> dl.size_not_set_;
 
-    dl.cur_training_pair_.first.Deserialize(serializer, dl.cur_training_pair_.first);
+    Deserialize(serializer, dl.cur_training_pair_.first);
     for (auto &val : dl.cur_training_pair_.second)
     {
       serializer >> val;
     }
 
-    dl.ret_pair_.first.Deserialize(serializer, dl.ret_pair_.first);
+    Deserialize(serializer, dl.ret_pair_.first);
     for (auto &val : dl.ret_pair_.second)
     {
       serializer >> val;
