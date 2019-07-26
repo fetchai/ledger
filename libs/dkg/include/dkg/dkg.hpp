@@ -165,9 +165,9 @@ protected:
 public:
   DistributedKeyGeneration(
       MuddleAddress address, CabinetMembers const &cabinet, uint32_t const &threshold,
-      std::function<void(DKGEnvelope const &)> broadcast_callback,
+      std::function<void(DKGEnvelope const &)> broadcast_function,
       std::function<void(MuddleAddress const &, std::pair<std::string, std::string> const &)>
-          rpc_callback);
+          rpc_function);
 
   void   BroadcastShares();
   void   OnNewShares(MuddleAddress from_id, std::pair<MsgShare, MsgShare> const &shares);
