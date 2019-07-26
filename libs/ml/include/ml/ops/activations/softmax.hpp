@@ -125,7 +125,7 @@ public:
     bool     is_done = false;
     while (offsets.at(offsets.size() - 1) < array1.shape().at(axes.at(axes.size() - 1)))
     {
-
+      // Prepare slice
       for (SizeType i = 0; i < offsets.size(); i++)
       {
 
@@ -155,9 +155,9 @@ public:
       if (is_done)
         break;
 
-      // Operation with Slice
+      // Do operation with slice
 
-      // ret=exp(array - max)
+      // sum=sum(array2)
       sum      = static_cast<DataType>(0);
       auto it1 = array2_slice.cbegin();
       while (it1.is_valid())
@@ -166,16 +166,15 @@ public:
         ++it1;
       }
 
-      // Cannot divide slice by scalar
-      // ret=ret/sum(ret)
+      // array1=array1*sum(array2)
       auto it2 = array1_slice.begin();
       while (it2.is_valid())
       {
         *it2 = (*it2) * sum;
         ++it2;
       }
-      // End operation with slice
 
+      // Next iteration step
       offsets.at(0)++;
     }
   }

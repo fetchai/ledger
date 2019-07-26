@@ -103,7 +103,7 @@ void Softmax2DImplementation(ArrayType const &array, ArrayType &ret,
   bool     is_done = false;
   while (offsets.at(offsets.size() - 1) < ret.shape().at(axes.at(axes.size() - 1)))
   {
-
+    // Prepare slice
     for (SizeType i = 0; i < offsets.size(); i++)
     {
 
@@ -134,9 +134,9 @@ void Softmax2DImplementation(ArrayType const &array, ArrayType &ret,
       break;
 
     // Operation with Slice
+    // ret=exp(array - array_max)/sum(exp(array - array_max))
 
-    // Cannot call Max on a slice
-    // Get maximum
+    // array_max=max(array)
     array_max = numeric_lowest<DataType>();
     auto it1  = array_slice.cbegin();
     while (it1.is_valid())
@@ -148,7 +148,7 @@ void Softmax2DImplementation(ArrayType const &array, ArrayType &ret,
       ++it1;
     }
 
-    // ret=exp(array - max)
+    // ret=exp(array - array_max)
     sum        = static_cast<DataType>(0);
     auto it2_a = array_slice.cbegin();
     auto it2_r = ret_slice.begin();
@@ -160,7 +160,6 @@ void Softmax2DImplementation(ArrayType const &array, ArrayType &ret,
       ++it2_r;
     }
 
-    // Cannot divide slice by scalar
     // ret=ret/sum(ret)
     auto it3 = ret_slice.begin();
     while (it3.is_valid())
@@ -168,8 +167,8 @@ void Softmax2DImplementation(ArrayType const &array, ArrayType &ret,
       *it3 = (*it3) / sum;
       ++it3;
     }
-    // End operation with slice
 
+    // Next iteration step
     offsets.at(0)++;
   }
 }

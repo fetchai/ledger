@@ -2157,7 +2157,7 @@ typename Tensor<T, C>::ConstSliceType Tensor<T, C>::Slice(SizeType index, SizeTy
 }
 
 template <typename T, typename C>
-typename Tensor<T, C>::ConstSliceType Tensor<T, C>::Slice(std::vector<SizeType> index,
+typename Tensor<T, C>::ConstSliceType Tensor<T, C>::Slice(std::vector<SizeType> indexes,
                                                           std::vector<SizeType> axes) const
 {
   std::vector<std::vector<SizeType>> range;
@@ -2167,10 +2167,10 @@ typename Tensor<T, C>::ConstSliceType Tensor<T, C>::Slice(std::vector<SizeType> 
     range.push_back({0, shape().at(j), 1});
   }
 
-  for (SizeType j = 0; j < index.size(); ++j)
+  for (SizeType j = 0; j < indexes.size(); ++j)
   {
-    range.at(axes.at(j)).at(0) = index.at(j);
-    range.at(axes.at(j)).at(1) = index.at(j) + 1;
+    range.at(axes.at(j)).at(0) = indexes.at(j);
+    range.at(axes.at(j)).at(1) = indexes.at(j) + 1;
     range.at(axes.at(j)).at(2) = 1;
   }
 
@@ -2206,7 +2206,7 @@ typename Tensor<T, C>::TensorSlice Tensor<T, C>::Slice(SizeType index, SizeType 
 }
 
 template <typename T, typename C>
-typename Tensor<T, C>::TensorSlice Tensor<T, C>::Slice(std::vector<SizeType> index,
+typename Tensor<T, C>::TensorSlice Tensor<T, C>::Slice(std::vector<SizeType> indexes,
                                                        std::vector<SizeType> axes)
 {
   std::vector<std::vector<SizeType>> range;
@@ -2216,10 +2216,10 @@ typename Tensor<T, C>::TensorSlice Tensor<T, C>::Slice(std::vector<SizeType> ind
     range.push_back({0, shape().at(j), 1});
   }
 
-  for (SizeType j = 0; j < index.size(); ++j)
+  for (SizeType j = 0; j < indexes.size(); ++j)
   {
-    range.at(axes.at(j)).at(0) = index.at(j);
-    range.at(axes.at(j)).at(1) = index.at(j) + 1;
+    range.at(axes.at(j)).at(0) = indexes.at(j);
+    range.at(axes.at(j)).at(1) = indexes.at(j) + 1;
     range.at(axes.at(j)).at(2) = 1;
   }
 
