@@ -210,12 +210,12 @@ public:
   using fetch::pack::SizeConstant<index>::value;
 
   Setter(Values &values)
-    : values(values)
+    : values_(values)
   {}
 
   constexpr auto &get() const
   {
-    return std::get<value>(values);
+    return std::get<value>(values_);
   }
 };
 
