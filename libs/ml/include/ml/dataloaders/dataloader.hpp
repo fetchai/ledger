@@ -55,15 +55,53 @@ public:
   virtual bool          IsDone() const = 0;
   virtual void          Reset()        = 0;
 
+  template <typename S>
+  friend void Serialize(S &serializer, DataLoader<LabelType, DataType> const &dl)
+  {
+    serializer << dl.random_mode_;
+    serializer << dl.size_not_set_;
+
+    dl.cur_training_pair_.first.Serialize(serializer, dl.cur_training_pair_.first);
+    for (auto &val : dl.cur_training_pair_.second)
+    {
+      serializer << val;
+    }
+
+    dl.ret_pair_.first.Serialize(serializer, dl.ret_pair_.first);
+    for (auto &val : dl.ret_pair_.second)
+    {
+      serializer << val;
+    }
+  }
+
+  template <typename S>
+  friend void Deserialize(S &serializer, DataLoader<LabelType, DataType> &dl)
+  {
+    serializer >> dl.random_mode_;
+    serializer >> dl.size_not_set_;
+
+    dl.cur_training_pair_.first.Deserialize(serializer, dl.cur_training_pair_.first);
+    for (auto &val : dl.cur_training_pair_.second)
+    {
+      serializer >> val;
+    }
+
+    dl.ret_pair_.first.Deserialize(serializer, dl.ret_pair_.first);
+    for (auto &val : dl.ret_pair_.second)
+    {
+      serializer >> val;
+    }
+  }
+
 protected:
   bool random_mode_ = false;
 
 private:
   bool       size_not_set_ = true;
   ReturnType cur_training_pair_;
+  ReturnType ret_pair_;
 
   void SetDataSize(std::pair<LabelType, std::vector<DataType>> &ret_pair);
-  std::pair<LabelType, std::vector<DataType>> ret_pair_;
 };
 
 /**

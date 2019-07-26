@@ -44,17 +44,8 @@ public:
     : DataLoader<LabelType, TensorType>(random_mode)
     , label_shape_(label_shape)
     , data_shapes_(data_shapes)
-  {
-    one_sample_label_shape_                                        = label_shape;
-    one_sample_label_shape_.at(one_sample_label_shape_.size() - 1) = 1;
 
-    for (std::size_t i = 0; i < data_shapes.size(); ++i)
-    {
-      one_sample_data_shapes_.emplace_back(data_shapes.at(i));
-      one_sample_data_shapes_.at(i).at(one_sample_data_shapes_.at(i).size() - 1) = 1;
-    }
-  }
-  ~TensorDataLoader() override = default;
+          ~TensorDataLoader() override = default;
 
   ReturnType   GetNext() override;
   virtual bool AddData(TensorType const &data, TensorType const &labels);
@@ -63,13 +54,12 @@ public:
   bool     IsDone() const override;
   void     Reset() override;
 
-  ////////////////////////////////
-  /// Serialization operations ///
-  ////////////////////////////////
-
   template <typename S>
   friend void Serialize(S &serializer, TensorDataLoader<LabelType, InputType> const &dl)
   {
+    auto base_ptr = std::make_shared<DataLoader<LabelType, InputType>>(dl);
+    base_ptr->Serialize(serializer, *base_ptr);
+
     serializer << dl.data_cursor_;
     serializer << dl.label_cursor_;
     serializer << dl.n_samples_;
@@ -89,6 +79,8 @@ public:
   template <typename S>
   friend void Deserialize(S &serializer, TensorDataLoader<LabelType, InputType> &dl)
   {
+    auto base_ptr = std::make_shared<DataLoader<LabelType, InputType>>(dl);
+    base_ptr->Deserialize(serializer, *base_ptr);
 
     serializer >> dl.data_cursor_;
     serializer >> dl.label_cursor_;
@@ -122,6 +114,24 @@ protected:
   SizeType batch_label_dim_ = fetch::math::numeric_max<SizeType>();
   SizeType batch_data_dim_  = fetch::math::numeric_max<SizeType>();
 };
+
+template <typename LabelType, typename InputType>
+TensorDataLoader<LabelType, InputType>::TensorDataLoader(SizeVector const &             label_shape,
+                                                         std::vector<SizeVector> const &data_shapes,
+                                                         bool                           random_mode)
+  : DataLoader<LabelType, TensorType>(random_mode)
+  , label_shape_(label_shape)
+  , data_shapes_(data_shapes)
+{
+  one_sample_label_shape_                                        = label_shape;
+  one_sample_label_shape_.at(one_sample_label_shape_.size() - 1) = 1;
+
+  for (std::size_t i = 0; i < data_shapes.size(); ++i)
+  {
+    one_sample_data_shapes_.emplace_back(data_shapes.at(i));
+    one_sample_data_shapes_.at(i).at(one_sample_data_shapes_.at(i).size() - 1) = 1;
+  }
+}
 
 template <typename LabelType, typename InputType>
 typename TensorDataLoader<LabelType, InputType>::ReturnType
