@@ -41,7 +41,7 @@ public:
   void Forward(VecTensorType const &inputs, ArrayType &output) override
   {
     assert(inputs.size() == 2);
-    assert(output.shape() == this->ComputeOutputShape(inputs));
+    assert(output.shape() == inputs.at(0)->shape());
     fetch::math::Add((*inputs.at(0)), (*inputs.at(1)), output);
   }
 

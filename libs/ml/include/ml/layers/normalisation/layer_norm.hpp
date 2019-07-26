@@ -20,8 +20,7 @@
 #include "ml/meta/ml_type_traits.hpp"
 #include "ml/ops/activation.hpp"
 #include "ml/ops/add.hpp"
-#include "ml/ops/flatten.hpp"
-#include "ml/ops/matrix_multiply.hpp"
+#include "ml/ops/multiply.hpp"
 #include "ml/ops/weights.hpp"
 #include "ml/ops/layer_norm.hpp"
 #include "ml/regularisers/regularisation.hpp"
@@ -58,8 +57,7 @@ public:
   	ASSERT(data_shape.size() <= 2);
   	
   	std::string name = DESCRIPTOR;
-    std::string input = this->template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>(name + "_Input", {});
-
+    
     // instantiate gamma and beta (the multiplicative training component)
     std::string gamma = this->template AddNode<fetch::ml::ops::Weights<ArrayType>>(name + "_Gamma", {});
     std::string beta = this->template AddNode<fetch::ml::ops::Weights<ArrayType>>(name + "_Beta", {});
@@ -77,15 +75,24 @@ public:
     this->SetInput(gamma, gamma_data);
 	  this->SetInput(beta, beta_data);
 	  
+	  // setup input
+	  std::string input = this->template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>(name + "_Input", {});
+	  
 	  // do the normalization
-    std::string output = this->template AddNode<fetch::ml::ops::LayerNorm<ArrayType>>(
-        name + "_BatchNorm", {input, gamma, beta}, data_shape_);
+	  // TODO (local) Allow ReduceMean on 3D matrix, Square on 3D matrix; Backward for layernorm
+    std::string normalized_output = this->template AddNode<fetch::ml::ops::LayerNorm<ArrayType>>(name + "_LayerNorm", {input}, data_shape_);
 		
     // do the rescaling
-    std::string
+	  // TODO (local) Allow broadcastable multiply
+    std::string scaled_output = this->template AddNode<fetch::ml::ops::Multiply<ArrayType>>(name + "_Gamma_Multiply", {normalized_output, gamma});
+    
+    // do the re-shifting
+	  // TODO (local) Allow broadcastable for inputs with dims 3
+    std::string shifted_output = this->template AddNode<fetch::ml::ops::Add<ArrayType>>(name + "_Beta_Addition", {normalized_output, beta});
+    
     
     this->AddInputNode(input);
-    this->SetOutputNode(output);
+    this->SetOutputNode(shifted_output);
   }
 
   std::vector<SizeType> ComputeOutputShape(
