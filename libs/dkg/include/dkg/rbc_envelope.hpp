@@ -76,7 +76,7 @@ public:
     uint8_t type;
     map.ExpectKeyGetValue(TYPE, type);
     map.ExpectKeyGetValue(MESSAGE, env.payload_);
-    env.type_ = static_cast<dkg::rbc::RBCEnvelop::MessageType>(type);
+    env.type_ = static_cast<dkg::rbc::RBCEnvelope::MessageType>(type);
   }
 };
 

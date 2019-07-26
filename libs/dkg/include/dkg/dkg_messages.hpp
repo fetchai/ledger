@@ -220,10 +220,10 @@ private:
 
 namespace serializers {
 template <typename D>
-struct MapSerializer<dkg::DKGEnvelop, D>
+struct MapSerializer<dkg::DKGEnvelope, D>
 {
 public:
-  using Type       = dkg::DKGEnvelop;
+  using Type       = dkg::DKGEnvelope;
   using DriverType = D;
 
   static uint8_t const TYPE    = 1;
@@ -243,7 +243,7 @@ public:
     uint8_t type;
     map.ExpectKeyGetValue(TYPE, type);
     map.ExpectKeyGetValue(MESSAGE, env.serialisedMessage_);
-    env.type_ = static_cast<dkg::DKGEnvelop::MessageType>(type);
+    env.type_ = static_cast<dkg::DKGEnvelope::MessageType>(type);
   }
 };
 
