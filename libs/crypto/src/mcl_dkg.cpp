@@ -116,7 +116,7 @@ void ComputeShares(bn::Fr &s_i, bn::Fr &sprime_i, std::vector<bn::Fr> const &a_i
  * @param shares The value of polynomial at the points parties
  * @return The value of the polynomial evaluated at 0 (z_i)
  */
-bn::Fr ComputeZi(std::vector<uint32_t> const &parties, std::vector<bn::Fr> const &shares)
+bn::Fr ComputeZi(std::set<uint32_t> const &parties, std::vector<bn::Fr> const &shares)
 {
   // compute $z_i$ using Lagrange interpolation (without corrupted parties)
   bn::Fr z{0};
