@@ -22,9 +22,11 @@
 #include "ml/ops/add.hpp"
 #include "ml/ops/flatten.hpp"
 #include "ml/ops/matrix_multiply.hpp"
+#include "ml/ops/ops_lookup.hpp"
 #include "ml/ops/weights.hpp"
 #include "ml/regularisers/regularisation.hpp"
 #include "ml/regularisers/regulariser.hpp"
+#include "ml/saveable_params.hpp"
 #include "ml/subgraph.hpp"
 
 #include <cmath>
@@ -46,7 +48,7 @@ public:
   using SizeType     = typename ArrayType::SizeType;
   using DataType     = typename ArrayType::Type;
   using WeightsInit  = fetch::ml::ops::WeightsInitialisation;
-  using SPType       = SaveableParams;
+  using SPType       = FullyConnectedSaveableParams<ArrayType>;
 
   FullyConnected(SizeType in, SizeType out,
                  details::ActivationType activation_type = details::ActivationType::NOTHING,
@@ -85,9 +87,26 @@ public:
     this->SetInput(bias, bias_data);
   }
 
+  explicit FullyConnected(SPType const &gs)
+    : SubGraph<ArrayType>(gs)
+  {
+    in_size_  = gs.in_size;
+    out_size_ = gs.out_size;
+  }
+
   std::shared_ptr<SaveableParams> GetOpSaveableParams() override
   {
-    throw std::runtime_error("This shouldn't be called!");
+    std::shared_ptr<SaveableParams> sgsp = SubGraph<ArrayType >::GetOpSaveableParams();
+    auto sg_ptr1 = std::dynamic_pointer_cast<typename SubGraph<ArrayType>::SPType >(sgsp);
+
+    auto sp    = std::make_shared<SPType>();
+    auto sg_ptr2 = std::static_pointer_cast<typename SubGraph<ArrayType>::SPType >(sp);
+    *sg_ptr2 = *sg_ptr1;
+
+    sp->DESCRIPTOR = DESCRIPTOR;
+    sp->in_size  = in_size_;
+    sp->out_size = out_size_;
+    return sp;
   }
 
   std::vector<SizeType> ComputeOutputShape(

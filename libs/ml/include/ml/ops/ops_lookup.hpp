@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "ml/graph.hpp"
+#include "ml/layers/fully_connected.hpp"
 #include "ml/ops/activations/dropout.hpp"
 #include "ml/ops/activations/elu.hpp"
 #include "ml/ops/activations/leaky_relu.hpp"
@@ -243,9 +244,14 @@ void OpsLookup(
     MyAddNode<Graph<ArrayType>, typename ops::Weights<ArrayType>>(g_ptr, saved_node, node_name,
                                                                   inputs);
   }
+  else if (descrip == layers::FullyConnected<ArrayType>::DESCRIPTOR)
+  {
+    MyAddNode<Graph<ArrayType>, typename layers::FullyConnected<ArrayType>>(g_ptr, saved_node,
+                                                                            node_name, inputs);
+  }
   else
   {
-    throw std::runtime_error("Unknown Op type");
+    throw std::runtime_error("Unknown Op type " + descrip);
   }
 }
 

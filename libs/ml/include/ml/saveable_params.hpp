@@ -385,6 +385,9 @@ void SerializeHelper(S &serializer, std::shared_ptr<SaveableParams> const &nsp)
   serializer << *castnode;
 }
 
+template <class S, class ArrayType>
+void SerializeIfElse(S &serializer, std::shared_ptr<SaveableParams> const &nsp);
+
 template <class S, class SP>
 std::shared_ptr<SaveableParams> DeserializeHelper(S &serializer)
 {
@@ -393,80 +396,34 @@ std::shared_ptr<SaveableParams> DeserializeHelper(S &serializer)
   return nsp_ptr;
 }
 
+template <class S, class ArrayType>
+std::shared_ptr<SaveableParams> DeserializeIfElse(S &serializer);
+
 template <class ArrayType>
-struct GraphSaveableParams
+struct GraphSaveableParams : public SaveableParams
 {
-  using DataType = typename ArrayType::Type;
-  using SizeType = typename ArrayType::SizeType;
-  // unique node name to list of inputs
+  using DataType                             = typename ArrayType::Type;
+  using SizeType                             = typename ArrayType::SizeType;
+  static constexpr char const *sp_descriptor = "GraphSaveableParams";
   std::vector<std::pair<std::string, std::vector<std::string>>> connections;
   std::map<std::string, std::shared_ptr<SaveableParams>>        nodes;
 
   template <typename S>
   friend void Serialize(S &serializer, GraphSaveableParams const &gsp)
   {
+    serializer << gsp.DESCRIPTOR;
     serializer << gsp.connections;
     for (auto const &node : gsp.nodes)
     {
       serializer << node.first;
-
-      std::string next_sp_descriptor = node.second->GetDescription();
-      serializer << next_sp_descriptor;
-
-      if (next_sp_descriptor == SaveableParams::sp_descriptor)
-      {
-        SerializeHelper<S, SaveableParams>(serializer, node.second);
-      }
-      else if (next_sp_descriptor == PlaceholderSaveableParams<ArrayType>::sp_descriptor)
-      {
-        SerializeHelper<S, PlaceholderSaveableParams<ArrayType>>(serializer, node.second);
-      }
-      else if (next_sp_descriptor == WeightsSaveableParams<ArrayType>::sp_descriptor)
-      {
-        SerializeHelper<S, WeightsSaveableParams<ArrayType>>(serializer, node.second);
-      }
-      else if (next_sp_descriptor == DropoutSaveableParams<ArrayType>::sp_descriptor)
-      {
-        SerializeHelper<S, DropoutSaveableParams<ArrayType>>(serializer, node.second);
-      }
-      else if (next_sp_descriptor == LeakyReluSaveableParams<ArrayType>::sp_descriptor)
-      {
-        SerializeHelper<S, LeakyReluSaveableParams<ArrayType>>(serializer, node.second);
-      }
-      else if (next_sp_descriptor == RandomizedReluSaveableParams<ArrayType>::sp_descriptor)
-      {
-        SerializeHelper<S, RandomizedReluSaveableParams<ArrayType>>(serializer, node.second);
-      }
-      else if (next_sp_descriptor == SoftmaxSaveableParams::sp_descriptor)
-      {
-        SerializeHelper<S, SoftmaxSaveableParams>(serializer, node.second);
-      }
-      else if (next_sp_descriptor == Convolution1DSaveableParams::sp_descriptor)
-      {
-        SerializeHelper<S, Convolution1DSaveableParams>(serializer, node.second);
-      }
-      else if (next_sp_descriptor == MaxPoolSaveableParams::sp_descriptor)
-      {
-        SerializeHelper<S, MaxPoolSaveableParams>(serializer, node.second);
-      }
-      else if (next_sp_descriptor == TransposeSaveableParams::sp_descriptor)
-      {
-        SerializeHelper<S, TransposeSaveableParams>(serializer, node.second);
-      }
-      else if (next_sp_descriptor == ReshapeSaveableParams::sp_descriptor)
-      {
-        SerializeHelper<S, ReshapeSaveableParams>(serializer, node.second);
-      }
-      else
-      {
-        throw std::runtime_error("Unknown type for Serialization");
-      }
+      SerializeIfElse<S, ArrayType>(serializer, node.second);
     }
   }
 
   template <typename S>
   friend void Deserialize(S &serializer, GraphSaveableParams &gsp)
   {
+    serializer >> gsp.DESCRIPTOR;
     serializer >> gsp.connections;
     auto num_nodes = gsp.connections.size();
     for (SizeType i = 0; i < num_nodes; i++)
@@ -474,64 +431,213 @@ struct GraphSaveableParams
       std::string node_name;
       serializer >> node_name;
 
-      std::string next_sp_descriptor;
-      serializer >> next_sp_descriptor;
-      //      std::cout << "next_sp_descriptor: " << next_sp_descriptor << std::endl;
-
-      std::shared_ptr<SaveableParams> nsp_ptr;
-      if (next_sp_descriptor == SaveableParams::sp_descriptor)
-      {
-        nsp_ptr = DeserializeHelper<S, SaveableParams>(serializer);
-      }
-      else if (next_sp_descriptor == PlaceholderSaveableParams<ArrayType>::sp_descriptor)
-      {
-        nsp_ptr = DeserializeHelper<S, PlaceholderSaveableParams<ArrayType>>(serializer);
-      }
-      else if (next_sp_descriptor == WeightsSaveableParams<ArrayType>::sp_descriptor)
-      {
-        nsp_ptr = DeserializeHelper<S, WeightsSaveableParams<ArrayType>>(serializer);
-      }
-      else if (next_sp_descriptor == DropoutSaveableParams<ArrayType>::sp_descriptor)
-      {
-        nsp_ptr = DeserializeHelper<S, DropoutSaveableParams<ArrayType>>(serializer);
-      }
-      else if (next_sp_descriptor == LeakyReluSaveableParams<ArrayType>::sp_descriptor)
-      {
-        nsp_ptr = DeserializeHelper<S, LeakyReluSaveableParams<ArrayType>>(serializer);
-      }
-      else if (next_sp_descriptor == RandomizedReluSaveableParams<ArrayType>::sp_descriptor)
-      {
-        nsp_ptr = DeserializeHelper<S, RandomizedReluSaveableParams<ArrayType>>(serializer);
-      }
-      else if (next_sp_descriptor == SoftmaxSaveableParams::sp_descriptor)
-      {
-        nsp_ptr = DeserializeHelper<S, SoftmaxSaveableParams>(serializer);
-      }
-      else if (next_sp_descriptor == Convolution1DSaveableParams::sp_descriptor)
-      {
-        nsp_ptr = DeserializeHelper<S, Convolution1DSaveableParams>(serializer);
-      }
-      else if (next_sp_descriptor == MaxPoolSaveableParams::sp_descriptor)
-      {
-        nsp_ptr = DeserializeHelper<S, MaxPoolSaveableParams>(serializer);
-      }
-      else if (next_sp_descriptor == TransposeSaveableParams::sp_descriptor)
-      {
-        nsp_ptr = DeserializeHelper<S, TransposeSaveableParams>(serializer);
-      }
-      else if (next_sp_descriptor == ReshapeSaveableParams::sp_descriptor)
-      {
-        nsp_ptr = DeserializeHelper<S, ReshapeSaveableParams>(serializer);
-      }
-      else
-      {
-        throw std::runtime_error("Unknown type for deserialization");
-      }
+      std::shared_ptr<SaveableParams> nsp_ptr = DeserializeIfElse<S, ArrayType>(serializer);
 
       gsp.nodes.insert(std::make_pair(node_name, nsp_ptr));
     }
   }
+
+  std::string GetDescription() override
+  {
+    return sp_descriptor;
+  }
 };
+
+template <class ArrayType>
+struct SubGraphSaveableParams : GraphSaveableParams<ArrayType>
+{
+  using SizeType = typename ArrayType::SizeType;
+  static constexpr char const *sp_descriptor = "SubgraphSaveableParams";
+
+  std::vector<std::string> input_node_names;
+  std::string output_node_name;
+
+  template <typename S>
+  friend void Serialize(S &serializer, SubGraphSaveableParams const &gsp)
+  {
+    // serialize parent class first
+    auto base_pointer = static_cast<GraphSaveableParams<ArrayType> const *>(&gsp);
+    Serialize(serializer, *base_pointer);
+
+    serializer << gsp.input_node_names;
+    serializer << gsp.output_node_name;
+  }
+
+  template <typename S>
+  friend void Deserialize(S &serializer, SubGraphSaveableParams &gsp)
+  {
+    // deserialize parent class first
+    auto base_pointer = static_cast<GraphSaveableParams<ArrayType>*>(&gsp);
+    Deserialize(serializer, *base_pointer);
+
+    serializer >> gsp.input_node_names;
+    serializer >> gsp.output_node_name;
+  }
+
+  std::string GetDescription() override
+  {
+    return sp_descriptor;
+  }
+};
+
+template <class ArrayType>
+struct FullyConnectedSaveableParams : SubGraphSaveableParams<ArrayType>
+{
+  using SizeType = typename ArrayType::SizeType;
+  static constexpr char const *sp_descriptor = "FullyConnectedSaveableParams";
+  SizeType in_size;
+  SizeType out_size;
+
+  template <typename S>
+  friend void Serialize(S &serializer, FullyConnectedSaveableParams const &gsp)
+  {
+    // serialize parent class first
+    auto base_pointer = static_cast<SubGraphSaveableParams<ArrayType> const *>(&gsp);
+    Serialize(serializer, *base_pointer);
+
+    serializer << gsp.in_size;
+    serializer << gsp.out_size;
+  }
+
+  template <typename S>
+  friend void Deserialize(S &serializer, FullyConnectedSaveableParams &gsp)
+  {
+    // deserialize parent class first
+    auto base_pointer = static_cast<SubGraphSaveableParams<ArrayType>*>(&gsp);
+    Deserialize(serializer, *base_pointer);
+
+    serializer >> gsp.in_size;
+    serializer >> gsp.out_size;
+  }
+
+  std::string GetDescription() override
+  {
+    return sp_descriptor;
+  }
+};
+
+template <class S, class ArrayType>
+void SerializeIfElse(S &serializer, std::shared_ptr<SaveableParams> const &nsp)
+{
+  std::string next_sp_descriptor = nsp->GetDescription();
+  serializer << next_sp_descriptor;
+
+  if (next_sp_descriptor == SaveableParams::sp_descriptor)
+  {
+    SerializeHelper<S, SaveableParams>(serializer, nsp);
+  }
+  else if (next_sp_descriptor == PlaceholderSaveableParams<ArrayType>::sp_descriptor)
+  {
+    SerializeHelper<S, PlaceholderSaveableParams<ArrayType>>(serializer, nsp);
+  }
+  else if (next_sp_descriptor == WeightsSaveableParams<ArrayType>::sp_descriptor)
+  {
+    SerializeHelper<S, WeightsSaveableParams<ArrayType>>(serializer, nsp);
+  }
+  else if (next_sp_descriptor == DropoutSaveableParams<ArrayType>::sp_descriptor)
+  {
+    SerializeHelper<S, DropoutSaveableParams<ArrayType>>(serializer, nsp);
+  }
+  else if (next_sp_descriptor == LeakyReluSaveableParams<ArrayType>::sp_descriptor)
+  {
+    SerializeHelper<S, LeakyReluSaveableParams<ArrayType>>(serializer, nsp);
+  }
+  else if (next_sp_descriptor == RandomizedReluSaveableParams<ArrayType>::sp_descriptor)
+  {
+    SerializeHelper<S, RandomizedReluSaveableParams<ArrayType>>(serializer, nsp);
+  }
+  else if (next_sp_descriptor == SoftmaxSaveableParams::sp_descriptor)
+  {
+    SerializeHelper<S, SoftmaxSaveableParams>(serializer, nsp);
+  }
+  else if (next_sp_descriptor == Convolution1DSaveableParams::sp_descriptor)
+  {
+    SerializeHelper<S, Convolution1DSaveableParams>(serializer, nsp);
+  }
+  else if (next_sp_descriptor == MaxPoolSaveableParams::sp_descriptor)
+  {
+    SerializeHelper<S, MaxPoolSaveableParams>(serializer, nsp);
+  }
+  else if (next_sp_descriptor == TransposeSaveableParams::sp_descriptor)
+  {
+    SerializeHelper<S, TransposeSaveableParams>(serializer, nsp);
+  }
+  else if (next_sp_descriptor == ReshapeSaveableParams::sp_descriptor)
+  {
+    SerializeHelper<S, ReshapeSaveableParams>(serializer, nsp);
+  }
+  else if (next_sp_descriptor == FullyConnectedSaveableParams<ArrayType>::sp_descriptor)
+  {
+    SerializeHelper<S, FullyConnectedSaveableParams<ArrayType>>(serializer, nsp);
+  }
+  else
+  {
+    throw std::runtime_error("Unknown type for Serialization");
+  }
+}
+
+template <class S, class ArrayType>
+std::shared_ptr<SaveableParams> DeserializeIfElse(S &serializer)
+{
+  std::string next_sp_descriptor;
+  serializer >> next_sp_descriptor;
+  //      std::cout << "next_sp_descriptor: " << next_sp_descriptor << std::endl;
+
+  std::shared_ptr<SaveableParams> nsp_ptr;
+  if (next_sp_descriptor == SaveableParams::sp_descriptor)
+  {
+    nsp_ptr = DeserializeHelper<S, SaveableParams>(serializer);
+  }
+  else if (next_sp_descriptor == PlaceholderSaveableParams<ArrayType>::sp_descriptor)
+  {
+    nsp_ptr = DeserializeHelper<S, PlaceholderSaveableParams<ArrayType>>(serializer);
+  }
+  else if (next_sp_descriptor == WeightsSaveableParams<ArrayType>::sp_descriptor)
+  {
+    nsp_ptr = DeserializeHelper<S, WeightsSaveableParams<ArrayType>>(serializer);
+  }
+  else if (next_sp_descriptor == DropoutSaveableParams<ArrayType>::sp_descriptor)
+  {
+    nsp_ptr = DeserializeHelper<S, DropoutSaveableParams<ArrayType>>(serializer);
+  }
+  else if (next_sp_descriptor == LeakyReluSaveableParams<ArrayType>::sp_descriptor)
+  {
+    nsp_ptr = DeserializeHelper<S, LeakyReluSaveableParams<ArrayType>>(serializer);
+  }
+  else if (next_sp_descriptor == RandomizedReluSaveableParams<ArrayType>::sp_descriptor)
+  {
+    nsp_ptr = DeserializeHelper<S, RandomizedReluSaveableParams<ArrayType>>(serializer);
+  }
+  else if (next_sp_descriptor == SoftmaxSaveableParams::sp_descriptor)
+  {
+    nsp_ptr = DeserializeHelper<S, SoftmaxSaveableParams>(serializer);
+  }
+  else if (next_sp_descriptor == Convolution1DSaveableParams::sp_descriptor)
+  {
+    nsp_ptr = DeserializeHelper<S, Convolution1DSaveableParams>(serializer);
+  }
+  else if (next_sp_descriptor == MaxPoolSaveableParams::sp_descriptor)
+  {
+    nsp_ptr = DeserializeHelper<S, MaxPoolSaveableParams>(serializer);
+  }
+  else if (next_sp_descriptor == TransposeSaveableParams::sp_descriptor)
+  {
+    nsp_ptr = DeserializeHelper<S, TransposeSaveableParams>(serializer);
+  }
+  else if (next_sp_descriptor == ReshapeSaveableParams::sp_descriptor)
+  {
+    nsp_ptr = DeserializeHelper<S, ReshapeSaveableParams>(serializer);
+  }
+  else if (next_sp_descriptor == FullyConnectedSaveableParams<ArrayType>::sp_descriptor)
+  {
+    nsp_ptr = DeserializeHelper<S, FullyConnectedSaveableParams<ArrayType>>(serializer);
+  }
+  else
+  {
+    throw std::runtime_error("Unknown type for deserialization");
+  }
+  return nsp_ptr;
+}
 
 }  // namespace ml
 }  // namespace fetch
