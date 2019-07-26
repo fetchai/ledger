@@ -45,10 +45,11 @@ class DkgService;
  */
 class DistributedKeyGeneration
 {
-  using MuddleAddress  = byte_array::ConstByteArray;
-  using CabinetMembers = std::set<MuddleAddress>;
-  using Endpoint       = muddle::MuddleEndpoint;
-  using MsgShare       = std::string;
+  using MuddleAddress    = byte_array::ConstByteArray;
+  using CabinetMembers   = std::set<MuddleAddress>;
+  using Endpoint         = muddle::MuddleEndpoint;
+  using MsgShare         = std::string;
+  using SharesExposedMap = std::unordered_map<MuddleAddress, std::pair<MsgShare, MsgShare>>;
 
   enum class State : uint8_t
   {
@@ -150,13 +151,13 @@ class DistributedKeyGeneration
   /// @{
   uint32_t                          CabinetIndex(MuddleAddress const &other_address) const;
   std::unordered_set<MuddleAddress> ComputeComplaints();
-  void CheckComplaintAnswer(std::shared_ptr<SharesMessage> const &answer,
-                            MuddleAddress const &from_id, uint32_t from_index);
-  bool BuildQual();
-  std::unordered_map<MuddleAddress, std::pair<MsgShare, MsgShare>> ComputeQualComplaints();
-  void                                                             ComputeSecretShare();
-  bool                                                             RunReconstruction();
-  void                                                             ComputePublicKeys();
+  void             CheckComplaintAnswer(std::shared_ptr<SharesMessage> const &answer,
+                                        MuddleAddress const &from_id, uint32_t from_index);
+  bool             BuildQual();
+  SharesExposedMap ComputeQualComplaints();
+  void             ComputeSecretShare();
+  bool             RunReconstruction();
+  void             ComputePublicKeys();
   /// @}
 
 public:

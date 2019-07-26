@@ -724,12 +724,9 @@ bool DistributedKeyGeneration::BuildQual()
  *
  * @return Map of address and pair of secret shares for each qual member we wish to complain against
  */
-std::unordered_map<
-    DistributedKeyGeneration::MuddleAddress,
-    std::pair<DistributedKeyGeneration::MsgShare, DistributedKeyGeneration::MsgShare>>
-DistributedKeyGeneration::ComputeQualComplaints()
+DistributedKeyGeneration::SharesExposedMap DistributedKeyGeneration::ComputeQualComplaints()
 {
-  std::unordered_map<MuddleAddress, std::pair<MsgShare, MsgShare>> qual_complaints;
+  SharesExposedMap qual_complaints;
 
   uint32_t i  = 0;
   auto     iq = cabinet_.begin();
