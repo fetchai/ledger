@@ -204,7 +204,7 @@ using Values = std::tuple<char, int, double>;
 template <std::size_t index>
 class Setter : public fetch::pack::SizeConstant<index>
 {
-  Values &values;
+  Values &values_;
 
 public:
   using fetch::pack::SizeConstant<index>::value;
