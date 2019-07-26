@@ -21,6 +21,10 @@
 #include "network/service/protocol.hpp"
 #include "storage/object_store_protocol.hpp"
 #include "storage/transient_object_store.hpp"
+#include "telemetry/counter.hpp"
+#include "telemetry/histogram.hpp"
+#include "telemetry/registry.hpp"
+#include "telemetry/utils/timer.hpp"
 
 namespace fetch {
 namespace storage {
@@ -52,10 +56,17 @@ public:
     GET_RECENT
   };
 
-  ObjectStoreProtocol(TransientObjectStore<T> *obj_store)
-    : fetch::service::Protocol()
+  ObjectStoreProtocol(TransientObjectStore<T> *obj_store, uint32_t lane)
+    : obj_store_{obj_store}
+    , set_count_{CreateCounter(lane, "ledger_tx_store_set_total",
+                               "The total number of set operations")}
+    , get_count_{CreateCounter(lane, "ledger_tx_store_get_total",
+                               "The total number of get operations")}
+    , set_durations_{CreateHistogram(lane, "ledger_tx_store_set_duration",
+                                     "The histogram of set operation durations in seconds")}
+    , get_durations_{CreateHistogram(lane, "ledger_tx_store_get_duration",
+                                     "The histogram of get operation durations in seconds")}
   {
-    obj_store_ = obj_store;
     this->Expose(GET, this, &self_type::Get);
     this->Expose(SET, this, &self_type::Set);
     this->Expose(SET_BULK, this, &self_type::SetBulk);
@@ -64,11 +75,29 @@ public:
   }
 
 private:
+  static telemetry::CounterPtr CreateCounter(uint32_t lane, char const *name,
+                                             char const *description)
+  {
+    return telemetry::Registry::Instance().CreateCounter(name, description,
+                                                         {{"lane", std::to_string(lane)}});
+  }
+
+  static telemetry::HistogramPtr CreateHistogram(uint32_t lane, char const *name,
+                                                 char const *description)
+  {
+    return telemetry::Registry::Instance().CreateHistogram(
+        {0.000001, 0.00001, 0.0001, 0.001, 0.01, 0.1, 1, 10., 100.}, name, description,
+        {{"lane", std::to_string(lane)}});
+  }
+
   void Set(ResourceID const &rid, T const &object)
   {
     FETCH_LOG_DEBUG(LOGGING_NAME, "Setting object across object store protocol");
 
+    telemetry::FunctionTimer const timer{*set_durations_};
+
     obj_store_->Set(rid, object, false);
+    set_count_->increment();
   }
 
   void SetBulk(ElementList const &elements)
@@ -84,6 +113,8 @@ private:
 
   T Get(ResourceID const &rid)
   {
+    telemetry::FunctionTimer const timer{*get_durations_};
+
     T ret;
 
     if (!obj_store_->Get(rid, ret))
@@ -93,11 +124,16 @@ private:
 
     // once we have retrieved a transaction from the core it is important that we persist it to disk
     obj_store_->Confirm(rid);
+    get_count_->increment();
 
     return ret;
   }
 
   TransientObjectStore<T> *obj_store_;
+  telemetry::CounterPtr    set_count_;
+  telemetry::CounterPtr    get_count_;
+  telemetry::HistogramPtr  set_durations_;
+  telemetry::HistogramPtr  get_durations_;
 };
 
 }  // namespace storage

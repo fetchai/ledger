@@ -40,7 +40,7 @@ public:
   static void Bind(vm::Module &module)
   {
     module.CreateClassType<SHA256Wrapper>("SHA256")
-        .CreateConstuctor<>()
+        .CreateConstructor<>()
         .CreateMemberFunction("update", &SHA256Wrapper::UpdateUInt256)
         .CreateMemberFunction("update", &SHA256Wrapper::UpdateString)
         .CreateMemberFunction("update", &SHA256Wrapper::UpdateBuffer)

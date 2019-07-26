@@ -55,14 +55,14 @@ void HistogramMap::Add(std::string const &key, double const &value)
  * @param stream The stream to be updated
  * @param mode The mode to be used when generating the stream
  */
-void HistogramMap::ToStream(std::ostream &stream, StreamMode mode) const
+void HistogramMap::ToStream(OutputStream &stream) const
 {
   LockGuard guard{lock_};
-  WriteHeader(stream, "histogram", mode);
+  WriteHeader(stream, "histogram");
 
   for (auto const &e : histograms_)
   {
-    e.second->ToStream(stream, StreamMode::WITHOUT_HEADER);
+    e.second->ToStream(stream);
   }
 }
 

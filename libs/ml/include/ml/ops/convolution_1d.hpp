@@ -41,8 +41,7 @@ public:
   explicit Convolution1D(SizeType stride_size = 1)
     : stride_size_(stride_size)
   {}
-
-  ~Convolution1D() = default;
+  ~Convolution1D() override = default;
 
   std::vector<typename ArrayType::SizeType> ComputeOutputShape(
       VecTensorType const &inputs) const override;
@@ -95,16 +94,16 @@ void Convolution1D<ArrayType>::Forward(VecTensorType const &inputs, ArrayType &o
 {
   assert(inputs.size() == 2);
   // Input should be a 3D tensor [C x H x N]
-  assert(inputs.at(0).get().shape().size() == 3);
+  assert(inputs.at(0)->shape().size() == 3);
   // Kernels should be a 4D tensor [oC x iC x H x N]
-  assert(inputs.at(1).get().shape().size() == 4);
+  assert(inputs.at(1)->shape().size() == 4);
   assert(output.shape() == ComputeOutputShape(inputs));
 
   // input data channels = kernel input channels
-  assert(inputs.at(0).get().shape().at(0) == inputs.at(1).get().shape().at(1));
+  assert(inputs.at(0)->shape().at(0) == inputs.at(1)->shape().at(1));
 
-  ArrayType input   = inputs.at(0).get();
-  ArrayType kernels = inputs.at(1).get();
+  ArrayType input   = (*inputs.at(0));
+  ArrayType kernels = (*inputs.at(1));
 
   SizeType input_channels  = input.shape().at(0);
   SizeType batch_size      = input.shape().at(2);
@@ -152,15 +151,15 @@ std::vector<ArrayType> Convolution1D<ArrayType>::Backward(VecTensorType const &i
 {
   assert(inputs.size() == 2);
   // Input should be a 2D tensor [C x H x N]
-  assert(inputs.at(0).get().shape().size() == 3);
+  assert(inputs.at(0)->shape().size() == 3);
   // Kernels should be a 3D tensor [oC x iC x H x N]
-  assert(inputs.at(1).get().shape().size() == 4);
+  assert(inputs.at(1)->shape().size() == 4);
   assert(error_signal.shape() == ComputeOutputShape(inputs));
 
   SizeType output_height = error_signal.shape().at(1);
 
-  ArrayType input   = inputs.at(0).get();
-  ArrayType kernels = inputs.at(1).get();
+  ArrayType input   = (*inputs.at(0));
+  ArrayType kernels = (*inputs.at(1));
 
   SizeType  input_channels  = input.shape().at(0);
   SizeType  batch_size      = input.shape().at(2);
@@ -210,13 +209,12 @@ std::vector<typename ArrayType::SizeType> Convolution1D<ArrayType>::ComputeOutpu
   std::vector<SizeType> output_shape;
 
   // output_shape_[0]=number of output channels
-  output_shape.emplace_back(inputs.at(1).get().shape().at(0));
+  output_shape.emplace_back(inputs.at(1)->shape().at(0));
   // output_shape_[1]=number of stride_size steps over input size
   output_shape.emplace_back(
-      (inputs.at(0).get().shape().at(1) - inputs.at(1).get().shape().at(2) + stride_size_) /
-      stride_size_);
+      (inputs.at(0)->shape().at(1) - inputs.at(1)->shape().at(2) + stride_size_) / stride_size_);
   // output_shape_[2]=batch dimension
-  output_shape.emplace_back(inputs.at(0).get().shape().at(2));
+  output_shape.emplace_back(inputs.at(0)->shape().at(2));
 
   return output_shape;
 }

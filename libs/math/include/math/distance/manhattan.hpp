@@ -20,7 +20,8 @@
 #include "core/assert.hpp"
 #include "math/fundamental_operators.hpp"
 #include "math/standard_functions/abs.hpp"
-#include <cmath>
+
+#include <cassert>
 
 namespace fetch {
 namespace math {

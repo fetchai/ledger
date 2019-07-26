@@ -117,7 +117,7 @@ public:
   using ConstByteArray = byte_array::ConstByteArray;
   using MuddleAddress  = ConstByteArray;
   using CabinetMembers = std::set<MuddleAddress>;
-  using RBCMessageType = DKGEnvelop;
+  using RBCMessageType = DKGEnvelope;
 
   // Construction / Destruction
   explicit DkgService(Endpoint &endpoint, ConstByteArray address);

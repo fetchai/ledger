@@ -19,6 +19,12 @@
 
 #include "dkg/dkg_messages.hpp"
 
+#include <atomic>
+#include <mutex>
+#include <set>
+#include <unordered_map>
+#include <vector>
+
 namespace fetch {
 namespace dkg {
 

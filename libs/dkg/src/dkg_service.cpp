@@ -180,7 +180,7 @@ void DkgService::SendReliableBroadcast(RBCMessageType const &msg)
  */
 void DkgService::OnRbcDeliver(MuddleAddress const &from, byte_array::ConstByteArray const &payload)
 {
-  DKGEnvelop    env;
+  DKGEnvelope   env;
   DKGSerializer serializer{payload};
   serializer >> env;
   dkg_.OnDkgMessage(from, env.Message());

@@ -1,3 +1,4 @@
+#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -16,10 +17,14 @@
 //
 //------------------------------------------------------------------------------
 
-#include <iostream>
+#include <chrono>
 
-int main()
+namespace fetch {
+
+template <typename R, typename P>
+double ToSeconds(std::chrono::duration<R, P> const &value)
 {
-
-  return 0;
+  return std::chrono::duration_cast<std::chrono::duration<double>>(value).count();
 }
+
+}  // namespace fetch

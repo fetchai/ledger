@@ -16,10 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/byte_array/byte_array.hpp"
 #include "ledger/identifier.hpp"
 
-#include "core/byte_array/byte_array.hpp"
-
+#include <cstddef>
 #include <stdexcept>
 
 using fetch::byte_array::ConstByteArray;

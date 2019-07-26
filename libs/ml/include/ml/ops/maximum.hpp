@@ -20,6 +20,10 @@
 #include "core/assert.hpp"
 #include "ml/ops/ops.hpp"
 
+#include <cassert>
+#include <memory>
+#include <vector>
+
 namespace fetch {
 namespace ml {
 namespace ops {
@@ -33,21 +37,21 @@ public:
   using ArrayPtrType  = std::shared_ptr<ArrayType>;
   using VecTensorType = typename Ops<T>::VecTensorType;
 
-  Maximum()          = default;
-  virtual ~Maximum() = default;
+  Maximum()           = default;
+  ~Maximum() override = default;
 
   /**
    * elementwise maximum
    * @param inputs  left & right inputs to get maximum
    * @return
    */
-  virtual void Forward(VecTensorType const &inputs, ArrayType &output)
+  void Forward(VecTensorType const &inputs, ArrayType &output) override
   {
     assert(inputs.size() == 2);
-    assert(inputs.at(0).get().size() == inputs.at(1).get().size());
+    assert(inputs.at(0)->size() == inputs.at(1)->size());
     assert(output.shape() == this->ComputeOutputShape(inputs));
 
-    fetch::math::Maximum(inputs[0].get(), inputs[1].get(), output);
+    fetch::math::Maximum((*inputs.at(0)), (*inputs.at(1)), output);
   }
 
   /**
@@ -55,18 +59,18 @@ public:
    * f'(input0)=if(input0>input1)=error_signal
    * f'(input1)=if(input0<=input1)=error_signal
    */
-  virtual std::vector<ArrayType> Backward(VecTensorType const &inputs,
-                                          ArrayType const &    error_signal)
+  std::vector<ArrayType> Backward(VecTensorType const &inputs,
+                                  ArrayType const &    error_signal) override
   {
     assert(inputs.size() == 2);
-    assert(inputs.at(0).get().size() == inputs.at(1).get().size());
-    assert(error_signal.size() == inputs.at(1).get().size());
+    assert(inputs.at(0)->size() == inputs.at(1)->size());
+    assert(error_signal.size() == inputs.at(1)->size());
 
-    ArrayType return_signal_1(inputs.at(0).get().shape());
-    ArrayType return_signal_2(inputs.at(1).get().shape());
+    ArrayType return_signal_1(inputs.at(0)->shape());
+    ArrayType return_signal_2(inputs.at(1)->shape());
 
-    auto a_it   = inputs.at(0).get().cbegin();
-    auto b_it   = inputs.at(1).get().cbegin();
+    auto a_it   = inputs.at(0)->cbegin();
+    auto b_it   = inputs.at(1)->cbegin();
     auto err_it = error_signal.cbegin();
     auto r_1_it = return_signal_1.begin();
     auto r_2_it = return_signal_2.begin();
@@ -91,9 +95,9 @@ public:
     return {return_signal_1, return_signal_2};
   }
 
-  virtual std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const
+  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
   {
-    return inputs.front().get().shape();
+    return inputs.front()->shape();
   }
 
   static constexpr char const *DESCRIPTOR = "Maximum";

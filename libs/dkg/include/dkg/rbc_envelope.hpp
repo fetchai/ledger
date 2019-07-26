@@ -25,15 +25,15 @@ namespace fetch {
 namespace dkg {
 namespace rbc {
 
-class RBCEnvelop
+class RBCEnvelope
 {
   using MessageType = RBCMessage::MessageType;
   using Payload     = byte_array::ConstByteArray;
 
 public:
   // Constructor
-  RBCEnvelop() = default;
-  explicit RBCEnvelop(RBCMessage const &msg)
+  RBCEnvelope() = default;
+  explicit RBCEnvelope(RBCMessage const &msg)
     : type_{msg.type()}
     , payload_{msg.Serialize().data()}
   {}
@@ -44,7 +44,7 @@ public:
   friend struct serializers::MapSerializer;
 
 private:
-  RBCMessage::MessageType type_;     ///< Type of message contained in envelop
+  RBCMessage::MessageType type_;     ///< Type of message contained in envelope
   Payload                 payload_;  ///< Serialised RBCMessage
 };
 
@@ -53,10 +53,10 @@ private:
 
 namespace serializers {
 template <typename D>
-struct MapSerializer<dkg::rbc::RBCEnvelop, D>
+struct MapSerializer<dkg::rbc::RBCEnvelope, D>
 {
 public:
-  using Type       = dkg::rbc::RBCEnvelop;
+  using Type       = dkg::rbc::RBCEnvelope;
   using DriverType = D;
 
   static uint8_t const TYPE    = 1;

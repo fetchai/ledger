@@ -20,7 +20,6 @@
 #include "ml/graph.hpp"
 #include "ml/layers/convolution_1d.hpp"
 #include "ml/layers/fully_connected.hpp"
-
 #include "ml/ops/activation.hpp"
 #include "ml/ops/loss_functions/cross_entropy_loss.hpp"
 #include "ml/ops/loss_functions/mean_square_error_loss.hpp"
@@ -139,7 +138,7 @@ public:
   static void Bind(fetch::vm::Module &module)
   {
     module.CreateClassType<VMGraph>("Graph")
-        .CreateConstuctor<>()
+        .CreateConstructor<>()
         .CreateMemberFunction("setInput", &VMGraph::SetInput)
         .CreateMemberFunction("evaluate", &VMGraph::Evaluate)
         .CreateMemberFunction("backPropagate", &VMGraph::BackPropagateError)

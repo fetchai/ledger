@@ -70,7 +70,7 @@ Muddle::Muddle(NetworkId network_id, CertificatePtr certificate, NetworkManager 
   : certificate_(std::move(certificate))
   , identity_(certificate_->identity())
   , network_manager_(nm)
-  , dispatcher_()
+  , dispatcher_(network_id, certificate_->identity().identifier())
   , register_(std::make_shared<MuddleRegister>(dispatcher_))
   , router_(network_id, identity_.identifier(), *register_, dispatcher_,
             sign_packets ? certificate_.get() : nullptr, sign_packets && sign_broadcasts)

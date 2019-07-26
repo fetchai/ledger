@@ -25,6 +25,7 @@
 #include "core/serializers/base_types.hpp"
 #include "core/serializers/group_definitions.hpp"
 #include "core/serializers/main_serializer.hpp"
+#include <string>
 
 namespace fetch {
 namespace dkg {
@@ -193,14 +194,14 @@ public:
   ///@}
 };
 
-class DKGEnvelop
+class DKGEnvelope
 {
   using MessageType = DKGMessage::MessageType;
   using Payload     = byte_array::ConstByteArray;
 
 public:
-  DKGEnvelop() = default;
-  explicit DKGEnvelop(DKGMessage const &msg)
+  DKGEnvelope() = default;
+  explicit DKGEnvelope(DKGMessage const &msg)
     : type_{msg.type()}
     , serialisedMessage_{msg.Serialize().data()}
   {}
