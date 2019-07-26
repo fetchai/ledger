@@ -280,69 +280,70 @@ private:
   }
 >>>>>>> master
 
-  NewRevertibleDocumentStore::Hash CurrentHash()
-  {
-    auto const hash = doc_store_->CurrentHash();
-    current_hash_count_->increment();
-    return hash;
-  }
+    NewRevertibleDocumentStore::Hash CurrentHash()
+    {
+      auto const hash = doc_store_->CurrentHash();
+      current_hash_count_->increment();
+      return hash;
+    }
 
-  bool HashExists(NewRevertibleDocumentStore::Hash const &hash)
-  {
-    auto const success = doc_store_->HashExists(hash);
-    hash_exists_count_->increment();
-    return success;
-  }
+    bool HashExists(NewRevertibleDocumentStore::Hash const &hash)
+    {
+      auto const success = doc_store_->HashExists(hash);
+      hash_exists_count_->increment();
+      return success;
+    }
 
-  NewRevertibleDocumentStore::Keys KeyDump()
-  {
-    auto const keys = doc_store_->KeyDump();
-    key_dump_count_->increment();
-    return keys;
-  }
+    NewRevertibleDocumentStore::Keys KeyDump()
+    {
+      auto const keys = doc_store_->KeyDump();
+      key_dump_count_->increment();
+      return keys;
+    }
 
-  void Reset()
-  {
-    doc_store_->Reset();
-    reset_count_->increment();
-  }
+    void Reset()
+    {
+      doc_store_->Reset();
+      reset_count_->increment();
+    }
 
-  void SetLaneLog2(lane_type const &count)
-  {
-    log2_lanes_ = uint32_t((sizeof(uint32_t) << 3) - uint32_t(__builtin_clz(uint32_t(count)) + 1));
-  }
+    void SetLaneLog2(lane_type const &count)
+    {
+      log2_lanes_ =
+          uint32_t((sizeof(uint32_t) << 3) - uint32_t(__builtin_clz(uint32_t(count)) + 1));
+    }
 
-  NewRevertibleDocumentStore *doc_store_;
+    NewRevertibleDocumentStore *doc_store_;
 
-  uint32_t log2_lanes_ = 0;
+    uint32_t log2_lanes_ = 0;
 
-  struct LockStatus
-  {
-    bool       is_locked{false};  ///< Flag to signal which client has locked the resource
-    Identifier client;            ///< The identifier of the locking client
+    struct LockStatus
+    {
+      bool       is_locked{false};  ///< Flag to signal which client has locked the resource
+      Identifier client;            ///< The identifier of the locking client
+    };
+
+    using SyncLockStatus = SynchronisedState<LockStatus>;
+
+    SyncLockStatus lock_status_;
+
+    telemetry::CounterPtr   get_count_;
+    telemetry::CounterPtr   get_create_count_;
+    telemetry::CounterPtr   set_count_;
+    telemetry::CounterPtr   commit_count_;
+    telemetry::CounterPtr   revert_count_;
+    telemetry::CounterPtr   current_hash_count_;
+    telemetry::CounterPtr   hash_exists_count_;
+    telemetry::CounterPtr   key_dump_count_;
+    telemetry::CounterPtr   reset_count_;
+    telemetry::CounterPtr   lock_count_;
+    telemetry::CounterPtr   unlock_count_;
+    telemetry::CounterPtr   has_lock_count_;
+    telemetry::HistogramPtr get_durations_;
+    telemetry::HistogramPtr set_durations_;
+    telemetry::HistogramPtr lock_durations_;
+    telemetry::HistogramPtr unlock_durations_;
   };
 
-  using SyncLockStatus = SynchronisedState<LockStatus>;
-
-  SyncLockStatus lock_status_;
-
-  telemetry::CounterPtr   get_count_;
-  telemetry::CounterPtr   get_create_count_;
-  telemetry::CounterPtr   set_count_;
-  telemetry::CounterPtr   commit_count_;
-  telemetry::CounterPtr   revert_count_;
-  telemetry::CounterPtr   current_hash_count_;
-  telemetry::CounterPtr   hash_exists_count_;
-  telemetry::CounterPtr   key_dump_count_;
-  telemetry::CounterPtr   reset_count_;
-  telemetry::CounterPtr   lock_count_;
-  telemetry::CounterPtr   unlock_count_;
-  telemetry::CounterPtr   has_lock_count_;
-  telemetry::HistogramPtr get_durations_;
-  telemetry::HistogramPtr set_durations_;
-  telemetry::HistogramPtr lock_durations_;
-  telemetry::HistogramPtr unlock_durations_;
-};
-
 }  // namespace storage
-}  // namespace fetch
+}  // namespace storage
