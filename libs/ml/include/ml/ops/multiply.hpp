@@ -70,22 +70,27 @@ public:
 	  assert(inputs.at(0)->shape().size() == inputs.at(1)->shape().size()); // check if addition is broadcastable
     assert(error_signal.shape() == inputs.front()->shape());
 	
+	  ArrayType error_signal_1(error_signal.shape());
+	  ArrayType error_signal_2(error_signal.shape());
+	  fetch::math::Multiply(error_signal, (*inputs.at(1)), error_signal_1);
+	  fetch::math::Multiply(error_signal, (*inputs.at(0)), error_signal_2);
+	
 	  if (inputs.at(0)->shape() == inputs.at(1)->shape())
 	  {
-		  return {error_signal, error_signal};
+		  return {error_signal_1, error_signal_2};
 	  }else if(inputs.at(1)->size() == 1) {
 		  // if second input is a scalar
-		  auto second_error_signal = ArrayType(inputs.at(1)->shape().at(0));
-		  fetch::math::Sum(error_signal, *second_error_signal.begin());
-		  return {error_signal, second_error_signal};
+		  auto second_error_signal = ArrayType(inputs.at(1)->shape());
+		  fetch::math::Sum(error_signal_2, *second_error_signal.begin());
+		  return {error_signal_1, second_error_signal};
 	  }
 	  else{
 		  // since the shape is not compatible, then the second input must have size 1 in batch dims
 		  SizeType batch_dimension = inputs.at(0)->shape().size() - 1;
 		  assert(inputs.at(1)->shape().at(batch_dimension) == 1);
 		  if (inputs.at(1)->shape().size() == 2){
-			  // the bias addition case
-			  return {error_signal, fetch::math::ReduceSum(error_signal, batch_dimension)};
+			  // NB * N1 case
+			  return {error_signal_1, fetch::math::ReduceSum(error_signal_2, batch_dimension)};
 		  }else{ // in the case where we have three dims
 			  // We only support backward broadcast through shape (N, 1, 1)
 			  assert(inputs.at(1)->shape(1) == 1);
@@ -93,20 +98,12 @@ public:
 			  ArrayType error_sum({inputs.at(1)->shape(0), 1});
 			  for(SizeType batch=0; batch < error_signal.shape(batch_dimension); batch++){
 //						error_sum += fetch::math::ReduceSum(inputs.at(0)->View(batch).Copy(), SizeType(1));
-				  error_sum += fetch::math::ReduceSum(error_signal.View(batch).Copy(), SizeType(1));
+				  error_sum += fetch::math::ReduceSum(error_signal_2.View(batch).Copy(), SizeType(1));
 			  }
 			  error_sum.Reshape(inputs.at(1)->shape());
-			  return {error_signal, error_sum};
+			  return {error_signal_1, error_sum};
 		  }
 	  }
-
-    ArrayType error_signal_1(inputs.at(0)->shape());
-    ArrayType error_signal_2(inputs.at(1)->shape());
-
-    fetch::math::Multiply((*inputs.at(1)), error_signal, error_signal_1);
-    fetch::math::Multiply((*inputs.at(0)), error_signal, error_signal_2);
-
-    return {error_signal_1, error_signal_2};
   }
 
   std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override

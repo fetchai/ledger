@@ -62,7 +62,7 @@ public:
 		  return {error_signal, error_signal};
 	  }else if(inputs.at(1)->size() == 1) {
 		  // if second input is a scalar
-		  auto second_error_signal = ArrayType(inputs.at(1)->shape().at(0));
+		  auto second_error_signal = ArrayType(inputs.at(1)->shape());
 		  fetch::math::Sum(error_signal, *second_error_signal.begin());
 		  return {error_signal, second_error_signal};
 	  }

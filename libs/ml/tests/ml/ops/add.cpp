@@ -97,8 +97,8 @@ TYPED_TEST(AddTest, backward_test_NMB_N11)
 	using ArrayType = TypeParam;
 	
 	ArrayType data_1 = ArrayType::FromString(
-	 "1, 1, 1, 1;"
-	 "1, 1, 1, 1");
+	 "1, -1, 1, 1;"
+	 "0, 1, 6, 2");
 	data_1.Reshape({2, 2, 2});
 	
 	ArrayType data_2 = ArrayType::FromString(
@@ -118,9 +118,42 @@ TYPED_TEST(AddTest, backward_test_NMB_N11)
 	std::vector<ArrayType>         prediction = op.Backward(
 	 {std::make_shared<ArrayType>(data_1), std::make_shared<ArrayType>(data_2)}, error);
 	
+	// test correct values and shape
+	ASSERT_TRUE(prediction[1].AllClose(gt, fetch::math::function_tolerance<DataType>(),
+	                                   fetch::math::function_tolerance<DataType>()));
+	ASSERT_TRUE(prediction[1].shape() == data_2.shape());
+}
+
+TYPED_TEST(AddTest, backward_test_NMB_111)
+{
+	using DataType  = typename TypeParam::Type;
+	using ArrayType = TypeParam;
+	
+	ArrayType data_1 = ArrayType::FromString(
+	 "1, -1, 1, 1;"
+	 "0, 1, 6, 2");
+	data_1.Reshape({2, 2, 2});
+	
+	ArrayType data_2 = ArrayType::FromString(
+	 "1");
+	data_2.Reshape({1, 1, 1});
+	
+	ArrayType gt = ArrayType::FromString(
+	 "36");
+	
+	ArrayType error = ArrayType::FromString(
+	 "1, 2, 5, 6;"
+	 "3, 4, 7, 8");
+	error.Reshape({2, 2, 2});
+	
+	fetch::ml::ops::Add<ArrayType> op;
+	std::vector<ArrayType>         prediction = op.Backward(
+	 {std::make_shared<ArrayType>(data_1), std::make_shared<ArrayType>(data_2)}, error);
+	
 	// test correct values
 	ASSERT_TRUE(prediction[1].AllClose(gt, fetch::math::function_tolerance<DataType>(),
 	                                   fetch::math::function_tolerance<DataType>()));
+	ASSERT_TRUE(prediction[1].shape() == data_2.shape());
 }
 
 TYPED_TEST(AddTest, backward_test_NB_N1)
@@ -157,4 +190,5 @@ TYPED_TEST(AddTest, backward_test_NB_N1)
                                      fetch::math::function_tolerance<DataType>()));
   ASSERT_TRUE(prediction[1].AllClose(gt_2, fetch::math::function_tolerance<DataType>(),
                                      fetch::math::function_tolerance<DataType>()));
+	ASSERT_TRUE(prediction[1].shape() == data_2.shape());
 }
