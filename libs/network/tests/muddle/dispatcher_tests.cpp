@@ -37,8 +37,6 @@ protected:
 
   void SetUp() override
   {
-    //NetworkId const &network_id, Packet::Address const &address
-
     dispatcher_ = std::make_unique<Dispatcher>(NetworkId{"TEST"}, "address");
   }
 
