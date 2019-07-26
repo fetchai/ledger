@@ -83,7 +83,6 @@ public:
     std::string normalized_output = this->template AddNode<fetch::ml::ops::LayerNorm<ArrayType>>(name + "_LayerNorm", {input}, data_shape_);
 		
     // do the rescaling
-	  // TODO (local) Allow broadcastable multiply
     std::string scaled_output = this->template AddNode<fetch::ml::ops::Multiply<ArrayType>>(name + "_Gamma_Multiply", {normalized_output, gamma});
     
     // do the re-shifting
