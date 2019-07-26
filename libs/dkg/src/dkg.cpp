@@ -274,7 +274,7 @@ void DistributedKeyGeneration::BroadcastReconstructionShares()
     assert(qual_.find(in) != qual_.end());
     uint32_t in_index{CabinetIndex(in)};
     reconstruction_shares.insert({in, {{}, std::vector<bn::Fr>(cabinet_.size(), zeroFr_)}});
-    reconstruction_shares.at(in).first.push_back(cabinet_index_);
+    reconstruction_shares.at(in).first.insert(cabinet_index_);
     reconstruction_shares.at(in).second[cabinet_index_] = s_ij[in_index][cabinet_index_];
     complaint_shares.insert(
         {in,
@@ -398,7 +398,6 @@ void DistributedKeyGeneration::ReceivedQualComplaint()
       FETCH_LOG_WARN(LOGGING_NAME, "Node: ", cabinet_index_, " is in qual complaints");
       lock.unlock();
       ComputePublicKeys();
-      // qual_complaints_manager_.Clear();
       return;
     }
     assert(qual_.find(address_) != qual_.end());
@@ -711,8 +710,7 @@ void DistributedKeyGeneration::OnReconstructionShares(
     }
     uint32_t victim_index{CabinetIndex(share.first)};
     // assert(qual_complaints_manager_.ComplaintsFind(share.first)); // Fails for nodes who receive
-    // shares for themselves when they
-    // don't know they are being complained against
+    // shares for themselves when they don't know they are being complained against
     bn::G2 lhs, rhs;
     bn::Fr s, sprime;
     lhs.clear();
@@ -730,7 +728,7 @@ void DistributedKeyGeneration::OnReconstructionShares(
       std::lock_guard<std::mutex> lock{mutex_};
       FETCH_LOG_INFO(LOGGING_NAME, "Node ", cabinet_index_, "received good share from node ",
                      from_index, "for reconstructing node ", victim_index);
-      reconstruction_shares.at(share.first).first.push_back(from_index);  // good share received
+      reconstruction_shares.at(share.first).first.insert(from_index);  // good share received
       reconstruction_shares.at(share.first).second[from_index] = s;
     }
     else
@@ -943,8 +941,8 @@ bool DistributedKeyGeneration::RunReconstruction()
   Init(a_ik, static_cast<uint32_t>(cabinet_.size()), static_cast<uint32_t>(threshold_ + 1));
   for (auto const &in : reconstruction_shares)
   {
-    std::vector<uint32_t> parties{in.second.first};
-    std::vector<bn::Fr>   shares{in.second.second};
+    std::set<uint32_t>  parties{in.second.first};
+    std::vector<bn::Fr> shares{in.second.second};
     if (parties.size() <= threshold_)
     {
       // Do not have enough good shares to be able to do reconstruction
@@ -955,13 +953,13 @@ bool DistributedKeyGeneration::RunReconstruction()
     // compute $z_i$ using Lagrange interpolation (without corrupted parties)
     uint32_t victim_index{CabinetIndex(in.first)};
     z_i[victim_index] = ComputeZi(in.second.first, in.second.second);
-    std::vector<bn::Fr> points(parties.size(), 0), shares_f(parties.size(), 0);
-    for (size_t k = 0; k < parties.size(); k++)
+    std::vector<bn::Fr> points, shares_f;
+    for (const auto &index : parties)
     {
       FETCH_LOG_INFO(LOGGING_NAME, "Node ", cabinet_index_, "run reconstruction for node ",
-                     victim_index, "with shares from node ", parties[k]);
-      points[k]   = parties[k] + 1;  // adjust index in computation
-      shares_f[k] = shares[parties[k]];
+                     victim_index, "with shares from node ", index);
+      points.push_back(index + 1);  // adjust index in computation
+      shares_f.push_back(shares[index]);
     }
     a_ik[victim_index] = InterpolatePolynom(points, shares_f);
     for (size_t k = 0; k <= threshold_; k++)
@@ -1044,6 +1042,9 @@ void DistributedKeyGeneration::ResetCabinet()
   Init(g__s_ij, cabinet_size, cabinet_size);
   Init(g__a_i, polynomial_size);
 
+  complaints_manager_.Clear();
+  complaints_answer_manager_.Clear();
+  qual_complaints_manager_.Clear();
   complaints_manager_.ResetCabinet(cabinet_size);
   complaints_answer_manager_.ResetCabinet(cabinet_size);
 
