@@ -44,13 +44,16 @@ public:
   ~SHA256Wrapper() override = default;
 
   static void Bind(fetch::vm::Module &module);
-  void        UpdateUInt256(fetch::vm::Ptr<math::UInt256Wrapper> const &uint);
-  void        UpdateString(fetch::vm::Ptr<fetch::vm::String> const &str);
 
-  void                                 UpdateBuffer(fetch::vm::Ptr<ByteArrayWrapper> const &buffer);
-  void                                 Reset();
+  void UpdateUInt256(fetch::vm::Ptr<math::UInt256Wrapper> const &uint);
+
+  void UpdateString(fetch::vm::Ptr<fetch::vm::String> const &str);
+
+  void UpdateBuffer(fetch::vm::Ptr<ByteArrayWrapper> const &buffer);
+
+  void Reset();
+
   fetch::vm::Ptr<math::UInt256Wrapper> Final();
-  fetch::vm::Ptr<ByteArrayWrapper>     FinalAsBuffer();
 
   SHA256Wrapper(fetch::vm::VM *vm, fetch::vm::TypeId type_id);
 

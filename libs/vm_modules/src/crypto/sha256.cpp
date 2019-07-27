@@ -64,11 +64,6 @@ Ptr<math::UInt256Wrapper> SHA256Wrapper::Final()
   return vm_->CreateNewObject<math::UInt256Wrapper>(hasher_.Final());
 }
 
-Ptr<ByteArrayWrapper> SHA256Wrapper::FinalAsBuffer()
-{
-  return vm_->CreateNewObject<ByteArrayWrapper>(hasher_.Final());
-}
-
 SHA256Wrapper::SHA256Wrapper(VM *vm, TypeId type_id)
   : Object(vm, type_id)
 {}
