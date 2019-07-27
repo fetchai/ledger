@@ -36,7 +36,7 @@ namespace ml {
 using SizeType       = fetch::math::SizeType;
 using MathTensorType = fetch::math::Tensor<VMGraph::DataType>;
 using VMTensorType   = fetch::vm_modules::math::VMTensor;
-using VMPtrString    = fetch::vm::Ptr<fetch::vm::String>;
+using VMPtrString    = Ptr<String>;
 
 VMGraph::VMGraph(VM *vm, TypeId type_id)
   : Object(vm, type_id)
