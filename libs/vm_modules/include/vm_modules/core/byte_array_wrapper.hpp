@@ -40,9 +40,6 @@ public:
   static fetch::vm::Ptr<ByteArrayWrapper> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
                                                       int32_t n);
 
-  static fetch::vm::Ptr<ByteArrayWrapper> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
-                                                      byte_array::ByteArray bytearray);
-
   fetch::vm::Ptr<ByteArrayWrapper> Copy();
 
   byte_array::ByteArray byte_array() const;
