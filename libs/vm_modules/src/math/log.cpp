@@ -19,15 +19,20 @@
 #include "math/meta/math_type_traits.hpp"
 #include "math/standard_functions/log.hpp"
 #include "vm/module.hpp"
+#include "vm_modules/math/log.hpp"
 
 #include <cmath>
+
+using namespace fetch::vm;
 
 namespace fetch {
 namespace vm_modules {
 namespace math {
 
+namespace {
+
 template <typename T>
-fetch::math::meta::IfIsMath<T, T> Log(fetch::vm::VM *, T const &a)
+fetch::math::meta::IfIsMath<T, T> Log(VM *, T const &a)
 {
   T x;
   fetch::math::Log(a, x);
@@ -35,7 +40,7 @@ fetch::math::meta::IfIsMath<T, T> Log(fetch::vm::VM *, T const &a)
 }
 
 template <typename T>
-fetch::math::meta::IfIsMath<T, T> Log2(fetch::vm::VM *, T const &a)
+fetch::math::meta::IfIsMath<T, T> Log2(VM *, T const &a)
 {
   T x;
   fetch::math::Log2(a, x);
@@ -43,14 +48,16 @@ fetch::math::meta::IfIsMath<T, T> Log2(fetch::vm::VM *, T const &a)
 }
 
 template <typename T>
-fetch::math::meta::IfIsMath<T, T> Log10(fetch::vm::VM *, T const &a)
+fetch::math::meta::IfIsMath<T, T> Log10(VM *, T const &a)
 {
   T x;
   fetch::math::Log10(a, x);
   return x;
 }
 
-inline void BindLog(fetch::vm::Module &module)
+}  // namespace
+
+void BindLog(Module &module)
 {
   module.CreateFreeFunction<float_t>("log", &Log<float_t>);
   module.CreateFreeFunction<double_t>("log", &Log<double_t>);

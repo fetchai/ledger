@@ -19,22 +19,29 @@
 #include "math/meta/math_type_traits.hpp"
 #include "math/standard_functions/exp.hpp"
 #include "vm/module.hpp"
+#include "vm_modules/math/exp.hpp"
 
 #include <cmath>
+
+using namespace fetch::vm;
 
 namespace fetch {
 namespace vm_modules {
 namespace math {
 
+namespace {
+
 template <typename T>
-fetch::math::meta::IfIsMath<T, T> Exp(fetch::vm::VM *, T const &a)
+fetch::math::meta::IfIsMath<T, T> Exp(VM *, T const &a)
 {
   T x;
   fetch::math::Exp(a, x);
   return x;
 }
 
-inline void BindExp(fetch::vm::Module &module)
+}  // namespace
+
+void BindExp(Module &module)
 {
   module.CreateFreeFunction<float_t>("exp", &Exp<float_t>);
   module.CreateFreeFunction<double_t>("exp", &Exp<double_t>);

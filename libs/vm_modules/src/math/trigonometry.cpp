@@ -18,16 +18,23 @@
 
 #include "math/meta/math_type_traits.hpp"
 #include "math/trigonometry.hpp"
+#include "vm/module.hpp"
+#include "vm/vm.hpp"
+#include "vm_modules/math/trigonometry.hpp"
+
+using namespace fetch::vm;
 
 namespace fetch {
 namespace vm_modules {
 namespace math {
 
+namespace {
+
 /**
  * method for taking the sine of a value
  */
 template <typename T>
-fetch::math::meta::IfIsMath<T, T> Sin(fetch::vm::VM *, T const &a)
+fetch::math::meta::IfIsMath<T, T> Sin(VM *, T const &a)
 {
   T x;
   fetch::math::Sin(a, x);
@@ -38,7 +45,7 @@ fetch::math::meta::IfIsMath<T, T> Sin(fetch::vm::VM *, T const &a)
  * method for taking the cosine of a value
  */
 template <typename T>
-fetch::math::meta::IfIsMath<T, T> Cos(fetch::vm::VM *, T const &a)
+fetch::math::meta::IfIsMath<T, T> Cos(VM *, T const &a)
 {
   T x;
   fetch::math::Cos(a, x);
@@ -49,7 +56,7 @@ fetch::math::meta::IfIsMath<T, T> Cos(fetch::vm::VM *, T const &a)
  * method for taking the tangent of a value
  */
 template <typename T>
-fetch::math::meta::IfIsMath<T, T> Tan(fetch::vm::VM *, T const &a)
+fetch::math::meta::IfIsMath<T, T> Tan(VM *, T const &a)
 {
   T x;
   fetch::math::Tan(a, x);
@@ -60,7 +67,7 @@ fetch::math::meta::IfIsMath<T, T> Tan(fetch::vm::VM *, T const &a)
  * method for taking the sine of a value
  */
 template <typename T>
-fetch::math::meta::IfIsMath<T, T> ASin(fetch::vm::VM *, T const &a)
+fetch::math::meta::IfIsMath<T, T> ASin(VM *, T const &a)
 {
   T x;
   fetch::math::ASin(a, x);
@@ -71,7 +78,7 @@ fetch::math::meta::IfIsMath<T, T> ASin(fetch::vm::VM *, T const &a)
  * method for taking the cosine of a value
  */
 template <typename T>
-fetch::math::meta::IfIsMath<T, T> ACos(fetch::vm::VM *, T const &a)
+fetch::math::meta::IfIsMath<T, T> ACos(VM *, T const &a)
 {
   T x;
   fetch::math::ACos(a, x);
@@ -82,7 +89,7 @@ fetch::math::meta::IfIsMath<T, T> ACos(fetch::vm::VM *, T const &a)
  * method for taking the tangent of a value
  */
 template <typename T>
-fetch::math::meta::IfIsMath<T, T> ATan(fetch::vm::VM *, T const &a)
+fetch::math::meta::IfIsMath<T, T> ATan(VM *, T const &a)
 {
   T x;
   fetch::math::ATan(a, x);
@@ -93,7 +100,7 @@ fetch::math::meta::IfIsMath<T, T> ATan(fetch::vm::VM *, T const &a)
  * method for taking the tangent of a value
  */
 template <typename T>
-fetch::math::meta::IfIsMath<T, T> ATan2(fetch::vm::VM *, T const &a, T const &b)
+fetch::math::meta::IfIsMath<T, T> ATan2(VM *, T const &a, T const &b)
 {
   T x;
   fetch::math::ATan2(a, b, x);
@@ -104,7 +111,7 @@ fetch::math::meta::IfIsMath<T, T> ATan2(fetch::vm::VM *, T const &a, T const &b)
  * method for taking the sine of a value
  */
 template <typename T>
-fetch::math::meta::IfIsMath<T, T> SinH(fetch::vm::VM *, T const &a)
+fetch::math::meta::IfIsMath<T, T> SinH(VM *, T const &a)
 {
   T x;
   fetch::math::SinH(a, x);
@@ -115,7 +122,7 @@ fetch::math::meta::IfIsMath<T, T> SinH(fetch::vm::VM *, T const &a)
  * method for taking the cosine of a value
  */
 template <typename T>
-fetch::math::meta::IfIsMath<T, T> CosH(fetch::vm::VM *, T const &a)
+fetch::math::meta::IfIsMath<T, T> CosH(VM *, T const &a)
 {
   T x;
   fetch::math::CosH(a, x);
@@ -126,7 +133,7 @@ fetch::math::meta::IfIsMath<T, T> CosH(fetch::vm::VM *, T const &a)
  * method for taking the tangent of a value
  */
 template <typename T>
-fetch::math::meta::IfIsMath<T, T> TanH(fetch::vm::VM *, T const &a)
+fetch::math::meta::IfIsMath<T, T> TanH(VM *, T const &a)
 {
   T x;
   fetch::math::TanH(a, x);
@@ -137,7 +144,7 @@ fetch::math::meta::IfIsMath<T, T> TanH(fetch::vm::VM *, T const &a)
  * method for taking the sine of a value
  */
 template <typename T>
-fetch::math::meta::IfIsMath<T, T> ASinH(fetch::vm::VM *, T const &a)
+fetch::math::meta::IfIsMath<T, T> ASinH(VM *, T const &a)
 {
   T x;
   fetch::math::ASinH(a, x);
@@ -148,7 +155,7 @@ fetch::math::meta::IfIsMath<T, T> ASinH(fetch::vm::VM *, T const &a)
  * method for taking the cosine of a value
  */
 template <typename T>
-fetch::math::meta::IfIsMath<T, T> ACosH(fetch::vm::VM *, T const &a)
+fetch::math::meta::IfIsMath<T, T> ACosH(VM *, T const &a)
 {
   T x;
   fetch::math::ACosH(a, x);
@@ -159,14 +166,16 @@ fetch::math::meta::IfIsMath<T, T> ACosH(fetch::vm::VM *, T const &a)
  * method for taking the tangent of a value
  */
 template <typename T>
-fetch::math::meta::IfIsMath<T, T> ATanH(fetch::vm::VM *, T const &a)
+fetch::math::meta::IfIsMath<T, T> ATanH(VM *, T const &a)
 {
   T x;
   fetch::math::ATanH(a, x);
   return x;
 }
 
-inline void BindTrigonometry(fetch::vm::Module &module)
+}  // namespace
+
+void BindTrigonometry(Module &module)
 {
   module.CreateFreeFunction<float_t>("sin", &Sin<float_t>);
   module.CreateFreeFunction<float_t>("cos", &Cos<float_t>);

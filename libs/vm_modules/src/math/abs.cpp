@@ -18,19 +18,26 @@
 
 #include "math/meta/math_type_traits.hpp"
 #include "math/standard_functions/abs.hpp"
+#include "vm/module.hpp"
+#include "vm/vm.hpp"
+#include "vm_modules/math/abs.hpp"
 
 #include <cstdint>
 #include <cstdlib>
+
+using namespace fetch::vm;
 
 namespace fetch {
 namespace vm_modules {
 namespace math {
 
+namespace {
+
 /**
  * method for taking the absolute of a value
  */
 template <typename T>
-fetch::math::meta::IfIsMath<T, T> Abs(fetch::vm::VM *, T const &a)
+fetch::math::meta::IfIsMath<T, T> Abs(VM *, T const &a)
 {
   T x;
   fetch::math::Abs(a, x);
@@ -50,24 +57,26 @@ meta::EnableIf<sizeof(T) < 4, int32_t> ToAtLeastInt(T const &value)
 }
 
 template <typename T>
-IfIsSmallSignedInteger<T, T> IntegerAbs(fetch::vm::VM *, T const &value)
+IfIsSmallSignedInteger<T, T> IntegerAbs(VM *, T const &value)
 {
   return static_cast<T>(std::abs(value));
 }
 
 template <typename T>
-IfIsNormalSignedInteger<T, T> IntegerAbs(fetch::vm::VM *, T const &value)
+IfIsNormalSignedInteger<T, T> IntegerAbs(VM *, T const &value)
 {
   return std::abs(value);
 }
 
 template <typename T>
-meta::IfIsUnsignedInteger<T, T> IntegerAbs(fetch::vm::VM *, T const &value)
+meta::IfIsUnsignedInteger<T, T> IntegerAbs(VM *, T const &value)
 {
   return value;
 }
 
-static void BindAbs(fetch::vm::Module &module)
+}  // namespace
+
+void BindAbs(Module &module)
 {
   module.CreateFreeFunction<int8_t>("abs", &IntegerAbs<int8_t>);
   module.CreateFreeFunction<int16_t>("abs", &IntegerAbs<int16_t>);

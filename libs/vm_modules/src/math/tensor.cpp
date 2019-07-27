@@ -18,151 +18,140 @@
 
 #include "math/tensor.hpp"
 #include "vm/module.hpp"
+#include "vm_modules/math/tensor.hpp"
 #include "vm_modules/math/type.hpp"
+
+using namespace fetch::vm;
 
 namespace fetch {
 namespace vm_modules {
 namespace math {
 
-class VMTensor : public fetch::vm::Object
+VMTensor::VMTensor(VM *vm, TypeId type_id, std::vector<std::uint64_t> const &shape)
+  : Object(vm, type_id)
+  , tensor_(shape)
+{}
+
+VMTensor::VMTensor(VM *vm, TypeId type_id, ArrayType tensor)
+  : Object(vm, type_id)
+  , tensor_(std::move(tensor))
+{}
+
+VMTensor::VMTensor(VM *vm, TypeId type_id)
+  : Object(vm, type_id)
+  , tensor_{}
+{}
+
+Ptr<VMTensor> VMTensor::Constructor(VM *vm, TypeId type_id, Ptr<Array<SizeType>> shape)
 {
+  return {new VMTensor(vm, type_id, shape->elements)};
+}
 
-public:
-  using DataType   = fetch::vm_modules::math::DataType;
-  using ArrayType  = fetch::math::Tensor<DataType>;
-  using SizeType   = ArrayType::SizeType;
-  using SizeVector = ArrayType::SizeVector;
+Ptr<VMTensor> VMTensor::Constructor(VM *vm, TypeId type_id)
+{
+  return {new VMTensor(vm, type_id)};
+}
 
-  VMTensor(fetch::vm::VM *vm, fetch::vm::TypeId type_id, std::vector<std::uint64_t> const &shape)
-    : fetch::vm::Object(vm, type_id)
-    , tensor_(shape)
-  {}
+void VMTensor::Bind(Module &module)
+{
+  module.CreateClassType<VMTensor>("Tensor")
+      .CreateConstructor<Ptr<Array<VMTensor::SizeType>>>()
+      .CreateSerializeDefaultConstructor<>()
+      .CreateMemberFunction("at", &VMTensor::AtOne)
+      .CreateMemberFunction("at", &VMTensor::AtTwo)
+      .CreateMemberFunction("at", &VMTensor::AtThree)
+      .CreateMemberFunction("setAt", &VMTensor::SetAt)
+      .CreateMemberFunction("fill", &VMTensor::Fill)
+      .CreateMemberFunction("fillRandom", &VMTensor::FillRandom)
+      .CreateMemberFunction("reshape", &VMTensor::Reshape)
+      .CreateMemberFunction("size", &VMTensor::size)
+      .CreateMemberFunction("toString", &VMTensor::ToString);
+}
 
-  VMTensor(fetch::vm::VM *vm, fetch::vm::TypeId type_id, ArrayType tensor)
-    : fetch::vm::Object(vm, type_id)
-    , tensor_(std::move(tensor))
-  {}
+VMTensor::SizeVector VMTensor::shape() const
+{
+  return tensor_.shape();
+}
 
-  VMTensor(fetch::vm::VM *vm, fetch::vm::TypeId type_id)
-    : fetch::vm::Object(vm, type_id)
-    , tensor_{}
-  {}
+VMTensor::SizeType VMTensor::size() const
+{
+  return tensor_.size();
+}
 
-  static fetch::vm::Ptr<VMTensor> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
-                                              fetch::vm::Ptr<fetch::vm::Array<SizeType>> shape)
-  {
-    return {new VMTensor(vm, type_id, shape->elements)};
-  }
+////////////////////////////////////
+/// ACCESSING AND SETTING VALUES ///
+////////////////////////////////////
 
-  static fetch::vm::Ptr<VMTensor> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id)
-  {
-    return {new VMTensor(vm, type_id)};
-  }
+DataType VMTensor::AtOne(SizeType idx1) const
+{
+  return tensor_.At(idx1);
+}
 
-  static void Bind(fetch::vm::Module &module)
-  {
-    module.CreateClassType<VMTensor>("Tensor")
-        .CreateConstructor<fetch::vm::Ptr<fetch::vm::Array<VMTensor::SizeType>>>()
-        .CreateSerializeDefaultConstructor<>()
-        .CreateMemberFunction("at", &VMTensor::AtOne)
-        .CreateMemberFunction("at", &VMTensor::AtTwo)
-        .CreateMemberFunction("at", &VMTensor::AtThree)
-        .CreateMemberFunction("setAt", &VMTensor::SetAt)
-        .CreateMemberFunction("fill", &VMTensor::Fill)
-        .CreateMemberFunction("fillRandom", &VMTensor::FillRandom)
-        .CreateMemberFunction("reshape", &VMTensor::Reshape)
-        .CreateMemberFunction("size", &VMTensor::size)
-        .CreateMemberFunction("toString", &VMTensor::ToString);
-  }
+DataType VMTensor::AtTwo(uint64_t idx1, uint64_t idx2) const
+{
+  return tensor_.At(idx1, idx2);
+}
 
-  SizeVector shape()
-  {
-    return tensor_.shape();
-  }
+DataType VMTensor::AtThree(uint64_t idx1, uint64_t idx2, uint64_t idx3) const
+{
+  return tensor_.At(idx1, idx2, idx3);
+}
 
-  SizeType size()
-  {
-    return tensor_.size();
-  }
+void VMTensor::SetAt(uint64_t index, DataType value)
+{
+  tensor_.At(index) = value;
+}
 
-  ////////////////////////////////////
-  /// ACCESSING AND SETTING VALUES ///
-  ////////////////////////////////////
+void VMTensor::Copy(ArrayType const &other)
+{
+  tensor_.Copy(other);
+}
 
-  DataType AtOne(SizeType idx1)
-  {
-    return tensor_.At(idx1);
-  }
+void VMTensor::Fill(DataType const &value)
+{
+  tensor_.Fill(value);
+}
 
-  DataType AtTwo(uint64_t idx1, uint64_t idx2)
-  {
-    return tensor_.At(idx1, idx2);
-  }
+void VMTensor::FillRandom()
+{
+  tensor_.FillUniformRandom();
+}
 
-  DataType AtThree(uint64_t idx1, uint64_t idx2, uint64_t idx3)
-  {
-    return tensor_.At(idx1, idx2, idx3);
-  }
+bool VMTensor::Reshape(Ptr<Array<SizeType>> const &new_shape)
+{
+  return tensor_.Reshape(new_shape->elements);
+}
 
-  void SetAt(uint64_t index, DataType value)
-  {
-    tensor_.At(index) = value;
-  }
+//////////////////////////////
+/// PRINTING AND EXPORTING ///
+//////////////////////////////
 
-  void Copy(ArrayType const &other)
-  {
-    tensor_.Copy(other);
-  }
+Ptr<String> VMTensor::ToString() const
+{
+  return new String(vm_, tensor_.ToString());
+}
 
-  void Fill(DataType const &value)
-  {
-    tensor_.Fill(value);
-  }
+VMTensor::ArrayType &VMTensor::GetTensor()
+{
+  return tensor_;
+}
 
-  void FillRandom()
-  {
-    tensor_.FillUniformRandom();
-  }
+VMTensor::ArrayType const &VMTensor::GetConstTensor()
+{
+  return tensor_;
+}
 
-  bool Reshape(fetch::vm::Ptr<fetch::vm::Array<SizeType>> const &new_shape)
-  {
-    return tensor_.Reshape(new_shape->elements);
-  }
+bool VMTensor::SerializeTo(serializers::ByteArrayBuffer &buffer)
+{
+  buffer << tensor_;
+  return true;
+}
 
-  //////////////////////////////
-  /// PRINTING AND EXPORTING ///
-  //////////////////////////////
-
-  fetch::vm::Ptr<fetch::vm::String> ToString()
-  {
-    return new fetch::vm::String(vm_, tensor_.ToString());
-  }
-
-  ArrayType &GetTensor()
-  {
-    return tensor_;
-  }
-
-  ArrayType const &GetConstTensor()
-  {
-    return tensor_;
-  }
-
-  bool SerializeTo(serializers::ByteArrayBuffer &buffer) override
-  {
-    buffer << tensor_;
-    return true;
-  }
-
-  bool DeserializeFrom(serializers::ByteArrayBuffer &buffer) override
-  {
-    buffer >> tensor_;
-    return true;
-  }
-
-private:
-  ArrayType tensor_;
-};
+bool VMTensor::DeserializeFrom(serializers::ByteArrayBuffer &buffer)
+{
+  buffer >> tensor_;
+  return true;
+}
 
 }  // namespace math
 }  // namespace vm_modules

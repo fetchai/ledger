@@ -20,17 +20,20 @@
 #include "vm_modules/math/abs.hpp"
 #include "vm_modules/math/exp.hpp"
 #include "vm_modules/math/log.hpp"
+#include "vm_modules/math/math.hpp"
 #include "vm_modules/math/pow.hpp"
 #include "vm_modules/math/random.hpp"
 #include "vm_modules/math/sqrt.hpp"
 #include "vm_modules/math/tensor.hpp"
 #include "vm_modules/math/trigonometry.hpp"
 
+using namespace fetch::vm;
+
 namespace fetch {
 namespace vm_modules {
 namespace math {
 
-inline void BindMath(fetch::vm::Module &module)
+void BindMath(Module &module)
 {
   // bind math functions
   BindAbs(module);

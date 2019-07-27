@@ -19,22 +19,29 @@
 #include "math/meta/math_type_traits.hpp"
 #include "math/standard_functions/pow.hpp"
 #include "vm/module.hpp"
+#include "vm_modules/math/pow.hpp"
 
 #include <cmath>
+
+using namespace fetch::vm;
 
 namespace fetch {
 namespace vm_modules {
 namespace math {
 
+namespace {
+
 template <typename T>
-fetch::math::meta::IfIsMath<T, T> Pow(fetch::vm::VM *, T const &a, T const &b)
+fetch::math::meta::IfIsMath<T, T> Pow(VM *, T const &a, T const &b)
 {
   T x;
   fetch::math::Pow(a, b, x);
   return x;
 }
 
-inline void BindPow(fetch::vm::Module &module)
+}  // namespace
+
+void BindPow(Module &module)
 {
   module.CreateFreeFunction<float_t>("pow", &Pow<float_t>);
   module.CreateFreeFunction<double_t>("pow", &Pow<double_t>);

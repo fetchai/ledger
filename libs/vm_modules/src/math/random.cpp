@@ -18,15 +18,20 @@
 
 #include "math/meta/math_type_traits.hpp"
 #include "vm/module.hpp"
+#include "vm_modules/math/random.hpp"
 
 #include <random>
+
+using namespace fetch::vm;
 
 namespace fetch {
 namespace vm_modules {
 namespace math {
 
+namespace {
+
 template <typename T>
-fetch::meta::IfIsInteger<T, T> Rand(fetch::vm::VM *vm, T const &a = T{0}, T const &b = T{100})
+fetch::meta::IfIsInteger<T, T> Rand(VM *vm, T const &a = T{0}, T const &b = T{100})
 {
   if (a >= b)
   {
@@ -41,7 +46,7 @@ fetch::meta::IfIsInteger<T, T> Rand(fetch::vm::VM *vm, T const &a = T{0}, T cons
 }
 
 template <typename T>
-fetch::meta::IfIsFloat<T, T> Rand(fetch::vm::VM *vm, T const &a = T{.0}, T const &b = T{1.0})
+fetch::meta::IfIsFloat<T, T> Rand(VM *vm, T const &a = T{.0}, T const &b = T{1.0})
 {
   if (a >= b)
   {
@@ -55,7 +60,9 @@ fetch::meta::IfIsFloat<T, T> Rand(fetch::vm::VM *vm, T const &a = T{.0}, T const
   return std::uniform_real_distribution<T>{a, b}(mt);
 }
 
-inline void BindRand(fetch::vm::Module &module)
+}  // namespace
+
+void BindRand(Module &module)
 {
   module.CreateFreeFunction<int16_t>("rand", &Rand<int16_t>);
   module.CreateFreeFunction<int32_t>("rand", &Rand<int32_t>);
