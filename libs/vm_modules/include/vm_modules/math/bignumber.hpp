@@ -95,7 +95,7 @@ public:
                      fetch::vm::Ptr<Object> const &rhso) override;
 
 private:
-  vectorise::UInt<256> number_;
+  UInt256 number_;
 };
 
 }  // namespace math

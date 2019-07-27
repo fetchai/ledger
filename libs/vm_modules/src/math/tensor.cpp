@@ -27,6 +27,10 @@ namespace fetch {
 namespace vm_modules {
 namespace math {
 
+using ArrayType  = fetch::math::Tensor<VMTensor::DataType>;
+using SizeType   = ArrayType::SizeType;
+using SizeVector = ArrayType::SizeVector;
+
 VMTensor::VMTensor(VM *vm, TypeId type_id, std::vector<std::uint64_t> const &shape)
   : Object(vm, type_id)
   , tensor_(shape)
@@ -42,7 +46,7 @@ VMTensor::VMTensor(VM *vm, TypeId type_id)
   , tensor_{}
 {}
 
-Ptr<VMTensor> VMTensor::Constructor(VM *vm, TypeId type_id, Ptr<Array<SizeType>> shape)
+Ptr<VMTensor> VMTensor::Constructor(VM *vm, TypeId type_id, Ptr<Array<SizeType>> const &shape)
 {
   return {new VMTensor(vm, type_id, shape->elements)};
 }
@@ -55,7 +59,7 @@ Ptr<VMTensor> VMTensor::Constructor(VM *vm, TypeId type_id)
 void VMTensor::Bind(Module &module)
 {
   module.CreateClassType<VMTensor>("Tensor")
-      .CreateConstructor<Ptr<Array<VMTensor::SizeType>>>()
+      .CreateConstructor<Ptr<Array<SizeType>>>()
       .CreateSerializeDefaultConstructor<>()
       .CreateMemberFunction("at", &VMTensor::AtOne)
       .CreateMemberFunction("at", &VMTensor::AtTwo)
@@ -68,12 +72,12 @@ void VMTensor::Bind(Module &module)
       .CreateMemberFunction("toString", &VMTensor::ToString);
 }
 
-VMTensor::SizeVector VMTensor::shape() const
+SizeVector VMTensor::shape() const
 {
   return tensor_.shape();
 }
 
-VMTensor::SizeType VMTensor::size() const
+SizeType VMTensor::size() const
 {
   return tensor_.size();
 }
@@ -131,12 +135,12 @@ Ptr<String> VMTensor::ToString() const
   return new String(vm_, tensor_.ToString());
 }
 
-VMTensor::ArrayType &VMTensor::GetTensor()
+ArrayType &VMTensor::GetTensor()
 {
   return tensor_;
 }
 
-VMTensor::ArrayType const &VMTensor::GetConstTensor()
+ArrayType const &VMTensor::GetConstTensor()
 {
   return tensor_;
 }

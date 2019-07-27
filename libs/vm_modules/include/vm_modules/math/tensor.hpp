@@ -26,6 +26,10 @@
 
 namespace fetch {
 
+namespace math {
+template <typename, typename>
+class Tensor;
+}
 namespace vm {
 class Module;
 template <typename T>
@@ -38,33 +42,31 @@ namespace math {
 class VMTensor : public fetch::vm::Object
 {
 public:
-  using DataType   = fetch::vm_modules::math::DataType;
-  using ArrayType  = fetch::math::Tensor<DataType>;
-  using SizeType   = ArrayType::SizeType;
-  using SizeVector = ArrayType::SizeVector;
+  using DataType = fetch::vm_modules::math::DataType;
 
   VMTensor(fetch::vm::VM *vm, fetch::vm::TypeId type_id, std::vector<std::uint64_t> const &shape);
 
-  VMTensor(fetch::vm::VM *vm, fetch::vm::TypeId type_id, ArrayType tensor);
+  VMTensor(fetch::vm::VM *vm, fetch::vm::TypeId type_id, fetch::math::Tensor<DataType> tensor);
 
   VMTensor(fetch::vm::VM *vm, fetch::vm::TypeId type_id);
 
-  static fetch::vm::Ptr<VMTensor> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
-                                              fetch::vm::Ptr<fetch::vm::Array<SizeType>> shape);
+  static fetch::vm::Ptr<VMTensor> Constructor(
+      fetch::vm::VM *vm, fetch::vm::TypeId type_id,
+      fetch::vm::Ptr<fetch::vm::Array<fetch::math::Tensor<DataType>::SizeType>> const &shape);
 
   static fetch::vm::Ptr<VMTensor> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id);
 
   static void Bind(fetch::vm::Module &module);
 
-  SizeVector shape() const;
+  fetch::math::Tensor<DataType>::SizeVector shape() const;
 
-  SizeType size() const;
+  fetch::math::Tensor<DataType>::SizeType size() const;
 
   ////////////////////////////////////
   /// ACCESSING AND SETTING VALUES ///
   ////////////////////////////////////
 
-  DataType AtOne(SizeType idx1) const;
+  DataType AtOne(fetch::math::Tensor<DataType>::SizeType idx1) const;
 
   DataType AtTwo(uint64_t idx1, uint64_t idx2) const;
 
@@ -72,13 +74,14 @@ public:
 
   void SetAt(uint64_t index, DataType value);
 
-  void Copy(ArrayType const &other);
+  void Copy(fetch::math::Tensor<DataType> const &other);
 
   void Fill(DataType const &value);
 
   void FillRandom();
 
-  bool Reshape(fetch::vm::Ptr<fetch::vm::Array<SizeType>> const &new_shape);
+  bool Reshape(
+      fetch::vm::Ptr<fetch::vm::Array<fetch::math::Tensor<DataType>::SizeType>> const &new_shape);
 
   //////////////////////////////
   /// PRINTING AND EXPORTING ///
@@ -86,16 +89,16 @@ public:
 
   fetch::vm::Ptr<fetch::vm::String> ToString() const;
 
-  ArrayType &GetTensor();
+  fetch::math::Tensor<DataType> &GetTensor();
 
-  ArrayType const &GetConstTensor();
+  fetch::math::Tensor<DataType> const &GetConstTensor();
 
   bool SerializeTo(serializers::ByteArrayBuffer &buffer) override;
 
   bool DeserializeFrom(serializers::ByteArrayBuffer &buffer) override;
 
 private:
-  ArrayType tensor_;
+  fetch::math::Tensor<DataType> tensor_;
 };
 
 }  // namespace math
