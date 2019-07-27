@@ -21,6 +21,12 @@
 #include "vm/object.hpp"
 
 namespace fetch {
+
+namespace vm {
+template <typename T>
+struct Array;
+}
+
 namespace vm_modules {
 
 class StructuredData : public vm::Object
