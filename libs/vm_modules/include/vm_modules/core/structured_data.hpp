@@ -18,7 +18,6 @@
 //------------------------------------------------------------------------------
 
 #include "variant/variant.hpp"
-#include "vm/array.hpp"
 #include "vm/object.hpp"
 
 namespace fetch {
