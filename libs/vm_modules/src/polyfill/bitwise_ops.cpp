@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -17,15 +16,44 @@
 //
 //------------------------------------------------------------------------------
 
+#include "vm/module.hpp"
+#include "vm_modules/polyfill/bitwise_ops.hpp"
+
+#include <cstdint>
+
+using namespace fetch::vm;
+
 namespace fetch {
-
-namespace vm {
-class Module;
-}
-
 namespace vm_modules {
 
-void BindBitwiseOps(fetch::vm::Module &module);
+namespace {
+
+template <typename T>
+T And(VM *, T x, T s)
+{
+  return T(x & s);
+}
+
+template <typename T>
+T Or(VM *, T x, T s)
+{
+  return T(x | s);
+}
+
+}  // namespace
+
+void BindBitwiseOps(Module &module)
+{
+  module.CreateFreeFunction("and", &And<int32_t>);
+  module.CreateFreeFunction("and", &And<int64_t>);
+  module.CreateFreeFunction("and", &And<uint32_t>);
+  module.CreateFreeFunction("and", &And<uint64_t>);
+
+  module.CreateFreeFunction("or", &Or<int32_t>);
+  module.CreateFreeFunction("or", &Or<int64_t>);
+  module.CreateFreeFunction("or", &Or<uint32_t>);
+  module.CreateFreeFunction("or", &Or<uint64_t>);
+}
 
 }  // namespace vm_modules
 }  // namespace fetch
