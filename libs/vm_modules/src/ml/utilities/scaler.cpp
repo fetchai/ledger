@@ -20,75 +20,69 @@
 #include "ml/utilities/scaler.hpp"
 #include "vm/module.hpp"
 #include "vm/object.hpp"
+#include "vm_modules/math/tensor.hpp"
 #include "vm_modules/ml/utilities/scaler.hpp"
 
 #include <memory>
 #include <stdexcept>
+
+using namespace fetch::vm;
 
 namespace fetch {
 namespace vm_modules {
 namespace ml {
 namespace utilities {
 
-class VMScaler : public fetch::vm::Object
+using MathTensorType   = fetch::math::Tensor<VMScaler::DataType>;
+using VMTensorType     = fetch::vm_modules::math::VMTensor;
+using ScalerType       = fetch::ml::utilities::Scaler<fetch::math::Tensor<VMScaler::DataType>>;
+using MinMaxScalerType = fetch::ml::utilities::MinMaxScaler<MathTensorType>;
+
+VMScaler::VMScaler(VM *vm, TypeId type_id)
+  : Object(vm, type_id)
+{}
+
+Ptr<VMScaler> VMScaler::Constructor(VM *vm, TypeId type_id)
 {
-  using DataType       = fetch::vm_modules::math::DataType;
-  using MathTensorType = fetch::math::Tensor<DataType>;
-  using VMTensorType   = fetch::vm_modules::math::VMTensor;
+  return new VMScaler(vm, type_id);
+}
 
-  using ScalerType       = fetch::ml::utilities::Scaler<fetch::math::Tensor<DataType>>;
-  using MinMaxScalerType = fetch::ml::utilities::MinMaxScaler<MathTensorType>;
-
-public:
-  VMScaler(fetch::vm::VM *vm, fetch::vm::TypeId type_id)
-    : fetch::vm::Object(vm, type_id)
-  {}
-
-  static fetch::vm::Ptr<VMScaler> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id)
+void VMScaler::SetScale(Ptr<VMTensorType> const &reference_tensor, Ptr<String> const &mode)
+{
+  if (mode->str == "min_max")
   {
-    return new VMScaler(vm, type_id);
+    scaler_ = std::make_shared<MinMaxScalerType>();
+  }
+  else
+  {
+    throw std::runtime_error("unrecognised mode type");
   }
 
-  void SetScale(fetch::vm::Ptr<VMTensorType> const &     reference_tensor,
-                fetch::vm::Ptr<fetch::vm::String> const &mode)
-  {
-    if (mode->str == "min_max")
-    {
-      scaler_ = std::make_shared<MinMaxScalerType>();
-    }
-    else
-    {
-      throw std::runtime_error("unrecognised mode type");
-    }
+  scaler_->SetScale(reference_tensor->GetConstTensor());
+}
 
-    scaler_->SetScale(reference_tensor->GetConstTensor());
-  }
+Ptr<VMTensorType> VMScaler::Normalise(Ptr<VMTensorType> const &input_tensor)
+{
+  MathTensorType output_tensor(input_tensor->shape());
+  scaler_->Normalise(input_tensor->GetConstTensor(), output_tensor);
+  return this->vm_->CreateNewObject<VMTensorType>(output_tensor);
+}
 
-  fetch::vm::Ptr<VMTensorType> Normalise(fetch::vm::Ptr<VMTensorType> const &input_tensor)
-  {
-    MathTensorType output_tensor(input_tensor->shape());
-    scaler_->Normalise(input_tensor->GetConstTensor(), output_tensor);
-    return this->vm_->CreateNewObject<VMTensorType>(output_tensor);
-  }
+Ptr<VMTensorType> VMScaler::DeNormalise(Ptr<VMTensorType> const &input_tensor)
+{
+  MathTensorType output_tensor(input_tensor->shape());
+  scaler_->DeNormalise(input_tensor->GetConstTensor(), output_tensor);
+  return this->vm_->CreateNewObject<VMTensorType>(output_tensor);
+}
 
-  fetch::vm::Ptr<VMTensorType> DeNormalise(fetch::vm::Ptr<VMTensorType> const &input_tensor)
-  {
-    MathTensorType output_tensor(input_tensor->shape());
-    scaler_->DeNormalise(input_tensor->GetConstTensor(), output_tensor);
-    return this->vm_->CreateNewObject<VMTensorType>(output_tensor);
-  }
-
-  static void Bind(fetch::vm::Module &module)
-  {
-    module.CreateClassType<VMScaler>("Scaler")
-        .CreateConstructor<>()
-        .CreateMemberFunction("setScale", &VMScaler::SetScale)
-        .CreateMemberFunction("normalise", &VMScaler::Normalise)
-        .CreateMemberFunction("deNormalise", &VMScaler::DeNormalise);
-  }
-
-  std::shared_ptr<ScalerType> scaler_;
-};
+void VMScaler::Bind(Module &module)
+{
+  module.CreateClassType<VMScaler>("Scaler")
+      .CreateConstructor<>()
+      .CreateMemberFunction("setScale", &VMScaler::SetScale)
+      .CreateMemberFunction("normalise", &VMScaler::Normalise)
+      .CreateMemberFunction("deNormalise", &VMScaler::DeNormalise);
+}
 
 }  // namespace utilities
 }  // namespace ml

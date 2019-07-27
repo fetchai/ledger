@@ -23,6 +23,7 @@
 #include "ml/optimisation/optimiser.hpp"
 #include "ml/optimisation/rmsprop_optimiser.hpp"
 #include "ml/optimisation/sgd_optimiser.hpp"
+#include "vm/module.hpp"
 #include "vm_modules/math/tensor.hpp"
 #include "vm_modules/math/type.hpp"
 #include "vm_modules/ml/dataloaders/dataloader.hpp"
@@ -35,110 +36,101 @@
 #include <string>
 #include <vector>
 
+using namespace fetch::vm;
+
 namespace fetch {
 namespace vm_modules {
 namespace ml {
 
-class VMOptimiser : public fetch::vm::Object
+using ArrayType = fetch::math::Tensor<VMOptimiser::DataType>;
+using GraphType = fetch::ml::Graph<ArrayType>;
+
+using OptimiserType         = fetch::ml::optimisers::Optimiser<ArrayType>;
+using AdagradOptimiserType  = fetch::ml::optimisers::AdaGradOptimiser<ArrayType>;
+using AdamOptimiserType     = fetch::ml::optimisers::AdamOptimiser<ArrayType>;
+using MomentumOptimiserType = fetch::ml::optimisers::MomentumOptimiser<ArrayType>;
+using RmspropOptimiserType  = fetch::ml::optimisers::RMSPropOptimiser<ArrayType>;
+using SgdOptimiserType      = fetch::ml::optimisers::SGDOptimiser<ArrayType>;
+
+VMOptimiser::VMOptimiser(VM *vm, TypeId type_id, std::string const &mode, GraphType const &graph,
+                         std::vector<std::string> const &input_node_names,
+                         std::string const &label_node_name, std::string const &output_node_name)
+  : Object(vm, type_id)
 {
-public:
-  using DataType  = fetch::vm_modules::math::DataType;
-  using ArrayType = fetch::math::Tensor<DataType>;
-  using GraphType = fetch::ml::Graph<ArrayType>;
-
-  using OptimiserType         = fetch::ml::optimisers::Optimiser<ArrayType>;
-  using AdagradOptimiserType  = fetch::ml::optimisers::AdaGradOptimiser<ArrayType>;
-  using AdamOptimiserType     = fetch::ml::optimisers::AdamOptimiser<ArrayType>;
-  using MomentumOptimiserType = fetch::ml::optimisers::MomentumOptimiser<ArrayType>;
-  using RmspropOptimiserType  = fetch::ml::optimisers::RMSPropOptimiser<ArrayType>;
-  using SgdOptimiserType      = fetch::ml::optimisers::SGDOptimiser<ArrayType>;
-
-  VMOptimiser(fetch::vm::VM *vm, fetch::vm::TypeId type_id, std::string const &mode,
-              GraphType const &graph, std::vector<std::string> const &input_node_names,
-              std::string const &label_node_name, std::string const &output_node_name)
-    : fetch::vm::Object(vm, type_id)
+  if (mode == "adagrad")
   {
-    if (mode == "adagrad")
-    {
-      AdagradOptimiserType optimiser(std::make_shared<GraphType>(graph), input_node_names,
-                                     label_node_name, output_node_name);
-      optimiser_ = std::make_shared<AdagradOptimiserType>(optimiser);
-    }
-    else if (mode == "adam")
-    {
-      AdamOptimiserType optimiser(std::make_shared<GraphType>(graph), input_node_names,
-                                  label_node_name, output_node_name);
-      optimiser_ = std::make_shared<AdamOptimiserType>(optimiser);
-    }
-    else if (mode == "momentum")
-    {
-      MomentumOptimiserType optimiser(std::make_shared<GraphType>(graph), input_node_names,
-                                      label_node_name, output_node_name);
-      optimiser_ = std::make_shared<MomentumOptimiserType>(optimiser);
-    }
-    else if (mode == "rmsprop")
-    {
-      RmspropOptimiserType optimiser(std::make_shared<GraphType>(graph), input_node_names,
-                                     label_node_name, output_node_name);
-      optimiser_ = std::make_shared<RmspropOptimiserType>(optimiser);
-    }
-    else if (mode == "sgd")
-    {
-      SgdOptimiserType optimiser(std::make_shared<GraphType>(graph), input_node_names,
-                                 label_node_name, output_node_name);
-      optimiser_ = std::make_shared<SgdOptimiserType>(optimiser);
-    }
-    else
-    {
-      throw std::runtime_error("unrecognised optimiser mode");
-    }
+    AdagradOptimiserType optimiser(std::make_shared<GraphType>(graph), input_node_names,
+                                   label_node_name, output_node_name);
+    optimiser_ = std::make_shared<AdagradOptimiserType>(optimiser);
   }
-
-  static void Bind(vm::Module &module)
+  else if (mode == "adam")
   {
-    module.CreateClassType<fetch::vm_modules::ml::VMOptimiser>("Optimiser")
-        .CreateConstructor<fetch::vm::Ptr<fetch::vm::String>,
-                           fetch::vm::Ptr<fetch::vm_modules::ml::VMGraph>,
-                           fetch::vm::Ptr<fetch::vm::String>, fetch::vm::Ptr<fetch::vm::String>,
-                           fetch::vm::Ptr<fetch::vm::String>>()
-        .CreateMemberFunction("run", &fetch::vm_modules::ml::VMOptimiser::RunData)
-        .CreateMemberFunction("run", &fetch::vm_modules::ml::VMOptimiser::RunLoader)
-        .CreateMemberFunction("run", &fetch::vm_modules::ml::VMOptimiser::RunLoaderNoSubset);
+    AdamOptimiserType optimiser(std::make_shared<GraphType>(graph), input_node_names,
+                                label_node_name, output_node_name);
+    optimiser_ = std::make_shared<AdamOptimiserType>(optimiser);
   }
-
-  static fetch::vm::Ptr<VMOptimiser> Constructor(
-      fetch::vm::VM *vm, fetch::vm::TypeId type_id, fetch::vm::Ptr<fetch::vm::String> const &mode,
-      fetch::vm::Ptr<fetch::vm_modules::ml::VMGraph> const &graph,
-      fetch::vm::Ptr<fetch::vm::String> const &             input_node_names,
-      fetch::vm::Ptr<fetch::vm::String> const &             label_node_name,
-      fetch::vm::Ptr<fetch::vm::String> const &             output_node_names)
+  else if (mode == "momentum")
   {
-    return new VMOptimiser(vm, type_id, mode->str, graph->graph_, {input_node_names->str},
-                           label_node_name->str, output_node_names->str);
+    MomentumOptimiserType optimiser(std::make_shared<GraphType>(graph), input_node_names,
+                                    label_node_name, output_node_name);
+    optimiser_ = std::make_shared<MomentumOptimiserType>(optimiser);
   }
-
-  DataType RunData(fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> const &data,
-                   fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> const &labels,
-                   uint64_t                                                 batch_size)
+  else if (mode == "rmsprop")
   {
-    return optimiser_->Run({(data->GetTensor())}, labels->GetTensor(), batch_size);
+    RmspropOptimiserType optimiser(std::make_shared<GraphType>(graph), input_node_names,
+                                   label_node_name, output_node_name);
+    optimiser_ = std::make_shared<RmspropOptimiserType>(optimiser);
   }
-
-  DataType RunLoader(fetch::vm::Ptr<fetch::vm_modules::ml::VMDataLoader> const &loader,
-                     uint64_t batch_size, uint64_t subset_size)
+  else if (mode == "sgd")
   {
-    return optimiser_->Run(*(loader->loader_), batch_size, subset_size);
+    SgdOptimiserType optimiser(std::make_shared<GraphType>(graph), input_node_names,
+                               label_node_name, output_node_name);
+    optimiser_ = std::make_shared<SgdOptimiserType>(optimiser);
   }
-
-  DataType RunLoaderNoSubset(fetch::vm::Ptr<fetch::vm_modules::ml::VMDataLoader> const &loader,
-                             uint64_t                                                   batch_size)
+  else
   {
-    return optimiser_->Run(*(loader->loader_), batch_size);
+    throw std::runtime_error("unrecognised optimiser mode");
   }
+}
 
-private:
-  std::shared_ptr<OptimiserType> optimiser_;
-};
+void VMOptimiser::Bind(Module &module)
+{
+  module.CreateClassType<fetch::vm_modules::ml::VMOptimiser>("Optimiser")
+      .CreateConstructor<Ptr<String>, Ptr<fetch::vm_modules::ml::VMGraph>, Ptr<String>, Ptr<String>,
+                         Ptr<String>>()
+      .CreateMemberFunction("run", &fetch::vm_modules::ml::VMOptimiser::RunData)
+      .CreateMemberFunction("run", &fetch::vm_modules::ml::VMOptimiser::RunLoader)
+      .CreateMemberFunction("run", &fetch::vm_modules::ml::VMOptimiser::RunLoaderNoSubset);
+}
+
+Ptr<VMOptimiser> VMOptimiser::Constructor(VM *vm, TypeId type_id, Ptr<String> const &mode,
+                                          Ptr<fetch::vm_modules::ml::VMGraph> const &graph,
+                                          Ptr<String> const &input_node_names,
+                                          Ptr<String> const &label_node_name,
+                                          Ptr<String> const &output_node_names)
+{
+  return new VMOptimiser(vm, type_id, mode->str, graph->graph_, {input_node_names->str},
+                         label_node_name->str, output_node_names->str);
+}
+
+VMOptimiser::DataType VMOptimiser::RunData(Ptr<fetch::vm_modules::math::VMTensor> const &data,
+                                           Ptr<fetch::vm_modules::math::VMTensor> const &labels,
+                                           uint64_t                                      batch_size)
+{
+  return optimiser_->Run({(data->GetTensor())}, labels->GetTensor(), batch_size);
+}
+
+VMOptimiser::DataType VMOptimiser::RunLoader(Ptr<fetch::vm_modules::ml::VMDataLoader> const &loader,
+                                             uint64_t batch_size, uint64_t subset_size)
+{
+  return optimiser_->Run(*(loader->loader_), batch_size, subset_size);
+}
+
+VMOptimiser::DataType VMOptimiser::RunLoaderNoSubset(
+    Ptr<fetch::vm_modules::ml::VMDataLoader> const &loader, uint64_t batch_size)
+{
+  return optimiser_->Run(*(loader->loader_), batch_size);
+}
 
 }  // namespace ml
 }  // namespace vm_modules

@@ -26,11 +26,13 @@
 #include "vm_modules/ml/training_pair.hpp"
 #include "vm_modules/ml/utilities/scaler.hpp"
 
+using namespace fetch::vm;
+
 namespace fetch {
 namespace vm_modules {
 namespace ml {
 
-inline void BindML(fetch::vm::Module &module)
+void BindML(Module &module)
 {
   // Tensor - required by later functions
   math::VMTensor::Bind(module);

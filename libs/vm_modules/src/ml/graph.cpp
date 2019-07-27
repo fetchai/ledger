@@ -27,136 +27,132 @@
 #include "vm_modules/ml/graph.hpp"
 #include "vm_modules/ml/state_dict.hpp"
 
+using namespace fetch::vm;
+
 namespace fetch {
 namespace vm_modules {
 namespace ml {
 
-class VMGraph : public fetch::vm::Object
+using SizeType       = fetch::math::SizeType;
+using MathTensorType = fetch::math::Tensor<VMGraph::DataType>;
+using VMTensorType   = fetch::vm_modules::math::VMTensor;
+using VMPtrString    = fetch::vm::Ptr<fetch::vm::String>;
+
+VMGraph::VMGraph(VM *vm, TypeId type_id)
+  : Object(vm, type_id)
+  , graph_()
+{}
+
+Ptr<VMGraph> VMGraph::Constructor(VM *vm, TypeId type_id)
 {
-  using SizeType       = fetch::math::SizeType;
-  using DataType       = fetch::vm_modules::math::DataType;
-  using MathTensorType = fetch::math::Tensor<DataType>;
-  using VMTensorType   = fetch::vm_modules::math::VMTensor;
-  using GraphType      = fetch::ml::Graph<MathTensorType>;
-  using VMPtrString    = fetch::vm::Ptr<fetch::vm::String>;
+  return new VMGraph(vm, type_id);
+}
 
-public:
-  VMGraph(fetch::vm::VM *vm, fetch::vm::TypeId type_id)
-    : fetch::vm::Object(vm, type_id)
-    , graph_()
-  {}
+void VMGraph::SetInput(VMPtrString const &name, Ptr<VMTensorType> const &input)
+{
+  graph_.SetInput(name->str, (*input).GetTensor());
+}
 
-  static fetch::vm::Ptr<VMGraph> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id)
-  {
-    return new VMGraph(vm, type_id);
-  }
+Ptr<VMTensorType> VMGraph::Evaluate(VMPtrString const &name)
+{
+  MathTensorType    t   = graph_.Evaluate(name->str);
+  Ptr<VMTensorType> ret = this->vm_->CreateNewObject<math::VMTensor>(t.shape());
+  (*ret).Copy(t);
+  return ret;
+}
 
-  void SetInput(VMPtrString const &name, fetch::vm::Ptr<VMTensorType> const &input)
-  {
-    graph_.SetInput(name->str, (*input).GetTensor());
-  }
+void VMGraph::BackPropagateError(VMPtrString const &name)
+{
+  graph_.BackPropagateError(name->str);
+}
 
-  fetch::vm::Ptr<VMTensorType> Evaluate(VMPtrString const &name)
-  {
-    MathTensorType               t   = graph_.Evaluate(name->str);
-    fetch::vm::Ptr<VMTensorType> ret = this->vm_->CreateNewObject<math::VMTensor>(t.shape());
-    (*ret).Copy(t);
-    return ret;
-  }
+void VMGraph::Step(DataType lr)
+{
+  graph_.Step(lr);
+}
 
-  void BackPropagateError(VMPtrString const &name)
-  {
-    graph_.BackPropagateError(name->str);
-  }
+void VMGraph::AddPlaceholder(VMPtrString const &name)
+{
+  graph_.AddNode<fetch::ml::ops::PlaceHolder<MathTensorType>>(name->str, {});
+}
 
-  void Step(DataType lr)
-  {
-    graph_.Step(lr);
-  }
+void VMGraph::AddFullyConnected(VMPtrString const &name, VMPtrString const &input_name, int in,
+                                int out)
+{
+  graph_.AddNode<fetch::ml::layers::FullyConnected<MathTensorType>>(
+      name->str, {input_name->str}, std::size_t(in), std::size_t(out));
+}
 
-  void AddPlaceholder(VMPtrString const &name)
-  {
-    graph_.AddNode<fetch::ml::ops::PlaceHolder<MathTensorType>>(name->str, {});
-  }
+void VMGraph::AddConv1D(VMPtrString const &name, VMPtrString const &input_name, int filters,
+                        int in_channels, int kernel_size, int stride_size)
+{
+  graph_.AddNode<fetch::ml::layers::Convolution1D<MathTensorType>>(
+      name->str, {input_name->str}, static_cast<SizeType>(filters),
+      static_cast<SizeType>(in_channels), static_cast<SizeType>(kernel_size),
+      static_cast<SizeType>(stride_size));
+}
 
-  void AddFullyConnected(VMPtrString const &name, VMPtrString const &input_name, int in, int out)
-  {
-    graph_.AddNode<fetch::ml::layers::FullyConnected<MathTensorType>>(
-        name->str, {input_name->str}, std::size_t(in), std::size_t(out));
-  }
+void VMGraph::AddRelu(VMPtrString const &name, VMPtrString const &input_name)
+{
+  graph_.AddNode<fetch::ml::ops::Relu<MathTensorType>>(name->str, {input_name->str});
+}
 
-  void AddConv1D(VMPtrString const &name, VMPtrString const &input_name, int filters,
-                 int in_channels, int kernel_size, int stride_size)
-  {
-    graph_.AddNode<fetch::ml::layers::Convolution1D<MathTensorType>>(
-        name->str, {input_name->str}, static_cast<SizeType>(filters),
-        static_cast<SizeType>(in_channels), static_cast<SizeType>(kernel_size),
-        static_cast<SizeType>(stride_size));
-  }
+void VMGraph::AddSoftmax(VMPtrString const &name, VMPtrString const &input_name)
+{
+  graph_.AddNode<fetch::ml::ops::Softmax<fetch::math::Tensor<DataType>>>(name->str,
+                                                                         {input_name->str});
+}
 
-  void AddRelu(VMPtrString const &name, VMPtrString const &input_name)
-  {
-    graph_.AddNode<fetch::ml::ops::Relu<MathTensorType>>(name->str, {input_name->str});
-  }
+void VMGraph::AddCrossEntropyLoss(VMPtrString const &name, VMPtrString const &input_name,
+                                  VMPtrString const &label_name)
+{
+  graph_.AddNode<fetch::ml::ops::CrossEntropyLoss<fetch::math::Tensor<DataType>>>(
+      name->str, {input_name->str, label_name->str});
+}
 
-  void AddSoftmax(VMPtrString const &name, VMPtrString const &input_name)
-  {
-    graph_.AddNode<fetch::ml::ops::Softmax<fetch::math::Tensor<DataType>>>(name->str,
-                                                                           {input_name->str});
-  }
+void VMGraph::AddMeanSquareErrorLoss(VMPtrString const &name, VMPtrString const &input_name,
+                                     VMPtrString const &label_name)
+{
+  graph_.AddNode<fetch::ml::ops::MeanSquareErrorLoss<fetch::math::Tensor<DataType>>>(
+      name->str, {input_name->str, label_name->str});
+}
 
-  void AddCrossEntropyLoss(VMPtrString const &name, VMPtrString const &input_name,
-                           VMPtrString const &label_name)
-  {
-    graph_.AddNode<fetch::ml::ops::CrossEntropyLoss<fetch::math::Tensor<DataType>>>(
-        name->str, {input_name->str, label_name->str});
-  }
+void VMGraph::AddDropout(VMPtrString const &name, VMPtrString const &input_name,
+                         DataType const &prob)
+{
+  graph_.AddNode<fetch::ml::ops::Dropout<MathTensorType>>(name->str, {input_name->str}, prob);
+}
 
-  void AddMeanSquareErrorLoss(VMPtrString const &name, VMPtrString const &input_name,
-                              VMPtrString const &label_name)
-  {
-    graph_.AddNode<fetch::ml::ops::MeanSquareErrorLoss<fetch::math::Tensor<DataType>>>(
-        name->str, {input_name->str, label_name->str});
-  }
+void VMGraph::LoadStateDict(Ptr<VMStateDict> const &sd)
+{
+  graph_.LoadStateDict(sd->state_dict_);
+}
 
-  void AddDropout(VMPtrString const &name, VMPtrString const &input_name, DataType const &prob)
-  {
-    graph_.AddNode<fetch::ml::ops::Dropout<MathTensorType>>(name->str, {input_name->str}, prob);
-  }
+Ptr<VMStateDict> VMGraph::StateDict()
+{
+  Ptr<VMStateDict> ret = this->vm_->CreateNewObject<VMStateDict>(graph_.StateDict());
+  return ret;
+}
 
-  void LoadStateDict(fetch::vm::Ptr<VMStateDict> const &sd)
-  {
-    graph_.LoadStateDict(sd->state_dict_);
-  }
-
-  fetch::vm::Ptr<VMStateDict> StateDict()
-  {
-    fetch::vm::Ptr<VMStateDict> ret = this->vm_->CreateNewObject<VMStateDict>(graph_.StateDict());
-    return ret;
-  }
-
-  static void Bind(fetch::vm::Module &module)
-  {
-    module.CreateClassType<VMGraph>("Graph")
-        .CreateConstructor<>()
-        .CreateMemberFunction("setInput", &VMGraph::SetInput)
-        .CreateMemberFunction("evaluate", &VMGraph::Evaluate)
-        .CreateMemberFunction("backPropagate", &VMGraph::BackPropagateError)
-        .CreateMemberFunction("step", &VMGraph::Step)
-        .CreateMemberFunction("addPlaceholder", &VMGraph::AddPlaceholder)
-        .CreateMemberFunction("addFullyConnected", &VMGraph::AddFullyConnected)
-        .CreateMemberFunction("addConv1D", &VMGraph::AddConv1D)
-        .CreateMemberFunction("addRelu", &VMGraph::AddRelu)
-        .CreateMemberFunction("addSoftmax", &VMGraph::AddSoftmax)
-        .CreateMemberFunction("addDropout", &VMGraph::AddDropout)
-        .CreateMemberFunction("addCrossEntropyLoss", &VMGraph::AddCrossEntropyLoss)
-        .CreateMemberFunction("addMeanSquareErrorLoss", &VMGraph::AddMeanSquareErrorLoss)
-        .CreateMemberFunction("loadStateDict", &VMGraph::LoadStateDict)
-        .CreateMemberFunction("stateDict", &VMGraph::StateDict);
-  }
-
-  GraphType graph_;
-};
+void VMGraph::Bind(Module &module)
+{
+  module.CreateClassType<VMGraph>("Graph")
+      .CreateConstructor<>()
+      .CreateMemberFunction("setInput", &VMGraph::SetInput)
+      .CreateMemberFunction("evaluate", &VMGraph::Evaluate)
+      .CreateMemberFunction("backPropagate", &VMGraph::BackPropagateError)
+      .CreateMemberFunction("step", &VMGraph::Step)
+      .CreateMemberFunction("addPlaceholder", &VMGraph::AddPlaceholder)
+      .CreateMemberFunction("addFullyConnected", &VMGraph::AddFullyConnected)
+      .CreateMemberFunction("addConv1D", &VMGraph::AddConv1D)
+      .CreateMemberFunction("addRelu", &VMGraph::AddRelu)
+      .CreateMemberFunction("addSoftmax", &VMGraph::AddSoftmax)
+      .CreateMemberFunction("addDropout", &VMGraph::AddDropout)
+      .CreateMemberFunction("addCrossEntropyLoss", &VMGraph::AddCrossEntropyLoss)
+      .CreateMemberFunction("addMeanSquareErrorLoss", &VMGraph::AddMeanSquareErrorLoss)
+      .CreateMemberFunction("loadStateDict", &VMGraph::LoadStateDict)
+      .CreateMemberFunction("stateDict", &VMGraph::StateDict);
+}
 
 }  // namespace ml
 }  // namespace vm_modules

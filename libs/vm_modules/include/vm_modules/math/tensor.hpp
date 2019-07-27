@@ -37,7 +37,6 @@ namespace math {
 
 class VMTensor : public fetch::vm::Object
 {
-
 public:
   using DataType   = fetch::vm_modules::math::DataType;
   using ArrayType  = fetch::math::Tensor<DataType>;
