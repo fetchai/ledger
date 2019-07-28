@@ -134,9 +134,9 @@ class BinaryDeserializer
 public:
   enum
   {
-    CODE8  = 0xc4,  // TODO(tfr): Needs to be move to central place
-    CODE16 = 0xc5,
-    CODE32 = 0xc6
+    CODE8  = TypeCodes::BINARY_CODE_FIXED, 
+    CODE16 = TypeCodes::BINARY_CODE16,
+    CODE32 = TypeCodes::BINARY_CODE32
   };
   BinaryDeserializer(Driver &serializer)
     : serializer_{serializer}

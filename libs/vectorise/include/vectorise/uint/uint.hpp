@@ -1121,6 +1121,7 @@ public:
   template <typename Constructor>
   static void Serialize(Constructor &array_constructor, Type const &u)
   {
+    // TODO(issue 1425): Add WideType size to serialisation
     auto array = array_constructor(u.elements());
     for (std::size_t i = 0; i < u.elements(); i++)
     {
