@@ -17,9 +17,9 @@
 //------------------------------------------------------------------------------
 
 #include "core/random/lfg.hpp"
-#include "core/serializers/main_serializer.hpp"
-#include "core/serializers/counter.hpp"
 #include "core/serializers/base_types.hpp"
+#include "core/serializers/counter.hpp"
+#include "core/serializers/main_serializer.hpp"
 
 #include <chrono>
 #include <cstdint>
@@ -121,7 +121,7 @@ Result BenchmarkSingle(Args... args)
   S buffer;
 
   high_resolution_clock::time_point t1 = high_resolution_clock::now();
-  SizeCounter                    counter;
+  SizeCounter                       counter;
   counter << data;
   buffer.Reserve(counter.size());
   buffer << data;

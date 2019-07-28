@@ -17,9 +17,9 @@
 //------------------------------------------------------------------------------
 
 #include "core/random/lfg.hpp"
-#include "core/serializers/main_serializer.hpp"
-#include "core/serializers/counter.hpp"
 #include "core/serializers/base_types.hpp"
+#include "core/serializers/counter.hpp"
+#include "core/serializers/main_serializer.hpp"
 #include "network/service/server.hpp"
 #include "network/service/service_client.hpp"
 

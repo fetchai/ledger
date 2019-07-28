@@ -37,9 +37,9 @@ class MsgPackSerializer
   static char const *const LOGGING_NAME;
 
 public:
-  using ByteArray         = byte_array::ByteArray;
+  using ByteArray = byte_array::ByteArray;
 
-  MsgPackSerializer()                              = default;
+  MsgPackSerializer()                         = default;
   MsgPackSerializer(MsgPackSerializer &&from) = default;
   MsgPackSerializer &operator=(MsgPackSerializer &&from) = default;
 
@@ -165,8 +165,8 @@ private:
   void AppendInternal(T const &arg, ARGS const &... args);
   void AppendInternal();
 
-  ByteArray         data_;
-  uint64_t          pos_ = 0;
+  ByteArray   data_;
+  uint64_t    pos_ = 0;
   SizeCounter size_counter_;
 };
 

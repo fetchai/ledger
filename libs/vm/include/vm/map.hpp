@@ -259,7 +259,7 @@ private:
 
   template <typename U, typename TemplateParameterType>
   typename std::enable_if_t<IsPtr<U>::value, bool> DeserializeElement(TypeId                 type,
-                                                                      MsgPackSerializer &      buffer,
+                                                                      MsgPackSerializer &    buffer,
                                                                       TemplateParameterType &v)
   {
     if (!vm_->IsDefaultSerializeConstructable(type))

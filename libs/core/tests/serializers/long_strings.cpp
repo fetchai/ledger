@@ -18,9 +18,8 @@
 
 #include "core/byte_array/decoders.hpp"
 #include "core/byte_array/encoders.hpp"
-#include "core/serializers/main_serializer.hpp"
 #include "core/serializers/group_definitions.hpp"
-
+#include "core/serializers/main_serializer.hpp"
 
 #include "gtest/gtest.h"
 
@@ -37,9 +36,9 @@ TEST(MsgPacker, long_strings)
 {
   // Setup
   MsgPackSerializer stream;
-  ByteArray       value;
-  ByteArray       value2;
-  ByteArray       text_buffer;
+  ByteArray         value;
+  ByteArray         value2;
+  ByteArray         text_buffer;
 
   text_buffer.Resize((1ull << 16) + 20);
   for (std::size_t j = 0; j < text_buffer.size(); ++j)

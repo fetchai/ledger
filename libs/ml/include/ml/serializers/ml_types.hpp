@@ -22,7 +22,6 @@
 namespace fetch {
 namespace serializers {
 
-
 template <typename V, typename D>
 struct MapSerializer<ml::StateDict<V>, D>
 {
@@ -37,24 +36,23 @@ public:
   static void Serialize(Constructor &map_constructor, Type const &sd)
   {
     uint64_t n = 0;
-    if(sd.weights_)
+    if (sd.weights_)
     {
       ++n;
     }
-    if(!sd.dict_.empty())
+    if (!sd.dict_.empty())
     {
       ++n;
     }
     auto map = map_constructor(n);
-    if(sd.weights_)
+    if (sd.weights_)
     {
       map.Append(WEIGHTS, *sd.weights_);
     }
-    if(!sd.dict_.empty())
+    if (!sd.dict_.empty())
     {
       map.Append(DICT, sd.dict_);
     }
-
   }
 
   template <typename MapDeserializer>
@@ -64,7 +62,7 @@ public:
     {
       uint8_t key;
       map.GetKey(key);
-      switch(key)
+      switch (key)
       {
       case WEIGHTS:
         output.weights_ = std::make_shared<V>();
@@ -78,7 +76,6 @@ public:
       }
     }
   }
-
 };
 
 }  // namespace serializers

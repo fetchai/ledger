@@ -18,8 +18,8 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/byte_array.hpp"
-#include "core/serializers/group_definitions.hpp"
 #include "core/serializers/exception.hpp"
+#include "core/serializers/group_definitions.hpp"
 
 #include <type_traits>
 
@@ -52,9 +52,9 @@ public:
     error::error_type     code;
     byte_array::ByteArray buffer;
 
-    map.ExpectKeyGetValue(KEY_CODE, code);  
+    map.ExpectKeyGetValue(KEY_CODE, code);
     map.ExpectKeyGetValue(KEY_EXPLANATION, buffer);
-    
+
     s = Type(code, buffer);
   }
 };

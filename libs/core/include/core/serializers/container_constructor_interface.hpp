@@ -91,7 +91,7 @@ public:
   }
 
 private:
-  bool                    created_{false};
+  bool    created_{false};
   Driver &serializer_;
 };
 

@@ -20,7 +20,7 @@
 namespace fetch {
 namespace serializers {
 namespace interfaces {
-template< typename Driver>
+template <typename Driver>
 class BinaryInterface
 {
 public:
@@ -47,9 +47,9 @@ public:
   }
 
 private:
-  Driver &serializer_;
-  uint64_t                size_;
-  uint64_t                pos_{0};
+  Driver & serializer_;
+  uint64_t size_;
+  uint64_t pos_{0};
 };
 
 template <typename Driver, uint8_t C8, uint8_t C16, uint8_t C32>
@@ -124,11 +124,11 @@ public:
   }
 
 private:
-  bool                    created_{false};
+  bool    created_{false};
   Driver &serializer_;
 };
 
-template< typename Driver >
+template <typename Driver>
 class BinaryDeserializer
 {
 public:
@@ -194,9 +194,9 @@ public:
   }
 
 private:
-  Driver &serializer_;
-  uint64_t                size_{0};
-  uint64_t                pos_{0};
+  Driver & serializer_;
+  uint64_t size_{0};
+  uint64_t pos_{0};
 };
 }  // namespace interfaces
 }  // namespace serializers

@@ -53,7 +53,7 @@ void MsgPackSerializer::Allocate(uint64_t const &delta)
 }
 
 void MsgPackSerializer::Resize(uint64_t const &size, ResizeParadigm const &resize_paradigm,
-                                    bool const zero_reserved_space)
+                               bool const zero_reserved_space)
 {
   data_.Resize(size, resize_paradigm, zero_reserved_space);
 
@@ -72,7 +72,7 @@ void MsgPackSerializer::Resize(uint64_t const &size, ResizeParadigm const &resiz
 }
 
 void MsgPackSerializer::Reserve(uint64_t const &size, ResizeParadigm const &resize_paradigm,
-                                     bool const zero_reserved_space)
+                                bool const zero_reserved_space)
 {
   data_.Reserve(size, resize_paradigm, zero_reserved_space);
 }

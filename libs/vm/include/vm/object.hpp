@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/main_serializer.hpp"
 #include "core/serializers/base_types.hpp"
+#include "core/serializers/main_serializer.hpp"
 #include "variant/variant.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 #include "vm/common.hpp"
@@ -28,7 +28,7 @@ namespace vm {
 
 // TODO(issue 648): We should rename variants to VMVariant and JSONVariant, respectively
 // to avoid name clash.
-using JSONVariant     = fetch::variant::Variant;
+using JSONVariant       = fetch::variant::Variant;
 using MsgPackSerializer = fetch::serializers::MsgPackSerializer;
 
 // Forward declarations

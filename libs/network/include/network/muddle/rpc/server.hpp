@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/byte_array/encoders.hpp"
 #include "core/byte_array/decoders.hpp"
+#include "core/byte_array/encoders.hpp"
 #include "core/mutex.hpp"
 #include "network/muddle/muddle_endpoint.hpp"
 #include "network/service/call_context.hpp"

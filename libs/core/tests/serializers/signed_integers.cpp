@@ -18,8 +18,8 @@
 
 #include "core/byte_array/decoders.hpp"
 #include "core/byte_array/encoders.hpp"
-#include "core/serializers/main_serializer.hpp"
 #include "core/serializers/group_definitions.hpp"
+#include "core/serializers/main_serializer.hpp"
 
 #include "gtest/gtest.h"
 
@@ -36,7 +36,7 @@ TEST(MsgPacker, signed_integers)
 {
   // Setup
   MsgPackSerializer stream;
-  int64_t         value;
+  int64_t           value;
 
   value  = 0;
   stream = MsgPackSerializer();

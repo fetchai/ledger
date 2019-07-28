@@ -18,8 +18,8 @@
 
 #include "core/byte_array/encoders.hpp"
 #include "core/logger.hpp"
-#include "core/serializers/main_serializer.hpp"
 #include "core/serializers/counter.hpp"
+#include "core/serializers/main_serializer.hpp"
 #include "core/service_ids.hpp"
 #include "crypto/fetch_identity.hpp"
 #include "ledger/chain/block_coordinator.hpp"

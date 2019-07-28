@@ -18,8 +18,8 @@
 
 #include "core/byte_array/decoders.hpp"
 #include "core/byte_array/encoders.hpp"
-#include "core/serializers/main_serializer.hpp"
 #include "core/serializers/group_definitions.hpp"
+#include "core/serializers/main_serializer.hpp"
 
 #include "gtest/gtest.h"
 
@@ -81,7 +81,7 @@ TEST(MsgPacker, SimpleTypes)
 {
   // Setup
   MsgPackSerializer stream;
-  HelloWorld      a1, b1;
+  HelloWorld        a1, b1;
   a1.compact = true;
   a1.schema  = 3;
 

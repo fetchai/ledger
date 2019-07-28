@@ -56,22 +56,21 @@ void MsgPackSerializer::ReadPrimitive(FinalType &val)
 }
 
 template <typename T>
-typename IgnoredSerializer<T, MsgPackSerializer>::DriverType &MsgPackSerializer::
-                                                                   operator<<(T const &)
+typename IgnoredSerializer<T, MsgPackSerializer>::DriverType &MsgPackSerializer::operator<<(
+    T const &)
 {
   return *this;
 }
 
 template <typename T>
-typename IgnoredSerializer<T, MsgPackSerializer>::DriverType &MsgPackSerializer::
-                                                                   operator>>(T &)
+typename IgnoredSerializer<T, MsgPackSerializer>::DriverType &MsgPackSerializer::operator>>(T &)
 {
   return *this;
 }
 
 template <typename T>
-typename ForwardSerializer<T, MsgPackSerializer>::DriverType &MsgPackSerializer::
-                                                                   operator<<(T const &val)
+typename ForwardSerializer<T, MsgPackSerializer>::DriverType &MsgPackSerializer::operator<<(
+    T const &val)
 {
   try
   {
@@ -87,8 +86,7 @@ typename ForwardSerializer<T, MsgPackSerializer>::DriverType &MsgPackSerializer:
 }
 
 template <typename T>
-typename ForwardSerializer<T, MsgPackSerializer>::DriverType &MsgPackSerializer::
-                                                                   operator>>(T &val)
+typename ForwardSerializer<T, MsgPackSerializer>::DriverType &MsgPackSerializer::operator>>(T &val)
 {
   try
   {
@@ -104,8 +102,8 @@ typename ForwardSerializer<T, MsgPackSerializer>::DriverType &MsgPackSerializer:
 }
 
 template <typename T>
-typename IntegerSerializer<T, MsgPackSerializer>::DriverType &MsgPackSerializer::
-                                                                   operator<<(T const &val)
+typename IntegerSerializer<T, MsgPackSerializer>::DriverType &MsgPackSerializer::operator<<(
+    T const &val)
 {
   try
   {
@@ -121,8 +119,7 @@ typename IntegerSerializer<T, MsgPackSerializer>::DriverType &MsgPackSerializer:
 }
 
 template <typename T>
-typename IntegerSerializer<T, MsgPackSerializer>::DriverType &MsgPackSerializer::
-                                                                   operator>>(T &val)
+typename IntegerSerializer<T, MsgPackSerializer>::DriverType &MsgPackSerializer::operator>>(T &val)
 {
   try
   {
@@ -155,8 +152,7 @@ typename FloatSerializer<T, MsgPackSerializer>::DriverType &MsgPackSerializer::o
 }
 
 template <typename T>
-typename FloatSerializer<T, MsgPackSerializer>::DriverType &MsgPackSerializer::operator>>(
-    T &val)
+typename FloatSerializer<T, MsgPackSerializer>::DriverType &MsgPackSerializer::operator>>(T &val)
 {
   try
   {
@@ -172,8 +168,8 @@ typename FloatSerializer<T, MsgPackSerializer>::DriverType &MsgPackSerializer::o
 }
 
 template <typename T>
-typename BooleanSerializer<T, MsgPackSerializer>::DriverType &MsgPackSerializer::
-                                                                   operator<<(T const &val)
+typename BooleanSerializer<T, MsgPackSerializer>::DriverType &MsgPackSerializer::operator<<(
+    T const &val)
 {
   try
   {
@@ -189,8 +185,7 @@ typename BooleanSerializer<T, MsgPackSerializer>::DriverType &MsgPackSerializer:
 }
 
 template <typename T>
-typename BooleanSerializer<T, MsgPackSerializer>::DriverType &MsgPackSerializer::
-                                                                   operator>>(T &val)
+typename BooleanSerializer<T, MsgPackSerializer>::DriverType &MsgPackSerializer::operator>>(T &val)
 {
   try
   {
@@ -206,8 +201,8 @@ typename BooleanSerializer<T, MsgPackSerializer>::DriverType &MsgPackSerializer:
 }
 
 template <typename T>
-typename StringSerializer<T, MsgPackSerializer>::DriverType &MsgPackSerializer::
-                                                                  operator<<(T const &val)
+typename StringSerializer<T, MsgPackSerializer>::DriverType &MsgPackSerializer::operator<<(
+    T const &val)
 {
   try
   {
@@ -223,8 +218,7 @@ typename StringSerializer<T, MsgPackSerializer>::DriverType &MsgPackSerializer::
 }
 
 template <typename T>
-typename StringSerializer<T, MsgPackSerializer>::DriverType &MsgPackSerializer::
-                                                                  operator>>(T &val)
+typename StringSerializer<T, MsgPackSerializer>::DriverType &MsgPackSerializer::operator>>(T &val)
 {
   try
   {
@@ -239,13 +233,13 @@ typename StringSerializer<T, MsgPackSerializer>::DriverType &MsgPackSerializer::
 }
 
 template <typename T>
-typename BinarySerializer<T, MsgPackSerializer>::DriverType &MsgPackSerializer::
-                                                                  operator<<(T const &val)
+typename BinarySerializer<T, MsgPackSerializer>::DriverType &MsgPackSerializer::operator<<(
+    T const &val)
 {
   using Serializer = BinarySerializer<T, MsgPackSerializer>;
   using Constructor =
-      interfaces::BinaryConstructorInterface<MsgPackSerializer, TypeCodes::BINARY_CODE_FIXED, TypeCodes::BINARY_CODE16,
-                                             TypeCodes::BINARY_CODE32>;
+      interfaces::BinaryConstructorInterface<MsgPackSerializer, TypeCodes::BINARY_CODE_FIXED,
+                                             TypeCodes::BINARY_CODE16, TypeCodes::BINARY_CODE32>;
 
   try
   {
@@ -262,8 +256,7 @@ typename BinarySerializer<T, MsgPackSerializer>::DriverType &MsgPackSerializer::
 }
 
 template <typename T>
-typename BinarySerializer<T, MsgPackSerializer>::DriverType &MsgPackSerializer::
-                                                                  operator>>(T &val)
+typename BinarySerializer<T, MsgPackSerializer>::DriverType &MsgPackSerializer::operator>>(T &val)
 {
   using Serializer = BinarySerializer<T, MsgPackSerializer>;
   try
@@ -284,11 +277,10 @@ template <typename T>
 typename ArraySerializer<T, MsgPackSerializer>::DriverType &MsgPackSerializer::operator<<(
     T const &val)
 {
-  using Serializer = ArraySerializer<T, MsgPackSerializer>;
-  using Constructor =
-      interfaces::ContainerConstructorInterface<MsgPackSerializer, interfaces::ArrayInterface<MsgPackSerializer>,
-                                                TypeCodes::ARRAY_CODE_FIXED,
-                                                TypeCodes::ARRAY_CODE16, TypeCodes::ARRAY_CODE32>;
+  using Serializer  = ArraySerializer<T, MsgPackSerializer>;
+  using Constructor = interfaces::ContainerConstructorInterface<
+      MsgPackSerializer, interfaces::ArrayInterface<MsgPackSerializer>, TypeCodes::ARRAY_CODE_FIXED,
+      TypeCodes::ARRAY_CODE16, TypeCodes::ARRAY_CODE32>;
 
   try
   {
@@ -305,8 +297,7 @@ typename ArraySerializer<T, MsgPackSerializer>::DriverType &MsgPackSerializer::o
 }
 
 template <typename T>
-typename ArraySerializer<T, MsgPackSerializer>::DriverType &MsgPackSerializer::operator>>(
-    T &val)
+typename ArraySerializer<T, MsgPackSerializer>::DriverType &MsgPackSerializer::operator>>(T &val)
 {
   using Serializer = ArraySerializer<T, MsgPackSerializer>;
   try
@@ -327,10 +318,10 @@ template <typename T>
 typename MapSerializer<T, MsgPackSerializer>::DriverType &MsgPackSerializer::operator<<(
     T const &val)
 {
-  using Serializer = MapSerializer<T, MsgPackSerializer>;
-  using Constructor =
-      interfaces::ContainerConstructorInterface<MsgPackSerializer, interfaces::MapInterface<MsgPackSerializer>, TypeCodes::MAP_CODE_FIXED,
-                                                TypeCodes::MAP_CODE16, TypeCodes::MAP_CODE32>;
+  using Serializer  = MapSerializer<T, MsgPackSerializer>;
+  using Constructor = interfaces::ContainerConstructorInterface<
+      MsgPackSerializer, interfaces::MapInterface<MsgPackSerializer>, TypeCodes::MAP_CODE_FIXED,
+      TypeCodes::MAP_CODE16, TypeCodes::MAP_CODE32>;
 
   try
   {
@@ -347,8 +338,7 @@ typename MapSerializer<T, MsgPackSerializer>::DriverType &MsgPackSerializer::ope
 }
 
 template <typename T>
-typename MapSerializer<T, MsgPackSerializer>::DriverType &MsgPackSerializer::operator>>(
-    T &val)
+typename MapSerializer<T, MsgPackSerializer>::DriverType &MsgPackSerializer::operator>>(T &val)
 {
   using Serializer = MapSerializer<T, MsgPackSerializer>;
   try

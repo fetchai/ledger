@@ -18,8 +18,8 @@
 
 #include "core/byte_array/decoders.hpp"
 #include "core/byte_array/encoders.hpp"
-#include "core/serializers/main_serializer.hpp"
 #include "core/serializers/group_definitions.hpp"
+#include "core/serializers/main_serializer.hpp"
 
 #include "gtest/gtest.h"
 
@@ -36,7 +36,7 @@ TEST(MsgPacker, floats)
 {
   // Setup
   MsgPackSerializer stream;
-  double          value;
+  double            value;
 
   value  = static_cast<double>(2.34);
   stream = MsgPackSerializer();

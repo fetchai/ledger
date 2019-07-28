@@ -36,7 +36,7 @@ TEST(MsgPacker, unsigned_integers)
 {
   // Setup
   MsgPackSerializer stream;
-  uint64_t        value;
+  uint64_t          value;
 
   value  = 0;
   stream = MsgPackSerializer();

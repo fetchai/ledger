@@ -31,7 +31,7 @@ TYPED_TEST_CASE(SerializersTest, MyTypes);
 
 TYPED_TEST(SerializersTest, serialize_empty_tensor)
 {
-  fetch::math::Tensor<TypeParam>      t1;
+  fetch::math::Tensor<TypeParam>        t1;
   fetch::serializers::MsgPackSerializer b;
   b << t1;
   b.seek(0);

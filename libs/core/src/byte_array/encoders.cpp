@@ -108,7 +108,6 @@ ConstByteArray ToHex(ConstByteArray const &str)
   return std::move(ret);
 }
 
-
 // Reverse bits in byte
 uint8_t Reverse(uint8_t c)
 {

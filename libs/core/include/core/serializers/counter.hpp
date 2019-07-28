@@ -17,11 +17,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/macros.hpp"
 #include "core/assert.hpp"
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/logger.hpp"
+#include "core/macros.hpp"
 #include "core/serializers/array_interface.hpp"
 #include "core/serializers/binary_interface.hpp"
 #include "core/serializers/container_constructor_interface.hpp"
@@ -219,26 +219,20 @@ private:
   std::size_t reserved_size_ = 0;
 };
 
-
-
-
 template <typename T>
-typename IgnoredSerializer<T, SizeCounter>::DriverType &SizeCounter::
-                                                                   operator<<(T const &)
+typename IgnoredSerializer<T, SizeCounter>::DriverType &SizeCounter::operator<<(T const &)
 {
   return *this;
 }
 
 template <typename T>
-typename IgnoredSerializer<T, SizeCounter>::DriverType &SizeCounter::
-                                                                   operator>>(T &)
+typename IgnoredSerializer<T, SizeCounter>::DriverType &SizeCounter::operator>>(T &)
 {
   return *this;
 }
 
 template <typename T>
-typename ForwardSerializer<T, SizeCounter>::DriverType &SizeCounter::
-                                                                   operator<<(T const &val)
+typename ForwardSerializer<T, SizeCounter>::DriverType &SizeCounter::operator<<(T const &val)
 {
   try
   {
@@ -254,8 +248,7 @@ typename ForwardSerializer<T, SizeCounter>::DriverType &SizeCounter::
 }
 
 template <typename T>
-typename ForwardSerializer<T, SizeCounter>::DriverType &SizeCounter::
-                                                                   operator>>(T &val)
+typename ForwardSerializer<T, SizeCounter>::DriverType &SizeCounter::operator>>(T &val)
 {
   try
   {
@@ -271,8 +264,7 @@ typename ForwardSerializer<T, SizeCounter>::DriverType &SizeCounter::
 }
 
 template <typename T>
-typename IntegerSerializer<T, SizeCounter>::DriverType &SizeCounter::
-                                                                   operator<<(T const &val)
+typename IntegerSerializer<T, SizeCounter>::DriverType &SizeCounter::operator<<(T const &val)
 {
   try
   {
@@ -288,8 +280,7 @@ typename IntegerSerializer<T, SizeCounter>::DriverType &SizeCounter::
 }
 
 template <typename T>
-typename IntegerSerializer<T, SizeCounter>::DriverType &SizeCounter::
-                                                                   operator>>(T &val)
+typename IntegerSerializer<T, SizeCounter>::DriverType &SizeCounter::operator>>(T &val)
 {
   try
   {
@@ -305,8 +296,7 @@ typename IntegerSerializer<T, SizeCounter>::DriverType &SizeCounter::
 }
 
 template <typename T>
-typename FloatSerializer<T, SizeCounter>::DriverType &SizeCounter::operator<<(
-    T const &val)
+typename FloatSerializer<T, SizeCounter>::DriverType &SizeCounter::operator<<(T const &val)
 {
   try
   {
@@ -322,8 +312,7 @@ typename FloatSerializer<T, SizeCounter>::DriverType &SizeCounter::operator<<(
 }
 
 template <typename T>
-typename FloatSerializer<T, SizeCounter>::DriverType &SizeCounter::operator>>(
-    T &val)
+typename FloatSerializer<T, SizeCounter>::DriverType &SizeCounter::operator>>(T &val)
 {
   try
   {
@@ -339,8 +328,7 @@ typename FloatSerializer<T, SizeCounter>::DriverType &SizeCounter::operator>>(
 }
 
 template <typename T>
-typename BooleanSerializer<T, SizeCounter>::DriverType &SizeCounter::
-                                                                   operator<<(T const &val)
+typename BooleanSerializer<T, SizeCounter>::DriverType &SizeCounter::operator<<(T const &val)
 {
   try
   {
@@ -356,8 +344,7 @@ typename BooleanSerializer<T, SizeCounter>::DriverType &SizeCounter::
 }
 
 template <typename T>
-typename BooleanSerializer<T, SizeCounter>::DriverType &SizeCounter::
-                                                                   operator>>(T &val)
+typename BooleanSerializer<T, SizeCounter>::DriverType &SizeCounter::operator>>(T &val)
 {
   try
   {
@@ -373,8 +360,7 @@ typename BooleanSerializer<T, SizeCounter>::DriverType &SizeCounter::
 }
 
 template <typename T>
-typename StringSerializer<T, SizeCounter>::DriverType &SizeCounter::
-                                                                  operator<<(T const &val)
+typename StringSerializer<T, SizeCounter>::DriverType &SizeCounter::operator<<(T const &val)
 {
   try
   {
@@ -390,8 +376,7 @@ typename StringSerializer<T, SizeCounter>::DriverType &SizeCounter::
 }
 
 template <typename T>
-typename StringSerializer<T, SizeCounter>::DriverType &SizeCounter::
-                                                                  operator>>(T &val)
+typename StringSerializer<T, SizeCounter>::DriverType &SizeCounter::operator>>(T &val)
 {
   try
   {
@@ -406,13 +391,12 @@ typename StringSerializer<T, SizeCounter>::DriverType &SizeCounter::
 }
 
 template <typename T>
-typename BinarySerializer<T, SizeCounter>::DriverType &SizeCounter::
-                                                                  operator<<(T const &val)
+typename BinarySerializer<T, SizeCounter>::DriverType &SizeCounter::operator<<(T const &val)
 {
   using Serializer = BinarySerializer<T, SizeCounter>;
   using Constructor =
-      interfaces::BinaryConstructorInterface<SizeCounter, TypeCodes::BINARY_CODE_FIXED, TypeCodes::BINARY_CODE16,
-                                             TypeCodes::BINARY_CODE32>;
+      interfaces::BinaryConstructorInterface<SizeCounter, TypeCodes::BINARY_CODE_FIXED,
+                                             TypeCodes::BINARY_CODE16, TypeCodes::BINARY_CODE32>;
 
   try
   {
@@ -429,8 +413,7 @@ typename BinarySerializer<T, SizeCounter>::DriverType &SizeCounter::
 }
 
 template <typename T>
-typename BinarySerializer<T, SizeCounter>::DriverType &SizeCounter::
-                                                                  operator>>(T &val)
+typename BinarySerializer<T, SizeCounter>::DriverType &SizeCounter::operator>>(T &val)
 {
   using Serializer = BinarySerializer<T, SizeCounter>;
   try
@@ -448,14 +431,12 @@ typename BinarySerializer<T, SizeCounter>::DriverType &SizeCounter::
 }
 
 template <typename T>
-typename ArraySerializer<T, SizeCounter>::DriverType &SizeCounter::operator<<(
-    T const &val)
+typename ArraySerializer<T, SizeCounter>::DriverType &SizeCounter::operator<<(T const &val)
 {
-  using Serializer = ArraySerializer<T, SizeCounter>;
-  using Constructor =
-      interfaces::ContainerConstructorInterface<SizeCounter, interfaces::ArrayInterface<SizeCounter>,
-                                                TypeCodes::ARRAY_CODE_FIXED,
-                                                TypeCodes::ARRAY_CODE16, TypeCodes::ARRAY_CODE32>;
+  using Serializer  = ArraySerializer<T, SizeCounter>;
+  using Constructor = interfaces::ContainerConstructorInterface<
+      SizeCounter, interfaces::ArrayInterface<SizeCounter>, TypeCodes::ARRAY_CODE_FIXED,
+      TypeCodes::ARRAY_CODE16, TypeCodes::ARRAY_CODE32>;
 
   try
   {
@@ -472,8 +453,7 @@ typename ArraySerializer<T, SizeCounter>::DriverType &SizeCounter::operator<<(
 }
 
 template <typename T>
-typename ArraySerializer<T, SizeCounter>::DriverType &SizeCounter::operator>>(
-    T &val)
+typename ArraySerializer<T, SizeCounter>::DriverType &SizeCounter::operator>>(T &val)
 {
   using Serializer = ArraySerializer<T, SizeCounter>;
   try
@@ -491,13 +471,13 @@ typename ArraySerializer<T, SizeCounter>::DriverType &SizeCounter::operator>>(
 }
 
 template <typename T>
-typename MapSerializer<T, SizeCounter>::DriverType &SizeCounter::operator<<(
-    T const &val)
+typename MapSerializer<T, SizeCounter>::DriverType &SizeCounter::operator<<(T const &val)
 {
   using Serializer = MapSerializer<T, SizeCounter>;
   using Constructor =
-      interfaces::ContainerConstructorInterface<SizeCounter, interfaces::MapInterface<SizeCounter>, TypeCodes::MAP_CODE_FIXED,
-                                                TypeCodes::MAP_CODE16, TypeCodes::MAP_CODE32>;
+      interfaces::ContainerConstructorInterface<SizeCounter, interfaces::MapInterface<SizeCounter>,
+                                                TypeCodes::MAP_CODE_FIXED, TypeCodes::MAP_CODE16,
+                                                TypeCodes::MAP_CODE32>;
 
   try
   {
@@ -514,8 +494,7 @@ typename MapSerializer<T, SizeCounter>::DriverType &SizeCounter::operator<<(
 }
 
 template <typename T>
-typename MapSerializer<T, SizeCounter>::DriverType &SizeCounter::operator>>(
-    T &val)
+typename MapSerializer<T, SizeCounter>::DriverType &SizeCounter::operator>>(T &val)
 {
   using Serializer = MapSerializer<T, SizeCounter>;
   try
@@ -531,11 +510,6 @@ typename MapSerializer<T, SizeCounter>::DriverType &SizeCounter::operator>>(
 
   return *this;
 }
-
-
-
-
-
 
 template <typename T>
 auto sizeCounterGuardFactory(T &size_counter);

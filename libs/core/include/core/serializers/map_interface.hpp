@@ -22,7 +22,7 @@
 namespace fetch {
 namespace serializers {
 namespace interfaces {
-template< typename Driver >
+template <typename Driver>
 class MapInterface
 {
 public:
@@ -69,12 +69,12 @@ public:
   }
 
 private:
-  Driver &serializer_;
-  uint64_t                size_;
-  uint64_t                pos_{0};
+  Driver & serializer_;
+  uint64_t size_;
+  uint64_t pos_{0};
 };
 
-template< typename Driver >
+template <typename Driver>
 class MapDeserializer
 {
 public:
@@ -227,10 +227,10 @@ private:
     VALUE_NEXT     = 1
   };
 
-  Driver &serializer_;
-  uint64_t                size_{0};
-  uint64_t                pos_{0};
-  State                   state_{State::KEY_VALUE_NEXT};
+  Driver & serializer_;
+  uint64_t size_{0};
+  uint64_t pos_{0};
+  State    state_{State::KEY_VALUE_NEXT};
 };
 
 }  // namespace interfaces

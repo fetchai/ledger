@@ -16,11 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/serializers/base_types.hpp"
 #include "core/serializers/main_serializer.hpp"
 #include "math/tensor.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/serializers/ml_types.hpp"
-#include "core/serializers/base_types.hpp"
 
 #include "gtest/gtest.h"
 
@@ -37,7 +37,7 @@ TYPED_TEST_CASE(SerializersTest, MyTypes);
 
 TYPED_TEST(SerializersTest, serialize_empty_state_dict)
 {
-  fetch::ml::StateDict<TypeParam>     sd1;
+  fetch::ml::StateDict<TypeParam>       sd1;
   fetch::serializers::MsgPackSerializer b;
   b << sd1;
   b.seek(0);
@@ -51,7 +51,7 @@ TYPED_TEST(SerializersTest, serialize_state_dict)
   // Generate a plausible state dict out of a fully connected layer
   fetch::ml::layers::FullyConnected<TypeParam> fc(10, 10);
   struct fetch::ml::StateDict<TypeParam>       sd1 = fc.StateDict();
-  fetch::serializers::MsgPackSerializer          b;
+  fetch::serializers::MsgPackSerializer        b;
   b << sd1;
   b.seek(0);
   fetch::ml::StateDict<TypeParam> sd2;

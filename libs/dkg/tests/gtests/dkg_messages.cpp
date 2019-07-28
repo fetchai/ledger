@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/main_serializer.hpp"
 #include "core/serializers/counter.hpp"
+#include "core/serializers/main_serializer.hpp"
 #include "dkg/dkg_messages.hpp"
 
 #include "gtest/gtest.h"
@@ -37,7 +37,7 @@ TEST(dkg_messages, coefficients)
   fetch::serializers::MsgPackSerializer serialiser{coeff.Serialize()};
 
   fetch::serializers::MsgPackSerializer serialiser1(serialiser.data());
-  CoefficientsMessage                 coeff1{serialiser1};
+  CoefficientsMessage                   coeff1{serialiser1};
 
   for (uint64_t ii = 0; ii < coeff.coefficients().size(); ++ii)
   {
@@ -57,7 +57,7 @@ TEST(dkg_messages, shares)
   fetch::serializers::MsgPackSerializer serialiser{shareMessage.Serialize()};
 
   fetch::serializers::MsgPackSerializer serialiser1(serialiser.data());
-  SharesMessage                       shareMessage1{serialiser1};
+  SharesMessage                         shareMessage1{serialiser1};
 
   for (auto const &i_share : shareMessage.shares())
   {
@@ -76,7 +76,7 @@ TEST(dkg_messages, complaints)
   fetch::serializers::MsgPackSerializer serialiser{complaintMsg.Serialize()};
 
   fetch::serializers::MsgPackSerializer serialiser1(serialiser.data());
-  ComplaintsMessage                   complaintMsg1{serialiser1};
+  ComplaintsMessage                     complaintMsg1{serialiser1};
 
   EXPECT_EQ(complaintMsg1.complaints(), complaintMsg.complaints());
   EXPECT_EQ(complaintMsg1.signature(), complaintMsg.signature());
@@ -99,7 +99,7 @@ TEST(dkg_messages, envelope)
   env_serialiser << env;
 
   fetch::serializers::MsgPackSerializer env_serialiser1{env_serialiser.data()};
-  DKGEnvelope                         env1;
+  DKGEnvelope                           env1;
   env_serialiser1 >> env1;
 
   // Check the message type of envelopes match

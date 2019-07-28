@@ -18,8 +18,8 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/const_byte_array.hpp"
-#include "core/serializers/main_serializer.hpp"
 #include "core/serializers/base_types.hpp"
+#include "core/serializers/main_serializer.hpp"
 
 #include <cstdint>
 

@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/main_serializer.hpp"
 #include "core/serializers/base_types.hpp"
+#include "core/serializers/main_serializer.hpp"
 
 namespace fetch {
 namespace service {

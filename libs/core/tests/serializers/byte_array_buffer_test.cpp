@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/main_serializer.hpp"
 #include "core/serializers/group_definitions.hpp"
+#include "core/serializers/main_serializer.hpp"
 
 #include "gtest/gtest.h"
 
@@ -246,7 +246,7 @@ TEST_F(MsgPackSerializerTest, test_stream_with_preexisting_offset)
 TEST_F(MsgPackSerializerTest, test_stream_relative_resize_with_preexisting_offset)
 {
   constexpr std::size_t preallocated_amount = 100;
-  MsgPackSerializer       stream;
+  MsgPackSerializer     stream;
 
   // Production code under test
   stream.Resize(preallocated_amount, ResizeParadigm::RELATIVE);
