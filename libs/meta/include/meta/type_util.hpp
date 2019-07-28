@@ -41,9 +41,9 @@ namespace type_util {
 //     F<F<F<int, char>, std::true_type>, double>
 //
 // char and std::true_type are treated the same way as the two other parameters.
-// Or, say, Switches can be written as
+// Or, say, Casees can be written as
 //
-//     Switch<pack::Pack<If1, Then1>, pack::Pack<If2, Then2>, pack::Pack<If3, Then3>>
+//     Case<pack::Pack<If1, Then1>, pack::Pack<If2, Then2>, pack::Pack<If3, Then3>>
 //
 // for greater readability.
 
@@ -148,195 +148,26 @@ using InvokeResult = pack::InvokeResult<F, pack::ConcatT<Args...>>;
 template <class F, class... Args>
 using InvokeResultT = typename InvokeResult<F, Args...>::type;
 
-// Switch<Clauses...> implements top-down linear switch.
+// Case<Clauses...> implements top-down linear switch.
 // Its arguments are split in coupled pairs: Condition, Then-Expression.
 // Its member typedef type is equal to the leftmost Then-Expression
 // whose preceeding Condition is a true type. If none of the Conditions is true then
 // the number of elements in Clauses should be odd, and its last element is taken as the default
 // statement.
-//     SwitchT<std::false_type, int, SizeConstant<0>, double, std::true_type, std::string, char> is
-//     std::string; SwitchT<std::false_type, int, SizeConstant<0>, double, char> is char.
-// If all the Conditions are false and there's no Default statement, Switch::type is void.
+//     CaseT<std::false_type, int, SizeConstant<0>, double, std::true_type, std::string, char> is
+//     std::string; CaseT<std::false_type, int, SizeConstant<0>, double, char> is char.
+// If all the Conditions are false and there's no Default statement, Case::type is void.
 template <class... Clauses>
-using Switch = pack::Switch<pack::ConcatT<Clauses...>>;
+using Case = pack::Case<pack::ConcatT<Clauses...>>;
 
 template <class... Clauses>
-using SwitchT = typename Switch<Clauses...>::type;
-
-// BinarySwitch allows to perform run-time dispatch of isomorphic templated constructs based on an
-// index value. It is similar to a logarithmic lookup-optimized switch statements but allows to wrap
-// identical operations on values of different types in a templated callable, thus potentially
-// reducing code duplication. See type_util_tests.cpp for an example; or refactoring of
-// type-dispatches in vm in an upcoming PR.
-namespace detail_ {
-
-// ReturnZero<T>::Call() returns value-constructed value of type T, and is a no-op for T = void.
-template <class T>
-struct ReturnZero
-{
-  static constexpr T Call() noexcept(std::is_nothrow_constructible<T>::value)
-  {
-    return T{};
-  }
-};
-
-template <>
-struct ReturnZero<void>
-{
-  static constexpr void Call() noexcept
-  {}
-};
-
-// SwitchNode is the intermediary node in binary search tree.
-// Its branches are expected to be sorted left-to-right, in that every Id handled by Left is less
-// (in the sense of member ::value comparison) than every Id handled by Right.
-template <class Left, class Right>
-struct SwitchNode
-{
-  /**
-   * Returns LowerBound(), that is the least Id that can be handled by this Node.
-   *
-   * @return the least Id that can be handled by this Node
-   */
-  static constexpr auto LowerBound() noexcept(noexcept(Left::LowerBound()))
-  {
-    return Left::LowerBound();
-  }
-
-  /**
-   * Returns whether an Id can be handled by this Node.
-   * For non-leaf nodes this is simply a check if this Id is not less than Node's LowerBound().
-   * Which, in turn implies that on Call()ing this node, Id is always checked left-to-right, Right
-   * branch first, as its Ids are greater than those of Left.
-   *
-   * @param Id probably an integral-valued class, matched against this node's lower bound
-   * @return false if Id is too low to be handled by this Node, true otherwise.
-   */
-  template <class Id>
-  static constexpr bool CanHandle(Id) noexcept(noexcept(LowerBound() <= Id::value))
-  {
-    return LowerBound() <= Id::value;
-  }
-
-  /**
-   * Probably invokes a function over arguments.
-   * This method should only be handled if `CanHandle()` returned true for this Id.
-   *
-   * @param selector value to be matched against BinarySwitch's set of known types
-   * @param f function to be called on particular args adapted through a particular Id that matched
-   * selector
-   * @param args
-   * @return whatever the appropriate Switch branch returned
-   */
-  template <class Id, class F, class... Args>
-  static constexpr decltype(auto) Call(Id selector, F &&f, Args &&... args) noexcept(
-      noexcept(Right::CanHandle(std::declval<Id>())) &&
-      noexcept(Right::Call(std::declval<Id>(), std::declval<F>(), std::declval<Args>()...)) &&
-      noexcept(Left::CanHandle(std::declval<Id>())) &&
-      noexcept(Left::Call(std::declval<Id>(), std::declval<F>(), std::declval<Args>()...)) &&
-      noexcept(ReturnZero<decltype(Right::Call(std::declval<Id>(), std::declval<F>(),
-                                               std::declval<Args>()...))>::Call()))
-
-  {
-    // as nodes check ids by comparing them against lower bound, first check the right branch
-    if (Right::CanHandle(selector))
-    {
-      return Right::Call(selector, std::forward<F>(f), std::forward<Args>(args)...);
-    }
-    if (Left::CanHandle(selector))
-    {
-      return Left::Call(selector, std::forward<F>(f), std::forward<Args>(args)...);
-    }
-    // if none of the branches can handle this id, return zero value
-    // TODO(bipll): it can make sense to introduce a default handler
-    return ReturnZero<decltype(
-        Right::Call(selector, std::forward<F>(f), std::forward<Args>(args)...))>::Call();
-  }
-};
-
-// The leaf node, where the invocation itself is done, if Id matches.
-template <class ParticularId>
-struct SwitchLeaf
-{
-  /**
-   * Returns this leaf's lower bound. Unlike in branch nodes, leaf can only handle ParticularId.
-   *
-   * @return ParticularId's value
-   */
-  static constexpr auto LowerBound() noexcept
-  {
-    return ParticularId::value;
-  }
-
-  /**
-   * Checks id Id corresponds to this Leaf's id.
-   *
-   * @param Id an integral_sequence-like type
-   * @return true iff this leaf is a match for Id, i.e. when Id is value-equal to ParticularId
-   */
-  template <class Id>
-  static constexpr bool CanHandle(Id) noexcept(noexcept(Id::value == LowerBound()))
-  {
-    return Id::value == LowerBound();
-  }
-
-  /**
-   * Invokes a function over arguments.
-   * This method should only be handled if `CanHandle()` returned true for this Id.
-   *
-   * @param Id value to be matched against BinarySwitch's set of known types, here ignored
-   * @param f function to be called on particular args adapted through a particular Id that matched
-   * selector
-   * @param args
-   * @return whatever the appropriate Switch branch returned
-   */
-  template <class Id, class F, class... Args>
-  static constexpr decltype(auto) Call(Id, F &&f, Args &&... args) noexcept(
-      noexcept(std::forward<F>(f)(ParticularId(std::forward<Args>(args))...)))
-  {
-    // no id match check is done here
-    return std::forward<F>(f)(ParticularId(std::forward<Args>(args))...);
-  }
-};
-
-// By default, a BinarySwitch implementation is a node with BinarySwitches at both branches, each
-// one handling its half of the ids.
-template <class Ids>
-struct BinarySwitch
-  : SwitchNode<BinarySwitch<pack::LeftHalfT<Ids>>, BinarySwitch<pack::RightHalfT<Ids>>>
-{
-};
-
-// If there's only one id to handle, it's a leaf.
-template <class ParticularId>
-struct BinarySwitch<pack::Pack<ParticularId>> : SwitchLeaf<ParticularId>
-{
-};
-
-}  // namespace detail_
-
-// Ids... are packed in a pack::Pack and sorted in ascending order, duplicates removed.
-template <class... Ids>
-using BinarySwitch = detail_::BinarySwitch<pack::UniqueSortT<pack::ConcatT<Ids...>>>;
-
-// This one may prove useful, so that we can convert a single integral_sequence (or a similar
-// template instantiation) into a pack of singleton integer_sequences, to be used as case
-// alternatives for BinarySwitch.
-template <class Sequence>
-struct LiftIntegerSequence;
-template <class Sequence>
-using LiftIntegerSequenceT = typename LiftIntegerSequence<Sequence>::type;
-template <template <class Id, Id...> class Ctor, class Id, Id... ids>
-struct LiftIntegerSequence<Ctor<Id, ids...>>
-  : TypeConstant<pack::Pack<std::integer_sequence<Id, ids>...>>
-{
-};
+using CaseT = typename Case<Clauses...>::type;
 
 // CopyReferenceKind<A, B> provide a member typedef type that is B with ref-qualifier changed to
 // that of A.
 template <class Source, class Dest>
 using CopyReferenceKind =
-    Switch<std::is_lvalue_reference<Source>, std::add_lvalue_reference_t<Dest>,
+    Case<std::is_lvalue_reference<Source>, std::add_lvalue_reference_t<Dest>,
            std::is_rvalue_reference<Source>, std::add_rvalue_reference_t<std::decay_t<Dest>>,
            std::decay_t<Dest>>;
 

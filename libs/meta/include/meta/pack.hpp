@@ -201,8 +201,9 @@ struct Tail<Pack<Car, Cdr...>> : Constant<Pack<Cdr...>>
 
 // Map a function over a list.
 // TODO(bipll): currently functions are not first-class objects here. This probably would need to be
-// fixed later. (Where 'function' denotes a template class with type-only parameters, and a
-// 'first-class object' is merely a C++ type.)
+// fixed later.
+// (Where 'function' denotes a template class with type-only parameters,
+// and a 'first-class object' is merely a C++ type.)
 template <template <class...> class F, class P>
 struct Transform;
 
@@ -536,33 +537,33 @@ struct InvokeResult<F, Pack<Args...>>
 {
 };
 
-// Switch<Clauses> implements top-down linear switch.
+// Case<Clauses> implements top-down linear switch.
 // Its arguments are split in coupled pairs: Condition, Then-Expression.
 // Its member typedef type is equal to the leftmost Then-Expression
 // whose preceeding Condition is a true type. If none of the Conditions is true then
 // the number of elements in Clauses should be odd, and its last element is taken as the default
 // statement.
-//     SwitchT<std::false_type, int, SizeConstant<0>, double, std::true_type, std::string, char> is
-//     std::string; SwitchT<std::false_type, int, SizeConstant<0>, double, char> is char.
-// If all the Conditions are false and there's no Default statement, Switch::type is void.
+//     CaseT<std::false_type, int, SizeConstant<0>, double, std::true_type, std::string, char> is
+//     std::string; CaseT<std::false_type, int, SizeConstant<0>, double, char> is char.
+// If all the Conditions are false and there's no Default statement, Case::type is void.
 template <class Clauses>
-struct Switch;
+struct Case;
 template <class Clauses>
-using SwitchT = typename Switch<Clauses>::type;
+using CaseT = typename Case<Clauses>::type;
 
 template <class If, class Then, class... Else>
-struct Switch<Pack<If, Then, Else...>>
-  : std::conditional<bool(If::value), Then, SwitchT<Pack<Else...>>>
+struct Case<Pack<If, Then, Else...>>
+  : std::conditional<bool(If::value), Then, CaseT<Pack<Else...>>>
 {
 };
 
 template <class Default>
-struct Switch<Pack<Default>> : Constant<Default>
+struct Case<Pack<Default>> : Constant<Default>
 {
 };
 
 template <>
-struct Switch<Nil>
+struct Case<Nil>
 {
   using type = void;
 };
@@ -595,7 +596,7 @@ template <class Left, class Right>
 using UniqueMergeT = typename UniqueMerge<Left, Right>::type;
 template <class Left, class Right>
 struct UniqueMerge
-  : Switch<Pack<
+  : Case<Pack<
         LessThan<HeadT<Left>, HeadT<Right>>, ConsT<HeadT<Left>, UniqueMergeT<TailT<Left>, Right>>,
         LessThan<HeadT<Right>, HeadT<Left>>, ConsT<HeadT<Right>, UniqueMergeT<Left, TailT<Right>>>,
         ConsT<HeadT<Left>, UniqueMergeT<TailT<Left>, TailT<Right>>>>>
