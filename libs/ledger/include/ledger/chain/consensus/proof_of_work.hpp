@@ -77,8 +77,7 @@ inline vectorise::UInt<256> const &ProofOfWork::target() const
 namespace serializers {
 
 template <typename D>
-struct MapSerializer<ledger::consensus::ProofOfWork,
-                     D>  
+struct MapSerializer<ledger::consensus::ProofOfWork, D>
 {
 public:
   using Type       = ledger::consensus::ProofOfWork;
