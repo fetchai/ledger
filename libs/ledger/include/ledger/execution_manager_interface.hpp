@@ -136,36 +136,6 @@ inline char const *ToString(ExecutionManagerInterface::State state)
 
 namespace serializers {
 
-/*
-template <typename T>
-void Serialize(T &serializer, ExecutionManagerInterface::ScheduleStatus const &status)
-{
-serializer << static_cast<uint8_t>(status);
-}
-
-template <typename T>
-void Deserialize(T &serializer, ExecutionManagerInterface::ScheduleStatus &status)
-{
-uint8_t raw = 0xFF;
-serializer >> raw;
-status = static_cast<ExecutionManagerInterface::ScheduleStatus>(raw);
-}
-
-template <typename T>
-void Serialize(T &serializer, ExecutionManagerInterface::State const &status)
-{
-serializer << static_cast<uint8_t>(status);
-}
-
-template <typename T>
-void Deserialize(T &serializer, ExecutionManagerInterface::State &status)
-{
-uint8_t raw = 0xFF;
-serializer >> raw;
-status = static_cast<ExecutionManagerInterface::State>(raw);
-}
-*/
-
 template <typename D>
 struct ForwardSerializer<ledger::ExecutionManagerInterface::ScheduleStatus, D>
 {

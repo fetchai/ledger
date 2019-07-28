@@ -33,11 +33,6 @@ public:
   Address sender_address;
   Address transmitter_address;
 
-  operator bool()
-  {
-    return is_valid_;
-  }
-
   void MarkAsValid()
   {
     is_valid_ = true;

@@ -16,6 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/byte_array/decoders.hpp"
+#include "core/byte_array/encoders.hpp"
 #include "core/time/to_seconds.hpp"
 #include "network/muddle/dispatcher.hpp"
 #include "network/muddle/network_id.hpp"

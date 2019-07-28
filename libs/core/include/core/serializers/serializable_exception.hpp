@@ -44,13 +44,6 @@ public:
     auto map = map_constructor(2);
     map.Append(KEY_CODE, code);
     map.Append(KEY_EXPLANATION, s.explanation());
-    /*
-     serializer.Allocate(sizeof(error::error_type) + sizeof(uint64_t) + s.explanation().size());
-
-     serializer.WriteBytes(reinterpret_cast<uint8_t const *>(&code), sizeof(error::error_type));
-     serializer.WriteBytes(reinterpret_cast<uint8_t const *>(&size), sizeof(uint64_t));
-     serializer.WriteBytes(reinterpret_cast<uint8_t const *>(s.explanation().c_str()), size);
-     */
   }
 
   template <typename T>
@@ -58,18 +51,10 @@ public:
   {
     error::error_type     code;
     byte_array::ByteArray buffer;
-    uint8_t               key;
 
-    map.GetNextKeyPair(key, code);  // TODO: Test keys
-    map.GetNextKeyPair(key, buffer);
-    /*
-        serializer.ReadBytes(reinterpret_cast<uint8_t *>(&code), sizeof(error::error_type));
-        serializer.ReadBytes(reinterpret_cast<uint8_t *>(&size), sizeof(uint64_t));
-
-        byte_array::ByteArray buffer;
-        buffer.Resize(size);
-        serializer.ReadBytes(buffer.pointer(), size);
-    */
+    map.ExpectKeyGetValue(KEY_CODE, code);  
+    map.ExpectKeyGetValue(KEY_EXPLANATION, buffer);
+    
     s = Type(code, buffer);
   }
 };

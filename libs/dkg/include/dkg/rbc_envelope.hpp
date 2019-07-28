@@ -17,7 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/byte_array.hpp"
 #include "dkg/rbc_messages.hpp"
 #include "network/muddle/packet.hpp"
 

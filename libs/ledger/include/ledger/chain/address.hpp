@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/serializers/main_serializer.hpp"
 #include "core/byte_array/const_byte_array.hpp"
-#include "core/serializers/byte_array.hpp"
 
 #include <array>
 #include <cstddef>

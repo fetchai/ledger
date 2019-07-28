@@ -109,6 +109,9 @@ inline float ToBigEndian(float x)
     float    value;
     uint32_t bytes;
   } conversion;
+  static_assert(sizeof(float) == sizeof(uint32_t), "float and uint32_t are required to be same size.");
+  static_assert(sizeof(conversion) == sizeof(uint32_t), "");
+
   conversion.value = x;
   conversion.bytes = __builtin_bswap32(conversion.bytes);
   return conversion.value;
@@ -121,6 +124,9 @@ inline float FromBigEndian(float x)
     float    value;
     uint32_t bytes;
   } conversion;
+  static_assert(sizeof(float) == sizeof(uint32_t), "float and uint32_t are required to be same size.");
+  static_assert(sizeof(conversion) == sizeof(uint32_t), "");
+
   conversion.value = x;
   conversion.bytes = __builtin_bswap32(conversion.bytes);
   return conversion.value;
@@ -133,6 +139,9 @@ inline double ToBigEndian(double x)
     double   value;
     uint64_t bytes;
   } conversion;
+  static_assert(sizeof(double) == sizeof(uint64_t), "double and uint64_t are required to be same size.");
+  static_assert(sizeof(conversion) == sizeof(uint64_t), "");
+
   conversion.value = x;
   conversion.bytes = __builtin_bswap64(conversion.bytes);
   return conversion.value;
@@ -145,6 +154,9 @@ inline double FromBigEndian(double x)
     double   value;
     uint64_t bytes;
   } conversion;
+  static_assert(sizeof(double) == sizeof(uint64_t), "double and uint64_t are required to be same size.");
+  static_assert(sizeof(conversion) == sizeof(uint64_t), "");
+
   conversion.value = x;
   conversion.bytes = __builtin_bswap64(conversion.bytes);
   return conversion.value;

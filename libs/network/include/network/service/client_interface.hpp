@@ -17,7 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/byte_array.hpp"
 #include "core/serializers/counter.hpp"
 #include "core/serializers/serializable_exception.hpp"
 #include "network/message.hpp"

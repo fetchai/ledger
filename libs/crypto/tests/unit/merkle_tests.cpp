@@ -18,16 +18,12 @@
 
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/encoders.hpp"
-#include "core/serializers/byte_array.hpp"
-#include "core/serializers/byte_array_buffer.hpp"
+#include "core/serializers/main_serializer.hpp"
 #include "crypto/hash.hpp"
 #include "crypto/merkle_tree.hpp"
 #include "crypto/sha256.hpp"
 
 #include "gtest/gtest.h"
-
-// struct fetch::serializers::MapSerializer<fetch::crypto::MerkleTree,
-// fetch::serializers::MsgPackSerializer >;
 
 using namespace fetch;
 using namespace fetch::crypto;

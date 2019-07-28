@@ -16,7 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/byte_array_buffer.hpp"
+#include "core/serializers/main_serializer.hpp"
 #include "math/tensor.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/serializers/ml_types.hpp"

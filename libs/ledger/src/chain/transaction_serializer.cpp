@@ -17,7 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/byte_array.hpp"
-#include "core/serializers/byte_array_buffer.hpp"
+#include "core/serializers/main_serializer.hpp"
 #include "crypto/sha256.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "ledger/chain/transaction_encoding.hpp"

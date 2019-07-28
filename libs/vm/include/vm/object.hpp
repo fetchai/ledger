@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/byte_array_buffer.hpp"
-#include "core/serializers/stl_types.hpp"
+#include "core/serializers/main_serializer.hpp"
+#include "core/serializers/base_types.hpp"
 #include "variant/variant.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 #include "vm/common.hpp"

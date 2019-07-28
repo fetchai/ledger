@@ -17,11 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/serializers/main_serializer.hpp"
 #include "core/serializers/base_types.hpp"
-#include "core/serializers/byte_array.hpp"
-#include "core/serializers/byte_array_buffer.hpp"
-#include "core/serializers/stl_types.hpp"
-#include "core/serializers/typed_byte_array_buffer.hpp"
 #include "storage/key_byte_array_store.hpp"
 
 #include <cstddef>

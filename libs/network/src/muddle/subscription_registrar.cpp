@@ -19,7 +19,6 @@
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/logger.hpp"
 #include "core/mutex.hpp"
-#include "core/serializers/byte_array.hpp"
 #include "network/muddle/subscription_registrar.hpp"
 
 #include <cstdint>

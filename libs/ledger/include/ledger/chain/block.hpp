@@ -19,7 +19,6 @@
 
 #include "core/byte_array/byte_array.hpp"
 #include "core/serializers/base_types.hpp"
-#include "core/serializers/stl_types.hpp"
 #include "ledger/chain/address.hpp"
 #include "ledger/chain/consensus/proof_of_work.hpp"
 #include "ledger/chain/digest.hpp"

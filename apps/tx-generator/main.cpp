@@ -18,8 +18,7 @@
 
 #include "core/byte_array/byte_array.hpp"
 #include "core/commandline/params.hpp"
-#include "core/serializers/byte_array.hpp"
-#include "core/serializers/byte_array_buffer.hpp"
+#include "core/serializers/main_serializer.hpp"
 #include "core/serializers/counter.hpp"
 #include "crypto/ecdsa.hpp"
 #include "ledger/chain/transaction.hpp"

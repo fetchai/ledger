@@ -17,8 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/logger.hpp"
-#include "core/serializers/byte_array.hpp"
-#include "core/serializers/byte_array_buffer.hpp"
+#include "core/serializers/main_serializer.hpp"
 #include "ledger/chaincode/dummy_contract.hpp"
 #include "ledger/chaincode/factory.hpp"
 #include "ledger/chaincode/smart_contract.hpp"

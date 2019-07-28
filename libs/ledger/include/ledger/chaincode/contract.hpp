@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/byte_array_buffer.hpp"
+#include "core/serializers/main_serializer.hpp"
 #include "crypto/identity.hpp"
 #include "ledger/chain/address.hpp"
 #include "ledger/identifier.hpp"

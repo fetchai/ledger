@@ -17,8 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/logging.hpp"
-#include "core/serializers/byte_array.hpp"
-#include "core/serializers/byte_array_buffer.hpp"
+#include "core/serializers/main_serializer.hpp"
 #include "core/service_ids.hpp"
 #include "crypto/sha256.hpp"
 #include "dkg/dkg_service.hpp"
