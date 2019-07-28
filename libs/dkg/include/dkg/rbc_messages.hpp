@@ -31,7 +31,7 @@ using TruncatedHash        = byte_array::ByteArray;
 using TagType              = uint64_t;
 using SerialisedMessage    = byte_array::ConstByteArray;
 using RBCSerializer        = fetch::serializers::ByteArrayBuffer;
-using RBCSerializerCounter = fetch::serializers::SizeCounter<fetch::serializers::ByteArrayBuffer>;
+using RBCSerializerCounter = fetch::serializers::SizeCounter;
 
 /**
  * Different messages using in reliable broadcast channel(RBC).

@@ -123,7 +123,7 @@ Result BenchmarkSingle(Args... args)
   S buffer;
 
   high_resolution_clock::time_point t1 = high_resolution_clock::now();
-  SizeCounter<S>                    counter;
+  SizeCounter                    counter;
   counter << data;
   buffer.Reserve(counter.size());
   buffer << data;

@@ -140,7 +140,7 @@ int main(int argc, char **argv)
   std::cout << "Generating contents..." << std::endl;
 
   // determine the size
-  SizeCounter<ByteArrayBuffer> counter{};
+  SizeCounter counter{};
   counter << encoded_txs;
 
   std::cout << "Serial size: " << counter.size() << std::endl;

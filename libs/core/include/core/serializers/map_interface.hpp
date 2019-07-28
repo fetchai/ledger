@@ -22,10 +22,11 @@
 namespace fetch {
 namespace serializers {
 namespace interfaces {
+template< typename Driver >
 class MapInterface
 {
 public:
-  MapInterface(MsgPackByteArrayBuffer &serializer, uint64_t size)
+  MapInterface(Driver &serializer, uint64_t size)
     : serializer_{serializer}
     , size_{std::move(size)}
   {}
@@ -62,17 +63,18 @@ public:
     serializer_ << val;
   }
 
-  MsgPackByteArrayBuffer &serializer()
+  Driver &serializer()
   {
     return serializer_;
   }
 
 private:
-  MsgPackByteArrayBuffer &serializer_;
+  Driver &serializer_;
   uint64_t                size_;
   uint64_t                pos_{0};
 };
 
+template< typename Driver >
 class MapDeserializer
 {
 public:
@@ -82,7 +84,7 @@ public:
     CODE16     = TypeCodes::MAP_CODE16,
     CODE32     = TypeCodes::MAP_CODE32
   };
-  MapDeserializer(MsgPackByteArrayBuffer &serializer)
+  MapDeserializer(Driver &serializer)
     : serializer_{serializer}
   {
     uint8_t  opcode;
@@ -213,7 +215,7 @@ public:
     state_ = State::KEY_VALUE_NEXT;
   }
 
-  MsgPackByteArrayBuffer &serializer()
+  Driver &serializer()
   {
     return serializer_;
   }
@@ -225,7 +227,7 @@ private:
     VALUE_NEXT     = 1
   };
 
-  MsgPackByteArrayBuffer &serializer_;
+  Driver &serializer_;
   uint64_t                size_{0};
   uint64_t                pos_{0};
   State                   state_{State::KEY_VALUE_NEXT};

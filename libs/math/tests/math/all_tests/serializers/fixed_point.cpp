@@ -17,7 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/serializers/byte_array_buffer.hpp"
-#include "vectorise/fixed_point/serializers.hpp"
+#include "core/serializers/base_types.hpp"
 
 #include "gtest/gtest.h"
 

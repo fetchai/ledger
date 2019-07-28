@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "vectorise/fixed_point/fixed_point.hpp"
-#include "vectorise/fixed_point/serializers.hpp"
+#include "core/serializers/base_types.hpp"
 #include "vm/vm.hpp"
 
 #include <algorithm>

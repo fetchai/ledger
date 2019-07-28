@@ -16,15 +16,17 @@
 //   limitations under the License.
 //
 //------------------------------------------------------------------------------
+#include "core/serializers/serializable_exception.hpp"
 
 namespace fetch {
 namespace serializers {
 namespace interfaces {
 
+template< typename Driver >
 class ArrayInterface
 {
 public:
-  ArrayInterface(MsgPackByteArrayBuffer &serializer, uint64_t size)
+  ArrayInterface(Driver &serializer, uint64_t size)
     : serializer_{serializer}
     , size_{std::move(size)}
   {}
@@ -42,17 +44,19 @@ public:
     serializer_ << val;
   }
 
-  MsgPackByteArrayBuffer &serializer()
+  Driver &serializer()
   {
     return serializer_;
   }
 
 private:
-  MsgPackByteArrayBuffer &serializer_;
+  Driver &serializer_;
   uint64_t                size_;
   uint64_t                pos_{0};
 };
 
+
+template< typename Driver >
 class ArrayDeserializer
 {
 public:
@@ -63,7 +67,7 @@ public:
     CODE32     = TypeCodes::ARRAY_CODE32
 
   };
-  ArrayDeserializer(MsgPackByteArrayBuffer &serializer)
+  ArrayDeserializer(Driver &serializer)
     : serializer_{serializer}
   {
     uint8_t  opcode;
@@ -112,13 +116,13 @@ public:
     return size_;
   }
 
-  MsgPackByteArrayBuffer &serializer()
+  Driver &serializer()
   {
     return serializer_;
   }
 
 private:
-  MsgPackByteArrayBuffer &serializer_;
+  Driver &serializer_;
   uint64_t                size_{0};
   uint64_t                pos_{0};
 };

@@ -20,7 +20,7 @@
 #include "math/tensor.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/serializers/ml_types.hpp"
-#include "vectorise/fixed_point/serializers.hpp"
+#include "core/serializers/base_types.hpp"
 
 #include "gtest/gtest.h"
 
@@ -37,30 +37,24 @@ TYPED_TEST_CASE(SerializersTest, MyTypes);
 
 TYPED_TEST(SerializersTest, serialize_empty_state_dict)
 {
-  /*
-  TODO
-    fetch::ml::StateDict<TypeParam>     sd1;
-    fetch::serializers::ByteArrayBuffer b;
-    b << sd1;
-    b.seek(0);
-    fetch::ml::StateDict<TypeParam> sd2;
-    b >> sd2;
-    EXPECT_EQ(sd1, sd2);
-  */
+  fetch::ml::StateDict<TypeParam>     sd1;
+  fetch::serializers::ByteArrayBuffer b;
+  b << sd1;
+  b.seek(0);
+  fetch::ml::StateDict<TypeParam> sd2;
+  b >> sd2;
+  EXPECT_EQ(sd1, sd2);
 }
 
 TYPED_TEST(SerializersTest, serialize_state_dict)
 {
-  /*
-  TODO
-    // Generate a plausible state dict out of a fully connected layer
-    fetch::ml::layers::FullyConnected<TypeParam> fc(10, 10);
-    struct fetch::ml::StateDict<TypeParam>       sd1 = fc.StateDict();
-    fetch::serializers::ByteArrayBuffer          b;
-    b << sd1;
-    b.seek(0);
-    fetch::ml::StateDict<TypeParam> sd2;
-    b >> sd2;
-    EXPECT_EQ(sd1, sd2);
-  */
+  // Generate a plausible state dict out of a fully connected layer
+  fetch::ml::layers::FullyConnected<TypeParam> fc(10, 10);
+  struct fetch::ml::StateDict<TypeParam>       sd1 = fc.StateDict();
+  fetch::serializers::ByteArrayBuffer          b;
+  b << sd1;
+  b.seek(0);
+  fetch::ml::StateDict<TypeParam> sd2;
+  b >> sd2;
+  EXPECT_EQ(sd1, sd2);
 }

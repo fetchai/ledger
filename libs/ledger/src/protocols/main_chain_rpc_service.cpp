@@ -44,7 +44,7 @@ using fetch::muddle::Packet;
 using fetch::byte_array::ToBase64;
 
 using BlockSerializer        = fetch::serializers::ByteArrayBuffer;
-using BlockSerializerCounter = fetch::serializers::SizeCounter<BlockSerializer>;
+using BlockSerializerCounter = fetch::serializers::SizeCounter;
 using PromiseState           = fetch::service::PromiseState;
 using State                  = MainChainRpcService::State;
 using Mode                   = MainChainRpcService::Mode;

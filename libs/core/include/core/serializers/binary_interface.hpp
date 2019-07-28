@@ -20,10 +20,11 @@
 namespace fetch {
 namespace serializers {
 namespace interfaces {
+template< typename Driver>
 class BinaryInterface
 {
 public:
-  BinaryInterface(MsgPackByteArrayBuffer &serializer, uint64_t size)
+  BinaryInterface(Driver &serializer, uint64_t size)
     : serializer_{serializer}
     , size_{std::move(size)}
   {}
@@ -40,18 +41,18 @@ public:
     serializer_.WriteBytes(arr, partial_size);
   }
 
-  MsgPackByteArrayBuffer &serializer()
+  Driver &serializer()
   {
     return serializer_;
   }
 
 private:
-  MsgPackByteArrayBuffer &serializer_;
+  Driver &serializer_;
   uint64_t                size_;
   uint64_t                pos_{0};
 };
 
-template <uint8_t C8, uint8_t C16, uint8_t C32>
+template <typename Driver, uint8_t C8, uint8_t C16, uint8_t C32>
 class BinaryConstructorInterface
 {
 public:
@@ -62,11 +63,11 @@ public:
     CODE32 = C32
   };
 
-  BinaryConstructorInterface(MsgPackByteArrayBuffer &serializer)
+  BinaryConstructorInterface(Driver &serializer)
     : serializer_{serializer}
   {}
 
-  BinaryInterface operator()(uint64_t count)
+  BinaryInterface<Driver> operator()(uint64_t count)
   {
     if (created_)
     {
@@ -114,19 +115,20 @@ public:
     }
 
     created_ = true;
-    return BinaryInterface(serializer_, count);
+    return BinaryInterface<Driver>(serializer_, count);
   }
 
-  MsgPackByteArrayBuffer &serializer()
+  Driver &serializer()
   {
     return serializer_;
   }
 
 private:
   bool                    created_{false};
-  MsgPackByteArrayBuffer &serializer_;
+  Driver &serializer_;
 };
 
+template< typename Driver >
 class BinaryDeserializer
 {
 public:
@@ -136,7 +138,7 @@ public:
     CODE16 = 0xc5,
     CODE32 = 0xc6
   };
-  BinaryDeserializer(MsgPackByteArrayBuffer &serializer)
+  BinaryDeserializer(Driver &serializer)
     : serializer_{serializer}
   {
     uint8_t  opcode;
@@ -192,7 +194,7 @@ public:
   }
 
 private:
-  MsgPackByteArrayBuffer &serializer_;
+  Driver &serializer_;
   uint64_t                size_{0};
   uint64_t                pos_{0};
 };

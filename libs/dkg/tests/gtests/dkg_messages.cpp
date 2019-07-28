@@ -91,7 +91,7 @@ TEST(dkg_messages, envelope)
   DKGEnvelope env{complaintMsg};
 
   // Serialise the envelope
-  fetch::serializers::SizeCounter<fetch::serializers::ByteArrayBuffer> env_counter;
+  fetch::serializers::SizeCounter env_counter;
   env_counter << env;
 
   fetch::serializers::ByteArrayBuffer env_serialiser;

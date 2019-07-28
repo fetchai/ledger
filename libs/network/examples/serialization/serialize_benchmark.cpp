@@ -110,7 +110,7 @@ void TestSerializationSpeed()
   high_resolution_clock::time_point t1 = high_resolution_clock::now();
   std::sort(a.begin(), a.end());
 
-  SizeCounter<ByteArrayBuffer> counter;
+  SizeCounter counter;
 
   counter << a;
   buffer.Reserve(counter.size());

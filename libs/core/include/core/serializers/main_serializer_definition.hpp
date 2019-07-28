@@ -38,7 +38,6 @@ class MsgPackByteArrayBuffer
 
 public:
   using ByteArray         = byte_array::ByteArray;
-  using size_counter_type = serializers::SizeCounter<MsgPackByteArrayBuffer>;
 
   MsgPackByteArrayBuffer()                              = default;
   MsgPackByteArrayBuffer(MsgPackByteArrayBuffer &&from) = default;
@@ -168,7 +167,7 @@ private:
 
   ByteArray         data_;
   uint64_t          pos_ = 0;
-  size_counter_type size_counter_;
+  SizeCounter size_counter_;
 };
 
 }  // namespace serializers

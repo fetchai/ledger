@@ -24,12 +24,13 @@
 #include "core/serializers/array_interface.hpp"
 #include "core/serializers/binary_interface.hpp"
 #include "core/serializers/container_constructor_interface.hpp"
-#include "core/serializers/counter.hpp"
+
 #include "core/serializers/exception.hpp"
 #include "core/serializers/group_definitions.hpp"
 #include "core/serializers/map_interface.hpp"
 #include "vectorise/platform.hpp"
 
+#include "core/serializers/counter.hpp"
 #include <type_traits>
 
 namespace fetch {
@@ -239,7 +240,7 @@ typename BinarySerializer<T, MsgPackByteArrayBuffer>::DriverType &MsgPackByteArr
 {
   using Serializer = BinarySerializer<T, MsgPackByteArrayBuffer>;
   using Constructor =
-      interfaces::BinaryConstructorInterface<TypeCodes::BINARY_CODE_FIXED, TypeCodes::BINARY_CODE16,
+      interfaces::BinaryConstructorInterface<MsgPackByteArrayBuffer, TypeCodes::BINARY_CODE_FIXED, TypeCodes::BINARY_CODE16,
                                              TypeCodes::BINARY_CODE32>;
 
   try
@@ -263,7 +264,7 @@ typename BinarySerializer<T, MsgPackByteArrayBuffer>::DriverType &MsgPackByteArr
   using Serializer = BinarySerializer<T, MsgPackByteArrayBuffer>;
   try
   {
-    interfaces::BinaryDeserializer stream(*this);
+    interfaces::BinaryDeserializer<MsgPackByteArrayBuffer> stream(*this);
     Serializer::Deserialize(stream, val);
   }
   catch (std::exception const &e)
@@ -281,7 +282,7 @@ typename ArraySerializer<T, MsgPackByteArrayBuffer>::DriverType &MsgPackByteArra
 {
   using Serializer = ArraySerializer<T, MsgPackByteArrayBuffer>;
   using Constructor =
-      interfaces::ContainerConstructorInterface<interfaces::ArrayInterface,
+      interfaces::ContainerConstructorInterface<MsgPackByteArrayBuffer, interfaces::ArrayInterface<MsgPackByteArrayBuffer>,
                                                 TypeCodes::ARRAY_CODE_FIXED,
                                                 TypeCodes::ARRAY_CODE16, TypeCodes::ARRAY_CODE32>;
 
@@ -306,7 +307,7 @@ typename ArraySerializer<T, MsgPackByteArrayBuffer>::DriverType &MsgPackByteArra
   using Serializer = ArraySerializer<T, MsgPackByteArrayBuffer>;
   try
   {
-    interfaces::ArrayDeserializer array(*this);
+    interfaces::ArrayDeserializer<MsgPackByteArrayBuffer> array(*this);
     Serializer::Deserialize(array, val);
   }
   catch (std::exception const &e)
@@ -324,7 +325,7 @@ typename MapSerializer<T, MsgPackByteArrayBuffer>::DriverType &MsgPackByteArrayB
 {
   using Serializer = MapSerializer<T, MsgPackByteArrayBuffer>;
   using Constructor =
-      interfaces::ContainerConstructorInterface<interfaces::MapInterface, TypeCodes::MAP_CODE_FIXED,
+      interfaces::ContainerConstructorInterface<MsgPackByteArrayBuffer, interfaces::MapInterface<MsgPackByteArrayBuffer>, TypeCodes::MAP_CODE_FIXED,
                                                 TypeCodes::MAP_CODE16, TypeCodes::MAP_CODE32>;
 
   try
@@ -348,7 +349,7 @@ typename MapSerializer<T, MsgPackByteArrayBuffer>::DriverType &MsgPackByteArrayB
   using Serializer = MapSerializer<T, MsgPackByteArrayBuffer>;
   try
   {
-    interfaces::MapDeserializer map(*this);
+    interfaces::MapDeserializer<MsgPackByteArrayBuffer> map(*this);
     Serializer::Deserialize(map, val);
   }
   catch (std::exception const &e)

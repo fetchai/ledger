@@ -63,7 +63,7 @@ struct Invoke
                              used_args &... args)
   {
     auto                                      ret = (cls.*m)(args...);
-    serializers::SizeCounter<serializer_type> counter;
+    serializers::SizeCounter counter;
     counter << ret;
 
     result.Reserve(counter.size());
@@ -321,7 +321,7 @@ public:
 
     auto ret = ((*class_).*function_)();
 
-    serializers::SizeCounter<serializer_type> counter;
+    serializers::SizeCounter counter;
     counter << ret;
     result.Reserve(counter.size());
     result << ret;
@@ -333,7 +333,7 @@ public:
     LOG_STACK_TRACE_POINT;
 
     auto                                      ret = ((*class_).*function_)();
-    serializers::SizeCounter<serializer_type> counter;
+    serializers::SizeCounter counter;
     counter << ret;
     result.Reserve(counter.size());
     result << ret;

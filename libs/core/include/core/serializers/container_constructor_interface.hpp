@@ -20,7 +20,7 @@
 namespace fetch {
 namespace serializers {
 namespace interfaces {
-template <typename I, uint8_t CF, uint8_t C16, uint8_t C32>
+template <typename Driver, typename I, uint8_t CF, uint8_t C16, uint8_t C32>
 class ContainerConstructorInterface
 {
 public:
@@ -33,7 +33,7 @@ public:
     CODE32     = C32
   };
 
-  ContainerConstructorInterface(MsgPackByteArrayBuffer &serializer)
+  ContainerConstructorInterface(Driver &serializer)
     : serializer_{serializer}
   {}
 
@@ -85,14 +85,14 @@ public:
     return Type(serializer_, count);
   }
 
-  MsgPackByteArrayBuffer &serializer()
+  Driver &serializer()
   {
     return serializer_;
   }
 
 private:
   bool                    created_{false};
-  MsgPackByteArrayBuffer &serializer_;
+  Driver &serializer_;
 };
 
 }  // namespace interfaces

@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/serializers/type_register.hpp"
 #include "core/byte_array/byte_array.hpp"
 #include "core/logger.hpp"
 #include "network/service/types.hpp"

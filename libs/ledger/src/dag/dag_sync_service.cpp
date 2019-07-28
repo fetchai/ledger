@@ -93,7 +93,7 @@ DAGSyncService::State DAGSyncService::OnBroadcastRecent()
   if (nodes_to_broadcast_.size() > BROADCAST_BATCH_SIZE)
   {
     // determine the serialised size of the dag nodes to send
-    fetch::serializers::SizeCounter<std::vector<DAGNode>> counter;
+    fetch::serializers::SizeCounter counter;
     counter << nodes_to_broadcast_;
 
     // allocate the buffer and serialise the dag nodes to send
