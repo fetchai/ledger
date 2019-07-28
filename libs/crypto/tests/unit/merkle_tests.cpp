@@ -27,7 +27,7 @@
 #include "gtest/gtest.h"
 
 // struct fetch::serializers::MapSerializer<fetch::crypto::MerkleTree,
-// fetch::serializers::MsgPackByteArrayBuffer >;
+// fetch::serializers::MsgPackSerializer >;
 
 using namespace fetch;
 using namespace fetch::crypto;
@@ -163,14 +163,14 @@ TEST(crypto_merkle_tree, serializes_deserializes)
   tree2.CalculateRoot();
 
   {
-    fetch::serializers::ByteArrayBuffer arr;
+    fetch::serializers::MsgPackSerializer arr;
     arr << tree2;
     arr.seek(0);
     arr >> tree2_deser;
   }
 
   {
-    fetch::serializers::ByteArrayBuffer arr;
+    fetch::serializers::MsgPackSerializer arr;
     arr << tree3;
     arr.seek(0);
     arr >> tree3_deser;

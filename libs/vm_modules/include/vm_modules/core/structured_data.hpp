@@ -37,8 +37,8 @@ public:
   ~StructuredData() override = default;
 
 protected:
-  bool SerializeTo(vm::ByteArrayBuffer &buffer) override;
-  bool DeserializeFrom(vm::ByteArrayBuffer &buffer) override;
+  bool SerializeTo(vm::MsgPackSerializer &buffer) override;
+  bool DeserializeFrom(vm::MsgPackSerializer &buffer) override;
 
   bool ToJSON(vm::JSONVariant &variant) override;
   bool FromJSON(vm::JSONVariant const &variant) override;

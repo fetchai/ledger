@@ -92,7 +92,7 @@ ChainCodeFactory::ContractPtr ChainCodeFactory::Create(Identifier const &contrac
       ConstByteArray contract_source;
 
       // deserialise the contract source
-      serializers::ByteArrayBuffer adapter{result.document};
+      serializers::MsgPackSerializer adapter{result.document};
       adapter >> contract_source;
 
       // attempt to construct the smart contract in question

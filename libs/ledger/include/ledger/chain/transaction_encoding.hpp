@@ -120,7 +120,7 @@ meta::IfIsSignedInteger<T, T> Negate(T value)
 }
 
 template <typename T>
-meta::IfIsInteger<T, T> DecodeInteger(fetch::serializers::ByteArrayBuffer &buffer)
+meta::IfIsInteger<T, T> DecodeInteger(fetch::serializers::MsgPackSerializer &buffer)
 {
   // determine the traits of the output type
   constexpr bool        output_is_signed   = meta::IsSignedInteger<T>;

@@ -42,7 +42,7 @@ class MuddleServer final : public NETWORK_SERVER
 public:
   using connection_handle_type = network::AbstractNetworkServer::connection_handle_type;
   using message_type           = network::message_type;
-  using ByteArrayBuffer        = serializers::ByteArrayBuffer;
+  using MsgPackSerializer        = serializers::MsgPackSerializer;
 
   // ensure the NETWORK_SERVER type that we are using is actually what we where expecting
   static_assert(std::is_base_of<network::AbstractNetworkServer, NETWORK_SERVER>::value,

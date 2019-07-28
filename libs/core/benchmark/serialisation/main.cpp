@@ -168,11 +168,11 @@ int main()
 
   Result result;
 
-  SINGLE_BENCHMARK(ByteArrayBuffer, std::vector<uint32_t>);
-  SINGLE_BENCHMARK(ByteArrayBuffer, std::vector<uint64_t>);
-  SINGLE_BENCHMARK(ByteArrayBuffer, std::vector<ByteArray>);
-  SINGLE_BENCHMARK(ByteArrayBuffer, std::vector<ConstByteArray>);
-  SINGLE_BENCHMARK(ByteArrayBuffer, std::vector<std::string>);
+  SINGLE_BENCHMARK(MsgPackSerializer, std::vector<uint32_t>);
+  SINGLE_BENCHMARK(MsgPackSerializer, std::vector<uint64_t>);
+  SINGLE_BENCHMARK(MsgPackSerializer, std::vector<ByteArray>);
+  SINGLE_BENCHMARK(MsgPackSerializer, std::vector<ConstByteArray>);
+  SINGLE_BENCHMARK(MsgPackSerializer, std::vector<std::string>);
 
   std::cout << std::endl;
 
@@ -183,11 +183,11 @@ int main()
   std::cout << std::setw(width) << "Ser. MBs";
   std::cout << std::setw(width) << "Des. MBs" << std::endl;
 
-  SINGLE_BENCHMARK(TypedByteArrayBuffer, std::vector<uint32_t>);
-  SINGLE_BENCHMARK(TypedByteArrayBuffer, std::vector<uint64_t>);
-  SINGLE_BENCHMARK(TypedByteArrayBuffer, std::vector<ByteArray>);
-  SINGLE_BENCHMARK(TypedByteArrayBuffer, std::vector<ConstByteArray>);
-  SINGLE_BENCHMARK(TypedByteArrayBuffer, std::vector<std::string>);
+  SINGLE_BENCHMARK(MsgPackSerializer, std::vector<uint32_t>);
+  SINGLE_BENCHMARK(MsgPackSerializer, std::vector<uint64_t>);
+  SINGLE_BENCHMARK(MsgPackSerializer, std::vector<ByteArray>);
+  SINGLE_BENCHMARK(MsgPackSerializer, std::vector<ConstByteArray>);
+  SINGLE_BENCHMARK(MsgPackSerializer, std::vector<std::string>);
 
   return 0;
 }

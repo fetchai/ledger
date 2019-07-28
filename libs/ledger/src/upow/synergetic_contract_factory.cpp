@@ -28,7 +28,7 @@ namespace ledger {
 constexpr char const *LOGGING_NAME = "SynContractFactory";
 
 using byte_array::ConstByteArray;
-using serializers::ByteArrayBuffer;
+using serializers::MsgPackSerializer;
 
 SynergeticContractFactory::SynergeticContractFactory(StorageInterface &storage)
   : storage_{storage}
@@ -47,7 +47,7 @@ SynergeticContractPtr SynergeticContractFactory::Create(Digest const &digest)
     try
     {
       // create and decode the document buffer
-      ByteArrayBuffer buffer{resource.document};
+      MsgPackSerializer buffer{resource.document};
 
       // parse the contents of the document
       ConstByteArray document{};

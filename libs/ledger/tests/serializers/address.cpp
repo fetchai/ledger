@@ -46,7 +46,7 @@ TEST(LedgerSerializers, address)
   Address a{raw_address};
   Address b;
 
-  ByteArrayBuffer stream;
+  MsgPackSerializer stream;
   stream << a;
   stream.seek(0);
   stream >> b;

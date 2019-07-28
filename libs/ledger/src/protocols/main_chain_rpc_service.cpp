@@ -43,7 +43,7 @@ namespace {
 using fetch::muddle::Packet;
 using fetch::byte_array::ToBase64;
 
-using BlockSerializer        = fetch::serializers::ByteArrayBuffer;
+using BlockSerializer        = fetch::serializers::MsgPackSerializer;
 using BlockSerializerCounter = fetch::serializers::SizeCounter;
 using PromiseState           = fetch::service::PromiseState;
 using State                  = MainChainRpcService::State;

@@ -259,12 +259,12 @@ struct Array : public IArray
     return &element;
   }
 
-  bool SerializeTo(ByteArrayBuffer &buffer) override
+  bool SerializeTo(MsgPackSerializer &buffer) override
   {
     return ApplySerialize(buffer, elements);
   }
 
-  bool DeserializeFrom(ByteArrayBuffer &buffer) override
+  bool DeserializeFrom(MsgPackSerializer &buffer) override
   {
     return ApplyDeserialize(buffer, elements);
   }
@@ -274,7 +274,7 @@ struct Array : public IArray
   std::vector<ElementType> elements;
 
 private:
-  bool ApplySerialize(ByteArrayBuffer &buffer, std::vector<Ptr<Object>> const &data)
+  bool ApplySerialize(MsgPackSerializer &buffer, std::vector<Ptr<Object>> const &data)
   {
     if (!vm_->IsDefaultSerializeConstructable(element_type_id))
     {
@@ -302,7 +302,7 @@ private:
 
   template <typename G>
   typename std::enable_if<IsPrimitive<G>::value, bool>::type ApplySerialize(
-      ByteArrayBuffer &buffer, std::vector<G> const &data)
+      MsgPackSerializer &buffer, std::vector<G> const &data)
   {
     buffer << GetUniqueId() << static_cast<uint64_t>(elements.size());
     for (G const &v : data)
@@ -312,7 +312,7 @@ private:
     return true;
   }
 
-  bool ApplyDeserialize(ByteArrayBuffer &buffer, std::vector<Ptr<Object>> &data)
+  bool ApplyDeserialize(MsgPackSerializer &buffer, std::vector<Ptr<Object>> &data)
   {
     uint64_t    size;
     std::string uid;
@@ -348,7 +348,7 @@ private:
 
   template <typename G>
   typename std::enable_if<IsPrimitive<G>::value, bool>::type ApplyDeserialize(
-      ByteArrayBuffer &buffer, std::vector<G> &data)
+      MsgPackSerializer &buffer, std::vector<G> &data)
   {
     uint64_t    size;
     std::string uid;

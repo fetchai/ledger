@@ -41,7 +41,7 @@ namespace {
 using byte_array::ByteArray;
 using byte_array::ConstByteArray;
 using crypto::Identity;
-using serializers::ByteArrayBuffer;
+using serializers::MsgPackSerializer;
 
 using TokenAmount  = Transaction::TokenAmount;
 using ContractMode = Transaction::ContractMode;
@@ -125,7 +125,7 @@ ConstByteArray Encode(Identity const &identity)
   return {buffer};
 }
 
-void Decode(ByteArrayBuffer &buffer, Address &address)
+void Decode(MsgPackSerializer &buffer, Address &address)
 {
   Address::RawAddress raw_address;
   buffer.ReadBytes(raw_address.data(), raw_address.size());
@@ -134,18 +134,18 @@ void Decode(ByteArrayBuffer &buffer, Address &address)
 }
 
 template <typename T>
-meta::IfIsInteger<T, T> Decode(ByteArrayBuffer &buffer)
+meta::IfIsInteger<T, T> Decode(MsgPackSerializer &buffer)
 {
   return detail::DecodeInteger<T>(buffer);
 }
 
 template <typename T>
-meta::IfIsInteger<T> Decode(ByteArrayBuffer &buffer, T &value)
+meta::IfIsInteger<T> Decode(MsgPackSerializer &buffer, T &value)
 {
   value = Decode<T>(buffer);
 }
 
-void Decode(ByteArrayBuffer &buffer, BitVector &bits)
+void Decode(MsgPackSerializer &buffer, BitVector &bits)
 {
   auto *            raw_data   = reinterpret_cast<uint8_t *>(bits.data().pointer());
   std::size_t const raw_length = bits.data().size() * sizeof(BitVector::Block);
@@ -163,7 +163,7 @@ void Decode(ByteArrayBuffer &buffer, BitVector &bits)
   }
 }
 
-void Decode(ByteArrayBuffer &buffer, ConstByteArray &bytes)
+void Decode(MsgPackSerializer &buffer, ConstByteArray &bytes)
 {
   // read the contents of the bytes
   std::size_t const byte_length = Decode<std::size_t>(buffer);
@@ -172,7 +172,7 @@ void Decode(ByteArrayBuffer &buffer, ConstByteArray &bytes)
   buffer.ReadByteArray(bytes, byte_length);
 }
 
-void Decode(ByteArrayBuffer &buffer, Identity &identity)
+void Decode(MsgPackSerializer &buffer, Identity &identity)
 {
   // read the identifier
   uint8_t identifier{0};
@@ -352,7 +352,7 @@ bool TransactionSerializer::Serialize(Transaction const &tx)
 
 bool TransactionSerializer::Deserialize(Transaction &tx) const
 {
-  serializers::ByteArrayBuffer buffer{serial_data_};
+  serializers::MsgPackSerializer buffer{serial_data_};
 
   std::size_t const payload_start = buffer.tell();
 

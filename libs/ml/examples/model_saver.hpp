@@ -32,7 +32,7 @@ namespace examples {
 template <typename GraphType>
 void SaveModel(GraphType const &g, std::string const &save_location)
 {
-  fetch::serializers::ByteArrayBuffer serializer;
+  fetch::serializers::MsgPackSerializer serializer;
   serializer << g.StateDict();
 
   std::fstream file(save_location, std::fstream::out);  // fba = FetchByteArray

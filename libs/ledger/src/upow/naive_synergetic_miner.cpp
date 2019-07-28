@@ -35,7 +35,7 @@ namespace {
 constexpr char const *LOGGING_NAME = "NaiveSynMiner";
 
 using UInt256 = vectorise::UInt<256>;
-using serializers::ByteArrayBuffer;
+using serializers::MsgPackSerializer;
 using byte_array::ConstByteArray;
 
 using DagNodes = NaiveSynergeticMiner::DagNodes;
@@ -174,7 +174,7 @@ SynergeticContractPtr NaiveSynergeticMiner::LoadContract(Digest const &contract_
     try
     {
       // create and decode the document buffer
-      ByteArrayBuffer buffer{resource_document.document};
+      MsgPackSerializer buffer{resource_document.document};
 
       // parse the contents of the document
       ConstByteArray document{};

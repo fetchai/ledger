@@ -25,9 +25,9 @@
 namespace fetch {
 namespace service {
 
-using serializer_type = serializers::TypedByteArrayBuffer;
+using serializer_type = serializers::MsgPackSerializer;
 
-// using serializer_type = serializers::ByteArrayBuffer;
+// using serializer_type = serializers::MsgPackSerializer;
 
 using protocol_handler_type       = uint64_t;
 using function_handler_type       = uint64_t;

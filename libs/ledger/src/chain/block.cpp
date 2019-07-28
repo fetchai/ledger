@@ -68,7 +68,7 @@ void Block::UpdateDigest()
   tx_merkle_tree.CalculateRoot();
 
   // Generate hash stream
-  serializers::ByteArrayBuffer buf;
+  serializers::MsgPackSerializer buf;
   buf << body.previous_hash << body.merkle_hash << body.block_number << body.miner
       << body.log2_num_lanes << body.timestamp << tx_merkle_tree.root() << nonce;
 

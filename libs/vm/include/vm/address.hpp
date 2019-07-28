@@ -111,13 +111,13 @@ public:
     return address_ == other;
   }
 
-  bool SerializeTo(ByteArrayBuffer &buffer) override
+  bool SerializeTo(MsgPackSerializer &buffer) override
   {
     buffer << address_.address();
     return true;
   }
 
-  bool DeserializeFrom(ByteArrayBuffer &buffer) override
+  bool DeserializeFrom(MsgPackSerializer &buffer) override
   {
     fetch::byte_array::ConstByteArray raw_address{};
     buffer >> raw_address;

@@ -383,7 +383,7 @@ ContractHttpInterface::SubmitTxStatus ContractHttpInterface::SubmitBulkTx(
   try
   {
     // extract out all the transaction payloads
-    serializers::ByteArrayBuffer buffer{request.body()};
+    serializers::MsgPackSerializer buffer{request.body()};
     buffer >> encoded_txs;
 
     for (auto const &encoded_tx : encoded_txs)

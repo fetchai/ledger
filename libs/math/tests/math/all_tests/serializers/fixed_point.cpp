@@ -29,7 +29,7 @@ TEST(FixedPointSerialisationTest, IntegerSerialisation)
   for (int i(-100); i < 100; ++i)
   {
     fetch::fixed_point::FixedPoint<32, 32> a(i);
-    fetch::serializers::ByteArrayBuffer    b;
+    fetch::serializers::MsgPackSerializer    b;
     b << a;
     b.seek(0);
     fetch::fixed_point::FixedPoint<32, 32> c;
@@ -44,7 +44,7 @@ TEST(FixedPointSerialisationTest, DecimalSerialisation)
   for (float i(-10); i < 10; i += 0.12345f)
   {
     fetch::fixed_point::FixedPoint<32, 32> a(i);
-    fetch::serializers::ByteArrayBuffer    b;
+    fetch::serializers::MsgPackSerializer    b;
     b << a;
     b.seek(0);
     fetch::fixed_point::FixedPoint<32, 32> c;

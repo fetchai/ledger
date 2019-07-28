@@ -53,7 +53,7 @@ class ObjectStore
 public:
   using type            = T;
   using self_type       = ObjectStore<T, S>;
-  using serializer_type = serializers::TypedByteArrayBuffer;
+  using serializer_type = serializers::MsgPackSerializer;
 
   class Iterator;
 

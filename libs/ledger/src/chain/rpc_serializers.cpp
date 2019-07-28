@@ -21,7 +21,7 @@
 #include "ledger/chain/transaction_layout_rpc_serializers.hpp"
 #include "ledger/chain/transaction_rpc_serializers.hpp"
 
-using fetch::serializers::ByteArrayBuffer;
+using fetch::serializers::MsgPackSerializer;
 
 namespace fetch {
 namespace ledger {

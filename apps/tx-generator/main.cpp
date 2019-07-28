@@ -41,7 +41,7 @@ using fetch::byte_array::ConstByteArray;
 using fetch::ledger::TransactionBuilder;
 using fetch::ledger::TransactionSerializer;
 using fetch::ledger::Address;
-using fetch::serializers::ByteArrayBuffer;
+using fetch::serializers::MsgPackSerializer;
 using fetch::serializers::SizeCounter;
 using fetch::BitVector;
 using fetch::storage::ResourceAddress;
@@ -145,7 +145,7 @@ int main(int argc, char **argv)
 
   std::cout << "Serial size: " << counter.size() << std::endl;
 
-  ByteArrayBuffer buffer{};
+  MsgPackSerializer buffer{};
   buffer.Reserve(counter.size());  // pre-allocate
   buffer << encoded_txs;
 

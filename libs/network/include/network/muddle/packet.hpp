@@ -369,7 +369,7 @@ inline void Packet::Sign(crypto::Prover &prover)
   SetStamped();
 
   auto const signature =
-      prover.Sign((serializers::ByteArrayBuffer() << StaticHeader() << payload_).data());
+      prover.Sign((serializers::MsgPackSerializer() << StaticHeader() << payload_).data());
 
   if (!signature.empty())
   {
@@ -389,7 +389,7 @@ inline bool Packet::Verify() const
     return false;  // null signature is not genuine in non-trusted networks
   }
   auto retVal = crypto::Verify(
-      GetSender(), (serializers::ByteArrayBuffer() << StaticHeader() << payload_).data(), stamp_);
+      GetSender(), (serializers::MsgPackSerializer() << StaticHeader() << payload_).data(), stamp_);
   return retVal;
 }
 

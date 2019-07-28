@@ -180,7 +180,7 @@ struct Map : public IMap
     Store<Key>(key, value);
   }
 
-  bool SerializeTo(ByteArrayBuffer &buffer) override
+  bool SerializeTo(MsgPackSerializer &buffer) override
   {
     buffer << GetUniqueId() << static_cast<uint64_t>(map.size());
     for (auto const &v : map)
@@ -197,7 +197,7 @@ struct Map : public IMap
     return true;
   }
 
-  bool DeserializeFrom(ByteArrayBuffer &buffer) override
+  bool DeserializeFrom(MsgPackSerializer &buffer) override
   {
     TypeInfo const &type_info     = vm_->GetTypeInfo(GetTypeId());
     TypeId const    key_type_id   = type_info.parameter_type_ids[0];
@@ -237,7 +237,7 @@ struct Map : public IMap
 
 private:
   template <typename U, typename TemplateParameterType>
-  typename std::enable_if_t<IsPtr<U>::value, bool> SerializeElement(ByteArrayBuffer &buffer,
+  typename std::enable_if_t<IsPtr<U>::value, bool> SerializeElement(MsgPackSerializer &buffer,
                                                                     TemplateParameterType const &v)
   {
     if (v.object == nullptr)
@@ -251,7 +251,7 @@ private:
 
   template <typename U, typename TemplateParameterType>
   typename std::enable_if_t<IsPrimitive<U>::value, bool> SerializeElement(
-      ByteArrayBuffer &buffer, TemplateParameterType const &v)
+      MsgPackSerializer &buffer, TemplateParameterType const &v)
   {
     buffer << v.template Get<U>();
     return true;
@@ -259,7 +259,7 @@ private:
 
   template <typename U, typename TemplateParameterType>
   typename std::enable_if_t<IsPtr<U>::value, bool> DeserializeElement(TypeId                 type,
-                                                                      ByteArrayBuffer &      buffer,
+                                                                      MsgPackSerializer &      buffer,
                                                                       TemplateParameterType &v)
   {
     if (!vm_->IsDefaultSerializeConstructable(type))
@@ -275,7 +275,7 @@ private:
 
   template <typename U, typename TemplateParameterType>
   typename std::enable_if_t<IsPrimitive<U>::value, bool> DeserializeElement(
-      TypeId type, ByteArrayBuffer &buffer, TemplateParameterType &v)
+      TypeId type, MsgPackSerializer &buffer, TemplateParameterType &v)
   {
     U data;
     buffer >> data;

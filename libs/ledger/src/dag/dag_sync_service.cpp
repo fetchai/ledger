@@ -27,7 +27,7 @@
 namespace fetch {
 namespace ledger {
 
-using DAGNodesSerializer = fetch::serializers::ByteArrayBuffer;
+using DAGNodesSerializer = fetch::serializers::MsgPackSerializer;
 
 DAGSyncService::DAGSyncService(MuddleEndpoint &                      muddle_endpoint,
                                std::shared_ptr<ledger::DAGInterface> dag)

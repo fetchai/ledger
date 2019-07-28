@@ -32,16 +32,16 @@
 namespace fetch {
 namespace serializers {
 
-class MsgPackByteArrayBuffer
+class MsgPackSerializer
 {
   static char const *const LOGGING_NAME;
 
 public:
   using ByteArray         = byte_array::ByteArray;
 
-  MsgPackByteArrayBuffer()                              = default;
-  MsgPackByteArrayBuffer(MsgPackByteArrayBuffer &&from) = default;
-  MsgPackByteArrayBuffer &operator=(MsgPackByteArrayBuffer &&from) = default;
+  MsgPackSerializer()                              = default;
+  MsgPackSerializer(MsgPackSerializer &&from) = default;
+  MsgPackSerializer &operator=(MsgPackSerializer &&from) = default;
 
   /**
    * @brief Contructting from MUTABLE ByteArray.
@@ -55,10 +55,10 @@ public:
    * @param s Input mutable instance of ByteArray to copy content from (by
    *          value as explained above)
    */
-  MsgPackByteArrayBuffer(byte_array::ByteArray const &s);
-  MsgPackByteArrayBuffer(MsgPackByteArrayBuffer const &from);
+  MsgPackSerializer(byte_array::ByteArray const &s);
+  MsgPackSerializer(MsgPackSerializer const &from);
 
-  MsgPackByteArrayBuffer &operator=(MsgPackByteArrayBuffer const &from);
+  MsgPackSerializer &operator=(MsgPackSerializer const &from);
 
   void Allocate(uint64_t const &delta);
 
@@ -87,66 +87,66 @@ public:
   void SkipBytes(uint64_t const &size);
 
   template <typename T>
-  typename IgnoredSerializer<T, MsgPackByteArrayBuffer>::DriverType &operator<<(T const &);
+  typename IgnoredSerializer<T, MsgPackSerializer>::DriverType &operator<<(T const &);
 
   template <typename T>
-  typename IgnoredSerializer<T, MsgPackByteArrayBuffer>::DriverType &operator>>(T &);
+  typename IgnoredSerializer<T, MsgPackSerializer>::DriverType &operator>>(T &);
 
   template <typename T>
-  typename ForwardSerializer<T, MsgPackByteArrayBuffer>::DriverType &operator<<(T const &val);
+  typename ForwardSerializer<T, MsgPackSerializer>::DriverType &operator<<(T const &val);
 
   template <typename T>
-  typename ForwardSerializer<T, MsgPackByteArrayBuffer>::DriverType &operator>>(T &val);
+  typename ForwardSerializer<T, MsgPackSerializer>::DriverType &operator>>(T &val);
 
   template <typename T>
-  typename IntegerSerializer<T, MsgPackByteArrayBuffer>::DriverType &operator<<(T const &val);
+  typename IntegerSerializer<T, MsgPackSerializer>::DriverType &operator<<(T const &val);
 
   template <typename T>
-  typename IntegerSerializer<T, MsgPackByteArrayBuffer>::DriverType &operator>>(T &val);
+  typename IntegerSerializer<T, MsgPackSerializer>::DriverType &operator>>(T &val);
 
   template <typename T>
-  typename FloatSerializer<T, MsgPackByteArrayBuffer>::DriverType &operator<<(T const &val);
+  typename FloatSerializer<T, MsgPackSerializer>::DriverType &operator<<(T const &val);
 
   template <typename T>
-  typename FloatSerializer<T, MsgPackByteArrayBuffer>::DriverType &operator>>(T &val);
+  typename FloatSerializer<T, MsgPackSerializer>::DriverType &operator>>(T &val);
 
   template <typename T>
-  typename BooleanSerializer<T, MsgPackByteArrayBuffer>::DriverType &operator<<(T const &val);
+  typename BooleanSerializer<T, MsgPackSerializer>::DriverType &operator<<(T const &val);
 
   template <typename T>
-  typename BooleanSerializer<T, MsgPackByteArrayBuffer>::DriverType &operator>>(T &val);
+  typename BooleanSerializer<T, MsgPackSerializer>::DriverType &operator>>(T &val);
 
   template <typename T>
-  typename StringSerializer<T, MsgPackByteArrayBuffer>::DriverType &operator<<(T const &val);
+  typename StringSerializer<T, MsgPackSerializer>::DriverType &operator<<(T const &val);
 
   template <typename T>
-  typename StringSerializer<T, MsgPackByteArrayBuffer>::DriverType &operator>>(T &val);
+  typename StringSerializer<T, MsgPackSerializer>::DriverType &operator>>(T &val);
 
   template <typename T>
-  typename BinarySerializer<T, MsgPackByteArrayBuffer>::DriverType &operator<<(T const &val);
+  typename BinarySerializer<T, MsgPackSerializer>::DriverType &operator<<(T const &val);
 
   template <typename T>
-  typename BinarySerializer<T, MsgPackByteArrayBuffer>::DriverType &operator>>(T &val);
+  typename BinarySerializer<T, MsgPackSerializer>::DriverType &operator>>(T &val);
 
   template <typename T>
-  typename ArraySerializer<T, MsgPackByteArrayBuffer>::DriverType &operator<<(T const &val);
+  typename ArraySerializer<T, MsgPackSerializer>::DriverType &operator<<(T const &val);
 
   template <typename T>
-  typename ArraySerializer<T, MsgPackByteArrayBuffer>::DriverType &operator>>(T &val);
+  typename ArraySerializer<T, MsgPackSerializer>::DriverType &operator>>(T &val);
   template <typename T>
-  typename MapSerializer<T, MsgPackByteArrayBuffer>::DriverType &operator<<(T const &val);
+  typename MapSerializer<T, MsgPackSerializer>::DriverType &operator<<(T const &val);
 
   template <typename T>
-  typename MapSerializer<T, MsgPackByteArrayBuffer>::DriverType &operator>>(T &val);
+  typename MapSerializer<T, MsgPackSerializer>::DriverType &operator>>(T &val);
 
   template <typename T>
-  MsgPackByteArrayBuffer &Pack(T const *val);
+  MsgPackSerializer &Pack(T const *val);
 
   template <typename T>
-  MsgPackByteArrayBuffer &Pack(T const &val);
+  MsgPackSerializer &Pack(T const &val);
 
   template <typename T>
-  MsgPackByteArrayBuffer &Unpack(T &val);
+  MsgPackSerializer &Unpack(T &val);
 
   void     seek(uint64_t p);
   uint64_t tell() const;
@@ -158,7 +158,7 @@ public:
   byte_array::ByteArray const &data() const;
 
   template <typename... ARGS>
-  MsgPackByteArrayBuffer &Append(ARGS const &... args);
+  MsgPackSerializer &Append(ARGS const &... args);
 
 private:
   template <typename T, typename... ARGS>

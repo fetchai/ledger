@@ -30,7 +30,7 @@
 namespace fetch {
 namespace dkg {
 
-using DKGSerializer = fetch::serializers::ByteArrayBuffer;
+using DKGSerializer = fetch::serializers::MsgPackSerializer;
 
 /**
  * Different messages using in distributed key generation (DKG) protocol.

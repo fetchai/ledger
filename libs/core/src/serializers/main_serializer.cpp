@@ -31,28 +31,28 @@
 namespace fetch {
 namespace serializers {
 
-MsgPackByteArrayBuffer::MsgPackByteArrayBuffer(byte_array::ByteArray const &s)
+MsgPackSerializer::MsgPackSerializer(byte_array::ByteArray const &s)
   : data_{s.Copy()}
 {}
 
-MsgPackByteArrayBuffer::MsgPackByteArrayBuffer(MsgPackByteArrayBuffer const &from)
+MsgPackSerializer::MsgPackSerializer(MsgPackSerializer const &from)
   : data_{from.data_.Copy()}
   , pos_{from.pos_}
   , size_counter_{from.size_counter_}
 {}
 
-MsgPackByteArrayBuffer &MsgPackByteArrayBuffer::operator=(MsgPackByteArrayBuffer const &from)
+MsgPackSerializer &MsgPackSerializer::operator=(MsgPackSerializer const &from)
 {
-  *this = MsgPackByteArrayBuffer{from};
+  *this = MsgPackSerializer{from};
   return *this;
 }
 
-void MsgPackByteArrayBuffer::Allocate(uint64_t const &delta)
+void MsgPackSerializer::Allocate(uint64_t const &delta)
 {
   Resize(delta, ResizeParadigm::RELATIVE);
 }
 
-void MsgPackByteArrayBuffer::Resize(uint64_t const &size, ResizeParadigm const &resize_paradigm,
+void MsgPackSerializer::Resize(uint64_t const &size, ResizeParadigm const &resize_paradigm,
                                     bool const zero_reserved_space)
 {
   data_.Resize(size, resize_paradigm, zero_reserved_space);
@@ -71,31 +71,31 @@ void MsgPackByteArrayBuffer::Resize(uint64_t const &size, ResizeParadigm const &
   };
 }
 
-void MsgPackByteArrayBuffer::Reserve(uint64_t const &size, ResizeParadigm const &resize_paradigm,
+void MsgPackSerializer::Reserve(uint64_t const &size, ResizeParadigm const &resize_paradigm,
                                      bool const zero_reserved_space)
 {
   data_.Reserve(size, resize_paradigm, zero_reserved_space);
 }
 
-void MsgPackByteArrayBuffer::WriteBytes(uint8_t const *arr, uint64_t const &size)
+void MsgPackSerializer::WriteBytes(uint8_t const *arr, uint64_t const &size)
 {
   data_.WriteBytes(arr, size, pos_);
   pos_ += size;
 }
 
-void MsgPackByteArrayBuffer::WriteByte(uint8_t const &val)
+void MsgPackSerializer::WriteByte(uint8_t const &val)
 {
   data_.WriteBytes(&val, 1, pos_);
   ++pos_;
 }
 
-void MsgPackByteArrayBuffer::ReadByte(uint8_t &val)
+void MsgPackSerializer::ReadByte(uint8_t &val)
 {
   data_.ReadBytes(&val, 1, pos_);
   ++pos_;
 }
 
-void MsgPackByteArrayBuffer::ReadBytes(uint8_t *arr, uint64_t const &size)
+void MsgPackSerializer::ReadBytes(uint8_t *arr, uint64_t const &size)
 {
 #ifndef NDEBUG
   if (size + pos_ > data_.size())
@@ -107,7 +107,7 @@ void MsgPackByteArrayBuffer::ReadBytes(uint8_t *arr, uint64_t const &size)
   pos_ += size;
 }
 
-void MsgPackByteArrayBuffer::ReadByteArray(byte_array::ConstByteArray &b, uint64_t const &size)
+void MsgPackSerializer::ReadByteArray(byte_array::ConstByteArray &b, uint64_t const &size)
 {
 #ifndef NDEBUG
   if (size + pos_ > data_.size())
@@ -119,42 +119,42 @@ void MsgPackByteArrayBuffer::ReadByteArray(byte_array::ConstByteArray &b, uint64
   pos_ += size;
 }
 
-void MsgPackByteArrayBuffer::SkipBytes(uint64_t const &size)
+void MsgPackSerializer::SkipBytes(uint64_t const &size)
 {
   pos_ += size;
 }
 
-void MsgPackByteArrayBuffer::seek(uint64_t p)
+void MsgPackSerializer::seek(uint64_t p)
 {
   pos_ = p;
 }
 
-uint64_t MsgPackByteArrayBuffer::tell() const
+uint64_t MsgPackSerializer::tell() const
 {
   return pos_;
 }
 
-uint64_t MsgPackByteArrayBuffer::size() const
+uint64_t MsgPackSerializer::size() const
 {
   return data_.size();
 }
 
-uint64_t MsgPackByteArrayBuffer::capacity() const
+uint64_t MsgPackSerializer::capacity() const
 {
   return data_.capacity();
 }
 
-int64_t MsgPackByteArrayBuffer::bytes_left() const
+int64_t MsgPackSerializer::bytes_left() const
 {
   return static_cast<int64_t>(data_.size()) - static_cast<int64_t>(pos_);
 }
 
-byte_array::ByteArray const &MsgPackByteArrayBuffer::data() const
+byte_array::ByteArray const &MsgPackSerializer::data() const
 {
   return data_;
 }
 
-void MsgPackByteArrayBuffer::AppendInternal()
+void MsgPackSerializer::AppendInternal()
 {}
 
 }  // namespace serializers

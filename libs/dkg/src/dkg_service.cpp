@@ -36,7 +36,7 @@ namespace {
 using namespace std::chrono_literals;
 
 using byte_array::ConstByteArray;
-using serializers::ByteArrayBuffer;
+using serializers::MsgPackSerializer;
 
 using MuddleAddress = muddle::Packet::Address;
 using State         = DkgService::State;

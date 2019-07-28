@@ -105,7 +105,7 @@ inline void DAGEpoch::Finalise()
 {
   // strictly speaking this is a bit of a weird hash because it will also contain all the weird
   // serialisation metadata
-  serializers::ByteArrayBuffer buf;
+  serializers::MsgPackSerializer buf;
   buf << *this;
 
   HasherType hasher;

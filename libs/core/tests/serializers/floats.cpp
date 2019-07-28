@@ -38,11 +38,11 @@ namespace serializers {
 TEST(MsgPacker, floats)
 {
   // Setup
-  ByteArrayBuffer stream;
+  MsgPackSerializer stream;
   double          value;
 
   value  = static_cast<double>(2.34);
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
   std::cout << ToHex(stream.data()) << std::endl;
   EXPECT_EQ(FromHex("cb4002b851eb851eb8"), stream.data());

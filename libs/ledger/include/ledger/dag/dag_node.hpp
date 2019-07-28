@@ -101,7 +101,7 @@ struct DAGNode
    */
   void Finalise()
   {
-    serializers::ByteArrayBuffer buf;
+    serializers::MsgPackSerializer buf;
 
     buf << type << previous << contents << contract_digest << identity << hash << signature
         << oldest_epoch_referenced << weight;

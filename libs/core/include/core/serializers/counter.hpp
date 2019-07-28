@@ -551,8 +551,8 @@ auto sizeCounterGuardFactory(T &size_counter);
  * This guard is implemented as class to ensure correct functionality in exception based
  * environment.
  *
- * @tparam T Represents type with STREAM/BUFFER like API (e.g. SizeCounter, ByteArrayBuffer,
- * TypedByteArrayBuffer, etc. ...), with clear preference to use here size count
+ * @tparam T Represents type with STREAM/BUFFER like API (e.g. SizeCounter, MsgPackSerializer,
+ * MsgPackSerializer, etc. ...), with clear preference to use here size count
  * implementation (SizeCounter class) due to performance reasons.
  */
 template <typename T>

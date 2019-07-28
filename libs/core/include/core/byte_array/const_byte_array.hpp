@@ -119,7 +119,7 @@ public:
       FETCH_LOG_WARN(LOGGING_NAME,
                      "ReadBytes target array is too big for us to fill. dest_size=", dest_size,
                      " src_offset=", src_offset, " size=", size());
-      assert(false);
+
       throw std::range_error("ReadBytes target array is too big");
     }
     std::memcpy(dest, pointer() + src_offset, dest_size);

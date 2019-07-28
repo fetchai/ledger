@@ -83,12 +83,12 @@ public:
 TEST(MsgPacker, SimpleTypes)
 {
   // Setup
-  ByteArrayBuffer stream;
+  MsgPackSerializer stream;
   HelloWorld      a1, b1;
   a1.compact = true;
   a1.schema  = 3;
 
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << a1;
   EXPECT_EQ(FromHex("82a7636f6d70616374c3a6736368656d6103"), stream.data());
   stream.seek(0);
@@ -101,7 +101,7 @@ TEST(MsgPacker, SimpleTypes)
   a2["compact"] = {1, 2, 3};
   a2["empty"]   = {};
   a2["schema"]  = {256, 257, 258, 259};
-  stream        = ByteArrayBuffer();
+  stream        = MsgPackSerializer();
   stream << a2;
   EXPECT_EQ(
       FromHex("83a7636f6d7061637493010203a5656d70747990a6736368656d6194cd0100cd0101cd0102cd0103"),

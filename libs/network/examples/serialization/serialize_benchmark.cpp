@@ -105,7 +105,7 @@ void TestSerializationSpeed()
     //    if(i % 3) c.push_back(entry);
   }
 
-  ByteArrayBuffer buffer;
+  MsgPackSerializer buffer;
 
   high_resolution_clock::time_point t1 = high_resolution_clock::now();
   std::sort(a.begin(), a.end());

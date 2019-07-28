@@ -38,12 +38,12 @@ namespace serializers {
 TEST(MsgPacker, short_strings)
 {
   // Setup
-  ByteArrayBuffer stream;
+  MsgPackSerializer stream;
   ConstByteArray  value;
 
   // len(value) = 0
   value  = "";
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
   EXPECT_EQ(FromHex("a0"), stream.data());
   stream.seek(0);
@@ -53,7 +53,7 @@ TEST(MsgPacker, short_strings)
 
   // len(value) = 1
   value  = "L";
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
   EXPECT_EQ(FromHex("a14c"), stream.data());
   stream.seek(0);
@@ -63,7 +63,7 @@ TEST(MsgPacker, short_strings)
 
   // len(value) = 2
   value  = "Lo";
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
   EXPECT_EQ(FromHex("a24c6f"), stream.data());
   stream.seek(0);
@@ -73,7 +73,7 @@ TEST(MsgPacker, short_strings)
 
   // len(value) = 3
   value  = "Lor";
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
   EXPECT_EQ(FromHex("a34c6f72"), stream.data());
   stream.seek(0);
@@ -83,7 +83,7 @@ TEST(MsgPacker, short_strings)
 
   // len(value) = 4
   value  = "Lore";
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
   EXPECT_EQ(FromHex("a44c6f7265"), stream.data());
   stream.seek(0);
@@ -93,7 +93,7 @@ TEST(MsgPacker, short_strings)
 
   // len(value) = 5
   value  = "Lorem";
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
   EXPECT_EQ(FromHex("a54c6f72656d"), stream.data());
   stream.seek(0);
@@ -103,7 +103,7 @@ TEST(MsgPacker, short_strings)
 
   // len(value) = 6
   value  = "Lorem ";
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
   EXPECT_EQ(FromHex("a64c6f72656d20"), stream.data());
   stream.seek(0);
@@ -113,7 +113,7 @@ TEST(MsgPacker, short_strings)
 
   // len(value) = 7
   value  = "Lorem i";
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
   EXPECT_EQ(FromHex("a74c6f72656d2069"), stream.data());
   stream.seek(0);
@@ -123,7 +123,7 @@ TEST(MsgPacker, short_strings)
 
   // len(value) = 8
   value  = "Lorem ip";
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
   EXPECT_EQ(FromHex("a84c6f72656d206970"), stream.data());
   stream.seek(0);
@@ -133,7 +133,7 @@ TEST(MsgPacker, short_strings)
 
   // len(value) = 9
   value  = "Lorem ips";
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
   EXPECT_EQ(FromHex("a94c6f72656d20697073"), stream.data());
   stream.seek(0);
@@ -143,7 +143,7 @@ TEST(MsgPacker, short_strings)
 
   // len(value) = 10
   value  = "Lorem ipsu";
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
   EXPECT_EQ(FromHex("aa4c6f72656d2069707375"), stream.data());
   stream.seek(0);
@@ -153,7 +153,7 @@ TEST(MsgPacker, short_strings)
 
   // len(value) = 11
   value  = "Lorem ipsum";
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
   EXPECT_EQ(FromHex("ab4c6f72656d20697073756d"), stream.data());
   stream.seek(0);
@@ -163,7 +163,7 @@ TEST(MsgPacker, short_strings)
 
   // len(value) = 12
   value  = "Lorem ipsum ";
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
   EXPECT_EQ(FromHex("ac4c6f72656d20697073756d20"), stream.data());
   stream.seek(0);
@@ -173,7 +173,7 @@ TEST(MsgPacker, short_strings)
 
   // len(value) = 13
   value  = "Lorem ipsum d";
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
   EXPECT_EQ(FromHex("ad4c6f72656d20697073756d2064"), stream.data());
   stream.seek(0);
@@ -183,7 +183,7 @@ TEST(MsgPacker, short_strings)
 
   // len(value) = 14
   value  = "Lorem ipsum do";
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
   EXPECT_EQ(FromHex("ae4c6f72656d20697073756d20646f"), stream.data());
   stream.seek(0);
@@ -193,7 +193,7 @@ TEST(MsgPacker, short_strings)
 
   // len(value) = 15
   value  = "Lorem ipsum dol";
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
   EXPECT_EQ(FromHex("af4c6f72656d20697073756d20646f6c"), stream.data());
   stream.seek(0);
@@ -203,7 +203,7 @@ TEST(MsgPacker, short_strings)
 
   // len(value) = 16
   value  = "Lorem ipsum dolo";
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
   EXPECT_EQ(FromHex("b04c6f72656d20697073756d20646f6c6f"), stream.data());
   stream.seek(0);
@@ -213,7 +213,7 @@ TEST(MsgPacker, short_strings)
 
   // len(value) = 17
   value  = "Lorem ipsum dolor";
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
   EXPECT_EQ(FromHex("b14c6f72656d20697073756d20646f6c6f72"), stream.data());
   stream.seek(0);
@@ -223,7 +223,7 @@ TEST(MsgPacker, short_strings)
 
   // len(value) = 18
   value  = "Lorem ipsum dolor ";
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
   EXPECT_EQ(FromHex("b24c6f72656d20697073756d20646f6c6f7220"), stream.data());
   stream.seek(0);
@@ -233,7 +233,7 @@ TEST(MsgPacker, short_strings)
 
   // len(value) = 19
   value  = "Lorem ipsum dolor s";
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
   EXPECT_EQ(FromHex("b34c6f72656d20697073756d20646f6c6f722073"), stream.data());
   stream.seek(0);
@@ -243,7 +243,7 @@ TEST(MsgPacker, short_strings)
 
   // len(value) = 20
   value  = "Lorem ipsum dolor si";
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
   EXPECT_EQ(FromHex("b44c6f72656d20697073756d20646f6c6f72207369"), stream.data());
   stream.seek(0);
@@ -253,7 +253,7 @@ TEST(MsgPacker, short_strings)
 
   // len(value) = 21
   value  = "Lorem ipsum dolor sit";
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
   EXPECT_EQ(FromHex("b54c6f72656d20697073756d20646f6c6f7220736974"), stream.data());
   stream.seek(0);
@@ -263,7 +263,7 @@ TEST(MsgPacker, short_strings)
 
   // len(value) = 22
   value  = "Lorem ipsum dolor sit ";
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
   EXPECT_EQ(FromHex("b64c6f72656d20697073756d20646f6c6f722073697420"), stream.data());
   stream.seek(0);
@@ -273,7 +273,7 @@ TEST(MsgPacker, short_strings)
 
   // len(value) = 23
   value  = "Lorem ipsum dolor sit a";
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
   EXPECT_EQ(FromHex("b74c6f72656d20697073756d20646f6c6f72207369742061"), stream.data());
   stream.seek(0);
@@ -283,7 +283,7 @@ TEST(MsgPacker, short_strings)
 
   // len(value) = 24
   value  = "Lorem ipsum dolor sit am";
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
   EXPECT_EQ(FromHex("b84c6f72656d20697073756d20646f6c6f722073697420616d"), stream.data());
   stream.seek(0);
@@ -293,7 +293,7 @@ TEST(MsgPacker, short_strings)
 
   // len(value) = 25
   value  = "Lorem ipsum dolor sit ame";
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
   EXPECT_EQ(FromHex("b94c6f72656d20697073756d20646f6c6f722073697420616d65"), stream.data());
   stream.seek(0);
@@ -303,7 +303,7 @@ TEST(MsgPacker, short_strings)
 
   // len(value) = 26
   value  = "Lorem ipsum dolor sit amet";
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
   EXPECT_EQ(FromHex("ba4c6f72656d20697073756d20646f6c6f722073697420616d6574"), stream.data());
   stream.seek(0);
@@ -313,7 +313,7 @@ TEST(MsgPacker, short_strings)
 
   // len(value) = 27
   value  = "Lorem ipsum dolor sit amet,";
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
   EXPECT_EQ(FromHex("bb4c6f72656d20697073756d20646f6c6f722073697420616d65742c"), stream.data());
   stream.seek(0);
@@ -323,7 +323,7 @@ TEST(MsgPacker, short_strings)
 
   // len(value) = 28
   value  = "Lorem ipsum dolor sit amet, ";
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
   EXPECT_EQ(FromHex("bc4c6f72656d20697073756d20646f6c6f722073697420616d65742c20"), stream.data());
   stream.seek(0);
@@ -333,7 +333,7 @@ TEST(MsgPacker, short_strings)
 
   // len(value) = 29
   value  = "Lorem ipsum dolor sit amet, c";
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
   EXPECT_EQ(FromHex("bd4c6f72656d20697073756d20646f6c6f722073697420616d65742c2063"), stream.data());
   stream.seek(0);
@@ -343,7 +343,7 @@ TEST(MsgPacker, short_strings)
 
   // len(value) = 30
   value  = "Lorem ipsum dolor sit amet, co";
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
   EXPECT_EQ(FromHex("be4c6f72656d20697073756d20646f6c6f722073697420616d65742c20636f"),
             stream.data());
@@ -354,7 +354,7 @@ TEST(MsgPacker, short_strings)
 
   // len(value) = 31
   value  = "Lorem ipsum dolor sit amet, con";
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
   EXPECT_EQ(FromHex("bf4c6f72656d20697073756d20646f6c6f722073697420616d65742c20636f6e"),
             stream.data());
@@ -365,7 +365,7 @@ TEST(MsgPacker, short_strings)
 
   // len(value) = 32
   value  = "Lorem ipsum dolor sit amet, cons";
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
   EXPECT_EQ(FromHex("d9204c6f72656d20697073756d20646f6c6f722073697420616d65742c20636f6e73"),
             stream.data());
@@ -376,7 +376,7 @@ TEST(MsgPacker, short_strings)
 
   // len(value) = 33
   value  = "Lorem ipsum dolor sit amet, conse";
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
   EXPECT_EQ(FromHex("d9214c6f72656d20697073756d20646f6c6f722073697420616d65742c20636f6e7365"),
             stream.data());
@@ -387,7 +387,7 @@ TEST(MsgPacker, short_strings)
 
   // len(value) = 34
   value  = "Lorem ipsum dolor sit amet, consec";
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
   EXPECT_EQ(FromHex("d9224c6f72656d20697073756d20646f6c6f722073697420616d65742c20636f6e736563"),
             stream.data());
@@ -400,7 +400,7 @@ TEST(MsgPacker, short_strings)
   value =
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec vel tempor odio. Phasellus "
       "congue sed";
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
   EXPECT_EQ(FromHex("d9644c6f72656d20697073756d20646f6c6f722073697420616d65742c20636f6e736563746574"
                     "75722061646970697363696e6720656c69742e20446f6e65632076656c2074656d706f72206f64"
@@ -417,7 +417,7 @@ TEST(MsgPacker, short_strings)
   value =
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec vel tempor odio. Phasellus "
       "congue sed ";
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
   EXPECT_EQ(FromHex("d9654c6f72656d20697073756d20646f6c6f722073697420616d65742c20636f6e736563746574"
                     "75722061646970697363696e6720656c69742e20446f6e65632076656c2074656d706f72206f64"
@@ -434,7 +434,7 @@ TEST(MsgPacker, short_strings)
   value =
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec vel tempor odio. Phasellus "
       "congue sed l";
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
   EXPECT_EQ(FromHex("d9664c6f72656d20697073756d20646f6c6f722073697420616d65742c20636f6e736563746574"
                     "75722061646970697363696e6720656c69742e20446f6e65632076656c2074656d706f72206f64"
@@ -451,7 +451,7 @@ TEST(MsgPacker, short_strings)
   value =
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec vel tempor odio. Phasellus "
       "congue sed le";
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
   EXPECT_EQ(FromHex("d9674c6f72656d20697073756d20646f6c6f722073697420616d65742c20636f6e736563746574"
                     "75722061646970697363696e6720656c69742e20446f6e65632076656c2074656d706f72206f64"
@@ -468,7 +468,7 @@ TEST(MsgPacker, short_strings)
   value =
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec vel tempor odio. Phasellus "
       "congue sed leo";
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
   EXPECT_EQ(FromHex("d9684c6f72656d20697073756d20646f6c6f722073697420616d65742c20636f6e736563746574"
                     "75722061646970697363696e6720656c69742e20446f6e65632076656c2074656d706f72206f64"
@@ -485,7 +485,7 @@ TEST(MsgPacker, short_strings)
   value =
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec vel tempor odio. Phasellus "
       "congue sed leo ";
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
   EXPECT_EQ(FromHex("d9694c6f72656d20697073756d20646f6c6f722073697420616d65742c20636f6e736563746574"
                     "75722061646970697363696e6720656c69742e20446f6e65632076656c2074656d706f72206f64"
@@ -502,7 +502,7 @@ TEST(MsgPacker, short_strings)
   value =
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec vel tempor odio. Phasellus "
       "congue sed leo i";
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
   EXPECT_EQ(FromHex("d96a4c6f72656d20697073756d20646f6c6f722073697420616d65742c20636f6e736563746574"
                     "75722061646970697363696e6720656c69742e20446f6e65632076656c2074656d706f72206f64"
@@ -519,7 +519,7 @@ TEST(MsgPacker, short_strings)
   value =
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec vel tempor odio. Phasellus "
       "congue sed leo in";
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
   EXPECT_EQ(FromHex("d96b4c6f72656d20697073756d20646f6c6f722073697420616d65742c20636f6e736563746574"
                     "75722061646970697363696e6720656c69742e20446f6e65632076656c2074656d706f72206f64"
@@ -536,7 +536,7 @@ TEST(MsgPacker, short_strings)
   value =
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec vel tempor odio. Phasellus "
       "congue sed leo in ";
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
   EXPECT_EQ(FromHex("d96c4c6f72656d20697073756d20646f6c6f722073697420616d65742c20636f6e736563746574"
                     "75722061646970697363696e6720656c69742e20446f6e65632076656c2074656d706f72206f64"
@@ -553,7 +553,7 @@ TEST(MsgPacker, short_strings)
   value =
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec vel tempor odio. Phasellus "
       "congue sed leo in p";
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
   EXPECT_EQ(FromHex("d96d4c6f72656d20697073756d20646f6c6f722073697420616d65742c20636f6e736563746574"
                     "75722061646970697363696e6720656c69742e20446f6e65632076656c2074656d706f72206f64"
@@ -570,7 +570,7 @@ TEST(MsgPacker, short_strings)
   value =
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec vel tempor odio. Phasellus "
       "congue sed leo in pl";
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
   EXPECT_EQ(FromHex("d96e4c6f72656d20697073756d20646f6c6f722073697420616d65742c20636f6e736563746574"
                     "75722061646970697363696e6720656c69742e20446f6e65632076656c2074656d706f72206f64"
@@ -587,7 +587,7 @@ TEST(MsgPacker, short_strings)
   value =
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec vel tempor odio. Phasellus "
       "congue sed leo in pla";
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
   EXPECT_EQ(FromHex("d96f4c6f72656d20697073756d20646f6c6f722073697420616d65742c20636f6e736563746574"
                     "75722061646970697363696e6720656c69742e20446f6e65632076656c2074656d706f72206f64"
@@ -604,7 +604,7 @@ TEST(MsgPacker, short_strings)
   value =
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec vel tempor odio. Phasellus "
       "congue sed leo in plac";
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
   EXPECT_EQ(FromHex("d9704c6f72656d20697073756d20646f6c6f722073697420616d65742c20636f6e736563746574"
                     "75722061646970697363696e6720656c69742e20446f6e65632076656c2074656d706f72206f64"
@@ -621,7 +621,7 @@ TEST(MsgPacker, short_strings)
   value =
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec vel tempor odio. Phasellus "
       "congue sed leo in place";
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
   EXPECT_EQ(FromHex("d9714c6f72656d20697073756d20646f6c6f722073697420616d65742c20636f6e736563746574"
                     "75722061646970697363696e6720656c69742e20446f6e65632076656c2074656d706f72206f64"
@@ -638,7 +638,7 @@ TEST(MsgPacker, short_strings)
   value =
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec vel tempor odio. Phasellus "
       "congue sed leo in placer";
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
   EXPECT_EQ(FromHex("d9724c6f72656d20697073756d20646f6c6f722073697420616d65742c20636f6e736563746574"
                     "75722061646970697363696e6720656c69742e20446f6e65632076656c2074656d706f72206f64"
@@ -655,7 +655,7 @@ TEST(MsgPacker, short_strings)
   value =
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec vel tempor odio. Phasellus "
       "congue sed leo in placera";
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
   EXPECT_EQ(
       FromHex("d9734c6f72656d20697073756d20646f6c6f722073697420616d65742c20636f6e736563746574757220"
@@ -673,7 +673,7 @@ TEST(MsgPacker, short_strings)
   value =
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec vel tempor odio. Phasellus "
       "congue sed leo in placerat";
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
   EXPECT_EQ(
       FromHex("d9744c6f72656d20697073756d20646f6c6f722073697420616d65742c20636f6e736563746574757220"
@@ -691,7 +691,7 @@ TEST(MsgPacker, short_strings)
   value =
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec vel tempor odio. Phasellus "
       "congue sed leo in placerat.";
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
   EXPECT_EQ(
       FromHex("d9754c6f72656d20697073756d20646f6c6f722073697420616d65742c20636f6e736563746574757220"
@@ -709,7 +709,7 @@ TEST(MsgPacker, short_strings)
   value =
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec vel tempor odio. Phasellus "
       "congue sed leo in placerat. ";
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
   EXPECT_EQ(
       FromHex("d9764c6f72656d20697073756d20646f6c6f722073697420616d65742c20636f6e736563746574757220"
@@ -727,7 +727,7 @@ TEST(MsgPacker, short_strings)
   value =
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec vel tempor odio. Phasellus "
       "congue sed leo in placerat. M";
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
   EXPECT_EQ(
       FromHex("d9774c6f72656d20697073756d20646f6c6f722073697420616d65742c20636f6e736563746574757220"
@@ -745,7 +745,7 @@ TEST(MsgPacker, short_strings)
   value =
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec vel tempor odio. Phasellus "
       "congue sed leo in placerat. Ma";
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
   EXPECT_EQ(
       FromHex("d9784c6f72656d20697073756d20646f6c6f722073697420616d65742c20636f6e736563746574757220"
@@ -763,7 +763,7 @@ TEST(MsgPacker, short_strings)
   value =
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec vel tempor odio. Phasellus "
       "congue sed leo in placerat. Mau";
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
   EXPECT_EQ(
       FromHex("d9794c6f72656d20697073756d20646f6c6f722073697420616d65742c20636f6e736563746574757220"
@@ -781,7 +781,7 @@ TEST(MsgPacker, short_strings)
   value =
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec vel tempor odio. Phasellus "
       "congue sed leo in placerat. Maur";
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
   EXPECT_EQ(
       FromHex("d97a4c6f72656d20697073756d20646f6c6f722073697420616d65742c20636f6e736563746574757220"
@@ -799,7 +799,7 @@ TEST(MsgPacker, short_strings)
   value =
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec vel tempor odio. Phasellus "
       "congue sed leo in placerat. Mauri";
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
   EXPECT_EQ(
       FromHex("d97b4c6f72656d20697073756d20646f6c6f722073697420616d65742c20636f6e736563746574757220"
@@ -817,7 +817,7 @@ TEST(MsgPacker, short_strings)
   value =
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec vel tempor odio. Phasellus "
       "congue sed leo in placerat. Mauris";
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
   EXPECT_EQ(
       FromHex(
@@ -836,7 +836,7 @@ TEST(MsgPacker, short_strings)
   value =
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec vel tempor odio. Phasellus "
       "congue sed leo in placerat. Mauris ";
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
   EXPECT_EQ(
       FromHex(
@@ -855,7 +855,7 @@ TEST(MsgPacker, short_strings)
   value =
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec vel tempor odio. Phasellus "
       "congue sed leo in placerat. Mauris e";
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
   EXPECT_EQ(
       FromHex(
@@ -874,7 +874,7 @@ TEST(MsgPacker, short_strings)
   value =
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec vel tempor odio. Phasellus "
       "congue sed leo in placerat. Mauris et";
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
   EXPECT_EQ(
       FromHex(
@@ -893,7 +893,7 @@ TEST(MsgPacker, short_strings)
   value =
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec vel tempor odio. Phasellus "
       "congue sed leo in placerat. Mauris et ";
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
   EXPECT_EQ(
       FromHex(
@@ -912,7 +912,7 @@ TEST(MsgPacker, short_strings)
   value =
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec vel tempor odio. Phasellus "
       "congue sed leo in placerat. Mauris et e";
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
   EXPECT_EQ(
       FromHex(
@@ -931,7 +931,7 @@ TEST(MsgPacker, short_strings)
   value =
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec vel tempor odio. Phasellus "
       "congue sed leo in placerat. Mauris et el";
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
   EXPECT_EQ(FromHex("d9824c6f72656d20697073756d20646f6c6f722073697420616d65742c20636f6e736563746574"
                     "75722061646970697363696e6720656c69742e20446f6e65632076656c2074656d706f72206f64"
@@ -949,7 +949,7 @@ TEST(MsgPacker, short_strings)
   value =
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec vel tempor odio. Phasellus "
       "congue sed leo in placerat. Mauris et eli";
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
   EXPECT_EQ(FromHex("d9834c6f72656d20697073756d20646f6c6f722073697420616d65742c20636f6e736563746574"
                     "75722061646970697363696e6720656c69742e20446f6e65632076656c2074656d706f72206f64"
@@ -967,7 +967,7 @@ TEST(MsgPacker, short_strings)
   value =
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec vel tempor odio. Phasellus "
       "congue sed leo in placerat. Mauris et elit";
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
   EXPECT_EQ(FromHex("d9844c6f72656d20697073756d20646f6c6f722073697420616d65742c20636f6e736563746574"
                     "75722061646970697363696e6720656c69742e20446f6e65632076656c2074656d706f72206f64"
@@ -985,7 +985,7 @@ TEST(MsgPacker, short_strings)
   value =
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec vel tempor odio. Phasellus "
       "congue sed leo in placerat. Mauris et elit ";
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
   EXPECT_EQ(FromHex("d9854c6f72656d20697073756d20646f6c6f722073697420616d65742c20636f6e736563746574"
                     "75722061646970697363696e6720656c69742e20446f6e65632076656c2074656d706f72206f64"
@@ -1003,7 +1003,7 @@ TEST(MsgPacker, short_strings)
   value =
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec vel tempor odio. Phasellus "
       "congue sed leo in placerat. Mauris et elit i";
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
   EXPECT_EQ(FromHex("d9864c6f72656d20697073756d20646f6c6f722073697420616d65742c20636f6e736563746574"
                     "75722061646970697363696e6720656c69742e20446f6e65632076656c2074656d706f72206f64"
@@ -1021,7 +1021,7 @@ TEST(MsgPacker, short_strings)
   value =
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec vel tempor odio. Phasellus "
       "congue sed leo in placerat. Mauris et elit in";
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
   EXPECT_EQ(FromHex("d9874c6f72656d20697073756d20646f6c6f722073697420616d65742c20636f6e736563746574"
                     "75722061646970697363696e6720656c69742e20446f6e65632076656c2074656d706f72206f64"
@@ -1039,7 +1039,7 @@ TEST(MsgPacker, short_strings)
   value =
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec vel tempor odio. Phasellus "
       "congue sed leo in placerat. Mauris et elit in ";
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
   EXPECT_EQ(FromHex("d9884c6f72656d20697073756d20646f6c6f722073697420616d65742c20636f6e736563746574"
                     "75722061646970697363696e6720656c69742e20446f6e65632076656c2074656d706f72206f64"
@@ -1057,7 +1057,7 @@ TEST(MsgPacker, short_strings)
   value =
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec vel tempor odio. Phasellus "
       "congue sed leo in placerat. Mauris et elit in q";
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
   EXPECT_EQ(FromHex("d9894c6f72656d20697073756d20646f6c6f722073697420616d65742c20636f6e736563746574"
                     "75722061646970697363696e6720656c69742e20446f6e65632076656c2074656d706f72206f64"
@@ -1075,7 +1075,7 @@ TEST(MsgPacker, short_strings)
   value =
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec vel tempor odio. Phasellus "
       "congue sed leo in placerat. Mauris et elit in qu";
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
   EXPECT_EQ(FromHex("d98a4c6f72656d20697073756d20646f6c6f722073697420616d65742c20636f6e736563746574"
                     "75722061646970697363696e6720656c69742e20446f6e65632076656c2074656d706f72206f64"
@@ -1093,7 +1093,7 @@ TEST(MsgPacker, short_strings)
   value =
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec vel tempor odio. Phasellus "
       "congue sed leo in placerat. Mauris et elit in qua";
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
   EXPECT_EQ(FromHex("d98b4c6f72656d20697073756d20646f6c6f722073697420616d65742c20636f6e736563746574"
                     "75722061646970697363696e6720656c69742e20446f6e65632076656c2074656d706f72206f64"
@@ -1111,7 +1111,7 @@ TEST(MsgPacker, short_strings)
   value =
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec vel tempor odio. Phasellus "
       "congue sed leo in placerat. Mauris et elit in quam";
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
   EXPECT_EQ(FromHex("d98c4c6f72656d20697073756d20646f6c6f722073697420616d65742c20636f6e736563746574"
                     "75722061646970697363696e6720656c69742e20446f6e65632076656c2074656d706f72206f64"
@@ -1130,7 +1130,7 @@ TEST(MsgPacker, short_strings)
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec vel tempor odio. Phasellus "
       "congue sed leo in placerat. Mauris et elit in quam ultrices vulputate ut ac justo. Donec a "
       "porta orci. Curabitur euismod hendrerit feugiat. Mauris neq";
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
   EXPECT_EQ(
       FromHex("d9f04c6f72656d20697073756d20646f6c6f722073697420616d65742c20636f6e736563746574757220"
@@ -1153,7 +1153,7 @@ TEST(MsgPacker, short_strings)
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec vel tempor odio. Phasellus "
       "congue sed leo in placerat. Mauris et elit in quam ultrices vulputate ut ac justo. Donec a "
       "porta orci. Curabitur euismod hendrerit feugiat. Mauris nequ";
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
   EXPECT_EQ(
       FromHex("d9f14c6f72656d20697073756d20646f6c6f722073697420616d65742c20636f6e736563746574757220"
@@ -1176,7 +1176,7 @@ TEST(MsgPacker, short_strings)
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec vel tempor odio. Phasellus "
       "congue sed leo in placerat. Mauris et elit in quam ultrices vulputate ut ac justo. Donec a "
       "porta orci. Curabitur euismod hendrerit feugiat. Mauris neque";
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
   EXPECT_EQ(
       FromHex("d9f24c6f72656d20697073756d20646f6c6f722073697420616d65742c20636f6e736563746574757220"
@@ -1199,7 +1199,7 @@ TEST(MsgPacker, short_strings)
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec vel tempor odio. Phasellus "
       "congue sed leo in placerat. Mauris et elit in quam ultrices vulputate ut ac justo. Donec a "
       "porta orci. Curabitur euismod hendrerit feugiat. Mauris neque ";
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
   EXPECT_EQ(
       FromHex("d9f34c6f72656d20697073756d20646f6c6f722073697420616d65742c20636f6e736563746574757220"
@@ -1222,7 +1222,7 @@ TEST(MsgPacker, short_strings)
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec vel tempor odio. Phasellus "
       "congue sed leo in placerat. Mauris et elit in quam ultrices vulputate ut ac justo. Donec a "
       "porta orci. Curabitur euismod hendrerit feugiat. Mauris neque f";
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
   EXPECT_EQ(
       FromHex("d9f44c6f72656d20697073756d20646f6c6f722073697420616d65742c20636f6e736563746574757220"
@@ -1245,7 +1245,7 @@ TEST(MsgPacker, short_strings)
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec vel tempor odio. Phasellus "
       "congue sed leo in placerat. Mauris et elit in quam ultrices vulputate ut ac justo. Donec a "
       "porta orci. Curabitur euismod hendrerit feugiat. Mauris neque fe";
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
   EXPECT_EQ(
       FromHex("d9f54c6f72656d20697073756d20646f6c6f722073697420616d65742c20636f6e736563746574757220"
@@ -1268,7 +1268,7 @@ TEST(MsgPacker, short_strings)
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec vel tempor odio. Phasellus "
       "congue sed leo in placerat. Mauris et elit in quam ultrices vulputate ut ac justo. Donec a "
       "porta orci. Curabitur euismod hendrerit feugiat. Mauris neque fel";
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
   EXPECT_EQ(
       FromHex("d9f64c6f72656d20697073756d20646f6c6f722073697420616d65742c20636f6e736563746574757220"
@@ -1291,7 +1291,7 @@ TEST(MsgPacker, short_strings)
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec vel tempor odio. Phasellus "
       "congue sed leo in placerat. Mauris et elit in quam ultrices vulputate ut ac justo. Donec a "
       "porta orci. Curabitur euismod hendrerit feugiat. Mauris neque feli";
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
   EXPECT_EQ(
       FromHex("d9f74c6f72656d20697073756d20646f6c6f722073697420616d65742c20636f6e736563746574757220"
@@ -1314,7 +1314,7 @@ TEST(MsgPacker, short_strings)
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec vel tempor odio. Phasellus "
       "congue sed leo in placerat. Mauris et elit in quam ultrices vulputate ut ac justo. Donec a "
       "porta orci. Curabitur euismod hendrerit feugiat. Mauris neque felis";
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
   EXPECT_EQ(
       FromHex("d9f84c6f72656d20697073756d20646f6c6f722073697420616d65742c20636f6e736563746574757220"
@@ -1337,7 +1337,7 @@ TEST(MsgPacker, short_strings)
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec vel tempor odio. Phasellus "
       "congue sed leo in placerat. Mauris et elit in quam ultrices vulputate ut ac justo. Donec a "
       "porta orci. Curabitur euismod hendrerit feugiat. Mauris neque felis,";
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
   EXPECT_EQ(
       FromHex("d9f94c6f72656d20697073756d20646f6c6f722073697420616d65742c20636f6e736563746574757220"
@@ -1360,7 +1360,7 @@ TEST(MsgPacker, short_strings)
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec vel tempor odio. Phasellus "
       "congue sed leo in placerat. Mauris et elit in quam ultrices vulputate ut ac justo. Donec a "
       "porta orci. Curabitur euismod hendrerit feugiat. Mauris neque felis, ";
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
   EXPECT_EQ(
       FromHex(
@@ -1384,7 +1384,7 @@ TEST(MsgPacker, short_strings)
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec vel tempor odio. Phasellus "
       "congue sed leo in placerat. Mauris et elit in quam ultrices vulputate ut ac justo. Donec a "
       "porta orci. Curabitur euismod hendrerit feugiat. Mauris neque felis, e";
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
   EXPECT_EQ(
       FromHex(
@@ -1409,7 +1409,7 @@ TEST(MsgPacker, short_strings)
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec vel tempor odio. Phasellus "
       "congue sed leo in placerat. Mauris et elit in quam ultrices vulputate ut ac justo. Donec a "
       "porta orci. Curabitur euismod hendrerit feugiat. Mauris neque felis, el";
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
   EXPECT_EQ(
       FromHex(
@@ -1434,7 +1434,7 @@ TEST(MsgPacker, short_strings)
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec vel tempor odio. Phasellus "
       "congue sed leo in placerat. Mauris et elit in quam ultrices vulputate ut ac justo. Donec a "
       "porta orci. Curabitur euismod hendrerit feugiat. Mauris neque felis, ele";
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
   EXPECT_EQ(
       FromHex(
@@ -1459,7 +1459,7 @@ TEST(MsgPacker, short_strings)
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec vel tempor odio. Phasellus "
       "congue sed leo in placerat. Mauris et elit in quam ultrices vulputate ut ac justo. Donec a "
       "porta orci. Curabitur euismod hendrerit feugiat. Mauris neque felis, elem";
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
   EXPECT_EQ(
       FromHex(
@@ -1484,7 +1484,7 @@ TEST(MsgPacker, short_strings)
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec vel tempor odio. Phasellus "
       "congue sed leo in placerat. Mauris et elit in quam ultrices vulputate ut ac justo. Donec a "
       "porta orci. Curabitur euismod hendrerit feugiat. Mauris neque felis, eleme";
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
   EXPECT_EQ(
       FromHex(
@@ -1509,7 +1509,7 @@ TEST(MsgPacker, short_strings)
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec vel tempor odio. Phasellus "
       "congue sed leo in placerat. Mauris et elit in quam ultrices vulputate ut ac justo. Donec a "
       "porta orci. Curabitur euismod hendrerit feugiat. Mauris neque felis, elemen";
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
 
   EXPECT_EQ(
@@ -1535,7 +1535,7 @@ TEST(MsgPacker, short_strings)
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec vel tempor odio. Phasellus "
       "congue sed leo in placerat. Mauris et elit in quam ultrices vulputate ut ac justo. Donec a "
       "porta orci. Curabitur euismod hendrerit feugiat. Mauris neque felis, element";
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
   EXPECT_EQ(
       FromHex(
@@ -1560,7 +1560,7 @@ TEST(MsgPacker, short_strings)
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec vel tempor odio. Phasellus "
       "congue sed leo in placerat. Mauris et elit in quam ultrices vulputate ut ac justo. Donec a "
       "porta orci. Curabitur euismod hendrerit feugiat. Mauris neque felis, elementu";
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
   EXPECT_EQ(
       FromHex(
@@ -1585,7 +1585,7 @@ TEST(MsgPacker, short_strings)
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec vel tempor odio. Phasellus "
       "congue sed leo in placerat. Mauris et elit in quam ultrices vulputate ut ac justo. Donec a "
       "porta orci. Curabitur euismod hendrerit feugiat. Mauris neque felis, elementum";
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
   EXPECT_EQ(
       FromHex(
@@ -1610,7 +1610,7 @@ TEST(MsgPacker, short_strings)
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec vel tempor odio. Phasellus "
       "congue sed leo in placerat. Mauris et elit in quam ultrices vulputate ut ac justo. Donec a "
       "porta orci. Curabitur euismod hendrerit feugiat. Mauris neque felis, elementum ";
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
   EXPECT_EQ(
       FromHex(
@@ -1635,7 +1635,7 @@ TEST(MsgPacker, short_strings)
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec vel tempor odio. Phasellus "
       "congue sed leo in placerat. Mauris et elit in quam ultrices vulputate ut ac justo. Donec a "
       "porta orci. Curabitur euismod hendrerit feugiat. Mauris neque felis, elementum v";
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
   EXPECT_EQ(FromHex("da01054c6f72656d20697073756d20646f6c6f722073697420616d65742c20636f6e7365637465"
                     "7475722061646970697363696e6720656c69742e20446f6e65632076656c2074656d706f72206f"
@@ -1659,7 +1659,7 @@ TEST(MsgPacker, short_strings)
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec vel tempor odio. Phasellus "
       "congue sed leo in placerat. Mauris et elit in quam ultrices vulputate ut ac justo. Donec a "
       "porta orci. Curabitur euismod hendrerit feugiat. Mauris neque felis, elementum vi";
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
   EXPECT_EQ(FromHex("da01064c6f72656d20697073756d20646f6c6f722073697420616d65742c20636f6e7365637465"
                     "7475722061646970697363696e6720656c69742e20446f6e65632076656c2074656d706f72206f"
@@ -1683,7 +1683,7 @@ TEST(MsgPacker, short_strings)
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec vel tempor odio. Phasellus "
       "congue sed leo in placerat. Mauris et elit in quam ultrices vulputate ut ac justo. Donec a "
       "porta orci. Curabitur euismod hendrerit feugiat. Mauris neque felis, elementum vit";
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
   EXPECT_EQ(FromHex("da01074c6f72656d20697073756d20646f6c6f722073697420616d65742c20636f6e7365637465"
                     "7475722061646970697363696e6720656c69742e20446f6e65632076656c2074656d706f72206f"
@@ -1707,7 +1707,7 @@ TEST(MsgPacker, short_strings)
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec vel tempor odio. Phasellus "
       "congue sed leo in placerat. Mauris et elit in quam ultrices vulputate ut ac justo. Donec a "
       "porta orci. Curabitur euismod hendrerit feugiat. Mauris neque felis, elementum vita";
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
   EXPECT_EQ(FromHex("da01084c6f72656d20697073756d20646f6c6f722073697420616d65742c20636f6e7365637465"
                     "7475722061646970697363696e6720656c69742e20446f6e65632076656c2074656d706f72206f"
@@ -1731,7 +1731,7 @@ TEST(MsgPacker, short_strings)
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec vel tempor odio. Phasellus "
       "congue sed leo in placerat. Mauris et elit in quam ultrices vulputate ut ac justo. Donec a "
       "porta orci. Curabitur euismod hendrerit feugiat. Mauris neque felis, elementum vitae";
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
   EXPECT_EQ(FromHex("da01094c6f72656d20697073756d20646f6c6f722073697420616d65742c20636f6e7365637465"
                     "7475722061646970697363696e6720656c69742e20446f6e65632076656c2074656d706f72206f"
@@ -1755,7 +1755,7 @@ TEST(MsgPacker, short_strings)
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec vel tempor odio. Phasellus "
       "congue sed leo in placerat. Mauris et elit in quam ultrices vulputate ut ac justo. Donec a "
       "porta orci. Curabitur euismod hendrerit feugiat. Mauris neque felis, elementum vitae ";
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
   EXPECT_EQ(FromHex("da010a4c6f72656d20697073756d20646f6c6f722073697420616d65742c20636f6e7365637465"
                     "7475722061646970697363696e6720656c69742e20446f6e65632076656c2074656d706f72206f"
@@ -1779,7 +1779,7 @@ TEST(MsgPacker, short_strings)
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec vel tempor odio. Phasellus "
       "congue sed leo in placerat. Mauris et elit in quam ultrices vulputate ut ac justo. Donec a "
       "porta orci. Curabitur euismod hendrerit feugiat. Mauris neque felis, elementum vitae m";
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
   EXPECT_EQ(FromHex("da010b4c6f72656d20697073756d20646f6c6f722073697420616d65742c20636f6e7365637465"
                     "7475722061646970697363696e6720656c69742e20446f6e65632076656c2074656d706f72206f"
@@ -1803,7 +1803,7 @@ TEST(MsgPacker, short_strings)
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec vel tempor odio. Phasellus "
       "congue sed leo in placerat. Mauris et elit in quam ultrices vulputate ut ac justo. Donec a "
       "porta orci. Curabitur euismod hendrerit feugiat. Mauris neque felis, elementum vitae ma";
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
   EXPECT_EQ(FromHex("da010c4c6f72656d20697073756d20646f6c6f722073697420616d65742c20636f6e7365637465"
                     "7475722061646970697363696e6720656c69742e20446f6e65632076656c2074656d706f72206f"
@@ -1827,7 +1827,7 @@ TEST(MsgPacker, short_strings)
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec vel tempor odio. Phasellus "
       "congue sed leo in placerat. Mauris et elit in quam ultrices vulputate ut ac justo. Donec a "
       "porta orci. Curabitur euismod hendrerit feugiat. Mauris neque felis, elementum vitae mas";
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
   EXPECT_EQ(FromHex("da010d4c6f72656d20697073756d20646f6c6f722073697420616d65742c20636f6e7365637465"
                     "7475722061646970697363696e6720656c69742e20446f6e65632076656c2074656d706f72206f"
@@ -1851,7 +1851,7 @@ TEST(MsgPacker, short_strings)
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec vel tempor odio. Phasellus "
       "congue sed leo in placerat. Mauris et elit in quam ultrices vulputate ut ac justo. Donec a "
       "porta orci. Curabitur euismod hendrerit feugiat. Mauris neque felis, elementum vitae mass";
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
   EXPECT_EQ(
       FromHex("da010e4c6f72656d20697073756d20646f6c6f722073697420616d65742c20636f6e7365637465747572"
@@ -1876,7 +1876,7 @@ TEST(MsgPacker, short_strings)
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec vel tempor odio. Phasellus "
       "congue sed leo in placerat. Mauris et elit in quam ultrices vulputate ut ac justo. Donec a "
       "porta orci. Curabitur euismod hendrerit feugiat. Mauris neque felis, elementum vitae massa";
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
   EXPECT_EQ(
       FromHex("da010f4c6f72656d20697073756d20646f6c6f722073697420616d65742c20636f6e7365637465747572"
@@ -1901,7 +1901,7 @@ TEST(MsgPacker, short_strings)
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec vel tempor odio. Phasellus "
       "congue sed leo in placerat. Mauris et elit in quam ultrices vulputate ut ac justo. Donec a "
       "porta orci. Curabitur euismod hendrerit feugiat. Mauris neque felis, elementum vitae massa ";
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
   EXPECT_EQ(
       FromHex("da01104c6f72656d20697073756d20646f6c6f722073697420616d65742c20636f6e7365637465747572"
@@ -1927,7 +1927,7 @@ TEST(MsgPacker, short_strings)
       "congue sed leo in placerat. Mauris et elit in quam ultrices vulputate ut ac justo. Donec a "
       "porta orci. Curabitur euismod hendrerit feugiat. Mauris neque felis, elementum vitae massa "
       "a";
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
   EXPECT_EQ(
       FromHex("da01114c6f72656d20697073756d20646f6c6f722073697420616d65742c20636f6e7365637465747572"
@@ -1953,7 +1953,7 @@ TEST(MsgPacker, short_strings)
       "congue sed leo in placerat. Mauris et elit in quam ultrices vulputate ut ac justo. Donec a "
       "porta orci. Curabitur euismod hendrerit feugiat. Mauris neque felis, elementum vitae massa "
       "a,";
-  stream = ByteArrayBuffer();
+  stream = MsgPackSerializer();
   stream << value;
   EXPECT_EQ(
       FromHex("da01124c6f72656d20697073756d20646f6c6f722073697420616d65742c20636f6e7365637465747572"

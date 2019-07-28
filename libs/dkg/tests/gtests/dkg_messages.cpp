@@ -34,9 +34,9 @@ TEST(dkg_messages, coefficients)
 
   CoefficientsMessage coeff{1, coefficients, "signature"};
 
-  fetch::serializers::ByteArrayBuffer serialiser{coeff.Serialize()};
+  fetch::serializers::MsgPackSerializer serialiser{coeff.Serialize()};
 
-  fetch::serializers::ByteArrayBuffer serialiser1(serialiser.data());
+  fetch::serializers::MsgPackSerializer serialiser1(serialiser.data());
   CoefficientsMessage                 coeff1{serialiser1};
 
   for (uint64_t ii = 0; ii < coeff.coefficients().size(); ++ii)
@@ -54,9 +54,9 @@ TEST(dkg_messages, shares)
 
   SharesMessage shareMessage{1, shares, "signature"};
 
-  fetch::serializers::ByteArrayBuffer serialiser{shareMessage.Serialize()};
+  fetch::serializers::MsgPackSerializer serialiser{shareMessage.Serialize()};
 
-  fetch::serializers::ByteArrayBuffer serialiser1(serialiser.data());
+  fetch::serializers::MsgPackSerializer serialiser1(serialiser.data());
   SharesMessage                       shareMessage1{serialiser1};
 
   for (auto const &i_share : shareMessage.shares())
@@ -73,9 +73,9 @@ TEST(dkg_messages, complaints)
   std::unordered_set<DKGMessage::CabinetId> complaints;
   ComplaintsMessage                         complaintMsg{complaints, "signature"};
 
-  fetch::serializers::ByteArrayBuffer serialiser{complaintMsg.Serialize()};
+  fetch::serializers::MsgPackSerializer serialiser{complaintMsg.Serialize()};
 
-  fetch::serializers::ByteArrayBuffer serialiser1(serialiser.data());
+  fetch::serializers::MsgPackSerializer serialiser1(serialiser.data());
   ComplaintsMessage                   complaintMsg1{serialiser1};
 
   EXPECT_EQ(complaintMsg1.complaints(), complaintMsg.complaints());
@@ -94,11 +94,11 @@ TEST(dkg_messages, envelope)
   fetch::serializers::SizeCounter env_counter;
   env_counter << env;
 
-  fetch::serializers::ByteArrayBuffer env_serialiser;
+  fetch::serializers::MsgPackSerializer env_serialiser;
   env_serialiser.Reserve(env_counter.size());
   env_serialiser << env;
 
-  fetch::serializers::ByteArrayBuffer env_serialiser1{env_serialiser.data()};
+  fetch::serializers::MsgPackSerializer env_serialiser1{env_serialiser.data()};
   DKGEnvelope                         env1;
   env_serialiser1 >> env1;
 

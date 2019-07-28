@@ -30,9 +30,9 @@ TEST(rbc_messages, broadcast)
 {
   RBroadcast broadcast{1, 1, 1, "hello"};
 
-  fetch::serializers::ByteArrayBuffer serialiser{broadcast.Serialize()};
+  fetch::serializers::MsgPackSerializer serialiser{broadcast.Serialize()};
 
-  fetch::serializers::ByteArrayBuffer serialiser1(serialiser.data());
+  fetch::serializers::MsgPackSerializer serialiser1(serialiser.data());
   RBroadcast                          broadcast1{serialiser1};
 
   EXPECT_EQ(broadcast1.message(), broadcast.message());
@@ -43,9 +43,9 @@ TEST(rbc_messages, echo)
 {
   REcho echo{1, 1, 1, "hello"};
 
-  fetch::serializers::ByteArrayBuffer serialiser{echo.Serialize()};
+  fetch::serializers::MsgPackSerializer serialiser{echo.Serialize()};
 
-  fetch::serializers::ByteArrayBuffer serialiser1(serialiser.data());
+  fetch::serializers::MsgPackSerializer serialiser1(serialiser.data());
   REcho                               echo1{serialiser1};
 
   EXPECT_EQ(echo1.hash(), echo.hash());
@@ -56,9 +56,9 @@ TEST(rbc_messages, ready)
 {
   RReady ready{1, 1, 1, "hello"};
 
-  fetch::serializers::ByteArrayBuffer serialiser{ready.Serialize()};
+  fetch::serializers::MsgPackSerializer serialiser{ready.Serialize()};
 
-  fetch::serializers::ByteArrayBuffer serialiser1(serialiser.data());
+  fetch::serializers::MsgPackSerializer serialiser1(serialiser.data());
   RReady                              ready1{serialiser1};
 
   EXPECT_EQ(ready1.hash(), ready.hash());
@@ -69,9 +69,9 @@ TEST(rbc_messages, request)
 {
   RRequest request{1, 1, 1};
 
-  fetch::serializers::ByteArrayBuffer serialiser{request.Serialize()};
+  fetch::serializers::MsgPackSerializer serialiser{request.Serialize()};
 
-  fetch::serializers::ByteArrayBuffer serialiser1(serialiser.data());
+  fetch::serializers::MsgPackSerializer serialiser1(serialiser.data());
   RRequest                            request1{serialiser1};
 
   EXPECT_EQ(request1.tag(), request.tag());
@@ -81,9 +81,9 @@ TEST(rbc_messages, answer)
 {
   RAnswer answer{1, 1, 1, "hello"};
 
-  fetch::serializers::ByteArrayBuffer serialiser{answer.Serialize()};
+  fetch::serializers::MsgPackSerializer serialiser{answer.Serialize()};
 
-  fetch::serializers::ByteArrayBuffer serialiser1(serialiser.data());
+  fetch::serializers::MsgPackSerializer serialiser1(serialiser.data());
   RAnswer                             answer1{serialiser1};
 
   EXPECT_EQ(answer1.message(), answer.message());
@@ -101,11 +101,11 @@ TEST(rbc_messages, envelope)
   fetch::serializers::SizeCounter env_counter;
   env_counter << env;
 
-  fetch::serializers::ByteArrayBuffer env_serialiser;
+  fetch::serializers::MsgPackSerializer env_serialiser;
   env_serialiser.Reserve(env_counter.size());
   env_serialiser << env;
 
-  fetch::serializers::ByteArrayBuffer env_serialiser1{env_serialiser.data()};
+  fetch::serializers::MsgPackSerializer env_serialiser1{env_serialiser.data()};
   RBCEnvelope                         env1;
   env_serialiser1 >> env1;
 

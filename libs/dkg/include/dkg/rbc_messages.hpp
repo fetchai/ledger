@@ -30,7 +30,7 @@ namespace rbc {
 using TruncatedHash        = byte_array::ByteArray;
 using TagType              = uint64_t;
 using SerialisedMessage    = byte_array::ConstByteArray;
-using RBCSerializer        = fetch::serializers::ByteArrayBuffer;
+using RBCSerializer        = fetch::serializers::MsgPackSerializer;
 using RBCSerializerCounter = fetch::serializers::SizeCounter;
 
 /**
