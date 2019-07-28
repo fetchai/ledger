@@ -28,7 +28,7 @@ namespace fetch {
 namespace value_util {
 
 namespace detail_ {
-template <class F, typename...>
+template <class F, typename A
 struct IsNothrowAccumulatable;
 
 template <class F, typename... Seq>
