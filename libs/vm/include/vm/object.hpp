@@ -28,7 +28,8 @@ namespace vm {
 
 // TODO(issue 648): We should rename variants to VMVariant and JSONVariant, respectively
 // to avoid name clash.
-using JSONVariant = fetch::variant::Variant;
+using JSONVariant       = fetch::variant::Variant;
+using MsgPackSerializer = fetch::serializers::MsgPackSerializer;
 
 // Forward declarations
 class Object;
