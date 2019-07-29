@@ -121,7 +121,7 @@ StructuredData::StructuredData(vm::VM *vm, vm::TypeId type_id)
   : vm::Object(vm, type_id)
 {}
 
-bool StructuredData::SerializeTo(vm::ByteArrayBuffer &buffer)
+bool StructuredData::SerializeTo(vm::MsgPackSerializer &buffer)
 {
   bool success{false};
 
@@ -142,7 +142,7 @@ bool StructuredData::SerializeTo(vm::ByteArrayBuffer &buffer)
   return success;
 }
 
-bool StructuredData::DeserializeFrom(vm::ByteArrayBuffer &buffer)
+bool StructuredData::DeserializeFrom(vm::MsgPackSerializer &buffer)
 {
   bool success{false};
 

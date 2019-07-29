@@ -51,7 +51,7 @@ inline bool WriteHelper(std::string const &name, T const &val, VM *vm)
 inline bool ReadHelper(TypeId type, std::string const &name, Ptr<Object> &val, VM *vm)
 {
   using fetch::byte_array::ByteArray;
-  using fetch::serializers::ByteArrayBuffer;
+  using fetch::serializers::MsgPackSerializer;
 
   if (!vm->HasIoObserver())
   {
@@ -96,7 +96,7 @@ inline bool ReadHelper(TypeId type, std::string const &name, Ptr<Object> &val, V
   // if we successfully extracted the data
   if (IoObserverInterface::Status::OK == result)
   {
-    ByteArrayBuffer byte_buffer{buffer};
+    MsgPackSerializer byte_buffer{buffer};
 
     retval = val->DeserializeFrom(byte_buffer);
     if (!retval)
@@ -113,7 +113,7 @@ inline bool ReadHelper(TypeId type, std::string const &name, Ptr<Object> &val, V
 
 inline bool WriteHelper(std::string const &name, Ptr<Object> const &val, VM *vm)
 {
-  using fetch::serializers::ByteArrayBuffer;
+  using fetch::serializers::MsgPackSerializer;
 
   if (!vm->HasIoObserver())
   {
@@ -121,7 +121,7 @@ inline bool WriteHelper(std::string const &name, Ptr<Object> const &val, VM *vm)
   }
 
   // convert the type into a byte stream
-  ByteArrayBuffer buffer;
+  MsgPackSerializer buffer;
   if (val == nullptr)
   {
     vm->RuntimeError("Cannot serialise null reference");
