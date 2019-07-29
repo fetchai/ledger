@@ -19,6 +19,7 @@
 
 #include "settings/detail/environment_wrapper.hpp"
 
+#include <functional>
 #include <vector>
 
 namespace fetch {
