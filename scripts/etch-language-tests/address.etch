@@ -1,0 +1,16 @@
+function main()
+   var reference_address_str = "tUGqzwsE8sCErRoyvx5NCoFCwWVv81Ni8PMPv6G3RZeoohYvi";
+   var reference_address = Address(reference_address_str);
+
+   var encoded_address = toString(reference_address);
+   assert(reference_address_str == encoded_address);
+
+   var new_address = Address(encoded_address);
+   var encoded_new_address = toString(new_address);
+
+   assert(encoded_new_address == encoded_address);
+
+endfunction
+
+
+
