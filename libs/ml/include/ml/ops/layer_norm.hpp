@@ -71,27 +71,62 @@ public:
 		// normalize input
 		ArrayType sqrt_variance = fetch::math::Sqrt(input_variance);
 		auto s5 = sqrt_variance.ToString();
-		ArrayType inv_sqrt_variance = fetch::math::Divide(static_cast<DataType>(1), input_variance);
+		ArrayType inv_sqrt_variance = fetch::math::Divide(static_cast<DataType>(1), sqrt_variance);
+		auto sf = inv_sqrt_variance.ToString();
 		ArrayType normalized_input = fetch::math::Divide(zero_centered_input, sqrt_variance);
 		auto s6 = normalized_input.ToString();
 		
-		return {normalized_input, squared_zero_centered_input, inv_sqrt_variance, input_variance};
+		return {normalized_input, inv_sqrt_variance};
 	}
 	
 	std::vector<ArrayType> normalize_3D_input(ArrayType const &input, DataType epsilon, SizeType axis){
 		assert(axis == 0 || axis == 1);
 		assert(input.shape().size() == 3);
 		
-		ArrayType normalized_input(input.shape()), squared_zero_centered_input(input.shape()), inv_sqrt_variance({1, input.shape(1), input.shape(2)}), input_variance({1, input.shape(1), input.shape(2)});
+		ArrayType normalized_input(input.shape()), inv_sqrt_variance({1, input.shape(1), input.shape(2)});
 		
 		for(SizeType batch = 0; batch < input.shape(2); batch++){
 			auto norm_output = normalize_2D_input(input.View(batch).Copy(), epsilon, axis);
 			normalized_input.View(batch).Assign(norm_output.at(0));
-			squared_zero_centered_input.View(batch).Assign(norm_output.at(1));
-			inv_sqrt_variance.View(batch).Assign(norm_output.at(2));
-			input_variance.View(batch).Assign(norm_output.at(3));
+			inv_sqrt_variance.View(batch).Assign(norm_output.at(1));
 		}
-		return {normalized_input, squared_zero_centered_input, inv_sqrt_variance, input_variance};
+		return {normalized_input, inv_sqrt_variance};
+	}
+	
+	ArrayType backword_2D(ArrayType error_signal_2D, ArrayType normalized_output_2D, ArrayType inv_sqrt_var_2D, SizeType axis){
+		assert(axis == 0 || axis == 1);
+		assert(inv_sqrt_var_2D.shape().size() == 2);
+		assert(inv_sqrt_var_2D.shape(axis) == 1);
+		assert(error_signal_2D.shape() == normalized_output_2D.shape());
+		
+		DataType feature_length = DataType(data_shape_.at(axis));
+		auto f = inv_sqrt_var_2D / feature_length;
+		auto sf = f.ToString();
+		auto a = error_signal_2D * feature_length;
+		auto sa = a.ToString();
+		auto b = fetch::math::ReduceSum(error_signal_2D, 0);
+		auto serr = error_signal_2D.ToString();
+		auto sb = b.ToString();
+		auto sno = normalized_output_2D.ToString();
+		auto c = normalized_output_2D * fetch::math::ReduceSum(error_signal_2D * normalized_output_2D, 0);
+		auto sc = c.ToString();
+		return inv_sqrt_var_2D / feature_length * (error_signal_2D * feature_length - fetch::math::ReduceSum(error_signal_2D, 0) - normalized_output_2D * fetch::math::ReduceSum(error_signal_2D * normalized_output_2D, 0));
+	}
+	
+	ArrayType backword_3D(ArrayType error_signal, ArrayType normalized_output, ArrayType inv_sqrt_var, SizeType axis){
+		assert(axis == 0 || axis == 1);
+		assert(normalized_output.shape().size() == 3);
+		assert(normalized_output.shape() == error_signal.shape());
+		assert(inv_sqrt_var.shape(axis) == 1);
+
+		ArrayType output_error_signal = error_signal.Copy();
+		for(SizeType batch = 0; batch < prev_inputs_.front().shape(2); batch++){
+			auto error_signal_2D = error_signal.View(batch).Copy();
+			auto normalized_output_2D = normalized_output.View(batch).Copy();
+			auto inv_sqrt_var_2D = inv_sqrt_var.View(batch).Copy();
+			output_error_signal.View(batch).Assign(backword_2D(error_signal_2D, normalized_output_2D, inv_sqrt_var_2D, axis));
+		}
+		return output_error_signal;
 	}
 
   void Forward(VecTensorType const &inputs, ArrayType &output) override
@@ -121,45 +156,54 @@ public:
 	  output = normalization_output.at(0);
 		
 		// cache data for backward part
-		cached_data_ = normalization_output;
+		cached_inv_sqrt_var_ = normalization_output.at(1);
 		cached_output_ = output;
   }
 
   std::vector<ArrayType> Backward(VecTensorType const &inputs,
                                   ArrayType const &error_signal) override
   {
+		// plz refer to https://kevinzakka.github.io/2016/09/14/batch_normalization/ for detailed derivation of gradient
+		// N.B. gradient for batch norm and layer norm is the same, apart from the change of axis.
+		
 		// make sure we have run forward for this inputs
-		if(prev_inputs_.size() > 0){
-			for(size_t i = 0; i < prev_inputs_.size(); i++){
-				if(*inputs.at(i) != prev_inputs_.at(i)){
-					// if this is a new inputs, we run the forward again.
-					cached_output_.Reshape(inputs.front()->shape());
-					Forward(inputs, cached_output_);
-					break;
-				}
+		bool is_cached = true;
+		if(prev_inputs_.size() == 1){
+			if(*inputs.front() != prev_inputs_.front()) {
+				// if this is a new inputs, we run the forward again.
+				is_cached = false;
 			}
 		}else{
+			is_cached = false;
+		}
+		
+		if(!is_cached){
 			// if this is a new input, run the forward again
 			cached_output_.Reshape(inputs.front()->shape());
 			Forward(inputs, cached_output_);
 		}
 		
 		// do the backward
-		DataType feature_length = DataType(data_shape_.at(0));
-		auto output_error_signal = (fetch::math::Square(cached_data_.at(2)) * cached_data_.at(2) * cached_data_.at(1) / (-feature_length) + cached_data_.at(2) * (1 - 1/feature_length)) * error_signal;
+		ArrayType output_error_signal;
+		if(data_shape_.size() == 2){
+			output_error_signal = backword_2D(error_signal, cached_output_, cached_inv_sqrt_var_, static_cast<SizeType>(0));
+		}else{
+			output_error_signal = backword_3D(error_signal, cached_output_, cached_inv_sqrt_var_, static_cast<SizeType>(0));
+		}
 		
 		return {output_error_signal};
   }
 
-  static constexpr char const *DESCRIPTOR = "Convolution1D";
+  static constexpr char const *DESCRIPTOR = "LayerNormalization";
 
 private:
 	std::vector<SizeType> data_shape_;
 	DataType epsilon_;
 	
 	std::vector<ArrayType> prev_inputs_;
-	std::vector<ArrayType> cached_data_;
-	ArrayType              cached_output_;
+	ArrayType cached_inv_sqrt_var_;
+	ArrayType cached_output_;
+	
 };
 
 }  // namespace ops

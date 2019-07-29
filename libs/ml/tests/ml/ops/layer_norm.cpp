@@ -29,7 +29,7 @@ class LayerNormTest : public ::testing::Test
 {
 };
 
-using MyTypes = ::testing::Types<fetch::math::Tensor<float>>;
+using MyTypes = ::testing::Types<fetch::math::Tensor<double>>;
 
 TYPED_TEST_CASE(LayerNormTest, MyTypes);
 
@@ -93,19 +93,19 @@ TYPED_TEST(LayerNormTest, backward_test_2d)
 	using DataType  = typename TypeParam::Type;
 	
 	ArrayType data = ArrayType::FromString(
-	 "-1.224744871, 1;"
-	 "0, 4;"
-	 "1.224744871, 7");
+	 "1, 1;"
+	 "2, 0;"
+	 "1, 1");
 	
 	ArrayType error_signal = ArrayType::FromString(
-	 "1, 1;"
-	 "1, 1;"
+	 "-1, 2;"
+	 "2, 0;"
 	 "1, 1");
 	
 	ArrayType gt = ArrayType::FromString(
-	 "-1.2247448, -0.98058067;"
-	 "0, -0.39223227;"
-	 "1.22474487, 1.372812945");
+	 "-2.12132050, 1.06066041;"
+	 "0.000001272, -0.00000095;"
+	 "2.12131923, -1.06065946");
 	
 	fetch::ml::ops::LayerNorm<ArrayType> op(data.shape());
 	
@@ -114,7 +114,39 @@ TYPED_TEST(LayerNormTest, backward_test_2d)
 	
 	
 	// test correct values
-	std::cout << "backward_errors.ToString(): \n" << backward_errors.ToString() << std::endl;
-	ASSERT_TRUE(prediction.AllClose(gt, fetch::math::function_tolerance<DataType>(),
-	                                fetch::math::function_tolerance<DataType>()));
+	ASSERT_TRUE(backward_errors.AllClose(gt, fetch::math::function_tolerance<DataType>(),
+	                                5 * fetch::math::function_tolerance<DataType>()));
+}
+
+TYPED_TEST(LayerNormTest, backward_test_3d)
+{
+	using ArrayType = TypeParam;
+	using DataType  = typename TypeParam::Type;
+	
+	ArrayType data = ArrayType::FromString(
+	 "1, 1, 0.5, 2;"
+	 "2, 0, 3, 1;"
+	 "1, 1, 7, 9");
+	data.Reshape({3, 2, 2});
+
+	ArrayType error_signal = ArrayType::FromString(
+	 "-1, 2, 1, 1;"
+	 "2, 0, 1, 3;"
+	 "1, 1, 1, 6");
+	error_signal.Reshape({3, 2, 2});
+	
+	ArrayType gt = ArrayType::FromString(
+	 "-2.12132050, 1.06066041, 0, -0.374634325;"
+	 "0.000001272, -0.00000095, 0, 0.327805029;"
+	 "2.12131923, -1.06065946, 0, 0.0468292959");
+	gt.Reshape({3, 2, 2});
+	
+	fetch::ml::ops::LayerNorm<ArrayType> op(data.shape());
+	
+	ArrayType prediction(op.ComputeOutputShape({std::make_shared<ArrayType>(data)}));
+	auto backward_errors = op.Backward({std::make_shared<ArrayType>(data)}, error_signal).at(0);
+	
+	// test correct values
+	ASSERT_TRUE(backward_errors.AllClose(gt, fetch::math::function_tolerance<DataType>(),
+	                                     5 * fetch::math::function_tolerance<DataType>()));
 }
