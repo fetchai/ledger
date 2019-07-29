@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/byte_array_buffer.hpp"
+#include "core/serializers/main_serializer.hpp"
 #include "crypto/identity.hpp"
 #include "ledger/chain/address.hpp"
 #include "ledger/identifier.hpp"
@@ -288,7 +288,7 @@ bool Contract::GetStateRecord(T &record, ConstByteArray const &key)
   case vm::IoObserverInterface::Status::OK:
   {
     // adapt the buffer for deserialization
-    serializers::ByteArrayBuffer adapter{buffer};
+    serializers::MsgPackSerializer adapter{buffer};
     adapter >> record;
 
     success = true;
@@ -316,7 +316,7 @@ template <typename T>
 void Contract::SetStateRecord(T const &record, ConstByteArray const &key)
 {
   // serialize the record to the buffer
-  serializers::ByteArrayBuffer buffer;
+  serializers::MsgPackSerializer buffer;
   buffer << record;
 
   // lookup reference to the underlying buffer

@@ -17,7 +17,6 @@
 //------------------------------------------------------------------------------
 
 #include "core/mutex.hpp"
-#include "core/serializers/byte_array.hpp"
 #include "network/muddle/subscription.hpp"
 #include "network/muddle/subscription_feed.hpp"
 

@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/stl_types.hpp"
+#include "core/serializers/base_types.hpp"
 #include "core/service_ids.hpp"
 #include "ledger/chain/main_chain.hpp"
 #include "network/service/protocol.hpp"
