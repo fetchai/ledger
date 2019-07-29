@@ -156,6 +156,8 @@ struct SubGraphSaveableParams : GraphSaveableParams<TensorType>
   template <typename S>
   friend void Serialize(S &serializer, SubGraphSaveableParams const &gsp)
   {
+    serializer << gsp.OP_DESCRIPTOR;
+
     // serialize parent class first
     auto base_pointer = static_cast<GraphSaveableParams<TensorType> const *>(&gsp);
     Serialize(serializer, *base_pointer);
@@ -167,6 +169,8 @@ struct SubGraphSaveableParams : GraphSaveableParams<TensorType>
   template <typename S>
   friend void Deserialize(S &serializer, SubGraphSaveableParams &gsp)
   {
+    serializer >> gsp.OP_DESCRIPTOR;
+
     // deserialize parent class first
     auto base_pointer = static_cast<GraphSaveableParams<TensorType> *>(&gsp);
     Deserialize(serializer, *base_pointer);
@@ -551,6 +555,8 @@ struct FullyConnectedSaveableParams : SubGraphSaveableParams<TensorType>
   template <class S>
   friend void Serialize(S &serializer, FullyConnectedSaveableParams const &gsp)
   {
+    serializer << gsp.OP_DESCRIPTOR;
+
     // serialize parent class first
     auto base_pointer = static_cast<SubGraphSaveableParams<TensorType> const *>(&gsp);
     Serialize(serializer, *base_pointer);
@@ -562,6 +568,8 @@ struct FullyConnectedSaveableParams : SubGraphSaveableParams<TensorType>
   template <class S>
   friend void Deserialize(S &serializer, FullyConnectedSaveableParams &gsp)
   {
+    serializer >> gsp.OP_DESCRIPTOR;
+
     // deserialize parent class first
     auto base_pointer = static_cast<SubGraphSaveableParams<TensorType> *>(&gsp);
     Deserialize(serializer, *base_pointer);
