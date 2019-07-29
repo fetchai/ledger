@@ -125,6 +125,47 @@ inline bool UpgradeIteratorFromBroadcast(SizeVector const &a, TensorSliceIterato
   return true;
 }
 
+template <typename T, typename C>
+inline bool UpgradeIteratorFromBroadcast(SizeVector const &              a,
+                                         ConstTensorSliceIterator<T, C> &iterator)
+{
+  assert(iterator.counter() == 0);   // Only upgrade untouched iterators.
+  iterator.counter_ = uint64_t(-1);  // Invalidating the iterator
+
+  auto &b   = iterator.ranges_;
+  auto  it1 = a.rbegin();
+  auto  it2 = b.rbegin();
+
+  while ((it1 != a.rend()) && (it2 != b.rend()))
+  {
+    if ((it2->total_steps) == 1)
+    {
+      it2->repeat_dimension = *it1;
+      iterator.size_ *= *it1;
+    }
+    else if ((*it1) != (it2->total_steps))
+    {
+      return false;
+    }
+
+    ++it1;
+    ++it2;
+  }
+
+  SizeType total_repeats = 1;
+  while (it1 != a.rend())
+  {
+    total_repeats *= (*it1);
+    ++it1;
+  }
+
+  iterator.total_runs_ = total_repeats;
+
+  iterator.counter_ = 0;
+
+  return true;
+}
+
 template <typename F, typename T, typename C>
 inline bool Broadcast(F function, Tensor<T, C> &a, Tensor<T, C> &b, Tensor<T, C> &c)
 {
@@ -152,6 +193,56 @@ inline bool Broadcast(F function, Tensor<T, C> &a, Tensor<T, C> &b, Tensor<T, C>
   TensorSliceIterator<T, C> it_a(a, rangeA);
   TensorSliceIterator<T, C> it_b(b, rangeB);
   TensorSliceIterator<T, C> it_c(c, rangeC);
+
+  if (!UpgradeIteratorFromBroadcast(cshape, it_a))
+  {
+    return false;
+  }
+
+  if (!UpgradeIteratorFromBroadcast(cshape, it_b))
+  {
+    return false;
+  }
+
+  while (it_c)
+  {
+    (*it_c) = function(*it_a, *it_b);
+
+    ++it_a;
+    ++it_b;
+    ++it_c;
+  }
+
+  return true;
+}
+
+template <typename F, typename T, typename C>
+inline bool Broadcast(F function, const Tensor<T, C> &a, const Tensor<T, C> &b, Tensor<T, C> &c)
+{
+  SizeVector cshape;
+
+  ShapeFromBroadcast(a.shape(), b.shape(), cshape);
+  c.Reshape(cshape);
+
+  std::vector<SizeVector> rangeA, rangeB, rangeC;
+  for (auto &i : a.shape())
+  {
+    rangeA.push_back({0, i});
+  }
+
+  for (auto &i : b.shape())
+  {
+    rangeB.push_back({0, i});
+  }
+
+  for (auto &i : c.shape())
+  {
+    rangeC.push_back({0, i});
+  }
+
+  ConstTensorSliceIterator<T, C> it_a(a, rangeA);
+  ConstTensorSliceIterator<T, C> it_b(b, rangeB);
+  TensorSliceIterator<T, C>      it_c(c, rangeC);
 
   if (!UpgradeIteratorFromBroadcast(cshape, it_a))
   {

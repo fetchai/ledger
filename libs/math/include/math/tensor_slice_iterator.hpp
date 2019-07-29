@@ -316,6 +316,10 @@ public:
   friend bool UpgradeIteratorFromBroadcast(std::vector<SizeType> const &,
                                            TensorSliceIterator<A, B> &);
 
+  template <typename A, typename B>
+  friend bool UpgradeIteratorFromBroadcast(std::vector<SizeType> const &,
+                                           TensorSliceIterator<A const, B, Tensor<A, B> const> &);
+
   /**
    * returns the n-dimensional index of the current position
    * @return

@@ -332,11 +332,8 @@ meta::IfIsMathArray<ArrayType, void> Add(ArrayType const &array1, ArrayType cons
   }
   else
   {
-    // TODO(issue 1257): Implement const version of Tensor::Broadcast
-    ArrayType a = array1.Copy();
-    ArrayType b = array2.Copy();
-    if (!(Broadcast([](typename ArrayType::Type x, typename ArrayType::Type y) { return x + y; }, a,
-                    b, ret)))
+    if (!(Broadcast([](typename ArrayType::Type x, typename ArrayType::Type y) { return x + y; },
+                    array1, array2, ret)))
     {
       throw std::runtime_error("arrays not broadcastable for InlineAdd!");
     }
@@ -426,11 +423,8 @@ meta::IfIsMathArray<ArrayType, void> Subtract(ArrayType const &array1, ArrayType
   }
   else
   {
-    // TODO(issue 1257): Implement const version of Tensor::Broadcast
-    ArrayType a = array1.Copy();
-    ArrayType b = array2.Copy();
-    if (!(Broadcast([](typename ArrayType::Type x, typename ArrayType::Type y) { return x - y; }, a,
-                    b, ret)))
+    if (!(Broadcast([](typename ArrayType::Type x, typename ArrayType::Type y) { return x - y; },
+                    array1, array2, ret)))
     {
       throw std::runtime_error("arrays not broadcastable for InlineAdd!");
     }
@@ -508,11 +502,8 @@ void Divide(ArrayType const &array1, ArrayType const &array2, ArrayType &ret)
   }
   else
   {
-    // TODO(issue 1257): Implement const version of Tensor::Broadcast
-    ArrayType a = array1.Copy();
-    ArrayType b = array2.Copy();
-    if (!(Broadcast([](typename ArrayType::Type x, typename ArrayType::Type y) { return x / y; }, a,
-                    b, ret)))
+    if (!(Broadcast([](typename ArrayType::Type x, typename ArrayType::Type y) { return x / y; },
+                    array1, array2, ret)))
     {
       throw std::runtime_error("arrays not broadcastable for InlineAdd!");
     }
