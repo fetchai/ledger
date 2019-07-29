@@ -134,7 +134,10 @@ void SettingCollection::UpdateFromArgs(int argc, char **argv, std::function<void
 
     FETCH_LOG_INFO(LOGGING_NAME, oss.str());
 
-    on_fail();
+    if (on_fail)
+    {
+      on_fail();
+    }
   }
 }
 
