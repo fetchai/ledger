@@ -16,9 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/ops/divide.hpp"
-
 #include "math/tensor.hpp"
+#include "ml/ops/divide.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 
 #include "gtest/gtest.h"
@@ -57,8 +56,10 @@ TYPED_TEST(DivideTest, forward_test)
 
   fetch::ml::ops::Divide<ArrayType> op;
 
-  TypeParam prediction(op.ComputeOutputShape({data_1, data_2}));
-  op.Forward({data_1, data_2}, prediction);
+  TypeParam prediction(op.ComputeOutputShape(
+      {std::make_shared<ArrayType>(data_1), std::make_shared<ArrayType>(data_2)}));
+  op.Forward({std::make_shared<ArrayType>(data_1), std::make_shared<ArrayType>(data_2)},
+             prediction);
 
   // test correct values
   ASSERT_TRUE(prediction.AllClose(gt, fetch::math::function_tolerance<DataType>(),
@@ -83,15 +84,16 @@ TYPED_TEST(DivideTest, backward_test)
       "0.625, -0.714285714285714, -1, -1.2, -1.75, -2.33333333333333, -4, -8");
 
   ArrayType gt_2 = ArrayType::FromString(
-      "0.015625, 0.040816326530612, 0.166666666666667, 0.32, 0.9375, 2, 7, 32;"
-      "0.078125, -0.204081632653061, 0.5, -0.96, 2.1875, -4.66666666666667, 14, -64");
+      "-0.015625, -0.040816326530612, -0.166666666666667, -0.32, -0.9375, -2, -7, -32;"
+      "-0.078125, 0.204081632653061, -0.5, 0.96, -2.1875, 4.66666666666667, -14, 64");
 
   ArrayType error = ArrayType::FromString(
       "1, -1, 2, -2, 3, -3, 4, -4;"
       "5, -5, 6, -6, 7, -7, 8, -8");
 
   fetch::ml::ops::Divide<ArrayType> op;
-  std::vector<ArrayType>            prediction = op.Backward({data_1, data_2}, error);
+  std::vector<ArrayType>            prediction = op.Backward(
+      {std::make_shared<ArrayType>(data_1), std::make_shared<ArrayType>(data_2)}, error);
 
   // test correct values
   ASSERT_TRUE(prediction[0].AllClose(gt_1, fetch::math::function_tolerance<DataType>(),

@@ -285,25 +285,53 @@ void Max(ArrayType const &array, typename ArrayType::SizeType const &axis, Array
     assert(axis_length > 1);
     assert(ret.size() == Divide(Product(array.shape()), array.shape()[axis]));
 
-    // fill the return with the first index values
-    ret.Assign(array.Slice(0, axis));
-
-    //
-    for (SizeType n{1}; n < axis_length; ++n)
+    // specialised implementation uses view if axis is the last dimension
+    if (axis == (array.shape().size() - 1))
     {
-      auto cur_slice    = array.Slice(n, axis);
-      auto cur_slice_it = cur_slice.begin();
-      auto rit          = ret.begin();
+      // fill the return with the first index values
+      ret.Assign(array.View(0));
 
-      // check every element in the n-1 dimensional return
-      while (cur_slice_it.is_valid())
+      //
+      for (SizeType n{1}; n < axis_length; ++n)
       {
-        if (*cur_slice_it > *rit)
+        auto cur_view    = array.View(n);
+        auto cur_view_it = cur_view.begin();
+        auto rit         = ret.begin();
+
+        // check every element in the n-1 dimensional return
+        while (cur_view_it.is_valid())
         {
-          *rit = *cur_slice_it;
+          if (*cur_view_it > *rit)
+          {
+            *rit = *cur_view_it;
+          }
+          ++rit;
+          ++cur_view_it;
         }
-        ++rit;
-        ++cur_slice_it;
+      }
+    }
+    else
+    {
+      // fill the return with the first index values
+      ret.Assign(array.Slice(0, axis));
+
+      //
+      for (SizeType n{1}; n < axis_length; ++n)
+      {
+        auto cur_slice    = array.Slice(n, axis);
+        auto cur_slice_it = cur_slice.cbegin();
+        auto rit          = ret.begin();
+
+        // check every element in the n-1 dimensional return
+        while (cur_slice_it.is_valid())
+        {
+          if (*cur_slice_it > *rit)
+          {
+            *rit = *cur_slice_it;
+          }
+          ++rit;
+          ++cur_slice_it;
+        }
       }
     }
   }
@@ -375,25 +403,53 @@ void Min(ArrayType const &array, typename ArrayType::SizeType const &axis, Array
     assert(axis_length > 1);
     assert(ret.size() == Divide(Product(array.shape()), array.shape()[axis]));
 
-    // fill the return with the first index values
-    ret.Assign(array.Slice(0, axis));
-
-    //
-    for (SizeType n{1}; n < axis_length; ++n)
+    // specialisation uses View if axis == last dimension
+    if (axis == array.shape().size() - 1)
     {
-      auto cur_slice    = array.Slice(n, axis);
-      auto cur_slice_it = cur_slice.begin();
-      auto rit          = ret.begin();
+      // fill the return with the first index values
+      ret.Assign(array.View(0));
 
-      // check every element in the n-1 dimensional return
-      while (cur_slice_it.is_valid())
+      //
+      for (SizeType n{1}; n < axis_length; ++n)
       {
-        if (*cur_slice_it < *rit)
+        auto cur_view    = array.View(n);
+        auto cur_view_it = cur_view.begin();
+        auto rit         = ret.begin();
+
+        // check every element in the n-1 dimensional return
+        while (cur_view_it.is_valid())
         {
-          *rit = *cur_slice_it;
+          if (*cur_view_it < *rit)
+          {
+            *rit = *cur_view_it;
+          }
+          ++rit;
+          ++cur_view_it;
         }
-        ++rit;
-        ++cur_slice_it;
+      }
+    }
+    else
+    {
+      // fill the return with the first index values
+      ret.Assign(array.Slice(0, axis));
+
+      //
+      for (SizeType n{1}; n < axis_length; ++n)
+      {
+        auto cur_slice    = array.Slice(n, axis);
+        auto cur_slice_it = cur_slice.cbegin();
+        auto rit          = ret.begin();
+
+        // check every element in the n-1 dimensional return
+        while (cur_slice_it.is_valid())
+        {
+          if (*cur_slice_it < *rit)
+          {
+            *rit = *cur_slice_it;
+          }
+          ++rit;
+          ++cur_slice_it;
+        }
       }
     }
   }
@@ -607,37 +663,76 @@ void PeakToPeak(ArrayType const &array, typename ArrayType::SizeType const &axis
     assert(axis_length > 1);
     assert(ret.size() == Divide(Product(array.shape()), array.shape()[axis]));
 
-    // fill the return with the first index values
-    ret.Assign(array.Slice(0, axis));
-    ArrayType min(ret.shape());
-    min.Assign(array.Slice(0, axis));
-
-    //
-    for (SizeType n{1}; n < axis_length; ++n)
+    if (axis == array.shape().size() - 1)
     {
-      auto cur_slice    = array.Slice(n, axis);
-      auto cur_slice_it = cur_slice.begin();
-      auto rit          = ret.begin();
-      auto mit          = min.begin();
+      // fill the return with the first index values
+      ret.Assign(array.View(0));
+      ArrayType min(ret.shape());
+      min.Assign(array.View(0));
 
-      // check every element in the n-1 dimensional return
-      while (cur_slice_it.is_valid())
+      //
+      for (SizeType n{1}; n < axis_length; ++n)
       {
-        if (*cur_slice_it > *rit)
+        auto cur_view    = array.View(n);
+        auto cur_view_it = cur_view.begin();
+        auto rit         = ret.begin();
+        auto mit         = min.begin();
+
+        // check every element in the n-1 dimensional return
+        while (cur_view_it.is_valid())
         {
-          *rit = *cur_slice_it;
+          if (*cur_view_it > *rit)
+          {
+            *rit = *cur_view_it;
+          }
+          if (*cur_view_it < *mit)
+          {
+            *mit = *cur_view_it;
+          }
+          ++rit;
+          ++mit;
+          ++cur_view_it;
         }
-        if (*cur_slice_it < *mit)
-        {
-          *mit = *cur_slice_it;
-        }
-        ++rit;
-        ++mit;
-        ++cur_slice_it;
       }
+
+      // i.e. ret=max-min, because max is stored in ret
+      fetch::math::Subtract(ret, min, ret);
     }
-    // i.e. ret=max-min, because max is stored in ret
-    fetch::math::Subtract(ret, min, ret);
+    else
+    {
+      // fill the return with the first index values
+      ret.Assign(array.Slice(0, axis));
+      ArrayType min(ret.shape());
+      min.Assign(array.Slice(0, axis));
+
+      //
+      for (SizeType n{1}; n < axis_length; ++n)
+      {
+        auto cur_slice    = array.Slice(n, axis);
+        auto cur_slice_it = cur_slice.cbegin();
+        auto rit          = ret.begin();
+        auto mit          = min.begin();
+
+        // check every element in the n-1 dimensional return
+        while (cur_slice_it.is_valid())
+        {
+          if (*cur_slice_it > *rit)
+          {
+            *rit = *cur_slice_it;
+          }
+          if (*cur_slice_it < *mit)
+          {
+            *mit = *cur_slice_it;
+          }
+          ++rit;
+          ++mit;
+          ++cur_slice_it;
+        }
+      }
+
+      // i.e. ret=max-min, because max is stored in ret
+      fetch::math::Subtract(ret, min, ret);
+    }
   }
 }
 
@@ -684,33 +779,65 @@ meta::IfIsMathArray<ArrayType, void> ArgMax(ArrayType const &array, ArrayType &r
     ret[0] = static_cast<Type>(position);
   }
   else
-  {  // Argmax along a single axis
+  {
+    // Argmax along a single axis
     SizeType axis_length = array.shape()[axis];
     assert(axis_length > 1);
     assert(ret.size() == Divide(Product(array.shape()), array.shape()[axis]));
 
     ret.Fill(Type(0));
-    auto max_slice = (array.Slice(0, axis)).Copy();
 
-    for (SizeType n{1}; n < axis_length; ++n)
+    // specialisation uses View if axis == last dimension
+    if (axis == array.shape().size() - 1)
     {
-      auto cur_slice = array.Slice(n, axis);
+      auto max_view = (array.View(0)).Copy();
 
-      auto max_slice_it = max_slice.begin();
-      auto cur_slice_it = cur_slice.begin();
-      auto ret_it       = ret.begin();
-
-      // check every element in the n-1 dimensional return
-      while (max_slice_it.is_valid())
+      for (SizeType n{1}; n < axis_length; ++n)
       {
-        if (*cur_slice_it > *max_slice_it)
+        auto cur_view = array.View(n);
+
+        auto max_view_it = max_view.begin();
+        auto cur_view_it = cur_view.begin();
+        auto ret_it      = ret.begin();
+
+        // check every element in the n-1 dimensional return
+        while (max_view_it.is_valid())
         {
-          *ret_it       = static_cast<Type>(n);
-          *max_slice_it = *cur_slice_it;
+          if (*cur_view_it > *max_view_it)
+          {
+            *ret_it      = static_cast<Type>(n);
+            *max_view_it = *cur_view_it;
+          }
+          ++ret_it;
+          ++cur_view_it;
+          ++max_view_it;
         }
-        ++ret_it;
-        ++cur_slice_it;
-        ++max_slice_it;
+      }
+    }
+    else
+    {
+      auto max_slice = (array.Slice(0, axis)).Copy();
+
+      for (SizeType n{1}; n < axis_length; ++n)
+      {
+        auto cur_slice = array.Slice(n, axis);
+
+        auto max_slice_it = max_slice.begin();
+        auto cur_slice_it = cur_slice.cbegin();
+        auto ret_it       = ret.begin();
+
+        // check every element in the n-1 dimensional return
+        while (max_slice_it.is_valid())
+        {
+          if (*cur_slice_it > *max_slice_it)
+          {
+            *ret_it       = static_cast<Type>(n);
+            *max_slice_it = *cur_slice_it;
+          }
+          ++ret_it;
+          ++cur_slice_it;
+          ++max_slice_it;
+        }
       }
     }
   }

@@ -16,7 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/byte_array_buffer.hpp"
+#include "core/serializers/main_serializer.hpp"
 #include "math/tensor.hpp"
 
 #include "gtest/gtest.h"
@@ -26,13 +26,13 @@ class SerializersTest : public ::testing::Test
 {
 };
 
-using MyTypes = ::testing::Types<int, long, float, double>;
+using MyTypes = ::testing::Types<int32_t, int64_t, float, double>;
 TYPED_TEST_CASE(SerializersTest, MyTypes);
 
 TYPED_TEST(SerializersTest, serialize_empty_tensor)
 {
-  fetch::math::Tensor<TypeParam>      t1;
-  fetch::serializers::ByteArrayBuffer b;
+  fetch::math::Tensor<TypeParam>        t1;
+  fetch::serializers::MsgPackSerializer b;
   b << t1;
   b.seek(0);
   fetch::math::Tensor<TypeParam> t2;
@@ -49,7 +49,7 @@ TYPED_TEST(SerializersTest, serialize_tensor)
     e = i;
     i++;
   }
-  fetch::serializers::ByteArrayBuffer b;
+  fetch::serializers::MsgPackSerializer b;
 
   b << t1;
   b.seek(0);

@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/byte_array.hpp"
+#include "core/serializers/group_definitions.hpp"
 #include "crypto/fnv.hpp"
 #include "crypto/openssl_common.hpp"
 #include "crypto/signature_register.hpp"
@@ -44,11 +45,11 @@ public:
   // Fully relying on caller that it will behave = will NOT modify value passed
   // (Const)ByteArray(s)
   Identity(uint8_t identity_parameters, byte_array::ConstByteArray identifier)
-    : identity_parameters_{std::move(identity_parameters)}
+    : identity_parameters_{identity_parameters}
     , identifier_{std::move(identifier)}
   {}
 
-  Identity(byte_array::ConstByteArray identifier)
+  explicit Identity(byte_array::ConstByteArray identifier)
     : identifier_{std::move(identifier)}
   {}
 
@@ -69,10 +70,10 @@ public:
 
   void SetParameters(uint8_t p)
   {
-    identity_parameters_ = std::move(p);
+    identity_parameters_ = p;
   }
 
-  operator bool() const
+  explicit operator bool() const
   {
     return TestIdentityParameterSize(identity_parameters_, identifier_.size());
   }
@@ -117,34 +118,46 @@ static inline Identity InvalidIdentity()
   return Identity::CreateInvalid();
 }
 
-template <typename T>
-T &Serialize(T &serializer, Identity const &data)
+}  // namespace crypto
+
+namespace serializers {
+template <typename D>
+struct MapSerializer<crypto::Identity, D>
 {
-  serializer << data.identifier();
-  serializer << data.parameters();
+public:
+  using Type       = crypto::Identity;
+  using DriverType = D;
 
-  return serializer;
-}
+  static uint8_t const ID     = 1;
+  static uint8_t const PARAMS = 2;
 
-template <typename T>
-T &Deserialize(T &serializer, Identity &data)
-{
-  uint8_t               params;
-  byte_array::ByteArray id;
-  serializer >> id;
-  serializer >> params;
-
-  data.SetParameters(params);
-  data.SetIdentifier(id);
-  if (!data)
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &data)
   {
-    data = InvalidIdentity();
+    auto map = map_constructor(2);
+    map.Append(ID, data.identifier());
+    map.Append(PARAMS, data.parameters());
   }
 
-  return serializer;
-}
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &data)
+  {
+    byte_array::ByteArray id;
+    uint8_t               params;
 
-}  // namespace crypto
+    map.ExpectKeyGetValue(ID, id);
+    map.ExpectKeyGetValue(PARAMS, params);
+
+    data.SetParameters(params);
+    data.SetIdentifier(id);
+    if (!data)
+    {
+      data = crypto::InvalidIdentity();
+    }
+  }
+};
+}  // namespace serializers
+
 }  // namespace fetch
 
 namespace std {

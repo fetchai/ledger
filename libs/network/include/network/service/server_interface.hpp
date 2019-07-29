@@ -65,7 +65,7 @@ protected:
   virtual bool DeliverResponse(connection_handle_type, network::message_type const &) = 0;
 
   bool PushProtocolRequest(connection_handle_type client, network::message_type const &msg,
-                           CallContext const *context = nullptr)
+                           CallContext const &context = CallContext())
   {
     LOG_STACK_TRACE_POINT;
 
@@ -97,7 +97,7 @@ protected:
   }
 
   bool HandleRPCCallRequest(connection_handle_type client, serializer_type params,
-                            CallContext const *context = 0)
+                            CallContext context = CallContext())
   {
     LOG_STACK_TRACE_POINT;
     bool            ret = true;
@@ -110,6 +110,7 @@ protected:
       params >> id;
       FETCH_LOG_DEBUG(LOGGING_NAME, "HandleRPCCallRequest prom =", id);
       result << SERVICE_RESULT << id;
+
       ExecuteCall(result, client, params, context);
     }
     catch (serializers::SerializableException const &e)
@@ -202,7 +203,7 @@ protected:
 
 private:
   void ExecuteCall(serializer_type &result, connection_handle_type const &connection_handle,
-                   serializer_type params, CallContext const *context = 0)
+                   serializer_type params, CallContext const &context = CallContext())
   {
     LOG_STACK_TRACE_POINT;
 

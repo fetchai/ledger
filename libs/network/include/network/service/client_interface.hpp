@@ -17,7 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/byte_array.hpp"
 #include "core/serializers/counter.hpp"
 #include "core/serializers/serializable_exception.hpp"
 #include "network/message.hpp"
@@ -69,7 +68,7 @@ public:
 
     serializer_type params;
 
-    serializers::SizeCounter<serializer_type> counter;
+    serializers::SizeCounter counter;
     counter << SERVICE_FUNCTION_CALL << prom->id();
 
     PackCall(counter, protocol, function, args...);

@@ -27,7 +27,11 @@
 
 #include "gtest/gtest.h"
 
+#include <atomic>
 #include <chrono>
+#include <cstddef>
+#include <cstdint>
+#include <memory>
 #include <thread>
 
 using std::this_thread::sleep_for;
@@ -35,7 +39,6 @@ using std::chrono::seconds;
 using fetch::byte_array::ByteArray;
 using fetch::byte_array::ConstByteArray;
 using fetch::byte_array::FromBase64;
-using fetch::byte_array::ToBase64;
 using fetch::muddle::NetworkId;
 
 class TestProtocol : public fetch::service::Protocol
@@ -72,7 +75,6 @@ protected:
       "646y3U97FbC8Q5MYTO+elrKOFWsMqwqpRGieAC7G0qZUeRhJN+xESV/PJ4NeDXtkp6KkVLzoqRmNKTXshBIftA==";
   static constexpr char const *NETWORK_B_PRIVATE_KEY =
       "4DW/sW8JLey8Z9nqi2yJJHaGzkLXIqaYc/fwHfK0w0Y=";
-  static constexpr char const *LOGGING_NAME = "MuddleRpcStressTests";
 
   using NetworkManager    = fetch::network::NetworkManager;
   using NetworkManagerPtr = std::unique_ptr<NetworkManager>;
@@ -95,9 +97,6 @@ protected:
     // load the key
     auto signer = std::make_unique<Signer>();
     signer->Load(FromBase64(private_key));
-
-    FETCH_LOG_INFO(LOGGING_NAME, private_key);
-    FETCH_LOG_INFO(LOGGING_NAME, ToBase64(signer->public_key()));
 
     return signer;
   }
@@ -158,8 +157,7 @@ protected:
     server->Add(PROTOCOL, &protocol);
 
     // create the client
-    auto client =
-        std::make_shared<RpcClient>("Client", endpoint, FromBase64(target), SERVICE, CHANNEL);
+    auto client = std::make_shared<RpcClient>("Client", endpoint, SERVICE, CHANNEL);
 
     if (NETWORK_A_PUBLIC_KEY == target)
     {
@@ -173,8 +171,8 @@ protected:
       uint8_t const        fill = static_cast<uint8_t>(loop);
       ConstByteArray const data = GenerateData(PAYLOAD_LENGTH, fill);
 
-      auto promise =
-          client->Call(endpoint.network_id().value(), PROTOCOL, TestProtocol::EXCHANGE, data);
+      Promise promise =
+          client->CallSpecificAddress(FromBase64(target), PROTOCOL, TestProtocol::EXCHANGE, data);
       promise->WithHandlers()
           .Then([promise, fill]() {
             auto const result = promise->As<ConstByteArray>();
@@ -194,7 +192,6 @@ protected:
     {
       if (!pending.back()->IsWaiting())
       {
-        // FETCH_LOG_WARN(LOGGING_NAME, "Discarding promise: ", pending.back()->id());
         pending.pop_back();
         continue;
       }
