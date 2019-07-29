@@ -16,8 +16,13 @@
 //
 //------------------------------------------------------------------------------
 
+<<<<<<< HEAD
 #include "core/serializers/counter.hpp"
 #include "core/serializers/main_serializer.hpp"
+=======
+#include "core/serializers/byte_array_buffer.hpp"
+#include "core/serializers/counter.hpp"
+>>>>>>> 7b6f97db7b9dee1927b99404e715e4a1fdd131d4
 #include "core/service_ids.hpp"
 #include "crypto/ecdsa.hpp"
 #include "crypto/prover.hpp"
@@ -401,7 +406,11 @@ struct CabinetMember
     shares_subscription->SetMessageHandler([this](ConstByteArray const &from, uint16_t, uint16_t,
                                                   uint16_t, muddle::Packet::Payload const &payload,
                                                   ConstByteArray) {
+<<<<<<< HEAD
       fetch::serializers::MsgPackSerializer serialiser(payload);
+=======
+      fetch::serializers::ByteArrayBuffer serialiser(payload);
+>>>>>>> 7b6f97db7b9dee1927b99404e715e4a1fdd131d4
 
       std::pair<std::string, std::string> shares;
       serialiser >> shares;
@@ -424,10 +433,17 @@ struct CabinetMember
   void SubmitShare(ConstByteArray const &                     destination,
                    std::pair<std::string, std::string> const &shares)
   {
+<<<<<<< HEAD
     fetch::serializers::SizeCounter counter;
     counter << shares;
 
     fetch::serializers::MsgPackSerializer serializer;
+=======
+    fetch::serializers::SizeCounter<fetch::serializers::ByteArrayBuffer> counter;
+    counter << shares;
+
+    fetch::serializers::ByteArrayBuffer serializer;
+>>>>>>> 7b6f97db7b9dee1927b99404e715e4a1fdd131d4
     serializer.Reserve(counter.size());
     serializer << shares;
     muddle.AsEndpoint().Send(destination, SERVICE_DKG, CHANNEL_SHARES, serializer.data());
