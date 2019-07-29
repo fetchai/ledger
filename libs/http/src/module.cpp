@@ -29,7 +29,7 @@ bool NormalAccessAuthentication(HTTPRequest const &req)
   }
 
   return true;
-};
+}
 
 /// Post methods
 /// @{
