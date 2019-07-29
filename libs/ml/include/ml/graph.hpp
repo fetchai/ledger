@@ -259,8 +259,7 @@ template <typename ArrayType>
 GraphSaveableParams<ArrayType> Graph<ArrayType>::GetGraphSaveableParams()
 {
   GraphSaveableParams<ArrayType> gs;
-  gs.connections   = connections;
-  gs.OP_DESCRIPTOR = OpType::GRAPH;
+  gs.connections = connections;
 
   for (auto const &node : nodes_)
   {

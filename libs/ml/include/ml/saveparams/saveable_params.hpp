@@ -85,15 +85,19 @@ struct GraphSaveableParams : public SaveableParamsInterface
   std::vector<std::pair<std::string, std::vector<std::string>>>   connections;
   std::map<std::string, std::shared_ptr<SaveableParamsInterface>> nodes;
 
+  GraphSaveableParams()
+    : SaveableParamsInterface(OpType::GRAPH)
+  {}
+
   explicit GraphSaveableParams(OpType operation_type)
     : SaveableParamsInterface(operation_type)
   {}
 
-  GraphSaveableParams& operator=(GraphSaveableParams const &gsp)
+  GraphSaveableParams &operator=(GraphSaveableParams const &gsp)
   {
     connections = gsp.connections;
-    nodes = gsp.nodes;
-    return this;
+    nodes       = gsp.nodes;
+    return *this;
   }
 
   template <typename S>
@@ -104,7 +108,7 @@ struct GraphSaveableParams : public SaveableParamsInterface
     for (auto const &node : gsp.nodes)
     {
       serializer << node.first;
-      Serialize<S, node.OP_DESCRIPTOR, TensorType>(serializer, node.second);
+      Serialize<S, node.second->OP_DESCRIPTOR, TensorType>(serializer, node.second);
     }
   }
 
@@ -120,7 +124,7 @@ struct GraphSaveableParams : public SaveableParamsInterface
       serializer >> node_name;
 
       std::shared_ptr<SaveableParamsInterface> nsp_ptr =
-          Deserialize<S, gsp.nodes[node_name].OP_DESCRIPTOR, TensorType>(serializer);
+          Deserialize<S, gsp.nodes[node_name]->OP_DESCRIPTOR, TensorType>(serializer);
 
       gsp.nodes.insert(std::make_pair(node_name, nsp_ptr));
     }
@@ -136,15 +140,17 @@ struct SubGraphSaveableParams : GraphSaveableParams<TensorType>
   std::vector<std::string> input_node_names;
   std::string              output_node_name;
 
+  SubGraphSaveableParams() = default;
+
   explicit SubGraphSaveableParams(OpType operation_type)
     : GraphSaveableParams<TensorType>(operation_type)
   {}
 
-  SubGraphSaveableParams& operator=(SubGraphSaveableParams const &sgsp)
+  SubGraphSaveableParams &operator=(SubGraphSaveableParams const &sgsp)
   {
     input_node_names = sgsp.input_node_names;
     output_node_name = sgsp.output_node_name;
-    return this;
+    return *this;
   }
 
   template <typename S>
@@ -206,21 +212,25 @@ struct AddSaveableParams : public SaveableParamsInterface
 template <class TensorType>
 struct ConcatenateSaveableParams : public SaveableParamsInterface
 {
+  fetch::math::SizeType   axis          = fetch::math::numeric_max<fetch::math::SizeType>();
+  const fetch::ml::OpType OP_DESCRIPTOR = OpType::CONCATENATE;
+
   ConcatenateSaveableParams()
     : SaveableParamsInterface(OpType::CONCATENATE)
   {}
-  const fetch::ml::OpType OP_DESCRIPTOR = OpType::CONCATENATE;
 
   template <class S>
   friend void Serialize(S &serializer, ConcatenateSaveableParams const &sp)
   {
     serializer << sp.OP_DESCRIPTOR;
+    serializer << sp.axis;
   }
 
   template <class S>
   friend void Deserialize(S &serializer, ConcatenateSaveableParams &sp)
   {
     serializer >> sp.OP_DESCRIPTOR;
+    serializer >> sp.axis;
   }
 };
 
@@ -484,9 +494,8 @@ struct FlattenSaveableParams : public SaveableParamsInterface
 template <class TensorType>
 struct ConvolutionLayerSaveableParams : SubGraphSaveableParams<TensorType>
 {
-  ConvolutionLayerSaveableParams()
-    : SaveableParamsInterface(OpType::LAYER_CONVOLUTION)
-  {}
+  ConvolutionLayerSaveableParams() = default;
+
   const fetch::ml::OpType OP_DESCRIPTOR = OpType::LAYER_CONVOLUTION;
 
   using SizeType = typename TensorType::SizeType;
@@ -686,8 +695,7 @@ struct LogSigmoidSaveableParams : public SaveableParamsInterface
 template <class TensorType>
 struct LogSoftmaxSaveableParams : public SaveableParamsInterface
 {
-  using DataType = typename TensorType::Type;
-  DataType                axis;
+  fetch::math::SizeType   axis          = fetch::math::numeric_max<fetch::math::SizeType>();
   const fetch::ml::OpType OP_DESCRIPTOR = OpType::LOGSOFTMAX;
 
   LogSoftmaxSaveableParams()
