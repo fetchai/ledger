@@ -18,10 +18,10 @@
 
 #include "core/json/document.hpp"
 #include "http/json_response.hpp"
+#include "http/middleware/deny_all.hpp"
+#include "http/middleware/token_auth.hpp"
 #include "http/server.hpp"
 #include "http/validators.hpp"
-#include "http/middleware/token_auth.hpp"
-#include "http/middleware/deny_all.hpp"
 
 #include <atomic>
 #include <chrono>
@@ -42,15 +42,13 @@ struct ExampleModule : HTTPModule
     Get("/pages", "Gets the pages",
         [](fetch::http::ViewParameters const & /*params*/,
            fetch::http::HTTPRequest const & /*request*/) {
-          return fetch::http::CreateJsonResponse("{}",
-                                                 fetch::http::Status::SUCCESS_OK);
+          return fetch::http::CreateJsonResponse("{}", fetch::http::Status::SUCCESS_OK);
         });
 
     Get("/pages/(id=\\d+)", "Get a specific page",
         {{"id", "The page id.", validators::StringValue()}},
-        [](fetch::http::HTTPRequest req)
-        {
-          if(req.authentication_level() < 900)
+        [](fetch::http::HTTPRequest req) {
+          if (req.authentication_level() < 900)
           {
             return false;
           }
@@ -65,11 +63,10 @@ struct ExampleModule : HTTPModule
     Get("/throw", "Throws an exception",
         [](fetch::http::ViewParameters const & /*params*/,
            fetch::http::HTTPRequest const & /*request*/) {
-
           throw std::runtime_error("some exception!");
           return fetch::http::CreateJsonResponse("{}",
                                                  fetch::http::Status::CLIENT_ERROR_BAD_REQUEST);
-        });    
+        });
   }
 };
 
@@ -82,7 +79,8 @@ int main()
   server.Start(8080);
 
   server.AddModule(module);
-  // server.AddMiddleware(middleware::DenyAll()); //< Add this line to deny all requests unless authenticated
+  // server.AddMiddleware(middleware::DenyAll()); //< Add this line to deny all requests unless
+  // authenticated
   server.AddMiddleware(middleware::TokenAuth("hello"));
   server.AddMiddleware([](HTTPRequest &) { std::cout << "Middleware 1" << std::endl; });
   server.AddMiddleware([](HTTPResponse &res, HTTPRequest const &req) {

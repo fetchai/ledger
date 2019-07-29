@@ -18,20 +18,18 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/byte_array.hpp"
+#include "http/authentication_level.hpp"
 #include "http/method.hpp"
 #include "http/request.hpp"
 #include "http/response.hpp"
 #include "http/validators.hpp"
 #include "http/view_parameters.hpp"
-#include "http/authentication_level.hpp"
-
 
 #include <vector>
 namespace fetch {
 namespace http {
 
 bool NormalAccessAuthentication(HTTPRequest const &req);
-
 
 struct HTTPParameter
 {
@@ -56,8 +54,8 @@ public:
   HTTPModule &operator=(HTTPModule const &rhs) = delete;
   HTTPModule &operator=(HTTPModule &&rhs) = delete;
 
-  using ViewType = std::function<HTTPResponse(ViewParameters, HTTPRequest)>;
-  using Authenticator = std::function<bool(HTTPRequest)>;  
+  using ViewType      = std::function<HTTPResponse(ViewParameters, HTTPRequest)>;
+  using Authenticator = std::function<bool(HTTPRequest)>;
 
   struct UnmountedView
   {
@@ -65,7 +63,7 @@ public:
     Method                     method;
     byte_array::ByteArray      route;
     std::vector<HTTPParameter> parameters;
-    ViewType                  view;
+    ViewType                   view;
     Authenticator              authenticator;
   };
 
@@ -77,11 +75,11 @@ public:
   void Post(byte_array::ByteArray const &path, byte_array::ByteArray const &description,
             ViewType const &view);
   void Post(byte_array::ByteArray const &path, byte_array::ByteArray const &description,
-            std::vector<HTTPParameter> const &parameters, Authenticator const &auth, ViewType const &view);
-  void Post(byte_array::ByteArray const &path, byte_array::ByteArray const &description, Authenticator const &auth,
+            std::vector<HTTPParameter> const &parameters, Authenticator const &auth,
             ViewType const &view);
+  void Post(byte_array::ByteArray const &path, byte_array::ByteArray const &description,
+            Authenticator const &auth, ViewType const &view);
   /// @}
-
 
   /// Get methods
   /// @{
@@ -90,11 +88,11 @@ public:
   void Get(byte_array::ByteArray const &path, byte_array::ByteArray const &description,
            ViewType const &view);
   void Get(byte_array::ByteArray const &path, byte_array::ByteArray const &description,
-           std::vector<HTTPParameter> const &parameters, Authenticator const &auth,  ViewType const &view);
-  void Get(byte_array::ByteArray const &path, byte_array::ByteArray const &description, Authenticator const &auth, 
+           std::vector<HTTPParameter> const &parameters, Authenticator const &auth,
            ViewType const &view);
+  void Get(byte_array::ByteArray const &path, byte_array::ByteArray const &description,
+           Authenticator const &auth, ViewType const &view);
   /// @}
-
 
   /// Put methods
   /// @{
@@ -103,9 +101,10 @@ public:
   void Put(byte_array::ByteArray const &path, byte_array::ByteArray const &description,
            ViewType const &view);
   void Put(byte_array::ByteArray const &path, byte_array::ByteArray const &description,
-           std::vector<HTTPParameter> const &parameters,Authenticator const &auth,  ViewType const &view);
-  void Put(byte_array::ByteArray const &path, byte_array::ByteArray const &description, Authenticator const &auth, 
+           std::vector<HTTPParameter> const &parameters, Authenticator const &auth,
            ViewType const &view);
+  void Put(byte_array::ByteArray const &path, byte_array::ByteArray const &description,
+           Authenticator const &auth, ViewType const &view);
   /// @}
 
   /// Patch methods
@@ -115,12 +114,10 @@ public:
   void Patch(byte_array::ByteArray const &path, byte_array::ByteArray const &description,
              ViewType const &view);
   void Patch(byte_array::ByteArray const &path, byte_array::ByteArray const &description,
-             std::vector<HTTPParameter> const &parameters,
-              Authenticator const &auth, 
-              ViewType const &view);
-  void Patch(byte_array::ByteArray const &path, byte_array::ByteArray const &description,
-            Authenticator const &auth,     
+             std::vector<HTTPParameter> const &parameters, Authenticator const &auth,
              ViewType const &view);
+  void Patch(byte_array::ByteArray const &path, byte_array::ByteArray const &description,
+             Authenticator const &auth, ViewType const &view);
   /// @}
 
   /// Delete methods
@@ -129,18 +126,19 @@ public:
               std::vector<HTTPParameter> const &parameters, ViewType const &view);
   void Delete(byte_array::ByteArray const &path, byte_array::ByteArray const &description,
               ViewType const &view);
-  void Delete(byte_array::ByteArray const &path, byte_array::ByteArray const &description, Authenticator const &auth, 
-              std::vector<HTTPParameter> const &parameters, ViewType const &view);
-  void Delete(byte_array::ByteArray const &path, byte_array::ByteArray const &description, Authenticator const &auth,     
+  void Delete(byte_array::ByteArray const &path, byte_array::ByteArray const &description,
+              Authenticator const &auth, std::vector<HTTPParameter> const &parameters,
               ViewType const &view);
+  void Delete(byte_array::ByteArray const &path, byte_array::ByteArray const &description,
+              Authenticator const &auth, ViewType const &view);
   /// @}
 
-
-  void AddView(Method method, byte_array::ByteArray const &path,
-               byte_array::ByteArray const &     description,
-               std::vector<HTTPParameter> const &parameters, ViewType const &view, Authenticator const & auth = NormalAccessAuthentication);
+  void                              AddView(Method method, byte_array::ByteArray const &path,
+                                            byte_array::ByteArray const &     description,
+                                            std::vector<HTTPParameter> const &parameters, ViewType const &view,
+                                            Authenticator const &auth = NormalAccessAuthentication);
   std::vector<UnmountedView> const &views() const;
-  
+
 private:
   std::vector<UnmountedView> views_;
   fetch::variant::Variant    interface_description_;

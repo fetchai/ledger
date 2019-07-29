@@ -17,8 +17,8 @@
 //------------------------------------------------------------------------------
 
 #include "core/logging.hpp"
-#include "http/middleware/token_auth.hpp"
 #include "http/authentication_level.hpp"
+#include "http/middleware/token_auth.hpp"
 
 #include <memory>
 
@@ -29,10 +29,7 @@ namespace middleware {
 HTTPServer::RequestMiddleware DenyAll()
 {
   // return the handler
-  return [](HTTPRequest &req) 
-  { 
-   req.SetAuthentication("", AuthenticationLevel::NO_ACCESS);
-  };
+  return [](HTTPRequest &req) { req.SetAuthentication("", AuthenticationLevel::NO_ACCESS); };
 }
 
 }  // namespace middleware

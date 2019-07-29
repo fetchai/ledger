@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "http/server.hpp"
 #include "core/byte_array/const_byte_array.hpp"
+#include "http/server.hpp"
 
 namespace fetch {
 namespace http {

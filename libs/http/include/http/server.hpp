@@ -50,14 +50,14 @@ class HTTPServer : public AbstractHTTPServer
 public:
   using handle_type = uint64_t;
 
-  using NetworkManager = network::NetworkManager;
-  using Socket          = asio::ip::tcp::tcp::socket;
-  using Acceptor        = asio::ip::tcp::tcp::acceptor;
-  using ConnectionManager         = HTTPConnectionManager;
+  using NetworkManager    = network::NetworkManager;
+  using Socket            = asio::ip::tcp::tcp::socket;
+  using Acceptor          = asio::ip::tcp::tcp::acceptor;
+  using ConnectionManager = HTTPConnectionManager;
 
   using RequestMiddleware  = std::function<void(HTTPRequest &)>;
-  using ViewType                = typename HTTPModule::ViewType;
-  using Authenticator                = typename HTTPModule::Authenticator;  
+  using ViewType           = typename HTTPModule::ViewType;
+  using Authenticator      = typename HTTPModule::Authenticator;
   using ResponseMiddleware = std::function<void(HTTPResponse &, HTTPRequest const &)>;
 
   static constexpr char const *LOGGING_NAME = "HTTPServer";
@@ -107,17 +107,16 @@ public:
   void Start(uint16_t port)
   {
     std::shared_ptr<ConnectionManager> manager   = manager_;
-    std::weak_ptr<Socket> &  socRef    = socket_;
-    std::weak_ptr<Acceptor> &accepRef  = acceptor_;
-    NetworkManager &        threadMan = networkManager_;
+    std::weak_ptr<Socket> &            socRef    = socket_;
+    std::weak_ptr<Acceptor> &          accepRef  = acceptor_;
+    NetworkManager &                   threadMan = networkManager_;
 
     networkManager_.Post([&socRef, &accepRef, manager, &threadMan, port] {
       FETCH_LOG_INFO(LOGGING_NAME, "Starting HTTPServer on http://127.0.0.1:", port);
 
       auto soc = threadMan.CreateIO<Socket>();
 
-      auto accep =
-          threadMan.CreateIO<Acceptor>(asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port));
+      auto accep = threadMan.CreateIO<Acceptor>(asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port));
 
       // allow initiating class to post closes to these
       socRef   = soc;
@@ -152,7 +151,7 @@ public:
 
     // TODO(issue 28): improve such that it works for multiple threads.
     std::lock_guard<std::mutex> lock(eval_mutex_);
-    HTTPResponse   res("page not found", mime_types::GetMimeTypeFromExtension(".html"),
+    HTTPResponse                res("page not found", mime_types::GetMimeTypeFromExtension(".html"),
                      Status::CLIENT_ERROR_NOT_FOUND);
 
     // Ensure that the HTTP server remains operational
@@ -178,10 +177,11 @@ public:
         if (v.route.Match(req.uri(), params))
         {
           // checking that the correct level of authentication is present
-          if(!v.authenticator(req))
+          if (!v.authenticator(req))
           {
-            res = HTTPResponse("authentication required", fetch::http::mime_types::GetMimeTypeFromExtension(".html"),
-                   Status::SERVER_ERROR_NETWORK_AUTHENTICATION_REQUIRED);
+            res = HTTPResponse("authentication required",
+                               fetch::http::mime_types::GetMimeTypeFromExtension(".html"),
+                               Status::SERVER_ERROR_NETWORK_AUTHENTICATION_REQUIRED);
             manager_->Send(client, res);
             return;
           }
@@ -199,21 +199,22 @@ public:
       {
         m(res, req);
       }
-
     }
-    catch(std::exception const &e)
+    catch (std::exception const &e)
     {
-      HTTPResponse res("internal error: " + std::string(e.what()), fetch::http::mime_types::GetMimeTypeFromExtension(".html"),
+      HTTPResponse res("internal error: " + std::string(e.what()),
+                       fetch::http::mime_types::GetMimeTypeFromExtension(".html"),
                        Status::SERVER_ERROR_INTERNAL_SERVER_ERROR);
       manager_->Send(client, res);
-      return;      
+      return;
     }
-    catch(...)
+    catch (...)
     {
-      HTTPResponse res("unknown internal error", fetch::http::mime_types::GetMimeTypeFromExtension(".html"),
+      HTTPResponse res("unknown internal error",
+                       fetch::http::mime_types::GetMimeTypeFromExtension(".html"),
                        Status::SERVER_ERROR_INTERNAL_SERVER_ERROR);
       manager_->Send(client, res);
-      return;      
+      return;
     }
 
     manager_->Send(client, res);
@@ -238,9 +239,9 @@ public:
         return;
       }
 
-      std::shared_ptr<Socket>   s = soc;
-      std::shared_ptr<Acceptor> a = accep;
-      std::shared_ptr<ConnectionManager>  m = manager;
+      std::shared_ptr<Socket>            s = soc;
+      std::shared_ptr<Acceptor>          a = accep;
+      std::shared_ptr<ConnectionManager> m = manager;
 
       HTTPServer::Accept(s, a, m);
     };
@@ -280,7 +281,8 @@ public:
     LOG_STACK_TRACE_POINT;
     for (auto const &view : module.views())
     {
-      this->AddView(view.description, view.method, view.route, view.parameters, view.view, view.authenticator);
+      this->AddView(view.description, view.method, view.route, view.parameters, view.view,
+                    view.authenticator);
     }
   }
 
@@ -299,13 +301,13 @@ private:
   std::mutex eval_mutex_;
 
   std::vector<RequestMiddleware>  pre_view_middleware_;
-  std::vector<MountedView>              views_;
+  std::vector<MountedView>        views_;
   std::vector<ResponseMiddleware> post_view_middleware_;
 
-  NetworkManager          networkManager_;
-  std::deque<HTTPRequest>       requests_;
-  std::weak_ptr<Acceptor>  acceptor_;
-  std::weak_ptr<Socket>    socket_;
+  NetworkManager                     networkManager_;
+  std::deque<HTTPRequest>            requests_;
+  std::weak_ptr<Acceptor>            acceptor_;
+  std::weak_ptr<Socket>              socket_;
   std::shared_ptr<ConnectionManager> manager_{std::make_shared<ConnectionManager>(*this)};
 };
 }  // namespace http

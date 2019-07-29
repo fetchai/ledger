@@ -21,10 +21,10 @@
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/json/document.hpp"
 #include "core/logger.hpp"
+#include "http/authentication_level.hpp"
 #include "http/header.hpp"
 #include "http/method.hpp"
 #include "http/query.hpp"
-#include "http/authentication_level.hpp"
 #include "network/fetch_asio.hpp"
 
 #include <chrono>
@@ -152,18 +152,18 @@ public:
            static_cast<double>(Clock::period::den);
   }
 
-  void AddAuthentication(byte_array::ConstByteArray const& auth_method, uint32_t level)
+  void AddAuthentication(byte_array::ConstByteArray const &auth_method, uint32_t level)
   {
-    if(auth_method_.size() != 0)
+    if (auth_method_.size() != 0)
     {
       auth_method_.Append(", ");
     }
 
     auth_method_.Append(auth_method);
-    auth_level_  |= level;
+    auth_level_ |= level;
   }
 
-  void SetAuthentication(byte_array::ConstByteArray const& auth_method, uint32_t level)
+  void SetAuthentication(byte_array::ConstByteArray const &auth_method, uint32_t level)
   {
     auth_method_ = auth_method;
     auth_level_  = level;
@@ -173,6 +173,7 @@ public:
   {
     return auth_level_;
   }
+
 private:
   bool ParseStartLine(byte_array::ByteArray &line);
 
@@ -203,7 +204,7 @@ private:
   /// Authenticated
   /// @{
   byte_array::ByteArray auth_method_{};
-  uint32_t auth_level_{AuthenticationLevel::DEFUALT_LEVEL};
+  uint32_t              auth_level_{AuthenticationLevel::DEFUALT_LEVEL};
   /// }
 };
 }  // namespace http

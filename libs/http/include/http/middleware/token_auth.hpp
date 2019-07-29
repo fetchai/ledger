@@ -17,15 +17,17 @@
 //
 //------------------------------------------------------------------------------
 
-#include "http/server.hpp"
-#include "http/authentication_level.hpp"
 #include "core/byte_array/const_byte_array.hpp"
+#include "http/authentication_level.hpp"
+#include "http/server.hpp"
 
 namespace fetch {
 namespace http {
 namespace middleware {
 
-HTTPServer::RequestMiddleware TokenAuth(byte_array::ConstByteArray const& token, uint32_t level = AuthenticationLevel::TOKEN_PRESENT, std::string token_name = "AUTH_TOKEN");
+HTTPServer::RequestMiddleware TokenAuth(byte_array::ConstByteArray const &token,
+                                        uint32_t    level      = AuthenticationLevel::TOKEN_PRESENT,
+                                        std::string token_name = "AUTH_TOKEN");
 
 }  // namespace middleware
 }  // namespace http

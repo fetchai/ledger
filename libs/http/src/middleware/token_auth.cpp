@@ -25,21 +25,21 @@ namespace fetch {
 namespace http {
 namespace middleware {
 
-HTTPServer::RequestMiddleware TokenAuth(byte_array::ConstByteArray const& token, uint32_t level, std::string token_name)
+HTTPServer::RequestMiddleware TokenAuth(byte_array::ConstByteArray const &token, uint32_t level,
+                                        std::string token_name)
 {
   // return the handler
-  for(auto &c: token_name)
+  for (auto &c : token_name)
   {
     c = static_cast<char>(std::tolower(c));
   }
 
-  return [token, token_name, level](HTTPRequest &req) 
-  { 
+  return [token, token_name, level](HTTPRequest &req) {
     auto header = req.header();
 
-    if(header.Has(token_name))
+    if (header.Has(token_name))
     {
-      if(header[token_name] == token)
+      if (header[token_name] == token)
       {
         req.AddAuthentication(token_name, level);
       }

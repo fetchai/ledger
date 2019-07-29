@@ -23,14 +23,13 @@ namespace http {
 
 struct AuthenticationLevel
 {
-  enum 
+  enum
   {
     NO_ACCESS     = 0,
     DEFUALT_LEVEL = 512,
     TOKEN_PRESENT = 1024
   };
-
 };
 
-}
-}
+}  // namespace http
+}  // namespace fetch
