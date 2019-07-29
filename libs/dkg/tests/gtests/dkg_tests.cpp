@@ -371,7 +371,7 @@ struct CabinetMember
   CabinetMember(uint16_t port_number, uint16_t index, RBC::CabinetMembers const &current_cabinet,
                 uint32_t const &threshold, const std::vector<FaultyDkg::Failures> &failures = {})
     : muddle_port{port_number}
-    , network_manager{"NetworkManager" + std::to_string(index), 3}
+    , network_manager{"NetworkManager" + std::to_string(index), 1}
     , muddle_certificate{CreateNewCertificate()}
     , muddle{fetch::muddle::NetworkId{"TestNetwork"}, muddle_certificate, network_manager, true,
              true}
