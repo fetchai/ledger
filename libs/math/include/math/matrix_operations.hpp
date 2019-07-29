@@ -725,7 +725,7 @@ ArrayType ReduceMax(ArrayType const &obj1, SizeType axis)
 
 /**
  * Finds the argument of the maximum value in an array
- * @tparam T data typeMultiplyBySumAnyAxis
+ * @tparam T data type
  * @tparam C container type
  * @param array array to search for maximum value
  * @return
