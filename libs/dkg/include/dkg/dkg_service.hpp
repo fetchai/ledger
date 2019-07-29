@@ -264,4 +264,5 @@ private:
 };
 
 }  // namespace dkg
+
 }  // namespace fetch

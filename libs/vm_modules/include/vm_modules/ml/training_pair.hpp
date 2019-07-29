@@ -17,9 +17,17 @@
 //
 //------------------------------------------------------------------------------
 
+#include "vm/object.hpp"
+#include "vm_modules/math/tensor.hpp"
+
 #include <utility>
 
 namespace fetch {
+
+namespace vm {
+class Module;
+}
+
 namespace vm_modules {
 namespace ml {
 
@@ -30,38 +38,18 @@ class VMTrainingPair : public fetch::vm::Object,
 public:
   VMTrainingPair(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
                  fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> ta,
-                 fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> tb)
-    : fetch::vm::Object(vm, type_id)
-  {
-    this->first  = ta;
-    this->second = tb;
-  }
+                 fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> tb);
 
-  static void Bind(vm::Module &module)
-  {
-    module.CreateClassType<fetch::vm_modules::ml::VMTrainingPair>("TrainingPair")
-        .CreateConstructor(&fetch::vm_modules::ml::VMTrainingPair::Constructor)
-        .CreateMemberFunction("data", &fetch::vm_modules::ml::VMTrainingPair::data)
-        .CreateMemberFunction("label", &fetch::vm_modules::ml::VMTrainingPair::label);
-  }
+  static void Bind(vm::Module &module);
 
   static fetch::vm::Ptr<VMTrainingPair> Constructor(
       fetch::vm::VM *vm, fetch::vm::TypeId type_id,
       fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> ta,
-      fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> tb)
-  {
-    return new VMTrainingPair(vm, type_id, ta, tb);
-  }
+      fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> tb);
 
-  fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> data()
-  {
-    return this->second;
-  }
+  fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> data() const;
 
-  fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> label()
-  {
-    return this->first;
-  }
+  fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> label() const;
 };
 
 }  // namespace ml

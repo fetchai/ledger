@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -17,35 +16,44 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/assert.hpp"
-#include "core/byte_array/const_byte_array.hpp"
+#include "vm/module.hpp"
+#include "vm_modules/polyfill/bitwise_ops.hpp"
 
-#include <type_traits>
+#include <cstdint>
+
+using namespace fetch::vm;
 
 namespace fetch {
-namespace serializers {
+namespace vm_modules {
+
+namespace {
 
 template <typename T>
-inline void Serialize(T &serializer, byte_array::ConstByteArray const &s)
+T And(VM *, T x, T s)
 {
-  serializer.Allocate(sizeof(uint64_t) + s.size());
-  uint64_t size = s.size();
-
-  serializer.WriteBytes(reinterpret_cast<uint8_t const *>(&size), sizeof(uint64_t));
-  serializer.WriteBytes(reinterpret_cast<uint8_t const *>(s.pointer()), s.size());
+  return T(x & s);
 }
 
 template <typename T>
-inline void Deserialize(T &serializer, byte_array::ConstByteArray &s)
+T Or(VM *, T x, T s)
 {
-  uint64_t size = 0;
-
-  detailed_assert(int64_t(sizeof(uint64_t)) <= serializer.bytes_left());
-  serializer.ReadBytes(reinterpret_cast<uint8_t *>(&size), sizeof(uint64_t));
-  detailed_assert(int64_t(size) <= serializer.bytes_left());
-
-  serializer.ReadByteArray(s, size);
+  return T(x | s);
 }
 
-}  // namespace serializers
+}  // namespace
+
+void BindBitwiseOps(Module &module)
+{
+  module.CreateFreeFunction("and", &And<int32_t>);
+  module.CreateFreeFunction("and", &And<int64_t>);
+  module.CreateFreeFunction("and", &And<uint32_t>);
+  module.CreateFreeFunction("and", &And<uint64_t>);
+
+  module.CreateFreeFunction("or", &Or<int32_t>);
+  module.CreateFreeFunction("or", &Or<int64_t>);
+  module.CreateFreeFunction("or", &Or<uint32_t>);
+  module.CreateFreeFunction("or", &Or<uint64_t>);
+}
+
+}  // namespace vm_modules
 }  // namespace fetch

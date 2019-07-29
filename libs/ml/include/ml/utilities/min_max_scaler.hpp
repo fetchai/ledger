@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "math/base_types.hpp"
 #include "ml/utilities/scaler.hpp"
 
 namespace fetch {

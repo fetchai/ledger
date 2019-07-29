@@ -17,30 +17,16 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/standard_functions/sqrt.hpp"
-#include "vm/module.hpp"
-
-#include <cmath>
-
 namespace fetch {
+
+namespace vm {
+class Module;
+}
+
 namespace vm_modules {
 namespace math {
 
-template <typename T>
-fetch::math::meta::IfIsMath<T, T> Sqrt(fetch::vm::VM *, T const &a)
-{
-  T x;
-  fetch::math::Sqrt(a, x);
-  return x;
-}
-
-inline void BindSqrt(fetch::vm::Module &module)
-{
-  module.CreateFreeFunction("sqrt", &Sqrt<float_t>);
-  module.CreateFreeFunction("sqrt", &Sqrt<double_t>);
-  module.CreateFreeFunction("sqrt", &Sqrt<fixed_point::fp32_t>);
-  module.CreateFreeFunction("sqrt", &Sqrt<fixed_point::fp64_t>);
-}
+void BindSqrt(fetch::vm::Module &module);
 
 }  // namespace math
 }  // namespace vm_modules

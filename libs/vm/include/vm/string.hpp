@@ -62,8 +62,8 @@ struct String : public Object
   bool        IsGreaterThanOrEqual(Ptr<Object> const &lhso, Ptr<Object> const &rhso) override;
   void        Add(Ptr<Object> &lhso, Ptr<Object> &rhso) override;
 
-  bool SerializeTo(ByteArrayBuffer &buffer) override;
-  bool DeserializeFrom(ByteArrayBuffer &buffer) override;
+  bool SerializeTo(MsgPackSerializer &buffer) override;
+  bool DeserializeFrom(MsgPackSerializer &buffer) override;
 
   std::string str;
   bool        is_literal;

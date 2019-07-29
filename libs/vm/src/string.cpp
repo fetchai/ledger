@@ -222,13 +222,13 @@ Ptr<String> String::Constructor(VM *vm, TypeId)
   return new String(vm, "");
 }
 
-bool String::SerializeTo(ByteArrayBuffer &buffer)
+bool String::SerializeTo(MsgPackSerializer &buffer)
 {
   buffer << str;
   return true;
 }
 
-bool String::DeserializeFrom(ByteArrayBuffer &buffer)
+bool String::DeserializeFrom(MsgPackSerializer &buffer)
 {
   buffer >> str;
   return true;

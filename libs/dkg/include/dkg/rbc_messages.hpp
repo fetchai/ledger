@@ -18,8 +18,8 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/const_byte_array.hpp"
-#include "core/serializers/byte_array_buffer.hpp"
-#include "core/serializers/stl_types.hpp"
+#include "core/serializers/base_types.hpp"
+#include "core/serializers/main_serializer.hpp"
 
 #include <cstdint>
 
@@ -30,8 +30,8 @@ namespace rbc {
 using TruncatedHash        = byte_array::ByteArray;
 using TagType              = uint64_t;
 using SerialisedMessage    = byte_array::ConstByteArray;
-using RBCSerializer        = fetch::serializers::ByteArrayBuffer;
-using RBCSerializerCounter = fetch::serializers::SizeCounter<fetch::serializers::ByteArrayBuffer>;
+using RBCSerializer        = fetch::serializers::MsgPackSerializer;
+using RBCSerializerCounter = fetch::serializers::SizeCounter;
 
 /**
  * Different messages using in reliable broadcast channel(RBC).

@@ -16,21 +16,38 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/byte_array.hpp"
-#include "core/serializers/byte_array_buffer.hpp"
-#include "ledger/chain/transaction_layout_rpc_serializers.hpp"
-#include "ledger/chain/transaction_rpc_serializers.hpp"
+#include "core/byte_array/decoders.hpp"
+#include "core/byte_array/encoders.hpp"
+#include "core/serializers/group_definitions.hpp"
+#include "core/serializers/main_serializer.hpp"
 
-using fetch::serializers::ByteArrayBuffer;
+#include "gtest/gtest.h"
+
+#include <cstddef>
+#include <cstdint>
+
+using namespace fetch::byte_array;
 
 namespace fetch {
-namespace ledger {
 
-template void Serialize<ByteArrayBuffer>(ByteArrayBuffer &, TransactionLayout const &);
-template void Serialize<ByteArrayBuffer>(ByteArrayBuffer &, Transaction const &);
+namespace serializers {
 
-template void Deserialize<ByteArrayBuffer>(ByteArrayBuffer &, TransactionLayout &);
-template void Deserialize<ByteArrayBuffer>(ByteArrayBuffer &, Transaction &);
+TEST(MsgPacker, floats)
+{
+  // Setup
+  MsgPackSerializer stream;
+  double            value;
 
-}  // namespace ledger
+  value  = static_cast<double>(2.34);
+  stream = MsgPackSerializer();
+  stream << value;
+  std::cout << ToHex(stream.data()) << std::endl;
+  EXPECT_EQ(FromHex("cb4002b851eb851eb8"), stream.data());
+  stream.seek(0);
+  value = 0;
+  stream >> value;
+  EXPECT_EQ(value, 2.34);
+}
+
+}  // namespace serializers
 }  // namespace fetch

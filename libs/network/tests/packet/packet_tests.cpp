@@ -16,7 +16,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/byte_array.hpp"
 #include "crypto/ecdsa.hpp"
 #include "network/muddle/packet.hpp"
 

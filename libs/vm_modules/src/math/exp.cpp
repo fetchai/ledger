@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -17,28 +16,39 @@
 //
 //------------------------------------------------------------------------------
 
-namespace fetch {
-namespace service {
-class CallContext;
-}
-}  // namespace fetch
+#include "math/meta/math_type_traits.hpp"
+#include "math/standard_functions/exp.hpp"
+#include "vm/module.hpp"
+#include "vm_modules/math/exp.hpp"
+
+#include <cmath>
+
+using namespace fetch::vm;
 
 namespace fetch {
-namespace serializers {
+namespace vm_modules {
+namespace math {
 
-using OBJ = fetch::service::CallContext;
-
-template <typename T>
-inline void Deserialize(T &serializer, OBJ const *(&ptr))
-{
-  serializer.ReadBytes(reinterpret_cast<uint8_t *>(&ptr), sizeof(std::nullptr_t));
-}
+namespace {
 
 template <typename T>
-inline void Deserialize(T &serializer, OBJ *(&ptr))
+fetch::math::meta::IfIsMath<T, T> Exp(VM *, T const &a)
 {
-  serializer.ReadBytes(reinterpret_cast<uint8_t *>(&ptr), sizeof(std::nullptr_t));
+  T x;
+  fetch::math::Exp(a, x);
+  return x;
 }
 
-}  // namespace serializers
+}  // namespace
+
+void BindExp(Module &module)
+{
+  module.CreateFreeFunction("exp", &Exp<float_t>);
+  module.CreateFreeFunction("exp", &Exp<double_t>);
+  module.CreateFreeFunction("exp", &Exp<fixed_point::fp32_t>);
+  module.CreateFreeFunction("exp", &Exp<fixed_point::fp64_t>);
+}
+
+}  // namespace math
+}  // namespace vm_modules
 }  // namespace fetch

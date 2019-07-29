@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/logger.hpp"
-#include "core/serializers/byte_array_buffer.hpp"
+#include "core/serializers/main_serializer.hpp"
 #include "network/muddle/router.hpp"
 #include "network/tcp/abstract_server.hpp"
 
@@ -42,7 +42,7 @@ class MuddleServer final : public NETWORK_SERVER
 public:
   using connection_handle_type = network::AbstractNetworkServer::connection_handle_type;
   using message_type           = network::message_type;
-  using ByteArrayBuffer        = serializers::ByteArrayBuffer;
+  using MsgPackSerializer      = serializers::MsgPackSerializer;
 
   // ensure the NETWORK_SERVER type that we are using is actually what we where expecting
   static_assert(std::is_base_of<network::AbstractNetworkServer, NETWORK_SERVER>::value,
@@ -85,19 +85,16 @@ private:
   {
     try
     {
-      LOG_STACK_TRACE_POINT;
-      // un-marshall the data
-      ByteArrayBuffer buffer(msg);
-
       auto packet = std::make_shared<Packet>();
-
+      if (Packet::FromBuffer(*packet, msg.pointer(), msg.size()))
       {
-        LOG_STACK_TRACE_POINT;
-        buffer >> *packet;
+        // dispatch the message to router
+        router_.Route(client, packet);
       }
-
-      // dispatch the message to router
-      router_.Route(client, packet);
+      else
+      {
+        FETCH_LOG_WARN(LOGGING_NAME, "Failed to extract packet from message");
+      }
     }
     catch (std::exception const &ex)
     {

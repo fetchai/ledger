@@ -17,31 +17,16 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/meta/math_type_traits.hpp"
-#include "math/standard_functions/exp.hpp"
-#include "vm/module.hpp"
-
-#include <cmath>
-
 namespace fetch {
+
+namespace vm {
+class Module;
+}
+
 namespace vm_modules {
 namespace math {
 
-template <typename T>
-fetch::math::meta::IfIsMath<T, T> Exp(fetch::vm::VM *, T const &a)
-{
-  T x;
-  fetch::math::Exp(a, x);
-  return x;
-}
-
-inline void BindExp(fetch::vm::Module &module)
-{
-  module.CreateFreeFunction("exp", &Exp<float_t>);
-  module.CreateFreeFunction("exp", &Exp<double_t>);
-  module.CreateFreeFunction("exp", &Exp<fixed_point::fp32_t>);
-  module.CreateFreeFunction("exp", &Exp<fixed_point::fp64_t>);
-}
+void BindExp(fetch::vm::Module &module);
 
 }  // namespace math
 }  // namespace vm_modules

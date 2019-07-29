@@ -20,13 +20,21 @@
 #include "core/byte_array/decoders.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "core/json/document.hpp"
+#include "vm/array.hpp"
 #include "vm/module.hpp"
 #include "vm_modules/core/structured_data.hpp"
 
 #include <sstream>
+#include <stdexcept>
+#include <string>
+#include <utility>
+#include <vector>
+
+using namespace fetch::vm;
 
 namespace fetch {
 namespace vm_modules {
+
 namespace {
 
 using fetch::byte_array::ConstByteArray;
@@ -34,10 +42,10 @@ using fetch::byte_array::ToBase64;
 using fetch::byte_array::FromBase64;
 
 template <typename T>
-vm::Ptr<vm::Array<T>> CreateNewPrimitiveArray(vm::VM *vm, std::vector<T> &&items)
+Ptr<Array<T>> CreateNewPrimitiveArray(VM *vm, std::vector<T> &&items)
 {
-  vm::Ptr<vm::Array<T>> array =
-      new vm::Array<T>(vm, vm->GetTypeId<vm::IArray>(), vm->GetTypeId<T>(), int32_t(items.size()));
+  Ptr<Array<T>> array =
+      new Array<T>(vm, vm->GetTypeId<IArray>(), vm->GetTypeId<T>(), int32_t(items.size()));
   array->elements = std::move(items);
 
   return array;
@@ -45,7 +53,7 @@ vm::Ptr<vm::Array<T>> CreateNewPrimitiveArray(vm::VM *vm, std::vector<T> &&items
 
 }  // namespace
 
-void StructuredData::Bind(vm::Module &module)
+void StructuredData::Bind(Module &module)
 {
   module.CreateClassType<StructuredData>("StructuredData")
       .CreateConstructor(&StructuredData::Constructor)
@@ -79,11 +87,10 @@ void StructuredData::Bind(vm::Module &module)
       .CreateMemberFunction("set", &StructuredData::SetPrimitive<double>);
 
   // add array support?
-  module.GetClassInterface<vm::IArray>()
-      .CreateInstantiationType<vm::Array<vm::Ptr<StructuredData>>>();
+  module.GetClassInterface<IArray>().CreateInstantiationType<Array<Ptr<StructuredData>>>();
 }
 
-vm::Ptr<StructuredData> StructuredData::Constructor(vm::VM *vm, vm::TypeId type_id)
+Ptr<StructuredData> StructuredData::Constructor(VM *vm, TypeId type_id)
 {
   return new StructuredData(vm, type_id);
 }
@@ -91,7 +98,7 @@ vm::Ptr<StructuredData> StructuredData::Constructor(vm::VM *vm, vm::TypeId type_
 vm::Ptr<StructuredData> StructuredData::ConstructorFromVariant(vm::VM *vm, vm::TypeId type_id,
                                                                variant::Variant const &data)
 {
-  vm::Ptr<StructuredData> structured_data{};
+  Ptr<StructuredData> structured_data{};
 
   try
   {
@@ -116,11 +123,11 @@ vm::Ptr<StructuredData> StructuredData::ConstructorFromVariant(vm::VM *vm, vm::T
   return structured_data;
 }
 
-StructuredData::StructuredData(vm::VM *vm, vm::TypeId type_id)
-  : vm::Object(vm, type_id)
+StructuredData::StructuredData(VM *vm, TypeId type_id)
+  : Object(vm, type_id)
 {}
 
-bool StructuredData::SerializeTo(vm::ByteArrayBuffer &buffer)
+bool StructuredData::SerializeTo(serializers::MsgPackSerializer &buffer)
 {
   bool success{false};
 
@@ -141,7 +148,7 @@ bool StructuredData::SerializeTo(vm::ByteArrayBuffer &buffer)
   return success;
 }
 
-bool StructuredData::DeserializeFrom(vm::ByteArrayBuffer &buffer)
+bool StructuredData::DeserializeFrom(serializers::MsgPackSerializer &buffer)
 {
   bool success{false};
 
@@ -163,7 +170,7 @@ bool StructuredData::DeserializeFrom(vm::ByteArrayBuffer &buffer)
   return success;
 }
 
-bool StructuredData::ToJSON(vm::JSONVariant &variant)
+bool StructuredData::ToJSON(JSONVariant &variant)
 {
   bool success{false};
 
@@ -180,7 +187,7 @@ bool StructuredData::ToJSON(vm::JSONVariant &variant)
   return success;
 }
 
-bool StructuredData::FromJSON(vm::JSONVariant const &variant)
+bool StructuredData::FromJSON(JSONVariant const &variant)
 {
   bool success{false};
 
@@ -197,12 +204,12 @@ bool StructuredData::FromJSON(vm::JSONVariant const &variant)
   return success;
 }
 
-bool StructuredData::Has(vm::Ptr<vm::String> const &s)
+bool StructuredData::Has(Ptr<String> const &s)
 {
   return contents_.Has(s->str);
 }
 
-vm::Ptr<vm::String> StructuredData::GetString(vm::Ptr<vm::String> const &s)
+Ptr<String> StructuredData::GetString(Ptr<String> const &s)
 {
   std::string ret;
 
@@ -224,11 +231,11 @@ vm::Ptr<vm::String> StructuredData::GetString(vm::Ptr<vm::String> const &s)
     vm_->RuntimeError(e.what());
   }
 
-  return new vm::String(vm_, ret);
+  return new String(vm_, ret);
 }
 
 template <typename T>
-T StructuredData::GetPrimitive(vm::Ptr<vm::String> const &s)
+T StructuredData::GetPrimitive(Ptr<String> const &s)
 {
   T ret{0};
 
@@ -253,9 +260,9 @@ T StructuredData::GetPrimitive(vm::Ptr<vm::String> const &s)
 }
 
 template <typename T>
-vm::Ptr<vm::Array<T>> StructuredData::GetArray(vm::Ptr<vm::String> const &s)
+Ptr<Array<T>> StructuredData::GetArray(Ptr<String> const &s)
 {
-  vm::Ptr<vm::Array<T>> ret{};
+  Ptr<Array<T>> ret{};
 
   try
   {
@@ -296,7 +303,7 @@ vm::Ptr<vm::Array<T>> StructuredData::GetArray(vm::Ptr<vm::String> const &s)
 }
 
 template <typename T>
-void StructuredData::SetPrimitive(vm::Ptr<vm::String> const &s, T value)
+void StructuredData::SetPrimitive(Ptr<String> const &s, T value)
 {
   try
   {
@@ -309,7 +316,7 @@ void StructuredData::SetPrimitive(vm::Ptr<vm::String> const &s, T value)
 }
 
 template <typename T>
-void StructuredData::SetArray(vm::Ptr<vm::String> const &s, vm::Ptr<vm::Array<T>> const &arr)
+void StructuredData::SetArray(Ptr<String> const &s, Ptr<Array<T>> const &arr)
 {
   try
   {
@@ -330,7 +337,7 @@ void StructuredData::SetArray(vm::Ptr<vm::String> const &s, vm::Ptr<vm::Array<T>
   }
 }
 
-void StructuredData::SetString(vm::Ptr<vm::String> const &s, vm::Ptr<vm::String> const &value)
+void StructuredData::SetString(Ptr<String> const &s, Ptr<String> const &value)
 {
   try
   {

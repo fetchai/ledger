@@ -18,6 +18,8 @@
 
 #include "core/byte_array/decoders.hpp"
 #include "core/random/lfg.hpp"
+#include "core/serializers/base_types.hpp"
+#include "core/serializers/group_definitions.hpp"
 #include "storage/object_store.hpp"
 #include "testing/common_testing_functionality.hpp"
 
@@ -63,48 +65,52 @@ struct TestSerDeser
   }
 };
 
-/**
- * Serializer for TestSerDeser
- *
- * @param: serializer The serializer
- * @param: b The class to serialize
- */
-template <typename T>
-void Serialize(T &serializer, TestSerDeser const &b)
+namespace fetch {
+namespace serializers {
+template <typename D>
+struct ArraySerializer<TestSerDeser, D>
 {
-  serializer << b.first;
-  serializer << b.second;
-  serializer << b.third;
-}
+public:
+  using Type       = TestSerDeser;
+  using DriverType = D;
 
-/**
- * Deserializer for TestSerDeser
- *
- * @param: serializer The deserializer
- * @param: b The class to deserialize
- */
-template <typename T>
-void Deserialize(T &serializer, TestSerDeser &b)
-{
-  serializer >> b.first;
-  serializer >> b.second;
-  std::string ret;
-  serializer >> ret;
-  b.third = ret;
-}
+  template <typename Constructor>
+  static void Serialize(Constructor &array_constructor, Type const &b)
+  {
+    auto array = array_constructor(3);
+    array.Append(b.first);
+    array.Append(b.second);
+    array.Append(b.third);
+  }
+
+  template <typename ArrayDeserializer>
+  static void Deserialize(ArrayDeserializer &array, Type &b)
+  {
+    if (array.size() != 3)
+    {
+      throw SerializableException(std::string("expected 3 elements."));
+    }
+
+    array.GetNextValue(b.first);
+    array.GetNextValue(b.second);
+    array.GetNextValue(b.third);
+  }
+};
+}  // namespace serializers
+}  // namespace fetch
 
 TEST(storage_object_store_basic_functionality, Setting_and_getting_elements)
 {
-  for (std::size_t iterations = 3; iterations < 10; ++iterations)
+  for (uint64_t iterations = 3; iterations < 10; ++iterations)
   {
-    ObjectStore<std::size_t> testStore;
+    ObjectStore<uint64_t> testStore;
     testStore.New("testFile.db", "testIndex.db");
 
-    for (std::size_t i = 0; i < iterations; ++i)
+    for (uint64_t i = 0; i < iterations; ++i)
     {
       testStore.Set(ResourceAddress(std::to_string(i)), i);
 
-      std::size_t result;
+      uint64_t result;
 
       testStore.Get(ResourceAddress(std::to_string(i)), result);
 
@@ -112,9 +118,9 @@ TEST(storage_object_store_basic_functionality, Setting_and_getting_elements)
     }
 
     // Do a second run
-    for (std::size_t i = 0; i < iterations; ++i)
+    for (uint64_t i = 0; i < iterations; ++i)
     {
-      std::size_t result;
+      uint64_t result;
 
       testStore.Get(ResourceAddress(std::to_string(i)), result);
 
@@ -122,9 +128,9 @@ TEST(storage_object_store_basic_functionality, Setting_and_getting_elements)
     }
 
     // Check against false positives
-    for (std::size_t i = 1; i < iterations; ++i)
+    for (uint64_t i = 1; i < iterations; ++i)
     {
-      std::size_t result = 0;
+      uint64_t result = 0;
 
       testStore.Get(ResourceAddress(std::to_string(i + iterations)), result);
 
@@ -139,7 +145,7 @@ TEST(storage_object_store_basic_functionality, Setting_and_getting_elements)
 
 TEST(storage_object_store_basic_functionality, find_over_basic_struct)
 {
-  std::vector<std::size_t> keyTests{99, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 100};
+  std::vector<uint64_t> keyTests{99, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 100};
 
   for (auto const &numberOfKeys : keyTests)
   {
@@ -152,7 +158,7 @@ TEST(storage_object_store_basic_functionality, find_over_basic_struct)
     fetch::random::LaggedFibonacciGenerator<> lfg;
 
     // Create vector of random numbers
-    for (std::size_t i = 0; i < numberOfKeys; ++i)
+    for (uint64_t i = 0; i < numberOfKeys; ++i)
     {
       uint64_t random = lfg();
 
@@ -187,7 +193,7 @@ TEST(storage_object_store_basic_functionality, find_over_basic_struct)
 
     successfullyFound = false;
 
-    for (std::size_t i = 0; i < 100; ++i)
+    for (uint64_t i = 0; i < 100; ++i)
     {
       auto it = testStore.Find(ResourceAddress(std::to_string(lfg())));
 
@@ -204,7 +210,7 @@ TEST(storage_object_store_basic_functionality, find_over_basic_struct)
 
 TEST(storage_object_store_with_STL_gtest, find_over_basic_struct_expect_failures)
 {
-  std::vector<std::size_t> keyTests{99, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 100};
+  std::vector<uint64_t> keyTests{99, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 100};
 
   for (auto const &numberOfKeys : keyTests)
   {
@@ -213,7 +219,7 @@ TEST(storage_object_store_with_STL_gtest, find_over_basic_struct_expect_failures
     testStore.New("testFile.db", "testIndex.db");
 
     // Create vector of random numbers
-    for (std::size_t i = 0; i < numberOfKeys; ++i)
+    for (uint64_t i = 0; i < numberOfKeys; ++i)
     {
       testType test;
       test.first  = int(-i);
@@ -227,7 +233,7 @@ TEST(storage_object_store_with_STL_gtest, find_over_basic_struct_expect_failures
     bool successfullyFound = false;
 
     // Expect in the case of hash collisions, we shouldn't find these
-    for (std::size_t i = numberOfKeys + 1; i < numberOfKeys * 2; ++i)
+    for (uint64_t i = numberOfKeys + 1; i < numberOfKeys * 2; ++i)
     {
       auto it = testStore.Find(ResourceAddress(std::to_string(i)));
       if (it != testStore.end())
@@ -243,7 +249,7 @@ TEST(storage_object_store_with_STL_gtest, find_over_basic_struct_expect_failures
 
 TEST(storage_object_store_with_STL_gtest, iterator_over_basic_struct)
 {
-  std::vector<std::size_t> keyTests{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 99, 100, 1010, 9999};
+  std::vector<uint64_t> keyTests{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 99, 100, 1010, 9999};
   for (auto const &numberOfKeys : keyTests)
   {
     using testType = TestSerDeser;
@@ -255,7 +261,7 @@ TEST(storage_object_store_with_STL_gtest, iterator_over_basic_struct)
     fetch::random::LaggedFibonacciGenerator<> lfg;
 
     // Create vector of random numbers
-    for (std::size_t i = 0; i < numberOfKeys; ++i)
+    for (uint64_t i = 0; i < numberOfKeys; ++i)
     {
       uint64_t random = lfg();
 
@@ -289,8 +295,8 @@ TEST(storage_object_store_with_STL_gtest, iterator_over_basic_struct)
 TEST(storage_object_store_with_STL_gtest,
      subtree_iterator_over_basic_struct_1_to_8_bits_root_sizes_split)
 {
-  std::vector<std::size_t> keyTests{0,  1,  2,  3,  4,  5,  6,   7,   8,   9,
-                                    10, 11, 12, 13, 14, 99, 100, 133, 998, 1001};
+  std::vector<uint64_t> keyTests{0,  1,  2,  3,  4,  5,  6,   7,   8,   9,
+                                 10, 11, 12, 13, 14, 99, 100, 133, 998, 1001};
   for (auto const &numberOfKeys : keyTests)
   {
     using testType = TestSerDeser;
@@ -303,13 +309,13 @@ TEST(storage_object_store_with_STL_gtest,
     ByteArray array;
     array.Resize(256 / 8);
 
-    for (std::size_t i = 0; i < array.size(); ++i)
+    for (uint64_t i = 0; i < array.size(); ++i)
     {
       array[i] = 0;
     }
 
     // Create vector of random numbers
-    for (std::size_t i = 0; i < numberOfKeys; ++i)
+    for (uint64_t i = 0; i < numberOfKeys; ++i)
     {
       uint64_t random = lfg();
 
@@ -378,7 +384,7 @@ TEST(storage_object_store, correlated_strings_work_correctly)
 
 TEST(storage_object_store_with_STL_gtest, iterator_over_basic_struct_with_key_info)
 {
-  std::vector<std::size_t> keyTests{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 99, 100, 1010, 9999};
+  std::vector<uint64_t> keyTests{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 99, 100, 1010, 9999};
   for (auto const &numberOfKeys : keyTests)
   {
     using testType = TestSerDeser;
@@ -391,7 +397,7 @@ TEST(storage_object_store_with_STL_gtest, iterator_over_basic_struct_with_key_in
     fetch::random::LaggedFibonacciGenerator<> lfg;
 
     // Create vector of random numbers
-    for (std::size_t i = 0; i < numberOfKeys; ++i)
+    for (uint64_t i = 0; i < numberOfKeys; ++i)
     {
       uint64_t random = lfg();
 

@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/byte_array_buffer.hpp"
+#include "core/serializers/main_serializer.hpp"
 #include "ml/serializers/ml_types.hpp"
 
 namespace fetch {
@@ -32,8 +32,9 @@ namespace examples {
 template <typename GraphType>
 void SaveModel(GraphType const &g, std::string const &save_location)
 {
-  fetch::serializers::ByteArrayBuffer serializer;
+  fetch::serializers::MsgPackSerializer serializer;
   serializer << g.StateDict();
+
   std::fstream file(save_location, std::fstream::out);  // fba = FetchByteArray
   if (file)
   {

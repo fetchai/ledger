@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/logger.hpp"
+#include "core/serializers/group_definitions.hpp"
 
 #include <cstdint>
 #include <string>
@@ -69,17 +70,8 @@ public:
   bool operator==(Peer const &other) const noexcept;
   bool operator<(Peer const &other) const;
 
-  template <typename T>
-  friend void Serialize(T &serializer, Peer const &peer)
-  {
-    serializer << peer.address_ << peer.port_;
-  }
-
-  template <typename T>
-  friend void Deserialize(T &serializer, Peer &peer)
-  {
-    serializer >> peer.address_ >> peer.port_;
-  }
+  template <typename X, typename D>
+  friend struct serializers::MapSerializer;
 
 private:
   std::string address_{"localhost"};
@@ -126,6 +118,35 @@ inline std::ostream &operator<<(std::ostream &s, Peer const &peer)
 }
 
 }  // namespace network
+
+namespace serializers {
+template <typename D>
+struct MapSerializer<network::Peer, D>
+{
+public:
+  using Type       = network::Peer;
+  using DriverType = D;
+
+  static const uint8_t ADDRESS = 1;
+  static const uint8_t PORT    = 2;
+
+  template <typename T>
+  static void Serialize(T &map_constructor, Type const &peer)
+  {
+    auto map = map_constructor(2);
+    map.Append(ADDRESS, peer.address_);
+    map.Append(PORT, peer.port_);
+  }
+
+  template <typename T>
+  static void Deserialize(T &map, Type &peer)
+  {
+    map.ExpectKeyGetValue(ADDRESS, peer.address_);
+    map.ExpectKeyGetValue(PORT, peer.port_);
+  }
+};
+}  // namespace serializers
+
 }  // namespace fetch
 
 namespace std {
