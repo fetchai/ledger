@@ -23,71 +23,15 @@
 #include <cstdint>
 
 namespace fetch {
+
+namespace vm {
+class Module;
+}
+
 namespace vm_modules {
 
-/**
- * method for type converting from arithmetic to string
- */
-template <typename T>
-fetch::math::meta::IfIsNonFixedPointArithmetic<T, fetch::vm::Ptr<fetch::vm::String>> ToString(
-    fetch::vm::VM *vm, T const &a)
-{
-  if (std::is_same<T, bool>::value)
-  {
-    fetch::vm::Ptr<fetch::vm::String> ret(
-        new fetch::vm::String(vm, static_cast<bool>(a) ? "true" : "false"));
-    return ret;
-  }
-  else
-  {
-    fetch::vm::Ptr<fetch::vm::String> ret(new fetch::vm::String(vm, std::to_string(a)));
-    return ret;
-  }
-}
-
-template <typename T>
-fetch::math::meta::IfIsFixedPoint<T, fetch::vm::Ptr<fetch::vm::String>> ToString(fetch::vm::VM *vm,
-                                                                                 T const &      a)
-{
-  std::stringstream stream;
-  stream << a;
-  fetch::vm::Ptr<fetch::vm::String> ret(new fetch::vm::String(vm, stream.str()));
-  return ret;
-}
-
-template <typename T>
-bool ToBool(fetch::vm::VM * /*vm*/, T const &a)
-{
-  return static_cast<bool>(a);
-}
-
-inline void CreateToString(fetch::vm::Module &module)
-{
-  module.CreateFreeFunction("toString", &ToString<int8_t>);
-  module.CreateFreeFunction("toString", &ToString<uint8_t>);
-  module.CreateFreeFunction("toString", &ToString<int16_t>);
-  module.CreateFreeFunction("toString", &ToString<uint16_t>);
-  module.CreateFreeFunction("toString", &ToString<int32_t>);
-  module.CreateFreeFunction("toString", &ToString<uint32_t>);
-  module.CreateFreeFunction("toString", &ToString<int64_t>);
-  module.CreateFreeFunction("toString", &ToString<uint64_t>);
-  module.CreateFreeFunction("toString", &ToString<float_t>);
-  module.CreateFreeFunction("toString", &ToString<double_t>);
-  module.CreateFreeFunction("toString", &ToString<bool>);
-  module.CreateFreeFunction("toString", &ToString<fixed_point::fp32_t>);
-  module.CreateFreeFunction("toString", &ToString<fixed_point::fp64_t>);
-}
-
-inline void CreateToBool(fetch::vm::Module &module)
-{
-
-  module.CreateFreeFunction("toBool", &ToBool<int32_t>);
-  module.CreateFreeFunction("toBool", &ToBool<uint32_t>);
-  module.CreateFreeFunction("toBool", &ToBool<int64_t>);
-  module.CreateFreeFunction("toBool", &ToBool<uint64_t>);
-  module.CreateFreeFunction("toBool", &ToBool<float_t>);
-  module.CreateFreeFunction("toBool", &ToBool<double_t>);
-}
+void CreateToString(fetch::vm::Module &module);
+void CreateToBool(fetch::vm::Module &module);
 
 }  // namespace vm_modules
 }  // namespace fetch
