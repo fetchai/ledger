@@ -17,37 +17,15 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm/module.hpp"
-
-#include <cmath>
-
 namespace fetch {
+
+namespace vm {
+class Module;
+}
+
 namespace vm_modules {
 
-template <typename T>
-T LeftShift(fetch::vm::VM * /*vm*/, T x, T s)
-{
-  return T(x << s);
-}
-
-template <typename T>
-T RightShift(fetch::vm::VM * /*vm*/, T x, T s)
-{
-  return T(x >> s);
-}
-
-inline void BindBitShift(vm::Module &module)
-{
-  module.CreateFreeFunction("leftShift", &LeftShift<int32_t>);
-  module.CreateFreeFunction("leftShift", &LeftShift<int64_t>);
-  module.CreateFreeFunction("leftShift", &LeftShift<uint32_t>);
-  module.CreateFreeFunction("leftShift", &LeftShift<uint64_t>);
-
-  module.CreateFreeFunction("rightShift", &RightShift<int32_t>);
-  module.CreateFreeFunction("rightShift", &RightShift<int64_t>);
-  module.CreateFreeFunction("rightShift", &RightShift<uint32_t>);
-  module.CreateFreeFunction("rightShift", &RightShift<uint64_t>);
-}
+void BindBitShift(fetch::vm::Module &module);
 
 }  // namespace vm_modules
 }  // namespace fetch
