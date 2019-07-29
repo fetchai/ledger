@@ -36,9 +36,9 @@ class Route
 {
 public:
   static constexpr char const *LOGGING_NAME = "HttpRoute";
-  using match_function_type =
+  using MatchFunction =
       std::function<bool(std::size_t &, byte_array::ByteArray const &, ViewParameters &)>;
-  using MatchingVector = std::vector<match_function_type>;
+  using MatchingVector = std::vector<MatchFunction>;
   using ParameterList  = std::vector<byte_array::ConstByteArray>;
   using ValidatorMap   = std::unordered_map<byte_array::ConstByteArray, validators::Validator>;
 

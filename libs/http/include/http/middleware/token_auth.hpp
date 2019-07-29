@@ -17,21 +17,16 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/macros.hpp"
 #include "http/server.hpp"
+#include "http/authentication_level.hpp"
+#include "core/byte_array/const_byte_array.hpp"
 
 namespace fetch {
 namespace http {
 namespace middleware {
 
-inline typename HTTPServer::ResponseMiddleware AllowOrigin(std::string const &val)
-{
-  return [val](fetch::http::HTTPResponse &res, fetch::http::HTTPRequest const &req) {
-    FETCH_UNUSED(req);
+HTTPServer::RequestMiddleware TokenAuth(byte_array::ConstByteArray const& token, uint32_t level = AuthenticationLevel::TOKEN_PRESENT, std::string token_name = "AUTH_TOKEN");
 
-    res.AddHeader("Access-Control-Allow-Origin", val);
-  };
-}
 }  // namespace middleware
 }  // namespace http
 }  // namespace fetch

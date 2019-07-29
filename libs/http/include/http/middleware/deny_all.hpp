@@ -17,21 +17,15 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/macros.hpp"
 #include "http/server.hpp"
+#include "core/byte_array/const_byte_array.hpp"
 
 namespace fetch {
 namespace http {
 namespace middleware {
 
-inline typename HTTPServer::ResponseMiddleware AllowOrigin(std::string const &val)
-{
-  return [val](fetch::http::HTTPResponse &res, fetch::http::HTTPRequest const &req) {
-    FETCH_UNUSED(req);
+HTTPServer::RequestMiddleware DenyAll();
 
-    res.AddHeader("Access-Control-Allow-Origin", val);
-  };
-}
 }  // namespace middleware
 }  // namespace http
 }  // namespace fetch

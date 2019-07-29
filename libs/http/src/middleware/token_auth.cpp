@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -17,21 +16,37 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/macros.hpp"
-#include "http/server.hpp"
+#include "core/logging.hpp"
+#include "http/middleware/token_auth.hpp"
+
+#include <memory>
 
 namespace fetch {
 namespace http {
 namespace middleware {
 
-inline typename HTTPServer::ResponseMiddleware AllowOrigin(std::string const &val)
+HTTPServer::RequestMiddleware TokenAuth(byte_array::ConstByteArray const& token, uint32_t level, std::string token_name)
 {
-  return [val](fetch::http::HTTPResponse &res, fetch::http::HTTPRequest const &req) {
-    FETCH_UNUSED(req);
+  // return the handler
+  for(auto &c: token_name)
+  {
+    c = static_cast<char>(std::tolower(c));
+  }
 
-    res.AddHeader("Access-Control-Allow-Origin", val);
+  return [token, token_name, level](HTTPRequest &req) 
+  { 
+    auto header = req.header();
+
+    if(header.Has(token_name))
+    {
+      if(header[token_name] == token)
+      {
+        req.AddAuthentication(token_name, level);
+      }
+    }
   };
 }
+
 }  // namespace middleware
 }  // namespace http
 }  // namespace fetch

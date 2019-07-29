@@ -75,7 +75,7 @@ using TelemetryDataPtr = std::shared_ptr<TelemetryData>();
 
 }  // namespace
 
-HTTPServer::response_middleware_type Telemetry()
+HTTPServer::ResponseMiddleware Telemetry()
 {
   // create the data structure
   auto data = std::make_shared<TelemetryData>();

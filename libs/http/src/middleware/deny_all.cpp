@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -17,21 +16,25 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/macros.hpp"
-#include "http/server.hpp"
+#include "core/logging.hpp"
+#include "http/middleware/token_auth.hpp"
+#include "http/authentication_level.hpp"
+
+#include <memory>
 
 namespace fetch {
 namespace http {
 namespace middleware {
 
-inline typename HTTPServer::ResponseMiddleware AllowOrigin(std::string const &val)
+HTTPServer::RequestMiddleware DenyAll()
 {
-  return [val](fetch::http::HTTPResponse &res, fetch::http::HTTPRequest const &req) {
-    FETCH_UNUSED(req);
-
-    res.AddHeader("Access-Control-Allow-Origin", val);
+  // return the handler
+  return [](HTTPRequest &req) 
+  { 
+   req.SetAuthentication("", AuthenticationLevel::NO_ACCESS);
   };
 }
+
 }  // namespace middleware
 }  // namespace http
 }  // namespace fetch
