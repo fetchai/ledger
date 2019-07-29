@@ -204,7 +204,7 @@ private:
   /// Authenticated
   /// @{
   byte_array::ByteArray auth_method_{};
-  uint32_t              auth_level_{AuthenticationLevel::DEFUALT_LEVEL};
+  uint32_t              auth_level_{AuthenticationLevel::DEFAULT_LEVEL};
   /// }
 };
 }  // namespace http

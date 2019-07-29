@@ -25,9 +25,33 @@ namespace fetch {
 namespace http {
 namespace middleware {
 
-HTTPServer::RequestMiddleware TokenAuth(byte_array::ConstByteArray const &token,
-                                        uint32_t    level      = AuthenticationLevel::TOKEN_PRESENT,
-                                        std::string token_name = "AUTH_TOKEN");
+class TokenAuthenticationInterface
+{
+public:
+  using ConstByteArray = byte_array::ConstByteArray;
+
+  virtual bool     ValidateToken(ConstByteArray const &token) = 0;
+  virtual uint32_t authentication_level() const               = 0;
+
+  void operator()(HTTPRequest &req);
+};
+
+class SimpleTokenAuthentication : public TokenAuthenticationInterface
+{
+public:
+  SimpleTokenAuthentication(ConstByteArray token,
+                            uint32_t authentication_level = AuthenticationLevel::TOKEN_PRESENT)
+    : token_{std::move(token)}
+    , authentication_level_{authentication_level}
+  {}
+
+  bool     ValidateToken(ConstByteArray const &token) override;
+  uint32_t authentication_level() const override;
+
+private:
+  ConstByteArray token_;
+  uint32_t       authentication_level_;
+};
 
 }  // namespace middleware
 }  // namespace http

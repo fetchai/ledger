@@ -23,7 +23,7 @@ namespace http {
 
 bool NormalAccessAuthentication(HTTPRequest const &req)
 {
-  if (req.authentication_level() < AuthenticationLevel::DEFUALT_LEVEL)
+  if (req.authentication_level() < AuthenticationLevel::DEFAULT_LEVEL)
   {
     return false;
   }

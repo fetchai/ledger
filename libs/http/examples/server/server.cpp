@@ -81,7 +81,8 @@ int main()
   server.AddModule(module);
   // server.AddMiddleware(middleware::DenyAll()); //< Add this line to deny all requests unless
   // authenticated
-  server.AddMiddleware(middleware::TokenAuth("hello"));
+  middleware::SimpleTokenAuthentication token_auth_middle("Hello");
+  server.AddMiddleware(token_auth_middle);
   server.AddMiddleware([](HTTPRequest &) { std::cout << "Middleware 1" << std::endl; });
   server.AddMiddleware([](HTTPResponse &res, HTTPRequest const &req) {
     std::cout << static_cast<uint16_t>(res.status()) << " " << req.uri() << std::endl;

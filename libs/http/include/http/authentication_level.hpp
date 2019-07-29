@@ -26,7 +26,7 @@ struct AuthenticationLevel
   enum
   {
     NO_ACCESS     = 0,
-    DEFUALT_LEVEL = 512,
+    DEFAULT_LEVEL = 512,
     TOKEN_PRESENT = 1024
   };
 };
