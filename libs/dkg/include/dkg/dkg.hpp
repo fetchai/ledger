@@ -169,14 +169,14 @@ public:
       std::function<void(MuddleAddress const &, std::pair<std::string, std::string> const &)>
           rpc_function);
 
-  virtual void   BroadcastShares();
-  void   OnNewShares(MuddleAddress from_id, std::pair<MsgShare, MsgShare> const &shares);
-  void   OnDkgMessage(MuddleAddress const &from, std::shared_ptr<DKGMessage> msg_ptr);
-  void   ResetCabinet();
-  void   SetDkgOutput(bn::G2 &public_key, bn::Fr &secret_share,
-                      std::vector<bn::G2> &public_key_shares, std::set<MuddleAddress> &qual);
-  bool   finished() const;
-  bn::G2 group() const;
+  virtual void BroadcastShares();
+  void         OnNewShares(MuddleAddress from_id, std::pair<MsgShare, MsgShare> const &shares);
+  void         OnDkgMessage(MuddleAddress const &from, std::shared_ptr<DKGMessage> msg_ptr);
+  void         ResetCabinet();
+  void         SetDkgOutput(bn::G2 &public_key, bn::Fr &secret_share,
+                            std::vector<bn::G2> &public_key_shares, std::set<MuddleAddress> &qual);
+  bool         finished() const;
+  bn::G2       group() const;
 };
 }  // namespace dkg
 }  // namespace fetch
