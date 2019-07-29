@@ -66,7 +66,6 @@ void Softmax1DImplementation(ArrayType1 const &array, ArrayType2 &ret)
   }
 }
 
-
 /**
  * Any-D softmax implementation
  * @tparam ArrayType
@@ -74,19 +73,19 @@ void Softmax1DImplementation(ArrayType1 const &array, ArrayType2 &ret)
  * @param ret
  * @param axis
  */
-    template <typename ArrayType>
-    void SoftmaxNDImplementation(ArrayType const &array, ArrayType &ret,
-                                           typename ArrayType::SizeType axis)
-    {
-      // Subtract max for numerical stability
-      ArrayType sums=ReduceMax(array,axis);
-      Subtract(array,sums,ret);
+template <typename ArrayType>
+void SoftmaxNDImplementation(ArrayType const &array, ArrayType &ret,
+                             typename ArrayType::SizeType axis)
+{
+  // Subtract max for numerical stability
+  ArrayType sums = ReduceMax(array, axis);
+  Subtract(array, sums, ret);
 
-      // exp(x)/sum(exp(x))
-      Exp(ret,ret);
-      ReduceSum(ret,axis,sums);
-      Divide(ret,sums,ret);
-    }
+  // exp(x)/sum(exp(x))
+  Exp(ret, ret);
+  ReduceSum(ret, axis, sums);
+  Divide(ret, sums, ret);
+}
 
 }  // namespace details
 
@@ -102,7 +101,7 @@ void Softmax(ArrayType const &array, ArrayType &ret, typename ArrayType::SizeTyp
   }
   else
   {
-      details::SoftmaxNDImplementation(array, ret, axis);
+    details::SoftmaxNDImplementation(array, ret, axis);
   }
 }
 

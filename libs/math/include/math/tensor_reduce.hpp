@@ -23,62 +23,59 @@
 #include <cassert>
 
 namespace fetch {
-    namespace math {
+namespace math {
 
 // need to forward declare
-        template <typename T, typename C>
-        class Tensor;
+template <typename T, typename C>
+class Tensor;
 
-        template <typename F, typename T, typename C>
-        inline void Reduce(SizeType axis, F function, const Tensor<T, C> &a, Tensor<T, C> &b)
-        {
-            assert(b.shape().at(axis) == 1);
-            for (SizeType i = 0; i < a.shape().size(); i++)
-            {
-                if (i != axis)
-                {
-                    assert(a.shape().at(i) == b.shape().at(i));
-                }
-            }
+template <typename F, typename T, typename C>
+inline void Reduce(SizeType axis, F function, const Tensor<T, C> &a, Tensor<T, C> &b)
+{
+  assert(b.shape().at(axis) == 1);
+  for (SizeType i = 0; i < a.shape().size(); i++)
+  {
+    if (i != axis)
+    {
+      assert(a.shape().at(i) == b.shape().at(i));
+    }
+  }
 
-            if (axis == 0)
-            {
-                auto it_a  = a.cbegin();
-                auto it_b = b.begin();
+  if (axis == 0)
+  {
+    auto it_a = a.cbegin();
+    auto it_b = b.begin();
 
-                while (it_a.is_valid())
-                {
-                    for (SizeType j{0}; j < a.shape().at(0); ++j)
-                    {
+    while (it_a.is_valid())
+    {
+      for (SizeType j{0}; j < a.shape().at(0); ++j)
+      {
 
-                        function(*it_a,*it_b);
-                        ++it_a;
-                    }
-                    ++it_b;
-                }
-            }
-            else
-            {
-                auto it_a  = a.Slice().cbegin();
-                auto it_b = b.Slice().begin();
+        function(*it_a, *it_b);
+        ++it_a;
+      }
+      ++it_b;
+    }
+  }
+  else
+  {
+    auto it_a = a.Slice().cbegin();
+    auto it_b = b.Slice().begin();
 
-                it_a.PermuteAxes(0, axis);
-                it_b.PermuteAxes(0, axis);
+    it_a.PermuteAxes(0, axis);
+    it_b.PermuteAxes(0, axis);
 
-                while (it_a.is_valid())
-                {
-                    for (SizeType j{0}; j < a.shape().at(0); ++j)
-                    {
+    while (it_a.is_valid())
+    {
+      for (SizeType j{0}; j < a.shape().at(axis); ++j)
+      {
+        function(*it_a, *it_b);
+        ++it_a;
+      }
+      ++it_b;
+    }
+  }
+}
 
-                        (*it_b) = function(*it_a);
-                        ++it_a;
-                    }
-                    ++it_b;
-                }
-            }
-        }
-
-
-
-    }  // namespace math
+}  // namespace math
 }  // namespace fetch
