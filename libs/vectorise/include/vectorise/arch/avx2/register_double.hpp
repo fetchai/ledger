@@ -18,14 +18,16 @@
 //------------------------------------------------------------------------------
 
 #include "vectorise/arch/avx2/info.hpp"
-#include "vectorise/arch/avx2/register_float.hpp"
-#include "vectorise/arch/avx2/register_int32.hpp"
 #include "vectorise/info.hpp"
 #include "vectorise/register.hpp"
 
+#include <limits>
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
+#include <iostream>
+#include <iomanip>
+
 #include <emmintrin.h>
 #include <immintrin.h>
 #include <smmintrin.h>
@@ -73,6 +75,10 @@ public:
   VectorRegister(type const *d)
   {
     data_ = _mm_load_pd(d);
+  }
+  VectorRegister(std::initializer_list<type> const &list)
+  {
+    data_ = _mm_load_pd(reinterpret_cast<type const *>(list.begin()));
   }
   VectorRegister(mm_register_type const &d)
     : data_(d)
@@ -135,6 +141,10 @@ public:
   {
     data_ = _mm256_load_pd(d);
   }
+  VectorRegister(std::initializer_list<type> const &list)
+  {
+    data_ = _mm256_load_pd(reinterpret_cast<type const *>(list.begin()));
+  }
   VectorRegister(mm_register_type const &d)
     : data_(d)
   {}
@@ -173,16 +183,39 @@ private:
   mm_register_type data_;
 };
 
+template<>
+inline std::ostream &operator<<(std::ostream &s, VectorRegister<double, 128> const &n)
+{
+  alignas(16) double out[2];
+  n.Store(out);
+  s << std::setprecision(std::numeric_limits<double>::digits10);
+  s << std::fixed;
+  s << out[0] << ", " << out[1] << ", ";
 
-#define FETCH_ADD_OPERATOR(zero, type, size, fnc)                                      \
-  inline VectorRegister<type, size> operator-(VectorRegister<type, size> const &x) \
-  {                                                                              \
-    return VectorRegister<type, size>(fnc(zero(), x.data()));                     \
-  }
+  return s;
+}
 
-FETCH_ADD_OPERATOR(_mm_setzero_pd, double, 128, _mm_sub_pd)
-FETCH_ADD_OPERATOR(_mm256_setzero_pd, double, 256, _mm256_sub_pd)
-#undef FETCH_ADD_OPERATOR
+template<>
+inline std::ostream &operator<<(std::ostream &s, VectorRegister<double, 256> const &n)
+{
+  alignas(32) double out[4];
+  n.Store(out);
+  s << std::setprecision(std::numeric_limits<double>::digits10);
+  s << std::fixed;
+  s << out[0] << ", " << out[1] << ", " << out[2] << ", " << out[3];
+
+  return s;
+}
+
+inline VectorRegister<double, 128> operator-(VectorRegister<double, 128> const &x)
+{
+  return VectorRegister<double, 128>(_mm_sub_pd(_mm_setzero_pd(), x.data()));
+}
+
+inline VectorRegister<double, 256> operator-(VectorRegister<double, 256> const &x)
+{
+  return VectorRegister<double, 256>(_mm256_sub_pd(_mm256_setzero_pd(), x.data()));
+}
 
 #define FETCH_ADD_OPERATOR(op, type, size, L, fnc)                                       \
   inline VectorRegister<type, size> operator op(VectorRegister<type, size> const &a, \
@@ -208,11 +241,8 @@ FETCH_ADD_OPERATOR(+, double, 256, __m256d, _mm256_add_pd)
   inline VectorRegister<type, 128> operator op(VectorRegister<type, 128> const &a, \
                                                VectorRegister<type, 128> const &b) \
   {                                                                                \
-    L              imm  = fnc(a.data(), b.data());                                 \
-    __m128i        ival = _mm_castpd_si128(imm);                                   \
-    const __m128i  one  = _mm_castpd_si128(_mm_set1_pd(1.0));                   \
-    __m128i        ret  = _mm_and_si128(ival, one);                                \
-    return VectorRegister<type, 128>(_mm_castsi128_pd(ret));                       \
+    L ret  = fnc(a.data(), b.data());                                 \
+    return VectorRegister<type, 128>(ret);                       \
   }
 
 FETCH_ADD_OPERATOR(==, double, __m128d, _mm_cmpeq_pd)
@@ -228,11 +258,8 @@ FETCH_ADD_OPERATOR(<, double, __m128d, _mm_cmplt_pd)
   inline VectorRegister<type, 256> operator op(VectorRegister<type, 256> const &a, \
                                                VectorRegister<type, 256> const &b) \
   {                                                                                \
-    L              imm  = _mm256_cmp_pd(a.data(), b.data(), fnc);                                 \
-    __m256i        ival = _mm256_castpd_si256(imm);                                   \
-    const __m256i  one  = _mm256_castpd_si256(_mm256_set1_pd(1.0));                   \
-    __m256i        ret  = _mm256_and_si256(ival, one);                                \
-    return VectorRegister<type, 256>(_mm256_castsi256_pd(ret));                       \
+    L ret  = _mm256_cmp_pd(a.data(), b.data(), fnc);                                 \
+    return VectorRegister<type, 256>(ret);                       \
   }
 
 FETCH_ADD_OPERATOR(==, double, __m256d, _CMP_EQ_OQ)
@@ -325,23 +352,58 @@ inline double reduce(VectorRegister<double, 256> const &x)
 inline bool all_less_than(VectorRegister<double, 128> const &x,
                           VectorRegister<double, 128> const &y)
 {
-  __m128i r = _mm_castpd_si128(_mm_cmplt_pd(x.data(), y.data()));
+  __m128i r = _mm_castpd_si128((x < y).data());
   return _mm_movemask_epi8(r) == 0xFFFF;
 }
 
 inline bool all_less_than(VectorRegister<double, 256> const &x,
                           VectorRegister<double, 256> const &y)
 {
-  __m256i r = _mm256_castpd_si256(_mm256_cmp_pd(x.data(), y.data(), _CMP_LT_OQ));
+  __m256i r = _mm256_castpd_si256((x < y).data());
   return _mm256_movemask_epi8(r) == 0xFFFF;
+}
+
+inline bool any_less_than(VectorRegister<double, 128> const &x,
+                          VectorRegister<double, 128> const &y)
+{
+  __m128i r = _mm_castpd_si128((x < y).data());
+  return _mm_movemask_epi8(r) != 0;
 }
 
 inline bool any_less_than(VectorRegister<double, 256> const &x,
                           VectorRegister<double, 256> const &y)
 {
-  __m256i r = _mm256_castpd_si256(_mm256_cmp_pd(x.data(), y.data(), _CMP_LT_OQ));
+  __m256i r = _mm256_castpd_si256((x < y).data());
   return _mm256_movemask_epi8(r) != 0;
 }
 
+inline bool all_equal_to(VectorRegister<double, 128> const &x,
+                          VectorRegister<double, 128> const &y)
+{
+  __m128i r = _mm_castpd_si128((x == y).data());
+  return _mm_movemask_epi8(r) == 0xFFFF;
+}
+
+inline bool all_equal_to(VectorRegister<double, 256> const &x,
+                          VectorRegister<double, 256> const &y)
+{
+  __m256i r = _mm256_castpd_si256((x == y).data());
+  uint32_t mask = _mm256_movemask_epi8(r);
+  return mask == 0xFFFFFFFFUL;
+}
+
+inline bool any_equal_to(VectorRegister<double, 128> const &x,
+                          VectorRegister<double, 128> const &y)
+{
+  __m128i r = _mm_castpd_si128((x == y).data());
+  return _mm_movemask_epi8(r) != 0;
+}
+
+inline bool any_equal_to(VectorRegister<double, 256> const &x,
+                          VectorRegister<double, 256> const &y)
+{
+  __m256i r = _mm256_castpd_si256((x == y).data());
+  return _mm256_movemask_epi8(r) != 0;
+}
 }  // namespace vectorise
 }  // namespace fetch

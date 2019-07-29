@@ -34,10 +34,10 @@ namespace fetch {
 namespace vectorise {
 
 template <>
-class VectorRegister<fixed_point::FixedPoint<16, 16>, 128>
+class VectorRegister<fixed_point::fp32_t, 128>
 {
 public:
-  using type             = fixed_point::FixedPoint<16, 16>;
+  using type             = fixed_point::fp32_t;
   using mm_register_type = __m128i;
 
   enum
@@ -55,6 +55,10 @@ public:
   {
     data_ = _mm_load_si128(reinterpret_cast<mm_register_type const *>(d->pointer()));
   }
+  VectorRegister(std::initializer_list<type> const &list)
+  {
+    data_ = _mm_load_si128(reinterpret_cast<mm_register_type const *>(list.begin()));
+  }
   VectorRegister(mm_register_type const &d)
     : data_(d)
   {}
@@ -71,14 +75,14 @@ public:
     return data_;
   }
 
-  void Store(type * /*ptr*/) const
+  void Store(type * ptr) const
   {
-    throw std::runtime_error("store pointer not implemented");
+    _mm_store_si128(reinterpret_cast<mm_register_type *>(ptr), data_);
   }
 
-  void Stream(type * /*ptr*/) const
+  void Stream(type * ptr) const
   {
-    throw std::runtime_error("stream pointer not implemented");
+    _mm_stream_si128(reinterpret_cast<mm_register_type *>(ptr), data_);
   }
 
   mm_register_type const &data() const
@@ -94,131 +98,252 @@ private:
   mm_register_type data_;
 };
 
-inline VectorRegister<fixed_point::FixedPoint<16, 16>, 128> operator-(
-    VectorRegister<fixed_point::FixedPoint<16, 16>, 128> const & /*x*/)
+template <>
+class VectorRegister<fixed_point::fp32_t, 256>
 {
-  throw std::runtime_error("operator- not implemented.");
-  return VectorRegister<fixed_point::FixedPoint<16, 16>, 128>(fixed_point::FixedPoint<16, 16>{});
+public:
+  using type             = fixed_point::fp32_t;
+  using mm_register_type = __m256i;
+
+  enum
+  {
+    E_VECTOR_SIZE   = 256,
+    E_REGISTER_SIZE = sizeof(mm_register_type),
+    E_BLOCK_COUNT   = E_REGISTER_SIZE / sizeof(type)
+  };
+
+  static_assert((E_BLOCK_COUNT * sizeof(type)) == E_REGISTER_SIZE,
+                "type cannot be contained in the given register size.");
+
+  VectorRegister() = default;
+  VectorRegister(type const *d)
+  {
+    data_ = _mm256_load_si256(reinterpret_cast<mm_register_type const *>(d->pointer()));
+  }
+  VectorRegister(std::initializer_list<type> const &list)
+  {
+    data_ = _mm256_load_si256(reinterpret_cast<mm_register_type const *>(list.begin()));
+  }
+  VectorRegister(mm_register_type const &d)
+    : data_(d)
+  {}
+  VectorRegister(mm_register_type &&d)
+    : data_(d)
+  {}
+  VectorRegister(type const &c)
+  {
+    data_ = _mm256_set1_epi32(c.Data());
+  }
+
+  explicit operator mm_register_type()
+  {
+    return data_;
+  }
+
+  void Store(type * ptr) const
+  {
+    _mm256_store_si256(reinterpret_cast<mm_register_type *>(ptr), data_);
+  }
+
+  void Stream(type * ptr) const
+  {
+    _mm256_stream_si256(reinterpret_cast<mm_register_type *>(ptr), data_);
+  }
+
+  mm_register_type const &data() const
+  {
+    return data_;
+  }
+  mm_register_type &data()
+  {
+    return data_;
+  }
+
+private:
+  mm_register_type data_;
+};
+
+template<>
+inline std::ostream &operator<<(std::ostream &s, VectorRegister<fixed_point::fp32_t, 128> const &n)
+{
+  alignas(16) fixed_point::fp32_t out[4];
+  n.Store(out);
+  s << std::setprecision(fixed_point::fp32_t::BaseTypeInfo::decimals);
+  s << std::fixed;
+  s << out[0] << ", " << out[1] << ", " << out[2] << ", " << out[3];
+
+  return s;
 }
 
-inline VectorRegister<fixed_point::FixedPoint<16, 16>, 128> operator*(
-    VectorRegister<fixed_point::FixedPoint<16, 16>, 128> const & /*x*/,
-    VectorRegister<fixed_point::FixedPoint<16, 16>, 128> const & /*y*/)
+template<>
+inline std::ostream &operator<<(std::ostream &s, VectorRegister<fixed_point::fp32_t, 256> const &n)
 {
-  throw std::runtime_error("operator* not implemented.");
-  return VectorRegister<fixed_point::FixedPoint<16, 16>, 128>(fixed_point::FixedPoint<16, 16>{});
+  alignas(32) fixed_point::fp32_t out[8];
+  n.Store(out);
+  s << std::setprecision(fixed_point::fp32_t::BaseTypeInfo::decimals);
+  s << std::fixed;
+  s << out[0] << ", " << out[1] << ", " << out[2] << ", " << out[3] << ", "
+    << out[4] << ", " << out[5] << ", " << out[6] << ", " << out[7];
+
+  return s;
 }
 
-inline VectorRegister<fixed_point::FixedPoint<16, 16>, 128> operator-(
-    VectorRegister<fixed_point::FixedPoint<16, 16>, 128> const & x,
-    VectorRegister<fixed_point::FixedPoint<16, 16>, 128> const & y)
+#define FETCH_ADD_OPERATOR(op, type, size, base_type)                                             \
+  inline VectorRegister<type, size> operator op(VectorRegister<type, size> const &x)              \
+  {                                                                                               \
+    VectorRegister<base_type, size> ret = operator op(VectorRegister<base_type, size>(x.data())); \
+    return VectorRegister<type, size>(ret.data());                                                \
+  }
+
+FETCH_ADD_OPERATOR(-, fixed_point::fp32_t, 128, int32_t)
+FETCH_ADD_OPERATOR(-, fixed_point::fp32_t, 256, int32_t)
+#undef FETCH_ADD_OPERATOR
+
+#define FETCH_ADD_OPERATOR(op, type, size, base_type)                                             \
+  inline VectorRegister<type, size> operator op(VectorRegister<type, size> const &a,              \
+                                                VectorRegister<type, size> const &b)              \
+  {                                                                                               \
+    VectorRegister<base_type, size> ret = operator op(VectorRegister<base_type, size>(a.data()),  \
+                                                      VectorRegister<base_type, size>(b.data())); \
+    return VectorRegister<type, size>(ret.data());                                                \
+  }
+
+FETCH_ADD_OPERATOR(+, fixed_point::fp32_t, 128, int32_t)
+FETCH_ADD_OPERATOR(-, fixed_point::fp32_t, 128, int32_t)
+// FETCH_ADD_OPERATOR(*, fixed_point::fp32_t, 128, int32_t)
+FETCH_ADD_OPERATOR(/, fixed_point::fp32_t, 128, int32_t)
+
+FETCH_ADD_OPERATOR(==, fixed_point::fp32_t, 128, int32_t)
+FETCH_ADD_OPERATOR(!=, fixed_point::fp32_t, 128, int32_t)
+FETCH_ADD_OPERATOR(>=, fixed_point::fp32_t, 128, int32_t)
+FETCH_ADD_OPERATOR(>, fixed_point::fp32_t, 128, int32_t)
+FETCH_ADD_OPERATOR(<=, fixed_point::fp32_t, 128, int32_t)
+FETCH_ADD_OPERATOR(<, fixed_point::fp32_t, 128, int32_t)
+
+FETCH_ADD_OPERATOR(+, fixed_point::fp32_t, 256, int32_t)
+FETCH_ADD_OPERATOR(-, fixed_point::fp32_t, 256, int32_t)
+FETCH_ADD_OPERATOR(*, fixed_point::fp32_t, 256, int32_t)
+FETCH_ADD_OPERATOR(/, fixed_point::fp32_t, 256, int32_t)
+
+FETCH_ADD_OPERATOR(==, fixed_point::fp32_t, 256, int32_t)
+FETCH_ADD_OPERATOR(!=, fixed_point::fp32_t, 256, int32_t)
+FETCH_ADD_OPERATOR(>=, fixed_point::fp32_t, 256, int32_t)
+FETCH_ADD_OPERATOR(>, fixed_point::fp32_t, 256, int32_t)
+FETCH_ADD_OPERATOR(<=, fixed_point::fp32_t, 256, int32_t)
+FETCH_ADD_OPERATOR(<, fixed_point::fp32_t, 256, int32_t)
+
+#undef FETCH_ADD_OPERATOR
+
+inline VectorRegister<fixed_point::fp32_t, 128> operator*(VectorRegister<fixed_point::fp32_t, 128> const &a,
+                                              VectorRegister<fixed_point::fp32_t, 128> const &b)
 {
-  return _mm_sub_epi32(x.data(), y.data());
+  VectorRegister<int32_t, 128> prod = VectorRegister<int32_t, 128>(a.data()) * VectorRegister<int32_t, 128>(b.data());
+  return VectorRegister<fixed_point::fp32_t, 128>(prod.data());
 }
 
-inline VectorRegister<fixed_point::FixedPoint<16, 16>, 128> operator/(
-    VectorRegister<fixed_point::FixedPoint<16, 16>, 128> const & /*x*/,
-    VectorRegister<fixed_point::FixedPoint<16, 16>, 128> const & /*y*/)
-{
-  throw std::runtime_error("operator/ not implemented.");
-  return VectorRegister<fixed_point::FixedPoint<16, 16>, 128>(fixed_point::FixedPoint<16, 16>{});
-}
-
-inline VectorRegister<fixed_point::FixedPoint<16, 16>, 128> operator+(
-    VectorRegister<fixed_point::FixedPoint<16, 16>, 128> const & x,
-    VectorRegister<fixed_point::FixedPoint<16, 16>, 128> const & y)
-{
-  return _mm_add_epi32(x.data(), y.data());
-}
-
-inline VectorRegister<fixed_point::FixedPoint<16, 16>, 128> operator==(
-    VectorRegister<fixed_point::FixedPoint<16, 16>, 128> const & /*x*/,
-    VectorRegister<fixed_point::FixedPoint<16, 16>, 128> const & /*y*/)
-{
-  throw std::runtime_error("operator== not implemented.");
-  return VectorRegister<fixed_point::FixedPoint<16, 16>, 128>(fixed_point::FixedPoint<16, 16>{});
-}
-
-inline VectorRegister<fixed_point::FixedPoint<16, 16>, 128> operator!=(
-    VectorRegister<fixed_point::FixedPoint<16, 16>, 128> const & /*x*/,
-    VectorRegister<fixed_point::FixedPoint<16, 16>, 128> const & /*y*/)
-{
-  throw std::runtime_error("operator not implemented.");
-  return VectorRegister<fixed_point::FixedPoint<16, 16>, 128>(fixed_point::FixedPoint<16, 16>{});
-}
-
-inline VectorRegister<fixed_point::FixedPoint<16, 16>, 128> operator>=(
-    VectorRegister<fixed_point::FixedPoint<16, 16>, 128> const & /*x*/,
-    VectorRegister<fixed_point::FixedPoint<16, 16>, 128> const & /*y*/)
-{
-  throw std::runtime_error("operator not implemented.");
-  return VectorRegister<fixed_point::FixedPoint<16, 16>, 128>(fixed_point::FixedPoint<16, 16>{});
-}
-
-inline VectorRegister<fixed_point::FixedPoint<16, 16>, 128> operator>(
-    VectorRegister<fixed_point::FixedPoint<16, 16>, 128> const & /*x*/,
-    VectorRegister<fixed_point::FixedPoint<16, 16>, 128> const & /*y*/)
-{
-  throw std::runtime_error("operator not implemented.");
-  return VectorRegister<fixed_point::FixedPoint<16, 16>, 128>(fixed_point::FixedPoint<16, 16>{});
-}
-
-inline VectorRegister<fixed_point::FixedPoint<16, 16>, 128> operator<=(
-    VectorRegister<fixed_point::FixedPoint<16, 16>, 128> const & /*x*/,
-    VectorRegister<fixed_point::FixedPoint<16, 16>, 128> const & /*y*/)
-{
-  throw std::runtime_error("operator not implemented.");
-  return VectorRegister<fixed_point::FixedPoint<16, 16>, 128>(fixed_point::FixedPoint<16, 16>{});
-}
-
-inline VectorRegister<fixed_point::FixedPoint<16, 16>, 128> operator<(
-    VectorRegister<fixed_point::FixedPoint<16, 16>, 128> const & /*x*/,
-    VectorRegister<fixed_point::FixedPoint<16, 16>, 128> const & /*y*/)
-{
-  throw std::runtime_error("operator not implemented.");
-  return VectorRegister<fixed_point::FixedPoint<16, 16>, 128>(fixed_point::FixedPoint<16, 16>{});
-}
-
-inline VectorRegister<fixed_point::FixedPoint<16, 16>, 128> vector_zero_below_element(
-    VectorRegister<fixed_point::FixedPoint<16, 16>, 128> const & /*a*/, int const & /*n*/)
+inline VectorRegister<fixed_point::fp32_t, 128> vector_zero_below_element(
+    VectorRegister<fixed_point::fp32_t, 128> const & /*a*/, int const & /*n*/)
 {
   throw std::runtime_error("vector_zero_below_element not implemented.");
-  return VectorRegister<fixed_point::FixedPoint<16, 16>, 128>(fixed_point::FixedPoint<16, 16>{});
+  return VectorRegister<fixed_point::fp32_t, 128>(fixed_point::fp32_t{});
 }
 
-inline VectorRegister<fixed_point::FixedPoint<16, 16>, 128> vector_zero_above_element(
-    VectorRegister<fixed_point::FixedPoint<16, 16>, 128> const & /*a*/, int const & /*n*/)
+inline VectorRegister<fixed_point::fp32_t, 128> vector_zero_above_element(
+    VectorRegister<fixed_point::fp32_t, 128> const & /*a*/, int const & /*n*/)
 {
   throw std::runtime_error("vector_zero_above_element not implemented.");
-  return VectorRegister<fixed_point::FixedPoint<16, 16>, 128>(fixed_point::FixedPoint<16, 16>{});
+  return VectorRegister<fixed_point::fp32_t, 128>(fixed_point::fp32_t{});
 }
 
-inline VectorRegister<fixed_point::FixedPoint<16, 16>, 128> shift_elements_left(
-    VectorRegister<fixed_point::FixedPoint<16, 16>, 128> const & /*x*/)
+inline VectorRegister<fixed_point::fp32_t, 128> shift_elements_left(
+    VectorRegister<fixed_point::fp32_t, 128> const & /*x*/)
 {
   throw std::runtime_error("shift_elements_left not implemented.");
-  return VectorRegister<fixed_point::FixedPoint<16, 16>, 128>(fixed_point::FixedPoint<16, 16>{});
+  return VectorRegister<fixed_point::fp32_t, 128>(fixed_point::fp32_t{});
 }
 
-inline VectorRegister<fixed_point::FixedPoint<16, 16>, 128> shift_elements_right(
-    VectorRegister<fixed_point::FixedPoint<16, 16>, 128> const & /*x*/)
+inline VectorRegister<fixed_point::fp32_t, 128> shift_elements_right(
+    VectorRegister<fixed_point::fp32_t, 128> const & /*x*/)
 {
   throw std::runtime_error("shift_elements_right not implemented.");
-  return VectorRegister<fixed_point::FixedPoint<16, 16>, 128>(fixed_point::FixedPoint<16, 16>{});
+  return VectorRegister<fixed_point::fp32_t, 128>(fixed_point::fp32_t{});
 }
 
-inline fixed_point::FixedPoint<16, 16> first_element(
-    VectorRegister<fixed_point::FixedPoint<16, 16>, 128> const & /*x*/)
+inline fixed_point::fp32_t first_element(
+    VectorRegister<fixed_point::fp32_t, 128> const & x)
 {
-  throw std::runtime_error("first_element not implemented.");
-  return fixed_point::FixedPoint<16, 16>{};
+  return static_cast<fixed_point::fp32_t>(_mm_extract_epi32(x.data(), 0));
 }
 
-inline fixed_point::FixedPoint<16, 16> reduce(
-    VectorRegister<fixed_point::FixedPoint<16, 16>, 128> const & /*x*/)
+inline fixed_point::fp32_t reduce(VectorRegister<fixed_point::fp32_t, 128> const &x)
 {
-  throw std::runtime_error("reduce not implemented.");
-  return fixed_point::FixedPoint<16, 16>{};
+  __m128i r = _mm_hadd_epi32(x.data(), _mm_setzero_si128());
+  r        = _mm_hadd_epi32(r, _mm_setzero_si128());
+  return static_cast<fixed_point::fp32_t>(_mm_extract_epi32(r, 0));
+}
+
+inline fixed_point::fp32_t reduce(VectorRegister<fixed_point::fp32_t, 256> const &x)
+{
+  __m256i r = _mm256_hadd_epi32(x.data(), _mm256_setzero_si256());
+  r        = _mm256_hadd_epi32(r, _mm256_setzero_si256());
+  r        = _mm256_hadd_epi32(r, _mm256_setzero_si256());
+  return static_cast<fixed_point::fp32_t>(_mm256_extract_epi32(r, 0));
+}
+
+inline bool all_less_than(VectorRegister<fixed_point::fp32_t, 128> const &x,
+                          VectorRegister<fixed_point::fp32_t, 128> const &y)
+{
+  __m128i r = (x < y).data();
+  return _mm_movemask_epi8(r) == 0xFFFF;
+}
+
+inline bool all_less_than(VectorRegister<fixed_point::fp32_t, 256> const &x,
+                          VectorRegister<fixed_point::fp32_t, 256> const &y)
+{
+  __m256i r = (x < y).data();
+  return _mm256_movemask_epi8(r) == 0xFFFF;
+}
+
+inline bool any_less_than(VectorRegister<fixed_point::fp32_t, 128> const &x,
+                          VectorRegister<fixed_point::fp32_t, 128> const &y)
+{
+  __m128i r = (x < y).data();
+  return _mm_movemask_epi8(r) != 0;
+}
+
+inline bool any_less_than(VectorRegister<fixed_point::fp32_t, 256> const &x,
+                          VectorRegister<fixed_point::fp32_t, 256> const &y)
+{
+  __m256i r = (x < y).data();
+  return _mm256_movemask_epi8(r) != 0;
+}
+
+inline bool all_equal_to(VectorRegister<fixed_point::fp32_t, 128> const &x,
+                          VectorRegister<fixed_point::fp32_t, 128> const &y)
+{
+  __m128i r = (x == y).data();
+  return _mm_movemask_epi8(r) == 0xFFFF;
+}
+
+inline bool all_equal_to(VectorRegister<fixed_point::fp32_t, 256> const &x,
+                          VectorRegister<fixed_point::fp32_t, 256> const &y)
+{
+  __m256i r = (x == y).data();
+  return _mm256_movemask_epi8(r) == 0xFFFF;
+}
+
+inline bool any_equal_to(VectorRegister<fixed_point::fp32_t, 128> const &x,
+                          VectorRegister<fixed_point::fp32_t, 128> const &y)
+{
+  __m128i r = (x == y).data();
+  return _mm_movemask_epi8(r) != 0;
+}
+
+inline bool any_equal_to(VectorRegister<fixed_point::fp32_t, 256> const &x,
+                          VectorRegister<fixed_point::fp32_t, 256> const &y)
+{
+  __m256i r = (x == y).data();
+  return _mm256_movemask_epi8(r) != 0;
 }
 
 }  // namespace vectorise

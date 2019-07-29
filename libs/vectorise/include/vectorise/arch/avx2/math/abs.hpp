@@ -17,8 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vectorise/arch/avx2.hpp"
-
 #include <emmintrin.h>
 #include <limits>
 

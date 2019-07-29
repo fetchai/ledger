@@ -25,6 +25,7 @@
 #include "vectorise/arch/avx2/register_fixed64.hpp"
 #include "vectorise/arch/avx2/register_float.hpp"
 #include "vectorise/arch/avx2/register_int32.hpp"
+#include "vectorise/arch/avx2/register_int64.hpp"
 
 #include "vectorise/arch/avx2/math/abs.hpp"
 #include "vectorise/arch/avx2/math/approx_exp.hpp"

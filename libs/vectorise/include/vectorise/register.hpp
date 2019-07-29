@@ -21,6 +21,7 @@
 
 #include <cstddef>
 #include <cmath>
+#include <ostream>
 
 namespace details {
 template <typename T, std::size_t N>
@@ -114,6 +115,9 @@ public:
 private:
   type data_;
 };
+
+template <typename T, std::size_t N = sizeof(T)>
+std::ostream &operator<<(std::ostream &s, VectorRegister<T, N> const &n);
 
 template <typename T, std::size_t N = sizeof(T)>
 inline VectorRegister<T, N> abs(VectorRegister<T, N> const &x)

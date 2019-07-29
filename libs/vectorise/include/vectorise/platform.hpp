@@ -77,6 +77,8 @@ constexpr bool has_avx2()
 #endif
 }
 
+#define FETCH_ASM_LABEL(Label) __asm__("#" Label)
+
 // Allow the option of specifying our platform endianness
 #if defined(FETCH_PLATFORM_BIG_ENDIAN) || defined(FETCH_PLATFORM_LITTLE_ENDIAN)
 #else

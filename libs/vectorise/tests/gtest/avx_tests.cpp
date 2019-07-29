@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vectorise/arch/avx2.hpp"
-#include "vectorise/register.hpp"
+#include "math/base_types.hpp"
+#include "vectorise/vectorise.hpp"
 
 #include "gtest/gtest.h"
 
@@ -73,4 +73,64 @@ TEST(vectorise_sse_gtest, register_test3)
 
   EXPECT_EQ(c[0], 5.4);
   EXPECT_EQ(c[1], 23.6);
+}
+
+template <typename T>
+class VectorRegisterTest : public ::testing::Test
+{
+};
+
+using MyTypes = ::testing::Types< fetch::vectorise::VectorRegister<float, 128>,
+                                  fetch::vectorise::VectorRegister<float, 256>, 
+                                  fetch::vectorise::VectorRegister<int32_t, 128>,
+                                  fetch::vectorise::VectorRegister<int32_t, 256>,
+                                  fetch::vectorise::VectorRegister<int64_t, 128>,
+                                  fetch::vectorise::VectorRegister<int64_t, 256>,
+                                  fetch::vectorise::VectorRegister<fetch::fixed_point::fp32_t, 128>,
+                                  fetch::vectorise::VectorRegister<fetch::fixed_point::fp32_t, 256>,
+                                  fetch::vectorise::VectorRegister<double, 128>,
+                                  fetch::vectorise::VectorRegister<double, 256>>;
+
+TYPED_TEST_CASE(VectorRegisterTest, MyTypes);
+TYPED_TEST(VectorRegisterTest, basic_tests)
+{
+  std::cout << "TypeParam::E_BLOCK_COUNT   = " << TypeParam::E_BLOCK_COUNT << std::endl;
+  std::cout << "TypeParam::E_REGISTER_SIZE = " << TypeParam::E_REGISTER_SIZE << std::endl;
+  alignas(TypeParam::E_REGISTER_SIZE) typename TypeParam::type  a[TypeParam::E_BLOCK_COUNT], b[TypeParam::E_BLOCK_COUNT],
+                                                              sum[TypeParam::E_BLOCK_COUNT], diff[TypeParam::E_BLOCK_COUNT],
+                                                              prod[TypeParam::E_BLOCK_COUNT], div[TypeParam::E_BLOCK_COUNT];
+  for (size_t i = 0; i < TypeParam::E_BLOCK_COUNT; i++)
+  {
+    // We don't want to check overflows right now, so we pick random numbers, but well within the type's limits
+    a[i] = typename TypeParam::type(double(random()) / (double)(RAND_MAX) * (1 << TypeParam::E_REGISTER_SIZE/2) );
+    b[i] = typename TypeParam::type(double(random()) / (double)(RAND_MAX) * (1 << TypeParam::E_REGISTER_SIZE/2) );
+    sum[i] = a[i] + b[i];
+    diff[i] = a[i] - b[i];
+    prod[i] = a[i] * b[i];
+    div[i] = a[i] / b[i];
+    std::cout << "sum[" << i << "]  = " << sum[i] << std::endl;
+    std::cout << "diff[" << i << "]  = " << diff[i] << std::endl;
+    std::cout << "prod[" << i << "]  = " << prod[i] << std::endl;
+    std::cout << "div[" << i << "]  = " << div[i] << std::endl;
+  }
+  TypeParam va{a};
+  TypeParam vb{b};
+
+  std::cout << va << std::endl;
+  std::cout << vb << std::endl;
+
+  auto vsum = va + vb;
+  auto vdiff = va - vb;
+  auto vprod = va * vb;
+  auto vdiv = va / vb;
+  std::cout << "sum  = " << vsum << std::endl;
+  std::cout << "diff = " << vdiff << std::endl;
+  std::cout << "prod = " << vprod << std::endl;
+  std::cout << "div  = " << vdiv << std::endl;
+
+  TypeParam vtmp1{sum}, vtmp2{diff}, vtmp3{prod}, vtmp4{div};
+  EXPECT_TRUE(all_equal_to(vtmp1, vsum));
+  EXPECT_TRUE(all_equal_to(vtmp2, vdiff));  
+  EXPECT_TRUE(all_equal_to(vtmp3, vprod));
+  EXPECT_TRUE(all_equal_to(vtmp4, vdiv));
 }

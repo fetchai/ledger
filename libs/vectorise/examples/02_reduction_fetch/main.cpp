@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "math/standard_functions/exp.hpp"
 #include "vectorise/memory/shared_array.hpp"
 
 #include <chrono>
@@ -24,15 +25,17 @@
 #include <cstdlib>
 #include <iostream>
 
-using type        = float;
+using type        = fetch::fixed_point::fp32_t;//float;
 using array_type  = fetch::memory::SharedArray<type>;
 using vector_type = typename array_type::VectorRegisterType;
 
 type Reduction(array_type const &A)
 {
-  type ret = 0;
+  type ret{0};
 
+  FETCH_ASM_LABEL("Loop start");
   ret = A.in_parallel().Reduce([](vector_type const &a, vector_type const &b) { return a + b; });
+  FETCH_ASM_LABEL("Loop end");
 
   return ret;
 }
@@ -53,7 +56,7 @@ int main(int argc, char const **argv)
 
   for (std::size_t i = 0; i < N; ++i)
   {
-    A[i] = type(std::exp(-0.1 * type(i)));
+    A[i] = type(fetch::math::Exp(type(-0.1) * type(i)));
   }
 
   std::chrono::high_resolution_clock::time_point t1  = std::chrono::high_resolution_clock::now();

@@ -56,7 +56,7 @@ public:
 
     if (n > 0)
     {
-      this->pointer_ = (type *)_mm_malloc(this->padded_size() * sizeof(type), 32);
+      this->pointer_ = (type *)_mm_malloc(this->padded_size() * sizeof(type), type_size);
     }
   }
 
@@ -100,7 +100,7 @@ public:
 
     if (this->size_ > 0)
     {
-      this->pointer_ = (type *)_mm_malloc(this->padded_size() * sizeof(type), 32);
+      this->pointer_ = (type *)_mm_malloc(this->padded_size() * sizeof(type), type_size);
     }
 
     for (std::size_t i = 0; i < this->size_; ++i)

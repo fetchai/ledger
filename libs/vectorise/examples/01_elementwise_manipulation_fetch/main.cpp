@@ -24,7 +24,7 @@
 #include <cstdlib>
 #include <iostream>
 
-using type        = float;//fetch::fixed_point::fp32_t;
+using type        = fetch::fixed_point::fp32_t;
 using array_type  = fetch::memory::Array<type>;
 using vector_type = typename array_type::VectorRegisterType;
 
