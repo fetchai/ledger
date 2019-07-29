@@ -30,8 +30,6 @@
 namespace fetch {
 namespace {
 
-static constexpr char const *LOGGING_NAME = "Settings";
-
 static const uint32_t DEFAULT_NUM_LANES       = 1;
 static const uint32_t DEFAULT_NUM_SLICES      = 500;
 static const uint32_t DEFAULT_NUM_EXECUTORS   = DEFAULT_NUM_LANES;
