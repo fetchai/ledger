@@ -89,7 +89,7 @@ public:
     }
   }
 
-  void BroadcastShares()
+  void BroadcastShares() override
   {
     std::vector<bn::Fr> a_i(threshold_ + 1, zeroFr_), b_i(threshold_ + 1, zeroFr_);
     for (size_t k = 0; k <= threshold_; k++)
