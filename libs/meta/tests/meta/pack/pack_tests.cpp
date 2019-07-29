@@ -274,13 +274,13 @@ TEST(PackTests, ScalarUtils)
       int);
 }
 
-TEST(PackTests, SwitchesAndSelects)
+TEST(PackTests, CasesAndSelects)
 {
-  ASSERT_TYPE_EQ(fetch::pack::SwitchT<
+  ASSERT_TYPE_EQ(fetch::pack::CaseT<
                      fetch::pack::Pack<std::false_type, char, std::false_type, int, std::true_type,
                                        NonConstructible, std::false_type, double>>,
                  NonConstructible);
-  ASSERT_TYPE_EQ(fetch::pack::SwitchT<
+  ASSERT_TYPE_EQ(fetch::pack::CaseT<
                      fetch::pack::Pack<std::false_type, char, std::false_type, int, std::false_type,
                                        NonConstructible, std::false_type, double, InputList>>,
                  InputList);
