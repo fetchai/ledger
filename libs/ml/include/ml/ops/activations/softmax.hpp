@@ -62,8 +62,8 @@ public:
 
     fetch::math::Multiply(return_signal, t, return_signal);
 
-    // 1D softmax
-    if (inputs.front()->shape().size() == 1)
+    // 1D softmax with 1 batch dimension
+    if (inputs.front()->shape().size() == 2)
     {
       typename ArrayType::Type sum = return_signal.Sum();
       fetch::math::Multiply(t, sum, t);

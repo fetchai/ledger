@@ -17,8 +17,8 @@
 //------------------------------------------------------------------------------
 
 #include "core/reactor.hpp"
-#include "core/serializers/byte_array_buffer.hpp"
 #include "core/serializers/counter.hpp"
+#include "core/serializers/main_serializer.hpp"
 #include "crypto/ecdsa.hpp"
 #include "crypto/prover.hpp"
 #include "dkg/dkg_service.hpp"

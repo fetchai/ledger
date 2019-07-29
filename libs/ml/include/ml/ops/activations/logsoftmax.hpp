@@ -64,22 +64,11 @@ public:
 
     // return_signal.InlineMultiply(t);
 
-    // 1D softmax
-    if (inputs.front()->shape().size() == 1)
+    // N-D softmax with 1 batch dimension
+    if (inputs.front()->shape().size() > 1)
     {
-      typename ArrayType::Type sum = return_signal.Sum();
+      ArrayType sum = ReduceSum(return_signal, axis_);
       t.InlineMultiply(sum);
-    }
-    // 2D softmax
-    else if (inputs.front()->shape().size() == 2)
-    {
-      ArrayType sum;
-      sum = ReduceSum(return_signal, axis_);
-      t.InlineMultiply(sum);
-    }
-    else
-    {
-      throw std::runtime_error("Softmax over >= 3 dimensions not implemented");
     }
 
     return_signal.InlineSubtract(t);
