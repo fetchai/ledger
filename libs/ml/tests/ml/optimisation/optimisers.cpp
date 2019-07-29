@@ -52,7 +52,7 @@ std::shared_ptr<fetch::ml::Graph<TypeParam>> PrepareTestGraph(
 
   std::shared_ptr<fetch::ml::Graph<TypeParam>> g(std::make_shared<fetch::ml::Graph<TypeParam>>());
 
-  input_name = g->template AddNode<fetch::ml::ops::PlaceHolder<TypeParam>>("", {});
+  input_name = g->template AddNode<fetch::ml::ops::Ops::PlaceHolder<TypeParam>>("", {});
 
   std::string fc1_name = g->template AddNode<fetch::ml::layers::FullyConnected<TypeParam>>(
       "FC1", {input_name}, input_size, hidden_size);
@@ -60,9 +60,9 @@ std::shared_ptr<fetch::ml::Graph<TypeParam>> PrepareTestGraph(
   std::string output_name = g->template AddNode<fetch::ml::layers::FullyConnected<TypeParam>>(
       "FC2", {act_name}, hidden_size, output_size);
 
-  label_name = g->template AddNode<fetch::ml::ops::PlaceHolder<TypeParam>>("", {});
+  label_name = g->template AddNode<fetch::ml::ops::Ops::PlaceHolder<TypeParam>>("", {});
 
-  error_name = g->template AddNode<fetch::ml::ops::MeanSquareErrorLoss<TypeParam>>(
+  error_name = g->template AddNode<fetch::ml::ops::Ops::MeanSquareErrorLoss<TypeParam>>(
       "Error", {output_name, label_name});
 
   return g;

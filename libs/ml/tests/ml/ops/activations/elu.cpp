@@ -139,7 +139,7 @@ TYPED_TEST(EluTest, saveparams_test)
 {
   using DataType      = typename TypeParam::Type;
   using ArrayType     = TypeParam;
-  using VecTensorType = typename fetch::ml::Ops<ArrayType>::VecTensorType;
+  using VecTensorType = typename fetch::ml::ops::Ops<ArrayType>::VecTensorType;
   using SPType        = typename fetch::ml::ops::Elu<ArrayType>::SPType;
 
   ArrayType data = ArrayType::FromString("1, -2, 3, -4, 5, -6, 7, -8");
@@ -152,7 +152,7 @@ TYPED_TEST(EluTest, saveparams_test)
   op.Forward(VecTensorType({data}), prediction);
 
   // extract saveparams
-  std::shared_ptr<fetch::ml::SaveableParams> sp = op.GetOpSaveableParams();
+  std::shared_ptr<fetch::ml::SaveableParamsInterface> sp = op.GetOpSaveableParams();
 
   // downcast to correct type
   auto dsp = std::dynamic_pointer_cast<SPType>(sp);

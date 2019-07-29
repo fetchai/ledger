@@ -22,7 +22,7 @@
 #include "math/base_types.hpp"
 =======
 >>>>>>> 59a522e74611199d626f9f41100205d2a18da2ae
-#include "math/tensor.hpp"
+    #include "math/tensor.hpp"
 #include "ml/ops/log.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 #include "vectorise/fixed_point/serializers.hpp"
@@ -33,8 +33,7 @@
 #include <cstdint>
 #include <vector>
 
-template <typename T>
-class LogFloatTest : public ::testing::Test
+    template < typename T > class LogFloatTest : public ::testing::Test
 {
 };
 
@@ -140,7 +139,7 @@ TYPED_TEST(LogBothTest, saveparams_test)
 {
   using ArrayType     = TypeParam;
   using DataType      = typename TypeParam::Type;
-  using VecTensorType = typename fetch::ml::Ops<ArrayType>::VecTensorType;
+  using VecTensorType = typename fetch::ml::ops::Ops<ArrayType>::VecTensorType;
   using SPType        = typename fetch::ml::ops::Log<ArrayType>::SPType;
   using OpType        = typename fetch::ml::ops::Log<ArrayType>;
 
@@ -157,7 +156,7 @@ TYPED_TEST(LogBothTest, saveparams_test)
   op.Forward(vec_data, prediction);
 
   // extract saveparams
-  std::shared_ptr<fetch::ml::SaveableParams> sp = op.GetOpSaveableParams();
+  std::shared_ptr<fetch::ml::SaveableParamsInterface> sp = op.GetOpSaveableParams();
 
   // downcast to correct type
   auto dsp = std::dynamic_pointer_cast<SPType>(sp);

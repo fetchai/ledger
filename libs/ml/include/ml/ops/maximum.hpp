@@ -29,14 +29,14 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class Maximum : public fetch::ml::Ops<T>
+class Maximum : public fetch::ml::ops::Ops<T>
 {
 public:
   using ArrayType     = T;
   using SizeType      = typename ArrayType::SizeType;
   using ArrayPtrType  = std::shared_ptr<ArrayType>;
   using VecTensorType = typename Ops<T>::VecTensorType;
-  using SPType        = SaveableParams;
+  using SPType        = MaximumSaveableParams<T>;
 
   Maximum() = default;
 
@@ -46,10 +46,9 @@ public:
 
   ~Maximum() override = default;
 
-  std::shared_ptr<SaveableParams> GetOpSaveableParams() override
+  std::shared_ptr<SaveableParamsInterface> GetOpSaveableParams() override
   {
     SPType sp{};
-    sp.DESCRIPTOR = DESCRIPTOR;
     return std::make_shared<SPType>(sp);
   }
 

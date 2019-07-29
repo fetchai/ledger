@@ -30,7 +30,7 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class Elu : public fetch::ml::Ops<T>
+class Elu : public fetch::ml::ops::Ops<T>
 {
 public:
   using ArrayType     = T;
@@ -50,12 +50,12 @@ public:
 
   ~Elu() override = default;
 
-  std::shared_ptr<SaveableParams> GetOpSaveableParams() override
+  std::shared_ptr<SaveableParamsInterface> GetOpSaveableParams() override
   {
-    SPType sp{};
-    sp.DESCRIPTOR = DESCRIPTOR;
-    sp.a          = a_;
-    return std::make_shared<SPType>(sp);
+    auto sp = std::make_shared<SPType>();
+    OpType::ELU;
+    sp.a = a_;
+    return sp;
   }
 
   void Forward(VecTensorType const &inputs, ArrayType &output) override

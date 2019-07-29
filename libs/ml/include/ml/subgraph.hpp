@@ -34,16 +34,16 @@ namespace ml {
  * @tparam T  the tensor/array type
  */
 template <class T>
-class SubGraph : public Graph<T>, public Ops<T>
+class SubGraph : public Graph<T>, public ops::Ops<T>
 {
 public:
   using ArrayType     = T;
   using VecTensorType = std::vector<std::shared_ptr<ArrayType const>>;
-  using SPType = SubGraphSaveableParams<ArrayType>;
+  using SPType        = SubGraphSaveableParams<ArrayType>;
 
-  virtual void                   Forward(VecTensorType const &inputs, ArrayType &output);
-  virtual std::vector<ArrayType> Backward(VecTensorType const &inputs,
-                                          ArrayType const &    error_signal);
+  void                   Forward(VecTensorType const &inputs, ArrayType &output) override;
+  std::vector<ArrayType> Backward(VecTensorType const &inputs,
+                                  ArrayType const &    error_signal) override;
 
   explicit SubGraph(SPType gs)
     : Graph<ArrayType>(gs)
@@ -52,15 +52,14 @@ public:
     output_node_name_ = gs.output_node_name;
   }
 
-  std::shared_ptr<SaveableParams> GetOpSaveableParams() override
+  std::shared_ptr<SaveableParamsInterface> GetOpSaveableParams() override
   {
-    auto gsp     = this->GetGraphSaveableParams();
+    auto gsp = this->GetGraphSaveableParams();
 
     auto sp    = std::make_shared<SPType>();
-    auto g_ptr = std::static_pointer_cast<GraphSaveableParams<ArrayType >>(sp);
-    *g_ptr = gsp;
+    auto g_ptr = std::static_pointer_cast<GraphSaveableParams<ArrayType>>(sp);
+    *g_ptr     = gsp;
 
-    sp->DESCRIPTOR = DESCRIPTOR;
     sp->input_node_names = input_node_names_;
     sp->output_node_name = output_node_name_;
 

@@ -28,13 +28,13 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class Reshape : public fetch::ml::Ops<T>
+class Reshape : public fetch::ml::ops::Ops<T>
 {
 public:
   using ArrayType     = T;
   using SizeType      = typename ArrayType::SizeType;
   using VecTensorType = typename Ops<T>::VecTensorType;
-  using SPType        = ReshapeSaveableParams;
+  using SPType        = ReshapeSaveableParams<T>;
 
   explicit Reshape(std::vector<SizeType> new_shape)
     : new_shape_(new_shape)
@@ -47,11 +47,10 @@ public:
 
   ~Reshape() = default;
 
-  std::shared_ptr<SaveableParams> GetOpSaveableParams() override
+  std::shared_ptr<SaveableParamsInterface> GetOpSaveableParams() override
   {
     SPType sp{};
-    sp.DESCRIPTOR = DESCRIPTOR;
-    sp.new_shape  = new_shape_;
+    sp.new_shape = new_shape_;
     return std::make_shared<SPType>(sp);
   }
 

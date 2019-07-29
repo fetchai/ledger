@@ -129,7 +129,7 @@ TYPED_TEST(WeightsTest, saveparams_test)
   op.Forward({}, prediction);
 
   // extract saveparams
-  std::shared_ptr<fetch::ml::SaveableParams> sp = op.GetOpSaveableParams();
+  std::shared_ptr<fetch::ml::SaveableParamsInterface> sp = op.GetOpSaveableParams();
 
   // downcast to correct type
   auto dsp = std::dynamic_pointer_cast<SPType>(sp);

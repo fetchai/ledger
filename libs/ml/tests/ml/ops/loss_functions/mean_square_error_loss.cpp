@@ -44,12 +44,12 @@ TYPED_TEST(MeanSquareErrorTest, perfect_match_forward_test)
   }
 
 <<<<<<< HEAD
-  auto      op = fetch::ml::ops::MeanSquareErrorLoss<TypeParam>();
+  auto      op = fetch::ml::ops::Ops::MeanSquareErrorLoss<TypeParam>();
   TypeParam result({1, 1});
   op.Forward({data1, data2}, result);
 =======
-  fetch::ml::ops::MeanSquareErrorLoss<TypeParam> op;
-  TypeParam                                      result({1, 1});
+  fetch::ml::ops::Ops::MeanSquareErrorLoss<TypeParam> op;
+  TypeParam                                           result({1, 1});
   op.Forward({std::make_shared<TypeParam>(data1), std::make_shared<TypeParam>(data2)}, result);
 >>>>>>> 59a522e74611199d626f9f41100205d2a18da2ae
 
@@ -64,8 +64,8 @@ TYPED_TEST(MeanSquareErrorTest, one_by_eight_dimensional_forward_test)
   TypeParam data1_transpose = data1.Transpose();
   TypeParam data2_transpose = data2.Transpose();
 
-  fetch::ml::ops::MeanSquareErrorLoss<TypeParam> op;
-  TypeParam                                      result({1, 1});
+  fetch::ml::ops::Ops::MeanSquareErrorLoss<TypeParam> op;
+  TypeParam                                           result({1, 1});
   op.Forward(
       {std::make_shared<TypeParam>(data1_transpose), std::make_shared<TypeParam>(data2_transpose)},
       result);
@@ -88,14 +88,14 @@ TYPED_TEST(MeanSquareErrorTest, one_by_eight_dimensional_backward_test)
   TypeParam data2_transpose = data2.Transpose();
 
   TypeParam error_signal({1, 1});
-  error_signal(0, 0) = DataType{1};
+  error_signal(0, 0)               = DataType{1};
 
 <<<<<<< HEAD
-  auto                   op        = fetch::ml::ops::MeanSquareErrorLoss<TypeParam>();
+  auto                   op        = fetch::ml::ops::Ops::MeanSquareErrorLoss<TypeParam>();
   std::vector<TypeParam> gradients = op.Backward({data1_transpose, data2_transpose}, error_signal);
 =======
-  fetch::ml::ops::MeanSquareErrorLoss<TypeParam> op;
-  std::vector<TypeParam>                         gradients = op.Backward(
+  fetch::ml::ops::Ops::MeanSquareErrorLoss<TypeParam> op;
+  std::vector<TypeParam>                              gradients = op.Backward(
       {std::make_shared<TypeParam>(data1_transpose), std::make_shared<TypeParam>(data2_transpose)},
       error_signal);
 >>>>>>> 59a522e74611199d626f9f41100205d2a18da2ae
@@ -110,8 +110,8 @@ TYPED_TEST(MeanSquareErrorTest, two_dimensional_forward_test_with_weighting)
   TypeParam data2 = TypeParam::FromString("1.1, 2.2, 7.7, 6.6; 0.0, -6.6, 7.7, -9.9");
 
   TypeParam weightings = TypeParam::FromString("1.0, 2.0, 1.0, 0.5; 0.0, 0.0, 0.0, 0.0");
-  fetch::ml::ops::MeanSquareErrorLoss<TypeParam> op(weightings);
-  TypeParam                                      result({1, 1});
+  fetch::ml::ops::Ops::MeanSquareErrorLoss<TypeParam> op(weightings);
+  TypeParam                                           result({1, 1});
   op.Forward({std::make_shared<TypeParam>(data1), std::make_shared<TypeParam>(data2)}, result);
 
   ASSERT_FLOAT_EQ(static_cast<float>(result(0, 0)), 118.58f / 8.0f / 2.0f);
@@ -125,8 +125,8 @@ TYPED_TEST(MeanSquareErrorTest, two_dimensional_backward_test_with_weighting)
   TypeParam weightings   = TypeParam::FromString("1.0, 2.0, 1.0, 0.5; 0.0, 0.0, 0.0, 0.0");
   TypeParam gt           = TypeParam::FromString("0.0, -2.2, -1.1, -1.375; 0.0, 0.0, 0.0, 0.0");
 
-  fetch::ml::ops::MeanSquareErrorLoss<TypeParam> op(weightings);
-  std::vector<TypeParam>                         gradients = op.Backward(
+  fetch::ml::ops::Ops::MeanSquareErrorLoss<TypeParam> op(weightings);
+  std::vector<TypeParam>                              gradients = op.Backward(
       {std::make_shared<TypeParam>(data1), std::make_shared<TypeParam>(data2)}, error_signal);
 
   EXPECT_TRUE(
@@ -139,8 +139,8 @@ TYPED_TEST(MeanSquareErrorTest, saveparams_test)
 {
   using ArrayType = TypeParam;
   using DataType  = typename TypeParam::Type;
-  using SPType    = typename fetch::ml::ops::MeanSquareErrorLoss<ArrayType>::SPType;
-  using OpType    = typename fetch::ml::ops::MeanSquareErrorLoss<ArrayType>;
+  using SPType    = typename fetch::ml::ops::Ops::MeanSquareErrorLoss<ArrayType>::SPType;
+  using OpType    = typename fetch::ml::ops::Ops::MeanSquareErrorLoss<ArrayType>;
   TypeParam data1 = TypeParam::FromString("1.1; -2.2; 3.3; -4.4; 5.5; -6.6; 7.7; -8.8");
   TypeParam data2 = TypeParam::FromString("1.1; 2.2; 7.7; 6.6; 0.0; -6.6; 7.7; -9.9");
 
@@ -152,7 +152,7 @@ TYPED_TEST(MeanSquareErrorTest, saveparams_test)
   op.Forward({data1_transpose, data2_transpose}, result);
 
   // extract saveparams
-  std::shared_ptr<fetch::ml::SaveableParams> sp = op.GetOpSaveableParams();
+  std::shared_ptr<fetch::ml::SaveableParamsInterface> sp = op.GetOpSaveableParams();
 
   // downcast to correct type
   auto dsp = std::dynamic_pointer_cast<SPType>(sp);

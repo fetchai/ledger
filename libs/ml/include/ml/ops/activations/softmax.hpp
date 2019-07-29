@@ -30,14 +30,14 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class Softmax : public fetch::ml::Ops<T>
+class Softmax : public fetch::ml::ops::Ops<T>
 {
 public:
   using ArrayType     = T;
   using DataType      = typename ArrayType::Type;
   using SizeType      = typename ArrayType::SizeType;
   using VecTensorType = typename Ops<T>::VecTensorType;
-  using SPType        = SoftmaxSaveableParams;
+  using SPType        = SoftmaxSaveableParams<T>;
 
   explicit Softmax(SizeType axis = 1)
     : axis_(axis)
@@ -50,11 +50,10 @@ public:
 
   ~Softmax() override = default;
 
-  std::shared_ptr<SaveableParams> GetOpSaveableParams() override
+  std::shared_ptr<SaveableParamsInterface> GetOpSaveableParams() override
   {
-    auto sp_ptr        = std::make_shared<SPType>();
-    sp_ptr->DESCRIPTOR = DESCRIPTOR;
-    sp_ptr->axis       = axis_;
+    auto sp_ptr  = std::make_shared<SPType>();
+    sp_ptr->axis = axis_;
     return sp_ptr;
   }
 

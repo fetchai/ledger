@@ -164,7 +164,7 @@ TYPED_TEST(ReluTest, saveparams_test)
 {
   using ArrayType     = TypeParam;
   using DataType      = typename TypeParam::Type;
-  using VecTensorType = typename fetch::ml::Ops<TypeParam>::VecTensorType;
+  using VecTensorType = typename fetch::ml::ops::Ops<TypeParam>::VecTensorType;
   using SPType        = typename fetch::ml::ops::Relu<ArrayType>::SPType;
   using OpType        = typename fetch::ml::ops::Relu<ArrayType>;
 
@@ -178,7 +178,7 @@ TYPED_TEST(ReluTest, saveparams_test)
   op.Forward(vec_data, prediction);
 
   // extract saveparams
-  std::shared_ptr<fetch::ml::SaveableParams> sp = op.GetOpSaveableParams();
+  std::shared_ptr<fetch::ml::SaveableParamsInterface> sp = op.GetOpSaveableParams();
 
   // downcast to correct type
   auto dsp = std::dynamic_pointer_cast<SPType>(sp);

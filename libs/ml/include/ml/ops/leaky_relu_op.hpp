@@ -31,7 +31,7 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class LeakyReluOp : public fetch::ml::Ops<T>
+class LeakyReluOp : public fetch::ml::ops::Ops<T>
 {
 public:
   using ArrayType     = T;
@@ -39,7 +39,7 @@ public:
   using SizeType      = typename ArrayType::SizeType;
   using ArrayPtrType  = std::shared_ptr<ArrayType>;
   using VecTensorType = typename Ops<T>::VecTensorType;
-  using SPType        = SaveableParams;
+  using SPType        = LeakyReluOpSaveableParams<T>;
 
   LeakyReluOp() = default;
 
@@ -49,11 +49,10 @@ public:
 
   ~LeakyReluOp() override = default;
 
-  std::shared_ptr<SaveableParams> GetOpSaveableParams() override
+  std::shared_ptr<SaveableParamsInterface> GetOpSaveableParams() override
   {
-    SPType sp{};
-    sp.DESCRIPTOR = DESCRIPTOR;
-    return std::make_shared<SPType>(sp);
+    auto sp = std::make_shared<SPType>();
+    return sp;
   }
 
   // LeakyRelu(x,alpha)=max(0,x)+alpha*min(0,x)

@@ -137,7 +137,7 @@ TYPED_TEST(SigmoidTest, saveparams_test)
 {
   using ArrayType     = TypeParam;
   using DataType      = typename TypeParam::Type;
-  using VecTensorType = typename fetch::ml::Ops<ArrayType>::VecTensorType;
+  using VecTensorType = typename fetch::ml::ops::Ops<ArrayType>::VecTensorType;
   using SPType        = typename fetch::ml::ops::Sigmoid<ArrayType>::SPType;
   using OpType        = typename fetch::ml::ops::Sigmoid<ArrayType>;
 
@@ -153,7 +153,7 @@ TYPED_TEST(SigmoidTest, saveparams_test)
   op.Forward(vec_data, prediction);
 
   // extract saveparams
-  std::shared_ptr<fetch::ml::SaveableParams> sp = op.GetOpSaveableParams();
+  std::shared_ptr<fetch::ml::SaveableParamsInterface> sp = op.GetOpSaveableParams();
 
   // downcast to correct type
   auto dsp = std::dynamic_pointer_cast<SPType>(sp);

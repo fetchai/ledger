@@ -30,14 +30,14 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class MatrixMultiply : public fetch::ml::Ops<T>
+class MatrixMultiply : public fetch::ml::ops::Ops<T>
 {
 public:
   using ArrayType     = T;
   using SizeType      = typename ArrayType::SizeType;
   using SizeVector    = typename ArrayType::SizeVector;
   using VecTensorType = typename Ops<T>::VecTensorType;
-  using SPType        = SaveableParams;
+  using SPType        = MatrixMultiplySaveableParams<T>;
 
   MatrixMultiply() = default;
 
@@ -47,11 +47,10 @@ public:
 
   ~MatrixMultiply() override = default;
 
-  std::shared_ptr<SaveableParams> GetOpSaveableParams() override
+  std::shared_ptr<SaveableParamsInterface> GetOpSaveableParams() override
   {
-    SPType sp{};
-    sp.DESCRIPTOR = DESCRIPTOR;
-    return std::make_shared<SPType>(sp);
+    auto sp = std::make_shared<SPType>();
+    return sp;
   }
 
   void                   Forward(VecTensorType const &inputs, ArrayType &output) override;

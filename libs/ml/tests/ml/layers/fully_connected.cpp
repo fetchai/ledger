@@ -84,8 +84,10 @@ TYPED_TEST(FullyConnectedTest, ops_backward_test)  // Use the class as an Ops
 TYPED_TEST(FullyConnectedTest, node_forward_test)  // Use the class as a Node
 {
   TypeParam data(std::vector<typename TypeParam::SizeType>({5, 10, 2}));
-  std::shared_ptr<fetch::ml::Node<TypeParam, fetch::ml::ops::PlaceHolder<TypeParam>>> placeholder =
-      std::make_shared<fetch::ml::Node<TypeParam, fetch::ml::ops::PlaceHolder<TypeParam>>>("Input");
+  std::shared_ptr<fetch::ml::Node<TypeParam, fetch::ml::ops::Ops::PlaceHolder<TypeParam>>>
+      placeholder =
+          std::make_shared<fetch::ml::Node<TypeParam, fetch::ml::ops::Ops::PlaceHolder<TypeParam>>>(
+              "Input");
   placeholder->SetData(data);
 
   fetch::ml::Node<TypeParam, fetch::ml::layers::FullyConnected<TypeParam>> fc("FullyConnected", 50u,
@@ -102,8 +104,10 @@ TYPED_TEST(FullyConnectedTest, node_forward_test)  // Use the class as a Node
 TYPED_TEST(FullyConnectedTest, node_backward_test)  // Use the class as a Node
 {
   TypeParam data({5, 10, 2});
-  std::shared_ptr<fetch::ml::Node<TypeParam, fetch::ml::ops::PlaceHolder<TypeParam>>> placeholder =
-      std::make_shared<fetch::ml::Node<TypeParam, fetch::ml::ops::PlaceHolder<TypeParam>>>("Input");
+  std::shared_ptr<fetch::ml::Node<TypeParam, fetch::ml::ops::Ops::PlaceHolder<TypeParam>>>
+      placeholder =
+          std::make_shared<fetch::ml::Node<TypeParam, fetch::ml::ops::Ops::PlaceHolder<TypeParam>>>(
+              "Input");
   placeholder->SetData(data);
 
   fetch::ml::Node<TypeParam, fetch::ml::layers::FullyConnected<TypeParam>> fc("FullyConnected", 50u,
@@ -125,7 +129,7 @@ TYPED_TEST(FullyConnectedTest, graph_forward_test)  // Use the class as a Node
 {
   fetch::ml::Graph<TypeParam> g;
 
-  g.template AddNode<fetch::ml::ops::PlaceHolder<TypeParam>>("Input", {});
+  g.template AddNode<fetch::ml::ops::Ops::PlaceHolder<TypeParam>>("Input", {});
   g.template AddNode<fetch::ml::layers::FullyConnected<TypeParam>>("FullyConnected", {"Input"}, 50u,
                                                                    42u);
 

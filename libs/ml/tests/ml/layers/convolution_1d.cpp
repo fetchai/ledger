@@ -213,8 +213,10 @@ TYPED_TEST(Convolution1DTest, node_forward_test)  // Use the class as a Node
   }
 
   // Evaluate
-  std::shared_ptr<fetch::ml::Node<TypeParam, fetch::ml::ops::PlaceHolder<TypeParam>>> placeholder =
-      std::make_shared<fetch::ml::Node<TypeParam, fetch::ml::ops::PlaceHolder<TypeParam>>>("Input");
+  std::shared_ptr<fetch::ml::Node<TypeParam, fetch::ml::ops::Ops::PlaceHolder<TypeParam>>>
+      placeholder =
+          std::make_shared<fetch::ml::Node<TypeParam, fetch::ml::ops::Ops::PlaceHolder<TypeParam>>>(
+              "Input");
   placeholder->SetData(input);
 
   fetch::ml::Node<TypeParam, fetch::ml::layers::Convolution1D<TypeParam>> conv(
@@ -276,8 +278,10 @@ TYPED_TEST(Convolution1DTest, node_backward_test)  // Use the class as a Node
   }
 
   // Evaluate
-  std::shared_ptr<fetch::ml::Node<TypeParam, fetch::ml::ops::PlaceHolder<TypeParam>>> placeholder =
-      std::make_shared<fetch::ml::Node<TypeParam, fetch::ml::ops::PlaceHolder<TypeParam>>>("Input");
+  std::shared_ptr<fetch::ml::Node<TypeParam, fetch::ml::ops::Ops::PlaceHolder<TypeParam>>>
+      placeholder =
+          std::make_shared<fetch::ml::Node<TypeParam, fetch::ml::ops::Ops::PlaceHolder<TypeParam>>>(
+              "Input");
   placeholder->SetData(input);
 
   fetch::ml::Node<TypeParam, fetch::ml::layers::Convolution1D<TypeParam>> conv(
@@ -339,7 +343,7 @@ TYPED_TEST(Convolution1DTest, graph_forward_test)  // Use the class as a Node
 
   // Evaluate
   fetch::ml::Graph<TypeParam> g;
-  g.template AddNode<fetch::ml::ops::PlaceHolder<TypeParam>>("Input", {});
+  g.template AddNode<fetch::ml::ops::Ops::PlaceHolder<TypeParam>>("Input", {});
   g.template AddNode<fetch::ml::layers::Convolution1D<TypeParam>>(
       "Convolution1D", {"Input"}, output_channels, input_channels, kernel_height, stride_size);
   g.SetInput("Input", input);
@@ -395,15 +399,15 @@ TYPED_TEST(Convolution1DTest, getStateDict)
 
 TYPED_TEST(Convolution1DTest, saveparams_test)
 {
-  using DataType  = typename TypeParam::Type;
-  using SizeType  = typename TypeParam::SizeType;
+  using DataType = typename TypeParam::Type;
+  using SizeType = typename TypeParam::SizeType;
 
   SizeType const input_channels  = 3;
   SizeType const output_channels = 5;
   SizeType const input_height    = 3;
   SizeType const kernel_height   = 3;
-//  SizeType const output_height   = 1;
-  SizeType const stride_size     = 1;
+  //  SizeType const output_height   = 1;
+  SizeType const stride_size = 1;
 
   // Generate input
   TypeParam input(std::vector<typename TypeParam::SizeType>({input_channels, input_height, 1}));
@@ -426,7 +430,8 @@ TYPED_TEST(Convolution1DTest, saveparams_test)
   auto sp = conv.GetOpSaveableParams();
 
   // downcast to correct type
-  auto dsp = std::dynamic_pointer_cast<typename fetch::ml::layers::Convolution1D<TypeParam>::SPType>(sp);
+  auto dsp =
+      std::dynamic_pointer_cast<typename fetch::ml::layers::Convolution1D<TypeParam>::SPType>(sp);
 
   // serialize
   fetch::serializers::ByteArrayBuffer b;

@@ -29,6 +29,8 @@
 #include "ml/optimisation/adam_optimiser.hpp"
 #include "ml/state_dict.hpp"
 
+#include "ml/utilities/graph_builder.hpp"
+
 #include <fstream>
 #include <iostream>
 #include <sstream>
@@ -374,11 +376,11 @@ int main(int argc, char **argv)
 
     // deserialize
     b.seek(0);
-    fetch::ml::GraphSaveableParams<ArrayType> gsp2;
+    auto gsp2 = std::make_shared<fetch::ml::GraphSaveableParams<ArrayType>>();
     b >> gsp2;
 
     // remake graph
-    GraphType newgraph{gsp2};
+    GraphType newgraph = fetch::ml::utilities::LoadGraph<ArrayType, GraphType>(gsp2);
 
     //// run same test as above:
     /// LOAD DATA ///

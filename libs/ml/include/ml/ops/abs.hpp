@@ -19,6 +19,7 @@
 
 #include "core/assert.hpp"
 #include "ml/ops/ops.hpp"
+#include "ml/saveparams/saveable_params.hpp"
 
 #include <cassert>
 #include <memory>
@@ -29,14 +30,14 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class Abs : public fetch::ml::Ops<T>
+class Abs : public Ops<T>
 {
 public:
   using ArrayType     = T;
   using SizeType      = typename ArrayType::SizeType;
   using ArrayPtrType  = std::shared_ptr<ArrayType>;
   using VecTensorType = typename Ops<T>::VecTensorType;
-  using SPType        = SaveableParams;
+  using SPType        = AbsSaveableParams<T>;
 
   Abs() = default;
 
@@ -46,11 +47,9 @@ public:
 
   ~Abs() override = default;
 
-  std::shared_ptr<SaveableParams> GetOpSaveableParams() override
+  std::shared_ptr<SaveableParamsInterface> GetOpSaveableParams() override
   {
-    auto sp_ptr        = std::make_shared<SPType>();
-    sp_ptr->DESCRIPTOR = DESCRIPTOR;
-    return sp_ptr;
+    return std::make_shared<SPType>();
   }
 
   /**

@@ -61,7 +61,8 @@ public:
 
   static void Bind(fetch::vm::Module &module)
   {
-    module.CreateClassType<VMStateDict>("StateDict")
+    module
+        .CreateClassType<VMStateDict>("StateDict")
 <<<<<<< HEAD
         .CreateConstuctor<>()
         .CreateSerializeDefaultConstuctor<>()

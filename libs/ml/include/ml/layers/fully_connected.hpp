@@ -25,8 +25,8 @@
 #include "ml/ops/weights.hpp"
 #include "ml/regularisers/regularisation.hpp"
 #include "ml/regularisers/regulariser.hpp"
-#include "ml/subgraph.hpp"
 #include "ml/saveparams/saveable_params.hpp"
+#include "ml/subgraph.hpp"
 
 #include <functional>
 #include <memory>
@@ -47,7 +47,7 @@ public:
   using DataType      = typename ArrayType::Type;
   using WeightsInit   = fetch::ml::ops::WeightsInitialisation;
   using VecTensorType = typename SubGraph<T>::VecTensorType;
-  using SPType       = FullyConnectedSaveableParams<ArrayType>;
+  using SPType        = FullyConnectedSaveableParams<ArrayType>;
 
   FullyConnected(SizeType in, SizeType out,
                  details::ActivationType activation_type = details::ActivationType::NOTHING,
@@ -93,16 +93,15 @@ public:
     out_size_ = gs.out_size;
   }
 
-  std::shared_ptr<SaveableParams> GetOpSaveableParams() override
+  std::shared_ptr<SaveableParamsInterface> GetOpSaveableParams() override
   {
-    std::shared_ptr<SaveableParams> sgsp = SubGraph<ArrayType >::GetOpSaveableParams();
-    auto sg_ptr1 = std::dynamic_pointer_cast<typename SubGraph<ArrayType>::SPType >(sgsp);
+    std::shared_ptr<SaveableParamsInterface> sgsp = SubGraph<ArrayType>::GetOpSaveableParams();
+    auto sg_ptr1 = std::dynamic_pointer_cast<typename SubGraph<ArrayType>::SPType>(sgsp);
 
-    auto sp    = std::make_shared<SPType>();
-    auto sg_ptr2 = std::static_pointer_cast<typename SubGraph<ArrayType>::SPType >(sp);
-    *sg_ptr2 = *sg_ptr1;
+    auto sp      = std::make_shared<SPType>();
+    auto sg_ptr2 = std::static_pointer_cast<typename SubGraph<ArrayType>::SPType>(sp);
+    *sg_ptr2     = *sg_ptr1;
 
-    sp->DESCRIPTOR = DESCRIPTOR;
     sp->in_size  = in_size_;
     sp->out_size = out_size_;
     return sp;

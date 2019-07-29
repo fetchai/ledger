@@ -55,7 +55,7 @@ TYPED_TEST(TanhTest, forward_all_positive_test)
     gt.Set(i, typename TypeParam::Type(gtInput[i]));
   }
 
-  fetch::ml::ops::TanH<TypeParam> op;
+  fetch::ml::ops::Tanh<TypeParam> op;
 
   TypeParam prediction(op.ComputeOutputShape({std::make_shared<const TypeParam>(data)}));
   op.Forward({std::make_shared<const TypeParam>(data)}, prediction);
@@ -80,7 +80,7 @@ TYPED_TEST(TanhTest, forward_all_negative_test)
     gt.Set(i, typename TypeParam::Type(gtInput[i]));
   }
 
-  fetch::ml::ops::TanH<TypeParam> op;
+  fetch::ml::ops::Tanh<TypeParam> op;
 
   TypeParam prediction(op.ComputeOutputShape({std::make_shared<const TypeParam>(data)}));
   op.Forward({std::make_shared<const TypeParam>(data)}, prediction);
@@ -105,7 +105,7 @@ TYPED_TEST(TanhTest, backward_all_positive_test)
     error.Set(i, typename TypeParam::Type(errorInput[i]));
     gt.Set(i, typename TypeParam::Type(gtInput[i]));
   }
-  fetch::ml::ops::TanH<TypeParam> op;
+  fetch::ml::ops::Tanh<TypeParam> op;
   std::vector<TypeParam> prediction = op.Backward({std::make_shared<const TypeParam>(data)}, error);
 
   // test correct values
@@ -129,7 +129,7 @@ TYPED_TEST(TanhTest, backward_all_negative_test)
     error.Set(i, typename TypeParam::Type(errorInput[i]));
     gt.Set(i, typename TypeParam::Type(gtInput[i]));
   }
-  fetch::ml::ops::TanH<TypeParam> op;
+  fetch::ml::ops::Tanh<TypeParam> op;
   std::vector<TypeParam> prediction = op.Backward({std::make_shared<const TypeParam>(data)}, error);
 
   // test correct values
@@ -141,9 +141,9 @@ TYPED_TEST(TanhTest, saveparams_test)
 {
   using ArrayType     = TypeParam;
   using DataType      = typename TypeParam::Type;
-  using VecTensorType = typename fetch::ml::Ops<ArrayType>::VecTensorType;
-  using SPType        = typename fetch::ml::ops::TanH<ArrayType>::SPType;
-  using OpType        = typename fetch::ml::ops::TanH<ArrayType>;
+  using VecTensorType = typename fetch::ml::ops::Ops<ArrayType>::VecTensorType;
+  using SPType        = typename fetch::ml::ops::Tanh<ArrayType>::SPType;
+  using OpType        = typename fetch::ml::ops::Tanh<ArrayType>;
 
   ArrayType data = TypeParam::FromString("0, 0.2, 0.4, -0, -0.2, -0.4");
   ArrayType gt   = TypeParam::FromString("0.0, 0.197375, 0.379949, -0.0, -0.197375, -0.379949");
@@ -156,7 +156,7 @@ TYPED_TEST(TanhTest, saveparams_test)
   op.Forward(vec_data, prediction);
 
   // extract saveparams
-  std::shared_ptr<fetch::ml::SaveableParams> sp = op.GetOpSaveableParams();
+  std::shared_ptr<fetch::ml::SaveableParamsInterface> sp = op.GetOpSaveableParams();
 
   // downcast to correct type
   auto dsp = std::dynamic_pointer_cast<SPType>(sp);

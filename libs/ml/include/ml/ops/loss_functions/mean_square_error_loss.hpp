@@ -36,7 +36,7 @@ public:
   using DataType      = typename ArrayType::Type;
   using SizeType      = typename ArrayType::SizeType;
   using VecTensorType = typename Ops<T>::VecTensorType;
-  using SPType        = SaveableParams;
+  using SPType        = MeanSquareErrorSaveableParams<T>;
 
   explicit MeanSquareErrorLoss(SPType const &sp)
     : Ops<T>(sp)
@@ -48,10 +48,9 @@ public:
 
   ~MeanSquareErrorLoss() override = default;
 
-  std::shared_ptr<SaveableParams> GetOpSaveableParams() override
+  std::shared_ptr<SaveableParamsInterface> GetOpSaveableParams() override
   {
     SPType sp{};
-    sp.DESCRIPTOR = DESCRIPTOR;
     return std::make_shared<SPType>(sp);
   }
 

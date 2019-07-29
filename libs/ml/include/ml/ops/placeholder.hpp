@@ -19,6 +19,7 @@
 
 #include "core/assert.hpp"
 #include "ml/ops/ops.hpp"
+#include "ml/saveparams/saveable_params.hpp"
 
 #include <cassert>
 #include <memory>
@@ -29,7 +30,7 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class PlaceHolder : public fetch::ml::Ops<T>
+class PlaceHolder : public fetch::ml::ops::Ops<T>
 {
 public:
   using ArrayType     = T;
@@ -50,10 +51,10 @@ public:
 
   ~PlaceHolder() override = default;
 
-  std::shared_ptr<SaveableParams> GetOpSaveableParams() override
+  std::shared_ptr<SaveableParamsInterface> GetOpSaveableParams() override
   {
     SPType tp{};
-    tp.DESCRIPTOR = DESCRIPTOR;
+    tp.OP_DESCRIPTOR = OpType::PLACEHOLDER;
     if (output_)
     {
       tp.output = std::make_shared<ArrayType>(output_->Copy());

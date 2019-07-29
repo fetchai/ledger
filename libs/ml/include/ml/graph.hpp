@@ -105,8 +105,8 @@ private:
 
 protected:
   std::unordered_map<std::string, NodePtrType> nodes_;
-  std::unordered_map<std::string, SizeType> trainable_lookup_;
-  std::vector<TrainablePtrType>             trainable_;
+  std::unordered_map<std::string, SizeType>    trainable_lookup_;
+  std::vector<TrainablePtrType>                trainable_;
   std::vector<std::pair<std::string, std::vector<std::string>>>
       connections;  // unique node name to list of inputs
 };
@@ -259,8 +259,8 @@ template <typename ArrayType>
 GraphSaveableParams<ArrayType> Graph<ArrayType>::GetGraphSaveableParams()
 {
   GraphSaveableParams<ArrayType> gs;
-  gs.connections = connections;
-  gs.DESCRIPTOR  = this->DESCRIPTOR;
+  gs.connections   = connections;
+  gs.OP_DESCRIPTOR = OpType::GRAPH;
 
   for (auto const &node : nodes_)
   {

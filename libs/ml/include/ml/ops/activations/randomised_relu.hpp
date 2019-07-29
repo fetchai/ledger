@@ -31,7 +31,7 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class RandomizedRelu : public fetch::ml::Ops<T>
+class RandomisedRelu : public fetch::ml::ops::Ops<T>
 {
 public:
   using ArrayType     = T;
@@ -39,9 +39,9 @@ public:
   using SizeType      = typename ArrayType::SizeType;
   using RNG           = fetch::random::LaggedFibonacciGenerator<>;
   using VecTensorType = typename Ops<T>::VecTensorType;
-  using SPType        = RandomizedReluSaveableParams<ArrayType>;
+  using SPType        = RandomisedReluSaveableParams<ArrayType>;
 
-  RandomizedRelu(DataType const lower_bound, DataType const upper_bound,
+  RandomisedRelu(DataType const lower_bound, DataType const upper_bound,
                  SizeType const &random_seed = 25102015)
     : lower_bound_(lower_bound)
     , upper_bound_(upper_bound)
@@ -51,7 +51,7 @@ public:
     UpdateRandomValue();
   }
 
-  explicit RandomizedRelu(SPType const &sp)
+  explicit RandomisedRelu(SPType const &sp)
   {
     lower_bound_ = sp.lower_bound;
     upper_bound_ = sp.upper_bound;
@@ -63,12 +63,11 @@ public:
     random_value_ = sp.random_value;
   }
 
-  ~RandomizedRelu() override = default;
+  ~RandomisedRelu() override = default;
 
-  std::shared_ptr<SaveableParams> GetOpSaveableParams() override
+  std::shared_ptr<SaveableParamsInterface> GetOpSaveableParams() override
   {
     SPType sp{};
-    sp.DESCRIPTOR   = DESCRIPTOR;
     sp.lower_bound  = lower_bound_;
     sp.upper_bound  = upper_bound_;
     sp.random_seed  = rng_.Seed();
@@ -136,7 +135,7 @@ public:
     return inputs.front()->shape();
   }
 
-  static constexpr char const *DESCRIPTOR = "RandomizedRelu";
+  static constexpr char const *DESCRIPTOR = "RandomisedRelu";
 
 private:
   void UpdateRandomValue()

@@ -37,7 +37,7 @@ public:
   using DataType      = typename ArrayType::Type;
   using ArrayPtrType  = std::shared_ptr<ArrayType>;
   using VecTensorType = typename Ops<T>::VecTensorType;
-  using SPType        = Convolution1DSaveableParams;
+  using SPType        = Convolution1DSaveableParams<ArrayType>;
 
   explicit Convolution2D(SizeType stride_size = 1)
     : stride_size_(stride_size)
@@ -50,12 +50,11 @@ public:
 
   ~Convolution2D() override = default;
 
-  std::shared_ptr<SaveableParams> GetOpSaveableParams() override
+  std::shared_ptr<SaveableParamsInterface> GetOpSaveableParams() override
   {
-    SPType sp{};
-    sp.DESCRIPTOR  = DESCRIPTOR;
-    sp.stride_size = stride_size_;
-    return std::make_shared<SPType>(sp);
+    auto sp         = std::make_shared<SPType>();
+    sp->stride_size = stride_size_;
+    return sp;
   }
 
   void Forward(VecTensorType const &inputs, ArrayType &output) override;

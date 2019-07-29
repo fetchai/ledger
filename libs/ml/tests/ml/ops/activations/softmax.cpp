@@ -44,7 +44,7 @@ TYPED_TEST(SoftmaxTest, forward_test)
   ArrayType gt   = ArrayType::FromString(
       R"(2.1437e-03, 1.0673e-04, 1.5840e-02, 1.4444e-05, 1.1704e-01, 1.9548e-06, 8.6485e-01, 2.6456e-07)");
 
-  fetch::ml::ops::Softmax<ArrayType> op(0);
+  fetch::ml::ops::Ops::Softmax<ArrayType> op(0);
   ArrayType prediction(op.ComputeOutputShape({std::make_shared<const ArrayType>(data)}));
   op.Forward({std::make_shared<const ArrayType>(data)}, prediction);
 
@@ -72,7 +72,7 @@ TYPED_TEST(SoftmaxTest, forward_2d_tensor_axis_0_test)
     }
   }
 
-  fetch::ml::ops::Softmax<ArrayType> op{0};
+  fetch::ml::ops::Ops::Softmax<ArrayType> op{0};
   ArrayType prediction(op.ComputeOutputShape({std::make_shared<const ArrayType>(data)}));
   op.Forward({std::make_shared<const ArrayType>(data)}, prediction);
 
@@ -90,7 +90,7 @@ TYPED_TEST(SoftmaxTest, backward_test)
   ArrayType gt    = ArrayType::FromString(
       R"(-2.5091e-04, -1.2492e-05, -1.8540e-03, -1.6906e-06, 1.0335e-01, -2.2880e-07, -1.0123e-01, -3.0965e-08)");
 
-  fetch::ml::ops::Softmax<ArrayType> op(0);
+  fetch::ml::ops::Ops::Softmax<ArrayType> op(0);
   std::vector<ArrayType> prediction = op.Backward({std::make_shared<const ArrayType>(data)}, error);
 
   // test correct values
@@ -119,7 +119,7 @@ TYPED_TEST(SoftmaxTest, backward_2d_tensor_axis_0_test)
     }
   }
 
-  fetch::ml::ops::Softmax<ArrayType> op{0};
+  fetch::ml::ops::Ops::Softmax<ArrayType> op{0};
   std::vector<ArrayType> prediction = op.Backward({std::make_shared<const ArrayType>(data)}, error);
 
   // test correct values
@@ -130,23 +130,23 @@ TYPED_TEST(SoftmaxTest, saveparams_test)
 {
   using ArrayType     = TypeParam;
   using DataType      = typename TypeParam::Type;
-  using VecTensorType = typename fetch::ml::Ops<ArrayType>::VecTensorType;
-  using SPType        = typename fetch::ml::ops::Softmax<ArrayType>::SPType;
-  using OpType        = typename fetch::ml::ops::Softmax<ArrayType>;
+  using VecTensorType = typename fetch::ml::ops::Ops<ArrayType>::VecTensorType;
+  using SPType        = typename fetch::ml::ops::Ops::Softmax<ArrayType>::SPType;
+  using OpType        = typename fetch::ml::ops::Ops::Softmax<ArrayType>;
 
   ArrayType data = ArrayType::FromString("1, -2, 3, -4, 5, -6, 7, -8");
   ArrayType gt   = ArrayType::FromString(
       "2.1437e-03, 1.0673e-04, 1.5840e-02, 1.4444e-05, 1.1704e-01, 1.9548e-06, 8.6485e-01, "
       "2.6456e-07");
 
-  fetch::ml::ops::Softmax<ArrayType> op(0);
-  ArrayType                          prediction(op.ComputeOutputShape({data}));
-  VecTensorType                      vec_data({data});
+  fetch::ml::ops::Ops::Softmax<ArrayType> op(0);
+  ArrayType                               prediction(op.ComputeOutputShape({data}));
+  VecTensorType                           vec_data({data});
 
   op.Forward(vec_data, prediction);
 
   // extract saveparams
-  std::shared_ptr<fetch::ml::SaveableParams> sp = op.GetOpSaveableParams();
+  std::shared_ptr<fetch::ml::SaveableParamsInterface> sp = op.GetOpSaveableParams();
 
   // downcast to correct type
   auto dsp = std::dynamic_pointer_cast<SPType>(sp);

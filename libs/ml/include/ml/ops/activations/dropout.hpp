@@ -31,7 +31,7 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class Dropout : public fetch::ml::Ops<T>
+class Dropout : public fetch::ml::ops::Ops<T>
 {
 public:
   using ArrayType     = T;
@@ -60,10 +60,9 @@ public:
 
   ~Dropout() override = default;
 
-  std::shared_ptr<SaveableParams> GetOpSaveableParams() override
+  std::shared_ptr<SaveableParamsInterface> GetOpSaveableParams() override
   {
     SPType sp{};
-    sp.DESCRIPTOR  = DESCRIPTOR;
     sp.random_seed = rng_.Seed();
     sp.probability = probability_;
     sp.buffer      = rng_.GetBuffer();

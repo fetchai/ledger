@@ -29,14 +29,14 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class Multiply : public fetch::ml::Ops<T>
+class Multiply : public fetch::ml::ops::Ops<T>
 {
 public:
   using ArrayType     = T;
   using SizeType      = typename ArrayType::SizeType;
   using ArrayPtrType  = std::shared_ptr<ArrayType>;
   using VecTensorType = typename Ops<T>::VecTensorType;
-  using SPType        = SaveableParams;
+  using SPType        = MultiplySaveableParams<T>;
 
   Multiply() = default;
 
@@ -46,10 +46,9 @@ public:
 
   ~Multiply() override = default;
 
-  std::shared_ptr<SaveableParams> GetOpSaveableParams() override
+  std::shared_ptr<SaveableParamsInterface> GetOpSaveableParams() override
   {
     SPType sp{};
-    sp.DESCRIPTOR = DESCRIPTOR;
     return std::make_shared<SPType>(sp);
   }
 

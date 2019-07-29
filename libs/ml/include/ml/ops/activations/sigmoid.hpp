@@ -31,14 +31,14 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class Sigmoid : public fetch::ml::Ops<T>
+class Sigmoid : public fetch::ml::ops::Ops<T>
 {
 public:
   using ArrayType     = T;
   using DataType      = typename ArrayType::Type;
   using SizeType      = typename ArrayType::SizeType;
   using VecTensorType = typename Ops<T>::VecTensorType;
-  using SPType        = SaveableParams;
+  using SPType        = SigmoidSaveableParams<T>;
 
   Sigmoid() = default;
 
@@ -48,10 +48,9 @@ public:
 
   ~Sigmoid() override = default;
 
-  std::shared_ptr<SaveableParams> GetOpSaveableParams() override
+  std::shared_ptr<SaveableParamsInterface> GetOpSaveableParams() override
   {
     SPType sp{};
-    sp.DESCRIPTOR = DESCRIPTOR;
     return std::make_shared<SPType>(sp);
   }
 

@@ -130,7 +130,7 @@ TYPED_TEST(LogSoftmaxTest, saveparams_test)
 {
   using DataType      = typename TypeParam::Type;
   using ArrayType     = TypeParam;
-  using VecTensorType = typename fetch::ml::Ops<ArrayType>::VecTensorType;
+  using VecTensorType = typename fetch::ml::ops::Ops<ArrayType>::VecTensorType;
   using SPType        = typename fetch::ml::ops::LogSoftmax<ArrayType>::SPType;
   using OpType        = typename fetch::ml::ops::LogSoftmax<ArrayType>;
 
@@ -145,7 +145,7 @@ TYPED_TEST(LogSoftmaxTest, saveparams_test)
 
   op.Forward(vec_data, prediction);
   // extract saveparams
-  std::shared_ptr<fetch::ml::SaveableParams> sp = op.GetOpSaveableParams();
+  std::shared_ptr<fetch::ml::SaveableParamsInterface> sp = op.GetOpSaveableParams();
 
   // downcast to correct type
   auto dsp = std::dynamic_pointer_cast<SPType>(sp);

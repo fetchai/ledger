@@ -88,7 +88,7 @@ public:
     this->SetOutputNode(output);
   }
 
-  std::shared_ptr<SaveableParams> GetOpSaveableParams() override
+  std::shared_ptr<SaveableParamsInterface> GetOpSaveableParams() override
   {
     throw std::runtime_error("This shouldn't be called!");
   }

@@ -29,7 +29,7 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class Divide : public fetch::ml::Ops<T>
+class Divide : public fetch::ml::ops::Ops<T>
 {
 public:
   using ArrayType     = T;
@@ -37,7 +37,7 @@ public:
   using ArrayPtrType  = std::shared_ptr<ArrayType>;
   using VecTensorType = typename Ops<T>::VecTensorType;
   using DataType      = typename T::Type;
-  using SPType        = SaveableParams;
+  using SPType        = DivideSaveableParams<ArrayType>;
 
   Divide() = default;
 
@@ -47,11 +47,10 @@ public:
 
   ~Divide() override = default;
 
-  std::shared_ptr<SaveableParams> GetOpSaveableParams() override
+  std::shared_ptr<SaveableParamsInterface> GetOpSaveableParams() override
   {
-    SPType sp{};
-    sp.DESCRIPTOR = DESCRIPTOR;
-    return std::make_shared<SPType>(sp);
+    auto sp = std::make_shared<SPType>();
+    return sp;
   }
 
   /**

@@ -29,14 +29,14 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class Relu : public fetch::ml::Ops<T>
+class Relu : public fetch::ml::ops::Ops<T>
 {
 public:
   using ArrayType     = T;
   using DataType      = typename ArrayType::Type;
   using SizeType      = typename ArrayType::SizeType;
   using VecTensorType = typename Ops<T>::VecTensorType;
-  using SPType        = SaveableParams;
+  using SPType        = ReluSaveableParams<T>;
 
   Relu() = default;
 
@@ -46,10 +46,9 @@ public:
 
   ~Relu() override = default;
 
-  std::shared_ptr<SaveableParams> GetOpSaveableParams() override
+  std::shared_ptr<SaveableParamsInterface> GetOpSaveableParams() override
   {
-    auto sp_ptr        = std::make_shared<SPType>();
-    sp_ptr->DESCRIPTOR = DESCRIPTOR;
+    auto sp_ptr = std::make_shared<SPType>();
     return sp_ptr;
   }
 

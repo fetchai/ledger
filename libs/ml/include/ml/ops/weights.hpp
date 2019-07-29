@@ -112,14 +112,13 @@ public:
 
   ~Weights() override = default;
 
-  std::shared_ptr<SaveableParams> GetOpSaveableParams() override
+  std::shared_ptr<SaveableParamsInterface> GetOpSaveableParams() override
   {
     SPType tp{};
     if (this->output_)
     {
       tp.output = std::make_shared<ArrayType>(this->output_->Copy());
     }
-    tp.DESCRIPTOR          = DESCRIPTOR;
     tp.regularisation_type = this->regularisation_type;
     tp.regularisation_rate = this->regularisation_rate_;
     return std::make_shared<SPType>(tp);

@@ -32,14 +32,14 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class LogSigmoid : public fetch::ml::Ops<T>
+class LogSigmoid : public fetch::ml::ops::Ops<T>
 {
 public:
   using ArrayType     = T;
   using DataType      = typename ArrayType::Type;
   using SizeType      = typename ArrayType::SizeType;
   using VecTensorType = typename Ops<T>::VecTensorType;
-  using SPType        = SaveableParams;
+  using SPType        = LogSigmoidSaveableParams<T>;
 
   LogSigmoid() = default;
 
@@ -49,11 +49,10 @@ public:
 
   ~LogSigmoid() override = default;
 
-  std::shared_ptr<SaveableParams> GetOpSaveableParams() override
+  std::shared_ptr<SaveableParamsInterface> GetOpSaveableParams() override
   {
-    SPType sp{};
-    sp.DESCRIPTOR = DESCRIPTOR;
-    return std::make_shared<SPType>(sp);
+    auto sp = std::make_shared<SPType>();
+    return sp;
   }
 
   void Forward(VecTensorType const &inputs, ArrayType &output) override

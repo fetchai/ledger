@@ -27,14 +27,14 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class Exp : public fetch::ml::Ops<T>
+class Exp : public fetch::ml::ops::Ops<T>
 {
 public:
   using ArrayType     = T;
   using DataType      = typename ArrayType::Type;
   using SizeType      = typename ArrayType::SizeType;
   using VecTensorType = typename Ops<T>::VecTensorType;
-  using SPType        = SaveableParams;
+  using SPType        = ExpSaveableParams<T>;
 
   Exp() = default;
 
@@ -44,11 +44,10 @@ public:
 
   ~Exp() override = default;
 
-  std::shared_ptr<SaveableParams> GetOpSaveableParams() override
+  std::shared_ptr<SaveableParamsInterface> GetOpSaveableParams() override
   {
-    SPType sp{};
-    sp.DESCRIPTOR = DESCRIPTOR;
-    return std::make_shared<SPType>(sp);
+    auto sp = std::make_shared<SPType>();
+    return sp;
   }
 
   /**

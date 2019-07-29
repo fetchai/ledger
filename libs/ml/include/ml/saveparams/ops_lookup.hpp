@@ -17,314 +17,300 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/graph.hpp"
-#include "ml/layers/fully_connected.hpp"
-#include "ml/layers/convolution_1d.hpp"
-#include "ml/layers/convolution_2d.hpp"
-#include "ml/layers/PRelu.hpp"
-#include "ml/layers/self_attention.hpp"
-#include "ml/layers/skip_gram.hpp"
-#include "ml/ops/activations/dropout.hpp"
-#include "ml/ops/activations/elu.hpp"
-#include "ml/ops/activations/leaky_relu.hpp"
-#include "ml/ops/activations/logsigmoid.hpp"
-#include "ml/ops/activations/logsoftmax.hpp"
-#include "ml/ops/activations/randomized_relu.hpp"
-#include "ml/ops/activations/relu.hpp"
-#include "ml/ops/activations/sigmoid.hpp"
-#include "ml/ops/activations/softmax.hpp"
-#include "ml/ops/add.hpp"
-#include "ml/ops/concatenate.hpp"
-#include "ml/ops/convolution_1d.hpp"
-#include "ml/ops/convolution_2d.hpp"
-#include "ml/ops/divide.hpp"
-#include "ml/ops/embeddings.hpp"
-#include "ml/ops/exp.hpp"
-#include "ml/ops/flatten.hpp"
-#include "ml/ops/log.hpp"
-#include "ml/ops/loss_functions.hpp"
-#include "ml/ops/matrix_multiply.hpp"
-#include "ml/ops/max_pool_1d.hpp"
-#include "ml/ops/max_pool_2d.hpp"
-#include "ml/ops/maximum.hpp"
-#include "ml/ops/multiply.hpp"
-#include "ml/ops/placeholder.hpp"
-#include "ml/ops/reshape.hpp"
-#include "ml/ops/sqrt.hpp"
-#include "ml/ops/subtract.hpp"
-#include "ml/ops/tanh.hpp"
-#include "ml/ops/transpose.hpp"
-#include "ml/ops/weights.hpp"
-#include "ml/saveparams/saveable_params.hpp"
-
-#include <typeindex>
-
-namespace fetch {
-namespace ml {
-namespace ops {
-
-template <typename GraphType, typename Op>
-void MyAddNode(std::shared_ptr<GraphType> g_ptr,
-               std::shared_ptr<SaveableParams> saved_node, std::string node_name,
-               std::vector<std::string> const &inputs)
-{
-  auto castnode = std::dynamic_pointer_cast<typename Op::SPType>(saved_node);
-  if (!castnode)
-  {
-    throw std::runtime_error("Node downcasting failed.");
-  }
-  g_ptr->template AddNode<Op>(node_name, inputs, *castnode);
-}
-
-template <typename GraphType, typename Op>
-void MyAddSubgraph(std::shared_ptr<GraphType> g_ptr,
-               std::shared_ptr<SaveableParams> saved_node, std::string node_name,
-               std::vector<std::string> const &inputs)
-{
-  auto castnode = std::dynamic_pointer_cast<typename Op::SPType>(saved_node);
-  if (!castnode)
-  {
-    throw std::runtime_error("Node downcasting failed.");
-  }
-  g_ptr->template AddNode<Op>(node_name, inputs, *castnode);
-}
-
-template <typename ArrayType>
-void OpsLookup(
-    std::shared_ptr<Graph<ArrayType>> g_ptr,
-    std::shared_ptr<SaveableParams> const & saved_node,
-    std::string const & node_name,
-    std::vector<std::string> const &inputs)
-{
-  std::string descrip = saved_node->DESCRIPTOR;
-
-  if (descrip == ops::Dropout<ArrayType>::DESCRIPTOR)
-  {
-    MyAddNode<Graph<ArrayType>, typename ops::Dropout<ArrayType>>(g_ptr, saved_node, node_name,
-                                                                  inputs);
-  }
-  else if (descrip == ops::Elu<ArrayType>::DESCRIPTOR)
-  {
-    MyAddNode<Graph<ArrayType>, typename ops::Elu<ArrayType>>(g_ptr, saved_node, node_name, inputs);
-  }
-  else if (descrip == ops::LeakyRelu<ArrayType>::DESCRIPTOR)
-  {
-    MyAddNode<Graph<ArrayType>, typename ops::LeakyRelu<ArrayType>>(g_ptr, saved_node, node_name,
-                                                                    inputs);
-  }
-  else if (descrip == ops::LogSigmoid<ArrayType>::DESCRIPTOR)
-  {
-    MyAddNode<Graph<ArrayType>, typename ops::LogSigmoid<ArrayType>>(g_ptr, saved_node, node_name,
-                                                                     inputs);
-  }
-  else if (descrip == ops::LogSoftmax<ArrayType>::DESCRIPTOR)
-  {
-    MyAddNode<Graph<ArrayType>, typename ops::LogSoftmax<ArrayType>>(g_ptr, saved_node, node_name,
-                                                                     inputs);
-  }
-  else if (descrip == ops::RandomizedRelu<ArrayType>::DESCRIPTOR)
-  {
-    MyAddNode<Graph<ArrayType>, typename ops::RandomizedRelu<ArrayType>>(g_ptr, saved_node,
-                                                                         node_name, inputs);
-  }
-  else if (descrip == ops::Relu<ArrayType>::DESCRIPTOR)
-  {
-    MyAddNode<Graph<ArrayType>, typename ops::Relu<ArrayType>>(g_ptr, saved_node, node_name,
-                                                               inputs);
-  }
-  else if (descrip == ops::Sigmoid<ArrayType>::DESCRIPTOR)
-  {
-    MyAddNode<Graph<ArrayType>, typename ops::Sigmoid<ArrayType>>(g_ptr, saved_node, node_name,
-                                                                  inputs);
-  }
-  else if (descrip == ops::Softmax<ArrayType>::DESCRIPTOR)
-  {
-    MyAddNode<Graph<ArrayType>, typename ops::Softmax<ArrayType>>(g_ptr, saved_node, node_name,
-                                                                  inputs);
-  }
-  else if (descrip == ops::CrossEntropyLoss<ArrayType>::DESCRIPTOR)
-  {
-    MyAddNode<Graph<ArrayType>, typename ops::CrossEntropyLoss<ArrayType>>(g_ptr, saved_node,
-                                                                           node_name, inputs);
-  }
-  else if (descrip == ops::MeanSquareErrorLoss<ArrayType>::DESCRIPTOR)
-  {
-    MyAddNode<Graph<ArrayType>, typename ops::MeanSquareErrorLoss<ArrayType>>(g_ptr, saved_node,
-                                                                              node_name, inputs);
-  }
-  else if (descrip == ops::SoftmaxCrossEntropyLoss<ArrayType>::DESCRIPTOR)
-  {
-    MyAddNode<Graph<ArrayType>, typename ops::SoftmaxCrossEntropyLoss<ArrayType>>(
-        g_ptr, saved_node, node_name, inputs);
-  }
-  else if (descrip == ops::Add<ArrayType>::DESCRIPTOR)
-  {
-    MyAddNode<Graph<ArrayType>, typename ops::Add<ArrayType>>(g_ptr, saved_node, node_name, inputs);
-  }
-  else if (descrip == ops::Concatenate<ArrayType>::DESCRIPTOR)
-  {
-    MyAddNode<Graph<ArrayType>, typename ops::Concatenate<ArrayType>>(g_ptr, saved_node, node_name,
-                                                                      inputs);
-  }
-  else if (descrip == ops::Convolution1D<ArrayType>::DESCRIPTOR)
-  {
-    MyAddNode<Graph<ArrayType>, typename ops::Convolution1D<ArrayType>>(g_ptr, saved_node,
-                                                                        node_name, inputs);
-  }
-  else if (descrip == ops::Convolution2D<ArrayType>::DESCRIPTOR)
-  {
-    MyAddNode<Graph<ArrayType>, typename ops::Convolution2D<ArrayType>>(g_ptr, saved_node,
-                                                                        node_name, inputs);
-  }
-  else if (descrip == ops::Divide<ArrayType>::DESCRIPTOR)
-  {
-    MyAddNode<Graph<ArrayType>, typename ops::Divide<ArrayType>>(g_ptr, saved_node, node_name,
-                                                                 inputs);
-  }
-  else if (descrip == ops::Embeddings<ArrayType>::DESCRIPTOR)
-  {
-    MyAddNode<Graph<ArrayType>, typename ops::Embeddings<ArrayType>>(g_ptr, saved_node, node_name,
-                                                                     inputs);
-  }
-  else if (descrip == ops::Exp<ArrayType>::DESCRIPTOR)
-  {
-    MyAddNode<Graph<ArrayType>, typename ops::Exp<ArrayType>>(g_ptr, saved_node, node_name, inputs);
-  }
-  else if (descrip == ops::Flatten<ArrayType>::DESCRIPTOR)
-  {
-    MyAddNode<Graph<ArrayType>, typename ops::Flatten<ArrayType>>(g_ptr, saved_node, node_name,
-                                                                  inputs);
-  }
-  else if (descrip == ops::LeakyRelu<ArrayType>::DESCRIPTOR)
-  {
-    MyAddNode<Graph<ArrayType>, typename ops::LeakyRelu<ArrayType>>(g_ptr, saved_node, node_name,
-                                                                    inputs);
-  }
-  else if (descrip == ops::Log<ArrayType>::DESCRIPTOR)
-  {
-    MyAddNode<Graph<ArrayType>, typename ops::Log<ArrayType>>(g_ptr, saved_node, node_name, inputs);
-  }
-  else if (descrip == ops::MatrixMultiply<ArrayType>::DESCRIPTOR)
-  {
-    MyAddNode<Graph<ArrayType>, typename ops::MatrixMultiply<ArrayType>>(g_ptr, saved_node,
-                                                                         node_name, inputs);
-  }
-  else if (descrip == ops::MaxPool1D<ArrayType>::DESCRIPTOR)
-  {
-    MyAddNode<Graph<ArrayType>, typename ops::MaxPool1D<ArrayType>>(g_ptr, saved_node, node_name,
-                                                                    inputs);
-  }
-  else if (descrip == ops::MaxPool2D<ArrayType>::DESCRIPTOR)
-  {
-    MyAddNode<Graph<ArrayType>, typename ops::MaxPool2D<ArrayType>>(g_ptr, saved_node, node_name,
-                                                                    inputs);
-  }
-  else if (descrip == ops::Maximum<ArrayType>::DESCRIPTOR)
-  {
-    MyAddNode<Graph<ArrayType>, typename ops::Maximum<ArrayType>>(g_ptr, saved_node, node_name,
-                                                                  inputs);
-  }
-  else if (descrip == ops::Multiply<ArrayType>::DESCRIPTOR)
-  {
-    MyAddNode<Graph<ArrayType>, typename ops::Multiply<ArrayType>>(g_ptr, saved_node, node_name,
-                                                                   inputs);
-  }
-  else if (descrip == ops::PlaceHolder<ArrayType>::DESCRIPTOR)
-  {
-    MyAddNode<Graph<ArrayType>, typename ops::PlaceHolder<ArrayType>>(g_ptr, saved_node, node_name,
-                                                                      inputs);
-  }
-  else if (descrip == ops::Reshape<ArrayType>::DESCRIPTOR)
-  {
-    MyAddNode<Graph<ArrayType>, typename ops::Reshape<ArrayType>>(g_ptr, saved_node, node_name,
-                                                                  inputs);
-  }
-  else if (descrip == ops::Sqrt<ArrayType>::DESCRIPTOR)
-  {
-    MyAddNode<Graph<ArrayType>, typename ops::Sqrt<ArrayType>>(g_ptr, saved_node, node_name,
-                                                               inputs);
-  }
-  else if (descrip == ops::Subtract<ArrayType>::DESCRIPTOR)
-  {
-    MyAddNode<Graph<ArrayType>, typename ops::Subtract<ArrayType>>(g_ptr, saved_node, node_name,
-                                                                   inputs);
-  }
-  else if (descrip == ops::TanH<ArrayType>::DESCRIPTOR)
-  {
-    MyAddNode<Graph<ArrayType>, typename ops::TanH<ArrayType>>(g_ptr, saved_node, node_name,
-                                                               inputs);
-  }
-  else if (descrip == ops::Transpose<ArrayType>::DESCRIPTOR)
-  {
-    MyAddNode<Graph<ArrayType>, typename ops::Transpose<ArrayType>>(g_ptr, saved_node, node_name,
-                                                                    inputs);
-  }
-  else if (descrip == ops::Weights<ArrayType>::DESCRIPTOR)
-  {
-    MyAddNode<Graph<ArrayType>, typename ops::Weights<ArrayType>>(g_ptr, saved_node, node_name,
-                                                                  inputs);
-  }
-  else if (descrip == layers::FullyConnected<ArrayType>::DESCRIPTOR)
-  {
-    MyAddNode<Graph<ArrayType>, typename layers::FullyConnected<ArrayType>>(g_ptr, saved_node,
-                                                                            node_name, inputs);
-  }
-  else if (descrip == layers::Convolution1D<ArrayType>::DESCRIPTOR)
-  {
-    MyAddNode<Graph<ArrayType>, typename layers::Convolution1D<ArrayType>>(g_ptr, saved_node,
-                                                                            node_name, inputs);
-  }
-  else if (descrip == layers::Convolution2D<ArrayType>::DESCRIPTOR)
-  {
-    MyAddNode<Graph<ArrayType>, typename layers::Convolution2D<ArrayType>>(g_ptr, saved_node,
-                                                                            node_name, inputs);
-  }
-  else if (descrip == layers::PRelu<ArrayType>::DESCRIPTOR)
-  {
-    MyAddNode<Graph<ArrayType>, typename layers::PRelu<ArrayType>>(g_ptr, saved_node,
-                                                                            node_name, inputs);
-  }
-//  else if (descrip == layers::SelfAttention<ArrayType>::DESCRIPTOR)
+//#pragma once
+////------------------------------------------------------------------------------
+////
+////   Copyright 2018-2019 Fetch.AI Limited
+////
+////   Licensed under the Apache License, Version 2.0 (the "License");
+////   you may not use this file except in compliance with the License.
+////   You may obtain a copy of the License at
+////
+////       http://www.apache.org/licenses/LICENSE-2.0
+////
+////   Unless required by applicable law or agreed to in writing, software
+////   distributed under the License is distributed on an "AS IS" BASIS,
+////   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+////   See the License for the specific language governing permissions and
+////   limitations under the License.
+////
+////------------------------------------------------------------------------------
+//
+//#include "ml/graph.hpp"
+//#include "ml/utilities/graph_builder.hpp"
+//
+//#include "ml/layers/PRelu.hpp"
+//#include "ml/layers/convolution_1d.hpp"
+//#include "ml/layers/convolution_2d.hpp"
+//#include "ml/layers/fully_connected.hpp"
+//#include "ml/layers/self_attention.hpp"
+//#include "ml/layers/skip_gram.hpp"
+//
+//// include every op we might need to lookup
+//#include "ml/ops/activations/dropout.hpp"
+//#include "ml/ops/activations/elu.hpp"
+//#include "ml/ops/activations/leaky_relu.hpp"
+//#include "ml/ops/activations/logsigmoid.hpp"
+//#include "ml/ops/activations/logsoftmax.hpp"
+//#include "ml/ops/activations/randomised_relu.hpp"
+//#include "ml/ops/activations/relu.hpp"
+//#include "ml/ops/activations/sigmoid.hpp"
+//#include "ml/ops/activations/softmax.hpp"
+//#include "ml/ops/add.hpp"
+//#include "ml/ops/concatenate.hpp"
+//#include "ml/ops/convolution_1d.hpp"
+//#include "ml/ops/convolution_2d.hpp"
+//#include "ml/ops/divide.hpp"
+//#include "ml/ops/embeddings.hpp"
+//#include "ml/ops/exp.hpp"
+//#include "ml/ops/flatten.hpp"
+//#include "ml/ops/log.hpp"
+//#include "ml/ops/loss_functions.hpp"
+//#include "ml/ops/matrix_multiply.hpp"
+//#include "ml/ops/max_pool_1d.hpp"
+//#include "ml/ops/max_pool_2d.hpp"
+//#include "ml/ops/maximum.hpp"
+//#include "ml/ops/multiply.hpp"
+//#include "ml/ops/placeholder.hpp"
+//#include "ml/ops/reshape.hpp"
+//#include "ml/ops/sqrt.hpp"
+//#include "ml/ops/subtract.hpp"
+//#include "ml/ops/tanh.hpp"
+//#include "ml/ops/transpose.hpp"
+//#include "ml/ops/weights.hpp"
+//#include "ml/saveparams/saveable_params.hpp"
+//
+//#include <typeindex>
+//
+// namespace fetch {
+// namespace ml {
+// namespace ops {
+//
+// template <typename ArrayType>
+// void OpsLookup(std::shared_ptr<Graph<ArrayType>>      g_ptr,
+//               std::shared_ptr<SaveableParamsInterface> const &saved_node, std::string const
+//               &node_name, std::vector<std::string> const &inputs)
+//{
+//  std::string descrip = saved_node->DESCRIPTOR;
+//
+//  if (descrip == ops::Dropout<ArrayType>::DESCRIPTOR)
 //  {
-//    MyAddNode<Graph<ArrayType>, typename layers::SelfAttention<ArrayType>>(g_ptr, saved_node,
+//    AddNode<Graph<ArrayType>, typename ops::Dropout<ArrayType>>(g_ptr, saved_node, node_name,
+//                                                                inputs);
+//  }
+//  else if (descrip == ops::Elu<ArrayType>::DESCRIPTOR)
+//  {
+//    AddNode<Graph<ArrayType>, typename ops::Elu<ArrayType>>(g_ptr, saved_node, node_name, inputs);
+//  }
+//  else if (descrip == ops::LeakyRelu<ArrayType>::DESCRIPTOR)
+//  {
+//    AddNode<Graph<ArrayType>, typename ops::LeakyRelu<ArrayType>>(g_ptr, saved_node, node_name,
+//                                                                  inputs);
+//  }
+//  else if (descrip == ops::LogSigmoid<ArrayType>::DESCRIPTOR)
+//  {
+//    AddNode<Graph<ArrayType>, typename ops::LogSigmoid<ArrayType>>(g_ptr, saved_node, node_name,
+//                                                                   inputs);
+//  }
+//  else if (descrip == ops::LogSoftmax<ArrayType>::DESCRIPTOR)
+//  {
+//    AddNode<Graph<ArrayType>, typename ops::LogSoftmax<ArrayType>>(g_ptr, saved_node, node_name,
+//                                                                   inputs);
+//  }
+//  else if (descrip == ops::RandomisedRelu<ArrayType>::DESCRIPTOR)
+//  {
+//    AddNode<Graph<ArrayType>, typename ops::RandomisedRelu<ArrayType>>(g_ptr, saved_node,
+//    node_name,
+//                                                                       inputs);
+//  }
+//  else if (descrip == ops::Relu<ArrayType>::DESCRIPTOR)
+//  {
+//    AddNode<Graph<ArrayType>, typename ops::Relu<ArrayType>>(g_ptr, saved_node, node_name,
+//    inputs);
+//  }
+//  else if (descrip == ops::Sigmoid<ArrayType>::DESCRIPTOR)
+//  {
+//    AddNode<Graph<ArrayType>, typename ops::Sigmoid<ArrayType>>(g_ptr, saved_node, node_name,
+//                                                                inputs);
+//  }
+//  else if (descrip == ops::Softmax<ArrayType>::DESCRIPTOR)
+//  {
+//    AddNode<Graph<ArrayType>, typename ops::Softmax<ArrayType>>(g_ptr, saved_node, node_name,
+//                                                                inputs);
+//  }
+//  else if (descrip == ops::CrossEntropyLoss<ArrayType>::DESCRIPTOR)
+//  {
+//    AddNode<Graph<ArrayType>, typename ops::CrossEntropyLoss<ArrayType>>(g_ptr, saved_node,
+//                                                                         node_name, inputs);
+//  }
+//  else if (descrip == ops::MeanSquareErrorLoss<ArrayType>::DESCRIPTOR)
+//  {
+//    AddNode<Graph<ArrayType>, typename ops::MeanSquareErrorLoss<ArrayType>>(g_ptr, saved_node,
 //                                                                            node_name, inputs);
 //  }
-//  else if (descrip == layers::SkipGram<ArrayType>::DESCRIPTOR)
+//  else if (descrip == ops::SoftmaxCrossEntropyLoss<ArrayType>::DESCRIPTOR)
 //  {
-//    MyAddNode<Graph<ArrayType>, typename layers::SkipGram<ArrayType>>(g_ptr, saved_node,
-//                                                                            node_name, inputs);
+//    AddNode<Graph<ArrayType>, typename ops::SoftmaxCrossEntropyLoss<ArrayType>>(g_ptr, saved_node,
+//                                                                                node_name,
+//                                                                                inputs);
 //  }
-  else
-  {
-    throw std::runtime_error("Unknown Op type " + descrip);
-  }
-}
-
-// todo: this should be recursive
-// when you want to add a subgraph call this with the subgraph as GraphType
-// Use MyAddNode to add nodes that are not graphs
-// MyAddSubgraph currently does nothing! But should call this.
-// Pass in a pointer to the current graph to graph reconstructor.
-// todo: self_attention need getopsaveableparams
-// todo: tests for all the layers
-
-template <class ArrayType, GraphType>
-void GraphReconstructor(std::shared_ptr<GraphSaveableParams<ArrayType>> gsp)
-{
-  auto g = std::make_shared<Graph<ArrayType>>();
-
-  // goes through list of nodenames adding nodes
-  for (auto &node : gsp->connections)
-  {
-    std::string              name   = node.first;
-    std::vector<std::string> inputs = node.second;
-
-    ops::OpsLookup<ArrayType>(g, gsp->nodes[name], name, inputs);
-  }
-  return *g;
-}
-
-
-}  // namespace ops
-}  // namespace ml
-}  // namespace fetch
+//  else if (descrip == ops::Add<ArrayType>::DESCRIPTOR)
+//  {
+//    AddNode<Graph<ArrayType>, typename ops::Add<ArrayType>>(g_ptr, saved_node, node_name, inputs);
+//  }
+//  else if (descrip == ops::Concatenate<ArrayType>::DESCRIPTOR)
+//  {
+//    AddNode<Graph<ArrayType>, typename ops::Concatenate<ArrayType>>(g_ptr, saved_node, node_name,
+//                                                                    inputs);
+//  }
+//  else if (descrip == ops::Convolution1D<ArrayType>::DESCRIPTOR)
+//  {
+//    AddNode<Graph<ArrayType>, typename ops::Convolution1D<ArrayType>>(g_ptr, saved_node,
+//    node_name,
+//                                                                      inputs);
+//  }
+//  else if (descrip == ops::Convolution2D<ArrayType>::DESCRIPTOR)
+//  {
+//    AddNode<Graph<ArrayType>, typename ops::Convolution2D<ArrayType>>(g_ptr, saved_node,
+//    node_name,
+//                                                                      inputs);
+//  }
+//  else if (descrip == ops::Divide<ArrayType>::DESCRIPTOR)
+//  {
+//    AddNode<Graph<ArrayType>, typename ops::Divide<ArrayType>>(g_ptr, saved_node, node_name,
+//                                                               inputs);
+//  }
+//  else if (descrip == ops::Embeddings<ArrayType>::DESCRIPTOR)
+//  {
+//    AddNode<Graph<ArrayType>, typename ops::Embeddings<ArrayType>>(g_ptr, saved_node, node_name,
+//                                                                   inputs);
+//  }
+//  else if (descrip == ops::Exp<ArrayType>::DESCRIPTOR)
+//  {
+//    AddNode<Graph<ArrayType>, typename ops::Exp<ArrayType>>(g_ptr, saved_node, node_name, inputs);
+//  }
+//  else if (descrip == ops::Flatten<ArrayType>::DESCRIPTOR)
+//  {
+//    AddNode<Graph<ArrayType>, typename ops::Flatten<ArrayType>>(g_ptr, saved_node, node_name,
+//                                                                inputs);
+//  }
+//  else if (descrip == ops::LeakyRelu<ArrayType>::DESCRIPTOR)
+//  {
+//    AddNode<Graph<ArrayType>, typename ops::LeakyRelu<ArrayType>>(g_ptr, saved_node, node_name,
+//                                                                  inputs);
+//  }
+//  else if (descrip == ops::Log<ArrayType>::DESCRIPTOR)
+//  {
+//    AddNode<Graph<ArrayType>, typename ops::Log<ArrayType>>(g_ptr, saved_node, node_name, inputs);
+//  }
+//  else if (descrip == ops::MatrixMultiply<ArrayType>::DESCRIPTOR)
+//  {
+//    AddNode<Graph<ArrayType>, typename ops::MatrixMultiply<ArrayType>>(g_ptr, saved_node,
+//    node_name,
+//                                                                       inputs);
+//  }
+//  else if (descrip == ops::MaxPool1D<ArrayType>::DESCRIPTOR)
+//  {
+//    AddNode<Graph<ArrayType>, typename ops::MaxPool1D<ArrayType>>(g_ptr, saved_node, node_name,
+//                                                                  inputs);
+//  }
+//  else if (descrip == ops::MaxPool2D<ArrayType>::DESCRIPTOR)
+//  {
+//    AddNode<Graph<ArrayType>, typename ops::MaxPool2D<ArrayType>>(g_ptr, saved_node, node_name,
+//                                                                  inputs);
+//  }
+//  else if (descrip == ops::Maximum<ArrayType>::DESCRIPTOR)
+//  {
+//    AddNode<Graph<ArrayType>, typename ops::Maximum<ArrayType>>(g_ptr, saved_node, node_name,
+//                                                                inputs);
+//  }
+//  else if (descrip == ops::Multiply<ArrayType>::DESCRIPTOR)
+//  {
+//    AddNode<Graph<ArrayType>, typename ops::Multiply<ArrayType>>(g_ptr, saved_node, node_name,
+//                                                                 inputs);
+//  }
+//  else if (descrip == ops::PlaceHolder<ArrayType>::DESCRIPTOR)
+//  {
+//    AddNode<Graph<ArrayType>, typename ops::PlaceHolder<ArrayType>>(g_ptr, saved_node, node_name,
+//                                                                    inputs);
+//  }
+//  else if (descrip == ops::Reshape<ArrayType>::DESCRIPTOR)
+//  {
+//    AddNode<Graph<ArrayType>, typename ops::Reshape<ArrayType>>(g_ptr, saved_node, node_name,
+//                                                                inputs);
+//  }
+//  else if (descrip == ops::Sqrt<ArrayType>::DESCRIPTOR)
+//  {
+//    AddNode<Graph<ArrayType>, typename ops::Sqrt<ArrayType>>(g_ptr, saved_node, node_name,
+//    inputs);
+//  }
+//  else if (descrip == ops::Subtract<ArrayType>::DESCRIPTOR)
+//  {
+//    AddNode<Graph<ArrayType>, typename ops::Subtract<ArrayType>>(g_ptr, saved_node, node_name,
+//                                                                 inputs);
+//  }
+//  else if (descrip == ops::TanH<ArrayType>::DESCRIPTOR)
+//  {
+//    AddNode<Graph<ArrayType>, typename ops::TanH<ArrayType>>(g_ptr, saved_node, node_name,
+//    inputs);
+//  }
+//  else if (descrip == ops::Transpose<ArrayType>::DESCRIPTOR)
+//  {
+//    AddNode<Graph<ArrayType>, typename ops::Transpose<ArrayType>>(g_ptr, saved_node, node_name,
+//                                                                  inputs);
+//  }
+//  else if (descrip == ops::Weights<ArrayType>::DESCRIPTOR)
+//  {
+//    AddNode<Graph<ArrayType>, typename ops::Weights<ArrayType>>(g_ptr, saved_node, node_name,
+//                                                                inputs);
+//  }
+//  //  else if (descrip == layers::FullyConnected<ArrayType>::DESCRIPTOR)
+//  //  {
+//  //    MyAddSubgraph<Graph<ArrayType>, typename layers::FullyConnected<ArrayType>>(g_ptr,
+//  //    saved_node,
+//  //                                                                            node_name,
+//  inputs);
+//  //
+//  //    AddNode<Graph<ArrayType>, typename layers::FullyConnected<ArrayType>>(g_ptr, saved_node,
+//  //                                                                            node_name,
+//  inputs);
+//  //  }
+//  //  else if (descrip == layers::Convolution1D<ArrayType>::DESCRIPTOR)
+//  //  {
+//  //    AddNode<Graph<ArrayType>, typename layers::Convolution1D<ArrayType>>(g_ptr, saved_node,
+//  //                                                                            node_name,
+//  inputs);
+//  //  }
+//  //  else if (descrip == layers::Convolution2D<ArrayType>::DESCRIPTOR)
+//  //  {
+//  //    AddNode<Graph<ArrayType>, typename layers::Convolution2D<ArrayType>>(g_ptr, saved_node,
+//  //                                                                            node_name,
+//  inputs);
+//  //  }
+//  //  else if (descrip == layers::PRelu<ArrayType>::DESCRIPTOR)
+//  //  {
+//  //    AddNode<Graph<ArrayType>, typename layers::PRelu<ArrayType>>(g_ptr, saved_node,
+//  //                                                                            node_name,
+//  inputs);
+//  //  }
+//  //  else if (descrip == layers::SelfAttention<ArrayType>::DESCRIPTOR)
+//  //  {
+//  //    AddNode<Graph<ArrayType>, typename layers::SelfAttention<ArrayType>>(g_ptr, saved_node,
+//  //                                                                            node_name,
+//  inputs);
+//  //  }
+//  //  else if (descrip == layers::SkipGram<ArrayType>::DESCRIPTOR)
+//  //  {
+//  //    AddNode<Graph<ArrayType>, typename layers::SkipGram<ArrayType>>(g_ptr, saved_node,
+//  //                                                                            node_name,
+//  inputs);
+//  //  }
+//  else
+//  {
+//    throw std::runtime_error("Unknown Op type " + descrip);
+//  }
+//}
+//
+//}  // namespace ops
+//}  // namespace ml
+//}  // namespace fetch

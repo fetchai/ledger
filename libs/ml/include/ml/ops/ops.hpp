@@ -27,6 +27,7 @@
 
 namespace fetch {
 namespace ml {
+namespace ops {
 
 /*
  * Abstract Ops interface
@@ -51,11 +52,11 @@ public:
    */
   virtual std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const = 0;
 
-  virtual std::shared_ptr<SaveableParams> GetOpSaveableParams() = 0;
+  virtual std::shared_ptr<SaveableParamsInterface> GetOpSaveableParams() = 0;
 
   Ops() = default;
 
-  explicit Ops(SaveableParams const &sp)
+  explicit Ops(SaveableParamsInterface const &sp)
   {
     FETCH_UNUSED(sp);
   }
@@ -69,5 +70,6 @@ protected:
   bool is_training_ = true;
 };
 
+}  // namespace ops
 }  // namespace ml
 }  // namespace fetch

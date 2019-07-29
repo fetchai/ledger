@@ -38,7 +38,7 @@ public:
   using ArrayPtrType  = std::shared_ptr<ArrayType>;
   using SizeType      = typename ArrayType::SizeType;
   using VecTensorType = typename Weights<T>::VecTensorType;
-  using SPType        = WeightsSaveableParams<ArrayType>;
+  using SPType        = EmbeddingsSaveableParams<ArrayType>;
 
   Embeddings(SizeType dimensions, SizeType data_points)
   {
@@ -59,12 +59,11 @@ public:
 
   ~Embeddings() override = default;
 
-  std::shared_ptr<SaveableParams> GetOpSaveableParams() override
+  std::shared_ptr<SaveableParamsInterface> GetOpSaveableParams() override
   {
-    SPType tp{};
-    tp.output     = std::make_shared<ArrayType>(this->output_->Copy());
-    tp.DESCRIPTOR = DESCRIPTOR;
-    return std::make_shared<SPType>(tp);
+    auto tp    = std::make_shared<SPType>();
+    tp->output = std::make_shared<ArrayType>(this->output_->Copy());
+    return tp;
   }
 
   void Forward(VecTensorType const &inputs, ArrayType &output) override

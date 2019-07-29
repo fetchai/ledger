@@ -16,7 +16,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include <ml/saveparams/ops_lookup.hpp>
 #include "core/serializers/byte_array_buffer.hpp"
 #include "math/tensor.hpp"
 #include "ml/graph.hpp"
@@ -24,6 +23,8 @@
 #include "ml/ops/placeholder.hpp"
 #include "ml/serializers/ml_types.hpp"
 #include "vectorise/fixed_point/serializers.hpp"
+
+#include "ml/utilities/graph_builder.hpp"
 
 #include "gtest/gtest.h"
 
@@ -85,7 +86,7 @@ TYPED_TEST(SerializersTest, serialize_graph_saveable_params)
   // Prepare graph with fairly random architecture
   auto g = std::make_shared<GraphType>();
 
-  std::string input = g->template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>("Input", {});
+  std::string input = g->template AddNode<fetch::ml::ops::Ops::PlaceHolder<ArrayType>>("Input", {});
 
   std::string layer_1 = g->template AddNode<fetch::ml::layers::FullyConnected<ArrayType>>(
       "FC1", {input}, 10u, 20u, fetch::ml::details::ActivationType::RELU, regulariser, reg_rate);
@@ -99,7 +100,7 @@ TYPED_TEST(SerializersTest, serialize_graph_saveable_params)
   fetch::serializers::ByteArrayBuffer       b;
   b << gsp1;
   b.seek(0);
-//  fetch::ml::GraphSaveableParams<TypeParam> gsp2;
+  //  fetch::ml::GraphSaveableParams<TypeParam> gsp2;
   auto gsp2 = std::make_shared<fetch::ml::GraphSaveableParams<TypeParam>>();
 
   b >> *gsp2;
@@ -114,7 +115,7 @@ TYPED_TEST(SerializersTest, serialize_graph_saveable_params)
     EXPECT_TRUE(gsp1_node->GetDescription() == gsp2_node->GetDescription());
   }
 
-  auto g2 = fetch::ml::ops::GraphReconstructor(gsp2);
+  auto g2 = fetch::ml::utilities::LoadGraph(gsp2);
 
   ArrayType data = ArrayType::FromString("1, 2, 3, 4, 5, 6, 7, 8, 9, 10");
 
@@ -123,7 +124,7 @@ TYPED_TEST(SerializersTest, serialize_graph_saveable_params)
 
   ArrayType prediction = g->Evaluate(output);
 
-  ArrayType   prediction2     = g2.Evaluate(output);
+  ArrayType prediction2 = g2.Evaluate(output);
 
   // test correct values
   EXPECT_TRUE(prediction.AllClose(prediction2, fetch::math::function_tolerance<DataType>(),

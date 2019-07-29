@@ -39,7 +39,7 @@ public:
   using DataType      = typename ArrayType::Type;
   using SizeType      = typename ArrayType::SizeType;
   using VecTensorType = typename Ops<T>::VecTensorType;
-  using SPType        = SaveableParams;
+  using SPType        = SoftmaxCrossEntropySaveableParams<T>;
 
   SoftmaxCrossEntropyLoss() = default;
 
@@ -49,11 +49,10 @@ public:
 
   ~SoftmaxCrossEntropyLoss() override = default;
 
-  std::shared_ptr<SaveableParams> GetOpSaveableParams() override
+  std::shared_ptr<SaveableParamsInterface> GetOpSaveableParams() override
   {
-    SaveableParams sp{};
-    sp.DESCRIPTOR = DESCRIPTOR;
-    return std::make_shared<SaveableParams>(sp);
+    SPType sp{};
+    return std::make_shared<SPType>(sp);
   }
 
   void Forward(VecTensorType const &inputs, ArrayType &output) override

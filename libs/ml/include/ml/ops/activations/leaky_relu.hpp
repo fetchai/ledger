@@ -30,7 +30,7 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class LeakyRelu : public fetch::ml::Ops<T>
+class LeakyRelu : public fetch::ml::ops::Ops<T>
 {
 public:
   using ArrayType     = T;
@@ -50,11 +50,10 @@ public:
 
   ~LeakyRelu() override = default;
 
-  std::shared_ptr<SaveableParams> GetOpSaveableParams() override
+  std::shared_ptr<SaveableParamsInterface> GetOpSaveableParams() override
   {
     SPType sp{};
-    sp.DESCRIPTOR = DESCRIPTOR;
-    sp.a          = a_;
+    sp.a = a_;
     return std::make_shared<SPType>(sp);
   }
 

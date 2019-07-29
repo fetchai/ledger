@@ -39,7 +39,7 @@ TYPED_TEST(DropoutTest, forward_test)
 {
   using DataType      = typename TypeParam::Type;
   using ArrayType     = TypeParam;
-  using VecTensorType = typename fetch::ml::Ops<ArrayType>::VecTensorType;
+  using VecTensorType = typename fetch::ml::ops::Ops<ArrayType>::VecTensorType;
 
   ArrayType data = ArrayType::FromString(R"(1, -2, 3, -4, 5, -6, 7, -8)");
   ArrayType gt   = ArrayType::FromString(R"(0, -2, 0,  0, 5, -6, 7, -8)");
@@ -149,7 +149,7 @@ TYPED_TEST(DropoutTest, backward_3d_tensor_test)
   using DataType      = typename TypeParam::Type;
   using ArrayType     = TypeParam;
   using SizeType      = typename TypeParam::SizeType;
-  using VecTensorType = typename fetch::ml::Ops<ArrayType>::VecTensorType;
+  using VecTensorType = typename fetch::ml::ops::Ops<ArrayType>::VecTensorType;
   DataType prob{0.5};
 
   ArrayType           data({2, 2, 2});
@@ -189,7 +189,7 @@ TYPED_TEST(DropoutTest, saveparams_test)
 {
   using ArrayType     = TypeParam;
   using DataType      = typename TypeParam::Type;
-  using VecTensorType = typename fetch::ml::Ops<ArrayType>::VecTensorType;
+  using VecTensorType = typename fetch::ml::ops::Ops<ArrayType>::VecTensorType;
   using SPType        = typename fetch::ml::ops::Dropout<ArrayType>::SPType;
   using OpType        = typename fetch::ml::ops::Dropout<ArrayType>;
 
@@ -208,7 +208,7 @@ TYPED_TEST(DropoutTest, saveparams_test)
   op.Forward(vec_data, prediction);
 
   // extract saveparams
-  std::shared_ptr<fetch::ml::SaveableParams> sp = op.GetOpSaveableParams();
+  std::shared_ptr<fetch::ml::SaveableParamsInterface> sp = op.GetOpSaveableParams();
 
   // downcast to correct type
   auto dsp = std::dynamic_pointer_cast<SPType>(sp);

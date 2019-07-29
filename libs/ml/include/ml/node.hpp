@@ -44,10 +44,10 @@ public:
   virtual void                                                  AddInput(NodePtrType const &i)  = 0;
   virtual void                                                  AddOutput(NodePtrType const &i) = 0;
   virtual std::vector<std::pair<NodeInterface<T> *, ArrayType>> BackPropagateSignal(
-      ArrayType const &error_signal)                                          = 0;
-  virtual void                            ResetCache(bool input_size_changed) = 0;
-  virtual std::vector<NodePtrType> const &GetOutputs() const                  = 0;
-  virtual std::shared_ptr<SaveableParams> GetNodeSaveableParams()             = 0;
+      ArrayType const &error_signal)                                                   = 0;
+  virtual void                                     ResetCache(bool input_size_changed) = 0;
+  virtual std::vector<NodePtrType> const &         GetOutputs() const                  = 0;
+  virtual std::shared_ptr<SaveableParamsInterface> GetNodeSaveableParams()             = 0;
 };
 
 template <class T, class O>
@@ -64,7 +64,7 @@ private:
 public:
   using ArrayType     = T;
   using NodePtrType   = std::shared_ptr<NodeInterface<T>>;
-  using VecTensorType = typename fetch::ml::Ops<T>::VecTensorType;
+  using VecTensorType = typename fetch::ml::ops::Ops<T>::VecTensorType;
 
   template <typename... Params>
   explicit Node(std::string name, Params... params)
@@ -73,10 +73,9 @@ public:
     , cached_output_status_(CachedOutputState::CHANGED_SIZE)
   {}
 
-  std::shared_ptr<SaveableParams> GetNodeSaveableParams() final
+  std::shared_ptr<SaveableParamsInterface> GetNodeSaveableParams() final
   {
-    std::shared_ptr<SaveableParams> sp = this->GetOpSaveableParams();
-    return sp;
+    return this->GetOpSaveableParams();
   }
 
   ~Node() override = default;

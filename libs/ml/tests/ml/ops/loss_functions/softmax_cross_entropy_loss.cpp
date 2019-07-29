@@ -52,8 +52,8 @@ TYPED_TEST(SoftmaxCrossEntropyTest, perfect_match_forward_test)
   data2.At(0, 1) = DataType(0);
   data2.At(0, 2) = DataType(1);
 
-  fetch::ml::ops::SoftmaxCrossEntropyLoss<TypeParam> op;
-  TypeParam                                          result({1, 1});
+  fetch::ml::ops::Ops::SoftmaxCrossEntropyLoss<TypeParam> op;
+  TypeParam                                               result({1, 1});
   op.Forward({std::make_shared<TypeParam>(data1), std::make_shared<TypeParam>(data2)}, result);
 
   EXPECT_EQ(result(0, 0), DataType(0));
@@ -88,8 +88,8 @@ TYPED_TEST(SoftmaxCrossEntropyTest, simple_forward_test)
     }
   }
 
-  fetch::ml::ops::SoftmaxCrossEntropyLoss<TypeParam> op;
-  TypeParam                                          result({1, 1});
+  fetch::ml::ops::Ops::SoftmaxCrossEntropyLoss<TypeParam> op;
+  TypeParam                                               result({1, 1});
   op.Forward({std::make_shared<TypeParam>(data1), std::make_shared<TypeParam>(data2)}, result);
 
   ASSERT_FLOAT_EQ(static_cast<float>(result(0, 0)),
@@ -130,7 +130,7 @@ TYPED_TEST(SoftmaxCrossEntropyTest, trivial_one_dimensional_backward_test)
   TypeParam error_signal({1, 1});
   error_signal(0, 0) = DataType{1};
 
-  fetch::ml::ops::SoftmaxCrossEntropyLoss<TypeParam> op;
+  fetch::ml::ops::Ops::SoftmaxCrossEntropyLoss<TypeParam> op;
   EXPECT_TRUE(op.Backward({std::make_shared<TypeParam>(data1), std::make_shared<TypeParam>(data2)},
                           error_signal)
                   .at(0)
@@ -185,7 +185,7 @@ TYPED_TEST(SoftmaxCrossEntropyTest, backward_test)
     }
   }
 
-  fetch::ml::ops::SoftmaxCrossEntropyLoss<TypeParam> op;
+  fetch::ml::ops::Ops::SoftmaxCrossEntropyLoss<TypeParam> op;
 
   TypeParam error_signal({1, 1});
   error_signal(0, 0) = DataType{1};
@@ -201,8 +201,8 @@ TYPED_TEST(SoftmaxCrossEntropyTest, saveparams_test)
   using ArrayType = TypeParam;
   using SizeType  = typename TypeParam::SizeType;
   using DataType  = typename TypeParam::Type;
-  using SPType    = typename fetch::ml::ops::SoftmaxCrossEntropyLoss<ArrayType>::SPType;
-  using OpType    = typename fetch::ml::ops::SoftmaxCrossEntropyLoss<ArrayType>;
+  using SPType    = typename fetch::ml::ops::Ops::SoftmaxCrossEntropyLoss<ArrayType>::SPType;
+  using OpType    = typename fetch::ml::ops::Ops::SoftmaxCrossEntropyLoss<ArrayType>;
 
   SizeType n_classes     = 4;
   SizeType n_data_points = 4;
@@ -233,7 +233,7 @@ TYPED_TEST(SoftmaxCrossEntropyTest, saveparams_test)
   op.Forward({data1, data2}, result);
 
   // extract saveparams
-  std::shared_ptr<fetch::ml::SaveableParams> sp = op.GetOpSaveableParams();
+  std::shared_ptr<fetch::ml::SaveableParamsInterface> sp = op.GetOpSaveableParams();
 
   // downcast to correct type
   auto dsp = std::dynamic_pointer_cast<SPType>(sp);

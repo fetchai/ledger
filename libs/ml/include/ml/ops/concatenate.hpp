@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "ml/ops/ops.hpp"
+#include "ml/saveparams/saveable_params.hpp"
 
 #include <functional>
 #include <vector>
@@ -27,13 +28,13 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class Concatenate : public fetch::ml::Ops<T>
+class Concatenate : public fetch::ml::ops::Ops<T>
 {
 public:
   using ArrayType     = T;
   using SizeType      = fetch::math::SizeType;
   using VecTensorType = typename Ops<T>::VecTensorType;
-  using SPType        = SoftmaxSaveableParams;
+  using SPType        = ConcatenateSaveableParams<T>;
 
   explicit Concatenate(SizeType axis)
     : axis_(axis)
@@ -46,11 +47,10 @@ public:
 
   ~Concatenate() override = default;
 
-  std::shared_ptr<SaveableParams> GetOpSaveableParams() override
+  std::shared_ptr<SaveableParamsInterface> GetOpSaveableParams() override
   {
-    auto sp_ptr        = std::make_shared<SPType>();
-    sp_ptr->DESCRIPTOR = DESCRIPTOR;
-    sp_ptr->axis       = axis_;
+    auto sp_ptr  = std::make_shared<SPType>();
+    sp_ptr->axis = axis_;
     return sp_ptr;
   }
 
