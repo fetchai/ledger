@@ -17,17 +17,15 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/byte_array.hpp"
-#include "core/serializers/byte_array_buffer.hpp"
-#include "core/serializers/stl_types.hpp"
-#include "core/serializers/typed_byte_array_buffer.hpp"
+#include "core/serializers/base_types.hpp"
+#include "core/serializers/main_serializer.hpp"
 
 namespace fetch {
 namespace service {
 
-using serializer_type = serializers::TypedByteArrayBuffer;
+using serializer_type = serializers::MsgPackSerializer;
 
-// using serializer_type = serializers::ByteArrayBuffer;
+// using serializer_type = serializers::MsgPackSerializer;
 
 using protocol_handler_type       = uint64_t;
 using function_handler_type       = uint64_t;

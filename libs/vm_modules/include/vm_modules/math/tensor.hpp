@@ -149,13 +149,13 @@ public:
     return tensor_;
   }
 
-  bool SerializeTo(serializers::ByteArrayBuffer &buffer) override
+  bool SerializeTo(serializers::MsgPackSerializer &buffer) override
   {
     buffer << tensor_;
     return true;
   }
 
-  bool DeserializeFrom(serializers::ByteArrayBuffer &buffer) override
+  bool DeserializeFrom(serializers::MsgPackSerializer &buffer) override
   {
     buffer >> tensor_;
     return true;

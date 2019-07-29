@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/byte_array_buffer.hpp"
-#include "core/serializers/stl_types.hpp"
+#include "core/serializers/base_types.hpp"
+#include "core/serializers/main_serializer.hpp"
 #include "variant/variant.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 #include "vm/common.hpp"
@@ -28,8 +28,8 @@ namespace vm {
 
 // TODO(issue 648): We should rename variants to VMVariant and JSONVariant, respectively
 // to avoid name clash.
-using JSONVariant     = fetch::variant::Variant;
-using ByteArrayBuffer = fetch::serializers::ByteArrayBuffer;
+using JSONVariant       = fetch::variant::Variant;
+using MsgPackSerializer = fetch::serializers::MsgPackSerializer;
 
 // Forward declarations
 class Object;
@@ -222,8 +222,8 @@ public:
   virtual void        InplaceDivide(Ptr<Object> const &lhso, Ptr<Object> const &rhso);
   virtual void        InplaceRightDivide(Ptr<Object> const &lhso, Variant const &rhsv);
 
-  virtual bool SerializeTo(ByteArrayBuffer &buffer);
-  virtual bool DeserializeFrom(ByteArrayBuffer &buffer);
+  virtual bool SerializeTo(MsgPackSerializer &buffer);
+  virtual bool DeserializeFrom(MsgPackSerializer &buffer);
 
   virtual bool ToJSON(JSONVariant &variant);
   virtual bool FromJSON(JSONVariant const &variant);

@@ -63,13 +63,13 @@ public:
     return byte_array_;
   }
 
-  bool SerializeTo(vm::ByteArrayBuffer &buffer) override
+  bool SerializeTo(vm::MsgPackSerializer &buffer) override
   {
     buffer << byte_array_;
     return true;
   }
 
-  bool DeserializeFrom(vm::ByteArrayBuffer &buffer) override
+  bool DeserializeFrom(vm::MsgPackSerializer &buffer) override
   {
     buffer >> byte_array_;
     return true;

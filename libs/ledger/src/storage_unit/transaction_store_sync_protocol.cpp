@@ -136,7 +136,7 @@ TransactionStoreSyncProtocol::TxArray TransactionStoreSyncProtocol::PullSubtree(
 }
 
 TransactionStoreSyncProtocol::TxArray TransactionStoreSyncProtocol::PullObjects(
-    service::CallContext const *call_context)
+    service::CallContext const &call_context)
 {
   // Creating result
   TxArray ret{};
@@ -149,9 +149,9 @@ TransactionStoreSyncProtocol::TxArray TransactionStoreSyncProtocol::PullObjects(
     {
       for (auto &c : cache_)
       {
-        if (c.delivered_to.find(call_context->sender_address) == c.delivered_to.end())
+        if (c.delivered_to.find(call_context.sender_address) == c.delivered_to.end())
         {
-          c.delivered_to.insert(call_context->sender_address);
+          c.delivered_to.insert(call_context.sender_address);
           ret.push_back(c.data);
         }
       }
