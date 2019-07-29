@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -17,28 +16,44 @@
 //
 //------------------------------------------------------------------------------
 
-namespace fetch {
-namespace service {
-class CallContext;
-}
-}  // namespace fetch
+#include "vm/module.hpp"
+#include "vm_modules/polyfill/bitwise_ops.hpp"
+
+#include <cstdint>
+
+using namespace fetch::vm;
 
 namespace fetch {
-namespace serializers {
+namespace vm_modules {
 
-using OBJ = fetch::service::CallContext;
+namespace {
 
 template <typename T>
-inline void Deserialize(T &serializer, OBJ const *(&ptr))
+T And(VM *, T x, T s)
 {
-  serializer.ReadBytes(reinterpret_cast<uint8_t *>(&ptr), sizeof(std::nullptr_t));
+  return T(x & s);
 }
 
 template <typename T>
-inline void Deserialize(T &serializer, OBJ *(&ptr))
+T Or(VM *, T x, T s)
 {
-  serializer.ReadBytes(reinterpret_cast<uint8_t *>(&ptr), sizeof(std::nullptr_t));
+  return T(x | s);
 }
 
-}  // namespace serializers
+}  // namespace
+
+void BindBitwiseOps(Module &module)
+{
+  module.CreateFreeFunction("and", &And<int32_t>);
+  module.CreateFreeFunction("and", &And<int64_t>);
+  module.CreateFreeFunction("and", &And<uint32_t>);
+  module.CreateFreeFunction("and", &And<uint64_t>);
+
+  module.CreateFreeFunction("or", &Or<int32_t>);
+  module.CreateFreeFunction("or", &Or<int64_t>);
+  module.CreateFreeFunction("or", &Or<uint32_t>);
+  module.CreateFreeFunction("or", &Or<uint64_t>);
+}
+
+}  // namespace vm_modules
 }  // namespace fetch

@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -17,35 +16,39 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/assert.hpp"
-#include "core/byte_array/const_byte_array.hpp"
+#include "math/meta/math_type_traits.hpp"
+#include "math/standard_functions/exp.hpp"
+#include "vm/module.hpp"
+#include "vm_modules/math/exp.hpp"
 
-#include <type_traits>
+#include <cmath>
+
+using namespace fetch::vm;
 
 namespace fetch {
-namespace serializers {
+namespace vm_modules {
+namespace math {
+
+namespace {
 
 template <typename T>
-inline void Serialize(T &serializer, byte_array::ConstByteArray const &s)
+fetch::math::meta::IfIsMath<T, T> Exp(VM *, T const &a)
 {
-  serializer.Allocate(sizeof(uint64_t) + s.size());
-  uint64_t size = s.size();
-
-  serializer.WriteBytes(reinterpret_cast<uint8_t const *>(&size), sizeof(uint64_t));
-  serializer.WriteBytes(reinterpret_cast<uint8_t const *>(s.pointer()), s.size());
+  T x;
+  fetch::math::Exp(a, x);
+  return x;
 }
 
-template <typename T>
-inline void Deserialize(T &serializer, byte_array::ConstByteArray &s)
+}  // namespace
+
+void BindExp(Module &module)
 {
-  uint64_t size = 0;
-
-  detailed_assert(int64_t(sizeof(uint64_t)) <= serializer.bytes_left());
-  serializer.ReadBytes(reinterpret_cast<uint8_t *>(&size), sizeof(uint64_t));
-  detailed_assert(int64_t(size) <= serializer.bytes_left());
-
-  serializer.ReadByteArray(s, size);
+  module.CreateFreeFunction<float_t>("exp", &Exp<float_t>);
+  module.CreateFreeFunction<double_t>("exp", &Exp<double_t>);
+  module.CreateFreeFunction<fixed_point::fp32_t>("exp", &Exp<fixed_point::fp32_t>);
+  module.CreateFreeFunction<fixed_point::fp64_t>("exp", &Exp<fixed_point::fp64_t>);
 }
 
-}  // namespace serializers
+}  // namespace math
+}  // namespace vm_modules
 }  // namespace fetch

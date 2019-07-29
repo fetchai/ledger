@@ -17,38 +17,16 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm/module.hpp"
-#include "vm_modules/math/tensor.hpp"
-#include "vm_modules/ml/dataloaders/dataloader.hpp"
-#include "vm_modules/ml/graph.hpp"
-#include "vm_modules/ml/optimisation/optimiser.hpp"
-#include "vm_modules/ml/state_dict.hpp"
-#include "vm_modules/ml/training_pair.hpp"
-#include "vm_modules/ml/utilities/scaler.hpp"
-
 namespace fetch {
+
+namespace vm {
+class Module;
+}
+
 namespace vm_modules {
 namespace ml {
 
-inline void BindML(fetch::vm::Module &module)
-{
-  // Tensor - required by later functions
-  math::VMTensor::Bind(module);
-
-  // ml fundamentals
-  VMStateDict::Bind(module);
-  VMGraph::Bind(module);
-  VMTrainingPair::Bind(module);
-
-  // dataloader
-  VMDataLoader::Bind(module);
-
-  // optimisers
-  VMOptimiser::Bind(module);
-
-  // utilities
-  utilities::VMScaler::Bind(module);
-}
+void BindML(fetch::vm::Module &module);
 
 }  // namespace ml
 }  // namespace vm_modules

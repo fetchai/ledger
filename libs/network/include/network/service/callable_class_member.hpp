@@ -18,12 +18,9 @@
 //------------------------------------------------------------------------------
 
 #include "core/logger.hpp"
-#include "core/serializers/byte_array.hpp"
-#include "core/serializers/byte_array_buffer.hpp"
+#include "core/serializers/base_types.hpp"
 #include "core/serializers/counter.hpp"
-#include "core/serializers/pointer_types.hpp"
-#include "core/serializers/stl_types.hpp"
-#include "core/serializers/typed_byte_array_buffer.hpp"
+#include "core/serializers/main_serializer.hpp"
 #include "network/service/abstract_callable.hpp"
 
 #include <cassert>
@@ -62,8 +59,8 @@ struct Invoke
   static void MemberFunction(serializer_type &result, class_type &cls, member_function_pointer &m,
                              used_args &... args)
   {
-    auto                                      ret = (cls.*m)(args...);
-    serializers::SizeCounter<serializer_type> counter;
+    auto                     ret = (cls.*m)(args...);
+    serializers::SizeCounter counter;
     counter << ret;
 
     result.Reserve(counter.size());
@@ -321,7 +318,7 @@ public:
 
     auto ret = ((*class_).*function_)();
 
-    serializers::SizeCounter<serializer_type> counter;
+    serializers::SizeCounter counter;
     counter << ret;
     result.Reserve(counter.size());
     result << ret;
@@ -332,8 +329,8 @@ public:
   {
     LOG_STACK_TRACE_POINT;
 
-    auto                                      ret = ((*class_).*function_)();
-    serializers::SizeCounter<serializer_type> counter;
+    auto                     ret = ((*class_).*function_)();
+    serializers::SizeCounter counter;
     counter << ret;
     result.Reserve(counter.size());
     result << ret;
