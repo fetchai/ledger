@@ -30,6 +30,8 @@ class TokenAuthenticationInterface
 public:
   using ConstByteArray = byte_array::ConstByteArray;
 
+  TokenAuthenticationInterface()                              = default;
+  virtual ~TokenAuthenticationInterface()                     = default;
   virtual bool     ValidateToken(ConstByteArray const &token) = 0;
   virtual uint32_t authentication_level() const               = 0;
 
