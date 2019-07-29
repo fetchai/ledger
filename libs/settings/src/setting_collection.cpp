@@ -90,7 +90,7 @@ void SettingCollection::Add(SettingBase &setting)
  * @param argc
  * @param argv
  */
-void SettingCollection::UpdateFromArgs(int argc, char **argv)
+void SettingCollection::UpdateFromArgs(int argc, char **argv, std::function<void()> on_fail)
 {
   ParamsParser parser;
   parser.Parse(argc, argv);
@@ -134,7 +134,7 @@ void SettingCollection::UpdateFromArgs(int argc, char **argv)
 
     FETCH_LOG_INFO(LOGGING_NAME, oss.str());
 
-    exit(1);
+    on_fail();
   }
 }
 

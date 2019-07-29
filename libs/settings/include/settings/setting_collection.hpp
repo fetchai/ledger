@@ -40,7 +40,7 @@ public:
   Settings const &settings() const;
 
   void Add(SettingBase &setting);
-  void UpdateFromArgs(int argc, char **argv);
+  void UpdateFromArgs(int argc, char **argv, std::function<void()> on_fail = nullptr);
   void UpdateFromEnv(char const *                        prefix,
                      detail::EnvironmentInterface const &env = detail::Environment{});
 

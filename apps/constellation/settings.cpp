@@ -87,7 +87,7 @@ Settings::Settings()
 bool Settings::Update(int argc, char **argv)
 {
   UpdateFromEnv("CONSTELLATION_");
-  UpdateFromArgs(argc, argv);
+  UpdateFromArgs(argc, argv, []() { std::exit(1); });
   return Validate();
 }
 
