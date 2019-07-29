@@ -19,6 +19,7 @@
 
 #include "math/meta/math_type_traits.hpp"
 #include "math/tensor_broadcast.hpp"
+#include "math/tensor_reduce.hpp"
 
 #include <cassert>
 

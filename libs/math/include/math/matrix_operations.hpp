@@ -739,6 +739,73 @@ ArrayType PeakToPeak(ArrayType const &array, typename ArrayType::SizeType const 
   return ret;
 }
 
+        template <typename ArrayType>
+        void ReduceMax(ArrayType const &obj1, SizeType axis, ArrayType &ret)
+        {
+          using DataType=typename ArrayType::Type;
+
+          assert(ret.shape().at(axis) == 1);
+          for (SizeType i = 0; i < obj1.shape().size(); i++)
+          {
+            if (i != axis)
+            {
+              assert(obj1.shape().at(i) == ret.shape().at(i));
+            }
+          }
+
+          if (axis == 0)
+          {
+            auto it  = obj1.cbegin();
+            auto rit = ret.begin();
+
+            while (rit.is_valid())
+            {
+              *rit = std::numeric_limits<DataType>::min();
+              for (SizeType j{0}; j < obj1.shape().at(0); ++j)
+              {
+                if((*it)>(*rit))
+                {
+                  *rit = *it;
+                }
+                ++it;
+              }
+              ++rit;
+            }
+          }
+          else
+          {
+            auto it  = obj1.Slice().cbegin();
+            auto rit = ret.Slice().begin();
+
+            it.PermuteAxes(0, axis);
+            rit.PermuteAxes(0, axis);
+
+            while (rit.is_valid())
+            {
+              *rit = std::numeric_limits<DataType>::min();
+              for (SizeType j{0}; j < obj1.shape().at(axis); ++j)
+              {
+                if((*it)>(*rit))
+                {
+                  *rit = *it;
+                }
+                ++it;
+              }
+              ++rit;
+            }
+          }
+        }
+
+        template <typename ArrayType>
+        ArrayType ReduceMax(ArrayType const &obj1, SizeType axis)
+        {
+          SizeVector new_shape = obj1.shape();
+          new_shape.at(axis)   = 1;
+          ArrayType ret{new_shape};
+          ReduceMax(obj1, axis, ret);
+          return ret;
+        }
+
 /**
  * Finds the argument of the maximum value in an array
  * @tparam T data type
