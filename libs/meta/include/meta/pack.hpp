@@ -149,10 +149,19 @@ using Not = BoolConstant<!B::value>;
 template <class B>
 static constexpr auto NotV = Not<B>::value;
 
+// Function composition.
+// The first argument serves as a root in AST, all the other ones are its branches.
+template <template <class...> class F, template <class...> class... Gs>
+struct Compose
+{
+  template <class... Args>
+  using type = F<Gs<Args...>...>;
+};
+
 // The fundamental typelist definition.
 template <class... Ts>
 struct Pack
-// It actually needs not definition, but a single empty pair of braces would do no harm here
+// It actually needs not to be defined, but a single empty pair of braces would do no harm here
 // and can accidentally prove useful if one needs to quickly pass a pack of parameters to a
 // function, so.
 {
@@ -552,8 +561,7 @@ template <class Clauses>
 using CaseT = typename Case<Clauses>::type;
 
 template <class If, class Then, class... Else>
-struct Case<Pack<If, Then, Else...>>
-  : std::conditional<bool(If::value), Then, CaseT<Pack<Else...>>>
+struct Case<Pack<If, Then, Else...>> : std::conditional<bool(If::value), Then, CaseT<Pack<Else...>>>
 {
 };
 
@@ -584,7 +592,9 @@ struct Select<Pack<Car, Cdr...>>
 // Sort pack by member value in increasing order, leaving only unique (non-mutually equal) keys.
 // Comparison predicate.
 template <class A, class B>
-using LessThan = BoolConstant<(A::value < B::value)>;
+struct LessThan : BoolConstant<(A::value < B::value)>
+{
+};
 template <class A, class B>
 static constexpr auto LessThanV = LessThan<A, B>::value;
 
@@ -634,20 +644,43 @@ struct UniqueSort<Nil> : Constant<Nil>
 
 // A companion predicate.
 template <class P>
-struct IsSorted;
+struct IsUniquelySorted;
 template <class P>
-static constexpr auto IsSortedV = IsSorted<P>::value;
+static constexpr auto IsUniquelySortedV = IsUniquelySorted<P>::value;
 
 template <class Car, class Cadr, class... Cddr>
-struct IsSorted<Pack<Car, Cadr, Cddr...>> : And<LessThan<Car, Cadr>, IsSorted<Pack<Cadr, Cddr...>>>
+struct IsUniquelySorted<Pack<Car, Cadr, Cddr...>>
+  : And<LessThan<Car, Cadr>, IsUniquelySorted<Pack<Cadr, Cddr...>>>
 {
 };
 template <class Car>
-struct IsSorted<Pack<Car>> : std::true_type
+struct IsUniquelySorted<Pack<Car>> : std::true_type
 {
 };
 template <>
-struct IsSorted<Nil> : std::true_type
+struct IsUniquelySorted<Nil> : std::true_type
+{
+};
+
+// Remove duplicates from a pack without changing the order of unique elements.
+template <class P>
+struct MakeUnique;
+template <class P>
+using MakeUniqueT = typename MakeUnique<P>::type;
+
+template <class P>
+struct MakeUnique
+  : Cons<HeadT<P>, Filter<Compose<Not, Bind<std::is_same, HeadT<P>>::template type>::template type,
+                          MakeUniqueT<TailT<P>>>>
+{
+};
+
+template <class Car, class... Cddr>
+struct MakeUnique<Pack<Car, Car, Cddr...>> : MakeUnique<Pack<Car, Cddr...>>
+{
+};
+template <>
+struct MakeUnique<Nil> : Constant<Nil>
 {
 };
 

@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "meta/switch.hpp"
 #include "meta/type_util.hpp"
 
 #include "gtest/gtest.h"
@@ -143,6 +144,7 @@ using Ctor = fetch::type_util::Bind<fetch::pack::Pack, char, int>::template type
 
 inline void f(char, int, NonConstructible, double);
 inline int  g(char, int, NonConstructible);
+inline bool h(char, int);
 
 TEST(TypeUtilTests, ScalarUtils)
 {
@@ -158,10 +160,6 @@ TEST(TypeUtilTests, ScalarUtils)
                  void);
   ASSERT_TYPE_EQ(fetch::type_util::InvokeResultT<decltype(&g), char, int, NonConstructible>, int);
 
-  ASSERT_EQ(fetch::type_util::detail_::ReturnZero<int>::Call(), 0);
-  ASSERT_FALSE(fetch::type_util::detail_::ReturnZero<bool>::Call());
-  ASSERT_TYPE_EQ(decltype(fetch::type_util::detail_::ReturnZero<void>::Call()), void);
-
   ASSERT_TYPE_EQ(
       fetch::type_util::LiftIntegerSequenceT<std::index_sequence<0, 3, 42>>,
       fetch::pack::Pack<std::index_sequence<0>, std::index_sequence<3>, std::index_sequence<42>>);
@@ -171,15 +169,14 @@ TEST(TypeUtilTests, ScalarUtils)
   ASSERT_TYPE_EQ(fetch::type_util::CopyReferenceKindT<int &&, char>, char &&);
 }
 
-TEST(TypeUtilTests, SwitchesAndSelects)
+TEST(TypeUtilTests, CasesAndSelects)
 {
+  ASSERT_TYPE_EQ(fetch::type_util::CaseT<std::false_type, char, std::false_type, int,
+                                         std::true_type, NonConstructible, std::false_type, double>,
+                 NonConstructible);
   ASSERT_TYPE_EQ(
-      fetch::type_util::SwitchT<std::false_type, char, std::false_type, int, std::true_type,
-                                NonConstructible, std::false_type, double>,
-      NonConstructible);
-  ASSERT_TYPE_EQ(
-      fetch::type_util::SwitchT<std::false_type, char, std::false_type, int, std::false_type,
-                                NonConstructible, std::false_type, double, float>,
+      fetch::type_util::CaseT<std::false_type, char, std::false_type, int, std::false_type,
+                              NonConstructible, std::false_type, double, float>,
       float);
 
   struct A
@@ -204,53 +201,131 @@ using Values = std::tuple<char, int, double>;
 template <std::size_t index>
 class Setter : public fetch::pack::SizeConstant<index>
 {
-  Values &values_;
-
 public:
   using fetch::pack::SizeConstant<index>::value;
 
-  Setter(Values &values)
-    : values_(values)
-  {}
-
-  constexpr auto &get() const
+  template <class F>
+  static constexpr decltype(auto) Invoke(F &&f, Values &values)
   {
-    return std::get<value>(values_);
+    return fetch::value_util::Invoke(std::forward<F>(f), std::get<(value - 1) / 2>(values));
   }
 };
 
-TEST(TypeUtilTests, BinarySwitch)
+TEST(TypeUtilTests, Switch)
 {
-  using BS = fetch::type_util::BinarySwitch<Setter<2>, Setter<0>, Setter<1>>;
+  using BS = fetch::type_util::Switch<Setter<5>, Setter<1>, Setter<3>>;
 
   Values v{};
 
-  ASSERT_HOLDS(BS::Call(fetch::pack::SizeConstant<0>{},
-                        [](auto &&x) {
-                          x.get() = 'H';
-                          return 0;
-                        },
-                        v) == 0);
-  ASSERT_HOLDS(BS::Call(fetch::pack::SizeConstant<1>{},
-                        [](auto &&x) {
-                          x.get() = 42;
-                          return 1;
-                        },
-                        v) == 1);
-  ASSERT_HOLDS(BS::Call(fetch::pack::SizeConstant<2>{},
-                        [](auto &&x) {
-                          x.get() = 3;
-                          return 2;
-                        },
-                        v) == 2);
+  ASSERT_HOLDS(BS::Invoke(1,
+                          [](auto &&x) {
+                            x = 'H';
+                            return 0;
+                          },
+                          v) == 0);
+  ASSERT_HOLDS(BS::Invoke(3,
+                          [](auto &&x) {
+                            x = 42;
+                            return 1;
+                          },
+                          v) == 1);
+  ASSERT_HOLDS(BS::Invoke(5,
+                          [](auto &&x) {
+                            x = 3;
+                            return 2;
+                          },
+                          v) == 2);
 
   // try to match an index unknown to this switch
-  ASSERT_HOLDS(BS::Call(fetch::pack::SizeConstant<3>{},
-                        [](auto &&x) {
-                          x.get() = 14;
-                          return 42;
-                        },
-                        v) == 0);
+  ASSERT_HOLDS(BS::Invoke(0,
+                          [](auto &&x) {
+                            x = 14;
+                            return 42;
+                          },
+                          v) == 0);
+  ASSERT_HOLDS(BS::Invoke(2,
+                          [](auto &&x) {
+                            x = 14;
+                            return 42;
+                          },
+                          v) == 0);
+  ASSERT_HOLDS(BS::Invoke(4,
+                          [](auto &&x) {
+                            x = 14;
+                            return 42;
+                          },
+                          v) == 0);
+  ASSERT_HOLDS(BS::Invoke(6,
+                          [](auto &&x) {
+                            x = 14;
+                            return 42;
+                          },
+                          v) == 0);
+  ASSERT_HOLDS(BS::Invoke(7,
+                          [](auto &&x) {
+                            x = 14;
+                            return 42;
+                          },
+                          v) == 0);
+  ASSERT_HOLDS(BS::Invoke(8,
+                          [](auto &&x) {
+                            x = 14;
+                            return 42;
+                          },
+                          v) == 0);
+  ASSERT_HOLDS(BS::Invoke(9,
+                          [](auto &&x) {
+                            x = 14;
+                            return 42;
+                          },
+                          v) == 0);
+
+  ASSERT_HOLDS(v == Values{'H', 42, 3});
+}
+
+struct Default
+{
+  static std::string &Reference(std::string *reference = nullptr)
+  {
+    static std::string *ref = nullptr;
+    if (reference)
+    {
+      ref = reference;
+    }
+    return *ref;
+  }
+
+  template <class F, class... Args>
+  static constexpr void Invoke(F &&, Args &&...)
+  {
+    Reference() = "This default has been observed";
+  }
+};
+
+TEST(TypeUtilTests, SwitchWithDefaultAndVoidReturnType)
+{
+  std::string visit_log;
+  Default::Reference(&visit_log);
+
+  using BS = fetch::type_util::Switch<Setter<5>, Setter<1>, Setter<3>,
+                                      fetch::type_util::DefaultCase<Default>>;
+
+  Values v{};
+
+  BS::Invoke(1, [](auto &&x) { x = 'H'; }, v);
+  ASSERT_TRUE(visit_log.empty());
+  BS::Invoke(3, [](auto &&x) { x = 42; }, v);
+  ASSERT_TRUE(visit_log.empty());
+  BS::Invoke(5, [](auto &&x) { x = 3; }, v);
+  ASSERT_TRUE(visit_log.empty());
+
+  // try to match an index unknown to this switch
+  BS::Invoke(0, [](auto &&x) { x = 14; }, v);
+  ASSERT_EQ(visit_log, "This default has been observed");
+
+  visit_log.clear();
+  BS::Invoke(9, [](auto &&x) { x = 14; }, v);
+  ASSERT_EQ(visit_log, "This default has been observed");
 
   ASSERT_HOLDS(v == Values{'H', 42, 3});
 }

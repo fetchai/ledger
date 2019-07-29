@@ -53,6 +53,13 @@ using TypeConstant = pack::Constant<T>;
 template <class T>
 using TypeConstantT = typename TypeConstant<T>::type;  // technically, an identity mapping
 
+// Two useful partial specializations of std::integral_constant.
+template <std::size_t i>
+using SizeConstant = pack::SizeConstant<i>;
+
+template <bool b>
+using BoolConstant = pack::BoolConstant<b>;
+
 // Accumulate<F, Ts...> is a left fold of F over Ts...
 // The pack should be non-empty.
 template <template <class...> class F, class... List>
@@ -166,10 +173,9 @@ using CaseT = typename Case<Clauses...>::type;
 // CopyReferenceKind<A, B> provide a member typedef type that is B with ref-qualifier changed to
 // that of A.
 template <class Source, class Dest>
-using CopyReferenceKind =
-    Case<std::is_lvalue_reference<Source>, std::add_lvalue_reference_t<Dest>,
-           std::is_rvalue_reference<Source>, std::add_rvalue_reference_t<std::decay_t<Dest>>,
-           std::decay_t<Dest>>;
+using CopyReferenceKind = Case<std::is_lvalue_reference<Source>, std::add_lvalue_reference_t<Dest>,
+                               std::is_rvalue_reference<Source>,
+                               std::add_rvalue_reference_t<std::decay_t<Dest>>, std::decay_t<Dest>>;
 
 template <class Source, class Dest>
 using CopyReferenceKindT = typename CopyReferenceKind<Source, Dest>::type;
