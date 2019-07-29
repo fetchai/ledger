@@ -75,23 +75,23 @@ public:
 		ArrayType normalized_input = fetch::math::Divide(zero_centered_input, sqrt_variance);
 		auto s6 = normalized_input.ToString();
 		
-		return {normalized_input, zero_centered_input, inv_sqrt_variance, sqrt_variance};
+		return {normalized_input, squared_zero_centered_input, inv_sqrt_variance, input_variance};
 	}
 	
 	std::vector<ArrayType> normalize_3D_input(ArrayType const &input, DataType epsilon, SizeType axis){
 		assert(axis == 0 || axis == 1);
 		assert(input.shape().size() == 3);
 		
-		ArrayType normalized_input(input.shape()), zero_centered_input(input.shape()), inv_sqrt_variance({1, input.shape(1), input.shape(2)}), sqrt_variance({1, input.shape(1), input.shape(2)});
+		ArrayType normalized_input(input.shape()), squared_zero_centered_input(input.shape()), inv_sqrt_variance({1, input.shape(1), input.shape(2)}), input_variance({1, input.shape(1), input.shape(2)});
 		
 		for(SizeType batch = 0; batch < input.shape(2); batch++){
 			auto norm_output = normalize_2D_input(input.View(batch).Copy(), epsilon, axis);
 			normalized_input.View(batch).Assign(norm_output.at(0));
-			zero_centered_input.View(batch).Assign(norm_output.at(1));
+			squared_zero_centered_input.View(batch).Assign(norm_output.at(1));
 			inv_sqrt_variance.View(batch).Assign(norm_output.at(2));
-			sqrt_variance.View(batch).Assign(norm_output.at(3));
+			input_variance.View(batch).Assign(norm_output.at(3));
 		}
-		return {normalized_input, zero_centered_input, inv_sqrt_variance, sqrt_variance};
+		return {normalized_input, squared_zero_centered_input, inv_sqrt_variance, input_variance};
 	}
 
   void Forward(VecTensorType const &inputs, ArrayType &output) override
@@ -129,20 +129,26 @@ public:
                                   ArrayType const &error_signal) override
   {
 		// make sure we have run forward for this inputs
-		assert(inputs.size() == prev_inputs_.size());
-		bool is_cached = true;
-		for(size_t i = 0; i < prev_inputs_.size(); i++){
-			if(*inputs.at(i) != prev_inputs_.at(i)){
-				is_cached = false;
-				break;
+		if(prev_inputs_.size() > 0){
+			for(size_t i = 0; i < prev_inputs_.size(); i++){
+				if(*inputs.at(i) != prev_inputs_.at(i)){
+					// if this is a new inputs, we run the forward again.
+					cached_output_.Reshape(inputs.front()->shape());
+					Forward(inputs, cached_output_);
+					break;
+				}
 			}
-		}
-		if(!is_cached){
+		}else{
+			// if this is a new input, run the forward again
 			cached_output_.Reshape(inputs.front()->shape());
 			Forward(inputs, cached_output_);
 		}
 		
-		return {error_signal};
+		// do the backward
+		DataType feature_length = DataType(data_shape_.at(0));
+		auto output_error_signal = (fetch::math::Square(cached_data_.at(2)) * cached_data_.at(2) * cached_data_.at(1) / (-feature_length) + cached_data_.at(2) * (1 - 1/feature_length)) * error_signal;
+		
+		return {output_error_signal};
   }
 
   static constexpr char const *DESCRIPTOR = "Convolution1D";

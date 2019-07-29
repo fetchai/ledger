@@ -86,3 +86,35 @@ TYPED_TEST(LayerNormTest, forward_test_3d)
 	ASSERT_TRUE(prediction.AllClose(gt, fetch::math::function_tolerance<DataType>(),
 	                                fetch::math::function_tolerance<DataType>()));
 }
+
+TYPED_TEST(LayerNormTest, backward_test_2d)
+{
+	using ArrayType = TypeParam;
+	using DataType  = typename TypeParam::Type;
+	
+	ArrayType data = ArrayType::FromString(
+	 "-1.224744871, 1;"
+	 "0, 4;"
+	 "1.224744871, 7");
+	
+	ArrayType error_signal = ArrayType::FromString(
+	 "1, 1;"
+	 "1, 1;"
+	 "1, 1");
+	
+	ArrayType gt = ArrayType::FromString(
+	 "-1.2247448, -0.98058067;"
+	 "0, -0.39223227;"
+	 "1.22474487, 1.372812945");
+	
+	fetch::ml::ops::LayerNorm<ArrayType> op(data.shape());
+	
+	ArrayType prediction(op.ComputeOutputShape({std::make_shared<ArrayType>(data)}));
+	auto backward_errors = op.Backward({std::make_shared<ArrayType>(data)}, error_signal).at(0);
+	
+	
+	// test correct values
+	std::cout << "backward_errors.ToString(): \n" << backward_errors.ToString() << std::endl;
+	ASSERT_TRUE(prediction.AllClose(gt, fetch::math::function_tolerance<DataType>(),
+	                                fetch::math::function_tolerance<DataType>()));
+}
