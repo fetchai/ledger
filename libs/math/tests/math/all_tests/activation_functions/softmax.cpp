@@ -78,22 +78,25 @@ TYPED_TEST(SoftmaxTest, equal_proportion_test)
 
 TYPED_TEST(SoftmaxTest, multi_dimension_test)
 {
-  TypeParam test_array({4, 3, 1});
-  TypeParam filling_array = TypeParam::FromString("1, 1, 1;2, 2, 2; 3, 3, 3; 4, 4, 4");
-  test_array.Slice(0, 2).Assign(filling_array);
+  TypeParam test_array = TypeParam::FromString("1, 2; 1, 4");
+  test_array.Reshape({2, 2, 1});
 
-  TypeParam gt_array({4, 3, 1});
-  gt_array.Fill(typename TypeParam::Type(double(1) / double(3)));
+  TypeParam gt_axis0 = TypeParam::FromString("0.2689414, 0.7310586; 0.04742587, 0.9525741");
+  gt_axis0.Reshape({2, 2, 1});
+  TypeParam gt_axis1 = TypeParam::FromString("0.5, 0.119202922; 0.5, 0.880797078");
+  gt_axis1.Reshape({2, 2, 1});
 
-  typename TypeParam::SizeType axis = 0;
-
-  fetch::math::Softmax(test_array, test_array, axis);
+  TypeParam test_axis0({2, 2, 1}), test_axis1({2, 2, 1});
+  fetch::math::Softmax(test_array, test_axis0, static_cast<typename TypeParam::SizeType>(0));
+  fetch::math::Softmax(test_array, test_axis1, static_cast<typename TypeParam::SizeType>(1));
 
   // test correct values
-  for (std::size_t j = 0; j < gt_array.size(); ++j)
-  {
-    ASSERT_NEAR(double(test_array[j]), double(gt_array[j]), double(1e-7));
-  }
+  ASSERT_TRUE(
+      test_axis0.AllClose(gt_axis0, fetch::math::function_tolerance<typename TypeParam::Type>()) ||
+      test_axis0.AllClose(gt_axis0, static_cast<typename TypeParam::Type>(1e-5)));
+  ASSERT_TRUE(
+      test_axis1.AllClose(gt_axis1, fetch::math::function_tolerance<typename TypeParam::Type>()) ||
+      test_axis0.AllClose(gt_axis0, static_cast<typename TypeParam::Type>(1e-5)));
 }
 
 TYPED_TEST(SoftmaxTest, exact_values_test)

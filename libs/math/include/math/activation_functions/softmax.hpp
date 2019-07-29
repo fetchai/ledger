@@ -99,14 +99,20 @@ void Softmax(ArrayType const &array, ArrayType &ret, typename ArrayType::SizeTyp
   {
     details::Softmax2DImplementation(array, ret, axis);
   }
-  else if ((array.shape().size() == 3) && (ret.shape().size() == 3) && (axis == 0 || axis == 1))
+  else if ((array.shape().size() == 3) && (ret.shape().size() == 3))
   {
-    ArrayType tmp_ret = ret.Slice(0, 2).Copy().Squeeze();
+    assert(axis == 0 || axis == 1);
+    // TODO (#1320) - Copy()s can be removed when softmax2dimplementation handles IsIterable types
+    auto tmp_ret = ret.View(0).Copy();
     for (size_t i = 0; i < array.shape()[2]; i++)
     {
-      details::Softmax2DImplementation(array.Slice(i, 2).Copy().Squeeze(), tmp_ret, axis);
-      ret.Slice(i, 2).Assign(tmp_ret);
+      details::Softmax2DImplementation(array.View(i).Copy(), tmp_ret, axis);
+      ret.View(i).Assign(tmp_ret);
     }
+  }
+  else if ((array.shape().size() == 3) && (ret.shape().size() == 3) && (axis == 2))
+  {
+    throw std::runtime_error("softmax on batch dimension is not implemented");
   }
   else
   {

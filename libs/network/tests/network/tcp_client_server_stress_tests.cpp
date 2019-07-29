@@ -123,8 +123,6 @@ void TestCase0(std::string /*host*/, uint16_t port)
     Server server(port, nmanager);
     server.Start();
   }
-
-  SUCCEED() << "Success." << std::endl;
 }
 
 template <std::size_t N = 1>
@@ -148,8 +146,6 @@ void TestCase1(std::string /*host*/, uint16_t port)
     nmanager.Start();
     server.Start();
   }
-
-  SUCCEED() << "Success." << std::endl;
 }
 
 template <std::size_t N = 1>
@@ -183,8 +179,6 @@ void TestCase2(std::string host, uint16_t port)
       nmanager.Stop();
     }
   }
-
-  SUCCEED() << "Success." << std::endl;
 }
 
 template <std::size_t N = 1>
@@ -227,8 +221,6 @@ void TestCase3(std::string host, uint16_t port)
       nmanager.Stop();
     }
   }
-
-  SUCCEED() << "Success." << std::endl;
 }
 
 template <std::size_t N = 1>
@@ -270,8 +262,6 @@ void TestCase4(std::string host, uint16_t port)
       std::this_thread::sleep_for(std::chrono::milliseconds(4));
     }
   }
-
-  SUCCEED() << "Success." << std::endl;
 }
 
 template <std::size_t N = 1>
@@ -366,8 +356,6 @@ void TestCase5(std::string host, uint16_t port)
       }
     }
   }
-
-  SUCCEED() << "Success." << std::endl;
 }
 
 template <std::size_t N = 1>
@@ -466,8 +454,6 @@ void TestCase6(std::string host, uint16_t port)
       }
     }
   }
-
-  SUCCEED() << "Success." << std::endl;
 }
 
 template <std::size_t N = 1>
@@ -597,49 +583,46 @@ void TestCase7(std::string host, uint16_t port)
       throw 1;
     }
   }
-
-  SUCCEED() << "Success." << std::endl;
 }
 
 class TCPClientServerTest : public testing::TestWithParam<std::size_t>
 {
+public:
+  TCPClientServerTest()
+    : host{"localhost"}
+    , port_number{8079}
+    , iterations{GetParam()}
+  {}
+
+  std::string const host;
+  uint16_t const    port_number;
+  std::size_t const iterations;
 };
 
-TEST_P(TCPClientServerTest, basic_test)
+TEST_P(TCPClientServerTest, DISABLED_basic_test)
 {
-
-  std::string host       = "localhost";
-  uint16_t    portNumber = 8079;
-
-  std::cerr << "Testing communications on port: " << portNumber << std::endl;
-
-  std::size_t iterations = GetParam();
-
-  FETCH_LOG_INFO(LOGGING_NAME, "Running test iterations: ", iterations);
-
   for (std::size_t i = 0; i < iterations; ++i)
   {
-    TestCase0<1>(host, portNumber);
-    TestCase1<1>(host, portNumber);
-    TestCase2<1>(host, portNumber);
-    TestCase3<1>(host, portNumber);
-    TestCase4<1>(host, portNumber);
-    TestCase5<1>(host, portNumber);
-    TestCase6<1>(host, portNumber);
-    TestCase7<1>(host, portNumber);
+    TestCase0<1>(host, port_number);
+    TestCase1<1>(host, port_number);
+    TestCase2<1>(host, port_number);
+    TestCase3<1>(host, port_number);
+    TestCase4<1>(host, port_number);
+    TestCase5<1>(host, port_number);
+    TestCase6<1>(host, port_number);
+    TestCase7<1>(host, port_number);
 
-    TestCase0<10>(host, portNumber);
-    TestCase1<10>(host, portNumber);
-    TestCase2<10>(host, portNumber);
-    TestCase3<10>(host, portNumber);
-    TestCase4<10>(host, portNumber);
-    TestCase5<10>(host, portNumber);
-    TestCase6<10>(host, portNumber);
-    TestCase7<10>(host, portNumber);
+    TestCase0<10>(host, port_number);
+    TestCase1<10>(host, port_number);
+    TestCase2<10>(host, port_number);
+    TestCase3<10>(host, port_number);
+    TestCase4<10>(host, port_number);
+    TestCase5<10>(host, port_number);
+    TestCase6<10>(host, port_number);
+    TestCase7<10>(host, port_number);
   }
-
-  SUCCEED() << "Success." << std::endl;
 }
+
 INSTANTIATE_TEST_CASE_P(MyGroup, TCPClientServerTest, testing::Values<std::size_t>(4),
                         testing::PrintToStringParamName());
 // testing::Values<std::size_t>(4): 4 is the number of iterations to run this test under 30 sec.

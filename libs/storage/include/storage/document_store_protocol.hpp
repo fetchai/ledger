@@ -117,9 +117,9 @@ public:
     assert(maxlanes == (1u << log2_lanes_));
   }
 
-  bool HasLock(CallContext const *context)
+  bool HasLock(CallContext const &context)
   {
-    if (!context)
+    if (!context.is_valid())
     {
       throw serializers::SerializableException(  // TODO(issue 11): set exception number
           0, byte_array_type(std::string("No context for HasLock.")));
@@ -127,7 +127,7 @@ public:
 
     bool has_lock = false;
     lock_status_.Apply([&context, &has_lock](LockStatus const &status) {
-      has_lock = (status.is_locked && (status.client == context->sender_address));
+      has_lock = (status.is_locked && (status.client == context.sender_address));
     });
 
     has_lock_count_->increment();
@@ -135,11 +135,10 @@ public:
     return has_lock;
   }
 
-  bool LockResource(CallContext const *context)
+  bool LockResource(CallContext const &context)
   {
     telemetry::FunctionTimer const timer{*lock_durations_};
-
-    if (!context)
+    if (!context.is_valid())
     {
       // TODO(issue 11): set exception number
       throw serializers::SerializableException(0, byte_array_type{"No context for HasLock."});
@@ -151,7 +150,7 @@ public:
       if (!status.is_locked)
       {
         status.is_locked = true;
-        status.client    = context->sender_address;
+        status.client    = context.sender_address;
         success          = true;
       }
     });
@@ -159,8 +158,7 @@ public:
     // print an error message on failure
     if (!success)
     {
-      FETCH_LOG_WARN(LOGGING_NAME,
-                     "Resource lock failed for: ", context->sender_address.ToBase64());
+      FETCH_LOG_WARN(LOGGING_NAME, "Resource lock failed for: ", context.sender_address.ToBase64());
     }
 
     lock_count_->increment();
@@ -168,11 +166,10 @@ public:
     return success;
   }
 
-  bool UnlockResource(CallContext const *context)
+  bool UnlockResource(CallContext const &context)
   {
     telemetry::FunctionTimer const timer{*unlock_durations_};
-
-    if (!context)
+    if (!context.is_valid())
     {
       throw serializers::SerializableException(  // TODO(issue 11): set exception number
           0, byte_array_type(std::string("No context for HasLock.")));
@@ -181,7 +178,7 @@ public:
     // attempt to unlock this shard
     bool success = false;
     lock_status_.Apply([&context, &success](LockStatus &status) {
-      if (status.is_locked && (status.client == context->sender_address))
+      if (status.is_locked && (status.client == context.sender_address))
       {
         status.is_locked = false;
         status.client    = Identifier{};
@@ -192,7 +189,7 @@ public:
     if (!success)
     {
       FETCH_LOG_WARN(LOGGING_NAME,
-                     "Resource unlock failed for: ", context->sender_address.ToBase64());
+                     "Resource unlock failed for: ", context.sender_address.ToBase64());
     }
 
     unlock_count_->increment();
