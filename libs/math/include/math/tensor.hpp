@@ -286,8 +286,10 @@ public:
   /// Slices ///
   //////////////
 
+  ConstSliceType Slice() const;
   ConstSliceType Slice(SizeType index, SizeType axis = 0) const;
   ConstSliceType Slice(SizeVector index, SizeVector axes) const;
+  TensorSlice    Slice();
   TensorSlice    Slice(SizeType index, SizeType axis = 0);
   TensorSlice    Slice(SizeVector index, SizeVector axes);
 
@@ -2128,6 +2130,19 @@ typename Tensor<T, C>::MAJOR_ORDER Tensor<T, C>::MajorOrder() const
 /// Tensor methods: slices ///
 //////////////////////////////
 
+template <typename T, typename C>
+typename Tensor<T, C>::ConstSliceType Tensor<T, C>::Slice() const
+{
+  std::vector<SizeVector> range;
+
+  for (SizeType j = 0; j < shape().size(); ++j)
+  {
+    range.push_back({0, shape().at(j), 1});
+  }
+
+  return ConstSliceType(*this, range, 0);
+}
+
 /**
  * Returns a Slice that is not permitted to alter the original tensor
  * @tparam T
@@ -2183,6 +2198,19 @@ typename Tensor<T, C>::ConstSliceType Tensor<T, C>::Slice(std::vector<SizeType> 
   }
 
   return ConstSliceType(*this, range, axes);
+}
+
+template <typename T, typename C>
+typename Tensor<T, C>::TensorSlice Tensor<T, C>::Slice()
+{
+  std::vector<SizeVector> range;
+
+  for (SizeType j = 0; j < shape().size(); ++j)
+  {
+    range.push_back({0, shape().at(j), 1});
+  }
+
+  return TensorSlice(*this, range, 0);
 }
 
 /**

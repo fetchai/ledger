@@ -516,17 +516,20 @@ meta::IfIsMathArray<ArrayType, typename ArrayType::Type> Sum(ArrayType const &ar
 template <typename ArrayType>
 void ReduceSum(ArrayType const &obj1, SizeType axis, ArrayType &ret)
 {
-  assert((axis == 0) || (axis == 1));
-  assert(obj1.shape().size() == 2);
+  assert(ret.shape().at(axis) == 1);
+  for (SizeType i = 0; i < obj1.shape().size(); i++)
+  {
+    if (i != axis)
+    {
+      assert(obj1.shape().at(i) == ret.shape().at(i));
+    }
+  }
 
-  SizeVector access_idx{0, 0};
   if (axis == 0)
   {
-    assert(ret.shape()[0] == 1);
-    assert(ret.shape()[1] == obj1.shape()[1]);
-
     auto it  = obj1.cbegin();
     auto rit = ret.begin();
+
     while (rit.is_valid())
     {
       *rit = typename ArrayType::Type{0};
@@ -540,17 +543,19 @@ void ReduceSum(ArrayType const &obj1, SizeType axis, ArrayType &ret)
   }
   else
   {
-    assert(ret.shape()[0] == obj1.shape()[0]);
-    assert(ret.shape()[1] == 1);
+    auto it  = obj1.Slice().cbegin();
+    auto rit = ret.Slice().begin();
 
-    auto rit = ret.begin();
-    for (SizeType i = 0; i < ret.size(); ++i)
+    it.PermuteAxes(0, axis);
+    rit.PermuteAxes(0, axis);
+
+    while (rit.is_valid())
     {
       *rit = typename ArrayType::Type{0};
-      for (SizeType j = 0; j < obj1.shape().at(1); ++j)
+      for (SizeType j{0}; j < obj1.shape().at(axis); ++j)
       {
-        // Todo(issue 1015) Replace with transposed iterator
-        *rit += obj1(i, j);
+        *rit += *it;
+        ++it;
       }
       ++rit;
     }
@@ -560,21 +565,11 @@ void ReduceSum(ArrayType const &obj1, SizeType axis, ArrayType &ret)
 template <typename ArrayType>
 ArrayType ReduceSum(ArrayType const &obj1, SizeType axis)
 {
-  assert((axis == 0) || (axis == 1));
-  if (axis == 0)
-  {
-    SizeVector new_shape{1, obj1.shape()[1]};
-    ArrayType  ret{new_shape};
-    ReduceSum(obj1, axis, ret);
-    return ret;
-  }
-  else
-  {
-    SizeVector new_shape{obj1.shape()[0], 1};
-    ArrayType  ret{new_shape};
-    ReduceSum(obj1, axis, ret);
-    return ret;
-  }
+  SizeVector new_shape = obj1.shape();
+  new_shape.at(axis)   = 1;
+  ArrayType ret{new_shape};
+  ReduceSum(obj1, axis, ret);
+  return ret;
 }
 
 template <typename ArrayType>
