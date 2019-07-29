@@ -120,7 +120,8 @@ IRVariablePtr IRBuilder::BuildVariable(VariablePtr const &variable)
     return ir_variable;
   }
   IRTypePtr ir_type = BuildType(variable->type);
-  ir_variable       = CreateIRVariable(variable->variable_kind, variable->name, ir_type);
+  ir_variable       = CreateIRVariable(variable->variable_kind, variable->name, ir_type,
+      variable->referenced);
   variable_map_.AddPair(variable, ir_variable);
   ir_->AddVariable(ir_variable);
   return ir_variable;
