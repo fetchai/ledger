@@ -183,13 +183,13 @@ public:
     return number_;
   }
 
-  bool SerializeTo(serializers::ByteArrayBuffer &buffer) override
+  bool SerializeTo(serializers::MsgPackSerializer &buffer) override
   {
     buffer << number_;
     return true;
   }
 
-  bool DeserializeFrom(serializers::ByteArrayBuffer &buffer) override
+  bool DeserializeFrom(serializers::MsgPackSerializer &buffer) override
   {
     buffer >> number_;
     return true;
