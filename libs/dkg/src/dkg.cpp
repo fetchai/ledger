@@ -906,8 +906,8 @@ bool DistributedKeyGeneration::RunReconstruction()
     std::vector<bn::Fr> points, shares_f;
     for (const auto &index : parties)
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "Node ", cabinet_index_, "run reconstruction for node ",
-                     victim_index, "with shares from node ", index);
+      FETCH_LOG_INFO(LOGGING_NAME, "Node ", cabinet_index_, " run reconstruction for node ",
+                     victim_index, " with shares from node ", index);
       points.push_back(index + 1);  // adjust index in computation
       shares_f.push_back(shares[index]);
     }

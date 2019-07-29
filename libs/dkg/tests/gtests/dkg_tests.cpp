@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/byte_array_buffer.hpp"
 #include "core/serializers/counter.hpp"
+#include "core/serializers/main_serializer.hpp"
 #include "core/service_ids.hpp"
 #include "crypto/ecdsa.hpp"
 #include "crypto/prover.hpp"
@@ -388,7 +388,7 @@ struct CabinetMember
           threshold,
           [this](DKGEnvelope const &envelope) -> void {
             DKGSerializer serialiser;
-            envelope.Serialize(serialiser);
+            serialiser << envelope;
             rbc.SendRBroadcast(serialiser.data());
           },
           [this](ConstByteArray const &                     destination,
@@ -401,7 +401,7 @@ struct CabinetMember
     shares_subscription->SetMessageHandler([this](ConstByteArray const &from, uint16_t, uint16_t,
                                                   uint16_t, muddle::Packet::Payload const &payload,
                                                   ConstByteArray) {
-      fetch::serializers::ByteArrayBuffer serialiser(payload);
+      fetch::serializers::MsgPackSerializer serialiser(payload);
 
       std::pair<std::string, std::string> shares;
       serialiser >> shares;
@@ -424,10 +424,10 @@ struct CabinetMember
   void SubmitShare(ConstByteArray const &                     destination,
                    std::pair<std::string, std::string> const &shares)
   {
-    fetch::serializers::SizeCounter<fetch::serializers::ByteArrayBuffer> counter;
+    fetch::serializers::SizeCounter counter;
     counter << shares;
 
-    fetch::serializers::ByteArrayBuffer serializer;
+    fetch::serializers::MsgPackSerializer serializer;
     serializer.Reserve(counter.size());
     serializer << shares;
     muddle.AsEndpoint().Send(destination, SERVICE_DKG, CHANNEL_SHARES, serializer.data());
