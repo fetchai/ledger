@@ -414,6 +414,13 @@ struct CabinetMember
     muddle.Start({muddle_port});
   }
 
+  ~CabinetMember()
+  {
+    muddle.Stop();
+    muddle.Shutdown();
+    network_manager.Stop();
+  }
+
   void SubmitShare(ConstByteArray const &                     destination,
                    std::pair<std::string, std::string> const &shares)
   {
