@@ -11,6 +11,3 @@ function main()
    assert(encoded_new_address == encoded_address);
 
 endfunction
-
-
-
