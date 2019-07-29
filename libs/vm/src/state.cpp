@@ -23,8 +23,9 @@ namespace fetch {
 namespace vm {
 
 namespace {
+
 template <typename T, typename = std::enable_if_t<IsPrimitive<T>::value>>
-inline bool ReadHelper(TypeId /*type*/, std::string const &name, T &val, VM *vm)
+bool ReadHelper(TypeId /*type*/, std::string const &name, T &val, VM *vm)
 {
   if (!vm->HasIoObserver())
   {
@@ -37,7 +38,7 @@ inline bool ReadHelper(TypeId /*type*/, std::string const &name, T &val, VM *vm)
 }
 
 template <typename T, typename = std::enable_if_t<IsPrimitive<T>::value>>
-inline bool WriteHelper(std::string const &name, T const &val, VM *vm)
+bool WriteHelper(std::string const &name, T const &val, VM *vm)
 {
   if (!vm->HasIoObserver())
   {
@@ -48,10 +49,9 @@ inline bool WriteHelper(std::string const &name, T const &val, VM *vm)
   return result == IoObserverInterface::Status::OK;
 }
 
-inline bool ReadHelper(TypeId type, std::string const &name, Ptr<Object> &val, VM *vm)
+bool ReadHelper(TypeId type, std::string const &name, Ptr<Object> &val, VM *vm)
 {
   using fetch::byte_array::ByteArray;
-  using fetch::serializers::MsgPackSerializer;
 
   if (!vm->HasIoObserver())
   {
@@ -111,10 +111,8 @@ inline bool ReadHelper(TypeId type, std::string const &name, Ptr<Object> &val, V
   return retval;
 }
 
-inline bool WriteHelper(std::string const &name, Ptr<Object> const &val, VM *vm)
+bool WriteHelper(std::string const &name, Ptr<Object> const &val, VM *vm)
 {
-  using fetch::serializers::MsgPackSerializer;
-
   if (!vm->HasIoObserver())
   {
     return true;
