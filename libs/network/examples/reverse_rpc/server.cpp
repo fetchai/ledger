@@ -47,12 +47,11 @@ public:
     : muddle_{std::move(muddle)}
   {}
 
-  void Register(CallContext const *context)
+  void Register(CallContext const context)
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Registering: ", context->sender_address.ToBase64());
+    FETCH_LOG_INFO(LOGGING_NAME, "Registering: ", context.sender_address.ToBase64());
 
-    node_set_.Apply(
-        [context](AddressSet &addresses) { addresses.insert(context->sender_address); });
+    node_set_.Apply([context](AddressSet &addresses) { addresses.insert(context.sender_address); });
   }
 
   Strings SearchFor(std::string const &val)

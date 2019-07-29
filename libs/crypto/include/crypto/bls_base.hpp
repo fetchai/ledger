@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/byte_array.hpp"
-
+#include "core/serializers/group_definitions.hpp"
 #include <bls/bls.h>
 
 #include <cstddef>
@@ -169,64 +169,100 @@ inline byte_array::ConstByteArray ToBinary(Signature const &sig)
 
 }  // namespace bls
 }  // namespace crypto
+
+namespace serializers {
+
+template <typename D>
+struct BinarySerializer<::blsId, D>
+{
+public:
+  using Type       = ::blsId;
+  using DriverType = D;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &binary_construtor, Type const &id)
+  {
+    auto        data = binary_construtor(sizeof(id));
+    auto const *raw  = reinterpret_cast<uint8_t const *>(&id);
+    data.Write(raw, sizeof(id));
+  }
+
+  template <typename BinaryDeserializer>
+  static void Deserialize(BinaryDeserializer &binary_stream, Type &id)
+  {
+    auto *raw = reinterpret_cast<uint8_t *>(&id);
+    binary_stream.Read(raw, sizeof(id));
+  }
+};
+
+template <typename D>
+struct BinarySerializer<::blsPublicKey, D>
+{
+public:
+  using Type       = ::blsPublicKey;
+  using DriverType = D;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &binary_construtor, Type const &id)
+  {
+    auto        data = binary_construtor(sizeof(id));
+    auto const *raw  = reinterpret_cast<uint8_t const *>(&id);
+    data.Write(raw, sizeof(id));
+  }
+
+  template <typename BinaryDeserializer>
+  static void Deserialize(BinaryDeserializer &binary_stream, Type &id)
+  {
+    auto *raw = reinterpret_cast<uint8_t *>(&id);
+    binary_stream.Read(raw, sizeof(id));
+  }
+};
+
+template <typename D>
+struct BinarySerializer<::blsSecretKey, D>
+{
+public:
+  using Type       = ::blsSecretKey;
+  using DriverType = D;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &binary_construtor, Type const &id)
+  {
+    auto        data = binary_construtor(sizeof(id));
+    auto const *raw  = reinterpret_cast<uint8_t const *>(&id);
+    data.Write(raw, sizeof(id));
+  }
+
+  template <typename BinaryDeserializer>
+  static void Deserialize(BinaryDeserializer &binary_stream, Type &id)
+  {
+    auto *raw = reinterpret_cast<uint8_t *>(&id);
+    binary_stream.Read(raw, sizeof(id));
+  }
+};
+
+template <typename D>
+struct BinarySerializer<::blsSignature, D>
+{
+public:
+  using Type       = ::blsSignature;
+  using DriverType = D;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &binary_construtor, Type const &id)
+  {
+    auto        data = binary_construtor(sizeof(id));
+    auto const *raw  = reinterpret_cast<uint8_t const *>(&id);
+    data.Write(raw, sizeof(id));
+  }
+
+  template <typename BinaryDeserializer>
+  static void Deserialize(BinaryDeserializer &binary_stream, Type &id)
+  {
+    auto *raw = reinterpret_cast<uint8_t *>(&id);
+    binary_stream.Read(raw, sizeof(id));
+  }
+};
+
+}  // namespace serializers
 }  // namespace fetch
-
-template <typename T>
-void Serialize(T &stream, ::blsId const &id)
-{
-  stream.Allocate(sizeof(id));
-  auto const *raw = reinterpret_cast<uint8_t const *>(&id);
-  stream.WriteBytes(raw, sizeof(id));
-}
-
-template <typename T>
-void Deserialize(T &stream, ::blsId &id)
-{
-  auto *raw = reinterpret_cast<uint8_t *>(&id);
-  stream.ReadBytes(raw, sizeof(id));
-}
-
-template <typename T>
-void Serialize(T &stream, ::blsPublicKey const &public_key)
-{
-  stream.Allocate(sizeof(public_key));
-  auto const *raw = reinterpret_cast<uint8_t const *>(&public_key);
-  stream.WriteBytes(raw, sizeof(public_key));
-}
-
-template <typename T>
-void Deserialize(T &stream, ::blsPublicKey &public_key)
-{
-  auto *raw = reinterpret_cast<uint8_t *>(&public_key);
-  stream.ReadBytes(raw, sizeof(public_key));
-}
-
-template <typename T>
-void Serialize(T &stream, ::blsSecretKey const &secret_key)
-{
-  stream.Allocate(sizeof(secret_key));
-  auto const *raw = reinterpret_cast<uint8_t const *>(&secret_key);
-  stream.WriteBytes(raw, sizeof(secret_key));
-}
-
-template <typename T>
-void Deserialize(T &stream, ::blsSecretKey &secret_key)
-{
-  auto *raw = reinterpret_cast<uint8_t *>(&secret_key);
-  stream.ReadBytes(raw, sizeof(secret_key));
-}
-
-template <typename T>
-void Serialize(T &stream, ::blsSignature const &signature)
-{
-  stream.Allocate(sizeof(signature));
-  auto const *raw = reinterpret_cast<uint8_t const *>(&signature);
-  stream.WriteBytes(raw, sizeof(signature));
-}
-
-template <typename T>
-void Deserialize(T &stream, ::blsSignature &signature)
-{
-  auto *raw = reinterpret_cast<uint8_t *>(&signature);
-  stream.ReadBytes(raw, sizeof(signature));
-}

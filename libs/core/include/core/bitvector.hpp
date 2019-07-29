@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/serializers/group_definitions.hpp"
 #include "vectorise/memory/shared_array.hpp"
 #include "vectorise/platform.hpp"
 
@@ -124,37 +125,49 @@ inline std::ostream &operator<<(std::ostream &s, BitVector const &b)
   return s;
 }
 
-template <typename T>
-void Serialize(T &s, BitVector const &mask)
+namespace serializers {
+
+template <typename D>
+struct ArraySerializer<BitVector, D>
 {
-  uint64_t const bit_size   = mask.size();
-  uint64_t const block_size = mask.blocks();
+public:
+  using Type       = BitVector;
+  using DriverType = D;
 
-  s << bit_size << block_size;
-
-  auto const &underlying_blocks = mask.data();
-  for (uint64_t i = 0; i < block_size; ++i)
+  template <typename Constructor>
+  static void Serialize(Constructor &array_constructor, Type const &mask)
   {
-    s << underlying_blocks[i];
+    uint64_t const bit_size   = mask.size();
+    uint64_t const block_size = mask.blocks();
+
+    auto array = array_constructor(block_size + 1);
+
+    auto const &underlying_blocks = mask.data();
+    array.Append(bit_size);
+    for (uint64_t i = 0; i < block_size; ++i)
+    {
+      array.Append(underlying_blocks[i]);
+    }
   }
-}
 
-template <typename T>
-void Deserialize(T &s, BitVector &mask)
-{
-  uint64_t bit_size   = 0;
-  uint64_t block_size = 0;
-
-  s >> bit_size >> block_size;
-
-  mask.Resize(bit_size);
-  assert(mask.blocks() == block_size);
-
-  auto &underlying_blocks = mask.data();
-  for (uint64_t i = 0; i < block_size; ++i)
+  template <typename ArrayDeserializer>
+  static void Deserialize(ArrayDeserializer &array, Type &mask)
   {
-    s >> underlying_blocks[i];
-  }
-}
+    uint64_t bit_size   = 0;
+    uint64_t block_size = array.size() - 1;
 
+    array.GetNextValue(bit_size);
+
+    mask.Resize(bit_size);
+    assert(mask.blocks() == block_size);
+    auto &underlying_blocks = mask.data();
+
+    for (uint64_t i = 0; i < block_size; ++i)
+    {
+      array.GetNextValue(underlying_blocks[i]);
+    }
+  }
+};
+
+}  // namespace serializers
 }  // namespace fetch

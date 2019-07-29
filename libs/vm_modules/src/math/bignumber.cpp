@@ -164,13 +164,13 @@ vectorise::UInt<256> const &UInt256Wrapper::number() const
   return number_;
 }
 
-bool UInt256Wrapper::SerializeTo(serializers::ByteArrayBuffer &buffer)
+bool UInt256Wrapper::SerializeTo(serializers::MsgPackSerializer &buffer)
 {
   buffer << number_;
   return true;
 }
 
-bool UInt256Wrapper::DeserializeFrom(serializers::ByteArrayBuffer &buffer)
+bool UInt256Wrapper::DeserializeFrom(serializers::MsgPackSerializer &buffer)
 {
   buffer >> number_;
   return true;

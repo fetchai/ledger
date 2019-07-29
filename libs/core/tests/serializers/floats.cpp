@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -17,34 +16,37 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/assert.hpp"
-#include "core/byte_array/const_byte_array.hpp"
+#include "core/byte_array/decoders.hpp"
+#include "core/byte_array/encoders.hpp"
+#include "core/serializers/group_definitions.hpp"
+#include "core/serializers/main_serializer.hpp"
 
-#include <type_traits>
+#include "gtest/gtest.h"
+
+#include <cstddef>
+#include <cstdint>
+
+using namespace fetch::byte_array;
 
 namespace fetch {
+
 namespace serializers {
 
-template <typename T>
-inline void Serialize(T &serializer, byte_array::ConstByteArray const &s)
+TEST(MsgPacker, floats)
 {
-  serializer.Allocate(sizeof(uint64_t) + s.size());
-  uint64_t size = s.size();
+  // Setup
+  MsgPackSerializer stream;
+  double            value;
 
-  serializer.WriteBytes(reinterpret_cast<uint8_t const *>(&size), sizeof(uint64_t));
-  serializer.WriteBytes(reinterpret_cast<uint8_t const *>(s.pointer()), s.size());
-}
-
-template <typename T>
-inline void Deserialize(T &serializer, byte_array::ConstByteArray &s)
-{
-  uint64_t size = 0;
-
-  detailed_assert(int64_t(sizeof(uint64_t)) <= serializer.bytes_left());
-  serializer.ReadBytes(reinterpret_cast<uint8_t *>(&size), sizeof(uint64_t));
-  detailed_assert(int64_t(size) <= serializer.bytes_left());
-
-  serializer.ReadByteArray(s, size);
+  value  = static_cast<double>(2.34);
+  stream = MsgPackSerializer();
+  stream << value;
+  std::cout << ToHex(stream.data()) << std::endl;
+  EXPECT_EQ(FromHex("cb4002b851eb851eb8"), stream.data());
+  stream.seek(0);
+  value = 0;
+  stream >> value;
+  EXPECT_EQ(value, 2.34);
 }
 
 }  // namespace serializers

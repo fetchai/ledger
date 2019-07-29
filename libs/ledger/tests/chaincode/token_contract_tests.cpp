@@ -19,7 +19,7 @@
 #include "contract_test.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "core/json/document.hpp"
-#include "core/serializers/byte_array_buffer.hpp"
+#include "core/serializers/main_serializer.hpp"
 #include "ledger/chain/transaction_builder.hpp"
 #include "ledger/chaincode/deed.hpp"
 #include "ledger/chaincode/token_contract.hpp"

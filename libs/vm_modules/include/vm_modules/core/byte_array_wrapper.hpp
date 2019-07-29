@@ -44,9 +44,9 @@ public:
 
   byte_array::ByteArray byte_array() const;
 
-  bool SerializeTo(fetch::vm::ByteArrayBuffer &buffer) override;
+  bool SerializeTo(serializers::MsgPackSerializer &buffer) override;
 
-  bool DeserializeFrom(fetch::vm::ByteArrayBuffer &buffer) override;
+  bool DeserializeFrom(serializers::MsgPackSerializer &buffer) override;
 
 private:
   byte_array::ByteArray byte_array_;

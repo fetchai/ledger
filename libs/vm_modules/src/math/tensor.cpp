@@ -145,13 +145,13 @@ ArrayType const &VMTensor::GetConstTensor()
   return tensor_;
 }
 
-bool VMTensor::SerializeTo(serializers::ByteArrayBuffer &buffer)
+bool VMTensor::SerializeTo(serializers::MsgPackSerializer &buffer)
 {
   buffer << tensor_;
   return true;
 }
 
-bool VMTensor::DeserializeFrom(serializers::ByteArrayBuffer &buffer)
+bool VMTensor::DeserializeFrom(serializers::MsgPackSerializer &buffer)
 {
   buffer >> tensor_;
   return true;

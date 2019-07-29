@@ -55,13 +55,13 @@ byte_array::ByteArray ByteArrayWrapper::byte_array() const
   return byte_array_;
 }
 
-bool ByteArrayWrapper::SerializeTo(ByteArrayBuffer &buffer)
+bool ByteArrayWrapper::SerializeTo(serializers::MsgPackSerializer &buffer)
 {
   buffer << byte_array_;
   return true;
 }
 
-bool ByteArrayWrapper::DeserializeFrom(ByteArrayBuffer &buffer)
+bool ByteArrayWrapper::DeserializeFrom(serializers::MsgPackSerializer &buffer)
 {
   buffer >> byte_array_;
   return true;

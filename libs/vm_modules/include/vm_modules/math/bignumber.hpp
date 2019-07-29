@@ -77,9 +77,9 @@ public:
 
   fetch::vectorise::UInt<256> const &number() const;
 
-  bool SerializeTo(fetch::serializers::ByteArrayBuffer &buffer) override;
+  bool SerializeTo(serializers::MsgPackSerializer &buffer) override;
 
-  bool DeserializeFrom(fetch::serializers::ByteArrayBuffer &buffer) override;
+  bool DeserializeFrom(serializers::MsgPackSerializer &buffer) override;
 
   bool ToJSON(fetch::vm::JSONVariant &variant) override;
 

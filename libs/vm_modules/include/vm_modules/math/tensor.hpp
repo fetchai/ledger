@@ -93,9 +93,9 @@ public:
 
   fetch::math::Tensor<DataType> const &GetConstTensor();
 
-  bool SerializeTo(serializers::ByteArrayBuffer &buffer) override;
+  bool SerializeTo(serializers::MsgPackSerializer &buffer) override;
 
-  bool DeserializeFrom(serializers::ByteArrayBuffer &buffer) override;
+  bool DeserializeFrom(serializers::MsgPackSerializer &buffer) override;
 
 private:
   fetch::math::Tensor<DataType> tensor_;
