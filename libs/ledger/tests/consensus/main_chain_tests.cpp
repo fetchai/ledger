@@ -132,7 +132,7 @@ TEST(ledger_main_chain_gtest, Test_mining_proof_after_serialization)
   // Verify blocks
   for (auto &i : blocks)
   {
-    fetch::serializers::ByteArrayBuffer arr;
+    fetch::serializers::MsgPackSerializer arr;
     arr << i;
     arr.seek(0);
     Block block;

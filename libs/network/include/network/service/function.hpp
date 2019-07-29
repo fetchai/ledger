@@ -17,9 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/byte_array.hpp"
-#include "core/serializers/stl_types.hpp"
-#include "core/serializers/typed_byte_array_buffer.hpp"
+#include "core/serializers/base_types.hpp"
 #include "network/service/abstract_callable.hpp"
 
 #include <functional>

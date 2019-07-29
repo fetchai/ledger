@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/containers/array.hpp"
+#include "core/serializers/group_definitions.hpp"
 #include "meta/has_index.hpp"
 #include "meta/type_traits.hpp"
 #include "vectorise/platform.hpp"
@@ -1107,23 +1108,40 @@ inline double ToDouble(UInt<256> const &x)
   return conv.value;
 }
 
-template <typename T, uint16_t S>
-constexpr void Serialize(T &s, UInt<S> const &u)
-{
-  for (std::size_t i = 0; i < u.elements(); i++)
-  {
-    s << u.ElementAt(i);
-  }
-}
-
-template <typename T, uint16_t S>
-constexpr void Deserialize(T &s, UInt<S> &u)
-{
-  for (std::size_t i = 0; i < u.elements(); i++)
-  {
-    s >> u.ElementAt(i);
-  }
-}
-
 }  // namespace vectorise
+
+namespace serializers {
+template <typename D, uint16_t S>
+struct ArraySerializer<vectorise::UInt<S>, D>
+{
+public:
+  using Type       = vectorise::UInt<S>;
+  using DriverType = D;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &array_constructor, Type const &u)
+  {
+    // TODO(issue 1425): Add WideType size to serialisation
+    auto array = array_constructor(u.elements());
+    for (std::size_t i = 0; i < u.elements(); i++)
+    {
+      array.Append(u.ElementAt(i));
+    }
+  }
+
+  template <typename ArrayDeserializer>
+  static void Deserialize(ArrayDeserializer &array, Type &u)
+  {
+    if (array.size() != u.elements())
+    {
+      // TODO: Throw
+    }
+    for (std::size_t i = 0; i < u.elements(); i++)
+    {
+      array.GetNextValue(u.ElementAt(i));
+    }
+  }
+};
+}  // namespace serializers
+
 }  // namespace fetch

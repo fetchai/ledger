@@ -17,9 +17,14 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm/module.hpp"
+#include "vm/object.hpp"
 
 namespace fetch {
+
+namespace vm {
+class Module;
+}
+
 namespace vm_modules {
 
 class ByteArrayWrapper : public fetch::vm::Object
@@ -28,52 +33,20 @@ public:
   ByteArrayWrapper()           = delete;
   ~ByteArrayWrapper() override = default;
 
-  static void Bind(vm::Module &module)
-  {
-    module.CreateClassType<ByteArrayWrapper>("Buffer")
-        .CreateConstructor<int32_t>()
-        .CreateMemberFunction("copy", &ByteArrayWrapper::Copy);
-  }
+  static void Bind(fetch::vm::Module &module);
 
-  ByteArrayWrapper(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
-                   byte_array::ByteArray const &bytearray)
-    : fetch::vm::Object(vm, type_id)
-    , byte_array_(bytearray)
-  {}
+  ByteArrayWrapper(fetch::vm::VM *vm, fetch::vm::TypeId type_id, byte_array::ByteArray bytearray);
 
   static fetch::vm::Ptr<ByteArrayWrapper> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
-                                                      int32_t n)
-  {
-    return new ByteArrayWrapper(vm, type_id, byte_array::ByteArray(std::size_t(n)));
-  }
+                                                      int32_t n);
 
-  static fetch::vm::Ptr<ByteArrayWrapper> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
-                                                      byte_array::ByteArray bytearray)
-  {
-    return new ByteArrayWrapper(vm, type_id, bytearray);
-  }
+  fetch::vm::Ptr<ByteArrayWrapper> Copy();
 
-  fetch::vm::Ptr<ByteArrayWrapper> Copy()
-  {
-    return vm_->CreateNewObject<ByteArrayWrapper>(byte_array_.Copy());
-  }
+  byte_array::ByteArray byte_array() const;
 
-  byte_array::ByteArray byte_array()
-  {
-    return byte_array_;
-  }
+  bool SerializeTo(serializers::MsgPackSerializer &buffer) override;
 
-  bool SerializeTo(vm::ByteArrayBuffer &buffer) override
-  {
-    buffer << byte_array_;
-    return true;
-  }
-
-  bool DeserializeFrom(vm::ByteArrayBuffer &buffer) override
-  {
-    buffer >> byte_array_;
-    return true;
-  }
+  bool DeserializeFrom(serializers::MsgPackSerializer &buffer) override;
 
 private:
   byte_array::ByteArray byte_array_;

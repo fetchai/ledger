@@ -20,9 +20,8 @@
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/mutex.hpp"
-#include "core/serializers/byte_array.hpp"
-#include "core/serializers/byte_array_buffer.hpp"
-#include "core/serializers/stl_types.hpp"
+#include "core/serializers/base_types.hpp"
+#include "core/serializers/main_serializer.hpp"
 #include "crypto/ecdsa.hpp"
 #include "crypto/fnv.hpp"
 #include "crypto/identity.hpp"
@@ -101,7 +100,7 @@ struct DAGNode
    */
   void Finalise()
   {
-    serializers::ByteArrayBuffer buf;
+    serializers::MsgPackSerializer buf;
 
     buf << type << previous << contents << contract_digest << identity << hash << signature
         << oldest_epoch_referenced << weight;
@@ -133,20 +132,6 @@ struct DAGNode
   }
 };
 
-template <typename T>
-void Serialize(T &serializer, DAGNode const &node)
-{
-  serializer << node.type << node.previous << node.contents << node.contract_digest << node.identity
-             << node.hash << node.signature << node.oldest_epoch_referenced << node.weight;
-}
-
-template <typename T>
-void Deserialize(T &serializer, DAGNode &node)
-{
-  serializer >> node.type >> node.previous >> node.contents >> node.contract_digest >>
-      node.identity >> node.hash >> node.signature >> node.oldest_epoch_referenced >> node.weight;
-}
-
 constexpr char const *DAGNodeTypeToString(uint64_t type)
 {
   char const *text = "Unknown";
@@ -171,4 +156,55 @@ constexpr char const *DAGNodeTypeToString(uint64_t type)
 }
 
 }  // namespace ledger
+
+namespace serializers {
+
+template <typename D>
+struct MapSerializer<ledger::DAGNode, D>
+{
+public:
+  using Type       = ledger::DAGNode;
+  using DriverType = D;
+
+  static uint8_t const TYPE                    = 1;
+  static uint8_t const PREVIOUS                = 2;
+  static uint8_t const CONTENTS                = 3;
+  static uint8_t const CONTRACT_DIGEST         = 4;
+  static uint8_t const IDENTITY                = 5;
+  static uint8_t const HASH                    = 6;
+  static uint8_t const SIGNATURE               = 7;
+  static uint8_t const OLDEST_EPOCH_REFERENCED = 8;
+  static uint8_t const WEIGHT                  = 9;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &node)
+  {
+    auto map = map_constructor(9);
+    map.Append(TYPE, node.type);
+    map.Append(PREVIOUS, node.previous);
+    map.Append(CONTENTS, node.contents);
+    map.Append(CONTRACT_DIGEST, node.contract_digest);
+    map.Append(IDENTITY, node.identity);
+    map.Append(HASH, node.hash);
+    map.Append(SIGNATURE, node.signature);
+    map.Append(OLDEST_EPOCH_REFERENCED, node.oldest_epoch_referenced);
+    map.Append(WEIGHT, node.weight);
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &node)
+  {
+    map.ExpectKeyGetValue(TYPE, node.type);
+    map.ExpectKeyGetValue(PREVIOUS, node.previous);
+    map.ExpectKeyGetValue(CONTENTS, node.contents);
+    map.ExpectKeyGetValue(CONTRACT_DIGEST, node.contract_digest);
+    map.ExpectKeyGetValue(IDENTITY, node.identity);
+    map.ExpectKeyGetValue(HASH, node.hash);
+    map.ExpectKeyGetValue(SIGNATURE, node.signature);
+    map.ExpectKeyGetValue(OLDEST_EPOCH_REFERENCED, node.oldest_epoch_referenced);
+    map.ExpectKeyGetValue(WEIGHT, node.weight);
+  }
+};
+}  // namespace serializers
+
 }  // namespace fetch
