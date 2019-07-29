@@ -72,158 +72,75 @@ public:
   /// Post methods
   /// @{
   void Post(byte_array::ByteArray const &path, byte_array::ByteArray const &description,
-            std::vector<HTTPParameter> const &parameters, ViewType const &view)
-  {
-    AddView(Method::POST, path, description, parameters, view);
-  }
+            std::vector<HTTPParameter> const &parameters, ViewType const &view);
 
   void Post(byte_array::ByteArray const &path, byte_array::ByteArray const &description,
-            ViewType const &view)
-  {
-    AddView(Method::POST, path, description, {}, view);
-  }
-
+            ViewType const &view);
   void Post(byte_array::ByteArray const &path, byte_array::ByteArray const &description,
-            std::vector<HTTPParameter> const &parameters, Authenticator const &auth, ViewType const &view)
-  {
-    AddView(Method::POST, path, description, parameters, view, auth);
-  }
-
+            std::vector<HTTPParameter> const &parameters, Authenticator const &auth, ViewType const &view);
   void Post(byte_array::ByteArray const &path, byte_array::ByteArray const &description, Authenticator const &auth,
-            ViewType const &view)
-  {
-    AddView(Method::POST, path, description, {}, view, auth);
-  }
+            ViewType const &view);
   /// @}
 
 
   /// Get methods
   /// @{
   void Get(byte_array::ByteArray const &path, byte_array::ByteArray const &description,
-           std::vector<HTTPParameter> const &parameters, ViewType const &view)
-  {
-    AddView(Method::GET, path, description, parameters, view);
-  }
-
+           std::vector<HTTPParameter> const &parameters, ViewType const &view);
   void Get(byte_array::ByteArray const &path, byte_array::ByteArray const &description,
-           ViewType const &view)
-  {
-    AddView(Method::GET, path, description, {}, view);
-  }
-
+           ViewType const &view);
   void Get(byte_array::ByteArray const &path, byte_array::ByteArray const &description,
-           std::vector<HTTPParameter> const &parameters, Authenticator const &auth,  ViewType const &view)
-  {
-    AddView(Method::GET, path, description, parameters, view, auth);
-  }
-
+           std::vector<HTTPParameter> const &parameters, Authenticator const &auth,  ViewType const &view);
   void Get(byte_array::ByteArray const &path, byte_array::ByteArray const &description, Authenticator const &auth, 
-           ViewType const &view)
-  {
-    AddView(Method::GET, path, description, {}, view, auth);
-  }  
+           ViewType const &view);
   /// @}
 
 
   /// Put methods
   /// @{
   void Put(byte_array::ByteArray const &path, byte_array::ByteArray const &description,
-           std::vector<HTTPParameter> const &parameters, ViewType const &view)
-  {
-    AddView(Method::PUT, path, description, parameters, view);
-  }
-
+           std::vector<HTTPParameter> const &parameters, ViewType const &view);
   void Put(byte_array::ByteArray const &path, byte_array::ByteArray const &description,
-           ViewType const &view)
-  {
-    AddView(Method::PUT, path, description, {}, view);
-  }
-
+           ViewType const &view);
   void Put(byte_array::ByteArray const &path, byte_array::ByteArray const &description,
-           std::vector<HTTPParameter> const &parameters,Authenticator const &auth,  ViewType const &view)
-  {
-    AddView(Method::PUT, path, description, parameters, view, auth);
-  }
-
+           std::vector<HTTPParameter> const &parameters,Authenticator const &auth,  ViewType const &view);
   void Put(byte_array::ByteArray const &path, byte_array::ByteArray const &description, Authenticator const &auth, 
-           ViewType const &view)
-  {
-    AddView(Method::PUT, path, description, {}, view, auth);
-  }
+           ViewType const &view);
   /// @}
 
   /// Patch methods
   /// @{
   void Patch(byte_array::ByteArray const &path, byte_array::ByteArray const &description,
-             std::vector<HTTPParameter> const &parameters, ViewType const &view)
-  {
-    AddView(Method::PATCH, path, description, parameters, view);
-  }
-
+             std::vector<HTTPParameter> const &parameters, ViewType const &view);
   void Patch(byte_array::ByteArray const &path, byte_array::ByteArray const &description,
-             ViewType const &view)
-  {
-    AddView(Method::PATCH, path, description, {}, view);
-  }
-
+             ViewType const &view);
   void Patch(byte_array::ByteArray const &path, byte_array::ByteArray const &description,
              std::vector<HTTPParameter> const &parameters,
               Authenticator const &auth, 
-              ViewType const &view)
-  {
-    AddView(Method::PATCH, path, description, parameters, view, auth);
-  }
-
+              ViewType const &view);
   void Patch(byte_array::ByteArray const &path, byte_array::ByteArray const &description,
             Authenticator const &auth,     
-             ViewType const &view)
-  {
-    AddView(Method::PATCH, path, description, {}, view, auth);
-  }
+             ViewType const &view);
   /// @}
 
   /// Delete methods
   /// @{
   void Delete(byte_array::ByteArray const &path, byte_array::ByteArray const &description,
-              std::vector<HTTPParameter> const &parameters, ViewType const &view)
-  {
-    AddView(Method::DELETE, path, description, parameters, view);
-  }
-
+              std::vector<HTTPParameter> const &parameters, ViewType const &view);
   void Delete(byte_array::ByteArray const &path, byte_array::ByteArray const &description,
-              ViewType const &view)
-  {
-    AddView(Method::DELETE, path, description, {}, view);
-  }
-
+              ViewType const &view);
   void Delete(byte_array::ByteArray const &path, byte_array::ByteArray const &description, Authenticator const &auth, 
-              std::vector<HTTPParameter> const &parameters, ViewType const &view)
-  {
-    AddView(Method::DELETE, path, description, parameters, view, auth);
-  }
-
+              std::vector<HTTPParameter> const &parameters, ViewType const &view);
   void Delete(byte_array::ByteArray const &path, byte_array::ByteArray const &description, Authenticator const &auth,     
-              ViewType const &view)
-  {
-    AddView(Method::DELETE, path, description, {}, view, auth);
-  }
+              ViewType const &view);
   /// @}
 
 
   void AddView(Method method, byte_array::ByteArray const &path,
                byte_array::ByteArray const &     description,
-               std::vector<HTTPParameter> const &parameters, ViewType const &view, Authenticator const & auth = NormalAccessAuthentication)
-  {
-    views_.push_back({description, method, path, parameters, view, auth});
-  }
-
-  std::vector<UnmountedView> const &views() const
-  {
-    LOG_STACK_TRACE_POINT;
-
-    return views_;
-  }
-
+               std::vector<HTTPParameter> const &parameters, ViewType const &view, Authenticator const & auth = NormalAccessAuthentication);
+  std::vector<UnmountedView> const &views() const;
+  
 private:
   std::vector<UnmountedView> views_;
   fetch::variant::Variant    interface_description_;
