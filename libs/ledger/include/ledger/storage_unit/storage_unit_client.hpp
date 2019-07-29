@@ -19,7 +19,6 @@
 
 #include "core/future_timepoint.hpp"
 #include "core/logger.hpp"
-#include "core/serializers/typed_byte_array_buffer.hpp"
 #include "core/service_ids.hpp"
 #include "crypto/merkle_tree.hpp"
 #include "ledger/shard_config.hpp"

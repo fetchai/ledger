@@ -17,9 +17,8 @@
 //------------------------------------------------------------------------------
 
 #include "core/logger.hpp"
-#include "core/serializers/byte_array.hpp"
-#include "core/serializers/byte_array_buffer.hpp"
-#include "core/serializers/stl_types.hpp"
+#include "core/serializers/base_types.hpp"
+#include "core/serializers/main_serializer.hpp"
 #include "network/muddle/muddle.hpp"
 #include "network/muddle/muddle_register.hpp"
 #include "network/muddle/muddle_server.hpp"
@@ -339,14 +338,17 @@ void Muddle::CreateTcpClient(Uri const &peer)
   strong_conn->OnMessage([this, peer, conn_handle](network::message_type const &msg) {
     try
     {
-      // un-marshall the data
-      serializers::ByteArrayBuffer buffer(msg);
-
       auto packet = std::make_shared<Packet>();
-      buffer >> *packet;
 
-      // dispatch the message to router
-      router_.Route(conn_handle, packet);
+      if (Packet::FromBuffer(*packet, msg.pointer(), msg.size()))
+      {
+        // dispatch the message to router
+        router_.Route(conn_handle, packet);
+      }
+      else
+      {
+        FETCH_LOG_WARN(LOGGING_NAME, "Failed to read packet from buffer");
+      }
     }
     catch (std::exception const &ex)
     {

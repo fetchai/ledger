@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/future_timepoint.hpp"
-#include "core/serializers/stl_types.hpp"
+#include "core/serializers/base_types.hpp"
 #include "core/service_ids.hpp"
 #include "ledger/executor_interface.hpp"
 #include "ledger/protocols/executor_rpc_protocol.hpp"

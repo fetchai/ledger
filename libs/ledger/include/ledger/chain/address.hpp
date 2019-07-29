@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/const_byte_array.hpp"
-#include "core/serializers/byte_array.hpp"
+#include "core/serializers/main_serializer.hpp"
 
 #include <array>
 #include <cstddef>
@@ -108,24 +108,6 @@ private:
   ConstByteArray display_;  ///< The display representation
 };
 
-template <typename T>
-void Serialize(T &s, Address const &address)
-{
-  assert(!address.address().empty());
-  s << address.address();
-}
-
-template <typename T>
-void Deserialize(T &s, Address &address)
-{
-  // extract the data from the stream
-  byte_array::ConstByteArray data;
-  s >> data;
-
-  // create the address
-  address = Address{data};
-}
-
 /**
  * Get the raw bytes of the address
  *
@@ -199,6 +181,36 @@ inline bool Address::operator>=(Address const &other) const
 }
 
 }  // namespace ledger
+
+namespace serializers {
+
+template <typename D>
+struct MapSerializer<ledger::Address, D>  // TODO(issue 1422): Use forward to bytearray
+{
+public:
+  using Type       = ledger::Address;
+  using DriverType = D;
+
+  static uint8_t const ADDRESS = 1;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &data)
+  {
+    auto map = map_constructor(1);
+    map.Append(ADDRESS, data.address());
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &address)
+  {
+    uint8_t                    key;
+    byte_array::ConstByteArray data;
+    map.GetNextKeyPair(key, data);
+    address = Type{data};
+  }
+};
+}  // namespace serializers
+
 }  // namespace fetch
 
 namespace std {

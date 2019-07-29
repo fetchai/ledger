@@ -16,21 +16,40 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/byte_array.hpp"
-#include "core/serializers/byte_array_buffer.hpp"
-#include "ledger/chain/transaction_layout_rpc_serializers.hpp"
-#include "ledger/chain/transaction_rpc_serializers.hpp"
+#include "core/byte_array/decoders.hpp"
+#include "core/byte_array/encoders.hpp"
+#include "core/serializers/group_definitions.hpp"
+#include "core/serializers/main_serializer.hpp"
+#include "ledger/chain/address.hpp"
+#include "ledger/chain/block.hpp"
 
-using fetch::serializers::ByteArrayBuffer;
+#include "gtest/gtest.h"
+
+#include <cstddef>
+#include <cstdint>
+using namespace fetch::ledger;
+using namespace fetch::byte_array;
 
 namespace fetch {
-namespace ledger {
 
-template void Serialize<ByteArrayBuffer>(ByteArrayBuffer &, TransactionLayout const &);
-template void Serialize<ByteArrayBuffer>(ByteArrayBuffer &, Transaction const &);
+namespace serializers {
 
-template void Deserialize<ByteArrayBuffer>(ByteArrayBuffer &, TransactionLayout &);
-template void Deserialize<ByteArrayBuffer>(ByteArrayBuffer &, Transaction &);
+TEST(LedgerSerializers, address)
+{
+  std::array<uint8_t, 32> raw_address;
+  for (uint8_t i = 0; i < raw_address.size(); ++i)
+  {
+    raw_address[i] = i;
+  }
+  Address a{raw_address};
+  Address b;
 
-}  // namespace ledger
+  MsgPackSerializer stream;
+  stream << a;
+  stream.seek(0);
+  stream >> b;
+  EXPECT_EQ(a, b);
+}
+
+}  // namespace serializers
 }  // namespace fetch
