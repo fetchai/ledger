@@ -88,6 +88,8 @@ using MyTypes = ::testing::Types< fetch::vectorise::VectorRegister<float, 128>,
                                   fetch::vectorise::VectorRegister<int64_t, 256>,
                                   fetch::vectorise::VectorRegister<fetch::fixed_point::fp32_t, 128>,
                                   fetch::vectorise::VectorRegister<fetch::fixed_point::fp32_t, 256>,
+                                  // fetch::vectorise::VectorRegister<fetch::fixed_point::fp64_t, 128>,
+                                  // fetch::vectorise::VectorRegister<fetch::fixed_point::fp64_t, 256>,
                                   fetch::vectorise::VectorRegister<double, 128>,
                                   fetch::vectorise::VectorRegister<double, 256>>;
 
