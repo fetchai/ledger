@@ -72,8 +72,8 @@ def main():
         total = len(args.addresses)
         threshold = min(total, max(1, int(DEFAULT_THRESHOLD * total)))
         print('Calculated threshold:', threshold)
-    elif args.threshold > len(args):
-        print('Threshold can\'t me more that the number of stakers')
+    elif args.threshold > len(args.addresses):
+        print('Threshold can\'t be more that the number of stakers')
     elif args.threshold < 0:
         print('Threshold must be larger than 0')
     else:

@@ -137,6 +137,8 @@ public:
   Status GenerateEntropy(Digest block_digest, uint64_t block_number, uint64_t &entropy) override;
   /// @}
 
+  bool IsSynced() const;
+
   /// @name Helper Methods
   /// @{
   std::weak_ptr<core::Runnable> GetWeakRunnable()
@@ -261,6 +263,7 @@ private:
   std::atomic<uint64_t> current_round_{0};             ///< The current round being generated
   RoundMap              rounds_{};                     ///< The map of round data
                                                        /// @}
+  std::atomic<bool> is_synced_{false};
 };
 
 }  // namespace dkg

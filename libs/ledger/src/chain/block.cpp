@@ -30,6 +30,11 @@
 namespace fetch {
 namespace ledger {
 
+Block::Block()
+  : first_seen_timestamp{static_cast<uint64_t>(std::time(nullptr))}
+{
+}
+
 /**
  * Get the number of transactions present in the block
  *

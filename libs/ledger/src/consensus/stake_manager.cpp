@@ -45,8 +45,10 @@ std::size_t SafeDecrement(std::size_t value, std::size_t decrement)
 
 }  // namespace
 
-StakeManager::StakeManager(EntropyGeneratorInterface &entropy)
+StakeManager::StakeManager(EntropyGeneratorInterface &entropy, uint32_t block_interval_ms, Mode mode)
   : entropy_{&entropy}
+  , mode_{mode}
+  , block_interval_ms_{block_interval_ms}
 {}
 
 void StakeManager::UpdateCurrentBlock(Block const &current)
@@ -66,21 +68,62 @@ void StakeManager::UpdateCurrentBlock(Block const &current)
 
 bool StakeManager::ShouldGenerateBlock(Block const &previous, Address const &address)
 {
-  bool generate{false};
+  FETCH_LOG_INFO(LOGGING_NAME, "Should generate block? Prev: ", previous.body.block_number);
+
+  if(mode_ == Mode::ALWAYS_OFF)
+  {
+    return false;
+  }
+
+  if(mode_ == Mode::ALWAYS_ON)
+  {
+    return true;
+  }
 
   auto const committee = GetCommittee(previous);
   if (!committee || committee->empty())
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Unable to determine committee for block generation");
-  }
-  else
-  {
-    // TODO(EJF): A reporting back mechanism will need to be added in order to handle the cases
-    //            where blocks are not generated in a given time interval
-    generate = (*committee)[0] == address;
+    return false;
   }
 
-  return generate;
+  // At this point the miner will decide if they should produce a block. The first miner in the
+  // committee will wait until block_interval after the block at the HEAD of the chain, the second
+  // miner 2*block_interval and so on.
+  uint32_t time_to_wait = block_interval_ms_;
+  bool in_committee     = false;
+
+  for (std::size_t i = 0; i < (*committee).size(); ++i)
+  {
+    if((*committee)[i] == address)
+    {
+      in_committee = true;
+      break;
+    }
+    time_to_wait += block_interval_ms_;
+  }
+
+  in_committee = true;
+
+  // TODO(HUT): switch to 64 for time based things (?)
+  // Time now, in seconds
+  uint64_t time_now_ms = static_cast<uint64_t>(std::time(nullptr)) * 1000;
+  uint64_t desired_time_for_next = (previous.first_seen_timestamp*1000) + time_to_wait;
+
+  FETCH_LOG_INFO(LOGGING_NAME, "Time to wait: ", time_to_wait);
+  FETCH_LOG_INFO(LOGGING_NAME, "In committee: ", in_committee);
+  FETCH_LOG_INFO(LOGGING_NAME, "Committee size: ", (*committee).size());
+  FETCH_LOG_INFO(LOGGING_NAME, "Prev timestamp: ", previous.first_seen_timestamp);
+  FETCH_LOG_INFO(LOGGING_NAME, "Time now (ms): ", time_now_ms);
+
+  if(in_committee && desired_time_for_next <= time_now_ms)
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "yes.");
+    return true;
+  }
+
+  FETCH_LOG_INFO(LOGGING_NAME, "no.");
+  return false;
 }
 
 StakeManager::CommitteePtr StakeManager::GetCommittee(Block const &previous)

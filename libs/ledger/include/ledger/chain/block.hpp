@@ -46,6 +46,8 @@ public:
   using Slices   = std::vector<Slice>;
   using DAGEpoch = fetch::ledger::DAGEpoch;
 
+  Block();
+
   struct Body
   {
     Digest   hash;               ///< The hash of the block
@@ -77,6 +79,7 @@ public:
   /// @{
   uint64_t total_weight = 1;
   bool     is_loose     = false;
+  uint64_t first_seen_timestamp{0u}; ///< Seconds since the block was first seen or created. Used to manage block interval
   /// @}
 
   // Helper functions

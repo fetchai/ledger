@@ -39,7 +39,7 @@ using MuddleAddress = muddle::Packet::Address;
 using State         = DkgService::State;
 using PromiseState  = service::PromiseState;
 
-constexpr uint64_t READ_AHEAD     = 3;
+constexpr uint64_t READ_AHEAD     = 100;
 constexpr uint64_t HISTORY_LENGTH = 10;
 
 const ConstByteArray GENESIS_PAYLOAD = "=~=~ Genesis ~=~=";
@@ -446,6 +446,8 @@ State DkgService::OnCollectSignaturesState()
  */
 State DkgService::OnCompleteState()
 {
+  is_synced_ = true;
+
   FETCH_LOG_DEBUG(LOGGING_NAME, "State: Complete round: ", requesting_iteration_.load(),
                   " read: ", current_iteration_.load());
 
@@ -533,6 +535,11 @@ RoundPtr DkgService::LookupRound(uint64_t round, bool create)
   }
 
   return round_ptr;
+}
+
+bool DkgService::IsSynced() const
+{
+  return is_synced_;
 }
 
 }  // namespace dkg

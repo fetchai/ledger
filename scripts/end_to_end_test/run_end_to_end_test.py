@@ -22,6 +22,7 @@ import shutil
 import traceback
 import time
 import pickle
+import subprocess
 from threading import Event
 from pathlib import Path
 
@@ -106,6 +107,10 @@ class TestInstance():
         self._creation_time = time.perf_counter()
         self._block_interval = 1000
 
+        # Variables related to temporary pos mode
+        self._pos_mode = False
+        self._nodes_pubkeys = []
+
         # Default to removing old tests
         for f in glob.glob(build_directory + "/end_to_end_test_*"):
             shutil.rmtree(f)
@@ -174,10 +179,65 @@ class TestInstance():
     def start_node(self, index):
         print('Starting Node {}...'.format(index))
 
+        print(" ".join(str(x) for x in self._nodes[index]._cmd))
+
         self._nodes[index].start()
         print('Starting Node {}...complete'.format(index))
 
         time.sleep(0.5)
+
+    def setup_pos_for_nodes(self):
+
+        # Path to config files
+        expected_ouptut_dir = os.path.abspath(
+            os.path.dirname(self._yaml_file)+"/input_files")
+
+        infofile = expected_ouptut_dir+"/info.txt"
+
+        # Required files for this operation
+        verify_file(infofile)
+
+        # infofile specifies the address of each numbered key
+        all_lines_in_file = open(infofile, "r").readlines()
+
+        nodes_mining_identities = []
+
+        # First give each node that is mining a unique identity
+        for index in range(self._number_of_nodes):
+
+            # max 200 mining nodes due to consensus requirements
+            assert(index <= 200)
+
+            node = self._nodes[index]
+
+            if(node.mining):
+                node_key = all_lines_in_file[index].strip().split()[-1]
+
+                print('Setting up POS for node {}...'.format(index))
+                print('Giving node the identity: {}'.format(node_key))
+
+                nodes_mining_identities.append(node_key)
+
+                key_path = expected_ouptut_dir+"/{}.key".format(index)
+                verify_file(key_path)
+
+                # Copy the keyfile from its location to the node's cwd
+                shutil.copy(key_path, node.root+"/p2p.key");
+
+        stake_gen = os.path.abspath("./scripts/generate-initial-state.py")
+        verify_file(stake_gen)
+
+        # Create a stake file into the logging directory for all nodes
+        snapshot_location = self._workspace+"/snapshot.json"
+        cmd = [stake_gen, *nodes_mining_identities, "-t", str(len(nodes_mining_identities) - 1), "-o", snapshot_location]
+
+        # After giving the relevant nodes identities, make a stake file
+        exit_code = subprocess.call(cmd)
+
+        # Give all nodes this stake file, plus append POS flag for when node starts
+        for index in range(self._number_of_nodes):
+            shutil.copy(snapshot_location, self._nodes[index].root);
+            self._nodes[index].append_to_cmd(["-pos",])
 
     def restart_node(self, index):
         print('Restarting Node {}...'.format(index))
@@ -222,11 +282,19 @@ class TestInstance():
             for node in self._nodes:
                 node.private_network = True
 
+        # Temporary special case for POS mode
+        if(self._pos_mode):
+            self.setup_pos_for_nodes()
+
         # start all the nodes
         for index in range(self._number_of_nodes):
             self.start_node(index)
 
         time.sleep(2)  # TODO(HUT): blocking http call to node for ready state
+
+        if(self._pos_mode):
+            output("POS mode. sleep extra time.")
+            time.sleep(60)
 
     def stop(self):
         if self._nodes:
@@ -306,12 +374,15 @@ def setup_test(test_yaml, test_instance):
                            expected=False, expect_type=list, default=[])
     max_test_time = extract(test_yaml, 'max_test_time',
                             expected=False, expect_type=int, default=10)
+    pos_mode = extract(test_yaml, 'pos_mode', expected=False,
+                       expect_type=bool, default=False)
 
     test_instance._number_of_nodes = number_of_nodes
     test_instance._node_load_directory = node_load_directory
     test_instance._node_connections = node_connections
     test_instance._nodes_are_mining = mining_nodes
     test_instance._max_test_time = max_test_time
+    test_instance._pos_mode = pos_mode
 
     # Watchdog will trigger this if the tests exceeds allowed bounds. Note stopping the test cleanly is
     # necessary to preserve output logs etc.
@@ -445,10 +516,11 @@ def verify_txs(parameters, test_instance):
                 status = api.tx.status(tx)
 
                 if status == "Executed" or expect_mined:
+                    output("found executed TX")
                     break
 
                 time.sleep(0.5)
-                output("Waiting for TX to get executed. Found: {}".format(status))
+                output("Waiting for TX to get executed (node {}). Found: {}".format(node_index, status))
 
             seen_balance = api.tokens.balance(identity)
             if balance != seen_balance:
