@@ -1596,6 +1596,12 @@ bool Analyser::AnnotateIndexOp(ExpressionNodePtr const &node)
     return false;
   }
 
+  if (lhs->type->IsPrimitive())
+  {
+    AddError(lhs->line, "primitive type '" + lhs->type->name + "' does not support index operator");
+    return false;
+  }
+
   TypePtr type;
   if (lhs->type->IsInstantiation())
   {
@@ -1711,6 +1717,7 @@ bool Analyser::AnnotateDotOp(ExpressionNodePtr const &node)
              "primitive type '" + lhs->type->name + "' does not support member-access operator");
     return false;
   }
+
   SymbolPtr member_symbol;
   if (lhs->type->IsInstantiation())
   {
