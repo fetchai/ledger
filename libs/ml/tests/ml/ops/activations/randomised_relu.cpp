@@ -216,8 +216,8 @@ TYPED_TEST(RandomisedReluTest, saveparams_test)
       ArrayType::FromString("1, -0.062793536, 3, -0.12558707, 5, -0.1883806, 7, -0.2511741");
 
   fetch::ml::ops::RandomisedRelu<ArrayType> op(DataType{0.03f}, DataType{0.08f}, 12345);
-  ArrayType                                 prediction(op.ComputeOutputShape({data}));
-  VecTensorType                             vec_data({data});
+  ArrayType     prediction(op.ComputeOutputShape({std::make_shared<const ArrayType>(data)}));
+  VecTensorType vec_data({std::make_shared<const ArrayType>(data)});
 
   op.Forward(vec_data, prediction);
 
@@ -243,7 +243,7 @@ TYPED_TEST(RandomisedReluTest, saveparams_test)
   OpType new_op(*dsp2);
 
   // check that new predictions match the old
-  ArrayType new_prediction(op.ComputeOutputShape({data}));
+  ArrayType new_prediction(op.ComputeOutputShape({std::make_shared<const ArrayType>(data)}));
   new_op.Forward(vec_data, new_prediction);
 
   // test correct values

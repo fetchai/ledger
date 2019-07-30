@@ -146,8 +146,8 @@ TYPED_TEST(LogSigmoidTest, saveparams_test)
       "-0.31326, -2.126928, -0.048587, -4.01815, -0.006715, -6.002476, -0.000911466, -8.000335");
 
   fetch::ml::ops::LogSigmoid<ArrayType> op;
-  ArrayType                             prediction(op.ComputeOutputShape({std::make_shared<const ArrayType>(data)}));
-  VecTensorType                         vec_data({data});
+  ArrayType     prediction(op.ComputeOutputShape({std::make_shared<const ArrayType>(data)}));
+  VecTensorType vec_data({std::make_shared<const ArrayType>(data)});
   op.Forward(vec_data, prediction);
 
   // extract saveparams

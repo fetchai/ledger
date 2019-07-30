@@ -124,7 +124,7 @@ TYPED_TEST(WeightsTest, saveparams_test)
   OpType op;
   op.SetData(data);
 
-  ArrayType prediction(op.ComputeOutputShape({data}));
+  ArrayType prediction(op.ComputeOutputShape({std::make_shared<const ArrayType>(data)}));
 
   op.Forward({}, prediction);
 
@@ -147,7 +147,7 @@ TYPED_TEST(WeightsTest, saveparams_test)
   OpType new_op(*dsp2);
 
   // check that new predictions match the old
-  ArrayType new_prediction(op.ComputeOutputShape({data}));
+  ArrayType new_prediction(op.ComputeOutputShape({std::make_shared<const ArrayType>(data)}));
   new_op.Forward({}, new_prediction);
 
   // test correct values

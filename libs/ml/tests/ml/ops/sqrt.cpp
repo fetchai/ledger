@@ -210,8 +210,8 @@ TYPED_TEST(SqrtBothTest, saveparams_test)
 
   OpType op;
 
-  ArrayType     prediction(op.ComputeOutputShape({data}));
-  VecTensorType vec_data({data});
+  ArrayType     prediction(op.ComputeOutputShape({std::make_shared<const ArrayType>(data)}));
+  VecTensorType vec_data({std::make_shared<const ArrayType>(data)});
 
   op.Forward(vec_data, prediction);
 
@@ -234,7 +234,7 @@ TYPED_TEST(SqrtBothTest, saveparams_test)
   OpType new_op(*dsp2);
 
   // check that new predictions match the old
-  ArrayType new_prediction(op.ComputeOutputShape({data}));
+  ArrayType new_prediction(op.ComputeOutputShape({std::make_shared<const ArrayType>(data)}));
   new_op.Forward(vec_data, new_prediction);
 
   // test correct values
