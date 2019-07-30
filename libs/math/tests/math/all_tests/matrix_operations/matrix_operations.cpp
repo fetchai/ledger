@@ -162,15 +162,18 @@ TYPED_TEST(FreeFunctionsTest, Product_OneDimension)
   array1(3) = DataType{22};
 
   DataType output = fetch::math::Product(array1);
-  EXPECT_NEAR(static_cast<double>(output), 5.544, 1e-6);
+  EXPECT_NEAR(static_cast<double>(output), 5.544,
+              10.0 * static_cast<double>(function_tolerance<DataType>()));
 
   array1(3) = 1;
   fetch::math::Product(array1, output);
-  EXPECT_NEAR(static_cast<double>(output), 0.252, 1e-6);
+  EXPECT_NEAR(static_cast<double>(output), 0.252,
+              10.0 * static_cast<double>(function_tolerance<DataType>()));
 
   array1(1) = 0;
   fetch::math::Product(array1, output);
-  EXPECT_NEAR(static_cast<double>(output), 0.0, 1e-6);
+  EXPECT_NEAR(static_cast<double>(output), 0.0,
+              10.0 * static_cast<double>(function_tolerance<DataType>()));
 }
 
 TYPED_TEST(FreeFunctionsTest, Product_TwoDimension)
@@ -192,11 +195,12 @@ TYPED_TEST(FreeFunctionsTest, Product_TwoDimension)
   array1(3, 1) = DataType{-0.5};
 
   DataType output = fetch::math::Product(array1);
-  EXPECT_NEAR(static_cast<double>(output), 487305.0, 1e-6);
+  EXPECT_NEAR(static_cast<double>(output), 487305.0,
+              static_cast<double>(function_tolerance<DataType>()));
 
   array1(1, 1) = 0;
   output       = fetch::math::Product(array1);
-  EXPECT_NEAR(static_cast<double>(output), 0, 1e-6);
+  EXPECT_NEAR(static_cast<double>(output), 0, static_cast<double>(function_tolerance<DataType>()));
 }
 
 TYPED_TEST(FreeFunctionsTest, Max_OneDimension)
@@ -315,22 +319,26 @@ TYPED_TEST(FreeFunctionsTest, PeakToPeak_OneDimension)
 
   TypeParam array1{4};
 
-  array1(0) = DataType{0.3f};
-  array1(1) = DataType{1.2f};
-  array1(2) = DataType{0.7f};
-  array1(3) = DataType{22};
+  array1(0) = static_cast<DataType>(0.3);
+  array1(1) = static_cast<DataType>(1.2);
+  array1(2) = static_cast<DataType>(0.7);
+  array1(3) = static_cast<DataType>(22);
 
   DataType output;
   fetch::math::PeakToPeak(array1, output);
-  EXPECT_NEAR(static_cast<double>(output), 21.7, 1e-5);
+
+  EXPECT_NEAR(static_cast<double>(output), 21.7,
+              static_cast<double>(function_tolerance<DataType>()));
 
   array1(3) = DataType{0.5};
   fetch::math::PeakToPeak(array1, output);
-  EXPECT_NEAR(static_cast<double>(output), 0.9, 1e-5);
+  EXPECT_NEAR(static_cast<double>(output), 0.9,
+              static_cast<double>(function_tolerance<DataType>()));
 
   array1(1) = DataType{0.1f};
   fetch::math::PeakToPeak(array1, output);
-  EXPECT_NEAR(static_cast<double>(output), 0.6, 1e-5);
+  EXPECT_NEAR(static_cast<double>(output), 0.6,
+              static_cast<double>(function_tolerance<DataType>()));
 }
 
 TYPED_TEST(FreeFunctionsTest, PeakToPeak_TwoDimension)
@@ -353,15 +361,21 @@ TYPED_TEST(FreeFunctionsTest, PeakToPeak_TwoDimension)
 
   TypeParam output{n_data};
   fetch::math::PeakToPeak(array1, 1, output);
-  EXPECT_NEAR(static_cast<double>(output(0)), 38, 1e-5);
-  EXPECT_NEAR(static_cast<double>(output(1)), 0, 1e-5);
-  EXPECT_NEAR(static_cast<double>(output(2)), 986, 1e-5);
-  EXPECT_NEAR(static_cast<double>(output(3)), 21.5, 1e-5);
+  EXPECT_NEAR(static_cast<double>(output(0)), 38,
+              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output(1)), 0,
+              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output(2)), 986,
+              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output(3)), 21.5,
+              static_cast<double>(function_tolerance<DataType>()));
 
   TypeParam output2{n_features};
   fetch::math::PeakToPeak(array1, 0, output2);
-  EXPECT_NEAR(static_cast<double>(output2(0)), 38, 1e-5);
-  EXPECT_NEAR(static_cast<double>(output2(1)), 999.5, 1e-5);
+  EXPECT_NEAR(static_cast<double>(output2(0)), 38,
+              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output2(1)), 999.5,
+              static_cast<double>(function_tolerance<DataType>()));
 }
 
 TYPED_TEST(FreeFunctionsTest, Maximum_TwoDimension)
@@ -494,15 +508,17 @@ TYPED_TEST(FreeFunctionsTest, Sum_OneDimension)
 
   DataType output;
   fetch::math::Sum(array1, output);
-  EXPECT_NEAR(static_cast<double>(output), 24.2, 1e-5);
+  EXPECT_NEAR(static_cast<double>(output), 24.2,
+              static_cast<double>(function_tolerance<DataType>()));
 
   array1(3) = 0;
   fetch::math::Sum(array1, output);
-  EXPECT_NEAR(static_cast<double>(output), 2.2, 1e-5);
+  EXPECT_NEAR(static_cast<double>(output), 2.2,
+              static_cast<double>(function_tolerance<DataType>()));
 
   array1(1) = 0;
   fetch::math::Sum(array1, output);
-  EXPECT_NEAR(static_cast<double>(output), 1., 1e-5);
+  EXPECT_NEAR(static_cast<double>(output), 1., static_cast<double>(function_tolerance<DataType>()));
 }
 
 TYPED_TEST(FreeFunctionsTest, ReduceSum_axis_0)
@@ -526,8 +542,10 @@ TYPED_TEST(FreeFunctionsTest, ReduceSum_axis_0)
   TypeParam output{{1, n_features}};
   fetch::math::ReduceSum(array1, 0, output);
 
-  EXPECT_NEAR(static_cast<double>(output(0, 0)), 17., 1e-5);
-  EXPECT_NEAR(static_cast<double>(output(0, 1)), 1019.5, 1e-5);
+  EXPECT_NEAR(static_cast<double>(output(0, 0)), 17.,
+              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output(0, 1)), 1019.5,
+              static_cast<double>(function_tolerance<DataType>()));
 }
 
 TYPED_TEST(FreeFunctionsTest, ReduceSum_axis_1)
@@ -550,10 +568,14 @@ TYPED_TEST(FreeFunctionsTest, ReduceSum_axis_1)
 
   TypeParam output{{n_data, 1}};
   fetch::math::ReduceSum(array1, 1, output);
-  EXPECT_NEAR(static_cast<double>(output(0, 0)), 4., 1e-5);
-  EXPECT_NEAR(static_cast<double>(output(1, 0)), 0., 1e-5);
-  EXPECT_NEAR(static_cast<double>(output(2, 0)), 1012., 1e-5);
-  EXPECT_NEAR(static_cast<double>(output(3, 0)), 20.5, 1e-5);
+  EXPECT_NEAR(static_cast<double>(output(0, 0)), 4.,
+              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output(1, 0)), 0.,
+              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output(2, 0)), 1012.,
+              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output(3, 0)), 20.5,
+              static_cast<double>(function_tolerance<DataType>()));
 }
 
 TYPED_TEST(FreeFunctionsTest, ReduceSum3D_axis_0)
@@ -581,14 +603,22 @@ TYPED_TEST(FreeFunctionsTest, ReduceSum3D_axis_0)
   fetch::math::ReduceSum(array1, 0, output);
 
   // Test values
-  EXPECT_NEAR(static_cast<double>(output(0, 0, 0)), 10., 1e-5);
-  EXPECT_NEAR(static_cast<double>(output(0, 1, 0)), 26., 1e-5);
-  EXPECT_NEAR(static_cast<double>(output(0, 2, 0)), 42., 1e-5);
-  EXPECT_NEAR(static_cast<double>(output(0, 3, 0)), 58., 1e-5);
-  EXPECT_NEAR(static_cast<double>(output(0, 0, 1)), 74., 1e-5);
-  EXPECT_NEAR(static_cast<double>(output(0, 1, 1)), 90., 1e-5);
-  EXPECT_NEAR(static_cast<double>(output(0, 2, 1)), 106., 1e-5);
-  EXPECT_NEAR(static_cast<double>(output(0, 3, 1)), 122., 1e-5);
+  EXPECT_NEAR(static_cast<double>(output(0, 0, 0)), 10.,
+              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output(0, 1, 0)), 26.,
+              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output(0, 2, 0)), 42.,
+              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output(0, 3, 0)), 58.,
+              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output(0, 0, 1)), 74.,
+              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output(0, 1, 1)), 90.,
+              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output(0, 2, 1)), 106.,
+              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output(0, 3, 1)), 122.,
+              static_cast<double>(function_tolerance<DataType>()));
 }
 
 TYPED_TEST(FreeFunctionsTest, ReduceSum3D_axis_2)
@@ -616,18 +646,30 @@ TYPED_TEST(FreeFunctionsTest, ReduceSum3D_axis_2)
   fetch::math::ReduceSum(array1, 2, output);
 
   // Test values
-  EXPECT_NEAR(static_cast<double>(output(0, 0, 0)), 18., 1e-5);
-  EXPECT_NEAR(static_cast<double>(output(1, 0, 0)), 20., 1e-5);
-  EXPECT_NEAR(static_cast<double>(output(2, 0, 0)), 22., 1e-5);
-  EXPECT_NEAR(static_cast<double>(output(3, 0, 0)), 24., 1e-5);
-  EXPECT_NEAR(static_cast<double>(output(0, 1, 0)), 26., 1e-5);
-  EXPECT_NEAR(static_cast<double>(output(1, 1, 0)), 28., 1e-5);
-  EXPECT_NEAR(static_cast<double>(output(2, 1, 0)), 30., 1e-5);
-  EXPECT_NEAR(static_cast<double>(output(3, 1, 0)), 32., 1e-5);
-  EXPECT_NEAR(static_cast<double>(output(0, 2, 0)), 34., 1e-5);
-  EXPECT_NEAR(static_cast<double>(output(1, 2, 0)), 36., 1e-5);
-  EXPECT_NEAR(static_cast<double>(output(2, 2, 0)), 38., 1e-5);
-  EXPECT_NEAR(static_cast<double>(output(3, 2, 0)), 40., 1e-5);
+  EXPECT_NEAR(static_cast<double>(output(0, 0, 0)), 18.,
+              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output(1, 0, 0)), 20.,
+              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output(2, 0, 0)), 22.,
+              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output(3, 0, 0)), 24.,
+              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output(0, 1, 0)), 26.,
+              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output(1, 1, 0)), 28.,
+              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output(2, 1, 0)), 30.,
+              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output(3, 1, 0)), 32.,
+              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output(0, 2, 0)), 34.,
+              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output(1, 2, 0)), 36.,
+              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output(2, 2, 0)), 38.,
+              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output(3, 2, 0)), 40.,
+              static_cast<double>(function_tolerance<DataType>()));
 }
 
 TYPED_TEST(FreeFunctionsTest, ReduceMean_axis_0)
@@ -651,8 +693,10 @@ TYPED_TEST(FreeFunctionsTest, ReduceMean_axis_0)
   TypeParam output{{1, n_features}};
   fetch::math::ReduceMean(array1, 0, output);
 
-  EXPECT_NEAR(static_cast<double>(output(0, 0)), 4.25, 1e-5);
-  EXPECT_NEAR(static_cast<double>(output(0, 1)), 254.875, 1e-5);
+  EXPECT_NEAR(static_cast<double>(output(0, 0)), 4.25,
+              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output(0, 1)), 254.875,
+              static_cast<double>(function_tolerance<DataType>()));
 }
 
 TYPED_TEST(FreeFunctionsTest, ReduceMean_axis_1)
@@ -675,10 +719,14 @@ TYPED_TEST(FreeFunctionsTest, ReduceMean_axis_1)
 
   TypeParam output{{n_data, 1}};
   fetch::math::ReduceMean(array1, 1, output);
-  EXPECT_NEAR(static_cast<double>(output(0, 0)), 2., 1e-5);
-  EXPECT_NEAR(static_cast<double>(output(1, 0)), 0., 1e-5);
-  EXPECT_NEAR(static_cast<double>(output(2, 0)), 506., 1e-5);
-  EXPECT_NEAR(static_cast<double>(output(3, 0)), 10.25, 1e-5);
+  EXPECT_NEAR(static_cast<double>(output(0, 0)), 2.,
+              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output(1, 0)), 0.,
+              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output(2, 0)), 506.,
+              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output(3, 0)), 10.25,
+              static_cast<double>(function_tolerance<DataType>()));
 }
 
 TYPED_TEST(FreeFunctionsTest, ReduceMean3D_axis_0)
@@ -706,14 +754,22 @@ TYPED_TEST(FreeFunctionsTest, ReduceMean3D_axis_0)
   fetch::math::ReduceMean(array1, 0, output);
 
   // Test values
-  EXPECT_NEAR(static_cast<double>(output(0, 0, 0)), 2.5, 1e-5);
-  EXPECT_NEAR(static_cast<double>(output(0, 1, 0)), 6.5, 1e-5);
-  EXPECT_NEAR(static_cast<double>(output(0, 2, 0)), 10.5, 1e-5);
-  EXPECT_NEAR(static_cast<double>(output(0, 3, 0)), 14.5, 1e-5);
-  EXPECT_NEAR(static_cast<double>(output(0, 0, 1)), 18.5, 1e-5);
-  EXPECT_NEAR(static_cast<double>(output(0, 1, 1)), 22.5, 1e-5);
-  EXPECT_NEAR(static_cast<double>(output(0, 2, 1)), 26.5, 1e-5);
-  EXPECT_NEAR(static_cast<double>(output(0, 3, 1)), 30.5, 1e-5);
+  EXPECT_NEAR(static_cast<double>(output(0, 0, 0)), 2.5,
+              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output(0, 1, 0)), 6.5,
+              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output(0, 2, 0)), 10.5,
+              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output(0, 3, 0)), 14.5,
+              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output(0, 0, 1)), 18.5,
+              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output(0, 1, 1)), 22.5,
+              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output(0, 2, 1)), 26.5,
+              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output(0, 3, 1)), 30.5,
+              static_cast<double>(function_tolerance<DataType>()));
 }
 
 TYPED_TEST(FreeFunctionsTest, ReduceMean3D_axis_2)
@@ -741,18 +797,30 @@ TYPED_TEST(FreeFunctionsTest, ReduceMean3D_axis_2)
   fetch::math::ReduceMean(array1, 2, output);
 
   // Test values
-  EXPECT_NEAR(static_cast<double>(output(0, 0, 0)), 9., 1e-5);
-  EXPECT_NEAR(static_cast<double>(output(1, 0, 0)), 10., 1e-5);
-  EXPECT_NEAR(static_cast<double>(output(2, 0, 0)), 11., 1e-5);
-  EXPECT_NEAR(static_cast<double>(output(3, 0, 0)), 12., 1e-5);
-  EXPECT_NEAR(static_cast<double>(output(0, 1, 0)), 13., 1e-5);
-  EXPECT_NEAR(static_cast<double>(output(1, 1, 0)), 14., 1e-5);
-  EXPECT_NEAR(static_cast<double>(output(2, 1, 0)), 15., 1e-5);
-  EXPECT_NEAR(static_cast<double>(output(3, 1, 0)), 16., 1e-5);
-  EXPECT_NEAR(static_cast<double>(output(0, 2, 0)), 17., 1e-5);
-  EXPECT_NEAR(static_cast<double>(output(1, 2, 0)), 18., 1e-5);
-  EXPECT_NEAR(static_cast<double>(output(2, 2, 0)), 19., 1e-5);
-  EXPECT_NEAR(static_cast<double>(output(3, 2, 0)), 20., 1e-5);
+  EXPECT_NEAR(static_cast<double>(output(0, 0, 0)), 9.,
+              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output(1, 0, 0)), 10.,
+              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output(2, 0, 0)), 11.,
+              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output(3, 0, 0)), 12.,
+              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output(0, 1, 0)), 13.,
+              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output(1, 1, 0)), 14.,
+              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output(2, 1, 0)), 15.,
+              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output(3, 1, 0)), 16.,
+              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output(0, 2, 0)), 17.,
+              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output(1, 2, 0)), 18.,
+              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output(2, 2, 0)), 19.,
+              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output(3, 2, 0)), 20.,
+              static_cast<double>(function_tolerance<DataType>()));
 }
 
 TYPED_TEST(FreeFunctionsTest, Dot)
@@ -789,18 +857,30 @@ TYPED_TEST(FreeFunctionsTest, Dot)
   TypeParam output{{matrix_one_width, matrix_two_height}};
   fetch::math::Dot(array1, array2, output);
 
-  EXPECT_NEAR(static_cast<double>(output(0, 0)), 3, 1e-5);
-  EXPECT_NEAR(static_cast<double>(output(0, 1)), 9, 1e-5);
-  EXPECT_NEAR(static_cast<double>(output(0, 2)), 15, 1e-5);
-  EXPECT_NEAR(static_cast<double>(output(0, 3)), 21, 1e-5);
-  EXPECT_NEAR(static_cast<double>(output(1, 0)), 4, 1e-5);
-  EXPECT_NEAR(static_cast<double>(output(1, 1)), 14, 1e-5);
-  EXPECT_NEAR(static_cast<double>(output(1, 2)), 24, 1e-5);
-  EXPECT_NEAR(static_cast<double>(output(1, 3)), 34, 1e-5);
-  EXPECT_NEAR(static_cast<double>(output(2, 0)), 5, 1e-5);
-  EXPECT_NEAR(static_cast<double>(output(2, 1)), 19, 1e-5);
-  EXPECT_NEAR(static_cast<double>(output(2, 2)), 33, 1e-5);
-  EXPECT_NEAR(static_cast<double>(output(2, 3)), 47, 1e-5);
+  EXPECT_NEAR(static_cast<double>(output(0, 0)), 3,
+              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output(0, 1)), 9,
+              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output(0, 2)), 15,
+              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output(0, 3)), 21,
+              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output(1, 0)), 4,
+              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output(1, 1)), 14,
+              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output(1, 2)), 24,
+              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output(1, 3)), 34,
+              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output(2, 0)), 5,
+              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output(2, 1)), 19,
+              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output(2, 2)), 33,
+              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output(2, 3)), 47,
+              static_cast<double>(function_tolerance<DataType>()));
 }
 
 TYPED_TEST(FreeFunctionsTest, DotTranspose)
@@ -837,18 +917,30 @@ TYPED_TEST(FreeFunctionsTest, DotTranspose)
   TypeParam output{{matrix_one_width, matrix_two_width}};
   fetch::math::DotTranspose(array1, array2, output);
 
-  EXPECT_NEAR(static_cast<double>(output(0, 0)), 12, 1e-5);
-  EXPECT_NEAR(static_cast<double>(output(0, 1)), 15, 1e-5);
-  EXPECT_NEAR(static_cast<double>(output(0, 2)), 18, 1e-5);
-  EXPECT_NEAR(static_cast<double>(output(0, 3)), 21, 1e-5);
-  EXPECT_NEAR(static_cast<double>(output(1, 0)), 16, 1e-5);
-  EXPECT_NEAR(static_cast<double>(output(1, 1)), 21, 1e-5);
-  EXPECT_NEAR(static_cast<double>(output(1, 2)), 26, 1e-5);
-  EXPECT_NEAR(static_cast<double>(output(1, 3)), 31, 1e-5);
-  EXPECT_NEAR(static_cast<double>(output(2, 0)), 20, 1e-5);
-  EXPECT_NEAR(static_cast<double>(output(2, 1)), 27, 1e-5);
-  EXPECT_NEAR(static_cast<double>(output(2, 2)), 34, 1e-5);
-  EXPECT_NEAR(static_cast<double>(output(2, 3)), 41, 1e-5);
+  EXPECT_NEAR(static_cast<double>(output(0, 0)), 12,
+              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output(0, 1)), 15,
+              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output(0, 2)), 18,
+              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output(0, 3)), 21,
+              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output(1, 0)), 16,
+              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output(1, 1)), 21,
+              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output(1, 2)), 26,
+              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output(1, 3)), 31,
+              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output(2, 0)), 20,
+              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output(2, 1)), 27,
+              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output(2, 2)), 34,
+              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output(2, 3)), 41,
+              static_cast<double>(function_tolerance<DataType>()));
 }
 
 TYPED_TEST(FreeFunctionsTest, TransposeDot)
@@ -885,18 +977,30 @@ TYPED_TEST(FreeFunctionsTest, TransposeDot)
   TypeParam output{{matrix_one_height, matrix_two_height}};
   fetch::math::TransposeDot(array1, array2, output);
 
-  EXPECT_NEAR(static_cast<double>(output(0, 0)), 1, 1e-5);
-  EXPECT_NEAR(static_cast<double>(output(0, 1)), 3, 1e-5);
-  EXPECT_NEAR(static_cast<double>(output(0, 2)), 5, 1e-5);
-  EXPECT_NEAR(static_cast<double>(output(0, 3)), 7, 1e-5);
-  EXPECT_NEAR(static_cast<double>(output(1, 0)), 3, 1e-5);
-  EXPECT_NEAR(static_cast<double>(output(1, 1)), 13, 1e-5);
-  EXPECT_NEAR(static_cast<double>(output(1, 2)), 23, 1e-5);
-  EXPECT_NEAR(static_cast<double>(output(1, 3)), 33, 1e-5);
-  EXPECT_NEAR(static_cast<double>(output(2, 0)), 5, 1e-5);
-  EXPECT_NEAR(static_cast<double>(output(2, 1)), 23, 1e-5);
-  EXPECT_NEAR(static_cast<double>(output(2, 2)), 41, 1e-5);
-  EXPECT_NEAR(static_cast<double>(output(2, 3)), 59, 1e-5);
+  EXPECT_NEAR(static_cast<double>(output(0, 0)), 1,
+              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output(0, 1)), 3,
+              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output(0, 2)), 5,
+              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output(0, 3)), 7,
+              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output(1, 0)), 3,
+              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output(1, 1)), 13,
+              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output(1, 2)), 23,
+              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output(1, 3)), 33,
+              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output(2, 0)), 5,
+              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output(2, 1)), 23,
+              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output(2, 2)), 41,
+              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output(2, 3)), 59,
+              static_cast<double>(function_tolerance<DataType>()));
 }
 
 TYPED_TEST(FreeFunctionsTest, DynamicStitch)
@@ -924,10 +1028,16 @@ TYPED_TEST(FreeFunctionsTest, DynamicStitch)
 
   TypeParam output{{n_data}};
   fetch::math::DynamicStitch(output, indicies, data);
-  EXPECT_NEAR(static_cast<double>(output(0)), 7., 1e-5);
-  EXPECT_NEAR(static_cast<double>(output(1)), -6., 1e-5);
-  EXPECT_NEAR(static_cast<double>(output(2)), 5., 1e-5);
-  EXPECT_NEAR(static_cast<double>(output(3)), -4., 1e-5);
-  EXPECT_NEAR(static_cast<double>(output(4)), 3., 1e-5);
-  EXPECT_NEAR(static_cast<double>(output(5)), -2., 1e-5);
+  EXPECT_NEAR(static_cast<double>(output(0)), 7.,
+              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output(1)), -6.,
+              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output(2)), 5.,
+              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output(3)), -4.,
+              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output(4)), 3.,
+              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output(5)), -2.,
+              static_cast<double>(function_tolerance<DataType>()));
 }

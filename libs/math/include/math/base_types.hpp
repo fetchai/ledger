@@ -79,7 +79,7 @@ fetch::meta::IfIsFixedPoint<T, T> static function_tolerance()
 template <typename T>
 fetch::meta::IfIsFloat<T, T> static function_tolerance()
 {
-  return T(1e-7);
+  return T(1e-6);
 }
 
 }  // namespace math

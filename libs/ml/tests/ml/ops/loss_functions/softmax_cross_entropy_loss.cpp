@@ -135,7 +135,8 @@ TYPED_TEST(SoftmaxCrossEntropyTest, trivial_one_dimensional_backward_test)
   EXPECT_TRUE(op.Backward({std::make_shared<TypeParam>(data1), std::make_shared<TypeParam>(data2)},
                           error_signal)
                   .at(0)
-                  .AllClose(gt, DataType(1e-5), DataType(1e-5)));
+                  .AllClose(gt, fetch::math::function_tolerance<DataType>(),
+                            fetch::math::function_tolerance<DataType>()));
 }
 
 TYPED_TEST(SoftmaxCrossEntropyTest, backward_test)
@@ -194,5 +195,6 @@ TYPED_TEST(SoftmaxCrossEntropyTest, backward_test)
   EXPECT_TRUE(op.Backward({std::make_shared<TypeParam>(data1), std::make_shared<TypeParam>(data2)},
                           error_signal)
                   .at(0)
-                  .AllClose(gt, DataType(1e-7), DataType(1e-7)));
+                  .AllClose(gt, fetch::math::function_tolerance<DataType>(),
+                            fetch::math::function_tolerance<DataType>()));
 }
