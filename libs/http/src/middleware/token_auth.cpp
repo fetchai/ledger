@@ -44,7 +44,7 @@ void TokenAuthenticationInterface::operator()(HTTPRequest &req)
       req.AddAuthentication(token_name, authentication_level());
     }
   }
-};
+}
 
 bool SimpleTokenAuthentication::ValidateToken(byte_array::ConstByteArray const &token)
 {
