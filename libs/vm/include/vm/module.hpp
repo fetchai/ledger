@@ -77,7 +77,8 @@ public:
     {
       TypeIndex const type_index__ = type_index_;
 
-      module_->deserialization_constructors_.insert({type_index__, {constructor}});
+      DefaultConstructorHandler h{constructor};
+      module_->deserialization_constructors_.insert({type_index__, std::move(h)});
 
       return *this;
     }
