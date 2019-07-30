@@ -19,7 +19,7 @@
 #include "math/tensor.hpp"
 #include "ml/graph.hpp"
 #include "ml/layers/fully_connected.hpp"
-#include "ml/layers/self_attention.hpp"
+#include "ml/layers/convolution_1d.hpp"
 #include "ml/ops/activations/relu.hpp"
 #include "ml/ops/multiply.hpp"
 #include "ml/ops/placeholder.hpp"
@@ -93,8 +93,8 @@ TYPED_TEST(GraphTest, no_such_node_test)  // Use the class as a Node
   fetch::ml::Graph<ArrayType> g;
 
   g.template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>("Input", {});
-  g.template AddNode<fetch::ml::layers::SelfAttention<ArrayType>>("SelfAttention", {"Input"}, 50u,
-                                                                  42u, 10u);
+  g.template AddNode<fetch::ml::layers::Convolution1D<ArrayType>>("Convolution1D", {"Input"}, 3u,
+                                                                  3u, 3u, 3u);
 
   ArrayType data(std::vector<SizeType>({5, 10}));
   g.SetInput("Input", data);
