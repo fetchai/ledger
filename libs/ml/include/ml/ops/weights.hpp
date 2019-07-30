@@ -39,7 +39,7 @@ namespace ops {
  */
 enum class WeightsInitialisation
 {
-	ONES,
+  ONES,
   ZEROS,
   XAVIER_GLOROT,
   XAVIER_FAN_IN,
@@ -224,11 +224,11 @@ public:
     {
     case WeightsInitialisation::ONES:
     {
-	    for (std::uint64_t j = 0; j < array.data().size(); ++j)
-	    {
-		    array.data()[j] = typename ArrayType::Type(1);
-	    }
-	    break;
+      for (std::uint64_t j = 0; j < array.data().size(); ++j)
+      {
+        array.data()[j] = typename ArrayType::Type(1);
+      }
+      break;
     }
     case WeightsInitialisation::ZEROS:
     {
