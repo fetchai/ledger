@@ -76,7 +76,7 @@ public:
 
   static_assert(E_SIMD_COUNT == (1ull << E_LOG_SIMD_COUNT), "type does not fit in SIMD");
 
-  constexpr VectorSlice(PointerType ptr = nullptr, std::size_t n = 0) noexcept
+  explicit constexpr VectorSlice(PointerType ptr = nullptr, std::size_t n = 0) noexcept
     : pointer_(ptr)
     , size_(n)
   {}
@@ -221,8 +221,8 @@ public:
   }
 
 protected:
-  PointerType pointer_;
-  SizeType    size_;
+  PointerType pointer_{nullptr};
+  SizeType    size_{0};
 };
 
 }  // namespace memory
