@@ -577,8 +577,8 @@ TYPED_TEST(FreeFunctionsTest, ReduceMean_axis_0)
   TypeParam output{{1, n_features}};
   fetch::math::ReduceMean(array1, 0, output);
 
-  EXPECT_NEAR(static_cast<double>(output(0, 0)), 8.5, 1e-5);
-  EXPECT_NEAR(static_cast<double>(output(0, 1)), 509.75, 1e-5);
+  EXPECT_NEAR(static_cast<double>(output(0, 0)), 4.25, 1e-5);
+  EXPECT_NEAR(static_cast<double>(output(0, 1)), 254.875, 1e-5);
 }
 
 TYPED_TEST(FreeFunctionsTest, ReduceMean_axis_1)
@@ -601,10 +601,10 @@ TYPED_TEST(FreeFunctionsTest, ReduceMean_axis_1)
 
   TypeParam output{{n_data, 1}};
   fetch::math::ReduceMean(array1, 1, output);
-  EXPECT_NEAR(static_cast<double>(output(0, 0)), 1., 1e-5);
+  EXPECT_NEAR(static_cast<double>(output(0, 0)), 2., 1e-5);
   EXPECT_NEAR(static_cast<double>(output(1, 0)), 0., 1e-5);
-  EXPECT_NEAR(static_cast<double>(output(2, 0)), 253., 1e-5);
-  EXPECT_NEAR(static_cast<double>(output(3, 0)), 5.125, 1e-5);
+  EXPECT_NEAR(static_cast<double>(output(2, 0)), 506., 1e-5);
+  EXPECT_NEAR(static_cast<double>(output(3, 0)), 10.25, 1e-5);
 }
 
 TYPED_TEST(FreeFunctionsTest, Dot)
