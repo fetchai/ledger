@@ -269,7 +269,14 @@ bool Analyser::Analyse(BlockNodePtr const &root, std::vector<std::string> &error
   root_ = root;
   blocks_.clear();
   loops_.clear();
-  function_ = nullptr;
+  state_constructor_ =
+      function_map_.Find(BuildUniqueId(state_type_, CONSTRUCTOR, {string_type_}, state_type_));
+  sharded_state_constructor_ = function_map_.Find(
+      BuildUniqueId(sharded_state_type_, CONSTRUCTOR, {string_type_}, sharded_state_type_));
+  assert(state_constructor_ && sharded_state_constructor_);
+  state_definitions_.Clear();
+  function_     = nullptr;
+  use_any_node_ = nullptr;
   errors_.clear();
 
   root_->symbols = CreateSymbolTable();
@@ -284,7 +291,11 @@ bool Analyser::Analyse(BlockNodePtr const &root, std::vector<std::string> &error
     root_  = nullptr;
     blocks_.clear();
     loops_.clear();
-    function_ = nullptr;
+    state_constructor_         = nullptr;
+    sharded_state_constructor_ = nullptr;
+    state_definitions_.Clear();
+    function_     = nullptr;
+    use_any_node_ = nullptr;
     errors_.clear();
     return false;
   }
@@ -294,7 +305,11 @@ bool Analyser::Analyse(BlockNodePtr const &root, std::vector<std::string> &error
   root_ = nullptr;
   blocks_.clear();
   loops_.clear();
-  function_ = nullptr;
+  state_constructor_         = nullptr;
+  sharded_state_constructor_ = nullptr;
+  state_definitions_.Clear();
+  function_     = nullptr;
+  use_any_node_ = nullptr;
 
   if (!errors_.empty())
   {
@@ -324,6 +339,11 @@ void Analyser::BuildBlock(BlockNodePtr const &block_node)
     case NodeKind::File:
     {
       BuildFile(ConvertToBlockNodePtr(child));
+      break;
+    }
+    case NodeKind::PersistentStatement:
+    {
+      BuildPersistentStatement(child);
       break;
     }
     case NodeKind::FunctionDefinitionStatement:
@@ -359,6 +379,55 @@ void Analyser::BuildFile(BlockNodePtr const &file_node)
 {
   file_node->symbols = CreateSymbolTable();
   BuildBlock(file_node);
+}
+
+void Analyser::BuildPersistentStatement(NodePtr const &node)
+{
+  ExpressionNodePtr  state_name_node = ConvertToExpressionNodePtr(node->children[0]);
+  ExpressionNodePtr  modifier_node   = ConvertToExpressionNodePtr(node->children[1]);
+  ExpressionNodePtr  type_node       = ConvertToExpressionNodePtr(node->children[2]);
+  std::string const &state_name      = state_name_node->text;
+  if (state_name == "any")
+  {
+    AddError(state_name_node->line, "invalid state name");
+    return;
+  }
+  if (state_definitions_.Find(state_name))
+  {
+    AddError(state_name_node->line, "state '" + state_name + "' is already defined");
+    return;
+  }
+  TypePtr managed_type = FindType(type_node);
+  if (managed_type == nullptr)
+  {
+    AddError(type_node->line, "unknown type '" + type_node->text + "'");
+    return;
+  }
+  TypePtr template_type;
+  if (modifier_node && (modifier_node->text == "sharded"))
+  {
+    template_type = sharded_state_type_;
+  }
+  else
+  {
+    template_type = state_type_;
+  }
+  std::string instantation_name = template_type->name + "<" + managed_type->name + ">";
+  TypePtr     instantation_type;
+  auto        symbol = SearchSymbols(instantation_name);
+  if (symbol)
+  {
+    // The instantiation already exists
+    instantation_type = ConvertToTypePtr(symbol);
+  }
+  else
+  {
+    // The instantiation doesn't already exist, so create it now
+    instantation_type = InternalCreateInstantiationType(TypeKind::UserDefinedInstantiation,
+                                                        template_type, {managed_type});
+    root_->symbols->Add(instantation_type);
+  }
+  state_definitions_.Add(state_name, instantation_type);
 }
 
 void Analyser::BuildFunctionDefinition(BlockNodePtr const &parent_block_node,
@@ -489,6 +558,11 @@ void Analyser::AnnotateBlock(BlockNodePtr const &block_node)
       AnnotateFile(ConvertToBlockNodePtr(child));
       break;
     }
+    case NodeKind::PersistentStatement:
+    {
+      // Nothing to do here
+      break;
+    }
     case NodeKind::FunctionDefinitionStatement:
     {
       AnnotateFunctionDefinitionStatement(ConvertToBlockNodePtr(child));
@@ -507,6 +581,16 @@ void Analyser::AnnotateBlock(BlockNodePtr const &block_node)
     case NodeKind::IfStatement:
     {
       AnnotateIfStatement(child);
+      break;
+    }
+    case NodeKind::UseStatement:
+    {
+      AnnotateUseStatement(block_node, child);
+      break;
+    }
+    case NodeKind::UseAnyStatement:
+    {
+      AnnotateUseAnyStatement(block_node, child);
       break;
     }
     case NodeKind::VarDeclarationStatement:
@@ -562,6 +646,39 @@ void Analyser::AnnotateBlock(BlockNodePtr const &block_node)
     }
     }  // switch
   }
+
+  for (auto const &it : block_node->symbols->map)
+  {
+    SymbolPtr const &symbol = it.second;
+    if (!symbol->IsVariable())
+    {
+      continue;
+    }
+    VariablePtr variable = ConvertToVariablePtr(symbol);
+    if (variable->variable_kind == VariableKind::Use)
+    {
+      if (!variable->referenced)
+      {
+        AddError(block_node->block_terminator_line,
+                 "state variable '" + variable->name + "' is not referenced in block");
+      }
+    }
+    else if (variable->variable_kind == VariableKind::UseAny)
+    {
+      if (variable->referenced)
+      {
+        ExpressionNodePtr child =
+            CreateExpressionNode(NodeKind::Identifier, variable->name, use_any_node_->line);
+        child->variable         = variable;
+        FunctionPtr constructor = (variable->type->template_type == sharded_state_type_)
+                                      ? sharded_state_constructor_
+                                      : state_constructor_;
+        child->function = constructor;
+        use_any_node_->children.push_back(child);
+      }
+    }
+  }
+
   if (is_loop)
   {
     loops_.pop_back();
@@ -578,7 +695,8 @@ void Analyser::AnnotateFunctionDefinitionStatement(BlockNodePtr const &function_
 {
   ExpressionNodePtr identifier_node =
       ConvertToExpressionNodePtr(function_definition_node->children[1]);
-  function_ = identifier_node->function;
+  function_     = identifier_node->function;
+  use_any_node_ = nullptr;
   AnnotateBlock(function_definition_node);
   if (errors_.size() == 0)
   {
@@ -591,7 +709,8 @@ void Analyser::AnnotateFunctionDefinitionStatement(BlockNodePtr const &function_
       }
     }
   }
-  function_ = nullptr;
+  function_     = nullptr;
+  use_any_node_ = nullptr;
 }
 
 void Analyser::AnnotateWhileStatement(BlockNodePtr const &while_statement_node)
@@ -667,6 +786,81 @@ void Analyser::AnnotateIfStatement(NodePtr const &if_statement_node)
   }
 }
 
+void Analyser::AnnotateUseStatement(BlockNodePtr const &parent_block_node, NodePtr const &node)
+{
+  ExpressionNodePtr state_name_node = ConvertToExpressionNodePtr(node->children[0]);
+  NodePtr           list_node       = node->children[1];
+  ExpressionNodePtr alias_name_node = ConvertToExpressionNodePtr(node->children[2]);
+  ExpressionNodePtr name_node       = alias_name_node ? alias_name_node : state_name_node;
+  TypePtr           type            = state_definitions_.Find(state_name_node->text);
+  if (!type)
+  {
+    AddError(state_name_node->line,
+             "unable to find state definition for '" + state_name_node->text + "'");
+    return;
+  }
+  if (list_node)
+  {
+    if (type->template_type != sharded_state_type_)
+    {
+      AddError(list_node->line, "key list can only be used with a sharded state");
+      return;
+    }
+    for (auto const &c : list_node->children)
+    {
+      ExpressionNodePtr child = ConvertToExpressionNodePtr(c);
+      if (!AnnotateExpression(child))
+      {
+        return;
+      }
+      if ((child->type != string_type_) && (child->type != address_type_))
+      {
+        AddError(child->line, "key must be String or Address type");
+        return;
+      }
+    }
+  }
+  std::string variable_name = name_node->text;
+  SymbolPtr   symbol        = parent_block_node->symbols->Find(variable_name);
+  if (symbol)
+  {
+    AddError(name_node->line, "symbol '" + variable_name + "' is already defined");
+    return;
+  }
+  VariablePtr variable = CreateVariable(VariableKind::Use, variable_name);
+  variable->type       = type;
+  parent_block_node->symbols->Add(variable);
+  FunctionPtr constructor = (type->template_type == sharded_state_type_)
+                                ? sharded_state_constructor_
+                                : state_constructor_;
+  name_node->variable = variable;
+  name_node->function = constructor;
+}
+
+void Analyser::AnnotateUseAnyStatement(BlockNodePtr const &parent_block_node, NodePtr const &node)
+{
+  if (use_any_node_)
+  {
+    AddError(node->line, "duplicate use-any statement");
+    return;
+  }
+  use_any_node_ = node;
+  for (auto &it : state_definitions_.map)
+  {
+    std::string const &name   = it.first;
+    TypePtr const &    type   = it.second;
+    SymbolPtr          symbol = parent_block_node->symbols->Find(name);
+    if (symbol)
+    {
+      AddError(node->line, "symbol '" + name + "' is already defined");
+      return;
+    }
+    VariablePtr variable = CreateVariable(VariableKind::UseAny, name);
+    variable->type       = type;
+    parent_block_node->symbols->Add(variable);
+  }
+}
+
 void Analyser::AnnotateVarStatement(BlockNodePtr const &parent_block_node,
                                     NodePtr const &     var_statement_node)
 {
@@ -675,11 +869,11 @@ void Analyser::AnnotateVarStatement(BlockNodePtr const &parent_block_node,
   SymbolPtr          symbol          = parent_block_node->symbols->Find(name);
   if (symbol)
   {
-    AddError(identifier_node->line, "variable '" + name + "' is already defined");
+    AddError(identifier_node->line, "symbol '" + name + "' is already defined");
     return;
   }
   // Note: variable is created with no type
-  VariablePtr variable = CreateVariable(VariableKind::Local, name);
+  VariablePtr variable = CreateVariable(VariableKind::Var, name);
   parent_block_node->symbols->Add(variable);
   identifier_node->variable = variable;
   if (var_statement_node->node_kind == NodeKind::VarDeclarationStatement)
@@ -1403,6 +1597,12 @@ bool Analyser::AnnotateIndexOp(ExpressionNodePtr const &node)
     return false;
   }
 
+  if (lhs->type->IsPrimitive())
+  {
+    AddError(lhs->line, "primitive type '" + lhs->type->name + "' does not support index operator");
+    return false;
+  }
+
   TypePtr type;
   if (lhs->type->IsInstantiation())
   {
@@ -1518,6 +1718,7 @@ bool Analyser::AnnotateDotOp(ExpressionNodePtr const &node)
              "primitive type '" + lhs->type->name + "' does not support member-access operator");
     return false;
   }
+
   SymbolPtr member_symbol;
   if (lhs->type->IsInstantiation())
   {
@@ -2065,6 +2266,7 @@ void Analyser::SetVariableExpression(ExpressionNodePtr const &node, VariablePtr 
   node->expression_kind = ExpressionKind::Variable;
   node->variable        = variable;
   node->type            = variable->type;
+  variable->referenced  = true;
 }
 
 void Analyser::SetLVExpression(ExpressionNodePtr const &node, TypePtr const &type)
