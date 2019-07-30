@@ -18,11 +18,12 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/byte_array.hpp"
-#include "core/serializers/stl_types.hpp"
+#include "core/serializers/base_types.hpp"
 #include "ledger/chain/address.hpp"
 #include "ledger/chain/consensus/proof_of_work.hpp"
 #include "ledger/chain/digest.hpp"
 #include "ledger/chain/transaction_layout.hpp"
+#include "ledger/chain/transaction_layout_rpc_serializers.hpp"
 #include "ledger/dag/dag_epoch.hpp"
 
 #include <cstdint>
@@ -83,61 +84,91 @@ public:
   void        UpdateDigest();
   void        UpdateTimestamp();
 };
-
-/**
- * Serializer for the block body
- *
- * @tparam T The serializer type
- * @param serializer The reference to the serializer
- * @param body The reference to the body to be serialised
- */
-template <typename T>
-void Serialize(T &serializer, Block::Body const &body)
-{
-  serializer << body.hash << body.previous_hash << body.merkle_hash << body.block_number
-             << body.miner << body.log2_num_lanes << body.slices << body.dag_epoch
-             << body.timestamp;
-}
-
-/**
- * Deserializer for the block body
- *
- * @tparam T The serializer type
- * @param serializer The reference to the serializer
- * @param body The reference to the output body to be populated
- */
-template <typename T>
-void Deserialize(T &serializer, Block::Body &body)
-{
-  serializer >> body.hash >> body.previous_hash >> body.merkle_hash >> body.block_number >>
-      body.miner >> body.log2_num_lanes >> body.slices >> body.dag_epoch >> body.timestamp;
-}
-
-/**
- * Serializer for the block
- *
- * @tparam T The serializer type
- * @param serializer The reference to hte serializer
- * @param block The reference to the block to be serialised
- */
-template <typename T>
-inline void Serialize(T &serializer, Block const &block)
-{
-  serializer << block.body << block.nonce << block.proof << block.weight << block.total_weight;
-}
-
-/**
- * Deserializer for the block
- *
- * @tparam T The serializer type
- * @param serializer The reference to the serializer
- * @param block The reference to the output block to be populated
- */
-template <typename T>
-inline void Deserialize(T &serializer, Block &block)
-{
-  serializer >> block.body >> block.nonce >> block.proof >> block.weight >> block.total_weight;
-}
-
 }  // namespace ledger
+
+namespace serializers {
+
+template <typename D>
+struct MapSerializer<ledger::Block::Body, D>
+{
+public:
+  using Type       = ledger::Block::Body;
+  using DriverType = D;
+
+  static uint8_t const HASH           = 1;
+  static uint8_t const PREVIOUS_HASH  = 2;
+  static uint8_t const MERKLE_HASH    = 3;
+  static uint8_t const BLOCK_NUMBER   = 4;
+  static uint8_t const MINER          = 5;
+  static uint8_t const LOG2_NUM_LANES = 6;
+  static uint8_t const SLICES         = 7;
+  static uint8_t const DAG_EPOCH      = 8;
+  static uint8_t const TIMESTAMP      = 9;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &body)
+  {
+    auto map = map_constructor(9);
+    map.Append(HASH, body.hash);
+    map.Append(PREVIOUS_HASH, body.previous_hash);
+    map.Append(MERKLE_HASH, body.merkle_hash);
+    map.Append(BLOCK_NUMBER, body.block_number);
+    map.Append(MINER, body.miner);
+    map.Append(LOG2_NUM_LANES, body.log2_num_lanes);
+    map.Append(SLICES, body.slices);
+    map.Append(DAG_EPOCH, body.dag_epoch);
+    map.Append(TIMESTAMP, body.timestamp);
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &body)
+  {
+    map.ExpectKeyGetValue(HASH, body.hash);
+    map.ExpectKeyGetValue(PREVIOUS_HASH, body.previous_hash);
+    map.ExpectKeyGetValue(MERKLE_HASH, body.merkle_hash);
+    map.ExpectKeyGetValue(BLOCK_NUMBER, body.block_number);
+    map.ExpectKeyGetValue(MINER, body.miner);
+    map.ExpectKeyGetValue(LOG2_NUM_LANES, body.log2_num_lanes);
+    map.ExpectKeyGetValue(SLICES, body.slices);
+    map.ExpectKeyGetValue(DAG_EPOCH, body.dag_epoch);
+    map.ExpectKeyGetValue(TIMESTAMP, body.timestamp);
+  }
+};
+
+template <typename D>
+struct MapSerializer<ledger::Block, D>
+{
+public:
+  using Type       = ledger::Block;
+  using DriverType = D;
+
+  static uint8_t const BODY         = 1;
+  static uint8_t const NONCE        = 2;
+  static uint8_t const PROOF        = 3;
+  static uint8_t const WEIGHT       = 4;
+  static uint8_t const TOTAL_WEIGHT = 5;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &block)
+  {
+    auto map = map_constructor(5);
+    map.Append(BODY, block.body);
+    map.Append(NONCE, block.nonce);
+    map.Append(PROOF, block.proof);
+    map.Append(WEIGHT, block.weight);
+    map.Append(TOTAL_WEIGHT, block.total_weight);
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &block)
+  {
+    map.ExpectKeyGetValue(BODY, block.body);
+    map.ExpectKeyGetValue(NONCE, block.nonce);
+    map.ExpectKeyGetValue(PROOF, block.proof);
+    map.ExpectKeyGetValue(WEIGHT, block.weight);
+    map.ExpectKeyGetValue(TOTAL_WEIGHT, block.total_weight);
+  }
+};
+
+}  // namespace serializers
 }  // namespace fetch

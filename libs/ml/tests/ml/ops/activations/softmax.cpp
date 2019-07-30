@@ -43,8 +43,8 @@ TYPED_TEST(SoftmaxTest, forward_test)
       "2.6456e-07");
 
   fetch::ml::ops::Softmax<ArrayType> op(1);
-  ArrayType                          prediction(op.ComputeOutputShape({data}));
-  op.Forward({data}, prediction);
+  ArrayType prediction(op.ComputeOutputShape({std::make_shared<const ArrayType>(data)}));
+  op.Forward({std::make_shared<const ArrayType>(data)}, prediction);
 
   // test correct values
   ASSERT_TRUE(prediction.AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
@@ -71,8 +71,8 @@ TYPED_TEST(SoftmaxTest, forward_3d_tensor_axis_0_test)
   }
 
   fetch::ml::ops::Softmax<ArrayType> op{0};
-  ArrayType                          prediction(op.ComputeOutputShape({data}));
-  op.Forward({data}, prediction);
+  ArrayType prediction(op.ComputeOutputShape({std::make_shared<const ArrayType>(data)}));
+  op.Forward({std::make_shared<const ArrayType>(data)}, prediction);
 
   // test correct values
   ASSERT_TRUE(prediction.AllClose(gt, static_cast<DataType>(1e-4), static_cast<DataType>(1e-4)));
@@ -90,7 +90,7 @@ TYPED_TEST(SoftmaxTest, backward_test)
       "-3.0965e-08");
 
   fetch::ml::ops::Softmax<ArrayType> op(1);
-  std::vector<ArrayType>             prediction = op.Backward({data}, error);
+  std::vector<ArrayType> prediction = op.Backward({std::make_shared<const ArrayType>(data)}, error);
 
   // test correct values
   ASSERT_TRUE(prediction[0].AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
@@ -119,7 +119,7 @@ TYPED_TEST(SoftmaxTest, backward_3d_tensor_axis_0_test)
   }
 
   fetch::ml::ops::Softmax<ArrayType> op{0};
-  std::vector<ArrayType>             prediction = op.Backward({data}, error);
+  std::vector<ArrayType> prediction = op.Backward({std::make_shared<const ArrayType>(data)}, error);
 
   // test correct values
   ASSERT_TRUE(prediction[0].AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));

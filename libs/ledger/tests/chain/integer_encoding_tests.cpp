@@ -24,11 +24,11 @@
 namespace {
 
 using fetch::byte_array::FromHex;
-using fetch::serializers::ByteArrayBuffer;
+using fetch::serializers::MsgPackSerializer;
 using fetch::ledger::detail::EncodeInteger;
 using fetch::ledger::detail::DecodeInteger;
 
-ByteArrayBuffer CreateEncodedBuffer(char const *hex)
+MsgPackSerializer CreateEncodedBuffer(char const *hex)
 {
   return {FromHex(hex)};
 }

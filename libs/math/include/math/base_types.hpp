@@ -82,5 +82,11 @@ fetch::meta::IfIsFloat<T, T> static function_tolerance()
   return T(1e-7);
 }
 
+template <typename T>
+fetch::meta::IfIsInteger<T, T> static function_tolerance()
+{
+  return T(0);
+}
+
 }  // namespace math
 }  // namespace fetch

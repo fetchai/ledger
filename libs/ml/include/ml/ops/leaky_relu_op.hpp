@@ -47,10 +47,10 @@ public:
   void Forward(VecTensorType const &inputs, ArrayType &output) override
   {
     assert(inputs.size() == 2);
-    assert(inputs.at(0).get().shape() == output.shape());
-    assert(inputs.at(1).get().shape().at(inputs.at(1).get().shape().size() - 1) == 1);
+    assert(inputs.at(0)->shape() == output.shape());
+    assert(inputs.at(1)->shape().at(inputs.at(1)->shape().size() - 1) == 1);
 
-    fetch::math::LeakyRelu(inputs.at(0).get(), inputs.at(1).get(), output);
+    fetch::math::LeakyRelu((*inputs.at(0)), (*inputs.at(1)), output);
   }
 
   // Gradient of input.at(0)=x is:
@@ -61,36 +61,36 @@ public:
                                   ArrayType const &    error_signal) override
   {
     assert(inputs.size() == 2);
-    assert(inputs.at(0).get().size() == error_signal.size());
+    assert(inputs.at(0)->size() == error_signal.size());
 
     // Test if batch dimension for alpha is 1
-    assert(inputs.at(1).get().shape().at(inputs.at(1).get().shape().size() - 1) == 1);
+    assert(inputs.at(1)->shape().at(inputs.at(1)->shape().size() - 1) == 1);
 
-    ArrayType return_signal_1{inputs.at(0).get().shape()};
+    ArrayType return_signal_1{inputs.at(0)->shape()};
 
     SizeType a_size{1};
-    for (SizeType i{0}; i < inputs.at(0).get().shape().size() - 1; i++)
+    for (SizeType i{0}; i < inputs.at(0)->shape().size() - 1; i++)
     {
-      a_size *= inputs.at(0).get().shape().at(i);
+      a_size *= inputs.at(0)->shape().at(i);
     }
     ArrayType return_signal_2({a_size, 1});
 
-    SizeType t_batch_dimension = inputs.at(0).get().shape().size() - 1;
-    SizeType batch_size        = inputs.at(0).get().shape().at(t_batch_dimension);
+    SizeType t_batch_dimension = inputs.at(0)->shape().size() - 1;
+    SizeType batch_size        = inputs.at(0)->shape().at(t_batch_dimension);
 
     for (SizeType i{0}; i < batch_size; i++)
     {
 
-      // Slice along batch dimension
-      auto input1_slice = inputs.at(0).get().Slice(i, t_batch_dimension);
-      auto rs1_slice    = return_signal_1.Slice(i, t_batch_dimension);
-      auto error_slice  = error_signal.Slice(i, 1);
+      // View along batch dimension
+      auto input1_view = inputs.at(0)->View(i);
+      auto rs1_view    = return_signal_1.View(i);
+      auto error_view  = error_signal.View(i);
 
-      auto rs1_it    = rs1_slice.begin();
+      auto rs1_it    = rs1_view.begin();
       auto rs2_it    = return_signal_2.begin();
-      auto input1_it = input1_slice.begin();
-      auto input2_it = inputs.at(1).get().begin();
-      auto error_it  = error_slice.begin();
+      auto input1_it = input1_view.begin();
+      auto input2_it = inputs.at(1)->begin();
+      auto error_it  = error_view.begin();
 
       while (input1_it.is_valid())
       {
@@ -116,7 +116,7 @@ public:
 
   std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
   {
-    return inputs.front().get().shape();
+    return inputs.front()->shape();
   }
 
   static constexpr char const *DESCRIPTOR = "LeakyReluOp";

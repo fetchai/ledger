@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/byte_array.hpp"
-#include "core/serializers/typed_byte_array_buffer.hpp"
+#include "core/serializers/group_definitions.hpp"
+#include "core/serializers/main_serializer.hpp"
 
 #include "gtest/gtest.h"
 
@@ -26,8 +26,6 @@
 
 namespace fetch {
 namespace serializers {
-
-namespace {
 
 template <typename T>
 struct A
@@ -90,42 +88,60 @@ struct A<void>
   ba_type y{"Y"};
 };
 
-template <typename T, typename X>
-void Serialize(T &serializer, A<X> const &a)
+template <typename X, typename D>
+struct ArraySerializer<A<X>, D>
 {
-  serializer.Append(a.x, a.y, a.t);
-}
+public:
+  using Type       = A<X>;
+  using DriverType = D;
 
-template <typename T, typename X>
-void Deserialize(T &serializer, A<X> &a)
+  template <typename Constructor>
+  static void Serialize(Constructor &array_constructor, Type const &a)
+  {
+    auto array = array_constructor(3);
+    array.Append(a.x);
+    array.Append(a.y);
+    array.Append(a.t);
+  }
+
+  template <typename ArrayDeserializer>
+  static void Deserialize(ArrayDeserializer &array, Type &a)
+  {
+    array.GetNextValue(a.x);
+    array.GetNextValue(a.y);
+    array.GetNextValue(a.t);
+  }
+};
+
+template <typename D>
+struct ArraySerializer<A<void>, D>
 {
-  serializer >> a.x >> a.y >> a.t;
-}
+public:
+  using Type       = A<void>;
+  using DriverType = D;
 
-template <typename T>
-void Serialize(T &serializer, A<void> const &a)
-{
-  serializer.Append(a.x, a.y);
-}
+  template <typename Constructor>
+  static void Serialize(Constructor &array_constructor, Type const &a)
+  {
+    auto array = array_constructor(3);
+    array.Append(a.x);
+    array.Append(a.y);
+  }
 
-template <typename T>
-void Deserialize(T &serializer, A<void> &a)
-{
-  serializer >> a.x >> a.y;
-}
+  template <typename ArrayDeserializer>
+  static void Deserialize(ArrayDeserializer &array, Type &a)
+  {
+    array.GetNextValue(a.x);
+    array.GetNextValue(a.y);
+  }
+};
 
-class ByteArrayBufferTest : public testing::Test
+class MsgPackSerializerTest : public testing::Test
 {
 protected:
   using B = A<A<A<void>>>;
 
-  void SetUp()
-  {}
-
-  void TearDown()
-  {}
-
-  void test_nested_append_serialisation(ByteArrayBuffer &stream)
+  void test_nested_append_serialisation(MsgPackSerializer &stream)
   {
     B const            b0{"b0x", "b0y"};
     B const            b1{"b1x", "b1y"};
@@ -133,10 +149,10 @@ protected:
 
     auto const orig_stream_offset = stream.tell();
 
-    //* Serialising
+    // Serialising
     stream.Append(b0, x, b1);
 
-    //* De-serialising
+    // De-serialising
     B        b0_d;
     B        b1_d;
     uint64_t x_d = 0;
@@ -149,17 +165,17 @@ protected:
   }
 };
 
-TEST_F(ByteArrayBufferTest, test_seek_position_is_zero_after_stream_construction)
+TEST_F(MsgPackSerializerTest, test_seek_position_is_zero_after_stream_construction)
 {
-  ByteArrayBuffer stream;
+  MsgPackSerializer stream;
   EXPECT_EQ(0, stream.tell());
 }
 
-TEST_F(ByteArrayBufferTest, test_basic_allocate_size)
+TEST_F(MsgPackSerializerTest, test_basic_allocate_size)
 {
   constexpr std::size_t preallocated_amount = 100;
 
-  ByteArrayBuffer stream;
+  MsgPackSerializer stream;
   stream.Allocate(preallocated_amount);
 
   EXPECT_EQ(preallocated_amount, stream.size());
@@ -172,12 +188,12 @@ TEST_F(ByteArrayBufferTest, test_basic_allocate_size)
   EXPECT_EQ(0, stream.tell());
 }
 
-TEST_F(ByteArrayBufferTest, test_allocate_with_offset)
+TEST_F(MsgPackSerializerTest, test_allocate_with_offset)
 {
   constexpr std::size_t offset              = 50;
   constexpr std::size_t preallocated_amount = offset + 50;
 
-  ByteArrayBuffer stream;
+  MsgPackSerializer stream;
   stream.Allocate(preallocated_amount);
   stream.seek(offset);
 
@@ -191,48 +207,48 @@ TEST_F(ByteArrayBufferTest, test_allocate_with_offset)
   EXPECT_EQ(offset, stream.tell());
 }
 
-TEST_F(ByteArrayBufferTest, verify_correctness_of_copy_and_comparison_behaviour_of_B_type)
+TEST_F(MsgPackSerializerTest, verify_correctness_of_copy_and_comparison_behaviour_of_B_type)
 {
   B const b0{"b0", "b0"};
   B       b0_copy{b0};
 
-  //* Verifying that both variables have the **same** value
+  // Verifying that both variables have the **same** value
   EXPECT_EQ(b0, b0_copy);
 
   auto const b0_copy_y_orig_value{b0_copy.t.t.y.Copy()};
-  //* Modifying value of one of variables
+  // Modifying value of one of variables
   b0_copy.t.t.y.Append("somethig new");
-  //* Proving that variables have **different** value
+  // Proving that variables have **different** value
   EXPECT_NE(b0, b0_copy);
 
-  //* Reverting variable to it's original value
+  // Reverting variable to it's original value
   b0_copy.t.t.y = b0_copy_y_orig_value;
-  //* Proving that variables have the **same** value after reverting
+  // Proving that variables have the **same** value after reverting
   EXPECT_EQ(b0, b0_copy);
 }
 
-TEST_F(ByteArrayBufferTest, test_basic)
+TEST_F(MsgPackSerializerTest, test_basic)
 {
-  ByteArrayBuffer stream;
+  MsgPackSerializer stream;
   test_nested_append_serialisation(stream);
 }
 
-TEST_F(ByteArrayBufferTest, test_stream_with_preexisting_offset)
+TEST_F(MsgPackSerializerTest, test_stream_with_preexisting_offset)
 {
   constexpr std::size_t preallocated_amount = 10;
 
-  ByteArrayBuffer stream;
+  MsgPackSerializer stream;
   stream.Allocate(preallocated_amount);
   stream.seek(preallocated_amount);
   test_nested_append_serialisation(stream);
 }
 
-TEST_F(ByteArrayBufferTest, test_stream_relative_resize_with_preexisting_offset)
+TEST_F(MsgPackSerializerTest, test_stream_relative_resize_with_preexisting_offset)
 {
   constexpr std::size_t preallocated_amount = 100;
-  ByteArrayBuffer       stream;
+  MsgPackSerializer     stream;
 
-  //* Production code under test
+  // Production code under test
   stream.Resize(preallocated_amount, ResizeParadigm::RELATIVE);
   stream.seek(preallocated_amount);
 
@@ -241,7 +257,7 @@ TEST_F(ByteArrayBufferTest, test_stream_relative_resize_with_preexisting_offset)
   EXPECT_EQ(preallocated_amount, stream.tell());
 
   constexpr std::size_t delta_size = 10;
-  //* Production code under test
+  // Production code under test
   stream.Resize(delta_size, ResizeParadigm::RELATIVE);
 
   EXPECT_EQ(preallocated_amount + delta_size, stream.size());
@@ -249,46 +265,44 @@ TEST_F(ByteArrayBufferTest, test_stream_relative_resize_with_preexisting_offset)
   EXPECT_EQ(preallocated_amount, stream.tell());
 }
 
-TEST_F(ByteArrayBufferTest, test_that_default_resize_paradigm_is_relative)
+TEST_F(MsgPackSerializerTest, test_that_default_resize_paradigm_is_relative)
 {
   constexpr std::size_t delta_size = 10;
-  //* Setup
-  ByteArrayBuffer stream;
+  // Setup
+  MsgPackSerializer stream;
 
   std::size_t expected_size = 0;
   for (uint64_t i = 0; i < 10; ++i)
   {
-    //* Production code under test
+    // Production code under test
     stream.Resize(delta_size);
 
-    //* Expectations
+    // Expectations
     expected_size += delta_size;
     EXPECT_EQ(expected_size, stream.size());
     EXPECT_EQ(expected_size, stream.data().capacity());
   }
 }
 
-TEST_F(ByteArrayBufferTest, test_stream_absolute_resize_with_preexisting_offset)
+TEST_F(MsgPackSerializerTest, test_stream_absolute_resize_with_preexisting_offset)
 {
   constexpr std::size_t small_size          = 30;
   constexpr std::size_t offset              = small_size + 20;
   constexpr std::size_t preallocated_amount = offset + 50;
 
-  //* Setup
-  ByteArrayBuffer stream;
+  // Setup
+  MsgPackSerializer stream;
   stream.Resize(preallocated_amount);
   stream.seek(offset);
 
-  //* Production code under test
+  // Production code under test
   stream.Resize(small_size, ResizeParadigm::ABSOLUTE);
 
-  //* Expectations
+  // Expectations
   EXPECT_EQ(small_size, stream.size());
   EXPECT_EQ(preallocated_amount, stream.data().capacity());
   EXPECT_EQ(small_size, stream.tell());
 }
-
-}  // namespace
 
 }  // namespace serializers
 }  // namespace fetch

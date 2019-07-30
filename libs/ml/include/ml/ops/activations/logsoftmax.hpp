@@ -48,7 +48,7 @@ public:
   {
     assert(output.shape() == ComputeOutputShape(inputs));
     assert(inputs.size() == 1);
-    fetch::math::Softmax(inputs.front().get(), output, axis_);
+    fetch::math::Softmax((*inputs.front()), output, axis_);
     fetch::math::Log(output, output);
   }
 
@@ -56,16 +56,16 @@ public:
                                   ArrayType const &    error_signal) override
   {
     assert(inputs.size() == 1);
-    assert(inputs.front().get().shape() == error_signal.shape());
+    assert(inputs.front()->shape() == error_signal.shape());
 
     ArrayType return_signal = error_signal.Copy();
     ArrayType t(error_signal.shape());
-    fetch::math::Softmax(inputs.front().get(), t, axis_);
+    fetch::math::Softmax((*inputs.front()), t, axis_);
 
     // return_signal.InlineMultiply(t);
 
     // 1D softmax with 1 batch dimension
-    if (inputs.front().get().shape().size() == 2)
+    if (inputs.front()->shape().size() == 2)
     {
       assert(axis_ == 1);
       ArrayType sum = ReduceSum(return_signal, 0);
@@ -73,13 +73,16 @@ public:
       t.InlineMultiply(sum);
     }
     // 2D softmax with 1 batch dimension
-    else if (inputs.front().get().shape().size() == 3)
+    else if (inputs.front()->shape().size() == 3)
     {
       assert((axis_ == 1) || (axis_ == 0));
-      ArrayType sum = return_signal.Slice(0, 1 - axis_).Copy();
+      auto sum_shape          = return_signal.shape();
+      sum_shape.at(1 - axis_) = 1;
+      ArrayType sum(sum_shape);
       for (size_t i = 0; i < return_signal.shape()[2]; i++)
       {
-        sum.View(i).Assign(ReduceSum(return_signal.Slice(i, 2).Copy().Squeeze(), 1 - axis_).View());
+        auto cur_sum = ReduceSum(return_signal.View(i).Copy(), 1 - axis_).View();
+        sum.View(i).Assign(cur_sum);
       }
 
       t.InlineMultiply(sum);
@@ -95,7 +98,7 @@ public:
 
   std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
   {
-    return inputs.front().get().shape();
+    return inputs.front()->shape();
   }
 
   static constexpr char const *DESCRIPTOR = "LogSoftmax";

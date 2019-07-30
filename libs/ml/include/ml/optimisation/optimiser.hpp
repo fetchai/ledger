@@ -73,7 +73,6 @@ public:
             LearningRateParam<DataType> const &learning_rate_param);
 
   virtual ~Optimiser() = default;
-  // TODO (private 1090): Optimise TensorSlice for graph-feeding without using .Copy
 
   /// DATA RUN INTERFACES ///
   DataType Run(std::vector<ArrayType> const &data, ArrayType const &labels,
@@ -161,7 +160,7 @@ Optimiser<T>::Optimiser(std::shared_ptr<Graph<T>>      graph,
   , epoch_(0)
   , learning_rate_param_(learning_rate_param)
 {
-  // initialize learning rate
+  // initialise learning rate
   learning_rate_ = learning_rate_param_.starting_learning_rate;
 
   Init();
@@ -176,7 +175,6 @@ Optimiser<T>::Optimiser(std::shared_ptr<Graph<T>>      graph,
  * @param batch_size size of mini-batch, if batch_size==0 it will be set to n_data size
  * @return Sum of losses from all mini-batches
  */
-// TODO (private 1090): Optimise TensorSlice for graph-feeding without using .Copy
 template <class T>
 typename T::Type Optimiser<T>::Run(std::vector<ArrayType> const &data, ArrayType const &labels,
                                    SizeType batch_size)
@@ -226,16 +224,15 @@ typename T::Type Optimiser<T>::Run(std::vector<ArrayType> const &data, ArrayType
       {
         it = 0;
       }
-      // Fill label slice
-      auto label_slice = batch_labels_.Slice(i, label_batch_dimension);
-      label_slice.Assign(labels.Slice(it, label_batch_dimension));
+      // Fill label view
+      auto label_view = batch_labels_.View(i);
+      label_view.Assign(labels.View(it));
       // Fill all data from data vector
       for (SizeType j{0}; j < data.size(); j++)
       {
-        // Fill data[j] slice
-        SizeType cur_data_batch_dim = data.at(j).shape().size() - 1;
-        auto     data_slice         = batch_data_.at(j).Slice(i, cur_data_batch_dim);
-        data_slice.Assign(data.at(j).Slice(it, cur_data_batch_dim));
+        // Fill data[j] view
+        auto data_view = batch_data_.at(j).View(i);
+        data_view.Assign(data.at(j).View(it));
       }
       it++;
     }
@@ -268,8 +265,10 @@ typename T::Type Optimiser<T>::Run(std::vector<ArrayType> const &data, ArrayType
     UpdateLearningRate();
   }
   epoch_++;
+
   return loss_sum_;
 }
+
 /**
  * Does 1 training epoch using DataLoader
  * @tparam T ArrayType

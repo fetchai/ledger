@@ -17,10 +17,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include <string>
-
 #include "core/logger.hpp"
+
 #include <chrono>
+#include <cstdint>
+#include <string>
+#include <utility>
 
 namespace fetch {
 namespace generics {

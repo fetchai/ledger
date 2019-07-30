@@ -119,6 +119,7 @@ public:
       FETCH_LOG_WARN(LOGGING_NAME,
                      "ReadBytes target array is too big for us to fill. dest_size=", dest_size,
                      " src_offset=", src_offset, " size=", size());
+
       throw std::range_error("ReadBytes target array is too big");
     }
     std::memcpy(dest, pointer() + src_offset, dest_size);
@@ -274,8 +275,9 @@ public:
 
   self_type operator+(self_type const &other) const
   {
-    self_type ret;
-    ret.Append(*this, other);
+    self_type ret = this->Copy();
+    ret.Resize(other.size() + size());
+    std::memcpy(ret.pointer() + size(), other.pointer(), other.size());
     return ret;
   }
 

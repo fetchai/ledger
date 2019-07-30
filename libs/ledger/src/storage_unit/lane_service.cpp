@@ -16,8 +16,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/storage_unit/lane_service.hpp"
-
 #include "core/service_ids.hpp"
 #include "ledger/chain/transaction_layout_rpc_serializers.hpp"
 #include "ledger/chain/transaction_rpc_serializers.hpp"
@@ -25,6 +23,7 @@
 #include "ledger/storage_unit/lane_controller_protocol.hpp"
 #include "ledger/storage_unit/lane_identity.hpp"
 #include "ledger/storage_unit/lane_identity_protocol.hpp"
+#include "ledger/storage_unit/lane_service.hpp"
 #include "ledger/storage_unit/transaction_finder_protocol.hpp"
 #include "ledger/storage_unit/transaction_store_sync_protocol.hpp"
 #include "ledger/storage_unit/transaction_store_sync_service.hpp"
@@ -34,7 +33,14 @@
 #include "storage/document_store_protocol.hpp"
 #include "storage/new_revertible_document_store.hpp"
 
+#include <chrono>
+#include <cstdint>
 #include <iomanip>
+#include <sstream>
+#include <string>
+#include <unordered_map>
+#include <utility>
+#include <vector>
 
 using fetch::byte_array::ToBase64;
 
@@ -87,7 +93,7 @@ LaneService::LaneService(NetworkManager nm, ShardConfig config, bool sign_packet
     break;
   }
 
-  tx_store_protocol_ = std::make_shared<TxStoreProto>(tx_store_.get());
+  tx_store_protocol_ = std::make_shared<TxStoreProto>(tx_store_.get(), cfg_.lane_id);
   internal_rpc_server_->Add(RPC_TX_STORE, tx_store_protocol_.get());
 
   // Controller

@@ -20,7 +20,6 @@
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/byte_array/decoders.hpp"
 #include "core/byte_array/encoders.hpp"
-#include "core/serializers/byte_array.hpp"
 #include "ledger/chain/address.hpp"
 
 #include "vm/vm.hpp"
@@ -43,6 +42,11 @@ public:
   static Ptr<Address> Constructor(VM *vm, TypeId type_id, Ptr<String> const &address)
   {
     return new Address{vm, type_id, address};
+  }
+
+  static Ptr<String> ToString(VM *, Ptr<Address> const &address)
+  {
+    return address->AsString();
   }
 
   // Construction / Destruction
@@ -111,13 +115,13 @@ public:
     return address_ == other;
   }
 
-  bool SerializeTo(ByteArrayBuffer &buffer) override
+  bool SerializeTo(MsgPackSerializer &buffer) override
   {
     buffer << address_.address();
     return true;
   }
 
-  bool DeserializeFrom(ByteArrayBuffer &buffer) override
+  bool DeserializeFrom(MsgPackSerializer &buffer) override
   {
     fetch::byte_array::ConstByteArray raw_address{};
     buffer >> raw_address;

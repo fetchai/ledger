@@ -17,15 +17,15 @@
 //
 //------------------------------------------------------------------------------
 
-#include <cassert>
-#include <memory>
-#include <vector>
-
 #include "math/activation_functions/sigmoid.hpp"
 #include "math/activation_functions/softmax.hpp"
 #include "math/fundamental_operators.hpp"
 #include "math/metrics/cross_entropy.hpp"
 #include "ml/ops/ops.hpp"
+
+#include <cassert>
+#include <memory>
+#include <vector>
 
 namespace fetch {
 namespace ml {
@@ -40,23 +40,22 @@ public:
   using SizeType      = typename ArrayType::SizeType;
   using VecTensorType = typename Ops<T>::VecTensorType;
 
-  SoftmaxCrossEntropyLoss()          = default;
-  virtual ~SoftmaxCrossEntropyLoss() = default;
+  SoftmaxCrossEntropyLoss()           = default;
+  ~SoftmaxCrossEntropyLoss() override = default;
 
   void Forward(VecTensorType const &inputs, ArrayType &output) override
   {
     // third term may be present for specifying n_classes
     assert(inputs.size() == 2);
-    assert(inputs.at(0).get().size() == inputs.at(1).get().size());
+    assert(inputs.at(0)->size() == inputs.at(1)->size());
 
     // sanity check the softmax adds up to 1
-    assert(Sum(fetch::math::Softmax(inputs.at(0).get())) -
-               (DataType(inputs.at(0).get().shape().at(0))) <
+    assert(Sum(fetch::math::Softmax((*inputs.at(0)))) - (DataType(inputs.at(0)->shape().at(0))) <
            0.0001);
 
     // softmax forward & then CrossEntropy
     output(0, 0) =
-        fetch::math::CrossEntropyLoss(fetch::math::Softmax(inputs.at(0).get()), inputs.at(1).get());
+        fetch::math::CrossEntropyLoss(fetch::math::Softmax((*inputs.at(0))), (*inputs.at(1)));
   }
 
   std::vector<ArrayType> Backward(VecTensorType const &inputs,
@@ -65,11 +64,11 @@ public:
     FETCH_UNUSED(error_signal);
 
     assert(inputs.size() == 2);
-    assert(inputs.at(0).get().size() == inputs.at(1).get().size());
+    assert(inputs.at(0)->size() == inputs.at(1)->size());
 
-    ArrayType ret({inputs.at(0).get().shape()});
-    fetch::math::Softmax(inputs.at(0).get(), ret);
-    fetch::math::Subtract(ret, inputs.at(1).get(), ret);
+    ArrayType ret({inputs.at(0)->shape()});
+    fetch::math::Softmax((*inputs.at(0)), ret);
+    fetch::math::Subtract(ret, (*inputs.at(1)), ret);
 
     return {ret, ret};
   }

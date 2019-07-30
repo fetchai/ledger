@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/random.hpp"
 #include "core/vector.hpp"
 #include "math/distance/euclidean.hpp"
 #include "math/standard_functions/pow.hpp"
@@ -42,7 +43,7 @@ using ClusteringType = Tensor<std::int64_t>;
 enum class InitMode
 {
   KMeansPP = 0,  // kmeans++, a good default choice
-  Forgy    = 1,  // Forgy, randomly initialize clusters to data points
+  Forgy    = 1,  // Forgy, randomly initialise clusters to data points
   PrevK    = 2   // PrevK, use previous k_assignment to determine cluster centres
 };
 enum class KInferenceMode
@@ -92,7 +93,7 @@ public:
    * @param ret the return matrix of shape n_points x 1 with values in range 0 -> K-1
    * @param r_seed a random seed for the data shuffling
    * @param max_loops maximum number of loops before assuming convergence
-   * @param init_mode what type of initialization to use
+   * @param init_mode what type of initialisation to use
    */
   KMeansImplementation(ArrayType const &data, SizeType const &n_clusters, ClusteringType &ret,
                        SizeType const &r_seed, SizeType const &max_loops,
@@ -106,7 +107,7 @@ public:
     n_points_     = data.shape()[0];
     n_dimensions_ = data.shape()[1];
 
-    init_mode_ = InitMode::PrevK;  // since prev_k_assignment is specified, the initialization will
+    init_mode_ = InitMode::PrevK;  // since prev_k_assignment is specified, the initialisation will
                                    // be to use that
 
     KMeansSetup(data, r_seed);
@@ -135,7 +136,7 @@ public:
     n_points_     = data.shape()[0];
     n_dimensions_ = data.shape()[1];
 
-    init_mode_ = InitMode::PrevK;  // since prev_k_assignment is specified, the initialization will
+    init_mode_ = InitMode::PrevK;  // since prev_k_assignment is specified, the initialisation will
     // be to use that
 
     KMeansSetup(data, r_seed);
@@ -153,12 +154,12 @@ public:
   }
 
   /**
-   * The remainder of initialization that is common to all constructors is carried out here
+   * The remainder of initialisation that is common to all constructors is carried out here
    */
   void KMeansSetup(ArrayType const &data, SizeType const &r_seed)
   {
     // seed random number generator
-    rng_.seed(uint32_t(r_seed));
+    lfg_.Seed(uint32_t(r_seed));
     loop_counter_ = 0;
 
     temp_k_ = ArrayType(data.shape());
@@ -213,7 +214,7 @@ private:
 
       // shuffle the data
       std::iota(std::begin(data_idxs_), std::end(data_idxs_), 0);
-      std::shuffle(data_idxs_.begin(), data_idxs_.end(), rng_);
+      fetch::random::Shuffle(lfg_, data_idxs_, data_idxs_);
 
       if (n_clusters_ != 0)
       {
@@ -287,7 +288,7 @@ private:
       break;
     }
     default:
-      throw std::runtime_error("no such initialization mode for KMeans");
+      throw std::runtime_error("no such initialisation mode for KMeans");
     }
 
     // reset the kcount
@@ -503,7 +504,7 @@ private:
       std::piecewise_constant_distribution<double> dist(std::begin(interval), std::end(interval),
                                                         std::begin(weights));
 
-      auto val      = dist(rng_);
+      auto val      = dist(lfg_);
       auto tmp_rand = static_cast<SizeType>(val);
 
       assert((tmp_rand < n_points_) && (tmp_rand >= 0));
@@ -588,7 +589,7 @@ private:
       {
         reassigned_k_.Set(j, -1);
       }
-      std::shuffle(data_idxs_.begin(), data_idxs_.end(), rng_);
+      fetch::random::Shuffle(lfg_, data_idxs_, data_idxs_);
 
       for (SizeType i = 0; i < n_clusters_; ++i)
       {
@@ -738,7 +739,7 @@ private:
   // used to find the smallest distance out of K comparisons
   typename ArrayType::Type running_mean_ = numeric_max<typename ArrayType::Type>();
 
-  std::default_random_engine rng_;
+  fetch::random::LaggedFibonacciGenerator<> lfg_;
 
   fetch::core::Vector<SizeType> data_idxs_;  // a vector of indices to the data used for shuffling
   fetch::core::Vector<SizeType> empty_clusters_;  // a vector tracking whenever a cluster goes empty

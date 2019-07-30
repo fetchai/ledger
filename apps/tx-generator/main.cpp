@@ -18,9 +18,8 @@
 
 #include "core/byte_array/byte_array.hpp"
 #include "core/commandline/params.hpp"
-#include "core/serializers/byte_array.hpp"
-#include "core/serializers/byte_array_buffer.hpp"
 #include "core/serializers/counter.hpp"
+#include "core/serializers/main_serializer.hpp"
 #include "crypto/ecdsa.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "ledger/chain/transaction_builder.hpp"
@@ -41,7 +40,7 @@ using fetch::byte_array::ConstByteArray;
 using fetch::ledger::TransactionBuilder;
 using fetch::ledger::TransactionSerializer;
 using fetch::ledger::Address;
-using fetch::serializers::ByteArrayBuffer;
+using fetch::serializers::MsgPackSerializer;
 using fetch::serializers::SizeCounter;
 using fetch::BitVector;
 using fetch::storage::ResourceAddress;
@@ -140,12 +139,12 @@ int main(int argc, char **argv)
   std::cout << "Generating contents..." << std::endl;
 
   // determine the size
-  SizeCounter<ByteArrayBuffer> counter{};
+  SizeCounter counter{};
   counter << encoded_txs;
 
   std::cout << "Serial size: " << counter.size() << std::endl;
 
-  ByteArrayBuffer buffer{};
+  MsgPackSerializer buffer{};
   buffer.Reserve(counter.size());  // pre-allocate
   buffer << encoded_txs;
 

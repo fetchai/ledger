@@ -76,9 +76,6 @@ macro (setup_compiler)
   # warnings
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wconversion -Wpedantic")
 
-  # Suppress visibility link warnings
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility=hidden")
-
   if (${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-pragmas -Wno-unknown-pragmas")
   elseif (_is_clang_compiler)
@@ -145,6 +142,11 @@ macro (setup_compiler)
   if ("${FETCH_COMPILE_LOGGING_LEVEL}" STREQUAL "")
     set(FETCH_COMPILE_LOGGING_LEVEL "info")
   endif ()
+
+  # debug mutex configuration
+  if (FETCH_ENABLE_DEADLOCK_DETECTION)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DFETCH_DEBUG_MUTEX")
+  endif (FETCH_ENABLE_DEADLOCK_DETECTION)
 
   # based on the configued logging level
   if ("${FETCH_COMPILE_LOGGING_LEVEL}" STREQUAL "trace")

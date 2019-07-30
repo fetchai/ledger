@@ -17,84 +17,92 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/tensor.hpp"
-#include "ml/dataloaders/commodity_dataloader.hpp"
-#include "ml/dataloaders/dataloader.hpp"
-#include "ml/dataloaders/mnist_loaders/mnist_loader.hpp"
-#include "vm/module.hpp"
-#include "vm_modules/ml/training_pair.hpp"
+#include "vm/object.hpp"
+#include "vm_modules/math/type.hpp"
+
+#include <memory>
 
 namespace fetch {
-namespace vm_modules {
+
 namespace ml {
+namespace dataloaders {
+template <typename LabelType, typename DataType>
+class DataLoader;
+}
+}  // namespace ml
+namespace vm_modules {
+namespace math {
+class VMTensor;
+}
+namespace ml {
+
+class VMTrainingPair;
 
 class VMDataLoader : public fetch::vm::Object
 {
 public:
-  VMDataLoader(fetch::vm::VM *vm, fetch::vm::TypeId type_id)
-    : fetch::vm::Object(vm, type_id)
-  {}
+  using DataType = fetch::vm_modules::math::DataType;
 
-  static fetch::vm::Ptr<VMDataLoader> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id)
-  {
-    return new VMDataLoader(vm, type_id);
-  }
+  VMDataLoader(fetch::vm::VM *vm, fetch::vm::TypeId type_id);
 
-  static void Bind(fetch::vm::Module &module)
-  {
-    module.CreateClassType<VMDataLoader>("DataLoader")
-        .CreateConstuctor<>()
-        .CreateMemberFunction("addData", &VMDataLoader::AddData)
-        .CreateMemberFunction("getNext", &VMDataLoader::GetNext)
-        .CreateMemberFunction("isDone", &VMDataLoader::IsDone);
-  }
+  static fetch::vm::Ptr<VMDataLoader> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id);
 
-  void AddData(fetch::vm::Ptr<fetch::vm::String> const &mode,
-               fetch::vm::Ptr<fetch::vm::String> const &xfilename,
-               fetch::vm::Ptr<fetch::vm::String> const &yfilename)
-  {
-    if (mode->str == "commodity")
-    {
-      fetch::ml::dataloaders::CommodityDataLoader<fetch::math::Tensor<float>,
-                                                  fetch::math::Tensor<float>>
-          ld;
-      ld.AddData(xfilename->str, yfilename->str);
+  static void Bind(fetch::vm::Module &module);
 
-      loader_ = std::make_shared<fetch::ml::dataloaders::CommodityDataLoader<
-          fetch::math::Tensor<float>, fetch::math::Tensor<float>>>(ld);
-    }
-    else if (mode->str == "mnist")
-    {
+  /**
+   * Add data to a dataloader by passing the filenames
+   * @param mode
+   * @param xfilename
+   * @param yfilename
+   */
+  void AddDataByFiles(fetch::vm::Ptr<fetch::vm::String> const &mode,
+                      fetch::vm::Ptr<fetch::vm::String> const &xfilename,
+                      fetch::vm::Ptr<fetch::vm::String> const &yfilename);
 
-      loader_ = std::make_shared<fetch::ml::dataloaders::MNISTLoader<fetch::math::Tensor<float>,
-                                                                     fetch::math::Tensor<float>>>(
-          xfilename->str, yfilename->str);
-    }
-    else
-    {
-      throw std::runtime_error("Unrecognised loader type");
-    }
-  }
+  /**
+   * Add data to a data loader by passing in the data and labels
+   * @param mode
+   * @param data
+   * @param labels
+   */
+  void AddDataByData(fetch::vm::Ptr<fetch::vm::String> const &                mode,
+                     fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> const &data,
+                     fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> const &labels);
 
-  fetch::vm::Ptr<VMTrainingPair> GetNext()
-  {
-    std::pair<fetch::math::Tensor<float>, std::vector<fetch::math::Tensor<float>>> next =
-        loader_->GetNext();
+  /**
+   * Add data to commodity data loader
+   * @param xfilename
+   * @param yfilename
+   */
+  void AddCommodityData(fetch::vm::Ptr<fetch::vm::String> const &xfilename,
+                        fetch::vm::Ptr<fetch::vm::String> const &yfilename);
 
-    auto first      = this->vm_->CreateNewObject<math::VMTensor>(next.first);
-    auto second     = this->vm_->CreateNewObject<math::VMTensor>(next.second.at(0));
-    auto dataHolder = this->vm_->CreateNewObject<VMTrainingPair>(first, second);
+  /**
+   * Add data to mnist data loader
+   * @param xfilename
+   * @param yfilename
+   */
+  void AddMnistData(fetch::vm::Ptr<fetch::vm::String> const &xfilename,
+                    fetch::vm::Ptr<fetch::vm::String> const &yfilename);
 
-    return dataHolder;
-  }
+  /**
+   * Add data to tensor data loader
+   * @param xfilename
+   * @param yfilename
+   */
+  void AddTensorData(fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> const &data,
+                     fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> const &labels);
 
-  bool IsDone()
-  {
-    return loader_->IsDone();
-  }
+  /**
+   * Get the next training pair of data and labels from the dataloader
+   * @return
+   */
+  fetch::vm::Ptr<VMTrainingPair> GetNext();
 
-  std::shared_ptr<
-      fetch::ml::dataloaders::DataLoader<fetch::math::Tensor<float>, fetch::math::Tensor<float>>>
+  bool IsDone();
+
+  std::shared_ptr<fetch::ml::dataloaders::DataLoader<fetch::math::Tensor<DataType>,
+                                                     fetch::math::Tensor<DataType>>>
       loader_;
 };
 

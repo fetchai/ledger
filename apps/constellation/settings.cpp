@@ -22,15 +22,13 @@
 #include "core/logging.hpp"
 #include "vectorise/platform.hpp"
 
-#include <algorithm>
-#include <cctype>
-#include <sstream>
+#include <cstddef>
+#include <cstdint>
+#include <ostream>
 #include <thread>
 
 namespace fetch {
 namespace {
-
-static constexpr char const *LOGGING_NAME = "Settings";
 
 static const uint32_t DEFAULT_NUM_LANES       = 1;
 static const uint32_t DEFAULT_NUM_SLICES      = 500;
@@ -44,11 +42,11 @@ static const uint32_t NUM_SYSTEM_THREADS =
 
 }  // namespace
 
+// clang-format off
 /**
  * Construct the settings object
  */
 Settings::Settings()
-  // clang-format off
   : num_lanes             {*this, "lanes",                   DEFAULT_NUM_LANES,        "The number of lanes to be used"}
   , num_slices            {*this, "slices",                  DEFAULT_NUM_SLICES,       "The number of slices to be used"}
   , block_interval        {*this, "block-interval",          DEFAULT_BLOCK_INTERVAL,   "The block interval is milliseconds"}
@@ -76,8 +74,8 @@ Settings::Settings()
   , experimental_features {*this, "experimental",            {},                       "The comma separated set of experimental features to enable"}
   , proof_of_stake        {*this, "pos",                     false,                    "Enable Proof of Stake consensus"}
   , beacon_address        {*this, "beacon",                  "",                       "The address of the dealer node"}
-// clang-format on
 {}
+// clang-format on
 
 /**
  * Given the specified command line arguments, update the settings from the cmd line and the

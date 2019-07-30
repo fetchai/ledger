@@ -42,7 +42,7 @@ cd ledger
 ./scripts/quickstart.sh
 ```
 
-Manual build steps are available in our [Getting Started Guide](docs/source/getting_started/index.rst).
+Or follow our online documentation at [building the ledger](http://docs.fetch.ai/getting-started/installation-mac/).
 
 ## Connecting to a test network
 

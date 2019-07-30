@@ -190,14 +190,14 @@ Module::Module()
   CreateFreeFunction("toFixed64", &toFixed64);
 
   GetClassInterface<IMatrix>()
-      .CreateConstuctor<int32_t, int32_t>()
+      .CreateConstructor<int32_t, int32_t>()
       .EnableIndexOperator<AnyInteger, AnyInteger, TemplateParameter1>()
       .CreateInstantiationType<Matrix<double>>()
       .CreateInstantiationType<Matrix<float>>();
 
   GetClassInterface<IArray>()
-      .CreateConstuctor<int32_t>()
-      .CreateSerializeDefaultConstuctor<int32_t>(static_cast<int32_t>(0))
+      .CreateConstructor<int32_t>()
+      .CreateSerializeDefaultConstructor<int32_t>(static_cast<int32_t>(0))
       .CreateMemberFunction("append", &IArray::Append)
       .CreateMemberFunction("count", &IArray::Count)
       .CreateMemberFunction("erase", &IArray::Erase)
@@ -225,7 +225,7 @@ Module::Module()
       .CreateInstantiationType<Array<Ptr<Address>>>();
 
   GetClassInterface<String>()
-      .CreateSerializeDefaultConstuctor<>()
+      .CreateSerializeDefaultConstructor<>()
       .CreateMemberFunction("find", &String::Find)
       .CreateMemberFunction("length", &String::Length)
       .CreateMemberFunction("reverse", &String::Reverse)
@@ -234,19 +234,20 @@ Module::Module()
       .CreateMemberFunction("trim", &String::Trim);
 
   GetClassInterface<IMap>()
-      .CreateConstuctor<>()
+      .CreateConstructor<>()
       .CreateMemberFunction("count", &IMap::Count)
       .EnableIndexOperator<TemplateParameter1, TemplateParameter2>();
 
   GetClassInterface<Address>()
-      .CreateSerializeDefaultConstuctor<>()
-      //      .CreateConstuctor<>()
-      .CreateConstuctor<Ptr<String>>()
+      .CreateSerializeDefaultConstructor<>()
+      .CreateConstructor<Ptr<String>>()
       .CreateMemberFunction("signedTx", &Address::HasSignedTx);
 
+  CreateFreeFunction("toString", &Address::ToString);
+
   GetClassInterface<IState>()
-      .CreateConstuctor<Ptr<String>>()
-      .CreateConstuctor<Ptr<Address>>()
+      .CreateConstructor<Ptr<String>>()
+      .CreateConstructor<Ptr<Address>>()
       .CreateMemberFunction("get", static_cast<TemplateParameter1 (IState::*)()>(&IState::Get))
       .CreateMemberFunction(
           "get",
@@ -255,8 +256,8 @@ Module::Module()
       .CreateMemberFunction("existed", &IState::Existed);
 
   GetClassInterface<IShardedState>()
-      .CreateConstuctor<Ptr<String>>()
-      .CreateConstuctor<Ptr<Address>>()
+      .CreateConstructor<Ptr<String>>()
+      .CreateConstructor<Ptr<Address>>()
       // TODO (issue 1172): This will be enabled once the issue is resolved
       //.EnableIndexOperator<Ptr<String>, TemplateParameter1>()
       //.EnableIndexOperator<Ptr<Address>, TemplateParameter1>();

@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/random.hpp"
 #include "math/statistics/mean.hpp"
 #include "math/tensor.hpp"
 #include "ml/dataloaders/mnist_loaders/mnist_loader.hpp"
@@ -55,9 +56,9 @@
 using namespace fetch::ml::ops;
 using namespace fetch::ml::layers;
 
-using DataType       = float;
-using ArrayType      = fetch::math::Tensor<DataType>;
-using ConstSliceType = typename ArrayType::ConstSliceType;
+using DataType  = float;
+using ArrayType = fetch::math::Tensor<DataType>;
+using SizeType  = fetch::math::SizeType;
 
 class TrainingClient
 {
@@ -114,18 +115,16 @@ public:
     return g_.StateDict();
   }
 
-  void AddPeers(std::vector<std::shared_ptr<TrainingClient>> const &clientList)
+  void AddPeers(std::vector<std::shared_ptr<TrainingClient>> const &clients)
   {
-    for (auto const &p : clientList)
+    for (auto const &p : clients)
     {
       if (p.get() != this)
       {
         peers_.push_back(p);
       }
     }
-    std::random_device rd;
-    std::mt19937       g(rd());
-    std::shuffle(peers_.begin(), peers_.end(), g);
+    fetch::random::Shuffle(gen_, peers_, peers_);
   }
 
   void UpdateWeights()
@@ -143,9 +142,7 @@ public:
       g_.LoadStateDict(g_.StateDict().Merge(averageStateDict, MERGE_RATIO));
     }
     // Shuffle the peers list to get new contact for next update
-    std::random_device rd;
-    std::mt19937       g(rd());
-    std::shuffle(peers_.begin(), peers_.end(), g);
+    fetch::random::Shuffle(gen_, peers_, peers_);
   }
 
   std::vector<float> const &GetLossesValues() const
@@ -168,6 +165,9 @@ private:
 
   // Mutex to protect weight access
   std::mutex m_;
+
+  // random number generator for shuffling peers
+  fetch::random::LaggedFibonacciGenerator<> gen_;
 };
 
 int main(int ac, char **av)

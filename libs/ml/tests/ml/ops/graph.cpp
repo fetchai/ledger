@@ -18,7 +18,8 @@
 
 #include "math/tensor.hpp"
 #include "ml/graph.hpp"
-#include "ml/layers/convolution_1d.hpp"
+#include "ml/layers/fully_connected.hpp"
+#include "ml/layers/self_attention.hpp"
 #include "ml/ops/activations/relu.hpp"
 #include "ml/ops/multiply.hpp"
 #include "ml/ops/placeholder.hpp"
@@ -90,9 +91,10 @@ TYPED_TEST(GraphTest, no_such_node_test)  // Use the class as a Node
   using SizeType  = typename TypeParam::SizeType;
 
   fetch::ml::Graph<ArrayType> g;
+
   g.template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>("Input", {});
-  g.template AddNode<fetch::ml::layers::Convolution1D<ArrayType>>("Convolution", {"Input"}, 10u,
-                                                                  20u, 3u, 1u);
+  g.template AddNode<fetch::ml::layers::SelfAttention<ArrayType>>("SelfAttention", {"Input"}, 50u,
+                                                                  42u, 10u);
 
   ArrayType data(std::vector<SizeType>({5, 10}));
   g.SetInput("Input", data);
@@ -100,30 +102,28 @@ TYPED_TEST(GraphTest, no_such_node_test)  // Use the class as a Node
   ASSERT_ANY_THROW(g.Evaluate("FullyConnected"));
 }
 
-TYPED_TEST(GraphTest, two_nodes_same_name_test)
+TYPED_TEST(GraphTest, multi_nodes_have_same_name)
 {
   using ArrayType = TypeParam;
-  using SizeType  = typename TypeParam::SizeType;
+  using DataType  = typename TypeParam::Type;
 
   fetch::ml::Graph<ArrayType> g;
 
-  g.template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>("Input", {});
-  std::string sa_1 = g.template AddNode<fetch::ml::layers::Convolution1D<ArrayType>>(
-      "Convolution", {"Input"}, 10u, 20u, 3u, 1u);
-  std::string sa_2 = g.template AddNode<fetch::ml::layers::Convolution1D<ArrayType>>(
-      "Convolution", {"Input"}, 10u, 20u, 3u, 1u);
-  std::string sa_3 = g.template AddNode<fetch::ml::layers::Convolution1D<ArrayType>>(
-      "Convolution", {"Input"}, 10u, 20u, 3u, 1u);
+  std::string input = g.template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>("Input", {});
+  std::string fc_1  = g.template AddNode<fetch::ml::layers::FullyConnected<ArrayType>>(
+      "FC1", {input}, 10u, 10u, fetch::ml::details::ActivationType::NOTHING,
+      fetch::ml::details::RegularisationType::NONE, static_cast<DataType>(0));
+  std::string fc_2 = g.template AddNode<fetch::ml::layers::FullyConnected<ArrayType>>(
+      "FC1", {fc_1}, 10u, 10u, fetch::ml::details::ActivationType::NOTHING,
+      fetch::ml::details::RegularisationType::NONE, static_cast<DataType>(0));
+  std::string fc_3 = g.template AddNode<fetch::ml::layers::FullyConnected<ArrayType>>(
+      "FC1", {fc_2}, 10u, 10u, fetch::ml::details::ActivationType::NOTHING,
+      fetch::ml::details::RegularisationType::NONE, static_cast<DataType>(0));
 
-  ArrayType data(std::vector<SizeType>({5, 10}));
-  g.SetInput("Input", data);
-
-  EXPECT_NE(sa_1, sa_2);
-  EXPECT_NE(sa_2, sa_3);
-  EXPECT_NE(sa_1, sa_3);
-  EXPECT_EQ(sa_1, "Convolution");
-  EXPECT_EQ(sa_2, "Convolution1D_0");
-  EXPECT_EQ(sa_3, "Convolution1D_1");
+  // check the naming is correct
+  ASSERT_EQ(fc_1, "FC1");
+  ASSERT_EQ(fc_2, "FC1_Copy_1");
+  ASSERT_EQ(fc_3, "FC1_Copy_2");
 }
 
 TYPED_TEST(GraphTest,

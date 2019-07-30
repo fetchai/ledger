@@ -66,9 +66,9 @@ private:
   using ModulePtr = std::shared_ptr<vm::Module>;
 
   // Transaction /
-  Status InvokeAction(std::string const &name, Transaction const &tx, BlockIndex index);
+  Result InvokeAction(std::string const &name, Transaction const &tx, BlockIndex index);
   Status InvokeQuery(std::string const &name, Query const &request, Query &response);
-  Status InvokeInit(Address const &owner);
+  Result InvokeInit(Address const &owner);
 
   BlockIndex     block_index_{};  ///< The index current contract's block
   std::string    source_;         ///< The source of the current contract
