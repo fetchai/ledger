@@ -29,6 +29,7 @@
 #include "math/linalg/blas/gemm_tn_vector.hpp"
 #include "math/linalg/prototype.hpp"
 #include "math/meta/math_type_traits.hpp"
+#include "math/tensor_reduce.hpp"
 
 #include <cassert>
 #include <numeric>
@@ -705,12 +706,7 @@ void ReduceMax(ArrayType const &obj1, SizeType axis, ArrayType &ret)
   using DataType = typename ArrayType::Type;
   ret.Fill(std::numeric_limits<DataType>::min());
 
-  Reduce(axis,
-         [](const DataType &x, DataType &y) {
-           if (x > y)
-             y = x;
-         },
-         obj1, ret);
+  Reduce(axis, [](const DataType &x, DataType &y) { y = std::max(x, y); }, obj1, ret);
 }
 
 template <typename ArrayType>

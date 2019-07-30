@@ -2150,12 +2150,12 @@ typename Tensor<T, C>::ConstSliceType Tensor<T, C>::Slice(SizeType index, SizeTy
  * Returns a Slice along multiple dimensions that is not permitted to alter the original tensor
  * @tparam T
  * @tparam C
- * @param indexes
+ * @param indices
  * @param axes
  * @return
  */
 template <typename T, typename C>
-typename Tensor<T, C>::ConstSliceType Tensor<T, C>::Slice(std::vector<SizeType> indexes,
+typename Tensor<T, C>::ConstSliceType Tensor<T, C>::Slice(std::vector<SizeType> indices,
                                                           std::vector<SizeType> axes) const
 {
   std::vector<std::vector<SizeType>> range;
@@ -2165,10 +2165,10 @@ typename Tensor<T, C>::ConstSliceType Tensor<T, C>::Slice(std::vector<SizeType> 
     range.push_back({0, shape().at(j), 1});
   }
 
-  for (SizeType j = 0; j < indexes.size(); ++j)
+  for (SizeType j = 0; j < indices.size(); ++j)
   {
-    range.at(axes.at(j)).at(0) = indexes.at(j);
-    range.at(axes.at(j)).at(1) = indexes.at(j) + 1;
+    range.at(axes.at(j)).at(0) = indices.at(j);
+    range.at(axes.at(j)).at(1) = indices.at(j) + 1;
     range.at(axes.at(j)).at(2) = 1;
   }
 
@@ -2220,12 +2220,12 @@ typename Tensor<T, C>::TensorSlice Tensor<T, C>::Slice(SizeType index, SizeType 
  * Returns a Slice along multiple dimensions that is not permitted to alter the original tensor
  * @tparam T
  * @tparam C
- * @param indexes
+ * @param indices
  * @param axes
  * @return
  */
 template <typename T, typename C>
-typename Tensor<T, C>::TensorSlice Tensor<T, C>::Slice(std::vector<SizeType> indexes,
+typename Tensor<T, C>::TensorSlice Tensor<T, C>::Slice(std::vector<SizeType> indices,
                                                        std::vector<SizeType> axes)
 {
   std::vector<std::vector<SizeType>> range;
@@ -2235,10 +2235,10 @@ typename Tensor<T, C>::TensorSlice Tensor<T, C>::Slice(std::vector<SizeType> ind
     range.push_back({0, shape().at(j), 1});
   }
 
-  for (SizeType j = 0; j < indexes.size(); ++j)
+  for (SizeType j = 0; j < indices.size(); ++j)
   {
-    range.at(axes.at(j)).at(0) = indexes.at(j);
-    range.at(axes.at(j)).at(1) = indexes.at(j) + 1;
+    range.at(axes.at(j)).at(0) = indices.at(j);
+    range.at(axes.at(j)).at(1) = indices.at(j) + 1;
     range.at(axes.at(j)).at(2) = 1;
   }
 

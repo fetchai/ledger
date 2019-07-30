@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "math/base_types.hpp"
+#include "math/tensor_declaration.hpp"
 #include "math/tensor_slice_iterator.hpp"
 
 #include <cassert>
@@ -25,32 +26,40 @@
 namespace fetch {
 namespace math {
 
-// need to forward declare
-template <typename T, typename C>
-class Tensor;
-
+/**
+ * Applies given function along given axis on N-1 sized array
+ * @tparam F Function type
+ * @tparam T
+ * @tparam C
+ * @param axis Axis along which function will be applied
+ * @param function Function that will be applied along specified axis
+ * @param array Constant input tensor
+ * @param ret Output tensor
+ */
 template <typename F, typename T, typename C>
-inline void Reduce(SizeType axis, F function, const Tensor<T, C> &a, Tensor<T, C> &b)
+inline void Reduce(SizeType axis, F function, const Tensor<T, C> &array, Tensor<T, C> &ret)
 {
-  assert(b.shape().at(axis) == 1);
-  for (SizeType i = 0; i < a.shape().size(); i++)
+  assert(ret.shape().at(axis) == 1);
+  for (SizeType i = 0; i < array.shape().size(); i++)
   {
     if (i != axis)
     {
-      assert(a.shape().at(i) == b.shape().at(i));
+      assert(array.shape().at(i) == ret.shape().at(i));
     }
   }
 
+  // If axis is 0, no need to put axis to front
   if (axis == 0)
   {
-    auto it_a = a.cbegin();
-    auto it_b = b.begin();
+    auto it_a = array.cbegin();
+    auto it_b = ret.begin();
 
     while (it_a.is_valid())
     {
-      for (SizeType j{0}; j < a.shape().at(0); ++j)
+      // Move return array iterator every array.shape().at(axis) steps
+      for (SizeType j{0}; j < array.shape().at(0); ++j)
       {
-
+        // Apply function
         function(*it_a, *it_b);
         ++it_a;
       }
@@ -59,20 +68,24 @@ inline void Reduce(SizeType axis, F function, const Tensor<T, C> &a, Tensor<T, C
   }
   else
   {
-    auto it_a = a.Slice().cbegin();
-    auto it_b = b.Slice().begin();
+    // Create axis-permutable slice iterator
+    auto a_it = array.Slice().cbegin();
+    auto r_it = ret.Slice().begin();
 
-    it_a.PermuteAxes(0, axis);
-    it_b.PermuteAxes(0, axis);
+    // Put selected axis to front
+    a_it.PermuteAxes(0, axis);
+    r_it.PermuteAxes(0, axis);
 
-    while (it_a.is_valid())
+    while (a_it.is_valid())
     {
-      for (SizeType j{0}; j < a.shape().at(axis); ++j)
+      // Move return array iterator every array.shape().at(axis) steps
+      for (SizeType j{0}; j < array.shape().at(axis); ++j)
       {
-        function(*it_a, *it_b);
-        ++it_a;
+        // Apply function
+        function(*a_it, *r_it);
+        ++a_it;
       }
-      ++it_b;
+      ++r_it;
     }
   }
 }
