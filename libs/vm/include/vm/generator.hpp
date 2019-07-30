@@ -297,6 +297,9 @@ private:
   void     HandleWhileStatement(IRBlockNodePtr const &block_node);
   void     HandleForStatement(IRBlockNodePtr const &block_node);
   void     HandleIfStatement(IRNodePtr const &node);
+  void     HandleUseStatement(IRNodePtr const &node);
+  void     HandleUseAnyStatement(IRNodePtr const &node);
+  void     HandleUseVariable(IRExpressionNodePtr const &node);
   void     HandleVarStatement(IRNodePtr const &node);
   void     HandleReturnStatement(IRNodePtr const &node);
   void     HandleBreakStatement(IRNodePtr const &node);
@@ -329,6 +332,7 @@ private:
   void     HandleFixed32(IRExpressionNodePtr const &node);
   void     HandleFixed64(IRExpressionNodePtr const &node);
   void     HandleString(IRExpressionNodePtr const &node);
+  void     PushString(std::string const &s, uint16_t line);
   void     HandleTrue(IRExpressionNodePtr const &node);
   void     HandleFalse(IRExpressionNodePtr const &node);
   void     HandleNull(IRExpressionNodePtr const &node);
