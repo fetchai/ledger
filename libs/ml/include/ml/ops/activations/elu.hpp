@@ -37,7 +37,7 @@ public:
   using DataType      = typename ArrayType::Type;
   using SizeType      = typename ArrayType::SizeType;
   using VecTensorType = typename Ops<T>::VecTensorType;
-  using SPType        = LeakyReluSaveableParams<ArrayType>;
+  using SPType        = EluSaveableParams<ArrayType>;
 
   explicit Elu(DataType a)
     : a_(a)
@@ -53,7 +53,7 @@ public:
   std::shared_ptr<SaveableParamsInterface> GetOpSaveableParams() override
   {
     auto sp = std::make_shared<SPType>();
-    sp.a    = a_;
+    sp->a   = a_;
     return sp;
   }
 
