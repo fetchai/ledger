@@ -143,7 +143,7 @@ TYPED_TEST(LeakyReluTest, saveparams_test)
   ArrayType gt   = ArrayType::FromString("1, -0.02, 3, -0.04, 5, -0.06, 7, -0.08");
 
   fetch::ml::ops::LeakyRelu<ArrayType> op(DataType{0.01f});
-  ArrayType                            prediction(op.ComputeOutputShape({data}));
+  ArrayType                            prediction(op.ComputeOutputShape({std::make_shared<const ArrayType>(data)}));
   op.Forward(VecTensorType({data}), prediction);
 
   // extract saveparams

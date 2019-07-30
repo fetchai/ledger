@@ -40,7 +40,9 @@ void Serialize(S &serializer, OpType const &operation_type)
 template <typename S>
 void Deserialize(S &serializer, OpType &operation_type)
 {
-  serializer >> static_cast<uint16_t>(operation_type);
+  uint16_t enum_val = 0;
+  serializer >> enum_val;
+  operation_type = static_cast<OpType>(enum_val);
 }
 
 ////////////////////////////

@@ -103,7 +103,7 @@ TYPED_TEST(AbsTest, saveparams_test)
 
   OpType op;
 
-  ArrayType     prediction(op.ComputeOutputShape({data}));
+  ArrayType     prediction(op.ComputeOutputShape({std::make_shared<ArrayType const>(data)}));
   VecTensorType vec_data({data});
 
   op.Forward(vec_data, prediction);

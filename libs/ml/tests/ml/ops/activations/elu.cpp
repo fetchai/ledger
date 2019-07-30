@@ -148,8 +148,8 @@ TYPED_TEST(EluTest, saveparams_test)
 
   fetch::ml::ops::Elu<ArrayType> op(DataType{2.0});
 
-  ArrayType prediction(op.ComputeOutputShape({data}));
-  op.Forward(VecTensorType({data}), prediction);
+  ArrayType prediction(op.ComputeOutputShape({std::make_shared<const ArrayType>(data)}));
+  op.Forward(VecTensorType({std::make_shared<const ArrayType>(data)}), prediction);
 
   // extract saveparams
   std::shared_ptr<fetch::ml::SaveableParamsInterface> sp = op.GetOpSaveableParams();
@@ -170,8 +170,8 @@ TYPED_TEST(EluTest, saveparams_test)
   fetch::ml::ops::Elu<ArrayType> new_op(*dsp2);
 
   // check that new predictions match the old
-  ArrayType new_prediction(op.ComputeOutputShape({data}));
-  new_op.Forward(VecTensorType({data}), new_prediction);
+  ArrayType new_prediction(op.ComputeOutputShape({std::make_shared<const ArrayType>(data)}));
+  new_op.Forward(VecTensorType({std::make_shared<const ArrayType>(data)}), new_prediction);
 
   // test correct values
   EXPECT_TRUE(new_prediction.AllClose(prediction, DataType{1e-5f}, DataType{1e-5f}));
