@@ -45,6 +45,7 @@ public:
       ArrayType const &error_signal)                                          = 0;
   virtual void                            ResetCache(bool input_size_changed) = 0;
   virtual std::vector<NodePtrType> const &GetOutputs() const                  = 0;
+  virtual std::string const &             GetNodeName()                       = 0;
 };
 
 template <class T, class O>
@@ -76,10 +77,14 @@ public:
   std::vector<std::pair<NodeInterface<T> *, ArrayType>> BackPropagateSignal(
       ArrayType const &error_signal) override;
 
-  void                                    AddInput(NodePtrType const &i) override;
-  void                                    AddOutput(NodePtrType const &o) override;
-  virtual std::vector<NodePtrType> const &GetOutputs() const override;
-  virtual void                            ResetCache(bool input_size_changed) override;
+  void                            AddInput(NodePtrType const &i) override;
+  void                            AddOutput(NodePtrType const &o) override;
+  std::vector<NodePtrType> const &GetOutputs() const override;
+  void                            ResetCache(bool input_size_changed) override;
+  std::string const &             GetNodeName() override
+  {
+    return name_;
+  }
 
 private:
   std::vector<NodePtrType> input_nodes_;
