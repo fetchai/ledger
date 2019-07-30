@@ -244,6 +244,8 @@ Module::Module()
       .CreateConstructor(&Address::ConstructorFromString)
       .CreateMemberFunction("signedTx", &Address::HasSignedTx);
 
+  CreateFreeFunction("toString", &Address::ToString);
+
   GetClassInterface<IState>()
       .CreateConstructor(&IState::ConstructorFromString)
       .CreateConstructor(&IState::ConstructorFromAddress)

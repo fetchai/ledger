@@ -44,6 +44,11 @@ public:
     return new Address{vm, type_id, address};
   }
 
+  static Ptr<String> ToString(VM *, Ptr<Address> const &address)
+  {
+    return address->AsString();
+  }
+
   // Construction / Destruction
   Address(VM *vm, TypeId id, Ptr<String> const &address = Ptr<String>{}, bool signed_tx = false)
     : Object(vm, id)
