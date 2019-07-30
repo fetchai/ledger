@@ -84,9 +84,7 @@ struct ConstructorInvoker
 template <typename ReturnType, typename... Args>
 void InvokeConstructor(VM *vm, TypeId type_id, ReturnType (*constructor)(VM *, TypeId, Args...))
 {
-  static_assert(
-      IsPtr<ReturnType>::value,
-      "Constructors must return a fetch::vm::Ptr to an instance of the type they belong to.");
+  static_assert(IsPtr<ReturnType>::value, "Constructors must return a fetch::vm::Ptr");
 
   constexpr int num_parameters         = int(sizeof...(Args));
   constexpr int first_parameter_offset = num_parameters - 1;

@@ -30,6 +30,7 @@
 #include "vm/module/functor_invoke.hpp"
 #include "vm/module/member_function_invoke.hpp"
 #include "vm/module/static_member_function_invoke.hpp"
+#include "vm/object.hpp"
 #include "vm/state.hpp"
 #include "vm/vm.hpp"
 
@@ -152,6 +153,8 @@ public:
     template <typename ReturnType, typename... Args>
     ClassInterface &InternalCreateConstructor(ReturnType (*constructor)(VM *, TypeId, Args...))
     {
+      static_assert(IsPtr<ReturnType>::value, "Constructors must return a fetch::vm::Ptr");
+
       TypeIndex const type_index__ = type_index_;
       TypeIndexArray  parameter_type_index_array;
       UnrollTypes<std::remove_cv_t<std::remove_reference_t<Args>>...>::Unroll(

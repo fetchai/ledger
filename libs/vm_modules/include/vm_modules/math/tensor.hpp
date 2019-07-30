@@ -50,11 +50,9 @@ public:
 
   VMTensor(fetch::vm::VM *vm, fetch::vm::TypeId type_id);
 
-  static fetch::vm::Ptr<VMTensor> ConstructorFromShape(
+  static fetch::vm::Ptr<VMTensor> Constructor(
       fetch::vm::VM *vm, fetch::vm::TypeId type_id,
       fetch::vm::Ptr<fetch::vm::Array<fetch::math::Tensor<DataType>::SizeType>> const &shape);
-
-  static fetch::vm::Ptr<VMTensor> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id);
 
   static void Bind(fetch::vm::Module &module);
 

@@ -217,11 +217,6 @@ void String::Add(Ptr<Object> &lhso, Ptr<Object> &rhso)
   }
 }
 
-Ptr<String> String::Constructor(VM *vm, TypeId)
-{
-  return new String(vm, "");
-}
-
 bool String::SerializeTo(MsgPackSerializer &buffer)
 {
   buffer << str;
