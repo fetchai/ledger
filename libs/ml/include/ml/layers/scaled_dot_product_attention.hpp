@@ -39,43 +39,50 @@ namespace ml {
 namespace layers {
 
 template <class T>
-class Attention : public SubGraph<T>
+class ScaledDotProductAttention : public SubGraph<T>
 {
 public:
   using ArrayType    = T;
   using SizeType     = typename ArrayType::SizeType;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
   using DataType     = typename T::Type;
-
-  Attention(std::uint64_t dk, std::uint64_t dv, DataType dropout = 0.9,
-            std::string const &name = "Attention")
+	using VecTensorType = typename SubGraph<T>::VecTensorType;
+	
+	ScaledDotProductAttention(std::uint64_t dk, DataType dropout = 0.1)
     : key_dim_(dk)
-    , value_dim_(dv)
   {
-
+		std::string name = DESCRIPTOR;
+		
+		// all input shapes are (feature_length, query/key/value_num, batch_num)
     std::string query =
         this->template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>(name + "_Query", {});
     std::string key =
         this->template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>(name + "_Key", {});
     std::string value =
         this->template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>(name + "_Value", {});
-
+		
+    // Be advised that the matrix multiplication sequence is different from what is proposed in the paper
+    // as our batch dimension is the last dimension, which the feature dimension is the first one.
+    // in the paper, feature dimension is the col dimension
+    // please refer to http://jalammar.github.io/illustrated-transformer/
     std::string transpose_key =
         this->template AddNode<fetch::ml::ops::Transpose<ArrayType>>(name + "_TransposeKey", {key});
-    std::string qk_matmul = this->template AddNode<fetch::ml::ops::MatrixMultiply<ArrayType>>(
-        name + "_Query_Key_MatMul", {query, transpose_key});
+    std::string kq_matmul = this->template AddNode<fetch::ml::ops::MatrixMultiply<ArrayType>>(
+        name + "_Key_Query_MatMul", {transpose_key, query});
 
-    ArrayType sqrt_dv_tensor = std::vector<SizeType>({1, 1});
-    sqrt_dv_tensor(0, 0)     = fetch::math::Sqrt(static_cast<DataType>(key_dim_));
-    std::string sqrt_dv_ph   = this->template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>(
-        name + "_Sqrt_Value_Dim", {}, sqrt_dv_tensor);
-
-    std::string scaled_qk_matmul = this->template AddNode<fetch::ml::ops::Divide<ArrayType>>(
-        name + "_Scaled_Query_Key_MatMul", {qk_matmul, sqrt_dv_ph});
+    ArrayType sqrt_dk_tensor = std::vector<SizeType>({1, 1, 1});
+    sqrt_dk_tensor(0, 0, 0)     = fetch::math::Sqrt(static_cast<DataType>(key_dim_));
+    std::string sqrt_dk_ph   = this->template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>(
+        name + "_Sqrt_Key_Dim", {});
+    this->SetInput(sqrt_dk_ph, sqrt_dk_tensor);
+    
+		// scale the QK matrix multiplication
+    std::string scaled_kq_matmul = this->template AddNode<fetch::ml::ops::Divide<ArrayType>>(
+        name + "_Scaled_Key_Query_MatMul", {kq_matmul, sqrt_dk_ph});
 
     // softmax
     std::string attention_weight = this->template AddNode<fetch::ml::ops::Softmax<ArrayType>>(
-        name + "_Softmax", {scaled_qk_matmul}, 0);
+        name + "_Softmax", {scaled_kq_matmul}, 0);
 
     // dropout
     std::string dropout_attention_weight =
@@ -85,7 +92,9 @@ public:
     // attention vectors
     std::string weight_value_matmul =
         this->template AddNode<fetch::ml::ops::MatrixMultiply<ArrayType>>(
-            name + "_Weights_Value_MatMul", {dropout_attention_weight, value});
+            name + "_Value_Weight_MatMul", {value, dropout_attention_weight});
+    
+    // in the end, the output is of shape (feature_length, query_num, batch_num)
 
     // TODO () masking op translation decoder
 
@@ -95,17 +104,15 @@ public:
     this->SetOutputNode(weight_value_matmul);
   }
 
-  virtual std::vector<SizeType> ComputeOutputShape(
-      std::vector<std::reference_wrapper<ArrayType const>> const &inputs) const
+  virtual std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const
   {
-    return inputs.front().get().shape();
+    return {inputs.front()->shape(0), inputs.at(2)->shape(1), inputs.front()->shape(2)};
   }
 
-  static constexpr char const *DESCRIPTOR = "Attention";
+  static constexpr char const *DESCRIPTOR = "ScaledDotProductAttention";
 
 private:
   SizeType key_dim_;
-  SizeType value_dim_;
 };
 
 }  // namespace layers

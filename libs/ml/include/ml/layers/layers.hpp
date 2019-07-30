@@ -17,6 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "attention.hpp"
+#include "scaled_dot_product_attention.hpp"
 #include "fully_connected.hpp"
 #include "skip_gram.hpp"
