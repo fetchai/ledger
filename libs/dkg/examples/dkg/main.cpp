@@ -57,7 +57,8 @@ ProverPtr CreateNewCertificate()
 int main()
 {
 
-  uint32_t cabinet_size = 4;
+  uint32_t cabinet_size = 10;
+  uint32_t threshold{8};
 
   struct CabinetMember
   {
@@ -127,7 +128,7 @@ int main()
 
   // Start at RBC for each muddle
   {
-    uint32_t threshold{1};
+
 
     for (auto &member : committee)
     {
