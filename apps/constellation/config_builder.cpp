@@ -73,6 +73,7 @@ Constellation::Config BuildConstellationConfig(Settings const &settings)
   cfg.sign_broadcasts       = false;
   cfg.dump_state_file       = settings.dump_state.value();
   cfg.load_state_file       = settings.load_state.value();
+  cfg.stakefile_location    = settings.stakefile_location.value();
   cfg.proof_of_stake        = settings.proof_of_stake.value();
   cfg.network_mode          = GetNetworkMode(settings);
   cfg.beacon_address        = settings.beacon_address.value();
