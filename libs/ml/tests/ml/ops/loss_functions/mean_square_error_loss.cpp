@@ -138,7 +138,9 @@ TYPED_TEST(MeanSquareErrorTest, saveparams_test)
 
   OpType    op;
   TypeParam result({1, 1});
-  op.Forward({data1_transpose, data2_transpose}, result);
+  op.Forward(
+      {std::make_shared<TypeParam>(data1_transpose), std::make_shared<TypeParam>(data2_transpose)},
+      result);
 
   // extract saveparams
   std::shared_ptr<fetch::ml::SaveableParamsInterface> sp = op.GetOpSaveableParams();
@@ -151,7 +153,7 @@ TYPED_TEST(MeanSquareErrorTest, saveparams_test)
   b << *dsp;
 
   // make another prediction with the original graph
-  op.Forward({data1, data2}, result);
+  op.Forward({std::make_shared<TypeParam>(data1), std::make_shared<TypeParam>(data2)}, result);
 
   // deserialize
   b.seek(0);
@@ -163,7 +165,7 @@ TYPED_TEST(MeanSquareErrorTest, saveparams_test)
 
   // check that new predictions match the old
   TypeParam new_result({1, 1});
-  op.Forward({data1, data2}, new_result);
+  op.Forward({std::make_shared<TypeParam>(data1), std::make_shared<TypeParam>(data2)}, new_result);
 
   // test correct values
   EXPECT_NEAR(static_cast<double>(result(0, 0)), static_cast<double>(new_result(0, 0)),

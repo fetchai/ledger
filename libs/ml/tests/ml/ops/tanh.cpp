@@ -29,7 +29,7 @@
 #include <vector>
 
 template <typename T>
-class TanhTest : public ::testing::Test
+class TanHTest : public ::testing::Test
 {
 };
 
@@ -37,9 +37,9 @@ using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor
                                  fetch::math::Tensor<fetch::fixed_point::FixedPoint<16, 16>>,
                                  fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
 
-TYPED_TEST_CASE(TanhTest, MyTypes);
+TYPED_TEST_CASE(TanHTest, MyTypes);
 
-TYPED_TEST(TanhTest, forward_all_positive_test)
+TYPED_TEST(TanHTest, forward_all_positive_test)
 {
   uint8_t   n = 9;
   TypeParam data{n};
@@ -55,7 +55,7 @@ TYPED_TEST(TanhTest, forward_all_positive_test)
     gt.Set(i, typename TypeParam::Type(gtInput[i]));
   }
 
-  fetch::ml::ops::Tanh<TypeParam> op;
+  fetch::ml::ops::TanH<TypeParam> op;
 
   TypeParam prediction(op.ComputeOutputShape({std::make_shared<const TypeParam>(data)}));
   op.Forward({std::make_shared<const TypeParam>(data)}, prediction);
@@ -64,7 +64,7 @@ TYPED_TEST(TanhTest, forward_all_positive_test)
       prediction.AllClose(gt, typename TypeParam::Type(1e-4), typename TypeParam::Type(1e-4)));
 }
 
-TYPED_TEST(TanhTest, forward_all_negative_test)
+TYPED_TEST(TanHTest, forward_all_negative_test)
 {
   uint8_t   n = 9;
   TypeParam data{n};
@@ -80,7 +80,7 @@ TYPED_TEST(TanhTest, forward_all_negative_test)
     gt.Set(i, typename TypeParam::Type(gtInput[i]));
   }
 
-  fetch::ml::ops::Tanh<TypeParam> op;
+  fetch::ml::ops::TanH<TypeParam> op;
 
   TypeParam prediction(op.ComputeOutputShape({std::make_shared<const TypeParam>(data)}));
   op.Forward({std::make_shared<const TypeParam>(data)}, prediction);
@@ -89,7 +89,7 @@ TYPED_TEST(TanhTest, forward_all_negative_test)
       prediction.AllClose(gt, typename TypeParam::Type(1e-4), typename TypeParam::Type(1e-4)));
 }
 
-TYPED_TEST(TanhTest, backward_all_positive_test)
+TYPED_TEST(TanHTest, backward_all_positive_test)
 {
 
   uint8_t             n = 8;
@@ -105,7 +105,7 @@ TYPED_TEST(TanhTest, backward_all_positive_test)
     error.Set(i, typename TypeParam::Type(errorInput[i]));
     gt.Set(i, typename TypeParam::Type(gtInput[i]));
   }
-  fetch::ml::ops::Tanh<TypeParam> op;
+  fetch::ml::ops::TanH<TypeParam> op;
   std::vector<TypeParam> prediction = op.Backward({std::make_shared<const TypeParam>(data)}, error);
 
   // test correct values
@@ -113,7 +113,7 @@ TYPED_TEST(TanhTest, backward_all_positive_test)
       prediction[0].AllClose(gt, typename TypeParam::Type(1e-4), typename TypeParam::Type(1e-4)));
 }
 
-TYPED_TEST(TanhTest, backward_all_negative_test)
+TYPED_TEST(TanHTest, backward_all_negative_test)
 {
   uint8_t             n = 8;
   TypeParam           data{n};
@@ -129,7 +129,7 @@ TYPED_TEST(TanhTest, backward_all_negative_test)
     error.Set(i, typename TypeParam::Type(errorInput[i]));
     gt.Set(i, typename TypeParam::Type(gtInput[i]));
   }
-  fetch::ml::ops::Tanh<TypeParam> op;
+  fetch::ml::ops::TanH<TypeParam> op;
   std::vector<TypeParam> prediction = op.Backward({std::make_shared<const TypeParam>(data)}, error);
 
   // test correct values
@@ -137,13 +137,13 @@ TYPED_TEST(TanhTest, backward_all_negative_test)
       prediction[0].AllClose(gt, typename TypeParam::Type(1e-4), typename TypeParam::Type(1e-4)));
 }
 
-TYPED_TEST(TanhTest, saveparams_test)
+TYPED_TEST(TanHTest, saveparams_test)
 {
   using ArrayType     = TypeParam;
   using DataType      = typename TypeParam::Type;
   using VecTensorType = typename fetch::ml::ops::Ops<ArrayType>::VecTensorType;
-  using SPType        = typename fetch::ml::ops::Tanh<ArrayType>::SPType;
-  using OpType        = typename fetch::ml::ops::Tanh<ArrayType>;
+  using SPType        = typename fetch::ml::ops::TanH<ArrayType>::SPType;
+  using OpType        = typename fetch::ml::ops::TanH<ArrayType>;
 
   ArrayType data = TypeParam::FromString("0, 0.2, 0.4, -0, -0.2, -0.4");
   ArrayType gt   = TypeParam::FromString("0.0, 0.197375, 0.379949, -0.0, -0.197375, -0.379949");

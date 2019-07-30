@@ -111,8 +111,9 @@ TYPED_TEST(LeakyReluOpTest, saveparams_test)
 
   OpType op;
 
-  ArrayType     prediction(op.ComputeOutputShape({data, alpha}));
-  VecTensorType vec_data({data, alpha});
+  ArrayType     prediction(op.ComputeOutputShape(
+      {std::make_shared<TypeParam>(data), std::make_shared<TypeParam>(alpha)}));
+  VecTensorType vec_data({std::make_shared<TypeParam>(data), std::make_shared<TypeParam>(alpha)});
 
   op.Forward(vec_data, prediction);
 
@@ -135,7 +136,8 @@ TYPED_TEST(LeakyReluOpTest, saveparams_test)
   OpType new_op(*dsp2);
 
   // check that new predictions match the old
-  ArrayType new_prediction(op.ComputeOutputShape({data, alpha}));
+  ArrayType new_prediction(op.ComputeOutputShape(
+      {std::make_shared<TypeParam>(data), std::make_shared<TypeParam>(alpha)}));
   new_op.Forward(vec_data, new_prediction);
 
   // test correct values

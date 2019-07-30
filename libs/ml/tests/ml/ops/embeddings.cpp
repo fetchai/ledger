@@ -177,9 +177,9 @@ TYPED_TEST(EmbeddingsTest, saveparams_test)
   OpType op(6, 10);
   op.SetData(weights);
 
-  ArrayType prediction(op.ComputeOutputShape({weights}));
+  ArrayType prediction(op.ComputeOutputShape({std::make_shared<ArrayType const>(weights)}));
 
-  op.Forward({input}, prediction);
+  op.Forward({std::make_shared<ArrayType const>(input)}, prediction);
 
   // extract saveparams
   std::shared_ptr<fetch::ml::SaveableParamsInterface> sp = op.GetOpSaveableParams();
@@ -200,8 +200,8 @@ TYPED_TEST(EmbeddingsTest, saveparams_test)
   OpType new_op(*dsp2);
 
   // check that new predictions match the old
-  ArrayType new_prediction(op.ComputeOutputShape({weights}));
-  new_op.Forward({input}, new_prediction);
+  ArrayType new_prediction(op.ComputeOutputShape({std::make_shared<ArrayType const>(weights)}));
+  new_op.Forward({std::make_shared<ArrayType const>(input)}, new_prediction);
 
   // test correct values
   EXPECT_TRUE(new_prediction.AllClose(prediction, fetch::math::function_tolerance<DataType>(),

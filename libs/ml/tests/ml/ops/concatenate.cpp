@@ -85,8 +85,10 @@ TYPED_TEST(ConcatenateTest, saveparams_test)
 
   OpType op(1);
 
-  ArrayType     prediction(op.ComputeOutputShape({data1, data2}));
-  VecTensorType vec_data({data1, data2});
+  ArrayType     prediction(op.ComputeOutputShape(
+      {std::make_shared<const ArrayType>(data1), std::make_shared<const ArrayType>(data2)}));
+  VecTensorType vec_data(
+      {std::make_shared<const ArrayType>(data1), std::make_shared<const ArrayType>(data2)});
 
   op.Forward(vec_data, prediction);
 
@@ -109,7 +111,8 @@ TYPED_TEST(ConcatenateTest, saveparams_test)
   OpType new_op(*dsp2);
 
   // check that new predictions match the old
-  ArrayType new_prediction(op.ComputeOutputShape({data1, data2}));
+  ArrayType new_prediction(op.ComputeOutputShape(
+      {std::make_shared<const ArrayType>(data1), std::make_shared<const ArrayType>(data2)}));
   new_op.Forward(vec_data, new_prediction);
 
   // test correct values

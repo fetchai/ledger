@@ -310,8 +310,10 @@ TYPED_TEST(Convolution1DTest, saveparams_test)
 
   OpType op;
 
-  ArrayType     prediction(op.ComputeOutputShape({input, weights}));
-  VecTensorType vec_data({input, weights});
+  ArrayType     prediction(op.ComputeOutputShape(
+      {std::make_shared<const ArrayType>(input), std::make_shared<const ArrayType>(weights)}));
+  VecTensorType vec_data(
+      {std::make_shared<const ArrayType>(input), std::make_shared<const ArrayType>(weights)});
 
   op.Forward(vec_data, prediction);
 
@@ -334,7 +336,8 @@ TYPED_TEST(Convolution1DTest, saveparams_test)
   OpType new_op(*dsp2);
 
   // check that new predictions match the old
-  ArrayType new_prediction(op.ComputeOutputShape({input, weights}));
+  ArrayType new_prediction(op.ComputeOutputShape(
+      {std::make_shared<const ArrayType>(input), std::make_shared<const ArrayType>(weights)}));
   new_op.Forward(vec_data, new_prediction);
 
   // test correct values
