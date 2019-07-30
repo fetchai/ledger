@@ -71,7 +71,7 @@ std::size_t WeightOf(std::vector<Address> const &addresses, Address const &targe
     weight = addresses.size() - index;
   }
 
-  return weight;
+  return weight + 1;
 }
 
 class StakeManagerTests : public ::testing::Test
