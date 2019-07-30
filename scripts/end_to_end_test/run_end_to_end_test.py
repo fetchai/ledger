@@ -294,7 +294,7 @@ class TestInstance():
 
         if(self._pos_mode):
             output("POS mode. sleep extra time.")
-            time.sleep(60)
+            time.sleep(10)
 
     def stop(self):
         if self._nodes:

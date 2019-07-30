@@ -174,7 +174,7 @@ std::size_t StakeManager::GetBlockGenerationWeight(Block const &previous, Addres
     weight = SafeDecrement(weight, 1);
   }
 
-  return weight;
+  return weight + 1;
 }
 
 void StakeManager::Reset(StakeSnapshot const &snapshot, std::size_t committee_size)
