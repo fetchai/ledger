@@ -96,7 +96,10 @@ template <class TensorType>
 struct FlattenSaveableParams;
 
 template <class TensorType>
-struct ConvolutionLayerSaveableParams;
+struct ConvolutionLayer1DSaveableParams;
+
+template <class TensorType>
+struct ConvolutionLayer2DSaveableParams;
 
 template <class TensorType>
 struct FullyConnectedSaveableParams;
@@ -174,22 +177,21 @@ struct WeightsSaveableParams;
 /// OP SPECIFIC SERIALISATION FUNCTIONS ///
 ///////////////////////////////////////////
 
-namespace
+namespace {
+template <typename S, class SP>
+void SerializeImplementation(S &serializer, std::shared_ptr<SaveableParamsInterface> const &nsp)
 {
-  template <typename S, class SP>
-  void SerializeImplementation(S &serializer, std::shared_ptr<SaveableParamsInterface> const &nsp)
-  {
-    auto castnode = std::dynamic_pointer_cast<SP>(nsp);
-    serializer << *castnode;
-  }
-
-  template <typename S, class SP>
-  void DeserializeImplementation(S &serializer, std::shared_ptr<SaveableParamsInterface> &nsp)
-  {
-    auto castnode = std::dynamic_pointer_cast<SP>(nsp);
-    serializer >> *castnode;
-  }
+  auto castnode = std::dynamic_pointer_cast<SP>(nsp);
+  serializer << *castnode;
 }
+
+template <typename S, class SP>
+void DeserializeImplementation(S &serializer, std::shared_ptr<SaveableParamsInterface> &nsp)
+{
+  auto castnode = std::dynamic_pointer_cast<SP>(nsp);
+  serializer >> *castnode;
+}
+}  // namespace
 
 template <typename S, class TensorType>
 void Serialize(S &serializer, std::shared_ptr<SaveableParamsInterface> const &nsp)
@@ -203,70 +205,80 @@ void Serialize(S &serializer, std::shared_ptr<SaveableParamsInterface> const &ns
 
   switch (operation_type)
   {
-    case OpType::PLACEHOLDER:
-    {
-      SerializeImplementation<S, PlaceholderSaveableParams<TensorType>>(serializer, nsp);
-      break;
-    }
-    case OpType::WEIGHTS:
-    {
-      SerializeImplementation<S, WeightsSaveableParams<TensorType>>(serializer, nsp);
-      break;
-    }
-    case OpType::DROPOUT:
-    {
-      SerializeImplementation<S, DropoutSaveableParams<TensorType>>(serializer, nsp);
-      break;
-    }
-    case OpType::LEAKY_RELU:
-    {
-      SerializeImplementation<S, LeakyReluSaveableParams<TensorType>>(serializer, nsp);
-      break;
-    }
-    case OpType::RANDOMISED_RELU:
-    {
-      SerializeImplementation<S, RandomisedReluSaveableParams<TensorType>>(serializer, nsp);
-      break;
-    }
-    case OpType::SOFTMAX:
-    {
-      SerializeImplementation<S, SoftmaxSaveableParams<TensorType>>(serializer, nsp);
-      break;
-    }
-    case OpType::CONVOLUTION_1D:
-    {
-      SerializeImplementation<S, Convolution1DSaveableParams<TensorType>>(serializer, nsp);
-      break;
-    }
-    case OpType::MAX_POOL:
-    {
-      SerializeImplementation<S, MaxPoolSaveableParams<TensorType>>(serializer, nsp);
-      break;
-    }
-    case OpType::TRANSPOSE:
-    {
-      SerializeImplementation<S, TransposeSaveableParams<TensorType>>(serializer, nsp);
-      break;
-    }
-    case OpType::RESHAPE:
-    {
-      SerializeImplementation<S, ReshapeSaveableParams<TensorType>>(serializer, nsp);
-      break;
-    }
-    case OpType::LAYER_FULLY_CONNECTED:
-    {
-      SerializeImplementation<S, FullyConnectedSaveableParams<TensorType>>(serializer, nsp);
-      break;
-    }
-    case OpType::LAYER_CONVOLUTION:
-    {
-      SerializeImplementation<S, ConvolutionLayerSaveableParams<TensorType>>(serializer, nsp);
-      break;
-    }
-    default:
-    {
-      throw std::runtime_error("Unknown type for Serialization");
-    }
+  case OpType::PLACEHOLDER:
+  {
+    SerializeImplementation<S, PlaceholderSaveableParams<TensorType>>(serializer, nsp);
+    break;
+  }
+  case OpType::WEIGHTS:
+  {
+    SerializeImplementation<S, WeightsSaveableParams<TensorType>>(serializer, nsp);
+    break;
+  }
+  case OpType::DROPOUT:
+  {
+    SerializeImplementation<S, DropoutSaveableParams<TensorType>>(serializer, nsp);
+    break;
+  }
+  case OpType::LEAKY_RELU:
+  {
+    SerializeImplementation<S, LeakyReluSaveableParams<TensorType>>(serializer, nsp);
+    break;
+  }
+  case OpType::RANDOMISED_RELU:
+  {
+    SerializeImplementation<S, RandomisedReluSaveableParams<TensorType>>(serializer, nsp);
+    break;
+  }
+  case OpType::SOFTMAX:
+  {
+    SerializeImplementation<S, SoftmaxSaveableParams<TensorType>>(serializer, nsp);
+    break;
+  }
+  case OpType::CONVOLUTION_1D:
+  {
+    SerializeImplementation<S, Convolution1DSaveableParams<TensorType>>(serializer, nsp);
+    break;
+  }
+  case OpType::MAX_POOL_1D:
+  {
+    SerializeImplementation<S, MaxPoolSaveableParams<TensorType>>(serializer, nsp);
+    break;
+  }
+  case OpType::MAX_POOL_2D:
+  {
+    SerializeImplementation<S, MaxPoolSaveableParams<TensorType>>(serializer, nsp);
+    break;
+  }
+  case OpType::TRANSPOSE:
+  {
+    SerializeImplementation<S, TransposeSaveableParams<TensorType>>(serializer, nsp);
+    break;
+  }
+  case OpType::RESHAPE:
+  {
+    SerializeImplementation<S, ReshapeSaveableParams<TensorType>>(serializer, nsp);
+    break;
+  }
+  case OpType::LAYER_FULLY_CONNECTED:
+  {
+    SerializeImplementation<S, FullyConnectedSaveableParams<TensorType>>(serializer, nsp);
+    break;
+  }
+  case OpType::LAYER_CONVOLUTION_1D:
+  {
+    SerializeImplementation<S, ConvolutionLayer1DSaveableParams<TensorType>>(serializer, nsp);
+    break;
+  }
+  case OpType::LAYER_CONVOLUTION_2D:
+  {
+    SerializeImplementation<S, ConvolutionLayer2DSaveableParams<TensorType>>(serializer, nsp);
+    break;
+  }
+  default:
+  {
+    throw std::runtime_error("Unknown type for Serialization");
+  }
   }
 }
 
@@ -282,73 +294,82 @@ void Deserialize(S &serializer, std::shared_ptr<SaveableParamsInterface> &nsp)
 
   switch (operation_type)
   {
-    case OpType::PLACEHOLDER:
-    {
-      DeserializeImplementation<S, PlaceholderSaveableParams<TensorType>>(serializer, nsp);
-      break;
-    }
-    case OpType::WEIGHTS:
-    {
-      DeserializeImplementation<S, WeightsSaveableParams<TensorType>>(serializer, nsp);
-      break;
-    }
-    case OpType::DROPOUT:
-    {
-      DeserializeImplementation<S, DropoutSaveableParams<TensorType>>(serializer, nsp);
-      break;
-    }
-    case OpType::LEAKY_RELU:
-    {
-      DeserializeImplementation<S, LeakyReluSaveableParams<TensorType>>(serializer, nsp);
-      break;
-    }
-    case OpType::RANDOMISED_RELU:
-    {
-      DeserializeImplementation<S, RandomisedReluSaveableParams<TensorType>>(serializer, nsp);
-      break;
-    }
-    case OpType::SOFTMAX:
-    {
-      DeserializeImplementation<S, SoftmaxSaveableParams<TensorType>>(serializer, nsp);
-      break;
-    }
-    case OpType::CONVOLUTION_1D:
-    {
-      DeserializeImplementation<S, Convolution1DSaveableParams<TensorType>>(serializer, nsp);
-      break;
-    }
-    case OpType::MAX_POOL:
-    {
-      DeserializeImplementation<S, MaxPoolSaveableParams<TensorType>>(serializer, nsp);
-      break;
-    }
-    case OpType::TRANSPOSE:
-    {
-      DeserializeImplementation<S, TransposeSaveableParams<TensorType>>(serializer, nsp);
-      break;
-    }
-    case OpType::RESHAPE:
-    {
-      DeserializeImplementation<S, ReshapeSaveableParams<TensorType>>(serializer, nsp);
-      break;
-    }
-    case OpType::LAYER_FULLY_CONNECTED:
-    {
-      DeserializeImplementation<S, FullyConnectedSaveableParams<TensorType>>(serializer, nsp);
-      break;
-    }
-    case OpType::LAYER_CONVOLUTION:
-    {
-      DeserializeImplementation<S, ConvolutionLayerSaveableParams<TensorType>>(serializer, nsp);
-      break;
-    }
-    default:
-    {
-      throw std::runtime_error("Unknown type for Serialization");
-    }
+  case OpType::PLACEHOLDER:
+  {
+    DeserializeImplementation<S, PlaceholderSaveableParams<TensorType>>(serializer, nsp);
+    break;
+  }
+  case OpType::WEIGHTS:
+  {
+    DeserializeImplementation<S, WeightsSaveableParams<TensorType>>(serializer, nsp);
+    break;
+  }
+  case OpType::DROPOUT:
+  {
+    DeserializeImplementation<S, DropoutSaveableParams<TensorType>>(serializer, nsp);
+    break;
+  }
+  case OpType::LEAKY_RELU:
+  {
+    DeserializeImplementation<S, LeakyReluSaveableParams<TensorType>>(serializer, nsp);
+    break;
+  }
+  case OpType::RANDOMISED_RELU:
+  {
+    DeserializeImplementation<S, RandomisedReluSaveableParams<TensorType>>(serializer, nsp);
+    break;
+  }
+  case OpType::SOFTMAX:
+  {
+    DeserializeImplementation<S, SoftmaxSaveableParams<TensorType>>(serializer, nsp);
+    break;
+  }
+  case OpType::CONVOLUTION_1D:
+  {
+    DeserializeImplementation<S, Convolution1DSaveableParams<TensorType>>(serializer, nsp);
+    break;
+  }
+  case OpType::MAX_POOL_1D:
+  {
+    DeserializeImplementation<S, MaxPoolSaveableParams<TensorType>>(serializer, nsp);
+    break;
+  }
+  case OpType::MAX_POOL_2D:
+  {
+    DeserializeImplementation<S, MaxPoolSaveableParams<TensorType>>(serializer, nsp);
+    break;
+  }
+  case OpType::TRANSPOSE:
+  {
+    DeserializeImplementation<S, TransposeSaveableParams<TensorType>>(serializer, nsp);
+    break;
+  }
+  case OpType::RESHAPE:
+  {
+    DeserializeImplementation<S, ReshapeSaveableParams<TensorType>>(serializer, nsp);
+    break;
+  }
+  case OpType::LAYER_FULLY_CONNECTED:
+  {
+    DeserializeImplementation<S, FullyConnectedSaveableParams<TensorType>>(serializer, nsp);
+    break;
+  }
+  case OpType::LAYER_CONVOLUTION_1D:
+  {
+    DeserializeImplementation<S, ConvolutionLayer1DSaveableParams<TensorType>>(serializer, nsp);
+    break;
+  }
+  case OpType::LAYER_CONVOLUTION_2D:
+  {
+    DeserializeImplementation<S, ConvolutionLayer2DSaveableParams<TensorType>>(serializer, nsp);
+    break;
+  }
+  default:
+  {
+    throw std::runtime_error("Unknown type for Serialization");
+  }
   }
 }
-
 
 template <class TensorType>
 struct GraphSaveableParams : public SaveableParamsInterface
@@ -401,14 +422,13 @@ struct GraphSaveableParams : public SaveableParamsInterface
       serializer >> node_name;
 
       std::shared_ptr<SaveableParamsInterface> nsp_ptr;
-//      std::shared_ptr<SaveableParamsInterface> nsp_ptr =
-//          Deserialize<S, gsp.nodes[node_name]->OP_DESCRIPTOR, TensorType>(serializer);
-//
-//      gsp.nodes.insert(std::make_pair(node_name, nsp_ptr));
+      //      std::shared_ptr<SaveableParamsInterface> nsp_ptr =
+      //          Deserialize<S, gsp.nodes[node_name]->OP_DESCRIPTOR, TensorType>(serializer);
+      //
+      //      gsp.nodes.insert(std::make_pair(node_name, nsp_ptr));
 
       Deserialize<S, TensorType>(serializer, nsp_ptr);
-//      Serialize<S, node.second->OP_DESCRIPTOR, TensorType>(serializer, node.second);
-
+      //      Serialize<S, node.second->OP_DESCRIPTOR, TensorType>(serializer, node.second);
     }
   }
 };
@@ -556,7 +576,7 @@ struct Convolution1DSaveableParams : public SaveableParamsInterface
     : SaveableParamsInterface(OpType::CONVOLUTION_1D)
   {}
   //  static constexpr fetch::ml::OpType OP_DESCRIPTOR = OpType::CONVOLUTION_1D;
-  fetch::ml::OpType OP_DESCRIPTOR = OpType::CONVOLUTION_1D;
+  fetch::ml::OpType     OP_DESCRIPTOR = OpType::CONVOLUTION_1D;
   fetch::math::SizeType stride_size   = fetch::math::numeric_max<fetch::math::SizeType>();
 
   template <class S>
@@ -809,11 +829,11 @@ struct FlattenSaveableParams : public SaveableParamsInterface
 };
 
 template <class TensorType>
-struct ConvolutionLayerSaveableParams : SubGraphSaveableParams<TensorType>
+struct ConvolutionLayer1DSaveableParams : SubGraphSaveableParams<TensorType>
 {
-  ConvolutionLayerSaveableParams() = default;
+  ConvolutionLayer1DSaveableParams() = default;
 
-  fetch::ml::OpType OP_DESCRIPTOR = OpType::LAYER_CONVOLUTION;
+  fetch::ml::OpType OP_DESCRIPTOR = OpType::LAYER_CONVOLUTION_1D;
 
   using SizeType = typename TensorType::SizeType;
 
@@ -823,7 +843,7 @@ struct ConvolutionLayerSaveableParams : SubGraphSaveableParams<TensorType>
   SizeType stride_size;
 
   template <typename S>
-  friend void Serialize(S &serializer, ConvolutionLayerSaveableParams const &sp)
+  friend void Serialize(S &serializer, ConvolutionLayer1DSaveableParams const &sp)
   {
     Serialize(serializer, sp.OP_DESCRIPTOR);
 
@@ -838,7 +858,52 @@ struct ConvolutionLayerSaveableParams : SubGraphSaveableParams<TensorType>
   }
 
   template <typename S>
-  friend void Deserialize(S &serializer, ConvolutionLayerSaveableParams &sp)
+  friend void Deserialize(S &serializer, ConvolutionLayer1DSaveableParams &sp)
+  {
+    Deserialize(serializer, sp.OP_DESCRIPTOR);
+
+    // deserialize parent class first
+    auto base_pointer = static_cast<SubGraphSaveableParams<TensorType> *>(&sp);
+    Deserialize(serializer, *base_pointer);
+
+    serializer >> sp.kernel_size;
+    serializer >> sp.input_channels;
+    serializer >> sp.output_channels;
+    serializer >> sp.stride_size;
+  }
+};
+
+template <class TensorType>
+struct ConvolutionLayer2DSaveableParams : SubGraphSaveableParams<TensorType>
+{
+  ConvolutionLayer2DSaveableParams() = default;
+
+  fetch::ml::OpType OP_DESCRIPTOR = OpType::LAYER_CONVOLUTION_2D;
+
+  using SizeType = typename TensorType::SizeType;
+
+  SizeType kernel_size;
+  SizeType input_channels;
+  SizeType output_channels;
+  SizeType stride_size;
+
+  template <typename S>
+  friend void Serialize(S &serializer, ConvolutionLayer2DSaveableParams const &sp)
+  {
+    Serialize(serializer, sp.OP_DESCRIPTOR);
+
+    // serialize parent class first
+    auto base_pointer = static_cast<SubGraphSaveableParams<TensorType> const *>(&sp);
+    Serialize(serializer, *base_pointer);
+
+    serializer << sp.kernel_size;
+    serializer << sp.input_channels;
+    serializer << sp.output_channels;
+    serializer << sp.stride_size;
+  }
+
+  template <typename S>
+  friend void Deserialize(S &serializer, ConvolutionLayer2DSaveableParams &sp)
   {
     Deserialize(serializer, sp.OP_DESCRIPTOR);
 
@@ -1065,18 +1130,18 @@ struct MatrixMultiplySaveableParams : public SaveableParamsInterface
 };
 
 template <class TensorType>
-struct MaxPoolSaveableParams : public SaveableParamsInterface
+struct MaxPool1DSaveableParams : public SaveableParamsInterface
 {
   fetch::math::SizeType kernel_size   = fetch::math::numeric_max<fetch::math::SizeType>();
   fetch::math::SizeType stride_size   = fetch::math::numeric_max<fetch::math::SizeType>();
-  fetch::ml::OpType     OP_DESCRIPTOR = OpType::MAX_POOL;
+  fetch::ml::OpType     OP_DESCRIPTOR = OpType::MAX_POOL_1D;
 
-  MaxPoolSaveableParams()
-    : SaveableParamsInterface(OpType::MAX_POOL)
+  MaxPool1DSaveableParams()
+    : SaveableParamsInterface(OpType::MAX_POOL_1D)
   {}
 
   template <class S>
-  friend void Serialize(S &serializer, MaxPoolSaveableParams const &sp)
+  friend void Serialize(S &serializer, MaxPool1DSaveableParams const &sp)
   {
     Serialize(serializer, sp.OP_DESCRIPTOR);
     serializer << sp.kernel_size;
@@ -1084,7 +1149,35 @@ struct MaxPoolSaveableParams : public SaveableParamsInterface
   }
 
   template <class S>
-  friend void Deserialize(S &serializer, MaxPoolSaveableParams &sp)
+  friend void Deserialize(S &serializer, MaxPool1DSaveableParams &sp)
+  {
+    Deserialize(serializer, sp.OP_DESCRIPTOR);
+    serializer >> sp.kernel_size;
+    serializer >> sp.stride_size;
+  }
+};
+
+template <class TensorType>
+struct MaxPool2DSaveableParams : public SaveableParamsInterface
+{
+  fetch::math::SizeType kernel_size   = fetch::math::numeric_max<fetch::math::SizeType>();
+  fetch::math::SizeType stride_size   = fetch::math::numeric_max<fetch::math::SizeType>();
+  fetch::ml::OpType     OP_DESCRIPTOR = OpType::MAX_POOL_2D;
+
+  MaxPool2DSaveableParams()
+    : SaveableParamsInterface(OpType::MAX_POOL_2D)
+  {}
+
+  template <class S>
+  friend void Serialize(S &serializer, MaxPool2DSaveableParams const &sp)
+  {
+    Serialize(serializer, sp.OP_DESCRIPTOR);
+    serializer << sp.kernel_size;
+    serializer << sp.stride_size;
+  }
+
+  template <class S>
+  friend void Deserialize(S &serializer, MaxPool2DSaveableParams &sp)
   {
     Deserialize(serializer, sp.OP_DESCRIPTOR);
     serializer >> sp.kernel_size;
@@ -1543,9 +1636,6 @@ struct WeightsSaveableParams : public SaveableParamsInterface
     serializer >> sp.regularisation_rate;
   }
 };
-
-
-
 
 }  // namespace ml
 }  // namespace fetch

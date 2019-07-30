@@ -90,10 +90,13 @@ public:
     return static_cast<RandomType>(std::numeric_limits<RandomType>::max());
   }
 
+  /**
+   * required for serialising lfg
+   * @return
+   */
   std::vector<RandomType> GetBuffer()
   {
-    std::vector<RandomType> dest(std::begin(buffer_), std::end(buffer_));
-    return dest;
+    return std::vector<RandomType>(std::begin(buffer_), std::end(buffer_));
   }
 
   void SetBuffer(std::vector<RandomType> const &buffer)
