@@ -130,3 +130,84 @@ steps:
     - send_txs : { "name": "batch1", "amount": 10, "nodes" : [1] }
     - verify_txs : { "name": "batch1", "nodes" : [0, 1, 2] }
 ...
+
+---
+test_description: >
+        Transactions sync and are executed across nodes when using POS
+
+setup_conditions:
+    test_name : "basic_multinode_POS"
+    number_of_nodes: 3
+    node_connections: [[0, 1], [0, 2], [1, 0], [1, 2], [2, 0], [2, 1]]
+    mining_nodes: [0, 1, 2]
+    pos_mode: True
+    max_test_time: 60
+
+steps:
+    - send_txs : { "name": "batch1", "amount": 10, "nodes" : [1] }
+    - verify_txs : { "name": "batch1", "nodes" : [0, 1, 2] }
+...
+---
+test_description: >
+        Transactions sync and are executed across nodes when using POS
+
+setup_conditions:
+    test_name : "basic_multinode_POS"
+    number_of_nodes: 3
+    node_connections: [[0, 1], [0, 2], [1, 0], [1, 2], [2, 0], [2, 1]]
+    mining_nodes: [0, 1, 2]
+    pos_mode: True
+    max_test_time: 60
+
+steps:
+    - send_txs : { "name": "batch1", "amount": 10, "nodes" : [1] }
+    - verify_txs : { "name": "batch1", "nodes" : [0, 1, 2] }
+...
+---
+test_description: >
+        Transactions sync and are executed across nodes when using POS
+
+setup_conditions:
+    test_name : "basic_multinode_POS"
+    number_of_nodes: 3
+    node_connections: [[0, 1], [0, 2], [1, 0], [1, 2], [2, 0], [2, 1]]
+    mining_nodes: [0, 1, 2]
+    pos_mode: True
+    max_test_time: 60
+
+steps:
+    - send_txs : { "name": "batch1", "amount": 10, "nodes" : [1] }
+    - verify_txs : { "name": "batch1", "nodes" : [0, 1, 2] }
+...
+---
+test_description: >
+        Transactions sync and are executed across nodes when using POS
+
+setup_conditions:
+    test_name : "basic_multinode_POS"
+    number_of_nodes: 3
+    node_connections: [[0, 1], [0, 2], [1, 0], [1, 2], [2, 0], [2, 1]]
+    mining_nodes: [0, 1, 2]
+    pos_mode: True
+    max_test_time: 60
+
+steps:
+    - send_txs : { "name": "batch1", "amount": 10, "nodes" : [1] }
+    - verify_txs : { "name": "batch1", "nodes" : [0, 1, 2] }
+...
+---
+test_description: >
+        Transactions sync and are executed across nodes when using POS (4 case)
+
+setup_conditions:
+    test_name : "basic_multinode_POS_4"
+    number_of_nodes: 4
+    node_connections: [[0, 1], [0, 2], [0, 3], [1, 0], [1, 2], [1, 3], [3, 0], [3, 1], [3, 2]]
+    mining_nodes: [0, 1, 2, 3]
+    pos_mode: True
+    max_test_time: 60
+
+steps:
+    - send_txs : { "name": "batch1", "amount": 10, "nodes" : [1] }
+    - verify_txs : { "name": "batch1", "nodes" : [0, 1, 2] }
+...
