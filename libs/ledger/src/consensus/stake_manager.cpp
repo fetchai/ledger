@@ -93,8 +93,13 @@ bool StakeManager::ShouldGenerateBlock(Block const &previous, Address const &add
   uint32_t time_to_wait = block_interval_ms_;
   bool in_committee     = false;
 
+  FETCH_LOG_INFO(LOGGING_NAME, "Committee size: ", (*committee).size());
+  FETCH_LOG_INFO(LOGGING_NAME, "Committee size2: ", committee_size_);
+
   for (std::size_t i = 0; i < (*committee).size(); ++i)
   {
+    FETCH_LOG_INFO(LOGGING_NAME, "Saw committee member: ", (*committee)[i].address().ToBase64(), "we are: ", address.address().ToBase64());
+
     if((*committee)[i] == address)
     {
       in_committee = true;
@@ -103,7 +108,7 @@ bool StakeManager::ShouldGenerateBlock(Block const &previous, Address const &add
     time_to_wait += block_interval_ms_;
   }
 
-  in_committee = true;
+  //in_committee = true;
 
   // TODO(HUT): switch to 64 for time based things (?)
   // Time now, in seconds

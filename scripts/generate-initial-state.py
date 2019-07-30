@@ -109,7 +109,7 @@ def main():
     snapshot = {
         'version': 1,
         'stake': {
-            'committeeSize': 1,  # sort of needed at the moment
+            'committeeSize': len(cabinet),
             'stakes': stakes,
         },
         'beacon': {

@@ -485,14 +485,14 @@ void Constellation::Run(UriList const &initial_peers, core::WeakRunnable bootstr
       // Note: the DKG will already have its cabinet reset by this point
       if (!dkg_attached)
       {
-        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+        std::this_thread::sleep_for(std::chrono::milliseconds(5000));
 
         FETCH_LOG_INFO(LOGGING_NAME, "Starting DKG");
         reactor_.Attach(dkg_->GetWeakRunnable());
         dkg_attached = true;
       }
     }
-    else
+    else if(!dkg_attached)
     {
       FETCH_LOG_INFO(LOGGING_NAME, "Connected peers so far: ", muddle_.AsEndpoint().GetDirectlyConnectedPeers().size());
     }

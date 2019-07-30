@@ -237,7 +237,7 @@ class TestInstance():
         # Give all nodes this stake file, plus append POS flag for when node starts
         for index in range(self._number_of_nodes):
             shutil.copy(snapshot_location, self._nodes[index].root);
-            self._nodes[index].append_to_cmd(["-pos",])
+            self._nodes[index].append_to_cmd(["-pos", "-private-network",])
 
     def restart_node(self, index):
         print('Restarting Node {}...'.format(index))
