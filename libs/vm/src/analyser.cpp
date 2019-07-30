@@ -670,7 +670,7 @@ void Analyser::AnnotateBlock(BlockNodePtr const &block_node)
         ExpressionNodePtr child =
             CreateExpressionNode(NodeKind::Identifier, variable->name, use_any_node_->line);
         child->variable         = variable;
-        FunctionPtr constructor = (variable->type == sharded_state_type_)
+        FunctionPtr constructor = (variable->type->template_type == sharded_state_type_)
                                       ? sharded_state_constructor_
                                       : state_constructor_;
         child->function = constructor;
@@ -830,8 +830,9 @@ void Analyser::AnnotateUseStatement(BlockNodePtr const &parent_block_node, NodeP
   VariablePtr variable = CreateVariable(VariableKind::Use, variable_name);
   variable->type       = type;
   parent_block_node->symbols->Add(variable);
-  FunctionPtr constructor =
-      (type == sharded_state_type_) ? sharded_state_constructor_ : state_constructor_;
+  FunctionPtr constructor = (type->template_type == sharded_state_type_)
+                                ? sharded_state_constructor_
+                                : state_constructor_;
   name_node->variable = variable;
   name_node->function = constructor;
 }
