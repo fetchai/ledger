@@ -104,6 +104,11 @@ bool Parser::ParseBlock(BlockNode &node)
     Next();
     switch (token_->kind)
     {
+    case Token::Kind::Persistent:
+    {
+      child = ParsePersistentStatement();
+      break;
+    }
     case Token::Kind::AnnotationIdentifier:
     case Token::Kind::Function:
     {
@@ -182,6 +187,11 @@ bool Parser::ParseBlock(BlockNode &node)
       AddError("no matching 'if', 'elseif' or 'else'");
       break;
     }
+    case Token::Kind::Use:
+    {
+      child = ParseUseStatement();
+      break;
+    }
     case Token::Kind::Var:
     {
       child = ParseVarStatement();
@@ -241,6 +251,60 @@ bool Parser::ParseBlock(BlockNode &node)
     }
     node.block_children.push_back(std::move(child));
   } while (true);
+}
+
+NodePtr Parser::ParsePersistentStatement()
+{
+  NodePtr persistent_statement_node =
+      CreateBasicNode(NodeKind::PersistentStatement, token_->text, token_->line);
+  NodeKind const block_kind = blocks_.back();
+  if (block_kind != NodeKind::File)
+  {
+    AddError("persistent statement only permitted at topmost scope");
+    // Move one token on so GoToNextStatement() can work properly
+    Next();
+    return nullptr;
+  }
+  Next();
+  if (token_->kind != Token::Kind::Identifier)
+  {
+    AddError("expected identifier or 'sharded'");
+    return nullptr;
+  }
+  NodePtr modifier_node;
+  if (token_->text == "sharded")
+  {
+    modifier_node = CreateExpressionNode(NodeKind::Identifier, token_->text, token_->line);
+    Next();
+    if (token_->kind != Token::Kind::Identifier)
+    {
+      AddError("expected identifier");
+      return nullptr;
+    }
+  }
+  ExpressionNodePtr state_name_node =
+      CreateExpressionNode(NodeKind::Identifier, token_->text, token_->line);
+  Next();
+  if (token_->kind != Token::Kind::Colon)
+  {
+    AddError("expected ':'");
+    return nullptr;
+  }
+  ExpressionNodePtr type_node = ParseType();
+  if (type_node == nullptr)
+  {
+    return nullptr;
+  }
+  Next();
+  if (token_->kind != Token::Kind::SemiColon)
+  {
+    AddError("expected ';'");
+    return nullptr;
+  }
+  persistent_statement_node->children.push_back(state_name_node);
+  persistent_statement_node->children.push_back(modifier_node);
+  persistent_statement_node->children.push_back(type_node);
+  return persistent_statement_node;
 }
 
 BlockNodePtr Parser::ParseFunctionDefinition()
@@ -684,6 +748,107 @@ NodePtr Parser::ParseIfStatement()
   } while (true);
 }
 
+NodePtr Parser::ParseUseStatement()
+{
+  NodeKind const block_kind = blocks_.back();
+  if (block_kind == NodeKind::File)
+  {
+    AddError("use statement not permitted at topmost scope");
+    // Move one token on so GoToNextStatement() can work properly
+    Next();
+    return nullptr;
+  }
+  NodePtr use_statement_node = CreateBasicNode(NodeKind::UseStatement, token_->text, token_->line);
+  Next();
+  if (token_->kind != Token::Kind::Identifier)
+  {
+    AddError("expected identifier or 'any'");
+    return nullptr;
+  }
+  if (token_->text != "any")
+  {
+    ExpressionNodePtr state_name_node =
+        CreateExpressionNode(NodeKind::Identifier, token_->text, token_->line);
+    NodePtr           list_node;
+    ExpressionNodePtr alias_name_node;
+    Next();
+    if (token_->kind == Token::Kind::LeftSquareBracket)
+    {
+      list_node = CreateBasicNode(NodeKind::UseStatementKeyList, token_->text, token_->line);
+      do
+      {
+        ExpressionNodePtr e = ParseExpression();
+        if (e == nullptr)
+        {
+          return nullptr;
+        }
+        list_node->children.push_back(e);
+        Next();
+        if (token_->kind == Token::Kind::Comma)
+        {
+          continue;
+        }
+        if (token_->kind == Token::Kind::RightSquareBracket)
+        {
+          Next();
+          break;
+        }
+        AddError("expected ',' or ']'");
+        return nullptr;
+      } while (true);
+    }
+    if (token_->kind == Token::Kind::As)
+    {
+      Next();
+      if (token_->kind != Token::Kind::Identifier)
+      {
+        AddError("expected identifier");
+        return nullptr;
+      }
+      alias_name_node = CreateExpressionNode(NodeKind::Identifier, token_->text, token_->line);
+      Next();
+    }
+    if (token_->kind != Token::Kind::SemiColon)
+    {
+      if (alias_name_node)
+      {
+        AddError("expected ';'");
+      }
+      else if (list_node)
+      {
+        AddError("expected 'as' or ';'");
+      }
+      else
+      {
+        AddError("expected '[', 'as' or ';'");
+      }
+      return nullptr;
+    }
+    use_statement_node->children.push_back(state_name_node);
+    use_statement_node->children.push_back(list_node);
+    use_statement_node->children.push_back(alias_name_node);
+    return use_statement_node;
+  }
+  else
+  {
+    if (block_kind != NodeKind::FunctionDefinitionStatement)
+    {
+      AddError("use-any statement only permitted at function scope");
+      // Move one token on so GoToNextStatement() can work properly
+      Next();
+      return nullptr;
+    }
+    use_statement_node->node_kind = NodeKind::UseAnyStatement;
+    Next();
+    if (token_->kind != Token::Kind::SemiColon)
+    {
+      AddError("expected ';'");
+      return nullptr;
+    }
+    return use_statement_node;
+  }
+}
+
 NodePtr Parser::ParseVarStatement()
 {
   NodeKind const block_kind = blocks_.back();
@@ -922,11 +1087,13 @@ void Parser::GoToNextStatement()
 {
   while ((token_->kind != Token::Kind::EndOfInput) && (token_->kind != Token::Kind::SemiColon))
   {
-    if ((token_->kind == Token::Kind::AnnotationIdentifier) ||
+    if ((token_->kind == Token::Kind::Persistent) ||
+        (token_->kind == Token::Kind::AnnotationIdentifier) ||
         (token_->kind == Token::Kind::Function) || (token_->kind == Token::Kind::While) ||
         (token_->kind == Token::Kind::For) || (token_->kind == Token::Kind::If) ||
-        (token_->kind == Token::Kind::Var) || (token_->kind == Token::Kind::Return) ||
-        (token_->kind == Token::Kind::Break) || (token_->kind == Token::Kind::Continue))
+        (token_->kind == Token::Kind::Use) || (token_->kind == Token::Kind::Var) ||
+        (token_->kind == Token::Kind::Return) || (token_->kind == Token::Kind::Break) ||
+        (token_->kind == Token::Kind::Continue))
     {
       Undo();
       return;
