@@ -312,13 +312,8 @@ public:
     return counter_;
   }
 
-  template <typename A, typename B>
-  friend bool UpgradeIteratorFromBroadcast(std::vector<SizeType> const &,
-                                           TensorSliceIterator<A, B> &);
-
-  template <typename A, typename B>
-  friend bool UpgradeIteratorFromBroadcast(std::vector<SizeType> const &,
-                                           TensorSliceIterator<A const, B, Tensor<A, B> const> &);
+  template <class IteratorType>
+  friend bool UpgradeIteratorFromBroadcast(std::vector<SizeType> const &, IteratorType &);
 
   /**
    * returns the n-dimensional index of the current position
