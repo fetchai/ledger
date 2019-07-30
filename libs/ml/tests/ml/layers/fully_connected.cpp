@@ -18,6 +18,8 @@
 
 #include "math/tensor.hpp"
 #include "ml/layers/fully_connected.hpp"
+#include "ml/ops/loss_functions.hpp"
+#include "ml/optimisation/sgd_optimiser.hpp"
 #include "ml/regularisers/regulariser.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 
@@ -28,18 +30,27 @@ class FullyConnectedTest : public ::testing::Test
 {
 };
 
-using MyTypes = ::testing::Types<fetch::math::Tensor<int>, fetch::math::Tensor<float>,
-                                 fetch::math::Tensor<double>,
-                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>,
-                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<16, 16>>>;
-TYPED_TEST_CASE(FullyConnectedTest, MyTypes);
+template <typename T>
+class FullyConnectedNoIntTest : public ::testing::Test
+{
+};
+
+using HasIntTypes = ::testing::Types<fetch::math::Tensor<int>, fetch::math::Tensor<float>,
+                                     fetch::math::Tensor<double>,
+                                     fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>,
+                                     fetch::math::Tensor<fetch::fixed_point::FixedPoint<16, 16>>>;
+using NoIntTypes  = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
+                                    fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>,
+                                    fetch::math::Tensor<fetch::fixed_point::FixedPoint<16, 16>>>;
+TYPED_TEST_CASE(FullyConnectedTest, HasIntTypes);
+TYPED_TEST_CASE(FullyConnectedNoIntTest, NoIntTypes);
 
 TYPED_TEST(FullyConnectedTest, set_input_and_evaluate_test)  // Use the class as a subgraph
 {
   fetch::ml::layers::FullyConnected<TypeParam> fc(100u, 10u);
   TypeParam input_data(std::vector<typename TypeParam::SizeType>({10, 10, 2}));
-  fc.SetInput("FC_Input", input_data);
-  TypeParam output = fc.Evaluate("FC_MatrixMultiply", true);
+  fc.SetInput("FullyConnected_Input", input_data);
+  TypeParam output = fc.Evaluate("FullyConnected_MatrixMultiply", true);
 
   ASSERT_EQ(output.shape().size(), 2);
   ASSERT_EQ(output.shape()[0], 10);
@@ -79,6 +90,161 @@ TYPED_TEST(FullyConnectedTest, ops_backward_test)  // Use the class as an Ops
   ASSERT_EQ(backprop_error[0].shape()[1], 10);
   ASSERT_EQ(backprop_error[0].shape()[2], 2);
   // No way to test actual values for now as weights are randomly initialised.
+}
+
+TYPED_TEST(FullyConnectedNoIntTest, share_weight_backward_test)
+{
+  using ArrayType       = TypeParam;
+  using DataType        = typename ArrayType::Type;
+  using SizeType        = typename ArrayType::SizeType;
+  using GraphType       = typename fetch::ml::Graph<ArrayType>;
+  using FCType          = typename fetch::ml::layers::FullyConnected<ArrayType>;
+  using RegType         = fetch::ml::details::RegularisationType;
+  using WeightsInitType = fetch::ml::ops::WeightsInitialisation;
+  using ActivationType  = fetch::ml::details::ActivationType;
+
+  std::string descriptor = FCType::DESCRIPTOR;
+
+  // create an auto encoder of two dense layers, both share same weights
+  auto g_shared = std::make_shared<GraphType>();
+
+  std::string g_shared_input =
+      g_shared->template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>("Input", {});
+  std::string g_shared_intermediate = g_shared->template AddNode<FCType>(
+      "FC1", {g_shared_input}, 10u, 10u, ActivationType::NOTHING, RegType::NONE,
+      static_cast<DataType>(0), WeightsInitType::XAVIER_GLOROT);
+  std::string g_shared_output = g_shared->template AddNode<FCType>(
+      "FC1", {g_shared_intermediate}, 10u, 10u, ActivationType::NOTHING, RegType::NONE,
+      static_cast<DataType>(0));
+  std::string g_shared_label =
+      g_shared->template AddNode<fetch::ml::ops::PlaceHolder<TypeParam>>("Label", {});
+  std::string g_shared_error =
+      g_shared->template AddNode<fetch::ml::ops::MeanSquareErrorLoss<TypeParam>>(
+          "Error", {g_shared_output, g_shared_label});
+
+  // create an auto encoder of two dense layers, both have different weights
+  auto g_not_shared = std::make_shared<GraphType>();
+
+  std::string g_not_shared_input =
+      g_not_shared->template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>("Input", {});
+  std::string g_not_shared_intermediate = g_not_shared->template AddNode<FCType>(
+      "FC4", {g_not_shared_input}, 10u, 10u, ActivationType::NOTHING, RegType::NONE,
+      static_cast<DataType>(0), WeightsInitType::XAVIER_GLOROT);
+  std::string g_not_shared_output = g_not_shared->template AddNode<FCType>(
+      "FC5", {g_not_shared_intermediate}, 10u, 10u, fetch::ml::details::ActivationType::NOTHING,
+      RegType::NONE, static_cast<DataType>(0), WeightsInitType::XAVIER_GLOROT);
+  std::string g_not_shared_label =
+      g_not_shared->template AddNode<fetch::ml::ops::PlaceHolder<TypeParam>>("Label", {});
+  std::string g_not_shared_error =
+      g_not_shared->template AddNode<fetch::ml::ops::MeanSquareErrorLoss<TypeParam>>(
+          "Error", {g_not_shared_output, g_not_shared_label});
+
+  // check that all weights are equal and create compare list
+  auto                   g_shared_statedict_before = g_shared->StateDict();
+  std::vector<ArrayType> g_shared_weights_before;
+
+  // check the naming is as expected
+  g_shared_weights_before.emplace_back(
+      g_shared_statedict_before.dict_["FC1_FullyConnected_Weights"].weights_->Copy());
+  g_shared_weights_before.emplace_back(
+      g_shared_statedict_before.dict_["FC1_FullyConnected_Bias"].weights_->Copy());
+  g_shared_weights_before.emplace_back(
+      g_shared_statedict_before.dict_["FC1_Copy_1_FullyConnected_Weights"].weights_->Copy());
+  g_shared_weights_before.emplace_back(
+      g_shared_statedict_before.dict_["FC1_Copy_1_FullyConnected_Bias"].weights_->Copy());
+
+  auto                   g_not_shared_statedict_before = g_not_shared->StateDict();
+  std::vector<ArrayType> g_not_shared_weights_before;
+
+  // check the naming is as expected
+  g_not_shared_weights_before.emplace_back(
+      g_not_shared_statedict_before.dict_["FC4_FullyConnected_Weights"].weights_->Copy());
+  g_not_shared_weights_before.emplace_back(
+      g_not_shared_statedict_before.dict_["FC4_FullyConnected_Bias"].weights_->Copy());
+  g_not_shared_weights_before.emplace_back(
+      g_not_shared_statedict_before.dict_["FC5_FullyConnected_Weights"].weights_->Copy());
+  g_not_shared_weights_before.emplace_back(
+      g_not_shared_statedict_before.dict_["FC5_FullyConnected_Bias"].weights_->Copy());
+
+  for (size_t i = 0; i < 4; i++)
+  {
+    ASSERT_EQ(g_shared_weights_before[i], g_not_shared_weights_before[i]);
+  }
+
+  // start training
+  // set data
+  ArrayType data;
+  data.Resize({10, 1});
+  for (SizeType i = 0; i < 10; i++)
+  {
+    data.Set(i, 0, static_cast<DataType>(i));
+  }
+
+  // SGD is chosen to be the optimizer to reflect the gradient throw change in weights after 1
+  // iteration of training. Run 1 iteration of SGD to train on g shared
+  auto                                           lr = static_cast<DataType>(1);
+  fetch::ml::optimisers::SGDOptimiser<ArrayType> g_shared_optimiser(
+      g_shared, {g_shared_input}, g_shared_label, g_shared_error, lr);
+  g_shared_optimiser.Run({data}, data, 1);
+  // Run 1 iteration of SGD to train on g not shared
+  fetch::ml::optimisers::SGDOptimiser<ArrayType> g_not_shared_optimiser(
+      g_not_shared, {g_not_shared_input}, g_not_shared_label, g_not_shared_error, lr);
+  g_not_shared_optimiser.Run({data}, data, 1);
+
+  // check that all weights are equal
+  auto                   g_shared_statedict_after = g_shared->StateDict();
+  std::vector<ArrayType> g_shared_weights_after;
+  g_shared_weights_after.emplace_back(
+      g_shared_statedict_after.dict_["FC1_FullyConnected_Weights"].weights_->Copy());
+  g_shared_weights_after.emplace_back(
+      g_shared_statedict_after.dict_["FC1_FullyConnected_Bias"].weights_->Copy());
+  g_shared_weights_after.emplace_back(
+      g_shared_statedict_after.dict_["FC1_Copy_1_FullyConnected_Weights"].weights_->Copy());
+  g_shared_weights_after.emplace_back(
+      g_shared_statedict_after.dict_["FC1_Copy_1_FullyConnected_Bias"].weights_->Copy());
+
+  auto                   g_not_shared_statedict_after = g_not_shared->StateDict();
+  std::vector<ArrayType> g_not_shared_weights_after;
+  g_not_shared_weights_after.emplace_back(
+      g_not_shared_statedict_after.dict_["FC4_FullyConnected_Weights"].weights_->Copy());
+  g_not_shared_weights_after.emplace_back(
+      g_not_shared_statedict_after.dict_["FC4_FullyConnected_Bias"].weights_->Copy());
+  g_not_shared_weights_after.emplace_back(
+      g_not_shared_statedict_after.dict_["FC5_FullyConnected_Weights"].weights_->Copy());
+  g_not_shared_weights_after.emplace_back(
+      g_not_shared_statedict_after.dict_["FC5_FullyConnected_Bias"].weights_->Copy());
+
+  // check the all weights are initialized to be the same
+  for (size_t i = 0; i < 2; i++)
+  {
+    ASSERT_TRUE(g_shared_weights_before[i] == g_shared_weights_before[i + 2]);
+    ASSERT_TRUE(g_not_shared_weights_before[i] == g_not_shared_weights_before[i + 2]);
+  }
+
+  // check the weights are equal after training for shared weights
+  for (size_t i = 0; i < 2; i++)
+  {
+    ASSERT_TRUE(g_shared_weights_after[i] == g_shared_weights_after[i + 2]);
+  }
+
+  // check the weights are different after training for not shared weights
+  for (size_t i = 0; i < 2; i++)
+  {
+    ASSERT_FALSE(g_not_shared_weights_after[i] == g_not_shared_weights_after[i + 2]);
+  }
+
+  // check the gradient of the shared weight matrices are the sum of individual weight matrice
+  // gradients in not_shared_graph
+  for (size_t i = 0; i < 2; i++)
+  {
+    ArrayType shared_gradient = g_shared_weights_after[i] - g_shared_weights_before[i];
+    ArrayType not_shared_gradient =
+        g_not_shared_weights_after[i] + g_not_shared_weights_after[i + 2] -
+        g_not_shared_weights_before[i] - g_not_shared_weights_before[i + 2];
+    ASSERT_TRUE(shared_gradient.AllClose(
+        not_shared_gradient,
+        static_cast<DataType>(100) * fetch::math::function_tolerance<DataType>()));
+  }
 }
 
 TYPED_TEST(FullyConnectedTest, node_forward_test)  // Use the class as a Node
@@ -144,17 +310,17 @@ TYPED_TEST(FullyConnectedTest, getStateDict)
   using RegType  = fetch::ml::details::RegularisationType;
 
   fetch::ml::layers::FullyConnected<TypeParam> fc(
-      50, 10, fetch::ml::details::ActivationType::NOTHING, RegType::NONE, DataType{0}, "FCTest");
+      50, 10, fetch::ml::details::ActivationType::NOTHING, RegType::NONE, DataType{0});
   fetch::ml::StateDict<TypeParam> sd = fc.StateDict();
 
   EXPECT_EQ(sd.weights_, nullptr);
   EXPECT_EQ(sd.dict_.size(), 2);
 
-  ASSERT_NE(sd.dict_["FCTest_Weights"].weights_, nullptr);
-  EXPECT_EQ(sd.dict_["FCTest_Weights"].weights_->shape(),
+  ASSERT_NE(sd.dict_["FullyConnected_Weights"].weights_, nullptr);
+  EXPECT_EQ(sd.dict_["FullyConnected_Weights"].weights_->shape(),
             std::vector<typename TypeParam::SizeType>({10, 50}));
 
-  ASSERT_NE(sd.dict_["FCTest_Bias"].weights_, nullptr);
-  EXPECT_EQ(sd.dict_["FCTest_Bias"].weights_->shape(),
+  ASSERT_NE(sd.dict_["FullyConnected_Bias"].weights_, nullptr);
+  EXPECT_EQ(sd.dict_["FullyConnected_Bias"].weights_->shape(),
             std::vector<typename TypeParam::SizeType>({10, 1}));
 }
