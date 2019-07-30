@@ -41,7 +41,7 @@ public:
   using SizeType      = typename ArrayType::SizeType;
   using WeightsInit   = fetch::ml::ops::WeightsInitialisation;
   using VecTensorType = typename SubGraph<T>::VecTensorType;
-  using SPType        = ConvolutionLayerSaveableParams<ArrayType>;
+  using SPType        = ConvolutionLayer1DSaveableParams<ArrayType>;
 
   /**
    * Creates 2D convolution layer with trainable kernel

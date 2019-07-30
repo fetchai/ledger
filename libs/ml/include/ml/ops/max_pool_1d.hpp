@@ -36,7 +36,7 @@ public:
   using DataType      = typename ArrayType::Type;
   using ArrayPtrType  = std::shared_ptr<ArrayType>;
   using VecTensorType = typename Ops<T>::VecTensorType;
-  using SPType        = MaxPoolSaveableParams<T>;
+  using SPType        = MaxPool1DSaveableParams<T>;
 
   MaxPool1D(SizeType const kernel_size, SizeType const stride_size)
     : kernel_size_{kernel_size}

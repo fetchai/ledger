@@ -123,13 +123,13 @@ template <class TensorType>
 struct MatrixMultiplySaveableParams;
 
 template <class TensorType>
-struct MaxPoolSaveableParams;
+struct MaxPool1DSaveableParams;
+
+template <class TensorType>
+struct MaxPool2DSaveableParams;
 
 template <class TensorType>
 struct MeanSquareErrorSaveableParams;
-
-template <class TensorType>
-struct MaxPoolSaveableParams;
 
 template <class TensorType>
 struct MaximumSaveableParams;
@@ -242,12 +242,12 @@ void Serialize(S &serializer, std::shared_ptr<SaveableParamsInterface> const &ns
   }
   case OpType::MAX_POOL_1D:
   {
-    SerializeImplementation<S, MaxPoolSaveableParams<TensorType>>(serializer, nsp);
+    SerializeImplementation<S, MaxPool1DSaveableParams<TensorType>>(serializer, nsp);
     break;
   }
   case OpType::MAX_POOL_2D:
   {
-    SerializeImplementation<S, MaxPoolSaveableParams<TensorType>>(serializer, nsp);
+    SerializeImplementation<S, MaxPool2DSaveableParams<TensorType>>(serializer, nsp);
     break;
   }
   case OpType::TRANSPOSE:
@@ -285,7 +285,7 @@ void Serialize(S &serializer, std::shared_ptr<SaveableParamsInterface> const &ns
 template <typename S, class TensorType>
 void Deserialize(S &serializer, std::shared_ptr<SaveableParamsInterface> &nsp)
 {
-  OpType operation_type;
+  OpType operation_type = OpType::NONE;
   serializer >> operation_type;
 
   assert(operation_type != OpType::NONE);
@@ -331,12 +331,12 @@ void Deserialize(S &serializer, std::shared_ptr<SaveableParamsInterface> &nsp)
   }
   case OpType::MAX_POOL_1D:
   {
-    DeserializeImplementation<S, MaxPoolSaveableParams<TensorType>>(serializer, nsp);
+    DeserializeImplementation<S, MaxPool1DSaveableParams<TensorType>>(serializer, nsp);
     break;
   }
   case OpType::MAX_POOL_2D:
   {
-    DeserializeImplementation<S, MaxPoolSaveableParams<TensorType>>(serializer, nsp);
+    DeserializeImplementation<S, MaxPool2DSaveableParams<TensorType>>(serializer, nsp);
     break;
   }
   case OpType::TRANSPOSE:
