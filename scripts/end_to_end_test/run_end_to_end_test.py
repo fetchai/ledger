@@ -294,7 +294,7 @@ class TestInstance():
 
         # start all the nodes
         for index in range(self._number_of_nodes):
-            if len(self._number_of_nodes) > 1 and not self._pos_mode:
+            if self._number_of_nodes > 1 and not self._pos_mode:
                 self._nodes[index].append_to_cmd(["-private-network", ])
             self.start_node(index)
 
