@@ -19,6 +19,7 @@
 
 #include "meta/type_util.hpp"
 
+#include <assert.h>
 #include <cmath>
 #include <cstdint>
 #include <functional>
@@ -33,7 +34,6 @@
 #include <unordered_set>
 #include <utility>
 #include <vector>
-#include <assert.h>
 
 namespace fetch {
 namespace vm {

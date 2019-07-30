@@ -637,7 +637,7 @@ void Generator::HandleUseStatement(IRNodePtr const &node)
   IRExpressionNodePtr state_name_node = ConvertToIRExpressionNodePtr(node->children[0]);
   IRNodePtr           list_node       = node->children[1];
   IRExpressionNodePtr alias_name_node = ConvertToIRExpressionNodePtr(node->children[2]);
-  IRExpressionNodePtr n = alias_name_node ? alias_name_node : state_name_node;
+  IRExpressionNodePtr n               = alias_name_node ? alias_name_node : state_name_node;
   HandleUseVariable(n);
 }
 
@@ -652,9 +652,9 @@ void Generator::HandleUseAnyStatement(IRNodePtr const &node)
 
 void Generator::HandleUseVariable(IRExpressionNodePtr const &node)
 {
-  IRVariablePtr v = node->variable;
-  IRFunctionPtr f = node->function;
-  uint16_t            type_id         = v->type->resolved_id;
+  IRVariablePtr  v              = node->variable;
+  IRFunctionPtr  f              = node->function;
+  uint16_t       type_id        = v->type->resolved_id;
   uint16_t const scope_number   = uint16_t(scopes_.size() - 1);
   uint16_t       variable_index = function_->AddVariable(v->name, type_id, scope_number);
   v->index                      = variable_index;
@@ -666,15 +666,15 @@ void Generator::HandleUseVariable(IRExpressionNodePtr const &node)
   PushString(v->name, node->line);
   uint16_t                opcode = f->resolved_opcode;
   Executable::Instruction constructor_instruction(opcode);
-  constructor_instruction.type_id = type_id;
-  constructor_instruction.data = type_id;
+  constructor_instruction.type_id     = type_id;
+  constructor_instruction.data        = type_id;
   uint16_t constructor_instruction_pc = function_->AddInstruction(constructor_instruction);
   AddLineNumber(node->line, constructor_instruction_pc);
   Executable::Instruction declare_assign_instruction(Opcodes::VariableDeclareAssign);
-  declare_assign_instruction.type_id = type_id;
-  declare_assign_instruction.index   = variable_index;
-  declare_assign_instruction.data    = scope_number;
-  uint16_t declare_assign_instruction_pc         = function_->AddInstruction(declare_assign_instruction);
+  declare_assign_instruction.type_id     = type_id;
+  declare_assign_instruction.index       = variable_index;
+  declare_assign_instruction.data        = scope_number;
+  uint16_t declare_assign_instruction_pc = function_->AddInstruction(declare_assign_instruction);
   AddLineNumber(node->line, declare_assign_instruction_pc);
 }
 
@@ -1258,8 +1258,8 @@ void Generator::HandleString(IRExpressionNodePtr const &node)
 
 void Generator::PushString(std::string const &s, uint16_t line)
 {
-  uint16_t    index;
-  auto        it = strings_map_.find(s);
+  uint16_t index;
+  auto     it = strings_map_.find(s);
   if (it != strings_map_.end())
   {
     index = it->second;

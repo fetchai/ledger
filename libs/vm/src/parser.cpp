@@ -268,8 +268,8 @@ NodePtr Parser::ParsePersistentStatement()
   Next();
   if (token_->kind != Token::Kind::Identifier)
   {
-     AddError("expected identifier or 'sharded'");
-     return nullptr;
+    AddError("expected identifier or 'sharded'");
+    return nullptr;
   }
   NodePtr modifier_node;
   if (token_->text == "sharded")
@@ -758,8 +758,7 @@ NodePtr Parser::ParseUseStatement()
     Next();
     return nullptr;
   }
-  NodePtr use_statement_node =
-      CreateBasicNode(NodeKind::UseStatement, token_->text, token_->line);
+  NodePtr use_statement_node = CreateBasicNode(NodeKind::UseStatement, token_->text, token_->line);
   Next();
   if (token_->kind != Token::Kind::Identifier)
   {
@@ -769,7 +768,7 @@ NodePtr Parser::ParseUseStatement()
   if (token_->text != "any")
   {
     ExpressionNodePtr state_name_node =
-      CreateExpressionNode(NodeKind::Identifier, token_->text, token_->line);
+        CreateExpressionNode(NodeKind::Identifier, token_->text, token_->line);
     NodePtr           list_node;
     ExpressionNodePtr alias_name_node;
     Next();
@@ -1092,9 +1091,9 @@ void Parser::GoToNextStatement()
         (token_->kind == Token::Kind::AnnotationIdentifier) ||
         (token_->kind == Token::Kind::Function) || (token_->kind == Token::Kind::While) ||
         (token_->kind == Token::Kind::For) || (token_->kind == Token::Kind::If) ||
-        (token_->kind == Token::Kind::Use) ||
-        (token_->kind == Token::Kind::Var) || (token_->kind == Token::Kind::Return) ||
-        (token_->kind == Token::Kind::Break) || (token_->kind == Token::Kind::Continue))
+        (token_->kind == Token::Kind::Use) || (token_->kind == Token::Kind::Var) ||
+        (token_->kind == Token::Kind::Return) || (token_->kind == Token::Kind::Break) ||
+        (token_->kind == Token::Kind::Continue))
     {
       Undo();
       return;

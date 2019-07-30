@@ -231,10 +231,8 @@ private:
   void        AnnotateWhileStatement(BlockNodePtr const &while_statement_node);
   void        AnnotateForStatement(BlockNodePtr const &for_statement_node);
   void        AnnotateIfStatement(NodePtr const &if_statement_node);
-  void        AnnotateUseStatement(BlockNodePtr const &parent_block_node,
-                                   NodePtr const &     node);
-  void        AnnotateUseAnyStatement(BlockNodePtr const &parent_block_node,
-                                      NodePtr const &     node);
+  void        AnnotateUseStatement(BlockNodePtr const &parent_block_node, NodePtr const &node);
+  void        AnnotateUseAnyStatement(BlockNodePtr const &parent_block_node, NodePtr const &node);
   void        AnnotateVarStatement(BlockNodePtr const &parent_block_node,
                                    NodePtr const &     var_statement_node);
   void        AnnotateReturnStatement(NodePtr const &return_statement_node);

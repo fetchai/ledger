@@ -83,7 +83,7 @@ inline IRTypePtr CreateIRType(TypeKind type_kind, std::string const &name,
 struct IRVariable
 {
   IRVariable(VariableKind variable_kind__, std::string const &name__, IRTypePtr const &type__,
-      bool referenced__)
+             bool referenced__)
   {
     variable_kind = variable_kind__;
     name          = name__;
