@@ -186,7 +186,6 @@ namespace
   template <typename S, class SP>
   void DeserializeImplementation(S &serializer, std::shared_ptr<SaveableParamsInterface> &nsp)
   {
-  //  auto nsp_ptr = std::make_shared<SP>();
     auto castnode = std::dynamic_pointer_cast<SP>(nsp);
     serializer >> *castnode;
   }
@@ -1181,7 +1180,7 @@ struct PlaceholderSaveableParams : public SaveableParamsInterface
   fetch::ml::OpType           OP_DESCRIPTOR = OpType::PLACEHOLDER;
 
   PlaceholderSaveableParams()
-    : SaveableParamsInterface(OpType::LEAKY_RELU)
+    : SaveableParamsInterface(OpType::PLACEHOLDER)
   {}
 
   template <class S>
