@@ -51,6 +51,7 @@ public:
   using PlaceholderType    = typename fetch::ml::ops::PlaceHolder<ArrayType>;
   using PlaceholderPtrType = typename std::shared_ptr<fetch::ml::ops::PlaceHolder<ArrayType>>;
   using RegPtrType         = std::shared_ptr<fetch::ml::regularisers::Regulariser<T>>;
+  using SPType             = GraphSaveableParams<ArrayType>;
 
   virtual ~Graph() = default;
   Graph()          = default;
@@ -264,7 +265,7 @@ GraphSaveableParams<ArrayType> Graph<ArrayType>::GetGraphSaveableParams()
   for (auto const &node : nodes_)
   {
     auto nsp = node.second->GetNodeSaveableParams();
-    gs.nodes.insert(std::make_pair(node.first, nsp));
+    (gs.nodes).insert(std::make_pair(node.first, nsp));
   }
   return gs;
 }

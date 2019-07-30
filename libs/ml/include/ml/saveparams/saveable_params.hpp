@@ -18,11 +18,8 @@
 //------------------------------------------------------------------------------
 
 #include "core/serializers/byte_array_buffer.hpp"
-//#include "math/base_types.hpp"
 #include "ml/meta/ml_type_traits.hpp"
 #include "ml/regularisers/regularisation.hpp"
-
-//#include <typeinfo>
 
 namespace fetch {
 namespace ml {
@@ -59,7 +56,7 @@ struct SaveableParamsInterface
   {}
   virtual ~SaveableParamsInterface() = default;
 
-  fetch::ml::OpType OP_DESCRIPTOR;
+  fetch::ml::OpType OP_DESCRIPTOR = OpType::NONE;
 };
 
 template <class TensorType>
@@ -177,554 +174,182 @@ struct WeightsSaveableParams;
 /// OP SPECIFIC SERIALISATION FUNCTIONS ///
 ///////////////////////////////////////////
 
-template <class S, OpType OperationType, typename TensorType>
-ml::meta::IfOpIsAbs<OperationType, void> Serialize(
-    S &serializer, std::shared_ptr<SaveableParamsInterface> const &node_pointer)
+namespace
 {
-  serializer << *(std::dynamic_pointer_cast<AbsSaveableParams<TensorType>>(node_pointer));
-}
-
-template <typename S, OpType OperationType, typename TensorType>
-ml::meta::IfOpIsAbs<OperationType, void> Deserialize(
-    S &serializer, std::shared_ptr<SaveableParamsInterface> &node_pointer)
-{
-  serializer >> (*(std::dynamic_pointer_cast<AbsSaveableParams<TensorType>>(node_pointer)));
-}
-
-template <typename S, OpType OperationType, typename TensorType>
-ml::meta::IfOpIsAdd<OperationType, void> Serialize(
-    S &serializer, std::shared_ptr<SaveableParamsInterface> const &node_pointer)
-{
-  serializer << *(std::dynamic_pointer_cast<AddSaveableParams<TensorType>>(node_pointer));
-}
-
-template <typename S, OpType OperationType, typename TensorType>
-ml::meta::IfOpIsAdd<OperationType, void> Deserialize(
-    S &serializer, std::shared_ptr<SaveableParamsInterface> &node_pointer)
-{
-  serializer >> (*(std::dynamic_pointer_cast<AddSaveableParams<TensorType>>(node_pointer)));
-}
-
-template <typename S, OpType OperationType, typename TensorType>
-ml::meta::IfOpIsConcatenate<OperationType, void> Serialize(
-    S &serializer, std::shared_ptr<SaveableParamsInterface> const &node_pointer)
-{
-  serializer << *(std::dynamic_pointer_cast<ConcatenateSaveableParams<TensorType>>(node_pointer));
-}
-
-template <typename S, OpType OperationType, typename TensorType>
-ml::meta::IfOpIsConcatenate<OperationType, void> Deserialize(
-    S &serializer, std::shared_ptr<SaveableParamsInterface> &node_pointer)
-{
-  serializer >> (*(std::dynamic_pointer_cast<ConcatenateSaveableParams<TensorType>>(node_pointer)));
-}
-
-template <typename S, OpType OperationType, typename TensorType>
-ml::meta::IfOpIsConvolution1D<OperationType, void> Serialize(
-    S &serializer, std::shared_ptr<SaveableParamsInterface> const &node_pointer)
-{
-  serializer << *(std::dynamic_pointer_cast<Convolution1DSaveableParams<TensorType>>(node_pointer));
-}
-
-template <typename S, OpType OperationType, typename TensorType>
-ml::meta::IfOpIsConvolution1D<OperationType, void> Deserialize(
-    S &serializer, std::shared_ptr<SaveableParamsInterface> &node_pointer)
-{
-  serializer >>
-      (*(std::dynamic_pointer_cast<Convolution1DSaveableParams<TensorType>>(node_pointer)));
-}
-
-template <typename S, OpType OperationType, typename TensorType>
-ml::meta::IfOpIsConvolution2D<OperationType, void> Serialize(
-    S &serializer, std::shared_ptr<SaveableParamsInterface> const &node_pointer)
-{
-  serializer << *(std::dynamic_pointer_cast<Convolution2DSaveableParams<TensorType>>(node_pointer));
-}
-
-template <typename S, OpType OperationType, typename TensorType>
-ml::meta::IfOpIsConvolution2D<OperationType, void> Deserialize(
-    S &serializer, std::shared_ptr<SaveableParamsInterface> &node_pointer)
-{
-  serializer >>
-      (*(std::dynamic_pointer_cast<Convolution2DSaveableParams<TensorType>>(node_pointer)));
-}
-
-template <typename S, OpType OperationType, typename TensorType>
-ml::meta::IfOpIsCrossEntropyLoss<OperationType, void> Serialize(
-    S &serializer, std::shared_ptr<SaveableParamsInterface> const &node_pointer)
-{
-  serializer << *(
-      std::dynamic_pointer_cast<CrossEntropyLossSaveableParams<TensorType>>(node_pointer));
-}
-
-template <typename S, OpType OperationType, typename TensorType>
-ml::meta::IfOpIsCrossEntropyLoss<OperationType, void> Deserialize(
-    S &serializer, std::shared_ptr<SaveableParamsInterface> &node_pointer)
-{
-  serializer >>
-      (*(std::dynamic_pointer_cast<CrossEntropyLossSaveableParams<TensorType>>(node_pointer)));
-}
-
-template <typename S, OpType OperationType, typename TensorType>
-ml::meta::IfOpIsDivide<OperationType, void> Serialize(
-    S &serializer, std::shared_ptr<SaveableParamsInterface> const &node_pointer)
-{
-  serializer << *(std::dynamic_pointer_cast<DivideSaveableParams<TensorType>>(node_pointer));
-}
-
-template <typename S, OpType OperationType, typename TensorType>
-ml::meta::IfOpIsDivide<OperationType, void> Deserialize(
-    S &serializer, std::shared_ptr<SaveableParamsInterface> &node_pointer)
-{
-  serializer >> (*(std::dynamic_pointer_cast<DivideSaveableParams<TensorType>>(node_pointer)));
-}
-
-template <typename S, OpType OperationType, typename TensorType>
-ml::meta::IfOpIsDropout<OperationType, void> Serialize(
-    S &serializer, std::shared_ptr<SaveableParamsInterface> const &node_pointer)
-{
-  serializer << *(std::dynamic_pointer_cast<DropoutSaveableParams<TensorType>>(node_pointer));
-}
-
-template <typename S, OpType OperationType, typename TensorType>
-ml::meta::IfOpIsDropout<OperationType, void> Deserialize(
-    S &serializer, std::shared_ptr<SaveableParamsInterface> &node_pointer)
-{
-  serializer >> (*(std::dynamic_pointer_cast<DropoutSaveableParams<TensorType>>(node_pointer)));
-}
-
-template <typename S, OpType OperationType, typename TensorType>
-ml::meta::IfOpIsElu<OperationType, void> Serialize(
-    S &serializer, std::shared_ptr<SaveableParamsInterface> const &node_pointer)
-{
-  serializer << *(std::dynamic_pointer_cast<EluSaveableParams<TensorType>>(node_pointer));
-}
-
-template <typename S, OpType OperationType, typename TensorType>
-ml::meta::IfOpIsElu<OperationType, void> Deserialize(
-    S &serializer, std::shared_ptr<SaveableParamsInterface> &node_pointer)
-{
-  serializer >> (*(std::dynamic_pointer_cast<EluSaveableParams<TensorType>>(node_pointer)));
-}
-
-template <typename S, OpType OperationType, typename TensorType>
-ml::meta::IfOpIsEmbeddings<OperationType, void> Serialize(
-    S &serializer, std::shared_ptr<SaveableParamsInterface> const &node_pointer)
-{
-  serializer << *(std::dynamic_pointer_cast<EmbeddingsSaveableParams<TensorType>>(node_pointer));
-}
-
-template <typename S, OpType OperationType, typename TensorType>
-ml::meta::IfOpIsEmbeddings<OperationType, void> Deserialize(
-    S &serializer, std::shared_ptr<SaveableParamsInterface> &node_pointer)
-{
-  serializer >> (*(std::dynamic_pointer_cast<EmbeddingsSaveableParams<TensorType>>(node_pointer)));
-}
-
-template <typename S, OpType OperationType, typename TensorType>
-ml::meta::IfOpIsExp<OperationType, void> Serialize(
-    S &serializer, std::shared_ptr<SaveableParamsInterface> const &node_pointer)
-{
-  serializer << *(std::dynamic_pointer_cast<ExpSaveableParams<TensorType>>(node_pointer));
-}
-
-template <typename S, OpType OperationType, typename TensorType>
-ml::meta::IfOpIsExp<OperationType, void> Deserialize(
-    S &serializer, std::shared_ptr<SaveableParamsInterface> &node_pointer)
-{
-  serializer >> (*(std::dynamic_pointer_cast<ExpSaveableParams<TensorType>>(node_pointer)));
-}
-
-template <typename S, OpType OperationType, typename TensorType>
-ml::meta::IfOpIsFlatten<OperationType, void> Serialize(
-    S &serializer, std::shared_ptr<SaveableParamsInterface> const &node_pointer)
-{
-  serializer << *(std::dynamic_pointer_cast<FlattenSaveableParams<TensorType>>(node_pointer));
-}
-
-template <typename S, OpType OperationType, typename TensorType>
-ml::meta::IfOpIsFlatten<OperationType, void> Deserialize(
-    S &serializer, std::shared_ptr<SaveableParamsInterface> &node_pointer)
-{
-  serializer >> (*(std::dynamic_pointer_cast<FlattenSaveableParams<TensorType>>(node_pointer)));
-}
-
-template <typename S, OpType OperationType, typename TensorType>
-ml::meta::IfOpIsLayerConvolution<OperationType, void> Serialize(
-    S &serializer, std::shared_ptr<SaveableParamsInterface> const &node_pointer)
-{
-  serializer << *(
-      std::dynamic_pointer_cast<ConvolutionLayerSaveableParams<TensorType>>(node_pointer));
-}
-
-template <typename S, OpType OperationType, typename TensorType>
-ml::meta::IfOpIsLayerConvolution<OperationType, void> Deserialize(
-    S &serializer, std::shared_ptr<SaveableParamsInterface> &node_pointer)
-{
-  serializer >>
-      (*(std::dynamic_pointer_cast<ConvolutionLayerSaveableParams<TensorType>>(node_pointer)));
-}
-
-template <typename S, OpType OperationType, typename TensorType>
-ml::meta::IfOpIsLayerFullyConnceted<OperationType, void> Serialize(
-    S &serializer, std::shared_ptr<SaveableParamsInterface> const &node_pointer)
-{
-  serializer << *(
-      std::dynamic_pointer_cast<FullyConnectedSaveableParams<TensorType>>(node_pointer));
-}
-
-template <typename S, OpType OperationType, typename TensorType>
-ml::meta::IfOpIsLayerFullyConnceted<OperationType, void> Deserialize(
-    S &serializer, std::shared_ptr<SaveableParamsInterface> &node_pointer)
-{
-  serializer >>
-      (*(std::dynamic_pointer_cast<FullyConnectedSaveableParams<TensorType>>(node_pointer)));
-}
-
-template <typename S, OpType OperationType, typename TensorType>
-ml::meta::IfOpIsLeakyRelu<OperationType, void> Serialize(
-    S &serializer, std::shared_ptr<SaveableParamsInterface> const &node_pointer)
-{
-  serializer << *(std::dynamic_pointer_cast<LeakyReluSaveableParams<TensorType>>(node_pointer));
-}
-
-template <typename S, OpType OperationType, typename TensorType>
-ml::meta::IfOpIsLeakyRelu<OperationType, void> Deserialize(
-    S &serializer, std::shared_ptr<SaveableParamsInterface> &node_pointer)
-{
-  serializer >> (*(std::dynamic_pointer_cast<LeakyReluSaveableParams<TensorType>>(node_pointer)));
-}
-
-template <typename S, OpType OperationType, typename TensorType>
-ml::meta::IfOpIsLeakyReluOp<OperationType, void> Serialize(
-    S &serializer, std::shared_ptr<SaveableParamsInterface> const &node_pointer)
-{
-  serializer << *(std::dynamic_pointer_cast<LeakyReluOpSaveableParams<TensorType>>(node_pointer));
-}
-
-template <typename S, OpType OperationType, typename TensorType>
-ml::meta::IfOpIsLeakyReluOp<OperationType, void> Deserialize(
-    S &serializer, std::shared_ptr<SaveableParamsInterface> &node_pointer)
-{
-  serializer >> (*(std::dynamic_pointer_cast<LeakyReluOpSaveableParams<TensorType>>(node_pointer)));
-}
-
-template <typename S, OpType OperationType, typename TensorType>
-ml::meta::IfOpIsLog<OperationType, void> Serialize(
-    S &serializer, std::shared_ptr<SaveableParamsInterface> const &node_pointer)
-{
-  serializer << *(std::dynamic_pointer_cast<LogSaveableParams<TensorType>>(node_pointer));
-}
-
-template <typename S, OpType OperationType, typename TensorType>
-ml::meta::IfOpIsLog<OperationType, void> Deserialize(
-    S &serializer, std::shared_ptr<SaveableParamsInterface> &node_pointer)
-{
-  serializer >> (*(std::dynamic_pointer_cast<LogSaveableParams<TensorType>>(node_pointer)));
-}
-
-template <typename S, OpType OperationType, typename TensorType>
-ml::meta::IfOpIsLogSigmoid<OperationType, void> Serialize(
-    S &serializer, std::shared_ptr<SaveableParamsInterface> const &node_pointer)
-{
-  serializer << *(std::dynamic_pointer_cast<LogSigmoidSaveableParams<TensorType>>(node_pointer));
-}
-
-template <typename S, OpType OperationType, typename TensorType>
-ml::meta::IfOpIsLogSigmoid<OperationType, void> Deserialize(
-    S &serializer, std::shared_ptr<SaveableParamsInterface> &node_pointer)
-{
-  serializer >> (*(std::dynamic_pointer_cast<LogSigmoidSaveableParams<TensorType>>(node_pointer)));
-}
-
-template <typename S, OpType OperationType, typename TensorType>
-ml::meta::IfOpIsLogSoftmax<OperationType, void> Serialize(
-    S &serializer, std::shared_ptr<SaveableParamsInterface> const &node_pointer)
-{
-  serializer << *(std::dynamic_pointer_cast<LogSoftmaxSaveableParams<TensorType>>(node_pointer));
-}
-
-template <typename S, OpType OperationType, typename TensorType>
-ml::meta::IfOpIsLogSoftmax<OperationType, void> Deserialize(
-    S &serializer, std::shared_ptr<SaveableParamsInterface> &node_pointer)
-{
-  serializer >> (*(std::dynamic_pointer_cast<LogSoftmaxSaveableParams<TensorType>>(node_pointer)));
-}
-
-template <typename S, OpType OperationType, typename TensorType>
-ml::meta::IfOpIsMatrixMultiply<OperationType, void> Serialize(
-    S &serializer, std::shared_ptr<SaveableParamsInterface> const &node_pointer)
-{
-  serializer << *(
-      std::dynamic_pointer_cast<MatrixMultiplySaveableParams<TensorType>>(node_pointer));
-}
-
-template <typename S, OpType OperationType, typename TensorType>
-ml::meta::IfOpIsMatrixMultiply<OperationType, void> Deserialize(
-    S &serializer, std::shared_ptr<SaveableParamsInterface> &node_pointer)
-{
-  serializer >>
-      (*(std::dynamic_pointer_cast<MatrixMultiplySaveableParams<TensorType>>(node_pointer)));
-}
-
-template <typename S, OpType OperationType, typename TensorType>
-ml::meta::IfOpIsMaxPool<OperationType, void> Serialize(
-    S &serializer, std::shared_ptr<SaveableParamsInterface> const &node_pointer)
-{
-  serializer << *(std::dynamic_pointer_cast<MaxPoolSaveableParams<TensorType>>(node_pointer));
-}
-
-template <typename S, OpType OperationType, typename TensorType>
-ml::meta::IfOpIsMaxPool<OperationType, void> Deserialize(
-    S &serializer, std::shared_ptr<SaveableParamsInterface> &node_pointer)
-{
-  serializer >> (*(std::dynamic_pointer_cast<MaxPoolSaveableParams<TensorType>>(node_pointer)));
-}
-
-template <typename S, OpType OperationType, typename TensorType>
-ml::meta::IfOpIsMeanSquareErrorLoss<OperationType, void> Serialize(
-    S &serializer, std::shared_ptr<SaveableParamsInterface> const &node_pointer)
-{
-  serializer << *(
-      std::dynamic_pointer_cast<MeanSquareErrorSaveableParams<TensorType>>(node_pointer));
-}
-
-template <typename S, OpType OperationType, typename TensorType>
-ml::meta::IfOpIsMeanSquareErrorLoss<OperationType, void> Deserialize(
-    S &serializer, std::shared_ptr<SaveableParamsInterface> &node_pointer)
-{
-  serializer >>
-      (*(std::dynamic_pointer_cast<MeanSquareErrorSaveableParams<TensorType>>(node_pointer)));
-}
-
-template <typename S, OpType OperationType, typename TensorType>
-ml::meta::IfOpIsMaximum<OperationType, void> Serialize(
-    S &serializer, std::shared_ptr<SaveableParamsInterface> const &node_pointer)
-{
-  serializer << *(std::dynamic_pointer_cast<MaximumSaveableParams<TensorType>>(node_pointer));
-}
-
-template <typename S, OpType OperationType, typename TensorType>
-ml::meta::IfOpIsMaximum<OperationType, void> Deserialize(
-    S &serializer, std::shared_ptr<SaveableParamsInterface> &node_pointer)
-{
-  serializer >> (*(std::dynamic_pointer_cast<MaximumSaveableParams<TensorType>>(node_pointer)));
-}
-
-template <typename S, OpType OperationType, typename TensorType>
-ml::meta::IfOpIsMultiply<OperationType, void> Serialize(
-    S &serializer, std::shared_ptr<SaveableParamsInterface> const &node_pointer)
-{
-  serializer << *(std::dynamic_pointer_cast<MultiplySaveableParams<TensorType>>(node_pointer));
-}
-
-template <typename S, OpType OperationType, typename TensorType>
-ml::meta::IfOpIsMultiply<OperationType, void> Deserialize(
-    S &serializer, std::shared_ptr<SaveableParamsInterface> &node_pointer)
-{
-  serializer >> (*(std::dynamic_pointer_cast<MultiplySaveableParams<TensorType>>(node_pointer)));
-}
-
-template <typename S, OpType OperationType, typename TensorType>
-ml::meta::IfOpIsPlaceholder<OperationType, void> Serialize(
-    S &serializer, std::shared_ptr<SaveableParamsInterface> const &node_pointer)
-{
-  serializer << *(std::dynamic_pointer_cast<PlaceholderSaveableParams<TensorType>>(node_pointer));
-}
-
-template <typename S, OpType OperationType, typename TensorType>
-ml::meta::IfOpIsPlaceholder<OperationType, void> Deserialize(
-    S &serializer, std::shared_ptr<SaveableParamsInterface> &node_pointer)
-{
-  serializer >> (*(std::dynamic_pointer_cast<PlaceholderSaveableParams<TensorType>>(node_pointer)));
-}
-
-template <typename S, OpType OperationType, typename TensorType>
-ml::meta::IfOpIsRandomisedRelu<OperationType, void> Serialize(
-    S &serializer, std::shared_ptr<SaveableParamsInterface> const &node_pointer)
-{
-  serializer << *(
-      std::dynamic_pointer_cast<RandomisedReluSaveableParams<TensorType>>(node_pointer));
-}
-
-template <typename S, OpType OperationType, typename TensorType>
-ml::meta::IfOpIsRandomisedRelu<OperationType, void> Deserialize(
-    S &serializer, std::shared_ptr<SaveableParamsInterface> &node_pointer)
-{
-  serializer >>
-      (*(std::dynamic_pointer_cast<RandomisedReluSaveableParams<TensorType>>(node_pointer)));
-}
-
-template <typename S, OpType OperationType, typename TensorType>
-ml::meta::IfOpIsRelu<OperationType, void> Serialize(
-    S &serializer, std::shared_ptr<SaveableParamsInterface> const &node_pointer)
-{
-  serializer << *(std::dynamic_pointer_cast<ReluSaveableParams<TensorType>>(node_pointer));
-}
-
-template <typename S, OpType OperationType, typename TensorType>
-ml::meta::IfOpIsRelu<OperationType, void> Deserialize(
-    S &serializer, std::shared_ptr<SaveableParamsInterface> &node_pointer)
-{
-  serializer >> (*(std::dynamic_pointer_cast<ReluSaveableParams<TensorType>>(node_pointer)));
-}
-
-template <typename S, OpType OperationType, typename TensorType>
-ml::meta::IfOpIsReshape<OperationType, void> Serialize(
-    S &serializer, std::shared_ptr<SaveableParamsInterface> const &node_pointer)
-{
-  serializer << *(std::dynamic_pointer_cast<ReshapeSaveableParams<TensorType>>(node_pointer));
-}
-
-template <typename S, OpType OperationType, typename TensorType>
-ml::meta::IfOpIsReshape<OperationType, void> Deserialize(
-    S &serializer, std::shared_ptr<SaveableParamsInterface> &node_pointer)
-{
-  serializer >> (*(std::dynamic_pointer_cast<ReshapeSaveableParams<TensorType>>(node_pointer)));
-}
-
-template <typename S, OpType OperationType, typename TensorType>
-ml::meta::IfOpIsSigmoid<OperationType, void> Serialize(
-    S &serializer, std::shared_ptr<SaveableParamsInterface> const &node_pointer)
-{
-  serializer << *(std::dynamic_pointer_cast<SigmoidSaveableParams<TensorType>>(node_pointer));
-}
-
-template <typename S, OpType OperationType, typename TensorType>
-ml::meta::IfOpIsSigmoid<OperationType, void> Deserialize(
-    S &serializer, std::shared_ptr<SaveableParamsInterface> &node_pointer)
-{
-  serializer >> (*(std::dynamic_pointer_cast<SigmoidSaveableParams<TensorType>>(node_pointer)));
-}
-
-template <typename S, OpType OperationType, typename TensorType>
-ml::meta::IfOpIsSoftmax<OperationType, void> Serialize(
-    S &serializer, std::shared_ptr<SaveableParamsInterface> const &node_pointer)
-{
-  serializer << *(std::dynamic_pointer_cast<SoftmaxSaveableParams<TensorType>>(node_pointer));
-}
-
-template <typename S, OpType OperationType, typename TensorType>
-ml::meta::IfOpIsSoftmax<OperationType, void> Deserialize(
-    S &serializer, std::shared_ptr<SaveableParamsInterface> &node_pointer)
-{
-  serializer >> (*(std::dynamic_pointer_cast<SoftmaxSaveableParams<TensorType>>(node_pointer)));
-}
-
-template <typename S, OpType OperationType, typename TensorType>
-ml::meta::IfOpIsSoftmaxCrossEntropyLoss<OperationType, void> Serialize(
-    S &serializer, std::shared_ptr<SaveableParamsInterface> const &node_pointer)
-{
-  serializer << *(
-      std::dynamic_pointer_cast<SoftmaxCrossEntropySaveableParams<TensorType>>(node_pointer));
-}
-
-template <typename S, OpType OperationType, typename TensorType>
-ml::meta::IfOpIsSoftmaxCrossEntropyLoss<OperationType, void> Deserialize(
-    S &serializer, std::shared_ptr<SaveableParamsInterface> &node_pointer)
-{
-  serializer >>
-      (*(std::dynamic_pointer_cast<SoftmaxCrossEntropySaveableParams<TensorType>>(node_pointer)));
-}
-
-template <typename S, OpType OperationType, typename TensorType>
-ml::meta::IfOpIsSqrt<OperationType, void> Serialize(
-    S &serializer, std::shared_ptr<SaveableParamsInterface> const &node_pointer)
-{
-  serializer << *(std::dynamic_pointer_cast<SQRTSaveableParams<TensorType>>(node_pointer));
-}
-
-template <typename S, OpType OperationType, typename TensorType>
-ml::meta::IfOpIsSqrt<OperationType, void> Deserialize(
-    S &serializer, std::shared_ptr<SaveableParamsInterface> &node_pointer)
-{
-  serializer >> (*(std::dynamic_pointer_cast<SQRTSaveableParams<TensorType>>(node_pointer)));
-}
-
-template <typename S, OpType OperationType, typename TensorType>
-ml::meta::IfOpIsSubtract<OperationType, void> Serialize(
-    S &serializer, std::shared_ptr<SaveableParamsInterface> const &node_pointer)
-{
-  serializer << *(std::dynamic_pointer_cast<SubtractSaveableParams<TensorType>>(node_pointer));
-}
-
-template <typename S, OpType OperationType, typename TensorType>
-ml::meta::IfOpIsSubtract<OperationType, void> Deserialize(
-    S &serializer, std::shared_ptr<SaveableParamsInterface> &node_pointer)
-{
-  serializer >> (*(std::dynamic_pointer_cast<SubtractSaveableParams<TensorType>>(node_pointer)));
-}
-
-template <typename S, OpType OperationType, typename TensorType>
-ml::meta::IfOpIsTanh<OperationType, void> Serialize(
-    S &serializer, std::shared_ptr<SaveableParamsInterface> const &node_pointer)
-{
-  serializer << *(std::dynamic_pointer_cast<TanhSaveableParams<TensorType>>(node_pointer));
-}
-
-template <typename S, OpType OperationType, typename TensorType>
-ml::meta::IfOpIsTanh<OperationType, void> Deserialize(
-    S &serializer, std::shared_ptr<SaveableParamsInterface> &node_pointer)
-{
-  serializer >> (*(std::dynamic_pointer_cast<TanhSaveableParams<TensorType>>(node_pointer)));
-}
-
-template <typename S, OpType OperationType, typename TensorType>
-ml::meta::IfOpIsTranspose<OperationType, void> Serialize(
-    S &serializer, std::shared_ptr<SaveableParamsInterface> const &node_pointer)
-{
-  serializer << *(std::dynamic_pointer_cast<TransposeSaveableParams<TensorType>>(node_pointer));
-}
-
-template <typename S, OpType OperationType, typename TensorType>
-ml::meta::IfOpIsTranspose<OperationType, void> Deserialize(
-    S &serializer, std::shared_ptr<SaveableParamsInterface> &node_pointer)
-{
-  serializer >> (*(std::dynamic_pointer_cast<TransposeSaveableParams<TensorType>>(node_pointer)));
-}
-
-template <typename S, OpType OperationType, typename TensorType>
-ml::meta::IfOpIsWeights<OperationType, void> Serialize(
-    S &serializer, std::shared_ptr<SaveableParamsInterface> const &node_pointer)
-{
-  serializer << *(std::dynamic_pointer_cast<WeightsSaveableParams<TensorType>>(node_pointer));
-}
-
-template <typename S, OpType OperationType, typename TensorType>
-ml::meta::IfOpIsWeights<OperationType, void> Deserialize(
-    S &serializer, std::shared_ptr<SaveableParamsInterface> &node_pointer)
-{
-  serializer >> (*(std::dynamic_pointer_cast<WeightsSaveableParams<TensorType>>(node_pointer)));
-}
-
-///////////////////////////////
-/// ALL OPS SAVEABLE PARAMS ///
-///////////////////////////////
-
-/**
- * Saveable parameters for Abs op (only includes the descriptor)
- * @tparam TensorType
- */
-template <class TensorType>
-struct AbsSaveableParams : public SaveableParamsInterface
-{
-  AbsSaveableParams()
-    : SaveableParamsInterface(OpType::ABS)
-  {}
-  fetch::ml::OpType OP_DESCRIPTOR = OpType::ABS;
-
-  template <class S>
-  friend void Serialize(S &serializer, AbsSaveableParams const &sp)
+  template <typename S, class SP>
+  void SerializeImplementation(S &serializer, std::shared_ptr<SaveableParamsInterface> const &nsp)
   {
-    Serialize(serializer, sp.OP_DESCRIPTOR);
+    auto castnode = std::dynamic_pointer_cast<SP>(nsp);
+    serializer << *castnode;
   }
 
-  template <class S>
-  friend void Deserialize(S &serializer, AbsSaveableParams &sp)
+  template <typename S, class SP>
+  void DeserializeImplementation(S &serializer, std::shared_ptr<SaveableParamsInterface> &nsp)
   {
-    Deserialize(serializer, sp.OP_DESCRIPTOR);
+  //  auto nsp_ptr = std::make_shared<SP>();
+    auto castnode = std::dynamic_pointer_cast<SP>(nsp);
+    serializer >> *castnode;
   }
-};
+}
+
+template <typename S, class TensorType>
+void Serialize(S &serializer, std::shared_ptr<SaveableParamsInterface> const &nsp)
+{
+  OpType operation_type = nsp->OP_DESCRIPTOR;
+  serializer << operation_type;
+
+  assert(operation_type != OpType::NONE);
+  assert(operation_type != OpType::GRAPH);
+  assert(operation_type != OpType::SUBGRAPH);
+
+  switch (operation_type)
+  {
+    case OpType::PLACEHOLDER:
+    {
+      SerializeImplementation<S, PlaceholderSaveableParams<TensorType>>(serializer, nsp);
+      break;
+    }
+    case OpType::WEIGHTS:
+    {
+      SerializeImplementation<S, WeightsSaveableParams<TensorType>>(serializer, nsp);
+      break;
+    }
+    case OpType::DROPOUT:
+    {
+      SerializeImplementation<S, DropoutSaveableParams<TensorType>>(serializer, nsp);
+      break;
+    }
+    case OpType::LEAKY_RELU:
+    {
+      SerializeImplementation<S, LeakyReluSaveableParams<TensorType>>(serializer, nsp);
+      break;
+    }
+    case OpType::RANDOMISED_RELU:
+    {
+      SerializeImplementation<S, RandomisedReluSaveableParams<TensorType>>(serializer, nsp);
+      break;
+    }
+    case OpType::SOFTMAX:
+    {
+      SerializeImplementation<S, SoftmaxSaveableParams<TensorType>>(serializer, nsp);
+      break;
+    }
+    case OpType::CONVOLUTION_1D:
+    {
+      SerializeImplementation<S, Convolution1DSaveableParams<TensorType>>(serializer, nsp);
+      break;
+    }
+    case OpType::MAX_POOL:
+    {
+      SerializeImplementation<S, MaxPoolSaveableParams<TensorType>>(serializer, nsp);
+      break;
+    }
+    case OpType::TRANSPOSE:
+    {
+      SerializeImplementation<S, TransposeSaveableParams<TensorType>>(serializer, nsp);
+      break;
+    }
+    case OpType::RESHAPE:
+    {
+      SerializeImplementation<S, ReshapeSaveableParams<TensorType>>(serializer, nsp);
+      break;
+    }
+    case OpType::LAYER_FULLY_CONNECTED:
+    {
+      SerializeImplementation<S, FullyConnectedSaveableParams<TensorType>>(serializer, nsp);
+      break;
+    }
+    case OpType::LAYER_CONVOLUTION:
+    {
+      SerializeImplementation<S, ConvolutionLayerSaveableParams<TensorType>>(serializer, nsp);
+      break;
+    }
+    default:
+    {
+      throw std::runtime_error("Unknown type for Serialization");
+    }
+  }
+}
+
+template <typename S, class TensorType>
+void Deserialize(S &serializer, std::shared_ptr<SaveableParamsInterface> &nsp)
+{
+  OpType operation_type;
+  serializer >> operation_type;
+
+  assert(operation_type != OpType::NONE);
+  assert(operation_type != OpType::GRAPH);
+  assert(operation_type != OpType::SUBGRAPH);
+
+  switch (operation_type)
+  {
+    case OpType::PLACEHOLDER:
+    {
+      DeserializeImplementation<S, PlaceholderSaveableParams<TensorType>>(serializer, nsp);
+      break;
+    }
+    case OpType::WEIGHTS:
+    {
+      DeserializeImplementation<S, WeightsSaveableParams<TensorType>>(serializer, nsp);
+      break;
+    }
+    case OpType::DROPOUT:
+    {
+      DeserializeImplementation<S, DropoutSaveableParams<TensorType>>(serializer, nsp);
+      break;
+    }
+    case OpType::LEAKY_RELU:
+    {
+      DeserializeImplementation<S, LeakyReluSaveableParams<TensorType>>(serializer, nsp);
+      break;
+    }
+    case OpType::RANDOMISED_RELU:
+    {
+      DeserializeImplementation<S, RandomisedReluSaveableParams<TensorType>>(serializer, nsp);
+      break;
+    }
+    case OpType::SOFTMAX:
+    {
+      DeserializeImplementation<S, SoftmaxSaveableParams<TensorType>>(serializer, nsp);
+      break;
+    }
+    case OpType::CONVOLUTION_1D:
+    {
+      DeserializeImplementation<S, Convolution1DSaveableParams<TensorType>>(serializer, nsp);
+      break;
+    }
+    case OpType::MAX_POOL:
+    {
+      DeserializeImplementation<S, MaxPoolSaveableParams<TensorType>>(serializer, nsp);
+      break;
+    }
+    case OpType::TRANSPOSE:
+    {
+      DeserializeImplementation<S, TransposeSaveableParams<TensorType>>(serializer, nsp);
+      break;
+    }
+    case OpType::RESHAPE:
+    {
+      DeserializeImplementation<S, ReshapeSaveableParams<TensorType>>(serializer, nsp);
+      break;
+    }
+    case OpType::LAYER_FULLY_CONNECTED:
+    {
+      DeserializeImplementation<S, FullyConnectedSaveableParams<TensorType>>(serializer, nsp);
+      break;
+    }
+    case OpType::LAYER_CONVOLUTION:
+    {
+      DeserializeImplementation<S, ConvolutionLayerSaveableParams<TensorType>>(serializer, nsp);
+      break;
+    }
+    default:
+    {
+      throw std::runtime_error("Unknown type for Serialization");
+    }
+  }
+}
+
 
 template <class TensorType>
 struct GraphSaveableParams : public SaveableParamsInterface
@@ -734,8 +359,8 @@ struct GraphSaveableParams : public SaveableParamsInterface
   fetch::ml::OpType OP_DESCRIPTOR = OpType::GRAPH;
 
   //  static constexpr char const *sp_descriptor = "GraphSaveableParams";
-  std::vector<std::pair<std::string, std::vector<std::string>>>   connections;
-  std::map<std::string, std::shared_ptr<SaveableParamsInterface>> nodes;
+  std::vector<std::pair<std::string, std::vector<std::string>>>             connections;
+  std::unordered_map<std::string, std::shared_ptr<SaveableParamsInterface>> nodes;
 
   GraphSaveableParams()
     : SaveableParamsInterface(OpType::GRAPH)
@@ -761,7 +386,7 @@ struct GraphSaveableParams : public SaveableParamsInterface
     for (auto const &node : gsp.nodes)
     {
       serializer << node.first;
-      Serialize<S, node.second->OP_DESCRIPTOR, TensorType>(serializer, node.second);
+      Serialize<S, TensorType>(serializer, node.second);
     }
   }
 
@@ -776,10 +401,15 @@ struct GraphSaveableParams : public SaveableParamsInterface
       std::string node_name;
       serializer >> node_name;
 
-      std::shared_ptr<SaveableParamsInterface> nsp_ptr =
-          Deserialize<S, gsp.nodes[node_name]->OP_DESCRIPTOR, TensorType>(serializer);
+      std::shared_ptr<SaveableParamsInterface> nsp_ptr;
+//      std::shared_ptr<SaveableParamsInterface> nsp_ptr =
+//          Deserialize<S, gsp.nodes[node_name]->OP_DESCRIPTOR, TensorType>(serializer);
+//
+//      gsp.nodes.insert(std::make_pair(node_name, nsp_ptr));
 
-      gsp.nodes.insert(std::make_pair(node_name, nsp_ptr));
+      Deserialize<S, TensorType>(serializer, nsp_ptr);
+//      Serialize<S, node.second->OP_DESCRIPTOR, TensorType>(serializer, node.second);
+
     }
   }
 };
@@ -830,6 +460,35 @@ struct SubGraphSaveableParams : GraphSaveableParams<TensorType>
 
     serializer >> gsp.input_node_names;
     serializer >> gsp.output_node_name;
+  }
+};
+
+///////////////////////////////
+/// ALL OPS SAVEABLE PARAMS ///
+///////////////////////////////
+
+/**
+ * Saveable parameters for Abs op (only includes the descriptor)
+ * @tparam TensorType
+ */
+template <class TensorType>
+struct AbsSaveableParams : public SaveableParamsInterface
+{
+  AbsSaveableParams()
+    : SaveableParamsInterface(OpType::ABS)
+  {}
+  fetch::ml::OpType OP_DESCRIPTOR = OpType::ABS;
+
+  template <class S>
+  friend void Serialize(S &serializer, AbsSaveableParams const &sp)
+  {
+    Serialize(serializer, sp.OP_DESCRIPTOR);
+  }
+
+  template <class S>
+  friend void Deserialize(S &serializer, AbsSaveableParams &sp)
+  {
+    Deserialize(serializer, sp.OP_DESCRIPTOR);
   }
 };
 
@@ -897,7 +556,8 @@ struct Convolution1DSaveableParams : public SaveableParamsInterface
   Convolution1DSaveableParams()
     : SaveableParamsInterface(OpType::CONVOLUTION_1D)
   {}
-  fetch::ml::OpType     OP_DESCRIPTOR = OpType::CONVOLUTION_1D;
+  //  static constexpr fetch::ml::OpType OP_DESCRIPTOR = OpType::CONVOLUTION_1D;
+  fetch::ml::OpType OP_DESCRIPTOR = OpType::CONVOLUTION_1D;
   fetch::math::SizeType stride_size   = fetch::math::numeric_max<fetch::math::SizeType>();
 
   template <class S>
@@ -1885,158 +1545,8 @@ struct WeightsSaveableParams : public SaveableParamsInterface
   }
 };
 
-// template <typename S, class SP>
-// void SerializeHelper(S &serializer, std::shared_ptr<SaveableParamsInterface> const &nsp)
-//{
-//  auto castnode = std::dynamic_pointer_cast<SP>(nsp);
-//  serializer << *castnode;
-//}
-//
-// template <typename S, class TensorType>
-// void SerializeIfElse(S &serializer, std::shared_ptr<SaveableParamsInterface> const &nsp);
-//
-// template <typename S, class TensorType>
-// std::shared_ptr<SaveableParamsInterface> DeserializeIfElse(S &serializer);
 
-// template <typename S, class SP>
-// std::shared_ptr<SaveableParamsInterface> DeserializeHelper(S &serializer)
-//{
-//  auto nsp_ptr = std::make_shared<SP>();
-//  serializer >> *nsp_ptr;
-//  return nsp_ptr;
-//}
 
-//
-// template <typename S, class TensorType>
-// void SerializeIfElse(S &serializer, std::shared_ptr<SaveableParamsInterface> const &nsp)
-//{
-//  std::string next_sp_descriptor = nsp->GetDescription();
-//  serializer << next_sp_descriptor;
-//
-//  if (next_sp_descriptor == SaveableParams::sp_descriptor)
-//  {
-//    SerializeHelper<S, SaveableParamsInterface>(serializer, nsp);
-//  }
-//  else if (next_sp_descriptor == PlaceholderSaveableParams<TensorType>::sp_descriptor)
-//  {
-//    SerializeHelper<S, PlaceholderSaveableParams<TensorType>>(serializer, nsp);
-//  }
-//  else if (next_sp_descriptor == WeightsSaveableParams<TensorType>::sp_descriptor)
-//  {
-//    SerializeHelper<S, WeightsSaveableParams<TensorType>>(serializer, nsp);
-//  }
-//  else if (next_sp_descriptor == DropoutSaveableParams<TensorType>::sp_descriptor)
-//  {
-//    SerializeHelper<S, DropoutSaveableParams<TensorType>>(serializer, nsp);
-//  }
-//  else if (next_sp_descriptor == LeakyReluSaveableParams<TensorType>::sp_descriptor)
-//  {
-//    SerializeHelper<S, LeakyReluSaveableParams<TensorType>>(serializer, nsp);
-//  }
-//  else if (next_sp_descriptor == RandomisedReluSaveableParams<TensorType>::sp_descriptor)
-//  {
-//    SerializeHelper<S, RandomisedReluSaveableParams<TensorType>>(serializer, nsp);
-//  }
-//  else if (next_sp_descriptor == SoftmaxSaveableParams::sp_descriptor)
-//  {
-//    SerializeHelper<S, SoftmaxSaveableParamsInterface>(serializer, nsp);
-//  }
-//  else if (next_sp_descriptor == Convolution1DSaveableParams::sp_descriptor)
-//  {
-//    SerializeHelper<S, Convolution1DSaveableParamsInterface>(serializer, nsp);
-//  }
-//  else if (next_sp_descriptor == MaxPoolSaveableParams::sp_descriptor)
-//  {
-//    SerializeHelper<S, MaxPoolSaveableParamsInterface>(serializer, nsp);
-//  }
-//  else if (next_sp_descriptor == TransposeSaveableParams::sp_descriptor)
-//  {
-//    SerializeHelper<S, TransposeSaveableParamsInterface>(serializer, nsp);
-//  }
-//  else if (next_sp_descriptor == ReshapeSaveableParams::sp_descriptor)
-//  {
-//    SerializeHelper<S, ReshapeSaveableParamsInterface>(serializer, nsp);
-//  }
-//  else if (next_sp_descriptor == FullyConnectedSaveableParams<TensorType>::sp_descriptor)
-//  {
-//    SerializeHelper<S, FullyConnectedSaveableParams<TensorType>>(serializer, nsp);
-//  }
-//  else if (next_sp_descriptor == ConvolutionLayerSaveableParams<TensorType>::sp_descriptor)
-//  {
-//    SerializeHelper<S, ConvolutionLayerSaveableParams<TensorType>>(serializer, nsp);
-//  }
-//  else
-//  {
-//    throw std::runtime_error("Unknown type for Serialization");
-//  }
-//}
-//
-// template <typename S, class TensorType>
-// std::shared_ptr<SaveableParamsInterface> DeserializeIfElse(S &serializer)
-//{
-//  std::string next_sp_descriptor;
-//  serializer >> next_sp_descriptor;
-//  //      std::cout << "next_sp_descriptor: " << next_sp_descriptor << std::endl;
-//
-//  std::shared_ptr<SaveableParamsInterface> nsp_ptr;
-//  if (next_sp_descriptor == SaveableParams::sp_descriptor)
-//  {
-//    nsp_ptr = DeserializeHelper<S, SaveableParamsInterface>(serializer);
-//  }
-//  else if (next_sp_descriptor == PlaceholderSaveableParams<TensorType>::sp_descriptor)
-//  {
-//    nsp_ptr = DeserializeHelper<S, PlaceholderSaveableParams<TensorType>>(serializer);
-//  }
-//  else if (next_sp_descriptor == WeightsSaveableParams<TensorType>::sp_descriptor)
-//  {
-//    nsp_ptr = DeserializeHelper<S, WeightsSaveableParams<TensorType>>(serializer);
-//  }
-//  else if (next_sp_descriptor == DropoutSaveableParams<TensorType>::sp_descriptor)
-//  {
-//    nsp_ptr = DeserializeHelper<S, DropoutSaveableParams<TensorType>>(serializer);
-//  }
-//  else if (next_sp_descriptor == LeakyReluSaveableParams<TensorType>::sp_descriptor)
-//  {
-//    nsp_ptr = DeserializeHelper<S, LeakyReluSaveableParams<TensorType>>(serializer);
-//  }
-//  else if (next_sp_descriptor == RandomisedReluSaveableParams<TensorType>::sp_descriptor)
-//  {
-//    nsp_ptr = DeserializeHelper<S, RandomisedReluSaveableParams<TensorType>>(serializer);
-//  }
-//  else if (next_sp_descriptor == SoftmaxSaveableParams::sp_descriptor)
-//  {
-//    nsp_ptr = DeserializeHelper<S, SoftmaxSaveableParamsInterface>(serializer);
-//  }
-//  else if (next_sp_descriptor == Convolution1DSaveableParams::sp_descriptor)
-//  {
-//    nsp_ptr = DeserializeHelper<S, Convolution1DSaveableParamsInterface>(serializer);
-//  }
-//  else if (next_sp_descriptor == MaxPoolSaveableParams::sp_descriptor)
-//  {
-//    nsp_ptr = DeserializeHelper<S, MaxPoolSaveableParamsInterface>(serializer);
-//  }
-//  else if (next_sp_descriptor == TransposeSaveableParams::sp_descriptor)
-//  {
-//    nsp_ptr = DeserializeHelper<S, TransposeSaveableParamsInterface>(serializer);
-//  }
-//  else if (next_sp_descriptor == ReshapeSaveableParams::sp_descriptor)
-//  {
-//    nsp_ptr = DeserializeHelper<S, ReshapeSaveableParamsInterface>(serializer);
-//  }
-//  else if (next_sp_descriptor == FullyConnectedSaveableParams<TensorType>::sp_descriptor)
-//  {
-//    nsp_ptr = DeserializeHelper<S, FullyConnectedSaveableParams<TensorType>>(serializer);
-//  }
-//  else if (next_sp_descriptor == ConvolutionLayerSaveableParams<TensorType>::sp_descriptor)
-//  {
-//    nsp_ptr = DeserializeHelper<S, ConvolutionLayerSaveableParams<TensorType>>(serializer);
-//  }
-//  else
-//  {
-//    throw std::runtime_error("Unknown type for deserialization");
-//  }
-//  return nsp_ptr;
-//}
 
 }  // namespace ml
 }  // namespace fetch

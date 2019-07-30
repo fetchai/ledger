@@ -124,81 +124,82 @@ using IfIsNotGraphOrTrainable = fetch::meta::EnableIf<IsNotGraphOrTrainable<T, O
 /////////////////////////////////////////////////////////////
 
 template <OpType OperationType>
-constexpr bool IsAbs = (OperationType == OpType::ABS);
+static constexpr bool IsAbs = (OperationType == OpType::ABS);
 template <OpType OperationType>
-constexpr bool IsAdd = (OperationType == OpType::ADD);
+static constexpr bool IsAdd = (OperationType == OpType::ADD);
 template <OpType OperationType>
-constexpr bool IsConcatenate = (OperationType == OpType::CONCATENATE);
+static constexpr bool IsConcatenate = (OperationType == OpType::CONCATENATE);
 template <OpType OperationType>
-constexpr bool IsConvolution1D = (OperationType == OpType::CONVOLUTION_1D);
+static constexpr bool IsConvolution1D = (OperationType == OpType::CONVOLUTION_1D);
 template <OpType OperationType>
-constexpr bool IsConvolution2D = (OperationType == OpType::CONVOLUTION_2D);
+static constexpr bool IsConvolution2D = (OperationType == OpType::CONVOLUTION_2D);
 template <OpType OperationType>
-constexpr bool IsCrossEntropyLoss = (OperationType == OpType::CROSS_ENTROPY_LOSS);
+static constexpr bool IsCrossEntropyLoss = (OperationType == OpType::CROSS_ENTROPY_LOSS);
 template <OpType OperationType>
-constexpr bool IsDivide = (OperationType == OpType::DIVIDE);
+static constexpr bool IsDivide = (OperationType == OpType::DIVIDE);
 template <OpType OperationType>
-constexpr bool IsDropout = (OperationType == OpType::DROPOUT);
+static constexpr bool IsDropout = (OperationType == OpType::DROPOUT);
 template <OpType OperationType>
-constexpr bool IsElu = (OperationType == OpType::ELU);
+static constexpr bool IsElu = (OperationType == OpType::ELU);
 template <OpType OperationType>
-constexpr bool IsEmbeddings = (OperationType == OpType::EMBEDDINGS);
+static constexpr bool IsEmbeddings = (OperationType == OpType::EMBEDDINGS);
 template <OpType OperationType>
-constexpr bool IsExp = (OperationType == OpType::EXP);
+static constexpr bool IsExp = (OperationType == OpType::EXP);
 template <OpType OperationType>
-constexpr bool IsFlatten = (OperationType == OpType::FLATTEN);
+static constexpr bool IsFlatten = (OperationType == OpType::FLATTEN);
 template <OpType OperationType>
-constexpr bool IsGraphOp = (OperationType == OpType::GRAPH);
+static constexpr bool IsGraphOp = (OperationType == OpType::GRAPH);
 template <OpType OperationType>
-constexpr bool IsLayerConvolution = (OperationType == OpType::LAYER_CONVOLUTION);
+static constexpr bool IsLayerConvolution = (OperationType == OpType::LAYER_CONVOLUTION);
 template <OpType OperationType>
-constexpr bool IsLayerFullyConnected = (OperationType == OpType::LAYER_FULLY_CONNECTED);
+static constexpr bool IsLayerFullyConnected = (OperationType == OpType::LAYER_FULLY_CONNECTED);
 template <OpType OperationType>
-constexpr bool IsLeakyRelu = (OperationType == OpType::LEAKY_RELU);
+static constexpr bool IsLeakyRelu = (OperationType == OpType::LEAKY_RELU);
 template <OpType OperationType>
-constexpr bool IsLeakyReluOp = (OperationType == OpType::LEAKY_RELU_OP);
+static constexpr bool IsLeakyReluOp = (OperationType == OpType::LEAKY_RELU_OP);
 template <OpType OperationType>
-constexpr bool IsLog = (OperationType == OpType::LOG);
+static constexpr bool IsLog = (OperationType == OpType::LOG);
 template <OpType OperationType>
-constexpr bool IsLogSigmoid = (OperationType == OpType::LOGSIGMOID);
+static constexpr bool IsLogSigmoid = (OperationType == OpType::LOGSIGMOID);
 template <OpType OperationType>
-constexpr bool IsLogSoftmax = (OperationType == OpType::LOGSOFTMAX);
+static constexpr bool IsLogSoftmax = (OperationType == OpType::LOGSOFTMAX);
 template <OpType OperationType>
-constexpr bool IsMatrixMultiply = (OperationType == OpType::MATRIX_MULTIPLY);
+static constexpr bool IsMatrixMultiply = (OperationType == OpType::MATRIX_MULTIPLY);
 template <OpType OperationType>
-constexpr bool IsMaxPool = (OperationType == OpType::MAX_POOL);
+static constexpr bool IsMaxPool = (OperationType == OpType::MAX_POOL);
 template <OpType OperationType>
-constexpr bool IsMeanSquareErrorLoss = (OperationType == OpType::MEAN_SQUARE_ERROR_LOSS);
+static constexpr bool IsMeanSquareErrorLoss = (OperationType == OpType::MEAN_SQUARE_ERROR_LOSS);
 template <OpType OperationType>
-constexpr bool IsMaximum = (OperationType == OpType::MAXIMUM);
+static constexpr bool IsMaximum = (OperationType == OpType::MAXIMUM);
 template <OpType OperationType>
-constexpr bool IsMultiply = (OperationType == OpType::MULTIPLY);
+static constexpr bool IsMultiply = (OperationType == OpType::MULTIPLY);
 template <OpType OperationType>
-constexpr bool IsPlaceholder = (OperationType == OpType::PLACEHOLDER);
+static constexpr bool IsPlaceholder = (OperationType == OpType::PLACEHOLDER);
 template <OpType OperationType>
-constexpr bool IsRandomisedRelu = (OperationType == OpType::RANDOMISED_RELU);
+static constexpr bool IsRandomisedRelu = (OperationType == OpType::RANDOMISED_RELU);
 template <OpType OperationType>
-constexpr bool IsRelu = (OperationType == OpType::RELU);
+static constexpr bool IsRelu = (OperationType == OpType::RELU);
 template <OpType OperationType>
-constexpr bool IsReshape = (OperationType == OpType::RESHAPE);
+static constexpr bool IsReshape = (OperationType == OpType::RESHAPE);
 template <OpType OperationType>
-constexpr bool IsSigmoid = (OperationType == OpType::SIGMOID);
+static constexpr bool IsSigmoid = (OperationType == OpType::SIGMOID);
 template <OpType OperationType>
-constexpr bool IsSoftmax = (OperationType == OpType::SOFTMAX);
+static constexpr bool IsSoftmax = (OperationType == OpType::SOFTMAX);
 template <OpType OperationType>
-constexpr bool IsSoftmaxCrossEntropyLoss = (OperationType == OpType::SOFTMAX_CROSS_ENTROPY_LOSS);
+static constexpr bool IsSoftmaxCrossEntropyLoss = (OperationType ==
+                                                   OpType::SOFTMAX_CROSS_ENTROPY_LOSS);
 template <OpType OperationType>
-constexpr bool IsSqrt = (OperationType == OpType::SQRT);
+static constexpr bool IsSqrt = (OperationType == OpType::SQRT);
 template <OpType OperationType>
-constexpr bool IsSubgraph = (OperationType == OpType::SUBGRAPH);
+static constexpr bool IsSubgraph = (OperationType == OpType::SUBGRAPH);
 template <OpType OperationType>
-constexpr bool IsSubtract = (OperationType == OpType::SUBTRACT);
+static constexpr bool IsSubtract = (OperationType == OpType::SUBTRACT);
 template <OpType OperationType>
-constexpr bool IsTanh = (OperationType == OpType::TANH);
+static constexpr bool IsTanh = (OperationType == OpType::TANH);
 template <OpType OperationType>
-constexpr bool IsTranspose = (OperationType == OpType::TRANSPOSE);
+static constexpr bool IsTranspose = (OperationType == OpType::TRANSPOSE);
 template <OpType OperationType>
-constexpr bool IsWeights = (OperationType == OpType::WEIGHTS);
+static constexpr bool IsWeights = (OperationType == OpType::WEIGHTS);
 
 template <OpType OperationType, typename R = void>
 using IfOpIsAbs = fetch::meta::EnableIf<IsAbs<OperationType>, R>;

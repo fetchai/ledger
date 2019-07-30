@@ -52,6 +52,21 @@ public:
     output_node_name_ = gs.output_node_name;
   }
 
+  template <typename OtherSaveParamsType>
+  void CopySaveableParams(OtherSaveParamsType &ret_save_params)
+  {
+    // copy graph save params info into the other save params
+    auto gsp = this->GetGraphSaveableParams();
+    auto ret_graph_save_params_ptr =
+        std::static_pointer_cast<GraphSaveableParams<ArrayType>>(ret_save_params);
+    *ret_graph_save_params_ptr = gsp;
+
+    // copy subgraph save params info into other save params
+    auto ret_subgraph_save_params_ptr = std::static_pointer_cast<SPType>(ret_save_params);
+    ret_subgraph_save_params_ptr->input_node_names = input_node_names_;
+    ret_subgraph_save_params_ptr->output_node_name = output_node_name_;
+  }
+
   std::shared_ptr<SaveableParamsInterface> GetOpSaveableParams() override
   {
     auto gsp = this->GetGraphSaveableParams();
