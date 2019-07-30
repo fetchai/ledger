@@ -16,28 +16,38 @@
 //
 //------------------------------------------------------------------------------
 
+#include "vm_modules/core/byte_array_wrapper.hpp"
+#include "vm_modules/core/panic.hpp"
+#include "vm_modules/core/print.hpp"
+#include "vm_modules/core/structured_data.hpp"
+#include "vm_modules/core/type_convert.hpp"
+#include "vm_modules/crypto/sha256.hpp"
+#include "vm_modules/math/bignumber.hpp"
+#include "vm_modules/math/exp.hpp"
+#include "vm_modules/math/math.hpp"
+#include "vm_modules/ml/ml.hpp"
+#include "vm_modules/polyfill/bitshifting.hpp"
+#include "vm_modules/polyfill/bitwise_ops.hpp"
 #include "vm_modules/vm_factory.hpp"
+
+#include <cstdint>
+#include <memory>
+#include <string>
+#include <vector>
+
+using namespace fetch::vm;
 
 namespace fetch {
 namespace vm_modules {
 
-/**
- * Compile a source file, returning a executable
- *
- * @param: module The module which the user might have added various bindings/classes to etc.
- * @param: source The raw source to compile
- * @param: executable executable to fill
- *
- * @return: Vector of strings which represent errors found during compilation
- */
-VMFactory::Errors VMFactory::Compile(std::shared_ptr<fetch::vm::Module> const &module,
-                                     std::string const &source, fetch::vm::Executable &executable)
+VMFactory::Errors VMFactory::Compile(std::shared_ptr<Module> const &module,
+                                     std::string const &source, Executable &executable)
 {
   std::vector<std::string> errors;
 
   // generate the compiler from the module
-  auto   compiler = std::make_shared<fetch::vm::Compiler>(module.get());
-  vm::IR ir;
+  auto compiler = std::make_shared<Compiler>(module.get());
+  IR   ir;
 
   // compile the source
   bool const compiled = compiler->Compile(source, "default", ir, errors);
@@ -48,7 +58,7 @@ VMFactory::Errors VMFactory::Compile(std::shared_ptr<fetch::vm::Module> const &m
     return errors;
   }
 
-  fetch::vm::VM vm(module.get());  // TODO(tfr): refactor such that IR is first made executable
+  VM vm(module.get());  // TODO(tfr): refactor such that IR is first made executable
   if (!vm.GenerateExecutable(ir, "default_ir", executable, errors))
   {
     return errors;
@@ -68,6 +78,46 @@ VMFactory::Errors VMFactory::Compile(std::shared_ptr<fetch::vm::Module> const &m
 #endif
 
   return errors;
+}
+
+std::shared_ptr<Module> VMFactory::GetModule(uint64_t enabled)
+{
+  auto module = std::make_shared<Module>();
+
+  // core modules
+  if (MOD_CORE & enabled)
+  {
+    CreatePrint(*module);
+    CreatePanic(*module);
+    CreateToString(*module);
+    CreateToBool(*module);
+
+    StructuredData::Bind(*module);
+    ByteArrayWrapper::Bind(*module);
+    math::UInt256Wrapper::Bind(*module);
+    SHA256Wrapper::Bind(*module);
+  }
+
+  // math modules
+  if (MOD_MATH & enabled)
+  {
+    math::BindMath(*module);
+  }
+
+  // synergetic modules
+  if (MOD_SYN & enabled)
+  {
+    BindBitShift(*module);
+    BindBitwiseOps(*module);
+  }
+
+  // ml modules
+  if (MOD_ML & enabled)
+  {
+    ml::BindML(*module);
+  }
+
+  return module;
 }
 
 }  // namespace vm_modules

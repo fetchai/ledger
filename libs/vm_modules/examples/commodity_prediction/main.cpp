@@ -20,6 +20,7 @@
 #include "ml/dataloaders/ReadCSV.hpp"
 #include "vm/module.hpp"
 #include "vm_modules/core/print.hpp"
+#include "vm_modules/math/tensor.hpp"
 #include "vm_modules/ml/ml.hpp"
 
 #include <cstddef>
@@ -30,7 +31,7 @@
 #include <string>
 #include <vector>
 
-using DataType  = typename fetch::vm_modules::math::VMTensor::DataType;
+using DataType  = fetch::vm_modules::math::VMTensor::DataType;
 using ArrayType = fetch::math::Tensor<DataType>;
 
 struct System : public fetch::vm::Object
