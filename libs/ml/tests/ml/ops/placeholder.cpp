@@ -40,7 +40,7 @@ TYPED_TEST(PlaceholderTest, setData)
   TypeParam data = TypeParam::FromString("1, 2, 3, 4, 5, 6, 7, 8");
   TypeParam gt   = TypeParam::FromString("1, 2, 3, 4, 5, 6, 7, 8");
 
-  fetch::ml::ops::Ops::PlaceHolder<TypeParam> op;
+  fetch::ml::ops::PlaceHolder<TypeParam> op;
   op.SetData(data);
 
   TypeParam prediction(op.ComputeOutputShape({}));
@@ -55,7 +55,7 @@ TYPED_TEST(PlaceholderTest, resetData)
   TypeParam data = TypeParam::FromString("1, 2, 3, 4, 5, 6, 7, 8");
   TypeParam gt   = TypeParam::FromString("1, 2, 3, 4, 5, 6, 7, 8");
 
-  fetch::ml::ops::Ops::PlaceHolder<TypeParam> op;
+  fetch::ml::ops::PlaceHolder<TypeParam> op;
   op.SetData(data);
 
   TypeParam prediction(op.ComputeOutputShape({}));
@@ -81,8 +81,8 @@ TYPED_TEST(PlaceholderTest, saveparams_test)
 {
   using ArrayType = TypeParam;
   using DataType  = typename TypeParam::Type;
-  using SPType    = typename fetch::ml::ops::Ops::PlaceHolder<ArrayType>::SPType;
-  using OpType    = typename fetch::ml::ops::Ops::PlaceHolder<ArrayType>;
+  using SPType    = typename fetch::ml::ops::PlaceHolder<ArrayType>::SPType;
+  using OpType    = typename fetch::ml::ops::PlaceHolder<ArrayType>;
 
   ArrayType data = ArrayType::FromString("1, -2, 3, -4, 5, -6, 7, -8");
   ArrayType gt   = ArrayType::FromString("1, -2, 3, -4, 5, -6, 7, -8");

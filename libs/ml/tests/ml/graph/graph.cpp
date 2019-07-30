@@ -42,7 +42,7 @@ TYPED_TEST(GraphTest, node_placeholder)
   using ArrayType = TypeParam;
 
   fetch::ml::Graph<ArrayType> g;
-  g.template AddNode<fetch::ml::ops::Ops::PlaceHolder<ArrayType>>("Input", {});
+  g.template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>("Input", {});
 
   ArrayType data = ArrayType::FromString(R"(1, 2, 3, 4, 5, 6, 7, 8)");
   ArrayType gt   = ArrayType::FromString(R"(1, 2, 3, 4, 5, 6, 7, 8)");
@@ -59,7 +59,7 @@ TYPED_TEST(GraphTest, node_relu)
   using ArrayType = TypeParam;
 
   fetch::ml::Graph<ArrayType> g;
-  g.template AddNode<fetch::ml::ops::Ops::PlaceHolder<ArrayType>>("Input", {});
+  g.template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>("Input", {});
   g.template AddNode<fetch::ml::ops::Relu<ArrayType>>("Relu", {"Input"});
 
   ArrayType data =
@@ -91,7 +91,7 @@ TYPED_TEST(GraphTest, no_such_node_test)  // Use the class as a Node
 
   fetch::ml::Graph<ArrayType> g;
 
-  g.template AddNode<fetch::ml::ops::Ops::PlaceHolder<ArrayType>>("Input", {});
+  g.template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>("Input", {});
   g.template AddNode<fetch::ml::layers::SelfAttention<ArrayType>>("SelfAttention", {"Input"}, 50u,
                                                                   42u, 10u);
 
@@ -108,7 +108,7 @@ TYPED_TEST(GraphTest, two_nodes_same_name_test)
 
   fetch::ml::Graph<ArrayType> g;
 
-  g.template AddNode<fetch::ml::ops::Ops::PlaceHolder<ArrayType>>("Input", {});
+  g.template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>("Input", {});
   std::string sa_1 = g.template AddNode<fetch::ml::layers::SelfAttention<ArrayType>>(
       "SelfAttention", {"Input"}, 50u, 42u, 10u);
   std::string sa_2 = g.template AddNode<fetch::ml::layers::SelfAttention<ArrayType>>(
@@ -143,18 +143,18 @@ TYPED_TEST(GraphTest,
   fetch::ml::Graph<TypeParam> g;
 
   std::string input_name1 =
-      g.template AddNode<fetch::ml::ops::Ops::PlaceHolder<ArrayType>>(name + "_Input1", {});
+      g.template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>(name + "_Input1", {});
 
   std::string input_name2 =
-      g.template AddNode<fetch::ml::ops::Ops::PlaceHolder<ArrayType>>(name + "_Input2", {});
+      g.template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>(name + "_Input2", {});
 
   std::string op1_name = g.template AddNode<fetch::ml::ops::Multiply<ArrayType>>(
       name + "_Op1", {input_name1, input_name1});
   std::string op2_name = g.template AddNode<fetch::ml::ops::Multiply<ArrayType>>(
       name + "_Op2", {input_name1, input_name2});
 
-  std::string output_name = g.template AddNode<fetch::ml::ops::Ops::Subtract<ArrayType>>(
-      name + "_Op3", {op2_name, op1_name});
+  std::string output_name =
+      g.template AddNode<fetch::ml::ops::Subtract<ArrayType>>(name + "_Op3", {op2_name, op1_name});
 
   // Evaluate
 
@@ -209,8 +209,8 @@ TYPED_TEST(GraphTest, diamond_graph_backward)  // output=(input1*input2)-(input1
   std::string op2_name = g.template AddNode<fetch::ml::ops::Multiply<ArrayType>>(
       name + "_Op2", {input_name1, input_name2});
 
-  std::string output_name = g.template AddNode<fetch::ml::ops::Ops::Subtract<ArrayType>>(
-      name + "_Op3", {op2_name, op1_name});
+  std::string output_name =
+      g.template AddNode<fetch::ml::ops::Subtract<ArrayType>>(name + "_Op3", {op2_name, op1_name});
 
   // Forward
   g.SetInput(input_name1, data1);
@@ -295,8 +295,8 @@ TYPED_TEST(GraphTest, diamond_graph_getStateDict)
   std::string op2_name = g.template AddNode<fetch::ml::ops::Multiply<ArrayType>>(
       name + "_Op2", {input_name1, input_name2});
 
-  std::string output_name = g.template AddNode<fetch::ml::ops::Ops::Subtract<ArrayType>>(
-      name + "_Op3", {op2_name, op1_name});
+  std::string output_name =
+      g.template AddNode<fetch::ml::ops::Subtract<ArrayType>>(name + "_Op3", {op2_name, op1_name});
 
   g.SetInput(input_name1, data1);
   g.SetInput(input_name2, data2);

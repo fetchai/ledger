@@ -27,12 +27,6 @@
 namespace fetch {
 namespace ml {
 
-template <typename S, OpType, typename TensorType>
-void Serialize();
-
-template <typename S, OpType, typename TensorType>
-void Deserialize();
-
 template <typename TensorType>
 struct WeightsSaveableParams;
 
@@ -48,6 +42,12 @@ struct SaveableParamsInterface
 
   fetch::ml::OpType OP_DESCRIPTOR;
 };
+
+template <typename S, OpType OperationType, typename TensorType>
+void Serialize(S &serializer, std::shared_ptr<SaveableParamsInterface> const &node_pointer);
+
+template <typename S, OpType OperationType, typename TensorType>
+void Deserialize(S &serializer);
 
 /**
  * Saveable parameters for Abs op (only includes the descriptor)
@@ -105,6 +105,7 @@ struct GraphSaveableParams : public SaveableParamsInterface
   {
     serializer << gsp.OP_DESCRIPTOR;
     serializer << gsp.connections;
+
     for (auto const &node : gsp.nodes)
     {
       serializer << node.first;
@@ -1745,11 +1746,12 @@ ml::meta::IfOpIsTanh<OperationType, void> Serialize(
 }
 
 template <typename S, OpType OperationType, typename TensorType>
-ml::meta::IfOpIsTanh<OperationType, void> Deserialize(S &serializer)
+ml::meta::IfOpIsTanh<OperationType, void> Deserialize(
+    S &serializer, std::shared_ptr<SaveableParamsInterface> &node_pointer)
 {
-  auto nsp_ptr = std::make_shared<TanhSaveableParams<TensorType>>();
-  serializer >> *nsp_ptr;
-  return nsp_ptr;
+  auto nsp_ptr = *(std::dynamic_pointer_cast<TanhSaveableParams<TensorType>>(node_pointer));
+  serializer >> nsp_ptr;
+  node_pointer = (std::dynamic_pointer_cast<SaveableParamsInterface>(node_pointer));
 }
 
 template <typename S, OpType OperationType, typename TensorType>

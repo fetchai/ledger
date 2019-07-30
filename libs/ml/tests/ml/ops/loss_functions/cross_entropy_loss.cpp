@@ -59,7 +59,7 @@ TYPED_TEST(CrossEntropyTest, perfect_match_forward_test)
     }
   }
 
-  fetch::ml::ops::Ops::CrossEntropyLoss<TypeParam> op;
+  fetch::ml::ops::CrossEntropyLoss<TypeParam> op;
   TypeParam                                        result({1, 1});
   op.Forward({std::make_shared<TypeParam>(data1), std::make_shared<TypeParam>(data2)}, result);
 
@@ -106,7 +106,7 @@ TYPED_TEST(CrossEntropyTest, one_dimensional_forward_test)
     }
   }
 
-  fetch::ml::ops::Ops::CrossEntropyLoss<TypeParam> op;
+  fetch::ml::ops::CrossEntropyLoss<TypeParam> op;
   TypeParam                                        result({1, 1});
   op.Forward({std::make_shared<TypeParam>(data1), std::make_shared<TypeParam>(data2)}, result);
 
@@ -146,7 +146,7 @@ TYPED_TEST(CrossEntropyTest, non_one_hot_forward_test)
     data1.Set(0, i, typename TypeParam::Type(logits[i]));
   }
 
-  fetch::ml::ops::Ops::CrossEntropyLoss<TypeParam> op;
+  fetch::ml::ops::CrossEntropyLoss<TypeParam> op;
   TypeParam                                        result({1, 1});
   op.Forward({std::make_shared<TypeParam>(data1), std::make_shared<TypeParam>(data2)}, result);
 
@@ -184,7 +184,7 @@ TYPED_TEST(CrossEntropyTest, trivial_one_dimensional_backward_test)
   TypeParam error_signal({1, 1});
   error_signal(0, 0) = DataType{1};
 
-  fetch::ml::ops::Ops::CrossEntropyLoss<TypeParam> op;
+  fetch::ml::ops::CrossEntropyLoss<TypeParam> op;
   EXPECT_TRUE(op.Backward({std::make_shared<TypeParam>(data1), std::make_shared<TypeParam>(data2)},
                           error_signal)
                   .at(0)
@@ -239,7 +239,7 @@ TYPED_TEST(CrossEntropyTest, one_dimensional_backward_test)
   TypeParam error_signal({1, 1});
   error_signal(0, 0) = DataType{1};
 
-  fetch::ml::ops::Ops::CrossEntropyLoss<TypeParam> op;
+  fetch::ml::ops::CrossEntropyLoss<TypeParam> op;
   EXPECT_TRUE(op.Backward({std::make_shared<TypeParam>(data1), std::make_shared<TypeParam>(data2)},
                           error_signal)
                   .at(0)
@@ -274,7 +274,7 @@ TYPED_TEST(CrossEntropyTest, non_one_hot_dimensional_backward_test)
   TypeParam error_signal({1, 1});
   error_signal(0, 0) = typename TypeParam::Type{1};
 
-  fetch::ml::ops::Ops::CrossEntropyLoss<TypeParam> op;
+  fetch::ml::ops::CrossEntropyLoss<TypeParam> op;
   EXPECT_TRUE(op.Backward({std::make_shared<TypeParam>(data1), std::make_shared<TypeParam>(data2)},
                           error_signal)
                   .at(0)
@@ -285,8 +285,8 @@ TYPED_TEST(CrossEntropyTest, saveparams_test)
 {
   using ArrayType = TypeParam;
   using DataType  = typename TypeParam::Type;
-  using SPType    = typename fetch::ml::ops::Ops::CrossEntropyLoss<ArrayType>::SPType;
-  using OpType    = typename fetch::ml::ops::Ops::CrossEntropyLoss<ArrayType>;
+  using SPType    = typename fetch::ml::ops::CrossEntropyLoss<ArrayType>::SPType;
+  using OpType    = typename fetch::ml::ops::CrossEntropyLoss<ArrayType>;
 
   std::uint64_t n_classes     = 4;
   std::uint64_t n_data_points = 8;

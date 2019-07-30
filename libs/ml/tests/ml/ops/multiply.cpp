@@ -16,13 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-<<<<<<< HEAD
-#include "ml/ops/multiply.hpp"
-
 #include "math/base_types.hpp"
-=======
->>>>>>> 59a522e74611199d626f9f41100205d2a18da2ae
-    #include "math/tensor.hpp"
+#include "math/tensor.hpp"
 #include "ml/ops/multiply.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 #include "vectorise/fixed_point/serializers.hpp"

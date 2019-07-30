@@ -88,9 +88,9 @@ TYPED_TEST(PReluTest, ops_backward_test)  // Use the class as an Ops
 TYPED_TEST(PReluTest, node_forward_test)  // Use the class as a Node
 {
   TypeParam data(std::vector<typename TypeParam::SizeType>({5, 10, 2}));
-  std::shared_ptr<fetch::ml::Node<TypeParam, fetch::ml::ops::Ops::PlaceHolder<TypeParam>>>
+  std::shared_ptr<fetch::ml::Node<TypeParam, fetch::ml::ops::PlaceHolder<TypeParam>>>
       placeholder =
-          std::make_shared<fetch::ml::Node<TypeParam, fetch::ml::ops::Ops::PlaceHolder<TypeParam>>>(
+          std::make_shared<fetch::ml::Node<TypeParam, fetch::ml::ops::PlaceHolder<TypeParam>>>(
               "Input");
   placeholder->SetData(data);
 
@@ -108,9 +108,9 @@ TYPED_TEST(PReluTest, node_forward_test)  // Use the class as a Node
 TYPED_TEST(PReluTest, node_backward_test)  // Use the class as a Node
 {
   TypeParam data({5, 10, 2});
-  std::shared_ptr<fetch::ml::Node<TypeParam, fetch::ml::ops::Ops::PlaceHolder<TypeParam>>>
+  std::shared_ptr<fetch::ml::Node<TypeParam, fetch::ml::ops::PlaceHolder<TypeParam>>>
       placeholder =
-          std::make_shared<fetch::ml::Node<TypeParam, fetch::ml::ops::Ops::PlaceHolder<TypeParam>>>(
+          std::make_shared<fetch::ml::Node<TypeParam, fetch::ml::ops::PlaceHolder<TypeParam>>>(
               "Input");
   placeholder->SetData(data);
 
@@ -132,7 +132,7 @@ TYPED_TEST(PReluTest, graph_forward_test)  // Use the class as a Node
 {
   fetch::ml::Graph<TypeParam> g;
 
-  g.template AddNode<fetch::ml::ops::Ops::PlaceHolder<TypeParam>>("Input", {});
+  g.template AddNode<fetch::ml::ops::PlaceHolder<TypeParam>>("Input", {});
   g.template AddNode<fetch::ml::layers::PRelu<TypeParam>>("PRelu", {"Input"}, 50u);
 
   TypeParam data({5, 10, 2});

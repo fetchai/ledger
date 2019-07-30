@@ -213,9 +213,9 @@ TYPED_TEST(Convolution1DTest, node_forward_test)  // Use the class as a Node
   }
 
   // Evaluate
-  std::shared_ptr<fetch::ml::Node<TypeParam, fetch::ml::ops::Ops::PlaceHolder<TypeParam>>>
+  std::shared_ptr<fetch::ml::Node<TypeParam, fetch::ml::ops::PlaceHolder<TypeParam>>>
       placeholder =
-          std::make_shared<fetch::ml::Node<TypeParam, fetch::ml::ops::Ops::PlaceHolder<TypeParam>>>(
+          std::make_shared<fetch::ml::Node<TypeParam, fetch::ml::ops::PlaceHolder<TypeParam>>>(
               "Input");
   placeholder->SetData(input);
 
@@ -278,9 +278,9 @@ TYPED_TEST(Convolution1DTest, node_backward_test)  // Use the class as a Node
   }
 
   // Evaluate
-  std::shared_ptr<fetch::ml::Node<TypeParam, fetch::ml::ops::Ops::PlaceHolder<TypeParam>>>
+  std::shared_ptr<fetch::ml::Node<TypeParam, fetch::ml::ops::PlaceHolder<TypeParam>>>
       placeholder =
-          std::make_shared<fetch::ml::Node<TypeParam, fetch::ml::ops::Ops::PlaceHolder<TypeParam>>>(
+          std::make_shared<fetch::ml::Node<TypeParam, fetch::ml::ops::PlaceHolder<TypeParam>>>(
               "Input");
   placeholder->SetData(input);
 
@@ -343,7 +343,7 @@ TYPED_TEST(Convolution1DTest, graph_forward_test)  // Use the class as a Node
 
   // Evaluate
   fetch::ml::Graph<TypeParam> g;
-  g.template AddNode<fetch::ml::ops::Ops::PlaceHolder<TypeParam>>("Input", {});
+  g.template AddNode<fetch::ml::ops::PlaceHolder<TypeParam>>("Input", {});
   g.template AddNode<fetch::ml::layers::Convolution1D<TypeParam>>(
       "Convolution1D", {"Input"}, output_channels, input_channels, kernel_height, stride_size);
   g.SetInput("Input", input);

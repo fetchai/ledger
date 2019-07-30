@@ -76,14 +76,14 @@ void PlusOneTest()
 
   fetch::ml::Graph<TypeParam> g;
 
-  std::string input_name = g.template AddNode<fetch::ml::ops::Ops::PlaceHolder<TypeParam>>("", {});
+  std::string input_name = g.template AddNode<fetch::ml::ops::PlaceHolder<TypeParam>>("", {});
   std::string fc1_name   = g.template AddNode<fetch::ml::layers::FullyConnected<TypeParam>>(
       "FC1", {input_name}, input_size, hidden_size);
   std::string act_name    = g.template AddNode<ActivationType>("", {fc1_name});
   std::string output_name = g.template AddNode<fetch::ml::layers::FullyConnected<TypeParam>>(
       "FC2", {act_name}, hidden_size, output_size);
 
-  std::string label_name = g.template AddNode<fetch::ml::ops::Ops::PlaceHolder<TypeParam>>("", {});
+  std::string label_name = g.template AddNode<fetch::ml::ops::PlaceHolder<TypeParam>>("", {});
 
   std::string error_name = g.template AddNode<CriterionType>("Error", {output_name, label_name});
 
@@ -183,7 +183,7 @@ void CategoricalPlusOneTest(bool add_softmax = false)
 
   fetch::ml::Graph<TypeParam> g;
 
-  std::string input_name = g.template AddNode<fetch::ml::ops::Ops::PlaceHolder<TypeParam>>("", {});
+  std::string input_name = g.template AddNode<fetch::ml::ops::PlaceHolder<TypeParam>>("", {});
   std::string fc1_name   = g.template AddNode<fetch::ml::layers::FullyConnected<TypeParam>>(
       "", {input_name}, input_size, hidden_size);
   std::string act_name    = g.template AddNode<ActivationType>("", {fc1_name});
@@ -191,10 +191,10 @@ void CategoricalPlusOneTest(bool add_softmax = false)
       "", {act_name}, hidden_size, output_size);
   if (add_softmax)
   {
-    output_name = g.template AddNode<fetch::ml::ops::Ops::Softmax<TypeParam>>("", {output_name});
+    output_name = g.template AddNode<fetch::ml::ops::Softmax<TypeParam>>("", {output_name});
   }
 
-  std::string label_name = g.template AddNode<fetch::ml::ops::Ops::PlaceHolder<TypeParam>>("", {});
+  std::string label_name = g.template AddNode<fetch::ml::ops::PlaceHolder<TypeParam>>("", {});
 
   std::string error_name = g.template AddNode<CriterionType>("Error", {output_name, label_name});
 
@@ -294,7 +294,7 @@ void CategoricalXorTest(bool add_softmax = false)
 
   fetch::ml::Graph<TypeParam> g;
 
-  std::string input_name = g.template AddNode<fetch::ml::ops::Ops::PlaceHolder<TypeParam>>("", {});
+  std::string input_name = g.template AddNode<fetch::ml::ops::PlaceHolder<TypeParam>>("", {});
   std::string fc1_name   = g.template AddNode<fetch::ml::layers::FullyConnected<TypeParam>>(
       "", {input_name}, input_size, hidden_size);
   std::string act_name    = g.template AddNode<ActivationType>("", {fc1_name});
@@ -302,10 +302,10 @@ void CategoricalXorTest(bool add_softmax = false)
       "", {act_name}, hidden_size, output_size);
   if (add_softmax)
   {
-    output_name = g.template AddNode<fetch::ml::ops::Ops::Softmax<TypeParam>>("", {output_name});
+    output_name = g.template AddNode<fetch::ml::ops::Softmax<TypeParam>>("", {output_name});
   }
 
-  std::string label_name = g.template AddNode<fetch::ml::ops::Ops::PlaceHolder<TypeParam>>("", {});
+  std::string label_name = g.template AddNode<fetch::ml::ops::PlaceHolder<TypeParam>>("", {});
 
   std::string error_name = g.template AddNode<CriterionType>("Error", {output_name, label_name});
 
@@ -387,42 +387,42 @@ TYPED_TEST_CASE(BasicTrainingTest, MyTypes);
 
 TYPED_TEST(BasicTrainingTest, plus_one_relu_test)
 {
-  PlusOneTest<TypeParam, fetch::ml::ops::Ops::MeanSquareErrorLoss<TypeParam>,
+  PlusOneTest<TypeParam, fetch::ml::ops::MeanSquareErrorLoss<TypeParam>,
               fetch::ml::ops::Relu<TypeParam>>();
 }
 TYPED_TEST(BasicTrainingTest, plus_one_sigmoid_test)
 {
-  PlusOneTest<TypeParam, fetch::ml::ops::Ops::MeanSquareErrorLoss<TypeParam>,
+  PlusOneTest<TypeParam, fetch::ml::ops::MeanSquareErrorLoss<TypeParam>,
               fetch::ml::ops::Sigmoid<TypeParam>>();
 }
 
 TYPED_TEST(BasicTrainingTest, categorical_plus_one_CE_relu_test)
 {
-  CategoricalPlusOneTest<TypeParam, fetch::ml::ops::Ops::CrossEntropyLoss<TypeParam>,
+  CategoricalPlusOneTest<TypeParam, fetch::ml::ops::CrossEntropyLoss<TypeParam>,
                          fetch::ml::ops::Relu<TypeParam>>(true);
 }
 TYPED_TEST(BasicTrainingTest, categorical_plus_one_SCE_relu_test)
 {
-  CategoricalPlusOneTest<TypeParam, fetch::ml::ops::Ops::SoftmaxCrossEntropyLoss<TypeParam>,
+  CategoricalPlusOneTest<TypeParam, fetch::ml::ops::SoftmaxCrossEntropyLoss<TypeParam>,
                          fetch::ml::ops::Relu<TypeParam>>(false);
 }
 TYPED_TEST(BasicTrainingTest, categorical_plus_one_CE_sigmoid_test)
 {
-  CategoricalPlusOneTest<TypeParam, fetch::ml::ops::Ops::CrossEntropyLoss<TypeParam>,
+  CategoricalPlusOneTest<TypeParam, fetch::ml::ops::CrossEntropyLoss<TypeParam>,
                          fetch::ml::ops::Sigmoid<TypeParam>>(true);
 }
 TYPED_TEST(BasicTrainingTest, categorical_plus_one_SCE_sigmoid_test)
 {
-  CategoricalPlusOneTest<TypeParam, fetch::ml::ops::Ops::SoftmaxCrossEntropyLoss<TypeParam>,
+  CategoricalPlusOneTest<TypeParam, fetch::ml::ops::SoftmaxCrossEntropyLoss<TypeParam>,
                          fetch::ml::ops::Sigmoid<TypeParam>>(false);
 }
 TYPED_TEST(BasicTrainingTest, categorical_xor_CE_relu_test)
 {
-  CategoricalXorTest<TypeParam, fetch::ml::ops::Ops::CrossEntropyLoss<TypeParam>,
+  CategoricalXorTest<TypeParam, fetch::ml::ops::CrossEntropyLoss<TypeParam>,
                      fetch::ml::ops::Relu<TypeParam>>(true);
 }
 TYPED_TEST(BasicTrainingTest, categorical_xor_SCE_relu_test)
 {
-  CategoricalXorTest<TypeParam, fetch::ml::ops::Ops::SoftmaxCrossEntropyLoss<TypeParam>,
+  CategoricalXorTest<TypeParam, fetch::ml::ops::SoftmaxCrossEntropyLoss<TypeParam>,
                      fetch::ml::ops::Relu<TypeParam>>(false);
 }

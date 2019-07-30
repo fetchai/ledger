@@ -86,7 +86,7 @@ TYPED_TEST(SerializersTest, serialize_graph_saveable_params)
   // Prepare graph with fairly random architecture
   auto g = std::make_shared<GraphType>();
 
-  std::string input = g->template AddNode<fetch::ml::ops::Ops::PlaceHolder<ArrayType>>("Input", {});
+  std::string input = g->template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>("Input", {});
 
   std::string layer_1 = g->template AddNode<fetch::ml::layers::FullyConnected<ArrayType>>(
       "FC1", {input}, 10u, 20u, fetch::ml::details::ActivationType::RELU, regulariser, reg_rate);
