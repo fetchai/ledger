@@ -489,6 +489,8 @@ void RBC::OnRAnswer(std::shared_ptr<RAnswer> const msg_ptr, uint32_t sender_inde
  */
 void RBC::Deliver(SerialisedMessage const &msg, uint32_t sender_index)
 {
+  assert(sender_index < current_cabinet_.size());
+  assert(parties_.size() == current_cabinet_.size());
   MuddleAddress miner_id{*std::next(current_cabinet_.begin(), sender_index)};
   deliver_msg_callback_(miner_id, msg);
   // Try to deliver old messages
@@ -515,8 +517,9 @@ void RBC::Deliver(SerialisedMessage const &msg, uint32_t sender_index)
  */
 uint32_t RBC::CabinetIndex(MuddleAddress const &other_address) const
 {
-  return static_cast<uint32_t>(
-      std::distance(current_cabinet_.begin(), current_cabinet_.find(other_address)));
+  auto iter = current_cabinet_.find(other_address);
+  assert(iter != current_cabinet_.end());
+  return static_cast<uint32_t>(std::distance(current_cabinet_.begin(), iter));
 }
 
 /**
@@ -529,7 +532,9 @@ uint32_t RBC::CabinetIndex(MuddleAddress const &other_address) const
 bool RBC::CheckTag(RBCMessage &msg)
 {
   std::lock_guard<std::mutex> lock(mutex_deliver_);
-  uint8_t                     msg_counter = parties_[msg.id()].deliver_s;
+  assert(msg.id() < current_cabinet_.size());
+  assert(parties_.size() == current_cabinet_.size());
+  uint8_t msg_counter = parties_[msg.id()].deliver_s;
   FETCH_LOG_TRACE(LOGGING_NAME, "Node ", id_, " has counter ", msg_counter, " for node ", msg.id());
   if (msg.channel() == CHANNEL_BROADCAST && msg.counter() == msg_counter)
   {
@@ -542,7 +547,7 @@ bool RBC::CheckTag(RBCMessage &msg)
                     " does not match tag counter ", msg.counter(), " for node ", msg.id());
     // Store tag of message for processing later
     if (parties_[msg.id()].undelivered_msg.find(msg.counter()) ==
-        parties_[msg.counter()].undelivered_msg.end())
+        parties_[msg.id()].undelivered_msg.end())
     {
       parties_[msg.id()].undelivered_msg.insert({msg.counter(), msg});
     }
@@ -562,8 +567,10 @@ bool RBC::CheckTag(RBCMessage &msg)
 bool RBC::SetPartyFlag(uint32_t sender_index, TagType tag, MsgType msg_type)
 {
   std::lock_guard<std::mutex> lock(mutex_flags_);
-  auto &                      iter  = parties_[sender_index].flags[tag];
-  auto                        index = static_cast<uint32_t>(msg_type);
+  assert(sender_index < current_cabinet_.size());
+  assert(parties_.size() == current_cabinet_.size());
+  auto &iter  = parties_[sender_index].flags[tag];
+  auto  index = static_cast<uint32_t>(msg_type);
   if (iter[index])
   {
     FETCH_LOG_TRACE(LOGGING_NAME, "Node ", id_, " repeated msg type ", msgType_to_string(m),
