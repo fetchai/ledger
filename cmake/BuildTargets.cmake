@@ -275,6 +275,12 @@ function (configure_vendor_targets)
   add_library(vendor-spdlog INTERFACE)
   target_include_directories(vendor-spdlog INTERFACE ${FETCH_ROOT_VENDOR_DIR}/spdlog/include)
 
+  # utfcpp
+  set(UTF8_TESTS OFF CACHE BOOL "Enable tests for UTF8-CPP" FORCE)
+  set(UTF8_INSTALL OFF CACHE BOOL "Enable installation for UTF8-CPP" FORCE)
+  set(UTF8_SAMPLES OFF CACHE BOOL "Enable building samples for UTF8-CPP" FORCE)
+  add_subdirectory(${FETCH_ROOT_VENDOR_DIR}/utfcpp)
+
 endfunction (configure_vendor_targets)
 
 function (configure_library_targets)

@@ -551,4 +551,86 @@ TEST_F(
   ASSERT_EQ(stdout.str(), "2 | aaa | ");
 }
 
+TEST_F(StringTests, utf8_split_returns_an_array_of_string_segments_with_the_separators_taken_out)
+{
+  static char const *TEXT = R"(
+    function main()
+      var text = '他身旁放着一支磨尖的花岗岩长矛备用，脚边卧着一头犬族猛兽，它发出的喘hōu声表明它虽已入睡却睡不安稳。';
+      var output = text.split('，');
+
+      print(output[0]);
+      print(' | ');
+      print(output[1]);
+      print(' | ');
+      print(output[2]);
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_TRUE(toolkit.Run());
+
+  ASSERT_EQ(stdout.str(),
+            "他身旁放着一支磨尖的花岗岩长矛备用 | 脚边卧着一头犬族猛兽 | "
+            "它发出的喘hōu声表明它虽已入睡却睡不安稳。");
+}
+
+TEST_F(StringTests, utf8_find_returns_zero_based_index_of_first_occurrence_of_substring_in_string)
+{
+  static char const *TEXT = R"(
+    function main()
+      var text = '他身旁放着一支磨尖的花岗岩长矛备用，脚边卧着一头犬族猛兽，它发出的喘hōu声表明它虽已入睡却睡不安稳。';
+
+      var output = Array<Int32>(5);
+      output[0] = text.find('他身旁放着');
+      output[1] = text.find('支磨尖的花岗岩长矛备用');
+      output[2] = text.find('脚边卧着');
+      output[3] = text.find('头犬族猛兽');
+      output[4] = text.find('它发出的喘hōu声表明它虽已入睡却睡不安稳。');
+
+      print(output);
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_TRUE(toolkit.Run());
+
+  ASSERT_EQ(stdout.str(), "[0, 6, 18, 23, 29]");
+}
+
+TEST_F(StringTests, utf8_basic_substring_test)
+{
+  static char const *TEXT = R"(
+    function main()
+      var text = '他身旁放着，脚边卧着，头犬族猛兽';
+
+      print(text.substr(0i32, 5i32));
+      print(' | ');
+      print(text.substr(6i32, 10i32));
+      print(' | ');
+      print(text.substr(11i32, 16i32));
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_TRUE(toolkit.Run());
+
+  ASSERT_EQ(stdout.str(), "他身旁放着 | 脚边卧着 | 头犬族猛兽");
+}
+
+TEST_F(StringTests, utf8_basic_reverse_test)
+{
+  static char const *TEXT = R"(
+    function main()
+      var text = '他身旁放着，脚边卧着';
+      text.reverse();
+      print(text);
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_TRUE(toolkit.Run());
+
+  ASSERT_EQ(stdout.str(), "着卧边脚，着放旁身他");
+}
+
 }  // namespace

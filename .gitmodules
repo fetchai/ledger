@@ -25,3 +25,6 @@
 [submodule "vendor/bls"]
 	path = vendor/bls
 	url = https://github.com/herumi/bls.git
+[submodule "vendor/utfcpp"]
+	path = vendor/utfcpp
+	url = https://github.com/pbukva/utfcpp.git

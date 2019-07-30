@@ -19,6 +19,8 @@
 #include "vm/array.hpp"
 #include "vm/string.hpp"
 
+#include "utf8.h"
+
 #include <algorithm>
 #include <cctype>
 #include <cstddef>
@@ -44,7 +46,19 @@ void trim_right(std::string &s)
   s.erase(std::find_if(s.rbegin(), s.rend(), is_not_whitespace).base(), s.end());
 }
 
+int32_t utf8_length(std::string const &str)
+{
+  return static_cast<int32_t>(utf8::distance(str.cbegin(), str.cend()));
+}
+
 }  // namespace
+
+String::String(VM *vm, std::string str__, bool is_literal__)
+  : Object(vm, TypeIds::String)
+  , str(std::move(str__))
+  , is_literal(is_literal__)
+  , length{utf8_length(str)}
+{}
 
 void String::Trim()
 {
@@ -68,7 +82,10 @@ int32_t String::Find(Ptr<String> const &substring) const
     return NOT_FOUND;
   }
 
-  return static_cast<int32_t>(first);
+  auto distance{
+      utf8::distance(str.begin(), str.begin() + static_cast<std::string::difference_type>(first))};
+
+  return static_cast<int32_t>(distance);
 }
 
 Ptr<String> String::Substring(int32_t start_index, int32_t end_index)
@@ -89,15 +106,31 @@ Ptr<String> String::Substring(int32_t start_index, int32_t end_index)
     return nullptr;
   }
 
-  auto const substring_length =
-      static_cast<std::size_t>(end_index) - static_cast<std::size_t>(start_index);
+  auto start{str.begin()};
+  // using *unchecked* version to enable index to point at the str.end()
+  utf8::unchecked::advance(start, start_index);
 
-  return new String(vm_, str.substr(static_cast<std::size_t>(start_index), substring_length));
+  auto end{str.begin()};
+  // using *unchecked* version to enable index to point at the str.end()
+  utf8::unchecked::advance(end, end_index);  // unchecked
+
+  return new String(vm_, std::string{start, end});
 }
 
 void String::Reverse()
 {
-  std::reverse(str.begin(), str.end());
+  utf8::iterator<std::string::iterator> it{str.end(), str.begin(), str.end()};
+  utf8::iterator<std::string::iterator> end{str.begin(), str.begin(), str.end()};
+
+  std::string reversed;
+  reversed.reserve(str.length());
+
+  for (; it != end;)
+  {
+    utf8::append(*(--it), reversed);
+  }
+
+  str = reversed;
 }
 
 Ptr<Array<Ptr<String>>> String::Split(Ptr<String> const &separator) const
@@ -119,7 +152,7 @@ Ptr<Array<Ptr<String>>> String::Split(Ptr<String> const &separator) const
   for (std::size_t i = str.find(separator->str); i != std::string::npos;
        i             = str.find(separator->str, i + separator->str.length()))
   {
-    segment_boundaries.push_back(i + separator->str.length());
+    segment_boundaries.emplace_back(i + separator->str.length());
   }
 
   // separator not found
@@ -140,15 +173,20 @@ Ptr<Array<Ptr<String>>> String::Split(Ptr<String> const &separator) const
 
   for (std::size_t i = 0; i + 1 < segment_boundaries.size(); ++i)
   {
-    std::size_t begin  = segment_boundaries[i];
-    std::size_t length = segment_boundaries[i + 1] - begin - separator->str.length();
-    ret->elements[i]   = new String(vm_, str.substr(begin, length));
+    std::size_t begin = segment_boundaries[i];
+    std::size_t len   = segment_boundaries[i + 1] - begin - separator->str.length();
+    ret->elements[i]  = new String(vm_, str.substr(begin, len));
   }
 
   return ret;
 }
 
 int32_t String::Length() const
+{
+  return length;
+}
+
+int32_t String::SizeInBytes() const
 {
   return static_cast<int32_t>(str.size());
 }
