@@ -45,7 +45,7 @@ public:
   };
 
   // Construction / Destruction
-  StakeManager(EntropyGeneratorInterface &entropy, uint32_t block_interval_ms,
+  StakeManager(EntropyGeneratorInterface &entropy, uint32_t block_interval_ms = 1000,
                Mode mode = Mode::NORMAL);
   StakeManager(StakeManager const &) = delete;
   StakeManager(StakeManager &&)      = delete;
