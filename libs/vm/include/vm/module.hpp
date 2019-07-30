@@ -44,42 +44,6 @@
 namespace fetch {
 namespace vm {
 
-namespace details {
-
-template <typename T, typename... Args>
-struct CreateSerializeConstructor
-{
-  template <typename ReturnType>
-  static DefaultConstructorHandler Apply(ReturnType (*)(VM *, TypeId, Args...))
-  {
-    return [](VM *vm, TypeId) -> Ptr<Object> {
-      vm->RuntimeError("No support for non-default constructors.");
-      return nullptr;
-    };
-  }
-
-  template <typename ReturnType>
-  static DefaultConstructorHandler Apply(ReturnType (*constructor)(VM *, TypeId, Args...),
-                                         Args const &... args)
-  {
-    return [constructor, args...](VM *vm, TypeId id) -> Ptr<Object> {
-      return constructor(vm, id, args...);
-    };
-  }
-};
-
-template <typename T>
-struct CreateSerializeConstructor<T>
-{
-  template <typename ReturnType, typename... Args>
-  static DefaultConstructorHandler Apply(ReturnType (*constructor)(VM *, TypeId, Args...))
-  {
-    return [constructor](VM *vm, TypeId id) -> Ptr<Object> { return constructor(vm, id); };
-  }
-};
-
-}  // namespace details
-
 class Module
 {
 public:
@@ -95,48 +59,24 @@ public:
       , type_index_(type_index__)
     {}
 
-    template <typename ReturnType, typename... Args>
-    ClassInterface &CreateConstructor(ReturnType (*constructor)(VM *, TypeId, Args...))
+    template <typename ReturnType>
+    ClassInterface &CreateConstructor(ReturnType (*constructor)(VM *, TypeId))
     {
-      TypeIndex const type_index__ = type_index_;
-      TypeIndexArray  parameter_type_index_array;
-      UnrollTypes<std::remove_cv_t<std::remove_reference_t<Args>>...>::Unroll(
-          parameter_type_index_array);
-
-      Handler handler = [constructor](VM *vm) {
-        InvokeConstructor(vm, vm->instruction_->type_id, constructor);
-      };
-
-      auto compiler_setup_function = [type_index__, parameter_type_index_array,
-                                      handler](Compiler *compiler) {
-        compiler->CreateConstructor(type_index__, parameter_type_index_array, handler);
-      };
-
-      module_->AddCompilerSetupFunction(compiler_setup_function);
-
-      if (sizeof...(Args) == 0)
-      {
-        DefaultConstructorHandler h =
-            details::CreateSerializeConstructor<Type, Args...>::Apply(constructor);
-        module_->deserialization_constructors_.insert({type_index__, std::move(h)});
-      }
-
-      return *this;
+      return InternalCreateConstructor(constructor).CreateSerializeDefaultConstructor(constructor);
     }
 
-    template <typename ReturnType, typename... Args>
-    ClassInterface &CreateSerializeDefaultConstructor(ReturnType (*constructor)(VM *, TypeId,
-                                                                                Args...),
-                                                      Args... args)
+    template <typename ReturnType, typename Arg1, typename... Args>
+    ClassInterface &CreateConstructor(ReturnType (*constructor)(VM *, TypeId, Arg1, Args...))
+    {
+      return InternalCreateConstructor(constructor);
+    }
+
+    template <typename Constructor>
+    ClassInterface &CreateSerializeDefaultConstructor(Constructor const &constructor)
     {
       TypeIndex const type_index__ = type_index_;
-      TypeIndexArray  parameter_type_index_array;
-      UnrollTypes<std::remove_cv_t<std::remove_reference_t<Args>>...>::Unroll(
-          parameter_type_index_array);
 
-      DefaultConstructorHandler h =
-          details::CreateSerializeConstructor<Type, Args...>::Apply(constructor, args...);
-      module_->deserialization_constructors_.insert({type_index__, std::move(h)});
+      module_->deserialization_constructors_.insert({type_index__, {constructor}});
 
       return *this;
     }
@@ -209,6 +149,28 @@ public:
     }
 
   private:
+    template <typename ReturnType, typename... Args>
+    ClassInterface &InternalCreateConstructor(ReturnType (*constructor)(VM *, TypeId, Args...))
+    {
+      TypeIndex const type_index__ = type_index_;
+      TypeIndexArray  parameter_type_index_array;
+      UnrollTypes<std::remove_cv_t<std::remove_reference_t<Args>>...>::Unroll(
+          parameter_type_index_array);
+
+      Handler handler = [constructor](VM *vm) {
+        InvokeConstructor(vm, vm->instruction_->type_id, constructor);
+      };
+
+      auto compiler_setup_function = [type_index__, parameter_type_index_array,
+                                      handler](Compiler *compiler) {
+        compiler->CreateConstructor(type_index__, parameter_type_index_array, handler);
+      };
+
+      module_->AddCompilerSetupFunction(compiler_setup_function);
+
+      return *this;
+    }
+
     template <typename GetterReturnType, typename... GetterArgs, typename SetterReturnType,
               typename... SetterArgs>
     ClassInterface &InternalEnableIndexOperator(GetterReturnType (Type::*getter)(GetterArgs...),

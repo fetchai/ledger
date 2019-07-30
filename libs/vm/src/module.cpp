@@ -197,7 +197,8 @@ Module::Module()
 
   GetClassInterface<IArray>()
       .CreateConstructor(&IArray::Constructor)
-      .CreateSerializeDefaultConstructor(&IArray::Constructor, {})
+      .CreateSerializeDefaultConstructor(
+          [](VM *vm, TypeId type_id) { return IArray::Constructor(vm, type_id, 0u); })
       .CreateMemberFunction("append", &IArray::Append)
       .CreateMemberFunction("count", &IArray::Count)
       .CreateMemberFunction("erase", &IArray::Erase)

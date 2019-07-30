@@ -63,7 +63,8 @@ T UInt256Wrapper::ToPrimitive(VM * /*vm*/, Ptr<UInt256Wrapper> const &a)
 void UInt256Wrapper::Bind(Module &module)
 {
   module.CreateClassType<UInt256Wrapper>("UInt256")
-      .CreateSerializeDefaultConstructor(&UInt256Wrapper::Constructor, {})
+      .CreateSerializeDefaultConstructor(
+          [](VM *vm, TypeId type_id) { return UInt256Wrapper::Constructor(vm, type_id, 0u); })
       .CreateConstructor(&UInt256Wrapper::Constructor)
       .CreateConstructor(&UInt256Wrapper::ConstructorFromBytes)
       .EnableOperator(Operator::Equal)
