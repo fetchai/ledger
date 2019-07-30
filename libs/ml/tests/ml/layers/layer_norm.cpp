@@ -37,7 +37,7 @@ TYPED_TEST(LayerNormTest, set_input_and_evaluate_test_2D)  // Use the class as a
 {
   fetch::ml::layers::LayerNorm<TypeParam> ln({100u, 10u});
   TypeParam input_data(std::vector<typename TypeParam::SizeType>({100, 10, 2}));
-  ln.SetInput("LN_Input", input_data);
+  ln.SetInput("LayerNorm_Input", input_data);
   TypeParam output = ln.Evaluate("LayerNorm_Beta_Addition", true);
 
   ASSERT_EQ(output.shape().size(), 3);
@@ -130,7 +130,7 @@ TYPED_TEST(LayerNormTest, graph_forward_test)  // Use the class as a Node
   TypeParam data({5, 10, 2});
   g.SetInput("Input", data);
 
-  TypeParam prediction = g.Evaluate("FullyConnected", true);
+  TypeParam prediction = g.Evaluate("LayerNorm", true);
   ASSERT_EQ(prediction.shape().size(), 3);
   ASSERT_EQ(prediction.shape()[0], 5);
   ASSERT_EQ(prediction.shape()[1], 10);
