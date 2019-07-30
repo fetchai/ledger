@@ -53,8 +53,7 @@ public:
   std::shared_ptr<SaveableParamsInterface> GetOpSaveableParams() override
   {
     auto sp = std::make_shared<SPType>();
-    OpType::ELU;
-    sp.a = a_;
+    sp.a    = a_;
     return sp;
   }
 
