@@ -39,6 +39,7 @@ namespace ops {
  */
 enum class WeightsInitialisation
 {
+  ONES,
   ZEROS,
   XAVIER_GLOROT,
   XAVIER_FAN_IN,
@@ -210,6 +211,43 @@ public:
     }
   }
 
+  /**
+   * interface to call standard weights initialisation routines. defaults to xavier.
+   * Fan in and fan out xavier not permitted with input and output sizes not known independently
+   * @param mode  An enum indicating which type of initialisation to perform
+   */
+  static void Initialise(ArrayType &array, std::uint64_t data_size,
+                         WeightsInitialisation mode = WeightsInitialisation::XAVIER_GLOROT,
+                         SizeType              seed = 123456789)
+  {
+    switch (mode)
+    {
+    case WeightsInitialisation::ONES:
+    {
+      for (std::uint64_t j = 0; j < array.data().size(); ++j)
+      {
+        array.data()[j] = typename ArrayType::Type(1);
+      }
+      break;
+    }
+    case WeightsInitialisation::ZEROS:
+    {
+      for (std::uint64_t j = 0; j < array.data().size(); ++j)
+      {
+        array.data()[j] = typename ArrayType::Type(0);
+      }
+      break;
+    }
+    case WeightsInitialisation::XAVIER_GLOROT:
+    {
+      XavierInitialisation(array, std::sqrt(2.0 / double(data_size)), seed);
+      break;
+    }
+    default:
+      std::cerr << "unrecognised weights initialisation" << std::endl;
+      throw;
+    }
+  }
   /**
    * exports the weight values Array
    * @return const reference to internal values Array

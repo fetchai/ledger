@@ -585,7 +585,7 @@ meta::IfIsMathArray<ArrayType, void> ReduceMean(ArrayType const &               
   using Type = typename ArrayType::Type;
 
   assert(axis == 0 || axis == 1);
-  Type n = static_cast<Type>(obj1.shape().at(1 - axis));
+  Type n = static_cast<Type>(obj1.shape().at(axis));
   ReduceSum(obj1, axis, ret);
   Divide(ret, n, ret);
 }
@@ -597,8 +597,8 @@ meta::IfIsMathArray<ArrayType, ArrayType> ReduceMean(ArrayType const &          
   using Type = typename ArrayType::Type;
 
   assert(axis == 0 || axis == 1);
-  Type n   = static_cast<Type>(obj1.shape().at(1 - axis));
-  Type ret = ReduceSum(obj1, axis);
+  Type      n   = static_cast<Type>(obj1.shape().at(axis));
+  ArrayType ret = ReduceSum(obj1, axis);
   Divide(ret, n, ret);
   return ret;
 }

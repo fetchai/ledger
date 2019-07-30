@@ -35,7 +35,7 @@ using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor
 
 TYPED_TEST_CASE(AddTest, MyTypes);
 
-TYPED_TEST(AddTest, forward_test)
+TYPED_TEST(AddTest, forward_test_NB_N1)
 {
   using ArrayType = TypeParam;
   using DataType  = typename TypeParam::Type;
@@ -64,7 +64,96 @@ TYPED_TEST(AddTest, forward_test)
                                   fetch::math::function_tolerance<DataType>()));
 }
 
-TYPED_TEST(AddTest, backward_test)
+TYPED_TEST(AddTest, forward_test_NB_NB)
+{
+  using ArrayType = TypeParam;
+  using DataType  = typename TypeParam::Type;
+
+  ArrayType data_1 = ArrayType::FromString(
+      "1, -2, 3,-4, 5,-6, 7,-8;"
+      "1,  2, 3, 4, 5, 6, 7, 8");
+
+  ArrayType data_2 = ArrayType::FromString(
+      "-1, 2, -3,4, -5,6, -7,8;"
+      "-1, -2, -3, -4, -5, -6, -7, -8");
+
+  ArrayType gt(data_1.shape());
+
+  fetch::ml::ops::Add<ArrayType> op;
+
+  TypeParam prediction(op.ComputeOutputShape(
+      {std::make_shared<ArrayType>(data_1), std::make_shared<ArrayType>(data_2)}));
+  op.Forward({std::make_shared<ArrayType>(data_1), std::make_shared<ArrayType>(data_2)},
+             prediction);
+
+  // test correct values
+  ASSERT_TRUE(prediction.AllClose(gt, fetch::math::function_tolerance<DataType>(),
+                                  fetch::math::function_tolerance<DataType>()));
+}
+
+TYPED_TEST(AddTest, backward_test_NMB_N11)
+{
+  using DataType  = typename TypeParam::Type;
+  using ArrayType = TypeParam;
+
+  ArrayType data_1 = ArrayType::FromString(
+      "1, -1, 1, 1;"
+      "0, 1, 6, 2");
+  data_1.Reshape({2, 2, 2});
+
+  ArrayType data_2 = ArrayType::FromString("1, -1");
+  data_2.Reshape({2, 1, 1});
+
+  ArrayType gt = ArrayType::FromString(
+      "14;"
+      "22");
+
+  ArrayType error = ArrayType::FromString(
+      "1, 2, 5, 6;"
+      "3, 4, 7, 8");
+  error.Reshape({2, 2, 2});
+
+  fetch::ml::ops::Add<ArrayType> op;
+  std::vector<ArrayType>         prediction = op.Backward(
+      {std::make_shared<ArrayType>(data_1), std::make_shared<ArrayType>(data_2)}, error);
+
+  // test correct values and shape
+  ASSERT_TRUE(prediction[1].AllClose(gt, fetch::math::function_tolerance<DataType>(),
+                                     fetch::math::function_tolerance<DataType>()));
+  ASSERT_TRUE(prediction[1].shape() == data_2.shape());
+}
+
+TYPED_TEST(AddTest, backward_test_NMB_111)
+{
+  using DataType  = typename TypeParam::Type;
+  using ArrayType = TypeParam;
+
+  ArrayType data_1 = ArrayType::FromString(
+      "1, -1, 1, 1;"
+      "0, 1, 6, 2");
+  data_1.Reshape({2, 2, 2});
+
+  ArrayType data_2 = ArrayType::FromString("1");
+  data_2.Reshape({1, 1, 1});
+
+  ArrayType gt = ArrayType::FromString("36");
+
+  ArrayType error = ArrayType::FromString(
+      "1, 2, 5, 6;"
+      "3, 4, 7, 8");
+  error.Reshape({2, 2, 2});
+
+  fetch::ml::ops::Add<ArrayType> op;
+  std::vector<ArrayType>         prediction = op.Backward(
+      {std::make_shared<ArrayType>(data_1), std::make_shared<ArrayType>(data_2)}, error);
+
+  // test correct values
+  ASSERT_TRUE(prediction[1].AllClose(gt, fetch::math::function_tolerance<DataType>(),
+                                     fetch::math::function_tolerance<DataType>()));
+  ASSERT_TRUE(prediction[1].shape() == data_2.shape());
+}
+
+TYPED_TEST(AddTest, backward_test_NB_N1)
 {
   using DataType  = typename TypeParam::Type;
   using ArrayType = TypeParam;
@@ -98,4 +187,5 @@ TYPED_TEST(AddTest, backward_test)
                                      fetch::math::function_tolerance<DataType>()));
   ASSERT_TRUE(prediction[1].AllClose(gt_2, fetch::math::function_tolerance<DataType>(),
                                      fetch::math::function_tolerance<DataType>()));
+  ASSERT_TRUE(prediction[1].shape() == data_2.shape());
 }
