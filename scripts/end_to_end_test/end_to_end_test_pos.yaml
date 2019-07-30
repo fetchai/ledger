@@ -14,6 +14,6 @@ setup_conditions:
 
 steps:
     - send_txs : { "name": "batch1", "amount": 10, "nodes" : [1] }
-    - verify_txs : { "name": "batch1", "nodes" : [0, 1] }
+    - verify_txs : { "name": "batch1", "nodes" : [0, 1, 2] }
 ...
 

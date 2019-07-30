@@ -192,6 +192,11 @@ class TestInstance():
         expected_ouptut_dir = os.path.abspath(
             os.path.dirname(self._yaml_file)+"/input_files")
 
+        # Create required files for this test
+        file_gen = os.path.abspath("./scripts/end_to_end_test/input_files/create-input-files.py")
+        verify_file(file_gen)
+        exit_code = subprocess.call([file_gen, str(self._number_of_nodes)])
+
         infofile = expected_ouptut_dir+"/info.txt"
 
         # Required files for this operation
