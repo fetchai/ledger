@@ -23,7 +23,7 @@
 namespace fetch {
 namespace ml {
 
-enum OpType
+enum class OpType : uint16_t
 {
   ABS,
   ADD,

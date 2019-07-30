@@ -53,7 +53,7 @@ TYPED_TEST(SoftmaxCrossEntropyTest, perfect_match_forward_test)
   data2.At(0, 2) = DataType(1);
 
   fetch::ml::ops::SoftmaxCrossEntropyLoss<TypeParam> op;
-  TypeParam                                               result({1, 1});
+  TypeParam                                          result({1, 1});
   op.Forward({std::make_shared<TypeParam>(data1), std::make_shared<TypeParam>(data2)}, result);
 
   EXPECT_EQ(result(0, 0), DataType(0));
@@ -89,7 +89,7 @@ TYPED_TEST(SoftmaxCrossEntropyTest, simple_forward_test)
   }
 
   fetch::ml::ops::SoftmaxCrossEntropyLoss<TypeParam> op;
-  TypeParam                                               result({1, 1});
+  TypeParam                                          result({1, 1});
   op.Forward({std::make_shared<TypeParam>(data1), std::make_shared<TypeParam>(data2)}, result);
 
   ASSERT_FLOAT_EQ(static_cast<float>(result(0, 0)),

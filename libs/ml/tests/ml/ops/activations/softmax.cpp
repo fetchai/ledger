@@ -140,8 +140,8 @@ TYPED_TEST(SoftmaxTest, saveparams_test)
       "2.6456e-07");
 
   fetch::ml::ops::Softmax<ArrayType> op(0);
-  ArrayType                               prediction(op.ComputeOutputShape({data}));
-  VecTensorType                           vec_data({data});
+  ArrayType                          prediction(op.ComputeOutputShape({data}));
+  VecTensorType                      vec_data({data});
 
   op.Forward(vec_data, prediction);
 

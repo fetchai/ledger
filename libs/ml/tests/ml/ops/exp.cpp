@@ -16,7 +16,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/ops/exp.hpp"
 #include "math/base_types.hpp"
 #include "math/tensor.hpp"
 #include "ml/ops/exp.hpp"
@@ -27,7 +26,8 @@
 
 #include <vector>
 
-    template < typename T > class ExpTest : public ::testing::Test
+template <typename T>
+class ExpTest : public ::testing::Test
 {
 };
 

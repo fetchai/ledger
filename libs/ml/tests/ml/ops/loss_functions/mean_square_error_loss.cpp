@@ -44,7 +44,7 @@ TYPED_TEST(MeanSquareErrorTest, perfect_match_forward_test)
   }
 
   fetch::ml::ops::MeanSquareErrorLoss<TypeParam> op;
-  TypeParam                                           result({1, 1});
+  TypeParam                                      result({1, 1});
   op.Forward({std::make_shared<TypeParam>(data1), std::make_shared<TypeParam>(data2)}, result);
 
   EXPECT_EQ(result(0, 0), typename TypeParam::Type(0));
@@ -59,7 +59,7 @@ TYPED_TEST(MeanSquareErrorTest, one_by_eight_dimensional_forward_test)
   TypeParam data2_transpose = data2.Transpose();
 
   fetch::ml::ops::MeanSquareErrorLoss<TypeParam> op;
-  TypeParam                                           result({1, 1});
+  TypeParam                                      result({1, 1});
   op.Forward(
       {std::make_shared<TypeParam>(data1_transpose), std::make_shared<TypeParam>(data2_transpose)},
       result);
@@ -82,10 +82,10 @@ TYPED_TEST(MeanSquareErrorTest, one_by_eight_dimensional_backward_test)
   TypeParam data2_transpose = data2.Transpose();
 
   TypeParam error_signal({1, 1});
-  error_signal(0, 0)               = DataType{1};
+  error_signal(0, 0) = DataType{1};
 
   fetch::ml::ops::MeanSquareErrorLoss<TypeParam> op;
-  std::vector<TypeParam>                              gradients = op.Backward(
+  std::vector<TypeParam>                         gradients = op.Backward(
       {std::make_shared<TypeParam>(data1_transpose), std::make_shared<TypeParam>(data2_transpose)},
       error_signal);
   EXPECT_TRUE(
@@ -100,7 +100,7 @@ TYPED_TEST(MeanSquareErrorTest, two_dimensional_forward_test_with_weighting)
 
   TypeParam weightings = TypeParam::FromString("1.0, 2.0, 1.0, 0.5; 0.0, 0.0, 0.0, 0.0");
   fetch::ml::ops::MeanSquareErrorLoss<TypeParam> op(weightings);
-  TypeParam                                           result({1, 1});
+  TypeParam                                      result({1, 1});
   op.Forward({std::make_shared<TypeParam>(data1), std::make_shared<TypeParam>(data2)}, result);
 
   ASSERT_FLOAT_EQ(static_cast<float>(result(0, 0)), 118.58f / 8.0f / 2.0f);
@@ -115,7 +115,7 @@ TYPED_TEST(MeanSquareErrorTest, two_dimensional_backward_test_with_weighting)
   TypeParam gt           = TypeParam::FromString("0.0, -2.2, -1.1, -1.375; 0.0, 0.0, 0.0, 0.0");
 
   fetch::ml::ops::MeanSquareErrorLoss<TypeParam> op(weightings);
-  std::vector<TypeParam>                              gradients = op.Backward(
+  std::vector<TypeParam>                         gradients = op.Backward(
       {std::make_shared<TypeParam>(data1), std::make_shared<TypeParam>(data2)}, error_signal);
 
   EXPECT_TRUE(

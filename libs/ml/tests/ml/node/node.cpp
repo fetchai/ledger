@@ -37,8 +37,7 @@ TYPED_TEST_CASE(NodeTest, MyTypes);
 
 TYPED_TEST(NodeTest, node_placeholder)
 {
-  fetch::ml::Node<TypeParam, fetch::ml::ops::PlaceHolder<TypeParam>> placeholder(
-      "PlaceHolder");
+  fetch::ml::Node<TypeParam, fetch::ml::ops::PlaceHolder<TypeParam>> placeholder("PlaceHolder");
   TypeParam data(std::vector<std::uint64_t>({5, 5}));
   placeholder.SetData(data);
 
@@ -51,10 +50,9 @@ TYPED_TEST(NodeTest, node_placeholder)
 
 TYPED_TEST(NodeTest, node_relu)
 {
-  std::shared_ptr<fetch::ml::Node<TypeParam, fetch::ml::ops::PlaceHolder<TypeParam>>>
-      placeholder =
-          std::make_shared<fetch::ml::Node<TypeParam, fetch::ml::ops::PlaceHolder<TypeParam>>>(
-              "PlaceHolder");
+  std::shared_ptr<fetch::ml::Node<TypeParam, fetch::ml::ops::PlaceHolder<TypeParam>>> placeholder =
+      std::make_shared<fetch::ml::Node<TypeParam, fetch::ml::ops::PlaceHolder<TypeParam>>>(
+          "PlaceHolder");
 
   std::shared_ptr<fetch::ml::Node<TypeParam, fetch::ml::ops::Relu<TypeParam>>> relu =
       std::make_shared<fetch::ml::Node<TypeParam, fetch::ml::ops::Relu<TypeParam>>>("Relu");

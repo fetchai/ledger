@@ -26,7 +26,8 @@
 
 #include <vector>
 
-    template < typename T > class MultiplyTest : public ::testing::Test
+template <typename T>
+class MultiplyTest : public ::testing::Test
 {
 };
 

@@ -27,135 +27,134 @@
 #include <cstdint>
 #include <vector>
 
-    namespace
+namespace {
+template <typename T>
+class DivideTest : public ::testing::Test
 {
-  template <typename T>
-  class DivideTest : public ::testing::Test
-  {
-  };
+};
 
-  using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
-                                   fetch::math::Tensor<fetch::fixed_point::fp32_t>,
-                                   fetch::math::Tensor<fetch::fixed_point::fp64_t>>;
+using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
+                                 fetch::math::Tensor<fetch::fixed_point::fp32_t>,
+                                 fetch::math::Tensor<fetch::fixed_point::fp64_t>>;
 
-  TYPED_TEST_CASE(DivideTest, MyTypes);
+TYPED_TEST_CASE(DivideTest, MyTypes);
 
-  TYPED_TEST(DivideTest, forward_test)
-  {
-    using ArrayType = TypeParam;
-    using DataType  = typename TypeParam::Type;
+TYPED_TEST(DivideTest, forward_test)
+{
+  using ArrayType = TypeParam;
+  using DataType  = typename TypeParam::Type;
 
-    ArrayType data_1 = ArrayType::FromString(
-        "1, -2, 3,-4, 5,-6, 7,-8;"
-        "1,  2, 3, 4, 5, 6, 7, 8");
+  ArrayType data_1 = ArrayType::FromString(
+      "1, -2, 3,-4, 5,-6, 7,-8;"
+      "1,  2, 3, 4, 5, 6, 7, 8");
 
-    ArrayType data_2 = ArrayType::FromString(
-        " 8, -7, 6,-5, 4,-3, 2,-1;"
-        "-8,  7,-6, 5,-4, 3,-2, 1");
+  ArrayType data_2 = ArrayType::FromString(
+      " 8, -7, 6,-5, 4,-3, 2,-1;"
+      "-8,  7,-6, 5,-4, 3,-2, 1");
 
-    ArrayType gt = ArrayType::FromString(
-        "0.125,	0.285714285714286,	0.5,	0.8,	1.25,	2,	3.5,	8;"
-        "-0.125, 0.285714285714286,	-0.5,	0.8,	-1.25,	2,	-3.5,	8");
+  ArrayType gt = ArrayType::FromString(
+      "0.125,	0.285714285714286,	0.5,	0.8,	1.25,	2,	3.5,	8;"
+      "-0.125, 0.285714285714286,	-0.5,	0.8,	-1.25,	2,	-3.5,	8");
 
-    fetch::ml::ops::Divide<ArrayType> op;
+  fetch::ml::ops::Divide<ArrayType> op;
 
-    TypeParam prediction(op.ComputeOutputShape(
-        {std::make_shared<ArrayType>(data_1), std::make_shared<ArrayType>(data_2)}));
-    op.Forward({std::make_shared<ArrayType>(data_1), std::make_shared<ArrayType>(data_2)},
-               prediction);
+  TypeParam prediction(op.ComputeOutputShape(
+      {std::make_shared<ArrayType>(data_1), std::make_shared<ArrayType>(data_2)}));
+  op.Forward({std::make_shared<ArrayType>(data_1), std::make_shared<ArrayType>(data_2)},
+             prediction);
 
-    // test correct values
-    ASSERT_TRUE(prediction.AllClose(gt, fetch::math::function_tolerance<DataType>(),
-                                    fetch::math::function_tolerance<DataType>()));
-  }
+  // test correct values
+  ASSERT_TRUE(prediction.AllClose(gt, fetch::math::function_tolerance<DataType>(),
+                                  fetch::math::function_tolerance<DataType>()));
+}
 
-  TYPED_TEST(DivideTest, backward_test)
-  {
-    using ArrayType = TypeParam;
-    using DataType  = typename TypeParam::Type;
+TYPED_TEST(DivideTest, backward_test)
+{
+  using ArrayType = TypeParam;
+  using DataType  = typename TypeParam::Type;
 
-    ArrayType data_1 = ArrayType::FromString(
-        "1, -2, 3,-4, 5,-6, 7,-8;"
-        "1,  2, 3, 4, 5, 6, 7, 8");
+  ArrayType data_1 = ArrayType::FromString(
+      "1, -2, 3,-4, 5,-6, 7,-8;"
+      "1,  2, 3, 4, 5, 6, 7, 8");
 
-    ArrayType data_2 = ArrayType::FromString(
-        "8, -7, 6,-5, 4,-3, 2,-1;"
-        "8,  7,-6, 5,-4, 3,-2, 1");
+  ArrayType data_2 = ArrayType::FromString(
+      "8, -7, 6,-5, 4,-3, 2,-1;"
+      "8,  7,-6, 5,-4, 3,-2, 1");
 
-    ArrayType gt_1 = ArrayType::FromString(
-        "0.125, 0.142857142857143, 0.333333333333333, 0.4, 0.75, 1, 2, 4;"
-        "0.625, -0.714285714285714, -1, -1.2, -1.75, -2.33333333333333, -4, -8");
+  ArrayType gt_1 = ArrayType::FromString(
+      "0.125, 0.142857142857143, 0.333333333333333, 0.4, 0.75, 1, 2, 4;"
+      "0.625, -0.714285714285714, -1, -1.2, -1.75, -2.33333333333333, -4, -8");
 
-    ArrayType gt_2 = ArrayType::FromString(
-        "-0.015625, -0.040816326530612, -0.166666666666667, -0.32, -0.9375, -2, -7, -32;"
-        "-0.078125, 0.204081632653061, -0.5, 0.96, -2.1875, 4.66666666666667, -14, 64");
+  ArrayType gt_2 = ArrayType::FromString(
+      "-0.015625, -0.040816326530612, -0.166666666666667, -0.32, -0.9375, -2, -7, -32;"
+      "-0.078125, 0.204081632653061, -0.5, 0.96, -2.1875, 4.66666666666667, -14, 64");
 
-    ArrayType error = ArrayType::FromString(
-        "1, -1, 2, -2, 3, -3, 4, -4;"
-        "5, -5, 6, -6, 7, -7, 8, -8");
+  ArrayType error = ArrayType::FromString(
+      "1, -1, 2, -2, 3, -3, 4, -4;"
+      "5, -5, 6, -6, 7, -7, 8, -8");
 
-    fetch::ml::ops::Divide<ArrayType> op;
-    std::vector<ArrayType>            prediction = op.Backward(
-        {std::make_shared<ArrayType>(data_1), std::make_shared<ArrayType>(data_2)}, error);
+  fetch::ml::ops::Divide<ArrayType> op;
+  std::vector<ArrayType>            prediction = op.Backward(
+      {std::make_shared<ArrayType>(data_1), std::make_shared<ArrayType>(data_2)}, error);
 
-    // test correct values
-    ASSERT_TRUE(prediction[0].AllClose(gt_1, fetch::math::function_tolerance<DataType>(),
-                                       fetch::math::function_tolerance<DataType>()));
-    ASSERT_TRUE(prediction[1].AllClose(gt_2, fetch::math::function_tolerance<DataType>(),
-                                       fetch::math::function_tolerance<DataType>()));
-  }
+  // test correct values
+  ASSERT_TRUE(prediction[0].AllClose(gt_1, fetch::math::function_tolerance<DataType>(),
+                                     fetch::math::function_tolerance<DataType>()));
+  ASSERT_TRUE(prediction[1].AllClose(gt_2, fetch::math::function_tolerance<DataType>(),
+                                     fetch::math::function_tolerance<DataType>()));
+}
 
-  TYPED_TEST(DivideTest, saveparams_test)
-  {
-    using ArrayType     = TypeParam;
-    using DataType      = typename TypeParam::Type;
-    using VecTensorType = typename fetch::ml::ops::Ops<ArrayType>::VecTensorType;
-    using SPType        = typename fetch::ml::ops::Divide<ArrayType>::SPType;
-    using OpType        = typename fetch::ml::ops::Divide<ArrayType>;
+TYPED_TEST(DivideTest, saveparams_test)
+{
+  using ArrayType     = TypeParam;
+  using DataType      = typename TypeParam::Type;
+  using VecTensorType = typename fetch::ml::ops::Ops<ArrayType>::VecTensorType;
+  using SPType        = typename fetch::ml::ops::Divide<ArrayType>::SPType;
+  using OpType        = typename fetch::ml::ops::Divide<ArrayType>;
 
-    ArrayType data_1 = ArrayType::FromString(
-        "1, -2, 3,-4, 5,-6, 7,-8;"
-        "1,  2, 3, 4, 5, 6, 7, 8");
+  ArrayType data_1 = ArrayType::FromString(
+      "1, -2, 3,-4, 5,-6, 7,-8;"
+      "1,  2, 3, 4, 5, 6, 7, 8");
 
-    ArrayType data_2 = ArrayType::FromString(
-        " 8, -7, 6,-5, 4,-3, 2,-1;"
-        "-8,  7,-6, 5,-4, 3,-2, 1");
+  ArrayType data_2 = ArrayType::FromString(
+      " 8, -7, 6,-5, 4,-3, 2,-1;"
+      "-8,  7,-6, 5,-4, 3,-2, 1");
 
-    ArrayType gt = ArrayType::FromString(
-        "0.125,	0.285714285714286,	0.5,	0.8,	1.25,	2,	3.5,	8;"
-        "-0.125, 0.285714285714286,	-0.5,	0.8,	-1.25,	2,	-3.5,	8");
+  ArrayType gt = ArrayType::FromString(
+      "0.125,	0.285714285714286,	0.5,	0.8,	1.25,	2,	3.5,	8;"
+      "-0.125, 0.285714285714286,	-0.5,	0.8,	-1.25,	2,	-3.5,	8");
 
-    OpType op;
+  OpType op;
 
-    ArrayType     prediction(op.ComputeOutputShape({data_1, data_2}));
-    VecTensorType vec_data({data_1, data_2});
+  ArrayType     prediction(op.ComputeOutputShape({data_1, data_2}));
+  VecTensorType vec_data({data_1, data_2});
 
-    op.Forward(vec_data, prediction);
+  op.Forward(vec_data, prediction);
 
-    // extract saveparams
-    std::shared_ptr<fetch::ml::SaveableParamsInterface> sp = op.GetOpSaveableParams();
+  // extract saveparams
+  std::shared_ptr<fetch::ml::SaveableParamsInterface> sp = op.GetOpSaveableParams();
 
-    // downcast to correct type
-    auto dsp = std::dynamic_pointer_cast<SPType>(sp);
+  // downcast to correct type
+  auto dsp = std::dynamic_pointer_cast<SPType>(sp);
 
-    // serialize
-    fetch::serializers::ByteArrayBuffer b;
-    b << *dsp;
+  // serialize
+  fetch::serializers::ByteArrayBuffer b;
+  b << *dsp;
 
-    // deserialize
-    b.seek(0);
-    auto dsp2 = std::make_shared<SPType>();
-    b >> *dsp2;
+  // deserialize
+  b.seek(0);
+  auto dsp2 = std::make_shared<SPType>();
+  b >> *dsp2;
 
-    // rebuild node
-    OpType new_op(*dsp2);
+  // rebuild node
+  OpType new_op(*dsp2);
 
-    // check that new predictions match the old
-    ArrayType new_prediction(op.ComputeOutputShape({data_1, data_2}));
-    new_op.Forward(vec_data, new_prediction);
+  // check that new predictions match the old
+  ArrayType new_prediction(op.ComputeOutputShape({data_1, data_2}));
+  new_op.Forward(vec_data, new_prediction);
 
-    // test correct values
-    EXPECT_TRUE(new_prediction.AllClose(prediction, fetch::math::function_tolerance<DataType>(),
-                                        fetch::math::function_tolerance<DataType>()));
-  }
+  // test correct values
+  EXPECT_TRUE(new_prediction.AllClose(prediction, fetch::math::function_tolerance<DataType>(),
+                                      fetch::math::function_tolerance<DataType>()));
+}
 }  // namespace

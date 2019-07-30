@@ -60,7 +60,7 @@ TYPED_TEST(CrossEntropyTest, perfect_match_forward_test)
   }
 
   fetch::ml::ops::CrossEntropyLoss<TypeParam> op;
-  TypeParam                                        result({1, 1});
+  TypeParam                                   result({1, 1});
   op.Forward({std::make_shared<TypeParam>(data1), std::make_shared<TypeParam>(data2)}, result);
 
   EXPECT_EQ(result(0, 0), typename TypeParam::Type(0));
@@ -107,7 +107,7 @@ TYPED_TEST(CrossEntropyTest, one_dimensional_forward_test)
   }
 
   fetch::ml::ops::CrossEntropyLoss<TypeParam> op;
-  TypeParam                                        result({1, 1});
+  TypeParam                                   result({1, 1});
   op.Forward({std::make_shared<TypeParam>(data1), std::make_shared<TypeParam>(data2)}, result);
 
   EXPECT_NEAR(static_cast<double>(result(0, 0)), static_cast<double>(0.893887639), 3e-7);
@@ -147,7 +147,7 @@ TYPED_TEST(CrossEntropyTest, non_one_hot_forward_test)
   }
 
   fetch::ml::ops::CrossEntropyLoss<TypeParam> op;
-  TypeParam                                        result({1, 1});
+  TypeParam                                   result({1, 1});
   op.Forward({std::make_shared<TypeParam>(data1), std::make_shared<TypeParam>(data2)}, result);
 
   ASSERT_FLOAT_EQ(static_cast<float>(result(0, 0)), float(2.6491587));

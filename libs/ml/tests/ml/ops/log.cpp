@@ -28,7 +28,8 @@
 #include <cstdint>
 #include <vector>
 
-    template < typename T > class LogFloatTest : public ::testing::Test
+template <typename T>
+class LogFloatTest : public ::testing::Test
 {
 };
 
