@@ -521,8 +521,6 @@ bool MainChainRpcService::IsBlockValid(Block &block) const
     block_valid = true;
   }
 
-  FETCH_LOG_INFO(LOGGING_NAME, "Block proof: ", block.proof());
-
   return block_valid;
 }
 

@@ -156,13 +156,14 @@ EntropyPtr CreateEntropy()
   return std::make_unique<ledger::NaiveEntropyGenerator>();
 }
 
-StakeManagerPtr CreateStakeManager(Constellation::Config const &cfg, bool enabled, ledger::EntropyGeneratorInterface &entropy)
+StakeManagerPtr CreateStakeManager(Constellation::Config const &cfg, bool enabled,
+                                   ledger::EntropyGeneratorInterface &entropy)
 {
   StakeManagerPtr mgr{};
 
   if (enabled)
   {
-    mgr = std::make_shared<ledger::StakeManager>(entropy, cfg.block_interval_ms / 10);
+    mgr = std::make_shared<ledger::StakeManager>(entropy, cfg.block_interval_ms);
   }
 
   return mgr;
@@ -251,7 +252,8 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
         std::make_shared<ledger::ContractHttpInterface>(*storage_, tx_processor_),
         std::make_shared<LoggingHttpModule>(),
         std::make_shared<TelemetryHttpModule>(),
-        std::make_shared<HealthCheckHttpModule>(chain_, *main_chain_service_, block_coordinator_, dkg_)}
+        std::make_shared<HealthCheckHttpModule>(chain_, *main_chain_service_, block_coordinator_,
+                                                dkg_)}
 {
 
   // print the start up log banner
@@ -437,20 +439,16 @@ void Constellation::Run(UriList const &initial_peers, core::WeakRunnable bootstr
 
   // P2P configuration
   p2p_.SetLocalManifest(cfg_.manifest);
-  FETCH_LOG_INFO(LOGGING_NAME, "Starting P2P");
   p2p_.Start(initial_peers);
-  FETCH_LOG_INFO(LOGGING_NAME, "Started P2P");
 
   /// INPUT INTERFACES
 
   // Finally start the HTTP server
   http_.Start(http_port_);
-  FETCH_LOG_INFO(LOGGING_NAME, "Started HTTP");
 
   // The block coordinator needs to access correctly started lanes to recover state in the case of
   // a crash.
   reactor_.Attach(block_coordinator_.GetWeakRunnable());
-  FETCH_LOG_INFO(LOGGING_NAME, "Started REAC");
 
   //---------------------------------------------------------------
   // Step 2. Main monitor loop
@@ -460,11 +458,11 @@ void Constellation::Run(UriList const &initial_peers, core::WeakRunnable bootstr
 
   std::size_t committee_size = 0;
 
-  if(stake_)
+  if (stake_)
   {
     auto current = stake_->GetCurrentStakeSnapshot();
 
-    if(!current)
+    if (!current)
     {
       FETCH_LOG_WARN(LOGGING_NAME, "No current stake snapshot found!");
     }
@@ -472,9 +470,9 @@ void Constellation::Run(UriList const &initial_peers, core::WeakRunnable bootstr
     {
       committee_size = current->size();
     }
-  }
 
-  FETCH_LOG_INFO(LOGGING_NAME, "Committee size: ", committee_size);
+    FETCH_LOG_INFO(LOGGING_NAME, "Committee size: ", committee_size);
+  }
 
   // monitor loop
   while (active_)
@@ -485,6 +483,7 @@ void Constellation::Run(UriList const &initial_peers, core::WeakRunnable bootstr
       // Note: the DKG will already have its cabinet reset by this point
       if (!dkg_attached)
       {
+        // Required until we can guarantee the DRB isn't vulnerable to races
         std::this_thread::sleep_for(std::chrono::milliseconds(5000));
 
         FETCH_LOG_INFO(LOGGING_NAME, "Starting DKG");
@@ -492,20 +491,22 @@ void Constellation::Run(UriList const &initial_peers, core::WeakRunnable bootstr
         dkg_attached = true;
       }
     }
-    else if(!dkg_attached)
+    else if (dkg_ && !dkg_attached)
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "Connected peers so far: ", muddle_.AsEndpoint().GetDirectlyConnectedPeers().size());
+      FETCH_LOG_INFO(LOGGING_NAME, "Waiting to connect for DKG. Peers so far: ",
+                     muddle_.AsEndpoint().GetDirectlyConnectedPeers().size());
     }
 
     bool beacon_synced = true;
 
-    if(dkg_)
+    if (dkg_)
     {
       beacon_synced = dkg_->IsSynced();
     }
 
     // determine the status of the main chain server
-    bool const is_in_sync = main_chain_service_->IsSynced() && block_coordinator_.IsSynced() && beacon_synced;
+    bool const is_in_sync =
+        main_chain_service_->IsSynced() && block_coordinator_.IsSynced() && beacon_synced;
 
     // control from the top level block production based on the chain sync state
     block_coordinator_.EnableMining(is_in_sync);

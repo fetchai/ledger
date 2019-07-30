@@ -45,7 +45,8 @@ std::size_t SafeDecrement(std::size_t value, std::size_t decrement)
 
 }  // namespace
 
-StakeManager::StakeManager(EntropyGeneratorInterface &entropy, uint32_t block_interval_ms, Mode mode)
+StakeManager::StakeManager(EntropyGeneratorInterface &entropy, uint32_t block_interval_ms,
+                           Mode mode)
   : entropy_{&entropy}
   , mode_{mode}
   , block_interval_ms_{block_interval_ms}
@@ -70,12 +71,12 @@ bool StakeManager::ShouldGenerateBlock(Block const &previous, Address const &add
 {
   FETCH_LOG_INFO(LOGGING_NAME, "Should generate block? Prev: ", previous.body.block_number);
 
-  if(mode_ == Mode::ALWAYS_OFF)
+  if (mode_ == Mode::ALWAYS_OFF)
   {
     return false;
   }
 
-  if(mode_ == Mode::ALWAYS_ON)
+  if (mode_ == Mode::ALWAYS_ON)
   {
     return true;
   }
@@ -91,16 +92,14 @@ bool StakeManager::ShouldGenerateBlock(Block const &previous, Address const &add
   // committee will wait until block_interval after the block at the HEAD of the chain, the second
   // miner 2*block_interval and so on.
   uint32_t time_to_wait = block_interval_ms_;
-  bool in_committee     = false;
-
-  FETCH_LOG_INFO(LOGGING_NAME, "Committee size: ", (*committee).size());
-  FETCH_LOG_INFO(LOGGING_NAME, "Committee size2: ", committee_size_);
+  bool     in_committee = false;
 
   for (std::size_t i = 0; i < (*committee).size(); ++i)
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Saw committee member: ", (*committee)[i].address().ToBase64(), "we are: ", address.address().ToBase64());
+    FETCH_LOG_INFO(LOGGING_NAME, "Saw committee member: ", (*committee)[i].address().ToBase64(),
+                   "we are: ", address.address().ToBase64());
 
-    if((*committee)[i] == address)
+    if ((*committee)[i] == address)
     {
       in_committee = true;
       break;
@@ -108,26 +107,14 @@ bool StakeManager::ShouldGenerateBlock(Block const &previous, Address const &add
     time_to_wait += block_interval_ms_;
   }
 
-  //in_committee = true;
+  uint64_t time_now_ms           = static_cast<uint64_t>(std::time(nullptr)) * 1000;
+  uint64_t desired_time_for_next = (previous.first_seen_timestamp * 1000) + time_to_wait;
 
-  // TODO(HUT): switch to 64 for time based things (?)
-  // Time now, in seconds
-  uint64_t time_now_ms = static_cast<uint64_t>(std::time(nullptr)) * 1000;
-  uint64_t desired_time_for_next = (previous.first_seen_timestamp*1000) + time_to_wait;
-
-  FETCH_LOG_INFO(LOGGING_NAME, "Time to wait: ", time_to_wait);
-  FETCH_LOG_INFO(LOGGING_NAME, "In committee: ", in_committee);
-  FETCH_LOG_INFO(LOGGING_NAME, "Committee size: ", (*committee).size());
-  FETCH_LOG_INFO(LOGGING_NAME, "Prev timestamp: ", previous.first_seen_timestamp);
-  FETCH_LOG_INFO(LOGGING_NAME, "Time now (ms): ", time_now_ms);
-
-  if(in_committee && desired_time_for_next <= time_now_ms)
+  if (in_committee && desired_time_for_next <= time_now_ms)
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "yes.");
     return true;
   }
 
-  FETCH_LOG_INFO(LOGGING_NAME, "no.");
   return false;
 }
 
@@ -179,6 +166,7 @@ std::size_t StakeManager::GetBlockGenerationWeight(Block const &previous, Addres
     weight = SafeDecrement(weight, 1);
   }
 
+  // Note: weight must always be non zero
   return weight + 1;
 }
 

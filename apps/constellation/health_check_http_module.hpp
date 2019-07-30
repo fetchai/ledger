@@ -30,7 +30,8 @@ public:
   using MainChainRpcService = ledger::MainChainRpcService;
 
   HealthCheckHttpModule(MainChain const &chain, MainChainRpcService const &chain_service,
-                        BlockCoordinator const &block_coordinator, std::shared_ptr<dkg::DkgService> dkg)
+                        BlockCoordinator const &         block_coordinator,
+                        std::shared_ptr<dkg::DkgService> dkg)
     : chain_{chain}
     , chain_service_{chain_service}
     , block_coordinator_{block_coordinator}
@@ -69,9 +70,9 @@ public:
   }
 
 private:
-  MainChain const &          chain_;
-  MainChainRpcService const &chain_service_;
-  BlockCoordinator const &   block_coordinator_;
+  MainChain const &                chain_;
+  MainChainRpcService const &      chain_service_;
+  BlockCoordinator const &         block_coordinator_;
   std::shared_ptr<dkg::DkgService> dkg_;
 };
 

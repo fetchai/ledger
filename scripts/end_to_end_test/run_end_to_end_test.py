@@ -179,7 +179,8 @@ class TestInstance():
     def start_node(self, index):
         print('Starting Node {}...'.format(index))
 
-        print(" ".join(str(x) for x in self._nodes[index]._cmd))
+        # Useful for seeing the exact command
+        #print(" ".join(str(x) for x in self._nodes[index]._cmd))
 
         self._nodes[index].start()
         print('Starting Node {}...complete'.format(index))
@@ -193,7 +194,8 @@ class TestInstance():
             os.path.dirname(self._yaml_file)+"/input_files")
 
         # Create required files for this test
-        file_gen = os.path.abspath("./scripts/end_to_end_test/input_files/create-input-files.py")
+        file_gen = os.path.abspath(
+            "./scripts/end_to_end_test/input_files/create-input-files.py")
         verify_file(file_gen)
         exit_code = subprocess.call([file_gen, str(self._number_of_nodes)])
 
@@ -227,22 +229,23 @@ class TestInstance():
                 verify_file(key_path)
 
                 # Copy the keyfile from its location to the node's cwd
-                shutil.copy(key_path, node.root+"/p2p.key");
+                shutil.copy(key_path, node.root+"/p2p.key")
 
         stake_gen = os.path.abspath("./scripts/generate-initial-state.py")
         verify_file(stake_gen)
 
         # Create a stake file into the logging directory for all nodes
         snapshot_location = self._workspace+"/snapshot.json"
-        cmd = [stake_gen, *nodes_mining_identities, "-t", str(len(nodes_mining_identities) - 1), "-o", snapshot_location]
+        cmd = [stake_gen, *nodes_mining_identities, "-t",
+               str(len(nodes_mining_identities) - 1), "-o", snapshot_location]
 
         # After giving the relevant nodes identities, make a stake file
         exit_code = subprocess.call(cmd)
 
         # Give all nodes this stake file, plus append POS flag for when node starts
         for index in range(self._number_of_nodes):
-            shutil.copy(snapshot_location, self._nodes[index].root);
-            self._nodes[index].append_to_cmd(["-pos", "-private-network",])
+            shutil.copy(snapshot_location, self._nodes[index].root)
+            self._nodes[index].append_to_cmd(["-pos", "-private-network", ])
 
     def restart_node(self, index):
         print('Restarting Node {}...'.format(index))
@@ -268,10 +271,8 @@ class TestInstance():
 
         # build up all the node instances
         for index in range(self._number_of_nodes):
-            output("Adding!")
             self.append_node(index, self._node_load_directory)
 
-        output("Added!")
         # Now connect the nodes as specified
         if self._node_connections:
             self.connect_nodes(self._node_connections)
@@ -525,7 +526,8 @@ def verify_txs(parameters, test_instance):
                     break
 
                 time.sleep(0.5)
-                output("Waiting for TX to get executed (node {}). Found: {}".format(node_index, status))
+                output("Waiting for TX to get executed (node {}). Found: {}".format(
+                    node_index, status))
 
             seen_balance = api.tokens.balance(identity)
             if balance != seen_balance:

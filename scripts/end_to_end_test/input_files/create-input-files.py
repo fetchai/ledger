@@ -1,12 +1,5 @@
 #!/usr/bin/env python3
 
-#
-# end to end tests of fetch-ledger
-#
-# This is achieved by using available fetch APIs to spin up a network locally
-# and test it can handle certain conditions (such as single or multiple
-# node failure)
-
 import sys
 import os
 import argparse
@@ -21,6 +14,7 @@ def output(*args):
         sys.stdout.write(text)
         sys.stdout.write('\n')
         sys.stdout.flush()
+
 
 def create_files(identities_to_create):
 
@@ -37,6 +31,7 @@ def create_files(identities_to_create):
 
     with open(this_file_dir+"/info.txt", 'w+') as f:
         f.write(file_info)
+
 
 def parse_commandline():
     parser = argparse.ArgumentParser(

@@ -45,7 +45,8 @@ public:
   };
 
   // Construction / Destruction
-  StakeManager(EntropyGeneratorInterface &entropy, uint32_t block_interval_ms, Mode mode = Mode::NORMAL);
+  StakeManager(EntropyGeneratorInterface &entropy, uint32_t block_interval_ms,
+               Mode mode = Mode::NORMAL);
   StakeManager(StakeManager const &) = delete;
   StakeManager(StakeManager &&)      = delete;
   ~StakeManager() override           = default;
@@ -98,8 +99,9 @@ private:
   StakeSnapshotPtr           current_{};               ///< Most recent snapshot
   BlockIndex                 current_block_index_{0};  ///< Block index of most recent snapshot
   EntropyCache               entropy_cache_{};
-  Mode                       mode_;                     ///< Different modes to operate in - disabling or force enabling the staking mechanism
-  uint32_t                   block_interval_ms_{std::numeric_limits<uint32_t>::max()};
+  Mode
+           mode_;  ///< Different modes to operate in - disabling or force enabling the staking mechanism
+  uint32_t block_interval_ms_{std::numeric_limits<uint32_t>::max()};
 };
 
 inline std::size_t StakeManager::committee_size() const
