@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/const_byte_array.hpp"
-#include "core/threading/synchronised_state.hpp"
+#include "core/threading/protect.hpp"
 #include "crypto/ecdsa_signature.hpp"
 #include "crypto/prover.hpp"
 #include "crypto/verifier.hpp"
@@ -76,12 +76,9 @@ public:
   using PrivateKey = openssl::ECDSAPrivateKey<>;
   using Signature  = openssl::ECDSASignature<>;
 
-  ECDSASigner()
-    : private_key_{PrivateKey{}}
-  {}
-
-  explicit ECDSASigner(ConstByteArray const &private_key)
-    : private_key_{private_key}
+  template <typename... Args>
+  explicit ECDSASigner(Args &&... args)
+    : private_key_{std::forward<Args>(args)...}
   {}
 
   void Load(ConstByteArray const &private_key) override
@@ -91,12 +88,12 @@ public:
 
   void SetPrivateKey(ConstByteArray const &private_key)
   {
-    private_key_.Set(PrivateKey{private_key});
+    private_key_.Apply([&private_key](auto &key) -> void { key = PrivateKey{private_key}; });
   }
 
   void GenerateKeys()
   {
-    private_key_.Set(PrivateKey{});
+    private_key_.Apply([](auto &key) -> void { key = PrivateKey{}; });
   }
 
   ConstByteArray Sign(ConstByteArray const &text) const final
@@ -132,9 +129,7 @@ public:
   }
 
 private:
-  using ThreadSafePrivateKey = SynchronisedState<PrivateKey>;
-
-  ThreadSafePrivateKey private_key_;
+  Protect<PrivateKey> private_key_;
 };
 
 }  // namespace crypto

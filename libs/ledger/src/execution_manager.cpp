@@ -179,7 +179,7 @@ ExecutionManager::ScheduleStatus ExecutionManager::Execute(Block::Body const &bl
   num_slices_       = block.slices.size();
 
   // update the state otherwise there is a race between when the executor thread wakes up
-  state_.Set(State::ACTIVE);
+  state_.Apply([](auto &state) -> void { state = State::ACTIVE; });
 
   // trigger the monitor / dispatch thread
   {
@@ -256,7 +256,7 @@ void ExecutionManager::DispatchExecution(ExecutionItem &item)
   if (executor)
   {
     // increment the active counters
-    counters_.Apply([](Counters &counters) { counters.active++; });
+    counters_.Apply([](auto &counters) -> void { ++counters.active; });
 
     // execute the item
     item.Execute(*executor);
@@ -269,7 +269,7 @@ void ExecutionManager::DispatchExecution(ExecutionItem &item)
                      " status: ", ledger::ToString(result.status));
     }
 
-    counters_.Apply([](Counters &counters) {
+    counters_.Apply([](auto &counters) -> void {
       counters.active--;
       counters.remaining--;
     });
@@ -355,7 +355,7 @@ Digest ExecutionManager::LastProcessedBlock()
 
 ExecutionManager::State ExecutionManager::GetState()
 {
-  return state_.Get();
+  return state_.Apply([](auto &state) -> State { return state; });
 }
 
 bool ExecutionManager::Abort()
@@ -396,29 +396,27 @@ void ExecutionManager::MonitorThreadEntrypoint()
     case MonitorState::FAILED:
       FETCH_LOG_WARN(LOGGING_NAME, "Execution Engine experience fatal error");
 
-      state_.Set(State::EXECUTION_FAILED);
+      state_.Apply([](auto &state) -> void { state = State::EXECUTION_FAILED; });
       monitor_state = MonitorState::IDLE;
       break;
 
     case MonitorState::STALLED:
       FETCH_LOG_DEBUG(LOGGING_NAME, "Now Stalled");
 
-      state_.Set(State::TRANSACTIONS_UNAVAILABLE);
+      state_.Apply([](auto &state) -> void { state = State::TRANSACTIONS_UNAVAILABLE; });
       monitor_state = MonitorState::IDLE;
       break;
 
     case MonitorState::COMPLETED:
       FETCH_LOG_DEBUG(LOGGING_NAME, "Now Complete");
 
-      state_.Set(State::IDLE);
+      state_.Apply([](auto &state) -> void { state = State::IDLE; });
       monitor_state = MonitorState::IDLE;
       break;
 
     case MonitorState::IDLE:
     {
-      blocks_completed_count_->increment();
-
-      state_.Set(State::IDLE);
+      state_.Apply([](auto &state) -> void { state = State::IDLE; });
 
       FETCH_LOG_DEBUG(LOGGING_NAME, "Now Idle");
 
@@ -428,7 +426,7 @@ void ExecutionManager::MonitorThreadEntrypoint()
         monitor_wake_.wait(lock);
       }
 
-      state_.Set(State::ACTIVE);
+      state_.Apply([](auto &state) -> void { state = State::ACTIVE; });
       current_block = last_block_hash_;
 
       FETCH_LOG_DEBUG(LOGGING_NAME, "Now Active");
@@ -448,8 +446,6 @@ void ExecutionManager::MonitorThreadEntrypoint()
     {
       FETCH_LOCK(execution_plan_lock_);
 
-      slices_executed_count_->increment();
-
       if (execution_plan_.empty())
       {
         monitor_state = MonitorState::SETTLE_FEES;
@@ -460,16 +456,15 @@ void ExecutionManager::MonitorThreadEntrypoint()
 
         // determine the target number of executions being expected (must be
         // done before the thread pool dispatch)
-        counters_.Set(Counters{0, slice_plan.size()});
+        counters_.Apply([&slice_plan](auto &counters) -> void {
+          counters = Counters{0, slice_plan.size()};
+        });
 
         auto self = shared_from_this();
         for (auto &item : slice_plan)
         {
           // create the closure and dispatch to the thread pool
-          thread_pool_->Post([self, &item]() {
-            telemetry::FunctionTimer const timer{*(self->execution_duration_)};
-            self->DispatchExecution(*item);
-          });
+          thread_pool_->Post([self, &item]() { self->DispatchExecution(*item); });
         }
 
         monitor_state = MonitorState::RUNNING;
@@ -482,13 +477,14 @@ void ExecutionManager::MonitorThreadEntrypoint()
     {
       // wait for the execution to complete
       bool const finished =
-          counters_.WaitFor(std::chrono::seconds{2},
-                            [](Counters const &counters) { return counters.remaining == 0; });
+          counters_.Wait([](auto const &counters) -> bool { return counters.remaining == 0; },
+                         std::chrono::seconds{2});
 
       if (!finished)
       {
-        FETCH_LOG_WARN(LOGGING_NAME,
-                       "### Extra long execution: remaining: ", counters_.Get().remaining);
+        counters_.Apply([](auto const &counters) -> void {
+          FETCH_LOG_WARN(LOGGING_NAME, "### Extra long execution: remaining: ", counters.remaining);
+        });
       }
       else
       {
@@ -528,11 +524,6 @@ void ExecutionManager::MonitorThreadEntrypoint()
 
           // update aggregate fees
           aggregate_block_fees += item->fee();
-
-          if (tx_status_cache_)
-          {
-            tx_status_cache_->Update(item->digest(), item->result());
-          }
         }
 
         // only provide debug if required
@@ -573,7 +564,6 @@ void ExecutionManager::MonitorThreadEntrypoint()
           monitor_state = MonitorState::SETTLE_FEES;
         }
       }
-
       break;
     }
 
@@ -600,8 +590,6 @@ void ExecutionManager::MonitorThreadEntrypoint()
             // get the first one and settle the fees
             idle_executors_.front()->SettleFees(last_block_miner_, aggregate_block_fees,
                                                 log2_num_lanes_);
-
-            fees_settled_count_->increment();
             break;
           }
         }

@@ -225,13 +225,16 @@ public:
 
   ConstByteArray GetLastExecutedBlock() const
   {
-    return last_executed_block_.Get();
+    return last_executed_block_.Apply(
+        [](auto &last_executed_block_hash) -> ConstByteArray { return last_executed_block_hash; });
   }
 
   bool IsSynced() const
   {
-    return (state_machine_->state() == State::SYNCHRONISED) &&
-           (last_executed_block_.Get() == chain_.GetHeaviestBlockHash());
+    return last_executed_block_.Apply([this](auto &last_executed_block_hash) -> bool {
+      return (state_machine_->state() == State::SYNCHRONISED) &&
+             (last_executed_block_hash == chain_.GetHeaviestBlockHash());
+    });
   }
 
   void Reset();
@@ -385,11 +388,6 @@ void BlockCoordinator::SetBlockPeriod(std::chrono::duration<R, P> const &period)
 
   // signal that we are mining
   mining_ = true;
-}
-
-inline void BlockCoordinator::EnableMining(bool enable)
-{
-  mining_enabled_ = enable;
 }
 
 }  // namespace ledger
