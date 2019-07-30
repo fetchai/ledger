@@ -27,8 +27,6 @@
 
 namespace fetch {
 namespace dkg {
-class DkgService;
-namespace rbc {
 
 /**
  * Reliable broadcast channel (RBC) is a protocol which ensures all honest
@@ -46,7 +44,7 @@ public:
   using SubscriptionPtr = std::shared_ptr<muddle::Subscription>;
 
   RBC(Endpoint &endpoint, MuddleAddress address, CabinetMembers const &cabinet,
-      DkgService &dkg_service);
+      std::function<void(MuddleAddress const &, byte_array::ConstByteArray const &)> call_back);
 
   // Operators
   void ResetCabinet();
@@ -102,8 +100,9 @@ private:
       &    current_cabinet_;  ///< The set of muddle addresses of the cabinet (including our own)
   uint32_t threshold_;  ///< Number of byzantine nodes (this is assumed to take the maximum allowed
                         ///< value satisying threshold_ < current_cabinet_.size()
-  DkgService &    dkg_service_;
-  SubscriptionPtr rbc_subscription_;  ///< For receiving messages in the rbc channel
+  std::function<void(MuddleAddress const &, byte_array::ConstByteArray const &)>
+                  deliver_msg_callback_;  ///< Callback for messages which have succeeded RBC protocol
+  SubscriptionPtr rbc_subscription_;      ///< For receiving messages in the rbc channel
 
   void Send(RBCEnvelope const &env, MuddleAddress const &address);
   void Broadcast(RBCEnvelope const &env);
@@ -124,7 +123,5 @@ private:
   struct MsgCount    ReceivedReady(TagType tag, std::shared_ptr<RHash> msg_ptr);
   bool               SetPartyFlag(uint32_t sender_index, TagType tag, MsgType msg_type);
 };
-
-}  // namespace rbc
 }  // namespace dkg
 }  // namespace fetch

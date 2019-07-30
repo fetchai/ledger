@@ -19,12 +19,10 @@
 #include "core/logging.hpp"
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
-#include "dkg/dkg_service.hpp"
 #include "dkg/rbc.hpp"
 
 namespace fetch {
 namespace dkg {
-namespace rbc {
 
 constexpr char const *LOGGING_NAME = "RBC";
 
@@ -67,11 +65,11 @@ std::string RBC::MsgTypeToString(MsgType msg_type)
  * @param dkg
  */
 RBC::RBC(Endpoint &endpoint, MuddleAddress address, CabinetMembers const &cabinet,
-         DkgService &dkg_service)
+         std::function<void(MuddleAddress const &, byte_array::ConstByteArray const &)> call_back)
   : address_{std::move(address)}
   , endpoint_{endpoint}
   , current_cabinet_{cabinet}
-  , dkg_service_{dkg_service}
+  , deliver_msg_callback_{std::move(call_back)}
   , rbc_subscription_(endpoint.Subscribe(SERVICE_DKG, CHANNEL_BROADCAST))
 {
 
@@ -492,7 +490,7 @@ void RBC::OnRAnswer(std::shared_ptr<RAnswer> const msg_ptr, uint32_t sender_inde
 void RBC::Deliver(SerialisedMessage const &msg, uint32_t sender_index)
 {
   MuddleAddress miner_id{*std::next(current_cabinet_.begin(), sender_index)};
-  dkg_service_.OnRbcDeliver(miner_id, msg);
+  deliver_msg_callback_(miner_id, msg);
   // Try to deliver old messages
   std::lock_guard<std::mutex> lock(mutex_deliver_);
   if (!parties_[sender_index].undelivered_msg.empty())
@@ -503,7 +501,7 @@ void RBC::Deliver(SerialisedMessage const &msg, uint32_t sender_index)
            old_tag_msg->second.id() == CHANNEL_BROADCAST &&
            old_tag_msg->second.counter() == parties_[id_].deliver_s)
     {
-      dkg_service_.OnRbcDeliver(miner_id, broadcasts_[old_tag_msg->second.tag()].mbar);
+      deliver_msg_callback_(miner_id, broadcasts_[old_tag_msg->second.tag()].mbar);
       old_tag_msg = parties_[sender_index].undelivered_msg.erase(old_tag_msg);
     }
   }
@@ -576,6 +574,5 @@ bool RBC::SetPartyFlag(uint32_t sender_index, TagType tag, MsgType msg_type)
   return true;
 }
 
-}  // namespace rbc
 }  // namespace dkg
 }  // namespace fetch

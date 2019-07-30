@@ -21,10 +21,19 @@
 namespace fetch {
 namespace dkg {
 
+constexpr char const *LOGGING_NAME = "DKGComplaints";
+
 void ComplaintsManager::ResetCabinet(uint32_t cabinet_size)
 {
+  std::lock_guard<std::mutex> lock{mutex_};
   cabinet_size_        = cabinet_size;
+  finished_            = false;
   complaints_received_ = std::vector<bool>(cabinet_size_, false);
+  complaints_counter_.clear();
+  complaints_from_.clear();
+  complaints_.clear();
+  complaints_received_.clear();
+  complaints_received_counter_ = 0;
 }
 
 void ComplaintsManager::Count(MuddleAddress const &address)
@@ -46,7 +55,7 @@ void ComplaintsManager::Add(std::shared_ptr<ComplaintsMessage> const &msg_ptr,
   }
   else
   {
-    complaints_.insert(from_id);
+    FETCH_LOG_WARN(LOGGING_NAME, "Duplicate complaints received from node ", from_index);
     return;
   }
 
@@ -67,7 +76,7 @@ bool ComplaintsManager::IsFinished(std::set<MuddleAddress> const &miners, uint32
                                    uint32_t threshold)
 {
   std::lock_guard<std::mutex> lock{mutex_};
-  if (complaints_received_counter_.load() == cabinet_size_ - 1)
+  if (complaints_received_counter_ == cabinet_size_ - 1)
   {
     // Add miners which did not send a complaint to complaints (redundant for now but will be
     // necessary when we do not wait for a message from everyone)
@@ -88,7 +97,7 @@ bool ComplaintsManager::IsFinished(std::set<MuddleAddress> const &miners, uint32
         complaints_.insert(node_complaints.first);
       }
     }
-    finished_.store(true);
+    finished_ = true;
     return true;
   }
   return false;
@@ -97,21 +106,32 @@ bool ComplaintsManager::IsFinished(std::set<MuddleAddress> const &miners, uint32
 std::set<ComplaintsMessage::MuddleAddress> ComplaintsManager::ComplaintsFrom() const
 {
   std::lock_guard<std::mutex> lock(mutex_);
-  assert(finished_ == true);
+  assert(finished_);
   return complaints_from_;
+}
+
+uint32_t ComplaintsManager::ComplaintsCount(MuddleAddress const &address)
+{
+  std::lock_guard<std::mutex> lock(mutex_);
+  auto                        iter = complaints_counter_.find(address);
+  if (iter == complaints_counter_.end())
+  {
+    return 0;
+  }
+  return complaints_counter_.at(address);
 }
 
 std::set<ComplaintsMessage::MuddleAddress> ComplaintsManager::Complaints() const
 {
   std::lock_guard<std::mutex> lock(mutex_);
-  assert(finished_ == true);
+  assert(finished_);
   return complaints_;
 }
 
 void ComplaintsManager::Clear()
 {
   std::lock_guard<std::mutex> lock(mutex_);
-  assert(finished_ == true);
+  assert(finished_);
   complaints_counter_.clear();
   complaints_from_.clear();
   complaints_.clear();
@@ -122,6 +142,13 @@ void QualComplaintsManager::Complaints(MuddleAddress const &id)
 {
   std::lock_guard<std::mutex> lock(mutex_);
   complaints_.insert(id);
+}
+
+std::set<QualComplaintsManager::MuddleAddress> QualComplaintsManager::Complaints() const
+{
+  std::lock_guard<std::mutex> lock(mutex_);
+  assert(finished_);
+  return complaints_;
 }
 
 void QualComplaintsManager::Received(MuddleAddress const &id)
@@ -157,6 +184,7 @@ bool QualComplaintsManager::IsFinished(std::set<MuddleAddress> const &qual,
         complaints_.insert(iq);
       }
     }
+    finished_ = true;
     return true;
   }
   return false;
@@ -165,6 +193,15 @@ bool QualComplaintsManager::IsFinished(std::set<MuddleAddress> const &qual,
 void QualComplaintsManager::Clear()
 {
   std::lock_guard<std::mutex> lock{mutex_};
+  assert(finished_);
+  complaints_.clear();
+  complaints_received_.clear();
+}
+
+void QualComplaintsManager::Reset()
+{
+  std::lock_guard<std::mutex> lock{mutex_};
+  finished_ = false;
   complaints_.clear();
   complaints_received_.clear();
 }
@@ -177,8 +214,12 @@ void ComplaintsAnswerManager::Init(std::set<MuddleAddress> const &complaints)
 
 void ComplaintsAnswerManager::ResetCabinet(uint32_t cabinet_size)
 {
+  std::lock_guard<std::mutex> lock{mutex_};
   cabinet_size_               = cabinet_size;
+  finished_                   = false;
   complaint_answers_received_ = std::vector<bool>(cabinet_size_, false);
+  complaints_.clear();
+  complaint_answers_received_counter_ = 0;
 }
 
 void ComplaintsAnswerManager::Add(MuddleAddress const &member)
@@ -187,17 +228,25 @@ void ComplaintsAnswerManager::Add(MuddleAddress const &member)
   complaints_.insert(member);
 }
 
-void ComplaintsAnswerManager::Count(uint32_t from_index)
+bool ComplaintsAnswerManager::Count(uint32_t from_index)
 {
   std::lock_guard<std::mutex> lock{mutex_};
-  complaint_answers_received_[from_index] = true;
-  ++complaint_answers_received_counter_;
+  if (!complaint_answers_received_[from_index])
+  {
+    complaint_answers_received_[from_index] = true;
+    ++complaint_answers_received_counter_;
+    return true;
+  }
+  else
+  {
+    return false;
+  }
 }
 
 bool ComplaintsAnswerManager::IsFinished(std::set<MuddleAddress> const &cabinet, uint32_t index)
 {
   std::lock_guard<std::mutex> lock{mutex_};
-  if (complaint_answers_received_counter_.load() == cabinet_size_ - 1)
+  if (complaint_answers_received_counter_ == cabinet_size_ - 1)
   {
     // Add miners which did not send a complaint to complaints (redundant for now but will be
     // necessary when we do not wait for a message from everyone)
@@ -210,7 +259,7 @@ bool ComplaintsAnswerManager::IsFinished(std::set<MuddleAddress> const &cabinet,
       }
       ++miner_it;
     }
-    finished_.store(true);
+    finished_ = true;
     return true;
   }
   return false;
@@ -220,7 +269,7 @@ std::set<ComplaintsAnswerManager::MuddleAddress> ComplaintsAnswerManager::BuildQ
     std::set<MuddleAddress> const &cabinet)
 {
   std::lock_guard<std::mutex> lock{mutex_};
-  assert(finished_ == true);
+  assert(finished_);
   std::set<MuddleAddress> qual;
   std::set_difference(cabinet.begin(), cabinet.end(), complaints_.begin(), complaints_.end(),
                       std::inserter(qual, qual.begin()));
@@ -230,7 +279,6 @@ std::set<ComplaintsAnswerManager::MuddleAddress> ComplaintsAnswerManager::BuildQ
 void ComplaintsAnswerManager::Clear()
 {
   std::lock_guard<std::mutex> lock(mutex_);
-  assert(finished_ == true);
   complaints_.clear();
   complaint_answers_received_.clear();
 }

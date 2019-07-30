@@ -235,7 +235,7 @@ private:
   muddle::rpc::Client      rpc_client_;     ///< The services' RPC client
   RpcProtocolPtr           rpc_proto_;      ///< The services RPC protocol
   StateMachinePtr          state_machine_;  ///< The service state machine
-  rbc::RBC                 rbc_;            ///< Runs the RBC protocol
+  RBC                      rbc_;            ///< Runs the RBC protocol
   DistributedKeyGeneration dkg_;            ///< Runs DKG protocol
 
   /// @name State Machine Data
