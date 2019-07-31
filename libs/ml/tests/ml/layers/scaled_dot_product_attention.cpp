@@ -37,14 +37,15 @@ TYPED_TEST_CASE(ScaledDotProductAttention, MyTypes);
 TYPED_TEST(ScaledDotProductAttention, input_output_dimension_check)  // Use the class as a subgraph
 {
   using DataType = typename TypeParam::Type;
-
+	using SizeType = typename TypeParam::SizeType;
+  
   fetch::ml::Graph<TypeParam> g;
 
   std::string query = g.template AddNode<fetch::ml::ops::PlaceHolder<TypeParam>>("Query", {});
   std::string key   = g.template AddNode<fetch::ml::ops::PlaceHolder<TypeParam>>("Key", {});
   std::string value = g.template AddNode<fetch::ml::ops::PlaceHolder<TypeParam>>("Value", {});
   g.template AddNode<fetch::ml::layers::ScaledDotProductAttention<TypeParam>>(
-      "ScaledDotProductAttention", {query, key, value}, 4u, DataType(0.1));
+      "ScaledDotProductAttention", {query, key, value}, static_cast<SizeType>(4), DataType(0.1));
   TypeParam query_data = TypeParam({4, 7, 2});
   TypeParam key_data   = TypeParam({4, 5, 2});
   TypeParam value_data = TypeParam({3, 5, 2});
@@ -62,15 +63,15 @@ TYPED_TEST(ScaledDotProductAttention,
            self_attention_output_value_check)  // Use the class as a subgraph
 {
   using DataType = typename TypeParam::Type;
-
-  using DataType = typename TypeParam::Type;
+	using SizeType = typename TypeParam::SizeType;
+	
   fetch::ml::Graph<TypeParam> g;
 
   std::string query = g.template AddNode<fetch::ml::ops::PlaceHolder<TypeParam>>("Query", {});
   std::string key   = g.template AddNode<fetch::ml::ops::PlaceHolder<TypeParam>>("Key", {});
   std::string value = g.template AddNode<fetch::ml::ops::PlaceHolder<TypeParam>>("Value", {});
   g.template AddNode<fetch::ml::layers::ScaledDotProductAttention<TypeParam>>(
-      "ScaledDotProductAttention", {query, key, value}, 3u, DataType(0.1));
+      "ScaledDotProductAttention", {query, key, value}, static_cast<SizeType>(3), DataType(0.1));
   TypeParam query_data = TypeParam::FromString("1, 2, 0.5, 0.1; 2, 1, 0.3, -0.2;2, 4, 0, 1");
   query_data.Reshape({3, 2, 2});
 
