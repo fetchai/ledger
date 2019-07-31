@@ -535,6 +535,31 @@ ArrayType ReduceSum(ArrayType const &obj1, SizeType axis)
 }
 
 template <typename ArrayType>
+void ReduceSum(ArrayType const &obj1, std::vector<SizeType> axes, ArrayType &ret)
+{
+
+  using DataType = typename ArrayType::Type;
+  ret.Fill(static_cast<DataType>(0));
+
+  Reduce(axes, [](const DataType &x, DataType &y) { y += x; }, obj1, ret);
+}
+
+template <typename ArrayType>
+ArrayType ReduceSum(ArrayType const &obj1, std::vector<SizeType> axes)
+{
+  SizeVector new_shape = obj1.shape();
+
+  for (SizeType i{0}; i < axes.size(); i++)
+  {
+    new_shape.at(axes.at(i)) = 1;
+  }
+
+  ArrayType ret{new_shape};
+  ReduceSum(obj1, axes, ret);
+  return ret;
+}
+
+template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, void> ReduceMean(ArrayType const &                   obj1,
                                                 typename ArrayType::SizeType const &axis,
                                                 ArrayType &                         ret)
@@ -555,6 +580,39 @@ meta::IfIsMathArray<ArrayType, ArrayType> ReduceMean(ArrayType const &          
   Type n   = static_cast<Type>(obj1.shape().at(axis));
   Type ret = ReduceSum(obj1, axis);
   Divide(ret, n, ret);
+  return ret;
+}
+
+template <typename ArrayType>
+meta::IfIsMathArray<ArrayType, void> ReduceMean(ArrayType const &            obj1,
+                                                std::vector<SizeType> const &axes, ArrayType &ret)
+{
+  using Type = typename ArrayType::Type;
+
+  SizeType n{1};
+  for (SizeType i{0}; i < axes.size(); i++)
+  {
+    n *= obj1.shape().at(axes.at(i));
+  }
+
+  ReduceSum(obj1, axes, ret);
+  Divide(ret, static_cast<Type>(n), ret);
+}
+
+template <typename ArrayType>
+meta::IfIsMathArray<ArrayType, ArrayType> ReduceMean(ArrayType const &            obj1,
+                                                     std::vector<SizeType> const &axes)
+{
+  using Type = typename ArrayType::Type;
+
+  SizeType n{1};
+  for (SizeType i{0}; i < axes.size(); i++)
+  {
+    n *= obj1.shape().at(axes.at(i));
+  }
+
+  Type ret = ReduceSum(obj1, axes);
+  Divide(ret, static_cast<Type>(n), ret);
   return ret;
 }
 

@@ -90,5 +90,49 @@ inline void Reduce(SizeType axis, F function, const Tensor<T, C> &array, Tensor<
   }
 }
 
+/**
+ * Applies given function along given axis on N-1 sized array
+ * @tparam F Function type
+ * @tparam T
+ * @tparam C
+ * @param axis Axis along which function will be applied
+ * @param function Function that will be applied along specified axis
+ * @param array Constant input tensor
+ * @param ret Output tensor
+ */
+template <typename F, typename T, typename C>
+inline void Reduce(std::vector<SizeType> axes, F function, const Tensor<T, C> &array,
+                   Tensor<T, C> &ret)
+{
+  for (SizeType i{0}; i < axes.size(); i++)
+  {
+    assert(ret.shape().at(axes.at(i)) == 1);
+  }
+  // Create axis-permutable slice iterator
+  auto a_it = array.Slice().cbegin();
+  auto r_it = ret.Slice().begin();
+
+  SizeType n = 1;
+  // Put selected axes to front
+  for (SizeType i{0}; i < axes.size(); i++)
+  {
+    n *= array.shape().at(axes.at(i));
+    a_it.PermuteAxes(i, axes.at(i));
+    r_it.PermuteAxes(i, axes.at(i));
+  }
+
+  while (a_it.is_valid())
+  {
+    // Move return array iterator every Nth steps
+    for (SizeType j{0}; j < n; ++j)
+    {
+      // Apply function
+      function(*a_it, *r_it);
+      ++a_it;
+    }
+    ++r_it;
+  }
+}
+
 }  // namespace math
 }  // namespace fetch

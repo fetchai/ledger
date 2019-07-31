@@ -672,6 +672,76 @@ TYPED_TEST(FreeFunctionsTest, ReduceSum3D_axis_2)
               static_cast<double>(function_tolerance<DataType>()));
 }
 
+TYPED_TEST(FreeFunctionsTest, ReduceSum_axes_0_2)
+{
+  using SizeType = typename TypeParam::SizeType;
+  using DataType = typename TypeParam::Type;
+
+  SizeType n_height{4};
+  SizeType n_width{4};
+  SizeType n_features{2};
+
+  TypeParam array1{{n_height, n_width, n_features}};
+
+  // Fill input
+  auto     it    = array1.begin();
+  SizeType count = 1;
+  while (it.is_valid())
+  {
+    *it = static_cast<DataType>(count);
+    count++;
+    ++it;
+  }
+
+  TypeParam output{{1, n_width, 1}};
+  fetch::math::ReduceSum(array1, {0, 2}, output);
+
+  // Test values
+  EXPECT_NEAR(static_cast<double>(output(0, 0, 0)), 84.,
+              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output(0, 1, 0)), 116.,
+              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output(0, 2, 0)), 148.,
+              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output(0, 3, 0)), 180.,
+              static_cast<double>(function_tolerance<DataType>()));
+}
+
+TYPED_TEST(FreeFunctionsTest, ReduceMean_axes_0_2)
+{
+  using SizeType = typename TypeParam::SizeType;
+  using DataType = typename TypeParam::Type;
+
+  SizeType n_height{4};
+  SizeType n_width{4};
+  SizeType n_features{2};
+
+  TypeParam array1{{n_height, n_width, n_features}};
+
+  // Fill input
+  auto     it    = array1.begin();
+  SizeType count = 1;
+  while (it.is_valid())
+  {
+    *it = static_cast<DataType>(count);
+    count++;
+    ++it;
+  }
+
+  TypeParam output{{1, n_width, 1}};
+  fetch::math::ReduceMean(array1, {0, 2}, output);
+
+  // Test values
+  EXPECT_NEAR(static_cast<double>(output(0, 0, 0)), 10.5,
+              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output(0, 1, 0)), 14.5,
+              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output(0, 2, 0)), 18.5,
+              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output(0, 3, 0)), 22.5,
+              static_cast<double>(function_tolerance<DataType>()));
+}
+
 TYPED_TEST(FreeFunctionsTest, ReduceMean_axis_0)
 {
   using SizeType = typename TypeParam::SizeType;
