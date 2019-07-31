@@ -83,8 +83,6 @@ TYPED_TEST(ScaledDotProductAttention,
       "0.0751734728, -0.0241974536; 3.6993491062, 3.9889853359, 0.4496530544, 0.6483949073");
   gt.Reshape({3, 2, 2});
   TypeParam prediction = g.Evaluate("ScaledDotProductAttention", false);
-  std::cout << "\nprediction.View(0).Copy().ToString(): \n"
-            << prediction.View(0).Copy().ToString() << std::endl;
 
   ASSERT_TRUE(prediction.AllClose(
       gt, static_cast<DataType>(5) * fetch::math::function_tolerance<DataType>()));
