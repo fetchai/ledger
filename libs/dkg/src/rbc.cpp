@@ -365,7 +365,6 @@ void RBC::OnRBroadcast(RBroadcast const &msg, uint32_t sender_index)
   {
     if (SetMbar(tag, msg, sender_index))
     {
-      broadcasts_[tag].mbar = msg.message();
       REcho       echo_msg{msg.channel(), msg.id(), msg.counter(), MessageHash(msg.message())};
       RBCEnvelope env{echo_msg};
       Broadcast(env);
