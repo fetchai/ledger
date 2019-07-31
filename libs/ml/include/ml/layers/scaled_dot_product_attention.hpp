@@ -81,9 +81,8 @@ public:
         name + "_Scaled_Key_Query_MatMul", {kq_matmul, sqrt_dk_ph});
 
     // softmax
-    // N.B. the axis must be changed to 0 once the logic of softmax is fixed
     std::string attention_weight = this->template AddNode<fetch::ml::ops::Softmax<ArrayType>>(
-        name + "_Softmax", {scaled_kq_matmul}, 1);
+        name + "_Softmax", {scaled_kq_matmul}, 0);
 
     // dropout
     std::string dropout_attention_weight =
