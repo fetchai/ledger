@@ -47,15 +47,18 @@ public:
   using DataType      = typename ArrayType::Type;
   using VecTensorType = typename SubGraph<T>::VecTensorType;
 
-  LayerNorm(std::vector<SizeType> const &data_shape,
-            DataType                     epsilon = fetch::math::numeric_lowest<DataType>())
+  LayerNorm(std::vector<SizeType> const &data_shape, SizeType axis = static_cast<SizeType>(0),
+            DataType epsilon = fetch::math::numeric_lowest<DataType>())
     : data_shape_(data_shape)
+    , axis_(axis)
     , epsilon_(epsilon)
   {
     // the data_shape is the shape of the data without including the batch dims
-    // currently 1D input or 1D inputs with time dims is supported
-    // currently, we only allow layernorm to be down in the first dims
-    ASSERT(data_shape.size() <= 2);
+    // make sure we do not do normalization along the batch dims
+    ASSERT(axis_ != data_shape_.size());
+
+    // Due to constrain in Add and Multiply layer, we do not support data of more than 3 dims
+    ASSERT(data_shape_.size() <= 2);
 
     std::string name = DESCRIPTOR;
 
@@ -65,21 +68,12 @@ public:
     std::string beta =
         this->template AddNode<fetch::ml::ops::Weights<ArrayType>>(name + "_Beta", {});
     ArrayType gamma_data, beta_data;
-    if (data_shape_.size() == 1)
-    {
-      gamma_data = ArrayType({data_shape_.at(0), 1});
-      beta_data  = ArrayType({data_shape_.at(0), 1});
-    }
-    else if (data_shape_.size() == 2)
-    {
-      gamma_data = ArrayType({data_shape_.at(0), 1, 1});
-      beta_data  = ArrayType({data_shape_.at(0), 1, 1});
-    }
-    else
-    {
-      throw std::runtime_error("more than 3D input data cannot be handled yet");
-    }
-    // initialization: gamma to all 1, beta to all zero
+
+    // initialization: gamma to all 1, beta to all zero, and with corresponding shape
+    std::vector<SizeType> weight_shape(data_shape_.size() + 1, 1);
+    weight_shape[axis_] = data_shape_[axis_];
+    gamma_data.Reshape(weight_shape);
+    beta_data.Reshape(weight_shape);
     gamma_data.Fill(static_cast<DataType>(1));
     this->SetInput(gamma, gamma_data);
     this->SetInput(beta, beta_data);
@@ -90,7 +84,7 @@ public:
 
     // do the normalization
     std::string normalized_output = this->template AddNode<fetch::ml::ops::LayerNorm<ArrayType>>(
-        name + "_LayerNorm", {input}, data_shape_);
+        name + "_LayerNorm", {input}, axis_);
 
     // do the rescaling
     std::string scaled_output = this->template AddNode<fetch::ml::ops::Multiply<ArrayType>>(
@@ -113,6 +107,7 @@ public:
 
 private:
   std::vector<SizeType> data_shape_;
+  SizeType              axis_;
   DataType              epsilon_;
 };
 

@@ -50,7 +50,7 @@ TYPED_TEST(LayerNormTest, forward_test_2d)
       "0, -0.39223227;"
       "1.22474487, 1.372812945");
 
-  fetch::ml::ops::LayerNorm<ArrayType> op(data.shape());
+  fetch::ml::ops::LayerNorm<ArrayType> op(0);
 
   ArrayType prediction(op.ComputeOutputShape({std::make_shared<ArrayType>(data)}));
   op.Forward({std::make_shared<ArrayType>(data)}, prediction);
@@ -79,7 +79,7 @@ TYPED_TEST(LayerNormTest, forward_test_3d)
       "0, -0.39223227, -1.22474487,  -0.62076591;"
       "1.22474487,  1.37281295, 1.22474487, 1.41083162");
 
-  fetch::ml::ops::LayerNorm<ArrayType> op({3, 2});
+  fetch::ml::ops::LayerNorm<ArrayType> op(0);
 
   ArrayType prediction(op.ComputeOutputShape({std::make_shared<ArrayType>(data)}));
   op.Forward({std::make_shared<ArrayType>(data)}, prediction);
@@ -110,7 +110,7 @@ TYPED_TEST(LayerNormTest, backward_test_2d)
       "0.000001272, -0.00000095;"
       "2.12131923, -1.06065946");
 
-  fetch::ml::ops::LayerNorm<ArrayType> op({3});
+  fetch::ml::ops::LayerNorm<ArrayType> op(0);
 
   ArrayType prediction(op.ComputeOutputShape({std::make_shared<ArrayType>(data)}));
   auto      backward_errors = op.Backward({std::make_shared<ArrayType>(data)}, error_signal).at(0);
@@ -144,7 +144,7 @@ TYPED_TEST(LayerNormTest, backward_test_3d)
       "2.12131923, -1.06065946, 0, 0.0468292959");
   gt.Reshape({3, 2, 2});
 
-  fetch::ml::ops::LayerNorm<ArrayType> op({3, 2});
+  fetch::ml::ops::LayerNorm<ArrayType> op(0);
 
   ArrayType prediction(op.ComputeOutputShape({std::make_shared<ArrayType>(data)}));
   auto      backward_errors = op.Backward({std::make_shared<ArrayType>(data)}, error_signal).at(0);
