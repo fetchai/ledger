@@ -156,12 +156,12 @@ EntropyPtr CreateEntropy()
   return std::make_unique<ledger::NaiveEntropyGenerator>();
 }
 
-StakeManagerPtr CreateStakeManager(Constellation::Config const &cfg, bool enabled,
+StakeManagerPtr CreateStakeManager(Constellation::Config const &      cfg,
                                    ledger::EntropyGeneratorInterface &entropy)
 {
   StakeManagerPtr mgr{};
 
-  if (enabled)
+  if (cfg.proof_of_stake)
   {
     mgr = std::make_shared<ledger::StakeManager>(entropy, cfg.block_interval_ms);
   }
@@ -220,7 +220,7 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
   , dag_{GenerateDAG(cfg_.features.IsEnabled("synergetic"), "dag_db_", true, certificate)}
   , dkg_{CreateDkgService(cfg_, certificate->identity().identifier(), muddle_.AsEndpoint())}
   , entropy_{CreateEntropy()}
-  , stake_{CreateStakeManager(cfg_, cfg_.proof_of_stake, *entropy_)}
+  , stake_{CreateStakeManager(cfg_, *entropy_)}
   , execution_manager_{std::make_shared<ExecutionManager>(
         cfg_.num_executors, cfg_.log2_num_lanes, storage_,
         [this] {
@@ -417,7 +417,7 @@ void Constellation::Run(UriList const &initial_peers, core::WeakRunnable bootstr
   }
 
   // BEFORE the block coordinator starts its state set up special genesis
-  if (cfg_.proof_of_stake)
+  if (cfg_.proof_of_stake || cfg_.load_state_file)
   {
     FETCH_LOG_INFO(LOGGING_NAME,
                    "Loading from genesis save file. Location: ", cfg_.stakefile_location);

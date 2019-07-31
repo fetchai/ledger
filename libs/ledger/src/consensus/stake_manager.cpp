@@ -45,10 +45,8 @@ std::size_t SafeDecrement(std::size_t value, std::size_t decrement)
 
 }  // namespace
 
-StakeManager::StakeManager(EntropyGeneratorInterface &entropy, uint32_t block_interval_ms,
-                           Mode mode)
+StakeManager::StakeManager(EntropyGeneratorInterface &entropy, uint32_t block_interval_ms)
   : entropy_{&entropy}
-  , mode_{mode}
   , block_interval_ms_{block_interval_ms}
 {}
 
@@ -70,16 +68,6 @@ void StakeManager::UpdateCurrentBlock(Block const &current)
 bool StakeManager::ShouldGenerateBlock(Block const &previous, Address const &address)
 {
   FETCH_LOG_INFO(LOGGING_NAME, "Should generate block? Prev: ", previous.body.block_number);
-
-  if (mode_ == Mode::ALWAYS_OFF)
-  {
-    return false;
-  }
-
-  if (mode_ == Mode::ALWAYS_ON)
-  {
-    return true;
-  }
 
   auto const committee = GetCommittee(previous);
   if (!committee || committee->empty())
@@ -166,8 +154,8 @@ std::size_t StakeManager::GetBlockGenerationWeight(Block const &previous, Addres
     weight = SafeDecrement(weight, 1);
   }
 
-  // Note: weight must always be non zero
-  return weight + 1;
+  // Note: weight must always be non zero (indicates failure/not in committee)
+  return weight;
 }
 
 void StakeManager::Reset(StakeSnapshot const &snapshot, std::size_t committee_size)

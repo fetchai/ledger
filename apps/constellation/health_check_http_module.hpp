@@ -54,13 +54,14 @@ public:
           bool const dkg_synced = dkg_ ? dkg_->IsSynced() : true;
 
           variant::Variant response            = variant::Variant::Object();
-          response["chain_synced"]             = chain_synced && dkg_synced;
+          response["dkg_synced"]               = dkg_synced;
+          response["chain_synced"]             = chain_synced;
           response["chain_executed_finished"]  = chain_executed_finished;
           response["chain_execution_complete"] = chain_execution_complete;
 
           // determine the status code for the response
           http::Status status{http::Status::CLIENT_ERROR_PRECONDITION_FAILED};
-          if (chain_synced && chain_executed_finished && chain_execution_complete)
+          if (chain_synced && dkg_synced && chain_executed_finished && chain_execution_complete)
           {
             status = http::Status::SUCCESS_OK;
           }
