@@ -26,6 +26,11 @@ namespace ml {
 template <typename T>
 class Graph;
 
+namespace layers {
+template <typename T>
+class FullyConnected;
+}
+
 namespace ops {
 template <typename T>
 class Trainable;
@@ -43,6 +48,13 @@ template <typename T, typename OperationType>
 constexpr bool IsGraph = std::is_base_of<fetch::ml::Graph<T>, OperationType>::value;
 
 template <typename T, typename OperationType>
+constexpr bool IsShareable =
+    std::is_base_of<fetch::ml::layers::FullyConnected<T>, OperationType>::value;
+
+template <typename T, typename OperationType>
+constexpr bool IsNotShareable = !IsShareable<T, OperationType>;
+
+template <typename T, typename OperationType>
 constexpr bool IsNotGraph = !IsGraph<T, OperationType>;
 
 template <typename T, typename OperationType>
@@ -54,6 +66,13 @@ using IfIsTrainable = fetch::meta::EnableIf<IsTrainable<T, OperationType>, R>;
 
 template <typename T, typename OperationType, typename R = void>
 using IfIsGraph = fetch::meta::EnableIf<IsGraph<T, OperationType>, R>;
+
+// TODO (#1397) Need to implement shared weight for every shareable weight layers and ops
+template <typename T, typename OperationType, typename R = void>
+using IfIsShareable = fetch::meta::EnableIf<IsShareable<T, OperationType>, R>;
+
+template <typename T, typename OperationType, typename R = void>
+using IfIsNotShareable = fetch::meta::EnableIf<IsNotShareable<T, OperationType>, R>;
 
 template <typename T, typename OperationType, typename R = void>
 using IfIsNotTrainable = fetch::meta::EnableIf<IsNotTrainable<T, OperationType>, R>;

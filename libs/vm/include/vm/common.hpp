@@ -19,6 +19,7 @@
 
 #include "meta/type_util.hpp"
 
+#include <assert.h>
 #include <cmath>
 #include <cstdint>
 #include <functional>
@@ -141,7 +142,11 @@ enum class NodeKind : uint16_t
   Divide                                    = 63,
   InplaceDivide                             = 64,
   Modulo                                    = 65,
-  InplaceModulo                             = 66
+  InplaceModulo                             = 66,
+  PersistentStatement                       = 67,
+  UseStatement                              = 68,
+  UseStatementKeyList                       = 69,
+  UseAnyStatement                           = 70
 };
 
 enum class ExpressionKind : uint8_t
@@ -171,7 +176,9 @@ enum class VariableKind : uint8_t
   Unknown   = 0,
   Parameter = 1,
   For       = 2,
-  Local     = 3
+  Var       = 3,
+  Use       = 4,
+  UseAny    = 5
 };
 
 enum class FunctionKind : uint8_t

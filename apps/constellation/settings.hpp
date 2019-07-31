@@ -92,8 +92,9 @@ public:
 
   /// @name State File
   /// @{
-  settings::Setting<bool> dump_state;
-  settings::Setting<bool> load_state;
+  settings::Setting<bool>        dump_state;
+  settings::Setting<bool>        load_state;
+  settings::Setting<std::string> stakefile_location;
   /// @}
 
   /// @name Experimental
