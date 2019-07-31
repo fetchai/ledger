@@ -42,47 +42,48 @@ template <class T>
 class ScaledDotProductAttention : public SubGraph<T>
 {
 public:
-  using ArrayType    = T;
-  using SizeType     = typename ArrayType::SizeType;
-  using ArrayPtrType = std::shared_ptr<ArrayType>;
-  using DataType     = typename T::Type;
-	using VecTensorType = typename SubGraph<T>::VecTensorType;
-	
-	ScaledDotProductAttention(std::uint64_t dk, DataType dropout = 0.1)
+  using ArrayType     = T;
+  using SizeType      = typename ArrayType::SizeType;
+  using ArrayPtrType  = std::shared_ptr<ArrayType>;
+  using DataType      = typename T::Type;
+  using VecTensorType = typename SubGraph<T>::VecTensorType;
+
+  ScaledDotProductAttention(std::uint64_t dk, DataType dropout = 0.1)
     : key_dim_(dk)
   {
-		std::string name = DESCRIPTOR;
-		
-		// all input shapes are (feature_length, query/key/value_num, batch_num)
+    std::string name = DESCRIPTOR;
+
+    // all input shapes are (feature_length, query/key/value_num, batch_num)
     std::string query =
         this->template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>(name + "_Query", {});
     std::string key =
         this->template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>(name + "_Key", {});
     std::string value =
         this->template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>(name + "_Value", {});
-		
-    // Be advised that the matrix multiplication sequence is different from what is proposed in the paper
-    // as our batch dimension is the last dimension, which the feature dimension is the first one.
-    // in the paper, feature dimension is the col dimension
-    // please refer to http://jalammar.github.io/illustrated-transformer/
+
+    // Be advised that the matrix multiplication sequence is different from what is proposed in the
+    // paper as our batch dimension is the last dimension, which the feature dimension is the first
+    // one. in the paper, feature dimension is the col dimension please refer to
+    // http://jalammar.github.io/illustrated-transformer/
     std::string transpose_key =
         this->template AddNode<fetch::ml::ops::Transpose<ArrayType>>(name + "_TransposeKey", {key});
     std::string kq_matmul = this->template AddNode<fetch::ml::ops::MatrixMultiply<ArrayType>>(
         name + "_Key_Query_MatMul", {transpose_key, query});
 
     ArrayType sqrt_dk_tensor = std::vector<SizeType>({1, 1, 1});
-    sqrt_dk_tensor(0, 0, 0)     = fetch::math::Sqrt(static_cast<DataType>(key_dim_));
-    std::string sqrt_dk_ph   = this->template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>(
-        name + "_Sqrt_Key_Dim", {});
+    sqrt_dk_tensor(0, 0, 0)  = fetch::math::Sqrt(static_cast<DataType>(key_dim_));
+    std::string sqrt_dk_ph =
+        this->template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>(name + "_Sqrt_Key_Dim", {});
     this->SetInput(sqrt_dk_ph, sqrt_dk_tensor);
-    
-		// scale the QK matrix multiplication
+
+    // scale the QK matrix multiplication
     std::string scaled_kq_matmul = this->template AddNode<fetch::ml::ops::Divide<ArrayType>>(
         name + "_Scaled_Key_Query_MatMul", {kq_matmul, sqrt_dk_ph});
 
     // softmax
+    // N.B. the axis must be changed to 0 once the logic of softmax is fixed
     std::string attention_weight = this->template AddNode<fetch::ml::ops::Softmax<ArrayType>>(
-        name + "_Softmax", {scaled_kq_matmul}, 0);
+        name + "_Softmax", {scaled_kq_matmul}, 1);
 
     // dropout
     std::string dropout_attention_weight =
@@ -93,7 +94,7 @@ public:
     std::string weight_value_matmul =
         this->template AddNode<fetch::ml::ops::MatrixMultiply<ArrayType>>(
             name + "_Value_Weight_MatMul", {value, dropout_attention_weight});
-    
+
     // in the end, the output is of shape (feature_length, query_num, batch_num)
 
     // TODO () masking op translation decoder

@@ -18,8 +18,8 @@
 
 #include "math/tensor.hpp"
 #include "ml/graph.hpp"
-#include "ml/layers/fully_connected.hpp"
 #include "ml/layers/convolution_1d.hpp"
+#include "ml/layers/fully_connected.hpp"
 #include "ml/ops/activations/relu.hpp"
 #include "ml/ops/multiply.hpp"
 #include "ml/ops/placeholder.hpp"
