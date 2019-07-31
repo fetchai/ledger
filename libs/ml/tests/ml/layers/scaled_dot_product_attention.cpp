@@ -37,8 +37,8 @@ TYPED_TEST_CASE(ScaledDotProductAttention, MyTypes);
 TYPED_TEST(ScaledDotProductAttention, input_output_dimension_check)  // Use the class as a subgraph
 {
   using DataType = typename TypeParam::Type;
-	using SizeType = typename TypeParam::SizeType;
-  
+  using SizeType = typename TypeParam::SizeType;
+
   fetch::ml::Graph<TypeParam> g;
 
   std::string query = g.template AddNode<fetch::ml::ops::PlaceHolder<TypeParam>>("Query", {});
@@ -63,8 +63,8 @@ TYPED_TEST(ScaledDotProductAttention,
            self_attention_output_value_check)  // Use the class as a subgraph
 {
   using DataType = typename TypeParam::Type;
-	using SizeType = typename TypeParam::SizeType;
-	
+  using SizeType = typename TypeParam::SizeType;
+
   fetch::ml::Graph<TypeParam> g;
 
   std::string query = g.template AddNode<fetch::ml::ops::PlaceHolder<TypeParam>>("Query", {});
