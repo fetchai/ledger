@@ -10,7 +10,4 @@ include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
 # Compiler Configuration
 setup_compiler()
 
-fetch_add_slow_test(fetch-dkg-tests
-                    fetch-dkg
-                    gtests
-                    DISABLED)
+fetch_add_slow_test(fetch-dkg-tests fetch-dkg gtests)
