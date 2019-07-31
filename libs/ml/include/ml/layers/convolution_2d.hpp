@@ -21,7 +21,7 @@
 #include "ml/ops/activation.hpp"
 #include "ml/ops/convolution_2d.hpp"
 #include "ml/ops/weights.hpp"
-#include "ml/subgraph.hpp"
+#include "ml/core/subgraph.hpp"
 
 #include <functional>
 #include <memory>

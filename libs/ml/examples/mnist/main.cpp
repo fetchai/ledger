@@ -18,7 +18,7 @@
 
 #include "math/tensor.hpp"
 #include "ml/dataloaders/mnist_loaders/mnist_loader.hpp"
-#include "ml/graph.hpp"
+#include "ml/core/graph.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/ops/activation.hpp"
 #include "ml/ops/loss_functions/cross_entropy_loss.hpp"

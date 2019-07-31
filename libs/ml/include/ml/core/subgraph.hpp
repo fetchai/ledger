@@ -17,7 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/graph.hpp"
+#include "ml/core/graph.hpp"
+#include "ml/core/node.hpp"
 
 #include <cassert>
 #include <memory>
@@ -136,13 +137,13 @@ std::vector<T> SubGraph<T>::Backward(VecTensorType const &inputs, ArrayType cons
 {
   assert(inputs.size() == this->input_node_names_.size());
   FETCH_UNUSED(inputs);
-  std::vector<std::pair<NodeInterface<T> *, ArrayType>> non_back_prop_err_signal =
+  std::vector<std::pair<Node<T> *, ArrayType>> non_back_prop_err_signal =
       this->nodes_[output_node_name_]->BackPropagateSignal(error_signal);
   std::vector<ArrayType> back_prop_err_signal;
 
   for (std::string const &s : input_node_names_)
   {
-    std::shared_ptr<NodeInterface<T>> node = this->nodes_[s];
+    std::shared_ptr<Node<T>> node = this->nodes_[s];
     for (auto const &grad : non_back_prop_err_signal)
     {
       if (grad.first == node.get())

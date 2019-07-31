@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "math/standard_functions/sqrt.hpp"
-#include "ml/graph.hpp"
+#include "ml/core/graph.hpp"
 #include "optimiser.hpp"
 
 namespace fetch {

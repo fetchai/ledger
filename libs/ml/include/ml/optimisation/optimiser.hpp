@@ -20,7 +20,7 @@
 #include "math/base_types.hpp"
 #include "math/statistics/mean.hpp"
 #include "ml/dataloaders/dataloader.hpp"
-#include "ml/graph.hpp"
+#include "ml/core/graph.hpp"
 
 #include <chrono>
 

@@ -21,7 +21,7 @@
 #include "math/matrix_operations.hpp"
 #include "math/tensor.hpp"
 #include "ml/dataloaders/word2vec_loaders/sgns_w2v_dataloader.hpp"
-#include "ml/graph.hpp"
+#include "ml/core/graph.hpp"
 #include "ml/layers/skip_gram.hpp"
 #include "ml/ops/loss_functions.hpp"
 #include "ml/optimisation/adam_optimiser.hpp"

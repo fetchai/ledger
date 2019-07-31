@@ -18,7 +18,7 @@
 
 #include "core/serializers/byte_array_buffer.hpp"
 #include "math/tensor.hpp"
-#include "ml/graph.hpp"
+#include "ml/core/graph.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/ops/placeholder.hpp"
 #include "ml/serializers/ml_types.hpp"

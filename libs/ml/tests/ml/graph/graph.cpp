@@ -17,7 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "math/tensor.hpp"
-#include "ml/graph.hpp"
+#include "ml/core/graph.hpp"
 #include "ml/layers/self_attention.hpp"
 #include "ml/ops/activations/relu.hpp"
 #include "ml/ops/multiply.hpp"

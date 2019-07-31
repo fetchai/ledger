@@ -17,7 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "math/tensor.hpp"
-#include "ml/node.hpp"
+#include "ml/core/node.hpp"
 #include "ml/ops/activations/relu.hpp"
 #include "ml/ops/placeholder.hpp"
 

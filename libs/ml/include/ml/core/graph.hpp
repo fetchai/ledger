@@ -18,8 +18,9 @@
 //------------------------------------------------------------------------------
 
 #include "ml/meta/ml_type_traits.hpp"
-#include "ml/node.hpp"
+#include "ml/core/node.hpp"
 #include "ml/ops/weights.hpp"
+#include "ml/ops/op_interface.hpp"
 
 #include <algorithm>
 #include <cassert>
@@ -45,7 +46,7 @@ public:
   using ArrayPtrType       = std::shared_ptr<ArrayType>;
   using SizeType           = typename ArrayType::SizeType;
   using DataType           = typename ArrayType::Type;
-  using NodePtrType        = typename std::shared_ptr<fetch::ml::NodeInterface<ArrayType>>;
+  using NodePtrType        = typename std::shared_ptr<fetch::ml::Node<ArrayType>>;
   using TrainablePtrType   = typename std::shared_ptr<fetch::ml::ops::Trainable<ArrayType>>;
   using GraphPtrType       = typename std::shared_ptr<fetch::ml::Graph<ArrayType>>;
   using PlaceholderType    = typename fetch::ml::ops::PlaceHolder<ArrayType>;
@@ -61,12 +62,12 @@ public:
   void         BackPropagateError(std::string const &node_name);
   virtual void Step(DataType learning_rate);
 
-  template <class OperationType, typename... Params>
-  std::string AddNode(std::string const &node_name, std::vector<std::string> const &inputs,
+  template <typename... Params>
+  std::string AddNode(OpType const & operation_type, std::string const &node_name, std::vector<std::string> const &inputs,
                       Params... params);
   NodePtrType GetNode(std::string const &node_name) const;
   void        SetInput(std::string const &node_name, ArrayType data);
-  void        ResetGraphCache(std::shared_ptr<NodeInterface<T>> const &n, bool input_size_changed);
+  void        ResetGraphCache(std::shared_ptr<Node<T>> const &n, bool input_size_changed);
   void        SetRegularisation(fetch::ml::details::RegularisationType regularisation_type,
                                 DataType regularisation_rate = DataType{0.0});
   bool        SetRegularisation(std::string                            node_name,
@@ -89,20 +90,7 @@ public:
 private:
   void ApplyRegularisation();
 
-  template <class OperationType>
-  meta::IfIsTrainable<ArrayType, OperationType, void> AddTrainable(
-      std::string const &name, std::shared_ptr<Node<ArrayType, OperationType>> op);
-
-  template <class OperationType>
-  meta::IfIsGraph<ArrayType, OperationType, void> AddTrainable(
-      std::string const &name, std::shared_ptr<Node<ArrayType, OperationType>> op);
-
-  template <class OperationType>
-  meta::IfIsNotGraphOrTrainable<ArrayType, OperationType, void> AddTrainable(
-      std::string const &name, std::shared_ptr<Node<ArrayType, OperationType>> op);
-
-  template <typename OperationType>
-  std::string UpdateVariableName(std::string const &name);
+  std::string UpdateVariableName(OpType const & operation_type, std::string const &name);
 
 protected:
   std::unordered_map<std::string, NodePtrType> nodes_;
@@ -228,54 +216,14 @@ void Graph<ArrayType>::ApplyRegularisation()
  * @param params input parameters to the node op
  */
 template <typename ArrayType>
-template <class OperationType, typename... Params>
-std::string Graph<ArrayType>::AddNode(std::string const &             node_name,
-                                      std::vector<std::string> const &inputs, Params... params)
-{
-  // guarantee unique op name
-  std::string name = UpdateVariableName<OperationType>(node_name);
-
-  // Instantiate the node
-  auto node_ptr = std::make_shared<Node<ArrayType, OperationType>>(name, params...);
-  nodes_[name]  = node_ptr;
-
-  // assign inputs and outputs
-  for (auto const &i : inputs)
-  {
-    nodes_[name]->AddInput(nodes_[i]);
-    nodes_[i]->AddOutput(nodes_[name]);
-  }
-
-  // save the connections (used for serializing graph)
-  connections_.push_back(std::make_pair(name, inputs));
-
-  // add to map of trainable ops if necessary
-  AddTrainable(name, node_ptr);
-
-  // return unique node name (may not be identical to node_name)
-  return name;
-}
-
-/**
- * An add node method that operates at run time (where the operation type is not known at compile time)
- * This is necessary because to construct a graph after deserialising saved states must happen at run time
- * @tparam ArrayType
- * @tparam Params
- * @param operation_type
- * @param node_name
- * @param inputs
- * @param params
- * @return
- */
-template <typename ArrayType>
 template <typename... Params>
-std::string Graph<ArrayType>::RunTimeAddNode(OpType const & operation_type, std::string const & node_name, std::vector<std::string> const &inputs, Params... params)
+std::string Graph<ArrayType>::AddNode(OpType const & operation_type, std::string const &node_name, std::vector<std::string> const &inputs, Params... params)
 {
   // guarantee unique op name
-  std::string name = RunTimeUpdateVariableName(operation_type, node_name);
+  std::string name = UpdateVariableName(node_name);
 
   // Instantiate the node
-  auto node_ptr = std::make_shared<Node<ArrayType>>(operation_type, name, params...);
+  auto node_ptr = std::make_shared<Node<ArrayType>>(name, params...);
   nodes_[name]  = node_ptr;
 
   // assign inputs and outputs
@@ -289,7 +237,22 @@ std::string Graph<ArrayType>::RunTimeAddNode(OpType const & operation_type, std:
   connections_.push_back(std::make_pair(name, inputs));
 
   // add to map of trainable ops if necessary
-  AddTrainable(name, node_ptr);
+  if (IsTrainableOp(operation_type))
+  {
+    trainable_.emplace_back(node_ptr);
+    trainable_lookup_[name] = trainable_.size() - 1;
+  }
+  else if (IsLayerOp(operation_type))
+  {
+    for (auto &trainable : node_ptr->trainable_lookup_)
+    {
+      // guarantee unique op name
+      std::string resolved_name = UpdateVariableName(name + "_" + trainable.first);
+
+      trainable_.emplace_back(node_ptr->trainable_.at(trainable.second));
+      trainable_lookup_[resolved_name] = trainable_.size() - 1;
+    }
+  }
 
   // return unique node name (may not be identical to node_name)
   return name;
@@ -446,81 +409,23 @@ void Graph<ArrayType>::ApplyGradients(std::vector<ArrayType> &grad)
 }
 
 /**
- * Appends op to map of trainable nodes. Called by AddNode if the node is for a trainable op
- * @tparam OperationType template class of operation
- * @param name the guaranteed unique name of the node
- * @param op the pointer to the op
- */
-template <typename ArrayType>
-template <class OperationType>
-meta::IfIsTrainable<ArrayType, OperationType, void> Graph<ArrayType>::AddTrainable(
-    std::string const &name, std::shared_ptr<Node<ArrayType, OperationType>> op)
-{
-
-  trainable_.emplace_back(op);
-  trainable_lookup_[name] = trainable_.size() - 1;
-}
-
-/**
- * Appends all trainable ops from op.trainable_ to map of trainable nodes.
- * Called by AddNode if the OperationType is a graph
- * @tparam OperationType template class of operation
- * @param name the guaranteed unique name of the node
- * @param op the pointer to the op
- */
-template <typename ArrayType>
-template <class OperationType>
-meta::IfIsGraph<ArrayType, OperationType, void> Graph<ArrayType>::AddTrainable(
-    std::string const &name, std::shared_ptr<Node<ArrayType, OperationType>> op)
-{
-  for (auto &trainable : op->trainable_lookup_)
-  {
-    // guarantee unique op name
-    std::string node_name(name + "_" + trainable.first);
-    std::string resolved_name = UpdateVariableName<OperationType>(node_name);
-
-    trainable_.emplace_back(op->trainable_.at(trainable.second));
-    trainable_lookup_[resolved_name] = trainable_.size() - 1;
-  }
-}
-
-/**
- * If AddNode is called for a non-trainable op, this version of the function is called which
- * does not append to the trainable map
- * @tparam OperationType
- * @param name
- * @param op
- * @return
- */
-template <typename ArrayType>
-template <class OperationType>
-meta::IfIsNotGraphOrTrainable<ArrayType, OperationType, void> Graph<ArrayType>::AddTrainable(
-    std::string const &name, std::shared_ptr<Node<ArrayType, OperationType>> op)
-{
-  FETCH_UNUSED(name);
-  FETCH_UNUSED(op);
-}
-
-/**
  * generates a new variable name if necessary to ensure uniqueness within graph
  * @param pre_string
  * @return
  */
 template <typename ArrayType>
-template <typename OperationType>
-std::string Graph<ArrayType>::UpdateVariableName(std::string const &name)
+std::string Graph<ArrayType>::UpdateVariableName(OpType const & operation_type, std::string const &name)
 {
   std::string ret           = name;
-  std::string op_descriptor = (OperationType::DESCRIPTOR);
   // search graph for existing variable names
   if ((nodes_.find(ret) != nodes_.end()) || ret.empty())
   {
     std::uint64_t name_idx = 0;
-    ret                    = op_descriptor + "_" + std::to_string(name_idx);
     while (!(nodes_.find(ret) == nodes_.end()))
     {
+      ret = ops::OpInterface::Descriptor(operation_type) + "_" + std::to_string(name_idx);
+      // TODO - a timeout would be nice
       ++name_idx;
-      ret = op_descriptor + "_" + std::to_string(name_idx);
     }
   }
 

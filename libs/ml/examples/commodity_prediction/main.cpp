@@ -21,7 +21,7 @@
 #include "math/tensor.hpp"
 #include "ml/dataloaders/ReadCSV.hpp"
 #include "ml/dataloaders/commodity_dataloader.hpp"
-#include "ml/graph.hpp"
+#include "ml/core/graph.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/ops/activation.hpp"
 #include "ml/ops/loss_functions/mean_square_error_loss.hpp"

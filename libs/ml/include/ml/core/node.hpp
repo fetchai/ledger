@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/logger.hpp"
+#include "ml/ops/op_interface.hpp"
 #include "ml/ops/ops.hpp"
 #include "ml/saveparams/saveable_params.hpp"
 
@@ -33,25 +34,27 @@
 namespace fetch {
 namespace ml {
 
-template <class T>
-class NodeInterface
-{
-public:
-  using ArrayType   = T;
-  using NodePtrType = std::shared_ptr<NodeInterface<T>>;
+//template <class T>
+//class NodeInterface
+//{
+//public:
+//  using ArrayType   = T;
+//  using NodePtrType = std::shared_ptr<NodeInterface<T>>;
+//
+//  virtual std::shared_ptr<T>                                    Evaluate(bool is_training)      = 0;
+//  virtual void                                                  AddInput(NodePtrType const &i)  = 0;
+//  virtual void                                                  AddOutput(NodePtrType const &i) = 0;
+//  virtual std::vector<std::pair<NodeInterface<T> *, ArrayType>> BackPropagateSignal(
+//      ArrayType const &error_signal)                                                   = 0;
+//  virtual void                                     ResetCache(bool input_size_changed) = 0;
+//  virtual std::vector<NodePtrType> const &         GetOutputs() const                  = 0;
+//  virtual std::shared_ptr<SaveableParamsInterface> GetNodeSaveableParams()             = 0;
+//};
 
-  virtual std::shared_ptr<T>                                    Evaluate(bool is_training)      = 0;
-  virtual void                                                  AddInput(NodePtrType const &i)  = 0;
-  virtual void                                                  AddOutput(NodePtrType const &i) = 0;
-  virtual std::vector<std::pair<NodeInterface<T> *, ArrayType>> BackPropagateSignal(
-      ArrayType const &error_signal)                                                   = 0;
-  virtual void                                     ResetCache(bool input_size_changed) = 0;
-  virtual std::vector<NodePtrType> const &         GetOutputs() const                  = 0;
-  virtual std::shared_ptr<SaveableParamsInterface> GetNodeSaveableParams()             = 0;
-};
-
-template <class T, class O>
-class Node : public NodeInterface<T>, public O
+//template <class T, class O>
+//class Node : public NodeInterface<T>
+template <typename T>
+class Node
 {
 private:
   enum class CachedOutputState
@@ -63,32 +66,32 @@ private:
 
 public:
   using ArrayType     = T;
-  using NodePtrType   = std::shared_ptr<NodeInterface<T>>;
+  using NodePtrType   = std::shared_ptr<Node<T>>;
   using VecTensorType = typename fetch::ml::ops::Ops<T>::VecTensorType;
 
   template <typename... Params>
-  explicit Node(std::string name, Params... params)
-    : O(params...)
-    , name_(std::move(name))
+  explicit Node(OpType const & operation_type, std::string name, Params... params) : name_(std::move(name))
     , cached_output_status_(CachedOutputState::CHANGED_SIZE)
-  {}
+  {
+      ops::OpInterface::Build<T, Params ...>(operation_type, op_ptr_, params ...);
+  }
 
-  std::shared_ptr<SaveableParamsInterface> GetNodeSaveableParams() final
+  std::shared_ptr<SaveableParamsInterface> GetNodeSaveableParams()
   {
     return this->GetOpSaveableParams();
   }
 
-  ~Node() override = default;
+  ~Node() = default;
 
   VecTensorType                                         GatherInputs() const;
   std::shared_ptr<T>                                    Evaluate(bool is_training) override;
-  std::vector<std::pair<NodeInterface<T> *, ArrayType>> BackPropagateSignal(
+  std::vector<std::pair<Node<T> *, ArrayType>> BackPropagateSignal(
       ArrayType const &error_signal) override;
 
-  void                                    AddInput(NodePtrType const &i) override;
-  void                                    AddOutput(NodePtrType const &o) override;
-  virtual std::vector<NodePtrType> const &GetOutputs() const override;
-  virtual void                            ResetCache(bool input_size_changed) override;
+  void                                    AddInput(NodePtrType const &i);
+  void                                    AddOutput(NodePtrType const &o);
+  std::vector<NodePtrType> const &GetOutputs() const;
+  void                            ResetCache(bool input_size_changed);
 
 private:
   std::vector<NodePtrType> input_nodes_;
@@ -96,6 +99,8 @@ private:
   std::string              name_;
   ArrayType                cached_output_;
   CachedOutputState        cached_output_status_;
+
+  std::shared_ptr<ops::Ops<T>> op_ptr_;
 };
 
 /**
@@ -103,8 +108,8 @@ private:
  * @tparam ArrayType tensor
  * @return vector of reference_wrapped tensors
  */
-template <class T, class O>
-typename Node<T, O>::VecTensorType Node<T, O>::GatherInputs() const
+template <class T>
+typename Node<T>::VecTensorType Node<T>::GatherInputs() const
 {
   VecTensorType inputs;
   for (auto const &i : input_nodes_)
@@ -123,8 +128,8 @@ typename Node<T, O>::VecTensorType Node<T, O>::GatherInputs() const
  * @tparam O operation class
  * @return the tensor with the forward result
  */
-template <typename T, class O>
-std::shared_ptr<T> Node<T, O>::Evaluate(bool is_training)
+template <typename T>
+std::shared_ptr<T> Node<T>::Evaluate(bool is_training)
 {
 
   this->SetTraining(is_training);
@@ -157,13 +162,13 @@ std::shared_ptr<T> Node<T, O>::Evaluate(bool is_training)
  * @param error_signal the error signal to backpropagate
  * @return
  */
-template <typename T, class O>
-std::vector<std::pair<NodeInterface<T> *, T>> Node<T, O>::BackPropagateSignal(
+template <typename T>
+std::vector<std::pair<Node<T> *, T>> Node<T>::BackPropagateSignal(
     ArrayType const &error_signal)
 {
   VecTensorType          inputs                        = GatherInputs();
   std::vector<ArrayType> back_propagated_error_signals = this->Backward(inputs, error_signal);
-  std::vector<std::pair<NodeInterface<T> *, ArrayType>> non_back_propagated_error_signals;
+  std::vector<std::pair<Node<T> *, ArrayType>> non_back_propagated_error_signals;
   assert(back_propagated_error_signals.size() == inputs.size() || inputs.empty());
 
   auto bp_it = back_propagated_error_signals.begin();
@@ -195,8 +200,8 @@ std::vector<std::pair<NodeInterface<T> *, T>> Node<T, O>::BackPropagateSignal(
  * @tparam O operation class
  * @param i pointer to the input node
  */
-template <typename T, class O>
-void Node<T, O>::AddInput(NodePtrType const &i)
+template <typename T>
+void Node<T>::AddInput(NodePtrType const &i)
 {
   input_nodes_.push_back(i);
 }
@@ -207,8 +212,8 @@ void Node<T, O>::AddInput(NodePtrType const &i)
  * @tparam O operation class
  * @param o pointer to the output node
  */
-template <typename T, class O>
-void Node<T, O>::AddOutput(NodePtrType const &o)
+template <typename T>
+void Node<T>::AddOutput(NodePtrType const &o)
 {
   outputs_.push_back(o);
 }
@@ -219,8 +224,8 @@ void Node<T, O>::AddOutput(NodePtrType const &o)
  * @tparam O operation class
  * @return vector of pointers to output nodes
  */
-template <typename T, class O>
-std::vector<typename Node<T, O>::NodePtrType> const &Node<T, O>::GetOutputs() const
+template <typename T>
+std::vector<typename Node<T>::NodePtrType> const &Node<T>::GetOutputs() const
 {
   return outputs_;
 }
@@ -231,8 +236,8 @@ std::vector<typename Node<T, O>::NodePtrType> const &Node<T, O>::GetOutputs() co
  * @tparam O operation class
  * @param input_size_changed boolean indicating whether the input size changed
  */
-template <typename T, class O>
-void Node<T, O>::ResetCache(bool input_size_changed)
+template <typename T>
+void Node<T>::ResetCache(bool input_size_changed)
 {
   cached_output_status_ =
       input_size_changed ? CachedOutputState::CHANGED_SIZE : CachedOutputState::CHANGED_CONTENT;

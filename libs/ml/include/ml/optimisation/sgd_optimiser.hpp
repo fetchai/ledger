@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/graph.hpp"
+#include "ml/core/graph.hpp"
 #include "optimiser.hpp"
 
 namespace fetch {

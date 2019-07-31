@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/graph.hpp"
+#include "ml/core/graph.hpp"
 #include "ml/utilities/graph_builder.hpp"
 
 // include every layer we might need to lookup
