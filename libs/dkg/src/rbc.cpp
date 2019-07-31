@@ -160,7 +160,7 @@ void RBC::Broadcast(RBCEnvelope const &env)
  */
 void RBC::SendRBroadcast(SerialisedMessage const &msg)
 {
-  RBroadcast broadcast_msg{CHANNEL_BROADCAST, id_, ++msg_counter_, msg};
+  RBroadcast  broadcast_msg{CHANNEL_BROADCAST, id_, ++msg_counter_, msg};
   RBCEnvelope env{broadcast_msg};
   Broadcast(env);
   OnRBroadcast(broadcast_msg, id_);  // Self sending
@@ -252,6 +252,11 @@ void RBC::OnRBC(MuddleAddress const &from, RBCEnvelope const &envelope)
   if (msg_ptr == nullptr)
   {
     return;  // To catch nullptr return in Message() switch statement default
+  }
+  else if (current_cabinet_.find(from) == current_cabinet_.end())
+  {
+    FETCH_LOG_ERROR(LOGGING_NAME, "Node ", id_, " received message from unknown sender");
+    return;
   }
   uint32_t sender_index{CabinetIndex(from)};
   switch (msg_ptr->type())
@@ -361,8 +366,7 @@ void RBC::OnRBroadcast(RBroadcast const &msg, uint32_t sender_index)
     if (SetMbar(tag, msg, sender_index))
     {
       broadcasts_[tag].mbar = msg.message();
-      REcho echo_msg{msg.channel(), msg.id(), msg.counter(),
-                          MessageHash(msg.message())};
+      REcho       echo_msg{msg.channel(), msg.id(), msg.counter(), MessageHash(msg.message())};
       RBCEnvelope env{echo_msg};
       Broadcast(env);
       OnREcho(echo_msg, id_);  // self sending.
@@ -397,7 +401,7 @@ void RBC::OnREcho(REcho const &msg, uint32_t sender_index)
                   sender_index, " with counter ", msg_ptr->counter(), " and id ", msg_ptr->id());
   if (ReceivedEcho(tag, msg))
   {
-    RReady ready_msg{msg.channel(), msg.id(), msg.counter(), msg.hash()};
+    RReady      ready_msg{msg.channel(), msg.id(), msg.counter(), msg.hash()};
     RBCEnvelope env{ready_msg};
     Broadcast(env);
     OnRReady(ready_msg, id_);  // self sending.
@@ -428,7 +432,7 @@ void RBC::OnRReady(RReady const &msg, uint32_t sender_index)
   if (threshold_ > 0 && msgsCount.ready_count == threshold_ + 1 &&
       msgsCount.echo_count < (current_cabinet_.size() - threshold_))
   {
-    RReady ready_msg{msg.channel(), msg.id(), msg.counter(), msg.hash()};
+    RReady      ready_msg{msg.channel(), msg.id(), msg.counter(), msg.hash()};
     RBCEnvelope env{ready_msg};
     Broadcast(env);
     OnRReady(ready_msg, id_);  // self sending.
@@ -485,8 +489,7 @@ void RBC::OnRRequest(RRequest const &msg, uint32_t sender_index)
                   sender_index, " with counter ", msg_ptr->counter(), " and id ", msg_ptr->id());
   if (!broadcasts_[tag].mbar.empty())
   {
-    RBCEnvelope env{
-        RAnswer{msg.channel(), msg.id(), msg.counter(), broadcasts_[tag].mbar}};
+    RBCEnvelope env{RAnswer{msg.channel(), msg.id(), msg.counter(), broadcasts_[tag].mbar}};
 
     auto im = std::next(current_cabinet_.begin(), sender_index);
     Send(env, *im);
@@ -549,7 +552,6 @@ void RBC::OnRAnswer(RAnswer const &msg, uint32_t sender_index)
  */
 void RBC::Deliver(SerialisedMessage const &msg, uint32_t sender_index)
 {
-  assert(sender_index < current_cabinet_.size());
   assert(parties_.size() == current_cabinet_.size());
   MuddleAddress miner_id{*std::next(current_cabinet_.begin(), sender_index)};
   deliver_msg_callback_(miner_id, msg);
@@ -592,7 +594,10 @@ uint32_t RBC::CabinetIndex(MuddleAddress const &other_address) const
 bool RBC::CheckTag(RBCMessage const &msg)
 {
   std::lock_guard<std::mutex> lock(mutex_deliver_);
-  assert(msg.id() < current_cabinet_.size());
+  if (msg.id() >= current_cabinet_.size())
+  {
+    FETCH_LOG_ERROR(LOGGING_NAME, "Node ", id_, " received message with unknown tag id");
+  }
   assert(parties_.size() == current_cabinet_.size());
   uint8_t msg_counter = parties_[msg.id()].deliver_s;
   FETCH_LOG_TRACE(LOGGING_NAME, "Node ", id_, " has counter ", msg_counter, " for node ", msg.id());
@@ -627,7 +632,6 @@ bool RBC::CheckTag(RBCMessage const &msg)
 bool RBC::SetPartyFlag(uint32_t sender_index, TagType tag, MsgType msg_type)
 {
   std::lock_guard<std::mutex> lock(mutex_flags_);
-  assert(sender_index < current_cabinet_.size());
   assert(parties_.size() == current_cabinet_.size());
   auto &iter  = parties_[sender_index].flags[tag];
   auto  index = static_cast<uint32_t>(msg_type);
