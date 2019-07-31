@@ -91,7 +91,7 @@ inline void Reduce(SizeType axis, F function, const Tensor<T, C> &array, Tensor<
 }
 
 /**
- * Applies given function along given axis on N-1 sized array
+ * Applies given function along given axes on N-M sized array, where M is number of given axes
  * @tparam F Function type
  * @tparam T
  * @tparam C
@@ -104,33 +104,83 @@ template <typename F, typename T, typename C>
 inline void Reduce(std::vector<SizeType> axes, F function, const Tensor<T, C> &array,
                    Tensor<T, C> &ret)
 {
+
   for (SizeType i{0}; i < axes.size(); i++)
   {
     assert(ret.shape().at(axes.at(i)) == 1);
-  }
-  // Create axis-permutable slice iterator
-  auto a_it = array.Slice().cbegin();
-  auto r_it = ret.Slice().begin();
 
-  SizeType n = 1;
-  // Put selected axes to front
+    // Axes must be sorted
+    if (i != (axes.size() - 1))
+    {
+      assert(axes.at(i) < axes.at(i + 1));
+    }
+  }
+
+  // If axes are not given like
+  bool permuting_needed = false;
   for (SizeType i{0}; i < axes.size(); i++)
   {
-    n *= array.shape().at(axes.at(i));
-    a_it.PermuteAxes(i, axes.at(i));
-    r_it.PermuteAxes(i, axes.at(i));
+    if (axes.at(i) != i)
+    {
+      permuting_needed = true;
+      break;
+    }
   }
 
-  while (a_it.is_valid())
+  if (permuting_needed)
   {
-    // Move return array iterator every Nth steps
-    for (SizeType j{0}; j < n; ++j)
+    // Create axis-permutable slice iterator
+    auto a_it = array.Slice().cbegin();
+    auto r_it = ret.Slice().begin();
+
+    SizeType n = 1;
+
+    for (SizeType i{0}; i < axes.size(); i++)
     {
-      // Apply function
-      function(*a_it, *r_it);
-      ++a_it;
+      // Calculate number of steps between iterations
+      n *= array.shape().at(axes.at(i));
+
+      // Put selected axes to front
+      a_it.PermuteAxes(i, axes.at(i));
+      r_it.PermuteAxes(i, axes.at(i));
     }
-    ++r_it;
+
+    while (a_it.is_valid())
+    {
+      // Move return array iterator every Nth steps
+      for (SizeType j{0}; j < n; ++j)
+      {
+        // Apply function
+        function(*a_it, *r_it);
+        ++a_it;
+      }
+      ++r_it;
+    }
+  }
+  else
+  {
+    // Create iterators
+    auto a_it = array.cbegin();
+    auto r_it = ret.begin();
+
+    // Calculate number of steps between iterations
+    SizeType n = 1;
+    for (SizeType i{0}; i < axes.size(); i++)
+    {
+      n *= array.shape().at(axes.at(i));
+    }
+
+    while (a_it.is_valid())
+    {
+      // Move return array iterator every Nth steps
+      for (SizeType j{0}; j < n; ++j)
+      {
+        // Apply function
+        function(*a_it, *r_it);
+        ++a_it;
+      }
+      ++r_it;
+    }
   }
 }
 
