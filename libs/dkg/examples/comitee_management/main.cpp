@@ -8,7 +8,7 @@
 #include <stdexcept>
 #include <unordered_map>
 #include <vector>
-
+/*
 struct BeaconRoundDetails
 {
   BeaconManager manager{};
@@ -138,13 +138,10 @@ public:
       std::lock_guard< std::mutex > lock(mutex_);
       beacon_queue_.push_back(beacon);
     })
-  }
 
   /// Maintainance logic
   /// @{
-  /* @brief this function is called when the node is in the cabinet
-   *
-   */
+  /// @brief this function is called when the node is in the cabinet
   void StartNewCabinet(std::unordered_set< Identity > members, uint32_t threshold)
   {
     std::lock_guard< std::mutex > lock(mutex_);
@@ -159,8 +156,7 @@ public:
     ++next_cabinet_generation_number_;
   }
 
-  /* @brief this function is called when the node is not.
-  */
+  /// @brief this function is called when the node is not.
   void SkipRound()
   {
     std::lock_guard< std::mutex > lock(mutex_);
@@ -200,7 +196,7 @@ private:
 
   BeaconSetupService cabinet_creator_;
 };
-
+*/
 int main()
 {
 
