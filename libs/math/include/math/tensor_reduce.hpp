@@ -27,7 +27,7 @@ namespace fetch {
 namespace math {
 
 /**
- * Applies given function along given axis on N-1 sized array
+ * Applies given function along given axis resulting in a N-1 sized array
  * @tparam F Function type
  * @tparam T
  * @tparam C
