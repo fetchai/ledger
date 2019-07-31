@@ -483,9 +483,6 @@ void Constellation::Run(UriList const &initial_peers, core::WeakRunnable bootstr
       // Note: the DKG will already have its cabinet reset by this point
       if (!dkg_attached)
       {
-        // Required until we can guarantee the DRB isn't vulnerable to races
-        std::this_thread::sleep_for(std::chrono::milliseconds(5000));
-
         FETCH_LOG_INFO(LOGGING_NAME, "Starting DKG");
         reactor_.Attach(dkg_->GetWeakRunnable());
         dkg_attached = true;
