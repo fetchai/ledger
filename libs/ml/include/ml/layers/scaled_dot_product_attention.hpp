@@ -82,7 +82,7 @@ public:
 
     // softmax
     std::string attention_weight = this->template AddNode<fetch::ml::ops::Softmax<ArrayType>>(
-        name + "_Softmax", {scaled_kq_matmul}, 0);
+        name + "_Softmax", {scaled_kq_matmul}, static_cast<SizeType>(0));
 
     // dropout
     std::string dropout_attention_weight =
