@@ -87,6 +87,11 @@ ConstByteArray LoadFileContents(std::string const &file_path)
   {
     size = file.tellg();
 
+    if (size == 0)
+    {
+      FETCH_LOG_ERROR(LOGGING_NAME, "Failed to load stakefile! : ", file_path);
+    }
+
     if (size > 0)
     {
       buffer.Resize(static_cast<std::size_t>(size));
@@ -96,6 +101,10 @@ ConstByteArray LoadFileContents(std::string const &file_path)
 
       file.close();
     }
+  }
+  else
+  {
+    FETCH_LOG_ERROR(LOGGING_NAME, "Failed to load stakefile! : ", file_path);
   }
 
   return {buffer};
