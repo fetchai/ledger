@@ -50,7 +50,7 @@ void TokenAuthenticationInterface::operator()(HTTPRequest &req)
 
 uint32_t SimpleTokenAuthentication::ValidateToken(byte_array::ConstByteArray const &token)
 {
-  return token_ == token ? authentication_level_ : AuthenticationLevel::NO_ACCESS;
+  return (token_ == token) ? authentication_level_ : static_cast<uint32_t>(AuthenticationLevel::NO_ACCESS);
 }
 
 }  // namespace middleware
