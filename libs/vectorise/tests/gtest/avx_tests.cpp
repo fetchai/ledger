@@ -88,8 +88,8 @@ using MyTypes = ::testing::Types< fetch::vectorise::VectorRegister<float, 128>,
                                   fetch::vectorise::VectorRegister<int64_t, 256>,
                                   fetch::vectorise::VectorRegister<fetch::fixed_point::fp32_t, 128>,
                                   fetch::vectorise::VectorRegister<fetch::fixed_point::fp32_t, 256>,
-                                  // fetch::vectorise::VectorRegister<fetch::fixed_point::fp64_t, 128>,
-                                  // fetch::vectorise::VectorRegister<fetch::fixed_point::fp64_t, 256>,
+                                  fetch::vectorise::VectorRegister<fetch::fixed_point::fp64_t, 128>,
+                                  fetch::vectorise::VectorRegister<fetch::fixed_point::fp64_t, 256>,
                                   fetch::vectorise::VectorRegister<double, 128>,
                                   fetch::vectorise::VectorRegister<double, 256>>;
 
@@ -104,30 +104,26 @@ TYPED_TEST(VectorRegisterTest, basic_tests)
   for (size_t i = 0; i < TypeParam::E_BLOCK_COUNT; i++)
   {
     // We don't want to check overflows right now, so we pick random numbers, but well within the type's limits
-    a[i] = typename TypeParam::type(double(random()) / (double)(RAND_MAX) * (1 << TypeParam::E_REGISTER_SIZE/2) );
-    b[i] = typename TypeParam::type(double(random()) / (double)(RAND_MAX) * (1 << TypeParam::E_REGISTER_SIZE/2) );
+    a[i] = typename TypeParam::type(double(random()) / (double)(RAND_MAX) * (1 << (TypeParam::E_REGISTER_SIZE/2)) );
+    b[i] = typename TypeParam::type(double(random()) / (double)(RAND_MAX) * (1 << (TypeParam::E_REGISTER_SIZE/2)) );
     sum[i] = a[i] + b[i];
     diff[i] = a[i] - b[i];
     prod[i] = a[i] * b[i];
     div[i] = a[i] / b[i];
-    std::cout << "sum[" << i << "]  = " << sum[i] << std::endl;
-    std::cout << "diff[" << i << "]  = " << diff[i] << std::endl;
     std::cout << "prod[" << i << "]  = " << prod[i] << std::endl;
     std::cout << "div[" << i << "]  = " << div[i] << std::endl;
   }
   TypeParam va{a};
   TypeParam vb{b};
 
-  std::cout << va << std::endl;
-  std::cout << vb << std::endl;
+  std::cout << "a = " << va << std::endl;
+  std::cout << "b = " << vb << std::endl;
 
   auto vsum = va + vb;
   auto vdiff = va - vb;
   auto vprod = va * vb;
   auto vdiv = va / vb;
-  std::cout << "sum  = " << vsum << std::endl;
-  std::cout << "diff = " << vdiff << std::endl;
-  std::cout << "prod = " << vprod << std::endl;
+  std::cout << "prod  = " << vprod << std::endl;
   std::cout << "div  = " << vdiv << std::endl;
 
   TypeParam vtmp1{sum}, vtmp2{diff}, vtmp3{prod}, vtmp4{div};

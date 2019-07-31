@@ -269,17 +269,61 @@ inline VectorRegister<fixed_point::fp32_t, 256> operator*(VectorRegister<fixed_p
 inline VectorRegister<fixed_point::fp32_t, 128> operator/(VectorRegister<fixed_point::fp32_t, 128> const &a,
                                               VectorRegister<fixed_point::fp32_t, 128> const &b)
 {
+  // TODO(private 440): AVX implementation required
+  alignas(VectorRegister<fixed_point::fp32_t, 128>::E_REGISTER_SIZE) fixed_point::fp32_t d1[4];
+  a.Store(d1);
+
+  alignas(VectorRegister<fixed_point::fp32_t, 128>::E_REGISTER_SIZE) fixed_point::fp32_t d2[4];
+  b.Store(d2);
+
+  alignas(VectorRegister<fixed_point::fp32_t, 128>::E_REGISTER_SIZE) fixed_point::fp32_t ret[4];
+
+  // don't divide by zero
+  // set each of the 4 values in the vector register to either the solution of the division or 0
+  ret[0] = d1[0] / d2[0];
+  ret[1] = d1[1] / d2[1];
+  ret[2] = d1[2] / d2[2];
+  ret[3] = d1[3] / d2[3];
+
+  return VectorRegister<fixed_point::fp32_t, 128>(ret);
+}
+
+inline VectorRegister<fixed_point::fp32_t, 256> operator/(VectorRegister<fixed_point::fp32_t, 256> const &a,
+                                                          VectorRegister<fixed_point::fp32_t, 256> const &b)
+{
+
+  // TODO(private 440): SSE implementation required
+  alignas(VectorRegister<fixed_point::fp32_t, 256>::E_REGISTER_SIZE) fixed_point::fp32_t d1[8];
+  a.Store(d1);
+
+  alignas(VectorRegister<fixed_point::fp32_t, 256>::E_REGISTER_SIZE) fixed_point::fp32_t d2[8];
+  b.Store(d2);
+
+  alignas(VectorRegister<fixed_point::fp32_t, 256>::E_REGISTER_SIZE) fixed_point::fp32_t ret[8];
+
+  // don't divide by zero
+  // set each of the 4 values in the vector register to either the solution of the division or 0
+  for (size_t i = 0; i < 8; i++)
+  {
+    ret[i] = d1[i] / d2[i];
+  }
+
+  return VectorRegister<fixed_point::fp32_t, 256>(ret);
+}
+
+/*
+  AVX2 Version of division that uses a cast to doubles, needs revisiting because performance gain is significant
+inline VectorRegister<fixed_point::fp32_t, 128> operator/(VectorRegister<fixed_point::fp32_t, 128> const &a,
+                                              VectorRegister<fixed_point::fp32_t, 128> const &b)
+{
   std::cout << "a = " << a << std::endl;
   std::cout << "b = " << b << std::endl;
-  __m256d scaler = _mm256_set1_pd(0xffff);
+  __m256d scaler = _mm256_set1_pd(0x10000U);
+  std::cout << "scaler = " << VectorRegister<double, 256>(scaler) << std::endl;
   // Convert the elements to double, and divide by the max fractional 0xffff
   __m256d va = _mm256_cvtepi32_pd(a.data());
   std::cout << "a = " << VectorRegister<double, 256>(va) << std::endl;
   __m256d vb = _mm256_cvtepi32_pd(b.data());
-  std::cout << "b = " << VectorRegister<double, 256>(vb) << std::endl;
-  va = _mm256_div_pd(va, scaler);
-  std::cout << "a = " << VectorRegister<double, 256>(va) << std::endl;
-  vb = _mm256_div_pd(vb, scaler);
   std::cout << "b = " << VectorRegister<double, 256>(vb) << std::endl;
   __m256d div256 = _mm256_div_pd(va, vb);
   std::cout << "div256 = " << VectorRegister<double, 256>(div256) << std::endl;
@@ -305,7 +349,7 @@ inline VectorRegister<fixed_point::fp32_t, 256> operator/(VectorRegister<fixed_p
   VectorRegister<fixed_point::fp32_t, 256> div(_mm256_set_m128i(div_hi.data(), div_lo.data()));
   std::cout << "div = " << std::hex << div << std::dec << std::endl;
   return div;
-}
+}*/
 
 inline VectorRegister<fixed_point::fp32_t, 128> vector_zero_below_element(
     VectorRegister<fixed_point::fp32_t, 128> const & /*a*/, int const & /*n*/)
