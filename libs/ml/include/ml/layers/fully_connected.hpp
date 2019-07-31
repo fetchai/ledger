@@ -71,9 +71,10 @@ public:
                  fetch::ml::details::RegularisationType regulariser =
                      fetch::ml::details::RegularisationType::NONE,
                  DataType    regularisation_rate = static_cast<DataType>(0),
-                 WeightsInit init_mode           = WeightsInit::XAVIER_GLOROT)
+                 WeightsInit init_mode           = WeightsInit::XAVIER_GLOROT, bool time_distributed = false)
     : in_size_(in)
     , out_size_(out)
+   ,  time_distributed_(time_distributed)
   {
     // since the weight is shared, we do not need to initialize the weight matrices.
     FETCH_UNUSED(init_mode);
@@ -99,9 +100,10 @@ public:
                  fetch::ml::details::RegularisationType regulariser =
                      fetch::ml::details::RegularisationType::NONE,
                  DataType    regularisation_rate = static_cast<DataType>(0),
-                 WeightsInit init_mode           = WeightsInit::XAVIER_GLOROT)
+                 WeightsInit init_mode           = WeightsInit::XAVIER_GLOROT, bool time_distributed = false)
     : in_size_(in)
     , out_size_(out)
+    , time_distributed_(time_distributed)
   {
     // setup overall architecture of the model
     SetupArchitecture(activation_type, regulariser, regularisation_rate);
@@ -178,7 +180,19 @@ public:
 
   std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const
   {
-    return {this->out_size_, inputs.front()->shape(inputs.front()->shape().size() - 1)};
+  	if(!time_distributed_){
+  		SizeType total_in_size = 1;
+  		for(size_t i=0; i<inputs.front()->shape().size()-1; i++){
+  			total_in_size *= inputs.front()->shape(i);
+  		}
+  		assert(total_in_size == this->in_size_);
+		  return {this->out_size_, inputs.front()->shape(inputs.front()->shape().size() - 1)};
+  	}else{
+  		assert(inputs.front()->shape().size() == 3);
+  		assert(inputs.front()->shape(0) == in_size_);
+		  return {this->out_size_, inputs.front()->shape(inputs.front()->shape().size() - 2), inputs.front()->shape(inputs.front()->shape().size() - 1)};
+  	}
+   
   }
 
   static constexpr char const *DESCRIPTOR = "FullyConnected";
@@ -186,6 +200,7 @@ public:
 private:
   SizeType in_size_;
   SizeType out_size_;
+  bool time_distributed_;
 
   void Initialise(ArrayType &weights, WeightsInit init_mode)
   {

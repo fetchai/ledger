@@ -31,7 +31,7 @@ class FullyConnectedTest : public ::testing::Test
 };
 
 template <typename T>
-class FullyConnectedNoIntTest : public ::testing::Test
+class FullyConnectedSharedWeightTest : public ::testing::Test
 {
 };
 
@@ -43,7 +43,7 @@ using NoIntTypes  = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Te
                                     fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>,
                                     fetch::math::Tensor<fetch::fixed_point::FixedPoint<16, 16>>>;
 TYPED_TEST_CASE(FullyConnectedTest, HasIntTypes);
-TYPED_TEST_CASE(FullyConnectedNoIntTest, NoIntTypes);
+TYPED_TEST_CASE(FullyConnectedSharedWeightTest, NoIntTypes);
 
 TYPED_TEST(FullyConnectedTest, set_input_and_evaluate_test)  // Use the class as a subgraph
 {
@@ -92,7 +92,7 @@ TYPED_TEST(FullyConnectedTest, ops_backward_test)  // Use the class as an Ops
   // No way to test actual values for now as weights are randomly initialised.
 }
 
-TYPED_TEST(FullyConnectedNoIntTest, share_weight_backward_test)
+TYPED_TEST(FullyConnectedSharedWeightTest, share_weight_backward_test)
 {
   using ArrayType       = TypeParam;
   using DataType        = typename ArrayType::Type;
