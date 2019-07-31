@@ -18,16 +18,14 @@
 //------------------------------------------------------------------------------
 
 #include "math/base_types.hpp"
+#include "math/tensor_declaration.hpp"
 #include "math/tensor_slice_iterator.hpp"
+
 #include <cassert>
 #include <unordered_set>
 
 namespace fetch {
 namespace math {
-
-// need to forward declare
-template <typename T, typename C>
-class Tensor;
 
 /* Computes the shape resulting from squeezing.
  * @param a is the input shape.

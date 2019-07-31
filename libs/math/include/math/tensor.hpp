@@ -287,8 +287,12 @@ public:
   /// Slices ///
   //////////////
 
-  ConstSliceType Slice(SizeType i, SizeType axis = 0) const;
-  TensorSlice    Slice(SizeType i, SizeType axis = 0);
+  ConstSliceType Slice() const;
+  ConstSliceType Slice(SizeType index, SizeType axis = 0) const;
+  ConstSliceType Slice(SizeVector index, SizeVector axes) const;
+  TensorSlice    Slice();
+  TensorSlice    Slice(SizeType index, SizeType axis = 0);
+  TensorSlice    Slice(SizeVector index, SizeVector axes);
 
   /////////////
   /// Views ///
@@ -346,6 +350,8 @@ public:
     SliceIteratorType begin();
     SliceIteratorType end();
     TensorSlice       Slice(SizeType i, SizeType axis);
+    void              ModifyRange(SizeType i, SizeType axis);
+
     template <typename G>
     void Assign(TensorSliceImplementation<G> const &other);
     void Assign(Tensor const &other);
@@ -646,6 +652,7 @@ private:
 
     Tensor                 Copy() const;
     ConstSliceType         Slice(SizeType i, SizeType axis) const;
+    void                   ModifyRange(SizeType i, SizeType axis);
     ConstSliceIteratorType cbegin() const;
     ConstSliceIteratorType cend() const;
     SizeType               size() const;
@@ -1103,7 +1110,7 @@ typename Tensor<T, C>::Type Tensor<T, C>::operator()(SizeType const &index) cons
  * @tparam T Type
  * @tparam C Container
  * @tparam S Integral type for accessing
- * @param i index to access tensor
+ * @param index index to access tensor
  * @return data stored at indexed location
  */
 template <typename T, typename C>
@@ -1132,7 +1139,7 @@ typename std::enable_if<std::is_integral<S>::value, typename Tensor<T, C>::Type>
  * @tparam T Type
  * @tparam C Container
  * @tparam S Integral type for accessing
- * @param i index to access tensor
+ * @param index index to access tensor
  * @return data stored at indexed location
  */
 template <typename T, typename C>
@@ -2098,16 +2105,29 @@ typename Tensor<T, C>::MAJOR_ORDER Tensor<T, C>::MajorOrder() const
 /// Tensor methods: slices ///
 //////////////////////////////
 
+template <typename T, typename C>
+typename Tensor<T, C>::ConstSliceType Tensor<T, C>::Slice() const
+{
+  std::vector<SizeVector> range;
+
+  for (SizeType j = 0; j < shape().size(); ++j)
+  {
+    range.push_back({0, shape().at(j), 1});
+  }
+
+  return ConstSliceType(*this, range, 0);
+}
+
 /**
  * Returns a Slice that is not permitted to alter the original tensor
  * @tparam T
  * @tparam C
- * @param i
+ * @param index
  * @param axis
  * @return
  */
 template <typename T, typename C>
-typename Tensor<T, C>::ConstSliceType Tensor<T, C>::Slice(SizeType i, SizeType axis) const
+typename Tensor<T, C>::ConstSliceType Tensor<T, C>::Slice(SizeType index, SizeType axis) const
 {
   std::vector<SizeVector> range;
 
@@ -2115,7 +2135,7 @@ typename Tensor<T, C>::ConstSliceType Tensor<T, C>::Slice(SizeType i, SizeType a
   {
     if (axis == j)
     {
-      range.push_back({i, i + 1, 1});
+      range.push_back({index, index + 1, 1});
     }
     else
     {
@@ -2127,15 +2147,57 @@ typename Tensor<T, C>::ConstSliceType Tensor<T, C>::Slice(SizeType i, SizeType a
 }
 
 /**
+ * Returns a Slice along multiple dimensions that is not permitted to alter the original tensor
+ * @tparam T
+ * @tparam C
+ * @param indices
+ * @param axes
+ * @return
+ */
+template <typename T, typename C>
+typename Tensor<T, C>::ConstSliceType Tensor<T, C>::Slice(std::vector<SizeType> indices,
+                                                          std::vector<SizeType> axes) const
+{
+  std::vector<std::vector<SizeType>> range;
+
+  for (SizeType j = 0; j < shape().size(); ++j)
+  {
+    range.push_back({0, shape().at(j), 1});
+  }
+
+  for (SizeType j = 0; j < indices.size(); ++j)
+  {
+    range.at(axes.at(j)).at(0) = indices.at(j);
+    range.at(axes.at(j)).at(1) = indices.at(j) + 1;
+    range.at(axes.at(j)).at(2) = 1;
+  }
+
+  return ConstSliceType(*this, range, axes);
+}
+
+template <typename T, typename C>
+typename Tensor<T, C>::TensorSlice Tensor<T, C>::Slice()
+{
+  std::vector<SizeVector> range;
+
+  for (SizeType j = 0; j < shape().size(); ++j)
+  {
+    range.push_back({0, shape().at(j), 1});
+  }
+
+  return TensorSlice(*this, range, 0);
+}
+
+/**
  * Returns a Slice of the tensor
  * @tparam T
  * @tparam C
- * @param i
+ * @param index
  * @param axis
  * @return
  */
 template <typename T, typename C>
-typename Tensor<T, C>::TensorSlice Tensor<T, C>::Slice(SizeType i, SizeType axis)
+typename Tensor<T, C>::TensorSlice Tensor<T, C>::Slice(SizeType index, SizeType axis)
 {
   std::vector<SizeVector> range;
 
@@ -2143,7 +2205,7 @@ typename Tensor<T, C>::TensorSlice Tensor<T, C>::Slice(SizeType i, SizeType axis
   {
     if (axis == j)
     {
-      range.push_back({i, i + 1, 1});
+      range.push_back({index, index + 1, 1});
     }
     else
     {
@@ -2152,6 +2214,35 @@ typename Tensor<T, C>::TensorSlice Tensor<T, C>::Slice(SizeType i, SizeType axis
   }
 
   return TensorSlice(*this, range, axis);
+}
+
+/**
+ * Returns a Slice along multiple dimensions that is not permitted to alter the original tensor
+ * @tparam T
+ * @tparam C
+ * @param indices
+ * @param axes
+ * @return
+ */
+template <typename T, typename C>
+typename Tensor<T, C>::TensorSlice Tensor<T, C>::Slice(std::vector<SizeType> indices,
+                                                       std::vector<SizeType> axes)
+{
+  std::vector<std::vector<SizeType>> range;
+
+  for (SizeType j = 0; j < shape().size(); ++j)
+  {
+    range.push_back({0, shape().at(j), 1});
+  }
+
+  for (SizeType j = 0; j < indices.size(); ++j)
+  {
+    range.at(axes.at(j)).at(0) = indices.at(j);
+    range.at(axes.at(j)).at(1) = indices.at(j) + 1;
+    range.at(axes.at(j)).at(2) = 1;
+  }
+
+  return TensorSlice(*this, range, axes);
 }
 
 ////////////////////////////////////////
@@ -2611,12 +2702,12 @@ typename Tensor<T, C>::SliceIteratorType Tensor<T, C>::TensorSlice::end()
  * @tparam T Slice Type
  * @tparam C Slice ContainerType
  * @tparam STensor original tensor type
- * @param i offset
+ * @param index offset
  * @param axis
  * @return
  */
 template <typename T, typename C>
-typename Tensor<T, C>::TensorSlice Tensor<T, C>::TensorSlice::Slice(SizeType i, SizeType axis)
+typename Tensor<T, C>::TensorSlice Tensor<T, C>::TensorSlice::Slice(SizeType index, SizeType axis)
 {
   std::vector<SizeType> new_axes(this->axes_);
 
@@ -2629,7 +2720,7 @@ typename Tensor<T, C>::TensorSlice Tensor<T, C>::TensorSlice::Slice(SizeType i, 
   // Test validity
   assert(axis < this->tensor_.shape().size());
   assert(new_axes.size() < this->tensor_.shape().size());
-  assert(i < this->tensor_.shape().at(axis));
+  assert(index < this->tensor_.shape().at(axis));
   for (SizeType i = 0; i < new_axes.size(); i++)
   {
     assert(new_axes.at(i) != axis);
@@ -2638,14 +2729,26 @@ typename Tensor<T, C>::TensorSlice Tensor<T, C>::TensorSlice::Slice(SizeType i, 
   std::vector<SizeVector> new_range(this->range_);
 
   // Modify range based on specified offset i
-  new_range.at(axis).at(0) = i;
-  new_range.at(axis).at(1) = i + 1;
+  new_range.at(axis).at(0) = index;
+  new_range.at(axis).at(1) = index + 1;
   new_range.at(axis).at(2) = 1;
 
   // Add new axis
   new_axes.push_back(axis);
 
   return TensorSlice(this->tensor_, new_range, new_axes);
+}
+
+template <typename T, typename C>
+void Tensor<T, C>::TensorSlice::ModifyRange(SizeType i, SizeType axis)
+{
+  assert(axis < this->tensor_.shape().size());
+  assert(i < this->tensor_.shape().at(axis));
+
+  // Modify range based on specified offset i
+  this->range_.at(axis).at(0) = i;
+  this->range_.at(axis).at(1) = i + 1;
+  this->range_.at(axis).at(2) = 1;
 }
 
 template <typename T, typename C>
@@ -2709,7 +2812,7 @@ Tensor<T, C> Tensor<T, C>::TensorSliceImplementation<STensor>::Copy() const
  * @tparam T Slice Type
  * @tparam C Slice ContainerType
  * @tparam STensor original tensor type
- * @param i offset
+ * @param index offset
  * @param axis
  * @return
  */
@@ -2746,6 +2849,19 @@ typename Tensor<T, C>::ConstSliceType Tensor<T, C>::TensorSliceImplementation<ST
   new_axes.push_back(axis);
 
   return ConstSliceType(tensor_, new_range, new_axes);
+}
+
+template <typename T, typename C>
+template <typename STensor>
+void Tensor<T, C>::TensorSliceImplementation<STensor>::ModifyRange(SizeType i, SizeType axis)
+{
+  assert(axis < this->tensor_.shape().size());
+  assert(i < this->tensor_.shape().at(axis));
+
+  // Modify range based on specified offset i
+  this->range_.at(axis).at(0) = i;
+  this->range_.at(axis).at(1) = i + 1;
+  this->range_.at(axis).at(2) = 1;
 }
 
 template <typename T, typename C>
