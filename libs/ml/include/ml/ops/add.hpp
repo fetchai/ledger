@@ -53,21 +53,51 @@ public:
     assert(inputs.at(0)->shape() == error_signal.shape());
     assert(error_signal.shape() == ComputeOutputShape(inputs));
 
-    // Test if input is broadcastable by batch dimension
-    assert(inputs.at(1)->shape().at(inputs.at(1)->shape().size() - 1) == 1);
-    for (SizeType i{0}; i < inputs.at(0)->shape().size() - 1; i++)
-    {
-      assert(inputs.at(0)->shape().at(i) == inputs.at(1)->shape().at(i));
-    }
-
     if (inputs.at(0)->shape() == inputs.at(1)->shape())
     {
+      // Non-broadcast Add
       return {error_signal, error_signal};
     }
     else
     {
-      SizeType batch_dimension = inputs.at(0)->shape().size() - 1;
-      return {error_signal, fetch::math::ReduceSum(error_signal, batch_dimension)};
+      // Broadcast Add
+      bool axes_changed = false;
+
+      // Check if axes were changed
+      SizeType cnt = 0;
+      for (SizeType i{0}; i < inputs.at(0)->shape().size(); i++)
+      {
+        if (inputs.at(0)->shape().at(i) != inputs.at(1)->shape().at(i))
+        {
+          if (cnt >= this->axes_.size() || this->axes_.at(cnt) != i)
+          {
+            axes_changed = true;
+            break;
+          }
+          cnt++;
+        }
+      }
+
+      if (this->axes_.size() == 0)
+      {
+        axes_changed = true;
+      }
+
+      // Update axes if necessary
+      if (axes_changed)
+      {
+        this->axes_.clear();
+        // Get axes
+        for (SizeType i{0}; i < inputs.at(0)->shape().size(); i++)
+        {
+          if (inputs.at(0)->shape().at(i) != inputs.at(1)->shape().at(i))
+          {
+            this->axes_.emplace_back(i);
+          }
+        }
+      }
+
+      return {error_signal, fetch::math::ReduceSum(error_signal, axes_)};
     }
   }
 
@@ -75,6 +105,8 @@ public:
   {
     return inputs.at(0)->shape();
   }
+
+  std::vector<SizeType> axes_;
 
   static constexpr char const *DESCRIPTOR = "Add";
 };
