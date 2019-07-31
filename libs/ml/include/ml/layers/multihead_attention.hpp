@@ -48,9 +48,19 @@ public:
   using DataType      = typename T::Type;
   using VecTensorType = typename SubGraph<T>::VecTensorType;
 
-  MultiheadAttention(std::uint64_t dk, DataType dropout = 0.1)
-    : key_dim_(dk)
+  MultiheadAttention(SizeType n_heads, SizeType d_model, DataType dropout = 0.1)
+  : n_heads_(n_heads)
+  , d_model_(d_model)
   {
+  	// make sure all heads can be concatenate together to form d_model
+  	assert(d_model_ % n_heads_ == 0);
+  	key_dim_ = d_model_ / n_heads_;
+  	
+  	
+  	
+  	
+  	
+  	
     std::string name = DESCRIPTOR;
 
     // all input shapes are (feature_length, query/key/value_num, batch_num)
@@ -113,6 +123,8 @@ public:
 
 private:
   SizeType key_dim_;
+  SizeType n_heads_;
+  SizeType d_model_;
 };
 
 }  // namespace layers
