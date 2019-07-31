@@ -517,6 +517,7 @@ meta::IfIsMathArray<ArrayType, typename ArrayType::Type> Sum(ArrayType const &ar
 template <typename ArrayType>
 void ReduceSum(ArrayType const &obj1, SizeType axis, ArrayType &ret)
 {
+
   using DataType = typename ArrayType::Type;
   ret.Fill(static_cast<DataType>(0));
 
@@ -780,6 +781,38 @@ ArrayType ReduceMax(ArrayType const &obj1, SizeType axis)
   new_shape.at(axis)   = 1;
   ArrayType ret{new_shape};
   ReduceMax(obj1, axis, ret);
+  return ret;
+}
+
+template <typename ArrayType>
+void ReduceMax(ArrayType const &obj1, std::vector<SizeType> axes, ArrayType &ret)
+{
+
+  using DataType = typename ArrayType::Type;
+  ret.Fill(std::numeric_limits<DataType>::min());
+
+  Reduce(axes,
+         [](const DataType &x, DataType &y) {
+           if (x > y)
+           {
+             y = x;
+           }
+         },
+         obj1, ret);
+}
+
+template <typename ArrayType>
+ArrayType ReduceMax(ArrayType const &obj1, std::vector<SizeType> axes)
+{
+  SizeVector new_shape = obj1.shape();
+
+  for (SizeType i{0}; i < axes.size(); i++)
+  {
+    new_shape.at(axes.at(i)) = 1;
+  }
+
+  ArrayType ret{new_shape};
+  ReduceMax(obj1, axes, ret);
   return ret;
 }
 
