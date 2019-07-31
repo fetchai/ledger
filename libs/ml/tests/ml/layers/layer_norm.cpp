@@ -119,22 +119,37 @@ TYPED_TEST(LayerNormTest, node_backward_test)  // Use the class as a Node
   ASSERT_EQ(backprop_error[0].second.shape()[2], 2);
 }
 
-TYPED_TEST(LayerNormTest, graph_forward_test)  // Use the class as a Node
+TYPED_TEST(LayerNormTest, graph_forward_test_exact_value)  // Use the class as a Node
 {
+	using DataType = typename TypeParam::Type;
+	using ArrayType = TypeParam;
+	
   fetch::ml::Graph<TypeParam> g;
 
   g.template AddNode<fetch::ml::ops::PlaceHolder<TypeParam>>("Input", {});
   g.template AddNode<fetch::ml::layers::LayerNorm<TypeParam>>(
-      "LayerNorm", {"Input"}, std::vector<typename TypeParam::SizeType>({5, 10}));
-
-  TypeParam data({5, 10, 2});
-  g.SetInput("Input", data);
+      "LayerNorm", {"Input"}, std::vector<typename TypeParam::SizeType>({3, 2}));
+	
+	ArrayType data = ArrayType::FromString(
+	 "1, 2, 3, 0;"
+	 "2, 3, 2, 1;"
+	 "3, 6, 4, 13");
+	data.Reshape({3, 2, 2});
+	
+	ArrayType gt = ArrayType::FromString(
+	 "-1.22474487, -0.98058068, 0, -0.79006571;"
+	 "0, -0.39223227, -1.22474487,  -0.62076591;"
+	 "1.22474487,  1.37281295, 1.22474487, 1.41083162");
+	gt.Reshape({3, 2, 2});
+	
+	g.SetInput("Input", data);
 
   TypeParam prediction = g.Evaluate("LayerNorm", true);
-  ASSERT_EQ(prediction.shape().size(), 3);
-  ASSERT_EQ(prediction.shape()[0], 5);
-  ASSERT_EQ(prediction.shape()[1], 10);
-  ASSERT_EQ(prediction.shape()[2], 2);
+	// test correct values
+	ASSERT_TRUE(
+	 prediction.AllClose(gt, fetch::math::function_tolerance<DataType>(),
+	                     static_cast<DataType>(5) * fetch::math::function_tolerance<DataType>()));
+  
 }
 
 TYPED_TEST(LayerNormTest, getStateDict)

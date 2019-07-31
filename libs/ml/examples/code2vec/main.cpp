@@ -189,7 +189,7 @@ int main(int ac, char **av)
   // (Softmax) normalisation
   // Dimensions: (N_CONTEXTS, BATCH_SIZE)
   std::string attention_weight = g->AddNode<fetch::ml::ops::Softmax<ArrayType>>(
-      "AttentionWeight", {scalar_product_contexts_with_attention_reshaped}, SizeType{1u});
+      "AttentionWeight", {scalar_product_contexts_with_attention_reshaped}, SizeType{0u});
 
   // Reshaping
   // Dimensions: (N_CONTEXTS, 1, BATCH_SIZE)
@@ -217,7 +217,7 @@ int main(int ac, char **av)
   // (Softmax) Normalisation of the prediction
   // Dimensions:  (vocab_size_functions, BATCH_SIZE)
   std::string result = g->AddNode<fetch::ml::ops::Softmax<ArrayType>>(
-      "PredictionSoftMax", {prediction_softmax_kernel}, SizeType{1});
+      "PredictionSoftMax", {prediction_softmax_kernel}, SizeType{0u});
 
   std::string label = g->AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>("Label", {});
 
