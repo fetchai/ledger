@@ -91,6 +91,7 @@ public:
     bool           sign_broadcasts{false};
     bool           dump_state_file{false};
     bool           load_state_file{false};
+    std::string    stakefile_location{""};
     bool           proof_of_stake{false};
     NetworkMode    network_mode{NetworkMode::PUBLIC_NETWORK};
     ConstByteArray beacon_address{};

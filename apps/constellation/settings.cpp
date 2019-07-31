@@ -71,6 +71,7 @@ Settings::Settings()
   , num_executors         {*this, "executors",               DEFAULT_NUM_EXECUTORS,    "The number of transaction executors"}
   , dump_state            {*this, "dump-state",              false,                    "Trigger the state file dump on shutdown"}
   , load_state            {*this, "load-state",              false,                    "Trigger the state file to be loaded on startup"}
+  , stakefile_location    {*this, "stakefile-location",      "",                       "Path to the stakefile (usually snapshot.json)"}
   , experimental_features {*this, "experimental",            {},                       "The comma separated set of experimental features to enable"}
   , proof_of_stake        {*this, "pos",                     false,                    "Enable Proof of Stake consensus"}
   , beacon_address        {*this, "beacon",                  "",                       "The address of the dealer node"}
