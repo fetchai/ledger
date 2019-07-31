@@ -18,16 +18,13 @@
 //------------------------------------------------------------------------------
 
 #include "math/base_types.hpp"
+#include "math/tensor_declaration.hpp"
 #include "math/tensor_slice_iterator.hpp"
 
 #include <cassert>
 
 namespace fetch {
 namespace math {
-
-// need to forward declare
-template <typename T, typename C>
-class Tensor;
 
 inline bool ShapeFromBroadcast(SizeVector const &a, SizeVector const &b, SizeVector &c)
 {
