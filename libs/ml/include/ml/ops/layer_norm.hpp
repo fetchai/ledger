@@ -61,22 +61,18 @@ public:
 
     // do normalization along axis = 0
     // recenter input
-    ArrayType mu = fetch::math::ReduceMean(*(inputs.front()), axis_);
-    fetch::math::Subtract(*(inputs.front()), mu, mu);
+    ArrayType mu   = fetch::math::ReduceMean(*(inputs.front()), axis_);
+    cached_output_ = fetch::math::Subtract(*(inputs.front()), mu);
 
     // get variance of input
-    ArrayType sq_mu = fetch::math::Square(mu);
-    ArrayType var   = fetch::math::ReduceMean(sq_mu, axis_);
-    fetch::math::Add(var, epsilon_, var);
+    ArrayType sq_dev     = fetch::math::Square(cached_output_);
+    cached_inv_sqrt_var_ = fetch::math::ReduceMean(sq_dev, axis_);
+    fetch::math::Add(cached_inv_sqrt_var_, epsilon_, cached_inv_sqrt_var_);
 
     // normalize input
-    fetch::math::Sqrt(var, var);
-    fetch::math::Divide(mu, var, mu);
-    fetch::math::Divide(static_cast<DataType>(1), var, var);
-
-    // cache data for backward part
-    cached_inv_sqrt_var_ = var;
-    cached_output_       = mu;
+    fetch::math::Sqrt(cached_inv_sqrt_var_, cached_inv_sqrt_var_);
+    fetch::math::Divide(cached_output_, cached_inv_sqrt_var_, cached_output_);
+    fetch::math::Divide(static_cast<DataType>(1), cached_inv_sqrt_var_, cached_inv_sqrt_var_);
 
     output = cached_output_;
   }
@@ -98,10 +94,10 @@ public:
 
     // do the backward
     ArrayType output_error_signal;
-    auto      feature_length = static_cast<DataType>(inputs.front()->shape(axis_));
-    auto      backward_a     = fetch::math::Multiply(error_signal, feature_length);
-    auto      backward_b     = fetch::math::ReduceSum(error_signal, axis_);
-    auto      backward_c =
+    DataType  feature_length = static_cast<DataType>(inputs.front()->shape()[axis_]);
+    ArrayType backward_a     = fetch::math::Multiply(error_signal, feature_length);
+    ArrayType backward_b     = fetch::math::ReduceSum(error_signal, axis_);
+    ArrayType backward_c =
         cached_output_ *
         fetch::math::ReduceSum(fetch::math::Multiply(error_signal, cached_output_), axis_);
     output_error_signal =
