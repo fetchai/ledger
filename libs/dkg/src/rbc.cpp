@@ -160,9 +160,10 @@ void RBC::Broadcast(RBCEnvelope const &env)
  */
 void RBC::SendRBroadcast(SerialisedMessage const &msg)
 {
-  RBCEnvelope env{RBroadcast(CHANNEL_BROADCAST, id_, ++msg_counter_, msg)};
+  RBroadcast broadcast_msg{CHANNEL_BROADCAST, id_, ++msg_counter_, msg};
+  RBCEnvelope env{broadcast_msg};
   Broadcast(env);
-  OnRBroadcast(std::dynamic_pointer_cast<RBroadcast>(env.Message()), id_);  // Self sending
+  OnRBroadcast(broadcast_msg, id_);  // Self sending
 }
 
 /**
@@ -173,15 +174,15 @@ void RBC::SendRBroadcast(SerialisedMessage const &msg)
  * @param sender_index Index of the sender in current_cabinet_
  * @return Bool for whether the value is set
  */
-bool RBC::SetMbar(TagType tag, std::shared_ptr<RMessage> msg_ptr, uint32_t sender_index)
+bool RBC::SetMbar(TagType tag, RMessage const &msg, uint32_t sender_index)
 {
   std::lock_guard<std::mutex> lock(mutex_broadcast_);
   if (broadcasts_[tag].mbar.empty())
   {
-    broadcasts_[tag].mbar = msg_ptr->message();
+    broadcasts_[tag].mbar = msg.message();
     return true;
   }
-  if (broadcasts_[tag].mbar != msg_ptr->message())
+  if (broadcasts_[tag].mbar != msg.message())
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Node ", id_, " received bad r-send message from ", sender_index);
   }
@@ -196,16 +197,16 @@ bool RBC::SetMbar(TagType tag, std::shared_ptr<RMessage> msg_ptr, uint32_t sende
  * @return Bool for whether the hash contained in RHash equals the MessageHash of message stored in
  * mbar for this tag
  */
-bool RBC::SetDbar(TagType tag, std::shared_ptr<RHash> msg_ptr)
+bool RBC::SetDbar(TagType tag, RHash const &msg)
 {
   std::lock_guard<std::mutex> lock(mutex_broadcast_);
-  broadcasts_[tag].dbar = msg_ptr->hash();
+  broadcasts_[tag].dbar = msg.hash();
   TruncatedHash msg_hash;
   if (!broadcasts_[tag].mbar.empty())
   {
     msg_hash = MessageHash(broadcasts_[tag].mbar);
   }
-  return msg_hash == msg_ptr->hash();
+  return msg_hash == msg.hash();
 }
 
 /**
@@ -214,10 +215,10 @@ bool RBC::SetDbar(TagType tag, std::shared_ptr<RHash> msg_ptr)
  * @param msg_ptr Shared pointer to REcho message
  * @return Bool for whether we have reached the message count for REcho messages
  */
-bool RBC::ReceivedEcho(TagType tag, std::shared_ptr<REcho> msg_ptr)
+bool RBC::ReceivedEcho(TagType tag, REcho const &msg)
 {
   std::lock_guard<std::mutex> lock(mutex_broadcast_);
-  auto &                      msg_count = broadcasts_[tag].msgs_count[msg_ptr->hash()];
+  auto &                      msg_count = broadcasts_[tag].msgs_count[msg.hash()];
   msg_count.echo_count++;
   return (msg_count.echo_count == current_cabinet_.size() - threshold_ &&
           msg_count.ready_count <= threshold_);
@@ -229,10 +230,10 @@ bool RBC::ReceivedEcho(TagType tag, std::shared_ptr<REcho> msg_ptr)
  * @param msg_ptr Shared pointer to RReady message
  * @return MsgCount for tag in broadcasts_
  */
-struct RBC::MsgCount RBC::ReceivedReady(TagType tag, std::shared_ptr<RHash> msg_ptr)
+struct RBC::MsgCount RBC::ReceivedReady(TagType tag, RHash const &msg)
 {
   std::lock_guard<std::mutex> lock(mutex_broadcast_);
-  auto &                      msg_count = broadcasts_[tag].msgs_count[msg_ptr->hash()];
+  auto &                      msg_count = broadcasts_[tag].msgs_count[msg.hash()];
   msg_count.ready_count++;
   MsgCount res = msg_count;
   return res;
@@ -256,25 +257,81 @@ void RBC::OnRBC(MuddleAddress const &from, RBCEnvelope const &envelope)
   switch (msg_ptr->type())
   {
   case RBCMessage::MessageType::RBROADCAST:
+  {
     FETCH_LOG_TRACE(LOGGING_NAME, "Node: ", id_, " received RBroadcast from node ", sender_index);
-    OnRBroadcast(std::dynamic_pointer_cast<RBroadcast>(msg_ptr), sender_index);
+    auto broadcast_ptr = std::dynamic_pointer_cast<RBroadcast>(msg_ptr);
+    if (broadcast_ptr != nullptr)
+    {
+      OnRBroadcast(*broadcast_ptr, sender_index);
+    }
+    else
+    {
+      FETCH_LOG_ERROR(LOGGING_NAME, "Node: ", id_, " can not process payload from node ",
+                      sender_index);
+    }
     break;
+  }
   case RBCMessage::MessageType::RECHO:
+  {
+
     FETCH_LOG_TRACE(LOGGING_NAME, "Node: ", id_, " received REcho from node ", sender_index);
-    OnREcho(std::dynamic_pointer_cast<REcho>(msg_ptr), sender_index);
+    auto echo_ptr = std::dynamic_pointer_cast<REcho>(msg_ptr);
+    if (echo_ptr != nullptr)
+    {
+      OnREcho(*echo_ptr, sender_index);
+    }
+    else
+    {
+      FETCH_LOG_ERROR(LOGGING_NAME, "Node: ", id_, " can not process payload from node ",
+                      sender_index);
+    }
     break;
+  }
   case RBCMessage::MessageType::RREADY:
+  {
     FETCH_LOG_TRACE(LOGGING_NAME, "Node: ", id_, " received RReady from node ", sender_index);
-    OnRReady(std::dynamic_pointer_cast<RReady>(msg_ptr), sender_index);
+    auto ready_ptr = std::dynamic_pointer_cast<RReady>(msg_ptr);
+    if (ready_ptr != nullptr)
+    {
+      OnRReady(*ready_ptr, sender_index);
+    }
+    else
+    {
+      FETCH_LOG_ERROR(LOGGING_NAME, "Node: ", id_, " can not process payload from node ",
+                      sender_index);
+    }
     break;
+  }
   case RBCMessage::MessageType::RREQUEST:
+  {
     FETCH_LOG_TRACE(LOGGING_NAME, "Node: ", id_, " received RRequest from node ", sender_index);
-    OnRRequest(std::dynamic_pointer_cast<RRequest>(msg_ptr), sender_index);
+    auto request_ptr = std::dynamic_pointer_cast<RRequest>(msg_ptr);
+    if (request_ptr != nullptr)
+    {
+      OnRRequest(*request_ptr, sender_index);
+    }
+    else
+    {
+      FETCH_LOG_ERROR(LOGGING_NAME, "Node: ", id_, " can not process payload from node ",
+                      sender_index);
+    }
     break;
+  }
   case RBCMessage::MessageType::RANSWER:
+  {
     FETCH_LOG_TRACE(LOGGING_NAME, "Node: ", id_, " received RAnswer from node ", sender_index);
-    OnRAnswer(std::dynamic_pointer_cast<RAnswer>(msg_ptr), sender_index);
+    auto answer_ptr = std::dynamic_pointer_cast<RAnswer>(msg_ptr);
+    if (answer_ptr != nullptr)
+    {
+      OnRAnswer(*answer_ptr, sender_index);
+    }
+    else
+    {
+      FETCH_LOG_ERROR(LOGGING_NAME, "Node: ", id_, " can not process payload from node ",
+                      sender_index);
+    }
     break;
+  }
   default:
     FETCH_LOG_ERROR(LOGGING_NAME, "Node: ", id_, " can not process payload from node ",
                     sender_index);
@@ -287,34 +344,35 @@ void RBC::OnRBC(MuddleAddress const &from, RBCEnvelope const &envelope)
  * @param msg_ptr Shared pointer to RBroadcast message
  * @param sender_index Index of sender in current_cabinet_
  */
-void RBC::OnRBroadcast(std::shared_ptr<RBroadcast> const msg_ptr, uint32_t sender_index)
+void RBC::OnRBroadcast(RBroadcast const &msg, uint32_t sender_index)
 {
-  TagType tag = msg_ptr->tag();
+  TagType tag = msg.tag();
   if (!SetPartyFlag(sender_index, tag, MsgType::R_SEND))
   {
     FETCH_LOG_WARN(LOGGING_NAME, "onRBroadcast: Node ", id_, " received repeated msg ", tag,
-                   " from node ", sender_index, " with counter ", msg_ptr->counter(), " and id ",
-                   msg_ptr->id());
+                   " from node ", sender_index, " with counter ", msg.counter(), " and id ",
+                   msg.id());
     return;
   }
   FETCH_LOG_INFO(LOGGING_NAME, "onRBroadcast: Node ", id_, " received msg ", tag, " from node ",
-                 sender_index, " with counter ", msg_ptr->counter(), " and id ", msg_ptr->id());
-  if (sender_index == msg_ptr->id())
+                 sender_index, " with counter ", msg.counter(), " and id ", msg.id());
+  if (sender_index == msg.id())
   {
-    if (SetMbar(tag, msg_ptr, sender_index))
+    if (SetMbar(tag, msg, sender_index))
     {
-      broadcasts_[tag].mbar = msg_ptr->message();
-      RBCEnvelope env{REcho{msg_ptr->channel(), msg_ptr->id(), msg_ptr->counter(),
-                            MessageHash(msg_ptr->message())}};
+      broadcasts_[tag].mbar = msg.message();
+      REcho echo_msg{msg.channel(), msg.id(), msg.counter(),
+                          MessageHash(msg.message())};
+      RBCEnvelope env{echo_msg};
       Broadcast(env);
-      OnREcho(std::dynamic_pointer_cast<REcho>(env.Message()), id_);  // self sending.
+      OnREcho(echo_msg, id_);  // self sending.
     }
   }
   else
   {
     FETCH_LOG_WARN(LOGGING_NAME, "onRBroadcast: Node ", id_,
                    " received wrong r-send msg from node ", sender_index, " for msg ", tag,
-                   " with id ", msg_ptr->id());
+                   " with id ", msg.id());
   }
 }
 
@@ -325,23 +383,24 @@ void RBC::OnRBroadcast(std::shared_ptr<RBroadcast> const msg_ptr, uint32_t sende
  * @param msg_ptr Shared pointer to REcho message
  * @param sender_index Index of sender in current_cabinet_
  */
-void RBC::OnREcho(std::shared_ptr<REcho> const msg_ptr, uint32_t sender_index)
+void RBC::OnREcho(REcho const &msg, uint32_t sender_index)
 {
-  TagType tag = msg_ptr->tag();
+  TagType tag = msg.tag();
   if (!SetPartyFlag(sender_index, tag, MsgType::R_ECHO))
   {
     FETCH_LOG_WARN(LOGGING_NAME, "onREcho: Node ", id_, " received repeated msg ", tag,
-                   " from node ", sender_index, " with counter ", msg_ptr->counter(), " and id ",
-                   msg_ptr->id());
+                   " from node ", sender_index, " with counter ", msg.counter(), " and id ",
+                   msg.id());
     return;
   }
   FETCH_LOG_TRACE(LOGGING_NAME, "onREcho: Node ", id_, " received msg ", tag, " from node ",
                   sender_index, " with counter ", msg_ptr->counter(), " and id ", msg_ptr->id());
-  if (ReceivedEcho(tag, msg_ptr))
+  if (ReceivedEcho(tag, msg))
   {
-    RBCEnvelope env{RReady{msg_ptr->channel(), msg_ptr->id(), msg_ptr->counter(), msg_ptr->hash()}};
+    RReady ready_msg{msg.channel(), msg.id(), msg.counter(), msg.hash()};
+    RBCEnvelope env{ready_msg};
     Broadcast(env);
-    OnRReady(std::dynamic_pointer_cast<RReady>(env.Message()), id_);  // self sending.
+    OnRReady(ready_msg, id_);  // self sending.
   }
 }
 
@@ -353,34 +412,35 @@ void RBC::OnREcho(std::shared_ptr<REcho> const msg_ptr, uint32_t sender_index)
  * @param msg_ptr Shared pointer to RReady message
  * @param sender_index Index of sender in current_cabinet_
  */
-void RBC::OnRReady(std::shared_ptr<RReady> const msg_ptr, uint32_t sender_index)
+void RBC::OnRReady(RReady const &msg, uint32_t sender_index)
 {
-  TagType tag = msg_ptr->tag();
+  TagType tag = msg.tag();
   if (!SetPartyFlag(sender_index, tag, MsgType::R_READY))
   {
     FETCH_LOG_WARN(LOGGING_NAME, "onRReady: Node ", id_, " received repeated msg ", tag,
-                   " from node ", sender_index, " with counter ", msg_ptr->counter(), " and id ",
-                   msg_ptr->id());
+                   " from node ", sender_index, " with counter ", msg.counter(), " and id ",
+                   msg.id());
     return;
   }
   FETCH_LOG_TRACE(LOGGING_NAME, "onRReady: Node ", id_, " received msg ", tag, " from node ",
                   sender_index, " with counter ", msg_ptr->counter(), " and id ", msg_ptr->id());
-  auto msgsCount = ReceivedReady(tag, msg_ptr);
+  auto msgsCount = ReceivedReady(tag, msg);
   if (threshold_ > 0 && msgsCount.ready_count == threshold_ + 1 &&
       msgsCount.echo_count < (current_cabinet_.size() - threshold_))
   {
-    RBCEnvelope env{RReady{msg_ptr->channel(), msg_ptr->id(), msg_ptr->counter(), msg_ptr->hash()}};
+    RReady ready_msg{msg.channel(), msg.id(), msg.counter(), msg.hash()};
+    RBCEnvelope env{ready_msg};
     Broadcast(env);
-    OnRReady(std::dynamic_pointer_cast<RReady>(env.Message()), id_);  // self sending.
+    OnRReady(ready_msg, id_);  // self sending.
   }
   else if (msgsCount.ready_count == 2 * threshold_ + 1)
   {
-    broadcasts_[tag].dbar = msg_ptr->hash();
+    broadcasts_[tag].dbar = msg.hash();
 
     TruncatedHash msg_hash;
-    if (!SetDbar(tag, msg_ptr))
+    if (!SetDbar(tag, msg))
     {
-      RBCEnvelope env{RRequest{msg_ptr->channel(), msg_ptr->id(), msg_ptr->counter()}};
+      RBCEnvelope env{RRequest{msg.channel(), msg.id(), msg.counter()}};
 
       uint32_t counter{0};
       auto     im = current_cabinet_.begin();
@@ -395,11 +455,11 @@ void RBC::OnRReady(std::shared_ptr<RReady> const msg_ptr, uint32_t sender_index)
         }
       }
     }
-    else if (CheckTag(*msg_ptr) && msg_ptr->id() != id_)
+    else if (CheckTag(msg) && msg.id() != id_)
     {
       FETCH_LOG_INFO(LOGGING_NAME, "Node ", id_, " delivered msg ", tag, " with counter ",
-                     msg_ptr->counter(), " and id ", msg_ptr->id());
-      Deliver(broadcasts_[tag].mbar, msg_ptr->id());
+                     msg.counter(), " and id ", msg.id());
+      Deliver(broadcasts_[tag].mbar, msg.id());
     }
   }
 }
@@ -411,14 +471,14 @@ void RBC::OnRReady(std::shared_ptr<RReady> const msg_ptr, uint32_t sender_index)
  * @param msg_ptr Shared pointer to RRequest message
  * @param sender_index Index of sender in current_cabinet_
  */
-void RBC::OnRRequest(std::shared_ptr<RRequest> const msg_ptr, uint32_t sender_index)
+void RBC::OnRRequest(RRequest const &msg, uint32_t sender_index)
 {
-  TagType tag = msg_ptr->tag();
+  TagType tag = msg.tag();
   if (!SetPartyFlag(sender_index, tag, MsgType::R_REQUEST))
   {
     FETCH_LOG_WARN(LOGGING_NAME, "onRRequest: Node ", id_, " received repeated msg ", tag,
-                   " from node ", sender_index, " with counter ", msg_ptr->counter(), " and id ",
-                   msg_ptr->id());
+                   " from node ", sender_index, " with counter ", msg.counter(), " and id ",
+                   msg.id());
     return;
   }
   FETCH_LOG_TRACE(LOGGING_NAME, "onRRequest: Node ", id_, " received msg ", tag, " from node ",
@@ -426,7 +486,7 @@ void RBC::OnRRequest(std::shared_ptr<RRequest> const msg_ptr, uint32_t sender_in
   if (!broadcasts_[tag].mbar.empty())
   {
     RBCEnvelope env{
-        RAnswer{msg_ptr->channel(), msg_ptr->id(), msg_ptr->counter(), broadcasts_[tag].mbar}};
+        RAnswer{msg.channel(), msg.id(), msg.counter(), broadcasts_[tag].mbar}};
 
     auto im = std::next(current_cabinet_.begin(), sender_index);
     Send(env, *im);
@@ -439,9 +499,9 @@ void RBC::OnRRequest(std::shared_ptr<RRequest> const msg_ptr, uint32_t sender_in
  * @param msg_ptr Shared pointer to RAnswer message
  * @param sender_index Index of sender in current_cabinet_
  */
-void RBC::OnRAnswer(std::shared_ptr<RAnswer> const msg_ptr, uint32_t sender_index)
+void RBC::OnRAnswer(RAnswer const &msg, uint32_t sender_index)
 {
-  TagType tag = msg_ptr->tag();
+  TagType tag = msg.tag();
   if (!SetPartyFlag(sender_index, tag, MsgType::R_ANSWER))
   {
     return;
@@ -452,17 +512,17 @@ void RBC::OnRAnswer(std::shared_ptr<RAnswer> const msg_ptr, uint32_t sender_inde
     return;
   }
   // Check the hash of the message
-  TruncatedHash msg_hash{MessageHash(msg_ptr->message())};
+  TruncatedHash msg_hash{MessageHash(msg.message())};
   if (msg_hash == broadcasts_[tag].dbar)
   {
     if (broadcasts_[tag].mbar.empty())
     {
-      broadcasts_[tag].mbar = msg_ptr->message();
+      broadcasts_[tag].mbar = msg.message();
     }
     else
     {
       // TODO(jmw): Double check this part of protocol
-      broadcasts_[tag].mbar = msg_ptr->message();
+      broadcasts_[tag].mbar = msg.message();
     }
   }
   else
@@ -473,11 +533,11 @@ void RBC::OnRAnswer(std::shared_ptr<RAnswer> const msg_ptr, uint32_t sender_inde
     return;
   }
 
-  if (CheckTag(*msg_ptr) && msg_ptr->id() != id_)
+  if (CheckTag(msg) && msg.id() != id_)
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Node ", id_, " delivered msg ", tag, " with counter ",
-                   msg_ptr->counter(), " and id ", msg_ptr->id());
-    Deliver(broadcasts_[tag].mbar, msg_ptr->id());
+                   msg.counter(), " and id ", msg.id());
+    Deliver(broadcasts_[tag].mbar, msg.id());
   }
 }
 
@@ -529,7 +589,7 @@ uint32_t RBC::CabinetIndex(MuddleAddress const &other_address) const
  * @param msg RBCMessage which is ready to be delivered
  * @return Bool for whether message can be delivered
  */
-bool RBC::CheckTag(RBCMessage &msg)
+bool RBC::CheckTag(RBCMessage const &msg)
 {
   std::lock_guard<std::mutex> lock(mutex_deliver_);
   assert(msg.id() < current_cabinet_.size());

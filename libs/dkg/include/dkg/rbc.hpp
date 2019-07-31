@@ -78,7 +78,7 @@ private:
     std::unordered_map<TagType, std::bitset<sizeof(MsgType) * 8>>
             flags;          ///< Marks for each message tag what messages have been received
     uint8_t deliver_s = 1;  ///< Counter for messages delivered - initialised to 1
-    std::map<uint8_t, RBCMessage &> undelivered_msg;  ///< Undelivered messages indexed by tag
+    std::map<uint8_t, RBCMessage const&> undelivered_msg;  ///< Undelivered messages indexed by tag
   };
 
   uint32_t           id_;  ///< Rank used in DKG (derived from position in current_cabinet_)
@@ -107,20 +107,20 @@ private:
   void Send(RBCEnvelope const &env, MuddleAddress const &address);
   void Broadcast(RBCEnvelope const &env);
   void OnRBC(MuddleAddress const &from, RBCEnvelope const &envelope);
-  void OnRBroadcast(std::shared_ptr<RBroadcast> msg_ptr, uint32_t sender_index);
-  void OnREcho(std::shared_ptr<REcho> msg_ptr, uint32_t sender_index);
-  void OnRReady(std::shared_ptr<RReady> msg_ptr, uint32_t sender_index);
-  void OnRRequest(std::shared_ptr<RRequest> msg_ptr, uint32_t sender_index);
-  void OnRAnswer(std::shared_ptr<RAnswer> msg_ptr, uint32_t sender_index);
+  void OnRBroadcast(RBroadcast const &msg, uint32_t sender_index);
+  void OnREcho(REcho const &msg, uint32_t sender_index);
+  void OnRReady(RReady const &msg, uint32_t sender_index);
+  void OnRRequest(RRequest const &msg, uint32_t sender_index);
+  void OnRAnswer(RAnswer const &msg, uint32_t sender_index);
   void Deliver(SerialisedMessage const &msg, uint32_t sender_index);
 
   static std::string MsgTypeToString(MsgType msg_type);
   uint32_t           CabinetIndex(MuddleAddress const &other_address) const;
-  bool               CheckTag(RBCMessage &msg);
-  bool               SetMbar(TagType tag, std::shared_ptr<RMessage> msg_ptr, uint32_t sender_index);
-  bool               SetDbar(TagType tag, std::shared_ptr<RHash> msg_ptr);
-  bool               ReceivedEcho(TagType tag, std::shared_ptr<REcho> msg_ptr);
-  struct MsgCount    ReceivedReady(TagType tag, std::shared_ptr<RHash> msg_ptr);
+  bool               CheckTag(RBCMessage const &msg);
+  bool               SetMbar(TagType tag, RMessage const &msg, uint32_t sender_index);
+  bool               SetDbar(TagType tag, RHash const &msg);
+  bool               ReceivedEcho(TagType tag, REcho const &msg);
+  struct MsgCount    ReceivedReady(TagType tag, RHash const &msg);
   bool               SetPartyFlag(uint32_t sender_index, TagType tag, MsgType msg_type);
 };
 }  // namespace dkg
