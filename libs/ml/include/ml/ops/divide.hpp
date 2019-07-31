@@ -51,7 +51,7 @@ public:
     assert(inputs.size() == 2);
     assert(inputs.at(0)->shape() == output.shape());
 
-    if (inputs.at(1)->size() > 1)
+    if ((inputs.at(0)->shape() == inputs.at(1)->shape()) || (inputs.at(1)->size() > 1))
     {  // array / array
       fetch::math::Divide(*inputs.at(0), *inputs.at(1), output);
     }

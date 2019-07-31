@@ -280,6 +280,11 @@ void Generator::HandleBlock(IRBlockNodePtr const &block_node)
       HandleFile(ConvertToIRBlockNodePtr(child));
       break;
     }
+    case NodeKind::PersistentStatement:
+    {
+      // Nothing to do here
+      break;
+    }
     case NodeKind::FunctionDefinitionStatement:
     {
       HandleFunctionDefinitionStatement(ConvertToIRBlockNodePtr(child));
@@ -298,6 +303,16 @@ void Generator::HandleBlock(IRBlockNodePtr const &block_node)
     case NodeKind::IfStatement:
     {
       HandleIfStatement(child);
+      break;
+    }
+    case NodeKind::UseStatement:
+    {
+      HandleUseStatement(child);
+      break;
+    }
+    case NodeKind::UseAnyStatement:
+    {
+      HandleUseAnyStatement(child);
       break;
     }
     case NodeKind::VarDeclarationStatement:
@@ -615,6 +630,52 @@ void Generator::HandleIfStatement(IRNodePtr const &node)
   {
     function_->instructions[jump_pc].index = endif_pc;
   }
+}
+
+void Generator::HandleUseStatement(IRNodePtr const &node)
+{
+  IRExpressionNodePtr state_name_node = ConvertToIRExpressionNodePtr(node->children[0]);
+  IRNodePtr           list_node       = node->children[1];
+  IRExpressionNodePtr alias_name_node = ConvertToIRExpressionNodePtr(node->children[2]);
+  IRExpressionNodePtr n               = alias_name_node ? alias_name_node : state_name_node;
+  HandleUseVariable(n);
+}
+
+void Generator::HandleUseAnyStatement(IRNodePtr const &node)
+{
+  for (auto const &c : node->children)
+  {
+    IRExpressionNodePtr child = ConvertToIRExpressionNodePtr(c);
+    HandleUseVariable(child);
+  }
+}
+
+void Generator::HandleUseVariable(IRExpressionNodePtr const &node)
+{
+  IRVariablePtr  v              = node->variable;
+  IRFunctionPtr  f              = node->function;
+  uint16_t       type_id        = v->type->resolved_id;
+  uint16_t const scope_number   = uint16_t(scopes_.size() - 1);
+  uint16_t       variable_index = function_->AddVariable(v->name, type_id, scope_number);
+  v->index                      = variable_index;
+  if (!v->type->IsPrimitive())
+  {
+    Scope &scope = scopes_[scope_number];
+    scope.objects.push_back(variable_index);
+  }
+  PushString(v->name, node->line);
+  uint16_t                opcode = f->resolved_opcode;
+  Executable::Instruction constructor_instruction(opcode);
+  constructor_instruction.type_id     = type_id;
+  constructor_instruction.data        = type_id;
+  uint16_t constructor_instruction_pc = function_->AddInstruction(constructor_instruction);
+  AddLineNumber(node->line, constructor_instruction_pc);
+  Executable::Instruction declare_assign_instruction(Opcodes::VariableDeclareAssign);
+  declare_assign_instruction.type_id     = type_id;
+  declare_assign_instruction.index       = variable_index;
+  declare_assign_instruction.data        = scope_number;
+  uint16_t declare_assign_instruction_pc = function_->AddInstruction(declare_assign_instruction);
+  AddLineNumber(node->line, declare_assign_instruction_pc);
 }
 
 void Generator::HandleVarStatement(IRNodePtr const &node)
@@ -1192,9 +1253,13 @@ void Generator::HandleFixed64(IRExpressionNodePtr const &node)
 
 void Generator::HandleString(IRExpressionNodePtr const &node)
 {
-  std::string s = node->text.substr(1, node->text.size() - 2);
-  uint16_t    index;
-  auto        it = strings_map_.find(s);
+  PushString(node->text.substr(1, node->text.size() - 2), node->line);
+}
+
+void Generator::PushString(std::string const &s, uint16_t line)
+{
+  uint16_t index;
+  auto     it = strings_map_.find(s);
   if (it != strings_map_.end())
   {
     index = it->second;
@@ -1205,11 +1270,10 @@ void Generator::HandleString(IRExpressionNodePtr const &node)
     executable_.strings.push_back(s);
     strings_map_[s] = index;
   }
-
   Executable::Instruction instruction(Opcodes::PushString);
   instruction.index = index;
   uint16_t pc       = function_->AddInstruction(instruction);
-  AddLineNumber(node->line, pc);
+  AddLineNumber(line, pc);
 }
 
 void Generator::HandleTrue(IRExpressionNodePtr const &node)
