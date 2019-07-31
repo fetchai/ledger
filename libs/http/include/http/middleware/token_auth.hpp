@@ -32,8 +32,7 @@ public:
 
   TokenAuthenticationInterface()                              = default;
   virtual ~TokenAuthenticationInterface()                     = default;
-  virtual bool     ValidateToken(ConstByteArray const &token) = 0;
-  virtual uint32_t authentication_level() const               = 0;
+  virtual uint32_t ValidateToken(ConstByteArray const &token) = 0;
 
   void operator()(HTTPRequest &req);
 };
@@ -47,8 +46,7 @@ public:
     , authentication_level_{authentication_level}
   {}
 
-  bool     ValidateToken(ConstByteArray const &token) override;
-  uint32_t authentication_level() const override;
+  uint32_t ValidateToken(ConstByteArray const &token) override;
 
 private:
   ConstByteArray token_;

@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/logging.hpp"
+#include "http/authentication_level.hpp"
 #include "http/middleware/token_auth.hpp"
 
 #include <memory>
@@ -38,22 +39,18 @@ void TokenAuthenticationInterface::operator()(HTTPRequest &req)
       return;
     }
 
-    token = token.SubArray(6);
-    if (ValidateToken(token))
+    token      = token.SubArray(6);
+    auto level = ValidateToken(token);
+    if (level != AuthenticationLevel::NO_ACCESS)
     {
-      req.AddAuthentication(token_name, authentication_level());
+      req.AddAuthentication(token_name, level);
     }
   }
 }
 
-bool SimpleTokenAuthentication::ValidateToken(byte_array::ConstByteArray const &token)
+uint32_t SimpleTokenAuthentication::ValidateToken(byte_array::ConstByteArray const &token)
 {
-  return token_ == token;
-}
-
-uint32_t SimpleTokenAuthentication::authentication_level() const
-{
-  return authentication_level_;
+  return token_ == token ? authentication_level_ : AuthenticationLevel::NO_ACCESS;
 }
 
 }  // namespace middleware
