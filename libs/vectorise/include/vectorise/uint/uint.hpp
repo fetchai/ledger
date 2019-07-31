@@ -26,6 +26,7 @@
 #include <cstdint>
 #include <string>
 #include <vector>
+#include <climits>
 
 namespace fetch {
 namespace vectorise {
