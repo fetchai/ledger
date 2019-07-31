@@ -38,7 +38,7 @@ public:
   using SizeType      = typename ArrayType::SizeType;
   using VecTensorType = typename Ops<T>::VecTensorType;
 
-  explicit Softmax(SizeType axis = 1)
+  explicit Softmax(SizeType axis = 0)
     : axis_(axis)
   {}
   ~Softmax() override = default;
@@ -59,28 +59,24 @@ public:
     ArrayType return_signal = error_signal.Copy();
     ArrayType t(error_signal.shape());
     this->Forward(inputs, t);
-    return_signal.InlineMultiply(t);
 
-    // 1D softmax
+    fetch::math::Multiply(return_signal, t, return_signal);
+
+    // 1D softmax with 1 batch dimension
     if (inputs.front()->shape().size() == 1)
     {
       typename ArrayType::Type sum = return_signal.Sum();
-      t.InlineMultiply(sum);
+      fetch::math::Multiply(t, sum, t);
     }
-    // 2D softmax
-    else if (inputs.front()->shape().size() == 2)
-    {
-      ArrayType sum;
-      sum = ReduceSum(return_signal, 1 - axis_);
-
-      t.InlineMultiply(sum);
-    }
+    // N-D softmax
     else
     {
-      throw std::runtime_error("Softmax over >= 3 dimensions not implemented");
+      ArrayType sum = ReduceSum(return_signal, axis_);
+      fetch::math::Multiply(t, sum, t);
     }
 
-    return_signal.InlineSubtract(t);
+    fetch::math::Subtract(return_signal, t, return_signal);
+
     return {return_signal};
   }
 

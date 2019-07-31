@@ -18,10 +18,15 @@
 //------------------------------------------------------------------------------
 
 #include "variant/variant.hpp"
-#include "vm/array.hpp"
 #include "vm/object.hpp"
 
 namespace fetch {
+
+namespace vm {
+template <typename T>
+struct Array;
+}
+
 namespace vm_modules {
 
 class StructuredData : public vm::Object
@@ -37,8 +42,8 @@ public:
   ~StructuredData() override = default;
 
 protected:
-  bool SerializeTo(vm::MsgPackSerializer &buffer) override;
-  bool DeserializeFrom(vm::MsgPackSerializer &buffer) override;
+  bool SerializeTo(serializers::MsgPackSerializer &buffer) override;
+  bool DeserializeFrom(serializers::MsgPackSerializer &buffer) override;
 
   bool ToJSON(vm::JSONVariant &variant) override;
   bool FromJSON(vm::JSONVariant const &variant) override;

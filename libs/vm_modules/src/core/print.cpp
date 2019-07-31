@@ -24,6 +24,8 @@
 
 #include <ostream>
 
+using namespace fetch::vm;
+
 namespace fetch {
 namespace vm_modules {
 
@@ -70,9 +72,9 @@ EnableIf<IsAny8BitInteger<T>> StringifyNumber(std::ostream &out, T const &el)
 }
 
 template <typename T>
-void StringifyArrayElement(vm::TypeId id, std::ostream &out, T const &el)
+void StringifyArrayElement(TypeId id, std::ostream &out, T const &el)
 {
-  if (id == vm::TypeIds::Bool)
+  if (id == TypeIds::Bool)
   {
     StringifyBool(out, static_cast<bool>(el));
   }
@@ -85,9 +87,9 @@ void StringifyArrayElement(vm::TypeId id, std::ostream &out, T const &el)
 }  // namespace internal
 
 template <bool APPEND_LINEBREAK = false>
-void PrintString(fetch::vm::VM *vm, fetch::vm::Ptr<fetch::vm::String> const &s)
+void PrintString(VM *vm, Ptr<String> const &s)
 {
-  auto &out = vm->GetOutputDevice(vm::VM::STDOUT);
+  auto &out = vm->GetOutputDevice(VM::STDOUT);
 
   if (s == nullptr)
   {
@@ -102,9 +104,9 @@ void PrintString(fetch::vm::VM *vm, fetch::vm::Ptr<fetch::vm::String> const &s)
 }
 
 template <typename T, bool APPEND_LINEBREAK = false>
-void PrintNumber(fetch::vm::VM *vm, T const &s)
+void PrintNumber(VM *vm, T const &s)
 {
-  auto &out = vm->GetOutputDevice(vm::VM::STDOUT);
+  auto &out = vm->GetOutputDevice(VM::STDOUT);
 
   internal::StringifyNumber(out, s);
 
@@ -112,9 +114,9 @@ void PrintNumber(fetch::vm::VM *vm, T const &s)
 }
 
 template <bool APPEND_LINEBREAK = false>
-void PrintBool(fetch::vm::VM *vm, bool const &s)
+void PrintBool(VM *vm, bool const &s)
 {
-  auto &out = vm->GetOutputDevice(vm::VM::STDOUT);
+  auto &out = vm->GetOutputDevice(VM::STDOUT);
 
   internal::StringifyBool(out, s);
 
@@ -122,9 +124,9 @@ void PrintBool(fetch::vm::VM *vm, bool const &s)
 }
 
 template <typename T, bool APPEND_LINEBREAK = false>
-void PrintArray(fetch::vm::VM *vm, vm::Ptr<vm::Array<T>> const &arr)
+void PrintArray(VM *vm, Ptr<Array<T>> const &arr)
 {
-  auto &out = vm->GetOutputDevice(vm::VM::STDOUT);
+  auto &out = vm->GetOutputDevice(VM::STDOUT);
 
   if (arr == nullptr)
   {
@@ -150,7 +152,7 @@ void PrintArray(fetch::vm::VM *vm, vm::Ptr<vm::Array<T>> const &arr)
 
 }  // namespace
 
-void CreatePrint(vm::Module &module)
+void CreatePrint(Module &module)
 {
   module.CreateFreeFunction("print", &PrintString<>);
   module.CreateFreeFunction("printLn", &PrintString<true>);
