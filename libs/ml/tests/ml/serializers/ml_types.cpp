@@ -76,9 +76,9 @@ TYPED_TEST(SerializersTest, serialize_empty_graph_saveable_params)
 
 TYPED_TEST(SerializersTest, serialize_graph_saveable_params)
 {
-  using ArrayType = TypeParam;
+  using TensorType = TypeParam;
   using DataType  = typename TypeParam::Type;
-  using GraphType = typename fetch::ml::Graph<ArrayType>;
+  using GraphType = typename fetch::ml::Graph<TensorType>;
 
   fetch::ml::details::RegularisationType regulariser = fetch::ml::details::RegularisationType::L1;
   DataType                               reg_rate{0.01f};
@@ -86,13 +86,13 @@ TYPED_TEST(SerializersTest, serialize_graph_saveable_params)
   // Prepare graph with fairly random architecture
   auto g = std::make_shared<GraphType>();
 
-  std::string input = g->template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>("Input", {});
+  std::string input = g->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Input", {});
 
-  std::string layer_1 = g->template AddNode<fetch::ml::layers::FullyConnected<ArrayType>>(
+  std::string layer_1 = g->template AddNode<fetch::ml::layers::FullyConnected<TensorType>>(
       "FC1", {input}, 10u, 20u, fetch::ml::details::ActivationType::RELU, regulariser, reg_rate);
-  std::string layer_2 = g->template AddNode<fetch::ml::layers::FullyConnected<ArrayType>>(
+  std::string layer_2 = g->template AddNode<fetch::ml::layers::FullyConnected<TensorType>>(
       "FC2", {layer_1}, 20u, 10u, fetch::ml::details::ActivationType::RELU, regulariser, reg_rate);
-  std::string output = g->template AddNode<fetch::ml::layers::FullyConnected<ArrayType>>(
+  std::string output = g->template AddNode<fetch::ml::layers::FullyConnected<TensorType>>(
       "FC3", {layer_2}, 10u, 10u, fetch::ml::details::ActivationType::SOFTMAX, regulariser,
       reg_rate);
 
@@ -100,7 +100,7 @@ TYPED_TEST(SerializersTest, serialize_graph_saveable_params)
   fetch::serializers::ByteArrayBuffer       b;
   b << gsp1;
   b.seek(0);
-  //  fetch::ml::GraphSaveableParams<TypeParam> gsp2;
+
   auto gsp2 = std::make_shared<fetch::ml::GraphSaveableParams<TypeParam>>();
 
   b >> *gsp2;
@@ -112,19 +112,19 @@ TYPED_TEST(SerializersTest, serialize_graph_saveable_params)
     auto gsp2_node = gsp2_node_pair.second;
     auto gsp1_node = gsp1.nodes[gsp2_node_pair.first];
 
-    EXPECT_TRUE(gsp1_node->GetDescription() == gsp2_node->GetDescription());
+    EXPECT_TRUE(gsp1_node->OP_DESCRIPTOR == gsp2_node->OP_DESCRIPTOR);
   }
 
-  auto g2 = fetch::ml::utilities::LoadGraph(gsp2);
+  auto g2 = fetch::ml::utilities::LoadGraph<TensorType, GraphType>(gsp2);
 
-  ArrayType data = ArrayType::FromString("1, 2, 3, 4, 5, 6, 7, 8, 9, 10");
+  TensorType data = TensorType::FromString("1, 2, 3, 4, 5, 6, 7, 8, 9, 10");
 
   g->SetInput("Input", data.Transpose());
-  g2.SetInput("Input", data.Transpose());
+  g2->SetInput("Input", data.Transpose());
 
-  ArrayType prediction = g->Evaluate(output);
+  TensorType prediction = g->Evaluate(output);
 
-  ArrayType prediction2 = g2.Evaluate(output);
+  TensorType prediction2 = g2->Evaluate(output);
 
   // test correct values
   EXPECT_TRUE(prediction.AllClose(prediction2, fetch::math::function_tolerance<DataType>(),

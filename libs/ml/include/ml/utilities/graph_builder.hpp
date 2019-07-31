@@ -17,13 +17,15 @@
 //
 //------------------------------------------------------------------------------
 
-//#include "ml/graph.hpp"
+#include "ml/graph.hpp"
 #include "ml/layers/PRelu.hpp"
 #include "ml/layers/convolution_1d.hpp"
 #include "ml/layers/convolution_2d.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/layers/self_attention.hpp"
 #include "ml/layers/skip_gram.hpp"
+#include "ml/layers/layers_declaration.hpp"
+
 
 #include "ml/meta/ml_type_traits.hpp"
 
@@ -65,6 +67,35 @@ namespace fetch {
 namespace ml {
 namespace utilities {
 
+/**
+ * method for constructing a graph given saveparams
+ * @tparam TensorType
+ * @tparam GraphType
+ * @param gsp shared pointer to a graph
+ * @return
+ */
+template <typename TensorType>
+std::shared_ptr<fetch::ml::SubGraph<TensorType>> LoadSubGraph(std::shared_ptr<SubGraphSaveableParams<TensorType>> sgsp)
+{
+  auto graph_ptr = LoadGraph(std::static_pointer_cast<std::shared_ptr<GraphSaveableParams<TensorType>>>(sgsp));
+  return SubGraph<TensorType>::BuildSubGraph(std::static_pointer_cast<std::shared_ptr<SubGraphSaveableParams<TensorType>>>(graph_ptr));
+}
+
+/**
+ * method for constructing a graph given saveparams
+ * @tparam TensorType
+ * @tparam GraphType
+ * @param gsp shared pointer to a graph
+ * @return
+ */
+template <typename TensorType>
+std::shared_ptr<fetch::ml::layers::Convolution1D<TensorType>> LoadConvolution1DLayer(std::shared_ptr<ConvolutionLayer1DSaveableParams<TensorType>> csp)
+{
+  auto sg_ptr = LoadSubGraph<TensorType>(std::dynamic_pointer_cast<std::shared_ptr<SubGraphSaveableParams<TensorType>>>(csp));
+  return fetch::ml::layers::Convolution1D<TensorType>::template BuildConvolution1D<TensorType>(std::dynamic_pointer_cast<std::shared_ptr<ConvolutionLayer1DSaveableParams<TensorType>>>(csp));
+}
+
+
 // TODO: this should be recursive
 // when you want to add a subgraph call this with the subgraph as GraphType
 // Use AddNode to add nodes that are not graphs
@@ -88,7 +119,7 @@ void AddToGraph(OpType const &operation_type, std::shared_ptr<Graph<TensorType>>
   {
     g_ptr->template AddNode<ops::PlaceHolder<TensorType>>(
         node_name, inputs,
-        *(std::dynamic_pointer_cast<typename fetch::ml::ops::PlaceHolder<TensorType>::SPType>(
+        *(std::dynamic_pointer_cast<PlaceholderSaveableParams<TensorType>>(
             saved_node)));
     break;
   }
@@ -96,7 +127,7 @@ void AddToGraph(OpType const &operation_type, std::shared_ptr<Graph<TensorType>>
   {
     g_ptr->template AddNode<ops::Weights<TensorType>>(
         node_name, inputs,
-        *(std::dynamic_pointer_cast<typename fetch::ml::ops::Weights<TensorType>::SPType>(
+        *(std::dynamic_pointer_cast<WeightsSaveableParams<TensorType>>(
             saved_node)));
     break;
   }
@@ -104,7 +135,7 @@ void AddToGraph(OpType const &operation_type, std::shared_ptr<Graph<TensorType>>
   {
     g_ptr->template AddNode<ops::Dropout<TensorType>>(
         node_name, inputs,
-        *(std::dynamic_pointer_cast<typename fetch::ml::ops::Dropout<TensorType>::SPType>(
+        *(std::dynamic_pointer_cast<DropoutSaveableParams<TensorType>>(
             saved_node)));
     break;
   }
@@ -112,7 +143,7 @@ void AddToGraph(OpType const &operation_type, std::shared_ptr<Graph<TensorType>>
   {
     g_ptr->template AddNode<ops::LeakyRelu<TensorType>>(
         node_name, inputs,
-        *(std::dynamic_pointer_cast<typename fetch::ml::ops::LeakyRelu<TensorType>::SPType>(
+        *(std::dynamic_pointer_cast<LeakyReluSaveableParams<TensorType>>(
             saved_node)));
     break;
   }
@@ -120,7 +151,7 @@ void AddToGraph(OpType const &operation_type, std::shared_ptr<Graph<TensorType>>
   {
     g_ptr->template AddNode<ops::RandomisedRelu<TensorType>>(
         node_name, inputs,
-        *(std::dynamic_pointer_cast<typename fetch::ml::ops::RandomisedRelu<TensorType>::SPType>(
+        *(std::dynamic_pointer_cast<RandomisedReluSaveableParams<TensorType>>(
             saved_node)));
     break;
   }
@@ -128,7 +159,7 @@ void AddToGraph(OpType const &operation_type, std::shared_ptr<Graph<TensorType>>
   {
     g_ptr->template AddNode<ops::Softmax<TensorType>>(
         node_name, inputs,
-        *(std::dynamic_pointer_cast<typename fetch::ml::ops::Softmax<TensorType>::SPType>(
+        *(std::dynamic_pointer_cast<SoftmaxSaveableParams<TensorType>>(
             saved_node)));
     break;
   }
@@ -136,7 +167,7 @@ void AddToGraph(OpType const &operation_type, std::shared_ptr<Graph<TensorType>>
   {
     g_ptr->template AddNode<ops::Convolution1D<TensorType>>(
         node_name, inputs,
-        *(std::dynamic_pointer_cast<typename fetch::ml::ops::Convolution1D<TensorType>::SPType>(
+        *(std::dynamic_pointer_cast<Convolution1DSaveableParams<TensorType>>(
             saved_node)));
     break;
   }
@@ -144,7 +175,7 @@ void AddToGraph(OpType const &operation_type, std::shared_ptr<Graph<TensorType>>
   {
     g_ptr->template AddNode<ops::MaxPool1D<TensorType>>(
         node_name, inputs,
-        *(std::dynamic_pointer_cast<typename fetch::ml::ops::MaxPool1D<TensorType>::SPType>(
+        *(std::dynamic_pointer_cast<MaxPool1DSaveableParams<TensorType>>(
             saved_node)));
     break;
   }
@@ -152,7 +183,7 @@ void AddToGraph(OpType const &operation_type, std::shared_ptr<Graph<TensorType>>
   {
     g_ptr->template AddNode<ops::MaxPool2D<TensorType>>(
         node_name, inputs,
-        *(std::dynamic_pointer_cast<typename fetch::ml::ops::MaxPool2D<TensorType>::SPType>(
+        *(std::dynamic_pointer_cast<MaxPool2DSaveableParams<TensorType>>(
             saved_node)));
     break;
   }
@@ -160,7 +191,7 @@ void AddToGraph(OpType const &operation_type, std::shared_ptr<Graph<TensorType>>
   {
     g_ptr->template AddNode<ops::Transpose<TensorType>>(
         node_name, inputs,
-        *(std::dynamic_pointer_cast<typename fetch::ml::ops::Transpose<TensorType>::SPType>(
+        *(std::dynamic_pointer_cast<TransposeSaveableParams<TensorType>>(
             saved_node)));
     break;
   }
@@ -168,7 +199,7 @@ void AddToGraph(OpType const &operation_type, std::shared_ptr<Graph<TensorType>>
   {
     g_ptr->template AddNode<ops::Reshape<TensorType>>(
         node_name, inputs,
-        *(std::dynamic_pointer_cast<typename fetch::ml::ops::Reshape<TensorType>::SPType>(
+        *(std::dynamic_pointer_cast<ReshapeSaveableParams<TensorType>>(
             saved_node)));
     break;
   }
@@ -176,23 +207,25 @@ void AddToGraph(OpType const &operation_type, std::shared_ptr<Graph<TensorType>>
   {
     g_ptr->template AddNode<layers::FullyConnected<TensorType>>(
         node_name, inputs,
-        *(std::dynamic_pointer_cast<typename fetch::ml::layers::FullyConnected<TensorType>::SPType>(
+        *(std::dynamic_pointer_cast<FullyConnectedSaveableParams<TensorType>>(
             saved_node)));
     break;
   }
   case OpType::LAYER_CONVOLUTION_1D:
   {
-    g_ptr->template AddNode<layers::Convolution1D<TensorType>>(
-        node_name, inputs,
-        *(std::dynamic_pointer_cast<typename fetch::ml::layers::Convolution1D<TensorType>::SPType>(
-            saved_node)));
+    auto sg_ptr = LoadSubGraph<TensorType>(std::dynamic_pointer_cast<std::shared_ptr<SubGraphSaveableParams<TensorType>>>(saved_node));
+    auto conv_ptr = fetch::ml::layers::Convolution1D<TensorType>::template BuildConvolution1D<TensorType>(std::dynamic_pointer_cast<std::shared_ptr<ConvolutionLayer1DSaveableParams<TensorType>>>(sg_ptr));
+
+    // CALL graph ADD NODE TO add fully formed layer to graph
+
+
     break;
   }
   case OpType::LAYER_CONVOLUTION_2D:
   {
     g_ptr->template AddNode<layers::Convolution2D<TensorType>>(
         node_name, inputs,
-        *(std::dynamic_pointer_cast<typename fetch::ml::layers::Convolution2D<TensorType>::SPType>(
+        *(std::dynamic_pointer_cast<ConvolutionLayer2DSaveableParams<TensorType>>(
             saved_node)));
     break;
   }
@@ -211,7 +244,7 @@ void AddToGraph(OpType const &operation_type, std::shared_ptr<Graph<TensorType>>
  * @return
  */
 template <typename TensorType, typename GraphType>
-GraphType LoadGraph(std::shared_ptr<GraphSaveableParams<TensorType>> gsp)
+std::shared_ptr<GraphType> LoadGraph(std::shared_ptr<GraphSaveableParams<TensorType>> gsp)
 {
   // set up the return graph
   auto ret = std::make_shared<GraphType>();
@@ -222,11 +255,10 @@ GraphType LoadGraph(std::shared_ptr<GraphSaveableParams<TensorType>> gsp)
     std::string              name   = node.first;
     std::vector<std::string> inputs = node.second;
 
-    fetch::ml::utilities::AddToGraph<TensorType>(gsp->nodes[name].OP_DESCRIPTOR, ret,
-                                                 gsp->nodes[name], name, inputs);
+    AddToGraph<TensorType>(gsp->nodes[name]->OP_DESCRIPTOR, ret, gsp->nodes[name], name, inputs);
   }
 
-  return *ret;
+  return ret;
 }
 
 }  // namespace utilities

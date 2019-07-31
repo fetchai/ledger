@@ -378,7 +378,6 @@ struct GraphSaveableParams : public SaveableParamsInterface
   using SizeType                  = typename TensorType::SizeType;
   fetch::ml::OpType OP_DESCRIPTOR = OpType::GRAPH;
 
-  //  static constexpr char const *sp_descriptor = "GraphSaveableParams";
   std::vector<std::pair<std::string, std::vector<std::string>>>             connections;
   std::unordered_map<std::string, std::shared_ptr<SaveableParamsInterface>> nodes;
 

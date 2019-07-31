@@ -86,13 +86,17 @@ public:
     this->SetOutputNode(output);
   }
 
-  explicit Convolution1D(SPType const &gs)
-    : SubGraph<ArrayType>(gs)
+  template <typename X>
+  static std::shared_ptr<Convolution1D<X>> BuildConvolution1D(ConvolutionLayer1DSaveableParams<X> const &sp)
   {
-    kernel_size_     = gs.kernel_size;
-    input_channels_  = gs.input_channels;
-    output_channels_ = gs.output_channels;
-    stride_size_     = gs.stride_size;
+    auto ret = std::make_shared<Convolution1D<X>>();
+
+    ret->kernel_size_     = sp.kernel_size;
+    ret->input_channels_  = sp.input_channels;
+    ret->output_channels_ = sp.output_channels;
+    ret->stride_size_     = sp.stride_size;
+
+    return ret;
   }
 
   std::shared_ptr<SaveableParamsInterface> GetOpSaveableParams() override

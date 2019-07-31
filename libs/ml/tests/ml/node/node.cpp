@@ -45,7 +45,7 @@ TYPED_TEST(NodeTest, node_placeholder)
   placeholder.Forward({}, output);
 
   EXPECT_EQ(output, data);
-  EXPECT_EQ(placeholder.Evaluate(true), data);
+  EXPECT_EQ(*(placeholder.Evaluate(true)), data);
 }
 
 TYPED_TEST(NodeTest, node_relu)
@@ -70,6 +70,6 @@ TYPED_TEST(NodeTest, node_relu)
   placeholder->Forward({}, output);
 
   EXPECT_EQ(output, data);
-  EXPECT_EQ(placeholder->Evaluate(true), data);
-  EXPECT_TRUE(relu->Evaluate(true).Copy().AllClose(gt));
+  EXPECT_EQ(*(placeholder->Evaluate(true)), data);
+  EXPECT_TRUE(relu->Evaluate(true)->Copy().AllClose(gt));
 }

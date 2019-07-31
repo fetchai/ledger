@@ -45,11 +45,27 @@ public:
   std::vector<ArrayType> Backward(VecTensorType const &inputs,
                                   ArrayType const &    error_signal) override;
 
-  explicit SubGraph(SPType gs)
-    : Graph<ArrayType>(gs)
+  template <typename X>
+  static std::shared_ptr<SubGraph<X>> BuildSubGraph(SubGraphSaveableParams<X> const &sgsp)
   {
-    input_node_names_ = gs.input_node_names;
-    output_node_name_ = gs.output_node_name;
+    auto ret = std::make_shared<SubGraph<X>>();
+
+    ret->input_node_names_ = sgsp.input_node_names;
+    ret->output_node_name_ = sgsp.output_node_name;
+
+    return ret;
+
+      // TODO - this must have already been done by the utilities
+//    // first load graph based on upcasting subpgrah saveparams to graph saveparams
+//    auto ptr_graph_saveable_params = std::make_shared<typename Graph<T>::SPType>(sgsp);
+//    auto graph_ptr = fetch::ml::utilities::LoadGraph<ArrayType, Graph<T>>(ptr_graph_saveable_params);
+//
+//    // overwrite base class with graph loaded from save params
+//    static_cast<Graph<T>>(*this) = *graph_ptr;
+//
+//    // assign
+//    input_node_names_ = sgsp.input_node_names;
+//    output_node_name_ = sgsp.output_node_name;
   }
 
   template <typename OtherSaveParamsType>

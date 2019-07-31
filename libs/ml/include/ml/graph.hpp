@@ -109,7 +109,7 @@ protected:
   std::unordered_map<std::string, SizeType>    trainable_lookup_;
   std::vector<TrainablePtrType>                trainable_;
   std::vector<std::pair<std::string, std::vector<std::string>>>
-      connections;  // unique node name to list of inputs
+      connections_;  // unique node name to list of inputs
 };
 
 /**
@@ -247,7 +247,46 @@ std::string Graph<ArrayType>::AddNode(std::string const &             node_name,
   }
 
   // save the connections (used for serializing graph)
-  connections.push_back(std::make_pair(name, inputs));
+  connections_.push_back(std::make_pair(name, inputs));
+
+  // add to map of trainable ops if necessary
+  AddTrainable(name, node_ptr);
+
+  // return unique node name (may not be identical to node_name)
+  return name;
+}
+
+/**
+ * An add node method that operates at run time (where the operation type is not known at compile time)
+ * This is necessary because to construct a graph after deserialising saved states must happen at run time
+ * @tparam ArrayType
+ * @tparam Params
+ * @param operation_type
+ * @param node_name
+ * @param inputs
+ * @param params
+ * @return
+ */
+template <typename ArrayType>
+template <typename... Params>
+std::string Graph<ArrayType>::RunTimeAddNode(OpType const & operation_type, std::string const & node_name, std::vector<std::string> const &inputs, Params... params)
+{
+  // guarantee unique op name
+  std::string name = RunTimeUpdateVariableName(operation_type, node_name);
+
+  // Instantiate the node
+  auto node_ptr = std::make_shared<Node<ArrayType>>(operation_type, name, params...);
+  nodes_[name]  = node_ptr;
+
+  // assign inputs and outputs
+  for (auto const &i : inputs)
+  {
+    nodes_[name]->AddInput(nodes_[i]);
+    nodes_[i]->AddOutput(nodes_[name]);
+  }
+
+  // save the connections (used for serializing graph)
+  connections_.push_back(std::make_pair(name, inputs));
 
   // add to map of trainable ops if necessary
   AddTrainable(name, node_ptr);
@@ -260,7 +299,7 @@ template <typename ArrayType>
 GraphSaveableParams<ArrayType> Graph<ArrayType>::GetGraphSaveableParams()
 {
   GraphSaveableParams<ArrayType> gs;
-  gs.connections = connections;
+  gs.connections = connections_;
 
   for (auto const &node : nodes_)
   {
