@@ -706,7 +706,14 @@ void ReduceMax(ArrayType const &obj1, SizeType axis, ArrayType &ret)
   using DataType = typename ArrayType::Type;
   ret.Fill(std::numeric_limits<DataType>::min());
 
-  Reduce(axis, [](const DataType &x, DataType &y) { y = std::max(x, y); }, obj1, ret);
+  Reduce(axis,
+         [](const DataType &x, DataType &y) {
+           if (x > y)
+           {
+             y = x;
+           }
+         },
+         obj1, ret);
 }
 
 template <typename ArrayType>

@@ -823,6 +823,100 @@ TYPED_TEST(FreeFunctionsTest, ReduceMean3D_axis_2)
               static_cast<double>(function_tolerance<DataType>()));
 }
 
+TYPED_TEST(FreeFunctionsTest, ReduceMax3D_axis_0)
+{
+  using SizeType = typename TypeParam::SizeType;
+  using DataType = typename TypeParam::Type;
+
+  SizeType n_height{4};
+  SizeType n_width{4};
+  SizeType n_features{2};
+
+  TypeParam array1{{n_height, n_width, n_features}};
+
+  // Fill input
+  auto     it    = array1.begin();
+  SizeType count = 1;
+  while (it.is_valid())
+  {
+    *it = static_cast<DataType>(count);
+    count++;
+    ++it;
+  }
+
+  TypeParam output{{1, n_width, n_features}};
+  fetch::math::ReduceMax(array1, 0, output);
+
+  // Test values
+  EXPECT_NEAR(static_cast<double>(output(0, 0, 0)), 4.,
+              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output(0, 1, 0)), 8.,
+              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output(0, 2, 0)), 12.,
+              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output(0, 3, 0)), 16.,
+              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output(0, 0, 1)), 20.,
+              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output(0, 1, 1)), 24.,
+              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output(0, 2, 1)), 28.,
+              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output(0, 3, 1)), 32.,
+              static_cast<double>(function_tolerance<DataType>()));
+}
+
+TYPED_TEST(FreeFunctionsTest, ReduceMax3D_axis_2)
+{
+  using SizeType = typename TypeParam::SizeType;
+  using DataType = typename TypeParam::Type;
+
+  SizeType n_height{4};
+  SizeType n_width{4};
+  SizeType n_features{2};
+
+  TypeParam array1{{n_height, n_width, n_features}};
+
+  // Fill input
+  auto     it    = array1.begin();
+  SizeType count = 1;
+  while (it.is_valid())
+  {
+    *it = static_cast<DataType>(count);
+    count++;
+    ++it;
+  }
+
+  TypeParam output{{n_height, n_width, 1}};
+  fetch::math::ReduceMax(array1, 2, output);
+
+  // Test values
+  EXPECT_NEAR(static_cast<double>(output(0, 0, 0)), 17.,
+              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output(1, 0, 0)), 18.,
+              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output(2, 0, 0)), 19.,
+              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output(3, 0, 0)), 20.,
+              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output(0, 1, 0)), 21.,
+              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output(1, 1, 0)), 22.,
+              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output(2, 1, 0)), 23.,
+              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output(3, 1, 0)), 24.,
+              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output(0, 2, 0)), 25.,
+              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output(1, 2, 0)), 26.,
+              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output(2, 2, 0)), 27.,
+              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output(3, 2, 0)), 28.,
+              static_cast<double>(function_tolerance<DataType>()));
+}
+
 TYPED_TEST(FreeFunctionsTest, Dot)
 {
   using SizeType = typename TypeParam::SizeType;
