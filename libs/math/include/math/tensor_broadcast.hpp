@@ -133,25 +133,25 @@ inline bool Broadcast(F function, const Tensor<T, C> &a, const Tensor<T, C> &b, 
   ShapeFromBroadcast(a.shape(), b.shape(), ret_shape);
   ret.Reshape(ret_shape);
 
-  std::vector<SizeVector> rangeA, rangeB, rangeRet;
+  std::vector<SizeVector> a_range, b_range, ret_range;
   for (auto &i : a.shape())
   {
-    rangeA.push_back({0, i});
+    a_range.push_back({0, i});
   }
 
   for (auto &i : b.shape())
   {
-    rangeB.push_back({0, i});
+    b_range.push_back({0, i});
   }
 
   for (auto &i : ret.shape())
   {
-    rangeRet.push_back({0, i});
+    ret_range.push_back({0, i});
   }
 
-  ConstTensorSliceIterator<T, C> it_a(a, rangeA);
-  ConstTensorSliceIterator<T, C> it_b(b, rangeB);
-  TensorSliceIterator<T, C>      it_ret(ret, rangeRet);
+  ConstTensorSliceIterator<T, C> it_a(a, a_range);
+  ConstTensorSliceIterator<T, C> it_b(b, b_range);
+  TensorSliceIterator<T, C>      it_ret(ret, ret_range);
 
   if (!UpgradeIteratorFromBroadcast<ConstTensorSliceIterator<T, C>>(ret_shape, it_a))
   {
