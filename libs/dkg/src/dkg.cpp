@@ -463,7 +463,7 @@ void DistributedKeyGeneration::OnExposedShares(std::shared_ptr<SharesMessage> co
 void DistributedKeyGeneration::OnNewShares(MuddleAddress                        from,
                                            std::pair<MsgShare, MsgShare> const &shares)
 {
-  FETCH_LOG_INFO(LOGGING_NAME, "Node ", cabinet_index_, " begin received shares from node  ",
+  FETCH_LOG_INFO(LOGGING_NAME, "Node ", cabinet_index_, " received shares from node  ",
                  CabinetIndex(from));
   uint32_t from_index{CabinetIndex(from)};
   s_ij[from_index][cabinet_index_].setStr(shares.first);
@@ -471,8 +471,6 @@ void DistributedKeyGeneration::OnNewShares(MuddleAddress                        
 
   ++shares_received_;
   ReceivedCoefficientsAndShares();
-  FETCH_LOG_INFO(LOGGING_NAME, "Node ", cabinet_index_, " end received shares from node  ",
-                 CabinetIndex(from));
 }
 
 /**

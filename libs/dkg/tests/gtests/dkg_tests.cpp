@@ -525,9 +525,9 @@ void GenerateTest(uint32_t cabinet_size, uint32_t threshold, uint32_t qual_size,
       while (pp < cabinet_size)
       {
         std::this_thread::sleep_for(std::chrono::seconds(5));
-        for (const auto &member : committee)
+        for (auto qq = pp; qq < cabinet_size; ++qq)
         {
-          if (!member->dkg.finished())
+          if (!committee[qq]->dkg.finished())
           {
             break;
           }
