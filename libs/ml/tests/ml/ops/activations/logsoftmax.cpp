@@ -69,7 +69,7 @@ TYPED_TEST(LogSoftmaxTest, forward_3d_tensor_axis_0_test)
     }
   }
 
-  fetch::ml::ops::LogSoftmax<ArrayType> op{0};
+  fetch::ml::ops::LogSoftmax<ArrayType> op{1};
   ArrayType prediction(op.ComputeOutputShape({std::make_shared<const ArrayType>(data)}));
   op.Forward({std::make_shared<const ArrayType>(data)}, prediction);
 
@@ -88,7 +88,7 @@ TYPED_TEST(LogSoftmaxTest, backward_test)
       "-6.4312e-03; -3.2019e-04; -4.7521e-02;  9.9996e-01;  6.4887e-01; 9.9999e-01; -2.59454; "
       "-7.9368e-07");
 
-  fetch::ml::ops::LogSoftmax<ArrayType> op{1};
+  fetch::ml::ops::LogSoftmax<ArrayType> op{0};
   std::vector<ArrayType> prediction = op.Backward({std::make_shared<const ArrayType>(data)}, error);
 
   // test correct values
@@ -117,7 +117,7 @@ TYPED_TEST(LogSoftmaxTest, backward_3d_tensor_axis_0_test)
       gt.Set(i, j, 0, static_cast<DataType>(gt_input[j + 3 * i]));
     }
   }
-  fetch::ml::ops::LogSoftmax<ArrayType> op{0};
+  fetch::ml::ops::LogSoftmax<ArrayType> op{1};
   std::vector<ArrayType> prediction = op.Backward({std::make_shared<const ArrayType>(data)}, error);
 
   // test correct values

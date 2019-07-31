@@ -29,6 +29,7 @@
 #include "math/linalg/blas/gemm_tn_vector.hpp"
 #include "math/linalg/prototype.hpp"
 #include "math/meta/math_type_traits.hpp"
+#include "math/tensor_reduce.hpp"
 
 #include <cassert>
 #include <numeric>
@@ -516,65 +517,21 @@ meta::IfIsMathArray<ArrayType, typename ArrayType::Type> Sum(ArrayType const &ar
 template <typename ArrayType>
 void ReduceSum(ArrayType const &obj1, SizeType axis, ArrayType &ret)
 {
-  assert((axis == 0) || (axis == 1));
-  assert(obj1.shape().size() == 2);
 
-  SizeVector access_idx{0, 0};
-  if (axis == 0)
-  {
-    assert(ret.shape()[0] == 1);
-    assert(ret.shape()[1] == obj1.shape()[1]);
+  using DataType = typename ArrayType::Type;
+  ret.Fill(static_cast<DataType>(0));
 
-    auto it  = obj1.cbegin();
-    auto rit = ret.begin();
-    while (rit.is_valid())
-    {
-      *rit = typename ArrayType::Type{0};
-      for (SizeType j{0}; j < obj1.shape().at(0); ++j)
-      {
-        *rit += *it;
-        ++it;
-      }
-      ++rit;
-    }
-  }
-  else
-  {
-    assert(ret.shape()[0] == obj1.shape()[0]);
-    assert(ret.shape()[1] == 1);
-
-    auto rit = ret.begin();
-    for (SizeType i = 0; i < ret.size(); ++i)
-    {
-      *rit = typename ArrayType::Type{0};
-      for (SizeType j = 0; j < obj1.shape().at(1); ++j)
-      {
-        // Todo(issue 1015) Replace with transposed iterator
-        *rit += obj1(i, j);
-      }
-      ++rit;
-    }
-  }
+  Reduce(axis, [](const DataType &x, DataType &y) { y += x; }, obj1, ret);
 }
 
 template <typename ArrayType>
 ArrayType ReduceSum(ArrayType const &obj1, SizeType axis)
 {
-  assert((axis == 0) || (axis == 1));
-  if (axis == 0)
-  {
-    SizeVector new_shape{1, obj1.shape()[1]};
-    ArrayType  ret{new_shape};
-    ReduceSum(obj1, axis, ret);
-    return ret;
-  }
-  else
-  {
-    SizeVector new_shape{obj1.shape()[0], 1};
-    ArrayType  ret{new_shape};
-    ReduceSum(obj1, axis, ret);
-    return ret;
-  }
+  SizeVector new_shape = obj1.shape();
+  new_shape.at(axis)   = 1;
+  ArrayType ret{new_shape};
+  ReduceSum(obj1, axis, ret);
+  return ret;
 }
 
 template <typename ArrayType>
@@ -584,7 +541,6 @@ meta::IfIsMathArray<ArrayType, void> ReduceMean(ArrayType const &               
 {
   using Type = typename ArrayType::Type;
 
-  assert(axis == 0 || axis == 1);
   Type n = static_cast<Type>(obj1.shape().at(axis));
   ReduceSum(obj1, axis, ret);
   Divide(ret, n, ret);
@@ -596,7 +552,6 @@ meta::IfIsMathArray<ArrayType, ArrayType> ReduceMean(ArrayType const &          
 {
   using Type = typename ArrayType::Type;
 
-  assert(axis == 0 || axis == 1);
   Type      n   = static_cast<Type>(obj1.shape().at(axis));
   ArrayType ret = ReduceSum(obj1, axis);
   Divide(ret, n, ret);
@@ -741,6 +696,33 @@ ArrayType PeakToPeak(ArrayType const &array, typename ArrayType::SizeType const 
 {
   ArrayType ret(Divide(Product(array.shape()), array.shape().at(axis)));
   PeakToPeak(array, axis, ret);
+  return ret;
+}
+
+template <typename ArrayType>
+void ReduceMax(ArrayType const &obj1, SizeType axis, ArrayType &ret)
+{
+
+  using DataType = typename ArrayType::Type;
+  ret.Fill(std::numeric_limits<DataType>::min());
+
+  Reduce(axis,
+         [](const DataType &x, DataType &y) {
+           if (x > y)
+           {
+             y = x;
+           }
+         },
+         obj1, ret);
+}
+
+template <typename ArrayType>
+ArrayType ReduceMax(ArrayType const &obj1, SizeType axis)
+{
+  SizeVector new_shape = obj1.shape();
+  new_shape.at(axis)   = 1;
+  ArrayType ret{new_shape};
+  ReduceMax(obj1, axis, ret);
   return ret;
 }
 
