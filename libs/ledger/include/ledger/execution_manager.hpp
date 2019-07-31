@@ -28,6 +28,7 @@
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 #include "network/details/thread_pool.hpp"
 #include "storage/object_store.hpp"
+#include "telemetry/telemetry.hpp"
 
 #include <atomic>
 #include <condition_variable>
@@ -101,6 +102,8 @@ private:
   using AtomicState       = std::atomic<State>;
   using SyncCounters      = SynchronisedState<Counters>;
   using SyncedState       = SynchronisedState<State>;
+  using CounterPtr        = telemetry::CounterPtr;
+  using HistogramPtr      = telemetry::HistogramPtr;
 
   uint32_t const log2_num_lanes_;
 
@@ -131,6 +134,13 @@ private:
 
   ThreadPool thread_pool_;
   ThreadPtr  monitor_thread_;
+
+  // Telemetry
+  CounterPtr   tx_executed_count_;
+  CounterPtr   slices_executed_count_;
+  CounterPtr   fees_settled_count_;
+  CounterPtr   blocks_completed_count_;
+  HistogramPtr execution_duration_;
 
   void MonitorThreadEntrypoint();
 

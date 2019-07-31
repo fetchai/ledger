@@ -59,7 +59,7 @@ std::ostream &operator<<(std::ostream &stream, LabelRefs const &refs)
 
       for (auto const &element : *container)
       {
-        // add the seperator if needed (all but the first loop)
+        // add the separator if needed (all but the first loop)
         if (add_sep)
         {
           stream << ',';
@@ -68,7 +68,7 @@ std::ostream &operator<<(std::ostream &stream, LabelRefs const &refs)
         // do the basic formatting
         stream << element.first << "=\"" << element.second << '"';
 
-        // after the first element seperators should always be added
+        // after the first element separators should always be added
         add_sep = true;
       }
     }
@@ -83,10 +83,19 @@ std::ostream &operator<<(std::ostream &stream, LabelRefs const &refs)
 
 }  // namespace
 
-std::ostream &Measurement::WriteHeader(std::ostream &stream, char const *type_name,
-                                       StreamMode mode) const
+OutputStream::OutputStream(std::ostream &stream)
+  : stream_{stream}
+{}
+
+bool OutputStream::HeaderIsRequired(std::string const &name)
 {
-  if (StreamMode::FULL == mode)
+  auto const result = metrics_.emplace(name);
+  return result.second;
+}
+
+OutputStream &Measurement::WriteHeader(OutputStream &stream, char const *type_name) const
+{
+  if (stream.HeaderIsRequired(name()))
   {
     stream << "# HELP " << name() << ' ' << description() << '\n'
            << "# TYPE " << name() << ' ' << type_name << '\n';
@@ -95,19 +104,19 @@ std::ostream &Measurement::WriteHeader(std::ostream &stream, char const *type_na
   return stream;
 }
 
-std::ostream &Measurement::WriteValuePrefix(std::ostream &stream) const
+OutputStream &Measurement::WriteValuePrefix(OutputStream &stream) const
 {
   stream << name() << LabelRefs{labels_};
   return stream;
 }
 
-std::ostream &Measurement::WriteValuePrefix(std::ostream &stream, std::string const &suffix) const
+OutputStream &Measurement::WriteValuePrefix(OutputStream &stream, std::string const &suffix) const
 {
   stream << name() << '_' << suffix << LabelRefs{labels_};
   return stream;
 }
 
-std::ostream &Measurement::WriteValuePrefix(std::ostream &stream, std::string const &suffix,
+OutputStream &Measurement::WriteValuePrefix(OutputStream &stream, std::string const &suffix,
                                             Labels const &extra) const
 {
   stream << name() << '_' << suffix << LabelRefs{labels_, extra};
