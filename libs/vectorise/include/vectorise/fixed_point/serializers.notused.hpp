@@ -1,3 +1,4 @@
+#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -16,21 +17,34 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/byte_array.hpp"
-#include "core/serializers/byte_array_buffer.hpp"
-#include "ledger/chain/transaction_layout_rpc_serializers.hpp"
-#include "ledger/chain/transaction_rpc_serializers.hpp"
+#include "core/serializers/group_definitions.hpp"
+#include "vectorise/fixed_point/fixed_point.hpp"
 
-using fetch::serializers::ByteArrayBuffer;
+#include <cstdint>
 
 namespace fetch {
-namespace ledger {
+namespace serializers {
 
-template void Serialize<ByteArrayBuffer>(ByteArrayBuffer &, TransactionLayout const &);
-template void Serialize<ByteArrayBuffer>(ByteArrayBuffer &, Transaction const &);
+template <std::uint16_t I, std::uint16_t F, typename D>
+struct ForwardSerializer<fixed_point::FixedPoint<I, F>, D>
+{
+  using Type       = fixed_point::FixedPoint<I, F>;
+  using DriverType = D;
 
-template void Deserialize<ByteArrayBuffer>(ByteArrayBuffer &, TransactionLayout &);
-template void Deserialize<ByteArrayBuffer>(ByteArrayBuffer &, Transaction &);
+  template <typename Interface>
+  static void Serialize(Interface &interface, Type const &n)
+  {
+    interface << n.Data();
+  }
 
-}  // namespace ledger
+  template <typename Interface>
+  static void Deserialize(Interface &interface, Type &n)
+  {
+    typename fixed_point::FixedPoint<I, F>::Type data;
+    interface >> data;
+    n = fixed_point::FixedPoint<I, F>::FromBase(data);
+  }
+};
+
+}  // namespace serializers
 }  // namespace fetch

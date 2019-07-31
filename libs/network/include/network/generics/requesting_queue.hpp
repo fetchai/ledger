@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/stl_types.hpp"
+#include "core/serializers/base_types.hpp"
 #include "network/generics/promise_of.hpp"
 #include "network/service/promise.hpp"
 

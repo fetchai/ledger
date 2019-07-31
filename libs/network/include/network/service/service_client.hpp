@@ -17,7 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/byte_array.hpp"
 #include "core/serializers/serializable_exception.hpp"
 #include "network/service/callable_class_member.hpp"
 #include "network/service/message_types.hpp"

@@ -17,8 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/logging.hpp"
-#include "core/serializers/byte_array.hpp"
-#include "core/serializers/byte_array_buffer.hpp"
+#include "core/serializers/main_serializer.hpp"
 #include "core/service_ids.hpp"
 #include "crypto/sha256.hpp"
 #include "dkg/dkg_service.hpp"
@@ -36,8 +35,6 @@ namespace {
 using namespace std::chrono_literals;
 
 using byte_array::ConstByteArray;
-using serializers::ByteArrayBuffer;
-
 using MuddleAddress = muddle::Packet::Address;
 using State         = DkgService::State;
 using PromiseState  = service::PromiseState;
@@ -168,7 +165,7 @@ void DkgService::SubmitSignatureShare(uint64_t round, uint32_t const &id,
 void DkgService::SendReliableBroadcast(RBCMessageType const &msg)
 {
   DKGSerializer serialiser;
-  msg.Serialize(serialiser);
+  serialiser << msg;
   rbc_.SendRBroadcast(serialiser.data());
 }
 

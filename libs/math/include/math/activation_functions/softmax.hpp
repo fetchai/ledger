@@ -99,9 +99,26 @@ void Softmax(ArrayType const &array, ArrayType &ret, typename ArrayType::SizeTyp
   {
     details::Softmax2DImplementation(array, ret, axis);
   }
+  else if ((array.shape().size() == 3) && (ret.shape().size() == 3))
+  {
+    assert(axis == 0 || axis == 1);
+    // TODO (#1320) - Copy()s can be removed when softmax2dimplementation handles IsIterable types
+    auto tmp_ret = ret.View(0).Copy();
+    for (size_t i = 0; i < array.shape()[2]; i++)
+    {
+      details::Softmax2DImplementation(array.View(i).Copy(), tmp_ret, axis);
+      ret.View(i).Assign(tmp_ret);
+    }
+  }
+  else if ((array.shape().size() == 3) && (ret.shape().size() == 3) && (axis == 2))
+  {
+    throw std::runtime_error("softmax on batch dimension is not implemented");
+  }
   else
   {
-    throw std::runtime_error("softmax for nDimensions not yet handled");
+    // TODO (#1360) we should have a N dimension implementation for softmax, with which the 2D
+    // implementation should be merged.
+    throw std::runtime_error("softmax for more than 3 Dimensions not yet handled");
   }
 }
 

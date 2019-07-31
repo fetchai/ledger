@@ -18,32 +18,39 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/const_byte_array.hpp"
+#include "core/byte_array/encoders.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "ledger/chain/transaction_serializer.hpp"
-
 namespace fetch {
-namespace ledger {
+namespace serializers {
 
-template <typename T>
-void Serialize(T &s, Transaction const &tx)
+template <typename D>
+struct ForwardSerializer<ledger::Transaction, D>
 {
-  TransactionSerializer serializer{};
-  serializer << tx;
+public:
+  using Type       = ledger::Transaction;
+  using DriverType = D;
 
-  s << serializer.data();
-}
+  template <typename Serializer>
+  static inline void Serialize(Serializer &s, Type const &tx)
+  {
+    ledger::TransactionSerializer serializer{};
+    serializer << tx;
+    s << serializer.data();
+  }
 
-template <typename T>
-void Deserialize(T &s, Transaction &tx)
-{
-  // extract the data from the stream
-  byte_array::ConstByteArray data;
-  s >> data;
+  template <typename Serializer>
+  static inline void Deserialize(Serializer &s, Type &tx)
+  {
+    // extract the data from the stream
+    byte_array::ConstByteArray data;
+    s >> data;
 
-  // create and extract the serializer
-  TransactionSerializer serializer{data};
-  serializer >> tx;
-}
+    // create and extract the serializer
+    ledger::TransactionSerializer serializer{data};
+    serializer >> tx;
+  }
+};
 
-}  // namespace ledger
+}  // namespace serializers
 }  // namespace fetch

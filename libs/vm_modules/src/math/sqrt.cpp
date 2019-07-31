@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -17,26 +16,38 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vectorise/fixed_point/fixed_point.hpp"
+#include "math/standard_functions/sqrt.hpp"
+#include "vm/module.hpp"
+#include "vm_modules/math/sqrt.hpp"
 
-#include <cstdint>
+#include <cmath>
+
+using namespace fetch::vm;
 
 namespace fetch {
-namespace serializers {
+namespace vm_modules {
+namespace math {
 
-template <typename T, std::uint16_t I, std::uint16_t F>
-inline void Serialize(T &serializer, fixed_point::FixedPoint<I, F> const &n)
+namespace {
+
+template <typename T>
+fetch::math::meta::IfIsMath<T, T> Sqrt(VM *, T const &a)
 {
-  serializer << n.Data();
+  T x;
+  fetch::math::Sqrt(a, x);
+  return x;
 }
 
-template <typename T, std::uint16_t I, std::uint16_t F>
-inline void Deserialize(T &serializer, fixed_point::FixedPoint<I, F> &n)
+}  // namespace
+
+void BindSqrt(Module &module)
 {
-  typename fixed_point::FixedPoint<I, F>::Type data;
-  serializer >> data;
-  n = fixed_point::FixedPoint<I, F>::FromBase(data);
+  module.CreateFreeFunction<float_t>("sqrt", &Sqrt<float_t>);
+  module.CreateFreeFunction<double_t>("sqrt", &Sqrt<double_t>);
+  module.CreateFreeFunction<fixed_point::fp32_t>("sqrt", &Sqrt<fixed_point::fp32_t>);
+  module.CreateFreeFunction<fixed_point::fp64_t>("sqrt", &Sqrt<fixed_point::fp64_t>);
 }
 
-}  // namespace serializers
+}  // namespace math
+}  // namespace vm_modules
 }  // namespace fetch

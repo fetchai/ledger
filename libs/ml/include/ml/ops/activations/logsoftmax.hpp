@@ -64,17 +64,27 @@ public:
 
     // return_signal.InlineMultiply(t);
 
-    // 1D softmax
-    if (inputs.front()->shape().size() == 1)
+    // 1D softmax with 1 batch dimension
+    if (inputs.front()->shape().size() == 2)
     {
-      typename ArrayType::Type sum = return_signal.Sum();
+      assert(axis_ == 1);
+      ArrayType sum = ReduceSum(return_signal, 0);
+
       t.InlineMultiply(sum);
     }
-    // 2D softmax
-    else if (inputs.front()->shape().size() == 2)
+    // 2D softmax with 1 batch dimension
+    else if (inputs.front()->shape().size() == 3)
     {
-      ArrayType sum;
-      sum = ReduceSum(return_signal, 1 - axis_);
+      assert((axis_ == 1) || (axis_ == 0));
+      auto sum_shape          = return_signal.shape();
+      sum_shape.at(1 - axis_) = 1;
+      ArrayType sum(sum_shape);
+      for (size_t i = 0; i < return_signal.shape()[2]; i++)
+      {
+        auto cur_sum = ReduceSum(return_signal.View(i).Copy(), 1 - axis_).View();
+        sum.View(i).Assign(cur_sum);
+      }
+
       t.InlineMultiply(sum);
     }
     else

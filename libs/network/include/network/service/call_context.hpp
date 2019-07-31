@@ -32,7 +32,30 @@ public:
 
   Address sender_address;
   Address transmitter_address;
+
+  void MarkAsValid()
+  {
+    is_valid_ = true;
+  }
+
+  bool is_valid() const
+  {
+    return is_valid_;
+  }
+
+private:
+  bool is_valid_{false};
 };
 
 }  // namespace service
+
+namespace serializers {
+template <typename D>
+struct IgnoredSerializer<service::CallContext, D>
+{
+public:
+  using Type       = service::CallContext;
+  using DriverType = D;
+};
+}  // namespace serializers
 }  // namespace fetch

@@ -187,6 +187,7 @@ struct Variable : public Symbol
     : Symbol(SymbolKind::Variable, name)
   {
     variable_kind = variable_kind__;
+    referenced    = false;
   }
   ~Variable() override = default;
 
@@ -196,6 +197,7 @@ struct Variable : public Symbol
   }
   VariableKind variable_kind;
   TypePtr      type;
+  bool         referenced;
 };
 using VariablePtr      = std::shared_ptr<Variable>;
 using VariablePtrArray = std::vector<VariablePtr>;
