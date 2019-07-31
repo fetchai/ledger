@@ -438,7 +438,6 @@ void RBC::OnRReady(RReady const &msg, uint32_t sender_index)
   }
   else if (msgsCount.ready_count == 2 * threshold_ + 1)
   {
-    TruncatedHash msg_hash;
     if (!SetDbar(tag, msg))
     {
       RBCEnvelope env{RRequest{msg.channel(), msg.id(), msg.counter()}};
