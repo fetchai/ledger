@@ -93,8 +93,14 @@ DkgService::DkgService(Endpoint &endpoint, ConstByteArray address)
   , rpc_server_{endpoint_, SERVICE_DKG, CHANNEL_RPC}
   , rpc_client_{"dkg", endpoint_, SERVICE_DKG, CHANNEL_RPC}
   , state_machine_{std::make_shared<StateMachine>("dkg", State::BUILD_AEON_KEYS, ToString)}
-  , rbc_{endpoint_, address_, current_cabinet_, *this}
-  , dkg_{address_, current_cabinet_, current_threshold_, *this}
+  , rbc_{endpoint_, address_, current_cabinet_,
+         [this](MuddleAddress const &address, ConstByteArray const &payload) -> void {
+           OnRbcDeliver(address, payload);
+         }}
+  , dkg_{address_, current_cabinet_, current_threshold_,
+         [this](DKGEnvelope const &envelope) -> void { SendReliableBroadcast(envelope); },
+         [this](MuddleAddress const &destination, std::pair<std::string, std::string> const &shares)
+             -> void { SendShares(destination, shares); }}
 {
   group_g_.clear();
   group_g_ = dkg_.group();
