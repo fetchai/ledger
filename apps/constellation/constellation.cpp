@@ -419,7 +419,8 @@ void Constellation::Run(UriList const &initial_peers, core::WeakRunnable bootstr
   // BEFORE the block coordinator starts its state set up special genesis
   if (cfg_.proof_of_stake)
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Loading from genesis save file. Location: ", cfg_.stakefile_location);
+    FETCH_LOG_INFO(LOGGING_NAME,
+                   "Loading from genesis save file. Location: ", cfg_.stakefile_location);
 
     GenesisFileCreator creator(block_coordinator_, *storage_, stake_.get(), dkg_.get());
 
