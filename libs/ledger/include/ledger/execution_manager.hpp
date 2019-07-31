@@ -141,6 +141,7 @@ private:
   CounterPtr   fees_settled_count_;
   CounterPtr   blocks_completed_count_;
   HistogramPtr execution_duration_;
+
   void MonitorThreadEntrypoint();
 
   bool PlanExecution(Block::Body const &block);
