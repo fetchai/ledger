@@ -438,8 +438,6 @@ void RBC::OnRReady(RReady const &msg, uint32_t sender_index)
   }
   else if (msgsCount.ready_count == 2 * threshold_ + 1)
   {
-    broadcasts_[tag].dbar = msg.hash();
-
     TruncatedHash msg_hash;
     if (!SetDbar(tag, msg))
     {
