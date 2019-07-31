@@ -420,7 +420,15 @@ void Constellation::Run(UriList const &initial_peers, core::WeakRunnable bootstr
     FETCH_LOG_INFO(LOGGING_NAME, "Loading from genesis save file.");
 
     GenesisFileCreator creator(block_coordinator_, *storage_, stake_.get(), dkg_.get());
-    creator.LoadFile(SNAPSHOT_FILENAME);
+
+    if (cfg_.stakefile_location != "")
+    {
+      creator.LoadFile(SNAPSHOT_FILENAME);
+    }
+    else
+    {
+      creator.LoadFile(cfg_.stakefile_location);
+    }
 
     FETCH_LOG_INFO(LOGGING_NAME, "Loaded from genesis save file.");
   }
