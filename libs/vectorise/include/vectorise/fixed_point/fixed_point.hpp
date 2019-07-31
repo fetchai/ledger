@@ -2461,7 +2461,6 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::Tan(FixedPoint<I, F> const &x)
 {
   if (IsNaN(x) || IsInfinity(x))
   {
-
     fp_state |= STATE_NAN;
     return NaN;
   }

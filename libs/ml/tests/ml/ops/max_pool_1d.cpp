@@ -22,6 +22,8 @@
 
 #include "gtest/gtest.h"
 
+#include <memory>
+
 template <typename T>
 class MaxPool1DTest : public ::testing::Test
 {

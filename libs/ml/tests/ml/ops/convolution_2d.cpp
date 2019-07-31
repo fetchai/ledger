@@ -22,6 +22,9 @@
 
 #include "gtest/gtest.h"
 
+#include <memory>
+#include <vector>
+
 template <typename T>
 class Convolution2DTest : public ::testing::Test
 {

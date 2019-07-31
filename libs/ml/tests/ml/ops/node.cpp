@@ -23,6 +23,9 @@
 
 #include "gtest/gtest.h"
 
+#include <memory>
+#include <vector>
+
 TEST(node_test, node_placeholder)
 {
   fetch::ml::Node<fetch::math::Tensor<int>, fetch::ml::ops::PlaceHolder<fetch::math::Tensor<int>>>

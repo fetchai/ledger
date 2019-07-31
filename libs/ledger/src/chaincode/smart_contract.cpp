@@ -55,19 +55,6 @@ namespace ledger {
 namespace {
 
 /**
- * Compute the digest for the contract source
- *
- * @param source Reference to the contract source
- * @return The calculated digest of the source
- */
-ConstByteArray GenerateDigest(std::string const &source)
-{
-  fetch::crypto::SHA256 hash;
-  hash.Update(source);
-  return hash.Final();
-}
-
-/**
  * Validate any addresses in the params list against the TX given
  *
  * @param: tx the transaction triggering the smart contract
@@ -105,7 +92,7 @@ void ValidateAddressesInParams(Transaction const &tx, vm::ParameterPack const &p
  */
 SmartContract::SmartContract(std::string const &source)
   : source_{source}
-  , digest_{GenerateDigest(source)}
+  , digest_{fetch::crypto::Hash<fetch::crypto::SHA256>(ConstByteArray(source))}
   , executable_{std::make_shared<Executable>()}
   , module_{VMFactory::GetModule(VMFactory::USE_SMART_CONTRACTS)}
 {

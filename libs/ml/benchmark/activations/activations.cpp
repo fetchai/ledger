@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "math/tensor.hpp"
 #include "ml/ops/activations/dropout.hpp"
 #include "ml/ops/activations/elu.hpp"
 #include "ml/ops/activations/leaky_relu.hpp"
@@ -27,9 +28,9 @@
 #include "ml/ops/activations/softmax.hpp"
 
 #include "benchmark/benchmark.h"
-#include "math/tensor.hpp"
 
 #include <functional>
+#include <memory>
 #include <vector>
 
 template <class T, int N>

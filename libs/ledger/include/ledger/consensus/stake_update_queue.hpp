@@ -65,9 +65,8 @@ public:
 private:
   using StakeMap     = std::unordered_map<Address, StakeAmount>;
   using BlockUpdates = std::map<BlockIndex, StakeMap>;
-  using SyncUpdates  = SynchronisedState<BlockUpdates>;
 
-  SyncUpdates updates_{};  ///< The update queue
+  SynchronisedState<BlockUpdates> updates_{};  ///< The update queue
 };
 
 /**

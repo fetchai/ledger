@@ -16,11 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chain/block.hpp"
-
 #include "core/serializers/main_serializer.hpp"
 #include "crypto/merkle_tree.hpp"
 #include "crypto/sha256.hpp"
+#include "ledger/chain/block.hpp"
 #include "ledger/chain/constants.hpp"
 
 #include <cstddef>

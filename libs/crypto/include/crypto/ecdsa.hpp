@@ -86,11 +86,6 @@ public:
 
   void Load(ConstByteArray const &private_key) override
   {
-    SetPrivateKey(private_key);
-  }
-
-  void SetPrivateKey(ConstByteArray const &private_key)
-  {
     private_key_.Set(PrivateKey{private_key});
   }
 

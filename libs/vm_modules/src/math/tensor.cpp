@@ -21,6 +21,9 @@
 #include "vm_modules/math/tensor.hpp"
 #include "vm_modules/math/type.hpp"
 
+#include <cstdint>
+#include <vector>
+
 using namespace fetch::vm;
 
 namespace fetch {

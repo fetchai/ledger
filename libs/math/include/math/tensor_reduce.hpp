@@ -37,7 +37,7 @@ namespace math {
  * @param ret Output tensor
  */
 template <typename F, typename T, typename C>
-inline void Reduce(SizeType axis, F function, const Tensor<T, C> &array, Tensor<T, C> &ret)
+void Reduce(SizeType axis, F function, const Tensor<T, C> &array, Tensor<T, C> &ret)
 {
   assert(ret.shape().at(axis) == 1);
   for (SizeType i = 0; i < array.shape().size(); i++)

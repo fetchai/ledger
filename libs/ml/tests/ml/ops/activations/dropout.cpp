@@ -22,6 +22,8 @@
 
 #include "gtest/gtest.h"
 
+#include <memory>
+
 template <typename T>
 class DropoutTest : public ::testing::Test
 {

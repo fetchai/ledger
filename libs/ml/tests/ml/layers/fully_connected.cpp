@@ -25,6 +25,8 @@
 
 #include "gtest/gtest.h"
 
+#include <memory>
+
 template <typename T>
 class FullyConnectedTest : public ::testing::Test
 {

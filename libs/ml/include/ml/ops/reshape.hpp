@@ -38,9 +38,9 @@ public:
   explicit Reshape(std::vector<SizeType> new_shape)
     : new_shape_(new_shape)
   {}
-  ~Reshape() = default;
+  ~Reshape() override = default;
 
-  void Forward(VecTensorType const &inputs, ArrayType &output)
+  void Forward(VecTensorType const &inputs, ArrayType &output) override
   {
     assert(inputs.size() == 1);
     assert(output.shape() == ComputeOutputShape(inputs));
@@ -49,7 +49,8 @@ public:
     output.Assign((*inputs.front()));
   }
 
-  std::vector<ArrayType> Backward(VecTensorType const &inputs, ArrayType const &error_signal)
+  std::vector<ArrayType> Backward(VecTensorType const &inputs,
+                                  ArrayType const &    error_signal) override
   {
     assert(inputs.size() == 1);
     ArrayType ret(inputs.front()->shape());
@@ -58,7 +59,7 @@ public:
   }
 
   // Output shape
-  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const
+  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
   {
     std::vector<SizeType> output_size;
     for (SizeType i{0}; i < new_shape_.size(); i++)
