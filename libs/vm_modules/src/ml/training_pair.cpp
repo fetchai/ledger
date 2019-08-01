@@ -42,8 +42,8 @@ void VMTrainingPair::Bind(Module &module)
 }
 
 Ptr<VMTrainingPair> VMTrainingPair::Constructor(VM *vm, TypeId type_id,
-                                                Ptr<fetch::vm_modules::math::VMTensor> ta,
-                                                Ptr<fetch::vm_modules::math::VMTensor> tb)
+                                                Ptr<fetch::vm_modules::math::VMTensor> const &ta,
+                                                Ptr<fetch::vm_modules::math::VMTensor> const &tb)
 {
   return new VMTrainingPair(vm, type_id, ta, tb);
 }
