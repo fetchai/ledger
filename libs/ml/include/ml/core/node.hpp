@@ -87,8 +87,7 @@ public:
     , cached_output_status_(CachedOutputState::CHANGED_SIZE)
     , operation_type_(operation_type)
     , op_ptr_(op_ptr)
-  {
-  }
+  {}
 
   //  template <typename... Params>
   Node(OpType const &operation_type, std::string name)

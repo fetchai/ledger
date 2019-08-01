@@ -214,13 +214,12 @@ TYPED_TEST(Convolution1DTest, node_forward_test)  // Use the class as a Node
   }
 
   // Evaluate
-  std::shared_ptr<fetch::ml::Node<TypeParam, fetch::ml::ops::PlaceHolder<TypeParam>>> placeholder =
-      std::make_shared<fetch::ml::Node<TypeParam, fetch::ml::ops::PlaceHolder<TypeParam>>>("Input");
-  placeholder->SetData(input);
+  auto placeholder_node = std::make_shared<fetch::ml::Node<TypeParam>>(fetch::ml::OpType::PLACEHOLDER, "Input");
+  placeholder_node->SetData(input);
 
-  fetch::ml::Node<TypeParam, fetch::ml::layers::Convolution1D<TypeParam>> conv(
-      "Convolution1D", output_channels, input_channels, kernel_height, stride_size);
-  conv.AddInput(placeholder);
+  auto conv2d_layer_ptr = std::make_shared<fetch::ml::layers::Convolution1D<TypeParam>>(output_channels, input_channels, kernel_height, stride_size);
+  auto conv = fetch::ml::Node<TypeParam>(fetch::ml::OpType::LAYER_CONVOLUTION_1D, "Convolution2D", conv2d_layer_ptr);
+  conv.AddInput(placeholder_node);
 
   TypeParam prediction = *conv.Evaluate(true);
 
@@ -277,13 +276,13 @@ TYPED_TEST(Convolution1DTest, node_backward_test)  // Use the class as a Node
   }
 
   // Evaluate
-  std::shared_ptr<fetch::ml::Node<TypeParam, fetch::ml::ops::PlaceHolder<TypeParam>>> placeholder =
-      std::make_shared<fetch::ml::Node<TypeParam, fetch::ml::ops::PlaceHolder<TypeParam>>>("Input");
-  placeholder->SetData(input);
+  auto placeholder_node = std::make_shared<fetch::ml::Node<TypeParam>>(fetch::ml::OpType::PLACEHOLDER, "Input");
+  placeholder_node->SetData(input);
 
-  fetch::ml::Node<TypeParam, fetch::ml::layers::Convolution1D<TypeParam>> conv(
-      "Convolution1D", output_channels, input_channels, kernel_height, stride_size);
-  conv.AddInput(placeholder);
+  auto conv2d_layer_ptr = std::make_shared<fetch::ml::layers::Convolution1D<TypeParam>>(output_channels, input_channels, kernel_height, stride_size);
+  auto conv = fetch::ml::Node<TypeParam>(fetch::ml::OpType::LAYER_CONVOLUTION_1D, "Convolution2D", conv2d_layer_ptr);
+  conv.AddInput(placeholder_node);
+
   TypeParam prediction     = *conv.Evaluate(true);
   auto      backprop_error = conv.BackPropagateSignal(error_signal);
 

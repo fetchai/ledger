@@ -18,8 +18,8 @@
 
 #include "math/tensor.hpp"
 #include "ml/layers/PRelu.hpp"
-#include "vectorise/fixed_point/fixed_point.hpp"
 #include "ml/meta/ml_type_traits.hpp"
+#include "vectorise/fixed_point/fixed_point.hpp"
 
 #include "gtest/gtest.h"
 
@@ -89,8 +89,10 @@ TYPED_TEST(PReluTest, ops_backward_test)  // Use the class as an Ops
 TYPED_TEST(PReluTest, node_forward_test)  // Use the class as a Node
 {
   TypeParam data(std::vector<typename TypeParam::SizeType>({5, 10, 2}));
-  auto placeholder_node = std::make_shared<fetch::ml::Node<TypeParam>>(fetch::ml::OpType::PLACEHOLDER, "Input");
-  std::dynamic_pointer_cast<fetch::ml::ops::PlaceHolder<TypeParam>>(placeholder_node->GetOp())->SetData(data);
+  auto      placeholder_node =
+      std::make_shared<fetch::ml::Node<TypeParam>>(fetch::ml::OpType::PLACEHOLDER, "Input");
+  std::dynamic_pointer_cast<fetch::ml::ops::PlaceHolder<TypeParam>>(placeholder_node->GetOp())
+      ->SetData(data);
 
   auto prelu_node = fetch::ml::Node<TypeParam>(fetch::ml::OpType::PRELU, "PRelu");
   prelu_node.AddInput(placeholder_node);
@@ -105,7 +107,8 @@ TYPED_TEST(PReluTest, node_forward_test)  // Use the class as a Node
 TYPED_TEST(PReluTest, node_backward_test)  // Use the class as a Node
 {
   TypeParam data({5, 10, 2});
-  auto placeholder_node = std::make_shared<fetch::ml::Node<TypeParam>>(fetch::ml::OpType::PLACEHOLDER, "Input");
+  auto      placeholder_node =
+      std::make_shared<fetch::ml::Node<TypeParam>>(fetch::ml::OpType::PLACEHOLDER, "Input");
   placeholder_node->SetData(data);
 
   fetch::ml::Node<TypeParam> prelu_node(fetch::ml::OpType::PRELU, "PRelu", 50u, "PRelu");
