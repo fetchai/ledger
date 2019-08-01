@@ -26,15 +26,6 @@ namespace dkg {
 
 constexpr char const *LOGGING_NAME = "RBC";
 
-/**
- * Helper function to compute truncation of message hash to 8 bytes. Truncation from left side.
- */
-TruncatedHash MessageHash(SerialisedMessage const &msg)
-{
-  byte_array::ByteArray msg_hash_256{crypto::Hash<crypto::SHA256>(msg)};
-  return msg_hash_256.SubArray(24);
-}
-
 std::string RBC::MsgTypeToString(MsgType msg_type)
 {
   switch (msg_type)
@@ -451,8 +442,8 @@ void RBC::OnRReady(RReady const &msg, uint32_t sender_index)
         {
           Send(env, *im);
           ++counter;
-          ++im;
         }
+        ++im;
       }
     }
     else if (CheckTag(msg) && msg.id() != id_)
@@ -639,6 +630,15 @@ bool RBC::SetPartyFlag(uint32_t sender_index, TagType tag, MsgType msg_type)
   }
   iter.set(index);
   return true;
+}
+
+/**
+ * Helper function to compute truncation of message hash to 8 bytes. Truncation from left side.
+ */
+TruncatedHash MessageHash(SerialisedMessage const &msg)
+{
+  byte_array::ByteArray msg_hash_256{crypto::Hash<crypto::SHA256>(msg)};
+  return msg_hash_256.SubArray(24);
 }
 
 }  // namespace dkg
