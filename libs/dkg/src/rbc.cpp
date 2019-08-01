@@ -506,7 +506,7 @@ void RBC::OnRAnswer(RAnswer const &msg, uint32_t sender_index)
     return;
   }
   // If have not set dbar then we did not send a request message
-  if (broadcasts_[tag].dbar == 0)
+  if (broadcasts_[tag].dbar.empty())
   {
     return;
   }
