@@ -16,13 +16,13 @@
 //
 //------------------------------------------------------------------------------
 
-#include <ml/layers/multihead_attention.hpp>
 #include "math/tensor.hpp"
 #include "ml/layers/scaled_dot_product_attention.hpp"
 #include "ml/ops/loss_functions.hpp"
 #include "ml/optimisation/sgd_optimiser.hpp"
 #include "ml/regularisers/regulariser.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
+#include <ml/layers/multihead_attention.hpp>
 
 #include "gtest/gtest.h"
 
@@ -39,74 +39,78 @@ TYPED_TEST_CASE(MultiheadAttention, MyTypes);
 
 TYPED_TEST(MultiheadAttention, input_output_dimension_check)  // Use the class as a subgraph
 {
-	using DataType = typename TypeParam::Type;
-	using SizeType = typename TypeParam::SizeType;
-	
-	fetch::ml::Graph<TypeParam> g;
-	
-	std::string query = g.template AddNode<fetch::ml::ops::PlaceHolder<TypeParam>>("Query", {});
-	std::string key = g.template AddNode<fetch::ml::ops::PlaceHolder<TypeParam>>("Key", {});
-	std::string value = g.template AddNode<fetch::ml::ops::PlaceHolder<TypeParam>>("Value", {});
-	g.template AddNode<fetch::ml::layers::MultiheadAttention<TypeParam>>(
-	 "ScaledDotProductAttention", {query, key, value}, static_cast<SizeType>(8), static_cast<SizeType>(1024),
-	 DataType(0.1));
-	TypeParam query_data = TypeParam({1024, 512, 64});
-	TypeParam key_data = TypeParam({1024, 512, 64});
-	TypeParam value_data = TypeParam({1024, 512, 64});
-	g.SetInput(query, query_data);
-	g.SetInput(key, key_data);
-	g.SetInput(value, value_data);
-	
-	
-	auto start = std::chrono::steady_clock::now();
-	TypeParam prediction = g.Evaluate("ScaledDotProductAttention", false);
-	auto end = std::chrono::steady_clock::now();
-	
-	std::cout << "Elapsed time in milliseconds : "
-	     << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count()
-	     << " ms" << std::endl;
-	ASSERT_EQ(prediction.shape().size(), 3);
-	ASSERT_EQ(prediction.shape()[0], 1024);
-	ASSERT_EQ(prediction.shape()[1], 512);
-	ASSERT_EQ(prediction.shape()[2], 64);
+  using DataType = typename TypeParam::Type;
+  using SizeType = typename TypeParam::SizeType;
+
+  fetch::ml::Graph<TypeParam> g;
+
+  std::string query = g.template AddNode<fetch::ml::ops::PlaceHolder<TypeParam>>("Query", {});
+  std::string key   = g.template AddNode<fetch::ml::ops::PlaceHolder<TypeParam>>("Key", {});
+  std::string value = g.template AddNode<fetch::ml::ops::PlaceHolder<TypeParam>>("Value", {});
+  g.template AddNode<fetch::ml::layers::MultiheadAttention<TypeParam>>(
+      "ScaledDotProductAttention", {query, key, value}, static_cast<SizeType>(4),
+      static_cast<SizeType>(12), DataType(0.1));
+  TypeParam query_data = TypeParam({12, 25, 4});
+  TypeParam key_data   = query_data;
+  TypeParam value_data = query_data;
+  g.SetInput(query, query_data);
+  g.SetInput(key, key_data);
+  g.SetInput(value, value_data);
+
+  TypeParam prediction = g.Evaluate("ScaledDotProductAttention", false);
+  ASSERT_EQ(prediction.shape().size(), 3);
+  ASSERT_EQ(prediction.shape()[0], 12);
+  ASSERT_EQ(prediction.shape()[1], 25);
+  ASSERT_EQ(prediction.shape()[2], 4);
 }
 
-TYPED_TEST(MultiheadAttention, tmp)  // Use the class as a subgraph
+TYPED_TEST(MultiheadAttention, backward_test)  // Use the class as an Ops
 {
-	TypeParam one = TypeParam({27, 27, 12});
-	TypeParam two = TypeParam({1, 27, 12});
-	
-	auto three = fetch::math::Softmax(one, 0);
-	
-}
+  using SizeType = typename TypeParam::SizeType;
+  using DataType = typename TypeParam::Type;
+  fetch::ml::layers::MultiheadAttention<TypeParam> m_att(static_cast<SizeType>(4),
+                                                         static_cast<SizeType>(12), DataType(0.1));
+  TypeParam input_data(std::vector<typename TypeParam::SizeType>({12, 20, 5}));
+  TypeParam output(m_att.ComputeOutputShape({std::make_shared<TypeParam>(input_data)}));
+  m_att.Forward({std::make_shared<TypeParam>(input_data), std::make_shared<TypeParam>(input_data),
+                 std::make_shared<TypeParam>(input_data)},
+                output);
 
-//
-//TYPED_TEST(ScaledDotProductAttention,
-//           self_attention_output_value_check)  // Use the class as a subgraph
-//{
-//  using DataType = typename TypeParam::Type;
-//  using SizeType = typename TypeParam::SizeType;
-//
-//  fetch::ml::Graph<TypeParam> g;
-//
-//  std::string query = g.template AddNode<fetch::ml::ops::PlaceHolder<TypeParam>>("Query", {});
-//  std::string key   = g.template AddNode<fetch::ml::ops::PlaceHolder<TypeParam>>("Key", {});
-//  std::string value = g.template AddNode<fetch::ml::ops::PlaceHolder<TypeParam>>("Value", {});
-//  g.template AddNode<fetch::ml::layers::ScaledDotProductAttention<TypeParam>>(
-//      "ScaledDotProductAttention", {query, key, value}, static_cast<SizeType>(3), DataType(0.1));
-//  TypeParam query_data = TypeParam::FromString("1, 2, 0.5, 0.1; 2, 1, 0.3, -0.2;2, 4, 0, 1");
-//  query_data.Reshape({3, 2, 2});
-//
-//  g.SetInput(query, query_data);
-//  g.SetInput(key, query_data);
-//  g.SetInput(value, query_data);
-//
-//  TypeParam gt = TypeParam::FromString(
-//      "1.8496745531, 1.9944926680, 0.3201387782, 0.2406420371; 1.1503254469, 1.0055073320, "
-//      "0.0751734728, -0.0241974536; 3.6993491062, 3.9889853359, 0.4496530544, 0.6483949073");
-//  gt.Reshape({3, 2, 2});
-//  TypeParam prediction = g.Evaluate("ScaledDotProductAttention", false);
-//
-//  ASSERT_TRUE(prediction.AllClose(
-//      gt, static_cast<DataType>(5) * fetch::math::function_tolerance<DataType>()));
-//}
+  TypeParam error_signal(std::vector<typename TypeParam::SizeType>({12, 20, 5}));
+
+  std::vector<TypeParam> backprop_error = m_att.Backward(
+      {std::make_shared<TypeParam>(input_data), std::make_shared<TypeParam>(input_data),
+       std::make_shared<TypeParam>(input_data)},
+      error_signal);
+  ASSERT_EQ(backprop_error.size(), 3 * 4);
+
+  bool                  all_same_shape = true;
+  std::vector<SizeType> prev_shape;
+  for (auto error : backprop_error)
+  {
+    auto shape = error.shape();
+    if (prev_shape.size() == 0)
+    {
+      prev_shape = shape;
+      continue;
+    }
+    else
+    {
+      if (shape != prev_shape)
+      {
+        all_same_shape = false;
+        break;
+      }
+      else
+      {
+        prev_shape = shape;
+      }
+    }
+  }
+  ASSERT_TRUE(all_same_shape);
+
+  ASSERT_EQ(backprop_error[0].shape().size(), 3);
+  ASSERT_EQ(backprop_error[0].shape()[0], 12);
+  ASSERT_EQ(backprop_error[0].shape()[1], 20);
+  ASSERT_EQ(backprop_error[0].shape()[2], 5);
+}

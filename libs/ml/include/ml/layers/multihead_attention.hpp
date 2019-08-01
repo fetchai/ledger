@@ -17,24 +17,24 @@
 //
 //------------------------------------------------------------------------------
 
+#include "layers.hpp"
 #include "math/standard_functions/sqrt.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/layers/scaled_dot_product_attention.hpp"
-#include "ml/ops/concatenate.hpp"
 #include "ml/ops/add.hpp"
+#include "ml/ops/concatenate.hpp"
 #include "ml/ops/divide.hpp"
 #include "ml/ops/flatten.hpp"
 #include "ml/ops/matrix_multiply.hpp"
 #include "ml/ops/placeholder.hpp"
 #include "ml/ops/transpose.hpp"
-#include "layers.hpp"
 
 #include <cmath>
 #include <cstdint>
 #include <memory>
+#include <ml/ops/concatenate.hpp>
 #include <random>
 #include <string>
-#include <ml/ops/concatenate.hpp>
 
 namespace fetch {
 namespace ml {
@@ -49,10 +49,10 @@ public:
   using ArrayPtrType  = std::shared_ptr<ArrayType>;
   using DataType      = typename T::Type;
   using VecTensorType = typename SubGraph<T>::VecTensorType;
-	
-	using RegType         = fetch::ml::details::RegularisationType;
-	using WeightsInitType = fetch::ml::ops::WeightsInitialisation;
-	using ActivationType  = fetch::ml::details::ActivationType;
+
+  using RegType         = fetch::ml::details::RegularisationType;
+  using WeightsInitType = fetch::ml::ops::WeightsInitialisation;
+  using ActivationType  = fetch::ml::details::ActivationType;
 
   MultiheadAttention(SizeType n_heads, SizeType model_dim, DataType dropout = 0.1)
     : n_heads_(n_heads)
@@ -62,7 +62,7 @@ public:
     // make sure all heads can be concatenate together to form model_dim
     assert(model_dim_ % n_heads_ == 0);
     key_dim_ = model_dim_ / n_heads_;
-    
+
     // assuming key_dim is the same as value_dim
     value_dim_ = key_dim_;
 
@@ -78,38 +78,57 @@ public:
 
     // do n_heads time linear transformation
     std::vector<std::string> heads;
-    for(SizeType i=0; i<n_heads_; i++){
-    	std::string head_name = name + "_Head_No_" + std::to_string(static_cast<int>(i));
-    	std::string head_attention_output = create_one_attention_head(head_name, query, key, value);
-    	heads.emplace_back(head_attention_output);
+    for (SizeType i = 0; i < n_heads_; i++)
+    {
+      std::string head_name             = name + "_Head_No_" + std::to_string(static_cast<int>(i));
+      std::string head_attention_output = create_one_attention_head(head_name, query, key, value);
+      heads.emplace_back(head_attention_output);
     }
-    
+
     // concatenate all attention head outputs
-    std::string concatenated_attention_heads = this->template AddNode<fetch::ml::ops::Concatenate<ArrayType>>(name + "_Concatenated_Heads", heads,
-                                                                                                              static_cast<SizeType>(0));
+    std::string concatenated_attention_heads =
+        this->template AddNode<fetch::ml::ops::Concatenate<ArrayType>>(
+            name + "_Concatenated_Heads", heads, static_cast<SizeType>(0));
     // do the final transformation
-    std::string transformed_multihead = this->template AddNode<fetch::ml::layers::FullyConnected<ArrayType>>(name + "_Final_Transformation", {concatenated_attention_heads},
-     static_cast<SizeType>(model_dim_), static_cast<SizeType>(model_dim_), ActivationType::NOTHING, RegType::NONE, static_cast<DataType>(0), WeightsInitType::XAVIER_GLOROT, true);
+    std::string transformed_multihead =
+        this->template AddNode<fetch::ml::layers::FullyConnected<ArrayType>>(
+            name + "_Final_Transformation", {concatenated_attention_heads},
+            static_cast<SizeType>(model_dim_), static_cast<SizeType>(model_dim_),
+            ActivationType::NOTHING, RegType::NONE, static_cast<DataType>(0),
+            WeightsInitType::XAVIER_GLOROT, true);
 
     this->AddInputNode(query);
     this->AddInputNode(key);
     this->AddInputNode(value);
     this->SetOutputNode(transformed_multihead);
   }
-  
-	std::string create_one_attention_head(std::string const& head_name, std::string const &query, std::string const &key, std::string const &value){
-		// tansform input vectors to attention space
-		std::string transformed_query = this->template AddNode<fetch::ml::layers::FullyConnected<ArrayType>>(head_name + "_Query_Transform", {query},
-		                                                                                                     static_cast<SizeType>(model_dim_), static_cast<SizeType>(key_dim_), ActivationType::NOTHING, RegType::NONE, static_cast<DataType>(0), WeightsInitType::XAVIER_GLOROT, true);
-		std::string transformed_key = this->template AddNode<fetch::ml::layers::FullyConnected<ArrayType>>(head_name + "_Query_Transform", {key},
-		                                                                                                   static_cast<SizeType>(model_dim_), static_cast<SizeType>(key_dim_), ActivationType::NOTHING, RegType::NONE, static_cast<DataType>(0), WeightsInitType::XAVIER_GLOROT, true);
-		std::string transformed_value = this->template AddNode<fetch::ml::layers::FullyConnected<ArrayType>>(head_name + "_Query_Transform", {value},
-		                                                                                                     static_cast<SizeType>(model_dim_), static_cast<SizeType>(value_dim_), ActivationType::NOTHING, RegType::NONE, static_cast<DataType>(0), WeightsInitType::XAVIER_GLOROT, true);
-		// do the scaled dot product attention
-		std::string attention_output = this->template AddNode<fetch::ml::layers::ScaledDotProductAttention<ArrayType>>(head_name + "_Scaled_Dot_Product_Attention",
-		                                                                                                               {transformed_query, transformed_key, transformed_value}, key_dim_, dropout_);
-		return attention_output;
-	}
+
+  std::string create_one_attention_head(std::string const &head_name, std::string const &query,
+                                        std::string const &key, std::string const &value)
+  {
+    // tansform input vectors to attention space
+    std::string transformed_query =
+        this->template AddNode<fetch::ml::layers::FullyConnected<ArrayType>>(
+            head_name + "_Query_Transform", {query}, static_cast<SizeType>(model_dim_),
+            static_cast<SizeType>(key_dim_), ActivationType::NOTHING, RegType::NONE,
+            static_cast<DataType>(0), WeightsInitType::XAVIER_GLOROT, true);
+    std::string transformed_key =
+        this->template AddNode<fetch::ml::layers::FullyConnected<ArrayType>>(
+            head_name + "_Query_Transform", {key}, static_cast<SizeType>(model_dim_),
+            static_cast<SizeType>(key_dim_), ActivationType::NOTHING, RegType::NONE,
+            static_cast<DataType>(0), WeightsInitType::XAVIER_GLOROT, true);
+    std::string transformed_value =
+        this->template AddNode<fetch::ml::layers::FullyConnected<ArrayType>>(
+            head_name + "_Query_Transform", {value}, static_cast<SizeType>(model_dim_),
+            static_cast<SizeType>(value_dim_), ActivationType::NOTHING, RegType::NONE,
+            static_cast<DataType>(0), WeightsInitType::XAVIER_GLOROT, true);
+    // do the scaled dot product attention
+    std::string attention_output =
+        this->template AddNode<fetch::ml::layers::ScaledDotProductAttention<ArrayType>>(
+            head_name + "_Scaled_Dot_Product_Attention",
+            {transformed_query, transformed_key, transformed_value}, key_dim_, dropout_);
+    return attention_output;
+  }
 
   virtual std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const
   {
