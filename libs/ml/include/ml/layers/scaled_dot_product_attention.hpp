@@ -48,7 +48,7 @@ public:
   using DataType      = typename T::Type;
   using VecTensorType = typename SubGraph<T>::VecTensorType;
 
-  ScaledDotProductAttention(std::uint64_t dk, DataType dropout = 0.1)
+  ScaledDotProductAttention(std::uint64_t dk, DataType dropout = 0.9)
     : key_dim_(dk)
   {
     std::string name = DESCRIPTOR;
