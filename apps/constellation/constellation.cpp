@@ -424,7 +424,7 @@ void Constellation::Run(UriList const &initial_peers, core::WeakRunnable bootstr
 
     GenesisFileCreator creator(block_coordinator_, *storage_, stake_.get(), dkg_.get());
 
-    if (cfg_.stakefile_location == "")
+    if (cfg_.stakefile_location.empty())
     {
       creator.LoadFile(SNAPSHOT_FILENAME);
     }
