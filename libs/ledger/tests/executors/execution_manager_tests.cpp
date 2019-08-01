@@ -162,7 +162,7 @@ protected:
   TransactionStatusCache::ShrdPtr tx_status_cache_{TransactionStatusCache::factory()};
 };
 
-TEST_P(ExecutionManagerTests, CheckIncrementalExecution)
+TEST_P(ExecutionManagerTests, DISABLED_CheckIncrementalExecution)
 {
   BlockConfig const &config = GetParam();
 

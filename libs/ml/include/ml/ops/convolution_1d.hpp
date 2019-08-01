@@ -66,6 +66,10 @@ public:
   std::vector<ArrayType> Backward(VecTensorType const &inputs,
                                   ArrayType const &    error_signal) override;
 
+  static constexpr OpType OpCode()
+  {
+    return OpType::CONVOLUTION_1D;
+  }
   static constexpr char const *DESCRIPTOR = "Convolution1D";
 
 private:

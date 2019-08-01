@@ -24,10 +24,10 @@ namespace ops {
 
 template <typename T>
 class Ops;
-} // ops
+}  // namespace ops
 
 template <class T>
 class SubGraph;
 
-} // ml
-} // fetch
+}  // namespace ml
+}  // namespace fetch

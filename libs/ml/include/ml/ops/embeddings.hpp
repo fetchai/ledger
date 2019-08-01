@@ -176,6 +176,10 @@ public:
     return output_shape;
   }
 
+  static constexpr OpType OpCode()
+  {
+    return OpType::EMBEDDINGS;
+  }
   static constexpr char const *DESCRIPTOR = "Embedding";
 
 private:

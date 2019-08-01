@@ -18,59 +18,36 @@
 //------------------------------------------------------------------------------
 
 #include "ml/state_dict.hpp"
-#include "vm/module.hpp"
 #include "vm/object.hpp"
-#include "vm_modules/math/tensor.hpp"
 #include "vm_modules/math/type.hpp"
 
 #include <utility>
 
 namespace fetch {
+
+namespace vm {
+class Module;
+}
+
 namespace vm_modules {
 namespace ml {
 
 class VMStateDict : public fetch::vm::Object
 {
 public:
-  using DataType       = fetch::vm_modules::math::DataType;
-  using MathTensorType = fetch::math::Tensor<DataType>;
-  using VMTensorType   = fetch::vm_modules::math::VMTensor;
+  using DataType = fetch::vm_modules::math::DataType;
 
-  VMStateDict(fetch::vm::VM *vm, fetch::vm::TypeId type_id)
-    : fetch::vm::Object(vm, type_id)
-    , state_dict_()
-  {}
+  VMStateDict(fetch::vm::VM *vm, fetch::vm::TypeId type_id);
 
-  VMStateDict(fetch::vm::VM *vm, fetch::vm::TypeId type_id, fetch::ml::StateDict<MathTensorType> sd)
-    : fetch::vm::Object(vm, type_id)
-  {
-    state_dict_ = std::move(sd);
-  }
+  VMStateDict(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
+              fetch::ml::StateDict<fetch::math::Tensor<fetch::vm_modules::math::DataType>> sd);
 
-  static fetch::vm::Ptr<VMStateDict> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id)
-  {
-    return new VMStateDict(vm, type_id);
-  }
+  static fetch::vm::Ptr<VMStateDict> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id);
 
   void SetWeights(fetch::vm::Ptr<fetch::vm::String> const &                nodename,
-                  fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> const &weights)
-  {
-    auto weights_tensor = state_dict_.dict_[nodename->str].weights_;
-    *weights_tensor     = weights->GetTensor();
-  }
+                  fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> const &weights);
 
-  static void Bind(fetch::vm::Module &module)
-  {
-    module
-        .CreateClassType<VMStateDict>("StateDict")
-<<<<<<< HEAD
-        .CreateConstuctor<>()
-        .CreateSerializeDefaultConstuctor<>()
-=======
-        .CreateConstructor<>()
->>>>>>> 59a522e74611199d626f9f41100205d2a18da2ae
-        .CreateMemberFunction("setWeights", &VMStateDict::SetWeights);
-  }
+  static void Bind(fetch::vm::Module &module);
 
   bool SerializeTo(serializers::ByteArrayBuffer &buffer) override
   {
@@ -84,7 +61,7 @@ public:
     return true;
   }
 
-  fetch::ml::StateDict<MathTensorType> state_dict_;
+  fetch::ml::StateDict<fetch::math::Tensor<DataType>> state_dict_;
 };
 
 }  // namespace ml

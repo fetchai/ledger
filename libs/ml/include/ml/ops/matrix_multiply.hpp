@@ -58,6 +58,10 @@ public:
                                   ArrayType const &    error_signal) override;
   std::vector<SizeType>  ComputeOutputShape(VecTensorType const &inputs) const override;
 
+  static constexpr OpType OpCode()
+  {
+    return OpType::MATRIX_MULTIPLY;
+  }
   static constexpr char const *DESCRIPTOR = "MatrixMultiply";
 
 private:

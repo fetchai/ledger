@@ -22,50 +22,61 @@
 namespace fetch {
 namespace serializers {
 
-template <typename T, typename U>
-inline void Serialize(T &serializer, struct ml::StateDict<U> const &sd)
+template <typename V, typename D>
+struct MapSerializer<ml::StateDict<V>, D>
 {
-  if (sd.weights_)
+public:
+  using Type       = ml::StateDict<V>;
+  using DriverType = D;
+
+  constexpr static uint8_t WEIGHTS = 1;
+  constexpr static uint8_t DICT    = 2;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &sd)
   {
-    Serialize(serializer, true);
-    Serialize(serializer, *sd.weights_);
-  }
-  else
-  {
-    Serialize(serializer, false);
+    uint64_t n = 0;
+    if (sd.weights_)
+    {
+      ++n;
+    }
+    if (!sd.dict_.empty())
+    {
+      ++n;
+    }
+    auto map = map_constructor(n);
+    if (sd.weights_)
+    {
+      map.Append(WEIGHTS, *sd.weights_);
+    }
+    if (!sd.dict_.empty())
+    {
+      map.Append(DICT, sd.dict_);
+    }
   }
 
-  if (!sd.dict_.empty())
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &output)
   {
-    Serialize(serializer, true);
-    Serialize(serializer, sd.dict_);
+    for (uint64_t i = 0; i < map.size(); ++i)
+    {
+      uint8_t key;
+      map.GetKey(key);
+      switch (key)
+      {
+      case WEIGHTS:
+        output.weights_ = std::make_shared<V>();
+        map.GetValue(*output.weights_);
+        break;
+      case DICT:
+        map.GetValue(output.dict_);
+        break;
+      default:
+        throw std::runtime_error("unsupported key in statemap deserialization");
+      }
+    }
   }
-  else
-  {
-    Serialize(serializer, false);
-  }
-}
-
-template <typename T, typename U>
-inline void Deserialize(T &serializer, struct ml::StateDict<U> &sd)
-{
-  bool hasWeight;
-  bool hasDict;
-
-  Deserialize(serializer, hasWeight);
-  if (hasWeight)
-  {
-    std::shared_ptr<U> w = std::make_shared<U>();
-    Deserialize(serializer, *w);
-    sd.weights_ = w;
-  }
-
-  Deserialize(serializer, hasDict);
-  if (hasDict)
-  {
-    Deserialize(serializer, sd.dict_);
-  }
-}
+};
 
 }  // namespace serializers
 }  // namespace fetch

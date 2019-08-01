@@ -17,11 +17,11 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ml/core/subgraph.hpp"
 #include "ml/meta/ml_type_traits.hpp"
 #include "ml/ops/activation.hpp"
 #include "ml/ops/convolution_1d.hpp"
 #include "ml/ops/weights.hpp"
-#include "ml/core/subgraph.hpp"
 
 #include <functional>
 #include <memory>
@@ -87,7 +87,8 @@ public:
   }
 
   template <typename X>
-  static std::shared_ptr<Convolution1D<X>> BuildConvolution1D(ConvolutionLayer1DSaveableParams<X> const &sp)
+  static std::shared_ptr<Convolution1D<X>> BuildConvolution1D(
+      ConvolutionLayer1DSaveableParams<X> const &sp)
   {
     auto ret = std::make_shared<Convolution1D<X>>();
 
@@ -118,6 +119,11 @@ public:
         std::vector<SizeType>{{output_channels_, input_channels_, kernel_size_, 1}});
     return fetch::ml::ops::Convolution1D<ArrayType>(stride_size_)
         .ComputeOutputShape({inputs.at(0), std::make_shared<ArrayType>(weights_data)});
+  }
+
+  static constexpr OpType OpCode()
+  {
+    return OpType::LAYER_CONVOLUTION_1D;
   }
 
   static constexpr char const *DESCRIPTOR = "Convolution1DLayer";

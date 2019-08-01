@@ -22,6 +22,8 @@
 #include "ml/ops/ops.hpp"
 #include "ml/saveparams/saveable_params.hpp"
 
+#include "ml/ops/abs.hpp"
+
 #include <algorithm>
 #include <cassert>
 #include <cstdint>
@@ -34,25 +36,25 @@
 namespace fetch {
 namespace ml {
 
-//template <class T>
-//class NodeInterface
+// template <class T>
+// class NodeInterface
 //{
-//public:
+// public:
 //  using ArrayType   = T;
 //  using NodePtrType = std::shared_ptr<NodeInterface<T>>;
 //
-//  virtual std::shared_ptr<T>                                    Evaluate(bool is_training)      = 0;
-//  virtual void                                                  AddInput(NodePtrType const &i)  = 0;
-//  virtual void                                                  AddOutput(NodePtrType const &i) = 0;
-//  virtual std::vector<std::pair<NodeInterface<T> *, ArrayType>> BackPropagateSignal(
+//  virtual std::shared_ptr<T>                                    Evaluate(bool is_training)      =
+//  0; virtual void                                                  AddInput(NodePtrType const &i)
+//  = 0; virtual void                                                  AddOutput(NodePtrType const
+//  &i) = 0; virtual std::vector<std::pair<NodeInterface<T> *, ArrayType>> BackPropagateSignal(
 //      ArrayType const &error_signal)                                                   = 0;
 //  virtual void                                     ResetCache(bool input_size_changed) = 0;
 //  virtual std::vector<NodePtrType> const &         GetOutputs() const                  = 0;
 //  virtual std::shared_ptr<SaveableParamsInterface> GetNodeSaveableParams()             = 0;
 //};
 
-//template <class T, class O>
-//class Node : public NodeInterface<T>
+// template <class T, class O>
+// class Node : public NodeInterface<T>
 template <typename T>
 class Node
 {
@@ -69,29 +71,61 @@ public:
   using NodePtrType   = std::shared_ptr<Node<T>>;
   using VecTensorType = typename fetch::ml::ops::Ops<T>::VecTensorType;
 
-  template <typename... Params>
-  explicit Node(OpType const & operation_type, std::string name, Params... params) : name_(std::move(name))
+  //  template <typename... Params>
+  Node(OpType const &operation_type, std::string name,
+       std::function<std::shared_ptr<ops::Ops<ArrayType>>()> constructor)
+    : name_(std::move(name))
     , cached_output_status_(CachedOutputState::CHANGED_SIZE)
+    , operation_type_(operation_type)
   {
-      ops::OpInterface::Build<T, Params ...>(operation_type, op_ptr_, params ...);
+    op_ptr_ = constructor();
+  }
+
+  //  template <typename... Params>
+  Node(OpType const &operation_type, std::string name)
+    : name_(std::move(name))
+    , cached_output_status_(CachedOutputState::CHANGED_SIZE)
+    , operation_type_(operation_type)
+  {
+    switch (operation_type)
+    {
+    case ops::Abs<ArrayType>::OpCode():
+      op_ptr_ = new fetch::ml::ops::Abs<ArrayType>();
+    default:
+      throw std::runtime_error("unknown node type");
+    }
   }
 
   std::shared_ptr<SaveableParamsInterface> GetNodeSaveableParams()
   {
-    return this->GetOpSaveableParams();
+    return op_ptr_->GetOpSaveableParams();
   }
 
   ~Node() = default;
 
-  VecTensorType                                         GatherInputs() const;
-  std::shared_ptr<T>                                    Evaluate(bool is_training) override;
-  std::vector<std::pair<Node<T> *, ArrayType>> BackPropagateSignal(
-      ArrayType const &error_signal) override;
+  VecTensorType                                GatherInputs() const;
+  std::shared_ptr<T>                           Evaluate(bool is_training);
+  std::vector<std::pair<Node<T> *, ArrayType>> BackPropagateSignal(ArrayType const &error_signal);
 
-  void                                    AddInput(NodePtrType const &i);
-  void                                    AddOutput(NodePtrType const &o);
+  void                            AddInput(NodePtrType const &i);
+  void                            AddOutput(NodePtrType const &o);
   std::vector<NodePtrType> const &GetOutputs() const;
   void                            ResetCache(bool input_size_changed);
+
+  std::string const &GetNodeName()
+  {
+    return name_;
+  }
+
+  std::shared_ptr<ops::Ops<T>> GetOp()
+  {
+    return op_ptr_;
+  }
+
+  OpType GetOpType()
+  {
+    return operation_type_;
+  }
 
 private:
   std::vector<NodePtrType> input_nodes_;
@@ -100,6 +134,7 @@ private:
   ArrayType                cached_output_;
   CachedOutputState        cached_output_status_;
 
+  OpType                       operation_type_;
   std::shared_ptr<ops::Ops<T>> op_ptr_;
 };
 
@@ -114,7 +149,7 @@ typename Node<T>::VecTensorType Node<T>::GatherInputs() const
   VecTensorType inputs;
   for (auto const &i : input_nodes_)
   {
-    inputs.push_back(i->Evaluate(this->is_training_));
+    inputs.push_back(i->Evaluate(op_ptr_->IsTraining()));
   }
   return inputs;
 }
@@ -132,7 +167,7 @@ template <typename T>
 std::shared_ptr<T> Node<T>::Evaluate(bool is_training)
 {
 
-  this->SetTraining(is_training);
+  op_ptr_->SetTraining(is_training);
 
   if (cached_output_status_ != CachedOutputState::VALID_CACHE)
   {
@@ -140,7 +175,7 @@ std::shared_ptr<T> Node<T>::Evaluate(bool is_training)
 
     if (cached_output_status_ == CachedOutputState::CHANGED_SIZE)
     {
-      auto output_shape = this->ComputeOutputShape(inputs);
+      auto output_shape = op_ptr_->ComputeOutputShape(inputs);
 
       if (cached_output_.shape() !=
           output_shape)  // make shape compatible right before we do the forwarding
@@ -148,7 +183,7 @@ std::shared_ptr<T> Node<T>::Evaluate(bool is_training)
         cached_output_.Reshape(output_shape);
       }
     }
-    this->Forward(inputs, cached_output_);
+    op_ptr_->Forward(inputs, cached_output_);
     cached_output_status_ = CachedOutputState::VALID_CACHE;
   }
 
@@ -163,11 +198,10 @@ std::shared_ptr<T> Node<T>::Evaluate(bool is_training)
  * @return
  */
 template <typename T>
-std::vector<std::pair<Node<T> *, T>> Node<T>::BackPropagateSignal(
-    ArrayType const &error_signal)
+std::vector<std::pair<Node<T> *, T>> Node<T>::BackPropagateSignal(ArrayType const &error_signal)
 {
   VecTensorType          inputs                        = GatherInputs();
-  std::vector<ArrayType> back_propagated_error_signals = this->Backward(inputs, error_signal);
+  std::vector<ArrayType> back_propagated_error_signals = op_ptr_->Backward(inputs, error_signal);
   std::vector<std::pair<Node<T> *, ArrayType>> non_back_propagated_error_signals;
   assert(back_propagated_error_signals.size() == inputs.size() || inputs.empty());
 

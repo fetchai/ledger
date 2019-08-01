@@ -95,6 +95,11 @@ public:
     return inputs.front()->shape();
   }
 
+  static constexpr OpType OpCode()
+  {
+    return OpType::TANH;
+  }
+
   static constexpr char const *DESCRIPTOR = "TanH";
 
 private:

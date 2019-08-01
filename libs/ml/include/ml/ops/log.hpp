@@ -84,6 +84,10 @@ public:
     return inputs.front()->shape();
   }
 
+  static constexpr OpType OpCode()
+  {
+    return OpType::LOG;
+  }
   static constexpr char const *DESCRIPTOR = "Log";
 };
 

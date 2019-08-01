@@ -52,7 +52,10 @@ public:
 
   std::string GetParam(std::string const &key, std::string const &default_value) const;
 
+  std::map<std::string, std::string> const &params() const;
+
   std::size_t arg_size() const;
+  std::size_t param_size() const;
 
   // Operators
   ParamsParser &operator=(ParamsParser const &) = delete;
@@ -109,6 +112,16 @@ T ParamsParser::GetParam(std::string const &key, T const &default_value) const
 inline std::size_t ParamsParser::arg_size() const
 {
   return args_.size();
+}
+
+inline std::size_t ParamsParser::param_size() const
+{
+  return params_.size();
+}
+
+inline std::map<std::string, std::string> const &ParamsParser::params() const
+{
+  return params_;
 }
 
 }  // namespace commandline

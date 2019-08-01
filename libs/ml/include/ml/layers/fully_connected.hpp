@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ml/core/subgraph.hpp"
 #include "ml/meta/ml_type_traits.hpp"
 #include "ml/ops/activation.hpp"
 #include "ml/ops/add.hpp"
@@ -26,7 +27,6 @@
 #include "ml/regularisers/regularisation.hpp"
 #include "ml/regularisers/regulariser.hpp"
 #include "ml/saveparams/saveable_params.hpp"
-#include "ml/core/subgraph.hpp"
 
 #include <functional>
 #include <memory>
@@ -49,15 +49,112 @@ public:
   using VecTensorType = typename SubGraph<T>::VecTensorType;
   using SPType        = FullyConnectedSaveableParams<ArrayType>;
 
+  using NodeType       = typename fetch::ml::Node<ArrayType>;
+  using NodePtrType    = typename std::shared_ptr<NodeType>;
+  using GraphType      = typename fetch::ml::Graph<ArrayType>;
+  using GraphPtrType   = typename std::shared_ptr<GraphType>;
+  using WeightsType    = typename fetch::ml::ops::Weights<ArrayType>;
+  using WeightsPtrType = typename std::shared_ptr<WeightsType>;
+
+  /**
+   * This initializer allows weight sharing to another fully connected layer through node interface
+   * pointer.
+   * @param target_node_ptr
+   * @param in
+   * @param out
+   * @param activation_type
+   * @param regulariser
+   * @param regularisation_rate
+   * @param init_mode
+   */
+  FullyConnected(NodePtrType target_node_ptr, SizeType in, SizeType out,
+                 details::ActivationType activation_type = details::ActivationType::NOTHING,
+                 fetch::ml::details::RegularisationType regulariser =
+                     fetch::ml::details::RegularisationType::NONE,
+                 DataType    regularisation_rate = static_cast<DataType>(0),
+                 WeightsInit init_mode           = WeightsInit::XAVIER_GLOROT)
+    : in_size_(in)
+    , out_size_(out)
+  {
+    // since the weight is shared, we do not need to initialize the weight matrices.
+    FETCH_UNUSED(init_mode);
+
+    // setup overall architecture of the layer
+    SetupArchitecture(activation_type, regulariser, regularisation_rate);
+
+    // share weight with target_node
+    ShareWeights(target_node_ptr);
+  }
+
+  /**
+   * Normal fully connected layer constructor
+   * @param in
+   * @param out
+   * @param activation_type
+   * @param regulariser
+   * @param regularisation_rate
+   * @param init_mode
+   */
   FullyConnected(SizeType in, SizeType out,
                  details::ActivationType activation_type = details::ActivationType::NOTHING,
                  fetch::ml::details::RegularisationType regulariser =
                      fetch::ml::details::RegularisationType::NONE,
-                 DataType           regularisation_rate = static_cast<DataType>(0),
-                 std::string const &name = "FC", WeightsInit init_mode = WeightsInit::XAVIER_GLOROT)
+                 DataType    regularisation_rate = static_cast<DataType>(0),
+                 WeightsInit init_mode           = WeightsInit::XAVIER_GLOROT)
     : in_size_(in)
     , out_size_(out)
   {
+    // setup overall architecture of the model
+    SetupArchitecture(activation_type, regulariser, regularisation_rate);
+
+    // initialize the weights and bias with specified initialization method
+    InitializeWeights(init_mode);
+  }
+
+  void InitializeWeights(WeightsInit init_mode)
+  {
+    // initialize weight with specified method
+    std::string name = DESCRIPTOR;
+    ArrayType   weights_data(std::vector<SizeType>({out_size_, in_size_}));
+    this->Initialise(weights_data, init_mode);
+    this->SetInput(name + "_Weights", weights_data);
+    ArrayType bias_data(std::vector<SizeType>({out_size_, 1}));
+    this->SetInput(name + "_Bias", bias_data);
+  }
+
+  void ShareWeights(NodePtrType target_node_ptr)
+  {
+    // Get ptr to each weights layer
+    std::string    name                    = DESCRIPTOR;
+    GraphPtrType   target_graph_ptr        = std::dynamic_pointer_cast<GraphType>(target_node_ptr);
+    NodePtrType    target_weights_node_ptr = target_graph_ptr->GetNode(name + "_Weights");
+    WeightsPtrType target_weights_ptr =
+        std::dynamic_pointer_cast<WeightsType>(target_weights_node_ptr);
+    NodePtrType    target_bias_node_ptr = target_graph_ptr->GetNode(name + "_Bias");
+    WeightsPtrType target_bias_ptr  = std::dynamic_pointer_cast<WeightsType>(target_bias_node_ptr);
+    NodePtrType    weights_node_ptr = this->GetNode(name + "_Weights");
+    WeightsPtrType weights_ptr      = std::dynamic_pointer_cast<WeightsType>(weights_node_ptr);
+    NodePtrType    bias_node_ptr    = this->GetNode(name + "_Bias");
+    WeightsPtrType bias_ptr         = std::dynamic_pointer_cast<WeightsType>(bias_node_ptr);
+
+    // check if the shared weight is compatible with input shape
+    auto w_s = target_weights_ptr->get_weights().shape();
+    auto b_s = target_bias_ptr->get_weights().shape();
+    ASSERT((w_s[0] == out_size_) && (w_s[1] == in_size_) && (b_s[0] == out_size_));
+
+    // Share weights and parameter among these weights layers
+    auto shared_weights = *(target_weights_ptr->GetShareableWeights());
+    auto shared_bias    = *(target_bias_ptr->GetShareableWeights());
+    this->SetInput(name + "_Weights", shared_weights);
+    this->SetInput(name + "_Bias", shared_bias);
+  }
+
+  void SetupArchitecture(details::ActivationType activation_type = details::ActivationType::NOTHING,
+                         fetch::ml::details::RegularisationType regulariser =
+                             fetch::ml::details::RegularisationType::NONE,
+                         DataType regularisation_rate = static_cast<DataType>(0))
+  {
+    std::string name = DESCRIPTOR;
     std::string input =
         this->template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>(name + "_Input", {});
     std::string flat_input =
@@ -76,14 +173,8 @@ public:
 
     this->AddInputNode(input);
     this->SetOutputNode(output);
-    this->SetRegularisation(regulariser, regularisation_rate);
-
-    ArrayType weights_data(std::vector<SizeType>({out, in}));
-    this->Initialise(weights_data, init_mode);
-    this->SetInput(weights, weights_data);
-
-    ArrayType bias_data(std::vector<SizeType>({out, 1}));
-    this->SetInput(bias, bias_data);
+    this->SetRegularisation(fetch::ml::details::CreateRegulariser<T>(regulariser),
+                            regularisation_rate);
   }
 
   explicit FullyConnected(SPType const &gs)
@@ -110,6 +201,11 @@ public:
   std::vector<SizeType> ComputeOutputShape(VecTensorType const &) const override
   {
     return {this->out_size_, 1};
+  }
+
+  static constexpr OpType OpCode()
+  {
+    return OpType::LAYER_FULLY_CONNECTED;
   }
 
   static constexpr char const *DESCRIPTOR = "FullyConnected";

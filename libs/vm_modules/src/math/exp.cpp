@@ -16,21 +16,39 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/byte_array.hpp"
-#include "core/serializers/byte_array_buffer.hpp"
-#include "ledger/chain/transaction_layout_rpc_serializers.hpp"
-#include "ledger/chain/transaction_rpc_serializers.hpp"
+#include "math/meta/math_type_traits.hpp"
+#include "math/standard_functions/exp.hpp"
+#include "vm/module.hpp"
+#include "vm_modules/math/exp.hpp"
 
-using fetch::serializers::ByteArrayBuffer;
+#include <cmath>
+
+using namespace fetch::vm;
 
 namespace fetch {
-namespace ledger {
+namespace vm_modules {
+namespace math {
 
-template void Serialize<ByteArrayBuffer>(ByteArrayBuffer &, TransactionLayout const &);
-template void Serialize<ByteArrayBuffer>(ByteArrayBuffer &, Transaction const &);
+namespace {
 
-template void Deserialize<ByteArrayBuffer>(ByteArrayBuffer &, TransactionLayout &);
-template void Deserialize<ByteArrayBuffer>(ByteArrayBuffer &, Transaction &);
+template <typename T>
+fetch::math::meta::IfIsMath<T, T> Exp(VM *, T const &a)
+{
+  T x;
+  fetch::math::Exp(a, x);
+  return x;
+}
 
-}  // namespace ledger
+}  // namespace
+
+void BindExp(Module &module)
+{
+  module.CreateFreeFunction<float_t>("exp", &Exp<float_t>);
+  module.CreateFreeFunction<double_t>("exp", &Exp<double_t>);
+  module.CreateFreeFunction<fixed_point::fp32_t>("exp", &Exp<fixed_point::fp32_t>);
+  module.CreateFreeFunction<fixed_point::fp64_t>("exp", &Exp<fixed_point::fp64_t>);
+}
+
+}  // namespace math
+}  // namespace vm_modules
 }  // namespace fetch

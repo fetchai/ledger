@@ -132,6 +132,10 @@ public:
     return inputs.front()->shape();
   }
 
+  static constexpr OpType OpCode()
+  {
+    return OpType::DROPOUT;
+  }
   static constexpr char const *DESCRIPTOR = "Dropout";
 
 private:

@@ -18,8 +18,8 @@
 
 #include "math/statistics/mean.hpp"
 #include "math/tensor.hpp"
-#include "ml/dataloaders/mnist_loaders/mnist_loader.hpp"
 #include "ml/core/graph.hpp"
+#include "ml/dataloaders/mnist_loaders/mnist_loader.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/ops/activation.hpp"
 #include "ml/ops/loss_functions/cross_entropy_loss.hpp"

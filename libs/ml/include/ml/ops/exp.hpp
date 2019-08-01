@@ -85,6 +85,10 @@ public:
     return inputs.front()->shape();
   }
 
+  static constexpr OpType OpCode()
+  {
+    return OpType::EXP;
+  }
   static constexpr char const *DESCRIPTOR = "Exp";
 };
 

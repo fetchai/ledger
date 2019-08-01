@@ -19,8 +19,8 @@
 
 #include "math/base_types.hpp"
 #include "math/statistics/mean.hpp"
-#include "ml/dataloaders/dataloader.hpp"
 #include "ml/core/graph.hpp"
+#include "ml/dataloaders/dataloader.hpp"
 
 #include <chrono>
 
@@ -127,7 +127,7 @@ private:
 template <class T>
 void Optimiser<T>::Init()
 {
-  graph_trainables_ = graph_->get_trainables();
+  graph_trainables_ = graph_->GetTrainable();
   for (auto &train : graph_trainables_)
   {
     this->gradients_.emplace_back(ArrayType(train->get_weights().shape()));

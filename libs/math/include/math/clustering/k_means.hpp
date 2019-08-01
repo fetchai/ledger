@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/random.hpp"
 #include "core/vector.hpp"
 #include "math/distance/euclidean.hpp"
 #include "math/standard_functions/pow.hpp"
@@ -158,7 +159,7 @@ public:
   void KMeansSetup(ArrayType const &data, SizeType const &r_seed)
   {
     // seed random number generator
-    rng_.seed(uint32_t(r_seed));
+    lfg_.Seed(uint32_t(r_seed));
     loop_counter_ = 0;
 
     temp_k_ = ArrayType(data.shape());
@@ -213,7 +214,7 @@ private:
 
       // shuffle the data
       std::iota(std::begin(data_idxs_), std::end(data_idxs_), 0);
-      std::shuffle(data_idxs_.begin(), data_idxs_.end(), rng_);
+      fetch::random::Shuffle(lfg_, data_idxs_, data_idxs_);
 
       if (n_clusters_ != 0)
       {
@@ -503,7 +504,7 @@ private:
       std::piecewise_constant_distribution<double> dist(std::begin(interval), std::end(interval),
                                                         std::begin(weights));
 
-      auto val      = dist(rng_);
+      auto val      = dist(lfg_);
       auto tmp_rand = static_cast<SizeType>(val);
 
       assert((tmp_rand < n_points_) && (tmp_rand >= 0));
@@ -588,7 +589,7 @@ private:
       {
         reassigned_k_.Set(j, -1);
       }
-      std::shuffle(data_idxs_.begin(), data_idxs_.end(), rng_);
+      fetch::random::Shuffle(lfg_, data_idxs_, data_idxs_);
 
       for (SizeType i = 0; i < n_clusters_; ++i)
       {
@@ -738,7 +739,7 @@ private:
   // used to find the smallest distance out of K comparisons
   typename ArrayType::Type running_mean_ = numeric_max<typename ArrayType::Type>();
 
-  std::default_random_engine rng_;
+  fetch::random::LaggedFibonacciGenerator<> lfg_;
 
   fetch::core::Vector<SizeType> data_idxs_;  // a vector of indices to the data used for shuffling
   fetch::core::Vector<SizeType> empty_clusters_;  // a vector tracking whenever a cluster goes empty

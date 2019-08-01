@@ -93,6 +93,10 @@ public:
     return inputs.front()->shape();
   }
 
+  static constexpr OpType OpCode()
+  {
+    return OpType::CONCATENATE;
+  }
   static constexpr char const *DESCRIPTOR = "Concatenate";
 
 private:

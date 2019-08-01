@@ -78,6 +78,11 @@ public:
     return {inputs.at(0)->shape()};
   }
 
+  static constexpr OpType OpCode()
+  {
+    return OpType::PRELU;
+  }
+
   static constexpr char const *DESCRIPTOR = "ParametricRelu";
 };
 

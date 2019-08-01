@@ -131,6 +131,10 @@ public:
     return inputs.front()->shape();
   }
 
+  static constexpr OpType OpCode()
+  {
+    return OpType::LEAKY_RELU_OP;
+  }
   static constexpr char const *DESCRIPTOR = "LeakyReluOp";
 };
 

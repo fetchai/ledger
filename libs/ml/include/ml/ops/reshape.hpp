@@ -91,6 +91,10 @@ public:
     return output_size;
   }
 
+  static constexpr OpType OpCode()
+  {
+    return OpType::RESHAPE;
+  }
   static constexpr char const *DESCRIPTOR = "Reshape";
 
 private:

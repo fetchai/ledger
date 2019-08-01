@@ -65,6 +65,10 @@ public:
   std::vector<typename ArrayType::SizeType> ComputeOutputShape(
       VecTensorType const &inputs) const override;
 
+  static constexpr OpType OpCode()
+  {
+    return OpType::CONVOLUTION_2D;
+  }
   static constexpr char const *DESCRIPTOR = "Convolution2D";
 
 private:

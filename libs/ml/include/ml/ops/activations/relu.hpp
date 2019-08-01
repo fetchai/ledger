@@ -104,6 +104,10 @@ public:
     return inputs.front()->shape();
   }
 
+  static constexpr OpType OpCode()
+  {
+    return OpType::RELU;
+  }
   static constexpr char const *DESCRIPTOR = "Relu";
 };
 

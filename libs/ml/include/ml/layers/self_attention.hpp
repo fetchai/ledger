@@ -96,6 +96,11 @@ public:
     return inputs.front()->shape();
   }
 
+  static constexpr OpType OpCode()
+  {
+    return OpType::SELF_ATTENTION;
+  }
+
   static constexpr char const *DESCRIPTOR = "SelfAttention";
 
 private:

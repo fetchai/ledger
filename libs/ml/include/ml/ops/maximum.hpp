@@ -112,6 +112,10 @@ public:
     return inputs.front()->shape();
   }
 
+  static constexpr OpType OpCode()
+  {
+    return OpType::MAXIMUM;
+  }
   static constexpr char const *DESCRIPTOR = "Maximum";
 };
 

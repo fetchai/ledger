@@ -87,6 +87,10 @@ public:
     return inputs.front()->shape();
   }
 
+  static constexpr OpType OpCode()
+  {
+    return OpType::SQRT;
+  }
   static constexpr char const *DESCRIPTOR = "Sqrt";
 };
 

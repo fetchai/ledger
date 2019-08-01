@@ -109,7 +109,12 @@ public:
     }
   }
 
-  std::vector<SizeType>        transpose_vector_;
+  std::vector<SizeType> transpose_vector_;
+
+  static constexpr OpType OpCode()
+  {
+    return OpType::TRANSPOSE;
+  }
   static constexpr char const *DESCRIPTOR = "Transpose";
 };
 

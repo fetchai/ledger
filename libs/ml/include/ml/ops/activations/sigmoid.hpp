@@ -88,6 +88,10 @@ public:
     return inputs.front()->shape();
   }
 
+  static constexpr OpType OpCode()
+  {
+    return OpType::SIGMOID;
+  }
   static constexpr char const *DESCRIPTOR = "Sigmoid";
 
 private:

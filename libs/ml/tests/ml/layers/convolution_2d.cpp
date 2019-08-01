@@ -18,6 +18,7 @@
 
 #include "math/tensor.hpp"
 #include "ml/layers/convolution_2d.hpp"
+#include "ml/meta/ml_type_traits.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 
 #include "gtest/gtest.h"
@@ -266,13 +267,13 @@ TYPED_TEST(Convolution2DTest, node_forward_test)  // Use the class as a Node
   }
 
   // Evaluate
-  std::shared_ptr<fetch::ml::Node<TypeParam, fetch::ml::ops::PlaceHolder<TypeParam>>> placeholder =
-      std::make_shared<fetch::ml::Node<TypeParam, fetch::ml::ops::PlaceHolder<TypeParam>>>("Input");
-  placeholder->SetData(input);
+  auto placeholder_node =
+      std::make_shared<fetch::ml::Node<TypeParam>>(OpType::PLACEHOLDER, "Input");
+  placeholder_node->SetData(input);
 
   fetch::ml::Node<TypeParam, fetch::ml::layers::Convolution2D<TypeParam>> conv(
       "Convolution2D", output_channels, input_channels, kernel_height, stride_size);
-  conv.AddInput(placeholder);
+  conv.AddInput(placeholder_node);
 
   TypeParam prediction = *conv.Evaluate(true);
 

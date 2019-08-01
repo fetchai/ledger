@@ -20,8 +20,6 @@
 #include "ml/regularisers/l1_regulariser.hpp"
 #include "ml/regularisers/l2_regulariser.hpp"
 #include "ml/regularisers/regulariser.hpp"
-//#include "regularisation.hpp"
-
 #include <memory>
 #include <stdexcept>
 

@@ -89,6 +89,10 @@ public:
     return {data_size, batch_size};
   }
 
+  static constexpr OpType OpCode()
+  {
+    return OpType::FLATTEN;
+  }
   static constexpr char const *DESCRIPTOR = "Flatten";
 
 private:

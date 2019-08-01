@@ -46,54 +46,17 @@ enum class WeightsInitialisation
   XAVIER_FAN_OUT
 };
 
-/**
- * Provide an interface for any trainable ops
- * @tparam T passes tensors to graph during update step
- */
-template <class T>
-class Trainable
-{
-public:
-  using ArrayType    = T;
-  using ArrayPtrType = std::shared_ptr<ArrayType>;
-  using DataType     = typename ArrayType::Type;
-  using RegPtrType   = std::shared_ptr<fetch::ml::regularisers::Regulariser<T>>;
-
-  virtual void                           Step(typename T::Type learning_rate)        = 0;
-  virtual struct fetch::ml::StateDict<T> StateDict() const                           = 0;
-  virtual void             LoadStateDict(struct fetch::ml::StateDict<T> const &dict) = 0;
-  virtual ArrayType const &get_weights() const                                       = 0;
-  virtual ArrayType const &get_gradients() const                                     = 0;
-  virtual void             ResetGradients()                                          = 0;
-  virtual void             ApplyGradient(ArrayType const &grad)                      = 0;
-  virtual void             ApplyRegularisation()                                     = 0;
-
-  void SetRegularisation(fetch::ml::details::RegularisationType type,
-                         DataType                               regularisation_rate = DataType{0.0})
-  {
-    RegPtrType regulariser     = fetch::ml::details::CreateRegulariser<ArrayType>(type);
-    this->regularisation_type  = type;
-    this->regulariser_         = regulariser;
-    this->regularisation_rate_ = regularisation_rate;
-  }
-
-protected:
-  fetch::ml::details::RegularisationType regularisation_type =
-      fetch::ml::details::RegularisationType::NONE;
-  RegPtrType regulariser_;
-  DataType   regularisation_rate_ = static_cast<DataType>(0);
-};
-
 template <class T>
 class Weights : public fetch::ml::ops::PlaceHolder<T>, public Trainable<T>
 {
 public:
-  using ArrayType     = T;
-  using SizeType      = typename ArrayType::SizeType;
-  using DataType      = typename ArrayType::Type;
-  using ArrayPtrType  = std::shared_ptr<ArrayType>;
-  using VecTensorType = typename PlaceHolder<T>::VecTensorType;
-  using SPType        = WeightsSaveableParams<ArrayType>;
+  using ArrayType      = T;
+  using SizeType       = typename ArrayType::SizeType;
+  using DataType       = typename ArrayType::Type;
+  using ArrayPtrType   = std::shared_ptr<ArrayType>;
+  using VecTensorType  = typename PlaceHolder<T>::VecTensorType;
+  using SPType         = WeightsSaveableParams<ArrayType>;
+  using WeightsPtrType = typename std::shared_ptr<Weights<ArrayType>>;
 
 protected:
   ArrayPtrType gradient_accumulation_;
@@ -119,9 +82,14 @@ public:
     {
       tp.output = std::make_shared<ArrayType>(this->output_->Copy());
     }
-    tp.regularisation_type = this->regularisation_type;
+    tp.regulariser         = this->regulariser_;
     tp.regularisation_rate = this->regularisation_rate_;
     return std::make_shared<SPType>(tp);
+  }
+
+  ArrayPtrType GetShareableWeights()
+  {
+    return this->output_;
   }
 
   std::vector<ArrayType> Backward(VecTensorType const &inputs,
@@ -252,6 +220,10 @@ public:
     return *this->gradient_accumulation_;
   }
 
+  static constexpr OpType OpCode()
+  {
+    return OpType::WEIGHTS;
+  }
   static constexpr char const *DESCRIPTOR = "Weights";
 
 private:

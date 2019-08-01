@@ -135,6 +135,10 @@ public:
     return inputs.front()->shape();
   }
 
+  static constexpr OpType OpCode()
+  {
+    return OpType::RANDOMISED_RELU;
+  }
   static constexpr char const *DESCRIPTOR = "RandomisedRelu";
 
 private:

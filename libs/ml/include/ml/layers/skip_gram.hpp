@@ -108,6 +108,11 @@ public:
     return {inputs.front()->shape().at(1), 1};
   }
 
+  static constexpr OpType OpCode()
+  {
+    return OpType::SKIP_GRAM;
+  }
+
   static constexpr char const *DESCRIPTOR = "SkipGram";
 
 private:

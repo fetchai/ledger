@@ -203,6 +203,10 @@ public:
     return output_shape;
   }
 
+  static constexpr OpType OpCode()
+  {
+    return OpType::MAX_POOL_2D;
+  }
   static constexpr char const *DESCRIPTOR = "MaxPool2D";
 
 private:

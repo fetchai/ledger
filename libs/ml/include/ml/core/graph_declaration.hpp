@@ -23,5 +23,5 @@ namespace ml {
 template <class T>
 class Graph;
 
-} // ml
-} // fetch
+}  // namespace ml
+}  // namespace fetch

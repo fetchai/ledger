@@ -92,6 +92,10 @@ public:
     return inputs.front()->shape();
   }
 
+  static constexpr OpType OpCode()
+  {
+    return OpType::MULTIPLY;
+  }
   static constexpr char const *DESCRIPTOR = "Multiply";
 };
 

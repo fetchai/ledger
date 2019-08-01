@@ -19,6 +19,7 @@
 #include "math/tensor.hpp"
 #include "ml/layers/PRelu.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
+#include "ml/meta/ml_type_traits.hpp"
 
 #include "gtest/gtest.h"
 
@@ -88,12 +89,11 @@ TYPED_TEST(PReluTest, ops_backward_test)  // Use the class as an Ops
 TYPED_TEST(PReluTest, node_forward_test)  // Use the class as a Node
 {
   TypeParam data(std::vector<typename TypeParam::SizeType>({5, 10, 2}));
-  std::shared_ptr<fetch::ml::Node<TypeParam, fetch::ml::ops::PlaceHolder<TypeParam>>> placeholder =
-      std::make_shared<fetch::ml::Node<TypeParam, fetch::ml::ops::PlaceHolder<TypeParam>>>("Input");
-  placeholder->SetData(data);
+  auto placeholder_node = std::make_shared<fetch::ml::Node<TypeParam>>(fetch::ml::OpType::PLACEHOLDER, "Input");
+  placeholder_node->SetData(data);
 
   fetch::ml::Node<TypeParam, fetch::ml::layers::PRelu<TypeParam>> fc("PRelu", 50u, "PRelu");
-  fc.AddInput(placeholder);
+  fc.AddInput(placeholder_node);
 
   TypeParam prediction = *fc.Evaluate(true);
 
@@ -106,12 +106,11 @@ TYPED_TEST(PReluTest, node_forward_test)  // Use the class as a Node
 TYPED_TEST(PReluTest, node_backward_test)  // Use the class as a Node
 {
   TypeParam data({5, 10, 2});
-  std::shared_ptr<fetch::ml::Node<TypeParam, fetch::ml::ops::PlaceHolder<TypeParam>>> placeholder =
-      std::make_shared<fetch::ml::Node<TypeParam, fetch::ml::ops::PlaceHolder<TypeParam>>>("Input");
-  placeholder->SetData(data);
+  auto placeholder_node = std::make_shared<fetch::ml::Node<TypeParam>>(fetch::ml::OpType::PLACEHOLDER, "Input");
+  placeholder_node->SetData(data);
 
   fetch::ml::Node<TypeParam, fetch::ml::layers::PRelu<TypeParam>> fc("PRelu", 50u, "PRelu");
-  fc.AddInput(placeholder);
+  fc.AddInput(placeholder_node);
   TypeParam prediction = *fc.Evaluate(true);
 
   TypeParam error_signal(std::vector<typename TypeParam::SizeType>({5, 10, 2}));

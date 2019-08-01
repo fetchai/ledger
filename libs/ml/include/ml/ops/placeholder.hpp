@@ -95,6 +95,11 @@ public:
     return this->output_->shape();
   }
 
+  static constexpr OpType OpCode()
+  {
+    return OpType::PLACEHOLDER;
+  }
+
   static constexpr char const *DESCRIPTOR = "PlaceHolder";
 
 protected:

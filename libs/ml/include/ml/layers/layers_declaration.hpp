@@ -42,6 +42,6 @@ class SelfAttention;
 template <class T>
 class SkipGram;
 
-} // layers
-} // ml
-} // fetch
+}  // namespace layers
+}  // namespace ml
+}  // namespace fetch

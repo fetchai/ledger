@@ -139,69 +139,68 @@ protected:
 };
 
 // TODO(private issue 633): Reinstate this test
-#if 0
-TEST_P(ExecutionManagerStateTests, DISABLED_CheckStateRollBack)
-{
-  BlockConfig const &config = GetParam();
-  AttachState();  // so that we can see state updates
-
-  // generate a series of blocks in the pattern:
-  //
-  //                    ┌──────────┐
-  //                 ┌─▶│ Block 2  │
-  //   ┌──────────┐  │  └──────────┘
-  //   │ Block 1  │──┤
-  //   └──────────┘  │  ┌──────────┐
-  //                 └─▶│ Block 3  │
-  //                    └──────────┘
-  //
-  auto block1 = TestBlock::Generate(config.log2_lanes, config.slices, __LINE__);
-  auto block2 = TestBlock::Generate(config.log2_lanes, config.slices, __LINE__, block1.block.hash);
-  auto block3 = TestBlock::Generate(config.log2_lanes, config.slices, __LINE__, block1.block.hash);
-
-  // start the execution manager
-  manager_->Start();
-
-  {
-    EXPECT_CALL(*mock_storage_, Set(_, _)).Times(block1.num_transactions);
-
-    ExecuteBlock(block1);
-  }
-
-  {
-    EXPECT_CALL(*mock_storage_, Set(_, _)).Times(block2.num_transactions);
-
-    ExecuteBlock(block2);
-  }
-
-  auto const previous_hash = mock_storage_->GetFake().Hash();
-
-  {
-    EXPECT_CALL(*mock_storage_, Hash()).Times(1);
-    EXPECT_CALL(*mock_storage_, Commit(_)).Times(1);
-    EXPECT_CALL(*mock_storage_, Set(_, _)).Times(block3.num_transactions);
-    EXPECT_CALL(*mock_storage_, Revert(_)).Times(1);
-
-    ExecuteBlock(block3);
-  }
-
-  {
-    EXPECT_CALL(*mock_storage_, Hash()).Times(0);
-    EXPECT_CALL(*mock_storage_, Set(_, _)).Times(0);
-    EXPECT_CALL(*mock_storage_, Commit(_)).Times(0);
-    EXPECT_CALL(*mock_storage_, Revert(_)).Times(1);
-
-    ExecuteBlock(block2, ScheduleStatus::RESTORED);
-  }
-
-  auto const reapply_hash = mock_storage_->GetFake().Hash();
-
-  EXPECT_EQ(previous_hash, reapply_hash);
-
-  // stop the ex
-  manager_->Stop();
-}
-#endif
+// TEST_P(ExecutionManagerStateTests, DISABLED_CheckStateRollBack)
+//{
+//  BlockConfig const &config = GetParam();
+//  AttachState();  // so that we can see state updates
+//
+//  // generate a series of blocks in the pattern:
+//  //
+//  //                    ┌──────────┐
+//  //                 ┌─▶│ Block 2  │
+//  //   ┌──────────┐  │  └──────────┘
+//  //   │ Block 1  │──┤
+//  //   └──────────┘  │  ┌──────────┐
+//  //                 └─▶│ Block 3  │
+//  //                    └──────────┘
+//  //
+//  auto block1 = TestBlock::Generate(config.log2_lanes, config.slices, __LINE__);
+//  auto block2 = TestBlock::Generate(config.log2_lanes, config.slices, __LINE__,
+//  block1.block.hash); auto block3 = TestBlock::Generate(config.log2_lanes, config.slices,
+//  __LINE__, block1.block.hash);
+//
+//  // start the execution manager
+//  manager_->Start();
+//
+//  {
+//    EXPECT_CALL(*mock_storage_, Set(_, _)).Times(block1.num_transactions);
+//
+//    ExecuteBlock(block1);
+//  }
+//
+//  {
+//    EXPECT_CALL(*mock_storage_, Set(_, _)).Times(block2.num_transactions);
+//
+//    ExecuteBlock(block2);
+//  }
+//
+//  auto const previous_hash = mock_storage_->GetFake().Hash();
+//
+//  {
+//    EXPECT_CALL(*mock_storage_, Hash()).Times(1);
+//    EXPECT_CALL(*mock_storage_, Commit(_)).Times(1);
+//    EXPECT_CALL(*mock_storage_, Set(_, _)).Times(block3.num_transactions);
+//    EXPECT_CALL(*mock_storage_, Revert(_)).Times(1);
+//
+//    ExecuteBlock(block3);
+//  }
+//
+//  {
+//    EXPECT_CALL(*mock_storage_, Hash()).Times(0);
+//    EXPECT_CALL(*mock_storage_, Set(_, _)).Times(0);
+//    EXPECT_CALL(*mock_storage_, Commit(_)).Times(0);
+//    EXPECT_CALL(*mock_storage_, Revert(_)).Times(1);
+//
+//    ExecuteBlock(block2, ScheduleStatus::RESTORED);
+//  }
+//
+//  auto const reapply_hash = mock_storage_->GetFake().Hash();
+//
+//  EXPECT_EQ(previous_hash, reapply_hash);
+//
+//  // stop the ex
+//  manager_->Stop();
+//}
 
 INSTANTIATE_TEST_CASE_P(Param, ExecutionManagerStateTests,
                         ::testing::ValuesIn(BlockConfig::REDUCED_SET), );

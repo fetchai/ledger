@@ -76,6 +76,10 @@ public:
     return inputs.front()->shape();
   }
 
+  static constexpr OpType OpCode()
+  {
+    return OpType::SUBTRACT;
+  }
   static constexpr char const *DESCRIPTOR = "Subtract";
 };
 

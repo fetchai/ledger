@@ -20,6 +20,7 @@
 #include "core/assert.hpp"
 #include "math/tensor.hpp"
 #include "ml/saveparams/saveable_params.hpp"
+#include "ml/state_dict.hpp"
 
 #include <functional>
 #include <memory>
@@ -66,8 +67,46 @@ public:
     is_training_ = is_training;
   }
 
+  bool IsTraining()
+  {
+    return is_training_;
+  }
+
 protected:
   bool is_training_ = true;
+};
+
+/**
+ * Provide an interface for any trainable ops
+ * @tparam T passes tensors to graph during update step
+ */
+template <class T>
+class Trainable
+{
+public:
+  using ArrayType    = T;
+  using ArrayPtrType = std::shared_ptr<ArrayType>;
+  using DataType     = typename ArrayType::Type;
+  using RegPtrType   = std::shared_ptr<fetch::ml::regularisers::Regulariser<T>>;
+
+  virtual void                           Step(typename T::Type learning_rate)        = 0;
+  virtual struct fetch::ml::StateDict<T> StateDict() const                           = 0;
+  virtual void             LoadStateDict(struct fetch::ml::StateDict<T> const &dict) = 0;
+  virtual ArrayType const &get_weights() const                                       = 0;
+  virtual ArrayType const &get_gradients() const                                     = 0;
+  virtual void             ResetGradients()                                          = 0;
+  virtual void             ApplyGradient(ArrayType const &grad)                      = 0;
+  virtual void             ApplyRegularisation()                                     = 0;
+
+  void SetRegularisation(RegPtrType regulariser, DataType regularisation_rate = DataType{0.0})
+  {
+    this->regulariser_         = regulariser;
+    this->regularisation_rate_ = regularisation_rate;
+  }
+
+protected:
+  RegPtrType regulariser_;
+  DataType   regularisation_rate_ = static_cast<DataType>(0);
 };
 
 }  // namespace ops

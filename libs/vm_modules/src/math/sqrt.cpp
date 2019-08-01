@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -17,35 +16,38 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/assert.hpp"
-#include "core/byte_array/const_byte_array.hpp"
+#include "math/standard_functions/sqrt.hpp"
+#include "vm/module.hpp"
+#include "vm_modules/math/sqrt.hpp"
 
-#include <type_traits>
+#include <cmath>
+
+using namespace fetch::vm;
 
 namespace fetch {
-namespace serializers {
+namespace vm_modules {
+namespace math {
+
+namespace {
 
 template <typename T>
-inline void Serialize(T &serializer, byte_array::ConstByteArray const &s)
+fetch::math::meta::IfIsMath<T, T> Sqrt(VM *, T const &a)
 {
-  serializer.Allocate(sizeof(uint64_t) + s.size());
-  uint64_t size = s.size();
-
-  serializer.WriteBytes(reinterpret_cast<uint8_t const *>(&size), sizeof(uint64_t));
-  serializer.WriteBytes(reinterpret_cast<uint8_t const *>(s.pointer()), s.size());
+  T x;
+  fetch::math::Sqrt(a, x);
+  return x;
 }
 
-template <typename T>
-inline void Deserialize(T &serializer, byte_array::ConstByteArray &s)
+}  // namespace
+
+void BindSqrt(Module &module)
 {
-  uint64_t size = 0;
-
-  detailed_assert(int64_t(sizeof(uint64_t)) <= serializer.bytes_left());
-  serializer.ReadBytes(reinterpret_cast<uint8_t *>(&size), sizeof(uint64_t));
-  detailed_assert(int64_t(size) <= serializer.bytes_left());
-
-  serializer.ReadByteArray(s, size);
+  module.CreateFreeFunction<float_t>("sqrt", &Sqrt<float_t>);
+  module.CreateFreeFunction<double_t>("sqrt", &Sqrt<double_t>);
+  module.CreateFreeFunction<fixed_point::fp32_t>("sqrt", &Sqrt<fixed_point::fp32_t>);
+  module.CreateFreeFunction<fixed_point::fp64_t>("sqrt", &Sqrt<fixed_point::fp64_t>);
 }
 
-}  // namespace serializers
+}  // namespace math
+}  // namespace vm_modules
 }  // namespace fetch

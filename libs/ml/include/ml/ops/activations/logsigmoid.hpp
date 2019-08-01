@@ -92,6 +92,10 @@ public:
     return inputs.front()->shape();
   }
 
+  static constexpr OpType OpCode()
+  {
+    return OpType::LOGSIGMOID;
+  }
   static constexpr char const *DESCRIPTOR = "LogSigmoid";
 
 private:

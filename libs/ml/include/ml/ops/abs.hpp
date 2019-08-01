@@ -105,6 +105,11 @@ public:
     return inputs.front()->shape();
   }
 
+  static constexpr OpType OpCode()
+  {
+    return OpType::ABS;
+  }
+
   static constexpr char const *DESCRIPTOR = "Abs";
 };
 

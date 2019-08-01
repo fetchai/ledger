@@ -17,11 +17,11 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ml/core/subgraph.hpp"
 #include "ml/meta/ml_type_traits.hpp"
 #include "ml/ops/activation.hpp"
 #include "ml/ops/convolution_2d.hpp"
 #include "ml/ops/weights.hpp"
-#include "ml/core/subgraph.hpp"
 
 #include <functional>
 #include <memory>
@@ -117,6 +117,11 @@ public:
         std::vector<SizeType>{{output_channels_, input_channels_, kernel_size_, kernel_size_, 1}});
     return fetch::ml::ops::Convolution2D<ArrayType>(stride_size_)
         .ComputeOutputShape({inputs.at(0), std::make_shared<ArrayType>(weights_data)});
+  }
+
+  static constexpr OpType OpCode()
+  {
+    return OpType::LAYER_CONVOLUTION_2D;
   }
 
   static constexpr char const *DESCRIPTOR = "Convolution2DLayer";

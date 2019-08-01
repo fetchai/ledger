@@ -56,17 +56,18 @@ public:
 
     return ret;
 
-      // TODO - this must have already been done by the utilities
-//    // first load graph based on upcasting subpgrah saveparams to graph saveparams
-//    auto ptr_graph_saveable_params = std::make_shared<typename Graph<T>::SPType>(sgsp);
-//    auto graph_ptr = fetch::ml::utilities::LoadGraph<ArrayType, Graph<T>>(ptr_graph_saveable_params);
-//
-//    // overwrite base class with graph loaded from save params
-//    static_cast<Graph<T>>(*this) = *graph_ptr;
-//
-//    // assign
-//    input_node_names_ = sgsp.input_node_names;
-//    output_node_name_ = sgsp.output_node_name;
+    // TODO - this must have already been done by the utilities
+    //    // first load graph based on upcasting subpgrah saveparams to graph saveparams
+    //    auto ptr_graph_saveable_params = std::make_shared<typename Graph<T>::SPType>(sgsp);
+    //    auto graph_ptr = fetch::ml::utilities::LoadGraph<ArrayType,
+    //    Graph<T>>(ptr_graph_saveable_params);
+    //
+    //    // overwrite base class with graph loaded from save params
+    //    static_cast<Graph<T>>(*this) = *graph_ptr;
+    //
+    //    // assign
+    //    input_node_names_ = sgsp.input_node_names;
+    //    output_node_name_ = sgsp.output_node_name;
   }
 
   template <typename OtherSaveParamsType>

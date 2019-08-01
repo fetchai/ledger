@@ -16,13 +16,13 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/byte_array_buffer.hpp"
+#include "core/serializers/base_types.hpp"
+#include "core/serializers/main_serializer.hpp"
 #include "math/tensor.hpp"
 #include "ml/core/graph.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/ops/placeholder.hpp"
 #include "ml/serializers/ml_types.hpp"
-#include "vectorise/fixed_point/serializers.hpp"
 
 #include "ml/utilities/graph_builder.hpp"
 
@@ -40,8 +40,8 @@ TYPED_TEST_CASE(SerializersTest, MyTypes);
 
 TYPED_TEST(SerializersTest, serialize_empty_state_dict)
 {
-  fetch::ml::StateDict<TypeParam>     sd1;
-  fetch::serializers::ByteArrayBuffer b;
+  fetch::ml::StateDict<TypeParam>       sd1;
+  fetch::serializers::MsgPackSerializer b;
   b << sd1;
   b.seek(0);
   fetch::ml::StateDict<TypeParam> sd2;
@@ -54,7 +54,7 @@ TYPED_TEST(SerializersTest, serialize_state_dict)
   // Generate a plausible state dict out of a fully connected layer
   fetch::ml::layers::FullyConnected<TypeParam> fc(10, 10);
   struct fetch::ml::StateDict<TypeParam>       sd1 = fc.StateDict();
-  fetch::serializers::ByteArrayBuffer          b;
+  fetch::serializers::MsgPackSerializer        b;
   b << sd1;
   b.seek(0);
   fetch::ml::StateDict<TypeParam> sd2;
@@ -77,8 +77,8 @@ TYPED_TEST(SerializersTest, serialize_empty_graph_saveable_params)
 TYPED_TEST(SerializersTest, serialize_graph_saveable_params)
 {
   using TensorType = TypeParam;
-  using DataType  = typename TypeParam::Type;
-  using GraphType = typename fetch::ml::Graph<TensorType>;
+  using DataType   = typename TypeParam::Type;
+  using GraphType  = typename fetch::ml::Graph<TensorType>;
 
   fetch::ml::details::RegularisationType regulariser = fetch::ml::details::RegularisationType::L1;
   DataType                               reg_rate{0.01f};

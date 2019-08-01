@@ -17,7 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/byte_array_buffer.hpp"
 #include "ml/meta/ml_type_traits.hpp"
 #include "ml/regularisers/regularisation.hpp"
 
@@ -1587,10 +1586,10 @@ struct TransposeSaveableParams : public SaveableParamsInterface
 template <class TensorType>
 struct WeightsSaveableParams : public SaveableParamsInterface
 {
-  std::shared_ptr<TensorType>            output;
-  fetch::ml::details::RegularisationType regularisation_type{};
-  typename TensorType::Type              regularisation_rate;
-  fetch::ml::OpType                      OP_DESCRIPTOR = OpType::WEIGHTS;
+  std::shared_ptr<TensorType>                                       output;
+  std::shared_ptr<fetch::ml::regularisers::Regulariser<TensorType>> regulariser;
+  typename TensorType::Type                                         regularisation_rate;
+  fetch::ml::OpType                                                 OP_DESCRIPTOR = OpType::WEIGHTS;
 
   WeightsSaveableParams()
     : SaveableParamsInterface(OpType::WEIGHTS)
