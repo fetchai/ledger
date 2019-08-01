@@ -249,10 +249,9 @@ BlockCoordinator::State BlockCoordinator::OnReloadState()
     {
       // we need to update the execution manager state and also our locally cached state about the
       // last block that has been executed
-      last_executed_block_.Apply([this](auto &digest) -> void {
-        execution_manager_.SetLastProcessedBlock(current_block_->body.hash);
-        digest = current_block_->body.hash;
-      });
+      execution_manager_.SetLastProcessedBlock(current_block_->body.hash);
+      last_executed_block_.Apply(
+          [this](auto &digest) -> void { digest = current_block_->body.hash; });
     }
   }
 

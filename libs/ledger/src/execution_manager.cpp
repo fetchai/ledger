@@ -270,8 +270,8 @@ void ExecutionManager::DispatchExecution(ExecutionItem &item)
     }
 
     counters_.Apply([](auto &counters) -> void {
-      counters.active--;
-      counters.remaining--;
+      --counters.active;
+      --counters.remaining;
     });
 
     ++completed_executions_;
@@ -355,7 +355,7 @@ Digest ExecutionManager::LastProcessedBlock()
 
 ExecutionManager::State ExecutionManager::GetState()
 {
-  return state_.Apply([](auto &state) -> State { return state; });
+  return state_.Apply([](auto const &state) -> State { return state; });
 }
 
 bool ExecutionManager::Abort()
@@ -416,6 +416,8 @@ void ExecutionManager::MonitorThreadEntrypoint()
 
     case MonitorState::IDLE:
     {
+      blocks_completed_count_->increment();
+
       state_.Apply([](auto &state) -> void { state = State::IDLE; });
 
       FETCH_LOG_DEBUG(LOGGING_NAME, "Now Idle");
@@ -446,6 +448,8 @@ void ExecutionManager::MonitorThreadEntrypoint()
     {
       FETCH_LOCK(execution_plan_lock_);
 
+      slices_executed_count_->increment();
+
       if (execution_plan_.empty())
       {
         monitor_state = MonitorState::SETTLE_FEES;
@@ -464,7 +468,10 @@ void ExecutionManager::MonitorThreadEntrypoint()
         for (auto &item : slice_plan)
         {
           // create the closure and dispatch to the thread pool
-          thread_pool_->Post([self, &item]() { self->DispatchExecution(*item); });
+          thread_pool_->Post([self, &item]() {
+            telemetry::FunctionTimer const timer{*(self->execution_duration_)};
+            self->DispatchExecution(*item);
+          });
         }
 
         monitor_state = MonitorState::RUNNING;
@@ -524,6 +531,11 @@ void ExecutionManager::MonitorThreadEntrypoint()
 
           // update aggregate fees
           aggregate_block_fees += item->fee();
+
+          if (tx_status_cache_)
+          {
+            tx_status_cache_->Update(item->digest(), item->result());
+          }
         }
 
         // only provide debug if required
@@ -590,6 +602,7 @@ void ExecutionManager::MonitorThreadEntrypoint()
             // get the first one and settle the fees
             idle_executors_.front()->SettleFees(last_block_miner_, aggregate_block_fees,
                                                 log2_num_lanes_);
+            fees_settled_count_->increment();
             break;
           }
         }
