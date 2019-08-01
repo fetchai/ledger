@@ -268,11 +268,11 @@ TYPED_TEST(Convolution2DTest, node_forward_test)  // Use the class as a Node
 
   // Evaluate
   auto placeholder_node =
-      std::make_shared<fetch::ml::Node<TypeParam>>(OpType::PLACEHOLDER, "Input");
+      std::make_shared<fetch::ml::Node<TypeParam>>(fetch::ml::OpType::PLACEHOLDER, "Input");
   placeholder_node->SetData(input);
 
-  fetch::ml::Node<TypeParam, fetch::ml::layers::Convolution2D<TypeParam>> conv(
-      "Convolution2D", output_channels, input_channels, kernel_height, stride_size);
+  auto conv2d_layer_ptr = std::make_shared<fetch::ml::layers::Convolution2D<TypeParam>>(output_channels, input_channels, kernel_height, stride_size);
+  auto conv = fetch::ml::Node<TypeParam>(fetch::ml::OpType::LAYER_CONVOLUTION_2D, "Convolution2D", conv2d_layer_ptr);
   conv.AddInput(placeholder_node);
 
   TypeParam prediction = *conv.Evaluate(true);

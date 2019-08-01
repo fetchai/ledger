@@ -90,17 +90,16 @@ TYPED_TEST(PReluTest, node_forward_test)  // Use the class as a Node
 {
   TypeParam data(std::vector<typename TypeParam::SizeType>({5, 10, 2}));
   auto placeholder_node = std::make_shared<fetch::ml::Node<TypeParam>>(fetch::ml::OpType::PLACEHOLDER, "Input");
-  placeholder_node->SetData(data);
+  std::dynamic_pointer_cast<fetch::ml::ops::PlaceHolder<TypeParam>>(placeholder_node->GetOp())->SetData(data);
 
-  fetch::ml::Node<TypeParam, fetch::ml::layers::PRelu<TypeParam>> fc("PRelu", 50u, "PRelu");
-  fc.AddInput(placeholder_node);
+  auto prelu_node = fetch::ml::Node<TypeParam>(fetch::ml::OpType::PRELU, "PRelu");
+  prelu_node.AddInput(placeholder_node);
+  auto prediction = prelu_node.Evaluate(true);
 
-  TypeParam prediction = *fc.Evaluate(true);
-
-  ASSERT_EQ(prediction.shape().size(), 3);
-  ASSERT_EQ(prediction.shape()[0], 5);
-  ASSERT_EQ(prediction.shape()[1], 10);
-  ASSERT_EQ(prediction.shape()[2], 2);
+  ASSERT_EQ(prediction->shape().size(), 3);
+  ASSERT_EQ(prediction->shape()[0], 5);
+  ASSERT_EQ(prediction->shape()[1], 10);
+  ASSERT_EQ(prediction->shape()[2], 2);
 }
 
 TYPED_TEST(PReluTest, node_backward_test)  // Use the class as a Node
@@ -109,12 +108,12 @@ TYPED_TEST(PReluTest, node_backward_test)  // Use the class as a Node
   auto placeholder_node = std::make_shared<fetch::ml::Node<TypeParam>>(fetch::ml::OpType::PLACEHOLDER, "Input");
   placeholder_node->SetData(data);
 
-  fetch::ml::Node<TypeParam, fetch::ml::layers::PRelu<TypeParam>> fc("PRelu", 50u, "PRelu");
-  fc.AddInput(placeholder_node);
-  TypeParam prediction = *fc.Evaluate(true);
+  fetch::ml::Node<TypeParam> prelu_node(fetch::ml::OpType::PRELU, "PRelu", 50u, "PRelu");
+  prelu_node.AddInput(placeholder_node);
+  TypeParam prediction = *prelu_node.Evaluate(true);
 
   TypeParam error_signal(std::vector<typename TypeParam::SizeType>({5, 10, 2}));
-  auto      bp_err = fc.BackPropagateSignal(error_signal);
+  auto      bp_err = prelu_node.BackPropagateSignal(error_signal);
 
   ASSERT_EQ(bp_err.size(), 1);
   ASSERT_EQ(bp_err[0].second.shape().size(), 3);

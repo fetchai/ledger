@@ -82,6 +82,15 @@ public:
   }
 
   //  template <typename... Params>
+  Node(OpType const &operation_type, std::string name, std::shared_ptr<ops::Ops<ArrayType>> op_ptr)
+    : name_(std::move(name))
+    , cached_output_status_(CachedOutputState::CHANGED_SIZE)
+    , operation_type_(operation_type)
+    , op_ptr_(op_ptr)
+  {
+  }
+
+  //  template <typename... Params>
   Node(OpType const &operation_type, std::string name)
     : name_(std::move(name))
     , cached_output_status_(CachedOutputState::CHANGED_SIZE)
