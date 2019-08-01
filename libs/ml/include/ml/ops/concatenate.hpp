@@ -75,7 +75,11 @@ public:
 
   std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
   {
-    return inputs.front()->shape();
+	  std::vector<SizeType> ret_shape{inputs.front()->shape()};
+	  for(size_t i=1; i<inputs.size(); i++){
+	  	ret_shape[axis_] += inputs.at(i)->shape(axis_);
+	  }
+	  return ret_shape;
   }
 
   static constexpr char const *DESCRIPTOR = "Concatenate";
