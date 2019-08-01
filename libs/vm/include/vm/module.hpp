@@ -85,13 +85,13 @@ public:
       return *this;
     }
 
-    template <typename ReturnType, typename... Ts>
+    template <typename ReturnType, typename... Args>
     ClassInterface &CreateStaticMemberFunction(std::string const &function_name,
-                                               ReturnType (*f)(VM *, TypeId, Ts...))
+                                               ReturnType (*f)(VM *, TypeId, Args...))
     {
       TypeIndex const type_index__ = type_index_;
       TypeIndexArray  parameter_type_index_array;
-      UnrollParameterTypes<Ts...>::Unroll(parameter_type_index_array);
+      UnrollParameterTypes<Args...>::Unroll(parameter_type_index_array);
       TypeIndex const return_type_index = TypeGetter<ReturnType>::GetTypeIndex();
       Handler         handler           = [f](VM *vm) {
         InvokeStaticMemberFunction(vm, vm->instruction_->data, vm->instruction_->type_id, f);
@@ -105,19 +105,19 @@ public:
       return *this;
     }
 
-    template <typename ReturnType, typename... Ts>
-    ClassInterface &CreateMemberFunction(std::string const &name, ReturnType (Type::*f)(Ts...))
+    template <typename ReturnType, typename... Args>
+    ClassInterface &CreateMemberFunction(std::string const &name, ReturnType (Type::*f)(Args...))
     {
-      using MemberFunction = ReturnType (Type::*)(Ts...);
-      return InternalCreateMemberFunction<ReturnType, MemberFunction, Ts...>(name, f);
+      using MemberFunction = ReturnType (Type::*)(Args...);
+      return InternalCreateMemberFunction<ReturnType, MemberFunction, Args...>(name, f);
     }
 
-    template <typename ReturnType, typename... Ts>
+    template <typename ReturnType, typename... Args>
     ClassInterface &CreateMemberFunction(std::string const &name,
-                                         ReturnType (Type::*f)(Ts...) const)
+                                         ReturnType (Type::*f)(Args...) const)
     {
-      using MemberFunction = ReturnType (Type::*)(Ts...) const;
-      return InternalCreateMemberFunction<ReturnType, MemberFunction, Ts...>(name, f);
+      using MemberFunction = ReturnType (Type::*)(Args...) const;
+      return InternalCreateMemberFunction<ReturnType, MemberFunction, Args...>(name, f);
     }
 
     ClassInterface &EnableOperator(Operator op)
@@ -216,12 +216,12 @@ public:
       return *this;
     }
 
-    template <typename ReturnType, typename MemberFunction, typename... Ts>
+    template <typename ReturnType, typename MemberFunction, typename... Args>
     ClassInterface &InternalCreateMemberFunction(std::string const &function_name, MemberFunction f)
     {
       TypeIndex const type_index__ = type_index_;
       TypeIndexArray  parameter_type_index_array;
-      UnrollParameterTypes<Ts...>::Unroll(parameter_type_index_array);
+      UnrollParameterTypes<Args...>::Unroll(parameter_type_index_array);
       TypeIndex const return_type_index = TypeGetter<ReturnType>::GetTypeIndex();
       Handler handler = [f](VM *vm) { InvokeMemberFunction(vm, vm->instruction_->type_id, f); };
       auto    compiler_setup_function = [type_index__, function_name, parameter_type_index_array,
@@ -237,11 +237,11 @@ public:
     TypeIndex type_index_;
   };
 
-  template <typename ReturnType, typename... Ts>
-  void CreateFreeFunction(std::string const &name, ReturnType (*f)(VM *, Ts...))
+  template <typename ReturnType, typename... Args>
+  void CreateFreeFunction(std::string const &name, ReturnType (*f)(VM *, Args...))
   {
     TypeIndexArray parameter_type_index_array;
-    UnrollParameterTypes<Ts...>::Unroll(parameter_type_index_array);
+    UnrollParameterTypes<Args...>::Unroll(parameter_type_index_array);
     TypeIndex const return_type_index = TypeGetter<ReturnType>::GetTypeIndex();
     Handler         handler = [f](VM *vm) { InvokeFreeFunction(vm, vm->instruction_->type_id, f); };
     auto            compiler_setup_function = [name, parameter_type_index_array, return_type_index,
