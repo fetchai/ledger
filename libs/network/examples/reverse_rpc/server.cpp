@@ -16,7 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/threading/synchronised_state.hpp"
+#include "core/threading/protect.hpp"
 #include "network/muddle/muddle.hpp"
 #include "network/muddle/rpc/client.hpp"
 #include "network/muddle/rpc/server.hpp"
@@ -29,6 +29,7 @@
 #include <utility>
 #include <vector>
 
+using fetch::Protect;
 using fetch::muddle::Muddle;
 using fetch::muddle::NetworkId;
 using fetch::muddle::rpc::Server;
@@ -51,7 +52,8 @@ public:
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Registering: ", context.sender_address.ToBase64());
 
-    node_set_.Apply([context](AddressSet &addresses) { addresses.insert(context.sender_address); });
+    node_set_.Apply(
+        [&context](AddressSet &addresses) -> void { addresses.insert(context.sender_address); });
   }
 
   Strings SearchFor(std::string const &val)
@@ -90,14 +92,13 @@ public:
   }
 
 private:
-  using RpcClientPtr   = std::shared_ptr<Client>;
-  using AddressSet     = std::unordered_set<Muddle::Address>;
-  using SyncAddressSet = fetch::SynchronisedState<AddressSet>;
+  using RpcClientPtr = std::shared_ptr<Client>;
+  using AddressSet   = std::unordered_set<Muddle::Address>;
 
   MuddlePtr    muddle_;
   RpcClientPtr client_{
       std::make_shared<Client>("RRPClient", muddle_->AsEndpoint(), SERVICE_TEST, CHANNEL_RPC)};
-  SyncAddressSet node_set_{};
+  Protect<AddressSet> node_set_{};
 };
 
 // Next we make a protocol for the implementation

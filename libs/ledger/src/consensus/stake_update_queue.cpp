@@ -19,6 +19,8 @@
 #include "ledger/consensus/stake_snapshot.hpp"
 #include "ledger/consensus/stake_update_queue.hpp"
 
+#include <memory>
+
 namespace fetch {
 namespace ledger {
 
@@ -33,7 +35,7 @@ bool StakeUpdateQueue::ApplyUpdates(BlockIndex block_index, StakeSnapshotPtr con
 {
   bool new_snapshot{false};
 
-  updates_.Apply([&](BlockUpdates &updates) {
+  updates_.Apply([&](BlockUpdates &updates) -> void {
     // ensure the output is empty (this should always be the case anyway)
     next.reset();
 

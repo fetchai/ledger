@@ -19,7 +19,7 @@
 
 #include "core/byte_array/encoders.hpp"
 #include "core/mutex.hpp"
-#include "core/threading/synchronised_state.hpp"
+#include "core/threading/protect.hpp"
 #include "network/service/protocol.hpp"
 #include "storage/document_store.hpp"
 #include "storage/new_revertible_document_store.hpp"
@@ -298,9 +298,7 @@ private:
     Identifier client;            ///< The identifier of the locking client
   };
 
-  using SyncLockStatus = SynchronisedState<LockStatus>;
-
-  SyncLockStatus lock_status_;
+  Protect<LockStatus> lock_status_;
 
   telemetry::CounterPtr   get_count_;
   telemetry::CounterPtr   get_create_count_;

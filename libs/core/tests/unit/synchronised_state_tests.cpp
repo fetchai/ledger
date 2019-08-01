@@ -54,14 +54,8 @@ TEST_F(SynchronisedStateTests, WaitFor_returns_when_the_condition_is_true)
   auto check_thread     = std::thread(std::move(check));
   auto increment_thread = std::thread(std::move(increment));
 
-  if (check_thread.joinable())
-  {
-    check_thread.join();
-  }
-  if (increment_thread.joinable())
-  {
-    increment_thread.join();
-  }
+  check_thread.join();
+  increment_thread.join();
 }
 
 }  // namespace
