@@ -91,7 +91,7 @@ void InvokeConstructor(VM *vm, TypeId type_id, ReturnType (*constructor)(VM *, T
   constexpr int sp_offset              = first_parameter_offset;
 
   using ConstructorInvoker =
-      typename ConstructorInvoker<TypeFromPtr<ReturnType>, ReturnType, decltype(constructor)>::
+      typename ConstructorInvoker<GetManagedType<ReturnType>, ReturnType, decltype(constructor)>::
           template Invoker<first_parameter_offset, Args...>;
   ConstructorInvoker::Invoke(vm, sp_offset, type_id, constructor);
 }

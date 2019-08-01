@@ -19,6 +19,8 @@
 
 #include "vm/vm.hpp"
 
+#include <typeinfo>
+
 namespace fetch {
 namespace vm {
 
@@ -243,14 +245,6 @@ struct FunctorTraits<ReturnType (Class_::*)(Args...)>
   using class_type      = Class_;
   using return_type     = ReturnType;
   using args_tuple_type = std::tuple<Args...>;
-};
-
-template <typename T>
-struct TypeFromPtr;
-template <typename T>
-struct TypeFromPtr<Ptr<T>>
-{
-  using type = T;
 };
 
 }  // namespace vm
