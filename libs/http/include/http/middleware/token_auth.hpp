@@ -17,21 +17,42 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/macros.hpp"
+#include "core/byte_array/const_byte_array.hpp"
+#include "http/authentication_level.hpp"
 #include "http/server.hpp"
 
 namespace fetch {
 namespace http {
 namespace middleware {
 
-inline typename HTTPServer::ResponseMiddleware AllowOrigin(std::string const &val)
+class TokenAuthenticationInterface
 {
-  return [val](fetch::http::HTTPResponse &res, fetch::http::HTTPRequest const &req) {
-    FETCH_UNUSED(req);
+public:
+  using ConstByteArray = byte_array::ConstByteArray;
 
-    res.AddHeader("Access-Control-Allow-Origin", val);
-  };
-}
+  TokenAuthenticationInterface()                              = default;
+  virtual ~TokenAuthenticationInterface()                     = default;
+  virtual uint32_t ValidateToken(ConstByteArray const &token) = 0;
+
+  void operator()(HTTPRequest &req);
+};
+
+class SimpleTokenAuthentication : public TokenAuthenticationInterface
+{
+public:
+  SimpleTokenAuthentication(ConstByteArray token,
+                            uint32_t authentication_level = AuthenticationLevel::TOKEN_PRESENT)
+    : token_{std::move(token)}
+    , authentication_level_{authentication_level}
+  {}
+
+  uint32_t ValidateToken(ConstByteArray const &token) override;
+
+private:
+  ConstByteArray token_;
+  uint32_t       authentication_level_;
+};
+
 }  // namespace middleware
 }  // namespace http
 }  // namespace fetch
