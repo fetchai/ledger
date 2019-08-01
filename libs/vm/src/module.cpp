@@ -191,7 +191,7 @@ Module::Module()
 
   GetClassInterface<IMatrix>()
       .CreateConstructor(&IMatrix::Constructor)
-      .EnableIndexOperator()
+      .EnableIndexOperator(&IMatrix::GetIndexedValue, &IMatrix::SetIndexedValue)
       .CreateInstantiationType<Matrix<double>>()
       .CreateInstantiationType<Matrix<float>>();
 
@@ -208,7 +208,7 @@ Module::Module()
       .CreateMemberFunction("popFront", &IArray::PopFrontOne)
       .CreateMemberFunction("popFront", &IArray::PopFrontMany)
       .CreateMemberFunction("reverse", &IArray::Reverse)
-      .EnableIndexOperator()
+      .EnableIndexOperator(&IArray::GetIndexedValue, &IArray::SetIndexedValue)
       .CreateInstantiationType<Array<bool>>()
       .CreateInstantiationType<Array<int8_t>>()
       .CreateInstantiationType<Array<uint8_t>>()
@@ -237,7 +237,7 @@ Module::Module()
   GetClassInterface<IMap>()
       .CreateConstructor(&IMap::Constructor)
       .CreateMemberFunction("count", &IMap::Count)
-      .EnableIndexOperator();
+      .EnableIndexOperator(&IMap::GetIndexedValue, &IMap::SetIndexedValue);
 
   GetClassInterface<Address>()
       .CreateSerializeDefaultConstructor(&Address::Constructor)

@@ -34,6 +34,7 @@
 #include "vm/state.hpp"
 #include "vm/vm.hpp"
 
+#include <cassert>
 #include <functional>
 #include <string>
 #include <tuple>
@@ -129,9 +130,49 @@ public:
       return *this;
     }
 
-    ClassInterface &EnableIndexOperator()
+    template <typename GetterReturnType, typename... GetterArgs, typename SetterReturnType,
+              typename... SetterArgs>
+    ClassInterface &EnableIndexOperator(GetterReturnType (Type::*getter)(GetterArgs...),
+                                        SetterReturnType (Type::*setter)(SetterArgs...))
     {
-      return InternalEnableIndexOperator(&Type::GetIndexedValue, &Type::SetIndexedValue);
+      static_assert(sizeof...(GetterArgs) >= 1, "Getter should take at least one parameter");
+      static_assert(sizeof...(SetterArgs) >= 2, "Setter should take at least two parameters");
+      static_assert(
+          std::is_same<
+              GetterReturnType,
+              std::decay_t<typename meta::GetLastType<std::tuple<SetterArgs...>>::type>>::value,
+          "Inconsistent getter and setter definitions: getter return type should be the "
+          "same as last setter parameter type (allowing for const and reference declarators)");
+
+      TypeIndex const type_index__ = type_index_;
+
+      TypeIndexArray setter_args_type_index_array;
+      UnrollParameterTypes<SetterArgs...>::Unroll(setter_args_type_index_array);
+      TypeIndex const output_type_index = setter_args_type_index_array.back();
+      setter_args_type_index_array.pop_back();
+
+      {  // sanity checks
+        TypeIndexArray getter_args_type_index_array;
+        UnrollParameterTypes<GetterArgs...>::Unroll(getter_args_type_index_array);
+        assert(getter_args_type_index_array == setter_args_type_index_array);
+        assert(output_type_index == TypeIndex(typeid(GetterReturnType)));
+      }
+
+      Handler get_handler = [getter](VM *vm) {
+        InvokeMemberFunction(vm, vm->instruction_->type_id, getter);
+      };
+      Handler set_handler = [setter](VM *vm) {
+        InvokeMemberFunction(vm, vm->instruction_->type_id, setter);
+      };
+
+      auto compiler_setup_function = [type_index__, setter_args_type_index_array, output_type_index,
+                                      get_handler, set_handler](Compiler *compiler) {
+        compiler->EnableIndexOperator(type_index__, setter_args_type_index_array, output_type_index,
+                                      get_handler, set_handler);
+      };
+      module_->AddCompilerSetupFunction(compiler_setup_function);
+
+      return *this;
     }
 
     template <typename InstantiationType>
@@ -159,8 +200,7 @@ public:
 
       TypeIndex const type_index__ = type_index_;
       TypeIndexArray  parameter_type_index_array;
-      UnrollTypes<std::remove_cv_t<std::remove_reference_t<Args>>...>::Unroll(
-          parameter_type_index_array);
+      UnrollParameterTypes<Args...>::Unroll(parameter_type_index_array);
 
       Handler handler = [constructor](VM *vm) {
         InvokeConstructor(vm, vm->instruction_->type_id, constructor);
@@ -173,43 +213,6 @@ public:
 
       module_->AddCompilerSetupFunction(compiler_setup_function);
 
-      return *this;
-    }
-
-    template <typename GetterReturnType, typename... GetterArgs, typename SetterReturnType,
-              typename... SetterArgs>
-    ClassInterface &InternalEnableIndexOperator(GetterReturnType (Type::*getter)(GetterArgs...),
-                                                SetterReturnType (Type::*setter)(SetterArgs...))
-    {
-      static_assert(sizeof...(GetterArgs) >= 1, "Getter should take at least one parameter");
-      static_assert(sizeof...(SetterArgs) >= 2, "Setter should take at least two parameters");
-      static_assert(
-          std::is_same<GetterReturnType,
-                       std::remove_cv_t<std::remove_reference_t<
-                           typename meta::GetLastType<std::tuple<SetterArgs...>>::type>>>::value,
-          "Inconsistent getter and setter definitions: getter return type should be the "
-          "same as last setter parameter type (allowing for const and reference declarators)");
-
-      TypeIndex const type_index__ = type_index_;
-      TypeIndexArray  input_type_index_array;
-      UnrollTypes<std::remove_cv_t<std::remove_reference_t<SetterArgs>>...>::Unroll(
-          input_type_index_array);
-      TypeIndex const output_type_index = input_type_index_array.back();
-      input_type_index_array.pop_back();
-
-      Handler get_handler = [getter](VM *vm) {
-        InvokeMemberFunction(vm, vm->instruction_->type_id, getter);
-      };
-      Handler set_handler = [setter](VM *vm) {
-        InvokeMemberFunction(vm, vm->instruction_->type_id, setter);
-      };
-
-      auto compiler_setup_function = [type_index__, input_type_index_array, output_type_index,
-                                      get_handler, set_handler](Compiler *compiler) {
-        compiler->EnableIndexOperator(type_index__, input_type_index_array, output_type_index,
-                                      get_handler, set_handler);
-      };
-      module_->AddCompilerSetupFunction(compiler_setup_function);
       return *this;
     }
 
