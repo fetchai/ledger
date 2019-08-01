@@ -105,7 +105,7 @@ protected:
   SubscriptionPtr rbc_subscription_;      ///< For receiving messages in the rbc channel
 
   void         Send(RBCEnvelope const &env, MuddleAddress const &address);
-  void         Broadcast(RBCEnvelope const &env);
+  virtual void Broadcast(RBCEnvelope const &env);
   virtual void OnRBC(MuddleAddress const &from, RBCEnvelope const &envelope);
   void         OnRBroadcast(RBroadcast const &msg, uint32_t sender_index);
   void         OnREcho(REcho const &msg, uint32_t sender_index);
