@@ -106,7 +106,7 @@ public:
 
   virtual std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const
   {
-    return {inputs.front()->shape(0), inputs.at(2)->shape(1), inputs.front()->shape(2)};
+    return {inputs.at(2)->shape(0), inputs.front()->shape(1), inputs.front()->shape(2)};
   }
 
   static constexpr char const *DESCRIPTOR = "ScaledDotProductAttention";
