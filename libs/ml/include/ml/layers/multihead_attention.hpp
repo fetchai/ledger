@@ -78,8 +78,8 @@ public:
 
     // do n_heads time linear transformation
     std::vector<std::string> heads;
-    for(int i=0; i<n_heads_; i++){
-    	std::string head_name = name + "_Head_No_" + std::to_string(i);
+    for(SizeType i=0; i<n_heads_; i++){
+    	std::string head_name = name + "_Head_No_" + std::to_string(static_cast<int>(i));
     	std::string head_attention_output = create_one_attention_head(head_name, query, key, value);
     	heads.emplace_back(head_attention_output);
     }

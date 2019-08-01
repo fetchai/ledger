@@ -79,6 +79,7 @@ public:
 	  for(size_t i=1; i<inputs.size(); i++){
 	  	ret_shape[axis_] += inputs.at(i)->shape(axis_);
 	  }
+		
 	  return ret_shape;
   }
 
