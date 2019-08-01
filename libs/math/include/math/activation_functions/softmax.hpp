@@ -127,5 +127,28 @@ ArrayType Softmax(ArrayType const &array)
   return ret;
 }
 
+/**
+ * Softmax implementation for multiple dimensions
+ * @tparam ArrayType
+ * @param array
+ * @param ret
+ * @param axes Vector of SizeType
+ */
+template <typename ArrayType>
+void Softmax(ArrayType const &array, ArrayType &ret, std::vector<SizeType> axes)
+{
+  assert(ret.shape() == array.shape());
+  assert(axes.size() >= 2);
+
+  // Subtract max for numerical stability
+  ArrayType sums = ReduceMax(array, axes);
+  Subtract(array, sums, ret);
+
+  // exp(x)/sum(exp(x))
+  Exp(ret, ret);
+  ReduceSum(ret, axes, sums);
+  Divide(ret, sums, ret);
+}
+
 }  // namespace math
 }  // namespace fetch
