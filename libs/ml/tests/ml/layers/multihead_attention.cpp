@@ -82,8 +82,11 @@ TYPED_TEST(MultiheadAttention, backward_test)  // Use the class as an Ops
       {std::make_shared<TypeParam>(input_data), std::make_shared<TypeParam>(input_data),
        std::make_shared<TypeParam>(input_data)},
       error_signal);
+
+  // check there are proper number of error signals
   ASSERT_EQ(backprop_error.size(), 3 * 4);
 
+  // check all shape are the same
   bool                  all_same_shape = true;
   std::vector<SizeType> prev_shape;
   for (auto error : backprop_error)
