@@ -62,9 +62,10 @@ public:
   void         BackPropagateError(std::string const &node_name);
   virtual void Step(DataType learning_rate);
 
-  template <typename... Params>
-  std::string AddNode(OpType const & operation_type, std::string const &node_name, std::vector<std::string> const &inputs,
-                      Params... params);
+  template <class Op, typename... Params>
+  std::string AddNode(std::string const &node_name, std::vector<std::string> const &inputs, Params... params);
+
+
   NodePtrType GetNode(std::string const &node_name) const;
   void        SetInput(std::string const &node_name, ArrayType data);
   void        ResetGraphCache(std::shared_ptr<Node<T>> const &n, bool input_size_changed);
@@ -216,46 +217,37 @@ void Graph<ArrayType>::ApplyRegularisation()
  * @param params input parameters to the node op
  */
 template <typename ArrayType>
-template <typename... Params>
-std::string Graph<ArrayType>::AddNode(OpType const & operation_type, std::string const &node_name, std::vector<std::string> const &inputs, Params... params)
+template <class OperationType, typename... Params>
+std::string Graph<ArrayType>::AddNode(std::string const &node_name, std::vector<std::string> const &inputs, Params... params)
 {
   // guarantee unique op name
-  std::string name = UpdateVariableName(node_name);
+  std::string updated_name;
+  bool        is_duplicate = UpdateVariableName<OperationType>(node_name, updated_name);
 
   // Instantiate the node
-  auto node_ptr = std::make_shared<Node<ArrayType>>(name, params...);
-  nodes_[name]  = node_ptr;
+  auto op = std::make_shared<Node<ArrayType>>(OperationType::OpCode(), [node_name, params ...](){return new OperationType(node_name, params...);});
 
-  // assign inputs and outputs
-  for (auto const &i : inputs)
+  if (!is_duplicate)
   {
-    nodes_[name]->AddInput(nodes_[i]);
-    nodes_[i]->AddOutput(nodes_[name]);
+    // Instantiate the node based on params
+    op = std::make_shared<Node<ArrayType>>(updated_name, params...);
+  }
+  else
+  {  // if shared weight is specified by duplicate naming
+    // Instantiate the node based on pointer to shared target node
+    NodePtrType target_node = GetNode(node_name);
+
+    op = std::make_shared<Node<ArrayType>>(updated_name, target_node, params...);
   }
 
-  // save the connections (used for serializing graph)
-  connections_.push_back(std::make_pair(name, inputs));
+  // assign inputs and outputs to the new node
+  LinkNodesInGraph(updated_name, inputs, op);
 
   // add to map of trainable ops if necessary
-  if (IsTrainableOp(operation_type))
-  {
-    trainable_.emplace_back(node_ptr);
-    trainable_lookup_[name] = trainable_.size() - 1;
-  }
-  else if (IsLayerOp(operation_type))
-  {
-    for (auto &trainable : node_ptr->trainable_lookup_)
-    {
-      // guarantee unique op name
-      std::string resolved_name = UpdateVariableName(name + "_" + trainable.first);
-
-      trainable_.emplace_back(node_ptr->trainable_.at(trainable.second));
-      trainable_lookup_[resolved_name] = trainable_.size() - 1;
-    }
-  }
+  AddTrainable(updated_name, op);
 
   // return unique node name (may not be identical to node_name)
-  return name;
+  return updated_name;
 }
 
 template <typename ArrayType>
@@ -414,7 +406,8 @@ void Graph<ArrayType>::ApplyGradients(std::vector<ArrayType> &grad)
  * @return
  */
 template <typename ArrayType>
-std::string Graph<ArrayType>::UpdateVariableName(OpType const & operation_type, std::string const &name)
+template <typename OperationType>
+bool Graph<ArrayType>::UpdateVariableName(std::string const &name, std::string &ret)
 {
   std::string ret           = name;
   // search graph for existing variable names
