@@ -514,6 +514,13 @@ meta::IfIsMathArray<ArrayType, typename ArrayType::Type> Sum(ArrayType const &ar
   return ret;
 }
 
+/**
+ * Sums cells of Tensor along given axis
+ * @tparam ArrayType
+ * @param obj1
+ * @param axis Axis along which sum is computed
+ * @param ret Output Tensor of shape of input with size 1 along given axis
+ */
 template <typename ArrayType>
 void ReduceSum(ArrayType const &obj1, SizeType axis, ArrayType &ret)
 {
@@ -524,6 +531,13 @@ void ReduceSum(ArrayType const &obj1, SizeType axis, ArrayType &ret)
   Reduce(axis, [](const DataType &x, DataType &y) { y += x; }, obj1, ret);
 }
 
+/**
+ * Sums cells of Tensor along given axis
+ * @tparam ArrayType
+ * @param obj1 Input Tensor
+ * @param axis Axis along which sum is computed
+ * @return  Output Tensor of shape of input with size 1 along given axis
+ */
 template <typename ArrayType>
 ArrayType ReduceSum(ArrayType const &obj1, SizeType axis)
 {
@@ -534,6 +548,13 @@ ArrayType ReduceSum(ArrayType const &obj1, SizeType axis)
   return ret;
 }
 
+/**
+ * Sums cells of Tensor along multiple given axes
+ * @tparam ArrayType
+ * @param obj1 Input Tensor
+ * @param axes Vector of axes along which sum is computed
+ * @param ret Output Tensor of shape of input with size 1 along given axes
+ */
 template <typename ArrayType>
 void ReduceSum(ArrayType const &obj1, std::vector<SizeType> axes, ArrayType &ret)
 {
@@ -544,6 +565,13 @@ void ReduceSum(ArrayType const &obj1, std::vector<SizeType> axes, ArrayType &ret
   Reduce(axes, [](const DataType &x, DataType &y) { y += x; }, obj1, ret);
 }
 
+/**
+ * Sums cells of Tensor along multiple given axes
+ * @tparam ArrayType
+ * @param obj1 Input Tensor
+ * @param axes Vector of axes along which sum is computed
+ * @return Output Tensor of shape of input with size 1 along given axes
+ */
 template <typename ArrayType>
 ArrayType ReduceSum(ArrayType const &obj1, std::vector<SizeType> axes)
 {
@@ -559,6 +587,13 @@ ArrayType ReduceSum(ArrayType const &obj1, std::vector<SizeType> axes)
   return ret;
 }
 
+/**
+ * Average cells of Tensor along given axis
+ * @tparam ArrayType
+ * @param obj1 Input Tensor
+ * @param axis Axis along which mean is computed
+ * @param ret Output Tensor of shape of input with size 1 along given axis
+ */
 template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, void> ReduceMean(ArrayType const &                   obj1,
                                                 typename ArrayType::SizeType const &axis,
@@ -571,6 +606,13 @@ meta::IfIsMathArray<ArrayType, void> ReduceMean(ArrayType const &               
   Divide(ret, n, ret);
 }
 
+/**
+ * Average cells of Tensor along given axis
+ * @tparam ArrayType
+ * @param obj1 Input Tensor
+ * @param axis Axis along which mean is computed
+ * @return Output Tensor of shape of input with size 1 along given axis
+ */
 template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, ArrayType> ReduceMean(ArrayType const &                   obj1,
                                                      typename ArrayType::SizeType const &axis)
@@ -583,6 +625,13 @@ meta::IfIsMathArray<ArrayType, ArrayType> ReduceMean(ArrayType const &          
   return ret;
 }
 
+/**
+ * Average cells of Tensor along multiple given axes
+ * @tparam ArrayType
+ * @param obj1 Input Tensor
+ * @param axes Vector of axes along which mean is computed
+ * @param ret Output Tensor of shape of input with size 1 along given axes
+ */
 template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, void> ReduceMean(ArrayType const &            obj1,
                                                 std::vector<SizeType> const &axes, ArrayType &ret)
@@ -599,6 +648,13 @@ meta::IfIsMathArray<ArrayType, void> ReduceMean(ArrayType const &            obj
   Divide(ret, static_cast<Type>(n), ret);
 }
 
+/**
+ * Average cells of Tensor along multiple given axes
+ * @tparam ArrayType
+ * @param obj1 Input Tensor
+ * @param axes Vector of axes along which mean is computed
+ * @return Output Tensor of shape of input with size 1 along given axes
+ */
 template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, ArrayType> ReduceMean(ArrayType const &            obj1,
                                                      std::vector<SizeType> const &axes)
@@ -757,6 +813,13 @@ ArrayType PeakToPeak(ArrayType const &array, typename ArrayType::SizeType const 
   return ret;
 }
 
+/**
+ * Computes maximums of cells of Tensor along multiple given axis
+ * @tparam ArrayType
+ * @param obj1 Input Tensor
+ * @param axis Axis along which max is computed
+ * @param ret Output Tensor of shape of input with size 1 along given axis
+ */
 template <typename ArrayType>
 void ReduceMax(ArrayType const &obj1, SizeType axis, ArrayType &ret)
 {
@@ -764,16 +827,16 @@ void ReduceMax(ArrayType const &obj1, SizeType axis, ArrayType &ret)
   using DataType = typename ArrayType::Type;
   ret.Fill(std::numeric_limits<DataType>::min());
 
-  Reduce(axis,
-         [](const DataType &x, DataType &y) {
-           if (x > y)
-           {
-             y = x;
-           }
-         },
-         obj1, ret);
+  Reduce(axis, [](const DataType &x, DataType &y) { y = (x < y) ? y : x; }, obj1, ret);
 }
 
+/**
+ * Computes maximums of cells of Tensor along multiple given axis
+ * @tparam ArrayType
+ * @param obj1 Input Tensor
+ * @param axis Axis along which max is computed
+ * @return Output Tensor of shape of input with size 1 along given axis
+ */
 template <typename ArrayType>
 ArrayType ReduceMax(ArrayType const &obj1, SizeType axis)
 {
@@ -784,6 +847,13 @@ ArrayType ReduceMax(ArrayType const &obj1, SizeType axis)
   return ret;
 }
 
+/**
+ * Computes maximums of cells of Tensor along multiple given axis
+ * @tparam ArrayType
+ * @param obj1 Input Tensor
+ * @param axes Vector of axes along which max is computed
+ * @param ret Output Tensor of shape of input with size 1 along given axes
+ */
 template <typename ArrayType>
 void ReduceMax(ArrayType const &obj1, std::vector<SizeType> axes, ArrayType &ret)
 {
@@ -791,16 +861,16 @@ void ReduceMax(ArrayType const &obj1, std::vector<SizeType> axes, ArrayType &ret
   using DataType = typename ArrayType::Type;
   ret.Fill(std::numeric_limits<DataType>::min());
 
-  Reduce(axes,
-         [](const DataType &x, DataType &y) {
-           if (x > y)
-           {
-             y = x;
-           }
-         },
-         obj1, ret);
+  Reduce(axes, [](const DataType &x, DataType &y) { y = (x < y) ? y : x; }, obj1, ret);
 }
 
+/**
+ * Computes maximums of cells of Tensor along multiple given axis
+ * @tparam ArrayType
+ * @param obj1
+ * @param axes Vector of axes along which max is computed
+ * @return Output Tensor of shape of input with size 1 along given axes
+ */
 template <typename ArrayType>
 ArrayType ReduceMax(ArrayType const &obj1, std::vector<SizeType> axes)
 {

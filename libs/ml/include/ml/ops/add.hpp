@@ -61,42 +61,7 @@ public:
     else
     {
       // Broadcast Add
-      bool axes_changed = false;
-
-      // Check if axes were changed
-      SizeType cnt = 0;
-      for (SizeType i{0}; i < inputs.at(0)->shape().size(); i++)
-      {
-        if (inputs.at(0)->shape().at(i) != inputs.at(1)->shape().at(i))
-        {
-          if (cnt >= this->axes_.size() || this->axes_.at(cnt) != i)
-          {
-            axes_changed = true;
-            break;
-          }
-          cnt++;
-        }
-      }
-
-      if (this->axes_.size() == 0)
-      {
-        axes_changed = true;
-      }
-
-      // Update axes if necessary
-      if (axes_changed)
-      {
-        this->axes_.clear();
-        // Get axes
-        for (SizeType i{0}; i < inputs.at(0)->shape().size(); i++)
-        {
-          if (inputs.at(0)->shape().at(i) != inputs.at(1)->shape().at(i))
-          {
-            this->axes_.emplace_back(i);
-          }
-        }
-      }
-
+      UpdateAxes(inputs);
       return {error_signal, fetch::math::ReduceSum(error_signal, axes_)};
     }
   }
@@ -109,6 +74,46 @@ public:
   std::vector<SizeType> axes_;
 
   static constexpr char const *DESCRIPTOR = "Add";
+
+private:
+  void UpdateAxes(VecTensorType const &inputs)
+  {
+    bool axes_changed = false;
+
+    // Check if axes were changed
+    SizeType cnt = 0;
+    for (SizeType i{0}; i < inputs.at(0)->shape().size(); i++)
+    {
+      if (inputs.at(0)->shape().at(i) != inputs.at(1)->shape().at(i))
+      {
+        if (cnt >= this->axes_.size() || this->axes_.at(cnt) != i)
+        {
+          axes_changed = true;
+          break;
+        }
+        cnt++;
+      }
+    }
+
+    if (this->axes_.size() == 0)
+    {
+      axes_changed = true;
+    }
+
+    // Update axes if necessary
+    if (axes_changed)
+    {
+      this->axes_.clear();
+      // Get axes
+      for (SizeType i{0}; i < inputs.at(0)->shape().size(); i++)
+      {
+        if (inputs.at(0)->shape().at(i) != inputs.at(1)->shape().at(i))
+        {
+          this->axes_.emplace_back(i);
+        }
+      }
+    }
+  }
 };
 
 }  // namespace ops
