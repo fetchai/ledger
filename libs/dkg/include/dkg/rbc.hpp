@@ -50,7 +50,7 @@ public:
   void ResetCabinet();
   void SendRBroadcast(SerialisedMessage const &msg);
 
-private:
+protected:
   enum class MsgType : uint8_t
   {
     R_SEND,
@@ -104,15 +104,15 @@ private:
                   deliver_msg_callback_;  ///< Callback for messages which have succeeded RBC protocol
   SubscriptionPtr rbc_subscription_;      ///< For receiving messages in the rbc channel
 
-  void Send(RBCEnvelope const &env, MuddleAddress const &address);
-  void Broadcast(RBCEnvelope const &env);
-  void OnRBC(MuddleAddress const &from, RBCEnvelope const &envelope);
-  void OnRBroadcast(RBroadcast const &msg, uint32_t sender_index);
-  void OnREcho(REcho const &msg, uint32_t sender_index);
-  void OnRReady(RReady const &msg, uint32_t sender_index);
-  void OnRRequest(RRequest const &msg, uint32_t sender_index);
-  void OnRAnswer(RAnswer const &msg, uint32_t sender_index);
-  void Deliver(SerialisedMessage const &msg, uint32_t sender_index);
+  void         Send(RBCEnvelope const &env, MuddleAddress const &address);
+  void         Broadcast(RBCEnvelope const &env);
+  virtual void OnRBC(MuddleAddress const &from, RBCEnvelope const &envelope);
+  void         OnRBroadcast(RBroadcast const &msg, uint32_t sender_index);
+  void         OnREcho(REcho const &msg, uint32_t sender_index);
+  void         OnRReady(RReady const &msg, uint32_t sender_index);
+  void         OnRRequest(RRequest const &msg, uint32_t sender_index);
+  void         OnRAnswer(RAnswer const &msg, uint32_t sender_index);
+  void         Deliver(SerialisedMessage const &msg, uint32_t sender_index);
 
   static std::string MsgTypeToString(MsgType msg_type);
   uint32_t           CabinetIndex(MuddleAddress const &other_address) const;
@@ -123,5 +123,7 @@ private:
   struct MsgCount    ReceivedReady(TagType tag, RHash const &msg);
   bool               SetPartyFlag(uint32_t sender_index, TagType tag, MsgType msg_type);
 };
+
+TruncatedHash MessageHash(SerialisedMessage const &msg);
 }  // namespace dkg
 }  // namespace fetch
