@@ -49,18 +49,13 @@ public:
   using VecTensorType = typename SubGraph<T>::VecTensorType;
 
   MultiheadAttention(SizeType n_heads, SizeType d_model, DataType dropout = 0.1)
-  : n_heads_(n_heads)
-  , d_model_(d_model)
+    : n_heads_(n_heads)
+    , d_model_(d_model)
   {
-  	// make sure all heads can be concatenate together to form d_model
-  	assert(d_model_ % n_heads_ == 0);
-  	key_dim_ = d_model_ / n_heads_;
-  	
-  	
-  	
-  	
-  	
-  	
+    // make sure all heads can be concatenate together to form d_model
+    assert(d_model_ % n_heads_ == 0);
+    key_dim_ = d_model_ / n_heads_;
+
     std::string name = DESCRIPTOR;
 
     // all input shapes are (feature_length, query/key/value_num, batch_num)
