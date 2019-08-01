@@ -25,7 +25,6 @@
 
 namespace fetch {
 namespace dkg {
-namespace rbc {
 
 using TruncatedHash        = byte_array::ByteArray;
 using TagType              = uint64_t;
@@ -253,6 +252,5 @@ public:
   }
   ~RAnswer() override = default;
 };
-}  // namespace rbc
 }  // namespace dkg
 }  // namespace fetch
