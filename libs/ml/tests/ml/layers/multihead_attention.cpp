@@ -104,8 +104,8 @@ TYPED_TEST(MultiheadAttention, backward_test)  // Use the class as an Ops
   using DataType = typename TypeParam::Type;
 
   fetch::ml::layers::MultiheadAttention<TypeParam> m_att(static_cast<SizeType>(4),
-                                                         static_cast<SizeType>(12), DataType(0.9));
-  TypeParam input_data(std::vector<typename TypeParam::SizeType>({12, 20, 5}));
+                                                         static_cast<SizeType>(16), DataType(0.9));
+  TypeParam input_data(std::vector<typename TypeParam::SizeType>({16, 20, 5}));
   TypeParam output(m_att.ComputeOutputShape({std::make_shared<TypeParam>(input_data)}));
   m_att.Forward({std::make_shared<TypeParam>(input_data), std::make_shared<TypeParam>(input_data),
                  std::make_shared<TypeParam>(input_data)},
