@@ -49,7 +49,7 @@ public:
 namespace serializers {
 
 /**
- * serializer for Embeddings saveable params
+ * serializer for regularisers
  * @tparam TensorType
  */
 template <typename TensorType, typename D>

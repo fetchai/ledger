@@ -1053,6 +1053,34 @@ struct WeightsSaveableParams : public SaveableParamsInterface
 namespace serializers {
 
 /**
+ * serializer for OpType
+ * @tparam TensorType
+ */
+template <typename D>
+struct MapSerializer<ml::OpType, D>
+{
+  using Type       = ml::OpType;
+  using DriverType = D;
+
+  static uint16_t const OP_CODE = 1;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &body)
+  {
+    auto map = map_constructor(1);
+    map.Append(OP_CODE, static_cast<uint16_t>(body));
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &body)
+  {
+    uint16_t op_code_int = 0;
+    map.ExpectKeyGetValue(OP_CODE, op_code_int);
+    body = static_cast<ml::OpType>(op_code_int);
+  }
+};
+
+/**
  * serializer for abs saveable params
  * @tparam TensorType
  */

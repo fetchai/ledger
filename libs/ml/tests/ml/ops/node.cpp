@@ -17,8 +17,8 @@
 //------------------------------------------------------------------------------
 
 #include "math/tensor.hpp"
-#include "ml/meta/ml_type_traits.hpp"
 #include "ml/core/node.hpp"
+#include "ml/meta/ml_type_traits.hpp"
 #include "ml/ops/activations/relu.hpp"
 #include "ml/ops/placeholder.hpp"
 
@@ -29,19 +29,22 @@ class NodeTest : public ::testing::Test
 {
 };
 
-using MyTypes = ::testing::Types<fetch::math::Tensor<int32_t>, fetch::math::Tensor<float>, fetch::math::Tensor<double>,
-                                 fetch::math::Tensor<fetch::fixed_point::fp32_t>,
-                                 fetch::math::Tensor<fetch::fixed_point::fp64_t>>;
+using MyTypes =
+    ::testing::Types<fetch::math::Tensor<int32_t>, fetch::math::Tensor<float>,
+                     fetch::math::Tensor<double>, fetch::math::Tensor<fetch::fixed_point::fp32_t>,
+                     fetch::math::Tensor<fetch::fixed_point::fp64_t>>;
 
 TYPED_TEST_CASE(NodeTest, MyTypes);
 
 TYPED_TEST(NodeTest, node_placeholder)
 {
   fetch::ml::Node<TypeParam> placeholder(fetch::ml::OpType::PLACEHOLDER, "PlaceHolder");
-  TypeParam data(std::vector<std::uint64_t>({5, 5}));
-  std::dynamic_pointer_cast<fetch::ml::ops::PlaceHolder<TypeParam>>(placeholder.GetOp())->SetData(data);
+  TypeParam                  data(std::vector<std::uint64_t>({5, 5}));
+  std::dynamic_pointer_cast<fetch::ml::ops::PlaceHolder<TypeParam>>(placeholder.GetOp())
+      ->SetData(data);
 
-  auto placeholder_ptr = std::dynamic_pointer_cast<fetch::ml::ops::PlaceHolder<TypeParam>>(placeholder.GetOp());
+  auto placeholder_ptr =
+      std::dynamic_pointer_cast<fetch::ml::ops::PlaceHolder<TypeParam>>(placeholder.GetOp());
   TypeParam output(placeholder_ptr->ComputeOutputShape({}));
   placeholder_ptr->Forward({}, output);
 
@@ -51,14 +54,17 @@ TYPED_TEST(NodeTest, node_placeholder)
 
 TYPED_TEST(NodeTest, node_relu)
 {
-  auto placeholder = std::make_shared<fetch::ml::Node<TypeParam>>(fetch::ml::OpType::PLACEHOLDER, "PlaceHolder");
-  auto placeholder_ptr = std::dynamic_pointer_cast<fetch::ml::ops::PlaceHolder<TypeParam>>(placeholder->GetOp());
+  auto placeholder =
+      std::make_shared<fetch::ml::Node<TypeParam>>(fetch::ml::OpType::PLACEHOLDER, "PlaceHolder");
+  auto placeholder_ptr =
+      std::dynamic_pointer_cast<fetch::ml::ops::PlaceHolder<TypeParam>>(placeholder->GetOp());
 
   auto relu = std::make_shared<fetch::ml::Node<TypeParam>>(fetch::ml::OpType::RELU, "Relu");
 
   relu->AddInput(placeholder);
 
-  auto data = TypeParam::FromString("0, -1, 2, -3, 4, -5, 6, -7, 8, -9, 10, -11, 12, -13, 14, -15, 16");
+  auto data =
+      TypeParam::FromString("0, -1, 2, -3, 4, -5, 6, -7, 8, -9, 10, -11, 12, -13, 14, -15, 16");
   data.Reshape({4, 4});
   auto gt = TypeParam::FromString("0, 0, 2, 0, 4, 0, 6, 0, 8, 0, 10, 0, 12, 0, 14, 0, 16");
   gt.Reshape({4, 4});
