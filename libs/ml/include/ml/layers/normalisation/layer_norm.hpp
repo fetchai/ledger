@@ -18,13 +18,10 @@
 //------------------------------------------------------------------------------
 
 #include "ml/meta/ml_type_traits.hpp"
-#include "ml/ops/activation.hpp"
 #include "ml/ops/add.hpp"
 #include "ml/ops/layer_norm.hpp"
 #include "ml/ops/multiply.hpp"
 #include "ml/ops/weights.hpp"
-#include "ml/regularisers/regularisation.hpp"
-#include "ml/regularisers/regulariser.hpp"
 #include "ml/subgraph.hpp"
 
 #include <cmath>
@@ -67,13 +64,11 @@ public:
         this->template AddNode<fetch::ml::ops::Weights<ArrayType>>(name + "_Gamma", {});
     std::string beta =
         this->template AddNode<fetch::ml::ops::Weights<ArrayType>>(name + "_Beta", {});
-    ArrayType gamma_data, beta_data;
 
     // initialization: gamma to all 1, beta to all zero, and with corresponding shape
     std::vector<SizeType> weight_shape(data_shape_.size() + 1, 1);
     weight_shape[axis_] = data_shape_[axis_];
-    gamma_data.Reshape(weight_shape);
-    beta_data.Reshape(weight_shape);
+    ArrayType gamma_data(weight_shape), beta_data(weight_shape);
     gamma_data.Fill(static_cast<DataType>(1));
     this->SetInput(gamma, gamma_data);
     this->SetInput(beta, beta_data);

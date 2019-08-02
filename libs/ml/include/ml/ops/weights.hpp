@@ -224,10 +224,7 @@ public:
     {
     case WeightsInitialisation::ONES:
     {
-      for (std::uint64_t j = 0; j < array.data().size(); ++j)
-      {
-        array.data()[j] = typename ArrayType::Type(1);
-      }
+      array.Fill(1);
       break;
     }
     case WeightsInitialisation::ZEROS:
