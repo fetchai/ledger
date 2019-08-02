@@ -36,15 +36,14 @@ VMTrainingPair::VMTrainingPair(VM *vm, TypeId type_id, Ptr<fetch::vm_modules::ma
 void VMTrainingPair::Bind(Module &module)
 {
   module.CreateClassType<fetch::vm_modules::ml::VMTrainingPair>("TrainingPair")
-      .CreateConstructor<Ptr<fetch::vm_modules::math::VMTensor>,
-                         Ptr<fetch::vm_modules::math::VMTensor>>()
+      .CreateConstructor(&VMTrainingPair::Constructor)
       .CreateMemberFunction("data", &fetch::vm_modules::ml::VMTrainingPair::data)
       .CreateMemberFunction("label", &fetch::vm_modules::ml::VMTrainingPair::label);
 }
 
 Ptr<VMTrainingPair> VMTrainingPair::Constructor(VM *vm, TypeId type_id,
-                                                Ptr<fetch::vm_modules::math::VMTensor> ta,
-                                                Ptr<fetch::vm_modules::math::VMTensor> tb)
+                                                Ptr<fetch::vm_modules::math::VMTensor> const &ta,
+                                                Ptr<fetch::vm_modules::math::VMTensor> const &tb)
 {
   return new VMTrainingPair(vm, type_id, ta, tb);
 }

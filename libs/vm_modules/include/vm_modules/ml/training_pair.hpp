@@ -44,8 +44,8 @@ public:
 
   static fetch::vm::Ptr<VMTrainingPair> Constructor(
       fetch::vm::VM *vm, fetch::vm::TypeId type_id,
-      fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> ta,
-      fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> tb);
+      fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> const &ta,
+      fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> const &tb);
 
   fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> data() const;
 
