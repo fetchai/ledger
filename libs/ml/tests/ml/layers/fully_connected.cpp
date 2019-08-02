@@ -20,7 +20,6 @@
 #include "ml/layers/fully_connected.hpp"
 #include "ml/ops/loss_functions.hpp"
 #include "ml/optimisation/sgd_optimiser.hpp"
-#include "ml/regularisers/regulariser.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 
 #include "gtest/gtest.h"
@@ -148,10 +147,11 @@ TYPED_TEST(FullyConnectedNoIntTest, share_weight_backward_test)
       g_shared_statedict_before.dict_["FC1_FullyConnected_Weights"].weights_->Copy());
   g_shared_weights_before.emplace_back(
       g_shared_statedict_before.dict_["FC1_FullyConnected_Bias"].weights_->Copy());
+
   g_shared_weights_before.emplace_back(
-      g_shared_statedict_before.dict_["FC1_Copy_1_FullyConnected_Weights"].weights_->Copy());
+      g_shared_statedict_before.dict_["FC1_FullyConnected_Weights"].weights_->Copy());
   g_shared_weights_before.emplace_back(
-      g_shared_statedict_before.dict_["FC1_Copy_1_FullyConnected_Bias"].weights_->Copy());
+      g_shared_statedict_before.dict_["FC1_FullyConnected_Bias"].weights_->Copy());
 
   auto                   g_not_shared_statedict_before = g_not_shared->StateDict();
   std::vector<ArrayType> g_not_shared_weights_before;
@@ -199,9 +199,9 @@ TYPED_TEST(FullyConnectedNoIntTest, share_weight_backward_test)
   g_shared_weights_after.emplace_back(
       g_shared_statedict_after.dict_["FC1_FullyConnected_Bias"].weights_->Copy());
   g_shared_weights_after.emplace_back(
-      g_shared_statedict_after.dict_["FC1_Copy_1_FullyConnected_Weights"].weights_->Copy());
+      g_shared_statedict_after.dict_["FC1_FullyConnected_Weights"].weights_->Copy());
   g_shared_weights_after.emplace_back(
-      g_shared_statedict_after.dict_["FC1_Copy_1_FullyConnected_Bias"].weights_->Copy());
+      g_shared_statedict_after.dict_["FC1_FullyConnected_Bias"].weights_->Copy());
 
   auto                   g_not_shared_statedict_after = g_not_shared->StateDict();
   std::vector<ArrayType> g_not_shared_weights_after;
@@ -241,6 +241,7 @@ TYPED_TEST(FullyConnectedNoIntTest, share_weight_backward_test)
     ArrayType not_shared_gradient =
         g_not_shared_weights_after[i] + g_not_shared_weights_after[i + 2] -
         g_not_shared_weights_before[i] - g_not_shared_weights_before[i + 2];
+
     ASSERT_TRUE(shared_gradient.AllClose(
         not_shared_gradient,
         static_cast<DataType>(100) * fetch::math::function_tolerance<DataType>()));

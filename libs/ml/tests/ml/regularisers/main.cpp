@@ -46,7 +46,7 @@ TYPED_TEST(WeightsTest, l1_regulariser_test)
 
   // Initialise values
   auto regularisation_rate = static_cast<DataType>(0.1f);
-  auto regulariser = std::make_shared<RegType>();
+  auto regulariser         = std::make_shared<RegType>();
 
   ArrayType data = ArrayType::FromString("1, -2, 3, -4, 5, -6, 7, -8");
   ArrayType gt   = ArrayType::FromString("0.9, -1.9, 2.9, -3.9, 4.9, -5.9, 6.9, -7.9");
@@ -74,7 +74,7 @@ TYPED_TEST(WeightsTest, l2_regulariser_test)
 
   // Initialise values
   auto regularisation_rate = static_cast<DataType>(0.1f);
-  auto regulariser = std::make_shared<RegType>();
+  auto regulariser         = std::make_shared<RegType>();
 
   ArrayType data = ArrayType::FromString("1, -2, 3, -4, 5, -6, 7, -8");
   ArrayType gt   = ArrayType::FromString("0.8, -1.6, 2.4, -3.2, 4.0, -4.8, 5.6, -6.4");

@@ -63,12 +63,11 @@ public:
   virtual void Step(DataType learning_rate);
 
   template <class OperationType, typename... Params>
-  meta::IfIsShareable<ArrayType, OperationType, std::string> AddNode(
-      std::string const &node_name, std::vector<std::string> const &inputs, Params... params);
+  meta::IfIsNotShareable<ArrayType, OperationType, std::string> AddNode(std::string const &node_name, std::vector<std::string> const &inputs, Params... params);
 
   template <class OperationType, typename... Params>
-  meta::IfIsNotShareable<ArrayType, OperationType, std::string> AddNode(
-      std::string const &node_name, std::vector<std::string> const &inputs, Params... params);
+  meta::IfIsShareable<ArrayType, OperationType, std::string> AddNode(std::string const &node_name, std::vector<std::string> const &inputs, Params... params);
+
 
   NodePtrType GetNode(std::string const &node_name) const;
   void        SetInput(std::string const &node_name, ArrayType data);
@@ -189,6 +188,8 @@ void Graph<ArrayType>::BackPropagateError(std::string const &node_name)
   ArrayType error_signal;
   nodes_[node_name]->BackPropagateSignal(error_signal);
 
+
+
   // Applies regularisation to all trainables based on their configuration
   ApplyRegularisation();
 }
@@ -244,11 +245,11 @@ meta::IfIsShareable<ArrayType, OperationType, std::string> Graph<ArrayType>::Add
   std::string updated_name;
   bool        is_duplicate = UpdateVariableName<OperationType>(node_name, updated_name);
 
-  std::shared_ptr<fetch::ml::Node<ArrayType>> op;
+  std::shared_ptr<fetch::ml::Node<ArrayType>> node_ptr;
   if (!is_duplicate)
   {
     // Instantiate the node based on params
-    op = std::make_shared<Node<ArrayType>>(OperationType::OpCode(), updated_name, [params...]() {
+    node_ptr = std::make_shared<Node<ArrayType>>(OperationType::OpCode(), updated_name, [params...]() {
       return std::make_shared<OperationType>(params...);
     });
   }
@@ -256,21 +257,29 @@ meta::IfIsShareable<ArrayType, OperationType, std::string> Graph<ArrayType>::Add
   {  // if shared weight is specified by duplicate naming
     // Instantiate the node based on pointer to shared target node
     NodePtrType target_node = GetNode(node_name);
-    op                      = std::make_shared<Node<ArrayType>>(
-        OperationType::OpCode(), updated_name,
-        [target_node, params...]() { return std::make_shared<OperationType>(params...); });
+    node_ptr = std::make_shared<Node<ArrayType>>(OperationType::OpCode(), updated_name, [target_node, params...]() {
+      return std::make_shared<OperationType>(target_node->GetOp(), params...);});
   }
 
   // assign inputs and outputs to the new node
-  LinkNodesInGraph<OperationType>(updated_name, inputs, op);
+  LinkNodesInGraph<OperationType>(updated_name, inputs, node_ptr);
 
   // add to map of trainable ops if necessary
-  AddTrainable<OperationType>(updated_name, op);
+  AddTrainable<OperationType>(updated_name, node_ptr);
 
   // return unique node name (may not be identical to node_name)
   return updated_name;
 }
 
+
+/**
+ * Adds a node without trainable parameters.
+ * @tparam OperationType Op template type
+ * @tparam Params template for input parameters to node
+ * @param node_name non-unique specified node name
+ * @param inputs names of node inputs to the node
+ * @param params input parameters to the node op
+ */
 template <typename ArrayType>
 template <class OperationType, typename... Params>
 meta::IfIsNotShareable<ArrayType, OperationType, std::string> Graph<ArrayType>::AddNode(
@@ -280,16 +289,15 @@ meta::IfIsNotShareable<ArrayType, OperationType, std::string> Graph<ArrayType>::
   std::string updated_name;
   UpdateVariableName<OperationType>(node_name, updated_name);
 
-  auto node = Node<ArrayType>(OperationType::OpCode(), updated_name,
-                              [params...]() { return std::make_shared<OperationType>(params...); });
-
-  auto op = std::make_shared<Node<ArrayType>>(node);
+  std::shared_ptr<fetch::ml::Node<ArrayType>> node_ptr;
+  // Instantiate the node based on params
+  node_ptr = std::make_shared<Node<ArrayType>>(OperationType::OpCode(), updated_name, [params...]() {return std::make_shared<OperationType>(params...);});
 
   // assign inputs and outputs to the new node
-  LinkNodesInGraph<OperationType>(updated_name, inputs, op);
+  LinkNodesInGraph<OperationType>(updated_name, inputs, node_ptr);
 
   // add to map of trainable ops if necessary
-  AddTrainable<OperationType>(updated_name, op);
+  AddTrainable<OperationType>(updated_name, node_ptr);
 
   // return unique node name (may not be identical to node_name)
   return updated_name;
@@ -460,10 +468,10 @@ template <typename ArrayType>
 template <class OperationType>
 void Graph<ArrayType>::LinkNodesInGraph(std::string const &                         node_name,
                                         std::vector<std::string> const &            inputs,
-                                        std::shared_ptr<fetch::ml::Node<ArrayType>> op)
+                                        std::shared_ptr<fetch::ml::Node<ArrayType>> node_ptr)
 {
   // put node in look up table
-  nodes_[node_name] = op;
+  nodes_[node_name] = node_ptr;
 
   // assign inputs and outputs
   for (auto const &i : inputs)
@@ -484,9 +492,15 @@ template <class OperationType>
 meta::IfIsTrainable<ArrayType, OperationType, void> Graph<ArrayType>::AddTrainable(
     std::string const &name, std::shared_ptr<Node<ArrayType>> node_ptr)
 {
-  auto node_op = node_ptr->GetOp();
+  auto op_ptr = node_ptr->GetOp();
+
+  if (trainable_lookup_.find(name) != trainable_lookup_.end())
+  {
+
+  }
+
   // it must be safe to cast this op down to a weight
-  trainable_.emplace_back(std::dynamic_pointer_cast<ops::Weights<ArrayType>>(node_op));
+  trainable_.emplace_back(std::dynamic_pointer_cast<ops::Weights<ArrayType>>(op_ptr));
   trainable_lookup_[name] = trainable_.size() - 1;
 }
 
@@ -502,15 +516,25 @@ template <class OperationType>
 meta::IfIsGraph<ArrayType, OperationType, void> Graph<ArrayType>::AddTrainable(
     std::string const &name, std::shared_ptr<Node<ArrayType>> op)
 {
-  auto graph_ptr = std::dynamic_pointer_cast<Graph<ArrayType>>(op->GetOp());
-  for (auto &trainable : graph_ptr->trainable_lookup_)
+  auto concrete_op_ptr = std::dynamic_pointer_cast<OperationType>(op->GetOp());
+//  for (auto &trainable : graph_ptr->trainable_lookup_)
+//  {
+//    // guarantee unique op name
+//    std::string node_name(name + "_" + trainable.first);
+//    std::string resolved_name;
+//    UpdateVariableName<OperationType>(node_name, resolved_name);
+//
+//    trainable_.emplace_back(graph_ptr->trainable_.at(trainable.second));
+//    trainable_lookup_[resolved_name] = trainable_.size() - 1;
+//  }
+  for (auto &trainable : concrete_op_ptr->trainable_lookup_)
   {
     // guarantee unique op name
     std::string node_name(name + "_" + trainable.first);
     std::string resolved_name;
     UpdateVariableName<OperationType>(node_name, resolved_name);
 
-    trainable_.emplace_back(graph_ptr->trainable_.at(trainable.second));
+    trainable_.emplace_back(concrete_op_ptr->trainable_.at(trainable.second));
     trainable_lookup_[resolved_name] = trainable_.size() - 1;
   }
 }

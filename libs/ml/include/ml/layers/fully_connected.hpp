@@ -49,12 +49,13 @@ public:
   using VecTensorType = typename SubGraph<T>::VecTensorType;
   using SPType        = FullyConnectedSaveableParams<ArrayType>;
 
-  using NodeType       = typename fetch::ml::Node<ArrayType>;
-  using NodePtrType    = typename std::shared_ptr<NodeType>;
+  using OpPtrType      = typename std::shared_ptr<fetch::ml::ops::Ops<ArrayType>>;
   using GraphType      = typename fetch::ml::Graph<ArrayType>;
   using GraphPtrType   = typename std::shared_ptr<GraphType>;
   using WeightsType    = typename fetch::ml::ops::Weights<ArrayType>;
   using WeightsPtrType = typename std::shared_ptr<WeightsType>;
+
+//  FullyConnected(std::shared_ptr<>)
 
   /**
    * This initializer allows weight sharing to another fully connected layer through node interface
@@ -67,7 +68,7 @@ public:
    * @param regularisation_rate
    * @param init_mode
    */
-  FullyConnected(NodePtrType target_node_ptr, SizeType in, SizeType out,
+  FullyConnected(OpPtrType target_node_ptr, SizeType in, SizeType out,
                  details::ActivationType activation_type = details::ActivationType::NOTHING,
                  fetch::ml::details::RegularisationType regulariser =
                      fetch::ml::details::RegularisationType::NONE,
@@ -122,19 +123,19 @@ public:
     this->SetInput(name + "_Bias", bias_data);
   }
 
-  void ShareWeights(NodePtrType target_node_ptr)
+  void ShareWeights(OpPtrType target_op_ptr)
   {
     // Get ptr to each weights layer
     std::string    name                    = DESCRIPTOR;
-    GraphPtrType   target_graph_ptr        = std::dynamic_pointer_cast<GraphType>(target_node_ptr);
-    NodePtrType    target_weights_node_ptr = target_graph_ptr->GetNode(name + "_Weights");
+    GraphPtrType   target_graph_ptr        = std::dynamic_pointer_cast<GraphType>(target_op_ptr);
+    OpPtrType      target_weights_node_ptr = target_graph_ptr->GetNode(name + "_Weights")->GetOp();
     WeightsPtrType target_weights_ptr =
         std::dynamic_pointer_cast<WeightsType>(target_weights_node_ptr);
-    NodePtrType    target_bias_node_ptr = target_graph_ptr->GetNode(name + "_Bias");
+    OpPtrType    target_bias_node_ptr = target_graph_ptr->GetNode(name + "_Bias")->GetOp();
     WeightsPtrType target_bias_ptr  = std::dynamic_pointer_cast<WeightsType>(target_bias_node_ptr);
-    NodePtrType    weights_node_ptr = this->GetNode(name + "_Weights");
+    OpPtrType    weights_node_ptr = this->GetNode(name + "_Weights")->GetOp();
     WeightsPtrType weights_ptr      = std::dynamic_pointer_cast<WeightsType>(weights_node_ptr);
-    NodePtrType    bias_node_ptr    = this->GetNode(name + "_Bias");
+    OpPtrType    bias_node_ptr    = this->GetNode(name + "_Bias")->GetOp();
     WeightsPtrType bias_ptr         = std::dynamic_pointer_cast<WeightsType>(bias_node_ptr);
 
     // check if the shared weight is compatible with input shape
@@ -205,7 +206,7 @@ public:
 
   static constexpr OpType OpCode()
   {
-    return OpType::LAYER_FULLY_CONNECTED;
+    return fetch::ml::OpType::LAYER_FULLY_CONNECTED;
   }
 
   static constexpr char const *DESCRIPTOR = "FullyConnected";

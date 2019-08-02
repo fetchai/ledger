@@ -98,7 +98,7 @@ public:
 
   static constexpr OpType OpCode()
   {
-    return OpType::SELF_ATTENTION;
+    return OpType::LAYER_SELF_ATTENTION;
   }
 
   static constexpr char const *DESCRIPTOR = "SelfAttention";

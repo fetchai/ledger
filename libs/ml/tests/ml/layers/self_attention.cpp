@@ -36,8 +36,7 @@ TYPED_TEST(SelfAttentionTest, output_shape_test)  // Use the class as a Node
   fetch::ml::Graph<TypeParam> g;
 
   g.template AddNode<fetch::ml::ops::PlaceHolder<TypeParam>>("Input", {});
-  g.template AddNode<fetch::ml::layers::SelfAttention<TypeParam>>("SelfAttention", {"Input"}, 50u,
-                                                                  42u, 10u);
+  g.template AddNode<fetch::ml::layers::SelfAttention<TypeParam>>("SelfAttention", {"Input"}, 50u, 42u, 10u);
 
   TypeParam data({5, 10, 1});
   g.SetInput("Input", data);

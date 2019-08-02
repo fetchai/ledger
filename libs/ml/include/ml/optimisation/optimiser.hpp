@@ -115,6 +115,7 @@ private:
   ArrayType                                      batch_labels_;
   LearningRateParam<DataType>                    learning_rate_param_;
   virtual void                                   ApplyGradients(SizeType batch_size) = 0;
+  void                                           ResetGradients();
 
   void PrintStats(SizeType batch_size, SizeType subset_size);
   void Init();
@@ -255,6 +256,8 @@ typename T::Type Optimiser<T>::Run(std::vector<ArrayType> const &data, ArrayType
     // Compute and apply gradient
     ApplyGradients(batch_size);
 
+    ResetGradients();
+
     step_ += batch_size;
     cumulative_step_ += batch_size;
 
@@ -352,6 +355,9 @@ typename T::Type Optimiser<T>::RunImplementation(
 
     // Compute and apply gradient
     ApplyGradients(batch_size);
+
+    // reset graph gradients
+    ResetGradients();
 
     // increment step
     step_ += batch_size;
@@ -477,6 +483,13 @@ typename Optimiser<T>::SizeType Optimiser<T>::UpdateBatchSize(SizeType const &ba
   }
   return updated_batch_size;
 }
+
+template <typename T>
+void Optimiser<T>::ResetGradients()
+{
+  this->graph_->ResetGradients();
+}
+
 }  // namespace optimisers
 }  // namespace ml
 }  // namespace fetch

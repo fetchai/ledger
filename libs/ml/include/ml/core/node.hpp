@@ -81,14 +81,15 @@ public:
     op_ptr_ = constructor();
   }
 
-  //  //  template <typename... Params>
-  //  Node(OpType const &operation_type, std::string name, std::shared_ptr<ops::Ops<ArrayType>>
-  //  op_ptr)
-  //    : name_(std::move(name))
-  //    , cached_output_status_(CachedOutputState::CHANGED_SIZE)
-  //    , operation_type_(operation_type)
-  //    , op_ptr_(op_ptr)
-  //  {}
+  //  template <typename... Params>
+  Node(OpType const &operation_type, std::string name, std::shared_ptr<ops::Ops<ArrayType>>
+  op_ptr)
+    : name_(std::move(name))
+    , cached_output_status_(CachedOutputState::CHANGED_SIZE)
+    , operation_type_(operation_type)
+    , op_ptr_(op_ptr)
+  {
+  }
 
   //  template <typename... Params>
 
@@ -186,7 +187,6 @@ typename Node<T>::VecTensorType Node<T>::GatherInputs() const
 template <typename T>
 std::shared_ptr<T> Node<T>::Evaluate(bool is_training)
 {
-
   op_ptr_->SetTraining(is_training);
 
   if (cached_output_status_ != CachedOutputState::VALID_CACHE)
