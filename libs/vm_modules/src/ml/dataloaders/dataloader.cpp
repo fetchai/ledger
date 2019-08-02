@@ -60,7 +60,7 @@ Ptr<VMDataLoader> VMDataLoader::Constructor(VM *vm, TypeId type_id)
 void VMDataLoader::Bind(Module &module)
 {
   module.CreateClassType<VMDataLoader>("DataLoader")
-      .CreateConstructor<>()
+      .CreateConstructor(&VMDataLoader::Constructor)
       .CreateMemberFunction("addData", &VMDataLoader::AddDataByFiles)
       .CreateMemberFunction("addData", &VMDataLoader::AddDataByData)
       .CreateMemberFunction("getNext", &VMDataLoader::GetNext)
