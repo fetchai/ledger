@@ -93,7 +93,8 @@ public:
     }
     else if (Failure(Failures::OUT_OF_SEQUENCE_MSGS))
     {
-      counter = num_messages - msg_counter_;
+      assert(num_messages >= msg_counter_);
+      counter = static_cast<uint8_t>(num_messages - msg_counter_);
     }
     RBroadcast  broadcast_msg{channel, sender_index, counter, msg};
     RBCEnvelope env{broadcast_msg};
@@ -103,8 +104,6 @@ public:
   }
 
 private:
-  char const *LOGGING_NAME = "FaultyRbc";
-
   std::bitset<static_cast<uint8_t>(Failures::WRONG_RANK) + 1> failures_flags_;
 
   bool Failure(Failures f) const
@@ -215,15 +214,7 @@ private:
           index = static_cast<uint32_t>((broadcast_ptr->id() + 1) % current_cabinet_.size());
         }
         RBroadcast new_broadcast{CHANNEL_BROADCAST, index, broadcast_ptr->counter(), payload};
-        FETCH_LOG_INFO(LOGGING_NAME, "Node: ", id_, " received RBroadcast from node ", sender_index,
-                       " with (tag, hash): (", new_broadcast.tag(), ",",
-                       MessageHash(new_broadcast.message()), ")");
         OnRBroadcast(new_broadcast, sender_index);
-      }
-      else
-      {
-        FETCH_LOG_WARN(LOGGING_NAME, "Node: ", id_, " can not process payload from node ",
-                       sender_index);
       }
       break;
     }
@@ -232,14 +223,7 @@ private:
       auto echo_ptr = std::dynamic_pointer_cast<REcho>(msg_ptr);
       if (echo_ptr != nullptr)
       {
-        FETCH_LOG_INFO(LOGGING_NAME, "Node: ", id_, " received REcho from node ", sender_index,
-                       " with (tag, hash): (", echo_ptr->tag(), ",", echo_ptr->hash(), ")");
         OnREcho(*echo_ptr, sender_index);
-      }
-      else
-      {
-        FETCH_LOG_WARN(LOGGING_NAME, "Node: ", id_, " can not process payload from node ",
-                       sender_index);
       }
       break;
     }
@@ -248,14 +232,7 @@ private:
       auto ready_ptr = std::dynamic_pointer_cast<RReady>(msg_ptr);
       if (ready_ptr != nullptr)
       {
-        FETCH_LOG_INFO(LOGGING_NAME, "Node: ", id_, " received RReady from node ", sender_index,
-                       " with (tag, hash): (", ready_ptr->tag(), ",", ready_ptr->hash(), ")");
         OnRReady(*ready_ptr, sender_index);
-      }
-      else
-      {
-        FETCH_LOG_WARN(LOGGING_NAME, "Node: ", id_, " can not process payload from node ",
-                       sender_index);
       }
       break;
     }
@@ -264,14 +241,7 @@ private:
       auto request_ptr = std::dynamic_pointer_cast<RRequest>(msg_ptr);
       if (request_ptr != nullptr)
       {
-        FETCH_LOG_INFO(LOGGING_NAME, "Node: ", id_, " received RRequest from node ", sender_index,
-                       " with tag: ", request_ptr->tag());
         OnRRequest(*request_ptr, sender_index);
-      }
-      else
-      {
-        FETCH_LOG_WARN(LOGGING_NAME, "Node: ", id_, " can not process payload from node ",
-                       sender_index);
       }
       break;
     }
@@ -280,21 +250,12 @@ private:
       auto answer_ptr = std::dynamic_pointer_cast<RAnswer>(msg_ptr);
       if (answer_ptr != nullptr)
       {
-        FETCH_LOG_INFO(LOGGING_NAME, "Node: ", id_, " received RAnswer from node ", sender_index,
-                       " with (tag, hash): (", answer_ptr->tag(), ",",
-                       MessageHash(answer_ptr->message()), ")");
         OnRAnswer(*answer_ptr, sender_index);
-      }
-      else
-      {
-        FETCH_LOG_WARN(LOGGING_NAME, "Node: ", id_, " can not process payload from node ",
-                       sender_index);
       }
       break;
     }
     default:
-      FETCH_LOG_WARN(LOGGING_NAME, "Node: ", id_, " can not process payload from node ",
-                     sender_index);
+      std::cerr << "Invalid payload. Can not process" << std::endl;
     }
   }
 };
@@ -317,8 +278,8 @@ struct RbcMember
     , muddle{fetch::muddle::NetworkId{"TestNetwork"}, muddle_certificate, network_manager, true,
              true}
     , rbc{muddle.AsEndpoint(), muddle_certificate->identity().identifier(), cabinet,
-          [this](ConstByteArray const &address, ConstByteArray const &payload) -> void {
-            OnRbcMessage(address, payload);
+          [this](ConstByteArray const &, ConstByteArray const &payload) -> void {
+            OnRbcMessage(payload);
           },
           failures}
   {
@@ -333,9 +294,8 @@ struct RbcMember
     network_manager.Stop();
   }
 
-  void OnRbcMessage(ConstByteArray const &address, ConstByteArray const &payload)
+  void OnRbcMessage(ConstByteArray const &payload)
   {
-    assert(cabinet.find(address) != cabinet.end());
     fetch::serializers::MsgPackSerializer serializer{payload};
     std::string                           msg;
     serializer >> msg;
