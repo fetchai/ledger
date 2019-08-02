@@ -81,9 +81,9 @@ TYPED_TEST(SoftmaxTest, multi_dimension_test)
   TypeParam test_array = TypeParam::FromString("1, 2; 1, 4");
   test_array.Reshape({2, 2, 1});
 
-  TypeParam gt_axis0 = TypeParam::FromString("0.2689414, 0.7310586; 0.04742587, 0.9525741");
+  TypeParam gt_axis0 = TypeParam::FromString("0.5, 0.119202922; 0.5, 0.880797078");
   gt_axis0.Reshape({2, 2, 1});
-  TypeParam gt_axis1 = TypeParam::FromString("0.5, 0.119202922; 0.5, 0.880797078");
+  TypeParam gt_axis1 = TypeParam::FromString("0.2689414, 0.7310586; 0.04742587, 0.9525741");
   gt_axis1.Reshape({2, 2, 1});
 
   TypeParam test_axis0({2, 2, 1}), test_axis1({2, 2, 1});
