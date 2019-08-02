@@ -47,11 +47,11 @@ TYPED_TEST(SelfAttentionEncoder, input_output_dimension_test)  // Use the class 
   std::string input = g.template AddNode<fetch::ml::ops::PlaceHolder<TypeParam>>("Input", {});
 
   std::string output = g.template AddNode<fetch::ml::layers::SelfAttentionEncoder<TypeParam>>(
-      "ScaledDotProductAttention", {input}, static_cast<SizeType>(4),
-      static_cast<SizeType>(12), static_cast<SizeType>(24));
+      "ScaledDotProductAttention", {input}, static_cast<SizeType>(4), static_cast<SizeType>(12),
+      static_cast<SizeType>(24));
   TypeParam input_data = TypeParam({12, 25, 4});
   g.SetInput(input, input_data);
-  
+
   TypeParam prediction = g.Evaluate(output, false);
   ASSERT_EQ(prediction.shape().size(), 3);
   ASSERT_EQ(prediction.shape()[0], 12);
@@ -62,18 +62,16 @@ TYPED_TEST(SelfAttentionEncoder, input_output_dimension_test)  // Use the class 
 TYPED_TEST(SelfAttentionEncoder, backward_dimension_test)  // Use the class as a subgraph
 {
   using SizeType = typename TypeParam::SizeType;
-	fetch::ml::layers::SelfAttentionEncoder<TypeParam> encoder(static_cast<SizeType>(4),
-                                                         static_cast<SizeType>(12), static_cast<SizeType>(13));
+  fetch::ml::layers::SelfAttentionEncoder<TypeParam> encoder(
+      static_cast<SizeType>(4), static_cast<SizeType>(12), static_cast<SizeType>(13));
   TypeParam input_data(std::vector<typename TypeParam::SizeType>({12, 20, 5}));
   TypeParam output(encoder.ComputeOutputShape({std::make_shared<TypeParam>(input_data)}));
-  encoder.Forward({std::make_shared<TypeParam>(input_data)},
-                output);
+  encoder.Forward({std::make_shared<TypeParam>(input_data)}, output);
 
   TypeParam error_signal(std::vector<typename TypeParam::SizeType>({12, 20, 5}));
 
-  std::vector<TypeParam> backprop_error = encoder.Backward(
-      {std::make_shared<TypeParam>(input_data)},
-      error_signal);
+  std::vector<TypeParam> backprop_error =
+      encoder.Backward({std::make_shared<TypeParam>(input_data)}, error_signal);
 
   // check there are proper number of error signals
   ASSERT_EQ(backprop_error.size(), 1);

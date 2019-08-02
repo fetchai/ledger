@@ -68,40 +68,40 @@ TYPED_TEST(MultiheadAttention, input_output_dimension_check)  // Use the class a
 
 TYPED_TEST(MultiheadAttention, trivial_test)
 {
-//	using SizeType = typename TypeParam::SizeType;
-	using DataType = typename TypeParam::Type;
-	
-	
-	TypeParam data1 = TypeParam::UniformRandom(100u);
-	TypeParam gt = TypeParam::UniformRandom(100u);
-	
-	data1.Reshape({10, 10});
-	gt.Reshape({10, 10});
-	
+  //	using SizeType = typename TypeParam::SizeType;
+  using DataType = typename TypeParam::Type;
 
-	auto g = std::make_shared<fetch::ml::Graph<TypeParam>>();
+  TypeParam data1 = TypeParam::UniformRandom(100u);
+  TypeParam gt    = TypeParam::UniformRandom(100u);
 
-	std::string in1 = g->template AddNode<fetch::ml::ops::PlaceHolder<TypeParam>>("in1", {});
-	std::string fc1 = g->template AddNode<fetch::ml::layers::FullyConnected<TypeParam>>("fc1", {in1}, 10, 10);
-	std::string fc3 = g->template AddNode<fetch::ml::layers::FullyConnected<TypeParam>>("fc3", {fc1}, 10, 10);
-	std::string fc4 = g->template AddNode<fetch::ml::layers::FullyConnected<TypeParam>>("fc4", {fc1}, 10, 10);
-	std::string sum = g->template AddNode<fetch::ml::ops::Add<TypeParam>>("add", {fc3, fc4});
-	
-	std::string label = g->template AddNode<fetch::ml::ops::PlaceHolder<TypeParam>>("label", {});
-	std::string error = g->template AddNode<fetch::ml::ops::MeanSquareErrorLoss<TypeParam>>("mse", {sum, label});
+  data1.Reshape({10, 10});
+  gt.Reshape({10, 10});
 
-	auto optimiser = fetch::ml::optimisers::SGDOptimiser<TypeParam> (g, {in1}, label, error, static_cast<DataType >(0.9));
-	
-	optimiser.Run({data1}, gt);
+  auto g = std::make_shared<fetch::ml::Graph<TypeParam>>();
+
+  std::string in1 = g->template AddNode<fetch::ml::ops::PlaceHolder<TypeParam>>("in1", {});
+  std::string fc1 =
+      g->template AddNode<fetch::ml::layers::FullyConnected<TypeParam>>("fc1", {in1}, 10, 10);
+  std::string fc3 =
+      g->template AddNode<fetch::ml::layers::FullyConnected<TypeParam>>("fc3", {fc1}, 10, 10);
+  std::string fc4 =
+      g->template AddNode<fetch::ml::layers::FullyConnected<TypeParam>>("fc4", {fc1}, 10, 10);
+  std::string sum = g->template AddNode<fetch::ml::ops::Add<TypeParam>>("add", {fc3, fc4});
+
+  std::string label = g->template AddNode<fetch::ml::ops::PlaceHolder<TypeParam>>("label", {});
+  std::string error =
+      g->template AddNode<fetch::ml::ops::MeanSquareErrorLoss<TypeParam>>("mse", {sum, label});
+
+  auto optimiser = fetch::ml::optimisers::SGDOptimiser<TypeParam>(g, {in1}, label, error,
+                                                                  static_cast<DataType>(0.9));
+
+  optimiser.Run({data1}, gt);
 }
 
 TYPED_TEST(MultiheadAttention, backward_test)  // Use the class as an Ops
 {
   using SizeType = typename TypeParam::SizeType;
   using DataType = typename TypeParam::Type;
-
-
-
 
   fetch::ml::layers::MultiheadAttention<TypeParam> m_att(static_cast<SizeType>(4),
                                                          static_cast<SizeType>(16), DataType(0.1));
