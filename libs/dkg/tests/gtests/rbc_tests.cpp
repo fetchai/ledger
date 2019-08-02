@@ -384,7 +384,7 @@ void GenerateRbcTest(uint32_t cabinet_size, uint32_t expected_completion_size,
       committee[sender_index]->rbc.SendRBroadcast(serialiser.data(), num_messages);
     }
 
-    std::this_thread::sleep_for(std::chrono::seconds(5 * num_messages));
+    std::this_thread::sleep_for(std::chrono::seconds(1 * num_messages));
     uint32_t pp = 0;
     for (uint32_t qq = 0; qq < cabinet_size; ++qq)
     {
@@ -404,43 +404,16 @@ TEST(rbc, bad_message)
   GenerateRbcTest(4, 3, {{FaultyRbc::Failures::BAD_MESSAGE}});
 }
 
-TEST(rbc, too_many_bad_message)
-{
-  // Half the network receives the wrong message and sends an echo with the wrong hash
-  // and the disagreement on the correct message means no one completes.
-  GenerateRbcTest(4, 0, {{FaultyRbc::Failures::BAD_MESSAGE}, {FaultyRbc::Failures::BAD_MESSAGE}});
-}
-
 TEST(rbc, no_echo)
 {
   // One node withholds their echo message but there should be enough for everyone to proceed
   GenerateRbcTest(4, 3, {{FaultyRbc::Failures::NO_ECHO}});
 }
 
-TEST(rbc, too_many_no_echo)
-{
-  // Three node withhold their echo messages and no one should received enough to deliver the
-  // message
-  GenerateRbcTest(4, 0,
-                  {{FaultyRbc::Failures::NO_ECHO},
-                   {FaultyRbc::Failures::NO_ECHO},
-                   {FaultyRbc::Failures::NO_ECHO}});
-}
-
 TEST(rbc, no_ready)
 {
   // One node withholds their ready message but there should be enough for everyone to proceed
   GenerateRbcTest(4, 3, {{FaultyRbc::Failures::NO_READY}});
-}
-
-TEST(rbc, too_many_no_ready)
-{
-  // Three node withhold their ready messages and no one should received enough to deliver the
-  // message
-  GenerateRbcTest(4, 0,
-                  {{FaultyRbc::Failures::NO_READY},
-                   {FaultyRbc::Failures::NO_READY},
-                   {FaultyRbc::Failures::NO_READY}});
 }
 
 TEST(rbc, no_answer)
