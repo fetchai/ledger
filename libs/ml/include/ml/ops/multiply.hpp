@@ -108,8 +108,6 @@ public:
         ArrayType error_sum({inputs.at(1)->shape(0), 1});
         for (SizeType batch = 0; batch < error_signal.shape(batch_dimension); batch++)
         {
-          //						error_sum +=
-          // fetch::math::ReduceSum(inputs.at(0)->View(batch).Copy(), SizeType(1));
           error_sum += fetch::math::ReduceSum(error_signal_2.View(batch).Copy(), SizeType(1));
         }
         error_sum.Reshape(inputs.at(1)->shape());

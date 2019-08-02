@@ -174,12 +174,12 @@ TYPED_TEST(MultiplyTest, backward_test_NB_N1)
       {std::make_shared<ArrayType>(data_1), std::make_shared<ArrayType>(data_2)}, error);
 
   // test correct values and shape
+  ASSERT_TRUE(prediction[0].shape() == data_1.shape());
+  ASSERT_TRUE(prediction[1].shape() == data_2.shape());
   ASSERT_TRUE(prediction[0].AllClose(gt_1, fetch::math::function_tolerance<DataType>(),
                                      fetch::math::function_tolerance<DataType>()));
-  ASSERT_TRUE(prediction[0].shape() == data_1.shape());
   ASSERT_TRUE(prediction[1].AllClose(gt_2, fetch::math::function_tolerance<DataType>(),
                                      fetch::math::function_tolerance<DataType>()));
-  ASSERT_TRUE(prediction[1].shape() == data_2.shape());
 }
 
 TYPED_TEST(MultiplyTest, backward_test_NB_NB)

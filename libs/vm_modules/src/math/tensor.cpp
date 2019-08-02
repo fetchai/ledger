@@ -51,16 +51,12 @@ Ptr<VMTensor> VMTensor::Constructor(VM *vm, TypeId type_id, Ptr<Array<SizeType>>
   return {new VMTensor(vm, type_id, shape->elements)};
 }
 
-Ptr<VMTensor> VMTensor::Constructor(VM *vm, TypeId type_id)
-{
-  return {new VMTensor(vm, type_id)};
-}
-
 void VMTensor::Bind(Module &module)
 {
   module.CreateClassType<VMTensor>("Tensor")
-      .CreateConstructor<Ptr<Array<SizeType>>>()
-      .CreateSerializeDefaultConstructor<>()
+      .CreateConstructor(&VMTensor::Constructor)
+      .CreateSerializeDefaultConstructor(
+          [](VM *vm, TypeId type_id) { return new VMTensor(vm, type_id); })
       .CreateMemberFunction("at", &VMTensor::AtOne)
       .CreateMemberFunction("at", &VMTensor::AtTwo)
       .CreateMemberFunction("at", &VMTensor::AtThree)

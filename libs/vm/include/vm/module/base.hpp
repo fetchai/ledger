@@ -19,6 +19,8 @@
 
 #include "vm/vm.hpp"
 
+#include <typeinfo>
+
 namespace fetch {
 namespace vm {
 

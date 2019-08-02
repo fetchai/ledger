@@ -93,15 +93,16 @@ public:
     }
 
     // do the backward
+    // 1.0 / N * ivar * (N * dxhat - np.sum(dxhat, axis=0) - xhat * np.sum(dxhat * xhat, axis=0))
+    // where N = feature_length, dxhat = error_signal, xhat = cached_output_
     ArrayType output_error_signal;
     DataType  feature_length = static_cast<DataType>(inputs.front()->shape()[axis_]);
-    ArrayType backward_a     = fetch::math::Multiply(error_signal, feature_length);
-    ArrayType backward_b     = fetch::math::ReduceSum(error_signal, axis_);
-    ArrayType backward_c =
+    ArrayType dmu_dx         = fetch::math::Multiply(error_signal, feature_length);
+    ArrayType dout_dx        = fetch::math::ReduceSum(error_signal, axis_);
+    ArrayType dvar_dx =
         cached_output_ *
         fetch::math::ReduceSum(fetch::math::Multiply(error_signal, cached_output_), axis_);
-    output_error_signal =
-        cached_inv_sqrt_var_ / feature_length * (backward_a - backward_b - backward_c);
+    output_error_signal = cached_inv_sqrt_var_ / feature_length * (dmu_dx - dout_dx - dvar_dx);
 
     return {output_error_signal};
   }
