@@ -90,7 +90,7 @@ public:
       losses_values_.push_back(loss);
 
       // Updating the weights
-      for (auto &w : g_.get_trainables())
+      for (auto &w : g_.GetTrainable())
       {
         ArrayType grad = w->get_gradients();
         fetch::math::Multiply(grad, DataType{-LEARNING_RATE}, grad);

@@ -17,8 +17,11 @@
 //------------------------------------------------------------------------------
 
 #include "file_loader.hpp"
+
+#include "core/serializers/main_serializer.hpp"
 #include "math/distance/cosine.hpp"
 #include "math/tensor.hpp"
+
 #include "ml/core/graph.hpp"
 #include "ml/dataloaders/ReadCSV.hpp"
 #include "ml/dataloaders/commodity_dataloader.hpp"
@@ -371,7 +374,7 @@ int main(int argc, char **argv)
     // now for the interesting bit
     auto gsp = g_ptr->GetGraphSaveableParams();
     // serialize
-    fetch::serializers::ByteArrayBuffer b;
+    fetch::serializers::MsgPackSerializer b;
     b << gsp;
 
     // deserialize
@@ -380,7 +383,8 @@ int main(int argc, char **argv)
     b >> gsp2;
 
     // remake graph
-    GraphType newgraph = fetch::ml::utilities::LoadGraph<ArrayType, GraphType>(gsp2);
+    std::shared_ptr<GraphType> newgraph_ptr =
+        fetch::ml::utilities::LoadGraph<ArrayType, GraphType>(gsp2);
 
     //// run same test as above:
     /// LOAD DATA ///
@@ -391,9 +395,9 @@ int main(int argc, char **argv)
     while (!loader.IsDone())
     {
       auto input = loader.GetNext();
-      newgraph.SetInput("num_input", input.second.at(0));
+      newgraph_ptr->SetInput("num_input", input.second.at(0));
 
-      auto slice_output = newgraph.Evaluate(node_names.at(node_names.size() - 2), false);
+      auto slice_output = newgraph_ptr->Evaluate(node_names.at(node_names.size() - 2), false);
       output.Slice(j).Assign(slice_output);
       test_y.Slice(j).Assign(input.first);
       j++;

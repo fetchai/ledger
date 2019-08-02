@@ -249,7 +249,7 @@ meta::IfIsShareable<ArrayType, OperationType, std::string> Graph<ArrayType>::Add
   {
     // Instantiate the node based on params
     op = std::make_shared<Node<ArrayType>>(OperationType::OpCode(), updated_name, [params...]() {
-      return std::make_shared<OperationType>(OperationType(params...));
+      return std::make_shared<OperationType>(params...);
     });
   }
   else
@@ -257,9 +257,8 @@ meta::IfIsShareable<ArrayType, OperationType, std::string> Graph<ArrayType>::Add
     // Instantiate the node based on pointer to shared target node
     NodePtrType target_node = GetNode(node_name);
     op                      = std::make_shared<Node<ArrayType>>(
-        OperationType::OpCode(), updated_name, [target_node, params...]() {
-          return std::make_shared<OperationType>(OperationType(params...));
-        });
+        OperationType::OpCode(), updated_name,
+        [target_node, params...]() { return std::make_shared<OperationType>(params...); });
   }
 
   // assign inputs and outputs to the new node
@@ -281,9 +280,8 @@ meta::IfIsNotShareable<ArrayType, OperationType, std::string> Graph<ArrayType>::
   std::string updated_name;
   UpdateVariableName<OperationType>(node_name, updated_name);
 
-  auto node = Node<ArrayType>(OperationType::OpCode(), updated_name, [params...]() {
-    return std::make_shared<OperationType>(OperationType(params...));
-  });
+  auto node = Node<ArrayType>(OperationType::OpCode(), updated_name,
+                              [params...]() { return std::make_shared<OperationType>(params...); });
 
   auto op = std::make_shared<Node<ArrayType>>(node);
 

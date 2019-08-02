@@ -132,7 +132,8 @@ void TestEmbeddings(Graph<ArrayType> const &g, std::string const &skip_gram_name
 
   // first get hold of the skipgram layer by searching the return name in the graph
   std::shared_ptr<fetch::ml::layers::SkipGram<ArrayType>> sg_layer =
-      std::dynamic_pointer_cast<fetch::ml::layers::SkipGram<ArrayType>>(g.GetNode(skip_gram_name));
+      std::dynamic_pointer_cast<fetch::ml::layers::SkipGram<ArrayType>>(
+          (g.GetNode(skip_gram_name))->GetOp());
 
   // next get hold of the embeddings
   std::shared_ptr<fetch::ml::ops::Embeddings<ArrayType>> embeddings =

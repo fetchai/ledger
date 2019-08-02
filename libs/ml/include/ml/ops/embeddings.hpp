@@ -47,7 +47,7 @@ public:
     this->SetData(weights);
   }
 
-  explicit Embeddings(ArrayType &weights)
+  explicit Embeddings(ArrayType const &weights)
   {
     this->SetData(weights);
   }

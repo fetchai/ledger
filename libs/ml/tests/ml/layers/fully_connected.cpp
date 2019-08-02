@@ -250,12 +250,18 @@ TYPED_TEST(FullyConnectedNoIntTest, share_weight_backward_test)
 TYPED_TEST(FullyConnectedTest, node_forward_test)  // Use the class as a Node
 {
   TypeParam data(std::vector<typename TypeParam::SizeType>({5, 10, 2}));
-  std::shared_ptr<fetch::ml::Node<TypeParam, fetch::ml::ops::PlaceHolder<TypeParam>>> placeholder =
-      std::make_shared<fetch::ml::Node<TypeParam, fetch::ml::ops::PlaceHolder<TypeParam>>>("Input");
-  placeholder->SetData(data);
 
-  fetch::ml::Node<TypeParam, fetch::ml::layers::FullyConnected<TypeParam>> fc("FullyConnected", 50u,
-                                                                              42u);
+  std::shared_ptr<fetch::ml::Node<TypeParam>> placeholder =
+      std::make_shared<fetch::ml::Node<TypeParam>>(fetch::ml::OpType::PLACEHOLDER, "Input");
+  std::dynamic_pointer_cast<fetch::ml::ops::PlaceHolder<TypeParam>>(placeholder->GetOp())
+      ->SetData(data);
+
+  fetch::math::SizeType      in_size  = 50u;
+  fetch::math::SizeType      out_size = 42u;
+  fetch::ml::Node<TypeParam> fc(
+      fetch::ml::OpType::LAYER_FULLY_CONNECTED, "FullyConnected", [in_size, out_size]() {
+        return std::make_shared<fetch::ml::layers::FullyConnected<TypeParam>>(in_size, out_size);
+      });
   fc.AddInput(placeholder);
 
   TypeParam prediction = *fc.Evaluate(true);
@@ -267,13 +273,18 @@ TYPED_TEST(FullyConnectedTest, node_forward_test)  // Use the class as a Node
 
 TYPED_TEST(FullyConnectedTest, node_backward_test)  // Use the class as a Node
 {
-  TypeParam data({5, 10, 2});
-  std::shared_ptr<fetch::ml::Node<TypeParam, fetch::ml::ops::PlaceHolder<TypeParam>>> placeholder =
-      std::make_shared<fetch::ml::Node<TypeParam, fetch::ml::ops::PlaceHolder<TypeParam>>>("Input");
-  placeholder->SetData(data);
+  TypeParam                                   data({5, 10, 2});
+  std::shared_ptr<fetch::ml::Node<TypeParam>> placeholder =
+      std::make_shared<fetch::ml::Node<TypeParam>>(fetch::ml::OpType::PLACEHOLDER, "Input");
+  std::dynamic_pointer_cast<fetch::ml::ops::PlaceHolder<TypeParam>>(placeholder->GetOp())
+      ->SetData(data);
 
-  fetch::ml::Node<TypeParam, fetch::ml::layers::FullyConnected<TypeParam>> fc("FullyConnected", 50u,
-                                                                              42u);
+  fetch::math::SizeType      in_size  = 50u;
+  fetch::math::SizeType      out_size = 42u;
+  fetch::ml::Node<TypeParam> fc(
+      fetch::ml::OpType::LAYER_FULLY_CONNECTED, "FullyConnected", [in_size, out_size]() {
+        return std::make_shared<fetch::ml::layers::FullyConnected<TypeParam>>(in_size, out_size);
+      });
   fc.AddInput(placeholder);
   TypeParam prediction = *fc.Evaluate(true);
 

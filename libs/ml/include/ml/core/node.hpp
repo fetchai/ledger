@@ -73,7 +73,7 @@ public:
 
   //  template <typename... Params>
   Node(OpType const &operation_type, std::string name,
-       std::function<std::shared_ptr<ops::Ops<ArrayType>>()> constructor)
+       std::function<std::shared_ptr<ops::Ops<ArrayType>>()> const &constructor)
     : name_(std::move(name))
     , cached_output_status_(CachedOutputState::CHANGED_SIZE)
     , operation_type_(operation_type)
@@ -81,15 +81,20 @@ public:
     op_ptr_ = constructor();
   }
 
-  //  template <typename... Params>
-  Node(OpType const &operation_type, std::string name, std::shared_ptr<ops::Ops<ArrayType>> op_ptr)
-    : name_(std::move(name))
-    , cached_output_status_(CachedOutputState::CHANGED_SIZE)
-    , operation_type_(operation_type)
-    , op_ptr_(op_ptr)
-  {}
+  //  //  template <typename... Params>
+  //  Node(OpType const &operation_type, std::string name, std::shared_ptr<ops::Ops<ArrayType>>
+  //  op_ptr)
+  //    : name_(std::move(name))
+  //    , cached_output_status_(CachedOutputState::CHANGED_SIZE)
+  //    , operation_type_(operation_type)
+  //    , op_ptr_(op_ptr)
+  //  {}
 
   //  template <typename... Params>
+
+  /**
+   * This method CANNOT be extended to include making any op that is a layer
+   */
   Node(OpType const &operation_type, std::string name)
     : name_(std::move(name))
     , cached_output_status_(CachedOutputState::CHANGED_SIZE)
@@ -98,7 +103,14 @@ public:
     switch (operation_type)
     {
     case ops::Abs<ArrayType>::OpCode():
-      op_ptr_ = new fetch::ml::ops::Abs<ArrayType>();
+      op_ptr_ = std::make_shared<fetch::ml::ops::Abs<ArrayType>>();
+      break;
+    case ops::PlaceHolder<ArrayType>::OpCode():
+      op_ptr_ = std::make_shared<fetch::ml::ops::PlaceHolder<ArrayType>>();
+      break;
+    case ops::Weights<ArrayType>::OpCode():
+      op_ptr_ = std::make_shared<fetch::ml::ops::Weights<ArrayType>>();
+      break;
     default:
       throw std::runtime_error("unknown node type");
     }

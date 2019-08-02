@@ -17,9 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/graph_declaration.hpp"
-#include "ml/subgraph_declaration.hpp"
-
 namespace fetch {
 namespace ml {
 namespace layers {
