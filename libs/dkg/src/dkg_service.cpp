@@ -93,6 +93,7 @@ DkgService::DkgService(Endpoint &endpoint, ConstByteArray address)
   , rpc_server_{endpoint_, SERVICE_DKG, CHANNEL_RPC}
   , rpc_client_{"dkg", endpoint_, SERVICE_DKG, CHANNEL_RPC}
   , state_machine_{std::make_shared<StateMachine>("dkg", State::BUILD_AEON_KEYS, ToString)}
+  , shares_subscription(endpoint_.Subscribe(SERVICE_DKG, CHANNEL_SECRET_KEY))
   , rbc_{endpoint_, address_, current_cabinet_,
          [this](MuddleAddress const &address, ConstByteArray const &payload) -> void {
            OnRbcDeliver(address, payload);
@@ -104,6 +105,19 @@ DkgService::DkgService(Endpoint &endpoint, ConstByteArray address)
 {
   group_g_.clear();
   group_g_ = dkg_.group();
+
+  // Set subscription for receiving shares
+  shares_subscription->SetMessageHandler([this](ConstByteArray const &from, uint16_t, uint16_t,
+                                                uint16_t, muddle::Packet::Payload const &payload,
+                                                ConstByteArray) {
+      fetch::serializers::MsgPackSerializer serialiser(payload);
+
+      std::pair<std::string, std::string> shares;
+      serialiser >> shares;
+
+      // Dispatch the event
+      dkg_.OnNewShares(from, shares);
+  });
 
   // RPC server registration
   rpc_proto_ = std::make_unique<DkgRpcProtocol>(*this);
@@ -119,16 +133,6 @@ DkgService::DkgService(Endpoint &endpoint, ConstByteArray address)
   // clang-format on
 }
 
-/** RPC Handler: Secret share submission
- *
- * @param address The address of the shares owner
- * @param shares The pair of secret shares to be submitted
- */
-void DkgService::SubmitShare(MuddleAddress const &                      address,
-                             std::pair<std::string, std::string> const &shares)
-{
-  dkg_.OnNewShares(address, shares);
-}
 
 /**
  * DKG call to send secret share
@@ -139,8 +143,13 @@ void DkgService::SubmitShare(MuddleAddress const &                      address,
 void DkgService::SendShares(MuddleAddress const &                      destination,
                             std::pair<std::string, std::string> const &shares)
 {
-  rpc_client_.CallSpecificAddress(destination, RPC_DKG_BEACON, DkgRpcProtocol::SUBMIT_SHARE,
-                                  address_, shares);
+  fetch::serializers::SizeCounter counter;
+  counter << shares;
+
+  fetch::serializers::MsgPackSerializer serializer;
+  serializer.Reserve(counter.size());
+  serializer << shares;
+  endpoint_.Send(destination, SERVICE_DKG, CHANNEL_SECRET_KEY, serializer.data());
 }
 
 /**

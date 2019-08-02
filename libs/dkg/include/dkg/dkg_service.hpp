@@ -128,7 +128,6 @@ public:
   /// @name External Events
   /// @{
   void SubmitSignatureShare(uint64_t round, uint32_t const &id, std::string const &signature);
-  void SubmitShare(MuddleAddress const &address, std::pair<std::string, std::string> const &shares);
   void OnRbcDeliver(MuddleAddress const &from, byte_array::ConstByteArray const &payload);
   /// @}
 
@@ -247,6 +246,8 @@ private:
   muddle::rpc::Client      rpc_client_;     ///< The services' RPC client
   RpcProtocolPtr           rpc_proto_;      ///< The services RPC protocol
   StateMachinePtr          state_machine_;  ///< The service state machine
+  std::shared_ptr<muddle::Subscription>
+            shares_subscription;  ///< Subscription for receiving secret shares
   RBC                      rbc_;            ///< Runs the RBC protocol
   DistributedKeyGeneration dkg_;            ///< Runs DKG protocol
 
